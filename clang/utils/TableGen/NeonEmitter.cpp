@@ -337,9 +337,9 @@ public:
     // Modify the TypeSpec per-argument to get a concrete Type, and create
     // known variables for each.
     // Types[0] is the return value.
-    Types.push_back(Type(OutTS, Proto[0]));
+    Types.emplace_back(OutTS, Proto[0]);
     for (unsigned I = 1; I < Proto.size(); ++I)
-      Types.push_back(Type(InTS, Proto[I]));
+      Types.emplace_back(InTS, Proto[I]);
   }
 
   /// Get the Record that this intrinsic is based off.

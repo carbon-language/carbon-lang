@@ -329,7 +329,7 @@ private:
   };
   std::vector<DeferredGlobal> DeferredDeclsToEmit;
   void addDeferredDeclToEmit(llvm::GlobalValue *GV, GlobalDecl GD) {
-    DeferredDeclsToEmit.push_back(DeferredGlobal(GV, GD));
+    DeferredDeclsToEmit.emplace_back(GV, GD);
   }
 
   /// List of alias we have emitted. Used to make sure that what they point to
@@ -876,7 +876,7 @@ public:
 
   /// Add a destructor and object to add to the C++ global destructor function.
   void AddCXXDtorEntry(llvm::Constant *DtorFn, llvm::Constant *Object) {
-    CXXGlobalDtors.push_back(std::make_pair(DtorFn, Object));
+    CXXGlobalDtors.emplace_back(DtorFn, Object);
   }
 
   /// Create a new runtime function with the specified type and name.

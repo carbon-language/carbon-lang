@@ -1878,8 +1878,8 @@ void
 Driver::generatePrefixedToolNames(const char *Tool, const ToolChain &TC,
                                   SmallVectorImpl<std::string> &Names) const {
   // FIXME: Needs a better variable than DefaultTargetTriple
-  Names.push_back(DefaultTargetTriple + "-" + Tool);
-  Names.push_back(Tool);
+  Names.emplace_back(DefaultTargetTriple + "-" + Tool);
+  Names.emplace_back(Tool);
 }
 
 static bool ScanDirForExecutable(SmallString<128> &Dir,

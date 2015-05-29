@@ -1463,7 +1463,7 @@ class ThreadSafetyReporter : public clang::threadSafety::ThreadSafetyHandler {
       PartialDiagnosticAt FNote(CurrentFunction->getBody()->getLocStart(),
                                 S.PDiag(diag::note_thread_warning_in_fun)
                                     << CurrentFunction->getNameAsString());
-      ONS.push_back(FNote);
+      ONS.push_back(std::move(FNote));
     }
     return ONS;
   }
@@ -1477,7 +1477,7 @@ class ThreadSafetyReporter : public clang::threadSafety::ThreadSafetyHandler {
       PartialDiagnosticAt FNote(CurrentFunction->getBody()->getLocStart(),
                                 S.PDiag(diag::note_thread_warning_in_fun)
                                     << CurrentFunction->getNameAsString());
-      ONS.push_back(FNote);
+      ONS.push_back(std::move(FNote));
     }
     return ONS;
   }
@@ -1490,7 +1490,7 @@ class ThreadSafetyReporter : public clang::threadSafety::ThreadSafetyHandler {
     if (!Loc.isValid())
       Loc = FunLocation;
     PartialDiagnosticAt Warning(Loc, S.PDiag(DiagID) << Kind << LockName);
-    Warnings.push_back(DelayedDiag(Warning, getNotes()));
+    Warnings.emplace_back(std::move(Warning), getNotes());
   }
 
  public:
@@ -1516,7 +1516,7 @@ class ThreadSafetyReporter : public clang::threadSafety::ThreadSafetyHandler {
   void handleInvalidLockExp(StringRef Kind, SourceLocation Loc) override {
     PartialDiagnosticAt Warning(Loc, S.PDiag(diag::warn_cannot_resolve_lock)
                                          << Loc);
-    Warnings.push_back(DelayedDiag(Warning, getNotes()));
+    Warnings.emplace_back(std::move(Warning), getNotes());
   }
 
   void handleUnmatchedUnlock(StringRef Kind, Name LockName,
@@ -1532,7 +1532,7 @@ class ThreadSafetyReporter : public clang::threadSafety::ThreadSafetyHandler {
     PartialDiagnosticAt Warning(Loc, S.PDiag(diag::warn_unlock_kind_mismatch)
                                          << Kind << LockName << Received
                                          << Expected);
-    Warnings.push_back(DelayedDiag(Warning, getNotes()));
+    Warnings.emplace_back(std::move(Warning), getNotes());
   }
 
   void handleDoubleLock(StringRef Kind, Name LockName, SourceLocation Loc) override {
@@ -1566,10 +1566,10 @@ class ThreadSafetyReporter : public clang::threadSafety::ThreadSafetyHandler {
     if (LocLocked.isValid()) {
       PartialDiagnosticAt Note(LocLocked, S.PDiag(diag::note_locked_here)
                                               << Kind);
-      Warnings.push_back(DelayedDiag(Warning, getNotes(Note)));
+      Warnings.emplace_back(std::move(Warning), getNotes(Note));
       return;
     }
-    Warnings.push_back(DelayedDiag(Warning, getNotes()));
+    Warnings.emplace_back(std::move(Warning), getNotes());
   }
 
   void handleExclusiveAndShared(StringRef Kind, Name LockName,
@@ -1580,7 +1580,7 @@ class ThreadSafetyReporter : public clang::threadSafety::ThreadSafetyHandler {
                                     << Kind << LockName);
     PartialDiagnosticAt Note(Loc2, S.PDiag(diag::note_lock_exclusive_and_shared)
                                        << Kind << LockName);
-    Warnings.push_back(DelayedDiag(Warning, getNotes(Note)));
+    Warnings.emplace_back(std::move(Warning), getNotes(Note));
   }
 
   void handleNoMutexHeld(StringRef Kind, const NamedDecl *D,
@@ -1593,7 +1593,7 @@ class ThreadSafetyReporter : public clang::threadSafety::ThreadSafetyHandler {
                         diag::warn_var_deref_requires_any_lock;
     PartialDiagnosticAt Warning(Loc, S.PDiag(DiagID)
       << D->getNameAsString() << getLockKindFromAccessKind(AK));
-    Warnings.push_back(DelayedDiag(Warning, getNotes()));
+    Warnings.emplace_back(std::move(Warning), getNotes());
   }
 
   void handleMutexNotHeld(StringRef Kind, const NamedDecl *D,
@@ -1628,9 +1628,9 @@ class ThreadSafetyReporter : public clang::threadSafety::ThreadSafetyHandler {
         PartialDiagnosticAt VNote(D->getLocation(),
                                  S.PDiag(diag::note_guarded_by_declared_here)
                                      << D->getNameAsString());
-        Warnings.push_back(DelayedDiag(Warning, getNotes(Note, VNote)));
+        Warnings.emplace_back(std::move(Warning), getNotes(Note, VNote));
       } else
-        Warnings.push_back(DelayedDiag(Warning, getNotes(Note)));
+        Warnings.emplace_back(std::move(Warning), getNotes(Note));
     } else {
       switch (POK) {
         case POK_VarAccess:
@@ -1656,9 +1656,9 @@ class ThreadSafetyReporter : public clang::threadSafety::ThreadSafetyHandler {
         PartialDiagnosticAt Note(D->getLocation(),
                                  S.PDiag(diag::note_guarded_by_declared_here)
                                      << D->getNameAsString());
-        Warnings.push_back(DelayedDiag(Warning, getNotes(Note)));
+        Warnings.emplace_back(std::move(Warning), getNotes(Note));
       } else
-        Warnings.push_back(DelayedDiag(Warning, getNotes()));
+        Warnings.emplace_back(std::move(Warning), getNotes());
     }
   }
 
@@ -1667,7 +1667,7 @@ class ThreadSafetyReporter : public clang::threadSafety::ThreadSafetyHandler {
     PartialDiagnosticAt Warning(Loc,
         S.PDiag(diag::warn_acquire_requires_negative_cap)
         << Kind << LockName << Neg);
-    Warnings.push_back(DelayedDiag(Warning, getNotes()));
+    Warnings.emplace_back(std::move(Warning), getNotes());
   }
 
 
@@ -1675,20 +1675,20 @@ class ThreadSafetyReporter : public clang::threadSafety::ThreadSafetyHandler {
                              SourceLocation Loc) override {
     PartialDiagnosticAt Warning(Loc, S.PDiag(diag::warn_fun_excludes_mutex)
                                          << Kind << FunName << LockName);
-    Warnings.push_back(DelayedDiag(Warning, getNotes()));
+    Warnings.emplace_back(std::move(Warning), getNotes());
   }
 
   void handleLockAcquiredBefore(StringRef Kind, Name L1Name, Name L2Name,
                                 SourceLocation Loc) override {
     PartialDiagnosticAt Warning(Loc,
       S.PDiag(diag::warn_acquired_before) << Kind << L1Name << L2Name);
-    Warnings.push_back(DelayedDiag(Warning, getNotes()));
+    Warnings.emplace_back(std::move(Warning), getNotes());
   }
 
   void handleBeforeAfterCycle(Name L1Name, SourceLocation Loc) override {
     PartialDiagnosticAt Warning(Loc,
       S.PDiag(diag::warn_acquired_before_after_cycle) << L1Name);
-    Warnings.push_back(DelayedDiag(Warning, getNotes()));
+    Warnings.emplace_back(std::move(Warning), getNotes());
   }
 
   void enterFunction(const FunctionDecl* FD) override {
@@ -1732,8 +1732,8 @@ public:
                              StringRef VariableName) override {
     PartialDiagnosticAt Warning(Loc, S.PDiag(diag::warn_loop_state_mismatch) <<
       VariableName);
-    
-    Warnings.push_back(DelayedDiag(Warning, OptionalNotes()));
+
+    Warnings.emplace_back(std::move(Warning), OptionalNotes());
   }
   
   void warnParamReturnTypestateMismatch(SourceLocation Loc,
@@ -1744,8 +1744,8 @@ public:
     PartialDiagnosticAt Warning(Loc, S.PDiag(
       diag::warn_param_return_typestate_mismatch) << VariableName <<
         ExpectedState << ObservedState);
-    
-    Warnings.push_back(DelayedDiag(Warning, OptionalNotes()));
+
+    Warnings.emplace_back(std::move(Warning), OptionalNotes());
   }
   
   void warnParamTypestateMismatch(SourceLocation Loc, StringRef ExpectedState,
@@ -1753,16 +1753,16 @@ public:
     
     PartialDiagnosticAt Warning(Loc, S.PDiag(
       diag::warn_param_typestate_mismatch) << ExpectedState << ObservedState);
-    
-    Warnings.push_back(DelayedDiag(Warning, OptionalNotes()));
+
+    Warnings.emplace_back(std::move(Warning), OptionalNotes());
   }
   
   void warnReturnTypestateForUnconsumableType(SourceLocation Loc,
                                               StringRef TypeName) override {
     PartialDiagnosticAt Warning(Loc, S.PDiag(
       diag::warn_return_typestate_for_unconsumable_type) << TypeName);
-    
-    Warnings.push_back(DelayedDiag(Warning, OptionalNotes()));
+
+    Warnings.emplace_back(std::move(Warning), OptionalNotes());
   }
   
   void warnReturnTypestateMismatch(SourceLocation Loc, StringRef ExpectedState,
@@ -1770,8 +1770,8 @@ public:
                                     
     PartialDiagnosticAt Warning(Loc, S.PDiag(
       diag::warn_return_typestate_mismatch) << ExpectedState << ObservedState);
-    
-    Warnings.push_back(DelayedDiag(Warning, OptionalNotes()));
+
+    Warnings.emplace_back(std::move(Warning), OptionalNotes());
   }
   
   void warnUseOfTempInInvalidState(StringRef MethodName, StringRef State,
@@ -1779,8 +1779,8 @@ public:
                                                     
     PartialDiagnosticAt Warning(Loc, S.PDiag(
       diag::warn_use_of_temp_in_invalid_state) << MethodName << State);
-    
-    Warnings.push_back(DelayedDiag(Warning, OptionalNotes()));
+
+    Warnings.emplace_back(std::move(Warning), OptionalNotes());
   }
   
   void warnUseInInvalidState(StringRef MethodName, StringRef VariableName,
@@ -1788,8 +1788,8 @@ public:
   
     PartialDiagnosticAt Warning(Loc, S.PDiag(diag::warn_use_in_invalid_state) <<
                                 MethodName << VariableName << State);
-    
-    Warnings.push_back(DelayedDiag(Warning, OptionalNotes()));
+
+    Warnings.emplace_back(std::move(Warning), OptionalNotes());
   }
 };
 }}}

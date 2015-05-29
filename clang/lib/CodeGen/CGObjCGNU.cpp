@@ -1057,7 +1057,7 @@ llvm::Value *CGObjCGNU::GetSelector(CodeGenFunction &CGF, Selector Sel,
     SelValue = llvm::GlobalAlias::create(
         SelectorTy, llvm::GlobalValue::PrivateLinkage,
         ".objc_selector_" + Sel.getAsString(), &TheModule);
-    Types.push_back(TypedSelector(TypeEncoding, SelValue));
+    Types.emplace_back(TypeEncoding, SelValue);
   }
 
   if (lval) {
@@ -2121,9 +2121,8 @@ void CGObjCGNU::RegisterAlias(const ObjCCompatibleAliasDecl *OAD) {
   // Get the class declaration for which the alias is specified.
   ObjCInterfaceDecl *ClassDecl =
     const_cast<ObjCInterfaceDecl *>(OAD->getClassInterface());
-  std::string ClassName = ClassDecl->getNameAsString();
-  std::string AliasName = OAD->getNameAsString();
-  ClassAliases.push_back(ClassAliasPair(ClassName,AliasName));
+  ClassAliases.emplace_back(ClassDecl->getNameAsString(),
+                            OAD->getNameAsString());
 }
 
 void CGObjCGNU::GenerateClass(const ObjCImplementationDecl *OID) {

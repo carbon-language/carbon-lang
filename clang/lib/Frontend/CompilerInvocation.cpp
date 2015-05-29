@@ -126,7 +126,7 @@ static void addDiagnosticArgs(ArgList &Args, OptSpecifier Group,
     } else {
       // Otherwise, add its value (for OPT_W_Joined and similar).
       for (const char *Arg : A->getValues())
-        Diagnostics.push_back(Arg);
+        Diagnostics.emplace_back(Arg);
     }
   }
 }
@@ -250,8 +250,8 @@ static bool ParseAnalyzerArgs(AnalyzerOptions &Opts, ArgList &Args,
     StringRef checkerList = A->getValue();
     SmallVector<StringRef, 4> checkers;
     checkerList.split(checkers, ",");
-    for (unsigned i = 0, e = checkers.size(); i != e; ++i)
-      Opts.CheckersControlList.push_back(std::make_pair(checkers[i], enable));
+    for (StringRef checker : checkers)
+      Opts.CheckersControlList.emplace_back(checker, enable);
   }
 
   // Go through the analyzer configuration options.
@@ -867,14 +867,14 @@ static InputKind ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args,
   }
 
   if (const Arg* A = Args.getLastArg(OPT_plugin)) {
-    Opts.Plugins.push_back(A->getValue(0));
+    Opts.Plugins.emplace_back(A->getValue(0));
     Opts.ProgramAction = frontend::PluginAction;
     Opts.ActionName = A->getValue();
 
     for (arg_iterator it = Args.filtered_begin(OPT_plugin_arg),
            end = Args.filtered_end(); it != end; ++it) {
       if ((*it)->getValue(0) == Opts.ActionName)
-        Opts.PluginArgs.push_back((*it)->getValue(1));
+        Opts.PluginArgs.emplace_back((*it)->getValue(1));
     }
   }
 
@@ -884,7 +884,7 @@ static InputKind ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args,
     for (arg_iterator it = Args.filtered_begin(OPT_plugin_arg),
            end = Args.filtered_end(); it != end; ++it) {
       if ((*it)->getValue(0) == Opts.AddPluginActions[i])
-        Opts.AddPluginArgs[i].push_back((*it)->getValue(1));
+        Opts.AddPluginArgs[i].emplace_back((*it)->getValue(1));
     }
   }
 
@@ -1035,7 +1035,7 @@ static InputKind ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args,
       if (i == 0)
         DashX = IK;
     }
-    Opts.Inputs.push_back(FrontendInputFile(Inputs[i], IK));
+    Opts.Inputs.emplace_back(std::move(Inputs[i]), IK);
   }
 
   return DashX;
@@ -1745,18 +1745,18 @@ static void ParsePreprocessorArgs(PreprocessorOptions &Opts, ArgList &Args,
   for (arg_iterator it = Args.filtered_begin(OPT_include),
          ie = Args.filtered_end(); it != ie; ++it) {
     const Arg *A = *it;
-    Opts.Includes.push_back(A->getValue());
+    Opts.Includes.emplace_back(A->getValue());
   }
 
   for (arg_iterator it = Args.filtered_begin(OPT_chain_include),
          ie = Args.filtered_end(); it != ie; ++it) {
     const Arg *A = *it;
-    Opts.ChainedIncludes.push_back(A->getValue());
+    Opts.ChainedIncludes.emplace_back(A->getValue());
   }
 
   // Include 'altivec.h' if -faltivec option present
   if (Args.hasArg(OPT_faltivec))
-    Opts.Includes.push_back("altivec.h");
+    Opts.Includes.emplace_back("altivec.h");
 
   for (arg_iterator it = Args.filtered_begin(OPT_remap_file),
          ie = Args.filtered_end(); it != ie; ++it) {

@@ -65,7 +65,7 @@ public:
   /// AddSystemHeaderPrefix - Add the specified prefix to the system header
   /// prefix list.
   void AddSystemHeaderPrefix(StringRef Prefix, bool IsSystemHeader) {
-    SystemHeaderPrefixes.push_back(std::make_pair(Prefix, IsSystemHeader));
+    SystemHeaderPrefixes.emplace_back(Prefix, IsSystemHeader);
   }
 
   /// AddGnuCPlusPlusIncludePaths - Add the necessary paths to support a gnu

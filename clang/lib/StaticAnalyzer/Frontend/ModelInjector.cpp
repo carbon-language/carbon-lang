@@ -69,7 +69,7 @@ void ModelInjector::onBodySynthesis(const NamedDecl *D) {
   FrontendOptions &FrontendOpts = Invocation->getFrontendOpts();
   InputKind IK = IK_CXX; // FIXME
   FrontendOpts.Inputs.clear();
-  FrontendOpts.Inputs.push_back(FrontendInputFile(fileName, IK));
+  FrontendOpts.Inputs.emplace_back(fileName, IK);
   FrontendOpts.DisableFree = true;
 
   Invocation->getDiagnosticOpts().VerifyDiagnostics = 0;

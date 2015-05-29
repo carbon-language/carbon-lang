@@ -613,7 +613,7 @@ void StoredDiagnosticConsumer::HandleDiagnostic(DiagnosticsEngine::Level Level,
   // about. This effectively drops diagnostics from modules we're building.
   // FIXME: In the long run, ee don't want to drop source managers from modules.
   if (!Info.hasSourceManager() || &Info.getSourceManager() == SourceMgr)
-    StoredDiags.push_back(StoredDiagnostic(Level, Info));
+    StoredDiags.emplace_back(Level, Info);
 }
 
 ASTMutationListener *ASTUnit::getASTMutationListener() {

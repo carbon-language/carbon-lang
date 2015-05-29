@@ -4514,16 +4514,15 @@ bool ASTReader::ParseHeaderSearchOptions(const RecordData &Record,
       = static_cast<frontend::IncludeDirGroup>(Record[Idx++]);
     bool IsFramework = Record[Idx++];
     bool IgnoreSysRoot = Record[Idx++];
-    HSOpts.UserEntries.push_back(
-      HeaderSearchOptions::Entry(Path, Group, IsFramework, IgnoreSysRoot));
+    HSOpts.UserEntries.emplace_back(std::move(Path), Group, IsFramework,
+                                    IgnoreSysRoot);
   }
 
   // System header prefixes.
   for (unsigned N = Record[Idx++]; N; --N) {
     std::string Prefix = ReadString(Record, Idx);
     bool IsSystemHeader = Record[Idx++];
-    HSOpts.SystemHeaderPrefixes.push_back(
-      HeaderSearchOptions::SystemHeaderPrefix(Prefix, IsSystemHeader));
+    HSOpts.SystemHeaderPrefixes.emplace_back(std::move(Prefix), IsSystemHeader);
   }
 
   HSOpts.ResourceDir = ReadString(Record, Idx);

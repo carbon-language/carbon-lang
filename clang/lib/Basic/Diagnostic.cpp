@@ -112,7 +112,7 @@ void DiagnosticsEngine::Reset() {
 
   // Create a DiagState and DiagStatePoint representing diagnostic changes
   // through command-line.
-  DiagStates.push_back(DiagState());
+  DiagStates.emplace_back();
   DiagStatePoints.push_back(DiagStatePoint(&DiagStates.back(), FullSourceLoc()));
 }
 

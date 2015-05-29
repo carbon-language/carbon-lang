@@ -1018,9 +1018,7 @@ void ResultBuilder::AddResult(Result R) {
 }
 
 /// \brief Enter into a new scope.
-void ResultBuilder::EnterNewScope() {
-  ShadowMaps.push_back(ShadowMap());
-}
+void ResultBuilder::EnterNewScope() { ShadowMaps.emplace_back(); }
 
 /// \brief Exit from the current scope.
 void ResultBuilder::ExitScope() {

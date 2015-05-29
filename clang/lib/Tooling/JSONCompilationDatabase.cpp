@@ -220,10 +220,10 @@ void JSONCompilationDatabase::getCommands(
   for (int I = 0, E = CommandsRef.size(); I != E; ++I) {
     SmallString<8> DirectoryStorage;
     SmallString<1024> CommandStorage;
-    Commands.push_back(CompileCommand(
-      // FIXME: Escape correctly:
-      CommandsRef[I].first->getValue(DirectoryStorage),
-      unescapeCommandLine(CommandsRef[I].second->getValue(CommandStorage))));
+    Commands.emplace_back(
+        // FIXME: Escape correctly:
+        CommandsRef[I].first->getValue(DirectoryStorage),
+        unescapeCommandLine(CommandsRef[I].second->getValue(CommandStorage)));
   }
 }
 

@@ -64,10 +64,9 @@ GetFlattenedSpellings(const Record &Attr) {
   for (const auto &Spelling : Spellings) {
     if (Spelling->getValueAsString("Variety") == "GCC") {
       // Gin up two new spelling objects to add into the list.
-      Ret.push_back(FlattenedSpelling("GNU", Spelling->getValueAsString("Name"),
-                                      "", true));
-      Ret.push_back(FlattenedSpelling(
-          "CXX11", Spelling->getValueAsString("Name"), "gnu", true));
+      Ret.emplace_back("GNU", Spelling->getValueAsString("Name"), "", true);
+      Ret.emplace_back("CXX11", Spelling->getValueAsString("Name"), "gnu",
+                       true);
     } else
       Ret.push_back(FlattenedSpelling(*Spelling));
   }

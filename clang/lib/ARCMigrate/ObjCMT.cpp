@@ -2283,7 +2283,7 @@ bool arcmt::getFileRemappingsFromFileList(
       continue;
     }
 
-    remap.push_back(std::make_pair(I->first->getName(), TempFile));
+    remap.emplace_back(I->first->getName(), TempFile);
   }
 
   return hasErrorOccurred;

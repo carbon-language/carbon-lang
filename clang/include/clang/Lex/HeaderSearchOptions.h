@@ -180,14 +180,14 @@ public:
   /// AddPath - Add the \p Path path to the specified \p Group list.
   void AddPath(StringRef Path, frontend::IncludeDirGroup Group,
                bool IsFramework, bool IgnoreSysRoot) {
-    UserEntries.push_back(Entry(Path, Group, IsFramework, IgnoreSysRoot));
+    UserEntries.emplace_back(Path, Group, IsFramework, IgnoreSysRoot);
   }
 
   /// AddSystemHeaderPrefix - Override whether \#include directives naming a
   /// path starting with \p Prefix should be considered as naming a system
   /// header.
   void AddSystemHeaderPrefix(StringRef Prefix, bool IsSystemHeader) {
-    SystemHeaderPrefixes.push_back(SystemHeaderPrefix(Prefix, IsSystemHeader));
+    SystemHeaderPrefixes.emplace_back(Prefix, IsSystemHeader);
   }
 
   void AddVFSOverlayFile(StringRef Name) {

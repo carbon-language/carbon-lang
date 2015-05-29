@@ -5608,7 +5608,7 @@ static void constructHexagonLinkArgs(Compilation &C, const JobAction &JA,
   for (arg_iterator it = Args.filtered_begin(options::OPT_moslib_EQ),
          ie = Args.filtered_end(); it != ie; ++it) {
     (*it)->claim();
-    oslibs.push_back((*it)->getValue());
+    oslibs.emplace_back((*it)->getValue());
     hasStandalone = hasStandalone || (oslibs.back() == "standalone");
   }
   if (oslibs.empty()) {

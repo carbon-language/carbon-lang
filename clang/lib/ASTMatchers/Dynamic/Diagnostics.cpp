@@ -14,7 +14,7 @@ namespace ast_matchers {
 namespace dynamic {
 Diagnostics::ArgStream Diagnostics::pushContextFrame(ContextType Type,
                                                      SourceRange Range) {
-  ContextStack.push_back(ContextFrame());
+  ContextStack.emplace_back();
   ContextFrame& data = ContextStack.back();
   data.Type = Type;
   data.Range = Range;
@@ -65,10 +65,10 @@ Diagnostics::ArgStream &Diagnostics::ArgStream::operator<<(const Twine &Arg) {
 
 Diagnostics::ArgStream Diagnostics::addError(const SourceRange &Range,
                                              ErrorType Error) {
-  Errors.push_back(ErrorContent());
+  Errors.emplace_back();
   ErrorContent &Last = Errors.back();
   Last.ContextStack = ContextStack;
-  Last.Messages.push_back(ErrorContent::Message());
+  Last.Messages.emplace_back();
   Last.Messages.back().Range = Range;
   Last.Messages.back().Type = Error;
   return ArgStream(&Last.Messages.back().Args);

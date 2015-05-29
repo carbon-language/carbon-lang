@@ -946,12 +946,11 @@ static bool compileModuleImpl(CompilerInstance &ImportingInstance,
   if (const FileEntry *ModuleMapFile =
           ModMap.getContainingModuleMapFile(Module)) {
     // Use the module map where this module resides.
-    FrontendOpts.Inputs.push_back(
-        FrontendInputFile(ModuleMapFile->getName(), IK));
+    FrontendOpts.Inputs.emplace_back(ModuleMapFile->getName(), IK);
   } else {
     SmallString<128> FakeModuleMapFile(Module->Directory->getName());
     llvm::sys::path::append(FakeModuleMapFile, "__inferred_module.map");
-    FrontendOpts.Inputs.push_back(FrontendInputFile(FakeModuleMapFile, IK));
+    FrontendOpts.Inputs.emplace_back(FakeModuleMapFile, IK);
 
     llvm::raw_string_ostream OS(InferredModuleMapContent);
     Module->print(OS);

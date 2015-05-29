@@ -30,17 +30,17 @@ void TextDiagnosticBuffer::HandleDiagnostic(DiagnosticsEngine::Level Level,
   default: llvm_unreachable(
                          "Diagnostic not handled during diagnostic buffering!");
   case DiagnosticsEngine::Note:
-    Notes.push_back(std::make_pair(Info.getLocation(), Buf.str()));
+    Notes.emplace_back(Info.getLocation(), Buf.str());
     break;
   case DiagnosticsEngine::Warning:
-    Warnings.push_back(std::make_pair(Info.getLocation(), Buf.str()));
+    Warnings.emplace_back(Info.getLocation(), Buf.str());
     break;
   case DiagnosticsEngine::Remark:
-    Remarks.push_back(std::make_pair(Info.getLocation(), Buf.str()));
+    Remarks.emplace_back(Info.getLocation(), Buf.str());
     break;
   case DiagnosticsEngine::Error:
   case DiagnosticsEngine::Fatal:
-    Errors.push_back(std::make_pair(Info.getLocation(), Buf.str()));
+    Errors.emplace_back(Info.getLocation(), Buf.str());
     break;
   }
 }

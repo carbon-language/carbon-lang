@@ -6741,7 +6741,7 @@ static bool extractFieldType(SmallVectorImpl<FieldEncoding> &FE,
     if (Field->isBitField())
       Enc += ')';
     Enc += '}';
-    FE.push_back(FieldEncoding(!Field->getName().empty(), Enc));
+    FE.emplace_back(!Field->getName().empty(), Enc);
   }
   return true;
 }
