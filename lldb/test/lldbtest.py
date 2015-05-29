@@ -654,6 +654,12 @@ def expectedFailureLinux(bugnumber=None, compilers=None):
 def expectedFailureWindows(bugnumber=None, compilers=None):
     return expectedFailureOS(['windows'], bugnumber, compilers)
 
+def expectedFailureAndroid(bugnumber=None):
+    def fn(self):
+        triple = self.dbg.GetSelectedPlatform().GetTriple()
+        return re.match(".*-.*-.*-android", triple)
+    return expectedFailure(fn, bugnumber)
+
 def expectedFailureLLGS(bugnumber=None, compilers=None):
     def fn(self):
         # llgs local is only an option on Linux targets

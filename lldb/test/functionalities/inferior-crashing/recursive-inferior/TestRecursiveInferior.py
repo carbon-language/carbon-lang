@@ -67,6 +67,7 @@ class CrashingRecursiveInferiorTestCase(TestBase):
         self.recursive_inferior_crashing_step_after_break()
 
     @skipIfFreeBSD # llvm.org/pr16684
+    @expectedFailureAndroid("llvm.org/pr23694")
     def test_recursive_inferior_crashing_step_after_break_dwarf(self):
         """Test that lldb functions correctly after stepping through a crash."""
         self.buildDwarf()
