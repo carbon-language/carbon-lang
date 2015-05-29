@@ -13,7 +13,6 @@
 #include "lldb/Core/Log.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Host/HostInfo.h"
-#include "llvm/Support/Path.h"
 #include "Utility/UriParser.h"
 
 // Project includes
@@ -215,13 +214,9 @@ PlatformAndroid::GetFile (const FileSpec& source,
     if (IsHost() || !m_remote_platform_sp)
         return PlatformLinux::GetFile(source, destination);
 
-    FileSpec source_spec (source);
-    const auto source_path = source_spec.GetPath (false);
-    if (llvm::sys::path::is_relative (source_path.c_str ()))
-    {
-        source_spec = GetRemoteWorkingDirectory ();
-        source_spec.AppendPathComponent (source_path.c_str ());
-    }
+    FileSpec source_spec (source.GetPath (false), false, FileSpec::ePathSyntaxPosix);
+    if (source_spec.IsRelativeToCurrentWorkingDirectory ())
+        source_spec = GetRemoteWorkingDirectory ().CopyByAppendingPathComponent (source_spec.GetCString (false));
 
     AdbClient adb (m_device_id);
     return adb.PullFile (source_spec, destination);
