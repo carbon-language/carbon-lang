@@ -917,7 +917,7 @@ GDBRemoteCommunicationServerCommon::Handle_qSupported (StringExtractorGDBRemote 
     response.PutCString (";QStartNoAckMode+");
     response.PutCString (";QThreadSuffixSupported+");
     response.PutCString (";QListThreadsInStopReply+");
-    response.PutCString (";qEcho");
+    response.PutCString (";qEcho+");
 #if defined(__linux__)
     response.PutCString (";qXfer:auxv:read+");
 #endif
