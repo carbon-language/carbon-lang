@@ -142,24 +142,29 @@ class GdbRemoteTestCaseBase(TestBase):
 
     def init_llgs_test(self, use_named_pipe=True):
         if lldb.remote_platform:
+            def run_shell_cmd(cmd):
+                platform = self.dbg.GetSelectedPlatform()
+                shell_cmd = lldb.SBPlatformShellCommand(cmd)
+                err = platform.Run(shell_cmd)
+                if err.Fail() or shell_cmd.GetStatus():
+                    m = "remote_platform.RunShellCommand('%s') failed:\n" % cmd
+                    m += ">>> return code: %d\n" % shell_cmd.GetStatus()
+                    if err.Fail():
+                        m += ">>> %s\n" % str(err).strip()
+                    m += ">>> %s\n" % (shell_cmd.GetOutput() or
+                                       "Command generated no output.")
+                    raise Exception(m)
+                return shell_cmd.GetOutput().strip()
             # Remote platforms don't support named pipe based port negotiation
             use_named_pipe = False
 
-            platform = self.dbg.GetSelectedPlatform()
+            pid = run_shell_cmd("echo $PPID")
+            ls_output = run_shell_cmd("ls -l /proc/%s/exe" % pid)
+            exe = ls_output.split()[-1]
 
-            shell_command = lldb.SBPlatformShellCommand("echo $PPID")
-            err = platform.Run(shell_command)
-            if err.Fail():
-                raise Exception("remote_platform.RunShellCommand('echo $PPID') failed: %s" % err)
-            pid = shell_command.GetOutput().strip()
-
-            shell_command = lldb.SBPlatformShellCommand("readlink /proc/%s/exe" % pid)
-            err = platform.Run(shell_command)
-            if err.Fail():
-                raise Exception("remote_platform.RunShellCommand('readlink /proc/%d/exe') failed: %s" % (pid, err))
             # If the binary has been deleted, the link name has " (deleted)" appended.
             # Remove if it's there.
-            self.debug_monitor_exe = re.sub(r' \(deleted\)$', '', shell_command.GetOutput().strip())
+            self.debug_monitor_exe = re.sub(r' \(deleted\)$', '', exe)
         else:
             self.debug_monitor_exe = get_lldb_server_exe()
             if not self.debug_monitor_exe:
