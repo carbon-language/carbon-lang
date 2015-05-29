@@ -358,7 +358,6 @@ void MipsTargetAsmStreamer::emitDirectiveModuleFP(
     MipsABIFlagsSection::FpABIKind Value, bool Is32BitABI) {
   MipsTargetStreamer::emitDirectiveModuleFP(Value, Is32BitABI);
 
-  StringRef ModuleValue;
   OS << "\t.module\tfp=";
   OS << ABIFlagsSection.getFpABIString(Value) << "\n";
 }
@@ -367,7 +366,6 @@ void MipsTargetAsmStreamer::emitDirectiveSetFp(
     MipsABIFlagsSection::FpABIKind Value) {
   MipsTargetStreamer::emitDirectiveSetFp(Value);
 
-  StringRef ModuleValue;
   OS << "\t.set\tfp=";
   OS << ABIFlagsSection.getFpABIString(Value) << "\n";
 }
