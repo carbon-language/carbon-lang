@@ -7,6 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "lldb/lldb-python.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Host/posix/HostInfoPosix.h"
 
