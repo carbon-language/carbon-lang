@@ -55,7 +55,7 @@ struct atomic_uintptr_t {
 
 }  // namespace __sanitizer
 
-#if defined(__GNUC__)
+#if defined(__clang__) || defined(__GNUC__)
 # include "sanitizer_atomic_clang.h"
 #elif defined(_MSC_VER)
 # include "sanitizer_atomic_msvc.h"
