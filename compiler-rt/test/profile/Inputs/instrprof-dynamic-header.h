@@ -1,5 +1,4 @@
-extern int X;
-template <class T> void bar() {
+template <class T> void bar(int X) {
   if (X) {
     X *= 4;
   }
