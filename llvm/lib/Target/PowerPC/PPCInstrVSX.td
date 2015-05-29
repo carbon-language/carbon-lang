@@ -1078,6 +1078,82 @@ let AddedComplexity = 400 in { // Prefer VSX patterns over non-VSX patterns.
                         (outs vssrc:$XT), (ins vssrc:$XA, vssrc:$XB),
                         "xssubsp $XT, $XA, $XB", IIC_VecFP,
                         [(set f32:$XT, (fsub f32:$XA, f32:$XB))]>;
+
+  // FMA Instructions
+  let BaseName = "XSMADDASP" in {
+  let isCommutable = 1 in
+  def XSMADDASP : XX3Form<60, 1,
+                          (outs vssrc:$XT),
+                          (ins vssrc:$XTi, vssrc:$XA, vssrc:$XB),
+                          "xsmaddasp $XT, $XA, $XB", IIC_VecFP,
+                          [(set f32:$XT, (fma f32:$XA, f32:$XB, f32:$XTi))]>,
+                          RegConstraint<"$XTi = $XT">, NoEncode<"$XTi">,
+                          AltVSXFMARel;
+  let IsVSXFMAAlt = 1 in
+  def XSMADDMSP : XX3Form<60, 9,
+                          (outs vssrc:$XT),
+                          (ins vssrc:$XTi, vssrc:$XA, vssrc:$XB),
+                          "xsmaddmsp $XT, $XA, $XB", IIC_VecFP, []>,
+                          RegConstraint<"$XTi = $XT">, NoEncode<"$XTi">,
+                          AltVSXFMARel;
+  }
+
+  let BaseName = "XSMSUBASP" in {
+  let isCommutable = 1 in
+  def XSMSUBASP : XX3Form<60, 17,
+                          (outs vssrc:$XT),
+                          (ins vssrc:$XTi, vssrc:$XA, vssrc:$XB),
+                          "xsmsubasp $XT, $XA, $XB", IIC_VecFP,
+                          [(set f32:$XT, (fma f32:$XA, f32:$XB,
+                                              (fneg f32:$XTi)))]>,
+                          RegConstraint<"$XTi = $XT">, NoEncode<"$XTi">,
+                          AltVSXFMARel;
+  let IsVSXFMAAlt = 1 in
+  def XSMSUBMSP : XX3Form<60, 25,
+                          (outs vssrc:$XT),
+                          (ins vssrc:$XTi, vssrc:$XA, vssrc:$XB),
+                          "xsmsubmsp $XT, $XA, $XB", IIC_VecFP, []>,
+                          RegConstraint<"$XTi = $XT">, NoEncode<"$XTi">,
+                          AltVSXFMARel;
+  }
+
+  let BaseName = "XSNMADDASP" in {
+  let isCommutable = 1 in
+  def XSNMADDASP : XX3Form<60, 129,
+                          (outs vssrc:$XT),
+                          (ins vssrc:$XTi, vssrc:$XA, vssrc:$XB),
+                          "xsnmaddasp $XT, $XA, $XB", IIC_VecFP,
+                          [(set f32:$XT, (fneg (fma f32:$XA, f32:$XB,
+                                                    f32:$XTi)))]>,
+                          RegConstraint<"$XTi = $XT">, NoEncode<"$XTi">,
+                          AltVSXFMARel;
+  let IsVSXFMAAlt = 1 in
+  def XSNMADDMSP : XX3Form<60, 137,
+                          (outs vssrc:$XT),
+                          (ins vssrc:$XTi, vssrc:$XA, vssrc:$XB),
+                          "xsnmaddmsp $XT, $XA, $XB", IIC_VecFP, []>,
+                          RegConstraint<"$XTi = $XT">, NoEncode<"$XTi">,
+                          AltVSXFMARel;
+  }
+
+  let BaseName = "XSNMSUBASP" in {
+  let isCommutable = 1 in
+  def XSNMSUBASP : XX3Form<60, 145,
+                          (outs vssrc:$XT),
+                          (ins vssrc:$XTi, vssrc:$XA, vssrc:$XB),
+                          "xsnmsubasp $XT, $XA, $XB", IIC_VecFP,
+                          [(set f32:$XT, (fneg (fma f32:$XA, f32:$XB,
+                                                    (fneg f32:$XTi))))]>,
+                          RegConstraint<"$XTi = $XT">, NoEncode<"$XTi">,
+                          AltVSXFMARel;
+  let IsVSXFMAAlt = 1 in
+  def XSNMSUBMSP : XX3Form<60, 153,
+                          (outs vssrc:$XT),
+                          (ins vssrc:$XTi, vssrc:$XA, vssrc:$XB),
+                          "xsnmsubmsp $XT, $XA, $XB", IIC_VecFP, []>,
+                          RegConstraint<"$XTi = $XT">, NoEncode<"$XTi">,
+                          AltVSXFMARel;
+  }
 } // AddedComplexity = 400
 } // HasP8Vector
 

@@ -148,6 +148,9 @@ class PPCFastISel final : public FastISel {
     bool isVSFRCRegister(unsigned Register) const {
       return MRI.getRegClass(Register)->getID() == PPC::VSFRCRegClassID;
     }
+    bool isVSSRCRegister(unsigned Register) const {
+      return MRI.getRegClass(Register)->getID() == PPC::VSSRCRegClassID;
+    }
     bool PPCEmitCmp(const Value *Src1Value, const Value *Src2Value,
                     bool isZExt, unsigned DestReg);
     bool PPCEmitLoad(MVT VT, unsigned &ResultReg, Address &Addr,
@@ -503,8 +506,11 @@ bool PPCFastISel::PPCEmitLoad(MVT VT, unsigned &ResultReg, Address &Addr,
 
   // If this is a potential VSX load with an offset of 0, a VSX indexed load can
   // be used.
+  bool IsVSSRC = (ResultReg != 0) && isVSSRCRegister(ResultReg);
   bool IsVSFRC = (ResultReg != 0) && isVSFRCRegister(ResultReg);
-  if (IsVSFRC && (Opc == PPC::LFD) && 
+  bool Is32VSXLoad = IsVSSRC && Opc == PPC::LFS;
+  bool Is64VSXLoad = IsVSSRC && Opc == PPC::LFD;
+  if ((Is32VSXLoad || Is64VSXLoad) &&
       (Addr.BaseType != Address::FrameIndexBase) && UseOffset &&
       (Addr.Offset == 0)) {
     UseOffset = false;
@@ -518,7 +524,7 @@ bool PPCFastISel::PPCEmitLoad(MVT VT, unsigned &ResultReg, Address &Addr,
   // into a RegBase.
   if (Addr.BaseType == Address::FrameIndexBase) {
     // VSX only provides an indexed load.
-    if (IsVSFRC && Opc == PPC::LFD) return false;
+    if (Is32VSXLoad || Is64VSXLoad) return false;
 
     MachineMemOperand *MMO =
       FuncInfo.MF->getMachineMemOperand(
@@ -532,7 +538,7 @@ bool PPCFastISel::PPCEmitLoad(MVT VT, unsigned &ResultReg, Address &Addr,
   // Base reg with offset in range.
   } else if (UseOffset) {
     // VSX only provides an indexed load.
-    if (IsVSFRC && Opc == PPC::LFD) return false;
+    if (Is32VSXLoad || Is64VSXLoad) return false;
 
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(Opc), ResultReg)
       .addImm(Addr.Offset).addReg(Addr.Base.Reg);
@@ -555,7 +561,7 @@ bool PPCFastISel::PPCEmitLoad(MVT VT, unsigned &ResultReg, Address &Addr,
       case PPC::LWA:    Opc = PPC::LWAX;    break;
       case PPC::LWA_32: Opc = PPC::LWAX_32; break;
       case PPC::LD:     Opc = PPC::LDX;     break;
-      case PPC::LFS:    Opc = PPC::LFSX;    break;
+      case PPC::LFS:    Opc = IsVSSRC ? PPC::LXSSPX : PPC::LFSX; break;
       case PPC::LFD:    Opc = IsVSFRC ? PPC::LXSDX : PPC::LFDX; break;
     }
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(Opc), ResultReg)
@@ -636,9 +642,12 @@ bool PPCFastISel::PPCEmitStore(MVT VT, unsigned SrcReg, Address &Addr) {
 
   // If this is a potential VSX store with an offset of 0, a VSX indexed store
   // can be used.
+  bool IsVSSRC = isVSSRCRegister(SrcReg);
   bool IsVSFRC = isVSFRCRegister(SrcReg);
-  if (IsVSFRC && (Opc == PPC::STFD) && 
-      (Addr.BaseType != Address::FrameIndexBase) && UseOffset && 
+  bool Is32VSXStore = IsVSSRC && Opc == PPC::STFS;
+  bool Is64VSXStore = IsVSFRC && Opc == PPC::STFD;
+  if ((Is32VSXStore || Is64VSXStore) &&
+      (Addr.BaseType != Address::FrameIndexBase) && UseOffset &&
       (Addr.Offset == 0)) {
     UseOffset = false;
   }
@@ -648,7 +657,7 @@ bool PPCFastISel::PPCEmitStore(MVT VT, unsigned SrcReg, Address &Addr) {
   // into a RegBase.
   if (Addr.BaseType == Address::FrameIndexBase) {
     // VSX only provides an indexed store.
-    if (IsVSFRC && Opc == PPC::STFD) return false;
+    if (Is32VSXStore || Is64VSXStore) return false;
 
     MachineMemOperand *MMO =
       FuncInfo.MF->getMachineMemOperand(
@@ -665,7 +674,7 @@ bool PPCFastISel::PPCEmitStore(MVT VT, unsigned SrcReg, Address &Addr) {
   // Base reg with offset in range.
   } else if (UseOffset) {
     // VSX only provides an indexed store.
-    if (IsVSFRC && Opc == PPC::STFD) return false;
+    if (Is32VSXStore || Is64VSXStore) return false;
     
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(Opc))
       .addReg(SrcReg).addImm(Addr.Offset).addReg(Addr.Base.Reg);
@@ -684,7 +693,7 @@ bool PPCFastISel::PPCEmitStore(MVT VT, unsigned SrcReg, Address &Addr) {
       case PPC::STH8: Opc = PPC::STHX8; break;
       case PPC::STW8: Opc = PPC::STWX8; break;
       case PPC::STD:  Opc = PPC::STDX;  break;
-      case PPC::STFS: Opc = PPC::STFSX; break;
+      case PPC::STFS: Opc = IsVSSRC ? PPC::STXSSPX : PPC::STFSX; break;
       case PPC::STFD: Opc = IsVSFRC ? PPC::STXSDX : PPC::STFDX; break;
     }
 
