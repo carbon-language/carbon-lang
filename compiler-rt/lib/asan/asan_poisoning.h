@@ -64,7 +64,7 @@ ALWAYS_INLINE void FastPoisonShadow(uptr aligned_beg, uptr aligned_size,
       if (page_end != shadow_end) {
         REAL(memset)((void *)page_end, 0, shadow_end - page_end);
       }
-      ReserveShadowMemoryRange(page_beg, page_end - 1);
+      ReserveShadowMemoryRange(page_beg, page_end - 1, nullptr);
     }
   }
 }

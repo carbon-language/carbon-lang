@@ -53,16 +53,16 @@ static bool CheckMemoryRangeAvailability(uptr beg, uptr size) {
   return true;
 }
 
-static bool ProtectMemoryRange(uptr beg, uptr size) {
+static bool ProtectMemoryRange(uptr beg, uptr size, const char *name) {
   if (size > 0) {
-    void *addr = MmapNoAccess(beg, size);
+    void *addr = MmapNoAccess(beg, size, name);
     if (beg == 0 && addr != 0) {
       // Depending on the kernel configuration, we may not be able to protect
       // the page at address zero.
       uptr gap = 16 * GetPageSizeCached();
       beg += gap;
       size -= gap;
-      addr = MmapNoAccess(beg, size);
+      addr = MmapNoAccess(beg, size, name);
     }
     if ((uptr)addr != beg) {
       uptr end = beg + size - 1;
@@ -135,7 +135,7 @@ bool InitShadow(bool init_origins) {
     if (map) {
       if (!CheckMemoryRangeAvailability(start, size))
         return false;
-      if ((uptr)MmapFixedNoReserve(start, size) != start)
+      if ((uptr)MmapFixedNoReserve(start, size, kMemoryLayout[i].name) != start)
         return false;
       if (common_flags()->use_madv_dontdump)
         DontDumpShadowMemory(start, size);
@@ -143,7 +143,7 @@ bool InitShadow(bool init_origins) {
     if (protect) {
       if (!CheckMemoryRangeAvailability(start, size))
         return false;
-      if (!ProtectMemoryRange(start, size))
+      if (!ProtectMemoryRange(start, size, kMemoryLayout[i].name))
         return false;
     }
   }

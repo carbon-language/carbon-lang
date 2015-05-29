@@ -24,6 +24,7 @@
 #include "sanitizer_symbolizer.h"
 
 #include <errno.h>
+#include <fcntl.h>
 #include <pthread.h>
 #include <signal.h>
 #include <stdlib.h>
@@ -31,6 +32,7 @@
 #include <sys/resource.h>
 #include <sys/time.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 namespace __sanitizer {
@@ -215,6 +217,55 @@ void PrepareForSandboxing(__sanitizer_sandbox_arguments *args) {
   Symbolizer::GetOrInit()->PrepareForSandboxing();
   CovPrepareForSandboxing(args);
 #endif
+}
+
+#if SANITIZER_ANDROID
+int GetNamedMappingFd(const char *name, uptr size) {
+  return -1;
+}
+#else
+int GetNamedMappingFd(const char *name, uptr size) {
+  if (!common_flags()->decorate_proc_maps)
+    return -1;
+  char shmname[200];
+  CHECK(internal_strlen(name) < sizeof(shmname) - 10);
+  internal_snprintf(shmname, sizeof(shmname), "%zu [%s]", internal_getpid(),
+                    name);
+  int fd = shm_open(shmname, O_RDWR | O_CREAT | O_TRUNC, S_IRWXU);
+  CHECK_GE(fd, 0);
+  int res = internal_ftruncate(fd, size);
+  CHECK_EQ(0, res);
+  res = shm_unlink(shmname);
+  CHECK_EQ(0, res);
+  return fd;
+}
+#endif
+
+void *MmapFixedNoReserve(uptr fixed_addr, uptr size, const char *name) {
+  int fd = name ? GetNamedMappingFd(name, size) : -1;
+  unsigned flags = MAP_PRIVATE | MAP_FIXED | MAP_NORESERVE;
+  if (fd == -1) flags |= MAP_ANON;
+
+  uptr PageSize = GetPageSizeCached();
+  uptr p = internal_mmap((void *)(fixed_addr & ~(PageSize - 1)),
+                         RoundUpTo(size, PageSize), PROT_READ | PROT_WRITE,
+                         flags, fd, 0);
+  int reserrno;
+  if (internal_iserror(p, &reserrno))
+    Report("ERROR: %s failed to "
+           "allocate 0x%zx (%zd) bytes at address %zx (errno: %d)\n",
+           SanitizerToolName, size, size, fixed_addr, reserrno);
+  IncreaseTotalMmap(size);
+  return (void *)p;
+}
+
+void *MmapNoAccess(uptr fixed_addr, uptr size, const char *name) {
+  int fd = name ? GetNamedMappingFd(name, size) : -1;
+  unsigned flags = MAP_PRIVATE | MAP_FIXED | MAP_NORESERVE;
+  if (fd == -1) flags |= MAP_ANON;
+
+  return (void *)internal_mmap((void *)fixed_addr, size, PROT_NONE, flags, fd,
+                               0);
 }
 
 }  // namespace __sanitizer

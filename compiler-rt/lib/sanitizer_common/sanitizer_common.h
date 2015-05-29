@@ -69,10 +69,11 @@ void GetThreadStackAndTls(bool main, uptr *stk_addr, uptr *stk_size,
 // Memory management
 void *MmapOrDie(uptr size, const char *mem_type);
 void UnmapOrDie(void *addr, uptr size);
-void *MmapFixedNoReserve(uptr fixed_addr, uptr size);
+void *MmapFixedNoReserve(uptr fixed_addr, uptr size,
+                         const char *name = nullptr);
 void *MmapNoReserveOrDie(uptr size, const char *mem_type);
 void *MmapFixedOrDie(uptr fixed_addr, uptr size);
-void *MmapNoAccess(uptr fixed_addr, uptr size);
+void *MmapNoAccess(uptr fixed_addr, uptr size, const char *name = nullptr);
 // Map aligned chunk of address space; size and alignment are powers of two.
 void *MmapAlignedOrDie(uptr size, uptr alignment, const char *mem_type);
 // Disallow access to a memory range.  Use MmapNoAccess to allocate an

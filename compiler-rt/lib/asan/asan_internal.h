@@ -93,7 +93,7 @@ void AppendToErrorMessageBuffer(const char *buffer);
 
 void *AsanDlSymNext(const char *sym);
 
-void ReserveShadowMemoryRange(uptr beg, uptr end);
+void ReserveShadowMemoryRange(uptr beg, uptr end, const char *name);
 
 // Platform-specific options.
 #if SANITIZER_MAC

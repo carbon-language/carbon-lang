@@ -104,9 +104,10 @@ void UnmapOrDie(void *addr, uptr size) {
   }
 }
 
-void *MmapFixedNoReserve(uptr fixed_addr, uptr size) {
+void *MmapFixedNoReserve(uptr fixed_addr, uptr size, const char *name) {
   // FIXME: is this really "NoReserve"? On Win32 this does not matter much,
   // but on Win64 it does.
+  (void)name; // unsupported
   void *p = VirtualAlloc((LPVOID)fixed_addr, size,
       MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
   if (p == 0)
@@ -125,7 +126,8 @@ void *MmapNoReserveOrDie(uptr size, const char *mem_type) {
   return MmapOrDie(size, mem_type);
 }
 
-void *MmapNoAccess(uptr fixed_addr, uptr size) {
+void *MmapNoAccess(uptr fixed_addr, uptr size, const char *name) {
+  (void)name; // unsupported
   void *res = VirtualAlloc((LPVOID)fixed_addr, size,
                            MEM_RESERVE | MEM_COMMIT, PAGE_NOACCESS);
   if (res == 0)

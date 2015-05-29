@@ -165,22 +165,6 @@ void *MmapNoReserveOrDie(uptr size, const char *mem_type) {
   return (void *)p;
 }
 
-void *MmapFixedNoReserve(uptr fixed_addr, uptr size) {
-  uptr PageSize = GetPageSizeCached();
-  uptr p = internal_mmap((void*)(fixed_addr & ~(PageSize - 1)),
-      RoundUpTo(size, PageSize),
-      PROT_READ | PROT_WRITE,
-      MAP_PRIVATE | MAP_ANON | MAP_FIXED | MAP_NORESERVE,
-      -1, 0);
-  int reserrno;
-  if (internal_iserror(p, &reserrno))
-    Report("ERROR: %s failed to "
-           "allocate 0x%zx (%zd) bytes at address %zx (errno: %d)\n",
-           SanitizerToolName, size, size, fixed_addr, reserrno);
-  IncreaseTotalMmap(size);
-  return (void *)p;
-}
-
 void *MmapFixedOrDie(uptr fixed_addr, uptr size) {
   uptr PageSize = GetPageSizeCached();
   uptr p = internal_mmap((void*)(fixed_addr & ~(PageSize - 1)),
@@ -197,13 +181,6 @@ void *MmapFixedOrDie(uptr fixed_addr, uptr size) {
   }
   IncreaseTotalMmap(size);
   return (void *)p;
-}
-
-void *MmapNoAccess(uptr fixed_addr, uptr size) {
-  return (void *)internal_mmap((void*)fixed_addr, size,
-                               PROT_NONE,
-                               MAP_PRIVATE | MAP_ANON | MAP_FIXED |
-                               MAP_NORESERVE, -1, 0);
 }
 
 bool MprotectNoAccess(uptr addr, uptr size) {

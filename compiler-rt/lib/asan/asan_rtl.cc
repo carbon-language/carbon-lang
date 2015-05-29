@@ -89,12 +89,12 @@ void ShowStatsAndAbort() {
 // ---------------------- mmap -------------------- {{{1
 // Reserve memory range [beg, end].
 // We need to use inclusive range because end+1 may not be representable.
-void ReserveShadowMemoryRange(uptr beg, uptr end) {
+void ReserveShadowMemoryRange(uptr beg, uptr end, const char *name) {
   CHECK_EQ((beg % GetPageSizeCached()), 0);
   CHECK_EQ(((end + 1) % GetPageSizeCached()), 0);
   uptr size = end - beg + 1;
   DecreaseTotalMmap(size);  // Don't count the shadow against mmap_limit_mb.
-  void *res = MmapFixedNoReserve(beg, size);
+  void *res = MmapFixedNoReserve(beg, size, name);
   if (res != (void*)beg) {
     Report("ReserveShadowMemoryRange failed while trying to map 0x%zx bytes. "
            "Perhaps you're using ulimit -v\n", size);
@@ -298,7 +298,7 @@ static void InitializeHighMemEnd() {
 }
 
 static void ProtectGap(uptr addr, uptr size) {
-  void *res = MmapNoAccess(addr, size);
+  void *res = MmapNoAccess(addr, size, "shadow gap");
   if (addr == (uptr)res)
     return;
   Report("ERROR: Failed to protect the shadow gap. "
@@ -422,9 +422,9 @@ static void AsanInitInternal() {
   if (full_shadow_is_available) {
     // mmap the low shadow plus at least one page at the left.
     if (kLowShadowBeg)
-      ReserveShadowMemoryRange(shadow_start, kLowShadowEnd);
+      ReserveShadowMemoryRange(shadow_start, kLowShadowEnd, "low shadow");
     // mmap the high shadow.
-    ReserveShadowMemoryRange(kHighShadowBeg, kHighShadowEnd);
+    ReserveShadowMemoryRange(kHighShadowBeg, kHighShadowEnd, "high shadow");
     // protect the gap.
     ProtectGap(kShadowGapBeg, kShadowGapEnd - kShadowGapBeg + 1);
     CHECK_EQ(kShadowGapEnd, kHighShadowBeg - 1);
@@ -433,11 +433,11 @@ static void AsanInitInternal() {
       MemoryRangeIsAvailable(kMidMemEnd + 1, kHighShadowEnd)) {
     CHECK(kLowShadowBeg != kLowShadowEnd);
     // mmap the low shadow plus at least one page at the left.
-    ReserveShadowMemoryRange(shadow_start, kLowShadowEnd);
+    ReserveShadowMemoryRange(shadow_start, kLowShadowEnd, "low shadow");
     // mmap the mid shadow.
-    ReserveShadowMemoryRange(kMidShadowBeg, kMidShadowEnd);
+    ReserveShadowMemoryRange(kMidShadowBeg, kMidShadowEnd, "mid shadow");
     // mmap the high shadow.
-    ReserveShadowMemoryRange(kHighShadowBeg, kHighShadowEnd);
+    ReserveShadowMemoryRange(kHighShadowBeg, kHighShadowEnd, "high shadow");
     // protect the gaps.
     ProtectGap(kShadowGapBeg, kShadowGapEnd - kShadowGapBeg + 1);
     ProtectGap(kShadowGap2Beg, kShadowGap2End - kShadowGap2Beg + 1);

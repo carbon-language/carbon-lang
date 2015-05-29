@@ -163,3 +163,6 @@ COMMON_FLAG(bool, intercept_strspn, true,
 COMMON_FLAG(bool, intercept_strpbrk, true,
             "If set, uses custom wrappers for strpbrk function "
             "to find more errors.")
+COMMON_FLAG(bool, decorate_proc_maps, false, "If set, decorate sanitizer "
+                                             "mappings in /proc/self/maps with "
+                                             "user-readable names")
