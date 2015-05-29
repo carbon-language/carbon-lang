@@ -572,6 +572,7 @@ struct MatchableInfo {
 
 private:
   void tokenizeAsmString(const AsmMatcherInfo &Info);
+  void addAsmOperand(size_t Start, size_t End);
 };
 
 /// SubtargetFeatureInfo - Helper class for storing information on a subtarget
@@ -811,6 +812,12 @@ void MatchableInfo::initialize(const AsmMatcherInfo &Info,
       DepMask ? !DepMask->getValue()->getAsUnquotedString().empty() : false;
 }
 
+/// Append an AsmOperand for the given substring of AsmString.
+void MatchableInfo::addAsmOperand(size_t Start, size_t End) {
+  StringRef String = AsmString;
+  AsmOperands.push_back(AsmOperand(String.slice(Start, End)));
+}
+
 /// tokenizeAsmString - Tokenize a simplified assembly string.
 void MatchableInfo::tokenizeAsmString(const AsmMatcherInfo &Info) {
   StringRef String = AsmString;
@@ -826,28 +833,28 @@ void MatchableInfo::tokenizeAsmString(const AsmMatcherInfo &Info) {
     case '\t':
     case ',':
       if (InTok) {
-        AsmOperands.push_back(AsmOperand(String.slice(Prev, i)));
+        addAsmOperand(Prev, i);
         InTok = false;
       }
       if (!isspace(String[i]) && String[i] != ',')
-        AsmOperands.push_back(AsmOperand(String.substr(i, 1)));
+        addAsmOperand(i, i + 1);
       Prev = i + 1;
       break;
 
     case '\\':
       if (InTok) {
-        AsmOperands.push_back(AsmOperand(String.slice(Prev, i)));
+        addAsmOperand(Prev, i);
         InTok = false;
       }
       ++i;
       assert(i != String.size() && "Invalid quoted character");
-      AsmOperands.push_back(AsmOperand(String.substr(i, 1)));
+      addAsmOperand(i, i + 1);
       Prev = i + 1;
       break;
 
     case '$': {
       if (InTok) {
-        AsmOperands.push_back(AsmOperand(String.slice(Prev, i)));
+        addAsmOperand(Prev, i);
         InTok = false;
       }
 
@@ -860,7 +867,7 @@ void MatchableInfo::tokenizeAsmString(const AsmMatcherInfo &Info) {
       StringRef::iterator End = std::find(String.begin() + i, String.end(),'}');
       assert(End != String.end() && "Missing brace in operand reference!");
       size_t EndPos = End - String.begin();
-      AsmOperands.push_back(AsmOperand(String.slice(i, EndPos+1)));
+      addAsmOperand(i, EndPos+1);
       Prev = EndPos + 1;
       i = EndPos;
       break;
@@ -869,7 +876,7 @@ void MatchableInfo::tokenizeAsmString(const AsmMatcherInfo &Info) {
     case '.':
       if (!Info.AsmParser->getValueAsBit("MnemonicContainsDot")) {
         if (InTok)
-          AsmOperands.push_back(AsmOperand(String.slice(Prev, i)));
+          addAsmOperand(Prev, i);
         Prev = i;
       }
       InTok = true;
@@ -880,7 +887,7 @@ void MatchableInfo::tokenizeAsmString(const AsmMatcherInfo &Info) {
     }
   }
   if (InTok && Prev != String.size())
-    AsmOperands.push_back(AsmOperand(String.substr(Prev)));
+    addAsmOperand(Prev, StringRef::npos);
 
   // The first token of the instruction is the mnemonic, which must be a
   // simple string, not a $foo variable or a singleton register.
