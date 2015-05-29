@@ -227,6 +227,17 @@ void Writer::assignAddresses() {
              RoundUpToAlignment(FileOff - SizeOfHeaders, FileAlignment);
 }
 
+static MachineTypes
+inferMachineType(std::vector<std::unique_ptr<ObjectFile>> &ObjectFiles) {
+  for (std::unique_ptr<ObjectFile> &File : ObjectFiles) {
+    // Try to infer machine type from the magic byte of the object file.
+    auto MT = static_cast<MachineTypes>(File->getCOFFObj()->getMachine());
+    if (MT != IMAGE_FILE_MACHINE_UNKNOWN)
+      return MT;
+  }
+  return IMAGE_FILE_MACHINE_UNKNOWN;
+}
+
 void Writer::writeHeader() {
   // Write DOS stub
   uint8_t *Buf = Buffer->getBufferStart();
@@ -241,10 +252,15 @@ void Writer::writeHeader() {
   memcpy(Buf, PEMagic, sizeof(PEMagic));
   Buf += sizeof(PEMagic);
 
+  // Determine machine type, infer if needed. TODO: diagnose conflicts.
+  MachineTypes MachineType = Config->MachineType;
+  if (MachineType == IMAGE_FILE_MACHINE_UNKNOWN)
+    MachineType = inferMachineType(Symtab->ObjectFiles);
+
   // Write COFF header
   auto *COFF = reinterpret_cast<coff_file_header *>(Buf);
   Buf += sizeof(*COFF);
-  COFF->Machine = Config->MachineType;
+  COFF->Machine = MachineType;
   COFF->NumberOfSections = OutputSections.size();
   COFF->Characteristics =
       (IMAGE_FILE_EXECUTABLE_IMAGE | IMAGE_FILE_RELOCS_STRIPPED |

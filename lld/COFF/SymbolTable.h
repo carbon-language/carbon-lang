@@ -53,6 +53,9 @@ public:
   // order to create the import descriptor table.
   std::vector<std::unique_ptr<ImportFile>> ImportFiles;
 
+  // The writer needs to infer the machine type from the object files.
+  std::vector<std::unique_ptr<ObjectFile>> ObjectFiles;
+
 private:
   std::error_code addObject(ObjectFile *File);
   std::error_code addArchive(ArchiveFile *File);
@@ -63,7 +66,6 @@ private:
   void addInitialSymbol(SymbolBody *Body);
 
   std::unordered_map<StringRef, Symbol *> Symtab;
-  std::vector<std::unique_ptr<ObjectFile>> ObjectFiles;
   std::vector<std::unique_ptr<ArchiveFile>> ArchiveFiles;
   std::vector<std::unique_ptr<SymbolBody>> OwnedSymbols;
   llvm::BumpPtrAllocator Alloc;
