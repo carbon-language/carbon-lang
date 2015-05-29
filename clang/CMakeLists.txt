@@ -525,7 +525,7 @@ if (CLANG_BUILT_STANDALONE)
 
   # Install a <prefix>/share/clang/cmake/ClangConfig.cmake file so that
   # find_package(Clang) works. Install the target list with it.
-  install(EXPORT ClangTargets DESTINATION ${LLVM_INSTALL_PACKAGE_DIR})
+  install(EXPORT ClangTargets DESTINATION ${CLANG_INSTALL_PACKAGE_DIR})
 
   install(FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules/ClangConfig.cmake
