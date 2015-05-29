@@ -627,10 +627,12 @@ static bool getDataDeps(const MachineInstr *UseMI,
                         SmallVectorImpl<DataDep> &Deps,
                         const MachineRegisterInfo *MRI) {
   bool HasPhysRegs = false;
-  for (ConstMIOperands MO(UseMI); MO.isValid(); ++MO) {
-    if (!MO->isReg())
+  for (MachineInstr::const_mop_iterator I = UseMI->operands_begin(),
+       E = UseMI->operands_end(); I != E; ++I) {
+    const MachineOperand &MO = *I;
+    if (!MO.isReg())
       continue;
-    unsigned Reg = MO->getReg();
+    unsigned Reg = MO.getReg();
     if (!Reg)
       continue;
     if (TargetRegisterInfo::isPhysicalRegister(Reg)) {
@@ -638,8 +640,8 @@ static bool getDataDeps(const MachineInstr *UseMI,
       continue;
     }
     // Collect virtual register reads.
-    if (MO->readsReg())
-      Deps.push_back(DataDep(MRI, Reg, MO.getOperandNo()));
+    if (MO.readsReg())
+      Deps.push_back(DataDep(MRI, Reg, UseMI->getOperandNo(I)));
   }
   return HasPhysRegs;
 }
@@ -690,28 +692,30 @@ static void updatePhysDepsDownwards(const MachineInstr *UseMI,
   SmallVector<unsigned, 8> Kills;
   SmallVector<unsigned, 8> LiveDefOps;
 
-  for (ConstMIOperands MO(UseMI); MO.isValid(); ++MO) {
-    if (!MO->isReg())
+  for (MachineInstr::const_mop_iterator MI = UseMI->operands_begin(),
+       ME = UseMI->operands_end(); MI != ME; ++MI) {
+    const MachineOperand &MO = *MI;
+    if (!MO.isReg())
       continue;
-    unsigned Reg = MO->getReg();
+    unsigned Reg = MO.getReg();
     if (!TargetRegisterInfo::isPhysicalRegister(Reg))
       continue;
     // Track live defs and kills for updating RegUnits.
-    if (MO->isDef()) {
-      if (MO->isDead())
+    if (MO.isDef()) {
+      if (MO.isDead())
         Kills.push_back(Reg);
       else
-        LiveDefOps.push_back(MO.getOperandNo());
-    } else if (MO->isKill())
+        LiveDefOps.push_back(UseMI->getOperandNo(MI));
+    } else if (MO.isKill())
       Kills.push_back(Reg);
     // Identify dependencies.
-    if (!MO->readsReg())
+    if (!MO.readsReg())
       continue;
     for (MCRegUnitIterator Units(Reg, TRI); Units.isValid(); ++Units) {
       SparseSet<LiveRegUnit>::iterator I = RegUnits.find(*Units);
       if (I == RegUnits.end())
         continue;
-      Deps.push_back(DataDep(I->MI, I->Op, MO.getOperandNo()));
+      Deps.push_back(DataDep(I->MI, I->Op, UseMI->getOperandNo(MI)));
       break;
     }
   }
@@ -864,15 +868,18 @@ static unsigned updatePhysDepsUpwards(const MachineInstr *MI, unsigned Height,
                                       const TargetInstrInfo *TII,
                                       const TargetRegisterInfo *TRI) {
   SmallVector<unsigned, 8> ReadOps;
-  for (ConstMIOperands MO(MI); MO.isValid(); ++MO) {
-    if (!MO->isReg())
+
+  for (MachineInstr::const_mop_iterator MOI = MI->operands_begin(),
+       MOE = MI->operands_end(); MOI != MOE; ++MOI) {
+    const MachineOperand &MO = *MOI;
+    if (!MO.isReg())
       continue;
-    unsigned Reg = MO->getReg();
+    unsigned Reg = MO.getReg();
     if (!TargetRegisterInfo::isPhysicalRegister(Reg))
       continue;
-    if (MO->readsReg())
-      ReadOps.push_back(MO.getOperandNo());
-    if (!MO->isDef())
+    if (MO.readsReg())
+      ReadOps.push_back(MI->getOperandNo(MOI));
+    if (!MO.isDef())
       continue;
     // This is a def of Reg. Remove corresponding entries from RegUnits, and
     // update MI Height to consider the physreg dependencies.
@@ -885,7 +892,7 @@ static unsigned updatePhysDepsUpwards(const MachineInstr *MI, unsigned Height,
         // We may not know the UseMI of this dependency, if it came from the
         // live-in list. SchedModel can handle a NULL UseMI.
         DepHeight += SchedModel
-          .computeOperandLatency(MI, MO.getOperandNo(), I->MI, I->Op);
+          .computeOperandLatency(MI, MI->getOperandNo(MOI), I->MI, I->Op);
       }
       Height = std::max(Height, DepHeight);
       // This regunit is dead above MI.

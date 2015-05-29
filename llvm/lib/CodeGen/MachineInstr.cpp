@@ -1092,9 +1092,8 @@ const TargetRegisterClass *MachineInstr::getRegClassConstraintEffectForVReg(
           OpndIt.getOperandNo(), Reg, CurRC, TII, TRI);
   else
     // Otherwise, just check the current operands.
-    for (ConstMIOperands OpndIt(this); OpndIt.isValid() && CurRC; ++OpndIt)
-      CurRC = getRegClassConstraintEffectForVRegImpl(OpndIt.getOperandNo(), Reg,
-                                                     CurRC, TII, TRI);
+    for (unsigned i = 0, e = NumOperands; i < e && CurRC; ++i)
+      CurRC = getRegClassConstraintEffectForVRegImpl(i, Reg, CurRC, TII, TRI);
   return CurRC;
 }
 

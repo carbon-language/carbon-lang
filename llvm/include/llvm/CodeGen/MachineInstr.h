@@ -331,6 +331,11 @@ public:
         operands_begin() + getDesc().getNumDefs(), operands_end());
   }
 
+  /// Returns the number of the operand iterator \p I points to.
+  unsigned getOperandNo(const_mop_iterator I) const {
+    return I - operands_begin();
+  }
+
   /// Access to memory operands of the instruction
   mmo_iterator memoperands_begin() const { return MemRefs; }
   mmo_iterator memoperands_end() const { return MemRefs + NumMemRefs; }

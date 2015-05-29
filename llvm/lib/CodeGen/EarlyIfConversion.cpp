@@ -226,21 +226,21 @@ bool SSAIfConv::canSpeculateInstrs(MachineBasicBlock *MBB) {
     }
 
     // Check for any dependencies on Head instructions.
-    for (MIOperands MO(I); MO.isValid(); ++MO) {
-      if (MO->isRegMask()) {
+    for (const MachineOperand MO : I->operands()) {
+      if (MO.isRegMask()) {
         DEBUG(dbgs() << "Won't speculate regmask: " << *I);
         return false;
       }
-      if (!MO->isReg())
+      if (!MO.isReg())
         continue;
-      unsigned Reg = MO->getReg();
+      unsigned Reg = MO.getReg();
 
       // Remember clobbered regunits.
-      if (MO->isDef() && TargetRegisterInfo::isPhysicalRegister(Reg))
+      if (MO.isDef() && TargetRegisterInfo::isPhysicalRegister(Reg))
         for (MCRegUnitIterator Units(Reg, TRI); Units.isValid(); ++Units)
           ClobberedRegUnits.set(*Units);
 
-      if (!MO->readsReg() || !TargetRegisterInfo::isVirtualRegister(Reg))
+      if (!MO.readsReg() || !TargetRegisterInfo::isVirtualRegister(Reg))
         continue;
       MachineInstr *DefMI = MRI->getVRegDef(Reg);
       if (!DefMI || DefMI->getParent() != Head)
@@ -284,19 +284,19 @@ bool SSAIfConv::findInsertionPoint() {
     }
 
     // Update live regunits.
-    for (MIOperands MO(I); MO.isValid(); ++MO) {
+    for (const MachineOperand &MO : I->operands()) {
       // We're ignoring regmask operands. That is conservatively correct.
-      if (!MO->isReg())
+      if (!MO.isReg())
         continue;
-      unsigned Reg = MO->getReg();
+      unsigned Reg = MO.getReg();
       if (!TargetRegisterInfo::isPhysicalRegister(Reg))
         continue;
       // I clobbers Reg, so it isn't live before I.
-      if (MO->isDef())
+      if (MO.isDef())
         for (MCRegUnitIterator Units(Reg, TRI); Units.isValid(); ++Units)
           LiveRegUnits.erase(*Units);
       // Unless I reads Reg.
-      if (MO->readsReg())
+      if (MO.readsReg())
         Reads.push_back(Reg);
     }
     // Anything read by I is live before I.

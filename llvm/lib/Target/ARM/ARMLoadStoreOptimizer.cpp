@@ -762,10 +762,10 @@ void ARMLoadStoreOpt::MergeOpsUpdate(MachineBasicBlock &MBB,
     Regs.push_back(std::make_pair(Reg, isKill));
 
     // Collect any implicit defs of super-registers. They must be preserved.
-    for (MIOperands MO(memOps[i].MBBI); MO.isValid(); ++MO) {
-      if (!MO->isReg() || !MO->isDef() || !MO->isImplicit() || MO->isDead())
+    for (const MachineOperand &MO : memOps[i].MBBI->operands()) {
+      if (!MO.isReg() || !MO.isDef() || !MO.isImplicit() || MO.isDead())
         continue;
-      unsigned DefReg = MO->getReg();
+      unsigned DefReg = MO.getReg();
       if (std::find(ImpDefs.begin(), ImpDefs.end(), DefReg) == ImpDefs.end())
         ImpDefs.push_back(DefReg);
 

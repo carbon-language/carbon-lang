@@ -3541,16 +3541,18 @@ bool X86FastISel::tryToFoldLoadIntoMI(MachineInstr *MI, unsigned OpNo,
   // to just look at OpNo + the offset to the index reg.  We actually need to
   // scan the instruction to find the index reg and see if its the correct reg
   // class.
-  for (MIOperands MO(Result); MO.isValid(); ++MO) {
-    if (!MO->isReg() || MO->isDef() || MO->getReg() != AM.IndexReg)
+  unsigned OperandNo = 0;
+  for (MachineInstr::mop_iterator I = Result->operands_begin(),
+       E = Result->operands_end(); I != E; ++I, ++OperandNo) {
+    MachineOperand &MO = *I;
+    if (!MO.isReg() || MO.isDef() || MO.getReg() != AM.IndexReg)
       continue;
     // Found the index reg, now try to rewrite it.
-    unsigned OpNo = MO.getOperandNo();
     unsigned IndexReg = constrainOperandRegClass(Result->getDesc(),
-                                                 MO->getReg(), OpNo);
-    if (IndexReg == MO->getReg())
+                                                 MO.getReg(), OperandNo);
+    if (IndexReg == MO.getReg())
       continue;
-    MO->setReg(IndexReg);
+    MO.setReg(IndexReg);
   }
 
   Result->addMemOperand(*FuncInfo.MF, createMachineMemOperandFor(LI));

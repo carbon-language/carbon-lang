@@ -68,8 +68,8 @@ bool ProcessImplicitDefs::canTurnIntoImplicitDef(MachineInstr *MI) {
       !MI->isRegSequence() &&
       !MI->isPHI())
     return false;
-  for (MIOperands MO(MI); MO.isValid(); ++MO)
-    if (MO->isReg() && MO->isUse() && MO->readsReg())
+  for (const MachineOperand &MO : MI->operands())
+    if (MO.isReg() && MO.isUse() && MO.readsReg())
       return false;
   return true;
 }
@@ -100,17 +100,17 @@ void ProcessImplicitDefs::processImplicitDef(MachineInstr *MI) {
   MachineBasicBlock::instr_iterator UserE = MI->getParent()->instr_end();
   bool Found = false;
   for (++UserMI; UserMI != UserE; ++UserMI) {
-    for (MIOperands MO(UserMI); MO.isValid(); ++MO) {
-      if (!MO->isReg())
+    for (MachineOperand &MO : UserMI->operands()) {
+      if (!MO.isReg())
         continue;
-      unsigned UserReg = MO->getReg();
+      unsigned UserReg = MO.getReg();
       if (!TargetRegisterInfo::isPhysicalRegister(UserReg) ||
           !TRI->regsOverlap(Reg, UserReg))
         continue;
       // UserMI uses or redefines Reg. Set <undef> flags on all uses.
       Found = true;
-      if (MO->isUse())
-        MO->setIsUndef();
+      if (MO.isUse())
+        MO.setIsUndef();
     }
     if (Found)
       break;

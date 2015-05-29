@@ -94,12 +94,12 @@ static void TrackDefUses(MachineInstr *MI,
 /// conservatively remove more kill flags than are necessary, but removing them
 /// is safer than incorrect kill flags remaining on instructions.
 static void ClearKillFlags(MachineInstr *MI, SmallSet<unsigned, 4> &Uses) {
-  for (MIOperands MO(MI); MO.isValid(); ++MO) {
-    if (!MO->isReg() || MO->isDef() || !MO->isKill())
+  for (MachineOperand &MO : MI->operands()) {
+    if (!MO.isReg() || MO.isDef() || !MO.isKill())
       continue;
-    if (!Uses.count(MO->getReg()))
+    if (!Uses.count(MO.getReg()))
       continue;
-    MO->setIsKill(false);
+    MO.setIsKill(false);
   }
 }
 

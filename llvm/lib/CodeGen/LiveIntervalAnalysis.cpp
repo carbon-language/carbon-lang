@@ -223,11 +223,11 @@ void LiveIntervals::computeRegMasks() {
     RMB.first = RegMaskSlots.size();
     for (MachineBasicBlock::iterator MI = MBB->begin(), ME = MBB->end();
          MI != ME; ++MI)
-      for (MIOperands MO(MI); MO.isValid(); ++MO) {
-        if (!MO->isRegMask())
+      for (const MachineOperand &MO : MI->operands()) {
+        if (!MO.isRegMask())
           continue;
           RegMaskSlots.push_back(Indexes->getInstructionIndex(MI).getRegSlot());
-          RegMaskBits.push_back(MO->getRegMask());
+          RegMaskBits.push_back(MO.getRegMask());
       }
     // Compute the number of register mask instructions in this block.
     RMB.second = RegMaskSlots.size() - RMB.first;
@@ -927,23 +927,23 @@ public:
   void updateAllRanges(MachineInstr *MI) {
     DEBUG(dbgs() << "handleMove " << OldIdx << " -> " << NewIdx << ": " << *MI);
     bool hasRegMask = false;
-    for (MIOperands MO(MI); MO.isValid(); ++MO) {
-      if (MO->isRegMask())
+    for (MachineOperand &MO : MI->operands()) {
+      if (MO.isRegMask())
         hasRegMask = true;
-      if (!MO->isReg())
+      if (!MO.isReg())
         continue;
       // Aggressively clear all kill flags.
       // They are reinserted by VirtRegRewriter.
-      if (MO->isUse())
-        MO->setIsKill(false);
+      if (MO.isUse())
+        MO.setIsKill(false);
 
-      unsigned Reg = MO->getReg();
+      unsigned Reg = MO.getReg();
       if (!Reg)
         continue;
       if (TargetRegisterInfo::isVirtualRegister(Reg)) {
         LiveInterval &LI = LIS.getInterval(Reg);
         if (LI.hasSubRanges()) {
-          unsigned SubReg = MO->getSubReg();
+          unsigned SubReg = MO.getSubReg();
           unsigned LaneMask = TRI.getSubRegIndexLaneMask(SubReg);
           for (LiveInterval::SubRange &S : LI.subranges()) {
             if ((S.LaneMask & LaneMask) == 0)

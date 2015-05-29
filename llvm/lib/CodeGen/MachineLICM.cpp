@@ -1012,10 +1012,10 @@ bool MachineLICM::HasLoopPHIUse(const MachineInstr *MI) const {
   SmallVector<const MachineInstr*, 8> Work(1, MI);
   do {
     MI = Work.pop_back_val();
-    for (ConstMIOperands MO(MI); MO.isValid(); ++MO) {
-      if (!MO->isReg() || !MO->isDef())
+    for (const MachineOperand &MO : MI->operands()) {
+      if (!MO.isReg() || !MO.isDef())
         continue;
-      unsigned Reg = MO->getReg();
+      unsigned Reg = MO.getReg();
       if (!TargetRegisterInfo::isVirtualRegister(Reg))
         continue;
       for (MachineInstr &UseMI : MRI->use_instructions(Reg)) {
