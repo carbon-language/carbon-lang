@@ -38,7 +38,7 @@ class MCObjectStreamer : public MCStreamer {
   MCSection::iterator CurInsertionPoint;
   bool EmitEHFrame;
   bool EmitDebugFrame;
-  SmallVector<MCSymbolData *, 2> PendingLabels;
+  SmallVector<MCSymbol *, 2> PendingLabels;
 
   virtual void EmitInstToData(const MCInst &Inst, const MCSubtargetInfo&) = 0;
   void EmitCFIStartProcImpl(MCDwarfFrameInfo &Frame) override;

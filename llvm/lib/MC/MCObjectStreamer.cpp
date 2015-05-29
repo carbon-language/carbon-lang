@@ -46,7 +46,8 @@ void MCObjectStreamer::flushPendingLabels(MCFragment *F, uint64_t FOffset) {
       CurSection->getFragmentList().insert(CurInsertionPoint, F);
       F->setParent(CurSection);
     }
-    for (MCSymbolData *SD : PendingLabels) {
+    for (MCSymbol *Sym : PendingLabels) {
+      MCSymbolData *SD = &Sym->getData();
       SD->setFragment(F);
       SD->setOffset(FOffset);
     }
@@ -174,7 +175,7 @@ void MCObjectStreamer::EmitLabel(MCSymbol *Symbol) {
     SD.setFragment(F);
     SD.setOffset(F->getContents().size());
   } else {
-    PendingLabels.push_back(&SD);
+    PendingLabels.push_back(Symbol);
   }
 }
 
