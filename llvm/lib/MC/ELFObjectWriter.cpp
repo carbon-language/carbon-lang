@@ -823,24 +823,19 @@ void ELFObjectWriter::computeSymbolTable(
 
     ELFSymbolData MSD;
     MSD.Symbol = &Symbol;
-    const MCSymbol *BaseSymbol = Layout.getBaseSymbol(Symbol);
 
     // Undefined symbols are global, but this is the first place we
     // are able to set it.
     bool Local = isLocal(Symbol, Used, isSignature);
-    if (!Local && MCELF::GetBinding(SD) == ELF::STB_LOCAL) {
-      assert(BaseSymbol);
-      MCSymbolData &BaseData = BaseSymbol->getData();
+    if (!Local && MCELF::GetBinding(SD) == ELF::STB_LOCAL)
       MCELF::SetBinding(SD, ELF::STB_GLOBAL);
-      MCELF::SetBinding(BaseData, ELF::STB_GLOBAL);
-    }
 
-    if (!BaseSymbol) {
+    if (Symbol.isAbsolute()) {
       MSD.SectionIndex = ELF::SHN_ABS;
     } else if (SD.isCommon()) {
       assert(!Local);
       MSD.SectionIndex = ELF::SHN_COMMON;
-    } else if (BaseSymbol->isUndefined()) {
+    } else if (Symbol.isUndefined()) {
       if (isSignature && !Used) {
         MSD.SectionIndex = RevGroupMap.lookup(&Symbol);
         if (MSD.SectionIndex >= ELF::SHN_LORESERVE)
@@ -852,7 +847,7 @@ void ELFObjectWriter::computeSymbolTable(
         MCELF::SetBinding(SD, ELF::STB_WEAK);
     } else {
       const MCSectionELF &Section =
-        static_cast<const MCSectionELF&>(BaseSymbol->getSection());
+          static_cast<const MCSectionELF &>(Symbol.getSection());
       MSD.SectionIndex = SectionIndexMap.lookup(&Section);
       assert(MSD.SectionIndex && "Invalid section index!");
       if (MSD.SectionIndex >= ELF::SHN_LORESERVE)
