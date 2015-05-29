@@ -40,7 +40,7 @@ class MCSymbolData {
   uint32_t Flags = 0;
 
 public:
-  MCSymbolData() {}
+  MCSymbolData() = default;
 
   MCFragment *getFragment() const { return Fragment.getPointer(); }
   void setFragment(MCFragment *Value) { Fragment.setPointer(Value); }
