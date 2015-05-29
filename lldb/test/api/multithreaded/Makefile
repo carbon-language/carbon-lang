@@ -6,4 +6,4 @@ CXX_SOURCES := main.cpp
 include $(LEVEL)/Makefile.rules
 
 clean::
-	rm $(wildcard -rf *.o *.d *.dSYM)
+	rm -rf $(wildcard *.o *.d *.dSYM)
