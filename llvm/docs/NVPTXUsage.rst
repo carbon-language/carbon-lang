@@ -168,10 +168,10 @@ These are overloaded intrinsics.  You can use these on any pointer types.
 
 .. code-block:: llvm
 
-    declare i8* @llvm.nvvm.ptr.gen.to.global.p1i8.p0i8(i8 addrspace(1)*)
-    declare i8* @llvm.nvvm.ptr.gen.to.shared.p3i8.p0i8(i8 addrspace(3)*)
-    declare i8* @llvm.nvvm.ptr.gen.to.constant.p4i8.p0i8(i8 addrspace(4)*)
-    declare i8* @llvm.nvvm.ptr.gen.to.local.p5i8.p0i8(i8 addrspace(5)*)
+    declare i8 addrspace(1)* @llvm.nvvm.ptr.gen.to.global.p1i8.p0i8(i8*)
+    declare i8 addrspace(3)* @llvm.nvvm.ptr.gen.to.shared.p3i8.p0i8(i8*)
+    declare i8 addrspace(4)* @llvm.nvvm.ptr.gen.to.constant.p4i8.p0i8(i8*)
+    declare i8 addrspace(5)* @llvm.nvvm.ptr.gen.to.local.p5i8.p0i8(i8*)
 
 Overview:
 """""""""
