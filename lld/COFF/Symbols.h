@@ -153,35 +153,6 @@ private:
   uint64_t RVA;
 };
 
-// This class represents a symbol imported from a DLL. This has two
-// names for internal use and external use. The former is used for
-// name resolution, and the latter is used for the import descriptor
-// table in an output. The former has "__imp_" prefix.
-class DefinedImportData : public Defined {
-public:
-  DefinedImportData(StringRef D, StringRef ImportName, StringRef ExportName,
-                    const coff_import_header *H)
-      : Defined(DefinedImportDataKind, ImportName), DLLName(D),
-        ExpName(ExportName), Hdr(H) {}
-
-  static bool classof(const SymbolBody *S) {
-    return S->kind() == DefinedImportDataKind;
-  }
-
-  uint64_t getRVA() override { return Location->getRVA(); }
-  uint64_t getFileOff() override { return Location->getFileOff(); }
-  StringRef getDLLName() { return DLLName; }
-  StringRef getExportName() { return ExpName; }
-  void setLocation(Chunk *AddressTable) { Location = AddressTable; }
-  uint16_t getOrdinal() { return Hdr->OrdinalHint; }
-
-private:
-  StringRef DLLName;
-  StringRef ExpName;
-  const coff_import_header *Hdr;
-  Chunk *Location = nullptr;
-};
-
 // This class represents a symbol defined in an archive file. It is
 // created from an archive file header, and it knows how to load an
 // object file from an archive to replace itself with a defined
@@ -228,6 +199,35 @@ private:
 };
 
 // Windows-specific classes.
+
+// This class represents a symbol imported from a DLL. This has two
+// names for internal use and external use. The former is used for
+// name resolution, and the latter is used for the import descriptor
+// table in an output. The former has "__imp_" prefix.
+class DefinedImportData : public Defined {
+public:
+  DefinedImportData(StringRef D, StringRef ImportName, StringRef ExportName,
+                    const coff_import_header *H)
+      : Defined(DefinedImportDataKind, ImportName), DLLName(D),
+        ExpName(ExportName), Hdr(H) {}
+
+  static bool classof(const SymbolBody *S) {
+    return S->kind() == DefinedImportDataKind;
+  }
+
+  uint64_t getRVA() override { return Location->getRVA(); }
+  uint64_t getFileOff() override { return Location->getFileOff(); }
+  StringRef getDLLName() { return DLLName; }
+  StringRef getExportName() { return ExpName; }
+  void setLocation(Chunk *AddressTable) { Location = AddressTable; }
+  uint16_t getOrdinal() { return Hdr->OrdinalHint; }
+
+private:
+  StringRef DLLName;
+  StringRef ExpName;
+  const coff_import_header *Hdr;
+  Chunk *Location = nullptr;
+};
 
 // This class represents a symbol for a jump table entry which jumps
 // to a function in a DLL. Linker are supposed to create such symbols
