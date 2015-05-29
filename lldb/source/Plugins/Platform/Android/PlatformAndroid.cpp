@@ -13,6 +13,7 @@
 #include "lldb/Core/Log.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Host/HostInfo.h"
+#include "llvm/Support/Path.h"
 #include "Utility/UriParser.h"
 
 // Project includes
@@ -211,12 +212,19 @@ Error
 PlatformAndroid::GetFile (const FileSpec& source,
                           const FileSpec& destination)
 {
-    if (!IsHost() && m_remote_platform_sp)
+    if (IsHost() || !m_remote_platform_sp)
+        return PlatformLinux::GetFile(source, destination);
+
+    FileSpec source_spec (source);
+    const auto source_path = source_spec.GetPath (false);
+    if (llvm::sys::path::is_relative (source_path.c_str ()))
     {
-        AdbClient adb (m_device_id);
-        return adb.PullFile(source, destination);
+        source_spec.SetFile (GetRemoteWorkingDirectory ().AsCString (), false, FileSpec::ePathSyntaxPosix);
+        source_spec.AppendPathComponent (source_path.c_str ());
     }
-    return PlatformLinux::GetFile(source, destination);
+
+    AdbClient adb (m_device_id);
+    return adb.PullFile (source_spec, destination);
 }
 
 Error
