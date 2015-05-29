@@ -29,7 +29,7 @@ class HandleSegvTestCase(TestBase):
         signo = process.GetUnixSignals().GetSignalNumberFromName("SIGSEGV")
 
         thread = lldbutil.get_stopped_thread(process, lldb.eStopReasonSignal)
-        self.assertTrue(thread.IsValid(), "Thread should be stopped due to a signal")
+        self.assertTrue(thread and thread.IsValid(), "Thread should be stopped due to a signal")
         self.assertTrue(thread.GetStopReasonDataCount() >= 1, "There was data in the event.")
         self.assertEqual(thread.GetStopReasonDataAtIndex(0), signo, "The stop signal was SIGSEGV")
 
