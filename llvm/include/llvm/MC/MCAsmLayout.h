@@ -18,7 +18,6 @@ class MCAssembler;
 class MCFragment;
 class MCSection;
 class MCSymbol;
-class MCSymbolData;
 
 /// Encapsulates the layout of an assembly file at a particular point in time.
 ///

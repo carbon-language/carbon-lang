@@ -27,39 +27,6 @@ class MCSection;
 class MCContext;
 class raw_ostream;
 
-// TODO: Merge completely with MCSymbol.
-class MCSymbolData {
-  /// Fragment - The fragment this symbol's value is relative to, if any. Also
-  /// stores if this symbol is visible outside this translation unit (bit 0) or
-  /// if it is private extern (bit 1).
-  PointerIntPair<MCFragment *, 2> Fragment;
-
-
-public:
-  MCSymbolData() = default;
-
-  MCFragment *getFragment() const { return Fragment.getPointer(); }
-  void setFragment(MCFragment *Value) { Fragment.setPointer(Value); }
-
-  /// @}
-  /// \name Symbol Attributes
-  /// @{
-
-  bool isExternal() const { return Fragment.getInt() & 1; }
-  void setExternal(bool Value) {
-    Fragment.setInt((Fragment.getInt() & ~1) | unsigned(Value));
-  }
-
-  bool isPrivateExtern() const { return Fragment.getInt() & 2; }
-  void setPrivateExtern(bool Value) {
-    Fragment.setInt((Fragment.getInt() & ~2) | (unsigned(Value) << 1));
-  }
-
-  /// @}
-
-  void dump() const;
-};
-
 /// MCSymbol - Instances of this class represent a symbol name in the MC file,
 /// and MCSymbols are created and uniqued by the MCContext class.  MCSymbols
 /// should only be constructed with valid names for the object file.
@@ -122,7 +89,10 @@ class MCSymbol {
   /// additional per symbol information which is not easily classified.
   mutable uint32_t Flags = 0;
 
-  mutable MCSymbolData Data;
+  /// The fragment this symbol's value is relative to, if any. Also stores if
+  /// this symbol is visible outside this translation unit (bit 0) or if it is
+  /// private extern (bit 1).
+  mutable PointerIntPair<MCFragment *, 2> Fragment;
 
 private: // MCContext creates and uniques these.
   friend class MCExpr;
@@ -147,11 +117,7 @@ public:
 
   bool hasData() const { return HasData; }
 
-  /// Get associated symbol data.
-  MCSymbolData &getData() const {
-    assert(HasData && "Missing symbol data!");
-    return Data;
-  }
+  MCSymbol &getData() const { return *const_cast<MCSymbol *>(this); }
 
   /// Initialize symbol data.
   ///
@@ -297,12 +263,27 @@ public:
     Flags = (Flags & ~Mask) | Value;
   }
 
+  MCFragment *getFragment() const { return Fragment.getPointer(); }
+  void setFragment(MCFragment *Value) const { Fragment.setPointer(Value); }
+
+  bool isExternal() const { return Fragment.getInt() & 1; }
+  void setExternal(bool Value) const {
+    Fragment.setInt((Fragment.getInt() & ~1) | unsigned(Value));
+  }
+
+  bool isPrivateExtern() const { return Fragment.getInt() & 2; }
+  void setPrivateExtern(bool Value) {
+    Fragment.setInt((Fragment.getInt() & ~2) | (unsigned(Value) << 1));
+  }
+
   /// print - Print the value to the stream \p OS.
   void print(raw_ostream &OS) const;
 
   /// dump - Print the value to stderr.
   void dump() const;
 };
+
+typedef MCSymbol MCSymbolData;
 
 inline raw_ostream &operator<<(raw_ostream &OS, const MCSymbol &Sym) {
   Sym.print(OS);

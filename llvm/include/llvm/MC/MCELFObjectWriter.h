@@ -21,7 +21,6 @@ class MCFixup;
 class MCFragment;
 class MCObjectWriter;
 class MCSymbol;
-class MCSymbolData;
 class MCValue;
 class raw_pwrite_stream;
 

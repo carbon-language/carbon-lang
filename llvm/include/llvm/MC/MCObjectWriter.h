@@ -22,7 +22,6 @@ class MCAsmLayout;
 class MCAssembler;
 class MCFixup;
 class MCFragment;
-class MCSymbolData;
 class MCSymbolRefExpr;
 class MCValue;
 

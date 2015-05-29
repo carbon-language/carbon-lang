@@ -1183,18 +1183,6 @@ void MCFragment::dump() {
   OS << ">";
 }
 
-void MCSymbolData::dump() const {
-  raw_ostream &OS = llvm::errs();
-
-  OS << "<MCSymbolData"
-     << " Fragment:" << getFragment();
-  if (isExternal())
-    OS << " (external)";
-  if (isPrivateExtern())
-    OS << " (private extern)";
-  OS << ">";
-}
-
 void MCAssembler::dump() {
   raw_ostream &OS = llvm::errs();
 

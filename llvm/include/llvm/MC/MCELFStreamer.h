@@ -24,7 +24,6 @@ class MCCodeEmitter;
 class MCExpr;
 class MCInst;
 class MCSymbol;
-class MCSymbolData;
 class raw_ostream;
 
 class MCELFStreamer : public MCObjectStreamer {
