@@ -3097,7 +3097,7 @@ RNBRemote::HandlePacket_qSupported (const char *p)
 {
     uint32_t max_packet_size = 128 * 1024;  // 128KBytes is a reasonable max packet size--debugger can always use less
     char buf[64];
-    snprintf (buf, sizeof(buf), "qXfer:features:read+;PacketSize=%x;qEcho", max_packet_size);
+    snprintf (buf, sizeof(buf), "qXfer:features:read+;PacketSize=%x;qEcho+", max_packet_size);
     return SendPacket (buf);
 }
 
