@@ -25,6 +25,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sanitizer/asan_interface.h>
 
 void test1(char *array, char *endptr) {
   // Buffer overflow if there is no terminating null (depends on base)
@@ -43,8 +44,11 @@ void test2(char *array, char *endptr) {
 
 void test3(char *array, char *endptr) {
   // Buffer overflow if base is invalid.
-  long long r = strtoll(array - 1, NULL, -1);
+  memset(array, 0, 8);
+  ASAN_POISON_MEMORY_REGION(array, 8);
+  long long r = strtoll(array + 1, NULL, -1);
   assert(r == 0);
+  ASAN_UNPOISON_MEMORY_REGION(array, 8);
 }
 
 void test4(char *array, char *endptr) {
@@ -79,7 +83,8 @@ void test7(char *array, char *endptr) {
 }
 
 int main(int argc, char **argv) {
-  char *array = (char*)malloc(3);
+  char *array0 = (char*)malloc(11);
+  char* array = array0 + 8;
   char *endptr = NULL;
   array[0] = '1';
   array[1] = '2';
@@ -91,9 +96,9 @@ int main(int argc, char **argv) {
   if (!strcmp(argv[1], "test2")) test2(array, endptr);
   // CHECK2: {{.*ERROR: AddressSanitizer: heap-buffer-overflow on address}}
   // CHECK2: READ of size 4
-  if (!strcmp(argv[1], "test3")) test3(array, endptr);
-  // CHECK3: {{.*ERROR: AddressSanitizer: heap-buffer-overflow on address}}
-  // CHECK3: READ of size 5
+  if (!strcmp(argv[1], "test3")) test3(array0, endptr);
+  // CHECK3: {{.*ERROR: AddressSanitizer: use-after-poison on address}}
+  // CHECK3: READ of size 1
   if (!strcmp(argv[1], "test4")) test4(array, endptr);
   // CHECK4: {{.*ERROR: AddressSanitizer: heap-buffer-overflow on address}}
   // CHECK4: READ of size 1
@@ -106,6 +111,6 @@ int main(int argc, char **argv) {
   if (!strcmp(argv[1], "test7")) test7(array, endptr);
   // CHECK7: {{.*ERROR: AddressSanitizer: heap-buffer-overflow on address}}
   // CHECK7: READ of size 2
-  free(array);
+  free(array0);
   return 0;
 }
