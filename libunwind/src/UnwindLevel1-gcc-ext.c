@@ -15,6 +15,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "config.h"
 #include "libunwind_ext.h"
@@ -110,10 +111,18 @@ _Unwind_Backtrace(_Unwind_Trace_Fn callback, void *ref) {
   _LIBUNWIND_TRACE_API("_Unwind_Backtrace(callback=%p)\n",
                        (void *)(uintptr_t)callback);
 
+#if LIBCXXABI_ARM_EHABI
+  // Create a mock exception object for force unwinding.
+  _Unwind_Exception ex;
+  memset(&ex, '\0', sizeof(ex));
+  ex.exception_class = 0x434C4E47554E5700; // CLNGUNW\0
+#endif
+
   // walk each frame
   while (true) {
     _Unwind_Reason_Code result;
 
+#if !LIBCXXABI_ARM_EHABI
     // ask libuwind to get next frame (skip over first frame which is
     // _Unwind_Backtrace())
     if (unw_step(&cursor) <= 0) {
@@ -122,48 +131,28 @@ _Unwind_Backtrace(_Unwind_Trace_Fn callback, void *ref) {
                                  _URC_END_OF_STACK);
       return _URC_END_OF_STACK;
     }
-
-#if LIBCXXABI_ARM_EHABI
+#else
     // Get the information for this frame.
     unw_proc_info_t frameInfo;
     if (unw_get_proc_info(&cursor, &frameInfo) != UNW_ESUCCESS) {
       return _URC_END_OF_STACK;
     }
 
-    struct _Unwind_Context *context = (struct _Unwind_Context *)&cursor;
+    // Update the pr_cache in the mock exception object.
     const uint32_t* unwindInfo = (uint32_t *) frameInfo.unwind_info;
-    if ((*unwindInfo & 0x80000000) == 0) {
-      // 6.2: Generic Model
-      // EHT entry is a prel31 pointing to the PR, followed by data understood
-      // only by the personality routine. Since EHABI doesn't guarantee the
-      // location or availability of the unwind opcodes in the generic model,
-      // we have to call personality functions with (_US_VIRTUAL_UNWIND_FRAME |
-      // _US_FORCE_UNWIND) state.
+    ex.pr_cache.fnstart = frameInfo.start_ip;
+    ex.pr_cache.ehtp = (_Unwind_EHT_Header *) unwindInfo;
+    ex.pr_cache.additional= frameInfo.flags;
 
-      // Create a mock exception object for force unwinding.
-      _Unwind_Exception ex;
-      ex.exception_class = 0x434C4E47554E5700; // CLNGUNW\0
-      ex.pr_cache.fnstart = frameInfo.start_ip;
-      ex.pr_cache.ehtp = (_Unwind_EHT_Header *) unwindInfo;
-      ex.pr_cache.additional= frameInfo.flags;
-
-      // Get and call the personality function to unwind the frame.
-      __personality_routine pr = (__personality_routine) readPrel31(unwindInfo);
-      if (pr(_US_VIRTUAL_UNWIND_FRAME | _US_FORCE_UNWIND, &ex, context) !=
-              _URC_CONTINUE_UNWIND) {
-        return _URC_END_OF_STACK;
-      }
-    } else {
-      size_t off, len;
-      unwindInfo = decode_eht_entry(unwindInfo, &off, &len);
-      if (unwindInfo == NULL) {
-        return _URC_FAILURE;
-      }
-
-      result = _Unwind_VRS_Interpret(context, unwindInfo, off, len);
-      if (result != _URC_CONTINUE_UNWIND) {
-        return _URC_END_OF_STACK;
-      }
+    struct _Unwind_Context *context = (struct _Unwind_Context *)&cursor;
+    // Get and call the personality function to unwind the frame.
+    __personality_routine handler = (__personality_routine) frameInfo.handler;
+    if (handler == NULL) {
+      return _URC_END_OF_STACK;
+    }
+    if (handler(_US_VIRTUAL_UNWIND_FRAME | _US_FORCE_UNWIND, &ex, context) !=
+            _URC_CONTINUE_UNWIND) {
+      return _URC_END_OF_STACK;
     }
 #endif // LIBCXXABI_ARM_EHABI
 

@@ -440,6 +440,20 @@ private:
 
 #if LIBCXXABI_ARM_EHABI
   bool getInfoFromEHABISection(pint_t pc, const UnwindInfoSections &sects);
+
+  int stepWithEHABI() {
+    size_t len = 0;
+    size_t off = 0;
+    // FIXME: Calling decode_eht_entry() here is violating the libunwind
+    // abstraction layer.
+    const uint32_t *ehtp =
+        decode_eht_entry(reinterpret_cast<const uint32_t *>(_info.unwind_info),
+                         &off, &len);
+    if (_Unwind_VRS_Interpret((_Unwind_Context *)this, ehtp, off, len) !=
+            _URC_CONTINUE_UNWIND)
+      return UNW_STEP_END;
+    return UNW_STEP_SUCCESS;
+  }
 #endif
 
 #if _LIBUNWIND_SUPPORT_DWARF_UNWIND
@@ -731,7 +745,7 @@ bool UnwindCursor<A, R>::getInfoFromEHABISection(
   //   isSingleWordEHT -- whether the entry is in the index.
   unw_word_t personalityRoutine = 0xbadf00d;
   bool scope32 = false;
-  uintptr_t lsda = 0xbadf00d;
+  uintptr_t lsda;
 
   // If the high bit in the exception handling table entry is set, the entry is
   // in compact form (section 6.3 EHABI).
@@ -744,16 +758,19 @@ bool UnwindCursor<A, R>::getInfoFromEHABISection(
         personalityRoutine = (unw_word_t) &__aeabi_unwind_cpp_pr0;
         extraWords = 0;
         scope32 = false;
+        lsda = isSingleWordEHT ? 0 : (exceptionTableAddr + 4);
         break;
       case 1:
         personalityRoutine = (unw_word_t) &__aeabi_unwind_cpp_pr1;
         extraWords = (exceptionTableData & 0x00ff0000) >> 16;
         scope32 = false;
+        lsda = exceptionTableAddr + (extraWords + 1) * 4;
         break;
       case 2:
         personalityRoutine = (unw_word_t) &__aeabi_unwind_cpp_pr2;
         extraWords = (exceptionTableData & 0x00ff0000) >> 16;
         scope32 = true;
+        lsda = exceptionTableAddr + (extraWords + 1) * 4;
         break;
       default:
         _LIBUNWIND_ABORT("unknown personality routine");
@@ -1281,7 +1298,7 @@ int UnwindCursor<A, R>::step() {
 #elif _LIBUNWIND_SUPPORT_DWARF_UNWIND
   result = this->stepWithDwarfFDE();
 #elif LIBCXXABI_ARM_EHABI
-  result = UNW_STEP_SUCCESS;
+  result = this->stepWithEHABI();
 #else
   #error Need _LIBUNWIND_SUPPORT_COMPACT_UNWIND or \
               _LIBUNWIND_SUPPORT_DWARF_UNWIND or \

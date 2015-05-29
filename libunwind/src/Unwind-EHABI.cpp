@@ -168,25 +168,22 @@ static _Unwind_Reason_Code unwindOneFrame(_Unwind_State state,
   assert((*unwindingData & 0xf0000000) == 0x80000000 && "Must be a compact entry");
   Descriptor::Format format =
       static_cast<Descriptor::Format>((*unwindingData & 0x0f000000) >> 24);
-  size_t len = 0;
-  size_t off = 0;
-  unwindingData = decode_eht_entry(unwindingData, &off, &len);
-  if (unwindingData == nullptr) {
-    return _URC_FAILURE;
-  }
+
+  const char *lsda =
+      reinterpret_cast<const char *>(_Unwind_GetLanguageSpecificData(context));
 
   // Handle descriptors before unwinding so they are processed in the context
   // of the correct stack frame.
   _Unwind_Reason_Code result =
-      ProcessDescriptors(
-          state, ucbp, context, format,
-          reinterpret_cast<const char*>(ucbp->pr_cache.ehtp) + len,
-          ucbp->pr_cache.additional);
+      ProcessDescriptors(state, ucbp, context, format, lsda,
+                         ucbp->pr_cache.additional);
 
   if (result != _URC_CONTINUE_UNWIND)
     return result;
 
-  return _Unwind_VRS_Interpret(context, unwindingData, off, len);
+  if (unw_step(reinterpret_cast<unw_cursor_t*>(context)) != UNW_STEP_SUCCESS)
+    return _URC_FAILURE;
+  return _URC_CONTINUE_UNWIND;
 }
 
 // Generates mask discriminator for _Unwind_VRS_Pop, e.g. for _UVRSC_CORE /
@@ -213,26 +210,37 @@ uint32_t RegisterRange(uint8_t start, uint8_t count_minus_one) {
  */
 extern "C" const uint32_t*
 decode_eht_entry(const uint32_t* data, size_t* off, size_t* len) {
-  assert((*data & 0x80000000) != 0 &&
-         "decode_eht_entry() does not support user-defined personality");
-
-  // 6.3: ARM Compact Model
-  // EHT entries here correspond to the __aeabi_unwind_cpp_pr[012] PRs indeded
-  // by format:
-  Descriptor::Format format =
-      static_cast<Descriptor::Format>((*data & 0x0f000000) >> 24);
-  switch (format) {
-    case Descriptor::SU16:
-      *len = 4;
-      *off = 1;
-      break;
-    case Descriptor::LU16:
-    case Descriptor::LU32:
-      *len = 4 + 4 * ((*data & 0x00ff0000) >> 16);
-      *off = 2;
-      break;
-    default:
-      return nullptr;
+  if ((*data & 0x80000000) == 0) {
+    // 6.2: Generic Model
+    //
+    // EHT entry is a prel31 pointing to the PR, followed by data understood
+    // only by the personality routine. Fortunately, all existing assembler
+    // implementations, including GNU assembler, LLVM integrated assembler,
+    // and ARM assembler, assume that the unwind opcodes come after the
+    // personality rountine address.
+    *off = 1; // First byte is size data.
+    *len = (((data[1] >> 24) & 0xff) + 1) * 4;
+    data++; // Skip the first word, which is the prel31 offset.
+  } else {
+    // 6.3: ARM Compact Model
+    //
+    // EHT entries here correspond to the __aeabi_unwind_cpp_pr[012] PRs indeded
+    // by format:
+    Descriptor::Format format =
+        static_cast<Descriptor::Format>((*data & 0x0f000000) >> 24);
+    switch (format) {
+      case Descriptor::SU16:
+        *len = 4;
+        *off = 1;
+        break;
+      case Descriptor::LU16:
+      case Descriptor::LU32:
+        *len = 4 + 4 * ((*data & 0x00ff0000) >> 16);
+        *off = 2;
+        break;
+      default:
+        return nullptr;
+    }
   }
   return data;
 }
@@ -443,6 +451,7 @@ unwind_phase1(unw_context_t *uc, _Unwind_Exception *exception_object) {
   // Walk each frame looking for a place to stop.
   for (bool handlerNotFound = true; handlerNotFound;) {
 
+#if !LIBCXXABI_ARM_EHABI
     // Ask libuwind to get next frame (skip over first which is
     // _Unwind_RaiseException).
     int stepResult = unw_step(&cursor1);
@@ -457,6 +466,7 @@ unwind_phase1(unw_context_t *uc, _Unwind_Exception *exception_object) {
                                  static_cast<void *>(exception_object));
       return _URC_FATAL_PHASE1_ERROR;
     }
+#endif
 
     // See if frame has code to run (has personality routine).
     unw_proc_info_t frameInfo;
@@ -575,6 +585,7 @@ static _Unwind_Reason_Code unwind_phase2(unw_context_t *uc,
       resume = false;
     }
 
+#if !LIBCXXABI_ARM_EHABI
     int stepResult = unw_step(&cursor2);
     if (stepResult == 0) {
       _LIBUNWIND_TRACE_UNWINDING("unwind_phase2(ex_ojb=%p): unw_step() reached "
@@ -587,6 +598,7 @@ static _Unwind_Reason_Code unwind_phase2(unw_context_t *uc,
                                  static_cast<void *>(exception_object));
       return _URC_FATAL_PHASE2_ERROR;
     }
+#endif
 
     // Get info about this frame.
     unw_word_t sp;
@@ -752,11 +764,6 @@ _Unwind_GetLanguageSpecificData(struct _Unwind_Context *context) {
   _LIBUNWIND_TRACE_API(
       "_Unwind_GetLanguageSpecificData(context=%p) => 0x%llx\n",
       static_cast<void *>(context), (long long)result);
-  if (result != 0) {
-    if (*((uint8_t *)result) != 0xFF)
-      _LIBUNWIND_DEBUG_LOG("lsda at 0x%llx does not start with 0xFF\n",
-                           (long long)result);
-  }
   return result;
 }
 
@@ -988,6 +995,15 @@ _Unwind_DeleteException(_Unwind_Exception *exception_object) {
   if (exception_object->exception_cleanup != NULL)
     (*exception_object->exception_cleanup)(_URC_FOREIGN_EXCEPTION_CAUGHT,
                                            exception_object);
+}
+
+_LIBUNWIND_EXPORT extern "C" _Unwind_Reason_Code
+__gnu_unwind_frame(_Unwind_Exception *exception_object,
+                   struct _Unwind_Context *context) {
+  unw_cursor_t *cursor = (unw_cursor_t *)context;
+  if (unw_step(cursor) != UNW_STEP_SUCCESS)
+    return _URC_FAILURE;
+  return _URC_OK;
 }
 
 #endif  // LIBCXXABI_ARM_EHABI
