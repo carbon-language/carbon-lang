@@ -2081,6 +2081,12 @@ struct FlowMap {
     : str1(str1), str2(str2), str3(str3) {}
 };
 
+struct FlowSeq {
+  llvm::StringRef str;
+  FlowSeq(llvm::StringRef S) : str(S) {}
+  FlowSeq() = default;
+};
+
 namespace llvm {
 namespace yaml {
   template <>
@@ -2093,14 +2099,6 @@ namespace yaml {
 
     static const bool flow = true;
   };
-}
-}
-
-struct FlowSeq {
-  llvm::StringRef str;
-  FlowSeq(llvm::StringRef S) : str(S) {}
-  FlowSeq() = default;
-};
 
 template <>
 struct ScalarTraits<FlowSeq> {
@@ -2114,6 +2112,8 @@ struct ScalarTraits<FlowSeq> {
 
   static bool mustQuote(StringRef S) { return false; }
 };
+}
+}
 
 LLVM_YAML_IS_FLOW_SEQUENCE_VECTOR(FlowSeq)
 
