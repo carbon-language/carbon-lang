@@ -268,6 +268,7 @@ bool AsmPrinter::doInitialization(Module &M) {
     default: llvm_unreachable("unsupported unwinding information encoding");
     case WinEH::EncodingType::Invalid:
       break;
+    case WinEH::EncodingType::X86:
     case WinEH::EncodingType::Itanium:
       ES = new WinException(this);
       break;

@@ -391,11 +391,17 @@ void MCStreamer::EmitCFIWindowSave() {
 }
 
 void MCStreamer::EnsureValidWinFrameInfo() {
+  const MCAsmInfo *MAI = Context.getAsmInfo();
+  if (!MAI->usesWindowsCFI())
+    report_fatal_error(".seh_* directives are not supported on this target");
   if (!CurrentWinFrameInfo || CurrentWinFrameInfo->End)
     report_fatal_error("No open Win64 EH frame function!");
 }
 
 void MCStreamer::EmitWinCFIStartProc(const MCSymbol *Symbol) {
+  const MCAsmInfo *MAI = Context.getAsmInfo();
+  if (!MAI->usesWindowsCFI())
+    report_fatal_error(".seh_* directives are not supported on this target");
   if (CurrentWinFrameInfo && !CurrentWinFrameInfo->End)
     report_fatal_error("Starting a function before ending the previous one!");
 

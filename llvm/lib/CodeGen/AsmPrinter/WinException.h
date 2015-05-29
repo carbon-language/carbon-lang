@@ -17,26 +17,34 @@
 #include "EHStreamer.h"
 
 namespace llvm {
+class Function;
 class GlobalValue;
 class MachineFunction;
 class MCExpr;
+struct WinEHFuncInfo;
 
 class WinException : public EHStreamer {
   /// Per-function flag to indicate if personality info should be emitted.
-  bool shouldEmitPersonality;
+  bool shouldEmitPersonality = false;
 
   /// Per-function flag to indicate if the LSDA should be emitted.
-  bool shouldEmitLSDA;
+  bool shouldEmitLSDA = false;
 
   /// Per-function flag to indicate if frame moves info should be emitted.
-  bool shouldEmitMoves;
+  bool shouldEmitMoves = false;
+
+  /// True if this is a 64-bit target and we should use image relative offsets.
+  bool useImageRel32 = false;
 
   void emitCSpecificHandlerTable();
 
   void emitCXXFrameHandler3Table(const MachineFunction *MF);
 
-  const MCExpr *createImageRel32(const MCSymbol *Value);
-  const MCExpr *createImageRel32(const GlobalValue *GV);
+  void extendIP2StateTable(const MachineFunction *MF, const Function *ParentF,
+                           WinEHFuncInfo &FuncInfo);
+
+  const MCExpr *create32bitRef(const MCSymbol *Value);
+  const MCExpr *create32bitRef(const GlobalValue *GV);
 
 public:
   //===--------------------------------------------------------------------===//
