@@ -52,7 +52,7 @@ typedef unsigned short mode_t;
 
 #ifdef LLDB_DISABLE_PYTHON
 typedef uint32_t pid_t;
-#endif
+#endif // LLDB_DISABLE_PYTHON
 
 int usleep(uint32_t useconds);
 
@@ -63,6 +63,7 @@ char *dirname(char *path);
 
 int strcasecmp(const char* s1, const char* s2);
 int strncasecmp(const char* s1, const char* s2, size_t n);
+int snprintf(char *buffer, size_t count, const char *format, ...);
 
 #define STDIN_FILENO  0
 #define STDOUT_FILENO 1
@@ -73,8 +74,7 @@ int strncasecmp(const char* s1, const char* s2, size_t n);
 #define S_IFDIR  _S_IFDIR
 #define S_ISDIR(mode)  (((mode) & S_IFMT) == S_IFDIR)
 
-#define snprintf _snprintf
-#endif
+#endif // _MSC_VER
 
 // timespec
 struct timespec

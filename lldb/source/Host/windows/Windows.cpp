@@ -198,8 +198,33 @@ int strncasecmp(const char* s1, const char* s2, size_t n)
 
 int usleep(uint32_t useconds)
 {
-	Sleep(useconds / 1000);
-	return 0;
+    Sleep(useconds / 1000);
+    return 0;
+}
+
+int snprintf(char *buffer, size_t count, const char *format, ...)
+{
+    int old_errno = errno;
+    va_list argptr;
+    va_start(argptr, format);
+    int r = vsnprintf(buffer, count, format, argptr);
+    int new_errno = errno;
+    buffer[count-1] = '\0';
+    if (r == -1 || r == count)
+    {
+        FILE *nul = fopen("nul", "w");
+        int bytes_written = vfprintf(nul, format, argptr);
+        fclose(nul);
+        if (bytes_written < count)
+            errno = new_errno;
+        else
+        {
+            errno = old_errno;
+            r = bytes_written;
+        }
+    }
+    va_end(argptr);
+    return r;
 }
 
 #endif // _MSC_VER
