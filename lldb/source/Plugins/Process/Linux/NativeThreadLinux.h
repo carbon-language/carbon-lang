@@ -60,7 +60,7 @@ namespace process_linux {
         SetStepping ();
 
         void
-        SetStoppedBySignal (uint32_t signo);
+        SetStoppedBySignal(uint32_t signo, const siginfo_t *info = nullptr);
 
         /// Return true if the thread is stopped.
         /// If stopped by a signal, indicate the signo in the signo argument.

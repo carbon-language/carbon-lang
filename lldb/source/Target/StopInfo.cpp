@@ -871,9 +871,10 @@ class StopInfoUnixSignal : public StopInfo
 {
 public:
 
-    StopInfoUnixSignal (Thread &thread, int signo) :
+    StopInfoUnixSignal (Thread &thread, int signo, const char *description) :
         StopInfo (thread, signo)
     {
+        SetDescription (description);
     }
     
     virtual ~StopInfoUnixSignal ()
@@ -1161,9 +1162,9 @@ StopInfo::CreateStopReasonWithWatchpointID (Thread &thread, break_id_t watch_id)
 }
 
 StopInfoSP
-StopInfo::CreateStopReasonWithSignal (Thread &thread, int signo)
+StopInfo::CreateStopReasonWithSignal (Thread &thread, int signo, const char *description)
 {
-    return StopInfoSP (new StopInfoUnixSignal (thread, signo));
+    return StopInfoSP (new StopInfoUnixSignal (thread, signo, description));
 }
 
 StopInfoSP

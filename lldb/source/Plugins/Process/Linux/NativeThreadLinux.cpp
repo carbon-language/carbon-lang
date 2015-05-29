@@ -125,15 +125,7 @@ NativeThreadLinux::GetStopReason (ThreadStopInfo &stop_info, std::string& descri
         if (log)
             LogThreadStopInfo (*log, m_stop_info, "m_stop_info in thread:");
         stop_info = m_stop_info;
-        switch (m_stop_info.reason)
-        {
-            case StopReason::eStopReasonException:
-            case StopReason::eStopReasonBreakpoint:
-            case StopReason::eStopReasonWatchpoint:
-                description = m_stop_description;
-            default:
-                break;
-        }
+        description = m_stop_description;
         if (log)
             LogThreadStopInfo (*log, stop_info, "returned stop_info:");
 
@@ -250,7 +242,7 @@ NativeThreadLinux::SetStepping ()
 }
 
 void
-NativeThreadLinux::SetStoppedBySignal (uint32_t signo)
+NativeThreadLinux::SetStoppedBySignal(uint32_t signo, const siginfo_t *info)
 {
     Log *log (GetLogIfAllCategoriesSet (LIBLLDB_LOG_THREAD));
     if (log)
@@ -262,6 +254,20 @@ NativeThreadLinux::SetStoppedBySignal (uint32_t signo)
 
     m_stop_info.reason = StopReason::eStopReasonSignal;
     m_stop_info.details.signal.signo = signo;
+
+    m_stop_description.clear();
+    switch (signo)
+    {
+    case SIGSEGV:
+    case SIGBUS:
+    case SIGFPE:
+    case SIGILL:
+        if (! info)
+            break;
+        const auto reason = GetCrashReason(*info);
+        m_stop_description = GetCrashReasonString(reason, reinterpret_cast<uintptr_t>(info->si_addr));
+        break;
+    }
 }
 
 bool
@@ -353,20 +359,6 @@ NativeThreadLinux::SetStoppedByTrace ()
 
     m_stop_info.reason = StopReason::eStopReasonTrace;
     m_stop_info.details.signal.signo = SIGTRAP;
-}
-
-void
-NativeThreadLinux::SetCrashedWithException (const siginfo_t& info)
-{
-    const StateType new_state = StateType::eStateCrashed;
-    MaybeLogStateChange (new_state);
-    m_state = new_state;
-
-    m_stop_info.reason = StopReason::eStopReasonException;
-    m_stop_info.details.signal.signo = info.si_signo;
-
-    const auto reason = GetCrashReason (info);
-    m_stop_description = GetCrashReasonString (reason, reinterpret_cast<uintptr_t>(info.si_addr));
 }
 
 void

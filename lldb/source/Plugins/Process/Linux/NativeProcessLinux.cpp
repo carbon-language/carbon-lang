@@ -2177,7 +2177,7 @@ NativeProcessLinux::MonitorSignal(const siginfo_t *info, lldb::pid_t pid, bool e
                 // leave the signal intact if this is the thread that was chosen as the
                 // triggering thread.
                 if (m_pending_notification_up && m_pending_notification_up->triggering_tid == pid)
-                    linux_thread_sp->SetStoppedBySignal(SIGSTOP);
+                    linux_thread_sp->SetStoppedBySignal(SIGSTOP, info);
                 else
                     linux_thread_sp->SetStoppedBySignal(0);
 
@@ -2217,22 +2217,8 @@ NativeProcessLinux::MonitorSignal(const siginfo_t *info, lldb::pid_t pid, bool e
     // This thread is stopped.
     ThreadDidStop (pid, false);
 
-    switch (signo)
-    {
-    case SIGSEGV:
-    case SIGILL:
-    case SIGFPE:
-    case SIGBUS:
-        if (thread_sp)
-            std::static_pointer_cast<NativeThreadLinux> (thread_sp)->SetCrashedWithException (*info);
-        break;
-    default:
-        // This is just a pre-signal-delivery notification of the incoming signal.
-        if (thread_sp)
-            std::static_pointer_cast<NativeThreadLinux> (thread_sp)->SetStoppedBySignal (signo);
-
-        break;
-    }
+    if (thread_sp)
+        std::static_pointer_cast<NativeThreadLinux> (thread_sp)->SetStoppedBySignal(signo, info);
 
     // Send a stop to the debugger after we get all other threads to stop.
     StopRunningThreads (pid);

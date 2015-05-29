@@ -49,20 +49,14 @@ class ChangedInferiorTestCase(TestBase):
 
         self.runCmd("run", RUN_FAILED)
 
-        if self.platformIsDarwin():
-            stop_reason = 'stop reason = EXC_BAD_ACCESS'
-        else:
-            stop_reason = 'stop reason = invalid address'
-
-        # The stop reason of the thread should be a bad access exception.
-        self.expect("thread list", STOPPED_DUE_TO_EXC_BAD_ACCESS,
-            substrs = ['stopped',
-                       stop_reason])
+        # We should have one crashing thread
+        self.assertEquals(
+                len(lldbutil.get_crashed_threads(self, self.dbg.GetSelectedTarget().GetProcess())),
+                1,
+                STOPPED_DUE_TO_EXC_BAD_ACCESS)
 
         # And it should report the correct line number.
-        self.expect("thread backtrace all",
-            substrs = [stop_reason,
-                       'main.c:%d' % self.line1])
+        self.expect("thread backtrace all", substrs = ['main.c:%d' % self.line1])
 
     def inferior_not_crashing(self):
         """Test lldb reloads the inferior after it was changed during the session."""
@@ -73,13 +67,10 @@ class ChangedInferiorTestCase(TestBase):
         self.runCmd("run", RUN_FAILED)
         self.runCmd("process status")
 
-        if self.platformIsDarwin():
-            stop_reason = 'EXC_BAD_ACCESS'
-        else:
-            stop_reason = 'invalid address'
-
-        if stop_reason in self.res.GetOutput():
-            self.fail("Inferior changed, but lldb did not perform a reload")
+        self.assertNotEquals(
+                len(lldbutil.get_crashed_threads(self, self.dbg.GetSelectedTarget().GetProcess())),
+                1,
+                "Inferior changed, but lldb did not perform a reload")
 
         # Break inside the main.
         lldbutil.run_break_set_by_file_and_line (self, "main2.c", self.line2, num_expected_locations=1, loc_exact=True)

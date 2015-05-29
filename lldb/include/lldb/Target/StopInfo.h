@@ -164,7 +164,7 @@ public:
     CreateStopReasonWithWatchpointID (Thread &thread, lldb::break_id_t watch_id);
 
     static lldb::StopInfoSP
-    CreateStopReasonWithSignal (Thread &thread, int signo);
+    CreateStopReasonWithSignal (Thread &thread, int signo, const char *description = nullptr);
 
     static lldb::StopInfoSP
     CreateStopReasonToTrace (Thread &thread);

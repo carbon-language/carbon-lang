@@ -134,69 +134,69 @@ GetCrashReasonString (CrashReason reason, lldb::addr_t fault_addr)
         break;
 
     case CrashReason::eInvalidAddress:
-        str = "invalid address";
+        str = "signal SIGSEGV: invalid address";
         AppendFaultAddr (str, fault_addr);
         break;
     case CrashReason::ePrivilegedAddress:
-        str = "address access protected";
+        str = "signal SIGSEGV: address access protected";
         AppendFaultAddr (str, fault_addr);
         break;
     case CrashReason::eIllegalOpcode:
-        str = "illegal instruction";
+        str = "signal SIGILL: illegal instruction";
         break;
     case CrashReason::eIllegalOperand:
-        str = "illegal instruction operand";
+        str = "signal SIGILL: illegal instruction operand";
         break;
     case CrashReason::eIllegalAddressingMode:
-        str = "illegal addressing mode";
+        str = "signal SIGILL: illegal addressing mode";
         break;
     case CrashReason::eIllegalTrap:
-        str = "illegal trap";
+        str = "signal SIGILL: illegal trap";
         break;
     case CrashReason::ePrivilegedOpcode:
-        str = "privileged instruction";
+        str = "signal SIGILL: privileged instruction";
         break;
     case CrashReason::ePrivilegedRegister:
-        str = "privileged register";
+        str = "signal SIGILL: privileged register";
         break;
     case CrashReason::eCoprocessorError:
-        str = "coprocessor error";
+        str = "signal SIGILL: coprocessor error";
         break;
     case CrashReason::eInternalStackError:
-        str = "internal stack error";
+        str = "signal SIGILL: internal stack error";
         break;
     case CrashReason::eIllegalAlignment:
-        str = "illegal alignment";
+        str = "signal SIGBUS: illegal alignment";
         break;
     case CrashReason::eIllegalAddress:
-        str = "illegal address";
+        str = "signal SIGBUS: illegal address";
         break;
     case CrashReason::eHardwareError:
-        str = "hardware error";
+        str = "signal SIGBUS: hardware error";
         break;
     case CrashReason::eIntegerDivideByZero:
-        str = "integer divide by zero";
+        str = "signal SIGFPE: integer divide by zero";
         break;
     case CrashReason::eIntegerOverflow:
-        str = "integer overflow";
+        str = "signal SIGFPE: integer overflow";
         break;
     case CrashReason::eFloatDivideByZero:
-        str = "floating point divide by zero";
+        str = "signal SIGFPE: floating point divide by zero";
         break;
     case CrashReason::eFloatOverflow:
-        str = "floating point overflow";
+        str = "signal SIGFPE: floating point overflow";
         break;
     case CrashReason::eFloatUnderflow:
-        str = "floating point underflow";
+        str = "signal SIGFPE: floating point underflow";
         break;
     case CrashReason::eFloatInexactResult:
-        str = "inexact floating point result";
+        str = "signal SIGFPE: inexact floating point result";
         break;
     case CrashReason::eFloatInvalidOperation:
-        str = "invalid floating point operation";
+        str = "signal SIGFPE: invalid floating point operation";
         break;
     case CrashReason::eFloatSubscriptRange:
-        str = "invalid floating point subscript range";
+        str = "signal SIGFPE: invalid floating point subscript range";
         break;
     }
 

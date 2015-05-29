@@ -553,6 +553,25 @@ def get_threads_stopped_at_breakpoint (process, bkpt):
 
     return threads
 
+def is_thread_crashed (test, thread):
+    """In the test suite we dereference a null pointer to simulate a crash. The way this is
+    reported depends on the platform."""
+    if test.platformIsDarwin():
+        return thread.GetStopReason() == lldb.eStopReasonException and "EXC_BAD_ACCESS" in thread.GetStopDescription(100)
+    elif test.getPlatform() == "linux":
+        return thread.GetStopReason() == lldb.eStopReasonSignal and thread.GetStopReasonDataAtIndex(0) == thread.GetProcess().GetUnixSignals().GetSignalNumberFromName("SIGSEGV")
+    else:
+        return "invalid address" in thread.GetStopDescription(100)
+
+def get_crashed_threads (test, process):
+    threads = []
+    if process.GetState() != lldb.eStateStopped:
+        return threads
+    for thread in process:
+        if is_thread_crashed(test, thread):
+            threads.append(thread)
+    return threads
+
 def continue_to_breakpoint (process, bkpt):
     """ Continues the process, if it stops, returns the threads stopped at bkpt; otherwise, returns None"""
     process.Continue()

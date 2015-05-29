@@ -2080,11 +2080,11 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
                                 if (thread_sp->GetTemporaryResumeState() == eStateStepping)
                                     thread_sp->SetStopInfo (StopInfo::CreateStopReasonToTrace (*thread_sp));
                                 else
-                                    thread_sp->SetStopInfo (StopInfo::CreateStopReasonWithSignal(*thread_sp, signo));
+                                    thread_sp->SetStopInfo (StopInfo::CreateStopReasonWithSignal(*thread_sp, signo, description.c_str()));
                             }
                         }
                         if (!handled)
-                            thread_sp->SetStopInfo (StopInfo::CreateStopReasonWithSignal (*thread_sp, signo));
+                            thread_sp->SetStopInfo (StopInfo::CreateStopReasonWithSignal (*thread_sp, signo, description.c_str()));
                     }
 
                     if (!description.empty())
