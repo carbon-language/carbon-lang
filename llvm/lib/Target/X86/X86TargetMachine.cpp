@@ -221,9 +221,9 @@ bool X86PassConfig::addILPOpts() {
 }
 
 bool X86PassConfig::addPreISel() {
-  // Only add this pass for 32-bit x86.
+  // Only add this pass for 32-bit x86 Windows.
   Triple TT(TM->getTargetTriple());
-  if (TT.getArch() == Triple::x86)
+  if (TT.isOSWindows() && TT.getArch() == Triple::x86)
     addPass(createX86WinEHStatePass());
   return true;
 }
