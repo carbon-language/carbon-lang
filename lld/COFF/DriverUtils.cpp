@@ -152,6 +152,30 @@ std::error_code parseVersion(StringRef Arg, uint32_t *Major, uint32_t *Minor) {
   return std::error_code();
 }
 
+// Parses a string in the form of "<subsystem>[,<integer>[.<integer>]]".
+std::error_code parseSubsystem(StringRef Arg, WindowsSubsystem *Sys,
+                               uint32_t *Major, uint32_t *Minor) {
+  StringRef SysStr, Ver;
+  std::tie(SysStr, Ver) = Arg.split(',');
+  *Sys = StringSwitch<WindowsSubsystem>(SysStr.lower())
+    .Case("boot_application", IMAGE_SUBSYSTEM_WINDOWS_BOOT_APPLICATION)
+    .Case("console", IMAGE_SUBSYSTEM_WINDOWS_CUI)
+    .Case("efi_application", IMAGE_SUBSYSTEM_EFI_APPLICATION)
+    .Case("efi_boot_service_driver", IMAGE_SUBSYSTEM_EFI_BOOT_SERVICE_DRIVER)
+    .Case("efi_rom", IMAGE_SUBSYSTEM_EFI_ROM)
+    .Case("efi_runtime_driver", IMAGE_SUBSYSTEM_EFI_RUNTIME_DRIVER)
+    .Case("native", IMAGE_SUBSYSTEM_NATIVE)
+    .Case("posix", IMAGE_SUBSYSTEM_POSIX_CUI)
+    .Case("windows", IMAGE_SUBSYSTEM_WINDOWS_GUI)
+    .Default(IMAGE_SUBSYSTEM_UNKNOWN);
+  if (*Sys == IMAGE_SUBSYSTEM_UNKNOWN)
+    return make_dynamic_error_code(Twine("unknown subsystem: ") + SysStr);
+  if (!Ver.empty())
+    if (auto EC = parseVersion(Ver, Major, Minor))
+      return EC;
+  return std::error_code();
+}
+
 // Create OptTable
 
 // Create prefix string literals used in Options.td

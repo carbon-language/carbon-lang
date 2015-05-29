@@ -161,6 +161,16 @@ bool link(int Argc, const char *Argv[]) {
     }
   }
 
+  // Handle /subsystem
+  if (auto *Arg = Args->getLastArg(OPT_subsystem)) {
+    if (auto EC = parseSubsystem(Arg->getValue(), &Config->Subsystem,
+                                 &Config->MajorOSVersion,
+                                 &Config->MinorOSVersion)) {
+      llvm::errs() << "/subsystem: " << EC.message() << "\n";
+      return false;
+    }
+  }
+
   // Parse all input files and put all symbols to the symbol table.
   // The symbol table will take care of name resolution.
   SymbolTable Symtab;

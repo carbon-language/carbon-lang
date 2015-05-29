@@ -23,6 +23,7 @@ namespace lld {
 namespace coff {
 
 using llvm::COFF::MachineTypes;
+using llvm::COFF::WindowsSubsystem;
 class InputFile;
 
 ErrorOr<std::unique_ptr<llvm::opt::InputArgList>>
@@ -50,6 +51,10 @@ std::error_code parseNumbers(StringRef Arg, uint64_t *Addr,
 // Parses a string in the form of "<integer>[.<integer>]".
 // Minor's default value is 0.
 std::error_code parseVersion(StringRef Arg, uint32_t *Major, uint32_t *Minor);
+
+// Parses a string in the form of "<subsystem>[,<integer>[.<integer>]]".
+std::error_code parseSubsystem(StringRef Arg, WindowsSubsystem *Sys,
+                               uint32_t *Major, uint32_t *Minor);
 
 // Create enum with OPT_xxx values for each option in Options.td
 enum {

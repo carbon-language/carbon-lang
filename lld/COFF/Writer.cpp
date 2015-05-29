@@ -261,9 +261,11 @@ void Writer::writeHeader() {
   PE->FileAlignment = FileAlignment;
   PE->MajorImageVersion = Config->MajorImageVersion;
   PE->MinorImageVersion = Config->MinorImageVersion;
-  PE->MajorOperatingSystemVersion = 6;
-  PE->MajorSubsystemVersion = 6;
-  PE->Subsystem = IMAGE_SUBSYSTEM_WINDOWS_CUI;
+  PE->MajorOperatingSystemVersion = Config->MajorOSVersion;
+  PE->MinorOperatingSystemVersion = Config->MinorOSVersion;
+  PE->MajorSubsystemVersion = Config->MajorOSVersion;
+  PE->MinorSubsystemVersion = Config->MinorOSVersion;
+  PE->Subsystem = Config->Subsystem;
   PE->SizeOfImage = SizeOfImage;
   PE->SizeOfHeaders = SizeOfHeaders;
   PE->AddressOfEntryPoint = Entry->getRVA();
