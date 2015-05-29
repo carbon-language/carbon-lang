@@ -662,3 +662,6 @@ frstor dword ptr [eax]
 // CHECK: fnsave (%eax)
 // CHECK: fxrstor (%eax)
 // CHECK: frstor (%eax)
+
+// CHECK: cmpnless %xmm1, %xmm0
+cmpnless xmm0, xmm1

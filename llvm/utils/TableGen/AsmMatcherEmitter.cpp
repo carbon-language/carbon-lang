@@ -310,11 +310,16 @@ struct MatchableInfo {
     /// The suboperand index within SrcOpName, or -1 for the entire operand.
     int SubOpIdx;
 
+    /// Whether the token is "isolated", i.e., it is preceded and followed
+    /// by separators.
+    bool IsIsolatedToken;
+
     /// Register record if this token is singleton register.
     Record *SingletonReg;
 
-    explicit AsmOperand(StringRef T) : Token(T), Class(nullptr), SubOpIdx(-1),
-                                       SingletonReg(nullptr) {}
+    explicit AsmOperand(bool IsIsolatedToken, StringRef T)
+        : Token(T), Class(nullptr), SubOpIdx(-1),
+          IsIsolatedToken(IsIsolatedToken), SingletonReg(nullptr) {}
   };
 
   /// ResOperand - This represents a single operand in the result instruction
@@ -815,7 +820,14 @@ void MatchableInfo::initialize(const AsmMatcherInfo &Info,
 /// Append an AsmOperand for the given substring of AsmString.
 void MatchableInfo::addAsmOperand(size_t Start, size_t End) {
   StringRef String = AsmString;
-  AsmOperands.push_back(AsmOperand(String.slice(Start, End)));
+  StringRef Separators = "[]*! \t,";
+  // Look for separators before and after to figure out is this token is
+  // isolated.  Accept '$$' as that's how we escape '$'.
+  bool IsIsolatedToken =
+      (!Start || Separators.find(String[Start - 1]) != StringRef::npos ||
+       String.substr(Start - 1, 2) == "$$") &&
+      (End >= String.size() || Separators.find(String[End]) != StringRef::npos);
+  AsmOperands.push_back(AsmOperand(IsIsolatedToken, String.slice(Start, End)));
 }
 
 /// tokenizeAsmString - Tokenize a simplified assembly string.
@@ -969,6 +981,12 @@ extractSingletonRegisterForAsmOperand(unsigned OperandNo,
                                       const AsmMatcherInfo &Info,
                                       std::string &RegisterPrefix) {
   StringRef Tok = AsmOperands[OperandNo].Token;
+
+  // If this token is not an isolated token, i.e., it isn't separated from
+  // other tokens (e.g. with whitespace), don't interpret it as a register name.
+  if (!AsmOperands[OperandNo].IsIsolatedToken)
+    return;
+
   if (RegisterPrefix.empty()) {
     std::string LoweredTok = Tok.lower();
     if (const CodeGenRegister *Reg = Info.Target.getRegisterByName(LoweredTok))
@@ -1517,7 +1535,7 @@ buildInstructionOperandReference(MatchableInfo *II,
       // Insert remaining suboperands after AsmOpIdx in II->AsmOperands.
       StringRef Token = Op->Token; // save this in case Op gets moved
       for (unsigned SI = 1, SE = Operands[Idx].MINumOperands; SI != SE; ++SI) {
-        MatchableInfo::AsmOperand NewAsmOp(Token);
+        MatchableInfo::AsmOperand NewAsmOp(/*IsIsolatedToken=*/true, Token);
         NewAsmOp.SubOpIdx = SI;
         II->AsmOperands.insert(II->AsmOperands.begin()+AsmOpIdx+SI, NewAsmOp);
       }
