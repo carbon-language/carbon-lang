@@ -12,6 +12,7 @@ set(DD_SOURCES
 
 set(DD_LINKLIBS)
 append_list_if(COMPILER_RT_HAS_LIBDL dl DD_LINKLIBS)
+append_list_if(COMPILER_RT_HAS_LIBRT rt DD_LINKLIBS)
 append_list_if(COMPILER_RT_HAS_LIBPTHREAD pthread DD_LINKLIBS)
 
 add_custom_target(dd)
