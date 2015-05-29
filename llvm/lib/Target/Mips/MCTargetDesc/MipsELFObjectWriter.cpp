@@ -46,7 +46,7 @@ struct MipsRelocationEntry {
 
     unsigned GetRelocType(const MCValue &Target, const MCFixup &Fixup,
                           bool IsPCRel) const override;
-    bool needsRelocateWithSymbol(const MCSymbolData &SD,
+    bool needsRelocateWithSymbol(const MCSymbol &Sym,
                                  unsigned Type) const override;
     virtual void sortRelocs(const MCAssembler &Asm,
                             std::vector<ELFRelocationEntry> &Relocs) override;
@@ -405,9 +405,8 @@ void MipsELFObjectWriter::sortRelocs(const MCAssembler &Asm,
     Relocs[I] = MipsRelocs[I].R;
 }
 
-bool
-MipsELFObjectWriter::needsRelocateWithSymbol(const MCSymbolData &SD,
-                                             unsigned Type) const {
+bool MipsELFObjectWriter::needsRelocateWithSymbol(const MCSymbol &Sym,
+                                                  unsigned Type) const {
   // FIXME: This is extremely conservative. This really needs to use a
   // whitelist with a clear explanation for why each realocation needs to
   // point to the symbol, not to the section.
@@ -434,7 +433,7 @@ MipsELFObjectWriter::needsRelocateWithSymbol(const MCSymbolData &SD,
     return true;
 
   case ELF::R_MIPS_32:
-    if (MCELF::getOther(SD) & (ELF::STO_MIPS_MICROMIPS >> 2))
+    if (MCELF::getOther(Sym.getData()) & (ELF::STO_MIPS_MICROMIPS >> 2))
       return true;
     // falltrough
   case ELF::R_MIPS_26:

@@ -28,7 +28,7 @@ namespace {
     unsigned GetRelocType(const MCValue &Target, const MCFixup &Fixup,
                           bool IsPCRel) const override;
 
-    bool needsRelocateWithSymbol(const MCSymbolData &SD,
+    bool needsRelocateWithSymbol(const MCSymbol &Sym,
                                  unsigned Type) const override;
   };
 }
@@ -395,7 +395,7 @@ unsigned PPCELFObjectWriter::GetRelocType(const MCValue &Target,
   return Type;
 }
 
-bool PPCELFObjectWriter::needsRelocateWithSymbol(const MCSymbolData &SD,
+bool PPCELFObjectWriter::needsRelocateWithSymbol(const MCSymbol &Sym,
                                                  unsigned Type) const {
   switch (Type) {
     default:
@@ -407,7 +407,7 @@ bool PPCELFObjectWriter::needsRelocateWithSymbol(const MCSymbolData &SD,
       // The "other" values are stored in the last 6 bits of the second byte.
       // The traditional defines for STO values assume the full byte and thus
       // the shift to pack it.
-      unsigned Other = MCELF::getOther(SD) << 2;
+      unsigned Other = MCELF::getOther(Sym.getData()) << 2;
       return (Other & ELF::STO_PPC64_LOCAL_MASK) != 0;
   }
 }

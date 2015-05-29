@@ -24,7 +24,7 @@ MCELFObjectTargetWriter::MCELFObjectTargetWriter(bool Is64Bit_,
     IsN64(IsN64_){
 }
 
-bool MCELFObjectTargetWriter::needsRelocateWithSymbol(const MCSymbolData &SD,
+bool MCELFObjectTargetWriter::needsRelocateWithSymbol(const MCSymbol &Sym,
                                                       unsigned Type) const {
   return false;
 }

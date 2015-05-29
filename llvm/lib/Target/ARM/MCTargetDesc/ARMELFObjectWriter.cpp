@@ -37,7 +37,7 @@ namespace {
     unsigned GetRelocType(const MCValue &Target, const MCFixup &Fixup,
                           bool IsPCRel) const override;
 
-    bool needsRelocateWithSymbol(const MCSymbolData &SD,
+    bool needsRelocateWithSymbol(const MCSymbol &Sym,
                                  unsigned Type) const override;
   };
 }
@@ -49,7 +49,7 @@ ARMELFObjectWriter::ARMELFObjectWriter(uint8_t OSABI)
 
 ARMELFObjectWriter::~ARMELFObjectWriter() {}
 
-bool ARMELFObjectWriter::needsRelocateWithSymbol(const MCSymbolData &SD,
+bool ARMELFObjectWriter::needsRelocateWithSymbol(const MCSymbol &Sym,
                                                  unsigned Type) const {
   // FIXME: This is extremely conservative. This really needs to use a
   // whitelist with a clear explanation for why each realocation needs to

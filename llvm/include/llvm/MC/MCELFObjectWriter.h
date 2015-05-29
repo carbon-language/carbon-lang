@@ -69,7 +69,7 @@ public:
   virtual unsigned GetRelocType(const MCValue &Target, const MCFixup &Fixup,
                                 bool IsPCRel) const = 0;
 
-  virtual bool needsRelocateWithSymbol(const MCSymbolData &SD,
+  virtual bool needsRelocateWithSymbol(const MCSymbol &Sym,
                                        unsigned Type) const;
 
   virtual void sortRelocs(const MCAssembler &Asm,
