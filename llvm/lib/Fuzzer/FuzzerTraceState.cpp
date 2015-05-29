@@ -332,7 +332,7 @@ extern "C" {
 void __dfsw___sanitizer_cov_trace_cmp(uint64_t SizeAndType, uint64_t Arg1,
                                       uint64_t Arg2, dfsan_label L0,
                                       dfsan_label L1, dfsan_label L2) {
-  assert(TS);
+  if (!TS) return;
   assert(L0 == 0);
   uintptr_t PC = reinterpret_cast<uintptr_t>(__builtin_return_address(0));
   uint64_t CmpSize = (SizeAndType >> 32) / 8;
@@ -343,7 +343,7 @@ void __dfsw___sanitizer_cov_trace_cmp(uint64_t SizeAndType, uint64_t Arg1,
 void dfsan_weak_hook_memcmp(void *caller_pc, const void *s1, const void *s2,
                             size_t n, dfsan_label s1_label,
                             dfsan_label s2_label, dfsan_label n_label) {
-  assert(TS);
+  if (!TS) return;
   uintptr_t PC = reinterpret_cast<uintptr_t>(caller_pc);
   uint64_t S1 = 0, S2 = 0;
   // Simplification: handle only first 8 bytes.
