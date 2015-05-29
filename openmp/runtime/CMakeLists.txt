@@ -117,6 +117,13 @@ set(LIBOMP_MICRO_TESTS false CACHE BOOL
 set(LIBOMP_STATS false CACHE BOOL
     "Stats-Gathering functionality?")
 
+# - Support for universal fat binary builds on Mac
+# - Having this extra variable allows people to build this library as a universal library 
+#   without forcing a universal build of the llvm/clang compiler.
+set(LIBOMP_OSX_ARCHITECTURES "${CMAKE_OSX_ARCHITECTURES}" CACHE STRING
+    "For Mac builds, semicolon separated list of architectures to build for universal fat binary.")
+set(CMAKE_OSX_ARCHITECTURES ${LIBOMP_OSX_ARCHITECTURES})
+
 # OMPT-support
 set(LIBOMP_OMPT_SUPPORT false CACHE BOOL
     "OMPT-support?")
@@ -709,19 +716,6 @@ endif()
 # --- Source file specific flags ---
 # kmp_version.o : -D _KMP_BUILD_TIME="\"$(date)}\""
 set_source_files_properties(${src_dir}/kmp_version.c  PROPERTIES COMPILE_DEFINITIONS "_KMP_BUILD_TIME=\"\\\"${date}\\\"\"")
-
-# z_Linux_asm.o : -D KMP_ARCH_*
-if(${ARM})
-    set_source_files_properties(${src_dir}/z_Linux_asm.s PROPERTIES COMPILE_DEFINITIONS "KMP_ARCH_ARM")
-elseif(${AARCH64})
-    set_source_files_properties(${src_dir}/z_Linux_asm.s PROPERTIES COMPILE_DEFINITIONS "KMP_ARCH_AARCH64")     
-elseif(${INTEL64} OR ${MIC})
-    set_source_files_properties(${src_dir}/z_Linux_asm.s PROPERTIES COMPILE_DEFINITIONS "KMP_ARCH_X86_64")
-elseif(${IA32})
-    set_source_files_properties(${src_dir}/z_Linux_asm.s PROPERTIES COMPILE_DEFINITIONS "KMP_ARCH_X86")
-elseif(${PPC64})
-	set_source_files_properties(${src_dir}/z_Linux_asm.s PROPERTIES COMPILE_DEFINITIONS "KMP_ARCH_PPC64")
-endif()
 
 if(${WINDOWS})
     set_source_files_properties(${src_dir}/thirdparty/ittnotify/ittnotify_static.c PROPERTIES COMPILE_DEFINITIONS "UNICODE")

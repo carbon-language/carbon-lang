@@ -611,29 +611,6 @@ ifneq "$(filter lin ,$(os))" ""
     endif
 endif
 
-# Intel compiler has a bug: in case of cross-build if used with
-# -x assembler-with-cpp option, it defines macros for both architectures,
-# host and tartget. For example, if compiler for IA-32 architecture
-# runs on Intel(R) 64, it defines both __i386 and __x86_64. (Note it is a bug
-# only if -x assembler-with-cpp is specified, in case of C files icc defines
-# only one, target architecture). So we cannot autodetect target architecture
-# within the file, and have to pass target architecture from command line.
-ifneq "$(os)" "win"
-    ifeq "$(arch)" "arm"
-        z_Linux_asm$(obj) : \
-		    cpp-flags += -D KMP_ARCH_ARM
-    else ifneq "$(filter ppc64 ppc64le,$(arch))" ""
-        z_Linux_asm$(obj) : \
-			cpp-flags += -D KMP_ARCH_PPC64
-    else ifeq "$(arch)" "aarch64"
-        z_Linux_asm$(obj) : \                            
-                        cpp-flags += -D KMP_ARCH_AARCH64
-    else
-        z_Linux_asm$(obj) : \
-		    cpp-flags += -D KMP_ARCH_X86$(if $(filter 32e mic,$(arch)),_64)
-    endif
-endif
-
 # Defining KMP_BUILD_DATE for all files leads to warning "incompatible redefinition", because the
 # same macro is also defined in omp.h. To avoid conflict, let us define macro with different name,
 # _KMP_BUILD_TIME.
