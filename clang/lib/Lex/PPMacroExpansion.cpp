@@ -362,12 +362,8 @@ static bool isTrivialSingleTokenExpansion(const MacroInfo *MI,
 
   // If this is a function-like macro invocation, it's safe to trivially expand
   // as long as the identifier is not a macro argument.
-  for (MacroInfo::arg_iterator I = MI->arg_begin(), E = MI->arg_end();
-       I != E; ++I)
-    if (*I == II)
-      return false;   // Identifier is a macro argument.
+  return std::find(MI->arg_begin(), MI->arg_end(), II) == MI->arg_end();
 
-  return true;
 }
 
 

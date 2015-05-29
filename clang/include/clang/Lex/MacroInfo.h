@@ -178,10 +178,13 @@ public:
   arg_iterator arg_begin() const { return ArgumentList; }
   arg_iterator arg_end() const { return ArgumentList + NumArguments; }
   unsigned getNumArgs() const { return NumArguments; }
+  ArrayRef<const IdentifierInfo *> args() const {
+    return ArrayRef<const IdentifierInfo *>(ArgumentList, NumArguments);
+  }
 
   /// \brief Return the argument number of the specified identifier,
   /// or -1 if the identifier is not a formal argument identifier.
-  int getArgumentNum(IdentifierInfo *Arg) const {
+  int getArgumentNum(const IdentifierInfo *Arg) const {
     for (arg_iterator I = arg_begin(), E = arg_end(); I != E; ++I)
       if (*I == Arg)
         return I - arg_begin();
