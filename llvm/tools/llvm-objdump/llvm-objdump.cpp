@@ -271,7 +271,7 @@ public:
   }
 };
 HexagonPrettyPrinter HexagonPrettyPrinterInst;
-PrettyPrinter &selectPrettyPrinter(Triple const &Triple, MCInstPrinter &IP) {
+PrettyPrinter &selectPrettyPrinter(Triple const &Triple) {
   switch(Triple.getArch()) {
   default:
     return PrettyPrinterInst;
@@ -347,7 +347,7 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
       << '\n';
     return;
   }
-  PrettyPrinter &PIP = selectPrettyPrinter(Triple(TripleName), *IP);
+  PrettyPrinter &PIP = selectPrettyPrinter(Triple(TripleName));
 
   StringRef Fmt = Obj->getBytesInAddress() > 4 ? "\t\t%016" PRIx64 ":  " :
                                                  "\t\t\t%08" PRIx64 ":  ";
