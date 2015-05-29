@@ -4322,6 +4322,7 @@ public:
       return "6M";
     case llvm::ARM::AK_ARMV7:
     case llvm::ARM::AK_ARMV7A:
+    case llvm::ARM::AK_ARMV7S:
       return "7A";
     case llvm::ARM::AK_ARMV7R:
       return "7R";

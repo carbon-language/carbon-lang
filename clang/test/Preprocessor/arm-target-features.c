@@ -7,6 +7,7 @@
 // CHECK: __ARM_FEATURE_NUMERIC_MAXMIN 1
 
 // RUN: %clang -target armv7a-none-linux-gnu -x c -E -dM %s -o - | FileCheck --check-prefix=CHECK-V7 %s
+// RUN: %clang -target x86_64-apple-macosx10.10 -arch armv7s -x c -E -dM %s -o - | FileCheck --check-prefix=CHECK-V7 %s
 // CHECK-V7: __ARMEL__ 1
 // CHECK-V7: __ARM_ARCH 7
 // CHECK-V7: __ARM_ARCH_7A__ 1
