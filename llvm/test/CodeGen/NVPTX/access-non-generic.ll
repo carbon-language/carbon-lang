@@ -85,6 +85,22 @@ define i32 @ld_int_from_float() {
   ret i32 %1
 }
 
+define i32 @ld_int_from_global_float(float addrspace(1)* %input, i32 %i, i32 %j) {
+; IR-LABEL: @ld_int_from_global_float(
+; PTX-LABEL: ld_int_from_global_float(
+  %1 = addrspacecast float addrspace(1)* %input to float*
+  %2 = getelementptr float, float* %1, i32 %i
+; IR-NEXT: getelementptr float, float addrspace(1)* %input, i32 %i
+  %3 = getelementptr float, float* %2, i32 %j
+; IR-NEXT: getelementptr float, float addrspace(1)* {{%[^,]+}}, i32 %j
+  %4 = bitcast float* %3 to i32*
+; IR-NEXT: bitcast float addrspace(1)* {{%[^ ]+}} to i32 addrspace(1)*
+  %5 = load i32, i32* %4
+; IR-NEXT: load i32, i32 addrspace(1)* {{%.+}}
+; PTX-LABEL: ld.global
+  ret i32 %5
+}
+
 declare void @llvm.cuda.syncthreads() #3
 
 attributes #3 = { noduplicate nounwind }
