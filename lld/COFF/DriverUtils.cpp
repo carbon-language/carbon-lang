@@ -172,5 +172,10 @@ parseArgs(int Argc, const char *Argv[]) {
   return std::move(Args);
 }
 
+void printHelp(const char *Argv0) {
+  COFFOptTable Table;
+  Table.PrintHelp(llvm::outs(), Argv0, "LLVM Linker", false);
+}
+
 } // namespace coff
 } // namespace lld

@@ -99,6 +99,12 @@ bool link(int Argc, const char *Argv[]) {
   }
   std::unique_ptr<llvm::opt::InputArgList> Args = std::move(ArgsOrErr.get());
 
+  // Handle /help
+  if (Args->hasArg(OPT_help)) {
+    printHelp(Argv[0]);
+    return true;
+  }
+
   if (Args->filtered_begin(OPT_INPUT) == Args->filtered_end()) {
     llvm::errs() << "no input files.\n";
     return false;

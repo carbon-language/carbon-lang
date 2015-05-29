@@ -34,6 +34,8 @@ std::error_code parseDirectives(StringRef S,
 
 // Functions below this line are defined in DriverUtils.cpp.
 
+void printHelp(const char *Argv0);
+
 // "ENV" environment variable-aware file finders.
 std::string findLib(StringRef Filename);
 std::string findFile(StringRef Filename);
