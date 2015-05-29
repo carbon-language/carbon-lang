@@ -209,11 +209,11 @@ void AArch64MachObjectWriter::RecordRelocation(
     }
   } else if (Target.getSymB()) { // A - B + constant
     const MCSymbol *A = &Target.getSymA()->getSymbol();
-    const MCSymbolData &A_SD = A->getData();
+    const MCSymbol &A_SD = A->getData();
     const MCSymbol *A_Base = Asm.getAtom(*A);
 
     const MCSymbol *B = &Target.getSymB()->getSymbol();
-    const MCSymbolData &B_SD = B->getData();
+    const MCSymbol &B_SD = B->getData();
     const MCSymbol *B_Base = Asm.getAtom(*B);
 
     // Check for "_foo@got - .", which comes through here as:

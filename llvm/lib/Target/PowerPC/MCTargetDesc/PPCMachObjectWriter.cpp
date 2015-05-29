@@ -206,7 +206,7 @@ bool PPCMachObjectWriter::RecordScatteredRelocation(
 
   // See <reloc.h>.
   const MCSymbol *A = &Target.getSymA()->getSymbol();
-  const MCSymbolData *A_SD = &A->getData();
+  const MCSymbol *A_SD = &A->getData();
 
   if (!A_SD->getFragment())
     report_fatal_error("symbol '" + A->getName() +
@@ -219,7 +219,7 @@ bool PPCMachObjectWriter::RecordScatteredRelocation(
   uint32_t Value2 = 0;
 
   if (const MCSymbolRefExpr *B = Target.getSymB()) {
-    const MCSymbolData *B_SD = &B->getSymbol().getData();
+    const MCSymbol *B_SD = &B->getSymbol().getData();
 
     if (!B_SD->getFragment())
       report_fatal_error("symbol '" + B->getSymbol().getName() +

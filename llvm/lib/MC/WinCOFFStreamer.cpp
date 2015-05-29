@@ -97,7 +97,7 @@ bool MCWinCOFFStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
          "Got non-COFF section in the COFF backend!");
 
   getAssembler().registerSymbol(*Symbol);
-  MCSymbolData &SD = Symbol->getData();
+  MCSymbol &SD = Symbol->getData();
 
   switch (Attribute) {
   default: return false;
@@ -197,7 +197,7 @@ void MCWinCOFFStreamer::EmitCommonSymbol(MCSymbol *Symbol, uint64_t Size,
   AssignSection(Symbol, nullptr);
 
   getAssembler().registerSymbol(*Symbol);
-  MCSymbolData &SD = Symbol->getData();
+  MCSymbol &SD = Symbol->getData();
   SD.setExternal(true);
   Symbol->setCommon(Size, ByteAlignment);
 
@@ -227,7 +227,7 @@ void MCWinCOFFStreamer::EmitLocalCommonSymbol(MCSymbol *Symbol, uint64_t Size,
     Section->setAlignment(ByteAlignment);
 
   getAssembler().registerSymbol(*Symbol);
-  MCSymbolData &SD = Symbol->getData();
+  MCSymbol &SD = Symbol->getData();
   SD.setExternal(false);
 
   AssignSection(Symbol, Section);

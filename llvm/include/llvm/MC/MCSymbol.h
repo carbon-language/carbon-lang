@@ -283,8 +283,6 @@ public:
   void dump() const;
 };
 
-typedef MCSymbol MCSymbolData;
-
 inline raw_ostream &operator<<(raw_ostream &OS, const MCSymbol &Sym) {
   Sym.print(OS);
   return OS;

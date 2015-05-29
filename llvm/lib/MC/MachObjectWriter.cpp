@@ -329,7 +329,7 @@ const MCSymbol &MachObjectWriter::findAliasedSymbol(const MCSymbol &Sym) const {
 void MachObjectWriter::WriteNlist(MachSymbolData &MSD,
                                   const MCAsmLayout &Layout) {
   const MCSymbol *Symbol = MSD.Symbol;
-  MCSymbolData &Data = Symbol->getData();
+  MCSymbol &Data = Symbol->getData();
   const MCSymbol *AliasedSymbol = &findAliasedSymbol(*Symbol);
   uint8_t SectionIndex = MSD.SectionIndex;
   uint8_t Type = 0;
@@ -554,7 +554,7 @@ void MachObjectWriter::ComputeSymbolTable(
   // match 'as'. Even though it doesn't matter for correctness, this is
   // important for letting us diff .o files.
   for (const MCSymbol &Symbol : Asm.symbols()) {
-    MCSymbolData &SD = Symbol.getData();
+    MCSymbol &SD = Symbol.getData();
 
     // Ignore non-linker visible symbols.
     if (!Asm.isSymbolLinkerVisible(Symbol))
@@ -582,7 +582,7 @@ void MachObjectWriter::ComputeSymbolTable(
 
   // Now add the data for local symbols.
   for (const MCSymbol &Symbol : Asm.symbols()) {
-    MCSymbolData &SD = Symbol.getData();
+    MCSymbol &SD = Symbol.getData();
 
     // Ignore non-linker visible symbols.
     if (!Asm.isSymbolLinkerVisible(Symbol))

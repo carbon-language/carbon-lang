@@ -16,7 +16,7 @@
 
 #include "llvm/Support/ELF.h"
 
-// Because all the symbol flags need to be stored in the MCSymbolData
+// Because all the symbol flags need to be stored in the MCSymbol
 // 'flags' variable we need to provide shift constants per flag type.
 
 namespace llvm {

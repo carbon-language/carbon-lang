@@ -359,7 +359,7 @@ void ELFObjectWriter::writeHeader(const MCAssembler &Asm) {
 
 uint64_t ELFObjectWriter::SymbolValue(const MCSymbol &Sym,
                                       const MCAsmLayout &Layout) {
-  MCSymbolData &Data = Sym.getData();
+  MCSymbol &Data = Sym.getData();
   if (Sym.isCommon() && Data.isExternal())
     return Sym.getCommonAlignment();
 
@@ -379,7 +379,7 @@ void ELFObjectWriter::ExecutePostLayoutBinding(MCAssembler &Asm,
   // versions declared with @@@ to be renamed.
 
   for (const MCSymbol &Alias : Asm.symbols()) {
-    MCSymbolData &OriginalData = Alias.getData();
+    MCSymbol &OriginalData = Alias.getData();
 
     // Not an alias.
     if (!Alias.isVariable())
@@ -388,7 +388,7 @@ void ELFObjectWriter::ExecutePostLayoutBinding(MCAssembler &Asm,
     if (!Ref)
       continue;
     const MCSymbol &Symbol = Ref->getSymbol();
-    MCSymbolData &SD = Symbol.getData();
+    MCSymbol &SD = Symbol.getData();
 
     StringRef AliasName = Alias.getName();
     size_t Pos = AliasName.find('@');
@@ -452,7 +452,7 @@ void ELFObjectWriter::writeSymbol(SymbolTableWriter &Writer,
                                   uint32_t StringIndex, ELFSymbolData &MSD,
                                   const MCAsmLayout &Layout) {
 #ifndef NDEBUG
-  MCSymbolData &OrigData = MSD.Symbol->getData();
+  MCSymbol &OrigData = MSD.Symbol->getData();
   assert((!OrigData.getFragment() ||
           (OrigData.getFragment()->getParent() == &MSD.Symbol->getSection())) &&
          "The symbol's section doesn't match the fragment's symbol");
@@ -466,7 +466,7 @@ void ELFObjectWriter::writeSymbol(SymbolTableWriter &Writer,
   // Binding and Type share the same byte as upper and lower nibbles
   uint8_t Binding = MCELF::GetBinding(*MSD.Symbol);
   uint8_t Type = MCELF::GetType(*MSD.Symbol);
-  MCSymbolData *BaseSD = nullptr;
+  MCSymbol *BaseSD = nullptr;
   if (Base) {
     BaseSD = &Base->getData();
     Type = mergeTypeForSet(Type, MCELF::GetType(*Base));
@@ -769,7 +769,7 @@ bool ELFObjectWriter::isInSymtab(const MCAsmLayout &Layout,
 
 bool ELFObjectWriter::isLocal(const MCSymbol &Symbol, bool IsUsedInReloc,
                               bool IsSignature) {
-  const MCSymbolData &Data = Symbol.getData();
+  const MCSymbol &Data = Symbol.getData();
   if (Data.isExternal())
     return false;
 

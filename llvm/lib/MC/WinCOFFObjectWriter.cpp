@@ -364,7 +364,7 @@ void WinCOFFObjectWriter::defineSection(MCSectionCOFF const &Sec) {
 
 static uint64_t getSymbolValue(const MCSymbol &Symbol,
                                const MCAsmLayout &Layout) {
-  const MCSymbolData &Data = Symbol.getData();
+  const MCSymbol &Data = Symbol.getData();
   if (Symbol.isCommon() && Data.isExternal())
     return Symbol.getCommonSize();
 
@@ -414,7 +414,7 @@ void WinCOFFObjectWriter::DefineSymbol(const MCSymbol &Symbol,
 
     coff_symbol->MC = &Symbol;
   } else {
-    const MCSymbolData &ResSymData = Symbol.getData();
+    const MCSymbol &ResSymData = Symbol.getData();
     const MCSymbol *Base = Layout.getBaseSymbol(Symbol);
     coff_symbol->Data.Value = getSymbolValue(Symbol, Layout);
 
@@ -434,7 +434,7 @@ void WinCOFFObjectWriter::DefineSymbol(const MCSymbol &Symbol,
     if (!Base) {
       coff_symbol->Data.SectionNumber = COFF::IMAGE_SYM_ABSOLUTE;
     } else {
-      const MCSymbolData &BaseData = Base->getData();
+      const MCSymbol &BaseData = Base->getData();
       if (BaseData.getFragment()) {
         COFFSection *Sec = SectionMap[BaseData.getFragment()->getParent()];
 
@@ -672,7 +672,7 @@ bool WinCOFFObjectWriter::IsSymbolRefDifferenceFullyResolvedImpl(
 }
 
 bool WinCOFFObjectWriter::isWeak(const MCSymbol &Sym) const {
-  const MCSymbolData &SD = Sym.getData();
+  const MCSymbol &SD = Sym.getData();
   if (!SD.isExternal())
     return false;
 
@@ -701,7 +701,7 @@ void WinCOFFObjectWriter::RecordRelocation(
                                       Twine("symbol '") + A.getName() +
                                           "' can not be undefined");
 
-  const MCSymbolData &A_SD = A.getData();
+  const MCSymbol &A_SD = A.getData();
 
   MCSection *Section = Fragment->getParent();
 
@@ -718,7 +718,7 @@ void WinCOFFObjectWriter::RecordRelocation(
 
   if (SymB) {
     const MCSymbol *B = &SymB->getSymbol();
-    const MCSymbolData &B_SD = B->getData();
+    const MCSymbol &B_SD = B->getData();
     if (!B_SD.getFragment())
       Asm.getContext().reportFatalError(
           Fixup.getLoc(),

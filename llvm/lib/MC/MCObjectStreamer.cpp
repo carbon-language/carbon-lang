@@ -47,7 +47,7 @@ void MCObjectStreamer::flushPendingLabels(MCFragment *F, uint64_t FOffset) {
       F->setParent(CurSection);
     }
     for (MCSymbol *Sym : PendingLabels) {
-      MCSymbolData *SD = &Sym->getData();
+      MCSymbol *SD = &Sym->getData();
       SD->setFragment(F);
       Sym->setOffset(FOffset);
     }
@@ -164,7 +164,7 @@ void MCObjectStreamer::EmitLabel(MCSymbol *Symbol) {
   MCStreamer::EmitLabel(Symbol);
 
   getAssembler().registerSymbol(*Symbol);
-  MCSymbolData &SD = Symbol->getData();
+  MCSymbol &SD = Symbol->getData();
   assert(!SD.getFragment() && "Unexpected fragment on symbol data!");
 
   // If there is a current fragment, mark the symbol as pointing into it.

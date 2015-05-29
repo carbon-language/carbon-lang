@@ -120,7 +120,7 @@ uint64_t MCAsmLayout::getFragmentOffset(const MCFragment *F) const {
 // Simple getSymbolOffset helper for the non-varibale case.
 static bool getLabelOffset(const MCAsmLayout &Layout, const MCSymbol &S,
                            bool ReportError, uint64_t &Val) {
-  const MCSymbolData &SD = S.getData();
+  const MCSymbol &SD = S.getData();
   if (!SD.getFragment()) {
     if (ReportError)
       report_fatal_error("unable to evaluate offset to undefined symbol '" +

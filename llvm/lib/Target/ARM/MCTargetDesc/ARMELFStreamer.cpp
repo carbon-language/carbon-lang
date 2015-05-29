@@ -567,7 +567,7 @@ private:
                                      Twine(MappingSymbolCounter++));
 
     getAssembler().registerSymbol(*Symbol);
-    MCSymbolData &SD = Symbol->getData();
+    MCSymbol &SD = Symbol->getData();
     MCELF::SetType(*Symbol, ELF::STT_NOTYPE);
     MCELF::SetBinding(*Symbol, ELF::STB_LOCAL);
     SD.setExternal(false);
