@@ -247,31 +247,6 @@ bool IntRecTy::baseClassOf(const RecTy *RHS) const{
   return kind==BitRecTyKind || kind==BitsRecTyKind || kind==IntRecTyKind;
 }
 
-Init *StringRecTy::convertValue(UnOpInit *UO) {
-  if (UO->getOpcode() == UnOpInit::CAST) {
-    Init *L = UO->getOperand()->convertInitializerTo(this);
-    if (!L) return nullptr;
-    if (L != UO->getOperand())
-      return UnOpInit::get(UnOpInit::CAST, L, StringRecTy::get());
-    return UO;
-  }
-
-  return convertValue((TypedInit*)UO);
-}
-
-Init *StringRecTy::convertValue(BinOpInit *BO) {
-  if (BO->getOpcode() == BinOpInit::STRCONCAT) {
-    Init *L = BO->getLHS()->convertInitializerTo(this);
-    Init *R = BO->getRHS()->convertInitializerTo(this);
-    if (!L || !R) return nullptr;
-    if (L != BO->getLHS() || R != BO->getRHS())
-      return BinOpInit::get(BinOpInit::STRCONCAT, L, R, StringRecTy::get());
-    return BO;
-  }
-
-  return convertValue((TypedInit*)BO);
-}
-
 
 Init *StringRecTy::convertValue(TypedInit *TI) {
   if (isa<StringRecTy>(TI->getType()))
@@ -317,29 +292,6 @@ bool ListRecTy::baseClassOf(const RecTy *RHS) const{
 Init *DagRecTy::convertValue(TypedInit *TI) {
   if (TI->getType()->typeIsConvertibleTo(this))
     return TI;
-  return nullptr;
-}
-
-Init *DagRecTy::convertValue(UnOpInit *UO) {
-  if (UO->getOpcode() == UnOpInit::CAST) {
-    Init *L = UO->getOperand()->convertInitializerTo(this);
-    if (!L) return nullptr;
-    if (L != UO->getOperand())
-      return UnOpInit::get(UnOpInit::CAST, L, DagRecTy::get());
-    return UO;
-  }
-  return nullptr;
-}
-
-Init *DagRecTy::convertValue(BinOpInit *BO) {
-  if (BO->getOpcode() == BinOpInit::CONCAT) {
-    Init *L = BO->getLHS()->convertInitializerTo(this);
-    Init *R = BO->getRHS()->convertInitializerTo(this);
-    if (!L || !R) return nullptr;
-    if (L != BO->getLHS() || R != BO->getRHS())
-      return BinOpInit::get(BinOpInit::CONCAT, L, R, DagRecTy::get());
-    return BO;
-  }
   return nullptr;
 }
 
