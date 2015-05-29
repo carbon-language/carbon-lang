@@ -946,10 +946,7 @@ static bool ReadCheckFile(SourceMgr &SM,
     }
 
     // Okay, add the string we captured to the output vector and move on.
-    CheckStrings.push_back(CheckString(P,
-                                       UsedPrefix,
-                                       PatternLoc,
-                                       CheckTy));
+    CheckStrings.emplace_back(P, UsedPrefix, PatternLoc, CheckTy);
     std::swap(DagNotMatches, CheckStrings.back().DagNotStrings);
     DagNotMatches = ImplicitNegativeChecks;
   }
@@ -957,10 +954,9 @@ static bool ReadCheckFile(SourceMgr &SM,
   // Add an EOF pattern for any trailing CHECK-DAG/-NOTs, and use the first
   // prefix as a filler for the error message.
   if (!DagNotMatches.empty()) {
-    CheckStrings.push_back(CheckString(Pattern(Check::CheckEOF),
-                                       *CheckPrefixes.begin(),
-                                       SMLoc::getFromPointer(Buffer.data()),
-                                       Check::CheckEOF));
+    CheckStrings.emplace_back(Pattern(Check::CheckEOF), *CheckPrefixes.begin(),
+                              SMLoc::getFromPointer(Buffer.data()),
+                              Check::CheckEOF);
     std::swap(DagNotMatches, CheckStrings.back().DagNotStrings);
   }
 

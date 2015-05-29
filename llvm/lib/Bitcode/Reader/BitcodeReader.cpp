@@ -63,9 +63,7 @@ public:
   // vector compatibility methods
   unsigned size() const { return ValuePtrs.size(); }
   void resize(unsigned N) { ValuePtrs.resize(N); }
-  void push_back(Value *V) {
-    ValuePtrs.push_back(V);
-  }
+  void push_back(Value *V) { ValuePtrs.emplace_back(V); }
 
   void clear() {
     assert(ResolveConstants.empty() && "Constants not resolved?");

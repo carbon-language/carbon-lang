@@ -1902,9 +1902,9 @@ bool LLParser::ParseArgumentList(SmallVectorImpl<ArgInfo> &ArgList,
       return Error(TypeLoc, "invalid type for function argument");
 
     unsigned AttrIndex = 1;
-    ArgList.push_back(ArgInfo(TypeLoc, ArgTy,
-                              AttributeSet::get(ArgTy->getContext(),
-                                                AttrIndex++, Attrs), Name));
+    ArgList.emplace_back(TypeLoc, ArgTy, AttributeSet::get(ArgTy->getContext(),
+                                                           AttrIndex++, Attrs),
+                         std::move(Name));
 
     while (EatIfPresent(lltok::comma)) {
       // Handle ... at end of arg list.
@@ -1930,10 +1930,10 @@ bool LLParser::ParseArgumentList(SmallVectorImpl<ArgInfo> &ArgList,
       if (!ArgTy->isFirstClassType())
         return Error(TypeLoc, "invalid type for function argument");
 
-      ArgList.push_back(ArgInfo(TypeLoc, ArgTy,
-                                AttributeSet::get(ArgTy->getContext(),
-                                                  AttrIndex++, Attrs),
-                                Name));
+      ArgList.emplace_back(
+          TypeLoc, ArgTy,
+          AttributeSet::get(ArgTy->getContext(), AttrIndex++, Attrs),
+          std::move(Name));
     }
   }
 

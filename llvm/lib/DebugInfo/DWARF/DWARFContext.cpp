@@ -352,7 +352,7 @@ void DWARFContext::parseTypeUnits() {
   if (!TUs.empty())
     return;
   for (const auto &I : getTypesSections()) {
-    TUs.push_back(DWARFUnitSection<DWARFTypeUnit>());
+    TUs.emplace_back();
     TUs.back().parse(*this, I.second);
   }
 }
@@ -365,7 +365,7 @@ void DWARFContext::parseDWOTypeUnits() {
   if (!DWOTUs.empty())
     return;
   for (const auto &I : getTypesDWOSections()) {
-    DWOTUs.push_back(DWARFUnitSection<DWARFTypeUnit>());
+    DWOTUs.emplace_back();
     DWOTUs.back().parseDWO(*this, I.second);
   }
 }

@@ -610,7 +610,7 @@ void Filter::emitTableEntry(DecoderTableInfo &TableInfo) const {
   TableInfo.Table.push_back(NumBits);
 
   // A new filter entry begins a new scope for fixup resolution.
-  TableInfo.FixupStack.push_back(FixupList());
+  TableInfo.FixupStack.emplace_back();
 
   DecoderTable &Table = TableInfo.Table;
 
@@ -1333,7 +1333,7 @@ void FilterChooser::emitSingletonTableEntry(DecoderTableInfo &TableInfo,
 
   // complex singletons need predicate checks from the first singleton
   // to refer forward to the variable filterchooser that follows.
-  TableInfo.FixupStack.push_back(FixupList());
+  TableInfo.FixupStack.emplace_back();
 
   emitSingletonTableEntry(TableInfo, Opc);
 
@@ -1350,7 +1350,7 @@ void FilterChooser::emitSingletonTableEntry(DecoderTableInfo &TableInfo,
 void FilterChooser::runSingleFilter(unsigned startBit, unsigned numBit,
                                     bool mixed) {
   Filters.clear();
-  Filters.push_back(Filter(*this, startBit, numBit, true));
+  Filters.emplace_back(*this, startBit, numBit, true);
   BestIndex = 0; // Sole Filter instance to choose from.
   bestFilter().recurse();
 }
@@ -1360,9 +1360,9 @@ void FilterChooser::runSingleFilter(unsigned startBit, unsigned numBit,
 void FilterChooser::reportRegion(bitAttr_t RA, unsigned StartBit,
                                  unsigned BitIndex, bool AllowMixed) {
   if (RA == ATTR_MIXED && AllowMixed)
-    Filters.push_back(Filter(*this, StartBit, BitIndex - StartBit, true));
+    Filters.emplace_back(*this, StartBit, BitIndex - StartBit, true);
   else if (RA == ATTR_ALL_SET && !AllowMixed)
-    Filters.push_back(Filter(*this, StartBit, BitIndex - StartBit, false));
+    Filters.emplace_back(*this, StartBit, BitIndex - StartBit, false);
 }
 
 // FilterProcessor scans the well-known encoding bits of the instructions and
@@ -2179,7 +2179,7 @@ void FixedLenDecoderEmitter::run(raw_ostream &o) {
     TableInfo.Table.clear();
     TableInfo.FixupStack.clear();
     TableInfo.Table.reserve(16384);
-    TableInfo.FixupStack.push_back(FixupList());
+    TableInfo.FixupStack.emplace_back();
     FC.emitTableEntries(TableInfo);
     // Any NumToSkip fixups in the top level scope can resolve to the
     // OPC_Fail at the end of the table.

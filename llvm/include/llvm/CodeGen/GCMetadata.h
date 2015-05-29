@@ -121,7 +121,7 @@ public:
   /// label just prior to the safe point (if the code generator is using
   /// MachineModuleInfo).
   void addSafePoint(GC::PointKind Kind, MCSymbol *Label, DebugLoc DL) {
-    SafePoints.push_back(GCPoint(Kind, Label, DL));
+    SafePoints.emplace_back(Kind, Label, DL);
   }
 
   /// getFrameSize/setFrameSize - Records the function's frame size.

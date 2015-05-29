@@ -1712,7 +1712,7 @@ unsigned SCEVExpander::replaceCongruentIVs(Loop *L, const DominatorTree *DT,
     // would confuse the logic below that expects proper IVs.
     if (Value *V = SimplifyInstruction(Phi, DL, SE.TLI, SE.DT, SE.AC)) {
       Phi->replaceAllUsesWith(V);
-      DeadInsts.push_back(Phi);
+      DeadInsts.emplace_back(Phi);
       ++NumElim;
       DEBUG_WITH_TYPE(DebugType, dbgs()
                       << "INDVARS: Eliminated constant iv: " << *Phi << '\n');
@@ -1787,7 +1787,7 @@ unsigned SCEVExpander::replaceCongruentIVs(Loop *L, const DominatorTree *DT,
             CreateTruncOrBitCast(OrigInc, IsomorphicInc->getType(), IVName);
         }
         IsomorphicInc->replaceAllUsesWith(NewInc);
-        DeadInsts.push_back(IsomorphicInc);
+        DeadInsts.emplace_back(IsomorphicInc);
       }
     }
     DEBUG_WITH_TYPE(DebugType, dbgs()
@@ -1800,7 +1800,7 @@ unsigned SCEVExpander::replaceCongruentIVs(Loop *L, const DominatorTree *DT,
       NewIV = Builder.CreateTruncOrBitCast(OrigPhiRef, Phi->getType(), IVName);
     }
     Phi->replaceAllUsesWith(NewIV);
-    DeadInsts.push_back(Phi);
+    DeadInsts.emplace_back(Phi);
   }
   return NumElim;
 }

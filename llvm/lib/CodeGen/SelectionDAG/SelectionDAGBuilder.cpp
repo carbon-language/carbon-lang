@@ -7437,7 +7437,7 @@ bool SelectionDAGBuilder::buildJumpTable(CaseClusterVector &Clusters,
   JumpTableHeader JTH(Clusters[First].Low->getValue(),
                       Clusters[Last].High->getValue(), SI->getCondition(),
                       nullptr, false);
-  JTCases.push_back(JumpTableBlock(JTH, JT));
+  JTCases.emplace_back(std::move(JTH), std::move(JT));
 
   JTCluster = CaseCluster::jumpTable(Clusters[First].Low, Clusters[Last].High,
                                      JTCases.size() - 1, Weight);
@@ -7650,9 +7650,9 @@ bool SelectionDAGBuilder::buildBitTests(CaseClusterVector &Clusters,
         FuncInfo.MF->CreateMachineBasicBlock(SI->getParent());
     BTI.push_back(BitTestCase(CB.Mask, BitTestBB, CB.BB, CB.ExtraWeight));
   }
-  BitTestCases.push_back(BitTestBlock(LowBound, CmpRange, SI->getCondition(),
-                                      -1U, MVT::Other, false, nullptr,
-                                      nullptr, std::move(BTI)));
+  BitTestCases.emplace_back(std::move(LowBound), std::move(CmpRange),
+                            SI->getCondition(), -1U, MVT::Other, false, nullptr,
+                            nullptr, std::move(BTI));
 
   BTCluster = CaseCluster::bitTests(Clusters[First].Low, Clusters[Last].High,
                                     BitTestCases.size() - 1, TotalWeight);

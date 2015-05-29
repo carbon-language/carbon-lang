@@ -130,7 +130,7 @@ void AliasSet::addPointer(AliasSetTracker &AST, PointerRec &Entry,
 void AliasSet::addUnknownInst(Instruction *I, AliasAnalysis &AA) {
   if (UnknownInsts.empty())
     addRef();
-  UnknownInsts.push_back(I);
+  UnknownInsts.emplace_back(I);
 
   if (!I->mayWriteToMemory()) {
     AliasTy = MayAlias;

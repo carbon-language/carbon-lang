@@ -1949,7 +1949,7 @@ bool AsmParser::parseMacroArgument(MCAsmMacroArgument &MA, bool Vararg) {
   if (Vararg) {
     if (Lexer.isNot(AsmToken::EndOfStatement)) {
       StringRef Str = parseStringToEndOfStatement();
-      MA.push_back(AsmToken(AsmToken::String, Str));
+      MA.emplace_back(AsmToken::String, Str);
     }
     return false;
   }
@@ -4346,8 +4346,7 @@ MCAsmMacro *AsmParser::parseMacroLikeBody(SMLoc DirectiveLoc) {
   StringRef Body = StringRef(BodyStart, BodyEnd - BodyStart);
 
   // We Are Anonymous.
-  MacroLikeBodies.push_back(
-      MCAsmMacro(StringRef(), Body, MCAsmMacroParameters()));
+  MacroLikeBodies.emplace_back(StringRef(), Body, MCAsmMacroParameters());
   return &MacroLikeBodies.back();
 }
 
@@ -4490,7 +4489,7 @@ bool AsmParser::parseDirectiveIrpc(SMLoc DirectiveLoc) {
   StringRef Values = A.front().front().getString();
   for (std::size_t I = 0, End = Values.size(); I != End; ++I) {
     MCAsmMacroArgument Arg;
-    Arg.push_back(AsmToken(AsmToken::Identifier, Values.slice(I, I + 1)));
+    Arg.emplace_back(AsmToken::Identifier, Values.slice(I, I + 1));
 
     // Note that the AtPseudoVariable is enabled for instantiations of .irpc.
     // This is undocumented, but GAS seems to support it.

@@ -1465,7 +1465,7 @@ void MergeFunctions::remove(Function *F) {
   if (Erased) {
     DEBUG(dbgs() << "Removed " << F->getName()
                  << " from set and deferred it.\n");
-    Deferred.push_back(F);
+    Deferred.emplace_back(F);
   }
 }
 

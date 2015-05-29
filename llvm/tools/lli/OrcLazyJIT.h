@@ -116,8 +116,7 @@ public:
     orc::CtorDtorRunner<CODLayerT> CtorRunner(std::move(CtorNames), H);
     CtorRunner.runViaLayer(CODLayer);
 
-    IRStaticDestructorRunners.push_back(
-        orc::CtorDtorRunner<CODLayerT>(std::move(DtorNames), H));
+    IRStaticDestructorRunners.emplace_back(std::move(DtorNames), H);
 
     return H;
   }

@@ -1797,7 +1797,7 @@ static void emitConvertFuncs(CodeGenTarget &Target, StringRef ClassName,
                                     getEnumNameForToken(AsmMatchConverter));
 
       // Add the converter row for this instruction.
-      ConversionTable.push_back(std::vector<uint8_t>());
+      ConversionTable.emplace_back();
       ConversionTable.back().push_back(KindID);
       ConversionTable.back().push_back(CVT_Done);
 
@@ -2161,8 +2161,7 @@ static void emitMatchTokenString(CodeGenTarget &Target,
   std::vector<StringMatcher::StringPair> Matches;
   for (const auto &CI : Infos) {
     if (CI.Kind == ClassInfo::Token)
-      Matches.push_back(
-          StringMatcher::StringPair(CI.ValueName, "return " + CI.Name + ";"));
+      Matches.emplace_back(CI.ValueName, "return " + CI.Name + ";");
   }
 
   OS << "static MatchClassKind matchTokenString(StringRef Name) {\n";
@@ -2184,9 +2183,8 @@ static void emitMatchRegisterName(CodeGenTarget &Target, Record *AsmParser,
     if (Reg.TheDef->getValueAsString("AsmName").empty())
       continue;
 
-    Matches.push_back(
-        StringMatcher::StringPair(Reg.TheDef->getValueAsString("AsmName"),
-                                  "return " + utostr(Reg.EnumValue) + ";"));
+    Matches.emplace_back(Reg.TheDef->getValueAsString("AsmName"),
+                         "return " + utostr(Reg.EnumValue) + ";");
   }
 
   OS << "static unsigned MatchRegisterName(StringRef Name) {\n";

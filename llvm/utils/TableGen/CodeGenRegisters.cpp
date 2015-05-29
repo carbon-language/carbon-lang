@@ -994,7 +994,7 @@ CodeGenRegBank::CodeGenRegBank(RecordKeeper &Records) {
 
   // Allocate user-defined register classes.
   for (auto *RC : RCs) {
-    RegClasses.push_back(CodeGenRegisterClass(*this, RC));
+    RegClasses.emplace_back(*this, RC);
     addToMaps(&RegClasses.back());
   }
 
@@ -1056,7 +1056,7 @@ CodeGenRegBank::getOrCreateSubClass(const CodeGenRegisterClass *RC,
     return FoundI->second;
 
   // Sub-class doesn't exist, create a new one.
-  RegClasses.push_back(CodeGenRegisterClass(*this, Name, K));
+  RegClasses.emplace_back(*this, Name, K);
   addToMaps(&RegClasses.back());
   return &RegClasses.back();
 }

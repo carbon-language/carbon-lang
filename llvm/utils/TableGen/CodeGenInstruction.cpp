@@ -115,9 +115,9 @@ CGIOperandList::CGIOperandList(Record *R) : TheDef(R) {
       PrintFatalError("In instruction '" + R->getName() + "', operand #" +
                       Twine(i) + " has the same name as a previous operand!");
 
-    OperandList.push_back(OperandInfo(Rec, ArgName, PrintMethod, EncoderMethod,
-                                      OperandNamespace + "::" + OperandType,
-				      MIOperandNo, NumOps, MIOpInfo));
+    OperandList.emplace_back(Rec, ArgName, PrintMethod, EncoderMethod,
+                             OperandNamespace + "::" + OperandType, MIOperandNo,
+                             NumOps, MIOpInfo);
     MIOperandNo += NumOps;
   }
 
@@ -642,9 +642,9 @@ CodeGenInstAlias::CodeGenInstAlias(Record *R, unsigned Variant,
 
           // Take care to instantiate each of the suboperands with the correct
           // nomenclature: $foo.bar
-          ResultOperands.push_back(
-              ResultOperand(Result->getArgName(AliasOpNo) + "." +
-                            MIOI->getArgName(SubOp), SubRec));
+          ResultOperands.emplace_back(Result->getArgName(AliasOpNo) + "." +
+                                          MIOI->getArgName(SubOp),
+                                      SubRec);
           ResultInstOperandIndex.push_back(std::make_pair(i, SubOp));
          }
          ++AliasOpNo;

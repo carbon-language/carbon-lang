@@ -71,7 +71,7 @@ SUnit *ScheduleDAGSDNodes::newSUnit(SDNode *N) {
   if (!SUnits.empty())
     Addr = &SUnits[0];
 #endif
-  SUnits.push_back(SUnit(N, (unsigned)SUnits.size()));
+  SUnits.emplace_back(N, (unsigned)SUnits.size());
   assert((Addr == nullptr || Addr == &SUnits[0]) &&
          "SUnits std::vector reallocated on the fly!");
   SUnits.back().OrigNode = &SUnits.back();

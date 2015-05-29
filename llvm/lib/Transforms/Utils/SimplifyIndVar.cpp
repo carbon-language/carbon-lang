@@ -141,7 +141,7 @@ Value *SimplifyIndvar::foldIVUser(Instruction *UseInst, Instruction *IVOperand) 
   ++NumElimOperand;
   Changed = true;
   if (IVOperand->use_empty())
-    DeadInsts.push_back(IVOperand);
+    DeadInsts.emplace_back(IVOperand);
   return IVSrc;
 }
 
@@ -178,7 +178,7 @@ void SimplifyIndvar::eliminateIVComparison(ICmpInst *ICmp, Value *IVOperand) {
   DEBUG(dbgs() << "INDVARS: Eliminated comparison: " << *ICmp << '\n');
   ++NumElimCmp;
   Changed = true;
-  DeadInsts.push_back(ICmp);
+  DeadInsts.emplace_back(ICmp);
 }
 
 /// SimplifyIVUsers helper for eliminating useless
@@ -229,7 +229,7 @@ void SimplifyIndvar::eliminateIVRemainder(BinaryOperator *Rem,
   DEBUG(dbgs() << "INDVARS: Simplified rem: " << *Rem << '\n');
   ++NumElimRem;
   Changed = true;
-  DeadInsts.push_back(Rem);
+  DeadInsts.emplace_back(Rem);
 }
 
 /// Eliminate an operation that consumes a simple IV and has
@@ -260,7 +260,7 @@ bool SimplifyIndvar::eliminateIVUser(Instruction *UseInst,
   UseInst->replaceAllUsesWith(IVOperand);
   ++NumElimIdentity;
   Changed = true;
-  DeadInsts.push_back(UseInst);
+  DeadInsts.emplace_back(UseInst);
   return true;
 }
 
@@ -386,7 +386,7 @@ Instruction *SimplifyIndvar::splitOverflowIntrinsic(Instruction *IVUser,
          "Bad add instruction created from overflow intrinsic.");
 
   AddVal->replaceAllUsesWith(AddInst);
-  DeadInsts.push_back(AddVal);
+  DeadInsts.emplace_back(AddVal);
   return AddInst;
 }
 

@@ -145,8 +145,7 @@ void CodeGenSchedModels::collectProcModels() {
   // Use idx=0 for NoModel/NoItineraries.
   Record *NoModelDef = Records.getDef("NoSchedModel");
   Record *NoItinsDef = Records.getDef("NoItineraries");
-  ProcModels.push_back(CodeGenProcModel(0, "NoSchedModel",
-                                        NoModelDef, NoItinsDef));
+  ProcModels.emplace_back(0, "NoSchedModel", NoModelDef, NoItinsDef);
   ProcModelMap[NoModelDef] = 0;
 
   // For each processor, find a unique machine model.
@@ -164,16 +163,14 @@ void CodeGenSchedModels::addProcModel(Record *ProcDef) {
   std::string Name = ModelKey->getName();
   if (ModelKey->isSubClassOf("SchedMachineModel")) {
     Record *ItinsDef = ModelKey->getValueAsDef("Itineraries");
-    ProcModels.push_back(
-      CodeGenProcModel(ProcModels.size(), Name, ModelKey, ItinsDef));
+    ProcModels.emplace_back(ProcModels.size(), Name, ModelKey, ItinsDef);
   }
   else {
     // An itinerary is defined without a machine model. Infer a new model.
     if (!ModelKey->getValueAsListOfDefs("IID").empty())
       Name = Name + "Model";
-    ProcModels.push_back(
-      CodeGenProcModel(ProcModels.size(), Name,
-                       ProcDef->getValueAsDef("SchedModel"), ModelKey));
+    ProcModels.emplace_back(ProcModels.size(), Name,
+                            ProcDef->getValueAsDef("SchedModel"), ModelKey);
   }
   DEBUG(ProcModels.back().dump());
 }
@@ -281,12 +278,12 @@ void CodeGenSchedModels::collectSchedRW() {
   std::sort(SWDefs.begin(), SWDefs.end(), LessRecord());
   for (RecIter SWI = SWDefs.begin(), SWE = SWDefs.end(); SWI != SWE; ++SWI) {
     assert(!getSchedRWIdx(*SWI, /*IsRead=*/false) && "duplicate SchedWrite");
-    SchedWrites.push_back(CodeGenSchedRW(SchedWrites.size(), *SWI));
+    SchedWrites.emplace_back(SchedWrites.size(), *SWI);
   }
   std::sort(SRDefs.begin(), SRDefs.end(), LessRecord());
   for (RecIter SRI = SRDefs.begin(), SRE = SRDefs.end(); SRI != SRE; ++SRI) {
     assert(!getSchedRWIdx(*SRI, /*IsRead-*/true) && "duplicate SchedWrite");
-    SchedReads.push_back(CodeGenSchedRW(SchedReads.size(), *SRI));
+    SchedReads.emplace_back(SchedReads.size(), *SRI);
   }
   // Initialize WriteSequence vectors.
   for (std::vector<CodeGenSchedRW>::iterator WI = SchedWrites.begin(),

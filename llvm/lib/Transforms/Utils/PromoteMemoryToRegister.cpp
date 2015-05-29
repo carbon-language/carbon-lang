@@ -636,7 +636,7 @@ void PromoteMem2Reg::run() {
   // and inserting the phi nodes we marked as necessary
   //
   std::vector<RenamePassData> RenamePassWorkList;
-  RenamePassWorkList.push_back(RenamePassData(F.begin(), nullptr, Values));
+  RenamePassWorkList.emplace_back(F.begin(), nullptr, std::move(Values));
   do {
     RenamePassData RPD;
     RPD.swap(RenamePassWorkList.back());
@@ -973,7 +973,7 @@ NextIteration:
 
   for (; I != E; ++I)
     if (VisitedSuccs.insert(*I).second)
-      Worklist.push_back(RenamePassData(*I, Pred, IncomingVals));
+      Worklist.emplace_back(*I, Pred, IncomingVals);
 
   goto NextIteration;
 }

@@ -733,7 +733,7 @@ static bool LinearizeExprTree(BinaryOperator *I,
   if (Ops.empty()) {
     Constant *Identity = ConstantExpr::getBinOpIdentity(Opcode, I->getType());
     assert(Identity && "Associative operation without identity!");
-    Ops.push_back(std::make_pair(Identity, APInt(Bitwidth, 1)));
+    Ops.emplace_back(Identity, APInt(Bitwidth, 1));
   }
 
   return Changed;

@@ -113,7 +113,7 @@ public:
       return *const_cast<BlockInfo*>(BI);
 
     // Otherwise, add a new record.
-    BlockInfoRecords.push_back(BlockInfo());
+    BlockInfoRecords.emplace_back();
     BlockInfoRecords.back().BlockID = BlockID;
     return BlockInfoRecords.back();
   }

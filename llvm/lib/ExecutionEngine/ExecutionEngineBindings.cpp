@@ -254,11 +254,8 @@ int LLVMRunFunctionAsMain(LLVMExecutionEngineRef EE, LLVMValueRef F,
                           unsigned ArgC, const char * const *ArgV,
                           const char * const *EnvP) {
   unwrap(EE)->finalizeObject();
-  
-  std::vector<std::string> ArgVec;
-  for (unsigned I = 0; I != ArgC; ++I)
-    ArgVec.push_back(ArgV[I]);
-  
+
+  std::vector<std::string> ArgVec(ArgV, ArgV + ArgC);
   return unwrap(EE)->runFunctionAsMain(unwrap<Function>(F), ArgVec, EnvP);
 }
 

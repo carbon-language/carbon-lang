@@ -2079,7 +2079,7 @@ void Interpreter::callFunction(Function *F,
           ECStack.back().Caller.arg_size() == ArgVals.size()) &&
          "Incorrect number of arguments passed into function call!");
   // Make a new stack frame... and fill it in.
-  ECStack.push_back(ExecutionContext());
+  ECStack.emplace_back();
   ExecutionContext &StackFrame = ECStack.back();
   StackFrame.CurFunction = F;
 

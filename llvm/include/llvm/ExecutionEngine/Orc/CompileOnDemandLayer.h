@@ -390,8 +390,7 @@ public:
       for (auto &F : *M) {
         if (F.isDeclaration())
           continue;
-        Partitioning.push_back(std::vector<Function*>());
-        Partitioning.back().push_back(&F);
+        Partitioning.emplace_back(1, &F);
       }
       addLogicalModule(*LogicalDylibs.back(),
                        std::shared_ptr<Module>(std::move(M)),

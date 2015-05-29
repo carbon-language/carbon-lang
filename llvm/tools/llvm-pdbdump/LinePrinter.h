@@ -41,7 +41,7 @@ private:
   void SetFilters(std::list<Regex> &List, Iter Begin, Iter End) {
     List.clear();
     for (; Begin != End; ++Begin)
-      List.push_back(StringRef(*Begin));
+      List.emplace_back(StringRef(*Begin));
   }
 
   raw_ostream &OS;

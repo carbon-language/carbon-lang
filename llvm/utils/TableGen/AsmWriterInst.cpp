@@ -163,27 +163,22 @@ AsmWriterInst::AsmWriterInst(const CodeGenInstruction &CGI, unsigned Variant,
 
       if (VarName.empty()) {
         // Just a modifier, pass this into PrintSpecial.
-        Operands.push_back(AsmWriterOperand("PrintSpecial",
-                                            ~0U,
-                                            ~0U,
-                                            Modifier,
-                                            PassSubtarget));
+        Operands.emplace_back("PrintSpecial", ~0U, ~0U, Modifier,
+                              PassSubtarget);
       } else {
         // Otherwise, normal operand.
         unsigned OpNo = CGI.Operands.getOperandNamed(VarName);
         CGIOperandList::OperandInfo OpInfo = CGI.Operands[OpNo];
 
         unsigned MIOp = OpInfo.MIOperandNo;
-        Operands.push_back(AsmWriterOperand(OpInfo.PrinterMethodName,
-                                            OpNo, MIOp, Modifier,
-                                            PassSubtarget));
+        Operands.emplace_back(OpInfo.PrinterMethodName, OpNo, MIOp, Modifier,
+                              PassSubtarget);
       }
       LastEmitted = VarEnd;
     }
   }
 
-  Operands.push_back(AsmWriterOperand("return;",
-    AsmWriterOperand::isLiteralStatementOperand));
+  Operands.emplace_back("return;", AsmWriterOperand::isLiteralStatementOperand);
 }
 
 /// MatchesAllButOneOp - If this instruction is exactly identical to the

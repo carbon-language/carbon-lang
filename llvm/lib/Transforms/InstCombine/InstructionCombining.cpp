@@ -1843,7 +1843,7 @@ isAllocSiteRemovable(Instruction *AI, SmallVectorImpl<WeakVH> &Users,
 
       case Instruction::BitCast:
       case Instruction::GetElementPtr:
-        Users.push_back(I);
+        Users.emplace_back(I);
         Worklist.push_back(I);
         continue;
 
@@ -1852,7 +1852,7 @@ isAllocSiteRemovable(Instruction *AI, SmallVectorImpl<WeakVH> &Users,
         // We can fold eq/ne comparisons with null to false/true, respectively.
         if (!ICI->isEquality() || !isa<ConstantPointerNull>(ICI->getOperand(1)))
           return false;
-        Users.push_back(I);
+        Users.emplace_back(I);
         continue;
       }
 
@@ -1878,13 +1878,13 @@ isAllocSiteRemovable(Instruction *AI, SmallVectorImpl<WeakVH> &Users,
           case Intrinsic::lifetime_start:
           case Intrinsic::lifetime_end:
           case Intrinsic::objectsize:
-            Users.push_back(I);
+            Users.emplace_back(I);
             continue;
           }
         }
 
         if (isFreeCall(I, TLI)) {
-          Users.push_back(I);
+          Users.emplace_back(I);
           continue;
         }
         return false;
@@ -1893,7 +1893,7 @@ isAllocSiteRemovable(Instruction *AI, SmallVectorImpl<WeakVH> &Users,
         StoreInst *SI = cast<StoreInst>(I);
         if (SI->isVolatile() || SI->getPointerOperand() != PI)
           return false;
-        Users.push_back(I);
+        Users.emplace_back(I);
         continue;
       }
       }

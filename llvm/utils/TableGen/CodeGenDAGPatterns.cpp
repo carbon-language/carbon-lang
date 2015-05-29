@@ -3798,13 +3798,11 @@ void CodeGenDAGPatterns::GenerateVariants() {
       if (AlreadyExists) continue;
 
       // Otherwise, add it to the list of patterns we have.
-      PatternsToMatch.
-        push_back(PatternToMatch(PatternsToMatch[i].getSrcRecord(),
-                                 PatternsToMatch[i].getPredicates(),
-                                 Variant, PatternsToMatch[i].getDstPattern(),
-                                 PatternsToMatch[i].getDstRegs(),
-                                 PatternsToMatch[i].getAddedComplexity(),
-                                 Record::getNewUID()));
+      PatternsToMatch.emplace_back(
+          PatternsToMatch[i].getSrcRecord(), PatternsToMatch[i].getPredicates(),
+          Variant, PatternsToMatch[i].getDstPattern(),
+          PatternsToMatch[i].getDstRegs(),
+          PatternsToMatch[i].getAddedComplexity(), Record::getNewUID());
     }
 
     DEBUG(errs() << "\n");

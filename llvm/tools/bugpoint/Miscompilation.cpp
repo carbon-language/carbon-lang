@@ -386,10 +386,8 @@ static bool ExtractLoops(BugDriver &BD,
       // that masked the error.  Stop loop extraction now.
 
       std::vector<std::pair<std::string, FunctionType*> > MisCompFunctions;
-      for (unsigned i = 0, e = MiscompiledFunctions.size(); i != e; ++i) {
-        Function *F = MiscompiledFunctions[i];
-        MisCompFunctions.push_back(std::make_pair(F->getName(),
-                                                  F->getFunctionType()));
+      for (Function *F : MiscompiledFunctions) {
+        MisCompFunctions.emplace_back(F->getName(), F->getFunctionType());
       }
 
       if (Linker::LinkModules(ToNotOptimize, ToOptimizeLoopExtracted))
@@ -414,8 +412,7 @@ static bool ExtractLoops(BugDriver &BD,
     for (Module::iterator I = ToOptimizeLoopExtracted->begin(),
            E = ToOptimizeLoopExtracted->end(); I != E; ++I)
       if (!I->isDeclaration())
-        MisCompFunctions.push_back(std::make_pair(I->getName(),
-                                                  I->getFunctionType()));
+        MisCompFunctions.emplace_back(I->getName(), I->getFunctionType());
 
     // Okay, great!  Now we know that we extracted a loop and that loop
     // extraction both didn't break the program, and didn't mask the problem.
@@ -596,8 +593,7 @@ static bool ExtractBlocks(BugDriver &BD,
   for (Module::iterator I = Extracted->begin(), E = Extracted->end();
        I != E; ++I)
     if (!I->isDeclaration())
-      MisCompFunctions.push_back(std::make_pair(I->getName(),
-                                                I->getFunctionType()));
+      MisCompFunctions.emplace_back(I->getName(), I->getFunctionType());
 
   if (Linker::LinkModules(ProgClone, Extracted.get()))
     exit(1);

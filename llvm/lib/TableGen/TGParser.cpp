@@ -1601,7 +1601,7 @@ TGParser::ParseDagArgList(Record *CurRec) {
     // DagArg ::= VARNAME
     if (Lex.getCode() == tgtok::VarName) {
       // A missing value is treated like '?'.
-      Result.push_back(std::make_pair(UnsetInit::get(), Lex.getCurStrVal()));
+      Result.emplace_back(UnsetInit::get(), Lex.getCurStrVal());
       Lex.Lex();
     } else {
       // DagArg ::= Value (':' VARNAME)?
@@ -2174,7 +2174,7 @@ std::vector<LetRecord> TGParser::ParseLetList() {
     if (!Val) return std::vector<LetRecord>();
 
     // Now that we have everything, add the record.
-    Result.push_back(LetRecord(Name, Bits, Val, NameLoc));
+    Result.emplace_back(std::move(Name), std::move(Bits), Val, NameLoc);
 
     if (Lex.getCode() != tgtok::comma)
       return Result;

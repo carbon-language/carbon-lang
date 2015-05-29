@@ -438,7 +438,7 @@ int ExecutionEngine::runFunctionAsMain(Function *Fn,
       if (NumArgs > 2) {
         std::vector<std::string> EnvVars;
         for (unsigned i = 0; envp[i]; ++i)
-          EnvVars.push_back(envp[i]);
+          EnvVars.emplace_back(envp[i]);
         // Arg #2 = envp.
         GVArgs.push_back(PTOGV(CEnv.reset(Fn->getContext(), this, EnvVars)));
       }

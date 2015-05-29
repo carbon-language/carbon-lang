@@ -811,7 +811,7 @@ DeleteTriviallyDeadInstructions(SmallVectorImpl<WeakVH> &DeadInsts) {
       if (Instruction *U = dyn_cast<Instruction>(O)) {
         O = nullptr;
         if (U->use_empty())
-          DeadInsts.push_back(U);
+          DeadInsts.emplace_back(U);
       }
 
     I->eraseFromParent();
@@ -2917,7 +2917,7 @@ void LSRInstance::GenerateIVChain(const IVChain &Chain, SCEVExpander &Rewriter,
       IVOper = Builder.CreateTruncOrBitCast(IVOper, OperTy, "lsr.chain");
     }
     Inc.UserInst->replaceUsesOfWith(Inc.IVOperand, IVOper);
-    DeadInsts.push_back(Inc.IVOperand);
+    DeadInsts.emplace_back(Inc.IVOperand);
   }
   // If LSR created a new, wider phi, we may also replace its postinc. We only
   // do this if we also found a wide value for the head of the chain.
@@ -2939,7 +2939,7 @@ void LSRInstance::GenerateIVChain(const IVChain &Chain, SCEVExpander &Rewriter,
         IVOper = Builder.CreatePointerCast(IVSrc, PostIncTy, "lsr.chain");
       }
       Phi->replaceUsesOfWith(PostIncV, IVOper);
-      DeadInsts.push_back(PostIncV);
+      DeadInsts.emplace_back(PostIncV);
     }
   }
 }
@@ -4594,7 +4594,7 @@ Value *LSRInstance::Expand(const LSRFixup &LF,
   // form, update the ICmp's other operand.
   if (LU.Kind == LSRUse::ICmpZero) {
     ICmpInst *CI = cast<ICmpInst>(LF.UserInst);
-    DeadInsts.push_back(CI->getOperand(1));
+    DeadInsts.emplace_back(CI->getOperand(1));
     assert(!F.BaseGV && "ICmp does not support folding a global value and "
                            "a scale at the same time!");
     if (F.Scale == -1) {
@@ -4737,7 +4737,7 @@ void LSRInstance::Rewrite(const LSRFixup &LF,
       LF.UserInst->replaceUsesOfWith(LF.OperandValToReplace, FullV);
   }
 
-  DeadInsts.push_back(LF.OperandValToReplace);
+  DeadInsts.emplace_back(LF.OperandValToReplace);
 }
 
 /// ImplementSolution - Rewrite all the fixup locations with new values,

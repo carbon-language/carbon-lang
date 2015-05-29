@@ -472,7 +472,7 @@ private:
 
   /// Create a new VectorizableTree entry.
   TreeEntry *newTreeEntry(ArrayRef<Value *> VL, bool Vectorized) {
-    VectorizableTree.push_back(TreeEntry());
+    VectorizableTree.emplace_back();
     int idx = VectorizableTree.size() - 1;
     TreeEntry *Last = &VectorizableTree[idx];
     Last->Scalars.insert(Last->Scalars.begin(), VL.begin(), VL.end());

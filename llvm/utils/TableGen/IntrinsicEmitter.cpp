@@ -760,7 +760,7 @@ static void EmitTargetBuiltins(const std::map<std::string, std::string> &BIM,
        E = BIM.end(); I != E; ++I) {
     std::string ResultCode =
     "return " + TargetPrefix + "Intrinsic::" + I->second + ";";
-    Results.push_back(StringMatcher::StringPair(I->first, ResultCode));
+    Results.emplace_back(I->first, ResultCode);
   }
 
   StringMatcher("BuiltinName", Results, OS).Emit();

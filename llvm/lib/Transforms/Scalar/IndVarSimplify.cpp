@@ -1102,7 +1102,7 @@ Instruction *WidenIV::WidenIVUse(NarrowIVDefUse DU, SCEVExpander &Rewriter) {
         IRBuilder<> Builder(WidePhi->getParent()->getFirstInsertionPt());
         Value *Trunc = Builder.CreateTrunc(WidePhi, DU.NarrowDef->getType());
         UsePhi->replaceAllUsesWith(Trunc);
-        DeadInsts.push_back(UsePhi);
+        DeadInsts.emplace_back(UsePhi);
         DEBUG(dbgs() << "INDVARS: Widen lcssa phi " << *UsePhi
               << " to " << *WidePhi << "\n");
       }
@@ -1135,7 +1135,7 @@ Instruction *WidenIV::WidenIVUse(NarrowIVDefUse DU, SCEVExpander &Rewriter) {
             << " replaced by " << *DU.WideDef << "\n");
       ++NumElimExt;
       DU.NarrowUse->replaceAllUsesWith(NewDef);
-      DeadInsts.push_back(DU.NarrowUse);
+      DeadInsts.emplace_back(DU.NarrowUse);
     }
     // Now that the extend is gone, we want to expose it's uses for potential
     // further simplification. We don't need to directly inform SimplifyIVUsers
@@ -1188,7 +1188,7 @@ Instruction *WidenIV::WidenIVUse(NarrowIVDefUse DU, SCEVExpander &Rewriter) {
   if (WideAddRec != SE->getSCEV(WideUse)) {
     DEBUG(dbgs() << "Wide use expression mismatch: " << *WideUse
           << ": " << *SE->getSCEV(WideUse) << " != " << *WideAddRec << "\n");
-    DeadInsts.push_back(WideUse);
+    DeadInsts.emplace_back(WideUse);
     return nullptr;
   }
 
@@ -1285,7 +1285,7 @@ PHINode *WidenIV::CreateWideIV(SCEVExpander &Rewriter) {
 
     // WidenIVUse may have removed the def-use edge.
     if (DU.NarrowDef->use_empty())
-      DeadInsts.push_back(DU.NarrowDef);
+      DeadInsts.emplace_back(DU.NarrowDef);
   }
   return WidePhi;
 }

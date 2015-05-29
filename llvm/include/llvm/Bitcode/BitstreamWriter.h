@@ -215,7 +215,7 @@ public:
 
     // Push the outer block's abbrev set onto the stack, start out with an
     // empty abbrev set.
-    BlockScope.push_back(Block(OldCodeSize, BlockSizeWordIndex));
+    BlockScope.emplace_back(OldCodeSize, BlockSizeWordIndex);
     BlockScope.back().PrevAbbrevs.swap(CurAbbrevs);
 
     // If there is a blockinfo for this BlockID, add all the predefined abbrevs
@@ -503,7 +503,7 @@ private:
       return *BI;
 
     // Otherwise, add a new record.
-    BlockInfoRecords.push_back(BlockInfo());
+    BlockInfoRecords.emplace_back();
     BlockInfoRecords.back().BlockID = BlockID;
     return BlockInfoRecords.back();
   }

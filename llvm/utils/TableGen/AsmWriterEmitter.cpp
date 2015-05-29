@@ -1105,9 +1105,8 @@ AsmWriterEmitter::AsmWriterEmitter(RecordKeeper &R) : Records(R), Target(R) {
   Record *AsmWriter = Target.getAsmWriter();
   for (const CodeGenInstruction *I : Target.instructions())
     if (!I->AsmString.empty() && I->TheDef->getName() != "PHI")
-      Instructions.push_back(
-          AsmWriterInst(*I, AsmWriter->getValueAsInt("Variant"),
-                        AsmWriter->getValueAsInt("PassSubtarget")));
+      Instructions.emplace_back(*I, AsmWriter->getValueAsInt("Variant"),
+                                AsmWriter->getValueAsInt("PassSubtarget"));
 
   // Get the instruction numbering.
   NumberedInstructions = &Target.getInstructionsByEnumValue();
