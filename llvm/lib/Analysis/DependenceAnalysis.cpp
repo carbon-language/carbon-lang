@@ -779,23 +779,56 @@ void DependenceAnalysis::collectCommonLoops(const SCEV *Expression,
   }
 }
 
-void DependenceAnalysis::unifySubscriptType(Subscript *Pair) {
-  const SCEV *Src = Pair->Src;
-  const SCEV *Dst = Pair->Dst;
-  IntegerType *SrcTy = dyn_cast<IntegerType>(Src->getType());
-  IntegerType *DstTy = dyn_cast<IntegerType>(Dst->getType());
-  if (SrcTy == nullptr || DstTy == nullptr) {
-    assert(SrcTy == DstTy && "This function only unify integer types and "
-                             "expect Src and Dst share the same type "
-                             "otherwise.");
-    return;
+void DependenceAnalysis::unifySubscriptType(ArrayRef<Subscript *> Pairs) {
+
+  unsigned widestWidthSeen = 0;
+  Type *widestType;
+
+  // Go through each pair and find the widest bit to which we need
+  // to extend all of them.
+  for (unsigned i = 0; i < Pairs.size(); i++) {
+    const SCEV *Src = Pairs[i]->Src;
+    const SCEV *Dst = Pairs[i]->Dst;
+    IntegerType *SrcTy = dyn_cast<IntegerType>(Src->getType());
+    IntegerType *DstTy = dyn_cast<IntegerType>(Dst->getType());
+    if (SrcTy == nullptr || DstTy == nullptr) {
+      assert(SrcTy == DstTy && "This function only unify integer types and "
+             "expect Src and Dst share the same type "
+             "otherwise.");
+      continue;
+    }
+    if (SrcTy->getBitWidth() > widestWidthSeen) {
+      widestWidthSeen = SrcTy->getBitWidth();
+      widestType = SrcTy;
+    }
+    if (DstTy->getBitWidth() > widestWidthSeen) {
+      widestWidthSeen = DstTy->getBitWidth();
+      widestType = DstTy;
+    }
   }
-  if (SrcTy->getBitWidth() > DstTy->getBitWidth()) {
-    // Sign-extend Dst to typeof(Src) if typeof(Src) is wider than typeof(Dst).
-    Pair->Dst = SE->getSignExtendExpr(Dst, SrcTy);
-  } else if (SrcTy->getBitWidth() < DstTy->getBitWidth()) {
-    // Sign-extend Src to typeof(Dst) if typeof(Dst) is wider than typeof(Src).
-    Pair->Src = SE->getSignExtendExpr(Src, DstTy);
+
+
+  assert(widestWidthSeen > 0);
+
+  // Now extend each pair to the widest seen.
+  for (unsigned i = 0; i < Pairs.size(); i++) {
+    const SCEV *Src = Pairs[i]->Src;
+    const SCEV *Dst = Pairs[i]->Dst;
+    IntegerType *SrcTy = dyn_cast<IntegerType>(Src->getType());
+    IntegerType *DstTy = dyn_cast<IntegerType>(Dst->getType());
+    if (SrcTy == nullptr || DstTy == nullptr) {
+      assert(SrcTy == DstTy && "This function only unify integer types and "
+             "expect Src and Dst share the same type "
+             "otherwise.");
+      continue;
+    }
+    if (SrcTy->getBitWidth() < widestWidthSeen)
+      // Sign-extend Src to widestType
+      Pairs[i]->Src = SE->getSignExtendExpr(Src, widestType);
+    if (DstTy->getBitWidth() < widestWidthSeen) {
+      // Sign-extend Dst to widestType
+      Pairs[i]->Dst = SE->getSignExtendExpr(Dst, widestType);
+    }
   }
 }
 
@@ -2937,7 +2970,7 @@ const SCEV *DependenceAnalysis::getUpperBound(BoundInfo *Bound) const {
 // return the coefficient (the step)
 // corresponding to the specified loop.
 // If there isn't one, return 0.
-// For example, given a*i + b*j + c*k, zeroing the coefficient
+// For example, given a*i + b*j + c*k, finding the coefficient
 // corresponding to the j loop would yield b.
 const SCEV *DependenceAnalysis::findCoefficient(const SCEV *Expr,
                                                 const Loop *TargetLoop)  const {
@@ -3574,13 +3607,16 @@ DependenceAnalysis::depends(Instruction *Src, Instruction *Dst,
       SmallBitVector Sivs(Pairs);
       SmallBitVector Mivs(Pairs);
       SmallBitVector ConstrainedLevels(MaxLevels + 1);
+      SmallVector<Subscript *, 4> PairsInGroup;
       for (int SJ = Group.find_first(); SJ >= 0; SJ = Group.find_next(SJ)) {
         DEBUG(dbgs() << SJ << " ");
         if (Pair[SJ].Classification == Subscript::SIV)
           Sivs.set(SJ);
         else
           Mivs.set(SJ);
+        PairsInGroup.push_back(&Pair[SJ]);
       }
+      unifySubscriptType(PairsInGroup);
       DEBUG(dbgs() << "}\n");
       while (Sivs.any()) {
         bool Changed = false;

@@ -41,6 +41,7 @@
 #define LLVM_ANALYSIS_DEPENDENCEANALYSIS_H
 
 #include "llvm/ADT/SmallBitVector.h"
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/Pass.h"
 
@@ -520,11 +521,11 @@ namespace llvm {
     /// in LoopNest.
     bool isLoopInvariant(const SCEV *Expression, const Loop *LoopNest) const;
 
-    /// Makes sure both subscripts (i.e. Pair->Src and Pair->Dst) share the same
-    /// integer type by sign-extending one of them when necessary.
+    /// Makes sure all subscript pairs share the same integer type by 
+    /// sign-extending as necessary.
     /// Sign-extending a subscript is safe because getelementptr assumes the
-    /// array subscripts are signed.
-    void unifySubscriptType(Subscript *Pair);
+    /// array subscripts are signed. 
+    void unifySubscriptType(ArrayRef<Subscript *> Pairs);
 
     /// removeMatchingExtensions - Examines a subscript pair.
     /// If the source and destination are identically sign (or zero)
