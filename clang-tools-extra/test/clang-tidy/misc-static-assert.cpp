@@ -10,6 +10,8 @@ void abort() {}
   abort()
 #endif
 
+void print(...);
+
 #define ZERO_MACRO 0
 
 #define False false
@@ -125,6 +127,15 @@ int main() {
 
   assert(strlen("12345") == 5);
   // CHECK-FIXES: {{^  }}assert(strlen("12345") == 5);
+
+#define assert(e) (__builtin_expect(!(e), 0) ? print (#e, __FILE__, __LINE__) : (void)0)
+  assert(false);
+  // CHECK-FIXES: {{^  }}assert(false);
+
+  assert(10 == 5 + 5);
+  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: found assert() that could be
+  // CHECK-FIXES: {{^  }}static_assert(10 == 5 + 5, "");
+#undef assert
 
   return 0;
 }

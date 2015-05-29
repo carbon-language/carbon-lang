@@ -1,4 +1,4 @@
-// RUN: $(dirname %s)/check_clang_tidy.sh %s misc-assert-side-effect %t -config="{CheckOptions: [{key: misc-assert-side-effect.CheckFunctionCalls, value: 1}, {key: misc-assert-side-effect.AssertMacros, value: 'assert,my_assert'}]}" -- -fexceptions
+// RUN: $(dirname %s)/check_clang_tidy.sh %s misc-assert-side-effect %t -config="{CheckOptions: [{key: misc-assert-side-effect.CheckFunctionCalls, value: 1}, {key: misc-assert-side-effect.AssertMacros, value: 'assert,assert2,my_assert'}]}" -- -fexceptions
 // REQUIRES: shell
 
 //===--- assert definition block ------------------------------------------===//
@@ -11,6 +11,10 @@ int abort() { return 0; }
   if (!(x))                                                                    \
   (void)abort()
 #endif
+
+void print(...);
+#define assert2(e) (__builtin_expect(!(e), 0) ?                                \
+                       print (#e, __FILE__, __LINE__) : (void)0)
 
 #ifdef NDEBUG
 #define my_assert(x) 1
@@ -87,6 +91,8 @@ int main() {
 
   assert((throw 1, false));
   // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: found assert() with side effect
+
+  assert2(1 == 2 - 1);
 
   return 0;
 }

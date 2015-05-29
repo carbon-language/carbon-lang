@@ -55,9 +55,13 @@ AST_MATCHER_P(Expr, hasSideEffect, bool, CheckFunctionCalls) {
 
   if (const auto *CExpr = dyn_cast<CallExpr>(E)) {
     bool Result = CheckFunctionCalls;
-    if (const auto *FuncDecl = CExpr->getDirectCallee())
-      if (const auto *MethodDecl = dyn_cast<CXXMethodDecl>(FuncDecl))
+    if (const auto *FuncDecl = CExpr->getDirectCallee()) {
+      if (FuncDecl->getDeclName().isIdentifier() &&
+          FuncDecl->getName() == "__builtin_expect") // exceptions come here
+        Result = false;
+      else if (const auto *MethodDecl = dyn_cast<CXXMethodDecl>(FuncDecl))
         Result &= !MethodDecl->isConst();
+    }
     return Result;
   }
 
