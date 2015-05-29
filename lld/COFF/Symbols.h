@@ -24,6 +24,7 @@ namespace coff {
 
 using llvm::object::Archive;
 using llvm::object::COFFSymbolRef;
+using llvm::object::coff_import_header;
 
 class ArchiveFile;
 class InputFile;
@@ -158,9 +159,10 @@ private:
 // table in an output. The former has "__imp_" prefix.
 class DefinedImportData : public Defined {
 public:
-  DefinedImportData(StringRef D, StringRef ImportName, StringRef ExportName)
+  DefinedImportData(StringRef D, StringRef ImportName, StringRef ExportName,
+                    const coff_import_header *H)
       : Defined(DefinedImportDataKind, ImportName), DLLName(D),
-        ExpName(ExportName) {}
+        ExpName(ExportName), Hdr(H) {}
 
   static bool classof(const SymbolBody *S) {
     return S->kind() == DefinedImportDataKind;
@@ -171,10 +173,12 @@ public:
   StringRef getDLLName() { return DLLName; }
   StringRef getExportName() { return ExpName; }
   void setLocation(Chunk *AddressTable) { Location = AddressTable; }
+  uint16_t getOrdinal() { return Hdr->OrdinalHint; }
 
 private:
   StringRef DLLName;
   StringRef ExpName;
+  const coff_import_header *Hdr;
   Chunk *Location = nullptr;
 };
 

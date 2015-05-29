@@ -172,11 +172,11 @@ void ImportThunkChunk::applyRelocations(uint8_t *Buf) {
   write32le(Buf + FileOff + 2, Operand);
 }
 
-HintNameChunk::HintNameChunk(StringRef N)
-    : Name(N), Size(RoundUpToAlignment(Name.size() + 4, 2)) {}
+HintNameChunk::HintNameChunk(StringRef N, uint16_t H)
+    : Name(N), Hint(H), Size(RoundUpToAlignment(Name.size() + 4, 2)) {}
 
 void HintNameChunk::writeTo(uint8_t *Buf) {
-  // The first two bytes is Hint/Name field.
+  write16le(Buf + FileOff, Hint);
   memcpy(Buf + FileOff + 2, Name.data(), Name.size());
 }
 
@@ -196,7 +196,8 @@ ImportTable::ImportTable(StringRef N,
   DLLName = new StringChunk(N);
   DirTab = new DirectoryChunk(DLLName);
   for (DefinedImportData *S : Symbols)
-    HintNameTables.push_back(new HintNameChunk(S->getExportName()));
+    HintNameTables.push_back(
+        new HintNameChunk(S->getExportName(), S->getOrdinal()));
 
   for (HintNameChunk *H : HintNameTables) {
     LookupTables.push_back(new LookupChunk(H));

@@ -23,5 +23,5 @@ IMPORT-NEXT:   Name: std64.dll
 IMPORT-NEXT:   ImportLookupTableRVA: 0x3028
 IMPORT-NEXT:   ImportAddressTableRVA: 0x3040
 IMPORT-NEXT:   Symbol: ExitProcess (0)
-IMPORT-NEXT:   Symbol: MessageBoxA (0)
+IMPORT-NEXT:   Symbol: MessageBoxA (1)
 IMPORT-NEXT: }

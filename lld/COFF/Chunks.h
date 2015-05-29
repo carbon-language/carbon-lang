@@ -194,12 +194,13 @@ private:
 // A chunk for the import descriptor table.
 class HintNameChunk : public Chunk {
 public:
-  explicit HintNameChunk(StringRef Name);
+  HintNameChunk(StringRef Name, uint16_t Hint);
   size_t getSize() const override { return Size; }
   void writeTo(uint8_t *Buf) override;
 
 private:
   StringRef Name;
+  uint16_t Hint;
   size_t Size;
 };
 
