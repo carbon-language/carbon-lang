@@ -43,7 +43,7 @@ void MCExpr::print(raw_ostream &OS) const {
     const MCSymbol &Sym = SRE.getSymbol();
     // Parenthesize names that start with $ so that they don't look like
     // absolute names.
-    bool UseParens = Sym.getName()[0] == '$';
+    bool UseParens = !Sym.getName().empty() && Sym.getName()[0] == '$';
     if (UseParens)
       OS << '(' << Sym << ')';
     else
