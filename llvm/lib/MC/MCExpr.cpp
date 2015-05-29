@@ -471,10 +471,7 @@ static void AttemptToFoldSymbolOffsetDifference(
   if (!Asm->getWriter().IsSymbolRefDifferenceFullyResolved(*Asm, A, B, InSet))
     return;
 
-  const MCSymbol &AD = SA.getData();
-  const MCSymbol &BD = SB.getData();
-
-  if (AD.getFragment() == BD.getFragment()) {
+  if (SA.getFragment() == SB.getFragment()) {
     Addend += (SA.getOffset() - SB.getOffset());
 
     // Pointers to Thumb symbols need to have their low-bit set to allow
@@ -491,8 +488,8 @@ static void AttemptToFoldSymbolOffsetDifference(
   if (!Layout)
     return;
 
-  const MCSection &SecA = *AD.getFragment()->getParent();
-  const MCSection &SecB = *BD.getFragment()->getParent();
+  const MCSection &SecA = *SA.getFragment()->getParent();
+  const MCSection &SecB = *SB.getFragment()->getParent();
 
   if ((&SecA != &SecB) && !Addrs)
     return;

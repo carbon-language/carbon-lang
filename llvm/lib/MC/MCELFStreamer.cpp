@@ -214,7 +214,6 @@ bool MCELFStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
   // important side effect of calling registerSymbol here is to register
   // the symbol with the assembler.
   getAssembler().registerSymbol(*Symbol);
-  MCSymbol &SD = Symbol->getData();
 
   // The implementation of symbol attributes is designed to match 'as', but it
   // leaves much to desired. It doesn't really make sense to arbitrarily add and
@@ -241,26 +240,26 @@ bool MCELFStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
     MCELF::SetType(
         *Symbol, CombineSymbolTypes(MCELF::GetType(*Symbol), ELF::STT_OBJECT));
     MCELF::SetBinding(*Symbol, ELF::STB_GNU_UNIQUE);
-    SD.setExternal(true);
+    Symbol->setExternal(true);
     BindingExplicitlySet.insert(Symbol);
     break;
 
   case MCSA_Global:
     MCELF::SetBinding(*Symbol, ELF::STB_GLOBAL);
-    SD.setExternal(true);
+    Symbol->setExternal(true);
     BindingExplicitlySet.insert(Symbol);
     break;
 
   case MCSA_WeakReference:
   case MCSA_Weak:
     MCELF::SetBinding(*Symbol, ELF::STB_WEAK);
-    SD.setExternal(true);
+    Symbol->setExternal(true);
     BindingExplicitlySet.insert(Symbol);
     break;
 
   case MCSA_Local:
     MCELF::SetBinding(*Symbol, ELF::STB_LOCAL);
-    SD.setExternal(false);
+    Symbol->setExternal(false);
     BindingExplicitlySet.insert(Symbol);
     break;
 
@@ -314,11 +313,10 @@ bool MCELFStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
 void MCELFStreamer::EmitCommonSymbol(MCSymbol *Symbol, uint64_t Size,
                                      unsigned ByteAlignment) {
   getAssembler().registerSymbol(*Symbol);
-  MCSymbol &SD = Symbol->getData();
 
   if (!BindingExplicitlySet.count(Symbol)) {
     MCELF::SetBinding(*Symbol, ELF::STB_GLOBAL);
-    SD.setExternal(true);
+    Symbol->setExternal(true);
   }
 
   MCELF::SetType(*Symbol, ELF::STT_OBJECT);
@@ -346,9 +344,8 @@ void MCELFStreamer::EmitLocalCommonSymbol(MCSymbol *Symbol, uint64_t Size,
                                           unsigned ByteAlignment) {
   // FIXME: Should this be caught and done earlier?
   getAssembler().registerSymbol(*Symbol);
-  MCSymbol &SD = Symbol->getData();
   MCELF::SetBinding(*Symbol, ELF::STB_LOCAL);
-  SD.setExternal(false);
+  Symbol->setExternal(false);
   BindingExplicitlySet.insert(Symbol);
   EmitCommonSymbol(Symbol, Size, ByteAlignment);
 }
@@ -648,7 +645,7 @@ void MCELFStreamer::Flush() {
     new MCAlignFragment(ByteAlignment, 0, 1, ByteAlignment, &Section);
 
     MCFragment *F = new MCFillFragment(0, 0, Size, &Section);
-    Symbol.getData().setFragment(F);
+    Symbol.setFragment(F);
 
     // Update the maximum alignment of the section if necessary.
     if (ByteAlignment > Section.getAlignment())

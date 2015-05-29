@@ -117,8 +117,6 @@ public:
 
   bool hasData() const { return HasData; }
 
-  MCSymbol &getData() const { return *const_cast<MCSymbol *>(this); }
-
   /// Initialize symbol data.
   ///
   /// Nothing really to do here, but this is enables an assertion that \a

@@ -97,17 +97,16 @@ bool MCWinCOFFStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
          "Got non-COFF section in the COFF backend!");
 
   getAssembler().registerSymbol(*Symbol);
-  MCSymbol &SD = Symbol->getData();
 
   switch (Attribute) {
   default: return false;
   case MCSA_WeakReference:
   case MCSA_Weak:
     Symbol->modifyFlags(COFF::SF_WeakExternal, COFF::SF_WeakExternal);
-    SD.setExternal(true);
+    Symbol->setExternal(true);
     break;
   case MCSA_Global:
-    SD.setExternal(true);
+    Symbol->setExternal(true);
     break;
   }
 
@@ -197,8 +196,7 @@ void MCWinCOFFStreamer::EmitCommonSymbol(MCSymbol *Symbol, uint64_t Size,
   AssignSection(Symbol, nullptr);
 
   getAssembler().registerSymbol(*Symbol);
-  MCSymbol &SD = Symbol->getData();
-  SD.setExternal(true);
+  Symbol->setExternal(true);
   Symbol->setCommon(Size, ByteAlignment);
 
   if (!T.isKnownWindowsMSVCEnvironment() && ByteAlignment > 1) {
@@ -227,8 +225,7 @@ void MCWinCOFFStreamer::EmitLocalCommonSymbol(MCSymbol *Symbol, uint64_t Size,
     Section->setAlignment(ByteAlignment);
 
   getAssembler().registerSymbol(*Symbol);
-  MCSymbol &SD = Symbol->getData();
-  SD.setExternal(false);
+  Symbol->setExternal(false);
 
   AssignSection(Symbol, Section);
 
@@ -238,7 +235,7 @@ void MCWinCOFFStreamer::EmitLocalCommonSymbol(MCSymbol *Symbol, uint64_t Size,
 
   MCFillFragment *Fragment = new MCFillFragment(
       /*Value=*/0, /*ValueSize=*/0, Size, Section);
-  SD.setFragment(Fragment);
+  Symbol->setFragment(Fragment);
 }
 
 void MCWinCOFFStreamer::EmitZerofill(MCSection *Section, MCSymbol *Symbol,

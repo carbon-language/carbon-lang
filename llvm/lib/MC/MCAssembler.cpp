@@ -120,14 +120,13 @@ uint64_t MCAsmLayout::getFragmentOffset(const MCFragment *F) const {
 // Simple getSymbolOffset helper for the non-varibale case.
 static bool getLabelOffset(const MCAsmLayout &Layout, const MCSymbol &S,
                            bool ReportError, uint64_t &Val) {
-  const MCSymbol &SD = S.getData();
-  if (!SD.getFragment()) {
+  if (!S.getFragment()) {
     if (ReportError)
       report_fatal_error("unable to evaluate offset to undefined symbol '" +
                          S.getName() + "'");
     return false;
   }
-  Val = Layout.getFragmentOffset(SD.getFragment()) + S.getOffset();
+  Val = Layout.getFragmentOffset(S.getFragment()) + S.getOffset();
   return true;
 }
 
@@ -377,17 +376,17 @@ const MCSymbol *MCAssembler::getAtom(const MCSymbol &S) const {
     return &S;
 
   // Absolute and undefined symbols have no defining atom.
-  if (!S.getData().getFragment())
+  if (!S.getFragment())
     return nullptr;
 
   // Non-linker visible symbols in sections which can't be atomized have no
   // defining atom.
   if (!getContext().getAsmInfo()->isSectionAtomizableBySymbols(
-          *S.getData().getFragment()->getParent()))
+          *S.getFragment()->getParent()))
     return nullptr;
 
   // Otherwise, return the atom for the containing fragment.
-  return S.getData().getFragment()->getAtom();
+  return S.getFragment()->getAtom();
 }
 
 bool MCAssembler::evaluateFixup(const MCAsmLayout &Layout,
@@ -1200,7 +1199,6 @@ void MCAssembler::dump() {
     OS << "(";
     it->dump();
     OS << ", Index:" << it->getIndex() << ", ";
-    it->getData().dump();
     OS << ")";
   }
   OS << "]>\n";

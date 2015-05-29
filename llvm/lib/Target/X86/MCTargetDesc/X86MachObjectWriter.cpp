@@ -142,13 +142,11 @@ void X86MachObjectWriter::RecordX86_64Relocation(
     const MCSymbol *A = &Target.getSymA()->getSymbol();
     if (A->isTemporary())
       A = &Writer->findAliasedSymbol(*A);
-    const MCSymbol &A_SD = A->getData();
     const MCSymbol *A_Base = Asm.getAtom(*A);
 
     const MCSymbol *B = &Target.getSymB()->getSymbol();
     if (B->isTemporary())
       B = &Writer->findAliasedSymbol(*B);
-    const MCSymbol &B_SD = B->getData();
     const MCSymbol *B_Base = Asm.getAtom(*B);
 
     // Neither symbol can be modified.
@@ -190,7 +188,7 @@ void X86MachObjectWriter::RecordX86_64Relocation(
              (!B_Base ? 0 : Writer->getSymbolAddress(*B_Base, Layout));
 
     if (!A_Base)
-      Index = A_SD.getFragment()->getParent()->getOrdinal() + 1;
+      Index = A->getFragment()->getParent()->getOrdinal() + 1;
     Type = MachO::X86_64_RELOC_UNSIGNED;
 
     MachO::any_relocation_info MRE;
@@ -202,7 +200,7 @@ void X86MachObjectWriter::RecordX86_64Relocation(
     if (B_Base)
       RelSymbol = B_Base;
     else
-      Index = B_SD.getFragment()->getParent()->getOrdinal() + 1;
+      Index = B->getFragment()->getParent()->getOrdinal() + 1;
     Type = MachO::X86_64_RELOC_SUBTRACTOR;
   } else {
     const MCSymbol *Symbol = &Target.getSymA()->getSymbol();
@@ -211,7 +209,6 @@ void X86MachObjectWriter::RecordX86_64Relocation(
       if (!Asm.getContext().getAsmInfo()->isSectionAtomizableBySymbols(Sec))
         Asm.addLocalUsedInReloc(*Symbol);
     }
-    const MCSymbol &SD = Symbol->getData();
     RelSymbol = Asm.getAtom(*Symbol);
 
     // Relocations inside debug sections always use local relocations when
@@ -235,7 +232,7 @@ void X86MachObjectWriter::RecordX86_64Relocation(
                  Layout.getSymbolOffset(*RelSymbol);
     } else if (Symbol->isInSection() && !Symbol->isVariable()) {
       // The index is the section ordinal (1-based).
-      Index = SD.getFragment()->getParent()->getOrdinal() + 1;
+      Index = Symbol->getFragment()->getParent()->getOrdinal() + 1;
       Value += Writer->getSymbolAddress(*Symbol, Layout);
 
       if (IsPCRel)
@@ -354,23 +351,21 @@ bool X86MachObjectWriter::RecordScatteredRelocation(MachObjectWriter *Writer,
 
   // See <reloc.h>.
   const MCSymbol *A = &Target.getSymA()->getSymbol();
-  const MCSymbol *A_SD = &A->getData();
 
-  if (!A_SD->getFragment())
+  if (!A->getFragment())
     report_fatal_error("symbol '" + A->getName() +
                        "' can not be undefined in a subtraction expression",
                        false);
 
   uint32_t Value = Writer->getSymbolAddress(*A, Layout);
-  uint64_t SecAddr =
-      Writer->getSectionAddress(A_SD->getFragment()->getParent());
+  uint64_t SecAddr = Writer->getSectionAddress(A->getFragment()->getParent());
   FixedValue += SecAddr;
   uint32_t Value2 = 0;
 
   if (const MCSymbolRefExpr *B = Target.getSymB()) {
-    const MCSymbol *B_SD = &B->getSymbol().getData();
+    const MCSymbol *SB = &B->getSymbol();
 
-    if (!B_SD->getFragment())
+    if (!SB->getFragment())
       report_fatal_error("symbol '" + B->getSymbol().getName() +
                          "' can not be undefined in a subtraction expression",
                          false);
@@ -380,10 +375,10 @@ bool X86MachObjectWriter::RecordScatteredRelocation(MachObjectWriter *Writer,
     // Note that there is no longer any semantic difference between these two
     // relocation types from the linkers point of view, this is done solely for
     // pedantic compatibility with 'as'.
-    Type = A_SD->isExternal() ? (unsigned)MachO::GENERIC_RELOC_SECTDIFF :
-      (unsigned)MachO::GENERIC_RELOC_LOCAL_SECTDIFF;
+    Type = A->isExternal() ? (unsigned)MachO::GENERIC_RELOC_SECTDIFF
+                           : (unsigned)MachO::GENERIC_RELOC_LOCAL_SECTDIFF;
     Value2 = Writer->getSymbolAddress(B->getSymbol(), Layout);
-    FixedValue -= Writer->getSectionAddress(B_SD->getFragment()->getParent());
+    FixedValue -= Writer->getSectionAddress(SB->getFragment()->getParent());
   }
 
   // Relocations are written out in reverse order, so the PAIR comes first.

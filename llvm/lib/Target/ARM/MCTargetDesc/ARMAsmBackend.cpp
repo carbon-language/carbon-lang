@@ -601,8 +601,7 @@ void ARMAsmBackend::processFixupValue(const MCAssembler &Asm,
   // the offset when the destination has the same MCFragment.
   if (A && (unsigned)Fixup.getKind() == ARM::fixup_arm_thumb_bl) {
     const MCSymbol &Sym = A->getSymbol();
-    const MCSymbol &SymData = Sym.getData();
-    IsResolved = (SymData.getFragment() == DF);
+    IsResolved = (Sym.getFragment() == DF);
   }
   // We must always generate a relocation for BL/BLX instructions if we have
   // a symbol to reference, as the linker relies on knowing the destination

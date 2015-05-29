@@ -359,8 +359,7 @@ void ELFObjectWriter::writeHeader(const MCAssembler &Asm) {
 
 uint64_t ELFObjectWriter::SymbolValue(const MCSymbol &Sym,
                                       const MCAsmLayout &Layout) {
-  MCSymbol &Data = Sym.getData();
-  if (Sym.isCommon() && Data.isExternal())
+  if (Sym.isCommon() && Sym.isExternal())
     return Sym.getCommonAlignment();
 
   uint64_t Res;
@@ -379,8 +378,6 @@ void ELFObjectWriter::ExecutePostLayoutBinding(MCAssembler &Asm,
   // versions declared with @@@ to be renamed.
 
   for (const MCSymbol &Alias : Asm.symbols()) {
-    MCSymbol &OriginalData = Alias.getData();
-
     // Not an alias.
     if (!Alias.isVariable())
       continue;
@@ -388,7 +385,6 @@ void ELFObjectWriter::ExecutePostLayoutBinding(MCAssembler &Asm,
     if (!Ref)
       continue;
     const MCSymbol &Symbol = Ref->getSymbol();
-    MCSymbol &SD = Symbol.getData();
 
     StringRef AliasName = Alias.getName();
     size_t Pos = AliasName.find('@');
@@ -397,7 +393,7 @@ void ELFObjectWriter::ExecutePostLayoutBinding(MCAssembler &Asm,
 
     // Aliases defined with .symvar copy the binding from the symbol they alias.
     // This is the first place we are able to copy this information.
-    OriginalData.setExternal(SD.isExternal());
+    Alias.setExternal(Symbol.isExternal());
     MCELF::SetBinding(Alias, MCELF::GetBinding(Symbol));
 
     StringRef Rest = AliasName.substr(Pos);
@@ -451,33 +447,28 @@ static uint8_t mergeTypeForSet(uint8_t origType, uint8_t newType) {
 void ELFObjectWriter::writeSymbol(SymbolTableWriter &Writer,
                                   uint32_t StringIndex, ELFSymbolData &MSD,
                                   const MCAsmLayout &Layout) {
-#ifndef NDEBUG
-  MCSymbol &OrigData = MSD.Symbol->getData();
-  assert((!OrigData.getFragment() ||
-          (OrigData.getFragment()->getParent() == &MSD.Symbol->getSection())) &&
+  const MCSymbol &Symbol = *MSD.Symbol;
+  assert((!Symbol.getFragment() ||
+          (Symbol.getFragment()->getParent() == &Symbol.getSection())) &&
          "The symbol's section doesn't match the fragment's symbol");
-#endif
-  const MCSymbol *Base = Layout.getBaseSymbol(*MSD.Symbol);
+  const MCSymbol *Base = Layout.getBaseSymbol(Symbol);
 
   // This has to be in sync with when computeSymbolTable uses SHN_ABS or
   // SHN_COMMON.
-  bool IsReserved = !Base || MSD.Symbol->isCommon();
+  bool IsReserved = !Base || Symbol.isCommon();
 
   // Binding and Type share the same byte as upper and lower nibbles
-  uint8_t Binding = MCELF::GetBinding(*MSD.Symbol);
-  uint8_t Type = MCELF::GetType(*MSD.Symbol);
-  MCSymbol *BaseSD = nullptr;
+  uint8_t Binding = MCELF::GetBinding(Symbol);
+  uint8_t Type = MCELF::GetType(Symbol);
   if (Base) {
-    BaseSD = &Base->getData();
     Type = mergeTypeForSet(Type, MCELF::GetType(*Base));
   }
   uint8_t Info = (Binding << ELF_STB_Shift) | (Type << ELF_STT_Shift);
 
   // Other and Visibility share the same byte with Visibility using the lower
   // 2 bits
-  uint8_t Visibility = MCELF::GetVisibility(*MSD.Symbol);
-  uint8_t Other = MCELF::getOther(*MSD.Symbol)
-                  << (ELF_STO_Shift - ELF_STV_Shift);
+  uint8_t Visibility = MCELF::GetVisibility(Symbol);
+  uint8_t Other = MCELF::getOther(Symbol) << (ELF_STO_Shift - ELF_STV_Shift);
   Other |= Visibility;
 
   uint64_t Value = SymbolValue(*MSD.Symbol, Layout);
@@ -769,8 +760,7 @@ bool ELFObjectWriter::isInSymtab(const MCAsmLayout &Layout,
 
 bool ELFObjectWriter::isLocal(const MCSymbol &Symbol, bool IsUsedInReloc,
                               bool IsSignature) {
-  const MCSymbol &Data = Symbol.getData();
-  if (Data.isExternal())
+  if (Symbol.isExternal())
     return false;
 
   if (Symbol.isDefined())

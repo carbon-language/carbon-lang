@@ -567,10 +567,9 @@ private:
                                      Twine(MappingSymbolCounter++));
 
     getAssembler().registerSymbol(*Symbol);
-    MCSymbol &SD = Symbol->getData();
     MCELF::SetType(*Symbol, ELF::STT_NOTYPE);
     MCELF::SetBinding(*Symbol, ELF::STB_LOCAL);
-    SD.setExternal(false);
+    Symbol->setExternal(false);
     AssignSection(Symbol, getCurrentSection().first);
 
     const MCExpr *Value = MCSymbolRefExpr::Create(Start, getContext());

@@ -152,23 +152,21 @@ RecordARMScatteredHalfRelocation(MachObjectWriter *Writer,
 
   // See <reloc.h>.
   const MCSymbol *A = &Target.getSymA()->getSymbol();
-  const MCSymbol *A_SD = &A->getData();
 
-  if (!A_SD->getFragment())
+  if (!A->getFragment())
     Asm.getContext().reportFatalError(Fixup.getLoc(),
                        "symbol '" + A->getName() +
                        "' can not be undefined in a subtraction expression");
 
   uint32_t Value = Writer->getSymbolAddress(*A, Layout);
   uint32_t Value2 = 0;
-  uint64_t SecAddr =
-      Writer->getSectionAddress(A_SD->getFragment()->getParent());
+  uint64_t SecAddr = Writer->getSectionAddress(A->getFragment()->getParent());
   FixedValue += SecAddr;
 
   if (const MCSymbolRefExpr *B = Target.getSymB()) {
-    const MCSymbol *B_SD = &B->getSymbol().getData();
+    const MCSymbol *SB = &B->getSymbol();
 
-    if (!B_SD->getFragment())
+    if (!SB->getFragment())
       Asm.getContext().reportFatalError(Fixup.getLoc(),
                          "symbol '" + B->getSymbol().getName() +
                          "' can not be undefined in a subtraction expression");
@@ -176,7 +174,7 @@ RecordARMScatteredHalfRelocation(MachObjectWriter *Writer,
     // Select the appropriate difference relocation type.
     Type = MachO::ARM_RELOC_HALF_SECTDIFF;
     Value2 = Writer->getSymbolAddress(B->getSymbol(), Layout);
-    FixedValue -= Writer->getSectionAddress(B_SD->getFragment()->getParent());
+    FixedValue -= Writer->getSectionAddress(SB->getFragment()->getParent());
   }
 
   // Relocations are written out in reverse order, so the PAIR comes first.
@@ -255,24 +253,22 @@ void ARMMachObjectWriter::RecordARMScatteredRelocation(MachObjectWriter *Writer,
 
   // See <reloc.h>.
   const MCSymbol *A = &Target.getSymA()->getSymbol();
-  const MCSymbol *A_SD = &A->getData();
 
-  if (!A_SD->getFragment())
+  if (!A->getFragment())
     Asm.getContext().reportFatalError(Fixup.getLoc(),
                        "symbol '" + A->getName() +
                        "' can not be undefined in a subtraction expression");
 
   uint32_t Value = Writer->getSymbolAddress(*A, Layout);
-  uint64_t SecAddr =
-      Writer->getSectionAddress(A_SD->getFragment()->getParent());
+  uint64_t SecAddr = Writer->getSectionAddress(A->getFragment()->getParent());
   FixedValue += SecAddr;
   uint32_t Value2 = 0;
 
   if (const MCSymbolRefExpr *B = Target.getSymB()) {
     assert(Type == MachO::ARM_RELOC_VANILLA && "invalid reloc for 2 symbols");
-    const MCSymbol *B_SD = &B->getSymbol().getData();
+    const MCSymbol *SB = &B->getSymbol();
 
-    if (!B_SD->getFragment())
+    if (!SB->getFragment())
       Asm.getContext().reportFatalError(Fixup.getLoc(),
                          "symbol '" + B->getSymbol().getName() +
                          "' can not be undefined in a subtraction expression");
@@ -280,7 +276,7 @@ void ARMMachObjectWriter::RecordARMScatteredRelocation(MachObjectWriter *Writer,
     // Select the appropriate difference relocation type.
     Type = MachO::ARM_RELOC_SECTDIFF;
     Value2 = Writer->getSymbolAddress(B->getSymbol(), Layout);
-    FixedValue -= Writer->getSectionAddress(B_SD->getFragment()->getParent());
+    FixedValue -= Writer->getSectionAddress(SB->getFragment()->getParent());
   }
 
   // Relocations are written out in reverse order, so the PAIR comes first.

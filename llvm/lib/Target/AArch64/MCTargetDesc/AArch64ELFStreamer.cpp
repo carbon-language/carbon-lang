@@ -165,10 +165,9 @@ private:
         Name + "." + Twine(MappingSymbolCounter++));
 
     getAssembler().registerSymbol(*Symbol);
-    MCSymbol &SD = Symbol->getData();
     MCELF::SetType(*Symbol, ELF::STT_NOTYPE);
     MCELF::SetBinding(*Symbol, ELF::STB_LOCAL);
-    SD.setExternal(false);
+    Symbol->setExternal(false);
     auto Sec = getCurrentSection().first;
     assert(Sec && "need a section");
     Symbol->setSection(*Sec);

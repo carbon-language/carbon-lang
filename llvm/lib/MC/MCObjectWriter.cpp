@@ -30,12 +30,10 @@ bool MCObjectWriter::IsSymbolRefDifferenceFullyResolved(
   if (SA.isUndefined() || SB.isUndefined())
     return false;
 
-  const MCSymbol &DataA = SA.getData();
-  const MCSymbol &DataB = SB.getData();
-  if(!DataA.getFragment() || !DataB.getFragment())
+  if (!SA.getFragment() || !SB.getFragment())
     return false;
 
-  return IsSymbolRefDifferenceFullyResolvedImpl(Asm, SA, *DataB.getFragment(),
+  return IsSymbolRefDifferenceFullyResolvedImpl(Asm, SA, *SB.getFragment(),
                                                 InSet, false);
 }
 

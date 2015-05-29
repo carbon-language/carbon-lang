@@ -173,12 +173,11 @@ void MCMachOStreamer::ChangeSection(MCSection *Section,
 void MCMachOStreamer::EmitEHSymAttributes(const MCSymbol *Symbol,
                                           MCSymbol *EHSymbol) {
   getAssembler().registerSymbol(*Symbol);
-  MCSymbol &SD = Symbol->getData();
-  if (SD.isExternal())
+  if (Symbol->isExternal())
     EmitSymbolAttribute(EHSymbol, MCSA_Global);
   if (Symbol->getFlags() & SF_WeakDefinition)
     EmitSymbolAttribute(EHSymbol, MCSA_WeakDefinition);
-  if (SD.isPrivateExtern())
+  if (Symbol->isPrivateExtern())
     EmitSymbolAttribute(EHSymbol, MCSA_PrivateExtern);
 }
 
@@ -296,7 +295,6 @@ bool MCMachOStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
   // important side effect of calling registerSymbol here is to register
   // the symbol with the assembler.
   getAssembler().registerSymbol(*Symbol);
-  MCSymbol &SD = Symbol->getData();
 
   // The implementation of symbol attributes is designed to match 'as', but it
   // leaves much to desired. It doesn't really make sense to arbitrarily add and
@@ -322,7 +320,7 @@ bool MCMachOStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
     return false;
 
   case MCSA_Global:
-    SD.setExternal(true);
+    Symbol->setExternal(true);
     // This effectively clears the undefined lazy bit, in Darwin 'as', although
     // it isn't very consistent because it implements this as part of symbol
     // lookup.
@@ -351,8 +349,8 @@ bool MCMachOStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
     break;
 
   case MCSA_PrivateExtern:
-    SD.setExternal(true);
-    SD.setPrivateExtern(true);
+    Symbol->setExternal(true);
+    Symbol->setPrivateExtern(true);
     break;
 
   case MCSA_WeakReference:
@@ -391,8 +389,7 @@ void MCMachOStreamer::EmitCommonSymbol(MCSymbol *Symbol, uint64_t Size,
   AssignSection(Symbol, nullptr);
 
   getAssembler().registerSymbol(*Symbol);
-  MCSymbol &SD = Symbol->getData();
-  SD.setExternal(true);
+  Symbol->setExternal(true);
   Symbol->setCommon(Size, ByteAlignment);
 }
 
@@ -417,14 +414,13 @@ void MCMachOStreamer::EmitZerofill(MCSection *Section, MCSymbol *Symbol,
   assert(Symbol->isUndefined() && "Cannot define a symbol twice!");
 
   getAssembler().registerSymbol(*Symbol);
-  MCSymbol &SD = Symbol->getData();
 
   // Emit an align fragment if necessary.
   if (ByteAlignment != 1)
     new MCAlignFragment(ByteAlignment, 0, 0, ByteAlignment, Section);
 
   MCFragment *F = new MCFillFragment(0, 0, Size, Section);
-  SD.setFragment(F);
+  Symbol->setFragment(F);
 
   AssignSection(Symbol, Section);
 
@@ -469,12 +465,11 @@ void MCMachOStreamer::FinishImpl() {
   // defining symbols.
   DenseMap<const MCFragment *, const MCSymbol *> DefiningSymbolMap;
   for (const MCSymbol &Symbol : getAssembler().symbols()) {
-    MCSymbol &SD = Symbol.getData();
-    if (getAssembler().isSymbolLinkerVisible(Symbol) && SD.getFragment()) {
+    if (getAssembler().isSymbolLinkerVisible(Symbol) && Symbol.getFragment()) {
       // An atom defining symbol should never be internal to a fragment.
       assert(Symbol.getOffset() == 0 &&
              "Invalid offset in atom defining symbol!");
-      DefiningSymbolMap[SD.getFragment()] = &Symbol;
+      DefiningSymbolMap[Symbol.getFragment()] = &Symbol;
     }
   }
 

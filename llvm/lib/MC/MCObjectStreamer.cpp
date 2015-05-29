@@ -47,8 +47,7 @@ void MCObjectStreamer::flushPendingLabels(MCFragment *F, uint64_t FOffset) {
       F->setParent(CurSection);
     }
     for (MCSymbol *Sym : PendingLabels) {
-      MCSymbol *SD = &Sym->getData();
-      SD->setFragment(F);
+      Sym->setFragment(F);
       Sym->setOffset(FOffset);
     }
     PendingLabels.clear();
@@ -61,15 +60,13 @@ bool MCObjectStreamer::emitAbsoluteSymbolDiff(const MCSymbol *Hi,
   // Must have symbol data.
   if (!Assembler->hasSymbolData(*Hi) || !Assembler->hasSymbolData(*Lo))
     return false;
-  auto &HiD = Hi->getData();
-  auto &LoD = Lo->getData();
 
   // Must both be assigned to the same (valid) fragment.
-  if (!HiD.getFragment() || HiD.getFragment() != LoD.getFragment())
+  if (!Hi->getFragment() || Hi->getFragment() != Lo->getFragment())
     return false;
 
   // Must be a data fragment.
-  if (!isa<MCDataFragment>(HiD.getFragment()))
+  if (!isa<MCDataFragment>(Hi->getFragment()))
     return false;
 
   assert(Hi->getOffset() >= Lo->getOffset() &&
@@ -164,8 +161,7 @@ void MCObjectStreamer::EmitLabel(MCSymbol *Symbol) {
   MCStreamer::EmitLabel(Symbol);
 
   getAssembler().registerSymbol(*Symbol);
-  MCSymbol &SD = Symbol->getData();
-  assert(!SD.getFragment() && "Unexpected fragment on symbol data!");
+  assert(!Symbol->getFragment() && "Unexpected fragment on symbol data!");
 
   // If there is a current fragment, mark the symbol as pointing into it.
   // Otherwise queue the label and set its fragment pointer when we emit the
@@ -173,7 +169,7 @@ void MCObjectStreamer::EmitLabel(MCSymbol *Symbol) {
   auto *F = dyn_cast_or_null<MCDataFragment>(getCurrentFragment());
   if (F && !(getAssembler().isBundlingEnabled() &&
              getAssembler().getRelaxAll())) {
-    SD.setFragment(F);
+    Symbol->setFragment(F);
     Symbol->setOffset(F->getContents().size());
   } else {
     PendingLabels.push_back(Symbol);

@@ -101,7 +101,7 @@ uint64_t MachObjectWriter::getSymbolAddress(const MCSymbol &S,
     return Address;
   }
 
-  return getSectionAddress(S.getData().getFragment()->getParent()) +
+  return getSectionAddress(S.getFragment()->getParent()) +
          Layout.getSymbolOffset(S);
 }
 
@@ -329,7 +329,7 @@ const MCSymbol &MachObjectWriter::findAliasedSymbol(const MCSymbol &Sym) const {
 void MachObjectWriter::WriteNlist(MachSymbolData &MSD,
                                   const MCAsmLayout &Layout) {
   const MCSymbol *Symbol = MSD.Symbol;
-  MCSymbol &Data = Symbol->getData();
+  const MCSymbol &Data = *Symbol;
   const MCSymbol *AliasedSymbol = &findAliasedSymbol(*Symbol);
   uint8_t SectionIndex = MSD.SectionIndex;
   uint8_t Type = 0;
@@ -554,13 +554,11 @@ void MachObjectWriter::ComputeSymbolTable(
   // match 'as'. Even though it doesn't matter for correctness, this is
   // important for letting us diff .o files.
   for (const MCSymbol &Symbol : Asm.symbols()) {
-    MCSymbol &SD = Symbol.getData();
-
     // Ignore non-linker visible symbols.
     if (!Asm.isSymbolLinkerVisible(Symbol))
       continue;
 
-    if (!SD.isExternal() && !Symbol.isUndefined())
+    if (!Symbol.isExternal() && !Symbol.isUndefined())
       continue;
 
     MachSymbolData MSD;
@@ -582,13 +580,11 @@ void MachObjectWriter::ComputeSymbolTable(
 
   // Now add the data for local symbols.
   for (const MCSymbol &Symbol : Asm.symbols()) {
-    MCSymbol &SD = Symbol.getData();
-
     // Ignore non-linker visible symbols.
     if (!Asm.isSymbolLinkerVisible(Symbol))
       continue;
 
-    if (SD.isExternal() || Symbol.isUndefined())
+    if (Symbol.isExternal() || Symbol.isUndefined())
       continue;
 
     MachSymbolData MSD;
@@ -692,8 +688,7 @@ bool MachObjectWriter::IsSymbolRefDifferenceFullyResolvedImpl(
     bool hasReliableSymbolDifference = isX86_64();
     if (!hasReliableSymbolDifference) {
       if (!SA.isInSection() || &SecA != &SecB ||
-          (!SA.isTemporary() &&
-           FB.getAtom() != SA.getData().getFragment()->getAtom() &&
+          (!SA.isTemporary() && FB.getAtom() != SA.getFragment()->getAtom() &&
            Asm.getSubsectionsViaSymbols()))
         return false;
       return true;
@@ -717,7 +712,7 @@ bool MachObjectWriter::IsSymbolRefDifferenceFullyResolvedImpl(
   if (&SecA != &SecB)
     return false;
 
-  const MCFragment *FA = SA.getData().getFragment();
+  const MCFragment *FA = SA.getFragment();
 
   // Bail if the symbol has no fragment.
   if (!FA)
@@ -968,7 +963,7 @@ void MachObjectWriter::WriteObject(MCAssembler &Asm,
           static_cast<const MCSectionMachO &>(*it->Section);
       if (Section.getType() == MachO::S_NON_LAZY_SYMBOL_POINTERS) {
         // If this symbol is defined and internal, mark it as such.
-        if (it->Symbol->isDefined() && !it->Symbol->getData().isExternal()) {
+        if (it->Symbol->isDefined() && !it->Symbol->isExternal()) {
           uint32_t Flags = MachO::INDIRECT_SYMBOL_LOCAL;
           if (it->Symbol->isAbsolute())
             Flags |= MachO::INDIRECT_SYMBOL_ABS;
