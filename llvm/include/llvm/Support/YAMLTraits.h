@@ -1114,7 +1114,7 @@ private:
 ///
 class Output : public IO {
 public:
-  Output(llvm::raw_ostream &, void *Ctxt=nullptr);
+  Output(llvm::raw_ostream &, void *Ctxt = nullptr, int WrapColumn = 70);
   ~Output() override;
 
   bool outputting() override;
@@ -1170,6 +1170,7 @@ private:
   };
 
   llvm::raw_ostream       &Out;
+  int                      WrapColumn;
   SmallVector<InState, 8>  StateStack;
   int                      Column;
   int                      ColumnAtFlowStart;

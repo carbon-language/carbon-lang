@@ -2074,3 +2074,123 @@ TEST(YAMLIO, TestEmptyStringSucceedsForSequence) {
   EXPECT_FALSE(yin.error());
   EXPECT_TRUE(seq.empty());
 }
+
+struct FlowMap {
+  llvm::StringRef str1, str2, str3;
+  FlowMap(llvm::StringRef str1, llvm::StringRef str2, llvm::StringRef str3)
+    : str1(str1), str2(str2), str3(str3) {}
+};
+
+namespace llvm {
+namespace yaml {
+  template <>
+  struct MappingTraits<FlowMap> {
+    static void mapping(IO &io, FlowMap &fm) {
+      io.mapRequired("str1", fm.str1);
+      io.mapRequired("str2", fm.str2);
+      io.mapRequired("str3", fm.str3);
+    }
+
+    static const bool flow = true;
+  };
+}
+}
+
+struct FlowSeq {
+  llvm::StringRef str;
+  FlowSeq(llvm::StringRef S) : str(S) {}
+  FlowSeq() = default;
+};
+
+template <>
+struct ScalarTraits<FlowSeq> {
+  static void output(const FlowSeq &value, void*, llvm::raw_ostream &out) {
+    out << value.str;
+  }
+  static StringRef input(StringRef scalar, void*, FlowSeq &value) {
+    value.str = scalar;
+    return "";
+  }
+
+  static bool mustQuote(StringRef S) { return false; }
+};
+
+LLVM_YAML_IS_FLOW_SEQUENCE_VECTOR(FlowSeq)
+
+TEST(YAMLIO, TestWrapFlow) {
+  std::string out;
+  llvm::raw_string_ostream ostr(out);
+  FlowMap Map("This is str1", "This is str2", "This is str3");
+  std::vector<FlowSeq> Seq;
+  Seq.emplace_back("This is str1");
+  Seq.emplace_back("This is str2");
+  Seq.emplace_back("This is str3");
+
+  {
+    // 20 is just bellow the total length of the first mapping field.
+    // We should wreap at every element.
+    Output yout(ostr, nullptr, 15);
+
+    yout << Map;
+    ostr.flush();
+    EXPECT_EQ(out,
+              "---\n"
+              "{ str1: This is str1, \n"
+              "  str2: This is str2, \n"
+              "  str3: This is str3 }\n"
+              "...\n");
+    out.clear();
+
+    yout << Seq;
+    ostr.flush();
+    EXPECT_EQ(out,
+              "---\n"
+              "[ This is str1, \n"
+              "  This is str2, \n"
+              "  This is str3 ]\n"
+              "...\n");
+    out.clear();
+  }
+  {
+    // 25 will allow the second field to be output on the first line.
+    Output yout(ostr, nullptr, 25);
+
+    yout << Map;
+    ostr.flush();
+    EXPECT_EQ(out,
+              "---\n"
+              "{ str1: This is str1, str2: This is str2, \n"
+              "  str3: This is str3 }\n"
+              "...\n");
+    out.clear();
+
+    yout << Seq;
+    ostr.flush();
+    EXPECT_EQ(out,
+              "---\n"
+              "[ This is str1, This is str2, \n"
+              "  This is str3 ]\n"
+              "...\n");
+    out.clear();
+  }
+  {
+    // 0 means no wrapping.
+    Output yout(ostr, nullptr, 0);
+
+    yout << Map;
+    ostr.flush();
+    EXPECT_EQ(out,
+              "---\n"
+              "{ str1: This is str1, str2: This is str2, str3: This is str3 }\n"
+              "...\n");
+    out.clear();
+
+    yout << Seq;
+    ostr.flush();
+    EXPECT_EQ(out,
+              "---\n"
+              "[ This is str1, This is str2, This is str3 ]\n"
+              "...\n");
+    out.clear();
+  }
+}

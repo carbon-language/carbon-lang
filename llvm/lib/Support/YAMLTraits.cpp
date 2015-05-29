@@ -404,9 +404,10 @@ bool Input::canElideEmptySequence() {
 //  Output
 //===----------------------------------------------------------------------===//
 
-Output::Output(raw_ostream &yout, void *context)
+Output::Output(raw_ostream &yout, void *context, int WrapColumn)
     : IO(context),
       Out(yout),
+      WrapColumn(WrapColumn),
       Column(0),
       ColumnAtFlowStart(0),
       ColumnAtMapFlowStart(0),
@@ -529,7 +530,7 @@ void Output::endFlowSequence() {
 bool Output::preflightFlowElement(unsigned, void *&) {
   if (NeedFlowSequenceComma)
     output(", ");
-  if (Column > 70) {
+  if (WrapColumn && Column > WrapColumn) {
     output("\n");
     for (int i = 0; i < ColumnAtFlowStart; ++i)
       output(" ");
@@ -720,7 +721,7 @@ void Output::paddedKey(StringRef key) {
 void Output::flowKey(StringRef Key) {
   if (StateStack.back() == inFlowMapOtherKey)
     output(", ");
-  if (Column > 70) {
+  if (WrapColumn && Column > WrapColumn) {
     output("\n");
     for (int I = 0; I < ColumnAtMapFlowStart; ++I)
       output(" ");
