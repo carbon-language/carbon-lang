@@ -47,6 +47,10 @@ ErrorOr<MachineTypes> getMachineType(llvm::opt::InputArgList *Args);
 std::error_code parseNumbers(StringRef Arg, uint64_t *Addr,
                              uint64_t *Size = nullptr);
 
+// Parses a string in the form of "<integer>[.<integer>]".
+// Minor's default value is 0.
+std::error_code parseVersion(StringRef Arg, uint32_t *Major, uint32_t *Minor);
+
 // Create enum with OPT_xxx values for each option in Options.td
 enum {
   OPT_INVALID = 0,

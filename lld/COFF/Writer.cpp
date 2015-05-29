@@ -259,6 +259,8 @@ void Writer::writeHeader() {
   PE->ImageBase = Config->ImageBase;
   PE->SectionAlignment = SectionAlignment;
   PE->FileAlignment = FileAlignment;
+  PE->MajorImageVersion = Config->MajorImageVersion;
+  PE->MinorImageVersion = Config->MinorImageVersion;
   PE->MajorOperatingSystemVersion = 6;
   PE->MajorSubsystemVersion = 6;
   PE->Subsystem = IMAGE_SUBSYSTEM_WINDOWS_CUI;

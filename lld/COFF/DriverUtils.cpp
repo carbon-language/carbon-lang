@@ -139,6 +139,19 @@ std::error_code parseNumbers(StringRef Arg, uint64_t *Addr, uint64_t *Size) {
   return std::error_code();
 }
 
+// Parses a string in the form of "<integer>[.<integer>]".
+// If second number is not present, Minor is set to 0.
+std::error_code parseVersion(StringRef Arg, uint32_t *Major, uint32_t *Minor) {
+  StringRef S1, S2;
+  std::tie(S1, S2) = Arg.split('.');
+  if (S1.getAsInteger(0, *Major))
+    return make_dynamic_error_code(Twine("invalid number: ") + S1);
+  *Minor = 0;
+  if (!S2.empty() && S2.getAsInteger(0, *Minor))
+    return make_dynamic_error_code(Twine("invalid number: ") + S2);
+  return std::error_code();
+}
+
 // Create OptTable
 
 // Create prefix string literals used in Options.td
