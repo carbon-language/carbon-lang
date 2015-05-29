@@ -44,4 +44,6 @@ Misc Tasks
 * Look at basic_string's move assignment operator, re LWG 2063 and POCMA
 * libc++ is missing try_emplace
 * Put a static_assert in std::allocator to deny const/volatile types (LWG 2447)
+* Investigate the effect of using __decltype instead of __typeof__ to provide
+  decltype in C++03. What code could be broken by this change?
 
