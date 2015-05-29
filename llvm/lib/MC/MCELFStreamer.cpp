@@ -331,12 +331,11 @@ void MCELFStreamer::EmitCommonSymbol(MCSymbol *Symbol, uint64_t Size,
     SD.setCommon(Size, ByteAlignment);
   }
 
-  SD.setSize(MCConstantExpr::Create(Size, getContext()));
+  Symbol->setSize(MCConstantExpr::Create(Size, getContext()));
 }
 
 void MCELFStreamer::EmitELFSize(MCSymbol *Symbol, const MCExpr *Value) {
-  MCSymbolData &SD = getAssembler().getOrCreateSymbolData(*Symbol);
-  SD.setSize(Value);
+  Symbol->setSize(Value);
 }
 
 void MCELFStreamer::EmitLocalCommonSymbol(MCSymbol *Symbol, uint64_t Size,

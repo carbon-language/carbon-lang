@@ -43,10 +43,6 @@ class MCSymbolData {
     uint64_t CommonSize;
   };
 
-  /// SymbolSize - An expression describing how to calculate the size of
-  /// a symbol. If a symbol has no size this field will be NULL.
-  const MCExpr *SymbolSize = nullptr;
-
   /// CommonAlign - The alignment of the symbol, if it is 'common', or -1.
   //
   // FIXME: Pack this in with other fields?
@@ -103,10 +99,6 @@ public:
     assert(isCommon() && "Not a 'common' symbol!");
     return CommonSize;
   }
-
-  void setSize(const MCExpr *SS) { SymbolSize = SS; }
-
-  const MCExpr *getSize() const { return SymbolSize; }
 
   /// getCommonAlignment - Return the alignment of a 'common' symbol.
   unsigned getCommonAlignment() const {
@@ -170,6 +162,10 @@ class MCSymbol {
 
   /// Index field, for use by the object file implementation.
   mutable uint64_t Index : 60;
+
+  /// An expression describing how to calculate the size of a symbol. If a
+  /// symbol has no size this field will be NULL.
+  const MCExpr *SymbolSize = nullptr;
 
   mutable MCSymbolData Data;
 
@@ -294,6 +290,10 @@ public:
     assert(!(Value >> 60) && "Not enough bits for value");
     Index = Value;
   }
+
+  void setSize(const MCExpr *SS) { SymbolSize = SS; }
+
+  const MCExpr *getSize() const { return SymbolSize; }
 
   /// print - Print the value to the stream \p OS.
   void print(raw_ostream &OS) const;

@@ -480,9 +480,9 @@ void ELFObjectWriter::writeSymbol(SymbolTableWriter &Writer,
   uint64_t Value = SymbolValue(*MSD.Symbol, Layout);
   uint64_t Size = 0;
 
-  const MCExpr *ESize = OrigData.getSize();
+  const MCExpr *ESize = MSD.Symbol->getSize();
   if (!ESize && Base)
-    ESize = BaseSD->getSize();
+    ESize = Base->getSize();
 
   if (ESize) {
     int64_t Res;
