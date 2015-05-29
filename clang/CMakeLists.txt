@@ -365,6 +365,7 @@ macro(add_clang_library name)
 
     if (NOT LLVM_INSTALL_TOOLCHAIN_ONLY OR ${name} STREQUAL "libclang")
       install(TARGETS ${name}
+        EXPORT ClangTargets
         LIBRARY DESTINATION lib${LLVM_LIBDIR_SUFFIX}
         ARCHIVE DESTINATION lib${LLVM_LIBDIR_SUFFIX}
         RUNTIME DESTINATION bin)
@@ -524,9 +525,10 @@ if (CLANG_BUILT_STANDALONE)
 
   # Install a <prefix>/share/clang/cmake/ClangConfig.cmake file so that
   # find_package(Clang) works. Install the target list with it.
+  install(EXPORT ClangTargets DESTINATION ${LLVM_INSTALL_PACKAGE_DIR})
+
   install(FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules/ClangConfig.cmake
-    ${CLANG_BINARY_DIR}/share/clang/cmake/ClangTargets.cmake
     DESTINATION share/clang/cmake)
 
   # Also copy ClangConfig.cmake to the build directory so that dependent projects
