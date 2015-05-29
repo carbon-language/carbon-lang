@@ -18,6 +18,7 @@
 #include "llvm/AsmParser/Parser.h"
 #include "llvm/CodeGen/MIRYamlMapping.h"
 #include "llvm/IR/Module.h"
+#include "llvm/Support/LineIterator.h"
 #include "llvm/Support/SMLoc.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -49,6 +50,11 @@ public:
   ///
   /// Return true if an error occurred.
   bool parseMachineFunction(yaml::Input &In);
+
+private:
+  /// Return a MIR diagnostic converted from an LLVM assembly diagnostic.
+  SMDiagnostic diagFromLLVMAssemblyDiag(const SMDiagnostic &Error,
+                                        SMRange SourceRange);
 };
 
 } // end anonymous namespace
@@ -81,8 +87,10 @@ std::unique_ptr<Module> MIRParserImpl::parse(SMDiagnostic &Error) {
           dyn_cast_or_null<yaml::BlockScalarNode>(In.getCurrentNode())) {
     M = parseAssembly(MemoryBufferRef(BSN->getValue(), Filename), Error,
                       Context);
-    if (!M)
+    if (!M) {
+      Error = diagFromLLVMAssemblyDiag(Error, BSN->getSourceRange());
       return M;
+    }
     In.nextDocument();
     if (!In.setCurrentDocument())
       return M;
@@ -109,6 +117,37 @@ bool MIRParserImpl::parseMachineFunction(yaml::Input &In) {
   // TODO: Initialize the real machine function with the state in the yaml
   // machine function later on.
   return false;
+}
+
+SMDiagnostic MIRParserImpl::diagFromLLVMAssemblyDiag(const SMDiagnostic &Error,
+                                                     SMRange SourceRange) {
+  assert(SourceRange.isValid());
+
+  // Translate the location of the error from the location in the llvm IR string
+  // to the corresponding location in the MIR file.
+  auto LineAndColumn = SM.getLineAndColumn(SourceRange.Start);
+  unsigned Line = LineAndColumn.first + Error.getLineNo() - 1;
+  unsigned Column = Error.getColumnNo();
+  StringRef LineStr = Error.getLineContents();
+  SMLoc Loc = Error.getLoc();
+
+  // Get the full line and adjust the column number by taking the indentation of
+  // LLVM IR into account.
+  for (line_iterator L(*SM.getMemoryBuffer(SM.getMainFileID()), false), E;
+       L != E; ++L) {
+    if (L.line_number() == Line) {
+      LineStr = *L;
+      Loc = SMLoc::getFromPointer(LineStr.data());
+      auto Indent = LineStr.find(Error.getLineContents());
+      if (Indent != StringRef::npos)
+        Column += Indent;
+      break;
+    }
+  }
+
+  return SMDiagnostic(SM, Loc, Filename, Line, Column, Error.getKind(),
+                      Error.getMessage(), LineStr, Error.getRanges(),
+                      Error.getFixIts());
 }
 
 std::unique_ptr<Module> llvm::parseMIRFile(StringRef Filename,
