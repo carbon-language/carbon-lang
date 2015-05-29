@@ -219,10 +219,7 @@ public:
 };
 PrettyPrinter PrettyPrinterInst;
 PrettyPrinter &selectPrettyPrinter(Triple const &Triple, MCInstPrinter &IP) {
-  switch(Triple.getArch()) {
-  default:
-    return PrettyPrinterInst;
-  }
+  return PrettyPrinterInst;
 }
 }
 
