@@ -567,8 +567,8 @@ private:
                                      Twine(MappingSymbolCounter++));
 
     MCSymbolData &SD = getAssembler().getOrCreateSymbolData(*Symbol);
-    MCELF::SetType(SD, ELF::STT_NOTYPE);
-    MCELF::SetBinding(SD, ELF::STB_LOCAL);
+    MCELF::SetType(*Symbol, ELF::STT_NOTYPE);
+    MCELF::SetBinding(*Symbol, ELF::STB_LOCAL);
     SD.setExternal(false);
     AssignSection(Symbol, getCurrentSection().first);
 
@@ -972,8 +972,8 @@ void ARMTargetELFStreamer::emitLabel(MCSymbol *Symbol) {
   if (!Streamer.IsThumb)
     return;
 
-  const MCSymbolData &SD = Streamer.getOrCreateSymbolData(Symbol);
-  unsigned Type = MCELF::GetType(SD);
+  Streamer.getOrCreateSymbolData(Symbol);
+  unsigned Type = MCELF::GetType(*Symbol);
   if (Type == ELF_STT_Func || Type == ELF_STT_GnuIFunc)
     Streamer.EmitThumbFunc(Symbol);
 }

@@ -271,9 +271,7 @@ static unsigned getMatchingLoType(const MCAssembler &Asm,
   if (Type == ELF::R_MIPS16_HI16)
     return ELF::R_MIPS16_LO16;
 
-  const MCSymbolData &SD = Reloc.Symbol->getData();
-
-  if (MCELF::GetBinding(SD) != ELF::STB_LOCAL)
+  if (MCELF::GetBinding(*Reloc.Symbol) != ELF::STB_LOCAL)
     return ELF::R_MIPS_NONE;
 
   if (Type == ELF::R_MIPS_GOT16)
@@ -433,7 +431,7 @@ bool MipsELFObjectWriter::needsRelocateWithSymbol(const MCSymbol &Sym,
     return true;
 
   case ELF::R_MIPS_32:
-    if (MCELF::getOther(Sym.getData()) & (ELF::STO_MIPS_MICROMIPS >> 2))
+    if (MCELF::getOther(Sym) & (ELF::STO_MIPS_MICROMIPS >> 2))
       return true;
     // falltrough
   case ELF::R_MIPS_26:

@@ -161,7 +161,6 @@ public:
   }
   void emitLocalEntry(MCSymbol *S, const MCExpr *LocalOffset) override {
     MCAssembler &MCA = getStreamer().getAssembler();
-    MCSymbolData &Data = getStreamer().getOrCreateSymbolData(S);
 
     int64_t Res;
     if (!LocalOffset->EvaluateAsAbsolute(Res, MCA))
@@ -174,10 +173,10 @@ public:
     // The "other" values are stored in the last 6 bits of the second byte.
     // The traditional defines for STO values assume the full byte and thus
     // the shift to pack it.
-    unsigned Other = MCELF::getOther(Data) << 2;
+    unsigned Other = MCELF::getOther(*S) << 2;
     Other &= ~ELF::STO_PPC64_LOCAL_MASK;
     Other |= Encoded;
-    MCELF::setOther(Data, Other >> 2);
+    MCELF::setOther(*S, Other >> 2);
 
     // For GAS compatibility, unless we already saw a .abiversion directive,
     // set e_flags to indicate ELFv2 ABI.
@@ -192,15 +191,13 @@ public:
       return;
     const MCSymbol &RhsSym =
         static_cast<const MCSymbolRefExpr *>(Value)->getSymbol();
-    MCSymbolData &Data = getStreamer().getOrCreateSymbolData(&RhsSym);
-    MCSymbolData &SymbolData = getStreamer().getOrCreateSymbolData(Symbol);
     // The "other" values are stored in the last 6 bits of the second byte.
     // The traditional defines for STO values assume the full byte and thus
     // the shift to pack it.
-    unsigned Other = MCELF::getOther(SymbolData) << 2;
+    unsigned Other = MCELF::getOther(*Symbol) << 2;
     Other &= ~ELF::STO_PPC64_LOCAL_MASK;
-    Other |= (MCELF::getOther(Data) << 2) & ELF::STO_PPC64_LOCAL_MASK;
-    MCELF::setOther(SymbolData, Other >> 2);
+    Other |= (MCELF::getOther(RhsSym) << 2) & ELF::STO_PPC64_LOCAL_MASK;
+    MCELF::setOther(*Symbol, Other >> 2);
   }
 };
 

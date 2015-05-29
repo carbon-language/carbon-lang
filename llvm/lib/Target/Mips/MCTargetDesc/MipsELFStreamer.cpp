@@ -42,11 +42,11 @@ void MipsELFStreamer::createPendingLabelRelocs() {
   // FIXME: Also mark labels when in MIPS16 mode.
   if (ELFTargetStreamer->isMicroMipsEnabled()) {
     for (auto Label : Labels) {
-      MCSymbolData &Data = getOrCreateSymbolData(Label);
+      getOrCreateSymbolData(Label);
       // The "other" values are stored in the last 6 bits of the second byte.
       // The traditional defines for STO values assume the full byte and thus
       // the shift to pack it.
-      MCELF::setOther(Data, ELF::STO_MIPS_MICROMIPS >> 2);
+      MCELF::setOther(*Label, ELF::STO_MIPS_MICROMIPS >> 2);
     }
   }
 

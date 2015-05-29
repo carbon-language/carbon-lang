@@ -16,18 +16,18 @@
 #define LLVM_MC_MCELF_H
 
 namespace llvm {
-class MCSymbolData;
+class MCSymbol;
 
 class MCELF {
  public:
-  static void SetBinding(MCSymbolData &SD, unsigned Binding);
-  static unsigned GetBinding(const MCSymbolData &SD);
-  static void SetType(MCSymbolData &SD, unsigned Type);
-  static unsigned GetType(const MCSymbolData &SD);
-  static void SetVisibility(MCSymbolData &SD, unsigned Visibility);
-  static unsigned GetVisibility(const MCSymbolData &SD);
-  static void setOther(MCSymbolData &SD, unsigned Other);
-  static unsigned getOther(const MCSymbolData &SD);
+   static void SetBinding(const MCSymbol &Sym, unsigned Binding);
+   static unsigned GetBinding(const MCSymbol &Sym);
+   static void SetType(const MCSymbol &Sym, unsigned Type);
+   static unsigned GetType(const MCSymbol &Sym);
+   static void SetVisibility(MCSymbol &Sym, unsigned Visibility);
+   static unsigned GetVisibility(const MCSymbol &Sym);
+   static void setOther(MCSymbol &Sym, unsigned Other);
+   static unsigned getOther(const MCSymbol &Sym);
 };
 
 }

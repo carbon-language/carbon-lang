@@ -184,8 +184,7 @@ static void fixELFSymbolsInTLSFixupsImpl(const MCExpr *Expr, MCAssembler &Asm) {
 
   case MCExpr::SymbolRef: {
     const MCSymbolRefExpr &SymRef = *cast<MCSymbolRefExpr>(Expr);
-    MCSymbolData &SD = Asm.getOrCreateSymbolData(SymRef.getSymbol());
-    MCELF::SetType(SD, ELF::STT_TLS);
+    MCELF::SetType(SymRef.getSymbol(), ELF::STT_TLS);
     break;
   }
 

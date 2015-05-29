@@ -121,8 +121,7 @@ static void fixELFSymbolsInTLSFixupsImpl(const MCExpr *Expr, MCAssembler &Asm) {
     // We're known to be under a TLS fixup, so any symbol should be
     // modified. There should be only one.
     const MCSymbolRefExpr &SymRef = *cast<MCSymbolRefExpr>(Expr);
-    MCSymbolData &SD = Asm.getOrCreateSymbolData(SymRef.getSymbol());
-    MCELF::SetType(SD, ELF::STT_TLS);
+    MCELF::SetType(SymRef.getSymbol(), ELF::STT_TLS);
     break;
   }
 
