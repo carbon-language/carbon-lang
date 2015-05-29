@@ -4001,38 +4001,6 @@ Value *CodeGenFunction::vectorWrapScalar8(Value *Op) {
   return Op;
 }
 
-Value *CodeGenFunction::
-emitVectorWrappedScalar8Intrinsic(unsigned Int, SmallVectorImpl<Value*> &Ops,
-                                  const char *Name) {
-  // i8 is not a legal types for AArch64, so we can't just use
-  // a normal overloaded intrinsic call for these scalar types. Instead
-  // we'll build 64-bit vectors w/ lane zero being our input values and
-  // perform the operation on that. The back end can pattern match directly
-  // to the scalar instruction.
-  Ops[0] = vectorWrapScalar8(Ops[0]);
-  Ops[1] = vectorWrapScalar8(Ops[1]);
-  llvm::Type *VTy = llvm::VectorType::get(Int8Ty, 8);
-  Value *V = EmitNeonCall(CGM.getIntrinsic(Int, VTy), Ops, Name);
-  Constant *CI = ConstantInt::get(SizeTy, 0);
-  return Builder.CreateExtractElement(V, CI, "lane0");
-}
-
-Value *CodeGenFunction::
-emitVectorWrappedScalar16Intrinsic(unsigned Int, SmallVectorImpl<Value*> &Ops,
-                                   const char *Name) {
-  // i16 is not a legal types for AArch64, so we can't just use
-  // a normal overloaded intrinsic call for these scalar types. Instead
-  // we'll build 64-bit vectors w/ lane zero being our input values and
-  // perform the operation on that. The back end can pattern match directly
-  // to the scalar instruction.
-  Ops[0] = vectorWrapScalar16(Ops[0]);
-  Ops[1] = vectorWrapScalar16(Ops[1]);
-  llvm::Type *VTy = llvm::VectorType::get(Int16Ty, 4);
-  Value *V = EmitNeonCall(CGM.getIntrinsic(Int, VTy), Ops, Name);
-  Constant *CI = ConstantInt::get(SizeTy, 0);
-  return Builder.CreateExtractElement(V, CI, "lane0");
-}
-
 Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
                                                const CallExpr *E) {
   unsigned HintID = static_cast<unsigned>(-1);
