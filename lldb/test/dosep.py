@@ -92,9 +92,14 @@ def call_with_timeout(command, timeout):
         command = [timeout_command, '-s', 'QUIT', timeout] + command
     # Specifying a value for close_fds is unsupported on Windows when using subprocess.PIPE
     if os.name != "nt":
-        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
+        process = subprocess.Popen(command, stdin=subprocess.PIPE,
+                                            stdout=subprocess.PIPE,
+                                            stderr=subprocess.PIPE,
+                                            close_fds=True)
     else:
-        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        process = subprocess.Popen(command, stdin=subprocess.PIPE,
+                                            stdout=subprocess.PIPE,
+                                            stderr=subprocess.PIPE)
     output = process.communicate()
     exit_status = process.returncode
     passes, failures = parse_test_results(output)
