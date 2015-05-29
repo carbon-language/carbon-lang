@@ -15,6 +15,7 @@ class CrashingInferiorTestCase(TestBase):
         self.buildDsym()
         self.inferior_crashing()
 
+    @expectedFailureFreeBSD("llvm.org/pr23699 SIGSEGV is reported as exception, not signal")
     def test_inferior_crashing_dwarf(self):
         """Test that lldb reliably catches the inferior crashing (command)."""
         self.buildDwarf()
