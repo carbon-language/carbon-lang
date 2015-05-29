@@ -24,7 +24,10 @@ public:
   llvm::COFF::MachineTypes MachineType = llvm::COFF::IMAGE_FILE_MACHINE_AMD64;
   bool Verbose = false;
   std::string EntryName = "mainCRTStartup";
+
   uint64_t ImageBase = 0x140000000;
+  uint64_t StackReserve = 1024 * 1024;
+  uint64_t StackCommit = 4096;
 
   bool insertFile(llvm::StringRef Path) {
     return VisitedFiles.insert(Path.lower()).second;

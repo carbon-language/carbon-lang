@@ -129,7 +129,16 @@ bool link(int Argc, const char *Argv[]) {
   // Handle /base
   if (auto *Arg = Args->getLastArg(OPT_base)) {
     if (auto EC = parseNumbers(Arg->getValue(), &Config->ImageBase)) {
-      llvm::errs() << EC.message() << "\n";
+      llvm::errs() << "/base: " << EC.message() << "\n";
+      return false;
+    }
+  }
+
+  // Handle /stack
+  if (auto *Arg = Args->getLastArg(OPT_stack)) {
+    if (auto EC = parseNumbers(Arg->getValue(), &Config->StackReserve,
+                               &Config->StackCommit)) {
+      llvm::errs() << "/stack: " << EC.message() << "\n";
       return false;
     }
   }

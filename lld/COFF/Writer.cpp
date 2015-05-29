@@ -265,8 +265,8 @@ void Writer::writeHeader() {
   PE->SizeOfImage = SizeOfImage;
   PE->SizeOfHeaders = SizeOfHeaders;
   PE->AddressOfEntryPoint = Entry->getRVA();
-  PE->SizeOfStackReserve = 1024 * 1024;
-  PE->SizeOfStackCommit = 4096;
+  PE->SizeOfStackReserve = Config->StackReserve;
+  PE->SizeOfStackCommit = Config->StackCommit;
   PE->SizeOfHeapReserve = 1024 * 1024;
   PE->SizeOfHeapCommit = 4096;
   PE->NumberOfRvaAndSize = NumberfOfDataDirectory;
