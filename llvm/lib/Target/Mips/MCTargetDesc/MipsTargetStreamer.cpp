@@ -689,7 +689,7 @@ void MipsTargetELFStreamer::emitDirectiveCpLoad(unsigned RegNo) {
   StringRef SymName("_gp_disp");
   MCAssembler &MCA = getStreamer().getAssembler();
   MCSymbol *GP_Disp = MCA.getContext().getOrCreateSymbol(SymName);
-  MCA.getOrCreateSymbolData(*GP_Disp);
+  MCA.registerSymbol(*GP_Disp);
 
   MCInst TmpInst;
   TmpInst.setOpcode(Mips::LUi);

@@ -1256,7 +1256,7 @@ void ELFObjectWriter::WriteObject(MCAssembler &Asm,
     MCSectionELF *RelSection = createRelocationSection(Ctx, Section);
 
     if (SignatureSymbol) {
-      Asm.getOrCreateSymbolData(*SignatureSymbol);
+      Asm.registerSymbol(*SignatureSymbol);
       unsigned &GroupIdx = RevGroupMap[SignatureSymbol];
       if (!GroupIdx) {
         MCSectionELF *Group = Ctx.createELFGroupSection(SignatureSymbol);

@@ -172,8 +172,8 @@ void MCMachOStreamer::ChangeSection(MCSection *Section,
 
 void MCMachOStreamer::EmitEHSymAttributes(const MCSymbol *Symbol,
                                           MCSymbol *EHSymbol) {
-  MCSymbolData &SD =
-    getAssembler().getOrCreateSymbolData(*Symbol);
+  getAssembler().registerSymbol(*Symbol);
+  MCSymbolData &SD = Symbol->getData();
   if (SD.isExternal())
     EmitSymbolAttribute(EHSymbol, MCSA_Global);
   if (Symbol->getFlags() & SF_WeakDefinition)
@@ -293,9 +293,10 @@ bool MCMachOStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
   }
 
   // Adding a symbol attribute always introduces the symbol, note that an
-  // important side effect of calling getOrCreateSymbolData here is to register
+  // important side effect of calling registerSymbol here is to register
   // the symbol with the assembler.
-  MCSymbolData &SD = getAssembler().getOrCreateSymbolData(*Symbol);
+  getAssembler().registerSymbol(*Symbol);
+  MCSymbolData &SD = Symbol->getData();
 
   // The implementation of symbol attributes is designed to match 'as', but it
   // leaves much to desired. It doesn't really make sense to arbitrarily add and
@@ -378,7 +379,7 @@ void MCMachOStreamer::EmitSymbolDesc(MCSymbol *Symbol, unsigned DescValue) {
   // Encode the 'desc' value into the lowest implementation defined bits.
   assert(DescValue == (DescValue & SF_DescFlagsMask) &&
          "Invalid .desc value!");
-  getAssembler().getOrCreateSymbolData(*Symbol);
+  getAssembler().registerSymbol(*Symbol);
   Symbol->setFlags(DescValue & SF_DescFlagsMask);
 }
 
@@ -389,7 +390,8 @@ void MCMachOStreamer::EmitCommonSymbol(MCSymbol *Symbol, uint64_t Size,
 
   AssignSection(Symbol, nullptr);
 
-  MCSymbolData &SD = getAssembler().getOrCreateSymbolData(*Symbol);
+  getAssembler().registerSymbol(*Symbol);
+  MCSymbolData &SD = Symbol->getData();
   SD.setExternal(true);
   Symbol->setCommon(Size, ByteAlignment);
 }
@@ -414,7 +416,8 @@ void MCMachOStreamer::EmitZerofill(MCSection *Section, MCSymbol *Symbol,
 
   assert(Symbol->isUndefined() && "Cannot define a symbol twice!");
 
-  MCSymbolData &SD = getAssembler().getOrCreateSymbolData(*Symbol);
+  getAssembler().registerSymbol(*Symbol);
+  MCSymbolData &SD = Symbol->getData();
 
   // Emit an align fragment if necessary.
   if (ByteAlignment != 1)

@@ -164,7 +164,8 @@ private:
     MCSymbol *Symbol = getContext().getOrCreateSymbol(
         Name + "." + Twine(MappingSymbolCounter++));
 
-    MCSymbolData &SD = getAssembler().getOrCreateSymbolData(*Symbol);
+    getAssembler().registerSymbol(*Symbol);
+    MCSymbolData &SD = Symbol->getData();
     MCELF::SetType(*Symbol, ELF::STT_NOTYPE);
     MCELF::SetBinding(*Symbol, ELF::STB_LOCAL);
     SD.setExternal(false);

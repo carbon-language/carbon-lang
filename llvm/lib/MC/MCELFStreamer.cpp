@@ -155,7 +155,7 @@ void MCELFStreamer::ChangeSection(MCSection *Section,
   auto *SectionELF = static_cast<const MCSectionELF *>(Section);
   const MCSymbol *Grp = SectionELF->getGroup();
   if (Grp)
-    Asm.getOrCreateSymbolData(*Grp);
+    Asm.registerSymbol(*Grp);
 
   this->MCObjectStreamer::ChangeSection(Section, Subsection);
   MCContext &Ctx = getContext();
@@ -165,13 +165,13 @@ void MCELFStreamer::ChangeSection(MCSection *Section,
     Section->setBeginSymbol(Begin);
   }
   if (Begin->isUndefined()) {
-    Asm.getOrCreateSymbolData(*Begin);
+    Asm.registerSymbol(*Begin);
     MCELF::SetType(*Begin, ELF::STT_SECTION);
   }
 }
 
 void MCELFStreamer::EmitWeakReference(MCSymbol *Alias, const MCSymbol *Symbol) {
-  getAssembler().getOrCreateSymbolData(*Symbol);
+  getAssembler().registerSymbol(*Symbol);
   const MCExpr *Value = MCSymbolRefExpr::Create(
       Symbol, MCSymbolRefExpr::VK_WEAKREF, getContext());
   Alias->setVariableValue(Value);
@@ -211,9 +211,10 @@ bool MCELFStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
   }
 
   // Adding a symbol attribute always introduces the symbol, note that an
-  // important side effect of calling getOrCreateSymbolData here is to register
+  // important side effect of calling registerSymbol here is to register
   // the symbol with the assembler.
-  MCSymbolData &SD = getAssembler().getOrCreateSymbolData(*Symbol);
+  getAssembler().registerSymbol(*Symbol);
+  MCSymbolData &SD = Symbol->getData();
 
   // The implementation of symbol attributes is designed to match 'as', but it
   // leaves much to desired. It doesn't really make sense to arbitrarily add and
@@ -311,8 +312,9 @@ bool MCELFStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
 }
 
 void MCELFStreamer::EmitCommonSymbol(MCSymbol *Symbol, uint64_t Size,
-                                       unsigned ByteAlignment) {
-  MCSymbolData &SD = getAssembler().getOrCreateSymbolData(*Symbol);
+                                     unsigned ByteAlignment) {
+  getAssembler().registerSymbol(*Symbol);
+  MCSymbolData &SD = Symbol->getData();
 
   if (!BindingExplicitlySet.count(Symbol)) {
     MCELF::SetBinding(*Symbol, ELF::STB_GLOBAL);
@@ -343,7 +345,8 @@ void MCELFStreamer::EmitELFSize(MCSymbol *Symbol, const MCExpr *Value) {
 void MCELFStreamer::EmitLocalCommonSymbol(MCSymbol *Symbol, uint64_t Size,
                                           unsigned ByteAlignment) {
   // FIXME: Should this be caught and done earlier?
-  MCSymbolData &SD = getAssembler().getOrCreateSymbolData(*Symbol);
+  getAssembler().registerSymbol(*Symbol);
+  MCSymbolData &SD = Symbol->getData();
   MCELF::SetBinding(*Symbol, ELF::STB_LOCAL);
   SD.setExternal(false);
   BindingExplicitlySet.insert(Symbol);
@@ -460,7 +463,7 @@ void MCELFStreamer::fixSymbolsInTLSFixups(const MCExpr *expr) {
     case MCSymbolRefExpr::VK_PPC_TLSLD:
       break;
     }
-    getAssembler().getOrCreateSymbolData(symRef.getSymbol());
+    getAssembler().registerSymbol(symRef.getSymbol());
     MCELF::SetType(symRef.getSymbol(), ELF::STT_TLS);
     break;
   }

@@ -500,7 +500,7 @@ void MachObjectWriter::BindIndirectSymbols(MCAssembler &Asm) {
     // Initialize the section indirect symbol base, if necessary.
     IndirectSymBase.insert(std::make_pair(it->Section, IndirectIndex));
 
-    Asm.getOrCreateSymbolData(*it->Symbol);
+    Asm.registerSymbol(*it->Symbol);
   }
 
   // Then lazy symbol pointers and symbol stubs.
@@ -520,7 +520,7 @@ void MachObjectWriter::BindIndirectSymbols(MCAssembler &Asm) {
     //
     // FIXME: Do not hardcode.
     bool Created;
-    Asm.getOrCreateSymbolData(*it->Symbol, &Created);
+    Asm.registerSymbol(*it->Symbol, &Created);
     if (Created)
       it->Symbol->setFlags(it->Symbol->getFlags() | 0x0001);
   }

@@ -96,7 +96,8 @@ bool MCWinCOFFStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
           Symbol->getSection().getVariant() == MCSection::SV_COFF) &&
          "Got non-COFF section in the COFF backend!");
 
-  MCSymbolData &SD = getAssembler().getOrCreateSymbolData(*Symbol);
+  getAssembler().registerSymbol(*Symbol);
+  MCSymbolData &SD = Symbol->getData();
 
   switch (Attribute) {
   default: return false;
@@ -136,7 +137,7 @@ void MCWinCOFFStreamer::EmitCOFFSymbolStorageClass(int StorageClass) {
     FatalError("storage class value '" + Twine(StorageClass) +
                "' out of range");
 
-  getAssembler().getOrCreateSymbolData(*CurSymbol);
+  getAssembler().registerSymbol(*CurSymbol);
   CurSymbol->modifyFlags(StorageClass << COFF::SF_ClassShift,
                          COFF::SF_ClassMask);
 }
@@ -148,7 +149,7 @@ void MCWinCOFFStreamer::EmitCOFFSymbolType(int Type) {
   if (Type & ~0xffff)
     FatalError("type value '" + Twine(Type) + "' out of range");
 
-  getAssembler().getOrCreateSymbolData(*CurSymbol);
+  getAssembler().registerSymbol(*CurSymbol);
   CurSymbol->modifyFlags(Type << COFF::SF_TypeShift, COFF::SF_TypeMask);
 }
 
@@ -195,7 +196,8 @@ void MCWinCOFFStreamer::EmitCommonSymbol(MCSymbol *Symbol, uint64_t Size,
 
   AssignSection(Symbol, nullptr);
 
-  MCSymbolData &SD = getAssembler().getOrCreateSymbolData(*Symbol);
+  getAssembler().registerSymbol(*Symbol);
+  MCSymbolData &SD = Symbol->getData();
   SD.setExternal(true);
   Symbol->setCommon(Size, ByteAlignment);
 
@@ -224,7 +226,8 @@ void MCWinCOFFStreamer::EmitLocalCommonSymbol(MCSymbol *Symbol, uint64_t Size,
   if (Section->getAlignment() < ByteAlignment)
     Section->setAlignment(ByteAlignment);
 
-  MCSymbolData &SD = getAssembler().getOrCreateSymbolData(*Symbol);
+  getAssembler().registerSymbol(*Symbol);
+  MCSymbolData &SD = Symbol->getData();
   SD.setExternal(false);
 
   AssignSection(Symbol, Section);

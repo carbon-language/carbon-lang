@@ -884,15 +884,13 @@ public:
 
   bool hasSymbolData(const MCSymbol &Symbol) const { return Symbol.hasData(); }
 
-  MCSymbolData &getOrCreateSymbolData(const MCSymbol &Symbol,
-                                      bool *Created = nullptr) {
+  void registerSymbol(const MCSymbol &Symbol, bool *Created = nullptr) {
     if (Created)
       *Created = !hasSymbolData(Symbol);
     if (!hasSymbolData(Symbol)) {
       Symbol.initializeData();
       Symbols.push_back(&Symbol);
     }
-    return Symbol.getData();
   }
 
   ArrayRef<std::string> getFileNames() { return FileNames; }

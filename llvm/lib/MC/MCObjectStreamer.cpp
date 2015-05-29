@@ -121,7 +121,7 @@ MCDataFragment *MCObjectStreamer::getOrCreateDataFragment() {
 }
 
 void MCObjectStreamer::visitUsedSymbol(const MCSymbol &Sym) {
-  Assembler->getOrCreateSymbolData(Sym);
+  Assembler->registerSymbol(Sym);
 }
 
 void MCObjectStreamer::EmitCFISections(bool EH, bool Debug) {
@@ -163,7 +163,8 @@ void MCObjectStreamer::EmitCFIEndProcImpl(MCDwarfFrameInfo &Frame) {
 void MCObjectStreamer::EmitLabel(MCSymbol *Symbol) {
   MCStreamer::EmitLabel(Symbol);
 
-  MCSymbolData &SD = getAssembler().getOrCreateSymbolData(*Symbol);
+  getAssembler().registerSymbol(*Symbol);
+  MCSymbolData &SD = Symbol->getData();
   assert(!SD.getFragment() && "Unexpected fragment on symbol data!");
 
   // If there is a current fragment, mark the symbol as pointing into it.
@@ -226,7 +227,7 @@ bool MCObjectStreamer::changeSectionImpl(MCSection *Section,
 }
 
 void MCObjectStreamer::EmitAssignment(MCSymbol *Symbol, const MCExpr *Value) {
-  getAssembler().getOrCreateSymbolData(*Symbol);
+  getAssembler().registerSymbol(*Symbol);
   MCStreamer::EmitAssignment(Symbol, Value);
 }
 
