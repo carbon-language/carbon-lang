@@ -861,7 +861,6 @@ ArchSpec::SetArchitecture (ArchitectureType arch_type, uint32_t cpu, uint32_t su
                 if (arch_type == eArchTypeMachO)
                 {
                     m_triple.setVendor (llvm::Triple::Apple);
-
                     switch (core_def->machine)
                     {
                         case llvm::Triple::aarch64:
@@ -885,11 +884,6 @@ ArchSpec::SetArchitecture (ArchitectureType arch_type, uint32_t cpu, uint32_t su
                             m_triple.setOS (llvm::Triple::MacOSX);
                             break;
                     }
-                }
-                else
-                {
-                    m_triple.setVendor (llvm::Triple::UnknownVendor);
-                    m_triple.setOS (llvm::Triple::UnknownOS);
                 }
                 // Fall back onto setting the machine type if the arch by name failed...
                 if (m_triple.getArch () == llvm::Triple::UnknownArch)
