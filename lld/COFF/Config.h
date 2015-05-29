@@ -11,6 +11,7 @@
 #define LLD_COFF_CONFIG_H
 
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Object/COFF.h"
 #include <cstdint>
 #include <set>
 #include <string>
@@ -20,6 +21,7 @@ namespace coff {
 
 class Configuration {
 public:
+  llvm::COFF::MachineTypes MachineType = llvm::COFF::IMAGE_FILE_MACHINE_AMD64;
   bool Verbose = false;
   std::string EntryName = "mainCRTStartup";
   uint64_t ImageBase = 0x140000000;

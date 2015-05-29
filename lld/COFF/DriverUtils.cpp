@@ -87,6 +87,47 @@ std::string findFile(StringRef Filename) {
   return Filename;
 }
 
+// Peeks at the file header to get architecture (e.g. i386 or AMD64).
+// Returns "unknown" if it's not a valid object file.
+static MachineTypes getFileMachineType(StringRef Path) {
+  file_magic Magic;
+  if (identify_magic(Path, Magic))
+    return IMAGE_FILE_MACHINE_UNKNOWN;
+  if (Magic != file_magic::coff_object)
+    return IMAGE_FILE_MACHINE_UNKNOWN;
+  ErrorOr<std::unique_ptr<MemoryBuffer>> BufOrErr = MemoryBuffer::getFile(Path);
+  if (BufOrErr.getError())
+    return IMAGE_FILE_MACHINE_UNKNOWN;
+  std::error_code EC;
+  llvm::object::COFFObjectFile Obj(BufOrErr.get()->getMemBufferRef(), EC);
+  if (EC)
+    return IMAGE_FILE_MACHINE_UNKNOWN;
+  return static_cast<MachineTypes>(Obj.getMachine());
+}
+
+// Returns /machine's value.
+ErrorOr<MachineTypes> getMachineType(llvm::opt::InputArgList *Args) {
+  if (auto *Arg = Args->getLastArg(OPT_machine)) {
+    StringRef S(Arg->getValue());
+    MachineTypes MT = StringSwitch<MachineTypes>(S.lower())
+                          .Case("arm", IMAGE_FILE_MACHINE_ARMNT)
+                          .Case("x64", IMAGE_FILE_MACHINE_AMD64)
+                          .Case("x86", IMAGE_FILE_MACHINE_I386)
+                          .Default(IMAGE_FILE_MACHINE_UNKNOWN);
+    if (MT == IMAGE_FILE_MACHINE_UNKNOWN)
+      return make_dynamic_error_code("unknown /machine argument" + S);
+    return MT;
+  }
+  // If /machine option is missing, we need to take a look at
+  // the magic byte of the first object file to infer machine type.
+  for (auto *Arg : Args->filtered(OPT_INPUT)) {
+    MachineTypes MT = getFileMachineType(Arg->getValue());
+    if (MT != IMAGE_FILE_MACHINE_UNKNOWN)
+      return MT;
+  }
+  return IMAGE_FILE_MACHINE_UNKNOWN;
+}
+
 // Create OptTable
 
 // Create prefix string literals used in Options.td

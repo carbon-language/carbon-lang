@@ -22,6 +22,7 @@
 namespace lld {
 namespace coff {
 
+using llvm::COFF::MachineTypes;
 class InputFile;
 
 ErrorOr<std::unique_ptr<llvm::opt::InputArgList>>
@@ -36,6 +37,9 @@ std::error_code parseDirectives(StringRef S,
 // "ENV" environment variable-aware file finders.
 std::string findLib(StringRef Filename);
 std::string findFile(StringRef Filename);
+
+// For /machine option.
+ErrorOr<MachineTypes> getMachineType(llvm::opt::InputArgList *Args);
 
 // Create enum with OPT_xxx values for each option in Options.td
 enum {

@@ -244,7 +244,7 @@ void Writer::writeHeader() {
   // Write COFF header
   auto *COFF = reinterpret_cast<coff_file_header *>(Buf);
   Buf += sizeof(*COFF);
-  COFF->Machine = IMAGE_FILE_MACHINE_AMD64;
+  COFF->Machine = Config->MachineType;
   COFF->NumberOfSections = OutputSections.size();
   COFF->Characteristics =
       (IMAGE_FILE_EXECUTABLE_IMAGE | IMAGE_FILE_RELOCS_STRIPPED |

@@ -103,10 +103,22 @@ bool link(int Argc, const char *Argv[]) {
     llvm::errs() << "no input files.\n";
     return false;
   }
+
+  // Handle /verbose
   if (Args->hasArg(OPT_verbose))
     Config->Verbose = true;
+
+  // Handle /entry
   if (auto *Arg = Args->getLastArg(OPT_entry))
     Config->EntryName = Arg->getValue();
+
+  // Handle /machine
+  auto MTOrErr = getMachineType(Args.get());
+  if (auto EC = MTOrErr.getError()) {
+    llvm::errs() << EC.message() << "\n";
+    return false;
+  }
+  Config->MachineType = MTOrErr.get();
 
   // Parse all input files and put all symbols to the symbol table.
   // The symbol table will take care of name resolution.
