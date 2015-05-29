@@ -155,6 +155,11 @@ bool WinEHStatePass::runOnFunction(Function &F) {
   if (!isMSVCEHPersonality(Personality))
     return false;
 
+  // Disable frame pointer elimination in this function.
+  // FIXME: Do the nested handlers need to keep the parent ebp in ebp, or can we
+  // use an arbitrary register?
+  F.addFnAttr("no-frame-pointer-elim", "true");
+
   emitExceptionRegistrationRecord(&F);
 
   auto *MMIPtr = getAnalysisIfAvailable<MachineModuleInfo>();

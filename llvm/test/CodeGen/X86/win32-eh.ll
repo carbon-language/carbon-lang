@@ -19,16 +19,18 @@ catchall:
 }
 
 ; CHECK-LABEL: _use_except_handler3:
+; CHECK: pushl %ebp
+; CHECK: movl %esp, %ebp
 ; CHECK: subl ${{[0-9]+}}, %esp
-; CHECK: movl $-1, 12(%esp)
-; CHECK: movl $L__ehtable$use_except_handler3, 8(%esp)
-; CHECK: movl $__except_handler3, 4(%esp)
+; CHECK: movl $-1, -4(%ebp)
+; CHECK: movl $L__ehtable$use_except_handler3, -8(%ebp)
+; CHECK: movl $__except_handler3, -12(%ebp)
 ; CHECK: movl %fs:0, %[[next:[^ ,]*]]
-; CHECK: movl %[[next]], (%esp)
-; CHECK: leal (%esp), %[[node:[^ ,]*]]
+; CHECK: movl %[[next]], -16(%ebp)
+; CHECK: leal -16(%ebp), %[[node:[^ ,]*]]
 ; CHECK: movl %[[node]], %fs:0
 ; CHECK: calll _may_throw_or_crash
-; CHECK: movl (%esp), %[[next:[^ ,]*]]
+; CHECK: movl -16(%ebp), %[[next:[^ ,]*]]
 ; CHECK: movl %[[next]], %fs:0
 ; CHECK: retl
 
@@ -44,17 +46,19 @@ catchall:
 }
 
 ; CHECK-LABEL: _use_except_handler4:
+; CHECK: pushl %ebp
+; CHECK: movl %esp, %ebp
 ; CHECK: subl ${{[0-9]+}}, %esp
-; CHECK: movl %esp, (%esp)
-; CHECK: movl $-1, 20(%esp)
-; CHECK: movl $L__ehtable$use_except_handler4, 4(%esp)
-; CHECK: leal 8(%esp), %[[node:[^ ,]*]]
-; CHECK: movl $__except_handler4, 12(%esp)
+; CHECK: movl %esp, -24(%ebp)
+; CHECK: movl $-1, -4(%ebp)
+; CHECK: movl $L__ehtable$use_except_handler4, -20(%ebp)
+; CHECK: leal -16(%ebp), %[[node:[^ ,]*]]
+; CHECK: movl $__except_handler4, -12(%ebp)
 ; CHECK: movl %fs:0, %[[next:[^ ,]*]]
-; CHECK: movl %[[next]], 8(%esp)
+; CHECK: movl %[[next]], -16(%ebp)
 ; CHECK: movl %[[node]], %fs:0
 ; CHECK: calll _may_throw_or_crash
-; CHECK: movl 8(%esp), %[[next:[^ ,]*]]
+; CHECK: movl -16(%ebp), %[[next:[^ ,]*]]
 ; CHECK: movl %[[next]], %fs:0
 ; CHECK: retl
 
@@ -73,17 +77,19 @@ catchall:
 }
 
 ; CHECK-LABEL: _use_CxxFrameHandler3:
+; CHECK: pushl %ebp
+; CHECK: movl %esp, %ebp
 ; CHECK: subl ${{[0-9]+}}, %esp
-; CHECK: movl %esp, (%esp)
-; CHECK: movl $-1, 12(%esp)
-; CHECK: leal 4(%esp), %[[node:[^ ,]*]]
-; CHECK: movl $___ehhandler$use_CxxFrameHandler3, 8(%esp)
+; CHECK: movl %esp, -16(%ebp)
+; CHECK: movl $-1, -4(%ebp)
+; CHECK: leal -12(%ebp), %[[node:[^ ,]*]]
+; CHECK: movl $___ehhandler$use_CxxFrameHandler3, -8(%ebp)
 ; CHECK: movl %fs:0, %[[next:[^ ,]*]]
-; CHECK: movl %[[next]], 4(%esp)
+; CHECK: movl %[[next]], -12(%ebp)
 ; CHECK: movl %[[node]], %fs:0
-; CHECK: movl $0, 12(%esp)
+; CHECK: movl $0, -4(%ebp)
 ; CHECK: calll _may_throw_or_crash
-; CHECK: movl 4(%esp), %[[next:[^ ,]*]]
+; CHECK: movl -12(%ebp), %[[next:[^ ,]*]]
 ; CHECK: movl %[[next]], %fs:0
 ; CHECK: retl
 

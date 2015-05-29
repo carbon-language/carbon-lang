@@ -90,14 +90,14 @@ eh.resume:                                        ; preds = %catch.dispatch.4
 }
 
 ; CHECK-LABEL: _f:
-; CHECK: movl $-1, [[state:[0-9]+]](%esp)
+; CHECK: movl $-1, [[state:[-0-9]+]](%ebp)
 ; CHECK: movl $___ehhandler$f, {{.*}}
 ;
-; CHECK: movl $0, [[state]](%esp)
+; CHECK: movl $0, [[state]](%ebp)
 ; CHECK: movl $1, (%esp)
 ; CHECK: calll _may_throw
 ;
-; CHECK: movl $1, [[state]](%esp)
+; CHECK: movl $1, [[state]](%ebp)
 ; CHECK: movl $2, (%esp)
 ; CHECK: calll _may_throw
 
