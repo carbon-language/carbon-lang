@@ -345,9 +345,24 @@ FileSpec::SetFile (const char *pathname, bool resolve, PathSyntax syntax)
 }
 
 void
+FileSpec::SetFile(const char *pathname, bool resolve, ArchSpec arch)
+{
+    return SetFile(pathname, resolve,
+            arch.GetTriple().isOSWindows()
+            ? ePathSyntaxWindows
+            : ePathSyntaxPosix);
+}
+
+void
 FileSpec::SetFile(const std::string &pathname, bool resolve, PathSyntax syntax)
 {
     return SetFile(pathname.c_str(), resolve, syntax);
+}
+
+void
+FileSpec::SetFile(const std::string &pathname, bool resolve, ArchSpec arch)
+{
+    return SetFile(pathname.c_str(), resolve, arch);
 }
 
 //----------------------------------------------------------------------

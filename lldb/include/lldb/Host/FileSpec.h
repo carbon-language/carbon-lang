@@ -669,7 +669,13 @@ public:
     SetFile (const char *path, bool resolve_path, PathSyntax syntax = ePathSyntaxHostNative);
 
     void
+    SetFile(const char *path, bool resolve_path, ArchSpec arch);
+
+    void
     SetFile(const std::string &path, bool resolve_path, PathSyntax syntax = ePathSyntaxHostNative);
+
+    void
+    SetFile(const std::string &path, bool resolve_path, ArchSpec arch);
 
     bool
     IsResolved () const

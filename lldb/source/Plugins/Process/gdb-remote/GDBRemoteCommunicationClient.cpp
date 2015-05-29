@@ -2301,7 +2301,7 @@ GDBRemoteCommunicationClient::GetWorkingDir(FileSpec &working_dir)
             return false;
         std::string cwd;
         response.GetHexByteString(cwd);
-        working_dir.SetFile(cwd, false);
+        working_dir.SetFile(cwd, false, GetHostArchitecture());
         return !cwd.empty();
     }
     return false;
