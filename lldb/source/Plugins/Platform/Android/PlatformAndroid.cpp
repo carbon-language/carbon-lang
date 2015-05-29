@@ -219,7 +219,7 @@ PlatformAndroid::GetFile (const FileSpec& source,
     const auto source_path = source_spec.GetPath (false);
     if (llvm::sys::path::is_relative (source_path.c_str ()))
     {
-        source_spec.SetFile (GetRemoteWorkingDirectory ().AsCString (), false, FileSpec::ePathSyntaxPosix);
+        source_spec = GetRemoteWorkingDirectory ();
         source_spec.AppendPathComponent (source_path.c_str ());
     }
 
