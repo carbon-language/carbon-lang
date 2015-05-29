@@ -7,7 +7,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "lldb/lldb-python.h"
 #include "lldb/lldb-forward.h"
 
 #include "lldb/API/SBAddress.h"

@@ -7,8 +7,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "lldb/lldb-python.h"
-
 // C Includes
 #include <sys/stat.h>
 #if defined(__APPLE__) || defined(__linux__)

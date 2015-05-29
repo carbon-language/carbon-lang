@@ -7,8 +7,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "lldb/lldb-python.h"
-
 #include "lldb/API/SBAttachInfo.h"
 
 #include "lldb/API/SBFileSpec.h"

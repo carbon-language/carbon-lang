@@ -7,8 +7,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "lldb/lldb-python.h"
-
 #include "lldb/Utility/SafeMachO.h"
 
 #include "lldb/Breakpoint/StoppointCallbackContext.h"

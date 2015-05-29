@@ -8,8 +8,6 @@
 //===----------------------------------------------------------------------===//
 
 
-#include "lldb/lldb-python.h"
-
 #include <string>
 
 #include "lldb/Breakpoint/BreakpointLocation.h"

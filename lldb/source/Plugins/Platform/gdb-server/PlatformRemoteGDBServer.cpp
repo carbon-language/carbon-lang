@@ -7,8 +7,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "lldb/lldb-python.h"
-
 #include "PlatformRemoteGDBServer.h"
 #include "lldb/Host/Config.h"
 

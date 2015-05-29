@@ -7,8 +7,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "lldb/lldb-python.h"
-
 #include "lldb/API/SBTypeCategory.h"
 
 #include "lldb/API/SBTypeFilter.h"

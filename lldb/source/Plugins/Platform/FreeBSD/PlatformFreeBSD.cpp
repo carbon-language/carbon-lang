@@ -7,8 +7,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "lldb/lldb-python.h"
-
 #include "PlatformFreeBSD.h"
 #include "lldb/Host/Config.h"
 

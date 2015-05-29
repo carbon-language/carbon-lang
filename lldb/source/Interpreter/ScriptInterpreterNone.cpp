@@ -7,8 +7,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "lldb/lldb-python.h"
-
 #include "lldb/Interpreter/ScriptInterpreterNone.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/StreamFile.h"

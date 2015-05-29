@@ -7,8 +7,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "lldb/lldb-python.h"
-
 #include "lldb/API/SBTypeNameSpecifier.h"
 
 #include "lldb/API/SBStream.h"

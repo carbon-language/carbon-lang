@@ -15,8 +15,6 @@
 
 #else
 
-#include "lldb/lldb-python.h"
-
 #include <stdio.h>
 
 #include "lldb/Core/Stream.h"

@@ -7,7 +7,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "lldb/lldb-python.h"
 #include "lldb/Host/Config.h"
 
 // C Includes

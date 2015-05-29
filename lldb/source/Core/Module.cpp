@@ -7,8 +7,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "lldb/lldb-python.h"
-
 #include "lldb/Core/AddressResolverFileLine.h"
 #include "lldb/Core/Error.h"
 #include "lldb/Core/Module.h"
