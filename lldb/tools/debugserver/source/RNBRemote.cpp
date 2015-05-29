@@ -163,6 +163,7 @@ RNBRemote::CreatePacketTable  ()
     t.push_back (Packet (remove_access_watch_bp,        &RNBRemote::HandlePacket_z,             NULL, "z4", "Remove access watchpoint"));
     t.push_back (Packet (query_monitor,                 &RNBRemote::HandlePacket_qRcmd,          NULL, "qRcmd", "Monitor command"));
     t.push_back (Packet (query_current_thread_id,       &RNBRemote::HandlePacket_qC,            NULL, "qC", "Query current thread ID"));
+    t.push_back (Packet (query_echo,                    &RNBRemote::HandlePacket_qEcho,         NULL, "qEcho:", "Echo the packet back to allow the debugger to sync up with this server"));
     t.push_back (Packet (query_get_pid,                 &RNBRemote::HandlePacket_qGetPid,       NULL, "qGetPid", "Query process id"));
     t.push_back (Packet (query_thread_ids_first,        &RNBRemote::HandlePacket_qThreadInfo,   NULL, "qfThreadInfo", "Get list of active threads (first req)"));
     t.push_back (Packet (query_thread_ids_subsequent,   &RNBRemote::HandlePacket_qThreadInfo,   NULL, "qsThreadInfo", "Get list of active threads (subsequent req)"));
@@ -1496,6 +1497,16 @@ RNBRemote::HandlePacket_qC (const char *p)
     }
     rep << "QC" << std::hex << tid;
     return SendPacket (rep.str());
+}
+
+rnb_err_t
+RNBRemote::HandlePacket_qEcho (const char *p)
+{
+    // Just send the exact same packet back that we received to
+    // synchronize the response packets after a previous packet
+    // timed out. This allows the debugger to get back on track
+    // with responses after a packet timeout.
+    return SendPacket (p);
 }
 
 rnb_err_t
@@ -3086,7 +3097,7 @@ RNBRemote::HandlePacket_qSupported (const char *p)
 {
     uint32_t max_packet_size = 128 * 1024;  // 128KBytes is a reasonable max packet size--debugger can always use less
     char buf[64];
-    snprintf (buf, sizeof(buf), "qXfer:features:read+;PacketSize=%x", max_packet_size);
+    snprintf (buf, sizeof(buf), "qXfer:features:read+;PacketSize=%x;qEcho", max_packet_size);
     return SendPacket (buf);
 }
 

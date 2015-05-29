@@ -18,6 +18,7 @@
 // C++ Includes
 // Other libraries and framework includes
 #include "lldb/Core/Log.h"
+#include "lldb/Core/RegularExpression.h"
 #include "lldb/Core/StreamFile.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Host/ConnectionFileDescriptor.h"
@@ -150,6 +151,8 @@ GDBRemoteCommunication::GDBRemoteCommunication(const char *comm_name,
 #else
     m_packet_timeout (1),
 #endif
+    m_echo_number(0),
+    m_supports_qEcho (eLazyBoolCalculate),
     m_sequence_mutex (Mutex::eMutexTypeRecursive),
     m_public_is_running (false),
     m_private_is_running (false),
@@ -292,7 +295,7 @@ GDBRemoteCommunication::PacketResult
 GDBRemoteCommunication::GetAck ()
 {
     StringExtractorGDBRemote packet;
-    PacketResult result = WaitForPacketWithTimeoutMicroSecondsNoLock (packet, GetPacketTimeoutInMicroSeconds ());
+    PacketResult result = WaitForPacketWithTimeoutMicroSecondsNoLock (packet, GetPacketTimeoutInMicroSeconds (), false);
     if (result == PacketResult::Success)
     {
         if (packet.GetResponseType() == StringExtractorGDBRemote::ResponseType::eAck)
@@ -321,7 +324,7 @@ GDBRemoteCommunication::WaitForNotRunningPrivate (const TimeValue *timeout_ptr)
 }
 
 GDBRemoteCommunication::PacketResult
-GDBRemoteCommunication::WaitForPacketWithTimeoutMicroSecondsNoLock (StringExtractorGDBRemote &packet, uint32_t timeout_usec)
+GDBRemoteCommunication::WaitForPacketWithTimeoutMicroSecondsNoLock (StringExtractorGDBRemote &packet, uint32_t timeout_usec, bool sync_on_timeout)
 {
     uint8_t buffer[8192];
     Error error;
@@ -358,6 +361,104 @@ GDBRemoteCommunication::WaitForPacketWithTimeoutMicroSecondsNoLock (StringExtrac
             {
             case eConnectionStatusTimedOut:
             case eConnectionStatusInterrupted:
+                if (sync_on_timeout)
+                {
+                    //------------------------------------------------------------------
+                    /// Sync the remote GDB server and make sure we get a response that
+                    /// corresponds to what we send.
+                    ///
+                    /// Sends a "qEcho" packet and makes sure it gets the exact packet
+                    /// echoed back. If the qEcho packet isn't supported, we send a qC
+                    /// packet and make sure we get a valid thread ID back. We use the
+                    /// "qC" packet since its response if very unique: is responds with
+                    /// "QC%x" where %x is the thread ID of the current thread. This
+                    /// makes the response unique enough from other packet responses to
+                    /// ensure we are back on track.
+                    ///
+                    /// This packet is needed after we time out sending a packet so we
+                    /// can ensure that we are getting the response for the packet we
+                    /// are sending. There are no sequence IDs in the GDB remote
+                    /// protocol (there used to be, but they are not supported anymore)
+                    /// so if you timeout sending packet "abc", you might then send
+                    /// packet "cde" and get the response for the previous "abc" packet.
+                    /// Many responses are "OK" or "" (unsupported) or "EXX" (error) so
+                    /// many responses for packets can look like responses for other
+                    /// packets. So if we timeout, we need to ensure that we can get
+                    /// back on track. If we can't get back on track, we must
+                    /// disconnect.
+                    //------------------------------------------------------------------
+                    bool sync_success = false;
+                    bool got_actual_response = false;
+                    // We timed out, we need to sync back up with the
+                    char echo_packet[32];
+                    int echo_packet_len = 0;
+                    RegularExpression response_regex;
+
+                    if (m_supports_qEcho == eLazyBoolYes)
+                    {
+                        echo_packet_len = ::snprintf (echo_packet, sizeof(echo_packet), "qEcho:%u", ++m_echo_number);
+                        std::string regex_str = "^";
+                        regex_str += echo_packet;
+                        regex_str += "$";
+                        response_regex.Compile(regex_str.c_str());
+                    }
+                    else
+                    {
+                        echo_packet_len = ::snprintf (echo_packet, sizeof(echo_packet), "qC");
+                        response_regex.Compile("^QC[0-9A-Fa-f]+$");
+                    }
+
+                    PacketResult echo_packet_result = SendPacketNoLock (echo_packet, echo_packet_len);
+                    if (echo_packet_result == PacketResult::Success)
+                    {
+                        const uint32_t max_retries = 3;
+                        uint32_t successful_responses = 0;
+                        for (uint32_t i=0; i<max_retries; ++i)
+                        {
+                            StringExtractorGDBRemote echo_response;
+                            echo_packet_result = WaitForPacketWithTimeoutMicroSecondsNoLock (echo_response, timeout_usec, false);
+                            if (echo_packet_result == PacketResult::Success)
+                            {
+                                ++successful_responses;
+                                if (response_regex.Execute(echo_response.GetStringRef().c_str()))
+                                {
+                                    sync_success = true;
+                                    break;
+                                }
+                                else if (successful_responses == 1)
+                                {
+                                    // We got something else back as the first successful response, it probably is
+                                    // the  response to the packet we actually wanted, so copy it over if this
+                                    // is the first success and continue to try to get the qEcho response
+                                    packet = echo_response;
+                                    got_actual_response = true;
+                                }
+                            }
+                            else if (echo_packet_result == PacketResult::ErrorReplyTimeout)
+                                continue;   // Packet timed out, continue waiting for a response
+                            else
+                                break;      // Something else went wrong getting the packet back, we failed and are done trying
+                        }
+                    }
+
+                    // We weren't able to sync back up with the server, we must abort otherwise
+                    // all responses might not be from the right packets...
+                    if (sync_success)
+                    {
+                        // We timed out, but were able to recover
+                        if (got_actual_response)
+                        {
+                            // We initially timed out, but we did get a response that came in before the successful
+                            // reply to our qEcho packet, so lets say everything is fine...
+                            return PacketResult::Success;
+                        }
+                    }
+                    else
+                    {
+                        disconnected = true;
+                        Disconnect();
+                    }
+                }
                 timed_out = true;
                 break;
             case eConnectionStatusSuccess:

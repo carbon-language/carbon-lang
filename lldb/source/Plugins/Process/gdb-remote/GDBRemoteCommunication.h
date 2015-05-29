@@ -281,7 +281,8 @@ protected:
 
     PacketResult
     WaitForPacketWithTimeoutMicroSecondsNoLock (StringExtractorGDBRemote &response, 
-                                                uint32_t timeout_usec);
+                                                uint32_t timeout_usec,
+                                                bool sync_on_timeout);
 
     bool
     WaitForNotRunningPrivate (const TimeValue *timeout_ptr);
@@ -290,6 +291,8 @@ protected:
     // Classes that inherit from GDBRemoteCommunication can see and modify these
     //------------------------------------------------------------------
     uint32_t m_packet_timeout;
+    uint32_t m_echo_number;
+    LazyBool m_supports_qEcho;
 #ifdef ENABLE_MUTEX_ERROR_CHECKING
     TrackingMutex m_sequence_mutex;
 #else

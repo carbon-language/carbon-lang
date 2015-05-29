@@ -1170,6 +1170,7 @@ ProcessGDBRemote::ConnectToDebugserver (const char *connect_url)
     if (GetTarget().GetNonStopModeEnabled())
         m_gdb_comm.SetNonStopMode(true);
 
+    m_gdb_comm.GetEchoSupported ();
     m_gdb_comm.GetThreadSuffixSupported ();
     m_gdb_comm.GetListThreadsInStopReplySupported ();
     m_gdb_comm.GetHostInfo ();

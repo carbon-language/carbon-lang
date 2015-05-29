@@ -83,6 +83,7 @@ public:
         query_monitor,                  // 'qRcmd'
         query_current_thread_id,        // 'qC'
         query_get_pid,                  // 'qGetPid'
+        query_echo,                     // 'qEcho'
         query_thread_ids_first,         // 'qfThreadInfo'
         query_thread_ids_subsequent,    // 'qsThreadInfo'
         query_thread_extra_info,        // 'qThreadExtraInfo'
@@ -177,6 +178,7 @@ public:
     rnb_err_t HandlePacket_qC (const char *p);
     rnb_err_t HandlePacket_qRcmd (const char *p);
     rnb_err_t HandlePacket_qGetPid (const char *p);
+    rnb_err_t HandlePacket_qEcho (const char *p);
     rnb_err_t HandlePacket_qLaunchSuccess (const char *p);
     rnb_err_t HandlePacket_qRegisterInfo (const char *p);
     rnb_err_t HandlePacket_qShlibInfoAddr (const char *p);

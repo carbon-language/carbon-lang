@@ -430,6 +430,9 @@ public:
     GetRemoteMaxPacketSize();
 
     bool
+    GetEchoSupported ();
+
+    bool
     GetAugmentedLibrariesSVR4ReadSupported ();
 
     bool
