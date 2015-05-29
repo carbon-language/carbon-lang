@@ -74,7 +74,8 @@ class ELFObjectWriter : public MCObjectWriter {
     static uint64_t SymbolValue(const MCSymbol &Sym, const MCAsmLayout &Layout);
     static bool isInSymtab(const MCAsmLayout &Layout, const MCSymbol &Symbol,
                            bool Used, bool Renamed);
-    static bool isLocal(const MCSymbol &Symbol, bool isUsedInReloc);
+    static bool isLocal(const MCSymbol &Symbol, bool IsUsedInReloc,
+                        bool IsSignature);
 
     /// Helper struct for containing some precomputed information on symbols.
     struct ELFSymbolData {
@@ -766,7 +767,8 @@ bool ELFObjectWriter::isInSymtab(const MCAsmLayout &Layout,
   return true;
 }
 
-bool ELFObjectWriter::isLocal(const MCSymbol &Symbol, bool isUsedInReloc) {
+bool ELFObjectWriter::isLocal(const MCSymbol &Symbol, bool IsUsedInReloc,
+                              bool IsSignature) {
   const MCSymbolData &Data = Symbol.getData();
   if (Data.isExternal())
     return false;
@@ -774,10 +776,10 @@ bool ELFObjectWriter::isLocal(const MCSymbol &Symbol, bool isUsedInReloc) {
   if (Symbol.isDefined())
     return true;
 
-  if (isUsedInReloc)
+  if (IsUsedInReloc)
     return false;
 
-  return true;
+  return IsSignature;
 }
 
 void ELFObjectWriter::computeSymbolTable(
@@ -825,7 +827,7 @@ void ELFObjectWriter::computeSymbolTable(
 
     // Undefined symbols are global, but this is the first place we
     // are able to set it.
-    bool Local = isLocal(Symbol, Used);
+    bool Local = isLocal(Symbol, Used, isSignature);
     if (!Local && MCELF::GetBinding(SD) == ELF::STB_LOCAL) {
       assert(BaseSymbol);
       MCSymbolData &BaseData = BaseSymbol->getData();
@@ -900,9 +902,7 @@ void ELFObjectWriter::computeSymbolTable(
     if (MCELF::GetType(SD) != ELF::STT_SECTION)
       MSD.Name = StrTabBuilder.add(Name);
 
-    if (MSD.SectionIndex == ELF::SHN_UNDEF)
-      ExternalSymbolData.push_back(MSD);
-    else if (Local)
+    if (Local)
       LocalSymbolData.push_back(MSD);
     else
       ExternalSymbolData.push_back(MSD);
