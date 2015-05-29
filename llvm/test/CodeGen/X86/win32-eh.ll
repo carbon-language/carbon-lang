@@ -24,10 +24,10 @@ catchall:
 ; CHECK: subl ${{[0-9]+}}, %esp
 ; CHECK: movl $-1, -4(%ebp)
 ; CHECK: movl $L__ehtable$use_except_handler3, -8(%ebp)
+; CHECK: leal -16(%ebp), %[[node:[^ ,]*]]
 ; CHECK: movl $__except_handler3, -12(%ebp)
 ; CHECK: movl %fs:0, %[[next:[^ ,]*]]
 ; CHECK: movl %[[next]], -16(%ebp)
-; CHECK: leal -16(%ebp), %[[node:[^ ,]*]]
 ; CHECK: movl %[[node]], %fs:0
 ; CHECK: calll _may_throw_or_crash
 ; CHECK: movl -16(%ebp), %[[next:[^ ,]*]]
@@ -50,8 +50,10 @@ catchall:
 ; CHECK: movl %esp, %ebp
 ; CHECK: subl ${{[0-9]+}}, %esp
 ; CHECK: movl %esp, -24(%ebp)
-; CHECK: movl $-1, -4(%ebp)
-; CHECK: movl $L__ehtable$use_except_handler4, -20(%ebp)
+; CHECK: movl $-2, -4(%ebp)
+; CHECK: movl $L__ehtable$use_except_handler4, %[[lsda:[^ ,]*]]
+; CHECK: xorl ___security_cookie, %[[lsda]]
+; CHECK: movl %[[lsda]], -8(%ebp)
 ; CHECK: leal -16(%ebp), %[[node:[^ ,]*]]
 ; CHECK: movl $__except_handler4, -12(%ebp)
 ; CHECK: movl %fs:0, %[[next:[^ ,]*]]

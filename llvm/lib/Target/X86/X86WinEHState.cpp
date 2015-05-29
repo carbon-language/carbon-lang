@@ -74,17 +74,15 @@ private:
   int escapeRegNode(Function &F);
 
   // Module-level type getters.
-  Type *getEHRegistrationType();
-  Type *getSEH3RegistrationType();
-  Type *getSEH4RegistrationType();
-  Type *getCXXEH3RegistrationType();
+  Type *getEHLinkRegistrationType();
+  Type *getSEHRegistrationType();
+  Type *getCXXEHRegistrationType();
 
   // Per-module data.
   Module *TheModule = nullptr;
-  StructType *EHRegistrationTy = nullptr;
-  StructType *CXXEH3RegistrationTy = nullptr;
-  StructType *SEH3RegistrationTy = nullptr;
-  StructType *SEH4RegistrationTy = nullptr;
+  StructType *EHLinkRegistrationTy = nullptr;
+  StructType *CXXEHRegistrationTy = nullptr;
+  StructType *SEHRegistrationTy = nullptr;
 
   // Per-function state
   EHPersonality Personality = EHPersonality::Unknown;
@@ -117,10 +115,9 @@ bool WinEHStatePass::doInitialization(Module &M) {
 bool WinEHStatePass::doFinalization(Module &M) {
   assert(TheModule == &M);
   TheModule = nullptr;
-  EHRegistrationTy = nullptr;
-  CXXEH3RegistrationTy = nullptr;
-  SEH3RegistrationTy = nullptr;
-  SEH4RegistrationTy = nullptr;
+  EHLinkRegistrationTy = nullptr;
+  CXXEHRegistrationTy = nullptr;
+  SEHRegistrationTy = nullptr;
   return false;
 }
 
@@ -182,17 +179,17 @@ bool WinEHStatePass::runOnFunction(Function &F) {
 ///     EHRegistrationNode *Next;
 ///     PEXCEPTION_ROUTINE Handler;
 ///   };
-Type *WinEHStatePass::getEHRegistrationType() {
-  if (EHRegistrationTy)
-    return EHRegistrationTy;
+Type *WinEHStatePass::getEHLinkRegistrationType() {
+  if (EHLinkRegistrationTy)
+    return EHLinkRegistrationTy;
   LLVMContext &Context = TheModule->getContext();
-  EHRegistrationTy = StructType::create(Context, "EHRegistrationNode");
+  EHLinkRegistrationTy = StructType::create(Context, "EHRegistrationNode");
   Type *FieldTys[] = {
-      EHRegistrationTy->getPointerTo(0), // EHRegistrationNode *Next
+      EHLinkRegistrationTy->getPointerTo(0), // EHRegistrationNode *Next
       Type::getInt8PtrTy(Context) // EXCEPTION_DISPOSITION (*Handler)(...)
   };
-  EHRegistrationTy->setBody(FieldTys, false);
-  return EHRegistrationTy;
+  EHLinkRegistrationTy->setBody(FieldTys, false);
+  return EHLinkRegistrationTy;
 }
 
 /// The __CxxFrameHandler3 registration node:
@@ -201,40 +198,21 @@ Type *WinEHStatePass::getEHRegistrationType() {
 ///     EHRegistrationNode SubRecord;
 ///     int32_t TryLevel;
 ///   };
-Type *WinEHStatePass::getCXXEH3RegistrationType() {
-  if (CXXEH3RegistrationTy)
-    return CXXEH3RegistrationTy;
+Type *WinEHStatePass::getCXXEHRegistrationType() {
+  if (CXXEHRegistrationTy)
+    return CXXEHRegistrationTy;
   LLVMContext &Context = TheModule->getContext();
   Type *FieldTys[] = {
       Type::getInt8PtrTy(Context), // void *SavedESP
-      getEHRegistrationType(),     // EHRegistrationNode SubRecord
+      getEHLinkRegistrationType(), // EHRegistrationNode SubRecord
       Type::getInt32Ty(Context)    // int32_t TryLevel
   };
-  CXXEH3RegistrationTy =
+  CXXEHRegistrationTy =
       StructType::create(FieldTys, "CXXExceptionRegistration");
-  return CXXEH3RegistrationTy;
+  return CXXEHRegistrationTy;
 }
 
-/// The _except_handler3 registration node:
-///   struct EH3ExceptionRegistration {
-///     EHRegistrationNode SubRecord;
-///     void *ScopeTable;
-///     int32_t TryLevel;
-///   };
-Type *WinEHStatePass::getSEH3RegistrationType() {
-  if (SEH3RegistrationTy)
-    return SEH3RegistrationTy;
-  LLVMContext &Context = TheModule->getContext();
-  Type *FieldTys[] = {
-      getEHRegistrationType(),     // EHRegistrationNode SubRecord
-      Type::getInt8PtrTy(Context), // void *ScopeTable
-      Type::getInt32Ty(Context)    // int32_t TryLevel
-  };
-  SEH3RegistrationTy = StructType::create(FieldTys, "EH3ExceptionRegistration");
-  return SEH3RegistrationTy;
-}
-
-/// The _except_handler4 registration node:
+/// The _except_handler3/4 registration node:
 ///   struct EH4ExceptionRegistration {
 ///     void *SavedESP;
 ///     _EXCEPTION_POINTERS *ExceptionPointers;
@@ -242,19 +220,19 @@ Type *WinEHStatePass::getSEH3RegistrationType() {
 ///     int32_t EncodedScopeTable;
 ///     int32_t TryLevel;
 ///   };
-Type *WinEHStatePass::getSEH4RegistrationType() {
-  if (SEH4RegistrationTy)
-    return SEH4RegistrationTy;
+Type *WinEHStatePass::getSEHRegistrationType() {
+  if (SEHRegistrationTy)
+    return SEHRegistrationTy;
   LLVMContext &Context = TheModule->getContext();
   Type *FieldTys[] = {
       Type::getInt8PtrTy(Context), // void *SavedESP
       Type::getInt8PtrTy(Context), // void *ExceptionPointers
-      getEHRegistrationType(),     // EHRegistrationNode SubRecord
+      getEHLinkRegistrationType(), // EHRegistrationNode SubRecord
       Type::getInt32Ty(Context),   // int32_t EncodedScopeTable
       Type::getInt32Ty(Context)    // int32_t TryLevel
   };
-  SEH4RegistrationTy = StructType::create(FieldTys, "EH4ExceptionRegistration");
-  return SEH4RegistrationTy;
+  SEHRegistrationTy = StructType::create(FieldTys, "SEHExceptionRegistration");
+  return SEHRegistrationTy;
 }
 
 // Emit an exception registration record. These are stack allocations with the
@@ -268,8 +246,8 @@ void WinEHStatePass::emitExceptionRegistrationRecord(Function *F) {
   StringRef PersonalityName = PersonalityFn->getName();
   IRBuilder<> Builder(&F->getEntryBlock(), F->getEntryBlock().begin());
   Type *Int8PtrType = Builder.getInt8PtrTy();
-  if (PersonalityName == "__CxxFrameHandler3") {
-    RegNodeTy = getCXXEH3RegistrationType();
+  if (Personality == EHPersonality::MSVC_CXX) {
+    RegNodeTy = getCXXEHRegistrationType();
     RegNode = Builder.CreateAlloca(RegNodeTy);
     // FIXME: We can skip this in -GS- mode, when we figure that out.
     // SavedESP = llvm.stacksave()
@@ -283,33 +261,35 @@ void WinEHStatePass::emitExceptionRegistrationRecord(Function *F) {
     Function *Trampoline = generateLSDAInEAXThunk(F);
     Link = Builder.CreateStructGEP(RegNodeTy, RegNode, 1);
     linkExceptionRegistration(Builder, Trampoline);
-  } else if (PersonalityName == "_except_handler3") {
-    RegNodeTy = getSEH3RegistrationType();
-    RegNode = Builder.CreateAlloca(RegNodeTy);
-    // TryLevel = -1
-    StateFieldIndex = 2;
-    insertStateNumberStore(RegNode, Builder.GetInsertPoint(), -1);
-    // ScopeTable = llvm.x86.seh.lsda(F)
-    Value *LSDA = emitEHLSDA(Builder, F);
-    Builder.CreateStore(LSDA, Builder.CreateStructGEP(RegNodeTy, RegNode, 1));
-    Link = Builder.CreateStructGEP(RegNodeTy, RegNode, 0);
-    linkExceptionRegistration(Builder, PersonalityFn);
-  } else if (PersonalityName == "_except_handler4") {
-    RegNodeTy = getSEH4RegistrationType();
+  } else if (Personality == EHPersonality::MSVC_X86SEH) {
+    // If _except_handler4 is in use, some additional guard checks and prologue
+    // stuff is required.
+    bool UseStackGuard = (PersonalityName == "_except_handler4");
+    RegNodeTy = getSEHRegistrationType();
     RegNode = Builder.CreateAlloca(RegNodeTy);
     // SavedESP = llvm.stacksave()
     Value *SP = Builder.CreateCall(
         Intrinsic::getDeclaration(TheModule, Intrinsic::stacksave), {});
     Builder.CreateStore(SP, Builder.CreateStructGEP(RegNodeTy, RegNode, 0));
-    // TryLevel = -1
+    // TryLevel = -2 / -1
     StateFieldIndex = 4;
-    insertStateNumberStore(RegNode, Builder.GetInsertPoint(), -1);
-    // FIXME: XOR the LSDA with __security_cookie.
+    insertStateNumberStore(RegNode, Builder.GetInsertPoint(),
+                           UseStackGuard ? -2 : -1);
     // ScopeTable = llvm.x86.seh.lsda(F)
     Value *FI8 = Builder.CreateBitCast(F, Int8PtrType);
     Value *LSDA = Builder.CreateCall(
         Intrinsic::getDeclaration(TheModule, Intrinsic::x86_seh_lsda), FI8);
-    Builder.CreateStore(LSDA, Builder.CreateStructGEP(RegNodeTy, RegNode, 1));
+    Type *Int32Ty = Type::getInt32Ty(TheModule->getContext());
+    LSDA = Builder.CreatePtrToInt(LSDA, Int32Ty);
+    // If using _except_handler4, xor the address of the table with
+    // __security_cookie.
+    if (UseStackGuard) {
+      Value *Cookie =
+          TheModule->getOrInsertGlobal("__security_cookie", Int32Ty);
+      Value *Val = Builder.CreateLoad(Int32Ty, Cookie);
+      LSDA = Builder.CreateXor(LSDA, Val);
+    }
+    Builder.CreateStore(LSDA, Builder.CreateStructGEP(RegNodeTy, RegNode, 3));
     Link = Builder.CreateStructGEP(RegNodeTy, RegNode, 2);
     linkExceptionRegistration(Builder, PersonalityFn);
   } else {
@@ -372,7 +352,7 @@ Function *WinEHStatePass::generateLSDAInEAXThunk(Function *ParentFunc) {
 
 void WinEHStatePass::linkExceptionRegistration(IRBuilder<> &Builder,
                                                Value *Handler) {
-  Type *LinkTy = getEHRegistrationType();
+  Type *LinkTy = getEHLinkRegistrationType();
   // Handler = Handler
   Handler = Builder.CreateBitCast(Handler, Builder.getInt8PtrTy());
   Builder.CreateStore(Handler, Builder.CreateStructGEP(LinkTy, Link, 1));
@@ -392,7 +372,7 @@ void WinEHStatePass::unlinkExceptionRegistration(IRBuilder<> &Builder) {
     Builder.Insert(GEP);
     Link = GEP;
   }
-  Type *LinkTy = getEHRegistrationType();
+  Type *LinkTy = getEHLinkRegistrationType();
   // [fs:00] = Link->Next
   Value *Next =
       Builder.CreateLoad(Builder.CreateStructGEP(LinkTy, Link, 0));
