@@ -34,9 +34,9 @@ ProcessLauncherWindows::LaunchProcess(const ProcessLaunchInfo &launch_info, Erro
 
     startupinfo.cb = sizeof(startupinfo);
     startupinfo.dwFlags |= STARTF_USESTDHANDLES;
-    startupinfo.hStdError = stderr_handle;
-    startupinfo.hStdInput = stdin_handle;
-    startupinfo.hStdOutput = stdout_handle;
+    startupinfo.hStdError  = stderr_handle ? stderr_handle : ::GetStdHandle(STD_ERROR_HANDLE);
+    startupinfo.hStdInput  = stdin_handle  ? stdin_handle  : ::GetStdHandle(STD_INPUT_HANDLE);
+    startupinfo.hStdOutput = stdout_handle ? stdout_handle : ::GetStdHandle(STD_OUTPUT_HANDLE);
 
     const char *hide_console_var = getenv("LLDB_LAUNCH_INFERIORS_WITHOUT_CONSOLE");
     if (hide_console_var && llvm::StringRef(hide_console_var).equals_lower("true"))
