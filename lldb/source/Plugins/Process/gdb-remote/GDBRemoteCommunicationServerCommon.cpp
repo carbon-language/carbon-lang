@@ -87,6 +87,8 @@ GDBRemoteCommunicationServerCommon::GDBRemoteCommunicationServerCommon(const cha
                                   &GDBRemoteCommunicationServerCommon::Handle_qLaunchSuccess);
     RegisterMemberFunctionHandler(StringExtractorGDBRemote::eServerPacketType_QListThreadsInStopReply,
                                   &GDBRemoteCommunicationServerCommon::Handle_QListThreadsInStopReply);
+    RegisterMemberFunctionHandler(StringExtractorGDBRemote::eServerPacketType_qEcho,
+                                  &GDBRemoteCommunicationServerCommon::Handle_qEcho);
     RegisterMemberFunctionHandler(StringExtractorGDBRemote::eServerPacketType_qModuleInfo,
                                   &GDBRemoteCommunicationServerCommon::Handle_qModuleInfo);
     RegisterMemberFunctionHandler(StringExtractorGDBRemote::eServerPacketType_qPlatform_chmod,
@@ -915,6 +917,7 @@ GDBRemoteCommunicationServerCommon::Handle_qSupported (StringExtractorGDBRemote 
     response.PutCString (";QStartNoAckMode+");
     response.PutCString (";QThreadSuffixSupported+");
     response.PutCString (";QListThreadsInStopReply+");
+    response.PutCString (";qEcho");
 #if defined(__linux__)
     response.PutCString (";qXfer:auxv:read+");
 #endif
@@ -1150,6 +1153,13 @@ GDBRemoteCommunicationServerCommon::Handle_A (StringExtractorGDBRemote &packet)
         }
     }
     return SendErrorResponse (8);
+}
+
+GDBRemoteCommunication::PacketResult
+GDBRemoteCommunicationServerCommon::Handle_qEcho (StringExtractorGDBRemote &packet)
+{
+    // Just echo back the exact same packet for qEcho...
+    return SendPacketNoLock(packet.GetStringRef().c_str(), packet.GetStringRef().size());
 }
 
 GDBRemoteCommunication::PacketResult

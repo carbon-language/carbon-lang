@@ -50,6 +50,7 @@ public:
         eServerPacketType_qfProcessInfo,
         eServerPacketType_qsProcessInfo,
         eServerPacketType_qC,
+        eServerPacketType_qEcho,
         eServerPacketType_qGroupName,
         eServerPacketType_qHostInfo,
         eServerPacketType_qLaunchGDBServer,
