@@ -477,6 +477,13 @@ CMICmnLLDBDebugSessionInfo::MIResponseForVariableInfoInternal(const VariableInfo
         }
         if (veVarInfoFormat != eVariableInfoFormat_NoValues)
         {
+            miValueTuple.Add(miValueResultName); // name
+            if (veVarInfoFormat == eVariableInfoFormat_SimpleValues)
+            {
+                const CMICmnMIValueConst miValueConst3(value.GetTypeName());
+                const CMICmnMIValueResult miValueResult3("type", miValueConst3);
+                miValueTuple.Add(miValueResult3);
+            }
             const MIuint nChildren = value.GetNumChildren();
             const bool bIsPointerType = value.GetType().IsPointerType();
             if (nChildren == 0 || // no children
@@ -488,12 +495,11 @@ CMICmnLLDBDebugSessionInfo::MIResponseForVariableInfoInternal(const VariableInfo
                 {
                     const CMICmnMIValueConst miValueConst2(strValue.Escape().AddSlashes());
                     const CMICmnMIValueResult miValueResult2("value", miValueConst2);
-                    miValueTuple.Add(miValueResultName); // name
                     miValueTuple.Add(miValueResult2);
-                    vwrMiValueList.Add(miValueTuple);
-                    continue;
                 }
             }
+            vwrMiValueList.Add(miValueTuple);
+            continue;
         }
         
         if (vbMarkArgs)
