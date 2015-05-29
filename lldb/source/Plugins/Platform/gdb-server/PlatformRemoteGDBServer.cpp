@@ -318,24 +318,17 @@ PlatformRemoteGDBServer::GetRemoteSystemArchitecture ()
     return m_gdb_client.GetSystemArchitecture();
 }
 
-ConstString
+FileSpec
 PlatformRemoteGDBServer::GetRemoteWorkingDirectory()
 {
     if (IsConnected())
     {
         Log *log = GetLogIfAnyCategoriesSet(LIBLLDB_LOG_PLATFORM);
-        std::string cwd;
-        if (m_gdb_client.GetWorkingDir(cwd))
-        {
-            ConstString working_dir(cwd.c_str());
-            if (log)
-                log->Printf("PlatformRemoteGDBServer::GetRemoteWorkingDirectory() -> '%s'", working_dir.GetCString());
-            return working_dir;
-        }
-        else
-        {
-            return ConstString();
-        }
+        FileSpec working_dir;
+        if (m_gdb_client.GetWorkingDir(working_dir) && log)
+            log->Printf("PlatformRemoteGDBServer::GetRemoteWorkingDirectory() -> '%s'",
+                    working_dir.GetCString());
+        return working_dir;
     }
     else
     {
@@ -344,7 +337,7 @@ PlatformRemoteGDBServer::GetRemoteWorkingDirectory()
 }
 
 bool
-PlatformRemoteGDBServer::SetRemoteWorkingDirectory(const ConstString &path)
+PlatformRemoteGDBServer::SetRemoteWorkingDirectory(const FileSpec &working_dir)
 {
     if (IsConnected())
     {
@@ -352,11 +345,12 @@ PlatformRemoteGDBServer::SetRemoteWorkingDirectory(const ConstString &path)
         // for use to re-read it
         Log *log = GetLogIfAnyCategoriesSet(LIBLLDB_LOG_PLATFORM);
         if (log)
-            log->Printf("PlatformRemoteGDBServer::SetRemoteWorkingDirectory('%s')", path.GetCString());
-        return m_gdb_client.SetWorkingDir(path.GetCString()) == 0;
+            log->Printf("PlatformRemoteGDBServer::SetRemoteWorkingDirectory('%s')",
+                    working_dir.GetCString());
+        return m_gdb_client.SetWorkingDir(working_dir) == 0;
     }
     else
-        return Platform::SetRemoteWorkingDirectory(path);
+        return Platform::SetRemoteWorkingDirectory(working_dir);
 }
 
 bool
@@ -396,7 +390,7 @@ PlatformRemoteGDBServer::ConnectRemote (Args& args)
                     m_gdb_client.GetHostInfo();
                     // If a working directory was set prior to connecting, send it down now
                     if (m_working_dir)
-                        m_gdb_client.SetWorkingDir(m_working_dir.GetCString());
+                        m_gdb_client.SetWorkingDir(m_working_dir);
                 }
                 else
                 {
@@ -492,13 +486,13 @@ PlatformRemoteGDBServer::LaunchProcess (ProcessLaunchInfo &launch_info)
         switch(file_action->GetFD())
         {
         case STDIN_FILENO:
-            m_gdb_client.SetSTDIN (file_action->GetPath());
+            m_gdb_client.SetSTDIN(file_action->GetFileSpec());
             break;
         case STDOUT_FILENO:
-            m_gdb_client.SetSTDOUT (file_action->GetPath());
+            m_gdb_client.SetSTDOUT(file_action->GetFileSpec());
             break;
         case STDERR_FILENO:
-            m_gdb_client.SetSTDERR (file_action->GetPath());
+            m_gdb_client.SetSTDERR(file_action->GetFileSpec());
             break;
         }
     }
@@ -506,10 +500,10 @@ PlatformRemoteGDBServer::LaunchProcess (ProcessLaunchInfo &launch_info)
     m_gdb_client.SetDisableASLR (launch_info.GetFlags().Test (eLaunchFlagDisableASLR));
     m_gdb_client.SetDetachOnError (launch_info.GetFlags().Test (eLaunchFlagDetachOnError));
     
-    const char *working_dir = launch_info.GetWorkingDirectory();
-    if (working_dir && working_dir[0])
+    FileSpec working_dir = launch_info.GetWorkingDirectory();
+    if (working_dir)
     {
-        m_gdb_client.SetWorkingDir (working_dir);
+        m_gdb_client.SetWorkingDir(working_dir);
     }
     
     // Send the environment and the program + arguments after we connect
@@ -749,33 +743,38 @@ PlatformRemoteGDBServer::Attach (ProcessAttachInfo &attach_info,
 }
 
 Error
-PlatformRemoteGDBServer::MakeDirectory (const char *path, uint32_t mode)
+PlatformRemoteGDBServer::MakeDirectory(const FileSpec &file_spec, uint32_t mode)
 {
-    Error error = m_gdb_client.MakeDirectory(path,mode);
+    Error error = m_gdb_client.MakeDirectory(file_spec, mode);
     Log *log = GetLogIfAnyCategoriesSet(LIBLLDB_LOG_PLATFORM);
     if (log)
-        log->Printf ("PlatformRemoteGDBServer::MakeDirectory(path='%s', mode=%o) error = %u (%s)", path, mode, error.GetError(), error.AsCString());
+        log->Printf ("PlatformRemoteGDBServer::MakeDirectory(path='%s', mode=%o) error = %u (%s)",
+                file_spec.GetCString(), mode, error.GetError(), error.AsCString());
     return error;
 }
 
 
 Error
-PlatformRemoteGDBServer::GetFilePermissions (const char *path, uint32_t &file_permissions)
+PlatformRemoteGDBServer::GetFilePermissions(const FileSpec &file_spec,
+                                            uint32_t &file_permissions)
 {
-    Error error = m_gdb_client.GetFilePermissions(path, file_permissions);
+    Error error = m_gdb_client.GetFilePermissions(file_spec, file_permissions);
     Log *log = GetLogIfAnyCategoriesSet(LIBLLDB_LOG_PLATFORM);
     if (log)
-        log->Printf ("PlatformRemoteGDBServer::GetFilePermissions(path='%s', file_permissions=%o) error = %u (%s)", path, file_permissions, error.GetError(), error.AsCString());
+        log->Printf ("PlatformRemoteGDBServer::GetFilePermissions(path='%s', file_permissions=%o) error = %u (%s)",
+                file_spec.GetCString(), file_permissions, error.GetError(), error.AsCString());
     return error;
 }
 
 Error
-PlatformRemoteGDBServer::SetFilePermissions (const char *path, uint32_t file_permissions)
+PlatformRemoteGDBServer::SetFilePermissions(const FileSpec &file_spec,
+                                            uint32_t file_permissions)
 {
-    Error error = m_gdb_client.SetFilePermissions(path, file_permissions);
+    Error error = m_gdb_client.SetFilePermissions(file_spec, file_permissions);
     Log *log = GetLogIfAnyCategoriesSet(LIBLLDB_LOG_PLATFORM);
     if (log)
-        log->Printf ("PlatformRemoteGDBServer::SetFilePermissions(path='%s', file_permissions=%o) error = %u (%s)", path, file_permissions, error.GetError(), error.AsCString());
+        log->Printf ("PlatformRemoteGDBServer::SetFilePermissions(path='%s', file_permissions=%o) error = %u (%s)",
+                file_spec.GetCString(), file_permissions, error.GetError(), error.AsCString());
     return error;
 }
 
@@ -831,23 +830,25 @@ PlatformRemoteGDBServer::PutFile (const FileSpec& source,
 }
 
 Error
-PlatformRemoteGDBServer::CreateSymlink (const char *src,    // The name of the link is in src
-                                        const char *dst)    // The symlink points to dst
+PlatformRemoteGDBServer::CreateSymlink(const FileSpec &src,    // The name of the link is in src
+                                       const FileSpec &dst)    // The symlink points to dst
 {
-    Error error = m_gdb_client.CreateSymlink (src, dst);
+    Error error = m_gdb_client.CreateSymlink(src, dst);
     Log *log = GetLogIfAnyCategoriesSet(LIBLLDB_LOG_PLATFORM);
     if (log)
-        log->Printf ("PlatformRemoteGDBServer::CreateSymlink(src='%s', dst='%s') error = %u (%s)", src, dst, error.GetError(), error.AsCString());
+        log->Printf ("PlatformRemoteGDBServer::CreateSymlink(src='%s', dst='%s') error = %u (%s)",
+                src.GetCString(), dst.GetCString(), error.GetError(), error.AsCString());
     return error;
 }
 
 Error
-PlatformRemoteGDBServer::Unlink (const char *path)
+PlatformRemoteGDBServer::Unlink(const FileSpec &file_spec)
 {
-    Error error = m_gdb_client.Unlink (path);
+    Error error = m_gdb_client.Unlink(file_spec);
     Log *log = GetLogIfAnyCategoriesSet(LIBLLDB_LOG_PLATFORM);
     if (log)
-        log->Printf ("PlatformRemoteGDBServer::Unlink(path='%s') error = %u (%s)", path, error.GetError(), error.AsCString());
+        log->Printf ("PlatformRemoteGDBServer::Unlink(path='%s') error = %u (%s)",
+                file_spec.GetCString(), error.GetError(), error.AsCString());
     return error;
 }
 
@@ -858,14 +859,14 @@ PlatformRemoteGDBServer::GetFileExists (const FileSpec& file_spec)
 }
 
 Error
-PlatformRemoteGDBServer::RunShellCommand (const char *command,           // Shouldn't be NULL
-                                          const char *working_dir,       // Pass NULL to use the current working directory
-                                          int *status_ptr,               // Pass NULL if you don't want the process exit status
-                                          int *signo_ptr,                // Pass NULL if you don't want the signal that caused the process to exit
-                                          std::string *command_output,   // Pass NULL if you don't want the command output
-                                          uint32_t timeout_sec)          // Timeout in seconds to wait for shell program to finish
+PlatformRemoteGDBServer::RunShellCommand(const char *command,           // Shouldn't be NULL
+                                         const FileSpec &working_dir,   // Pass empty FileSpec to use the current working directory
+                                         int *status_ptr,               // Pass NULL if you don't want the process exit status
+                                         int *signo_ptr,                // Pass NULL if you don't want the signal that caused the process to exit
+                                         std::string *command_output,   // Pass NULL if you don't want the command output
+                                         uint32_t timeout_sec)          // Timeout in seconds to wait for shell program to finish
 {
-    return m_gdb_client.RunShellCommand (command, working_dir, status_ptr, signo_ptr, command_output, timeout_sec);
+    return m_gdb_client.RunShellCommand(command, working_dir, status_ptr, signo_ptr, command_output, timeout_sec);
 }
 
 void

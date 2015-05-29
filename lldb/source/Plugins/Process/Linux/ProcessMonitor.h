@@ -17,6 +17,7 @@
 // C++ Includes
 // Other libraries and framework includes
 #include "lldb/lldb-types.h"
+#include "lldb/Host/FileSpec.h"
 #include "lldb/Host/HostThread.h"
 #include "lldb/Host/Mutex.h"
 
@@ -58,10 +59,10 @@ public:
                    lldb_private::Module *module,
                    char const *argv[],
                    char const *envp[],
-                   const char *stdin_path,
-                   const char *stdout_path,
-                   const char *stderr_path,
-                   const char *working_dir,
+                   const lldb_private::FileSpec &stdin_file_spec,
+                   const lldb_private::FileSpec &stdout_file_spec,
+                   const lldb_private::FileSpec &stderr_file_spec,
+                   const lldb_private::FileSpec &working_dir,
                    const lldb_private::ProcessLaunchInfo &launch_info,
                    lldb_private::Error &error);
 
@@ -251,21 +252,21 @@ private:
                    lldb_private::Module *module,
                    char const **argv,
                    char const **envp,
-                   const char *stdin_path,
-                   const char *stdout_path,
-                   const char *stderr_path,
-                   const char *working_dir,
+                   const lldb_private::FileSpec &stdin_file_spec,
+                   const lldb_private::FileSpec &stdout_file_spec,
+                   const lldb_private::FileSpec &stderr_file_spec,
+                   const lldb_private::FileSpec &working_dir,
                    const lldb_private::ProcessLaunchInfo &launch_info);
 
         ~LaunchArgs();
 
-        lldb_private::Module *m_module; // The executable image to launch.
-        char const **m_argv;            // Process arguments.
-        char const **m_envp;            // Process environment.
-        const char *m_stdin_path;       // Redirect stdin or NULL.
-        const char *m_stdout_path;      // Redirect stdout or NULL.
-        const char *m_stderr_path;      // Redirect stderr or NULL.
-        const char *m_working_dir;      // Working directory or NULL.
+        lldb_private::Module *m_module;                  // The executable image to launch.
+        char const **m_argv;                             // Process arguments.
+        char const **m_envp;                             // Process environment.
+        const lldb_private::FileSpec m_stdin_file_spec;  // Redirect stdin or empty.
+        const lldb_private::FileSpec m_stdout_file_spec; // Redirect stdout or empty.
+        const lldb_private::FileSpec m_stderr_file_spec; // Redirect stderr or empty.
+        const lldb_private::FileSpec m_working_dir;      // Working directory or empty.
         const lldb_private::ProcessLaunchInfo &m_launch_info;
     };
 
@@ -304,7 +305,7 @@ private:
     ServeOperation(OperationArgs *args);
 
     static bool
-    DupDescriptor(const char *path, int fd, int flags);
+    DupDescriptor(const lldb_private::FileSpec &file_spec, int fd, int flags);
 
     static bool
     MonitorCallback(void *callback_baton,

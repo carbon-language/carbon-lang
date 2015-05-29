@@ -40,7 +40,7 @@ namespace
 
         // Remove the LLDB temporary directory if we have one. Set "recurse" to
         // true to all files that were created for the LLDB process can be cleaned up.
-        FileSystem::DeleteDirectory(tmpdir_file_spec.GetDirectory().GetCString(), true);
+        FileSystem::DeleteDirectory(tmpdir_file_spec, true);
     }
 
     //----------------------------------------------------------------------
@@ -326,18 +326,15 @@ HostInfoBase::ComputeProcessTempFileDirectory(FileSpec &file_spec)
     if (!HostInfo::ComputeGlobalTempFileDirectory(temp_file_spec))
         return false;
 
-    std::string pid_str;
-    llvm::raw_string_ostream pid_stream(pid_str);
-    pid_stream << Host::GetCurrentProcessID();
-    temp_file_spec.AppendPathComponent(pid_stream.str().c_str());
-    std::string final_path = temp_file_spec.GetPath();
-    if (!FileSystem::MakeDirectory(final_path.c_str(), eFilePermissionsDirectoryDefault).Success())
+    std::string pid_str{std::to_string(Host::GetCurrentProcessID())};
+    temp_file_spec.AppendPathComponent(pid_str);
+    if (!FileSystem::MakeDirectory(temp_file_spec, eFilePermissionsDirectoryDefault).Success())
         return false;
 
     // Make an atexit handler to clean up the process specify LLDB temp dir
     // and all of its contents.
     ::atexit(CleanupProcessSpecificLLDBTempDir);
-    file_spec.GetDirectory().SetCStringWithLength(final_path.c_str(), final_path.size());
+    file_spec = temp_file_spec;
     return true;
 }
 
@@ -370,7 +367,7 @@ HostInfoBase::ComputeGlobalTempFileDirectory(FileSpec &file_spec)
         return false;
 
     temp_file_spec.AppendPathComponent("lldb");
-    if (!FileSystem::MakeDirectory(temp_file_spec.GetPath().c_str(), eFilePermissionsDirectoryDefault).Success())
+    if (!FileSystem::MakeDirectory(temp_file_spec, eFilePermissionsDirectoryDefault).Success())
         return false;
 
     file_spec = temp_file_spec;

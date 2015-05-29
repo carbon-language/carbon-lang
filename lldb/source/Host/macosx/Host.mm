@@ -411,9 +411,9 @@ LaunchInNewTerminalWithAppleScript (const char *exe_path, ProcessLaunchInfo &lau
     if (arch_spec.IsValid())
         command.Printf(" --arch=%s", arch_spec.GetArchitectureName());
 
-    const char *working_dir = launch_info.GetWorkingDirectory();
+    FileSpec working_dir{launch_info.GetWorkingDirectory()};
     if (working_dir)
-        command.Printf(" --working-dir '%s'", working_dir);
+        command.Printf(" --working-dir '%s'", working_dir.GetCString());
     else
     {
         char cwd[PATH_MAX];
@@ -527,7 +527,7 @@ LaunchInNewTerminalWithAppleScript (const char *exe_path, ProcessLaunchInfo &lau
         WaitForProcessToSIGSTOP(pid, 5);
     }
 
-    FileSystem::Unlink(unix_socket_name);
+    FileSystem::Unlink(FileSpec{unix_socket_name, false});
     [applescript release];
     if (pid != LLDB_INVALID_PROCESS_ID)
         launch_info.SetProcessID (pid);

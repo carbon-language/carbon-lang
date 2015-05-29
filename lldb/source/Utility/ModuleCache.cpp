@@ -49,8 +49,7 @@ MakeDirectory (const FileSpec &dir_path)
         return Error ();
     }
 
-    return FileSystem::MakeDirectory (dir_path.GetPath ().c_str (),
-                                      eFilePermissionsDirectoryDefault);
+    return FileSystem::MakeDirectory(dir_path, eFilePermissionsDirectoryDefault);
 }
 
 FileSpec
@@ -72,7 +71,7 @@ CreateHostSysRootModuleLink (const FileSpec &root_dir_spec, const char *hostname
     if (error.Fail ())
         return error;
 
-    return FileSystem::Hardlink (sysroot_module_path_spec.GetPath ().c_str (), local_module_spec.GetPath ().c_str ());
+    return FileSystem::Hardlink(sysroot_module_path_spec, local_module_spec);
 }
 
 }  // namespace

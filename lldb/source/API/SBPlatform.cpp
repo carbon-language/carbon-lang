@@ -329,9 +329,9 @@ SBPlatform::SetWorkingDirectory(const char *path)
     if (platform_sp)
     {
         if (path)
-            platform_sp->SetWorkingDirectory(ConstString(path));
+            platform_sp->SetWorkingDirectory(FileSpec{path, false});
         else
-            platform_sp->SetWorkingDirectory(ConstString());
+            platform_sp->SetWorkingDirectory(FileSpec{});
         return true;
     }
     return false;
@@ -545,7 +545,7 @@ SBPlatform::Run (SBPlatformShellCommand &shell_command)
                     shell_command.SetWorkingDirectory(working_dir);
             }
             return platform_sp->RunShellCommand(command,
-                                                working_dir,
+                                                FileSpec{working_dir, false},
                                                 &shell_command.m_opaque_ptr->m_status,
                                                 &shell_command.m_opaque_ptr->m_signo,
                                                 &shell_command.m_opaque_ptr->m_output,
@@ -598,7 +598,7 @@ SBPlatform::MakeDirectory (const char *path, uint32_t file_permissions)
     PlatformSP platform_sp(GetSP());
     if (platform_sp)
     {
-        sb_error.ref() = platform_sp->MakeDirectory(path, file_permissions);
+        sb_error.ref() = platform_sp->MakeDirectory(FileSpec{path, false}, file_permissions);
     }
     else
     {
@@ -614,7 +614,7 @@ SBPlatform::GetFilePermissions (const char *path)
     if (platform_sp)
     {
         uint32_t file_permissions = 0;
-        platform_sp->GetFilePermissions(path, file_permissions);
+        platform_sp->GetFilePermissions(FileSpec{path, false}, file_permissions);
         return file_permissions;
     }
     return 0;
@@ -628,7 +628,7 @@ SBPlatform::SetFilePermissions (const char *path, uint32_t file_permissions)
     PlatformSP platform_sp(GetSP());
     if (platform_sp)
     {
-        sb_error.ref() = platform_sp->SetFilePermissions(path, file_permissions);
+        sb_error.ref() = platform_sp->SetFilePermissions(FileSpec{path, false}, file_permissions);
     }
     else
     {

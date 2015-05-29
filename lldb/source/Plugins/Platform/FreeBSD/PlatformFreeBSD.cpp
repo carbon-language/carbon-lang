@@ -134,12 +134,12 @@ PlatformFreeBSD::GetModuleSpec (const FileSpec& module_file_spec,
 }
 
 lldb_private::Error
-PlatformFreeBSD::RunShellCommand (const char *command,
-                                  const char *working_dir,
-                                  int *status_ptr,
-                                  int *signo_ptr,
-                                  std::string *command_output,
-                                  uint32_t timeout_sec)
+PlatformFreeBSD::RunShellCommand(const char *command,
+                                 const FileSpec &working_dir,
+                                 int *status_ptr,
+                                 int *signo_ptr,
+                                 std::string *command_output,
+                                 uint32_t timeout_sec)
 {
     if (IsHost())
         return Host::RunShellCommand(command, working_dir, status_ptr, signo_ptr, command_output, timeout_sec);

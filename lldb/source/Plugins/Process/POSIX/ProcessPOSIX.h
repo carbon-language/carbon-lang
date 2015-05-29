@@ -151,8 +151,10 @@ public:
     ProcessMonitor &
     GetMonitor() { assert(m_monitor); return *m_monitor; }
 
-    const char *GetFilePath(const lldb_private::FileAction *file_action, const char *default_path,
-                            const char *dbg_pts_path);
+    lldb_private::FileSpec
+    GetFileSpec(const lldb_private::FileAction *file_action,
+                const lldb_private::FileSpec &default_file_spec,
+                const lldb_private::FileSpec &dbg_pts_file_spec);
 
     /// Stops all threads in the process.
     /// The \p stop_tid parameter indicates the thread which initiated the stop.

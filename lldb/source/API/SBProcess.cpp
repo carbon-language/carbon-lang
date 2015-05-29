@@ -167,11 +167,11 @@ SBProcess::RemoteLaunch (char const **argv,
         {
             if (stop_at_entry)
                 launch_flags |= eLaunchFlagStopAtEntry;
-            ProcessLaunchInfo launch_info (stdin_path,
-                                           stdout_path,
-                                           stderr_path,
-                                           working_directory,
-                                           launch_flags);
+            ProcessLaunchInfo launch_info(FileSpec{stdin_path, false},
+                                          FileSpec{stdout_path, false},
+                                          FileSpec{stderr_path, false},
+                                          FileSpec{working_directory, false},
+                                          launch_flags);
             Module *exe_module = process_sp->GetTarget().GetExecutableModulePointer();
             if (exe_module)
                 launch_info.SetExecutableFile(exe_module->GetPlatformFileSpec(), true);

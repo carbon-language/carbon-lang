@@ -7,6 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "lldb/Host/FileSpec.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Host/HostProcess.h"
 #include "lldb/Host/android/ProcessLauncherAndroid.h"
@@ -19,9 +20,9 @@ using namespace lldb;
 using namespace lldb_private;
 
 static bool
-DupDescriptor(const char *path, int fd, int flags)
+DupDescriptor(const FileSpec &file_spec, int fd, int flags)
 {
-    int target_fd = ::open(path, flags, 0666);
+    int target_fd = ::open(file_spec.GetCString(), flags, 0666);
 
     if (target_fd == -1)
         return false;
@@ -63,23 +64,23 @@ ProcessLauncherAndroid::LaunchProcess(const ProcessLaunchInfo &launch_info, Erro
     else if (pid == 0)
     {
         if (const lldb_private::FileAction *file_action = launch_info.GetFileActionForFD(STDIN_FILENO)) {
-            const char* path = file_action->GetPath();
-            if (path && ::strlen(path))
-                if (!DupDescriptor(path, STDIN_FILENO, O_RDONLY))
+            FileSpec file_spec = file_action->GetFileSpec();
+            if (file_spec)
+                if (!DupDescriptor(file_spec, STDIN_FILENO, O_RDONLY))
                     exit(-1);
         }
 
         if (const lldb_private::FileAction *file_action = launch_info.GetFileActionForFD(STDOUT_FILENO)) {
-            const char* path = file_action->GetPath();
-            if (path && ::strlen(path))
-                if (!DupDescriptor(path, STDOUT_FILENO, O_WRONLY | O_CREAT | O_TRUNC))
+            FileSpec file_spec = file_action->GetFileSpec();
+            if (file_spec)
+                if (!DupDescriptor(file_spec, STDOUT_FILENO, O_WRONLY | O_CREAT | O_TRUNC))
                     exit(-1);
         }
 
         if (const lldb_private::FileAction *file_action = launch_info.GetFileActionForFD(STDERR_FILENO)) {
-            const char* path = file_action->GetPath();
-            if (path && ::strlen(path))
-                if (!DupDescriptor(path, STDERR_FILENO, O_WRONLY | O_CREAT | O_TRUNC))
+            FileSpec file_spec = file_action->GetFileSpec();
+            if (file_spec)
+                if (!DupDescriptor(file_spec, STDERR_FILENO, O_WRONLY | O_CREAT | O_TRUNC))
                     exit(-1);
         }
 
@@ -90,10 +91,10 @@ ProcessLauncherAndroid::LaunchProcess(const ProcessLaunchInfo &launch_info, Erro
         FixupEnvironment(env);
         const char **envp = env.GetConstArgumentVector();
 
-        const char *working_dir = launch_info.GetWorkingDirectory();
-        if (working_dir != nullptr && working_dir[0])
+        FileSpec working_dir = launch_info.GetWorkingDirectory();
+        if (working_dir)
         {
-            if (::chdir(working_dir) != 0)
+            if (::chdir(working_dir.GetCString()) != 0)
                 exit(-1);
         }
 

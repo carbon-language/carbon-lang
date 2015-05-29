@@ -42,8 +42,11 @@ ProcessLaunchInfo::ProcessLaunchInfo () :
 {
 }
 
-ProcessLaunchInfo::ProcessLaunchInfo(const char *stdin_path, const char *stdout_path, const char *stderr_path,
-                                     const char *working_directory, uint32_t launch_flags) :
+ProcessLaunchInfo::ProcessLaunchInfo(const FileSpec &stdin_file_spec,
+                                     const FileSpec &stdout_file_spec,
+                                     const FileSpec &stderr_file_spec,
+                                     const FileSpec &working_directory,
+                                     uint32_t launch_flags) :
     ProcessInfo(),
     m_working_dir(),
     m_plugin_name(),
@@ -57,28 +60,28 @@ ProcessLaunchInfo::ProcessLaunchInfo(const char *stdin_path, const char *stdout_
     m_listener_sp (),
     m_hijack_listener_sp()
 {
-    if (stdin_path)
+    if (stdin_file_spec)
     {
         FileAction file_action;
         const bool read = true;
         const bool write = false;
-        if (file_action.Open(STDIN_FILENO, stdin_path, read, write))
+        if (file_action.Open(STDIN_FILENO, stdin_file_spec, read, write))
             AppendFileAction (file_action);
     }
-    if (stdout_path)
+    if (stdout_file_spec)
     {
         FileAction file_action;
         const bool read = false;
         const bool write = true;
-        if (file_action.Open(STDOUT_FILENO, stdout_path, read, write))
+        if (file_action.Open(STDOUT_FILENO, stdout_file_spec, read, write))
             AppendFileAction (file_action);
     }
-    if (stderr_path)
+    if (stderr_file_spec)
     {
         FileAction file_action;
         const bool read = false;
         const bool write = true;
-        if (file_action.Open(STDERR_FILENO, stderr_path, read, write))
+        if (file_action.Open(STDERR_FILENO, stderr_file_spec, read, write))
             AppendFileAction (file_action);
     }
     if (working_directory)
@@ -110,10 +113,11 @@ ProcessLaunchInfo::AppendDuplicateFileAction (int fd, int dup_fd)
 }
 
 bool
-ProcessLaunchInfo::AppendOpenFileAction (int fd, const char *path, bool read, bool write)
+ProcessLaunchInfo::AppendOpenFileAction(int fd, const FileSpec &file_spec,
+                                        bool read, bool write)
 {
     FileAction file_action;
-    if (file_action.Open (fd, path, read, write))
+    if (file_action.Open(fd, file_spec, read, write))
     {
         AppendFileAction (file_action);
         return true;
@@ -125,7 +129,7 @@ bool
 ProcessLaunchInfo::AppendSuppressFileAction (int fd, bool read, bool write)
 {
     FileAction file_action;
-    if (file_action.Open (fd, "/dev/null", read, write))
+    if (file_action.Open(fd, FileSpec{"/dev/null", false}, read, write))
     {
         AppendFileAction (file_action);
         return true;
@@ -152,21 +156,16 @@ ProcessLaunchInfo::GetFileActionForFD(int fd) const
     return NULL;
 }
 
-const char *
-ProcessLaunchInfo::GetWorkingDirectory () const
+const FileSpec &
+ProcessLaunchInfo::GetWorkingDirectory() const
 {
-    if (m_working_dir.empty())
-        return NULL;
-    return m_working_dir.c_str();
+    return m_working_dir;
 }
 
 void
-ProcessLaunchInfo::SetWorkingDirectory (const char *working_dir)
+ProcessLaunchInfo::SetWorkingDirectory(const FileSpec &working_dir)
 {
-    if (working_dir && working_dir[0])
-        m_working_dir.assign (working_dir);
-    else
-        m_working_dir.clear();
+    m_working_dir = working_dir;
 }
 
 const char *
@@ -227,7 +226,7 @@ void
 ProcessLaunchInfo::Clear ()
 {
     ProcessInfo::Clear();
-    m_working_dir.clear();
+    m_working_dir.Clear();
     m_plugin_name.clear();
     m_shell.Clear();
     m_flags.Clear();
@@ -300,57 +299,53 @@ ProcessLaunchInfo::FinalizeFileActions (Target *target, bool default_to_use_pty)
             // (lldb) settings set target.input-path
             // (lldb) settings set target.output-path
             // (lldb) settings set target.error-path
-            FileSpec in_path;
-            FileSpec out_path;
-            FileSpec err_path;
+            FileSpec in_file_spec;
+            FileSpec out_file_spec;
+            FileSpec err_file_spec;
             if (target)
             {
                 // Only override with the target settings if we don't already have
                 // an action for in, out or error
                 if (GetFileActionForFD(STDIN_FILENO) == NULL)
-                    in_path = target->GetStandardInputPath();
+                    in_file_spec = target->GetStandardInputPath();
                 if (GetFileActionForFD(STDOUT_FILENO) == NULL)
-                    out_path = target->GetStandardOutputPath();
+                    out_file_spec = target->GetStandardOutputPath();
                 if (GetFileActionForFD(STDERR_FILENO) == NULL)
-                    err_path = target->GetStandardErrorPath();
+                    err_file_spec = target->GetStandardErrorPath();
             }
 
             if (log)
                 log->Printf ("ProcessLaunchInfo::%s target stdin='%s', target stdout='%s', stderr='%s'",
                              __FUNCTION__,
-                              in_path ?  in_path.GetPath().c_str () : "<null>",
-                             out_path ? out_path.GetPath().c_str () : "<null>",
-                             err_path ? err_path.GetPath().c_str () : "<null>");
+                              in_file_spec ?  in_file_spec.GetCString() : "<null>",
+                             out_file_spec ? out_file_spec.GetCString() : "<null>",
+                             err_file_spec ? err_file_spec.GetCString() : "<null>");
 
-            char path[PATH_MAX];
-            if (in_path && in_path.GetPath(path, sizeof(path)))
+            if (in_file_spec)
             {
-                AppendOpenFileAction(STDIN_FILENO, path, true, false);
+                AppendOpenFileAction(STDIN_FILENO, in_file_spec, true, false);
                 if (log)
                     log->Printf ("ProcessLaunchInfo::%s appended stdin open file action for %s",
-                                 __FUNCTION__,
-                                 in_path.GetPath().c_str ());
+                                 __FUNCTION__, in_file_spec.GetCString());
             }
 
-            if (out_path && out_path.GetPath(path, sizeof(path)))
+            if (out_file_spec)
             {
-                AppendOpenFileAction(STDOUT_FILENO, path, false, true);
+                AppendOpenFileAction(STDOUT_FILENO, out_file_spec, false, true);
                 if (log)
                     log->Printf ("ProcessLaunchInfo::%s appended stdout open file action for %s",
-                                 __FUNCTION__,
-                                 out_path.GetPath().c_str ());
+                                 __FUNCTION__, out_file_spec.GetCString());
             }
 
-            if (err_path && err_path.GetPath(path, sizeof(path)))
+            if (err_file_spec)
             {
+                AppendOpenFileAction(STDERR_FILENO, err_file_spec, false, true);
                 if (log)
                     log->Printf ("ProcessLaunchInfo::%s appended stderr open file action for %s",
-                                 __FUNCTION__,
-                                 err_path.GetPath().c_str ());
-                AppendOpenFileAction(STDERR_FILENO, path, false, true);
+                                 __FUNCTION__, err_file_spec.GetCString());
             }
 
-            if (default_to_use_pty && (!in_path || !out_path || !err_path))
+            if (default_to_use_pty && (!in_file_spec || !out_file_spec || !err_file_spec))
             {
                 if (log)
                     log->Printf ("ProcessLaunchInfo::%s default_to_use_pty is set, and at least one stdin/stderr/stdout is unset, so generating a pty to use for it",
@@ -365,27 +360,27 @@ ProcessLaunchInfo::FinalizeFileActions (Target *target, bool default_to_use_pty)
 #endif
                 if (m_pty->OpenFirstAvailableMaster(open_flags, NULL, 0))
                 {
-                    const char *slave_path = m_pty->GetSlaveName(NULL, 0);
+                    const FileSpec slave_file_spec{m_pty->GetSlaveName(NULL, 0), false};
 
                     // Only use the slave tty if we don't have anything specified for
                     // input and don't have an action for stdin
-                    if (!in_path && GetFileActionForFD(STDIN_FILENO) == NULL)
+                    if (!in_file_spec && GetFileActionForFD(STDIN_FILENO) == NULL)
                     {
-                        AppendOpenFileAction(STDIN_FILENO, slave_path, true, false);
+                        AppendOpenFileAction(STDIN_FILENO, slave_file_spec, true, false);
                     }
 
                     // Only use the slave tty if we don't have anything specified for
                     // output and don't have an action for stdout
-                    if (!out_path && GetFileActionForFD(STDOUT_FILENO) == NULL)
+                    if (!out_file_spec && GetFileActionForFD(STDOUT_FILENO) == NULL)
                     {
-                        AppendOpenFileAction(STDOUT_FILENO, slave_path, false, true);
+                        AppendOpenFileAction(STDOUT_FILENO, slave_file_spec, false, true);
                     }
 
                     // Only use the slave tty if we don't have anything specified for
                     // error and don't have an action for stderr
-                    if (!err_path && GetFileActionForFD(STDERR_FILENO) == NULL)
+                    if (!err_file_spec && GetFileActionForFD(STDERR_FILENO) == NULL)
                     {
-                        AppendOpenFileAction(STDERR_FILENO, slave_path, false, true);
+                        AppendOpenFileAction(STDERR_FILENO, slave_file_spec, false, true);
                     }
                 }
             }
@@ -432,14 +427,14 @@ ProcessLaunchInfo::ConvertArgumentsForLaunchingInShell (Error &error,
                 {
                     // We have a relative path to our executable which may not work if
                     // we just try to run "a.out" (without it being converted to "./a.out")
-                    const char *working_dir = GetWorkingDirectory();
+                    FileSpec working_dir = GetWorkingDirectory();
                     // Be sure to put quotes around PATH's value in case any paths have spaces...
                     std::string new_path("PATH=\"");
                     const size_t empty_path_len = new_path.size();
 
-                    if (working_dir && working_dir[0])
+                    if (working_dir)
                     {
-                        new_path += working_dir;
+                        new_path += working_dir.GetPath();
                     }
                     else
                     {

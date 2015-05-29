@@ -84,17 +84,18 @@ public:
     GetFileSize (const lldb_private::FileSpec& file_spec) override;
 
     lldb_private::Error
-    CreateSymlink(const char *src, const char *dst) override;
+    CreateSymlink(const lldb_private::FileSpec &src,
+                  const lldb_private::FileSpec &dst) override;
 
     lldb_private::Error
-    GetFile (const lldb_private::FileSpec& source,
-             const lldb_private::FileSpec& destination) override;
-    
-    lldb_private::ConstString
+    GetFile(const lldb_private::FileSpec &source,
+            const lldb_private::FileSpec &destination) override;
+
+    lldb_private::FileSpec
     GetRemoteWorkingDirectory() override;
     
     bool
-    SetRemoteWorkingDirectory(const lldb_private::ConstString &path) override;
+    SetRemoteWorkingDirectory(const lldb_private::FileSpec &working_dir) override;
 
     bool
     GetRemoteOSVersion () override;
@@ -115,27 +116,27 @@ public:
     IsConnected () const override;
 
     lldb_private::Error
-    RunShellCommand (const char *command,           // Shouldn't be NULL
-                     const char *working_dir,       // Pass NULL to use the current working directory
-                     int *status_ptr,               // Pass NULL if you don't want the process exit status
-                     int *signo_ptr,                // Pass NULL if you don't want the signal that caused the process to exit
-                     std::string *command_output,   // Pass NULL if you don't want the command output
-                     uint32_t timeout_sec) override;// Timeout in seconds to wait for shell program to finish
+    RunShellCommand(const char *command,                       // Shouldn't be NULL
+                    const lldb_private::FileSpec &working_dir, // Pass empty FileSpec to use the current working directory
+                    int *status_ptr,                           // Pass NULL if you don't want the process exit status
+                    int *signo_ptr,                            // Pass NULL if you don't want the signal that caused the process to exit
+                    std::string *command_output,               // Pass NULL if you don't want the command output
+                    uint32_t timeout_sec) override;            // Timeout in seconds to wait for shell program to finish
 
     lldb_private::Error
-    MakeDirectory (const char *path, uint32_t mode) override;
-    
-    lldb_private::Error
-    GetFilePermissions (const char *path, uint32_t &file_permissions) override;
+    MakeDirectory(const lldb_private::FileSpec &file_spec, uint32_t mode) override;
 
     lldb_private::Error
-    SetFilePermissions (const char *path, uint32_t file_permissions) override;
+    GetFilePermissions(const lldb_private::FileSpec &file_spec, uint32_t &file_permissions) override;
+
+    lldb_private::Error
+    SetFilePermissions(const lldb_private::FileSpec &file_spec, uint32_t file_permissions) override;
 
     bool
     GetFileExists (const lldb_private::FileSpec& file_spec) override;
     
     lldb_private::Error
-    Unlink (const char *path) override;
+    Unlink(const lldb_private::FileSpec &file_spec) override;
 
     lldb_private::Error
     LaunchProcess (lldb_private::ProcessLaunchInfo &launch_info) override;

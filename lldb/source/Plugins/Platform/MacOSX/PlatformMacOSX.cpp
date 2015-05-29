@@ -293,7 +293,7 @@ PlatformMacOSX::GetFileWithUUID (const lldb_private::FileSpec &platform_file,
             FileSpec module_cache_folder = module_cache_spec.CopyByRemovingLastPathComponent();
             // try to make the local directory first
             Error err =
-                FileSystem::MakeDirectory(module_cache_folder.GetPath().c_str(), eFilePermissionsDirectoryDefault);
+                FileSystem::MakeDirectory(module_cache_folder, eFilePermissionsDirectoryDefault);
             if (err.Fail())
                 return err;
             err = GetFile(platform_file, module_cache_spec);

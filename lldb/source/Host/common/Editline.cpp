@@ -193,9 +193,9 @@ namespace lldb_private
             {
                 if (m_path.empty() && m_history && !m_prefix.empty())
                 {
-                    std::string parent_path = FileSpec ("~/.lldb", true).GetPath();
+                    FileSpec parent_path{"~/.lldb", true};
                     char history_path[PATH_MAX];
-                    if (FileSystem::MakeDirectory(parent_path.c_str(), lldb::eFilePermissionsDirectoryDefault).Success())
+                    if (FileSystem::MakeDirectory(parent_path, lldb::eFilePermissionsDirectoryDefault).Success())
                     {
                         snprintf (history_path, sizeof (history_path), "~/.lldb/%s-history", m_prefix.c_str());
                     }

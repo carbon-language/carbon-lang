@@ -950,18 +950,18 @@ GDBRemoteCommunicationServerLLGS::Handle_QSetWorkingDir (StringExtractorGDBRemot
     packet.SetFilePos (::strlen ("QSetWorkingDir:"));
     std::string path;
     packet.GetHexByteString (path);
-    m_process_launch_info.SwapWorkingDirectory (path);
+    m_process_launch_info.SetWorkingDirectory(FileSpec{path, true});
     return SendOKResponse ();
 }
 
 GDBRemoteCommunication::PacketResult
 GDBRemoteCommunicationServerLLGS::Handle_qGetWorkingDir (StringExtractorGDBRemote &packet)
 {
-    const char *working_dir = m_process_launch_info.GetWorkingDirectory();
-    if (working_dir && working_dir[0])
+    FileSpec working_dir{m_process_launch_info.GetWorkingDirectory()};
+    if (working_dir)
     {
         StreamString response;
-        response.PutBytesAsRawHex8(working_dir, strlen(working_dir));
+        response.PutCStringAsRawHex8(working_dir.GetCString());
         return SendPacketNoLock(response.GetData(), response.GetSize());
     }
 

@@ -36,11 +36,11 @@ namespace lldb_private
 
         ProcessLaunchInfo ();
 
-        ProcessLaunchInfo (const char *stdin_path,
-                           const char *stdout_path,
-                           const char *stderr_path,
-                           const char *working_directory,
-                           uint32_t launch_flags);
+        ProcessLaunchInfo(const FileSpec &stdin_file_spec,
+                          const FileSpec &stdout_file_spec,
+                          const FileSpec &stderr_file_spec,
+                          const FileSpec &working_dir,
+                          uint32_t launch_flags);
 
         void
         AppendFileAction (const FileAction &info)
@@ -55,7 +55,8 @@ namespace lldb_private
         AppendDuplicateFileAction (int fd, int dup_fd);
 
         bool
-        AppendOpenFileAction (int fd, const char *path, bool read, bool write);
+        AppendOpenFileAction(int fd, const FileSpec &file_spec,
+                             bool read, bool write);
 
         bool
         AppendSuppressFileAction (int fd, bool read, bool write);
@@ -88,17 +89,11 @@ namespace lldb_private
             return m_flags;
         }
 
-        const char *
-        GetWorkingDirectory () const;
+        const FileSpec &
+        GetWorkingDirectory() const;
 
         void
-        SetWorkingDirectory (const char *working_dir);
-
-        void
-        SwapWorkingDirectory (std::string &working_dir)
-        {
-            m_working_dir.swap (working_dir);
-        }
+        SetWorkingDirectory(const FileSpec &working_dir);
 
         const char *
         GetProcessPluginName () const;
@@ -238,7 +233,7 @@ namespace lldb_private
         }
 
     protected:
-        std::string m_working_dir;
+        FileSpec m_working_dir;
         std::string m_plugin_name;
         FileSpec m_shell;
         Flags m_flags;       // Bitwise OR of bits from lldb::LaunchFlags

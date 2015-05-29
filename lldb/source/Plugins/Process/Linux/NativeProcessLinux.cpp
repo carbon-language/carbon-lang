@@ -954,17 +954,17 @@ NativeProcessLinux::Monitor::RunMonitor(void *arg)
 NativeProcessLinux::LaunchArgs::LaunchArgs(Module *module,
                                        char const **argv,
                                        char const **envp,
-                                       const std::string &stdin_path,
-                                       const std::string &stdout_path,
-                                       const std::string &stderr_path,
-                                       const char *working_dir,
+                                       const FileSpec &stdin_file_spec,
+                                       const FileSpec &stdout_file_spec,
+                                       const FileSpec &stderr_file_spec,
+                                       const FileSpec &working_dir,
                                        const ProcessLaunchInfo &launch_info)
     : m_module(module),
       m_argv(argv),
       m_envp(envp),
-      m_stdin_path(stdin_path),
-      m_stdout_path(stdout_path),
-      m_stderr_path(stderr_path),
+      m_stdin_file_spec(stdin_file_spec),
+      m_stdout_file_spec(stdout_file_spec),
+      m_stderr_file_spec(stderr_file_spec),
       m_working_dir(working_dir),
       m_launch_info(launch_info)
 {
@@ -989,50 +989,52 @@ NativeProcessLinux::LaunchProcess (
     Error error;
 
     // Verify the working directory is valid if one was specified.
-    const char* working_dir = launch_info.GetWorkingDirectory ();
-    if (working_dir)
+    FileSpec working_dir{launch_info.GetWorkingDirectory()};
+    if (working_dir &&
+            (!working_dir.ResolvePath() ||
+             working_dir.GetFileType() != FileSpec::eFileTypeDirectory))
     {
-      FileSpec working_dir_fs (working_dir, true);
-      if (!working_dir_fs || working_dir_fs.GetFileType () != FileSpec::eFileTypeDirectory)
-      {
-          error.SetErrorStringWithFormat ("No such file or directory: %s", working_dir);
-          return error;
-      }
+        error.SetErrorStringWithFormat ("No such file or directory: %s",
+                working_dir.GetCString());
+        return error;
     }
 
     const FileAction *file_action;
 
-    // Default of NULL will mean to use existing open file descriptors.
-    std::string stdin_path;
-    std::string stdout_path;
-    std::string stderr_path;
+    // Default of empty will mean to use existing open file descriptors.
+    FileSpec stdin_file_spec{};
+    FileSpec stdout_file_spec{};
+    FileSpec stderr_file_spec{};
 
     file_action = launch_info.GetFileActionForFD (STDIN_FILENO);
     if (file_action)
-        stdin_path = file_action->GetPath ();
+        stdin_file_spec = file_action->GetFileSpec();
 
     file_action = launch_info.GetFileActionForFD (STDOUT_FILENO);
     if (file_action)
-        stdout_path = file_action->GetPath ();
+        stdout_file_spec = file_action->GetFileSpec();
 
     file_action = launch_info.GetFileActionForFD (STDERR_FILENO);
     if (file_action)
-        stderr_path = file_action->GetPath ();
+        stderr_file_spec = file_action->GetFileSpec();
 
     if (log)
     {
-        if (!stdin_path.empty ())
-            log->Printf ("NativeProcessLinux::%s setting STDIN to '%s'", __FUNCTION__, stdin_path.c_str ());
+        if (stdin_file_spec)
+            log->Printf ("NativeProcessLinux::%s setting STDIN to '%s'",
+                    __FUNCTION__, stdin_file_spec.GetCString());
         else
             log->Printf ("NativeProcessLinux::%s leaving STDIN as is", __FUNCTION__);
 
-        if (!stdout_path.empty ())
-            log->Printf ("NativeProcessLinux::%s setting STDOUT to '%s'", __FUNCTION__, stdout_path.c_str ());
+        if (stdout_file_spec)
+            log->Printf ("NativeProcessLinux::%s setting STDOUT to '%s'",
+                    __FUNCTION__, stdout_file_spec.GetCString());
         else
             log->Printf ("NativeProcessLinux::%s leaving STDOUT as is", __FUNCTION__);
 
-        if (!stderr_path.empty ())
-            log->Printf ("NativeProcessLinux::%s setting STDERR to '%s'", __FUNCTION__, stderr_path.c_str ());
+        if (stderr_file_spec)
+            log->Printf ("NativeProcessLinux::%s setting STDERR to '%s'",
+                    __FUNCTION__, stderr_file_spec.GetCString());
         else
             log->Printf ("NativeProcessLinux::%s leaving STDERR as is", __FUNCTION__);
     }
@@ -1061,9 +1063,9 @@ NativeProcessLinux::LaunchProcess (
             exe_module,
             launch_info.GetArguments ().GetConstArgumentVector (),
             launch_info.GetEnvironmentEntries ().GetConstArgumentVector (),
-            stdin_path,
-            stdout_path,
-            stderr_path,
+            stdin_file_spec,
+            stdout_file_spec,
+            stderr_file_spec,
             working_dir,
             launch_info,
             error);
@@ -1141,10 +1143,10 @@ NativeProcessLinux::LaunchInferior (
     Module *module,
     const char *argv[],
     const char *envp[],
-    const std::string &stdin_path,
-    const std::string &stdout_path,
-    const std::string &stderr_path,
-    const char *working_dir,
+    const FileSpec &stdin_file_spec,
+    const FileSpec &stdout_file_spec,
+    const FileSpec &stderr_file_spec,
+    const FileSpec &working_dir,
     const ProcessLaunchInfo &launch_info,
     Error &error)
 {
@@ -1154,10 +1156,12 @@ NativeProcessLinux::LaunchInferior (
     SetState (eStateLaunching);
 
     std::unique_ptr<LaunchArgs> args(
-        new LaunchArgs(
-            module, argv, envp,
-            stdin_path, stdout_path, stderr_path,
-            working_dir, launch_info));
+        new LaunchArgs(module, argv, envp,
+                       stdin_file_spec,
+                       stdout_file_spec,
+                       stderr_file_spec,
+                       working_dir,
+                       launch_info));
 
     StartMonitorThread ([&] (Error &e) { return Launch(args.get(), e); }, error);
     if (!error.Success ())
@@ -1226,7 +1230,7 @@ NativeProcessLinux::Launch(LaunchArgs *args, Error &error)
 
     const char **argv = args->m_argv;
     const char **envp = args->m_envp;
-    const char *working_dir = args->m_working_dir;
+    const FileSpec working_dir = args->m_working_dir;
 
     lldb_utility::PseudoTerminal terminal;
     const size_t err_len = 1024;
@@ -1286,16 +1290,16 @@ NativeProcessLinux::Launch(LaunchArgs *args, Error &error)
         }
 
         // Dup file descriptors if needed.
-        if (!args->m_stdin_path.empty ())
-            if (!DupDescriptor(args->m_stdin_path.c_str (), STDIN_FILENO, O_RDONLY))
+        if (args->m_stdin_file_spec)
+            if (!DupDescriptor(args->m_stdin_file_spec, STDIN_FILENO, O_RDONLY))
                 exit(eDupStdinFailed);
 
-        if (!args->m_stdout_path.empty ())
-            if (!DupDescriptor(args->m_stdout_path.c_str (), STDOUT_FILENO, O_WRONLY | O_CREAT | O_TRUNC))
+        if (args->m_stdout_file_spec)
+            if (!DupDescriptor(args->m_stdout_file_spec, STDOUT_FILENO, O_WRONLY | O_CREAT | O_TRUNC))
                 exit(eDupStdoutFailed);
 
-        if (!args->m_stderr_path.empty ())
-            if (!DupDescriptor(args->m_stderr_path.c_str (), STDERR_FILENO, O_WRONLY | O_CREAT | O_TRUNC))
+        if (args->m_stderr_file_spec)
+            if (!DupDescriptor(args->m_stderr_file_spec, STDERR_FILENO, O_WRONLY | O_CREAT | O_TRUNC))
                 exit(eDupStderrFailed);
 
         // Close everything besides stdin, stdout, and stderr that has no file
@@ -1305,8 +1309,7 @@ NativeProcessLinux::Launch(LaunchArgs *args, Error &error)
                 close(fd);
 
         // Change working directory
-        if (working_dir != NULL && working_dir[0])
-          if (0 != ::chdir(working_dir))
+        if (working_dir && 0 != ::chdir(working_dir.GetCString()))
               exit(eChdirFailed);
 
         // Disable ASLR if requested.
@@ -3310,9 +3313,9 @@ NativeProcessLinux::Detach(lldb::tid_t tid)
 }
 
 bool
-NativeProcessLinux::DupDescriptor(const char *path, int fd, int flags)
+NativeProcessLinux::DupDescriptor(const FileSpec &file_spec, int fd, int flags)
 {
-    int target_fd = open(path, flags, 0666);
+    int target_fd = open(file_spec.GetCString(), flags, 0666);
 
     if (target_fd == -1)
         return false;

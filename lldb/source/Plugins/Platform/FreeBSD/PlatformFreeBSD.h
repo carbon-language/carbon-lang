@@ -77,12 +77,12 @@ public:
                    lldb_private::ModuleSpec &module_spec) override;
 
     lldb_private::Error
-    RunShellCommand (const char *command,
-                     const char *working_dir,
-                     int *status_ptr,
-                     int *signo_ptr,
-                     std::string *command_output,
-                     uint32_t timeout_sec) override;
+    RunShellCommand(const char *command,
+                    const lldb_private::FileSpec &working_dir,
+                    int *status_ptr,
+                    int *signo_ptr,
+                    std::string *command_output,
+                    uint32_t timeout_sec) override;
 
     lldb_private::Error
     ResolveExecutable (const lldb_private::ModuleSpec &module_spec,

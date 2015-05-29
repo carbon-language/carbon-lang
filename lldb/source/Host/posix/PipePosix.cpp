@@ -335,7 +335,7 @@ PipePosix::Close()
 Error
 PipePosix::Delete(llvm::StringRef name)
 {
-    return FileSystem::Unlink(name.data());
+    return FileSystem::Unlink(FileSpec{name.data(), true});
 }
 
 bool

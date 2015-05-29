@@ -556,7 +556,7 @@ protected:
         if (platform_sp)
         {
             if (m_option_working_dir.GetOptionValue().OptionWasSet())
-                platform_sp->SetWorkingDirectory (ConstString(m_option_working_dir.GetOptionValue().GetCurrentValue().GetPath().c_str()));
+                platform_sp->SetWorkingDirectory(m_option_working_dir.GetOptionValue().GetCurrentValue());
         }
         else
         {
@@ -616,7 +616,7 @@ public:
                 mode = options_permissions->m_permissions;
             else
                 mode = lldb::eFilePermissionsUserRWX | lldb::eFilePermissionsGroupRWX | lldb::eFilePermissionsWorldRX;
-            Error error = platform_sp->MakeDirectory(cmd_line.c_str(), mode);
+            Error error = platform_sp->MakeDirectory(FileSpec{cmd_line, false}, mode);
             if (error.Success())
             {
                 result.SetStatus (eReturnStatusSuccessFinishResult);
@@ -2150,7 +2150,7 @@ public:
         Error error;
         if (platform_sp)
         {
-            const char *working_dir = NULL;
+            FileSpec working_dir{};
             std::string output;
             int status = -1;
             int signo = -1;

@@ -17,6 +17,7 @@
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/lldb-types.h"
 #include "lldb/Host/Debug.h"
+#include "lldb/Host/FileSpec.h"
 #include "lldb/Host/HostThread.h"
 #include "lldb/Host/Mutex.h"
 #include "lldb/Target/MemoryRegionInfo.h"
@@ -195,21 +196,21 @@ namespace process_linux {
             LaunchArgs(Module *module,
                     char const **argv,
                     char const **envp,
-                    const std::string &stdin_path,
-                    const std::string &stdout_path,
-                    const std::string &stderr_path,
-                    const char *working_dir,
+                    const FileSpec &stdin_file_spec,
+                    const FileSpec &stdout_file_spec,
+                    const FileSpec &stderr_file_spec,
+                    const FileSpec &working_dir,
                     const ProcessLaunchInfo &launch_info);
 
             ~LaunchArgs();
 
-            Module *m_module;                 // The executable image to launch.
-            char const **m_argv;              // Process arguments.
-            char const **m_envp;              // Process environment.
-            const std::string &m_stdin_path;  // Redirect stdin if not empty.
-            const std::string &m_stdout_path; // Redirect stdout if not empty.
-            const std::string &m_stderr_path; // Redirect stderr if not empty.
-            const char *m_working_dir;        // Working directory or NULL.
+            Module *m_module;                  // The executable image to launch.
+            char const **m_argv;               // Process arguments.
+            char const **m_envp;               // Process environment.
+            const FileSpec m_stdin_file_spec;  // Redirect stdin if not empty.
+            const FileSpec m_stdout_file_spec; // Redirect stdout if not empty.
+            const FileSpec m_stderr_file_spec; // Redirect stderr if not empty.
+            const FileSpec m_working_dir;      // Working directory or empty.
             const ProcessLaunchInfo &m_launch_info;
         };
 
@@ -227,10 +228,10 @@ namespace process_linux {
             Module *module,
             char const *argv[],
             char const *envp[],
-            const std::string &stdin_path,
-            const std::string &stdout_path,
-            const std::string &stderr_path,
-            const char *working_dir,
+            const FileSpec &stdin_file_spec,
+            const FileSpec &stdout_file_spec,
+            const FileSpec &stderr_file_spec,
+            const FileSpec &working_dir,
             const ProcessLaunchInfo &launch_info,
             Error &error);
 
@@ -252,7 +253,7 @@ namespace process_linux {
         SetDefaultPtraceOpts(const lldb::pid_t);
 
         static bool
-        DupDescriptor(const char *path, int fd, int flags);
+        DupDescriptor(const FileSpec &file_spec, int fd, int flags);
 
         static void *
         MonitorThread(void *baton);

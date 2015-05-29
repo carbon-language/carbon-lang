@@ -343,7 +343,11 @@ SBTarget::Launch
         if (getenv("LLDB_LAUNCH_FLAG_DISABLE_STDIO"))
             launch_flags |= eLaunchFlagDisableSTDIO;
 
-        ProcessLaunchInfo launch_info (stdin_path, stdout_path, stderr_path, working_directory, launch_flags);
+        ProcessLaunchInfo launch_info(FileSpec{stdin_path, false},
+                                      FileSpec{stdout_path, false},
+                                      FileSpec{stderr_path, false},
+                                      FileSpec{working_directory, false},
+                                      launch_flags);
 
         Module *exe_module = target_sp->GetExecutableModulePointer();
         if (exe_module)

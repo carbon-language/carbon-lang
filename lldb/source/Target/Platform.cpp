@@ -610,16 +610,16 @@ Platform::AddClangModuleCompilationOptions (Target *target, std::vector<std::str
 }
 
 
-ConstString
+FileSpec
 Platform::GetWorkingDirectory ()
 {
     if (IsHost())
     {
         char cwd[PATH_MAX];
         if (getcwd(cwd, sizeof(cwd)))
-            return ConstString(cwd);
+            return FileSpec{cwd, true};
         else
-            return ConstString();
+            return FileSpec{};
     }
     else
     {
@@ -658,11 +658,11 @@ RecurseCopy_Callback (void *baton,
                 FileSpec dst_dir = rc_baton->dst;
                 if (!dst_dir.GetFilename())
                     dst_dir.GetFilename() = src.GetLastPathComponent();
-                std::string dst_dir_path (dst_dir.GetPath());
-                Error error = rc_baton->platform_ptr->MakeDirectory(dst_dir_path.c_str(), lldb::eFilePermissionsDirectoryDefault);
+                Error error = rc_baton->platform_ptr->MakeDirectory(dst_dir, lldb::eFilePermissionsDirectoryDefault);
                 if (error.Fail())
                 {
-                    rc_baton->error.SetErrorStringWithFormat("unable to setup directory %s on remote end", dst_dir_path.c_str());
+                    rc_baton->error.SetErrorStringWithFormat("unable to setup directory %s on remote end",
+                            dst_dir.GetCString());
                     return FileSpec::eEnumerateDirectoryResultQuit; // got an error, bail out
                 }
                 
@@ -690,15 +690,15 @@ RecurseCopy_Callback (void *baton,
                 FileSpec dst_file = rc_baton->dst;
                 if (!dst_file.GetFilename())
                     dst_file.GetFilename() = src.GetFilename();
-                
-                char buf[PATH_MAX];
 
-                rc_baton->error = FileSystem::Readlink(src.GetPath().c_str(), buf, sizeof(buf));
+                FileSpec src_resolved;
+
+                rc_baton->error = FileSystem::Readlink(src, src_resolved);
 
                 if (rc_baton->error.Fail())
                     return FileSpec::eEnumerateDirectoryResultQuit; // got an error, bail out
-                
-                rc_baton->error = rc_baton->platform_ptr->CreateSymlink(dst_file.GetPath().c_str(), buf);
+
+                rc_baton->error = rc_baton->platform_ptr->CreateSymlink(dst_file, src_resolved);
 
                 if (rc_baton->error.Fail())
                     return FileSpec::eEnumerateDirectoryResultQuit; // got an error, bail out
@@ -745,7 +745,7 @@ Platform::Install (const FileSpec& src, const FileSpec& dst)
     if (!fixed_dst.GetFilename())
         fixed_dst.GetFilename() = src.GetFilename();
 
-    ConstString working_dir = GetWorkingDirectory();
+    FileSpec working_dir = GetWorkingDirectory();
 
     if (dst)
     {
@@ -765,8 +765,8 @@ Platform::Install (const FileSpec& src, const FileSpec& dst)
                 std::string path;
                 if (working_dir)
                 {
-                    relative_spec.SetFile(working_dir.GetCString(), false);
-                    relative_spec.AppendPathComponent(dst.GetPath().c_str());
+                    relative_spec = working_dir;
+                    relative_spec.AppendPathComponent(dst.GetPath());
                     fixed_dst.GetDirectory() = relative_spec.GetDirectory();
                 }
                 else
@@ -780,7 +780,7 @@ Platform::Install (const FileSpec& src, const FileSpec& dst)
         {
             if (working_dir)
             {
-                fixed_dst.GetDirectory() = working_dir;
+                fixed_dst.GetDirectory().SetCString(working_dir.GetCString());
             }
             else
             {
@@ -793,7 +793,7 @@ Platform::Install (const FileSpec& src, const FileSpec& dst)
     {
         if (working_dir)
         {
-            fixed_dst.GetDirectory() = working_dir;
+            fixed_dst.GetDirectory().SetCString(working_dir.GetCString());
         }
         else
         {
@@ -816,18 +816,17 @@ Platform::Install (const FileSpec& src, const FileSpec& dst)
             case FileSpec::eFileTypeDirectory:
                 {
                     if (GetFileExists (fixed_dst))
-                        Unlink (fixed_dst.GetPath().c_str());
+                        Unlink(fixed_dst);
                     uint32_t permissions = src.GetPermissions();
                     if (permissions == 0)
                         permissions = eFilePermissionsDirectoryDefault;
-                    std::string dst_dir_path(fixed_dst.GetPath());
-                    error = MakeDirectory(dst_dir_path.c_str(), permissions);
+                    error = MakeDirectory(fixed_dst, permissions);
                     if (error.Success())
                     {
                         // Make a filespec that only fills in the directory of a FileSpec so
                         // when we enumerate we can quickly fill in the filename for dst copies
                         FileSpec recurse_dst;
-                        recurse_dst.GetDirectory().SetCString(dst_dir_path.c_str());
+                        recurse_dst.GetDirectory().SetCString(fixed_dst.GetCString());
                         std::string src_dir_path (src.GetPath());
                         RecurseCopyBaton baton = { recurse_dst, this, Error() };
                         FileSpec::EnumerateDirectory(src_dir_path.c_str(), true, true, true, RecurseCopy_Callback, &baton);
@@ -838,18 +837,18 @@ Platform::Install (const FileSpec& src, const FileSpec& dst)
 
             case FileSpec::eFileTypeRegular:
                 if (GetFileExists (fixed_dst))
-                    Unlink (fixed_dst.GetPath().c_str());
+                    Unlink(fixed_dst);
                 error = PutFile(src, fixed_dst);
                 break;
 
             case FileSpec::eFileTypeSymbolicLink:
                 {
                     if (GetFileExists (fixed_dst))
-                        Unlink (fixed_dst.GetPath().c_str());
-                    char buf[PATH_MAX];
-                    error = FileSystem::Readlink(src.GetPath().c_str(), buf, sizeof(buf));
+                        Unlink(fixed_dst);
+                    FileSpec src_resolved;
+                    error = FileSystem::Readlink(src, src_resolved);
                     if (error.Success())
-                        error = CreateSymlink(dst.GetPath().c_str(), buf);
+                        error = CreateSymlink(dst, src_resolved);
                 }
                 break;
             case FileSpec::eFileTypePipe:
@@ -869,16 +868,17 @@ Platform::Install (const FileSpec& src, const FileSpec& dst)
 }
 
 bool
-Platform::SetWorkingDirectory (const ConstString &path)
+Platform::SetWorkingDirectory(const FileSpec &file_spec)
 {
     if (IsHost())
     {
         Log *log = GetLogIfAnyCategoriesSet(LIBLLDB_LOG_PLATFORM);
         if (log)
-            log->Printf("Platform::SetWorkingDirectory('%s')", path.GetCString());
-        if (path)
+            log->Printf("Platform::SetWorkingDirectory('%s')",
+                    file_spec.GetCString());
+        if (file_spec)
         {
-            if (chdir(path.GetCString()) == 0)
+            if (::chdir(file_spec.GetCString()) == 0)
                 return true;
         }
         return false;
@@ -886,15 +886,15 @@ Platform::SetWorkingDirectory (const ConstString &path)
     else
     {
         m_working_dir.Clear();
-        return SetRemoteWorkingDirectory(path);
+        return SetRemoteWorkingDirectory(file_spec);
     }
 }
 
 Error
-Platform::MakeDirectory (const char *path, uint32_t permissions)
+Platform::MakeDirectory(const FileSpec &file_spec, uint32_t permissions)
 {
     if (IsHost())
-        return FileSystem::MakeDirectory(path, permissions);
+        return FileSystem::MakeDirectory(file_spec, permissions);
     else
     {
         Error error;
@@ -904,10 +904,10 @@ Platform::MakeDirectory (const char *path, uint32_t permissions)
 }
 
 Error
-Platform::GetFilePermissions (const char *path, uint32_t &file_permissions)
+Platform::GetFilePermissions(const FileSpec &file_spec, uint32_t &file_permissions)
 {
     if (IsHost())
-        return FileSystem::GetFilePermissions(path, file_permissions);
+        return FileSystem::GetFilePermissions(file_spec, file_permissions);
     else
     {
         Error error;
@@ -917,10 +917,10 @@ Platform::GetFilePermissions (const char *path, uint32_t &file_permissions)
 }
 
 Error
-Platform::SetFilePermissions (const char *path, uint32_t file_permissions)
+Platform::SetFilePermissions(const FileSpec &file_spec, uint32_t file_permissions)
 {
     if (IsHost())
-        return FileSystem::SetFilePermissions(path, file_permissions);
+        return FileSystem::SetFilePermissions(file_spec, file_permissions);
     else
     {
         Error error;
@@ -947,12 +947,13 @@ Platform::GetHostname ()
 }
 
 bool
-Platform::SetRemoteWorkingDirectory(const ConstString &path)
+Platform::SetRemoteWorkingDirectory(const FileSpec &working_dir)
 {
     Log *log = GetLogIfAnyCategoriesSet(LIBLLDB_LOG_PLATFORM);
     if (log)
-        log->Printf("Platform::SetRemoteWorkingDirectory('%s')", path.GetCString());
-    m_working_dir = path;
+        log->Printf("Platform::SetRemoteWorkingDirectory('%s')",
+                working_dir.GetCString());
+    m_working_dir = working_dir;
     return true;
 }
 
@@ -1470,29 +1471,29 @@ Platform::PutFile (const FileSpec& source,
 }
 
 Error
-Platform::GetFile (const FileSpec& source,
-                   const FileSpec& destination)
+Platform::GetFile(const FileSpec &source,
+                  const FileSpec &destination)
 {
     Error error("unimplemented");
     return error;
 }
 
 Error
-Platform::CreateSymlink (const char *src, // The name of the link is in src
-                         const char *dst)// The symlink points to dst
+Platform::CreateSymlink(const FileSpec &src, // The name of the link is in src
+                        const FileSpec &dst) // The symlink points to dst
 {
     Error error("unimplemented");
     return error;
 }
 
 bool
-Platform::GetFileExists (const lldb_private::FileSpec& file_spec)
+Platform::GetFileExists(const lldb_private::FileSpec &file_spec)
 {
     return false;
 }
 
 Error
-Platform::Unlink (const char *path)
+Platform::Unlink(const FileSpec &path)
 {
     Error error("unimplemented");
     return error;
@@ -1510,12 +1511,12 @@ Platform::ConvertMmapFlagsToPlatform(unsigned flags)
 }
 
 lldb_private::Error
-Platform::RunShellCommand (const char *command,           // Shouldn't be NULL
-                           const char *working_dir,       // Pass NULL to use the current working directory
-                           int *status_ptr,               // Pass NULL if you don't want the process exit status
-                           int *signo_ptr,                // Pass NULL if you don't want the signal that caused the process to exit
-                           std::string *command_output,   // Pass NULL if you don't want the command output
-                           uint32_t timeout_sec)          // Timeout in seconds to wait for shell program to finish
+Platform::RunShellCommand(const char *command,           // Shouldn't be NULL
+                          const FileSpec &working_dir,   // Pass empty FileSpec to use the current working directory
+                          int *status_ptr,               // Pass NULL if you don't want the process exit status
+                          int *signo_ptr,                // Pass NULL if you don't want the signal that caused the process to exit
+                          std::string *command_output,   // Pass NULL if you don't want the command output
+                          uint32_t timeout_sec)          // Timeout in seconds to wait for shell program to finish
 {
     if (IsHost())
         return Host::RunShellCommand (command, working_dir, status_ptr, signo_ptr, command_output, timeout_sec);

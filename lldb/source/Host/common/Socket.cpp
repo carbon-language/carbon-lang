@@ -504,7 +504,7 @@ Error Socket::UnixDomainAccept(llvm::StringRef name, bool child_processes_inheri
     saddr_un.sun_len = SUN_LEN (&saddr_un);
 #endif
 
-    FileSystem::Unlink(name.data());
+    FileSystem::Unlink(FileSpec{name, true});
     bool success = false;
     if (::bind (listen_fd, (struct sockaddr *)&saddr_un, SUN_LEN (&saddr_un)) == 0) 
     {

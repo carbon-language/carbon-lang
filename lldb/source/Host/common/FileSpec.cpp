@@ -243,7 +243,17 @@ FileSpec::FileSpec(const char *pathname, bool resolve_path, PathSyntax syntax) :
 }
 
 FileSpec::FileSpec(const char *pathname, bool resolve_path, ArchSpec arch) :
-    FileSpec(pathname, resolve_path, arch.GetTriple().isOSWindows() ? ePathSyntaxWindows : ePathSyntaxPosix)
+    FileSpec{pathname, resolve_path, arch.GetTriple().isOSWindows() ? ePathSyntaxWindows : ePathSyntaxPosix}
+{
+}
+
+FileSpec::FileSpec(const std::string &path, bool resolve_path, PathSyntax syntax) :
+    FileSpec{path.c_str(), resolve_path, syntax}
+{
+}
+
+FileSpec::FileSpec(const std::string &path, bool resolve_path, ArchSpec arch) :
+    FileSpec{path.c_str(), resolve_path, arch}
 {
 }
 
@@ -332,6 +342,12 @@ FileSpec::SetFile (const char *pathname, bool resolve, PathSyntax syntax)
     }
     else
         m_directory.SetCString(normalized.c_str());
+}
+
+void
+FileSpec::SetFile(const std::string &pathname, bool resolve, PathSyntax syntax)
+{
+    return SetFile(pathname.c_str(), resolve, syntax);
 }
 
 //----------------------------------------------------------------------
@@ -755,7 +771,7 @@ FileSpec::GetPermissions () const
 {
     uint32_t file_permissions = 0;
     if (*this)
-        FileSystem::GetFilePermissions(GetPath().c_str(), file_permissions);
+        FileSystem::GetFilePermissions(*this, file_permissions);
     return file_permissions;
 }
 
@@ -827,6 +843,12 @@ FileSpec::GetPath(bool denormalize) const
     llvm::SmallString<64> result;
     GetPath(result, denormalize);
     return std::string(result.begin(), result.end());
+}
+
+const char *
+FileSpec::GetCString(bool denormalize) const
+{
+    return ConstString{GetPath(denormalize)}.AsCString(NULL);
 }
 
 void
@@ -1333,6 +1355,12 @@ FileSpec::AppendPathComponent (const char *new_path)
     else
         stream.Printf("%s/%s/%s",m_directory.GetCString(), m_filename.GetCString(),new_path);
     SetFile(stream.GetData(), resolve);
+}
+
+void
+FileSpec::AppendPathComponent(const std::string &new_path)
+{
+    return AppendPathComponent(new_path.c_str());
 }
 
 void

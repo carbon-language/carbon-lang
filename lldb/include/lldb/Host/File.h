@@ -470,7 +470,7 @@ public:
     GetPermissions(Error &error) const;
     
     static uint32_t
-    GetPermissions (const char *path, Error &error);
+    GetPermissions(const FileSpec &file_spec, Error &error);
 
     
     //------------------------------------------------------------------

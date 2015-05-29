@@ -533,25 +533,25 @@ MonitorShellCommand (void *callback_baton,
 }
 
 Error
-Host::RunShellCommand (const char *command,
-                       const char *working_dir,
-                       int *status_ptr,
-                       int *signo_ptr,
-                       std::string *command_output_ptr,
-                       uint32_t timeout_sec,
-                       bool run_in_default_shell)
+Host::RunShellCommand(const char *command,
+                      const FileSpec &working_dir,
+                      int *status_ptr,
+                      int *signo_ptr,
+                      std::string *command_output_ptr,
+                      uint32_t timeout_sec,
+                      bool run_in_default_shell)
 {
     return RunShellCommand(Args(command), working_dir, status_ptr, signo_ptr, command_output_ptr, timeout_sec, run_in_default_shell);
 }
 
 Error
-Host::RunShellCommand (const Args &args,
-                       const char *working_dir,
-                       int *status_ptr,
-                       int *signo_ptr,
-                       std::string *command_output_ptr,
-                       uint32_t timeout_sec,
-                       bool run_in_default_shell)
+Host::RunShellCommand(const Args &args,
+                      const FileSpec &working_dir,
+                      int *status_ptr,
+                      int *signo_ptr,
+                      std::string *command_output_ptr,
+                      uint32_t timeout_sec,
+                      bool run_in_default_shell)
 {
     Error error;
     ProcessLaunchInfo launch_info;
@@ -597,11 +597,13 @@ Host::RunShellCommand (const Args &args,
             llvm::sys::fs::createTemporaryFile("lldb-shell-output.%%%%%%", "", output_file_path);
         }
     }
-    
+
+    FileSpec output_file_spec{output_file_path.c_str(), false};
+
     launch_info.AppendSuppressFileAction (STDIN_FILENO, true, false);
-    if (!output_file_path.empty())
+    if (output_file_spec)
     {
-        launch_info.AppendOpenFileAction(STDOUT_FILENO, output_file_path.c_str(), false, true);
+        launch_info.AppendOpenFileAction(STDOUT_FILENO, output_file_spec, false, true);
         launch_info.AppendDuplicateFileAction(STDOUT_FILENO, STDERR_FILENO);
     }
     else
@@ -660,8 +662,7 @@ Host::RunShellCommand (const Args &args,
             if (command_output_ptr)
             {
                 command_output_ptr->clear();
-                FileSpec file_spec(output_file_path.c_str(), File::eOpenOptionRead);
-                uint64_t file_size = file_spec.GetByteSize();
+                uint64_t file_size = output_file_spec.GetByteSize();
                 if (file_size > 0)
                 {
                     if (file_size > command_output_ptr->max_size())
@@ -670,18 +671,19 @@ Host::RunShellCommand (const Args &args,
                     }
                     else
                     {
-                        command_output_ptr->resize(file_size);
-                        file_spec.ReadFileContents(0, &((*command_output_ptr)[0]), command_output_ptr->size(), &error);
+                        std::vector<char> command_output(file_size);
+                        output_file_spec.ReadFileContents(0, command_output.data(), file_size, &error);
+                        if (error.Success())
+                            command_output_ptr->assign(command_output.data(), file_size);
                     }
                 }
             }
         }
         shell_info->can_delete.SetValue(true, eBroadcastAlways);
     }
-    
-    FileSpec output_file_spec(output_file_path.c_str(), false);
+
     if (FileSystem::GetFileExists(output_file_spec))
-        FileSystem::Unlink(output_file_path.c_str());
+        FileSystem::Unlink(output_file_spec);
     // Handshake with the monitor thread, or just let it know in advance that
     // it can delete "shell_info" in case we timed out and were not able to kill
     // the process...
@@ -832,16 +834,18 @@ Host::LaunchProcessPosixSpawn(const char *exe_path, const ProcessLaunchInfo &lau
     current_dir[0] = '\0';
 #endif
 
-    const char *working_dir = launch_info.GetWorkingDirectory();
+    FileSpec working_dir{launch_info.GetWorkingDirectory()};
     if (working_dir)
     {
 #if defined (__APPLE__)
         // Set the working directory on this thread only
-        if (__pthread_chdir (working_dir) < 0) {
+        if (__pthread_chdir(working_dir.GetCString()) < 0) {
             if (errno == ENOENT) {
-                error.SetErrorStringWithFormat("No such file or directory: %s", working_dir);
+                error.SetErrorStringWithFormat("No such file or directory: %s",
+                        working_dir.GetCString());
             } else if (errno == ENOTDIR) {
-                error.SetErrorStringWithFormat("Path doesn't name a directory: %s", working_dir);
+                error.SetErrorStringWithFormat("Path doesn't name a directory: %s",
+                        working_dir.GetCString());
             } else {
                 error.SetErrorStringWithFormat("An unknown error occurred when changing directory for process execution.");
             }
@@ -855,10 +859,11 @@ Host::LaunchProcessPosixSpawn(const char *exe_path, const ProcessLaunchInfo &lau
             return error;
         }
 
-        if (::chdir(working_dir) == -1)
+        if (::chdir(working_dir.GetCString()) == -1)
         {
             error.SetError(errno, eErrorTypePOSIX);
-            error.LogIfError(log, "unable to change working directory to %s", working_dir);
+            error.LogIfError(log, "unable to change working directory to %s",
+                    working_dir.GetCString());
             return error;
         }
 #endif

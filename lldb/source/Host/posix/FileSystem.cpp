@@ -35,70 +35,61 @@ FileSystem::GetNativePathSyntax()
 }
 
 Error
-FileSystem::MakeDirectory(const char *path, uint32_t file_permissions)
+FileSystem::MakeDirectory(const FileSpec &file_spec, uint32_t file_permissions)
 {
-    Error error;
-    if (path && path[0])
+    if (file_spec)
     {
-        if (::mkdir(path, file_permissions) != 0)
+        Error error;
+        if (::mkdir(file_spec.GetCString(), file_permissions) == -1)
         {
             error.SetErrorToErrno();
+            errno = 0;
             switch (error.GetError())
             {
                 case ENOENT:
                 {
                     // Parent directory doesn't exist, so lets make it if we can
-                    FileSpec spec(path, false);
-                    if (spec.GetDirectory() && spec.GetFilename())
+                    // Make the parent directory and try again
+                    FileSpec parent_file_spec{file_spec.GetDirectory().GetCString(), false};
+                    error = MakeDirectory(parent_file_spec, file_permissions);
+                    if (error.Fail())
+                        return error;
+                    // Try and make the directory again now that the parent directory was made successfully
+                    if (::mkdir(file_spec.GetCString(), file_permissions) == -1)
                     {
-                        // Make the parent directory and try again
-                        Error error2 = MakeDirectory(spec.GetDirectory().GetCString(), file_permissions);
-                        if (error2.Success())
-                        {
-                            // Try and make the directory again now that the parent directory was made successfully
-                            if (::mkdir(path, file_permissions) == 0)
-                                error.Clear();
-                            else
-                                error.SetErrorToErrno();
-                        }
+                        error.SetErrorToErrno();
+                        return error;
                     }
                 }
-                break;
-
                 case EEXIST:
                 {
-                    FileSpec path_spec(path, false);
-                    if (path_spec.IsDirectory())
-                        error.Clear(); // It is a directory and it already exists
+                    if (file_spec.IsDirectory())
+                        return Error{}; // It is a directory and it already exists
                 }
-                break;
             }
         }
+        return error;
     }
-    else
-    {
-        error.SetErrorString("empty path");
-    }
-    return error;
+    return Error{"empty path"};
 }
 
 Error
-FileSystem::DeleteDirectory(const char *path, bool recurse)
+FileSystem::DeleteDirectory(const FileSpec &file_spec, bool recurse)
 {
     Error error;
-    if (path && path[0])
+    if (file_spec)
     {
         if (recurse)
         {
             StreamString command;
-            command.Printf("rm -rf \"%s\"", path);
+            command.Printf("rm -rf \"%s\"", file_spec.GetCString());
             int status = ::system(command.GetString().c_str());
             if (status != 0)
                 error.SetError(status, eErrorTypeGeneric);
         }
         else
         {
-            if (::rmdir(path) != 0)
+            if (::rmdir(file_spec.GetCString()) != 0)
                 error.SetErrorToErrno();
         }
     }
@@ -110,11 +101,11 @@ FileSystem::DeleteDirectory(const char *path, bool recurse)
 }
 
 Error
-FileSystem::GetFilePermissions(const char *path, uint32_t &file_permissions)
+FileSystem::GetFilePermissions(const FileSpec &file_spec, uint32_t &file_permissions)
 {
     Error error;
     struct stat file_stats;
-    if (::stat(path, &file_stats) == 0)
+    if (::stat(file_spec.GetCString(), &file_stats) == 0)
     {
         // The bits in "st_mode" currently match the definitions
         // for the file mode bits in unix.
@@ -128,10 +119,10 @@ FileSystem::GetFilePermissions(const char *path, uint32_t &file_permissions)
 }
 
 Error
-FileSystem::SetFilePermissions(const char *path, uint32_t file_permissions)
+FileSystem::SetFilePermissions(const FileSpec &file_spec, uint32_t file_permissions)
 {
     Error error;
-    if (::chmod(path, file_permissions) != 0)
+    if (::chmod(file_spec.GetCString(), file_permissions) != 0)
         error.SetErrorToErrno();
     return error;
 }
@@ -149,43 +140,45 @@ FileSystem::GetFileExists(const FileSpec &file_spec)
 }
 
 Error
-FileSystem::Hardlink(const char *src, const char *dst)
+FileSystem::Hardlink(const FileSpec &src, const FileSpec &dst)
 {
     Error error;
-    if (::link(dst, src) == -1)
+    if (::link(dst.GetCString(), src.GetCString()) == -1)
         error.SetErrorToErrno();
     return error;
 }
 
 Error
-FileSystem::Symlink(const char *src, const char *dst)
+FileSystem::Symlink(const FileSpec &src, const FileSpec &dst)
 {
     Error error;
-    if (::symlink(dst, src) == -1)
+    if (::symlink(dst.GetCString(), src.GetCString()) == -1)
         error.SetErrorToErrno();
     return error;
 }
 
 Error
-FileSystem::Unlink(const char *path)
+FileSystem::Unlink(const FileSpec &file_spec)
 {
     Error error;
-    if (::unlink(path) == -1)
+    if (::unlink(file_spec.GetCString()) == -1)
         error.SetErrorToErrno();
     return error;
 }
 
 Error
-FileSystem::Readlink(const char *path, char *buf, size_t buf_len)
+FileSystem::Readlink(const FileSpec &src, FileSpec &dst)
 {
     Error error;
-    ssize_t count = ::readlink(path, buf, buf_len);
+    char buf[PATH_MAX];
+    ssize_t count = ::readlink(src.GetCString(), buf, sizeof(buf) - 1);
     if (count < 0)
         error.SetErrorToErrno();
-    else if (static_cast<size_t>(count) < (buf_len - 1))
-        buf[count] = '\0'; // Success
     else
-        error.SetErrorString("'buf' buffer is too small to contain link contents");
+    {
+        buf[count] = '\0'; // Success
+        dst.SetFile(buf, false);
+    }
     return error;
 }
 

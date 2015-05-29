@@ -128,11 +128,11 @@ public:
     ArchSpec
     GetRemoteSystemArchitecture () override;
 
-    ConstString
+    FileSpec
     GetRemoteWorkingDirectory() override;
     
     bool
-    SetRemoteWorkingDirectory(const ConstString &path) override;
+    SetRemoteWorkingDirectory(const FileSpec &working_dir) override;
 
     // Remote subclasses should override this and return a valid instance
     // name if connected.
@@ -155,14 +155,14 @@ public:
     DisconnectRemote () override;
     
     Error
-    MakeDirectory (const char *path, uint32_t file_permissions) override;
-    
+    MakeDirectory(const FileSpec &file_spec, uint32_t file_permissions) override;
+
     Error
-    GetFilePermissions (const char *path, uint32_t &file_permissions) override;
-    
+    GetFilePermissions(const FileSpec &file_spec, uint32_t &file_permissions) override;
+
     Error
-    SetFilePermissions (const char *path, uint32_t file_permissions) override;
-    
+    SetFilePermissions(const FileSpec &file_spec, uint32_t file_permissions) override;
+
 
     lldb::user_id_t
     OpenFile (const FileSpec& file_spec, uint32_t flags, uint32_t mode, Error &error) override;
@@ -194,21 +194,21 @@ public:
              uint32_t gid = UINT32_MAX) override;
     
     Error
-    CreateSymlink (const char *src, const char *dst) override;
+    CreateSymlink(const FileSpec &src, const FileSpec &dst) override;
 
     bool
     GetFileExists (const FileSpec& file_spec) override;
 
     Error
-    Unlink (const char *path) override;
+    Unlink(const FileSpec &path) override;
 
     Error
-    RunShellCommand (const char *command,            // Shouldn't be NULL
-                     const char *working_dir,        // Pass NULL to use the current working directory
-                     int *status_ptr,                // Pass NULL if you don't want the process exit status
-                     int *signo_ptr,                 // Pass NULL if you don't want the signal that caused the process to exit
-                     std::string *command_output,    // Pass NULL if you don't want the command output
-                     uint32_t timeout_sec) override; // Timeout in seconds to wait for shell program to finish
+    RunShellCommand(const char *command,            // Shouldn't be NULL
+                    const FileSpec &working_dir,    // Pass empty FileSpec to use the current working directory
+                    int *status_ptr,                // Pass NULL if you don't want the process exit status
+                    int *signo_ptr,                 // Pass NULL if you don't want the signal that caused the process to exit
+                    std::string *command_output,    // Pass NULL if you don't want the command output
+                    uint32_t timeout_sec) override; // Timeout in seconds to wait for shell program to finish
 
     void
     CalculateTrapHandlerSymbolNames () override;

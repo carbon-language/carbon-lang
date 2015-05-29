@@ -24,18 +24,20 @@ class FileSystem
   public:
     static FileSpec::PathSyntax GetNativePathSyntax();
 
-    static Error MakeDirectory(const char *path, uint32_t mode);
-    static Error DeleteDirectory(const char *path, bool recurse);
+    static Error MakeDirectory(const FileSpec &file_spec, uint32_t mode);
+    static Error DeleteDirectory(const FileSpec &file_spec, bool recurse);
 
-    static Error GetFilePermissions(const char *path, uint32_t &file_permissions);
-    static Error SetFilePermissions(const char *path, uint32_t file_permissions);
+    static Error GetFilePermissions(const FileSpec &file_spec,
+                                    uint32_t &file_permissions);
+    static Error SetFilePermissions(const FileSpec &file_spec,
+                                    uint32_t file_permissions);
     static lldb::user_id_t GetFileSize(const FileSpec &file_spec);
     static bool GetFileExists(const FileSpec &file_spec);
 
-    static Error Hardlink(const char *src, const char *dst);
-    static Error Symlink(const char *src, const char *dst);
-    static Error Readlink(const char *path, char *buf, size_t buf_len);
-    static Error Unlink(const char *path);
+    static Error Hardlink(const FileSpec &src, const FileSpec &dst);
+    static Error Symlink(const FileSpec &src, const FileSpec &dst);
+    static Error Readlink(const FileSpec &src, FileSpec &dst);
+    static Error Unlink(const FileSpec &file_spec);
 
     static bool CalculateMD5(const FileSpec &file_spec, uint64_t &low, uint64_t &high);
     static bool CalculateMD5(const FileSpec &file_spec,

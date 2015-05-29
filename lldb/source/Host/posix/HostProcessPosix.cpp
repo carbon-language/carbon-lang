@@ -69,28 +69,25 @@ Error HostProcessPosix::GetMainModule(FileSpec &file_spec) const
 
     // Use special code here because proc/[pid]/exe is a symbolic link.
     char link_path[PATH_MAX];
-    char exe_path[PATH_MAX] = "";
-    if (snprintf (link_path, PATH_MAX, "/proc/%" PRIu64 "/exe", m_process) <= 0)
+    if (snprintf(link_path, PATH_MAX, "/proc/%" PRIu64 "/exe", m_process) != 1)
     {
         error.SetErrorString("Unable to build /proc/<pid>/exe string");
         return error;
     }
 
-    error = FileSystem::Readlink(link_path, exe_path, llvm::array_lengthof(exe_path));
+    error = FileSystem::Readlink(FileSpec{link_path, false}, file_spec);
     if (!error.Success())
         return error;
 
-    const ssize_t len = strlen(exe_path);
     // If the binary has been deleted, the link name has " (deleted)" appended.
     // Remove if there.
-    static const ssize_t deleted_len = strlen(" (deleted)");
-    if (len > deleted_len &&
-        !strcmp(exe_path + len - deleted_len, " (deleted)"))
+    if (file_spec.GetFilename().GetStringRef().endswith(" (deleted)"))
     {
-        exe_path[len - deleted_len] = 0;
+        const char *filename = file_spec.GetFilename().GetCString();
+        static const size_t deleted_len = strlen(" (deleted)");
+        const size_t len = file_spec.GetFilename().GetLength();
+        file_spec.GetFilename().SetCStringWithLength(filename, len - deleted_len);
     }
-
-    file_spec.SetFile(exe_path, false);
     return error;
 }
 

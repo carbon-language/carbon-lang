@@ -11,6 +11,7 @@
 #define liblldb_Target_FileAction_h
 
 #include <string>
+#include "lldb/Host/FileSpec.h"
 
 namespace lldb_private
 {
@@ -34,7 +35,7 @@ class FileAction
 
     bool Duplicate(int fd, int dup_fd);
 
-    bool Open(int fd, const char *path, bool read, bool write);
+    bool Open(int fd, const FileSpec &file_spec, bool read, bool write);
 
     int
     GetFD() const
@@ -54,16 +55,20 @@ class FileAction
         return m_arg;
     }
 
-    const char *GetPath() const;
+    const char *
+    GetPath() const;
+
+    const FileSpec &
+    GetFileSpec() const;
 
     void
     Dump (Stream &stream) const;
 
   protected:
-    Action m_action;    // The action for this file
-    int m_fd;           // An existing file descriptor
-    int m_arg;          // oflag for eFileActionOpen*, dup_fd for eFileActionDuplicate
-    std::string m_path; // A file path to use for opening after fork or posix_spawn
+    Action m_action;      // The action for this file
+    int m_fd;             // An existing file descriptor
+    int m_arg;            // oflag for eFileActionOpen*, dup_fd for eFileActionDuplicate
+    FileSpec m_file_spec; // A file spec to use for opening after fork or posix_spawn
 };
 
 } // namespace lldb_private

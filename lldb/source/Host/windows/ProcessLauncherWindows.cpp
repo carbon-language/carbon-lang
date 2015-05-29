@@ -52,7 +52,7 @@ ProcessLauncherWindows::LaunchProcess(const ProcessLaunchInfo &launch_info, Erro
     executable = launch_info.GetExecutableFile().GetPath();
     launch_info.GetArguments().GetQuotedCommandString(commandLine);
     BOOL result = ::CreateProcessA(executable.c_str(), const_cast<char *>(commandLine.c_str()), NULL, NULL, TRUE, flags, NULL,
-                                   launch_info.GetWorkingDirectory(), &startupinfo, &pi);
+                                   launch_info.GetWorkingDirectory().GetCString(), &startupinfo, &pi);
     if (result)
     {
         // Do not call CloseHandle on pi.hProcess, since we want to pass that back through the HostProcess.

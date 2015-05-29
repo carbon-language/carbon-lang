@@ -233,7 +233,7 @@ public:
     const char *
     AsCString(const char *value_if_empty = NULL) const
     {
-        if (m_string == NULL)
+        if (IsEmpty())
             return value_if_empty;
         return m_string;
     }

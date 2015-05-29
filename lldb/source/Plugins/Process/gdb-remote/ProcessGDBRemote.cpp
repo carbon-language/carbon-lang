@@ -878,45 +878,45 @@ ProcessGDBRemote::DoLaunch (Module *exe_module, ProcessLaunchInfo &launch_info)
         log->Printf ("ProcessGDBRemote::%s() entered", __FUNCTION__);
 
     uint32_t launch_flags = launch_info.GetFlags().Get();
-    const char *stdin_path = NULL;
-    const char *stdout_path = NULL;
-    const char *stderr_path = NULL;
-    const char *working_dir = launch_info.GetWorkingDirectory();
+    FileSpec stdin_file_spec{};
+    FileSpec stdout_file_spec{};
+    FileSpec stderr_file_spec{};
+    FileSpec working_dir = launch_info.GetWorkingDirectory();
 
     const FileAction *file_action;
     file_action = launch_info.GetFileActionForFD (STDIN_FILENO);
     if (file_action)
     {
         if (file_action->GetAction() == FileAction::eFileActionOpen)
-            stdin_path = file_action->GetPath();
+            stdin_file_spec = file_action->GetFileSpec();
     }
     file_action = launch_info.GetFileActionForFD (STDOUT_FILENO);
     if (file_action)
     {
         if (file_action->GetAction() == FileAction::eFileActionOpen)
-            stdout_path = file_action->GetPath();
+            stdout_file_spec = file_action->GetFileSpec();
     }
     file_action = launch_info.GetFileActionForFD (STDERR_FILENO);
     if (file_action)
     {
         if (file_action->GetAction() == FileAction::eFileActionOpen)
-            stderr_path = file_action->GetPath();
+            stderr_file_spec = file_action->GetFileSpec();
     }
 
     if (log)
     {
-        if (stdin_path || stdout_path || stderr_path)
+        if (stdin_file_spec || stdout_file_spec || stderr_file_spec)
             log->Printf ("ProcessGDBRemote::%s provided with STDIO paths via launch_info: stdin=%s, stdout=%s, stderr=%s",
                          __FUNCTION__,
-                         stdin_path ? stdin_path : "<null>",
-                         stdout_path ? stdout_path : "<null>",
-                         stderr_path ? stderr_path : "<null>");
+                          stdin_file_spec ?  stdin_file_spec.GetCString() : "<null>",
+                         stdout_file_spec ? stdout_file_spec.GetCString() : "<null>",
+                         stderr_file_spec ? stderr_file_spec.GetCString() : "<null>");
         else
             log->Printf ("ProcessGDBRemote::%s no STDIO paths given via launch_info", __FUNCTION__);
     }
 
     const bool disable_stdio = (launch_flags & eLaunchFlagDisableSTDIO) != 0;
-    if (stdin_path || disable_stdio)
+    if (stdin_file_spec || disable_stdio)
     {
         // the inferior will be reading stdin from the specified file
         // or stdio is completely disabled
@@ -949,12 +949,12 @@ ProcessGDBRemote::DoLaunch (Module *exe_module, ProcessLaunchInfo &launch_info)
             if (disable_stdio)
             {
                 // set to /dev/null unless redirected to a file above
-                if (!stdin_path)
-                    stdin_path = "/dev/null";
-                if (!stdout_path)
-                    stdout_path = "/dev/null";
-                if (!stderr_path)
-                    stderr_path = "/dev/null";
+                if (!stdin_file_spec)
+                    stdin_file_spec.SetFile("/dev/null", false);
+                if (!stdout_file_spec)
+                    stdout_file_spec.SetFile("/dev/null", false);
+                if (!stderr_file_spec)
+                    stderr_file_spec.SetFile("/dev/null", false);
             }
             else if (platform_sp && platform_sp->IsHost())
             {
@@ -962,42 +962,41 @@ ProcessGDBRemote::DoLaunch (Module *exe_module, ProcessLaunchInfo &launch_info)
                 // a pseudo terminal to instead of relying on the 'O' packets for stdio
                 // since 'O' packets can really slow down debugging if the inferior
                 // does a lot of output.
-                const char *slave_name = NULL;
-                if (stdin_path == NULL || stdout_path == NULL || stderr_path == NULL)
+                if ((!stdin_file_spec || !stdout_file_spec || !stderr_file_spec) &&
+                        pty.OpenFirstAvailableMaster(O_RDWR|O_NOCTTY, NULL, 0))
                 {
-                    if (pty.OpenFirstAvailableMaster(O_RDWR|O_NOCTTY, NULL, 0))
-                        slave_name = pty.GetSlaveName (NULL, 0);
+                    FileSpec slave_name{pty.GetSlaveName(NULL, 0), false};
+
+                    if (!stdin_file_spec)
+                        stdin_file_spec = slave_name;
+
+                    if (!stdout_file_spec)
+                        stdout_file_spec = slave_name;
+
+                    if (!stderr_file_spec)
+                        stderr_file_spec = slave_name;
                 }
-                if (stdin_path == NULL) 
-                    stdin_path = slave_name;
-
-                if (stdout_path == NULL)
-                    stdout_path = slave_name;
-
-                if (stderr_path == NULL)
-                    stderr_path = slave_name;
-
                 if (log)
                     log->Printf ("ProcessGDBRemote::%s adjusted STDIO paths for local platform (IsHost() is true) using slave: stdin=%s, stdout=%s, stderr=%s",
                                  __FUNCTION__,
-                                 stdin_path ? stdin_path : "<null>",
-                                 stdout_path ? stdout_path : "<null>",
-                                 stderr_path ? stderr_path : "<null>");
+                                  stdin_file_spec ?  stdin_file_spec.GetCString() : "<null>",
+                                 stdout_file_spec ? stdout_file_spec.GetCString() : "<null>",
+                                 stderr_file_spec ? stderr_file_spec.GetCString() : "<null>");
             }
 
             if (log)
                 log->Printf ("ProcessGDBRemote::%s final STDIO paths after all adjustments: stdin=%s, stdout=%s, stderr=%s",
                              __FUNCTION__,
-                             stdin_path ? stdin_path : "<null>",
-                             stdout_path ? stdout_path : "<null>",
-                             stderr_path ? stderr_path : "<null>");
+                              stdin_file_spec ?  stdin_file_spec.GetCString() : "<null>",
+                             stdout_file_spec ? stdout_file_spec.GetCString() : "<null>",
+                             stderr_file_spec ? stderr_file_spec.GetCString() : "<null>");
 
-            if (stdin_path)
-                m_gdb_comm.SetSTDIN (stdin_path);
-            if (stdout_path)
-                m_gdb_comm.SetSTDOUT (stdout_path);
-            if (stderr_path)
-                m_gdb_comm.SetSTDERR (stderr_path);
+            if (stdin_file_spec)
+                m_gdb_comm.SetSTDIN(stdin_file_spec);
+            if (stdout_file_spec)
+                m_gdb_comm.SetSTDOUT(stdout_file_spec);
+            if (stderr_file_spec)
+                m_gdb_comm.SetSTDERR(stderr_file_spec);
 
             m_gdb_comm.SetDisableASLR (launch_flags & eLaunchFlagDisableASLR);
             m_gdb_comm.SetDetachOnError (launch_flags & eLaunchFlagDetachOnError);
@@ -1008,7 +1007,7 @@ ProcessGDBRemote::DoLaunch (Module *exe_module, ProcessLaunchInfo &launch_info)
             if (launch_event_data != NULL && *launch_event_data != '\0')
                 m_gdb_comm.SendLaunchEventDataPacket (launch_event_data);
             
-            if (working_dir && working_dir[0])
+            if (working_dir)
             {
                 m_gdb_comm.SetWorkingDir (working_dir);
             }

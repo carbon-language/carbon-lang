@@ -173,13 +173,13 @@ SBLaunchInfo::Clear ()
 const char *
 SBLaunchInfo::GetWorkingDirectory () const
 {
-    return m_opaque_sp->GetWorkingDirectory();
+    return m_opaque_sp->GetWorkingDirectory().GetCString();
 }
 
 void
 SBLaunchInfo::SetWorkingDirectory (const char *working_dir)
 {
-    m_opaque_sp->SetWorkingDirectory(working_dir);
+    m_opaque_sp->SetWorkingDirectory(FileSpec{working_dir, false});
 }
 
 uint32_t
@@ -260,7 +260,7 @@ SBLaunchInfo::AddDuplicateFileAction (int fd, int dup_fd)
 bool
 SBLaunchInfo::AddOpenFileAction (int fd, const char *path, bool read, bool write)
 {
-    return m_opaque_sp->AppendOpenFileAction(fd, path, read, write);
+    return m_opaque_sp->AppendOpenFileAction(fd, FileSpec{path, false}, read, write);
 }
 
 bool

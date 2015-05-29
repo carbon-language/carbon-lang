@@ -325,12 +325,12 @@ File::Open (const char *path, uint32_t options, uint32_t permissions)
 }
 
 uint32_t
-File::GetPermissions (const char *path, Error &error)
+File::GetPermissions(const FileSpec &file_spec, Error &error)
 {
-    if (path && path[0])
+    if (file_spec)
     {
         struct stat file_stats;
-        if (::stat (path, &file_stats) == -1)
+        if (::stat(file_spec.GetCString(), &file_stats) == -1)
             error.SetErrorToErrno();
         else
         {
@@ -339,12 +339,7 @@ File::GetPermissions (const char *path, Error &error)
         }
     }
     else
-    {
-        if (path)
-            error.SetErrorString ("invalid path");
-        else
-            error.SetErrorString ("empty path");        
-    }
+        error.SetErrorString ("empty file spec");
     return 0;
 }
 
