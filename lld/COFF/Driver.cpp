@@ -143,6 +143,15 @@ bool link(int Argc, const char *Argv[]) {
     }
   }
 
+  // Handle /heap
+  if (auto *Arg = Args->getLastArg(OPT_heap)) {
+    if (auto EC = parseNumbers(Arg->getValue(), &Config->HeapReserve,
+                               &Config->HeapCommit)) {
+      llvm::errs() << "/heap: " << EC.message() << "\n";
+      return false;
+    }
+  }
+
   // Parse all input files and put all symbols to the symbol table.
   // The symbol table will take care of name resolution.
   SymbolTable Symtab;

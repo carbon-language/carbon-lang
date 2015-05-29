@@ -267,8 +267,8 @@ void Writer::writeHeader() {
   PE->AddressOfEntryPoint = Entry->getRVA();
   PE->SizeOfStackReserve = Config->StackReserve;
   PE->SizeOfStackCommit = Config->StackCommit;
-  PE->SizeOfHeapReserve = 1024 * 1024;
-  PE->SizeOfHeapCommit = 4096;
+  PE->SizeOfHeapReserve = Config->HeapReserve;
+  PE->SizeOfHeapCommit = Config->HeapCommit;
   PE->NumberOfRvaAndSize = NumberfOfDataDirectory;
   if (OutputSection *Text = findSection(".text")) {
     PE->BaseOfCode = Text->getRVA();

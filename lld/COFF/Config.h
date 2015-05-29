@@ -28,6 +28,8 @@ public:
   uint64_t ImageBase = 0x140000000;
   uint64_t StackReserve = 1024 * 1024;
   uint64_t StackCommit = 4096;
+  uint64_t HeapReserve = 1024 * 1024;
+  uint64_t HeapCommit = 4096;
 
   bool insertFile(llvm::StringRef Path) {
     return VisitedFiles.insert(Path.lower()).second;
