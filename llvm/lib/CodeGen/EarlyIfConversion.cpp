@@ -226,7 +226,7 @@ bool SSAIfConv::canSpeculateInstrs(MachineBasicBlock *MBB) {
     }
 
     // Check for any dependencies on Head instructions.
-    for (const MachineOperand MO : I->operands()) {
+    for (const MachineOperand &MO : I->operands()) {
       if (MO.isRegMask()) {
         DEBUG(dbgs() << "Won't speculate regmask: " << *I);
         return false;
