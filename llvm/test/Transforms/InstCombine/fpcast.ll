@@ -85,3 +85,11 @@ define float @test8(float %V) {
 ; CHECK-NEXT: %[[trunc:.*]] = fptrunc double %frem to float
 ; CHECK-NEXT: ret float %trunc
 }
+
+; CHECK-LABEL: @test_fptrunc_fptrunc
+; CHECK-NOT: fptrunc double {{.*}} to half
+define half @test_fptrunc_fptrunc(double %V) {
+  %t1 = fptrunc double %V to float
+  %t2 = fptrunc float %t1 to half
+  ret half %t2
+}
