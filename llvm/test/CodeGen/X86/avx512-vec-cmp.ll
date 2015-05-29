@@ -116,11 +116,8 @@ define <2 x double> @test8(<2 x double> %a, <2 x double> %b) {
 define <8 x i32> @test9(<8 x i32> %x, <8 x i32> %y) nounwind {
 ; KNL-LABEL: test9:
 ; KNL:       ## BB#0:
-; KNL-NEXT:      ## kill: YMM1<def> YMM1<kill> ZMM1<def>
-; KNL-NEXT:      ## kill: YMM0<def> YMM0<kill> ZMM0<def>
 ; KNL-NEXT:    vpcmpeqd %zmm1, %zmm0, %k1
 ; KNL-NEXT:    vpblendmd %zmm0, %zmm1, %zmm0 {%k1}
-; KNL-NEXT:      ## kill: YMM0<def> YMM0<kill> ZMM0<kill>
 ; KNL-NEXT:    retq
   %mask = icmp eq <8 x i32> %x, %y
   %max = select <8 x i1> %mask, <8 x i32> %x, <8 x i32> %y
@@ -130,11 +127,8 @@ define <8 x i32> @test9(<8 x i32> %x, <8 x i32> %y) nounwind {
 define <8 x float> @test10(<8 x float> %x, <8 x float> %y) nounwind {
 ; KNL-LABEL: test10:
 ; KNL:       ## BB#0:
-; KNL-NEXT:      ## kill: YMM1<def> YMM1<kill> ZMM1<def>
-; KNL-NEXT:      ## kill: YMM0<def> YMM0<kill> ZMM0<def>
 ; KNL-NEXT:    vcmpeqps %zmm1, %zmm0, %k1
 ; KNL-NEXT:    vblendmps %zmm0, %zmm1, %zmm0 {%k1}
-; KNL-NEXT:      ## kill: YMM0<def> YMM0<kill> ZMM0<kill>
 ; KNL-NEXT:    retq
 ; SKX-LABEL: test10:
 ; SKX:       ## BB#0:
@@ -166,7 +160,6 @@ define i16 @test12(<16 x i64> %a, <16 x i64> %b) nounwind {
 ; KNL-NEXT:    vpcmpeqq %zmm3, %zmm1, %k1
 ; KNL-NEXT:    kunpckbw %k0, %k1, %k0
 ; KNL-NEXT:    kmovw %k0, %eax
-; KNL-NEXT:      ## kill: AX<def> AX<kill> EAX<kill>
 ; KNL-NEXT:    retq
   %res = icmp eq <16 x i64> %a, %b
   %res1 = bitcast <16 x i1> %res to i16

@@ -417,17 +417,11 @@ void VirtRegRewriter::rewrite() {
       // Finally, remove any identity copies.
       if (MI->isIdentityCopy()) {
         ++NumIdCopies;
-        if (MI->getNumOperands() == 2) {
-          DEBUG(dbgs() << "Deleting identity copy.\n");
-          if (Indexes)
-            Indexes->removeMachineInstrFromMaps(MI);
-          // It's safe to erase MI because MII has already been incremented.
-          MI->eraseFromParent();
-        } else {
-          // Transform identity copy to a KILL to deal with subregisters.
-          MI->setDesc(TII->get(TargetOpcode::KILL));
-          DEBUG(dbgs() << "Identity copy: " << *MI);
-        }
+        DEBUG(dbgs() << "Deleting identity copy.\n");
+        if (Indexes)
+          Indexes->removeMachineInstrFromMaps(MI);
+        // It's safe to erase MI because MII has already been incremented.
+        MI->eraseFromParent();
       }
     }
   }

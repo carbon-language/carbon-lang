@@ -11,8 +11,7 @@
 @NullToken = external global i64
 
 ; CHECK-LABEL: Part_Create:
-; CHECK-DAG: # kill: RDI<def> 
-; CHECK-DAG: movq PartClass@GOTPCREL(%rip), %r10
+; CHECK: movq PartClass@GOTPCREL(%rip), %r10
 define i32 @Part_Create(i64* %Anchor, i32 %TypeNum, i32 %F, i32 %Z, i32* %Status, i64* %PartTkn) {
   %PartObj = alloca i64*, align 8
   %Vchunk = alloca i64, align 8

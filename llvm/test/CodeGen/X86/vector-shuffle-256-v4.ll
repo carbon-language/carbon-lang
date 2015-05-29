@@ -843,7 +843,6 @@ define <4 x i64> @insert_mem_and_zero_v4i64(i64* %ptr) {
 define <4 x double> @insert_reg_and_zero_v4f64(double %a) {
 ; ALL-LABEL: insert_reg_and_zero_v4f64:
 ; ALL:       # BB#0:
-; ALL-NEXT:    # kill: XMM0<def> XMM0<kill> YMM0<def>
 ; ALL-NEXT:    vxorpd %ymm1, %ymm1, %ymm1
 ; ALL-NEXT:    vblendpd {{.*#+}} ymm0 = ymm0[0],ymm1[1,2,3]
 ; ALL-NEXT:    retq
