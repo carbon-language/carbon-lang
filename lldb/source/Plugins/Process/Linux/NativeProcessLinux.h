@@ -10,13 +10,7 @@
 #ifndef liblldb_NativeProcessLinux_H_
 #define liblldb_NativeProcessLinux_H_
 
-// C Includes
-#include <semaphore.h>
-#include <signal.h>
-
 // C++ Includes
-#include <mutex>
-#include <unordered_map>
 #include <unordered_set>
 
 // Other libraries and framework includes

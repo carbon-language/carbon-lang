@@ -13,7 +13,7 @@
 
 // C Includes
 #include <errno.h>
-#include <poll.h>
+#include <semaphore.h>
 #include <string.h>
 #include <stdint.h>
 #include <unistd.h>
@@ -22,25 +22,23 @@
 #include <fstream>
 #include <sstream>
 #include <string>
+#include <unordered_map>
 
 // Other libraries and framework includes
-#include "lldb/Core/Debugger.h"
 #include "lldb/Core/EmulateInstruction.h"
 #include "lldb/Core/Error.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/ModuleSpec.h"
 #include "lldb/Core/RegisterValue.h"
-#include "lldb/Core/Scalar.h"
 #include "lldb/Core/State.h"
 #include "lldb/Host/common/NativeBreakpoint.h"
 #include "lldb/Host/common/NativeRegisterContext.h"
 #include "lldb/Host/Host.h"
-#include "lldb/Host/HostInfo.h"
-#include "lldb/Host/HostNativeThread.h"
 #include "lldb/Host/ThreadLauncher.h"
-#include "lldb/Symbol/ObjectFile.h"
+#include "lldb/Target/Platform.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/ProcessLaunchInfo.h"
+#include "lldb/Target/Target.h"
 #include "lldb/Utility/LLDBAssert.h"
 #include "lldb/Utility/PseudoTerminal.h"
 
