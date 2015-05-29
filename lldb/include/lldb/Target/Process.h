@@ -818,11 +818,12 @@ public:
             virtual const ConstString &
             GetFlavor () const;
 
-            const lldb::ProcessSP &
+            lldb::ProcessSP
             GetProcessSP() const
             {
-                return m_process_sp;
+                return m_process_wp.lock();
             }
+
             lldb::StateType
             GetState() const
             {
@@ -917,7 +918,7 @@ public:
                 m_restarted_reasons.push_back(reason);
             }
 
-            lldb::ProcessSP m_process_sp;
+            lldb::ProcessWP m_process_wp;
             lldb::StateType m_state;
             std::vector<std::string> m_restarted_reasons;
             bool m_restarted;  // For "eStateStopped" events, this is true if the target was automatically restarted.
