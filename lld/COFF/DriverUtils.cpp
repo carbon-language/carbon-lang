@@ -128,6 +128,17 @@ ErrorOr<MachineTypes> getMachineType(llvm::opt::InputArgList *Args) {
   return IMAGE_FILE_MACHINE_UNKNOWN;
 }
 
+// Parses a string in the form of "<integer>[,<integer>]".
+std::error_code parseNumbers(StringRef Arg, uint64_t *Addr, uint64_t *Size) {
+  StringRef S1, S2;
+  std::tie(S1, S2) = Arg.split(',');
+  if (S1.getAsInteger(0, *Addr))
+    return make_dynamic_error_code(Twine("invalid number: ") + S1);
+  if (Size && !S2.empty() && S2.getAsInteger(0, *Size))
+    return make_dynamic_error_code(Twine("invalid number: ") + S2);
+  return std::error_code();
+}
+
 // Create OptTable
 
 // Create prefix string literals used in Options.td

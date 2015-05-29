@@ -43,6 +43,10 @@ std::string findFile(StringRef Filename);
 // For /machine option.
 ErrorOr<MachineTypes> getMachineType(llvm::opt::InputArgList *Args);
 
+// Parses a string in the form of "<integer>[,<integer>]".
+std::error_code parseNumbers(StringRef Arg, uint64_t *Addr,
+                             uint64_t *Size = nullptr);
+
 // Create enum with OPT_xxx values for each option in Options.td
 enum {
   OPT_INVALID = 0,
