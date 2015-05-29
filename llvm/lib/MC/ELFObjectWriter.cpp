@@ -451,10 +451,12 @@ static uint8_t mergeTypeForSet(uint8_t origType, uint8_t newType) {
 void ELFObjectWriter::writeSymbol(SymbolTableWriter &Writer,
                                   uint32_t StringIndex, ELFSymbolData &MSD,
                                   const MCAsmLayout &Layout) {
+#ifndef NDEBUG
   MCSymbolData &OrigData = MSD.Symbol->getData();
   assert((!OrigData.getFragment() ||
           (OrigData.getFragment()->getParent() == &MSD.Symbol->getSection())) &&
          "The symbol's section doesn't match the fragment's symbol");
+#endif
   const MCSymbol *Base = Layout.getBaseSymbol(*MSD.Symbol);
 
   // This has to be in sync with when computeSymbolTable uses SHN_ABS or
