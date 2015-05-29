@@ -7,9 +7,11 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "Hexagon.h"
 #include "MCTargetDesc/HexagonBaseInfo.h"
 #include "MCTargetDesc/HexagonMCInstrInfo.h"
 #include "MCTargetDesc/HexagonMCTargetDesc.h"
+
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCDisassembler.h"
 #include "llvm/MC/MCExpr.h"
@@ -27,6 +29,7 @@
 #include <vector>
 
 using namespace llvm;
+using namespace Hexagon;
 
 #define DEBUG_TYPE "hexagon-disassembler"
 
@@ -37,9 +40,14 @@ namespace {
 /// \brief Hexagon disassembler for all Hexagon platforms.
 class HexagonDisassembler : public MCDisassembler {
 public:
+  std::unique_ptr<MCInst *> CurrentBundle;
   HexagonDisassembler(MCSubtargetInfo const &STI, MCContext &Ctx)
-      : MCDisassembler(STI, Ctx) {}
+      : MCDisassembler(STI, Ctx), CurrentBundle(new MCInst *) {}
 
+  DecodeStatus getSingleInstruction(MCInst &Instr, MCInst &MCB,
+                                    ArrayRef<uint8_t> Bytes, uint64_t Address,
+                                    raw_ostream &VStream, raw_ostream &CStream,
+                                    bool &Complete) const;
   DecodeStatus getInstruction(MCInst &Instr, uint64_t &Size,
                               ArrayRef<uint8_t> Bytes, uint64_t Address,
                               raw_ostream &VStream,
@@ -191,17 +199,53 @@ DecodeStatus HexagonDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
                                                  uint64_t Address,
                                                  raw_ostream &os,
                                                  raw_ostream &cs) const {
-  Size = 4;
-  if (Bytes.size() < 4)
-    return MCDisassembler::Fail;
+  DecodeStatus Result = DecodeStatus::Success;
+  bool Complete = false;
+  Size = 0;
 
-  uint32_t insn =
+  *CurrentBundle = &MI;
+  MI.setOpcode(Hexagon::BUNDLE);
+  MI.addOperand(MCOperand::createImm(0));
+  while (Result == Success && Complete == false)
+  {
+    if (Bytes.size() < HEXAGON_INSTR_SIZE)
+      return MCDisassembler::Fail;
+    MCInst * Inst = new (getContext()) MCInst;
+    Result = getSingleInstruction(*Inst, MI, Bytes, Address, os, cs, Complete);
+    MI.addOperand(MCOperand::createInst(Inst));
+    Size += HEXAGON_INSTR_SIZE;
+    Bytes = Bytes.slice(HEXAGON_INSTR_SIZE);
+  }
+  return Result;
+}
+
+DecodeStatus HexagonDisassembler::getSingleInstruction(
+    MCInst &MI, MCInst &MCB, ArrayRef<uint8_t> Bytes, uint64_t Address,
+    raw_ostream &os, raw_ostream &cs, bool &Complete) const {
+  assert(Bytes.size() >= HEXAGON_INSTR_SIZE);
+
+  uint32_t Instruction =
       llvm::support::endian::read<uint32_t, llvm::support::little,
                                   llvm::support::unaligned>(Bytes.data());
 
-  // Remove parse bits.
-  insn &= ~static_cast<uint32_t>(HexagonII::InstParseBits::INST_PARSE_MASK);
-  DecodeStatus Result = decodeInstruction(DecoderTable32, MI, insn, Address, this, STI);
-  HexagonMCInstrInfo::AppendImplicitOperands(MI);
+  auto BundleSize = HexagonMCInstrInfo::bundleSize(MCB);
+  if ((Instruction & HexagonII::INST_PARSE_MASK) ==
+      HexagonII::INST_PARSE_LOOP_END) {
+    if (BundleSize == 0)
+      HexagonMCInstrInfo::setInnerLoop(MCB);
+    else if (BundleSize == 1)
+      HexagonMCInstrInfo::setOuterLoop(MCB);
+    else
+      return DecodeStatus::Fail;
+  }
+
+  DecodeStatus Result = DecodeStatus::Success;
+  if ((Instruction & HexagonII::INST_PARSE_MASK) ==
+      HexagonII::INST_PARSE_PACKET_END)
+    Complete = true;
+  // Calling the auto-generated decoder function.
+  Result =
+      decodeInstruction(DecoderTable32, MI, Instruction, Address, this, STI);
+
   return Result;
 }

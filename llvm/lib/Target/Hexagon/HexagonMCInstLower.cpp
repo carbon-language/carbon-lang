@@ -15,9 +15,12 @@
 #include "Hexagon.h"
 #include "HexagonAsmPrinter.h"
 #include "HexagonMachineFunctionInfo.h"
+#include "MCTargetDesc/HexagonMCInstrInfo.h"
+
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Mangler.h"
+#include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
 
@@ -38,9 +41,20 @@ static MCOperand GetSymbolRef(const MachineOperand& MO, const MCSymbol* Symbol,
 }
 
 // Create an MCInst from a MachineInstr
-void llvm::HexagonLowerToMC(MachineInstr const* MI, MCInst& MCI,
+void llvm::HexagonLowerToMC(MachineInstr const* MI, MCInst& MCB,
                             HexagonAsmPrinter& AP) {
-  MCI.setOpcode(MI->getOpcode());
+  if(MI->getOpcode() == Hexagon::ENDLOOP0){
+    HexagonMCInstrInfo::setInnerLoop(MCB);
+    return;
+  }
+  if(MI->getOpcode() == Hexagon::ENDLOOP1){
+    HexagonMCInstrInfo::setOuterLoop(MCB);
+    return;
+  }
+  MCInst* MCI = new (AP.OutContext) MCInst;
+  MCI->setOpcode(MI->getOpcode());
+  assert(MCI->getOpcode() == static_cast<unsigned>(MI->getOpcode()) &&
+         "MCI opcode should have been set on construction");
 
   for (unsigned i = 0, e = MI->getNumOperands(); i < e; i++) {
     const MachineOperand &MO = MI->getOperand(i);
@@ -88,6 +102,7 @@ void llvm::HexagonLowerToMC(MachineInstr const* MI, MCInst& MCI,
       break;
     }
 
-    MCI.addOperand(MCO);
+    MCI->addOperand(MCO);
   }
+  MCB.addOperand(MCOperand::createInst(MCI));
 }

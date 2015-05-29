@@ -190,7 +190,7 @@ namespace HexagonII {
     MO_GPREL
   };
 
-  enum class InstParseBits : uint32_t {
+  enum InstParseBits {
     INST_PARSE_MASK       = 0x0000c000,
     INST_PARSE_PACKET_END = 0x0000c000,
     INST_PARSE_LOOP_END   = 0x00008000,

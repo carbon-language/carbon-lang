@@ -66,10 +66,8 @@ def DoubleWordAccess : MemAccessSize<4>;// Double word access instruction (memd)
 class OpcodeHexagon {
   field bits<32> Inst = ?; // Default to an invalid insn.
   bits<4> IClass = 0; // ICLASS
-  bits<2> IParse = 0; // Parse bits.
 
   let Inst{31-28} = IClass;
-  let Inst{15-14} = IParse;
 
   bits<1> zero = 0;
 }

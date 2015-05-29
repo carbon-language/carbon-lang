@@ -1,4 +1,5 @@
 ; RUN: llc -march=hexagon -mcpu=hexagonv4 < %s | FileCheck %s
+; XFAIL:
 ; Check that the packetizer generates valid packets with constant
 ; extended add and base+offset store instructions.
 

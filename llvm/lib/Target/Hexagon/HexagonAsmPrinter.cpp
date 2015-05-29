@@ -177,47 +177,29 @@ bool HexagonAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
 /// the current output stream.
 ///
 void HexagonAsmPrinter::EmitInstruction(const MachineInstr *MI) {
+  MCInst MCB;
+  MCB.setOpcode(Hexagon::BUNDLE);
+  MCB.addOperand(MCOperand::createImm(0));
+
   if (MI->isBundle()) {
-    std::vector<MachineInstr const *> BundleMIs;
-
-    const MachineBasicBlock *MBB = MI->getParent();
+    const MachineBasicBlock* MBB = MI->getParent();
     MachineBasicBlock::const_instr_iterator MII = MI;
-    ++MII;
-    unsigned int IgnoreCount = 0;
-    while (MII != MBB->end() && MII->isInsideBundle()) {
-      const MachineInstr *MInst = MII;
-      if (MInst->getOpcode() == TargetOpcode::DBG_VALUE ||
-        MInst->getOpcode() == TargetOpcode::IMPLICIT_DEF) {
-        IgnoreCount++;
-        ++MII;
-        continue;
-      }
-      // BundleMIs.push_back(&*MII);
-      BundleMIs.push_back(MInst);
-      ++MII;
-    }
-    unsigned Size = BundleMIs.size();
-    assert((Size + IgnoreCount) == MI->getBundleSize() && "Corrupt Bundle!");
-    for (unsigned Index = 0; Index < Size; Index++) {
-      MCInst MCI;
+    unsigned IgnoreCount = 0;
 
-      HexagonLowerToMC(BundleMIs[Index], MCI, *this);
-      HexagonMCInstrInfo::AppendImplicitOperands(MCI);
-      HexagonMCInstrInfo::setPacketBegin(MCI, Index == 0);
-      HexagonMCInstrInfo::setPacketEnd(MCI, Index == (Size - 1));
-      EmitToStreamer(*OutStreamer, MCI);
+    for (++MII; MII != MBB->end() && MII->isInsideBundle(); ++MII) {
+      if (MII->getOpcode() == TargetOpcode::DBG_VALUE ||
+          MII->getOpcode() == TargetOpcode::IMPLICIT_DEF)
+        ++IgnoreCount;
+      else {
+        HexagonLowerToMC(MII, MCB, *this);
+      }
     }
   }
   else {
-    MCInst MCI;
-    HexagonLowerToMC(MI, MCI, *this);
-    HexagonMCInstrInfo::AppendImplicitOperands(MCI);
-    if (MI->getOpcode() == Hexagon::ENDLOOP0) {
-      HexagonMCInstrInfo::setPacketBegin(MCI, true);
-      HexagonMCInstrInfo::setPacketEnd(MCI, true);
-    }
-    EmitToStreamer(*OutStreamer, MCI);
+    HexagonLowerToMC(MI, MCB, *this);
+    HexagonMCInstrInfo::padEndloop(MCB);
   }
+  EmitToStreamer(*OutStreamer, MCB);
 
   return;
 }

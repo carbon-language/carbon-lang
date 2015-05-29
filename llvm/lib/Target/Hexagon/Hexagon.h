@@ -76,4 +76,8 @@ namespace llvm {
 // Maximum number of words and instructions in a packet.
 #define HEXAGON_PACKET_SIZE 4
 
+// Minimum number of instructions in an end-loop packet.
+#define HEXAGON_PACKET_INNER_SIZE 2
+#define HEXAGON_PACKET_OUTER_SIZE 3
+
 #endif
