@@ -204,6 +204,10 @@
 // CHECK-BOGUS: error: {{.*}} does not support '-march=armbogusv6' 
 // RUN: %clang -target arm---eabihf -march=armbogusv7 -### -c %s 2>&1 | FileCheck -check-prefix=CHECK-BOGUS-HF %s
 // CHECK-BOGUS-HF: error: {{.*}} does not support '-march=armbogusv7' 
+// RUN: %clang -target arm -march=armv6bogus -### -c %s 2>&1 | FileCheck -check-prefix=CHECK-BOGUS2 %s
+// CHECK-BOGUS2: error: {{.*}} does not support '-march=armv6bogus'
+// RUN: %clang -target arm -march=bogus -### -c %s 2>&1 | FileCheck -check-prefix=CHECK-BOGUS3 %s
+// CHECK-BOGUS3: error: {{.*}} does not support '-march=bogus'
 
 // ================== Check that a bogus CPU gives an error
 // RUN: %clang -target arm -mcpu=bogus -### -c %s 2>&1 | FileCheck -check-prefix=CHECK-BOGUS-CPU %s

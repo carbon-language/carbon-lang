@@ -753,12 +753,13 @@ static void getARMTargetFeatures(const Driver &D, const llvm::Triple &Triple,
   if (const Arg *A = Args.getLastArg(options::OPT_mhwdiv_EQ))
     getARMHWDivFeatures(D, A, Args, Features);
 
-  // Check if -march is valid by checking if it can be canonicalised. getARMArch
-  // is used here instead of just checking the -march value in order to handle
-  // -march=native correctly.
+  // Check if -march is valid by checking if it can be canonicalised and parsed.
+  // getARMArch is used here instead of just checking the -march value in order
+  // to handle -march=native correctly.
   if (const Arg *A = Args.getLastArg(options::OPT_march_EQ)) {
     StringRef Arch = arm::getARMArch(Args, Triple);
-    if (llvm::ARMTargetParser::getCanonicalArchName(Arch).empty())
+    Arch = llvm::ARMTargetParser::getCanonicalArchName(Arch);
+    if (llvm::ARMTargetParser::parseArch(Arch) == llvm::ARM::AK_INVALID)
       D.Diag(diag::err_drv_clang_unsupported) << A->getAsString(Args);
   }
 
