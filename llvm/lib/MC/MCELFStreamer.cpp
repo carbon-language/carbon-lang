@@ -328,7 +328,7 @@ void MCELFStreamer::EmitCommonSymbol(MCSymbol *Symbol, uint64_t Size,
     struct LocalCommon L = {Symbol, Size, ByteAlignment};
     LocalCommons.push_back(L);
   } else {
-    SD.setCommon(Size, ByteAlignment);
+    Symbol->setCommon(Size, ByteAlignment);
   }
 
   Symbol->setSize(MCConstantExpr::Create(Size, getContext()));

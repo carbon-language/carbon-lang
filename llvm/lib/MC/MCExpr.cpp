@@ -475,7 +475,7 @@ static void AttemptToFoldSymbolOffsetDifference(
   const MCSymbolData &BD = SB.getData();
 
   if (AD.getFragment() == BD.getFragment()) {
-    Addend += (AD.getOffset() - BD.getOffset());
+    Addend += (SA.getOffset() - SB.getOffset());
 
     // Pointers to Thumb symbols need to have their low-bit set to allow
     // for interworking.

@@ -373,13 +373,13 @@ void MachObjectWriter::WriteNlist(MachSymbolData &MSD,
     Address = AliaseeInfo->StringIndex;
   else if (Symbol->isDefined())
     Address = getSymbolAddress(OrigSymbol, Layout);
-  else if (Data.isCommon()) {
+  else if (Symbol->isCommon()) {
     // Common symbols are encoded with the size in the address
     // field, and their alignment in the flags.
-    Address = Data.getCommonSize();
+    Address = Symbol->getCommonSize();
 
     // Common alignment is packed into the 'desc' bits.
-    if (unsigned Align = Data.getCommonAlignment()) {
+    if (unsigned Align = Symbol->getCommonAlignment()) {
       unsigned Log2Size = Log2_32(Align);
       assert((1U << Log2Size) == Align && "Invalid 'common' alignment!");
       if (Log2Size > 15)

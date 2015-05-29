@@ -49,7 +49,7 @@ void MCObjectStreamer::flushPendingLabels(MCFragment *F, uint64_t FOffset) {
     for (MCSymbol *Sym : PendingLabels) {
       MCSymbolData *SD = &Sym->getData();
       SD->setFragment(F);
-      SD->setOffset(FOffset);
+      Sym->setOffset(FOffset);
     }
     PendingLabels.clear();
   }
@@ -72,9 +72,9 @@ bool MCObjectStreamer::emitAbsoluteSymbolDiff(const MCSymbol *Hi,
   if (!isa<MCDataFragment>(HiD.getFragment()))
     return false;
 
-  assert(HiD.getOffset() >= LoD.getOffset() &&
+  assert(Hi->getOffset() >= Lo->getOffset() &&
          "Expected Hi to be greater than Lo");
-  EmitIntValue(HiD.getOffset() - LoD.getOffset(), Size);
+  EmitIntValue(Hi->getOffset() - Lo->getOffset(), Size);
   return true;
 }
 
@@ -173,7 +173,7 @@ void MCObjectStreamer::EmitLabel(MCSymbol *Symbol) {
   if (F && !(getAssembler().isBundlingEnabled() &&
              getAssembler().getRelaxAll())) {
     SD.setFragment(F);
-    SD.setOffset(F->getContents().size());
+    Symbol->setOffset(F->getContents().size());
   } else {
     PendingLabels.push_back(Symbol);
   }

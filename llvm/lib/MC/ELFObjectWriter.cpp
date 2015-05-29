@@ -360,8 +360,8 @@ void ELFObjectWriter::writeHeader(const MCAssembler &Asm) {
 uint64_t ELFObjectWriter::SymbolValue(const MCSymbol &Sym,
                                       const MCAsmLayout &Layout) {
   MCSymbolData &Data = Sym.getData();
-  if (Data.isCommon() && Data.isExternal())
-    return Data.getCommonAlignment();
+  if (Sym.isCommon() && Data.isExternal())
+    return Sym.getCommonAlignment();
 
   uint64_t Res;
   if (!Layout.getSymbolOffset(Sym, Res))
@@ -459,7 +459,7 @@ void ELFObjectWriter::writeSymbol(SymbolTableWriter &Writer,
 
   // This has to be in sync with when computeSymbolTable uses SHN_ABS or
   // SHN_COMMON.
-  bool IsReserved = !Base || OrigData.isCommon();
+  bool IsReserved = !Base || MSD.Symbol->isCommon();
 
   // Binding and Type share the same byte as upper and lower nibbles
   uint8_t Binding = MCELF::GetBinding(OrigData);
@@ -832,7 +832,7 @@ void ELFObjectWriter::computeSymbolTable(
 
     if (Symbol.isAbsolute()) {
       MSD.SectionIndex = ELF::SHN_ABS;
-    } else if (SD.isCommon()) {
+    } else if (Symbol.isCommon()) {
       assert(!Local);
       MSD.SectionIndex = ELF::SHN_COMMON;
     } else if (Symbol.isUndefined()) {

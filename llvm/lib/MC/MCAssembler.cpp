@@ -127,7 +127,7 @@ static bool getLabelOffset(const MCAsmLayout &Layout, const MCSymbol &S,
                          S.getName() + "'");
     return false;
   }
-  Val = Layout.getFragmentOffset(SD.getFragment()) + SD.getOffset();
+  Val = Layout.getFragmentOffset(SD.getFragment()) + S.getOffset();
   return true;
 }
 
@@ -195,8 +195,7 @@ const MCSymbol *MCAsmLayout::getBaseSymbol(const MCSymbol &Symbol) const {
 
   const MCSymbol &ASym = A->getSymbol();
   const MCAssembler &Asm = getAssembler();
-  const MCSymbolData &ASD = ASym.getData();
-  if (ASD.isCommon()) {
+  if (ASym.isCommon()) {
     // FIXME: we should probably add a SMLoc to MCExpr.
     Asm.getContext().reportFatalError(SMLoc(),
                                 "Common symbol " + ASym.getName() +
@@ -1189,12 +1188,7 @@ void MCSymbolData::dump() const {
 
   OS << "<MCSymbolData"
      << " Fragment:" << getFragment();
-  if (!isCommon())
-    OS << " Offset:" << getOffset();
   OS << " Flags:" << getFlags();
-  if (isCommon())
-    OS << " (common, size:" << getCommonSize()
-       << " align: " << getCommonAlignment() << ")";
   if (isExternal())
     OS << " (external)";
   if (isPrivateExtern())

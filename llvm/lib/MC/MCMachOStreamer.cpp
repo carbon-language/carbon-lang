@@ -392,7 +392,7 @@ void MCMachOStreamer::EmitCommonSymbol(MCSymbol *Symbol, uint64_t Size,
 
   MCSymbolData &SD = getAssembler().getOrCreateSymbolData(*Symbol);
   SD.setExternal(true);
-  SD.setCommon(Size, ByteAlignment);
+  Symbol->setCommon(Size, ByteAlignment);
 }
 
 void MCMachOStreamer::EmitLocalCommonSymbol(MCSymbol *Symbol, uint64_t Size,
@@ -470,7 +470,8 @@ void MCMachOStreamer::FinishImpl() {
     MCSymbolData &SD = Symbol.getData();
     if (getAssembler().isSymbolLinkerVisible(Symbol) && SD.getFragment()) {
       // An atom defining symbol should never be internal to a fragment.
-      assert(SD.getOffset() == 0 && "Invalid offset in atom defining symbol!");
+      assert(Symbol.getOffset() == 0 &&
+             "Invalid offset in atom defining symbol!");
       DefiningSymbolMap[SD.getFragment()] = &Symbol;
     }
   }

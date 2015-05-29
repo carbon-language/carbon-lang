@@ -34,38 +34,16 @@ class MCSymbolData {
   /// if it is private extern (bit 1).
   PointerIntPair<MCFragment *, 2> Fragment;
 
-  union {
-    /// Offset - The offset to apply to the fragment address to form this
-    /// symbol's value.
-    uint64_t Offset;
-
-    /// CommonSize - The size of the symbol, if it is 'common'.
-    uint64_t CommonSize;
-  };
-
-  /// CommonAlign - The alignment of the symbol, if it is 'common', or -1.
-  //
-  // FIXME: Pack this in with other fields?
-  unsigned CommonAlign = -1U;
 
   /// Flags - The Flags field is used by object file implementations to store
   /// additional per symbol information which is not easily classified.
   uint32_t Flags = 0;
 
 public:
-  MCSymbolData() { Offset = 0; }
+  MCSymbolData() {}
 
   MCFragment *getFragment() const { return Fragment.getPointer(); }
   void setFragment(MCFragment *Value) { Fragment.setPointer(Value); }
-
-  uint64_t getOffset() const {
-    assert(!isCommon());
-    return Offset;
-  }
-  void setOffset(uint64_t Value) {
-    assert(!isCommon());
-    Offset = Value;
-  }
 
   /// @}
   /// \name Symbol Attributes
@@ -79,31 +57,6 @@ public:
   bool isPrivateExtern() const { return Fragment.getInt() & 2; }
   void setPrivateExtern(bool Value) {
     Fragment.setInt((Fragment.getInt() & ~2) | (unsigned(Value) << 1));
-  }
-
-  /// isCommon - Is this a 'common' symbol.
-  bool isCommon() const { return CommonAlign != -1U; }
-
-  /// setCommon - Mark this symbol as being 'common'.
-  ///
-  /// \param Size - The size of the symbol.
-  /// \param Align - The alignment of the symbol.
-  void setCommon(uint64_t Size, unsigned Align) {
-    assert(getOffset() == 0);
-    CommonSize = Size;
-    CommonAlign = Align;
-  }
-
-  /// getCommonSize - Return the size of a 'common' symbol.
-  uint64_t getCommonSize() const {
-    assert(isCommon() && "Not a 'common' symbol!");
-    return CommonSize;
-  }
-
-  /// getCommonAlignment - Return the alignment of a 'common' symbol.
-  unsigned getCommonAlignment() const {
-    assert(isCommon() && "Not a 'common' symbol!");
-    return CommonAlign;
   }
 
   /// getFlags - Get the (implementation defined) symbol flags.
@@ -167,6 +120,19 @@ class MCSymbol {
   /// symbol has no size this field will be NULL.
   const MCExpr *SymbolSize = nullptr;
 
+  /// The alignment of the symbol, if it is 'common', or -1.
+  //
+  // FIXME: Pack this in with other fields?
+  unsigned CommonAlign = -1U;
+
+  union {
+    /// The offset to apply to the fragment address to form this symbol's value.
+    uint64_t Offset;
+
+    /// The size of the symbol, if it is 'common'.
+    uint64_t CommonSize;
+  };
+
   mutable MCSymbolData Data;
 
 private: // MCContext creates and uniques these.
@@ -174,7 +140,9 @@ private: // MCContext creates and uniques these.
   friend class MCContext;
   MCSymbol(const StringMapEntry<bool> *Name, bool isTemporary)
       : Name(Name), Section(nullptr), Value(nullptr), IsTemporary(isTemporary),
-        IsRedefinable(false), IsUsed(false), HasData(false), Index(0) {}
+        IsRedefinable(false), IsUsed(false), HasData(false), Index(0) {
+    Offset = 0;
+  }
 
   MCSymbol(const MCSymbol &) = delete;
   void operator=(const MCSymbol &) = delete;
@@ -294,6 +262,40 @@ public:
   void setSize(const MCExpr *SS) { SymbolSize = SS; }
 
   const MCExpr *getSize() const { return SymbolSize; }
+
+  uint64_t getOffset() const {
+    assert(!isCommon());
+    return Offset;
+  }
+  void setOffset(uint64_t Value) {
+    assert(!isCommon());
+    Offset = Value;
+  }
+
+  /// Return the size of a 'common' symbol.
+  uint64_t getCommonSize() const {
+    assert(isCommon() && "Not a 'common' symbol!");
+    return CommonSize;
+  }
+
+  /// Mark this symbol as being 'common'.
+  ///
+  /// \param Size - The size of the symbol.
+  /// \param Align - The alignment of the symbol.
+  void setCommon(uint64_t Size, unsigned Align) {
+    assert(getOffset() == 0);
+    CommonSize = Size;
+    CommonAlign = Align;
+  }
+
+  ///  Return the alignment of a 'common' symbol.
+  unsigned getCommonAlignment() const {
+    assert(isCommon() && "Not a 'common' symbol!");
+    return CommonAlign;
+  }
+
+  /// Is this a 'common' symbol.
+  bool isCommon() const { return CommonAlign != -1U; }
 
   /// print - Print the value to the stream \p OS.
   void print(raw_ostream &OS) const;

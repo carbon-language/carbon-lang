@@ -365,8 +365,8 @@ void WinCOFFObjectWriter::defineSection(MCSectionCOFF const &Sec) {
 static uint64_t getSymbolValue(const MCSymbol &Symbol,
                                const MCAsmLayout &Layout) {
   const MCSymbolData &Data = Symbol.getData();
-  if (Data.isCommon() && Data.isExternal())
-    return Data.getCommonSize();
+  if (Symbol.isCommon() && Data.isExternal())
+    return Symbol.getCommonSize();
 
   uint64_t Res;
   if (!Layout.getSymbolOffset(Symbol, Res))
@@ -765,7 +765,7 @@ void WinCOFFObjectWriter::RecordRelocation(
     Reloc.Symb = coff_symbol->Section->Symbol;
     FixedValue +=
         Layout.getFragmentOffset(coff_symbol->MC->getData().getFragment()) +
-        coff_symbol->MC->getData().getOffset();
+        coff_symbol->MC->getOffset();
   } else
     Reloc.Symb = coff_symbol;
 
