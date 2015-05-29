@@ -176,7 +176,7 @@ void MCMachOStreamer::EmitEHSymAttributes(const MCSymbol *Symbol,
     getAssembler().getOrCreateSymbolData(*Symbol);
   if (SD.isExternal())
     EmitSymbolAttribute(EHSymbol, MCSA_Global);
-  if (SD.getFlags() & SF_WeakDefinition)
+  if (Symbol->getFlags() & SF_WeakDefinition)
     EmitSymbolAttribute(EHSymbol, MCSA_WeakDefinition);
   if (SD.isPrivateExtern())
     EmitSymbolAttribute(EHSymbol, MCSA_PrivateExtern);
@@ -194,7 +194,6 @@ void MCMachOStreamer::EmitLabel(MCSymbol *Symbol) {
 
   MCObjectStreamer::EmitLabel(Symbol);
 
-  MCSymbolData &SD = Symbol->getData();
   // This causes the reference type flag to be cleared. Darwin 'as' was "trying"
   // to clear the weak reference and weak definition bits too, but the
   // implementation was buggy. For now we just try to match 'as', for
@@ -202,7 +201,7 @@ void MCMachOStreamer::EmitLabel(MCSymbol *Symbol) {
   //
   // FIXME: Cleanup this code, these bits should be emitted based on semantic
   // properties, not on the order of definition, etc.
-  SD.setFlags(SD.getFlags() & ~SF_ReferenceTypeMask);
+  Symbol->setFlags(Symbol->getFlags() & ~SF_ReferenceTypeMask);
 }
 
 void MCMachOStreamer::EmitDataRegion(DataRegionData::KindTy Kind) {
@@ -329,25 +328,25 @@ bool MCMachOStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
     //
     // FIXME: Cleanup this code, these bits should be emitted based on semantic
     // properties, not on the order of definition, etc.
-    SD.setFlags(SD.getFlags() & ~SF_ReferenceTypeUndefinedLazy);
+    Symbol->setFlags(Symbol->getFlags() & ~SF_ReferenceTypeUndefinedLazy);
     break;
 
   case MCSA_LazyReference:
     // FIXME: This requires -dynamic.
-    SD.setFlags(SD.getFlags() | SF_NoDeadStrip);
+    Symbol->setFlags(Symbol->getFlags() | SF_NoDeadStrip);
     if (Symbol->isUndefined())
-      SD.setFlags(SD.getFlags() | SF_ReferenceTypeUndefinedLazy);
+      Symbol->setFlags(Symbol->getFlags() | SF_ReferenceTypeUndefinedLazy);
     break;
 
     // Since .reference sets the no dead strip bit, it is equivalent to
     // .no_dead_strip in practice.
   case MCSA_Reference:
   case MCSA_NoDeadStrip:
-    SD.setFlags(SD.getFlags() | SF_NoDeadStrip);
+    Symbol->setFlags(Symbol->getFlags() | SF_NoDeadStrip);
     break;
 
   case MCSA_SymbolResolver:
-    SD.setFlags(SD.getFlags() | SF_SymbolResolver);
+    Symbol->setFlags(Symbol->getFlags() | SF_SymbolResolver);
     break;
 
   case MCSA_PrivateExtern:
@@ -358,17 +357,17 @@ bool MCMachOStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
   case MCSA_WeakReference:
     // FIXME: This requires -dynamic.
     if (Symbol->isUndefined())
-      SD.setFlags(SD.getFlags() | SF_WeakReference);
+      Symbol->setFlags(Symbol->getFlags() | SF_WeakReference);
     break;
 
   case MCSA_WeakDefinition:
     // FIXME: 'as' enforces that this is defined and global. The manual claims
     // it has to be in a coalesced section, but this isn't enforced.
-    SD.setFlags(SD.getFlags() | SF_WeakDefinition);
+    Symbol->setFlags(Symbol->getFlags() | SF_WeakDefinition);
     break;
 
   case MCSA_WeakDefAutoPrivate:
-    SD.setFlags(SD.getFlags() | SF_WeakDefinition | SF_WeakReference);
+    Symbol->setFlags(Symbol->getFlags() | SF_WeakDefinition | SF_WeakReference);
     break;
   }
 
@@ -379,8 +378,8 @@ void MCMachOStreamer::EmitSymbolDesc(MCSymbol *Symbol, unsigned DescValue) {
   // Encode the 'desc' value into the lowest implementation defined bits.
   assert(DescValue == (DescValue & SF_DescFlagsMask) &&
          "Invalid .desc value!");
-  getAssembler().getOrCreateSymbolData(*Symbol).setFlags(
-    DescValue & SF_DescFlagsMask);
+  getAssembler().getOrCreateSymbolData(*Symbol);
+  Symbol->setFlags(DescValue & SF_DescFlagsMask);
 }
 
 void MCMachOStreamer::EmitCommonSymbol(MCSymbol *Symbol, uint64_t Size,

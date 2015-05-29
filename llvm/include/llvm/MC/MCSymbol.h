@@ -35,10 +35,6 @@ class MCSymbolData {
   PointerIntPair<MCFragment *, 2> Fragment;
 
 
-  /// Flags - The Flags field is used by object file implementations to store
-  /// additional per symbol information which is not easily classified.
-  uint32_t Flags = 0;
-
 public:
   MCSymbolData() = default;
 
@@ -57,17 +53,6 @@ public:
   bool isPrivateExtern() const { return Fragment.getInt() & 2; }
   void setPrivateExtern(bool Value) {
     Fragment.setInt((Fragment.getInt() & ~2) | (unsigned(Value) << 1));
-  }
-
-  /// getFlags - Get the (implementation defined) symbol flags.
-  uint32_t getFlags() const { return Flags; }
-
-  /// setFlags - Set the (implementation defined) symbol flags.
-  void setFlags(uint32_t Value) { Flags = Value; }
-
-  /// modifyFlags - Modify the flags via a mask
-  void modifyFlags(uint32_t Value, uint32_t Mask) {
-    Flags = (Flags & ~Mask) | Value;
   }
 
   /// @}
@@ -132,6 +117,10 @@ class MCSymbol {
     /// The size of the symbol, if it is 'common'.
     uint64_t CommonSize;
   };
+
+  /// The Flags field is used by object file implementations to store
+  /// additional per symbol information which is not easily classified.
+  mutable uint32_t Flags = 0;
 
   mutable MCSymbolData Data;
 
@@ -296,6 +285,17 @@ public:
 
   /// Is this a 'common' symbol.
   bool isCommon() const { return CommonAlign != -1U; }
+
+  /// Get the (implementation defined) symbol flags.
+  uint32_t getFlags() const { return Flags; }
+
+  /// Set the (implementation defined) symbol flags.
+  void setFlags(uint32_t Value) const { Flags = Value; }
+
+  /// Modify the flags via a mask
+  void modifyFlags(uint32_t Value, uint32_t Mask) const {
+    Flags = (Flags & ~Mask) | Value;
+  }
 
   /// print - Print the value to the stream \p OS.
   void print(raw_ostream &OS) const;

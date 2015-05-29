@@ -20,35 +20,31 @@
 namespace llvm {
 
 void MCELF::SetBinding(const MCSymbol &Sym, unsigned Binding) {
-  MCSymbolData &SD = Sym.getData();
   assert(Binding == ELF::STB_LOCAL || Binding == ELF::STB_GLOBAL ||
          Binding == ELF::STB_WEAK || Binding == ELF::STB_GNU_UNIQUE);
-  uint32_t OtherFlags = SD.getFlags() & ~(0xf << ELF_STB_Shift);
-  SD.setFlags(OtherFlags | (Binding << ELF_STB_Shift));
+  uint32_t OtherFlags = Sym.getFlags() & ~(0xf << ELF_STB_Shift);
+  Sym.setFlags(OtherFlags | (Binding << ELF_STB_Shift));
 }
 
 unsigned MCELF::GetBinding(const MCSymbol &Sym) {
-  MCSymbolData &SD = Sym.getData();
-  uint32_t Binding = (SD.getFlags() & (0xf << ELF_STB_Shift)) >> ELF_STB_Shift;
+  uint32_t Binding = (Sym.getFlags() & (0xf << ELF_STB_Shift)) >> ELF_STB_Shift;
   assert(Binding == ELF::STB_LOCAL || Binding == ELF::STB_GLOBAL ||
          Binding == ELF::STB_WEAK || Binding == ELF::STB_GNU_UNIQUE);
   return Binding;
 }
 
 void MCELF::SetType(const MCSymbol &Sym, unsigned Type) {
-  MCSymbolData &SD = Sym.getData();
   assert(Type == ELF::STT_NOTYPE || Type == ELF::STT_OBJECT ||
          Type == ELF::STT_FUNC || Type == ELF::STT_SECTION ||
          Type == ELF::STT_COMMON || Type == ELF::STT_TLS ||
          Type == ELF::STT_GNU_IFUNC);
 
-  uint32_t OtherFlags = SD.getFlags() & ~(0xf << ELF_STT_Shift);
-  SD.setFlags(OtherFlags | (Type << ELF_STT_Shift));
+  uint32_t OtherFlags = Sym.getFlags() & ~(0xf << ELF_STT_Shift);
+  Sym.setFlags(OtherFlags | (Type << ELF_STT_Shift));
 }
 
 unsigned MCELF::GetType(const MCSymbol &Sym) {
-  MCSymbolData &SD = Sym.getData();
-  uint32_t Type = (SD.getFlags() & (0xf << ELF_STT_Shift)) >> ELF_STT_Shift;
+  uint32_t Type = (Sym.getFlags() & (0xf << ELF_STT_Shift)) >> ELF_STT_Shift;
   assert(Type == ELF::STT_NOTYPE || Type == ELF::STT_OBJECT ||
          Type == ELF::STT_FUNC || Type == ELF::STT_SECTION ||
          Type == ELF::STT_COMMON || Type == ELF::STT_TLS || Type == ELF::STT_GNU_IFUNC);
@@ -58,18 +54,16 @@ unsigned MCELF::GetType(const MCSymbol &Sym) {
 // Visibility is stored in the first two bits of st_other
 // st_other values are stored in the second byte of get/setFlags
 void MCELF::SetVisibility(MCSymbol &Sym, unsigned Visibility) {
-  MCSymbolData &SD = Sym.getData();
   assert(Visibility == ELF::STV_DEFAULT || Visibility == ELF::STV_INTERNAL ||
          Visibility == ELF::STV_HIDDEN || Visibility == ELF::STV_PROTECTED);
 
-  uint32_t OtherFlags = SD.getFlags() & ~(0x3 << ELF_STV_Shift);
-  SD.setFlags(OtherFlags | (Visibility << ELF_STV_Shift));
+  uint32_t OtherFlags = Sym.getFlags() & ~(0x3 << ELF_STV_Shift);
+  Sym.setFlags(OtherFlags | (Visibility << ELF_STV_Shift));
 }
 
 unsigned MCELF::GetVisibility(const MCSymbol &Sym) {
-  MCSymbolData &SD = Sym.getData();
   unsigned Visibility =
-    (SD.getFlags() & (0x3 << ELF_STV_Shift)) >> ELF_STV_Shift;
+      (Sym.getFlags() & (0x3 << ELF_STV_Shift)) >> ELF_STV_Shift;
   assert(Visibility == ELF::STV_DEFAULT || Visibility == ELF::STV_INTERNAL ||
          Visibility == ELF::STV_HIDDEN || Visibility == ELF::STV_PROTECTED);
   return Visibility;
@@ -78,15 +72,12 @@ unsigned MCELF::GetVisibility(const MCSymbol &Sym) {
 // Other is stored in the last six bits of st_other
 // st_other values are stored in the second byte of get/setFlags
 void MCELF::setOther(MCSymbol &Sym, unsigned Other) {
-  MCSymbolData &SD = Sym.getData();
-  uint32_t OtherFlags = SD.getFlags() & ~(0x3f << ELF_STO_Shift);
-  SD.setFlags(OtherFlags | (Other << ELF_STO_Shift));
+  uint32_t OtherFlags = Sym.getFlags() & ~(0x3f << ELF_STO_Shift);
+  Sym.setFlags(OtherFlags | (Other << ELF_STO_Shift));
 }
 
 unsigned MCELF::getOther(const MCSymbol &Sym) {
-  MCSymbolData &SD = Sym.getData();
-  unsigned Other =
-    (SD.getFlags() & (0x3f << ELF_STO_Shift)) >> ELF_STO_Shift;
+  unsigned Other = (Sym.getFlags() & (0x3f << ELF_STO_Shift)) >> ELF_STO_Shift;
   return Other;
 }
 

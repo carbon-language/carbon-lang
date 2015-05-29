@@ -46,7 +46,7 @@ bool MachObjectWriter::doesSymbolRequireExternRelocation(const MCSymbol &S) {
 
   // References to weak definitions require external relocation entries; the
   // definition may not always be the one in the same object file.
-  if (S.getData().getFlags() & SF_WeakDefinition)
+  if (S.getFlags() & SF_WeakDefinition)
     return true;
 
   // Otherwise, we can use an internal relocation.
@@ -333,7 +333,7 @@ void MachObjectWriter::WriteNlist(MachSymbolData &MSD,
   const MCSymbol *AliasedSymbol = &findAliasedSymbol(*Symbol);
   uint8_t SectionIndex = MSD.SectionIndex;
   uint8_t Type = 0;
-  uint16_t Flags = Data.getFlags();
+  uint16_t Flags = Symbol->getFlags();
   uint64_t Address = 0;
   bool IsAlias = Symbol != AliasedSymbol;
 
@@ -520,9 +520,9 @@ void MachObjectWriter::BindIndirectSymbols(MCAssembler &Asm) {
     //
     // FIXME: Do not hardcode.
     bool Created;
-    MCSymbolData &Entry = Asm.getOrCreateSymbolData(*it->Symbol, &Created);
+    Asm.getOrCreateSymbolData(*it->Symbol, &Created);
     if (Created)
-      Entry.setFlags(Entry.getFlags() | 0x0001);
+      it->Symbol->setFlags(it->Symbol->getFlags() | 0x0001);
   }
 }
 

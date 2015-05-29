@@ -102,7 +102,7 @@ bool MCWinCOFFStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
   default: return false;
   case MCSA_WeakReference:
   case MCSA_Weak:
-    SD.modifyFlags(COFF::SF_WeakExternal, COFF::SF_WeakExternal);
+    Symbol->modifyFlags(COFF::SF_WeakExternal, COFF::SF_WeakExternal);
     SD.setExternal(true);
     break;
   case MCSA_Global:
@@ -136,8 +136,9 @@ void MCWinCOFFStreamer::EmitCOFFSymbolStorageClass(int StorageClass) {
     FatalError("storage class value '" + Twine(StorageClass) +
                "' out of range");
 
-  MCSymbolData &SD = getAssembler().getOrCreateSymbolData(*CurSymbol);
-  SD.modifyFlags(StorageClass << COFF::SF_ClassShift, COFF::SF_ClassMask);
+  getAssembler().getOrCreateSymbolData(*CurSymbol);
+  CurSymbol->modifyFlags(StorageClass << COFF::SF_ClassShift,
+                         COFF::SF_ClassMask);
 }
 
 void MCWinCOFFStreamer::EmitCOFFSymbolType(int Type) {
@@ -147,8 +148,8 @@ void MCWinCOFFStreamer::EmitCOFFSymbolType(int Type) {
   if (Type & ~0xffff)
     FatalError("type value '" + Twine(Type) + "' out of range");
 
-  MCSymbolData &SD = getAssembler().getOrCreateSymbolData(*CurSymbol);
-  SD.modifyFlags(Type << COFF::SF_TypeShift, COFF::SF_TypeMask);
+  getAssembler().getOrCreateSymbolData(*CurSymbol);
+  CurSymbol->modifyFlags(Type << COFF::SF_TypeShift, COFF::SF_TypeMask);
 }
 
 void MCWinCOFFStreamer::EndCOFFSymbolDef() {
