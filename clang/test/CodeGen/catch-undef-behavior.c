@@ -371,6 +371,34 @@ void call_decl_nonnull(int *a) {
   decl_nonnull(a);
 }
 
+extern void *memcpy (void *, const void *, unsigned) __attribute__((nonnull(1, 2)));
+
+// CHECK-COMMON-LABEL: @call_memcpy_nonnull
+void call_memcpy_nonnull(void *p, void *q, int sz) {
+  // CHECK-COMMON: icmp ne i8* {{.*}}, null
+  // CHECK-UBSAN: call void @__ubsan_handle_nonnull_arg
+  // CHECK-TRAP: call void @llvm.trap()
+
+  // CHECK-COMMON: icmp ne i8* {{.*}}, null
+  // CHECK-UBSAN: call void @__ubsan_handle_nonnull_arg
+  // CHECK-TRAP: call void @llvm.trap()
+  memcpy(p, q, sz);
+}
+
+extern void *memmove (void *, const void *, unsigned) __attribute__((nonnull(1, 2)));
+
+// CHECK-COMMON-LABEL: @call_memmove_nonnull
+void call_memmove_nonnull(void *p, void *q, int sz) {
+  // CHECK-COMMON: icmp ne i8* {{.*}}, null
+  // CHECK-UBSAN: call void @__ubsan_handle_nonnull_arg
+  // CHECK-TRAP: call void @llvm.trap()
+
+  // CHECK-COMMON: icmp ne i8* {{.*}}, null
+  // CHECK-UBSAN: call void @__ubsan_handle_nonnull_arg
+  // CHECK-TRAP: call void @llvm.trap()
+  memmove(p, q, sz);
+}
+
 // CHECK-COMMON-LABEL: @call_nonnull_variadic
 __attribute__((nonnull)) void nonnull_variadic(int a, ...);
 void call_nonnull_variadic(int a, int *b) {

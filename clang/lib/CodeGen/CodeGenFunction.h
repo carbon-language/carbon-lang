@@ -2836,6 +2836,11 @@ public:
   /// conditional branch to it, for the -ftrapv checks.
   void EmitTrapCheck(llvm::Value *Checked);
 
+  /// \brief Create a check for a function parameter that may potentially be
+  /// declared as non-null.
+  void EmitNonNullArgCheck(RValue RV, QualType ArgType, SourceLocation ArgLoc,
+                           const FunctionDecl *FD, unsigned ParmNum);
+
   /// EmitCallArg - Emit a single call argument.
   void EmitCallArg(CallArgList &args, const Expr *E, QualType ArgType);
 

@@ -698,6 +698,8 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     std::pair<llvm::Value*, unsigned> Dest =
         EmitPointerWithAlignment(E->getArg(0));
     Value *SizeVal = EmitScalarExpr(E->getArg(1));
+    EmitNonNullArgCheck(RValue::get(Dest.first), E->getArg(0)->getType(),
+                        E->getArg(0)->getExprLoc(), FD, 0);
     Builder.CreateMemSet(Dest.first, Builder.getInt8(0), SizeVal,
                          Dest.second, false);
     return RValue::get(Dest.first);
@@ -710,6 +712,10 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
         EmitPointerWithAlignment(E->getArg(1));
     Value *SizeVal = EmitScalarExpr(E->getArg(2));
     unsigned Align = std::min(Dest.second, Src.second);
+    EmitNonNullArgCheck(RValue::get(Dest.first), E->getArg(0)->getType(),
+                        E->getArg(0)->getExprLoc(), FD, 0);
+    EmitNonNullArgCheck(RValue::get(Src.first), E->getArg(1)->getType(),
+                        E->getArg(1)->getExprLoc(), FD, 1);
     Builder.CreateMemCpy(Dest.first, Src.first, SizeVal, Align, false);
     return RValue::get(Dest.first);
   }
@@ -767,6 +773,10 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
         EmitPointerWithAlignment(E->getArg(1));
     Value *SizeVal = EmitScalarExpr(E->getArg(2));
     unsigned Align = std::min(Dest.second, Src.second);
+    EmitNonNullArgCheck(RValue::get(Dest.first), E->getArg(0)->getType(),
+                        E->getArg(0)->getExprLoc(), FD, 0);
+    EmitNonNullArgCheck(RValue::get(Src.first), E->getArg(1)->getType(),
+                        E->getArg(1)->getExprLoc(), FD, 1);
     Builder.CreateMemMove(Dest.first, Src.first, SizeVal, Align, false);
     return RValue::get(Dest.first);
   }
@@ -777,6 +787,8 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     Value *ByteVal = Builder.CreateTrunc(EmitScalarExpr(E->getArg(1)),
                                          Builder.getInt8Ty());
     Value *SizeVal = EmitScalarExpr(E->getArg(2));
+    EmitNonNullArgCheck(RValue::get(Dest.first), E->getArg(0)->getType(),
+                        E->getArg(0)->getExprLoc(), FD, 0);
     Builder.CreateMemSet(Dest.first, ByteVal, SizeVal, Dest.second, false);
     return RValue::get(Dest.first);
   }
