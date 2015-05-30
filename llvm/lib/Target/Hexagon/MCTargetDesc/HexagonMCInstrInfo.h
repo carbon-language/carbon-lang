@@ -54,6 +54,13 @@ unsigned short getCExtOpNum(MCInstrInfo const &MCII, MCInst const &MCI);
 
 MCInstrDesc const &getDesc(MCInstrInfo const &MCII, MCInst const &MCI);
 
+// Return the index of the extendable operand
+unsigned short getExtendableOp(MCInstrInfo const &MCII, MCInst const &MCI);
+
+// Return a reference to the extendable operand
+MCOperand const &getExtendableOperand(MCInstrInfo const &MCII,
+                                      MCInst const &MCI);
+
 // Return the implicit alignment of the extendable operand
 unsigned getExtentAlignment(MCInstrInfo const &MCII, MCInst const &MCI);
 
@@ -82,6 +89,9 @@ unsigned getType(MCInstrInfo const &MCII, MCInst const &MCI);
 
 // Return whether the instruction is a legal new-value producer.
 bool hasNewValue(MCInstrInfo const &MCII, MCInst const &MCI);
+
+// Return the instruction at Index
+MCInst const &instruction(MCInst const &MCB, size_t Index);
 
 // Returns whether this MCInst is a wellformed bundle
 bool isBundle(MCInst const &MCI);

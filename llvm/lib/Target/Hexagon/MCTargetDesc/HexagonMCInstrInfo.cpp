@@ -56,6 +56,24 @@ MCInstrDesc const &HexagonMCInstrInfo::getDesc(MCInstrInfo const &MCII,
   return (MCII.get(MCI.getOpcode()));
 }
 
+unsigned short HexagonMCInstrInfo::getExtendableOp(MCInstrInfo const &MCII,
+                                                   MCInst const &MCI) {
+  const uint64_t F = HexagonMCInstrInfo::getDesc(MCII, MCI).TSFlags;
+  return ((F >> HexagonII::ExtendableOpPos) & HexagonII::ExtendableOpMask);
+}
+
+MCOperand const &
+HexagonMCInstrInfo::getExtendableOperand(MCInstrInfo const &MCII,
+                                         MCInst const &MCI) {
+  unsigned O = HexagonMCInstrInfo::getExtendableOp(MCII, MCI);
+  MCOperand const &MO = MCI.getOperand(O);
+
+  assert((HexagonMCInstrInfo::isExtendable(MCII, MCI) ||
+          HexagonMCInstrInfo::isExtended(MCII, MCI)) &&
+         (MO.isImm() || MO.isExpr()));
+  return (MO);
+}
+
 unsigned HexagonMCInstrInfo::getExtentAlignment(MCInstrInfo const &MCII,
                                                 MCInst const &MCI) {
   const uint64_t F = HexagonMCInstrInfo::getDesc(MCII, MCI).TSFlags;
@@ -135,6 +153,12 @@ bool HexagonMCInstrInfo::hasNewValue(MCInstrInfo const &MCII,
                                      MCInst const &MCI) {
   const uint64_t F = HexagonMCInstrInfo::getDesc(MCII, MCI).TSFlags;
   return ((F >> HexagonII::hasNewValuePos) & HexagonII::hasNewValueMask);
+}
+
+MCInst const &HexagonMCInstrInfo::instruction(MCInst const &MCB, size_t Index) {
+  assert(isBundle(MCB));
+  assert(Index < HEXAGON_PACKET_SIZE);
+  return *MCB.getOperand(bundleInstructionsOffset + Index).getInst();
 }
 
 bool HexagonMCInstrInfo::isBundle(MCInst const &MCI) {
