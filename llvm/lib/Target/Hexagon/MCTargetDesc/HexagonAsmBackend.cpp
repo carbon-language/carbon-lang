@@ -39,8 +39,6 @@ public:
 
   bool isInstRelaxable(MCInst const &HMI) const {
     const MCInstrDesc &MCID = HexagonMCInstrInfo::getDesc(*MCII, HMI);
-    assert(&MCID && "invalid instruction");
-
     bool Relaxable = false;
     // Branches and loop-setup insns are handled as necessary by relaxation.
     if (llvm::HexagonMCInstrInfo::getType(*MCII, HMI) == HexagonII::TypeJ ||
@@ -58,7 +56,7 @@ public:
   /// relaxation.
   ///
   /// \param Inst - The instruction to test.
-  bool mayNeedRelaxation(MCInst const &Inst) const {
+  bool mayNeedRelaxation(MCInst const &Inst) const override {
     assert(HexagonMCInstrInfo::isBundle(Inst));
     bool PreviousIsExtender = false;
     for (auto const &I : HexagonMCInstrInfo::bundleInstructions(Inst)) {
@@ -77,7 +75,7 @@ public:
   bool fixupNeedsRelaxationAdvanced(const MCFixup &Fixup, bool Resolved,
                                     uint64_t Value,
                                     const MCRelaxableFragment *DF,
-                                    const MCAsmLayout &Layout) const {
+                                    const MCAsmLayout &Layout) const override {
     MCInst const &MCB = DF->getInst();
     assert(HexagonMCInstrInfo::isBundle(MCB));
 
