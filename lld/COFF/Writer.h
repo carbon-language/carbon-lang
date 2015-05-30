@@ -37,13 +37,12 @@ public:
   StringRef getName() { return Name; }
   uint64_t getSectionIndex() { return SectionIndex; }
   std::vector<Chunk *> &getChunks() { return Chunks; }
-
-  const llvm::object::coff_section getHeader() { return Header; }
   void addPermissions(uint32_t C);
   uint32_t getPermissions() { return Header.Characteristics & PermMask; }
   uint32_t getCharacteristics() { return Header.Characteristics; }
   uint64_t getRVA() { return Header.VirtualAddress; }
   uint64_t getFileOff() { return Header.PointerToRawData; }
+  void writeHeader(uint8_t *Buf);
 
   // Returns the size of this section in an executable memory image.
   // This may be smaller than the raw size (the raw size is multiple
@@ -55,10 +54,15 @@ public:
   // Returns the size of the section in the output file.
   uint64_t getRawSize() { return Header.SizeOfRawData; }
 
+  // Set offset into the string table storing this section name.
+  // Used only when the name is longer than 8 bytes.
+  void setStringTableOff(uint32_t V) { StringTableOff = V; }
+
 private:
-  llvm::object::coff_section Header;
+  coff_section Header;
   StringRef Name;
   uint32_t SectionIndex;
+  uint32_t StringTableOff = 0;
   std::vector<Chunk *> Chunks;
 };
 

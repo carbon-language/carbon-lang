@@ -18,13 +18,16 @@
 #include "llvm/Support/FileOutputBuffer.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
+#include <cstdio>
 #include <functional>
 #include <map>
 #include <utility>
 
 using namespace llvm;
-using namespace llvm::object;
 using namespace llvm::COFF;
+using namespace llvm::object;
+using namespace llvm::support;
+using namespace llvm::support::endian;
 
 static const int PageSize = 4096;
 static const int FileAlignment = 512;
@@ -41,7 +44,6 @@ namespace coff {
 OutputSection::OutputSection(StringRef N, uint32_t SI)
     : Name(N), SectionIndex(SI) {
   memset(&Header, 0, sizeof(Header));
-  strncpy(Header.Name, Name.data(), std::min(Name.size(), size_t(8)));
 }
 
 void OutputSection::setRVA(uint64_t RVA) {
@@ -75,6 +77,19 @@ void OutputSection::addChunk(Chunk *C) {
 
 void OutputSection::addPermissions(uint32_t C) {
   Header.Characteristics = Header.Characteristics | (C & PermMask);
+}
+
+// Write the section header to a given buffer.
+void OutputSection::writeHeader(uint8_t *Buf) {
+  auto *Hdr = reinterpret_cast<coff_section *>(Buf);
+  *Hdr = Header;
+  if (StringTableOff) {
+    // If name is too long, write offset into the string table as a name.
+    sprintf(Hdr->Name, "/%d", StringTableOff);
+  } else {
+    assert(Name.size() <= COFF::NameSize);
+    strncpy(Hdr->Name, Name.data(), Name.size());
+  }
 }
 
 void Writer::markLive() {
@@ -307,11 +322,41 @@ void Writer::writeHeader() {
     DataDirectory[IAT].Size = ImportAddressTableSize;
   }
 
+  // Section table
+  // Name field in the string table is 8 byte long. Longer names need
+  // to be written to the string table. First, construct string table.
+  std::vector<char> Strtab;
+  for (std::unique_ptr<OutputSection> &Sec : OutputSections) {
+    StringRef Name = Sec->getName();
+    if (Name.size() <= COFF::NameSize)
+      continue;
+    Sec->setStringTableOff(Strtab.size() + 4); // +4 for the size field
+    Strtab.insert(Strtab.end(), Name.begin(), Name.end());
+    Strtab.push_back('\0');
+  }
+
   // Write section table
-  coff_section *SectionTable = reinterpret_cast<coff_section *>(Buf);
-  int Idx = 0;
-  for (std::unique_ptr<OutputSection> &Sec : OutputSections)
-    SectionTable[Idx++] = Sec->getHeader();
+  for (std::unique_ptr<OutputSection> &Sec : OutputSections) {
+    Sec->writeHeader(Buf);
+    Buf += sizeof(coff_section);
+  }
+
+  // Write string table if we need to. The string table immediately
+  // follows the symbol table, so we create a dummy symbol table
+  // first. The symbol table contains one dummy symbol.
+  if (Strtab.empty())
+    return;
+  COFF->PointerToSymbolTable = Buf - Buffer->getBufferStart();
+  COFF->NumberOfSymbols = 1;
+  auto *SymbolTable = reinterpret_cast<coff_symbol16 *>(Buf);
+  Buf += sizeof(*SymbolTable);
+  // (Set 4 to make the dummy symbol point to the first string table
+  // entry, so that tools to print out symbols don't read NUL bytes.)
+  SymbolTable->Name.Offset.Offset = 4;
+  // Then create the symbol table. The first 4 bytes is length
+  // including itself.
+  write32le(Buf, Strtab.size() + 4);
+  memcpy(Buf + 4, Strtab.data(), Strtab.size());
 }
 
 std::error_code Writer::openFile(StringRef Path) {
