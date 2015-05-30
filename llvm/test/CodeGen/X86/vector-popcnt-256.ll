@@ -99,14 +99,13 @@ define <4 x i64> @testv4i64(<4 x i64> %in) {
 ; AVX2-NEXT:    vpaddq %ymm1, %ymm0, %ymm0
 ; AVX2-NEXT:    vpbroadcastq {{.*}}(%rip), %ymm1
 ; AVX2-NEXT:    vpand %ymm1, %ymm0, %ymm0
-; AVX2-NEXT:    vpsrlq $8, %ymm0, %ymm1
-; AVX2-NEXT:    vpaddq %ymm1, %ymm0, %ymm0
-; AVX2-NEXT:    vpsrlq $16, %ymm0, %ymm1
-; AVX2-NEXT:    vpaddq %ymm1, %ymm0, %ymm0
-; AVX2-NEXT:    vpsrlq $32, %ymm0, %ymm1
-; AVX2-NEXT:    vpaddq %ymm1, %ymm0, %ymm0
-; AVX2-NEXT:    vpbroadcastq {{.*}}(%rip), %ymm1
-; AVX2-NEXT:    vpand %ymm1, %ymm0, %ymm0
+; AVX2-NEXT:    vpsllq $32, %ymm0, %ymm1
+; AVX2-NEXT:    vpaddb %ymm1, %ymm0, %ymm0
+; AVX2-NEXT:    vpsllq $16, %ymm0, %ymm1
+; AVX2-NEXT:    vpaddb %ymm1, %ymm0, %ymm0
+; AVX2-NEXT:    vpsllq $8, %ymm0, %ymm1
+; AVX2-NEXT:    vpaddb %ymm1, %ymm0, %ymm0
+; AVX2-NEXT:    vpsrlq $56, %ymm0, %ymm0
 ; AVX2-NEXT:    retq
   %out = call <4 x i64> @llvm.ctpop.v4i64(<4 x i64> %in)
   ret <4 x i64> %out
@@ -270,12 +269,11 @@ define <8 x i32> @testv8i32(<8 x i32> %in) {
 ; AVX2-NEXT:    vpaddd %ymm1, %ymm0, %ymm0
 ; AVX2-NEXT:    vpbroadcastd {{.*}}(%rip), %ymm1
 ; AVX2-NEXT:    vpand %ymm1, %ymm0, %ymm0
-; AVX2-NEXT:    vpsrld $8, %ymm0, %ymm1
-; AVX2-NEXT:    vpaddd %ymm1, %ymm0, %ymm0
-; AVX2-NEXT:    vpsrld $16, %ymm0, %ymm1
-; AVX2-NEXT:    vpaddd %ymm1, %ymm0, %ymm0
-; AVX2-NEXT:    vpbroadcastd {{.*}}(%rip), %ymm1
-; AVX2-NEXT:    vpand %ymm1, %ymm0, %ymm0
+; AVX2-NEXT:    vpsllq $16, %ymm0, %ymm1
+; AVX2-NEXT:    vpaddb %ymm1, %ymm0, %ymm0
+; AVX2-NEXT:    vpsllq $8, %ymm0, %ymm1
+; AVX2-NEXT:    vpaddb %ymm1, %ymm0, %ymm0
+; AVX2-NEXT:    vpsrld $24, %ymm0, %ymm0
 ; AVX2-NEXT:    retq
   %out = call <8 x i32> @llvm.ctpop.v8i32(<8 x i32> %in)
   ret <8 x i32> %out
