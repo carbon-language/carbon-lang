@@ -1004,6 +1004,11 @@ std::error_code MachOObjectFile::getRelocationHidden(DataRefImpl Rel,
   return object_error::success;
 }
 
+uint8_t MachOObjectFile::getRelocationLength(DataRefImpl Rel) const {
+  MachO::any_relocation_info RE = getRelocation(Rel);
+  return getAnyRelocationLength(RE);
+}
+
 //
 // guessLibraryShortName() is passed a name of a dynamic library and returns a
 // guess on what the short name is.  Then name is returned as a substring of the

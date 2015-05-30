@@ -1,0 +1,7 @@
+# Check that relocations get applied
+RUN: llvm-dwarfdump %p/Inputs/test-simple-macho.o | FileCheck %s
+RUN: llvm-dwarfdump %p/Inputs/test-multiple-macho.o | FileCheck %s
+RUN: llvm-rtdyld -printline %p/Inputs/test-multiple-macho.o | FileCheck %s
+RUN: llvm-rtdyld -printobjline %p/Inputs/test-multiple-macho.o | FileCheck %s
+
+CHECK-NOT: error: failed to compute relocation: X86_64_RELOC_UNSIGNED

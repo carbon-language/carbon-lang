@@ -47,6 +47,7 @@ InputFileList(cl::Positional, cl::ZeroOrMore,
 
 enum ActionType {
   AC_Execute,
+  AC_PrintObjectLineInfo,
   AC_PrintLineInfo,
   AC_PrintDebugLineInfo,
   AC_Verify
@@ -61,6 +62,8 @@ Action(cl::desc("Action to perform:"),
                              "Load, link, and print line information for each function."),
                   clEnumValN(AC_PrintDebugLineInfo, "printdebugline",
                              "Load, link, and print line information for each function using the debug object"),
+                  clEnumValN(AC_PrintObjectLineInfo, "printobjline",
+                             "Like -printlineinfo but does not load the object first"),
                   clEnumValN(AC_Verify, "verify",
                              "Load, link and verify the resulting memory image."),
                   clEnumValEnd));
@@ -622,9 +625,11 @@ int main(int argc, char **argv) {
   case AC_Execute:
     return executeInput();
   case AC_PrintDebugLineInfo:
-    return printLineInfoForInput(true,true);
+    return printLineInfoForInput(/* LoadObjects */ true,/* UseDebugObj */ true);
   case AC_PrintLineInfo:
-    return printLineInfoForInput(true,false);
+    return printLineInfoForInput(/* LoadObjects */ true,/* UseDebugObj */false);
+  case AC_PrintObjectLineInfo:
+    return printLineInfoForInput(/* LoadObjects */false,/* UseDebugObj */false);
   case AC_Verify:
     return linkAndVerify();
   }

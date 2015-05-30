@@ -19,9 +19,11 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Object/COFF.h"
 #include "llvm/Object/ELFObjectFile.h"
+#include "llvm/Object/MachO.h"
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ELF.h"
+#include "llvm/Support/MachO.h"
 #include "llvm/Support/raw_ostream.h"
 
 namespace llvm {
@@ -52,6 +54,8 @@ public:
       return visitELF(RelocType, R, Value);
     if (isa<COFFObjectFile>(ObjToVisit))
       return visitCOFF(RelocType, R, Value);
+    if (isa<MachOObjectFile>(ObjToVisit))
+      return visitMachO(RelocType, R, Value);
 
     HasError = true;
     return RelocToApply();
@@ -221,6 +225,20 @@ private:
     return RelocToApply();
   }
 
+  RelocToApply visitMachO(uint32_t RelocType, RelocationRef R, uint64_t Value) {
+    switch (ObjToVisit.getArch()) {
+    default: break;
+    case Triple::x86_64:
+      switch (RelocType) {
+        default: break;
+        case MachO::X86_64_RELOC_UNSIGNED:
+          return visitMACHO_X86_64_UNSIGNED(R, Value);
+      }
+    }
+    HasError = true;
+    return RelocToApply();
+  }
+
   int64_t getELFAddend32LE(RelocationRef R) {
     const ELF32LEObjectFile *Obj = cast<ELF32LEObjectFile>(R.getObjectFile());
     DataRefImpl DRI = R.getRawDataRefImpl();
@@ -252,6 +270,12 @@ private:
     Obj->getRelocationAddend(DRI, Addend);
     return Addend;
   }
+
+  uint8_t getLengthMachO64(RelocationRef R) {
+    const MachOObjectFile *Obj = cast<MachOObjectFile>(R.getObjectFile());
+    return Obj->getRelocationLength(R.getRawDataRefImpl());
+  }
+
   /// Operations
 
   /// 386-ELF
@@ -412,6 +436,13 @@ private:
 
   RelocToApply visitCOFF_AMD64_ADDR64(RelocationRef R, uint64_t Value) {
     return RelocToApply(Value, /*Width=*/8);
+  }
+
+  // X86_64 MachO
+  RelocToApply visitMACHO_X86_64_UNSIGNED(RelocationRef R, uint64_t Value) {
+    uint8_t Length = getLengthMachO64(R);
+    Length = 1<<Length;
+    return RelocToApply(Value, Length);
   }
 };
 

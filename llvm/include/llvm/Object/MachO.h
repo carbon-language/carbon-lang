@@ -246,6 +246,7 @@ public:
                            SmallVectorImpl<char> &Result) const override;
   std::error_code getRelocationHidden(DataRefImpl Rel,
                                       bool &Result) const override;
+  uint8_t getRelocationLength(DataRefImpl Rel) const;
 
   // MachO specific.
   std::error_code getLibraryShortNameByIndex(unsigned Index, StringRef &) const;
