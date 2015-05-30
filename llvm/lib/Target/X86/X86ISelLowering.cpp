@@ -17347,7 +17347,7 @@ static SDValue LowerVectorCTPOPInRegLUT(SDValue Op, SDLoc DL,
 
   int NumByteElts = VecSize / 8;
   MVT ByteVecVT = MVT::getVectorVT(MVT::i8, NumByteElts);
-  SDValue In = DAG.getNode(ISD::BITCAST, DL, ByteVecVT, Op);
+  SDValue In = DAG.getBitcast(ByteVecVT, Op);
   SmallVector<SDValue, 16> LUTVec;
   for (int i = 0; i < NumByteElts; ++i)
     LUTVec.push_back(DAG.getConstant(LUT[i % 16], DL, MVT::i8));
@@ -17381,7 +17381,7 @@ static SDValue LowerVectorCTPOPInRegLUT(SDValue Op, SDLoc DL,
   if (EltVT == MVT::i64) {
     SDValue Zeros = getZeroVector(ByteVecVT, Subtarget, DAG, DL);
     PopCnt = DAG.getNode(X86ISD::PSADBW, DL, ByteVecVT, PopCnt, Zeros);
-    return DAG.getNode(ISD::BITCAST, DL, VT, PopCnt);
+    return DAG.getBitcast(VT, PopCnt);
   }
 
   int NumI64Elts = VecSize / 64;
@@ -17400,17 +17400,17 @@ static SDValue LowerVectorCTPOPInRegLUT(SDValue Op, SDLoc DL,
     // Do the horizontal sums into two v2i64s.
     Zeros = getZeroVector(ByteVecVT, Subtarget, DAG, DL);
     Low = DAG.getNode(X86ISD::PSADBW, DL, ByteVecVT,
-                      DAG.getNode(ISD::BITCAST, DL, ByteVecVT, Low), Zeros);
+                      DAG.getBitcast(ByteVecVT, Low), Zeros);
     High = DAG.getNode(X86ISD::PSADBW, DL, ByteVecVT,
-                       DAG.getNode(ISD::BITCAST, DL, ByteVecVT, High), Zeros);
+                       DAG.getBitcast(ByteVecVT, High), Zeros);
 
     // Merge them together.
     MVT ShortVecVT = MVT::getVectorVT(MVT::i16, VecSize / 16);
     PopCnt = DAG.getNode(X86ISD::PACKUS, DL, ByteVecVT,
-                         DAG.getNode(ISD::BITCAST, DL, ShortVecVT, Low),
-                         DAG.getNode(ISD::BITCAST, DL, ShortVecVT, High));
+                         DAG.getBitcast(ShortVecVT, Low),
+                         DAG.getBitcast(ShortVecVT, High));
 
-    return DAG.getNode(ISD::BITCAST, DL, VT, PopCnt);
+    return DAG.getBitcast(VT, PopCnt);
   }
 
   // To obtain pop count for each i16 element, shuffle the byte pop count to get
@@ -17452,10 +17452,10 @@ static SDValue LowerVectorCTPOPInRegLUT(SDValue Op, SDLoc DL,
     Mask.push_back(2 * i);
   Mask.append((size_t)NumLanes, -1);
 
-  PopCnt = DAG.getNode(ISD::BITCAST, DL, VecI64VT, PopCnt);
+  PopCnt = DAG.getBitcast(VecI64VT, PopCnt);
   PopCnt =
       DAG.getVectorShuffle(VecI64VT, DL, PopCnt, DAG.getUNDEF(VecI64VT), Mask);
-  PopCnt = DAG.getNode(ISD::BITCAST, DL, ByteVecVT, PopCnt);
+  PopCnt = DAG.getBitcast(ByteVecVT, PopCnt);
 
   // Zero extend i8s into i16 elts
   SmallVector<int, 16> ZExtInRegMask;
@@ -17464,11 +17464,10 @@ static SDValue LowerVectorCTPOPInRegLUT(SDValue Op, SDLoc DL,
     ZExtInRegMask.push_back(NumByteElts);
   }
 
-  return DAG.getNode(
-      ISD::BITCAST, DL, VT,
-      DAG.getVectorShuffle(ByteVecVT, DL, PopCnt,
-                           getZeroVector(ByteVecVT, Subtarget, DAG, DL),
-                           ZExtInRegMask));
+  return DAG.getBitcast(
+      VT, DAG.getVectorShuffle(ByteVecVT, DL, PopCnt,
+                               getZeroVector(ByteVecVT, Subtarget, DAG, DL),
+                               ZExtInRegMask));
 }
 
 static SDValue LowerVectorCTPOPBitmath(SDValue Op, SDLoc DL,
