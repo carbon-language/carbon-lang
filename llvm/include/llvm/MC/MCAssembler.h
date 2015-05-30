@@ -60,7 +60,8 @@ public:
     FT_Org,
     FT_Dwarf,
     FT_DwarfFrame,
-    FT_LEB
+    FT_LEB,
+    FT_SafeSEH
   };
 
 private:
@@ -528,6 +529,28 @@ public:
 
   static bool classof(const MCFragment *F) {
     return F->getKind() == MCFragment::FT_DwarfFrame;
+  }
+};
+
+class MCSafeSEHFragment : public MCFragment {
+  virtual void anchor();
+
+  const MCSymbol *Sym;
+
+public:
+  MCSafeSEHFragment(const MCSymbol *Sym, MCSection *Sec = nullptr)
+      : MCFragment(FT_SafeSEH, Sec), Sym(Sym) {}
+
+  /// \name Accessors
+  /// @{
+
+  const MCSymbol *getSymbol() { return Sym; }
+  const MCSymbol *getSymbol() const { return Sym; }
+
+  /// @}
+
+  static bool classof(const MCFragment *F) {
+    return F->getKind() == MCFragment::FT_SafeSEH;
   }
 };
 

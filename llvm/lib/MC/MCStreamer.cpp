@@ -555,6 +555,9 @@ void MCStreamer::EmitWinCFIEndProlog() {
   CurrentWinFrameInfo->PrologEnd = Label;
 }
 
+void MCStreamer::EmitCOFFSafeSEH(MCSymbol const *Symbol) {
+}
+
 void MCStreamer::EmitCOFFSectionIndex(MCSymbol const *Symbol) {
 }
 

@@ -186,6 +186,7 @@ protected:
   MCSection *DrectveSection;
   MCSection *PDataSection;
   MCSection *XDataSection;
+  MCSection *SXDataSection;
 
 public:
   void InitMCObjectFileInfo(StringRef TT, Reloc::Model RM, CodeModel::Model CM,
@@ -321,6 +322,7 @@ public:
   MCSection *getDrectveSection() const { return DrectveSection; }
   MCSection *getPDataSection() const { return PDataSection; }
   MCSection *getXDataSection() const { return XDataSection; }
+  MCSection *getSXDataSection() const { return SXDataSection; }
 
   MCSection *getEHFrameSection() {
     if (!EHFrameSection)

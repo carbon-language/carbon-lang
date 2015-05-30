@@ -162,7 +162,8 @@ namespace COFF {
     SF_ClassMask = 0x00FF0000,
     SF_ClassShift = 16,
 
-    SF_WeakExternal = 0x01000000
+    SF_WeakExternal = 0x01000000,
+    SF_SafeSEH = 0x02000000,
   };
 
   enum SymbolSectionNumber : int32_t {

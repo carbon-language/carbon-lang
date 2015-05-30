@@ -158,6 +158,21 @@ void MCWinCOFFStreamer::EndCOFFSymbolDef() {
   CurSymbol = nullptr;
 }
 
+void MCWinCOFFStreamer::EmitCOFFSafeSEH(MCSymbol const *Symbol) {
+  if (Symbol->getFlags() & COFF::SF_SafeSEH)
+    return;
+
+  MCSection *SXData = getContext().getObjectFileInfo()->getSXDataSection();
+  getAssembler().registerSection(*SXData);
+  if (SXData->getAlignment() < 4)
+    SXData->setAlignment(4);
+
+  new MCSafeSEHFragment(Symbol, SXData);
+
+  getAssembler().registerSymbol(*Symbol);
+  Symbol->modifyFlags(COFF::SF_SafeSEH, COFF::SF_SafeSEH);
+}
+
 void MCWinCOFFStreamer::EmitCOFFSectionIndex(MCSymbol const *Symbol) {
   MCDataFragment *DF = getOrCreateDataFragment();
   const MCSymbolRefExpr *SRE = MCSymbolRefExpr::create(Symbol, getContext());

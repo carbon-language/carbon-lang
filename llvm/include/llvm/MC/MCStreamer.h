@@ -434,6 +434,8 @@ public:
   /// \brief Marks the end of the symbol definition.
   virtual void EndCOFFSymbolDef();
 
+  virtual void EmitCOFFSafeSEH(MCSymbol const *Symbol);
+
   /// \brief Emits a COFF section index.
   ///
   /// \param Symbol - Symbol the section number relocation should point to.
