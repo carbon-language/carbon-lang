@@ -68,14 +68,14 @@ static MCInst lowerRIEfLow(const MachineInstr *MI, unsigned Opcode) {
 
 static const MCSymbolRefExpr *getTLSGetOffset(MCContext &Context) {
   StringRef Name = "__tls_get_offset";
-  return MCSymbolRefExpr::Create(Context.getOrCreateSymbol(Name),
+  return MCSymbolRefExpr::create(Context.getOrCreateSymbol(Name),
                                  MCSymbolRefExpr::VK_PLT,
                                  Context);
 }
 
 static const MCSymbolRefExpr *getGlobalOffsetTable(MCContext &Context) {
   StringRef Name = "_GLOBAL_OFFSET_TABLE_";
-  return MCSymbolRefExpr::Create(Context.getOrCreateSymbol(Name),
+  return MCSymbolRefExpr::create(Context.getOrCreateSymbol(Name),
                                  MCSymbolRefExpr::VK_None,
                                  Context);
 }
@@ -285,7 +285,7 @@ EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV) {
   auto *ZCPV = static_cast<SystemZConstantPoolValue*>(MCPV);
 
   const MCExpr *Expr =
-    MCSymbolRefExpr::Create(getSymbol(ZCPV->getGlobalValue()),
+    MCSymbolRefExpr::create(getSymbol(ZCPV->getGlobalValue()),
                             getModifierVariantKind(ZCPV->getModifier()),
                             OutContext);
   uint64_t Size = TM.getDataLayout()->getTypeAllocSize(ZCPV->getType());

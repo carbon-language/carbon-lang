@@ -37,7 +37,7 @@ public:
   static bool isSupportedBinaryExpr(MCSymbolRefExpr::VariantKind VK,
                                     const MCBinaryExpr *BE);
 
-  static const MipsMCExpr *Create(MCSymbolRefExpr::VariantKind VK,
+  static const MipsMCExpr *create(MCSymbolRefExpr::VariantKind VK,
                                   const MCExpr *Expr, MCContext &Ctx);
 
   /// getOpcode - Get the kind of this expression.
@@ -46,13 +46,13 @@ public:
   /// getSubExpr - Get the child of this expression.
   const MCExpr *getSubExpr() const { return Expr; }
 
-  void PrintImpl(raw_ostream &OS) const override;
-  bool EvaluateAsRelocatableImpl(MCValue &Res,
+  void printImpl(raw_ostream &OS) const override;
+  bool evaluateAsRelocatableImpl(MCValue &Res,
                                  const MCAsmLayout *Layout,
                                  const MCFixup *Fixup) const override;
   void visitUsedExpr(MCStreamer &Streamer) const override;
-  MCSection *FindAssociatedSection() const override {
-    return getSubExpr()->FindAssociatedSection();
+  MCSection *findAssociatedSection() const override {
+    return getSubExpr()->findAssociatedSection();
   }
 
   // There are no TLS MipsMCExprs at the moment.

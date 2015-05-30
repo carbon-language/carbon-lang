@@ -192,9 +192,9 @@ void DwarfAccelTable::emitOffsets(AsmPrinter *Asm, const MCSymbol *SecBegin) {
       PrevHash = HashValue;
       Asm->OutStreamer->AddComment("Offset in Bucket " + Twine(i));
       MCContext &Context = Asm->OutStreamer->getContext();
-      const MCExpr *Sub = MCBinaryExpr::CreateSub(
-          MCSymbolRefExpr::Create((*HI)->Sym, Context),
-          MCSymbolRefExpr::Create(SecBegin, Context), Context);
+      const MCExpr *Sub = MCBinaryExpr::createSub(
+          MCSymbolRefExpr::create((*HI)->Sym, Context),
+          MCSymbolRefExpr::create(SecBegin, Context), Context);
       Asm->OutStreamer->EmitValue(Sub, sizeof(uint32_t));
     }
   }

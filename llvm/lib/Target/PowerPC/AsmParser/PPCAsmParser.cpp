@@ -772,7 +772,7 @@ public:
 
     if (const PPCMCExpr *TE = dyn_cast<PPCMCExpr>(Val)) {
       int64_t Res;
-      if (TE->EvaluateAsConstant(Res))
+      if (TE->evaluateAsConstant(Res))
         return CreateContextImm(Res, S, E, IsPPC64);
     }
 
@@ -814,13 +814,13 @@ addNegOperand(MCInst &Inst, MCOperand &Op, MCContext &Ctx) {
     }
   } else if (const MCBinaryExpr *BinExpr = dyn_cast<MCBinaryExpr>(Expr)) {
     if (BinExpr->getOpcode() == MCBinaryExpr::Sub) {
-      const MCExpr *NE = MCBinaryExpr::CreateSub(BinExpr->getRHS(),
+      const MCExpr *NE = MCBinaryExpr::createSub(BinExpr->getRHS(),
                                                  BinExpr->getLHS(), Ctx);
       Inst.addOperand(MCOperand::createExpr(NE));
       return;
     }
   }
-  Inst.addOperand(MCOperand::createExpr(MCUnaryExpr::CreateMinus(Expr, Ctx)));
+  Inst.addOperand(MCOperand::createExpr(MCUnaryExpr::createMinus(Expr, Ctx)));
 }
 
 void PPCAsmParser::ProcessInstruction(MCInst &Inst,
@@ -1330,7 +1330,7 @@ ExtractModifierFromExpr(const MCExpr *E,
       return nullptr;
     }
 
-    return MCSymbolRefExpr::Create(&SRE->getSymbol(), Context);
+    return MCSymbolRefExpr::create(&SRE->getSymbol(), Context);
   }
 
   case MCExpr::Unary: {
@@ -1338,7 +1338,7 @@ ExtractModifierFromExpr(const MCExpr *E,
     const MCExpr *Sub = ExtractModifierFromExpr(UE->getSubExpr(), Variant);
     if (!Sub)
       return nullptr;
-    return MCUnaryExpr::Create(UE->getOpcode(), Sub, Context);
+    return MCUnaryExpr::create(UE->getOpcode(), Sub, Context);
   }
 
   case MCExpr::Binary: {
@@ -1362,7 +1362,7 @@ ExtractModifierFromExpr(const MCExpr *E,
     else
       return nullptr;
 
-    return MCBinaryExpr::Create(BE->getOpcode(), LHS, RHS, Context);
+    return MCBinaryExpr::create(BE->getOpcode(), LHS, RHS, Context);
   }
   }
 
@@ -1396,7 +1396,7 @@ FixupVariantKind(const MCExpr *E) {
     default:
       return E;
     }
-    return MCSymbolRefExpr::Create(&SRE->getSymbol(), Variant, Context);
+    return MCSymbolRefExpr::create(&SRE->getSymbol(), Variant, Context);
   }
 
   case MCExpr::Unary: {
@@ -1404,7 +1404,7 @@ FixupVariantKind(const MCExpr *E) {
     const MCExpr *Sub = FixupVariantKind(UE->getSubExpr());
     if (Sub == UE->getSubExpr())
       return E;
-    return MCUnaryExpr::Create(UE->getOpcode(), Sub, Context);
+    return MCUnaryExpr::create(UE->getOpcode(), Sub, Context);
   }
 
   case MCExpr::Binary: {
@@ -1413,7 +1413,7 @@ FixupVariantKind(const MCExpr *E) {
     const MCExpr *RHS = FixupVariantKind(BE->getRHS());
     if (LHS == BE->getLHS() && RHS == BE->getRHS())
       return E;
-    return MCBinaryExpr::Create(BE->getOpcode(), LHS, RHS, Context);
+    return MCBinaryExpr::create(BE->getOpcode(), LHS, RHS, Context);
   }
   }
 
@@ -1438,7 +1438,7 @@ ParseExpression(const MCExpr *&EVal) {
   PPCMCExpr::VariantKind Variant;
   const MCExpr *E = ExtractModifierFromExpr(EVal, Variant);
   if (E)
-    EVal = PPCMCExpr::Create(Variant, E, false, getParser().getContext());
+    EVal = PPCMCExpr::create(Variant, E, false, getParser().getContext());
 
   return false;
 }
@@ -1485,7 +1485,7 @@ ParseDarwinExpression(const MCExpr *&EVal) {
     if (getLexer().isNot(AsmToken::RParen))
       return Error(Parser.getTok().getLoc(), "expected ')'");
     Parser.Lex(); // Eat the ')'
-    EVal = PPCMCExpr::Create(Variant, EVal, false, getParser().getContext());
+    EVal = PPCMCExpr::create(Variant, EVal, false, getParser().getContext());
   }
   return false;
 }
@@ -1936,19 +1936,19 @@ PPCAsmParser::applyModifierToExpr(const MCExpr *E,
                                   MCContext &Ctx) {
   switch (Variant) {
   case MCSymbolRefExpr::VK_PPC_LO:
-    return PPCMCExpr::Create(PPCMCExpr::VK_PPC_LO, E, false, Ctx);
+    return PPCMCExpr::create(PPCMCExpr::VK_PPC_LO, E, false, Ctx);
   case MCSymbolRefExpr::VK_PPC_HI:
-    return PPCMCExpr::Create(PPCMCExpr::VK_PPC_HI, E, false, Ctx);
+    return PPCMCExpr::create(PPCMCExpr::VK_PPC_HI, E, false, Ctx);
   case MCSymbolRefExpr::VK_PPC_HA:
-    return PPCMCExpr::Create(PPCMCExpr::VK_PPC_HA, E, false, Ctx);
+    return PPCMCExpr::create(PPCMCExpr::VK_PPC_HA, E, false, Ctx);
   case MCSymbolRefExpr::VK_PPC_HIGHER:
-    return PPCMCExpr::Create(PPCMCExpr::VK_PPC_HIGHER, E, false, Ctx);
+    return PPCMCExpr::create(PPCMCExpr::VK_PPC_HIGHER, E, false, Ctx);
   case MCSymbolRefExpr::VK_PPC_HIGHERA:
-    return PPCMCExpr::Create(PPCMCExpr::VK_PPC_HIGHERA, E, false, Ctx);
+    return PPCMCExpr::create(PPCMCExpr::VK_PPC_HIGHERA, E, false, Ctx);
   case MCSymbolRefExpr::VK_PPC_HIGHEST:
-    return PPCMCExpr::Create(PPCMCExpr::VK_PPC_HIGHEST, E, false, Ctx);
+    return PPCMCExpr::create(PPCMCExpr::VK_PPC_HIGHEST, E, false, Ctx);
   case MCSymbolRefExpr::VK_PPC_HIGHESTA:
-    return PPCMCExpr::Create(PPCMCExpr::VK_PPC_HIGHESTA, E, false, Ctx);
+    return PPCMCExpr::create(PPCMCExpr::VK_PPC_HIGHESTA, E, false, Ctx);
   default:
     return nullptr;
   }

@@ -136,7 +136,7 @@ void MCObjectStreamer::EmitValueImpl(const MCExpr *Value, unsigned Size,
 
   // Avoid fixups when possible.
   int64_t AbsValue;
-  if (Value->EvaluateAsAbsolute(AbsValue, getAssembler())) {
+  if (Value->evaluateAsAbsolute(AbsValue, getAssembler())) {
     EmitIntValue(AbsValue, Size);
     return;
   }
@@ -178,7 +178,7 @@ void MCObjectStreamer::EmitLabel(MCSymbol *Symbol) {
 
 void MCObjectStreamer::EmitULEB128Value(const MCExpr *Value) {
   int64_t IntValue;
-  if (Value->EvaluateAsAbsolute(IntValue, getAssembler())) {
+  if (Value->evaluateAsAbsolute(IntValue, getAssembler())) {
     EmitULEB128IntValue(IntValue);
     return;
   }
@@ -187,7 +187,7 @@ void MCObjectStreamer::EmitULEB128Value(const MCExpr *Value) {
 
 void MCObjectStreamer::EmitSLEB128Value(const MCExpr *Value) {
   int64_t IntValue;
-  if (Value->EvaluateAsAbsolute(IntValue, getAssembler())) {
+  if (Value->evaluateAsAbsolute(IntValue, getAssembler())) {
     EmitSLEB128IntValue(IntValue);
     return;
   }
@@ -213,7 +213,7 @@ bool MCObjectStreamer::changeSectionImpl(MCSection *Section,
 
   int64_t IntSubsection = 0;
   if (Subsection &&
-      !Subsection->EvaluateAsAbsolute(IntSubsection, getAssembler()))
+      !Subsection->evaluateAsAbsolute(IntSubsection, getAssembler()))
     report_fatal_error("Cannot evaluate subsection number");
   if (IntSubsection < 0 || IntSubsection > 8192)
     report_fatal_error("Subsection number out of range");
@@ -320,10 +320,10 @@ static const MCExpr *buildSymbolDiff(MCObjectStreamer &OS, const MCSymbol *A,
                                      const MCSymbol *B) {
   MCContext &Context = OS.getContext();
   MCSymbolRefExpr::VariantKind Variant = MCSymbolRefExpr::VK_None;
-  const MCExpr *ARef = MCSymbolRefExpr::Create(A, Variant, Context);
-  const MCExpr *BRef = MCSymbolRefExpr::Create(B, Variant, Context);
+  const MCExpr *ARef = MCSymbolRefExpr::create(A, Variant, Context);
+  const MCExpr *BRef = MCSymbolRefExpr::create(B, Variant, Context);
   const MCExpr *AddrDelta =
-      MCBinaryExpr::Create(MCBinaryExpr::Sub, ARef, BRef, Context);
+      MCBinaryExpr::create(MCBinaryExpr::Sub, ARef, BRef, Context);
   return AddrDelta;
 }
 
@@ -349,7 +349,7 @@ void MCObjectStreamer::EmitDwarfAdvanceLineAddr(int64_t LineDelta,
   }
   const MCExpr *AddrDelta = buildSymbolDiff(*this, Label, LastLabel);
   int64_t Res;
-  if (AddrDelta->EvaluateAsAbsolute(Res, getAssembler())) {
+  if (AddrDelta->evaluateAsAbsolute(Res, getAssembler())) {
     MCDwarfLineAddr::Emit(this, LineDelta, Res);
     return;
   }
@@ -360,7 +360,7 @@ void MCObjectStreamer::EmitDwarfAdvanceFrameAddr(const MCSymbol *LastLabel,
                                                  const MCSymbol *Label) {
   const MCExpr *AddrDelta = buildSymbolDiff(*this, Label, LastLabel);
   int64_t Res;
-  if (AddrDelta->EvaluateAsAbsolute(Res, getAssembler())) {
+  if (AddrDelta->evaluateAsAbsolute(Res, getAssembler())) {
     MCDwarfFrameEmitter::EmitAdvanceLoc(*this, Res);
     return;
   }
@@ -395,7 +395,7 @@ void MCObjectStreamer::EmitCodeAlignment(unsigned ByteAlignment,
 bool MCObjectStreamer::EmitValueToOffset(const MCExpr *Offset,
                                          unsigned char Value) {
   int64_t Res;
-  if (Offset->EvaluateAsAbsolute(Res, getAssembler())) {
+  if (Offset->evaluateAsAbsolute(Res, getAssembler())) {
     insert(new MCOrgFragment(*Offset, Value));
     return false;
   }
@@ -404,11 +404,11 @@ bool MCObjectStreamer::EmitValueToOffset(const MCExpr *Offset,
   EmitLabel(CurrentPos);
   MCSymbolRefExpr::VariantKind Variant = MCSymbolRefExpr::VK_None;
   const MCExpr *Ref =
-    MCSymbolRefExpr::Create(CurrentPos, Variant, getContext());
+    MCSymbolRefExpr::create(CurrentPos, Variant, getContext());
   const MCExpr *Delta =
-    MCBinaryExpr::Create(MCBinaryExpr::Sub, Offset, Ref, getContext());
+    MCBinaryExpr::create(MCBinaryExpr::Sub, Offset, Ref, getContext());
 
-  if (!Delta->EvaluateAsAbsolute(Res, getAssembler()))
+  if (!Delta->evaluateAsAbsolute(Res, getAssembler()))
     return true;
   EmitFill(Res, Value);
   return false;

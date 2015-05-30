@@ -37,7 +37,7 @@ public:
     MCSymbol *Sym = Ctx.getOrCreateSymbol(SymName);
     // FIXME: check that the value is actually the same.
     if (!Sym->isVariable())
-      Sym->setVariableValue(MCConstantExpr::Create(SymAddr, Ctx));
+      Sym->setVariableValue(MCConstantExpr::create(SymAddr, Ctx));
 
     const MCExpr *Expr = nullptr;
     // If hasAddend is true, then we need to add Addend (r_addend) to Expr.
@@ -76,7 +76,7 @@ public:
     case R_X86_64_PC64:
       // S + A - P (P/pcrel is implicit)
       hasAddend = true;
-      Expr = MCSymbolRefExpr::Create(Sym, Ctx);
+      Expr = MCSymbolRefExpr::create(Sym, Ctx);
       break;
     case R_X86_64_GOT32:
     case R_X86_64_GOT64:
@@ -85,27 +85,27 @@ public:
     case R_X86_64_GOTPLT64:
       // G + A
       hasAddend = true;
-      Expr = MCSymbolRefExpr::Create(Sym, MCSymbolRefExpr::VK_GOT, Ctx);
+      Expr = MCSymbolRefExpr::create(Sym, MCSymbolRefExpr::VK_GOT, Ctx);
       break;
     case R_X86_64_PLT32:
       // L + A - P -> S@PLT + A
       hasAddend = true;
-      Expr = MCSymbolRefExpr::Create(Sym, MCSymbolRefExpr::VK_PLT, Ctx);
+      Expr = MCSymbolRefExpr::create(Sym, MCSymbolRefExpr::VK_PLT, Ctx);
       break;
     case R_X86_64_GLOB_DAT:
     case R_X86_64_JUMP_SLOT:
       // S
-      Expr = MCSymbolRefExpr::Create(Sym, Ctx);
+      Expr = MCSymbolRefExpr::create(Sym, Ctx);
       break;
     case R_X86_64_GOTPCREL:
     case R_X86_64_GOTPCREL64:
       // G + GOT + A - P -> S@GOTPCREL + A
       hasAddend = true;
-      Expr = MCSymbolRefExpr::Create(Sym, MCSymbolRefExpr::VK_GOTPCREL, Ctx);
+      Expr = MCSymbolRefExpr::create(Sym, MCSymbolRefExpr::VK_GOTPCREL, Ctx);
       break;
     case R_X86_64_GOTOFF64:
       // S + A - GOT
-      Expr = MCSymbolRefExpr::Create(Sym, MCSymbolRefExpr::VK_GOTOFF, Ctx);
+      Expr = MCSymbolRefExpr::create(Sym, MCSymbolRefExpr::VK_GOTOFF, Ctx);
       break;
     case R_X86_64_PLTOFF64:
       // L + A - GOT
@@ -113,15 +113,15 @@ public:
     case R_X86_64_SIZE32:
     case R_X86_64_SIZE64:
       // Z + A
-      Expr = MCConstantExpr::Create(SymSize, Ctx);
+      Expr = MCConstantExpr::create(SymSize, Ctx);
       break;
     default:
-      Expr = MCSymbolRefExpr::Create(Sym, Ctx);
+      Expr = MCSymbolRefExpr::create(Sym, Ctx);
       break;
     }
     if (Expr && hasAddend && Addend != 0)
-      Expr = MCBinaryExpr::CreateAdd(Expr,
-                                     MCConstantExpr::Create(Addend, Ctx),
+      Expr = MCBinaryExpr::createAdd(Expr,
+                                     MCConstantExpr::create(Addend, Ctx),
                                      Ctx);
     return Expr;
   }

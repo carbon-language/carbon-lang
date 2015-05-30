@@ -68,11 +68,11 @@ SystemZMCInstLower::getExpr(const MachineOperand &MO,
   default:
     llvm_unreachable("unknown operand type");
   }
-  const MCExpr *Expr = MCSymbolRefExpr::Create(Symbol, Kind, Ctx);
+  const MCExpr *Expr = MCSymbolRefExpr::create(Symbol, Kind, Ctx);
   if (HasOffset)
     if (int64_t Offset = MO.getOffset()) {
-      const MCExpr *OffsetExpr = MCConstantExpr::Create(Offset, Ctx);
-      Expr = MCBinaryExpr::CreateAdd(Expr, OffsetExpr, Ctx);
+      const MCExpr *OffsetExpr = MCConstantExpr::create(Offset, Ctx);
+      Expr = MCBinaryExpr::createAdd(Expr, OffsetExpr, Ctx);
     }
   return Expr;
 }

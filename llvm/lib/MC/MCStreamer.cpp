@@ -117,7 +117,7 @@ void MCStreamer::EmitSymbolValue(const MCSymbol *Sym, unsigned Size,
          "SectionRelative value requires 4-bytes");
 
   if (!IsSectionRelative)
-    EmitValueImpl(MCSymbolRefExpr::Create(Sym, getContext()), Size);
+    EmitValueImpl(MCSymbolRefExpr::create(Sym, getContext()), Size);
   else
     EmitCOFFSecRel32(Sym);
 }
@@ -133,7 +133,7 @@ void MCStreamer::EmitGPRel32Value(const MCExpr *Value) {
 /// EmitFill - Emit NumBytes bytes worth of the value specified by
 /// FillValue.  This implements directives such as '.space'.
 void MCStreamer::EmitFill(uint64_t NumBytes, uint8_t FillValue) {
-  const MCExpr *E = MCConstantExpr::Create(FillValue, getContext());
+  const MCExpr *E = MCConstantExpr::create(FillValue, getContext());
   for (uint64_t i = 0, e = NumBytes; i != e; ++i)
     EmitValue(E, 1);
 }

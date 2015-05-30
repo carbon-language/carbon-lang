@@ -778,7 +778,7 @@ void MipsAsmPrinter::EmitJal(const MCSubtargetInfo &STI, MCSymbol *Symbol) {
   MCInst I;
   I.setOpcode(Mips::JAL);
   I.addOperand(
-      MCOperand::createExpr(MCSymbolRefExpr::Create(Symbol, OutContext)));
+      MCOperand::createExpr(MCSymbolRefExpr::create(Symbol, OutContext)));
   OutStreamer->EmitInstruction(I, STI);
 }
 
@@ -1028,9 +1028,9 @@ void MipsAsmPrinter::EmitFPCallStub(
 
   MCSymbol *Tmp = OutContext.createTempSymbol();
   OutStreamer->EmitLabel(Tmp);
-  const MCSymbolRefExpr *E = MCSymbolRefExpr::Create(Stub, OutContext);
-  const MCSymbolRefExpr *T = MCSymbolRefExpr::Create(Tmp, OutContext);
-  const MCExpr *T_min_E = MCBinaryExpr::CreateSub(T, E, OutContext);
+  const MCSymbolRefExpr *E = MCSymbolRefExpr::create(Stub, OutContext);
+  const MCSymbolRefExpr *T = MCSymbolRefExpr::create(Tmp, OutContext);
+  const MCExpr *T_min_E = MCBinaryExpr::createSub(T, E, OutContext);
   OutStreamer->EmitELFSize(Stub, T_min_E);
   TS.emitDirectiveEnd(x);
   OutStreamer->PopSection();

@@ -240,7 +240,7 @@ void X86MachObjectWriter::RecordX86_64Relocation(
     } else if (Symbol->isVariable()) {
       const MCExpr *Value = Symbol->getVariableValue();
       int64_t Res;
-      bool isAbs = Value->EvaluateAsAbsolute(Res, Layout,
+      bool isAbs = Value->evaluateAsAbsolute(Res, Layout,
                                              Writer->getSectionAddressMap());
       if (isAbs) {
         FixedValue = Res;
@@ -533,7 +533,7 @@ void X86MachObjectWriter::RecordX86Relocation(MachObjectWriter *Writer,
     // Resolve constant variables.
     if (A->isVariable()) {
       int64_t Res;
-      if (A->getVariableValue()->EvaluateAsAbsolute(
+      if (A->getVariableValue()->evaluateAsAbsolute(
               Res, Layout, Writer->getSectionAddressMap())) {
         FixedValue = Res;
         return;

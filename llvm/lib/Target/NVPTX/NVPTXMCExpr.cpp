@@ -16,11 +16,11 @@ using namespace llvm;
 #define DEBUG_TYPE "nvptx-mcexpr"
 
 const NVPTXFloatMCExpr*
-NVPTXFloatMCExpr::Create(VariantKind Kind, APFloat Flt, MCContext &Ctx) {
+NVPTXFloatMCExpr::create(VariantKind Kind, APFloat Flt, MCContext &Ctx) {
   return new (Ctx) NVPTXFloatMCExpr(Kind, Flt);
 }
 
-void NVPTXFloatMCExpr::PrintImpl(raw_ostream &OS) const {
+void NVPTXFloatMCExpr::printImpl(raw_ostream &OS) const {
   bool Ignored;
   unsigned NumHex;
   APFloat APF = getAPFloat();
@@ -47,11 +47,11 @@ void NVPTXFloatMCExpr::PrintImpl(raw_ostream &OS) const {
 }
 
 const NVPTXGenericMCSymbolRefExpr*
-NVPTXGenericMCSymbolRefExpr::Create(const MCSymbolRefExpr *SymExpr,
+NVPTXGenericMCSymbolRefExpr::create(const MCSymbolRefExpr *SymExpr,
                                     MCContext &Ctx) {
   return new (Ctx) NVPTXGenericMCSymbolRefExpr(SymExpr);
 }
 
-void NVPTXGenericMCSymbolRefExpr::PrintImpl(raw_ostream &OS) const {
+void NVPTXGenericMCSymbolRefExpr::printImpl(raw_ostream &OS) const {
   OS << "generic(" << *SymExpr << ")";
 }

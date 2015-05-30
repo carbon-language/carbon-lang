@@ -88,9 +88,9 @@ bool MCExternalSymbolizer::tryAddingSymbolicOperand(MCInst &MI,
     if (SymbolicOp.AddSymbol.Name) {
       StringRef Name(SymbolicOp.AddSymbol.Name);
       MCSymbol *Sym = Ctx.getOrCreateSymbol(Name);
-      Add = MCSymbolRefExpr::Create(Sym, Ctx);
+      Add = MCSymbolRefExpr::create(Sym, Ctx);
     } else {
-      Add = MCConstantExpr::Create((int)SymbolicOp.AddSymbol.Value, Ctx);
+      Add = MCConstantExpr::create((int)SymbolicOp.AddSymbol.Value, Ctx);
     }
   }
 
@@ -99,37 +99,37 @@ bool MCExternalSymbolizer::tryAddingSymbolicOperand(MCInst &MI,
       if (SymbolicOp.SubtractSymbol.Name) {
       StringRef Name(SymbolicOp.SubtractSymbol.Name);
       MCSymbol *Sym = Ctx.getOrCreateSymbol(Name);
-      Sub = MCSymbolRefExpr::Create(Sym, Ctx);
+      Sub = MCSymbolRefExpr::create(Sym, Ctx);
     } else {
-      Sub = MCConstantExpr::Create((int)SymbolicOp.SubtractSymbol.Value, Ctx);
+      Sub = MCConstantExpr::create((int)SymbolicOp.SubtractSymbol.Value, Ctx);
     }
   }
 
   const MCExpr *Off = nullptr;
   if (SymbolicOp.Value != 0)
-    Off = MCConstantExpr::Create(SymbolicOp.Value, Ctx);
+    Off = MCConstantExpr::create(SymbolicOp.Value, Ctx);
 
   const MCExpr *Expr;
   if (Sub) {
     const MCExpr *LHS;
     if (Add)
-      LHS = MCBinaryExpr::CreateSub(Add, Sub, Ctx);
+      LHS = MCBinaryExpr::createSub(Add, Sub, Ctx);
     else
-      LHS = MCUnaryExpr::CreateMinus(Sub, Ctx);
+      LHS = MCUnaryExpr::createMinus(Sub, Ctx);
     if (Off)
-      Expr = MCBinaryExpr::CreateAdd(LHS, Off, Ctx);
+      Expr = MCBinaryExpr::createAdd(LHS, Off, Ctx);
     else
       Expr = LHS;
   } else if (Add) {
     if (Off)
-      Expr = MCBinaryExpr::CreateAdd(Add, Off, Ctx);
+      Expr = MCBinaryExpr::createAdd(Add, Off, Ctx);
     else
       Expr = Add;
   } else {
     if (Off)
       Expr = Off;
     else
-      Expr = MCConstantExpr::Create(0, Ctx);
+      Expr = MCConstantExpr::create(0, Ctx);
   }
 
   Expr = RelInfo->createExprForCAPIVariantKind(Expr, SymbolicOp.VariantKind);

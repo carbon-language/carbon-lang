@@ -119,9 +119,9 @@ X86_64MCAsmInfoDarwin::getExprForPersonalitySymbol(const MCSymbol *Sym,
                                                    MCStreamer &Streamer) const {
   MCContext &Context = Streamer.getContext();
   const MCExpr *Res =
-    MCSymbolRefExpr::Create(Sym, MCSymbolRefExpr::VK_GOTPCREL, Context);
-  const MCExpr *Four = MCConstantExpr::Create(4, Context);
-  return MCBinaryExpr::CreateAdd(Res, Four, Context);
+    MCSymbolRefExpr::create(Sym, MCSymbolRefExpr::VK_GOTPCREL, Context);
+  const MCExpr *Four = MCConstantExpr::create(4, Context);
+  return MCBinaryExpr::createAdd(Res, Four, Context);
 }
 
 void X86MCAsmInfoMicrosoft::anchor() { }

@@ -337,7 +337,7 @@ void ARMInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
       // address.
       const MCConstantExpr *Constant = cast<MCConstantExpr>(Expr);
       int64_t TargetAddress;
-      if (!Constant->EvaluateAsAbsolute(TargetAddress)) {
+      if (!Constant->evaluateAsAbsolute(TargetAddress)) {
         O << '#' << *Expr;
       } else {
         O << "0x";

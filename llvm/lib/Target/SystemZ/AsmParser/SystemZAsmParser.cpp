@@ -865,9 +865,9 @@ SystemZAsmParser::parsePCRel(OperandVector &Operands, int64_t MinVal,
     }
     MCSymbol *Sym = Ctx.createTempSymbol();
     Out.EmitLabel(Sym);
-    const MCExpr *Base = MCSymbolRefExpr::Create(Sym, MCSymbolRefExpr::VK_None,
+    const MCExpr *Base = MCSymbolRefExpr::create(Sym, MCSymbolRefExpr::VK_None,
                                                  Ctx);
-    Expr = Value == 0 ? Base : MCBinaryExpr::CreateAdd(Base, Expr, Ctx);
+    Expr = Value == 0 ? Base : MCBinaryExpr::createAdd(Base, Expr, Ctx);
   }
 
   // Optionally match :tls_gdcall: or :tls_ldcall: followed by a TLS symbol.
@@ -904,7 +904,7 @@ SystemZAsmParser::parsePCRel(OperandVector &Operands, int64_t MinVal,
     }
 
     StringRef Identifier = Parser.getTok().getString();
-    Sym = MCSymbolRefExpr::Create(Ctx.getOrCreateSymbol(Identifier),
+    Sym = MCSymbolRefExpr::create(Ctx.getOrCreateSymbol(Identifier),
                                   Kind, Ctx);
     Parser.Lex();
   }

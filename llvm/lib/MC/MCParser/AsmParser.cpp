@@ -789,7 +789,7 @@ bool AsmParser::parsePrimaryExpr(const MCExpr *&Res, SMLoc &EndLoc) {
     Lex(); // Eat the operator.
     if (parsePrimaryExpr(Res, EndLoc))
       return true;
-    Res = MCUnaryExpr::CreateLNot(Res, getContext());
+    Res = MCUnaryExpr::createLNot(Res, getContext());
     return false;
   case AsmToken::Dollar:
   case AsmToken::At:
@@ -803,7 +803,7 @@ bool AsmParser::parsePrimaryExpr(const MCExpr *&Res, SMLoc &EndLoc) {
           // temporary label to the streamer and refer to it.
           MCSymbol *Sym = Ctx.createTempSymbol();
           Out.EmitLabel(Sym);
-          Res = MCSymbolRefExpr::Create(Sym, MCSymbolRefExpr::VK_None,
+          Res = MCSymbolRefExpr::create(Sym, MCSymbolRefExpr::VK_None,
                                         getContext());
           EndLoc = FirstTokenLoc;
           return false;
@@ -871,7 +871,7 @@ bool AsmParser::parsePrimaryExpr(const MCExpr *&Res, SMLoc &EndLoc) {
     }
 
     // Otherwise create a symbol ref.
-    Res = MCSymbolRefExpr::Create(Sym, Variant, getContext());
+    Res = MCSymbolRefExpr::create(Sym, Variant, getContext());
     return false;
   }
   case AsmToken::BigNum:
@@ -879,7 +879,7 @@ bool AsmParser::parsePrimaryExpr(const MCExpr *&Res, SMLoc &EndLoc) {
   case AsmToken::Integer: {
     SMLoc Loc = getTok().getLoc();
     int64_t IntVal = getTok().getIntVal();
-    Res = MCConstantExpr::Create(IntVal, getContext());
+    Res = MCConstantExpr::create(IntVal, getContext());
     EndLoc = Lexer.getTok().getEndLoc();
     Lex(); // Eat token.
     // Look for 'b' or 'f' following an Integer as a directional label
@@ -897,7 +897,7 @@ bool AsmParser::parsePrimaryExpr(const MCExpr *&Res, SMLoc &EndLoc) {
       if (IDVal == "f" || IDVal == "b") {
         MCSymbol *Sym =
             Ctx.getDirectionalLocalSymbol(IntVal, IDVal == "b");
-        Res = MCSymbolRefExpr::Create(Sym, Variant, getContext());
+        Res = MCSymbolRefExpr::create(Sym, Variant, getContext());
         if (IDVal == "b" && Sym->isUndefined())
           return Error(Loc, "invalid reference to undefined symbol");
         EndLoc = Lexer.getTok().getEndLoc();
@@ -909,7 +909,7 @@ bool AsmParser::parsePrimaryExpr(const MCExpr *&Res, SMLoc &EndLoc) {
   case AsmToken::Real: {
     APFloat RealVal(APFloat::IEEEdouble, getTok().getString());
     uint64_t IntVal = RealVal.bitcastToAPInt().getZExtValue();
-    Res = MCConstantExpr::Create(IntVal, getContext());
+    Res = MCConstantExpr::create(IntVal, getContext());
     EndLoc = Lexer.getTok().getEndLoc();
     Lex(); // Eat token.
     return false;
@@ -919,7 +919,7 @@ bool AsmParser::parsePrimaryExpr(const MCExpr *&Res, SMLoc &EndLoc) {
     // temporary label to the streamer and refer to it.
     MCSymbol *Sym = Ctx.createTempSymbol();
     Out.EmitLabel(Sym);
-    Res = MCSymbolRefExpr::Create(Sym, MCSymbolRefExpr::VK_None, getContext());
+    Res = MCSymbolRefExpr::create(Sym, MCSymbolRefExpr::VK_None, getContext());
     EndLoc = Lexer.getTok().getEndLoc();
     Lex(); // Eat identifier.
     return false;
@@ -936,19 +936,19 @@ bool AsmParser::parsePrimaryExpr(const MCExpr *&Res, SMLoc &EndLoc) {
     Lex(); // Eat the operator.
     if (parsePrimaryExpr(Res, EndLoc))
       return true;
-    Res = MCUnaryExpr::CreateMinus(Res, getContext());
+    Res = MCUnaryExpr::createMinus(Res, getContext());
     return false;
   case AsmToken::Plus:
     Lex(); // Eat the operator.
     if (parsePrimaryExpr(Res, EndLoc))
       return true;
-    Res = MCUnaryExpr::CreatePlus(Res, getContext());
+    Res = MCUnaryExpr::createPlus(Res, getContext());
     return false;
   case AsmToken::Tilde:
     Lex(); // Eat the operator.
     if (parsePrimaryExpr(Res, EndLoc))
       return true;
-    Res = MCUnaryExpr::CreateNot(Res, getContext());
+    Res = MCUnaryExpr::createNot(Res, getContext());
     return false;
   }
 }
@@ -981,7 +981,7 @@ AsmParser::applyModifierToExpr(const MCExpr *E,
       return E;
     }
 
-    return MCSymbolRefExpr::Create(&SRE->getSymbol(), Variant, getContext());
+    return MCSymbolRefExpr::create(&SRE->getSymbol(), Variant, getContext());
   }
 
   case MCExpr::Unary: {
@@ -989,7 +989,7 @@ AsmParser::applyModifierToExpr(const MCExpr *E,
     const MCExpr *Sub = applyModifierToExpr(UE->getSubExpr(), Variant);
     if (!Sub)
       return nullptr;
-    return MCUnaryExpr::Create(UE->getOpcode(), Sub, getContext());
+    return MCUnaryExpr::create(UE->getOpcode(), Sub, getContext());
   }
 
   case MCExpr::Binary: {
@@ -1005,7 +1005,7 @@ AsmParser::applyModifierToExpr(const MCExpr *E,
     if (!RHS)
       RHS = BE->getRHS();
 
-    return MCBinaryExpr::Create(BE->getOpcode(), LHS, RHS, getContext());
+    return MCBinaryExpr::create(BE->getOpcode(), LHS, RHS, getContext());
   }
   }
 
@@ -1054,8 +1054,8 @@ bool AsmParser::parseExpression(const MCExpr *&Res, SMLoc &EndLoc) {
 
   // Try to constant fold it up front, if possible.
   int64_t Value;
-  if (Res->EvaluateAsAbsolute(Value))
-    Res = MCConstantExpr::Create(Value, getContext());
+  if (Res->evaluateAsAbsolute(Value))
+    Res = MCConstantExpr::create(Value, getContext());
 
   return false;
 }
@@ -1072,7 +1072,7 @@ bool AsmParser::parseAbsoluteExpression(int64_t &Res) {
   if (parseExpression(Expr))
     return true;
 
-  if (!Expr->EvaluateAsAbsolute(Res))
+  if (!Expr->evaluateAsAbsolute(Res))
     return Error(StartLoc, "expected absolute expression");
 
   return false;
@@ -1183,7 +1183,7 @@ bool AsmParser::parseBinOpRHS(unsigned Precedence, const MCExpr *&Res,
       return true;
 
     // Merge LHS and RHS according to operator.
-    Res = MCBinaryExpr::Create(Kind, Res, RHS, getContext());
+    Res = MCBinaryExpr::create(Kind, Res, RHS, getContext());
   }
 }
 
@@ -4378,7 +4378,7 @@ bool AsmParser::parseDirectiveRept(SMLoc DirectiveLoc, StringRef Dir) {
     return true;
 
   int64_t Count;
-  if (!CountExpr->EvaluateAsAbsolute(Count)) {
+  if (!CountExpr->evaluateAsAbsolute(Count)) {
     eatToEndOfStatement();
     return Error(CountLoc, "unexpected token in '" + Dir + "' directive");
   }

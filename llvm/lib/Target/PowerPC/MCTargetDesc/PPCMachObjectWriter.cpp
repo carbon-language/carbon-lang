@@ -251,7 +251,7 @@ bool PPCMachObjectWriter::RecordScatteredRelocation(
     }
 
     // Is this supposed to follow MCTarget/PPCAsmBackend.cpp:adjustFixupValue()?
-    // see PPCMCExpr::EvaluateAsRelocatableImpl()
+    // see PPCMCExpr::evaluateAsRelocatableImpl()
     uint32_t other_half = 0;
     switch (Type) {
     case MachO::PPC_RELOC_LO16_SECTDIFF:
@@ -344,7 +344,7 @@ void PPCMachObjectWriter::RecordPPCRelocation(
     // Resolve constant variables.
     if (A->isVariable()) {
       int64_t Res;
-      if (A->getVariableValue()->EvaluateAsAbsolute(
+      if (A->getVariableValue()->evaluateAsAbsolute(
               Res, Layout, Writer->getSectionAddressMap())) {
         FixedValue = Res;
         return;

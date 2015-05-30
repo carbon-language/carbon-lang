@@ -31,10 +31,10 @@ static MCOperand GetSymbolRef(const MachineOperand& MO, const MCSymbol* Symbol,
   MCContext &MC = Printer.OutContext;
   const MCExpr *ME;
 
-  ME = MCSymbolRefExpr::Create(Symbol, MCSymbolRefExpr::VK_None, MC);
+  ME = MCSymbolRefExpr::create(Symbol, MCSymbolRefExpr::VK_None, MC);
 
   if (!MO.isJTI() && MO.getOffset())
-    ME = MCBinaryExpr::CreateAdd(ME, MCConstantExpr::Create(MO.getOffset(), MC),
+    ME = MCBinaryExpr::createAdd(ME, MCConstantExpr::create(MO.getOffset(), MC),
                                  MC);
 
   return (MCOperand::createExpr(ME));
@@ -81,7 +81,7 @@ void llvm::HexagonLowerToMC(MachineInstr const* MI, MCInst& MCB,
       break;
     case MachineOperand::MO_MachineBasicBlock:
       MCO = MCOperand::createExpr
-              (MCSymbolRefExpr::Create(MO.getMBB()->getSymbol(),
+              (MCSymbolRefExpr::create(MO.getMBB()->getSymbol(),
                AP.OutContext));
       break;
     case MachineOperand::MO_GlobalAddress:

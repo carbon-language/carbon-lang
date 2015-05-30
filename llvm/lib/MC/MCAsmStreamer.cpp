@@ -643,7 +643,7 @@ void MCAsmStreamer::EmitBytes(StringRef Data) {
 }
 
 void MCAsmStreamer::EmitIntValue(uint64_t Value, unsigned Size) {
-  EmitValue(MCConstantExpr::Create(Value, getContext()), Size);
+  EmitValue(MCConstantExpr::create(Value, getContext()), Size);
 }
 
 void MCAsmStreamer::EmitValueImpl(const MCExpr *Value, unsigned Size,
@@ -662,7 +662,7 @@ void MCAsmStreamer::EmitValueImpl(const MCExpr *Value, unsigned Size,
 
   if (!Directive) {
     int64_t IntValue;
-    if (!Value->EvaluateAsAbsolute(IntValue))
+    if (!Value->evaluateAsAbsolute(IntValue))
       report_fatal_error("Don't know how to emit this value.");
 
     // We couldn't handle the requested integer size so we fallback by breaking
@@ -703,7 +703,7 @@ void MCAsmStreamer::EmitValueImpl(const MCExpr *Value, unsigned Size,
 
 void MCAsmStreamer::EmitULEB128Value(const MCExpr *Value) {
   int64_t IntValue;
-  if (Value->EvaluateAsAbsolute(IntValue)) {
+  if (Value->evaluateAsAbsolute(IntValue)) {
     EmitULEB128IntValue(IntValue);
     return;
   }
@@ -713,7 +713,7 @@ void MCAsmStreamer::EmitULEB128Value(const MCExpr *Value) {
 
 void MCAsmStreamer::EmitSLEB128Value(const MCExpr *Value) {
   int64_t IntValue;
-  if (Value->EvaluateAsAbsolute(IntValue)) {
+  if (Value->evaluateAsAbsolute(IntValue)) {
     EmitSLEB128IntValue(IntValue);
     return;
   }

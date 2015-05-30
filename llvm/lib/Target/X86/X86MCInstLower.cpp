@@ -240,10 +240,10 @@ MCOperand X86MCInstLower::LowerSymbolOperand(const MachineOperand &MO,
 
   case X86II::MO_TLVP:      RefKind = MCSymbolRefExpr::VK_TLVP; break;
   case X86II::MO_TLVP_PIC_BASE:
-    Expr = MCSymbolRefExpr::Create(Sym, MCSymbolRefExpr::VK_TLVP, Ctx);
+    Expr = MCSymbolRefExpr::create(Sym, MCSymbolRefExpr::VK_TLVP, Ctx);
     // Subtract the pic base.
-    Expr = MCBinaryExpr::CreateSub(Expr,
-                                  MCSymbolRefExpr::Create(MF.getPICBaseSymbol(),
+    Expr = MCBinaryExpr::createSub(Expr,
+                                  MCSymbolRefExpr::create(MF.getPICBaseSymbol(),
                                                            Ctx),
                                    Ctx);
     break;
@@ -264,10 +264,10 @@ MCOperand X86MCInstLower::LowerSymbolOperand(const MachineOperand &MO,
   case X86II::MO_PIC_BASE_OFFSET:
   case X86II::MO_DARWIN_NONLAZY_PIC_BASE:
   case X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE:
-    Expr = MCSymbolRefExpr::Create(Sym, Ctx);
+    Expr = MCSymbolRefExpr::create(Sym, Ctx);
     // Subtract the pic base.
-    Expr = MCBinaryExpr::CreateSub(Expr,
-                            MCSymbolRefExpr::Create(MF.getPICBaseSymbol(), Ctx),
+    Expr = MCBinaryExpr::createSub(Expr,
+                            MCSymbolRefExpr::create(MF.getPICBaseSymbol(), Ctx),
                                    Ctx);
     if (MO.isJTI()) {
       assert(MAI.doesSetDirectiveSuppressesReloc());
@@ -277,17 +277,17 @@ MCOperand X86MCInstLower::LowerSymbolOperand(const MachineOperand &MO,
       // section so we are restricting it to jumptable references.
       MCSymbol *Label = Ctx.createTempSymbol();
       AsmPrinter.OutStreamer->EmitAssignment(Label, Expr);
-      Expr = MCSymbolRefExpr::Create(Label, Ctx);
+      Expr = MCSymbolRefExpr::create(Label, Ctx);
     }
     break;
   }
 
   if (!Expr)
-    Expr = MCSymbolRefExpr::Create(Sym, RefKind, Ctx);
+    Expr = MCSymbolRefExpr::create(Sym, RefKind, Ctx);
 
   if (!MO.isJTI() && !MO.isMBB() && MO.getOffset())
-    Expr = MCBinaryExpr::CreateAdd(Expr,
-                                   MCConstantExpr::Create(MO.getOffset(), Ctx),
+    Expr = MCBinaryExpr::createAdd(Expr,
+                                   MCConstantExpr::create(MO.getOffset(), Ctx),
                                    Ctx);
   return MCOperand::createExpr(Expr);
 }
@@ -710,7 +710,7 @@ void X86AsmPrinter::LowerTlsAddr(X86MCInstLower &MCInstLowering,
   }
 
   MCSymbol *sym = MCInstLowering.GetSymbolFromOperand(MI.getOperand(3));
-  const MCSymbolRefExpr *symRef = MCSymbolRefExpr::Create(sym, SRVK, context);
+  const MCSymbolRefExpr *symRef = MCSymbolRefExpr::create(sym, SRVK, context);
 
   MCInst LEA;
   if (is64Bits) {
@@ -749,7 +749,7 @@ void X86AsmPrinter::LowerTlsAddr(X86MCInstLower &MCInstLowering,
   StringRef name = is64Bits ? "__tls_get_addr" : "___tls_get_addr";
   MCSymbol *tlsGetAddr = context.getOrCreateSymbol(name);
   const MCSymbolRefExpr *tlsRef =
-    MCSymbolRefExpr::Create(tlsGetAddr,
+    MCSymbolRefExpr::create(tlsGetAddr,
                             MCSymbolRefExpr::VK_PLT,
                             context);
 
@@ -1071,7 +1071,7 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
     // FIXME: We would like an efficient form for this, so we don't have to do a
     // lot of extra uniquing.
     EmitAndCountInstruction(MCInstBuilder(X86::CALLpcrel32)
-      .addExpr(MCSymbolRefExpr::Create(PICBase, OutContext)));
+      .addExpr(MCSymbolRefExpr::create(PICBase, OutContext)));
 
     // Emit the label.
     OutStreamer->EmitLabel(PICBase);
@@ -1100,12 +1100,12 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
     // Now that we have emitted the label, lower the complex operand expression.
     MCSymbol *OpSym = MCInstLowering.GetSymbolFromOperand(MI->getOperand(2));
 
-    const MCExpr *DotExpr = MCSymbolRefExpr::Create(DotSym, OutContext);
+    const MCExpr *DotExpr = MCSymbolRefExpr::create(DotSym, OutContext);
     const MCExpr *PICBase =
-      MCSymbolRefExpr::Create(MF->getPICBaseSymbol(), OutContext);
-    DotExpr = MCBinaryExpr::CreateSub(DotExpr, PICBase, OutContext);
+      MCSymbolRefExpr::create(MF->getPICBaseSymbol(), OutContext);
+    DotExpr = MCBinaryExpr::createSub(DotExpr, PICBase, OutContext);
 
-    DotExpr = MCBinaryExpr::CreateAdd(MCSymbolRefExpr::Create(OpSym,OutContext),
+    DotExpr = MCBinaryExpr::createAdd(MCSymbolRefExpr::create(OpSym,OutContext),
                                       DotExpr, OutContext);
 
     EmitAndCountInstruction(MCInstBuilder(X86::ADD32ri)

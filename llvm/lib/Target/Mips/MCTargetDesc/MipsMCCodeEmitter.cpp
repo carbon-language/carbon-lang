@@ -467,7 +467,7 @@ getExprOpValue(const MCExpr *Expr, SmallVectorImpl<MCFixup> &Fixups,
                const MCSubtargetInfo &STI) const {
   int64_t Res;
 
-  if (Expr->EvaluateAsAbsolute(Res))
+  if (Expr->evaluateAsAbsolute(Res))
     return Res;
 
   MCExpr::ExprKind Kind = Expr->getKind();

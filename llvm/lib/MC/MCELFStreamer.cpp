@@ -172,7 +172,7 @@ void MCELFStreamer::ChangeSection(MCSection *Section,
 
 void MCELFStreamer::EmitWeakReference(MCSymbol *Alias, const MCSymbol *Symbol) {
   getAssembler().registerSymbol(*Symbol);
-  const MCExpr *Value = MCSymbolRefExpr::Create(
+  const MCExpr *Value = MCSymbolRefExpr::create(
       Symbol, MCSymbolRefExpr::VK_WEAKREF, getContext());
   Alias->setVariableValue(Value);
 }
@@ -333,7 +333,7 @@ void MCELFStreamer::EmitCommonSymbol(MCSymbol *Symbol, uint64_t Size,
     Symbol->setCommon(Size, ByteAlignment);
   }
 
-  Symbol->setSize(MCConstantExpr::Create(Size, getContext()));
+  Symbol->setSize(MCConstantExpr::create(Size, getContext()));
 }
 
 void MCELFStreamer::EmitELFSize(MCSymbol *Symbol, const MCExpr *Value) {

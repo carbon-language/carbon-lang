@@ -1264,7 +1264,7 @@ void AArch64InstPrinter::printAlignedLabel(const MCInst *MI, unsigned OpNum,
   const MCConstantExpr *BranchTarget =
       dyn_cast<MCConstantExpr>(MI->getOperand(OpNum).getExpr());
   int64_t Address;
-  if (BranchTarget && BranchTarget->EvaluateAsAbsolute(Address)) {
+  if (BranchTarget && BranchTarget->evaluateAsAbsolute(Address)) {
     O << "0x";
     O.write_hex(Address);
   } else {

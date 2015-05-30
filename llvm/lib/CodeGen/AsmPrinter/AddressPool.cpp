@@ -38,7 +38,7 @@ void AddressPool::emit(AsmPrinter &Asm, MCSection *AddrSection) {
     Entries[I.second.Number] =
         I.second.TLS
             ? Asm.getObjFileLowering().getDebugThreadLocalSymbol(I.first)
-            : MCSymbolRefExpr::Create(I.first, Asm.OutContext);
+            : MCSymbolRefExpr::create(I.first, Asm.OutContext);
 
   for (const MCExpr *Entry : Entries)
     Asm.OutStreamer->EmitValue(Entry, Asm.getDataLayout().getPointerSize());

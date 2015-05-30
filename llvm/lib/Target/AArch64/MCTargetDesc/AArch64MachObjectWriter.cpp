@@ -300,7 +300,7 @@ void AArch64MachObjectWriter::RecordRelocation(
       // If the evaluation is an absolute value, just use that directly
       // to keep things easy.
       int64_t Res;
-      if (Symbol->getVariableValue()->EvaluateAsAbsolute(
+      if (Symbol->getVariableValue()->evaluateAsAbsolute(
               Res, Layout, Writer->getSectionAddressMap())) {
         FixedValue = Res;
         return;
@@ -309,7 +309,7 @@ void AArch64MachObjectWriter::RecordRelocation(
       // FIXME: Will the Target we already have ever have any data in it
       // we need to preserve and merge with the new Target? How about
       // the FixedValue?
-      if (!Symbol->getVariableValue()->EvaluateAsRelocatable(Target, &Layout,
+      if (!Symbol->getVariableValue()->evaluateAsRelocatable(Target, &Layout,
                                                              &Fixup))
         Asm.getContext().reportFatalError(Fixup.getLoc(),
                                     "unable to resolve variable '" +
@@ -356,7 +356,7 @@ void AArch64MachObjectWriter::RecordRelocation(
       // Resolve constant variables.
       if (Symbol->isVariable()) {
         int64_t Res;
-        if (Symbol->getVariableValue()->EvaluateAsAbsolute(
+        if (Symbol->getVariableValue()->evaluateAsAbsolute(
                 Res, Layout, Writer->getSectionAddressMap())) {
           FixedValue = Res;
           return;

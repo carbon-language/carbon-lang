@@ -16,12 +16,12 @@ using namespace llvm;
 #define DEBUG_TYPE "armmcexpr"
 
 const ARMMCExpr*
-ARMMCExpr::Create(VariantKind Kind, const MCExpr *Expr,
+ARMMCExpr::create(VariantKind Kind, const MCExpr *Expr,
                        MCContext &Ctx) {
   return new (Ctx) ARMMCExpr(Kind, Expr);
 }
 
-void ARMMCExpr::PrintImpl(raw_ostream &OS) const {
+void ARMMCExpr::printImpl(raw_ostream &OS) const {
   switch (Kind) {
   default: llvm_unreachable("Invalid kind!");
   case VK_ARM_HI16: OS << ":upper16:"; break;

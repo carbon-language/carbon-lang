@@ -277,7 +277,7 @@ unsigned HexagonMCCodeEmitter::getExprOpValue(const MCInst &MI,
 {
   int64_t Res;
 
-  if (ME->EvaluateAsAbsolute(Res))
+  if (ME->evaluateAsAbsolute(Res))
     return Res;
 
   MCExpr::ExprKind MK = ME->getKind();

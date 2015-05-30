@@ -1084,7 +1084,7 @@ AMDGPUAsmParser::parseSOppBrTarget(OperandVector &Operands) {
 
     case AsmToken::Identifier:
       Operands.push_back(AMDGPUOperand::CreateExpr(
-          MCSymbolRefExpr::Create(getContext().getOrCreateSymbol(
+          MCSymbolRefExpr::create(getContext().getOrCreateSymbol(
                                   Parser.getTok().getString()), getContext()), S));
       Parser.Lex();
       return MatchOperand_Success;

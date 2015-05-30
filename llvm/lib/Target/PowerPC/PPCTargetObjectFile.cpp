@@ -55,9 +55,9 @@ MCSection *PPC64LinuxTargetObjectFile::SelectSectionForGlobal(
 const MCExpr *PPC64LinuxTargetObjectFile::
 getDebugThreadLocalSymbol(const MCSymbol *Sym) const {
   const MCExpr *Expr =
-    MCSymbolRefExpr::Create(Sym, MCSymbolRefExpr::VK_PPC_DTPREL, getContext());
-  return MCBinaryExpr::CreateAdd(Expr,
-                                 MCConstantExpr::Create(0x8000, getContext()),
+    MCSymbolRefExpr::create(Sym, MCSymbolRefExpr::VK_PPC_DTPREL, getContext());
+  return MCBinaryExpr::createAdd(Expr,
+                                 MCConstantExpr::create(0x8000, getContext()),
                                  getContext());
 }
 

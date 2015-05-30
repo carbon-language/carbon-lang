@@ -26,14 +26,14 @@ using namespace llvm;
 #define DEBUG_TYPE "sparcmcexpr"
 
 const SparcMCExpr*
-SparcMCExpr::Create(VariantKind Kind, const MCExpr *Expr,
+SparcMCExpr::create(VariantKind Kind, const MCExpr *Expr,
                       MCContext &Ctx) {
     return new (Ctx) SparcMCExpr(Kind, Expr);
 }
 
 
 
-void SparcMCExpr::PrintImpl(raw_ostream &OS) const
+void SparcMCExpr::printImpl(raw_ostream &OS) const
 {
 
   bool closeParen = printVariantKind(OS, Kind);
@@ -160,10 +160,10 @@ Sparc::Fixups SparcMCExpr::getFixupKind(SparcMCExpr::VariantKind Kind) {
 }
 
 bool
-SparcMCExpr::EvaluateAsRelocatableImpl(MCValue &Res,
+SparcMCExpr::evaluateAsRelocatableImpl(MCValue &Res,
                                        const MCAsmLayout *Layout,
                                        const MCFixup *Fixup) const {
-  return getSubExpr()->EvaluateAsRelocatable(Res, Layout, Fixup);
+  return getSubExpr()->evaluateAsRelocatable(Res, Layout, Fixup);
 }
 
 static void fixELFSymbolsInTLSFixupsImpl(const MCExpr *Expr, MCAssembler &Asm) {

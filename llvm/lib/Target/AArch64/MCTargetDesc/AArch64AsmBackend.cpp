@@ -496,7 +496,7 @@ void ELFAArch64AsmBackend::processFixupValue(
 // FIXME: Should be replaced with something more principled.
 static bool isByteSwappedFixup(const MCExpr *E) {
   MCValue Val;
-  if (!E->EvaluateAsRelocatable(Val, nullptr, nullptr))
+  if (!E->evaluateAsRelocatable(Val, nullptr, nullptr))
     return false;
 
   if (!Val.getSymA() || Val.getSymA()->getSymbol().isUndefined())

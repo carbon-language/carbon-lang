@@ -254,7 +254,7 @@ const MCExpr *
 TargetLowering::getPICJumpTableRelocBaseExpr(const MachineFunction *MF,
                                              unsigned JTI,MCContext &Ctx) const{
   // The normal PIC reloc base is the label at the start of the jump table.
-  return MCSymbolRefExpr::Create(MF->getJTISymbol(JTI, Ctx), Ctx);
+  return MCSymbolRefExpr::create(MF->getJTISymbol(JTI, Ctx), Ctx);
 }
 
 bool

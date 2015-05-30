@@ -40,7 +40,7 @@ const MCExpr *ConstantPool::addEntry(const MCExpr *Value, MCContext &Context,
   MCSymbol *CPEntryLabel = Context.createTempSymbol();
 
   Entries.push_back(ConstantPoolEntry(CPEntryLabel, Value, Size));
-  return MCSymbolRefExpr::Create(CPEntryLabel, Context);
+  return MCSymbolRefExpr::create(CPEntryLabel, Context);
 }
 
 bool ConstantPool::empty() { return Entries.empty(); }

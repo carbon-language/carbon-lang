@@ -100,7 +100,7 @@ void XCoreAsmPrinter::emitArrayBound(MCSymbol *Sym, const GlobalVariable *GV) {
                           Twine(Sym->getName() + StringRef(".globound")));
     OutStreamer->EmitSymbolAttribute(SymGlob, MCSA_Global);
     OutStreamer->EmitAssignment(SymGlob,
-                                MCConstantExpr::Create(ATy->getNumElements(),
+                                MCConstantExpr::create(ATy->getNumElements(),
                                                        OutContext));
     if (GV->hasWeakLinkage() || GV->hasLinkOnceLinkage() ||
         GV->hasCommonLinkage()) {
@@ -157,7 +157,7 @@ void XCoreAsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
   unsigned Size = TD->getTypeAllocSize(C->getType());
   if (MAI->hasDotTypeDotSizeDirective()) {
     OutStreamer->EmitSymbolAttribute(GVSym, MCSA_ELF_TypeObject);
-    OutStreamer->EmitELFSize(GVSym, MCConstantExpr::Create(Size, OutContext));
+    OutStreamer->EmitELFSize(GVSym, MCConstantExpr::create(Size, OutContext));
   }
   OutStreamer->EmitLabel(GVSym);
   

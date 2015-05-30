@@ -19,12 +19,12 @@ using namespace llvm;
 #define DEBUG_TYPE "ppcmcexpr"
 
 const PPCMCExpr*
-PPCMCExpr::Create(VariantKind Kind, const MCExpr *Expr,
+PPCMCExpr::create(VariantKind Kind, const MCExpr *Expr,
                   bool isDarwin, MCContext &Ctx) {
   return new (Ctx) PPCMCExpr(Kind, Expr, isDarwin);
 }
 
-void PPCMCExpr::PrintImpl(raw_ostream &OS) const {
+void PPCMCExpr::printImpl(raw_ostream &OS) const {
   if (isDarwinSyntax()) {
     switch (Kind) {
     default: llvm_unreachable("Invalid kind!");
@@ -53,21 +53,21 @@ void PPCMCExpr::PrintImpl(raw_ostream &OS) const {
 }
 
 bool
-PPCMCExpr::EvaluateAsConstant(int64_t &Res) const {
+PPCMCExpr::evaluateAsConstant(int64_t &Res) const {
   MCValue Value;
 
-  if (!getSubExpr()->EvaluateAsRelocatable(Value, nullptr, nullptr))
+  if (!getSubExpr()->evaluateAsRelocatable(Value, nullptr, nullptr))
     return false;
 
   if (!Value.isAbsolute())
     return false;
 
-  Res = EvaluateAsInt64(Value.getConstant());
+  Res = evaluateAsInt64(Value.getConstant());
   return true;
 }
 
 int64_t
-PPCMCExpr::EvaluateAsInt64(int64_t Value) const {
+PPCMCExpr::evaluateAsInt64(int64_t Value) const {
   switch (Kind) {
     case VK_PPC_LO:
       return Value & 0xffff;
@@ -90,16 +90,16 @@ PPCMCExpr::EvaluateAsInt64(int64_t Value) const {
 }
 
 bool
-PPCMCExpr::EvaluateAsRelocatableImpl(MCValue &Res,
+PPCMCExpr::evaluateAsRelocatableImpl(MCValue &Res,
                                      const MCAsmLayout *Layout,
                                      const MCFixup *Fixup) const {
   MCValue Value;
 
-  if (!getSubExpr()->EvaluateAsRelocatable(Value, Layout, Fixup))
+  if (!getSubExpr()->evaluateAsRelocatable(Value, Layout, Fixup))
     return false;
 
   if (Value.isAbsolute()) {
-    int64_t Result = EvaluateAsInt64(Value.getConstant());
+    int64_t Result = evaluateAsInt64(Value.getConstant());
     if ((Fixup == nullptr || (unsigned)Fixup->getKind() != PPC::fixup_ppc_half16) &&
         (Result >= 0x8000))
       return false;
@@ -138,7 +138,7 @@ PPCMCExpr::EvaluateAsRelocatableImpl(MCValue &Res,
         Modifier = MCSymbolRefExpr::VK_PPC_HIGHESTA;
         break;
     }
-    Sym = MCSymbolRefExpr::Create(&Sym->getSymbol(), Modifier, Context);
+    Sym = MCSymbolRefExpr::create(&Sym->getSymbol(), Modifier, Context);
     Res = MCValue::get(Sym, Value.getSymB(), Value.getConstant());
   }
 

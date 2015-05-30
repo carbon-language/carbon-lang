@@ -41,7 +41,7 @@ bool MipsMCExpr::isSupportedBinaryExpr(MCSymbolRefExpr::VariantKind VK,
 }
 
 const MipsMCExpr*
-MipsMCExpr::Create(MCSymbolRefExpr::VariantKind VK, const MCExpr *Expr,
+MipsMCExpr::create(MCSymbolRefExpr::VariantKind VK, const MCExpr *Expr,
                    MCContext &Ctx) {
   VariantKind Kind;
   switch (VK) {
@@ -64,7 +64,7 @@ MipsMCExpr::Create(MCSymbolRefExpr::VariantKind VK, const MCExpr *Expr,
   return new (Ctx) MipsMCExpr(Kind, Expr);
 }
 
-void MipsMCExpr::PrintImpl(raw_ostream &OS) const {
+void MipsMCExpr::printImpl(raw_ostream &OS) const {
   switch (Kind) {
   default: llvm_unreachable("Invalid kind!");
   case VK_Mips_LO: OS << "%lo"; break;
@@ -79,10 +79,10 @@ void MipsMCExpr::PrintImpl(raw_ostream &OS) const {
 }
 
 bool
-MipsMCExpr::EvaluateAsRelocatableImpl(MCValue &Res,
+MipsMCExpr::evaluateAsRelocatableImpl(MCValue &Res,
                                       const MCAsmLayout *Layout,
                                       const MCFixup *Fixup) const {
-  return getSubExpr()->EvaluateAsRelocatable(Res, Layout, Fixup);
+  return getSubExpr()->evaluateAsRelocatable(Res, Layout, Fixup);
 }
 
 void MipsMCExpr::visitUsedExpr(MCStreamer &Streamer) const {

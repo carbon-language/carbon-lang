@@ -65,7 +65,7 @@ MCOperand XCoreMCInstLower::LowerSymbolOperand(const MachineOperand &MO,
       llvm_unreachable("<unknown operand type>");
   }
 
-  const MCSymbolRefExpr *MCSym = MCSymbolRefExpr::Create(Symbol, Kind, *Ctx);
+  const MCSymbolRefExpr *MCSym = MCSymbolRefExpr::create(Symbol, Kind, *Ctx);
 
   if (!Offset)
     return MCOperand::createExpr(MCSym);
@@ -73,8 +73,8 @@ MCOperand XCoreMCInstLower::LowerSymbolOperand(const MachineOperand &MO,
   // Assume offset is never negative.
   assert(Offset > 0);
 
-  const MCConstantExpr *OffsetExpr =  MCConstantExpr::Create(Offset, *Ctx);
-  const MCBinaryExpr *Add = MCBinaryExpr::CreateAdd(MCSym, OffsetExpr, *Ctx);
+  const MCConstantExpr *OffsetExpr =  MCConstantExpr::create(Offset, *Ctx);
+  const MCBinaryExpr *Add = MCBinaryExpr::createAdd(MCSym, OffsetExpr, *Ctx);
   return MCOperand::createExpr(Add);
 }
 

@@ -62,11 +62,11 @@ const MCExpr *AArch64MCAsmInfoDarwin::getExprForPersonalitySymbol(
   // version.
   MCContext &Context = Streamer.getContext();
   const MCExpr *Res =
-      MCSymbolRefExpr::Create(Sym, MCSymbolRefExpr::VK_GOT, Context);
+      MCSymbolRefExpr::create(Sym, MCSymbolRefExpr::VK_GOT, Context);
   MCSymbol *PCSym = Context.createTempSymbol();
   Streamer.EmitLabel(PCSym);
-  const MCExpr *PC = MCSymbolRefExpr::Create(PCSym, Context);
-  return MCBinaryExpr::CreateSub(Res, PC, Context);
+  const MCExpr *PC = MCSymbolRefExpr::create(PCSym, Context);
+  return MCBinaryExpr::createSub(Res, PC, Context);
 }
 
 AArch64MCAsmInfoELF::AArch64MCAsmInfoELF(StringRef TT) {

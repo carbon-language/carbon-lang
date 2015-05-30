@@ -171,10 +171,10 @@ static void EmitLabelDiff(MCStreamer &Streamer,
                           unsigned int Size = 4) {
   MCSymbolRefExpr::VariantKind Variant = MCSymbolRefExpr::VK_None;
   MCContext &Context = Streamer.getContext();
-  const MCExpr *FromRef = MCSymbolRefExpr::Create(From, Variant, Context),
-               *ToRef   = MCSymbolRefExpr::Create(To, Variant, Context);
+  const MCExpr *FromRef = MCSymbolRefExpr::create(From, Variant, Context),
+               *ToRef   = MCSymbolRefExpr::create(To, Variant, Context);
   const MCExpr *AddrDelta =
-      MCBinaryExpr::Create(MCBinaryExpr::Sub, ToRef, FromRef, Context);
+      MCBinaryExpr::create(MCBinaryExpr::Sub, ToRef, FromRef, Context);
   Streamer.EmitValue(AddrDelta, Size);
 }
 

@@ -128,12 +128,12 @@ MCAsmInfo::getExprForFDESymbol(const MCSymbol *Sym,
                                unsigned Encoding,
                                MCStreamer &Streamer) const {
   if (!(Encoding & dwarf::DW_EH_PE_pcrel))
-    return MCSymbolRefExpr::Create(Sym, Streamer.getContext());
+    return MCSymbolRefExpr::create(Sym, Streamer.getContext());
 
   MCContext &Context = Streamer.getContext();
-  const MCExpr *Res = MCSymbolRefExpr::Create(Sym, Context);
+  const MCExpr *Res = MCSymbolRefExpr::create(Sym, Context);
   MCSymbol *PCSym = Context.createTempSymbol();
   Streamer.EmitLabel(PCSym);
-  const MCExpr *PC = MCSymbolRefExpr::Create(PCSym, Context);
-  return MCBinaryExpr::CreateSub(Res, PC, Context);
+  const MCExpr *PC = MCSymbolRefExpr::create(PCSym, Context);
+  return MCBinaryExpr::createSub(Res, PC, Context);
 }

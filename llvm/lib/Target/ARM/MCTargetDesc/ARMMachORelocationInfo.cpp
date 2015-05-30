@@ -26,9 +26,9 @@ public:
                                              unsigned VariantKind) override {
     switch(VariantKind) {
     case LLVMDisassembler_VariantKind_ARM_HI16:
-      return ARMMCExpr::CreateUpper16(SubExpr, Ctx);
+      return ARMMCExpr::createUpper16(SubExpr, Ctx);
     case LLVMDisassembler_VariantKind_ARM_LO16:
-      return ARMMCExpr::CreateLower16(SubExpr, Ctx);
+      return ARMMCExpr::createLower16(SubExpr, Ctx);
     default:
       return MCRelocationInfo::createExprForCAPIVariantKind(SubExpr,
                                                             VariantKind);

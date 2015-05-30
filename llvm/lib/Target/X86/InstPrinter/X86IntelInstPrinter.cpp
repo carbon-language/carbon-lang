@@ -131,7 +131,7 @@ void X86IntelInstPrinter::printPCRelImm(const MCInst *MI, unsigned OpNo,
     // that address in hex.
     const MCConstantExpr *BranchTarget = dyn_cast<MCConstantExpr>(Op.getExpr());
     int64_t Address;
-    if (BranchTarget && BranchTarget->EvaluateAsAbsolute(Address)) {
+    if (BranchTarget && BranchTarget->evaluateAsAbsolute(Address)) {
       O << formatHex((uint64_t)Address);
     }
     else {

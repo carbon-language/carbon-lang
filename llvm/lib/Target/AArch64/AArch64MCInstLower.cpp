@@ -69,10 +69,10 @@ MCOperand AArch64MCInstLower::lowerSymbolOperandDarwin(const MachineOperand &MO,
              AArch64II::MO_PAGEOFF)
       RefKind = MCSymbolRefExpr::VK_PAGEOFF;
   }
-  const MCExpr *Expr = MCSymbolRefExpr::Create(Sym, RefKind, Ctx);
+  const MCExpr *Expr = MCSymbolRefExpr::create(Sym, RefKind, Ctx);
   if (!MO.isJTI() && MO.getOffset())
-    Expr = MCBinaryExpr::CreateAdd(
-        Expr, MCConstantExpr::Create(MO.getOffset(), Ctx), Ctx);
+    Expr = MCBinaryExpr::createAdd(
+        Expr, MCConstantExpr::create(MO.getOffset(), Ctx), Ctx);
   return MCOperand::createExpr(Expr);
 }
 
@@ -139,14 +139,14 @@ MCOperand AArch64MCInstLower::lowerSymbolOperandELF(const MachineOperand &MO,
     RefFlags |= AArch64MCExpr::VK_NC;
 
   const MCExpr *Expr =
-      MCSymbolRefExpr::Create(Sym, MCSymbolRefExpr::VK_None, Ctx);
+      MCSymbolRefExpr::create(Sym, MCSymbolRefExpr::VK_None, Ctx);
   if (!MO.isJTI() && MO.getOffset())
-    Expr = MCBinaryExpr::CreateAdd(
-        Expr, MCConstantExpr::Create(MO.getOffset(), Ctx), Ctx);
+    Expr = MCBinaryExpr::createAdd(
+        Expr, MCConstantExpr::create(MO.getOffset(), Ctx), Ctx);
 
   AArch64MCExpr::VariantKind RefKind;
   RefKind = static_cast<AArch64MCExpr::VariantKind>(RefFlags);
-  Expr = AArch64MCExpr::Create(Expr, RefKind, Ctx);
+  Expr = AArch64MCExpr::create(Expr, RefKind, Ctx);
 
   return MCOperand::createExpr(Expr);
 }
@@ -179,7 +179,7 @@ bool AArch64MCInstLower::lowerOperand(const MachineOperand &MO,
     break;
   case MachineOperand::MO_MachineBasicBlock:
     MCOp = MCOperand::createExpr(
-        MCSymbolRefExpr::Create(MO.getMBB()->getSymbol(), Ctx));
+        MCSymbolRefExpr::create(MO.getMBB()->getSymbol(), Ctx));
     break;
   case MachineOperand::MO_GlobalAddress:
     MCOp = LowerSymbolOperand(MO, GetGlobalAddressSymbol(MO));

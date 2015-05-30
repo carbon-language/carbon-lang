@@ -81,7 +81,7 @@ uint64_t MachObjectWriter::getSymbolAddress(const MCSymbol &S,
 
 
     MCValue Target;
-    if (!S.getVariableValue()->EvaluateAsRelocatable(Target, &Layout, nullptr))
+    if (!S.getVariableValue()->evaluateAsRelocatable(Target, &Layout, nullptr))
       report_fatal_error("unable to evaluate offset for variable '" +
                          S.getName() + "'");
 

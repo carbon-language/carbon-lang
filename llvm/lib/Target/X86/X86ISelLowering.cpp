@@ -1842,7 +1842,7 @@ X86TargetLowering::LowerCustomJumpTableEntry(const MachineJumpTableInfo *MJTI,
          Subtarget->isPICStyleGOT());
   // In 32-bit ELF systems, our jump table entries are formed with @GOTOFF
   // entries.
-  return MCSymbolRefExpr::Create(MBB->getSymbol(),
+  return MCSymbolRefExpr::create(MBB->getSymbol(),
                                  MCSymbolRefExpr::VK_GOTOFF, Ctx);
 }
 
@@ -1866,7 +1866,7 @@ getPICJumpTableRelocBaseExpr(const MachineFunction *MF, unsigned JTI,
     return TargetLowering::getPICJumpTableRelocBaseExpr(MF, JTI, Ctx);
 
   // Otherwise, the reference is relative to the PIC base.
-  return MCSymbolRefExpr::Create(MF->getPICBaseSymbol(), Ctx);
+  return MCSymbolRefExpr::create(MF->getPICBaseSymbol(), Ctx);
 }
 
 std::pair<const TargetRegisterClass *, uint8_t>

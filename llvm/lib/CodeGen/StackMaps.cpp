@@ -315,9 +315,9 @@ void StackMaps::recordStackMapOpers(const MachineInstr &MI, uint64_t ID,
 
   // Create an expression to calculate the offset of the callsite from function
   // entry.
-  const MCExpr *CSOffsetExpr = MCBinaryExpr::CreateSub(
-    MCSymbolRefExpr::Create(MILabel, OutContext),
-    MCSymbolRefExpr::Create(AP.CurrentFnSymForSize, OutContext),
+  const MCExpr *CSOffsetExpr = MCBinaryExpr::createSub(
+    MCSymbolRefExpr::create(MILabel, OutContext),
+    MCSymbolRefExpr::create(AP.CurrentFnSymForSize, OutContext),
     OutContext);
 
   CSInfos.emplace_back(CSOffsetExpr, ID, std::move(Locations),

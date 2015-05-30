@@ -64,25 +64,25 @@ void AMDGPUMCInstLower::lower(const MachineInstr *MI, MCInst &OutMI) const {
       MCOp = MCOperand::createReg(MO.getReg());
       break;
     case MachineOperand::MO_MachineBasicBlock:
-      MCOp = MCOperand::createExpr(MCSymbolRefExpr::Create(
+      MCOp = MCOperand::createExpr(MCSymbolRefExpr::create(
                                    MO.getMBB()->getSymbol(), Ctx));
       break;
     case MachineOperand::MO_GlobalAddress: {
       const GlobalValue *GV = MO.getGlobal();
       MCSymbol *Sym = Ctx.getOrCreateSymbol(StringRef(GV->getName()));
-      MCOp = MCOperand::createExpr(MCSymbolRefExpr::Create(Sym, Ctx));
+      MCOp = MCOperand::createExpr(MCSymbolRefExpr::create(Sym, Ctx));
       break;
     }
     case MachineOperand::MO_TargetIndex: {
       assert(MO.getIndex() == AMDGPU::TI_CONSTDATA_START);
       MCSymbol *Sym = Ctx.getOrCreateSymbol(StringRef(END_OF_TEXT_LABEL_NAME));
-      const MCSymbolRefExpr *Expr = MCSymbolRefExpr::Create(Sym, Ctx);
+      const MCSymbolRefExpr *Expr = MCSymbolRefExpr::create(Sym, Ctx);
       MCOp = MCOperand::createExpr(Expr);
       break;
     }
     case MachineOperand::MO_ExternalSymbol: {
       MCSymbol *Sym = Ctx.getOrCreateSymbol(StringRef(MO.getSymbolName()));
-      const MCSymbolRefExpr *Expr = MCSymbolRefExpr::Create(Sym, Ctx);
+      const MCSymbolRefExpr *Expr = MCSymbolRefExpr::create(Sym, Ctx);
       MCOp = MCOperand::createExpr(Expr);
       break;
     }

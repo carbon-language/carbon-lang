@@ -172,7 +172,7 @@ private:
     assert(Sec && "need a section");
     Symbol->setSection(*Sec);
 
-    const MCExpr *Value = MCSymbolRefExpr::Create(Start, getContext());
+    const MCExpr *Value = MCSymbolRefExpr::create(Start, getContext());
     Symbol->setVariableValue(Value);
   }
 

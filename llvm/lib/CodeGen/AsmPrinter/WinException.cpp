@@ -96,7 +96,7 @@ void WinException::beginFunction(const MachineFunction *MF) {
       // Emit a symbol assignment.
       Asm->OutStreamer->EmitAssignment(
           HandlerTypeParentFrameOffset,
-          MCConstantExpr::Create(I->second, Asm->OutContext));
+          MCConstantExpr::create(I->second, Asm->OutContext));
     }
   }
 
@@ -159,8 +159,8 @@ void WinException::endFunction(const MachineFunction *MF) {
 
 const MCExpr *WinException::create32bitRef(const MCSymbol *Value) {
   if (!Value)
-    return MCConstantExpr::Create(0, Asm->OutContext);
-  return MCSymbolRefExpr::Create(Value, useImageRel32
+    return MCConstantExpr::create(0, Asm->OutContext);
+  return MCSymbolRefExpr::create(Value, useImageRel32
                                             ? MCSymbolRefExpr::VK_COFF_IMGREL32
                                             : MCSymbolRefExpr::VK_None,
                                  Asm->OutContext);
@@ -168,7 +168,7 @@ const MCExpr *WinException::create32bitRef(const MCSymbol *Value) {
 
 const MCExpr *WinException::create32bitRef(const GlobalValue *GV) {
   if (!GV)
-    return MCConstantExpr::Create(0, Asm->OutContext);
+    return MCConstantExpr::create(0, Asm->OutContext);
   return create32bitRef(Asm->getSymbol(GV));
 }
 
@@ -255,8 +255,8 @@ void WinException::emitCSpecificHandlerTable() {
     if (CSE.EndLabel) {
       // The interval is half-open, so we have to add one to include the return
       // address of the last invoke in the range.
-      End = MCBinaryExpr::CreateAdd(create32bitRef(CSE.EndLabel),
-                                    MCConstantExpr::Create(1, Asm->OutContext),
+      End = MCBinaryExpr::createAdd(create32bitRef(CSE.EndLabel),
+                                    MCConstantExpr::create(1, Asm->OutContext),
                                     Asm->OutContext);
     } else {
       End = create32bitRef(EHFuncEndSym);
@@ -428,10 +428,10 @@ void WinException::emitCXXFrameHandler3Table(const MachineFunction *MF) {
               Asm->OutContext.getOrCreateFrameAllocSymbol(
                   GlobalValue::getRealLinkageName(ParentF->getName()),
                   HT.CatchObjRecoverIdx);
-          FrameAllocOffsetRef = MCSymbolRefExpr::Create(
+          FrameAllocOffsetRef = MCSymbolRefExpr::create(
               FrameAllocOffset, MCSymbolRefExpr::VK_None, Asm->OutContext);
         } else {
-          FrameAllocOffsetRef = MCConstantExpr::Create(0, Asm->OutContext);
+          FrameAllocOffsetRef = MCConstantExpr::create(0, Asm->OutContext);
         }
 
         OS.EmitIntValue(HT.Adjectives, 4);                    // Adjectives
@@ -443,7 +443,7 @@ void WinException::emitCXXFrameHandler3Table(const MachineFunction *MF) {
           MCSymbol *ParentFrameOffset =
               Asm->OutContext.getOrCreateParentFrameOffsetSymbol(
                   GlobalValue::getRealLinkageName(HT.Handler->getName()));
-          const MCSymbolRefExpr *ParentFrameOffsetRef = MCSymbolRefExpr::Create(
+          const MCSymbolRefExpr *ParentFrameOffsetRef = MCSymbolRefExpr::create(
               ParentFrameOffset, MCSymbolRefExpr::VK_None, Asm->OutContext);
           OS.EmitValue(ParentFrameOffsetRef, 4); // ParentFrameOffset
         }

@@ -168,11 +168,11 @@ bool AArch64ExternalSymbolizer::tryAddingSymbolicOperand(
       MCSymbol *Sym = Ctx.getOrCreateSymbol(Name);
       MCSymbolRefExpr::VariantKind Variant = getVariant(SymbolicOp.VariantKind);
       if (Variant != MCSymbolRefExpr::VK_None)
-        Add = MCSymbolRefExpr::Create(Sym, Variant, Ctx);
+        Add = MCSymbolRefExpr::create(Sym, Variant, Ctx);
       else
-        Add = MCSymbolRefExpr::Create(Sym, Ctx);
+        Add = MCSymbolRefExpr::create(Sym, Ctx);
     } else {
-      Add = MCConstantExpr::Create(SymbolicOp.AddSymbol.Value, Ctx);
+      Add = MCConstantExpr::create(SymbolicOp.AddSymbol.Value, Ctx);
     }
   }
 
@@ -181,37 +181,37 @@ bool AArch64ExternalSymbolizer::tryAddingSymbolicOperand(
     if (SymbolicOp.SubtractSymbol.Name) {
       StringRef Name(SymbolicOp.SubtractSymbol.Name);
       MCSymbol *Sym = Ctx.getOrCreateSymbol(Name);
-      Sub = MCSymbolRefExpr::Create(Sym, Ctx);
+      Sub = MCSymbolRefExpr::create(Sym, Ctx);
     } else {
-      Sub = MCConstantExpr::Create(SymbolicOp.SubtractSymbol.Value, Ctx);
+      Sub = MCConstantExpr::create(SymbolicOp.SubtractSymbol.Value, Ctx);
     }
   }
 
   const MCExpr *Off = nullptr;
   if (SymbolicOp.Value != 0)
-    Off = MCConstantExpr::Create(SymbolicOp.Value, Ctx);
+    Off = MCConstantExpr::create(SymbolicOp.Value, Ctx);
 
   const MCExpr *Expr;
   if (Sub) {
     const MCExpr *LHS;
     if (Add)
-      LHS = MCBinaryExpr::CreateSub(Add, Sub, Ctx);
+      LHS = MCBinaryExpr::createSub(Add, Sub, Ctx);
     else
-      LHS = MCUnaryExpr::CreateMinus(Sub, Ctx);
+      LHS = MCUnaryExpr::createMinus(Sub, Ctx);
     if (Off)
-      Expr = MCBinaryExpr::CreateAdd(LHS, Off, Ctx);
+      Expr = MCBinaryExpr::createAdd(LHS, Off, Ctx);
     else
       Expr = LHS;
   } else if (Add) {
     if (Off)
-      Expr = MCBinaryExpr::CreateAdd(Add, Off, Ctx);
+      Expr = MCBinaryExpr::createAdd(Add, Off, Ctx);
     else
       Expr = Add;
   } else {
     if (Off)
       Expr = Off;
     else
-      Expr = MCConstantExpr::Create(0, Ctx);
+      Expr = MCConstantExpr::create(0, Ctx);
   }
 
   MI.addOperand(MCOperand::createExpr(Expr));

@@ -163,7 +163,7 @@ public:
     MCAssembler &MCA = getStreamer().getAssembler();
 
     int64_t Res;
-    if (!LocalOffset->EvaluateAsAbsolute(Res, MCA))
+    if (!LocalOffset->evaluateAsAbsolute(Res, MCA))
       report_fatal_error(".localentry expression must be absolute.");
 
     unsigned Encoded = ELF::encodePPC64LocalEntryOffset(Res);

@@ -304,7 +304,7 @@ EmitImmediate(const MCOperand &DispOp, SMLoc Loc, unsigned Size,
       EmitConstant(DispOp.getImm()+ImmOffset, Size, CurByte, OS);
       return;
     }
-    Expr = MCConstantExpr::Create(DispOp.getImm(), Ctx);
+    Expr = MCConstantExpr::create(DispOp.getImm(), Ctx);
   } else {
     Expr = DispOp.getExpr();
   }
@@ -351,7 +351,7 @@ EmitImmediate(const MCOperand &DispOp, SMLoc Loc, unsigned Size,
     ImmOffset -= 1;
 
   if (ImmOffset)
-    Expr = MCBinaryExpr::CreateAdd(Expr, MCConstantExpr::Create(ImmOffset, Ctx),
+    Expr = MCBinaryExpr::createAdd(Expr, MCConstantExpr::create(ImmOffset, Ctx),
                                    Ctx);
 
   // Emit a symbolic constant as a fixup and 4 zeros.

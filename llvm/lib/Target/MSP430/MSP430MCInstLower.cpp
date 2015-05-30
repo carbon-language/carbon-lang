@@ -96,7 +96,7 @@ MCOperand MSP430MCInstLower::
 LowerSymbolOperand(const MachineOperand &MO, MCSymbol *Sym) const {
   // FIXME: We would like an efficient form for this, so we don't have to do a
   // lot of extra uniquing.
-  const MCExpr *Expr = MCSymbolRefExpr::Create(Sym, Ctx);
+  const MCExpr *Expr = MCSymbolRefExpr::create(Sym, Ctx);
 
   switch (MO.getTargetFlags()) {
   default: llvm_unreachable("Unknown target flag on GV operand");
@@ -104,8 +104,8 @@ LowerSymbolOperand(const MachineOperand &MO, MCSymbol *Sym) const {
   }
 
   if (!MO.isJTI() && MO.getOffset())
-    Expr = MCBinaryExpr::CreateAdd(Expr,
-                                   MCConstantExpr::Create(MO.getOffset(), Ctx),
+    Expr = MCBinaryExpr::createAdd(Expr,
+                                   MCConstantExpr::create(MO.getOffset(), Ctx),
                                    Ctx);
   return MCOperand::createExpr(Expr);
 }
@@ -130,7 +130,7 @@ void MSP430MCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
       MCOp = MCOperand::createImm(MO.getImm());
       break;
     case MachineOperand::MO_MachineBasicBlock:
-      MCOp = MCOperand::createExpr(MCSymbolRefExpr::Create(
+      MCOp = MCOperand::createExpr(MCSymbolRefExpr::create(
                          MO.getMBB()->getSymbol(), Ctx));
       break;
     case MachineOperand::MO_GlobalAddress:

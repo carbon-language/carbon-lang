@@ -40,11 +40,11 @@ const MCExpr *AArch64_MachoTargetObjectFile::getTTypeGlobalReference(
   if (Encoding & (DW_EH_PE_indirect | DW_EH_PE_pcrel)) {
     const MCSymbol *Sym = TM.getSymbol(GV, Mang);
     const MCExpr *Res =
-        MCSymbolRefExpr::Create(Sym, MCSymbolRefExpr::VK_GOT, getContext());
+        MCSymbolRefExpr::create(Sym, MCSymbolRefExpr::VK_GOT, getContext());
     MCSymbol *PCSym = getContext().createTempSymbol();
     Streamer.EmitLabel(PCSym);
-    const MCExpr *PC = MCSymbolRefExpr::Create(PCSym, getContext());
-    return MCBinaryExpr::CreateSub(Res, PC, getContext());
+    const MCExpr *PC = MCSymbolRefExpr::create(PCSym, getContext());
+    return MCBinaryExpr::createSub(Res, PC, getContext());
   }
 
   return TargetLoweringObjectFileMachO::getTTypeGlobalReference(
@@ -65,9 +65,9 @@ const MCExpr *AArch64_MachoTargetObjectFile::getIndirectSymViaGOTPCRel(
   // On ARM64 Darwin, we can reference symbols with foo@GOT-., which
   // is an indirect pc-relative reference.
   const MCExpr *Res =
-      MCSymbolRefExpr::Create(Sym, MCSymbolRefExpr::VK_GOT, getContext());
+      MCSymbolRefExpr::create(Sym, MCSymbolRefExpr::VK_GOT, getContext());
   MCSymbol *PCSym = getContext().createTempSymbol();
   Streamer.EmitLabel(PCSym);
-  const MCExpr *PC = MCSymbolRefExpr::Create(PCSym, getContext());
-  return MCBinaryExpr::CreateSub(Res, PC, getContext());
+  const MCExpr *PC = MCSymbolRefExpr::create(PCSym, getContext());
+  return MCBinaryExpr::createSub(Res, PC, getContext());
 }

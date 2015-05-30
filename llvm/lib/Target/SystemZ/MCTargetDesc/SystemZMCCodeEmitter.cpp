@@ -217,7 +217,7 @@ SystemZMCCodeEmitter::getPCRelEncoding(const MCInst &MI, unsigned OpNum,
   const MCOperand &MO = MI.getOperand(OpNum);
   const MCExpr *Expr;
   if (MO.isImm())
-    Expr = MCConstantExpr::Create(MO.getImm() + Offset, Ctx);
+    Expr = MCConstantExpr::create(MO.getImm() + Offset, Ctx);
   else {
     Expr = MO.getExpr();
     if (Offset) {
@@ -225,8 +225,8 @@ SystemZMCCodeEmitter::getPCRelEncoding(const MCInst &MI, unsigned OpNum,
       // is relative to the operand field itself, which is Offset bytes
       // into MI.  Add Offset to the relocation value to cancel out
       // this difference.
-      const MCExpr *OffsetExpr = MCConstantExpr::Create(Offset, Ctx);
-      Expr = MCBinaryExpr::CreateAdd(Expr, OffsetExpr, Ctx);
+      const MCExpr *OffsetExpr = MCConstantExpr::create(Offset, Ctx);
+      Expr = MCBinaryExpr::createAdd(Expr, OffsetExpr, Ctx);
     }
   }
   Fixups.push_back(MCFixup::create(Offset, Expr, (MCFixupKind)Kind));

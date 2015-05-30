@@ -50,12 +50,12 @@ const MCExpr *ARMElfTargetObjectFile::getTTypeGlobalReference(
 
   assert(Encoding == DW_EH_PE_absptr && "Can handle absptr encoding only");
 
-  return MCSymbolRefExpr::Create(TM.getSymbol(GV, Mang),
+  return MCSymbolRefExpr::create(TM.getSymbol(GV, Mang),
                                  MCSymbolRefExpr::VK_ARM_TARGET2, getContext());
 }
 
 const MCExpr *ARMElfTargetObjectFile::
 getDebugThreadLocalSymbol(const MCSymbol *Sym) const {
-  return MCSymbolRefExpr::Create(Sym, MCSymbolRefExpr::VK_ARM_TLSLDO,
+  return MCSymbolRefExpr::create(Sym, MCSymbolRefExpr::VK_ARM_TLSLDO,
                                  getContext());
 }

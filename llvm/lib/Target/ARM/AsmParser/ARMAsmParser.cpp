@@ -4252,7 +4252,7 @@ ARMAsmParser::parseSetEndImm(OperandVector &Operands) {
     Error(S, "'be' or 'le' operand expected");
     return MatchOperand_ParseFail;
   }
-  Operands.push_back(ARMOperand::CreateImm(MCConstantExpr::Create(Val,
+  Operands.push_back(ARMOperand::CreateImm(MCConstantExpr::create(Val,
                                                                   getContext()),
                                            S, Tok.getEndLoc()));
   return MatchOperand_Success;
@@ -4656,7 +4656,7 @@ ARMAsmParser::parseAM3Offset(OperandVector &Operands) {
       Val = INT32_MIN;
 
     Operands.push_back(
-      ARMOperand::CreateImm(MCConstantExpr::Create(Val, getContext()), S, E));
+      ARMOperand::CreateImm(MCConstantExpr::create(Val, getContext()), S, E));
 
     return MatchOperand_Success;
   }
@@ -4886,7 +4886,7 @@ bool ARMAsmParser::parseMemory(OperandVector &Operands) {
     // If the constant was #-0, represent it as INT32_MIN.
     int32_t Val = CE->getValue();
     if (isNegative && Val == 0)
-      CE = MCConstantExpr::Create(INT32_MIN, getContext());
+      CE = MCConstantExpr::create(INT32_MIN, getContext());
 
     // Now we should have the closing ']'
     if (Parser.getTok().isNot(AsmToken::RBrac))
@@ -5073,7 +5073,7 @@ ARMAsmParser::parseFPImm(OperandVector &Operands) {
     IntVal ^= (uint64_t)isNegative << 31;
     Parser.Lex(); // Eat the token.
     Operands.push_back(ARMOperand::CreateImm(
-          MCConstantExpr::Create(IntVal, getContext()),
+          MCConstantExpr::create(IntVal, getContext()),
           S, Parser.getTok().getLoc()));
     return MatchOperand_Success;
   }
@@ -5090,7 +5090,7 @@ ARMAsmParser::parseFPImm(OperandVector &Operands) {
     Val = APFloat(RealVal).bitcastToAPInt().getZExtValue();
 
     Operands.push_back(ARMOperand::CreateImm(
-        MCConstantExpr::Create(Val, getContext()), S,
+        MCConstantExpr::create(Val, getContext()), S,
         Parser.getTok().getLoc()));
     return MatchOperand_Success;
   }
@@ -5179,7 +5179,7 @@ bool ARMAsmParser::parseOperand(OperandVector &Operands, StringRef Mnemonic) {
       if (CE) {
         int32_t Val = CE->getValue();
         if (isNegative && Val == 0)
-          ImmVal = MCConstantExpr::Create(INT32_MIN, getContext());
+          ImmVal = MCConstantExpr::create(INT32_MIN, getContext());
       }
       E = SMLoc::getFromPointer(Parser.getTok().getLoc().getPointer() - 1);
       Operands.push_back(ARMOperand::CreateImm(ImmVal, S, E));
@@ -5209,7 +5209,7 @@ bool ARMAsmParser::parseOperand(OperandVector &Operands, StringRef Mnemonic) {
     if (getParser().parseExpression(SubExprVal))
       return true;
 
-    const MCExpr *ExprVal = ARMMCExpr::Create(RefKind, SubExprVal,
+    const MCExpr *ExprVal = ARMMCExpr::create(RefKind, SubExprVal,
                                               getContext());
     E = SMLoc::getFromPointer(Parser.getTok().getLoc().getPointer() - 1);
     Operands.push_back(ARMOperand::CreateImm(ExprVal, S, E));
@@ -5765,7 +5765,7 @@ bool ARMAsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
   // Add the processor imod operand, if necessary.
   if (ProcessorIMod) {
     Operands.push_back(ARMOperand::CreateImm(
-          MCConstantExpr::Create(ProcessorIMod, getContext()),
+          MCConstantExpr::create(ProcessorIMod, getContext()),
                                  NameLoc, NameLoc));
   } else if (Mnemonic == "cps" && isMClass()) {
     return Error(NameLoc, "instruction 'cps' requires effect for M-class");
@@ -6752,13 +6752,13 @@ bool ARMAsmParser::processInstruction(MCInst &Inst,
       MCSymbol *Dot = getContext().createTempSymbol();
       Out.EmitLabel(Dot);
       const MCExpr *OpExpr = Inst.getOperand(2).getExpr();
-      const MCExpr *InstPC = MCSymbolRefExpr::Create(Dot,
+      const MCExpr *InstPC = MCSymbolRefExpr::create(Dot,
                                                      MCSymbolRefExpr::VK_None,
                                                      getContext());
-      const MCExpr *Const8 = MCConstantExpr::Create(8, getContext());
-      const MCExpr *ReadPC = MCBinaryExpr::CreateAdd(InstPC, Const8,
+      const MCExpr *Const8 = MCConstantExpr::create(8, getContext());
+      const MCExpr *ReadPC = MCBinaryExpr::createAdd(InstPC, Const8,
                                                      getContext());
-      const MCExpr *FixupAddr = MCBinaryExpr::CreateAdd(ReadPC, OpExpr,
+      const MCExpr *FixupAddr = MCBinaryExpr::createAdd(ReadPC, OpExpr,
                                                         getContext());
       TmpInst.addOperand(MCOperand::createExpr(FixupAddr));
     }
@@ -9804,7 +9804,7 @@ bool ARMAsmParser::parseDirectiveTLSDescSeq(SMLoc L) {
   }
 
   const MCSymbolRefExpr *SRE =
-    MCSymbolRefExpr::Create(Parser.getTok().getIdentifier(),
+    MCSymbolRefExpr::create(Parser.getTok().getIdentifier(),
                             MCSymbolRefExpr::VK_ARM_TLSDESCSEQ, getContext());
   Lex();
 
@@ -10080,7 +10080,7 @@ unsigned ARMAsmParser::validateTargetOperandClass(MCParsedAsmOperand &AsmOp,
     if (Op.isImm()) {
       const MCExpr *SOExpr = Op.getImm();
       int64_t Value;
-      if (!SOExpr->EvaluateAsAbsolute(Value))
+      if (!SOExpr->evaluateAsAbsolute(Value))
         return Match_Success;
       assert((Value >= INT32_MIN && Value <= UINT32_MAX) &&
              "expression value must be representable in 32 bits");

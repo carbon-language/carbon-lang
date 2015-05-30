@@ -46,7 +46,7 @@ private:
   MCExpr(const MCExpr&) = delete;
   void operator=(const MCExpr&) = delete;
 
-  bool EvaluateAsAbsolute(int64_t &Res, const MCAssembler *Asm,
+  bool evaluateAsAbsolute(int64_t &Res, const MCAssembler *Asm,
                           const MCAsmLayout *Layout,
                           const SectionAddrMap *Addrs) const;
 
@@ -57,7 +57,7 @@ private:
 protected:
   explicit MCExpr(ExprKind Kind) : Kind(Kind) {}
 
-  bool EvaluateAsRelocatableImpl(MCValue &Res, const MCAssembler *Asm,
+  bool evaluateAsRelocatableImpl(MCValue &Res, const MCAssembler *Asm,
                                  const MCAsmLayout *Layout,
                                  const MCFixup *Fixup,
                                  const SectionAddrMap *Addrs, bool InSet) const;
@@ -86,11 +86,11 @@ public:
   /// values. If not given, then only non-symbolic expressions will be
   /// evaluated.
   /// \return - True on success.
-  bool EvaluateAsAbsolute(int64_t &Res, const MCAsmLayout &Layout,
+  bool evaluateAsAbsolute(int64_t &Res, const MCAsmLayout &Layout,
                           const SectionAddrMap &Addrs) const;
-  bool EvaluateAsAbsolute(int64_t &Res) const;
-  bool EvaluateAsAbsolute(int64_t &Res, const MCAssembler &Asm) const;
-  bool EvaluateAsAbsolute(int64_t &Res, const MCAsmLayout &Layout) const;
+  bool evaluateAsAbsolute(int64_t &Res) const;
+  bool evaluateAsAbsolute(int64_t &Res, const MCAssembler &Asm) const;
+  bool evaluateAsAbsolute(int64_t &Res, const MCAsmLayout &Layout) const;
 
   bool evaluateKnownAbsolute(int64_t &Res, const MCAsmLayout &Layout) const;
 
@@ -101,13 +101,13 @@ public:
   /// \param Layout - The assembler layout object to use for evaluating values.
   /// \param Fixup - The Fixup object if available.
   /// \return - True on success.
-  bool EvaluateAsRelocatable(MCValue &Res, const MCAsmLayout *Layout,
+  bool evaluateAsRelocatable(MCValue &Res, const MCAsmLayout *Layout,
                              const MCFixup *Fixup) const;
 
   /// \brief Try to evaluate the expression to the form (a - b + constant) where
   /// neither a nor b are variables.
   ///
-  /// This is a more aggressive variant of EvaluateAsRelocatable. The intended
+  /// This is a more aggressive variant of evaluateAsRelocatable. The intended
   /// use is for when relocations are not available, like the .size directive.
   bool evaluateAsValue(MCValue &Res, const MCAsmLayout &Layout) const;
 
@@ -115,7 +115,7 @@ public:
   /// currently defined as the absolute section for constants, or
   /// otherwise the section associated with the first defined symbol in the
   /// expression.
-  MCSection *FindAssociatedSection() const;
+  MCSection *findAssociatedSection() const;
 
   /// @}
 };
@@ -136,7 +136,7 @@ public:
   /// \name Construction
   /// @{
 
-  static const MCConstantExpr *Create(int64_t Value, MCContext &Ctx);
+  static const MCConstantExpr *create(int64_t Value, MCContext &Ctx);
 
   /// @}
   /// \name Accessors
@@ -312,13 +312,13 @@ public:
   /// \name Construction
   /// @{
 
-  static const MCSymbolRefExpr *Create(const MCSymbol *Symbol, MCContext &Ctx) {
-    return MCSymbolRefExpr::Create(Symbol, VK_None, Ctx);
+  static const MCSymbolRefExpr *create(const MCSymbol *Symbol, MCContext &Ctx) {
+    return MCSymbolRefExpr::create(Symbol, VK_None, Ctx);
   }
 
-  static const MCSymbolRefExpr *Create(const MCSymbol *Symbol, VariantKind Kind,
+  static const MCSymbolRefExpr *create(const MCSymbol *Symbol, VariantKind Kind,
                                        MCContext &Ctx);
-  static const MCSymbolRefExpr *Create(StringRef Name, VariantKind Kind,
+  static const MCSymbolRefExpr *create(StringRef Name, VariantKind Kind,
                                        MCContext &Ctx);
 
   /// @}
@@ -369,19 +369,19 @@ public:
   /// \name Construction
   /// @{
 
-  static const MCUnaryExpr *Create(Opcode Op, const MCExpr *Expr,
+  static const MCUnaryExpr *create(Opcode Op, const MCExpr *Expr,
                                    MCContext &Ctx);
-  static const MCUnaryExpr *CreateLNot(const MCExpr *Expr, MCContext &Ctx) {
-    return Create(LNot, Expr, Ctx);
+  static const MCUnaryExpr *createLNot(const MCExpr *Expr, MCContext &Ctx) {
+    return create(LNot, Expr, Ctx);
   }
-  static const MCUnaryExpr *CreateMinus(const MCExpr *Expr, MCContext &Ctx) {
-    return Create(Minus, Expr, Ctx);
+  static const MCUnaryExpr *createMinus(const MCExpr *Expr, MCContext &Ctx) {
+    return create(Minus, Expr, Ctx);
   }
-  static const MCUnaryExpr *CreateNot(const MCExpr *Expr, MCContext &Ctx) {
-    return Create(Not, Expr, Ctx);
+  static const MCUnaryExpr *createNot(const MCExpr *Expr, MCContext &Ctx) {
+    return create(Not, Expr, Ctx);
   }
-  static const MCUnaryExpr *CreatePlus(const MCExpr *Expr, MCContext &Ctx) {
-    return Create(Plus, Expr, Ctx);
+  static const MCUnaryExpr *createPlus(const MCExpr *Expr, MCContext &Ctx) {
+    return create(Plus, Expr, Ctx);
   }
 
   /// @}
@@ -441,83 +441,83 @@ public:
   /// \name Construction
   /// @{
 
-  static const MCBinaryExpr *Create(Opcode Op, const MCExpr *LHS,
+  static const MCBinaryExpr *create(Opcode Op, const MCExpr *LHS,
                                     const MCExpr *RHS, MCContext &Ctx);
-  static const MCBinaryExpr *CreateAdd(const MCExpr *LHS, const MCExpr *RHS,
+  static const MCBinaryExpr *createAdd(const MCExpr *LHS, const MCExpr *RHS,
                                        MCContext &Ctx) {
-    return Create(Add, LHS, RHS, Ctx);
+    return create(Add, LHS, RHS, Ctx);
   }
-  static const MCBinaryExpr *CreateAnd(const MCExpr *LHS, const MCExpr *RHS,
+  static const MCBinaryExpr *createAnd(const MCExpr *LHS, const MCExpr *RHS,
                                        MCContext &Ctx) {
-    return Create(And, LHS, RHS, Ctx);
+    return create(And, LHS, RHS, Ctx);
   }
-  static const MCBinaryExpr *CreateDiv(const MCExpr *LHS, const MCExpr *RHS,
+  static const MCBinaryExpr *createDiv(const MCExpr *LHS, const MCExpr *RHS,
                                        MCContext &Ctx) {
-    return Create(Div, LHS, RHS, Ctx);
+    return create(Div, LHS, RHS, Ctx);
   }
-  static const MCBinaryExpr *CreateEQ(const MCExpr *LHS, const MCExpr *RHS,
+  static const MCBinaryExpr *createEQ(const MCExpr *LHS, const MCExpr *RHS,
                                       MCContext &Ctx) {
-    return Create(EQ, LHS, RHS, Ctx);
+    return create(EQ, LHS, RHS, Ctx);
   }
-  static const MCBinaryExpr *CreateGT(const MCExpr *LHS, const MCExpr *RHS,
+  static const MCBinaryExpr *createGT(const MCExpr *LHS, const MCExpr *RHS,
                                       MCContext &Ctx) {
-    return Create(GT, LHS, RHS, Ctx);
+    return create(GT, LHS, RHS, Ctx);
   }
-  static const MCBinaryExpr *CreateGTE(const MCExpr *LHS, const MCExpr *RHS,
+  static const MCBinaryExpr *createGTE(const MCExpr *LHS, const MCExpr *RHS,
                                        MCContext &Ctx) {
-    return Create(GTE, LHS, RHS, Ctx);
+    return create(GTE, LHS, RHS, Ctx);
   }
-  static const MCBinaryExpr *CreateLAnd(const MCExpr *LHS, const MCExpr *RHS,
+  static const MCBinaryExpr *createLAnd(const MCExpr *LHS, const MCExpr *RHS,
                                         MCContext &Ctx) {
-    return Create(LAnd, LHS, RHS, Ctx);
+    return create(LAnd, LHS, RHS, Ctx);
   }
-  static const MCBinaryExpr *CreateLOr(const MCExpr *LHS, const MCExpr *RHS,
+  static const MCBinaryExpr *createLOr(const MCExpr *LHS, const MCExpr *RHS,
                                        MCContext &Ctx) {
-    return Create(LOr, LHS, RHS, Ctx);
+    return create(LOr, LHS, RHS, Ctx);
   }
-  static const MCBinaryExpr *CreateLT(const MCExpr *LHS, const MCExpr *RHS,
+  static const MCBinaryExpr *createLT(const MCExpr *LHS, const MCExpr *RHS,
                                       MCContext &Ctx) {
-    return Create(LT, LHS, RHS, Ctx);
+    return create(LT, LHS, RHS, Ctx);
   }
-  static const MCBinaryExpr *CreateLTE(const MCExpr *LHS, const MCExpr *RHS,
+  static const MCBinaryExpr *createLTE(const MCExpr *LHS, const MCExpr *RHS,
                                        MCContext &Ctx) {
-    return Create(LTE, LHS, RHS, Ctx);
+    return create(LTE, LHS, RHS, Ctx);
   }
-  static const MCBinaryExpr *CreateMod(const MCExpr *LHS, const MCExpr *RHS,
+  static const MCBinaryExpr *createMod(const MCExpr *LHS, const MCExpr *RHS,
                                        MCContext &Ctx) {
-    return Create(Mod, LHS, RHS, Ctx);
+    return create(Mod, LHS, RHS, Ctx);
   }
-  static const MCBinaryExpr *CreateMul(const MCExpr *LHS, const MCExpr *RHS,
+  static const MCBinaryExpr *createMul(const MCExpr *LHS, const MCExpr *RHS,
                                        MCContext &Ctx) {
-    return Create(Mul, LHS, RHS, Ctx);
+    return create(Mul, LHS, RHS, Ctx);
   }
-  static const MCBinaryExpr *CreateNE(const MCExpr *LHS, const MCExpr *RHS,
+  static const MCBinaryExpr *createNE(const MCExpr *LHS, const MCExpr *RHS,
                                       MCContext &Ctx) {
-    return Create(NE, LHS, RHS, Ctx);
+    return create(NE, LHS, RHS, Ctx);
   }
-  static const MCBinaryExpr *CreateOr(const MCExpr *LHS, const MCExpr *RHS,
+  static const MCBinaryExpr *createOr(const MCExpr *LHS, const MCExpr *RHS,
                                       MCContext &Ctx) {
-    return Create(Or, LHS, RHS, Ctx);
+    return create(Or, LHS, RHS, Ctx);
   }
-  static const MCBinaryExpr *CreateShl(const MCExpr *LHS, const MCExpr *RHS,
+  static const MCBinaryExpr *createShl(const MCExpr *LHS, const MCExpr *RHS,
                                        MCContext &Ctx) {
-    return Create(Shl, LHS, RHS, Ctx);
+    return create(Shl, LHS, RHS, Ctx);
   }
-  static const MCBinaryExpr *CreateAShr(const MCExpr *LHS, const MCExpr *RHS,
+  static const MCBinaryExpr *createAShr(const MCExpr *LHS, const MCExpr *RHS,
                                        MCContext &Ctx) {
-    return Create(AShr, LHS, RHS, Ctx);
+    return create(AShr, LHS, RHS, Ctx);
   }
-  static const MCBinaryExpr *CreateLShr(const MCExpr *LHS, const MCExpr *RHS,
+  static const MCBinaryExpr *createLShr(const MCExpr *LHS, const MCExpr *RHS,
                                        MCContext &Ctx) {
-    return Create(LShr, LHS, RHS, Ctx);
+    return create(LShr, LHS, RHS, Ctx);
   }
-  static const MCBinaryExpr *CreateSub(const MCExpr *LHS, const MCExpr *RHS,
+  static const MCBinaryExpr *createSub(const MCExpr *LHS, const MCExpr *RHS,
                                        MCContext &Ctx) {
-    return Create(Sub, LHS, RHS, Ctx);
+    return create(Sub, LHS, RHS, Ctx);
   }
-  static const MCBinaryExpr *CreateXor(const MCExpr *LHS, const MCExpr *RHS,
+  static const MCBinaryExpr *createXor(const MCExpr *LHS, const MCExpr *RHS,
                                        MCContext &Ctx) {
-    return Create(Xor, LHS, RHS, Ctx);
+    return create(Xor, LHS, RHS, Ctx);
   }
 
   /// @}
@@ -552,12 +552,12 @@ protected:
   virtual ~MCTargetExpr() {}
 public:
 
-  virtual void PrintImpl(raw_ostream &OS) const = 0;
-  virtual bool EvaluateAsRelocatableImpl(MCValue &Res,
+  virtual void printImpl(raw_ostream &OS) const = 0;
+  virtual bool evaluateAsRelocatableImpl(MCValue &Res,
                                          const MCAsmLayout *Layout,
                                          const MCFixup *Fixup) const = 0;
   virtual void visitUsedExpr(MCStreamer& Streamer) const = 0;
-  virtual MCSection *FindAssociatedSection() const = 0;
+  virtual MCSection *findAssociatedSection() const = 0;
 
   virtual void fixELFSymbolsInTLSFixups(MCAssembler &) const = 0;
 

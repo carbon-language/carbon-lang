@@ -32,9 +32,9 @@ const MCExpr *X86_64MachoTargetObjectFile::getTTypeGlobalReference(
   if ((Encoding & DW_EH_PE_indirect) && (Encoding & DW_EH_PE_pcrel)) {
     const MCSymbol *Sym = TM.getSymbol(GV, Mang);
     const MCExpr *Res =
-      MCSymbolRefExpr::Create(Sym, MCSymbolRefExpr::VK_GOTPCREL, getContext());
-    const MCExpr *Four = MCConstantExpr::Create(4, getContext());
-    return MCBinaryExpr::CreateAdd(Res, Four, getContext());
+      MCSymbolRefExpr::create(Sym, MCSymbolRefExpr::VK_GOTPCREL, getContext());
+    const MCExpr *Four = MCConstantExpr::create(4, getContext());
+    return MCBinaryExpr::createAdd(Res, Four, getContext());
   }
 
   return TargetLoweringObjectFileMachO::getTTypeGlobalReference(
@@ -55,14 +55,14 @@ const MCExpr *X86_64MachoTargetObjectFile::getIndirectSymViaGOTPCRel(
   // foo@GOTPCREL+4+<offset>.
   unsigned FinalOff = Offset+MV.getConstant()+4;
   const MCExpr *Res =
-    MCSymbolRefExpr::Create(Sym, MCSymbolRefExpr::VK_GOTPCREL, getContext());
-  const MCExpr *Off = MCConstantExpr::Create(FinalOff, getContext());
-  return MCBinaryExpr::CreateAdd(Res, Off, getContext());
+    MCSymbolRefExpr::create(Sym, MCSymbolRefExpr::VK_GOTPCREL, getContext());
+  const MCExpr *Off = MCConstantExpr::create(FinalOff, getContext());
+  return MCBinaryExpr::createAdd(Res, Off, getContext());
 }
 
 const MCExpr *X86ELFTargetObjectFile::getDebugThreadLocalSymbol(
     const MCSymbol *Sym) const {
-  return MCSymbolRefExpr::Create(Sym, MCSymbolRefExpr::VK_DTPOFF, getContext());
+  return MCSymbolRefExpr::create(Sym, MCSymbolRefExpr::VK_DTPOFF, getContext());
 }
 
 void
@@ -116,7 +116,7 @@ const MCExpr *X86WindowsTargetObjectFile::getExecutableRelativeSymbol(
   if (GOLHS->isThreadLocal())
     return nullptr;
 
-  return MCSymbolRefExpr::Create(TM.getSymbol(GOLHS, Mang),
+  return MCSymbolRefExpr::create(TM.getSymbol(GOLHS, Mang),
                                  MCSymbolRefExpr::VK_COFF_IMGREL32,
                                  getContext());
 }

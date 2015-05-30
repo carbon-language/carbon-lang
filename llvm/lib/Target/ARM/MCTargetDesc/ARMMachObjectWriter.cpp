@@ -401,7 +401,7 @@ void ARMMachObjectWriter::RecordRelocation(MachObjectWriter *Writer,
     // Resolve constant variables.
     if (A->isVariable()) {
       int64_t Res;
-      if (A->getVariableValue()->EvaluateAsAbsolute(
+      if (A->getVariableValue()->evaluateAsAbsolute(
               Res, Layout, Writer->getSectionAddressMap())) {
         FixedValue = Res;
         return;

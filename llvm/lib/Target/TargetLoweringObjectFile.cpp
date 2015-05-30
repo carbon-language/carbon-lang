@@ -313,7 +313,7 @@ const MCExpr *TargetLoweringObjectFile::getTTypeGlobalReference(
     const TargetMachine &TM, MachineModuleInfo *MMI,
     MCStreamer &Streamer) const {
   const MCSymbolRefExpr *Ref =
-      MCSymbolRefExpr::Create(TM.getSymbol(GV, Mang), getContext());
+      MCSymbolRefExpr::create(TM.getSymbol(GV, Mang), getContext());
 
   return getTTypeReference(Ref, Encoding, Streamer);
 }
@@ -332,8 +332,8 @@ getTTypeReference(const MCSymbolRefExpr *Sym, unsigned Encoding,
     // .-foo addressing.
     MCSymbol *PCSym = getContext().createTempSymbol();
     Streamer.EmitLabel(PCSym);
-    const MCExpr *PC = MCSymbolRefExpr::Create(PCSym, getContext());
-    return MCBinaryExpr::CreateSub(Sym, PC, getContext());
+    const MCExpr *PC = MCSymbolRefExpr::create(PCSym, getContext());
+    return MCBinaryExpr::createSub(Sym, PC, getContext());
   }
   }
 }
@@ -341,7 +341,7 @@ getTTypeReference(const MCSymbolRefExpr *Sym, unsigned Encoding,
 const MCExpr *TargetLoweringObjectFile::getDebugThreadLocalSymbol(const MCSymbol *Sym) const {
   // FIXME: It's not clear what, if any, default this should have - perhaps a
   // null return could mean 'no location' & we should just do that here.
-  return MCSymbolRefExpr::Create(Sym, *Ctx);
+  return MCSymbolRefExpr::create(Sym, *Ctx);
 }
 
 void TargetLoweringObjectFile::getNameWithPrefix(

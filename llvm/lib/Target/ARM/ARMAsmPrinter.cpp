@@ -87,7 +87,7 @@ void ARMAsmPrinter::EmitXXStructor(const Constant *CV) {
   const GlobalValue *GV = dyn_cast<GlobalValue>(CV->stripPointerCasts());
   assert(GV && "C++ constructor pointer was not a GlobalValue!");
 
-  const MCExpr *E = MCSymbolRefExpr::Create(GetARMGVSymbol(GV,
+  const MCExpr *E = MCSymbolRefExpr::create(GetARMGVSymbol(GV,
                                                            ARMII::MO_NO_FLAG),
                                             (Subtarget->isTargetELF()
                                              ? MCSymbolRefExpr::VK_ARM_TARGET1
@@ -467,7 +467,7 @@ emitNonLazySymbolPointer(MCStreamer &OutStreamer, MCSymbol *StubLabel,
     // using NLPs; however, sometimes the types are local to the file.
     // We need to fill in the value for the NLP in those cases.
     OutStreamer.EmitValue(
-        MCSymbolRefExpr::Create(MCSym.getPointer(), OutStreamer.getContext()),
+        MCSymbolRefExpr::create(MCSym.getPointer(), OutStreamer.getContext()),
         4 /*size*/);
 }
 
@@ -895,7 +895,7 @@ EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV) {
 
   // Create an MCSymbol for the reference.
   const MCExpr *Expr =
-    MCSymbolRefExpr::Create(MCSym, getModifierVariantKind(ACPV->getModifier()),
+    MCSymbolRefExpr::create(MCSym, getModifierVariantKind(ACPV->getModifier()),
                             OutContext);
 
   if (ACPV->getPCAdjustment()) {
@@ -903,10 +903,10 @@ EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV) {
                                     getFunctionNumber(),
                                     ACPV->getLabelId(),
                                     OutContext);
-    const MCExpr *PCRelExpr = MCSymbolRefExpr::Create(PCLabel, OutContext);
+    const MCExpr *PCRelExpr = MCSymbolRefExpr::create(PCLabel, OutContext);
     PCRelExpr =
-      MCBinaryExpr::CreateAdd(PCRelExpr,
-                              MCConstantExpr::Create(ACPV->getPCAdjustment(),
+      MCBinaryExpr::createAdd(PCRelExpr,
+                              MCConstantExpr::create(ACPV->getPCAdjustment(),
                                                      OutContext),
                               OutContext);
     if (ACPV->mustAddCurrentAddress()) {
@@ -914,10 +914,10 @@ EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV) {
       // label, so just emit a local label end reference that instead.
       MCSymbol *DotSym = OutContext.createTempSymbol();
       OutStreamer->EmitLabel(DotSym);
-      const MCExpr *DotExpr = MCSymbolRefExpr::Create(DotSym, OutContext);
-      PCRelExpr = MCBinaryExpr::CreateSub(PCRelExpr, DotExpr, OutContext);
+      const MCExpr *DotExpr = MCSymbolRefExpr::create(DotSym, OutContext);
+      PCRelExpr = MCBinaryExpr::createSub(PCRelExpr, DotExpr, OutContext);
     }
-    Expr = MCBinaryExpr::CreateSub(Expr, PCRelExpr, OutContext);
+    Expr = MCBinaryExpr::createSub(Expr, PCRelExpr, OutContext);
   }
   OutStreamer->EmitValue(Expr, Size);
 }
@@ -955,16 +955,16 @@ void ARMAsmPrinter::EmitJumpTable(const MachineInstr *MI) {
     // LJTI_0_0:
     //    .word (LBB0 - LJTI_0_0)
     //    .word (LBB1 - LJTI_0_0)
-    const MCExpr *Expr = MCSymbolRefExpr::Create(MBB->getSymbol(), OutContext);
+    const MCExpr *Expr = MCSymbolRefExpr::create(MBB->getSymbol(), OutContext);
 
     if (TM.getRelocationModel() == Reloc::PIC_)
-      Expr = MCBinaryExpr::CreateSub(Expr, MCSymbolRefExpr::Create(JTISymbol,
+      Expr = MCBinaryExpr::createSub(Expr, MCSymbolRefExpr::create(JTISymbol,
                                                                    OutContext),
                                      OutContext);
     // If we're generating a table of Thumb addresses in static relocation
     // model, we need to add one to keep interworking correctly.
     else if (AFI->isThumbFunction())
-      Expr = MCBinaryExpr::CreateAdd(Expr, MCConstantExpr::Create(1,OutContext),
+      Expr = MCBinaryExpr::createAdd(Expr, MCConstantExpr::create(1,OutContext),
                                      OutContext);
     OutStreamer->EmitValue(Expr, 4);
   }
@@ -998,7 +998,7 @@ void ARMAsmPrinter::EmitJump2Table(const MachineInstr *MI) {
 
   for (unsigned i = 0, e = JTBBs.size(); i != e; ++i) {
     MachineBasicBlock *MBB = JTBBs[i];
-    const MCExpr *MBBSymbolExpr = MCSymbolRefExpr::Create(MBB->getSymbol(),
+    const MCExpr *MBBSymbolExpr = MCSymbolRefExpr::create(MBB->getSymbol(),
                                                           OutContext);
     // If this isn't a TBB or TBH, the entries are direct branch instructions.
     if (OffsetWidth == 4) {
@@ -1018,10 +1018,10 @@ void ARMAsmPrinter::EmitJump2Table(const MachineInstr *MI) {
     //    .byte (LBB0 - LJTI_0_0) / 2
     //    .byte (LBB1 - LJTI_0_0) / 2
     const MCExpr *Expr =
-      MCBinaryExpr::CreateSub(MBBSymbolExpr,
-                              MCSymbolRefExpr::Create(JTISymbol, OutContext),
+      MCBinaryExpr::createSub(MBBSymbolExpr,
+                              MCSymbolRefExpr::create(JTISymbol, OutContext),
                               OutContext);
-    Expr = MCBinaryExpr::CreateDiv(Expr, MCConstantExpr::Create(2, OutContext),
+    Expr = MCBinaryExpr::createDiv(Expr, MCConstantExpr::create(2, OutContext),
                                    OutContext);
     OutStreamer->EmitValue(Expr, OffsetWidth);
   }
@@ -1212,7 +1212,7 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
                   : (MI->getOpcode() == ARM::tLEApcrel ? ARM::tADR
                      : ARM::ADR))
       .addReg(MI->getOperand(0).getReg())
-      .addExpr(MCSymbolRefExpr::Create(CPISymbol, OutContext))
+      .addExpr(MCSymbolRefExpr::create(CPISymbol, OutContext))
       // Add predicate operands.
       .addImm(MI->getOperand(2).getImm())
       .addReg(MI->getOperand(3).getReg()));
@@ -1228,7 +1228,7 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
                   : (MI->getOpcode() == ARM::tLEApcrelJT ? ARM::tADR
                      : ARM::ADR))
       .addReg(MI->getOperand(0).getReg())
-      .addExpr(MCSymbolRefExpr::Create(JTIPICSymbol, OutContext))
+      .addExpr(MCSymbolRefExpr::create(JTIPICSymbol, OutContext))
       // Add predicate operands.
       .addImm(MI->getOperand(2).getImm())
       .addReg(MI->getOperand(3).getReg()));
@@ -1278,7 +1278,7 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     EmitToStreamer(*OutStreamer, MCInstBuilder(ARM::tBL)
         // Predicate comes first here.
         .addImm(ARMCC::AL).addReg(0)
-        .addExpr(MCSymbolRefExpr::Create(TRegSym, OutContext)));
+        .addExpr(MCSymbolRefExpr::create(TRegSym, OutContext)));
     return;
   }
   case ARM::BMOVPCRX_CALL: {
@@ -1315,7 +1315,7 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     const GlobalValue *GV = Op.getGlobal();
     const unsigned TF = Op.getTargetFlags();
     MCSymbol *GVSym = GetARMGVSymbol(GV, TF);
-    const MCExpr *GVSymExpr = MCSymbolRefExpr::Create(GVSym, OutContext);
+    const MCExpr *GVSymExpr = MCSymbolRefExpr::create(GVSym, OutContext);
     EmitToStreamer(*OutStreamer, MCInstBuilder(ARM::Bcc)
       .addExpr(GVSymExpr)
       // Add predicate operands.
@@ -1332,17 +1332,17 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     unsigned TF = MI->getOperand(1).getTargetFlags();
     const GlobalValue *GV = MI->getOperand(1).getGlobal();
     MCSymbol *GVSym = GetARMGVSymbol(GV, TF);
-    const MCExpr *GVSymExpr = MCSymbolRefExpr::Create(GVSym, OutContext);
+    const MCExpr *GVSymExpr = MCSymbolRefExpr::create(GVSym, OutContext);
 
     MCSymbol *LabelSym = getPICLabel(DL->getPrivateGlobalPrefix(),
                                      getFunctionNumber(),
                                      MI->getOperand(2).getImm(), OutContext);
-    const MCExpr *LabelSymExpr= MCSymbolRefExpr::Create(LabelSym, OutContext);
+    const MCExpr *LabelSymExpr= MCSymbolRefExpr::create(LabelSym, OutContext);
     unsigned PCAdj = (Opc == ARM::MOVi16_ga_pcrel) ? 8 : 4;
     const MCExpr *PCRelExpr =
-      ARMMCExpr::CreateLower16(MCBinaryExpr::CreateSub(GVSymExpr,
-                                      MCBinaryExpr::CreateAdd(LabelSymExpr,
-                                      MCConstantExpr::Create(PCAdj, OutContext),
+      ARMMCExpr::createLower16(MCBinaryExpr::createSub(GVSymExpr,
+                                      MCBinaryExpr::createAdd(LabelSymExpr,
+                                      MCConstantExpr::create(PCAdj, OutContext),
                                       OutContext), OutContext), OutContext);
       TmpInst.addOperand(MCOperand::createExpr(PCRelExpr));
 
@@ -1365,17 +1365,17 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     unsigned TF = MI->getOperand(2).getTargetFlags();
     const GlobalValue *GV = MI->getOperand(2).getGlobal();
     MCSymbol *GVSym = GetARMGVSymbol(GV, TF);
-    const MCExpr *GVSymExpr = MCSymbolRefExpr::Create(GVSym, OutContext);
+    const MCExpr *GVSymExpr = MCSymbolRefExpr::create(GVSym, OutContext);
 
     MCSymbol *LabelSym = getPICLabel(DL->getPrivateGlobalPrefix(),
                                      getFunctionNumber(),
                                      MI->getOperand(3).getImm(), OutContext);
-    const MCExpr *LabelSymExpr= MCSymbolRefExpr::Create(LabelSym, OutContext);
+    const MCExpr *LabelSymExpr= MCSymbolRefExpr::create(LabelSym, OutContext);
     unsigned PCAdj = (Opc == ARM::MOVTi16_ga_pcrel) ? 8 : 4;
     const MCExpr *PCRelExpr =
-        ARMMCExpr::CreateUpper16(MCBinaryExpr::CreateSub(GVSymExpr,
-                                   MCBinaryExpr::CreateAdd(LabelSymExpr,
-                                      MCConstantExpr::Create(PCAdj, OutContext),
+        ARMMCExpr::createUpper16(MCBinaryExpr::createSub(GVSymExpr,
+                                   MCBinaryExpr::createAdd(LabelSymExpr,
+                                      MCConstantExpr::create(PCAdj, OutContext),
                                           OutContext), OutContext), OutContext);
       TmpInst.addOperand(MCOperand::createExpr(PCRelExpr));
     // Add predicate operands.
@@ -1695,7 +1695,7 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
       .addImm(ARMCC::AL)
       .addReg(0));
 
-    const MCExpr *SymbolExpr = MCSymbolRefExpr::Create(Label, OutContext);
+    const MCExpr *SymbolExpr = MCSymbolRefExpr::create(Label, OutContext);
     EmitToStreamer(*OutStreamer, MCInstBuilder(ARM::tB)
       .addExpr(SymbolExpr)
       .addImm(ARMCC::AL)

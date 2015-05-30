@@ -525,7 +525,7 @@ void X86AsmPrinter::EmitStartOfAsmFile(Module &M) {
       // register any SEH handlers, so its object files should be safe.
       OutStreamer->EmitSymbolAttribute(S, MCSA_Global);
       OutStreamer->EmitAssignment(
-          S, MCConstantExpr::Create(int64_t(1), MMI->getContext()));
+          S, MCConstantExpr::create(int64_t(1), MMI->getContext()));
     }
   }
 }
@@ -549,7 +549,7 @@ emitNonLazySymbolPointer(MCStreamer &OutStreamer, MCSymbol *StubLabel,
     // using NLPs; however, sometimes the types are local to the file.
     // We need to fill in the value for the NLP in those cases.
     OutStreamer.EmitValue(
-        MCSymbolRefExpr::Create(MCSym.getPointer(), OutStreamer.getContext()),
+        MCSymbolRefExpr::create(MCSym.getPointer(), OutStreamer.getContext()),
         4 /*size*/);
 }
 

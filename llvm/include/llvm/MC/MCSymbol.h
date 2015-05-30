@@ -108,7 +108,7 @@ private: // MCContext creates and uniques these.
   MCSection *getSectionPtr() const {
     if (Section || !Value)
       return Section;
-    return Section = Value->FindAssociatedSection();
+    return Section = Value->findAssociatedSection();
   }
 
 public:
