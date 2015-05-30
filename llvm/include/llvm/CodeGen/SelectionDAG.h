@@ -878,6 +878,10 @@ public:
   /// Return an MDNodeSDNode which holds an MDNode.
   SDValue getMDNode(const MDNode *MD);
 
+  /// Return a bitcast using the SDLoc of the value operand, and casting to the
+  /// provided type. Use getNode to set a custom SDLoc.
+  SDValue getBitcast(EVT VT, SDValue V);
+
   /// Return an AddrSpaceCastSDNode.
   SDValue getAddrSpaceCast(SDLoc dl, EVT VT, SDValue Ptr,
                            unsigned SrcAS, unsigned DestAS);

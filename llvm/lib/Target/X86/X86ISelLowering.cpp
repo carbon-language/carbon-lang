@@ -17515,24 +17515,19 @@ static SDValue LowerVectorCTPOPBitmath(SDValue Op, SDLoc DL,
   SDValue V = Op;
 
   // v = v - ((v >> 1) & 0x55555555...)
-  SDValue Srl = DAG.getNode(
-      ISD::BITCAST, DL, VT,
-      GetShift(ISD::SRL, DAG.getNode(ISD::BITCAST, DL, SrlVT, V), 1));
+  SDValue Srl =
+      DAG.getBitcast(VT, GetShift(ISD::SRL, DAG.getBitcast(SrlVT, V), 1));
   SDValue And = GetMask(Srl, APInt::getSplat(Len, APInt(8, 0x55)));
   V = DAG.getNode(ISD::SUB, DL, VT, V, And);
 
   // v = (v & 0x33333333...) + ((v >> 2) & 0x33333333...)
   SDValue AndLHS = GetMask(V, APInt::getSplat(Len, APInt(8, 0x33)));
-  Srl = DAG.getNode(
-      ISD::BITCAST, DL, VT,
-      GetShift(ISD::SRL, DAG.getNode(ISD::BITCAST, DL, SrlVT, V), 2));
+  Srl = DAG.getBitcast(VT, GetShift(ISD::SRL, DAG.getBitcast(SrlVT, V), 2));
   SDValue AndRHS = GetMask(Srl, APInt::getSplat(Len, APInt(8, 0x33)));
   V = DAG.getNode(ISD::ADD, DL, VT, AndLHS, AndRHS);
 
   // v = (v + (v >> 4)) & 0x0F0F0F0F...
-  Srl = DAG.getNode(
-      ISD::BITCAST, DL, VT,
-      GetShift(ISD::SRL, DAG.getNode(ISD::BITCAST, DL, SrlVT, V), 4));
+  Srl = DAG.getBitcast(VT, GetShift(ISD::SRL, DAG.getBitcast(SrlVT, V), 4));
   SDValue Add = DAG.getNode(ISD::ADD, DL, VT, V, Srl);
   V = GetMask(Add, APInt::getSplat(Len, APInt(8, 0x0F)));
 
@@ -17545,19 +17540,18 @@ static SDValue LowerVectorCTPOPBitmath(SDValue Op, SDLoc DL,
   // using the fastest of the two for each size.
   MVT ByteVT = MVT::getVectorVT(MVT::i8, VecSize / 8);
   MVT ShiftVT = MVT::getVectorVT(MVT::i64, VecSize / 64);
-  V = DAG.getNode(ISD::BITCAST, DL, ByteVT, V);
+  V = DAG.getBitcast(ByteVT, V);
   assert(Len <= 64 && "We don't support element sizes of more than 64 bits!");
   assert(isPowerOf2_32(Len) && "Only power of two element sizes supported!");
   for (int i = Len; i > 8; i /= 2) {
-    SDValue Shl = DAG.getNode(
-        ISD::BITCAST, DL, ByteVT,
-        GetShift(ISD::SHL, DAG.getNode(ISD::BITCAST, DL, ShiftVT, V), i / 2));
+    SDValue Shl = DAG.getBitcast(
+        ByteVT, GetShift(ISD::SHL, DAG.getBitcast(ShiftVT, V), i / 2));
     V = DAG.getNode(ISD::ADD, DL, ByteVT, V, Shl);
   }
 
   // The high byte now contains the sum of the element bytes. Shift it right
   // (if needed) to make it the low byte.
-  V = DAG.getNode(ISD::BITCAST, DL, VT, V);
+  V = DAG.getBitcast(VT, V);
   if (Len > 8)
     V = GetShift(ISD::SRL, V, Len - 8);
 
