@@ -108,23 +108,19 @@ define <16 x i16> @testv16i16(<16 x i16> %in) {
 ; AVX1-NEXT:    vpand %xmm1, %xmm4, %xmm4
 ; AVX1-NEXT:    vpshufb %xmm4, %xmm3, %xmm4
 ; AVX1-NEXT:    vpaddb %xmm2, %xmm4, %xmm2
-; AVX1-NEXT:    vmovdqa {{.*#+}} xmm4 = <1,3,5,7,9,11,13,15,u,u,u,u,u,u,u,u>
-; AVX1-NEXT:    vpshufb %xmm4, %xmm2, %xmm5
-; AVX1-NEXT:    vmovdqa {{.*#+}} xmm6 = <0,2,4,6,8,10,12,14,u,u,u,u,u,u,u,u>
-; AVX1-NEXT:    vpshufb %xmm6, %xmm2, %xmm2
-; AVX1-NEXT:    vpaddb %xmm5, %xmm2, %xmm2
-; AVX1-NEXT:    vpmovzxbw {{.*#+}} xmm2 = xmm2[0],zero,xmm2[1],zero,xmm2[2],zero,xmm2[3],zero,xmm2[4],zero,xmm2[5],zero,xmm2[6],zero,xmm2[7],zero
+; AVX1-NEXT:    vpsllw $8, %xmm2, %xmm4
+; AVX1-NEXT:    vpaddb %xmm2, %xmm4, %xmm2
+; AVX1-NEXT:    vpsrlw $8, %xmm2, %xmm2
 ; AVX1-NEXT:    vextractf128 $1, %ymm0, %xmm0
-; AVX1-NEXT:    vpand %xmm1, %xmm0, %xmm5
-; AVX1-NEXT:    vpshufb %xmm5, %xmm3, %xmm5
+; AVX1-NEXT:    vpand %xmm1, %xmm0, %xmm4
+; AVX1-NEXT:    vpshufb %xmm4, %xmm3, %xmm4
 ; AVX1-NEXT:    vpsrlw $4, %xmm0, %xmm0
 ; AVX1-NEXT:    vpand %xmm1, %xmm0, %xmm0
 ; AVX1-NEXT:    vpshufb %xmm0, %xmm3, %xmm0
-; AVX1-NEXT:    vpaddb %xmm5, %xmm0, %xmm0
-; AVX1-NEXT:    vpshufb %xmm4, %xmm0, %xmm1
-; AVX1-NEXT:    vpshufb %xmm6, %xmm0, %xmm0
-; AVX1-NEXT:    vpaddb %xmm1, %xmm0, %xmm0
-; AVX1-NEXT:    vpmovzxbw {{.*#+}} xmm0 = xmm0[0],zero,xmm0[1],zero,xmm0[2],zero,xmm0[3],zero,xmm0[4],zero,xmm0[5],zero,xmm0[6],zero,xmm0[7],zero
+; AVX1-NEXT:    vpaddb %xmm4, %xmm0, %xmm0
+; AVX1-NEXT:    vpsllw $8, %xmm0, %xmm1
+; AVX1-NEXT:    vpaddb %xmm0, %xmm1, %xmm0
+; AVX1-NEXT:    vpsrlw $8, %xmm0, %xmm0
 ; AVX1-NEXT:    vinsertf128 $1, %xmm0, %ymm2, %ymm0
 ; AVX1-NEXT:    retq
 ;
@@ -138,11 +134,9 @@ define <16 x i16> @testv16i16(<16 x i16> %in) {
 ; AVX2-NEXT:    vpand %ymm1, %ymm0, %ymm0
 ; AVX2-NEXT:    vpshufb %ymm0, %ymm3, %ymm0
 ; AVX2-NEXT:    vpaddb %ymm2, %ymm0, %ymm0
-; AVX2-NEXT:    vpshufb {{.*#+}} ymm1 = ymm0[1,3,5,7,9,11,13,15,u,u,u,u,u,u,u,u,17,19,21,23,25,27,29,31,u,u,u,u,u,u,u,u]
-; AVX2-NEXT:    vpshufb {{.*#+}} ymm0 = ymm0[0,2,4,6,8,10,12,14,u,u,u,u,u,u,u,u,16,18,20,22,24,26,28,30,u,u,u,u,u,u,u,u]
-; AVX2-NEXT:    vpaddb %ymm1, %ymm0, %ymm0
-; AVX2-NEXT:    vpermq {{.*#+}} ymm0 = ymm0[0,2,2,3]
-; AVX2-NEXT:    vpmovzxbw {{.*#+}} ymm0 = xmm0[0],zero,xmm0[1],zero,xmm0[2],zero,xmm0[3],zero,xmm0[4],zero,xmm0[5],zero,xmm0[6],zero,xmm0[7],zero,xmm0[8],zero,xmm0[9],zero,xmm0[10],zero,xmm0[11],zero,xmm0[12],zero,xmm0[13],zero,xmm0[14],zero,xmm0[15],zero
+; AVX2-NEXT:    vpsllw $8, %ymm0, %ymm1
+; AVX2-NEXT:    vpaddb %ymm0, %ymm1, %ymm0
+; AVX2-NEXT:    vpsrlw $8, %ymm0, %ymm0
 ; AVX2-NEXT:    retq
   %out = call <16 x i16> @llvm.ctpop.v16i16(<16 x i16> %in)
   ret <16 x i16> %out

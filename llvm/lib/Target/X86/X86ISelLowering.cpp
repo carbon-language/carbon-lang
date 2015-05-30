@@ -17344,63 +17344,19 @@ static SDValue LowerHorizontalByteSum(SDValue V, MVT VT,
     return DAG.getBitcast(VT, V);
   }
 
-  // To obtain pop count for each i16 element, shuffle the byte pop count to get
-  // even and odd elements into distinct vectors, add them and zero-extend each
-  // i8 elemento into i16, i.e.:
-  //
-  //  B -> pop count per i8
-  //  W -> pop count per i16
-  //
-  //  Y = shuffle B, undef <0, 2, ...>
-  //  Z = shuffle B, undef <1, 3, ...>
-  //  W = zext <... x i8> to <... x i16> (Y + Z)
-  //
-  // Use a byte shuffle mask that matches PSHUFB.
-  //
+  // The only element type left is i16.
   assert(EltVT == MVT::i16 && "Unknown how to handle type");
-  SDValue Undef = DAG.getUNDEF(ByteVecVT);
-  SmallVector<int, 32> MaskA, MaskB;
 
-  // We can't use PSHUFB across lanes, so do the shuffle and sum inside each
-  // 128-bit lane, and then collapse the result.
-  int NumLanes = VecSize / 128;
-  assert(VecSize % 128 == 0 && "Must have 16-byte multiple vectors!");
-  for (int i = 0; i < NumLanes; ++i) {
-    for (int j = 0; j < 8; ++j) {
-      MaskA.push_back(i * 16 + j * 2);
-      MaskB.push_back(i * 16 + (j * 2) + 1);
-    }
-    MaskA.append((size_t)8, -1);
-    MaskB.append((size_t)8, -1);
-  }
-
-  SDValue ShuffA = DAG.getVectorShuffle(ByteVecVT, DL, V, Undef, MaskA);
-  SDValue ShuffB = DAG.getVectorShuffle(ByteVecVT, DL, V, Undef, MaskB);
-  V = DAG.getNode(ISD::ADD, DL, ByteVecVT, ShuffA, ShuffB);
-
-  SmallVector<int, 4> Mask;
-  for (int i = 0; i < NumLanes; ++i)
-    Mask.push_back(2 * i);
-  Mask.append((size_t)NumLanes, -1);
-
-  int NumI64Elts = VecSize / 64;
-  MVT VecI64VT = MVT::getVectorVT(MVT::i64, NumI64Elts);
-
-  V = DAG.getBitcast(VecI64VT, V);
-  V = DAG.getVectorShuffle(VecI64VT, DL, V, DAG.getUNDEF(VecI64VT), Mask);
-  V = DAG.getBitcast(ByteVecVT, V);
-
-  // Zero extend i8s into i16 elts
-  SmallVector<int, 16> ZExtInRegMask;
-  for (int i = 0; i < NumElts; ++i) {
-    ZExtInRegMask.push_back(i);
-    ZExtInRegMask.push_back(2 * NumElts);
-  }
-
-  return DAG.getBitcast(
-      VT, DAG.getVectorShuffle(ByteVecVT, DL, V,
-                               getZeroVector(ByteVecVT, Subtarget, DAG, DL),
-                               ZExtInRegMask));
+  // To obtain pop count for each i16 element starting from the pop count for
+  // i8 elements, shift the i16s left by 8, sum as i8s, and then shift as i16s
+  // right by 8. It is important to shift as i16s as i8 vector shift isn't
+  // directly supported.
+  SmallVector<SDValue, 16> Shifters(NumElts, DAG.getConstant(8, DL, EltVT));
+  SDValue Shifter = DAG.getNode(ISD::BUILD_VECTOR, DL, VT, Shifters);
+  SDValue Shl = DAG.getNode(ISD::SHL, DL, VT, DAG.getBitcast(VT, V), Shifter);
+  V = DAG.getNode(ISD::ADD, DL, ByteVecVT, DAG.getBitcast(ByteVecVT, Shl),
+                  DAG.getBitcast(ByteVecVT, V));
+  return DAG.getNode(ISD::SRL, DL, VT, DAG.getBitcast(VT, V), Shifter);
 }
 
 static SDValue LowerVectorCTPOPInRegLUT(SDValue Op, SDLoc DL,
@@ -17526,28 +17482,12 @@ static SDValue LowerVectorCTPOPBitmath(SDValue Op, SDLoc DL,
   // At this point, V contains the byte-wise population count, and we are
   // merely doing a horizontal sum if necessary to get the wider element
   // counts.
-  //
-  // FIXME: There is a different lowering strategy above for the horizontal sum
-  // of byte-wise population counts. This one and that one should be merged,
-  // using the fastest of the two for each size.
-  MVT ByteVT = MVT::getVectorVT(MVT::i8, VecSize / 8);
-  MVT ShiftVT = MVT::getVectorVT(MVT::i64, VecSize / 64);
-  V = DAG.getBitcast(ByteVT, V);
-  assert(Len <= 64 && "We don't support element sizes of more than 64 bits!");
-  assert(isPowerOf2_32(Len) && "Only power of two element sizes supported!");
-  for (int i = Len; i > 8; i /= 2) {
-    SDValue Shl = DAG.getBitcast(
-        ByteVT, GetShift(ISD::SHL, DAG.getBitcast(ShiftVT, V), i / 2));
-    V = DAG.getNode(ISD::ADD, DL, ByteVT, V, Shl);
-  }
+  if (EltVT == MVT::i8)
+    return V;
 
-  // The high byte now contains the sum of the element bytes. Shift it right
-  // (if needed) to make it the low byte.
-  V = DAG.getBitcast(VT, V);
-  if (Len > 8)
-    V = GetShift(ISD::SRL, V, Len - 8);
-
-  return V;
+  return LowerHorizontalByteSum(
+      DAG.getBitcast(MVT::getVectorVT(MVT::i8, VecSize / 8), V), VT, Subtarget,
+      DAG);
 }
 
 static SDValue LowerVectorCTPOP(SDValue Op, const X86Subtarget *Subtarget,
