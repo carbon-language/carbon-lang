@@ -2064,6 +2064,8 @@ bool ScopInfo::runOnRegion(Region *R, RGPassManager &RGM) {
 
   scop = new Scop(*tempScop, LI, SE, SD, ctx);
 
+  DEBUG(scop->print(dbgs()));
+
   if (!PollyUseRuntimeAliasChecks) {
     // Statistics.
     ++ScopFound;
