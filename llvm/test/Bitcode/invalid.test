@@ -187,3 +187,8 @@ RUN: not llvm-dis -disable-output %p/Inputs/invalid-array-operand-encoding.bc 2>
 RUN:   FileCheck --check-prefix=ARRAY-OP-ENC %s
 
 ARRAY-OP-ENC: Array element type has to be an encoding of a type
+
+RUN: not llvm-dis -disable-output %p/Inputs/invalid-metadata-not-followed-named-node.bc 2>&1 | \
+RUN:   FileCheck --check-prefix=META-NOT-FOLLOWED-BY-NAMED-META %s
+
+META-NOT-FOLLOWED-BY-NAMED-META: METADATA_NAME not followed by METADATA_NAMED_NODE

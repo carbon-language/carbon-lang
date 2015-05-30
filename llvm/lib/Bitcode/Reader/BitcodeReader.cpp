@@ -1634,9 +1634,9 @@ std::error_code BitcodeReader::ParseMetadata() {
       Record.clear();
       Code = Stream.ReadCode();
 
-      // METADATA_NAME is always followed by METADATA_NAMED_NODE.
       unsigned NextBitCode = Stream.readRecord(Code, Record);
-      assert(NextBitCode == bitc::METADATA_NAMED_NODE); (void)NextBitCode;
+      if (NextBitCode != bitc::METADATA_NAMED_NODE)
+        return Error("METADATA_NAME not followed by METADATA_NAMED_NODE");
 
       // Read named metadata elements.
       unsigned Size = Record.size();
