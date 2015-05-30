@@ -1,4 +1,8 @@
 // Test that llvm-readobj dumps DF_XXX and DF_1_XXX flags correctly.
+// The input was generated using the following:
+// $ clang -Wl,-z,origin -Wl,-z,now example.c
+// $ cat example.c
+// int main(void) { return (0); }
 
 RUN: llvm-readobj -dynamic-table %p/Inputs/dtflags.elf-x86-64 | FileCheck %s
 
