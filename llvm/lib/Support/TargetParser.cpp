@@ -106,8 +106,14 @@ struct {
   { "fp",       ARM::AEK_FP },
   { "idiv",     ARM::AEK_HWDIV },
   { "mp",       ARM::AEK_MP },
+  { "simd",     ARM::AEK_SIMD },
   { "sec",      ARM::AEK_SEC },
-  { "virt",     ARM::AEK_VIRT }
+  { "virt",     ARM::AEK_VIRT },
+  { "os",       ARM::AEK_OS },
+  { "iwmmxt",   ARM::AEK_IWMMXT },
+  { "iwmmxt2",  ARM::AEK_IWMMXT2 },
+  { "maverick", ARM::AEK_MAVERICK },
+  { "xscale",   ARM::AEK_XSCALE }
 };
 // List of CPU names and their arches.
 // The same CPU can have multiple arches and can be default on multiple arches.
