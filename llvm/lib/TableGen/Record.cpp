@@ -89,6 +89,9 @@ DagRecTy DagRecTy::Shared;
 void RecTy::anchor() { }
 void RecTy::dump() const { print(errs()); }
 
+void StringRecTy::anchor() { }
+void DagRecTy::anchor() { }
+
 ListRecTy *RecTy::getListTy() {
   if (!ListTy)
     ListTy.reset(new ListRecTy(this));
@@ -98,38 +101,6 @@ ListRecTy *RecTy::getListTy() {
 bool RecTy::baseClassOf(const RecTy *RHS) const {
   assert (RHS && "NULL pointer");
   return Kind == RHS->getRecTyKind();
-}
-
-Init *BitRecTy::convertValue(BitsInit *BI) {
-  if (BI->getNumBits() != 1) return nullptr; // Only accept if just one bit!
-  return BI->getBit(0);
-}
-
-Init *BitRecTy::convertValue(IntInit *II) {
-  int64_t Val = II->getValue();
-  if (Val != 0 && Val != 1) return nullptr;  // Only accept 0 or 1 for a bit!
-
-  return BitInit::get(Val != 0);
-}
-
-Init *BitRecTy::convertValue(TypedInit *TI) {
-  RecTy *Ty = TI->getType();
-  if (isa<BitRecTy>(Ty))
-    return TI;  // Accept variable if it is already of bit type!
-  if (auto *BitsTy = dyn_cast<BitsRecTy>(Ty))
-    // Accept only bits<1> expression.
-    return BitsTy->getNumBits() == 1 ? TI : nullptr;
-  // Ternary !if can be converted to bit, but only if both sides are
-  // convertible to a bit.
-  if (TernOpInit *TOI = dyn_cast<TernOpInit>(TI)) {
-    if (TOI->getOpcode() != TernOpInit::TernaryOp::IF)
-      return nullptr;
-    if (!TOI->getMHS()->convertInitializerTo(BitRecTy::get()) ||
-        !TOI->getRHS()->convertInitializerTo(BitRecTy::get()))
-      return nullptr;
-    return TOI;
-  }
-  return nullptr;
 }
 
 bool BitRecTy::baseClassOf(const RecTy *RHS) const{
@@ -154,92 +125,11 @@ std::string BitsRecTy::getAsString() const {
   return "bits<" + utostr(Size) + ">";
 }
 
-Init *BitsRecTy::convertValue(UnsetInit *UI) {
-  SmallVector<Init *, 16> NewBits(Size);
-
-  for (unsigned i = 0; i != Size; ++i)
-    NewBits[i] = UnsetInit::get();
-
-  return BitsInit::get(NewBits);
-}
-
-Init *BitsRecTy::convertValue(BitInit *BI) {
-  if (Size != 1) return nullptr;  // Can only convert single bit.
-  return BitsInit::get(BI);
-}
-
-/// canFitInBitfield - Return true if the number of bits is large enough to hold
-/// the integer value.
-static bool canFitInBitfield(int64_t Value, unsigned NumBits) {
-  // For example, with NumBits == 4, we permit Values from [-7 .. 15].
-  return (NumBits >= sizeof(Value) * 8) ||
-         (Value >> NumBits == 0) || (Value >> (NumBits-1) == -1);
-}
-
-/// convertValue from Int initializer to bits type: Split the integer up into the
-/// appropriate bits.
-///
-Init *BitsRecTy::convertValue(IntInit *II) {
-  int64_t Value = II->getValue();
-  // Make sure this bitfield is large enough to hold the integer value.
-  if (!canFitInBitfield(Value, Size))
-    return nullptr;
-
-  SmallVector<Init *, 16> NewBits(Size);
-
-  for (unsigned i = 0; i != Size; ++i)
-    NewBits[i] = BitInit::get(Value & (1LL << i));
-
-  return BitsInit::get(NewBits);
-}
-
-Init *BitsRecTy::convertValue(BitsInit *BI) {
-  // If the number of bits is right, return it.  Otherwise we need to expand or
-  // truncate.
-  if (BI->getNumBits() == Size) return BI;
-  return nullptr;
-}
-
-Init *BitsRecTy::convertValue(TypedInit *TI) {
-  if (Size == 1 && isa<BitRecTy>(TI->getType()))
-    return BitsInit::get(TI);
-
-  if (TI->getType()->typeIsConvertibleTo(this)) {
-    SmallVector<Init *, 16> NewBits(Size);
-
-    for (unsigned i = 0; i != Size; ++i)
-      NewBits[i] = VarBitInit::get(TI, i);
-    return BitsInit::get(NewBits);
-  }
-
-  return nullptr;
-}
-
 bool BitsRecTy::baseClassOf(const RecTy *RHS) const{
   if (RecTy::baseClassOf(RHS)) //argument and the receiver are the same type
     return cast<BitsRecTy>(RHS)->Size == Size;
   RecTyKind kind = RHS->getRecTyKind();
   return (kind == BitRecTyKind && Size == 1) || (kind == IntRecTyKind);
-}
-
-Init *IntRecTy::convertValue(BitInit *BI) {
-  return IntInit::get(BI->getValue());
-}
-
-Init *IntRecTy::convertValue(BitsInit *BI) {
-  int64_t Result = 0;
-  for (unsigned i = 0, e = BI->getNumBits(); i != e; ++i)
-    if (BitInit *Bit = dyn_cast<BitInit>(BI->getBit(i)))
-      Result |= static_cast<int64_t>(Bit->getValue()) << i;
-    else
-      return nullptr;
-  return IntInit::get(Result);
-}
-
-Init *IntRecTy::convertValue(TypedInit *TI) {
-  if (TI->getType()->typeIsConvertibleTo(this))
-    return TI;  // Accept variable if already of the right type!
-  return nullptr;
 }
 
 bool IntRecTy::baseClassOf(const RecTy *RHS) const{
@@ -248,39 +138,8 @@ bool IntRecTy::baseClassOf(const RecTy *RHS) const{
 }
 
 
-Init *StringRecTy::convertValue(TypedInit *TI) {
-  if (isa<StringRecTy>(TI->getType()))
-    return TI;  // Accept variable if already of the right type!
-  return nullptr;
-}
-
 std::string ListRecTy::getAsString() const {
   return "list<" + Ty->getAsString() + ">";
-}
-
-Init *ListRecTy::convertValue(ListInit *LI) {
-  std::vector<Init*> Elements;
-
-  // Verify that all of the elements of the list are subclasses of the
-  // appropriate class!
-  for (unsigned i = 0, e = LI->getSize(); i != e; ++i)
-    if (Init *CI = LI->getElement(i)->convertInitializerTo(Ty))
-      Elements.push_back(CI);
-    else
-      return nullptr;
-
-  if (!isa<ListRecTy>(LI->getType()))
-    return nullptr;
-
-  return ListInit::get(Elements, this);
-}
-
-Init *ListRecTy::convertValue(TypedInit *TI) {
-  // Ensure that TI is compatible with our class.
-  if (ListRecTy *LRT = dyn_cast<ListRecTy>(TI->getType()))
-    if (LRT->getElementType()->typeIsConvertibleTo(getElementType()))
-      return TI;
-  return nullptr;
 }
 
 bool ListRecTy::baseClassOf(const RecTy *RHS) const{
@@ -289,34 +148,12 @@ bool ListRecTy::baseClassOf(const RecTy *RHS) const{
   return false;
 }
 
-Init *DagRecTy::convertValue(TypedInit *TI) {
-  if (TI->getType()->typeIsConvertibleTo(this))
-    return TI;
-  return nullptr;
-}
-
 RecordRecTy *RecordRecTy::get(Record *R) {
   return dyn_cast<RecordRecTy>(R->getDefInit()->getType());
 }
 
 std::string RecordRecTy::getAsString() const {
   return Rec->getName();
-}
-
-Init *RecordRecTy::convertValue(DefInit *DI) {
-  // Ensure that DI is a subclass of Rec.
-  if (!DI->getDef()->isSubClassOf(Rec))
-    return nullptr;
-  return DI;
-}
-
-Init *RecordRecTy::convertValue(TypedInit *TI) {
-  // Ensure that TI is compatible with Rec.
-  if (RecordRecTy *RRT = dyn_cast<RecordRecTy>(TI->getType()))
-    if (RRT->getRecord()->isSubClassOf(getRecord()) ||
-        RRT->getRecord() == getRecord())
-      return TI;
-  return nullptr;
 }
 
 bool RecordRecTy::baseClassOf(const RecTy *RHS) const{
@@ -374,20 +211,46 @@ RecTy *llvm::resolveTypes(RecTy *T1, RecTy *T2) {
 void Init::anchor() { }
 void Init::dump() const { return print(errs()); }
 
-void UnsetInit::anchor() { }
-
 UnsetInit *UnsetInit::get() {
   static UnsetInit TheInit;
   return &TheInit;
 }
 
-void BitInit::anchor() { }
+Init *UnsetInit::convertInitializerTo(RecTy *Ty) const {
+  if (auto *BRT = dyn_cast<BitsRecTy>(Ty)) {
+    SmallVector<Init *, 16> NewBits(BRT->getNumBits());
+
+    for (unsigned i = 0; i != BRT->getNumBits(); ++i)
+      NewBits[i] = UnsetInit::get();
+
+    return BitsInit::get(NewBits);
+  }
+
+  // All other types can just be returned.
+  return const_cast<UnsetInit *>(this);
+}
 
 BitInit *BitInit::get(bool V) {
   static BitInit True(true);
   static BitInit False(false);
 
   return V ? &True : &False;
+}
+
+Init *BitInit::convertInitializerTo(RecTy *Ty) const {
+  if (isa<BitRecTy>(Ty))
+    return const_cast<BitInit *>(this);
+
+  if (isa<IntRecTy>(Ty))
+    return IntInit::get(getValue());
+
+  if (auto *BRT = dyn_cast<BitsRecTy>(Ty)) {
+    // Can only convert single bit.
+    if (BRT->getNumBits() == 1)
+      return BitsInit::get(const_cast<BitInit *>(this));
+  }
+
+  return nullptr;
 }
 
 static void
@@ -417,6 +280,32 @@ BitsInit *BitsInit::get(ArrayRef<Init *> Range) {
 
 void BitsInit::Profile(FoldingSetNodeID &ID) const {
   ProfileBitsInit(ID, Bits);
+}
+
+Init *BitsInit::convertInitializerTo(RecTy *Ty) const {
+  if (isa<BitRecTy>(Ty)) {
+    if (getNumBits() != 1) return nullptr; // Only accept if just one bit!
+    return getBit(0);
+  }
+
+  if (auto *BRT = dyn_cast<BitsRecTy>(Ty)) {
+    // If the number of bits is right, return it.  Otherwise we need to expand
+    // or truncate.
+    if (getNumBits() != BRT->getNumBits()) return nullptr;
+    return const_cast<BitsInit *>(this);
+  }
+
+  if (isa<IntRecTy>(Ty)) {
+    int64_t Result = 0;
+    for (unsigned i = 0, e = getNumBits(); i != e; ++i)
+      if (auto *Bit = dyn_cast<BitInit>(getBit(i)))
+        Result |= static_cast<int64_t>(Bit->getValue()) << i;
+      else
+        return nullptr;
+    return IntInit::get(Result);
+  }
+
+  return nullptr;
 }
 
 Init *
@@ -512,6 +401,40 @@ std::string IntInit::getAsString() const {
   return itostr(Value);
 }
 
+/// canFitInBitfield - Return true if the number of bits is large enough to hold
+/// the integer value.
+static bool canFitInBitfield(int64_t Value, unsigned NumBits) {
+  // For example, with NumBits == 4, we permit Values from [-7 .. 15].
+  return (NumBits >= sizeof(Value) * 8) ||
+         (Value >> NumBits == 0) || (Value >> (NumBits-1) == -1);
+}
+
+Init *IntInit::convertInitializerTo(RecTy *Ty) const {
+  if (isa<IntRecTy>(Ty))
+    return const_cast<IntInit *>(this);
+
+  if (isa<BitRecTy>(Ty)) {
+    int64_t Val = getValue();
+    if (Val != 0 && Val != 1) return nullptr;  // Only accept 0 or 1 for a bit!
+    return BitInit::get(Val != 0);
+  }
+
+  if (auto *BRT = dyn_cast<BitsRecTy>(Ty)) {
+    int64_t Value = getValue();
+    // Make sure this bitfield is large enough to hold the integer value.
+    if (!canFitInBitfield(Value, BRT->getNumBits()))
+      return nullptr;
+
+    SmallVector<Init *, 16> NewBits(BRT->getNumBits());
+    for (unsigned i = 0; i != BRT->getNumBits(); ++i)
+      NewBits[i] = BitInit::get(Value & (1LL << i));
+
+    return BitsInit::get(NewBits);
+  }
+
+  return nullptr;
+}
+
 Init *
 IntInit::convertInitializerBitRange(const std::vector<unsigned> &Bits) const {
   SmallVector<Init *, 16> NewBits(Bits.size());
@@ -525,14 +448,19 @@ IntInit::convertInitializerBitRange(const std::vector<unsigned> &Bits) const {
   return BitsInit::get(NewBits);
 }
 
-void StringInit::anchor() { }
-
 StringInit *StringInit::get(StringRef V) {
   static StringMap<std::unique_ptr<StringInit>> ThePool;
 
   std::unique_ptr<StringInit> &I = ThePool[V];
   if (!I) I.reset(new StringInit(V));
   return I.get();
+}
+
+Init *StringInit::convertInitializerTo(RecTy *Ty) const {
+  if (isa<StringRecTy>(Ty))
+    return const_cast<StringInit *>(this);
+
+  return nullptr;
 }
 
 static void ProfileListInit(FoldingSetNodeID &ID,
@@ -566,6 +494,25 @@ void ListInit::Profile(FoldingSetNodeID &ID) const {
   RecTy *EltTy = cast<ListRecTy>(getType())->getElementType();
 
   ProfileListInit(ID, Values, EltTy);
+}
+
+Init *ListInit::convertInitializerTo(RecTy *Ty) const {
+  if (auto *LRT = dyn_cast<ListRecTy>(Ty)) {
+    std::vector<Init*> Elements;
+
+    // Verify that all of the elements of the list are subclasses of the
+    // appropriate class!
+    for (unsigned i = 0, e = getSize(); i != e; ++i)
+      if (Init *CI = getElement(i)->convertInitializerTo(LRT->getElementType()))
+        Elements.push_back(CI);
+      else
+        return nullptr;
+
+    if (isa<ListRecTy>(getType()))
+      return ListInit::get(Elements, Ty);
+  }
+
+  return nullptr;
 }
 
 Init *
@@ -1148,6 +1095,82 @@ RecTy *TypedInit::getFieldType(const std::string &FieldName) const {
 }
 
 Init *
+TypedInit::convertInitializerTo(RecTy *Ty) const {
+  if (isa<IntRecTy>(Ty)) {
+    if (getType()->typeIsConvertibleTo(Ty))
+      return const_cast<TypedInit *>(this);
+    return nullptr;
+  }
+
+  if (isa<StringRecTy>(Ty)) {
+    if (isa<StringRecTy>(getType()))
+      return const_cast<TypedInit *>(this);
+    return nullptr;
+  }
+
+  if (isa<BitRecTy>(Ty)) {
+    // Accept variable if it is already of bit type!
+    if (isa<BitRecTy>(getType()))
+      return const_cast<TypedInit *>(this);
+    if (auto *BitsTy = dyn_cast<BitsRecTy>(getType())) {
+      // Accept only bits<1> expression.
+      if (BitsTy->getNumBits() == 1)
+        return const_cast<TypedInit *>(this);
+      return nullptr;
+    }
+    // Ternary !if can be converted to bit, but only if both sides are
+    // convertible to a bit.
+    if (const auto *TOI = dyn_cast<TernOpInit>(this)) {
+      if (TOI->getOpcode() == TernOpInit::TernaryOp::IF &&
+          TOI->getMHS()->convertInitializerTo(BitRecTy::get()) &&
+          TOI->getRHS()->convertInitializerTo(BitRecTy::get()))
+        return const_cast<TypedInit *>(this);
+      return nullptr;
+    }
+    return nullptr;
+  }
+
+  if (auto *BRT = dyn_cast<BitsRecTy>(Ty)) {
+    if (BRT->getNumBits() == 1 && isa<BitRecTy>(getType()))
+      return BitsInit::get(const_cast<TypedInit *>(this));
+
+    if (getType()->typeIsConvertibleTo(BRT)) {
+      SmallVector<Init *, 16> NewBits(BRT->getNumBits());
+
+      for (unsigned i = 0; i != BRT->getNumBits(); ++i)
+        NewBits[i] = VarBitInit::get(const_cast<TypedInit *>(this), i);
+      return BitsInit::get(NewBits);
+    }
+
+    return nullptr;
+  }
+
+  if (auto *DLRT = dyn_cast<ListRecTy>(Ty)) {
+    if (auto *SLRT = dyn_cast<ListRecTy>(getType()))
+      if (SLRT->getElementType()->typeIsConvertibleTo(DLRT->getElementType()))
+        return const_cast<TypedInit *>(this);
+    return nullptr;
+  }
+
+  if (auto *DRT = dyn_cast<DagRecTy>(Ty)) {
+    if (getType()->typeIsConvertibleTo(DRT))
+      return const_cast<TypedInit *>(this);
+    return nullptr;
+  }
+
+  if (auto *SRRT = dyn_cast<RecordRecTy>(Ty)) {
+    // Ensure that this is compatible with Rec.
+    if (RecordRecTy *DRRT = dyn_cast<RecordRecTy>(getType()))
+      if (DRRT->getRecord()->isSubClassOf(SRRT->getRecord()) ||
+          DRRT->getRecord() == SRRT->getRecord())
+        return const_cast<TypedInit *>(this);
+    return nullptr;
+  }
+
+  return nullptr;
+}
+
+Init *
 TypedInit::convertInitializerBitRange(const std::vector<unsigned> &Bits) const {
   BitsRecTy *T = dyn_cast<BitsRecTy>(getType());
   if (!T) return nullptr;  // Cannot subscript a non-bits variable.
@@ -1276,6 +1299,13 @@ VarBitInit *VarBitInit::get(TypedInit *T, unsigned B) {
   return I.get();
 }
 
+Init *VarBitInit::convertInitializerTo(RecTy *Ty) const {
+  if (isa<BitRecTy>(Ty))
+    return const_cast<VarBitInit *>(this);
+
+  return nullptr;
+}
+
 std::string VarBitInit::getAsString() const {
   return TI->getAsString() + "{" + utostr(Bit) + "}";
 }
@@ -1335,6 +1365,13 @@ Init *VarListElementInit:: resolveListElementReference(Record &R,
 
 DefInit *DefInit::get(Record *R) {
   return R->getDefInit();
+}
+
+Init *DefInit::convertInitializerTo(RecTy *Ty) const {
+  if (auto *RRT = dyn_cast<RecordRecTy>(Ty))
+    if (getDef()->isSubClassOf(RRT->getRecord()))
+      return const_cast<DefInit *>(this);
+  return nullptr;
 }
 
 RecTy *DefInit::getFieldType(const std::string &FieldName) const {
@@ -1453,6 +1490,13 @@ void DagInit::Profile(FoldingSetNodeID &ID) const {
   ProfileDagInit(ID, Val, ValName, Args, ArgNames);
 }
 
+Init *DagInit::convertInitializerTo(RecTy *Ty) const {
+  if (isa<DagRecTy>(Ty))
+    return const_cast<DagInit *>(this);
+
+  return nullptr;
+}
+
 Init *DagInit::resolveReferences(Record &R, const RecordVal *RV) const {
   std::vector<Init*> NewArgs;
   for (unsigned i = 0, e = Args.size(); i != e; ++i)
@@ -1489,13 +1533,13 @@ std::string DagInit::getAsString() const {
 
 RecordVal::RecordVal(Init *N, RecTy *T, unsigned P)
   : Name(N), Ty(T), Prefix(P) {
-  Value = Ty->convertValue(UnsetInit::get());
+  Value = UnsetInit::get()->convertInitializerTo(Ty);
   assert(Value && "Cannot create unset value for current type!");
 }
 
 RecordVal::RecordVal(const std::string &N, RecTy *T, unsigned P)
   : Name(StringInit::get(N)), Ty(T), Prefix(P) {
-  Value = Ty->convertValue(UnsetInit::get());
+  Value = UnsetInit::get()->convertInitializerTo(Ty);
   assert(Value && "Cannot create unset value for current type!");
 }
 

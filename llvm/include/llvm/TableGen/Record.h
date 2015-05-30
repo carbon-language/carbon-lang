@@ -100,25 +100,6 @@ public:
   /// getListTy - Returns the type representing list<this>.
   ListRecTy *getListTy();
 
-public:   // These methods should only be called from subclasses of Init
-  virtual Init *convertValue( UnsetInit *UI) { return nullptr; }
-  virtual Init *convertValue(   BitInit *BI) { return nullptr; }
-  virtual Init *convertValue(  BitsInit *BI) { return nullptr; }
-  virtual Init *convertValue(   IntInit *II) { return nullptr; }
-  virtual Init *convertValue(StringInit *SI) { return nullptr; }
-  virtual Init *convertValue(  ListInit *LI) { return nullptr; }
-  virtual Init *convertValue(VarBitInit *VB) { return nullptr; }
-  virtual Init *convertValue(   DefInit *DI) { return nullptr; }
-  virtual Init *convertValue(   DagInit *DI) { return nullptr; }
-  virtual Init *convertValue( TypedInit *TI) { return nullptr; }
-  virtual Init *convertValue(   VarInit *VI) {
-    return convertValue((TypedInit*)VI);
-  }
-  virtual Init *convertValue( FieldInit *FI) {
-    return convertValue((TypedInit*)FI);
-  }
-
-public:
   virtual bool baseClassOf(const RecTy*) const;
 };
 
@@ -139,14 +120,6 @@ public:
   }
 
   static BitRecTy *get() { return &Shared; }
-
-  using RecTy::convertValue;
-  Init *convertValue( UnsetInit *UI) override { return (Init*)UI; }
-  Init *convertValue(   BitInit *BI) override { return (Init*)BI; }
-  Init *convertValue(  BitsInit *BI) override;
-  Init *convertValue(   IntInit *II) override;
-  Init *convertValue(VarBitInit *VB) override { return (Init*)VB; }
-  Init *convertValue( TypedInit *TI) override;
 
   std::string getAsString() const override { return "bit"; }
 
@@ -171,13 +144,6 @@ public:
 
   unsigned getNumBits() const { return Size; }
 
-  using RecTy::convertValue;
-  Init *convertValue( UnsetInit *UI) override;
-  Init *convertValue(   BitInit *UI) override;
-  Init *convertValue(  BitsInit *BI) override;
-  Init *convertValue(   IntInit *II) override;
-  Init *convertValue( TypedInit *TI) override;
-
   std::string getAsString() const override;
 
   bool typeIsConvertibleTo(const RecTy *RHS) const override {
@@ -199,13 +165,6 @@ public:
 
   static IntRecTy *get() { return &Shared; }
 
-  using RecTy::convertValue;
-  Init *convertValue( UnsetInit *UI) override { return (Init*)UI; }
-  Init *convertValue(   BitInit *BI) override;
-  Init *convertValue(  BitsInit *BI) override;
-  Init *convertValue(   IntInit *II) override { return (Init*)II; }
-  Init *convertValue( TypedInit *TI) override;
-
   std::string getAsString() const override { return "int"; }
 
   bool typeIsConvertibleTo(const RecTy *RHS) const override {
@@ -221,17 +180,13 @@ class StringRecTy : public RecTy {
   static StringRecTy Shared;
   StringRecTy() : RecTy(StringRecTyKind) {}
 
+  void anchor() override;
 public:
   static bool classof(const RecTy *RT) {
     return RT->getRecTyKind() == StringRecTyKind;
   }
 
   static StringRecTy *get() { return &Shared; }
-
-  using RecTy::convertValue;
-  Init *convertValue( UnsetInit *UI) override { return (Init*)UI; }
-  Init *convertValue(StringInit *SI) override { return (Init*)SI; }
-  Init *convertValue( TypedInit *TI) override;
 
   std::string getAsString() const override { return "string"; }
 
@@ -256,11 +211,6 @@ public:
   static ListRecTy *get(RecTy *T) { return T->getListTy(); }
   RecTy *getElementType() const { return Ty; }
 
-  using RecTy::convertValue;
-  Init *convertValue( UnsetInit *UI) override { return (Init*)UI; }
-  Init *convertValue(  ListInit *LI) override;
-  Init *convertValue( TypedInit *TI) override;
-
   std::string getAsString() const override;
 
   bool typeIsConvertibleTo(const RecTy *RHS) const override {
@@ -276,17 +226,13 @@ class DagRecTy : public RecTy {
   static DagRecTy Shared;
   DagRecTy() : RecTy(DagRecTyKind) {}
 
+  void anchor() override;
 public:
   static bool classof(const RecTy *RT) {
     return RT->getRecTyKind() == DagRecTyKind;
   }
 
   static DagRecTy *get() { return &Shared; }
-
-  using RecTy::convertValue;
-  Init *convertValue( UnsetInit *UI) override { return (Init*)UI; }
-  Init *convertValue(   DagInit *DI) override { return (Init*)DI; }
-  Init *convertValue( TypedInit *TI) override;
 
   std::string getAsString() const override { return "dag"; }
 
@@ -311,11 +257,6 @@ public:
   static RecordRecTy *get(Record *R);
 
   Record *getRecord() const { return Rec; }
-
-  using RecTy::convertValue;
-  Init *convertValue( UnsetInit *UI) override { return (Init*)UI; }
-  Init *convertValue(   DefInit *DI) override;
-  Init *convertValue( TypedInit *TI) override;
 
   std::string getAsString() const override;
 
@@ -405,10 +346,8 @@ public:
   /// invokes print on stderr.
   void dump() const;
 
-  /// convertInitializerTo - This virtual function is a simple call-back
-  /// function that should be overridden to call the appropriate
-  /// RecTy::convertValue method.
-  ///
+  /// convertInitializerTo - This virtual function converts to the appropriate
+  /// Init based on the passed in type.
   virtual Init *convertInitializerTo(RecTy *Ty) const = 0;
 
   /// convertInitializerBitRange - This method is used to implement the bitrange
@@ -498,6 +437,8 @@ public:
   }
   RecTy *getType() const { return Ty; }
 
+  Init *convertInitializerTo(RecTy *Ty) const override;
+
   Init *
   convertInitializerBitRange(const std::vector<unsigned> &Bits) const override;
   Init *
@@ -522,7 +463,6 @@ class UnsetInit : public Init {
   UnsetInit() : Init(IK_UnsetInit) {}
   UnsetInit(const UnsetInit &) = delete;
   UnsetInit &operator=(const UnsetInit &Other) = delete;
-  void anchor() override;
 
 public:
   static bool classof(const Init *I) {
@@ -530,9 +470,7 @@ public:
   }
   static UnsetInit *get();
 
-  Init *convertInitializerTo(RecTy *Ty) const override {
-    return Ty->convertValue(const_cast<UnsetInit *>(this));
-  }
+  Init *convertInitializerTo(RecTy *Ty) const override;
 
   Init *getBit(unsigned Bit) const override {
     return const_cast<UnsetInit*>(this);
@@ -550,7 +488,6 @@ class BitInit : public Init {
   explicit BitInit(bool V) : Init(IK_BitInit), Value(V) {}
   BitInit(const BitInit &Other) = delete;
   BitInit &operator=(BitInit &Other) = delete;
-  void anchor() override;
 
 public:
   static bool classof(const Init *I) {
@@ -560,9 +497,7 @@ public:
 
   bool getValue() const { return Value; }
 
-  Init *convertInitializerTo(RecTy *Ty) const override {
-    return Ty->convertValue(const_cast<BitInit *>(this));
-  }
+  Init *convertInitializerTo(RecTy *Ty) const override;
 
   Init *getBit(unsigned Bit) const override {
     assert(Bit < 1 && "Bit index out of range!");
@@ -595,9 +530,7 @@ public:
 
   unsigned getNumBits() const { return Bits.size(); }
 
-  Init *convertInitializerTo(RecTy *Ty) const override {
-    return Ty->convertValue(const_cast<BitsInit *>(this));
-  }
+  Init *convertInitializerTo(RecTy *Ty) const override;
   Init *
   convertInitializerBitRange(const std::vector<unsigned> &Bits) const override;
 
@@ -648,9 +581,7 @@ public:
 
   int64_t getValue() const { return Value; }
 
-  Init *convertInitializerTo(RecTy *Ty) const override {
-    return Ty->convertValue(const_cast<IntInit *>(this));
-  }
+  Init *convertInitializerTo(RecTy *Ty) const override;
   Init *
   convertInitializerBitRange(const std::vector<unsigned> &Bits) const override;
 
@@ -679,7 +610,6 @@ class StringInit : public TypedInit {
 
   StringInit(const StringInit &Other) = delete;
   StringInit &operator=(const StringInit &Other) = delete;
-  void anchor() override;
 
 public:
   static bool classof(const Init *I) {
@@ -689,9 +619,7 @@ public:
 
   const std::string &getValue() const { return Value; }
 
-  Init *convertInitializerTo(RecTy *Ty) const override {
-    return Ty->convertValue(const_cast<StringInit *>(this));
-  }
+  Init *convertInitializerTo(RecTy *Ty) const override;
 
   std::string getAsString() const override { return "\"" + Value + "\""; }
   std::string getAsUnquotedString() const override { return Value; }
@@ -744,9 +672,7 @@ public:
   Init *
     convertInitListSlice(const std::vector<unsigned> &Elements) const override;
 
-  Init *convertInitializerTo(RecTy *Ty) const override {
-    return Ty->convertValue(const_cast<ListInit *>(this));
-  }
+  Init *convertInitializerTo(RecTy *Ty) const override;
 
   /// resolveReferences - This method is used by classes that refer to other
   /// variables which may not be defined at the time they expression is formed.
@@ -798,10 +724,6 @@ public:
   // Fold - If possible, fold this to a simpler init.  Return this if not
   // possible to fold.
   virtual Init *Fold(Record *CurRec, MultiClass *CurMultiClass) const = 0;
-
-  Init *convertInitializerTo(RecTy *Ty) const override {
-    return Ty->convertValue(const_cast<OpInit *>(this));
-  }
 
   Init *resolveListElementReference(Record &R, const RecordVal *RV,
                                     unsigned Elt) const override;
@@ -991,10 +913,6 @@ public:
   static VarInit *get(const std::string &VN, RecTy *T);
   static VarInit *get(Init *VN, RecTy *T);
 
-  Init *convertInitializerTo(RecTy *Ty) const override {
-    return Ty->convertValue(const_cast<VarInit *>(this));
-  }
-
   const std::string &getName() const;
   Init *getNameInit() const { return VarName; }
   std::string getNameInitAsString() const {
@@ -1043,9 +961,7 @@ public:
   }
   static VarBitInit *get(TypedInit *T, unsigned B);
 
-  Init *convertInitializerTo(RecTy *Ty) const override {
-    return Ty->convertValue(const_cast<VarBitInit *>(this));
-  }
+  Init *convertInitializerTo(RecTy *Ty) const override;
 
   Init *getBitVar() const override { return TI; }
   unsigned getBitNum() const override { return Bit; }
@@ -1082,10 +998,6 @@ public:
   }
   static VarListElementInit *get(TypedInit *T, unsigned E);
 
-  Init *convertInitializerTo(RecTy *Ty) const override {
-    return Ty->convertValue(const_cast<VarListElementInit *>(this));
-  }
-
   TypedInit *getVariable() const { return TI; }
   unsigned getElementNum() const { return Element; }
 
@@ -1118,9 +1030,7 @@ public:
   }
   static DefInit *get(Record*);
 
-  Init *convertInitializerTo(RecTy *Ty) const override {
-    return Ty->convertValue(const_cast<DefInit *>(this));
-  }
+  Init *convertInitializerTo(RecTy *Ty) const override;
 
   Record *getDef() const { return Def; }
 
@@ -1165,10 +1075,6 @@ public:
   }
   static FieldInit *get(Init *R, const std::string &FN);
   static FieldInit *get(Init *R, const Init *FN);
-
-  Init *convertInitializerTo(RecTy *Ty) const override {
-    return Ty->convertValue(const_cast<FieldInit *>(this));
-  }
 
   Init *getBit(unsigned Bit) const override;
 
@@ -1215,9 +1121,7 @@ public:
 
   void Profile(FoldingSetNodeID &ID) const;
 
-  Init *convertInitializerTo(RecTy *Ty) const override {
-    return Ty->convertValue(const_cast<DagInit *>(this));
-  }
+  Init *convertInitializerTo(RecTy *Ty) const override;
 
   Init *getOperator() const { return Val; }
 
