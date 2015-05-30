@@ -895,13 +895,11 @@ void MCAssembler::Finish() {
 bool MCAssembler::fixupNeedsRelaxation(const MCFixup &Fixup,
                                        const MCRelaxableFragment *DF,
                                        const MCAsmLayout &Layout) const {
-  // If we cannot resolve the fixup value, it requires relaxation.
   MCValue Target;
   uint64_t Value;
-  if (!evaluateFixup(Layout, Fixup, DF, Target, Value))
-    return true;
-
-  return getBackend().fixupNeedsRelaxation(Fixup, Value, DF, Layout);
+  bool Resolved = evaluateFixup(Layout, Fixup, DF, Target, Value);
+  return getBackend().fixupNeedsRelaxationAdvanced(Fixup, Resolved, Value, DF,
+                                                   Layout);
 }
 
 bool MCAssembler::fragmentNeedsRelaxation(const MCRelaxableFragment *F,
