@@ -289,7 +289,9 @@ void Fuzzer::MutateAndTestOne(Unit *U) {
     size_t Size = U->size();
     U->resize(Options.MaxLen);
     size_t NewSize = USF.Mutate(U->data(), Size, U->size());
-    assert(NewSize > 0 && NewSize <= (size_t)Options.MaxLen);
+    assert(NewSize > 0 && "Mutator returned empty unit");
+    assert(NewSize <= (size_t)Options.MaxLen &&
+           "Mutator return overisized unit");
     U->resize(NewSize);
     RunOneAndUpdateCorpus(*U);
     size_t NumTraceBasedMutations = StopTraceRecording();
@@ -317,7 +319,9 @@ void Fuzzer::Loop(size_t NumIterations) {
           size_t NewSize = USF.CrossOver(
               Corpus[J1].data(), Corpus[J1].size(), Corpus[J2].data(),
               Corpus[J2].size(), CurrentUnit.data(), CurrentUnit.size());
-          assert(NewSize > 0 && NewSize <= (size_t)Options.MaxLen);
+          assert(NewSize > 0 && "CrossOver returned empty unit");
+          assert(NewSize <= (size_t)Options.MaxLen &&
+                 "CrossOver return overisized unit");
           CurrentUnit.resize(NewSize);
           MutateAndTestOne(&CurrentUnit);
         }

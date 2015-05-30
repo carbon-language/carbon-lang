@@ -69,12 +69,12 @@ class UserSuppliedFuzzer {
   /// Executes the target function on 'Size' bytes of 'Data'.
   virtual void TargetFunction(const uint8_t *Data, size_t Size) = 0;
   /// Mutates 'Size' bytes of data in 'Data' inplace into up to 'MaxSize' bytes,
-  /// returns the new size of the data.
+  /// returns the new size of the data, which should be positive.
   virtual size_t Mutate(uint8_t *Data, size_t Size, size_t MaxSize) {
     return BasicMutate(Data, Size, MaxSize);
   }
   /// Crosses 'Data1' and 'Data2', writes up to 'MaxOutSize' bytes into Out,
-  /// returns the number of bytes written.
+  /// returns the number of bytes written, which should be positive.
   virtual size_t CrossOver(const uint8_t *Data1, size_t Size1,
                            const uint8_t *Data2, size_t Size2,
                            uint8_t *Out, size_t MaxOutSize) {
