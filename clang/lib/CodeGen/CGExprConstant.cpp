@@ -1349,8 +1349,14 @@ static llvm::Constant *EmitNullConstant(CodeGenModule &CGM,
     }
 
     // For unions, stop after the first named field.
-    if (record->isUnion() && Field->getDeclName())
-      break;
+    if (record->isUnion()) {
+      if (Field->getIdentifier())
+        break;
+      if (const auto *FieldRD =
+              dyn_cast_or_null<RecordDecl>(Field->getType()->getAsTagDecl()))
+        if (FieldRD->findFirstNamedDataMember())
+          break;
+    }
   }
 
   // Fill in the virtual bases, if we're working with the complete object.

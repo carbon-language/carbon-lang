@@ -285,4 +285,14 @@ S s;
 // CHECK-GLOBAL: @_ZN19FlexibleArrayMember1sE = global %"struct.FlexibleArrayMember::S" zeroinitializer, align 8
 }
 
+namespace IndirectPDM {
+union U {
+  union {
+    int U::*m;
+  };
+};
+U u;
+// CHECK-GLOBAL: @_ZN11IndirectPDM1uE = global %"union.IndirectPDM::U" { %union.anon { i64 -1 } }, align 8
+}
+
 // CHECK-O3: attributes [[NUW]] = { nounwind readnone{{.*}} }
