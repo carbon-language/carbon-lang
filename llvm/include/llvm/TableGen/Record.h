@@ -81,7 +81,6 @@ public:
 private:
   RecTyKind Kind;
   std::unique_ptr<ListRecTy> ListTy;
-  virtual void anchor();
 
 public:
   RecTyKind getRecTyKind() const { return Kind; }
@@ -95,12 +94,10 @@ public:
 
   /// typeIsConvertibleTo - Return true if all values of 'this' type can be
   /// converted to the specified type.
-  virtual bool typeIsConvertibleTo(const RecTy *RHS) const = 0;
+  virtual bool typeIsConvertibleTo(const RecTy *RHS) const;
 
   /// getListTy - Returns the type representing list<this>.
   ListRecTy *getListTy();
-
-  virtual bool baseClassOf(const RecTy*) const;
 };
 
 inline raw_ostream &operator<<(raw_ostream &OS, const RecTy &Ty) {
@@ -123,10 +120,7 @@ public:
 
   std::string getAsString() const override { return "bit"; }
 
-  bool typeIsConvertibleTo(const RecTy *RHS) const override {
-    return RHS->baseClassOf(this);
-  }
-  bool baseClassOf(const RecTy*) const override;
+  bool typeIsConvertibleTo(const RecTy *RHS) const override;
 };
 
 /// BitsRecTy - 'bits<n>' - Represent a fixed number of bits
@@ -146,10 +140,7 @@ public:
 
   std::string getAsString() const override;
 
-  bool typeIsConvertibleTo(const RecTy *RHS) const override {
-    return RHS->baseClassOf(this);
-  }
-  bool baseClassOf(const RecTy*) const override;
+  bool typeIsConvertibleTo(const RecTy *RHS) const override;
 };
 
 /// IntRecTy - 'int' - Represent an integer value of no particular size
@@ -167,11 +158,7 @@ public:
 
   std::string getAsString() const override { return "int"; }
 
-  bool typeIsConvertibleTo(const RecTy *RHS) const override {
-    return RHS->baseClassOf(this);
-  }
-
-  bool baseClassOf(const RecTy*) const override;
+  bool typeIsConvertibleTo(const RecTy *RHS) const override;
 };
 
 /// StringRecTy - 'string' - Represent an string value
@@ -180,7 +167,7 @@ class StringRecTy : public RecTy {
   static StringRecTy Shared;
   StringRecTy() : RecTy(StringRecTyKind) {}
 
-  void anchor() override;
+  virtual void anchor();
 public:
   static bool classof(const RecTy *RT) {
     return RT->getRecTyKind() == StringRecTyKind;
@@ -189,10 +176,6 @@ public:
   static StringRecTy *get() { return &Shared; }
 
   std::string getAsString() const override { return "string"; }
-
-  bool typeIsConvertibleTo(const RecTy *RHS) const override {
-    return RHS->baseClassOf(this);
-  }
 };
 
 /// ListRecTy - 'list<Ty>' - Represent a list of values, all of which must be of
@@ -213,11 +196,7 @@ public:
 
   std::string getAsString() const override;
 
-  bool typeIsConvertibleTo(const RecTy *RHS) const override {
-    return RHS->baseClassOf(this);
-  }
-
-  bool baseClassOf(const RecTy*) const override;
+  bool typeIsConvertibleTo(const RecTy *RHS) const override;
 };
 
 /// DagRecTy - 'dag' - Represent a dag fragment
@@ -226,7 +205,7 @@ class DagRecTy : public RecTy {
   static DagRecTy Shared;
   DagRecTy() : RecTy(DagRecTyKind) {}
 
-  void anchor() override;
+  virtual void anchor();
 public:
   static bool classof(const RecTy *RT) {
     return RT->getRecTyKind() == DagRecTyKind;
@@ -235,10 +214,6 @@ public:
   static DagRecTy *get() { return &Shared; }
 
   std::string getAsString() const override { return "dag"; }
-
-  bool typeIsConvertibleTo(const RecTy *RHS) const override {
-    return RHS->baseClassOf(this);
-  }
 };
 
 /// RecordRecTy - '[classname]' - Represent an instance of a class, such as:
@@ -260,10 +235,7 @@ public:
 
   std::string getAsString() const override;
 
-  bool typeIsConvertibleTo(const RecTy *RHS) const override {
-    return RHS->baseClassOf(this);
-  }
-  bool baseClassOf(const RecTy*) const override;
+  bool typeIsConvertibleTo(const RecTy *RHS) const override;
 };
 
 /// resolveTypes - Find a common type that T1 and T2 convert to.

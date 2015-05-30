@@ -86,7 +86,6 @@ IntRecTy IntRecTy::Shared;
 StringRecTy StringRecTy::Shared;
 DagRecTy DagRecTy::Shared;
 
-void RecTy::anchor() { }
 void RecTy::dump() const { print(errs()); }
 
 void StringRecTy::anchor() { }
@@ -98,13 +97,13 @@ ListRecTy *RecTy::getListTy() {
   return ListTy.get();
 }
 
-bool RecTy::baseClassOf(const RecTy *RHS) const {
-  assert (RHS && "NULL pointer");
+bool RecTy::typeIsConvertibleTo(const RecTy *RHS) const {
+  assert(RHS && "NULL pointer");
   return Kind == RHS->getRecTyKind();
 }
 
-bool BitRecTy::baseClassOf(const RecTy *RHS) const{
-  if(RecTy::baseClassOf(RHS) || RHS->getRecTyKind() == IntRecTyKind)
+bool BitRecTy::typeIsConvertibleTo(const RecTy *RHS) const{
+  if(RecTy::typeIsConvertibleTo(RHS) || RHS->getRecTyKind() == IntRecTyKind)
     return true;
   if(const BitsRecTy *BitsTy = dyn_cast<BitsRecTy>(RHS))
     return BitsTy->getNumBits() == 1;
@@ -125,14 +124,14 @@ std::string BitsRecTy::getAsString() const {
   return "bits<" + utostr(Size) + ">";
 }
 
-bool BitsRecTy::baseClassOf(const RecTy *RHS) const{
-  if (RecTy::baseClassOf(RHS)) //argument and the receiver are the same type
+bool BitsRecTy::typeIsConvertibleTo(const RecTy *RHS) const {
+  if (RecTy::typeIsConvertibleTo(RHS)) //argument and the sender are same type
     return cast<BitsRecTy>(RHS)->Size == Size;
   RecTyKind kind = RHS->getRecTyKind();
   return (kind == BitRecTyKind && Size == 1) || (kind == IntRecTyKind);
 }
 
-bool IntRecTy::baseClassOf(const RecTy *RHS) const{
+bool IntRecTy::typeIsConvertibleTo(const RecTy *RHS) const {
   RecTyKind kind = RHS->getRecTyKind();
   return kind==BitRecTyKind || kind==BitsRecTyKind || kind==IntRecTyKind;
 }
@@ -142,9 +141,9 @@ std::string ListRecTy::getAsString() const {
   return "list<" + Ty->getAsString() + ">";
 }
 
-bool ListRecTy::baseClassOf(const RecTy *RHS) const{
-  if(const ListRecTy* ListTy = dyn_cast<ListRecTy>(RHS))
-    return ListTy->getElementType()->typeIsConvertibleTo(Ty);
+bool ListRecTy::typeIsConvertibleTo(const RecTy *RHS) const {
+  if (const auto *ListTy = dyn_cast<ListRecTy>(RHS))
+    return Ty->typeIsConvertibleTo(ListTy->getElementType());
   return false;
 }
 
@@ -156,17 +155,16 @@ std::string RecordRecTy::getAsString() const {
   return Rec->getName();
 }
 
-bool RecordRecTy::baseClassOf(const RecTy *RHS) const{
+bool RecordRecTy::typeIsConvertibleTo(const RecTy *RHS) const {
   const RecordRecTy *RTy = dyn_cast<RecordRecTy>(RHS);
   if (!RTy)
     return false;
 
-  if (Rec == RTy->getRecord() || RTy->getRecord()->isSubClassOf(Rec))
+  if (RTy->getRecord() == Rec || Rec->isSubClassOf(RTy->getRecord()))
     return true;
 
-  const std::vector<Record*> &SC = Rec->getSuperClasses();
-  for (unsigned i = 0, e = SC.size(); i != e; ++i)
-    if (RTy->getRecord()->isSubClassOf(SC[i]))
+  for (Record *SC : RTy->getRecord()->getSuperClasses())
+    if (Rec->isSubClassOf(SC))
       return true;
 
   return false;
