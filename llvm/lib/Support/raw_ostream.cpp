@@ -815,7 +815,7 @@ void raw_svector_ostream::write_impl(const char *Ptr, size_t Size) {
 }
 
 uint64_t raw_svector_ostream::current_pos() const {
-   return OS.size();
+  return OS.size();
 }
 
 StringRef raw_svector_ostream::str() {
