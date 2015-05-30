@@ -147,8 +147,8 @@ define <16 x i16> @E5i(<16 x i16>* %a, <16 x i16>* %b) nounwind uwtable readnone
 ; AVX1-LABEL: E5i:
 ; AVX1:       ## BB#0: ## %entry
 ; AVX1-NEXT:    vmovdqa (%rdi), %ymm0
-; AVX1-NEXT:    vpaddw {{.*}}(%rip), %xmm0, %xmm0
 ; AVX1-NEXT:    vmovaps (%rsi), %ymm1
+; AVX1-NEXT:    vpaddw {{.*}}(%rip), %xmm0, %xmm0
 ; AVX1-NEXT:    vinsertf128 $1, %xmm0, %ymm1, %ymm0
 ; AVX1-NEXT:    retq
 ;
