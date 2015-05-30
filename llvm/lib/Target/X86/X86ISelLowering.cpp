@@ -842,15 +842,10 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     setOperationAction(ISD::INSERT_VECTOR_ELT,  MVT::v4i32, Custom);
     setOperationAction(ISD::INSERT_VECTOR_ELT,  MVT::v4f32, Custom);
 
-    // Only provide customized ctpop vector bit twiddling for vector types we
-    // know to perform better than using the popcnt instructions on each vector
-    // element. If popcnt isn't supported, always provide the custom version.
-    if (!Subtarget->hasPOPCNT()) {
-      setOperationAction(ISD::CTPOP,            MVT::v2i64, Custom);
-      setOperationAction(ISD::CTPOP,            MVT::v4i32, Custom);
-      setOperationAction(ISD::CTPOP,            MVT::v8i16, Custom);
-      setOperationAction(ISD::CTPOP,            MVT::v16i8, Custom);
-    }
+    setOperationAction(ISD::CTPOP,              MVT::v16i8, Custom);
+    setOperationAction(ISD::CTPOP,              MVT::v8i16, Custom);
+    setOperationAction(ISD::CTPOP,              MVT::v4i32, Custom);
+    setOperationAction(ISD::CTPOP,              MVT::v2i64, Custom);
 
     // Custom lower build_vector, vector_shuffle, and extract_vector_elt.
     for (int i = MVT::v16i8; i != MVT::v2i64; ++i) {
@@ -1115,6 +1110,11 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     setOperationAction(ISD::TRUNCATE,          MVT::v8i16, Custom);
     setOperationAction(ISD::TRUNCATE,          MVT::v4i32, Custom);
 
+    setOperationAction(ISD::CTPOP,             MVT::v32i8, Custom);
+    setOperationAction(ISD::CTPOP,             MVT::v16i16, Custom);
+    setOperationAction(ISD::CTPOP,             MVT::v8i32, Custom);
+    setOperationAction(ISD::CTPOP,             MVT::v4i64, Custom);
+
     if (Subtarget->hasFMA() || Subtarget->hasFMA4()) {
       setOperationAction(ISD::FMA,             MVT::v8f32, Legal);
       setOperationAction(ISD::FMA,             MVT::v4f64, Legal);
@@ -1148,16 +1148,6 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
       // The custom lowering for UINT_TO_FP for v8i32 becomes interesting
       // when we have a 256bit-wide blend with immediate.
       setOperationAction(ISD::UINT_TO_FP, MVT::v8i32, Custom);
-
-      // Only provide customized ctpop vector bit twiddling for vector types we
-      // know to perform better than using the popcnt instructions on each
-      // vector element. If popcnt isn't supported, always provide the custom
-      // version.
-      if (!Subtarget->hasPOPCNT())
-        setOperationAction(ISD::CTPOP,           MVT::v4i64, Custom);
-
-      // Custom CTPOP always performs better on natively supported v8i32
-      setOperationAction(ISD::CTPOP,             MVT::v8i32, Custom);
 
       // AVX2 also has wider vector sign/zero extending loads, VPMOV[SZ]X
       setLoadExtAction(ISD::SEXTLOAD, MVT::v16i16, MVT::v16i8, Legal);
@@ -17329,12 +17319,164 @@ static SDValue LowerBITCAST(SDValue Op, const X86Subtarget *Subtarget,
   return SDValue();
 }
 
+static SDValue LowerVectorCTPOPInRegLUT(SDValue Op, SDLoc DL,
+                                  const X86Subtarget *Subtarget,
+                                  SelectionDAG &DAG) {
+  EVT VT = Op.getValueType();
+  MVT EltVT = VT.getVectorElementType().getSimpleVT();
+  unsigned VecSize = VT.getSizeInBits();
+
+  // Implement a lookup table in register by using an algorithm based on:
+  // http://wm.ite.pl/articles/sse-popcount.html
+  //
+  // The general idea is that every lower byte nibble in the input vector is an
+  // index into a in-register pre-computed pop count table. We then split up the
+  // input vector in two new ones: (1) a vector with only the shifted-right
+  // higher nibbles for each byte and (2) a vector with the lower nibbles (and
+  // masked out higher ones) for each byte. PSHUB is used separately with both
+  // to index the in-register table. Next, both are added and the result is a
+  // i8 vector where each element contains the pop count for input byte.
+  //
+  // To obtain the pop count for elements != i8, we follow up with the same
+  // approach and use additional tricks as described below.
+  //
+  const int LUT[16] = {/* 0 */ 0, /* 1 */ 1, /* 2 */ 1, /* 3 */ 2,
+                       /* 4 */ 1, /* 5 */ 2, /* 6 */ 2, /* 7 */ 3,
+                       /* 8 */ 1, /* 9 */ 2, /* a */ 2, /* b */ 3,
+                       /* c */ 2, /* d */ 3, /* e */ 3, /* f */ 4};
+
+  int NumByteElts = VecSize / 8;
+  MVT ByteVecVT = MVT::getVectorVT(MVT::i8, NumByteElts);
+  SDValue In = DAG.getNode(ISD::BITCAST, DL, ByteVecVT, Op);
+  SmallVector<SDValue, 16> LUTVec;
+  for (int i = 0; i < NumByteElts; ++i)
+    LUTVec.push_back(DAG.getConstant(LUT[i % 16], DL, MVT::i8));
+  SDValue InRegLUT = DAG.getNode(ISD::BUILD_VECTOR, DL, ByteVecVT, LUTVec);
+  SmallVector<SDValue, 16> Mask0F(NumByteElts,
+                                  DAG.getConstant(0x0F, DL, MVT::i8));
+  SDValue M0F = DAG.getNode(ISD::BUILD_VECTOR, DL, ByteVecVT, Mask0F);
+
+  // High nibbles
+  SmallVector<SDValue, 16> Four(NumByteElts, DAG.getConstant(4, DL, MVT::i8));
+  SDValue FourV = DAG.getNode(ISD::BUILD_VECTOR, DL, ByteVecVT, Four);
+  SDValue HighNibbles = DAG.getNode(ISD::SRL, DL, ByteVecVT, In, FourV);
+
+  // Low nibbles
+  SDValue LowNibbles = DAG.getNode(ISD::AND, DL, ByteVecVT, In, M0F);
+
+  // The input vector is used as the shuffle mask that index elements into the
+  // LUT. After counting low and high nibbles, add the vector to obtain the
+  // final pop count per i8 element.
+  SDValue HighPopCnt =
+      DAG.getNode(X86ISD::PSHUFB, DL, ByteVecVT, InRegLUT, HighNibbles);
+  SDValue LowPopCnt =
+      DAG.getNode(X86ISD::PSHUFB, DL, ByteVecVT, InRegLUT, LowNibbles);
+  SDValue PopCnt = DAG.getNode(ISD::ADD, DL, ByteVecVT, HighPopCnt, LowPopCnt);
+
+  if (EltVT == MVT::i8)
+    return PopCnt;
+
+  // PSADBW instruction horizontally add all bytes and leave the result in i64
+  // chunks, thus directly computes the pop count for v2i64 and v4i64.
+  if (EltVT == MVT::i64) {
+    SDValue Zeros = getZeroVector(ByteVecVT, Subtarget, DAG, DL);
+    PopCnt = DAG.getNode(X86ISD::PSADBW, DL, ByteVecVT, PopCnt, Zeros);
+    return DAG.getNode(ISD::BITCAST, DL, VT, PopCnt);
+  }
+
+  int NumI64Elts = VecSize / 64;
+  MVT VecI64VT = MVT::getVectorVT(MVT::i64, NumI64Elts);
+
+  if (EltVT == MVT::i32) {
+    // We unpack the low half and high half into i32s interleaved with zeros so
+    // that we can use PSADBW to horizontally sum them. The most useful part of
+    // this is that it lines up the results of two PSADBW instructions to be
+    // two v2i64 vectors which concatenated are the 4 population counts. We can
+    // then use PACKUSWB to shrink and concatenate them into a v4i32 again.
+    SDValue Zeros = getZeroVector(VT, Subtarget, DAG, DL);
+    SDValue Low = DAG.getNode(X86ISD::UNPCKL, DL, VT, PopCnt, Zeros);
+    SDValue High = DAG.getNode(X86ISD::UNPCKH, DL, VT, PopCnt, Zeros);
+
+    // Do the horizontal sums into two v2i64s.
+    Zeros = getZeroVector(ByteVecVT, Subtarget, DAG, DL);
+    Low = DAG.getNode(X86ISD::PSADBW, DL, ByteVecVT,
+                      DAG.getNode(ISD::BITCAST, DL, ByteVecVT, Low), Zeros);
+    High = DAG.getNode(X86ISD::PSADBW, DL, ByteVecVT,
+                       DAG.getNode(ISD::BITCAST, DL, ByteVecVT, High), Zeros);
+
+    // Merge them together.
+    MVT ShortVecVT = MVT::getVectorVT(MVT::i16, VecSize / 16);
+    PopCnt = DAG.getNode(X86ISD::PACKUS, DL, ByteVecVT,
+                         DAG.getNode(ISD::BITCAST, DL, ShortVecVT, Low),
+                         DAG.getNode(ISD::BITCAST, DL, ShortVecVT, High));
+
+    return DAG.getNode(ISD::BITCAST, DL, VT, PopCnt);
+  }
+
+  // To obtain pop count for each i16 element, shuffle the byte pop count to get
+  // even and odd elements into distinct vectors, add them and zero-extend each
+  // i8 elemento into i16, i.e.:
+  //
+  //  B -> pop count per i8
+  //  W -> pop count per i16
+  //
+  //  Y = shuffle B, undef <0, 2, ...>
+  //  Z = shuffle B, undef <1, 3, ...>
+  //  W = zext <... x i8> to <... x i16> (Y + Z)
+  //
+  // Use a byte shuffle mask that matches PSHUFB.
+  //
+  assert(EltVT == MVT::i16 && "Unknown how to handle type");
+  SDValue Undef = DAG.getUNDEF(ByteVecVT);
+  SmallVector<int, 32> MaskA, MaskB;
+
+  // We can't use PSHUFB across lanes, so do the shuffle and sum inside each
+  // 128-bit lane, and then collapse the result.
+  int NumLanes = NumByteElts / 16;
+  assert(NumByteElts % 16 == 0 && "Must have 16-byte multiple vectors!");
+  for (int i = 0; i < NumLanes; ++i) {
+    for (int j = 0; j < 8; ++j) {
+      MaskA.push_back(i * 16 + j * 2);
+      MaskB.push_back(i * 16 + (j * 2) + 1);
+    }
+    MaskA.append((size_t)8, -1);
+    MaskB.append((size_t)8, -1);
+  }
+
+  SDValue ShuffA = DAG.getVectorShuffle(ByteVecVT, DL, PopCnt, Undef, MaskA);
+  SDValue ShuffB = DAG.getVectorShuffle(ByteVecVT, DL, PopCnt, Undef, MaskB);
+  PopCnt = DAG.getNode(ISD::ADD, DL, ByteVecVT, ShuffA, ShuffB);
+
+  SmallVector<int, 4> Mask;
+  for (int i = 0; i < NumLanes; ++i)
+    Mask.push_back(2 * i);
+  Mask.append((size_t)NumLanes, -1);
+
+  PopCnt = DAG.getNode(ISD::BITCAST, DL, VecI64VT, PopCnt);
+  PopCnt =
+      DAG.getVectorShuffle(VecI64VT, DL, PopCnt, DAG.getUNDEF(VecI64VT), Mask);
+  PopCnt = DAG.getNode(ISD::BITCAST, DL, ByteVecVT, PopCnt);
+
+  // Zero extend i8s into i16 elts
+  SmallVector<int, 16> ZExtInRegMask;
+  for (int i = 0; i < NumByteElts / 2; ++i) {
+    ZExtInRegMask.push_back(i);
+    ZExtInRegMask.push_back(NumByteElts);
+  }
+
+  return DAG.getNode(
+      ISD::BITCAST, DL, VT,
+      DAG.getVectorShuffle(ByteVecVT, DL, PopCnt,
+                           getZeroVector(ByteVecVT, Subtarget, DAG, DL),
+                           ZExtInRegMask));
+}
+
 static SDValue LowerVectorCTPOPBitmath(SDValue Op, SDLoc DL,
                                        const X86Subtarget *Subtarget,
                                        SelectionDAG &DAG) {
   MVT VT = Op.getSimpleValueType();
-  assert((VT.is128BitVector() || VT.is256BitVector()) &&
-         "CTPOP lowering only implemented for 128/256-bit wide vector types");
+  assert(VT.is128BitVector() &&
+         "Only 128-bit vector bitmath lowering supported.");
 
   int VecSize = VT.getSizeInBits();
   int NumElts = VT.getVectorNumElements();
@@ -17344,9 +17486,9 @@ static SDValue LowerVectorCTPOPBitmath(SDValue Op, SDLoc DL,
   // This is the vectorized version of the "best" algorithm from
   // http://graphics.stanford.edu/~seander/bithacks.html#CountBitsSetParallel
   // with a minor tweak to use a series of adds + shifts instead of vector
-  // multiplications. Implemented for all integer vector types.
-  //
-  // FIXME: Use strategies from http://wm.ite.pl/articles/sse-popcount.html
+  // multiplications. Implemented for all integer vector types. We only use
+  // this when we don't have SSSE3 which allows a LUT-based lowering that is
+  // much faster, even faster than using native popcnt instructions.
 
   SDValue Cst55 = DAG.getConstant(APInt::getSplat(Len, APInt(8, 0x55)), DL,
                                   EltVT);
@@ -17424,7 +17566,6 @@ static SDValue LowerVectorCTPOPBitmath(SDValue Op, SDLoc DL,
   return V;
 }
 
-
 static SDValue LowerVectorCTPOP(SDValue Op, const X86Subtarget *Subtarget,
                                 SelectionDAG &DAG) {
   MVT VT = Op.getSimpleValueType();
@@ -17434,6 +17575,12 @@ static SDValue LowerVectorCTPOP(SDValue Op, const X86Subtarget *Subtarget,
   SDLoc DL(Op.getNode());
   SDValue Op0 = Op.getOperand(0);
 
+  if (!Subtarget->hasSSSE3()) {
+    // We can't use the fast LUT approach, so fall back on vectorized bitmath.
+    assert(VT.is128BitVector() && "Only 128-bit vectors supported in SSE!");
+    return LowerVectorCTPOPBitmath(Op0, DL, Subtarget, DAG);
+  }
+
   if (VT.is256BitVector() && !Subtarget->hasInt256()) {
     unsigned NumElems = VT.getVectorNumElements();
 
@@ -17442,11 +17589,11 @@ static SDValue LowerVectorCTPOP(SDValue Op, const X86Subtarget *Subtarget,
     SDValue RHS = Extract128BitVector(Op0, NumElems/2, DAG, DL);
 
     return DAG.getNode(ISD::CONCAT_VECTORS, DL, VT,
-                       LowerVectorCTPOPBitmath(LHS, DL, Subtarget, DAG),
-                       LowerVectorCTPOPBitmath(RHS, DL, Subtarget, DAG));
+                       LowerVectorCTPOPInRegLUT(LHS, DL, Subtarget, DAG),
+                       LowerVectorCTPOPInRegLUT(RHS, DL, Subtarget, DAG));
   }
 
-  return LowerVectorCTPOPBitmath(Op0, DL, Subtarget, DAG);
+  return LowerVectorCTPOPInRegLUT(Op0, DL, Subtarget, DAG);
 }
 
 static SDValue LowerCTPOP(SDValue Op, const X86Subtarget *Subtarget,
@@ -18149,6 +18296,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::VPERMI:             return "X86ISD::VPERMI";
   case X86ISD::PMULUDQ:            return "X86ISD::PMULUDQ";
   case X86ISD::PMULDQ:             return "X86ISD::PMULDQ";
+  case X86ISD::PSADBW:             return "X86ISD::PSADBW";
   case X86ISD::VASTART_SAVE_XMM_REGS: return "X86ISD::VASTART_SAVE_XMM_REGS";
   case X86ISD::VAARG_64:           return "X86ISD::VAARG_64";
   case X86ISD::WIN_ALLOCA:         return "X86ISD::WIN_ALLOCA";

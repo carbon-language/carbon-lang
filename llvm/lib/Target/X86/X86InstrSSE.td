@@ -4053,6 +4053,20 @@ defm PAVGW   : PDI_binop_all_int<0xE3, "pavgw", int_x86_sse2_pavg_w,
 defm PSADBW  : PDI_binop_all_int<0xF6, "psadbw", int_x86_sse2_psad_bw,
                                  int_x86_avx2_psad_bw, SSE_PMADD, 1>;
 
+let Predicates = [HasAVX2] in
+  def : Pat<(v32i8 (X86psadbw (v32i8 VR256:$src1),
+                              (v32i8 VR256:$src2))),
+            (VPSADBWYrr VR256:$src2, VR256:$src1)>;
+
+let Predicates = [HasAVX] in
+  def : Pat<(v16i8 (X86psadbw (v16i8 VR128:$src1),
+                              (v16i8 VR128:$src2))),
+            (VPSADBWrr VR128:$src2, VR128:$src1)>;
+
+def : Pat<(v16i8 (X86psadbw (v16i8 VR128:$src1),
+                            (v16i8 VR128:$src2))),
+          (PSADBWrr VR128:$src2, VR128:$src1)>;
+
 let Predicates = [HasAVX] in
 defm VPMULUDQ : PDI_binop_rm2<0xF4, "vpmuludq", X86pmuludq, v2i64, v4i32, VR128,
                               loadv2i64, i128mem, SSE_INTMUL_ITINS_P, 1, 0>,

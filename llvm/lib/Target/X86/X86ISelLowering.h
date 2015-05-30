@@ -184,6 +184,9 @@ namespace llvm {
       /// Shuffle 16 8-bit values within a vector.
       PSHUFB,
 
+      /// Compute Sum of Absolute Differences.
+      PSADBW,
+
       /// Bitwise Logical AND NOT of Packed FP values.
       ANDNP,
 
