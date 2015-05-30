@@ -1265,7 +1265,7 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     setLoadExtAction(ISD::SEXTLOAD, MVT::v8i64,  MVT::v8i16,  Legal);
     setLoadExtAction(ISD::ZEXTLOAD, MVT::v8i64,  MVT::v8i32,  Legal);
     setLoadExtAction(ISD::SEXTLOAD, MVT::v8i64,  MVT::v8i32,  Legal);
-    
+
     setOperationAction(ISD::BR_CC,              MVT::i1,    Expand);
     setOperationAction(ISD::SETCC,              MVT::i1,    Custom);
     setOperationAction(ISD::XOR,                MVT::i1,    Legal);
@@ -5281,7 +5281,7 @@ X86TargetLowering::LowerBUILD_VECTORvXi1(SDValue Op, SelectionDAG &DAG) const {
     SDValue In = Op.getOperand(idx);
     if (In.getOpcode() == ISD::UNDEF)
       continue;
-    if (!isa<ConstantSDNode>(In)) 
+    if (!isa<ConstantSDNode>(In))
       NonConstIdx.push_back(idx);
     else {
       Immediate |= cast<ConstantSDNode>(In)->getZExtValue() << idx;
@@ -5308,7 +5308,7 @@ X86TargetLowering::LowerBUILD_VECTORvXi1(SDValue Op, SelectionDAG &DAG) const {
   }
   else if (HasConstElts)
     Imm = DAG.getConstant(0, dl, VT);
-  else 
+  else
     Imm = DAG.getUNDEF(VT);
   if (Imm.getValueSizeInBits() == VT.getSizeInBits())
     DstVec = DAG.getBitcast(VT, Imm);
@@ -12169,14 +12169,14 @@ SDValue X86TargetLowering::LowerTRUNCATE(SDValue Op, SelectionDAG &DAG) const {
     if (InVT.is512BitVector() && InVT.getScalarSizeInBits() <= 16 &&
         Subtarget->hasBWI())
       return Op; // legal, will go to VPMOVB2M, VPMOVW2M
-    if ((InVT.is256BitVector() || InVT.is128BitVector()) 
+    if ((InVT.is256BitVector() || InVT.is128BitVector())
         && InVT.getScalarSizeInBits() <= 16 &&
         Subtarget->hasBWI() && Subtarget->hasVLX())
       return Op; // legal, will go to VPMOVB2M, VPMOVW2M
     if (InVT.is512BitVector() && InVT.getScalarSizeInBits() >= 32 &&
         Subtarget->hasDQI())
       return Op; // legal, will go to VPMOVD2M, VPMOVQ2M
-    if ((InVT.is256BitVector() || InVT.is128BitVector()) 
+    if ((InVT.is256BitVector() || InVT.is128BitVector())
         && InVT.getScalarSizeInBits() >= 32 &&
         Subtarget->hasDQI() && Subtarget->hasVLX())
       return Op; // legal, will go to VPMOVB2M, VPMOVQ2M
@@ -13665,7 +13665,7 @@ SDValue X86TargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) const {
       else if (Op2.getOpcode() == ISD::BITCAST && Op2.getOperand(0))
         Op2Scalar = Op2.getOperand(0);
       if (Op1Scalar.getNode() && Op2Scalar.getNode()) {
-        SDValue newSelect = DAG.getNode(ISD::SELECT, DL, 
+        SDValue newSelect = DAG.getNode(ISD::SELECT, DL,
                                         Op1Scalar.getValueType(),
                                         Cond, Op1Scalar, Op2Scalar);
         if (newSelect.getValueSizeInBits() == VT.getSizeInBits())
@@ -16474,16 +16474,16 @@ static SDValue LowerMUL_LOHI(SDValue Op, const X86Subtarget *Subtarget,
 
 // Return true if the requred (according to Opcode) shift-imm form is natively
 // supported by the Subtarget
-static bool SupportedVectorShiftWithImm(MVT VT, const X86Subtarget *Subtarget, 
+static bool SupportedVectorShiftWithImm(MVT VT, const X86Subtarget *Subtarget,
                                         unsigned Opcode) {
   if (VT.getScalarSizeInBits() < 16)
     return false;
- 
+
   if (VT.is512BitVector() &&
       (VT.getScalarSizeInBits() > 16 || Subtarget->hasBWI()))
     return true;
 
-  bool LShift = VT.is128BitVector() || 
+  bool LShift = VT.is128BitVector() ||
     (VT.is256BitVector() && Subtarget->hasInt256());
 
   bool AShift = LShift && (Subtarget->hasVLX() ||
@@ -16493,15 +16493,15 @@ static bool SupportedVectorShiftWithImm(MVT VT, const X86Subtarget *Subtarget,
 
 // The shift amount is a variable, but it is the same for all vector lanes.
 // These instrcutions are defined together with shift-immediate.
-static 
-bool SupportedVectorShiftWithBaseAmnt(MVT VT, const X86Subtarget *Subtarget, 
+static
+bool SupportedVectorShiftWithBaseAmnt(MVT VT, const X86Subtarget *Subtarget,
                                       unsigned Opcode) {
   return SupportedVectorShiftWithImm(VT, Subtarget, Opcode);
 }
 
 // Return true if the requred (according to Opcode) variable-shift form is
 // natively supported by the Subtarget
-static bool SupportedVectorVarShift(MVT VT, const X86Subtarget *Subtarget, 
+static bool SupportedVectorVarShift(MVT VT, const X86Subtarget *Subtarget,
                                     unsigned Opcode) {
 
   if (!Subtarget->hasInt256() || VT.getScalarSizeInBits() < 16)
