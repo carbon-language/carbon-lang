@@ -30,6 +30,7 @@
 #include "isl/constraint.h"
 #include "isl/map.h"
 #include "isl/options.h"
+#include "isl/printer.h"
 #include "isl/schedule.h"
 #include "isl/schedule_node.h"
 #include "isl/space.h"
@@ -454,7 +455,13 @@ bool IslScheduleOptimizer::runOnScop(Scop &S) {
   if (!Schedule)
     return false;
 
-  DEBUG(dbgs() << "Schedule := " << stringFromIslObj(Schedule) << ";\n");
+  DEBUG({
+    auto *P = isl_printer_to_str(S.getIslCtx());
+    P = isl_printer_set_yaml_style(P, ISL_YAML_STYLE_BLOCK);
+    P = isl_printer_print_schedule(P, Schedule);
+    dbgs() << "NewScheduleTree: \n" << isl_printer_get_str(P) << "\n";
+    isl_printer_free(P);
+  });
 
   isl_union_map *NewSchedule = getScheduleMap(Schedule);
 
