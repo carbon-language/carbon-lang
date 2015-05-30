@@ -30,7 +30,8 @@ const uint32_t PermMask = 0xF00000F0;
 // non-overlapping file offsets and RVAs.
 class OutputSection {
 public:
-  OutputSection(StringRef Name, uint32_t SectionIndex);
+  OutputSection(StringRef N, uint32_t SI)
+      : Name(N), SectionIndex(SI), Header({}) {}
   void setRVA(uint64_t);
   void setFileOffset(uint64_t);
   void addChunk(Chunk *C);
@@ -59,9 +60,9 @@ public:
   void setStringTableOff(uint32_t V) { StringTableOff = V; }
 
 private:
-  coff_section Header;
   StringRef Name;
   uint32_t SectionIndex;
+  coff_section Header;
   uint32_t StringTableOff = 0;
   std::vector<Chunk *> Chunks;
 };

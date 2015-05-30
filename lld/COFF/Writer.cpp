@@ -41,11 +41,6 @@ static const int HeaderSize =
 namespace lld {
 namespace coff {
 
-OutputSection::OutputSection(StringRef N, uint32_t SI)
-    : Name(N), SectionIndex(SI) {
-  memset(&Header, 0, sizeof(Header));
-}
-
 void OutputSection::setRVA(uint64_t RVA) {
   Header.VirtualAddress = RVA;
   for (Chunk *C : Chunks)
