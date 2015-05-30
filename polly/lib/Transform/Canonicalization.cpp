@@ -29,6 +29,7 @@ void polly::registerCanonicalicationPasses(llvm::legacy::PassManagerBase &PM) {
   PM.add(llvm::createReassociatePass());
   PM.add(llvm::createLoopRotatePass());
   PM.add(llvm::createInstructionCombiningPass());
+  PM.add(llvm::createIndVarSimplifyPass());
   PM.add(polly::createCodePreparationPass());
 }
 
