@@ -72,11 +72,6 @@ class MCSymbol {
   /// symbol has no size this field will be NULL.
   const MCExpr *SymbolSize = nullptr;
 
-  /// The alignment of the symbol, if it is 'common', or -1.
-  //
-  // FIXME: Pack this in with other fields?
-  unsigned CommonAlign = -1U;
-
   union {
     /// The offset to apply to the fragment address to form this symbol's value.
     uint64_t Offset;
@@ -84,6 +79,11 @@ class MCSymbol {
     /// The size of the symbol, if it is 'common'.
     uint64_t CommonSize;
   };
+
+  /// The alignment of the symbol, if it is 'common', or -1.
+  //
+  // FIXME: Pack this in with other fields?
+  unsigned CommonAlign = -1U;
 
   /// The Flags field is used by object file implementations to store
   /// additional per symbol information which is not easily classified.
