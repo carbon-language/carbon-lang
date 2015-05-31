@@ -621,8 +621,6 @@ void* align(size_t alignment, size_t size, void*& ptr, size_t& space);
 #pragma GCC system_header
 #endif
 
-extern "C" int printf(const char * __restrict, ...);
-
 _LIBCPP_BEGIN_NAMESPACE_STD
 
 // addressof moved to <__functional_base>
