@@ -248,25 +248,27 @@ static int printLineInfoForInput(bool LoadObjects, bool UseDebugObj) {
       new DWARFContextInMemory(*SymbolObj,LoadedObjInfo.get()));
 
     // Use symbol info to iterate functions in the object.
-    for (object::symbol_iterator I = SymbolObj->symbol_begin(),
-                                 E = SymbolObj->symbol_end();
-         I != E; ++I) {
+    for (object::SymbolRef Sym : SymbolObj->symbols()) {
       object::SymbolRef::Type SymType;
-      if (I->getType(SymType)) continue;
+      if (Sym.getType(SymType))
+        continue;
       if (SymType == object::SymbolRef::ST_Function) {
         StringRef  Name;
         uint64_t   Addr;
         uint64_t   Size;
-        if (I->getName(Name)) continue;
-        if (I->getAddress(Addr)) continue;
-        if (I->getSize(Size)) continue;
+        if (Sym.getName(Name))
+          continue;
+        if (Sym.getAddress(Addr))
+          continue;
+        if (Sym.getSize(Size))
+          continue;
 
         // If we're not using the debug object, compute the address of the
         // symbol in memory (rather than that in the unrelocated object file)
         // and use that to query the DWARFContext.
         if (!UseDebugObj && LoadObjects) {
           object::section_iterator Sec(SymbolObj->section_end());
-          I->getSection(Sec);
+          Sym.getSection(Sec);
           StringRef SecName;
           Sec->getName(SecName);
           uint64_t SectionLoadAddress =
