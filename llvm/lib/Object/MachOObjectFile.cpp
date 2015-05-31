@@ -401,16 +401,13 @@ std::error_code MachOObjectFile::getSymbolAddress(DataRefImpl Symb,
   return object_error::success;
 }
 
-std::error_code MachOObjectFile::getSymbolAlignment(DataRefImpl DRI,
-                                                    uint32_t &Result) const {
+uint32_t MachOObjectFile::getSymbolAlignment(DataRefImpl DRI) const {
   uint32_t flags = getSymbolFlags(DRI);
   if (flags & SymbolRef::SF_Common) {
     MachO::nlist_base Entry = getSymbolTableEntryBase(this, DRI);
-    Result = 1 << MachO::GET_COMM_ALIGN(Entry.n_desc);
-  } else {
-    Result = 0;
+    return 1 << MachO::GET_COMM_ALIGN(Entry.n_desc);
   }
-  return object_error::success;
+  return 0;
 }
 
 std::error_code MachOObjectFile::getSymbolSize(DataRefImpl DRI,

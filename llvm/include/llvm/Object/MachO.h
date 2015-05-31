@@ -204,8 +204,7 @@ public:
 
   std::error_code getSymbolAddress(DataRefImpl Symb,
                                    uint64_t &Res) const override;
-  std::error_code getSymbolAlignment(DataRefImpl Symb,
-                                     uint32_t &Res) const override;
+  uint32_t getSymbolAlignment(DataRefImpl Symb) const override;
   std::error_code getSymbolSize(DataRefImpl Symb, uint64_t &Res) const override;
   std::error_code getSymbolType(DataRefImpl Symb,
                                 SymbolRef::Type &Res) const override;

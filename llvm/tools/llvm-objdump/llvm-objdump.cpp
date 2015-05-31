@@ -697,9 +697,7 @@ void llvm::PrintSymbolTable(const ObjectFile *o) {
     bool Hidden = Flags & SymbolRef::SF_Hidden;
 
     if (Common) {
-      uint32_t Alignment;
-      if (error(Symbol.getAlignment(Alignment)))
-        Alignment = 0;
+      uint32_t Alignment = Symbol.getAlignment();
       Address = Size;
       Size = Alignment;
     }

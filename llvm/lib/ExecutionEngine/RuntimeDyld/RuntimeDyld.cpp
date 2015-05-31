@@ -494,9 +494,8 @@ void RuntimeDyldImpl::emitCommonSymbols(const ObjectFile &Obj,
       continue;
     }
 
-    uint32_t Align = 0;
+    uint32_t Align = Sym.getAlignment();
     uint64_t Size = 0;
-    Check(Sym.getAlignment(Align));
     Check(Sym.getSize(Size));
 
     CommonSize += Align + Size;
@@ -518,10 +517,9 @@ void RuntimeDyldImpl::emitCommonSymbols(const ObjectFile &Obj,
 
   // Assign the address of each symbol
   for (auto &Sym : SymbolsToAllocate) {
-    uint32_t Align;
+    uint32_t Align = Sym.getAlignment();
     uint64_t Size;
     StringRef Name;
-    Check(Sym.getAlignment(Align));
     Check(Sym.getSize(Size));
     Check(Sym.getName(Name));
     if (Align) {
