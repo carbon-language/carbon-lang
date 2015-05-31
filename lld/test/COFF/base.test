@@ -1,11 +1,11 @@
-# RUN: lld -flavor link2 /entry:main /out:%t.exe /subsystem:console \
-# RUN:   %p/Inputs/ret42.obj
+# RUN: yaml2obj < %p/Inputs/ret42.yaml > %t.obj
+
+# RUN: lld -flavor link2 /out:%t.exe %t.obj
 # RUN: llvm-readobj -file-headers %t.exe | FileCheck -check-prefix=DEFAULT %s
 
 DEFAULT: ImageBase: 0x140000000
 
-# RUN: lld -flavor link2 /entry:main /out:%t.exe /subsystem:console \
-# RUN:   /base:0x280000000 %p/Inputs/ret42.obj
+# RUN: lld -flavor link2 /out:%t.exe %t.obj /base:0x280000000
 # RUN: llvm-readobj -file-headers %t.exe | FileCheck -check-prefix=BASE %s
 
 BASE: ImageBase: 0x280000000
