@@ -424,6 +424,16 @@ static uint32_t selectFpAbiFlag(uint32_t oldFp, uint32_t newFp) {
 namespace lld {
 namespace elf {
 
+template <class ELFT> bool MipsAbiInfoHandler<ELFT>::isMicroMips() const {
+  assert(_abiFlags.hasValue());
+  return _abiFlags->_ases & AFL_ASE_MICROMIPS;
+}
+
+template <class ELFT> bool MipsAbiInfoHandler<ELFT>::isMipsR6() const {
+  assert(_abiFlags.hasValue());
+  return _abiFlags->_isa == Arch32r6 || _abiFlags->_isa == Arch64r6;
+}
+
 template <class ELFT> uint32_t MipsAbiInfoHandler<ELFT>::getFlags() const {
   std::lock_guard<std::mutex> lock(_mutex);
   uint32_t flags = 0;
