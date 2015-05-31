@@ -208,6 +208,11 @@ bool LinkerDriver::link(int Argc, const char *Argv[]) {
   }
   Config->MachineType = MTOrErr.get();
 
+  // Handle /libpath
+  // (Inserting at front of a vector is okay because it's short.)
+  for (auto *Arg : Args->filtered(OPT_libpath))
+    SearchPaths.insert(SearchPaths.begin(), Arg->getValue());
+
   // Handle /nodefaultlib:<filename>
   for (auto *Arg : Args->filtered(OPT_nodefaultlib))
     Config->NoDefaultLibs.insert(doFindLib(Arg->getValue()));
