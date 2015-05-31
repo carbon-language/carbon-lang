@@ -1,5 +1,3 @@
 # RUN: not lld -flavor link2 nosuchfile.obj >& %t.log
 # RUN: FileCheck -check-prefix=MISSING %s < %t.log
 MISSING: nosuchfile.obj: {{[Nn]}}o such file or directory
-
-# RUN: lld -flavor link2 /entry:main /out:%t.exe %p/Inputs/ret42.obj

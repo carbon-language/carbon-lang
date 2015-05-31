@@ -1,12 +1,3 @@
-# RUN: lld -flavor link2 /entry:main /out:%t.exe %p/Inputs/ret42.obj
-# RUN: llvm-readobj -file-headers %t.exe | FileCheck -check-prefix=DEFAULT %s
-
-DEFAULT: MajorOperatingSystemVersion: 6
-DEFAULT: MinorOperatingSystemVersion: 0
-DEFAULT: MajorSubsystemVersion: 6
-DEFAULT: MinorSubsystemVersion: 0
-DEFAULT: Subsystem: IMAGE_SUBSYSTEM_WINDOWS_CUI
-
 # RUN: lld -flavor link2 /entry:main /out:%t.exe /subsystem:windows \
 # RUN:   %p/Inputs/ret42.obj
 # RUN: llvm-readobj -file-headers %t.exe | FileCheck -check-prefix=CHECK1 %s

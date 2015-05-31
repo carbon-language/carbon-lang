@@ -1,20 +1,20 @@
-# RUN: lld -flavor link2 /entry:main /machine:x64 /out:%t.exe \
+# RUN: lld -flavor link2 /entry:main /subsystem:console /machine:x64 \
+# RUN:   /out:%t.exe %p/Inputs/ret42.obj
+# RUN: llvm-readobj -file-headers %t.exe | FileCheck -check-prefix=AMD64 %s
+# RUN: lld -flavor link2 /entry:main /subsystem:console /machine:x64 \
+# RUN:   /out:%t.exe %p/Inputs/ret42.lib
+# RUN: llvm-readobj -file-headers %t.exe | FileCheck -check-prefix=AMD64 %s
+# RUN: lld -flavor link2 /entry:main /subsystem:console /out:%t.exe \
 # RUN:   %p/Inputs/ret42.obj
 # RUN: llvm-readobj -file-headers %t.exe | FileCheck -check-prefix=AMD64 %s
-# RUN: lld -flavor link2 /entry:main /machine:x64 /out:%t.exe \
-# RUN:   %p/Inputs/ret42.lib
-# RUN: llvm-readobj -file-headers %t.exe | FileCheck -check-prefix=AMD64 %s
-# RUN: lld -flavor link2 /entry:main /out:%t.exe \
-# RUN:   %p/Inputs/ret42.obj
-# RUN: llvm-readobj -file-headers %t.exe | FileCheck -check-prefix=AMD64 %s
-# RUN: lld -flavor link2 /entry:main /out:%t.exe \
+# RUN: lld -flavor link2 /entry:main /subsystem:console /out:%t.exe \
 # RUN:   %p/Inputs/ret42.lib
 # RUN: llvm-readobj -file-headers %t.exe | FileCheck -check-prefix=AMD64 %s
 
 AMD64: Machine: IMAGE_FILE_MACHINE_AMD64
 
-# RUN: lld -flavor link2 /entry:main /machine:x86 /out:%t.exe \
-# RUN:   %p/Inputs/ret42.obj
+# RUN: lld -flavor link2 /entry:main /subsystem:console /machine:x86 \
+# RUN:   /out:%t.exe %p/Inputs/ret42.obj
 # RUN: llvm-readobj -file-headers %t.exe | FileCheck -check-prefix=I386 %s
 
 I386: Machine: IMAGE_FILE_MACHINE_I386

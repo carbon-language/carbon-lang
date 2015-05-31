@@ -1,18 +1,19 @@
-# RUN: lld -flavor link2 /entry:main /out:%t.exe %p/Inputs/ret42.obj
+# RUN: lld -flavor link2 /entry:main /subsystem:console /out:%t.exe \
+# RUN:   %p/Inputs/ret42.obj
 # RUN: llvm-readobj -file-headers %t.exe | FileCheck -check-prefix=DEFAULT %s
 
 DEFAULT: SizeOfStackReserve: 1048576
 DEFAULT: SizeOfStackCommit: 4096
 
-# RUN: lld -flavor link2 /entry:main /out:%t.exe /stack:0x3000 \
-# RUN:   %p/Inputs/ret42.obj
+# RUN: lld -flavor link2 /entry:main /subsystem:console /out:%t.exe \
+# RUN:   /stack:0x3000 %p/Inputs/ret42.obj
 # RUN: llvm-readobj -file-headers %t.exe | FileCheck -check-prefix=CHECK1 %s
 
 CHECK1: SizeOfStackReserve: 12288
 CHECK1: SizeOfStackCommit: 4096
 
-# RUN: lld -flavor link2 /entry:main /out:%t.exe /stack:0x5000,0x3000 \
-# RUN:   %p/Inputs/ret42.obj
+# RUN: lld -flavor link2 /entry:main /subsystem:console /out:%t.exe \
+# RUN:   /stack:0x5000,0x3000 %p/Inputs/ret42.obj
 # RUN: llvm-readobj -file-headers %t.exe | FileCheck -check-prefix=CHECK2 %s
 
 CHECK2: SizeOfStackReserve: 20480

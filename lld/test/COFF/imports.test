@@ -1,7 +1,7 @@
 # Verify that the lld can handle .lib files and emit .idata sections.
 #
-# RUN: lld -flavor link2 /out:%t.exe /entry:main %p/Inputs/hello64.obj \
-# RUN:   %p/Inputs/std64.lib
+# RUN: lld -flavor link2 /out:%t.exe /entry:main /subsystem:console \
+# RUN:   %p/Inputs/hello64.obj %p/Inputs/std64.lib
 # RUN: llvm-objdump -d %t.exe | FileCheck -check-prefix=TEXT %s
 # RUN: llvm-readobj -coff-imports %t.exe | FileCheck -check-prefix=IMPORT %s
 

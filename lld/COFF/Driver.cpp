@@ -16,6 +16,7 @@
 #include "lld/Core/Error.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/StringSwitch.h"
 #include "llvm/Option/Arg.h"
 #include "llvm/Option/ArgList.h"
 #include "llvm/Option/Option.h"
@@ -26,6 +27,9 @@
 #include <memory>
 
 using namespace llvm;
+using llvm::COFF::IMAGE_SUBSYSTEM_UNKNOWN;
+using llvm::COFF::IMAGE_SUBSYSTEM_WINDOWS_CUI;
+using llvm::COFF::IMAGE_SUBSYSTEM_WINDOWS_GUI;
 
 namespace lld {
 namespace coff {
@@ -199,6 +203,22 @@ bool link(int Argc, const char *Argv[]) {
   // Make sure we have resolved all symbols.
   if (Symtab.reportRemainingUndefines())
     return false;
+
+  // Windows specific -- if no /subsystem is given, we need to infer
+  // that from entry point name.
+  if (Config->Subsystem == IMAGE_SUBSYSTEM_UNKNOWN) {
+    Config->Subsystem =
+      StringSwitch<WindowsSubsystem>(Config->EntryName)
+          .Case("mainCRTStartup", IMAGE_SUBSYSTEM_WINDOWS_CUI)
+          .Case("wmainCRTStartup", IMAGE_SUBSYSTEM_WINDOWS_CUI)
+          .Case("WinMainCRTStartup", IMAGE_SUBSYSTEM_WINDOWS_GUI)
+          .Case("wWinMainCRTStartup", IMAGE_SUBSYSTEM_WINDOWS_GUI)
+          .Default(IMAGE_SUBSYSTEM_UNKNOWN);
+    if (Config->Subsystem == IMAGE_SUBSYSTEM_UNKNOWN) {
+      llvm::errs() << "subsystem must be defined\n";
+      return false;
+    }
+  }
 
   // Write the result.
   Writer Out(&Symtab);

@@ -25,7 +25,7 @@ class Configuration {
 public:
   llvm::COFF::MachineTypes MachineType = llvm::COFF::IMAGE_FILE_MACHINE_AMD64;
   bool Verbose = false;
-  WindowsSubsystem Subsystem = llvm::COFF::IMAGE_SUBSYSTEM_WINDOWS_CUI;
+  WindowsSubsystem Subsystem = llvm::COFF::IMAGE_SUBSYSTEM_UNKNOWN;
   std::string EntryName;
 
   uint64_t ImageBase = 0x140000000;
