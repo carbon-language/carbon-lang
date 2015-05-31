@@ -447,13 +447,8 @@ bool MCContext::isValidDwarfFileNumber(unsigned FileNumber, unsigned CUID) {
 /// Remove empty sections from SectionStartEndSyms, to avoid generating
 /// useless debug info for them.
 void MCContext::finalizeDwarfSections(MCStreamer &MCOS) {
-  std::vector<MCSection *> Keep;
-  for (MCSection *Sec : SectionsForRanges) {
-    if (MCOS.mayHaveInstructions(*Sec))
-      Keep.push_back(Sec);
-  }
-  SectionsForRanges.clear();
-  SectionsForRanges.insert(Keep.begin(), Keep.end());
+  SectionsForRanges.remove_if(
+      [&](MCSection *Sec) { return !MCOS.mayHaveInstructions(*Sec); });
 }
 
 void MCContext::reportFatalError(SMLoc Loc, const Twine &Msg) const {
