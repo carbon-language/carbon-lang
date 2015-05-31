@@ -621,6 +621,8 @@ void* align(size_t alignment, size_t size, void*& ptr, size_t& space);
 #pragma GCC system_header
 #endif
 
+extern "C" int printf(const char * __restrict, ...);
+
 _LIBCPP_BEGIN_NAMESPACE_STD
 
 // addressof moved to <__functional_base>
@@ -1521,7 +1523,8 @@ struct _LIBCPP_TYPE_VIS_ONLY allocator_traits
         __construct_forward(allocator_type& __a, _Tp* __begin1, _Tp* __end1, _Tp*& __begin2)
         {
             ptrdiff_t _Np = __end1 - __begin1;
-            _VSTD::memcpy(__begin2, __begin1, _Np * sizeof(_Tp));
+            if (_Np > 0)
+                _VSTD::memcpy(__begin2, __begin1, _Np * sizeof(_Tp));
             __begin2 += _Np;
         }
 
@@ -1549,7 +1552,8 @@ struct _LIBCPP_TYPE_VIS_ONLY allocator_traits
         {
             typedef typename remove_const<_Tp>::type _Vp;
             ptrdiff_t _Np = __end1 - __begin1;
-            _VSTD::memcpy(const_cast<_Vp*>(__begin2), __begin1, _Np * sizeof(_Tp));
+            if (_Np > 0)
+                _VSTD::memcpy(const_cast<_Vp*>(__begin2), __begin1, _Np * sizeof(_Tp));
             __begin2 += _Np;
         }
 
@@ -1580,7 +1584,8 @@ struct _LIBCPP_TYPE_VIS_ONLY allocator_traits
         {
             ptrdiff_t _Np = __end1 - __begin1;
             __end2 -= _Np;
-            _VSTD::memcpy(__end2, __begin1, _Np * sizeof(_Tp));
+            if (_Np > 0)
+                _VSTD::memcpy(__end2, __begin1, _Np * sizeof(_Tp));
         }
 
 private:
