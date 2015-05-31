@@ -1,4 +1,4 @@
-//===- HexagonMCInstrInfo.cpp - Hexagon sub-class of MCInst ---------------===//
+//===- HexagonMCInstrInfo.cpp - Utility functions on Hexagon MCInsts ------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -27,6 +27,12 @@ class MCOperand;
 namespace HexagonII {
 enum class MemAccessSize;
 }
+class DuplexCandidate {
+public:
+  unsigned packetIndexI, packetIndexJ, iClass;
+  DuplexCandidate(unsigned i, unsigned j, unsigned iClass)
+      : packetIndexI(i), packetIndexJ(j), iClass(iClass) {}
+};
 namespace HexagonMCInstrInfo {
 size_t const innerLoopOffset = 0;
 int64_t const innerLoopMask = 1 << innerLoopOffset;
@@ -84,8 +90,16 @@ unsigned short getNewValueOp(MCInstrInfo const &MCII, MCInst const &MCI);
 // Return the operand that consumes or produces a new value.
 MCOperand const &getNewValueOperand(MCInstrInfo const &MCII, MCInst const &MCI);
 
+int getSubTarget(MCInstrInfo const &MCII, MCInst const &MCI);
+
 // Return the Hexagon ISA class for the insn.
 unsigned getType(MCInstrInfo const &MCII, MCInst const &MCI);
+
+/// Return the slots used by the insn.
+unsigned getUnits(MCInstrInfo const &MCII, MCSubtargetInfo const &STI,
+                  MCInst const &MCI);
+
+bool hasImmExt(MCInst const &MCI);
 
 // Return whether the instruction is a legal new-value producer.
 bool hasNewValue(MCInstrInfo const &MCII, MCInst const &MCI);
@@ -107,6 +121,9 @@ bool isExtendable(MCInstrInfo const &MCII, MCInst const &MCI);
 
 // Return whether the instruction must be always extended.
 bool isExtended(MCInstrInfo const &MCII, MCInst const &MCI);
+
+/// Return whether it is a floating-point insn.
+bool isFloat(MCInstrInfo const &MCII, MCInst const &MCI);
 
 // Returns whether this instruction is an immediate extender
 bool isImmext(MCInst const &MCI);
@@ -136,8 +153,16 @@ bool isPrefix(MCInstrInfo const &MCII, MCInst const &MCI);
 // Return whether the insn is solo, i.e., cannot be in a packet.
 bool isSolo(MCInstrInfo const &MCII, MCInst const &MCI);
 
+/// Return whether the insn can be packaged only with A and X-type insns.
+bool isSoloAX(MCInstrInfo const &MCII, MCInst const &MCI);
+
+/// Return whether the insn can be packaged only with an A-type insn in slot #1.
+bool isSoloAin1(MCInstrInfo const &MCII, MCInst const &MCI);
+
 // Pad the bundle with nops to satisfy endloop requirements
 void padEndloop(MCInst &MCI);
+
+bool prefersSlot3(MCInstrInfo const &MCII, MCInst const &MCI);
 
 // Marks a bundle as endloop0
 void setInnerLoop(MCInst &MCI);

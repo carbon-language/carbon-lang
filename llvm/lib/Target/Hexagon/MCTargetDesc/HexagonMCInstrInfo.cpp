@@ -11,9 +11,12 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "HexagonMCInstrInfo.h"
+
 #include "Hexagon.h"
 #include "HexagonBaseInfo.h"
-#include "HexagonMCInstrInfo.h"
+
+#include "llvm/MC/MCSubtargetInfo.h"
 
 namespace llvm {
 iterator_range<MCInst::const_iterator>
@@ -140,12 +143,49 @@ MCOperand const &HexagonMCInstrInfo::getNewValueOperand(MCInstrInfo const &MCII,
   return (MCO);
 }
 
+int HexagonMCInstrInfo::getSubTarget(MCInstrInfo const &MCII,
+                                     MCInst const &MCI) {
+  const uint64_t F = HexagonMCInstrInfo::getDesc(MCII, MCI).TSFlags;
+
+  HexagonII::SubTarget Target = static_cast<HexagonII::SubTarget>(
+      (F >> HexagonII::validSubTargetPos) & HexagonII::validSubTargetMask);
+
+  switch (Target) {
+  default:
+    return Hexagon::ArchV4;
+  case HexagonII::HasV5SubT:
+    return Hexagon::ArchV5;
+  }
+}
+
 // Return the Hexagon ISA class for the insn.
 unsigned HexagonMCInstrInfo::getType(MCInstrInfo const &MCII,
                                      MCInst const &MCI) {
   const uint64_t F = HexagonMCInstrInfo::getDesc(MCII, MCI).TSFlags;
 
   return ((F >> HexagonII::TypePos) & HexagonII::TypeMask);
+}
+
+unsigned HexagonMCInstrInfo::getUnits(MCInstrInfo const &MCII,
+                                      MCSubtargetInfo const &STI,
+                                      MCInst const &MCI) {
+
+  const InstrItinerary *II = STI.getSchedModel().InstrItineraries;
+  int SchedClass = HexagonMCInstrInfo::getDesc(MCII, MCI).getSchedClass();
+  return ((II[SchedClass].FirstStage + HexagonStages)->getUnits());
+}
+
+bool HexagonMCInstrInfo::hasImmExt(MCInst const &MCI) {
+  if (!HexagonMCInstrInfo::isBundle(MCI))
+    return false;
+
+  for (const auto &I : HexagonMCInstrInfo::bundleInstructions(MCI)) {
+    auto MI = I.getInst();
+    if (isImmext(*MI))
+      return true;
+  }
+
+  return false;
 }
 
 // Return whether the instruction is a legal new-value producer.
@@ -212,18 +252,21 @@ bool HexagonMCInstrInfo::isConstExtended(MCInstrInfo const &MCII,
   return (ImmValue < MinValue || ImmValue > MaxValue);
 }
 
-// Return true if the instruction may be extended based on the operand value.
 bool HexagonMCInstrInfo::isExtendable(MCInstrInfo const &MCII,
                                       MCInst const &MCI) {
   uint64_t const F = HexagonMCInstrInfo::getDesc(MCII, MCI).TSFlags;
   return (F >> HexagonII::ExtendablePos) & HexagonII::ExtendableMask;
 }
 
-// Return whether the instruction must be always extended.
 bool HexagonMCInstrInfo::isExtended(MCInstrInfo const &MCII,
                                     MCInst const &MCI) {
   uint64_t const F = HexagonMCInstrInfo::getDesc(MCII, MCI).TSFlags;
   return (F >> HexagonII::ExtendedPos) & HexagonII::ExtendedMask;
+}
+
+bool HexagonMCInstrInfo::isFloat(MCInstrInfo const &MCII, MCInst const &MCI) {
+  const uint64_t F = HexagonMCInstrInfo::getDesc(MCII, MCI).TSFlags;
+  return ((F >> HexagonII::FPPos) & HexagonII::FPMask);
 }
 
 bool HexagonMCInstrInfo::isImmext(MCInst const &MCI) {
@@ -273,15 +316,24 @@ bool HexagonMCInstrInfo::isPredicatedTrue(MCInstrInfo const &MCII,
       !((F >> HexagonII::PredicatedFalsePos) & HexagonII::PredicatedFalseMask));
 }
 
-// Return whether the insn is a prefix.
 bool HexagonMCInstrInfo::isPrefix(MCInstrInfo const &MCII, MCInst const &MCI) {
   return (HexagonMCInstrInfo::getType(MCII, MCI) == HexagonII::TypePREFIX);
 }
 
-// Return whether the insn is solo, i.e., cannot be in a packet.
 bool HexagonMCInstrInfo::isSolo(MCInstrInfo const &MCII, MCInst const &MCI) {
   const uint64_t F = HexagonMCInstrInfo::getDesc(MCII, MCI).TSFlags;
   return ((F >> HexagonII::SoloPos) & HexagonII::SoloMask);
+}
+
+bool HexagonMCInstrInfo::isSoloAX(MCInstrInfo const &MCII, MCInst const &MCI) {
+  const uint64_t F = HexagonMCInstrInfo::getDesc(MCII, MCI).TSFlags;
+  return ((F >> HexagonII::SoloAXPos) & HexagonII::SoloAXMask);
+}
+
+bool HexagonMCInstrInfo::isSoloAin1(MCInstrInfo const &MCII,
+                                    MCInst const &MCI) {
+  const uint64_t F = HexagonMCInstrInfo::getDesc(MCII, MCI).TSFlags;
+  return ((F >> HexagonII::SoloAin1Pos) & HexagonII::SoloAin1Mask);
 }
 
 void HexagonMCInstrInfo::padEndloop(MCInst &MCB) {
@@ -293,6 +345,26 @@ void HexagonMCInstrInfo::padEndloop(MCInst &MCB) {
          ((HexagonMCInstrInfo::isOuterLoop(MCB) &&
            (HexagonMCInstrInfo::bundleSize(MCB) < HEXAGON_PACKET_OUTER_SIZE))))
     MCB.addOperand(MCOperand::createInst(new MCInst(Nop)));
+}
+
+bool HexagonMCInstrInfo::prefersSlot3(MCInstrInfo const &MCII,
+                                      MCInst const &MCI) {
+  if (HexagonMCInstrInfo::getType(MCII, MCI) == HexagonII::TypeCR)
+    return false;
+
+  unsigned SchedClass = HexagonMCInstrInfo::getDesc(MCII, MCI).getSchedClass();
+  switch (SchedClass) {
+  case Hexagon::Sched::ALU32_3op_tc_2_SLOT0123:
+  case Hexagon::Sched::ALU64_tc_2_SLOT23:
+  case Hexagon::Sched::ALU64_tc_3x_SLOT23:
+  case Hexagon::Sched::M_tc_2_SLOT23:
+  case Hexagon::Sched::M_tc_3x_SLOT23:
+  case Hexagon::Sched::S_2op_tc_2_SLOT23:
+  case Hexagon::Sched::S_3op_tc_2_SLOT23:
+  case Hexagon::Sched::S_3op_tc_3x_SLOT23:
+    return true;
+  }
+  return false;
 }
 
 void HexagonMCInstrInfo::setInnerLoop(MCInst &MCI) {

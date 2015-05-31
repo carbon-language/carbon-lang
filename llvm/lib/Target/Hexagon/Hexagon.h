@@ -79,5 +79,8 @@ namespace llvm {
 // Minimum number of instructions in an end-loop packet.
 #define HEXAGON_PACKET_INNER_SIZE 2
 #define HEXAGON_PACKET_OUTER_SIZE 3
+// Maximum number of instructions in a packet before shuffling,
+// including a compound one or a duplex or an extender.
+#define HEXAGON_PRESHUFFLE_PACKET_SIZE (HEXAGON_PACKET_SIZE + 3)
 
 #endif

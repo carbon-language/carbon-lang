@@ -17,6 +17,8 @@
 #include <cstdint>
 
 namespace llvm {
+class InstrItinerary;
+class InstrStage;
 class MCAsmBackend;
 class MCCodeEmitter;
 class MCContext;
@@ -30,6 +32,8 @@ class raw_ostream;
 class raw_pwrite_stream;
 
 extern Target TheHexagonTarget;
+
+extern const InstrStage HexagonStages[];
 
 MCInstrInfo *createHexagonMCInstrInfo();
 
