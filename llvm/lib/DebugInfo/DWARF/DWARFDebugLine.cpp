@@ -531,10 +531,36 @@ bool DWARFDebugLine::LineTable::parse(DataExtractor debug_line_data,
   return end_offset;
 }
 
+uint32_t
+DWARFDebugLine::LineTable::findRowInSeq(const DWARFDebugLine::Sequence &seq,
+                                        uint64_t address) const {
+  if (!seq.containsPC(address))
+    return UnknownRowIndex;
+  // Search for instruction address in the rows describing the sequence.
+  // Rows are stored in a vector, so we may use arithmetical operations with
+  // iterators.
+  DWARFDebugLine::Row row;
+  row.Address = address;
+  RowIter first_row = Rows.begin() + seq.FirstRowIndex;
+  RowIter last_row = Rows.begin() + seq.LastRowIndex;
+  LineTable::RowIter row_pos = std::lower_bound(
+      first_row, last_row, row, DWARFDebugLine::Row::orderByAddress);
+  if (row_pos == last_row) {
+    return seq.LastRowIndex - 1;
+  }
+  uint32_t index = seq.FirstRowIndex + (row_pos - first_row);
+  if (row_pos->Address > address) {
+    if (row_pos == first_row)
+      return UnknownRowIndex;
+    else
+      index--;
+  }
+  return index;
+}
+
 uint32_t DWARFDebugLine::LineTable::lookupAddress(uint64_t address) const {
-  uint32_t unknown_index = UINT32_MAX;
   if (Sequences.empty())
-    return unknown_index;
+    return UnknownRowIndex;
   // First, find an instruction sequence containing the given address.
   DWARFDebugLine::Sequence sequence;
   sequence.LowPC = address;
@@ -549,31 +575,10 @@ uint32_t DWARFDebugLine::LineTable::lookupAddress(uint64_t address) const {
     found_seq = *seq_pos;
   } else {
     if (seq_pos == first_seq)
-      return unknown_index;
+      return UnknownRowIndex;
     found_seq = *(seq_pos - 1);
   }
-  if (!found_seq.containsPC(address))
-    return unknown_index;
-  // Search for instruction address in the rows describing the sequence.
-  // Rows are stored in a vector, so we may use arithmetical operations with
-  // iterators.
-  DWARFDebugLine::Row row;
-  row.Address = address;
-  RowIter first_row = Rows.begin() + found_seq.FirstRowIndex;
-  RowIter last_row = Rows.begin() + found_seq.LastRowIndex;
-  RowIter row_pos = std::lower_bound(first_row, last_row, row,
-      DWARFDebugLine::Row::orderByAddress);
-  if (row_pos == last_row) {
-    return found_seq.LastRowIndex - 1;
-  }
-  uint32_t index = found_seq.FirstRowIndex + (row_pos - first_row);
-  if (row_pos->Address > address) {
-    if (row_pos == first_row)
-      return unknown_index;
-    else
-      index--;
-  }
-  return index;
+  return findRowInSeq(found_seq, address);
 }
 
 bool DWARFDebugLine::LineTable::lookupAddressRange(
@@ -602,44 +607,20 @@ bool DWARFDebugLine::LineTable::lookupAddressRange(
   // index we just calculated
 
   while (seq_pos != last_seq && seq_pos->LowPC < end_addr) {
-    DWARFDebugLine::Sequence cur_seq = *seq_pos;
-    uint32_t first_row_index;
-    uint32_t last_row_index;
-    if (seq_pos == start_pos) {
-      // For the first sequence, we need to find which row in the sequence is the
-      // first in our range. Rows are stored in a vector, so we may use
-      // arithmetical operations with iterators.
-      DWARFDebugLine::Row row;
-      row.Address = address;
-      RowIter first_row = Rows.begin() + cur_seq.FirstRowIndex;
-      RowIter last_row = Rows.begin() + cur_seq.LastRowIndex;
-      RowIter row_pos = std::upper_bound(first_row, last_row, row,
-                                         DWARFDebugLine::Row::orderByAddress);
-      // The 'row_pos' iterator references the first row that is greater than
-      // our start address. Unless that's the first row, we want to start at
-      // the row before that.
-      first_row_index = cur_seq.FirstRowIndex + (row_pos - first_row);
-      if (row_pos != first_row)
-        --first_row_index;
-    } else
-      first_row_index = cur_seq.FirstRowIndex;
+    const DWARFDebugLine::Sequence &cur_seq = *seq_pos;
+    // For the first sequence, we need to find which row in the sequence is the
+    // first in our range.
+    uint32_t first_row_index = cur_seq.FirstRowIndex;
+    if (seq_pos == start_pos)
+      first_row_index = findRowInSeq(cur_seq, address);
 
-    // For the last sequence in our range, we need to figure out the last row in
-    // range.  For all other sequences we can go to the end of the sequence.
-    if (cur_seq.HighPC > end_addr) {
-      DWARFDebugLine::Row row;
-      row.Address = end_addr;
-      RowIter first_row = Rows.begin() + cur_seq.FirstRowIndex;
-      RowIter last_row = Rows.begin() + cur_seq.LastRowIndex;
-      RowIter row_pos = std::upper_bound(first_row, last_row, row,
-                                         DWARFDebugLine::Row::orderByAddress);
-      // The 'row_pos' iterator references the first row that is greater than
-      // our end address.  The row before that is the last row we want.
-      last_row_index = cur_seq.FirstRowIndex + (row_pos - first_row) - 1;
-    } else
-      // Contrary to what you might expect, DWARFDebugLine::SequenceLastRowIndex
-      // isn't a valid index within the current sequence.  It's that plus one.
+    // Figure out the last row in the range.
+    uint32_t last_row_index = findRowInSeq(cur_seq, end_addr - 1);
+    if (last_row_index == UnknownRowIndex)
       last_row_index = cur_seq.LastRowIndex - 1;
+
+    assert(first_row_index != UnknownRowIndex);
+    assert(last_row_index != UnknownRowIndex);
 
     for (uint32_t i = first_row_index; i <= last_row_index; ++i) {
       result.push_back(i);

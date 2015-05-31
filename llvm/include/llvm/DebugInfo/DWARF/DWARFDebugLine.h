@@ -171,6 +171,9 @@ public:
   struct LineTable {
     LineTable();
 
+    // Represents an invalid row
+    const uint32_t UnknownRowIndex = UINT32_MAX;
+
     void appendRow(const DWARFDebugLine::Row &R) {
       Rows.push_back(R);
     }
@@ -179,7 +182,7 @@ public:
     }
 
     // Returns the index of the row with file/line info for a given address,
-    // or -1 if there is no such row.
+    // or UnknownRowIndex if there is no such row.
     uint32_t lookupAddress(uint64_t address) const;
 
     bool lookupAddressRange(uint64_t address, uint64_t size,
@@ -211,6 +214,10 @@ public:
     typedef SequenceVector::const_iterator SequenceIter;
     RowVector Rows;
     SequenceVector Sequences;
+
+  private:
+    uint32_t findRowInSeq(const DWARFDebugLine::Sequence &seq,
+                          uint64_t address) const;
   };
 
   const LineTable *getLineTable(uint32_t offset) const;

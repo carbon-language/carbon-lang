@@ -18,7 +18,6 @@ TEST_INLINE-NEXT: Line info @ 165: test-inline.cpp, line:35
 TEST_INLINE-NEXT: Function: _Z3foov, Size = 3
 TEST_INLINE-NEXT: Line info @ 0: test-inline.cpp, line:28
 TEST_INLINE-NEXT: Line info @ 2: test-inline.cpp, line:29
-TEST_INLINE-NEXT: Line info @ 3: test-inline.cpp, line:29
 TEST_INLINE-NEXT: Function: main, Size = 146
 TEST_INLINE-NEXT: Line info @ 0: test-inline.cpp, line:39
 TEST_INLINE-NEXT: Line info @ 21: test-inline.cpp, line:41
@@ -29,7 +28,6 @@ TEST_INLINE-NEXT: Line info @ 90: test-inline.cpp, line:45
 TEST_INLINE-NEXT: Line info @ 95: test-inline.cpp, line:46
 TEST_INLINE-NEXT: Line info @ 114: test-inline.cpp, line:48 
 TEST_INLINE-NEXT: Line info @ 141: test-inline.cpp, line:49
-TEST_INLINE-NEXT: Line info @ 146: test-inline.cpp, line:49
 
 ; This test checks the case where all code is in a single section.
 TEST_PARAMETERS:      Function: _Z15test_parametersPfPA2_dR11char_structPPitm, Size = 170
@@ -49,5 +47,4 @@ TEST_PARAMETERS-NEXT: Line info @ 90: test-parameters.cpp, line:45
 TEST_PARAMETERS-NEXT: Line info @ 95: test-parameters.cpp, line:46
 TEST_PARAMETERS-NEXT: Line info @ 114: test-parameters.cpp, line:48 
 TEST_PARAMETERS-NEXT: Line info @ 141: test-parameters.cpp, line:49
-TEST_PARAMETERS-NEXT: Line info @ 146: test-parameters.cpp, line:49
 
