@@ -887,9 +887,8 @@ void UnwrappedLineParser::parseStructuralElement() {
       // followed by a curly.
       if (FormatTok->is(TT_JsFatArrow)) {
         nextToken();
-        if (FormatTok->is(tok::l_brace)) {
+        if (FormatTok->is(tok::l_brace))
           parseChildBlock();
-        }
         break;
       }
 
@@ -1019,7 +1018,7 @@ void UnwrappedLineParser::tryToParseJSFunction() {
     return;
 
   // Parse formal parameter list.
-  parseBalanced(tok::l_paren, tok::r_paren);
+  parseParens();
 
   if (FormatTok->is(tok::colon)) {
     // Parse a type definition.
@@ -1027,32 +1026,14 @@ void UnwrappedLineParser::tryToParseJSFunction() {
 
     // Eat the type declaration. For braced inline object types, balance braces,
     // otherwise just parse until finding an l_brace for the function body.
-    if (FormatTok->is(tok::l_brace)) {
-      parseBalanced(tok::l_brace, tok::r_brace);
-    } else {
-      while(FormatTok->isNot(tok::l_brace) && !eof()) {
+    if (FormatTok->is(tok::l_brace))
+      tryToParseBracedList();
+    else
+      while(FormatTok->isNot(tok::l_brace) && !eof())
         nextToken();
-      }
-    }
   }
 
   parseChildBlock();
-}
-
-void UnwrappedLineParser::parseBalanced(tok::TokenKind OpenKind,
-                                        tok::TokenKind CloseKind) {
-  assert(FormatTok->is(OpenKind));
-  nextToken();
-  int Depth = 1;
-  while (Depth > 0 && !eof()) {
-    // Parse the formal parameter list.
-    if (FormatTok->is(OpenKind)) {
-      ++Depth;
-    } else if (FormatTok->is(CloseKind)) {
-      --Depth;
-    }
-    nextToken();
-  }
 }
 
 bool UnwrappedLineParser::tryToParseBracedList() {
@@ -1076,7 +1057,8 @@ bool UnwrappedLineParser::parseBracedList(bool ContinueOnSemicolons) {
       if (FormatTok->is(Keywords.kw_function)) {
         tryToParseJSFunction();
         continue;
-      } else if (FormatTok->is(TT_JsFatArrow)) {
+      }
+      if (FormatTok->is(TT_JsFatArrow)) {
         nextToken();
         // Fat arrows can be followed by simple expressions or by child blocks
         // in curly braces.
