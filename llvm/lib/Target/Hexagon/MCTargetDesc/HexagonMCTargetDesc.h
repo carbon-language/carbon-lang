@@ -17,8 +17,8 @@
 #include <cstdint>
 
 namespace llvm {
-class InstrItinerary;
-class InstrStage;
+struct InstrItinerary;
+struct InstrStage;
 class MCAsmBackend;
 class MCCodeEmitter;
 class MCContext;
