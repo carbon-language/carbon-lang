@@ -11,33 +11,60 @@
 
 #include "llvm/ADT/Optional.h"
 #include "llvm/Object/ELFTypes.h"
+#include "llvm/Support/ErrorOr.h"
 #include <mutex>
 #include <system_error>
 
 namespace lld {
 namespace elf {
 
+struct MipsAbiFlags {
+  unsigned _isa = 0;
+  unsigned _fpAbi = 0;
+  unsigned _ases = 0;
+  unsigned _flags1 = 0;
+  unsigned _gprSize = 0;
+  unsigned _cpr1Size = 0;
+  unsigned _cpr2Size = 0;
+
+  unsigned _abi = 0;
+
+  bool _isPic = false;
+  bool _isCPic = false;
+  bool _isNoReorder = false;
+  bool _is32BitMode = false;
+  bool _isNan2008 = false;
+};
+
 template <class ELFT> class MipsAbiInfoHandler {
 public:
   typedef llvm::object::Elf_Mips_RegInfo<ELFT> Elf_Mips_RegInfo;
+  typedef llvm::object::Elf_Mips_ABIFlags<ELFT> Elf_Mips_ABIFlags;
 
   MipsAbiInfoHandler() = default;
 
-  uint32_t getFlags() const { return _flags; }
-  const llvm::Optional<Elf_Mips_RegInfo> &getRegistersMask() const {
-    return _regMask;
-  }
+  uint32_t getFlags() const;
+  llvm::Optional<Elf_Mips_RegInfo> getRegistersMask() const;
+  llvm::Optional<Elf_Mips_ABIFlags> getAbiFlags() const;
 
   /// \brief Merge saved ELF header flags and the new set of flags.
-  std::error_code mergeFlags(uint32_t newFlags);
+  std::error_code mergeFlags(uint32_t newFlags,
+                             const Elf_Mips_ABIFlags *newAbi);
 
   /// \brief Merge saved and new sets of registers usage masks.
   void mergeRegistersMask(const Elf_Mips_RegInfo &info);
 
 private:
-  std::mutex _mutex;
-  uint32_t _flags = 0;
+  mutable std::mutex _mutex;
+  bool _hasAbiSection = false;
+  llvm::Optional<MipsAbiFlags> _abiFlags;
   llvm::Optional<Elf_Mips_RegInfo> _regMask;
+
+  llvm::ErrorOr<MipsAbiFlags> createAbiFlags(uint32_t flags,
+                                             const Elf_Mips_ABIFlags *sec);
+  static llvm::ErrorOr<MipsAbiFlags> createAbiFromHeaderFlags(uint32_t flags);
+  static llvm::ErrorOr<MipsAbiFlags>
+  createAbiFromSection(const Elf_Mips_ABIFlags &sec);
 };
 
 } // namespace elf

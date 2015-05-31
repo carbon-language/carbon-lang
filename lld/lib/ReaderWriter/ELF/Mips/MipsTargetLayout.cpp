@@ -38,6 +38,8 @@ MipsTargetLayout<ELFT>::getSegmentType(Section<ELFT> *section) const {
     return llvm::ELF::PT_MIPS_REGINFO;
   case ORDER_MIPS_OPTIONS:
     return llvm::ELF::PT_LOAD;
+  case ORDER_MIPS_ABI_FLAGS:
+    return llvm::ELF::PT_MIPS_ABIFLAGS;
   default:
     return TargetLayout<ELFT>::getSegmentType(section);
   }

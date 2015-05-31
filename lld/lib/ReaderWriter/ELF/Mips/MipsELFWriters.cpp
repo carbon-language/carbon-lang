@@ -85,6 +85,16 @@ MipsELFWriter<ELFT>::createOptionsSection(llvm::BumpPtrAllocator &alloc) {
 }
 
 template <class ELFT>
+unique_bump_ptr<Section<ELFT>>
+MipsELFWriter<ELFT>::createAbiFlagsSection(llvm::BumpPtrAllocator &alloc) {
+  typedef unique_bump_ptr<Section<ELFT>> Ptr;
+  const auto &abi = _abiInfo.getAbiFlags();
+  if (!abi.hasValue())
+    return Ptr();
+  return Ptr(new (alloc) MipsAbiFlagsSection<ELFT>(_ctx, _targetLayout, *abi));
+}
+
+template <class ELFT>
 void MipsELFWriter<ELFT>::setAtomValue(StringRef name, uint64_t value) {
   AtomLayout *atom = _targetLayout.findAbsoluteAtom(name);
   assert(atom);
@@ -117,6 +127,9 @@ void MipsDynamicLibraryWriter<ELFT>::createDefaultSections() {
   _reginfo = _writeHelper.createOptionsSection(this->_alloc);
   if (_reginfo)
     this->_layout.addSection(_reginfo.get());
+  _abiFlags = _writeHelper.createAbiFlagsSection(this->_alloc);
+  if (_abiFlags)
+    this->_layout.addSection(_abiFlags.get());
 }
 
 template <class ELFT>
@@ -235,6 +248,9 @@ template <class ELFT> void MipsExecutableWriter<ELFT>::createDefaultSections() {
   _reginfo = _writeHelper.createOptionsSection(this->_alloc);
   if (_reginfo)
     this->_layout.addSection(_reginfo.get());
+  _abiFlags = _writeHelper.createAbiFlagsSection(this->_alloc);
+  if (_abiFlags)
+    this->_layout.addSection(_abiFlags.get());
 }
 
 template <class ELFT>

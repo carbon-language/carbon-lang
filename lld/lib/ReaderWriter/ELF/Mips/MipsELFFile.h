@@ -100,8 +100,10 @@ private:
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Ehdr Elf_Ehdr;
   typedef llvm::object::Elf_Mips_RegInfo<ELFT> Elf_Mips_RegInfo;
   typedef llvm::object::Elf_Mips_Options<ELFT> Elf_Mips_Options;
+  typedef llvm::object::Elf_Mips_ABIFlags<ELFT> Elf_Mips_ABIFlags;
 
   ErrorOr<const Elf_Mips_RegInfo *> findRegInfoSec() const;
+  ErrorOr<const Elf_Mips_ABIFlags*> findAbiFlagsSec() const;
 
   std::error_code readAuxData();
 

@@ -31,6 +31,8 @@ public:
   std::unique_ptr<RuntimeFile<ELFT>> createRuntimeFile();
   unique_bump_ptr<Section<ELFT>>
   createOptionsSection(llvm::BumpPtrAllocator &alloc);
+  unique_bump_ptr<Section<ELFT>>
+  createAbiFlagsSection(llvm::BumpPtrAllocator &alloc);
 
 private:
   MipsLinkingContext &_ctx;
@@ -64,6 +66,7 @@ private:
   MipsELFWriter<ELFT> _writeHelper;
   MipsTargetLayout<ELFT> &_targetLayout;
   unique_bump_ptr<Section<ELFT>> _reginfo;
+  unique_bump_ptr<Section<ELFT>> _abiFlags;
 };
 
 template <class ELFT>
@@ -90,6 +93,7 @@ private:
   MipsELFWriter<ELFT> _writeHelper;
   MipsTargetLayout<ELFT> &_targetLayout;
   unique_bump_ptr<Section<ELFT>> _reginfo;
+  unique_bump_ptr<Section<ELFT>> _abiFlags;
 };
 
 } // elf

@@ -60,6 +60,26 @@ private:
   MipsTargetLayout<ELFT> &_targetLayout;
 };
 
+/// \brief Handle .MIPS.abiflags section
+template <class ELFT> class MipsAbiFlagsSection : public Section<ELFT> {
+public:
+  typedef llvm::object::Elf_Mips_ABIFlags<ELFT> Elf_Mips_ABIFlags;
+
+  MipsAbiFlagsSection(const ELFLinkingContext &ctx,
+                      MipsTargetLayout<ELFT> &targetLayout,
+                      const Elf_Mips_ABIFlags &abiFlags);
+
+  bool hasOutputSegment() const override { return true; }
+
+  void write(ELFWriter *writer, TargetLayout<ELFT> &layout,
+             llvm::FileOutputBuffer &buffer) override;
+  void finalize() override;
+
+private:
+  Elf_Mips_ABIFlags _abiFlags;
+  MipsTargetLayout<ELFT> &_targetLayout;
+};
+
 /// \brief Handle Mips GOT section
 template <class ELFT> class MipsGOTSection : public AtomSection<ELFT> {
 public:

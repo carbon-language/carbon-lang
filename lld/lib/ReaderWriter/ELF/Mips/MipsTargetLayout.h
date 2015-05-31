@@ -21,8 +21,9 @@ class MipsLinkingContext;
 template <class ELFT> class MipsTargetLayout final : public TargetLayout<ELFT> {
 public:
   enum MipsSectionOrder {
-    ORDER_MIPS_REGINFO = TargetLayout<ELFT>::ORDER_RO_NOTE + 1,
-    ORDER_MIPS_OPTIONS
+    ORDER_MIPS_ABI_FLAGS = TargetLayout<ELFT>::ORDER_RO_NOTE + 1,
+    ORDER_MIPS_REGINFO,
+    ORDER_MIPS_OPTIONS,
   };
 
   MipsTargetLayout(MipsLinkingContext &ctx);

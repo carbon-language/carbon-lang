@@ -89,6 +89,37 @@ template class MipsOptionsSection<ELF32LE>;
 template class MipsOptionsSection<ELF64LE>;
 
 template <class ELFT>
+MipsAbiFlagsSection<ELFT>::MipsAbiFlagsSection(
+    const ELFLinkingContext &ctx, MipsTargetLayout<ELFT> &targetLayout,
+    const Elf_Mips_ABIFlags &abiFlags)
+    : Section<ELFT>(ctx, ".MIPS.abiflags", "MipsAbiFlags"), _abiFlags(abiFlags),
+      _targetLayout(targetLayout) {
+  this->setOrder(MipsTargetLayout<ELFT>::ORDER_MIPS_ABI_FLAGS);
+  this->_alignment = 8;
+  this->_fsize = llvm::RoundUpToAlignment(sizeof(_abiFlags), this->_alignment);
+  this->_msize = this->_fsize;
+  this->_entSize = this->_fsize;
+  this->_type = SHT_MIPS_ABIFLAGS;
+  this->_flags = SHF_ALLOC;
+}
+
+template <class ELFT>
+void MipsAbiFlagsSection<ELFT>::write(ELFWriter *writer,
+                                      TargetLayout<ELFT> &layout,
+                                      llvm::FileOutputBuffer &buffer) {
+  uint8_t *dest = buffer.getBufferStart() + this->fileOffset();
+  std::memcpy(dest, &_abiFlags, this->_fsize);
+}
+
+template <class ELFT> void MipsAbiFlagsSection<ELFT>::finalize() {
+  if (this->_outputSection)
+    this->_outputSection->setType(this->_type);
+}
+
+template class MipsAbiFlagsSection<ELF32LE>;
+template class MipsAbiFlagsSection<ELF64LE>;
+
+template <class ELFT>
 MipsGOTSection<ELFT>::MipsGOTSection(const MipsLinkingContext &ctx)
     : AtomSection<ELFT>(ctx, ".got", DefinedAtom::typeGOT, DefinedAtom::permRW_,
                         MipsTargetLayout<ELFT>::ORDER_GOT),
