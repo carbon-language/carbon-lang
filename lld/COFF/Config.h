@@ -20,6 +20,7 @@ namespace lld {
 namespace coff {
 
 using llvm::COFF::WindowsSubsystem;
+using llvm::StringRef;
 
 class Configuration {
 public:
@@ -27,6 +28,9 @@ public:
   bool Verbose = false;
   WindowsSubsystem Subsystem = llvm::COFF::IMAGE_SUBSYSTEM_UNKNOWN;
   std::string EntryName;
+
+  std::set<StringRef> NoDefaultLibs;
+  bool NoDefaultLibAll = false;
 
   uint64_t ImageBase = 0x140000000;
   uint64_t StackReserve = 1024 * 1024;

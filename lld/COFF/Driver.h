@@ -11,6 +11,7 @@
 #define LLD_COFF_DRIVER_H
 
 #include "Memory.h"
+#include "llvm/ADT/Optional.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Object/COFF.h"
 #include "llvm/Option/Arg.h"
@@ -28,6 +29,7 @@ extern LinkerDriver *Driver;
 
 using llvm::COFF::MachineTypes;
 using llvm::COFF::WindowsSubsystem;
+using llvm::Optional;
 class InputFile;
 
 // Entry point of the COFF linker.
@@ -43,13 +45,13 @@ public:
   parseDirectives(StringRef S, std::vector<std::unique_ptr<InputFile>> *Res);
 
 private:
-  // Returns false if a given file has already been read.
-  bool insertFile(StringRef Path);
+  StringAllocator Alloc;
 
   // Searches a file from search paths.
-  StringRef findFile(StringRef Filename);
-  StringRef findLib(StringRef Filename);
-  StringRef addExtOpt(StringRef Filename, StringRef Ext);
+  Optional<StringRef> findFile(StringRef Filename);
+  Optional<StringRef> findLib(StringRef Filename);
+  StringRef doFindFile(StringRef Filename);
+  StringRef doFindLib(StringRef Filename);
 
   // Parses LIB environment which contains a list of search paths.
   // The returned list always contains "." as the first element.
@@ -57,7 +59,6 @@ private:
 
   std::vector<StringRef> SearchPaths;
   std::set<std::string> VisitedFiles;
-  StringAllocator Alloc;
 };
 
 ErrorOr<std::unique_ptr<llvm::opt::InputArgList>>

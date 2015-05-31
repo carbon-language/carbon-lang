@@ -95,18 +95,15 @@ LinkerDriver::parseDirectives(StringRef S,
     return EC;
   std::unique_ptr<llvm::opt::InputArgList> Args = std::move(ArgsOrErr.get());
 
-  for (auto *Arg : Args->filtered(OPT_defaultlib)) {
-    StringRef Path = findLib(Arg->getValue());
-    if (!insertFile(Path))
-      continue;
-    Res->push_back(llvm::make_unique<ArchiveFile>(Path));
-  }
+  for (auto *Arg : Args->filtered(OPT_defaultlib))
+    if (Optional<StringRef> Path = findLib(Arg->getValue()))
+      Res->push_back(llvm::make_unique<ArchiveFile>(*Path));
   return std::error_code();
 }
 
 // Find file from search paths. You can omit ".obj", this function takes
 // care of that. Note that the returned path is not guaranteed to exist.
-StringRef LinkerDriver::findFile(StringRef Filename) {
+StringRef LinkerDriver::doFindFile(StringRef Filename) {
   bool hasPathSep = (Filename.find_first_of("/\\") != StringRef::npos);
   if (hasPathSep)
     return Filename;
@@ -125,17 +122,38 @@ StringRef LinkerDriver::findFile(StringRef Filename) {
   return Filename;
 }
 
-StringRef LinkerDriver::findLib(StringRef Filename) {
-  StringRef S = addExtOpt(Filename, ".lib");
-  return findFile(S);
+// Resolves a file path. This never returns the same path
+// (in that case, it returns None).
+Optional<StringRef> LinkerDriver::findFile(StringRef Filename) {
+  StringRef Path = doFindFile(Filename);
+  bool Seen = !VisitedFiles.insert(Path.lower()).second;
+  if (Seen)
+    return None;
+  return Path;
 }
 
-// Add Ext to Filename if Filename has no file extension.
-StringRef LinkerDriver::addExtOpt(StringRef Filename, StringRef Ext) {
+// Find library file from search path.
+StringRef LinkerDriver::doFindLib(StringRef Filename) {
+  // Add ".lib" to Filename if that has no file extension.
   bool hasExt = (Filename.find('.') != StringRef::npos);
-  if (hasExt)
-    return Filename;
-  return Alloc.save(Filename + Ext);
+  if (!hasExt)
+    Filename = Alloc.save(Filename + ".lib");
+  return doFindFile(Filename);
+}
+
+// Resolves a library path. /nodefaultlib options are taken into
+// consideration. This never returns the same path (in that case,
+// it returns None).
+Optional<StringRef> LinkerDriver::findLib(StringRef Filename) {
+  if (Config->NoDefaultLibAll)
+    return None;
+  StringRef Path = doFindLib(Filename);
+  if (Config->NoDefaultLibs.count(Path))
+    return None;
+  bool Seen = !VisitedFiles.insert(Path.lower()).second;
+  if (Seen)
+    return None;
+  return Path;
 }
 
 // Parses LIB environment which contains a list of search paths.
@@ -190,6 +208,14 @@ bool LinkerDriver::link(int Argc, const char *Argv[]) {
   }
   Config->MachineType = MTOrErr.get();
 
+  // Handle /nodefaultlib:<filename>
+  for (auto *Arg : Args->filtered(OPT_nodefaultlib))
+    Config->NoDefaultLibs.insert(doFindLib(Arg->getValue()));
+
+  // Handle /nodefaultlib
+  if (Args->hasArg(OPT_nodefaultlib_all))
+    Config->NoDefaultLibAll = true;
+
   // Handle /base
   if (auto *Arg = Args->getLastArg(OPT_base)) {
     if (auto EC = parseNumbers(Arg->getValue(), &Config->ImageBase)) {
@@ -235,13 +261,20 @@ bool LinkerDriver::link(int Argc, const char *Argv[]) {
     }
   }
 
+  // Create a list of input files. Files can be given as arguments
+  // for /defaultlib option.
+  std::vector<StringRef> Inputs;
+  for (auto *Arg : Args->filtered(OPT_INPUT))
+    if (Optional<StringRef> Path = findFile(Arg->getValue()))
+      Inputs.push_back(*Path);
+  for (auto *Arg : Args->filtered(OPT_defaultlib))
+    if (Optional<StringRef> Path = findLib(Arg->getValue()))
+      Inputs.push_back(*Path);
+
   // Parse all input files and put all symbols to the symbol table.
   // The symbol table will take care of name resolution.
   SymbolTable Symtab;
-  for (auto *Arg : Args->filtered(OPT_INPUT)) {
-    StringRef Path = findFile(Arg->getValue());
-    if (!insertFile(Path))
-      continue;
+  for (StringRef Path : Inputs) {
     if (auto EC = Symtab.addFile(createFile(Path))) {
       llvm::errs() << Path << ": " << EC.message() << "\n";
       return false;
@@ -287,10 +320,6 @@ bool LinkerDriver::link(int Argc, const char *Argv[]) {
     return false;
   }
   return true;
-}
-
-bool LinkerDriver::insertFile(StringRef Path) {
-  return VisitedFiles.insert(Path.lower()).second;
 }
 
 } // namespace coff
