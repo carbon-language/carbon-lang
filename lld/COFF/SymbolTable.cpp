@@ -187,6 +187,15 @@ std::error_code SymbolTable::addUndefined(StringRef Name) {
   return addSymbol(new Undefined(Name));
 }
 
+// Resolve To, and make From an alias to To.
+std::error_code SymbolTable::rename(StringRef From, StringRef To) {
+  SymbolBody *Body = new (Alloc) Undefined(To);
+  if (auto EC = resolve(Body))
+    return EC;
+  Symtab[From]->Body = Body->getReplacement();
+  return std::error_code();
+}
+
 std::error_code SymbolTable::addSymbol(SymbolBody *Body) {
   OwningSymbols.push_back(std::unique_ptr<SymbolBody>(Body));
   return resolve(Body);

@@ -68,6 +68,9 @@ public:
   // Creates an Undefined symbol for a given name.
   std::error_code addUndefined(StringRef Name);
 
+  // Rename From -> To in the symbol table.
+  std::error_code rename(StringRef From, StringRef To);
+
 private:
   std::error_code addObject(ObjectFile *File);
   std::error_code addArchive(ArchiveFile *File);

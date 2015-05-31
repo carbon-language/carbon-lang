@@ -320,6 +320,27 @@ bool LinkerDriver::link(int Argc, const char *Argv[]) {
     }
   }
 
+  // Add weak aliases. Weak aliases is a mechanism to give remaining
+  // undefined symbols final chance to be resolved successfully.
+  // This is symbol renaming.
+  for (auto *Arg : Args->filtered(OPT_alternatename)) {
+    StringRef From, To;
+    std::tie(From, To) = StringRef(Arg->getValue()).split('=');
+    if (From.empty() || To.empty()) {
+      llvm::errs() << "/alternatename: invalid argument: "
+                   << Arg->getValue() << "\n";
+      return false;
+    }
+    // If it's already resolved as some Defined type, do nothing.
+    // Otherwise, rename it to see if To can be resolved successfully.
+    if (Symtab.find(From))
+      continue;
+    if (auto EC = Symtab.rename(From, To)) {
+      llvm::errs() << EC.message() << "\n";
+      return false;
+    }
+  }
+
   // Windows specific -- If entry point name is not given, we need to
   // infer that from user-defined entry name. The symbol table takes
   // care of details.
