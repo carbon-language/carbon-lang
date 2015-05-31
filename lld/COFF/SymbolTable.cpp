@@ -162,24 +162,23 @@ Defined *SymbolTable::find(StringRef Name) {
   return nullptr;
 }
 
-// Link default entry point name.
+// Windows specific -- Link default entry point name.
 ErrorOr<StringRef> SymbolTable::findDefaultEntry() {
+  // User-defined main functions and their corresponding entry points.
   static const char *Entries[][2] = {
-      {"mainCRTStartup", "mainCRTStartup"},
-      {"wmainCRTStartup", "wmainCRTStartup"},
-      {"WinMainCRTStartup", "WinMainCRTStartup"},
-      {"wWinMainCRTStartup", "wWinMainCRTStartup"},
       {"main", "mainCRTStartup"},
       {"wmain", "wmainCRTStartup"},
       {"WinMain", "WinMainCRTStartup"},
       {"wWinMain", "wWinMainCRTStartup"},
   };
-  for (size_t I = 0; I < array_lengthof(Entries); ++I) {
-    if (!find(Entries[I][0]))
+  for (auto E : Entries) {
+    if (find(E[1]))
+      return StringRef(E[1]);
+    if (!find(E[0]))
       continue;
-    if (auto EC = addSymbol(new Undefined(Entries[I][1])))
+    if (auto EC = addSymbol(new Undefined(E[1])))
       return EC;
-    return StringRef(Entries[I][1]);
+    return StringRef(E[1]);
   }
   return make_dynamic_error_code("entry point must be defined");
 }
