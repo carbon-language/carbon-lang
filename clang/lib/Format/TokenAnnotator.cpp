@@ -1321,7 +1321,7 @@ private:
       else if (Current->is(TT_LambdaArrow))
         return prec::Comma;
       else if (Current->isOneOf(tok::semi, TT_InlineASMColon,
-                                TT_SelectorName) ||
+                                TT_SelectorName, TT_JsComputedPropertyName) ||
                (Current->is(tok::comment) && NextNonComment &&
                 NextNonComment->is(TT_SelectorName)))
         return 0;
