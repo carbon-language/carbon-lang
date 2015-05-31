@@ -2,8 +2,8 @@
 
 ; test that we print the label of a bb that is only used in a jump table.
 
-; CHECK:	.long	LBB0_2
-; CHECK: LBB0_2:
+; CHECK:	.long	[[JUMPTABLE_DEST:LBB[0-9]+_[0-9]+]]
+; CHECK: [[JUMPTABLE_DEST]]:
 
 define i32 @calculate()  {
 entry:

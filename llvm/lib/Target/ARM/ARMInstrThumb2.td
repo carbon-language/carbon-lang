@@ -3531,20 +3531,20 @@ def t2B   : T2I<(outs), (ins uncondbrtarget:$target), IIC_Br,
   let AsmMatchConverter = "cvtThumbBranches";
 }
 
-let isNotDuplicable = 1, isIndirectBranch = 1 in {
+let Size = 4, isNotDuplicable = 1, isIndirectBranch = 1 in {
 def t2BR_JT : t2PseudoInst<(outs),
           (ins GPR:$target, GPR:$index, i32imm:$jt),
            0, IIC_Br,
           [(ARMbr2jt GPR:$target, GPR:$index, tjumptable:$jt)]>,
           Sched<[WriteBr]>;
 
-// FIXME: Add a non-pc based case that can be predicated.
+// FIXME: Add a case that can be predicated.
 def t2TBB_JT : t2PseudoInst<(outs),
-        (ins GPR:$index, i32imm:$jt), 0, IIC_Br, []>,
+        (ins GPR:$base, GPR:$index, i32imm:$jt, i32imm:$pclbl), 0, IIC_Br, []>,
         Sched<[WriteBr]>;
 
 def t2TBH_JT : t2PseudoInst<(outs),
-        (ins GPR:$index, i32imm:$jt), 0, IIC_Br, []>,
+        (ins GPR:$base, GPR:$index, i32imm:$jt, i32imm:$pclbl), 0, IIC_Br, []>,
         Sched<[WriteBr]>;
 
 def t2TBB : T2I<(outs), (ins addrmode_tbb:$addr), IIC_Br,

@@ -14,9 +14,19 @@ declare void @Z_fatal(i8*) noreturn nounwind
 
 declare noalias i8* @calloc(i32, i32) nounwind
 
+; Jump tables are not anchored next to the TBB/TBH any more. Make sure the
+; correct address is still calculated (i.e. via a PC-relative symbol *at* the
+; TBB/TBH).
 define i32 @main(i32 %argc, i8** nocapture %argv) nounwind {
 ; CHECK-LABEL: main:
-; CHECK: tbb
+; CHECK-NOT: adr {{r[0-9]+}}, LJTI
+; CHECK: [[PCREL_ANCHOR:LCPI[0-9]+_[0-9]+]]:
+; CHECK-NEXT:     tbb [pc, {{r[0-9]+}}]
+
+; CHECK: LJTI0_0:
+; CHECK-NEXT: .data_region jt8
+; CHECK-NEXT: .byte (LBB{{[0-9]+_[0-9]+}}-([[PCREL_ANCHOR]]+4))/2
+
 entry:
 	br label %bb42.i
 
