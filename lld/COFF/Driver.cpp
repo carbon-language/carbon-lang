@@ -32,6 +32,8 @@ using llvm::COFF::IMAGE_SUBSYSTEM_UNKNOWN;
 using llvm::COFF::IMAGE_SUBSYSTEM_WINDOWS_CUI;
 using llvm::COFF::IMAGE_SUBSYSTEM_WINDOWS_GUI;
 using llvm::sys::Process;
+using llvm::sys::fs::file_magic;
+using llvm::sys::fs::identify_magic;
 
 namespace lld {
 namespace coff {
@@ -62,14 +64,17 @@ static std::string getOutputPath(llvm::opt::InputArgList *Args) {
 
 // Opens a file. Path has to be resolved already.
 // Newly created memory buffers are owned by this driver.
-ErrorOr<std::unique_ptr<InputFile>> LinkerDriver::createFile(StringRef Path) {
+ErrorOr<std::unique_ptr<InputFile>> LinkerDriver::openFile(StringRef Path) {
   auto MBOrErr = MemoryBuffer::getFile(Path);
   if (auto EC = MBOrErr.getError())
     return EC;
   std::unique_ptr<MemoryBuffer> MB = std::move(MBOrErr.get());
   MemoryBufferRef MBRef = MB->getMemBufferRef();
   OwningMBs.push_back(std::move(MB)); // take ownership
-  if (StringRef(Path).endswith_lower(".lib"))
+
+  // File type is detected by contents, not by file extension.
+  file_magic Magic = identify_magic(MBRef.getBuffer());
+  if (Magic == file_magic::archive)
     return std::unique_ptr<InputFile>(new ArchiveFile(MBRef));
   return std::unique_ptr<InputFile>(new ObjectFile(MBRef));
 }
@@ -105,7 +110,7 @@ LinkerDriver::parseDirectives(StringRef S,
 
   for (auto *Arg : Args->filtered(OPT_defaultlib)) {
     if (Optional<StringRef> Path = findLib(Arg->getValue())) {
-      auto FileOrErr = createFile(*Path);
+      auto FileOrErr = openFile(*Path);
       if (auto EC = FileOrErr.getError())
         return EC;
       std::unique_ptr<InputFile> File = std::move(FileOrErr.get());
@@ -303,7 +308,7 @@ bool LinkerDriver::link(int Argc, const char *Argv[]) {
   // Parse all input files and put all symbols to the symbol table.
   // The symbol table will take care of name resolution.
   for (StringRef Path : Inputs) {
-    auto FileOrErr = createFile(Path);
+    auto FileOrErr = openFile(Path);
     if (auto EC = FileOrErr.getError()) {
       llvm::errs() << Path << ": " << EC.message() << "\n";
       return false;

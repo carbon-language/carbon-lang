@@ -33,8 +33,6 @@
 using namespace llvm::COFF;
 using namespace llvm;
 using llvm::sys::Process;
-using llvm::sys::fs::file_magic;
-using llvm::sys::fs::identify_magic;
 
 namespace lld {
 namespace coff {

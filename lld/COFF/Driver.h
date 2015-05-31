@@ -48,7 +48,7 @@ private:
   StringAllocator Alloc;
 
   // Opens a file. Path has to be resolved already.
-  ErrorOr<std::unique_ptr<InputFile>> createFile(StringRef Path);
+  ErrorOr<std::unique_ptr<InputFile>> openFile(StringRef Path);
 
   // Searches a file from search paths.
   Optional<StringRef> findFile(StringRef Filename);
