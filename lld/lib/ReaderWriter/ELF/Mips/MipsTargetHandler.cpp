@@ -17,7 +17,7 @@ namespace elf {
 
 template <class ELFT>
 MipsTargetHandler<ELFT>::MipsTargetHandler(MipsLinkingContext &ctx)
-    : _ctx(ctx), _targetLayout(new MipsTargetLayout<ELFT>(ctx)),
+    : _ctx(ctx), _targetLayout(new MipsTargetLayout<ELFT>(ctx, _abiInfoHandler)),
       _relocationHandler(
           createMipsRelocationHandler<ELFT>(ctx, *_targetLayout)) {}
 

@@ -43,6 +43,8 @@ public:
 
   MipsAbiInfoHandler() = default;
 
+  bool hasMipsAbiSection() const { return _hasAbiSection; }
+
   uint32_t getFlags() const;
   llvm::Optional<Elf_Mips_RegInfo> getRegistersMask() const;
   llvm::Optional<Elf_Mips_ABIFlags> getAbiFlags() const;

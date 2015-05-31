@@ -14,8 +14,9 @@ namespace lld {
 namespace elf {
 
 template <class ELFT>
-MipsTargetLayout<ELFT>::MipsTargetLayout(MipsLinkingContext &ctx)
-    : TargetLayout<ELFT>(ctx),
+MipsTargetLayout<ELFT>::MipsTargetLayout(MipsLinkingContext &ctx,
+                                         MipsAbiInfoHandler<ELFT> &abi)
+    : TargetLayout<ELFT>(ctx), _abiInfo(abi),
       _gotSection(new (this->_allocator) MipsGOTSection<ELFT>(ctx)),
       _pltSection(new (this->_allocator) MipsPLTSection<ELFT>(ctx)) {}
 
@@ -35,7 +36,8 @@ typename TargetLayout<ELFT>::SegmentType
 MipsTargetLayout<ELFT>::getSegmentType(Section<ELFT> *section) const {
   switch (section->order()) {
   case ORDER_MIPS_REGINFO:
-    return llvm::ELF::PT_MIPS_REGINFO;
+    return _abiInfo.hasMipsAbiSection() ? llvm::ELF::PT_LOAD
+                                        : llvm::ELF::PT_MIPS_REGINFO;
   case ORDER_MIPS_OPTIONS:
     return llvm::ELF::PT_LOAD;
   case ORDER_MIPS_ABI_FLAGS:
@@ -81,11 +83,13 @@ uint64_t MipsTargetLayout<ELFT>::getLookupSectionFlags(
 template <class ELFT> void MipsTargetLayout<ELFT>::sortSegments() {
   using namespace llvm::ELF;
   TargetLayout<ELFT>::sortSegments();
-  // Move PT_MIPS_ABIFLAGS right after PT_INTERP.
-  auto abiIt = std::find_if(this->_segments.begin(), this->_segments.end(),
-                            [](const Segment<ELFT> *s) {
-                              return s->segmentType() == PT_MIPS_ABIFLAGS;
-                            });
+  // Move PT_MIPS_ABIFLAGS or PT_MIPS_REGINFO right after PT_INTERP.
+  auto abiIt =
+      std::find_if(this->_segments.begin(), this->_segments.end(),
+                   [](const Segment<ELFT> *s) {
+                     auto typ = s->segmentType();
+                     return typ == PT_MIPS_ABIFLAGS || typ == PT_MIPS_REGINFO;
+                   });
   if (abiIt == this->_segments.end())
     return;
   Segment<ELFT> *abiSeg = *abiIt;

@@ -8,9 +8,9 @@
 
 # SEC:      Index: 1
 # SEC-NEXT: Name: .reginfo (1)
-# SEC-NEXT: Type: SHT_MIPS_REGINFO (0x70000006)
-# SEC-NEXT: Flags [ (0x2)
-# SEC-NEXT:   SHF_ALLOC (0x2)
+# SEC-NEXT: Type: SHT_MIPS_REGINFO
+# SEC-NEXT: Flags [
+# SEC-NEXT:   SHF_ALLOC
 # SEC-NEXT: ]
 # SEC-NEXT: Address: {{[0-9A-F]+}}
 # SEC-NEXT: Offset: {{[0-9A-F]+}}
@@ -20,18 +20,19 @@
 # SEC-NEXT: AddressAlignment: 4
 # SEC-NEXT: EntrySize: 24
 
-# SEC:      ProgramHeader {
-# SEC:        Type: PT_MIPS_REGINFO (0x70000000)
-# SEC-NEXT:   Offset: 0x{{[0-9A-F]+}}
-# SEC-NEXT:   VirtualAddress: 0x{{[0-9A-F]+}}
-# SEC-NEXT:   PhysicalAddress: 0x{{[0-9A-F]+}}
-# SEC-NEXT:   FileSize: 24
-# SEC-NEXT:   MemSize: 24
-# SEC-NEXT:   Flags [ (0x4)
-# SEC-NEXT:     PF_R (0x4)
-# SEC-NEXT:   ]
-# SEC-NEXT:   Alignment: 4
-# SEC-NEXT: }
+# SEC:      ProgramHeaders [
+# SEC-NEXT:   ProgramHeader {
+# SEC-NEXT:     Type: PT_MIPS_REGINFO
+# SEC-NEXT:     Offset: 0x{{[0-9A-F]+}}
+# SEC-NEXT:     VirtualAddress: 0x{{[0-9A-F]+}}
+# SEC-NEXT:     PhysicalAddress: 0x{{[0-9A-F]+}}
+# SEC-NEXT:     FileSize: 24
+# SEC-NEXT:     MemSize: 24
+# SEC-NEXT:     Flags [
+# SEC-NEXT:       PF_R
+# SEC-NEXT:     ]
+# SEC-NEXT:     Alignment: 4
+# SEC-NEXT:   }
 
 # RAW:      Contents of section .reginfo:
 # RAW-NEXT:  {{[0-9a-f]+}} f0000001 e0000002 d0000003 c0000004

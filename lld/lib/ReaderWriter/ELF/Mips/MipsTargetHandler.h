@@ -31,9 +31,9 @@ public:
 
 private:
   MipsLinkingContext &_ctx;
+  MipsAbiInfoHandler<ELFT> _abiInfoHandler;
   std::unique_ptr<MipsTargetLayout<ELFT>> _targetLayout;
   std::unique_ptr<TargetRelocationHandler> _relocationHandler;
-  MipsAbiInfoHandler<ELFT> _abiInfoHandler;
 };
 
 template <class ELFT> class MipsSymbolTable : public SymbolTable<ELFT> {

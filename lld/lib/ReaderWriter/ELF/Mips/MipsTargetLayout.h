@@ -9,6 +9,7 @@
 #ifndef LLD_READER_WRITER_ELF_MIPS_MIPS_TARGET_LAYOUT_H
 #define LLD_READER_WRITER_ELF_MIPS_MIPS_TARGET_LAYOUT_H
 
+#include "MipsAbiInfoHandler.h"
 #include "MipsSectionChunks.h"
 #include "TargetLayout.h"
 
@@ -26,7 +27,7 @@ public:
     ORDER_MIPS_OPTIONS,
   };
 
-  MipsTargetLayout(MipsLinkingContext &ctx);
+  MipsTargetLayout(MipsLinkingContext &ctx, MipsAbiInfoHandler<ELFT> &abi);
 
   const MipsGOTSection<ELFT> &getGOTSection() const { return *_gotSection; }
   const MipsPLTSection<ELFT> &getPLTSection() const { return *_pltSection; }
@@ -57,6 +58,7 @@ protected:
   void sortSegments() override;
 
 private:
+  MipsAbiInfoHandler<ELFT> &_abiInfo;
   MipsGOTSection<ELFT> *_gotSection;
   MipsPLTSection<ELFT> *_pltSection;
   uint64_t _gpAddr = 0;
