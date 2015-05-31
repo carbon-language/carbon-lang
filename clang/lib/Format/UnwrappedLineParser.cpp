@@ -1762,15 +1762,12 @@ void UnwrappedLineParser::addUnwrappedLine() {
     if (CurrentLines == &Lines)
       printDebugInfo(*Line);
   });
-  CurrentLines->push_back(*Line);
+  CurrentLines->push_back(std::move(*Line));
   Line->Tokens.clear();
   if (CurrentLines == &Lines && !PreprocessorDirectives.empty()) {
-    for (SmallVectorImpl<UnwrappedLine>::iterator
-             I = PreprocessorDirectives.begin(),
-             E = PreprocessorDirectives.end();
-         I != E; ++I) {
-      CurrentLines->push_back(*I);
-    }
+    CurrentLines->append(
+        std::make_move_iterator(PreprocessorDirectives.begin()),
+        std::make_move_iterator(PreprocessorDirectives.end()));
     PreprocessorDirectives.clear();
   }
 }
