@@ -54,6 +54,7 @@ protected:
   unique_bump_ptr<RelocationTable<ELFT>>
   createRelocationTable(StringRef name, int32_t order) override;
   uint64_t getLookupSectionFlags(const OutputSection<ELFT> *os) const override;
+  void sortSegments() override;
 
 private:
   MipsGOTSection<ELFT> *_gotSection;

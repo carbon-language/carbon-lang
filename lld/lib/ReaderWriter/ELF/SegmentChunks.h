@@ -157,7 +157,7 @@ public:
   int32_t sectionCount() const { return _sections.size(); }
 
   /// \brief, this function returns the type of segment (PT_*)
-  typename TargetLayout<ELFT>::SegmentType segmentType() {
+  typename TargetLayout<ELFT>::SegmentType segmentType() const {
     return _segmentType;
   }
 

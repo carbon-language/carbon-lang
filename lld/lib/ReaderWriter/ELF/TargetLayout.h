@@ -302,6 +302,9 @@ protected:
 
   virtual uint64_t getLookupSectionFlags(const OutputSection<ELFT> *os) const;
 
+  /// \brief Sort segements stored in the _segments
+  virtual void sortSegments();
+
 protected:
   llvm::BumpPtrAllocator _allocator;
   SectionMapT _sectionMap;

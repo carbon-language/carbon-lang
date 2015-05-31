@@ -26,8 +26,8 @@
 # CHECK-NEXT: }
 
 # CHECK:      ProgramHeaders [
-# CHECK:        ProgramHeader {
-# CHECK:          Type: PT_MIPS_ABIFLAGS (0x70000003)
+# CHECK-NEXT:   ProgramHeader {
+# CHECK-NEXT:     Type: PT_MIPS_ABIFLAGS (0x70000003)
 # CHECK-NEXT:     Offset: 0x{{[0-9A-F]+}}
 # CHECK-NEXT:     VirtualAddress: 0x{{[0-9A-F]+}}
 # CHECK-NEXT:     PhysicalAddress: 0x{{[0-9A-F]+}}

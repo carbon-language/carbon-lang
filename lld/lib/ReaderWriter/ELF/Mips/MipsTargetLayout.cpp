@@ -78,6 +78,26 @@ uint64_t MipsTargetLayout<ELFT>::getLookupSectionFlags(
   return flags & ~llvm::ELF::SHF_MIPS_NOSTRIP;
 }
 
+template <class ELFT> void MipsTargetLayout<ELFT>::sortSegments() {
+  using namespace llvm::ELF;
+  TargetLayout<ELFT>::sortSegments();
+  // Move PT_MIPS_ABIFLAGS right after PT_INTERP.
+  auto abiIt = std::find_if(this->_segments.begin(), this->_segments.end(),
+                            [](const Segment<ELFT> *s) {
+                              return s->segmentType() == PT_MIPS_ABIFLAGS;
+                            });
+  if (abiIt == this->_segments.end())
+    return;
+  Segment<ELFT> *abiSeg = *abiIt;
+  this->_segments.erase(abiIt);
+  auto outIt = std::find_if(this->_segments.begin(), this->_segments.end(),
+                            [](const Segment<ELFT> *s) {
+                              auto typ = s->segmentType();
+                              return typ != PT_PHDR && typ != PT_INTERP;
+                            });
+  this->_segments.insert(outIt, abiSeg);
+}
+
 template class MipsTargetLayout<ELF32LE>;
 template class MipsTargetLayout<ELF64LE>;
 

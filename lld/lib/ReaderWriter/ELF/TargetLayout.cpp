@@ -439,11 +439,15 @@ template <class ELFT> void TargetLayout<ELFT>::assignSectionsToSegments() {
   }
 }
 
+template <class ELFT> void TargetLayout<ELFT>::sortSegments() {
+  std::sort(_segments.begin(), _segments.end(), Segment<ELFT>::compareSegments);
+}
+
 template <class ELFT> void TargetLayout<ELFT>::assignVirtualAddress() {
   if (_segments.empty())
     return;
 
-  std::sort(_segments.begin(), _segments.end(), Segment<ELFT>::compareSegments);
+  sortSegments();
 
   uint64_t baseAddress = _ctx.getBaseAddress();
 
