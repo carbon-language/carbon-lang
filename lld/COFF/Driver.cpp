@@ -60,10 +60,18 @@ static std::string getOutputPath(llvm::opt::InputArgList *Args) {
   llvm_unreachable("internal error");
 }
 
-std::unique_ptr<InputFile> createFile(StringRef Path) {
+// Opens a file. Path has to be resolved already.
+// Newly created memory buffers are owned by this driver.
+ErrorOr<std::unique_ptr<InputFile>> LinkerDriver::createFile(StringRef Path) {
+  auto MBOrErr = MemoryBuffer::getFile(Path);
+  if (auto EC = MBOrErr.getError())
+    return EC;
+  std::unique_ptr<MemoryBuffer> MB = std::move(MBOrErr.get());
+  MemoryBufferRef MBRef = MB->getMemBufferRef();
+  OwningMBs.push_back(std::move(MB)); // take ownership
   if (StringRef(Path).endswith_lower(".lib"))
-    return llvm::make_unique<ArchiveFile>(Path);
-  return llvm::make_unique<ObjectFile>(Path);
+    return std::unique_ptr<InputFile>(new ArchiveFile(MBRef));
+  return std::unique_ptr<InputFile>(new ObjectFile(MBRef));
 }
 
 namespace {
@@ -95,9 +103,15 @@ LinkerDriver::parseDirectives(StringRef S,
     return EC;
   std::unique_ptr<llvm::opt::InputArgList> Args = std::move(ArgsOrErr.get());
 
-  for (auto *Arg : Args->filtered(OPT_defaultlib))
-    if (Optional<StringRef> Path = findLib(Arg->getValue()))
-      Res->push_back(llvm::make_unique<ArchiveFile>(*Path));
+  for (auto *Arg : Args->filtered(OPT_defaultlib)) {
+    if (Optional<StringRef> Path = findLib(Arg->getValue())) {
+      auto FileOrErr = createFile(*Path);
+      if (auto EC = FileOrErr.getError())
+        return EC;
+      std::unique_ptr<InputFile> File = std::move(FileOrErr.get());
+      Res->push_back(std::move(File));
+    }
+  }
   return std::error_code();
 }
 
@@ -289,7 +303,13 @@ bool LinkerDriver::link(int Argc, const char *Argv[]) {
   // Parse all input files and put all symbols to the symbol table.
   // The symbol table will take care of name resolution.
   for (StringRef Path : Inputs) {
-    if (auto EC = Symtab.addFile(createFile(Path))) {
+    auto FileOrErr = createFile(Path);
+    if (auto EC = FileOrErr.getError()) {
+      llvm::errs() << Path << ": " << EC.message() << "\n";
+      return false;
+    }
+    std::unique_ptr<InputFile> File = std::move(FileOrErr.get());
+    if (auto EC = Symtab.addFile(std::move(File))) {
       llvm::errs() << Path << ": " << EC.message() << "\n";
       return false;
     }

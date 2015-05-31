@@ -63,7 +63,7 @@ private:
 // .lib or .a file.
 class ArchiveFile : public InputFile {
 public:
-  explicit ArchiveFile(StringRef S) : InputFile(ArchiveKind), Filename(S) {}
+  explicit ArchiveFile(MemoryBufferRef M) : InputFile(ArchiveKind), MB(M) {}
   static bool classof(const InputFile *F) { return F->kind() == ArchiveKind; }
   std::error_code parse() override;
   StringRef getName() override { return Filename; }
@@ -79,7 +79,7 @@ public:
 private:
   std::unique_ptr<Archive> File;
   std::string Filename;
-  std::unique_ptr<MemoryBuffer> MB;
+  MemoryBufferRef MB;
   std::vector<SymbolBody *> SymbolBodies;
   std::set<const char *> Seen;
   llvm::MallocAllocator Alloc;
@@ -88,13 +88,10 @@ private:
 // .obj or .o file. This may be a member of an archive file.
 class ObjectFile : public InputFile {
 public:
-  explicit ObjectFile(StringRef S) : InputFile(ObjectKind), Filename(S) {}
-  ObjectFile(StringRef S, MemoryBufferRef M)
-      : InputFile(ObjectKind), Filename(S), MBRef(M) {}
-
+  explicit ObjectFile(MemoryBufferRef M) : InputFile(ObjectKind), MB(M) {}
   static bool classof(const InputFile *F) { return F->kind() == ObjectKind; }
   std::error_code parse() override;
-  StringRef getName() override { return Filename; }
+  StringRef getName() override { return MB.getBufferIdentifier(); }
   std::vector<Chunk *> &getChunks() { return Chunks; }
   std::vector<SymbolBody *> &getSymbols() override { return SymbolBodies; }
 
@@ -115,10 +112,8 @@ private:
   SymbolBody *createSymbolBody(StringRef Name, COFFSymbolRef Sym,
                                const void *Aux, bool IsFirst);
 
-  std::string Filename;
   std::unique_ptr<COFFObjectFile> COFFObj;
-  std::unique_ptr<MemoryBuffer> MB;
-  MemoryBufferRef MBRef;
+  MemoryBufferRef MB;
   StringRef Directives;
   llvm::BumpPtrAllocator Alloc;
 
@@ -148,15 +143,15 @@ private:
 // for details about the format.
 class ImportFile : public InputFile {
 public:
-  explicit ImportFile(MemoryBufferRef M) : InputFile(ImportKind), MBRef(M) {}
+  explicit ImportFile(MemoryBufferRef M) : InputFile(ImportKind), MB(M) {}
   static bool classof(const InputFile *F) { return F->kind() == ImportKind; }
-  StringRef getName() override { return MBRef.getBufferIdentifier(); }
+  StringRef getName() override { return MB.getBufferIdentifier(); }
   std::vector<SymbolBody *> &getSymbols() override { return SymbolBodies; }
 
 private:
   std::error_code parse() override;
 
-  MemoryBufferRef MBRef;
+  MemoryBufferRef MB;
   std::vector<SymbolBody *> SymbolBodies;
   llvm::BumpPtrAllocator Alloc;
   StringAllocator StringAlloc;

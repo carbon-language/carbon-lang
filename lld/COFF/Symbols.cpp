@@ -87,7 +87,7 @@ ErrorOr<std::unique_ptr<InputFile>> Lazy::getMember() {
   if (Magic != file_magic::coff_object)
     return make_dynamic_error_code("unknown file type");
 
-  std::unique_ptr<InputFile> Obj(new ObjectFile(MBRef.getBufferIdentifier(), MBRef));
+  std::unique_ptr<InputFile> Obj(new ObjectFile(MBRef));
   Obj->setParentName(File->getName());
   return std::move(Obj);
 }

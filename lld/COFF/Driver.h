@@ -47,6 +47,9 @@ public:
 private:
   StringAllocator Alloc;
 
+  // Opens a file. Path has to be resolved already.
+  ErrorOr<std::unique_ptr<InputFile>> createFile(StringRef Path);
+
   // Searches a file from search paths.
   Optional<StringRef> findFile(StringRef Filename);
   Optional<StringRef> findLib(StringRef Filename);
@@ -59,6 +62,10 @@ private:
 
   std::vector<StringRef> SearchPaths;
   std::set<std::string> VisitedFiles;
+
+  // Driver is the owner of all opened files.
+  // InputFiles have MemoryBufferRefs to them.
+  std::vector<std::unique_ptr<MemoryBuffer>> OwningMBs;
 };
 
 ErrorOr<std::unique_ptr<llvm::opt::InputArgList>>
