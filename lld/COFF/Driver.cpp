@@ -209,9 +209,11 @@ bool LinkerDriver::link(int Argc, const char *Argv[]) {
   Config->MachineType = MTOrErr.get();
 
   // Handle /libpath
-  // (Inserting at front of a vector is okay because it's short.)
-  for (auto *Arg : Args->filtered(OPT_libpath))
-    SearchPaths.insert(SearchPaths.begin(), Arg->getValue());
+  for (auto *Arg : Args->filtered(OPT_libpath)) {
+    // Inserting at front of a vector is okay because it's short.
+    // +1 because the first entry is always "." (current directory).
+    SearchPaths.insert(SearchPaths.begin() + 1, Arg->getValue());
+  }
 
   // Handle /nodefaultlib:<filename>
   for (auto *Arg : Args->filtered(OPT_nodefaultlib))
