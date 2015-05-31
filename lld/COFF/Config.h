@@ -26,7 +26,7 @@ public:
   llvm::COFF::MachineTypes MachineType = llvm::COFF::IMAGE_FILE_MACHINE_AMD64;
   bool Verbose = false;
   WindowsSubsystem Subsystem = llvm::COFF::IMAGE_SUBSYSTEM_WINDOWS_CUI;
-  std::string EntryName = "mainCRTStartup";
+  std::string EntryName;
 
   uint64_t ImageBase = 0x140000000;
   uint64_t StackReserve = 1024 * 1024;

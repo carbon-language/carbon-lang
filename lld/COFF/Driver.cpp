@@ -183,6 +183,20 @@ bool link(int Argc, const char *Argv[]) {
       return false;
     }
   }
+
+  // Windows specific -- If entry point name is not given, we need to
+  // infer that from user-defined entry name. The symbol table takes
+  // care of details.
+  if (Config->EntryName.empty()) {
+    auto EntryOrErr = Symtab.findDefaultEntry();
+    if (auto EC = EntryOrErr.getError()) {
+      llvm::errs() << EC.message() << "\n";
+      return false;
+    }
+    Config->EntryName = EntryOrErr.get();
+  }
+
+  // Make sure we have resolved all symbols.
   if (Symtab.reportRemainingUndefines())
     return false;
 

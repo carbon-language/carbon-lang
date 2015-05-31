@@ -19,13 +19,9 @@ namespace lld {
 namespace coff {
 
 SymbolTable::SymbolTable() {
-  addInitialSymbol(new DefinedAbsolute("__ImageBase", Config->ImageBase));
-  addInitialSymbol(new Undefined(Config->EntryName));
-}
-
-void SymbolTable::addInitialSymbol(SymbolBody *Body) {
-  OwnedSymbols.push_back(std::unique_ptr<SymbolBody>(Body));
-  Symtab[Body->getName()] = new (Alloc) Symbol(Body);
+  addSymbol(new DefinedAbsolute("__ImageBase", Config->ImageBase));
+  if (!Config->EntryName.empty())
+    addSymbol(new Undefined(Config->EntryName));
 }
 
 std::error_code SymbolTable::addFile(std::unique_ptr<InputFile> File) {
@@ -155,11 +151,40 @@ std::vector<Chunk *> SymbolTable::getChunks() {
   return Res;
 }
 
-SymbolBody *SymbolTable::find(StringRef Name) {
+Defined *SymbolTable::find(StringRef Name) {
   auto It = Symtab.find(Name);
   if (It == Symtab.end())
     return nullptr;
-  return It->second->Body;
+  if (auto *Def = dyn_cast<Defined>(It->second->Body))
+    return Def;
+  return nullptr;
+}
+
+// Link default entry point name.
+ErrorOr<StringRef> SymbolTable::findDefaultEntry() {
+  static const char *Entries[][2] = {
+      {"mainCRTStartup", "mainCRTStartup"},
+      {"wmainCRTStartup", "wmainCRTStartup"},
+      {"WinMainCRTStartup", "WinMainCRTStartup"},
+      {"wWinMainCRTStartup", "wWinMainCRTStartup"},
+      {"main", "mainCRTStartup"},
+      {"wmain", "wmainCRTStartup"},
+      {"WinMain", "WinMainCRTStartup"},
+      {"wWinMain", "wWinMainCRTStartup"},
+  };
+  for (size_t I = 0; I < sizeof(Entries); ++I) {
+    if (!find(Entries[I][0]))
+      continue;
+    if (auto EC = addSymbol(new Undefined(Entries[I][1])))
+      return EC;
+    return StringRef(Entries[I][1]);
+  }
+  return make_dynamic_error_code("entry point must be defined");
+}
+
+std::error_code SymbolTable::addSymbol(SymbolBody *Body) {
+  OwningSymbols.push_back(std::unique_ptr<SymbolBody>(Body));
+  return resolve(Body);
 }
 
 void SymbolTable::dump() {

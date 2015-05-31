@@ -44,7 +44,16 @@ public:
   // returned symbol actually has the same name (because of various
   // mechanisms to allow aliases, a name can be resolved to a
   // different symbol). Returns a nullptr if not found.
-  SymbolBody *find(StringRef Name);
+  Defined *find(StringRef Name);
+
+  // Windows specific -- `main` is not the only main function in Windows.
+  // You can choose one from these four -- {w,}{WinMain,main}.
+  // There are four different entry point functions for them,
+  // {w,}{WinMain,main}CRTStartup, respectively. The linker needs to
+  // choose the right one depending on which `main` function is defined.
+  // This function looks up the symbol table and resolve corresponding
+  // entry point name.
+  ErrorOr<StringRef> findDefaultEntry();
 
   // Dump contents of the symbol table to stderr.
   void dump();
@@ -63,11 +72,11 @@ private:
 
   std::error_code resolve(SymbolBody *Body);
   std::error_code addMemberFile(Lazy *Body);
-  void addInitialSymbol(SymbolBody *Body);
+  std::error_code addSymbol(SymbolBody *Body);
 
   std::unordered_map<StringRef, Symbol *> Symtab;
   std::vector<std::unique_ptr<ArchiveFile>> ArchiveFiles;
-  std::vector<std::unique_ptr<SymbolBody>> OwnedSymbols;
+  std::vector<std::unique_ptr<SymbolBody>> OwningSymbols;
   llvm::BumpPtrAllocator Alloc;
   StringAllocator StringAlloc;
 };
