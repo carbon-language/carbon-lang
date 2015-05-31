@@ -11,7 +11,6 @@
 
 #include "ELFReader.h"
 #include "MipsLinkingContext.h"
-#include "MipsReginfo.h"
 #include "MipsRelocationHandler.h"
 #include "llvm/ADT/STLExtras.h"
 

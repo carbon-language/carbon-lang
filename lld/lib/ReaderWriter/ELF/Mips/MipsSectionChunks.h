@@ -9,7 +9,6 @@
 #ifndef LLD_READER_WRITER_ELF_MIPS_MIPS_SECTION_CHUNKS_H
 #define LLD_READER_WRITER_ELF_MIPS_MIPS_SECTION_CHUNKS_H
 
-#include "MipsReginfo.h"
 #include "SectionChunks.h"
 
 namespace lld {
@@ -21,9 +20,11 @@ class MipsLinkingContext;
 /// \brief Handle Mips .reginfo section
 template <class ELFT> class MipsReginfoSection : public Section<ELFT> {
 public:
+  typedef llvm::object::Elf_Mips_RegInfo<ELFT> Elf_Mips_RegInfo;
+
   MipsReginfoSection(const ELFLinkingContext &ctx,
                      MipsTargetLayout<ELFT> &targetLayout,
-                     const MipsReginfo &reginfo);
+                     const Elf_Mips_RegInfo &reginfo);
 
   StringRef segmentKindToStr() const override { return "REGINFO"; }
   bool hasOutputSegment() const override { return true; }
@@ -33,8 +34,6 @@ public:
   void finalize() override;
 
 private:
-  typedef llvm::object::Elf_Mips_RegInfo<ELFT> Elf_Mips_RegInfo;
-
   Elf_Mips_RegInfo _reginfo;
   MipsTargetLayout<ELFT> &_targetLayout;
 };
@@ -42,9 +41,12 @@ private:
 /// \brief Handle .MIPS.options section
 template <class ELFT> class MipsOptionsSection : public Section<ELFT> {
 public:
+  typedef llvm::object::Elf_Mips_Options<ELFT> Elf_Mips_Options;
+  typedef llvm::object::Elf_Mips_RegInfo<ELFT> Elf_Mips_RegInfo;
+
   MipsOptionsSection(const ELFLinkingContext &ctx,
                      MipsTargetLayout<ELFT> &targetLayout,
-                     const MipsReginfo &reginfo);
+                     const Elf_Mips_RegInfo &reginfo);
 
   bool hasOutputSegment() const override { return true; }
 
@@ -53,9 +55,6 @@ public:
   void finalize() override;
 
 private:
-  typedef llvm::object::Elf_Mips_Options<ELFT> Elf_Mips_Options;
-  typedef llvm::object::Elf_Mips_RegInfo<ELFT> Elf_Mips_RegInfo;
-
   Elf_Mips_Options _header;
   Elf_Mips_RegInfo _reginfo;
   MipsTargetLayout<ELFT> &_targetLayout;

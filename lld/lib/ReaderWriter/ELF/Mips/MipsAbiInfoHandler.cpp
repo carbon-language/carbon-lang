@@ -61,16 +61,6 @@ static bool matchMipsISA(unsigned base, unsigned ext) {
 namespace lld {
 namespace elf {
 
-template <class ELFT> uint32_t MipsAbiInfoHandler<ELFT>::getFlags() const {
-  return _flags;
-}
-
-template <class ELFT>
-const llvm::Optional<MipsReginfo> &
-MipsAbiInfoHandler<ELFT>::getRegistersMask() const {
-  return _regMask;
-}
-
 template <class ELFT>
 std::error_code MipsAbiInfoHandler<ELFT>::mergeFlags(uint32_t newFlags) {
   // We support two ABI: O32 and N64. The last one does not have
@@ -151,12 +141,18 @@ std::error_code MipsAbiInfoHandler<ELFT>::mergeFlags(uint32_t newFlags) {
 }
 
 template <class ELFT>
-void MipsAbiInfoHandler<ELFT>::mergeRegistersMask(const MipsReginfo &info) {
+void MipsAbiInfoHandler<ELFT>::mergeRegistersMask(
+    const Elf_Mips_RegInfo &info) {
   std::lock_guard<std::mutex> lock(_mutex);
-  if (_regMask.hasValue())
-    _regMask->merge(info);
-  else
+  if (!_regMask.hasValue()) {
     _regMask = info;
+    return;
+  }
+  _regMask->ri_gprmask = _regMask->ri_gprmask | info.ri_gprmask;
+  _regMask->ri_cprmask[0] = _regMask->ri_cprmask[0] | info.ri_cprmask[0];
+  _regMask->ri_cprmask[1] = _regMask->ri_cprmask[1] | info.ri_cprmask[1];
+  _regMask->ri_cprmask[2] = _regMask->ri_cprmask[2] | info.ri_cprmask[2];
+  _regMask->ri_cprmask[3] = _regMask->ri_cprmask[3] | info.ri_cprmask[3];
 }
 
 template class MipsAbiInfoHandler<ELF32LE>;
