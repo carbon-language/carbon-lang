@@ -15,6 +15,8 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 
+using namespace llvm;
+
 namespace lld {
 namespace coff {
 
@@ -172,7 +174,7 @@ ErrorOr<StringRef> SymbolTable::findDefaultEntry() {
       {"WinMain", "WinMainCRTStartup"},
       {"wWinMain", "wWinMainCRTStartup"},
   };
-  for (size_t I = 0; I < sizeof(Entries); ++I) {
+  for (size_t I = 0; I < array_lengthof(Entries); ++I) {
     if (!find(Entries[I][0]))
       continue;
     if (auto EC = addSymbol(new Undefined(Entries[I][1])))
