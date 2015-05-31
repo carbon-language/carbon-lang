@@ -1,7 +1,7 @@
 add_llvm_library(lldMipsELFTarget
+  MipsAbiInfoHandler.cpp
   MipsCtorsOrderPass.cpp
   MipsELFFile.cpp
-  MipsELFFlagsMerger.cpp
   MipsELFWriters.cpp
   MipsLinkingContext.cpp
   MipsRelocationHandler.cpp

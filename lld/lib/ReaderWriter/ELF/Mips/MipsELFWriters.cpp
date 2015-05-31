@@ -27,8 +27,9 @@ namespace elf {
 
 template <class ELFT>
 MipsELFWriter<ELFT>::MipsELFWriter(MipsLinkingContext &ctx,
-                                   MipsTargetLayout<ELFT> &targetLayout)
-    : _ctx(ctx), _targetLayout(targetLayout) {}
+                                   MipsTargetLayout<ELFT> &targetLayout,
+                                   const MipsAbiInfoHandler<ELFT> &abiInfo)
+    : _ctx(ctx), _targetLayout(targetLayout), _abiInfo(abiInfo) {}
 
 template <class ELFT>
 void MipsELFWriter<ELFT>::setELFHeader(ELFHeader<ELFT> &elfHeader) {
@@ -40,7 +41,7 @@ void MipsELFWriter<ELFT>::setELFHeader(ELFHeader<ELFT> &elfHeader) {
   else
     elfHeader.e_ident(llvm::ELF::EI_ABIVERSION, 0);
 
-  elfHeader.e_flags(_ctx.getMergedELFFlags());
+  elfHeader.e_flags(_abiInfo.getFlags());
 }
 
 template <class ELFT>
@@ -70,6 +71,20 @@ std::unique_ptr<RuntimeFile<ELFT>> MipsELFWriter<ELFT>::createRuntimeFile() {
 }
 
 template <class ELFT>
+unique_bump_ptr<Section<ELFT>>
+MipsELFWriter<ELFT>::createOptionsSection(llvm::BumpPtrAllocator &alloc) {
+  typedef unique_bump_ptr<Section<ELFT>> Ptr;
+  const auto &regMask = _abiInfo.getRegistersMask();
+  if (!regMask.hasValue())
+    return Ptr();
+  return ELFT::Is64Bits
+             ? Ptr(new (alloc)
+                       MipsOptionsSection<ELFT>(_ctx, _targetLayout, *regMask))
+             : Ptr(new (alloc)
+                       MipsReginfoSection<ELFT>(_ctx, _targetLayout, *regMask));
+}
+
+template <class ELFT>
 void MipsELFWriter<ELFT>::setAtomValue(StringRef name, uint64_t value) {
   AtomLayout *atom = _targetLayout.findAbsoluteAtom(name);
   assert(atom);
@@ -78,9 +93,10 @@ void MipsELFWriter<ELFT>::setAtomValue(StringRef name, uint64_t value) {
 
 template <class ELFT>
 MipsDynamicLibraryWriter<ELFT>::MipsDynamicLibraryWriter(
-    MipsLinkingContext &ctx, MipsTargetLayout<ELFT> &layout)
-    : DynamicLibraryWriter<ELFT>(ctx, layout), _writeHelper(ctx, layout),
-      _targetLayout(layout) {}
+    MipsLinkingContext &ctx, MipsTargetLayout<ELFT> &layout,
+    const MipsAbiInfoHandler<ELFT> &abiInfo)
+    : DynamicLibraryWriter<ELFT>(ctx, layout),
+      _writeHelper(ctx, layout, abiInfo), _targetLayout(layout) {}
 
 template <class ELFT>
 void MipsDynamicLibraryWriter<ELFT>::createImplicitFiles(
@@ -98,17 +114,9 @@ void MipsDynamicLibraryWriter<ELFT>::finalizeDefaultAtomValues() {
 template <class ELFT>
 void MipsDynamicLibraryWriter<ELFT>::createDefaultSections() {
   DynamicLibraryWriter<ELFT>::createDefaultSections();
-  const auto &ctx = static_cast<const MipsLinkingContext &>(this->_ctx);
-  const auto &mask = ctx.getMergedReginfoMask();
-  if (!mask.hasValue())
-    return;
-  if (ELFT::Is64Bits)
-    _reginfo = unique_bump_ptr<Section<ELFT>>(
-        new (this->_alloc) MipsOptionsSection<ELFT>(ctx, _targetLayout, *mask));
-  else
-    _reginfo = unique_bump_ptr<Section<ELFT>>(
-        new (this->_alloc) MipsReginfoSection<ELFT>(ctx, _targetLayout, *mask));
-  this->_layout.addSection(_reginfo.get());
+  _reginfo = _writeHelper.createOptionsSection(this->_alloc);
+  if (_reginfo)
+    this->_layout.addSection(_reginfo.get());
 }
 
 template <class ELFT>
@@ -143,9 +151,10 @@ template class MipsDynamicLibraryWriter<ELF32LE>;
 template class MipsDynamicLibraryWriter<ELF64LE>;
 
 template <class ELFT>
-MipsExecutableWriter<ELFT>::MipsExecutableWriter(MipsLinkingContext &ctx,
-                                                 MipsTargetLayout<ELFT> &layout)
-    : ExecutableWriter<ELFT>(ctx, layout), _writeHelper(ctx, layout),
+MipsExecutableWriter<ELFT>::MipsExecutableWriter(
+    MipsLinkingContext &ctx, MipsTargetLayout<ELFT> &layout,
+    const MipsAbiInfoHandler<ELFT> &abiInfo)
+    : ExecutableWriter<ELFT>(ctx, layout), _writeHelper(ctx, layout, abiInfo),
       _targetLayout(layout) {}
 
 template <class ELFT>
@@ -223,17 +232,9 @@ void MipsExecutableWriter<ELFT>::finalizeDefaultAtomValues() {
 
 template <class ELFT> void MipsExecutableWriter<ELFT>::createDefaultSections() {
   ExecutableWriter<ELFT>::createDefaultSections();
-  const auto &ctx = static_cast<const MipsLinkingContext &>(this->_ctx);
-  const auto &mask = ctx.getMergedReginfoMask();
-  if (!mask.hasValue())
-    return;
-  if (ELFT::Is64Bits)
-    _reginfo = unique_bump_ptr<Section<ELFT>>(
-        new (this->_alloc) MipsOptionsSection<ELFT>(ctx, _targetLayout, *mask));
-  else
-    _reginfo = unique_bump_ptr<Section<ELFT>>(
-        new (this->_alloc) MipsReginfoSection<ELFT>(ctx, _targetLayout, *mask));
-  this->_layout.addSection(_reginfo.get());
+  _reginfo = _writeHelper.createOptionsSection(this->_alloc);
+  if (_reginfo)
+    this->_layout.addSection(_reginfo.get());
 }
 
 template <class ELFT>

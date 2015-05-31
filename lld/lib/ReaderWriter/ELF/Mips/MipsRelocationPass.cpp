@@ -10,6 +10,7 @@
 #include "MipsELFFile.h"
 #include "MipsLinkingContext.h"
 #include "MipsRelocationPass.h"
+#include "MipsTargetHandler.h"
 #include "llvm/ADT/DenseSet.h"
 
 using namespace lld;
@@ -310,6 +311,12 @@ private:
   /// \brief Owner of all the Atoms created by this pass.
   RelocationPassFile _file;
 
+  /// \brief Linked files contain MIPS R6 code.
+  bool _isMipsR6 = false;
+
+  /// \brief Linked files contain microMIPS code.
+  bool _isMicroMips = false;
+
   /// \brief Map Atoms and addend to local GOT entries.
   typedef std::pair<const Atom *, int64_t> LocalGotMapKeyT;
   llvm::DenseMap<LocalGotMapKeyT, GOTAtom *> _gotLocalMap;
@@ -411,8 +418,6 @@ private:
   bool mightBeDynamic(const MipsELFDefinedAtom<ELFT> &atom,
                       Reference::KindValue refKind) const;
   bool hasPLTEntry(const Atom *atom) const;
-
-  bool isR6Target() const;
 };
 
 template <typename ELFT>
@@ -425,6 +430,14 @@ RelocationPass<ELFT>::RelocationPass(MipsLinkingContext &ctx)
 
 template <typename ELFT>
 void RelocationPass<ELFT>::perform(std::unique_ptr<SimpleFile> &mf) {
+  auto &handler =
+      static_cast<MipsTargetHandler<ELFT> &>(this->_ctx.getTargetHandler());
+
+  uint32_t elfFlags = handler.getAbiInfoHandler().getFlags();
+  _isMicroMips = elfFlags & EF_MIPS_MICROMIPS;
+  _isMipsR6 = (elfFlags & EF_MIPS_ARCH) == EF_MIPS_ARCH_32R6 ||
+              (elfFlags & EF_MIPS_ARCH) == EF_MIPS_ARCH_64R6;
+
   for (const auto &atom : mf->defined())
     for (const auto &ref : *atom)
       collectReferenceInfo(*cast<MipsELFDefinedAtom<ELFT>>(atom),
@@ -696,16 +709,6 @@ bool RelocationPass<ELFT>::hasPLTEntry(const Atom *atom) const {
   return _pltRegMap.count(atom) || _pltMicroMap.count(atom);
 }
 
-template <typename ELFT> bool RelocationPass<ELFT>::isR6Target() const {
-  switch (_ctx.getMergedELFFlags() & EF_MIPS_ARCH) {
-  case EF_MIPS_ARCH_32R6:
-  case EF_MIPS_ARCH_64R6:
-    return true;
-  default:
-    return false;
-  }
-}
-
 template <typename ELFT>
 bool RelocationPass<ELFT>::requirePLTEntry(const Atom *a) const {
   if (!_hasStaticRelocations.count(a))
@@ -757,10 +760,8 @@ const LA25Atom *RelocationPass<ELFT>::getLA25Entry(const Atom *target,
 
 template <typename ELFT>
 const PLTAtom *RelocationPass<ELFT>::getPLTEntry(const Atom *a) {
-  bool hasMicroCode = _ctx.getMergedELFFlags() & EF_MIPS_MICROMIPS;
-
   // If file contains microMIPS code try to reuse compressed PLT entry...
-  if (hasMicroCode) {
+  if (_isMicroMips) {
     auto microPLT = _pltMicroMap.find(a);
     if (microPLT != _pltMicroMap.end())
       return microPLT->second;
@@ -772,7 +773,7 @@ const PLTAtom *RelocationPass<ELFT>::getPLTEntry(const Atom *a) {
     return regPLT->second;
 
   // ... and finally prefer to create new compressed PLT entry.
-  return hasMicroCode ? getPLTMicroEntry(a) : getPLTRegEntry(a);
+  return _isMicroMips ? getPLTMicroEntry(a) : getPLTRegEntry(a);
 }
 
 template <typename ELFT>
@@ -1009,7 +1010,7 @@ const PLTAtom *RelocationPass<ELFT>::getPLTRegEntry(const Atom *a) {
   if (plt != _pltRegMap.end())
     return plt->second;
 
-  PLTAAtom *pa = isR6Target()
+  PLTAAtom *pa = _isMipsR6
                      ? new (_file._alloc) PLTR6Atom(getGOTPLTEntry(a), _file)
                      : new (_file._alloc) PLTAAtom(getGOTPLTEntry(a), _file);
   _pltRegMap[a] = pa;

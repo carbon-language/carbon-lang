@@ -11,6 +11,7 @@
 
 #include "DynamicLibraryWriter.h"
 #include "ExecutableWriter.h"
+#include "MipsAbiInfoHandler.h"
 #include "MipsLinkingContext.h"
 
 namespace lld {
@@ -20,17 +21,21 @@ template <class ELFT> class MipsTargetLayout;
 
 template <typename ELFT> class MipsELFWriter {
 public:
-  MipsELFWriter(MipsLinkingContext &ctx, MipsTargetLayout<ELFT> &targetLayout);
+  MipsELFWriter(MipsLinkingContext &ctx, MipsTargetLayout<ELFT> &targetLayout,
+                const MipsAbiInfoHandler<ELFT> &abiInfo);
 
   void setELFHeader(ELFHeader<ELFT> &elfHeader);
 
   void finalizeMipsRuntimeAtomValues();
 
   std::unique_ptr<RuntimeFile<ELFT>> createRuntimeFile();
+  unique_bump_ptr<Section<ELFT>>
+  createOptionsSection(llvm::BumpPtrAllocator &alloc);
 
 private:
   MipsLinkingContext &_ctx;
   MipsTargetLayout<ELFT> &_targetLayout;
+  const MipsAbiInfoHandler<ELFT> &_abiInfo;
 
   void setAtomValue(StringRef name, uint64_t value);
 };
@@ -39,7 +44,8 @@ template <class ELFT>
 class MipsDynamicLibraryWriter : public DynamicLibraryWriter<ELFT> {
 public:
   MipsDynamicLibraryWriter(MipsLinkingContext &ctx,
-                           MipsTargetLayout<ELFT> &layout);
+                           MipsTargetLayout<ELFT> &layout,
+                           const MipsAbiInfoHandler<ELFT> &abiInfo);
 
 protected:
   // Add any runtime files and their atoms to the output
@@ -63,7 +69,8 @@ private:
 template <class ELFT>
 class MipsExecutableWriter : public ExecutableWriter<ELFT> {
 public:
-  MipsExecutableWriter(MipsLinkingContext &ctx, MipsTargetLayout<ELFT> &layout);
+  MipsExecutableWriter(MipsLinkingContext &ctx, MipsTargetLayout<ELFT> &layout,
+                       const MipsAbiInfoHandler<ELFT> &abiInfo);
 
 protected:
   void buildDynamicSymbolTable(const File &file) override;

@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "MipsELFFile.h"
+#include "MipsTargetHandler.h"
 
 namespace lld {
 namespace elf {
@@ -162,18 +163,20 @@ template <class ELFT> std::error_code MipsELFFile<ELFT>::readAuxData() {
     _dtpOff = sec->sh_addr + DTP_OFFSET;
   }
 
-  auto &ctx = static_cast<MipsLinkingContext &>(this->_ctx);
+  auto &handler =
+      static_cast<MipsTargetHandler<ELFT> &>(this->_ctx.getTargetHandler());
+  auto &abi = handler.getAbiInfoHandler();
 
   ErrorOr<const Elf_Mips_RegInfo *> regInfoSec = findRegInfoSec();
   if (auto ec = regInfoSec.getError())
     return ec;
   if (const Elf_Mips_RegInfo *regInfo = regInfoSec.get()) {
-    ctx.mergeReginfoMask(*regInfo);
+    abi.mergeRegistersMask(*regInfo);
     _gp0 = regInfo->ri_gp_value;
   }
 
   const Elf_Ehdr *hdr = this->_objFile->getHeader();
-  if (std::error_code ec = ctx.mergeElfFlags(hdr->e_flags))
+  if (std::error_code ec = abi.mergeFlags(hdr->e_flags))
     return ec;
 
   return std::error_code();

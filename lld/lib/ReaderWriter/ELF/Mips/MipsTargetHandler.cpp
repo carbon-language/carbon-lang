@@ -41,10 +41,11 @@ template <class ELFT>
 std::unique_ptr<Writer> MipsTargetHandler<ELFT>::getWriter() {
   switch (_ctx.getOutputELFType()) {
   case llvm::ELF::ET_EXEC:
-    return llvm::make_unique<MipsExecutableWriter<ELFT>>(_ctx, *_targetLayout);
+    return llvm::make_unique<MipsExecutableWriter<ELFT>>(_ctx, *_targetLayout,
+                                                         _abiInfoHandler);
   case llvm::ELF::ET_DYN:
-    return llvm::make_unique<MipsDynamicLibraryWriter<ELFT>>(_ctx,
-                                                             *_targetLayout);
+    return llvm::make_unique<MipsDynamicLibraryWriter<ELFT>>(
+        _ctx, *_targetLayout, _abiInfoHandler);
   case llvm::ELF::ET_REL:
     llvm_unreachable("TODO: support -r mode");
   default:

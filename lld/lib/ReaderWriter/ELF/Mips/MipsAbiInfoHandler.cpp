@@ -1,4 +1,4 @@
-//===- lib/ReaderWriter/ELF/MipsELFFlagsMerger.cpp ------------------------===//
+//===- lib/ReaderWriter/ELF/MipsAbiInfoHandler.cpp ------------------------===//
 //
 //                             The LLVM Linker
 //
@@ -7,14 +7,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "MipsELFFlagsMerger.h"
+#include "MipsAbiInfoHandler.h"
 #include "lld/Core/Error.h"
+#include "lld/ReaderWriter/ELFLinkingContext.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/ELF.h"
 #include "llvm/Support/raw_ostream.h"
 
-using namespace lld;
-using namespace lld::elf;
 using namespace llvm::ELF;
 
 struct MipsISATreeEdge {
@@ -59,16 +58,25 @@ static bool matchMipsISA(unsigned base, unsigned ext) {
   return false;
 }
 
-MipsELFFlagsMerger::MipsELFFlagsMerger(bool is64Bits)
-    : _is64Bit(is64Bits), _flags(0) {}
+namespace lld {
+namespace elf {
 
-uint32_t MipsELFFlagsMerger::getMergedELFFlags() const { return _flags; }
+template <class ELFT> uint32_t MipsAbiInfoHandler<ELFT>::getFlags() const {
+  return _flags;
+}
 
-std::error_code MipsELFFlagsMerger::mergeFlags(uint32_t newFlags) {
+template <class ELFT>
+const llvm::Optional<MipsReginfo> &
+MipsAbiInfoHandler<ELFT>::getRegistersMask() const {
+  return _regMask;
+}
+
+template <class ELFT>
+std::error_code MipsAbiInfoHandler<ELFT>::mergeFlags(uint32_t newFlags) {
   // We support two ABI: O32 and N64. The last one does not have
   // the corresponding ELF flag.
   uint32_t inAbi = newFlags & EF_MIPS_ABI;
-  uint32_t supportedAbi = _is64Bit ? 0 : uint32_t(EF_MIPS_ABI_O32);
+  uint32_t supportedAbi = ELFT::Is64Bits ? 0 : uint32_t(EF_MIPS_ABI_O32);
   if (inAbi != supportedAbi)
     return make_dynamic_error_code("Unsupported ABI");
 
@@ -140,4 +148,19 @@ std::error_code MipsELFFlagsMerger::mergeFlags(uint32_t newFlags) {
   _flags |= newFlags & EF_MIPS_32BITMODE;
 
   return std::error_code();
+}
+
+template <class ELFT>
+void MipsAbiInfoHandler<ELFT>::mergeRegistersMask(const MipsReginfo &info) {
+  std::lock_guard<std::mutex> lock(_mutex);
+  if (_regMask.hasValue())
+    _regMask->merge(info);
+  else
+    _regMask = info;
+}
+
+template class MipsAbiInfoHandler<ELF32LE>;
+template class MipsAbiInfoHandler<ELF64LE>;
+
+}
 }

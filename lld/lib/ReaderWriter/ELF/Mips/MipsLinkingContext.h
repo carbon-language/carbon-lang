@@ -9,10 +9,7 @@
 #ifndef LLD_READER_WRITER_ELF_MIPS_MIPS_LINKING_CONTEXT_H
 #define LLD_READER_WRITER_ELF_MIPS_MIPS_LINKING_CONTEXT_H
 
-#include "MipsELFFlagsMerger.h"
-#include "MipsReginfo.h"
 #include "lld/ReaderWriter/ELFLinkingContext.h"
-#include <mutex>
 
 namespace lld {
 namespace elf {
@@ -39,18 +36,10 @@ enum {
 
 class MipsLinkingContext final : public ELFLinkingContext {
 public:
-  int getMachineType() const override { return llvm::ELF::EM_MIPS; }
   MipsLinkingContext(llvm::Triple triple);
 
-  std::error_code mergeElfFlags(uint64_t flags);
-  void mergeReginfoMask(const MipsReginfo &info);
-
-  uint32_t getMergedELFFlags() const;
-  const llvm::Optional<MipsReginfo> &getMergedReginfoMask() const;
-
   void registerRelocationNames(Registry &r) override;
-
-  // ELFLinkingContext
+  int getMachineType() const override { return llvm::ELF::EM_MIPS; }
   uint64_t getBaseAddress() const override;
   StringRef entrySymbolName() const override;
   StringRef getDefaultInterpreter() const override;
@@ -60,11 +49,6 @@ public:
   bool isCopyRelocation(const Reference &r) const override;
   bool isPLTRelocation(const Reference &r) const override;
   bool isRelativeReloc(const Reference &r) const override;
-
-private:
-  MipsELFFlagsMerger _flagsMerger;
-  std::mutex _maskMutex;
-  llvm::Optional<MipsReginfo> _reginfoMask;
 };
 
 } // elf
