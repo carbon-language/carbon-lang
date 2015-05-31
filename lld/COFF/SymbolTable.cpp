@@ -49,7 +49,7 @@ std::error_code SymbolTable::addObject(ObjectFile *File) {
   StringRef Dir = File->getDirectives();
   if (!Dir.empty()) {
     std::vector<std::unique_ptr<InputFile>> Libs;
-    if (auto EC = parseDirectives(Dir, &Libs, &StringAlloc))
+    if (auto EC = Driver->parseDirectives(Dir, &Libs))
       return EC;
     for (std::unique_ptr<InputFile> &Lib : Libs)
       addFile(std::move(Lib));

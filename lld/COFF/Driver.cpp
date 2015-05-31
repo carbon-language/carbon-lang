@@ -35,6 +35,15 @@ namespace lld {
 namespace coff {
 
 Configuration *Config;
+LinkerDriver *Driver;
+
+bool link(int Argc, const char *Argv[]) {
+  auto C = make_unique<Configuration>();
+  Config = C.get();
+  auto D = make_unique<LinkerDriver>();
+  Driver = D.get();
+  return Driver->link(Argc, Argv);
+}
 
 static std::string getOutputPath(llvm::opt::InputArgList *Args) {
   if (auto *Arg = Args->getLastArg(OPT_out))
@@ -68,12 +77,12 @@ public:
 
 // Parses .drectve section contents and returns a list of files
 // specified by /defaultlib.
-std::error_code parseDirectives(StringRef S,
-                                std::vector<std::unique_ptr<InputFile>> *Res,
-                                StringAllocator *Alloc) {
+std::error_code
+LinkerDriver::parseDirectives(StringRef S,
+                              std::vector<std::unique_ptr<InputFile>> *Res) {
   SmallVector<const char *, 16> Tokens;
   Tokens.push_back("link"); // argv[0] value. Will be ignored.
-  BumpPtrStringSaver Saver(Alloc);
+  BumpPtrStringSaver Saver(&Alloc);
   llvm::cl::TokenizeWindowsCommandLine(S, Saver, Tokens);
   Tokens.push_back(nullptr);
   int Argc = Tokens.size() - 1;
@@ -86,16 +95,15 @@ std::error_code parseDirectives(StringRef S,
 
   for (auto *Arg : Args->filtered(OPT_defaultlib)) {
     std::string Path = findLib(Arg->getValue());
-    if (!Config->insertFile(Path))
+    if (!insertFile(Path))
       continue;
     Res->push_back(llvm::make_unique<ArchiveFile>(Path));
   }
   return std::error_code();
 }
 
-bool link(int Argc, const char *Argv[]) {
+bool LinkerDriver::link(int Argc, const char *Argv[]) {
   // Parse command line options.
-  Config = new Configuration();
   auto ArgsOrErr = parseArgs(Argc, Argv);
   if (auto EC = ArgsOrErr.getError()) {
     llvm::errs() << EC.message() << "\n";
@@ -180,7 +188,7 @@ bool link(int Argc, const char *Argv[]) {
   SymbolTable Symtab;
   for (auto *Arg : Args->filtered(OPT_INPUT)) {
     std::string Path = findFile(Arg->getValue());
-    if (!Config->insertFile(Path))
+    if (!insertFile(Path))
       continue;
     if (auto EC = Symtab.addFile(createFile(Path))) {
       llvm::errs() << Path << ": " << EC.message() << "\n";
@@ -227,6 +235,10 @@ bool link(int Argc, const char *Argv[]) {
     return false;
   }
   return true;
+}
+
+bool LinkerDriver::insertFile(StringRef Path) {
+  return VisitedFiles.insert(Path.lower()).second;
 }
 
 } // namespace coff

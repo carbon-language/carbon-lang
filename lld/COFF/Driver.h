@@ -16,22 +16,41 @@
 #include "llvm/Option/Arg.h"
 #include "llvm/Option/ArgList.h"
 #include <memory>
+#include <set>
 #include <system_error>
 #include <vector>
 
 namespace lld {
 namespace coff {
 
+class LinkerDriver;
+extern LinkerDriver *Driver;
+
 using llvm::COFF::MachineTypes;
 using llvm::COFF::WindowsSubsystem;
 class InputFile;
 
+// Entry point of the COFF linker.
+bool link(int Argc, const char *Argv[]);
+
+class LinkerDriver {
+public:
+  bool link(int Argc, const char *Argv[]);
+
+  // Used by the resolver to parse .drectve section contents.
+  std::error_code
+  parseDirectives(StringRef S, std::vector<std::unique_ptr<InputFile>> *Res);
+
+private:
+  // Returns false if a given file has already been read.
+  bool insertFile(StringRef Path);
+
+  std::set<std::string> VisitedFiles;
+  StringAllocator Alloc;
+};
+
 ErrorOr<std::unique_ptr<llvm::opt::InputArgList>>
 parseArgs(int Argc, const char *Argv[]);
-
-std::error_code parseDirectives(StringRef S,
-                                std::vector<std::unique_ptr<InputFile>> *Res,
-                                StringAllocator *Alloc);
 
 // Functions below this line are defined in DriverUtils.cpp.
 

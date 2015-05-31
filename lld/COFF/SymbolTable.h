@@ -78,7 +78,6 @@ private:
   std::vector<std::unique_ptr<ArchiveFile>> ArchiveFiles;
   std::vector<std::unique_ptr<SymbolBody>> OwningSymbols;
   llvm::BumpPtrAllocator Alloc;
-  StringAllocator StringAlloc;
 };
 
 } // namespace pecoff

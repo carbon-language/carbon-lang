@@ -37,13 +37,6 @@ public:
   uint32_t MinorImageVersion = 0;
   uint32_t MajorOSVersion = 6;
   uint32_t MinorOSVersion = 0;
-
-  bool insertFile(llvm::StringRef Path) {
-    return VisitedFiles.insert(Path.lower()).second;
-  }
-
-private:
-  std::set<std::string> VisitedFiles;
 };
 
 extern Configuration *Config;
