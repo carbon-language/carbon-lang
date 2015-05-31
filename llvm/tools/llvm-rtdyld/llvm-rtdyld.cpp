@@ -247,6 +247,36 @@ static int printLineInfoForInput(bool LoadObjects, bool UseDebugObj) {
     std::unique_ptr<DIContext> Context(
       new DWARFContextInMemory(*SymbolObj,LoadedObjInfo.get()));
 
+    // FIXME: This is generally useful. Figure out a place in lib/Object to
+    // put utility functions.
+    std::map<object::SectionRef, std::vector<uint64_t>> FuncAddresses;
+    if (!isa<ELFObjectFileBase>(SymbolObj)) {
+      for (object::SymbolRef Sym : SymbolObj->symbols()) {
+        object::SymbolRef::Type SymType;
+        if (Sym.getType(SymType))
+          continue;
+        if (SymType != object::SymbolRef::ST_Function)
+          continue;
+        uint64_t Addr;
+        if (Sym.getAddress(Addr))
+          continue;
+        object::section_iterator Sec = SymbolObj->section_end();
+        if (Sym.getSection(Sec))
+          continue;
+        std::vector<uint64_t> &Addrs = FuncAddresses[*Sec];
+        if (Addrs.empty()) {
+          uint64_t SecAddr = Sec->getAddress();
+          uint64_t SecSize = Sec->getSize();
+          Addrs.push_back(SecAddr + SecSize);
+        }
+        Addrs.push_back(Addr);
+      }
+      for (auto &Pair : FuncAddresses) {
+        std::vector<uint64_t> &Addrs = Pair.second;
+        array_pod_sort(Addrs.begin(), Addrs.end());
+      }
+    }
+
     // Use symbol info to iterate functions in the object.
     for (object::SymbolRef Sym : SymbolObj->symbols()) {
       object::SymbolRef::Type SymType;
@@ -255,13 +285,25 @@ static int printLineInfoForInput(bool LoadObjects, bool UseDebugObj) {
       if (SymType == object::SymbolRef::ST_Function) {
         StringRef  Name;
         uint64_t   Addr;
-        uint64_t   Size;
         if (Sym.getName(Name))
           continue;
         if (Sym.getAddress(Addr))
           continue;
-        if (Sym.getSize(Size))
-          continue;
+
+        uint64_t Size;
+        if (isa<ELFObjectFileBase>(SymbolObj)) {
+          if (Sym.getSize(Size))
+            continue;
+        } else {
+          object::section_iterator Sec = SymbolObj->section_end();
+          if (Sym.getSection(Sec))
+            continue;
+          const std::vector<uint64_t> &Addrs = FuncAddresses[*Sec];
+          auto AddrI = std::find(Addrs.begin(), Addrs.end(), Addr);
+          assert(AddrI != Addrs.end() && (AddrI + 1) != Addrs.end());
+          assert(*AddrI == Addr);
+          Size = *(AddrI + 1) - Addr;
+        }
 
         // If we're not using the debug object, compute the address of the
         // symbol in memory (rather than that in the unrelocated object file)
