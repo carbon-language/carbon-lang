@@ -1,0 +1,7 @@
+# RUN: yaml2obj < %p/Inputs/ret42.yaml > %t.obj
+
+# RUN: lld -flavor link2 /out:%t.exe %t.obj
+# RUN: not lld -flavor link2 /out:%t.exe %t.obj /include:xyz >& %t.log
+# RUN: FileCheck %s < %t.log
+
+CHECK: undefined symbol: xyz

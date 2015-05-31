@@ -23,7 +23,7 @@ namespace coff {
 SymbolTable::SymbolTable() {
   addSymbol(new DefinedAbsolute("__ImageBase", Config->ImageBase));
   if (!Config->EntryName.empty())
-    addSymbol(new Undefined(Config->EntryName));
+    addUndefined(Config->EntryName);
 }
 
 std::error_code SymbolTable::addFile(std::unique_ptr<InputFile> File) {
@@ -181,6 +181,10 @@ ErrorOr<StringRef> SymbolTable::findDefaultEntry() {
     return StringRef(E[1]);
   }
   return make_dynamic_error_code("entry point must be defined");
+}
+
+std::error_code SymbolTable::addUndefined(StringRef Name) {
+  return addSymbol(new Undefined(Name));
 }
 
 std::error_code SymbolTable::addSymbol(SymbolBody *Body) {

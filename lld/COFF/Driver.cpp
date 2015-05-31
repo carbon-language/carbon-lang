@@ -271,9 +271,16 @@ bool LinkerDriver::link(int Argc, const char *Argv[]) {
     if (Optional<StringRef> Path = findLib(Arg->getValue()))
       Inputs.push_back(*Path);
 
+  // Create a symbol table.
+  SymbolTable Symtab;
+
+  // Add undefined symbols given via the command line.
+  // (/include is equivalent to Unix linker's -u option.)
+  for (auto *Arg : Args->filtered(OPT_incl))
+    Symtab.addUndefined(Arg->getValue());
+
   // Parse all input files and put all symbols to the symbol table.
   // The symbol table will take care of name resolution.
-  SymbolTable Symtab;
   for (StringRef Path : Inputs) {
     if (auto EC = Symtab.addFile(createFile(Path))) {
       llvm::errs() << Path << ": " << EC.message() << "\n";

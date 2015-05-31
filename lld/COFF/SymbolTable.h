@@ -65,6 +65,9 @@ public:
   // The writer needs to infer the machine type from the object files.
   std::vector<std::unique_ptr<ObjectFile>> ObjectFiles;
 
+  // Creates an Undefined symbol for a given name.
+  std::error_code addUndefined(StringRef Name);
+
 private:
   std::error_code addObject(ObjectFile *File);
   std::error_code addArchive(ArchiveFile *File);
