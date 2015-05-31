@@ -1952,7 +1952,6 @@ bool ARMConstantIslands::optimizeThumb2Branches() {
   return MadeChange;
 }
 
-/// \brief 
 static bool isSimpleIndexCalc(MachineInstr &I, unsigned EntryReg,
                               unsigned BaseReg) {
   if (I.getOpcode() != ARM::t2ADDrs)
