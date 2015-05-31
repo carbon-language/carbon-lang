@@ -39,54 +39,6 @@ using llvm::sys::fs::identify_magic;
 namespace lld {
 namespace coff {
 
-// Split the given string with the path separator.
-static std::vector<StringRef> splitPathList(StringRef str) {
-  std::vector<StringRef> ret;
-  while (!str.empty()) {
-    StringRef path;
-    std::tie(path, str) = str.split(';');
-    ret.push_back(path);
-  }
-  return ret;
-}
-
-std::string findLib(StringRef Filename) {
-  if (llvm::sys::fs::exists(Filename))
-    return Filename;
-  std::string Name;
-  if (Filename.endswith_lower(".lib")) {
-    Name = Filename;
-  } else {
-    Name = (Filename + ".lib").str();
-  }
-
-  Optional<std::string> Env = Process::GetEnv("LIB");
-  if (!Env.hasValue())
-    return Filename;
-  for (StringRef Dir : splitPathList(*Env)) {
-    SmallString<128> Path = Dir;
-    llvm::sys::path::append(Path, Name);
-    if (llvm::sys::fs::exists(Path.str()))
-      return Path.str();
-  }
-  return Filename;
-}
-
-std::string findFile(StringRef Filename) {
-  if (llvm::sys::fs::exists(Filename))
-    return Filename;
-  Optional<std::string> Env = Process::GetEnv("LIB");
-  if (!Env.hasValue())
-    return Filename;
-  for (StringRef Dir : splitPathList(*Env)) {
-    SmallString<128> Path = Dir;
-    llvm::sys::path::append(Path, Filename);
-    if (llvm::sys::fs::exists(Path.str()))
-      return Path.str();
-  }
-  return Filename;
-}
-
 // Returns /machine's value.
 ErrorOr<MachineTypes> getMachineType(llvm::opt::InputArgList *Args) {
   if (auto *Arg = Args->getLastArg(OPT_machine)) {

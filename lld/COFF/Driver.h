@@ -35,6 +35,7 @@ bool link(int Argc, const char *Argv[]);
 
 class LinkerDriver {
 public:
+ LinkerDriver() : SearchPaths(getSearchPaths()) {}
   bool link(int Argc, const char *Argv[]);
 
   // Used by the resolver to parse .drectve section contents.
@@ -45,6 +46,16 @@ private:
   // Returns false if a given file has already been read.
   bool insertFile(StringRef Path);
 
+  // Searches a file from search paths.
+  StringRef findFile(StringRef Filename);
+  StringRef findLib(StringRef Filename);
+  StringRef addExtOpt(StringRef Filename, StringRef Ext);
+
+  // Parses LIB environment which contains a list of search paths.
+  // The returned list always contains "." as the first element.
+  std::vector<StringRef> getSearchPaths();
+
+  std::vector<StringRef> SearchPaths;
   std::set<std::string> VisitedFiles;
   StringAllocator Alloc;
 };
@@ -55,10 +66,6 @@ parseArgs(int Argc, const char *Argv[]);
 // Functions below this line are defined in DriverUtils.cpp.
 
 void printHelp(const char *Argv0);
-
-// "ENV" environment variable-aware file finders.
-std::string findLib(StringRef Filename);
-std::string findFile(StringRef Filename);
 
 // For /machine option.
 ErrorOr<MachineTypes> getMachineType(llvm::opt::InputArgList *Args);

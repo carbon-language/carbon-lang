@@ -23,6 +23,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Path.h"
+#include "llvm/Support/Process.h"
 #include "llvm/Support/raw_ostream.h"
 #include <memory>
 
@@ -30,6 +31,7 @@ using namespace llvm;
 using llvm::COFF::IMAGE_SUBSYSTEM_UNKNOWN;
 using llvm::COFF::IMAGE_SUBSYSTEM_WINDOWS_CUI;
 using llvm::COFF::IMAGE_SUBSYSTEM_WINDOWS_GUI;
+using llvm::sys::Process;
 
 namespace lld {
 namespace coff {
@@ -94,12 +96,62 @@ LinkerDriver::parseDirectives(StringRef S,
   std::unique_ptr<llvm::opt::InputArgList> Args = std::move(ArgsOrErr.get());
 
   for (auto *Arg : Args->filtered(OPT_defaultlib)) {
-    std::string Path = findLib(Arg->getValue());
+    StringRef Path = findLib(Arg->getValue());
     if (!insertFile(Path))
       continue;
     Res->push_back(llvm::make_unique<ArchiveFile>(Path));
   }
   return std::error_code();
+}
+
+// Find file from search paths. You can omit ".obj", this function takes
+// care of that. Note that the returned path is not guaranteed to exist.
+StringRef LinkerDriver::findFile(StringRef Filename) {
+  bool hasPathSep = (Filename.find_first_of("/\\") != StringRef::npos);
+  if (hasPathSep)
+    return Filename;
+  bool hasExt = (Filename.find('.') != StringRef::npos);
+  for (StringRef Dir : SearchPaths) {
+    SmallString<128> Path = Dir;
+    llvm::sys::path::append(Path, Filename);
+    if (llvm::sys::fs::exists(Path.str()))
+      return Alloc.save(Path.str());
+    if (!hasExt) {
+      Path.append(".obj");
+      if (llvm::sys::fs::exists(Path.str()))
+        return Alloc.save(Path.str());
+    }
+  }
+  return Filename;
+}
+
+StringRef LinkerDriver::findLib(StringRef Filename) {
+  StringRef S = addExtOpt(Filename, ".lib");
+  return findFile(S);
+}
+
+// Add Ext to Filename if Filename has no file extension.
+StringRef LinkerDriver::addExtOpt(StringRef Filename, StringRef Ext) {
+  bool hasExt = (Filename.find('.') != StringRef::npos);
+  if (hasExt)
+    return Filename;
+  return Alloc.save(Filename + Ext);
+}
+
+// Parses LIB environment which contains a list of search paths.
+std::vector<StringRef> LinkerDriver::getSearchPaths() {
+  std::vector<StringRef> Ret;
+  Ret.push_back(".");
+  Optional<std::string> EnvOpt = Process::GetEnv("LIB");
+  if (!EnvOpt.hasValue())
+    return Ret;
+  StringRef Env = Alloc.save(*EnvOpt);
+  while (!Env.empty()) {
+    StringRef Path;
+    std::tie(Path, Env) = Env.split(';');
+    Ret.push_back(Path);
+  }
+  return Ret;
 }
 
 bool LinkerDriver::link(int Argc, const char *Argv[]) {
@@ -187,7 +239,7 @@ bool LinkerDriver::link(int Argc, const char *Argv[]) {
   // The symbol table will take care of name resolution.
   SymbolTable Symtab;
   for (auto *Arg : Args->filtered(OPT_INPUT)) {
-    std::string Path = findFile(Arg->getValue());
+    StringRef Path = findFile(Arg->getValue());
     if (!insertFile(Path))
       continue;
     if (auto EC = Symtab.addFile(createFile(Path))) {

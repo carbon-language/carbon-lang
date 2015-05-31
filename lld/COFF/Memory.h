@@ -31,6 +31,7 @@ public:
 
   StringRef save(Twine S) { return save(StringRef(S.str())); }
   StringRef save(const char *S) { return save(StringRef(S)); }
+  StringRef save(std::string &S) { return save(StringRef(S)); }
 
 private:
   llvm::BumpPtrAllocator Alloc;
