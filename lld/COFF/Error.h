@@ -26,7 +26,7 @@ enum class LLDError {
 
 class LLDErrorCategory : public std::error_category {
 public:
-  const char *name() const noexcept override { return "lld"; }
+  const char *name() const LLVM_NOEXCEPT override { return "lld"; }
 
   std::string message(int EV) const override {
     switch (static_cast<LLDError>(EV)) {
