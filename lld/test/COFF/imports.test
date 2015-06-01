@@ -12,16 +12,19 @@ TEXT-NEXT: movq    $0, %rcx
 TEXT-NEXT: leaq    -4108(%rip), %rdx
 TEXT-NEXT: leaq    -4121(%rip), %r8
 TEXT-NEXT: movl    $0, %r9d
-TEXT-NEXT: callq   16
+TEXT-NEXT: callq   27
 TEXT-NEXT: movl    $0, %ecx
-TEXT-NEXT: callq   0
-TEXT-NEXT: jmpq    *4108(%rip)
-TEXT-NEXT: jmpq    *4110(%rip)
+TEXT-NEXT: callq   5
+TEXT-NEXT: callq   6
+TEXT-NEXT: jmpq    *4111(%rip)
+TEXT-NEXT: jmpq    *4113(%rip)
+TEXT-NEXT: jmpq    *4115(%rip)
 
 IMPORT:      Import {
 IMPORT-NEXT:   Name: std64.dll
 IMPORT-NEXT:   ImportLookupTableRVA: 0x3028
-IMPORT-NEXT:   ImportAddressTableRVA: 0x3040
+IMPORT-NEXT:   ImportAddressTableRVA: 0x3048
 IMPORT-NEXT:   Symbol: ExitProcess (0)
+IMPORT-NEXT:   Symbol:  (50)
 IMPORT-NEXT:   Symbol: MessageBoxA (1)
 IMPORT-NEXT: }

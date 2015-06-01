@@ -186,6 +186,12 @@ void LookupChunk::applyRelocations(uint8_t *Buf) {
   write32le(Buf + FileOff, HintName->getRVA());
 }
 
+void OrdinalOnlyChunk::writeTo(uint8_t *Buf) {
+  // An import-by-ordinal slot has MSB 1 to indicate that
+  // this is import-by-ordinal (and not import-by-name).
+  write64le(Buf + FileOff, (uint64_t(1) << 63) | Ordinal);
+}
+
 void DirectoryChunk::applyRelocations(uint8_t *Buf) {
   auto *E = (coff_import_directory_table_entry *)(Buf + FileOff);
   E->ImportLookupTableRVA = LookupTab->getRVA();
@@ -195,20 +201,27 @@ void DirectoryChunk::applyRelocations(uint8_t *Buf) {
 
 ImportTable::ImportTable(StringRef N,
                          std::vector<DefinedImportData *> &Symbols) {
+  // Create the import table hader.
   DLLName = new StringChunk(N);
   DirTab = new DirectoryChunk(DLLName);
-  for (DefinedImportData *S : Symbols)
-    HintNameTables.push_back(
-        new HintNameChunk(S->getExportName(), S->getOrdinal()));
 
-  for (Chunk *H : HintNameTables) {
-    LookupTables.push_back(new LookupChunk(H));
-    AddressTables.push_back(new LookupChunk(H));
+  // Create lookup and address tables. If they have external names,
+  // we need to create HintName chunks to store the names.
+  // If they don't (if they are import-by-ordinals), we store only
+  // ordinal values to the table.
+  for (DefinedImportData *S : Symbols) {
+    if (S->getExternalName().empty()) {
+      LookupTables.push_back(new OrdinalOnlyChunk(S->getOrdinal()));
+      AddressTables.push_back(new OrdinalOnlyChunk(S->getOrdinal()));
+      continue;
+    }
+    Chunk *C = new HintNameChunk(S->getExternalName(), S->getOrdinal());
+    HintNameTables.push_back(C);
+    LookupTables.push_back(new LookupChunk(C));
+    AddressTables.push_back(new LookupChunk(C));
   }
-
   for (int I = 0, E = Symbols.size(); I < E; ++I)
     Symbols[I]->setLocation(AddressTables[I]);
-
   DirTab->LookupTab = LookupTables[0];
   DirTab->AddressTab = AddressTables[0];
 }

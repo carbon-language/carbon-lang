@@ -229,7 +229,11 @@ std::error_code ImportFile::parse() {
   StringRef Name = StringAlloc.save(StringRef(Buf + sizeof(*Hdr)));
   StringRef ImpName = StringAlloc.save(Twine("__imp_") + Name);
   StringRef DLLName(Buf + sizeof(coff_import_header) + Name.size() + 1);
-  auto *ImpSym = new (Alloc) DefinedImportData(DLLName, ImpName, Name, Hdr);
+  StringRef ExternalName = Name;
+  if (Hdr->getNameType() == llvm::COFF::IMPORT_ORDINAL)
+    ExternalName = "";
+  auto *ImpSym = new (Alloc) DefinedImportData(DLLName, ImpName, ExternalName,
+                                               Hdr);
   SymbolBodies.push_back(ImpSym);
 
   // If type is function, we need to create a thunk which jump to an

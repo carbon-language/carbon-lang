@@ -214,6 +214,18 @@ public:
 };
 
 // A chunk for the import descriptor table.
+// This chunk represent import-by-ordinal symbols.
+// See the Microsoft PE/COFF spec 7.1. Import Header for details.
+class OrdinalOnlyChunk : public Chunk {
+public:
+  explicit OrdinalOnlyChunk(uint16_t V) : Ordinal(V) {}
+  bool hasData() const override { return true; }
+  size_t getSize() const override { return sizeof(uint64_t); }
+  void writeTo(uint8_t *Buf) override;
+  uint16_t Ordinal;
+};
+
+// A chunk for the import descriptor table.
 class DirectoryChunk : public Chunk {
 public:
   explicit DirectoryChunk(Chunk *N) : DLLName(N) {}

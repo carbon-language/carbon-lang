@@ -207,10 +207,10 @@ private:
 // table in an output. The former has "__imp_" prefix.
 class DefinedImportData : public Defined {
 public:
-  DefinedImportData(StringRef D, StringRef ImportName, StringRef ExportName,
+  DefinedImportData(StringRef D, StringRef Name, StringRef E,
                     const coff_import_header *H)
-      : Defined(DefinedImportDataKind, ImportName), DLLName(D),
-        ExpName(ExportName), Hdr(H) {}
+      : Defined(DefinedImportDataKind, Name), DLLName(D),
+        ExternalName(E), Hdr(H) {}
 
   static bool classof(const SymbolBody *S) {
     return S->kind() == DefinedImportDataKind;
@@ -219,13 +219,13 @@ public:
   uint64_t getRVA() override { return Location->getRVA(); }
   uint64_t getFileOff() override { return Location->getFileOff(); }
   StringRef getDLLName() { return DLLName; }
-  StringRef getExportName() { return ExpName; }
+  StringRef getExternalName() { return ExternalName; }
   void setLocation(Chunk *AddressTable) { Location = AddressTable; }
   uint16_t getOrdinal() { return Hdr->OrdinalHint; }
 
 private:
   StringRef DLLName;
-  StringRef ExpName;
+  StringRef ExternalName;
   const coff_import_header *Hdr;
   Chunk *Location = nullptr;
 };

@@ -3,6 +3,7 @@
 
 extern ExitProcess : PROC
 extern MessageBoxA : PROC
+extern ImportByOrdinal: PROC
 
 .data
         caption db 'Hello', 0
@@ -18,5 +19,6 @@ main PROC
         call MessageBoxA
         mov ecx, 0
         call ExitProcess
+        call ImportByOrdinal
 main ENDP
 END
