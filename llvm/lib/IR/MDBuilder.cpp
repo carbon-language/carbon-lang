@@ -168,9 +168,16 @@ MDNode *MDBuilder::createTBAAScalarTypeNode(StringRef Name, MDNode *Parent,
 /// \brief Return metadata for a TBAA tag node with the given
 /// base type, access type and offset relative to the base type.
 MDNode *MDBuilder::createTBAAStructTagNode(MDNode *BaseType, MDNode *AccessType,
-                                           uint64_t Offset) {
+                                           uint64_t Offset, bool IsConstant) {
   Type *Int64 = Type::getInt64Ty(Context);
-  Metadata *Ops[3] = {BaseType, AccessType,
-                      createConstant(ConstantInt::get(Int64, Offset))};
-  return MDNode::get(Context, Ops);
+  if (IsConstant) {
+    Metadata *Ops[4] = {BaseType, AccessType,
+                        createConstant(ConstantInt::get(Int64, Offset)),
+                        createConstant(ConstantInt::get(Int64, 1))};
+    return MDNode::get(Context, Ops);
+  } else {
+    Metadata *Ops[3] = {BaseType, AccessType,
+                        createConstant(ConstantInt::get(Int64, Offset))};
+    return MDNode::get(Context, Ops);
+  }
 }
