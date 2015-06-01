@@ -208,7 +208,7 @@ are documented in different modules.
  - @ref THREADPRIVATE functions to support thread private data, copyin etc
  - @ref SYNCHRONIZATION functions to support `omp critical`, `omp barrier`, `omp master`, reductions etc
  - @ref ATOMIC_OPS functions to support atomic operations
- - @ref STATS_GATHERING macros to support developer profiling of libiomp5
+ - @ref STATS_GATHERING macros to support developer profiling of libomp
  - Documentation on tasking has still to be written...
 
 @section SEC_EXAMPLES Examples
@@ -321,12 +321,12 @@ These functions are used for implementing barriers.
 These functions support copyin/out and thread private data.
 
 @defgroup STATS_GATHERING Statistics Gathering from OMPTB
-These macros support profiling the libiomp5 library.  Use --stats=on when building with build.pl to enable
-and then use the KMP_* macros to profile (through counts or clock ticks) libiomp5 during execution of an OpenMP program.
+These macros support profiling the libomp library.  Use --stats=on when building with build.pl to enable
+and then use the KMP_* macros to profile (through counts or clock ticks) libomp during execution of an OpenMP program.
 
 @section sec_stats_env_vars Environment Variables
 
-This section describes the environment variables relevent to stats-gathering in libiomp5
+This section describes the environment variables relevent to stats-gathering in libomp
 
 @code
 KMP_STATS_FILE
