@@ -10,7 +10,7 @@
 #
 
 ################
-# CMAKE libiomp5
+# CMAKE libomp
 cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
 
 #########
@@ -25,7 +25,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
 set(LIBOMP_STANDALONE_BUILD FALSE)
 if("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_CURRENT_SOURCE_DIR}" OR 
    "${CMAKE_SOURCE_DIR}/runtime" STREQUAL "${CMAKE_CURRENT_SOURCE_DIR}")
-    project(libiomp C CXX)
+    project(libomp C CXX)
     set(LIBOMP_STANDALONE_BUILD TRUE)
 endif()
 
@@ -66,7 +66,7 @@ set(mic_arch_possible_values knf knc)
 # ----------------------------
 # Right now, this build system considers os=lin to mean "Unix-like that is not MAC"
 # Apple goes first because CMake considers Mac to be a Unix based 
-# operating system, while libiomp5 considers it a special case
+# operating system, while libomp considers it a special case
 if(${APPLE})
     set(temp_os mac)
 elseif(${UNIX})
@@ -87,7 +87,7 @@ set(LIBOMP_ARCH ${detected_arch} CACHE STRING
 set(LIBOMP_LIB_TYPE normal CACHE STRING
     "Performance,Profiling,Stubs library (normal/profile/stubs)")
 set(LIBOMP_VERSION 5 CACHE STRING 
-    "Produce libguide (version 4) or libiomp5 (version 5)")
+    "Produce libguide (version 4) or libomp (version 5)")
 set(LIBOMP_OMP_VERSION 41 CACHE STRING 
     "The OpenMP version (41/40/30)")
 set(LIBOMP_MIC_ARCH knc CACHE STRING 
@@ -149,7 +149,7 @@ set(LIBOMP_LIBFLAGS "" CACHE STRING
 set(LIBOMP_FFLAGS "" CACHE STRING 
     "Appended user specified Fortran compiler flags.  These are only used if LIBOMP_FORTRAN_MODULES==true.")
 
-# Should the libiomp5 library and generated headers be copied into the original source exports/ directory
+# Should the libomp library and generated headers be copied into the original source exports/ directory
 # Turning this to false aids parallel builds to not interfere with each other.
 set(LIBOMP_COPY_EXPORTS true CACHE STRING
     "Should exports be copied into source exports/ directory?")
@@ -288,7 +288,7 @@ set(LIBOMP_COMPILER_QUAD_TYPE "" CACHE STRING
     "*INCOMPLETE* The quad precision data type (e.g., for gcc, __float128)")
 
 # - Should the orignal build rules for builds be used? (cmake/OriginalBuildRules.cmake).  This setting is off by default.
-# - This always compiles with -g.  And if it is a release build, the debug info is stripped out via objcopy and put into libiomp5.dbg.
+# - This always compiles with -g.  And if it is a release build, the debug info is stripped out via objcopy and put into libomp.dbg.
 set(LIBOMP_USE_BUILDPL_RULES false CACHE BOOL
     "Should the build follow build.pl rules/recipes?")
 
@@ -382,8 +382,7 @@ set(src_dir "${CMAKE_CURRENT_SOURCE_DIR}/src")
 set(tools_dir "${CMAKE_CURRENT_SOURCE_DIR}/tools") 
 set(export_dir "${CMAKE_CURRENT_SOURCE_DIR}/exports") 
 set(export_ptf_dir "${export_dir}/${platform}${suffix}")
-set(export_cmn_dir1 "${export_dir}/common${suffix}/include") 
-set(export_cmn_dir2 "${export_dir}/common${suffix}/include_compat") 
+set(export_cmn_dir "${export_dir}/common${suffix}/include") 
 set(export_inc_dir "${export_ptf_dir}/include") 
 set(export_mod_dir "${export_ptf_dir}/include_compat")
 _export_lib_dir(${platform} export_lib_dir)  # set exports directory (relative to build_dir) e.g., ../exports/lin_32e/lib/
@@ -397,48 +396,43 @@ set(inc_dir "${src_dir}/include/${LIBOMP_OMP_VERSION}")
 
 ############################
 # Setting final library name
-set(lib_item "libiomp")
+set(lib_item "libomp")
 if(${PROFILE_LIBRARY})
     set(lib_item "${lib_item}prof")
 endif()
 if(${STUBS_LIBRARY})
     set(lib_item "${lib_item}stubs")
 endif()
-set(lib_item "${lib_item}${LIBOMP_VERSION}")
 if(${WINDOWS})
     set(lib_item "${lib_item}md")
 endif()
 set(LIBOMP_LIB_NAME "${lib_item}" CACHE STRING "OMP library name")
 set(lib_ext "${dll}")
 # ${lib_file} is real library name:
-# libiomp5.so    for Linux
-# libiomp5.dylib for Mac
-# libiomp5md.dll for Windows
+# libomp.so    for Linux
+# libomp.dylib for Mac
+# libompmd.dll   for Windows
 set(lib_file "${LIBOMP_LIB_NAME}${lib_ext}")
 
 ########################################
 # Setting export file names
 if(${WINDOWS})
-    set(imp_file "${lib_item}${lib}") # this is exported (libiomp5md.lib)
+    set(imp_file "${lib_item}${lib}") # this is exported (libomp.lib)
     set(def_file "${lib_item}.def") # this is not exported
-    set(rc_file  "${lib_item}.rc")  # this is not exported
     if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug" OR 
         "${CMAKE_BUILD_TYPE}" STREQUAL "RelWithDebInfo" OR 
         ${LIBOMP_USE_BUILDPL_RULES})
-        set(pdb_file "${lib_file}.pdb") # this is exported if it exists (libiomp5md.dll.pdb)
+        set(pdb_file "${lib_file}.pdb") # this is exported if it exists (libompmd.dll.pdb)
     endif()
 endif()
 set(export_lib_files "${lib_file}" "${imp_file}" "${pdb_file}") 
-set(export_inc_files "iomp_lib.h")
 set(export_mod_files "omp_lib.mod" "omp_lib_kinds.mod")
-set(export_cmn_files1 "omp.h" "omp_lib.h" "omp_lib.f" "omp_lib.f90")
-set(export_cmn_files2 "iomp.h")
+set(export_cmn_files "omp.h" "omp_lib.h" "omp_lib.f" "omp_lib.f90")
 
 if(${LIBOMP_OMPT_SUPPORT})
-    set(export_cmn_files1 ${export_cmn_files1} "ompt.h")
+    set(export_cmn_files ${export_cmn_files} "ompt.h")
 endif()
 
-set(export_cmn_files "${export_cmn_files1}" "${export_cmn_files2}")
 if("${export_lib_fat_dir}")
     set(export_lib_fat_files "${lib_file}" "${imp_file}")
 endif()
@@ -593,8 +587,7 @@ debug_say_var(imp_src_files)
 
 ####################
 # --- Create all ---
-add_custom_target(lib ALL DEPENDS iomp5)
-add_custom_target(inc ALL DEPENDS ${export_inc_files})
+add_custom_target(lib ALL DEPENDS omp)
 if(${LIBOMP_FORTRAN_MODULES})
     add_custom_target(mod ALL DEPENDS ${export_mod_files})
 endif()
@@ -607,24 +600,17 @@ add_custom_target(clean-common COMMAND ${CMAKE_COMMAND} -E remove -f ${export_cm
 # --- Put headers in convenient locations post build ---
 if(${LIBOMP_COPY_EXPORTS})
     add_custom_command(TARGET common POST_BUILD 
-        COMMAND ${CMAKE_COMMAND} -E make_directory ${export_cmn_dir1}
-        COMMAND ${CMAKE_COMMAND} -E make_directory ${export_cmn_dir2}
-        COMMAND ${CMAKE_COMMAND} -E copy omp.h ${export_cmn_dir1}
-        COMMAND ${CMAKE_COMMAND} -E copy omp_lib.h ${export_cmn_dir1}
-        COMMAND ${CMAKE_COMMAND} -E copy omp_lib.f ${export_cmn_dir1}
-        COMMAND ${CMAKE_COMMAND} -E copy omp_lib.f90 ${export_cmn_dir1}
-        COMMAND ${CMAKE_COMMAND} -E copy iomp.h ${export_cmn_dir2}
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${export_cmn_dir}
+        COMMAND ${CMAKE_COMMAND} -E copy omp.h ${export_cmn_dir}
+        COMMAND ${CMAKE_COMMAND} -E copy omp_lib.h ${export_cmn_dir}
+        COMMAND ${CMAKE_COMMAND} -E copy omp_lib.f ${export_cmn_dir}
+        COMMAND ${CMAKE_COMMAND} -E copy omp_lib.f90 ${export_cmn_dir}
     )
     if(${LIBOMP_OMPT_SUPPORT})
         add_custom_command(TARGET common POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E make_directory ${export_cmn_dir1}
-            COMMAND ${CMAKE_COMMAND} -E copy ompt.h ${export_cmn_dir1}
+            COMMAND ${CMAKE_COMMAND} -E copy ompt.h ${export_cmn_dir}
         )
     endif()
-    add_custom_command(TARGET inc POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E make_directory ${export_inc_dir}
-        COMMAND ${CMAKE_COMMAND} -E copy iomp_lib.h ${export_inc_dir}
-    )
     if(${LIBOMP_FORTRAN_MODULES})
         add_custom_command(TARGET mod POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E make_directory ${export_mod_dir}
@@ -644,8 +630,8 @@ add_custom_target(needed-headers DEPENDS ${build_dir}/kmp_i18n_id.inc ${build_di
 
 # For Windows, there is a definitions file (.def) and resource file (.res) created using generate-def.pl and rc.exe respectively.
 if(${WINDOWS})
-    add_custom_target(needed-windows-files DEPENDS ${build_dir}/${def_file} ${build_dir}/${rc_file})
-    list(APPEND lib_src_files ${build_dir}/${rc_file})
+    add_custom_target(needed-windows-files DEPENDS ${build_dir}/${def_file} ${build_dir}/libomp.rc)
+    list(APPEND lib_src_files ${build_dir}/libomp.rc)
 endif()
 
 # Remove any cmake-automatic linking of libraries by linker, This is so linux 
@@ -657,40 +643,40 @@ if(${LIBOMP_USE_PREDEFINED_LINKER_FLAGS})
 endif()
 
 # --- ${lib_file} rule ---
-add_library(iomp5 SHARED ${lib_src_files})
-set_target_properties(iomp5 PROPERTIES 
+add_library(omp SHARED ${lib_src_files})
+set_target_properties(omp PROPERTIES 
     PREFIX "" SUFFIX ""        # Take control 
     OUTPUT_NAME "${lib_file}"  # of output name
     LINK_FLAGS  "${LD_FLAGS}"
     LINKER_LANGUAGE C          # use C Compiler for linking step
-    SKIP_BUILD_RPATH true      # have Mac linker -install_name just be "-install_name libiomp5.dylib"
+    SKIP_BUILD_RPATH true      # have Mac linker -install_name just be "-install_name libomp.dylib"
 )
 
-# --- Copy libiomp into exports directory post build ---
+# --- Copy libomp into exports directory post build ---
 if(${WINDOWS})
-    get_target_property(LIBOMP_OUTPUT_DIRECTORY iomp5 RUNTIME_OUTPUT_DIRECTORY)
+    get_target_property(LIBOMP_OUTPUT_DIRECTORY omp RUNTIME_OUTPUT_DIRECTORY)
 else()
-    get_target_property(LIBOMP_OUTPUT_DIRECTORY iomp5 LIBRARY_OUTPUT_DIRECTORY)
+    get_target_property(LIBOMP_OUTPUT_DIRECTORY omp LIBRARY_OUTPUT_DIRECTORY)
 endif()
 if(NOT LIBOMP_OUTPUT_DIRECTORY)
     set(LIBOMP_OUTPUT_DIRECTORY ${build_dir})
 endif()
 
 if(${LIBOMP_COPY_EXPORTS})
-    add_custom_command(TARGET iomp5 POST_BUILD
+    add_custom_command(TARGET omp POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E make_directory ${export_lib_dir}
         COMMAND ${CMAKE_COMMAND} -E copy ${LIBOMP_OUTPUT_DIRECTORY}/${lib_file} ${export_lib_dir}
     )
 endif()
 
 # Linking command will include libraries in LD_LIB_FLAGS
-target_link_libraries(iomp5 ${LD_LIB_FLAGS} ${CMAKE_DL_LIBS})
+target_link_libraries(omp ${LD_LIB_FLAGS} ${CMAKE_DL_LIBS})
 
 # Create *.inc and omp.h before compiling any sources
-add_dependencies(iomp5 needed-headers)
+add_dependencies(omp needed-headers)
 if(${WINDOWS})
 # Create .def and .rc file before compiling any sources
-    add_dependencies(iomp5 needed-windows-files)
+    add_dependencies(omp needed-windows-files)
 endif()
 
 # Set the compiler flags for each type of source
@@ -747,23 +733,23 @@ if(${WINDOWS})
     # It is then "re-linked" to include kmp_import.c which prevents linking of both Visual Studio OpenMP and newly built OpenMP
     if(NOT "${imp_file}" STREQUAL "")
         set(generated_import_file ${lib_file}${lib})
-        add_library(iomp5imp STATIC ${generated_import_file} ${imp_src_files})
+        add_library(ompimp STATIC ${generated_import_file} ${imp_src_files})
         set_source_files_properties(${generated_import_file} PROPERTIES GENERATED TRUE EXTERNAL_OBJECT TRUE)
-        set_target_properties(iomp5imp PROPERTIES
+        set_target_properties(ompimp PROPERTIES
             PREFIX "" SUFFIX ""
             OUTPUT_NAME "${imp_file}"
             STATIC_LIBRARY_FLAGS "${AR_FLAGS}"
             LINKER_LANGUAGE C
             SKIP_BUILD_RPATH true
         )
-        add_custom_command(TARGET iomp5imp PRE_BUILD COMMAND ${CMAKE_COMMAND} -E remove -f ${imp_file})
-        add_dependencies(iomp5imp iomp5)
-        get_target_property(LIBOMPIMP_OUTPUT_DIRECTORY iomp5imp ARCHIVE_OUTPUT_DIRECTORY)
+        add_custom_command(TARGET ompimp PRE_BUILD COMMAND ${CMAKE_COMMAND} -E remove -f ${imp_file})
+        add_dependencies(ompimp omp)
+        get_target_property(LIBOMPIMP_OUTPUT_DIRECTORY ompimp ARCHIVE_OUTPUT_DIRECTORY)
         if(NOT LIBOMPIMP_OUTPUT_DIRECTORY)
             set(LIBOMPIMP_OUTPUT_DIRECTORY ${build_dir})
         endif()
         if(${LIBOMP_COPY_EXPORTS})
-            add_custom_command(TARGET iomp5imp POST_BUILD 
+            add_custom_command(TARGET ompimp POST_BUILD 
                 COMMAND ${CMAKE_COMMAND} -E make_directory ${export_lib_dir}
                 COMMAND ${CMAKE_COMMAND} -E copy ${LIBOMPIMP_OUTPUT_DIRECTORY}/${imp_file} ${export_lib_dir}
             )
@@ -780,14 +766,6 @@ if(${WINDOWS})
         )
     endif()
 
-    # --- Create $(rc_file) ---
-    if(NOT "${rc_file}" STREQUAL "")
-        add_custom_command(
-            OUTPUT  ${rc_file}
-            COMMAND ${CMAKE_COMMAND} -E copy libiomp.rc ${rc_file}
-            DEPENDS libiomp.rc
-        )
-    endif()
 endif()
 
 ######################################################
@@ -810,21 +788,21 @@ add_custom_command(
 # - Only perform if ${tests} == true (specify when invoking: cmake -Dtests=on ...)
 if(${LIBOMP_MICRO_TESTS})
     include(MicroTests)
-    add_custom_target(libiomp-micro-tests)
+    add_custom_target(libomp-micro-tests)
     if(NOT ${MIC} AND ${LIBOMP_TEST_TOUCH})
-        add_dependencies(libiomp-micro-tests libiomp-test-touch)
+        add_dependencies(libomp-micro-tests libomp-test-touch)
     endif()
     if(${LINUX} AND ${LIBOMP_TEST_RELO})
-        add_dependencies(libiomp-micro-tests libiomp-test-relo)
+        add_dependencies(libomp-micro-tests libomp-test-relo)
     endif()
     if(${LINUX} AND ${LIBOMP_TEST_EXECSTACK})
-        add_dependencies(libiomp-micro-tests libiomp-test-execstack)
+        add_dependencies(libomp-micro-tests libomp-test-execstack)
     endif()
     if(${MIC} AND ${LIBOMP_TEST_INSTR})
-        add_dependencies(libiomp-micro-tests libiomp-test-instr)
+        add_dependencies(libomp-micro-tests libomp-test-instr)
     endif()
     if(${LIBOMP_TEST_DEPS}) 
-        add_dependencies(libiomp-micro-tests libiomp-test-deps)
+        add_dependencies(libomp-micro-tests libomp-test-deps)
     endif()
 endif()
 
@@ -863,7 +841,8 @@ endif()
 # - 'file' is generated using expand-vars.pl and 'file'.var
 # - Any .h .f .f90 .rc files should be created with this recipe
 macro(expand_vars_recipe file_dir filename)
-    get_source_file_property(extra_ev_flags ${filename} COMPILE_DEFINITIONS)
+    set(extra_ev_flags)
+    get_source_file_property(extra_ev_flags ${filename} EV_COMPILE_DEFINITIONS)
     if("${extra_ev_flags}" MATCHES "NOTFOUND")
         set(extra_ev_flags)
     else()
@@ -878,24 +857,16 @@ macro(expand_vars_recipe file_dir filename)
     endif()
 endmacro()
 string_to_list("${ev_flags}" ev_flags)
-# omp_lib.h  : ev-flags += -D KMP_INT_PTR_KIND="int_ptr_kind()"
-set_source_files_properties(omp_lib.h PROPERTIES COMPILE_DEFINITIONS "-D KMP_INT_PTR_KIND=\"int_ptr_kind()\"") 
-# iomp_lib.h : ev-flags += -D KMP_INT_PTR_KIND=$(if $(filter 32,$(arch)),4,8)
-if(${IA32}) # 32 bit archs
-    set_source_files_properties(iomp_lib.h PROPERTIES COMPILE_DEFINITIONS "-D KMP_INT_PTR_KIND=4") 
-else()
-    set_source_files_properties(iomp_lib.h PROPERTIES COMPILE_DEFINITIONS "-D KMP_INT_PTR_KIND=8") 
-endif()
-# libiomp.rc : ev-flags += -D KMP_FILE=$(lib_file)
-set_source_files_properties(libiomp.rc PROPERTIES COMPILE_DEFINITIONS "-D KMP_FILE=${lib_file}") 
+# iomp_lib.h  : ev-flags += -D KMP_INT_PTR_KIND="int_ptr_kind()"
+set_source_files_properties(omp_lib.h PROPERTIES EV_COMPILE_DEFINITIONS "-D KMP_INT_PTR_KIND=\"int_ptr_kind()\"") 
+# libomp.rc : ev-flags += -D KMP_FILE=$(lib_file)
+set_source_files_properties(libomp.rc PROPERTIES EV_COMPILE_DEFINITIONS "-D KMP_FILE=${lib_file}") 
 expand_vars_recipe(${src_dir}/include/${LIBOMP_OMP_VERSION} omp.h)
 expand_vars_recipe(${src_dir}/include/${LIBOMP_OMP_VERSION} ompt.h)
 expand_vars_recipe(${src_dir}/include/${LIBOMP_OMP_VERSION} omp_lib.h)
 expand_vars_recipe(${src_dir}/include/${LIBOMP_OMP_VERSION} omp_lib.f)
 expand_vars_recipe(${src_dir}/include/${LIBOMP_OMP_VERSION} omp_lib.f90)
-expand_vars_recipe(${src_dir}/include/${LIBOMP_OMP_VERSION} iomp.h)
-expand_vars_recipe(${src_dir}/include/${LIBOMP_OMP_VERSION} iomp_lib.h)
-expand_vars_recipe(${src_dir} libiomp.rc)
+expand_vars_recipe(${src_dir} libomp.rc)
 
 ####################################################################
 # Print configuration after all variables are set.
@@ -930,7 +901,7 @@ endif()
 
 ####################################################################
 # Install rules
-# We want to install libiomp5 in DESTDIR/CMAKE_INSTALL_PREFIX/lib
+# We want to install libomp in DESTDIR/CMAKE_INSTALL_PREFIX/lib
 # We want to install headers in DESTDIR/CMAKE_INSTALL_PREFIX/include
 if(${LIBOMP_STANDALONE_BUILD})
     set(LIBOMP_HEADERS_INSTALL_PATH include)
@@ -939,17 +910,30 @@ else()
     set(LIBOMP_HEADERS_INSTALL_PATH lib${LIBOMP_LIBDIR_SUFFIX}/clang/${CLANG_VERSION}/include)
 endif()
 if(${WINDOWS})
-    install(TARGETS iomp5 RUNTIME DESTINATION bin)
+    install(TARGETS omp RUNTIME DESTINATION bin)
     if(NOT "${imp_file}" STREQUAL "")
-        install(TARGETS iomp5imp ARCHIVE DESTINATION lib${LIBOMP_LIBDIR_SUFFIX})
+        install(TARGETS ompimp ARCHIVE DESTINATION lib${LIBOMP_LIBDIR_SUFFIX})
     endif()
+    # Create aliases (regular copies) of the library for backwards compatibility
+    set(LIBOMP_ALIASES "libiomp5md")
+    foreach(alias IN LISTS LIBOMP_ALIASES)
+        install(CODE "execute_process(COMMAND \"\${CMAKE_COMMAND}\" -E copy \"${lib_file}\" \"${alias}${dll}\"
+            WORKING_DIRECTORY \${CMAKE_INSTALL_PREFIX}/bin)")
+        install(CODE "execute_process(COMMAND \"\${CMAKE_COMMAND}\" -E copy \"${imp_file}\" \"${alias}${lib}\"
+            WORKING_DIRECTORY \${CMAKE_INSTALL_PREFIX}/lib${LIBOMP_LIBDIR_SUFFIX})")
+    endforeach()
 else()
-    install(TARGETS iomp5 LIBRARY DESTINATION lib${LIBOMP_LIBDIR_SUFFIX}) 
+    install(TARGETS omp LIBRARY DESTINATION lib${LIBOMP_LIBDIR_SUFFIX}) 
+    # Create aliases (symlinks) of the library for backwards compatibility
+    set(LIBOMP_ALIASES "libgomp;libiomp5")
+    foreach(alias IN LISTS LIBOMP_ALIASES)
+        install(CODE "execute_process(COMMAND \"\${CMAKE_COMMAND}\" -E create_symlink \"${lib_file}\" \"${alias}${dll}\"
+            WORKING_DIRECTORY \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/lib${LIBOMP_LIBDIR_SUFFIX})")
+    endforeach()
 endif()
 install(
     FILES 
     ${build_dir}/omp.h 
-    ${build_dir}/iomp.h 
     DESTINATION ${LIBOMP_HEADERS_INSTALL_PATH}
 )
 if(${LIBOMP_OMPT_SUPPORT})

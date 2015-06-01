@@ -123,7 +123,7 @@ Library type can be normal, profile, or stubs.
 Build type can be Release, Debug, or RelWithDebInfo.
 
 -DLIBOMP_VERSION=5|4
-libiomp5 version can be 5 or 4.
+libomp version can be 5 or 4.
 
 -DLIBOMP_OMP_VERSION=40|30
 OpenMP version can be either 40 or 30.
@@ -159,10 +159,10 @@ These tests can be turned on (default) or off with the following options:
 -DLIBOMP_TEST_EXECSTACK=on|off -- Should the stack be checked for executability?
 -DLIBOMP_TEST_INSTR=on|off     -- Should the Intel(R) MIC Libraries be checked
                             for correct instruction set?
--DLIBOMP_TEST_DEPS=on|off      -- Should libiomp5's dependencies be checked?
+-DLIBOMP_TEST_DEPS=on|off      -- Should libomp's dependencies be checked?
 -DLIBOMP_MICRO_TESTS=off|on          -- Should any of the above tests be done?
 If -DLIBOMP_MICRO_TESTS=on is specified, the user can then call:
-$ make libiomp-micro-tests
+$ make libomp-micro-tests
 which runs the tests.
 
 ============================================
@@ -185,9 +185,9 @@ which runs the tests.
 ===================================
 -DLIBOMP_USE_BUILDPL_RULES=false|true
 Should the build imitate build.pl's build process.
-When this is true, the Unix* Release builds will build libiomp5
+When this is true, the Unix* Release builds will build libomp
 with -O2 and -g flags activated (same as RelWithDebInfo). Then,
-the debug info is stripped out of the library and put into libiomp5.dbg
+the debug info is stripped out of the library and put into libomp.dbg
 This is done for interaction with Intel(R) Parallel Amplifier.
 
 -DLIBOMP_USE_ADAPTIVE_LOCKS=true|false       
@@ -231,7 +231,7 @@ cmake -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DLIBOMP_OS=mac -DLI
 
 - Build the library (architecture determined by probing compiler) using the
   Intel(R) C Compiler and the Intel(R) C++ Compiler. Also, create the fortran modules using
-  the Intel(R) Fortran Compiler, enabling the libiomp-micro-tests target and using similar rules that build.pl 
+  the Intel(R) Fortran Compiler, enabling the libomp-micro-tests target and using similar rules that build.pl 
   would use to build the library.
 cmake -DCMAKE_C_COMPILER=icc -DCMAKE_CXX_COMPILER=icpc -DCMAKE_Fortran_COMPILER=ifort -DLIBOMP_MICRO_TESTS=on -DLIBOMP_FORTRAN_MODULES=on -DLIBOMP_USE_BUILDPL_RULES=on ..
 

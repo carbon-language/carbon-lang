@@ -11,31 +11,31 @@
 
 ###############################################################################
 # This file contains additional build rules that correspond to build.pl's rules.
-# Building libiomp5.dbg is linux only, Windows will build libiomp5md.dll.pdb
+# Building libomp.dbg is linux only, Windows will build libompmd.dll.pdb
 # This file is only active if ${LIBOMP_USE_BUILDPL_RULES} is true.
 #
 #                        ######### BUILD DEPENDENCIES ##########
 #
-#        exports/.../libiomp5.so                        exports/.../libiomp5.dbg
+#        exports/.../libomp.so                        exports/.../libomp.dbg
 #        [copy]  |                                                 | [copy]
 #                |                                                 |
-#           ./libiomp5.so                                     ./libiomp5.dbg
+#           ./libomp.so                                     ./libomp.dbg
 #    [copy]    /  OR  \____________ [copy]                         | [copy]
 #             /                    \                               |
-#    ./unstripped/libiomp5.so   ./stripped/libiomp5.so   ./unstripped/libiomp5.dbg
+#    ./unstripped/libomp.so   ./stripped/libomp.so   ./unstripped/libomp.dbg
 #           /                                \                /
 #          / [linking]                        \[strip]       /[strip and store]
 #         /                                    \            /
-#     ${objs} (maybe compiled with -g)     ./unstripped/libiomp5.so (library with debug info in it)
+#     ${objs} (maybe compiled with -g)     ./unstripped/libomp.so (library with debug info in it)
 #                                                    |
 #                                                    | [linking]
 #                                                    |
 #                                                 ${objs} (always compiled with -g)
 #
-# For icc Linux builds, we always include debugging information via -g and create libiomp5.dbg 
+# For icc Linux builds, we always include debugging information via -g and create libomp.dbg 
 # so that Intel(R) Parallel Amplifier can use the .dbg file.
-# For icc Windows builds, we always include debugging information via -Zi and create libiomp5.pdb
-# in a fashion similar to libiomp5.dbg
+# For icc Windows builds, we always include debugging information via -Zi and create libomp.pdb
+# in a fashion similar to libomp.dbg
 # For icc Mac builds, we don't bother with the debug info.
 
 # We build library in unstripped directory
@@ -77,7 +77,7 @@ if(NOT "${dbg_file}" STREQUAL "")
     add_custom_command(
         OUTPUT  ${build_dir}/unstripped/${dbg_file}
         COMMAND ${CMAKE_OBJCOPY} --only-keep-debug ${build_dir}/unstripped/${lib_file} ${build_dir}/unstripped/${dbg_file} 
-        DEPENDS iomp5
+        DEPENDS omp
     )
     
 else()
@@ -89,21 +89,21 @@ endif()
 
 # Windows specific command to move around debug info files post-build
 if(NOT "${pdb_file}" STREQUAL "" AND ${RELEASE_BUILD})
-    add_custom_command(TARGET iomp5 POST_BUILD
+    add_custom_command(TARGET omp POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E rename ${pdb_file} ${pdb_file}.nonstripped
         COMMAND ${CMAKE_COMMAND} -E rename ${pdb_file}.stripped ${pdb_file}
     )
 endif()
 
-# Have icc build libiomp5 in unstripped directory
-set_target_properties(iomp5 PROPERTIES 
+# Have icc build libomp in unstripped directory
+set_target_properties(omp PROPERTIES 
     LIBRARY_OUTPUT_DIRECTORY "${build_dir}/unstripped" 
     RUNTIME_OUTPUT_DIRECTORY "${build_dir}/unstripped"
     ARCHIVE_OUTPUT_DIRECTORY "${build_dir}"
 )
 
 # Always use RelWithDebInfo flags for Release builds when using the build.pl's build rules (use -g -O2 instead of just -O3)
-# The debug info is then stripped out at the end of the build and put into libiomp5.dbg for Linux
+# The debug info is then stripped out at the end of the build and put into libomp.dbg for Linux
 if(${RELEASE_BUILD} AND NOT ${MAC})
     set(CMAKE_C_FLAGS_RELEASE   ${CMAKE_C_FLAGS_RELWITHDEBINFO}  )
     set(CMAKE_CXX_FLAGS_RELEASE ${CMAKE_CXX_FLAGS_RELWITHDEBINFO})

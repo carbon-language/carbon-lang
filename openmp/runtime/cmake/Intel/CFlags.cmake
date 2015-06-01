@@ -74,7 +74,7 @@ function(append_compiler_specific_c_and_cxx_flags input_c_flags input_cxx_flags)
             endif()
         endif()
     endif()
-    # CMake prefers the /MD flags when compiling Windows sources, but libiomp5 needs to use /MT instead
+    # CMake prefers the /MD flags when compiling Windows sources, but libomp needs to use /MT instead
     # So we replace these /MD instances with /MT within the CMAKE_*_FLAGS variables and put that out to the CACHE.
     # replace_md_with_mt() is in HelperFunctions.cmake
     if(${WINDOWS})

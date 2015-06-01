@@ -28,7 +28,7 @@ function(append_compiler_specific_c_and_cxx_flags input_c_flags input_cxx_flags)
         append_c_and_cxx_flags("-arch:ia32") # Tells the compiler which features it may target (ia32)
         append_c_and_cxx_flags("-Oy-") # equivalent to -fno-omit-frame-pointer
     endif()
-    # CMake prefers the /MD flags when compiling Windows sources, but libiomp5 needs to use /MT instead
+    # CMake prefers the /MD flags when compiling Windows sources, but libomp needs to use /MT instead
     # So we replace these /MD instances with /MT within the CMAKE_*_FLAGS variables and put that out to the CACHE.
     # replace_md_with_mt() is in HelperFunctions.cmake
     replace_md_with_mt(CMAKE_C_FLAGS)

@@ -26,7 +26,7 @@ function(append_assembler_specific_asm_flags input_asm_flags)
     elseif(${INTEL64})
         append_asm_flags("-D _M_AMD64")
     endif()
-    # CMake prefers the /MD flags when compiling Windows sources, but libiomp5 needs to use /MT instead
+    # CMake prefers the /MD flags when compiling Windows sources, but libomp needs to use /MT instead
     # So we replace these /MD instances with /MT within the CMAKE_*_FLAGS variables and put that out to the CACHE.
     # replace_md_with_mt() is in HelperFunctions.cmake
     replace_md_with_mt(CMAKE_ASM_MASM_FLAGS)

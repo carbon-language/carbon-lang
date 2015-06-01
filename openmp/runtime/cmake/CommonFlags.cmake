@@ -113,7 +113,7 @@ function(append_linker_flags_common input_ld_flags input_ld_flags_libs)
             # For now, always include --version-script flag on Unix systems.
             append_linker_flags("-Wl,--version-script=${src_dir}/exports_so.txt") # Use exports_so.txt as version script to create versioned symbols for ELF libraries
             append_linker_flags("-Wl,-z,noexecstack") #  Marks the object as not requiring executable stack.
-            append_linker_flags("-Wl,--as-needed")    #  Only adds library dependencies as they are needed. (if libiomp5 actually uses a function from the library, then add it)
+            append_linker_flags("-Wl,--as-needed")    #  Only adds library dependencies as they are needed. (if libomp actually uses a function from the library, then add it)
             if(NOT ${STUBS_LIBRARY})
                 append_linker_flags("-Wl,--warn-shared-textrel") #  Warn if the linker adds a DT_TEXTREL to a shared object.
                 append_linker_flags("-Wl,-fini=__kmp_internal_end_fini") # When creating an ELF executable or shared object, call NAME when the 

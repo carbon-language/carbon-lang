@@ -15,13 +15,13 @@
 # the library just created in ${build_dir}/, there are currently
 # five micro-tests: 
 # (1) test-touch 
-#    - Compile and run a small program using newly created libiomp5 library
+#    - Compile and run a small program using newly created libomp library
 #    - Fails if test-touch.c does not compile or if test-touch.c does not run after compilation
 #    - Program dependencies: gcc or g++, grep, bourne shell
 #    - Available for all Linux,Mac,Windows builds.  Not available on Intel(R) MIC Architecture builds.
 # (2) test-relo
 #    - Tests dynamic libraries for position-dependent code (can not have any position dependent code)
-#    - Fails if TEXTREL is in output of readelf -d libiomp5.so command
+#    - Fails if TEXTREL is in output of readelf -d libomp.so command
 #    - Program dependencies: readelf, grep, bourne shell
 #    - Available for Linux, Intel(R) MIC Architecture dynamic library builds. Not available otherwise.
 # (3) test-execstack 
@@ -35,7 +35,7 @@
 #    - Program dependencies: perl, objdump 
 #    - Available for Intel(R) MIC Architecture builds. Not available otherwise.
 # (5) test-deps      
-#    - Tests newly created libiomp5 for library dependencies
+#    - Tests newly created libomp for library dependencies
 #    - Fails if sees a dependence not listed in td_exp variable below
 #    - Program dependencies: perl, (linux)readelf, (mac)otool[64], (windows)link.exe
 #    - Available for Linux,Mac,Windows, Intel(R) MIC Architecture dynamic builds and Windows static builds. Not available otherwise.
@@ -58,7 +58,7 @@ set(regular_test_touch_items "${test_touch_items}")
 add_suffix("/.success"  regular_test_touch_items)
 # test-touch : ${test_touch_items}/.success
 set(ldeps "${regular_test_touch_items}")
-add_custom_target(libiomp-test-touch DEPENDS ${ldeps})
+add_custom_target(libomp-test-touch DEPENDS ${ldeps})
 
 if(${WINDOWS})
     # pick test-touch compiler
@@ -138,7 +138,7 @@ else()
 endif()
 
 # test-relo 
-add_custom_target(libiomp-test-relo DEPENDS test-relo/.success)
+add_custom_target(libomp-test-relo DEPENDS test-relo/.success)
 add_custom_command(
     OUTPUT  test-relo/.success
     COMMAND ${CMAKE_COMMAND} -E make_directory ${build_dir}/test-relo
@@ -149,7 +149,7 @@ add_custom_command(
 )
 
 # test-execstack
-add_custom_target(libiomp-test-execstack DEPENDS test-execstack/.success)
+add_custom_target(libomp-test-execstack DEPENDS test-execstack/.success)
 add_custom_command(
     OUTPUT  test-execstack/.success
     COMMAND ${CMAKE_COMMAND} -E make_directory ${build_dir}/test-execstack
@@ -159,7 +159,7 @@ add_custom_command(
 )
 
 # test-instr
-add_custom_target(libiomp-test-instr DEPENDS test-instr/.success)
+add_custom_target(libomp-test-instr DEPENDS test-instr/.success)
 add_custom_command(
     OUTPUT  test-instr/.success
     COMMAND ${CMAKE_COMMAND} -E make_directory ${build_dir}/test-instr
@@ -169,7 +169,7 @@ add_custom_command(
 )
 
 # test-deps
-add_custom_target(libiomp-test-deps DEPENDS test-deps/.success)
+add_custom_target(libomp-test-deps DEPENDS test-deps/.success)
 set(td_exp)
 if(${FREEBSD})
     set(td_exp libc.so.7 libthr.so.3 libunwind.so.5)
