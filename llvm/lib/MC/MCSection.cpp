@@ -20,7 +20,8 @@ using namespace llvm;
 //===----------------------------------------------------------------------===//
 
 MCSection::MCSection(SectionVariant V, SectionKind K, MCSymbol *Begin)
-    : Begin(Begin), HasInstructions(false), Variant(V), Kind(K) {}
+    : Begin(Begin), BundleGroupBeforeFirstInst(false), HasInstructions(false),
+      Variant(V), Kind(K) {}
 
 MCSymbol *MCSection::getEndSymbol(MCContext &Ctx) {
   if (!End)

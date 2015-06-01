@@ -73,7 +73,7 @@ private:
 
   /// \brief We've seen a bundle_lock directive but not its first instruction
   /// yet.
-  bool BundleGroupBeforeFirstInst = false;
+  unsigned BundleGroupBeforeFirstInst : 1;
 
   /// Whether this section has had instructions emitted into it.
   unsigned HasInstructions : 1;
