@@ -33,7 +33,7 @@ BPFMCInstLower::GetGlobalAddressSymbol(const MachineOperand &MO) const {
 MCOperand BPFMCInstLower::LowerSymbolOperand(const MachineOperand &MO,
                                              MCSymbol *Sym) const {
 
-  const MCExpr *Expr = MCSymbolRefExpr::Create(Sym, Ctx);
+  const MCExpr *Expr = MCSymbolRefExpr::create(Sym, Ctx);
 
   if (!MO.isJTI() && MO.getOffset())
     llvm_unreachable("unknown symbol op");
@@ -63,7 +63,7 @@ void BPFMCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
       break;
     case MachineOperand::MO_MachineBasicBlock:
       MCOp = MCOperand::createExpr(
-          MCSymbolRefExpr::Create(MO.getMBB()->getSymbol(), Ctx));
+          MCSymbolRefExpr::create(MO.getMBB()->getSymbol(), Ctx));
       break;
     case MachineOperand::MO_RegisterMask:
       continue;
