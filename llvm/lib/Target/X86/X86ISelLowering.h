@@ -379,6 +379,8 @@ namespace llvm {
       VPERM2X128,
       //Fix Up Special Packed Float32/64 values
       VFIXUPIMM,
+      //Range Restriction Calculation For Packed Pairs of Float32/64 values
+      VRANGE,
       // Broadcast scalar to vector
       VBROADCAST,
       // Broadcast subvector to vector

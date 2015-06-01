@@ -285,6 +285,7 @@ def X86VPermiv3   : SDNode<"X86ISD::VPERMIV3",  SDTShuff3Op>;
 def X86VPerm2x128 : SDNode<"X86ISD::VPERM2X128", SDTShuff3OpI>;
 
 def X86VFixupimm       : SDNode<"X86ISD::VFIXUPIMM", SDTFPBinOpImmRound>;
+def X86VRange          : SDNode<"X86ISD::VRANGE", SDTFPBinOpImmRound>;
 
 def X86SubVBroadcast : SDNode<"X86ISD::SUBV_BROADCAST",
                     SDTypeProfile<1, 1, [SDTCisVec<0>, SDTCisVec<1>,

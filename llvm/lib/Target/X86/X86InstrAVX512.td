@@ -6009,15 +6009,15 @@ multiclass avx512_fp_sae_packed_imm<bits<8> opc, string OpcodeStr,
                               (i32 FROUND_NO_EXC))>, EVEX_B;
 }
 
-multiclass avx512_vfixupimm_float<string OpcodeStr, AVX512VLVectorVTInfo _,
-                          bits<8> opc = 0x54, SDNode OpNode = X86VFixupimm>{
-    let Predicates = [HasAVX512] in {
+multiclass avx512_common_fp_sae_packed_imm<string OpcodeStr,
+            AVX512VLVectorVTInfo _, bits<8> opc, SDNode OpNode, Predicate prd>{
+    let Predicates = [prd] in {
       defm Z    : avx512_fp_packed_imm<opc, OpcodeStr, OpNode, _.info512>,
                   avx512_fp_sae_packed_imm<opc, OpcodeStr, OpNode, _.info512>,
                                   EVEX_V512;
 
     }
-    let Predicates = [HasAVX512, HasVLX] in {
+    let Predicates = [prd, HasVLX] in {
      defm Z128 : avx512_fp_packed_imm<opc, OpcodeStr, OpNode, _.info128>,
                                   EVEX_V128;
      defm Z256 : avx512_fp_packed_imm<opc, OpcodeStr, OpNode, _.info256>,
@@ -6025,8 +6025,32 @@ multiclass avx512_vfixupimm_float<string OpcodeStr, AVX512VLVectorVTInfo _,
     }
 }
 
-defm VFIXUPIMMPD : avx512_vfixupimm_float<"vfixupimmpd", avx512vl_f64_info>,
+defm VFIXUPIMMPD : avx512_common_fp_sae_packed_imm<"vfixupimmpd",
+                              avx512vl_f64_info, 0x54, X86VFixupimm, HasAVX512>,
       AVX512AIi8Base, EVEX_4V, EVEX_CD8<64, CD8VF>, VEX_W;
-defm VFIXUPIMMPS : avx512_vfixupimm_float<"vfixupimmps", avx512vl_f32_info>,
+defm VFIXUPIMMPS : avx512_common_fp_sae_packed_imm<"vfixupimmps",
+                              avx512vl_f32_info, 0x54, X86VFixupimm, HasAVX512>,
       AVX512AIi8Base, EVEX_4V, EVEX_CD8<32, CD8VF>;
+
+
+defm VRANGEPD : avx512_common_fp_sae_packed_imm<"vrangepd", avx512vl_f64_info,
+                                                       0x50, X86VRange, HasDQI>,
+      AVX512AIi8Base, EVEX_4V, EVEX_CD8<64, CD8VF>, VEX_W;
+defm VRANGEPS : avx512_common_fp_sae_packed_imm<"vrangeps", avx512vl_f32_info,
+                                                       0x50, X86VRange, HasDQI>,
+      AVX512AIi8Base, EVEX_4V, EVEX_CD8<32, CD8VF>;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
