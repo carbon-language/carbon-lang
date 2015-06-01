@@ -3712,7 +3712,7 @@ ClangASTType::GetChildClangTypeAtIndex (ExecutionContext *exe_ctx,
                     if (element_type.GetCompleteType())
                     {
                         char element_name[64];
-                        ::snprintf (element_name, sizeof (element_name), "[%zu]", idx);
+                        ::snprintf(element_name, sizeof(element_name), "[%" PRIu64 "]", static_cast<uint64_t>(idx));
                         child_name.assign(element_name);
                         child_byte_size = element_type.GetByteSize(exe_ctx ? exe_ctx->GetBestExecutionContextScope() : NULL);
                         child_byte_offset = (int32_t)idx * (int32_t)child_byte_size;
@@ -3733,7 +3733,7 @@ ClangASTType::GetChildClangTypeAtIndex (ExecutionContext *exe_ctx,
                     if (element_type.GetCompleteType())
                     {
                         char element_name[64];
-                        ::snprintf (element_name, sizeof (element_name), "[%zu]", idx);
+                        ::snprintf(element_name, sizeof(element_name), "[%" PRIu64 "]", static_cast<uint64_t>(idx));
                         child_name.assign(element_name);
                         child_byte_size = element_type.GetByteSize(exe_ctx ? exe_ctx->GetBestExecutionContextScope() : NULL);
                         child_byte_offset = (int32_t)idx * (int32_t)child_byte_size;
