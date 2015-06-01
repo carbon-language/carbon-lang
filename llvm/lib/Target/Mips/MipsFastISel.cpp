@@ -103,6 +103,7 @@ private:
   bool selectTrunc(const Instruction *I);
   bool selectIntExt(const Instruction *I);
   bool selectShift(const Instruction *I);
+  bool selectDivRem(const Instruction *I, unsigned ISDOpcode);
 
   // Utility helper routines.
   bool isTypeLegal(Type *Ty, MVT &VT);
@@ -1471,6 +1472,50 @@ unsigned MipsFastISel::emitIntExt(MVT SrcVT, unsigned SrcReg, MVT DestVT,
   return Success ? DestReg : 0;
 }
 
+bool MipsFastISel::selectDivRem(const Instruction *I, unsigned ISDOpcode) {
+  EVT DestEVT = TLI.getValueType(I->getType(), true);
+  if (!DestEVT.isSimple())
+    return false;
+
+  MVT DestVT = DestEVT.getSimpleVT();
+  if (DestVT != MVT::i32)
+    return false;
+
+  unsigned DivOpc;
+  switch (ISDOpcode) {
+  default:
+    return false;
+  case ISD::SDIV:
+  case ISD::SREM:
+    DivOpc = Mips::SDIV;
+    break;
+  case ISD::UDIV:
+  case ISD::UREM:
+    DivOpc = Mips::UDIV;
+    break;
+  }
+
+  unsigned Src0Reg = getRegForValue(I->getOperand(0));
+  unsigned Src1Reg = getRegForValue(I->getOperand(1));
+  if (!Src0Reg || !Src1Reg)
+    return false;
+
+  emitInst(DivOpc).addReg(Src0Reg).addReg(Src1Reg);
+  emitInst(Mips::TEQ).addReg(Src1Reg).addReg(Mips::ZERO).addImm(7);
+
+  unsigned ResultReg = createResultReg(&Mips::GPR32RegClass);
+  if (!ResultReg)
+    return false;
+
+  unsigned MFOpc = (ISDOpcode == ISD::SREM || ISDOpcode == ISD::UREM)
+                       ? Mips::MFHI
+                       : Mips::MFLO;
+  emitInst(MFOpc, ResultReg);
+
+  updateValueMap(I, ResultReg);
+  return true;
+}
+
 bool MipsFastISel::selectShift(const Instruction *I) {
   MVT RetVT;
 
@@ -1556,6 +1601,22 @@ bool MipsFastISel::fastSelectInstruction(const Instruction *I) {
     return selectLoad(I);
   case Instruction::Store:
     return selectStore(I);
+  case Instruction::SDiv:
+    if (!selectBinaryOp(I, ISD::SDIV))
+      return selectDivRem(I, ISD::SDIV);
+    return true;
+  case Instruction::UDiv:
+    if (!selectBinaryOp(I, ISD::UDIV))
+      return selectDivRem(I, ISD::UDIV);
+    return true;
+  case Instruction::SRem:
+    if (!selectBinaryOp(I, ISD::SREM))
+      return selectDivRem(I, ISD::SREM);
+    return true;
+  case Instruction::URem:
+    if (!selectBinaryOp(I, ISD::UREM))
+      return selectDivRem(I, ISD::UREM);
+    return true;
   case Instruction::Shl:
   case Instruction::LShr:
   case Instruction::AShr:
