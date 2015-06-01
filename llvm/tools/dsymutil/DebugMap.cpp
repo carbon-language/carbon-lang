@@ -46,8 +46,9 @@ void DebugMapObject::print(raw_ostream &OS) const {
       [](const Entry &LHS, const Entry &RHS) { return LHS.first < RHS.first; });
   for (const auto &Sym : Entries) {
     OS << format("\t%016" PRIx64 " => %016" PRIx64 "+0x%x\t%s\n",
-                 Sym.second.ObjectAddress, Sym.second.BinaryAddress,
-                 Sym.second.Size, Sym.first.data());
+                 uint64_t(Sym.second.ObjectAddress),
+                 uint64_t(Sym.second.BinaryAddress),
+                 uint32_t(Sym.second.Size), Sym.first.data());
   }
   OS << '\n';
 }
@@ -78,11 +79,8 @@ DebugMapObject::lookupObjectAddress(uint64_t Address) const {
 }
 
 void DebugMap::print(raw_ostream &OS) const {
-  OS << "DEBUG MAP: " << BinaryTriple.getTriple()
-     << "\n\tobject addr =>  executable addr\tsymbol name\n";
-  for (const auto &Obj : objects())
-    Obj->print(OS);
-  OS << "END DEBUG MAP\n";
+  yaml::Output yout(OS, /* Ctxt = */ nullptr, /* WrapColumn = */ 0);
+  yout << const_cast<DebugMap&>(*this);
 }
 
 #ifndef NDEBUG

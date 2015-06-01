@@ -28,6 +28,7 @@
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/Format.h"
+#include "llvm/Support/YAMLTraits.h"
 #include <vector>
 
 namespace llvm {
@@ -66,6 +67,11 @@ class DebugMap {
   typedef std::vector<std::unique_ptr<DebugMapObject>> ObjectContainer;
   ObjectContainer Objects;
 
+  /// For YAML IO support.
+  ///@{
+  friend yaml::MappingTraits<DebugMap>;
+  DebugMap() = default;
+  ///@}
 public:
   DebugMap(const Triple &BinaryTriple) : BinaryTriple(BinaryTriple) {}
 
@@ -99,12 +105,14 @@ public:
 class DebugMapObject {
 public:
   struct SymbolMapping {
-    uint64_t ObjectAddress;
-    uint64_t BinaryAddress;
-    uint32_t Size;
+    yaml::Hex64 ObjectAddress;
+    yaml::Hex64 BinaryAddress;
+    yaml::Hex32 Size;
     SymbolMapping(uint64_t ObjectAddress, uint64_t BinaryAddress, uint32_t Size)
         : ObjectAddress(ObjectAddress), BinaryAddress(BinaryAddress),
           Size(Size) {}
+    /// For YAML IO support
+    SymbolMapping() = default;
   };
 
   typedef StringMapEntry<SymbolMapping> DebugMapEntry;
@@ -141,6 +149,109 @@ private:
   std::string Filename;
   StringMap<SymbolMapping> Symbols;
   DenseMap<uint64_t, DebugMapEntry *> AddressToMapping;
+
+  /// For YAMLIO support.
+  ///@{
+  typedef std::pair<std::string, SymbolMapping> YAMLSymbolMapping;
+  friend yaml::MappingTraits<dsymutil::DebugMapObject>;
+  friend yaml::SequenceTraits<std::vector<std::unique_ptr<DebugMapObject>>>;
+  friend yaml::SequenceTraits<std::vector<YAMLSymbolMapping>>;
+  DebugMapObject() = default;
+  ///@}
+};
+}
+}
+
+LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::dsymutil::DebugMapObject::YAMLSymbolMapping);
+
+namespace llvm {
+namespace yaml {
+
+using namespace llvm::dsymutil;
+
+template <>
+struct MappingTraits<std::pair<std::string, DebugMapObject::SymbolMapping>> {
+
+  static void
+  mapping(IO &io, std::pair<std::string, DebugMapObject::SymbolMapping> &s) {
+    io.mapRequired("sym", s.first);
+    io.mapRequired("objAddr", s.second.ObjectAddress);
+    io.mapRequired("binAddr", s.second.BinaryAddress);
+    io.mapOptional("size", s.second.Size);
+  }
+
+  static const bool flow = true;
+};
+
+template <> struct MappingTraits<dsymutil::DebugMapObject> {
+  typedef StringMap<dsymutil::DebugMapObject::SymbolMapping> SymbolMap;
+
+  struct SequencedStringMap {
+    SequencedStringMap(IO &io) {}
+
+    SequencedStringMap(IO &io, SymbolMap &Map) {
+      Entries.reserve(Map.size());
+      for (auto &Entry : Map)
+        Entries.push_back(std::make_pair(Entry.getKey(), Entry.getValue()));
+    }
+
+    SymbolMap denormalize(IO &) {
+      SymbolMap Res;
+
+      for (auto &Entry : Entries)
+        Res[Entry.first] = Entry.second;
+
+      return std::move(Res);
+    }
+
+    std::vector<dsymutil::DebugMapObject::YAMLSymbolMapping> Entries;
+  };
+
+  static void mapping(IO &io, dsymutil::DebugMapObject &s) {
+    MappingNormalization<SequencedStringMap, SymbolMap> seq(io, s.Symbols);
+    io.mapRequired("filename", s.Filename);
+    io.mapRequired("symbols", seq->Entries);
+  }
+};
+
+template <> struct ScalarTraits<Triple> {
+
+  static void output(const Triple &val, void *, llvm::raw_ostream &out) {
+    out << val.str();
+  }
+
+  static StringRef input(StringRef scalar, void *, Triple &value) {
+    value = Triple(scalar);
+    return value.str();
+  }
+
+  static bool mustQuote(StringRef) { return true; }
+};
+
+template <>
+struct SequenceTraits<std::vector<std::unique_ptr<dsymutil::DebugMapObject>>> {
+
+  static size_t
+  size(IO &io, std::vector<std::unique_ptr<dsymutil::DebugMapObject>> &seq) {
+    return seq.size();
+  }
+
+  static dsymutil::DebugMapObject &
+  element(IO &, std::vector<std::unique_ptr<dsymutil::DebugMapObject>> &seq,
+          size_t index) {
+    if (index >= seq.size()) {
+      seq.resize(index + 1);
+      seq[index].reset(new dsymutil::DebugMapObject);
+    }
+    return *seq[index];
+  }
+};
+
+template <> struct MappingTraits<dsymutil::DebugMap> {
+  static void mapping(IO &io, dsymutil::DebugMap &DM) {
+    io.mapRequired("triple", DM.BinaryTriple);
+    io.mapOptional("objects", DM.Objects);
+  }
 };
 }
 }

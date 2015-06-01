@@ -8,33 +8,35 @@ RUN: not llvm-dsymutil -v -parse-only %p/Inputs/inexistant 2>&1 | FileCheck %s -
 Check that We can parse the debug map of the basic executable.
 
 CHECK-NOT: error
-CHECK: DEBUG MAP: x86_64-unknown-unknown-macho
-CHECK: /Inputs/basic1.macho.x86_64.o:
-CHECK: 	0000000000000000 => 0000000100000ea0+0x24	_main
-CHECK: /Inputs/basic2.macho.x86_64.o:
-CHECK: 	0000000000000310 => 0000000100001000+0x0	_baz
-CHECK: 	0000000000000020 => 0000000100000ed0+0x50	_foo
-CHECK: 	0000000000000070 => 0000000100000f20+0x17	_inc
-CHECK: 	0000000000000560 => 0000000100001008+0x0	_private_int
-CHECK: /Inputs/basic3.macho.x86_64.o:
-CHECK: 	0000000000000020 => 0000000100000f40+0x50	_bar
-CHECK: 	0000000000000070 => 0000000100000f90+0x19	_inc
-CHECK: 	0000000000000004 => 0000000100001004+0x0	_val
-CHECK: END DEBUG MAP
+CHECK: ---
+CHECK: triple: 'x86_64-unknown-unknown-macho'
+CHECK: filename:{{.*}}/Inputs/basic1.macho.x86_64.o
+CHECK-DAG: sym: _main, objAddr: 0x0000000000000000, binAddr: 0x0000000100000EA0, size: 0x00000024
+CHECK: filename{{.*}}/Inputs/basic2.macho.x86_64.o
+CHECK-DAG: 	sym: _baz, objAddr: 0x0000000000000310, binAddr: 0x0000000100001000, size: 0x00000000
+CHECK-DAG: 	sym: _foo, objAddr: 0x0000000000000020, binAddr: 0x0000000100000ED0, size: 0x00000050
+CHECK-DAG: 	sym: _inc, objAddr: 0x0000000000000070, binAddr: 0x0000000100000F20, size: 0x00000017
+CHECK-DAG: 	sym: _private_int, objAddr: 0x0000000000000560, binAddr: 0x0000000100001008, size: 0x00000000
+CHECK: filename{{.*}}/Inputs/basic3.macho.x86_64.o
+CHECK-DAG: 	sym: _bar, objAddr: 0x0000000000000020, binAddr: 0x0000000100000F40, size: 0x00000050
+CHECK-DAG: 	sym: _inc, objAddr: 0x0000000000000070, binAddr: 0x0000000100000F90, size: 0x00000019
+CHECK-DAG: 	sym: _val, objAddr: 0x0000000000000004, binAddr: 0x0000000100001004, size: 0x00000000
+CHECK: ...
 
 
 Check that we can parse the debug-map of the basic-lto executable
 
 CHECK-LTO-NOT: error
-CHECK-LTO: DEBUG MAP: x86_64-unknown-unknown-macho
-CHECK-LTO: /Inputs/basic-lto.macho.x86_64.o:
-CHECK-LTO: 	0000000000000050 => 0000000100000f90+0x24	_bar
-CHECK-LTO: 	0000000000000658 => 0000000100001000+0x0	_baz
-CHECK-LTO: 	0000000000000010 => 0000000100000f50+0x40	_foo
-CHECK-LTO: 	0000000000000000 => 0000000100000f40+0x10	_main
-CHECK-LTO: 	00000000000008e8 => 0000000100001008+0x0	_private_int
-CHECK-LTO: 	00000000000008ec => 0000000100001004+0x0	_val
-CHECK-LTO: END DEBUG MAP
+CHECK-LTO: ---
+CHECK-LTO: triple: 'x86_64-unknown-unknown-macho'
+CHECK-LTO: /Inputs/basic-lto.macho.x86_64.o
+CHECK-LTO-DAG: 	sym: _bar, objAddr: 0x0000000000000050, binAddr: 0x0000000100000F90, size: 0x00000024
+CHECK-LTO-DAG: 	sym: _baz, objAddr: 0x0000000000000658, binAddr: 0x0000000100001000, size: 0x00000000
+CHECK-LTO-DAG: 	sym: _foo, objAddr: 0x0000000000000010, binAddr: 0x0000000100000F50, size: 0x00000040
+CHECK-LTO-DAG: 	sym: _main, objAddr: 0x0000000000000000, binAddr: 0x0000000100000F40, size: 0x00000010
+CHECK-LTO-DAG: 	sym: _private_int, objAddr: 0x00000000000008E8, binAddr: 0x0000000100001008, size: 0x00000000
+CHECK-LTO-DAG: 	sym: _val, objAddr: 0x00000000000008EC, binAddr: 0x0000000100001004, size: 0x00000000
+CHECK-LTO: ...
 
 Check thet we correctly handle debug maps with archive members (including only
 opening the archive once if mulitple of its members are used).
@@ -48,20 +50,20 @@ CHECK-ARCHIVE-NEXT: 	opened new archive {{.*}}/libbasic.a'
 CHECK-ARCHIVE-NEXT: 	found member in current archive.
 CHECK-ARCHIVE-NEXT: trying to open {{.*}}/libbasic.a(basic3.macho.x86_64.o)'
 CHECK-ARCHIVE-NEXT: 	found member in current archive.
-CHECK-ARCHIVE: DEBUG MAP: x86_64-unknown-unknown-macho
-CHECK-ARCHIVE:       object addr =>  executable addr	symbol name
-CHECK-ARCHIVE: /Inputs/basic1.macho.x86_64.o:
-CHECK-ARCHIVE: 	0000000000000000 => 0000000100000ea0+0x24	_main
-CHECK-ARCHIVE: /Inputs/./libbasic.a(basic2.macho.x86_64.o):
-CHECK-ARCHIVE: 	0000000000000310 => 0000000100001000+0x0	_baz
-CHECK-ARCHIVE: 	0000000000000020 => 0000000100000ed0+0x50	_foo
-CHECK-ARCHIVE: 	0000000000000070 => 0000000100000f20+0x17	_inc
-CHECK-ARCHIVE: 	0000000000000560 => 0000000100001004+0x0	_private_int
-CHECK-ARCHIVE: /Inputs/./libbasic.a(basic3.macho.x86_64.o):
-CHECK-ARCHIVE: 	0000000000000020 => 0000000100000f40+0x50	_bar
-CHECK-ARCHIVE: 	0000000000000070 => 0000000100000f90+0x19	_inc
-CHECK-ARCHIVE: 	0000000000000004 => 0000000100001008+0x0	_val
-CHECK-ARCHIVE: END DEBUG MAP
+CHECK-ARCHIVE: ---
+CHECK-ARCHIVE: triple: 'x86_64-unknown-unknown-macho'
+CHECK-ARCHIVE: /Inputs/basic1.macho.x86_64.o
+CHECK-ARCHIVE-DAG: 	sym: _main, objAddr: 0x0000000000000000, binAddr: 0x0000000100000EA0, size: 0x00000024
+CHECK-ARCHIVE: /Inputs/./libbasic.a(basic2.macho.x86_64.o)
+CHECK-ARCHIVE-DAG: 	sym: _baz, objAddr: 0x0000000000000310, binAddr: 0x0000000100001000, size: 0x00000000
+CHECK-ARCHIVE-DAG: 	sym: _foo, objAddr: 0x0000000000000020, binAddr: 0x0000000100000ED0, size: 0x00000050
+CHECK-ARCHIVE-DAG: 	sym: _inc, objAddr: 0x0000000000000070, binAddr: 0x0000000100000F20, size: 0x00000017
+CHECK-ARCHIVE-DAG: 	sym: _private_int, objAddr: 0x0000000000000560, binAddr: 0x0000000100001004, size: 0x00000000
+CHECK-ARCHIVE: /Inputs/./libbasic.a(basic3.macho.x86_64.o)
+CHECK-ARCHIVE-DAG: 	sym: _bar, objAddr: 0x0000000000000020, binAddr: 0x0000000100000F40, size: 0x00000050
+CHECK-ARCHIVE-DAG: 	sym: _inc, objAddr: 0x0000000000000070, binAddr: 0x0000000100000F90, size: 0x00000019
+CHECK-ARCHIVE-DAG: 	sym: _val, objAddr: 0x0000000000000004, binAddr: 0x0000000100001008, size: 0x00000000
+CHECK-ARCHIVE: ...
 
 Check that we warn about missing object files (this presumes that the files aren't
 present in the machine's /Inputs/ folder, which should be a pretty safe bet).
@@ -69,11 +71,11 @@ present in the machine's /Inputs/ folder, which should be a pretty safe bet).
 NOT-FOUND: cannot open{{.*}}"/Inputs/basic1.macho.x86_64.o": {{[Nn]o}} such file
 NOT-FOUND: cannot open{{.*}}"/Inputs/basic2.macho.x86_64.o": {{[Nn]o}} such file
 NOT-FOUND: cannot open{{.*}}"/Inputs/basic3.macho.x86_64.o": {{[Nn]o}} such file
-NOT-FOUND: DEBUG MAP:
-NOT-FOUND-NEXT:  object addr =>  executable addr	symbol name
-NOT-FOUND-NEXT: END DEBUG MAP
+NOT-FOUND: ---
+NOT-FOUND-NEXT: triple: 'x86_64-unknown-unknown-macho'
+NOT-FOUND-NEXT: ...
 
 Check that we correctly error out on invalid executatble.
 
 NO-EXECUTABLE: cannot parse{{.*}}/inexistant": {{[Nn]o}} such file
-NO-EXECUTABLE-NOT: DEBUG MAP
+NO-EXECUTABLE-NOT: ---

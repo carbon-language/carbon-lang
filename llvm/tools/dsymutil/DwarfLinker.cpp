@@ -1508,15 +1508,15 @@ bool DwarfLinker::hasValidRelocation(uint32_t StartOffset, uint32_t EndOffset,
     return false;
 
   const auto &ValidReloc = ValidRelocs[NextValidReloc++];
+  const auto &Mapping = ValidReloc.Mapping->getValue();
   if (Options.Verbose)
     outs() << "Found valid debug map entry: " << ValidReloc.Mapping->getKey()
            << " " << format("\t%016" PRIx64 " => %016" PRIx64,
-                            ValidReloc.Mapping->getValue().ObjectAddress,
-                            ValidReloc.Mapping->getValue().BinaryAddress);
+                            uint64_t(Mapping.ObjectAddress),
+                            uint64_t(Mapping.BinaryAddress));
 
-  Info.AddrAdjust = int64_t(ValidReloc.Mapping->getValue().BinaryAddress) +
-                    ValidReloc.Addend -
-                    ValidReloc.Mapping->getValue().ObjectAddress;
+  Info.AddrAdjust = int64_t(Mapping.BinaryAddress) +
+                    ValidReloc.Addend - Mapping.ObjectAddress;
   Info.InDebugMap = true;
   return true;
 }
