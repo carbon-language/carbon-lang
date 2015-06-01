@@ -134,3 +134,6 @@ EVAL_EXPR(50, &Test50 < (struct Test50S*)((unsigned)&Test50 + 10)) // expected-e
 
 // <rdar://problem/11874571>
 EVAL_EXPR(51, 0 != (float)1e99)
+
+// PR21945
+void PR21945() { int i = (({}), 0l); }

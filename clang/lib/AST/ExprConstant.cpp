@@ -4276,6 +4276,9 @@ public:
 
     BlockScopeRAII Scope(Info);
     const CompoundStmt *CS = E->getSubStmt();
+    if (CS->body_empty())
+      return true;
+
     for (CompoundStmt::const_body_iterator BI = CS->body_begin(),
                                            BE = CS->body_end();
          /**/; ++BI) {
@@ -4301,6 +4304,8 @@ public:
         return false;
       }
     }
+
+    llvm_unreachable("Return from function from the loop above.");
   }
 
   /// Visit a value which is evaluated, but whose value is ignored.
