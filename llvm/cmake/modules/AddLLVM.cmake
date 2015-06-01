@@ -284,9 +284,6 @@ function(set_windows_version_resource_properties name resource_file)
     set(ARG_PRODUCT_NAME "LLVM")
   endif()
 
-  get_target_property(target_location ${name} LOCATION)
-  get_filename_component(target_filename ${target_location} NAME)
-
   set_property(SOURCE ${resource_file}
                PROPERTY COMPILE_DEFINITIONS
                "RC_VERSION_FIELD_1=${ARG_VERSION_MAJOR}"
@@ -295,7 +292,6 @@ function(set_windows_version_resource_properties name resource_file)
                "RC_VERSION_FIELD_4=0"
                "RC_FILE_VERSION=\"${ARG_VERSION_STRING}\""
                "RC_INTERNAL_NAME=\"${name}\""
-               "RC_ORIGINAL_FILENAME=\"${target_filename}\""
                "RC_PRODUCT_NAME=\"${ARG_PRODUCT_NAME}\""
                "RC_PRODUCT_VERSION=\"${ARG_VERSION_STRING}\"")
 endfunction(set_windows_version_resource_properties)
