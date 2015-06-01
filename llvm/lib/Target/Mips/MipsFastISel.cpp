@@ -94,6 +94,7 @@ private:
   bool selectLoad(const Instruction *I);
   bool selectStore(const Instruction *I);
   bool selectBranch(const Instruction *I);
+  bool selectSelect(const Instruction *I);
   bool selectCmp(const Instruction *I);
   bool selectFPExt(const Instruction *I);
   bool selectFPTrunc(const Instruction *I);
@@ -899,6 +900,50 @@ bool MipsFastISel::selectFPExt(const Instruction *I) {
   return true;
 }
 
+bool MipsFastISel::selectSelect(const Instruction *I) {
+  assert(isa<SelectInst>(I) && "Expected a select instruction.");
+
+  MVT VT;
+  if (!isTypeSupported(I->getType(), VT))
+    return false;
+
+  unsigned CondMovOpc;
+  const TargetRegisterClass *RC;
+
+  if (VT.isInteger() && !VT.isVector() && VT.getSizeInBits() <= 32) {
+    CondMovOpc = Mips::MOVN_I_I;
+    RC = &Mips::GPR32RegClass;
+  } else if (VT == MVT::f32) {
+    CondMovOpc = Mips::MOVN_I_S;
+    RC = &Mips::FGR32RegClass;
+  } else if (VT == MVT::f64) {
+    CondMovOpc = Mips::MOVN_I_D32;
+    RC = &Mips::AFGR64RegClass;
+  } else
+    return false;
+
+  const SelectInst *SI = cast<SelectInst>(I);
+  const Value *Cond = SI->getCondition();
+  unsigned Src1Reg = getRegForValue(SI->getTrueValue());
+  unsigned Src2Reg = getRegForValue(SI->getFalseValue());
+  unsigned CondReg = getRegForValue(Cond);
+
+  if (!Src1Reg || !Src2Reg || !CondReg)
+    return false;
+
+  unsigned ResultReg = createResultReg(RC);
+  unsigned TempReg = createResultReg(RC);
+
+  if (!ResultReg || !TempReg)
+    return false;
+
+  emitInst(TargetOpcode::COPY, TempReg).addReg(Src2Reg);
+  emitInst(CondMovOpc, ResultReg)
+    .addReg(Src1Reg).addReg(CondReg).addReg(TempReg);
+  updateValueMap(I, ResultReg);
+  return true;
+}
+
 // Attempt to fast-select a floating-point truncate instruction.
 bool MipsFastISel::selectFPTrunc(const Instruction *I) {
   if (UnsupportedFPMode)
@@ -1539,6 +1584,8 @@ bool MipsFastISel::fastSelectInstruction(const Instruction *I) {
   case Instruction::ICmp:
   case Instruction::FCmp:
     return selectCmp(I);
+  case Instruction::Select:
+    return selectSelect(I);
   }
   return false;
 }
