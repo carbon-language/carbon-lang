@@ -57,7 +57,7 @@ private:
 public:
   RecTyKind getRecTyKind() const { return Kind; }
 
-  RecTy(RecTyKind K) : Kind(K), ListTy(nullptr) {}
+  RecTy(RecTyKind K) : Kind(K) {}
   virtual ~RecTy() {}
 
   virtual std::string getAsString() const = 0;
