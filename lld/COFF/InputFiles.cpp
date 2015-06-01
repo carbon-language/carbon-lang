@@ -202,7 +202,7 @@ SymbolBody *ObjectFile::createSymbolBody(StringRef Name, COFFSymbolRef Sym,
   }
   if (IsFirst && AuxP) {
     if (Chunk *C = SparseChunks[Sym.getSectionNumber()]) {
-      auto *Aux = (coff_aux_section_definition *)const_cast<void *>(AuxP);
+      auto *Aux = reinterpret_cast<const coff_aux_section_definition *>(AuxP);
       auto *Parent =
           (SectionChunk *)(SparseChunks[Aux->getNumber(Sym.isBigObj())]);
       if (Parent)
