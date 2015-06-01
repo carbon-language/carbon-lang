@@ -88,9 +88,6 @@ DagRecTy DagRecTy::Shared;
 
 void RecTy::dump() const { print(errs()); }
 
-void StringRecTy::anchor() { }
-void DagRecTy::anchor() { }
-
 ListRecTy *RecTy::getListTy() {
   if (!ListTy)
     ListTy.reset(new ListRecTy(this));
@@ -136,6 +133,9 @@ bool IntRecTy::typeIsConvertibleTo(const RecTy *RHS) const {
   return kind==BitRecTyKind || kind==BitsRecTyKind || kind==IntRecTyKind;
 }
 
+std::string StringRecTy::getAsString() const {
+  return "string";
+}
 
 std::string ListRecTy::getAsString() const {
   return "list<" + Ty->getAsString() + ">";
@@ -145,6 +145,10 @@ bool ListRecTy::typeIsConvertibleTo(const RecTy *RHS) const {
   if (const auto *ListTy = dyn_cast<ListRecTy>(RHS))
     return Ty->typeIsConvertibleTo(ListTy->getElementType());
   return false;
+}
+
+std::string DagRecTy::getAsString() const {
+  return "dag";
 }
 
 RecordRecTy *RecordRecTy::get(Record *R) {

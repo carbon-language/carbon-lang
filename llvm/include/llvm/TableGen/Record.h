@@ -139,7 +139,6 @@ class StringRecTy : public RecTy {
   static StringRecTy Shared;
   StringRecTy() : RecTy(StringRecTyKind) {}
 
-  virtual void anchor();
 public:
   static bool classof(const RecTy *RT) {
     return RT->getRecTyKind() == StringRecTyKind;
@@ -147,7 +146,7 @@ public:
 
   static StringRecTy *get() { return &Shared; }
 
-  std::string getAsString() const override { return "string"; }
+  std::string getAsString() const override;
 };
 
 /// ListRecTy - 'list<Ty>' - Represent a list of values, all of which must be of
@@ -177,7 +176,6 @@ class DagRecTy : public RecTy {
   static DagRecTy Shared;
   DagRecTy() : RecTy(DagRecTyKind) {}
 
-  virtual void anchor();
 public:
   static bool classof(const RecTy *RT) {
     return RT->getRecTyKind() == DagRecTyKind;
@@ -185,7 +183,7 @@ public:
 
   static DagRecTy *get() { return &Shared; }
 
-  std::string getAsString() const override { return "dag"; }
+  std::string getAsString() const override;
 };
 
 /// RecordRecTy - '[classname]' - Represent an instance of a class, such as:
