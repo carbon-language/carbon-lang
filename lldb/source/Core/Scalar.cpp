@@ -1900,7 +1900,7 @@ Scalar::SetValueFromData (DataExtractor &data, lldb::Encoding encoding, size_t b
         break;
     case lldb::eEncodingUint:
         {
-            lldb::offset_t offset;
+            lldb::offset_t offset = 0;
             
             switch (byte_size)
             {
@@ -1916,7 +1916,7 @@ Scalar::SetValueFromData (DataExtractor &data, lldb::Encoding encoding, size_t b
         break;
     case lldb::eEncodingSint:
         {
-            lldb::offset_t offset;
+            lldb::offset_t offset = 0;
             
             switch (byte_size)
             {
@@ -1932,7 +1932,7 @@ Scalar::SetValueFromData (DataExtractor &data, lldb::Encoding encoding, size_t b
         break;
     case lldb::eEncodingIEEE754:
         {
-            lldb::offset_t offset;
+            lldb::offset_t offset = 0;
             
             if (byte_size == sizeof (float))
                 operator=((float)data.GetFloat(&offset));
