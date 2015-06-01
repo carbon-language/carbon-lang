@@ -201,7 +201,7 @@ ImportTable::ImportTable(StringRef N,
     HintNameTables.push_back(
         new HintNameChunk(S->getExportName(), S->getOrdinal()));
 
-  for (HintNameChunk *H : HintNameTables) {
+  for (Chunk *H : HintNameTables) {
     LookupTables.push_back(new LookupChunk(H));
     AddressTables.push_back(new LookupChunk(H));
   }

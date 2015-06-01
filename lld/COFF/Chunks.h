@@ -206,24 +206,24 @@ private:
 // A chunk for the import descriptor table.
 class LookupChunk : public Chunk {
 public:
-  explicit LookupChunk(HintNameChunk *H) : HintName(H) {}
+  explicit LookupChunk(Chunk *C) : HintName(C) {}
   bool hasData() const override { return false; }
   size_t getSize() const override { return sizeof(uint64_t); }
   void applyRelocations(uint8_t *Buf) override;
-  HintNameChunk *HintName;
+  Chunk *HintName;
 };
 
 // A chunk for the import descriptor table.
 class DirectoryChunk : public Chunk {
 public:
-  explicit DirectoryChunk(StringChunk *N) : DLLName(N) {}
+  explicit DirectoryChunk(Chunk *N) : DLLName(N) {}
   bool hasData() const override { return false; }
   size_t getSize() const override { return sizeof(ImportDirectoryTableEntry); }
   void applyRelocations(uint8_t *Buf) override;
 
-  StringChunk *DLLName;
-  LookupChunk *LookupTab;
-  LookupChunk *AddressTab;
+  Chunk *DLLName;
+  Chunk *LookupTab;
+  Chunk *AddressTab;
 };
 
 // A chunk for the import descriptor table representing.
@@ -246,9 +246,9 @@ public:
   ImportTable(StringRef DLLName, std::vector<DefinedImportData *> &Symbols);
   StringChunk *DLLName;
   DirectoryChunk *DirTab;
-  std::vector<LookupChunk *> LookupTables;
-  std::vector<LookupChunk *> AddressTables;
-  std::vector<HintNameChunk *> HintNameTables;
+  std::vector<Chunk *> LookupTables;
+  std::vector<Chunk *> AddressTables;
+  std::vector<Chunk *> HintNameTables;
 };
 
 } // namespace coff

@@ -178,7 +178,7 @@ void Writer::createImportTables() {
 
   // Add the import lookup tables.
   for (ImportTable &T : Tabs) {
-    for (LookupChunk *C : T.LookupTables)
+    for (Chunk *C : T.LookupTables)
       Idata->addChunk(C);
     Idata->addChunk(new NullChunk(sizeof(uint64_t)));
   }
@@ -186,7 +186,7 @@ void Writer::createImportTables() {
   // Add the import address tables. Their contents are the same as the
   // lookup tables.
   for (ImportTable &T : Tabs) {
-    for (LookupChunk *C : T.AddressTables)
+    for (Chunk *C : T.AddressTables)
       Idata->addChunk(C);
     Idata->addChunk(new NullChunk(sizeof(uint64_t)));
     ImportAddressTableSize += (T.AddressTables.size() + 1) * sizeof(uint64_t);
@@ -195,7 +195,7 @@ void Writer::createImportTables() {
 
   // Add the hint name table.
   for (ImportTable &T : Tabs)
-    for (HintNameChunk *C : T.HintNameTables)
+    for (Chunk *C : T.HintNameTables)
       Idata->addChunk(C);
 
   // Add DLL names.
