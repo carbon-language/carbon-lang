@@ -125,7 +125,7 @@ def call_with_timeout(command, timeout, name):
     output = process.communicate()
     exit_status = process.returncode
     passes, failures = parse_test_results(output)
-    update_status(name, output if failures > 0 else None)
+    update_status(name, output if exit_status != 0 else None)
     return exit_status, passes, failures
 
 def process_dir(root, files, test_root, dotest_argv):
@@ -388,8 +388,10 @@ Run lldb test suite using a separate process for each test file.
             touch(os.path.join(session_dir, "{}-{}".format(result, test_name)))
 
     print
-    print "Ran %d test suites (%d failed) (%f%%)" % (num_test_files, len(failed), 100.0*len(failed)/num_test_files)
-    print "Ran %d test cases (%d failed) (%f%%)" % (num_tests, all_fails, 100.0*all_fails/num_tests)
+    print "Ran %d test suites (%d failed) (%f%%)" % (num_test_files, len(failed),
+            (100.0 * len(failed) / num_test_files) if num_test_files > 0 else float('NaN'))
+    print "Ran %d test cases (%d failed) (%f%%)" % (num_tests, all_fails,
+            (100.0 * all_fails / num_tests) if num_tests > 0 else float('NaN'))
     if len(failed) > 0:
         failed.sort()
         print "Failing Tests (%d)" % len(failed)
