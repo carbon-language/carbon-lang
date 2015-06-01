@@ -145,7 +145,7 @@ sub _load_symbols_nm($) {
             die "nm reported unknown object file:\n    $line\n";
         }; # if
         # AC: exclude some libc symbols from renaming, otherwise we have problems
-        #     in tests for gfortran + static libiomp on Lin_32.
+        #     in tests for gfortran + static libomp on Lin_32.
         #     These symbols came from libtbbmalloc.a
         if ( $target_os eq "lin" ) {
             if ( $symbol =~ m{__i686} ) {

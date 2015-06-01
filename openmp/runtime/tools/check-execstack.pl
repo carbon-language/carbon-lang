@@ -136,9 +136,9 @@ A name of executable or shared object to check. Multiple files may be specified.
 
 =head1 EXAMPLES
 
-Check libiomp5.so library:
+Check libomp.so library:
 
-    $ check-execstack.pl libiomp5.so
+    $ check-execstack.pl libomp.so
 
 =cut
 

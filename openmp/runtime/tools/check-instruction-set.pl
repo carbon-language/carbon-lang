@@ -132,9 +132,9 @@ sub check_file($;$$) {
             # Empty line.
             # Ignore.
         } elsif ( $line =~ m{^In archive (.*?):\s*$} ) {
-            # In archive libiomp5.a:
+            # In archive libomp.a:
         } elsif ( $line =~ m{^(?:.*?):\s*file format (.*?)\s*$} ) {
-            # libiomp5.so:     file format elf64-x86-64-freebsd
+            # libomp.so:     file format elf64-x86-64-freebsd
             # kmp_ftn_cdecl.o:     file format elf64-x86-64
             my $fmt = $1;
             if ( bad_fmt( $fmt ) ) {
