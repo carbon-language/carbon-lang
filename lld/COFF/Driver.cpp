@@ -356,6 +356,10 @@ bool LinkerDriver::link(int Argc, const char *Argv[]) {
   if (Symtab.reportRemainingUndefines())
     return false;
 
+  // /include option takes precedence over garbage collection.
+  for (auto *Arg : Args->filtered(OPT_incl))
+    Symtab.find(Arg->getValue())->markLive();
+
   // Windows specific -- if no /subsystem is given, we need to infer
   // that from entry point name.
   if (Config->Subsystem == IMAGE_SUBSYSTEM_UNKNOWN) {
