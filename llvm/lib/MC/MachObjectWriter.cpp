@@ -789,9 +789,7 @@ void MachObjectWriter::WriteObject(MCAssembler &Asm,
   uint64_t SectionDataSize = 0;
   uint64_t SectionDataFileSize = 0;
   uint64_t VMSize = 0;
-  for (MCAssembler::const_iterator it = Asm.begin(),
-         ie = Asm.end(); it != ie; ++it) {
-    const MCSection &Sec = *it;
+  for (const MCSection &Sec : Asm) {
     uint64_t Address = getSectionAddress(&Sec);
     uint64_t Size = Layout.getSectionAddressSize(&Sec);
     uint64_t FileSize = Layout.getSectionFileSize(&Sec);
@@ -799,7 +797,7 @@ void MachObjectWriter::WriteObject(MCAssembler &Asm,
 
     VMSize = std::max(VMSize, Address + Size);
 
-    if (it->isVirtualSection())
+    if (Sec.isVirtualSection())
       continue;
 
     SectionDataSize = std::max(SectionDataSize, Address + Size);
@@ -820,12 +818,11 @@ void MachObjectWriter::WriteObject(MCAssembler &Asm,
 
   // ... and then the section headers.
   uint64_t RelocTableEnd = SectionDataStart + SectionDataFileSize;
-  for (MCAssembler::const_iterator it = Asm.begin(),
-         ie = Asm.end(); it != ie; ++it) {
-    std::vector<RelAndSymbol> &Relocs = Relocations[&*it];
+  for (const MCSection &Sec : Asm) {
+    std::vector<RelAndSymbol> &Relocs = Relocations[&Sec];
     unsigned NumRelocs = Relocs.size();
-    uint64_t SectionStart = SectionDataStart + getSectionAddress(&*it);
-    WriteSection(Asm, Layout, *it, SectionStart, RelocTableEnd, NumRelocs);
+    uint64_t SectionStart = SectionDataStart + getSectionAddress(&Sec);
+    WriteSection(Asm, Layout, Sec, SectionStart, RelocTableEnd, NumRelocs);
     RelocTableEnd += NumRelocs * sizeof(MachO::any_relocation_info);
   }
 
@@ -899,9 +896,7 @@ void MachObjectWriter::WriteObject(MCAssembler &Asm,
   }
 
   // Write the actual section data.
-  for (MCAssembler::const_iterator it = Asm.begin(),
-         ie = Asm.end(); it != ie; ++it) {
-    MCSection &Sec = *it;
+  for (const MCSection &Sec : Asm) {
     Asm.writeSectionData(&Sec, Layout);
 
     uint64_t Pad = getPaddingSize(&Sec, Layout);
@@ -912,11 +907,10 @@ void MachObjectWriter::WriteObject(MCAssembler &Asm,
   WriteZeros(SectionDataPadding);
 
   // Write the relocation entries.
-  for (MCAssembler::const_iterator it = Asm.begin(),
-         ie = Asm.end(); it != ie; ++it) {
+  for (const MCSection &Sec : Asm) {
     // Write the section relocation entries, in reverse order to match 'as'
     // (approximately, the exact algorithm is more complicated than this).
-    std::vector<RelAndSymbol> &Relocs = Relocations[&*it];
+    std::vector<RelAndSymbol> &Relocs = Relocations[&Sec];
     for (unsigned i = 0, e = Relocs.size(); i != e; ++i) {
       Write32(Relocs[e - i - 1].MRE.r_word0);
       Write32(Relocs[e - i - 1].MRE.r_word1);

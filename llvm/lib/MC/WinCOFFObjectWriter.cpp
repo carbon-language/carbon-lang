@@ -1021,7 +1021,7 @@ void WinCOFFObjectWriter::WriteObject(MCAssembler &Asm,
 
   {
     sections::iterator i, ie;
-    MCAssembler::const_iterator j, je;
+    MCAssembler::iterator j, je;
 
     for (auto &Section : Sections) {
       if (Section->Number != -1) {

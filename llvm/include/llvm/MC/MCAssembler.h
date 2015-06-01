@@ -12,7 +12,6 @@
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
-#include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/ilist.h"
@@ -574,7 +573,7 @@ class MCAssembler {
   friend class MCAsmLayout;
 
 public:
-  typedef SetVector<MCSection *> SectionListType;
+  typedef std::vector<MCSection *> SectionListType;
   typedef std::vector<const MCSymbol *> SymbolDataListType;
 
   typedef pointee_iterator<SectionListType::const_iterator> const_iterator;
@@ -903,7 +902,13 @@ public:
   /// \name Backend Data Access
   /// @{
 
-  bool registerSection(MCSection &Section) { return Sections.insert(&Section); }
+  bool registerSection(MCSection &Section) {
+    if (Section.isRegistered())
+      return false;
+    Sections.push_back(&Section);
+    Section.setIsRegistered(true);
+    return true;
+  }
 
   bool hasSymbolData(const MCSymbol &Symbol) const { return Symbol.hasData(); }
 

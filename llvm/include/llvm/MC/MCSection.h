@@ -78,6 +78,8 @@ private:
   /// Whether this section has had instructions emitted into it.
   unsigned HasInstructions : 1;
 
+  unsigned IsRegistered : 1;
+
   FragmentListType Fragments;
 
   /// Mapping from subsection number to insertion point for subsection numbers
@@ -129,6 +131,9 @@ public:
 
   bool hasInstructions() const { return HasInstructions; }
   void setHasInstructions(bool Value) { HasInstructions = Value; }
+
+  bool isRegistered() const { return IsRegistered; }
+  void setIsRegistered(bool Value) { IsRegistered = Value; }
 
   MCSection::FragmentListType &getFragmentList() { return Fragments; }
   const MCSection::FragmentListType &getFragmentList() const {
