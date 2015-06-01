@@ -431,8 +431,7 @@ static void InvalidPTH(DiagnosticsEngine &Diags, const char *Msg) {
   Diags.Report(Diags.getCustomDiagID(DiagnosticsEngine::Error, "%0")) << Msg;
 }
 
-PTHManager *PTHManager::Create(const std::string &file,
-                               DiagnosticsEngine &Diags) {
+PTHManager *PTHManager::Create(StringRef file, DiagnosticsEngine &Diags) {
   // Memory map the PTH file.
   llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> FileOrErr =
       llvm::MemoryBuffer::getFile(file);

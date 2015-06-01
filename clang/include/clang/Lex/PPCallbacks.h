@@ -155,7 +155,7 @@ public:
   /// \param Loc The location of the directive.
   /// \param str The text of the directive.
   ///
-  virtual void Ident(SourceLocation Loc, const std::string &str) {
+  virtual void Ident(SourceLocation Loc, StringRef str) {
   }
 
   /// \brief Callback invoked when start reading any pragma directive.
@@ -165,14 +165,13 @@ public:
 
   /// \brief Callback invoked when a \#pragma comment directive is read.
   virtual void PragmaComment(SourceLocation Loc, const IdentifierInfo *Kind,
-                             const std::string &Str) {
+                             StringRef Str) {
   }
 
   /// \brief Callback invoked when a \#pragma detect_mismatch directive is
   /// read.
-  virtual void PragmaDetectMismatch(SourceLocation Loc,
-                                    const std::string &Name,
-                                    const std::string &Value) {
+  virtual void PragmaDetectMismatch(SourceLocation Loc, StringRef Name,
+                                    StringRef Value) {
   }
 
   /// \brief Callback invoked when a \#pragma clang __debug directive is read.
@@ -375,19 +374,19 @@ public:
     Second->EndOfMainFile();
   }
 
-  void Ident(SourceLocation Loc, const std::string &str) override {
+  void Ident(SourceLocation Loc, StringRef str) override {
     First->Ident(Loc, str);
     Second->Ident(Loc, str);
   }
 
   void PragmaComment(SourceLocation Loc, const IdentifierInfo *Kind,
-                     const std::string &Str) override {
+                     StringRef Str) override {
     First->PragmaComment(Loc, Kind, Str);
     Second->PragmaComment(Loc, Kind, Str);
   }
 
-  void PragmaDetectMismatch(SourceLocation Loc, const std::string &Name,
-                            const std::string &Value) override {
+  void PragmaDetectMismatch(SourceLocation Loc, StringRef Name,
+                            StringRef Value) override {
     First->PragmaDetectMismatch(Loc, Name, Value);
     Second->PragmaDetectMismatch(Loc, Name, Value);
   }

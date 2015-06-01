@@ -128,7 +128,7 @@ public:
                           CharSourceRange FilenameRange, const FileEntry *File,
                           StringRef SearchPath, StringRef RelativePath,
                           const Module *Imported) override;
-  void Ident(SourceLocation Loc, const std::string &str) override;
+  void Ident(SourceLocation Loc, StringRef str) override;
   void PragmaMessage(SourceLocation Loc, StringRef Namespace,
                      PragmaMessageKind Kind, StringRef Str) override;
   void PragmaDebug(SourceLocation Loc, StringRef DebugType) override;
@@ -337,11 +337,11 @@ void PrintPPOutputPPCallbacks::InclusionDirective(SourceLocation HashLoc,
 
 /// Ident - Handle #ident directives when read by the preprocessor.
 ///
-void PrintPPOutputPPCallbacks::Ident(SourceLocation Loc, const std::string &S) {
+void PrintPPOutputPPCallbacks::Ident(SourceLocation Loc, StringRef S) {
   MoveToLine(Loc);
 
   OS.write("#ident ", strlen("#ident "));
-  OS.write(&S[0], S.size());
+  OS.write(S.begin(), S.size());
   EmittedTokensOnThisLine = true;
 }
 
