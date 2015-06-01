@@ -27,38 +27,10 @@
 
 namespace llvm {
 
-// RecTy subclasses.
-class BitRecTy;
-class BitsRecTy;
-class IntRecTy;
-class StringRecTy;
 class ListRecTy;
-class DagRecTy;
-class RecordRecTy;
-
-// Init subclasses.
-class Init;
-class UnsetInit;
-class BitInit;
-class BitsInit;
-class IntInit;
-class StringInit;
-class ListInit;
-class UnOpInit;
-class BinOpInit;
-class TernOpInit;
-class DefInit;
-class DagInit;
-class TypedInit;
-class VarInit;
-class FieldInit;
-class VarBitInit;
-class VarListElementInit;
-
-// Other classes.
+struct MultiClass;
 class Record;
 class RecordVal;
-struct MultiClass;
 class RecordKeeper;
 
 //===----------------------------------------------------------------------===//
