@@ -1470,8 +1470,7 @@ bool ARMLoadStoreOpt::FixInvalidRegPairOp(MachineBasicBlock &MBB,
                                           MachineBasicBlock::iterator &MBBI) {
   MachineInstr *MI = &*MBBI;
   unsigned Opcode = MI->getOpcode();
-  if (Opcode == ARM::LDRD || Opcode == ARM::STRD ||
-      Opcode == ARM::t2LDRDi8 || Opcode == ARM::t2STRDi8) {
+  if (Opcode == ARM::LDRD || Opcode == ARM::STRD) {
     const MachineOperand &BaseOp = MI->getOperand(2);
     unsigned BaseReg = BaseOp.getReg();
     unsigned EvenReg = MI->getOperand(0).getReg();
@@ -1949,10 +1948,11 @@ static void concatenateMemOperands(MachineInstr *MI, MachineInstr *Op0,
 
 bool
 ARMPreAllocLoadStoreOpt::CanFormLdStDWord(MachineInstr *Op0, MachineInstr *Op1,
-                                          DebugLoc &dl,
-                                          unsigned &NewOpc, unsigned &EvenReg,
-                                          unsigned &OddReg, unsigned &BaseReg,
-                                          int &Offset, unsigned &PredReg,
+                                          DebugLoc &dl, unsigned &NewOpc,
+                                          unsigned &FirstReg,
+                                          unsigned &SecondReg,
+                                          unsigned &BaseReg, int &Offset,
+                                          unsigned &PredReg,
                                           ARMCC::CondCodes &Pred,
                                           bool &isT2) {
   // Make sure we're allowed to generate LDRD/STRD.
@@ -2011,9 +2011,9 @@ ARMPreAllocLoadStoreOpt::CanFormLdStDWord(MachineInstr *Op0, MachineInstr *Op1,
       return false;
     Offset = ARM_AM::getAM3Opc(AddSub, OffImm);
   }
-  EvenReg = Op0->getOperand(0).getReg();
-  OddReg  = Op1->getOperand(0).getReg();
-  if (EvenReg == OddReg)
+  FirstReg = Op0->getOperand(0).getReg();
+  SecondReg = Op1->getOperand(0).getReg();
+  if (FirstReg == SecondReg)
     return false;
   BaseReg = Op0->getOperand(1).getReg();
   Pred = getInstrPredicate(Op0, PredReg);
@@ -2109,7 +2109,7 @@ bool ARMPreAllocLoadStoreOpt::RescheduleOps(MachineBasicBlock *MBB,
         // to try to allocate a pair of registers that can form register pairs.
         MachineInstr *Op0 = Ops.back();
         MachineInstr *Op1 = Ops[Ops.size()-2];
-        unsigned EvenReg = 0, OddReg = 0;
+        unsigned FirstReg = 0, SecondReg = 0;
         unsigned BaseReg = 0, PredReg = 0;
         ARMCC::CondCodes Pred = ARMCC::AL;
         bool isT2 = false;
@@ -2117,21 +2117,21 @@ bool ARMPreAllocLoadStoreOpt::RescheduleOps(MachineBasicBlock *MBB,
         int Offset = 0;
         DebugLoc dl;
         if (NumMove == 2 && CanFormLdStDWord(Op0, Op1, dl, NewOpc,
-                                             EvenReg, OddReg, BaseReg,
+                                             FirstReg, SecondReg, BaseReg,
                                              Offset, PredReg, Pred, isT2)) {
           Ops.pop_back();
           Ops.pop_back();
 
           const MCInstrDesc &MCID = TII->get(NewOpc);
           const TargetRegisterClass *TRC = TII->getRegClass(MCID, 0, TRI, *MF);
-          MRI->constrainRegClass(EvenReg, TRC);
-          MRI->constrainRegClass(OddReg, TRC);
+          MRI->constrainRegClass(FirstReg, TRC);
+          MRI->constrainRegClass(SecondReg, TRC);
 
           // Form the pair instruction.
           if (isLd) {
             MachineInstrBuilder MIB = BuildMI(*MBB, InsertPos, dl, MCID)
-              .addReg(EvenReg, RegState::Define)
-              .addReg(OddReg, RegState::Define)
+              .addReg(FirstReg, RegState::Define)
+              .addReg(SecondReg, RegState::Define)
               .addReg(BaseReg);
             // FIXME: We're converting from LDRi12 to an insn that still
             // uses addrmode2, so we need an explicit offset reg. It should
@@ -2144,8 +2144,8 @@ bool ARMPreAllocLoadStoreOpt::RescheduleOps(MachineBasicBlock *MBB,
             ++NumLDRDFormed;
           } else {
             MachineInstrBuilder MIB = BuildMI(*MBB, InsertPos, dl, MCID)
-              .addReg(EvenReg)
-              .addReg(OddReg)
+              .addReg(FirstReg)
+              .addReg(SecondReg)
               .addReg(BaseReg);
             // FIXME: We're converting from LDRi12 to an insn that still
             // uses addrmode2, so we need an explicit offset reg. It should
@@ -2160,9 +2160,11 @@ bool ARMPreAllocLoadStoreOpt::RescheduleOps(MachineBasicBlock *MBB,
           MBB->erase(Op0);
           MBB->erase(Op1);
 
-          // Add register allocation hints to form register pairs.
-          MRI->setRegAllocationHint(EvenReg, ARMRI::RegPairEven, OddReg);
-          MRI->setRegAllocationHint(OddReg,  ARMRI::RegPairOdd, EvenReg);
+          if (!isT2) {
+            // Add register allocation hints to form register pairs.
+            MRI->setRegAllocationHint(FirstReg, ARMRI::RegPairEven, SecondReg);
+            MRI->setRegAllocationHint(SecondReg,  ARMRI::RegPairOdd, FirstReg);
+          }
         } else {
           for (unsigned i = 0; i != NumMove; ++i) {
             MachineInstr *Op = Ops.back();
