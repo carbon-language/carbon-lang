@@ -380,11 +380,12 @@ SDValue SITargetLowering::LowerParameter(SelectionDAG &DAG, EVT VT, EVT MemVT,
   Type *Ty = VT.getTypeForEVT(*DAG.getContext());
 
   MachineRegisterInfo &MRI = DAG.getMachineFunction().getRegInfo();
+  MVT PtrVT = getPointerTy(AMDGPUAS::CONSTANT_ADDRESS);
   PointerType *PtrTy = PointerType::get(Ty, AMDGPUAS::CONSTANT_ADDRESS);
-  SDValue BasePtr =  DAG.getCopyFromReg(Chain, SL,
-                           MRI.getLiveInVirtReg(InputPtrReg), MVT::i64);
-  SDValue Ptr = DAG.getNode(ISD::ADD, SL, MVT::i64, BasePtr,
-                            DAG.getConstant(Offset, SL, MVT::i64));
+  SDValue BasePtr = DAG.getCopyFromReg(Chain, SL,
+                                       MRI.getLiveInVirtReg(InputPtrReg), PtrVT);
+  SDValue Ptr = DAG.getNode(ISD::ADD, SL, PtrVT, BasePtr,
+                            DAG.getConstant(Offset, SL, PtrVT));
   SDValue PtrOffset = DAG.getUNDEF(getPointerTy(AMDGPUAS::CONSTANT_ADDRESS));
   MachinePointerInfo PtrInfo(UndefValue::get(PtrTy));
 
