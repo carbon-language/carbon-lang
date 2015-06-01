@@ -1088,7 +1088,7 @@ FTN_GET_CANCELLATION_STATUS(int cancel_kind) {
     These following sections create function aliases (dummy symbols) for the omp_* routines.
     These aliases will then be versioned according to how libgomp ``versions'' its
     symbols (OMP_1.0, OMP_2.0, OMP_3.0, ...) while also retaining the
-    default version which libiomp5 uses: VERSION (defined in exports_so.txt)
+    default version which libomp uses: VERSION (defined in exports_so.txt)
     If you want to see the versioned symbols for libgomp.so.1 then just type:
 
     objdump -T /path/to/libgomp.so.1 | grep omp_

@@ -27,7 +27,7 @@
 /*
     Using "magic" prefix in all the version strings is rather convenient to get static version info
     from binaries by using standard utilities "strings" and "grep", e. g.:
-        $ strings libiomp5.so | grep "@(#)"
+        $ strings libomp.so | grep "@(#)"
     gives clean list of all version strings in the library. Leading zero helps to keep version
     string separate from printable characters which may occurs just before version string.
 */

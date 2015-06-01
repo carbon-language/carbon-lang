@@ -1212,7 +1212,7 @@ xexpand(KMP_API_NAME_GOMP_TASKGROUP_END)(void)
 #ifndef KMP_DEBUG
 static
 #endif /* KMP_DEBUG */
-kmp_int32 __kmp_gomp_to_iomp_cancellation_kind(int gomp_kind) {
+kmp_int32 __kmp_gomp_to_omp_cancellation_kind(int gomp_kind) {
     kmp_int32 cncl_kind = 0;
     switch(gomp_kind) {
       case 1:
@@ -1241,7 +1241,7 @@ xexpand(KMP_API_NAME_GOMP_CANCELLATION_POINT)(int which)
     MKLOC(loc, "GOMP_cancellation_point");
     KA_TRACE(20, ("GOMP_cancellation_point: T#%d\n", gtid));
 
-    kmp_int32 cncl_kind = __kmp_gomp_to_iomp_cancellation_kind(which);
+    kmp_int32 cncl_kind = __kmp_gomp_to_omp_cancellation_kind(which);
 
     return __kmpc_cancellationpoint(&loc, gtid, cncl_kind);
 }
@@ -1273,7 +1273,7 @@ xexpand(KMP_API_NAME_GOMP_CANCEL)(int which, bool do_cancel)
     MKLOC(loc, "GOMP_cancel");
     KA_TRACE(20, ("GOMP_cancel: T#%d\n", gtid));
 
-    kmp_int32 cncl_kind = __kmp_gomp_to_iomp_cancellation_kind(which);
+    kmp_int32 cncl_kind = __kmp_gomp_to_omp_cancellation_kind(which);
 
     if(do_cancel == FALSE) {
         return xexpand(KMP_API_NAME_GOMP_CANCELLATION_POINT)(which);

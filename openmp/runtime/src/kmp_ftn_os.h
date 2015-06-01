@@ -475,7 +475,7 @@
 #define KMP_API_NAME_GOMP_TASKYIELD                      GOMP_taskyield
 
 // All GOMP_4.0 symbols 
-// TODO: As of 2013-10-14, none of the GOMP_4.0 functions are implemented in libiomp5
+// TODO: As of 2013-10-14, none of the GOMP_4.0 functions are implemented in libomp
 #define KMP_API_NAME_GOMP_BARRIER_CANCEL                 GOMP_barrier_cancel
 #define KMP_API_NAME_GOMP_CANCEL                         GOMP_cancel
 #define KMP_API_NAME_GOMP_CANCELLATION_POINT             GOMP_cancellation_point

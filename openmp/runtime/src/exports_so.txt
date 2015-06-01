@@ -11,7 +11,7 @@
 #//===----------------------------------------------------------------------===//
 #
 
-# This is version script for OMP RTL shared library (libiomp5*.so)
+# This is version script for OMP RTL shared library (libomp*.so)
 
 VERSION {
 
