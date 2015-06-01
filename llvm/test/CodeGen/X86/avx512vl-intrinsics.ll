@@ -668,7 +668,7 @@ declare <4 x float> @llvm.x86.avx512.mask.compress.ps.128(<4 x float> %data, <4 
 
 ; CHECK-LABEL: compr7
 ; CHECK-NOT: vcompress
-; CHECK: vmovapd
+; CHECK: vmovupd
 define void @compr7(i8* %addr, <8 x double> %data) {
   call void @llvm.x86.avx512.mask.compress.store.pd.512(i8* %addr, <8 x double> %data, i8 -1)
   ret void
@@ -757,7 +757,7 @@ declare <4 x float> @llvm.x86.avx512.mask.expand.ps.128(<4 x float> %data, <4 x 
 
 ; CHECK-LABEL: expand7
 ; CHECK-NOT: vexpand
-; CHECK: vmovapd
+; CHECK: vmovupd
 define <8 x double> @expand7(i8* %addr, <8 x double> %data) {
   %res = call <8 x double> @llvm.x86.avx512.mask.expand.load.pd.512(i8* %addr, <8 x double> %data, i8 -1)
   ret <8 x double> %res

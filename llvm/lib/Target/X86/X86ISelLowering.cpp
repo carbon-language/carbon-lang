@@ -15670,11 +15670,12 @@ static SDValue LowerINTRINSIC_W_CHAIN(SDValue Op, const X86Subtarget *Subtarget,
     SDValue Addr = Op.getOperand(2);
     SDValue Chain = Op.getOperand(0);
 
+    EVT VT = DataToCompress.getValueType();
     if (isAllOnes(Mask)) // return just a store
       return DAG.getStore(Chain, dl, DataToCompress, Addr,
-                          MachinePointerInfo(), false, false, 0);
+                          MachinePointerInfo(), false, false,
+                          VT.getScalarSizeInBits()/8);
 
-    EVT VT = DataToCompress.getValueType();
     EVT MaskVT = EVT::getVectorVT(*DAG.getContext(), MVT::i1,
                                   VT.getVectorNumElements());
     EVT BitcastVT = EVT::getVectorVT(*DAG.getContext(), MVT::i1,
@@ -15686,7 +15687,8 @@ static SDValue LowerINTRINSIC_W_CHAIN(SDValue Op, const X86Subtarget *Subtarget,
     SDValue Compressed =  DAG.getNode(IntrData->Opc0, dl, VT, VMask,
                                       DataToCompress, DAG.getUNDEF(VT));
     return DAG.getStore(Chain, dl, Compressed, Addr,
-                        MachinePointerInfo(), false, false, 0);
+                        MachinePointerInfo(), false, false,
+                        VT.getScalarSizeInBits()/8);
   }
   case EXPAND_FROM_MEM: {
     SDLoc dl(Op);
@@ -15698,7 +15700,7 @@ static SDValue LowerINTRINSIC_W_CHAIN(SDValue Op, const X86Subtarget *Subtarget,
 
     if (isAllOnes(Mask)) // return just a load
       return DAG.getLoad(VT, dl, Chain, Addr, MachinePointerInfo(), false, false,
-                         false, 0);
+                         false, VT.getScalarSizeInBits()/8);
     EVT MaskVT = EVT::getVectorVT(*DAG.getContext(), MVT::i1,
                                   VT.getVectorNumElements());
     EVT BitcastVT = EVT::getVectorVT(*DAG.getContext(), MVT::i1,
@@ -15708,7 +15710,8 @@ static SDValue LowerINTRINSIC_W_CHAIN(SDValue Op, const X86Subtarget *Subtarget,
                                 DAG.getIntPtrConstant(0, dl));
 
     SDValue DataToExpand = DAG.getLoad(VT, dl, Chain, Addr, MachinePointerInfo(),
-                                   false, false, false, 0);
+                                       false, false, false,
+                                       VT.getScalarSizeInBits()/8);
 
     SDValue Results[] = {
         DAG.getNode(IntrData->Opc0, dl, VT, VMask, DataToExpand, PathThru),
