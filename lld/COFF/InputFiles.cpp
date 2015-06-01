@@ -8,9 +8,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "Chunks.h"
+#include "Error.h"
 #include "InputFiles.h"
 #include "Writer.h"
-#include "lld/Core/Error.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Object/COFF.h"
 #include "llvm/Support/COFF.h"
@@ -93,7 +93,8 @@ std::error_code ObjectFile::parse() {
     Bin.release();
     COFFObj.reset(Obj);
   } else {
-    return make_dynamic_error_code(getName() + " is not a COFF file.");
+    llvm::errs() << getName() << " is not a COFF file.\n";
+    return make_error_code(LLDError::InvalidFile);
   }
 
   // Read section and symbol tables.
@@ -113,12 +114,16 @@ std::error_code ObjectFile::initializeChunks() {
   for (uint32_t I = 1; I < NumSections + 1; ++I) {
     const coff_section *Sec;
     StringRef Name;
-    if (auto EC = COFFObj->getSection(I, Sec))
-      return make_dynamic_error_code(Twine("getSection failed: ") + Name +
-                                     ": " + EC.message());
-    if (auto EC = COFFObj->getSectionName(Sec, Name))
-      return make_dynamic_error_code(Twine("getSectionName failed: ") + Name +
-                                     ": " + EC.message());
+    if (auto EC = COFFObj->getSection(I, Sec)) {
+      llvm::errs() << "getSection failed: " << Name << ": "
+                   << EC.message() << "\n";
+      return make_error_code(LLDError::BrokenFile);
+    }
+    if (auto EC = COFFObj->getSectionName(Sec, Name)) {
+      llvm::errs() << "getSectionName failed: " << Name << ": "
+                   << EC.message() << "\n";
+      return make_error_code(LLDError::BrokenFile);
+    }
     if (Name == ".drectve") {
       ArrayRef<uint8_t> Data;
       COFFObj->getSectionContents(Sec, Data);
@@ -144,16 +149,20 @@ std::error_code ObjectFile::initializeSymbols() {
   for (uint32_t I = 0; I < NumSymbols; ++I) {
     // Get a COFFSymbolRef object.
     auto SymOrErr = COFFObj->getSymbol(I);
-    if (auto EC = SymOrErr.getError())
-      return make_dynamic_error_code("broken object file: " + getName() +
-                                     ": " + EC.message());
+    if (auto EC = SymOrErr.getError()) {
+      llvm::errs() << "broken object file: " << getName() << ": "
+                   << EC.message() << "\n";
+      return make_error_code(LLDError::BrokenFile);
+    }
     COFFSymbolRef Sym = SymOrErr.get();
 
     // Get a symbol name.
     StringRef SymbolName;
-    if (auto EC = COFFObj->getSymbolName(Sym, SymbolName))
-      return make_dynamic_error_code("broken object file: " + getName() +
-                                     ": " + EC.message());
+    if (auto EC = COFFObj->getSymbolName(Sym, SymbolName)) {
+      llvm::errs() << "broken object file: " << getName() << ": "
+                   << EC.message() << "\n";
+      return make_error_code(LLDError::BrokenFile);
+    }
     // Skip special symbols.
     if (SymbolName == "@comp.id" || SymbolName == "@feat.00")
       continue;
@@ -210,8 +219,10 @@ std::error_code ImportFile::parse() {
   const auto *Hdr = reinterpret_cast<const coff_import_header *>(Buf);
 
   // Check if the total size is valid.
-  if (End - Buf != sizeof(*Hdr) + Hdr->SizeOfData)
-    return make_dynamic_error_code("broken import library");
+  if (End - Buf != sizeof(*Hdr) + Hdr->SizeOfData) {
+    llvm::errs() << "broken import library\n";
+    return make_error_code(LLDError::BrokenFile);
+  }
 
   // Read names and create an __imp_ symbol.
   StringRef Name = StringAlloc.save(StringRef(Buf + sizeof(*Hdr)));

@@ -9,8 +9,8 @@
 
 #include "Config.h"
 #include "Driver.h"
+#include "Error.h"
 #include "SymbolTable.h"
-#include "lld/Core/Error.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
@@ -115,8 +115,10 @@ std::error_code SymbolTable::resolve(SymbolBody *New) {
   int comp = Existing->compare(New);
   if (comp < 0)
     Sym->Body = New;
-  if (comp == 0)
-    return make_dynamic_error_code(Twine("duplicate symbol: ") + Name);
+  if (comp == 0) {
+    llvm::errs() << "duplicate symbol: " << Name << "\n";
+    return make_error_code(LLDError::DuplicateSymbols);
+  }
 
   // If we have an Undefined symbol for a Lazy symbol, we need
   // to read an archive member to replace the Lazy symbol with
@@ -180,7 +182,8 @@ ErrorOr<StringRef> SymbolTable::findDefaultEntry() {
       return EC;
     return StringRef(E[1]);
   }
-  return make_dynamic_error_code("entry point must be defined");
+  llvm::errs() << "entry point must be defined\n";
+  return make_error_code(LLDError::InvalidOption);
 }
 
 std::error_code SymbolTable::addUndefined(StringRef Name) {

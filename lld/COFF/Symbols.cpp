@@ -7,9 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "Error.h"
 #include "InputFiles.h"
 #include "Symbols.h"
-#include "lld/Core/Error.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
@@ -84,8 +84,10 @@ ErrorOr<std::unique_ptr<InputFile>> Lazy::getMember() {
   if (Magic == file_magic::coff_import_library)
     return std::unique_ptr<InputFile>(new ImportFile(MBRef));
 
-  if (Magic != file_magic::coff_object)
-    return make_dynamic_error_code("unknown file type");
+  if (Magic != file_magic::coff_object) {
+    llvm::errs() << File->getName() << ": unknown file type\n";
+    return make_error_code(LLDError::InvalidFile);
+  }
 
   std::unique_ptr<InputFile> Obj(new ObjectFile(MBRef));
   Obj->setParentName(File->getName());

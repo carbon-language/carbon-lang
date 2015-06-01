@@ -14,8 +14,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "Driver.h"
+#include "Error.h"
 #include "Memory.h"
-#include "lld/Core/Error.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringSwitch.h"
@@ -24,7 +24,6 @@
 #include "llvm/Option/ArgList.h"
 #include "llvm/Option/Option.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/Support/Format.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/Process.h"
 #include "llvm/Support/raw_ostream.h"
@@ -46,8 +45,10 @@ ErrorOr<MachineTypes> getMachineType(llvm::opt::InputArgList *Args) {
                           .Case("x64", IMAGE_FILE_MACHINE_AMD64)
                           .Case("x86", IMAGE_FILE_MACHINE_I386)
                           .Default(IMAGE_FILE_MACHINE_UNKNOWN);
-    if (MT == IMAGE_FILE_MACHINE_UNKNOWN)
-      return make_dynamic_error_code("unknown /machine argument" + S);
+    if (MT == IMAGE_FILE_MACHINE_UNKNOWN) {
+      llvm::errs() << "unknown /machine argument" << S << "\n";
+      return make_error_code(LLDError::InvalidOption);
+    }
     return MT;
   }
   return IMAGE_FILE_MACHINE_UNKNOWN;
@@ -57,10 +58,14 @@ ErrorOr<MachineTypes> getMachineType(llvm::opt::InputArgList *Args) {
 std::error_code parseNumbers(StringRef Arg, uint64_t *Addr, uint64_t *Size) {
   StringRef S1, S2;
   std::tie(S1, S2) = Arg.split(',');
-  if (S1.getAsInteger(0, *Addr))
-    return make_dynamic_error_code(Twine("invalid number: ") + S1);
-  if (Size && !S2.empty() && S2.getAsInteger(0, *Size))
-    return make_dynamic_error_code(Twine("invalid number: ") + S2);
+  if (S1.getAsInteger(0, *Addr)) {
+    llvm::errs() << "invalid number: " << S1 << "\n";
+    return make_error_code(LLDError::InvalidOption);
+  }
+  if (Size && !S2.empty() && S2.getAsInteger(0, *Size)) {
+    llvm::errs() << "invalid number: " << S2 << "\n";
+    return make_error_code(LLDError::InvalidOption);
+  }
   return std::error_code();
 }
 
@@ -69,11 +74,15 @@ std::error_code parseNumbers(StringRef Arg, uint64_t *Addr, uint64_t *Size) {
 std::error_code parseVersion(StringRef Arg, uint32_t *Major, uint32_t *Minor) {
   StringRef S1, S2;
   std::tie(S1, S2) = Arg.split('.');
-  if (S1.getAsInteger(0, *Major))
-    return make_dynamic_error_code(Twine("invalid number: ") + S1);
+  if (S1.getAsInteger(0, *Major)) {
+    llvm::errs() << "invalid number: " << S1 << "\n";
+    return make_error_code(LLDError::InvalidOption);
+  }
   *Minor = 0;
-  if (!S2.empty() && S2.getAsInteger(0, *Minor))
-    return make_dynamic_error_code(Twine("invalid number: ") + S2);
+  if (!S2.empty() && S2.getAsInteger(0, *Minor)) {
+    llvm::errs() << "invalid number: " << S2 << "\n";
+    return make_error_code(LLDError::InvalidOption);
+  }
   return std::error_code();
 }
 
@@ -93,8 +102,10 @@ std::error_code parseSubsystem(StringRef Arg, WindowsSubsystem *Sys,
     .Case("posix", IMAGE_SUBSYSTEM_POSIX_CUI)
     .Case("windows", IMAGE_SUBSYSTEM_WINDOWS_GUI)
     .Default(IMAGE_SUBSYSTEM_UNKNOWN);
-  if (*Sys == IMAGE_SUBSYSTEM_UNKNOWN)
-    return make_dynamic_error_code(Twine("unknown subsystem: ") + SysStr);
+  if (*Sys == IMAGE_SUBSYSTEM_UNKNOWN) {
+    llvm::errs() << "unknown subsystem: " << SysStr << "\n";
+    return make_error_code(LLDError::InvalidOption);
+  }
   if (!Ver.empty())
     if (auto EC = parseVersion(Ver, Major, Minor))
       return EC;
@@ -132,13 +143,11 @@ parseArgs(int Argc, const char *Argv[]) {
   std::unique_ptr<llvm::opt::InputArgList> Args(
       Table.ParseArgs(&Argv[1], &Argv[Argc], MissingIndex, MissingCount));
   if (MissingCount) {
-    std::string S;
-    llvm::raw_string_ostream OS(S);
-    OS << llvm::format("missing arg value for \"%s\", expected %d argument%s.",
-                       Args->getArgString(MissingIndex), MissingCount,
-                       (MissingCount == 1 ? "" : "s"));
-    OS.flush();
-    return make_dynamic_error_code(StringRef(S));
+    llvm::errs() << "missing arg value for \""
+                 << Args->getArgString(MissingIndex)
+                 << "\", expected " << MissingCount
+                 << (MissingCount == 1 ? " argument.\n" : " arguments.\n");
+    return make_error_code(LLDError::InvalidOption);
   }
   for (auto *Arg : Args->filtered(OPT_UNKNOWN))
     llvm::errs() << "ignoring unknown argument: " << Arg->getSpelling() << "\n";

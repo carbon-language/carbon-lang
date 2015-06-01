@@ -10,7 +10,6 @@
 #include "Chunks.h"
 #include "InputFiles.h"
 #include "Writer.h"
-#include "lld/Core/Error.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Object/COFF.h"
 #include "llvm/Support/COFF.h"

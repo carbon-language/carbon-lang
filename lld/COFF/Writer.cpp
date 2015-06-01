@@ -9,7 +9,6 @@
 
 #include "Config.h"
 #include "Writer.h"
-#include "lld/Core/Error.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/STLExtras.h"
@@ -356,9 +355,10 @@ void Writer::writeHeader() {
 
 std::error_code Writer::openFile(StringRef Path) {
   if (auto EC = FileOutputBuffer::create(Path, FileSize, Buffer,
-                                         FileOutputBuffer::F_executable))
-    return make_dynamic_error_code(Twine("Failed to open ") + Path + ": " +
-                                   EC.message());
+                                         FileOutputBuffer::F_executable)) {
+    llvm::errs() << "failed to open " << Path << ": " << EC.message() << "\n";
+    return EC;
+  }
   return std::error_code();
 }
 

@@ -13,7 +13,6 @@
 #include "Memory.h"
 #include "SymbolTable.h"
 #include "Writer.h"
-#include "lld/Core/Error.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringSwitch.h"
