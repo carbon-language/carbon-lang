@@ -118,7 +118,7 @@ class TestingConfig:
     def __init__(self, parent, name, suffixes, test_format,
                  environment, substitutions, unsupported,
                  test_exec_root, test_source_root, excludes,
-                 available_features, pipefail):
+                 available_features, pipefail, limit_to_features = []):
         self.parent = parent
         self.name = str(name)
         self.suffixes = set(suffixes)
@@ -131,6 +131,10 @@ class TestingConfig:
         self.excludes = set(excludes)
         self.available_features = set(available_features)
         self.pipefail = pipefail
+        # This list is used by TestRunner.py to restrict running only tests that
+        # require one of the features in this list if this list is non-empty.
+        # Configurations can set this list to restrict the set of tests to run.
+        self.limit_to_features = set(limit_to_features)
 
     def finish(self, litConfig):
         """finish() - Finish this config object, after loading is complete."""

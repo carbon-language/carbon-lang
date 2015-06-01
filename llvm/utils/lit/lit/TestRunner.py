@@ -513,6 +513,15 @@ def parseIntegratedTestScript(test, normalize_slashes=False,
         return lit.Test.Result(Test.UNSUPPORTED,
                     "Test is unsupported with the following features: %s" % msg)
 
+    if test.config.limit_to_features:
+        # Check that we have one of the limit_to_features features in requires.
+        limit_to_features_tests = [f for f in test.config.limit_to_features
+                                   if f in requires]
+        if not limit_to_features_tests:
+            msg = ', '.join(test.config.limit_to_features)
+            return lit.Test.Result(Test.UNSUPPORTED,
+                 "Test requires one of the limit_to_features features %s" % msg)
+
     return script,tmpBase,execdir
 
 def _runShTest(test, litConfig, useExternalSh,
