@@ -58,7 +58,7 @@ bool MCObjectStreamer::emitAbsoluteSymbolDiff(const MCSymbol *Hi,
                                               const MCSymbol *Lo,
                                               unsigned Size) {
   // Must have symbol data.
-  if (!Assembler->hasSymbolData(*Hi) || !Assembler->hasSymbolData(*Lo))
+  if (!Hi->hasData() || !Lo->hasData())
     return false;
 
   // Must both be assigned to the same (valid) fragment.

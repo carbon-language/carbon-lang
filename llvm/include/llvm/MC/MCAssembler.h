@@ -910,12 +910,11 @@ public:
     return true;
   }
 
-  bool hasSymbolData(const MCSymbol &Symbol) const { return Symbol.hasData(); }
-
   void registerSymbol(const MCSymbol &Symbol, bool *Created = nullptr) {
+    bool New = !Symbol.hasData();
     if (Created)
-      *Created = !hasSymbolData(Symbol);
-    if (!hasSymbolData(Symbol)) {
+      *Created = New;
+    if (New) {
       Symbol.initializeData();
       Symbols.push_back(&Symbol);
     }

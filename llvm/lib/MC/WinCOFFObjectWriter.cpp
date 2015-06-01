@@ -706,7 +706,7 @@ void WinCOFFObjectWriter::RecordRelocation(
 
   const MCSymbol &Symbol = Target.getSymA()->getSymbol();
   const MCSymbol &A = Symbol;
-  if (!Asm.hasSymbolData(A))
+  if (!A.hasData())
     Asm.getContext().reportFatalError(Fixup.getLoc(),
                                       Twine("symbol '") + A.getName() +
                                           "' can not be undefined");
