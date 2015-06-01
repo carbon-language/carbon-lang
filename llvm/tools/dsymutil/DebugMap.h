@@ -162,7 +162,7 @@ private:
 }
 }
 
-LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::dsymutil::DebugMapObject::YAMLSymbolMapping);
+LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::dsymutil::DebugMapObject::YAMLSymbolMapping)
 
 namespace llvm {
 namespace yaml {
