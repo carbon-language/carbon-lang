@@ -1249,7 +1249,8 @@ GetElementPtrInst::GetElementPtrInst(const GetElementPtrInst &GEPI)
                   OperandTraits<GetElementPtrInst>::op_end(this) -
                       GEPI.getNumOperands(),
                   GEPI.getNumOperands()),
-      SourceElementType(GEPI.SourceElementType) {
+      SourceElementType(GEPI.SourceElementType),
+      ResultElementType(GEPI.ResultElementType) {
   std::copy(GEPI.op_begin(), GEPI.op_end(), op_begin());
   SubclassOptionalData = GEPI.SubclassOptionalData;
 }
