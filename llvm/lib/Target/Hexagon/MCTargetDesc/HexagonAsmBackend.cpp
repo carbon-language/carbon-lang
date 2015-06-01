@@ -15,8 +15,6 @@
 #include "llvm/MC/MCAsmBackend.h"
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCELFObjectWriter.h"
-#include "llvm/MC/MCFixupKindInfo.h"
-#include "llvm/Support/TargetRegistry.h"
 
 using namespace llvm;
 using namespace Hexagon;
@@ -24,132 +22,14 @@ using namespace Hexagon;
 namespace {
 
 class HexagonAsmBackend : public MCAsmBackend {
-  uint8_t OSABI;
-  StringRef CPU;
   mutable uint64_t relaxedCnt;
   std::unique_ptr <MCInstrInfo> MCII;
   std::unique_ptr <MCInst *> RelaxTarget;
 public:
-  HexagonAsmBackend(Target const &T,  uint8_t OSABI, StringRef CPU) :
-    MCII (T.createMCInstrInfo()), RelaxTarget(new MCInst *){}
+  HexagonAsmBackend(Target const & /*T*/) :
+    MCII (createHexagonMCInstrInfo()), RelaxTarget(new MCInst *){}
 
-  MCObjectWriter *createObjectWriter(raw_pwrite_stream &OS) const override {
-    return createHexagonELFObjectWriter(OS, OSABI, CPU);
-  }
-
-  unsigned getNumFixupKinds() const override {
-    return Hexagon::NumTargetFixupKinds;
-  }
-
-  const MCFixupKindInfo &getFixupKindInfo(MCFixupKind Kind) const override {
-    const static MCFixupKindInfo Infos[Hexagon::NumTargetFixupKinds] = {
-        // This table *must* be in same the order of fixup_* kinds in
-        // HexagonFixupKinds.h.
-        //
-        // namei                          offset  bits    flags
-        {"fixup_Hexagon_B22_PCREL", 0, 32, MCFixupKindInfo::FKF_IsPCRel},
-        {"fixup_Hexagon_B15_PCREL", 0, 32, MCFixupKindInfo::FKF_IsPCRel},
-        {"fixup_Hexagon_B7_PCREL", 0, 32, MCFixupKindInfo::FKF_IsPCRel},
-        {"fixup_Hexagon_LO16", 0, 32, 0},
-        {"fixup_Hexagon_HI16", 0, 32, 0},
-        {"fixup_Hexagon_32", 0, 32, 0},
-        {"fixup_Hexagon_16", 0, 32, 0},
-        {"fixup_Hexagon_8", 0, 32, 0},
-        {"fixup_Hexagon_GPREL16_0", 0, 32, 0},
-        {"fixup_Hexagon_GPREL16_1", 0, 32, 0},
-        {"fixup_Hexagon_GPREL16_2", 0, 32, 0},
-        {"fixup_Hexagon_GPREL16_3", 0, 32, 0},
-        {"fixup_Hexagon_HL16", 0, 32, 0},
-        {"fixup_Hexagon_B13_PCREL", 0, 32, MCFixupKindInfo::FKF_IsPCRel},
-        {"fixup_Hexagon_B9_PCREL", 0, 32, MCFixupKindInfo::FKF_IsPCRel},
-        {"fixup_Hexagon_B32_PCREL_X", 0, 32, MCFixupKindInfo::FKF_IsPCRel},
-        {"fixup_Hexagon_32_6_X", 0, 32, 0},
-        {"fixup_Hexagon_B22_PCREL_X", 0, 32, MCFixupKindInfo::FKF_IsPCRel},
-        {"fixup_Hexagon_B15_PCREL_X", 0, 32, MCFixupKindInfo::FKF_IsPCRel},
-        {"fixup_Hexagon_B13_PCREL_X", 0, 32, MCFixupKindInfo::FKF_IsPCRel},
-        {"fixup_Hexagon_B9_PCREL_X", 0, 32, MCFixupKindInfo::FKF_IsPCRel},
-        {"fixup_Hexagon_B7_PCREL_X", 0, 32, MCFixupKindInfo::FKF_IsPCRel},
-        {"fixup_Hexagon_16_X", 0, 32, 0},
-        {"fixup_Hexagon_12_X", 0, 32, 0},
-        {"fixup_Hexagon_11_X", 0, 32, 0},
-        {"fixup_Hexagon_10_X", 0, 32, 0},
-        {"fixup_Hexagon_9_X", 0, 32, 0},
-        {"fixup_Hexagon_8_X", 0, 32, 0},
-        {"fixup_Hexagon_7_X", 0, 32, 0},
-        {"fixup_Hexagon_6_X", 0, 32, 0},
-        {"fixup_Hexagon_32_PCREL", 0, 32, MCFixupKindInfo::FKF_IsPCRel},
-        {"fixup_Hexagon_COPY", 0, 32, 0},
-        {"fixup_Hexagon_GLOB_DAT", 0, 32, 0},
-        {"fixup_Hexagon_JMP_SLOT", 0, 32, 0},
-        {"fixup_Hexagon_RELATIVE", 0, 32, 0},
-        {"fixup_Hexagon_PLT_B22_PCREL", 0, 32, MCFixupKindInfo::FKF_IsPCRel},
-        {"fixup_Hexagon_GOTREL_LO16", 0, 32, 0},
-        {"fixup_Hexagon_GOTREL_HI16", 0, 32, 0},
-        {"fixup_Hexagon_GOTREL_32", 0, 32, 0},
-        {"fixup_Hexagon_GOT_LO16", 0, 32, 0},
-        {"fixup_Hexagon_GOT_HI16", 0, 32, 0},
-        {"fixup_Hexagon_GOT_32", 0, 32, 0},
-        {"fixup_Hexagon_GOT_16", 0, 32, 0},
-        {"fixup_Hexagon_DTPMOD_32", 0, 32, 0},
-        {"fixup_Hexagon_DTPREL_LO16", 0, 32, 0},
-        {"fixup_Hexagon_DTPREL_HI16", 0, 32, 0},
-        {"fixup_Hexagon_DTPREL_32", 0, 32, 0},
-        {"fixup_Hexagon_DTPREL_16", 0, 32, 0},
-        {"fixup_Hexagon_GD_PLT_B22_PCREL", 0, 32, MCFixupKindInfo::FKF_IsPCRel},
-        {"fixup_Hexagon_LD_PLT_B22_PCREL", 0, 32, MCFixupKindInfo::FKF_IsPCRel},
-        {"fixup_Hexagon_GD_GOT_LO16", 0, 32, 0},
-        {"fixup_Hexagon_GD_GOT_HI16", 0, 32, 0},
-        {"fixup_Hexagon_GD_GOT_32", 0, 32, 0},
-        {"fixup_Hexagon_GD_GOT_16", 0, 32, 0},
-        {"fixup_Hexagon_LD_GOT_LO16", 0, 32, 0},
-        {"fixup_Hexagon_LD_GOT_HI16", 0, 32, 0},
-        {"fixup_Hexagon_LD_GOT_32", 0, 32, 0},
-        {"fixup_Hexagon_LD_GOT_16", 0, 32, 0},
-        {"fixup_Hexagon_IE_LO16", 0, 32, 0},
-        {"fixup_Hexagon_IE_HI16", 0, 32, 0},
-        {"fixup_Hexagon_IE_32", 0, 32, 0},
-        {"fixup_Hexagon_IE_16", 0, 32, 0},
-        {"fixup_Hexagon_IE_GOT_LO16", 0, 32, 0},
-        {"fixup_Hexagon_IE_GOT_HI16", 0, 32, 0},
-        {"fixup_Hexagon_IE_GOT_32", 0, 32, 0},
-        {"fixup_Hexagon_IE_GOT_16", 0, 32, 0},
-        {"fixup_Hexagon_TPREL_LO16", 0, 32, 0},
-        {"fixup_Hexagon_TPREL_HI16", 0, 32, 0},
-        {"fixup_Hexagon_TPREL_32", 0, 32, 0},
-        {"fixup_Hexagon_TPREL_16", 0, 32, 0},
-        {"fixup_Hexagon_6_PCREL_X", 0, 32, MCFixupKindInfo::FKF_IsPCRel},
-        {"fixup_Hexagon_GOTREL_32_6_X", 0, 32, 0},
-        {"fixup_Hexagon_GOTREL_16_X", 0, 32, 0},
-        {"fixup_Hexagon_GOTREL_11_X", 0, 32, 0},
-        {"fixup_Hexagon_GOT_32_6_X", 0, 32, 0},
-        {"fixup_Hexagon_GOT_16_X", 0, 32, 0},
-        {"fixup_Hexagon_GOT_11_X", 0, 32, 0},
-        {"fixup_Hexagon_DTPREL_32_6_X", 0, 32, 0},
-        {"fixup_Hexagon_DTPREL_16_X", 0, 32, 0},
-        {"fixup_Hexagon_DTPREL_11_X", 0, 32, 0},
-        {"fixup_Hexagon_GD_GOT_32_6_X", 0, 32, 0},
-        {"fixup_Hexagon_GD_GOT_16_X", 0, 32, 0},
-        {"fixup_Hexagon_GD_GOT_11_X", 0, 32, 0},
-        {"fixup_Hexagon_LD_GOT_32_6_X", 0, 32, 0},
-        {"fixup_Hexagon_LD_GOT_16_X", 0, 32, 0},
-        {"fixup_Hexagon_LD_GOT_11_X", 0, 32, 0},
-        {"fixup_Hexagon_IE_32_6_X", 0, 32, 0},
-        {"fixup_Hexagon_IE_16_X", 0, 32, 0},
-        {"fixup_Hexagon_IE_GOT_32_6_X", 0, 32, 0},
-        {"fixup_Hexagon_IE_GOT_16_X", 0, 32, 0},
-        {"fixup_Hexagon_IE_GOT_11_X", 0, 32, 0},
-        {"fixup_Hexagon_TPREL_32_6_X", 0, 32, 0},
-        {"fixup_Hexagon_TPREL_16_X", 0, 32, 0},
-        {"fixup_Hexagon_TPREL_11_X", 0, 32, 0}};
-
-    if (Kind < FirstTargetFixupKind) {
-      return MCAsmBackend::getFixupKindInfo(Kind);
-    }
-
-    assert(unsigned(Kind - FirstTargetFixupKind) < getNumFixupKinds() &&
-           "Invalid kind!");
-    return Infos[Kind - FirstTargetFixupKind];
-  }
+  unsigned getNumFixupKinds() const override { return 0; }
 
   void applyFixup(MCFixup const & /*Fixup*/, char * /*Data*/,
                   unsigned /*DataSize*/, uint64_t /*Value*/,
@@ -284,11 +164,26 @@ public:
 };
 } // end anonymous namespace
 
+namespace {
+class ELFHexagonAsmBackend : public HexagonAsmBackend {
+  uint8_t OSABI;
+
+public:
+  ELFHexagonAsmBackend(Target const &T, uint8_t OSABI)
+      : HexagonAsmBackend(T), OSABI(OSABI) {}
+
+  MCObjectWriter *createObjectWriter(raw_pwrite_stream &OS) const override {
+    StringRef CPU("HexagonV4");
+    return createHexagonELFObjectWriter(OS, OSABI, CPU);
+  }
+};
+} // end anonymous namespace
+
 namespace llvm {
 MCAsmBackend *createHexagonAsmBackend(Target const &T,
                                       MCRegisterInfo const & /*MRI*/,
-                                      StringRef TT, StringRef CPU) {
+                                      StringRef TT, StringRef /*CPU*/) {
   uint8_t OSABI = MCELFObjectTargetWriter::getOSABI(Triple(TT).getOS());
-  return new HexagonAsmBackend(T, OSABI, CPU);
+  return new ELFHexagonAsmBackend(T, OSABI);
 }
 }
