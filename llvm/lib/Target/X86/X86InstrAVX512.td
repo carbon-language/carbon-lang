@@ -3401,32 +3401,6 @@ defm VPUNPCKHQDQZ : avx512_unpack_int<0x6D, "vpunpckhqdq", X86Unpckh, v8i64,
                                 VR512, loadv8i64, i512mem>, EVEX_V512,
                                 VEX_W, EVEX_CD8<64, CD8VF>;
 //===----------------------------------------------------------------------===//
-// AVX-512 - PSHUFD
-//
-
-multiclass avx512_pshuf_imm<bits<8> opc, string OpcodeStr, RegisterClass RC,
-                         SDNode OpNode, PatFrag mem_frag,
-                         X86MemOperand x86memop, ValueType OpVT> {
-  def ri : AVX512Ii8<opc, MRMSrcReg, (outs RC:$dst),
-                     (ins RC:$src1, u8imm:$src2),
-                     !strconcat(OpcodeStr,
-                         "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-                     [(set RC:$dst,
-                       (OpVT (OpNode RC:$src1, (i8 imm:$src2))))]>,
-                     EVEX;
-  def mi : AVX512Ii8<opc, MRMSrcMem, (outs RC:$dst),
-                     (ins x86memop:$src1, u8imm:$src2),
-                     !strconcat(OpcodeStr,
-                         "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-                     [(set RC:$dst,
-                       (OpVT (OpNode (mem_frag addr:$src1),
-                              (i8 imm:$src2))))]>, EVEX;
-}
-
-defm VPSHUFDZ : avx512_pshuf_imm<0x70, "vpshufd", VR512, X86PShufd, loadv16i32,
-                      i512mem, v16i32>, PD, EVEX_V512, EVEX_CD8<32, CD8VF>;
-
-//===----------------------------------------------------------------------===//
 // AVX-512  Logical Instructions
 //===----------------------------------------------------------------------===//
 
@@ -3729,14 +3703,14 @@ multiclass avx512_shift_rmi<bits<8> opc, Format ImmFormR, Format ImmFormM,
                    (ins _.RC:$src1, u8imm:$src2), OpcodeStr,
                       "$src2, $src1", "$src1, $src2",
                    (_.VT (OpNode _.RC:$src1, (i8 imm:$src2))),
-                   SSE_INTSHIFT_ITINS_P.rr>, AVX512BIi8Base, EVEX_4V;
+                   SSE_INTSHIFT_ITINS_P.rr>;
   let mayLoad = 1 in
   defm mi : AVX512_maskable<opc, ImmFormM, _, (outs _.RC:$dst),
                    (ins _.MemOp:$src1, u8imm:$src2), OpcodeStr,
                        "$src2, $src1", "$src1, $src2",
                    (_.VT (OpNode (_.VT (bitconvert (_.LdFrag addr:$src1))),
                           (i8 imm:$src2))),
-                   SSE_INTSHIFT_ITINS_P.rm>, AVX512BIi8Base, EVEX_4V;
+                   SSE_INTSHIFT_ITINS_P.rm>;
 }
 
 multiclass avx512_shift_rmbi<bits<8> opc, Format ImmFormM,
@@ -3746,7 +3720,7 @@ multiclass avx512_shift_rmbi<bits<8> opc, Format ImmFormM,
                    (ins _.ScalarMemOp:$src1, u8imm:$src2), OpcodeStr,
       "$src2, ${src1}"##_.BroadcastStr, "${src1}"##_.BroadcastStr##", $src2",
      (_.VT (OpNode (X86VBroadcast (_.ScalarLdFrag addr:$src1)), (i8 imm:$src2))),
-     SSE_INTSHIFT_ITINS_P.rm>, AVX512BIi8Base, EVEX_4V, EVEX_B;
+     SSE_INTSHIFT_ITINS_P.rm>, EVEX_B;
 }
 
 multiclass avx512_shift_rrm<bits<8> opc, string OpcodeStr, SDNode OpNode,
@@ -3836,16 +3810,16 @@ multiclass avx512_shift_rmi_dq<bits<8> opcd, bits<8> opcq,
 }
 
 defm VPSRL : avx512_shift_rmi_dq<0x72, 0x73, MRM2r, MRM2m, "vpsrl", X86vsrli>,
-             avx512_shift_rmi_w<0x71, MRM2r, MRM2m, "vpsrlw", X86vsrli>;
+             avx512_shift_rmi_w<0x71, MRM2r, MRM2m, "vpsrlw", X86vsrli>, AVX512BIi8Base, EVEX_4V;
 
 defm VPSLL : avx512_shift_rmi_dq<0x72, 0x73, MRM6r, MRM6m, "vpsll", X86vshli>,
-             avx512_shift_rmi_w<0x71, MRM6r, MRM6m, "vpsllw", X86vshli>;
+             avx512_shift_rmi_w<0x71, MRM6r, MRM6m, "vpsllw", X86vshli>, AVX512BIi8Base, EVEX_4V;
 
 defm VPSRA : avx512_shift_rmi_dq<0x72, 0x72, MRM4r, MRM4m, "vpsra", X86vsrai>,
-             avx512_shift_rmi_w<0x71, MRM4r, MRM4m, "vpsraw", X86vsrai>;
+             avx512_shift_rmi_w<0x71, MRM4r, MRM4m, "vpsraw", X86vsrai>, AVX512BIi8Base, EVEX_4V;
 
-defm VPROR : avx512_shift_rmi_dq<0x72, 0x72, MRM0r, MRM0m, "vpror", rotr>;
-defm VPROL : avx512_shift_rmi_dq<0x72, 0x72, MRM1r, MRM1m, "vprol", rotl>;
+defm VPROR : avx512_shift_rmi_dq<0x72, 0x72, MRM0r, MRM0m, "vpror", rotr>, AVX512BIi8Base, EVEX_4V;
+defm VPROL : avx512_shift_rmi_dq<0x72, 0x72, MRM1r, MRM1m, "vprol", rotl>, AVX512BIi8Base, EVEX_4V;
 
 defm VPSLL : avx512_shift_types<0xF2, 0xF3, 0xF1, "vpsll", X86vshl>;
 defm VPSRA : avx512_shift_types<0xE2, 0xE2, 0xE1, "vpsra", X86vsra>;
@@ -3927,6 +3901,17 @@ defm VPSRLV : avx512_var_shift_types<0x45, "vpsrlv", srl>,
 defm VPRORV : avx512_var_shift_types<0x14, "vprorv", rotr>;
 defm VPROLV : avx512_var_shift_types<0x15, "vprolv", rotl>;
 
+//===----------------------------------------------------------------------===//
+// AVX-512 - VPSHUFD, VPSHUFLW, VPSHUFHW
+//===----------------------------------------------------------------------===//
+
+defm VPSHUFD : avx512_shift_rmi_sizes<0x70, MRMSrcReg, MRMSrcMem, "vpshufd",
+                             X86PShufd, avx512vl_i32_info>, 
+                             EVEX, AVX512BIi8Base, EVEX_CD8<32, CD8VF>;
+defm VPSHUFH : avx512_shift_rmi_w<0x70, MRMSrcReg, MRMSrcMem, "vpshufhw",
+                                  X86PShufhw>, EVEX, AVX512XSIi8Base, VEX_W;
+defm VPSHUFL : avx512_shift_rmi_w<0x70, MRMSrcReg, MRMSrcMem, "vpshuflw",
+                                  X86PShuflw>, EVEX, AVX512XDIi8Base, VEX_W;
 //===----------------------------------------------------------------------===//
 // AVX-512 - MOVDDUP
 //===----------------------------------------------------------------------===//
@@ -5949,7 +5934,7 @@ multiclass expand_by_vec_width<bits<8> opc, X86VectorVTInfo _,
                                               (_.LdFrag addr:$src))),
                                       _.RC:$src0)))]>,
               EVEX_K, EVEX_CD8<_.EltSize, CD8VT1>;
-  
+
   let mayLoad = 1 in
   def rmkz : AVX5128I<opc, MRMSrcMem, (outs _.RC:$dst),
               (ins _.KRCWM:$mask, _.MemOp:$src),
@@ -5958,7 +5943,6 @@ multiclass expand_by_vec_width<bits<8> opc, X86VectorVTInfo _,
                                       (_.VT (bitconvert (_.LdFrag addr:$src))),
                                      _.ImmAllZerosV)))]>,
               EVEX_KZ, EVEX_CD8<_.EltSize, CD8VT1>;
-  
 }
 
 multiclass expand_by_elt_width<bits<8> opc, string OpcodeStr,

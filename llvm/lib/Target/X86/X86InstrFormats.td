@@ -764,6 +764,14 @@ class AVX512BIi8Base : PD {
   Domain ExeDomain = SSEPackedInt;
   ImmType ImmT = Imm8;
 }
+class AVX512XSIi8Base : XS {
+  Domain ExeDomain = SSEPackedInt;
+  ImmType ImmT = Imm8;
+}
+class AVX512XDIi8Base : XD {
+  Domain ExeDomain = SSEPackedInt;
+  ImmType ImmT = Imm8;
+}
 class AVX512PSIi8Base : PS {
   Domain ExeDomain = SSEPackedSingle;
   ImmType ImmT = Imm8;
