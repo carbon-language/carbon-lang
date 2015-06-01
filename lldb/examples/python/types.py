@@ -177,7 +177,7 @@ def check_padding_command (debugger, command, result, dict):
         # (courtesy of OptParse dealing with argument errors by throwing SystemExit)
         result.SetStatus (lldb.eReturnStatusFailed)
         return "option parsing failed" # returning a string is the same as returning an error whose description is the string
-    verify_types(options, debugger.GetSelectedTarget(), command_args)
+    verify_types(debugger.GetSelectedTarget(), options)
 
 @lldb.command("parse_all_struct_class_types")
 def parse_all_struct_class_types (debugger, command, result, dict):
