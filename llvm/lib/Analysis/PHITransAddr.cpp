@@ -150,7 +150,8 @@ Value *PHITransAddr::PHITranslateSubExpr(Value *V, BasicBlock *CurBB,
   if (!Inst) return V;
 
   // Determine whether 'Inst' is an input to our PHI translatable expression.
-  bool isInput = std::count(InstInputs.begin(), InstInputs.end(), Inst);
+  bool isInput =
+      std::find(InstInputs.begin(), InstInputs.end(), Inst) != InstInputs.end();
 
   // Handle inputs instructions if needed.
   if (isInput) {
@@ -276,7 +277,8 @@ Value *PHITransAddr::PHITranslateSubExpr(Value *V, BasicBlock *CurBB,
           isNSW = isNUW = false;
 
           // If the old 'LHS' was an input, add the new 'LHS' as an input.
-          if (std::count(InstInputs.begin(), InstInputs.end(), BOp)) {
+          if (std::find(InstInputs.begin(), InstInputs.end(), BOp) !=
+              InstInputs.end()) {
             RemoveInstInputs(BOp, InstInputs);
             AddAsInput(LHS);
           }
