@@ -292,8 +292,7 @@ static int printLineInfoForInput(bool LoadObjects, bool UseDebugObj) {
 
         uint64_t Size;
         if (isa<ELFObjectFileBase>(SymbolObj)) {
-          if (Sym.getSize(Size))
-            continue;
+          Size = Sym.getSize();
         } else {
           object::section_iterator Sec = SymbolObj->section_end();
           if (Sym.getSection(Sec))

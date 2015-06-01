@@ -676,7 +676,6 @@ void llvm::PrintSymbolTable(const ObjectFile *o) {
     StringRef Name;
     uint64_t Address;
     SymbolRef::Type Type;
-    uint64_t Size;
     uint32_t Flags = Symbol.getFlags();
     section_iterator Section = o->section_end();
     if (error(Symbol.getName(Name)))
@@ -685,8 +684,7 @@ void llvm::PrintSymbolTable(const ObjectFile *o) {
       continue;
     if (error(Symbol.getType(Type)))
       continue;
-    if (error(Symbol.getSize(Size)))
-      continue;
+    uint64_t Size = Symbol.getSize();
     if (error(Symbol.getSection(Section)))
       continue;
 

@@ -236,16 +236,12 @@ uint32_t COFFObjectFile::getSymbolFlags(DataRefImpl Ref) const {
   return Result;
 }
 
-std::error_code COFFObjectFile::getSymbolSize(DataRefImpl Ref,
-                                              uint64_t &Result) const {
+uint64_t COFFObjectFile::getSymbolSize(DataRefImpl Ref) const {
   COFFSymbolRef Symb = getCOFFSymbol(Ref);
 
   if (Symb.isCommon())
-    Result = Symb.getValue();
-  else
-    Result = UnknownAddressOrSize;
-
-  return object_error::success;
+    return Symb.getValue();
+  return UnknownAddressOrSize;
 }
 
 std::error_code

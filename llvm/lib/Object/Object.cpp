@@ -187,10 +187,7 @@ uint64_t LLVMGetSymbolAddress(LLVMSymbolIteratorRef SI) {
 }
 
 uint64_t LLVMGetSymbolSize(LLVMSymbolIteratorRef SI) {
-  uint64_t ret;
-  if (std::error_code ec = (*unwrap(SI))->getSize(ret))
-    report_fatal_error(ec.message());
-  return ret;
+  return (*unwrap(SI))->getSize();
 }
 
 // RelocationRef accessors

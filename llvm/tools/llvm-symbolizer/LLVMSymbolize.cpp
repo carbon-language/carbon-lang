@@ -113,9 +113,11 @@ void ModuleInfo::addSymbol(const SymbolRef &Symbol, DataExtractor *OpdExtractor,
   // occupies the memory range up to the following symbol.
   if (isa<MachOObjectFile>(Module))
     SymbolSize = 0;
-  else if (error(Symbol.getSize(SymbolSize)) ||
-           SymbolSize == UnknownAddressOrSize)
-    return;
+  else {
+    SymbolSize = Symbol.getSize();
+    if (SymbolSize == UnknownAddressOrSize)
+      return;
+  }
   StringRef SymbolName;
   if (error(Symbol.getName(SymbolName)))
     return;

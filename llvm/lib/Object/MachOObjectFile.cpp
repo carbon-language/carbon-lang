@@ -410,16 +410,13 @@ uint32_t MachOObjectFile::getSymbolAlignment(DataRefImpl DRI) const {
   return 0;
 }
 
-std::error_code MachOObjectFile::getSymbolSize(DataRefImpl DRI,
-                                               uint64_t &Result) const {
+uint64_t MachOObjectFile::getSymbolSize(DataRefImpl DRI) const {
   uint64_t Value;
   getSymbolAddress(DRI, Value);
   uint32_t flags = getSymbolFlags(DRI);
   if (flags & SymbolRef::SF_Common)
-    Result = Value;
-  else
-    Result = UnknownAddressOrSize;
-  return object_error::success;
+    return Value;
+  return UnknownAddressOrSize;
 }
 
 std::error_code MachOObjectFile::getSymbolType(DataRefImpl Symb,

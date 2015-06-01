@@ -31,7 +31,7 @@ public:
 
     StringRef SymName; SymI->getName(SymName);
     uint64_t  SymAddr; SymI->getAddress(SymAddr);
-    uint64_t  SymSize; SymI->getSize(SymSize);
+    uint64_t SymSize = SymI->getSize();
     int64_t  Addend;  getELFRelocationAddend(Rel, Addend);
 
     MCSymbol *Sym = Ctx.getOrCreateSymbol(SymName);

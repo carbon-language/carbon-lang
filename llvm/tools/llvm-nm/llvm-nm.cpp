@@ -934,8 +934,7 @@ static void dumpSymbolNamesFromObject(SymbolicFile &Obj, bool printName,
     S.Address = UnknownAddressOrSize;
     if (PrintSize && isa<ELFObjectFileBase>(Obj)) {
       symbol_iterator SymI = I;
-      if (error(SymI->getSize(S.Size)))
-        break;
+      S.Size = SymI->getSize();
     }
     if (PrintAddress && isa<ObjectFile>(Obj))
       if (error(symbol_iterator(I)->getAddress(S.Address)))
