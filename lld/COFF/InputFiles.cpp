@@ -127,7 +127,7 @@ std::error_code ObjectFile::initializeChunks() {
     if (Name == ".drectve") {
       ArrayRef<uint8_t> Data;
       COFFObj->getSectionContents(Sec, Data);
-      Directives = StringRef((char *)Data.data(), Data.size()).trim();
+      Directives = StringRef((const char *)Data.data(), Data.size()).trim();
       continue;
     }
     if (Name.startswith(".debug"))
@@ -201,7 +201,7 @@ SymbolBody *ObjectFile::createSymbolBody(StringRef Name, COFFSymbolRef Sym,
   }
   if (IsFirst && AuxP) {
     if (Chunk *C = SparseChunks[Sym.getSectionNumber()]) {
-      auto *Aux = (coff_aux_section_definition *)AuxP;
+      auto *Aux = (coff_aux_section_definition *)const_cast<void *>(AuxP);
       auto *Parent =
           (SectionChunk *)(SparseChunks[Aux->getNumber(Sym.isBigObj())]);
       if (Parent)
@@ -219,7 +219,7 @@ std::error_code ImportFile::parse() {
   const auto *Hdr = reinterpret_cast<const coff_import_header *>(Buf);
 
   // Check if the total size is valid.
-  if (End - Buf != sizeof(*Hdr) + Hdr->SizeOfData) {
+  if ((size_t)(End - Buf) != (sizeof(*Hdr) + Hdr->SizeOfData)) {
     llvm::errs() << "broken import library\n";
     return make_error_code(LLDError::BrokenFile);
   }
