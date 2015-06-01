@@ -73,7 +73,22 @@ static void lto_initialize() {
   }
 }
 
-DEFINE_SIMPLE_CONVERSION_FUNCTIONS(LTOCodeGenerator, lto_code_gen_t)
+namespace {
+
+// This derived class owns the native object file. This helps implement the
+// libLTO API semantics, which require that the code generator owns the object
+// file.
+struct LibLTOCodeGenerator : LTOCodeGenerator {
+  LibLTOCodeGenerator() {}
+  LibLTOCodeGenerator(std::unique_ptr<LLVMContext> Context)
+      : LTOCodeGenerator(std::move(Context)) {}
+
+  std::unique_ptr<MemoryBuffer> NativeObjectFile;
+};
+
+}
+
+DEFINE_SIMPLE_CONVERSION_FUNCTIONS(LibLTOCodeGenerator, lto_code_gen_t)
 DEFINE_SIMPLE_CONVERSION_FUNCTIONS(LTOModule, lto_module_t)
 
 // Convert the subtarget features into a string to pass to LTOCodeGenerator.
@@ -235,11 +250,10 @@ static lto_code_gen_t createCodeGen(bool InLocalContext) {
 
   TargetOptions Options = InitTargetOptionsFromCodeGenFlags();
 
-  LTOCodeGenerator *CodeGen =
-      InLocalContext ? new LTOCodeGenerator(make_unique<LLVMContext>())
-                     : new LTOCodeGenerator();
-  if (CodeGen)
-    CodeGen->setTargetOptions(Options);
+  LibLTOCodeGenerator *CodeGen =
+      InLocalContext ? new LibLTOCodeGenerator(make_unique<LLVMContext>())
+                     : new LibLTOCodeGenerator();
+  CodeGen->setTargetOptions(Options);
   return wrap(CodeGen);
 }
 
@@ -304,9 +318,13 @@ bool lto_codegen_write_merged_modules(lto_code_gen_t cg, const char *path) {
 
 const void *lto_codegen_compile(lto_code_gen_t cg, size_t *length) {
   maybeParseOptions(cg);
-  return unwrap(cg)->compile(length, DisableInline,
-                             DisableGVNLoadPRE, DisableLTOVectorization,
-                             sLastErrorString);
+  LibLTOCodeGenerator *CG = unwrap(cg);
+  CG->NativeObjectFile = CG->compile(DisableInline, DisableGVNLoadPRE,
+                                     DisableLTOVectorization, sLastErrorString);
+  if (!CG->NativeObjectFile)
+    return nullptr;
+  *length = CG->NativeObjectFile->getBufferSize();
+  return CG->NativeObjectFile->getBufferStart();
 }
 
 bool lto_codegen_optimize(lto_code_gen_t cg) {
@@ -318,7 +336,12 @@ bool lto_codegen_optimize(lto_code_gen_t cg) {
 
 const void *lto_codegen_compile_optimized(lto_code_gen_t cg, size_t *length) {
   maybeParseOptions(cg);
-  return unwrap(cg)->compileOptimized(length, sLastErrorString);
+  LibLTOCodeGenerator *CG = unwrap(cg);
+  CG->NativeObjectFile = CG->compileOptimized(sLastErrorString);
+  if (!CG->NativeObjectFile)
+    return nullptr;
+  *length = CG->NativeObjectFile->getBufferSize();
+  return CG->NativeObjectFile->getBufferStart();
 }
 
 bool lto_codegen_compile_to_file(lto_code_gen_t cg, const char **name) {

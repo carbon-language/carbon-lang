@@ -82,7 +82,7 @@ struct LTOCodeGenerator {
   void setShouldInternalize(bool Value) { ShouldInternalize = Value; }
   void setShouldEmbedUselists(bool Value) { ShouldEmbedUselists = Value; }
 
-  void addMustPreserveSymbol(const char *sym) { MustPreserveSymbols[sym] = 1; }
+  void addMustPreserveSymbol(StringRef sym) { MustPreserveSymbols[sym] = 1; }
 
   // To pass options to the driver and optimization passes. These options are
   // not necessarily for debugging purpose (The function name is misleading).
@@ -117,11 +117,10 @@ struct LTOCodeGenerator {
   // (linker), it brings the object to a buffer, and return the buffer to the
   // caller. This function should delete intermediate object file once its content
   // is brought to memory. Return NULL if the compilation was not successful.
-  const void *compile(size_t *length,
-                      bool disableInline,
-                      bool disableGVNLoadPRE,
-                      bool disableVectorization,
-                      std::string &errMsg);
+  std::unique_ptr<MemoryBuffer> compile(bool disableInline,
+                                        bool disableGVNLoadPRE,
+                                        bool disableVectorization,
+                                        std::string &errMsg);
 
   // Optimizes the merged module. Returns true on success.
   bool optimize(bool disableInline,
@@ -132,7 +131,7 @@ struct LTOCodeGenerator {
   // Compiles the merged optimized module into a single object file. It brings
   // the object to a buffer, and returns the buffer to the caller. Return NULL
   // if the compilation was not successful.
-  const void *compileOptimized(size_t *length, std::string &errMsg);
+  std::unique_ptr<MemoryBuffer> compileOptimized(std::string &errMsg);
 
   void setDiagnosticHandler(lto_diagnostic_handler_t, void *);
 
@@ -166,7 +165,6 @@ private:
   lto_codegen_model CodeModel = LTO_CODEGEN_PIC_MODEL_DEFAULT;
   StringSet MustPreserveSymbols;
   StringSet AsmUndefinedRefs;
-  std::unique_ptr<MemoryBuffer> NativeObjectFile;
   std::vector<char *> CodegenOptions;
   std::string MCpu;
   std::string MAttr;
