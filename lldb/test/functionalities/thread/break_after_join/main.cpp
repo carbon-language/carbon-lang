@@ -13,9 +13,9 @@
 // breakpoint is hit.  The test case should be flexible enough to treat that
 // as success.
 
-#include <pthread.h>
-#include <unistd.h>
 #include <atomic>
+#include <chrono>
+#include <thread>
 
 volatile int g_test = 0;
 
@@ -39,13 +39,13 @@ std::atomic_int g_barrier1;
 std::atomic_int g_barrier2;
 
 void *
-break_thread_func (void *input)
+break_thread_func ()
 {
     // Wait until all the threads are running
     pseudo_barrier_wait(g_barrier1);
 
     // Wait for the join thread to join
-    usleep(50);
+    std::this_thread::sleep_for(std::chrono::microseconds(50));
 
     // Do something
     g_test++;       // Set breakpoint here
@@ -58,7 +58,7 @@ break_thread_func (void *input)
 }
 
 void *
-wait_thread_func (void *input)
+wait_thread_func ()
 {
     // Wait until the entire first group of threads is running
     pseudo_barrier_wait(g_barrier1);
@@ -73,13 +73,13 @@ wait_thread_func (void *input)
 void *
 join_thread_func (void *input)
 {
-    pthread_t *thread_to_join = (pthread_t*)input;
+    std::thread *thread_to_join = (std::thread *)input;
 
     // Sync up with the rest of the threads.
     pseudo_barrier_wait(g_barrier1);
 
     // Join the other thread
-    pthread_join(*thread_to_join, NULL);
+    thread_to_join->join();
 
     // Return
     return NULL;
@@ -87,12 +87,6 @@ join_thread_func (void *input)
 
 int main ()
 {
-    pthread_t thread_1;
-    pthread_t thread_2;
-    pthread_t thread_3;
-    pthread_t thread_4;
-    pthread_t thread_5;
-
     // The first barrier waits for the non-joining threads to start.
     // This thread will also participate in that barrier.
     // The idea here is to guarantee that the joining thread will be
@@ -104,22 +98,21 @@ int main ()
     pseudo_barrier_init(g_barrier2, 4);
 
     // Create a thread to hit the breakpoint
-    pthread_create (&thread_1, NULL, break_thread_func, NULL);
+    std::thread thread_1(break_thread_func);
 
     // Create more threads to slow the debugger down during processing.
-    pthread_create (&thread_2, NULL, wait_thread_func, NULL);
-    pthread_create (&thread_3, NULL, wait_thread_func, NULL);
-    pthread_create (&thread_4, NULL, wait_thread_func, NULL);
+    std::thread thread_2(wait_thread_func);
+    std::thread thread_3(wait_thread_func);
+    std::thread thread_4(wait_thread_func);
 
     // Create a thread to join the breakpoint thread
-    pthread_create (&thread_5, NULL, join_thread_func, &thread_4);
+    std::thread thread_5(join_thread_func, &thread_1);
 
     // Wait for the threads to finish
-    pthread_join(thread_5, NULL);
-    pthread_join(thread_4, NULL);
-    pthread_join(thread_3, NULL);
-    pthread_join(thread_2, NULL);
-    pthread_join(thread_1, NULL);
+    thread_5.join();  // implies thread_1 is already finished
+    thread_4.join();
+    thread_3.join();
+    thread_2.join();
 
     return 0;
 }

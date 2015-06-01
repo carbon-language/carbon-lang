@@ -7,6 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "lldb/Core/Log.h"
+#include "lldb/Core/Logging.h"
+#include "lldb/Core/State.h"
 #include "lldb/Host/HostInfo.h"
 #include "lldb/Host/HostNativeThreadBase.h"
 #include "lldb/Host/windows/HostThreadWindows.h"
@@ -15,6 +18,7 @@
 
 #include "TargetThreadWindows.h"
 #include "ProcessWindows.h"
+#include "ProcessWindowsLog.h"
 #include "UnwindLLDB.h"
 
 #if defined(_WIN64)
@@ -41,14 +45,17 @@ void
 TargetThreadWindows::RefreshStateAfterStop()
 {
     ::SuspendThread(m_host_thread.GetNativeThread().GetSystemHandle());
-
+    SetState(eStateStopped);
     GetRegisterContext()->InvalidateIfNeeded(false);
 }
 
 void
 TargetThreadWindows::WillResume(lldb::StateType resume_state)
 {
-    SetResumeState(resume_state);
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (WINDOWS_LOG_THREAD));
+    if (log)
+        log->Printf ("TargetThreadWindows::WillResume (tid = %" PRIi64 ") setting thread resume state to %s",
+                     GetID(), StateAsCString(resume_state));
 }
 
 void

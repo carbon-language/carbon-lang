@@ -45,7 +45,7 @@ class BreakpointAfterJoinTestCase(TestBase):
 
         # The breakpoint list should show 1 location.
         self.expect("breakpoint list -f", "Breakpoint location shown correctly",
-            substrs = ["1: file = 'main.cpp', line = %d, locations = 1" % self.breakpoint])
+            substrs = ["1: file = 'main.cpp', line = %d, exact_match = 0, locations = 1" % self.breakpoint])
 
         # Run the program.
         self.runCmd("run", RUN_FAILED)
@@ -66,24 +66,13 @@ class BreakpointAfterJoinTestCase(TestBase):
         # Get the number of threads
         num_threads = process.GetNumThreads()
 
-        # Make sure we see six threads
-        self.assertTrue(num_threads == 6, 'Number of expected threads and actual threads do not match.')
-
-        # Get the thread objects
-        thread1 = process.GetThreadAtIndex(0)
-        thread2 = process.GetThreadAtIndex(1)
-        thread3 = process.GetThreadAtIndex(2)
-        thread4 = process.GetThreadAtIndex(3)
-        thread5 = process.GetThreadAtIndex(4)
-        thread6 = process.GetThreadAtIndex(5)
+        # Make sure we see at least six threads
+        self.assertTrue(num_threads >= 6, 'Number of expected threads and actual threads do not match.')
 
         # Make sure all threads are stopped
-        self.assertTrue(thread1.IsStopped(), "Thread 1 didn't stop during breakpoint")
-        self.assertTrue(thread2.IsStopped(), "Thread 2 didn't stop during breakpoint")
-        self.assertTrue(thread3.IsStopped(), "Thread 3 didn't stop during breakpoint")
-        self.assertTrue(thread4.IsStopped(), "Thread 4 didn't stop during breakpoint")
-        self.assertTrue(thread5.IsStopped(), "Thread 5 didn't stop during breakpoint")
-        self.assertTrue(thread6.IsStopped(), "Thread 6 didn't stop during breakpoint")
+        for i in range(0, num_threads):
+            self.assertTrue(process.GetThreadAtIndex(i).IsStopped(),
+                            "Thread {0} didn't stop during breakpoint.".format(i))
 
         # Run to completion
         self.runCmd("continue")
