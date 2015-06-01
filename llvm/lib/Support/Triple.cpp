@@ -702,6 +702,16 @@ std::string Triple::normalize(StringRef Str) {
 
   // Special case logic goes here.  At this point Arch, Vendor and OS have the
   // correct values for the computed components.
+  std::string NormalizedEnvironment;
+  if (Environment == Triple::Android && Components[3].startswith("androideabi")) {
+    StringRef AndroidVersion = Components[3].drop_front(strlen("androideabi"));
+    if (AndroidVersion.empty()) {
+      Components[3] = "android";
+    } else {
+      NormalizedEnvironment = Twine("android", AndroidVersion).str();
+      Components[3] = NormalizedEnvironment;
+    }
+  }
 
   if (OS == Triple::Win32) {
     Components.resize(4);
@@ -779,6 +789,35 @@ static unsigned EatNumber(StringRef &Str) {
   return Result;
 }
 
+static void parseVersionFromName(StringRef Name, unsigned &Major,
+                                 unsigned &Minor, unsigned &Micro) {
+  // Any unset version defaults to 0.
+  Major = Minor = Micro = 0;
+
+  // Parse up to three components.
+  unsigned *Components[3] = {&Major, &Minor, &Micro};
+  for (unsigned i = 0; i != 3; ++i) {
+    if (Name.empty() || Name[0] < '0' || Name[0] > '9')
+      break;
+
+    // Consume the leading number.
+    *Components[i] = EatNumber(Name);
+
+    // Consume the separator, if present.
+    if (Name.startswith("."))
+      Name = Name.substr(1);
+  }
+}
+
+void Triple::getEnvironmentVersion(unsigned &Major, unsigned &Minor,
+                                   unsigned &Micro) const {
+  StringRef EnvironmentName = getEnvironmentName();
+  StringRef EnvironmentTypeName = getEnvironmentTypeName(getEnvironment());
+  if (EnvironmentName.startswith(EnvironmentTypeName))
+    EnvironmentName = EnvironmentName.substr(EnvironmentTypeName.size());
+  parseVersionFromName(EnvironmentName, Major, Minor, Micro);
+}
+
 void Triple::getOSVersion(unsigned &Major, unsigned &Minor,
                           unsigned &Micro) const {
   StringRef OSName = getOSName();
@@ -796,22 +835,7 @@ void Triple::getOSVersion(unsigned &Major, unsigned &Minor,
   if (OSName.startswith(OSTypeName))
     OSName = OSName.substr(OSTypeName.size());
 
-  // Any unset version defaults to 0.
-  Major = Minor = Micro = 0;
-
-  // Parse up to three components.
-  unsigned *Components[3] = { &Major, &Minor, &Micro };
-  for (unsigned i = 0; i != 3; ++i) {
-    if (OSName.empty() || OSName[0] < '0' || OSName[0] > '9')
-      break;
-
-    // Consume the leading number.
-    *Components[i] = EatNumber(OSName);
-
-    // Consume the separator, if present.
-    if (OSName.startswith("."))
-      OSName = OSName.substr(1);
-  }
+  parseVersionFromName(OSName, Major, Minor, Micro);
 }
 
 bool Triple::getMacOSXVersion(unsigned &Major, unsigned &Minor,
