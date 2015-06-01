@@ -159,6 +159,12 @@ void MCWinCOFFStreamer::EndCOFFSymbolDef() {
 }
 
 void MCWinCOFFStreamer::EmitCOFFSafeSEH(MCSymbol const *Symbol) {
+  // SafeSEH is a feature specific to 32-bit x86.  It does not exist (and is
+  // unnecessary) on all platforms which use table-based exception dispatch.
+  if (getContext().getObjectFileInfo()->getTargetTriple().getArch() !=
+      Triple::x86)
+    return;
+
   if (Symbol->getFlags() & COFF::SF_SafeSEH)
     return;
 
