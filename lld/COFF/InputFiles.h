@@ -15,6 +15,7 @@
 #include "Symbols.h"
 #include "lld/Core/LLVM.h"
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/LTO/LTOModule.h"
 #include "llvm/Object/Archive.h"
 #include "llvm/Object/COFF.h"
 #include <memory>
@@ -24,13 +25,14 @@
 namespace lld {
 namespace coff {
 
+using llvm::LTOModule;
 using llvm::object::Archive;
 using llvm::object::COFFObjectFile;
 
 // The root class of input files.
 class InputFile {
 public:
-  enum Kind { ArchiveKind, ObjectKind, ImportKind };
+  enum Kind { ArchiveKind, ObjectKind, ImportKind, BitcodeKind };
   Kind kind() const { return FileKind; }
   virtual ~InputFile() {}
 
@@ -155,6 +157,28 @@ private:
   std::vector<SymbolBody *> SymbolBodies;
   llvm::BumpPtrAllocator Alloc;
   StringAllocator StringAlloc;
+};
+
+// Used for LTO.
+class BitcodeFile : public InputFile {
+public:
+  explicit BitcodeFile(StringRef S) : InputFile(BitcodeKind), Filename(S) {}
+  explicit BitcodeFile(MemoryBufferRef M) : InputFile(BitcodeKind), MBRef(M) {}
+  static bool classof(const InputFile *F) { return F->kind() == BitcodeKind; }
+  StringRef getName() override { return Filename; }
+  std::vector<SymbolBody *> &getSymbols() override { return SymbolBodies; }
+
+  LTOModule *getModule() const { return M.get(); }
+  LTOModule *releaseModule() { return M.release(); }
+
+private:
+  std::error_code parse() override;
+
+  std::string Filename;
+  MemoryBufferRef MBRef;
+  std::vector<SymbolBody *> SymbolBodies;
+  llvm::BumpPtrAllocator Alloc;
+  std::unique_ptr<LTOModule> M;
 };
 
 } // namespace coff

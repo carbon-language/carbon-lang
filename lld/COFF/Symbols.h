@@ -48,6 +48,7 @@ public:
     DefinedAbsoluteKind,
     DefinedImportDataKind,
     DefinedImportThunkKind,
+    DefinedBitcodeKind,
     DefinedLast,
     UndefinedKind,
     LazyKind,
@@ -249,6 +250,18 @@ public:
 
 private:
   ImportThunkChunk Data;
+};
+
+class DefinedBitcode : public Defined {
+public:
+  DefinedBitcode(StringRef Name) : Defined(DefinedBitcodeKind, Name) {}
+
+  static bool classof(const SymbolBody *S) {
+    return S->kind() == DefinedBitcodeKind;
+  }
+
+  uint64_t getRVA() override { llvm_unreachable("bitcode reached writer"); }
+  uint64_t getFileOff() override { llvm_unreachable("bitcode reached writer"); }
 };
 
 } // namespace coff

@@ -23,6 +23,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/Process.h"
+#include "llvm/Support/TargetSelect.h"
 #include "llvm/Support/raw_ostream.h"
 #include <memory>
 
@@ -75,6 +76,8 @@ ErrorOr<std::unique_ptr<InputFile>> LinkerDriver::openFile(StringRef Path) {
   file_magic Magic = identify_magic(MBRef.getBuffer());
   if (Magic == file_magic::archive)
     return std::unique_ptr<InputFile>(new ArchiveFile(MBRef));
+  if (Magic == file_magic::bitcode)
+    return std::unique_ptr<InputFile>(new BitcodeFile(Path));
   return std::unique_ptr<InputFile>(new ObjectFile(MBRef));
 }
 
@@ -191,6 +194,14 @@ std::vector<StringRef> LinkerDriver::getSearchPaths() {
 }
 
 bool LinkerDriver::link(int Argc, const char *Argv[]) {
+  // Needed for LTO.
+  llvm::InitializeAllTargetInfos();
+  llvm::InitializeAllTargets();
+  llvm::InitializeAllTargetMCs();
+  llvm::InitializeAllAsmParsers();
+  llvm::InitializeAllAsmPrinters();
+  llvm::InitializeAllDisassemblers();
+
   // Parse command line options.
   auto ArgsOrErr = parseArgs(Argc, Argv);
   if (auto EC = ArgsOrErr.getError()) {
@@ -355,6 +366,11 @@ bool LinkerDriver::link(int Argc, const char *Argv[]) {
   // Make sure we have resolved all symbols.
   if (Symtab.reportRemainingUndefines())
     return false;
+
+  if (auto EC = Symtab.addCombinedLTOObject()) {
+    llvm::errs() << EC.message() << "\n";
+    return false;
+  }
 
   // /include option takes precedence over garbage collection.
   for (auto *Arg : Args->filtered(OPT_incl))

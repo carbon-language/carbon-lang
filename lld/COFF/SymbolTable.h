@@ -58,6 +58,11 @@ public:
   // Dump contents of the symbol table to stderr.
   void dump();
 
+  // Build a COFF object representing the combined contents of BitcodeFiles
+  // and add it to the symbol table. Called after all files are added and
+  // before the writer writes results to a file.
+  std::error_code addCombinedLTOObject();
+
   // The writer needs to handle DLL import libraries specially in
   // order to create the import descriptor table.
   std::vector<std::unique_ptr<ImportFile>> ImportFiles;
@@ -75,6 +80,7 @@ private:
   std::error_code addObject(ObjectFile *File);
   std::error_code addArchive(ArchiveFile *File);
   std::error_code addImport(ImportFile *File);
+  std::error_code addBitcode(BitcodeFile *File);
 
   std::error_code resolve(SymbolBody *Body);
   std::error_code addMemberFile(Lazy *Body);
@@ -82,7 +88,9 @@ private:
 
   std::unordered_map<StringRef, Symbol *> Symtab;
   std::vector<std::unique_ptr<ArchiveFile>> ArchiveFiles;
+  std::vector<std::unique_ptr<BitcodeFile>> BitcodeFiles;
   std::vector<std::unique_ptr<SymbolBody>> OwningSymbols;
+  std::unique_ptr<MemoryBuffer> LTOObjectFile;
   llvm::BumpPtrAllocator Alloc;
 };
 

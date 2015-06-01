@@ -12,6 +12,7 @@
 #include "InputFiles.h"
 #include "Writer.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/LTO/LTOModule.h"
 #include "llvm/Object/COFF.h"
 #include "llvm/Support/COFF.h"
 #include "llvm/Support/Debug.h"
@@ -239,5 +240,32 @@ std::error_code ImportFile::parse() {
   return std::error_code();
 }
 
+std::error_code BitcodeFile::parse() {
+  std::string Err;
+  if (!Filename.empty()) {
+    M.reset(LTOModule::createFromFile(Filename.c_str(), llvm::TargetOptions(),
+                                      Err));
+  } else {
+    M.reset(LTOModule::createFromBuffer(MBRef.getBufferStart(),
+                                        MBRef.getBufferSize(),
+                                        llvm::TargetOptions(), Err));
+  }
+  if (!Err.empty()) {
+    llvm::errs() << Err << '\n';
+    return make_error_code(LLDError::BrokenFile);
+  }
+
+  for (unsigned I = 0, E = M->getSymbolCount(); I != E; ++I) {
+    StringRef SymName = M->getSymbolName(I);
+    if ((M->getSymbolAttributes(I) & LTO_SYMBOL_DEFINITION_MASK) ==
+        LTO_SYMBOL_DEFINITION_UNDEFINED) {
+      SymbolBodies.push_back(new (Alloc) Undefined(SymName));
+    } else {
+      SymbolBodies.push_back(new (Alloc) DefinedBitcode(SymName));
+    }
+  }
+
+  return std::error_code();
+}
 } // namespace coff
 } // namespace lld

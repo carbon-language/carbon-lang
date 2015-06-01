@@ -81,6 +81,8 @@ ErrorOr<std::unique_ptr<InputFile>> Lazy::getMember() {
     return std::unique_ptr<InputFile>(nullptr);
 
   file_magic Magic = identify_magic(MBRef.getBuffer());
+  if (Magic == file_magic::bitcode)
+    return std::unique_ptr<InputFile>(new BitcodeFile(MBRef));
   if (Magic == file_magic::coff_import_library)
     return std::unique_ptr<InputFile>(new ImportFile(MBRef));
 

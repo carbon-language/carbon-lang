@@ -10,6 +10,14 @@ add_llvm_library(lldCOFF
   SymbolTable.cpp
   Symbols.cpp
   Writer.cpp
+
+  LINK_COMPONENTS
+  ${LLVM_TARGETS_TO_BUILD}
+  Core
+  LTO
+  MC
+  MCDisassembler
+  Support
   )
 
 add_dependencies(lldCOFF COFFOptionsTableGen)
