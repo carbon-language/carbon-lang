@@ -69,9 +69,8 @@ class Value {
   Type *VTy;
   Use *UseList;
 
-  friend class ValueAsMetadata; // Allow access to NameAndIsUsedByMD.
+  friend class ValueAsMetadata; // Allow access to IsUsedByMD.
   friend class ValueHandleBase;
-  PointerIntPair<ValueName *, 1> NameAndIsUsedByMD;
 
   const unsigned char SubclassID;   // Subclass identifier (for isa/dyn_cast)
   unsigned char HasValueHandle : 1; // Has a ValueHandle pointing to this?
@@ -101,7 +100,10 @@ protected:
   /// This is stored here to save space in User on 64-bit hosts.  Since most
   /// instances of Value have operands, 32-bit hosts aren't significantly
   /// affected.
-  unsigned NumOperands;
+  unsigned NumOperands : 30;
+
+  bool IsUsedByMD : 1;
+  bool HasName : 1;
 
 private:
   template <typename UseT> // UseT == 'Use' or 'const Use'
@@ -210,9 +212,9 @@ public:
   LLVMContext &getContext() const;
 
   // \brief All values can potentially be named.
-  bool hasName() const { return getValueName() != nullptr; }
-  ValueName *getValueName() const { return NameAndIsUsedByMD.getPointer(); }
-  void setValueName(ValueName *VN) { NameAndIsUsedByMD.setPointer(VN); }
+  bool hasName() const { return HasName; }
+  ValueName *getValueName() const;
+  void setValueName(ValueName *VN);
 
 private:
   void destroyValueName();
@@ -394,7 +396,7 @@ public:
   bool hasValueHandle() const { return HasValueHandle; }
 
   /// \brief Return true if there is metadata referencing this value.
-  bool isUsedByMetadata() const { return NameAndIsUsedByMD.getInt(); }
+  bool isUsedByMetadata() const { return IsUsedByMD; }
 
   /// \brief Strip off pointer casts, all-zero GEPs, and aliases.
   ///

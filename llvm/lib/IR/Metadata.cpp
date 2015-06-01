@@ -256,9 +256,9 @@ ValueAsMetadata *ValueAsMetadata::get(Value *V) {
   if (!Entry) {
     assert((isa<Constant>(V) || isa<Argument>(V) || isa<Instruction>(V)) &&
            "Expected constant or function-local value");
-    assert(!V->NameAndIsUsedByMD.getInt() &&
+    assert(!V->IsUsedByMD &&
            "Expected this to be the only metadata use");
-    V->NameAndIsUsedByMD.setInt(true);
+    V->IsUsedByMD = true;
     if (auto *C = dyn_cast<Constant>(V))
       Entry = new ConstantAsMetadata(C);
     else
@@ -302,15 +302,15 @@ void ValueAsMetadata::handleRAUW(Value *From, Value *To) {
   auto &Store = Context.pImpl->ValuesAsMetadata;
   auto I = Store.find(From);
   if (I == Store.end()) {
-    assert(!From->NameAndIsUsedByMD.getInt() &&
+    assert(!From->IsUsedByMD &&
            "Expected From not to be used by metadata");
     return;
   }
 
   // Remove old entry from the map.
-  assert(From->NameAndIsUsedByMD.getInt() &&
+  assert(From->IsUsedByMD &&
          "Expected From to be used by metadata");
-  From->NameAndIsUsedByMD.setInt(false);
+  From->IsUsedByMD = false;
   ValueAsMetadata *MD = I->second;
   assert(MD && "Expected valid metadata");
   assert(MD->getValue() == From && "Expected valid mapping");
@@ -346,9 +346,9 @@ void ValueAsMetadata::handleRAUW(Value *From, Value *To) {
   }
 
   // Update MD in place (and update the map entry).
-  assert(!To->NameAndIsUsedByMD.getInt() &&
+  assert(!To->IsUsedByMD &&
          "Expected this to be the only metadata use");
-  To->NameAndIsUsedByMD.setInt(true);
+  To->IsUsedByMD = true;
   MD->V = To;
   Entry = MD;
 }
