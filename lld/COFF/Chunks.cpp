@@ -171,8 +171,11 @@ void ImportThunkChunk::applyRelocations(uint8_t *Buf) {
   write32le(Buf + FileOff + 2, Operand);
 }
 
-HintNameChunk::HintNameChunk(StringRef N, uint16_t H)
-    : Name(N), Hint(H), Size(RoundUpToAlignment(Name.size() + 4, 2)) {}
+size_t HintNameChunk::getSize() const {
+  // Starts with 2 byte Hint field, followed by a null-terminated string,
+  // ends with 0 or 1 byte padding.
+  return RoundUpToAlignment(Name.size() + 3, 2);
+}
 
 void HintNameChunk::writeTo(uint8_t *Buf) {
   write16le(Buf + FileOff, Hint);
