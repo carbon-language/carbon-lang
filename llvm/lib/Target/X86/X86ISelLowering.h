@@ -377,6 +377,8 @@ namespace llvm {
       VPERMIV3,
       VPERMI,
       VPERM2X128,
+      //Fix Up Special Packed Float32/64 values
+      VFIXUPIMM,
       // Broadcast scalar to vector
       VBROADCAST,
       // Broadcast subvector to vector
