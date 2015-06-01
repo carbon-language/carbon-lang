@@ -77,7 +77,7 @@ ErrorOr<std::unique_ptr<InputFile>> LinkerDriver::openFile(StringRef Path) {
   if (Magic == file_magic::archive)
     return std::unique_ptr<InputFile>(new ArchiveFile(MBRef));
   if (Magic == file_magic::bitcode)
-    return std::unique_ptr<InputFile>(new BitcodeFile(Path));
+    return std::unique_ptr<InputFile>(new BitcodeFile(MBRef));
   return std::unique_ptr<InputFile>(new ObjectFile(MBRef));
 }
 

@@ -246,14 +246,9 @@ std::error_code ImportFile::parse() {
 
 std::error_code BitcodeFile::parse() {
   std::string Err;
-  if (!Filename.empty()) {
-    M.reset(LTOModule::createFromFile(Filename.c_str(), llvm::TargetOptions(),
-                                      Err));
-  } else {
-    M.reset(LTOModule::createFromBuffer(MBRef.getBufferStart(),
-                                        MBRef.getBufferSize(),
-                                        llvm::TargetOptions(), Err));
-  }
+  M.reset(LTOModule::createFromBuffer(MB.getBufferStart(),
+                                      MB.getBufferSize(),
+                                      llvm::TargetOptions(), Err));
   if (!Err.empty()) {
     llvm::errs() << Err << '\n';
     return make_error_code(LLDError::BrokenFile);
@@ -268,8 +263,8 @@ std::error_code BitcodeFile::parse() {
       SymbolBodies.push_back(new (Alloc) DefinedBitcode(SymName));
     }
   }
-
   return std::error_code();
 }
+
 } // namespace coff
 } // namespace lld

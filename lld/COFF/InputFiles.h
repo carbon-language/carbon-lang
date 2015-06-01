@@ -162,10 +162,9 @@ private:
 // Used for LTO.
 class BitcodeFile : public InputFile {
 public:
-  explicit BitcodeFile(StringRef S) : InputFile(BitcodeKind), Filename(S) {}
-  explicit BitcodeFile(MemoryBufferRef M) : InputFile(BitcodeKind), MBRef(M) {}
+  explicit BitcodeFile(MemoryBufferRef M) : InputFile(BitcodeKind), MB(M) {}
   static bool classof(const InputFile *F) { return F->kind() == BitcodeKind; }
-  StringRef getName() override { return Filename; }
+  StringRef getName() override { return MB.getBufferIdentifier(); }
   std::vector<SymbolBody *> &getSymbols() override { return SymbolBodies; }
 
   LTOModule *getModule() const { return M.get(); }
@@ -174,8 +173,7 @@ public:
 private:
   std::error_code parse() override;
 
-  std::string Filename;
-  MemoryBufferRef MBRef;
+  MemoryBufferRef MB;
   std::vector<SymbolBody *> SymbolBodies;
   llvm::BumpPtrAllocator Alloc;
   std::unique_ptr<LTOModule> M;
