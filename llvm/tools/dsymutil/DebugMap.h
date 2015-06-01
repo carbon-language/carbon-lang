@@ -201,7 +201,7 @@ template <> struct MappingTraits<dsymutil::DebugMapObject> {
       for (auto &Entry : Entries)
         Res[Entry.first] = Entry.second;
 
-      return std::move(Res);
+      return Res;
     }
 
     std::vector<dsymutil::DebugMapObject::YAMLSymbolMapping> Entries;
