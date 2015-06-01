@@ -655,6 +655,10 @@ bool MachineSinking::SinkInstruction(MachineInstr *MI, bool &SawStore) {
   if (!MI->isSafeToMove(AA, SawStore))
     return false;
 
+  // Convergent operations may only be moved to control equivalent locations.
+  if (MI->isConvergent())
+    return false;
+
   // FIXME: This should include support for sinking instructions within the
   // block they are currently in to shorten the live ranges.  We often get
   // instructions sunk into the top of a large block, but it would be better to
