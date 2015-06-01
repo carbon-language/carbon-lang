@@ -1313,6 +1313,70 @@ bool MipsFastISel::fastLowerIntrinsicCall(const IntrinsicInst *II) {
   switch (II->getIntrinsicID()) {
   default:
     return false;
+  case Intrinsic::bswap: {
+    Type *RetTy = II->getCalledFunction()->getReturnType();
+
+    MVT VT;
+    if (!isTypeSupported(RetTy, VT))
+      return false;
+
+    unsigned SrcReg = getRegForValue(II->getOperand(0));
+    if (SrcReg == 0)
+      return false;
+    unsigned DestReg = createResultReg(&Mips::GPR32RegClass);
+    if (DestReg == 0)
+      return false;
+    if (VT == MVT::i16) {
+      if (Subtarget->hasMips32r2()) {
+        emitInst(Mips::WSBH, DestReg).addReg(SrcReg);
+        updateValueMap(II, DestReg);
+        return true;
+      } else {
+        unsigned TempReg[3];
+        for (int i = 0; i < 3; i++) {
+          TempReg[i] = createResultReg(&Mips::GPR32RegClass);
+          if (TempReg[i] == 0)
+            return false;
+        }
+        emitInst(Mips::SLL, TempReg[0]).addReg(SrcReg).addImm(8);
+        emitInst(Mips::SRL, TempReg[1]).addReg(SrcReg).addImm(8);
+        emitInst(Mips::OR, TempReg[2]).addReg(TempReg[0]).addReg(TempReg[1]);
+        emitInst(Mips::ANDi, DestReg).addReg(TempReg[2]).addImm(0xFFFF);
+        updateValueMap(II, DestReg);
+        return true;
+      }
+    } else if (VT == MVT::i32) {
+      if (Subtarget->hasMips32r2()) {
+        unsigned TempReg = createResultReg(&Mips::GPR32RegClass);
+        emitInst(Mips::WSBH, TempReg).addReg(SrcReg);
+        emitInst(Mips::ROTR, DestReg).addReg(TempReg).addImm(16);
+        updateValueMap(II, DestReg);
+        return true;
+      } else {
+        unsigned TempReg[8];
+        for (int i = 0; i < 8; i++) {
+          TempReg[i] = createResultReg(&Mips::GPR32RegClass);
+          if (TempReg[i] == 0)
+            return false;
+        }
+
+        emitInst(Mips::SRL, TempReg[0]).addReg(SrcReg).addImm(8);
+        emitInst(Mips::SRL, TempReg[1]).addReg(SrcReg).addImm(24);
+        emitInst(Mips::ANDi, TempReg[2]).addReg(TempReg[0]).addImm(0xFF00);
+        emitInst(Mips::OR, TempReg[3]).addReg(TempReg[1]).addReg(TempReg[2]);
+
+        emitInst(Mips::ANDi, TempReg[4]).addReg(SrcReg).addImm(0xFF00);
+        emitInst(Mips::SLL, TempReg[5]).addReg(TempReg[4]).addImm(8);
+
+        emitInst(Mips::SLL, TempReg[6]).addReg(SrcReg).addImm(24);
+        emitInst(Mips::OR, TempReg[7]).addReg(TempReg[3]).addReg(TempReg[5]);
+        emitInst(Mips::OR, DestReg).addReg(TempReg[6]).addReg(TempReg[7]);
+        updateValueMap(II, DestReg);
+        return true;
+      }
+    }
+    return false;
+  }
   case Intrinsic::memcpy:
   case Intrinsic::memmove: {
     const auto *MTI = cast<MemTransferInst>(II);
