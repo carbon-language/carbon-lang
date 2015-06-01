@@ -100,14 +100,14 @@ public:
   void moduleImport(clang::SourceLocation ImportLoc, clang::ModuleIdPath Path,
                     const clang::Module *Imported) override;
   void EndOfMainFile() override;
-  void Ident(clang::SourceLocation Loc, const std::string &str) override;
+  void Ident(clang::SourceLocation Loc, llvm::StringRef str) override;
   void PragmaDirective(clang::SourceLocation Loc,
                        clang::PragmaIntroducerKind Introducer) override;
   void PragmaComment(clang::SourceLocation Loc,
                      const clang::IdentifierInfo *Kind,
-                     const std::string &Str) override;
-  void PragmaDetectMismatch(clang::SourceLocation Loc, const std::string &Name,
-                            const std::string &Value) override;
+                     llvm::StringRef Str) override;
+  void PragmaDetectMismatch(clang::SourceLocation Loc, llvm::StringRef Name,
+                            llvm::StringRef Value) override;
   void PragmaDebug(clang::SourceLocation Loc,
                    llvm::StringRef DebugType) override;
   void PragmaMessage(clang::SourceLocation Loc, llvm::StringRef Namespace,

@@ -166,8 +166,7 @@ void PPCallbacksTracker::moduleImport(clang::SourceLocation ImportLoc,
 void PPCallbacksTracker::EndOfMainFile() { beginCallback("EndOfMainFile"); }
 
 // Callback invoked when a #ident or #sccs directive is read.
-void PPCallbacksTracker::Ident(clang::SourceLocation Loc,
-                               const std::string &Str) {
+void PPCallbacksTracker::Ident(clang::SourceLocation Loc, llvm::StringRef Str) {
   beginCallback("Ident");
   appendArgument("Loc", Loc);
   appendArgument("Str", Str);
@@ -185,7 +184,7 @@ PPCallbacksTracker::PragmaDirective(clang::SourceLocation Loc,
 // Callback invoked when a #pragma comment directive is read.
 void PPCallbacksTracker::PragmaComment(clang::SourceLocation Loc,
                                        const clang::IdentifierInfo *Kind,
-                                       const std::string &Str) {
+                                       llvm::StringRef Str) {
   beginCallback("PragmaComment");
   appendArgument("Loc", Loc);
   appendArgument("Kind", Kind);
@@ -195,8 +194,8 @@ void PPCallbacksTracker::PragmaComment(clang::SourceLocation Loc,
 // Callback invoked when a #pragma detect_mismatch directive is
 // read.
 void PPCallbacksTracker::PragmaDetectMismatch(clang::SourceLocation Loc,
-                                              const std::string &Name,
-                                              const std::string &Value) {
+                                              llvm::StringRef Name,
+                                              llvm::StringRef Value) {
   beginCallback("PragmaDetectMismatch");
   appendArgument("Loc", Loc);
   appendArgument("Name", Name);
