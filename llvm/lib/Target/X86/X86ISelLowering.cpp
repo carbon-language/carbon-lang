@@ -10167,42 +10167,16 @@ static SDValue lowerV8X64VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   return DAG.getNode(X86ISD::VPERMV3, DL, VT, MaskNode, V1, V2);
 }
 
-/// \brief Handle lowering of 16-lane 32-bit floating point shuffles.
-static SDValue lowerV16F32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
-                                       const X86Subtarget *Subtarget,
-                                       SelectionDAG &DAG) {
-  SDLoc DL(Op);
-  assert(V1.getSimpleValueType() == MVT::v16f32 && "Bad operand type!");
-  assert(V2.getSimpleValueType() == MVT::v16f32 && "Bad operand type!");
-  ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(Op);
-  ArrayRef<int> Mask = SVOp->getMask();
-  assert(Mask.size() == 16 && "Unexpected mask size for v16 shuffle!");
-
-  // Use dedicated unpack instructions for masks that match their pattern.
-  if (isShuffleEquivalent(V1, V2, Mask,
-                          {// First 128-bit lane.
-                           0, 16, 1, 17, 4, 20, 5, 21,
-                           // Second 128-bit lane.
-                           8, 24, 9, 25, 12, 28, 13, 29}))
-    return DAG.getNode(X86ISD::UNPCKL, DL, MVT::v16f32, V1, V2);
-  if (isShuffleEquivalent(V1, V2, Mask,
-                          {// First 128-bit lane.
-                           2, 18, 3, 19, 6, 22, 7, 23,
-                           // Second 128-bit lane.
-                           10, 26, 11, 27, 14, 30, 15, 31}))
-    return DAG.getNode(X86ISD::UNPCKH, DL, MVT::v16f32, V1, V2);
-
-  // FIXME: Implement direct support for this type!
-  return splitAndLowerVectorShuffle(DL, MVT::v16f32, V1, V2, Mask, DAG);
-}
-
 /// \brief Handle lowering of 16-lane 32-bit integer shuffles.
-static SDValue lowerV16I32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
+static SDValue lowerV16X32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
                                        const X86Subtarget *Subtarget,
                                        SelectionDAG &DAG) {
+  MVT VT = Op.getSimpleValueType();
   SDLoc DL(Op);
-  assert(V1.getSimpleValueType() == MVT::v16i32 && "Bad operand type!");
-  assert(V2.getSimpleValueType() == MVT::v16i32 && "Bad operand type!");
+  assert((V1.getSimpleValueType() == MVT::v16i32 ||
+          V1.getSimpleValueType() == MVT::v16f32) && "Bad operand type!");
+  assert((V2.getSimpleValueType() == MVT::v16i32 ||
+          V2.getSimpleValueType() == MVT::v16f32) && "Bad operand type!");
   ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(Op);
   ArrayRef<int> Mask = SVOp->getMask();
   assert(Mask.size() == 16 && "Unexpected mask size for v16 shuffle!");
@@ -10213,16 +10187,55 @@ static SDValue lowerV16I32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
                            0, 16, 1, 17, 4, 20, 5, 21,
                            // Second 128-bit lane.
                            8, 24, 9, 25, 12, 28, 13, 29}))
-    return DAG.getNode(X86ISD::UNPCKL, DL, MVT::v16i32, V1, V2);
+    return DAG.getNode(X86ISD::UNPCKL, DL, VT, V1, V2);
   if (isShuffleEquivalent(V1, V2, Mask,
                           {// First 128-bit lane.
                            2, 18, 3, 19, 6, 22, 7, 23,
                            // Second 128-bit lane.
                            10, 26, 11, 27, 14, 30, 15, 31}))
-    return DAG.getNode(X86ISD::UNPCKH, DL, MVT::v16i32, V1, V2);
+    return DAG.getNode(X86ISD::UNPCKH, DL, VT, V1, V2);
 
-  // FIXME: Implement direct support for this type!
-  return splitAndLowerVectorShuffle(DL, MVT::v16i32, V1, V2, Mask, DAG);
+  if (isShuffleEquivalent(V1, V2, Mask, {0, 0, 2, 2, 4, 4, 6, 6, 8, 8, 10, 10,
+		                  12, 12, 14, 14}))
+    return DAG.getNode(X86ISD::MOVSLDUP, DL, VT, V1);
+  if (isShuffleEquivalent(V1, V2, Mask, {1, 1, 3, 3, 5, 5, 7, 7, 9, 9, 11, 11,
+		                  13, 13, 15, 15}))
+    return DAG.getNode(X86ISD::MOVSHDUP, DL, VT, V1);
+
+  SmallVector<int, 4> RepeatedMask;
+  if (is128BitLaneRepeatedShuffleMask(VT, Mask, RepeatedMask)) {
+    unsigned Immediate = 0;
+    for (int i = 0; i < 4; ++i)
+      if (RepeatedMask[i] > 0)
+        Immediate |= (RepeatedMask[i] & 3) << (i*2);
+
+    if (isSingleInputShuffleMask(Mask)) {
+      unsigned Opc = VT.isInteger() ? X86ISD::PSHUFD : X86ISD::VPERMILPI;
+      return DAG.getNode(Opc, DL, VT, V1, 
+                         DAG.getConstant(Immediate, DL, MVT::i8));
+    }
+
+    // VSHUFPS pattern: 0-3, 0-3, 16-19, 16-19, 4-7, 4-7, 20-23, 20-23 ..
+    bool InterleavedMask = true;
+    for (int i = 0; i < 4; ++i)
+      if (RepeatedMask[i] >= 0 &&
+          ((i < 2 && RepeatedMask[i] > 2) || ( i >=2 && RepeatedMask[i] < 16)))
+        InterleavedMask = false;
+
+    if (InterleavedMask)
+      return DAG.getNode(X86ISD::SHUFP, DL, VT, V1, V2,
+                          DAG.getConstant(Immediate, DL, MVT::i8));
+  }
+  SDValue VPermMask[16];
+  for (int i = 0; i < 16; ++i)
+    VPermMask[i] = Mask[i] < 0 ? DAG.getUNDEF(MVT::i32)
+                               : DAG.getConstant(Mask[i], DL, MVT::i32);
+  SDValue MaskNode = DAG.getNode(ISD::BUILD_VECTOR, DL, MVT::v16i32,
+                                 VPermMask);
+  if (V2.getOpcode() == ISD::UNDEF)
+    return DAG.getNode(X86ISD::VPERMV, DL, VT, MaskNode, V1);
+
+  return DAG.getNode(X86ISD::VPERMV3, DL, VT, MaskNode, V1, V2);
 }
 
 /// \brief Handle lowering of 32-lane 16-bit integer shuffles.
@@ -10285,9 +10298,8 @@ static SDValue lower512BitVectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   case MVT::v8i64:
     return lowerV8X64VectorShuffle(Op, V1, V2, Subtarget, DAG);
   case MVT::v16f32:
-    return lowerV16F32VectorShuffle(Op, V1, V2, Subtarget, DAG);
   case MVT::v16i32:
-    return lowerV16I32VectorShuffle(Op, V1, V2, Subtarget, DAG);
+    return lowerV16X32VectorShuffle(Op, V1, V2, Subtarget, DAG);
   case MVT::v32i16:
     if (Subtarget->hasBWI())
       return lowerV32I16VectorShuffle(Op, V1, V2, Subtarget, DAG);
