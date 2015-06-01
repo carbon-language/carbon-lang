@@ -10548,3 +10548,4 @@ vaddpd  {rz-sae}, %zmm2, %zmm1, %zmm1
 // CHECK: vpshufd $123, -516(%rdx){1to8}, %ymm20
 // CHECK:  encoding: [0x62,0xe1,0x7d,0x38,0x70,0xa2,0xfc,0xfd,0xff,0xff,0x7b]
           vpshufd $123, -516(%rdx){1to8}, %ymm20
+
