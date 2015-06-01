@@ -70,7 +70,7 @@ unsigned MipsELFObjectWriter::GetRelocType(const MCValue &Target,
   switch (Kind) {
   case Mips::fixup_Mips_32:
   case FK_Data_4:
-    return ELF::R_MIPS_32;
+    return IsPCRel ? ELF::R_MIPS_PC32 : ELF::R_MIPS_32;
   case Mips::fixup_Mips_64:
   case FK_Data_8:
     return ELF::R_MIPS_64;
