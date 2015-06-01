@@ -66,7 +66,7 @@ class MCSymbol {
   mutable bool HasData : 1;
 
   /// Index field, for use by the object file implementation.
-  mutable uint64_t Index : 60;
+  mutable uint32_t Index = 0;
 
   /// An expression describing how to calculate the size of a symbol. If a
   /// symbol has no size this field will be NULL.
@@ -99,7 +99,7 @@ private: // MCContext creates and uniques these.
   friend class MCContext;
   MCSymbol(const StringMapEntry<bool> *Name, bool isTemporary)
       : Name(Name), Section(nullptr), Value(nullptr), IsTemporary(isTemporary),
-        IsRedefinable(false), IsUsed(false), HasData(false), Index(0) {
+        IsRedefinable(false), IsUsed(false), HasData(false) {
     Offset = 0;
   }
 
@@ -200,15 +200,14 @@ public:
   /// @}
 
   /// Get the (implementation defined) index.
-  uint64_t getIndex() const {
+  uint32_t getIndex() const {
     assert(HasData && "Uninitialized symbol data");
     return Index;
   }
 
   /// Set the (implementation defined) index.
-  void setIndex(uint64_t Value) const {
+  void setIndex(uint32_t Value) const {
     assert(HasData && "Uninitialized symbol data");
-    assert(!(Value >> 60) && "Not enough bits for value");
     Index = Value;
   }
 
