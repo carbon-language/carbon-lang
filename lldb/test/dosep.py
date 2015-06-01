@@ -66,6 +66,28 @@ default_timeout = os.getenv("LLDB_TEST_TIMEOUT") or "10m"
 # Status codes for running command with timeout.
 eTimedOut, ePassed, eFailed = 124, 0, 1
 
+output_lock = None
+test_counter = None
+total_tests = None
+
+def setup_lock_and_counter(lock, counter, total):
+    global output_lock, test_counter, total_tests
+    output_lock = lock
+    test_counter = counter
+    total_tests = total
+
+def update_status(name = None, output = None):
+    global output_lock, test_counter, total_tests
+    with output_lock:
+        if output is not None:
+            print >> sys.stderr
+            print >> sys.stderr, 'Test suite %s failed' % name
+            print >> sys.stderr, 'stdout:\n' + output[0]
+            print >> sys.stderr, 'stderr:\n' + output[1]
+        sys.stderr.write("\r%*d out of %d test suites processed" %
+            (len(str(total_tests)), test_counter.value, total_tests))
+        test_counter.value += 1
+
 def parse_test_results(output):
     passes = 0
     failures = 0
@@ -84,7 +106,7 @@ def parse_test_results(output):
         pass
     return passes, failures
 
-def call_with_timeout(command, timeout):
+def call_with_timeout(command, timeout, name):
     """Run command with a timeout if possible."""
     """-s QUIT will create a coredump if they are enabled on your system"""
     process = None
@@ -103,6 +125,7 @@ def call_with_timeout(command, timeout):
     output = process.communicate()
     exit_status = process.returncode
     passes, failures = parse_test_results(output)
+    update_status(name, output if failures > 0 else None)
     return exit_status, passes, failures
 
 def process_dir(root, files, test_root, dotest_argv):
@@ -132,7 +155,7 @@ def process_dir(root, files, test_root, dotest_argv):
 
         timeout = os.getenv("LLDB_%s_TIMEOUT" % timeout_name) or default_timeout
 
-        exit_status, pass_count, fail_count = call_with_timeout(command, timeout)
+        exit_status, pass_count, fail_count = call_with_timeout(command, timeout, name)
 
         pass_sub_count = pass_sub_count + pass_count
         fail_sub_count = fail_sub_count + fail_count
@@ -169,10 +192,19 @@ def walk_and_invoke(test_directory, test_subdir, dotest_argv, num_threads):
     for root, dirs, files in os.walk(test_subdir, topdown=False):
         test_work_items.append((root, files, test_directory, dotest_argv))
 
+    global output_lock, test_counter, total_tests
+    output_lock = multiprocessing.Lock()
+    total_tests = len(test_work_items)
+    test_counter = multiprocessing.Value('i', 0)
+    print >> sys.stderr, "Testing: %d tests, %d threads" % (total_tests, num_threads)
+    update_status()
+
     # Run the items, either in a pool (for multicore speedup) or
     # calling each individually.
     if num_threads > 1:
-        pool = multiprocessing.Pool(num_threads)
+        pool = multiprocessing.Pool(num_threads,
+            initializer = setup_lock_and_counter,
+            initargs = (output_lock, test_counter, total_tests))
         test_results = pool.map(process_dir_worker, test_work_items)
     else:
         test_results = []
@@ -355,6 +387,7 @@ Run lldb test suite using a separate process for each test file.
             test_name = os.path.splitext(xtime)[0]
             touch(os.path.join(session_dir, "{}-{}".format(result, test_name)))
 
+    print
     print "Ran %d test suites (%d failed) (%f%%)" % (num_test_files, len(failed), 100.0*len(failed)/num_test_files)
     print "Ran %d test cases (%d failed) (%f%%)" % (num_tests, all_fails, 100.0*all_fails/num_tests)
     if len(failed) > 0:
