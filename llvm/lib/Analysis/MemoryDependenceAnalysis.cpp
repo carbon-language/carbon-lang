@@ -1278,8 +1278,7 @@ getNonLocalPointerDepFromBB(Instruction *QueryInst,
       // Get the PHI translated pointer in this predecessor.  This can fail if
       // not translatable, in which case the getAddr() returns null.
       PHITransAddr &PredPointer = PredList.back().second;
-      PredPointer.PHITranslateValue(BB, Pred, nullptr);
-
+      PredPointer.PHITranslateValue(BB, Pred, DT, /*MustDominate=*/false);
       Value *PredPtrVal = PredPointer.getAddr();
 
       // Check to see if we have already visited this pred block with another

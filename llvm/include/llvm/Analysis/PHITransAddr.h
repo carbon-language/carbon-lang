@@ -75,12 +75,12 @@ public:
   bool IsPotentiallyPHITranslatable() const;
   
   /// PHITranslateValue - PHI translate the current address up the CFG from
-  /// CurBB to Pred, updating our state to reflect any needed changes.  If the
-  /// dominator tree DT is non-null, the translated value must dominate
+  /// CurBB to Pred, updating our state to reflect any needed changes.  If
+  /// 'MustDominate' is true, the translated value must dominate
   /// PredBB.  This returns true on failure and sets Addr to null.
   bool PHITranslateValue(BasicBlock *CurBB, BasicBlock *PredBB,
-                         const DominatorTree *DT);
-  
+                         const DominatorTree *DT, bool MustDominate);
+
   /// PHITranslateWithInsertion - PHI translate this value into the specified
   /// predecessor block, inserting a computation of the value if it is
   /// unavailable.
