@@ -45,11 +45,6 @@ LockFileWindows::LockFileWindows (int fd)
 LockFileWindows::~LockFileWindows ()
 {
     Unlock ();
-    if (m_file != INVALID_HANDLE_VALUE)
-    {
-        ::CloseHandle (m_file);
-        m_file = INVALID_HANDLE_VALUE;
-    }
 }
 
 bool
