@@ -6260,6 +6260,42 @@ is128BitLaneRepeatedShuffleMask(MVT VT, ArrayRef<int> Mask,
   return true;
 }
 
+/// \brief Test whether a shuffle mask is equivalent within each 256-bit lane.
+///
+/// This checks a shuffle mask to see if it is performing the same
+/// 256-bit lane-relative shuffle in each 256-bit lane. This trivially implies
+/// that it is also not lane-crossing. It may however involve a blend from the
+/// same lane of a second vector.
+///
+/// The specific repeated shuffle mask is populated in \p RepeatedMask, as it is
+/// non-trivial to compute in the face of undef lanes. The representation is
+/// *not* suitable for use with existing 256-bit shuffles as it will contain
+/// entries from both V1 and V2 inputs to the wider mask.
+static bool
+is256BitLaneRepeatedShuffleMask(MVT VT, ArrayRef<int> Mask,
+                                SmallVectorImpl<int> &RepeatedMask) {
+  int LaneSize = 256 / VT.getScalarSizeInBits();
+  RepeatedMask.resize(LaneSize, -1);
+  int Size = Mask.size();
+  for (int i = 0; i < Size; ++i) {
+    if (Mask[i] < 0)
+      continue;
+    if ((Mask[i] % Size) / LaneSize != i / LaneSize)
+      // This entry crosses lanes, so there is no way to model this shuffle.
+      return false;
+
+    // Ok, handle the in-lane shuffles by detecting if and when they repeat.
+    if (RepeatedMask[i % LaneSize] == -1)
+      // This is the first non-undef entry in this slot of a 256-bit lane.
+      RepeatedMask[i % LaneSize] =
+          Mask[i] < Size ? Mask[i] % LaneSize : Mask[i] % LaneSize + Size;
+    else if (RepeatedMask[i % LaneSize] + (i / LaneSize) * LaneSize != Mask[i])
+      // Found a mismatch with the repeated mask.
+      return false;
+  }
+  return true;
+}
+
 /// \brief Checks whether a shuffle mask is equivalent to an explicit list of
 /// arguments.
 ///
@@ -10054,12 +10090,15 @@ static SDValue lower256BitVectorShuffle(SDValue Op, SDValue V1, SDValue V2,
 }
 
 /// \brief Handle lowering of 8-lane 64-bit floating point shuffles.
-static SDValue lowerV8F64VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
+static SDValue lowerV8X64VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
                                        const X86Subtarget *Subtarget,
                                        SelectionDAG &DAG) {
   SDLoc DL(Op);
-  assert(V1.getSimpleValueType() == MVT::v8f64 && "Bad operand type!");
-  assert(V2.getSimpleValueType() == MVT::v8f64 && "Bad operand type!");
+  MVT VT = Op.getSimpleValueType();
+  assert((V1.getSimpleValueType() == MVT::v8f64 ||
+          V1.getSimpleValueType() == MVT::v8i64) && "Bad operand type!");
+  assert((V2.getSimpleValueType() == MVT::v8f64 ||
+          V2.getSimpleValueType() == MVT::v8i64) && "Bad operand type!");
   ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(Op);
   ArrayRef<int> Mask = SVOp->getMask();
   assert(Mask.size() == 8 && "Unexpected mask size for v8 shuffle!");
@@ -10067,12 +10106,65 @@ static SDValue lowerV8F64VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   // X86 has dedicated unpack instructions that can handle specific blend
   // operations: UNPCKH and UNPCKL.
   if (isShuffleEquivalent(V1, V2, Mask, {0, 8, 2, 10, 4, 12, 6, 14}))
-    return DAG.getNode(X86ISD::UNPCKL, DL, MVT::v8f64, V1, V2);
+    return DAG.getNode(X86ISD::UNPCKL, DL, VT, V1, V2);
   if (isShuffleEquivalent(V1, V2, Mask, {1, 9, 3, 11, 5, 13, 7, 15}))
-    return DAG.getNode(X86ISD::UNPCKH, DL, MVT::v8f64, V1, V2);
+    return DAG.getNode(X86ISD::UNPCKH, DL, VT, V1, V2);
 
-  // FIXME: Implement direct support for this type!
-  return splitAndLowerVectorShuffle(DL, MVT::v8f64, V1, V2, Mask, DAG);
+  // VSHUFPD instruction - mask 0/1, 8/9, 2/3, 10/11, 4/5, 12/13, 6/7, 14/15
+  bool ShufpdMask = true;
+  unsigned Immediate = 0;
+  for (int i = 0; i < 8; ++i) {
+    if (Mask[i] < 0)
+      continue;
+    int Val = (i & 6) + 8 * (i & 1);
+    if (Mask[i] < Val ||  Mask[i] > Val+1) {
+      ShufpdMask = false;
+      break;
+    }
+    Immediate |= (Mask[i]%2) << i;
+  }
+  if (ShufpdMask)
+      return DAG.getNode(X86ISD::SHUFP, DL, VT, V1, V2,
+                         DAG.getConstant(Immediate, DL, MVT::i8));
+
+  // PERMILPD instruction - mask 0/1, 0/1, 2/3, 2/3, 4/5, 4/5, 6/7, 6/7
+  if (isSingleInputShuffleMask(Mask)) {
+    bool PermilMask = true;
+    unsigned Immediate = 0;
+    for (int i = 0; i < 8; ++i) {
+      if (Mask[i] < 0)
+        continue;
+      int Val = (i & 6);
+      if (Mask[i] < Val ||  Mask[i] > Val+1) {
+        PermilMask = false;
+        break;
+      }
+      Immediate |= (Mask[i]%2) << i;
+    }
+    if (PermilMask)
+      return DAG.getNode(X86ISD::VPERMILPI, DL, VT, V1,
+                         DAG.getConstant(Immediate, DL, MVT::i8));
+
+    SmallVector<int, 4> RepeatedMask;
+    if (is256BitLaneRepeatedShuffleMask(VT, Mask, RepeatedMask)) {
+      unsigned Immediate = 0;
+      for (int i = 0; i < 4; ++i)
+        if (RepeatedMask[i] > 0)
+          Immediate |= (RepeatedMask[i] & 3) << (i*2);
+      return DAG.getNode(X86ISD::VPERMI, DL, VT, V1,
+                         DAG.getConstant(Immediate, DL, MVT::i8));
+    }
+  }
+  SDValue VPermMask[8];
+  for (int i = 0; i < 8; ++i)
+    VPermMask[i] = Mask[i] < 0 ? DAG.getUNDEF(MVT::i64)
+                               : DAG.getConstant(Mask[i], DL, MVT::i64);
+  SDValue MaskNode = DAG.getNode(ISD::BUILD_VECTOR, DL, MVT::v8i64,
+                                 VPermMask);
+  if (isSingleInputShuffleMask(Mask))
+    return DAG.getNode(X86ISD::VPERMV, DL, VT, MaskNode, V1);
+
+  return DAG.getNode(X86ISD::VPERMV3, DL, VT, MaskNode, V1, V2);
 }
 
 /// \brief Handle lowering of 16-lane 32-bit floating point shuffles.
@@ -10102,28 +10194,6 @@ static SDValue lowerV16F32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
 
   // FIXME: Implement direct support for this type!
   return splitAndLowerVectorShuffle(DL, MVT::v16f32, V1, V2, Mask, DAG);
-}
-
-/// \brief Handle lowering of 8-lane 64-bit integer shuffles.
-static SDValue lowerV8I64VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
-                                       const X86Subtarget *Subtarget,
-                                       SelectionDAG &DAG) {
-  SDLoc DL(Op);
-  assert(V1.getSimpleValueType() == MVT::v8i64 && "Bad operand type!");
-  assert(V2.getSimpleValueType() == MVT::v8i64 && "Bad operand type!");
-  ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(Op);
-  ArrayRef<int> Mask = SVOp->getMask();
-  assert(Mask.size() == 8 && "Unexpected mask size for v8 shuffle!");
-
-  // X86 has dedicated unpack instructions that can handle specific blend
-  // operations: UNPCKH and UNPCKL.
-  if (isShuffleEquivalent(V1, V2, Mask, {0, 8, 2, 10, 4, 12, 6, 14}))
-    return DAG.getNode(X86ISD::UNPCKL, DL, MVT::v8i64, V1, V2);
-  if (isShuffleEquivalent(V1, V2, Mask, {1, 9, 3, 11, 5, 13, 7, 15}))
-    return DAG.getNode(X86ISD::UNPCKH, DL, MVT::v8i64, V1, V2);
-
-  // FIXME: Implement direct support for this type!
-  return splitAndLowerVectorShuffle(DL, MVT::v8i64, V1, V2, Mask, DAG);
 }
 
 /// \brief Handle lowering of 16-lane 32-bit integer shuffles.
@@ -10212,11 +10282,10 @@ static SDValue lower512BitVectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   // the requisite ISA extensions for that element type are available.
   switch (VT.SimpleTy) {
   case MVT::v8f64:
-    return lowerV8F64VectorShuffle(Op, V1, V2, Subtarget, DAG);
+  case MVT::v8i64:
+    return lowerV8X64VectorShuffle(Op, V1, V2, Subtarget, DAG);
   case MVT::v16f32:
     return lowerV16F32VectorShuffle(Op, V1, V2, Subtarget, DAG);
-  case MVT::v8i64:
-    return lowerV8I64VectorShuffle(Op, V1, V2, Subtarget, DAG);
   case MVT::v16i32:
     return lowerV16I32VectorShuffle(Op, V1, V2, Subtarget, DAG);
   case MVT::v32i16:
@@ -20482,7 +20551,7 @@ static SmallVector<int, 4> getPSHUFShuffleMask(SDValue N) {
 #ifndef NDEBUG
     for (int i = 1, NumLanes = VT.getSizeInBits() / 128; i < NumLanes; ++i)
       for (int j = 0; j < LaneElts; ++j)
-        assert(Mask[j] == Mask[i * LaneElts + j] - LaneElts &&
+        assert(Mask[j] == Mask[i * LaneElts + j] - (LaneElts * i) &&
                "Mask doesn't repeat in high 128-bit lanes!");
 #endif
     Mask.resize(LaneElts);
