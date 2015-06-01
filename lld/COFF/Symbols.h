@@ -67,7 +67,7 @@ public:
   // in the Symbol may be mutated by the resolver. If you have a
   // pointer P to a SymbolBody and are not sure whether the resolver
   // has chosen the object among other objects having the same name,
-  // you can access P->getSymbol()->Body to get the resolver's result.
+  // you can access P->Backref->Body to get the resolver's result.
   void setBackref(Symbol *P) { Backref = P; }
   SymbolBody *getReplacement() { return Backref ? Backref->Body : this; }
 

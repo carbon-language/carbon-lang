@@ -331,7 +331,7 @@ bool LinkerDriver::link(int Argc, const char *Argv[]) {
       return false;
     }
     // If it's already resolved as some Defined type, do nothing.
-    // Otherwise, rename it to see if To can be resolved successfully.
+    // Otherwise, rename it to see if To can be resolved instead.
     if (Symtab.find(From))
       continue;
     if (auto EC = Symtab.rename(From, To)) {

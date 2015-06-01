@@ -317,7 +317,7 @@ void Writer::writeHeader() {
   }
 
   // Section table
-  // Name field in the string table is 8 byte long. Longer names need
+  // Name field in the section table is 8 byte long. Longer names need
   // to be written to the string table. First, construct string table.
   std::vector<char> Strtab;
   for (std::unique_ptr<OutputSection> &Sec : OutputSections) {
