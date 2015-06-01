@@ -65,181 +65,134 @@ unsigned MipsELFObjectWriter::GetRelocType(const MCValue &Target,
                                            const MCFixup &Fixup,
                                            bool IsPCRel) const {
   // determine the type of the relocation
-  unsigned Type = (unsigned)ELF::R_MIPS_NONE;
   unsigned Kind = (unsigned)Fixup.getKind();
 
   switch (Kind) {
-  default:
-    llvm_unreachable("invalid fixup kind!");
   case Mips::fixup_Mips_32:
   case FK_Data_4:
-    Type = ELF::R_MIPS_32;
-    break;
+    return ELF::R_MIPS_32;
   case Mips::fixup_Mips_64:
   case FK_Data_8:
-    Type = ELF::R_MIPS_64;
-    break;
+    return ELF::R_MIPS_64;
   case FK_GPRel_4:
     if (isN64()) {
+      unsigned Type = (unsigned)ELF::R_MIPS_NONE;
       Type = setRType((unsigned)ELF::R_MIPS_GPREL32, Type);
       Type = setRType2((unsigned)ELF::R_MIPS_64, Type);
       Type = setRType3((unsigned)ELF::R_MIPS_NONE, Type);
+      return Type;
     }
-    else
-      Type = ELF::R_MIPS_GPREL32;
-    break;
+    return ELF::R_MIPS_GPREL32;
   case Mips::fixup_Mips_GPREL16:
-    Type = ELF::R_MIPS_GPREL16;
-    break;
+    return ELF::R_MIPS_GPREL16;
   case Mips::fixup_Mips_26:
-    Type = ELF::R_MIPS_26;
-    break;
+    return ELF::R_MIPS_26;
   case Mips::fixup_Mips_CALL16:
-    Type = ELF::R_MIPS_CALL16;
-    break;
+    return ELF::R_MIPS_CALL16;
   case Mips::fixup_Mips_GOT_Global:
   case Mips::fixup_Mips_GOT_Local:
-    Type = ELF::R_MIPS_GOT16;
-    break;
+    return ELF::R_MIPS_GOT16;
   case Mips::fixup_Mips_HI16:
-    Type = ELF::R_MIPS_HI16;
-    break;
+    return ELF::R_MIPS_HI16;
   case Mips::fixup_Mips_LO16:
-    Type = ELF::R_MIPS_LO16;
-    break;
+    return ELF::R_MIPS_LO16;
   case Mips::fixup_Mips_TLSGD:
-    Type = ELF::R_MIPS_TLS_GD;
-    break;
+    return ELF::R_MIPS_TLS_GD;
   case Mips::fixup_Mips_GOTTPREL:
-    Type = ELF::R_MIPS_TLS_GOTTPREL;
-    break;
+    return ELF::R_MIPS_TLS_GOTTPREL;
   case Mips::fixup_Mips_TPREL_HI:
-    Type = ELF::R_MIPS_TLS_TPREL_HI16;
-    break;
+    return ELF::R_MIPS_TLS_TPREL_HI16;
   case Mips::fixup_Mips_TPREL_LO:
-    Type = ELF::R_MIPS_TLS_TPREL_LO16;
-    break;
+    return ELF::R_MIPS_TLS_TPREL_LO16;
   case Mips::fixup_Mips_TLSLDM:
-    Type = ELF::R_MIPS_TLS_LDM;
-    break;
+    return ELF::R_MIPS_TLS_LDM;
   case Mips::fixup_Mips_DTPREL_HI:
-    Type = ELF::R_MIPS_TLS_DTPREL_HI16;
-    break;
+    return ELF::R_MIPS_TLS_DTPREL_HI16;
   case Mips::fixup_Mips_DTPREL_LO:
-    Type = ELF::R_MIPS_TLS_DTPREL_LO16;
-    break;
+    return ELF::R_MIPS_TLS_DTPREL_LO16;
   case Mips::fixup_Mips_Branch_PCRel:
   case Mips::fixup_Mips_PC16:
-    Type = ELF::R_MIPS_PC16;
-    break;
+    return ELF::R_MIPS_PC16;
   case Mips::fixup_Mips_GOT_PAGE:
-    Type = ELF::R_MIPS_GOT_PAGE;
-    break;
+    return ELF::R_MIPS_GOT_PAGE;
   case Mips::fixup_Mips_GOT_OFST:
-    Type = ELF::R_MIPS_GOT_OFST;
-    break;
+    return ELF::R_MIPS_GOT_OFST;
   case Mips::fixup_Mips_GOT_DISP:
-    Type = ELF::R_MIPS_GOT_DISP;
-    break;
-  case Mips::fixup_Mips_GPOFF_HI:
+    return ELF::R_MIPS_GOT_DISP;
+  case Mips::fixup_Mips_GPOFF_HI: {
+    unsigned Type = (unsigned)ELF::R_MIPS_NONE;
     Type = setRType((unsigned)ELF::R_MIPS_GPREL16, Type);
     Type = setRType2((unsigned)ELF::R_MIPS_SUB, Type);
     Type = setRType3((unsigned)ELF::R_MIPS_HI16, Type);
-    break;
-  case Mips::fixup_Mips_GPOFF_LO:
+    return Type;
+  }
+  case Mips::fixup_Mips_GPOFF_LO: {
+    unsigned Type = (unsigned)ELF::R_MIPS_NONE;
     Type = setRType((unsigned)ELF::R_MIPS_GPREL16, Type);
     Type = setRType2((unsigned)ELF::R_MIPS_SUB, Type);
     Type = setRType3((unsigned)ELF::R_MIPS_LO16, Type);
-    break;
-  case Mips::fixup_Mips_HIGHER:
-    Type = ELF::R_MIPS_HIGHER;
-    break;
-  case Mips::fixup_Mips_HIGHEST:
-    Type = ELF::R_MIPS_HIGHEST;
-    break;
-  case Mips::fixup_Mips_GOT_HI16:
-    Type = ELF::R_MIPS_GOT_HI16;
-    break;
-  case Mips::fixup_Mips_GOT_LO16:
-    Type = ELF::R_MIPS_GOT_LO16;
-    break;
-  case Mips::fixup_Mips_CALL_HI16:
-    Type = ELF::R_MIPS_CALL_HI16;
-    break;
-  case Mips::fixup_Mips_CALL_LO16:
-    Type = ELF::R_MIPS_CALL_LO16;
-    break;
-  case Mips::fixup_MICROMIPS_26_S1:
-    Type = ELF::R_MICROMIPS_26_S1;
-    break;
-  case Mips::fixup_MICROMIPS_HI16:
-    Type = ELF::R_MICROMIPS_HI16;
-    break;
-  case Mips::fixup_MICROMIPS_LO16:
-    Type = ELF::R_MICROMIPS_LO16;
-    break;
-  case Mips::fixup_MICROMIPS_GOT16:
-    Type = ELF::R_MICROMIPS_GOT16;
-    break;
-  case Mips::fixup_MICROMIPS_PC7_S1:
-    Type = ELF::R_MICROMIPS_PC7_S1;
-    break;
-  case Mips::fixup_MICROMIPS_PC10_S1:
-    Type = ELF::R_MICROMIPS_PC10_S1;
-    break;
-  case Mips::fixup_MICROMIPS_PC16_S1:
-    Type = ELF::R_MICROMIPS_PC16_S1;
-    break;
-  case Mips::fixup_MICROMIPS_CALL16:
-    Type = ELF::R_MICROMIPS_CALL16;
-    break;
-  case Mips::fixup_MICROMIPS_GOT_DISP:
-    Type = ELF::R_MICROMIPS_GOT_DISP;
-    break;
-  case Mips::fixup_MICROMIPS_GOT_PAGE:
-    Type = ELF::R_MICROMIPS_GOT_PAGE;
-    break;
-  case Mips::fixup_MICROMIPS_GOT_OFST:
-    Type = ELF::R_MICROMIPS_GOT_OFST;
-    break;
-  case Mips::fixup_MICROMIPS_TLS_GD:
-    Type = ELF::R_MICROMIPS_TLS_GD;
-    break;
-  case Mips::fixup_MICROMIPS_TLS_LDM:
-    Type = ELF::R_MICROMIPS_TLS_LDM;
-    break;
-  case Mips::fixup_MICROMIPS_TLS_DTPREL_HI16:
-    Type = ELF::R_MICROMIPS_TLS_DTPREL_HI16;
-    break;
-  case Mips::fixup_MICROMIPS_TLS_DTPREL_LO16:
-    Type = ELF::R_MICROMIPS_TLS_DTPREL_LO16;
-    break;
-  case Mips::fixup_MICROMIPS_TLS_TPREL_HI16:
-    Type = ELF::R_MICROMIPS_TLS_TPREL_HI16;
-    break;
-  case Mips::fixup_MICROMIPS_TLS_TPREL_LO16:
-    Type = ELF::R_MICROMIPS_TLS_TPREL_LO16;
-    break;
-  case Mips::fixup_MIPS_PC19_S2:
-    Type = ELF::R_MIPS_PC19_S2;
-    break;
-  case Mips::fixup_MIPS_PC18_S3:
-    Type = ELF::R_MIPS_PC18_S3;
-    break;
-  case Mips::fixup_MIPS_PC21_S2:
-    Type = ELF::R_MIPS_PC21_S2;
-    break;
-  case Mips::fixup_MIPS_PC26_S2:
-    Type = ELF::R_MIPS_PC26_S2;
-    break;
-  case Mips::fixup_MIPS_PCHI16:
-    Type = ELF::R_MIPS_PCHI16;
-    break;
-  case Mips::fixup_MIPS_PCLO16:
-    Type = ELF::R_MIPS_PCLO16;
-    break;
+    return Type;
   }
-  return Type;
+  case Mips::fixup_Mips_HIGHER:
+    return ELF::R_MIPS_HIGHER;
+  case Mips::fixup_Mips_HIGHEST:
+    return ELF::R_MIPS_HIGHEST;
+  case Mips::fixup_Mips_GOT_HI16:
+    return ELF::R_MIPS_GOT_HI16;
+  case Mips::fixup_Mips_GOT_LO16:
+    return ELF::R_MIPS_GOT_LO16;
+  case Mips::fixup_Mips_CALL_HI16:
+    return ELF::R_MIPS_CALL_HI16;
+  case Mips::fixup_Mips_CALL_LO16:
+    return ELF::R_MIPS_CALL_LO16;
+  case Mips::fixup_MICROMIPS_26_S1:
+    return ELF::R_MICROMIPS_26_S1;
+  case Mips::fixup_MICROMIPS_HI16:
+    return ELF::R_MICROMIPS_HI16;
+  case Mips::fixup_MICROMIPS_LO16:
+    return ELF::R_MICROMIPS_LO16;
+  case Mips::fixup_MICROMIPS_GOT16:
+    return ELF::R_MICROMIPS_GOT16;
+  case Mips::fixup_MICROMIPS_PC7_S1:
+    return ELF::R_MICROMIPS_PC7_S1;
+  case Mips::fixup_MICROMIPS_PC10_S1:
+    return ELF::R_MICROMIPS_PC10_S1;
+  case Mips::fixup_MICROMIPS_PC16_S1:
+    return ELF::R_MICROMIPS_PC16_S1;
+  case Mips::fixup_MICROMIPS_CALL16:
+    return ELF::R_MICROMIPS_CALL16;
+  case Mips::fixup_MICROMIPS_GOT_DISP:
+    return ELF::R_MICROMIPS_GOT_DISP;
+  case Mips::fixup_MICROMIPS_GOT_PAGE:
+    return ELF::R_MICROMIPS_GOT_PAGE;
+  case Mips::fixup_MICROMIPS_GOT_OFST:
+    return ELF::R_MICROMIPS_GOT_OFST;
+  case Mips::fixup_MICROMIPS_TLS_GD:
+    return ELF::R_MICROMIPS_TLS_GD;
+  case Mips::fixup_MICROMIPS_TLS_LDM:
+    return ELF::R_MICROMIPS_TLS_LDM;
+  case Mips::fixup_MICROMIPS_TLS_DTPREL_HI16:
+    return ELF::R_MICROMIPS_TLS_DTPREL_HI16;
+  case Mips::fixup_MICROMIPS_TLS_DTPREL_LO16:
+    return ELF::R_MICROMIPS_TLS_DTPREL_LO16;
+  case Mips::fixup_MICROMIPS_TLS_TPREL_HI16:
+    return ELF::R_MICROMIPS_TLS_TPREL_HI16;
+  case Mips::fixup_MICROMIPS_TLS_TPREL_LO16:
+    return ELF::R_MICROMIPS_TLS_TPREL_LO16;
+  case Mips::fixup_MIPS_PC19_S2:
+    return ELF::R_MIPS_PC19_S2;
+  case Mips::fixup_MIPS_PC18_S3:
+    return ELF::R_MIPS_PC18_S3;
+  case Mips::fixup_MIPS_PC21_S2:
+    return ELF::R_MIPS_PC21_S2;
+  case Mips::fixup_MIPS_PC26_S2:
+    return ELF::R_MIPS_PC26_S2;
+  case Mips::fixup_MIPS_PCHI16:
+    return ELF::R_MIPS_PCHI16;
+  case Mips::fixup_MIPS_PCLO16:
+    return ELF::R_MIPS_PCLO16;
+  }
+  llvm_unreachable("invalid fixup kind!");
 }
 
 // Sort entries by SortOffset in descending order.
