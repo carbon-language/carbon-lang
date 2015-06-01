@@ -389,7 +389,7 @@ protected:
     if (Triple.getEnvironment() == llvm::Triple::Android) {
       Builder.defineMacro("__ANDROID__", "1");
       unsigned Maj, Min, Rev;
-      Triple.getOSVersion(Maj, Min, Rev);
+      Triple.getEnvironmentVersion(Maj, Min, Rev);
       this->PlatformName = "android";
       this->PlatformMinVersion = VersionTuple(Maj, Min, Rev);
     }
