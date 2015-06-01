@@ -82,6 +82,7 @@ class MipsFastISel final : public FastISel {
   LLVMContext *Context;
 
   bool fastLowerCall(CallLoweringInfo &CLI) override;
+  bool fastLowerIntrinsicCall(const IntrinsicInst *II) override;
 
   bool TargetSupported;
   bool UnsupportedFPMode; // To allow fast-isel to proceed and just not handle
@@ -142,6 +143,7 @@ private:
   unsigned materializeGV(const GlobalValue *GV, MVT VT);
   unsigned materializeInt(const Constant *C, MVT VT);
   unsigned materialize32BitInt(int64_t Imm, const TargetRegisterClass *RC);
+  unsigned materializeExternalCallSym(const char *SynName);
 
   MachineInstrBuilder emitInst(unsigned Opc) {
     return BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(Opc));
@@ -367,6 +369,15 @@ unsigned MipsFastISel::materializeGV(const GlobalValue *GV, MVT VT) {
   return DestReg;
 }
 
+unsigned MipsFastISel::materializeExternalCallSym(const char *SymName) {
+  const TargetRegisterClass *RC = &Mips::GPR32RegClass;
+  unsigned DestReg = createResultReg(RC);
+  emitInst(Mips::LW, DestReg)
+      .addReg(MFI->getGlobalBaseReg())
+      .addExternalSymbol(SymName, MipsII::MO_GOT);
+  return DestReg;
+}
+
 // Materialize a constant into a register, and return the register
 // number (or zero if we failed to handle it).
 unsigned MipsFastISel::fastMaterializeConstant(const Constant *C) {
@@ -471,15 +482,51 @@ bool MipsFastISel::computeAddress(const Value *Obj, Address &Addr) {
 }
 
 bool MipsFastISel::computeCallAddress(const Value *V, Address &Addr) {
-  const GlobalValue *GV = dyn_cast<GlobalValue>(V);
-  if (GV && isa<Function>(GV) && cast<Function>(GV)->isIntrinsic())
-    return false;
-  if (!GV)
-    return false;
+  const User *U = nullptr;
+  unsigned Opcode = Instruction::UserOp1;
+
+  if (const auto *I = dyn_cast<Instruction>(V)) {
+    // Check if the value is defined in the same basic block. This information
+    // is crucial to know whether or not folding an operand is valid.
+    if (I->getParent() == FuncInfo.MBB->getBasicBlock()) {
+      Opcode = I->getOpcode();
+      U = I;
+    }
+  } else if (const auto *C = dyn_cast<ConstantExpr>(V)) {
+    Opcode = C->getOpcode();
+    U = C;
+  }
+
+  switch (Opcode) {
+  default:
+    break;
+  case Instruction::BitCast:
+    // Look past bitcasts if its operand is in the same BB.
+      return computeCallAddress(U->getOperand(0), Addr);
+    break;
+  case Instruction::IntToPtr:
+    // Look past no-op inttoptrs if its operand is in the same BB.
+    if (TLI.getValueType(U->getOperand(0)->getType()) == TLI.getPointerTy())
+      return computeCallAddress(U->getOperand(0), Addr);
+    break;
+  case Instruction::PtrToInt:
+    // Look past no-op ptrtoints if its operand is in the same BB.
+    if (TLI.getValueType(U->getType()) == TLI.getPointerTy())
+      return computeCallAddress(U->getOperand(0), Addr);
+    break;
+  }
+
   if (const GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
     Addr.setGlobalValue(GV);
     return true;
   }
+
+  // If all else fails, try to materialize the value in a register.
+  if (!Addr.getGlobalValue()) {
+    Addr.setReg(getRegForValue(V));
+    return Addr.getReg() != 0;
+  }
+
   return false;
 }
 
@@ -1187,7 +1234,7 @@ bool MipsFastISel::fastLowerCall(CallLoweringInfo &CLI) {
   bool IsTailCall = CLI.IsTailCall;
   bool IsVarArg = CLI.IsVarArg;
   const Value *Callee = CLI.Callee;
-  // const char *SymName = CLI.SymName;
+  const char *SymName = CLI.SymName;
 
   // Allow SelectionDAG isel to handle tail calls.
   if (IsTailCall)
@@ -1234,8 +1281,15 @@ bool MipsFastISel::fastLowerCall(CallLoweringInfo &CLI) {
   if (!processCallArgs(CLI, OutVTs, NumBytes))
     return false;
 
+  if (!Addr.getGlobalValue())
+    return false;
+
   // Issue the call.
-  unsigned DestAddress = materializeGV(Addr.getGlobalValue(), MVT::i32);
+  unsigned DestAddress;
+  if (SymName)
+    DestAddress = materializeExternalCallSym(SymName);
+  else
+    DestAddress = materializeGV(Addr.getGlobalValue(), MVT::i32);
   emitInst(TargetOpcode::COPY, Mips::T9).addReg(DestAddress);
   MachineInstrBuilder MIB =
       BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(Mips::JALR),
@@ -1253,6 +1307,34 @@ bool MipsFastISel::fastLowerCall(CallLoweringInfo &CLI) {
 
   // Finish off the call including any return values.
   return finishCall(CLI, RetVT, NumBytes);
+}
+
+bool MipsFastISel::fastLowerIntrinsicCall(const IntrinsicInst *II) {
+  switch (II->getIntrinsicID()) {
+  default:
+    return false;
+  case Intrinsic::memcpy:
+  case Intrinsic::memmove: {
+    const auto *MTI = cast<MemTransferInst>(II);
+    // Don't handle volatile.
+    if (MTI->isVolatile())
+      return false;
+    if (!MTI->getLength()->getType()->isIntegerTy(32))
+      return false;
+    const char *IntrMemName = isa<MemCpyInst>(II) ? "memcpy" : "memmove";
+    return lowerCallTo(II, IntrMemName, II->getNumArgOperands() - 2);
+  }
+  case Intrinsic::memset: {
+    const MemSetInst *MSI = cast<MemSetInst>(II);
+    // Don't handle volatile.
+    if (MSI->isVolatile())
+      return false;
+    if (!MSI->getLength()->getType()->isIntegerTy(32))
+      return false;
+    return lowerCallTo(II, "memset", II->getNumArgOperands() - 2);
+  }
+  }
+  return false;
 }
 
 bool MipsFastISel::selectRet(const Instruction *I) {
