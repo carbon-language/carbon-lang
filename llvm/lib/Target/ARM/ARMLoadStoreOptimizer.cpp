@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains a pass that performs load / store related peephole
-// optimizations. This pass should be run after register allocation.
+/// \file This file contains a pass that performs load / store related peephole
+/// optimizations. This pass should be run after register allocation.
 //
 //===----------------------------------------------------------------------===//
 
@@ -58,10 +58,9 @@ STATISTIC(NumSTRD2STM,  "Number of strd instructions turned back into stm");
 STATISTIC(NumLDRD2LDR,  "Number of ldrd instructions turned back into ldr's");
 STATISTIC(NumSTRD2STR,  "Number of strd instructions turned back into str's");
 
-/// ARMAllocLoadStoreOpt - Post- register allocation pass the combine
-/// load / store instructions to form ldm / stm instructions.
-
 namespace {
+  /// Post- register allocation pass the combine load / store instructions to
+  /// form ldm / stm instructions.
   struct ARMLoadStoreOpt : public MachineFunctionPass {
     static char ID;
     ARMLoadStoreOpt() : MachineFunctionPass(ID) {}
@@ -469,9 +468,9 @@ ARMLoadStoreOpt::UpdateBaseRegUses(MachineBasicBlock &MBB,
   }
 }
 
-/// MergeOps - Create and insert a LDM or STM with Base as base register and
-/// registers in Regs as the register operands that would be loaded / stored.
-/// It returns true if the transformation is done.
+/// Create and insert a LDM or STM with Base as base register and registers in
+/// Regs as the register operands that would be loaded / stored.  It returns
+/// true if the transformation is done.
 bool
 ARMLoadStoreOpt::MergeOps(MachineBasicBlock &MBB,
                           MachineBasicBlock::iterator MBBI,
@@ -665,7 +664,7 @@ ARMLoadStoreOpt::MergeOps(MachineBasicBlock &MBB,
   return true;
 }
 
-/// \brief Find all instructions using a given imp-def within a range.
+/// Find all instructions using a given imp-def within a range.
 ///
 /// We are trying to combine a range of instructions, one of which (located at
 /// position RangeBegin) implicitly defines a register. The final LDM/STM will
@@ -721,8 +720,7 @@ void ARMLoadStoreOpt::findUsesOfImpDef(
   }
 }
 
-// MergeOpsUpdate - call MergeOps and update MemOps and merges accordingly on
-// success.
+/// Call MergeOps and update MemOps and merges accordingly on success.
 void ARMLoadStoreOpt::MergeOpsUpdate(MachineBasicBlock &MBB,
                                      MemOpQueue &memOps,
                                      unsigned memOpsBegin, unsigned memOpsEnd,
@@ -823,8 +821,8 @@ void ARMLoadStoreOpt::MergeOpsUpdate(MachineBasicBlock &MBB,
   }
 }
 
-/// MergeLDR_STR - Merge a number of load / store instructions into one or more
-/// load / store multiple instructions.
+/// Merge a number of load / store instructions into one or more load / store
+/// multiple instructions.
 void
 ARMLoadStoreOpt::MergeLDR_STR(MachineBasicBlock &MBB, unsigned SIndex,
                          unsigned Base, unsigned Opcode, unsigned Size,
@@ -1083,8 +1081,8 @@ static unsigned getUpdatingLSMultipleOpcode(unsigned Opc,
   }
 }
 
-/// MergeBaseUpdateLSMultiple - Fold proceeding/trailing inc/dec of base
-/// register into the LDM/STM/VLDM{D|S}/VSTM{D|S} op when possible:
+/// Fold proceeding/trailing inc/dec of base register into the
+/// LDM/STM/VLDM{D|S}/VSTM{D|S} op when possible:
 ///
 /// stmia rn, <ra, rb, rc>
 /// rn := rn + 4 * 3;
@@ -1231,8 +1229,8 @@ static unsigned getPostIndexedLoadStoreOpcode(unsigned Opc,
   }
 }
 
-/// MergeBaseUpdateLoadStore - Fold proceeding/trailing inc/dec of base
-/// register into the LDR/STR/FLD{D|S}/FST{D|S} op when possible:
+/// Fold proceeding/trailing inc/dec of base register into the
+/// LDR/STR/FLD{D|S}/FST{D|S} op when possible:
 bool ARMLoadStoreOpt::MergeBaseUpdateLoadStore(MachineBasicBlock &MBB,
                                                MachineBasicBlock::iterator MBBI,
                                                const TargetInstrInfo *TII,
@@ -1373,8 +1371,8 @@ bool ARMLoadStoreOpt::MergeBaseUpdateLoadStore(MachineBasicBlock &MBB,
   return true;
 }
 
-/// isMemoryOp - Returns true if instruction is a memory operation that this
-/// pass is capable of operating on.
+/// Returns true if instruction is a memory operation that this pass is capable
+/// of operating on.
 static bool isMemoryOp(const MachineInstr *MI) {
   // When no memory operands are present, conservatively assume unaligned,
   // volatile, unfoldable.
@@ -1428,8 +1426,8 @@ static bool isMemoryOp(const MachineInstr *MI) {
   return false;
 }
 
-/// AdvanceRS - Advance register scavenger to just before the earliest memory
-/// op that is being merged.
+/// Advance register scavenger to just before the earliest memory op that is
+/// being merged.
 void ARMLoadStoreOpt::AdvanceRS(MachineBasicBlock &MBB, MemOpQueue &MemOps) {
   MachineBasicBlock::iterator Loc = MemOps[0].MBBI;
   unsigned Position = MemOps[0].Position;
@@ -1588,8 +1586,8 @@ bool ARMLoadStoreOpt::FixInvalidRegPairOp(MachineBasicBlock &MBB,
   return false;
 }
 
-/// LoadStoreMultipleOpti - An optimization pass to turn multiple LDR / STR
-/// ops of the same base and incrementing offset into LDM / STM ops.
+/// An optimization pass to turn multiple LDR / STR ops of the same base and
+/// incrementing offset into LDM / STM ops.
 bool ARMLoadStoreOpt::LoadStoreMultipleOpti(MachineBasicBlock &MBB) {
   unsigned NumMerges = 0;
   unsigned NumMemOps = 0;
@@ -1770,9 +1768,9 @@ bool ARMLoadStoreOpt::LoadStoreMultipleOpti(MachineBasicBlock &MBB) {
   return NumMerges > 0;
 }
 
-/// MergeReturnIntoLDM - If this is a exit BB, try merging the return ops
-/// ("bx lr" and "mov pc, lr") into the preceding stack restore so it
-/// directly restore the value of LR into pc.
+/// If this is a exit BB, try merging the return ops ("bx lr" and "mov pc, lr")
+/// into the preceding stack restore so it directly restore the value of LR
+/// into pc.
 ///   ldmfd sp!, {..., lr}
 ///   bx lr
 /// or
@@ -1834,12 +1832,9 @@ bool ARMLoadStoreOpt::runOnMachineFunction(MachineFunction &Fn) {
   return Modified;
 }
 
-
-/// ARMPreAllocLoadStoreOpt - Pre- register allocation pass that move
-/// load / stores from consecutive locations close to make it more
-/// likely they will be combined later.
-
 namespace {
+  /// Pre- register allocation pass that move load / stores from consecutive
+  /// locations close to make it more likely they will be combined later.
   struct ARMPreAllocLoadStoreOpt : public MachineFunctionPass{
     static char ID;
     ARMPreAllocLoadStoreOpt() : MachineFunctionPass(ID) {}
@@ -1936,7 +1931,7 @@ static bool IsSafeAndProfitableToMove(bool isLd, unsigned Base,
 }
 
 
-/// Copy Op0 and Op1 operands into a new array assigned to MI.
+/// Copy \p Op0 and \p Op1 operands into a new array assigned to MI.
 static void concatenateMemOperands(MachineInstr *MI, MachineInstr *Op0,
                                    MachineInstr *Op1) {
   assert(MI->memoperands_empty() && "expected a new machineinstr");
@@ -2292,8 +2287,7 @@ ARMPreAllocLoadStoreOpt::RescheduleLoadStoreInstrs(MachineBasicBlock *MBB) {
 }
 
 
-/// createARMLoadStoreOptimizationPass - returns an instance of the load / store
-/// optimization pass.
+/// Returns an instance of the load / store optimization pass.
 FunctionPass *llvm::createARMLoadStoreOptimizationPass(bool PreAlloc) {
   if (PreAlloc)
     return new ARMPreAllocLoadStoreOpt();
