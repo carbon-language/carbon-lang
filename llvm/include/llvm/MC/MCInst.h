@@ -32,12 +32,12 @@ class MCInst;
 /// This is a simple discriminated union.
 class MCOperand {
   enum MachineOperandType : unsigned char {
-    kInvalid,                 ///< Uninitialized.
-    kRegister,                ///< Register operand.
-    kImmediate,               ///< Immediate operand.
-    kFPImmediate,             ///< Floating-point immediate operand.
-    kExpr,                    ///< Relocatable immediate operand.
-    kInst                     ///< Sub-instruction operand.
+    kInvalid,     ///< Uninitialized.
+    kRegister,    ///< Register operand.
+    kImmediate,   ///< Immediate operand.
+    kFPImmediate, ///< Floating-point immediate operand.
+    kExpr,        ///< Relocatable immediate operand.
+    kInst         ///< Sub-instruction operand.
   };
   MachineOperandType Kind;
 
@@ -48,8 +48,8 @@ class MCOperand {
     const MCExpr *ExprVal;
     const MCInst *InstVal;
   };
-public:
 
+public:
   MCOperand() : Kind(kInvalid), FPImmVal(0.0) {}
 
   bool isValid() const { return Kind != kInvalid; }
@@ -151,6 +151,7 @@ class MCInst {
   unsigned Opcode;
   SMLoc Loc;
   SmallVector<MCOperand, 8> Operands;
+
 public:
   MCInst() : Opcode(0) {}
 
@@ -164,9 +165,7 @@ public:
   MCOperand &getOperand(unsigned i) { return Operands[i]; }
   unsigned getNumOperands() const { return Operands.size(); }
 
-  void addOperand(const MCOperand &Op) {
-    Operands.push_back(Op);
-  }
+  void addOperand(const MCOperand &Op) { Operands.push_back(Op); }
 
   void clear() { Operands.clear(); }
   size_t size() const { return Operands.size(); }
@@ -175,7 +174,7 @@ public:
   typedef SmallVectorImpl<MCOperand>::const_iterator const_iterator;
   iterator begin() { return Operands.begin(); }
   const_iterator begin() const { return Operands.begin(); }
-  iterator end()   { return Operands.end(); }
+  iterator end() { return Operands.end(); }
   const_iterator end() const { return Operands.end(); }
   iterator insert(iterator I, const MCOperand &Op) {
     return Operands.insert(I, Op);

@@ -27,10 +27,10 @@ class StringRef;
 void dumpBytes(ArrayRef<uint8_t> Bytes, raw_ostream &OS);
 
 namespace HexStyle {
-    enum Style {
-        C,          ///< 0xff
-        Asm         ///< 0ffh
-    };
+enum Style {
+  C,  ///< 0xff
+  Asm ///< 0ffh
+};
 }
 
 /// \brief This is an instance of a target assembly language printer that
@@ -56,12 +56,12 @@ protected:
 
   /// Utility function for printing annotations.
   void printAnnotation(raw_ostream &OS, StringRef Annot);
+
 public:
   MCInstPrinter(const MCAsmInfo &mai, const MCInstrInfo &mii,
                 const MCRegisterInfo &mri)
-    : CommentStream(nullptr), MAI(mai), MII(mii), MRI(mri),
-      UseMarkup(0), PrintImmHex(0),
-      PrintHexStyle(HexStyle::C) {}
+      : CommentStream(nullptr), MAI(mai), MII(mii), MRI(mri), UseMarkup(0),
+        PrintImmHex(0), PrintHexStyle(HexStyle::C) {}
 
   virtual ~MCInstPrinter();
 
@@ -69,8 +69,8 @@ public:
   void setCommentStream(raw_ostream &OS) { CommentStream = &OS; }
 
   /// \brief Print the specified MCInst to the specified raw_ostream.
-  virtual void printInst(const MCInst *MI, raw_ostream &OS,
-                         StringRef Annot, const MCSubtargetInfo &STI) = 0;
+  virtual void printInst(const MCInst *MI, raw_ostream &OS, StringRef Annot,
+                         const MCSubtargetInfo &STI) = 0;
 
   /// \brief Return the name of the specified opcode enum (e.g. "MOV32ri") or
   /// empty if we can't resolve it.
