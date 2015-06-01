@@ -119,10 +119,9 @@ void IntelJITEventListener::NotifyObjectEmitted(
     if (SymType == SymbolRef::ST_Function) {
       StringRef  Name;
       uint64_t   Addr;
-      uint64_t   Size;
       if (I->getName(Name)) continue;
       if (I->getAddress(Addr)) continue;
-      if (I->getSize(Size)) continue;
+      uint64_t Size = I->getSize();
 
       // Record this address in a local vector
       Functions.push_back((void*)Addr);
