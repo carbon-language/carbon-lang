@@ -579,6 +579,16 @@ static void writeFragmentContents(const MCFragment &F, MCObjectWriter *OW) {
   OW->WriteBytes(EF.getContents());
 }
 
+void MCAssembler::registerSymbol(const MCSymbol &Symbol, bool *Created) {
+  bool New = !Symbol.isRegistered();
+  if (Created)
+    *Created = New;
+  if (New) {
+    Symbol.setIsRegistered(true);
+    Symbols.push_back(&Symbol);
+  }
+}
+
 void MCAssembler::writeFragmentPadding(const MCFragment &F, uint64_t FSize,
                                        MCObjectWriter *OW) const {
   // Should NOP padding be written out before this fragment?

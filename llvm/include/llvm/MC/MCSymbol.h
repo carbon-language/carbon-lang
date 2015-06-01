@@ -14,8 +14,8 @@
 #ifndef LLVM_MC_MCSYMBOL_H
 #define LLVM_MC_MCSYMBOL_H
 
-#include "llvm/ADT/PointerIntPair.h"
 #include "llvm/ADT/StringMap.h"
+#include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/Support/Compiler.h"
 
@@ -44,10 +44,20 @@ class MCSymbol {
   /// held by the StringMap that lives in MCContext.
   const StringMapEntry<bool> *Name;
 
-  /// The section the symbol is defined in. This is null for undefined symbols,
-  /// and the special AbsolutePseudoSection value for absolute symbols. If this
-  /// is a variable symbol, this caches the variable value's section.
-  mutable MCSection *Section;
+  /// If a symbol has a Fragment, the section is implied, so we only need
+  /// one pointer.
+  /// FIXME: We might be able to simplify this by having the asm streamer create
+  /// dummy fragments.
+  union {
+    /// The section the symbol is defined in. This is null for undefined
+    /// symbols, and the special AbsolutePseudoSection value for absolute
+    /// symbols. If this is a variable symbol, this caches the variable value's
+    /// section.
+    mutable MCSection *Section;
+
+    /// The fragment this symbol's value is relative to, if any.
+    mutable MCFragment *Fragment;
+  };
 
   /// Value - If non-null, the value for a variable symbol.
   const MCExpr *Value;
@@ -64,6 +74,14 @@ class MCSymbol {
   mutable unsigned IsUsed : 1;
 
   mutable bool IsRegistered : 1;
+
+  /// This symbol is visible outside this translation unit.
+  mutable unsigned IsExternal : 1;
+
+  /// This symbol is private extern.
+  mutable unsigned IsPrivateExtern : 1;
+
+  mutable unsigned HasFragment : 1;
 
   /// Index field, for use by the object file implementation.
   mutable uint32_t Index = 0;
@@ -89,23 +107,22 @@ class MCSymbol {
   /// additional per symbol information which is not easily classified.
   mutable uint32_t Flags = 0;
 
-  /// The fragment this symbol's value is relative to, if any. Also stores if
-  /// this symbol is visible outside this translation unit (bit 0) or if it is
-  /// private extern (bit 1).
-  mutable PointerIntPair<MCFragment *, 2> Fragment;
-
 private: // MCContext creates and uniques these.
   friend class MCExpr;
   friend class MCContext;
   MCSymbol(const StringMapEntry<bool> *Name, bool isTemporary)
       : Name(Name), Section(nullptr), Value(nullptr), IsTemporary(isTemporary),
-        IsRedefinable(false), IsUsed(false), IsRegistered(false) {
+        IsRedefinable(false), IsUsed(false), IsRegistered(false),
+        IsExternal(false), IsPrivateExtern(false), HasFragment(false) {
     Offset = 0;
   }
 
   MCSymbol(const MCSymbol &) = delete;
   void operator=(const MCSymbol &) = delete;
   MCSection *getSectionPtr() const {
+    if (MCFragment *F = getFragment())
+      return F->getParent();
+    assert(!HasFragment);
     if (Section || !Value)
       return Section;
     return Section = Value->findAssociatedSection();
@@ -137,6 +154,7 @@ public:
     if (IsRedefinable) {
       Value = nullptr;
       Section = nullptr;
+      HasFragment = false;
       IsRedefinable = false;
     }
   }
@@ -169,11 +187,15 @@ public:
   /// Mark the symbol as defined in the section \p S.
   void setSection(MCSection &S) {
     assert(!isVariable() && "Cannot set section of variable");
+    assert(!HasFragment);
     Section = &S;
   }
 
-  /// setUndefined - Mark the symbol as undefined.
-  void setUndefined() { Section = nullptr; }
+  /// Mark the symbol as undefined.
+  void setUndefined() {
+    HasFragment = false;
+    Section = nullptr;
+  }
 
   /// @}
   /// \name Variable Symbols
@@ -252,18 +274,21 @@ public:
     Flags = (Flags & ~Mask) | Value;
   }
 
-  MCFragment *getFragment() const { return Fragment.getPointer(); }
-  void setFragment(MCFragment *Value) const { Fragment.setPointer(Value); }
-
-  bool isExternal() const { return Fragment.getInt() & 1; }
-  void setExternal(bool Value) const {
-    Fragment.setInt((Fragment.getInt() & ~1) | unsigned(Value));
+  MCFragment *getFragment() const {
+    if (!HasFragment)
+      return nullptr;
+    return Fragment;
+  }
+  void setFragment(MCFragment *Value) const {
+    HasFragment = true;
+    Fragment = Value;
   }
 
-  bool isPrivateExtern() const { return Fragment.getInt() & 2; }
-  void setPrivateExtern(bool Value) {
-    Fragment.setInt((Fragment.getInt() & ~2) | (unsigned(Value) << 1));
-  }
+  bool isExternal() const { return IsExternal; }
+  void setExternal(bool Value) const { IsExternal = Value; }
+
+  bool isPrivateExtern() const { return IsPrivateExtern; }
+  void setPrivateExtern(bool Value) { IsPrivateExtern = Value; }
 
   /// print - Print the value to the stream \p OS.
   void print(raw_ostream &OS) const;

@@ -13,6 +13,7 @@
 
 #include "llvm/MC/MCELF.h"
 #include "llvm/MC/MCAssembler.h"
+#include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCELFSymbolFlags.h"
 #include "llvm/MC/MCFixupKindInfo.h"
 #include "llvm/Support/ELF.h"

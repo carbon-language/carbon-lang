@@ -23,7 +23,6 @@
 #include "llvm/MC/MCLinkerOptimizationHint.h"
 #include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCSubtargetInfo.h"
-#include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/DataTypes.h"
 #include <algorithm>
@@ -910,15 +909,7 @@ public:
     return true;
   }
 
-  void registerSymbol(const MCSymbol &Symbol, bool *Created = nullptr) {
-    bool New = !Symbol.isRegistered();
-    if (Created)
-      *Created = New;
-    if (New) {
-      Symbol.setIsRegistered(true);
-      Symbols.push_back(&Symbol);
-    }
-  }
+  void registerSymbol(const MCSymbol &Symbol, bool *Created = nullptr);
 
   ArrayRef<std::string> getFileNames() { return FileNames; }
 
