@@ -2021,23 +2021,29 @@ void MicrosoftCXXNameMangler::mangleType(const VectorType *T, Qualifiers Quals,
   uint64_t Width = getASTContext().getTypeSize(T);
   // Pattern match exactly the typedefs in our intrinsic headers.  Anything that
   // doesn't match the Intel types uses a custom mangling below.
-  bool IntelVector = true;
-  if (Width == 64 && ET->getKind() == BuiltinType::LongLong) {
-    Out << "T__m64";
-  } else if (Width == 128 || Width == 256) {
-    if (ET->getKind() == BuiltinType::Float)
-      Out << "T__m" << Width;
-    else if (ET->getKind() == BuiltinType::LongLong)
-      Out << "T__m" << Width << 'i';
-    else if (ET->getKind() == BuiltinType::Double)
-      Out << "U__m" << Width << 'd';
-    else
-      IntelVector = false;
+  bool IsBuiltin = true;
+  llvm::Triple::ArchType AT =
+      getASTContext().getTargetInfo().getTriple().getArch();
+  if (AT == llvm::Triple::x86 || AT == llvm::Triple::x86_64) {
+    if (Width == 64 && ET->getKind() == BuiltinType::LongLong) {
+      Out << "T__m64";
+    } else if (Width >= 128) {
+      if (ET->getKind() == BuiltinType::Float)
+        Out << "T__m" << Width;
+      else if (ET->getKind() == BuiltinType::LongLong)
+        Out << "T__m" << Width << 'i';
+      else if (ET->getKind() == BuiltinType::Double)
+        Out << "U__m" << Width << 'd';
+      else
+        IsBuiltin = false;
+    } else {
+      IsBuiltin = false;
+    }
   } else {
-    IntelVector = false;
+    IsBuiltin = false;
   }
 
-  if (!IntelVector) {
+  if (!IsBuiltin) {
     // The MS ABI doesn't have a special mangling for vector types, so we define
     // our own mangling to handle uses of __vector_size__ on user-specified
     // types, and for extensions like __v4sf.
