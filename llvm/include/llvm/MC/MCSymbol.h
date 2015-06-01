@@ -63,7 +63,7 @@ class MCSymbol {
   /// IsUsed - True if this symbol has been used.
   mutable unsigned IsUsed : 1;
 
-  mutable bool HasData : 1;
+  mutable bool IsRegistered : 1;
 
   /// Index field, for use by the object file implementation.
   mutable uint32_t Index = 0;
@@ -99,7 +99,7 @@ private: // MCContext creates and uniques these.
   friend class MCContext;
   MCSymbol(const StringMapEntry<bool> *Name, bool isTemporary)
       : Name(Name), Section(nullptr), Value(nullptr), IsTemporary(isTemporary),
-        IsRedefinable(false), IsUsed(false), HasData(false) {
+        IsRedefinable(false), IsUsed(false), IsRegistered(false) {
     Offset = 0;
   }
 
@@ -115,14 +115,8 @@ public:
   /// getName - Get the symbol name.
   StringRef getName() const { return Name ? Name->first() : ""; }
 
-  bool hasData() const { return HasData; }
-
-  /// Initialize symbol data.
-  ///
-  /// Nothing really to do here, but this is enables an assertion that \a
-  /// MCAssembler::getOrCreateSymbolData() has actually been called before
-  /// anyone calls \a getData().
-  void initializeData() const { HasData = true; }
+  bool isRegistered() const { return IsRegistered; }
+  void setIsRegistered(bool Value) const { IsRegistered = Value; }
 
   /// \name Accessors
   /// @{
@@ -201,13 +195,11 @@ public:
 
   /// Get the (implementation defined) index.
   uint32_t getIndex() const {
-    assert(HasData && "Uninitialized symbol data");
     return Index;
   }
 
   /// Set the (implementation defined) index.
   void setIndex(uint32_t Value) const {
-    assert(HasData && "Uninitialized symbol data");
     Index = Value;
   }
 

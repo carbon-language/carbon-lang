@@ -911,11 +911,11 @@ public:
   }
 
   void registerSymbol(const MCSymbol &Symbol, bool *Created = nullptr) {
-    bool New = !Symbol.hasData();
+    bool New = !Symbol.isRegistered();
     if (Created)
       *Created = New;
     if (New) {
-      Symbol.initializeData();
+      Symbol.setIsRegistered(true);
       Symbols.push_back(&Symbol);
     }
   }

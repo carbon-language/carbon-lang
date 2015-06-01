@@ -57,10 +57,6 @@ void MCObjectStreamer::flushPendingLabels(MCFragment *F, uint64_t FOffset) {
 bool MCObjectStreamer::emitAbsoluteSymbolDiff(const MCSymbol *Hi,
                                               const MCSymbol *Lo,
                                               unsigned Size) {
-  // Must have symbol data.
-  if (!Hi->hasData() || !Lo->hasData())
-    return false;
-
   // Must both be assigned to the same (valid) fragment.
   if (!Hi->getFragment() || Hi->getFragment() != Lo->getFragment())
     return false;
