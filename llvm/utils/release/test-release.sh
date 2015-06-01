@@ -388,39 +388,27 @@ for Flavor in $Flavors ; do
 
     llvmCore_phase2_objdir=$BuildDir/Phase2/$Flavor/llvmCore-$Release-$RC.obj
     llvmCore_phase2_installdir=$BuildDir/Phase2/$Flavor/llvmCore-$Release-$RC.install
-    llvmCore_de_phase2_objdir=$BuildDir/Phase2/$Flavor/llvmCore-DragonEgg-$Release-$RC.obj
-    llvmCore_de_phase2_installdir=$BuildDir/Phase2/$Flavor/llvmCore-DragonEgg-$Release-$RC.install
 
     llvmCore_phase3_objdir=$BuildDir/Phase3/$Flavor/llvmCore-$Release-$RC.obj
     llvmCore_phase3_installdir=$BuildDir/Phase3/$Flavor/llvmCore-$Release-$RC.install
-    llvmCore_de_phase3_objdir=$BuildDir/Phase3/$Flavor/llvmCore-DragonEgg-$Release-$RC.obj
-    llvmCore_de_phase3_installdir=$BuildDir/Phase3/$Flavor/llvmCore-DragonEgg-$Release-$RC.install
 
     rm -rf $llvmCore_phase1_objdir
     rm -rf $llvmCore_phase1_installdir
 
     rm -rf $llvmCore_phase2_objdir
     rm -rf $llvmCore_phase2_installdir
-    rm -rf $llvmCore_de_phase2_objdir
-    rm -rf $llvmCore_de_phase2_installdir
 
     rm -rf $llvmCore_phase3_objdir
     rm -rf $llvmCore_phase3_installdir
-    rm -rf $llvmCore_de_phase3_objdir
-    rm -rf $llvmCore_de_phase3_installdir
 
     mkdir -p $llvmCore_phase1_objdir
     mkdir -p $llvmCore_phase1_installdir
 
     mkdir -p $llvmCore_phase2_objdir
     mkdir -p $llvmCore_phase2_installdir
-    mkdir -p $llvmCore_de_phase2_objdir
-    mkdir -p $llvmCore_de_phase2_installdir
 
     mkdir -p $llvmCore_phase3_objdir
     mkdir -p $llvmCore_phase3_installdir
-    mkdir -p $llvmCore_de_phase3_objdir
-    mkdir -p $llvmCore_de_phase3_installdir
 
     ############################################################################
     # Phase 1: Build llvmCore and clang
