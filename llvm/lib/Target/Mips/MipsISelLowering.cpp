@@ -3547,7 +3547,8 @@ void MipsTargetLowering::LowerAsmOperandForConstraint(SDValue Op,
 }
 
 bool MipsTargetLowering::isLegalAddressingMode(const AddrMode &AM,
-                                               Type *Ty) const {
+                                               Type *Ty,
+                                               unsigned AS) const {
   // No global is ever allowed as a base.
   if (AM.BaseGV)
     return false;

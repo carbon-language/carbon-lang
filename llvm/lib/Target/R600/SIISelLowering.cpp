@@ -263,7 +263,7 @@ bool SITargetLowering::isShuffleMaskLegal(const SmallVectorImpl<int> &,
 // SMRD instructions have an 8-bit, dword offset.
 //
 bool SITargetLowering::isLegalAddressingMode(const AddrMode &AM,
-                                             Type *Ty) const {
+                                             Type *Ty, unsigned AS) const {
   // No global is ever allowed as a base.
   if (AM.BaseGV)
     return false;

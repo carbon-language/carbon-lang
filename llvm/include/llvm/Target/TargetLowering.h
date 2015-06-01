@@ -1431,7 +1431,8 @@ public:
   /// load/store.
   virtual bool GetAddrModeArguments(IntrinsicInst * /*I*/,
                                     SmallVectorImpl<Value*> &/*Ops*/,
-                                    Type *&/*AccessTy*/) const {
+                                    Type *&/*AccessTy*/,
+                                    unsigned AddrSpace = 0) const {
     return false;
   }
 
@@ -1456,7 +1457,9 @@ public:
   /// The type may be VoidTy, in which case only return true if the addressing
   /// mode is legal for a load/store of any legal type.  TODO: Handle
   /// pre/postinc as well.
-  virtual bool isLegalAddressingMode(const AddrMode &AM, Type *Ty) const;
+  /// TODO: Remove default argument
+  virtual bool isLegalAddressingMode(const AddrMode &AM, Type *Ty,
+                                     unsigned AS = 0) const;
 
   /// \brief Return the cost of the scaling factor used in the addressing mode
   /// represented by AM for this target, for a load/store of the specified type.
@@ -1464,9 +1467,12 @@ public:
   /// If the AM is supported, the return value must be >= 0.
   /// If the AM is not supported, it returns a negative value.
   /// TODO: Handle pre/postinc as well.
-  virtual int getScalingFactorCost(const AddrMode &AM, Type *Ty) const {
+  /// TODO: Remove default argument
+  virtual int getScalingFactorCost(const AddrMode &AM, Type *Ty,
+                                   unsigned AS = 0) const {
     // Default: assume that any scaling factor used in a legal AM is free.
-    if (isLegalAddressingMode(AM, Ty)) return 0;
+    if (isLegalAddressingMode(AM, Ty, AS))
+      return 0;
     return -1;
   }
 

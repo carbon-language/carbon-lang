@@ -63,7 +63,7 @@ public:
                           EVT /*VT*/) const override;
 
   bool isLegalAddressingMode(const AddrMode &AM,
-                             Type *Ty) const override;
+                             Type *Ty, unsigned AS) const override;
 
   bool allowsMisalignedMemoryAccesses(EVT VT, unsigned AS,
                                       unsigned Align,
