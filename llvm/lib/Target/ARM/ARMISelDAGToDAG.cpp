@@ -15,6 +15,7 @@
 #include "ARMBaseInstrInfo.h"
 #include "ARMTargetMachine.h"
 #include "MCTargetDesc/ARMAddressingModes.h"
+#include "llvm/ADT/StringSwitch.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
@@ -250,6 +251,9 @@ private:
 
   // Select special operations if node forms integer ABS pattern
   SDNode *SelectABSOp(SDNode *N);
+
+  SDNode *SelectReadRegister(SDNode *N);
+  SDNode *SelectWriteRegister(SDNode *N);
 
   SDNode *SelectInlineAsm(SDNode *N);
 
@@ -2457,6 +2461,18 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
 
   switch (N->getOpcode()) {
   default: break;
+  case ISD::WRITE_REGISTER: {
+    SDNode *ResNode = SelectWriteRegister(N);
+    if (ResNode)
+      return ResNode;
+    break;
+  }
+  case ISD::READ_REGISTER: {
+    SDNode *ResNode = SelectReadRegister(N);
+    if (ResNode)
+      return ResNode;
+    break;
+  }
   case ISD::INLINEASM: {
     SDNode *ResNode = SelectInlineAsm(N);
     if (ResNode)
@@ -3334,6 +3350,418 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
   }
 
   return SelectCode(N);
+}
+
+// Inspect a register string of the form
+// cp<coprocessor>:<opc1>:c<CRn>:c<CRm>:<opc2> (32bit) or
+// cp<coprocessor>:<opc1>:c<CRm> (64bit) inspect the fields of the string
+// and obtain the integer operands from them, adding these operands to the
+// provided vector.
+static void getIntOperandsFromRegisterString(StringRef RegString,
+                                             SelectionDAG *CurDAG, SDLoc DL,
+                                             std::vector<SDValue>& Ops) {
+  SmallVector<StringRef, 5> Fields;
+  RegString.split(Fields, ":");
+
+  if (Fields.size() > 1) {
+    bool AllIntFields = true;
+
+    for (StringRef Field : Fields) {
+      // Need to trim out leading 'cp' characters and get the integer field.
+      unsigned IntField;
+      AllIntFields &= !Field.trim("CPcp").getAsInteger(10, IntField);
+      Ops.push_back(CurDAG->getTargetConstant(IntField, DL, MVT::i32));
+    }
+
+    assert(AllIntFields &&
+            "Unexpected non-integer value in special register string.");
+  }
+}
+
+// Maps a Banked Register string to its mask value. The mask value returned is
+// for use in the MRSbanked / MSRbanked instruction nodes as the Banked Register
+// mask operand, which expresses which register is to be used, e.g. r8, and in
+// which mode it is to be used, e.g. usr. Returns -1 to signify that the string
+// was invalid.
+static inline int getBankedRegisterMask(StringRef RegString) {
+  return StringSwitch<int>(RegString.lower())
+          .Case("r8_usr", 0x00)
+          .Case("r9_usr", 0x01)
+          .Case("r10_usr", 0x02)
+          .Case("r11_usr", 0x03)
+          .Case("r12_usr", 0x04)
+          .Case("sp_usr", 0x05)
+          .Case("lr_usr", 0x06)
+          .Case("r8_fiq", 0x08)
+          .Case("r9_fiq", 0x09)
+          .Case("r10_fiq", 0x0a)
+          .Case("r11_fiq", 0x0b)
+          .Case("r12_fiq", 0x0c)
+          .Case("sp_fiq", 0x0d)
+          .Case("lr_fiq", 0x0e)
+          .Case("lr_irq", 0x10)
+          .Case("sp_irq", 0x11)
+          .Case("lr_svc", 0x12)
+          .Case("sp_svc", 0x13)
+          .Case("lr_abt", 0x14)
+          .Case("sp_abt", 0x15)
+          .Case("lr_und", 0x16)
+          .Case("sp_und", 0x17)
+          .Case("lr_mon", 0x1c)
+          .Case("sp_mon", 0x1d)
+          .Case("elr_hyp", 0x1e)
+          .Case("sp_hyp", 0x1f)
+          .Case("spsr_fiq", 0x2e)
+          .Case("spsr_irq", 0x30)
+          .Case("spsr_svc", 0x32)
+          .Case("spsr_abt", 0x34)
+          .Case("spsr_und", 0x36)
+          .Case("spsr_mon", 0x3c)
+          .Case("spsr_hyp", 0x3e)
+          .Default(-1);
+}
+
+// Maps a MClass special register string to its value for use in the
+// t2MRS_M / t2MSR_M instruction nodes as the SYSm value operand.
+// Returns -1 to signify that the string was invalid.
+static inline int getMClassRegisterSYSmValueMask(StringRef RegString) {
+  return StringSwitch<int>(RegString.lower())
+          .Case("apsr", 0x0)
+          .Case("iapsr", 0x1)
+          .Case("eapsr", 0x2)
+          .Case("xpsr", 0x3)
+          .Case("ipsr", 0x5)
+          .Case("epsr", 0x6)
+          .Case("iepsr", 0x7)
+          .Case("msp", 0x8)
+          .Case("psp", 0x9)
+          .Case("primask", 0x10)
+          .Case("basepri", 0x11)
+          .Case("basepri_max", 0x12)
+          .Case("faultmask", 0x13)
+          .Case("control", 0x14)
+          .Default(-1);
+}
+
+// The flags here are common to those allowed for apsr in the A class cores and
+// those allowed for the special registers in the M class cores. Returns a
+// value representing which flags were present, -1 if invalid.
+static inline int getMClassFlagsMask(StringRef Flags) {
+  if (Flags.empty())
+    return 0x3;
+
+  return StringSwitch<int>(Flags)
+          .Case("g", 0x1)
+          .Case("nzcvq", 0x2)
+          .Case("nzcvqg", 0x3)
+          .Default(-1);
+}
+
+static int getMClassRegisterMask(StringRef Reg, StringRef Flags, bool IsRead,
+                                 const ARMSubtarget *Subtarget) {
+  // Ensure that the register (without flags) was a valid M Class special
+  // register.
+  int SYSmvalue = getMClassRegisterSYSmValueMask(Reg);
+  if (SYSmvalue == -1)
+    return -1;
+
+  // basepri, basepri_max and faultmask are only valid for V7m.
+  if (!Subtarget->hasV7Ops() && SYSmvalue >= 0x11 && SYSmvalue <= 0x13)
+    return -1;
+
+  // If it was a read then we won't be expecting flags and so at this point
+  // we can return the mask.
+  if (IsRead) {
+    assert (Flags.empty() && "Unexpected flags for reading M class register.");
+    return SYSmvalue;
+  }
+
+  // We know we are now handling a write so need to get the mask for the flags.
+  int Mask = getMClassFlagsMask(Flags);
+
+  // Only apsr, iapsr, eapsr, xpsr can have flags. The other register values
+  // shouldn't have flags present.
+  if ((SYSmvalue < 0x4 && Mask == -1) || (SYSmvalue > 0x4 && !Flags.empty()))
+    return -1;
+
+  // The _g and _nzcvqg versions are only valid if the DSP extension is
+  // available.
+  if (!Subtarget->hasThumb2DSP() && (Mask & 0x2))
+    return -1;
+
+  // The register was valid so need to put the mask in the correct place
+  // (the flags need to be in bits 11-10) and combine with the SYSmvalue to
+  // construct the operand for the instruction node.
+  if (SYSmvalue < 0x4)
+    return SYSmvalue | Mask << 10;
+
+  return SYSmvalue;
+}
+
+static int getARClassRegisterMask(StringRef Reg, StringRef Flags) {
+  // The mask operand contains the special register (R Bit) in bit 4, whether
+  // the register is spsr (R bit is 1) or one of cpsr/apsr (R bit is 0), and
+  // bits 3-0 contains the fields to be accessed in the special register, set by
+  // the flags provided with the register.
+  int Mask = 0;
+  if (Reg == "apsr") {
+    // The flags permitted for apsr are the same flags that are allowed in
+    // M class registers. We get the flag value and then shift the flags into
+    // the correct place to combine with the mask.
+    Mask = getMClassFlagsMask(Flags);
+    if (Mask == -1)
+      return -1;
+    return Mask << 2;
+  }
+
+  if (Reg != "cpsr" && Reg != "spsr") {
+    return -1;
+  }
+
+  // This is the same as if the flags were "fc"
+  if (Flags.empty() || Flags == "all")
+    return Mask | 0x9;
+
+  // Inspect the supplied flags string and set the bits in the mask for
+  // the relevant and valid flags allowed for cpsr and spsr.
+  for (char Flag : Flags) {
+    int FlagVal;
+    switch (Flag) {
+      case 'c':
+        FlagVal = 0x1;
+        break;
+      case 'x':
+        FlagVal = 0x2;
+        break;
+      case 's':
+        FlagVal = 0x4;
+        break;
+      case 'f':
+        FlagVal = 0x8;
+        break;
+      default:
+        FlagVal = 0;
+    }
+
+    // This avoids allowing strings where the same flag bit appears twice.
+    if (!FlagVal || (Mask & FlagVal))
+      return -1;
+    Mask |= FlagVal;
+  }
+
+  // If the register is spsr then we need to set the R bit.
+  if (Reg == "spsr")
+    Mask |= 0x10;
+
+  return Mask;
+}
+
+// Lower the read_register intrinsic to ARM specific DAG nodes
+// using the supplied metadata string to select the instruction node to use
+// and the registers/masks to construct as operands for the node.
+SDNode *ARMDAGToDAGISel::SelectReadRegister(SDNode *N){
+  const MDNodeSDNode *MD = dyn_cast<MDNodeSDNode>(N->getOperand(1));
+  const MDString *RegString = dyn_cast<MDString>(MD->getMD()->getOperand(0));
+  bool IsThumb2 = Subtarget->isThumb2();
+  SDLoc DL(N);
+
+  std::vector<SDValue> Ops;
+  getIntOperandsFromRegisterString(RegString->getString(), CurDAG, DL, Ops);
+
+  if (!Ops.empty()) {
+    // If the special register string was constructed of fields (as defined
+    // in the ACLE) then need to lower to MRC node (32 bit) or
+    // MRRC node(64 bit), we can make the distinction based on the number of
+    // operands we have.
+    unsigned Opcode;
+    SmallVector<EVT, 3> ResTypes;
+    if (Ops.size() == 5){
+      Opcode = IsThumb2 ? ARM::t2MRC : ARM::MRC;
+      ResTypes.append({ MVT::i32, MVT::Other });
+    } else {
+      assert(Ops.size() == 3 &&
+              "Invalid number of fields in special register string.");
+      Opcode = IsThumb2 ? ARM::t2MRRC : ARM::MRRC;
+      ResTypes.append({ MVT::i32, MVT::i32, MVT::Other });
+    }
+
+    Ops.push_back(getAL(CurDAG, DL));
+    Ops.push_back(CurDAG->getRegister(0, MVT::i32));
+    Ops.push_back(N->getOperand(0));
+    return CurDAG->getMachineNode(Opcode, DL, ResTypes, Ops);
+  }
+
+  std::string SpecialReg = RegString->getString().lower();
+
+  int BankedReg = getBankedRegisterMask(SpecialReg);
+  if (BankedReg != -1) {
+    Ops = { CurDAG->getTargetConstant(BankedReg, DL, MVT::i32),
+            getAL(CurDAG, DL), CurDAG->getRegister(0, MVT::i32),
+            N->getOperand(0) };
+    return CurDAG->getMachineNode(IsThumb2 ? ARM::t2MRSbanked : ARM::MRSbanked,
+                                  DL, MVT::i32, MVT::Other, Ops);
+  }
+
+  // The VFP registers are read by creating SelectionDAG nodes with opcodes
+  // corresponding to the register that is being read from. So we switch on the
+  // string to find which opcode we need to use.
+  unsigned Opcode = StringSwitch<unsigned>(SpecialReg)
+                    .Case("fpscr", ARM::VMRS)
+                    .Case("fpexc", ARM::VMRS_FPEXC)
+                    .Case("fpsid", ARM::VMRS_FPSID)
+                    .Case("mvfr0", ARM::VMRS_MVFR0)
+                    .Case("mvfr1", ARM::VMRS_MVFR1)
+                    .Case("mvfr2", ARM::VMRS_MVFR2)
+                    .Case("fpinst", ARM::VMRS_FPINST)
+                    .Case("fpinst2", ARM::VMRS_FPINST2)
+                    .Default(0);
+
+  // If an opcode was found then we can lower the read to a VFP instruction.
+  if (Opcode) {
+    if (!Subtarget->hasVFP2())
+      return nullptr;
+    if (Opcode == ARM::VMRS_MVFR2 && !Subtarget->hasFPARMv8())
+      return nullptr;
+
+    Ops = { getAL(CurDAG, DL), CurDAG->getRegister(0, MVT::i32),
+            N->getOperand(0) };
+    return CurDAG->getMachineNode(Opcode, DL, MVT::i32, MVT::Other, Ops);
+  }
+
+  // If the target is M Class then need to validate that the register string
+  // is an acceptable value, so check that a mask can be constructed from the
+  // string.
+  if (Subtarget->isMClass()) {
+    int SYSmValue = getMClassRegisterMask(SpecialReg, "", true, Subtarget);
+    if (SYSmValue == -1)
+      return nullptr;
+
+    SDValue Ops[] = { CurDAG->getTargetConstant(SYSmValue, DL, MVT::i32),
+                      getAL(CurDAG, DL), CurDAG->getRegister(0, MVT::i32),
+                      N->getOperand(0) };
+    return CurDAG->getMachineNode(ARM::t2MRS_M, DL, MVT::i32, MVT::Other, Ops);
+  }
+
+  // Here we know the target is not M Class so we need to check if it is one
+  // of the remaining possible values which are apsr, cpsr or spsr.
+  if (SpecialReg == "apsr" || SpecialReg == "cpsr") {
+    Ops = { getAL(CurDAG, DL), CurDAG->getRegister(0, MVT::i32),
+            N->getOperand(0) };
+    return CurDAG->getMachineNode(IsThumb2 ? ARM::t2MRS_AR : ARM::MRS, DL,
+                                  MVT::i32, MVT::Other, Ops);
+  }
+
+  if (SpecialReg == "spsr") {
+    Ops = { getAL(CurDAG, DL), CurDAG->getRegister(0, MVT::i32),
+            N->getOperand(0) };
+    return CurDAG->getMachineNode(IsThumb2 ? ARM::t2MRSsys_AR : ARM::MRSsys,
+                                  DL, MVT::i32, MVT::Other, Ops);
+  }
+
+  return nullptr;
+}
+
+// Lower the write_register intrinsic to ARM specific DAG nodes
+// using the supplied metadata string to select the instruction node to use
+// and the registers/masks to use in the nodes
+SDNode *ARMDAGToDAGISel::SelectWriteRegister(SDNode *N){
+  const MDNodeSDNode *MD = dyn_cast<MDNodeSDNode>(N->getOperand(1));
+  const MDString *RegString = dyn_cast<MDString>(MD->getMD()->getOperand(0));
+  bool IsThumb2 = Subtarget->isThumb2();
+  SDLoc DL(N);
+
+  std::vector<SDValue> Ops;
+  getIntOperandsFromRegisterString(RegString->getString(), CurDAG, DL, Ops);
+
+  if (!Ops.empty()) {
+    // If the special register string was constructed of fields (as defined
+    // in the ACLE) then need to lower to MCR node (32 bit) or
+    // MCRR node(64 bit), we can make the distinction based on the number of
+    // operands we have.
+    unsigned Opcode;
+    if (Ops.size() == 5) {
+      Opcode = IsThumb2 ? ARM::t2MCR : ARM::MCR;
+      Ops.insert(Ops.begin()+2, N->getOperand(2));
+    } else {
+      assert(Ops.size() == 3 &&
+              "Invalid number of fields in special register string.");
+      Opcode = IsThumb2 ? ARM::t2MCRR : ARM::MCRR;
+      SDValue WriteValue[] = { N->getOperand(2), N->getOperand(3) };
+      Ops.insert(Ops.begin()+2, WriteValue, WriteValue+2);
+    }
+
+    Ops.push_back(getAL(CurDAG, DL));
+    Ops.push_back(CurDAG->getRegister(0, MVT::i32));
+    Ops.push_back(N->getOperand(0));
+
+    return CurDAG->getMachineNode(Opcode, DL, MVT::Other, Ops);
+  }
+
+  std::string SpecialReg = RegString->getString().lower();
+  int BankedReg = getBankedRegisterMask(SpecialReg);
+  if (BankedReg != -1) {
+    Ops = { CurDAG->getTargetConstant(BankedReg, DL, MVT::i32), N->getOperand(2),
+            getAL(CurDAG, DL), CurDAG->getRegister(0, MVT::i32),
+            N->getOperand(0) };
+    return CurDAG->getMachineNode(IsThumb2 ? ARM::t2MSRbanked : ARM::MSRbanked,
+                                  DL, MVT::Other, Ops);
+  }
+
+  // The VFP registers are written to by creating SelectionDAG nodes with
+  // opcodes corresponding to the register that is being written. So we switch
+  // on the string to find which opcode we need to use.
+  unsigned Opcode = StringSwitch<unsigned>(SpecialReg)
+                    .Case("fpscr", ARM::VMSR)
+                    .Case("fpexc", ARM::VMSR_FPEXC)
+                    .Case("fpsid", ARM::VMSR_FPSID)
+                    .Case("fpinst", ARM::VMSR_FPINST)
+                    .Case("fpinst2", ARM::VMSR_FPINST2)
+                    .Default(0);
+
+  if (Opcode) {
+    if (!Subtarget->hasVFP2())
+      return nullptr;
+    Ops = { N->getOperand(2), getAL(CurDAG, DL),
+            CurDAG->getRegister(0, MVT::i32), N->getOperand(0) };
+    return CurDAG->getMachineNode(Opcode, DL, MVT::Other, Ops);
+  }
+
+  SmallVector<StringRef, 5> Fields;
+  StringRef(SpecialReg).split(Fields, "_", 1, false);
+  std::string Reg = Fields[0].str();
+  StringRef Flags = Fields.size() == 2 ? Fields[1] : "";
+
+  // If the target was M Class then need to validate the special register value
+  // and retrieve the mask for use in the instruction node.
+  if (Subtarget->isMClass()) {
+    // basepri_max gets split so need to correct Reg and Flags.
+    if (SpecialReg == "basepri_max") {
+      Reg = SpecialReg;
+      Flags = "";
+    }
+    int SYSmValue = getMClassRegisterMask(Reg, Flags, false, Subtarget);
+    if (SYSmValue == -1)
+      return nullptr;
+
+    SDValue Ops[] = { CurDAG->getTargetConstant(SYSmValue, DL, MVT::i32),
+                      N->getOperand(2), getAL(CurDAG, DL),
+                      CurDAG->getRegister(0, MVT::i32), N->getOperand(0) };
+    return CurDAG->getMachineNode(ARM::t2MSR_M, DL, MVT::Other, Ops);
+  }
+
+  // We then check to see if a valid mask can be constructed for one of the
+  // register string values permitted for the A and R class cores. These values
+  // are apsr, spsr and cpsr; these are also valid on older cores.
+  int Mask = getARClassRegisterMask(Reg, Flags);
+  if (Mask != -1) {
+    Ops = { CurDAG->getTargetConstant(Mask, DL, MVT::i32), N->getOperand(2),
+            getAL(CurDAG, DL), CurDAG->getRegister(0, MVT::i32),
+            N->getOperand(0) };
+    return CurDAG->getMachineNode(IsThumb2 ? ARM::t2MSR_AR : ARM::MSR,
+                                  DL, MVT::Other, Ops);
+  }
+
+  return nullptr;
 }
 
 SDNode *ARMDAGToDAGISel::SelectInlineAsm(SDNode *N){
