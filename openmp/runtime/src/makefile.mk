@@ -764,7 +764,7 @@ endif
                         lib_asm_items =
                         gd-flags += -D shim
                         # for some reason, test-touch-md is able to work with
-                        # the build compiler's version of libiomp5md.dll, but
+                        # the build compiler's version of libompmd.dll, but
                         # test-touch-mt can't load it.
                         do_test_touch_mt := 0
                     endif
@@ -803,14 +803,13 @@ ifeq "$(VERSION)" "4"
         _lib_item += _stats
     endif
 else
-    _lib_item = libiomp
+    _lib_item = libomp
     ifeq "$(LIB_TYPE)" "prof"
         _lib_item += prof
     endif
     ifeq "$(LIB_TYPE)" "stub"
         _lib_item += stubs
     endif
-    _lib_item += $(VERSION)
     ifeq "$(os)" "win"
         ifeq "$(LINK_TYPE)" "dyna"
             _lib_item += md
@@ -831,7 +830,6 @@ ifeq "$(os)-$(LINK_TYPE)" "win-dyna"
     imp_file  = $(lib_item)$(lib)
     def_file  = $(lib_item).def
     res_file  = $(lib_item).res
-    rc_file   = $(lib_item).rc
     # PDB file should be generated if: ( DEBIG_INFO is on ) OR ( we are building 32-bit normal
     # library AND version is 5 ).
     ifneq "$(filter on,$(DEBUG_INFO))$(filter norm-5,$(LIB_TYPE)-$(VERSION))" ""
@@ -851,12 +849,10 @@ endif
 # --- Output files ---
 
 out_lib_files  = $(addprefix $(out_lib_dir),$(lib_file) $(imp_file) $(pdb_file) $(dbg_file))
-out_inc_files  = $(addprefix $(out_ptf_dir)include_compat/,iomp_lib.h)
 out_mod_files  = \
     $(addprefix $(out_ptf_dir)include/,omp_lib.mod omp_lib_kinds.mod)
 out_cmn_files  = \
-    $(addprefix $(out_cmn_dir)include/,omp.h omp_lib.h omp_lib.f omp_lib.f90) \
-    $(addprefix $(out_cmn_dir)include_compat/,iomp.h)
+    $(addprefix $(out_cmn_dir)include/,omp.h omp_lib.h omp_lib.f omp_lib.f90)
 ifeq "$(OMPT_SUPPORT)" "on"
     out_cmn_files  += $(addprefix $(out_cmn_dir)include/,ompt.h)
 endif
@@ -1017,12 +1013,11 @@ endif
 # --------------------------------------------------------------------------------------------------
 
 all    : lib inc mod
-lib    : tests $(out_lib_files)
-inc    : $(out_inc_files)
+lib    : tests $(out_lib_files) libomp_aliases
 mod    : $(out_mod_files)
 clean  :
 	$(rm) $(out_lib_files) $(out_lib_fat_files)
-	$(rm) $(out_inc_files) $(out_mod_files)
+	$(rm) $(out_mod_files)
 
 # --------------------------------------------------------------------------------------------------
 # Building library.
@@ -1042,7 +1037,7 @@ ifneq "$(filter lin,$(os))" ""
     lib_file_deps = $(if $(linked_in_libs),required/.objs,$(lib_obj_files))
 endif
 ifeq "$(os)" "mac"
-    lib_file_deps = iomp$(obj)
+    lib_file_deps = omp$(obj)
 endif
 ifeq "$(os)" "win"
     lib_file_deps = $(if $(linked_in_libs),wiped/.objs,$(lib_obj_files))
@@ -1149,21 +1144,21 @@ ifeq "$(os)" "mac"
     # These targets are under condition because of some OS X*-specific ld and nm options. For
     # example, GNU nm does not accept -j, GNU ld does not know -filelist.
 
-    # iomp.o is a big object file including all the OMP RTL object files and object files from
+    # omp.o is a big object file including all the OMP RTL object files and object files from
     # external libraries (like libirc). It is partially linked, references to external symbols
     # (e. g. references to libirc) already resolved, symbols defined in external libraries are
     # hidden by using -unexported-symbol-list and -non_global_symbols_strip_list linker options
     # (both options are required).
     # AC: 2012-04-12: after MAC machines upgrade compiler fails to create object, so use linker instead
 ifeq "$(mac_os_new)" "1"
-    iomp$(obj) : $(lib_obj_files) external-symbols.lst external-objects.lst .rebuild
+    omp$(obj) : $(lib_obj_files) external-symbols.lst external-objects.lst .rebuild
 	    $(target)
 	    ld -r -unexported_symbols_list external-symbols.lst \
 		-non_global_symbols_strip_list external-symbols.lst \
 		-filelist external-objects.lst \
 		-o $@ $(obj_deps_files)
 else
-    iomp$(obj) : $(lib_obj_files) external-symbols.lst external-objects.lst .rebuild
+    omp$(obj) : $(lib_obj_files) external-symbols.lst external-objects.lst .rebuild
 	    $(target)
 	    $(c) -r -nostartfiles -static-intel  -no-intel-extensions \
 		-Wl,-unexported_symbols_list,external-symbols.lst \
@@ -1173,7 +1168,7 @@ else
 endif
 
     # external-objects.lst is a list of object files extracted from external libraries, which should
-    # be linked into iomp.o. kmp_dummy.o is added to the list to avoid empty list -- OS X* utilities
+    # be linked into omp.o. kmp_dummy.o is added to the list to avoid empty list -- OS X* utilities
     # nm and ld do not like empty lists.
     external-objects.lst : $(lib_obj_files) $(addsuffix /.objs,$(linked_in_libs)) kmp_dummy$(obj) \
 	$(tools_dir)required-objects.pl .rebuild
@@ -1234,12 +1229,8 @@ $(def_file) : dllexports \
 	$(target)
 	$(perl) $(tools_dir)generate-def.pl $(gd-flags) -o $@ $<
 
-libiomp.rc : libiomp.rc.var kmp_version.c
-libiomp.rc : ev-flags += -D KMP_FILE=$(lib_file)
-
-$(rc_file) : libiomp.rc .rebuild
-	$(target)
-	$(cp) $< $@
+libomp.rc : libomp.rc.var kmp_version.c
+libomp.rc : ev-flags += -D KMP_FILE=$(lib_file)
 
 kmp_dummy.c : .rebuild
 	$(target)
@@ -1540,7 +1531,6 @@ omp_lib_kinds.mod : $(omp_lib_f) .rebuild
 omp_lib.mod : omp_lib_kinds.mod
 
 omp_lib.h  : ev-flags += -D KMP_INT_PTR_KIND="int_ptr_kind()"
-iomp_lib.h : ev-flags += -D KMP_INT_PTR_KIND=$(if $(filter 32,$(arch)),4,8)
 
 # --------------------------------------------------------------------------------------------------
 # Common files.

@@ -30,6 +30,15 @@ $(out_lib_dir)% : % $(out_lib_dir).dir .rebuild
 	    $(touch) $(dir $@).touch
         endif
 
+.PHONY: libomp_aliases
+libomp_aliases: $(out_lib_dir).dir .rebuild $(out_lib_dir)$(lib_file)
+	$(target)
+ifeq "$(os)" "win"
+	cd $(out_lib_dir) ; $(cp) $(lib_file) libiomp5md$(dll) ; $(cp) $(imp_file) libiomp5md$(lib)
+else
+	cd $(out_lib_dir) ; ln -sf $(lib_file) libiomp5$(dll)
+endif
+
 $(out_ptf_dir)include/% : % $(out_ptf_dir)include/.dir .rebuild
 	$(target)
 	$(cp) $< $@
