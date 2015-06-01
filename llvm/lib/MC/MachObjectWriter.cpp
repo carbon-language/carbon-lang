@@ -939,7 +939,7 @@ void MachObjectWriter::WriteObject(MCAssembler &Asm,
 #ifndef NDEBUG
     unsigned Start = OS.tell();
 #endif
-    Asm.getLOHContainer().Emit(*this, Layout);
+    Asm.getLOHContainer().emit(*this, Layout);
     // Pad to a multiple of the pointer size.
     WriteBytes("", OffsetToAlignment(LOHRawSize, is64Bit() ? 8 : 4));
     assert(OS.tell() - Start == LOHSize);

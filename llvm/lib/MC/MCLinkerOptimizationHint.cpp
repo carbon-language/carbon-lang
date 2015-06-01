@@ -22,7 +22,7 @@ using namespace llvm;
 // - Its argN.
 // <arg1> to <argN> are absolute addresses in the object file, i.e.,
 // relative addresses from the beginning of the object file.
-void MCLOHDirective::Emit_impl(raw_ostream &OutStream,
+void MCLOHDirective::emit_impl(raw_ostream &OutStream,
                                const MachObjectWriter &ObjWriter,
                                const MCAsmLayout &Layout) const {
   encodeULEB128(Kind, OutStream);
