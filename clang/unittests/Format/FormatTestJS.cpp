@@ -337,6 +337,14 @@ TEST_F(FormatTestJS, FunctionLiterals) {
                "               doSomething();\n"
                "               doSomething();\n"
                "             }, this));");
+
+  // FIXME: This is bad, we should be wrapping before "function() {".
+  verifyFormat("someFunction(function() {\n"
+               "  doSomething();  // break\n"
+               "})\n"
+               "    .doSomethingElse(\n"
+               "        // break\n"
+               "        );");
 }
 
 TEST_F(FormatTestJS, InliningFunctionLiterals) {
@@ -455,7 +463,14 @@ TEST_F(FormatTestJS, ArrowFunctions) {
                "  return a;\n"
                "};");
   verifyFormat("var x = (a) => a;");
-  verifyFormat("var x = (a) => a;");
+
+  // FIXME: This is bad, we should be wrapping before "() => {".
+  verifyFormat("someFunction(() => {\n"
+               "  doSomething();  // break\n"
+               "})\n"
+               "    .doSomethingElse(\n"
+               "        // break\n"
+               "        );");
 }
 
 TEST_F(FormatTestJS, ReturnStatements) {

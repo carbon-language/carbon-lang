@@ -481,11 +481,9 @@ unsigned ContinuationIndenter::addTokenOnNewLine(LineState &State,
   bool NestedBlockSpecialCase =
       Current.is(tok::r_brace) && State.Stack.size() > 1 &&
       State.Stack[State.Stack.size() - 2].NestedBlockInlined;
-  if (!NestedBlockSpecialCase) {
-    for (unsigned i = 0, e = State.Stack.size() - 1; i != e; ++i) {
+  if (!NestedBlockSpecialCase)
+    for (unsigned i = 0, e = State.Stack.size() - 1; i != e; ++i)
       State.Stack[i].BreakBeforeParameter = true;
-    }
-  }
 
   if (PreviousNonComment &&
       !PreviousNonComment->isOneOf(tok::comma, tok::semi) &&
@@ -689,11 +687,9 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
   //   }, a, b, c);
   if (Current.isNot(tok::comment) && Previous && Previous->is(tok::l_brace) &&
       State.Stack.size() > 1) {
-    if (State.Stack[State.Stack.size() - 2].NestedBlockInlined && Newline) {
-      for (unsigned i = 0, e = State.Stack.size() - 1; i != e; ++i) {
+    if (State.Stack[State.Stack.size() - 2].NestedBlockInlined && Newline)
+      for (unsigned i = 0, e = State.Stack.size() - 1; i != e; ++i)
         State.Stack[i].NoLineBreak = true;
-      }
-    }
     State.Stack[State.Stack.size() - 2].NestedBlockInlined = false;
   }
   if (Previous && (Previous->isOneOf(tok::l_paren, tok::comma, tok::colon) ||
