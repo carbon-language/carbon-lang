@@ -834,6 +834,11 @@ Named metadata is a collection of metadata. :ref:`Metadata
 nodes <metadata>` (but not metadata strings) are the only valid
 operands for a named metadata.
 
+#. Named metadata are represented as a string of characters with the
+   metadata prefix. The rules for metadata names are the same as for
+   identifiers, but quoted names are not allowed. ``"\xx"`` type escapes
+   are still valid, which allows any character to be part of a name.
+
 Syntax::
 
     ; Some unnamed metadata nodes, which are referenced by the named metadata.

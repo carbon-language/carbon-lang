@@ -2215,9 +2215,8 @@ void AssemblyWriter::printModule(const Module *M) {
   }
 }
 
-void AssemblyWriter::printNamedMDNode(const NamedMDNode *NMD) {
-  Out << '!';
-  StringRef Name = NMD->getName();
+static void printMetadataIdentifier(StringRef Name,
+                                    formatted_raw_ostream &Out) {
   if (Name.empty()) {
     Out << "<empty name> ";
   } else {
@@ -2235,6 +2234,11 @@ void AssemblyWriter::printNamedMDNode(const NamedMDNode *NMD) {
         Out << '\\' << hexdigit(C >> 4) << hexdigit(C & 0x0F);
     }
   }
+}
+
+void AssemblyWriter::printNamedMDNode(const NamedMDNode *NMD) {
+  Out << '!';
+  printMetadataIdentifier(NMD->getName(), Out);
   Out << " = !{";
   for (unsigned i = 0, e = NMD->getNumOperands(); i != e; ++i) {
     if (i)
@@ -3006,9 +3010,10 @@ void AssemblyWriter::printMetadataAttachments(
   for (const auto &I : MDs) {
     unsigned Kind = I.first;
     Out << Separator;
-    if (Kind < MDNames.size())
-      Out << "!" << MDNames[Kind];
-    else
+    if (Kind < MDNames.size()) {
+      Out << "!";
+      printMetadataIdentifier(MDNames[Kind], Out);
+    } else
       Out << "!<unknown kind #" << Kind << ">";
     Out << ' ';
     WriteAsOperandInternal(Out, I.second, &TypePrinter, &Machine, TheModule);

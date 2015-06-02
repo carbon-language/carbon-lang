@@ -22,6 +22,13 @@ define void @test3() !bar !3 {
   unreachable, !bar !4
 }
 
+; CHECK-LABEL: define void @test_attachment_name() {
+; CHECK:   unreachable, !\342abc !4
+define void @test_attachment_name() {
+  ;; Escape the first character when printing text IR, since it's a digit
+  unreachable, !\34\32abc !4
+}
+
 !0 = !DILocation(line: 662302, column: 26, scope: !1)
 !1 = !DISubprogram(name: "foo")
 !2 = distinct !{}
