@@ -714,17 +714,15 @@ void RuntimeDyldELF::findPPC64TOCSection(const ObjectFile &Obj,
 
   // The TOC consists of sections .got, .toc, .tocbss, .plt in that
   // order. The TOC starts where the first of these sections starts.
-  for (section_iterator si = Obj.section_begin(), se = Obj.section_end();
-       si != se; ++si) {
-
+  for (auto &Section: Obj.sections()) {
     StringRef SectionName;
-    check(si->getName(SectionName));
+    check(Section.getName(SectionName));
 
     if (SectionName == ".got"
         || SectionName == ".toc"
         || SectionName == ".tocbss"
         || SectionName == ".plt") {
-      Rel.SectionID = findOrEmitSection(Obj, *si, false, LocalSections);
+      Rel.SectionID = findOrEmitSection(Obj, Section, false, LocalSections);
       break;
     }
   }
