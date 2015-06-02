@@ -1177,7 +1177,7 @@ class Record {
   //     def Def : Class<Struct<i>>;
   //
   // These need to get fully resolved before instantiating any other
-  // definitions that usie them (e.g. Def).  However, inside a multiclass they
+  // definitions that use them (e.g. Def).  However, inside a multiclass they
   // can't be immediately resolved so we mark them ResolveFirst to fully
   // resolve them later as soon as the multiclass is instantiated.
   bool ResolveFirst;
