@@ -1,6 +1,6 @@
 ; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=sse2 | FileCheck %s
-; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=avx,use-recip-est | FileCheck %s --check-prefix=RECIP
-; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=avx,use-recip-est -x86-recip-refinement-steps=2 | FileCheck %s --check-prefix=REFINE
+; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=avx -recip=divf,vec-divf | FileCheck %s --check-prefix=RECIP
+; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=avx -recip=divf:2,vec-divf:2 | FileCheck %s --check-prefix=REFINE
 
 ; If the target's divss/divps instructions are substantially
 ; slower than rcpss/rcpps with a Newton-Raphson refinement,

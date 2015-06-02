@@ -1,5 +1,5 @@
 ; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=sse2 | FileCheck %s
-; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=avx,use-sqrt-est | FileCheck %s --check-prefix=ESTIMATE
+; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=avx -recip=sqrtf,vec-sqrtf | FileCheck %s --check-prefix=ESTIMATE
 
 declare double @__sqrt_finite(double) #0
 declare float @__sqrtf_finite(float) #0
