@@ -247,6 +247,8 @@ class MipsAsmParser : public MCTargetAsmParser {
   bool parseSetFpDirective();
   bool parseSetPopDirective();
   bool parseSetPushDirective();
+  bool parseSetSoftFloatDirective();
+  bool parseSetHardFloatDirective();
 
   bool parseSetAssignment();
 
@@ -3621,6 +3623,28 @@ bool MipsAsmParser::parseSetPushDirective() {
   return false;
 }
 
+bool MipsAsmParser::parseSetSoftFloatDirective() {
+  MCAsmParser &Parser = getParser();
+  Parser.Lex();
+  if (getLexer().isNot(AsmToken::EndOfStatement))
+    return reportParseError("unexpected token, expected end of statement");
+
+  setFeatureBits(Mips::FeatureSoftFloat, "soft-float");
+  getTargetStreamer().emitDirectiveSetSoftFloat();
+  return false;
+}
+
+bool MipsAsmParser::parseSetHardFloatDirective() {
+  MCAsmParser &Parser = getParser();
+  Parser.Lex();
+  if (getLexer().isNot(AsmToken::EndOfStatement))
+    return reportParseError("unexpected token, expected end of statement");
+
+  clearFeatureBits(Mips::FeatureSoftFloat, "soft-float");
+  getTargetStreamer().emitDirectiveSetHardFloat();
+  return false;
+}
+
 bool MipsAsmParser::parseSetAssignment() {
   StringRef Name;
   const MCExpr *Value;
@@ -3985,6 +4009,10 @@ bool MipsAsmParser::parseDirectiveSet() {
     return parseSetMsaDirective();
   } else if (Tok.getString() == "nomsa") {
     return parseSetNoMsaDirective();
+  } else if (Tok.getString() == "softfloat") {
+    return parseSetSoftFloatDirective();
+  } else if (Tok.getString() == "hardfloat") {
+    return parseSetHardFloatDirective();
   } else {
     // It is just an identifier, look for an assignment.
     parseSetAssignment();

@@ -81,6 +81,12 @@ void MipsTargetStreamer::emitDirectiveSetMips64R5() { forbidModuleDirective(); }
 void MipsTargetStreamer::emitDirectiveSetMips64R6() { forbidModuleDirective(); }
 void MipsTargetStreamer::emitDirectiveSetPop() { forbidModuleDirective(); }
 void MipsTargetStreamer::emitDirectiveSetPush() { forbidModuleDirective(); }
+void MipsTargetStreamer::emitDirectiveSetSoftFloat() {
+  forbidModuleDirective();
+}
+void MipsTargetStreamer::emitDirectiveSetHardFloat() {
+  forbidModuleDirective();
+}
 void MipsTargetStreamer::emitDirectiveSetDsp() { forbidModuleDirective(); }
 void MipsTargetStreamer::emitDirectiveSetNoDsp() { forbidModuleDirective(); }
 void MipsTargetStreamer::emitDirectiveCpLoad(unsigned RegNo) {}
@@ -306,6 +312,16 @@ void MipsTargetAsmStreamer::emitDirectiveSetPop() {
 void MipsTargetAsmStreamer::emitDirectiveSetPush() {
  OS << "\t.set\tpush\n";
  MipsTargetStreamer::emitDirectiveSetPush();
+}
+
+void MipsTargetAsmStreamer::emitDirectiveSetSoftFloat() {
+  OS << "\t.set\tsoftfloat\n";
+  MipsTargetStreamer::emitDirectiveSetSoftFloat();
+}
+
+void MipsTargetAsmStreamer::emitDirectiveSetHardFloat() {
+  OS << "\t.set\thardfloat\n";
+  MipsTargetStreamer::emitDirectiveSetHardFloat();
 }
 
 // Print a 32 bit hex number with all numbers.

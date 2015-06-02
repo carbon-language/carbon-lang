@@ -72,6 +72,8 @@ public:
   virtual void emitDirectiveSetNoDsp();
   virtual void emitDirectiveSetPop();
   virtual void emitDirectiveSetPush();
+  virtual void emitDirectiveSetSoftFloat();
+  virtual void emitDirectiveSetHardFloat();
 
   // PIC support
   virtual void emitDirectiveCpLoad(unsigned RegNo);
@@ -188,6 +190,8 @@ public:
   void emitDirectiveSetNoDsp() override;
   void emitDirectiveSetPop() override;
   void emitDirectiveSetPush() override;
+  void emitDirectiveSetSoftFloat() override;
+  void emitDirectiveSetHardFloat() override;
 
   // PIC support
   void emitDirectiveCpLoad(unsigned RegNo) override;
