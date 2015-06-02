@@ -208,7 +208,8 @@ namespace llvm {
 
     MCSymbol *createSymbolImpl(const StringMapEntry<bool> *Name,
                                bool IsTemporary);
-    MCSymbol *CreateSymbol(StringRef Name, bool AlwaysAddSuffix);
+    MCSymbol *createSymbol(StringRef Name, bool AlwaysAddSuffix,
+                           bool IsTemporary);
 
     MCSymbol *getOrCreateDirectionalLocalSymbol(unsigned LocalLabelVal,
                                                 unsigned Instance);

@@ -114,7 +114,7 @@ MCSymbol *MCContext::getOrCreateSymbol(const Twine &Name) {
 
   MCSymbol *&Sym = Symbols[NameRef];
   if (!Sym)
-    Sym = CreateSymbol(NameRef, false);
+    Sym = createSymbol(NameRef, false, false);
 
   return Sym;
 }
@@ -165,14 +165,16 @@ MCSymbol *MCContext::createSymbolImpl(const StringMapEntry<bool> *Name,
   return new (*this) MCSymbol(false, Name, IsTemporary);
 }
 
-MCSymbol *MCContext::CreateSymbol(StringRef Name, bool AlwaysAddSuffix) {
-  // Determine whether this is an assembler temporary or normal label, if used.
-  bool IsTemporary = false;
+MCSymbol *MCContext::createSymbol(StringRef Name, bool AlwaysAddSuffix,
+                                  bool IsTemporary) {
+  if (IsTemporary && !UseNamesOnTempLabels)
+    return createSymbolImpl(nullptr, true);
+
+  // Determine whether this is an user writter assembler temporary or normal
+  // label, if used.
+  IsTemporary = false;
   if (AllowTemporaryLabels)
     IsTemporary = Name.startswith(MAI->getPrivateGlobalPrefix());
-
-  if (IsTemporary && AlwaysAddSuffix && !UseNamesOnTempLabels)
-    return createSymbolImpl(nullptr, true);
 
   SmallString<128> NewName = Name;
   bool AddSuffix = AlwaysAddSuffix;
@@ -197,13 +199,13 @@ MCSymbol *MCContext::CreateSymbol(StringRef Name, bool AlwaysAddSuffix) {
 MCSymbol *MCContext::createTempSymbol(const Twine &Name, bool AlwaysAddSuffix) {
   SmallString<128> NameSV;
   raw_svector_ostream(NameSV) << MAI->getPrivateGlobalPrefix() << Name;
-  return CreateSymbol(NameSV, AlwaysAddSuffix);
+  return createSymbol(NameSV, AlwaysAddSuffix, true);
 }
 
 MCSymbol *MCContext::createLinkerPrivateTempSymbol() {
   SmallString<128> NameSV;
   raw_svector_ostream(NameSV) << MAI->getLinkerPrivateGlobalPrefix() << "tmp";
-  return CreateSymbol(NameSV, true);
+  return createSymbol(NameSV, true, false);
 }
 
 MCSymbol *MCContext::createTempSymbol() {
