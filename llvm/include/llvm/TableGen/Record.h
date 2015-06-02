@@ -1239,8 +1239,8 @@ public:
   ArrayRef<SMRange> getSuperClassRanges() const { return SuperClassRanges; }
 
   bool isTemplateArg(Init *Name) const {
-    for (unsigned i = 0, e = TemplateArgs.size(); i != e; ++i)
-      if (TemplateArgs[i] == Name) return true;
+    for (Init *TA : TemplateArgs)
+      if (TA == Name) return true;
     return false;
   }
   bool isTemplateArg(StringRef Name) const {
@@ -1248,16 +1248,16 @@ public:
   }
 
   const RecordVal *getValue(const Init *Name) const {
-    for (unsigned i = 0, e = Values.size(); i != e; ++i)
-      if (Values[i].getNameInit() == Name) return &Values[i];
+    for (const RecordVal &Val : Values)
+      if (Val.getNameInit() == Name) return &Val;
     return nullptr;
   }
   const RecordVal *getValue(StringRef Name) const {
     return getValue(StringInit::get(Name));
   }
   RecordVal *getValue(const Init *Name) {
-    for (unsigned i = 0, e = Values.size(); i != e; ++i)
-      if (Values[i].getNameInit() == Name) return &Values[i];
+    for (RecordVal &Val : Values)
+      if (Val.getNameInit() == Name) return &Val;
     return nullptr;
   }
   RecordVal *getValue(StringRef Name) {
@@ -1298,15 +1298,15 @@ public:
   }
 
   bool isSubClassOf(const Record *R) const {
-    for (unsigned i = 0, e = SuperClasses.size(); i != e; ++i)
-      if (SuperClasses[i] == R)
+    for (const Record *SC : SuperClasses)
+      if (SC == R)
         return true;
     return false;
   }
 
   bool isSubClassOf(StringRef Name) const {
-    for (unsigned i = 0, e = SuperClasses.size(); i != e; ++i)
-      if (SuperClasses[i]->getNameInitAsString() == Name)
+    for (const Record *SC : SuperClasses)
+      if (SC->getNameInitAsString() == Name)
         return true;
     return false;
   }
