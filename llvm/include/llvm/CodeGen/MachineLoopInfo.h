@@ -114,7 +114,7 @@ public:
   }
 
   // isLoopHeader - True if the block is a loop header node
-  inline bool isLoopHeader(MachineBasicBlock *BB) const {
+  inline bool isLoopHeader(const MachineBasicBlock *BB) const {
     return LI.isLoopHeader(BB);
   }
 

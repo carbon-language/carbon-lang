@@ -47,13 +47,6 @@ namespace llvm {
 template <typename IRUnitT> class AnalysisManager;
 class PreservedAnalyses;
 
-template<typename T>
-inline void RemoveFromVector(std::vector<T*> &V, T *N) {
-  typename std::vector<T*>::iterator I = std::find(V.begin(), V.end(), N);
-  assert(I != V.end() && "N is not in this list!");
-  V.erase(I);
-}
-
 class DominatorTree;
 class LoopInfo;
 class Loop;
@@ -324,7 +317,10 @@ public:
   /// current loop, updating the Blocks as appropriate.  This does not update
   /// the mapping in the LoopInfo class.
   void removeBlockFromLoop(BlockT *BB) {
-    RemoveFromVector(Blocks, BB);
+    auto I = std::find(Blocks.begin(), Blocks.end(), BB);
+    assert(I != Blocks.end() && "N is not in this list!");
+    Blocks.erase(I);
+
     DenseBlockSet.erase(BB);
   }
 
@@ -493,7 +489,7 @@ private:
 template<class BlockT, class LoopT>
 class LoopInfoBase {
   // BBMap - Mapping of basic blocks to the inner most loop they occur in
-  DenseMap<BlockT *, LoopT *> BBMap;
+  DenseMap<const BlockT *, LoopT *> BBMap;
   std::vector<LoopT *> TopLevelLoops;
   friend class LoopBase<BlockT, LoopT>;
   friend class LoopInfo;
@@ -543,9 +539,7 @@ public:
   /// getLoopFor - Return the inner most loop that BB lives in.  If a basic
   /// block is in no loop (for example the entry node), null is returned.
   ///
-  LoopT *getLoopFor(const BlockT *BB) const {
-    return BBMap.lookup(const_cast<BlockT*>(BB));
-  }
+  LoopT *getLoopFor(const BlockT *BB) const { return BBMap.lookup(BB); }
 
   /// operator[] - same as getLoopFor...
   ///
@@ -562,7 +556,7 @@ public:
   }
 
   // isLoopHeader - True if the block is a loop header node
-  bool isLoopHeader(BlockT *BB) const {
+  bool isLoopHeader(const BlockT *BB) const {
     const LoopT *L = getLoopFor(BB);
     return L && L->getHeader() == BB;
   }
@@ -728,12 +722,6 @@ public:
 
   /// \brief Provide a name for the analysis for debugging and logging.
   static StringRef name() { return "LoopAnalysis"; }
-
-  LoopAnalysis() {}
-  LoopAnalysis(const LoopAnalysis &Arg) {}
-  LoopAnalysis(LoopAnalysis &&Arg) {}
-  LoopAnalysis &operator=(const LoopAnalysis &RHS) { return *this; }
-  LoopAnalysis &operator=(LoopAnalysis &&RHS) { return *this; }
 
   LoopInfo run(Function &F, AnalysisManager<Function> *AM);
 };

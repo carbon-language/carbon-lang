@@ -418,9 +418,8 @@ void NVPTXAsmPrinter::printReturnValStr(const MachineFunction &MF,
 bool NVPTXAsmPrinter::isLoopHeaderOfNoUnroll(
     const MachineBasicBlock &MBB) const {
   MachineLoopInfo &LI = getAnalysis<MachineLoopInfo>();
-  // TODO: isLoopHeader() should take "const MachineBasicBlock *".
   // We insert .pragma "nounroll" only to the loop header.
-  if (!LI.isLoopHeader(const_cast<MachineBasicBlock *>(&MBB)))
+  if (!LI.isLoopHeader(&MBB))
     return false;
 
   // llvm.loop.unroll.disable is marked on the back edges of a loop. Therefore,

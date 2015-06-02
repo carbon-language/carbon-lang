@@ -527,7 +527,7 @@ void LoopInfoBase<BlockT, LoopT>::verify() const {
   // Verify that blocks are mapped to valid loops.
 #ifndef NDEBUG
   for (auto &Entry : BBMap) {
-    BlockT *BB = Entry.first;
+    const BlockT *BB = Entry.first;
     LoopT *L = Entry.second;
     assert(Loops.count(L) && "orphaned loop");
     assert(L->contains(BB) && "orphaned block");
