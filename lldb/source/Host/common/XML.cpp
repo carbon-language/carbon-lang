@@ -589,13 +589,13 @@ ApplePropertyList::ExtractStringFromValueNode (const XMLNode &node, std::string 
     if (node.IsValid())
     {
         llvm::StringRef element_name = node.GetName();
-        if (element_name == "true" or element_name == "false")
+        if (element_name == "true" || element_name == "false")
         {
             // The text value _is_ the element name itself...
             value = std::move(element_name.str());
             return true;
         }
-        else if (element_name == "dict" or element_name == "array")
+        else if (element_name == "dict" || element_name == "array")
             return false; // dictionaries and arrays have no text value, so we fail
         else
             return node.GetElementText(value);
