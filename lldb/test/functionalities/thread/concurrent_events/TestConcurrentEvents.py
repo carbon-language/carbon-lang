@@ -10,17 +10,11 @@ until exit or a crash takes place, and the number of events seen by LLDB is
 verified to match the expected number of events.
 """
 
-import os, signal, time
+import os, time
 import unittest2
 import lldb
 from lldbtest import *
 import lldbutil
-
-# ==================================================
-# Dictionary of signal names
-# ==================================================
-signal_names = dict((getattr(signal, n), n) \
-        for n in dir(signal) if n.startswith('SIG') and '_' not in n )
 
 @skipIfWindows
 class ConcurrentEventsTestCase(TestBase):
@@ -366,7 +360,9 @@ class ConcurrentEventsTestCase(TestBase):
                 watch = self.inferior_target.FindWatchpointByID(watchid)
                 reason_str = "%s hit %d times" % (lldbutil.get_description(watch), watch.GetHitCount())
             elif reason == lldb.eStopReasonSignal:
-                reason_str = "signal %s" % (signal_names[x.GetStopReasonDataAtIndex(0)])
+                signals = self.inferior_process.GetUnixSignals()
+                signal_name = signals.GetSignalAsCString(x.GetStopReasonDataAtIndex(0))
+                reason_str = "signal %s" % signal_name
 
             location = "\t".join([lldbutil.get_description(x.GetFrameAtIndex(i)) for i in range(x.GetNumFrames())])
             ret.append("thread %d %s due to %s at\n\t%s" % (id, status, reason_str, location))
