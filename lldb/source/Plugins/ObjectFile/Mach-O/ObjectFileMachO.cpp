@@ -4788,6 +4788,8 @@ ObjectFileMachO::GetDependentModules (FileSpecList& files)
         lldb_private::Mutex::Locker locker(module_sp->GetMutex());
         struct load_command load_cmd;
         lldb::offset_t offset = MachHeaderSizeFromMagic(m_header.magic);
+        std::vector<std::string> rpath_paths;
+        std::vector<std::string> rpath_relative_paths;
         const bool resolve_path = false; // Don't resolve the dependent file paths since they may not reside on this system
         uint32_t i;
         for (i=0; i<m_header.ncmds; ++i)
@@ -4798,6 +4800,7 @@ ObjectFileMachO::GetDependentModules (FileSpecList& files)
 
             switch (load_cmd.cmd)
             {
+            case LC_RPATH:
             case LC_LOAD_DYLIB:
             case LC_LOAD_WEAK_DYLIB:
             case LC_REEXPORT_DYLIB:
@@ -4807,14 +4810,24 @@ ObjectFileMachO::GetDependentModules (FileSpecList& files)
                 {
                     uint32_t name_offset = cmd_offset + m_data.GetU32(&offset);
                     const char *path = m_data.PeekCStr(name_offset);
-                    // Skip any path that starts with '@' since these are usually:
-                    // @executable_path/.../file
-                    // @rpath/.../file
-                    if (path && path[0] != '@')
+                    if (path)
                     {
-                        FileSpec file_spec(path, resolve_path);
-                        if (files.AppendIfUnique(file_spec))
-                            count++;
+                        if (load_cmd.cmd == LC_RPATH)
+                            rpath_paths.push_back(path);
+                        else
+                        {
+                            if (path[0] == '@')
+                            {
+                                if (strncmp(path, "@rpath", strlen("@rpath")) == 0)
+                                    rpath_relative_paths.push_back(path + strlen("@rpath"));
+                            }
+                            else
+                            {
+                                FileSpec file_spec(path, resolve_path);
+                                if (files.AppendIfUnique(file_spec))
+                                    count++;
+                            }
+                        }
                     }
                 }
                 break;
@@ -4823,6 +4836,48 @@ ObjectFileMachO::GetDependentModules (FileSpecList& files)
                 break;
             }
             offset = cmd_offset + load_cmd.cmdsize;
+        }
+
+        if (!rpath_paths.empty())
+        {
+            // Fixup all LC_RPATH values to be absolute paths
+            FileSpec this_file_spec(m_file);
+            this_file_spec.ResolvePath();
+            std::string loader_path("@loader_path");
+            std::string executable_path("@executable_path");
+            for (auto &rpath : rpath_paths)
+            {
+                if (rpath.find(loader_path) == 0)
+                {
+                    rpath.erase(0, loader_path.size());
+                    rpath.insert(0, this_file_spec.GetDirectory().GetCString());
+                }
+                else if (rpath.find(executable_path) == 0)
+                {
+                    rpath.erase(0, executable_path.size());
+                    rpath.insert(0, this_file_spec.GetDirectory().GetCString());
+                }
+            }
+
+            for (const auto &rpath_relative_path : rpath_relative_paths)
+            {
+                for (const auto &rpath : rpath_paths)
+                {
+                    std::string path = rpath;
+                    path += rpath_relative_path;
+                    // It is OK to resolve this path because we must find a file on
+                    // disk for us to accept it anyway if it is rpath relative.
+                    FileSpec file_spec(path, true);
+                    // Remove any redundant parts of the path (like "../foo") since
+                    // LC_RPATH values often contain "..".
+                    file_spec.NormalizePath ();
+                    if (file_spec.Exists() && files.AppendIfUnique(file_spec))
+                    {
+                        count++;
+                        break;
+                    }
+                }
+            }
         }
     }
     return count;

@@ -639,6 +639,13 @@ public:
     ReadFileContentsAsCString(Error *error_ptr = NULL);
 
     //------------------------------------------------------------------
+    /// Normalize a pathname by collapsing redundant separators and
+    /// up-level references.
+    //------------------------------------------------------------------
+    void
+    NormalizePath ();
+
+    //------------------------------------------------------------------
     /// Run through the input string, replaying the effect of any ".." and produce
     /// the resultant path.  The input path is not required to be in the host file system
     /// format, but it is required to be normalized to that system.

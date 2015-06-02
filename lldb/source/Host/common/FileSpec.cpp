@@ -546,6 +546,14 @@ FileSpec::Equal (const FileSpec& a, const FileSpec& b, bool full, bool remove_ba
 }
 
 void
+FileSpec::NormalizePath ()
+{
+    ConstString normalized_directory;
+    FileSpec::RemoveBackupDots(m_directory, normalized_directory);
+    m_directory = normalized_directory;
+}
+
+void
 FileSpec::RemoveBackupDots (const ConstString &input_const_str, ConstString &result_const_str)
 {
     const char *input = input_const_str.GetCString();
