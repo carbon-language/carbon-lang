@@ -138,12 +138,12 @@ The driver functionality is conceptually divided into five stages:
    this vector instead of storing its values directly.
 
    The clang driver can dump the results of this stage using the
-   ``-ccc-print-options`` flag (which must precede any actual command
+   ``-###`` flag (which must precede any actual command
    line arguments). For example:
 
    .. code-block:: console
 
-      $ clang -ccc-print-options -Xarch_i386 -fomit-frame-pointer -Wa,-fast -Ifoo -I foo t.c
+      $ clang -### -Xarch_i386 -fomit-frame-pointer -Wa,-fast -Ifoo -I foo t.c
       Option 0 - Name: "-Xarch_", Values: {"i386", "-fomit-frame-pointer"}
       Option 1 - Name: "-Wa,", Values: {"-fast"}
       Option 2 - Name: "-I", Values: {"foo"}
