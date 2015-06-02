@@ -100,7 +100,7 @@ class SendSignalTestCase(TestBase):
         self.match_state(process_listener, lldb.eStateRunning)
 
         # Now signal the process, and make sure it stops:
-        process.Signal(signal.SIGUSR1)
+        process.Signal(lldbutil.get_signal_number('SIGUSR1'))
 
         self.match_state(process_listener, lldb.eStateStopped)
 
@@ -110,7 +110,8 @@ class SendSignalTestCase(TestBase):
         thread = threads[0]
 
         self.assertTrue(thread.GetStopReasonDataCount() >= 1, "There was data in the event.")
-        self.assertTrue(thread.GetStopReasonDataAtIndex(0) == signal.SIGUSR1, "The stop signal was SIGUSR1")
+        self.assertTrue(thread.GetStopReasonDataAtIndex(0) == lldbutil.get_signal_number('SIGUSR1'),
+                "The stop signal was SIGUSR1")
 
 if __name__ == '__main__':
     import atexit

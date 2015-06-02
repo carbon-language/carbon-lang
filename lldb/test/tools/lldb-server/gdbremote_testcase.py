@@ -1147,7 +1147,8 @@ class GdbRemoteTestCaseBase(TestBase):
             context = self.expect_gdbremote_sequence()
             self.assertIsNotNone(context)
             self.assertIsNotNone(context.get("stop_signo"))
-            self.assertEquals(int(context.get("stop_signo"), 16), signal.SIGTRAP)
+            self.assertEquals(int(context.get("stop_signo"), 16),
+                    lldbutil.get_signal_number('SIGTRAP'))
 
             single_step_count += 1
 
