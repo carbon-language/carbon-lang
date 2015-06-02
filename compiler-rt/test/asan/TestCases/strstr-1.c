@@ -2,7 +2,8 @@
 // RUN: %clang_asan %s -o %t && ASAN_OPTIONS=strict_string_checks=true not %run %t 2>&1 | FileCheck %s
 
 // Test intercept_strstr asan option
-// RUN: ASAN_OPTIONS=intercept_strstr=false %run %t 2>&1
+// Disable other interceptors because strlen may be called inside strstr
+// RUN: ASAN_OPTIONS=intercept_strstr=false:replace_str=false %run %t 2>&1
 
 #include <assert.h>
 #include <string.h>
