@@ -30,6 +30,7 @@
 #include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/Module.h"
+#include "llvm/IR/MDBuilder.h"
 #include "llvm/IR/Statepoint.h"
 #include "llvm/IR/Value.h"
 #include "llvm/IR/Verifier.h"
@@ -85,6 +86,14 @@ struct RewriteStatepointsForGC : public ModulePass {
     bool Changed = false;
     for (Function &F : M)
       Changed |= runOnFunction(F);
+
+    if (Changed) {
+      // stripDereferenceabilityInfo asserts that shouldRewriteStatepointsIn
+      // returns true for at least one function in the module.  Since at least
+      // one function changed, we know that the precondition is satisfied.
+      stripDereferenceabilityInfo(M);
+    }
+
     return Changed;
   }
 
@@ -94,6 +103,20 @@ struct RewriteStatepointsForGC : public ModulePass {
     AU.addRequired<DominatorTreeWrapperPass>();
     AU.addRequired<TargetTransformInfoWrapperPass>();
   }
+
+  /// The IR fed into RewriteStatepointsForGC may have had attributes implying
+  /// dereferenceability that are no longer valid/correct after
+  /// RewriteStatepointsForGC has run.  This is because semantically, after
+  /// RewriteStatepointsForGC runs, all calls to gc.statepoint "free" the entire
+  /// heap.  stripDereferenceabilityInfo (conservatively) restores correctness
+  /// by erasing all attributes in the module that externally imply
+  /// dereferenceability.
+  ///
+  void stripDereferenceabilityInfo(Module &M);
+
+  // Helpers for stripDereferenceabilityInfo
+  void stripDereferenceabilityInfoFromBody(Function &F);
+  void stripDereferenceabilityInfoFromPrototype(Function &F);
 };
 } // namespace
 
@@ -2200,6 +2223,72 @@ static bool insertParsePoints(Function &F, DominatorTree &DT, Pass *P,
   return !records.empty();
 }
 
+// Handles both return values and arguments for Functions and CallSites.
+template <typename AttrHolder>
+static void RemoveDerefAttrAtIndex(LLVMContext &Ctx, AttrHolder &AH,
+                                   unsigned Index) {
+  AttrBuilder R;
+  if (AH.getDereferenceableBytes(Index))
+    R.addAttribute(Attribute::get(Ctx, Attribute::Dereferenceable,
+                                  AH.getDereferenceableBytes(Index)));
+  if (AH.getDereferenceableOrNullBytes(Index))
+    R.addAttribute(Attribute::get(Ctx, Attribute::DereferenceableOrNull,
+                                  AH.getDereferenceableOrNullBytes(Index)));
+
+  if (!R.empty())
+    AH.setAttributes(AH.getAttributes().removeAttributes(
+        Ctx, Index, AttributeSet::get(Ctx, Index, R)));
+};
+
+void
+RewriteStatepointsForGC::stripDereferenceabilityInfoFromPrototype(Function &F) {
+  LLVMContext &Ctx = F.getContext();
+
+  for (Argument &A : F.args())
+    if (isa<PointerType>(A.getType()))
+      RemoveDerefAttrAtIndex(Ctx, F, A.getArgNo() + 1);
+
+  if (isa<PointerType>(F.getReturnType()))
+    RemoveDerefAttrAtIndex(Ctx, F, AttributeSet::ReturnIndex);
+}
+
+void RewriteStatepointsForGC::stripDereferenceabilityInfoFromBody(Function &F) {
+  if (F.empty())
+    return;
+
+  LLVMContext &Ctx = F.getContext();
+  MDBuilder Builder(Ctx);
+
+  for (Instruction &I : inst_range(F)) {
+    if (const MDNode *MD = I.getMetadata(LLVMContext::MD_tbaa)) {
+      assert(MD->getNumOperands() < 5 && "unrecognized metadata shape!");
+      bool IsImmutableTBAA =
+          MD->getNumOperands() == 4 &&
+          mdconst::extract<ConstantInt>(MD->getOperand(3))->getValue() == 1;
+
+      if (!IsImmutableTBAA)
+        continue; // no work to do, MD_tbaa is already marked mutable
+
+      MDNode *Base = cast<MDNode>(MD->getOperand(0));
+      MDNode *Access = cast<MDNode>(MD->getOperand(1));
+      uint64_t Offset =
+          mdconst::extract<ConstantInt>(MD->getOperand(2))->getZExtValue();
+
+      MDNode *MutableTBAA =
+          Builder.createTBAAStructTagNode(Base, Access, Offset);
+      I.setMetadata(LLVMContext::MD_tbaa, MutableTBAA);
+    }
+
+    if (CallSite CS = CallSite(&I)) {
+      for (int i = 0, e = CS.arg_size(); i != e; i++)
+        if (isa<PointerType>(CS.getArgument(i)->getType()))
+          RemoveDerefAttrAtIndex(Ctx, CS, i + 1);
+      if (isa<PointerType>(CS.getType()))
+        RemoveDerefAttrAtIndex(Ctx, CS, AttributeSet::ReturnIndex);
+    }
+  }
+}
+
 /// Returns true if this function should be rewritten by this pass.  The main
 /// point of this function is as an extension point for custom logic.
 static bool shouldRewriteStatepointsIn(Function &F) {
@@ -2212,6 +2301,19 @@ static bool shouldRewriteStatepointsIn(Function &F) {
            (CoreCLRName == FunctionGCName);
   } else
     return false;
+}
+
+void RewriteStatepointsForGC::stripDereferenceabilityInfo(Module &M) {
+#ifndef NDEBUG
+  assert(std::any_of(M.begin(), M.end(), shouldRewriteStatepointsIn) &&
+         "precondition!");
+#endif
+
+  for (Function &F : M)
+    stripDereferenceabilityInfoFromPrototype(F);
+
+  for (Function &F : M)
+    stripDereferenceabilityInfoFromBody(F);
 }
 
 bool RewriteStatepointsForGC::runOnFunction(Function &F) {
