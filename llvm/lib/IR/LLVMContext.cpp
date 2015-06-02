@@ -240,15 +240,15 @@ void LLVMContext::emitError(unsigned LocCookie, const Twine &ErrorStr) {
 // Metadata Kind Uniquing
 //===----------------------------------------------------------------------===//
 
-/// getMDKindID - Return a unique non-zero ID for the specified metadata kind.
+/// Return a unique non-zero ID for the specified metadata kind.
 unsigned LLVMContext::getMDKindID(StringRef Name) const {
   assert(!std::isdigit(Name.front()) &&
          "Named metadata may not start with a digit");
 
   // If this is new, assign it its ID.
-  return pImpl->CustomMDKindNames.insert(std::make_pair(
-                                             Name,
-                                             pImpl->CustomMDKindNames.size()))
+  return pImpl->CustomMDKindNames.insert(
+                                     std::make_pair(
+                                         Name, pImpl->CustomMDKindNames.size()))
       .first->second;
 }
 

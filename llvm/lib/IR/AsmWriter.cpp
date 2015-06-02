@@ -2221,9 +2221,8 @@ void AssemblyWriter::printNamedMDNode(const NamedMDNode *NMD) {
   if (Name.empty()) {
     Out << "<empty name> ";
   } else {
-    if (isalpha(static_cast<unsigned char>(Name[0])) ||
-        Name[0] == '-' || Name[0] == '$' ||
-        Name[0] == '.' || Name[0] == '_')
+    if (isalpha(static_cast<unsigned char>(Name[0])) || Name[0] == '-' ||
+        Name[0] == '$' || Name[0] == '.' || Name[0] == '_')
       Out << Name[0];
     else
       Out << '\\' << hexdigit(Name[0] >> 4) << hexdigit(Name[0] & 0x0F);
@@ -2238,7 +2237,8 @@ void AssemblyWriter::printNamedMDNode(const NamedMDNode *NMD) {
   }
   Out << " = !{";
   for (unsigned i = 0, e = NMD->getNumOperands(); i != e; ++i) {
-    if (i) Out << ", ";
+    if (i)
+      Out << ", ";
     int Slot = Machine.getMetadataSlot(NMD->getOperand(i));
     if (Slot == -1)
       Out << "<badref>";
@@ -2247,7 +2247,6 @@ void AssemblyWriter::printNamedMDNode(const NamedMDNode *NMD) {
   }
   Out << "}\n";
 }
-
 
 static void PrintLinkage(GlobalValue::LinkageTypes LT,
                          formatted_raw_ostream &Out) {
@@ -2267,7 +2266,6 @@ static void PrintLinkage(GlobalValue::LinkageTypes LT,
     break;
   }
 }
-
 
 static void PrintVisibility(GlobalValue::VisibilityTypes Vis,
                             formatted_raw_ostream &Out) {
