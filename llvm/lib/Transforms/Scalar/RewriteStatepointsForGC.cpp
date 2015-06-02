@@ -74,13 +74,19 @@ static cl::opt<bool, true> ClobberNonLiveOverride("rs4gc-clobber-non-live",
                                                   cl::Hidden);
 
 namespace {
-struct RewriteStatepointsForGC : public FunctionPass {
+struct RewriteStatepointsForGC : public ModulePass {
   static char ID; // Pass identification, replacement for typeid
 
-  RewriteStatepointsForGC() : FunctionPass(ID) {
+  RewriteStatepointsForGC() : ModulePass(ID) {
     initializeRewriteStatepointsForGCPass(*PassRegistry::getPassRegistry());
   }
-  bool runOnFunction(Function &F) override;
+  bool runOnFunction(Function &F);
+  bool runOnModule(Module &M) override {
+    bool Changed = false;
+    for (Function &F : M)
+      Changed |= runOnFunction(F);
+    return Changed;
+  }
 
   void getAnalysisUsage(AnalysisUsage &AU) const override {
     // We add and rewrite a bunch of instructions, but don't really do much
@@ -93,7 +99,7 @@ struct RewriteStatepointsForGC : public FunctionPass {
 
 char RewriteStatepointsForGC::ID = 0;
 
-FunctionPass *llvm::createRewriteStatepointsForGCPass() {
+ModulePass *llvm::createRewriteStatepointsForGCPass() {
   return new RewriteStatepointsForGC();
 }
 
@@ -1031,14 +1037,11 @@ static void recomputeLiveInValues(
 // goes through the statepoint.  We might need to split an edge to make this
 // possible.
 static BasicBlock *
-normalizeForInvokeSafepoint(BasicBlock *BB, BasicBlock *InvokeParent, Pass *P) {
-  DominatorTree *DT = nullptr;
-  if (auto *DTP = P->getAnalysisIfAvailable<DominatorTreeWrapperPass>())
-    DT = &DTP->getDomTree();
-
+normalizeForInvokeSafepoint(BasicBlock *BB, BasicBlock *InvokeParent,
+                            DominatorTree &DT) {
   BasicBlock *Ret = BB;
   if (!BB->getUniquePredecessor()) {
-    Ret = SplitBlockPredecessors(BB, InvokeParent, "", nullptr, DT);
+    Ret = SplitBlockPredecessors(BB, InvokeParent, "", nullptr, &DT);
   }
 
   // Now that 'ret' has unique predecessor we can safely remove all phi nodes
@@ -2016,9 +2019,9 @@ static bool insertParsePoints(Function &F, DominatorTree &DT, Pass *P,
       continue;
     InvokeInst *invoke = cast<InvokeInst>(CS.getInstruction());
     normalizeForInvokeSafepoint(invoke->getNormalDest(), invoke->getParent(),
-                                P);
+                                DT);
     normalizeForInvokeSafepoint(invoke->getUnwindDest(), invoke->getParent(),
-                                P);
+                                DT);
   }
 
   // A list of dummy calls added to the IR to keep various values obviously
@@ -2221,7 +2224,7 @@ bool RewriteStatepointsForGC::runOnFunction(Function &F) {
   if (!shouldRewriteStatepointsIn(F))
     return false;
 
-  DominatorTree &DT = getAnalysis<DominatorTreeWrapperPass>().getDomTree();
+  DominatorTree &DT = getAnalysis<DominatorTreeWrapperPass>(F).getDomTree();
 
   // Gather all the statepoints which need rewritten.  Be careful to only
   // consider those in reachable code since we need to ask dominance queries
