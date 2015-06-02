@@ -24,6 +24,7 @@ class ChangeProcessGroupTestCase(TestBase):
         self.buildDsym()
         self.setpgid()
 
+    @skipIfFreeBSD # Times out on FreeBSD llvm.org/pr23731
     @skipIfWindows # setpgid call does not exist on Windows
     @dwarf_test
     def test_setpgid_with_dwarf(self):
