@@ -949,17 +949,18 @@ def get_signal_number(signal_name):
                     output = 'SIG' + output
                 if output == signal_name:
                     return signal_number
-    for target_index in range(lldb.debugger.GetNumTargets()):
-        target = lldb.debugger.GetTargetAtIndex(target_index)
-        if not target.IsValid():
-            continue
-        process = target.GetProcess()
-        if not process.IsValid():
-            continue
-        signals = process.GetUnixSignals()
-        if not signals.IsValid():
-            continue
-        signal_number = signals.GetSignalNumberFromName(signal_name)
-        if signal_number > 0:
-            return signal_number
+    if lldb.debugger:
+        for target_index in range(lldb.debugger.GetNumTargets()):
+            target = lldb.debugger.GetTargetAtIndex(target_index)
+            if not target.IsValid():
+                continue
+            process = target.GetProcess()
+            if not process.IsValid():
+                continue
+            signals = process.GetUnixSignals()
+            if not signals.IsValid():
+                continue
+            signal_number = signals.GetSignalNumberFromName(signal_name)
+            if signal_number > 0:
+                return signal_number
     return getattr(signal, signal_name)
