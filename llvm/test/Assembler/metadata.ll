@@ -1,7 +1,7 @@
 ; RUN: llvm-as < %s | llvm-dis | llvm-as | llvm-dis | FileCheck %s
 ; RUN: verify-uselistorder %s
 
-; CHECK: @test
+; CHECK-LABEL: @test
 ; CHECK: ret void, !bar !1, !foo !0
 define void @test() {
   add i32 2, 1, !bar !0
@@ -11,12 +11,12 @@ define void @test() {
   ret void, !foo !0, !bar !1
 }
 
-; CHECK: define void @test2() !foo !2 !baz !3
+; CHECK-LABEL: define void @test2() !foo !2 !baz !3
 define void @test2() !foo !2 !baz !3 {
   unreachable
 }
 
-; CHECK: define void @test3() !bar !3
+; CHECK-LABEL: define void @test3() !bar !3
 ; CHECK: unreachable, !bar !4
 define void @test3() !bar !3 {
   unreachable, !bar !4
