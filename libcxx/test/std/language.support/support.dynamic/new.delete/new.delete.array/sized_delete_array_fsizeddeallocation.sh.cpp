@@ -49,7 +49,7 @@ void operator delete[](void* p, const std::nothrow_t&) throw()
     std::free(p);
 }
 
-void operator delete[](void* p, std::size_t) noexcept
+void operator delete[](void* p, std::size_t) throw()
 {
     ++sized_delete_called;
     std::free(p);

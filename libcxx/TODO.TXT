@@ -46,4 +46,6 @@ Misc Tasks
 * Put a static_assert in std::allocator to deny const/volatile types (LWG 2447)
 * Investigate the effect of using __decltype instead of __typeof__ to provide
   decltype in C++03. What code could be broken by this change?
-
+* Convert failure tests to use Clang Verify.
+* Document support (or lack of) for C++11 libraries in C++03.
+* Document supported compilers.
