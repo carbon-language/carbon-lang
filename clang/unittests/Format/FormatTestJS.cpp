@@ -252,6 +252,11 @@ TEST_F(FormatTestJS, ArrayLiterals) {
                "  new SomeThingAAAAAAAAAAAA(),\n"
                "  new SomeThingBBBBBBBBB()\n"
                "];");
+  verifyFormat("return [\n"
+               "  aaaaaaaaaaaaaaaaaaaaaaaaaaa,\n"
+               "  bbbbbbbbbbbbbbbbbbbbbbbbbbb,\n"
+               "  ccccccccccccccccccccccccccc\n"
+               "];");
   verifyFormat("var someVariable = SomeFuntion([\n"
                "  aaaaaaaaaaaaaaaaaaaaaaaaaaa,\n"
                "  bbbbbbbbbbbbbbbbbbbbbbbbbbb,\n"
