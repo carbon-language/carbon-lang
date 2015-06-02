@@ -1763,7 +1763,8 @@ typename enable_if
 __copy(_Tp* __first, _Tp* __last, _Up* __result)
 {
     const size_t __n = static_cast<size_t>(__last - __first);
-    _VSTD::memmove(__result, __first, __n * sizeof(_Up));
+    if (__n > 0)
+        _VSTD::memmove(__result, __first, __n * sizeof(_Up));
     return __result + __n;
 }
 
@@ -1798,8 +1799,11 @@ typename enable_if
 __copy_backward(_Tp* __first, _Tp* __last, _Up* __result)
 {
     const size_t __n = static_cast<size_t>(__last - __first);
-    __result -= __n;
-    _VSTD::memmove(__result, __first, __n * sizeof(_Up));
+    if (__n > 0)
+    {
+        __result -= __n;
+        _VSTD::memmove(__result, __first, __n * sizeof(_Up));
+    }
     return __result;
 }
 
@@ -1896,7 +1900,8 @@ typename enable_if
 __move(_Tp* __first, _Tp* __last, _Up* __result)
 {
     const size_t __n = static_cast<size_t>(__last - __first);
-    _VSTD::memmove(__result, __first, __n * sizeof(_Up));
+    if (__n > 0)
+        _VSTD::memmove(__result, __first, __n * sizeof(_Up));
     return __result + __n;
 }
 
@@ -1931,8 +1936,11 @@ typename enable_if
 __move_backward(_Tp* __first, _Tp* __last, _Up* __result)
 {
     const size_t __n = static_cast<size_t>(__last - __first);
-    __result -= __n;
-    _VSTD::memmove(__result, __first, __n * sizeof(_Up));
+    if (__n > 0)
+    {
+        __result -= __n;
+        _VSTD::memmove(__result, __first, __n * sizeof(_Up));
+    }
     return __result;
 }
 
