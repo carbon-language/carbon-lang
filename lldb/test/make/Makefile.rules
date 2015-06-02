@@ -30,6 +30,39 @@
 THIS_FILE_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))/
 LLDB_BASE_DIR := $(THIS_FILE_DIR)../../
 
+
+#----------------------------------------------------------------------
+# If TRIPLE is not defined try to set the ARCH, CC, CFLAGS, and more
+# from the triple alone
+#----------------------------------------------------------------------
+TRIPLE_CFLAGS :=
+ifneq "$(TRIPLE)" ""
+	triple_space = $(subst -, ,$(TRIPLE))
+	ARCH =$(word 1, $(triple_space))
+	TRIPLE_VENDOR =$(word 2, $(triple_space))
+	triple_os_and_version =$(shell echo $(word 3, $(triple_space)) | sed -e 's/\(.*\)\([0-9]\.[0-9]\).*/\1 \2/')
+	TRIPLE_OS =$(word 1, $(triple_os_and_version))
+	TRIPLE_VERSION =$(word 2, $(triple_os_and_version))
+	ifeq "$(TRIPLE_VERSION)" ""
+		TRIPLE_VERSION =$(shell echo $(sdk_basename) | sed -e 's/.*\([0-9]\.[0-9]\).*/\1/')
+	endif
+	ifeq "$(TRIPLE_VENDOR)" "apple"
+		ifeq "$(TRIPLE_OS)" "ios"
+		    ifeq "$(SDKROOT)" ""
+				# Set SDKROOT if it wasn't set
+				ifneq (,$(findstring arm,$(ARCH)))
+					SDKROOT = $(shell xcrun --sdk iphoneos --show-sdk-path)
+					TRIPLE_CFLAGS :=-mios-version-min=$(TRIPLE_VERSION) -isysroot "$(SDKROOT)"
+				else
+					SDKROOT = $(shell xcrun --sdk iphonesimulator --show-sdk-path)
+					TRIPLE_CFLAGS :=-mios-simulator-version-min=$(TRIPLE_VERSION) -isysroot "$(SDKROOT)"
+				endif
+			endif
+			sdk_basename = $(notdir $(SDKROOT))
+		endif
+	endif
+endif
+
 #----------------------------------------------------------------------
 # If OS is not defined, use 'uname -s' to determine the OS name.
 #
@@ -140,13 +173,13 @@ ifeq "$(OS)" "Darwin"
 else
 	CFLAGS += $(ARCHFLAG)$(ARCH) $(FRAMEWORK_INCLUDES) $(CFLAGS_EXTRAS) -I$(LLDB_BASE_DIR)include
 endif
-CFLAGS += -include $(THIS_FILE_DIR)test_common.h
+CFLAGS += -include $(THIS_FILE_DIR)test_common.h $(TRIPLE_CFLAGS)
 
 # Use this one if you want to build one part of the result without debug information:
 ifeq "$(OS)" "Darwin"
-	CFLAGS_NO_DEBUG = -O0 $(ARCHFLAG) $(ARCH) $(FRAMEWORK_INCLUDES) $(CFLAGS_EXTRAS)
+	CFLAGS_NO_DEBUG = -O0 $(ARCHFLAG) $(ARCH) $(FRAMEWORK_INCLUDES) $(CFLAGS_EXTRAS) $(TRIPLE_CFLAGS)
 else
-	CFLAGS_NO_DEBUG = -O0 $(ARCHFLAG)$(ARCH) $(FRAMEWORK_INCLUDES) $(CFLAGS_EXTRAS)
+	CFLAGS_NO_DEBUG = -O0 $(ARCHFLAG)$(ARCH) $(FRAMEWORK_INCLUDES) $(CFLAGS_EXTRAS) $(TRIPLE_CFLAGS)
 endif
 
 CXXFLAGS += -std=c++11
