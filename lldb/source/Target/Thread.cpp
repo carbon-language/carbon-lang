@@ -655,11 +655,6 @@ Thread::SetupForResume ()
         // telling the current plan it will resume, since we might change what the current
         // plan is.
 
-//      StopReason stop_reason = lldb::eStopReasonInvalid;
-//      StopInfoSP stop_info_sp = GetStopInfo();
-//      if (stop_info_sp.get())
-//          stop_reason = stop_info_sp->GetStopReason();
-//      if (stop_reason == lldb::eStopReasonBreakpoint)
         lldb::RegisterContextSP reg_ctx_sp (GetRegisterContext());
         if (reg_ctx_sp)
         {
@@ -725,7 +720,7 @@ Thread::ShouldResume (StateType resume_state)
     // the target, 'cause that slows down single stepping.  So assume that if we got to the point where
     // we're about to resume, and we haven't yet had to fetch the stop reason, then it doesn't need to know
     // about the fact that we are resuming...
-        const uint32_t process_stop_id = GetProcess()->GetStopID();
+    const uint32_t process_stop_id = GetProcess()->GetStopID();
     if (m_stop_info_stop_id == process_stop_id &&
         (m_stop_info_sp && m_stop_info_sp->IsValid()))
     {

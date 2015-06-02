@@ -582,6 +582,7 @@ ThreadList::WillResume ()
 
             if (thread_sp == GetSelectedThread())
             {
+                // If the currently selected thread wants to run on its own, always let it.
                 run_only_current_thread = true;
                 run_me_only_list.Clear();
                 run_me_only_list.AddThread (thread_sp);
