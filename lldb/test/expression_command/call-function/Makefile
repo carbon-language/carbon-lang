@@ -12,4 +12,4 @@ endif
 include $(LEVEL)/Makefile.rules
 
 clean::
-	rm -rf *.o *.d *.dSYM
+	rm -rf $(wildcard *.o *.d *.dSYM)

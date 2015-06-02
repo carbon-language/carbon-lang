@@ -9,5 +9,4 @@ include $(LEVEL)/Makefile.rules
 LDFLAGS += -framework Foundation
 
 clean::
-	rm -rf *.o *.d *.dSYM *.log
-	
+	rm -rf $(wildcard *.o *.d *.dSYM *.log)
