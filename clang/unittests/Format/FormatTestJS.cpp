@@ -259,7 +259,8 @@ TEST_F(FormatTestJS, ArrayLiterals) {
                "]);");
   verifyFormat("var someVariable = SomeFuntion([\n"
                "  [aaaaaaaaaaaaaaaaaaaaaa, bbbbbbbbbbbbbbbbbbbbbb],\n"
-               "]);");
+               "]);",
+               getGoogleJSStyleWithColumns(51));
   verifyFormat("var someVariable = SomeFuntion(aaaa, [\n"
                "  aaaaaaaaaaaaaaaaaaaaaaaaaaa,\n"
                "  bbbbbbbbbbbbbbbbbbbbbbbbbbb,\n"

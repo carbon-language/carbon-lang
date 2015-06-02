@@ -159,7 +159,8 @@ bool ContinuationIndenter::mustBreak(const LineState &State) {
   if (((Previous.is(TT_DictLiteral) && Previous.is(tok::l_brace)) ||
        Previous.is(TT_ArrayInitializerLSquare)) &&
       Style.ColumnLimit > 0 &&
-      getLengthToMatchingParen(Previous) + State.Column > getColumnLimit(State))
+      getLengthToMatchingParen(Previous) + State.Column - 1 >
+          getColumnLimit(State))
     return true;
   if (Current.is(TT_CtorInitializerColon) &&
       ((Style.AllowShortFunctionsOnASingleLine != FormatStyle::SFS_All) ||
