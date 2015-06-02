@@ -109,7 +109,7 @@ entry:
 define double @load_d(double* %a) {
 entry:
 ; CHECK-LABEL: load_d:
-; NONE: ldrd r0, r1, [r0]
+; NONE: ldm r0, {r0, r1}
 ; HARD: vldr d0, [r0]
   %0 = load double, double* %a, align 8
   ret double %0
@@ -127,7 +127,9 @@ entry:
 define void @store_d(double* %a, double %b) {
 entry:
 ; CHECK-LABEL: store_d:
-; NONE: strd r2, r3, [r0]
+; NONE: mov r1, r3
+; NONE: str r2, [r0]
+; NONE: str r1, [r0, #4]
 ; HARD: vstr d0, [r0]
   store double %b, double* %a, align 8
   ret void

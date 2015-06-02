@@ -664,7 +664,7 @@ define void @test_atomic_load_min_i64(i64 %offset) nounwind {
 ; CHECK: movt r[[ADDR]], :upper16:var64
 
 ; CHECK: .LBB{{[0-9]+}}_1:
-; CHECK: ldaexd [[OLD1:r[0-9]+|lr]], [[OLD2:r[0-9]+|lr]], [r[[ADDR]]]
+; CHECK: ldaexd [[OLD1:r[0-9]+]], [[OLD2:r[0-9]+]], [r[[ADDR]]]
   ; r0, r1 below is a reasonable guess but could change: it certainly comes into the
   ; function there.
 ; CHECK-ARM: mov [[LOCARRY:r[0-9]+|lr]], #0
@@ -782,7 +782,7 @@ define void @test_atomic_load_max_i64(i64 %offset) nounwind {
 ; CHECK: movt r[[ADDR]], :upper16:var64
 
 ; CHECK: .LBB{{[0-9]+}}_1:
-; CHECK: ldrexd [[OLD1:r[0-9]+]], [[OLD2:r[0-9]+|lr]], [r[[ADDR]]]
+; CHECK: ldrexd [[OLD1:r[0-9]+]], [[OLD2:r[0-9]+]], [r[[ADDR]]]
   ; r0, r1 below is a reasonable guess but could change: it certainly comes into the
   ; function there.
 ; CHECK-ARM: mov [[LOCARRY:r[0-9]+|lr]], #0
@@ -900,7 +900,7 @@ define void @test_atomic_load_umin_i64(i64 %offset) nounwind {
 ; CHECK: movt r[[ADDR]], :upper16:var64
 
 ; CHECK: .LBB{{[0-9]+}}_1:
-; CHECK: ldaexd [[OLD1:r[0-9]+|lr]], [[OLD2:r[0-9]+|lr]], [r[[ADDR]]]
+; CHECK: ldaexd [[OLD1:r[0-9]+]], [[OLD2:r[0-9]+]], [r[[ADDR]]]
   ; r0, r1 below is a reasonable guess but could change: it certainly comes into the
   ; function there.
 ; CHECK-ARM: mov [[LOCARRY:r[0-9]+|lr]], #0
@@ -1018,7 +1018,7 @@ define void @test_atomic_load_umax_i64(i64 %offset) nounwind {
 ; CHECK: movt r[[ADDR]], :upper16:var64
 
 ; CHECK: .LBB{{[0-9]+}}_1:
-; CHECK: ldaexd [[OLD1:r[0-9]+|lr]], [[OLD2:r[0-9]+|lr]], [r[[ADDR]]]
+; CHECK: ldaexd [[OLD1:r[0-9]+]], [[OLD2:r[0-9]+]], [r[[ADDR]]]
   ; r0, r1 below is a reasonable guess but could change: it certainly comes into the
   ; function there.
 ; CHECK-ARM: mov [[LOCARRY:r[0-9]+|lr]], #0
@@ -1146,12 +1146,10 @@ define void @test_atomic_cmpxchg_i64(i64 %wanted, i64 %new) nounwind {
   ; function there.
 ; CHECK-LE-DAG: eor{{(\.w)?}} [[MISMATCH_LO:r[0-9]+|lr]], [[OLD1]], r0
 ; CHECK-LE-DAG: eor{{(\.w)?}} [[MISMATCH_HI:r[0-9]+|lr]], [[OLD2]], r1
-; CHECK-ARM-LE: orrs{{(\.w)?}} {{r[0-9]+}}, [[MISMATCH_LO]], [[MISMATCH_HI]]
-; CHECK-THUMB-LE: orrs{{(\.w)?}} {{(r[0-9]+, )?}}[[MISMATCH_HI]], [[MISMATCH_LO]]
+; CHECK-LE: orrs{{(\.w)?}} {{r[0-9]+}}, [[MISMATCH_LO]], [[MISMATCH_HI]]
 ; CHECK-BE-DAG: eor{{(\.w)?}} [[MISMATCH_HI:r[0-9]+|lr]], [[OLD2]], r1
 ; CHECK-BE-DAG: eor{{(\.w)?}} [[MISMATCH_LO:r[0-9]+|lr]], [[OLD1]], r0
-; CHECK-ARM-BE: orrs{{(\.w)?}} {{r[0-9]+}}, [[MISMATCH_HI]], [[MISMATCH_LO]]
-; CHECK-THUMB-BE: orrs{{(\.w)?}} {{(r[0-9]+, )?}}[[MISMATCH_LO]], [[MISMATCH_HI]]
+; CHECK-BE: orrs{{(\.w)?}} {{r[0-9]+}}, [[MISMATCH_HI]], [[MISMATCH_LO]]
 ; CHECK-NEXT: bne .LBB{{[0-9]+}}_3
 ; CHECK-NEXT: BB#2:
   ; As above, r2, r3 is a reasonable guess.

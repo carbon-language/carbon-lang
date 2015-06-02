@@ -92,22 +92,6 @@ entry:
   ret void
 }
 
-declare void @extfunc(i32, i32, i32, i32)
-
-; CHECK-LABEL: Func2:
-; A8: ldrd
-; A8: blx
-; A8: pop
-define void @Func2(i32* %p) {
-entry:
-  %addr0 = getelementptr i32, i32* %p, i32 0
-  %addr1 = getelementptr i32, i32* %p, i32 1
-  %v0 = load i32, i32* %addr0
-  %v1 = load i32, i32* %addr1
-  ; try to force %v0/%v1 into non-adjacent registers
-  call void @extfunc(i32 %v0, i32 0, i32 0, i32 %v1)
-  ret void
-}
 
 declare void @llvm.lifetime.start(i64, i8* nocapture) nounwind
 declare void @llvm.lifetime.end(i64, i8* nocapture) nounwind
