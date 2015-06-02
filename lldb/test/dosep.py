@@ -248,6 +248,7 @@ def getExpectedTimeouts(platform_name):
             "TestCreateAfterAttach.py",
             "TestEvents.py",
             "TestExitDuringStep.py",
+            "TestHelloWorld.py", # Times out in ~10% of the times on the build bot
             "TestThreadStepOut.py",
         }
     elif target.startswith("android"):
