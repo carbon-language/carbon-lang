@@ -5996,6 +5996,38 @@ multiclass avx512_fp_packed_imm<bits<8> opc, string OpcodeStr, SDNode OpNode,
   }
 }
 
+//handle scalar instruction  reg_vec1 = op(reg_vec2,reg_vec3,imm)
+//                                      op(reg_vec2,mem_scalar,imm)
+//all instruction created with FROUND_CURRENT
+multiclass avx512_fp_scalar_imm<bits<8> opc, string OpcodeStr, SDNode OpNode,
+                                                           X86VectorVTInfo _> {
+
+  defm rri : AVX512_maskable_scalar<opc, MRMSrcReg, _, (outs _.RC:$dst),
+                      (ins _.RC:$src1, _.RC:$src2, u8imm:$src3),
+                      OpcodeStr, "$src3, $src2, $src1", "$src1, $src2, $src3",
+                      (OpNode (_.VT _.RC:$src1),
+                              (_.VT _.RC:$src2),
+                              (i8 imm:$src3),
+                              (i32 FROUND_CURRENT))>;
+  let mayLoad = 1 in {
+    defm rmi : AVX512_maskable_scalar<opc, MRMSrcMem, _, (outs _.RC:$dst),
+                      (ins _.RC:$src1, _.MemOp:$src2, u8imm:$src3),
+                      OpcodeStr, "$src3, $src2, $src1", "$src1, $src2, $src3",
+                      (OpNode (_.VT _.RC:$src1),
+                              (_.VT (scalar_to_vector
+                                        (_.ScalarLdFrag addr:$src2))),
+                              (i8 imm:$src3),
+                              (i32 FROUND_CURRENT))>;
+
+    let isAsmParserOnly = 1 in {
+      defm rmi_alt :AVX512_maskable_in_asm<opc, MRMSrcMem, _, (outs _.FRC:$dst),
+                      (ins _.FRC:$src1, _.ScalarMemOp:$src2, u8imm:$src3),
+                      OpcodeStr, "$src3, $src2, $src1", "$src1, $src2, $src3",
+                      []>;
+    }
+  }
+}
+
 //handle instruction  reg_vec1 = op(reg_vec2,reg_vec3,imm),{sae}
 multiclass avx512_fp_sae_packed_imm<bits<8> opc, string OpcodeStr,
                                              SDNode OpNode, X86VectorVTInfo _>{
@@ -6007,6 +6039,11 @@ multiclass avx512_fp_sae_packed_imm<bits<8> opc, string OpcodeStr,
                               (_.VT _.RC:$src2),
                               (i8 imm:$src3),
                               (i32 FROUND_NO_EXC))>, EVEX_B;
+}
+//handle scalar instruction  reg_vec1 = op(reg_vec2,reg_vec3,imm),{sae}
+multiclass avx512_fp_sae_scalar_imm<bits<8> opc, string OpcodeStr,
+                                             SDNode OpNode, X86VectorVTInfo _> {
+  defm NAME: avx512_fp_sae_packed_imm<opc, OpcodeStr, OpNode, _>;
 }
 
 multiclass avx512_common_fp_sae_packed_imm<string OpcodeStr,
@@ -6025,6 +6062,14 @@ multiclass avx512_common_fp_sae_packed_imm<string OpcodeStr,
     }
 }
 
+multiclass avx512_common_fp_sae_scalar_imm<string OpcodeStr,
+                  X86VectorVTInfo _, bits<8> opc, SDNode OpNode, Predicate prd>{
+  let Predicates = [prd] in {
+     defm Z128 : avx512_fp_scalar_imm<opc, OpcodeStr, OpNode, _>,
+                 avx512_fp_sae_scalar_imm<opc, OpcodeStr, OpNode, _>;
+    }
+}
+
 defm VFIXUPIMMPD : avx512_common_fp_sae_packed_imm<"vfixupimmpd",
                               avx512vl_f64_info, 0x54, X86VFixupimm, HasAVX512>,
       AVX512AIi8Base, EVEX_4V, EVEX_CD8<64, CD8VF>, VEX_W;
@@ -6032,6 +6077,12 @@ defm VFIXUPIMMPS : avx512_common_fp_sae_packed_imm<"vfixupimmps",
                               avx512vl_f32_info, 0x54, X86VFixupimm, HasAVX512>,
       AVX512AIi8Base, EVEX_4V, EVEX_CD8<32, CD8VF>;
 
+defm VFIXUPIMMSD: avx512_common_fp_sae_scalar_imm<"vfixupimmsd", f64x_info,
+                                                 0x55, X86VFixupimm, HasAVX512>,
+      AVX512AIi8Base, VEX_LIG, EVEX_4V, EVEX_CD8<64, CD8VT1>, VEX_W;
+defm VFIXUPIMMSS: avx512_common_fp_sae_scalar_imm<"vfixupimmss", f32x_info,
+                                                 0x55, X86VFixupimm, HasAVX512>,
+      AVX512AIi8Base, VEX_LIG, EVEX_4V, EVEX_CD8<32, CD8VT1>;
 
 defm VRANGEPD : avx512_common_fp_sae_packed_imm<"vrangepd", avx512vl_f64_info,
                                                        0x50, X86VRange, HasDQI>,
@@ -6039,18 +6090,4 @@ defm VRANGEPD : avx512_common_fp_sae_packed_imm<"vrangepd", avx512vl_f64_info,
 defm VRANGEPS : avx512_common_fp_sae_packed_imm<"vrangeps", avx512vl_f32_info,
                                                        0x50, X86VRange, HasDQI>,
       AVX512AIi8Base, EVEX_4V, EVEX_CD8<32, CD8VF>;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
