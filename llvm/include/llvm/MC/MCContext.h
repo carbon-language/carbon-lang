@@ -343,18 +343,18 @@ namespace llvm {
 
     MCSectionELF *getELFSection(StringRef Section, unsigned Type,
                                 unsigned Flags, unsigned EntrySize,
-                                const MCSymbol *Group, unsigned UniqueID,
+                                const MCSymbolELF *Group, unsigned UniqueID,
                                 const char *BeginSymName,
                                 const MCSectionELF *Associated);
 
     MCSectionELF *createELFRelSection(StringRef Name, unsigned Type,
                                       unsigned Flags, unsigned EntrySize,
-                                      const MCSymbol *Group,
+                                      const MCSymbolELF *Group,
                                       const MCSectionELF *Associated);
 
     void renameELFSection(MCSectionELF *Section, StringRef Name);
 
-    MCSectionELF *createELFGroupSection(const MCSymbol *Group);
+    MCSectionELF *createELFGroupSection(const MCSymbolELF *Group);
 
     MCSectionCOFF *getCOFFSection(StringRef Section, unsigned Characteristics,
                                   SectionKind Kind, StringRef COMDATSymName,

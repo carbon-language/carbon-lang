@@ -1242,7 +1242,7 @@ void ELFObjectWriter::WriteObject(MCAssembler &Asm,
     // Remember the offset into the file for this section.
     uint64_t SecStart = OS.tell();
 
-    const MCSymbol *SignatureSymbol = Section.getGroup();
+    const MCSymbolELF *SignatureSymbol = Section.getGroup();
     writeSectionData(Asm, Section, Layout);
 
     uint64_t SecEnd = OS.tell();

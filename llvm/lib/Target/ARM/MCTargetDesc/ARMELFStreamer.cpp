@@ -1022,7 +1022,7 @@ inline void ARMELFStreamer::SwitchToEHSection(const char *Prefix,
   }
 
   // Get .ARM.extab or .ARM.exidx section
-  const MCSymbol *Group = FnSection.getGroup();
+  const MCSymbolELF *Group = FnSection.getGroup();
   if (Group)
     Flags |= ELF::SHF_GROUP;
   MCSectionELF *EHSection =

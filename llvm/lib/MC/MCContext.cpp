@@ -302,7 +302,7 @@ void MCContext::renameELFSection(MCSectionELF *Section, StringRef Name) {
 
 MCSectionELF *MCContext::createELFRelSection(StringRef Name, unsigned Type,
                                              unsigned Flags, unsigned EntrySize,
-                                             const MCSymbol *Group,
+                                             const MCSymbolELF *Group,
                                              const MCSectionELF *Associated) {
   StringMap<bool>::iterator I;
   bool Inserted;
@@ -317,9 +317,9 @@ MCSectionELF *MCContext::getELFSection(StringRef Section, unsigned Type,
                                        unsigned Flags, unsigned EntrySize,
                                        StringRef Group, unsigned UniqueID,
                                        const char *BeginSymName) {
-  MCSymbol *GroupSym = nullptr;
+  MCSymbolELF *GroupSym = nullptr;
   if (!Group.empty())
-    GroupSym = getOrCreateSymbol(Group);
+    GroupSym = cast<MCSymbolELF>(getOrCreateSymbol(Group));
 
   return getELFSection(Section, Type, Flags, EntrySize, GroupSym, UniqueID,
                        BeginSymName, nullptr);
@@ -327,7 +327,7 @@ MCSectionELF *MCContext::getELFSection(StringRef Section, unsigned Type,
 
 MCSectionELF *MCContext::getELFSection(StringRef Section, unsigned Type,
                                        unsigned Flags, unsigned EntrySize,
-                                       const MCSymbol *GroupSym,
+                                       const MCSymbolELF *GroupSym,
                                        unsigned UniqueID,
                                        const char *BeginSymName,
                                        const MCSectionELF *Associated) {
@@ -360,7 +360,7 @@ MCSectionELF *MCContext::getELFSection(StringRef Section, unsigned Type,
   return Result;
 }
 
-MCSectionELF *MCContext::createELFGroupSection(const MCSymbol *Group) {
+MCSectionELF *MCContext::createELFGroupSection(const MCSymbolELF *Group) {
   MCSectionELF *Result = new (*this)
       MCSectionELF(".group", ELF::SHT_GROUP, 0, SectionKind::getReadOnly(), 4,
                    Group, ~0, nullptr, nullptr);
