@@ -382,6 +382,11 @@ void MipsSEFrameLowering::emitPrologue(MachineFunction &MF,
   unsigned FP = ABI.GetFramePtr();
   unsigned ZERO = ABI.GetNullPtr();
   unsigned ADDu = ABI.GetPtrAdduOp();
+  unsigned ADDiu = ABI.GetPtrAddiuOp();
+  unsigned AND = ABI.IsN64() ? Mips::AND64 : Mips::AND;
+
+  const TargetRegisterClass *RC = ABI.ArePtrs64bit() ?
+        &Mips::GPR64RegClass : &Mips::GPR32RegClass;
 
   // First, compute final stack size.
   uint64_t StackSize = MFI->getStackSize();
@@ -464,15 +469,12 @@ void MipsSEFrameLowering::emitPrologue(MachineFunction &MF,
   }
 
   if (MipsFI->callsEhReturn()) {
-    const TargetRegisterClass *PtrRC =
-        ABI.ArePtrs64bit() ? &Mips::GPR64RegClass : &Mips::GPR32RegClass;
-
     // Insert instructions that spill eh data registers.
     for (int I = 0; I < 4; ++I) {
       if (!MBB.isLiveIn(ABI.GetEhDataReg(I)))
         MBB.addLiveIn(ABI.GetEhDataReg(I));
       TII.storeRegToStackSlot(MBB, MBBI, ABI.GetEhDataReg(I), false,
-                              MipsFI->getEhDataRegFI(I), PtrRC, &RegInfo);
+                              MipsFI->getEhDataRegFI(I), RC, &RegInfo);
     }
 
     // Emit .cfi_offset directives for eh data registers.
@@ -497,6 +499,26 @@ void MipsSEFrameLowering::emitPrologue(MachineFunction &MF,
         nullptr, MRI->getDwarfRegNum(FP, true)));
     BuildMI(MBB, MBBI, dl, TII.get(TargetOpcode::CFI_INSTRUCTION))
         .addCFIIndex(CFIIndex);
+
+    if (RegInfo.needsStackRealignment(MF)) {
+      // addiu $Reg, $zero, -MaxAlignment
+      // andi $sp, $sp, $Reg
+      unsigned VR = MF.getRegInfo().createVirtualRegister(RC);
+      assert(isInt<16>(MFI->getMaxAlignment()) &&
+             "Function's alignment size requirement is not supported.");
+      int MaxAlign = - (signed) MFI->getMaxAlignment();
+
+      BuildMI(MBB, MBBI, dl, TII.get(ADDiu), VR).addReg(ZERO) .addImm(MaxAlign);
+      BuildMI(MBB, MBBI, dl, TII.get(AND), SP).addReg(SP).addReg(VR);
+
+      if (hasBP(MF)) {
+        // move $s7, $sp
+        unsigned BP = STI.isABI_N64() ? Mips::S7_64 : Mips::S7;
+        BuildMI(MBB, MBBI, dl, TII.get(ADDu), BP)
+          .addReg(SP)
+          .addReg(ZERO);
+      }
+    }
   }
 }
 
@@ -606,10 +628,14 @@ processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
   MipsFunctionInfo *MipsFI = MF.getInfo<MipsFunctionInfo>();
   MipsABIInfo ABI = STI.getABI();
   unsigned FP = ABI.GetFramePtr();
+  unsigned BP = ABI.IsN64() ? Mips::S7_64 : Mips::S7;
 
   // Mark $fp as used if function has dedicated frame pointer.
   if (hasFP(MF))
     MRI.setPhysRegUsed(FP);
+  // Mark $s7 as used if function has dedicated base pointer.
+  if (hasBP(MF))
+    MRI.setPhysRegUsed(BP);
 
   // Create spill slots for eh data registers if function calls eh_return.
   if (MipsFI->callsEhReturn())

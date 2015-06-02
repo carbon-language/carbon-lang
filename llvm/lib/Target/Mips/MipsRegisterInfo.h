@@ -57,6 +57,14 @@ public:
                            int SPAdj, unsigned FIOperandNum,
                            RegScavenger *RS = nullptr) const override;
 
+  void processFunctionBeforeFrameFinalized(MachineFunction &MF,
+                                       RegScavenger *RS = nullptr) const;
+
+  // Stack realignment queries.
+  bool canRealignStack(const MachineFunction &MF) const;
+
+  bool needsStackRealignment(const MachineFunction &MF) const override;
+
   /// Debug information queries.
   unsigned getFrameRegister(const MachineFunction &MF) const override;
 

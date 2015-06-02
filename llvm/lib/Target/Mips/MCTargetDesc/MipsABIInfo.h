@@ -65,6 +65,7 @@ public:
 
   unsigned GetStackPtr() const;
   unsigned GetFramePtr() const;
+  unsigned GetBasePtr() const;
   unsigned GetNullPtr() const;
   unsigned GetPtrAdduOp() const;
   unsigned GetPtrAddiuOp() const;

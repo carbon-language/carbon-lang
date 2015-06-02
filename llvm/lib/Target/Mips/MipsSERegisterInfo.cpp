@@ -110,8 +110,11 @@ void MipsSERegisterInfo::eliminateFI(MachineBasicBlock::iterator II,
   MachineFunction &MF = *MI.getParent()->getParent();
   MachineFrameInfo *MFI = MF.getFrameInfo();
   MipsFunctionInfo *MipsFI = MF.getInfo<MipsFunctionInfo>();
+
   MipsABIInfo ABI =
       static_cast<const MipsTargetMachine &>(MF.getTarget()).getABI();
+  const MipsRegisterInfo *RegInfo =
+    static_cast<const MipsRegisterInfo *>(MF.getSubtarget().getRegisterInfo());
 
   const std::vector<CalleeSavedInfo> &CSI = MFI->getCalleeSavedInfo();
   int MinCSFI = 0;
@@ -135,7 +138,14 @@ void MipsSERegisterInfo::eliminateFI(MachineBasicBlock::iterator II,
 
   if ((FrameIndex >= MinCSFI && FrameIndex <= MaxCSFI) || EhDataRegFI)
     FrameReg = ABI.GetStackPtr();
-  else
+  else if (RegInfo->needsStackRealignment(MF)) {
+    if (MFI->hasVarSizedObjects() && !MFI->isFixedObjectIndex(FrameIndex))
+      FrameReg = ABI.GetBasePtr();
+    else if (MFI->isFixedObjectIndex(FrameIndex))
+      FrameReg = getFrameRegister(MF);
+    else
+      FrameReg = ABI.GetStackPtr();
+  } else
     FrameReg = getFrameRegister(MF);
 
   // Calculate final offset.

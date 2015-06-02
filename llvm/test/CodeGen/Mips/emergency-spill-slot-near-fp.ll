@@ -1,8 +1,8 @@
 ; Check that register scavenging spill slot is close to $fp.
 ; RUN: llc -march=mipsel -O0 < %s | FileCheck %s
 
-; CHECK: sw ${{.*}}, 4($fp)
-; CHECK: lw ${{.*}}, 4($fp)
+; CHECK: sw ${{.*}}, 4($sp)
+; CHECK: lw ${{.*}}, 4($sp)
 
 define i32 @main(i32 signext %argc, i8** %argv) "no-frame-pointer-elim"="true" {
 entry:

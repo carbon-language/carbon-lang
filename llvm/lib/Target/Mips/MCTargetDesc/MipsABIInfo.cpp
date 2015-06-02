@@ -99,6 +99,10 @@ unsigned MipsABIInfo::GetFramePtr() const {
   return ArePtrs64bit() ? Mips::FP_64 : Mips::FP;
 }
 
+unsigned MipsABIInfo::GetBasePtr() const {
+  return ArePtrs64bit() ? Mips::S7_64 : Mips::S7;
+}
+
 unsigned MipsABIInfo::GetNullPtr() const {
   return ArePtrs64bit() ? Mips::ZERO_64 : Mips::ZERO;
 }

@@ -90,12 +90,23 @@ const MipsFrameLowering *MipsFrameLowering::create(const MipsSubtarget &ST) {
 }
 
 // hasFP - Return true if the specified function should have a dedicated frame
-// pointer register.  This is true if the function has variable sized allocas or
-// if frame pointer elimination is disabled.
+// pointer register.  This is true if the function has variable sized allocas,
+// if it needs dynamic stack realignment, if frame pointer elimination is
+// disabled, or if the frame address is taken.
 bool MipsFrameLowering::hasFP(const MachineFunction &MF) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
+  const TargetRegisterInfo *TRI = STI.getRegisterInfo();
+
   return MF.getTarget().Options.DisableFramePointerElim(MF) ||
-      MFI->hasVarSizedObjects() || MFI->isFrameAddressTaken();
+      MFI->hasVarSizedObjects() || MFI->isFrameAddressTaken() ||
+      TRI->needsStackRealignment(MF);
+}
+
+bool MipsFrameLowering::hasBP(const MachineFunction &MF) const {
+  const MachineFrameInfo *MFI = MF.getFrameInfo();
+  const TargetRegisterInfo *TRI = STI.getRegisterInfo();
+
+  return MFI->hasVarSizedObjects() && TRI->needsStackRealignment(MF);
 }
 
 uint64_t MipsFrameLowering::estimateStackSize(const MachineFunction &MF) const {
