@@ -276,11 +276,12 @@ private:
       if (StartsObjCMethodExpr) {
         Left->Type = TT_ObjCMethodExpr;
       } else if (Style.Language == FormatStyle::LK_JavaScript && Parent &&
+                 Contexts.back().ContextKind == tok::l_brace &&
                  Parent->isOneOf(tok::l_brace, tok::comma)) {
         Left->Type = TT_JsComputedPropertyName;
       } else if (Parent &&
                  Parent->isOneOf(tok::at, tok::equal, tok::comma,
-                                 tok::l_paren)) {
+                                 tok::l_paren, tok::question, tok::colon)) {
         Left->Type = TT_ArrayInitializerLSquare;
       } else {
         BindingIncrease = 10;
