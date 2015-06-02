@@ -48,7 +48,8 @@ terminate_handler set_terminate(terminate_handler  f ) noexcept;
 terminate_handler get_terminate() noexcept;
 [[noreturn]] void terminate() noexcept;
 
-bool uncaught_exception() noexcept;
+bool uncaught_exception()  noexcept;
+int  uncaught_exceptions() noexcept;  // C++17
 
 typedef unspecified exception_ptr;
 
@@ -115,6 +116,7 @@ _LIBCPP_FUNC_VIS terminate_handler get_terminate() _NOEXCEPT;
 _LIBCPP_NORETURN _LIBCPP_FUNC_VIS void terminate() _NOEXCEPT;
 
 _LIBCPP_FUNC_VIS bool uncaught_exception() _NOEXCEPT;
+_LIBCPP_FUNC_VIS int uncaught_exceptions() _NOEXCEPT;
 
 class _LIBCPP_TYPE_VIS exception_ptr;
 
