@@ -8,6 +8,12 @@ R_MIPS_32:
         .word foo
 # rtdyld-check: *{4}(R_MIPS_32+4) = foo
         .4byte foo
+# rtdyld-check: *{4}(R_MIPS_PC32) = foo - R_MIPS_PC32
+R_MIPS_PC32:
+        .word foo-.
+# rtdyld-check: *{4}(R_MIPS_PC32 + 4) = foo - tmp1
+tmp1:
+        .4byte foo-tmp1
 
 	.text
 	.abicalls

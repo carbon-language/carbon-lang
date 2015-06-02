@@ -480,7 +480,7 @@ void RuntimeDyldELF::resolveMIPSRelocation(const SectionEntry &Section,
   uint32_t *TargetPtr = (uint32_t *)(Section.Address + Offset);
   Value += Addend;
 
-  DEBUG(dbgs() << "resolveMipselocation, LocalAddress: "
+  DEBUG(dbgs() << "resolveMIPSRelocation, LocalAddress: "
                << Section.Address + Offset << " FinalAddress: "
                << format("%p", Section.LoadAddress + Offset) << " Value: "
                << format("%x", Value) << " Type: " << format("%x", Type)
@@ -503,6 +503,10 @@ void RuntimeDyldELF::resolveMIPSRelocation(const SectionEntry &Section,
     break;
   case ELF::R_MIPS_LO16:
     *TargetPtr = ((*TargetPtr) & 0xffff0000) | (Value & 0xffff);
+    break;
+  case ELF::R_MIPS_PC32:
+    uint32_t FinalAddress = (Section.LoadAddress + Offset);
+    writeBytesUnaligned(Value + Addend - FinalAddress, (uint8_t *)TargetPtr, 4);
     break;
   }
 }
