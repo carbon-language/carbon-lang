@@ -922,3 +922,44 @@ def join_remote_paths(*paths):
 
 def append_to_remote_wd(*paths):
     return join_remote_paths(lldb.remote_platform.GetWorkingDirectory(), *paths)
+
+# ==================================================
+# Utility functions to get the correct signal number
+# ==================================================
+
+import signal
+
+def get_signal_number(signal_name):
+    platform = lldb.remote_platform
+    if platform:
+        if platform.GetName() == 'remote-linux':
+            command = lldb.SBPlatformShellCommand('kill -l %d' % signal_name)
+            if platform.Run(command).Success() and command.GetStatus() == 0:
+                try:
+                    return int(command.GetOutput())
+                except ValueError:
+                    pass
+        elif platform.GetName() == 'remote-android':
+            for signal_number in range(1, 65):
+                command = lldb.SBPlatformShellCommand('kill -l %d' % signal_number)
+                if platform.Run(command).Fail() or command.GetStatus() != 0:
+                    continue
+                output = command.GetOutput().strip().upper()
+                if not output.startswith('SIG'):
+                    output = 'SIG' + output
+                if output == signal_name:
+                    return signal_number
+    for target_index in range(lldb.debugger.GetNumTargets()):
+        target = lldb.debugger.GetTargetAtIndex(target_index)
+        if not target.IsValid():
+            continue
+        process = target.GetProcess()
+        if not process.IsValid():
+            continue
+        signals = process.GetUnixSignals()
+        if not signals.IsValid():
+            continue
+        signal_number = signals.GetSignalNumberFromName(signal_name)
+        if signal_number > 0:
+            return signal_number
+    return getattr(signal, signal_name)
