@@ -20,7 +20,7 @@
 
 #include <__cxxabi_config.h>
 
-#define _LIBCPPABI_VERSION 1001
+#define _LIBCPPABI_VERSION 1002
 #define LIBCXXABI_NORETURN  __attribute__((noreturn))
 
 #ifdef __cplusplus
@@ -161,8 +161,9 @@ extern void __cxa_rethrow_primary_exception(void* primary_exception);
 extern void __cxa_increment_exception_refcount(void* primary_exception) throw();
 extern void __cxa_decrement_exception_refcount(void* primary_exception) throw();
 
-// Apple addition to support std::uncaught_exception()
-extern bool __cxa_uncaught_exception() throw();
+// Apple extension to support std::uncaught_exception()
+extern bool          __cxa_uncaught_exception () throw();
+extern unsigned int  __cxa_uncaught_exceptions() throw();
 
 #ifdef __linux__
 // Linux TLS support. Not yet an official part of the Itanium ABI.
