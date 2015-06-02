@@ -41,7 +41,7 @@
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCSectionELF.h"
-#include "llvm/MC/MCSymbol.h"
+#include "llvm/MC/MCSymbolELF.h"
 #include "llvm/Support/ELF.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/raw_ostream.h"
@@ -983,7 +983,8 @@ void MipsAsmPrinter::EmitFPCallStub(
   //  __call_stub_fp_xxxx:
   //
   std::string x = "__call_stub_fp_" + std::string(Symbol);
-  MCSymbol *Stub = OutContext.getOrCreateSymbol(StringRef(x));
+  MCSymbolELF *Stub =
+      cast<MCSymbolELF>(OutContext.getOrCreateSymbol(StringRef(x)));
   TS.emitDirectiveEnt(*Stub);
   MCSymbol *MType =
       OutContext.getOrCreateSymbol("__call_stub_fp_" + Twine(Symbol));
@@ -1031,7 +1032,7 @@ void MipsAsmPrinter::EmitFPCallStub(
   const MCSymbolRefExpr *E = MCSymbolRefExpr::create(Stub, OutContext);
   const MCSymbolRefExpr *T = MCSymbolRefExpr::create(Tmp, OutContext);
   const MCExpr *T_min_E = MCBinaryExpr::createSub(T, E, OutContext);
-  OutStreamer->EmitELFSize(Stub, T_min_E);
+  OutStreamer->emitELFSize(Stub, T_min_E);
   TS.emitDirectiveEnd(x);
   OutStreamer->PopSection();
 }

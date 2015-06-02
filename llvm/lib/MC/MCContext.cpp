@@ -20,7 +20,7 @@
 #include "llvm/MC/MCSectionELF.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCStreamer.h"
-#include "llvm/MC/MCSymbol.h"
+#include "llvm/MC/MCSymbolELF.h"
 #include "llvm/Support/ELF.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FileSystem.h"
@@ -119,8 +119,8 @@ MCSymbol *MCContext::getOrCreateSymbol(const Twine &Name) {
   return Sym;
 }
 
-MCSymbol *MCContext::getOrCreateSectionSymbol(const MCSectionELF &Section) {
-  MCSymbol *&Sym = SectionSymbols[&Section];
+MCSymbolELF *MCContext::getOrCreateSectionSymbol(const MCSectionELF &Section) {
+  MCSymbolELF *&Sym = SectionSymbols[&Section];
   if (Sym)
     return Sym;
 
@@ -128,12 +128,12 @@ MCSymbol *MCContext::getOrCreateSectionSymbol(const MCSectionELF &Section) {
 
   MCSymbol *&OldSym = Symbols[Name];
   if (OldSym && OldSym->isUndefined()) {
-    Sym = OldSym;
-    return OldSym;
+    Sym = cast<MCSymbolELF>(OldSym);
+    return Sym;
   }
 
   auto NameIter = UsedNames.insert(std::make_pair(Name, true)).first;
-  Sym = new (*this) MCSymbol(&*NameIter, /*isTemporary*/ false);
+  Sym = new (*this) MCSymbolELF(&*NameIter, /*isTemporary*/ false);
 
   if (!OldSym)
     OldSym = Sym;
@@ -157,6 +157,14 @@ MCSymbol *MCContext::getOrCreateLSDASymbol(StringRef FuncName) {
                            FuncName);
 }
 
+MCSymbol *MCContext::createSymbolImpl(const StringMapEntry<bool> *Name,
+                                      bool IsTemporary) {
+  bool IsELF = MOFI && MOFI->getObjectFileType() == MCObjectFileInfo::IsELF;
+  if (IsELF)
+    return new (*this) MCSymbolELF(Name, IsTemporary);
+  return new (*this) MCSymbol(false, Name, IsTemporary);
+}
+
 MCSymbol *MCContext::CreateSymbol(StringRef Name, bool AlwaysAddSuffix) {
   // Determine whether this is an assembler temporary or normal label, if used.
   bool IsTemporary = false;
@@ -164,7 +172,7 @@ MCSymbol *MCContext::CreateSymbol(StringRef Name, bool AlwaysAddSuffix) {
     IsTemporary = Name.startswith(MAI->getPrivateGlobalPrefix());
 
   if (IsTemporary && AlwaysAddSuffix && !UseNamesOnTempLabels)
-    return new (*this) MCSymbol(nullptr, true);
+    return createSymbolImpl(nullptr, true);
 
   SmallString<128> NewName = Name;
   bool AddSuffix = AlwaysAddSuffix;
@@ -178,8 +186,7 @@ MCSymbol *MCContext::CreateSymbol(StringRef Name, bool AlwaysAddSuffix) {
     if (NameEntry.second) {
       // Ok, we found a name. Have the MCSymbol object itself refer to the copy
       // of the string that is embedded in the UsedNames entry.
-      MCSymbol *Result = new (*this) MCSymbol(&*NameEntry.first, IsTemporary);
-      return Result;
+      return createSymbolImpl(&*NameEntry.first, IsTemporary);
     }
     assert(IsTemporary && "Cannot rename non-temporary symbols");
     AddSuffix = true;

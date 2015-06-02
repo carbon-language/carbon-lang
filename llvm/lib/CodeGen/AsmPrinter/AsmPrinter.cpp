@@ -40,7 +40,7 @@
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCStreamer.h"
-#include "llvm/MC/MCSymbol.h"
+#include "llvm/MC/MCSymbolELF.h"
 #include "llvm/MC/MCValue.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Format.h"
@@ -512,7 +512,8 @@ void AsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
 
   if (MAI->hasDotTypeDotSizeDirective())
     // .size foo, 42
-    OutStreamer->EmitELFSize(GVSym, MCConstantExpr::create(Size, OutContext));
+    OutStreamer->emitELFSize(cast<MCSymbolELF>(GVSym),
+                             MCConstantExpr::create(Size, OutContext));
 
   OutStreamer->AddBlankLine();
 }
@@ -904,7 +905,7 @@ void AsmPrinter::EmitFunctionBody() {
                               MCSymbolRefExpr::create(CurrentFnSymForSize,
                                                       OutContext),
                               OutContext);
-    OutStreamer->EmitELFSize(CurrentFnSym, SizeExp);
+    OutStreamer->emitELFSize(cast<MCSymbolELF>(CurrentFnSym), SizeExp);
   }
 
   for (const HandlerInfo &HI : Handlers) {

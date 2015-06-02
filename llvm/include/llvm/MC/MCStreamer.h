@@ -34,6 +34,7 @@ class MCInstPrinter;
 class MCSection;
 class MCStreamer;
 class MCSymbol;
+class MCSymbolELF;
 class MCSymbolRefExpr;
 class MCSubtargetInfo;
 class StringRef;
@@ -450,7 +451,7 @@ public:
   ///
   /// This corresponds to an assembler statement such as:
   ///  .size symbol, expression
-  virtual void EmitELFSize(MCSymbol *Symbol, const MCExpr *Value);
+  virtual void emitELFSize(MCSymbolELF *Symbol, const MCExpr *Value);
 
   /// \brief Emit a Linker Optimization Hint (LOH) directive.
   /// \param Args - Arguments of the LOH.

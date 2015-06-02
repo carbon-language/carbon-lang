@@ -27,6 +27,7 @@
 #include "llvm/MC/MCFixupKindInfo.h"
 #include "llvm/MC/MCObjectWriter.h"
 #include "llvm/MC/MCSectionELF.h"
+#include "llvm/MC/MCSymbolELF.h"
 #include "llvm/MC/MCValue.h"
 #include "llvm/MC/StringTableBuilder.h"
 #include "llvm/Support/Compression.h"
@@ -79,7 +80,7 @@ class ELFObjectWriter : public MCObjectWriter {
 
     /// Helper struct for containing some precomputed information on symbols.
     struct ELFSymbolData {
-      const MCSymbol *Symbol;
+      const MCSymbolELF *Symbol;
       uint32_t SectionIndex;
       StringRef Name;
 
@@ -451,7 +452,8 @@ void ELFObjectWriter::writeSymbol(SymbolTableWriter &Writer,
   assert((!Symbol.getFragment() ||
           (Symbol.getFragment()->getParent() == &Symbol.getSection())) &&
          "The symbol's section doesn't match the fragment's symbol");
-  const MCSymbol *Base = Layout.getBaseSymbol(Symbol);
+  const MCSymbolELF *Base =
+      cast_or_null<MCSymbolELF>(Layout.getBaseSymbol(Symbol));
 
   // This has to be in sync with when computeSymbolTable uses SHN_ABS or
   // SHN_COMMON.
@@ -810,7 +812,7 @@ void ELFObjectWriter::computeSymbolTable(
       continue;
 
     ELFSymbolData MSD;
-    MSD.Symbol = &Symbol;
+    MSD.Symbol = cast<MCSymbolELF>(&Symbol);
 
     // Undefined symbols are global, but this is the first place we
     // are able to set it.

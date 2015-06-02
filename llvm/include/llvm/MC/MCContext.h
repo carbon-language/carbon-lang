@@ -30,6 +30,7 @@ namespace llvm {
   class MCExpr;
   class MCSection;
   class MCSymbol;
+  class MCSymbolELF;
   class MCLabel;
   struct MCDwarfFile;
   class MCDwarfLoc;
@@ -75,7 +76,7 @@ namespace llvm {
 
     /// ELF sections can have a corresponding symbol. This maps one to the
     /// other.
-    DenseMap<const MCSectionELF *, MCSymbol *> SectionSymbols;
+    DenseMap<const MCSectionELF *, MCSymbolELF *> SectionSymbols;
 
     /// A mapping from a local label number and an instance count to a symbol.
     /// For example, in the assembly
@@ -205,6 +206,8 @@ namespace llvm {
     /// Do automatic reset in destructor
     bool AutoReset;
 
+    MCSymbol *createSymbolImpl(const StringMapEntry<bool> *Name,
+                               bool IsTemporary);
     MCSymbol *CreateSymbol(StringRef Name, bool AlwaysAddSuffix);
 
     MCSymbol *getOrCreateDirectionalLocalSymbol(unsigned LocalLabelVal,
@@ -263,7 +266,7 @@ namespace llvm {
     /// \param Name - The symbol name, which must be unique across all symbols.
     MCSymbol *getOrCreateSymbol(const Twine &Name);
 
-    MCSymbol *getOrCreateSectionSymbol(const MCSectionELF &Section);
+    MCSymbolELF *getOrCreateSectionSymbol(const MCSectionELF &Section);
 
     /// Gets a symbol that will be defined to the final stack offset of a local
     /// variable after codegen.

@@ -30,7 +30,7 @@
 #include "llvm/MC/MCSectionELF.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCStreamer.h"
-#include "llvm/MC/MCSymbol.h"
+#include "llvm/MC/MCSymbolELF.h"
 #include "llvm/MC/MCValue.h"
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/ELF.h"
@@ -63,7 +63,8 @@ void TargetLoweringObjectFileELF::emitPersonalityValue(MCStreamer &Streamer,
                                                        const MCSymbol *Sym) const {
   SmallString<64> NameData("DW.ref.");
   NameData += Sym->getName();
-  MCSymbol *Label = getContext().getOrCreateSymbol(NameData);
+  MCSymbolELF *Label =
+      cast<MCSymbolELF>(getContext().getOrCreateSymbol(NameData));
   Streamer.EmitSymbolAttribute(Label, MCSA_Hidden);
   Streamer.EmitSymbolAttribute(Label, MCSA_Weak);
   StringRef Prefix = ".data.";
@@ -76,7 +77,7 @@ void TargetLoweringObjectFileELF::emitPersonalityValue(MCStreamer &Streamer,
   Streamer.EmitValueToAlignment(TM.getDataLayout()->getPointerABIAlignment());
   Streamer.EmitSymbolAttribute(Label, MCSA_ELF_TypeObject);
   const MCExpr *E = MCConstantExpr::create(Size, getContext());
-  Streamer.EmitELFSize(Label, E);
+  Streamer.emitELFSize(Label, E);
   Streamer.EmitLabel(Label);
 
   Streamer.EmitSymbolValue(Sym, Size);

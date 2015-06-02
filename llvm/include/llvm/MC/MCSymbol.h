@@ -83,12 +83,10 @@ class MCSymbol {
 
   mutable unsigned HasFragment : 1;
 
+  unsigned IsELF : 1;
+
   /// Index field, for use by the object file implementation.
   mutable uint32_t Index = 0;
-
-  /// An expression describing how to calculate the size of a symbol. If a
-  /// symbol has no size this field will be NULL.
-  const MCExpr *SymbolSize = nullptr;
 
   union {
     /// The offset to apply to the fragment address to form this symbol's value.
@@ -107,16 +105,18 @@ class MCSymbol {
   /// additional per symbol information which is not easily classified.
   mutable uint32_t Flags = 0;
 
-private: // MCContext creates and uniques these.
+protected: // MCContext creates and uniques these.
   friend class MCExpr;
   friend class MCContext;
-  MCSymbol(const StringMapEntry<bool> *Name, bool isTemporary)
+  MCSymbol(bool IsELF, const StringMapEntry<bool> *Name, bool isTemporary)
       : Name(Name), Section(nullptr), Value(nullptr), IsTemporary(isTemporary),
         IsRedefinable(false), IsUsed(false), IsRegistered(false),
-        IsExternal(false), IsPrivateExtern(false), HasFragment(false) {
+        IsExternal(false), IsPrivateExtern(false), HasFragment(false),
+        IsELF(IsELF) {
     Offset = 0;
   }
 
+private:
   MCSymbol(const MCSymbol &) = delete;
   void operator=(const MCSymbol &) = delete;
   MCSection *getSectionPtr() const {
@@ -197,6 +197,8 @@ public:
     Section = nullptr;
   }
 
+  bool isELF() const { return IsELF; }
+
   /// @}
   /// \name Variable Symbols
   /// @{
@@ -224,10 +226,6 @@ public:
   void setIndex(uint32_t Value) const {
     Index = Value;
   }
-
-  void setSize(const MCExpr *SS) { SymbolSize = SS; }
-
-  const MCExpr *getSize() const { return SymbolSize; }
 
   uint64_t getOffset() const {
     assert(!isCommon());

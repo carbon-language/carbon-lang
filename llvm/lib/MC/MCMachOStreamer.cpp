@@ -93,9 +93,6 @@ public:
   void EndCOFFSymbolDef() override {
     llvm_unreachable("macho doesn't support this directive");
   }
-  void EmitELFSize(MCSymbol *Symbol, const MCExpr *Value) override {
-    llvm_unreachable("macho doesn't support this directive");
-  }
   void EmitLocalCommonSymbol(MCSymbol *Symbol, uint64_t Size,
                              unsigned ByteAlignment) override;
   void EmitZerofill(MCSection *Section, MCSymbol *Symbol = nullptr,

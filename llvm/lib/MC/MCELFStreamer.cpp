@@ -28,6 +28,7 @@
 #include "llvm/MC/MCObjectStreamer.h"
 #include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCSectionELF.h"
+#include "llvm/MC/MCSymbolELF.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCValue.h"
 #include "llvm/Support/Debug.h"
@@ -333,10 +334,11 @@ void MCELFStreamer::EmitCommonSymbol(MCSymbol *Symbol, uint64_t Size,
     Symbol->setCommon(Size, ByteAlignment);
   }
 
-  Symbol->setSize(MCConstantExpr::create(Size, getContext()));
+  cast<MCSymbolELF>(Symbol)
+      ->setSize(MCConstantExpr::create(Size, getContext()));
 }
 
-void MCELFStreamer::EmitELFSize(MCSymbol *Symbol, const MCExpr *Value) {
+void MCELFStreamer::emitELFSize(MCSymbolELF *Symbol, const MCExpr *Value) {
   Symbol->setSize(Value);
 }
 

@@ -195,10 +195,6 @@ void MCWinCOFFStreamer::EmitCOFFSecRel32(MCSymbol const *Symbol) {
   DF->getContents().resize(DF->getContents().size() + 4, 0);
 }
 
-void MCWinCOFFStreamer::EmitELFSize(MCSymbol *Symbol, const MCExpr *Value) {
-  llvm_unreachable("not supported");
-}
-
 void MCWinCOFFStreamer::EmitCommonSymbol(MCSymbol *Symbol, uint64_t Size,
                                          unsigned ByteAlignment) {
   assert((!Symbol->isInSection() ||
