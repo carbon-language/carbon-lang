@@ -1522,8 +1522,10 @@ struct _LIBCPP_TYPE_VIS_ONLY allocator_traits
         {
             ptrdiff_t _Np = __end1 - __begin1;
             if (_Np > 0)
+            {
                 _VSTD::memcpy(__begin2, __begin1, _Np * sizeof(_Tp));
-            __begin2 += _Np;
+                __begin2 += _Np;
+            }
         }
 
     template <class _Iter, class _Ptr>
@@ -1551,8 +1553,10 @@ struct _LIBCPP_TYPE_VIS_ONLY allocator_traits
             typedef typename remove_const<_Tp>::type _Vp;
             ptrdiff_t _Np = __end1 - __begin1;
             if (_Np > 0)
+            {
                 _VSTD::memcpy(const_cast<_Vp*>(__begin2), __begin1, _Np * sizeof(_Tp));
-            __begin2 += _Np;
+                __begin2 += _Np;
+            }
         }
 
     template <class _Ptr>
