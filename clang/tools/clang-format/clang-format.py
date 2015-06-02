@@ -85,6 +85,8 @@ def main():
     for op in reversed(sequence.get_opcodes()):
       if op[0] is not 'equal':
         vim.current.buffer[op[1]:op[2]] = lines[op[3]:op[4]]
+    if output['IncompleteFormat']:
+      print 'clang-format: incomplete (syntax errors)'
     vim.command('goto %d' % (output['Cursor'] + 1))
 
 main()
