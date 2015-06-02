@@ -825,6 +825,7 @@ function<_Rp()>::operator=(nullptr_t)
     else if (__f_)
         __f_->destroy_deallocate();
     __f_ = 0;
+    return *this;
 }
 
 template<class _Rp>
@@ -1121,6 +1122,7 @@ function<_Rp(_A0)>::operator=(nullptr_t)
     else if (__f_)
         __f_->destroy_deallocate();
     __f_ = 0;
+    return *this;
 }
 
 template<class _Rp, class _A0>
@@ -1417,6 +1419,7 @@ function<_Rp(_A0, _A1)>::operator=(nullptr_t)
     else if (__f_)
         __f_->destroy_deallocate();
     __f_ = 0;
+    return *this;
 }
 
 template<class _Rp, class _A0, class _A1>
@@ -1713,6 +1716,7 @@ function<_Rp(_A0, _A1, _A2)>::operator=(nullptr_t)
     else if (__f_)
         __f_->destroy_deallocate();
     __f_ = 0;
+    return *this;
 }
 
 template<class _Rp, class _A0, class _A1, class _A2>
