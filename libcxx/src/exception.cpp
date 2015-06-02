@@ -105,9 +105,9 @@ terminate() _NOEXCEPT
 #endif // !__EMSCRIPTEN__
 #endif // !defined(LIBCXXRT) && !defined(_LIBCPPABI_VERSION)
 
+#if !defined(LIBCXXRT) && !defined(__GLIBCXX__) && !defined(__EMSCRIPTEN__)
 bool uncaught_exception() _NOEXCEPT { return uncaught_exceptions() > 0; }
 
-#if !defined(LIBCXXRT) && !defined(__GLIBCXX__) && !defined(__EMSCRIPTEN__)
 int uncaught_exceptions() _NOEXCEPT
 {
 #if defined(__APPLE__) || defined(_LIBCPPABI_VERSION)
