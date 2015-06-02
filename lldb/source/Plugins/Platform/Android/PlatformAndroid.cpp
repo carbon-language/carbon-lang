@@ -228,13 +228,16 @@ PlatformAndroid::PutFile (const FileSpec& source,
                           uint32_t uid,
                           uint32_t gid)
 {
-    if (!IsHost() && m_remote_platform_sp)
-    {
-        AdbClient adb (m_device_id);
-        // TODO: Set correct uid and gid on remote file.
-        return adb.PushFile(source, destination);
-    }
-    return PlatformLinux::PutFile(source, destination, uid, gid);
+    if (IsHost() || !m_remote_platform_sp)
+        return PlatformLinux::PutFile (source, destination, uid, gid);
+
+    FileSpec destination_spec (destination.GetPath (false), false, FileSpec::ePathSyntaxPosix);
+    if (destination_spec.IsRelativeToCurrentWorkingDirectory ())
+        destination_spec = GetRemoteWorkingDirectory ().CopyByAppendingPathComponent (destination_spec.GetCString (false));
+
+    AdbClient adb (m_device_id);
+    // TODO: Set correct uid and gid on remote file.
+    return adb.PushFile(source, destination_spec);
 }
 
 const char *
