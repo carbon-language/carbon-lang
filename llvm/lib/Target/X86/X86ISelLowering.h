@@ -203,7 +203,6 @@ namespace llvm {
 
       /// Combined add and sub on an FP vector.
       ADDSUB,
-
       //  FP vector ops with rounding mode.
       FADD_RND,
       FSUB_RND,
@@ -211,10 +210,6 @@ namespace llvm {
       FDIV_RND,
       FMAX_RND,
       FMIN_RND,
-      FSQRT_RND,
-
-      // FP vector get exponent 
-      FGETEXP_RND,
       
       // Integer add/sub with unsigned saturation.
       ADDUS,

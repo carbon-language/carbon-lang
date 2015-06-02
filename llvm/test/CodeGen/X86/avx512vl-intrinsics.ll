@@ -2553,37 +2553,3 @@ define <4 x float> @test_mm512_min_ps_128(<4 x float> %a0, <4 x float> %a1, i8 %
   ret <4 x float> %res
 }
 declare <4 x float> @llvm.x86.avx512.mask.min.ps.128(<4 x float>, <4 x float>, <4 x float>, i8)
-
-define <4 x double> @test_sqrt_pd_256(<4 x double> %a0, i8 %mask) {
-  ; CHECK-LABEL: test_sqrt_pd_256
-  ; CHECK: vsqrtpd
-  %res = call <4 x double> @llvm.x86.avx512.mask.sqrt.pd.256(<4 x double> %a0,  <4 x double> zeroinitializer, i8 %mask)
-  ret <4 x double> %res
-}
-declare <4 x double> @llvm.x86.avx512.mask.sqrt.pd.256(<4 x double>, <4 x double>, i8) nounwind readnone
-
-define <8 x float> @test_sqrt_ps_256(<8 x float> %a0, i8 %mask) {
-  ; CHECK-LABEL: test_sqrt_ps_256
-  ; CHECK: vsqrtps
-  %res = call <8 x float> @llvm.x86.avx512.mask.sqrt.ps.256(<8 x float> %a0, <8 x float> zeroinitializer, i8 %mask)
-  ret <8 x float> %res
-}
-
-declare <8 x float> @llvm.x86.avx512.mask.sqrt.ps.256(<8 x float>, <8 x float>, i8) nounwind readnone
-
-define <4 x double> @test_getexp_pd_256(<4 x double> %a0) {
-  ; CHECK-LABEL: test_getexp_pd_256
-  ; CHECK: vgetexppd
-  %res = call <4 x double> @llvm.x86.avx512.mask.getexp.pd.256(<4 x double> %a0,  <4 x double> zeroinitializer, i8 -1)
-  ret <4 x double> %res
-}
-
-declare <4 x double> @llvm.x86.avx512.mask.getexp.pd.256(<4 x double>, <4 x double>, i8) nounwind readnone
-
-define <8 x float> @test_getexp_ps_256(<8 x float> %a0) {
-  ; CHECK-LABEL: test_getexp_ps_256
-  ; CHECK: vgetexpps
-  %res = call <8 x float> @llvm.x86.avx512.mask.getexp.ps.256(<8 x float> %a0, <8 x float> zeroinitializer, i8 -1)
-  ret <8 x float> %res
-}
-declare <8 x float> @llvm.x86.avx512.mask.getexp.ps.256(<8 x float>, <8 x float>, i8) nounwind readnone
