@@ -169,6 +169,14 @@ static DecodeStatus DecodeVecShiftL16Imm(llvm::MCInst &Inst, unsigned Imm,
                                          uint64_t Addr, const void *Decoder);
 static DecodeStatus DecodeVecShiftL8Imm(llvm::MCInst &Inst, unsigned Imm,
                                         uint64_t Addr, const void *Decoder);
+static DecodeStatus DecodeWSeqPairsClassRegisterClass(MCInst &Inst,
+                                                      unsigned RegNo,
+                                                      uint64_t Addr,
+                                                      const void *Decoder);
+static DecodeStatus DecodeXSeqPairsClassRegisterClass(MCInst &Inst,
+                                                      unsigned RegNo,
+                                                      uint64_t Addr,
+                                                      const void *Decoder);
 
 static bool Check(DecodeStatus &Out, DecodeStatus In) {
   switch (In) {
@@ -1542,4 +1550,36 @@ static DecodeStatus DecodeTestAndBranch(llvm::MCInst &Inst, uint32_t insn,
     Inst.addOperand(MCOperand::createImm(dst));
 
   return Success;
+}
+
+static DecodeStatus DecodeGPRSeqPairsClassRegisterClass(MCInst &Inst,
+                                                        unsigned RegClassID,
+                                                        unsigned RegNo,
+                                                        uint64_t Addr,
+                                                        const void *Decoder) {
+  // Register number must be even (see CASP instruction)
+  if (RegNo & 0x1)
+    return Fail;
+
+  unsigned Register = AArch64MCRegisterClasses[RegClassID].getRegister(RegNo);
+  Inst.addOperand(MCOperand::createReg(Register));
+  return Success;
+}
+
+static DecodeStatus DecodeWSeqPairsClassRegisterClass(MCInst &Inst,
+                                                      unsigned RegNo,
+                                                      uint64_t Addr,
+                                                      const void *Decoder) {
+  return DecodeGPRSeqPairsClassRegisterClass(Inst, 
+                                             AArch64::WSeqPairsClassRegClassID,
+                                             RegNo, Addr, Decoder);
+}
+
+static DecodeStatus DecodeXSeqPairsClassRegisterClass(MCInst &Inst,
+                                                      unsigned RegNo,
+                                                      uint64_t Addr,
+                                                      const void *Decoder) {
+  return DecodeGPRSeqPairsClassRegisterClass(Inst, 
+                                             AArch64::XSeqPairsClassRegClassID,
+                                             RegNo, Addr, Decoder);
 }

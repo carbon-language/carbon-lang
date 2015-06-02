@@ -1113,7 +1113,7 @@ void AArch64InstPrinter::printPrefetchOp(const MCInst *MI, unsigned OpNum,
                                          raw_ostream &O) {
   unsigned prfop = MI->getOperand(OpNum).getImm();
   bool Valid;
-  StringRef Name = 
+  StringRef Name =
       AArch64PRFM::PRFMMapper().toString(prfop, STI.getFeatureBits(), Valid);
   if (Valid)
     O << Name;
@@ -1175,6 +1175,23 @@ static unsigned getNextVectorRegister(unsigned Reg, unsigned Stride = 1) {
     }
   }
   return Reg;
+}
+
+template<unsigned size>
+void AArch64InstPrinter::printGPRSeqPairsClassOperand(const MCInst *MI,
+                                                   unsigned OpNum,
+                                                   const MCSubtargetInfo &STI,
+                                                   raw_ostream &O) {
+  static_assert(size == 64 || size == 32,
+                "Template parameter must be either 32 or 64");
+  unsigned Reg = MI->getOperand(OpNum).getReg();
+
+  unsigned Sube = (size == 32) ? AArch64::sube32 : AArch64::sube64;
+  unsigned Subo = (size == 32) ? AArch64::subo32 : AArch64::subo64;
+
+  unsigned Even = MRI.getSubReg(Reg,  Sube);
+  unsigned Odd = MRI.getSubReg(Reg,  Subo);
+  O << getRegisterName(Even) << ", " << getRegisterName(Odd);
 }
 
 void AArch64InstPrinter::printVectorList(const MCInst *MI, unsigned OpNum,
@@ -1298,10 +1315,10 @@ void AArch64InstPrinter::printBarrierOption(const MCInst *MI, unsigned OpNo,
   bool Valid;
   StringRef Name;
   if (Opcode == AArch64::ISB)
-    Name = AArch64ISB::ISBMapper().toString(Val, STI.getFeatureBits(), 
+    Name = AArch64ISB::ISBMapper().toString(Val, STI.getFeatureBits(),
                                             Valid);
   else
-    Name = AArch64DB::DBarrierMapper().toString(Val, STI.getFeatureBits(), 
+    Name = AArch64DB::DBarrierMapper().toString(Val, STI.getFeatureBits(),
                                                 Valid);
   if (Valid)
     O << Name;
@@ -1337,7 +1354,7 @@ void AArch64InstPrinter::printSystemPStateField(const MCInst *MI, unsigned OpNo,
   unsigned Val = MI->getOperand(OpNo).getImm();
 
   bool Valid;
-  StringRef Name = 
+  StringRef Name =
       AArch64PState::PStateMapper().toString(Val, STI.getFeatureBits(), Valid);
   if (Valid)
     O << StringRef(Name.str()).upper();

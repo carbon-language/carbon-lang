@@ -107,6 +107,7 @@ private:
   OperandMatchResultTy tryParseAddSubImm(OperandVector &Operands);
   OperandMatchResultTy tryParseGPR64sp0Operand(OperandVector &Operands);
   bool tryParseVectorRegister(OperandVector &Operands);
+  OperandMatchResultTy tryParseGPRSeqPair(OperandVector &Operands);
 
 public:
   enum AArch64MatchResultTy {
@@ -874,6 +875,16 @@ public:
   bool isGPR32as64() const {
     return Kind == k_Register && !Reg.isVector &&
       AArch64MCRegisterClasses[AArch64::GPR64RegClassID].contains(Reg.RegNum);
+  }
+  bool isWSeqPair() const {
+    return Kind == k_Register && !Reg.isVector &&
+           AArch64MCRegisterClasses[AArch64::WSeqPairsClassRegClassID].contains(
+               Reg.RegNum);
+  }
+  bool isXSeqPair() const {
+    return Kind == k_Register && !Reg.isVector &&
+           AArch64MCRegisterClasses[AArch64::XSeqPairsClassRegClassID].contains(
+               Reg.RegNum);
   }
 
   bool isGPR64sp0() const {
@@ -4353,4 +4364,78 @@ unsigned AArch64AsmParser::validateTargetOperandClass(MCParsedAsmOperand &AsmOp,
   if (CE->getValue() == ExpectedVal)
     return Match_Success;
   return Match_InvalidOperand;
+}
+
+
+AArch64AsmParser::OperandMatchResultTy
+AArch64AsmParser::tryParseGPRSeqPair(OperandVector &Operands) {
+
+  SMLoc S = getLoc();
+
+  if (getParser().getTok().isNot(AsmToken::Identifier)) {
+    Error(S, "expected register");
+    return MatchOperand_ParseFail;
+  }
+
+  int FirstReg = tryParseRegister();
+  if (FirstReg == -1) {
+    return MatchOperand_ParseFail;
+  }
+  const MCRegisterClass &WRegClass =
+      AArch64MCRegisterClasses[AArch64::GPR32RegClassID];
+  const MCRegisterClass &XRegClass =
+      AArch64MCRegisterClasses[AArch64::GPR64RegClassID];
+
+  bool isXReg = XRegClass.contains(FirstReg),
+       isWReg = WRegClass.contains(FirstReg);
+  if (!isXReg && !isWReg) {
+    Error(S, "expected first even register of a "
+             "consecutive same-size even/odd register pair");
+    return MatchOperand_ParseFail;
+  }
+
+  const MCRegisterInfo *RI = getContext().getRegisterInfo();
+  unsigned FirstEncoding = RI->getEncodingValue(FirstReg);
+
+  if (FirstEncoding & 0x1) {
+    Error(S, "expected first even register of a "
+             "consecutive same-size even/odd register pair");
+    return MatchOperand_ParseFail;
+  }
+
+  SMLoc M = getLoc();
+  if (getParser().getTok().isNot(AsmToken::Comma)) {
+    Error(M, "expected comma");
+    return MatchOperand_ParseFail;
+  }
+  // Eat the comma
+  getParser().Lex();
+
+  SMLoc E = getLoc();
+  int SecondReg = tryParseRegister();
+  if (SecondReg ==-1) {
+    return MatchOperand_ParseFail;
+  }
+
+ if (RI->getEncodingValue(SecondReg) != FirstEncoding + 1 ||
+      (isXReg && !XRegClass.contains(SecondReg)) ||
+      (isWReg && !WRegClass.contains(SecondReg))) {
+    Error(E,"expected second odd register of a "
+             "consecutive same-size even/odd register pair");
+    return MatchOperand_ParseFail;
+  }
+  
+  unsigned Pair = 0;
+  if(isXReg) {
+    Pair = RI->getMatchingSuperReg(FirstReg, AArch64::sube64,
+           &AArch64MCRegisterClasses[AArch64::XSeqPairsClassRegClassID]);
+  } else {
+    Pair = RI->getMatchingSuperReg(FirstReg, AArch64::sube32,
+           &AArch64MCRegisterClasses[AArch64::WSeqPairsClassRegClassID]);
+  }
+
+  Operands.push_back(AArch64Operand::CreateReg(Pair, false, S, getLoc(),
+      getContext()));
+
+  return MatchOperand_Success;
 }

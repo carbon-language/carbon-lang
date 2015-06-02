@@ -745,6 +745,74 @@ def CRC32CHrr : BaseCRC32<0, 0b01, 1, GPR32, int_aarch64_crc32ch, "crc32ch">;
 def CRC32CWrr : BaseCRC32<0, 0b10, 1, GPR32, int_aarch64_crc32cw, "crc32cw">;
 def CRC32CXrr : BaseCRC32<1, 0b11, 1, GPR64, int_aarch64_crc32cx, "crc32cx">;
 
+// v8.1 atomic CAS
+defm CAS   : CompareAndSwap<0, 0, "">;
+defm CASA  : CompareAndSwap<1, 0, "a">;
+defm CASL  : CompareAndSwap<0, 1, "l">;
+defm CASAL : CompareAndSwap<1, 1, "al">;
+
+// v8.1 atomic CASP
+defm CASP   : CompareAndSwapPair<0, 0, "">;
+defm CASPA  : CompareAndSwapPair<1, 0, "a">;
+defm CASPL  : CompareAndSwapPair<0, 1, "l">;
+defm CASPAL : CompareAndSwapPair<1, 1, "al">;
+
+// v8.1 atomic SWP
+defm SWP   : Swap<0, 0, "">;
+defm SWPA  : Swap<1, 0, "a">;
+defm SWPL  : Swap<0, 1, "l">;
+defm SWPAL : Swap<1, 1, "al">;
+
+// v8.1 atomic LD<OP>(register). Performs load and then ST<OP>(register)
+defm LDADD   : LDOPregister<0b000, "add", 0, 0, "">;
+defm LDADDA  : LDOPregister<0b000, "add", 1, 0, "a">;
+defm LDADDL  : LDOPregister<0b000, "add", 0, 1, "l">;
+defm LDADDAL : LDOPregister<0b000, "add", 1, 1, "al">;
+
+defm LDCLR   : LDOPregister<0b001, "clr", 0, 0, "">;
+defm LDCLRA  : LDOPregister<0b001, "clr", 1, 0, "a">;
+defm LDCLRL  : LDOPregister<0b001, "clr", 0, 1, "l">;
+defm LDCLRAL : LDOPregister<0b001, "clr", 1, 1, "al">;
+
+defm LDEOR   : LDOPregister<0b010, "eor", 0, 0, "">;
+defm LDEORA  : LDOPregister<0b010, "eor", 1, 0, "a">;
+defm LDEORL  : LDOPregister<0b010, "eor", 0, 1, "l">;
+defm LDEORAL : LDOPregister<0b010, "eor", 1, 1, "al">;
+
+defm LDSET   : LDOPregister<0b011, "set", 0, 0, "">;
+defm LDSETA  : LDOPregister<0b011, "set", 1, 0, "a">;
+defm LDSETL  : LDOPregister<0b011, "set", 0, 1, "l">;
+defm LDSETAL : LDOPregister<0b011, "set", 1, 1, "al">;
+
+defm LDSMAX   : LDOPregister<0b100, "smax", 0, 0, "">;
+defm LDSMAXA  : LDOPregister<0b100, "smax", 1, 0, "a">;
+defm LDSMAXL  : LDOPregister<0b100, "smax", 0, 1, "l">;
+defm LDSMAXAL : LDOPregister<0b100, "smax", 1, 1, "al">;
+
+defm LDSMIN   : LDOPregister<0b101, "smin`", 0, 0, "">;
+defm LDSMINA  : LDOPregister<0b101, "smin", 1, 0, "a">;
+defm LDSMINL  : LDOPregister<0b101, "smin", 0, 1, "l">;
+defm LDSMINAL : LDOPregister<0b101, "smin", 1, 1, "al">;
+
+defm LDUMAX   : LDOPregister<0b110, "umax", 0, 0, "">;
+defm LDUMAXA  : LDOPregister<0b110, "umax", 1, 0, "a">;
+defm LDUMAXL  : LDOPregister<0b110, "umax", 0, 1, "l">;
+defm LDUMAXAL : LDOPregister<0b110, "umax", 1, 1, "al">;
+
+defm LDUMIN   : LDOPregister<0b111, "umin", 0, 0, "">;
+defm LDUMINA  : LDOPregister<0b111, "umin", 1, 0, "a">;
+defm LDUMINL  : LDOPregister<0b111, "umin", 0, 1, "l">;
+defm LDUMINAL : LDOPregister<0b111, "umin", 1, 1, "al">;
+
+// v8.1 atomic ST<OP>(register) as aliases to "LD<OP>(register) when Rt=xZR"
+defm : STOPregister<"stadd","LDADD">; // STADDx
+defm : STOPregister<"stclr","LDCLR">; // STCLRx
+defm : STOPregister<"steor","LDEOR">; // STEORx
+defm : STOPregister<"stset","LDSET">; // STSETx
+defm : STOPregister<"stsmax","LDSMAX">;// STSMAXx
+defm : STOPregister<"stsmin","LDSMIN">;// STSMINx
+defm : STOPregister<"stumax","LDUMAX">;// STUMAXx
+defm : STOPregister<"stumin","LDUMIN">;// STUMINx
 
 //===----------------------------------------------------------------------===//
 // Logical instructions.

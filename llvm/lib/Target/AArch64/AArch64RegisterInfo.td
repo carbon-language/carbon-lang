@@ -26,8 +26,12 @@ let Namespace = "AArch64" in {
   def hsub : SubRegIndex<16>;
   def ssub : SubRegIndex<32>;
   def dsub : SubRegIndex<32>;
+  def sube32 : SubRegIndex<32>;
+  def subo32 : SubRegIndex<32>;
   def qhisub : SubRegIndex<64>;
   def qsub : SubRegIndex<64>;
+  def sube64 : SubRegIndex<64>;
+  def subo64 : SubRegIndex<64>;
   // Note: Code depends on these having consecutive numbers
   def dsub0 : SubRegIndex<64>;
   def dsub1 : SubRegIndex<64>;
@@ -592,3 +596,40 @@ def FPR16Op : RegisterOperand<FPR16, "printOperand">;
 def FPR32Op : RegisterOperand<FPR32, "printOperand">;
 def FPR64Op : RegisterOperand<FPR64, "printOperand">;
 def FPR128Op : RegisterOperand<FPR128, "printOperand">;
+
+
+//===----------------------------------------------------------------------===//
+// ARMv8.1a atomic CASP register operands
+
+
+def WSeqPairs : RegisterTuples<[sube32, subo32], 
+                               [(rotl GPR32, 0), (rotl GPR32, 1)]>;
+def XSeqPairs : RegisterTuples<[sube64, subo64], 
+                               [(rotl GPR64, 0), (rotl GPR64, 1)]>;
+
+def WSeqPairsClass   : RegisterClass<"AArch64", [untyped], 32, 
+                                     (add WSeqPairs)>{
+  let Size = 64;
+}
+def XSeqPairsClass   : RegisterClass<"AArch64", [untyped], 64, 
+                                     (add XSeqPairs)>{
+  let Size = 128;
+}
+
+
+let RenderMethod = "addRegOperands", ParserMethod="tryParseGPRSeqPair" in {
+  def WSeqPairsAsmOperandClass : AsmOperandClass { let Name = "WSeqPair"; }
+  def XSeqPairsAsmOperandClass : AsmOperandClass { let Name = "XSeqPair"; }
+}
+
+def WSeqPairClassOperand :
+    RegisterOperand<WSeqPairsClass, "printGPRSeqPairsClassOperand<32>"> {
+  let ParserMatchClass = WSeqPairsAsmOperandClass;
+}
+def XSeqPairClassOperand :
+    RegisterOperand<XSeqPairsClass, "printGPRSeqPairsClassOperand<64>"> {
+  let ParserMatchClass = XSeqPairsAsmOperandClass;
+}
+
+
+//===----- END: v8.1a atomic CASP register operands -----------------------===//
