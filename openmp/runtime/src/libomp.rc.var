@@ -38,17 +38,17 @@ VS_VERSION_INFO VERSIONINFO
             BEGIN
 
                 // FileDescription and LegalCopyright should be short.
-                VALUE "FileDescription",  "Intel(R) OpenMP* Runtime Library${{ our $MESSAGE_CATALOG; $MESSAGE_CATALOG ? " Message Catalog" : "" }}\0"
+                VALUE "FileDescription",  "LLVM* OpenMP* Runtime Library${{ our $MESSAGE_CATALOG; $MESSAGE_CATALOG ? " Message Catalog" : "" }}\0"
                 // Following values may be relatively long.
                 VALUE "CompanyName",      "Intel Corporation\0"
                 // VALUE "LegalTrademarks",  "\0"  // Not used for now.
-                VALUE "ProductName",      "Intel(R) OpenMP* Runtime Library\0"
+                VALUE "ProductName",      "LLVM* OpenMP* Runtime Library\0"
                 VALUE "ProductVersion",   "$KMP_VERSION_MAJOR.$KMP_VERSION_MINOR\0"
                 VALUE "FileVersion",      "$KMP_VERSION_BUILD\0"
                 VALUE "InternalName",     "$KMP_FILE\0"
                 VALUE "OriginalFilename", "$KMP_FILE\0"
                 VALUE "Comments",
-                    "Intel(R) OpenMP* ${{ our ( $MESSAGE_CATALOG, $KMP_TYPE ); $MESSAGE_CATALOG ? "Runtime Library Message Catalog" : "$KMP_TYPE Library" }} "
+                    "LLVM* OpenMP* ${{ our ( $MESSAGE_CATALOG, $KMP_TYPE ); $MESSAGE_CATALOG ? "Runtime Library Message Catalog" : "$KMP_TYPE Library" }} "
                     "version $KMP_VERSION_MAJOR.$KMP_VERSION_MINOR.$KMP_VERSION_BUILD "
                     "for $KMP_ARCH architecture built on $KMP_BUILD_DATE.\0"
                 #if $KMP_VERSION_BUILD == 0
