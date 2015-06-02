@@ -243,12 +243,10 @@ public:
   bool isRelocatableObject() const override;
 };
 
-// Use an alignment of 2 for the typedefs since that is the worst case for
-// ELF files in archives.
-typedef ELFObjectFile<ELFType<support::little, 2, false> > ELF32LEObjectFile;
-typedef ELFObjectFile<ELFType<support::little, 2, true> > ELF64LEObjectFile;
-typedef ELFObjectFile<ELFType<support::big, 2, false> > ELF32BEObjectFile;
-typedef ELFObjectFile<ELFType<support::big, 2, true> > ELF64BEObjectFile;
+typedef ELFObjectFile<ELFType<support::little, false>> ELF32LEObjectFile;
+typedef ELFObjectFile<ELFType<support::little, true>> ELF64LEObjectFile;
+typedef ELFObjectFile<ELFType<support::big, false>> ELF32BEObjectFile;
+typedef ELFObjectFile<ELFType<support::big, true>> ELF64BEObjectFile;
 
 template <class ELFT>
 void ELFObjectFile<ELFT>::moveSymbolNext(DataRefImpl &Symb) const {

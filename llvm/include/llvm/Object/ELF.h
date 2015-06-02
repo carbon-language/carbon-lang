@@ -423,12 +423,10 @@ public:
   StringRef getLoadName() const;
 };
 
-// Use an alignment of 2 for the typedefs since that is the worst case for
-// ELF files in archives.
-typedef ELFFile<ELFType<support::little, 2, false> > ELF32LEFile;
-typedef ELFFile<ELFType<support::little, 2, true> > ELF64LEFile;
-typedef ELFFile<ELFType<support::big, 2, false> > ELF32BEFile;
-typedef ELFFile<ELFType<support::big, 2, true> > ELF64BEFile;
+typedef ELFFile<ELFType<support::little, false>> ELF32LEFile;
+typedef ELFFile<ELFType<support::little, true>> ELF64LEFile;
+typedef ELFFile<ELFType<support::big, false>> ELF32BEFile;
+typedef ELFFile<ELFType<support::big, true>> ELF64BEFile;
 
 // Iterate through the version definitions, and place each Elf_Verdef
 // in the VersionMap according to its index.

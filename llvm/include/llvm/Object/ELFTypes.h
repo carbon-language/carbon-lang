@@ -10,7 +10,6 @@
 #ifndef LLVM_OBJECT_ELFTYPES_H
 #define LLVM_OBJECT_ELFTYPES_H
 
-#include "llvm/Support/AlignOf.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/ELF.h"
 #include "llvm/Support/Endian.h"
@@ -20,95 +19,74 @@ namespace object {
 
 using support::endianness;
 
-template <endianness target_endianness, std::size_t max_alignment,
-          bool is64Bits>
-struct ELFType {
+template <endianness target_endianness, bool is64Bits> struct ELFType {
   static const endianness TargetEndianness = target_endianness;
-  static const std::size_t MaxAlignment = max_alignment;
   static const bool Is64Bits = is64Bits;
 };
 
-template <typename T, int max_align> struct MaximumAlignment {
-  enum { value = AlignOf<T>::Alignment > max_align ? max_align
-                                                   : AlignOf<T>::Alignment
-  };
-};
+// Use an alignment of 2 for the typedefs since that is the worst case for
+// ELF files in archives.
 
 // Templates to choose Elf_Addr and Elf_Off depending on is64Bits.
-template <endianness target_endianness, std::size_t max_alignment>
-struct ELFDataTypeTypedefHelperCommon {
+template <endianness target_endianness> struct ELFDataTypeTypedefHelperCommon {
   typedef support::detail::packed_endian_specific_integral<
-      uint16_t, target_endianness,
-      MaximumAlignment<uint16_t, max_alignment>::value> Elf_Half;
+      uint16_t, target_endianness, 2> Elf_Half;
   typedef support::detail::packed_endian_specific_integral<
-      uint32_t, target_endianness,
-      MaximumAlignment<uint32_t, max_alignment>::value> Elf_Word;
+      uint32_t, target_endianness, 2> Elf_Word;
   typedef support::detail::packed_endian_specific_integral<
-      int32_t, target_endianness,
-      MaximumAlignment<int32_t, max_alignment>::value> Elf_Sword;
+      int32_t, target_endianness, 2> Elf_Sword;
   typedef support::detail::packed_endian_specific_integral<
-      uint64_t, target_endianness,
-      MaximumAlignment<uint64_t, max_alignment>::value> Elf_Xword;
+      uint64_t, target_endianness, 2> Elf_Xword;
   typedef support::detail::packed_endian_specific_integral<
-      int64_t, target_endianness,
-      MaximumAlignment<int64_t, max_alignment>::value> Elf_Sxword;
+      int64_t, target_endianness, 2> Elf_Sxword;
 };
 
 template <class ELFT> struct ELFDataTypeTypedefHelper;
 
 /// ELF 32bit types.
-template <endianness TargetEndianness, std::size_t MaxAlign>
-struct ELFDataTypeTypedefHelper<ELFType<TargetEndianness, MaxAlign, false> >
-    : ELFDataTypeTypedefHelperCommon<TargetEndianness, MaxAlign> {
+template <endianness TargetEndianness>
+struct ELFDataTypeTypedefHelper<ELFType<TargetEndianness, false>>
+    : ELFDataTypeTypedefHelperCommon<TargetEndianness> {
   typedef uint32_t value_type;
   typedef support::detail::packed_endian_specific_integral<
-      value_type, TargetEndianness,
-      MaximumAlignment<value_type, MaxAlign>::value> Elf_Addr;
+      value_type, TargetEndianness, 2> Elf_Addr;
   typedef support::detail::packed_endian_specific_integral<
-      value_type, TargetEndianness,
-      MaximumAlignment<value_type, MaxAlign>::value> Elf_Off;
+      value_type, TargetEndianness, 2> Elf_Off;
 };
 
 /// ELF 64bit types.
-template <endianness TargetEndianness, std::size_t MaxAlign>
-struct ELFDataTypeTypedefHelper<ELFType<TargetEndianness, MaxAlign, true> >
-    : ELFDataTypeTypedefHelperCommon<TargetEndianness, MaxAlign> {
+template <endianness TargetEndianness>
+struct ELFDataTypeTypedefHelper<ELFType<TargetEndianness, true>>
+    : ELFDataTypeTypedefHelperCommon<TargetEndianness> {
   typedef uint64_t value_type;
   typedef support::detail::packed_endian_specific_integral<
-      value_type, TargetEndianness,
-      MaximumAlignment<value_type, MaxAlign>::value> Elf_Addr;
+      value_type, TargetEndianness, 2> Elf_Addr;
   typedef support::detail::packed_endian_specific_integral<
-      value_type, TargetEndianness,
-      MaximumAlignment<value_type, MaxAlign>::value> Elf_Off;
+      value_type, TargetEndianness, 2> Elf_Off;
 };
 
 // I really don't like doing this, but the alternative is copypasta.
-#define LLVM_ELF_IMPORT_TYPES(E, M, W)                                         \
-typedef typename ELFDataTypeTypedefHelper<ELFType<E, M, W> >::Elf_Addr         \
-    Elf_Addr;                                                                  \
-typedef typename ELFDataTypeTypedefHelper<ELFType<E, M, W> >::Elf_Off          \
-    Elf_Off;                                                                   \
-typedef typename ELFDataTypeTypedefHelper<ELFType<E, M, W> >::Elf_Half         \
-    Elf_Half;                                                                  \
-typedef typename ELFDataTypeTypedefHelper<ELFType<E, M, W> >::Elf_Word         \
-    Elf_Word;                                                                  \
-typedef typename ELFDataTypeTypedefHelper<ELFType<E, M, W> >::Elf_Sword        \
-    Elf_Sword;                                                                 \
-typedef typename ELFDataTypeTypedefHelper<ELFType<E, M, W> >::Elf_Xword        \
-    Elf_Xword;                                                                 \
-typedef typename ELFDataTypeTypedefHelper<ELFType<E, M, W> >::Elf_Sxword       \
-    Elf_Sxword;
+#define LLVM_ELF_IMPORT_TYPES(E, W)                                            \
+  typedef typename ELFDataTypeTypedefHelper<ELFType<E, W>>::Elf_Addr Elf_Addr; \
+  typedef typename ELFDataTypeTypedefHelper<ELFType<E, W>>::Elf_Off Elf_Off;   \
+  typedef typename ELFDataTypeTypedefHelper<ELFType<E, W>>::Elf_Half Elf_Half; \
+  typedef typename ELFDataTypeTypedefHelper<ELFType<E, W>>::Elf_Word Elf_Word; \
+  typedef                                                                      \
+      typename ELFDataTypeTypedefHelper<ELFType<E, W>>::Elf_Sword Elf_Sword;   \
+  typedef                                                                      \
+      typename ELFDataTypeTypedefHelper<ELFType<E, W>>::Elf_Xword Elf_Xword;   \
+  typedef                                                                      \
+      typename ELFDataTypeTypedefHelper<ELFType<E, W>>::Elf_Sxword Elf_Sxword;
 
 #define LLVM_ELF_IMPORT_TYPES_ELFT(ELFT)                                       \
-  LLVM_ELF_IMPORT_TYPES(ELFT::TargetEndianness, ELFT::MaxAlignment,            \
-                        ELFT::Is64Bits)
+  LLVM_ELF_IMPORT_TYPES(ELFT::TargetEndianness, ELFT::Is64Bits)
 
 // Section header.
 template <class ELFT> struct Elf_Shdr_Base;
 
-template <endianness TargetEndianness, std::size_t MaxAlign>
-struct Elf_Shdr_Base<ELFType<TargetEndianness, MaxAlign, false> > {
-  LLVM_ELF_IMPORT_TYPES(TargetEndianness, MaxAlign, false)
+template <endianness TargetEndianness>
+struct Elf_Shdr_Base<ELFType<TargetEndianness, false>> {
+  LLVM_ELF_IMPORT_TYPES(TargetEndianness, false)
   Elf_Word sh_name;      // Section name (index into string table)
   Elf_Word sh_type;      // Section type (SHT_*)
   Elf_Word sh_flags;     // Section flags (SHF_*)
@@ -121,9 +99,9 @@ struct Elf_Shdr_Base<ELFType<TargetEndianness, MaxAlign, false> > {
   Elf_Word sh_entsize;   // Size of records contained within the section
 };
 
-template <endianness TargetEndianness, std::size_t MaxAlign>
-struct Elf_Shdr_Base<ELFType<TargetEndianness, MaxAlign, true> > {
-  LLVM_ELF_IMPORT_TYPES(TargetEndianness, MaxAlign, true)
+template <endianness TargetEndianness>
+struct Elf_Shdr_Base<ELFType<TargetEndianness, true>> {
+  LLVM_ELF_IMPORT_TYPES(TargetEndianness, true)
   Elf_Word sh_name;       // Section name (index into string table)
   Elf_Word sh_type;       // Section type (SHT_*)
   Elf_Xword sh_flags;     // Section flags (SHF_*)
@@ -151,9 +129,9 @@ struct Elf_Shdr_Impl : Elf_Shdr_Base<ELFT> {
 
 template <class ELFT> struct Elf_Sym_Base;
 
-template <endianness TargetEndianness, std::size_t MaxAlign>
-struct Elf_Sym_Base<ELFType<TargetEndianness, MaxAlign, false> > {
-  LLVM_ELF_IMPORT_TYPES(TargetEndianness, MaxAlign, false)
+template <endianness TargetEndianness>
+struct Elf_Sym_Base<ELFType<TargetEndianness, false>> {
+  LLVM_ELF_IMPORT_TYPES(TargetEndianness, false)
   Elf_Word st_name;       // Symbol name (index into string table)
   Elf_Addr st_value;      // Value or address associated with the symbol
   Elf_Word st_size;       // Size of the symbol
@@ -162,9 +140,9 @@ struct Elf_Sym_Base<ELFType<TargetEndianness, MaxAlign, false> > {
   Elf_Half st_shndx;      // Which section (header table index) it's defined in
 };
 
-template <endianness TargetEndianness, std::size_t MaxAlign>
-struct Elf_Sym_Base<ELFType<TargetEndianness, MaxAlign, true> > {
-  LLVM_ELF_IMPORT_TYPES(TargetEndianness, MaxAlign, true)
+template <endianness TargetEndianness>
+struct Elf_Sym_Base<ELFType<TargetEndianness, true>> {
+  LLVM_ELF_IMPORT_TYPES(TargetEndianness, true)
   Elf_Word st_name;       // Symbol name (index into string table)
   unsigned char st_info;  // Symbol's type and binding attributes
   unsigned char st_other; // Must be zero; reserved
@@ -267,9 +245,9 @@ struct Elf_Vernaux_Impl {
 ///               table section (.dynamic) look like.
 template <class ELFT> struct Elf_Dyn_Base;
 
-template <endianness TargetEndianness, std::size_t MaxAlign>
-struct Elf_Dyn_Base<ELFType<TargetEndianness, MaxAlign, false> > {
-  LLVM_ELF_IMPORT_TYPES(TargetEndianness, MaxAlign, false)
+template <endianness TargetEndianness>
+struct Elf_Dyn_Base<ELFType<TargetEndianness, false>> {
+  LLVM_ELF_IMPORT_TYPES(TargetEndianness, false)
   Elf_Sword d_tag;
   union {
     Elf_Word d_val;
@@ -277,9 +255,9 @@ struct Elf_Dyn_Base<ELFType<TargetEndianness, MaxAlign, false> > {
   } d_un;
 };
 
-template <endianness TargetEndianness, std::size_t MaxAlign>
-struct Elf_Dyn_Base<ELFType<TargetEndianness, MaxAlign, true> > {
-  LLVM_ELF_IMPORT_TYPES(TargetEndianness, MaxAlign, true)
+template <endianness TargetEndianness>
+struct Elf_Dyn_Base<ELFType<TargetEndianness, true>> {
+  LLVM_ELF_IMPORT_TYPES(TargetEndianness, true)
   Elf_Sxword d_tag;
   union {
     Elf_Xword d_val;
@@ -300,9 +278,9 @@ struct Elf_Dyn_Impl : Elf_Dyn_Base<ELFT> {
 // Elf_Rel: Elf Relocation
 template <class ELFT, bool isRela> struct Elf_Rel_Base;
 
-template <endianness TargetEndianness, std::size_t MaxAlign>
-struct Elf_Rel_Base<ELFType<TargetEndianness, MaxAlign, false>, false> {
-  LLVM_ELF_IMPORT_TYPES(TargetEndianness, MaxAlign, false)
+template <endianness TargetEndianness>
+struct Elf_Rel_Base<ELFType<TargetEndianness, false>, false> {
+  LLVM_ELF_IMPORT_TYPES(TargetEndianness, false)
   Elf_Addr r_offset; // Location (file byte offset, or program virtual addr)
   Elf_Word r_info;   // Symbol table index and type of relocation to apply
 
@@ -316,9 +294,9 @@ struct Elf_Rel_Base<ELFType<TargetEndianness, MaxAlign, false>, false> {
   }
 };
 
-template <endianness TargetEndianness, std::size_t MaxAlign>
-struct Elf_Rel_Base<ELFType<TargetEndianness, MaxAlign, true>, false> {
-  LLVM_ELF_IMPORT_TYPES(TargetEndianness, MaxAlign, true)
+template <endianness TargetEndianness>
+struct Elf_Rel_Base<ELFType<TargetEndianness, true>, false> {
+  LLVM_ELF_IMPORT_TYPES(TargetEndianness, true)
   Elf_Addr r_offset; // Location (file byte offset, or program virtual addr)
   Elf_Xword r_info;  // Symbol table index and type of relocation to apply
 
@@ -341,9 +319,9 @@ struct Elf_Rel_Base<ELFType<TargetEndianness, MaxAlign, true>, false> {
   }
 };
 
-template <endianness TargetEndianness, std::size_t MaxAlign>
-struct Elf_Rel_Base<ELFType<TargetEndianness, MaxAlign, false>, true> {
-  LLVM_ELF_IMPORT_TYPES(TargetEndianness, MaxAlign, false)
+template <endianness TargetEndianness>
+struct Elf_Rel_Base<ELFType<TargetEndianness, false>, true> {
+  LLVM_ELF_IMPORT_TYPES(TargetEndianness, false)
   Elf_Addr r_offset;  // Location (file byte offset, or program virtual addr)
   Elf_Word r_info;    // Symbol table index and type of relocation to apply
   Elf_Sword r_addend; // Compute value for relocatable field by adding this
@@ -358,9 +336,9 @@ struct Elf_Rel_Base<ELFType<TargetEndianness, MaxAlign, false>, true> {
   }
 };
 
-template <endianness TargetEndianness, std::size_t MaxAlign>
-struct Elf_Rel_Base<ELFType<TargetEndianness, MaxAlign, true>, true> {
-  LLVM_ELF_IMPORT_TYPES(TargetEndianness, MaxAlign, true)
+template <endianness TargetEndianness>
+struct Elf_Rel_Base<ELFType<TargetEndianness, true>, true> {
+  LLVM_ELF_IMPORT_TYPES(TargetEndianness, true)
   Elf_Addr r_offset;   // Location (file byte offset, or program virtual addr)
   Elf_Xword r_info;    // Symbol table index and type of relocation to apply
   Elf_Sxword r_addend; // Compute value for relocatable field by adding this.
@@ -386,11 +364,10 @@ struct Elf_Rel_Base<ELFType<TargetEndianness, MaxAlign, true>, true> {
 
 template <class ELFT, bool isRela> struct Elf_Rel_Impl;
 
-template <endianness TargetEndianness, std::size_t MaxAlign, bool isRela>
-struct Elf_Rel_Impl<ELFType<TargetEndianness, MaxAlign, true>,
-                    isRela> : Elf_Rel_Base<
-    ELFType<TargetEndianness, MaxAlign, true>, isRela> {
-  LLVM_ELF_IMPORT_TYPES(TargetEndianness, MaxAlign, true)
+template <endianness TargetEndianness, bool isRela>
+struct Elf_Rel_Impl<ELFType<TargetEndianness, true>, isRela>
+    : Elf_Rel_Base<ELFType<TargetEndianness, true>, isRela> {
+  LLVM_ELF_IMPORT_TYPES(TargetEndianness, true)
 
   // These accessors and mutators correspond to the ELF64_R_SYM, ELF64_R_TYPE,
   // and ELF64_R_INFO macros defined in the ELF specification:
@@ -411,11 +388,10 @@ struct Elf_Rel_Impl<ELFType<TargetEndianness, MaxAlign, true>,
   }
 };
 
-template <endianness TargetEndianness, std::size_t MaxAlign, bool isRela>
-struct Elf_Rel_Impl<ELFType<TargetEndianness, MaxAlign, false>,
-                    isRela> : Elf_Rel_Base<
-    ELFType<TargetEndianness, MaxAlign, false>, isRela> {
-  LLVM_ELF_IMPORT_TYPES(TargetEndianness, MaxAlign, false)
+template <endianness TargetEndianness, bool isRela>
+struct Elf_Rel_Impl<ELFType<TargetEndianness, false>, isRela>
+    : Elf_Rel_Base<ELFType<TargetEndianness, false>, isRela> {
+  LLVM_ELF_IMPORT_TYPES(TargetEndianness, false)
 
   // These accessors and mutators correspond to the ELF32_R_SYM, ELF32_R_TYPE,
   // and ELF32_R_INFO macros defined in the ELF specification:
@@ -463,9 +439,9 @@ struct Elf_Ehdr_Impl {
 
 template <class ELFT> struct Elf_Phdr_Impl;
 
-template <endianness TargetEndianness, std::size_t MaxAlign>
-struct Elf_Phdr_Impl<ELFType<TargetEndianness, MaxAlign, false> > {
-  LLVM_ELF_IMPORT_TYPES(TargetEndianness, MaxAlign, false)
+template <endianness TargetEndianness>
+struct Elf_Phdr_Impl<ELFType<TargetEndianness, false>> {
+  LLVM_ELF_IMPORT_TYPES(TargetEndianness, false)
   Elf_Word p_type;   // Type of segment
   Elf_Off p_offset;  // FileOffset where segment is located, in bytes
   Elf_Addr p_vaddr;  // Virtual Address of beginning of segment
@@ -476,9 +452,9 @@ struct Elf_Phdr_Impl<ELFType<TargetEndianness, MaxAlign, false> > {
   Elf_Word p_align;  // Segment alignment constraint
 };
 
-template <endianness TargetEndianness, std::size_t MaxAlign>
-struct Elf_Phdr_Impl<ELFType<TargetEndianness, MaxAlign, true> > {
-  LLVM_ELF_IMPORT_TYPES(TargetEndianness, MaxAlign, true)
+template <endianness TargetEndianness>
+struct Elf_Phdr_Impl<ELFType<TargetEndianness, true>> {
+  LLVM_ELF_IMPORT_TYPES(TargetEndianness, true)
   Elf_Word p_type;    // Type of segment
   Elf_Word p_flags;   // Segment flags
   Elf_Off p_offset;   // FileOffset where segment is located, in bytes
@@ -493,17 +469,17 @@ struct Elf_Phdr_Impl<ELFType<TargetEndianness, MaxAlign, true> > {
 template <class ELFT>
 struct Elf_Mips_RegInfo;
 
-template <llvm::support::endianness TargetEndianness, std::size_t MaxAlign>
-struct Elf_Mips_RegInfo<ELFType<TargetEndianness, MaxAlign, false>> {
-  LLVM_ELF_IMPORT_TYPES(TargetEndianness, MaxAlign, false)
+template <llvm::support::endianness TargetEndianness>
+struct Elf_Mips_RegInfo<ELFType<TargetEndianness, false>> {
+  LLVM_ELF_IMPORT_TYPES(TargetEndianness, false)
   Elf_Word ri_gprmask;     // bit-mask of used general registers
   Elf_Word ri_cprmask[4];  // bit-mask of used co-processor registers
   Elf_Addr ri_gp_value;    // gp register value
 };
 
-template <llvm::support::endianness TargetEndianness, std::size_t MaxAlign>
-struct Elf_Mips_RegInfo<ELFType<TargetEndianness, MaxAlign, true>> {
-  LLVM_ELF_IMPORT_TYPES(TargetEndianness, MaxAlign, true)
+template <llvm::support::endianness TargetEndianness>
+struct Elf_Mips_RegInfo<ELFType<TargetEndianness, true>> {
+  LLVM_ELF_IMPORT_TYPES(TargetEndianness, true)
   Elf_Word ri_gprmask;     // bit-mask of used general registers
   Elf_Word ri_pad;         // unused padding field
   Elf_Word ri_cprmask[4];  // bit-mask of used co-processor registers

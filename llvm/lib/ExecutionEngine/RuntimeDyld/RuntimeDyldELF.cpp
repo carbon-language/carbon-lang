@@ -157,16 +157,16 @@ OwningBinary<ObjectFile> createELFDebugObject(const ObjectFile &Obj,
 
   std::unique_ptr<ObjectFile> DebugObj;
   if (Obj.getBytesInAddress() == 4 && Obj.isLittleEndian()) {
-    typedef ELFType<support::little, 2, false> ELF32LE;
+    typedef ELFType<support::little, false> ELF32LE;
     DebugObj = createRTDyldELFObject<ELF32LE>(Buffer->getMemBufferRef(), L, ec);
   } else if (Obj.getBytesInAddress() == 4 && !Obj.isLittleEndian()) {
-    typedef ELFType<support::big, 2, false> ELF32BE;
+    typedef ELFType<support::big, false> ELF32BE;
     DebugObj = createRTDyldELFObject<ELF32BE>(Buffer->getMemBufferRef(), L, ec);
   } else if (Obj.getBytesInAddress() == 8 && !Obj.isLittleEndian()) {
-    typedef ELFType<support::big, 2, true> ELF64BE;
+    typedef ELFType<support::big, true> ELF64BE;
     DebugObj = createRTDyldELFObject<ELF64BE>(Buffer->getMemBufferRef(), L, ec);
   } else if (Obj.getBytesInAddress() == 8 && Obj.isLittleEndian()) {
-    typedef ELFType<support::little, 2, true> ELF64LE;
+    typedef ELFType<support::little, true> ELF64LE;
     DebugObj = createRTDyldELFObject<ELF64LE>(Buffer->getMemBufferRef(), L, ec);
   } else
     llvm_unreachable("Unexpected ELF format");
