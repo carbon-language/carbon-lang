@@ -165,9 +165,6 @@ class kmp_stats_list;
 # define USEC_PER_SEC 1000000L
 #endif
 
-// For error messages
-#define KMP_IOMP_NAME       "Intel(R) OMP"
-
 /*!
 @ingroup BASIC_TYPES
 @{
