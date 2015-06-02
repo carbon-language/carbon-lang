@@ -1640,8 +1640,6 @@ FormatStyle getStyle(StringRef StyleName, StringRef FileName,
       return Style;
     }
   }
-  llvm::errs() << "Can't find usable .clang-format, using " << FallbackStyle
-               << " style\n";
   if (!UnsuitableConfigFiles.empty()) {
     llvm::errs() << "Configuration file(s) do(es) not support "
                  << getLanguageName(Style.Language) << ": "
