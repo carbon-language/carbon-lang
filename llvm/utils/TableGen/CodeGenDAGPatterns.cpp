@@ -842,8 +842,8 @@ getPatternComplexity(const CodeGenDAGPatterns &CGP) const {
 ///
 std::string PatternToMatch::getPredicateCheck() const {
   std::string PredicateCheck;
-  for (unsigned i = 0, e = Predicates->getSize(); i != e; ++i) {
-    if (DefInit *Pred = dyn_cast<DefInit>(Predicates->getElement(i))) {
+  for (Init *I : Predicates->getValues()) {
+    if (DefInit *Pred = dyn_cast<DefInit>(I)) {
       Record *Def = Pred->getDef();
       if (!Def->isSubClassOf("Predicate")) {
 #ifndef NDEBUG
@@ -1999,8 +1999,8 @@ bool TreePatternNode::canPatternMatch(std::string &Reason,
 TreePattern::TreePattern(Record *TheRec, ListInit *RawPat, bool isInput,
                          CodeGenDAGPatterns &cdp) : TheRecord(TheRec), CDP(cdp),
                          isInputPattern(isInput), HasError(false) {
-  for (unsigned i = 0, e = RawPat->getSize(); i != e; ++i)
-    Trees.push_back(ParseTreePattern(RawPat->getElement(i), ""));
+  for (Init *I : RawPat->getValues())
+    Trees.push_back(ParseTreePattern(I, ""));
 }
 
 TreePattern::TreePattern(Record *TheRec, DagInit *Pat, bool isInput,
@@ -2860,8 +2860,8 @@ static bool hasNullFragReference(DagInit *DI) {
 /// hasNullFragReference - Return true if any DAG in the list references
 /// the null_frag operator.
 static bool hasNullFragReference(ListInit *LI) {
-  for (unsigned i = 0, e = LI->getSize(); i != e; ++i) {
-    DagInit *DI = dyn_cast<DagInit>(LI->getElement(i));
+  for (Init *I : LI->getValues()) {
+    DagInit *DI = dyn_cast<DagInit>(I);
     assert(DI && "non-dag in an instruction Pattern list?!");
     if (hasNullFragReference(DI))
       return true;
