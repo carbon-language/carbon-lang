@@ -12,10 +12,10 @@
 #include "MCTargetDesc/MipsMCTargetDesc.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/MC/MCAssembler.h"
-#include "llvm/MC/MCELF.h"
 #include "llvm/MC/MCELFObjectWriter.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCSection.h"
+#include "llvm/MC/MCSymbolELF.h"
 #include "llvm/MC/MCValue.h"
 #include "llvm/Support/ErrorHandling.h"
 #include <list>
@@ -224,7 +224,7 @@ static unsigned getMatchingLoType(const MCAssembler &Asm,
   if (Type == ELF::R_MIPS16_HI16)
     return ELF::R_MIPS16_LO16;
 
-  if (MCELF::GetBinding(*Reloc.Symbol) != ELF::STB_LOCAL)
+  if (Reloc.Symbol->getBinding() != ELF::STB_LOCAL)
     return ELF::R_MIPS_NONE;
 
   if (Type == ELF::R_MIPS_GOT16)
@@ -384,7 +384,7 @@ bool MipsELFObjectWriter::needsRelocateWithSymbol(const MCSymbol &Sym,
     return true;
 
   case ELF::R_MIPS_32:
-    if (MCELF::getOther(Sym) & (ELF::STO_MIPS_MICROMIPS >> 2))
+    if (cast<MCSymbolELF>(Sym).getOther() & (ELF::STO_MIPS_MICROMIPS >> 2))
       return true;
     // falltrough
   case ELF::R_MIPS_26:

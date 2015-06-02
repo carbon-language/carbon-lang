@@ -24,6 +24,18 @@ public:
 
   const MCExpr *getSize() const { return SymbolSize; }
 
+  void setVisibility(unsigned Visibility);
+  unsigned getVisibility() const;
+
+  void setOther(unsigned Other);
+  unsigned getOther() const;
+
+  void setType(unsigned Type) const;
+  unsigned getType() const;
+
+  void setBinding(unsigned Binding) const;
+  unsigned getBinding() const;
+
   static bool classof(const MCSymbol *S) { return S->isELF(); }
 };
 }

@@ -20,7 +20,6 @@
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCCodeEmitter.h"
 #include "llvm/MC/MCContext.h"
-#include "llvm/MC/MCELF.h"
 #include "llvm/MC/MCELFSymbolFlags.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
@@ -107,7 +106,8 @@ void MCELFStreamer::InitSections(bool NoExecStack) {
     SwitchSection(Ctx.getAsmInfo()->getNonexecutableStackSection(Ctx));
 }
 
-void MCELFStreamer::EmitLabel(MCSymbol *Symbol) {
+void MCELFStreamer::EmitLabel(MCSymbol *S) {
+  auto *Symbol = cast<MCSymbolELF>(S);
   assert(Symbol->isUndefined() && "Cannot define a symbol twice!");
 
   MCObjectStreamer::EmitLabel(Symbol);
@@ -115,7 +115,7 @@ void MCELFStreamer::EmitLabel(MCSymbol *Symbol) {
   const MCSectionELF &Section =
     static_cast<const MCSectionELF&>(Symbol->getSection());
   if (Section.getFlags() & ELF::SHF_TLS)
-    MCELF::SetType(*Symbol, ELF::STT_TLS);
+    Symbol->setType(ELF::STT_TLS);
 }
 
 void MCELFStreamer::EmitAssemblerFlag(MCAssemblerFlag Flag) {
@@ -160,14 +160,14 @@ void MCELFStreamer::ChangeSection(MCSection *Section,
 
   this->MCObjectStreamer::ChangeSection(Section, Subsection);
   MCContext &Ctx = getContext();
-  MCSymbol *Begin = Section->getBeginSymbol();
+  auto *Begin = cast_or_null<MCSymbolELF>(Section->getBeginSymbol());
   if (!Begin) {
     Begin = Ctx.getOrCreateSectionSymbol(*SectionELF);
     Section->setBeginSymbol(Begin);
   }
   if (Begin->isUndefined()) {
     Asm.registerSymbol(*Begin);
-    MCELF::SetType(*Begin, ELF::STT_SECTION);
+    Begin->setType(ELF::STT_SECTION);
   }
 }
 
@@ -197,8 +197,8 @@ static unsigned CombineSymbolTypes(unsigned T1, unsigned T2) {
   return T2;
 }
 
-bool MCELFStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
-                                        MCSymbolAttr Attribute) {
+bool MCELFStreamer::EmitSymbolAttribute(MCSymbol *S, MCSymbolAttr Attribute) {
+  auto *Symbol = cast<MCSymbolELF>(S);
   // Indirect symbols are handled differently, to match how 'as' handles
   // them. This makes writing matching .o files easier.
   if (Attribute == MCSA_IndirectSymbol) {
@@ -238,91 +238,85 @@ bool MCELFStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
     break;
 
   case MCSA_ELF_TypeGnuUniqueObject:
-    MCELF::SetType(
-        *Symbol, CombineSymbolTypes(MCELF::GetType(*Symbol), ELF::STT_OBJECT));
-    MCELF::SetBinding(*Symbol, ELF::STB_GNU_UNIQUE);
+    Symbol->setType(CombineSymbolTypes(Symbol->getType(), ELF::STT_OBJECT));
+    Symbol->setBinding(ELF::STB_GNU_UNIQUE);
     Symbol->setExternal(true);
     BindingExplicitlySet.insert(Symbol);
     break;
 
   case MCSA_Global:
-    MCELF::SetBinding(*Symbol, ELF::STB_GLOBAL);
+    Symbol->setBinding(ELF::STB_GLOBAL);
     Symbol->setExternal(true);
     BindingExplicitlySet.insert(Symbol);
     break;
 
   case MCSA_WeakReference:
   case MCSA_Weak:
-    MCELF::SetBinding(*Symbol, ELF::STB_WEAK);
+    Symbol->setBinding(ELF::STB_WEAK);
     Symbol->setExternal(true);
     BindingExplicitlySet.insert(Symbol);
     break;
 
   case MCSA_Local:
-    MCELF::SetBinding(*Symbol, ELF::STB_LOCAL);
+    Symbol->setBinding(ELF::STB_LOCAL);
     Symbol->setExternal(false);
     BindingExplicitlySet.insert(Symbol);
     break;
 
   case MCSA_ELF_TypeFunction:
-    MCELF::SetType(*Symbol,
-                   CombineSymbolTypes(MCELF::GetType(*Symbol), ELF::STT_FUNC));
+    Symbol->setType(CombineSymbolTypes(Symbol->getType(), ELF::STT_FUNC));
     break;
 
   case MCSA_ELF_TypeIndFunction:
-    MCELF::SetType(*Symbol, CombineSymbolTypes(MCELF::GetType(*Symbol),
-                                               ELF::STT_GNU_IFUNC));
+    Symbol->setType(CombineSymbolTypes(Symbol->getType(), ELF::STT_GNU_IFUNC));
     break;
 
   case MCSA_ELF_TypeObject:
-    MCELF::SetType(
-        *Symbol, CombineSymbolTypes(MCELF::GetType(*Symbol), ELF::STT_OBJECT));
+    Symbol->setType(CombineSymbolTypes(Symbol->getType(), ELF::STT_OBJECT));
     break;
 
   case MCSA_ELF_TypeTLS:
-    MCELF::SetType(*Symbol,
-                   CombineSymbolTypes(MCELF::GetType(*Symbol), ELF::STT_TLS));
+    Symbol->setType(CombineSymbolTypes(Symbol->getType(), ELF::STT_TLS));
     break;
 
   case MCSA_ELF_TypeCommon:
     // TODO: Emit these as a common symbol.
-    MCELF::SetType(
-        *Symbol, CombineSymbolTypes(MCELF::GetType(*Symbol), ELF::STT_OBJECT));
+    Symbol->setType(CombineSymbolTypes(Symbol->getType(), ELF::STT_OBJECT));
     break;
 
   case MCSA_ELF_TypeNoType:
-    MCELF::SetType(
-        *Symbol, CombineSymbolTypes(MCELF::GetType(*Symbol), ELF::STT_NOTYPE));
+    Symbol->setType(CombineSymbolTypes(Symbol->getType(), ELF::STT_NOTYPE));
     break;
 
   case MCSA_Protected:
-    MCELF::SetVisibility(*Symbol, ELF::STV_PROTECTED);
+    Symbol->setVisibility(ELF::STV_PROTECTED);
     break;
 
   case MCSA_Hidden:
-    MCELF::SetVisibility(*Symbol, ELF::STV_HIDDEN);
+    Symbol->setVisibility(ELF::STV_HIDDEN);
     break;
 
   case MCSA_Internal:
-    MCELF::SetVisibility(*Symbol, ELF::STV_INTERNAL);
+    Symbol->setVisibility(ELF::STV_INTERNAL);
     break;
   }
 
   return true;
 }
 
-void MCELFStreamer::EmitCommonSymbol(MCSymbol *Symbol, uint64_t Size,
+void MCELFStreamer::EmitCommonSymbol(MCSymbol *S, uint64_t Size,
                                      unsigned ByteAlignment) {
+  auto *Symbol = cast<MCSymbolELF>(S);
   getAssembler().registerSymbol(*Symbol);
 
   if (!BindingExplicitlySet.count(Symbol)) {
-    MCELF::SetBinding(*Symbol, ELF::STB_GLOBAL);
+    Symbol->setBinding(ELF::STB_GLOBAL);
     Symbol->setExternal(true);
   }
 
-  MCELF::SetType(*Symbol, ELF::STT_OBJECT);
+  Symbol->setType(ELF::STT_OBJECT);
 
-  if (MCELF::GetBinding(*Symbol) == ELF_STB_Local) {
+  if (Symbol->getBinding() == ELF_STB_Local) {
     MCSection *Section = getAssembler().getContext().getELFSection(
         ".bss", ELF::SHT_NOBITS, ELF::SHF_WRITE | ELF::SHF_ALLOC);
 
@@ -342,11 +336,12 @@ void MCELFStreamer::emitELFSize(MCSymbolELF *Symbol, const MCExpr *Value) {
   Symbol->setSize(Value);
 }
 
-void MCELFStreamer::EmitLocalCommonSymbol(MCSymbol *Symbol, uint64_t Size,
+void MCELFStreamer::EmitLocalCommonSymbol(MCSymbol *S, uint64_t Size,
                                           unsigned ByteAlignment) {
+  auto *Symbol = cast<MCSymbolELF>(S);
   // FIXME: Should this be caught and done earlier?
   getAssembler().registerSymbol(*Symbol);
-  MCELF::SetBinding(*Symbol, ELF::STB_LOCAL);
+  Symbol->setBinding(ELF::STB_LOCAL);
   Symbol->setExternal(false);
   BindingExplicitlySet.insert(Symbol);
   EmitCommonSymbol(Symbol, Size, ByteAlignment);
@@ -463,7 +458,7 @@ void MCELFStreamer::fixSymbolsInTLSFixups(const MCExpr *expr) {
       break;
     }
     getAssembler().registerSymbol(symRef.getSymbol());
-    MCELF::SetType(symRef.getSymbol(), ELF::STT_TLS);
+    cast<MCSymbolELF>(symRef.getSymbol()).setType(ELF::STT_TLS);
     break;
   }
 

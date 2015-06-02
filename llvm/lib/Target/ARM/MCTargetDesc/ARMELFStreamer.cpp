@@ -22,7 +22,6 @@
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCCodeEmitter.h"
 #include "llvm/MC/MCContext.h"
-#include "llvm/MC/MCELF.h"
 #include "llvm/MC/MCELFStreamer.h"
 #include "llvm/MC/MCELFSymbolFlags.h"
 #include "llvm/MC/MCExpr.h"
@@ -34,7 +33,7 @@
 #include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCSectionELF.h"
 #include "llvm/MC/MCStreamer.h"
-#include "llvm/MC/MCSymbol.h"
+#include "llvm/MC/MCSymbolELF.h"
 #include "llvm/MC/MCValue.h"
 #include "llvm/Support/ARMBuildAttributes.h"
 #include "llvm/Support/ARMEHABI.h"
@@ -562,13 +561,12 @@ private:
     MCSymbol *Start = getContext().createTempSymbol();
     EmitLabel(Start);
 
-    MCSymbol *Symbol =
-      getContext().getOrCreateSymbol(Name + "." +
-                                     Twine(MappingSymbolCounter++));
+    auto *Symbol = cast<MCSymbolELF>(getContext().getOrCreateSymbol(
+        Name + "." + Twine(MappingSymbolCounter++)));
 
     getAssembler().registerSymbol(*Symbol);
-    MCELF::SetType(*Symbol, ELF::STT_NOTYPE);
-    MCELF::SetBinding(*Symbol, ELF::STB_LOCAL);
+    Symbol->setType(ELF::STT_NOTYPE);
+    Symbol->setBinding(ELF::STB_LOCAL);
     Symbol->setExternal(false);
     AssignSection(Symbol, getCurrentSection().first);
 
@@ -973,7 +971,7 @@ void ARMTargetELFStreamer::emitLabel(MCSymbol *Symbol) {
     return;
 
   Streamer.getOrCreateSymbolData(Symbol);
-  unsigned Type = MCELF::GetType(*Symbol);
+  unsigned Type = cast<MCSymbolELF>(Symbol)->getType();
   if (Type == ELF_STT_Func || Type == ELF_STT_GnuIFunc)
     Streamer.EmitThumbFunc(Symbol);
 }

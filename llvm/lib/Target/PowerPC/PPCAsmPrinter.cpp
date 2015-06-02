@@ -49,7 +49,7 @@
 #include "llvm/MC/MCSectionELF.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCStreamer.h"
-#include "llvm/MC/MCSymbol.h"
+#include "llvm/MC/MCSymbolELF.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ELF.h"
@@ -1166,7 +1166,7 @@ void PPCLinuxAsmPrinter::EmitFunctionBodyStart() {
       static_cast<PPCTargetStreamer *>(OutStreamer->getTargetStreamer());
 
     if (TS)
-      TS->emitLocalEntry(CurrentFnSym, LocalOffsetExp);
+      TS->emitLocalEntry(cast<MCSymbolELF>(CurrentFnSym), LocalOffsetExp);
   }
 }
 

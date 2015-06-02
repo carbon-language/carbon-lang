@@ -21,16 +21,17 @@ class MCFixup;
 class MCFragment;
 class MCObjectWriter;
 class MCSymbol;
+class MCSymbolELF;
 class MCValue;
 class raw_pwrite_stream;
 
 struct ELFRelocationEntry {
   uint64_t Offset; // Where is the relocation.
-  const MCSymbol *Symbol;       // The symbol to relocate with.
+  const MCSymbolELF *Symbol; // The symbol to relocate with.
   unsigned Type;   // The type of the relocation.
   uint64_t Addend; // The addend to use.
 
-  ELFRelocationEntry(uint64_t Offset, const MCSymbol *Symbol, unsigned Type,
+  ELFRelocationEntry(uint64_t Offset, const MCSymbolELF *Symbol, unsigned Type,
                      uint64_t Addend)
       : Offset(Offset), Symbol(Symbol), Type(Type), Addend(Addend) {}
 };

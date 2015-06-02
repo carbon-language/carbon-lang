@@ -11,12 +11,12 @@
 #include "MCTargetDesc/PPCFixupKinds.h"
 #include "llvm/MC/MCAsmBackend.h"
 #include "llvm/MC/MCAssembler.h"
-#include "llvm/MC/MCELF.h"
 #include "llvm/MC/MCELFObjectWriter.h"
 #include "llvm/MC/MCFixupKindInfo.h"
 #include "llvm/MC/MCMachObjectWriter.h"
 #include "llvm/MC/MCObjectWriter.h"
 #include "llvm/MC/MCSectionMachO.h"
+#include "llvm/MC/MCSymbolELF.h"
 #include "llvm/MC/MCValue.h"
 #include "llvm/Support/ELF.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -142,12 +142,14 @@ public:
       // to resolve the fixup directly.  Emit a relocation and leave
       // resolution of the final target address to the linker.
       if (const MCSymbolRefExpr *A = Target.getSymA()) {
-        // The "other" values are stored in the last 6 bits of the second byte.
-        // The traditional defines for STO values assume the full byte and thus
-        // the shift to pack it.
-        unsigned Other = MCELF::getOther(A->getSymbol()) << 2;
-        if ((Other & ELF::STO_PPC64_LOCAL_MASK) != 0)
-          IsResolved = false;
+        if (const auto *S = dyn_cast<MCSymbolELF>(&A->getSymbol())) {
+          // The "other" values are stored in the last 6 bits of the second
+          // byte. The traditional defines for STO values assume the full byte
+          // and thus the shift to pack it.
+          unsigned Other = S->getOther() << 2;
+          if ((Other & ELF::STO_PPC64_LOCAL_MASK) != 0)
+            IsResolved = false;
+        }
       }
       break;
     }

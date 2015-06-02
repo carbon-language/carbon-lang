@@ -17,10 +17,9 @@
 #include "MipsTargetObjectFile.h"
 #include "MipsTargetStreamer.h"
 #include "llvm/MC/MCContext.h"
-#include "llvm/MC/MCELF.h"
 #include "llvm/MC/MCSectionELF.h"
 #include "llvm/MC/MCSubtargetInfo.h"
-#include "llvm/MC/MCSymbol.h"
+#include "llvm/MC/MCSymbolELF.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ELF.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -454,18 +453,19 @@ MipsTargetELFStreamer::MipsTargetELFStreamer(MCStreamer &S,
   MCA.setELFHeaderEFlags(EFlags);
 }
 
-void MipsTargetELFStreamer::emitLabel(MCSymbol *Symbol) {
+void MipsTargetELFStreamer::emitLabel(MCSymbol *S) {
+  auto *Symbol = cast<MCSymbolELF>(S);
   if (!isMicroMipsEnabled())
     return;
   getStreamer().getOrCreateSymbolData(Symbol);
-  uint8_t Type = MCELF::GetType(*Symbol);
+  uint8_t Type = Symbol->getType();
   if (Type != ELF::STT_FUNC)
     return;
 
   // The "other" values are stored in the last 6 bits of the second byte
   // The traditional defines for STO values assume the full byte and thus
   // the shift to pack it.
-  MCELF::setOther(*Symbol, ELF::STO_MIPS_MICROMIPS >> 2);
+  Symbol->setOther(ELF::STO_MIPS_MICROMIPS >> 2);
 }
 
 void MipsTargetELFStreamer::finish() {
@@ -519,21 +519,21 @@ void MipsTargetELFStreamer::finish() {
   emitMipsAbiFlags();
 }
 
-void MipsTargetELFStreamer::emitAssignment(MCSymbol *Symbol,
-                                           const MCExpr *Value) {
+void MipsTargetELFStreamer::emitAssignment(MCSymbol *S, const MCExpr *Value) {
+  auto *Symbol = cast<MCSymbolELF>(S);
   // If on rhs is micromips symbol then mark Symbol as microMips.
   if (Value->getKind() != MCExpr::SymbolRef)
     return;
-  const MCSymbol &RhsSym =
-      static_cast<const MCSymbolRefExpr *>(Value)->getSymbol();
+  const auto &RhsSym = cast<MCSymbolELF>(
+      static_cast<const MCSymbolRefExpr *>(Value)->getSymbol());
 
-  if (!(MCELF::getOther(RhsSym) & (ELF::STO_MIPS_MICROMIPS >> 2)))
+  if (!(RhsSym.getOther() & (ELF::STO_MIPS_MICROMIPS >> 2)))
     return;
 
   // The "other" values are stored in the last 6 bits of the second byte.
   // The traditional defines for STO values assume the full byte and thus
   // the shift to pack it.
-  MCELF::setOther(*Symbol, ELF::STO_MIPS_MICROMIPS >> 2);
+  Symbol->setOther(ELF::STO_MIPS_MICROMIPS >> 2);
 }
 
 MCELFStreamer &MipsTargetELFStreamer::getStreamer() {

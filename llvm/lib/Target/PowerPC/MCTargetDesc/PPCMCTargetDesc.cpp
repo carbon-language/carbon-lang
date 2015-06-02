@@ -16,14 +16,13 @@
 #include "PPCMCAsmInfo.h"
 #include "PPCTargetStreamer.h"
 #include "llvm/MC/MCCodeGenInfo.h"
-#include "llvm/MC/MCELF.h"
 #include "llvm/MC/MCELFStreamer.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSubtargetInfo.h"
-#include "llvm/MC/MCSymbol.h"
+#include "llvm/MC/MCSymbolELF.h"
 #include "llvm/MC/MachineLocation.h"
 #include "llvm/Support/ELF.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -132,7 +131,7 @@ public:
   void emitAbiVersion(int AbiVersion) override {
     OS << "\t.abiversion " << AbiVersion << '\n';
   }
-  void emitLocalEntry(MCSymbol *S, const MCExpr *LocalOffset) override {
+  void emitLocalEntry(MCSymbolELF *S, const MCExpr *LocalOffset) override {
     OS << "\t.localentry\t" << *S << ", " << *LocalOffset << '\n';
   }
 };
@@ -159,7 +158,7 @@ public:
     Flags |= (AbiVersion & ELF::EF_PPC64_ABI);
     MCA.setELFHeaderEFlags(Flags);
   }
-  void emitLocalEntry(MCSymbol *S, const MCExpr *LocalOffset) override {
+  void emitLocalEntry(MCSymbolELF *S, const MCExpr *LocalOffset) override {
     MCAssembler &MCA = getStreamer().getAssembler();
 
     int64_t Res;
@@ -173,10 +172,10 @@ public:
     // The "other" values are stored in the last 6 bits of the second byte.
     // The traditional defines for STO values assume the full byte and thus
     // the shift to pack it.
-    unsigned Other = MCELF::getOther(*S) << 2;
+    unsigned Other = S->getOther() << 2;
     Other &= ~ELF::STO_PPC64_LOCAL_MASK;
     Other |= Encoded;
-    MCELF::setOther(*S, Other >> 2);
+    S->setOther(Other >> 2);
 
     // For GAS compatibility, unless we already saw a .abiversion directive,
     // set e_flags to indicate ELFv2 ABI.
@@ -184,20 +183,21 @@ public:
     if ((Flags & ELF::EF_PPC64_ABI) == 0)
       MCA.setELFHeaderEFlags(Flags | 2);
   }
-  void emitAssignment(MCSymbol *Symbol, const MCExpr *Value) override {
+  void emitAssignment(MCSymbol *S, const MCExpr *Value) override {
+    auto *Symbol = cast<MCSymbolELF>(S);
     // When encoding an assignment to set symbol A to symbol B, also copy
     // the st_other bits encoding the local entry point offset.
     if (Value->getKind() != MCExpr::SymbolRef)
       return;
-    const MCSymbol &RhsSym =
-        static_cast<const MCSymbolRefExpr *>(Value)->getSymbol();
+    const auto &RhsSym = cast<MCSymbolELF>(
+        static_cast<const MCSymbolRefExpr *>(Value)->getSymbol());
     // The "other" values are stored in the last 6 bits of the second byte.
     // The traditional defines for STO values assume the full byte and thus
     // the shift to pack it.
-    unsigned Other = MCELF::getOther(*Symbol) << 2;
+    unsigned Other = Symbol->getOther() << 2;
     Other &= ~ELF::STO_PPC64_LOCAL_MASK;
-    Other |= (MCELF::getOther(RhsSym) << 2) & ELF::STO_PPC64_LOCAL_MASK;
-    MCELF::setOther(*Symbol, Other >> 2);
+    Other |= (RhsSym.getOther() << 2) & ELF::STO_PPC64_LOCAL_MASK;
+    Symbol->setOther(Other >> 2);
   }
 };
 
@@ -214,7 +214,7 @@ public:
   void emitAbiVersion(int AbiVersion) override {
     llvm_unreachable("Unknown pseudo-op: .abiversion");
   }
-  void emitLocalEntry(MCSymbol *S, const MCExpr *LocalOffset) override {
+  void emitLocalEntry(MCSymbolELF *S, const MCExpr *LocalOffset) override {
     llvm_unreachable("Unknown pseudo-op: .localentry");
   }
 };
