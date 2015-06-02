@@ -441,11 +441,11 @@ template <class ELFT> uint32_t MipsAbiInfoHandler<ELFT>::getFlags() const {
     flags |= isaToHeaderFlags(_abiFlags->_isa);
     flags |= asesToFlags(_abiFlags->_ases);
     flags |= _abiFlags->_abi;
-    flags |= _abiFlags->_isPic ? EF_MIPS_PIC : 0;
-    flags |= _abiFlags->_isCPic ? EF_MIPS_CPIC : 0;
-    flags |= _abiFlags->_isNoReorder ? EF_MIPS_NOREORDER : 0;
-    flags |= _abiFlags->_is32BitMode ? EF_MIPS_32BITMODE : 0;
-    flags |= _abiFlags->_isNan2008 ? EF_MIPS_NAN2008 : 0;
+    flags |= _abiFlags->_isPic ? EF_MIPS_PIC : 0u;
+    flags |= _abiFlags->_isCPic ? EF_MIPS_CPIC : 0u;
+    flags |= _abiFlags->_isNoReorder ? EF_MIPS_NOREORDER : 0u;
+    flags |= _abiFlags->_is32BitMode ? EF_MIPS_32BITMODE : 0u;
+    flags |= _abiFlags->_isNan2008 ? EF_MIPS_NAN2008 : 0u;
   }
   return flags;
 }
