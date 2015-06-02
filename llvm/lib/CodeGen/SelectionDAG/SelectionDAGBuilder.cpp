@@ -2848,7 +2848,17 @@ void SelectionDAGBuilder::visitLoad(const LoadInst &I) {
 
   bool isVolatile = I.isVolatile();
   bool isNonTemporal = I.getMetadata(LLVMContext::MD_nontemporal) != nullptr;
-  bool isInvariant = I.getMetadata(LLVMContext::MD_invariant_load) != nullptr;
+
+  // The IR notion of invariant_load only guarantees that all *non-faulting*
+  // invariant loads result in the same value.  The MI notion of invariant load
+  // guarantees that the load can be legally moved to any location within its
+  // containing function.  The MI notion of invariant_load is stronger than the
+  // IR notion of invariant_load -- an MI invariant_load is an IR invariant_load
+  // with a guarantee that the location being loaded from is dereferenceable
+  // throughout the function's lifetime.
+
+  bool isInvariant = I.getMetadata(LLVMContext::MD_invariant_load) != nullptr &&
+    isDereferenceablePointer(SV, *DAG.getTarget().getDataLayout());
   unsigned Alignment = I.getAlignment();
 
   AAMDNodes AAInfo;
