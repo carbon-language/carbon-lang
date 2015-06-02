@@ -10089,6 +10089,49 @@ static SDValue lower256BitVectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   }
 }
 
+static SDValue lowerVectorShuffleWithVALIGN(SDLoc DL, MVT VT,
+                                            ArrayRef<int> Mask, SDValue V1,
+                                            SDValue V2, SelectionDAG &DAG) {
+
+  assert(VT.getScalarSizeInBits() >= 32 && "Unexpected data type for VALIGN");
+  // VALIGN pattern 2, 3, 4, 5, .. (sequential, shifted right)
+  int AlignVal = -1;
+  for (int i = 0; i < (signed)VT.getVectorNumElements(); ++i) {
+    if (Mask[i] < 0)
+      continue;
+    if (Mask[i] < i)
+      return SDValue();
+    if (AlignVal == -1)
+      AlignVal = Mask[i] - i;
+    else if (Mask[i] - i != AlignVal)
+      return SDValue();
+  }
+  return DAG.getNode(X86ISD::VALIGN, DL, VT, V1, V2,
+                     DAG.getConstant(AlignVal, DL, MVT::i8));
+}
+
+static SDValue lowerVectorShuffleWithPERMV(SDLoc DL, MVT VT,
+                                           ArrayRef<int> Mask, SDValue V1,
+                                           SDValue V2, SelectionDAG &DAG) {
+
+  assert(VT.getScalarSizeInBits() >= 16 && "Unexpected data type for PERMV");
+
+  MVT MaskEltVT = MVT::getIntegerVT(VT.getScalarSizeInBits());
+  MVT MaskVecVT = MVT::getVectorVT(MaskEltVT, VT.getVectorNumElements());
+
+  SmallVector<SDValue, 32>  VPermMask;
+  for (unsigned i = 0; i < VT.getVectorNumElements(); ++i)
+    VPermMask.push_back(Mask[i] < 0 ? DAG.getUNDEF(MaskEltVT) :
+                        DAG.getConstant(Mask[i], DL,MaskEltVT));
+  SDValue MaskNode = DAG.getNode(ISD::BUILD_VECTOR, DL, MaskVecVT,
+                                 VPermMask);
+  if (isSingleInputShuffleMask(Mask))
+    return DAG.getNode(X86ISD::VPERMV, DL, VT, MaskNode, V1);
+
+  return DAG.getNode(X86ISD::VPERMV3, DL, VT, MaskNode, V1, V2);
+}
+
+
 /// \brief Handle lowering of 8-lane 64-bit floating point shuffles.
 static SDValue lowerV8X64VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
                                        const X86Subtarget *Subtarget,
@@ -10110,6 +10153,9 @@ static SDValue lowerV8X64VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   if (isShuffleEquivalent(V1, V2, Mask, {1, 9, 3, 11, 5, 13, 7, 15}))
     return DAG.getNode(X86ISD::UNPCKH, DL, VT, V1, V2);
 
+  if (SDValue Op = lowerVectorShuffleWithVALIGN(DL, VT, Mask, V1, V2, DAG))
+    return Op;
+
   // VSHUFPD instruction - mask 0/1, 8/9, 2/3, 10/11, 4/5, 12/13, 6/7, 14/15
   bool ShufpdMask = true;
   unsigned Immediate = 0;
@@ -10124,8 +10170,8 @@ static SDValue lowerV8X64VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
     Immediate |= (Mask[i]%2) << i;
   }
   if (ShufpdMask)
-      return DAG.getNode(X86ISD::SHUFP, DL, VT, V1, V2,
-                         DAG.getConstant(Immediate, DL, MVT::i8));
+    return DAG.getNode(X86ISD::SHUFP, DL, VT, V1, V2,
+                       DAG.getConstant(Immediate, DL, MVT::i8));
 
   // PERMILPD instruction - mask 0/1, 0/1, 2/3, 2/3, 4/5, 4/5, 6/7, 6/7
   if (isSingleInputShuffleMask(Mask)) {
@@ -10155,16 +10201,7 @@ static SDValue lowerV8X64VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
                          DAG.getConstant(Immediate, DL, MVT::i8));
     }
   }
-  SDValue VPermMask[8];
-  for (int i = 0; i < 8; ++i)
-    VPermMask[i] = Mask[i] < 0 ? DAG.getUNDEF(MVT::i64)
-                               : DAG.getConstant(Mask[i], DL, MVT::i64);
-  SDValue MaskNode = DAG.getNode(ISD::BUILD_VECTOR, DL, MVT::v8i64,
-                                 VPermMask);
-  if (isSingleInputShuffleMask(Mask))
-    return DAG.getNode(X86ISD::VPERMV, DL, VT, MaskNode, V1);
-
-  return DAG.getNode(X86ISD::VPERMV3, DL, VT, MaskNode, V1, V2);
+  return lowerVectorShuffleWithPERMV(DL, VT, Mask, V1, V2, DAG);
 }
 
 /// \brief Handle lowering of 16-lane 32-bit integer shuffles.
@@ -10196,46 +10233,31 @@ static SDValue lowerV16X32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
     return DAG.getNode(X86ISD::UNPCKH, DL, VT, V1, V2);
 
   if (isShuffleEquivalent(V1, V2, Mask, {0, 0, 2, 2, 4, 4, 6, 6, 8, 8, 10, 10,
-		                  12, 12, 14, 14}))
+                                         12, 12, 14, 14}))
     return DAG.getNode(X86ISD::MOVSLDUP, DL, VT, V1);
   if (isShuffleEquivalent(V1, V2, Mask, {1, 1, 3, 3, 5, 5, 7, 7, 9, 9, 11, 11,
-		                  13, 13, 15, 15}))
+                                         13, 13, 15, 15}))
     return DAG.getNode(X86ISD::MOVSHDUP, DL, VT, V1);
 
   SmallVector<int, 4> RepeatedMask;
   if (is128BitLaneRepeatedShuffleMask(VT, Mask, RepeatedMask)) {
-    unsigned Immediate = 0;
-    for (int i = 0; i < 4; ++i)
-      if (RepeatedMask[i] > 0)
-        Immediate |= (RepeatedMask[i] & 3) << (i*2);
-
     if (isSingleInputShuffleMask(Mask)) {
       unsigned Opc = VT.isInteger() ? X86ISD::PSHUFD : X86ISD::VPERMILPI;
       return DAG.getNode(Opc, DL, VT, V1, 
-                         DAG.getConstant(Immediate, DL, MVT::i8));
+                         getV4X86ShuffleImm8ForMask(RepeatedMask, DL, DAG));
     }
 
-    // VSHUFPS pattern: 0-3, 0-3, 16-19, 16-19, 4-7, 4-7, 20-23, 20-23 ..
-    bool InterleavedMask = true;
-    for (int i = 0; i < 4; ++i)
-      if (RepeatedMask[i] >= 0 &&
-          ((i < 2 && RepeatedMask[i] > 2) || ( i >=2 && RepeatedMask[i] < 16)))
-        InterleavedMask = false;
-
-    if (InterleavedMask)
-      return DAG.getNode(X86ISD::SHUFP, DL, VT, V1, V2,
-                          DAG.getConstant(Immediate, DL, MVT::i8));
+    for (int i = 0; i < 4; ++i) {
+      if (RepeatedMask[i] >= 16)
+        RepeatedMask[i] -= 12;
+     }
+     return lowerVectorShuffleWithSHUFPS(DL, VT, RepeatedMask, V1, V2, DAG);
   }
-  SDValue VPermMask[16];
-  for (int i = 0; i < 16; ++i)
-    VPermMask[i] = Mask[i] < 0 ? DAG.getUNDEF(MVT::i32)
-                               : DAG.getConstant(Mask[i], DL, MVT::i32);
-  SDValue MaskNode = DAG.getNode(ISD::BUILD_VECTOR, DL, MVT::v16i32,
-                                 VPermMask);
-  if (V2.getOpcode() == ISD::UNDEF)
-    return DAG.getNode(X86ISD::VPERMV, DL, VT, MaskNode, V1);
 
-  return DAG.getNode(X86ISD::VPERMV3, DL, VT, MaskNode, V1, V2);
+  if (SDValue Op = lowerVectorShuffleWithVALIGN(DL, VT, Mask, V1, V2, DAG))
+    return Op;
+
+  return lowerVectorShuffleWithPERMV(DL, VT, Mask, V1, V2, DAG);
 }
 
 /// \brief Handle lowering of 32-lane 16-bit integer shuffles.

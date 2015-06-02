@@ -114,6 +114,13 @@ define <16 x i32> @test15(<16 x i32> %a) {
  %b = shufflevector <16 x i32> %a, <16 x i32> undef, <16 x i32><i32 1, i32 0, i32 3, i32 2, i32 5, i32 4, i32 7, i32 6, i32 9, i32 8, i32 11, i32 10, i32 13, i32 12, i32 15, i32 14>
  ret <16 x i32> %b
 }
+; CHECK-LABEL: test16
+; CHECK: valignq $2, %zmm0, %zmm1
+; CHECK: ret
+define <8 x double> @test16(<8 x double> %a, <8 x double> %b) nounwind {
+  %c = shufflevector <8 x double> %a, <8 x double> %b, <8 x i32> <i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9>
+  ret <8 x double> %c
+}
 
 ; CHECK-LABEL: test17
 ; CHECK: vshufpd $19, %zmm1, %zmm0
@@ -163,11 +170,20 @@ define <8 x i64> @test22(<8 x i64> %a, <8 x i64> %b) {
   ret <8 x i64> %shuffle
 }
 
+; CHECK-LABEL: @test23
+; CHECK: vshufps
+; CHECK: vshufps
+; CHECK: ret
+define <16 x i32> @test23(<16 x i32> %a, <16 x i32> %b) nounwind {
+  %c = shufflevector <16 x i32> %a, <16 x i32> %b, <16 x i32> <i32 0, i32 1, i32 2, i32 19, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
+  ret <16 x i32> %c
+}
+
 ; CHECK-LABEL: @test24
 ; CHECK: vpermt2d
 ; CHECK: ret
 define <16 x i32> @test24(<16 x i32> %a, <16 x i32> %b) nounwind {
-  %c = shufflevector <16 x i32> %a, <16 x i32> %b, <16 x i32> <i32 0, i32 1, i32 2, i32 19, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
+  %c = shufflevector <16 x i32> %a, <16 x i32> %b, <16 x i32> <i32 0, i32 1, i32 2, i32 19, i32 25, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
   ret <16 x i32> %c
 }
 
@@ -175,8 +191,8 @@ define <16 x i32> @test24(<16 x i32> %a, <16 x i32> %b) nounwind {
 ; CHECK: vshufps  $52
 ; CHECK: ret
 define <16 x i32> @test25(<16 x i32> %a, <16 x i32> %b) nounwind {
-; mask - 0-1-3-undef 00110100 = 0x34 = 52
-  %c = shufflevector <16 x i32> %a, <16 x i32> %b, <16 x i32> <i32 0, i32 1, i32 19, i32 undef, i32 4, i32 5, i32 23, i32 undef, i32 8, i32 9, i32 27, i32 undef, i32 12, i32 13, i32 undef, i32 undef>
+; mask - 0-1-3-0 00110100 = 0x34 = 52
+  %c = shufflevector <16 x i32> %a, <16 x i32> %b, <16 x i32> <i32 0, i32 1, i32 19, i32 16, i32 4, i32 5, i32 23, i32 undef, i32 8, i32 9, i32 27, i32 undef, i32 12, i32 13, i32 undef, i32 undef>
   ret <16 x i32> %c
 }
 
@@ -217,4 +233,12 @@ define <16 x float> @test29(<16 x float> %a, <16 x float> %c) {
 define <16 x float> @test30(<16 x float> %a, <16 x float> %c) {
  %b = shufflevector <16 x float> %a, <16 x float> %c, <16 x i32><i32 0, i32 0, i32 17, i32 18, i32 4, i32 4, i32 21, i32 22, i32 8, i32 8, i32 25, i32 26, i32 12, i32 12, i32 29, i32 30>
  ret <16 x float> %b
+}
+
+; CHECK-LABEL: test31
+; CHECK: valignd $3, %zmm0, %zmm1
+; CHECK: ret
+define <16 x i32> @test31(<16 x i32> %a, <16 x i32> %b) nounwind {
+  %c = shufflevector <16 x i32> %a, <16 x i32> %b, <16 x i32> <i32 3, i32 4, i32 5, i32 undef, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 16, i32 17, i32 18>
+  ret <16 x i32> %c
 }
