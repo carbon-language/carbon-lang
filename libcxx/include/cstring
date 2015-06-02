@@ -67,34 +67,15 @@ size_t strlen(const char* s);
 _LIBCPP_BEGIN_NAMESPACE_STD
 
 using ::size_t;
-
-// using ::memcpy;
-inline _LIBCPP_INLINE_VISIBILITY 
-void* memcpy(void* __s1, const void* __s2, size_t __n) __attribute__((nonnull(1, 2)))
-{ return ::memcpy(__s1, __s2, __n); }
-
-// using ::memmove;
-inline _LIBCPP_INLINE_VISIBILITY 
-void* memmove(void* __s1, const void* __s2, size_t __n) __attribute__((nonnull(1, 2)))
-{ return ::memmove(__s1, __s2, __n); }
-
+using ::memcpy;
+using ::memmove;
 using ::strcpy;
 using ::strncpy;
 using ::strcat;
 using ::strncat;
-
-// using ::memcmp;
-inline _LIBCPP_INLINE_VISIBILITY 
-int memcmp(const void* __s1, const void* __s2, size_t __n) __attribute__((nonnull(1, 2)))
-{ return ::memcmp(__s1, __s2, __n); }
-
+using ::memcmp;
 using ::strcmp;
-
-// using ::strncmp;
-inline _LIBCPP_INLINE_VISIBILITY 
-int strncmp(const char* __s1, const char* __s2, size_t __n) __attribute__((nonnull(1, 2)))
-{ return ::memcmp(__s1, __s2, __n); }
-
+using ::strncmp;
 using ::strcoll;
 using ::strxfrm;
 
