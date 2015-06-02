@@ -75,6 +75,8 @@ struct allocator_traits
           | false_type                   propagate_on_container_move_assignment;
     typedef Alloc::propagate_on_container_swap
           | false_type                   propagate_on_container_swap;
+    typedef Alloc::is_always_equal
+          | is_empty                     is_always_equal;
 
     template <class T> using rebind_alloc  = Alloc::rebind<U>::other | Alloc<T, Args...>;
     template <class T> using rebind_traits = allocator_traits<rebind_alloc<T>>;
@@ -1144,6 +1146,29 @@ struct __propagate_on_container_swap<_Alloc, true>
     typedef typename _Alloc::propagate_on_container_swap type;
 };
 
+template <class _Tp>
+struct __has_is_always_equal
+{
+private:
+    struct __two {char __lx; char __lxx;};
+    template <class _Up> static __two __test(...);
+    template <class _Up> static char __test(typename _Up::is_always_equal* = 0);
+public:
+    static const bool value = sizeof(__test<_Tp>(0)) == 1;
+};
+
+template <class _Alloc, bool = __has_is_always_equal<_Alloc>::value>
+struct __is_always_equal
+{
+    typedef typename _VSTD::is_empty<_Alloc>::type type;
+};
+
+template <class _Alloc>
+struct __is_always_equal<_Alloc, true>
+{
+    typedef typename _Alloc::is_always_equal type;
+};
+
 template <class _Tp, class _Up, bool = __has_rebind<_Tp, _Up>::value>
 struct __has_rebind_other
 {
@@ -1423,6 +1448,8 @@ struct _LIBCPP_TYPE_VIS_ONLY allocator_traits
                      propagate_on_container_move_assignment;
     typedef typename __propagate_on_container_swap<allocator_type>::type
                      propagate_on_container_swap;
+    typedef typename __is_always_equal<allocator_type>::type
+                     is_always_equal;
 
 #ifndef _LIBCPP_HAS_NO_TEMPLATE_ALIASES
     template <class _Tp> using rebind_alloc =
@@ -1667,6 +1694,7 @@ public:
     typedef _Tp               value_type;
 
     typedef true_type propagate_on_container_move_assignment;
+    typedef true_type is_always_equal;
 
     template <class _Up> struct rebind {typedef allocator<_Up> other;};
 
