@@ -870,7 +870,6 @@ __kmp_reserve_threads( kmp_root_t *root, kmp_team_t *parent_team,
 {
     int capacity;
     int new_nthreads;
-    int use_rml_to_adjust_nth;
     KMP_DEBUG_ASSERT( __kmp_init_serial );
     KMP_DEBUG_ASSERT( root && parent_team );
 
@@ -897,7 +896,6 @@ __kmp_reserve_threads( kmp_root_t *root, kmp_team_t *parent_team,
     // according to the method specified by dynamic_mode.
     //
     new_nthreads = set_nthreads;
-    use_rml_to_adjust_nth = FALSE;
     if ( ! get__dynamic_2( parent_team, master_tid ) ) {
         ;
     }

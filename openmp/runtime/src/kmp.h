@@ -2542,7 +2542,7 @@ extern char const   *__kmp_barrier_pattern_name        [ bp_last_bar ];
 
 /* Global Locks */
 extern kmp_bootstrap_lock_t __kmp_initz_lock;     /* control initialization */
-extern kmp_bootstrap_lock_t __kmp_forkjoin_lock;  /* control fork/join access and load calculation if rml is used*/
+extern kmp_bootstrap_lock_t __kmp_forkjoin_lock;  /* control fork/join access */
 extern kmp_bootstrap_lock_t __kmp_exit_lock;      /* exit() is not always thread-safe */
 extern kmp_bootstrap_lock_t __kmp_monitor_lock;   /* control monitor thread creation */
 extern kmp_bootstrap_lock_t __kmp_tp_cached_lock; /* used for the hack to allow threadprivate cache and __kmp_threads expansion to co-exist */
