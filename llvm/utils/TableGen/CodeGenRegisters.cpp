@@ -543,7 +543,7 @@ struct TupleExpander : SetTheory::Expander {
     std::vector<Record*> Indices = Def->getValueAsListOfDefs("SubRegIndices");
     unsigned Dim = Indices.size();
     ListInit *SubRegs = Def->getValueAsListInit("SubRegs");
-    if (Dim != SubRegs->getSize())
+    if (Dim != SubRegs->size())
       PrintFatalError(Def->getLoc(), "SubRegIndices and SubRegs size mismatch");
     if (Dim < 2)
       PrintFatalError(Def->getLoc(),
@@ -676,7 +676,7 @@ CodeGenRegisterClass::CodeGenRegisterClass(CodeGenRegBank &RegBank, Record *R)
   // Allocation order 0 is the full set. AltOrders provides others.
   const SetTheory::RecVec *Elements = RegBank.getSets().expand(R);
   ListInit *AltOrders = R->getValueAsListInit("AltOrders");
-  Orders.resize(1 + AltOrders->getSize());
+  Orders.resize(1 + AltOrders->size());
 
   // Default allocation order always contains all registers.
   for (unsigned i = 0, e = Elements->size(); i != e; ++i) {
@@ -689,7 +689,7 @@ CodeGenRegisterClass::CodeGenRegisterClass(CodeGenRegBank &RegBank, Record *R)
 
   // Alternative allocation orders may be subsets.
   SetTheory::RecSet Order;
-  for (unsigned i = 0, e = AltOrders->getSize(); i != e; ++i) {
+  for (unsigned i = 0, e = AltOrders->size(); i != e; ++i) {
     RegBank.getSets().evaluate(AltOrders->getElement(i), Order, R->getLoc());
     Orders[1 + i].append(Order.begin(), Order.end());
     // Verify that all altorder members are regclass members.

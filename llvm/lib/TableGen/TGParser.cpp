@@ -309,7 +309,7 @@ bool TGParser::ProcessForeachDefs(Record *CurRec, SMLoc Loc, IterSet &IterVals){
     }
 
     // Process each value.
-    for (int64_t i = 0; i < List->getSize(); ++i) {
+    for (unsigned i = 0; i < List->size(); ++i) {
       Init *ItemVal = List->resolveListElementReference(*CurRec, nullptr, i);
       IterVals.push_back(IterRecord(CurLoop.IterVar, ItemVal));
       if (ProcessForeachDefs(CurRec, Loc, IterVals))

@@ -603,7 +603,6 @@ public:
 
   void Profile(FoldingSetNodeID &ID) const;
 
-  unsigned getSize() const { return Values.size(); }
   Init *getElement(unsigned i) const {
     assert(i < Values.size() && "List element index out of range!");
     return Values[i];
@@ -627,10 +626,11 @@ public:
 
   ArrayRef<Init*> getValues() const { return Values; }
 
-  inline const_iterator begin() const { return Values.begin(); }
-  inline const_iterator end  () const { return Values.end();   }
+  const_iterator begin() const { return Values.begin(); }
+  const_iterator end  () const { return Values.end();   }
 
-  inline bool           empty() const { return Values.empty(); }
+  size_t         size () const { return Values.size();  }
+  bool           empty() const { return Values.empty(); }
 
   /// resolveListElementReference - This method is used to implement
   /// VarListElementInit::resolveReferences.  If the list element is resolvable

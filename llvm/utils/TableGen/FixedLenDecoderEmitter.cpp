@@ -1113,7 +1113,7 @@ bool FilterChooser::emitPredicateMatch(raw_ostream &o, unsigned &Indentation,
   ListInit *Predicates =
     AllInstructions[Opc]->TheDef->getValueAsListInit("Predicates");
   bool IsFirstEmission = true;
-  for (unsigned i = 0; i < Predicates->getSize(); ++i) {
+  for (unsigned i = 0; i < Predicates->size(); ++i) {
     Record *Pred = Predicates->getElementAsRecord(i);
     if (!Pred->getValue("AssemblerMatcherPredicate"))
       continue;
@@ -1136,13 +1136,13 @@ bool FilterChooser::emitPredicateMatch(raw_ostream &o, unsigned &Indentation,
     emitSinglePredicateMatch(o, pairs.first, Emitter->PredicateNamespace);
     IsFirstEmission = false;
   }
-  return Predicates->getSize() > 0;
+  return !Predicates->empty();
 }
 
 bool FilterChooser::doesOpcodeNeedPredicate(unsigned Opc) const {
   ListInit *Predicates =
     AllInstructions[Opc]->TheDef->getValueAsListInit("Predicates");
-  for (unsigned i = 0; i < Predicates->getSize(); ++i) {
+  for (unsigned i = 0; i < Predicates->size(); ++i) {
     Record *Pred = Predicates->getElementAsRecord(i);
     if (!Pred->getValue("AssemblerMatcherPredicate"))
       continue;

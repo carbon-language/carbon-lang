@@ -69,7 +69,7 @@ void CallingConvEmitter::EmitCallingConv(Record *CC, raw_ostream &O) {
     << std::string(CC->getName().size()+13, ' ')
     << "ISD::ArgFlagsTy ArgFlags, CCState &State) {\n";
   // Emit all of the actions, in order.
-  for (unsigned i = 0, e = CCActions->getSize(); i != e; ++i) {
+  for (unsigned i = 0, e = CCActions->size(); i != e; ++i) {
     O << "\n";
     EmitAction(CCActions->getElementAsRecord(i), 2, O);
   }
@@ -87,7 +87,7 @@ void CallingConvEmitter::EmitAction(Record *Action,
     
     if (Action->isSubClassOf("CCIfType")) {
       ListInit *VTs = Action->getValueAsListInit("VTs");
-      for (unsigned i = 0, e = VTs->getSize(); i != e; ++i) {
+      for (unsigned i = 0, e = VTs->size(); i != e; ++i) {
         Record *VT = VTs->getElementAsRecord(i);
         if (i != 0) O << " ||\n    " << IndentStr;
         O << "LocVT == " << getEnumName(getValueType(VT));
@@ -111,14 +111,14 @@ void CallingConvEmitter::EmitAction(Record *Action,
         << IndentStr << "  return false;\n";
     } else if (Action->isSubClassOf("CCAssignToReg")) {
       ListInit *RegList = Action->getValueAsListInit("RegList");
-      if (RegList->getSize() == 1) {
+      if (RegList->size() == 1) {
         O << IndentStr << "if (unsigned Reg = State.AllocateReg(";
         O << getQualifiedName(RegList->getElementAsRecord(0)) << ")) {\n";
       } else {
         O << IndentStr << "static const MCPhysReg RegList" << ++Counter
           << "[] = {\n";
         O << IndentStr << "  ";
-        for (unsigned i = 0, e = RegList->getSize(); i != e; ++i) {
+        for (unsigned i = 0, e = RegList->size(); i != e; ++i) {
           if (i != 0) O << ", ";
           O << getQualifiedName(RegList->getElementAsRecord(i));
         }
@@ -133,11 +133,10 @@ void CallingConvEmitter::EmitAction(Record *Action,
     } else if (Action->isSubClassOf("CCAssignToRegWithShadow")) {
       ListInit *RegList = Action->getValueAsListInit("RegList");
       ListInit *ShadowRegList = Action->getValueAsListInit("ShadowRegList");
-      if (ShadowRegList->getSize() >0 &&
-          ShadowRegList->getSize() != RegList->getSize())
+      if (!ShadowRegList->empty() && ShadowRegList->size() != RegList->size())
         PrintFatalError("Invalid length of list of shadowed registers");
 
-      if (RegList->getSize() == 1) {
+      if (RegList->size() == 1) {
         O << IndentStr << "if (unsigned Reg = State.AllocateReg(";
         O << getQualifiedName(RegList->getElementAsRecord(0));
         O << ", " << getQualifiedName(ShadowRegList->getElementAsRecord(0));
@@ -149,7 +148,7 @@ void CallingConvEmitter::EmitAction(Record *Action,
         O << IndentStr << "static const MCPhysReg RegList" << RegListNumber
           << "[] = {\n";
         O << IndentStr << "  ";
-        for (unsigned i = 0, e = RegList->getSize(); i != e; ++i) {
+        for (unsigned i = 0, e = RegList->size(); i != e; ++i) {
           if (i != 0) O << ", ";
           O << getQualifiedName(RegList->getElementAsRecord(i));
         }
@@ -158,7 +157,7 @@ void CallingConvEmitter::EmitAction(Record *Action,
         O << IndentStr << "static const MCPhysReg RegList"
           << ShadowRegListNumber << "[] = {\n";
         O << IndentStr << "  ";
-        for (unsigned i = 0, e = ShadowRegList->getSize(); i != e; ++i) {
+        for (unsigned i = 0, e = ShadowRegList->size(); i != e; ++i) {
           if (i != 0) O << ", ";
           O << getQualifiedName(ShadowRegList->getElementAsRecord(i));
         }
@@ -206,7 +205,7 @@ void CallingConvEmitter::EmitAction(Record *Action,
       O << IndentStr << "static const MCPhysReg ShadowRegList"
           << ShadowRegListNumber << "[] = {\n";
       O << IndentStr << "  ";
-      for (unsigned i = 0, e = ShadowRegList->getSize(); i != e; ++i) {
+      for (unsigned i = 0, e = ShadowRegList->size(); i != e; ++i) {
         if (i != 0) O << ", ";
         O << getQualifiedName(ShadowRegList->getElementAsRecord(i));
       }

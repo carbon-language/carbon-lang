@@ -521,7 +521,7 @@ Init *
 ListInit::convertInitListSlice(const std::vector<unsigned> &Elements) const {
   std::vector<Init*> Vals;
   for (unsigned i = 0, e = Elements.size(); i != e; ++i) {
-    if (Elements[i] >= getSize())
+    if (Elements[i] >= size())
       return nullptr;
     Vals.push_back(getElement(Elements[i]));
   }
@@ -538,7 +538,7 @@ Record *ListInit::getElementAsRecord(unsigned i) const {
 
 Init *ListInit::resolveReferences(Record &R, const RecordVal *RV) const {
   std::vector<Init*> Resolved;
-  Resolved.reserve(getSize());
+  Resolved.reserve(size());
   bool Changed = false;
 
   for (Init *CurElt : getValues()) {
@@ -559,7 +559,7 @@ Init *ListInit::resolveReferences(Record &R, const RecordVal *RV) const {
 
 Init *ListInit::resolveListElementReference(Record &R, const RecordVal *IRV,
                                             unsigned Elt) const {
-  if (Elt >= getSize())
+  if (Elt >= size())
     return nullptr;  // Out of range reference.
   Init *E = getElement(Elt);
   // If the element is set to some value, or if we are resolving a reference
@@ -1243,7 +1243,7 @@ Init *VarInit::resolveListElementReference(Record &R,
   if (!LI)
     return VarListElementInit::get(cast<TypedInit>(RV->getValue()), Elt);
 
-  if (Elt >= LI->getSize())
+  if (Elt >= LI->size())
     return nullptr;  // Out of range reference.
   Init *E = LI->getElement(Elt);
   // If the element is set to some value, or if we are resolving a reference
@@ -1412,7 +1412,7 @@ Init *FieldInit::resolveListElementReference(Record &R, const RecordVal *RV,
                                              unsigned Elt) const {
   if (Init *ListVal = Rec->getFieldInit(R, RV, FieldName))
     if (ListInit *LI = dyn_cast<ListInit>(ListVal)) {
-      if (Elt >= LI->getSize()) return nullptr;
+      if (Elt >= LI->size()) return nullptr;
       Init *E = LI->getElement(Elt);
 
       // If the element is set to some value, or if we are resolving a
