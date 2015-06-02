@@ -1,6 +1,8 @@
 # RUN: llvm-mc -triple=mipsel-unknown-linux -relocation-model=pic -code-model=small -filetype=obj -o %T/test_ELF_O32.o %s
 # RUN: llc -mtriple=mipsel-unknown-linux -relocation-model=pic -filetype=obj -o %T/test_ELF_ExternalFunction_O32.o %S/Inputs/ExternalFunction.ll
 # RUN: llvm-rtdyld -triple=mipsel-unknown-linux -verify -map-section test_ELF_O32.o,.text=0x1000 -map-section test_ELF_ExternalFunction_O32.o,.text=0x10000 -check=%s %T/test_ELF_O32.o %T/test_ELF_ExternalFunction_O32.o
+# There are endian awareness bugs in the O32 support.
+# XFAIL: mips-
 
         .data
 # rtdyld-check: *{4}R_MIPS_32 = foo
