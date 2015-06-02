@@ -789,7 +789,7 @@ defm LDSMAXA  : LDOPregister<0b100, "smax", 1, 0, "a">;
 defm LDSMAXL  : LDOPregister<0b100, "smax", 0, 1, "l">;
 defm LDSMAXAL : LDOPregister<0b100, "smax", 1, 1, "al">;
 
-defm LDSMIN   : LDOPregister<0b101, "smin`", 0, 0, "">;
+defm LDSMIN   : LDOPregister<0b101, "smin", 0, 0, "">;
 defm LDSMINA  : LDOPregister<0b101, "smin", 1, 0, "a">;
 defm LDSMINL  : LDOPregister<0b101, "smin", 0, 1, "l">;
 defm LDSMINAL : LDOPregister<0b101, "smin", 1, 1, "al">;

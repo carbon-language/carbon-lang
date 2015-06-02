@@ -84,6 +84,7 @@
   ldsminlb w0, w1, [x2]
   ldumaxalh w0, w1, [x2]
   ldumin w0, w1, [x2]
+  ldsminb w2, w3, [x5]
 //CHECK: ldadda     x0, x1, [x2]  // encoding: [0x41,0x00,0xa0,0xf8]
 //CHECK: ldclrl     x0, x1, [x2]  // encoding: [0x41,0x10,0x60,0xf8]
 //CHECK: ldeoral    x0, x1, [x2]  // encoding: [0x41,0x20,0xe0,0xf8]
@@ -92,6 +93,7 @@
 //CHECK: ldsminlb   w0, w1, [x2]  // encoding: [0x41,0x50,0x60,0x38]
 //CHECK: ldumaxalh  w0, w1, [x2]  // encoding: [0x41,0x60,0xe0,0x78]
 //CHECK: ldumin     w0, w1, [x2]  // encoding: [0x41,0x70,0x20,0xb8]
+//CHECK: ldsminb    w2, w3, [x5]  // encoding: [0xa3,0x50,0x22,0x38]
 
   // ST<OP> intructions: aliases to LD<OP>
   stADDlb w0, [x2]
@@ -102,6 +104,7 @@
   stsminh  w0, [x2]
   stumax   w0, [x2]
   stumin   x0, [x2]
+  stsminl x29, [sp]
 //CHECK: staddlb    w0, [x2]  // encoding: [0x5f,0x00,0x60,0x38]
 //CHECK: stclrlh    w0, [x2]  // encoding: [0x5f,0x10,0x60,0x78]
 //CHECK: steorl     w0, [x2]  // encoding: [0x5f,0x20,0x60,0xb8]
@@ -110,6 +113,8 @@
 //CHECK: stsminh     w0, [x2]  // encoding: [0x5f,0x50,0x20,0x78]
 //CHECK: stumax      w0, [x2]  // encoding: [0x5f,0x60,0x20,0xb8]
 //CHECK: stumin      x0, [x2]  // encoding: [0x5f,0x70,0x20,0xf8]
+//CHECK: stsminl     x29, [sp] // encoding: [0xff,0x53,0x7d,0xf8]
+
 
   ldsmax x0, x1, [w2]
   ldeorl w0, w1, [w2]
