@@ -19,10 +19,6 @@ mov .rodata, %rsi
 // There is only one .rodata symbol
 
 // CHECK:Symbols [
-// CHECK-NOT:    Name: .rodata
-// CHECK:        Name: .rodata
-// CHECK-NEXT:   Value: 0x0
-// CHECK-NEXT:   Size: 0
-// CHECK-NEXT:   Binding: Local (0x0)
-// CHECK-NEXT:   Type: Section (0x3)
-// CHECK-NOT:    Name: .rodata
+// CHECK:   Type: Section (0x3)
+// CHECK:   Section: .rodata
+// CHECK-NOT:   Section: .rodata

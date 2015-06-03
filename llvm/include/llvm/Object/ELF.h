@@ -916,11 +916,8 @@ ErrorOr<StringRef> ELFFile<ELFT>::getSymbolName(Elf_Sym_Iter Sym) const {
 template <class ELFT>
 ErrorOr<StringRef> ELFFile<ELFT>::getSymbolName(const Elf_Shdr *Section,
                                                 const Elf_Sym *Symb) const {
-  if (Symb->st_name == 0) {
-    const Elf_Shdr *ContainingSec = getSection(Symb);
-    if (ContainingSec)
-      return getSectionName(ContainingSec);
-  }
+  if (Symb->st_name == 0)
+    return StringRef("");
 
   const Elf_Shdr *StrTab = getSection(Section->sh_link);
   if (Symb->st_name >= StrTab->sh_size)

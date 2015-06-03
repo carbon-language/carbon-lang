@@ -327,10 +327,20 @@ static std::error_code getRelocationValueString(const ELFObjectFile<ELFT> *Obj,
   }
   const Elf_Sym *symb =
       EF.template getEntry<Elf_Sym>(sec->sh_link, symbol_index);
-  ErrorOr<StringRef> SymName =
-      EF.getSymbolName(EF.getSection(sec->sh_link), symb);
-  if (!SymName)
-    return SymName.getError();
+  StringRef Target;
+  const Elf_Shdr *SymSec = EF.getSection(symb);
+  if (symb->getType() == ELF::STT_SECTION) {
+    ErrorOr<StringRef> SecName = EF.getSectionName(SymSec);
+    if (std::error_code EC = SecName.getError())
+      return EC;
+    Target = *SecName;
+  } else {
+    ErrorOr<StringRef> SymName =
+        EF.getSymbolName(EF.getSection(sec->sh_link), symb);
+    if (!SymName)
+      return SymName.getError();
+    Target = *SymName;
+  }
   switch (EF.getHeader()->e_machine) {
   case ELF::EM_X86_64:
     switch (type) {
@@ -339,7 +349,7 @@ static std::error_code getRelocationValueString(const ELFObjectFile<ELFT> *Obj,
     case ELF::R_X86_64_PC32: {
       std::string fmtbuf;
       raw_string_ostream fmt(fmtbuf);
-      fmt << *SymName << (addend < 0 ? "" : "+") << addend << "-P";
+      fmt << Target << (addend < 0 ? "" : "+") << addend << "-P";
       fmt.flush();
       Result.append(fmtbuf.begin(), fmtbuf.end());
     } break;
@@ -350,7 +360,7 @@ static std::error_code getRelocationValueString(const ELFObjectFile<ELFT> *Obj,
     case ELF::R_X86_64_64: {
       std::string fmtbuf;
       raw_string_ostream fmt(fmtbuf);
-      fmt << *SymName << (addend < 0 ? "" : "+") << addend;
+      fmt << Target << (addend < 0 ? "" : "+") << addend;
       fmt.flush();
       Result.append(fmtbuf.begin(), fmtbuf.end());
     } break;
@@ -361,7 +371,7 @@ static std::error_code getRelocationValueString(const ELFObjectFile<ELFT> *Obj,
   case ELF::EM_AARCH64: {
     std::string fmtbuf;
     raw_string_ostream fmt(fmtbuf);
-    fmt << *SymName;
+    fmt << Target;
     if (addend != 0)
       fmt << (addend < 0 ? "" : "+") << addend;
     fmt.flush();
@@ -372,7 +382,7 @@ static std::error_code getRelocationValueString(const ELFObjectFile<ELFT> *Obj,
   case ELF::EM_ARM:
   case ELF::EM_HEXAGON:
   case ELF::EM_MIPS:
-    res = *SymName;
+    res = Target;
     break;
   default:
     res = "Unknown";
@@ -1052,13 +1062,10 @@ void llvm::PrintSymbolTable(const ObjectFile *o) {
     return;
   }
   for (const SymbolRef &Symbol : o->symbols()) {
-    StringRef Name;
     uint64_t Address;
     SymbolRef::Type Type;
     uint32_t Flags = Symbol.getFlags();
     section_iterator Section = o->section_end();
-    if (error(Symbol.getName(Name)))
-      continue;
     if (error(Symbol.getAddress(Address)))
       continue;
     if (error(Symbol.getType(Type)))
@@ -1066,6 +1073,12 @@ void llvm::PrintSymbolTable(const ObjectFile *o) {
     uint64_t Size = Symbol.getSize();
     if (error(Symbol.getSection(Section)))
       continue;
+    StringRef Name;
+    if (Type == SymbolRef::ST_Debug && Section != o->section_end()) {
+      Section->getName(Name);
+    } else if (error(Symbol.getName(Name))) {
+      continue;
+    }
 
     bool Global = Flags & SymbolRef::SF_Global;
     bool Weak = Flags & SymbolRef::SF_Weak;

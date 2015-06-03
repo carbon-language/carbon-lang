@@ -9,13 +9,13 @@
 
 // Check the last referenced section.
 
-// SYMBOLS:         Name: zed
-// SYMBOLS-NEXT:    Value: 0x0
-// SYMBOLS-NEXT:    Size: 0
-// SYMBOLS-NEXT:    Binding: Local (0x0)
-// SYMBOLS-NEXT:    Type: Section (0x3)
-// SYMBOLS-NEXT:    Other: 0
-// SYMBOLS-NEXT:    Section: zed (0xFEFF)
+// SYMBOLS:         Name: (0)
+// SYMBOLS:         Value: 0x0
+// SYMBOLS:         Size: 0
+// SYMBOLS:         Binding: Local (0x0)
+// SYMBOLS:         Type: Section (0x3)
+// SYMBOLS:         Other: 0
+// SYMBOLS:         Section: zed (0xFEFF)
 // SYMBOLS-NEXT:  }
 // SYMBOLS-NEXT:]
 

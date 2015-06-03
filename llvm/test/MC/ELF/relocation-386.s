@@ -1,4 +1,4 @@
-// RUN: llvm-mc -filetype=obj -triple i386-pc-linux-gnu %s -o - | llvm-readobj -r -t | FileCheck  %s
+// RUN: llvm-mc -filetype=obj -triple i386-pc-linux-gnu %s -o - | llvm-readobj -r  | FileCheck  %s
 
 // Test that we produce the correct relocation types and that the relocations
 // correctly point to the section or the symbol.
@@ -70,27 +70,6 @@
 // CHECK-NEXT:     0xB5         R_386_8          foo      0x0
 // CHECK-NEXT:   }
 // CHECK-NEXT: ]
-
-// Symbol 4 is zed
-// CHECK:        Symbol {
-// CHECK:          Name: zed
-// CHECK-NEXT:     Value: 0x0
-// CHECK-NEXT:     Size: 0
-// CHECK-NEXT:     Binding: Local
-// CHECK-NEXT:     Type: TLS
-// CHECK-NEXT:     Other: 0
-// CHECK-NEXT:     Section: zedsec
-// CHECK-NEXT:   }
-// Symbol 7 is section 4
-// CHECK:        Symbol {
-// CHECK:          Name: .bss (0)
-// CHECK-NEXT:     Value: 0x0
-// CHECK-NEXT:     Size: 0
-// CHECK-NEXT:     Binding: Local
-// CHECK-NEXT:     Type: Section
-// CHECK-NEXT:     Other: 0
-// CHECK-NEXT:     Section: .bss
-// CHECK-NEXT:   }
 
         .text
 bar:

@@ -1,4 +1,4 @@
-// RUN: llvm-mc -filetype=obj -triple x86_64-pc-linux-gnu %s -o - | llvm-readobj -s -sr -t | FileCheck  %s
+// RUN: llvm-mc -filetype=obj -triple x86_64-pc-linux-gnu %s -o - | llvm-readobj -s -sr  | FileCheck  %s
 
 // Test that we produce the correct relocation.
 
@@ -91,14 +91,4 @@ bar:
 // CHECK-NEXT:       0xD8 R_X86_64_GOTPCREL foo 0x0
 // CHECK-NEXT:       0xDC R_X86_64_PLT32 foo 0x0
 // CHECK-NEXT:     ]
-// CHECK-NEXT:   }
-
-// CHECK:        Symbol {
-// CHECK:          Name: .text (0)
-// CHECK-NEXT:     Value:
-// CHECK-NEXT:     Size:
-// CHECK-NEXT:     Binding: Local
-// CHECK-NEXT:     Type: Section
-// CHECK-NEXT:     Other: 0
-// CHECK-NEXT:     Section: .text
 // CHECK-NEXT:   }

@@ -16,11 +16,11 @@
 // CHECK-NEXT:   }
 
 // CHECK:        Symbol {
-// CHECK:          Name: .note.GNU-stack (0)
-// CHECK-NEXT:     Value: 0x0
-// CHECK-NEXT:     Size: 0
-// CHECK-NEXT:     Binding: Local
-// CHECK-NEXT:     Type: Section
-// CHECK-NEXT:     Other: 0
-// CHECK-NEXT:     Section: .note.GNU-stack
+// CHECK:          Name: (0)
+// CHECK:          Value: 0x0
+// CHECK:          Size: 0
+// CHECK:          Binding: Local
+// CHECK:          Type: Section
+// CHECK:          Other: 0
+// CHECK:          Section: .note.GNU-stack
 // CHECK-NEXT:   }

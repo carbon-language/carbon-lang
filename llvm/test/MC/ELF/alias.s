@@ -107,15 +107,15 @@ leaq .Llocal1(%rip), %rdi
 // CHECK-NEXT:     Section: .text
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: .text (0)
+// CHECK-NEXT:     Name: (0)
 // CHECK-NOT: Symbol {
 // CHECK:        }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: .data (0)
+// CHECK-NEXT:     Name: (0)
 // CHECK-NOT: Symbol {
 // CHECK:        }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: .bss (0)
+// CHECK-NEXT:     Name: (0)
 // CHECK-NOT: Symbol {
 // CHECK:        }
 // CHECK-NEXT:   Symbol {
