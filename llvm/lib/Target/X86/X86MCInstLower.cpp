@@ -128,6 +128,7 @@ GetSymbolFromOperand(const MachineOperand &MO) const {
   const DataLayout *DL = TM.getDataLayout();
   assert((MO.isGlobal() || MO.isSymbol() || MO.isMBB()) && "Isn't a symbol reference");
 
+  MCSymbol *Sym = nullptr;
   SmallString<128> Name;
   StringRef Suffix;
 
@@ -160,12 +161,14 @@ GetSymbolFromOperand(const MachineOperand &MO) const {
     else
       getMang()->getNameWithPrefix(Name, MO.getSymbolName());
   } else if (MO.isMBB()) {
-    Name += MO.getMBB()->getSymbol()->getName();
+    assert(Suffix.empty());
+    Sym = MO.getMBB()->getSymbol();
   }
   unsigned OrigLen = Name.size() - PrefixLen;
 
   Name += Suffix;
-  MCSymbol *Sym = Ctx.getOrCreateSymbol(Name);
+  if (!Sym)
+    Sym = Ctx.getOrCreateSymbol(Name);
 
   StringRef OrigName = StringRef(Name).substr(PrefixLen, OrigLen);
 
