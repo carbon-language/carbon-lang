@@ -2431,7 +2431,7 @@ __kmpc_reduce_nowait(
     kmp_critical_name *lck ) {
 
     KMP_COUNT_BLOCK(REDUCE_nowait);
-    int retval;
+    int retval = 0;
     PACKED_REDUCTION_METHOD_T packed_reduction_method;
 #if OMP_40_ENABLED
     kmp_team_t *team;
@@ -2629,7 +2629,7 @@ __kmpc_reduce(
     kmp_critical_name *lck )
 {
     KMP_COUNT_BLOCK(REDUCE_wait);
-    int retval;
+    int retval = 0;
     PACKED_REDUCTION_METHOD_T packed_reduction_method;
 
     KA_TRACE( 10, ( "__kmpc_reduce() enter: called T#%d\n", global_tid ) );
