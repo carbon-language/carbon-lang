@@ -631,6 +631,15 @@ TEST_F(FormatTestJS, ClassDeclarations) {
   verifyFormat("class C {\n  static x(): string { return 'asd'; }\n}");
   verifyFormat("class C extends P implements I {}");
   verifyFormat("class C extends p.P implements i.I {}");
+
+  // ':' is not a type declaration here.
+  verifyFormat("class X {\n"
+               "  subs = {\n"
+               "    'b': {\n"
+               "      'c': 1,\n"
+               "    },\n"
+               "  };\n"
+               "}");
 }
 
 TEST_F(FormatTestJS, InterfaceDeclarations) {

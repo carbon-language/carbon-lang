@@ -448,7 +448,8 @@ private:
              !Line.First->isOneOf(tok::kw_enum, tok::kw_case)) ||
             Contexts.back().ContextKind == tok::l_paren ||  // function params
             Contexts.back().ContextKind == tok::l_square || // array type
-            Line.MustBeDeclaration) { // method/property declaration
+            (Contexts.size() == 1 &&
+             Line.MustBeDeclaration)) { // method/property declaration
           Tok->Type = TT_JsTypeColon;
           break;
         }
