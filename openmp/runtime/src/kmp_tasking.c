@@ -1055,15 +1055,18 @@ __kmpc_omp_task_alloc( ident_t *loc_ref, kmp_int32 gtid, kmp_int32 flags,
     input_flags->native = FALSE;
     // __kmp_task_alloc() sets up all other runtime flags
 
+#if OMP_41_ENABLED
     KA_TRACE(10, ("__kmpc_omp_task_alloc(enter): T#%d loc=%p, flags=(%s %s) "
                   "sizeof_task=%ld sizeof_shared=%ld entry=%p\n",
                   gtid, loc_ref, input_flags->tiedness ? "tied  " : "untied",
-#if OMP_41_ENABLED
                   input_flags->proxy ? "proxy" : "",
-#else
-		  "",
-#endif
                   sizeof_kmp_task_t, sizeof_shareds, task_entry) );
+#else
+    KA_TRACE(10, ("__kmpc_omp_task_alloc(enter): T#%d loc=%p, flags=(%s) "
+                  "sizeof_task=%ld sizeof_shared=%ld entry=%p\n",
+                  gtid, loc_ref, input_flags->tiedness ? "tied  " : "untied",
+                  sizeof_kmp_task_t, sizeof_shareds, task_entry) );
+#endif
 
     retval = __kmp_task_alloc( loc_ref, gtid, input_flags, sizeof_kmp_task_t,
                                sizeof_shareds, task_entry );
