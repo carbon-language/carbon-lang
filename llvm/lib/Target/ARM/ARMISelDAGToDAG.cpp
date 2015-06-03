@@ -3920,13 +3920,25 @@ SDNode *ARMDAGToDAGISel::SelectInlineAsm(SDNode *N){
 bool ARMDAGToDAGISel::
 SelectInlineAsmMemoryOperand(const SDValue &Op, unsigned ConstraintID,
                              std::vector<SDValue> &OutOps) {
-  assert(ConstraintID == InlineAsm::Constraint_m &&
-         "unexpected asm memory constraint");
-  // Require the address to be in a register.  That is safe for all ARM
-  // variants and it is hard to do anything much smarter without knowing
-  // how the operand is used.
-  OutOps.push_back(Op);
-  return false;
+  switch(ConstraintID) {
+  default:
+    llvm_unreachable("Unexpected asm memory constraint");
+  case InlineAsm::Constraint_m:
+  case InlineAsm::Constraint_Q:
+  case InlineAsm::Constraint_Um:
+  case InlineAsm::Constraint_Un:
+  case InlineAsm::Constraint_Uq:
+  case InlineAsm::Constraint_Us:
+  case InlineAsm::Constraint_Ut:
+  case InlineAsm::Constraint_Uv:
+  case InlineAsm::Constraint_Uy:
+    // Require the address to be in a register.  That is safe for all ARM
+    // variants and it is hard to do anything much smarter without knowing
+    // how the operand is used.
+    OutOps.push_back(Op);
+    return false;
+  }
+  return true;
 }
 
 /// createARMISelDag - This pass converts a legalized DAG into a
