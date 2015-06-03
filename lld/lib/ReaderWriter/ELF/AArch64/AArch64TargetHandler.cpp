@@ -23,7 +23,7 @@ AArch64TargetLayout::AArch64TargetLayout(ELFLinkingContext &ctx) :
 
 AtomSection<ELF64LE> *AArch64TargetLayout::createSection(
     StringRef name, int32_t type, DefinedAtom::ContentPermissions permissions,
-    typename TargetLayout<ELF64LE>::SectionOrder order) {
+    TargetLayout<ELF64LE>::SectionOrder order) {
   if (type == DefinedAtom::typeGOT && name == ".got")
     return _gotSection;
   return TargetLayout<ELF64LE>::createSection(name, type, permissions, order);

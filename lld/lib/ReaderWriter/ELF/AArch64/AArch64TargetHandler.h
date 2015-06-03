@@ -30,7 +30,7 @@ public:
   AtomSection<ELF64LE> *
   createSection(StringRef name, int32_t type,
                 DefinedAtom::ContentPermissions permissions,
-                typename TargetLayout<ELF64LE>::SectionOrder order) override;
+                TargetLayout<ELF64LE>::SectionOrder order) override;
 
   const AArch64GOTSection &getGOTSection() const { return *_gotSection; }
 
