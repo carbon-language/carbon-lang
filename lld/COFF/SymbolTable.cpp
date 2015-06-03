@@ -22,9 +22,9 @@ namespace lld {
 namespace coff {
 
 SymbolTable::SymbolTable() {
-  addSymbol(new DefinedAbsolute("__ImageBase", Config->ImageBase));
+  resolve(new (Alloc) DefinedAbsolute("__ImageBase", Config->ImageBase));
   if (!Config->EntryName.empty())
-    addUndefined(Config->EntryName);
+    resolve(new (Alloc) Undefined(Config->EntryName));
 }
 
 std::error_code SymbolTable::addFile(std::unique_ptr<InputFile> File) {
@@ -192,7 +192,7 @@ ErrorOr<StringRef> SymbolTable::findDefaultEntry() {
       return StringRef(E[1]);
     if (!find(E[0]))
       continue;
-    if (auto EC = addSymbol(new Undefined(E[1])))
+    if (auto EC = resolve(new (Alloc) Undefined(E[1])))
       return EC;
     return StringRef(E[1]);
   }
@@ -201,7 +201,7 @@ ErrorOr<StringRef> SymbolTable::findDefaultEntry() {
 }
 
 std::error_code SymbolTable::addUndefined(StringRef Name) {
-  return addSymbol(new Undefined(Name));
+  return resolve(new (Alloc) Undefined(Name));
 }
 
 // Resolve To, and make From an alias to To.
@@ -211,11 +211,6 @@ std::error_code SymbolTable::rename(StringRef From, StringRef To) {
     return EC;
   Symtab[From]->Body = Body->getReplacement();
   return std::error_code();
-}
-
-std::error_code SymbolTable::addSymbol(SymbolBody *Body) {
-  OwningSymbols.push_back(std::unique_ptr<SymbolBody>(Body));
-  return resolve(Body);
 }
 
 void SymbolTable::dump() {

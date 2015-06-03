@@ -84,12 +84,10 @@ private:
 
   std::error_code resolve(SymbolBody *Body);
   std::error_code addMemberFile(Lazy *Body);
-  std::error_code addSymbol(SymbolBody *Body);
 
   std::unordered_map<StringRef, Symbol *> Symtab;
   std::vector<std::unique_ptr<ArchiveFile>> ArchiveFiles;
   std::vector<std::unique_ptr<BitcodeFile>> BitcodeFiles;
-  std::vector<std::unique_ptr<SymbolBody>> OwningSymbols;
   std::unique_ptr<MemoryBuffer> LTOObjectFile;
   llvm::BumpPtrAllocator Alloc;
 };
