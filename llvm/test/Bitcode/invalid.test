@@ -197,3 +197,8 @@ RUN: not llvm-dis -disable-output %p/Inputs/invalid-vector-length.bc 2>&1 | \
 RUN:   FileCheck --check-prefix=VECTOR-LENGTH %s
 
 VECTOR-LENGTH: Invalid vector length
+
+RUN: not llvm-dis -disable-output %p/Inputs/invalid-alias-type-mismatch.bc 2>&1 | \
+RUN:   FileCheck --check-prefix=ALIAS-TYPE-MISMATCH %s
+
+ALIAS-TYPE-MISMATCH: Alias and aliasee types don't match
