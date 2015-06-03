@@ -1455,8 +1455,8 @@ Process::SetExitStatus (int status, const char *cstr)
         m_exit_string.clear();
 
     // When we exit, we no longer need to the communication channel
-    m_stdio_communication.StopReadThread();
     m_stdio_communication.Disconnect();
+    m_stdio_communication.StopReadThread();
     m_stdin_forward = false;
 
     // And we don't need the input reader anymore as well
@@ -4036,8 +4036,8 @@ Process::Destroy (bool force_kill)
             DidDestroy();
             StopPrivateStateThread();
         }
-        m_stdio_communication.StopReadThread();
         m_stdio_communication.Disconnect();
+        m_stdio_communication.StopReadThread();
         m_stdin_forward = false;
 
         if (m_process_input_reader)
