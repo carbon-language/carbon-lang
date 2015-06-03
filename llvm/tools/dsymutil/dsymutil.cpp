@@ -30,25 +30,26 @@ using namespace llvm::cl;
 static opt<std::string> InputFile(Positional, desc("<input file>"),
                                   init("a.out"));
 
-static opt<std::string> OutputFileOpt("o", desc("Specify the output file."
-                                                " default: <input file>.dwarf"),
-                                      value_desc("filename"));
+static opt<std::string>
+    OutputFileOpt("o",
+                  desc("Specify the output file. default: <input file>.dwarf"),
+                  value_desc("filename"));
 
-static opt<std::string> OsoPrependPath("oso-prepend-path",
-                                       desc("Specify a directory to prepend "
-                                            "to the paths of object files."),
-                                       value_desc("path"));
+static opt<std::string> OsoPrependPath(
+    "oso-prepend-path",
+    desc("Specify a directory to prepend to the paths of object files."),
+    value_desc("path"));
 
 static opt<bool> Verbose("v", desc("Verbosity level"), init(false));
 
-static opt<bool> NoOutput("no-output", desc("Do the link in memory, but do "
-                                            "not emit the result file."),
-                          init(false));
+static opt<bool>
+    NoOutput("no-output",
+             desc("Do the link in memory, but do not emit the result file."),
+             init(false));
 
 static opt<bool>
     ParseOnly("parse-only",
-              desc("Only parse the debug map, do not actaully link "
-                   "the DWARF."),
+              desc("Only parse the debug map, do not actaully link the DWARF."),
               init(false));
 }
 
