@@ -97,8 +97,8 @@ void *fallback_malloc(size_t len) {
 
         if (p->len > nelems) {  //  chunk is larger, shorten, and return the tail
             heap_node *q;
-            
-            p->len -= nelems;
+
+            p->len = static_cast<heap_size>(p->len - nelems);
             q = p + p->len;
             q->next_node = 0;
             q->len = static_cast<heap_size>(nelems);
@@ -143,14 +143,14 @@ void fallback_free (void *ptr) {
 #ifdef DEBUG_FALLBACK_MALLOC
             std::cout << "  Appending onto chunk at " << offset_from_node ( p ) << std::endl;
 #endif
-            p->len += cp->len;  // make the free heap_node larger
+            p->len = static_cast<heap_size>(p->len + cp->len);  // make the free heap_node larger
             return;
             }
         else if ( after ( cp ) == p ) { // there's a free heap_node right after
 #ifdef DEBUG_FALLBACK_MALLOC
             std::cout << "  Appending free chunk at " << offset_from_node ( p ) << std::endl;
 #endif
-            cp->len += p->len;
+            cp->len = static_cast<heap_size>(cp->len + p->len);
             if ( prev == 0 ) {
                 freelist = cp;
                 cp->next_node = p->next_node;
