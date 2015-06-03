@@ -9468,6 +9468,37 @@ static bool isShuffleMaskInputInPlace(int Input, ArrayRef<int> Mask) {
   return true;
 }
 
+static SDValue lowerVectorShuffleWithSHUFPD(SDLoc DL, MVT VT,
+                                            ArrayRef<int> Mask, SDValue V1,
+                                            SDValue V2, SelectionDAG &DAG) {
+
+  // Mask for V8F64: 0/1,  8/9,  2/3,  10/11, 4/5, ..
+  // Mask for V4F64; 0/1,  4/5,  2/3,  6/7..
+  assert(VT.getScalarSizeInBits() == 64 && "Unexpected data type for VSHUFPD");
+  int NumElts = VT.getVectorNumElements();
+  bool ShufpdMask = true;
+  bool CommutableMask = true;
+  unsigned Immediate = 0;
+  for (int i = 0; i < NumElts; ++i) {
+    if (Mask[i] < 0)
+      continue;
+    int Val = (i & 6) + NumElts * (i & 1);
+    int CommutVal = (i & 0xe) + NumElts * ((i & 1)^1);
+    if (Mask[i] < Val ||  Mask[i] > Val + 1)
+      ShufpdMask = false;
+    if (Mask[i] < CommutVal ||  Mask[i] > CommutVal + 1)
+      CommutableMask = false;
+    Immediate |= (Mask[i] % 2) << i;
+  }
+  if (ShufpdMask)
+    return DAG.getNode(X86ISD::SHUFP, DL, VT, V1, V2,
+                       DAG.getConstant(Immediate, DL, MVT::i8));
+  if (CommutableMask)
+    return DAG.getNode(X86ISD::SHUFP, DL, VT, V2, V1,
+                       DAG.getConstant(Immediate, DL, MVT::i8));
+  return SDValue();
+}
+
 /// \brief Handle lowering of 4-lane 64-bit floating point shuffles.
 ///
 /// Also ends up handling lowering of 4-lane 64-bit integer shuffles when AVX2
@@ -9532,24 +9563,9 @@ static SDValue lowerV4F64VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
     return Blend;
 
   // Check if the blend happens to exactly fit that of SHUFPD.
-  if ((Mask[0] == -1 || Mask[0] < 2) &&
-      (Mask[1] == -1 || (Mask[1] >= 4 && Mask[1] < 6)) &&
-      (Mask[2] == -1 || (Mask[2] >= 2 && Mask[2] < 4)) &&
-      (Mask[3] == -1 || Mask[3] >= 6)) {
-    unsigned SHUFPDMask = (Mask[0] == 1) | ((Mask[1] == 5) << 1) |
-                          ((Mask[2] == 3) << 2) | ((Mask[3] == 7) << 3);
-    return DAG.getNode(X86ISD::SHUFP, DL, MVT::v4f64, V1, V2,
-                       DAG.getConstant(SHUFPDMask, DL, MVT::i8));
-  }
-  if ((Mask[0] == -1 || (Mask[0] >= 4 && Mask[0] < 6)) &&
-      (Mask[1] == -1 || Mask[1] < 2) &&
-      (Mask[2] == -1 || Mask[2] >= 6) &&
-      (Mask[3] == -1 || (Mask[3] >= 2 && Mask[3] < 4))) {
-    unsigned SHUFPDMask = (Mask[0] == 5) | ((Mask[1] == 1) << 1) |
-                          ((Mask[2] == 7) << 2) | ((Mask[3] == 3) << 3);
-    return DAG.getNode(X86ISD::SHUFP, DL, MVT::v4f64, V2, V1,
-                       DAG.getConstant(SHUFPDMask, DL, MVT::i8));
-  }
+  if (SDValue Op =
+      lowerVectorShuffleWithSHUFPD(DL, MVT::v4f64, Mask, V1, V2, DAG))
+    return Op;
 
   // Try to simplify this by merging 128-bit lanes to enable a lane-based
   // shuffle. However, if we have AVX2 and either inputs are already in place,
@@ -10156,22 +10172,8 @@ static SDValue lowerV8X64VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   if (SDValue Op = lowerVectorShuffleWithVALIGN(DL, VT, Mask, V1, V2, DAG))
     return Op;
 
-  // VSHUFPD instruction - mask 0/1, 8/9, 2/3, 10/11, 4/5, 12/13, 6/7, 14/15
-  bool ShufpdMask = true;
-  unsigned Immediate = 0;
-  for (int i = 0; i < 8; ++i) {
-    if (Mask[i] < 0)
-      continue;
-    int Val = (i & 6) + 8 * (i & 1);
-    if (Mask[i] < Val ||  Mask[i] > Val+1) {
-      ShufpdMask = false;
-      break;
-    }
-    Immediate |= (Mask[i]%2) << i;
-  }
-  if (ShufpdMask)
-    return DAG.getNode(X86ISD::SHUFP, DL, VT, V1, V2,
-                       DAG.getConstant(Immediate, DL, MVT::i8));
+  if (SDValue Op = lowerVectorShuffleWithSHUFPD(DL, VT, Mask, V1, V2, DAG))
+    return Op;
 
   // PERMILPD instruction - mask 0/1, 0/1, 2/3, 2/3, 4/5, 4/5, 6/7, 6/7
   if (isSingleInputShuffleMask(Mask)) {

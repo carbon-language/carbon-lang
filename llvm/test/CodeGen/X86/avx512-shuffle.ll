@@ -242,3 +242,11 @@ define <16 x i32> @test31(<16 x i32> %a, <16 x i32> %b) nounwind {
   %c = shufflevector <16 x i32> %a, <16 x i32> %b, <16 x i32> <i32 3, i32 4, i32 5, i32 undef, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 16, i32 17, i32 18>
   ret <16 x i32> %c
 }
+
+; CHECK-LABEL: test32
+; CHECK: vshufpd $99, %zmm0, %zmm1
+; CHECK: ret
+define <8 x double> @test32(<8 x double> %a, <8 x double> %b) nounwind {
+  %c = shufflevector <8 x double> %a, <8 x double> %b, <8 x i32> <i32 9, i32 1, i32 10, i32 2, i32 undef, i32 5, i32 15, i32 undef>
+  ret <8 x double> %c
+}
