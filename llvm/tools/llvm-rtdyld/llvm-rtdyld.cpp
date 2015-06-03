@@ -139,6 +139,11 @@ public:
   // explicit cache flush, otherwise JIT code manipulations (like resolved
   // relocations) will get to the data cache but not to the instruction cache.
   virtual void invalidateInstructionCache();
+
+  void registerEHFrames(uint8_t *Addr, uint64_t LoadAddr,
+                        size_t Size) override {}
+  void deregisterEHFrames(uint8_t *Addr, uint64_t LoadAddr,
+                          size_t Size) override {}
 };
 
 uint8_t *TrivialMemoryManager::allocateCodeSection(uintptr_t Size,
