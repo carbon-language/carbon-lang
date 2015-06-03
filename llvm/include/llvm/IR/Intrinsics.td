@@ -537,7 +537,8 @@ def int_experimental_patchpoint_i64 : Intrinsic<[llvm_i64_ty],
 def int_experimental_gc_statepoint : Intrinsic<[llvm_i32_ty],
                                [llvm_i64_ty, llvm_i32_ty,
                                 llvm_anyptr_ty, llvm_i32_ty,
-                                llvm_i32_ty, llvm_vararg_ty]>;
+                                llvm_i32_ty, llvm_vararg_ty],
+                                [Throws]>;
 
 def int_experimental_gc_result   : Intrinsic<[llvm_any_ty], [llvm_i32_ty]>;
 def int_experimental_gc_relocate : Intrinsic<[llvm_anyptr_ty],
