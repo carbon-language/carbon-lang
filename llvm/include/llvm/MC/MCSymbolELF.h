@@ -19,11 +19,13 @@ class MCSymbolELF : public MCSymbol {
 
   mutable unsigned BindingSet : 1;
   mutable unsigned UsedInReloc : 1;
+  mutable unsigned WeakrefUsedInReloc : 1;
   mutable unsigned IsSignature : 1;
 
 public:
   MCSymbolELF(const StringMapEntry<bool> *Name, bool isTemporary)
-      : MCSymbol(true, Name, isTemporary), BindingSet(false) {}
+      : MCSymbol(true, Name, isTemporary), BindingSet(false),
+        UsedInReloc(false), WeakrefUsedInReloc(false), IsSignature(false) {}
   void setSize(const MCExpr *SS) { SymbolSize = SS; }
 
   const MCExpr *getSize() const { return SymbolSize; }
@@ -44,6 +46,9 @@ public:
 
   void setUsedInReloc() const;
   bool isUsedInReloc() const;
+
+  void setIsWeakrefUsedInReloc() const;
+  bool isWeakrefUsedInReloc() const;
 
   void setIsSignature() const;
   bool isSignature() const;

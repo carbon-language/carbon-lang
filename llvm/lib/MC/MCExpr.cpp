@@ -601,6 +601,13 @@ bool MCExpr::evaluateAsValue(MCValue &Res, const MCAsmLayout &Layout) const {
 }
 
 static bool canExpand(const MCSymbol &Sym, const MCAssembler *Asm, bool InSet) {
+  const MCExpr *Expr = Sym.getVariableValue();
+  const auto *Inner = dyn_cast<MCSymbolRefExpr>(Expr);
+  if (Inner) {
+    if (Inner->getKind() == MCSymbolRefExpr::VK_WEAKREF)
+      return false;
+  }
+
   if (InSet)
     return true;
   if (!Asm)

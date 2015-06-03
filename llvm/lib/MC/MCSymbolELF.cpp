@@ -35,6 +35,8 @@ unsigned MCSymbolELF::getBinding() const {
     return ELF::STB_LOCAL;
   if (isUsedInReloc())
     return ELF::STB_GLOBAL;
+  if (isWeakrefUsedInReloc())
+    return ELF::STB_WEAK;
   if (isSignature())
     return ELF::STB_LOCAL;
   return ELF::STB_GLOBAL;
@@ -95,6 +97,10 @@ void MCSymbolELF::setUsedInReloc() const {
 bool MCSymbolELF::isUsedInReloc() const {
   return UsedInReloc;
 }
+
+void MCSymbolELF::setIsWeakrefUsedInReloc() const { WeakrefUsedInReloc = true; }
+
+bool MCSymbolELF::isWeakrefUsedInReloc() const { return WeakrefUsedInReloc; }
 
 void MCSymbolELF::setIsSignature() const { IsSignature = true; }
 
