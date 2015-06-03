@@ -475,12 +475,12 @@ std::error_code AArch64TargetRelocationHandler::applyRelocation(
     break;
   case R_AARCH64_TLSLE_ADD_TPREL_HI12:
   case R_AARCH64_TLSLE_ADD_TPREL_LO12_NC: {
-    _tlsSize = _layout.getAlignedTLSSize();
+    auto tpoffset = _layout.getTPOffset();
     if (ref.kindValue() == R_AARCH64_TLSLE_ADD_TPREL_HI12)
-      return relocR_AARCH64_TLSLE_ADD_TPREL_HI12(loc, reloc, target + _tlsSize,
+      return relocR_AARCH64_TLSLE_ADD_TPREL_HI12(loc, reloc, target + tpoffset,
                                                  addend);
     else 
-      relocR_AARCH64_TLSLE_ADD_TPREL_LO12_NC(loc, reloc, target + _tlsSize,
+      relocR_AARCH64_TLSLE_ADD_TPREL_LO12_NC(loc, reloc, target + tpoffset,
                                              addend);
   }  break;
   default:

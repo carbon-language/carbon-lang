@@ -27,8 +27,6 @@ public:
                                   const Reference &) const override;
 
 private:
-  // Cached size of the TLS segment.
-  mutable uint64_t _tlsSize = 0;
   AArch64TargetLayout &_layout;
 };
 

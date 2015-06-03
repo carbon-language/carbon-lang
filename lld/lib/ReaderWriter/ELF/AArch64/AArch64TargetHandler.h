@@ -20,16 +20,32 @@ namespace elf {
 class AArch64LinkingContext;
 
 class AArch64TargetLayout final : public TargetLayout<ELF64LE> {
+  typedef llvm::object::Elf_Shdr_Impl<ELF64LE> Elf_Shdr;
+
 public:
   AArch64TargetLayout(ELFLinkingContext &ctx) : TargetLayout(ctx) {}
 
-  uint64_t getAlignedTLSSize() const {
-    return llvm::RoundUpToAlignment(TCB_ALIGNMENT, this->getTLSSize());
+  uint64_t getTPOffset() {
+    std::call_once(_tpOffOnce, [this]() {
+      for (const auto &phdr : *_programHeader) {
+        if (phdr->p_type == llvm::ELF::PT_TLS) {
+          _tpOff = llvm::RoundUpToAlignment(TCB_SIZE, phdr->p_align);
+          break;
+        }
+      }
+      assert(_tpOff != 0 && "TLS segment not found");
+    });
+    return _tpOff;
   }
 
 private:
-  // Alignment requirement for TCB.
-  enum { TCB_ALIGNMENT = 0x10 };
+  enum {
+    TCB_SIZE = 16,
+  };
+
+private:
+  uint64_t _tpOff = 0;
+  std::once_flag _tpOffOnce;
 };
 
 class AArch64TargetHandler final : public TargetHandler {
