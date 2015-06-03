@@ -477,32 +477,43 @@ void RuntimeDyldELF::resolveARMRelocation(const SectionEntry &Section,
 void RuntimeDyldELF::resolveMIPSRelocation(const SectionEntry &Section,
                                            uint64_t Offset, uint32_t Value,
                                            uint32_t Type, int32_t Addend) {
-  uint32_t *TargetPtr = (uint32_t *)(Section.Address + Offset);
+  uint8_t *TargetPtr = Section.Address + Offset;
   Value += Addend;
 
-  DEBUG(dbgs() << "resolveMipselocation, LocalAddress: "
+  DEBUG(dbgs() << "resolveMIPSRelocation, LocalAddress: "
                << Section.Address + Offset << " FinalAddress: "
                << format("%p", Section.LoadAddress + Offset) << " Value: "
                << format("%x", Value) << " Type: " << format("%x", Type)
                << " Addend: " << format("%x", Addend) << "\n");
+
+  uint32_t Insn = readBytesUnaligned(TargetPtr, 4);
 
   switch (Type) {
   default:
     llvm_unreachable("Not implemented relocation type!");
     break;
   case ELF::R_MIPS_32:
-    *TargetPtr = Value;
+    writeBytesUnaligned(Value, TargetPtr, 4);
     break;
   case ELF::R_MIPS_26:
-    *TargetPtr = ((*TargetPtr) & 0xfc000000) | ((Value & 0x0fffffff) >> 2);
+    Insn &= 0xfc000000;
+    Insn |= (Value & 0x0fffffff) >> 2;
+    writeBytesUnaligned(Insn, TargetPtr, 4);
     break;
   case ELF::R_MIPS_HI16:
     // Get the higher 16-bits. Also add 1 if bit 15 is 1.
-    *TargetPtr =
-      ((*TargetPtr) & 0xffff0000) | (((Value + 0x8000) >> 16) & 0xffff);
+    Insn &= 0xffff0000;
+    Insn |= ((Value + 0x8000) >> 16) & 0xffff;
+    writeBytesUnaligned(Insn, TargetPtr, 4);
     break;
   case ELF::R_MIPS_LO16:
-    *TargetPtr = ((*TargetPtr) & 0xffff0000) | (Value & 0xffff);
+    Insn &= 0xffff0000;
+    Insn |= Value & 0xffff;
+    writeBytesUnaligned(Insn, TargetPtr, 4);
+    break;
+  case ELF::R_MIPS_PC32:
+    uint32_t FinalAddress = (Section.LoadAddress + Offset);
+    writeBytesUnaligned(Value + Addend - FinalAddress, (uint8_t *)TargetPtr, 4);
     break;
   }
 }
@@ -1199,7 +1210,9 @@ relocation_iterator RuntimeDyldELF::processRelocationRef(
       processSimpleRelocation(SectionID, Offset, RelType, Value);
     }
   } else if (IsMipsO32ABI) {
-    uint32_t *Placeholder = reinterpret_cast<uint32_t*>(computePlaceholderAddress(SectionID, Offset));
+    uint8_t *Placeholder = reinterpret_cast<uint8_t *>(
+        computePlaceholderAddress(SectionID, Offset));
+    uint32_t Opcode = readBytesUnaligned(Placeholder, 4);
     if (RelType == ELF::R_MIPS_26) {
       // This is an Mips branch relocation, need to use a stub function.
       DEBUG(dbgs() << "\t\tThis is a Mips branch relocation.");
@@ -1208,7 +1221,7 @@ relocation_iterator RuntimeDyldELF::processRelocationRef(
       // Extract the addend from the instruction.
       // We shift up by two since the Value will be down shifted again
       // when applying the relocation.
-      uint32_t Addend = ((*Placeholder) & 0x03ffffff) << 2;
+      uint32_t Addend = (Opcode & 0x03ffffff) << 2;
 
       Value.Addend += Addend;
 
@@ -1246,11 +1259,11 @@ relocation_iterator RuntimeDyldELF::processRelocationRef(
       }
     } else {
       if (RelType == ELF::R_MIPS_HI16)
-        Value.Addend += ((*Placeholder) & 0x0000ffff) << 16;
+        Value.Addend += (Opcode & 0x0000ffff) << 16;
       else if (RelType == ELF::R_MIPS_LO16)
-        Value.Addend += ((*Placeholder) & 0x0000ffff);
+        Value.Addend += (Opcode & 0x0000ffff);
       else if (RelType == ELF::R_MIPS_32)
-        Value.Addend += *Placeholder;
+        Value.Addend += Opcode;
       processSimpleRelocation(SectionID, Offset, RelType, Value);
     }
   } else if (IsMipsN64ABI) {
