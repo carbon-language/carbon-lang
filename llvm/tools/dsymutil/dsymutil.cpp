@@ -52,6 +52,10 @@ static opt<bool> DumpDebugMap(
     desc("Parse and dump the debug map to standard output. Not DWARF link "
          "will take place."),
     init(false));
+
+static opt<bool> InputIsYAMLDebugMap(
+    "y", desc("Treat the input file is a YAML debug map rather than a binary."),
+    init(false));
 }
 
 int main(int argc, char **argv) {
@@ -61,7 +65,9 @@ int main(int argc, char **argv) {
   LinkOptions Options;
 
   llvm::cl::ParseCommandLineOptions(argc, argv, "llvm dsymutil\n");
-  auto DebugMapPtrOrErr = parseDebugMap(InputFile, OsoPrependPath, Verbose);
+
+  auto DebugMapPtrOrErr =
+      parseDebugMap(InputFile, OsoPrependPath, Verbose, InputIsYAMLDebugMap);
 
   Options.Verbose = Verbose;
   Options.NoOutput = NoOutput;
