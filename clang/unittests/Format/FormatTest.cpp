@@ -4965,6 +4965,9 @@ TEST_F(FormatTest, AlignsPipes) {
                "                    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,\n"
                "                    aaaaaaaaaaaaaaaaaaaaa)\n"
                "             << aaaaaaaaaaaaaaaaaaaaaaaaaa;");
+  verifyFormat("LOG_IF(aaa == //\n"
+               "       bbb)\n"
+               "    << a << b;");
 
   // Breaking before the first "<<" is generally not desirable.
   verifyFormat(
