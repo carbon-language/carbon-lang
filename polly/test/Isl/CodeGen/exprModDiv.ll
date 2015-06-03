@@ -46,10 +46,8 @@
 ; POW2:  %polly.access.A6 = getelementptr float, float* %A, i64 %pexp.pdiv_r
 
 ; A[i / 128]
-; POW2:  %pexp.div = sdiv i64 %polly.indvar, 128
+; POW2:  %pexp.div.shr = ashr i64 %polly.indvar, 7
 ; POW2:  %polly.access.B8 = getelementptr float, float* %B, i64 %pexp.div
-;
-; FIXME: Make isl mark this as an udiv expression.
 
 ; #define floord(n,d) ((n < 0) ? (n - d + 1) : n) / d
 ; A[p + 128 * floord(-p - 1, 128) + 128]
@@ -62,8 +60,8 @@
 ; POW2:  %polly.access.A10 = getelementptr float, float* %A, i64 %24
 
 ; A[p / 128]
-; POW2:  %pexp.div12 = sdiv i64 %p, 128
-; POW2:  %polly.access.B13 = getelementptr float, float* %B, i64 %pexp.div12
+; POW2:  %pexp.div.shr12 = ashr i64 %p, 7
+; POW2:  %polly.access.B13 = getelementptr float, float* %B, i64 %pexp.div.shr12
 
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 
