@@ -6,11 +6,11 @@ format. Because the fundamental design of this port is different from
 the other ports of LLD, this port is separated to this directory.
 
 The other ports are based on the Atom model, in which symbols and
-references are represented as vertices and edges of graphs. The port
-in this directory is based on sections instead. The aim is
-simplicity and better performance. Our plan is to implement a linker
-for the PE/COFF format based on a different idea, and then apply the
-same idea to the ELF if proved to be effective.
+references are represented as vertices and edges of graphs.
+We don't use that model to aim for performance and simplicity.
+Our plan is to implement a linker for the PE/COFF format based on a
+different idea, and then apply the same idea to the ELF if proved to
+be effective.
 
 Overall Design
 --------------
