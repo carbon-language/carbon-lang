@@ -1095,6 +1095,19 @@ CFGBlock *CFGBuilder::addInitializer(CXXCtorInitializer *I) {
       // generating destructors for the second time.
       return Visit(cast<ExprWithCleanups>(Init)->getSubExpr());
     }
+    if (BuildOpts.AddCXXDefaultInitExprInCtors) {
+      if (CXXDefaultInitExpr *Default = dyn_cast<CXXDefaultInitExpr>(Init)) {
+        // In general, appending the expression wrapped by a CXXDefaultInitExpr
+        // may cause the same Expr to appear more than once in the CFG. Doing it
+        // here is safe because there's only one initializer per field.
+        autoCreateBlock();
+        appendStmt(Block, Default);
+        if (Stmt *Child = Default->getExpr())
+          if (CFGBlock *R = Visit(Child))
+            Block = R;
+        return Block;
+      }
+    }
     return Visit(Init);
   }
 

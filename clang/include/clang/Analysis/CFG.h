@@ -738,6 +738,7 @@ public:
     bool AddTemporaryDtors;
     bool AddStaticInitBranches;
     bool AddCXXNewAllocator;
+    bool AddCXXDefaultInitExprInCtors;
 
     bool alwaysAdd(const Stmt *stmt) const {
       return alwaysAddMask[stmt->getStmtClass()];
@@ -758,7 +759,7 @@ public:
         PruneTriviallyFalseEdges(true), AddEHEdges(false),
         AddInitializers(false), AddImplicitDtors(false),
         AddTemporaryDtors(false), AddStaticInitBranches(false),
-        AddCXXNewAllocator(false) {}
+        AddCXXNewAllocator(false), AddCXXDefaultInitExprInCtors(false) {}
   };
 
   /// \brief Provides a custom implementation of the iterator class to have the
