@@ -740,17 +740,13 @@ bool ELFObjectWriter::isInSymtab(const MCAsmLayout &Layout,
   if (Renamed)
     return false;
 
-  if (Symbol.getName() == "_GLOBAL_OFFSET_TABLE_")
-    return true;
-
-  if (Symbol.isVariable()) {
-    const MCSymbol *Base = Layout.getBaseSymbol(Symbol);
-    if (Base && Base->isUndefined())
-      return false;
+  if (Symbol.isVariable() && Symbol.isUndefined()) {
+    // FIXME: this is here just to diagnose the case of a var = commmon_sym.
+    Layout.getBaseSymbol(Symbol);
+    return false;
   }
 
-  bool IsGlobal = Symbol.getBinding() == ELF::STB_GLOBAL;
-  if (!Symbol.isVariable() && Symbol.isUndefined() && !IsGlobal)
+  if (Symbol.isUndefined() && !Symbol.isBindingSet())
     return false;
 
   if (Symbol.getType() == ELF::STT_SECTION)
