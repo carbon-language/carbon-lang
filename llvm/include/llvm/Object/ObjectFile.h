@@ -66,11 +66,6 @@ public:
   /// This is for display purposes only.
   std::error_code getTypeName(SmallVectorImpl<char> &Result) const;
 
-  /// @brief Get a string that represents the calculation of the value of this
-  ///        relocation.
-  ///
-  /// This is for display purposes only.
-  std::error_code getValueString(SmallVectorImpl<char> &Result) const;
 
   DataRefImpl getRawDataRefImpl() const;
   const ObjectFile *getObjectFile() const;
@@ -252,9 +247,6 @@ protected:
   virtual std::error_code
   getRelocationTypeName(DataRefImpl Rel,
                         SmallVectorImpl<char> &Result) const = 0;
-  virtual std::error_code
-  getRelocationValueString(DataRefImpl Rel,
-                           SmallVectorImpl<char> &Result) const = 0;
   virtual std::error_code getRelocationHidden(DataRefImpl Rel,
                                               bool &Result) const {
     Result = false;
@@ -478,11 +470,6 @@ inline std::error_code RelocationRef::getType(uint64_t &Result) const {
 inline std::error_code
 RelocationRef::getTypeName(SmallVectorImpl<char> &Result) const {
   return OwningObject->getRelocationTypeName(RelocationPimpl, Result);
-}
-
-inline std::error_code
-RelocationRef::getValueString(SmallVectorImpl<char> &Result) const {
-  return OwningObject->getRelocationValueString(RelocationPimpl, Result);
 }
 
 inline std::error_code RelocationRef::getHidden(bool &Result) const {

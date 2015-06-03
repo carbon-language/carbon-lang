@@ -1114,22 +1114,6 @@ COFFObjectFile::getRelocationTypeName(DataRefImpl Rel,
 
 #undef LLVM_COFF_SWITCH_RELOC_TYPE_NAME
 
-std::error_code
-COFFObjectFile::getRelocationValueString(DataRefImpl Rel,
-                                         SmallVectorImpl<char> &Result) const {
-  const coff_relocation *Reloc = toRel(Rel);
-  DataRefImpl Sym;
-  ErrorOr<COFFSymbolRef> Symb = getSymbol(Reloc->SymbolTableIndex);
-  if (std::error_code EC = Symb.getError())
-    return EC;
-  Sym.p = reinterpret_cast<uintptr_t>(Symb->getRawPtr());
-  StringRef SymName;
-  if (std::error_code EC = getSymbolName(Sym, SymName))
-    return EC;
-  Result.append(SymName.begin(), SymName.end());
-  return object_error::success;
-}
-
 bool COFFObjectFile::isRelocatableObject() const {
   return !DataDirectory;
 }

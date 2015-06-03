@@ -647,10 +647,6 @@ protected:
   std::error_code
   getRelocationTypeName(DataRefImpl Rel,
                         SmallVectorImpl<char> &Result) const override;
-  std::error_code
-  getRelocationValueString(DataRefImpl Rel,
-                           SmallVectorImpl<char> &Result) const override;
-
 public:
   COFFObjectFile(MemoryBufferRef Object, std::error_code &EC);
   basic_symbol_iterator symbol_begin_impl() const override;

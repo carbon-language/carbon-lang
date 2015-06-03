@@ -118,9 +118,6 @@ protected:
   std::error_code
   getRelocationTypeName(DataRefImpl Rel,
                         SmallVectorImpl<char> &Result) const override;
-  std::error_code
-  getRelocationValueString(DataRefImpl Rel,
-                           SmallVectorImpl<char> &Result) const override;
 
   uint64_t getROffset(DataRefImpl Rel) const;
   StringRef getRelocationTypeName(uint32_t Type) const;
@@ -705,87 +702,6 @@ ELFObjectFile<ELFT>::getRelocationAddend(DataRefImpl Rel,
     return object_error::success;
   }
   }
-}
-
-template <class ELFT>
-std::error_code ELFObjectFile<ELFT>::getRelocationValueString(
-    DataRefImpl Rel, SmallVectorImpl<char> &Result) const {
-  const Elf_Shdr *sec = getRelSection(Rel);
-  uint8_t type;
-  StringRef res;
-  int64_t addend = 0;
-  uint16_t symbol_index = 0;
-  switch (sec->sh_type) {
-  default:
-    return object_error::parse_failed;
-  case ELF::SHT_REL: {
-    type = getRel(Rel)->getType(EF.isMips64EL());
-    symbol_index = getRel(Rel)->getSymbol(EF.isMips64EL());
-    // TODO: Read implicit addend from section data.
-    break;
-  }
-  case ELF::SHT_RELA: {
-    type = getRela(Rel)->getType(EF.isMips64EL());
-    symbol_index = getRela(Rel)->getSymbol(EF.isMips64EL());
-    addend = getRela(Rel)->r_addend;
-    break;
-  }
-  }
-  const Elf_Sym *symb =
-      EF.template getEntry<Elf_Sym>(sec->sh_link, symbol_index);
-  ErrorOr<StringRef> SymName =
-      EF.getSymbolName(EF.getSection(sec->sh_link), symb);
-  if (!SymName)
-    return SymName.getError();
-  switch (EF.getHeader()->e_machine) {
-  case ELF::EM_X86_64:
-    switch (type) {
-    case ELF::R_X86_64_PC8:
-    case ELF::R_X86_64_PC16:
-    case ELF::R_X86_64_PC32: {
-      std::string fmtbuf;
-      raw_string_ostream fmt(fmtbuf);
-      fmt << *SymName << (addend < 0 ? "" : "+") << addend << "-P";
-      fmt.flush();
-      Result.append(fmtbuf.begin(), fmtbuf.end());
-    } break;
-    case ELF::R_X86_64_8:
-    case ELF::R_X86_64_16:
-    case ELF::R_X86_64_32:
-    case ELF::R_X86_64_32S:
-    case ELF::R_X86_64_64: {
-      std::string fmtbuf;
-      raw_string_ostream fmt(fmtbuf);
-      fmt << *SymName << (addend < 0 ? "" : "+") << addend;
-      fmt.flush();
-      Result.append(fmtbuf.begin(), fmtbuf.end());
-    } break;
-    default:
-      res = "Unknown";
-    }
-    break;
-  case ELF::EM_AARCH64: {
-    std::string fmtbuf;
-    raw_string_ostream fmt(fmtbuf);
-    fmt << *SymName;
-    if (addend != 0)
-      fmt << (addend < 0 ? "" : "+") << addend;
-    fmt.flush();
-    Result.append(fmtbuf.begin(), fmtbuf.end());
-    break;
-  }
-  case ELF::EM_386:
-  case ELF::EM_ARM:
-  case ELF::EM_HEXAGON:
-  case ELF::EM_MIPS:
-    res = *SymName;
-    break;
-  default:
-    res = "Unknown";
-  }
-  if (Result.empty())
-    Result.append(res.begin(), res.end());
-  return object_error::success;
 }
 
 template <class ELFT>
