@@ -110,7 +110,7 @@ will be chosen, so you'll almost always have to change it via flags.
 
 Typical flags include:
  * ``-mcpu=<cpu-name>``, like x86-64, swift, cortex-a15
- * ``-fpu=<fpu-name>``, like SSE3, NEON, controlling the FP unit available
+ * ``-mfpu=<fpu-name>``, like SSE3, NEON, controlling the FP unit available
  * ``-mfloat-abi=<fabi>``, like soft, hard, controlling which registers
    to use for floating-point
 
