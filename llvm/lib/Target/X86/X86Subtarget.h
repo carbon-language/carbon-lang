@@ -218,6 +218,9 @@ protected:
   /// Processor has AVX-512 Vector Length eXtenstions
   bool HasVLX;
 
+  /// Processot supports MPX - Memory Protection Extensions
+  bool HasMPX;
+
   /// Use software floating point for code generation.
   bool UseSoftFloat;
 
@@ -385,6 +388,7 @@ public:
   bool hasDQI() const { return HasDQI; }
   bool hasBWI() const { return HasBWI; }
   bool hasVLX() const { return HasVLX; }
+  bool hasMPX() const { return HasMPX; }
 
   bool isAtom() const { return X86ProcFamily == IntelAtom; }
   bool isSLM() const { return X86ProcFamily == IntelSLM; }
