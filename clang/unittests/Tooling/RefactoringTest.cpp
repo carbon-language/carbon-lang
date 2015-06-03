@@ -281,6 +281,7 @@ public:
 
 protected:
   clang::SourceManager *SM;
+  clang::ASTContext *Context;
 
 private:
   class FindConsumer : public clang::ASTConsumer {
@@ -303,6 +304,7 @@ private:
     CreateASTConsumer(clang::CompilerInstance &compiler,
                       llvm::StringRef dummy) override {
       Visitor->SM = &compiler.getSourceManager();
+      Visitor->Context = &compiler.getASTContext();
       /// TestConsumer will be deleted by the framework calling us.
       return llvm::make_unique<FindConsumer>(Visitor);
     }
@@ -366,6 +368,29 @@ TEST(Replacement, TemplatedFunctionCall) {
   EXPECT_TRUE(CallToF.runOver(
         "template <typename T> void F(); void G() { F<int>(); }"));
   expectReplacementAt(CallToF.Replace, "input.cc", 43, 8);
+}
+
+class NestedNameSpecifierAVisitor
+    : public TestVisitor<NestedNameSpecifierAVisitor> {
+public:
+  bool TraverseNestedNameSpecifierLoc(NestedNameSpecifierLoc NNSLoc) {
+    if (NNSLoc.getNestedNameSpecifier()) {
+      if (const NamespaceDecl* NS = NNSLoc.getNestedNameSpecifier()->getAsNamespace()) {
+        if (NS->getName() == "a") {
+          Replace = Replacement(*SM, &NNSLoc, "", Context->getLangOpts());
+        }
+      }
+    }
+    return TestVisitor<NestedNameSpecifierAVisitor>::TraverseNestedNameSpecifierLoc(
+        NNSLoc);
+  }
+  Replacement Replace;
+};
+
+TEST(Replacement, ColonColon) {
+  NestedNameSpecifierAVisitor VisitNNSA;
+  EXPECT_TRUE(VisitNNSA.runOver("namespace a { void f() { ::a::f(); } }"));
+  expectReplacementAt(VisitNNSA.Replace, "input.cc", 25, 5);
 }
 
 TEST(Range, overlaps) {
