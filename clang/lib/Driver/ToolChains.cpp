@@ -2077,21 +2077,26 @@ bool Generic_GCC::isPICDefaultForced() const {
 }
 
 bool Generic_GCC::IsIntegratedAssemblerDefault() const {
-  return getTriple().getArch() == llvm::Triple::x86 ||
-         getTriple().getArch() == llvm::Triple::x86_64 ||
-         getTriple().getArch() == llvm::Triple::aarch64 ||
-         getTriple().getArch() == llvm::Triple::aarch64_be ||
-         getTriple().getArch() == llvm::Triple::arm ||
-         getTriple().getArch() == llvm::Triple::armeb ||
-         getTriple().getArch() == llvm::Triple::thumb ||
-         getTriple().getArch() == llvm::Triple::thumbeb ||
-         getTriple().getArch() == llvm::Triple::ppc ||
-         getTriple().getArch() == llvm::Triple::ppc64 ||
-         getTriple().getArch() == llvm::Triple::ppc64le ||
-         getTriple().getArch() == llvm::Triple::sparc ||
-         getTriple().getArch() == llvm::Triple::sparcel ||
-         getTriple().getArch() == llvm::Triple::sparcv9 ||
-         getTriple().getArch() == llvm::Triple::systemz;
+  switch (getTriple().getArch()) {
+  case llvm::Triple::x86:
+  case llvm::Triple::x86_64:
+  case llvm::Triple::aarch64:
+  case llvm::Triple::aarch64_be:
+  case llvm::Triple::arm:
+  case llvm::Triple::armeb:
+  case llvm::Triple::thumb:
+  case llvm::Triple::thumbeb:
+  case llvm::Triple::ppc:
+  case llvm::Triple::ppc64:
+  case llvm::Triple::ppc64le:
+  case llvm::Triple::sparc:
+  case llvm::Triple::sparcel:
+  case llvm::Triple::sparcv9:
+  case llvm::Triple::systemz:
+    return true;
+  default:
+    return false;
+  }
 }
 
 void Generic_ELF::addClangTargetOptions(const ArgList &DriverArgs,
