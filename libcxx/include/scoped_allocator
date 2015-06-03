@@ -183,7 +183,7 @@ template <class _A0, class ..._Allocs>
 struct __get_is_always_equal<_A0, _Allocs...>
 {
     static const bool value =
-        allocator_traits<_A0>::is_always_equal::value ||
+        allocator_traits<_A0>::is_always_equal::value &&
         __get_is_always_equal<_Allocs...>::value;
 };
 
