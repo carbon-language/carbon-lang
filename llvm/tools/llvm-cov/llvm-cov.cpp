@@ -13,6 +13,7 @@
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSwitch.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/Process.h"
 #include "llvm/Support/raw_ostream.h"
@@ -43,6 +44,12 @@ static int helpMain(int argc, const char *argv[]) {
   return 0;
 }
 
+/// \brief Top level version information.
+static int versionMain(int argc, const char *argv[]) {
+  cl::PrintVersionMessage();
+  return 0;
+}
+
 int main(int argc, const char **argv) {
   // If argv[0] is or ends with 'gcov', always be gcov compatible
   if (sys::path::stem(argv[0]).endswith_lower("gcov"))
@@ -57,6 +64,7 @@ int main(int argc, const char **argv) {
                             .Case("report", reportMain)
                             .Case("show", showMain)
                             .Cases("-h", "-help", "--help", helpMain)
+                            .Cases("-version", "--version", versionMain)
                             .Default(nullptr);
 
     if (Func) {
