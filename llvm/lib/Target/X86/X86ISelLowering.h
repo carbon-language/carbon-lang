@@ -354,6 +354,8 @@ namespace llvm {
       PSHUFHW,
       PSHUFLW,
       SHUFP,
+      //Shuffle Packed Values at 128-bit granularity
+      SHUF128,
       MOVDDUP,
       MOVSHDUP,
       MOVSLDUP,

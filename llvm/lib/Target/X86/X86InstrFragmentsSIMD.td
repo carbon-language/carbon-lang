@@ -249,7 +249,8 @@ def X86PShufd  : SDNode<"X86ISD::PSHUFD", SDTShuff2OpI>;
 def X86PShufhw : SDNode<"X86ISD::PSHUFHW", SDTShuff2OpI>;
 def X86PShuflw : SDNode<"X86ISD::PSHUFLW", SDTShuff2OpI>;
 
-def X86Shufp : SDNode<"X86ISD::SHUFP", SDTShuff3OpI>;
+def X86Shufp   : SDNode<"X86ISD::SHUFP", SDTShuff3OpI>;
+def X86Shuf128 : SDNode<"X86ISD::SHUF128", SDTShuff3OpI>;
 
 def X86Movddup  : SDNode<"X86ISD::MOVDDUP", SDTShuff1Op>;
 def X86Movshdup : SDNode<"X86ISD::MOVSHDUP", SDTShuff1Op>;
