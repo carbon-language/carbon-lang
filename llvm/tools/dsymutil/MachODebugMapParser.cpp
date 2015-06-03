@@ -242,32 +242,12 @@ void MachODebugMapParser::loadMainBinarySymbols() {
   }
 }
 
-ErrorOr<std::unique_ptr<DebugMap>>
-parseYAMLDebugMap(StringRef InputFile, bool Verbose) {
-  auto ErrOrFile = MemoryBuffer::getFileOrSTDIN(InputFile);
-  if (auto Err =ErrOrFile.getError())
-    return Err;
-
-  std::unique_ptr<DebugMap> Res;
-  yaml::Input yin((*ErrOrFile)->getBuffer());
-  yin >> Res;
-
-  if (auto EC = yin.error())
-    return EC;
-
-  return std::move(Res);
-}
-
 namespace llvm {
 namespace dsymutil {
 llvm::ErrorOr<std::unique_ptr<DebugMap>>
-parseDebugMap(StringRef InputFile, StringRef PrependPath, bool Verbose, bool InputIsYAML) {
-  if (!InputIsYAML) {
-    MachODebugMapParser Parser(InputFile, PrependPath, Verbose);
-    return Parser.parse();
-  } else {
-    return parseYAMLDebugMap(InputFile, Verbose);
-  }
+parseDebugMap(StringRef InputFile, StringRef PrependPath, bool Verbose) {
+  MachODebugMapParser Parser(InputFile, PrependPath, Verbose);
+  return Parser.parse();
 }
 }
 }

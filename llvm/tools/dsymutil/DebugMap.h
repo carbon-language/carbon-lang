@@ -69,7 +69,6 @@ class DebugMap {
 
   /// For YAML IO support.
   ///@{
-  friend yaml::MappingTraits<std::unique_ptr<DebugMap>>;
   friend yaml::MappingTraits<DebugMap>;
   DebugMap() = default;
   ///@}
@@ -185,35 +184,33 @@ struct MappingTraits<std::pair<std::string, DebugMapObject::SymbolMapping>> {
 };
 
 template <> struct MappingTraits<dsymutil::DebugMapObject> {
-  // Normalize/Denormalize between YAML and a DebugMapObject.
-  struct YamlDMO {
-    YamlDMO(IO &io) {}
+  typedef StringMap<dsymutil::DebugMapObject::SymbolMapping> SymbolMap;
 
-    YamlDMO(IO &io, dsymutil::DebugMapObject &Obj) {
-      Filename = Obj.Filename;
-      Entries.reserve(Obj.Symbols.size());
-      for (auto &Entry : Obj.Symbols)
+  struct SequencedStringMap {
+    SequencedStringMap(IO &io) {}
+
+    SequencedStringMap(IO &io, SymbolMap &Map) {
+      Entries.reserve(Map.size());
+      for (auto &Entry : Map)
         Entries.push_back(std::make_pair(Entry.getKey(), Entry.getValue()));
     }
 
-    dsymutil::DebugMapObject denormalize(IO &) {
-      dsymutil::DebugMapObject Res(Filename);
-      for (auto &Entry : Entries) {
-        auto &Mapping = Entry.second;
-        Res.addSymbol(Entry.first, Mapping.ObjectAddress, Mapping.BinaryAddress,
-                      Mapping.Size);
-      }
+    SymbolMap denormalize(IO &) {
+      SymbolMap Res;
+
+      for (auto &Entry : Entries)
+        Res[Entry.first] = Entry.second;
+
       return Res;
     }
 
-    std::string Filename;
     std::vector<dsymutil::DebugMapObject::YAMLSymbolMapping> Entries;
   };
 
-  static void mapping(IO &io, dsymutil::DebugMapObject &DMO) {
-    MappingNormalization<YamlDMO, dsymutil::DebugMapObject> Norm(io, DMO);
-    io.mapRequired("filename", Norm->Filename);
-    io.mapRequired("symbols", Norm->Entries);
+  static void mapping(IO &io, dsymutil::DebugMapObject &s) {
+    MappingNormalization<SequencedStringMap, SymbolMap> seq(io, s.Symbols);
+    io.mapRequired("filename", s.Filename);
+    io.mapRequired("symbols", seq->Entries);
   }
 };
 
@@ -225,7 +222,7 @@ template <> struct ScalarTraits<Triple> {
 
   static StringRef input(StringRef scalar, void *, Triple &value) {
     value = Triple(scalar);
-    return StringRef();
+    return value.str();
   }
 
   static bool mustQuote(StringRef) { return true; }
@@ -254,15 +251,6 @@ template <> struct MappingTraits<dsymutil::DebugMap> {
   static void mapping(IO &io, dsymutil::DebugMap &DM) {
     io.mapRequired("triple", DM.BinaryTriple);
     io.mapOptional("objects", DM.Objects);
-  }
-};
-
- template <> struct MappingTraits<std::unique_ptr<dsymutil::DebugMap>> {
-  static void mapping(IO &io, std::unique_ptr<dsymutil::DebugMap> &DM) {
-    if (!DM)
-      DM.reset(new DebugMap());
-    io.mapRequired("triple", DM->BinaryTriple);
-    io.mapOptional("objects", DM->Objects);
   }
 };
 }
