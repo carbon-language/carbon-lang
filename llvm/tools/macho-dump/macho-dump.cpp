@@ -340,7 +340,7 @@ DumpDylibID(const MachOObjectFile &Obj,
 }
 
 static int DumpLoadCommand(const MachOObjectFile &Obj,
-                           MachOObjectFile::LoadCommandInfo &LCI) {
+                           const MachOObjectFile::LoadCommandInfo &LCI) {
   switch (LCI.C.cmd) {
   case MachO::LC_SEGMENT:
     return DumpSegmentCommand(Obj, LCI);
@@ -369,9 +369,8 @@ static int DumpLoadCommand(const MachOObjectFile &Obj,
   }
 }
 
-
 static int DumpLoadCommand(const MachOObjectFile &Obj, unsigned Index,
-                           MachOObjectFile::LoadCommandInfo &LCI) {
+                           const MachOObjectFile::LoadCommandInfo &LCI) {
   outs() << "  # Load Command " << Index << "\n"
          << " (('command', " << LCI.C.cmd << ")\n"
          << "  ('size', " << LCI.C.cmdsize << ")\n";
@@ -423,16 +422,11 @@ int main(int argc, char **argv) {
 
   // Print the load commands.
   int Res = 0;
-  MachOObjectFile::LoadCommandInfo Command =
-    InputObject->getFirstLoadCommandInfo();
+  unsigned Index = 0;
   outs() << "('load_commands', [\n";
-  for (unsigned i = 0; ; ++i) {
-    if (DumpLoadCommand(*InputObject, i, Command))
+  for (const auto &Load : InputObject->load_commands()) {
+    if (DumpLoadCommand(*InputObject, Index++, Load))
       break;
-
-    if (i == Header->ncmds - 1)
-      break;
-    Command = InputObject->getNextLoadCommandInfo(Command);
   }
   outs() << "])\n";
 

@@ -194,8 +194,9 @@ MachOObjectFile::MachOObjectFile(MemoryBufferRef Object, bool IsLittleEndian,
   MachO::LoadCommandType SegmentLoadType = is64Bit() ?
     MachO::LC_SEGMENT_64 : MachO::LC_SEGMENT;
 
-  MachOObjectFile::LoadCommandInfo Load = getFirstLoadCommandInfo();
-  for (unsigned I = 0; ; ++I) {
+  LoadCommandInfo Load = getFirstLoadCommandInfo();
+  for (unsigned I = 0; I < LoadCommandCount; ++I) {
+    LoadCommands.push_back(Load);
     if (Load.C.cmd == MachO::LC_SYMTAB) {
       // Multiple symbol tables
       if (SymtabLoadCmd) {
@@ -260,12 +261,10 @@ MachOObjectFile::MachOObjectFile(MemoryBufferRef Object, bool IsLittleEndian,
                Load.C.cmd == MachO::LC_LOAD_UPWARD_DYLIB) {
       Libraries.push_back(Load.Ptr);
     }
-
-    if (I == LoadCommandCount - 1)
-      break;
-    else
+    if (I < LoadCommandCount - 1)
       Load = getNextLoadCommandInfo(Load);
   }
+  assert(LoadCommands.size() == LoadCommandCount);
 }
 
 void MachOObjectFile::moveSymbolNext(DataRefImpl &Symb) const {
@@ -1861,6 +1860,22 @@ iterator_range<bind_iterator> MachOObjectFile::lazyBindTable() const {
 iterator_range<bind_iterator> MachOObjectFile::weakBindTable() const {
   return bindTable(getDyldInfoWeakBindOpcodes(), is64Bit(),
                    MachOBindEntry::Kind::Weak);
+}
+
+MachOObjectFile::load_command_iterator
+MachOObjectFile::begin_load_commands() const {
+  return LoadCommands.begin();
+}
+
+MachOObjectFile::load_command_iterator
+MachOObjectFile::end_load_commands() const {
+  return LoadCommands.end();
+}
+
+iterator_range<MachOObjectFile::load_command_iterator>
+MachOObjectFile::load_commands() const {
+  return iterator_range<load_command_iterator>(begin_load_commands(),
+                                               end_load_commands());
 }
 
 StringRef

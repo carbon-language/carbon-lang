@@ -122,12 +122,10 @@ static void PrintDarwinSectionSizes(MachOObjectFile *MachO) {
     fmt << "0x";
   fmt << "%" << radix_fmt;
 
-  uint32_t LoadCommandCount = MachO->getHeader().ncmds;
   uint32_t Filetype = MachO->getHeader().filetype;
-  MachOObjectFile::LoadCommandInfo Load = MachO->getFirstLoadCommandInfo();
 
   uint64_t total = 0;
-  for (unsigned I = 0;; ++I) {
+  for (const auto &Load : MachO->load_commands()) {
     if (Load.C.cmd == MachO::LC_SEGMENT_64) {
       MachO::segment_command_64 Seg = MachO->getSegment64LoadCommand(Load);
       outs() << "Segment " << Seg.segname << ": "
@@ -181,10 +179,6 @@ static void PrintDarwinSectionSizes(MachOObjectFile *MachO) {
       if (Seg.nsects != 0)
         outs() << "\ttotal " << format(fmt.str().c_str(), sec_total) << "\n";
     }
-    if (I == LoadCommandCount - 1)
-      break;
-    else
-      Load = MachO->getNextLoadCommandInfo(Load);
   }
   outs() << "total " << format(fmt.str().c_str(), total) << "\n";
 }
@@ -194,14 +188,11 @@ static void PrintDarwinSectionSizes(MachOObjectFile *MachO) {
 /// This is when used when @c OutputFormat is berkeley with a Mach-O file and
 /// produces the same output as darwin's size(1) default output.
 static void PrintDarwinSegmentSizes(MachOObjectFile *MachO) {
-  uint32_t LoadCommandCount = MachO->getHeader().ncmds;
-  MachOObjectFile::LoadCommandInfo Load = MachO->getFirstLoadCommandInfo();
-
   uint64_t total_text = 0;
   uint64_t total_data = 0;
   uint64_t total_objc = 0;
   uint64_t total_others = 0;
-  for (unsigned I = 0;; ++I) {
+  for (const auto &Load : MachO->load_commands()) {
     if (Load.C.cmd == MachO::LC_SEGMENT_64) {
       MachO::segment_command_64 Seg = MachO->getSegment64LoadCommand(Load);
       if (MachO->getHeader().filetype == MachO::MH_OBJECT) {
@@ -255,10 +246,6 @@ static void PrintDarwinSegmentSizes(MachOObjectFile *MachO) {
           total_others += Seg.vmsize;
       }
     }
-    if (I == LoadCommandCount - 1)
-      break;
-    else
-      Load = MachO->getNextLoadCommandInfo(Load);
   }
   uint64_t total = total_text + total_data + total_objc + total_others;
 

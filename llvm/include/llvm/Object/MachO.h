@@ -190,6 +190,8 @@ public:
     const char *Ptr;      // Where in memory the load command is.
     MachO::load_command C; // The command itself.
   };
+  typedef SmallVector<LoadCommandInfo, 4> LoadCommandList;
+  typedef LoadCommandList::const_iterator load_command_iterator;
 
   MachOObjectFile(MemoryBufferRef Object, bool IsLittleEndian, bool Is64Bits,
                   std::error_code &EC);
@@ -270,10 +272,14 @@ public:
 
   dice_iterator begin_dices() const;
   dice_iterator end_dices() const;
-  
+
+  load_command_iterator begin_load_commands() const;
+  load_command_iterator end_load_commands() const;
+  iterator_range<load_command_iterator> load_commands() const;
+
   /// For use iterating over all exported symbols.
   iterator_range<export_iterator> exports() const;
-  
+
   /// For use examining a trie not in a MachOObjectFile.
   static iterator_range<export_iterator> exports(ArrayRef<uint8_t> Trie);
 
@@ -325,10 +331,6 @@ public:
   unsigned getAnyRelocationLength(const MachO::any_relocation_info &RE) const;
   unsigned getAnyRelocationType(const MachO::any_relocation_info &RE) const;
   SectionRef getAnyRelocationSection(const MachO::any_relocation_info &RE) const;
-
-  // Walk load commands.
-  LoadCommandInfo getFirstLoadCommandInfo() const;
-  LoadCommandInfo getNextLoadCommandInfo(const LoadCommandInfo &L) const;
 
   // MachO specific structures.
   MachO::section getSection(DataRefImpl DRI) const;
@@ -427,10 +429,15 @@ public:
   }
 
 private:
+  // Walk load commands.
+  LoadCommandInfo getFirstLoadCommandInfo() const;
+  LoadCommandInfo getNextLoadCommandInfo(const LoadCommandInfo &L) const;
+
   typedef SmallVector<const char*, 1> SectionList;
   SectionList Sections;
   typedef SmallVector<const char*, 1> LibraryList;
   LibraryList Libraries;
+  LoadCommandList LoadCommands;
   typedef SmallVector<StringRef, 1> LibraryShortName;
   mutable LibraryShortName LibrariesShortNames;
   const char *SymtabLoadCmd;
