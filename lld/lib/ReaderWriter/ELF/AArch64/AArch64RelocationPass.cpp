@@ -56,11 +56,20 @@ namespace {
 /// \brief Atoms that are used by AArch64 dynamic linking
 class AArch64GOTAtom : public GOTAtom {
 public:
-  AArch64GOTAtom(const File &f, StringRef secName) : GOTAtom(f, secName) {}
+  AArch64GOTAtom(const File &f) : GOTAtom(f, ".got") {}
 
   ArrayRef<uint8_t> rawContent() const override {
     return ArrayRef<uint8_t>(AArch64GotAtomContent, 8);
   }
+
+protected:
+  // Constructor for AArch64GOTAtom
+  AArch64GOTAtom(const File &f, StringRef secName) : GOTAtom(f, secName) {}
+};
+
+class AArch64GOTPLTAtom : public AArch64GOTAtom {
+public:
+  AArch64GOTPLTAtom(const File &f) : AArch64GOTAtom(f, ".got.plt") {}
 };
 
 class AArch64PLT0Atom : public PLT0Atom {
@@ -73,7 +82,7 @@ public:
 
 class AArch64PLTAtom : public PLTAtom {
 public:
-  AArch64PLTAtom(const File &f, StringRef secName) : PLTAtom(f, secName) {}
+  AArch64PLTAtom(const File &f) : PLTAtom(f, ".plt") {}
 
   ArrayRef<uint8_t> rawContent() const override {
     return ArrayRef<uint8_t>(AArch64PltAtomContent, 16);
@@ -138,9 +147,11 @@ template <class Derived> class AArch64RelocationPass : public Pass {
       break;
     case R_AARCH64_ADR_GOT_PAGE:
     case R_AARCH64_LD64_GOT_LO12_NC:
+      static_cast<Derived *>(this)->handleGOT(ref);
+      break;
     case R_AARCH64_TLSIE_ADR_GOTTPREL_PAGE21:
     case R_AARCH64_TLSIE_LD64_GOTTPREL_LO12_NC:
-      static_cast<Derived *>(this)->handleGOT(ref);
+      static_cast<Derived *>(this)->handleGOTTPREL(ref);
       break;
     }
   }
@@ -153,9 +164,9 @@ protected:
     auto plt = _pltMap.find(da);
     if (plt != _pltMap.end())
       return plt->second;
-    auto ga = new (_file._alloc) AArch64GOTAtom(_file, ".got.plt");
+    auto ga = new (_file._alloc) AArch64GOTPLTAtom(_file);
     ga->addReferenceELF_AArch64(R_AARCH64_IRELATIVE, 0, da, 0);
-    auto pa = new (_file._alloc) AArch64PLTAtom(_file, ".plt");
+    auto pa = new (_file._alloc) AArch64PLTAtom(_file);
     pa->addReferenceELF_AArch64(R_AARCH64_PREL32, 2, ga, -4);
 #ifndef NDEBUG
     ga->_name = "__got_ifunc_";
@@ -182,11 +193,11 @@ protected:
   }
 
   /// \brief Create a GOT entry for the TP offset of a TLS atom.
-  const GOTAtom *getGOTTPOFF(const Atom *atom) {
+  const GOTAtom *getGOTTPREL(const Atom *atom) {
     auto got = _gotMap.find(atom);
     if (got == _gotMap.end()) {
-      auto g = new (_file._alloc) AArch64GOTAtom(_file, ".got");
-      g->addReferenceELF_AArch64(R_AARCH64_GOTREL64, 0, atom, 0);
+      auto g = new (_file._alloc) AArch64GOTAtom(_file);
+      g->addReferenceELF_AArch64(R_AARCH64_TLS_TPREL64, 0, atom, 0);
 #ifndef NDEBUG
       g->_name = "__got_tls_";
       g->_name += atom->name();
@@ -198,17 +209,19 @@ protected:
     return got->second;
   }
 
-  /// \brief Create a TPOFF64 GOT entry and change the relocation to a PC32 to
+  /// \brief Create a GOT TPREL entry and change the relocation to a PC32 to
   /// the GOT.
-  void handleGOTTPOFF(const Reference &ref) {
-    const_cast<Reference &>(ref).setTarget(getGOTTPOFF(ref.target()));
-    const_cast<Reference &>(ref).setKindValue(R_AARCH64_PREL32);
+  std::error_code handleGOTTPREL(const Reference &ref) {
+    if (isa<DefinedAtom>(ref.target())) {
+      const_cast<Reference &>(ref).setTarget(getGOTTPREL(ref.target()));
+    }
+    return std::error_code();
   }
 
   /// \brief Create a GOT entry containing 0.
   const GOTAtom *getNullGOT() {
     if (!_null) {
-      _null = new (_file._alloc) AArch64GOTAtom(_file, ".got.plt");
+      _null = new (_file._alloc) AArch64GOTPLTAtom(_file);
 #ifndef NDEBUG
       _null->_name = "__got_null";
 #endif
@@ -219,7 +232,7 @@ protected:
   const GOTAtom *getGOT(const DefinedAtom *da) {
     auto got = _gotMap.find(da);
     if (got == _gotMap.end()) {
-      auto g = new (_file._alloc) AArch64GOTAtom(_file, ".got");
+      auto g = new (_file._alloc) AArch64GOTAtom(_file);
       g->addReferenceELF_AArch64(R_AARCH64_ABS64, 0, da, 0);
 #ifndef NDEBUG
       g->_name = "__got_";
@@ -386,8 +399,8 @@ public:
     // Fill in the null entry.
     getNullGOT();
     _plt0 = new (_file._alloc) AArch64PLT0Atom(_file);
-    _got0 = new (_file._alloc) AArch64GOTAtom(_file, ".got.plt");
-    _got1 = new (_file._alloc) AArch64GOTAtom(_file, ".got.plt");
+    _got0 = new (_file._alloc) AArch64GOTPLTAtom(_file);
+    _got1 = new (_file._alloc) AArch64GOTPLTAtom(_file);
     _plt0->addReferenceELF_AArch64(R_AARCH64_ADR_GOT_PAGE, 4, _got0, 0);
     _plt0->addReferenceELF_AArch64(R_AARCH64_LD64_GOT_LO12_NC, 8, _got1, 0);
     _plt0->addReferenceELF_AArch64(ADD_AARCH64_GOTRELINDEX, 12, _got1, 0);
@@ -403,9 +416,9 @@ public:
     auto plt = _pltMap.find(a);
     if (plt != _pltMap.end())
       return plt->second;
-    auto ga = new (_file._alloc) AArch64GOTAtom(_file, ".got.plt");
+    auto ga = new (_file._alloc) AArch64GOTPLTAtom(_file);
     ga->addReferenceELF_AArch64(R_AARCH64_JUMP_SLOT, 0, a, 0);
-    auto pa = new (_file._alloc) AArch64PLTAtom(_file, ".plt");
+    auto pa = new (_file._alloc) AArch64PLTAtom(_file);
     pa->addReferenceELF_AArch64(R_AARCH64_ADR_GOT_PAGE, 0, ga, 0);
     pa->addReferenceELF_AArch64(R_AARCH64_LD64_GOT_LO12_NC, 4, ga, 0);
     pa->addReferenceELF_AArch64(ADD_AARCH64_GOTRELINDEX, 8, ga, 0);
@@ -472,7 +485,7 @@ public:
   const GOTAtom *getSharedGOT(const SharedLibraryAtom *sla) {
     auto got = _gotMap.find(sla);
     if (got == _gotMap.end()) {
-      auto g = new (_file._alloc) AArch64GOTAtom(_file, ".got");
+      auto g = new (_file._alloc) AArch64GOTAtom(_file);
       g->addReferenceELF_AArch64(R_AARCH64_GLOB_DAT, 0, sla, 0);
 #ifndef NDEBUG
       g->_name = "__got_";

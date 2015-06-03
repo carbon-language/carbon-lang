@@ -12,9 +12,23 @@
 #include "AArch64ExecutableWriter.h"
 #include "AArch64LinkingContext.h"
 #include "AArch64TargetHandler.h"
+#include "AArch64SectionChunks.h"
 
 using namespace lld;
 using namespace elf;
+
+AArch64TargetLayout::AArch64TargetLayout(ELFLinkingContext &ctx) :
+  TargetLayout(ctx),
+  _gotSection(new (this->_allocator) AArch64GOTSection(ctx)) {}
+
+AtomSection<ELF64LE> *AArch64TargetLayout::createSection(
+    StringRef name, int32_t type, DefinedAtom::ContentPermissions permissions,
+    typename TargetLayout<ELF64LE>::SectionOrder order) {
+  if (type == DefinedAtom::typeGOT && name == ".got")
+    return _gotSection;
+  return TargetLayout<ELF64LE>::createSection(name, type, permissions, order);
+}
+
 
 AArch64TargetHandler::AArch64TargetHandler(AArch64LinkingContext &ctx)
     : _ctx(ctx), _targetLayout(new AArch64TargetLayout(ctx)),

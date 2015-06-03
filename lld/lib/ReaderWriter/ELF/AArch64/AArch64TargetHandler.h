@@ -17,13 +17,22 @@
 
 namespace lld {
 namespace elf {
+
 class AArch64LinkingContext;
+class AArch64GOTSection;
 
 class AArch64TargetLayout final : public TargetLayout<ELF64LE> {
   typedef llvm::object::Elf_Shdr_Impl<ELF64LE> Elf_Shdr;
 
 public:
-  AArch64TargetLayout(ELFLinkingContext &ctx) : TargetLayout(ctx) {}
+  AArch64TargetLayout(ELFLinkingContext &ctx);
+
+  AtomSection<ELF64LE> *
+  createSection(StringRef name, int32_t type,
+                DefinedAtom::ContentPermissions permissions,
+                typename TargetLayout<ELF64LE>::SectionOrder order) override;
+
+  const AArch64GOTSection &getGOTSection() const { return *_gotSection; }
 
   uint64_t getTPOffset() {
     std::call_once(_tpOffOnce, [this]() {
@@ -44,6 +53,7 @@ private:
   };
 
 private:
+  AArch64GOTSection *_gotSection;
   uint64_t _tpOff = 0;
   std::once_flag _tpOffOnce;
 };

@@ -3,6 +3,8 @@ add_llvm_library(lldAArch64ELFTarget
   AArch64TargetHandler.cpp
   AArch64RelocationHandler.cpp
   AArch64RelocationPass.cpp
+  AArch64ExecutableWriter.cpp
+  AArch64SectionChunks.cpp
   LINK_LIBS
     lldELF
     lldReaderWriter
