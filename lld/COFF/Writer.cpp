@@ -117,14 +117,14 @@ void Writer::createSections() {
     StringRef SectionName = P.first;
     std::vector<Chunk *> &Chunks = P.second;
     std::stable_sort(Chunks.begin(), Chunks.end(), Comp);
-    auto Sec =
-        llvm::make_unique<OutputSection>(SectionName, OutputSections.size());
+    size_t SectIdx = OutputSections.size();
+    auto Sec = new (CAlloc.Allocate()) OutputSection(SectionName, SectIdx);
     for (Chunk *C : Chunks) {
-      C->setOutputSection(Sec.get());
+      C->setOutputSection(Sec);
       Sec->addChunk(C);
       Sec->addPermissions(C->getPermissions());
     }
-    OutputSections.push_back(std::move(Sec));
+    OutputSections.push_back(Sec);
   }
 }
 
@@ -210,9 +210,7 @@ void Writer::createImportTables() {
 // The Windows loader doesn't seem to like empty sections,
 // so we remove them if any.
 void Writer::removeEmptySections() {
-  auto IsEmpty = [](const std::unique_ptr<OutputSection> &S) {
-    return S->getVirtualSize() == 0;
-  };
+  auto IsEmpty = [](OutputSection *S) { return S->getVirtualSize() == 0; };
   OutputSections.erase(
       std::remove_if(OutputSections.begin(), OutputSections.end(), IsEmpty),
       OutputSections.end());
@@ -225,7 +223,7 @@ void Writer::assignAddresses() {
       HeaderSize + sizeof(coff_section) * OutputSections.size(), PageSize);
   uint64_t RVA = 0x1000; // The first page is kept unmapped.
   uint64_t FileOff = SizeOfHeaders;
-  for (std::unique_ptr<OutputSection> &Sec : OutputSections) {
+  for (OutputSection *Sec : OutputSections) {
     Sec->setRVA(RVA);
     Sec->setFileOffset(FileOff);
     RVA += RoundUpToAlignment(Sec->getVirtualSize(), PageSize);
@@ -320,7 +318,7 @@ void Writer::writeHeader() {
   // Name field in the section table is 8 byte long. Longer names need
   // to be written to the string table. First, construct string table.
   std::vector<char> Strtab;
-  for (std::unique_ptr<OutputSection> &Sec : OutputSections) {
+  for (OutputSection *Sec : OutputSections) {
     StringRef Name = Sec->getName();
     if (Name.size() <= COFF::NameSize)
       continue;
@@ -330,7 +328,7 @@ void Writer::writeHeader() {
   }
 
   // Write section table
-  for (std::unique_ptr<OutputSection> &Sec : OutputSections) {
+  for (OutputSection *Sec : OutputSections) {
     Sec->writeHeader(Buf);
     Buf += sizeof(coff_section);
   }
@@ -365,7 +363,7 @@ std::error_code Writer::openFile(StringRef Path) {
 // Write section contents to a mmap'ed file.
 void Writer::writeSections() {
   uint8_t *Buf = Buffer->getBufferStart();
-  for (std::unique_ptr<OutputSection> &Sec : OutputSections) {
+  for (OutputSection *Sec : OutputSections) {
     // Fill gaps between functions in .text with INT3 instructions
     // instead of leaving as NUL bytes (which can be interpreted as
     // ADD instructions).
@@ -377,15 +375,15 @@ void Writer::writeSections() {
 }
 
 OutputSection *Writer::findSection(StringRef Name) {
-  for (std::unique_ptr<OutputSection> &Sec : OutputSections)
+  for (OutputSection *Sec : OutputSections)
     if (Sec->getName() == Name)
-      return Sec.get();
+      return Sec;
   return nullptr;
 }
 
 uint32_t Writer::getSizeOfInitializedData() {
   uint32_t Res = 0;
-  for (std::unique_ptr<OutputSection> &S : OutputSections)
+  for (OutputSection *S : OutputSections)
     if (S->getPermissions() & IMAGE_SCN_CNT_INITIALIZED_DATA)
       Res += S->getRawSize();
   return Res;
@@ -407,15 +405,16 @@ OutputSection *Writer::createSection(StringRef Name) {
                       .Default(0);
   if (!Perm)
     llvm_unreachable("unknown section name");
-  auto Sec = new OutputSection(Name, OutputSections.size());
+  size_t SectIdx = OutputSections.size();
+  auto Sec = new (CAlloc.Allocate()) OutputSection(Name, SectIdx);
   Sec->addPermissions(Perm);
-  OutputSections.push_back(std::unique_ptr<OutputSection>(Sec));
+  OutputSections.push_back(Sec);
   return Sec;
 }
 
 void Writer::applyRelocations() {
   uint8_t *Buf = Buffer->getBufferStart();
-  for (std::unique_ptr<OutputSection> &Sec : OutputSections)
+  for (OutputSection *Sec : OutputSections)
     for (Chunk *C : Sec->getChunks())
       C->applyRelocations(Buf);
 }
