@@ -75,6 +75,8 @@ struct DumpValueObjectOptions
     
     DumpValueObjectOptions (const DumpValueObjectOptions& rhs) = default;
     
+    DumpValueObjectOptions (ValueObject& valobj);
+    
     DumpValueObjectOptions&
     SetMaximumPointerDepth(uint32_t depth = 0)
     {
@@ -246,6 +248,9 @@ struct DumpValueObjectOptions
 class ValueObjectPrinter
 {
 public:
+
+    ValueObjectPrinter (ValueObject* valobj,
+                        Stream* s);
     
     ValueObjectPrinter (ValueObject* valobj,
                         Stream* s,

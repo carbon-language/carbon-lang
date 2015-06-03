@@ -3560,7 +3560,7 @@ void
 ValueObject::LogValueObject (Log *log)
 {
     if (log)
-        return LogValueObject (log, DumpValueObjectOptions::DefaultOptions());
+        return LogValueObject (log, DumpValueObjectOptions(*this));
 }
 
 void
@@ -3578,7 +3578,7 @@ ValueObject::LogValueObject (Log *log, const DumpValueObjectOptions& options)
 void
 ValueObject::Dump (Stream &s)
 {
-    Dump (s, DumpValueObjectOptions::DefaultOptions());
+    Dump (s, DumpValueObjectOptions(*this));
 }
 
 void

@@ -21,6 +21,28 @@
 using namespace lldb;
 using namespace lldb_private;
 
+DumpValueObjectOptions::DumpValueObjectOptions (ValueObject& valobj) :
+DumpValueObjectOptions()
+{
+    m_use_dynamic = valobj.GetDynamicValueType();
+    m_use_synthetic = valobj.IsSynthetic();
+}
+
+ValueObjectPrinter::ValueObjectPrinter (ValueObject* valobj,
+                                        Stream* s)
+{
+    if (valobj)
+    {
+        DumpValueObjectOptions options(*valobj);
+        Init (valobj,s,options,options.m_max_ptr_depth,0);
+    }
+    else
+    {
+        DumpValueObjectOptions options;
+        Init (valobj,s,options,options.m_max_ptr_depth,0);
+    }
+}
+
 ValueObjectPrinter::ValueObjectPrinter (ValueObject* valobj,
                                         Stream* s,
                                         const DumpValueObjectOptions& options)
