@@ -192,3 +192,8 @@ RUN: not llvm-dis -disable-output %p/Inputs/invalid-metadata-not-followed-named-
 RUN:   FileCheck --check-prefix=META-NOT-FOLLOWED-BY-NAMED-META %s
 
 META-NOT-FOLLOWED-BY-NAMED-META: METADATA_NAME not followed by METADATA_NAMED_NODE
+
+RUN: not llvm-dis -disable-output %p/Inputs/invalid-vector-length.bc 2>&1 | \
+RUN:   FileCheck --check-prefix=VECTOR-LENGTH %s
+
+VECTOR-LENGTH: Invalid vector length
