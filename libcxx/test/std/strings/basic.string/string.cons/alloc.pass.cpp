@@ -14,6 +14,7 @@
 #include <string>
 #include <cassert>
 
+#include "test_macros.h"
 #include "test_allocator.h"
 #include "min_allocator.h"
 
@@ -22,6 +23,11 @@ void
 test()
 {
     {
+#if TEST_STD_VER > 14
+	static_assert((noexcept(S{})), "" );
+#elif TEST_STD_VER >= 11
+	static_assert((noexcept(S()) == noexcept(typename S::allocator_type())), "" );
+#endif
     S s;
     assert(s.__invariants());
     assert(s.data());
@@ -30,6 +36,11 @@ test()
     assert(s.get_allocator() == typename S::allocator_type());
     }
     {
+#if TEST_STD_VER > 14
+	static_assert((noexcept(S{typename S::allocator_type{}})), "" );
+#elif TEST_STD_VER >= 11
+	static_assert((noexcept(S(typename S::allocator_type())) == std::is_nothrow_copy_constructible<typename S::allocator_type>::value), "" );
+#endif
     S s(typename S::allocator_type(5));
     assert(s.__invariants());
     assert(s.data());
@@ -39,13 +50,18 @@ test()
     }
 }
 
-#if __cplusplus >= 201103L
+#if TEST_STD_VER >= 11
 
 template <class S>
 void
 test2()
 {
     {
+#if TEST_STD_VER > 14
+	static_assert((noexcept(S{})), "" );
+#elif TEST_STD_VER >= 11
+	static_assert((noexcept(S()) == noexcept(typename S::allocator_type())), "" );
+#endif
     S s;
     assert(s.__invariants());
     assert(s.data());
@@ -54,6 +70,11 @@ test2()
     assert(s.get_allocator() == typename S::allocator_type());
     }
     {
+#if TEST_STD_VER > 14
+	static_assert((noexcept(S{typename S::allocator_type{}})), "" );
+#elif TEST_STD_VER >= 11
+	static_assert((noexcept(S(typename S::allocator_type())) == std::is_nothrow_copy_constructible<typename S::allocator_type>::value), "" );
+#endif
     S s(typename S::allocator_type{});
     assert(s.__invariants());
     assert(s.data());
@@ -68,7 +89,7 @@ test2()
 int main()
 {
     test<std::basic_string<char, std::char_traits<char>, test_allocator<char> > >();
-#if __cplusplus >= 201103L
+#if TEST_STD_VER >= 11
     test2<std::basic_string<char, std::char_traits<char>, min_allocator<char> > >();
 #endif
 }

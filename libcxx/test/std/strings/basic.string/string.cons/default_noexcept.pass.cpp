@@ -17,6 +17,7 @@
 #include <string>
 #include <cassert>
 
+#include "test_macros.h"
 #include "test_allocator.h"
 
 template <class T>
@@ -39,7 +40,12 @@ int main()
     }
     {
         typedef std::basic_string<char, std::char_traits<char>, some_alloc<char>> C;
+// See N4258 - basic_string<char, traits, Allocator>::basic_string() noexcept;
+#if TEST_STD_VER <= 14
         static_assert(!std::is_nothrow_default_constructible<C>::value, "");
+#else
+        static_assert( std::is_nothrow_default_constructible<C>::value, "");
+#endif
     }
 #endif
 }
