@@ -103,6 +103,16 @@ class TestCheckCFC(unittest.TestCase):
             check_cfc.is_normal_compile(['clang', '-c', 'test.cpp', '--version']))
         self.assertFalse(
             check_cfc.is_normal_compile(['clang', '-c', 'test.cpp', '--help']))
+        # Outputting dependency files is not a normal compile
+        self.assertFalse(
+            check_cfc.is_normal_compile(['clang', '-c', '-M', 'test.cpp']))
+        self.assertFalse(
+            check_cfc.is_normal_compile(['clang', '-c', '-MM', 'test.cpp']))
+        # Creating a dependency file as a side effect still outputs an object file
+        self.assertTrue(
+            check_cfc.is_normal_compile(['clang', '-c', '-MD', 'test.cpp']))
+        self.assertTrue(
+            check_cfc.is_normal_compile(['clang', '-c', '-MMD', 'test.cpp']))
 
     def test_replace_output_file(self):
         self.assertEqual(check_cfc.replace_output_file(
