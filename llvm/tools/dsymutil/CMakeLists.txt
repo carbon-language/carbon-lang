@@ -5,6 +5,7 @@ set(LLVM_LINK_COMPONENTS
   MC
   Object
   Support
+  Target
   )
 
 add_llvm_tool(llvm-dsymutil

@@ -3,6 +3,7 @@ set(LLVM_LINK_COMPONENTS
   LTO
   MC
   Support
+  Target
   )
 
 add_llvm_tool(llvm-lto

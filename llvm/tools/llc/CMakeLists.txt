@@ -10,6 +10,7 @@ set(LLVM_LINK_COMPONENTS
   ScalarOpts
   SelectionDAG
   Support
+  Target
   )
 
 # Support plugins.
