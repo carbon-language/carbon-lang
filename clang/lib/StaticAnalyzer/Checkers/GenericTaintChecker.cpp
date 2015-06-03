@@ -199,7 +199,7 @@ GenericTaintChecker::TaintPropagationRule::getTaintPropagationRule(
                                                      const FunctionDecl *FDecl,
                                                      StringRef Name,
                                                      CheckerContext &C) {
-  // TODO: Currently, we might loose precision here: we always mark a return
+  // TODO: Currently, we might lose precision here: we always mark a return
   // value as tainted even if it's just a pointer, pointing to tainted data.
 
   // Check for exact name match for functions without builtin substitutes.
