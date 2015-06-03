@@ -6355,6 +6355,21 @@ static SDValue getV4X86ShuffleImm8ForMask(ArrayRef<int> Mask, SDLoc DL,
   return DAG.getConstant(Imm, DL, MVT::i8);
 }
 
+/// \brief Get a 8-bit shuffle, 1 bit per lane, immediate for a mask.
+///
+/// This helper function produces an 8-bit shuffle immediate corresponding to
+/// the ubiquitous shuffle encoding scheme used in x86 instructions for
+/// shuffling 8 lanes. 
+static SDValue get1bitLaneShuffleImm8ForMask(ArrayRef<int> Mask, SDLoc DL,
+                                             SelectionDAG &DAG) {
+  assert(Mask.size() <= 8 &&
+         "Up to 8 elts may be in Imm8 1-bit lane shuffle mask");
+  unsigned Imm = 0;
+  for (unsigned i = 0; i < Mask.size(); ++i)
+    Imm |= (Mask[i] % 2) << i;
+  return DAG.getConstant(Imm, DL, MVT::i8);
+}
+
 /// \brief Try to emit a blend instruction for a shuffle using bit math.
 ///
 /// This is used as a fallback approach when first class blend instructions are
@@ -10177,31 +10192,14 @@ static SDValue lowerV8X64VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
 
   // PERMILPD instruction - mask 0/1, 0/1, 2/3, 2/3, 4/5, 4/5, 6/7, 6/7
   if (isSingleInputShuffleMask(Mask)) {
-    bool PermilMask = true;
-    unsigned Immediate = 0;
-    for (int i = 0; i < 8; ++i) {
-      if (Mask[i] < 0)
-        continue;
-      int Val = (i & 6);
-      if (Mask[i] < Val ||  Mask[i] > Val+1) {
-        PermilMask = false;
-        break;
-      }
-      Immediate |= (Mask[i]%2) << i;
-    }
-    if (PermilMask)
+    if (!is128BitLaneCrossingShuffleMask(VT, Mask))
       return DAG.getNode(X86ISD::VPERMILPI, DL, VT, V1,
-                         DAG.getConstant(Immediate, DL, MVT::i8));
+                         get1bitLaneShuffleImm8ForMask(Mask, DL, DAG));
 
     SmallVector<int, 4> RepeatedMask;
-    if (is256BitLaneRepeatedShuffleMask(VT, Mask, RepeatedMask)) {
-      unsigned Immediate = 0;
-      for (int i = 0; i < 4; ++i)
-        if (RepeatedMask[i] > 0)
-          Immediate |= (RepeatedMask[i] & 3) << (i*2);
+    if (is256BitLaneRepeatedShuffleMask(VT, Mask, RepeatedMask))
       return DAG.getNode(X86ISD::VPERMI, DL, VT, V1,
-                         DAG.getConstant(Immediate, DL, MVT::i8));
-    }
+                         getV4X86ShuffleImm8ForMask(RepeatedMask, DL, DAG));
   }
   return lowerVectorShuffleWithPERMV(DL, VT, Mask, V1, V2, DAG);
 }
