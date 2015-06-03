@@ -33,7 +33,6 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
-#include "llvm/Target/TargetRecip.h"
 #include "llvm/Target/TargetSubtargetInfo.h"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
@@ -480,9 +479,6 @@ TargetMachine *EmitAssemblyHelper::CreateTargetMachine(bool MustCreateTM) {
   }
 
   llvm::TargetOptions Options;
-
-  if (!TargetOpts.Reciprocals.empty())
-    Options.Reciprocals = TargetRecip(TargetOpts.Reciprocals);
 
   Options.ThreadModel =
     llvm::StringSwitch<llvm::ThreadModel::Model>(CodeGenOpts.ThreadModel)
