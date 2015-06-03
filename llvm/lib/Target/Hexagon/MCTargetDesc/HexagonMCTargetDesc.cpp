@@ -119,8 +119,4 @@ extern "C" void LLVMInitializeHexagonTargetMC() {
   // Register the MC Inst Printer
   TargetRegistry::RegisterMCInstPrinter(TheHexagonTarget,
                                         createHexagonMCInstPrinter);
-
-  // Register the asm backend
-  TargetRegistry::RegisterMCAsmBackend(TheHexagonTarget,
-                                       createHexagonAsmBackend);
 }
