@@ -24,7 +24,6 @@
 #include "llvm/Support/Host.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
-#include "llvm/Target/TargetRecip.h"
 #include <string>
 using namespace llvm;
 
@@ -153,12 +152,6 @@ FuseFPOps("fp-contract",
                          "Only fuse FP ops when the result won't be effected."),
               clEnumValEnd));
 
-cl::list<std::string>
-ReciprocalOps("recip",
-  cl::CommaSeparated,
-  cl::desc("Choose reciprocal operation types and parameters."),
-  cl::value_desc("all,none,default,divf,!vec-sqrtd,vec-divd:0,sqrt:9..."));
-
 cl::opt<bool>
 DontPlaceZerosInBSS("nozero-initialized-in-bss",
               cl::desc("Don't place zero-initialized symbols into bss section"),
@@ -237,7 +230,6 @@ static inline TargetOptions InitTargetOptionsFromCodeGenFlags() {
   TargetOptions Options;
   Options.LessPreciseFPMADOption = EnableFPMAD;
   Options.AllowFPOpFusion = FuseFPOps;
-  Options.Reciprocals = TargetRecip(ReciprocalOps);
   Options.UnsafeFPMath = EnableUnsafeFPMath;
   Options.NoInfsFPMath = EnableNoInfsFPMath;
   Options.NoNaNsFPMath = EnableNoNaNsFPMath;

@@ -188,6 +188,10 @@ def FeatureSlowLEA : SubtargetFeature<"slow-lea", "SlowLEA", "true",
                                    "LEA instruction with certain arguments is slow">;
 def FeatureSlowIncDec : SubtargetFeature<"slow-incdec", "SlowIncDec", "true",
                                    "INC and DEC instructions are slower than ADD and SUB">;
+def FeatureUseSqrtEst : SubtargetFeature<"use-sqrt-est", "UseSqrtEst", "true",
+                            "Use RSQRT* to optimize square root calculations">;
+def FeatureUseRecipEst : SubtargetFeature<"use-recip-est", "UseReciprocalEst",
+                          "true", "Use RCP* to optimize division calculations">;
 def FeatureSoftFloat
     : SubtargetFeature<"soft-float", "UseSoftFloat", "true",
                        "Use software floating point features.">;
@@ -440,7 +444,7 @@ def : ProcessorModel<"btver2", BtVer2Model,
                       FeaturePRFCHW, FeatureAES, FeaturePCLMUL,
                       FeatureBMI, FeatureF16C, FeatureMOVBE,
                       FeatureLZCNT, FeaturePOPCNT, FeatureFastUAMem,
-                      FeatureSlowSHLD]>;
+                      FeatureSlowSHLD, FeatureUseSqrtEst, FeatureUseRecipEst]>;
 
 // TODO: We should probably add 'FeatureFastUAMem' to all of the AMD chips.
 

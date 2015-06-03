@@ -15,7 +15,6 @@
 #ifndef LLVM_TARGET_TARGETOPTIONS_H
 #define LLVM_TARGET_TARGETOPTIONS_H
 
-#include "llvm/Target/TargetRecip.h"
 #include "llvm/MC/MCTargetOptions.h"
 #include <string>
 
@@ -73,8 +72,7 @@ namespace llvm {
           CompressDebugSections(false), FunctionSections(false),
           DataSections(false), UniqueSectionNames(true), TrapUnreachable(false),
           TrapFuncName(), FloatABIType(FloatABI::Default),
-          AllowFPOpFusion(FPOpFusion::Standard), Reciprocals(TargetRecip()),
-          JTType(JumpTable::Single),
+          AllowFPOpFusion(FPOpFusion::Standard), JTType(JumpTable::Single),
           ThreadModel(ThreadModel::POSIX) {}
 
     /// PrintMachineCode - This flag is enabled when the -print-machineinstrs
@@ -208,9 +206,6 @@ namespace llvm {
     /// the value of this option.
     FPOpFusion::FPOpFusionMode AllowFPOpFusion;
 
-    /// This class encapsulates options for reciprocal-estimate code generation.
-    TargetRecip Reciprocals;
-    
     /// JTType - This flag specifies the type of jump-instruction table to
     /// create for functions that have the jumptable attribute.
     JumpTable::JumpTableType JTType;
@@ -245,7 +240,6 @@ inline bool operator==(const TargetOptions &LHS,
     ARE_EQUAL(TrapFuncName) &&
     ARE_EQUAL(FloatABIType) &&
     ARE_EQUAL(AllowFPOpFusion) &&
-    ARE_EQUAL(Reciprocals) &&
     ARE_EQUAL(JTType) &&
     ARE_EQUAL(ThreadModel) &&
     ARE_EQUAL(MCOptions);
