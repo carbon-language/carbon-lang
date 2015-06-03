@@ -484,6 +484,12 @@ TEST_F(FormatTestJS, ArrowFunctions) {
                "};");
   verifyFormat("var x = (a) => a;");
   verifyFormat("return () => [];");
+  verifyFormat("var aaaaaaaaaaaaaaaaaaaa = {\n"
+               "  aaaaaaaaaaaaaaaaaaaaaaaaaaaa:\n"
+               "      (aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,\n"
+               "       aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) =>\n"
+               "              aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,\n"
+               "};");
 
   // FIXME: This is bad, we should be wrapping before "() => {".
   verifyFormat("someFunction(() => {\n"
