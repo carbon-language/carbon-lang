@@ -464,18 +464,19 @@ public:
     kmp_flag_oncore(volatile kmp_uint64 *p)
         : kmp_flag<kmp_uint64>(p, flag_oncore), num_waiting_threads(0), flag_switch(false) {}
     kmp_flag_oncore(volatile kmp_uint64 *p, kmp_uint32 idx)
-        : kmp_flag<kmp_uint64>(p, flag_oncore), offset(idx), num_waiting_threads(0), flag_switch(false) {}
+        : kmp_flag<kmp_uint64>(p, flag_oncore), num_waiting_threads(0), offset(idx), flag_switch(false) {}
     kmp_flag_oncore(volatile kmp_uint64 *p, kmp_uint64 c, kmp_uint32 idx, enum barrier_type bar_t,
                     kmp_info_t * thr
 #if USE_ITT_BUILD
                     , void *itt
 #endif
                     ) 
-        : kmp_flag<kmp_uint64>(p, flag_oncore), checker(c), offset(idx), bt(bar_t), this_thr(thr)
+        : kmp_flag<kmp_uint64>(p, flag_oncore), checker(c), num_waiting_threads(0), offset(idx),
+          flag_switch(false), bt(bar_t), this_thr(thr)
 #if USE_ITT_BUILD
         , itt_sync_obj(itt)
 #endif
-        , num_waiting_threads(0), flag_switch(false) {}
+        {}
     kmp_info_t * get_waiter(kmp_uint32 i) { 
         KMP_DEBUG_ASSERT(i<num_waiting_threads);
         return waiting_threads[i]; 
