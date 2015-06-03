@@ -105,6 +105,14 @@ int fi3e(atomic_int *i) {
   return atomic_fetch_or(i, 1);
 }
 
+int fi3f(int *i) {
+  // CHECK-LABEL: @fi3f
+  // CHECK-NOT: store volatile
+  // CHECK: atomicrmw or
+  // CHECK-NOT: {{ or }}
+  return __atomic_fetch_or(i, (short)1, memory_order_seq_cst);
+}
+
 _Bool fi4(_Atomic(int) *i) {
   // CHECK-LABEL: @fi4(
   // CHECK: [[PAIR:%[.0-9A-Z_a-z]+]] = cmpxchg i32* [[PTR:%[.0-9A-Z_a-z]+]], i32 [[EXPECTED:%[.0-9A-Z_a-z]+]], i32 [[DESIRED:%[.0-9A-Z_a-z]+]]
