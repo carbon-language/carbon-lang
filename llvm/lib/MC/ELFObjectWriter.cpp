@@ -74,7 +74,6 @@ class ELFObjectWriter : public MCObjectWriter {
     static uint64_t SymbolValue(const MCSymbol &Sym, const MCAsmLayout &Layout);
     static bool isInSymtab(const MCAsmLayout &Layout, const MCSymbolELF &Symbol,
                            bool Used, bool Renamed);
-    static bool isLocal(const MCSymbolELF &Symbol, bool IsSignature);
 
     /// Helper struct for containing some precomputed information on symbols.
     struct ELFSymbolData {
@@ -755,19 +754,6 @@ bool ELFObjectWriter::isInSymtab(const MCAsmLayout &Layout,
   return true;
 }
 
-bool ELFObjectWriter::isLocal(const MCSymbolELF &Symbol, bool IsSignature) {
-  if (Symbol.isExternal())
-    return false;
-
-  if (Symbol.isDefined())
-    return true;
-
-  if (Symbol.isUsedInReloc())
-    return false;
-
-  return IsSignature;
-}
-
 void ELFObjectWriter::computeSymbolTable(
     MCAssembler &Asm, const MCAsmLayout &Layout,
     const SectionIndexMapTy &SectionIndexMap, const RevGroupMapTy &RevGroupMap,
@@ -800,7 +786,7 @@ void ELFObjectWriter::computeSymbolTable(
     const auto &Symbol = cast<MCSymbolELF>(S);
     bool Used = Symbol.isUsedInReloc();
     bool WeakrefUsed = WeakrefUsedInReloc.count(&Symbol);
-    bool isSignature = RevGroupMap.count(&Symbol);
+    bool isSignature = Symbol.isSignature();
 
     if (!isInSymtab(Layout, Symbol, Used || WeakrefUsed || isSignature,
                     Renames.count(&Symbol)))
@@ -809,12 +795,7 @@ void ELFObjectWriter::computeSymbolTable(
     ELFSymbolData MSD;
     MSD.Symbol = cast<MCSymbolELF>(&Symbol);
 
-    // Undefined symbols are global, but this is the first place we
-    // are able to set it.
-    bool Local = isLocal(Symbol, isSignature);
-    if (!Local && Symbol.getBinding() == ELF::STB_LOCAL)
-      Symbol.setBinding(ELF::STB_GLOBAL);
-
+    bool Local = Symbol.getBinding() == ELF::STB_LOCAL;
     if (Symbol.isAbsolute()) {
       MSD.SectionIndex = ELF::SHN_ABS;
     } else if (Symbol.isCommon()) {

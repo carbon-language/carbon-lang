@@ -24,10 +24,20 @@ void MCSymbolELF::setBinding(unsigned Binding) const {
 }
 
 unsigned MCSymbolELF::getBinding() const {
-  uint32_t Binding = (getFlags() & (0xf << ELF_STB_Shift)) >> ELF_STB_Shift;
-  assert(Binding == ELF::STB_LOCAL || Binding == ELF::STB_GLOBAL ||
-         Binding == ELF::STB_WEAK || Binding == ELF::STB_GNU_UNIQUE);
-  return Binding;
+  if (isBindingSet()) {
+    uint32_t Binding = (getFlags() & (0xf << ELF_STB_Shift)) >> ELF_STB_Shift;
+    assert(Binding == ELF::STB_LOCAL || Binding == ELF::STB_GLOBAL ||
+           Binding == ELF::STB_WEAK || Binding == ELF::STB_GNU_UNIQUE);
+    return Binding;
+  }
+
+  if (isDefined())
+    return ELF::STB_LOCAL;
+  if (isUsedInReloc())
+    return ELF::STB_GLOBAL;
+  if (isSignature())
+    return ELF::STB_LOCAL;
+  return ELF::STB_GLOBAL;
 }
 
 void MCSymbolELF::setType(unsigned Type) const {
@@ -86,4 +96,7 @@ bool MCSymbolELF::isUsedInReloc() const {
   return UsedInReloc;
 }
 
+void MCSymbolELF::setIsSignature() const { IsSignature = true; }
+
+bool MCSymbolELF::isSignature() const { return IsSignature; }
 }
