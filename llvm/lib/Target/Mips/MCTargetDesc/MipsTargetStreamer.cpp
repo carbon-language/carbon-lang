@@ -457,7 +457,7 @@ void MipsTargetELFStreamer::emitLabel(MCSymbol *S) {
   auto *Symbol = cast<MCSymbolELF>(S);
   if (!isMicroMipsEnabled())
     return;
-  getStreamer().getOrCreateSymbolData(Symbol);
+  getStreamer().getAssembler().registerSymbol(*Symbol);
   uint8_t Type = Symbol->getType();
   if (Type != ELF::STT_FUNC)
     return;

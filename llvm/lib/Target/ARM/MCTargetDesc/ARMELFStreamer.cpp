@@ -970,7 +970,7 @@ void ARMTargetELFStreamer::emitLabel(MCSymbol *Symbol) {
   if (!Streamer.IsThumb)
     return;
 
-  Streamer.getOrCreateSymbolData(Symbol);
+  Streamer.getAssembler().registerSymbol(*Symbol);
   unsigned Type = cast<MCSymbolELF>(Symbol)->getType();
   if (Type == ELF_STT_Func || Type == ELF_STT_GnuIFunc)
     Streamer.EmitThumbFunc(Symbol);

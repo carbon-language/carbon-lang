@@ -56,9 +56,6 @@ public:
   /// Object streamers require the integrated assembler.
   bool isIntegratedAssemblerRequired() const override { return true; }
 
-  void getOrCreateSymbolData(const MCSymbol *Symbol) {
-    getAssembler().registerSymbol(*Symbol);
-  }
   void EmitFrames(MCAsmBackend *MAB);
   void EmitCFISections(bool EH, bool Debug) override;
 

@@ -43,7 +43,7 @@ void MipsELFStreamer::createPendingLabelRelocs() {
   if (ELFTargetStreamer->isMicroMipsEnabled()) {
     for (auto *L : Labels) {
       auto *Label = cast<MCSymbolELF>(L);
-      getOrCreateSymbolData(Label);
+      getAssembler().registerSymbol(*Label);
       // The "other" values are stored in the last 6 bits of the second byte.
       // The traditional defines for STO values assume the full byte and thus
       // the shift to pack it.
