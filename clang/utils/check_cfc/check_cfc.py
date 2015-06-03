@@ -282,12 +282,24 @@ class dash_s_no_change(WrapperCheck):
         run_step(alternate_command, my_env,
                  "Error compiling with -via-file-asm")
 
-        # Compare disassembly (returns first diff if differs)
-        difference = obj_diff.compare_object_files(self._output_file_a,
-                                                   output_file_b)
-        if difference:
-            raise WrapperCheckException(
-                "Code difference detected with -S\n{}".format(difference))
+        # Compare if object files are exactly the same
+        exactly_equal = obj_diff.compare_exact(self._output_file_a, output_file_b)
+        if not exactly_equal:
+            # Compare disassembly (returns first diff if differs)
+            difference = obj_diff.compare_object_files(self._output_file_a,
+                                                       output_file_b)
+            if difference:
+                raise WrapperCheckException(
+                    "Code difference detected with -S\n{}".format(difference))
+
+            # Code is identical, compare debug info
+            dbgdifference = obj_diff.compare_debug_info(self._output_file_a,
+                                                        output_file_b)
+            if dbgdifference:
+                raise WrapperCheckException(
+                    "Debug info difference detected with -S\n{}".format(dbgdifference))
+
+            raise WrapperCheckException("Object files not identical with -S\n")
 
         # Clean up temp file if comparison okay
         os.remove(output_file_b)

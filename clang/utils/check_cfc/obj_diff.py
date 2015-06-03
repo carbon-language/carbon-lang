@@ -4,6 +4,7 @@ from __future__ import print_function
 
 import argparse
 import difflib
+import filecmp
 import os
 import subprocess
 import sys
@@ -23,6 +24,15 @@ def disassemble(objfile):
     (out, err) = p.communicate()
     if p.returncode or err:
         print("Disassemble failed: {}".format(objfile))
+        sys.exit(1)
+    return filter(keep_line, out.split(os.linesep))
+
+def dump_debug(objfile):
+    """Dump all of the debug info from a file."""
+    p = subprocess.Popen([disassembler, '-WliaprmfsoRt', objfile], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    (out, err) = p.communicate()
+    if p.returncode or err:
+        print("Dump debug failed: {}".format(objfile))
         sys.exit(1)
     return filter(keep_line, out.split(os.linesep))
 
@@ -62,6 +72,22 @@ def compare_object_files(objfilea, objfileb):
     disa = disassemble(objfilea)
     disb = disassemble(objfileb)
     return first_diff(disa, disb, objfilea, objfileb)
+
+def compare_debug_info(objfilea, objfileb):
+    """Compare debug info of two different files.
+       Allowing unavoidable differences, such as filenames.
+       Return the first difference if the debug info differs, or None.
+       If there are differences in the code, there will almost certainly be differences in the debug info too.
+    """
+    dbga = dump_debug(objfilea)
+    dbgb = dump_debug(objfileb)
+    return first_diff(dbga, dbgb, objfilea, objfileb)
+
+def compare_exact(objfilea, objfileb):
+    """Byte for byte comparison between object files.
+       Returns True if equal, False otherwise.
+    """
+    return filecmp.cmp(objfilea, objfileb)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
