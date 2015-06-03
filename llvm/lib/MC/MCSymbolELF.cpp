@@ -77,4 +77,13 @@ unsigned MCSymbolELF::getOther() const {
   unsigned Other = (getFlags() & (0x3f << ELF_STO_Shift)) >> ELF_STO_Shift;
   return Other;
 }
+
+void MCSymbolELF::setUsedInReloc() const {
+  UsedInReloc = true;
+}
+
+bool MCSymbolELF::isUsedInReloc() const {
+  return UsedInReloc;
+}
+
 }

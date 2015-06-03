@@ -74,8 +74,7 @@ class ELFObjectWriter : public MCObjectWriter {
     static uint64_t SymbolValue(const MCSymbol &Sym, const MCAsmLayout &Layout);
     static bool isInSymtab(const MCAsmLayout &Layout, const MCSymbolELF &Symbol,
                            bool Used, bool Renamed);
-    static bool isLocal(const MCSymbol &Symbol, bool IsUsedInReloc,
-                        bool IsSignature);
+    static bool isLocal(const MCSymbolELF &Symbol, bool IsSignature);
 
     /// Helper struct for containing some precomputed information on symbols.
     struct ELFSymbolData {
@@ -100,7 +99,6 @@ class ELFObjectWriter : public MCObjectWriter {
     /// The target specific ELF writer instance.
     std::unique_ptr<MCELFObjectTargetWriter> TargetObjectWriter;
 
-    SmallPtrSet<const MCSymbol *, 16> UsedInReloc;
     SmallPtrSet<const MCSymbol *, 16> WeakrefUsedInReloc;
     DenseMap<const MCSymbolELF *, const MCSymbolELF *> Renames;
 
@@ -144,7 +142,6 @@ class ELFObjectWriter : public MCObjectWriter {
         : MCObjectWriter(OS, IsLittleEndian), TargetObjectWriter(MOTW) {}
 
     void reset() override {
-      UsedInReloc.clear();
       WeakrefUsedInReloc.clear();
       Renames.clear();
       Relocations.clear();
@@ -716,7 +713,7 @@ void ELFObjectWriter::RecordRelocation(MCAssembler &Asm,
     if (const MCSymbol *WeakRef = getWeakRef(*RefA))
       WeakrefUsedInReloc.insert(WeakRef);
     else
-      UsedInReloc.insert(SymA);
+      SymA->setUsedInReloc();
   }
   ELFRelocationEntry Rec(FixupOffset, SymA, Type, Addend);
   Relocations[&FixupSection].push_back(Rec);
@@ -758,15 +755,14 @@ bool ELFObjectWriter::isInSymtab(const MCAsmLayout &Layout,
   return true;
 }
 
-bool ELFObjectWriter::isLocal(const MCSymbol &Symbol, bool IsUsedInReloc,
-                              bool IsSignature) {
+bool ELFObjectWriter::isLocal(const MCSymbolELF &Symbol, bool IsSignature) {
   if (Symbol.isExternal())
     return false;
 
   if (Symbol.isDefined())
     return true;
 
-  if (IsUsedInReloc)
+  if (Symbol.isUsedInReloc())
     return false;
 
   return IsSignature;
@@ -802,7 +798,7 @@ void ELFObjectWriter::computeSymbolTable(
   bool HasLargeSectionIndex = false;
   for (const MCSymbol &S : Asm.symbols()) {
     const auto &Symbol = cast<MCSymbolELF>(S);
-    bool Used = UsedInReloc.count(&Symbol);
+    bool Used = Symbol.isUsedInReloc();
     bool WeakrefUsed = WeakrefUsedInReloc.count(&Symbol);
     bool isSignature = RevGroupMap.count(&Symbol);
 
@@ -815,7 +811,7 @@ void ELFObjectWriter::computeSymbolTable(
 
     // Undefined symbols are global, but this is the first place we
     // are able to set it.
-    bool Local = isLocal(Symbol, Used, isSignature);
+    bool Local = isLocal(Symbol, isSignature);
     if (!Local && Symbol.getBinding() == ELF::STB_LOCAL)
       Symbol.setBinding(ELF::STB_GLOBAL);
 

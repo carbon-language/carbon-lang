@@ -18,6 +18,7 @@ class MCSymbolELF : public MCSymbol {
   const MCExpr *SymbolSize = nullptr;
 
   mutable unsigned BindingSet : 1;
+  mutable unsigned UsedInReloc : 1;
 
 public:
   MCSymbolELF(const StringMapEntry<bool> *Name, bool isTemporary)
@@ -39,6 +40,9 @@ public:
   unsigned getBinding() const;
 
   bool isBindingSet() const { return BindingSet; }
+
+  void setUsedInReloc() const;
+  bool isUsedInReloc() const;
 
   static bool classof(const MCSymbol *S) { return S->isELF(); }
 };
