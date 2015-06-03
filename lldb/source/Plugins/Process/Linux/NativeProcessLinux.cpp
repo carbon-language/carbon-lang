@@ -2991,6 +2991,8 @@ NativeProcessLinux::GetSoftwareBreakpointPCOffset (NativeRegisterContextSP conte
 
         case llvm::Triple::mips64:
         case llvm::Triple::mips64el:
+        case llvm::Triple::mips:
+        case llvm::Triple::mipsel:
             actual_opcode_size = static_cast<uint32_t> (sizeof(g_mips64_opcode));
             return Error ();
         
@@ -3054,11 +3056,13 @@ NativeProcessLinux::GetSoftwareBreakpointTrapOpcode (size_t trap_opcode_size_hin
         actual_opcode_size = sizeof(g_i386_opcode);
         return Error ();
 
+    case llvm::Triple::mips:
     case llvm::Triple::mips64:
         trap_opcode_bytes = g_mips64_opcode;
         actual_opcode_size = sizeof(g_mips64_opcode);
         return Error ();
 
+    case llvm::Triple::mipsel:
     case llvm::Triple::mips64el:
         trap_opcode_bytes = g_mips64el_opcode;
         actual_opcode_size = sizeof(g_mips64el_opcode);

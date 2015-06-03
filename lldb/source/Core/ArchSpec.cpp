@@ -90,16 +90,16 @@ static const CoreDefinition g_core_definitions[] =
     { eByteOrderLittle, 8, 4, 4, llvm::Triple::aarch64, ArchSpec::eCore_arm_aarch64     , "aarch64"   },
 
     // mips32, mips32r2, mips32r3, mips32r5, mips32r6
-    { eByteOrderBig   , 4, 4, 4, llvm::Triple::mips  , ArchSpec::eCore_mips32         , "mips32"      },
-    { eByteOrderBig   , 4, 4, 4, llvm::Triple::mips  , ArchSpec::eCore_mips32r2       , "mips32r2"    },
-    { eByteOrderBig   , 4, 4, 4, llvm::Triple::mips  , ArchSpec::eCore_mips32r3       , "mips32r3"    },
-    { eByteOrderBig   , 4, 4, 4, llvm::Triple::mips  , ArchSpec::eCore_mips32r5       , "mips32r5"    },
-    { eByteOrderBig   , 4, 4, 4, llvm::Triple::mips  , ArchSpec::eCore_mips32r6       , "mips32r6"    },
-    { eByteOrderLittle, 4, 4, 4, llvm::Triple::mipsel, ArchSpec::eCore_mips32el       , "mips32el"    },
-    { eByteOrderLittle, 4, 4, 4, llvm::Triple::mipsel, ArchSpec::eCore_mips32r2el     , "mips32r2el"  },
-    { eByteOrderLittle, 4, 4, 4, llvm::Triple::mipsel, ArchSpec::eCore_mips32r3el     , "mips32r3el"  },
-    { eByteOrderLittle, 4, 4, 4, llvm::Triple::mipsel, ArchSpec::eCore_mips32r5el     , "mips32r5el"  },
-    { eByteOrderLittle, 4, 4, 4, llvm::Triple::mipsel, ArchSpec::eCore_mips32r6el     , "mips32r6el"  },
+    { eByteOrderBig   , 4, 4, 4, llvm::Triple::mips  , ArchSpec::eCore_mips32         , "mips"      },
+    { eByteOrderBig   , 4, 4, 4, llvm::Triple::mips  , ArchSpec::eCore_mips32r2       , "mipsr2"    },
+    { eByteOrderBig   , 4, 4, 4, llvm::Triple::mips  , ArchSpec::eCore_mips32r3       , "mipsr3"    },
+    { eByteOrderBig   , 4, 4, 4, llvm::Triple::mips  , ArchSpec::eCore_mips32r5       , "mipsr5"    },
+    { eByteOrderBig   , 4, 4, 4, llvm::Triple::mips  , ArchSpec::eCore_mips32r6       , "mipsr6"    },
+    { eByteOrderLittle, 4, 4, 4, llvm::Triple::mipsel, ArchSpec::eCore_mips32el       , "mipsel"    },
+    { eByteOrderLittle, 4, 4, 4, llvm::Triple::mipsel, ArchSpec::eCore_mips32r2el     , "mipsr2el"  },
+    { eByteOrderLittle, 4, 4, 4, llvm::Triple::mipsel, ArchSpec::eCore_mips32r3el     , "mipsr3el"  },
+    { eByteOrderLittle, 4, 4, 4, llvm::Triple::mipsel, ArchSpec::eCore_mips32r5el     , "mipsr5el"  },
+    { eByteOrderLittle, 4, 4, 4, llvm::Triple::mipsel, ArchSpec::eCore_mips32r6el     , "mipsr6el"  },
     
     // mips64, mips64r2, mips64r3, mips64r5, mips64r6
     { eByteOrderBig   , 8, 4, 4, llvm::Triple::mips64  , ArchSpec::eCore_mips64         , "mips64"      },
@@ -1134,6 +1134,36 @@ cores_match (const ArchSpec::Core core1, const ArchSpec::Core core2, bool try_in
             if (core2 == ArchSpec::eCore_arm_aarch64)
                 return true;
             if (core2 == ArchSpec::eCore_arm_armv8)
+                return true;
+            try_inverse = false;
+        }
+        break;
+
+    case ArchSpec::eCore_mips64:
+    case ArchSpec::eCore_mips64r2:
+    case ArchSpec::eCore_mips64r3:
+    case ArchSpec::eCore_mips64r5:
+    case ArchSpec::eCore_mips64r6:
+        if (!enforce_exact_match)
+        {
+            if (core2 >= ArchSpec::kCore_mips32_first && core2 <= (core1 - 10))
+                return true;
+            if (core2 >= ArchSpec::kCore_mips64_first && core2 <= (core1 - 1))
+                return true;
+            try_inverse = false;
+        }
+        break;
+
+    case ArchSpec::eCore_mips64el:
+    case ArchSpec::eCore_mips64r2el:
+    case ArchSpec::eCore_mips64r3el:
+    case ArchSpec::eCore_mips64r5el:
+    case ArchSpec::eCore_mips64r6el:
+        if (!enforce_exact_match)
+        {
+            if (core2 >= ArchSpec::kCore_mips32el_first && core2 <= (core1 - 10))
+                return true;
+            if (core2 >= ArchSpec::kCore_mips64el_first && core2 <= (core1 - 1))
                 return true;
             try_inverse = false;
         }

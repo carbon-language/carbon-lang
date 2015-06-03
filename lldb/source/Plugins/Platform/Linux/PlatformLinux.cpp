@@ -513,6 +513,8 @@ PlatformLinux::GetSupportedArchitectureAtIndex (uint32_t idx, ArchSpec &arch)
             case 4: triple.setArchName("mips64"); break;
             case 5: triple.setArchName("hexagon"); break;
             case 6: triple.setArchName("mips"); break;
+            case 7: triple.setArchName("mips64el"); break;
+            case 8: triple.setArchName("mipsel"); break;
             default: return false;
         }
         // Leave the vendor as "llvm::Triple:UnknownVendor" and don't specify the vendor by

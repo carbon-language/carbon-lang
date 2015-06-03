@@ -177,7 +177,19 @@ public:
         kCore_hexagon_last   = eCore_hexagon_hexagonv5,
 
         kCore_kalimba_first = eCore_kalimba3,
-        kCore_kalimba_last = eCore_kalimba5
+        kCore_kalimba_last = eCore_kalimba5,
+
+        kCore_mips32_first  = eCore_mips32,
+        kCore_mips32_last   = eCore_mips32r6,
+
+        kCore_mips32el_first  = eCore_mips32el,
+        kCore_mips32el_last   = eCore_mips32r6el,
+
+        kCore_mips64_first  = eCore_mips64,
+        kCore_mips64_last   = eCore_mips64r6,
+
+        kCore_mips64el_first  = eCore_mips64el,
+        kCore_mips64el_last   = eCore_mips64r6el
     };
 
     typedef void (* StopInfoOverrideCallbackType)(lldb_private::Thread &thread);
