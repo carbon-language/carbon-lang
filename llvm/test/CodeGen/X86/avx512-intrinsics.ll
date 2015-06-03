@@ -98,18 +98,55 @@ define <4 x float> @test_rcp14_ss(<4 x float> %a0) {
 declare <4 x float> @llvm.x86.avx512.rcp14.ss(<4 x float>, <4 x float>, <4 x float>, i8) nounwind readnone
 
 define <8 x double> @test_sqrt_pd_512(<8 x double> %a0) {
+  ; CHECK-LABEL: test_sqrt_pd_512
   ; CHECK: vsqrtpd
-  %res = call <8 x double> @llvm.x86.avx512.sqrt.pd.512(<8 x double> %a0,  <8 x double> zeroinitializer, i8 -1, i32 4) ; <<8 x double>> [#uses=1]
+  %res = call <8 x double> @llvm.x86.avx512.mask.sqrt.pd.512(<8 x double> %a0,  <8 x double> zeroinitializer, i8 -1, i32 4) 
   ret <8 x double> %res
 }
-declare <8 x double> @llvm.x86.avx512.sqrt.pd.512(<8 x double>, <8 x double>, i8, i32) nounwind readnone
+declare <8 x double> @llvm.x86.avx512.mask.sqrt.pd.512(<8 x double>, <8 x double>, i8, i32) nounwind readnone
 
 define <16 x float> @test_sqrt_ps_512(<16 x float> %a0) {
+  ; CHECK-LABEL: test_sqrt_ps_512
   ; CHECK: vsqrtps
-  %res = call <16 x float> @llvm.x86.avx512.sqrt.ps.512(<16 x float> %a0, <16 x float> zeroinitializer, i16 -1, i32 4) ; <<16 x float>> [#uses=1]
+  %res = call <16 x float> @llvm.x86.avx512.mask.sqrt.ps.512(<16 x float> %a0, <16 x float> zeroinitializer, i16 -1, i32 4) 
   ret <16 x float> %res
 }
-declare <16 x float> @llvm.x86.avx512.sqrt.ps.512(<16 x float>, <16 x float>, i16, i32) nounwind readnone
+define <16 x float> @test_sqrt_round_ps_512(<16 x float> %a0) {
+  ; CHECK-LABEL: test_sqrt_round_ps_512
+  ; CHECK: vsqrtps {rz-sae}
+  %res = call <16 x float> @llvm.x86.avx512.mask.sqrt.ps.512(<16 x float> %a0, <16 x float> zeroinitializer, i16 -1, i32 3) 
+  ret <16 x float> %res
+}
+declare <16 x float> @llvm.x86.avx512.mask.sqrt.ps.512(<16 x float>, <16 x float>, i16, i32) nounwind readnone
+
+define <8 x double> @test_getexp_pd_512(<8 x double> %a0) {
+  ; CHECK-LABEL: test_getexp_pd_512
+  ; CHECK: vgetexppd
+  %res = call <8 x double> @llvm.x86.avx512.mask.getexp.pd.512(<8 x double> %a0,  <8 x double> zeroinitializer, i8 -1, i32 4) 
+  ret <8 x double> %res
+}
+define <8 x double> @test_getexp_round_pd_512(<8 x double> %a0) {
+  ; CHECK-LABEL: test_getexp_round_pd_512
+  ; CHECK: vgetexppd {sae}
+  %res = call <8 x double> @llvm.x86.avx512.mask.getexp.pd.512(<8 x double> %a0,  <8 x double> zeroinitializer, i8 -1, i32 8) 
+  ret <8 x double> %res
+}
+declare <8 x double> @llvm.x86.avx512.mask.getexp.pd.512(<8 x double>, <8 x double>, i8, i32) nounwind readnone
+
+define <16 x float> @test_getexp_ps_512(<16 x float> %a0) {
+  ; CHECK-LABEL: test_getexp_ps_512
+  ; CHECK: vgetexpps
+  %res = call <16 x float> @llvm.x86.avx512.mask.getexp.ps.512(<16 x float> %a0, <16 x float> zeroinitializer, i16 -1, i32 4) 
+  ret <16 x float> %res
+}
+
+define <16 x float> @test_getexp_round_ps_512(<16 x float> %a0) {
+  ; CHECK-LABEL: test_getexp_round_ps_512
+  ; CHECK: vgetexpps {sae}
+  %res = call <16 x float> @llvm.x86.avx512.mask.getexp.ps.512(<16 x float> %a0, <16 x float> zeroinitializer, i16 -1, i32 8) 
+  ret <16 x float> %res
+}
+declare <16 x float> @llvm.x86.avx512.mask.getexp.ps.512(<16 x float>, <16 x float>, i16, i32) nounwind readnone
 
 define <4 x float> @test_sqrt_ss(<4 x float> %a0, <4 x float> %a1) {
   ; CHECK: vsqrtss {{.*}}encoding: [0x62

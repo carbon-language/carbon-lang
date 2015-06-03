@@ -15098,12 +15098,31 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, const X86Subtarget *Subtarget
         Op.getOperand(2), Op.getOperand(3));
     case INTR_TYPE_1OP_MASK_RM: {
       SDValue Src = Op.getOperand(1);
-      SDValue Src0 = Op.getOperand(2);
+      SDValue PassThru = Op.getOperand(2);
       SDValue Mask = Op.getOperand(3);
-      SDValue RoundingMode = Op.getOperand(4);
+      SDValue RoundingMode;
+      if (Op.getNumOperands() == 4)
+        RoundingMode = DAG.getConstant(X86::STATIC_ROUNDING::CUR_DIRECTION, dl, MVT::i32);
+      else
+        RoundingMode = Op.getOperand(4);
+      unsigned IntrWithRoundingModeOpcode = IntrData->Opc1;
+      if (IntrWithRoundingModeOpcode != 0) {
+        unsigned Round = cast<ConstantSDNode>(RoundingMode)->getZExtValue();
+        if (Round != X86::STATIC_ROUNDING::CUR_DIRECTION) 
+          return getVectorMaskingNode(DAG.getNode(IntrWithRoundingModeOpcode,
+                                      dl, Op.getValueType(), Src, RoundingMode),
+                                      Mask, PassThru, Subtarget, DAG);
+      }
       return getVectorMaskingNode(DAG.getNode(IntrData->Opc0, dl, VT, Src,
                                               RoundingMode),
-                                  Mask, Src0, Subtarget, DAG);
+                                  Mask, PassThru, Subtarget, DAG);
+    }
+    case INTR_TYPE_1OP_MASK: {
+      SDValue Src = Op.getOperand(1);
+      SDValue Passthru = Op.getOperand(2);
+      SDValue Mask = Op.getOperand(3);
+      return getVectorMaskingNode(DAG.getNode(IntrData->Opc0, dl, VT, Src),
+                                  Mask, Passthru, Subtarget, DAG);
     }
     case INTR_TYPE_SCALAR_MASK_RM: {
       SDValue Src1 = Op.getOperand(1);
@@ -18368,6 +18387,8 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::FSUB_RND:           return "X86ISD::FSUB_RND";
   case X86ISD::FMUL_RND:           return "X86ISD::FMUL_RND";
   case X86ISD::FDIV_RND:           return "X86ISD::FDIV_RND";
+  case X86ISD::FSQRT_RND:          return "X86ISD::FSQRT_RND";
+  case X86ISD::FGETEXP_RND:        return "X86ISD::FGETEXP_RND";
   case X86ISD::ADDS:               return "X86ISD::ADDS";
   case X86ISD::SUBS:               return "X86ISD::SUBS";
   }
