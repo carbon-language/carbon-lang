@@ -930,7 +930,7 @@ void BlockFrequencyInfoImpl<BT>::doFunction(const FunctionT *F,
   initializeRPOT();
   initializeLoops();
 
-  // Visit loops in post-order to find thelocal mass distribution, and then do
+  // Visit loops in post-order to find the local mass distribution, and then do
   // the full function.
   computeMassInLoops();
   computeMassInFunction();
