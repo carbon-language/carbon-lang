@@ -358,6 +358,14 @@ class SettingsCommandTestCase(TestBase):
         self.expect ("settings show target.env-vars",
                      substrs = [ 'MY_FILE=this is a file name with spaces.txt' ])
         self.runCmd ("settings clear target.env-vars")
+        # Test and make sure that setting "format-string" settings obeys quotes if they are provided
+        self.runCmd ("settings set thread-format    'abc def'   ")
+        self.expect ("settings show thread-format", 'thread-format (format-string) = "abc def"')
+        self.runCmd ('settings set thread-format    "abc def"   ')
+        self.expect ("settings show thread-format", 'thread-format (format-string) = "abc def"')
+        # Make sure when no quotes are provided that we maintain any trailing spaces
+        self.runCmd ('settings set thread-format abc def   ')
+        self.expect ("settings show thread-format", 'thread-format (format-string) = "abc def   "')
 
     def test_settings_with_trailing_whitespace (self):
         

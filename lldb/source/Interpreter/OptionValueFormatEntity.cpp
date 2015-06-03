@@ -66,7 +66,7 @@ OptionValueFormatEntity::DumpValue (const ExecutionContext *exe_ctx, Stream &str
 
 Error
 OptionValueFormatEntity::SetValueFromString (llvm::StringRef value_str,
-                                      VarSetOperationType op)
+                                             VarSetOperationType op)
 {
     Error error;
     switch (op)
@@ -79,6 +79,25 @@ OptionValueFormatEntity::SetValueFromString (llvm::StringRef value_str,
         case eVarSetOperationReplace:
         case eVarSetOperationAssign:
             {
+                // Check if the string starts with a quote character after removing leading and trailing spaces.
+                // If it does start with a quote character, make sure it ends with the same quote character
+                // and remove the quotes before we parse the format string. If the string doesn't start with
+                // a quote, leave the string alone and parse as is.
+                llvm::StringRef trimmed_value_str = value_str.trim();
+                if (!trimmed_value_str.empty())
+                {
+                    const char first_char = trimmed_value_str[0];
+                    if (first_char == '"' || first_char == '\'')
+                    {
+                        const size_t trimmed_len = trimmed_value_str.size();
+                        if (trimmed_len == 1 || value_str[trimmed_len-1] != first_char)
+                        {
+                            error.SetErrorStringWithFormat("mismatched quotes");
+                            return error;
+                        }
+                        value_str = trimmed_value_str.substr(1,trimmed_len-2);
+                    }
+                }
                 FormatEntity::Entry entry;
                 error = FormatEntity::Parse(value_str, entry);
                 if (error.Success())
