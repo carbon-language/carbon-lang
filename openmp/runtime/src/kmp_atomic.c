@@ -724,7 +724,6 @@ RET_TYPE __kmpc_atomic_##TYPE_ID##_##OP_ID( ident_t *id_ref, int gtid, TYPE * lh
 // I verified the asm of the workaround.
 #define OP_CMPXCHG_WORKAROUND(TYPE,BITS,OP)                               \
     {                                                                     \
-	char anonym[ ( sizeof( TYPE ) == sizeof( kmp_int##BITS ) ) ? ( 1 ) : ( 0 ) ] = { 1 }; \
 	struct _sss {                                                     \
 	    TYPE            cmp;                                          \
 	    kmp_int##BITS   *vvv;                                         \
