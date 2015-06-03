@@ -106,7 +106,7 @@ public:
   virtual uint64_t getFileOff() = 0;
 
   // Called by the garbage collector. All Defined subclasses should
-  // know how to call markLive to dependent symbols.
+  // know how to call depending symbols' markLive functions.
   virtual void markLive() {}
 
   int compare(SymbolBody *Other) override;
