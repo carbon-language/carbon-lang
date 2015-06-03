@@ -18,6 +18,7 @@ class PlatformCommandTestCase(TestBase):
         self.expect("platform list",
             patterns = ['^Available platforms:'])
 
+    @expectedFailureFreeBSD("llvm.org/pr23747 failing on the buildbot")
     def test_process_list(self):
         self.expect("platform process list",
             substrs = ['PID', 'TRIPLE', 'NAME'])
