@@ -248,10 +248,9 @@ TEST_F(FormatTestJS, FormatsFreestandingFunctions) {
 }
 
 TEST_F(FormatTestJS, ArrayLiterals) {
-  verifyFormat("var aaaaa: List<SomeThing> = [\n"
-               "  new SomeThingAAAAAAAAAAAA(),\n"
-               "  new SomeThingBBBBBBBBB()\n"
-               "];");
+  verifyFormat(
+      "var aaaaa: List<SomeThing> =\n"
+      "    [new SomeThingAAAAAAAAAAAA(), new SomeThingBBBBBBBBB()];");
   verifyFormat("return [\n"
                "  aaaaaaaaaaaaaaaaaaaaaaaaaaa,\n"
                "  bbbbbbbbbbbbbbbbbbbbbbbbbbb,\n"
