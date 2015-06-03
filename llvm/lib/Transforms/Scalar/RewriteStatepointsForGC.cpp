@@ -2238,7 +2238,7 @@ static void RemoveDerefAttrAtIndex(LLVMContext &Ctx, AttrHolder &AH,
   if (!R.empty())
     AH.setAttributes(AH.getAttributes().removeAttributes(
         Ctx, Index, AttributeSet::get(Ctx, Index, R)));
-};
+}
 
 void
 RewriteStatepointsForGC::stripDereferenceabilityInfoFromPrototype(Function &F) {
