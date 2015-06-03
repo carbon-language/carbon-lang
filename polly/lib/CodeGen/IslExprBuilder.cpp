@@ -301,10 +301,12 @@ Value *IslExprBuilder::createOpBin(__isl_take isl_ast_expr *Expr) {
     Res = Builder.CreateUDiv(LHS, RHS, "pexp.p_div_q");
     break;
   case isl_ast_op_fdiv_q: { // Round towards -infty
-    auto &Int = dyn_cast<ConstantInt>(RHS)->getValue();
-    if (Int.isPowerOf2()) {
-      Res = Builder.CreateAShr(LHS, Int.ceilLogBase2(), "polly.fdiv_q.shr");
-      break;
+    if (auto *Const = dyn_cast<ConstantInt>(RHS)) {
+      auto &Val = Const->getValue();
+      if (Val.isPowerOf2() && Val.isNonNegative()) {
+        Res = Builder.CreateAShr(LHS, Val.ceilLogBase2(), "polly.fdiv_q.shr");
+        break;
+      }
     }
     // TODO: Review code and check that this calculation does not yield
     //       incorrect overflow in some bordercases.
