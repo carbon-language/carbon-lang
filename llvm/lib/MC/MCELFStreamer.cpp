@@ -241,26 +241,22 @@ bool MCELFStreamer::EmitSymbolAttribute(MCSymbol *S, MCSymbolAttr Attribute) {
     Symbol->setType(CombineSymbolTypes(Symbol->getType(), ELF::STT_OBJECT));
     Symbol->setBinding(ELF::STB_GNU_UNIQUE);
     Symbol->setExternal(true);
-    BindingExplicitlySet.insert(Symbol);
     break;
 
   case MCSA_Global:
     Symbol->setBinding(ELF::STB_GLOBAL);
     Symbol->setExternal(true);
-    BindingExplicitlySet.insert(Symbol);
     break;
 
   case MCSA_WeakReference:
   case MCSA_Weak:
     Symbol->setBinding(ELF::STB_WEAK);
     Symbol->setExternal(true);
-    BindingExplicitlySet.insert(Symbol);
     break;
 
   case MCSA_Local:
     Symbol->setBinding(ELF::STB_LOCAL);
     Symbol->setExternal(false);
-    BindingExplicitlySet.insert(Symbol);
     break;
 
   case MCSA_ELF_TypeFunction:
@@ -309,7 +305,7 @@ void MCELFStreamer::EmitCommonSymbol(MCSymbol *S, uint64_t Size,
   auto *Symbol = cast<MCSymbolELF>(S);
   getAssembler().registerSymbol(*Symbol);
 
-  if (!BindingExplicitlySet.count(Symbol)) {
+  if (!Symbol->isBindingSet()) {
     Symbol->setBinding(ELF::STB_GLOBAL);
     Symbol->setExternal(true);
   }
@@ -343,7 +339,6 @@ void MCELFStreamer::EmitLocalCommonSymbol(MCSymbol *S, uint64_t Size,
   getAssembler().registerSymbol(*Symbol);
   Symbol->setBinding(ELF::STB_LOCAL);
   Symbol->setExternal(false);
-  BindingExplicitlySet.insert(Symbol);
   EmitCommonSymbol(Symbol, Size, ByteAlignment);
 }
 

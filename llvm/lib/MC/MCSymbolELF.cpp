@@ -16,6 +16,7 @@
 namespace llvm {
 
 void MCSymbolELF::setBinding(unsigned Binding) const {
+  BindingSet = true;
   assert(Binding == ELF::STB_LOCAL || Binding == ELF::STB_GLOBAL ||
          Binding == ELF::STB_WEAK || Binding == ELF::STB_GNU_UNIQUE);
   uint32_t OtherFlags = getFlags() & ~(0xf << ELF_STB_Shift);

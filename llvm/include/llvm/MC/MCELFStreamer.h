@@ -37,7 +37,6 @@ public:
   void reset() override {
     SeenIdent = false;
     LocalCommons.clear();
-    BindingExplicitlySet.clear();
     BundleGroups.clear();
     MCObjectStreamer::reset();
   }
@@ -105,8 +104,6 @@ private:
   };
 
   std::vector<LocalCommon> LocalCommons;
-
-  SmallPtrSet<MCSymbol *, 16> BindingExplicitlySet;
 
   /// BundleGroups - The stack of fragments holding the bundle-locked
   /// instructions.

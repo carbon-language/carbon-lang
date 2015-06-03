@@ -17,9 +17,11 @@ class MCSymbolELF : public MCSymbol {
   /// symbol has no size this field will be NULL.
   const MCExpr *SymbolSize = nullptr;
 
+  mutable unsigned BindingSet : 1;
+
 public:
   MCSymbolELF(const StringMapEntry<bool> *Name, bool isTemporary)
-      : MCSymbol(true, Name, isTemporary) {}
+      : MCSymbol(true, Name, isTemporary), BindingSet(false) {}
   void setSize(const MCExpr *SS) { SymbolSize = SS; }
 
   const MCExpr *getSize() const { return SymbolSize; }
@@ -35,6 +37,8 @@ public:
 
   void setBinding(unsigned Binding) const;
   unsigned getBinding() const;
+
+  bool isBindingSet() const { return BindingSet; }
 
   static bool classof(const MCSymbol *S) { return S->isELF(); }
 };
