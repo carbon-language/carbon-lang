@@ -47,10 +47,11 @@ static opt<bool>
              desc("Do the link in memory, but do not emit the result file."),
              init(false));
 
-static opt<bool>
-    ParseOnly("parse-only",
-              desc("Only parse the debug map, do not actaully link the DWARF."),
-              init(false));
+static opt<bool> DumpDebugMap(
+    "dump-debug-map",
+    desc("Parse and dump the debug map to standard output. Not DWARF link "
+         "will take place."),
+    init(false));
 }
 
 int main(int argc, char **argv) {
@@ -76,10 +77,10 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  if (Verbose)
+  if (Verbose || DumpDebugMap)
     (*DebugMapPtrOrErr)->print(llvm::outs());
 
-  if (ParseOnly)
+  if (DumpDebugMap)
     return 0;
 
   std::string OutputFile;
