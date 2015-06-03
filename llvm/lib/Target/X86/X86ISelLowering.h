@@ -56,10 +56,6 @@ namespace llvm {
       /// corresponds to X86::ANDNPS or X86::ANDNPD.
       FANDN,
 
-      /// Bitwise logical right shift of floating point values. This
-      /// corresponds to X86::PSRLDQ.
-      FSRL,
-
       /// These operations represent an abstract X86 call
       /// instruction, which includes a bunch of information.  In particular the
       /// operands of these node are:
@@ -210,7 +206,7 @@ namespace llvm {
       FDIV_RND,
       FMAX_RND,
       FMIN_RND,
-      
+
       // Integer add/sub with unsigned saturation.
       ADDUS,
       SUBUS,

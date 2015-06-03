@@ -10243,7 +10243,7 @@ static SDValue lowerV16X32VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   if (is128BitLaneRepeatedShuffleMask(VT, Mask, RepeatedMask)) {
     if (isSingleInputShuffleMask(Mask)) {
       unsigned Opc = VT.isInteger() ? X86ISD::PSHUFD : X86ISD::VPERMILPI;
-      return DAG.getNode(Opc, DL, VT, V1, 
+      return DAG.getNode(Opc, DL, VT, V1,
                          getV4X86ShuffleImm8ForMask(RepeatedMask, DL, DAG));
     }
 
@@ -18175,7 +18175,6 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::FANDN:              return "X86ISD::FANDN";
   case X86ISD::FOR:                return "X86ISD::FOR";
   case X86ISD::FXOR:               return "X86ISD::FXOR";
-  case X86ISD::FSRL:               return "X86ISD::FSRL";
   case X86ISD::FILD:               return "X86ISD::FILD";
   case X86ISD::FILD_FLAG:          return "X86ISD::FILD_FLAG";
   case X86ISD::FP_TO_INT16_IN_MEM: return "X86ISD::FP_TO_INT16_IN_MEM";

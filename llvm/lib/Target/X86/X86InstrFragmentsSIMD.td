@@ -35,8 +35,6 @@ def bc_mmx  : PatFrag<(ops node:$in), (x86mmx  (bitconvert node:$in))>;
 // SSE specific DAG Nodes.
 //===----------------------------------------------------------------------===//
 
-def SDTX86FPShiftOp : SDTypeProfile<1, 2, [ SDTCisSameAs<0, 1>,
-                                            SDTCisFP<0>, SDTCisInt<2> ]>;
 def SDTX86VFCMP : SDTypeProfile<1, 3, [SDTCisInt<0>, SDTCisSameAs<1, 2>,
                                        SDTCisFP<1>, SDTCisVT<3, i8>,
                                        SDTCisVec<1>]>;
@@ -65,7 +63,6 @@ def X86fandn   : SDNode<"X86ISD::FANDN",     SDTFPBinOp,
                         [SDNPCommutative, SDNPAssociative]>;
 def X86frsqrt  : SDNode<"X86ISD::FRSQRT",    SDTFPUnaryOp>;
 def X86frcp    : SDNode<"X86ISD::FRCP",      SDTFPUnaryOp>;
-def X86fsrl    : SDNode<"X86ISD::FSRL",      SDTX86FPShiftOp>;
 def X86fgetsign: SDNode<"X86ISD::FGETSIGNx86",SDTFPToIntOp>;
 def X86fhadd   : SDNode<"X86ISD::FHADD",     SDTFPBinOp>;
 def X86fhsub   : SDNode<"X86ISD::FHSUB",     SDTFPBinOp>;

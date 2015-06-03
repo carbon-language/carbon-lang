@@ -3560,7 +3560,7 @@ multiclass scalar_unary_math_patterns<Intrinsic Intr, string OpcPrefix,
   let Predicates = [HasAVX] in {
     def : Pat<(VT (Move VT:$dst, (Intr VT:$src))),
               (!cast<I>("V"#OpcPrefix#r_Int) VT:$dst, VT:$src)>;
-    
+
     def : Pat<(VT (X86Blendi VT:$dst, (Intr VT:$src), (i8 1))),
               (!cast<I>("V"#OpcPrefix#r_Int) VT:$dst, VT:$src)>;
   }
@@ -4220,16 +4220,6 @@ let ExeDomain = SSEPackedInt, SchedRW = [WriteVecShift], hasSideEffects = 0 in {
   // PSRADQri doesn't exist in SSE[1-3].
 }
 } // Constraints = "$src1 = $dst"
-
-let Predicates = [HasAVX] in {
-  def : Pat<(v2f64 (X86fsrl VR128:$src1, i32immSExt8:$src2)),
-            (VPSRLDQri VR128:$src1, (BYTE_imm imm:$src2))>;
-}
-
-let Predicates = [UseSSE2] in {
-  def : Pat<(v2f64 (X86fsrl VR128:$src1, i32immSExt8:$src2)),
-            (PSRLDQri VR128:$src1, (BYTE_imm imm:$src2))>;
-}
 
 //===---------------------------------------------------------------------===//
 // SSE2 - Packed Integer Comparison Instructions
