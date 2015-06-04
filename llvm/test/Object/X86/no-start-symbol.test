@@ -1,4 +1,4 @@
-RUN: llvm-objdump -d %p/Inputs/no-start-symbol.elf-x86_64 | FileCheck %s
+RUN: llvm-objdump -d %p/../Inputs/no-start-symbol.elf-x86_64 | FileCheck %s
 
 Test that we disassemble the start of the section.
 
