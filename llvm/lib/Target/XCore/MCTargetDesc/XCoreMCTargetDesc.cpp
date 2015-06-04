@@ -54,7 +54,7 @@ static MCSubtargetInfo *createXCoreMCSubtargetInfo(StringRef TT, StringRef CPU,
 }
 
 static MCAsmInfo *createXCoreMCAsmInfo(const MCRegisterInfo &MRI,
-                                       StringRef TT) {
+                                       const Triple &TT) {
   MCAsmInfo *MAI = new XCoreMCAsmInfo(TT);
 
   // Initial state of the frame pointer is SP.

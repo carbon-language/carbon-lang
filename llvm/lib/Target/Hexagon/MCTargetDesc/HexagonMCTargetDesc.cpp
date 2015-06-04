@@ -55,7 +55,7 @@ createHexagonMCSubtargetInfo(StringRef TT, StringRef CPU, StringRef FS) {
 }
 
 static MCAsmInfo *createHexagonMCAsmInfo(const MCRegisterInfo &MRI,
-                                         StringRef TT) {
+                                         const Triple &TT) {
   MCAsmInfo *MAI = new HexagonMCAsmInfo(TT);
 
   // VirtualFP = (R30 + #0).

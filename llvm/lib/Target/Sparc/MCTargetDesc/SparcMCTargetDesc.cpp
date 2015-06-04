@@ -34,7 +34,7 @@ using namespace llvm;
 #include "SparcGenRegisterInfo.inc"
 
 static MCAsmInfo *createSparcMCAsmInfo(const MCRegisterInfo &MRI,
-                                       StringRef TT) {
+                                       const Triple &TT) {
   MCAsmInfo *MAI = new SparcELFMCAsmInfo(TT);
   unsigned Reg = MRI.getDwarfRegNum(SP::O6, true);
   MCCFIInstruction Inst = MCCFIInstruction::createDefCfa(nullptr, Reg, 0);
@@ -43,7 +43,7 @@ static MCAsmInfo *createSparcMCAsmInfo(const MCRegisterInfo &MRI,
 }
 
 static MCAsmInfo *createSparcV9MCAsmInfo(const MCRegisterInfo &MRI,
-                                       StringRef TT) {
+                                         const Triple &TT) {
   MCAsmInfo *MAI = new SparcELFMCAsmInfo(TT);
   unsigned Reg = MRI.getDwarfRegNum(SP::O6, true);
   MCCFIInstruction Inst = MCCFIInstruction::createDefCfa(nullptr, Reg, 2047);

@@ -58,15 +58,13 @@ static MCRegisterInfo *createAArch64MCRegisterInfo(StringRef Triple) {
 }
 
 static MCAsmInfo *createAArch64MCAsmInfo(const MCRegisterInfo &MRI,
-                                         StringRef TT) {
-  Triple TheTriple(TT);
-
+                                         const Triple &TheTriple) {
   MCAsmInfo *MAI;
   if (TheTriple.isOSDarwin())
     MAI = new AArch64MCAsmInfoDarwin();
   else {
     assert(TheTriple.isOSBinFormatELF() && "Only expect Darwin or ELF");
-    MAI = new AArch64MCAsmInfoELF(TT);
+    MAI = new AArch64MCAsmInfoELF(TheTriple);
   }
 
   // Initial state of the frame pointer is SP.

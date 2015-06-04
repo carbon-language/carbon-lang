@@ -19,10 +19,11 @@
 
 namespace llvm {
 class Target;
+class Triple;
 
 class BPFMCAsmInfo : public MCAsmInfo {
 public:
-  explicit BPFMCAsmInfo(StringRef TT) {
+  explicit BPFMCAsmInfo(const Triple &TT) {
     PrivateGlobalPrefix = ".L";
     WeakRefDirective = "\t.weak\t";
 

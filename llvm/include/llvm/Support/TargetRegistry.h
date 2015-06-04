@@ -91,7 +91,7 @@ public:
   typedef bool (*ArchMatchFnTy)(Triple::ArchType Arch);
 
   typedef MCAsmInfo *(*MCAsmInfoCtorFnTy)(const MCRegisterInfo &MRI,
-                                          StringRef TT);
+                                          const Triple &TT);
   typedef MCCodeGenInfo *(*MCCodeGenInfoCtorFnTy)(StringRef TT, Reloc::Model RM,
                                                   CodeModel::Model CM,
                                                   CodeGenOpt::Level OL);
@@ -287,15 +287,15 @@ public:
   /// createMCAsmInfo - Create a MCAsmInfo implementation for the specified
   /// target triple.
   ///
-  /// \param Triple This argument is used to determine the target machine
+  /// \param TheTriple This argument is used to determine the target machine
   /// feature set; it should always be provided. Generally this should be
   /// either the target triple from the module, or the target triple of the
   /// host if that does not exist.
   MCAsmInfo *createMCAsmInfo(const MCRegisterInfo &MRI,
-                             StringRef Triple) const {
+                             StringRef TheTriple) const {
     if (!MCAsmInfoCtorFn)
       return nullptr;
-    return MCAsmInfoCtorFn(MRI, Triple);
+    return MCAsmInfoCtorFn(MRI, Triple(TheTriple));
   }
 
   /// createMCCodeGenInfo - Create a MCCodeGenInfo implementation.
@@ -889,7 +889,8 @@ template <class MCAsmInfoImpl> struct RegisterMCAsmInfo {
   }
 
 private:
-  static MCAsmInfo *Allocator(const MCRegisterInfo & /*MRI*/, StringRef TT) {
+  static MCAsmInfo *Allocator(const MCRegisterInfo & /*MRI*/,
+                              const Triple &TT) {
     return new MCAsmInfoImpl(TT);
   }
 };

@@ -8,12 +8,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "XCoreMCAsmInfo.h"
-#include "llvm/ADT/StringRef.h"
 using namespace llvm;
 
 void XCoreMCAsmInfo::anchor() { }
 
-XCoreMCAsmInfo::XCoreMCAsmInfo(StringRef TT) {
+XCoreMCAsmInfo::XCoreMCAsmInfo(const Triple &TT) {
   SupportsDebugInformation = true;
   Data16bitsDirective = "\t.short\t";
   Data32bitsDirective = "\t.long\t";

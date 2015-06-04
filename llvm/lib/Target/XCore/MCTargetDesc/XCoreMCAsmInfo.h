@@ -17,14 +17,14 @@
 #include "llvm/MC/MCAsmInfoELF.h"
 
 namespace llvm {
-  class StringRef;
-  class Target;
+class Triple;
 
-  class XCoreMCAsmInfo : public MCAsmInfoELF {
-    void anchor() override;
-  public:
-    explicit XCoreMCAsmInfo(StringRef TT);
-  };
+class XCoreMCAsmInfo : public MCAsmInfoELF {
+  void anchor() override;
+
+public:
+  explicit XCoreMCAsmInfo(const Triple &TT);
+};
 
 } // namespace llvm
 

@@ -19,18 +19,19 @@
 #include "llvm/MC/MCAsmInfoELF.h"
 
 namespace llvm {
+  class Triple;
 
   class ARMMCAsmInfoDarwin : public MCAsmInfoDarwin {
     virtual void anchor();
 
   public:
-    explicit ARMMCAsmInfoDarwin(StringRef TT);
+    explicit ARMMCAsmInfoDarwin(const Triple &TheTriple);
   };
 
   class ARMELFMCAsmInfo : public MCAsmInfoELF {
     void anchor() override;
   public:
-    explicit ARMELFMCAsmInfo(StringRef TT);
+    explicit ARMELFMCAsmInfo(const Triple &TT);
 
     void setUseIntegratedAssembler(bool Value) override;
   };

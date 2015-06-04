@@ -25,8 +25,7 @@ static cl::opt<bool> CompileForDebugging("debug-compile",
 
 void NVPTXMCAsmInfo::anchor() {}
 
-NVPTXMCAsmInfo::NVPTXMCAsmInfo(StringRef TT) {
-  Triple TheTriple(TT);
+NVPTXMCAsmInfo::NVPTXMCAsmInfo(const Triple &TheTriple) {
   if (TheTriple.getArch() == Triple::nvptx64) {
     PointerSize = CalleeSaveStackSlotSize = 8;
   }

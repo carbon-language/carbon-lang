@@ -132,7 +132,7 @@ unsigned SystemZMC::getFirstReg(unsigned Reg) {
 }
 
 static MCAsmInfo *createSystemZMCAsmInfo(const MCRegisterInfo &MRI,
-                                         StringRef TT) {
+                                         const Triple &TT) {
   MCAsmInfo *MAI = new SystemZMCAsmInfo(TT);
   MCCFIInstruction Inst =
       MCCFIInstruction::createDefCfa(nullptr,

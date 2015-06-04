@@ -14,11 +14,11 @@
 #include "llvm/Support/Compiler.h"
 
 namespace llvm {
-class StringRef;
+class Triple;
 
 class SystemZMCAsmInfo : public MCAsmInfoELF {
 public:
-  explicit SystemZMCAsmInfo(StringRef TT);
+  explicit SystemZMCAsmInfo(const Triple &TT);
 };
 
 } // end namespace llvm

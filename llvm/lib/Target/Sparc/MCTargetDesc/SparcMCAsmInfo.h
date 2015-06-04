@@ -17,12 +17,12 @@
 #include "llvm/MC/MCAsmInfoELF.h"
 
 namespace llvm {
-class StringRef;
+class Triple;
 
 class SparcELFMCAsmInfo : public MCAsmInfoELF {
   void anchor() override;
 public:
-  explicit SparcELFMCAsmInfo(StringRef TT);
+  explicit SparcELFMCAsmInfo(const Triple &TheTriple);
   const MCExpr*
   getExprForPersonalitySymbol(const MCSymbol *Sym, unsigned Encoding,
                               MCStreamer &Streamer) const override;

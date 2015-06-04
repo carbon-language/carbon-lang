@@ -69,8 +69,7 @@ const MCExpr *AArch64MCAsmInfoDarwin::getExprForPersonalitySymbol(
   return MCBinaryExpr::createSub(Res, PC, Context);
 }
 
-AArch64MCAsmInfoELF::AArch64MCAsmInfoELF(StringRef TT) {
-  Triple T(TT);
+AArch64MCAsmInfoELF::AArch64MCAsmInfoELF(const Triple &T) {
   if (T.getArch() == Triple::aarch64_be)
     IsLittleEndian = false;
 

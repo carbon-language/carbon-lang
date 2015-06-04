@@ -12,12 +12,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "MSP430MCAsmInfo.h"
-#include "llvm/ADT/StringRef.h"
 using namespace llvm;
 
 void MSP430MCAsmInfo::anchor() { }
 
-MSP430MCAsmInfo::MSP430MCAsmInfo(StringRef TT) {
+MSP430MCAsmInfo::MSP430MCAsmInfo(const Triple &TT) {
   PointerSize = CalleeSaveStackSlotSize = 2;
 
   CommentString = ";";
