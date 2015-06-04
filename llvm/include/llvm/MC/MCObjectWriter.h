@@ -25,8 +25,8 @@ class MCFragment;
 class MCSymbolRefExpr;
 class MCValue;
 
-/// MCObjectWriter - Defines the object file and target independent interfaces
-/// used by the assembler backend to write native file format object files.
+/// Defines the object file and target independent interfaces used by the
+/// assembler backend to write native file format object files.
 ///
 /// The object writer contains a few callbacks used by the assembler to allow
 /// the object writer to modify the assembler data structures at appropriate
@@ -53,7 +53,7 @@ public:
   virtual ~MCObjectWriter();
 
   /// lifetime management
-  virtual void reset() { }
+  virtual void reset() {}
 
   bool isLittleEndian() const { return IsLittleEndian; }
 
@@ -62,7 +62,7 @@ public:
   /// \name High-Level API
   /// @{
 
-  /// \brief Perform any late binding of symbols (for example, to assign symbol
+  /// Perform any late binding of symbols (for example, to assign symbol
   /// indices for use when generating relocations).
   ///
   /// This routine is called by the assembler after layout and relaxation is
@@ -70,7 +70,7 @@ public:
   virtual void ExecutePostLayoutBinding(MCAssembler &Asm,
                                         const MCAsmLayout &Layout) = 0;
 
-  /// \brief Record a relocation entry.
+  /// Record a relocation entry.
   ///
   /// This routine is called by the assembler after layout and relaxation, and
   /// post layout binding. The implementation is responsible for storing
@@ -81,8 +81,8 @@ public:
                                 const MCFixup &Fixup, MCValue Target,
                                 bool &IsPCRel, uint64_t &FixedValue) = 0;
 
-  /// \brief Check whether the difference (A - B) between two symbol
-  /// references is fully resolved.
+  /// Check whether the difference (A - B) between two symbol references is
+  /// fully resolved.
   ///
   /// Clients are not required to answer precisely and may conservatively return
   /// false, even when a difference is fully resolved.
@@ -97,26 +97,23 @@ public:
                                                       bool InSet,
                                                       bool IsPCRel) const;
 
-  /// \brief True if this symbol (which is a variable) is weak. This is not
+  /// True if this symbol (which is a variable) is weak. This is not
   /// just STB_WEAK, but more generally whether or not we can evaluate
   /// past it.
   virtual bool isWeak(const MCSymbol &Sym) const;
 
-  /// \brief Write the object file.
+  /// Write the object file.
   ///
   /// This routine is called by the assembler after layout and relaxation is
   /// complete, fixups have been evaluated and applied, and relocations
   /// generated.
-  virtual void WriteObject(MCAssembler &Asm,
-                           const MCAsmLayout &Layout) = 0;
+  virtual void WriteObject(MCAssembler &Asm, const MCAsmLayout &Layout) = 0;
 
   /// @}
   /// \name Binary Output
   /// @{
 
-  void Write8(uint8_t Value) {
-    OS << char(Value);
-  }
+  void Write8(uint8_t Value) { OS << char(Value); }
 
   void WriteLE16(uint16_t Value) {
     support::endian::Writer<support::little>(OS).write(Value);
@@ -164,7 +161,7 @@ public:
   }
 
   void WriteZeros(unsigned N) {
-    const char Zeros[16] = { 0 };
+    const char Zeros[16] = {0};
 
     for (unsigned i = 0, e = N / 16; i != e; ++i)
       OS << StringRef(Zeros, 16);
@@ -172,22 +169,23 @@ public:
     OS << StringRef(Zeros, N % 16);
   }
 
-  void WriteBytes(const SmallVectorImpl<char> &ByteVec, unsigned ZeroFillSize = 0) {
+  void WriteBytes(const SmallVectorImpl<char> &ByteVec,
+                  unsigned ZeroFillSize = 0) {
     WriteBytes(StringRef(ByteVec.data(), ByteVec.size()), ZeroFillSize);
   }
 
   void WriteBytes(StringRef Str, unsigned ZeroFillSize = 0) {
     // TODO: this version may need to go away once all fragment contents are
     // converted to SmallVector<char, N>
-    assert((ZeroFillSize == 0 || Str.size () <= ZeroFillSize) &&
-      "data size greater than fill size, unexpected large write will occur");
+    assert(
+        (ZeroFillSize == 0 || Str.size() <= ZeroFillSize) &&
+        "data size greater than fill size, unexpected large write will occur");
     OS << Str;
     if (ZeroFillSize)
       WriteZeros(ZeroFillSize - Str.size());
   }
 
   /// @}
-
 };
 
 } // End llvm namespace
