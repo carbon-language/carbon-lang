@@ -367,6 +367,8 @@ static void AsanInitInternal() {
   // initialization steps look at flags().
   InitializeFlags();
 
+  CacheBinaryName();
+
   AsanCheckIncompatibleRT();
   AsanCheckDynamicRTPrereqs();
 

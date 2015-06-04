@@ -238,6 +238,10 @@ const char *StripPathPrefix(const char *filepath,
 const char *StripModuleName(const char *module);
 
 // OS
+uptr ReadBinaryName(/*out*/char *buf, uptr buf_len);
+const char *GetBinaryName();
+const char *GetBinaryBasename();
+void CacheBinaryName();
 void DisableCoreDumperIfNecessary();
 void DumpProcessMap();
 bool FileExists(const char *filename);
@@ -248,8 +252,6 @@ char *FindPathToBinary(const char *name);
 bool IsPathSeparator(const char c);
 bool IsAbsolutePath(const char *path);
 
-// Returns the path to the main executable.
-uptr ReadBinaryName(/*out*/char *buf, uptr buf_len);
 u32 GetUid();
 void ReExec();
 bool StackSizeIsUnlimited();

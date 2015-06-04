@@ -706,45 +706,30 @@ uptr GetPageSize() {
 #endif
 }
 
-static char proc_self_exe_cache_str[kMaxPathLength];
-static uptr proc_self_exe_cache_len = 0;
-
 uptr ReadBinaryName(/*out*/char *buf, uptr buf_len) {
-  if (proc_self_exe_cache_len > 0) {
-    // If available, use the cached module name.
-    uptr module_name_len =
-        internal_snprintf(buf, buf_len, "%s", proc_self_exe_cache_str);
-    CHECK_LT(module_name_len, buf_len);
-    return module_name_len;
-  }
 #if SANITIZER_FREEBSD
-  const int Mib[4] = { CTL_KERN, KERN_PROC, KERN_PROC_PATHNAME, -1 };
+  const int Mib[] = { CTL_KERN, KERN_PROC, KERN_PROC_PATHNAME, -1 };
+  const char *default_module_name = "kern.proc.pathname";
   size_t Size = buf_len;
-  bool IsErr = (sysctl(Mib, 4, buf, &Size, NULL, 0) != 0);
+  bool IsErr = (sysctl(Mib, ARRAY_SIZE(Mib), buf, &Size, NULL, 0) != 0);
   int readlink_error = IsErr ? errno : 0;
   uptr module_name_len = Size;
 #else
+  const char *default_module_name = "/proc/self/exe";
   uptr module_name_len = internal_readlink(
-      "/proc/self/exe", buf, buf_len);
+      default_module_name, buf, buf_len);
   int readlink_error;
   bool IsErr = internal_iserror(module_name_len, &readlink_error);
 #endif
   if (IsErr) {
-    // We can't read /proc/self/exe for some reason, assume the name of the
-    // binary is unknown.
-    Report("WARNING: readlink(\"/proc/self/exe\") failed with errno %d, "
+    // We can't read binary name for some reason, assume it's unknown.
+    Report("WARNING: reading executable name failed with errno %d, "
            "some stack frames may not be symbolized\n", readlink_error);
-    module_name_len = internal_snprintf(buf, buf_len, "/proc/self/exe");
+    module_name_len = internal_snprintf(buf, buf_len, "%s",
+                                        default_module_name);
     CHECK_LT(module_name_len, buf_len);
   }
   return module_name_len;
-}
-
-void CacheBinaryName() {
-  if (!proc_self_exe_cache_len) {
-    proc_self_exe_cache_len =
-        ReadBinaryName(proc_self_exe_cache_str, kMaxPathLength);
-  }
 }
 
 // Match full names of the form /path/to/base_name{-,.}*

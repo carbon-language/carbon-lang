@@ -354,12 +354,7 @@ const char *Symbolizer::PlatformDemangle(const char *name) {
   return DemangleCXXABI(name);
 }
 
-void Symbolizer::PlatformPrepareForSandboxing() {
-#if SANITIZER_LINUX && !SANITIZER_ANDROID
-  // Cache /proc/self/exe on Linux.
-  CacheBinaryName();
-#endif
-}
+void Symbolizer::PlatformPrepareForSandboxing() {}
 
 static SymbolizerTool *ChooseExternalSymbolizer(LowLevelAllocator *allocator) {
   const char *path = common_flags()->external_symbolizer_path;

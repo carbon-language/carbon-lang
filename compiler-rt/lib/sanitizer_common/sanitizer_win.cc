@@ -641,6 +641,13 @@ SignalContext SignalContext::Create(void *siginfo, void *context) {
   return SignalContext(context, access_addr, pc, sp, bp);
 }
 
+uptr ReadBinaryName(/*out*/char *buf, uptr buf_len) {
+  // FIXME: Actually implement this function.
+  CHECK_GT(buf_len, 0);
+  buf[0] = 0;
+  return 0;
+}
+
 }  // namespace __sanitizer
 
 #endif  // _WIN32

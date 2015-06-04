@@ -338,6 +338,24 @@ bool TemplateMatch(const char *templ, const char *str) {
   return true;
 }
 
+static char binary_name_cache_str[kMaxPathLength];
+static const char *binary_basename_cache_str;
+
+const char *GetBinaryName() {
+  return binary_name_cache_str;
+}
+
+const char *GetBinaryBasename() {
+  return binary_basename_cache_str;
+}
+
+// Call once to make sure that binary_name_cache_str is initialized
+void CacheBinaryName() {
+  CHECK_EQ('\0', binary_name_cache_str[0]);
+  ReadBinaryName(binary_name_cache_str, sizeof(binary_name_cache_str));
+  binary_basename_cache_str = StripModuleName(binary_name_cache_str);
+}
+
 }  // namespace __sanitizer
 
 using namespace __sanitizer;  // NOLINT
