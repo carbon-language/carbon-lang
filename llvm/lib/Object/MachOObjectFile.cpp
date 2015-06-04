@@ -38,11 +38,25 @@ namespace {
   };
 }
 
+// FIXME: Replace all uses of this function with getStructOrErr.
 template <typename T>
 static T getStruct(const MachOObjectFile *O, const char *P) {
   // Don't read before the beginning or past the end of the file
   if (P < O->getData().begin() || P + sizeof(T) > O->getData().end())
     report_fatal_error("Malformed MachO file.");
+
+  T Cmd;
+  memcpy(&Cmd, P, sizeof(T));
+  if (O->isLittleEndian() != sys::IsLittleEndianHost)
+    MachO::swapStruct(Cmd);
+  return Cmd;
+}
+
+template <typename T>
+static ErrorOr<T> getStructOrErr(const MachOObjectFile *O, const char *P) {
+  // Don't read before the beginning or past the end of the file
+  if (P < O->getData().begin() || P + sizeof(T) > O->getData().end())
+    return object_error::parse_failed;
 
   T Cmd;
   memcpy(&Cmd, P, sizeof(T));
@@ -203,6 +217,16 @@ getNextLoadCommandInfo(const MachOObjectFile *Obj,
   return getLoadCommandInfo(Obj, L.Ptr + L.C.cmdsize);
 }
 
+template <typename T>
+static void parseHeader(const MachOObjectFile *Obj, T &Header,
+                        std::error_code &EC) {
+  auto HeaderOrErr = getStructOrErr<T>(Obj, getPtr(Obj, 0));
+  if (HeaderOrErr)
+    Header = HeaderOrErr.get();
+  else
+    EC = HeaderOrErr.getError();
+}
+
 MachOObjectFile::MachOObjectFile(MemoryBufferRef Object, bool IsLittleEndian,
                                  bool Is64bits, std::error_code &EC)
     : ObjectFile(getMachOType(IsLittleEndian, Is64bits), Object),
@@ -210,14 +234,15 @@ MachOObjectFile::MachOObjectFile(MemoryBufferRef Object, bool IsLittleEndian,
       DataInCodeLoadCmd(nullptr), LinkOptHintsLoadCmd(nullptr),
       DyldInfoLoadCmd(nullptr), UuidLoadCmd(nullptr),
       HasPageZeroSegment(false) {
-  // Parse header.
   if (is64Bit())
-    Header64 = getStruct<MachO::mach_header_64>(this, getPtr(this, 0));
+    parseHeader(this, Header64, EC);
   else
     // First fields of MachO::mach_header_64 are the same as
     // in MachO::mach_header.
-    *reinterpret_cast<MachO::mach_header *>(&this->Header64) =
-        getStruct<MachO::mach_header>(this, getPtr(this, 0));
+    parseHeader(this, *reinterpret_cast<MachO::mach_header *>(&this->Header64),
+                EC);
+  if (EC)
+    return;
 
   uint32_t LoadCommandCount = getHeader().ncmds;
   if (LoadCommandCount == 0)
