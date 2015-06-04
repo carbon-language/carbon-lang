@@ -22,6 +22,7 @@
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/EndianStream.h"
 #include "llvm/Support/raw_ostream.h"
 
 #define DEBUG_TYPE "mccodeemitter"
@@ -30,15 +31,6 @@ using namespace llvm;
 using namespace Hexagon;
 
 STATISTIC(MCNumEmitted, "Number of MC instructions emitted");
-
-namespace {
-void emitLittleEndian(uint64_t Binary, raw_ostream &OS) {
-  OS << static_cast<uint8_t>((Binary >> 0x00) & 0xff);
-  OS << static_cast<uint8_t>((Binary >> 0x08) & 0xff);
-  OS << static_cast<uint8_t>((Binary >> 0x10) & 0xff);
-  OS << static_cast<uint8_t>((Binary >> 0x18) & 0xff);
-}
-}
 
 HexagonMCCodeEmitter::HexagonMCCodeEmitter(MCInstrInfo const &aMII,
                                            MCContext &aMCT)
@@ -157,7 +149,7 @@ void HexagonMCCodeEmitter::EncodeSingleInstruction(
     llvm_unreachable("Unimplemented Instruction");
   }
   Binary |= Parse;
-  emitLittleEndian(Binary, OS);
+  support::endian::Writer<support::little>(OS).write<uint32_t>(Binary);
   ++MCNumEmitted;
 }
 

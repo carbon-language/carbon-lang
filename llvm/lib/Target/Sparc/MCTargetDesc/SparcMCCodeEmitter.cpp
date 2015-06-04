@@ -86,16 +86,10 @@ void SparcMCCodeEmitter::encodeInstruction(const MCInst &MI, raw_ostream &OS,
 
   if (Ctx.getAsmInfo()->isLittleEndian()) {
     // Output the bits in little-endian byte order.
-    for (unsigned i = 0; i != 4; ++i) {
-      OS << (char)Bits;
-      Bits >>= 8;
-    }
+    support::endian::Writer<support::little>(OS).write<uint32_t>(Bits);
   } else {
     // Output the bits in big-endian byte order.
-    for (unsigned i = 0; i != 4; ++i) {
-      OS << (char)(Bits >> 24);
-      Bits <<= 8;
-    }
+    support::endian::Writer<support::big>(OS).write<uint32_t>(Bits);
   }
   unsigned tlsOpNo = 0;
   switch (MI.getOpcode()) {

@@ -23,6 +23,7 @@
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
+#include "llvm/Support/EndianStream.h"
 #include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
@@ -148,15 +149,11 @@ void R600MCCodeEmitter::EmitByte(unsigned int Byte, raw_ostream &OS) const {
 }
 
 void R600MCCodeEmitter::Emit(uint32_t Value, raw_ostream &OS) const {
-  for (unsigned i = 0; i < 4; i++) {
-    OS.write((uint8_t) ((Value >> (8 * i)) & 0xff));
-  }
+  support::endian::Writer<support::little>(OS).write(Value);
 }
 
 void R600MCCodeEmitter::Emit(uint64_t Value, raw_ostream &OS) const {
-  for (unsigned i = 0; i < 8; i++) {
-    EmitByte((Value >> (8 * i)) & 0xff, OS);
-  }
+  support::endian::Writer<support::little>(OS).write(Value);
 }
 
 unsigned R600MCCodeEmitter::getHWRegChan(unsigned reg) const {

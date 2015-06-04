@@ -22,6 +22,7 @@
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
+#include "llvm/Support/EndianStream.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
@@ -173,16 +174,6 @@ public:
 
   unsigned fixMOVZ(const MCInst &MI, unsigned EncodedValue,
                    const MCSubtargetInfo &STI) const;
-
-  void EmitByte(unsigned char C, raw_ostream &OS) const { OS << (char)C; }
-
-  void EmitConstant(uint64_t Val, unsigned Size, raw_ostream &OS) const {
-    // Output the constant in little endian byte order.
-    for (unsigned i = 0; i != Size; ++i) {
-      EmitByte(Val & 255, OS);
-      Val >>= 8;
-    }
-  }
 
   void encodeInstruction(const MCInst &MI, raw_ostream &OS,
                          SmallVectorImpl<MCFixup> &Fixups,
@@ -611,7 +602,7 @@ void AArch64MCCodeEmitter::encodeInstruction(const MCInst &MI, raw_ostream &OS,
   }
 
   uint64_t Binary = getBinaryCodeForInstr(MI, Fixups, STI);
-  EmitConstant(Binary, 4, OS);
+  support::endian::Writer<support::little>(OS).write<uint32_t>(Binary);
   ++MCNumEmitted; // Keep track of the # of mi's emitted.
 }
 

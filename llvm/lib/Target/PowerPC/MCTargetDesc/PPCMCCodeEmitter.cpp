@@ -22,6 +22,7 @@
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
+#include "llvm/Support/EndianStream.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetOpcodes.h"
@@ -116,38 +117,19 @@ public:
     switch (Size) {
     case 4:
       if (IsLittleEndian) {
-        OS << (char)(Bits);
-        OS << (char)(Bits >> 8);
-        OS << (char)(Bits >> 16);
-        OS << (char)(Bits >> 24);
+        support::endian::Writer<support::little>(OS).write<uint32_t>(Bits);
       } else {
-        OS << (char)(Bits >> 24);
-        OS << (char)(Bits >> 16);
-        OS << (char)(Bits >> 8);
-        OS << (char)(Bits);
+        support::endian::Writer<support::big>(OS).write<uint32_t>(Bits);
       }
       break;
     case 8:
       // If we emit a pair of instructions, the first one is
       // always in the top 32 bits, even on little-endian.
       if (IsLittleEndian) {
-        OS << (char)(Bits >> 32);
-        OS << (char)(Bits >> 40);
-        OS << (char)(Bits >> 48);
-        OS << (char)(Bits >> 56);
-        OS << (char)(Bits);
-        OS << (char)(Bits >> 8);
-        OS << (char)(Bits >> 16);
-        OS << (char)(Bits >> 24);
+        uint64_t Swapped = (Bits << 32) | (Bits >> 32);
+        support::endian::Writer<support::little>(OS).write<uint64_t>(Swapped);
       } else {
-        OS << (char)(Bits >> 56);
-        OS << (char)(Bits >> 48);
-        OS << (char)(Bits >> 40);
-        OS << (char)(Bits >> 32);
-        OS << (char)(Bits >> 24);
-        OS << (char)(Bits >> 16);
-        OS << (char)(Bits >> 8);
-        OS << (char)(Bits);
+        support::endian::Writer<support::big>(OS).write<uint64_t>(Bits);
       }
       break;
     default:
