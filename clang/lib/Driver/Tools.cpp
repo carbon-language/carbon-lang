@@ -758,7 +758,6 @@ static void getARMTargetFeatures(const Driver &D, const llvm::Triple &Triple,
   // to handle -march=native correctly.
   if (const Arg *A = Args.getLastArg(options::OPT_march_EQ)) {
     StringRef Arch = arm::getARMArch(Args, Triple);
-    Arch = llvm::ARMTargetParser::getCanonicalArchName(Arch);
     if (llvm::ARMTargetParser::parseArch(Arch) == llvm::ARM::AK_INVALID)
       D.Diag(diag::err_drv_clang_unsupported) << A->getAsString(Args);
   }
@@ -5768,12 +5767,9 @@ std::string arm::getARMTargetCPU(const ArgList &Args,
 /// CPU  (or Arch, if CPU is generic).
 // FIXME: This is redundant with -mcpu, why does LLVM use this.
 const char *arm::getLLVMArchSuffixForARM(StringRef CPU, StringRef Arch) {
-  if (CPU == "generic") {
-    unsigned ArchKind = llvm::ARMTargetParser::parseArch(
-                        llvm::ARMTargetParser::getCanonicalArchName(Arch));
-    if (ArchKind == llvm::ARM::AK_ARMV8_1A)
-      return "v8.1a";
-  }
+  if (CPU == "generic" &&
+      llvm::ARMTargetParser::parseArch(Arch) == llvm::ARM::AK_ARMV8_1A)
+    return "v8.1a";
 
   unsigned ArchKind = llvm::ARMTargetParser::parseCPUArch(CPU);
   if (ArchKind == llvm::ARM::AK_INVALID)
