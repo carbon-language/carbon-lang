@@ -272,16 +272,11 @@ public:
   /// used from.  Used to disambiguate if a header is present in multiple
   /// modules.
   ///
-  /// \param IncludeTextualHeaders If \c true, also find textual headers. By
-  /// default, these are treated like excluded headers and result in no known
-  /// header being found.
-  ///
   /// \returns The module KnownHeader, which provides the module that owns the
   /// given header file.  The KnownHeader is default constructed to indicate
   /// that no module owns this header file.
   KnownHeader findModuleForHeader(const FileEntry *File,
-                                  Module *RequestingModule = nullptr,
-                                  bool IncludeTextualHeaders = false);
+                                  Module *RequestingModule = nullptr);
 
   /// \brief Reports errors if a module must not include a specific file.
   ///

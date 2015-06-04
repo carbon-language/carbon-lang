@@ -332,12 +332,11 @@ static bool isBetterKnownHeader(const ModuleMap::KnownHeader &New,
 
 ModuleMap::KnownHeader
 ModuleMap::findModuleForHeader(const FileEntry *File,
-                               Module *RequestingModule,
-                               bool IncludeTextualHeaders) {
+                               Module *RequestingModule) {
   HeadersMap::iterator Known = findKnownHeader(File);
 
   auto MakeResult = [&](ModuleMap::KnownHeader R) -> ModuleMap::KnownHeader {
-    if (!IncludeTextualHeaders && (R.getRole() & ModuleMap::TextualHeader))
+    if (R.getRole() & ModuleMap::TextualHeader)
       return ModuleMap::KnownHeader();
     return R;
   };
