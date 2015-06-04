@@ -292,10 +292,28 @@ static Value *SimplifyWithOpReplaced(Value *V, Value *Op, Value *RepOp,
 
   // If this is a binary operator, try to simplify it with the replaced op.
   if (BinaryOperator *B = dyn_cast<BinaryOperator>(I)) {
+    Value *Simplified = nullptr;
     if (B->getOperand(0) == Op)
-      return SimplifyBinOp(B->getOpcode(), RepOp, B->getOperand(1), DL, TLI);
-    if (B->getOperand(1) == Op)
-      return SimplifyBinOp(B->getOpcode(), B->getOperand(0), RepOp, DL, TLI);
+      Simplified =
+          SimplifyBinOp(B->getOpcode(), RepOp, B->getOperand(1), DL, TLI);
+    if (!Simplified && B->getOperand(1) == Op)
+      Simplified =
+          SimplifyBinOp(B->getOpcode(), B->getOperand(0), RepOp, DL, TLI);
+    if (Simplified) {
+      // Consider:
+      //   %cmp = icmp eq i32 %x, 2147483647
+      //   %add = add nsw i32 %x, 1
+      //   %sel = select i1 %cmp, i32 -2147483648, i32 %add
+      //
+      // We can't replace %sel with %add unless we strip away the flags.
+      if (isa<OverflowingBinaryOperator>(B)) {
+        B->setHasNoSignedWrap(false);
+        B->setHasNoUnsignedWrap(false);
+      }
+      if (isa<PossiblyExactOperator>(B))
+        B->setIsExact(false);
+    }
+    return Simplified;
   }
 
   // Same for CmpInsts.
