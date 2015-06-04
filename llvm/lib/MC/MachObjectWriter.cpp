@@ -299,17 +299,11 @@ void MachObjectWriter::WriteDysymtabLoadCommand(uint32_t FirstLocalSymbol,
 
 MachObjectWriter::MachSymbolData *
 MachObjectWriter::findSymbolData(const MCSymbol &Sym) {
-  for (auto &Entry : LocalSymbolData)
-    if (Entry.Symbol == &Sym)
-      return &Entry;
-
-  for (auto &Entry : ExternalSymbolData)
-    if (Entry.Symbol == &Sym)
-      return &Entry;
-
-  for (auto &Entry : UndefinedSymbolData)
-    if (Entry.Symbol == &Sym)
-      return &Entry;
+  for (auto *SymbolData :
+       {&LocalSymbolData, &ExternalSymbolData, &UndefinedSymbolData})
+    for (MachSymbolData &Entry : *SymbolData)
+      if (Entry.Symbol == &Sym)
+        return &Entry;
 
   return nullptr;
 }
@@ -427,8 +421,8 @@ static unsigned ComputeLinkerOptionsLoadCommandSize(
   const std::vector<std::string> &Options, bool is64Bit)
 {
   unsigned Size = sizeof(MachO::linker_option_command);
-  for (unsigned i = 0, e = Options.size(); i != e; ++i)
-    Size += Options[i].size() + 1;
+  for (const std::string &Option : Options)
+    Size += Option.size() + 1;
   return RoundUpToAlignment(Size, is64Bit ? 8 : 4);
 }
 
@@ -443,9 +437,8 @@ void MachObjectWriter::WriteLinkerOptionsLoadCommand(
   Write32(Size);
   Write32(Options.size());
   uint64_t BytesWritten = sizeof(MachO::linker_option_command);
-  for (unsigned i = 0, e = Options.size(); i != e; ++i) {
+  for (const std::string &Option : Options) {
     // Write each string, including the null byte.
-    const std::string &Option = Options[i];
     WriteBytes(Option.c_str(), Option.size() + 1);
     BytesWritten += Option.size() + 1;
   }
@@ -607,16 +600,13 @@ void MachObjectWriter::ComputeSymbolTable(
 
   // Set the symbol indices.
   Index = 0;
-  for (unsigned i = 0, e = LocalSymbolData.size(); i != e; ++i)
-    LocalSymbolData[i].Symbol->setIndex(Index++);
-  for (unsigned i = 0, e = ExternalSymbolData.size(); i != e; ++i)
-    ExternalSymbolData[i].Symbol->setIndex(Index++);
-  for (unsigned i = 0, e = UndefinedSymbolData.size(); i != e; ++i)
-    UndefinedSymbolData[i].Symbol->setIndex(Index++);
+  for (auto *SymbolData :
+       {&LocalSymbolData, &ExternalSymbolData, &UndefinedSymbolData})
+    for (MachSymbolData &Entry : *SymbolData)
+      Entry.Symbol->setIndex(Index++);
 
   for (const MCSection &Section : Asm) {
-    std::vector<RelAndSymbol> &Relocs = Relocations[&Section];
-    for (RelAndSymbol &Rel : Relocs) {
+    for (RelAndSymbol &Rel : Relocations[&Section]) {
       if (!Rel.Sym)
         continue;
 
@@ -634,9 +624,7 @@ void MachObjectWriter::ComputeSymbolTable(
 void MachObjectWriter::computeSectionAddresses(const MCAssembler &Asm,
                                                const MCAsmLayout &Layout) {
   uint64_t StartAddress = 0;
-  const SmallVectorImpl<MCSection *> &Order = Layout.getSectionOrder();
-  for (int i = 0, n = Order.size(); i != n ; ++i) {
-    const MCSection *Sec = Order[i];
+  for (const MCSection *Sec : Layout.getSectionOrder()) {
     StartAddress = RoundUpToAlignment(StartAddress, Sec->getAlignment());
     SectionAddress[Sec] = StartAddress;
     StartAddress += Layout.getSectionAddressSize(Sec);
@@ -771,12 +759,9 @@ void MachObjectWriter::WriteObject(MCAssembler &Asm,
   }
 
   // Add the linker option load commands sizes.
-  const std::vector<std::vector<std::string> > &LinkerOptions =
-    Asm.getLinkerOptions();
-  for (unsigned i = 0, e = LinkerOptions.size(); i != e; ++i) {
+  for (const auto &Option : Asm.getLinkerOptions()) {
     ++NumLoadCommands;
-    LoadCommandsSize += ComputeLinkerOptionsLoadCommandSize(LinkerOptions[i],
-                                                            is64Bit());
+    LoadCommandsSize += ComputeLinkerOptionsLoadCommandSize(Option, is64Bit());
   }
   
   // Compute the total size of the section data, as well as its file size and vm
@@ -888,9 +873,8 @@ void MachObjectWriter::WriteObject(MCAssembler &Asm,
   }
 
   // Write the linker options load commands.
-  for (unsigned i = 0, e = LinkerOptions.size(); i != e; ++i) {
-    WriteLinkerOptionsLoadCommand(LinkerOptions[i]);
-  }
+  for (const auto &Option : Asm.getLinkerOptions())
+    WriteLinkerOptionsLoadCommand(Option);
 
   // Write the actual section data.
   for (const MCSection &Sec : Asm) {
@@ -908,9 +892,9 @@ void MachObjectWriter::WriteObject(MCAssembler &Asm,
     // Write the section relocation entries, in reverse order to match 'as'
     // (approximately, the exact algorithm is more complicated than this).
     std::vector<RelAndSymbol> &Relocs = Relocations[&Sec];
-    for (unsigned i = 0, e = Relocs.size(); i != e; ++i) {
-      Write32(Relocs[e - i - 1].MRE.r_word0);
-      Write32(Relocs[e - i - 1].MRE.r_word1);
+    for (const RelAndSymbol &Rel : make_range(Relocs.rbegin(), Relocs.rend())) {
+      Write32(Rel.MRE.r_word0);
+      Write32(Rel.MRE.r_word1);
     }
   }
 
@@ -969,12 +953,10 @@ void MachObjectWriter::WriteObject(MCAssembler &Asm,
     // FIXME: Check that offsets match computed ones.
 
     // Write the symbol table entries.
-    for (unsigned i = 0, e = LocalSymbolData.size(); i != e; ++i)
-      WriteNlist(LocalSymbolData[i], Layout);
-    for (unsigned i = 0, e = ExternalSymbolData.size(); i != e; ++i)
-      WriteNlist(ExternalSymbolData[i], Layout);
-    for (unsigned i = 0, e = UndefinedSymbolData.size(); i != e; ++i)
-      WriteNlist(UndefinedSymbolData[i], Layout);
+    for (auto *SymbolData :
+         {&LocalSymbolData, &ExternalSymbolData, &UndefinedSymbolData})
+      for (MachSymbolData &Entry : *SymbolData)
+        WriteNlist(Entry, Layout);
 
     // Write the string table.
     OS << StringTable.data();
