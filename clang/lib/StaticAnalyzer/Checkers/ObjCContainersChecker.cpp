@@ -110,7 +110,8 @@ void ObjCContainersChecker::checkPreStmt(const CallExpr *CE,
   if (Name.equals("CFArrayGetValueAtIndex")) {
     ProgramStateRef State = C.getState();
     // Retrieve the size.
-    // Find out if we saw this array symbol before and have information about it.
+    // Find out if we saw this array symbol before and have information about
+    // it.
     const Expr *ArrayExpr = CE->getArg(0);
     SymbolRef ArraySym = getArraySym(ArrayExpr, C);
     if (!ArraySym)
