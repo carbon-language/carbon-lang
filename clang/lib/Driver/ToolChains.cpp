@@ -3115,6 +3115,14 @@ static std::string getMultiarchTriple(const llvm::Triple &TargetTriple,
     if (llvm::sys::fs::exists(SysRoot + "/lib/powerpc64le-linux-gnu"))
       return "powerpc64le-linux-gnu";
     return TargetTriple.str();
+  case llvm::Triple::sparc:
+    if (llvm::sys::fs::exists(SysRoot + "/lib/sparc-linux-gnu"))
+      return "sparc-linux-gnu";
+    return TargetTriple.str();
+  case llvm::Triple::sparcv9:
+    if (llvm::sys::fs::exists(SysRoot + "/lib/sparc64-linux-gnu"))
+      return "sparc64-linux-gnu";
+    return TargetTriple.str();
   }
 }
 
