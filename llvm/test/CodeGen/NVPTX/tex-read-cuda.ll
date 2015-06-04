@@ -16,8 +16,8 @@ define void @foo(i64 %img, float* %red, i32 %idx) {
 ; SM30: tex.1d.v4.f32.s32 {%f[[RED:[0-9]+]], %f[[GREEN:[0-9]+]], %f[[BLUE:[0-9]+]], %f[[ALPHA:[0-9]+]]}, [%rd[[TEXREG]], {%r{{[0-9]+}}}]
   %val = tail call { float, float, float, float } @llvm.nvvm.tex.unified.1d.v4f32.s32(i64 %img, i32 %idx)
   %ret = extractvalue { float, float, float, float } %val, 0
-; SM20: st.f32 [%r{{[0-9]+}}], %f[[RED]]
-; SM30: st.f32 [%r{{[0-9]+}}], %f[[RED]]
+; SM20: st.global.f32 [%r{{[0-9]+}}], %f[[RED]]
+; SM30: st.global.f32 [%r{{[0-9]+}}], %f[[RED]]
   store float %ret, float* %red
   ret void
 }
@@ -34,8 +34,8 @@ define void @bar(float* %red, i32 %idx) {
 ; SM30: tex.1d.v4.f32.s32 {%f[[RED:[0-9]+]], %f[[GREEN:[0-9]+]], %f[[BLUE:[0-9]+]], %f[[ALPHA:[0-9]+]]}, [%rd[[TEXHANDLE]], {%r{{[0-9]+}}}]
   %val = tail call { float, float, float, float } @llvm.nvvm.tex.unified.1d.v4f32.s32(i64 %texHandle, i32 %idx)
   %ret = extractvalue { float, float, float, float } %val, 0
-; SM20: st.f32 [%r{{[0-9]+}}], %f[[RED]]
-; SM30: st.f32 [%r{{[0-9]+}}], %f[[RED]]
+; SM20: st.global.f32 [%r{{[0-9]+}}], %f[[RED]]
+; SM30: st.global.f32 [%r{{[0-9]+}}], %f[[RED]]
   store float %ret, float* %red
   ret void
 }
