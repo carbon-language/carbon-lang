@@ -303,7 +303,7 @@ std::string ToolChain::ComputeLLVMTriple(const ArgList &Args,
     // Thumb2 is the default for V7 on Darwin.
     //
     // FIXME: Thumb should just be another -target-feaure, not in the triple.
-    StringRef CPU = Triple.isOSBinFormatMachO()
+    std::string CPU = Triple.isOSBinFormatMachO()
       ? tools::arm::getARMCPUForMArch(Args, Triple)
       : tools::arm::getARMTargetCPU(Args, Triple);
     StringRef Suffix = 
