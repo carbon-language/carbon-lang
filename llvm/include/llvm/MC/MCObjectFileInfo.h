@@ -18,28 +18,25 @@
 #include "llvm/Support/CodeGen.h"
 
 namespace llvm {
-  class MCContext;
-  class MCSection;
-  class StringRef;
+class MCContext;
+class MCSection;
+class StringRef;
 
 class MCObjectFileInfo {
 protected:
-  /// CommDirectiveSupportsAlignment - True if .comm supports alignment.  This
-  /// is a hack for as long as we support 10.4 Tiger, whose assembler doesn't
-  /// support alignment on comm.
+  /// True if .comm supports alignment.  This is a hack for as long as we
+  /// support 10.4 Tiger, whose assembler doesn't support alignment on comm.
   bool CommDirectiveSupportsAlignment;
 
-  /// SupportsWeakEmptyEHFrame - True if target object file supports a
-  /// weak_definition of constant 0 for an omitted EH frame.
+  /// True if target object file supports a weak_definition of constant 0 for an
+  /// omitted EH frame.
   bool SupportsWeakOmittedEHFrame;
 
-  /// SupportsCompactUnwindWithoutEHFrame - True if the target object file
-  /// supports emitting a compact unwind section without an associated EH frame
-  /// section.
+  /// True if the target object file supports emitting a compact unwind section
+  /// without an associated EH frame section.
   bool SupportsCompactUnwindWithoutEHFrame;
 
-  /// PersonalityEncoding, LSDAEncoding, TTypeEncoding - Some encoding values
-  /// for EH.
+  /// Some encoding values for EH.
   unsigned PersonalityEncoding;
   unsigned LSDAEncoding;
   unsigned FDECFIEncoding;
@@ -49,16 +46,13 @@ protected:
   unsigned EHSectionType;
   unsigned EHSectionFlags;
 
-  /// CompactUnwindDwarfEHFrameOnly - Compact unwind encoding indicating that we
-  /// should emit only an EH frame.
+  /// Compact unwind encoding indicating that we should emit only an EH frame.
   unsigned CompactUnwindDwarfEHFrameOnly;
 
   /// Section directive for standard text.
-  ///
   MCSection *TextSection;
 
   /// Section directive for standard data.
-  ///
   MCSection *DataSection;
 
   /// Section that is default initialized to zero.
@@ -101,7 +95,7 @@ protected:
   // can be enabled by a compiler flag.
   MCSection *DwarfPubNamesSection;
 
-  // DWARF5 Experimental Debug Info Sections
+  /// DWARF5 Experimental Debug Info Sections
   /// DwarfAccelNamesSection, DwarfAccelObjCSection,
   /// DwarfAccelNamespaceSection, DwarfAccelTypesSection -
   /// If we use the DWARF accelerated hash tables then we want to emit these
@@ -111,7 +105,7 @@ protected:
   MCSection *DwarfAccelNamespaceSection;
   MCSection *DwarfAccelTypesSection;
 
-  /// These are used for the Fission separate debug information files.
+  // These are used for the Fission separate debug information files.
   MCSection *DwarfInfoDWOSection;
   MCSection *DwarfTypesDWOSection;
   MCSection *DwarfAbbrevDWOSection;
@@ -121,32 +115,36 @@ protected:
   MCSection *DwarfStrOffDWOSection;
   MCSection *DwarfAddrSection;
 
-  /// Sections for newer gnu pubnames and pubtypes.
+  /// Section for newer gnu pubnames.
   MCSection *DwarfGnuPubNamesSection;
+  /// Section for newer gnu pubtypes.
   MCSection *DwarfGnuPubTypesSection;
 
   MCSection *COFFDebugSymbolsSection;
 
-  // Extra TLS Variable Data section.  If the target needs to put additional
-  // information for a TLS variable, it'll go here.
+  /// Extra TLS Variable Data section.
+  ///
+  /// If the target needs to put additional information for a TLS variable,
+  /// it'll go here.
   MCSection *TLSExtraDataSection;
 
   /// Section directive for Thread Local data. ELF, MachO and COFF.
   MCSection *TLSDataSection; // Defaults to ".tdata".
 
-  /// Section directive for Thread Local uninitialized data. Null if this target
-  /// doesn't support a BSS section. ELF and MachO only.
+  /// Section directive for Thread Local uninitialized data.
+  ///
+  /// Null if this target doesn't support a BSS section. ELF and MachO only.
   MCSection *TLSBSSSection; // Defaults to ".tbss".
 
   /// StackMap section.
   MCSection *StackMapSection;
 
-  /// EH frame section. It is initialized on demand so it can be overwritten
-  /// (with uniquing).
+  /// EH frame section.
+  ///
+  /// It is initialized on demand so it can be overwritten (with uniquing).
   MCSection *EHFrameSection;
 
-  /// ELF specific sections.
-  ///
+  // ELF specific sections.
   MCSection *DataRelSection;
   const MCSection *DataRelLocalSection;
   MCSection *DataRelROSection;
@@ -155,17 +153,16 @@ protected:
   MCSection *MergeableConst8Section;
   MCSection *MergeableConst16Section;
 
-  /// MachO specific sections.
-  ///
+  // MachO specific sections.
 
-  /// Section for thread local structure information. Contains the source code
-  /// name of the variable, visibility and a pointer to the initial value
-  /// (.tdata or .tbss).
+  /// Section for thread local structure information.
+  ///
+  /// Contains the source code name of the variable, visibility and a pointer to
+  /// the initial value (.tdata or .tbss).
   MCSection *TLSTLVSection; // Defaults to ".tlv".
 
-  /// TLSThreadInitSection - Section for thread local data initialization
-  /// functions.
-  const MCSection *TLSThreadInitSection;  // Defaults to ".thread_init_func".
+  /// Section for thread local data initialization functions.
+  const MCSection *TLSThreadInitSection; // Defaults to ".thread_init_func".
 
   MCSection *CStringSection;
   MCSection *UStringSection;
@@ -182,7 +179,6 @@ protected:
   MCSection *NonLazySymbolPointerSection;
 
   /// COFF specific sections.
-  ///
   MCSection *DrectveSection;
   MCSection *PDataSection;
   MCSection *XDataSection;
@@ -267,8 +263,7 @@ public:
 
   MCSection *getStackMapSection() const { return StackMapSection; }
 
-  /// ELF specific sections.
-  ///
+  // ELF specific sections.
   MCSection *getDataRelSection() const { return DataRelSection; }
   const MCSection *getDataRelLocalSection() const {
     return DataRelLocalSection;
@@ -285,8 +280,7 @@ public:
     return MergeableConst16Section;
   }
 
-  /// MachO specific sections.
-  ///
+  // MachO specific sections.
   const MCSection *getTLSTLVSection() const { return TLSTLVSection; }
   const MCSection *getTLSThreadInitSection() const {
     return TLSThreadInitSection;
@@ -317,8 +311,7 @@ public:
     return NonLazySymbolPointerSection;
   }
 
-  /// COFF specific sections.
-  ///
+  // COFF specific sections.
   MCSection *getDrectveSection() const { return DrectveSection; }
   MCSection *getPDataSection() const { return PDataSection; }
   MCSection *getXDataSection() const { return XDataSection; }
@@ -331,13 +324,9 @@ public:
   }
 
   enum Environment { IsMachO, IsELF, IsCOFF };
-  Environment getObjectFileType() const {
-    return Env;
-  }
+  Environment getObjectFileType() const { return Env; }
 
-  Reloc::Model getRelocM() const {
-    return RelocM;
-  }
+  Reloc::Model getRelocM() const { return RelocM; }
 
 private:
   Environment Env;
@@ -350,8 +339,7 @@ private:
   void InitELFMCObjectFileInfo(Triple T);
   void InitCOFFMCObjectFileInfo(Triple T);
 
-  /// InitEHFrameSection - Initialize EHFrameSection on demand.
-  ///
+  /// Initialize EHFrameSection on demand.
   void InitEHFrameSection();
 
 public:
