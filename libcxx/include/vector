@@ -501,13 +501,22 @@ public:
 
     _LIBCPP_INLINE_VISIBILITY
     vector()
+#if _LIBCPP_STD_VER <= 14
         _NOEXCEPT_(is_nothrow_default_constructible<allocator_type>::value)
+#else
+        _NOEXCEPT
+#endif
         {
 #if _LIBCPP_DEBUG_LEVEL >= 2
             __get_db()->__insert_c(this);
 #endif
         }
     _LIBCPP_INLINE_VISIBILITY explicit vector(const allocator_type& __a)
+#if _LIBCPP_STD_VER <= 14
+        _NOEXCEPT_(is_nothrow_copy_constructible<allocator_type>::value)
+#else
+        _NOEXCEPT
+#endif
         : __base(__a)
     {
 #if _LIBCPP_DEBUG_LEVEL >= 2
@@ -2162,8 +2171,18 @@ private:
 public:
     _LIBCPP_INLINE_VISIBILITY
     vector()
+#if _LIBCPP_STD_VER <= 14
         _NOEXCEPT_(is_nothrow_default_constructible<allocator_type>::value);
-    _LIBCPP_INLINE_VISIBILITY explicit vector(const allocator_type& __a);
+#else
+        _NOEXCEPT;
+#endif
+
+    _LIBCPP_INLINE_VISIBILITY explicit vector(const allocator_type& __a)
+#if _LIBCPP_STD_VER <= 14
+        _NOEXCEPT_(is_nothrow_copy_constructible<allocator_type>::value);
+#else
+        _NOEXCEPT;
+#endif
     ~vector();
     explicit vector(size_type __n);
 #if _LIBCPP_STD_VER > 11
@@ -2550,7 +2569,11 @@ vector<bool, _Allocator>::__construct_at_end(_ForwardIterator __first, _ForwardI
 template <class _Allocator>
 inline _LIBCPP_INLINE_VISIBILITY
 vector<bool, _Allocator>::vector()
+#if _LIBCPP_STD_VER <= 14
         _NOEXCEPT_(is_nothrow_default_constructible<allocator_type>::value)
+#else
+        _NOEXCEPT
+#endif
     : __begin_(nullptr),
       __size_(0),
       __cap_alloc_(0)
@@ -2560,6 +2583,11 @@ vector<bool, _Allocator>::vector()
 template <class _Allocator>
 inline _LIBCPP_INLINE_VISIBILITY
 vector<bool, _Allocator>::vector(const allocator_type& __a)
+#if _LIBCPP_STD_VER <= 14
+        _NOEXCEPT_(is_nothrow_copy_constructible<allocator_type>::value)
+#else
+        _NOEXCEPT
+#endif
     : __begin_(nullptr),
       __size_(0),
       __cap_alloc_(0, static_cast<__storage_allocator>(__a))

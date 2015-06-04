@@ -9,7 +9,8 @@
 
 // <vector>
 
-// vector(const Alloc& = Alloc());
+// vector();
+// vector(const Alloc&);
 
 #include <vector>
 #include <cassert>
@@ -24,12 +25,17 @@ template <class C>
 void
 test0()
 {
+#if TEST_STD_VER > 14
+	static_assert((noexcept(C{})), "" );
+#elif TEST_STD_VER >= 11
+	static_assert((noexcept(C()) == noexcept(typename C::allocator_type())), "" );
+#endif
     C c;
     assert(c.__invariants());
     assert(c.empty());
     assert(c.get_allocator() == typename C::allocator_type());
     assert(is_contiguous_container_asan_correct(c)); 
-#if __cplusplus >= 201103L
+#if TEST_STD_VER >= 11
     C c1 = {};
     assert(c1.__invariants());
     assert(c1.empty());
@@ -42,6 +48,11 @@ template <class C>
 void
 test1(const typename C::allocator_type& a)
 {
+#if TEST_STD_VER > 14
+	static_assert((noexcept(C{typename C::allocator_type{}})), "" );
+#elif TEST_STD_VER >= 11
+	static_assert((noexcept(C(typename C::allocator_type())) == std::is_nothrow_copy_constructible<typename C::allocator_type>::value), "" );
+#endif
     C c(a);
     assert(c.__invariants());
     assert(c.empty());
@@ -62,7 +73,7 @@ int main()
         std::vector<int, stack_allocator<int, 10> > v;
         assert(v.empty());
     }
-#if __cplusplus >= 201103L
+#if TEST_STD_VER >= 11
     {
     test0<std::vector<int, min_allocator<int>> >();
     test0<std::vector<NotConstructible, min_allocator<NotConstructible>> >();
