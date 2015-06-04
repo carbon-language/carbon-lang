@@ -158,7 +158,7 @@ public:
     /// @param[in] stop_at_entry
     ///     If false do not stop the inferior at the entry point.
     ///
-    /// @param[out]
+    /// @param[out] error
     ///     An error object. Contains the reason if there is some failure.
     ///
     /// @return
@@ -229,7 +229,7 @@ public:
     /// @param[in] pid
     ///     The process ID to attach to.
     ///
-    /// @param[out]
+    /// @param[out] error
     ///     An error explaining what went wrong if attach fails.
     ///
     /// @return
@@ -263,7 +263,7 @@ public:
     /// @param[in] wait_for
     ///     If true wait for a new instance of 'name' to be launched.
     ///
-    /// @param[out]
+    /// @param[out] error
     ///     An error explaining what went wrong if attach fails.
     ///
     /// @return
@@ -290,7 +290,7 @@ public:
     /// @param[in] plugin_name
     ///     The plugin name to be used; can be NULL.
     ///
-    /// @param[out]
+    /// @param[out] error
     ///     An error explaining what went wrong if the connect fails.
     ///
     /// @return

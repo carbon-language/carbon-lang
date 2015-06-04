@@ -106,7 +106,7 @@ public:
     /// or "./usr/lib", then the install path will be resolved using
     /// the platform's current working directory as the base path.
     ///
-    /// @param[in]
+    /// @param[in] file
     ///     A file specification object.
     //------------------------------------------------------------------
     bool
