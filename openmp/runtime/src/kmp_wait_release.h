@@ -459,7 +459,7 @@ class kmp_flag_oncore : public kmp_flag<kmp_uint64> {
 #if USE_ITT_BUILD
     void *itt_sync_obj;     /**< ITT object that must be passed to new flag location. */
 #endif
-    char& byteref(volatile kmp_uint64* loc, size_t offset) { return ((char *)loc)[offset]; }
+    unsigned char& byteref(volatile kmp_uint64* loc, size_t offset) { return ((unsigned char *)loc)[offset]; }
 public:
     kmp_flag_oncore(volatile kmp_uint64 *p)
         : kmp_flag<kmp_uint64>(p, flag_oncore), num_waiting_threads(0), flag_switch(false) {}

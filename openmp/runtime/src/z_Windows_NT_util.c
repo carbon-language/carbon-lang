@@ -799,7 +799,7 @@ __kmp_read_cpu_time( void )
         sec += KernelTime.dwLowDateTime;
         sec += UserTime.dwLowDateTime;
 
-        cpu_time += (sec * 100.0) / NSEC_PER_SEC;
+        cpu_time += (sec * 100.0) / KMP_NSEC_PER_SEC;
     }
 
     return cpu_time;

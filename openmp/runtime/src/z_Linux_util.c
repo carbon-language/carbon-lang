@@ -843,7 +843,7 @@ __kmp_launch_monitor( void *thr )
         interval.tv_nsec = 0;
     } else {
         interval.tv_sec  = 0;
-        interval.tv_nsec = (NSEC_PER_SEC / __kmp_monitor_wakeups);
+        interval.tv_nsec = (KMP_NSEC_PER_SEC / __kmp_monitor_wakeups);
     }
 
     KA_TRACE( 10, ("__kmp_launch_monitor: #2 monitor\n" ) );
@@ -870,9 +870,9 @@ __kmp_launch_monitor( void *thr )
         now.tv_sec  += interval.tv_sec;
         now.tv_nsec += interval.tv_nsec;
 
-        if (now.tv_nsec >= NSEC_PER_SEC) {
+        if (now.tv_nsec >= KMP_NSEC_PER_SEC) {
             now.tv_sec  += 1;
-            now.tv_nsec -= NSEC_PER_SEC;
+            now.tv_nsec -= KMP_NSEC_PER_SEC;
         }
 
         status = pthread_mutex_lock( & __kmp_wait_mx.m_mutex );
@@ -2248,14 +2248,14 @@ __kmp_elapsed( double *t )
 
     status = clock_gettime( CLOCK_PROCESS_CPUTIME_ID, &ts );
     KMP_CHECK_SYSFAIL_ERRNO( "clock_gettime", status );
-    *t = (double) ts.tv_nsec * (1.0 / (double) NSEC_PER_SEC) +
+    *t = (double) ts.tv_nsec * (1.0 / (double) KMP_NSEC_PER_SEC) +
         (double) ts.tv_sec;
 # else
     struct timeval tv;
 
     status = gettimeofday( & tv, NULL );
     KMP_CHECK_SYSFAIL_ERRNO( "gettimeofday", status );
-    *t = (double) tv.tv_usec * (1.0 / (double) USEC_PER_SEC) +
+    *t = (double) tv.tv_usec * (1.0 / (double) KMP_USEC_PER_SEC) +
         (double) tv.tv_sec;
 # endif
 }
