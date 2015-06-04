@@ -131,7 +131,7 @@ class Type {
 private:
   TypeSpec TS;
 
-  bool Float, Signed, Void, Poly, Constant, Pointer;
+  bool Float, Signed, Immediate, Void, Poly, Constant, Pointer;
   // ScalarForMangling and NoManglingQ are really not suited to live here as
   // they are not related to the type. But they live in the TypeSpec (not the
   // prototype), so this is really the only place to store them.
@@ -140,13 +140,13 @@ private:
 
 public:
   Type()
-      : Float(false), Signed(false), Void(true), Poly(false), Constant(false),
-        Pointer(false), ScalarForMangling(false), NoManglingQ(false),
-        Bitwidth(0), ElementBitwidth(0), NumVectors(0) {}
+      : Float(false), Signed(false), Immediate(false), Void(true), Poly(false),
+        Constant(false), Pointer(false), ScalarForMangling(false),
+        NoManglingQ(false), Bitwidth(0), ElementBitwidth(0), NumVectors(0) {}
 
   Type(TypeSpec TS, char CharMod)
-      : TS(TS), Float(false), Signed(false), Void(false), Poly(false),
-        Constant(false), Pointer(false), ScalarForMangling(false),
+      : TS(TS), Float(false), Signed(false), Immediate(false), Void(false),
+        Poly(false), Constant(false), Pointer(false), ScalarForMangling(false),
         NoManglingQ(false), Bitwidth(0), ElementBitwidth(0), NumVectors(0) {
     applyModifier(CharMod);
   }
@@ -167,6 +167,7 @@ public:
   bool isFloating() const { return Float; }
   bool isInteger() const { return !Float && !Poly; }
   bool isSigned() const { return Signed; }
+  bool isImmediate() const { return Immediate; }
   bool isScalar() const { return NumVectors == 0; }
   bool isVector() const { return NumVectors > 0; }
   bool isFloat() const { return Float && ElementBitwidth == 32; }
@@ -192,6 +193,14 @@ public:
     Float = false;
     Poly = false;
     Signed = Sign;
+    Immediate = false;
+    ElementBitwidth = ElemWidth;
+  }
+  void makeImmediate(unsigned ElemWidth) {
+    Float = false;
+    Poly = false;
+    Signed = true;
+    Immediate = true;
     ElementBitwidth = ElemWidth;
   }
   void makeScalar() {
@@ -600,6 +609,12 @@ std::string Type::builtin_str() const {
   else if (isInteger() && !Pointer && !Signed)
     S = "U" + S;
 
+  // Constant indices are "int", but have the "constant expression" modifier.
+  if (isImmediate()) {
+    assert(isInteger() && isSigned());
+    S = "I" + S;
+  }
+
   if (isScalar()) {
     if (Constant) S += "C";
     if (Pointer) S += "*";
@@ -853,6 +868,7 @@ void Type::applyModifier(char Mod) {
     ElementBitwidth = Bitwidth = 32;
     NumVectors = 0;
     Signed = true;
+    Immediate = true;
     break;
   case 'l':
     Float = false;
@@ -860,6 +876,7 @@ void Type::applyModifier(char Mod) {
     ElementBitwidth = Bitwidth = 64;
     NumVectors = 0;
     Signed = false;
+    Immediate = true;
     break;
   case 'z':
     ElementBitwidth /= 2;
@@ -1019,9 +1036,8 @@ std::string Intrinsic::getBuiltinTypeStr() {
     if (LocalCK == ClassI)
       T.makeSigned();
 
-    // Constant indices are always just "int".
     if (hasImmediate() && getImmediateIdx() == I)
-      T.makeInteger(32, true);
+      T.makeImmediate(32);
 
     S += T.builtin_str();
   }
