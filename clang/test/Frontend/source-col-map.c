@@ -1,4 +1,4 @@
-// RUN: not %clang_cc1 %s -fsyntax-only -fmessage-length 75 -o /dev/null 2>&1 | FileCheck %s -strict-whitespace
+// RUN: not %clang_cc1 -fsyntax-only -fmessage-length 75 -o /dev/null -x c < %s 2>&1 | FileCheck %s -strict-whitespace
 
 // Test case for the text diagnostics source column conversion crash.
 
@@ -31,7 +31,8 @@ void test2(Unknown* b);  // αααα αααα αααα αααα αααα ααα�
 void test3() {
    /* αααα αααα αααα αααα αααα αααα αααα αααα αααα αααα */ printf("%d", "s");
 }
-// CHECK:       format specifies type 'int' but the argument has type 'char *'
+// CHECK:       format specifies type 'int' but the argument has
+// CHECK:       type 'char *'
 // CHECK-NEXT:   ...αααα αααα αααα αααα αααα αααα αααα αααα αααα */ printf("%d", "s");
 // CHECK-NEXT: {{^                                                             ~~   \^~~$}}
 // CHECK-NEXT: {{^                                                             %s$}}
