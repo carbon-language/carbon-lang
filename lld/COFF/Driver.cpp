@@ -337,6 +337,7 @@ bool LinkerDriver::link(int Argc, const char *Argv[]) {
   // undefined symbols final chance to be resolved successfully.
   // This is symbol renaming.
   for (auto *Arg : Args->filtered(OPT_alternatename)) {
+    // Parse a string of the form of "/alternatename:From=To".
     StringRef From, To;
     std::tie(From, To) = StringRef(Arg->getValue()).split('=');
     if (From.empty() || To.empty()) {
@@ -344,7 +345,7 @@ bool LinkerDriver::link(int Argc, const char *Argv[]) {
                    << Arg->getValue() << "\n";
       return false;
     }
-    // If it's already resolved as some Defined type, do nothing.
+    // If From is already resolved to a Defined type, do nothing.
     // Otherwise, rename it to see if To can be resolved instead.
     if (Symtab.find(From))
       continue;
