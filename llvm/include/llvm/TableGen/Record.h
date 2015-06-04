@@ -752,11 +752,10 @@ public:
 
   int getNumOperands() const override { return 2; }
   Init *getOperand(int i) const override {
-    assert((i == 0 || i == 1) && "Invalid operand id for binary operator");
-    if (i == 0) {
-      return getLHS();
-    } else {
-      return getRHS();
+    switch (i) {
+    default: llvm_unreachable("Invalid operand id for binary operator");
+    case 0: return getLHS();
+    case 1: return getRHS();
     }
   }
 
@@ -808,14 +807,11 @@ public:
 
   int getNumOperands() const override { return 3; }
   Init *getOperand(int i) const override {
-    assert((i == 0 || i == 1 || i == 2) &&
-           "Invalid operand id for ternary operator");
-    if (i == 0) {
-      return getLHS();
-    } else if (i == 1) {
-      return getMHS();
-    } else {
-      return getRHS();
+    switch (i) {
+    default: llvm_unreachable("Invalid operand id for ternary operator");
+    case 0: return getLHS();
+    case 1: return getMHS();
+    case 2: return getRHS();
     }
   }
 
