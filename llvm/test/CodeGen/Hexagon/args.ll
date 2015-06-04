@@ -1,3 +1,4 @@
+; XFAIL: hexagon
 ; RUN: llc -march=hexagon -mcpu=hexagonv4 -disable-dfa-sched -disable-hexagon-misched < %s | FileCheck %s
 ; CHECK: memw(r29{{ *}}+{{ *}}#0){{ *}}={{ *}}#7
 ; CHECK: r1:0 = combine(#2, #1)

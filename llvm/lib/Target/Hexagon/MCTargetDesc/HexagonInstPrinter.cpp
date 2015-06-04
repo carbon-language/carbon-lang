@@ -129,13 +129,7 @@ void HexagonInstPrinter::printInst(MCInst const *MI, raw_ostream &OS,
   HasExtender = false;
   for (auto const &I : HexagonMCInstrInfo::bundleInstructions(*MI)) {
     MCInst const &MCI = *I.getInst();
-    if (HexagonMCInstrInfo::isDuplex(MII, MCI)) {
-      printInstruction(MCI.getOperand(1).getInst(), OS);
-      OS << '\v';
-      HasExtender = false;
-      printInstruction(MCI.getOperand(0).getInst(), OS);
-    } else
-      printInstruction(&MCI, OS);
+    printInstruction(&MCI, OS);
     setExtender(MCI);
     OS << "\n";
   }

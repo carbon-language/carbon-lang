@@ -20,7 +20,6 @@
 #include "HexagonTargetMachine.h"
 #include "MCTargetDesc/HexagonInstPrinter.h"
 #include "MCTargetDesc/HexagonMCInstrInfo.h"
-#include "MCTargetDesc/HexagonMCShuffler.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
@@ -200,12 +199,9 @@ void HexagonAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     HexagonLowerToMC(MI, MCB, *this);
     HexagonMCInstrInfo::padEndloop(MCB);
   }
-  // Examine the packet and convert pairs of instructions to duplex
-  // instructions when possible.
-  SmallVector<DuplexCandidate, 8> possibleDuplexes;
-  possibleDuplexes = HexagonMCInstrInfo::getDuplexPossibilties(*Subtarget->getInstrInfo(), MCB);
-  HexagonMCShuffle(*Subtarget->getInstrInfo(), *Subtarget, OutStreamer->getContext(), MCB, possibleDuplexes);
   EmitToStreamer(*OutStreamer, MCB);
+
+  return;
 }
 
 extern "C" void LLVMInitializeHexagonAsmPrinter() {

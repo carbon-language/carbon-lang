@@ -40,24 +40,17 @@ HexagonMCCodeEmitter::HexagonMCCodeEmitter(MCInstrInfo const &aMII,
 uint32_t HexagonMCCodeEmitter::parseBits(size_t Instruction, size_t Last,
                                          MCInst const &MCB,
                                          MCInst const &MCI) const {
-  bool Duplex = HexagonMCInstrInfo::isDuplex(MCII, MCI);
   if (Instruction == 0) {
     if (HexagonMCInstrInfo::isInnerLoop(MCB)) {
-      assert(!Duplex);
       assert(Instruction != Last);
       return HexagonII::INST_PARSE_LOOP_END;
     }
   }
   if (Instruction == 1) {
     if (HexagonMCInstrInfo::isOuterLoop(MCB)) {
-      assert(!Duplex);
       assert(Instruction != Last);
       return HexagonII::INST_PARSE_LOOP_END;
     }
-  }
-  if (Duplex) {
-    assert(Instruction == Last);
-    return HexagonII::INST_PARSE_DUPLEX;
   }
   if(Instruction == Last)
     return HexagonII::INST_PARSE_PACKET_END;
@@ -156,81 +149,6 @@ void HexagonMCCodeEmitter::EncodeSingleInstruction(
     llvm_unreachable("Unimplemented Instruction");
   }
   Binary |= Parse;
-
-  // if we need to emit a duplexed instruction
-  if (HMB.getOpcode() >= Hexagon::DuplexIClass0 &&
-      HMB.getOpcode() <= Hexagon::DuplexIClassF) {
-    assert(Parse == HexagonII::INST_PARSE_DUPLEX &&
-           "Emitting duplex without duplex parse bits");
-    unsigned dupIClass;
-    switch (HMB.getOpcode()) {
-    case Hexagon::DuplexIClass0:
-      dupIClass = 0;
-      break;
-    case Hexagon::DuplexIClass1:
-      dupIClass = 1;
-      break;
-    case Hexagon::DuplexIClass2:
-      dupIClass = 2;
-      break;
-    case Hexagon::DuplexIClass3:
-      dupIClass = 3;
-      break;
-    case Hexagon::DuplexIClass4:
-      dupIClass = 4;
-      break;
-    case Hexagon::DuplexIClass5:
-      dupIClass = 5;
-      break;
-    case Hexagon::DuplexIClass6:
-      dupIClass = 6;
-      break;
-    case Hexagon::DuplexIClass7:
-      dupIClass = 7;
-      break;
-    case Hexagon::DuplexIClass8:
-      dupIClass = 8;
-      break;
-    case Hexagon::DuplexIClass9:
-      dupIClass = 9;
-      break;
-    case Hexagon::DuplexIClassA:
-      dupIClass = 10;
-      break;
-    case Hexagon::DuplexIClassB:
-      dupIClass = 11;
-      break;
-    case Hexagon::DuplexIClassC:
-      dupIClass = 12;
-      break;
-    case Hexagon::DuplexIClassD:
-      dupIClass = 13;
-      break;
-    case Hexagon::DuplexIClassE:
-      dupIClass = 14;
-      break;
-    case Hexagon::DuplexIClassF:
-      dupIClass = 15;
-      break;
-    default:
-      llvm_unreachable("Unimplemented DuplexIClass");
-      break;
-    }
-    // 29 is the bit position.
-    // 0b1110 =0xE bits are masked off and down shifted by 1 bit.
-    // Last bit is moved to bit position 13
-    Binary = ((dupIClass & 0xE) << (29 - 1)) | ((dupIClass & 0x1) << 13);
-
-    const MCInst *subInst0 = HMB.getOperand(0).getInst();
-    const MCInst *subInst1 = HMB.getOperand(1).getInst();
-
-    // get subinstruction slot 0
-    unsigned subInstSlot0Bits = getBinaryCodeForInstr(*subInst0, Fixups, STI);
-    // get subinstruction slot 1
-    unsigned subInstSlot1Bits = getBinaryCodeForInstr(*subInst1, Fixups, STI);
-
-    Binary |= subInstSlot0Bits | (subInstSlot1Bits << 16);
-  }
   support::endian::Writer<support::little>(OS).write<uint32_t>(Binary);
   ++MCNumEmitted;
 }
