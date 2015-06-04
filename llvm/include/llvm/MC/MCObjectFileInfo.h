@@ -335,9 +335,9 @@ private:
   MCContext *Ctx;
   Triple TT;
 
-  void InitMachOMCObjectFileInfo(Triple T);
-  void InitELFMCObjectFileInfo(Triple T);
-  void InitCOFFMCObjectFileInfo(Triple T);
+  void initMachOMCObjectFileInfo(Triple T);
+  void initELFMCObjectFileInfo(Triple T);
+  void initCOFFMCObjectFileInfo(Triple T);
 
   /// Initialize EHFrameSection on demand.
   void InitEHFrameSection();

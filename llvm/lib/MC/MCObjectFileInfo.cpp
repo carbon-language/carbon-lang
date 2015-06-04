@@ -39,7 +39,7 @@ static bool useCompactUnwind(const Triple &T) {
   return false;
 }
 
-void MCObjectFileInfo::InitMachOMCObjectFileInfo(Triple T) {
+void MCObjectFileInfo::initMachOMCObjectFileInfo(Triple T) {
   // MachO
   SupportsWeakOmittedEHFrame = false;
 
@@ -241,7 +241,7 @@ void MCObjectFileInfo::InitMachOMCObjectFileInfo(Triple T) {
   TLSExtraDataSection = TLSTLVSection;
 }
 
-void MCObjectFileInfo::InitELFMCObjectFileInfo(Triple T) {
+void MCObjectFileInfo::initELFMCObjectFileInfo(Triple T) {
   switch (T.getArch()) {
   case Triple::mips:
   case Triple::mipsel:
@@ -520,7 +520,7 @@ void MCObjectFileInfo::InitELFMCObjectFileInfo(Triple T) {
       Ctx->getELFSection(".llvm_stackmaps", ELF::SHT_PROGBITS, ELF::SHF_ALLOC);
 }
 
-void MCObjectFileInfo::InitCOFFMCObjectFileInfo(Triple T) {
+void MCObjectFileInfo::initCOFFMCObjectFileInfo(Triple T) {
   bool IsWoA = T.getArch() == Triple::arm || T.getArch() == Triple::thumb;
 
   CommDirectiveSupportsAlignment = true;
@@ -765,15 +765,15 @@ void MCObjectFileInfo::InitMCObjectFileInfo(StringRef T, Reloc::Model relocm,
        Arch == Triple::UnknownArch) &&
       TT.isOSBinFormatMachO()) {
     Env = IsMachO;
-    InitMachOMCObjectFileInfo(TT);
+    initMachOMCObjectFileInfo(TT);
   } else if ((Arch == Triple::x86 || Arch == Triple::x86_64 ||
               Arch == Triple::arm || Arch == Triple::thumb) &&
              (TT.isOSWindows() && TT.getObjectFormat() == Triple::COFF)) {
     Env = IsCOFF;
-    InitCOFFMCObjectFileInfo(TT);
+    initCOFFMCObjectFileInfo(TT);
   } else {
     Env = IsELF;
-    InitELFMCObjectFileInfo(TT);
+    initELFMCObjectFileInfo(TT);
   }
 }
 
