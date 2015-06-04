@@ -238,17 +238,6 @@ lowerCallFromStatepoint(ImmutableStatepoint ISP, MachineBasicBlock *LandingPad,
 
   SDValue ActualCallee = Builder.getValue(ISP.getActualCallee());
 
-  // Handle immediate and symbolic callees.
-  if (auto *ConstCallee = dyn_cast<ConstantSDNode>(ActualCallee.getNode()))
-    ActualCallee = Builder.DAG.getIntPtrConstant(ConstCallee->getZExtValue(),
-                                                 Builder.getCurSDLoc(),
-                                                 /*isTarget=*/true);
-  else if (auto *SymbolicCallee =
-               dyn_cast<GlobalAddressSDNode>(ActualCallee.getNode()))
-    ActualCallee = Builder.DAG.getTargetGlobalAddress(
-        SymbolicCallee->getGlobal(), SDLoc(SymbolicCallee),
-        SymbolicCallee->getValueType(0));
-
   assert(CS.getCallingConv() != CallingConv::AnyReg &&
          "anyregcc is not supported on statepoints!");
 
