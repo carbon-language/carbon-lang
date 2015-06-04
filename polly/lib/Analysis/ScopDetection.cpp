@@ -471,7 +471,7 @@ bool ScopDetection::hasAffineMemoryAccesses(DetectionContext &Context) const {
 
   for (const SCEVUnknown *BasePointer : Context.NonAffineAccesses) {
     Value *BaseValue = BasePointer->getValue();
-    ArrayShape *Shape = new ArrayShape(BasePointer);
+    auto Shape = std::shared_ptr<ArrayShape>(new ArrayShape(BasePointer));
     bool BasePtrHasNonAffine = false;
 
     // First step: collect parametric terms in all array references.
@@ -527,8 +527,10 @@ bool ScopDetection::hasAffineMemoryAccesses(DetectionContext &Context) const {
       const Instruction *Insn = Pair.first;
       const SCEVAddRecExpr *AF = dyn_cast<SCEVAddRecExpr>(Pair.second);
       bool IsNonAffine = false;
-      MemAcc *Acc = new MemAcc(Insn, Shape);
-      TempMemoryAccesses.insert({Insn, Acc});
+      TempMemoryAccesses.emplace(std::piecewise_construct,
+                                 std::forward_as_tuple(Insn),
+                                 std::forward_as_tuple(Insn, Shape));
+      MemAcc *Acc = &TempMemoryAccesses.find(Insn)->second;
 
       if (!AF) {
         if (isAffineExpr(&CurRegion, Pair.second, *SE, BaseValue))

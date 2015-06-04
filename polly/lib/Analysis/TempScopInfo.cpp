@@ -237,10 +237,11 @@ TempScopInfo::buildIRAccess(Instruction *Inst, Loop *L, Region *R,
   assert(BasePointer && "Could not find base pointer");
   AccessFunction = SE->getMinusSCEV(AccessFunction, BasePointer);
 
-  MemAcc *Acc = InsnToMemAcc[Inst];
-  if (PollyDelinearize && Acc)
+  auto AccItr = InsnToMemAcc.find(Inst);
+  if (PollyDelinearize && AccItr != InsnToMemAcc.end())
     return IRAccess(Type, BasePointer->getValue(), AccessFunction, Size, true,
-                    Acc->DelinearizedSubscripts, Acc->Shape->DelinearizedSizes);
+                    AccItr->second.DelinearizedSubscripts,
+                    AccItr->second.Shape->DelinearizedSizes);
 
   // Check if the access depends on a loop contained in a non-affine subregion.
   bool isVariantInNonAffineLoop = false;

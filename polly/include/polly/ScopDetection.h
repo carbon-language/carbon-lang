@@ -52,6 +52,7 @@
 #include "llvm/Analysis/AliasSetTracker.h"
 #include "llvm/Pass.h"
 #include <map>
+#include <memory>
 #include <set>
 
 using namespace llvm;
@@ -89,16 +90,16 @@ struct MemAcc {
   const Instruction *Insn;
 
   // A pointer to the shape description of the array.
-  ArrayShape *Shape;
+  std::shared_ptr<ArrayShape> Shape;
 
   // Subscripts computed by delinearization.
   SmallVector<const SCEV *, 4> DelinearizedSubscripts;
 
-  MemAcc(const Instruction *I, ArrayShape *S)
+  MemAcc(const Instruction *I, std::shared_ptr<ArrayShape> S)
       : Insn(I), Shape(S), DelinearizedSubscripts() {}
 };
 
-typedef std::map<const Instruction *, MemAcc *> MapInsnToMemAcc;
+typedef std::map<const Instruction *, MemAcc> MapInsnToMemAcc;
 typedef std::pair<const Instruction *, const SCEV *> PairInstSCEV;
 typedef std::vector<PairInstSCEV> AFs;
 typedef std::map<const SCEVUnknown *, AFs> BaseToAFs;
