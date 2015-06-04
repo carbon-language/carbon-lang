@@ -25,7 +25,7 @@ using namespace llvm;
 
 namespace {
 class X86MachObjectWriter : public MCMachObjectTargetWriter {
-  bool RecordScatteredRelocation(MachObjectWriter *Writer,
+  bool recordScatteredRelocation(MachObjectWriter *Writer,
                                  const MCAssembler &Asm,
                                  const MCAsmLayout &Layout,
                                  const MCFragment *Fragment,
@@ -33,7 +33,7 @@ class X86MachObjectWriter : public MCMachObjectTargetWriter {
                                  MCValue Target,
                                  unsigned Log2Size,
                                  uint64_t &FixedValue);
-  void RecordTLVPRelocation(MachObjectWriter *Writer,
+  void recordTLVPRelocation(MachObjectWriter *Writer,
                             const MCAssembler &Asm,
                             const MCAsmLayout &Layout,
                             const MCFragment *Fragment,
@@ -334,7 +334,7 @@ void X86MachObjectWriter::RecordX86_64Relocation(
   Writer->addRelocation(RelSymbol, Fragment->getParent(), MRE);
 }
 
-bool X86MachObjectWriter::RecordScatteredRelocation(MachObjectWriter *Writer,
+bool X86MachObjectWriter::recordScatteredRelocation(MachObjectWriter *Writer,
                                                     const MCAssembler &Asm,
                                                     const MCAsmLayout &Layout,
                                                     const MCFragment *Fragment,
@@ -428,7 +428,7 @@ bool X86MachObjectWriter::RecordScatteredRelocation(MachObjectWriter *Writer,
   return true;
 }
 
-void X86MachObjectWriter::RecordTLVPRelocation(MachObjectWriter *Writer,
+void X86MachObjectWriter::recordTLVPRelocation(MachObjectWriter *Writer,
                                                const MCAssembler &Asm,
                                                const MCAsmLayout &Layout,
                                                const MCFragment *Fragment,
@@ -483,7 +483,7 @@ void X86MachObjectWriter::RecordX86Relocation(MachObjectWriter *Writer,
   // If this is a 32-bit TLVP reloc it's handled a bit differently.
   if (Target.getSymA() &&
       Target.getSymA()->getKind() == MCSymbolRefExpr::VK_TLVP) {
-    RecordTLVPRelocation(Writer, Asm, Layout, Fragment, Fixup, Target,
+    recordTLVPRelocation(Writer, Asm, Layout, Fragment, Fixup, Target,
                          FixedValue);
     return;
   }
@@ -492,7 +492,7 @@ void X86MachObjectWriter::RecordX86Relocation(MachObjectWriter *Writer,
   // scattered relocation entry. Differences always require scattered
   // relocations.
   if (Target.getSymB()) {
-    RecordScatteredRelocation(Writer, Asm, Layout, Fragment, Fixup,
+    recordScatteredRelocation(Writer, Asm, Layout, Fragment, Fixup,
                               Target, Log2Size, FixedValue);
     return;
   }
@@ -508,10 +508,10 @@ void X86MachObjectWriter::RecordX86Relocation(MachObjectWriter *Writer,
   if (IsPCRel)
     Offset += 1 << Log2Size;
   // Try to record the scattered relocation if needed. Fall back to non
-  // scattered if necessary (see comments in RecordScatteredRelocation()
+  // scattered if necessary (see comments in recordScatteredRelocation()
   // for details).
   if (Offset && A && !Writer->doesSymbolRequireExternRelocation(*A) &&
-      RecordScatteredRelocation(Writer, Asm, Layout, Fragment, Fixup, Target,
+      recordScatteredRelocation(Writer, Asm, Layout, Fragment, Fixup, Target,
                                 Log2Size, FixedValue))
     return;
 

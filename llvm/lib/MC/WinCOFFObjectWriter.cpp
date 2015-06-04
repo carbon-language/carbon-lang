@@ -169,12 +169,12 @@ public:
   void WriteFileHeader(const COFF::header &Header);
   void WriteSymbol(const COFFSymbol &S);
   void WriteAuxiliarySymbols(const COFFSymbol::AuxiliarySymbols &S);
-  void WriteSectionHeader(const COFF::section &S);
+  void writeSectionHeader(const COFF::section &S);
   void WriteRelocation(const COFF::relocation &R);
 
   // MCObjectWriter interface implementation.
 
-  void ExecutePostLayoutBinding(MCAssembler &Asm,
+  void executePostLayoutBinding(MCAssembler &Asm,
                                 const MCAsmLayout &Layout) override;
 
   bool isSymbolRefDifferenceFullyResolvedImpl(const MCAssembler &Asm,
@@ -634,7 +634,7 @@ void WinCOFFObjectWriter::WriteAuxiliarySymbols(
   }
 }
 
-void WinCOFFObjectWriter::WriteSectionHeader(const COFF::section &S) {
+void WinCOFFObjectWriter::writeSectionHeader(const COFF::section &S) {
   writeBytes(StringRef(S.Name, COFF::NameSize));
 
   writeLE32(S.VirtualSize);
@@ -657,7 +657,7 @@ void WinCOFFObjectWriter::WriteRelocation(const COFF::relocation &R) {
 ////////////////////////////////////////////////////////////////////////////////
 // MCObjectWriter interface implementations
 
-void WinCOFFObjectWriter::ExecutePostLayoutBinding(MCAssembler &Asm,
+void WinCOFFObjectWriter::executePostLayoutBinding(MCAssembler &Asm,
                                                    const MCAsmLayout &Layout) {
   // "Define" each section & symbol. This creates section & symbol
   // entries in the staging area.
@@ -715,9 +715,9 @@ void WinCOFFObjectWriter::recordRelocation(
 
   // Mark this symbol as requiring an entry in the symbol table.
   assert(SectionMap.find(Section) != SectionMap.end() &&
-         "Section must already have been defined in ExecutePostLayoutBinding!");
+         "Section must already have been defined in executePostLayoutBinding!");
   assert(SymbolMap.find(&A) != SymbolMap.end() &&
-         "Symbol must already have been defined in ExecutePostLayoutBinding!");
+         "Symbol must already have been defined in executePostLayoutBinding!");
 
   COFFSection *coff_section = SectionMap[Section];
   COFFSymbol *coff_symbol = SymbolMap[&A];
@@ -1027,7 +1027,7 @@ void WinCOFFObjectWriter::writeObject(MCAssembler &Asm,
       if (Section->Number != -1) {
         if (Section->Relocations.size() >= 0xffff)
           Section->Header.Characteristics |= COFF::IMAGE_SCN_LNK_NRELOC_OVFL;
-        WriteSectionHeader(Section->Header);
+        writeSectionHeader(Section->Header);
       }
     }
 

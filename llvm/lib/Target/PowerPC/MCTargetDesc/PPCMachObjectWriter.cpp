@@ -24,7 +24,7 @@ using namespace llvm;
 
 namespace {
 class PPCMachObjectWriter : public MCMachObjectTargetWriter {
-  bool RecordScatteredRelocation(MachObjectWriter *Writer,
+  bool recordScatteredRelocation(MachObjectWriter *Writer,
                                  const MCAssembler &Asm,
                                  const MCAsmLayout &Layout,
                                  const MCFragment *Fragment,
@@ -186,9 +186,9 @@ static uint32_t getFixupOffset(const MCAsmLayout &Layout,
 
 /// \return false if falling back to using non-scattered relocation,
 /// otherwise true for normal scattered relocation.
-/// based on X86MachObjectWriter::RecordScatteredRelocation
-/// and ARMMachObjectWriter::RecordScatteredRelocation
-bool PPCMachObjectWriter::RecordScatteredRelocation(
+/// based on X86MachObjectWriter::recordScatteredRelocation
+/// and ARMMachObjectWriter::recordScatteredRelocation
+bool PPCMachObjectWriter::recordScatteredRelocation(
     MachObjectWriter *Writer, const MCAssembler &Asm, const MCAsmLayout &Layout,
     const MCFragment *Fragment, const MCFixup &Fixup, MCValue Target,
     unsigned Log2Size, uint64_t &FixedValue) {
@@ -314,7 +314,7 @@ void PPCMachObjectWriter::RecordPPCRelocation(
       // Q: are branch targets ever scattered?
       RelocType != MachO::PPC_RELOC_BR24 &&
       RelocType != MachO::PPC_RELOC_BR14) {
-    RecordScatteredRelocation(Writer, Asm, Layout, Fragment, Fixup, Target,
+    recordScatteredRelocation(Writer, Asm, Layout, Fragment, Fixup, Target,
                               Log2Size, FixedValue);
     return;
   }

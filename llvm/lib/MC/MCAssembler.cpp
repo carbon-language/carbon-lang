@@ -874,7 +874,7 @@ void MCAssembler::Finish() {
 
   // Allow the object writer a chance to perform post-layout binding (for
   // example, to set the index fields in the symbol data).
-  getWriter().ExecutePostLayoutBinding(*this, Layout);
+  getWriter().executePostLayoutBinding(*this, Layout);
 
   // Evaluate and apply the fixups, generating relocation entries as necessary.
   for (MCAssembler::iterator it = begin(), ie = end(); it != ie; ++it) {

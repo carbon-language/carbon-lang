@@ -118,7 +118,7 @@ uint64_t MachObjectWriter::getPaddingSize(const MCSection *Sec,
   return OffsetToAlignment(EndAddr, NextSec.getAlignment());
 }
 
-void MachObjectWriter::WriteHeader(unsigned NumLoadCommands,
+void MachObjectWriter::writeHeader(unsigned NumLoadCommands,
                                    unsigned LoadCommandsSize,
                                    bool SubsectionsViaSymbols) {
   uint32_t Flags = 0;
@@ -148,11 +148,11 @@ void MachObjectWriter::WriteHeader(unsigned NumLoadCommands,
          (is64Bit()?sizeof(MachO::mach_header_64): sizeof(MachO::mach_header)));
 }
 
-/// WriteSegmentLoadCommand - Write a segment load command.
+/// writeSegmentLoadCommand - Write a segment load command.
 ///
 /// \param NumSections The number of sections in this segment.
 /// \param SectionDataSize The total size of the sections.
-void MachObjectWriter::WriteSegmentLoadCommand(unsigned NumSections,
+void MachObjectWriter::writeSegmentLoadCommand(unsigned NumSections,
                                                uint64_t VMSize,
                                                uint64_t SectionDataStartOffset,
                                                uint64_t SectionDataSize) {
@@ -192,7 +192,7 @@ void MachObjectWriter::WriteSegmentLoadCommand(unsigned NumSections,
   assert(OS.tell() - Start == SegmentLoadCommandSize);
 }
 
-void MachObjectWriter::WriteSection(const MCAssembler &Asm,
+void MachObjectWriter::writeSection(const MCAssembler &Asm,
                                     const MCAsmLayout &Layout,
                                     const MCSection &Sec, uint64_t FileOffset,
                                     uint64_t RelocationsStart,
@@ -241,7 +241,7 @@ void MachObjectWriter::WriteSection(const MCAssembler &Asm,
                                sizeof(MachO::section)));
 }
 
-void MachObjectWriter::WriteSymtabLoadCommand(uint32_t SymbolOffset,
+void MachObjectWriter::writeSymtabLoadCommand(uint32_t SymbolOffset,
                                               uint32_t NumSymbols,
                                               uint32_t StringTableOffset,
                                               uint32_t StringTableSize) {
@@ -260,7 +260,7 @@ void MachObjectWriter::WriteSymtabLoadCommand(uint32_t SymbolOffset,
   assert(OS.tell() - Start == sizeof(MachO::symtab_command));
 }
 
-void MachObjectWriter::WriteDysymtabLoadCommand(uint32_t FirstLocalSymbol,
+void MachObjectWriter::writeDysymtabLoadCommand(uint32_t FirstLocalSymbol,
                                                 uint32_t NumLocalSymbols,
                                                 uint32_t FirstExternalSymbol,
                                                 uint32_t NumExternalSymbols,
@@ -320,7 +320,7 @@ const MCSymbol &MachObjectWriter::findAliasedSymbol(const MCSymbol &Sym) const {
   return *S;
 }
 
-void MachObjectWriter::WriteNlist(MachSymbolData &MSD,
+void MachObjectWriter::writeNlist(MachSymbolData &MSD,
                                   const MCAsmLayout &Layout) {
   const MCSymbol *Symbol = MSD.Symbol;
   const MCSymbol &Data = *Symbol;
@@ -403,7 +403,7 @@ void MachObjectWriter::WriteNlist(MachSymbolData &MSD,
     write32(Address);
 }
 
-void MachObjectWriter::WriteLinkeditLoadCommand(uint32_t Type,
+void MachObjectWriter::writeLinkeditLoadCommand(uint32_t Type,
                                                 uint32_t DataOffset,
                                                 uint32_t DataSize) {
   uint64_t Start = OS.tell();
@@ -426,7 +426,7 @@ static unsigned ComputeLinkerOptionsLoadCommandSize(
   return RoundUpToAlignment(Size, is64Bit ? 8 : 4);
 }
 
-void MachObjectWriter::WriteLinkerOptionsLoadCommand(
+void MachObjectWriter::writeLinkerOptionsLoadCommand(
   const std::vector<std::string> &Options)
 {
   unsigned Size = ComputeLinkerOptionsLoadCommandSize(Options, is64Bit());
@@ -458,7 +458,7 @@ void MachObjectWriter::recordRelocation(MCAssembler &Asm,
                                        Target, FixedValue);
 }
 
-void MachObjectWriter::BindIndirectSymbols(MCAssembler &Asm) {
+void MachObjectWriter::bindIndirectSymbols(MCAssembler &Asm) {
   // This is the point where 'as' creates actual symbols for indirect symbols
   // (in the following two passes). It would be easier for us to do this sooner
   // when we see the attribute, but that makes getting the order in the symbol
@@ -519,8 +519,8 @@ void MachObjectWriter::BindIndirectSymbols(MCAssembler &Asm) {
   }
 }
 
-/// ComputeSymbolTable - Compute the symbol table data
-void MachObjectWriter::ComputeSymbolTable(
+/// computeSymbolTable - Compute the symbol table data
+void MachObjectWriter::computeSymbolTable(
     MCAssembler &Asm, std::vector<MachSymbolData> &LocalSymbolData,
     std::vector<MachSymbolData> &ExternalSymbolData,
     std::vector<MachSymbolData> &UndefinedSymbolData) {
@@ -636,12 +636,12 @@ void MachObjectWriter::computeSectionAddresses(const MCAssembler &Asm,
   }
 }
 
-void MachObjectWriter::ExecutePostLayoutBinding(MCAssembler &Asm,
+void MachObjectWriter::executePostLayoutBinding(MCAssembler &Asm,
                                                 const MCAsmLayout &Layout) {
   computeSectionAddresses(Asm, Layout);
 
   // Create symbol data for any indirect symbols.
-  BindIndirectSymbols(Asm);
+  bindIndirectSymbols(Asm);
 }
 
 bool MachObjectWriter::isSymbolRefDifferenceFullyResolvedImpl(
@@ -714,7 +714,7 @@ bool MachObjectWriter::isSymbolRefDifferenceFullyResolvedImpl(
 void MachObjectWriter::writeObject(MCAssembler &Asm,
                                    const MCAsmLayout &Layout) {
   // Compute symbol table information and bind symbol indices.
-  ComputeSymbolTable(Asm, LocalSymbolData, ExternalSymbolData,
+  computeSymbolTable(Asm, LocalSymbolData, ExternalSymbolData,
                      UndefinedSymbolData);
 
   unsigned NumSections = Asm.size();
@@ -793,9 +793,9 @@ void MachObjectWriter::writeObject(MCAssembler &Asm,
   SectionDataFileSize += SectionDataPadding;
 
   // Write the prolog, starting with the header and load command...
-  WriteHeader(NumLoadCommands, LoadCommandsSize,
+  writeHeader(NumLoadCommands, LoadCommandsSize,
               Asm.getSubsectionsViaSymbols());
-  WriteSegmentLoadCommand(NumSections, VMSize,
+  writeSegmentLoadCommand(NumSections, VMSize,
                           SectionDataStart, SectionDataSize);
 
   // ... and then the section headers.
@@ -804,7 +804,7 @@ void MachObjectWriter::writeObject(MCAssembler &Asm,
     std::vector<RelAndSymbol> &Relocs = Relocations[&Sec];
     unsigned NumRelocs = Relocs.size();
     uint64_t SectionStart = SectionDataStart + getSectionAddress(&Sec);
-    WriteSection(Asm, Layout, Sec, SectionStart, RelocTableEnd, NumRelocs);
+    writeSection(Asm, Layout, Sec, SectionStart, RelocTableEnd, NumRelocs);
     RelocTableEnd += NumRelocs * sizeof(MachO::any_relocation_info);
   }
 
@@ -827,14 +827,14 @@ void MachObjectWriter::writeObject(MCAssembler &Asm,
   if (NumDataRegions) {
     uint64_t DataRegionsOffset = RelocTableEnd;
     uint64_t DataRegionsSize = NumDataRegions * 8;
-    WriteLinkeditLoadCommand(MachO::LC_DATA_IN_CODE, DataRegionsOffset,
+    writeLinkeditLoadCommand(MachO::LC_DATA_IN_CODE, DataRegionsOffset,
                              DataRegionsSize);
   }
 
   // Write the loh load command, if used.
   uint64_t LOHTableEnd = DataInCodeTableEnd + LOHSize;
   if (LOHSize)
-    WriteLinkeditLoadCommand(MachO::LC_LINKER_OPTIMIZATION_HINT,
+    writeLinkeditLoadCommand(MachO::LC_LINKER_OPTIMIZATION_HINT,
                              DataInCodeTableEnd, LOHSize);
 
   // Write the symbol table load command, if used.
@@ -863,10 +863,10 @@ void MachObjectWriter::writeObject(MCAssembler &Asm,
       SymbolTableOffset + NumSymTabSymbols * (is64Bit() ?
                                               sizeof(MachO::nlist_64) :
                                               sizeof(MachO::nlist));
-    WriteSymtabLoadCommand(SymbolTableOffset, NumSymTabSymbols,
+    writeSymtabLoadCommand(SymbolTableOffset, NumSymTabSymbols,
                            StringTableOffset, StringTable.data().size());
 
-    WriteDysymtabLoadCommand(FirstLocalSymbol, NumLocalSymbols,
+    writeDysymtabLoadCommand(FirstLocalSymbol, NumLocalSymbols,
                              FirstExternalSymbol, NumExternalSymbols,
                              FirstUndefinedSymbol, NumUndefinedSymbols,
                              IndirectSymbolOffset, NumIndirectSymbols);
@@ -874,7 +874,7 @@ void MachObjectWriter::writeObject(MCAssembler &Asm,
 
   // Write the linker options load commands.
   for (const auto &Option : Asm.getLinkerOptions())
-    WriteLinkerOptionsLoadCommand(Option);
+    writeLinkerOptionsLoadCommand(Option);
 
   // Write the actual section data.
   for (const MCSection &Sec : Asm) {
@@ -956,7 +956,7 @@ void MachObjectWriter::writeObject(MCAssembler &Asm,
     for (auto *SymbolData :
          {&LocalSymbolData, &ExternalSymbolData, &UndefinedSymbolData})
       for (MachSymbolData &Entry : *SymbolData)
-        WriteNlist(Entry, Layout);
+        writeNlist(Entry, Layout);
 
     // Write the string table.
     OS << StringTable.data();

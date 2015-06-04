@@ -159,37 +159,37 @@ public:
 
   /// @}
 
-  void WriteHeader(unsigned NumLoadCommands, unsigned LoadCommandsSize,
+  void writeHeader(unsigned NumLoadCommands, unsigned LoadCommandsSize,
                    bool SubsectionsViaSymbols);
 
   /// Write a segment load command.
   ///
   /// \param NumSections The number of sections in this segment.
   /// \param SectionDataSize The total size of the sections.
-  void WriteSegmentLoadCommand(unsigned NumSections, uint64_t VMSize,
+  void writeSegmentLoadCommand(unsigned NumSections, uint64_t VMSize,
                                uint64_t SectionDataStartOffset,
                                uint64_t SectionDataSize);
 
-  void WriteSection(const MCAssembler &Asm, const MCAsmLayout &Layout,
+  void writeSection(const MCAssembler &Asm, const MCAsmLayout &Layout,
                     const MCSection &Sec, uint64_t FileOffset,
                     uint64_t RelocationsStart, unsigned NumRelocations);
 
-  void WriteSymtabLoadCommand(uint32_t SymbolOffset, uint32_t NumSymbols,
+  void writeSymtabLoadCommand(uint32_t SymbolOffset, uint32_t NumSymbols,
                               uint32_t StringTableOffset,
                               uint32_t StringTableSize);
 
-  void WriteDysymtabLoadCommand(
+  void writeDysymtabLoadCommand(
       uint32_t FirstLocalSymbol, uint32_t NumLocalSymbols,
       uint32_t FirstExternalSymbol, uint32_t NumExternalSymbols,
       uint32_t FirstUndefinedSymbol, uint32_t NumUndefinedSymbols,
       uint32_t IndirectSymbolOffset, uint32_t NumIndirectSymbols);
 
-  void WriteNlist(MachSymbolData &MSD, const MCAsmLayout &Layout);
+  void writeNlist(MachSymbolData &MSD, const MCAsmLayout &Layout);
 
-  void WriteLinkeditLoadCommand(uint32_t Type, uint32_t DataOffset,
+  void writeLinkeditLoadCommand(uint32_t Type, uint32_t DataOffset,
                                 uint32_t DataSize);
 
-  void WriteLinkerOptionsLoadCommand(const std::vector<std::string> &Options);
+  void writeLinkerOptionsLoadCommand(const std::vector<std::string> &Options);
 
   // FIXME: We really need to improve the relocation validation. Basically, we
   // want to implement a separate computation which evaluates the relocation
@@ -216,13 +216,13 @@ public:
     Relocations[Sec].push_back(P);
   }
 
-  void RecordScatteredRelocation(const MCAssembler &Asm,
+  void recordScatteredRelocation(const MCAssembler &Asm,
                                  const MCAsmLayout &Layout,
                                  const MCFragment *Fragment,
                                  const MCFixup &Fixup, MCValue Target,
                                  unsigned Log2Size, uint64_t &FixedValue);
 
-  void RecordTLVPRelocation(const MCAssembler &Asm, const MCAsmLayout &Layout,
+  void recordTLVPRelocation(const MCAssembler &Asm, const MCAsmLayout &Layout,
                             const MCFragment *Fragment, const MCFixup &Fixup,
                             MCValue Target, uint64_t &FixedValue);
 
@@ -231,10 +231,10 @@ public:
                         MCValue Target, bool &IsPCRel,
                         uint64_t &FixedValue) override;
 
-  void BindIndirectSymbols(MCAssembler &Asm);
+  void bindIndirectSymbols(MCAssembler &Asm);
 
   /// Compute the symbol table data.
-  void ComputeSymbolTable(MCAssembler &Asm,
+  void computeSymbolTable(MCAssembler &Asm,
                           std::vector<MachSymbolData> &LocalSymbolData,
                           std::vector<MachSymbolData> &ExternalSymbolData,
                           std::vector<MachSymbolData> &UndefinedSymbolData);
@@ -242,7 +242,7 @@ public:
   void computeSectionAddresses(const MCAssembler &Asm,
                                const MCAsmLayout &Layout);
 
-  void ExecutePostLayoutBinding(MCAssembler &Asm,
+  void executePostLayoutBinding(MCAssembler &Asm,
                                 const MCAsmLayout &Layout) override;
 
   bool isSymbolRefDifferenceFullyResolvedImpl(const MCAssembler &Asm,

@@ -25,7 +25,7 @@ namespace {
 class AMDGPUMCObjectWriter : public MCObjectWriter {
 public:
   AMDGPUMCObjectWriter(raw_pwrite_stream &OS) : MCObjectWriter(OS, true) {}
-  void ExecutePostLayoutBinding(MCAssembler &Asm,
+  void executePostLayoutBinding(MCAssembler &Asm,
                                 const MCAsmLayout &Layout) override {
     //XXX: Implement if necessary.
   }

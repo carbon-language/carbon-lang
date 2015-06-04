@@ -199,7 +199,7 @@ class ELFObjectWriter : public MCObjectWriter {
 
     const MCSectionELF *createStringTable(MCContext &Ctx);
 
-    void ExecutePostLayoutBinding(MCAssembler &Asm,
+    void executePostLayoutBinding(MCAssembler &Asm,
                                   const MCAsmLayout &Layout) override;
 
     void writeSectionHeader(const MCAsmLayout &Layout,
@@ -365,7 +365,7 @@ uint64_t ELFObjectWriter::SymbolValue(const MCSymbol &Sym,
   return Res;
 }
 
-void ELFObjectWriter::ExecutePostLayoutBinding(MCAssembler &Asm,
+void ELFObjectWriter::executePostLayoutBinding(MCAssembler &Asm,
                                                const MCAsmLayout &Layout) {
   // The presence of symbol versions causes undefined symbols and
   // versions declared with @@@ to be renamed.
