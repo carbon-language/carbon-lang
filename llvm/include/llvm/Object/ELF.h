@@ -928,7 +928,7 @@ ErrorOr<StringRef> ELFFile<ELFT>::getSymbolName(const Elf_Shdr *Section,
 template <class ELFT>
 ErrorOr<StringRef>
 ELFFile<ELFT>::getSectionName(const Elf_Shdr *Section) const {
-  if (Section->sh_name >= dot_shstrtab_sec->sh_size)
+  if (!dot_shstrtab_sec || Section->sh_name >= dot_shstrtab_sec->sh_size)
     return object_error::parse_failed;
   return StringRef(getString(dot_shstrtab_sec, Section->sh_name));
 }
