@@ -36,7 +36,7 @@ define void @store_imm_neg_0.0_i64(i64 addrspace(1) *%out) {
 
 ; CHECK-LABEL: {{^}}store_inline_imm_neg_0.0_i32:
 ; CHECK: v_mov_b32_e32 [[REG:v[0-9]+]], 0x80000000
-; CHECK-NEXT: buffer_store_dword [[REG]]
+; CHECK: buffer_store_dword [[REG]]
 define void @store_inline_imm_neg_0.0_i32(i32 addrspace(1)* %out) {
   store i32 -2147483648, i32 addrspace(1)* %out
   ret void
