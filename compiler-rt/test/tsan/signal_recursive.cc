@@ -3,6 +3,8 @@
 // Test case for recursive signal handlers, adopted from:
 // https://code.google.com/p/thread-sanitizer/issues/detail?id=71
 
+// REQUIRES: disabled
+
 #include "test.h"
 #include <semaphore.h>
 #include <signal.h>
