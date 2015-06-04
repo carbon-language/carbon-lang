@@ -46,19 +46,19 @@
 //   [(include-files_list)|(module map)]+ [(front-end-options) ...]
 //
 // Options:
-//    -prefix (optional header path prefix)
+//    -prefix=(optional header path prefix)
 //          Note that unless a "-prefix (header path)" option is specified,
 //          non-absolute file paths in the header list file will be relative
 //          to the header list file directory.  Use -prefix to specify a
 //          different directory.
-//    -module-map-path (module map)
+//    -module-map-path=(module map)
 //          Skip the checks, and instead act as a module.map generation
 //          assistant, generating a module map file based on the header list.
 //          An optional "-root-module=(rootName)" argument can specify a root
 //          module to be created in the generated module.map file.  Note that
 //          you will likely need to edit this file to suit the needs of your
 //          headers.
-//    -root-module (root module name)
+//    -root-module=(root module name)
 //          Specifies a root module to be created in the generated module.map
 //          file.
 //    -block-check-header-list-only
@@ -334,7 +334,7 @@ static std::string findInputFile(const CommandLineArguments &CLArgs) {
 // dependencies.  It also insertts a "-w" option and a "-x c++",
 // if no other "-x" option is present.
 static ArgumentsAdjuster
-getAddDependenciesAdjuster(DependencyMap &Dependencies) {
+getModularizeArgumentsAdjuster(DependencyMap &Dependencies) {
   return [&Dependencies](const CommandLineArguments &Args) {
     std::string InputFile = findInputFile(Args);
     DependentsVector &FileDependents = Dependencies[InputFile];
@@ -775,7 +775,8 @@ int main(int Argc, const char **Argv) {
   // Parse all of the headers, detecting duplicates.
   EntityMap Entities;
   ClangTool Tool(*Compilations, ModUtil->HeaderFileNames);
-  Tool.appendArgumentsAdjuster(getAddDependenciesAdjuster(ModUtil->Dependencies));
+  Tool.appendArgumentsAdjuster(
+    getModularizeArgumentsAdjuster(ModUtil->Dependencies));
   ModularizeFrontendActionFactory Factory(Entities, *PPTracker, HadErrors);
   HadErrors |= Tool.run(&Factory);
 
