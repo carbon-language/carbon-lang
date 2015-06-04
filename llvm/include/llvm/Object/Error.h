@@ -29,6 +29,8 @@ enum class object_error {
   unexpected_eof,
   bitcode_section_not_found,
   macho_small_load_command,
+  macho_load_segment_too_many_sections,
+  macho_load_segment_too_small,
 };
 
 inline std::error_code make_error_code(object_error e) {

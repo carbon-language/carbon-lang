@@ -66,17 +66,16 @@ static ErrorOr<T> getStructOrErr(const MachOObjectFile *O, const char *P) {
 }
 
 template <typename SegmentCmd>
-static uint32_t getSegmentLoadCommandNumSections(const SegmentCmd &S,
-                                                 uint32_t Cmdsize) {
+static ErrorOr<uint32_t> getSegmentLoadCommandNumSections(const SegmentCmd &S,
+                                                          uint32_t Cmdsize) {
   const unsigned SectionSize = sizeof(SegmentCmd);
   if (S.nsects > std::numeric_limits<uint32_t>::max() / SectionSize ||
       S.nsects * SectionSize > Cmdsize - sizeof(S))
-    report_fatal_error(
-        "Number of sections too large for size of load command.");
+    return object_error::macho_load_segment_too_many_sections;
   return S.nsects;
 }
 
-static uint32_t
+static ErrorOr<uint32_t>
 getSegmentLoadCommandNumSections(const MachOObjectFile *O,
                                  const MachOObjectFile::LoadCommandInfo &L) {
   if (O->is64Bit())
@@ -306,14 +305,19 @@ MachOObjectFile::MachOObjectFile(MemoryBufferRef Object, bool IsLittleEndian,
       }
       UuidLoadCmd = Load.Ptr;
     } else if (Load.C.cmd == SegmentLoadType) {
-      const unsigned SegmentLoadSize = this->is64Bit()
+      const unsigned SegmentLoadSize = is64Bit()
                                            ? sizeof(MachO::segment_command_64)
                                            : sizeof(MachO::segment_command);
-      if (Load.C.cmdsize < SegmentLoadSize)
-        report_fatal_error("Segment load command size is too small.");
-
-      uint32_t NumSections = getSegmentLoadCommandNumSections(this, Load);
-      for (unsigned J = 0; J < NumSections; ++J) {
+      if (Load.C.cmdsize < SegmentLoadSize) {
+        EC = object_error::macho_load_segment_too_small;
+        return;
+      }
+      auto NumSectionsOrErr = getSegmentLoadCommandNumSections(this, Load);
+      if (!NumSectionsOrErr) {
+        EC = NumSectionsOrErr.getError();
+        return;
+      }
+      for (unsigned J = 0; J < NumSectionsOrErr.get(); ++J) {
         const char *Sec = getSectionPtr(this, Load, J);
         Sections.push_back(Sec);
       }

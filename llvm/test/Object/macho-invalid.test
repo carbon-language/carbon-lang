@@ -15,13 +15,13 @@ RUN: not llvm-objdump -private-headers %p/Inputs/macho-invalid-too-small-segment
 RUN:      | FileCheck -check-prefix SMALL-SEGLOADC-SIZE %s
 RUN: not llvm-objdump -private-headers %p/Inputs/macho64-invalid-too-small-segment-load-command 2>&1 \
 RUN:      | FileCheck -check-prefix SMALL-SEGLOADC-SIZE %s
-SMALL-SEGLOADC-SIZE: Segment load command size is too small
+SMALL-SEGLOADC-SIZE: Mach-O segment load command size is too small
 
 RUN: not llvm-objdump -private-headers %p/Inputs/macho-invalid-no-size-for-sections 2>&1 \
 RUN:      | FileCheck -check-prefix TOO-MANY-SECTS %s
 RUN: not llvm-objdump -private-headers %p/Inputs/macho64-invalid-no-size-for-sections 2>&1 \
 RUN:      | FileCheck -check-prefix TOO-MANY-SECTS %s
-TOO-MANY-SECTS: Number of sections too large for size of load command
+TOO-MANY-SECTS: Mach-O segment load command contains too many sections
 
 RUN: not llvm-objdump -t %p/Inputs/macho-invalid-bad-symbol-index 2>&1 \
 RUN:      | FileCheck -check-prefix BAD-SYMBOL %s
