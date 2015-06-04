@@ -98,7 +98,6 @@ private:
   uint32_t ImportDirectoryTableSize = 0;
   uint32_t ImportAddressTableSize = 0;
 
-  Defined *Entry;
   uint64_t FileSize;
   uint64_t SizeOfImage;
   uint64_t SizeOfHeaders;

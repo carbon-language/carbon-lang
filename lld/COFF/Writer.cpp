@@ -87,8 +87,8 @@ void OutputSection::writeHeader(uint8_t *Buf) {
 }
 
 void Writer::markLive() {
-  Entry = cast<Defined>(Symtab->find(Config->EntryName));
-  Entry->markLive();
+  for (StringRef Name : Config->GCRoots)
+    cast<Defined>(Symtab->find(Name))->markLive();
   for (Chunk *C : Symtab->getChunks())
     if (C->isRoot())
       C->markLive();
@@ -291,6 +291,7 @@ void Writer::writeHeader() {
   PE->Subsystem = Config->Subsystem;
   PE->SizeOfImage = SizeOfImage;
   PE->SizeOfHeaders = SizeOfHeaders;
+  Defined *Entry = cast<Defined>(Symtab->find(Config->EntryName));
   PE->AddressOfEntryPoint = Entry->getRVA();
   PE->SizeOfStackReserve = Config->StackReserve;
   PE->SizeOfStackCommit = Config->StackCommit;

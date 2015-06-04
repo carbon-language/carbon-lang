@@ -227,20 +227,17 @@ std::error_code SymbolTable::addCombinedLTOObject() {
     return std::error_code();
 
   llvm::LTOCodeGenerator CG;
-  std::set<DefinedBitcode *> PreservedBitcodeSymbols;
 
   // All symbols referenced by non-bitcode objects must be preserved.
   for (std::unique_ptr<ObjectFile> &File : ObjectFiles)
     for (SymbolBody *Body : File->getSymbols())
       if (auto *S = dyn_cast<DefinedBitcode>(Body->getReplacement()))
-        PreservedBitcodeSymbols.insert(S);
+        CG.addMustPreserveSymbol(S->getName());
 
-  // Likewise for the linker-generated reference to the entry point.
-  if (auto *S = dyn_cast<DefinedBitcode>(Symtab[Config->EntryName]->Body))
-    PreservedBitcodeSymbols.insert(S);
-
-  for (DefinedBitcode *S : PreservedBitcodeSymbols)
-    CG.addMustPreserveSymbol(S->getName());
+  // Likewise for other symbols that must be preserved.
+  for (StringRef Name : Config->GCRoots)
+    if (isa<DefinedBitcode>(Symtab[Name]->Body))
+      CG.addMustPreserveSymbol(Name);
 
   CG.setModule(BitcodeFiles[0]->releaseModule());
   for (unsigned I = 1, E = BitcodeFiles.size(); I != E; ++I)

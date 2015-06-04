@@ -27,7 +27,10 @@ public:
   llvm::COFF::MachineTypes MachineType = llvm::COFF::IMAGE_FILE_MACHINE_AMD64;
   bool Verbose = false;
   WindowsSubsystem Subsystem = llvm::COFF::IMAGE_SUBSYSTEM_UNKNOWN;
-  std::string EntryName;
+  StringRef EntryName;
+
+  // Symbols in this set are considered as live by the garbage collector.
+  std::set<StringRef> GCRoots;
 
   std::set<StringRef> NoDefaultLibs;
   bool NoDefaultLibAll = false;

@@ -312,8 +312,11 @@ bool LinkerDriver::link(int Argc, const char *Argv[]) {
 
   // Add undefined symbols given via the command line.
   // (/include is equivalent to Unix linker's -u option.)
-  for (auto *Arg : Args->filtered(OPT_incl))
-    Symtab.addUndefined(Arg->getValue());
+  for (auto *Arg : Args->filtered(OPT_incl)) {
+    StringRef Sym = Arg->getValue();
+    Symtab.addUndefined(Sym);
+    Config->GCRoots.insert(Sym);
+  }
 
   // Parse all input files and put all symbols to the symbol table.
   // The symbol table will take care of name resolution.
@@ -362,11 +365,14 @@ bool LinkerDriver::link(int Argc, const char *Argv[]) {
     }
     Config->EntryName = EntryOrErr.get();
   }
+  Config->GCRoots.insert(Config->EntryName);
 
   // Make sure we have resolved all symbols.
   if (Symtab.reportRemainingUndefines())
     return false;
 
+  // Do LTO by compiling bitcode input files to a native COFF file
+  // then link that file.
   if (auto EC = Symtab.addCombinedLTOObject()) {
     llvm::errs() << EC.message() << "\n";
     return false;

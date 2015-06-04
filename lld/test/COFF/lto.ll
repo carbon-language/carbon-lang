@@ -8,10 +8,10 @@
 ; RUN: rm -f %T/foo.lib
 ; RUN: llvm-ar cru %T/foo.lib %T/foo.obj
 
-; RUN: lld -flavor link2 /out:%T/main.exe /entry:main /subsystem:console %T/main.lto.obj %T/foo.lto.obj
+; RUN: lld -flavor link2 /out:%T/main.exe /entry:main /include:f2 /subsystem:console %T/main.lto.obj %T/foo.lto.obj
 ; RUN: llvm-readobj -file-headers %T/main.exe | FileCheck -check-prefix=HEADERS-11 %s
 ; RUN: llvm-objdump -d %T/main.exe | FileCheck -check-prefix=TEXT-11 %s
-; RUN: lld -flavor link2 /out:%T/main.exe /entry:main /subsystem:console %T/main.lto.obj %T/foo.lto.lib
+; RUN: lld -flavor link2 /out:%T/main.exe /entry:main /include:f2 /subsystem:console %T/main.lto.obj %T/foo.lto.lib
 ; RUN: llvm-readobj -file-headers %T/main.exe | FileCheck -check-prefix=HEADERS-11 %s
 ; RUN: llvm-objdump -d %T/main.exe | FileCheck -check-prefix=TEXT-11 %s
 
@@ -33,6 +33,21 @@
 ; TEXT-11: Disassembly of section .text:
 ; TEXT-11-NEXT: .text:
 ; TEXT-11-NEXT: xorl	%eax, %eax
+; TEXT-11-NEXT: retq
+; TEXT-11-NEXT: int3
+; TEXT-11-NEXT: int3
+; TEXT-11-NEXT: int3
+; TEXT-11-NEXT: int3
+; TEXT-11-NEXT: int3
+; TEXT-11-NEXT: int3
+; TEXT-11-NEXT: int3
+; TEXT-11-NEXT: int3
+; TEXT-11-NEXT: int3
+; TEXT-11-NEXT: int3
+; TEXT-11-NEXT: int3
+; TEXT-11-NEXT: int3
+; TEXT-11-NEXT: int3
+; TEXT-11-NEXT: movl	$2, %eax
 ; TEXT-11-NEXT: retq
 
 ; HEADERS-01: AddressOfEntryPoint: 0x1000
@@ -79,3 +94,13 @@ define i32 @main() {
 }
 
 declare void @foo()
+
+$f1 = comdat any
+define i32 @f1() comdat($f1) {
+  ret i32 1
+}
+
+$f2 = comdat any
+define i32 @f2() comdat($f2) {
+  ret i32 2
+}
