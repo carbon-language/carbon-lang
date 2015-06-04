@@ -146,8 +146,8 @@ void InstrProfiling::lowerIncrement(InstrProfIncrementInst *Inc) {
 
   IRBuilder<> Builder(Inc->getParent(), *Inc);
   uint64_t Index = Inc->getIndex()->getZExtValue();
-  llvm::Value *Addr = Builder.CreateConstInBoundsGEP2_64(Counters, 0, Index);
-  llvm::Value *Count = Builder.CreateLoad(Addr, "pgocount");
+  Value *Addr = Builder.CreateConstInBoundsGEP2_64(Counters, 0, Index);
+  Value *Count = Builder.CreateLoad(Addr, "pgocount");
   Count = Builder.CreateAdd(Count, Builder.getInt64(1));
   Inc->replaceAllUsesWith(Builder.CreateStore(Count, Addr));
   Inc->eraseFromParent();
@@ -263,7 +263,7 @@ void InstrProfiling::emitRegistration() {
   if (Options.NoRedZone)
     RegisterF->addFnAttr(Attribute::NoRedZone);
 
-  auto *RuntimeRegisterTy = llvm::FunctionType::get(VoidTy, VoidPtrTy, false);
+  auto *RuntimeRegisterTy = FunctionType::get(VoidTy, VoidPtrTy, false);
   auto *RuntimeRegisterF =
       Function::Create(RuntimeRegisterTy, GlobalVariable::ExternalLinkage,
                        "__llvm_profile_register_function", M);
@@ -310,7 +310,7 @@ void InstrProfiling::emitUses() {
     return;
 
   GlobalVariable *LLVMUsed = M->getGlobalVariable("llvm.used");
-  std::vector<Constant*> MergedVars;
+  std::vector<Constant *> MergedVars;
   if (LLVMUsed) {
     // Collect the existing members of llvm.used.
     ConstantArray *Inits = cast<ConstantArray>(LLVMUsed->getInitializer());
@@ -323,13 +323,13 @@ void InstrProfiling::emitUses() {
   // Add uses for our data.
   for (auto *Value : UsedVars)
     MergedVars.push_back(
-        ConstantExpr::getBitCast(cast<llvm::Constant>(Value), i8PTy));
+        ConstantExpr::getBitCast(cast<Constant>(Value), i8PTy));
 
   // Recreate llvm.used.
   ArrayType *ATy = ArrayType::get(i8PTy, MergedVars.size());
-  LLVMUsed = new llvm::GlobalVariable(
-      *M, ATy, false, llvm::GlobalValue::AppendingLinkage,
-      llvm::ConstantArray::get(ATy, MergedVars), "llvm.used");
+  LLVMUsed =
+      new GlobalVariable(*M, ATy, false, GlobalValue::AppendingLinkage,
+                         ConstantArray::get(ATy, MergedVars), "llvm.used");
 
   LLVMUsed->setSection("llvm.metadata");
 }
