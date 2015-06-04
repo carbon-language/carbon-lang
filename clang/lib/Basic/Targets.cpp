@@ -5501,6 +5501,16 @@ class SparcV8TargetInfo : public SparcTargetInfo {
 public:
   SparcV8TargetInfo(const llvm::Triple &Triple) : SparcTargetInfo(Triple) {
     DescriptionString = "E-m:e-p:32:32-i64:64-f128:64-n32-S64";
+    // NetBSD uses long (same as llvm default); everyone else uses int.
+    if (getTriple().getOS() == llvm::Triple::NetBSD) {
+      SizeType = UnsignedLong;
+      IntPtrType = SignedLong;
+      PtrDiffType = SignedLong;
+    } else {
+      SizeType = UnsignedInt;
+      IntPtrType = SignedInt;
+      PtrDiffType = SignedInt;
+    }
   }
 
   void getTargetDefines(const LangOptions &Opts,
@@ -5570,15 +5580,6 @@ public:
     // No need to store the CPU yet.  There aren't any CPU-specific
     // macros to define.
     return CPUKnown;
-  }
-};
-
-class SolarisSparcV8TargetInfo : public SolarisTargetInfo<SparcV8TargetInfo> {
-public:
-  SolarisSparcV8TargetInfo(const llvm::Triple &Triple)
-      : SolarisTargetInfo<SparcV8TargetInfo>(Triple) {
-    SizeType = UnsignedInt;
-    PtrDiffType = SignedInt;
   }
 };
 
@@ -7023,7 +7024,7 @@ static TargetInfo *AllocateTarget(const llvm::Triple &Triple) {
     case llvm::Triple::Linux:
       return new LinuxTargetInfo<SparcV8TargetInfo>(Triple);
     case llvm::Triple::Solaris:
-      return new SolarisSparcV8TargetInfo(Triple);
+      return new SolarisTargetInfo<SparcV8TargetInfo>(Triple);
     case llvm::Triple::NetBSD:
       return new NetBSDTargetInfo<SparcV8TargetInfo>(Triple);
     case llvm::Triple::OpenBSD:
