@@ -7614,7 +7614,8 @@ bool SelectionDAGBuilder::buildBitTests(CaseClusterVector &Clusters,
 
   const int BitWidth =
       DAG.getTargetLoweringInfo().getPointerTy().getSizeInBits();
-  assert((High - Low + 1).sle(BitWidth) && "Case range must fit in bit mask!");
+  uint64_t Range = (High - Low).getLimitedValue(UINT64_MAX - 1) + 1;
+  assert(Range <= (uint64_t)BitWidth && "Case range must fit in bit mask!");
 
   if (Low.isNonNegative() && High.slt(BitWidth)) {
     // Optimize the case where all the case values fit in a

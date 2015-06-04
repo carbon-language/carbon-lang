@@ -534,3 +534,18 @@ return: ret void
 ; CHECK-NOT: cmpl
 ; CHECK: cmpl $99
 }
+
+
+define void @pr23738(i4 %x) {
+entry:
+  switch i4 %x, label %bb0 [
+    i4 0, label %bb1
+    i4 1, label %bb1
+    i4 -5, label %bb1
+  ]
+bb0: tail call void @g(i32 0) br label %return
+bb1: tail call void @g(i32 1) br label %return
+return: ret void
+; Don't assert due to truncating the bitwidth (64) to i4 when checking
+; that the bit-test range fits in a word.
+}
