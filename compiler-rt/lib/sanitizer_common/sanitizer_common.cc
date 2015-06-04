@@ -243,7 +243,8 @@ void ReportErrorSummary(const char *error_type, const AddressInfo &info) {
     return;
   InternalScopedString buff(kMaxSummaryLength);
   buff.append("%s ", error_type);
-  RenderFrame(&buff, "%L %F", 0, info, common_flags()->strip_path_prefix);
+  RenderFrame(&buff, "%L %F", 0, info, common_flags()->symbolize_vs_style,
+              common_flags()->strip_path_prefix);
   ReportErrorSummary(buff.data());
 }
 #endif

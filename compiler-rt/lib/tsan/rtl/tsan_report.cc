@@ -120,6 +120,7 @@ void PrintStack(const ReportStack *ent) {
   for (int i = 0; frame && frame->info.address; frame = frame->next, i++) {
     InternalScopedString res(2 * GetPageSizeCached());
     RenderFrame(&res, common_flags()->stack_trace_format, i, frame->info,
+                common_flags()->symbolize_vs_style,
                 common_flags()->strip_path_prefix, "__interceptor_");
     Printf("%s\n", res.data());
   }

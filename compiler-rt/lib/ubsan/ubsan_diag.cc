@@ -121,7 +121,8 @@ static void renderLocation(Location Loc) {
       LocBuffer.append("<unknown>");
     else
       RenderSourceLocation(&LocBuffer, SLoc.getFilename(), SLoc.getLine(),
-                           SLoc.getColumn(), common_flags()->strip_path_prefix);
+                           SLoc.getColumn(), common_flags()->symbolize_vs_style,
+                           common_flags()->strip_path_prefix);
     break;
   }
   case Location::LK_Memory:
@@ -131,6 +132,7 @@ static void renderLocation(Location Loc) {
     const AddressInfo &Info = Loc.getSymbolizedStack()->info;
     if (Info.file) {
       RenderSourceLocation(&LocBuffer, Info.file, Info.line, Info.column,
+                           common_flags()->symbolize_vs_style,
                            common_flags()->strip_path_prefix);
     } else if (Info.module) {
       RenderModuleLocation(&LocBuffer, Info.module, Info.module_offset,

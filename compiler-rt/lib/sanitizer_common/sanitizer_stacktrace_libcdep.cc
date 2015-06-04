@@ -35,7 +35,8 @@ void StackTrace::Print() const {
     for (SymbolizedStack *cur = frames; cur; cur = cur->next) {
       frame_desc.clear();
       RenderFrame(&frame_desc, common_flags()->stack_trace_format, frame_num++,
-                  cur->info, common_flags()->strip_path_prefix);
+                  cur->info, common_flags()->symbolize_vs_style,
+                  common_flags()->strip_path_prefix);
       Printf("%s\n", frame_desc.data());
     }
     frames->ClearAll();
