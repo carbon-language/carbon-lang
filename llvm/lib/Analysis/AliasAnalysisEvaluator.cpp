@@ -219,8 +219,8 @@ bool AAEval::runOnFunction(Function &F) {
          I1 != E; ++I1) {
       for (SetVector<Value *>::iterator I2 = Stores.begin(), E2 = Stores.end();
            I2 != E2; ++I2) {
-        switch (AA.alias(AA.getLocation(cast<LoadInst>(*I1)),
-                         AA.getLocation(cast<StoreInst>(*I2)))) {
+        switch (AA.alias(MemoryLocation::get(cast<LoadInst>(*I1)),
+                         MemoryLocation::get(cast<StoreInst>(*I2)))) {
         case AliasAnalysis::NoAlias:
           PrintLoadStoreResults("NoAlias", PrintNoAlias, *I1, *I2,
                                 F.getParent());
@@ -245,8 +245,8 @@ bool AAEval::runOnFunction(Function &F) {
     for (SetVector<Value *>::iterator I1 = Stores.begin(), E = Stores.end();
          I1 != E; ++I1) {
       for (SetVector<Value *>::iterator I2 = Stores.begin(); I2 != I1; ++I2) {
-        switch (AA.alias(AA.getLocation(cast<StoreInst>(*I1)),
-                         AA.getLocation(cast<StoreInst>(*I2)))) {
+        switch (AA.alias(MemoryLocation::get(cast<StoreInst>(*I1)),
+                         MemoryLocation::get(cast<StoreInst>(*I2)))) {
         case AliasAnalysis::NoAlias:
           PrintLoadStoreResults("NoAlias", PrintNoAlias, *I1, *I2,
                                 F.getParent());

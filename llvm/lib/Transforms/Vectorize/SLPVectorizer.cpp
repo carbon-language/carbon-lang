@@ -317,9 +317,9 @@ static bool InTreeUserNeedToExtract(Value *Scalar, Instruction *UserInst,
 /// \returns the AA location that is being access by the instruction.
 static AliasAnalysis::Location getLocation(Instruction *I, AliasAnalysis *AA) {
   if (StoreInst *SI = dyn_cast<StoreInst>(I))
-    return AA->getLocation(SI);
+    return MemoryLocation::get(SI);
   if (LoadInst *LI = dyn_cast<LoadInst>(I))
-    return AA->getLocation(LI);
+    return MemoryLocation::get(LI);
   return AliasAnalysis::Location();
 }
 

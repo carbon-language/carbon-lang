@@ -93,7 +93,7 @@ AliasAnalysis::getModRefInfo(Instruction *I, ImmutableCallSite Call) {
     // location this memory access defines.  The best we can say
     // is that if the call references what this instruction
     // defines, it must be clobbered by this location.
-    const AliasAnalysis::Location DefLoc = AA->getLocation(I);
+    const AliasAnalysis::Location DefLoc = MemoryLocation::get(I);
     if (getModRefInfo(Call, DefLoc) != AliasAnalysis::NoModRef)
       return AliasAnalysis::ModRef;
   }
@@ -267,78 +267,6 @@ AliasAnalysis::getModRefBehavior(const Function *F) {
 // AliasAnalysis non-virtual helper method implementation
 //===----------------------------------------------------------------------===//
 
-AliasAnalysis::Location AliasAnalysis::getLocation(const LoadInst *LI) {
-  AAMDNodes AATags;
-  LI->getAAMetadata(AATags);
-
-  return Location(LI->getPointerOperand(),
-                  getTypeStoreSize(LI->getType()), AATags);
-}
-
-AliasAnalysis::Location AliasAnalysis::getLocation(const StoreInst *SI) {
-  AAMDNodes AATags;
-  SI->getAAMetadata(AATags);
-
-  return Location(SI->getPointerOperand(),
-                  getTypeStoreSize(SI->getValueOperand()->getType()), AATags);
-}
-
-AliasAnalysis::Location AliasAnalysis::getLocation(const VAArgInst *VI) {
-  AAMDNodes AATags;
-  VI->getAAMetadata(AATags);
-
-  return Location(VI->getPointerOperand(), UnknownSize, AATags);
-}
-
-AliasAnalysis::Location
-AliasAnalysis::getLocation(const AtomicCmpXchgInst *CXI) {
-  AAMDNodes AATags;
-  CXI->getAAMetadata(AATags);
-
-  return Location(CXI->getPointerOperand(),
-                  getTypeStoreSize(CXI->getCompareOperand()->getType()),
-                  AATags);
-}
-
-AliasAnalysis::Location
-AliasAnalysis::getLocation(const AtomicRMWInst *RMWI) {
-  AAMDNodes AATags;
-  RMWI->getAAMetadata(AATags);
-
-  return Location(RMWI->getPointerOperand(),
-                  getTypeStoreSize(RMWI->getValOperand()->getType()), AATags);
-}
-
-AliasAnalysis::Location
-AliasAnalysis::getLocationForSource(const MemTransferInst *MTI) {
-  uint64_t Size = UnknownSize;
-  if (ConstantInt *C = dyn_cast<ConstantInt>(MTI->getLength()))
-    Size = C->getValue().getZExtValue();
-
-  // memcpy/memmove can have AA tags. For memcpy, they apply
-  // to both the source and the destination.
-  AAMDNodes AATags;
-  MTI->getAAMetadata(AATags);
-
-  return Location(MTI->getRawSource(), Size, AATags);
-}
-
-AliasAnalysis::Location
-AliasAnalysis::getLocationForDest(const MemIntrinsic *MTI) {
-  uint64_t Size = UnknownSize;
-  if (ConstantInt *C = dyn_cast<ConstantInt>(MTI->getLength()))
-    Size = C->getValue().getZExtValue();
-
-  // memcpy/memmove can have AA tags. For memcpy, they apply
-  // to both the source and the destination.
-  AAMDNodes AATags;
-  MTI->getAAMetadata(AATags);
-
-  return Location(MTI->getRawDest(), Size, AATags);
-}
-
-
-
 AliasAnalysis::ModRefResult
 AliasAnalysis::getModRefInfo(const LoadInst *L, const Location &Loc) {
   // Be conservative in the face of volatile/atomic.
@@ -347,7 +275,7 @@ AliasAnalysis::getModRefInfo(const LoadInst *L, const Location &Loc) {
 
   // If the load address doesn't alias the given address, it doesn't read
   // or write the specified memory.
-  if (Loc.Ptr && !alias(getLocation(L), Loc))
+  if (Loc.Ptr && !alias(MemoryLocation::get(L), Loc))
     return NoModRef;
 
   // Otherwise, a load just reads.
@@ -363,7 +291,7 @@ AliasAnalysis::getModRefInfo(const StoreInst *S, const Location &Loc) {
   if (Loc.Ptr) {
     // If the store address cannot alias the pointer in question, then the
     // specified memory cannot be modified by the store.
-    if (!alias(getLocation(S), Loc))
+    if (!alias(MemoryLocation::get(S), Loc))
       return NoModRef;
 
     // If the pointer is a pointer to constant memory, then it could not have
@@ -383,7 +311,7 @@ AliasAnalysis::getModRefInfo(const VAArgInst *V, const Location &Loc) {
   if (Loc.Ptr) {
     // If the va_arg address cannot alias the pointer in question, then the
     // specified memory cannot be accessed by the va_arg.
-    if (!alias(getLocation(V), Loc))
+    if (!alias(MemoryLocation::get(V), Loc))
       return NoModRef;
 
     // If the pointer is a pointer to constant memory, then it could not have
@@ -403,7 +331,7 @@ AliasAnalysis::getModRefInfo(const AtomicCmpXchgInst *CX, const Location &Loc) {
     return ModRef;
 
   // If the cmpxchg address does not alias the location, it does not access it.
-  if (Loc.Ptr && !alias(getLocation(CX), Loc))
+  if (Loc.Ptr && !alias(MemoryLocation::get(CX), Loc))
     return NoModRef;
 
   return ModRef;
@@ -416,7 +344,7 @@ AliasAnalysis::getModRefInfo(const AtomicRMWInst *RMW, const Location &Loc) {
     return ModRef;
 
   // If the atomicrmw address does not alias the location, it does not access it.
-  if (Loc.Ptr && !alias(getLocation(RMW), Loc))
+  if (Loc.Ptr && !alias(MemoryLocation::get(RMW), Loc))
     return NoModRef;
 
   return ModRef;

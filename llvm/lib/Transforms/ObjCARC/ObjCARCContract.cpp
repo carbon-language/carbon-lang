@@ -200,7 +200,7 @@ static StoreInst *findSafeStoreForStoreStrongContraction(LoadInst *Load,
   bool SawRelease = false;
 
   // Get the location associated with Load.
-  AliasAnalysis::Location Loc = AA->getLocation(Load);
+  AliasAnalysis::Location Loc = MemoryLocation::get(Load);
 
   // Walk down to find the store and the release, which may be in either order.
   for (auto I = std::next(BasicBlock::iterator(Load)),

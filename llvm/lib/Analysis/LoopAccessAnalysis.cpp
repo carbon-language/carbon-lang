@@ -1066,7 +1066,7 @@ void LoopAccessInfo::analyzeLoop(const ValueToValueMap &Strides) {
     if (Seen.insert(Ptr).second) {
       ++NumReadWrites;
 
-      AliasAnalysis::Location Loc = AA->getLocation(ST);
+      AliasAnalysis::Location Loc = MemoryLocation::get(ST);
       // The TBAA metadata could have a control dependency on the predication
       // condition, so we cannot rely on it when determining whether or not we
       // need runtime pointer checks.
@@ -1102,7 +1102,7 @@ void LoopAccessInfo::analyzeLoop(const ValueToValueMap &Strides) {
       IsReadOnlyPtr = true;
     }
 
-    AliasAnalysis::Location Loc = AA->getLocation(LD);
+    AliasAnalysis::Location Loc = MemoryLocation::get(LD);
     // The TBAA metadata could have a control dependency on the predication
     // condition, so we cannot rely on it when determining whether or not we
     // need runtime pointer checks.

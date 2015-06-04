@@ -197,11 +197,11 @@ static bool hasMemoryWrite(Instruction *I, const TargetLibraryInfo *TLI) {
 static AliasAnalysis::Location
 getLocForWrite(Instruction *Inst, AliasAnalysis &AA) {
   if (StoreInst *SI = dyn_cast<StoreInst>(Inst))
-    return AA.getLocation(SI);
+    return MemoryLocation::get(SI);
 
   if (MemIntrinsic *MI = dyn_cast<MemIntrinsic>(Inst)) {
     // memcpy/memmove/memset.
-    AliasAnalysis::Location Loc = AA.getLocationForDest(MI);
+    AliasAnalysis::Location Loc = MemoryLocation::getForDest(MI);
     return Loc;
   }
 
@@ -231,7 +231,7 @@ getLocForRead(Instruction *Inst, AliasAnalysis &AA) {
   // The only instructions that both read and write are the mem transfer
   // instructions (memcpy/memmove).
   if (MemTransferInst *MTI = dyn_cast<MemTransferInst>(Inst))
-    return AA.getLocationForSource(MTI);
+    return MemoryLocation::getForSource(MTI);
   return AliasAnalysis::Location();
 }
 
@@ -815,11 +815,11 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
     if (LoadInst *L = dyn_cast<LoadInst>(BBI)) {
       if (!L->isUnordered()) // Be conservative with atomic/volatile load
         break;
-      LoadedLoc = AA->getLocation(L);
+      LoadedLoc = MemoryLocation::get(L);
     } else if (VAArgInst *V = dyn_cast<VAArgInst>(BBI)) {
-      LoadedLoc = AA->getLocation(V);
+      LoadedLoc = MemoryLocation::get(V);
     } else if (MemTransferInst *MTI = dyn_cast<MemTransferInst>(BBI)) {
-      LoadedLoc = AA->getLocationForSource(MTI);
+      LoadedLoc = MemoryLocation::getForSource(MTI);
     } else if (!BBI->mayReadFromMemory()) {
       // Instruction doesn't read memory.  Note that stores that weren't removed
       // above will hit this case.

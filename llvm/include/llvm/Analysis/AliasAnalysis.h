@@ -40,6 +40,7 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/IR/CallSite.h"
 #include "llvm/IR/Metadata.h"
+#include "llvm/Analysis/MemoryLocation.h"
 
 namespace llvm {
 
@@ -82,7 +83,7 @@ public:
   /// UnknownSize - This is a special value which can be used with the
   /// size arguments in alias queries to indicate that the caller does not
   /// know the sizes of the potential memory references.
-  static uint64_t const UnknownSize = ~UINT64_C(0);
+  static uint64_t const UnknownSize = MemoryLocation::UnknownSize;
 
   /// getTargetLibraryInfo - Return a pointer to the current TargetLibraryInfo
   /// object, or null if no TargetLibraryInfo object is available.
@@ -98,70 +99,9 @@ public:
   /// Alias Queries...
   ///
 
-  /// Location - A description of a memory location.
-  struct Location {
-    /// Ptr - The address of the start of the location.
-    const Value *Ptr;
-    /// Size - The maximum size of the location, in address-units, or
-    /// UnknownSize if the size is not known.  Note that an unknown size does
-    /// not mean the pointer aliases the entire virtual address space, because
-    /// there are restrictions on stepping out of one object and into another.
-    /// See http://llvm.org/docs/LangRef.html#pointeraliasing
-    uint64_t Size;
-    /// AATags - The metadata nodes which describes the aliasing of the
-    /// location (each member is null if that kind of information is
-    /// unavailable)..
-    AAMDNodes AATags;
-
-    explicit Location(const Value *P = nullptr, uint64_t S = UnknownSize,
-                      const AAMDNodes &N = AAMDNodes())
-      : Ptr(P), Size(S), AATags(N) {}
-
-    Location getWithNewPtr(const Value *NewPtr) const {
-      Location Copy(*this);
-      Copy.Ptr = NewPtr;
-      return Copy;
-    }
-
-    Location getWithNewSize(uint64_t NewSize) const {
-      Location Copy(*this);
-      Copy.Size = NewSize;
-      return Copy;
-    }
-
-    Location getWithoutAATags() const {
-      Location Copy(*this);
-      Copy.AATags = AAMDNodes();
-      return Copy;
-    }
-
-    bool operator==(const AliasAnalysis::Location &Other) const {
-      return Ptr == Other.Ptr && Size == Other.Size && AATags == Other.AATags;
-    }
-  };
-
-  /// getLocation - Fill in Loc with information about the memory reference by
-  /// the given instruction.
-  Location getLocation(const LoadInst *LI);
-  Location getLocation(const StoreInst *SI);
-  Location getLocation(const VAArgInst *VI);
-  Location getLocation(const AtomicCmpXchgInst *CXI);
-  Location getLocation(const AtomicRMWInst *RMWI);
-  static Location getLocationForSource(const MemTransferInst *MTI);
-  static Location getLocationForDest(const MemIntrinsic *MI);
-  Location getLocation(const Instruction *Inst) {
-    if (auto *I = dyn_cast<LoadInst>(Inst))
-      return getLocation(I);
-    else if (auto *I = dyn_cast<StoreInst>(Inst))
-      return getLocation(I);
-    else if (auto *I = dyn_cast<VAArgInst>(Inst))
-      return getLocation(I);
-    else if (auto *I = dyn_cast<AtomicCmpXchgInst>(Inst))
-      return getLocation(I);
-    else if (auto *I = dyn_cast<AtomicRMWInst>(Inst))
-      return getLocation(I);
-    llvm_unreachable("unsupported memory instruction");
-  }
+  /// Legacy typedef for the AA location object. New code should use \c
+  /// MemoryLocation directly.
+  typedef MemoryLocation Location;
 
   /// Alias analysis result - Either we know for sure that it does not alias, we
   /// know for sure it must alias, or we don't know anything: The two pointers
@@ -598,28 +538,6 @@ public:
   void replaceWithNewValue(Value *Old, Value *New) {
     copyValue(Old, New);
     deleteValue(Old);
-  }
-};
-
-// Specialize DenseMapInfo for Location.
-template<>
-struct DenseMapInfo<AliasAnalysis::Location> {
-  static inline AliasAnalysis::Location getEmptyKey() {
-    return AliasAnalysis::Location(DenseMapInfo<const Value *>::getEmptyKey(),
-                                   0);
-  }
-  static inline AliasAnalysis::Location getTombstoneKey() {
-    return AliasAnalysis::Location(
-        DenseMapInfo<const Value *>::getTombstoneKey(), 0);
-  }
-  static unsigned getHashValue(const AliasAnalysis::Location &Val) {
-    return DenseMapInfo<const Value *>::getHashValue(Val.Ptr) ^
-           DenseMapInfo<uint64_t>::getHashValue(Val.Size) ^
-           DenseMapInfo<AAMDNodes>::getHashValue(Val.AATags);
-  }
-  static bool isEqual(const AliasAnalysis::Location &LHS,
-                      const AliasAnalysis::Location &RHS) {
-    return LHS == RHS;
   }
 };
 

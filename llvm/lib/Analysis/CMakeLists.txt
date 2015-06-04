@@ -42,6 +42,7 @@ add_llvm_library(LLVMAnalysis
   MemDerefPrinter.cpp
   MemoryBuiltins.cpp
   MemoryDependenceAnalysis.cpp
+  MemoryLocation.cpp
   ModuleDebugInfoPrinter.cpp
   NoAliasAnalysis.cpp
   PHITransAddr.cpp

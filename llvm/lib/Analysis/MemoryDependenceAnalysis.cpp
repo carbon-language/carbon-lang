@@ -124,11 +124,11 @@ AliasAnalysis::ModRefResult GetLocation(const Instruction *Inst,
                                         AliasAnalysis *AA) {
   if (const LoadInst *LI = dyn_cast<LoadInst>(Inst)) {
     if (LI->isUnordered()) {
-      Loc = AA->getLocation(LI);
+      Loc = MemoryLocation::get(LI);
       return AliasAnalysis::Ref;
     }
     if (LI->getOrdering() == Monotonic) {
-      Loc = AA->getLocation(LI);
+      Loc = MemoryLocation::get(LI);
       return AliasAnalysis::ModRef;
     }
     Loc = AliasAnalysis::Location();
@@ -137,11 +137,11 @@ AliasAnalysis::ModRefResult GetLocation(const Instruction *Inst,
 
   if (const StoreInst *SI = dyn_cast<StoreInst>(Inst)) {
     if (SI->isUnordered()) {
-      Loc = AA->getLocation(SI);
+      Loc = MemoryLocation::get(SI);
       return AliasAnalysis::Mod;
     }
     if (SI->getOrdering() == Monotonic) {
-      Loc = AA->getLocation(SI);
+      Loc = MemoryLocation::get(SI);
       return AliasAnalysis::ModRef;
     }
     Loc = AliasAnalysis::Location();
@@ -149,7 +149,7 @@ AliasAnalysis::ModRefResult GetLocation(const Instruction *Inst,
   }
 
   if (const VAArgInst *V = dyn_cast<VAArgInst>(Inst)) {
-    Loc = AA->getLocation(V);
+    Loc = MemoryLocation::get(V);
     return AliasAnalysis::ModRef;
   }
 
@@ -486,7 +486,7 @@ getPointerDependencyFrom(const AliasAnalysis::Location &MemLoc, bool isLoad,
         }
       }
 
-      AliasAnalysis::Location LoadLoc = AA->getLocation(LI);
+      AliasAnalysis::Location LoadLoc = MemoryLocation::get(LI);
 
       // If we found a pointer, check if it could be the same as our pointer.
       AliasAnalysis::AliasResult R = AA->alias(LoadLoc, MemLoc);
@@ -575,7 +575,7 @@ getPointerDependencyFrom(const AliasAnalysis::Location &MemLoc, bool isLoad,
 
       // Ok, this store might clobber the query pointer.  Check to see if it is
       // a must alias: in this case, we want to return this as a def.
-      AliasAnalysis::Location StoreLoc = AA->getLocation(SI);
+      AliasAnalysis::Location StoreLoc = MemoryLocation::get(SI);
 
       // If we found a pointer, check if it could be the same as our pointer.
       AliasAnalysis::AliasResult R = AA->alias(StoreLoc, MemLoc);
@@ -872,7 +872,7 @@ MemoryDependenceAnalysis::getNonLocalCallDependency(CallSite QueryCS) {
 void MemoryDependenceAnalysis::
 getNonLocalPointerDependency(Instruction *QueryInst,
                              SmallVectorImpl<NonLocalDepResult> &Result) {
-  const AliasAnalysis::Location Loc = AA->getLocation(QueryInst);
+  const AliasAnalysis::Location Loc = MemoryLocation::get(QueryInst);
   bool isLoad = isa<LoadInst>(QueryInst);
   BasicBlock *FromBB = QueryInst->getParent();
   assert(FromBB);

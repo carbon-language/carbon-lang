@@ -510,7 +510,7 @@ bool MemCpyOpt::processStore(StoreInst *SI, BasicBlock::iterator &BBI) {
         // Check that nothing touches the dest of the "copy" between
         // the call and the store.
         AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
-        AliasAnalysis::Location StoreLoc = AA.getLocation(SI);
+        AliasAnalysis::Location StoreLoc = MemoryLocation::get(SI);
         for (BasicBlock::iterator I = --BasicBlock::iterator(SI),
                                   E = C; I != E; --I) {
           if (AA.getModRefInfo(&*I, StoreLoc) != AliasAnalysis::NoModRef) {
@@ -802,9 +802,8 @@ bool MemCpyOpt::processMemCpyMemCpyDependence(MemCpyInst *M, MemCpyInst *MDep) {
   //
   // NOTE: This is conservative, it will stop on any read from the source loc,
   // not just the defining memcpy.
-  MemDepResult SourceDep =
-    MD->getPointerDependencyFrom(AA.getLocationForSource(MDep),
-                                 false, M, M->getParent());
+  MemDepResult SourceDep = MD->getPointerDependencyFrom(
+      MemoryLocation::getForSource(MDep), false, M, M->getParent());
   if (!SourceDep.isClobber() || SourceDep.getInst() != MDep)
     return false;
 
@@ -812,7 +811,8 @@ bool MemCpyOpt::processMemCpyMemCpyDependence(MemCpyInst *M, MemCpyInst *MDep) {
   // source and dest might overlap.  We still want to eliminate the intermediate
   // value, but we have to generate a memmove instead of memcpy.
   bool UseMemMove = false;
-  if (!AA.isNoAlias(AA.getLocationForDest(M), AA.getLocationForSource(MDep)))
+  if (!AA.isNoAlias(MemoryLocation::getForDest(M),
+                    MemoryLocation::getForSource(MDep)))
     UseMemMove = true;
 
   // If all checks passed, then we can transform M.
@@ -860,9 +860,8 @@ bool MemCpyOpt::processMemSetMemCpyDependence(MemCpyInst *MemCpy,
     return false;
 
   // Check that there are no other dependencies on the memset destination.
-  MemDepResult DstDepInfo =
-      MD->getPointerDependencyFrom(AliasAnalysis::getLocationForDest(MemSet),
-                                   false, MemCpy, MemCpy->getParent());
+  MemDepResult DstDepInfo = MD->getPointerDependencyFrom(
+      MemoryLocation::getForDest(MemSet), false, MemCpy, MemCpy->getParent());
   if (DstDepInfo.getInst() != MemSet)
     return false;
 
@@ -998,7 +997,7 @@ bool MemCpyOpt::processMemCpy(MemCpyInst *M) {
     }
   }
 
-  AliasAnalysis::Location SrcLoc = AliasAnalysis::getLocationForSource(M);
+  AliasAnalysis::Location SrcLoc = MemoryLocation::getForSource(M);
   MemDepResult SrcDepInfo = MD->getPointerDependencyFrom(SrcLoc, true,
                                                          M, M->getParent());
 
@@ -1047,7 +1046,8 @@ bool MemCpyOpt::processMemMove(MemMoveInst *M) {
     return false;
 
   // See if the pointers alias.
-  if (!AA.isNoAlias(AA.getLocationForDest(M), AA.getLocationForSource(M)))
+  if (!AA.isNoAlias(MemoryLocation::getForDest(M),
+                    MemoryLocation::getForSource(M)))
     return false;
 
   DEBUG(dbgs() << "MemCpyOpt: Optimizing memmove -> memcpy: " << *M << "\n");
@@ -1121,8 +1121,8 @@ bool MemCpyOpt::processByValArgument(CallSite CS, unsigned ArgNo) {
   // NOTE: This is conservative, it will stop on any read from the source loc,
   // not just the defining memcpy.
   MemDepResult SourceDep =
-    MD->getPointerDependencyFrom(AliasAnalysis::getLocationForSource(MDep),
-                                 false, CS.getInstruction(), MDep->getParent());
+      MD->getPointerDependencyFrom(MemoryLocation::getForSource(MDep), false,
+                                   CS.getInstruction(), MDep->getParent());
   if (!SourceDep.isClobber() || SourceDep.getInst() != MDep)
     return false;
 
