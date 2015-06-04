@@ -39,6 +39,7 @@
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/Errc.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/GraphWriter.h"
@@ -159,6 +160,12 @@ bool llvm::error(std::error_code EC) {
   outs().flush();
   ReturnValue = EXIT_FAILURE;
   return true;
+}
+
+static void report_error(StringRef File, std::error_code EC) {
+  assert(EC);
+  errs() << ToolName << ": '" << File << "': " << EC.message() << ".\n";
+  ReturnValue = EXIT_FAILURE;
 }
 
 static const Target *getTarget(const ObjectFile *Obj = nullptr) {
@@ -1263,15 +1270,13 @@ static void DumpArchive(const Archive *a) {
     if (std::error_code EC = ChildOrErr.getError()) {
       // Ignore non-object files.
       if (EC != object_error::invalid_file_type)
-        errs() << ToolName << ": '" << a->getFileName() << "': " << EC.message()
-               << ".\n";
+        report_error(a->getFileName(), EC);
       continue;
     }
     if (ObjectFile *o = dyn_cast<ObjectFile>(&*ChildOrErr.get()))
       DumpObject(o);
     else
-      errs() << ToolName << ": '" << a->getFileName() << "': "
-              << "Unrecognized file type.\n";
+      report_error(a->getFileName(), object_error::invalid_file_type);
   }
 }
 
@@ -1279,7 +1284,7 @@ static void DumpArchive(const Archive *a) {
 static void DumpInput(StringRef file) {
   // If file isn't stdin, check that it exists.
   if (file != "-" && !sys::fs::exists(file)) {
-    errs() << ToolName << ": '" << file << "': " << "No such file\n";
+    report_error(file, errc::no_such_file_or_directory);
     return;
   }
 
@@ -1294,7 +1299,7 @@ static void DumpInput(StringRef file) {
   // Attempt to open the binary.
   ErrorOr<OwningBinary<Binary>> BinaryOrErr = createBinary(file);
   if (std::error_code EC = BinaryOrErr.getError()) {
-    errs() << ToolName << ": '" << file << "': " << EC.message() << ".\n";
+    report_error(file, EC);
     return;
   }
   Binary &Binary = *BinaryOrErr.get().getBinary();
@@ -1304,7 +1309,7 @@ static void DumpInput(StringRef file) {
   else if (ObjectFile *o = dyn_cast<ObjectFile>(&Binary))
     DumpObject(o);
   else
-    errs() << ToolName << ": '" << file << "': " << "Unrecognized file type.\n";
+    report_error(file, object_error::invalid_file_type);
 }
 
 int main(int argc, char **argv) {
