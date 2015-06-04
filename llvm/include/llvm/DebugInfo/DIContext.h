@@ -169,7 +169,7 @@ public:
   /// Obtain a copy of this LoadedObjectInfo.
   ///
   /// The caller is responsible for deallocation once the copy is no longer required.
-  virtual LoadedObjectInfo *clone() const = 0;
+  virtual std::unique_ptr<LoadedObjectInfo> clone() const = 0;
 };
 
 }

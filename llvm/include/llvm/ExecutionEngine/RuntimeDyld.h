@@ -15,6 +15,7 @@
 #define LLVM_EXECUTIONENGINE_RUNTIMEDYLD_H
 
 #include "JITSymbolFlags.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Memory.h"
 #include "llvm/DebugInfo/DIContext.h"
@@ -78,8 +79,8 @@ public:
     LoadedObjectInfoHelper(RuntimeDyldImpl &RTDyld, unsigned BeginIdx,
                            unsigned EndIdx)
         : LoadedObjectInfo(RTDyld, BeginIdx, EndIdx) {}
-    llvm::LoadedObjectInfo *clone() const override {
-      return new Derived(static_cast<const Derived &>(*this));
+    std::unique_ptr<llvm::LoadedObjectInfo> clone() const override {
+      return llvm::make_unique<Derived>(static_cast<const Derived &>(*this));
     }
   };
 
