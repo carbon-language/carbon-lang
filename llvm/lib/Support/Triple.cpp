@@ -1147,12 +1147,12 @@ Triple Triple::get64BitArchVariant() const {
 const char *Triple::getARMCPUForArch(StringRef MArch) const {
   if (MArch.empty())
     MArch = getArchName();
+  MArch = ARMTargetParser::getCanonicalArchName(MArch);
 
   // Some defaults are forced.
   switch (getOS()) {
   case llvm::Triple::FreeBSD:
   case llvm::Triple::NetBSD:
-    MArch = ARMTargetParser::getCanonicalArchName(MArch);
     if (!MArch.empty() && MArch == "v6")
       return "arm1176jzf-s";
     break;
@@ -1163,7 +1163,6 @@ const char *Triple::getARMCPUForArch(StringRef MArch) const {
     break;
   }
 
-  MArch = ARMTargetParser::getCanonicalArchName(MArch);
   if (MArch.empty())
     return nullptr;
 
