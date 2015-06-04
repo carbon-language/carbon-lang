@@ -130,3 +130,4 @@ gen_sections4 m
 
 a:
 b = a + 1
+.long dm

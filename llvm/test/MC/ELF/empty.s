@@ -78,9 +78,9 @@
 // CHECK-NEXT:     ]
 // CHECK-NEXT:     Address: 0x0
 // CHECK-NEXT:     Offset:
-// CHECK-NEXT:     Size: 96
+// CHECK-NEXT:     Size: 24
 // CHECK-NEXT:     Link:
-// CHECK-NEXT:     Info: 4
+// CHECK-NEXT:     Info: 1
 // CHECK-NEXT:     AddressAlignment: 8
 // CHECK-NEXT:     EntrySize: 24
 // CHECK-NEXT:   }

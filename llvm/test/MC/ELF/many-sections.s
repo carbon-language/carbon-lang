@@ -106,3 +106,4 @@ gen_sections8 l
         .section foo
         .section bar
         .section zed
+.long zed

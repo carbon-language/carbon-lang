@@ -58,16 +58,6 @@ main:                                   # @main
 // CHECK:     Type: Section
 
 // CHECK:   Symbol {
-// CHECK:     Binding: Local
-// CHECK:     Type: Section
-// CHECK:   }
-
-// CHECK:   Symbol {
-// CHECK:     Binding: Local
-// CHECK:     Type: Section
-// CHECK:   }
-
-// CHECK:   Symbol {
 // CHECK:     Name: main
 // CHECK:     Binding: Global
 // CHECK:     Type: Function

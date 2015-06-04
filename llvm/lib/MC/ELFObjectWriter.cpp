@@ -688,6 +688,8 @@ void ELFObjectWriter::RecordRelocation(MCAssembler &Asm,
     auto *ELFSec = cast_or_null<MCSectionELF>(SecA);
     const auto *SectionSymbol =
         ELFSec ? cast<MCSymbolELF>(ELFSec->getBeginSymbol()) : nullptr;
+    if (SectionSymbol)
+      SectionSymbol->setUsedInReloc();
     ELFRelocationEntry Rec(FixupOffset, SectionSymbol, Type, Addend);
     Relocations[&FixupSection].push_back(Rec);
     return;
@@ -733,10 +735,10 @@ bool ELFObjectWriter::isInSymtab(const MCAsmLayout &Layout,
   if (Symbol.isUndefined() && !Symbol.isBindingSet())
     return false;
 
-  if (Symbol.getType() == ELF::STT_SECTION)
-    return true;
-
   if (Symbol.isTemporary())
+    return false;
+
+  if (Symbol.getType() == ELF::STT_SECTION)
     return false;
 
   return true;

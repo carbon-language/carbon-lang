@@ -111,14 +111,6 @@ leaq .Llocal1(%rip), %rdi
 // CHECK-NOT: Symbol {
 // CHECK:        }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: (0)
-// CHECK-NOT: Symbol {
-// CHECK:        }
-// CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: (0)
-// CHECK-NOT: Symbol {
-// CHECK:        }
-// CHECK-NEXT:   Symbol {
 // CHECK-NEXT:     Name: bar2
 // CHECK-NEXT:     Value: 0x0
 // CHECK-NEXT:     Size: 0

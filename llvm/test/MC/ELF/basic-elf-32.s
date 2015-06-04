@@ -54,20 +54,6 @@ main:                                   # @main
 // CHECK: ]
 
 // CHECK: Symbols [
-// CHECK:   Symbol {
-// CHECK:     Binding: Local
-// CHECK:     Type: Section
-// CHECK:   }
-
-// CHECK:   Symbol {
-// CHECK:     Binding: Local
-// CHECK:     Type: Section
-// CHECK:   }
-
-// CHECK:   Symbol {
-// CHECK:     Binding: Local
-// CHECK:     Type: Section
-// CHECK:   }
 
 // CHECK:   Symbol {
 // CHECK:     Name: main

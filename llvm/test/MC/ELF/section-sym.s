@@ -40,14 +40,54 @@
 // CHECK-NEXT:   EntrySize:       0
 // CHECK-NEXT: }
 
-// The relocation points to symbol 6
+// The relocation points to symbol 3
 // CHECK:      Relocations [
 // CHECK-NEXT:   Section ({{.*}}) .relabar {
 // CHECK-NEXT:     Relocation {
 // CHECK-NEXT:       Offset:  0x0
 // CHECK-NEXT:       Type:    R_X86_64_32 (10)
-// CHECK-NEXT:       Symbol:  foo (6)
+// CHECK-NEXT:       Symbol:  foo (3)
 // CHECK-NEXT:       Addend:  0x0
 // CHECK-NEXT:     }
 // CHECK-NEXT:   }
+// CHECK-NEXT: ]
+
+// Symbol 3 is section 6
+// CHECK: Symbols [
+// CHECK-NEXT:  Symbol {
+// CHECK-NEXT:    Name:  (0)
+// CHECK-NEXT:    Value: 0x0
+// CHECK-NEXT:    Size: 0
+// CHECK-NEXT:    Binding: Local (0x0)
+// CHECK-NEXT:    Type: None (0x0)
+// CHECK-NEXT:    Other: 0
+// CHECK-NEXT:    Section: Undefined (0x0)
+// CHECK-NEXT:  }
+// CHECK-NEXT:  Symbol {
+// CHECK-NEXT:    Name: f1 (57)
+// CHECK-NEXT:    Value: 0x0
+// CHECK-NEXT:    Size: 0
+// CHECK-NEXT:    Binding: Local (0x0)
+// CHECK-NEXT:    Type: None (0x0)
+// CHECK-NEXT:    Other: 0
+// CHECK-NEXT:    Section: .group (0x5)
+// CHECK-NEXT:  }
+// CHECK-NEXT:  Symbol {
+// CHECK-NEXT:    Name: f2 (54)
+// CHECK-NEXT:    Value: 0x0
+// CHECK-NEXT:    Size: 0
+// CHECK-NEXT:    Binding: Local (0x0)
+// CHECK-NEXT:    Type: None (0x0)
+// CHECK-NEXT:    Other: 0
+// CHECK-NEXT:    Section: .group (0x7)
+// CHECK-NEXT:  }
+// CHECK-NEXT:  Symbol {
+// CHECK-NEXT:    Name:  (0)
+// CHECK-NEXT:    Value: 0x0
+// CHECK-NEXT:    Size: 0
+// CHECK-NEXT:    Binding: Local (0x0)
+// CHECK-NEXT:    Type: Section (0x3)
+// CHECK-NEXT:    Other: 0
+// CHECK-NEXT:    Section: foo (0x6)
+// CHECK-NEXT:  }
 // CHECK-NEXT: ]
