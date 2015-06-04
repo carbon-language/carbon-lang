@@ -1002,7 +1002,16 @@ bool SelectionDAGBuilder::findValue(const Value *V) const {
 SDValue SelectionDAGBuilder::getNonRegisterValue(const Value *V) {
   // If we already have an SDValue for this value, use it.
   SDValue &N = NodeMap[V];
-  if (N.getNode()) return N;
+  if (N.getNode()) {
+    if (isa<ConstantSDNode>(N) || isa<ConstantFPSDNode>(N)) {
+      // Remove the debug location from the node as the node is about to be used
+      // in a location which may differ from the original debug location.  This
+      // is relevant to Constant and ConstantFP nodes because they can appear
+      // as constant expressions inside PHI nodes.
+      N->setDebugLoc(DebugLoc());
+    }
+    return N;
+  }
 
   // Otherwise create a new SDValue and remember it.
   SDValue Val = getValueImpl(V);
