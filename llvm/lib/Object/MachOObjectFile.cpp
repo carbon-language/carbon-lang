@@ -207,7 +207,10 @@ static std::error_code parseSegmentLoadCommand(
   const unsigned SegmentLoadSize = sizeof(SegmentCmd);
   if (Load.C.cmdsize < SegmentLoadSize)
     return object_error::macho_load_segment_too_small;
-  SegmentCmd S = getStruct<SegmentCmd>(Obj, Load.Ptr);
+  auto SegOrErr = getStructOrErr<SegmentCmd>(Obj, Load.Ptr);
+  if (!SegOrErr)
+    return SegOrErr.getError();
+  SegmentCmd S = SegOrErr.get();
   const unsigned SectionSize =
       Obj->is64Bit() ? sizeof(MachO::section_64) : sizeof(MachO::section);
   if (S.nsects > std::numeric_limits<uint32_t>::max() / SectionSize ||
