@@ -170,7 +170,8 @@ class TypePromotionTransaction;
     void EliminateMostlyEmptyBlock(BasicBlock *BB);
     bool OptimizeBlock(BasicBlock &BB, bool& ModifiedDT);
     bool OptimizeInst(Instruction *I, bool& ModifiedDT);
-    bool OptimizeMemoryInst(Instruction *I, Value *Addr, Type *AccessTy);
+    bool OptimizeMemoryInst(Instruction *I, Value *Addr,
+                            Type *AccessTy, unsigned AS);
     bool OptimizeInlineAsmInst(CallInst *CS);
     bool OptimizeCallInst(CallInst *CI, bool& ModifiedDT);
     bool MoveExtToFormExtLoad(Instruction *&I);
@@ -1410,11 +1411,15 @@ bool CodeGenPrepare::OptimizeCallInst(CallInst *CI, bool& ModifiedDT) {
     }
 
     if (TLI) {
+      // Unknown address space.
+      // TODO: Target hook to pick which address space the intrinsic cares
+      // about?
+      unsigned AddrSpace = ~0u;
       SmallVector<Value*, 2> PtrOps;
       Type *AccessTy;
-      if (TLI->GetAddrModeArguments(II, PtrOps, AccessTy))
+      if (TLI->GetAddrModeArguments(II, PtrOps, AccessTy, AddrSpace))
         while (!PtrOps.empty())
-          if (OptimizeMemoryInst(II, PtrOps.pop_back_val(), AccessTy))
+          if (OptimizeMemoryInst(II, PtrOps.pop_back_val(), AccessTy, AddrSpace))
             return true;
     }
   }
@@ -2095,6 +2100,7 @@ class AddressingModeMatcher {
   /// AccessTy/MemoryInst - This is the type for the access (e.g. double) and
   /// the memory instruction that we're computing this address for.
   Type *AccessTy;
+  unsigned AddrSpace;
   Instruction *MemoryInst;
 
   /// AddrMode - This is the addressing mode that we're building up.  This is
@@ -2114,14 +2120,15 @@ class AddressingModeMatcher {
   bool IgnoreProfitability;
 
   AddressingModeMatcher(SmallVectorImpl<Instruction *> &AMI,
-                        const TargetMachine &TM, Type *AT, Instruction *MI,
-                        ExtAddrMode &AM, const SetOfInstrs &InsertedTruncs,
+                        const TargetMachine &TM, Type *AT, unsigned AS,
+                        Instruction *MI, ExtAddrMode &AM,
+                        const SetOfInstrs &InsertedTruncs,
                         InstrToOrigTy &PromotedInsts,
                         TypePromotionTransaction &TPT)
       : AddrModeInsts(AMI), TM(TM),
         TLI(*TM.getSubtargetImpl(*MI->getParent()->getParent())
                  ->getTargetLowering()),
-        AccessTy(AT), MemoryInst(MI), AddrMode(AM),
+        AccessTy(AT), AddrSpace(AS), MemoryInst(MI), AddrMode(AM),
         InsertedTruncs(InsertedTruncs), PromotedInsts(PromotedInsts), TPT(TPT) {
     IgnoreProfitability = false;
   }
@@ -2135,7 +2142,7 @@ public:
   /// optimizations.
   /// \p PromotedInsts maps the instructions to their type before promotion.
   /// \p The ongoing transaction where every action should be registered.
-  static ExtAddrMode Match(Value *V, Type *AccessTy,
+  static ExtAddrMode Match(Value *V, Type *AccessTy, unsigned AS,
                            Instruction *MemoryInst,
                            SmallVectorImpl<Instruction*> &AddrModeInsts,
                            const TargetMachine &TM,
@@ -2144,7 +2151,7 @@ public:
                            TypePromotionTransaction &TPT) {
     ExtAddrMode Result;
 
-    bool Success = AddressingModeMatcher(AddrModeInsts, TM, AccessTy,
+    bool Success = AddressingModeMatcher(AddrModeInsts, TM, AccessTy, AS,
                                          MemoryInst, Result, InsertedTruncs,
                                          PromotedInsts, TPT).MatchAddr(V, 0);
     (void)Success; assert(Success && "Couldn't select *anything*?");
@@ -2190,7 +2197,7 @@ bool AddressingModeMatcher::MatchScaledValue(Value *ScaleReg, int64_t Scale,
   TestAddrMode.ScaledReg = ScaleReg;
 
   // If the new address isn't legal, bail out.
-  if (!TLI.isLegalAddressingMode(TestAddrMode, AccessTy))
+  if (!TLI.isLegalAddressingMode(TestAddrMode, AccessTy, AddrSpace))
     return false;
 
   // It was legal, so commit it.
@@ -2207,7 +2214,7 @@ bool AddressingModeMatcher::MatchScaledValue(Value *ScaleReg, int64_t Scale,
 
     // If this addressing mode is legal, commit it and remember that we folded
     // this instruction.
-    if (TLI.isLegalAddressingMode(TestAddrMode, AccessTy)) {
+    if (TLI.isLegalAddressingMode(TestAddrMode, AccessTy, AddrSpace)) {
       AddrModeInsts.push_back(cast<Instruction>(ScaleReg));
       AddrMode = TestAddrMode;
       return true;
@@ -2771,7 +2778,8 @@ bool AddressingModeMatcher::MatchOperationAddr(User *AddrInst, unsigned Opcode,
     // just add it to the disp field and check validity.
     if (VariableOperand == -1) {
       AddrMode.BaseOffs += ConstantOffset;
-      if (ConstantOffset == 0 || TLI.isLegalAddressingMode(AddrMode, AccessTy)){
+      if (ConstantOffset == 0 ||
+          TLI.isLegalAddressingMode(AddrMode, AccessTy, AddrSpace)) {
         // Check to see if we can fold the base pointer in too.
         if (MatchAddr(AddrInst->getOperand(0), Depth+1))
           return true;
@@ -2894,14 +2902,14 @@ bool AddressingModeMatcher::MatchAddr(Value *Addr, unsigned Depth) {
   if (ConstantInt *CI = dyn_cast<ConstantInt>(Addr)) {
     // Fold in immediates if legal for the target.
     AddrMode.BaseOffs += CI->getSExtValue();
-    if (TLI.isLegalAddressingMode(AddrMode, AccessTy))
+    if (TLI.isLegalAddressingMode(AddrMode, AccessTy, AddrSpace))
       return true;
     AddrMode.BaseOffs -= CI->getSExtValue();
   } else if (GlobalValue *GV = dyn_cast<GlobalValue>(Addr)) {
     // If this is a global variable, try to fold it into the addressing mode.
     if (!AddrMode.BaseGV) {
       AddrMode.BaseGV = GV;
-      if (TLI.isLegalAddressingMode(AddrMode, AccessTy))
+      if (TLI.isLegalAddressingMode(AddrMode, AccessTy, AddrSpace))
         return true;
       AddrMode.BaseGV = nullptr;
     }
@@ -2945,7 +2953,7 @@ bool AddressingModeMatcher::MatchAddr(Value *Addr, unsigned Depth) {
     AddrMode.HasBaseReg = true;
     AddrMode.BaseReg = Addr;
     // Still check for legality in case the target supports [imm] but not [i+r].
-    if (TLI.isLegalAddressingMode(AddrMode, AccessTy))
+    if (TLI.isLegalAddressingMode(AddrMode, AccessTy, AddrSpace))
       return true;
     AddrMode.HasBaseReg = false;
     AddrMode.BaseReg = nullptr;
@@ -2955,7 +2963,7 @@ bool AddressingModeMatcher::MatchAddr(Value *Addr, unsigned Depth) {
   if (AddrMode.Scale == 0) {
     AddrMode.Scale = 1;
     AddrMode.ScaledReg = Addr;
-    if (TLI.isLegalAddressingMode(AddrMode, AccessTy))
+    if (TLI.isLegalAddressingMode(AddrMode, AccessTy, AddrSpace))
       return true;
     AddrMode.Scale = 0;
     AddrMode.ScaledReg = nullptr;
@@ -3136,9 +3144,11 @@ IsProfitableToFoldIntoAddressingMode(Instruction *I, ExtAddrMode &AMBefore,
     // Get the access type of this use.  If the use isn't a pointer, we don't
     // know what it accesses.
     Value *Address = User->getOperand(OpNo);
-    if (!Address->getType()->isPointerTy())
+    PointerType *AddrTy = dyn_cast<PointerType>(Address->getType());
+    if (!AddrTy)
       return false;
-    Type *AddressAccessTy = Address->getType()->getPointerElementType();
+    Type *AddressAccessTy = AddrTy->getElementType();
+    unsigned AS = AddrTy->getAddressSpace();
 
     // Do a match against the root of this address, ignoring profitability. This
     // will tell us if the addressing mode for the memory operation will
@@ -3146,7 +3156,7 @@ IsProfitableToFoldIntoAddressingMode(Instruction *I, ExtAddrMode &AMBefore,
     ExtAddrMode Result;
     TypePromotionTransaction::ConstRestorationPt LastKnownGood =
         TPT.getRestorationPoint();
-    AddressingModeMatcher Matcher(MatchedAddrModeInsts, TM, AddressAccessTy,
+    AddressingModeMatcher Matcher(MatchedAddrModeInsts, TM, AddressAccessTy, AS,
                                   MemoryInst, Result, InsertedTruncs,
                                   PromotedInsts, TPT);
     Matcher.IgnoreProfitability = true;
@@ -3189,7 +3199,7 @@ static bool IsNonLocalValue(Value *V, BasicBlock *BB) {
 /// This method is used to optimize both load/store and inline asms with memory
 /// operands.
 bool CodeGenPrepare::OptimizeMemoryInst(Instruction *MemoryInst, Value *Addr,
-                                        Type *AccessTy) {
+                                        Type *AccessTy, unsigned AddrSpace) {
   Value *Repl = Addr;
 
   // Try to collapse single-value PHI nodes.  This is necessary to undo
@@ -3229,8 +3239,8 @@ bool CodeGenPrepare::OptimizeMemoryInst(Instruction *MemoryInst, Value *Addr,
     // For non-PHIs, determine the addressing mode being computed.
     SmallVector<Instruction*, 16> NewAddrModeInsts;
     ExtAddrMode NewAddrMode = AddressingModeMatcher::Match(
-        V, AccessTy, MemoryInst, NewAddrModeInsts, *TM, InsertedTruncsSet,
-        PromotedInsts, TPT);
+      V, AccessTy, AddrSpace, MemoryInst, NewAddrModeInsts, *TM,
+      InsertedTruncsSet, PromotedInsts, TPT);
 
     // This check is broken into two cases with very similar code to avoid using
     // getNumUses() as much as possible. Some values have a lot of uses, so
@@ -3545,7 +3555,7 @@ bool CodeGenPrepare::OptimizeInlineAsmInst(CallInst *CS) {
     if (OpInfo.ConstraintType == TargetLowering::C_Memory &&
         OpInfo.isIndirect) {
       Value *OpVal = CS->getArgOperand(ArgNo++);
-      MadeChange |= OptimizeMemoryInst(CS, OpVal, OpVal->getType());
+      MadeChange |= OptimizeMemoryInst(CS, OpVal, OpVal->getType(), ~0u);
     } else if (OpInfo.Type == InlineAsm::isInput)
       ArgNo++;
   }
@@ -4394,15 +4404,19 @@ bool CodeGenPrepare::OptimizeInst(Instruction *I, bool& ModifiedDT) {
       return OptimizeCmpExpression(CI);
 
   if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
-    if (TLI)
-      return OptimizeMemoryInst(I, I->getOperand(0), LI->getType());
+    if (TLI) {
+      unsigned AS = LI->getPointerAddressSpace();
+      return OptimizeMemoryInst(I, I->getOperand(0), LI->getType(), AS);
+    }
     return false;
   }
 
   if (StoreInst *SI = dyn_cast<StoreInst>(I)) {
-    if (TLI)
+    if (TLI) {
+      unsigned AS = SI->getPointerAddressSpace();
       return OptimizeMemoryInst(I, SI->getOperand(1),
-                                SI->getOperand(0)->getType());
+                                SI->getOperand(0)->getType(), AS);
+    }
     return false;
   }
 
