@@ -7807,21 +7807,17 @@ void SelectionDAGBuilder::lowerWorkItem(SwitchWorkListItem W, Value *Cond,
       const APInt &BigValue = Big.Low->getValue();
 
       // Check that there is only one bit different.
-      if ((BigValue ^ SmallValue).isPowerOf2()) {
-        // Isolate the common bit.
-        APInt CommonBit = BigValue & ~SmallValue;
-        assert((SmallValue | CommonBit) == BigValue &&
-               CommonBit.countPopulation() == 1 && "Not a common bit?");
-
+      APInt CommonBit = BigValue ^ SmallValue;
+      if (CommonBit.isPowerOf2()) {
         SDValue CondLHS = getValue(Cond);
         EVT VT = CondLHS.getValueType();
         SDLoc DL = getCurSDLoc();
 
         SDValue Or = DAG.getNode(ISD::OR, DL, VT, CondLHS,
                                  DAG.getConstant(CommonBit, DL, VT));
-        SDValue Cond = DAG.getSetCC(DL, MVT::i1, Or,
-                                    DAG.getConstant(BigValue, DL, VT),
-                                    ISD::SETEQ);
+        SDValue Cond = DAG.getSetCC(
+            DL, MVT::i1, Or, DAG.getConstant(BigValue | SmallValue, DL, VT),
+            ISD::SETEQ);
 
         // Update successor info.
         // Both Small and Big will jump to Small.BB, so we sum up the weights.
