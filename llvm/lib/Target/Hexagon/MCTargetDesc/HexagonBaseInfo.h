@@ -43,6 +43,7 @@ namespace HexagonII {
     TypeXTYPE   = 8,
     TypeMEMOP   = 9,
     TypeNV      = 10,
+    TypeDUPLEX  = 11,
     TypePREFIX  = 30, // Such as extenders.
     TypeENDLOOP = 31  // Such as end of a HW loop.
   };
@@ -188,6 +189,17 @@ namespace HexagonII {
 
     // Offset from the base of the SDA.
     MO_GPREL
+  };
+
+  // Hexagon Sub-instruction classes.
+  enum SubInstructionGroup {
+    HSIG_None = 0,
+    HSIG_L1,
+    HSIG_L2,
+    HSIG_S1,
+    HSIG_S2,
+    HSIG_A,
+    HSIG_Compound
   };
 
   enum InstParseBits {

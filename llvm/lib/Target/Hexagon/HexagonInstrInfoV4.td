@@ -4263,3 +4263,7 @@ def J4_jumpsetr: CJInst <
     let Inst{19-16} = Rs;
     let Inst{7-1} = r9_2{8-2};
   }
+
+// Duplex instructions
+//===----------------------------------------------------------------------===//
+include "HexagonIsetDx.td"

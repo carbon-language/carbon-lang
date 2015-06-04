@@ -16,6 +16,7 @@
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCELFObjectWriter.h"
 #include "llvm/MC/MCFixupKindInfo.h"
+#include "llvm/MC/MCInstrInfo.h"
 #include "llvm/Support/TargetRegistry.h"
 
 using namespace llvm;

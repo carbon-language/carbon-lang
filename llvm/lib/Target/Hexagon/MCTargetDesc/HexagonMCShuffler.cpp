@@ -147,6 +147,61 @@ bool llvm::HexagonMCShuffle(MCInstrInfo const &MCII, MCSubtargetInfo const &STI,
   return true;
 }
 
+unsigned
+llvm::HexagonMCShuffle(MCInstrInfo const &MCII, MCSubtargetInfo const &STI,
+                       MCContext &Context, MCInst &MCB,
+                       SmallVector<DuplexCandidate, 8> possibleDuplexes) {
+
+  if (DisableShuffle)
+    return HexagonShuffler::SHUFFLE_SUCCESS;
+
+  if (!HexagonMCInstrInfo::bundleSize(MCB)) {
+    // There once was a bundle:
+    //    BUNDLE %D2<imp-def>, %R4<imp-def>, %R5<imp-def>, %D7<imp-def>, ...
+    //      * %D2<def> = IMPLICIT_DEF; flags:
+    //      * %D7<def> = IMPLICIT_DEF; flags:
+    // After the IMPLICIT_DEFs were removed by the asm printer, the bundle
+    // became empty.
+    DEBUG(dbgs() << "Skipping empty bundle");
+    return HexagonShuffler::SHUFFLE_SUCCESS;
+  } else if (!HexagonMCInstrInfo::isBundle(MCB)) {
+    DEBUG(dbgs() << "Skipping stand-alone insn");
+    return HexagonShuffler::SHUFFLE_SUCCESS;
+  }
+
+  bool doneShuffling = false;
+  unsigned shuffleError;
+  while (possibleDuplexes.size() > 0 && (!doneShuffling)) {
+    // case of Duplex Found
+    DuplexCandidate duplexToTry = possibleDuplexes.pop_back_val();
+    MCInst Attempt(MCB);
+    HexagonMCInstrInfo::replaceDuplex(Context, Attempt, duplexToTry);
+    HexagonMCShuffler MCS(MCII, STI, Attempt); // copy packet to the shuffler
+    if (MCS.size() == 1) {                     // case of one duplex
+      // copy the created duplex in the shuffler to the bundle
+      MCS.copyTo(MCB);
+      doneShuffling = true;
+      return HexagonShuffler::SHUFFLE_SUCCESS;
+    }
+    // try shuffle with this duplex
+    doneShuffling = MCS.reshuffleTo(MCB);
+    shuffleError = MCS.getError();
+
+    if (doneShuffling)
+      break;
+  }
+
+  if (doneShuffling == false) {
+    HexagonMCShuffler MCS(MCII, STI, MCB);
+    doneShuffling = MCS.reshuffleTo(MCB); // shuffle
+    shuffleError = MCS.getError();
+  }
+  if (!doneShuffling)
+    return shuffleError;
+
+  return HexagonShuffler::SHUFFLE_SUCCESS;
+}
+
 bool llvm::HexagonMCShuffle(MCInstrInfo const &MCII, MCSubtargetInfo const &STI,
                             MCInst &MCB, MCInst const *AddMI, int fixupCount) {
   if (!HexagonMCInstrInfo::isBundle(MCB) || !AddMI)

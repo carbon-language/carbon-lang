@@ -16,6 +16,8 @@
 #include "Hexagon.h"
 #include "HexagonBaseInfo.h"
 
+#include "llvm/MC/MCContext.h"
+#include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 
 namespace llvm {
@@ -31,6 +33,32 @@ size_t HexagonMCInstrInfo::bundleSize(MCInst const &MCI) {
     return (MCI.size() - bundleInstructionsOffset);
   else
     return (1);
+}
+
+MCInst *HexagonMCInstrInfo::deriveDuplex(MCContext &Context, unsigned iClass,
+                                         MCInst const &inst0,
+                                         MCInst const &inst1) {
+  assert((iClass <= 0xf) && "iClass must have range of 0 to 0xf");
+  MCInst *duplexInst = new (Context) MCInst;
+  duplexInst->setOpcode(Hexagon::DuplexIClass0 + iClass);
+
+  MCInst *SubInst0 = new (Context) MCInst(deriveSubInst(inst0));
+  MCInst *SubInst1 = new (Context) MCInst(deriveSubInst(inst1));
+  duplexInst->addOperand(MCOperand::createInst(SubInst0));
+  duplexInst->addOperand(MCOperand::createInst(SubInst1));
+  return duplexInst;
+}
+
+MCInst const *HexagonMCInstrInfo::extenderForIndex(MCInst const &MCB,
+                                                   size_t Index) {
+  assert(Index <= bundleSize(MCB));
+  if (Index == 0)
+    return nullptr;
+  MCInst const *Inst =
+      MCB.getOperand(Index + bundleInstructionsOffset - 1).getInst();
+  if (isImmext(*Inst))
+    return Inst;
+  return nullptr;
 }
 
 HexagonII::MemAccessSize
@@ -188,6 +216,10 @@ bool HexagonMCInstrInfo::hasImmExt(MCInst const &MCI) {
   return false;
 }
 
+bool HexagonMCInstrInfo::hasExtenderForIndex(MCInst const &MCB, size_t Index) {
+  return extenderForIndex(MCB, Index) != nullptr;
+}
+
 // Return whether the instruction is a legal new-value producer.
 bool HexagonMCInstrInfo::hasNewValue(MCInstrInfo const &MCII,
                                      MCInst const &MCI) {
@@ -212,6 +244,15 @@ bool HexagonMCInstrInfo::isCanon(MCInstrInfo const &MCII, MCInst const &MCI) {
   return (!HexagonMCInstrInfo::getDesc(MCII, MCI).isPseudo() &&
           !HexagonMCInstrInfo::isPrefix(MCII, MCI) &&
           HexagonMCInstrInfo::getType(MCII, MCI) != HexagonII::TypeENDLOOP);
+}
+
+bool HexagonMCInstrInfo::isDblRegForSubInst(unsigned Reg) {
+  return ((Reg >= Hexagon::D0 && Reg <= Hexagon::D3) ||
+          (Reg >= Hexagon::D8 && Reg <= Hexagon::D11));
+}
+
+bool HexagonMCInstrInfo::isDuplex(MCInstrInfo const &MCII, MCInst const &MCI) {
+  return HexagonII::TypeDUPLEX == HexagonMCInstrInfo::getType(MCII, MCI);
 }
 
 // Return whether the instruction needs to be constant extended.
@@ -281,6 +322,15 @@ bool HexagonMCInstrInfo::isInnerLoop(MCInst const &MCI) {
   return (Flags & innerLoopMask) != 0;
 }
 
+bool HexagonMCInstrInfo::isIntReg(unsigned Reg) {
+  return (Reg >= Hexagon::R0 && Reg <= Hexagon::R31);
+}
+
+bool HexagonMCInstrInfo::isIntRegForSubInst(unsigned Reg) {
+  return ((Reg >= Hexagon::R0 && Reg <= Hexagon::R7) ||
+          (Reg >= Hexagon::R16 && Reg <= Hexagon::R23));
+}
+
 // Return whether the insn is a new-value consumer.
 bool HexagonMCInstrInfo::isNewValue(MCInstrInfo const &MCII,
                                     MCInst const &MCI) {
@@ -314,6 +364,10 @@ bool HexagonMCInstrInfo::isPredicatedTrue(MCInstrInfo const &MCII,
   const uint64_t F = HexagonMCInstrInfo::getDesc(MCII, MCI).TSFlags;
   return (
       !((F >> HexagonII::PredicatedFalsePos) & HexagonII::PredicatedFalseMask));
+}
+
+bool HexagonMCInstrInfo::isPredReg(unsigned Reg) {
+  return (Reg >= Hexagon::P0 && Reg <= Hexagon::P3_0);
 }
 
 bool HexagonMCInstrInfo::isPrefix(MCInstrInfo const &MCII, MCInst const &MCI) {
@@ -365,6 +419,20 @@ bool HexagonMCInstrInfo::prefersSlot3(MCInstrInfo const &MCII,
     return true;
   }
   return false;
+}
+
+void HexagonMCInstrInfo::replaceDuplex(MCContext &Context, MCInst &MCB,
+                                       DuplexCandidate Candidate) {
+  assert(Candidate.packetIndexI < MCB.size());
+  assert(Candidate.packetIndexJ < MCB.size());
+  assert(isBundle(MCB));
+  MCInst *Duplex =
+      deriveDuplex(Context, Candidate.iClass,
+                   *MCB.getOperand(Candidate.packetIndexJ).getInst(),
+                   *MCB.getOperand(Candidate.packetIndexI).getInst());
+  assert(Duplex != nullptr);
+  MCB.getOperand(Candidate.packetIndexI).setInst(Duplex);
+  MCB.erase(MCB.begin() + Candidate.packetIndexJ);
 }
 
 void HexagonMCInstrInfo::setInnerLoop(MCInst &MCI) {

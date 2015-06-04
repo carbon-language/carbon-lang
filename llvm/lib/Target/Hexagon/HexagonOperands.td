@@ -27,6 +27,7 @@ let PrintMethod = "printImmOperand" in {
   def s8Imm : Operand<i32>;
   def s8Imm64 : Operand<i64>;
   def s6Imm : Operand<i32>;
+  def s6_3Imm : Operand<i32>;
   def s4Imm : Operand<i32>;
   def s4_0Imm : Operand<i32>;
   def s4_1Imm : Operand<i32>;
@@ -51,8 +52,14 @@ let PrintMethod = "printImmOperand" in {
   def u6_2Imm : Operand<i32>;
   def u6_3Imm : Operand<i32>;
   def u5Imm : Operand<i32>;
+  def u5_2Imm : Operand<i32>;
+  def u5_3Imm : Operand<i32>;
   def u4Imm : Operand<i32>;
+  def u4_0Imm : Operand<i32>;
+  def u4_2Imm : Operand<i32>;
   def u3Imm : Operand<i32>;
+  def u3_0Imm : Operand<i32>;
+  def u3_1Imm : Operand<i32>;
   def u2Imm : Operand<i32>;
   def u1Imm : Operand<i32>;
   def n8Imm : Operand<i32>;
@@ -444,6 +451,7 @@ let PrintMethod = "printExtOperand" in {
   def s10Ext : Operand<i32>;
   def s9Ext : Operand<i32>;
   def s8Ext : Operand<i32>;
+  def s7Ext : Operand<i32>;
   def s6Ext : Operand<i32>;
   def s11_0Ext : Operand<i32>;
   def s11_1Ext : Operand<i32>;
