@@ -4,6 +4,3 @@ RUN: llvm-dwarfdump %p/Inputs/invalid.elf 2>&1 | FileCheck %s --check-prefix=INV
 RUN: llvm-dwarfdump %p/Inputs/invalid.elf.2 2>&1 | FileCheck %s --check-prefix=INVALID-ELF
 RUN: llvm-dwarfdump %p/Inputs/invalid.elf.3 2>&1 | FileCheck %s --check-prefix=INVALID-ELF
 INVALID-ELF: Invalid data was encountered while parsing the file
-
-RUN: llvm-dwarfdump %p/Inputs/invalid.elf.no-shstrtab 2>&1 | FileCheck %s --check-prefix=EMPTY
-EMPTY: .debug_info contents:
