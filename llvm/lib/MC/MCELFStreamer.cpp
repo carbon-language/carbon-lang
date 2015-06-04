@@ -601,7 +601,7 @@ void MCELFStreamer::EmitBundleUnlock() {
     report_fatal_error("Empty bundle-locked group is forbidden");
 
   // When the -mc-relax-all flag is used, we emit instructions to fragments
-  // stored on a stack. When the bundle unlock is emited, we pop a fragment 
+  // stored on a stack. When the bundle unlock is emited, we pop a fragment
   // from the stack a merge it to the one below.
   if (getAssembler().getRelaxAll()) {
     assert(!BundleGroups.empty() && "There are no bundle groups");
