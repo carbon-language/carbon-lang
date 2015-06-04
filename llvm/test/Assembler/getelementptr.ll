@@ -19,6 +19,10 @@
 @y = global i32* getelementptr ({ i32, i32 }, { i32, i32 }* @x, i16 42, i32 0)
 ; CHECK: @y = global i32* getelementptr ({ i32, i32 }, { i32, i32 }* @x, i16 42, i32 0)
 
+@PR23753_a = external global i8
+@PR23753_b = global i8* getelementptr (i8, i8* @PR23753_a, i64 ptrtoint (i8* @PR23753_a to i64))
+; CHECK: @PR23753_b = global i8* getelementptr (i8, i8* @PR23753_a, i64 ptrtoint (i8* @PR23753_a to i64))
+
 ; See if i92 indices work too.
 define i32 *@test({i32, i32}* %t, i92 %n) {
 ; CHECK: @test
