@@ -2282,7 +2282,11 @@ void SelectionDAGBuilder::visitSelect(const User &I) {
     while (TLI.getTypeAction(Ctx, VT) == TargetLoweringBase::TypeSplitVector)
       VT = TLI.getTypeToTransformTo(Ctx, VT);
 
-    if (Opc != ISD::DELETED_NODE && TLI.isOperationLegalOrCustom(Opc, VT)) {
+    if (Opc != ISD::DELETED_NODE && TLI.isOperationLegalOrCustom(Opc, VT) &&
+        // If the underlying comparison instruction is used by any other instruction,
+        // the consumed instructions won't be destroyed, so it is not profitable
+        // to convert to a min/max.
+        cast<SelectInst>(&I)->getCondition()->hasOneUse()) {
       OpCode = Opc;
       LHSVal = getValue(LHS);
       RHSVal = getValue(RHS);

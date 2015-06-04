@@ -94,3 +94,14 @@ define <16 x i32> @t11(<16 x i32> %a, <16 x i32> %b) {
   %t2 = select <16 x i1> %t1, <16 x i32> %a, <16 x i32> %b
   ret <16 x i32> %t2
 }
+
+; CHECK-LABEL: t12
+; CHECK-NOT: umin
+; The icmp is used by two instructions, so don't produce a umin node.
+define <16 x i8> @t12(<16 x i8> %a, <16 x i8> %b) {
+  %t1 = icmp ugt <16 x i8> %b, %a
+  %t2 = select <16 x i1> %t1, <16 x i8> %a, <16 x i8> %b
+  %t3 = zext <16 x i1> %t1 to <16 x i8>
+  %t4 = add <16 x i8> %t3, %t2
+  ret <16 x i8> %t4
+}
