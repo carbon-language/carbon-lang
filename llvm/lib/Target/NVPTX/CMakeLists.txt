@@ -20,7 +20,7 @@ set(NVPTXCodeGen_sources
   NVPTXImageOptimizer.cpp
   NVPTXInstrInfo.cpp
   NVPTXLowerAggrCopies.cpp
-  NVPTXLowerKernelArgs.cpp
+  NVPTXLowerStructArgs.cpp
   NVPTXMCExpr.cpp
   NVPTXPrologEpilogPass.cpp
   NVPTXRegisterInfo.cpp

@@ -69,7 +69,7 @@ ModulePass *createNVVMReflectPass(const StringMap<int>& Mapping);
 MachineFunctionPass *createNVPTXPrologEpilogPass();
 MachineFunctionPass *createNVPTXReplaceImageHandlesPass();
 FunctionPass *createNVPTXImageOptimizerPass();
-FunctionPass *createNVPTXLowerKernelArgsPass(const NVPTXTargetMachine *TM);
+FunctionPass *createNVPTXLowerStructArgsPass();
 
 bool isImageOrSamplerVal(const Value *, const Module *);
 
