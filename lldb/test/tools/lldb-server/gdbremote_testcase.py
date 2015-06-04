@@ -1065,6 +1065,9 @@ class GdbRemoteTestCaseBase(TestBase):
             # This is a 2-letter register name that ends in "s", like a segment register.
             # Don't try to bit flip these.
             return False
+        if re.match("^(c|)psr$", reg_info["name"]):
+            # This is an ARM program status register; don't flip it.
+            return False
         # Okay, this looks fine-enough.
         return True
 
