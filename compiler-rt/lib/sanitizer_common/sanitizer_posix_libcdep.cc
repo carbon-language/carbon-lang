@@ -35,6 +35,13 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#if SANITIZER_FREEBSD
+// The MAP_NORESERVE define has been removed in FreeBSD 11.x, and even before
+// that, it was never implemented.  So just define it to zero.
+#undef  MAP_NORESERVE
+#define MAP_NORESERVE 0
+#endif
+
 namespace __sanitizer {
 
 u32 GetUid() {
