@@ -57,7 +57,7 @@ bool BPFAsmBackend::writeNopData(uint64_t Count, MCObjectWriter *OW) const {
     return false;
 
   for (uint64_t i = 0; i < Count; i += 8)
-    OW->Write64(0x15000000);
+    OW->write64(0x15000000);
 
   return true;
 }

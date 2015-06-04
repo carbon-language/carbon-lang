@@ -105,7 +105,7 @@ void SystemZMCAsmBackend::applyFixup(const MCFixup &Fixup, char *Data,
 bool SystemZMCAsmBackend::writeNopData(uint64_t Count,
                                        MCObjectWriter *OW) const {
   for (uint64_t I = 0; I != Count; ++I)
-    OW->Write8(7);
+    OW->write8(7);
   return true;
 }
 

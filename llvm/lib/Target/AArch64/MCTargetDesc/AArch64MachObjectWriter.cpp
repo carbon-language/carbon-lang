@@ -33,7 +33,7 @@ public:
   AArch64MachObjectWriter(uint32_t CPUType, uint32_t CPUSubtype)
       : MCMachObjectTargetWriter(true /* is64Bit */, CPUType, CPUSubtype) {}
 
-  void RecordRelocation(MachObjectWriter *Writer, MCAssembler &Asm,
+  void recordRelocation(MachObjectWriter *Writer, MCAssembler &Asm,
                         const MCAsmLayout &Layout, const MCFragment *Fragment,
                         const MCFixup &Fixup, MCValue Target,
                         uint64_t &FixedValue) override;
@@ -139,7 +139,7 @@ static bool canUseLocalRelocation(const MCSectionMachO &Section,
   return false;
 }
 
-void AArch64MachObjectWriter::RecordRelocation(
+void AArch64MachObjectWriter::recordRelocation(
     MachObjectWriter *Writer, MCAssembler &Asm, const MCAsmLayout &Layout,
     const MCFragment *Fragment, const MCFixup &Fixup, MCValue Target,
     uint64_t &FixedValue) {
@@ -313,7 +313,7 @@ void AArch64MachObjectWriter::RecordRelocation(
         Asm.getContext().reportFatalError(Fixup.getLoc(),
                                     "unable to resolve variable '" +
                                         Symbol->getName() + "'");
-      return RecordRelocation(Writer, Asm, Layout, Fragment, Fixup, Target,
+      return recordRelocation(Writer, Asm, Layout, Fragment, Fixup, Target,
                               FixedValue);
     }
 

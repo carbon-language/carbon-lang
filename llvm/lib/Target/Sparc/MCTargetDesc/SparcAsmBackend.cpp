@@ -260,7 +260,7 @@ namespace {
 
       uint64_t NumNops = Count / 4;
       for (uint64_t i = 0; i != NumNops; ++i)
-        OW->Write32(0x01000000);
+        OW->write32(0x01000000);
 
       return true;
     }

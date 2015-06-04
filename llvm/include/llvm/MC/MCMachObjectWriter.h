@@ -62,7 +62,7 @@ public:
   /// \name API
   /// @{
 
-  virtual void RecordRelocation(MachObjectWriter *Writer, MCAssembler &Asm,
+  virtual void recordRelocation(MachObjectWriter *Writer, MCAssembler &Asm,
                                 const MCAsmLayout &Layout,
                                 const MCFragment *Fragment,
                                 const MCFixup &Fixup, MCValue Target,
@@ -234,7 +234,7 @@ public:
                             const MCFixup &Fixup, MCValue Target,
                             uint64_t &FixedValue);
 
-  void RecordRelocation(MCAssembler &Asm, const MCAsmLayout &Layout,
+  void recordRelocation(MCAssembler &Asm, const MCAsmLayout &Layout,
                         const MCFragment *Fragment, const MCFixup &Fixup,
                         MCValue Target, bool &IsPCRel,
                         uint64_t &FixedValue) override;
@@ -254,12 +254,12 @@ public:
   void ExecutePostLayoutBinding(MCAssembler &Asm,
                                 const MCAsmLayout &Layout) override;
 
-  bool IsSymbolRefDifferenceFullyResolvedImpl(const MCAssembler &Asm,
+  bool isSymbolRefDifferenceFullyResolvedImpl(const MCAssembler &Asm,
                                               const MCSymbol &SymA,
                                               const MCFragment &FB, bool InSet,
                                               bool IsPCRel) const override;
 
-  void WriteObject(MCAssembler &Asm, const MCAsmLayout &Layout) override;
+  void writeObject(MCAssembler &Asm, const MCAsmLayout &Layout) override;
 };
 
 

@@ -177,19 +177,19 @@ public:
   void ExecutePostLayoutBinding(MCAssembler &Asm,
                                 const MCAsmLayout &Layout) override;
 
-  bool IsSymbolRefDifferenceFullyResolvedImpl(const MCAssembler &Asm,
+  bool isSymbolRefDifferenceFullyResolvedImpl(const MCAssembler &Asm,
                                               const MCSymbol &SymA,
                                               const MCFragment &FB, bool InSet,
                                               bool IsPCRel) const override;
 
   bool isWeak(const MCSymbol &Sym) const override;
 
-  void RecordRelocation(MCAssembler &Asm, const MCAsmLayout &Layout,
+  void recordRelocation(MCAssembler &Asm, const MCAsmLayout &Layout,
                         const MCFragment *Fragment, const MCFixup &Fixup,
                         MCValue Target, bool &IsPCRel,
                         uint64_t &FixedValue) override;
 
-  void WriteObject(MCAssembler &Asm, const MCAsmLayout &Layout) override;
+  void writeObject(MCAssembler &Asm, const MCAsmLayout &Layout) override;
 };
 }
 
@@ -546,40 +546,40 @@ bool WinCOFFObjectWriter::IsPhysicalSection(COFFSection *S) {
 
 void WinCOFFObjectWriter::WriteFileHeader(const COFF::header &Header) {
   if (UseBigObj) {
-    WriteLE16(COFF::IMAGE_FILE_MACHINE_UNKNOWN);
-    WriteLE16(0xFFFF);
-    WriteLE16(COFF::BigObjHeader::MinBigObjectVersion);
-    WriteLE16(Header.Machine);
-    WriteLE32(Header.TimeDateStamp);
-    WriteBytes(StringRef(COFF::BigObjMagic, sizeof(COFF::BigObjMagic)));
-    WriteLE32(0);
-    WriteLE32(0);
-    WriteLE32(0);
-    WriteLE32(0);
-    WriteLE32(Header.NumberOfSections);
-    WriteLE32(Header.PointerToSymbolTable);
-    WriteLE32(Header.NumberOfSymbols);
+    writeLE16(COFF::IMAGE_FILE_MACHINE_UNKNOWN);
+    writeLE16(0xFFFF);
+    writeLE16(COFF::BigObjHeader::MinBigObjectVersion);
+    writeLE16(Header.Machine);
+    writeLE32(Header.TimeDateStamp);
+    writeBytes(StringRef(COFF::BigObjMagic, sizeof(COFF::BigObjMagic)));
+    writeLE32(0);
+    writeLE32(0);
+    writeLE32(0);
+    writeLE32(0);
+    writeLE32(Header.NumberOfSections);
+    writeLE32(Header.PointerToSymbolTable);
+    writeLE32(Header.NumberOfSymbols);
   } else {
-    WriteLE16(Header.Machine);
-    WriteLE16(static_cast<int16_t>(Header.NumberOfSections));
-    WriteLE32(Header.TimeDateStamp);
-    WriteLE32(Header.PointerToSymbolTable);
-    WriteLE32(Header.NumberOfSymbols);
-    WriteLE16(Header.SizeOfOptionalHeader);
-    WriteLE16(Header.Characteristics);
+    writeLE16(Header.Machine);
+    writeLE16(static_cast<int16_t>(Header.NumberOfSections));
+    writeLE32(Header.TimeDateStamp);
+    writeLE32(Header.PointerToSymbolTable);
+    writeLE32(Header.NumberOfSymbols);
+    writeLE16(Header.SizeOfOptionalHeader);
+    writeLE16(Header.Characteristics);
   }
 }
 
 void WinCOFFObjectWriter::WriteSymbol(const COFFSymbol &S) {
-  WriteBytes(StringRef(S.Data.Name, COFF::NameSize));
-  WriteLE32(S.Data.Value);
+  writeBytes(StringRef(S.Data.Name, COFF::NameSize));
+  writeLE32(S.Data.Value);
   if (UseBigObj)
-    WriteLE32(S.Data.SectionNumber);
+    writeLE32(S.Data.SectionNumber);
   else
-    WriteLE16(static_cast<int16_t>(S.Data.SectionNumber));
-  WriteLE16(S.Data.Type);
-  Write8(S.Data.StorageClass);
-  Write8(S.Data.NumberOfAuxSymbols);
+    writeLE16(static_cast<int16_t>(S.Data.SectionNumber));
+  writeLE16(S.Data.Type);
+  write8(S.Data.StorageClass);
+  write8(S.Data.NumberOfAuxSymbols);
   WriteAuxiliarySymbols(S.Aux);
 }
 
@@ -589,44 +589,44 @@ void WinCOFFObjectWriter::WriteAuxiliarySymbols(
        i != e; ++i) {
     switch (i->AuxType) {
     case ATFunctionDefinition:
-      WriteLE32(i->Aux.FunctionDefinition.TagIndex);
-      WriteLE32(i->Aux.FunctionDefinition.TotalSize);
-      WriteLE32(i->Aux.FunctionDefinition.PointerToLinenumber);
-      WriteLE32(i->Aux.FunctionDefinition.PointerToNextFunction);
+      writeLE32(i->Aux.FunctionDefinition.TagIndex);
+      writeLE32(i->Aux.FunctionDefinition.TotalSize);
+      writeLE32(i->Aux.FunctionDefinition.PointerToLinenumber);
+      writeLE32(i->Aux.FunctionDefinition.PointerToNextFunction);
       WriteZeros(sizeof(i->Aux.FunctionDefinition.unused));
       if (UseBigObj)
         WriteZeros(COFF::Symbol32Size - COFF::Symbol16Size);
       break;
     case ATbfAndefSymbol:
       WriteZeros(sizeof(i->Aux.bfAndefSymbol.unused1));
-      WriteLE16(i->Aux.bfAndefSymbol.Linenumber);
+      writeLE16(i->Aux.bfAndefSymbol.Linenumber);
       WriteZeros(sizeof(i->Aux.bfAndefSymbol.unused2));
-      WriteLE32(i->Aux.bfAndefSymbol.PointerToNextFunction);
+      writeLE32(i->Aux.bfAndefSymbol.PointerToNextFunction);
       WriteZeros(sizeof(i->Aux.bfAndefSymbol.unused3));
       if (UseBigObj)
         WriteZeros(COFF::Symbol32Size - COFF::Symbol16Size);
       break;
     case ATWeakExternal:
-      WriteLE32(i->Aux.WeakExternal.TagIndex);
-      WriteLE32(i->Aux.WeakExternal.Characteristics);
+      writeLE32(i->Aux.WeakExternal.TagIndex);
+      writeLE32(i->Aux.WeakExternal.Characteristics);
       WriteZeros(sizeof(i->Aux.WeakExternal.unused));
       if (UseBigObj)
         WriteZeros(COFF::Symbol32Size - COFF::Symbol16Size);
       break;
     case ATFile:
-      WriteBytes(
+      writeBytes(
           StringRef(reinterpret_cast<const char *>(&i->Aux),
                     UseBigObj ? COFF::Symbol32Size : COFF::Symbol16Size));
       break;
     case ATSectionDefinition:
-      WriteLE32(i->Aux.SectionDefinition.Length);
-      WriteLE16(i->Aux.SectionDefinition.NumberOfRelocations);
-      WriteLE16(i->Aux.SectionDefinition.NumberOfLinenumbers);
-      WriteLE32(i->Aux.SectionDefinition.CheckSum);
-      WriteLE16(static_cast<int16_t>(i->Aux.SectionDefinition.Number));
-      Write8(i->Aux.SectionDefinition.Selection);
+      writeLE32(i->Aux.SectionDefinition.Length);
+      writeLE16(i->Aux.SectionDefinition.NumberOfRelocations);
+      writeLE16(i->Aux.SectionDefinition.NumberOfLinenumbers);
+      writeLE32(i->Aux.SectionDefinition.CheckSum);
+      writeLE16(static_cast<int16_t>(i->Aux.SectionDefinition.Number));
+      write8(i->Aux.SectionDefinition.Selection);
       WriteZeros(sizeof(i->Aux.SectionDefinition.unused));
-      WriteLE16(static_cast<int16_t>(i->Aux.SectionDefinition.Number >> 16));
+      writeLE16(static_cast<int16_t>(i->Aux.SectionDefinition.Number >> 16));
       if (UseBigObj)
         WriteZeros(COFF::Symbol32Size - COFF::Symbol16Size);
       break;
@@ -635,23 +635,23 @@ void WinCOFFObjectWriter::WriteAuxiliarySymbols(
 }
 
 void WinCOFFObjectWriter::WriteSectionHeader(const COFF::section &S) {
-  WriteBytes(StringRef(S.Name, COFF::NameSize));
+  writeBytes(StringRef(S.Name, COFF::NameSize));
 
-  WriteLE32(S.VirtualSize);
-  WriteLE32(S.VirtualAddress);
-  WriteLE32(S.SizeOfRawData);
-  WriteLE32(S.PointerToRawData);
-  WriteLE32(S.PointerToRelocations);
-  WriteLE32(S.PointerToLineNumbers);
-  WriteLE16(S.NumberOfRelocations);
-  WriteLE16(S.NumberOfLineNumbers);
-  WriteLE32(S.Characteristics);
+  writeLE32(S.VirtualSize);
+  writeLE32(S.VirtualAddress);
+  writeLE32(S.SizeOfRawData);
+  writeLE32(S.PointerToRawData);
+  writeLE32(S.PointerToRelocations);
+  writeLE32(S.PointerToLineNumbers);
+  writeLE16(S.NumberOfRelocations);
+  writeLE16(S.NumberOfLineNumbers);
+  writeLE32(S.Characteristics);
 }
 
 void WinCOFFObjectWriter::WriteRelocation(const COFF::relocation &R) {
-  WriteLE32(R.VirtualAddress);
-  WriteLE32(R.SymbolTableIndex);
-  WriteLE16(R.Type);
+  writeLE32(R.VirtualAddress);
+  writeLE32(R.SymbolTableIndex);
+  writeLE16(R.Type);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -669,7 +669,7 @@ void WinCOFFObjectWriter::ExecutePostLayoutBinding(MCAssembler &Asm,
       DefineSymbol(Symbol, Asm, Layout);
 }
 
-bool WinCOFFObjectWriter::IsSymbolRefDifferenceFullyResolvedImpl(
+bool WinCOFFObjectWriter::isSymbolRefDifferenceFullyResolvedImpl(
     const MCAssembler &Asm, const MCSymbol &SymA, const MCFragment &FB,
     bool InSet, bool IsPCRel) const {
   // MS LINK expects to be able to replace all references to a function with a
@@ -678,7 +678,7 @@ bool WinCOFFObjectWriter::IsSymbolRefDifferenceFullyResolvedImpl(
   if ((((SymA.getFlags() & COFF::SF_TypeMask) >> COFF::SF_TypeShift) >>
        COFF::SCT_COMPLEX_TYPE_SHIFT) == COFF::IMAGE_SYM_DTYPE_FUNCTION)
     return false;
-  return MCObjectWriter::IsSymbolRefDifferenceFullyResolvedImpl(Asm, SymA, FB,
+  return MCObjectWriter::isSymbolRefDifferenceFullyResolvedImpl(Asm, SymA, FB,
                                                                 InSet, IsPCRel);
 }
 
@@ -699,7 +699,7 @@ bool WinCOFFObjectWriter::isWeak(const MCSymbol &Sym) const {
   return true;
 }
 
-void WinCOFFObjectWriter::RecordRelocation(
+void WinCOFFObjectWriter::recordRelocation(
     MCAssembler &Asm, const MCAsmLayout &Layout, const MCFragment *Fragment,
     const MCFixup &Fixup, MCValue Target, bool &IsPCRel, uint64_t &FixedValue) {
   assert(Target.getSymA() && "Relocation must reference a symbol!");
@@ -830,7 +830,7 @@ void WinCOFFObjectWriter::RecordRelocation(
     coff_section->Relocations.push_back(Reloc);
 }
 
-void WinCOFFObjectWriter::WriteObject(MCAssembler &Asm,
+void WinCOFFObjectWriter::writeObject(MCAssembler &Asm,
                                       const MCAsmLayout &Layout) {
   size_t SectionsSize = Sections.size();
   if (SectionsSize > static_cast<size_t>(INT32_MAX))

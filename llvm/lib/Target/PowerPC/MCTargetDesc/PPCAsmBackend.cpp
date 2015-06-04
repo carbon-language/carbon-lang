@@ -177,7 +177,7 @@ public:
   bool writeNopData(uint64_t Count, MCObjectWriter *OW) const override {
     uint64_t NumNops = Count / 4;
     for (uint64_t i = 0; i != NumNops; ++i)
-      OW->Write32(0x60000000);
+      OW->write32(0x60000000);
 
     OW->WriteZeros(Count % 4);
 

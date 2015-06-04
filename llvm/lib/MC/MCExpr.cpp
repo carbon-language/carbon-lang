@@ -468,7 +468,7 @@ static void AttemptToFoldSymbolOffsetDifference(
   if (SA.isUndefined() || SB.isUndefined())
     return;
 
-  if (!Asm->getWriter().IsSymbolRefDifferenceFullyResolved(*Asm, A, B, InSet))
+  if (!Asm->getWriter().isSymbolRefDifferenceFullyResolved(*Asm, A, B, InSet))
     return;
 
   if (SA.getFragment() == SB.getFragment()) {

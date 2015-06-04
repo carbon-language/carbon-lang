@@ -326,7 +326,7 @@ bool X86AsmBackend::writeNopData(uint64_t Count, MCObjectWriter *OW) const {
   // FIXME: We could generated something better than plain 0x90.
   if (!HasNopl) {
     for (uint64_t i = 0; i < Count; ++i)
-      OW->Write8(0x90);
+      OW->write8(0x90);
     return true;
   }
 
@@ -336,10 +336,10 @@ bool X86AsmBackend::writeNopData(uint64_t Count, MCObjectWriter *OW) const {
     const uint8_t ThisNopLength = (uint8_t) std::min(Count, MaxNopLength);
     const uint8_t Prefixes = ThisNopLength <= 10 ? 0 : ThisNopLength - 10;
     for (uint8_t i = 0; i < Prefixes; i++)
-      OW->Write8(0x66);
+      OW->write8(0x66);
     const uint8_t Rest = ThisNopLength - Prefixes;
     for (uint8_t i = 0; i < Rest; i++)
-      OW->Write8(Nops[Rest - 1][i]);
+      OW->write8(Nops[Rest - 1][i]);
     Count -= ThisNopLength;
   } while (Count != 0);
 

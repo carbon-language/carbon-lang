@@ -252,7 +252,7 @@ bool AArch64AsmBackend::writeNopData(uint64_t Count, MCObjectWriter *OW) const {
   // We are properly aligned, so write NOPs as requested.
   Count /= 4;
   for (uint64_t i = 0; i != Count; ++i)
-    OW->Write32(0xd503201f);
+    OW->write32(0xd503201f);
   return true;
 }
 

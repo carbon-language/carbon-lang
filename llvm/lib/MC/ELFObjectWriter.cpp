@@ -150,9 +150,9 @@ class ELFObjectWriter : public MCObjectWriter {
 
     void WriteWord(uint64_t W) {
       if (is64Bit())
-        Write64(W);
+        write64(W);
       else
-        Write32(W);
+        write32(W);
     }
 
     template <typename T> void write(T Val) {
@@ -176,7 +176,7 @@ class ELFObjectWriter : public MCObjectWriter {
                                   const MCSymbol *Sym, uint64_t C,
                                   unsigned Type) const;
 
-    void RecordRelocation(MCAssembler &Asm, const MCAsmLayout &Layout,
+    void recordRelocation(MCAssembler &Asm, const MCAsmLayout &Layout,
                           const MCFragment *Fragment, const MCFixup &Fixup,
                           MCValue Target, bool &IsPCRel,
                           uint64_t &FixedValue) override;
@@ -216,7 +216,7 @@ class ELFObjectWriter : public MCObjectWriter {
 
     void writeRelocations(const MCAssembler &Asm, const MCSectionELF &Sec);
 
-    bool IsSymbolRefDifferenceFullyResolvedImpl(const MCAssembler &Asm,
+    bool isSymbolRefDifferenceFullyResolvedImpl(const MCAssembler &Asm,
                                                 const MCSymbol &SymA,
                                                 const MCFragment &FB,
                                                 bool InSet,
@@ -224,7 +224,7 @@ class ELFObjectWriter : public MCObjectWriter {
 
     bool isWeak(const MCSymbol &Sym) const override;
 
-    void WriteObject(MCAssembler &Asm, const MCAsmLayout &Layout) override;
+    void writeObject(MCAssembler &Asm, const MCAsmLayout &Layout) override;
     void writeSection(const SectionIndexMapTy &SectionIndexMap,
                       uint32_t GroupSymbolIndex, uint64_t Offset, uint64_t Size,
                       const MCSectionELF &Section);
@@ -307,47 +307,47 @@ void ELFObjectWriter::writeHeader(const MCAssembler &Asm) {
   // emitWord method behaves differently for ELF32 and ELF64, writing
   // 4 bytes in the former and 8 in the latter.
 
-  WriteBytes(ELF::ElfMagic); // e_ident[EI_MAG0] to e_ident[EI_MAG3]
+  writeBytes(ELF::ElfMagic); // e_ident[EI_MAG0] to e_ident[EI_MAG3]
 
-  Write8(is64Bit() ? ELF::ELFCLASS64 : ELF::ELFCLASS32); // e_ident[EI_CLASS]
+  write8(is64Bit() ? ELF::ELFCLASS64 : ELF::ELFCLASS32); // e_ident[EI_CLASS]
 
   // e_ident[EI_DATA]
-  Write8(isLittleEndian() ? ELF::ELFDATA2LSB : ELF::ELFDATA2MSB);
+  write8(isLittleEndian() ? ELF::ELFDATA2LSB : ELF::ELFDATA2MSB);
 
-  Write8(ELF::EV_CURRENT);        // e_ident[EI_VERSION]
+  write8(ELF::EV_CURRENT);        // e_ident[EI_VERSION]
   // e_ident[EI_OSABI]
-  Write8(TargetObjectWriter->getOSABI());
-  Write8(0);                  // e_ident[EI_ABIVERSION]
+  write8(TargetObjectWriter->getOSABI());
+  write8(0);                  // e_ident[EI_ABIVERSION]
 
   WriteZeros(ELF::EI_NIDENT - ELF::EI_PAD);
 
-  Write16(ELF::ET_REL);             // e_type
+  write16(ELF::ET_REL);             // e_type
 
-  Write16(TargetObjectWriter->getEMachine()); // e_machine = target
+  write16(TargetObjectWriter->getEMachine()); // e_machine = target
 
-  Write32(ELF::EV_CURRENT);         // e_version
+  write32(ELF::EV_CURRENT);         // e_version
   WriteWord(0);                    // e_entry, no entry point in .o file
   WriteWord(0);                    // e_phoff, no program header for .o
   WriteWord(0);                     // e_shoff = sec hdr table off in bytes
 
   // e_flags = whatever the target wants
-  Write32(Asm.getELFHeaderEFlags());
+  write32(Asm.getELFHeaderEFlags());
 
   // e_ehsize = ELF header size
-  Write16(is64Bit() ? sizeof(ELF::Elf64_Ehdr) : sizeof(ELF::Elf32_Ehdr));
+  write16(is64Bit() ? sizeof(ELF::Elf64_Ehdr) : sizeof(ELF::Elf32_Ehdr));
 
-  Write16(0);                  // e_phentsize = prog header entry size
-  Write16(0);                  // e_phnum = # prog header entries = 0
+  write16(0);                  // e_phentsize = prog header entry size
+  write16(0);                  // e_phnum = # prog header entries = 0
 
   // e_shentsize = Section header entry size
-  Write16(is64Bit() ? sizeof(ELF::Elf64_Shdr) : sizeof(ELF::Elf32_Shdr));
+  write16(is64Bit() ? sizeof(ELF::Elf64_Shdr) : sizeof(ELF::Elf32_Shdr));
 
   // e_shnum     = # of section header ents
-  Write16(0);
+  write16(0);
 
   // e_shstrndx  = Section # of '.shstrtab'
   assert(StringTableIndex < ELF::SHN_LORESERVE);
-  Write16(StringTableIndex);
+  write16(StringTableIndex);
 }
 
 uint64_t ELFObjectWriter::SymbolValue(const MCSymbol &Sym,
@@ -605,7 +605,7 @@ static bool isWeak(const MCSymbolELF &Sym) {
   }
 }
 
-void ELFObjectWriter::RecordRelocation(MCAssembler &Asm,
+void ELFObjectWriter::recordRelocation(MCAssembler &Asm,
                                        const MCAsmLayout &Layout,
                                        const MCFragment *Fragment,
                                        const MCFixup &Fixup, MCValue Target,
@@ -1035,14 +1035,14 @@ void ELFObjectWriter::WriteSecHdrEntry(uint32_t Name, uint32_t Type,
                                        uint32_t Link, uint32_t Info,
                                        uint64_t Alignment,
                                        uint64_t EntrySize) {
-  Write32(Name);        // sh_name: index into string table
-  Write32(Type);        // sh_type
+  write32(Name);        // sh_name: index into string table
+  write32(Type);        // sh_type
   WriteWord(Flags);     // sh_flags
   WriteWord(Address);   // sh_addr
   WriteWord(Offset);    // sh_offset
   WriteWord(Size);      // sh_size
-  Write32(Link);        // sh_link
-  Write32(Info);        // sh_info
+  write32(Link);        // sh_link
+  write32(Info);        // sh_info
   WriteWord(Alignment); // sh_addralign
   WriteWord(EntrySize); // sh_entsize
 }
@@ -1174,7 +1174,7 @@ void ELFObjectWriter::writeSectionHeader(
   }
 }
 
-void ELFObjectWriter::WriteObject(MCAssembler &Asm,
+void ELFObjectWriter::writeObject(MCAssembler &Asm,
                                   const MCAsmLayout &Layout) {
   MCContext &Ctx = Asm.getContext();
   MCSectionELF *StrtabSection =
@@ -1308,7 +1308,7 @@ void ELFObjectWriter::WriteObject(MCAssembler &Asm,
             NumSectionsOffset);
 }
 
-bool ELFObjectWriter::IsSymbolRefDifferenceFullyResolvedImpl(
+bool ELFObjectWriter::isSymbolRefDifferenceFullyResolvedImpl(
     const MCAssembler &Asm, const MCSymbol &SA, const MCFragment &FB,
     bool InSet, bool IsPCRel) const {
   const auto &SymA = cast<MCSymbolELF>(SA);
@@ -1317,7 +1317,7 @@ bool ELFObjectWriter::IsSymbolRefDifferenceFullyResolvedImpl(
     if (::isWeak(SymA))
       return false;
   }
-  return MCObjectWriter::IsSymbolRefDifferenceFullyResolvedImpl(Asm, SymA, FB,
+  return MCObjectWriter::isSymbolRefDifferenceFullyResolvedImpl(Asm, SymA, FB,
                                                                 InSet, IsPCRel);
 }
 

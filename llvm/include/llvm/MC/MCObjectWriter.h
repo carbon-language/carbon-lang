@@ -32,7 +32,7 @@ class MCValue;
 /// the object writer to modify the assembler data structures at appropriate
 /// points. Once assembly is complete, the object writer is given the
 /// MCAssembler instance, which contains all the symbol and section data which
-/// should be emitted as part of WriteObject().
+/// should be emitted as part of writeObject().
 ///
 /// The object writer also contains a number of helper methods for writing
 /// binary data to the output stream.
@@ -75,8 +75,8 @@ public:
   /// This routine is called by the assembler after layout and relaxation, and
   /// post layout binding. The implementation is responsible for storing
   /// information about the relocation so that it can be emitted during
-  /// WriteObject().
-  virtual void RecordRelocation(MCAssembler &Asm, const MCAsmLayout &Layout,
+  /// writeObject().
+  virtual void recordRelocation(MCAssembler &Asm, const MCAsmLayout &Layout,
                                 const MCFragment *Fragment,
                                 const MCFixup &Fixup, MCValue Target,
                                 bool &IsPCRel, uint64_t &FixedValue) = 0;
@@ -86,12 +86,12 @@ public:
   ///
   /// Clients are not required to answer precisely and may conservatively return
   /// false, even when a difference is fully resolved.
-  bool IsSymbolRefDifferenceFullyResolved(const MCAssembler &Asm,
+  bool isSymbolRefDifferenceFullyResolved(const MCAssembler &Asm,
                                           const MCSymbolRefExpr *A,
                                           const MCSymbolRefExpr *B,
                                           bool InSet) const;
 
-  virtual bool IsSymbolRefDifferenceFullyResolvedImpl(const MCAssembler &Asm,
+  virtual bool isSymbolRefDifferenceFullyResolvedImpl(const MCAssembler &Asm,
                                                       const MCSymbol &SymA,
                                                       const MCFragment &FB,
                                                       bool InSet,
@@ -107,57 +107,57 @@ public:
   /// This routine is called by the assembler after layout and relaxation is
   /// complete, fixups have been evaluated and applied, and relocations
   /// generated.
-  virtual void WriteObject(MCAssembler &Asm, const MCAsmLayout &Layout) = 0;
+  virtual void writeObject(MCAssembler &Asm, const MCAsmLayout &Layout) = 0;
 
   /// @}
   /// \name Binary Output
   /// @{
 
-  void Write8(uint8_t Value) { OS << char(Value); }
+  void write8(uint8_t Value) { OS << char(Value); }
 
-  void WriteLE16(uint16_t Value) {
+  void writeLE16(uint16_t Value) {
     support::endian::Writer<support::little>(OS).write(Value);
   }
 
-  void WriteLE32(uint32_t Value) {
+  void writeLE32(uint32_t Value) {
     support::endian::Writer<support::little>(OS).write(Value);
   }
 
-  void WriteLE64(uint64_t Value) {
+  void writeLE64(uint64_t Value) {
     support::endian::Writer<support::little>(OS).write(Value);
   }
 
-  void WriteBE16(uint16_t Value) {
+  void writeBE16(uint16_t Value) {
     support::endian::Writer<support::big>(OS).write(Value);
   }
 
-  void WriteBE32(uint32_t Value) {
+  void writeBE32(uint32_t Value) {
     support::endian::Writer<support::big>(OS).write(Value);
   }
 
-  void WriteBE64(uint64_t Value) {
+  void writeBE64(uint64_t Value) {
     support::endian::Writer<support::big>(OS).write(Value);
   }
 
-  void Write16(uint16_t Value) {
+  void write16(uint16_t Value) {
     if (IsLittleEndian)
-      WriteLE16(Value);
+      writeLE16(Value);
     else
-      WriteBE16(Value);
+      writeBE16(Value);
   }
 
-  void Write32(uint32_t Value) {
+  void write32(uint32_t Value) {
     if (IsLittleEndian)
-      WriteLE32(Value);
+      writeLE32(Value);
     else
-      WriteBE32(Value);
+      writeBE32(Value);
   }
 
-  void Write64(uint64_t Value) {
+  void write64(uint64_t Value) {
     if (IsLittleEndian)
-      WriteLE64(Value);
+      writeLE64(Value);
     else
-      WriteBE64(Value);
+      writeBE64(Value);
   }
 
   void WriteZeros(unsigned N) {
@@ -169,12 +169,12 @@ public:
     OS << StringRef(Zeros, N % 16);
   }
 
-  void WriteBytes(const SmallVectorImpl<char> &ByteVec,
+  void writeBytes(const SmallVectorImpl<char> &ByteVec,
                   unsigned ZeroFillSize = 0) {
-    WriteBytes(StringRef(ByteVec.data(), ByteVec.size()), ZeroFillSize);
+    writeBytes(StringRef(ByteVec.data(), ByteVec.size()), ZeroFillSize);
   }
 
-  void WriteBytes(StringRef Str, unsigned ZeroFillSize = 0) {
+  void writeBytes(StringRef Str, unsigned ZeroFillSize = 0) {
     // TODO: this version may need to go away once all fragment contents are
     // converted to SmallVector<char, N>
     assert(

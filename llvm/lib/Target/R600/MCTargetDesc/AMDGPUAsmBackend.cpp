@@ -29,14 +29,14 @@ public:
                                 const MCAsmLayout &Layout) override {
     //XXX: Implement if necessary.
   }
-  void RecordRelocation(MCAssembler &Asm, const MCAsmLayout &Layout,
+  void recordRelocation(MCAssembler &Asm, const MCAsmLayout &Layout,
                         const MCFragment *Fragment, const MCFixup &Fixup,
                         MCValue Target, bool &IsPCRel,
                         uint64_t &FixedValue) override {
     assert(!"Not implemented");
   }
 
-  void WriteObject(MCAssembler &Asm, const MCAsmLayout &Layout) override;
+  void writeObject(MCAssembler &Asm, const MCAsmLayout &Layout) override;
 
 };
 
@@ -64,7 +64,7 @@ public:
 
 } //End anonymous namespace
 
-void AMDGPUMCObjectWriter::WriteObject(MCAssembler &Asm,
+void AMDGPUMCObjectWriter::writeObject(MCAssembler &Asm,
                                        const MCAsmLayout &Layout) {
   for (MCAssembler::iterator I = Asm.begin(), E = Asm.end(); I != E; ++I) {
     Asm.writeSectionData(&*I, Layout);

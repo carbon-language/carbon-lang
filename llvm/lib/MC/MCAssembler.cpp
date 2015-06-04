@@ -394,7 +394,7 @@ bool MCAssembler::evaluateFixup(const MCAsmLayout &Layout,
                                 MCValue &Target, uint64_t &Value) const {
   ++stats::evaluateFixup;
 
-  // FIXME: This code has some duplication with RecordRelocation. We should
+  // FIXME: This code has some duplication with recordRelocation. We should
   // probably merge the two into a single callback that tries to evaluate a
   // fixup and records a relocation if one is needed.
   const MCExpr *Expr = Fixup.getValue();
@@ -416,7 +416,7 @@ bool MCAssembler::evaluateFixup(const MCAsmLayout &Layout,
       if (A->getKind() != MCSymbolRefExpr::VK_None || SA.isUndefined()) {
         IsResolved = false;
       } else {
-        IsResolved = getWriter().IsSymbolRefDifferenceFullyResolvedImpl(
+        IsResolved = getWriter().isSymbolRefDifferenceFullyResolvedImpl(
             *this, SA, *DF, false, true);
       }
     }
@@ -576,7 +576,7 @@ void MCAsmLayout::layoutFragment(MCFragment *F) {
 ///        a MCEncodedFragment.
 static void writeFragmentContents(const MCFragment &F, MCObjectWriter *OW) {
   const MCEncodedFragment &EF = cast<MCEncodedFragment>(F);
-  OW->WriteBytes(EF.getContents());
+  OW->writeBytes(EF.getContents());
 }
 
 void MCAssembler::registerSymbol(const MCSymbol &Symbol, bool *Created) {
@@ -670,10 +670,10 @@ static void writeFragment(const MCAssembler &Asm, const MCAsmLayout &Layout,
     for (uint64_t i = 0; i != Count; ++i) {
       switch (AF.getValueSize()) {
       default: llvm_unreachable("Invalid size!");
-      case 1: OW->Write8 (uint8_t (AF.getValue())); break;
-      case 2: OW->Write16(uint16_t(AF.getValue())); break;
-      case 4: OW->Write32(uint32_t(AF.getValue())); break;
-      case 8: OW->Write64(uint64_t(AF.getValue())); break;
+      case 1: OW->write8 (uint8_t (AF.getValue())); break;
+      case 2: OW->write16(uint16_t(AF.getValue())); break;
+      case 4: OW->write32(uint32_t(AF.getValue())); break;
+      case 8: OW->write64(uint64_t(AF.getValue())); break;
       }
     }
     break;
@@ -703,10 +703,10 @@ static void writeFragment(const MCAssembler &Asm, const MCAsmLayout &Layout,
     for (uint64_t i = 0, e = FF.getSize() / FF.getValueSize(); i != e; ++i) {
       switch (FF.getValueSize()) {
       default: llvm_unreachable("Invalid size!");
-      case 1: OW->Write8 (uint8_t (FF.getValue())); break;
-      case 2: OW->Write16(uint16_t(FF.getValue())); break;
-      case 4: OW->Write32(uint32_t(FF.getValue())); break;
-      case 8: OW->Write64(uint64_t(FF.getValue())); break;
+      case 1: OW->write8 (uint8_t (FF.getValue())); break;
+      case 2: OW->write16(uint16_t(FF.getValue())); break;
+      case 4: OW->write32(uint32_t(FF.getValue())); break;
+      case 8: OW->write64(uint64_t(FF.getValue())); break;
       }
     }
     break;
@@ -714,13 +714,13 @@ static void writeFragment(const MCAssembler &Asm, const MCAsmLayout &Layout,
 
   case MCFragment::FT_LEB: {
     const MCLEBFragment &LF = cast<MCLEBFragment>(F);
-    OW->WriteBytes(LF.getContents());
+    OW->writeBytes(LF.getContents());
     break;
   }
 
   case MCFragment::FT_SafeSEH: {
     const MCSafeSEHFragment &SF = cast<MCSafeSEHFragment>(F);
-    OW->Write32(SF.getSymbol()->getIndex());
+    OW->write32(SF.getSymbol()->getIndex());
     break;
   }
 
@@ -729,19 +729,19 @@ static void writeFragment(const MCAssembler &Asm, const MCAsmLayout &Layout,
     const MCOrgFragment &OF = cast<MCOrgFragment>(F);
 
     for (uint64_t i = 0, e = FragmentSize; i != e; ++i)
-      OW->Write8(uint8_t(OF.getValue()));
+      OW->write8(uint8_t(OF.getValue()));
 
     break;
   }
 
   case MCFragment::FT_Dwarf: {
     const MCDwarfLineAddrFragment &OF = cast<MCDwarfLineAddrFragment>(F);
-    OW->WriteBytes(OF.getContents());
+    OW->writeBytes(OF.getContents());
     break;
   }
   case MCFragment::FT_DwarfFrame: {
     const MCDwarfCallFrameFragment &CF = cast<MCDwarfCallFrameFragment>(F);
-    OW->WriteBytes(CF.getContents());
+    OW->writeBytes(CF.getContents());
     break;
   }
   }
@@ -819,7 +819,7 @@ std::pair<uint64_t, bool> MCAssembler::handleFixup(const MCAsmLayout &Layout,
     // The fixup was unresolved, we need a relocation. Inform the object
     // writer of the relocation, and give it an opportunity to adjust the
     // fixup value if need be.
-    getWriter().RecordRelocation(*this, Layout, &F, Fixup, Target, IsPCRel,
+    getWriter().recordRelocation(*this, Layout, &F, Fixup, Target, IsPCRel,
                                  FixedValue);
   }
   return std::make_pair(FixedValue, IsPCRel);
@@ -897,7 +897,7 @@ void MCAssembler::Finish() {
   }
 
   // Write the object file.
-  getWriter().WriteObject(*this, Layout);
+  getWriter().writeObject(*this, Layout);
 
   stats::ObjectBytes += OS.tell() - StartOffset;
 }

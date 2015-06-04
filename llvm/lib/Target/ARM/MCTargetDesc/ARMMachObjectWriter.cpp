@@ -52,7 +52,7 @@ public:
   ARMMachObjectWriter(bool Is64Bit, uint32_t CPUType, uint32_t CPUSubtype)
       : MCMachObjectTargetWriter(Is64Bit, CPUType, CPUSubtype) {}
 
-  void RecordRelocation(MachObjectWriter *Writer, MCAssembler &Asm,
+  void recordRelocation(MachObjectWriter *Writer, MCAssembler &Asm,
                         const MCAsmLayout &Layout, const MCFragment *Fragment,
                         const MCFixup &Fixup, MCValue Target,
                         uint64_t &FixedValue) override;
@@ -338,7 +338,7 @@ bool ARMMachObjectWriter::requiresExternRelocation(MachObjectWriter *Writer,
   return false;
 }
 
-void ARMMachObjectWriter::RecordRelocation(MachObjectWriter *Writer,
+void ARMMachObjectWriter::recordRelocation(MachObjectWriter *Writer,
                                            MCAssembler &Asm,
                                            const MCAsmLayout &Layout,
                                            const MCFragment *Fragment,
