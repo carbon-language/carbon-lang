@@ -4481,16 +4481,28 @@ get_integer_value_for_key_name_from_json (const char *key, const char *json_stri
     uint64_t retval = INVALID_NUB_ADDRESS;
     std::string key_with_quotes = "\"";
     key_with_quotes += key;
-    key_with_quotes += "\":";
+    key_with_quotes += "\"";
     const char *c = strstr (json_string, key_with_quotes.c_str());
     if (c)
     {
         c += key_with_quotes.size();
-        errno = 0;
-        retval = strtoul (c, NULL, 10);
-        if (errno != 0)
+
+        while (*c != '\0' && (*c == ' ' || *c == '\t' || *c == '\n' || *c == '\r'))
+            c++;
+
+        if (*c == ':')
         {
-            retval = INVALID_NUB_ADDRESS;
+            c++;
+
+            while (*c != '\0' && (*c == ' ' || *c == '\t' || *c == '\n' || *c == '\r'))
+                c++;
+
+            errno = 0;
+            retval = strtoul (c, NULL, 10);
+            if (errno != 0)
+            {
+                retval = INVALID_NUB_ADDRESS;
+            }
         }
     }
     return retval;
