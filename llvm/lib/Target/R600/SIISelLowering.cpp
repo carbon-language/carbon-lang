@@ -155,7 +155,6 @@ SITargetLowering::SITargetLowering(TargetMachine &TM,
   for (MVT VT : MVT::fp_valuetypes())
     setLoadExtAction(ISD::EXTLOAD, VT, MVT::f32, Expand);
 
-  setTruncStoreAction(MVT::f64, MVT::f32, Expand);
   setTruncStoreAction(MVT::i64, MVT::i32, Expand);
   setTruncStoreAction(MVT::v8i32, MVT::v8i16, Expand);
   setTruncStoreAction(MVT::v16i32, MVT::v16i16, Expand);
@@ -368,6 +367,12 @@ bool SITargetLowering::shouldConvertConstantLoadToIntImm(const APInt &Imm,
   return TII->isInlineConstant(Imm);
 }
 
+static EVT toIntegerVT(EVT VT) {
+  if (VT.isVector())
+    return VT.changeVectorElementTypeToInteger();
+  return MVT::getIntegerVT(VT.getSizeInBits());
+}
+
 SDValue SITargetLowering::LowerParameter(SelectionDAG &DAG, EVT VT, EVT MemVT,
                                          SDLoc SL, SDValue Chain,
                                          unsigned Offset, bool Signed) const {
@@ -389,12 +394,33 @@ SDValue SITargetLowering::LowerParameter(SelectionDAG &DAG, EVT VT, EVT MemVT,
   SDValue PtrOffset = DAG.getUNDEF(getPointerTy(AMDGPUAS::CONSTANT_ADDRESS));
   MachinePointerInfo PtrInfo(UndefValue::get(PtrTy));
 
-  return DAG.getLoad(ISD::UNINDEXED, Signed ? ISD::SEXTLOAD : ISD::ZEXTLOAD,
+  unsigned Align = DL->getABITypeAlignment(Ty);
+
+  if (VT != MemVT && VT.isFloatingPoint()) {
+    // Do an integer load and convert.
+    // FIXME: This is mostly because load legalization after type legalization
+    // doesn't handle FP extloads.
+    assert(VT.getScalarType() == MVT::f32 &&
+           MemVT.getScalarType() == MVT::f16);
+
+    EVT IVT = toIntegerVT(VT);
+    EVT MemIVT = toIntegerVT(MemVT);
+    SDValue Load = DAG.getLoad(ISD::UNINDEXED, ISD::ZEXTLOAD,
+                               IVT, SL, Chain, Ptr, PtrOffset, PtrInfo, MemIVT,
+                               false, // isVolatile
+                               true, // isNonTemporal
+                               true, // isInvariant
+                               Align); // Alignment
+    return DAG.getNode(ISD::FP16_TO_FP, SL, VT, Load);
+  }
+
+  ISD::LoadExtType ExtTy = Signed ? ISD::SEXTLOAD : ISD::ZEXTLOAD;
+  return DAG.getLoad(ISD::UNINDEXED, ExtTy,
                      VT, SL, Chain, Ptr, PtrOffset, PtrInfo, MemVT,
                      false, // isVolatile
                      true, // isNonTemporal
                      true, // isInvariant
-                     DL->getABITypeAlignment(Ty)); // Alignment
+                     Align); // Alignment
 }
 
 SDValue SITargetLowering::LowerFormalArguments(
