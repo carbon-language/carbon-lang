@@ -250,47 +250,83 @@ bool SITargetLowering::isShuffleMaskLegal(const SmallVectorImpl<int> &,
   return false;
 }
 
-// FIXME: This really needs an address space argument. The immediate offset
-// size is different for different sets of memory instruction sets.
-
-// The single offset DS instructions have a 16-bit unsigned byte offset.
-//
-// MUBUF / MTBUF have a 12-bit unsigned byte offset, and additionally can do r +
-// r + i with addr64. 32-bit has more addressing mode options. Depending on the
-// resource constant, it can also do (i64 r0) + (i32 r1) * (i14 i).
-//
-// SMRD instructions have an 8-bit, dword offset.
-//
 bool SITargetLowering::isLegalAddressingMode(const AddrMode &AM,
                                              Type *Ty, unsigned AS) const {
   // No global is ever allowed as a base.
   if (AM.BaseGV)
     return false;
 
-  // Allow a 16-bit unsigned immediate field, since this is what DS instructions
-  // use.
-  if (!isUInt<16>(AM.BaseOffs))
-    return false;
+  switch (AS) {
+  case AMDGPUAS::GLOBAL_ADDRESS:
+  case AMDGPUAS::CONSTANT_ADDRESS: // XXX - Should we assume SMRD instructions?
+  case AMDGPUAS::PRIVATE_ADDRESS:
+  case AMDGPUAS::UNKNOWN_ADDRESS_SPACE: {
+    // MUBUF / MTBUF instructions have a 12-bit unsigned byte offset, and
+    // additionally can do r + r + i with addr64. 32-bit has more addressing
+    // mode options. Depending on the resource constant, it can also do
+    // (i64 r0) + (i32 r1) * (i14 i).
+    //
+    // SMRD instructions have an 8-bit, dword offset.
+    //
+    // Assume nonunifom access, since the address space isn't enough to know
+    // what instruction we will use, and since we don't know if this is a load
+    // or store and scalar stores are only available on VI.
+    //
+    // We also know if we are doing an extload, we can't do a scalar load.
+    //
+    // Private arrays end up using a scratch buffer most of the time, so also
+    // assume those use MUBUF instructions. Scratch loads / stores are currently
+    // implemented as mubuf instructions with offen bit set, so slightly
+    // different than the normal addr64.
+    if (!isUInt<12>(AM.BaseOffs))
+      return false;
 
-  // Only support r+r,
-  switch (AM.Scale) {
-  case 0:  // "r+i" or just "i", depending on HasBaseReg.
-    break;
-  case 1:
-    if (AM.HasBaseReg && AM.BaseOffs)  // "r+r+i" is not allowed.
+    // FIXME: Since we can split immediate into soffset and immediate offset,
+    // would it make sense to allow any immediate?
+
+    switch (AM.Scale) {
+    case 0: // r + i or just i, depending on HasBaseReg.
+      return true;
+    case 1:
+      return true; // We have r + r or r + i.
+    case 2:
+      if (AM.HasBaseReg) {
+        // Reject 2 * r + r.
+        return false;
+      }
+
+      // Allow 2 * r as r + r
+      // Or  2 * r + i is allowed as r + r + i.
+      return true;
+    default: // Don't allow n * r
       return false;
-    // Otherwise we have r+r or r+i.
-    break;
-  case 2:
-    if (AM.HasBaseReg || AM.BaseOffs)  // 2*r+r  or  2*r+i is not allowed.
+    }
+  }
+  case AMDGPUAS::LOCAL_ADDRESS:
+  case AMDGPUAS::REGION_ADDRESS: {
+    // Basic, single offset DS instructions allow a 16-bit unsigned immediate
+    // field.
+    // XXX - If doing a 4-byte aligned 8-byte type access, we effectively have
+    // an 8-bit dword offset but we don't know the alignment here.
+    if (!isUInt<16>(AM.BaseOffs))
       return false;
-    // Allow 2*r as r+r.
-    break;
-  default: // Don't allow n * r
+
+    if (AM.Scale == 0) // r + i or just i, depending on HasBaseReg.
+      return true;
+
+    if (AM.Scale == 1 && AM.HasBaseReg)
+      return true;
+
     return false;
   }
-
-  return true;
+  case AMDGPUAS::FLAT_ADDRESS: {
+    // Flat instructions do not have offsets, and only have the register
+    // address.
+    return AM.BaseOffs == 0 && (AM.Scale == 0 || AM.Scale == 1);
+  }
+  default:
+    llvm_unreachable("unhandled address space");
+  }
 }
 
 bool SITargetLowering::allowsMisalignedMemoryAccesses(EVT VT,
