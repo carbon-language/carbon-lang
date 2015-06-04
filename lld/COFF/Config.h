@@ -13,6 +13,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Object/COFF.h"
 #include <cstdint>
+#include <map>
 #include <set>
 #include <string>
 
@@ -34,6 +35,9 @@ public:
 
   std::set<StringRef> NoDefaultLibs;
   bool NoDefaultLibAll = false;
+
+  // Used by /failifmismatch option.
+  std::map<StringRef, StringRef> MustMatch;
 
   uint64_t ImageBase = 0x140000000;
   uint64_t StackReserve = 1024 * 1024;

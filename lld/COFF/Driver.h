@@ -90,6 +90,12 @@ std::error_code parseVersion(StringRef Arg, uint32_t *Major, uint32_t *Minor);
 std::error_code parseSubsystem(StringRef Arg, WindowsSubsystem *Sys,
                                uint32_t *Major, uint32_t *Minor);
 
+// Parses a string in the form of "key=value" and check
+// if value matches previous values for the key.
+// This feature used in the directive section to reject
+// incompatible objects.
+std::error_code checkFailIfMismatch(llvm::opt::InputArgList *Args);
+
 // Create enum with OPT_xxx values for each option in Options.td
 enum {
   OPT_INVALID = 0,

@@ -110,6 +110,11 @@ LinkerDriver::parseDirectives(StringRef S,
     return EC;
   std::unique_ptr<llvm::opt::InputArgList> Args = std::move(ArgsOrErr.get());
 
+  // Handle /failifmismatch
+  if (auto EC = checkFailIfMismatch(Args.get()))
+    return EC;
+
+  // Handle /defaultlib
   for (auto *Arg : Args->filtered(OPT_defaultlib)) {
     if (Optional<StringRef> Path = findLib(Arg->getValue())) {
       auto FileOrErr = openFile(*Path);
@@ -295,6 +300,12 @@ bool LinkerDriver::link(int Argc, const char *Argv[]) {
       llvm::errs() << "/subsystem: " << EC.message() << "\n";
       return false;
     }
+  }
+
+  // Handle /failifmismatch
+  if (auto EC = checkFailIfMismatch(Args.get())) {
+    llvm::errs() << "/failifmismatch: " << EC.message() << "\n";
+    return false;
   }
 
   // Create a list of input files. Files can be given as arguments
