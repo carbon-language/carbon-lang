@@ -874,6 +874,50 @@ vec_and(vector float __a, vector bool int __b)
   return (vector float)__res;
 }
 
+#ifdef __VSX__
+static vector signed long long __ATTRS_o_ai
+vec_and(vector signed long long __a, vector signed long long __b)
+{
+  return __a & __b;
+}
+
+static vector signed long long __ATTRS_o_ai
+vec_and(vector bool long long __a, vector signed long long __b)
+{
+  return (vector signed long long)__a & __b;
+}
+
+static vector signed long long __ATTRS_o_ai
+vec_and(vector signed long long __a, vector bool long long __b)
+{
+  return __a & (vector signed long long)__b;
+}
+
+static vector unsigned long long __ATTRS_o_ai
+vec_and(vector unsigned long long __a, vector unsigned long long __b)
+{
+  return __a & __b;
+}
+
+static vector unsigned long long __ATTRS_o_ai
+vec_and(vector bool long long __a, vector unsigned long long __b)
+{
+  return (vector unsigned long long)__a & __b;
+}
+
+static vector unsigned long long __ATTRS_o_ai
+vec_and(vector unsigned long long __a, vector bool long long __b)
+{
+  return __a & (vector unsigned long long)__b;
+}
+
+static vector bool long long __ATTRS_o_ai
+vec_and(vector bool long long __a, vector bool long long __b)
+{
+  return __a & __b;
+}
+#endif
+
 /* vec_vand */
 
 static vector signed char __ATTRS_o_ai
@@ -1022,6 +1066,50 @@ vec_vand(vector float __a, vector bool int __b)
   vector unsigned int __res = (vector unsigned int)__a & (vector unsigned int)__b;
   return (vector float)__res;
 }
+
+#ifdef __VSX__
+static vector signed long long __ATTRS_o_ai
+vec_vand(vector signed long long __a, vector signed long long __b)
+{
+  return __a & __b;
+}
+
+static vector signed long long __ATTRS_o_ai
+vec_vand(vector bool long long __a, vector signed long long __b)
+{
+  return (vector signed long long)__a & __b;
+}
+
+static vector signed long long __ATTRS_o_ai
+vec_vand(vector signed long long __a, vector bool long long __b)
+{
+  return __a & (vector signed long long)__b;
+}
+
+static vector unsigned long long __ATTRS_o_ai
+vec_vand(vector unsigned long long __a, vector unsigned long long __b)
+{
+  return __a & __b;
+}
+
+static vector unsigned long long __ATTRS_o_ai
+vec_vand(vector bool long long __a, vector unsigned long long __b)
+{
+  return (vector unsigned long long)__a & __b;
+}
+
+static vector unsigned long long __ATTRS_o_ai
+vec_vand(vector unsigned long long __a, vector bool long long __b)
+{
+  return __a & (vector unsigned long long)__b;
+}
+
+static vector bool long long __ATTRS_o_ai
+vec_vand(vector bool long long __a, vector bool long long __b)
+{
+  return __a & __b;
+}
+#endif
 
 /* vec_andc */
 
@@ -1174,6 +1262,50 @@ vec_andc(vector float __a, vector bool int __b)
   return (vector float)__res;
 }
 
+#ifdef __VSX__
+static vector signed long long __ATTRS_o_ai
+vec_andc(vector signed long long __a, vector signed long long __b)
+{
+  return __a & ~__b;
+}
+
+static vector signed long long __ATTRS_o_ai
+vec_andc(vector bool long long __a, vector signed long long __b)
+{
+  return (vector signed long long)__a & ~__b;
+}
+
+static vector signed long long __ATTRS_o_ai
+vec_andc(vector signed long long __a, vector bool long long __b)
+{
+  return __a & ~(vector signed long long)__b;
+}
+
+static vector unsigned long long __ATTRS_o_ai
+vec_andc(vector unsigned long long __a, vector unsigned long long __b)
+{
+  return __a & ~__b;
+}
+
+static vector unsigned long long __ATTRS_o_ai
+vec_andc(vector bool long long __a, vector unsigned long long __b)
+{
+  return (vector unsigned long long)__a & ~__b;
+}
+
+static vector unsigned long long __ATTRS_o_ai
+vec_andc(vector unsigned long long __a, vector bool long long __b)
+{
+  return __a & ~(vector unsigned long long)__b;
+}
+
+static vector bool long long __ATTRS_o_ai
+vec_andc(vector bool long long __a, vector bool long long __b)
+{
+  return __a & ~__b;
+}
+#endif
+
 /* vec_vandc */
 
 static vector signed char __ATTRS_o_ai
@@ -1322,6 +1454,50 @@ vec_vandc(vector float __a, vector bool int __b)
   vector unsigned int __res = (vector unsigned int)__a & ~(vector unsigned int)__b;
   return (vector float)__res;
 }
+
+#ifdef __VSX__
+static vector signed long long __ATTRS_o_ai
+vec_vandc(vector signed long long __a, vector signed long long __b)
+{
+  return __a & ~__b;
+}
+
+static vector signed long long __ATTRS_o_ai
+vec_vandc(vector bool long long __a, vector signed long long __b)
+{
+  return (vector signed long long)__a & ~__b;
+}
+
+static vector signed long long __ATTRS_o_ai
+vec_vandc(vector signed long long __a, vector bool long long __b)
+{
+  return __a & ~(vector signed long long)__b;
+}
+
+static vector unsigned long long __ATTRS_o_ai
+vec_vandc(vector unsigned long long __a, vector unsigned long long __b)
+{
+  return __a & ~__b;
+}
+
+static vector unsigned long long __ATTRS_o_ai
+vec_vandc(vector bool long long __a, vector unsigned long long __b)
+{
+  return (vector unsigned long long)__a & ~__b;
+}
+
+static vector unsigned long long __ATTRS_o_ai
+vec_vandc(vector unsigned long long __a, vector bool long long __b)
+{
+  return __a & ~(vector unsigned long long)__b;
+}
+
+static vector bool long long __ATTRS_o_ai
+vec_vandc(vector bool long long __a, vector bool long long __b)
+{
+  return __a & ~__b;
+}
+#endif
 
 /* vec_avg */
 
@@ -2806,15 +2982,39 @@ vec_max(vector unsigned int __a, vector bool int __b)
 
 #ifdef __POWER8_VECTOR__
 static vector signed long long __ATTRS_o_ai
-vec_max(vector signed long long __a, vector signed long long __b) 
+vec_max(vector signed long long __a, vector signed long long __b)
 {
   return __builtin_altivec_vmaxsd(__a, __b);
+}
+
+static vector signed long long __ATTRS_o_ai
+vec_max(vector bool long long __a, vector signed long long __b)
+{
+  return __builtin_altivec_vmaxsd((vector signed long long)__a, __b);
+}
+
+static vector signed long long __ATTRS_o_ai
+vec_max(vector signed long long __a, vector bool long long __b)
+{
+  return __builtin_altivec_vmaxsd(__a, (vector signed long long)__b);
 }
 
 static vector unsigned long long __ATTRS_o_ai
 vec_max(vector unsigned long long __a, vector unsigned long long __b)
 {
   return __builtin_altivec_vmaxud(__a, __b);
+}
+
+static vector unsigned long long __ATTRS_o_ai
+vec_max(vector bool long long __a, vector unsigned long long __b)
+{
+  return __builtin_altivec_vmaxud((vector unsigned long long)__a, __b);
+}
+
+static vector unsigned long long __ATTRS_o_ai
+vec_max(vector unsigned long long __a, vector bool long long __b)
+{
+  return __builtin_altivec_vmaxud(__a, (vector unsigned long long)__b);
 }
 #endif
 
@@ -3473,10 +3673,34 @@ vec_min(vector signed long long __a, vector signed long long __b)
   return __builtin_altivec_vminsd(__a, __b);
 }
 
+static vector signed long long __ATTRS_o_ai
+vec_min(vector bool long long __a, vector signed long long __b)
+{
+  return __builtin_altivec_vminsd((vector signed long long)__a, __b);
+}
+
+static vector signed long long __ATTRS_o_ai
+vec_min(vector signed long long __a, vector bool long long __b)
+{
+  return __builtin_altivec_vminsd(__a, (vector signed long long)__b);
+}
+
 static vector unsigned long long __ATTRS_o_ai
 vec_min(vector unsigned long long __a, vector unsigned long long __b)
 {
   return __builtin_altivec_vminud(__a, __b);
+}
+
+static vector unsigned long long __ATTRS_o_ai
+vec_min(vector bool long long __a, vector unsigned long long __b)
+{
+  return __builtin_altivec_vminud((vector unsigned long long)__a, __b);
+}
+
+static vector unsigned long long __ATTRS_o_ai
+vec_min(vector unsigned long long __a, vector bool long long __b)
+{
+  return __builtin_altivec_vminud(__a, (vector unsigned long long)__b);
 }
 #endif
 
@@ -4241,6 +4465,26 @@ vec_vnor(vector float __a, vector float __b)
   return (vector float)__res;
 }
 
+#ifdef __VSX__
+static vector signed long long __ATTRS_o_ai
+vec_nor(vector signed long long __a, vector signed long long __b)
+{
+  return ~(__a | __b);
+}
+
+static vector unsigned long long __ATTRS_o_ai
+vec_nor(vector unsigned long long __a, vector unsigned long long __b)
+{
+  return ~(__a | __b);
+}
+
+static vector bool long long __ATTRS_o_ai
+vec_nor(vector bool long long __a, vector bool long long __b)
+{
+  return ~(__a | __b);
+}
+#endif
+
 /* vec_or */
 
 #define __builtin_altivec_vor vec_or
@@ -4392,6 +4636,50 @@ vec_or(vector float __a, vector bool int __b)
   return (vector float)__res;
 }
 
+#ifdef __VSX__
+static vector signed long long __ATTRS_o_ai
+vec_or(vector signed long long __a, vector signed long long __b)
+{
+  return __a | __b;
+}
+
+static vector signed long long __ATTRS_o_ai
+vec_or(vector bool long long __a, vector signed long long __b)
+{
+  return (vector signed long long)__a | __b;
+}
+
+static vector signed long long __ATTRS_o_ai
+vec_or(vector signed long long __a, vector bool long long __b)
+{
+  return __a | (vector signed long long)__b;
+}
+
+static vector unsigned long long __ATTRS_o_ai
+vec_or(vector unsigned long long __a, vector unsigned long long __b)
+{
+  return __a | __b;
+}
+
+static vector unsigned long long __ATTRS_o_ai
+vec_or(vector bool long long __a, vector unsigned long long __b)
+{
+  return (vector unsigned long long)__a | __b;
+}
+
+static vector unsigned long long __ATTRS_o_ai
+vec_or(vector unsigned long long __a, vector bool long long __b)
+{
+  return __a | (vector unsigned long long)__b;
+}
+
+static vector bool long long __ATTRS_o_ai
+vec_or(vector bool long long __a, vector bool long long __b)
+{
+  return __a | __b;
+}
+#endif
+
 /* vec_vor */
 
 static vector signed char __ATTRS_o_ai
@@ -4540,6 +4828,50 @@ vec_vor(vector float __a, vector bool int __b)
   vector unsigned int __res = (vector unsigned int)__a | (vector unsigned int)__b;
   return (vector float)__res;
 }
+
+#ifdef __VSX__
+static vector signed long long __ATTRS_o_ai
+vec_vor(vector signed long long __a, vector signed long long __b)
+{
+  return __a | __b;
+}
+
+static vector signed long long __ATTRS_o_ai
+vec_vor(vector bool long long __a, vector signed long long __b)
+{
+  return (vector signed long long)__a | __b;
+}
+
+static vector signed long long __ATTRS_o_ai
+vec_vor(vector signed long long __a, vector bool long long __b)
+{
+  return __a | (vector signed long long)__b;
+}
+
+static vector unsigned long long __ATTRS_o_ai
+vec_vor(vector unsigned long long __a, vector unsigned long long __b)
+{
+  return __a | __b;
+}
+
+static vector unsigned long long __ATTRS_o_ai
+vec_vor(vector bool long long __a, vector unsigned long long __b)
+{
+  return (vector unsigned long long)__a | __b;
+}
+
+static vector unsigned long long __ATTRS_o_ai
+vec_vor(vector unsigned long long __a, vector bool long long __b)
+{
+  return __a | (vector unsigned long long)__b;
+}
+
+static vector bool long long __ATTRS_o_ai
+vec_vor(vector bool long long __a, vector bool long long __b)
+{
+  return __a | __b;
+}
+#endif
 
 /* vec_pack */
 
@@ -9766,6 +10098,50 @@ vec_xor(vector float __a, vector bool int __b)
   return (vector float)__res;
 }
 
+#ifdef __VSX__
+static vector signed long long __ATTRS_o_ai
+vec_xor(vector signed long long __a, vector signed long long __b)
+{
+  return __a ^ __b;
+}
+
+static vector signed long long __ATTRS_o_ai
+vec_xor(vector bool long long __a, vector signed long long __b)
+{
+  return (vector signed long long)__a ^ __b;
+}
+
+static vector signed long long __ATTRS_o_ai
+vec_xor(vector signed long long __a, vector bool long long __b)
+{
+  return __a ^ (vector signed long long)__b;
+}
+
+static vector unsigned long long __ATTRS_o_ai
+vec_xor(vector unsigned long long __a, vector unsigned long long __b)
+{
+  return __a ^ __b;
+}
+
+static vector unsigned long long __ATTRS_o_ai
+vec_xor(vector bool long long __a, vector unsigned long long __b)
+{
+  return (vector unsigned long long)__a ^ __b;
+}
+
+static vector unsigned long long __ATTRS_o_ai
+vec_xor(vector unsigned long long __a, vector bool long long __b)
+{
+  return __a ^ (vector unsigned long long)__b;
+}
+
+static vector bool long long __ATTRS_o_ai
+vec_xor(vector bool long long __a, vector bool long long __b)
+{
+  return __a ^ __b;
+}
+#endif
+
 /* vec_vxor */
 
 static vector signed char __ATTRS_o_ai
@@ -9914,6 +10290,50 @@ vec_vxor(vector float __a, vector bool int __b)
   vector unsigned int __res = (vector unsigned int)__a ^ (vector unsigned int)__b;
   return (vector float)__res;
 }
+
+#ifdef __VSX__
+static vector signed long long __ATTRS_o_ai
+vec_vxor(vector signed long long __a, vector signed long long __b)
+{
+  return __a ^ __b;
+}
+
+static vector signed long long __ATTRS_o_ai
+vec_vxor(vector bool long long __a, vector signed long long __b)
+{
+  return (vector signed long long)__a ^ __b;
+}
+
+static vector signed long long __ATTRS_o_ai
+vec_vxor(vector signed long long __a, vector bool long long __b)
+{
+  return __a ^ (vector signed long long)__b;
+}
+
+static vector unsigned long long __ATTRS_o_ai
+vec_vxor(vector unsigned long long __a, vector unsigned long long __b)
+{
+  return __a ^ __b;
+}
+
+static vector unsigned long long __ATTRS_o_ai
+vec_vxor(vector bool long long __a, vector unsigned long long __b)
+{
+  return (vector unsigned long long)__a ^ __b;
+}
+
+static vector unsigned long long __ATTRS_o_ai
+vec_vxor(vector unsigned long long __a, vector bool long long __b)
+{
+  return __a ^ (vector unsigned long long)__b;
+}
+
+static vector bool long long __ATTRS_o_ai
+vec_vxor(vector bool long long __a, vector bool long long __b)
+{
+  return __a ^ __b;
+}
+#endif
 
 /* ------------------------ extensions for CBEA ----------------------------- */
 
