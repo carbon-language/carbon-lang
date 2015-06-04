@@ -202,7 +202,6 @@ void HexagonAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   }
   // Examine the packet and convert pairs of instructions to duplex
   // instructions when possible.
-  MCInst InstBundlePreDuplex = MCInst(MCB);
   SmallVector<DuplexCandidate, 8> possibleDuplexes;
   possibleDuplexes = HexagonMCInstrInfo::getDuplexPossibilties(*Subtarget->getInstrInfo(), MCB);
   HexagonMCShuffle(*Subtarget->getInstrInfo(), *Subtarget, OutStreamer->getContext(), MCB, possibleDuplexes);
