@@ -115,7 +115,7 @@
 
 # RAW: SYMBOL TABLE:
 # RAW: {{[0x0-9a-f]+}}       *UND*  00000000
-# RAW: {{[0x0-9a-f]+}} l     .data  00000000 data_1
+# RAW: {{[0x0-9a-f]+}} l     .data  00001020 data_1
 # RAW: {{[0x0-9a-f]+}} l     .data  00000001 data_2
 # RAW: {{[0x0-9a-f]+}} g   F .text  00000004 bar
 # RAW: {{[0x0-9a-f]+}} g   F .text  0000001c main
