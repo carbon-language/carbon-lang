@@ -131,6 +131,10 @@ L
 **LCSSA**
     Loop-Closed Static Single Assignment Form
 
+**LGTM**
+    "Looks Good To Me". In a review thread, this indicates that the
+    reviewer thinks that the patch is okay to commit.
+
 **LICM**
     Loop Invariant Code Motion
 
