@@ -250,10 +250,14 @@ bool AArch64PassConfig::addPreISel() {
   // FIXME: On AArch64, this depends on the type.
   // Basically, the addressable offsets are up to 4095 * Ty.getSizeInBytes().
   // and the offset has to be a multiple of the related size in bytes.
-  if ((TM->getOptLevel() == CodeGenOpt::Aggressive &&
+  if ((TM->getOptLevel() != CodeGenOpt::None &&
        EnableGlobalMerge == cl::BOU_UNSET) ||
-      EnableGlobalMerge == cl::BOU_TRUE)
-    addPass(createGlobalMergePass(TM, 4095));
+      EnableGlobalMerge == cl::BOU_TRUE) {
+    bool OnlyOptimizeForSize = (TM->getOptLevel() < CodeGenOpt::Aggressive) &&
+                               (EnableGlobalMerge == cl::BOU_UNSET);
+    addPass(createGlobalMergePass(TM, 4095, OnlyOptimizeForSize));
+  }
+
   if (TM->getOptLevel() != CodeGenOpt::None)
     addPass(createAArch64AddressTypePromotionPass());
 
