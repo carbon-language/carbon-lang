@@ -2185,6 +2185,6 @@ std::pair<unsigned, unsigned> Driver::getIncludeExcludeOptionFlagMasks() const {
   return std::make_pair(IncludedFlagsBitmask, ExcludedFlagsBitmask);
 }
 
-bool clang::driver::isOptimizationLevelFast(const llvm::opt::ArgList &Args) {
+bool clang::driver::isOptimizationLevelFast(const ArgList &Args) {
   return Args.hasFlag(options::OPT_Ofast, options::OPT_O_Group, false);
 }
