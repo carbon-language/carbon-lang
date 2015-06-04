@@ -98,6 +98,8 @@ class MachObjectWriter : public MCObjectWriter {
   llvm::DenseMap<const MCSection *, std::vector<RelAndSymbol>> Relocations;
   llvm::DenseMap<const MCSection *, unsigned> IndirectSymBase;
 
+  SectionAddrMap SectionAddress;
+
   /// @}
   /// \name Symbol Table Data
   /// @{
@@ -129,8 +131,6 @@ public:
   /// @{
 
   bool isFixupKindPCRel(const MCAssembler &Asm, unsigned Kind);
-
-  SectionAddrMap SectionAddress;
 
   SectionAddrMap &getSectionAddressMap() { return SectionAddress; }
 
