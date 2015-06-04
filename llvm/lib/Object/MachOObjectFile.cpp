@@ -234,10 +234,7 @@ MachOObjectFile::MachOObjectFile(MemoryBufferRef Object, bool IsLittleEndian,
   if (is64Bit())
     parseHeader(this, Header64, EC);
   else
-    // First fields of MachO::mach_header_64 are the same as
-    // in MachO::mach_header.
-    parseHeader(this, *reinterpret_cast<MachO::mach_header *>(&this->Header64),
-                EC);
+    parseHeader(this, Header, EC);
   if (EC)
     return;
 
@@ -1251,7 +1248,6 @@ unsigned MachOObjectFile::getArch() const {
 
 Triple MachOObjectFile::getArch(const char **McpuDefault,
                                 Triple *ThumbTriple) const {
-  const auto &Header = getHeader();
   *ThumbTriple = getThumbArch(Header.cputype, Header.cpusubtype, McpuDefault);
   return getArch(Header.cputype, Header.cpusubtype, McpuDefault);
 }
@@ -2186,9 +2182,7 @@ MachOObjectFile::getDice(DataRefImpl Rel) const {
 }
 
 const MachO::mach_header &MachOObjectFile::getHeader() const {
-  // First fields of MachO::mach_header_64 are the same as
-  // in MachO::mach_header.
-  return *reinterpret_cast<const MachO::mach_header *>(&this->Header64);
+  return Header;
 }
 
 const MachO::mach_header_64 &MachOObjectFile::getHeader64() const {

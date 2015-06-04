@@ -429,7 +429,10 @@ public:
   }
 
 private:
-  MachO::mach_header_64 Header64;
+  union {
+    MachO::mach_header_64 Header64;
+    MachO::mach_header Header;
+  };
   typedef SmallVector<const char*, 1> SectionList;
   SectionList Sections;
   typedef SmallVector<const char*, 1> LibraryList;
