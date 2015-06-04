@@ -6360,7 +6360,8 @@ static SDValue get1bitLaneShuffleImm8ForMask(ArrayRef<int> Mask, SDLoc DL,
          "Up to 8 elts may be in Imm8 1-bit lane shuffle mask");
   unsigned Imm = 0;
   for (unsigned i = 0; i < Mask.size(); ++i)
-    Imm |= (Mask[i] % 2) << i;
+    if (Mask[i] >= 0)
+      Imm |= (Mask[i] % 2) << i;
   return DAG.getConstant(Imm, DL, MVT::i8);
 }
 
