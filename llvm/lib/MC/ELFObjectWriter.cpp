@@ -202,7 +202,7 @@ class ELFObjectWriter : public MCObjectWriter {
     void ExecutePostLayoutBinding(MCAssembler &Asm,
                                   const MCAsmLayout &Layout) override;
 
-    void writeSectionHeader(const MCAssembler &Asm, const MCAsmLayout &Layout,
+    void writeSectionHeader(const MCAsmLayout &Layout,
                             const SectionIndexMapTy &SectionIndexMap,
                             const SectionOffsetsTy &SectionOffsets);
 
@@ -1144,8 +1144,7 @@ void ELFObjectWriter::writeSection(const SectionIndexMapTy &SectionIndexMap,
 }
 
 void ELFObjectWriter::writeSectionHeader(
-    const MCAssembler &Asm, const MCAsmLayout &Layout,
-    const SectionIndexMapTy &SectionIndexMap,
+    const MCAsmLayout &Layout, const SectionIndexMapTy &SectionIndexMap,
     const SectionOffsetsTy &SectionOffsets) {
   const unsigned NumSections = SectionTable.size();
 
@@ -1281,7 +1280,7 @@ void ELFObjectWriter::WriteObject(MCAssembler &Asm,
   const unsigned SectionHeaderOffset = OS.tell();
 
   // ... then the section header table ...
-  writeSectionHeader(Asm, Layout, SectionIndexMap, SectionOffsets);
+  writeSectionHeader(Layout, SectionIndexMap, SectionOffsets);
 
   uint16_t NumSections = (SectionTable.size() + 1 >= ELF::SHN_LORESERVE)
                              ? (uint16_t)ELF::SHN_UNDEF
