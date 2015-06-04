@@ -21,7 +21,6 @@
 #include "llvm/MC/MCAsmLayout.h"
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCContext.h"
-#include "llvm/MC/MCELFSymbolFlags.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCFixupKindInfo.h"
 #include "llvm/MC/MCObjectWriter.h"
@@ -459,12 +458,12 @@ void ELFObjectWriter::writeSymbol(SymbolTableWriter &Writer,
   if (Base) {
     Type = mergeTypeForSet(Type, Base->getType());
   }
-  uint8_t Info = (Binding << ELF_STB_Shift) | (Type << ELF_STT_Shift);
+  uint8_t Info = (Binding << 4) | Type;
 
   // Other and Visibility share the same byte with Visibility using the lower
   // 2 bits
   uint8_t Visibility = Symbol.getVisibility();
-  uint8_t Other = Symbol.getOther() << (ELF_STO_Shift - ELF_STV_Shift);
+  uint8_t Other = Symbol.getOther() << 2;
   Other |= Visibility;
 
   uint64_t Value = SymbolValue(*MSD.Symbol, Layout);

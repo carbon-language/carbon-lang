@@ -20,7 +20,6 @@
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCCodeEmitter.h"
 #include "llvm/MC/MCContext.h"
-#include "llvm/MC/MCELFSymbolFlags.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCObjectFileInfo.h"
@@ -312,7 +311,7 @@ void MCELFStreamer::EmitCommonSymbol(MCSymbol *S, uint64_t Size,
 
   Symbol->setType(ELF::STT_OBJECT);
 
-  if (Symbol->getBinding() == ELF_STB_Local) {
+  if (Symbol->getBinding() == ELF::STB_LOCAL) {
     MCSection *Section = getAssembler().getContext().getELFSection(
         ".bss", ELF::SHT_NOBITS, ELF::SHF_WRITE | ELF::SHF_ALLOC);
 

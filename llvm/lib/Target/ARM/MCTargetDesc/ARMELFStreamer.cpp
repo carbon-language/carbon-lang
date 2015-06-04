@@ -23,7 +23,6 @@
 #include "llvm/MC/MCCodeEmitter.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCELFStreamer.h"
-#include "llvm/MC/MCELFSymbolFlags.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstPrinter.h"
@@ -972,7 +971,7 @@ void ARMTargetELFStreamer::emitLabel(MCSymbol *Symbol) {
 
   Streamer.getAssembler().registerSymbol(*Symbol);
   unsigned Type = cast<MCSymbolELF>(Symbol)->getType();
-  if (Type == ELF_STT_Func || Type == ELF_STT_GnuIFunc)
+  if (Type == ELF::STT_FUNC || Type == ELF::STT_GNU_IFUNC)
     Streamer.EmitThumbFunc(Symbol);
 }
 

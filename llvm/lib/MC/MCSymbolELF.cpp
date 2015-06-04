@@ -9,11 +9,19 @@
 
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCSymbolELF.h"
-#include "llvm/MC/MCELFSymbolFlags.h"
 #include "llvm/MC/MCFixupKindInfo.h"
 #include "llvm/Support/ELF.h"
 
 namespace llvm {
+
+namespace {
+enum {
+  ELF_STT_Shift = 0, // Shift value for STT_* flags
+  ELF_STB_Shift = 4, // Shift value for STB_* flags
+  ELF_STV_Shift = 8, // Shift value for STV_* flags
+  ELF_STO_Shift = 10 // Shift value for STO_* flags
+};
+}
 
 void MCSymbolELF::setBinding(unsigned Binding) const {
   BindingSet = true;
