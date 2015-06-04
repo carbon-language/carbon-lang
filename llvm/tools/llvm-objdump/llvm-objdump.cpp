@@ -809,11 +809,9 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
       outs() << SegmentName << ",";
     outs() << name << ':';
 
-    // If the section has no symbols just insert a dummy one and disassemble
-    // the whole section.
-    if (Symbols.empty())
-      Symbols.push_back(std::make_pair(0, name));
-
+    // If the section has no symbol at the start, just insert a dummy one.
+    if (Symbols.empty() || Symbols[0].first != 0)
+      Symbols.insert(Symbols.begin(), std::make_pair(0, name));
 
     SmallString<40> Comments;
     raw_svector_ostream CommentStream(Comments);
