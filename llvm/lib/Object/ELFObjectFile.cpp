@@ -39,14 +39,15 @@ ObjectFile::createELFObjectFile(MemoryBufferRef Obj) {
       R.reset(new ELFObjectFile<ELFType<support::big, false>>(Obj, EC));
     else
       return object_error::parse_failed;
-  } else {
-    assert(Ident.first == ELF::ELFCLASS64);
+  } else if (Ident.first == ELF::ELFCLASS64) {
     if (Ident.second == ELF::ELFDATA2LSB)
       R.reset(new ELFObjectFile<ELFType<support::little, true>>(Obj, EC));
     else if (Ident.second == ELF::ELFDATA2MSB)
       R.reset(new ELFObjectFile<ELFType<support::big, true>>(Obj, EC));
     else
       return object_error::parse_failed;
+  } else {
+    return object_error::parse_failed;
   }
 
   if (EC)
