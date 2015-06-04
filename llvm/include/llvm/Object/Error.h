@@ -28,6 +28,7 @@ enum class object_error {
   parse_failed,
   unexpected_eof,
   bitcode_section_not_found,
+  macho_small_load_command,
 };
 
 inline std::error_code make_error_code(object_error e) {

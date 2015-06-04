@@ -44,6 +44,8 @@ std::string _object_error_category::message(int EV) const {
     return "The end of the file was unexpectedly encountered";
   case object_error::bitcode_section_not_found:
     return "Bitcode section not found in object file";
+  case object_error::macho_small_load_command:
+    return "Mach-O load command with size < 8 bytes";
   }
   llvm_unreachable("An enumerator of object_error does not have a message "
                    "defined.");

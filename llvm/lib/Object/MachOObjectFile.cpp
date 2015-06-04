@@ -194,24 +194,27 @@ static uint32_t getSectionFlags(const MachOObjectFile *O,
   return Sect.flags;
 }
 
-static MachOObjectFile::LoadCommandInfo
+static ErrorOr<MachOObjectFile::LoadCommandInfo>
 getLoadCommandInfo(const MachOObjectFile *Obj, const char *Ptr) {
+  auto CmdOrErr = getStructOrErr<MachO::load_command>(Obj, Ptr);
+  if (!CmdOrErr)
+    return CmdOrErr.getError();
+  if (CmdOrErr->cmdsize < 8)
+    return object_error::macho_small_load_command;
   MachOObjectFile::LoadCommandInfo Load;
   Load.Ptr = Ptr;
-  Load.C = getStruct<MachO::load_command>(Obj, Load.Ptr);
-  if (Load.C.cmdsize < 8)
-    report_fatal_error("Load command with size < 8 bytes.");
+  Load.C = CmdOrErr.get();
   return Load;
 }
 
-static MachOObjectFile::LoadCommandInfo
+static ErrorOr<MachOObjectFile::LoadCommandInfo>
 getFirstLoadCommandInfo(const MachOObjectFile *Obj) {
   unsigned HeaderSize = Obj->is64Bit() ? sizeof(MachO::mach_header_64)
                                        : sizeof(MachO::mach_header);
   return getLoadCommandInfo(Obj, getPtr(Obj, HeaderSize));
 }
 
-static MachOObjectFile::LoadCommandInfo
+static ErrorOr<MachOObjectFile::LoadCommandInfo>
 getNextLoadCommandInfo(const MachOObjectFile *Obj,
                        const MachOObjectFile::LoadCommandInfo &L) {
   return getLoadCommandInfo(Obj, L.Ptr + L.C.cmdsize);
@@ -251,7 +254,12 @@ MachOObjectFile::MachOObjectFile(MemoryBufferRef Object, bool IsLittleEndian,
   MachO::LoadCommandType SegmentLoadType = is64Bit() ?
     MachO::LC_SEGMENT_64 : MachO::LC_SEGMENT;
 
-  LoadCommandInfo Load = getFirstLoadCommandInfo(this);
+  auto LoadOrErr = getFirstLoadCommandInfo(this);
+  if (!LoadOrErr) {
+    EC = LoadOrErr.getError();
+    return;
+  }
+  LoadCommandInfo Load = LoadOrErr.get();
   for (unsigned I = 0; I < LoadCommandCount; ++I) {
     LoadCommands.push_back(Load);
     if (Load.C.cmd == MachO::LC_SYMTAB) {
@@ -318,8 +326,14 @@ MachOObjectFile::MachOObjectFile(MemoryBufferRef Object, bool IsLittleEndian,
                Load.C.cmd == MachO::LC_LOAD_UPWARD_DYLIB) {
       Libraries.push_back(Load.Ptr);
     }
-    if (I < LoadCommandCount - 1)
-      Load = getNextLoadCommandInfo(this, Load);
+    if (I < LoadCommandCount - 1) {
+      auto LoadOrErr = getNextLoadCommandInfo(this, Load);
+      if (!LoadOrErr) {
+        EC = LoadOrErr.getError();
+        return;
+      }
+      Load = LoadOrErr.get();
+    }
   }
   assert(LoadCommands.size() == LoadCommandCount);
 }
