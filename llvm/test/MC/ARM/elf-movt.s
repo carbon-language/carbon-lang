@@ -49,10 +49,6 @@ barf:                                   @ @barf
 @ OBJ-NEXT:     AddressAlignment: 4
 @ OBJ-NEXT:     EntrySize: 8
 @ OBJ-NEXT:     Relocations [
-@ OBJ-NEXT:       0x0 R_ARM_MOVW_PREL_NC
-@ OBJ-NEXT:       0x4 R_ARM_MOVT_PREL
+@ OBJ-NEXT:       0x0 R_ARM_MOVW_PREL_NC GOT 0x0
+@ OBJ-NEXT:       0x4 R_ARM_MOVT_PREL GOT 0x0
 @ OBJ-NEXT:   ]
-@ OBJ-NEXT:     SectionData (
-@ OBJ-NEXT:       0000: 00000000 2D050000 04000000 2E050000  |....-...........|
-@ OBJ-NEXT:     )
-@ OBJ-NEXT:   }
