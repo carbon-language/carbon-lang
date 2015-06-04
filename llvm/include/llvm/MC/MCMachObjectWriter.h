@@ -43,7 +43,7 @@ public:
   /// \name Lifetime Management
   /// @{
 
-  virtual void reset() {};
+  virtual void reset(){};
 
   /// @}
 
@@ -72,8 +72,7 @@ public:
 };
 
 class MachObjectWriter : public MCObjectWriter {
-  /// MachSymbolData - Helper struct for containing some precomputed information
-  /// on symbols.
+  /// Helper struct for containing some precomputed information on symbols.
   struct MachSymbolData {
     const MCSymbol *Symbol;
     uint64_t StringIndex;
@@ -163,12 +162,11 @@ public:
   void WriteHeader(unsigned NumLoadCommands, unsigned LoadCommandsSize,
                    bool SubsectionsViaSymbols);
 
-  /// WriteSegmentLoadCommand - Write a segment load command.
+  /// Write a segment load command.
   ///
   /// \param NumSections The number of sections in this segment.
   /// \param SectionDataSize The total size of the sections.
-  void WriteSegmentLoadCommand(unsigned NumSections,
-                               uint64_t VMSize,
+  void WriteSegmentLoadCommand(unsigned NumSections, uint64_t VMSize,
                                uint64_t SectionDataStartOffset,
                                uint64_t SectionDataSize);
 
@@ -180,14 +178,11 @@ public:
                               uint32_t StringTableOffset,
                               uint32_t StringTableSize);
 
-  void WriteDysymtabLoadCommand(uint32_t FirstLocalSymbol,
-                                uint32_t NumLocalSymbols,
-                                uint32_t FirstExternalSymbol,
-                                uint32_t NumExternalSymbols,
-                                uint32_t FirstUndefinedSymbol,
-                                uint32_t NumUndefinedSymbols,
-                                uint32_t IndirectSymbolOffset,
-                                uint32_t NumIndirectSymbols);
+  void WriteDysymtabLoadCommand(
+      uint32_t FirstLocalSymbol, uint32_t NumLocalSymbols,
+      uint32_t FirstExternalSymbol, uint32_t NumExternalSymbols,
+      uint32_t FirstUndefinedSymbol, uint32_t NumUndefinedSymbols,
+      uint32_t IndirectSymbolOffset, uint32_t NumIndirectSymbols);
 
   void WriteNlist(MachSymbolData &MSD, const MCAsmLayout &Layout);
 
@@ -225,14 +220,11 @@ public:
                                  const MCAsmLayout &Layout,
                                  const MCFragment *Fragment,
                                  const MCFixup &Fixup, MCValue Target,
-                                 unsigned Log2Size,
-                                 uint64_t &FixedValue);
+                                 unsigned Log2Size, uint64_t &FixedValue);
 
-  void RecordTLVPRelocation(const MCAssembler &Asm,
-                            const MCAsmLayout &Layout,
-                            const MCFragment *Fragment,
-                            const MCFixup &Fixup, MCValue Target,
-                            uint64_t &FixedValue);
+  void RecordTLVPRelocation(const MCAssembler &Asm, const MCAsmLayout &Layout,
+                            const MCFragment *Fragment, const MCFixup &Fixup,
+                            MCValue Target, uint64_t &FixedValue);
 
   void recordRelocation(MCAssembler &Asm, const MCAsmLayout &Layout,
                         const MCFragment *Fragment, const MCFixup &Fixup,
@@ -241,8 +233,7 @@ public:
 
   void BindIndirectSymbols(MCAssembler &Asm);
 
-  /// ComputeSymbolTable - Compute the symbol table data
-  ///
+  /// Compute the symbol table data.
   void ComputeSymbolTable(MCAssembler &Asm,
                           std::vector<MachSymbolData> &LocalSymbolData,
                           std::vector<MachSymbolData> &ExternalSymbolData,
@@ -262,8 +253,7 @@ public:
   void writeObject(MCAssembler &Asm, const MCAsmLayout &Layout) override;
 };
 
-
-/// \brief Construct a new Mach-O writer instance.
+/// Construct a new Mach-O writer instance.
 ///
 /// This routine takes ownership of the target writer subclass.
 ///
