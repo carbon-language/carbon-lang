@@ -151,11 +151,15 @@ BracesAroundStatementsCheck::check(const MatchFinder::MatchResult &Result) {
     SourceLocation StartLoc = findRParenLoc(S, SM, Context);
     if (StartLoc.isInvalid())
       return;
+    if (ForceBracesStmts.erase(S))
+      ForceBracesStmts.insert(S->getThen());
     bool BracedIf = checkStmt(Result, S->getThen(), StartLoc, S->getElseLoc());
     const Stmt *Else = S->getElse();
+    if (Else && BracedIf)
+      ForceBracesStmts.insert(Else);
     if (Else && !isa<IfStmt>(Else)) {
       // Omit 'else if' statements here, they will be handled directly.
-      checkStmt(Result, Else, S->getElseLoc(), SourceLocation(), BracedIf);
+      checkStmt(Result, Else, S->getElseLoc(), SourceLocation());
     }
   } else {
     llvm_unreachable("Invalid match");
@@ -203,7 +207,7 @@ BracesAroundStatementsCheck::findRParenLoc(const IfOrWhileStmt *S,
 /// Returns true if braces where added.
 bool BracesAroundStatementsCheck::checkStmt(
     const MatchFinder::MatchResult &Result, const Stmt *S,
-    SourceLocation InitialLoc, SourceLocation EndLocHint, bool ForceBraces) {
+    SourceLocation InitialLoc, SourceLocation EndLocHint) {
   // 1) If there's a corresponding "else" or "while", the check inserts "} "
   // right before that token.
   // 2) If there's a multi-line block comment starting on the same line after
@@ -241,7 +245,7 @@ bool BracesAroundStatementsCheck::checkStmt(
   assert(EndLoc.isValid());
   // Don't require braces for statements spanning less than certain number of
   // lines.
-  if (ShortStatementLines && !ForceBraces) {
+  if (ShortStatementLines && !ForceBracesStmts.erase(S)) {
     unsigned StartLine = SM.getSpellingLineNumber(StartLoc);
     unsigned EndLine = SM.getSpellingLineNumber(EndLoc);
     if (EndLine - StartLine < ShortStatementLines)
@@ -252,6 +256,10 @@ bool BracesAroundStatementsCheck::checkStmt(
   Diag << FixItHint::CreateInsertion(StartLoc, " {")
        << FixItHint::CreateInsertion(EndLoc, ClosingInsertion);
   return true;
+}
+
+void BracesAroundStatementsCheck::onEndOfTranslationUnit() {
+  ForceBracesStmts.clear();
 }
 
 } // namespace readability

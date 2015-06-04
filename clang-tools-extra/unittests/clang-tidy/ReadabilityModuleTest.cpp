@@ -254,6 +254,19 @@ TEST(BracesAroundStatementsCheck, IfElseWithShortStatements) {
                 "  else return -3;\n"
                 "}",
                 nullptr, "input.cc", None, Options));
+
+  // If the last else is an else-if, we also force it.
+  EXPECT_EQ("int main() {\n"
+            "  if (false) { return -1;\n"
+            "  } else if (1 == 2) { return -2;\n"
+            "}\n"
+            "}",
+            runCheckOnCode<BracesAroundStatementsCheck>(
+                "int main() {\n"
+                "  if (false) return -1;\n"
+                "  else if (1 == 2) return -2;\n"
+                "}",
+                nullptr, "input.cc", None, Options));
 }
 
 TEST(BracesAroundStatementsCheck, For) {

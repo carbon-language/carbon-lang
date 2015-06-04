@@ -41,17 +41,18 @@ public:
   void storeOptions(ClangTidyOptions::OptionMap &Opts) override;
   void registerMatchers(ast_matchers::MatchFinder *Finder) override;
   void check(const ast_matchers::MatchFinder::MatchResult &Result) override;
+  void onEndOfTranslationUnit() override;
 
 private:
   bool checkStmt(const ast_matchers::MatchFinder::MatchResult &Result,
                  const Stmt *S, SourceLocation StartLoc,
-                 SourceLocation EndLocHint = SourceLocation(),
-                 bool ForceBraces = false);
+                 SourceLocation EndLocHint = SourceLocation());
   template <typename IfOrWhileStmt>
   SourceLocation findRParenLoc(const IfOrWhileStmt *S, const SourceManager &SM,
                                const ASTContext *Context);
 
 private:
+  std::set<const Stmt*> ForceBracesStmts;
   const unsigned ShortStatementLines;
 };
 
