@@ -462,7 +462,10 @@ void MipsTargetELFStreamer::emitLabel(MCSymbol *S) {
   if (Type != ELF::STT_FUNC)
     return;
 
-  Symbol->setOther(ELF::STO_MIPS_MICROMIPS);
+  // The "other" values are stored in the last 6 bits of the second byte
+  // The traditional defines for STO values assume the full byte and thus
+  // the shift to pack it.
+  Symbol->setOther(ELF::STO_MIPS_MICROMIPS >> 2);
 }
 
 void MipsTargetELFStreamer::finish() {
@@ -524,10 +527,13 @@ void MipsTargetELFStreamer::emitAssignment(MCSymbol *S, const MCExpr *Value) {
   const auto &RhsSym = cast<MCSymbolELF>(
       static_cast<const MCSymbolRefExpr *>(Value)->getSymbol());
 
-  if (!(RhsSym.getOther() & ELF::STO_MIPS_MICROMIPS))
+  if (!(RhsSym.getOther() & (ELF::STO_MIPS_MICROMIPS >> 2)))
     return;
 
-  Symbol->setOther(ELF::STO_MIPS_MICROMIPS);
+  // The "other" values are stored in the last 6 bits of the second byte.
+  // The traditional defines for STO values assume the full byte and thus
+  // the shift to pack it.
+  Symbol->setOther(ELF::STO_MIPS_MICROMIPS >> 2);
 }
 
 MCELFStreamer &MipsTargetELFStreamer::getStreamer() {

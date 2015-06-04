@@ -169,10 +169,13 @@ public:
     if (Res != ELF::decodePPC64LocalEntryOffset(Encoded))
       report_fatal_error(".localentry expression cannot be encoded.");
 
-    unsigned Other = S->getOther();
+    // The "other" values are stored in the last 6 bits of the second byte.
+    // The traditional defines for STO values assume the full byte and thus
+    // the shift to pack it.
+    unsigned Other = S->getOther() << 2;
     Other &= ~ELF::STO_PPC64_LOCAL_MASK;
     Other |= Encoded;
-    S->setOther(Other);
+    S->setOther(Other >> 2);
 
     // For GAS compatibility, unless we already saw a .abiversion directive,
     // set e_flags to indicate ELFv2 ABI.
@@ -188,10 +191,13 @@ public:
       return;
     const auto &RhsSym = cast<MCSymbolELF>(
         static_cast<const MCSymbolRefExpr *>(Value)->getSymbol());
-    unsigned Other = Symbol->getOther();
+    // The "other" values are stored in the last 6 bits of the second byte.
+    // The traditional defines for STO values assume the full byte and thus
+    // the shift to pack it.
+    unsigned Other = Symbol->getOther() << 2;
     Other &= ~ELF::STO_PPC64_LOCAL_MASK;
-    Other |= RhsSym.getOther() & ELF::STO_PPC64_LOCAL_MASK;
-    Symbol->setOther(Other);
+    Other |= (RhsSym.getOther() << 2) & ELF::STO_PPC64_LOCAL_MASK;
+    Symbol->setOther(Other >> 2);
   }
 };
 

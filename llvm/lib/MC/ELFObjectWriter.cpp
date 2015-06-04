@@ -463,7 +463,8 @@ void ELFObjectWriter::writeSymbol(SymbolTableWriter &Writer,
   // Other and Visibility share the same byte with Visibility using the lower
   // 2 bits
   uint8_t Visibility = Symbol.getVisibility();
-  uint8_t Other = Symbol.getOther() | Visibility;
+  uint8_t Other = Symbol.getOther() << 2;
+  Other |= Visibility;
 
   uint64_t Value = SymbolValue(*MSD.Symbol, Layout);
   uint64_t Size = 0;
