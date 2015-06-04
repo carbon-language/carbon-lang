@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=bpf -show-mc-encoding | FileCheck %s
+; RUN: llc < %s -march=bpf_le -show-mc-encoding | FileCheck %s
 
 ; Function Attrs: nounwind uwtable
 define i32 @ld_b(i64 %foo, i64* nocapture %bar, i8* %ctx, i8* %ctx2) #0 {

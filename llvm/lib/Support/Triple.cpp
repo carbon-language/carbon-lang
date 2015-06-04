@@ -13,6 +13,7 @@
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/TargetParser.h"
+#include "llvm/Support/Host.h"
 #include <cstring>
 using namespace llvm;
 
@@ -24,7 +25,8 @@ const char *Triple::getArchTypeName(ArchType Kind) {
   case aarch64_be:  return "aarch64_be";
   case arm:         return "arm";
   case armeb:       return "armeb";
-  case bpf:         return "bpf";
+  case bpf_le:      return "bpf_le";
+  case bpf_be:      return "bpf_be";
   case hexagon:     return "hexagon";
   case mips:        return "mips";
   case mipsel:      return "mipsel";
@@ -89,7 +91,8 @@ const char *Triple::getArchTypePrefix(ArchType Kind) {
   case amdgcn:
   case r600:        return "amdgpu";
 
-  case bpf:         return "bpf";
+  case bpf_le:
+  case bpf_be:      return "bpf";
 
   case sparcv9:
   case sparcel:
@@ -192,14 +195,30 @@ const char *Triple::getEnvironmentTypeName(EnvironmentType Kind) {
   llvm_unreachable("Invalid EnvironmentType!");
 }
 
+static Triple::ArchType parseBPFArch(StringRef ArchName) {
+  if (ArchName.equals("bpf")) {
+    if (sys::IsLittleEndianHost)
+      return Triple::bpf_le;
+    else
+      return Triple::bpf_be;
+  } else if (ArchName.equals("bpf_be")) {
+    return Triple::bpf_be;
+  } else if (ArchName.equals("bpf_le")) {
+    return Triple::bpf_le;
+  } else {
+    return Triple::UnknownArch;
+  }
+}
+
 Triple::ArchType Triple::getArchTypeForLLVMName(StringRef Name) {
+  Triple::ArchType BPFArch(parseBPFArch(Name));
   return StringSwitch<Triple::ArchType>(Name)
     .Case("aarch64", aarch64)
     .Case("aarch64_be", aarch64_be)
     .Case("arm64", aarch64) // "arm64" is an alias for "aarch64"
     .Case("arm", arm)
     .Case("armeb", armeb)
-    .Case("bpf", bpf)
+    .StartsWith("bpf", BPFArch)
     .Case("mips", mips)
     .Case("mipsel", mipsel)
     .Case("mips64", mips64)
@@ -296,6 +315,7 @@ static Triple::ArchType parseARMArch(StringRef ArchName) {
 
 static Triple::ArchType parseArch(StringRef ArchName) {
   Triple::ArchType ARMArch(parseARMArch(ArchName));
+  Triple::ArchType BPFArch(parseBPFArch(ArchName));
 
   return StringSwitch<Triple::ArchType>(ArchName)
     .Cases("i386", "i486", "i586", "i686", Triple::x86)
@@ -317,7 +337,7 @@ static Triple::ArchType parseArch(StringRef ArchName) {
     .Case("mips64el", Triple::mips64el)
     .Case("r600", Triple::r600)
     .Case("amdgcn", Triple::amdgcn)
-    .Case("bpf", Triple::bpf)
+    .StartsWith("bpf", BPFArch)
     .Case("hexagon", Triple::hexagon)
     .Case("s390x", Triple::systemz)
     .Case("sparc", Triple::sparc)
@@ -989,7 +1009,8 @@ static unsigned getArchPointerBitWidth(llvm::Triple::ArchType Arch) {
   case llvm::Triple::aarch64:
   case llvm::Triple::aarch64_be:
   case llvm::Triple::amdgcn:
-  case llvm::Triple::bpf:
+  case llvm::Triple::bpf_le:
+  case llvm::Triple::bpf_be:
   case llvm::Triple::le64:
   case llvm::Triple::mips64:
   case llvm::Triple::mips64el:
@@ -1026,7 +1047,8 @@ Triple Triple::get32BitArchVariant() const {
   case Triple::aarch64:
   case Triple::aarch64_be:
   case Triple::amdgcn:
-  case Triple::bpf:
+  case Triple::bpf_le:
+  case Triple::bpf_be:
   case Triple::msp430:
   case Triple::systemz:
   case Triple::ppc64le:
@@ -1090,7 +1112,8 @@ Triple Triple::get64BitArchVariant() const {
 
   case Triple::aarch64:
   case Triple::aarch64_be:
-  case Triple::bpf:
+  case Triple::bpf_le:
+  case Triple::bpf_be:
   case Triple::le64:
   case Triple::amdil64:
   case Triple::amdgcn:

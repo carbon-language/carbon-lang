@@ -1,5 +1,4 @@
-; RUN: llc -march=bpf -show-mc-encoding < %s | FileCheck %s
-; test little endian only for now
+; RUN: llc -march=bpf_le -show-mc-encoding < %s | FileCheck %s
 
 define i8 @mov(i8 %a, i8 %b) nounwind {
 ; CHECK-LABEL: mov:

@@ -79,32 +79,43 @@ static MCInstPrinter *createBPFMCInstPrinter(const Triple &T,
 }
 
 extern "C" void LLVMInitializeBPFTargetMC() {
-  // Register the MC asm info.
-  RegisterMCAsmInfo<BPFMCAsmInfo> X(TheBPFTarget);
+  for (Target *T : {&TheBPFleTarget, &TheBPFbeTarget, &TheBPFTarget}) {
+    // Register the MC asm info.
+    RegisterMCAsmInfo<BPFMCAsmInfo> X(*T);
 
-  // Register the MC codegen info.
-  TargetRegistry::RegisterMCCodeGenInfo(TheBPFTarget, createBPFMCCodeGenInfo);
+    // Register the MC codegen info.
+    TargetRegistry::RegisterMCCodeGenInfo(*T, createBPFMCCodeGenInfo);
 
-  // Register the MC instruction info.
-  TargetRegistry::RegisterMCInstrInfo(TheBPFTarget, createBPFMCInstrInfo);
+    // Register the MC instruction info.
+    TargetRegistry::RegisterMCInstrInfo(*T, createBPFMCInstrInfo);
 
-  // Register the MC register info.
-  TargetRegistry::RegisterMCRegInfo(TheBPFTarget, createBPFMCRegisterInfo);
+    // Register the MC register info.
+    TargetRegistry::RegisterMCRegInfo(*T, createBPFMCRegisterInfo);
 
-  // Register the MC subtarget info.
-  TargetRegistry::RegisterMCSubtargetInfo(TheBPFTarget,
-                                          createBPFMCSubtargetInfo);
+    // Register the MC subtarget info.
+    TargetRegistry::RegisterMCSubtargetInfo(*T,
+                                            createBPFMCSubtargetInfo);
+
+    // Register the object streamer
+    TargetRegistry::RegisterELFStreamer(*T, createBPFMCStreamer);
+
+    // Register the MCInstPrinter.
+    TargetRegistry::RegisterMCInstPrinter(*T, createBPFMCInstPrinter);
+  }
 
   // Register the MC code emitter
-  TargetRegistry::RegisterMCCodeEmitter(TheBPFTarget,
-                                        llvm::createBPFMCCodeEmitter);
+  TargetRegistry::RegisterMCCodeEmitter(TheBPFleTarget, createBPFMCCodeEmitter);
+  TargetRegistry::RegisterMCCodeEmitter(TheBPFbeTarget, createBPFbeMCCodeEmitter);
 
   // Register the ASM Backend
-  TargetRegistry::RegisterMCAsmBackend(TheBPFTarget, createBPFAsmBackend);
+  TargetRegistry::RegisterMCAsmBackend(TheBPFleTarget, createBPFAsmBackend);
+  TargetRegistry::RegisterMCAsmBackend(TheBPFbeTarget, createBPFbeAsmBackend);
 
-  // Register the object streamer
-  TargetRegistry::RegisterELFStreamer(TheBPFTarget, createBPFMCStreamer);
-
-  // Register the MCInstPrinter.
-  TargetRegistry::RegisterMCInstPrinter(TheBPFTarget, createBPFMCInstPrinter);
+  if (sys::IsLittleEndianHost) {
+    TargetRegistry::RegisterMCCodeEmitter(TheBPFTarget, createBPFMCCodeEmitter);
+    TargetRegistry::RegisterMCAsmBackend(TheBPFTarget, createBPFAsmBackend);
+  } else {
+    TargetRegistry::RegisterMCCodeEmitter(TheBPFTarget, createBPFbeMCCodeEmitter);
+    TargetRegistry::RegisterMCAsmBackend(TheBPFTarget, createBPFbeAsmBackend);
+  }
 }

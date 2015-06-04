@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=bpf | FileCheck %s
+; RUN: llc < %s -march=bpf_le | FileCheck %s
 
 %struct.bpf_context = type { i64, i64, i64, i64, i64, i64, i64 }
 %struct.sk_buff = type { i64, i64, i64, i64, i64, i64, i64 }

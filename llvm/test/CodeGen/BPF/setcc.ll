@@ -1,4 +1,4 @@
-; RUN: llc -march=bpf < %s | FileCheck %s
+; RUN: llc -march=bpf_le < %s | FileCheck %s
 
 define i16 @sccweqand(i16 %a, i16 %b) nounwind {
   %t1 = and i16 %a, %b

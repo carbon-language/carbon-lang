@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=bpf | FileCheck %s
+; RUN: llc < %s -march=bpf_le | FileCheck %s
 
 define i32 @test0(i32 %X) {
   %tmp.1 = add i32 %X, 1

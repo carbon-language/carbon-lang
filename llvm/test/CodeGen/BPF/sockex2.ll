@@ -1,5 +1,4 @@
-; RUN: llc < %s -march=bpf -show-mc-encoding | FileCheck %s
-; test little endian only for now
+; RUN: llc < %s -march=bpf_le -show-mc-encoding | FileCheck %s
 
 %struct.bpf_map_def = type { i32, i32, i32, i32 }
 %struct.sk_buff = type opaque

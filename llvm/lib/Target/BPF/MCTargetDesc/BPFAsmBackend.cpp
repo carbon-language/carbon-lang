@@ -25,7 +25,10 @@ using namespace llvm;
 namespace {
 class BPFAsmBackend : public MCAsmBackend {
 public:
-  BPFAsmBackend() : MCAsmBackend() {}
+  bool IsLittleEndian;
+
+  BPFAsmBackend(bool IsLittleEndian)
+    : MCAsmBackend(), IsLittleEndian(IsLittleEndian) {}
   ~BPFAsmBackend() override {}
 
   void applyFixup(const MCFixup &Fixup, char *Data, unsigned DataSize,
@@ -69,17 +72,28 @@ void BPFAsmBackend::applyFixup(const MCFixup &Fixup, char *Data,
   }
   assert(Fixup.getKind() == FK_PCRel_2);
   Value = (uint16_t)((Value - 8) / 8);
-  Data[Fixup.getOffset() + 2] = Value & 0xFF;
-  Data[Fixup.getOffset() + 3] = Value >> 8;
+  if (IsLittleEndian) {
+    Data[Fixup.getOffset() + 2] = Value & 0xFF;
+    Data[Fixup.getOffset() + 3] = Value >> 8;
+  } else {
+    Data[Fixup.getOffset() + 2] = Value >> 8;
+    Data[Fixup.getOffset() + 3] = Value & 0xFF;
+  }
 }
 
 MCObjectWriter *BPFAsmBackend::createObjectWriter(raw_pwrite_stream &OS) const {
-  return createBPFELFObjectWriter(OS, 0);
+  return createBPFELFObjectWriter(OS, 0, IsLittleEndian);
 }
 }
 
 MCAsmBackend *llvm::createBPFAsmBackend(const Target &T,
                                         const MCRegisterInfo &MRI, StringRef TT,
                                         StringRef CPU) {
-  return new BPFAsmBackend();
+  return new BPFAsmBackend(/*IsLittleEndian=*/true);
+}
+
+MCAsmBackend *llvm::createBPFbeAsmBackend(const Target &T,
+                                          const MCRegisterInfo &MRI, StringRef TT,
+                                          StringRef CPU) {
+  return new BPFAsmBackend(/*IsLittleEndian=*/false);
 }

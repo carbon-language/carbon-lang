@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=bpf | FileCheck %s
+; RUN: llc < %s -march=bpf_le | FileCheck %s
 
 @foo_printf.fmt = private unnamed_addr constant [9 x i8] c"hello  \0A\00", align 1
 

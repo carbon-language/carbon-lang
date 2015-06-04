@@ -1,5 +1,4 @@
-; RUN: llc < %s -march=bpf -verify-machineinstrs -show-mc-encoding | FileCheck %s
-; test little endian only for now
+; RUN: llc < %s -march=bpf_le -verify-machineinstrs -show-mc-encoding | FileCheck %s
 
 ; CHECK-LABEL: test_load_add_32
 ; CHECK: xadd32
