@@ -62,8 +62,6 @@ public:
                      unsigned EndIdx)
       : RTDyld(RTDyld), BeginIdx(BeginIdx), EndIdx(EndIdx) { }
 
-    virtual ~LoadedObjectInfo() = default;
-
     virtual object::OwningBinary<object::ObjectFile>
     getObjectForDebug(const object::ObjectFile &Obj) const = 0;
 
