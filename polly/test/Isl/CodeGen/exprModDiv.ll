@@ -42,7 +42,7 @@
 ; CHECK:  %polly.access.A10 = getelementptr float, float* %A, i64 %24
 
 ; A[p / 127]
-; CHECK:  %pexp.div = sdiv i64 %p, 127
+; CHECK:  %pexp.div = sdiv exact i64 %p, 127
 ; CHECK:  %polly.access.B12 = getelementptr float, float* %B, i64 %pexp.div
 
 ; A[i % 128]
@@ -64,8 +64,8 @@
 ; POW2:  %polly.access.A10 = getelementptr float, float* %A, i64 %24
 
 ; A[p / 128]
-; POW2:  %pexp.div.shr = ashr i64 %p, 7
-; POW2:  %polly.access.B12 = getelementptr float, float* %B, i64 %pexp.div.shr
+; POW2:  %pexp.div = sdiv exact i64 %p, 128
+; POW2:  %polly.access.B12 = getelementptr float, float* %B, i64 %pexp.div
 
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 

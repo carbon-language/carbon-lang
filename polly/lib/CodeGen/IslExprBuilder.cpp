@@ -295,14 +295,7 @@ Value *IslExprBuilder::createOpBin(__isl_take isl_ast_expr *Expr) {
     Res = Builder.CreateNSWMul(LHS, RHS);
     break;
   case isl_ast_op_div:
-    if (auto *Const = dyn_cast<ConstantInt>(RHS)) {
-      auto &Val = Const->getValue();
-      if (Val.isPowerOf2() && Val.isNonNegative()) {
-        Res = Builder.CreateAShr(LHS, Val.ceilLogBase2(), "pexp.div.shr");
-        break;
-      }
-    }
-    Res = Builder.CreateSDiv(LHS, RHS, "pexp.div");
+    Res = Builder.CreateSDiv(LHS, RHS, "pexp.div", true);
     break;
   case isl_ast_op_pdiv_q: // Dividend is non-negative
     Res = Builder.CreateUDiv(LHS, RHS, "pexp.p_div_q");
