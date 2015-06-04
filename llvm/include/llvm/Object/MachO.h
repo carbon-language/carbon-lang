@@ -385,8 +385,8 @@ public:
 
   MachO::any_relocation_info getRelocation(DataRefImpl Rel) const;
   MachO::data_in_code_entry getDice(DataRefImpl Rel) const;
-  MachO::mach_header getHeader() const;
-  MachO::mach_header_64 getHeader64() const;
+  const MachO::mach_header &getHeader() const;
+  const MachO::mach_header_64 &getHeader64() const;
   uint32_t
   getIndirectSymbolTableEntry(const MachO::dysymtab_command &DLC,
                               unsigned Index) const;
@@ -433,6 +433,7 @@ private:
   LoadCommandInfo getFirstLoadCommandInfo() const;
   LoadCommandInfo getNextLoadCommandInfo(const LoadCommandInfo &L) const;
 
+  MachO::mach_header_64 Header64;
   typedef SmallVector<const char*, 1> SectionList;
   SectionList Sections;
   typedef SmallVector<const char*, 1> LibraryList;

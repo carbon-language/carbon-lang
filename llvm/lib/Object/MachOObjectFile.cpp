@@ -187,7 +187,16 @@ MachOObjectFile::MachOObjectFile(MemoryBufferRef Object, bool IsLittleEndian,
       DataInCodeLoadCmd(nullptr), LinkOptHintsLoadCmd(nullptr),
       DyldInfoLoadCmd(nullptr), UuidLoadCmd(nullptr),
       HasPageZeroSegment(false) {
-  uint32_t LoadCommandCount = this->getHeader().ncmds;
+  // Parse header.
+  if (is64Bit())
+    Header64 = getStruct<MachO::mach_header_64>(this, getPtr(this, 0));
+  else
+    // First fields of MachO::mach_header_64 are the same as
+    // in MachO::mach_header.
+    *reinterpret_cast<MachO::mach_header *>(&this->Header64) =
+        getStruct<MachO::mach_header>(this, getPtr(this, 0));
+
+  uint32_t LoadCommandCount = getHeader().ncmds;
   if (LoadCommandCount == 0)
     return;
 
@@ -1195,21 +1204,9 @@ unsigned MachOObjectFile::getArch() const {
 
 Triple MachOObjectFile::getArch(const char **McpuDefault,
                                 Triple *ThumbTriple) const {
-  Triple T;
-  if (is64Bit()) {
-    MachO::mach_header_64 H_64;
-    H_64 = getHeader64();
-    T = MachOObjectFile::getArch(H_64.cputype, H_64.cpusubtype, McpuDefault);
-    *ThumbTriple = MachOObjectFile::getThumbArch(H_64.cputype, H_64.cpusubtype,
-                                                 McpuDefault);
-  } else {
-    MachO::mach_header H;
-    H = getHeader();
-    T = MachOObjectFile::getArch(H.cputype, H.cpusubtype, McpuDefault);
-    *ThumbTriple = MachOObjectFile::getThumbArch(H.cputype, H.cpusubtype,
-                                                 McpuDefault);
-  }
-  return T;
+  const auto &Header = getHeader();
+  *ThumbTriple = getThumbArch(Header.cputype, Header.cpusubtype, McpuDefault);
+  return getArch(Header.cputype, Header.cpusubtype, McpuDefault);
 }
 
 relocation_iterator MachOObjectFile::section_rel_begin(unsigned Index) const {
@@ -2164,12 +2161,15 @@ MachOObjectFile::getDice(DataRefImpl Rel) const {
   return getStruct<MachO::data_in_code_entry>(this, P);
 }
 
-MachO::mach_header MachOObjectFile::getHeader() const {
-  return getStruct<MachO::mach_header>(this, getPtr(this, 0));
+const MachO::mach_header &MachOObjectFile::getHeader() const {
+  // First fields of MachO::mach_header_64 are the same as
+  // in MachO::mach_header.
+  return *reinterpret_cast<const MachO::mach_header *>(&this->Header64);
 }
 
-MachO::mach_header_64 MachOObjectFile::getHeader64() const {
-  return getStruct<MachO::mach_header_64>(this, getPtr(this, 0));
+const MachO::mach_header_64 &MachOObjectFile::getHeader64() const {
+  assert(is64Bit());
+  return Header64;
 }
 
 uint32_t MachOObjectFile::getIndirectSymbolTableEntry(
