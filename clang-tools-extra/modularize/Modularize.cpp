@@ -738,8 +738,8 @@ int main(int Argc, const char **Argv) {
       ListFileNames, HeaderPrefix));
 
   // Get header file names and dependencies.
-  ModUtil->loadAllHeaderListsAndDependencies();
-
+  if (ModUtil->loadAllHeaderListsAndDependencies())
+    HadErrors = 1;
 
   // If we are in assistant mode, output the module map and quit.
   if (ModuleMapPath.length() != 0) {

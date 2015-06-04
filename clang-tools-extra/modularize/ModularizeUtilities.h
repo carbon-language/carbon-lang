@@ -52,6 +52,8 @@ public:
   DependencyMap Dependencies;
   /// True if we have module maps.
   bool HasModuleMap;
+  /// Missing header count.
+  int MissingHeaderCount;
 
   // Functions.
 

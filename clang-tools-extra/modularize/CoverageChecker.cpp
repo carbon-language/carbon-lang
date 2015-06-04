@@ -221,13 +221,13 @@ bool CoverageChecker::collectModuleHeaders(const Module &Mod) {
   }
 
   for (auto &HeaderKind : Mod.Headers)
-  for (auto &Header : HeaderKind)
-    ModuleMapHeadersSet.insert(ModularizeUtilities::getCanonicalPath(
-      Header.Entry->getName()));
+    for (auto &Header : HeaderKind)
+      ModuleMapHeadersSet.insert(ModularizeUtilities::getCanonicalPath(
+        Header.Entry->getName()));
 
   for (Module::submodule_const_iterator MI = Mod.submodule_begin(),
-    MIEnd = Mod.submodule_end();
-    MI != MIEnd; ++MI)
+      MIEnd = Mod.submodule_end();
+      MI != MIEnd; ++MI)
     collectModuleHeaders(**MI);
 
   return true;
