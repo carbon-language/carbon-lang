@@ -1113,22 +1113,21 @@ public:
 //===----------------------------------------------------------------------===//
 
 class RecordVal {
-  Init *Name;
+  PointerIntPair<Init *, 1, bool> NameAndPrefix;
   RecTy *Ty;
-  unsigned Prefix;
   Init *Value;
 
 public:
-  RecordVal(Init *N, RecTy *T, unsigned P);
-  RecordVal(const std::string &N, RecTy *T, unsigned P);
+  RecordVal(Init *N, RecTy *T, bool P);
+  RecordVal(const std::string &N, RecTy *T, bool P);
 
   const std::string &getName() const;
-  const Init *getNameInit() const { return Name; }
+  const Init *getNameInit() const { return NameAndPrefix.getPointer(); }
   std::string getNameInitAsString() const {
     return getNameInit()->getAsUnquotedString();
   }
 
-  unsigned getPrefix() const { return Prefix; }
+  bool getPrefix() const { return NameAndPrefix.getInt(); }
   RecTy *getType() const { return Ty; }
   Init *getValue() const { return Value; }
 
