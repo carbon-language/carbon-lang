@@ -613,6 +613,10 @@ SDNode *NVPTXDAGToDAGISel::SelectAddrSpaceCast(SDNode *N) {
       Opc =
           TM.is64Bit() ? NVPTX::cvta_to_local_yes_64 : NVPTX::cvta_to_local_yes;
       break;
+    case ADDRESS_SPACE_PARAM:
+      Opc = TM.is64Bit() ? NVPTX::nvvm_ptr_gen_to_param_64
+                         : NVPTX::nvvm_ptr_gen_to_param;
+      break;
     }
     return CurDAG->getMachineNode(Opc, SDLoc(N), N->getValueType(0), Src);
   }

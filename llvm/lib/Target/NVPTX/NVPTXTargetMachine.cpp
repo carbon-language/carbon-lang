@@ -53,7 +53,7 @@ void initializeGenericToNVVMPass(PassRegistry&);
 void initializeNVPTXAllocaHoistingPass(PassRegistry &);
 void initializeNVPTXAssignValidGlobalNamesPass(PassRegistry&);
 void initializeNVPTXFavorNonGenericAddrSpacesPass(PassRegistry &);
-void initializeNVPTXLowerStructArgsPass(PassRegistry &);
+void initializeNVPTXLowerKernelArgsPass(PassRegistry &);
 }
 
 extern "C" void LLVMInitializeNVPTXTarget() {
@@ -69,7 +69,7 @@ extern "C" void LLVMInitializeNVPTXTarget() {
   initializeNVPTXAssignValidGlobalNamesPass(*PassRegistry::getPassRegistry());
   initializeNVPTXFavorNonGenericAddrSpacesPass(
     *PassRegistry::getPassRegistry());
-  initializeNVPTXLowerStructArgsPass(*PassRegistry::getPassRegistry());
+  initializeNVPTXLowerKernelArgsPass(*PassRegistry::getPassRegistry());
 }
 
 static std::string computeDataLayout(bool is64Bit) {
@@ -163,6 +163,7 @@ void NVPTXPassConfig::addIRPasses() {
   TargetPassConfig::addIRPasses();
   addPass(createNVPTXAssignValidGlobalNamesPass());
   addPass(createGenericToNVVMPass());
+  addPass(createNVPTXLowerKernelArgsPass(&getNVPTXTargetMachine()));
   addPass(createNVPTXFavorNonGenericAddrSpacesPass());
   // FavorNonGenericAddrSpaces shortcuts unnecessary addrspacecasts, and leave
   // them unused. We could remove dead code in an ad-hoc manner, but that
