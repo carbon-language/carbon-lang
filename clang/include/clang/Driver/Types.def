@@ -55,14 +55,14 @@ TYPE("objective-c++",            ObjCXX,       PP_ObjCXX,       "mm",    "u")
 
 // C family input files to precompile.
 TYPE("c-header-cpp-output",      PP_CHeader,   INVALID,         "i",     "p")
-TYPE("c-header",                 CHeader,      PP_CHeader,      nullptr, "pu")
-TYPE("cl-header",                CLHeader,     PP_CHeader,      nullptr, "pu")
+TYPE("c-header",                 CHeader,      PP_CHeader,      "h",     "pu")
+TYPE("cl-header",                CLHeader,     PP_CHeader,      "h",     "pu")
 TYPE("objective-c-header-cpp-output", PP_ObjCHeader, INVALID,   "mi",    "p")
-TYPE("objective-c-header",       ObjCHeader,   PP_ObjCHeader,   nullptr, "pu")
+TYPE("objective-c-header",       ObjCHeader,   PP_ObjCHeader,   "h",     "pu")
 TYPE("c++-header-cpp-output",    PP_CXXHeader, INVALID,         "ii",    "p")
-TYPE("c++-header",               CXXHeader,    PP_CXXHeader,    nullptr, "pu")
+TYPE("c++-header",               CXXHeader,    PP_CXXHeader,    "hh",    "pu")
 TYPE("objective-c++-header-cpp-output", PP_ObjCXXHeader, INVALID, "mii", "p")
-TYPE("objective-c++-header",     ObjCXXHeader, PP_ObjCXXHeader, nullptr, "pu")
+TYPE("objective-c++-header",     ObjCXXHeader, PP_ObjCXXHeader, "h",     "pu")
 
 // Other languages.
 TYPE("ada",                      Ada,          INVALID,         nullptr, "u")
