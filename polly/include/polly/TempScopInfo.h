@@ -243,7 +243,7 @@ class TempScopInfo : public FunctionPass {
   void buildCondition(BasicBlock *BB, Region &R);
 
   // Build the affine function of the given condition
-  void buildAffineCondition(Value &V, bool inverted, Comparison **Comp) const;
+  Comparison buildAffineCondition(Value &V, bool inverted);
 
   // Return the temporary Scop information of Region R, where R must be a valid
   // part of Scop

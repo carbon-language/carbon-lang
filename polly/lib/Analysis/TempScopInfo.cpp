@@ -314,8 +314,7 @@ void TempScopInfo::buildAccessFunctions(Region &R, BasicBlock &BB,
   Accs.insert(Accs.end(), Functions.begin(), Functions.end());
 }
 
-void TempScopInfo::buildAffineCondition(Value &V, bool inverted,
-                                        Comparison **Comp) const {
+Comparison TempScopInfo::buildAffineCondition(Value &V, bool inverted) {
   if (ConstantInt *C = dyn_cast<ConstantInt>(&V)) {
     // If this is always true condition, we will create 0 <= 1,
     // otherwise we will create 0 >= 1.
@@ -323,11 +322,9 @@ void TempScopInfo::buildAffineCondition(Value &V, bool inverted,
     const SCEV *RHS = SE->getConstant(C->getType(), 1);
 
     if (C->isOne() == inverted)
-      *Comp = new Comparison(LHS, RHS, ICmpInst::ICMP_SLE);
+      return Comparison(LHS, RHS, ICmpInst::ICMP_SLE);
     else
-      *Comp = new Comparison(LHS, RHS, ICmpInst::ICMP_SGE);
-
-    return;
+      return Comparison(LHS, RHS, ICmpInst::ICMP_SGE);
   }
 
   ICmpInst *ICmp = dyn_cast<ICmpInst>(&V);
@@ -357,7 +354,7 @@ void TempScopInfo::buildAffineCondition(Value &V, bool inverted,
     break;
   }
 
-  *Comp = new Comparison(LHS, RHS, Pred);
+  return Comparison(LHS, RHS, Pred);
 }
 
 void TempScopInfo::buildCondition(BasicBlock *BB, Region &R) {
@@ -421,9 +418,7 @@ void TempScopInfo::buildCondition(BasicBlock *BB, Region &R) {
         inverted = false;
     }
 
-    Comparison *Cmp;
-    buildAffineCondition(*(Br->getCondition()), inverted, &Cmp);
-    Cond.push_back(*Cmp);
+    Cond.push_back(buildAffineCondition(*(Br->getCondition()), inverted));
   }
 
   if (!Cond.empty())
