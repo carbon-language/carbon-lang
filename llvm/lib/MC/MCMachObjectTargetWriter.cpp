@@ -11,12 +11,9 @@
 
 using namespace llvm;
 
-MCMachObjectTargetWriter::MCMachObjectTargetWriter(
-  bool Is64Bit_, uint32_t CPUType_, uint32_t CPUSubtype_,
-  bool UseAggressiveSymbolFolding_)
-  : Is64Bit(Is64Bit_), CPUType(CPUType_), CPUSubtype(CPUSubtype_),
-    UseAggressiveSymbolFolding(UseAggressiveSymbolFolding_) {
-}
+MCMachObjectTargetWriter::MCMachObjectTargetWriter(bool Is64Bit_,
+                                                   uint32_t CPUType_,
+                                                   uint32_t CPUSubtype_)
+    : Is64Bit(Is64Bit_), CPUType(CPUType_), CPUSubtype(CPUSubtype_) {}
 
-MCMachObjectTargetWriter::~MCMachObjectTargetWriter() {
-}
+MCMachObjectTargetWriter::~MCMachObjectTargetWriter() {}

@@ -27,15 +27,11 @@ class MCMachObjectTargetWriter {
   const unsigned Is64Bit : 1;
   const uint32_t CPUType;
   const uint32_t CPUSubtype;
-  // FIXME: Remove this, we should just always use it once we no longer care
-  // about Darwin 'as' compatibility.
-  const unsigned UseAggressiveSymbolFolding : 1;
   unsigned LocalDifference_RIT;
 
 protected:
   MCMachObjectTargetWriter(bool Is64Bit_, uint32_t CPUType_,
-                           uint32_t CPUSubtype_,
-                           bool UseAggressiveSymbolFolding_ = false);
+                           uint32_t CPUSubtype_);
 
   void setLocalDifferenceRelocationType(unsigned Type) {
     LocalDifference_RIT = Type;
@@ -55,7 +51,6 @@ public:
   /// @{
 
   bool is64Bit() const { return Is64Bit; }
-  bool useAggressiveSymbolFolding() const { return UseAggressiveSymbolFolding; }
   uint32_t getCPUType() const { return CPUType; }
   uint32_t getCPUSubtype() const { return CPUSubtype; }
   unsigned getLocalDifferenceRelocationType() const {

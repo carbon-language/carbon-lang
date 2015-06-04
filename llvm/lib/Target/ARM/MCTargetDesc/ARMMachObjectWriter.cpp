@@ -49,10 +49,8 @@ class ARMMachObjectWriter : public MCMachObjectTargetWriter {
                                 const MCSymbol &S, uint64_t FixedValue);
 
 public:
-  ARMMachObjectWriter(bool Is64Bit, uint32_t CPUType,
-                      uint32_t CPUSubtype)
-    : MCMachObjectTargetWriter(Is64Bit, CPUType, CPUSubtype,
-                               /*UseAggressiveSymbolFolding=*/true) {}
+  ARMMachObjectWriter(bool Is64Bit, uint32_t CPUType, uint32_t CPUSubtype)
+      : MCMachObjectTargetWriter(Is64Bit, CPUType, CPUSubtype) {}
 
   void RecordRelocation(MachObjectWriter *Writer, MCAssembler &Asm,
                         const MCAsmLayout &Layout, const MCFragment *Fragment,

@@ -31,8 +31,7 @@ class AArch64MachObjectWriter : public MCMachObjectTargetWriter {
 
 public:
   AArch64MachObjectWriter(uint32_t CPUType, uint32_t CPUSubtype)
-      : MCMachObjectTargetWriter(true /* is64Bit */, CPUType, CPUSubtype,
-                                 /*UseAggressiveSymbolFolding=*/true) {}
+      : MCMachObjectTargetWriter(true /* is64Bit */, CPUType, CPUSubtype) {}
 
   void RecordRelocation(MachObjectWriter *Writer, MCAssembler &Asm,
                         const MCAsmLayout &Layout, const MCFragment *Fragment,

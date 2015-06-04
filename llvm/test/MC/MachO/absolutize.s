@@ -6,9 +6,9 @@ _text_b:
         xorl %eax,%eax
 Ltext_c:
         xorl %eax,%eax
-Ltext_d:        
+Ltext_d:
         xorl %eax,%eax
-        
+
         movl $(_text_a - _text_b), %eax
 Ltext_expr_0 = _text_a - _text_b
         movl $(Ltext_expr_0), %eax
@@ -30,9 +30,9 @@ _data_b:
         .long 0
 Ldata_c:
         .long 0
-Ldata_d:        
+Ldata_d:
         .long 0
-        
+
         .long _data_a - _data_b
 Ldata_expr_0 = _data_a - _data_b
         .long Ldata_expr_0
@@ -75,7 +75,7 @@ Ldata_expr_2 = Ldata_d - Ldata_c
 // CHECK:     ('offset', 324)
 // CHECK:     ('alignment', 0)
 // CHECK:     ('reloc_offset', 412)
-// CHECK:     ('num_reloc', 7)
+// CHECK:     ('num_reloc', 3)
 // CHECK:     ('flags', 0x80000400)
 // CHECK:     ('reserved1', 0)
 // CHECK:     ('reserved2', 0)
@@ -85,21 +85,9 @@ Ldata_expr_2 = Ldata_d - Ldata_c
 // CHECK:     (('word-0', 0xa0000027),
 // CHECK:      ('word-1', 0x0)),
 // CHECK:     # Relocation 1
-// CHECK:     (('word-0', 0xa400001d),
-// CHECK:      ('word-1', 0x6)),
-// CHECK:     # Relocation 2
-// CHECK:     (('word-0', 0xa1000000),
-// CHECK:      ('word-1', 0x4)),
-// CHECK:     # Relocation 3
-// CHECK:     (('word-0', 0xa4000013),
-// CHECK:      ('word-1', 0x4)),
-// CHECK:     # Relocation 4
-// CHECK:     (('word-0', 0xa1000000),
-// CHECK:      ('word-1', 0x2)),
-// CHECK:     # Relocation 5
 // CHECK:     (('word-0', 0xa4000009),
 // CHECK:      ('word-1', 0x0)),
-// CHECK:     # Relocation 6
+// CHECK:     # Relocation 2
 // CHECK:     (('word-0', 0xa1000000),
 // CHECK:      ('word-1', 0x2)),
 // CHECK:   ])
@@ -111,8 +99,8 @@ Ldata_expr_2 = Ldata_d - Ldata_c
 // CHECK:     ('size', 44)
 // CHECK:     ('offset', 367)
 // CHECK:     ('alignment', 0)
-// CHECK:     ('reloc_offset', 468)
-// CHECK:     ('num_reloc', 7)
+// CHECK:     ('reloc_offset', 436)
+// CHECK:     ('num_reloc', 3)
 // CHECK:     ('flags', 0x0)
 // CHECK:     ('reserved1', 0)
 // CHECK:     ('reserved2', 0)
@@ -122,21 +110,9 @@ Ldata_expr_2 = Ldata_d - Ldata_c
 // CHECK:     (('word-0', 0xa0000028),
 // CHECK:      ('word-1', 0x2b)),
 // CHECK:     # Relocation 1
-// CHECK:     (('word-0', 0xa4000020),
-// CHECK:      ('word-1', 0x37)),
-// CHECK:     # Relocation 2
-// CHECK:     (('word-0', 0xa1000000),
-// CHECK:      ('word-1', 0x33)),
-// CHECK:     # Relocation 3
-// CHECK:     (('word-0', 0xa4000018),
-// CHECK:      ('word-1', 0x33)),
-// CHECK:     # Relocation 4
-// CHECK:     (('word-0', 0xa1000000),
-// CHECK:      ('word-1', 0x2f)),
-// CHECK:     # Relocation 5
 // CHECK:     (('word-0', 0xa4000010),
 // CHECK:      ('word-1', 0x2b)),
-// CHECK:     # Relocation 6
+// CHECK:     # Relocation 2
 // CHECK:     (('word-0', 0xa1000000),
 // CHECK:      ('word-1', 0x2f)),
 // CHECK:   ])
@@ -146,9 +122,9 @@ Ldata_expr_2 = Ldata_d - Ldata_c
 // CHECK:   # Load Command 1
 // CHECK:  (('command', 2)
 // CHECK:   ('size', 24)
-// CHECK:   ('symoff', 524)
+// CHECK:   ('symoff', 460)
 // CHECK:   ('nsyms', 4)
-// CHECK:   ('stroff', 572)
+// CHECK:   ('stroff', 508)
 // CHECK:   ('strsize', 36)
 // CHECK:   ('_string_data', '\x00_text_b\x00_data_b\x00_text_a\x00_data_a\x00\x00\x00\x00')
 // CHECK:   ('_symbols', [

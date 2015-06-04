@@ -703,9 +703,6 @@ bool MachObjectWriter::IsSymbolRefDifferenceFullyResolvedImpl(
             SA.isTemporary() && SA.isInSection() && &SecA == &SecB){
       return true;
     }
-  } else {
-    if (!TargetObjectWriter->useAggressiveSymbolFolding())
-      return false;
   }
 
   // If they are not in the same section, we can't compute the diff.

@@ -38,8 +38,7 @@ class PPCMachObjectWriter : public MCMachObjectTargetWriter {
 
 public:
   PPCMachObjectWriter(bool Is64Bit, uint32_t CPUType, uint32_t CPUSubtype)
-      : MCMachObjectTargetWriter(Is64Bit, CPUType, CPUSubtype,
-                                 /*UseAggressiveSymbolFolding=*/Is64Bit) {}
+      : MCMachObjectTargetWriter(Is64Bit, CPUType, CPUSubtype) {}
 
   void RecordRelocation(MachObjectWriter *Writer, MCAssembler &Asm,
                         const MCAsmLayout &Layout, const MCFragment *Fragment,

@@ -54,10 +54,8 @@ class X86MachObjectWriter : public MCMachObjectTargetWriter {
                               MCValue Target, uint64_t &FixedValue);
 
 public:
-  X86MachObjectWriter(bool Is64Bit, uint32_t CPUType,
-                      uint32_t CPUSubtype)
-    : MCMachObjectTargetWriter(Is64Bit, CPUType, CPUSubtype,
-                               /*UseAggressiveSymbolFolding=*/Is64Bit) {}
+  X86MachObjectWriter(bool Is64Bit, uint32_t CPUType, uint32_t CPUSubtype)
+      : MCMachObjectTargetWriter(Is64Bit, CPUType, CPUSubtype) {}
 
   void RecordRelocation(MachObjectWriter *Writer, MCAssembler &Asm,
                         const MCAsmLayout &Layout, const MCFragment *Fragment,
