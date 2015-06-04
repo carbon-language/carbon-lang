@@ -7614,8 +7614,7 @@ bool SelectionDAGBuilder::buildBitTests(CaseClusterVector &Clusters,
 
   const int BitWidth =
       DAG.getTargetLoweringInfo().getPointerTy().getSizeInBits();
-  uint64_t Range = (High - Low).getLimitedValue(UINT64_MAX - 1) + 1;
-  assert(Range <= (uint64_t)BitWidth && "Case range must fit in bit mask!");
+  assert(rangeFitsInWord(Low, High) && "Case range must fit in bit mask!");
 
   if (Low.isNonNegative() && High.slt(BitWidth)) {
     // Optimize the case where all the case values fit in a
@@ -7643,10 +7642,9 @@ bool SelectionDAGBuilder::buildBitTests(CaseClusterVector &Clusters,
     // Update Mask, Bits and ExtraWeight.
     uint64_t Lo = (Clusters[i].Low->getValue() - LowBound).getZExtValue();
     uint64_t Hi = (Clusters[i].High->getValue() - LowBound).getZExtValue();
-    for (uint64_t j = Lo; j <= Hi; ++j) {
-      CB->Mask |= 1ULL << j;
-      CB->Bits++;
-    }
+    assert(Hi >= Lo && Hi < 64 && "Invalid bit case!");
+    CB->Mask |= (-1ULL >> (63 - (Hi - Lo))) << Lo;
+    CB->Bits += Hi - Lo + 1;
     CB->ExtraWeight += Clusters[i].Weight;
     TotalWeight += Clusters[i].Weight;
     assert(TotalWeight >= Clusters[i].Weight && "Weight overflow!");
@@ -7761,8 +7759,10 @@ void SelectionDAGBuilder::findBitTestClusters(CaseClusterVector &Clusters,
     if (buildBitTests(Clusters, First, Last, SI, BitTestCluster)) {
       Clusters[DstIndex++] = BitTestCluster;
     } else {
-      for (unsigned I = First; I <= Last; ++I)
-        std::memmove(&Clusters[DstIndex++], &Clusters[I], sizeof(Clusters[I]));
+      size_t NumClusters = Last - First + 1;
+      std::memmove(&Clusters[DstIndex], &Clusters[First],
+                   sizeof(Clusters[0]) * NumClusters);
+      DstIndex += NumClusters;
     }
   }
   Clusters.resize(DstIndex);
@@ -7798,8 +7798,7 @@ void SelectionDAGBuilder::lowerWorkItem(SwitchWorkListItem W, Value *Cond,
       const APInt &BigValue = Big.Low->getValue();
 
       // Check that there is only one bit different.
-      if (BigValue.countPopulation() == SmallValue.countPopulation() + 1 &&
-          (SmallValue | BigValue) == BigValue) {
+      if ((BigValue ^ SmallValue).isPowerOf2()) {
         // Isolate the common bit.
         APInt CommonBit = BigValue & ~SmallValue;
         assert((SmallValue | CommonBit) == BigValue &&
