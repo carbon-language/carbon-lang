@@ -141,7 +141,6 @@ private:
 /// on the fly.
 class LoadedObjectInfo {
 public:
-  LoadedObjectInfo() {}
   virtual ~LoadedObjectInfo() {}
 
   /// Obtain the Load Address of a section by Name.
