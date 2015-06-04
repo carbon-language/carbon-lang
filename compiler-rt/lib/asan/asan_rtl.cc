@@ -367,6 +367,9 @@ static void AsanInitInternal() {
   // initialization steps look at flags().
   InitializeFlags();
 
+  AsanCheckIncompatibleRT();
+  AsanCheckDynamicRTPrereqs();
+
   SetCanPoisonMemory(flags()->poison_heap);
   SetMallocContextSize(common_flags()->malloc_context_size);
 
@@ -514,13 +517,11 @@ void AsanInitFromRtl() {
 
 #if ASAN_DYNAMIC
 // Initialize runtime in case it's LD_PRELOAD-ed into unsanitized executable
-// (and thus normal initializer from .preinit_array haven't run).
+// (and thus normal initializers from .preinit_array or modules haven't run).
 
 class AsanInitializer {
 public:  // NOLINT
   AsanInitializer() {
-    AsanCheckIncompatibleRT();
-    AsanCheckDynamicRTPrereqs();
     AsanInitFromRtl();
   }
 };
@@ -572,7 +573,6 @@ void NOINLINE __asan_set_death_callback(void (*callback)(void)) {
 // Initialize as requested from instrumented application code.
 // We use this call as a trigger to wake up ASan from deactivated state.
 void __asan_init() {
-  AsanCheckIncompatibleRT();
   AsanActivate();
   AsanInitInternal();
 }
