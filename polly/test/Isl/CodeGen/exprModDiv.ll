@@ -17,11 +17,15 @@
 ; CHECK:  %pexp.pdiv_r = urem i64 %polly.indvar, 127
 ; CHECK:  %polly.access.A6 = getelementptr float, float* %A, i64 %pexp.pdiv_r
 
-; A[i / 127]
-; CHECK:  %pexp.div = sdiv i64 %polly.indvar, 127
-; CHECK:  %polly.access.B8 = getelementptr float, float* %B, i64 %pexp.div
+; A[floor(i / 127)]
 ;
-; FIXME: Make isl mark this as an udiv expression.
+; Note: without the floor, we would create a map i -> i/127, which only contains
+;       values of i that are divisible by 127. All other values of i would not
+;       be mapped to any value. However, to generate correct code we require
+;       each value of i to indeed be mapped to a value.
+;
+; CHECK:  %pexp.p_div_q = udiv i64 %polly.indvar, 127
+; CHECK:  %polly.access.B8 = getelementptr float, float* %B, i64 %pexp.p_div_q
 
 ; #define floord(n,d) ((n < 0) ? (n - d + 1) : n) / d
 ; A[p + 127 * floord(-p - 1, 127) + 127]
@@ -38,16 +42,16 @@
 ; CHECK:  %polly.access.A10 = getelementptr float, float* %A, i64 %24
 
 ; A[p / 127]
-; CHECK:  %pexp.div12 = sdiv i64 %p, 127
-; CHECK:  %polly.access.B13 = getelementptr float, float* %B, i64 %pexp.div12
+; CHECK:  %pexp.div = sdiv i64 %p, 127
+; CHECK:  %polly.access.B12 = getelementptr float, float* %B, i64 %pexp.div
 
 ; A[i % 128]
 ; POW2:  %pexp.pdiv_r = urem i64 %polly.indvar, 128
 ; POW2:  %polly.access.A6 = getelementptr float, float* %A, i64 %pexp.pdiv_r
 
-; A[i / 128]
-; POW2:  %pexp.div.shr = ashr i64 %polly.indvar, 7
-; POW2:  %polly.access.B8 = getelementptr float, float* %B, i64 %pexp.div
+; A[floor(i / 128)]
+; POW2:  %pexp.p_div_q = udiv i64 %polly.indvar, 128
+; POW2:  %polly.access.B8 = getelementptr float, float* %B, i64 %pexp.p_div_q
 
 ; #define floord(n,d) ((n < 0) ? (n - d + 1) : n) / d
 ; A[p + 128 * floord(-p - 1, 128) + 128]
@@ -60,8 +64,8 @@
 ; POW2:  %polly.access.A10 = getelementptr float, float* %A, i64 %24
 
 ; A[p / 128]
-; POW2:  %pexp.div.shr12 = ashr i64 %p, 7
-; POW2:  %polly.access.B13 = getelementptr float, float* %B, i64 %pexp.div.shr12
+; POW2:  %pexp.div.shr = ashr i64 %p, 7
+; POW2:  %polly.access.B12 = getelementptr float, float* %B, i64 %pexp.div.shr
 
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 

@@ -343,6 +343,28 @@ bool JSONImporter::runOnScop(Scop &S) {
         isl_map_free(newAccessMap);
         return false;
       }
+
+      auto NewAccessDomain = isl_map_domain(isl_map_copy(newAccessMap));
+      auto CurrentAccessDomain = isl_map_domain(isl_map_copy(currentAccessMap));
+
+      NewAccessDomain =
+          isl_set_intersect_params(NewAccessDomain, S.getContext());
+      CurrentAccessDomain =
+          isl_set_intersect_params(CurrentAccessDomain, S.getContext());
+
+      if (isl_set_is_subset(CurrentAccessDomain, NewAccessDomain) ==
+          isl_bool_false) {
+        errs() << "Mapping not defined for all iteration domain elements\n";
+        isl_set_free(CurrentAccessDomain);
+        isl_set_free(NewAccessDomain);
+        isl_map_free(currentAccessMap);
+        isl_map_free(newAccessMap);
+        return false;
+      }
+
+      isl_set_free(CurrentAccessDomain);
+      isl_set_free(NewAccessDomain);
+
       if (!isl_map_is_equal(newAccessMap, currentAccessMap)) {
         // Statistics.
         ++NewAccessMapFound;
