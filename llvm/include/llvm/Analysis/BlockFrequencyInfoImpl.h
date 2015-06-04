@@ -191,8 +191,8 @@ public:
 
   /// \brief Data about a loop.
   ///
-  /// Contains the data necessary to represent represent a loop as a
-  /// pseudo-node once it's packaged.
+  /// Contains the data necessary to represent a loop as a pseudo-node once it's
+  /// packaged.
   struct LoopData {
     typedef SmallVector<std::pair<BlockNode, BlockMass>, 4> ExitMap;
     typedef SmallVector<BlockNode, 4> NodeList;
