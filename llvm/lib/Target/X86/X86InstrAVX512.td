@@ -1047,12 +1047,6 @@ multiclass avx512_permil<bits<8> OpcImm, bits<8> OpcVar, X86VectorVTInfo _,
              EVEX_4V;
   }
 }
-
-defm VPERMQZ :    avx512_perm_imm<0x00, "vpermq", X86VPermi, v8i64_info>,
-                  EVEX_V512, VEX_W;
-defm VPERMPDZ :   avx512_perm_imm<0x01, "vpermpd", X86VPermi, v8f64_info>,
-                  EVEX_V512, VEX_W;
-
 defm VPERMILPSZ : avx512_permil<0x04, 0x0C, v16f32_info, v16i32_info>,
                   EVEX_V512;
 defm VPERMILPDZ : avx512_permil<0x05, 0x0D, v8f64_info, v8i64_info>,
@@ -1062,37 +1056,6 @@ def : Pat<(v16i32 (X86VPermilpi VR512:$src1, (i8 imm:$imm))),
           (VPERMILPSZri VR512:$src1, imm:$imm)>;
 def : Pat<(v8i64 (X86VPermilpi VR512:$src1, (i8 imm:$imm))),
           (VPERMILPDZri VR512:$src1, imm:$imm)>;
-
-// -- VPERM - register form --
-multiclass avx512_perm<bits<8> opc, string OpcodeStr, RegisterClass RC,
-                     PatFrag mem_frag, X86MemOperand x86memop, ValueType OpVT> {
-
-  def rr : AVX5128I<opc, MRMSrcReg, (outs RC:$dst),
-                   (ins RC:$src1, RC:$src2),
-                   !strconcat(OpcodeStr,
-                       "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-                   [(set RC:$dst,
-                     (OpVT (X86VPermv RC:$src1, RC:$src2)))]>, EVEX_4V;
-
-  def rm : AVX5128I<opc, MRMSrcMem, (outs RC:$dst),
-                   (ins RC:$src1, x86memop:$src2),
-                   !strconcat(OpcodeStr,
-                       "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-                   [(set RC:$dst,
-                     (OpVT (X86VPermv RC:$src1, (mem_frag addr:$src2))))]>,
-                     EVEX_4V;
-}
-
-defm VPERMDZ   : avx512_perm<0x36, "vpermd",  VR512,  loadv16i32, i512mem,
-                           v16i32>, EVEX_V512, EVEX_CD8<32, CD8VF>;
-defm VPERMQZ   : avx512_perm<0x36, "vpermq",  VR512,  loadv8i64,  i512mem,
-                           v8i64>,  EVEX_V512, VEX_W, EVEX_CD8<64, CD8VF>;
-let ExeDomain = SSEPackedSingle in
-defm VPERMPSZ  : avx512_perm<0x16, "vpermps", VR512,  loadv16f32, f512mem,
-                           v16f32>, EVEX_V512, EVEX_CD8<32, CD8VF>;
-let ExeDomain = SSEPackedDouble in
-defm VPERMPDZ  : avx512_perm<0x16, "vpermpd", VR512,  loadv8f64, f512mem,
-                           v8f64>, EVEX_V512, VEX_W, EVEX_CD8<64, CD8VF>;
 
 // -- VPERM2I - 3 source operands form --
 multiclass avx512_perm_3src<bits<8> opc, string OpcodeStr, RegisterClass RC,
@@ -3839,7 +3802,8 @@ multiclass avx512_var_shift<bits<8> opc, string OpcodeStr, SDNode OpNode,
   defm rm : AVX512_maskable<opc, MRMSrcMem, _, (outs _.RC:$dst),
                    (ins _.RC:$src1, _.MemOp:$src2), OpcodeStr,
                        "$src2, $src1", "$src1, $src2",
-                   (_.VT (OpNode _.RC:$src1, (_.LdFrag addr:$src2))),
+                   (_.VT (OpNode _.RC:$src1,
+                   (_.VT (bitconvert (_.LdFrag addr:$src2))))),
                    SSE_INTSHIFT_ITINS_P.rm>, AVX5128IBase, EVEX_4V,
                    EVEX_CD8<_.EltSize, CD8VF>;
 }
@@ -3900,6 +3864,54 @@ defm VPSRLV : avx512_var_shift_types<0x45, "vpsrlv", srl>,
               avx512_var_shift_w<0x10, "vpsrlvw", srl>;
 defm VPRORV : avx512_var_shift_types<0x14, "vprorv", rotr>;
 defm VPROLV : avx512_var_shift_types<0x15, "vprolv", rotl>;
+
+//===-------------------------------------------------------------------===//
+// 1-src variable permutation VPERMW/D/Q
+//===-------------------------------------------------------------------===//
+multiclass avx512_vperm_dq_sizes<bits<8> opc, string OpcodeStr, SDNode OpNode,
+                                  AVX512VLVectorVTInfo _> {
+  let Predicates  = [HasAVX512] in
+  defm Z : avx512_var_shift<opc, OpcodeStr, OpNode, _.info512>,
+           avx512_var_shift_mb<opc, OpcodeStr, OpNode, _.info512>, EVEX_V512;
+
+  let Predicates = [HasAVX512, HasVLX] in
+  defm Z256 : avx512_var_shift<opc, OpcodeStr, OpNode, _.info256>,
+              avx512_var_shift_mb<opc, OpcodeStr, OpNode, _.info256>, EVEX_V256;
+}
+
+multiclass avx512_vpermi_dq_sizes<bits<8> opc, Format ImmFormR, Format ImmFormM,
+                                 string OpcodeStr, SDNode OpNode,
+                                 AVX512VLVectorVTInfo VTInfo> {
+  let Predicates = [HasAVX512] in
+  defm Z:    avx512_shift_rmi<opc, ImmFormR, ImmFormM, OpcodeStr, OpNode,
+                              VTInfo.info512>,
+             avx512_shift_rmbi<opc, ImmFormM, OpcodeStr, OpNode,
+                              VTInfo.info512>, EVEX_V512;
+  let Predicates = [HasAVX512, HasVLX] in
+  defm Z256: avx512_shift_rmi<opc, ImmFormR, ImmFormM, OpcodeStr, OpNode,
+                              VTInfo.info256>,
+             avx512_shift_rmbi<opc, ImmFormM, OpcodeStr, OpNode,
+                              VTInfo.info256>, EVEX_V256;
+}
+
+
+defm VPERM  : avx512_var_shift_w<0x8D, "vpermw", X86VPermv>;
+
+defm VPERMD : avx512_vperm_dq_sizes<0x36, "vpermd", X86VPermv,
+                                    avx512vl_i32_info>;
+defm VPERMQ : avx512_vperm_dq_sizes<0x36, "vpermq", X86VPermv,
+                                    avx512vl_i64_info>, VEX_W;
+defm VPERMPS : avx512_vperm_dq_sizes<0x16, "vpermps", X86VPermv,
+                                    avx512vl_f32_info>;
+defm VPERMPD : avx512_vperm_dq_sizes<0x16, "vpermpd", X86VPermv,
+                                    avx512vl_f64_info>, VEX_W;
+
+defm VPERMQ : avx512_vpermi_dq_sizes<0x00, MRMSrcReg, MRMSrcMem, "vpermq",
+                             X86VPermi, avx512vl_i64_info>,
+                             EVEX, AVX512AIi8Base, EVEX_CD8<64, CD8VF>, VEX_W;
+defm VPERMPD : avx512_vpermi_dq_sizes<0x01, MRMSrcReg, MRMSrcMem, "vpermpd",
+                             X86VPermi, avx512vl_f64_info>,
+                             EVEX, AVX512AIi8Base, EVEX_CD8<64, CD8VF>, VEX_W;
 
 //===----------------------------------------------------------------------===//
 // AVX-512 - VPSHUFD, VPSHUFLW, VPSHUFHW
