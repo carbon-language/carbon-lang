@@ -180,6 +180,29 @@ static uint32_t getSectionFlags(const MachOObjectFile *O,
   return Sect.flags;
 }
 
+static MachOObjectFile::LoadCommandInfo
+getLoadCommandInfo(const MachOObjectFile *Obj, const char *Ptr) {
+  MachOObjectFile::LoadCommandInfo Load;
+  Load.Ptr = Ptr;
+  Load.C = getStruct<MachO::load_command>(Obj, Load.Ptr);
+  if (Load.C.cmdsize < 8)
+    report_fatal_error("Load command with size < 8 bytes.");
+  return Load;
+}
+
+static MachOObjectFile::LoadCommandInfo
+getFirstLoadCommandInfo(const MachOObjectFile *Obj) {
+  unsigned HeaderSize = Obj->is64Bit() ? sizeof(MachO::mach_header_64)
+                                       : sizeof(MachO::mach_header);
+  return getLoadCommandInfo(Obj, getPtr(Obj, HeaderSize));
+}
+
+static MachOObjectFile::LoadCommandInfo
+getNextLoadCommandInfo(const MachOObjectFile *Obj,
+                       const MachOObjectFile::LoadCommandInfo &L) {
+  return getLoadCommandInfo(Obj, L.Ptr + L.C.cmdsize);
+}
+
 MachOObjectFile::MachOObjectFile(MemoryBufferRef Object, bool IsLittleEndian,
                                  bool Is64bits, std::error_code &EC)
     : ObjectFile(getMachOType(IsLittleEndian, Is64bits), Object),
@@ -203,7 +226,7 @@ MachOObjectFile::MachOObjectFile(MemoryBufferRef Object, bool IsLittleEndian,
   MachO::LoadCommandType SegmentLoadType = is64Bit() ?
     MachO::LC_SEGMENT_64 : MachO::LC_SEGMENT;
 
-  LoadCommandInfo Load = getFirstLoadCommandInfo();
+  LoadCommandInfo Load = getFirstLoadCommandInfo(this);
   for (unsigned I = 0; I < LoadCommandCount; ++I) {
     LoadCommands.push_back(Load);
     if (Load.C.cmd == MachO::LC_SYMTAB) {
@@ -271,7 +294,7 @@ MachOObjectFile::MachOObjectFile(MemoryBufferRef Object, bool IsLittleEndian,
       Libraries.push_back(Load.Ptr);
     }
     if (I < LoadCommandCount - 1)
-      Load = getNextLoadCommandInfo(Load);
+      Load = getNextLoadCommandInfo(this, Load);
   }
   assert(LoadCommands.size() == LoadCommandCount);
 }
@@ -1972,29 +1995,6 @@ MachOObjectFile::getAnyRelocationSection(
   DataRefImpl DRI;
   DRI.d.a = SecNum;
   return SectionRef(DRI, this);
-}
-
-MachOObjectFile::LoadCommandInfo
-MachOObjectFile::getFirstLoadCommandInfo() const {
-  MachOObjectFile::LoadCommandInfo Load;
-
-  unsigned HeaderSize = is64Bit() ? sizeof(MachO::mach_header_64) :
-                                    sizeof(MachO::mach_header);
-  Load.Ptr = getPtr(this, HeaderSize);
-  Load.C = getStruct<MachO::load_command>(this, Load.Ptr);
-  if (Load.C.cmdsize < 8)
-    report_fatal_error("Load command with size < 8 bytes.");
-  return Load;
-}
-
-MachOObjectFile::LoadCommandInfo
-MachOObjectFile::getNextLoadCommandInfo(const LoadCommandInfo &L) const {
-  MachOObjectFile::LoadCommandInfo Next;
-  Next.Ptr = L.Ptr + L.C.cmdsize;
-  Next.C = getStruct<MachO::load_command>(this, Next.Ptr);
-  if (Next.C.cmdsize < 8)
-    report_fatal_error("Load command with size < 8 bytes.");
-  return Next;
 }
 
 MachO::section MachOObjectFile::getSection(DataRefImpl DRI) const {

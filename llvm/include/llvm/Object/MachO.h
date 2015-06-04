@@ -429,10 +429,6 @@ public:
   }
 
 private:
-  // Walk load commands.
-  LoadCommandInfo getFirstLoadCommandInfo() const;
-  LoadCommandInfo getNextLoadCommandInfo(const LoadCommandInfo &L) const;
-
   MachO::mach_header_64 Header64;
   typedef SmallVector<const char*, 1> SectionList;
   SectionList Sections;
