@@ -134,6 +134,12 @@ TEST(APIntTest, i1) {
   EXPECT_EQ(one, neg_one);
   EXPECT_EQ(two, neg_two);
 
+  // Min/max signed values.
+  EXPECT_TRUE(zero.isMaxSignedValue());
+  EXPECT_FALSE(one.isMaxSignedValue());
+  EXPECT_FALSE(zero.isMinSignedValue());
+  EXPECT_TRUE(one.isMinSignedValue());
+
   // Additions.
   EXPECT_EQ(two, one + one);
   EXPECT_EQ(zero, neg_one + one);
