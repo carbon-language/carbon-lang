@@ -65,38 +65,6 @@ static ErrorOr<T> getStructOrErr(const MachOObjectFile *O, const char *P) {
   return Cmd;
 }
 
-template <typename SegmentCmd>
-static ErrorOr<uint32_t> getSegmentLoadCommandNumSections(const SegmentCmd &S,
-                                                          uint32_t Cmdsize) {
-  const unsigned SectionSize = sizeof(SegmentCmd);
-  if (S.nsects > std::numeric_limits<uint32_t>::max() / SectionSize ||
-      S.nsects * SectionSize > Cmdsize - sizeof(S))
-    return object_error::macho_load_segment_too_many_sections;
-  return S.nsects;
-}
-
-static ErrorOr<uint32_t>
-getSegmentLoadCommandNumSections(const MachOObjectFile *O,
-                                 const MachOObjectFile::LoadCommandInfo &L) {
-  if (O->is64Bit())
-    return getSegmentLoadCommandNumSections(O->getSegment64LoadCommand(L),
-                                            L.C.cmdsize);
-
-  return getSegmentLoadCommandNumSections(O->getSegmentLoadCommand(L),
-                                          L.C.cmdsize);
-}
-
-static bool isPageZeroSegment(const MachOObjectFile *O,
-                              const MachOObjectFile::LoadCommandInfo &L) {
-  if (O->is64Bit()) {
-    MachO::segment_command_64 S = O->getSegment64LoadCommand(L);
-    return StringRef("__PAGEZERO").equals(S.segname);
-  }
-  MachO::segment_command S = O->getSegmentLoadCommand(L);
-  return StringRef("__PAGEZERO").equals(S.segname);
-}
-
-
 static const char *
 getSectionPtr(const MachOObjectFile *O, MachOObjectFile::LoadCommandInfo L,
               unsigned Sec) {
@@ -229,6 +197,30 @@ static void parseHeader(const MachOObjectFile *Obj, T &Header,
     EC = HeaderOrErr.getError();
 }
 
+// Parses LC_SEGMENT or LC_SEGMENT_64 load command, adds addresses of all
+// sections to \param Sections, and optionally sets
+// \param IsPageZeroSegment to true.
+template <typename SegmentCmd>
+static std::error_code parseSegmentLoadCommand(
+    const MachOObjectFile *Obj, const MachOObjectFile::LoadCommandInfo &Load,
+    SmallVectorImpl<const char *> &Sections, bool &IsPageZeroSegment) {
+  const unsigned SegmentLoadSize = sizeof(SegmentCmd);
+  if (Load.C.cmdsize < SegmentLoadSize)
+    return object_error::macho_load_segment_too_small;
+  SegmentCmd S = getStruct<SegmentCmd>(Obj, Load.Ptr);
+  const unsigned SectionSize =
+      Obj->is64Bit() ? sizeof(MachO::section_64) : sizeof(MachO::section);
+  if (S.nsects > std::numeric_limits<uint32_t>::max() / SectionSize ||
+      S.nsects * SectionSize > Load.C.cmdsize - SegmentLoadSize)
+    return object_error::macho_load_segment_too_many_sections;
+  for (unsigned J = 0; J < S.nsects; ++J) {
+    const char *Sec = getSectionPtr(Obj, Load, J);
+    Sections.push_back(Sec);
+  }
+  IsPageZeroSegment |= StringRef("__PAGEZERO").equals(S.segname);
+  return object_error::success;
+}
+
 MachOObjectFile::MachOObjectFile(MemoryBufferRef Object, bool IsLittleEndian,
                                  bool Is64bits, std::error_code &EC)
     : ObjectFile(getMachOType(IsLittleEndian, Is64bits), Object),
@@ -249,9 +241,6 @@ MachOObjectFile::MachOObjectFile(MemoryBufferRef Object, bool IsLittleEndian,
   uint32_t LoadCommandCount = getHeader().ncmds;
   if (LoadCommandCount == 0)
     return;
-
-  MachO::LoadCommandType SegmentLoadType = is64Bit() ?
-    MachO::LC_SEGMENT_64 : MachO::LC_SEGMENT;
 
   auto LoadOrErr = getFirstLoadCommandInfo(this);
   if (!LoadOrErr) {
@@ -304,25 +293,14 @@ MachOObjectFile::MachOObjectFile(MemoryBufferRef Object, bool IsLittleEndian,
         return;
       }
       UuidLoadCmd = Load.Ptr;
-    } else if (Load.C.cmd == SegmentLoadType) {
-      const unsigned SegmentLoadSize = is64Bit()
-                                           ? sizeof(MachO::segment_command_64)
-                                           : sizeof(MachO::segment_command);
-      if (Load.C.cmdsize < SegmentLoadSize) {
-        EC = object_error::macho_load_segment_too_small;
+    } else if (Load.C.cmd == MachO::LC_SEGMENT_64) {
+      if ((EC = parseSegmentLoadCommand<MachO::segment_command_64>(
+               this, Load, Sections, HasPageZeroSegment)))
         return;
-      }
-      auto NumSectionsOrErr = getSegmentLoadCommandNumSections(this, Load);
-      if (!NumSectionsOrErr) {
-        EC = NumSectionsOrErr.getError();
+    } else if (Load.C.cmd == MachO::LC_SEGMENT) {
+      if ((EC = parseSegmentLoadCommand<MachO::segment_command>(
+               this, Load, Sections, HasPageZeroSegment)))
         return;
-      }
-      for (unsigned J = 0; J < NumSectionsOrErr.get(); ++J) {
-        const char *Sec = getSectionPtr(this, Load, J);
-        Sections.push_back(Sec);
-      }
-      if (isPageZeroSegment(this, Load))
-        HasPageZeroSegment = true;
     } else if (Load.C.cmd == MachO::LC_LOAD_DYLIB ||
                Load.C.cmd == MachO::LC_LOAD_WEAK_DYLIB ||
                Load.C.cmd == MachO::LC_LAZY_LOAD_DYLIB ||
