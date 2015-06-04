@@ -41,21 +41,11 @@ int main()
     }
     {
         typedef std::vector<MoveOnly, other_allocator<MoveOnly>> C;
-// See N4258 - vector<T, Allocator>::basic_string() noexcept;
-#if TEST_STD_VER <= 14
         static_assert(!std::is_nothrow_default_constructible<C>::value, "");
-#else
-        static_assert( std::is_nothrow_default_constructible<C>::value, "");
-#endif
     }
     {
         typedef std::vector<MoveOnly, some_alloc<MoveOnly>> C;
-// See N4258 - vector<T, Allocator>::basic_string() noexcept;
-#if TEST_STD_VER <= 14
         static_assert(!std::is_nothrow_default_constructible<C>::value, "");
-#else
-        static_assert( std::is_nothrow_default_constructible<C>::value, "");
-#endif
     }
 #endif
 }
