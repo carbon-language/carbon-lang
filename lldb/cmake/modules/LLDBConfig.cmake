@@ -219,6 +219,14 @@ else()
 
 endif()
 
+if (HAVE_LIBPTHREAD)
+  list(APPEND system_libs pthread)
+endif(HAVE_LIBPTHREAD)
+
+if (HAVE_LIBDL)
+  list(APPEND system_libs ${CMAKE_DL_LIBS})
+endif()
+
 if(LLDB_REQUIRES_EH)
   set(LLDB_REQUIRES_RTTI ON)
 else()

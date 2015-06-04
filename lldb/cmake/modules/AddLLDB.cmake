@@ -44,13 +44,14 @@ macro(add_lldb_library name)
     set(libkind MODULE)
   elseif (PARAM_SHARED)
     set(libkind SHARED)
-  elseif (PARAM_STATIC)
-    set(libkind STATIC)
   elseif (PARAM_OBJECT)
     set(libkind OBJECT)
   else ()
-    # library type unspecified - controlled by BUILD_SHARED_LIBS
-    unset(libkind)
+    # PARAM_STATIC or library type unspecified. BUILD_SHARED_LIBS
+    # does not control the kind of libraries created for LLDB,
+    # only whether or not they link to shared/static LLVM/Clang
+    # libraries.
+    set(libkind STATIC)
   endif()
 
   #PIC not needed on Win

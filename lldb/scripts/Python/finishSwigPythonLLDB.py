@@ -304,6 +304,8 @@ def make_symlink( vDictArgs, vstrFrameworkPythonDir, vstrSrcFile, vstrTargetFile
             # llvm/build/lib/python2.7/site-packages/lldb
             strBuildDir = os.path.join("..", "..", "..", "..");
         strSrc = os.path.normcase(os.path.join(strBuildDir, vstrSrcFile));
+        strTargetDir = os.path.dirname(strTarget);
+        strSrc = os.path.relpath(os.path.abspath(strSrc), strTargetDir);
 
     if eOSType == utilsOsType.EnumOsType.Unknown:
         bOk = False;
@@ -370,6 +372,13 @@ def make_symlink_liblldb( vDictArgs, vstrFrameworkPythonDir, vstrLiblldbFileName
             else:
                 strLibFileExtn = ".so";
             strSrc = os.path.join("lib", "liblldb" + strLibFileExtn);
+
+    if eOSType != utilsOsType.EnumOsType.Windows:
+        # Create a symlink to the "lib" directory, to ensure liblldb's RPATH is
+        # effective.
+        bOk, strErrMsg = make_symlink( vDictArgs, vstrFrameworkPythonDir, "lib", os.path.join("../lib") );
+        if not bOk:
+            return (bOk, strErrMsg)
 
     bOk, strErrMsg = make_symlink( vDictArgs, vstrFrameworkPythonDir, strSrc, strTarget );
 
