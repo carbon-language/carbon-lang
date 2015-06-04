@@ -49,7 +49,7 @@ arguments to match those passed in by default by the driver.
 Modularize Command Line Options
 ===============================
 
-.. option:: -prefix <header-path>
+.. option:: -prefix=<header-path>
 
   Prepend the given path to non-absolute file paths in the header list file.
   By default, headers are assumed to be relative to the header list file
