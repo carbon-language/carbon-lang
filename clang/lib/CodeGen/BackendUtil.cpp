@@ -453,10 +453,8 @@ TargetMachine *EmitAssemblyHelper::CreateTargetMachine(bool MustCreateTM) {
   std::string FeaturesStr;
   if (!TargetOpts.Features.empty()) {
     SubtargetFeatures Features;
-    for (std::vector<std::string>::const_iterator
-           it = TargetOpts.Features.begin(),
-           ie = TargetOpts.Features.end(); it != ie; ++it)
-      Features.AddFeature(*it);
+    for (const std::string &Feature : TargetOpts.Features)
+      Features.AddFeature(Feature);
     FeaturesStr = Features.getString();
   }
 
