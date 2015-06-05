@@ -2195,6 +2195,7 @@ bool InstCombiner::OptimizeOverflowCheck(OverflowCheckFlavor OCF, Value *LHS,
       if (WillNotOverflowSignedMul(LHS, RHS, OrigI))
         return SetResult(Builder->CreateNSWMul(LHS, RHS), Builder->getFalse(),
                          true);
+    break;
   }
 
   return false;
