@@ -157,6 +157,17 @@ public:
                             "input.cc");
 }
 
+::testing::AssertionResult
+PrintedDeclCXX1ZMatches(StringRef Code, const DeclarationMatcher &NodeMatch,
+                        StringRef ExpectedPrinted) {
+  std::vector<std::string> Args(1, "-std=c++1z");
+  return PrintedDeclMatches(Code,
+                            Args,
+                            NodeMatch,
+                            ExpectedPrinted,
+                            "input.cc");
+}
+
 ::testing::AssertionResult PrintedDeclObjCMatches(
                                   StringRef Code,
                                   const DeclarationMatcher &NodeMatch,
@@ -1262,6 +1273,13 @@ TEST(DeclPrinter, TestTemplateArgumentList15) {
     "A",
     "Z<sizeof...(T)> A"));
     // Should be: with semicolon
+}
+
+TEST(DeclPrinter, TestStaticAssert1) {
+  ASSERT_TRUE(PrintedDeclCXX1ZMatches(
+    "static_assert(true);",
+    staticAssertDecl().bind("id"),
+    "static_assert(true)"));
 }
 
 TEST(DeclPrinter, TestObjCMethod1) {

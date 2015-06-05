@@ -311,6 +311,7 @@ RegistryMaps::RegistryMaps() {
   REGISTER_MATCHER(specifiesTypeLoc);
   REGISTER_MATCHER(statementCountIs);
   REGISTER_MATCHER(staticCastExpr);
+  REGISTER_MATCHER(staticAssertDecl);
   REGISTER_MATCHER(stmt);
   REGISTER_MATCHER(stringLiteral);
   REGISTER_MATCHER(substNonTypeTemplateParmExpr);

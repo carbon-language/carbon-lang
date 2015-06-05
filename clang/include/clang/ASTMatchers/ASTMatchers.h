@@ -1476,6 +1476,23 @@ const internal::VariadicDynCastAllOfMatcher<
   Stmt,
   ConditionalOperator> conditionalOperator;
 
+/// \brief Matches a C++ static_assert declaration.
+///
+/// Example:
+///   staticAssertExpr()
+/// matches
+///   static_assert(sizeof(S) == sizeof(int))
+/// in
+/// \code
+///   struct S {
+///     int x;
+///   };
+///   static_assert(sizeof(S) == sizeof(int));
+/// \endcode
+const internal::VariadicDynCastAllOfMatcher<
+  Decl,
+  StaticAssertDecl> staticAssertDecl;
+
 /// \brief Matches a reinterpret_cast expression.
 ///
 /// Either the source expression or the destination type can be matched
