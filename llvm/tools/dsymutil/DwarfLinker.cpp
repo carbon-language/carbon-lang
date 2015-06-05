@@ -186,8 +186,8 @@ public:
   void addTypeAccelerator(const DIE *Die, const char *Name, uint32_t Offset);
 
   struct AccelInfo {
-    StringRef Name; ///< Name of the entry.
-    const DIE *Die; ///< DIE this entry describes.
+    StringRef Name;      ///< Name of the entry.
+    const DIE *Die;      ///< DIE this entry describes.
     uint32_t NameOffset; ///< Offset of Name in the string pool.
     bool SkipPubSection; ///< Emit this entry only in the apple_* sections.
 
@@ -965,7 +965,7 @@ void DwarfStreamer::emitPubSectionForUnit(
       Asm->EmitLabelDifference(EndLabel, BeginLabel, 4); // Length
       Asm->OutStreamer->EmitLabel(BeginLabel);
       Asm->EmitInt16(dwarf::DW_PUBNAMES_VERSION); // Version
-      Asm->EmitInt32(Unit.getStartOffset()); // Unit offset
+      Asm->EmitInt32(Unit.getStartOffset());      // Unit offset
       Asm->EmitInt32(Unit.getNextUnitOffset() - Unit.getStartOffset()); // Size
       HeaderEmitted = true;
     }
@@ -1515,8 +1515,8 @@ bool DwarfLinker::hasValidRelocation(uint32_t StartOffset, uint32_t EndOffset,
                             uint64_t(Mapping.ObjectAddress),
                             uint64_t(Mapping.BinaryAddress));
 
-  Info.AddrAdjust = int64_t(Mapping.BinaryAddress) +
-                    ValidReloc.Addend - Mapping.ObjectAddress;
+  Info.AddrAdjust = int64_t(Mapping.BinaryAddress) + ValidReloc.Addend -
+                    Mapping.ObjectAddress;
   Info.InDebugMap = true;
   return true;
 }
@@ -2322,8 +2322,7 @@ static void insertLineSequence(std::vector<DWARFDebugLine::Row> &Seq,
 /// are present in the binary.
 void DwarfLinker::patchLineTableForUnit(CompileUnit &Unit,
                                         DWARFContext &OrigDwarf) {
-  const DWARFDebugInfoEntryMinimal *CUDie =
-      Unit.getOrigUnit().getUnitDIE();
+  const DWARFDebugInfoEntryMinimal *CUDie = Unit.getOrigUnit().getUnitDIE();
   uint64_t StmtList = CUDie->getAttributeValueAsSectionOffset(
       &Unit.getOrigUnit(), dwarf::DW_AT_stmt_list, -1ULL);
   if (StmtList == -1ULL)
@@ -2331,10 +2330,11 @@ void DwarfLinker::patchLineTableForUnit(CompileUnit &Unit,
 
   // Update the cloned DW_AT_stmt_list with the correct debug_line offset.
   if (auto *OutputDIE = Unit.getOutputUnitDIE()) {
-    auto Stmt = std::find_if(OutputDIE->values_begin(), OutputDIE->values_end(),
-                             [](const DIEValue &Value) {
-      return Value.getAttribute() == dwarf::DW_AT_stmt_list;
-    });
+    auto Stmt =
+        std::find_if(OutputDIE->values_begin(), OutputDIE->values_end(),
+                     [](const DIEValue &Value) {
+                       return Value.getAttribute() == dwarf::DW_AT_stmt_list;
+                     });
     assert(Stmt != OutputDIE->values_end() &&
            "Didn't find DW_AT_stmt_list in cloned DIE!");
     OutputDIE->setValue(Stmt - OutputDIE->values_begin(),

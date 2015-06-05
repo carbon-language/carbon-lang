@@ -244,7 +244,6 @@ void MachODebugMapParser::loadMainBinarySymbols() {
 
 namespace llvm {
 namespace dsymutil {
-
 llvm::ErrorOr<std::unique_ptr<DebugMap>> parseDebugMap(StringRef InputFile,
                                                        StringRef PrependPath,
                                                        bool Verbose,

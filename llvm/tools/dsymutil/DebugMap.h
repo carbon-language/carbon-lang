@@ -163,7 +163,8 @@ private:
   friend yaml::SequenceTraits<std::vector<std::unique_ptr<DebugMapObject>>>;
   friend yaml::SequenceTraits<std::vector<YAMLSymbolMapping>>;
   DebugMapObject() = default;
- public:
+
+public:
   DebugMapObject &operator=(DebugMapObject RHS) {
     std::swap(Filename, RHS.Filename);
     std::swap(Symbols, RHS.Symbols);
