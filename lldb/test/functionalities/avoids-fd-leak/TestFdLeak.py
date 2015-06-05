@@ -15,13 +15,13 @@ class AvoidsFdLeakTestCase(TestBase):
     @expectedFailure(lambda x: sys.version_info >= (2, 7, 8), "bugs.freebsd.org/197376") # python random leaks fd
     @expectedFailureLinux # xfail flakey test to get buildbot green
     @skipIfWindows # The check for descriptor leakage needs to be implemented differently here.
-    @skipIfTargetAndroid # Android have some other file descriptors open by the shell
+    @skipIfTargetAndroid() # Android have some other file descriptors open by the shell
     def test_fd_leak_basic (self):
         self.do_test([])
 
     @expectedFailure(lambda x: sys.version_info >= (2, 7, 8), "bugs.freebsd.org/197376") # python random leaks fd
     @skipIfWindows # The check for descriptor leakage needs to be implemented differently here.
-    @skipIfTargetAndroid # Android have some other file descriptors open by the shell
+    @skipIfTargetAndroid() # Android have some other file descriptors open by the shell
     def test_fd_leak_log (self):
         self.do_test(["log enable -f '/dev/null' lldb commands"])
 
@@ -44,7 +44,7 @@ class AvoidsFdLeakTestCase(TestBase):
     @expectedFailure(lambda x: sys.version_info >= (2, 7, 8), "bugs.freebsd.org/197376") # python random leaks fd
     @expectedFailureLinux # xfail flakey test to get buildbot green
     @skipIfWindows # The check for descriptor leakage needs to be implemented differently here.
-    @skipIfTargetAndroid # Android have some other file descriptors open by the shell
+    @skipIfTargetAndroid() # Android have some other file descriptors open by the shell
     def test_fd_leak_multitarget (self):
         self.buildDefault()
         exe = os.path.join (os.getcwd(), "a.out")

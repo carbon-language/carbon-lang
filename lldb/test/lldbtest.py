@@ -930,20 +930,33 @@ def skipIfi386(func):
             func(*args, **kwargs)
     return wrapper
 
-def skipIfTargetAndroid(func):
-    """Decorate the item to skip tests that should be skipped when the target is Android."""
-    if isinstance(func, type) and issubclass(func, unittest2.TestCase):
-        raise Exception("@skipIfTargetAndroid can only be used to decorate a test method")
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        from unittest2 import case
-        self = args[0]
-        triple = self.dbg.GetSelectedPlatform().GetTriple()
-        if re.match(".*-.*-.*-android", triple):
-            self.skipTest("skip on Android target")
-        else:
+def skipIfTargetAndroid(api_levels=None):
+    """Decorator to skip tests when the target is Android.
+
+    Arguments:
+        api_levels - The API levels for which the test should be skipped. If
+            it is None, then the test will be skipped for all API levels.
+    """
+    def myImpl(func):
+        if isinstance(func, type) and issubclass(func, unittest2.TestCase):
+            raise Exception("@skipIfTargetAndroid can only be used to "
+                            "decorate a test method")
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            from unittest2 import case
+            self = args[0]
+            triple = self.dbg.GetSelectedPlatform().GetTriple()
+            if re.match(".*-.*-.*-android", triple):
+                if api_levels:
+                    device_api = android_device_api()
+                    if device_api and (device_api in api_levels):
+                        self.skipTest(
+                            "skip on Android target with API %d" % device_api)
+                else:
+                    self.skipTest("skip on Android target")
             func(*args, **kwargs)
-    return wrapper
+        return wrapper
+    return myImpl
 
 def skipUnlessCompilerRt(func):
     """Decorate the item to skip tests if testing remotely."""
