@@ -6,11 +6,11 @@
 # RUN: llvm-objdump -s -t %t.so | FileCheck %s
 
 # CHECK:      Contents of section .text:
-# CHECK-NEXT:  0110 a8410100 083de08e a8410100 083dd60e
-# CHECK-NEXT:  0120 a8410200 a841cf8e 00000000 00000000
-# CHECK-NEXT:  0130 083d0200 a841bf8e 083d0080 a841b88e
-# CHECK-NEXT:  0140 a8410100 a8410100 a8410200 a8410300
-# CHECK-NEXT:  0150 a8410140 083d9f8e
+# CHECK-NEXT:  0110 00000100 0000e08e 00000100 0000d60e
+# CHECK-NEXT:  0120 00000100 00004f0f 00000000 00000000
+# CHECK-NEXT:  0130 00000200 0000bf0e 00000140 0000378f
+# CHECK-NEXT:  0140 00000100 00000100 00000200 00000300
+# CHECK-NEXT:  0150 00000140 00001f8f
 
 # CHECK: SYMBOL TABLE:
 # CHECK: 00000110 g F .text 00000018 T0
@@ -28,7 +28,7 @@ FileHeader:
 Sections:
 - Name:         .text.1
   Type:         SHT_PROGBITS
-  Content:      "A8410000083D0100A8410000083DFF7FA8410100A8410000"
+  Content:      "0000000000000100000000000000FF7F0000010000008080"
 #                ^ %hi(gp+0x1)   ^ %hi(gp+0x7fff)        ^ %lo(gp+0x8080)
 #                        ^ %lo(gp+0x1)   ^ %lo(gp+0x7fff)
 #                                                ^ %hi(gp+0x8080)
@@ -61,10 +61,10 @@ Sections:
 
 - Name:         .text.2
   Type:         SHT_PROGBITS
-  Content:      "083D0100A8410000083DFF7FA8410100"
-#                ^ %hi(gp+0x18000)       ^ %lo(gp+0x40000000)
+  Content:      "00000200000000800000004000008000"
+#                ^ %hi(gp+0x18000)       ^ %lo(gp+0x40000080)
 #                        ^ %lo(gp+0x18000)
-#                                ^ %hi(gp+0x40000000)
+#                                ^ %hi(gp+0x40000080)
   AddressAlign: 16
   Flags:        [ SHF_ALLOC, SHF_EXECINSTR ]
 
@@ -88,9 +88,9 @@ Sections:
 
 - Name:         .text.3
   Type:         SHT_PROGBITS
-  Content:      "A8410000A8410000A8410100A8410200A8410040083D0000"
-#                ^ %hi(gp+0x1)   ^ %hi(gp+0x8080)        ^ %lo(gp+0x40000000)
-#                        ^ %hi(gp+0x7fff)        ^ %hi(gp+0x40000000)
+  Content:      "000000000000000000000100000002000000004000008000"
+#                ^ %hi(gp+0x1)   ^ %hi(gp+0x8080)        ^ %lo(gp+0x40000080)
+#                        ^ %hi(gp+0x7fff)        ^ %hi(gp+0x40000080)
 #                                        ^ %hi(gp+0x18000)
   AddressAlign: 16
   Flags:        [ SHF_ALLOC, SHF_EXECINSTR ]
