@@ -86,5 +86,114 @@ void DebugMap::print(raw_ostream &OS) const {
 #ifndef NDEBUG
 void DebugMap::dump() const { print(errs()); }
 #endif
+
+ErrorOr<std::unique_ptr<DebugMap>>
+DebugMap::parseYAMLDebugMap(StringRef InputFile, StringRef PrependPath,
+                            bool Verbose) {
+  auto ErrOrFile = MemoryBuffer::getFileOrSTDIN(InputFile);
+  if (auto Err = ErrOrFile.getError())
+    return Err;
+
+  std::unique_ptr<DebugMap> Res;
+  yaml::Input yin((*ErrOrFile)->getBuffer(), &PrependPath);
+  yin >> Res;
+
+  if (auto EC = yin.error())
+    return EC;
+
+  return std::move(Res);
+}
+}
+
+namespace yaml {
+
+// Normalize/Denormalize between YAML and a DebugMapObject.
+struct MappingTraits<dsymutil::DebugMapObject>::YamlDMO {
+  YamlDMO(IO &io) {}
+  YamlDMO(IO &io, dsymutil::DebugMapObject &Obj);
+  dsymutil::DebugMapObject denormalize(IO &IO);
+
+  std::string Filename;
+  std::vector<dsymutil::DebugMapObject::YAMLSymbolMapping> Entries;
+};
+
+void MappingTraits<std::pair<std::string, DebugMapObject::SymbolMapping>>::
+    mapping(IO &io, std::pair<std::string, DebugMapObject::SymbolMapping> &s) {
+  io.mapRequired("sym", s.first);
+  io.mapRequired("objAddr", s.second.ObjectAddress);
+  io.mapRequired("binAddr", s.second.BinaryAddress);
+  io.mapOptional("size", s.second.Size);
+}
+
+void MappingTraits<dsymutil::DebugMapObject>::mapping(
+    IO &io, dsymutil::DebugMapObject &DMO) {
+  MappingNormalization<YamlDMO, dsymutil::DebugMapObject> Norm(io, DMO);
+  io.mapRequired("filename", Norm->Filename);
+  io.mapRequired("symbols", Norm->Entries);
+}
+
+void ScalarTraits<Triple>::output(const Triple &val, void *,
+                                  llvm::raw_ostream &out) {
+  out << val.str();
+}
+
+StringRef ScalarTraits<Triple>::input(StringRef scalar, void *, Triple &value) {
+  value = Triple(scalar);
+  return StringRef();
+}
+
+size_t
+SequenceTraits<std::vector<std::unique_ptr<dsymutil::DebugMapObject>>>::size(
+    IO &io, std::vector<std::unique_ptr<dsymutil::DebugMapObject>> &seq) {
+  return seq.size();
+}
+
+dsymutil::DebugMapObject &
+SequenceTraits<std::vector<std::unique_ptr<dsymutil::DebugMapObject>>>::element(
+    IO &, std::vector<std::unique_ptr<dsymutil::DebugMapObject>> &seq,
+    size_t index) {
+  if (index >= seq.size()) {
+    seq.resize(index + 1);
+    seq[index].reset(new dsymutil::DebugMapObject);
+  }
+  return *seq[index];
+}
+
+void MappingTraits<dsymutil::DebugMap>::mapping(IO &io,
+                                                dsymutil::DebugMap &DM) {
+  io.mapRequired("triple", DM.BinaryTriple);
+  io.mapOptional("objects", DM.Objects);
+}
+
+void MappingTraits<std::unique_ptr<dsymutil::DebugMap>>::mapping(
+    IO &io, std::unique_ptr<dsymutil::DebugMap> &DM) {
+  if (!DM)
+    DM.reset(new DebugMap());
+  io.mapRequired("triple", DM->BinaryTriple);
+  io.mapOptional("objects", DM->Objects);
+}
+
+MappingTraits<dsymutil::DebugMapObject>::YamlDMO::YamlDMO(
+    IO &io, dsymutil::DebugMapObject &Obj) {
+  Filename = Obj.Filename;
+  Entries.reserve(Obj.Symbols.size());
+  for (auto &Entry : Obj.Symbols)
+    Entries.push_back(std::make_pair(Entry.getKey(), Entry.getValue()));
+}
+
+dsymutil::DebugMapObject
+MappingTraits<dsymutil::DebugMapObject>::YamlDMO::denormalize(IO &IO) {
+  void *Ctxt = IO.getContext();
+  StringRef PrependPath = *reinterpret_cast<StringRef *>(Ctxt);
+  SmallString<80> Path(PrependPath);
+  sys::path::append(Path, Filename);
+  dsymutil::DebugMapObject Res(Path);
+  for (auto &Entry : Entries) {
+    auto &Mapping = Entry.second;
+    Res.addSymbol(Entry.first, Mapping.ObjectAddress, Mapping.BinaryAddress,
+                  Mapping.Size);
+  }
+  return Res;
+}
 }
 }
