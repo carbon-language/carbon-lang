@@ -527,9 +527,7 @@ bool ScopDetection::hasAffineMemoryAccesses(DetectionContext &Context) const {
       const Instruction *Insn = Pair.first;
       const SCEVAddRecExpr *AF = dyn_cast<SCEVAddRecExpr>(Pair.second);
       bool IsNonAffine = false;
-      TempMemoryAccesses.emplace(std::piecewise_construct,
-                                 std::forward_as_tuple(Insn),
-                                 std::forward_as_tuple(Insn, Shape));
+      TempMemoryAccesses.insert(std::make_pair(Insn, MemAcc(Insn, Shape)));
       MemAcc *Acc = &TempMemoryAccesses.find(Insn)->second;
 
       if (!AF) {
