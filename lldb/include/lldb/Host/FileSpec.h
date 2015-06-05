@@ -739,12 +739,24 @@ public:
     
     FileSpec
     CopyByRemovingLastPathComponent () const;
-    
+
     void
-    AppendPathComponent (const char *new_path);
+    PrependPathComponent(const char *new_path);
+
+    void
+    PrependPathComponent(const std::string &new_path);
+
+    void
+    PrependPathComponent(const FileSpec &new_path);
+
+    void
+    AppendPathComponent(const char *new_path);
 
     void
     AppendPathComponent(const std::string &new_path);
+
+    void
+    AppendPathComponent(const FileSpec &new_path);
 
     void
     RemoveLastPathComponent ();

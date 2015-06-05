@@ -1362,21 +1362,54 @@ FileSpec::GetLastPathComponent () const
 }
 
 void
-FileSpec::AppendPathComponent (const char *new_path)
+FileSpec::PrependPathComponent(const char *new_path)
 {
+    if (!new_path) return;
     const bool resolve = false;
     if (m_filename.IsEmpty() && m_directory.IsEmpty())
     {
-        SetFile(new_path,resolve);
+        SetFile(new_path, resolve);
         return;
     }
     StreamString stream;
     if (m_filename.IsEmpty())
-        stream.Printf("%s/%s",m_directory.GetCString(),new_path);
+        stream.Printf("%s/%s", new_path, m_directory.GetCString());
     else if (m_directory.IsEmpty())
-        stream.Printf("%s/%s",m_filename.GetCString(),new_path);
+        stream.Printf("%s/%s", new_path, m_filename.GetCString());
     else
-        stream.Printf("%s/%s/%s",m_directory.GetCString(), m_filename.GetCString(),new_path);
+        stream.Printf("%s/%s/%s", new_path, m_directory.GetCString(), m_filename.GetCString());
+    SetFile(stream.GetData(), resolve);
+}
+
+void
+FileSpec::PrependPathComponent(const std::string &new_path)
+{
+    return PrependPathComponent(new_path.c_str());
+}
+
+void
+FileSpec::PrependPathComponent(const FileSpec &new_path)
+{
+    return PrependPathComponent(new_path.GetPath(false));
+}
+
+void
+FileSpec::AppendPathComponent(const char *new_path)
+{
+    if (!new_path) return;
+    const bool resolve = false;
+    if (m_filename.IsEmpty() && m_directory.IsEmpty())
+    {
+        SetFile(new_path, resolve);
+        return;
+    }
+    StreamString stream;
+    if (m_filename.IsEmpty())
+        stream.Printf("%s/%s", m_directory.GetCString(), new_path);
+    else if (m_directory.IsEmpty())
+        stream.Printf("%s/%s", m_filename.GetCString(), new_path);
+    else
+        stream.Printf("%s/%s/%s", m_directory.GetCString(), m_filename.GetCString(), new_path);
     SetFile(stream.GetData(), resolve);
 }
 
@@ -1384,6 +1417,12 @@ void
 FileSpec::AppendPathComponent(const std::string &new_path)
 {
     return AppendPathComponent(new_path.c_str());
+}
+
+void
+FileSpec::AppendPathComponent(const FileSpec &new_path)
+{
+    return AppendPathComponent(new_path.GetPath(false));
 }
 
 void
