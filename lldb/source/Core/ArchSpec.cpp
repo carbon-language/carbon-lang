@@ -840,7 +840,7 @@ ArchSpec::MergeFrom(const ArchSpec &other)
 }
 
 bool
-ArchSpec::SetArchitecture (ArchitectureType arch_type, uint32_t cpu, uint32_t sub)
+ArchSpec::SetArchitecture (ArchitectureType arch_type, uint32_t cpu, uint32_t sub, uint32_t os)
 {
     m_core = kCore_invalid;
     bool update_triple = true;
@@ -884,6 +884,23 @@ ArchSpec::SetArchitecture (ArchitectureType arch_type, uint32_t cpu, uint32_t su
                             m_triple.setOS (llvm::Triple::MacOSX);
                             break;
                     }
+                }
+                else if (arch_type == eArchTypeELF)
+                {
+                    llvm::Triple::OSType ostype;
+                    switch (os)
+                    {
+                        case llvm::ELF::ELFOSABI_AIX:      ostype = llvm::Triple::OSType::AIX; break;
+                        case llvm::ELF::ELFOSABI_FREEBSD:  ostype = llvm::Triple::OSType::FreeBSD; break;
+                        case llvm::ELF::ELFOSABI_GNU:      ostype = llvm::Triple::OSType::Linux; break;
+                        case llvm::ELF::ELFOSABI_NETBSD:   ostype = llvm::Triple::OSType::NetBSD; break;
+                        case llvm::ELF::ELFOSABI_OPENBSD:  ostype = llvm::Triple::OSType::OpenBSD; break;
+                        case llvm::ELF::ELFOSABI_SOLARIS:  ostype = llvm::Triple::OSType::Solaris; break;
+                        default:
+                            ostype = llvm::Triple::OSType::UnknownOS;
+                    }
+                    m_triple.setOS (ostype);
+                    m_triple.setVendor (llvm::Triple::UnknownVendor);
                 }
                 // Fall back onto setting the machine type if the arch by name failed...
                 if (m_triple.getArch () == llvm::Triple::UnknownArch)

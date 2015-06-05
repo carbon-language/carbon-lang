@@ -339,18 +339,46 @@ public:
     MergeFrom(const ArchSpec &other);
     
     //------------------------------------------------------------------
-    /// Change the architecture object type and CPU type.
+    /// Change the architecture object type, CPU type and OS type.
     ///
     /// @param[in] arch_type The object type of this ArchSpec.
     ///
     /// @param[in] cpu The required CPU type.
     ///
-    /// @return True if the object and CPU type were successfully set.
+    /// @param[in] os The optional OS type
+    /// The default value of 0 was choosen to from the ELF spec value
+    /// ELFOSABI_NONE.  ELF is the only one using this parameter.  If another
+    /// format uses this parameter and 0 does not work, use a value over
+    /// 255 because in the ELF header this is value is only a byte.
+    ///
+    /// @return True if the object, and CPU were successfully set.
+    ///
+    /// As a side effect, the vendor value is usually set to unknown.
+    /// The exections are
+    ///   aarch64-apple-ios
+    ///   arm-apple-ios
+    ///   thumb-apple-ios
+    ///   x86-apple-
+    ///   x86_64-apple-
+    ///
+    /// As a side effect, the os value is usually set to unknown
+    /// The exceptions are
+    ///   *-*-aix
+    ///   aarch64-apple-ios
+    ///   arm-apple-ios
+    ///   thumb-apple-ios
+    ///   powerpc-apple-darwin
+    ///   *-*-freebsd
+    ///   *-*-linux
+    ///   *-*-netbsd
+    ///   *-*-openbsd
+    ///   *-*-solaris
     //------------------------------------------------------------------
     bool
     SetArchitecture (ArchitectureType arch_type, 
                      uint32_t cpu,
-                     uint32_t sub);
+                     uint32_t sub,
+                     uint32_t os = 0);
 
     //------------------------------------------------------------------
     /// Returns the byte order for the architecture specification.
