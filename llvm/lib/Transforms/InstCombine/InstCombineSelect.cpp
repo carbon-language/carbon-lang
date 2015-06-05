@@ -598,6 +598,24 @@ Instruction *InstCombiner::visitSelectInstWithICmp(SelectInst &SI,
     }
   }
 
+  // Consider:
+  //   %cmp = icmp eq i32 %x, 2147483647
+  //   %add = add nsw i32 %x, 1
+  //   %sel = select i1 %cmp, i32 -2147483648, i32 %add
+  //
+  // We can't replace %sel with %add unless we strip away the flags.
+  auto StripBinOpFlags = [](Value *V) {
+    if (auto *B = dyn_cast<BinaryOperator>(V)) {
+      if (isa<OverflowingBinaryOperator>(B)) {
+        B->setHasNoSignedWrap(false);
+        B->setHasNoUnsignedWrap(false);
+      }
+      if (isa<PossiblyExactOperator>(B))
+        B->setIsExact(false);
+    }
+    return V;
+  };
+
   // If we have an equality comparison then we know the value in one of the
   // arms of the select. See if substituting this value into the arm and
   // simplifying the result yields the same value as the other arm.
@@ -606,23 +624,23 @@ Instruction *InstCombiner::visitSelectInstWithICmp(SelectInst &SI,
             TrueVal ||
         SimplifyWithOpReplaced(FalseVal, CmpRHS, CmpLHS, TLI, DL, DT, AC) ==
             TrueVal)
-      return ReplaceInstUsesWith(SI, FalseVal);
+      return ReplaceInstUsesWith(SI, StripBinOpFlags(FalseVal));
     if (SimplifyWithOpReplaced(TrueVal, CmpLHS, CmpRHS, TLI, DL, DT, AC) ==
             FalseVal ||
         SimplifyWithOpReplaced(TrueVal, CmpRHS, CmpLHS, TLI, DL, DT, AC) ==
             FalseVal)
-      return ReplaceInstUsesWith(SI, FalseVal);
+      return ReplaceInstUsesWith(SI, StripBinOpFlags(FalseVal));
   } else if (Pred == ICmpInst::ICMP_NE) {
     if (SimplifyWithOpReplaced(TrueVal, CmpLHS, CmpRHS, TLI, DL, DT, AC) ==
             FalseVal ||
         SimplifyWithOpReplaced(TrueVal, CmpRHS, CmpLHS, TLI, DL, DT, AC) ==
             FalseVal)
-      return ReplaceInstUsesWith(SI, TrueVal);
+      return ReplaceInstUsesWith(SI, StripBinOpFlags(TrueVal));
     if (SimplifyWithOpReplaced(FalseVal, CmpLHS, CmpRHS, TLI, DL, DT, AC) ==
             TrueVal ||
         SimplifyWithOpReplaced(FalseVal, CmpRHS, CmpLHS, TLI, DL, DT, AC) ==
             TrueVal)
-      return ReplaceInstUsesWith(SI, TrueVal);
+      return ReplaceInstUsesWith(SI, StripBinOpFlags(TrueVal));
   }
 
   // NOTE: if we wanted to, this is where to detect integer MIN/MAX
