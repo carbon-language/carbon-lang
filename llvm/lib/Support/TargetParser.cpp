@@ -299,7 +299,7 @@ StringRef ARMTargetParser::getArchSynonym(StringRef Arch) {
     .Case("v7r", "v7-r")
     .Case("v7m", "v7-m")
     .Case("v7em", "v7e-m")
-    .Cases("v8", "v8a", "aarch64", "arm64", "armv8-a")
+    .Cases("v8", "v8a", "aarch64", "arm64", "v8-a")
     .Case("v8.1a", "v8.1-a")
     .Default(Arch);
 }
