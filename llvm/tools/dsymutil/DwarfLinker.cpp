@@ -419,6 +419,7 @@ class DwarfStreamer {
   uint32_t RangesSectionSize;
   uint32_t LocSectionSize;
   uint32_t LineSectionSize;
+  uint32_t FrameSectionSize;
 
   /// \brief Emit the pubnames or pubtypes section contribution for \p
   /// Unit into \p Sec. The data is provided in \p Names.
@@ -492,6 +493,15 @@ public:
 
   /// \brief Emit the .debug_pubtypes contribution for \p Unit.
   void emitPubTypesForUnit(const CompileUnit &Unit);
+
+  /// \brief Emit a CIE.
+  void emitCIE(StringRef CIEBytes);
+
+  /// \brief Emit an FDE with data \p Bytes.
+  void emitFDE(uint32_t CIEOffset, uint32_t AddreSize, uint32_t Address,
+               StringRef Bytes);
+
+  uint32_t getFrameSectionSize() const { return FrameSectionSize; }
 };
 
 bool DwarfStreamer::init(Triple TheTriple, StringRef OutputFilename) {
@@ -561,6 +571,7 @@ bool DwarfStreamer::init(Triple TheTriple, StringRef OutputFilename) {
   RangesSectionSize = 0;
   LocSectionSize = 0;
   LineSectionSize = 0;
+  FrameSectionSize = 0;
 
   return true;
 }
@@ -992,6 +1003,28 @@ void DwarfStreamer::emitPubTypesForUnit(const CompileUnit &Unit) {
                         "types", Unit, Unit.getPubtypes());
 }
 
+/// \brief Emit a CIE into the debug_frame section.
+void DwarfStreamer::emitCIE(StringRef CIEBytes) {
+  MS->SwitchSection(MC->getObjectFileInfo()->getDwarfFrameSection());
+
+  MS->EmitBytes(CIEBytes);
+  FrameSectionSize += CIEBytes.size();
+}
+
+/// \brief Emit a FDE into the debug_frame section. \p FDEBytes
+/// contains the FDE data without the length, CIE offset and address
+/// which will be replaced with the paramter values.
+void DwarfStreamer::emitFDE(uint32_t CIEOffset, uint32_t AddrSize,
+                            uint32_t Address, StringRef FDEBytes) {
+  MS->SwitchSection(MC->getObjectFileInfo()->getDwarfFrameSection());
+
+  MS->EmitIntValue(FDEBytes.size() + 4 + AddrSize, 4);
+  MS->EmitIntValue(CIEOffset, 4);
+  MS->EmitIntValue(Address, AddrSize);
+  MS->EmitBytes(FDEBytes);
+  FrameSectionSize += FDEBytes.size() + 8 + AddrSize;
+}
+
 /// \brief The core of the Dwarf linking logic.
 ///
 /// The link of the dwarf information from the object files will be
@@ -1010,7 +1043,7 @@ class DwarfLinker {
 public:
   DwarfLinker(StringRef OutputFilename, const LinkOptions &Options)
       : OutputFilename(OutputFilename), Options(Options),
-        BinHolder(Options.Verbose) {}
+        BinHolder(Options.Verbose), LastCIEOffset(0) {}
 
   ~DwarfLinker() {
     for (auto *Abbrev : Abbreviations)
@@ -1208,6 +1241,10 @@ private:
   /// \brief Emit the accelerator entries for \p Unit.
   void emitAcceleratorEntriesForUnit(CompileUnit &Unit);
 
+  /// \brief Patch the frame info for an object file and emit it.
+  void patchFrameInfoForObject(const DebugMapObject &, DWARFContext &,
+                               unsigned AddressSize);
+
   /// \brief DIELoc objects that need to be destructed (but not freed!).
   std::vector<DIELoc *> DIELocs;
   /// \brief DIEBlock objects that need to be destructed (but not freed!).
@@ -1257,6 +1294,16 @@ private:
   ///
   /// See startDebugObject() for a more complete description of its use.
   std::map<uint64_t, std::pair<uint64_t, int64_t>> Ranges;
+
+  /// \brief The CIEs that have been emitted in the output
+  /// section. The actual CIE data serves a the key to this StringMap,
+  /// this takes care of comparing the semantics of CIEs defined in
+  /// different object files.
+  StringMap<uint32_t> EmittedCIEs;
+
+  /// Offset of the last CIE that has been emitted in the output
+  /// debug_frame section.
+  uint32_t LastCIEOffset;
 };
 
 /// \brief Similar to DWARFUnitSection::getUnitForOffset(), but
@@ -2458,6 +2505,91 @@ void DwarfLinker::emitAcceleratorEntriesForUnit(CompileUnit &Unit) {
   Streamer->emitPubTypesForUnit(Unit);
 }
 
+/// \brief Read the frame info stored in the object, and emit the
+/// patched frame descriptions for the linked binary.
+///
+/// This is actually pretty easy as the data of the CIEs and FDEs can
+/// be considered as black boxes and moved as is. The only thing to do
+/// is to patch the addresses in the headers.
+void DwarfLinker::patchFrameInfoForObject(const DebugMapObject &DMO,
+                                          DWARFContext &OrigDwarf,
+                                          unsigned AddrSize) {
+  StringRef FrameData = OrigDwarf.getDebugFrameSection();
+  if (FrameData.empty())
+    return;
+
+  DataExtractor Data(FrameData, OrigDwarf.isLittleEndian(), 0);
+  uint32_t InputOffset = 0;
+
+  // Store the data of the CIEs defined in this object, keyed by their
+  // offsets.
+  DenseMap<uint32_t, StringRef> LocalCIES;
+
+  while (Data.isValidOffset(InputOffset)) {
+    uint32_t EntryOffset = InputOffset;
+    uint32_t InitialLength = Data.getU32(&InputOffset);
+    if (InitialLength == 0xFFFFFFFF)
+      return reportWarning("Dwarf64 bits no supported");
+
+    uint32_t CIEId = Data.getU32(&InputOffset);
+    if (CIEId == 0xFFFFFFFF) {
+      // This is a CIE, store it.
+      StringRef CIEData = FrameData.substr(EntryOffset, InitialLength + 4);
+      LocalCIES[EntryOffset] = CIEData;
+      // The -4 is to account for the CIEId we just read.
+      InputOffset += InitialLength - 4;
+      continue;
+    }
+
+    uint32_t Loc = Data.getUnsigned(&InputOffset, AddrSize);
+
+    // Some compilers seem to emit frame info that doesn't start at
+    // the function entry point, thus we can't just lookup the address
+    // in the debug map. Use the linker's range map to see if the FDE
+    // describes something that we can relocate.
+    auto Range = Ranges.upper_bound(Loc);
+    if (Range != Ranges.begin())
+      --Range;
+    if (Range == Ranges.end() || Range->first > Loc ||
+        Range->second.first <= Loc) {
+      // The +4 is to account for the size of the InitialLength field itself.
+      InputOffset = EntryOffset + InitialLength + 4;
+      continue;
+    }
+
+    // This is an FDE, and we have a mapping.
+    // Have we already emitted a corresponding CIE?
+    StringRef CIEData = LocalCIES[CIEId];
+    if (CIEData.empty())
+      return reportWarning("Inconsistent debug_frame content. Dropping.");
+
+    // Look if we already emitted a CIE that corresponds to the
+    // referenced one (the CIE data is the key of that lookup).
+    auto IteratorInserted = EmittedCIEs.insert(
+        std::make_pair(CIEData, Streamer->getFrameSectionSize()));
+    // If there is no CIE yet for this ID, emit it.
+    if (IteratorInserted.second ||
+        // FIXME: dsymutil-classic only caches the last used CIE for
+        // reuse. Mimic that behavior for now. Just removing that
+        // second half of the condition and the LastCIEOffset variable
+        // makes the code DTRT.
+        LastCIEOffset != IteratorInserted.first->getValue()) {
+      LastCIEOffset = Streamer->getFrameSectionSize();
+      IteratorInserted.first->getValue() = LastCIEOffset;
+      Streamer->emitCIE(CIEData);
+    }
+
+    // Emit the FDE with updated address and CIE pointer.
+    // (4 + AddrSize) is the size of the CIEId + initial_location
+    // fields that will get reconstructed by emitFDE().
+    unsigned FDERemainingBytes = InitialLength - (4 + AddrSize);
+    Streamer->emitFDE(IteratorInserted.first->getValue(), AddrSize,
+                      Loc + Range->second.second,
+                      FrameData.substr(InputOffset, FDERemainingBytes));
+    InputOffset += FDERemainingBytes;
+  }
+}
+
 bool DwarfLinker::link(const DebugMap &Map) {
 
   if (Map.begin() == Map.end()) {
@@ -2554,6 +2686,10 @@ bool DwarfLinker::link(const DebugMap &Map) {
           continue;
         Streamer->emitDIE(*CurrentUnit.getOutputUnitDIE());
       }
+
+    if (!ValidRelocs.empty() && !Options.NoOutput && !Units.empty())
+      patchFrameInfoForObject(*Obj, DwarfContext,
+                              Units[0].getOrigUnit().getAddressByteSize());
 
     // Clean-up before starting working on the next object.
     endDebugObject();
