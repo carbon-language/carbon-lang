@@ -7,6 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 #include "DebugMap.h"
+#include "BinaryHolder.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/Support/DataTypes.h"
@@ -87,6 +88,13 @@ void DebugMap::print(raw_ostream &OS) const {
 void DebugMap::dump() const { print(errs()); }
 #endif
 
+namespace {
+struct YAMLContext {
+  StringRef PrependPath;
+  Triple Triple;
+};
+}
+
 ErrorOr<std::unique_ptr<DebugMap>>
 DebugMap::parseYAMLDebugMap(StringRef InputFile, StringRef PrependPath,
                             bool Verbose) {
@@ -94,8 +102,12 @@ DebugMap::parseYAMLDebugMap(StringRef InputFile, StringRef PrependPath,
   if (auto Err = ErrOrFile.getError())
     return Err;
 
+  YAMLContext Ctxt;
+
+  Ctxt.PrependPath = PrependPath;
+
   std::unique_ptr<DebugMap> Res;
-  yaml::Input yin((*ErrOrFile)->getBuffer(), &PrependPath);
+  yaml::Input yin((*ErrOrFile)->getBuffer(), &Ctxt);
   yin >> Res;
 
   if (auto EC = yin.error())
@@ -163,6 +175,8 @@ void MappingTraits<dsymutil::DebugMap>::mapping(IO &io,
                                                 dsymutil::DebugMap &DM) {
   io.mapRequired("triple", DM.BinaryTriple);
   io.mapOptional("objects", DM.Objects);
+  if (void *Ctxt = io.getContext())
+    reinterpret_cast<YAMLContext *>(Ctxt)->Triple = DM.BinaryTriple;
 }
 
 void MappingTraits<std::unique_ptr<dsymutil::DebugMap>>::mapping(
@@ -171,6 +185,8 @@ void MappingTraits<std::unique_ptr<dsymutil::DebugMap>>::mapping(
     DM.reset(new DebugMap());
   io.mapRequired("triple", DM->BinaryTriple);
   io.mapOptional("objects", DM->Objects);
+  if (void *Ctxt = io.getContext())
+    reinterpret_cast<YAMLContext *>(Ctxt)->Triple = DM->BinaryTriple;
 }
 
 MappingTraits<dsymutil::DebugMapObject>::YamlDMO::YamlDMO(
@@ -183,15 +199,39 @@ MappingTraits<dsymutil::DebugMapObject>::YamlDMO::YamlDMO(
 
 dsymutil::DebugMapObject
 MappingTraits<dsymutil::DebugMapObject>::YamlDMO::denormalize(IO &IO) {
-  void *Ctxt = IO.getContext();
-  StringRef PrependPath = *reinterpret_cast<StringRef *>(Ctxt);
-  SmallString<80> Path(PrependPath);
+  BinaryHolder BinHolder(/* Verbose =*/false);
+  const auto &Ctxt = *reinterpret_cast<YAMLContext *>(IO.getContext());
+  SmallString<80> Path(Ctxt.PrependPath);
+  StringMap<uint64_t> SymbolAddresses;
+
   sys::path::append(Path, Filename);
+  auto ErrOrObjectFile = BinHolder.GetObjectFile(Path);
+  if (auto EC = ErrOrObjectFile.getError()) {
+    llvm::errs() << "warning: Unable to open " << Path << " " << EC.message()
+                 << '\n';
+  } else {
+    // Rewrite the object file symbol addresses in the debug map. The
+    // YAML input is mainly used to test llvm-dsymutil without
+    // requiring binaries checked-in. If we generate the object files
+    // during the test, we can't hardcode the symbols addresses, so
+    // look them up here and rewrite them.
+    for (const auto &Sym : ErrOrObjectFile->symbols()) {
+      StringRef Name;
+      uint64_t Address;
+      if (Sym.getName(Name) || Sym.getAddress(Address))
+        continue;
+      SymbolAddresses[Name] = Address;
+    }
+  }
+
   dsymutil::DebugMapObject Res(Path);
   for (auto &Entry : Entries) {
     auto &Mapping = Entry.second;
-    Res.addSymbol(Entry.first, Mapping.ObjectAddress, Mapping.BinaryAddress,
-                  Mapping.Size);
+    uint64_t ObjAddress = Mapping.ObjectAddress;
+    auto AddressIt = SymbolAddresses.find(Entry.first);
+    if (AddressIt != SymbolAddresses.end())
+      ObjAddress = AddressIt->getValue();
+    Res.addSymbol(Entry.first, ObjAddress, Mapping.BinaryAddress, Mapping.Size);
   }
   return Res;
 }
