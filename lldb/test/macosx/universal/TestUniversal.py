@@ -18,7 +18,8 @@ class UniversalTestCase(TestBase):
 
     @python_api_test
     @skipUnlessDarwin
-    @unittest2.skipUnless(os.uname()[4] in ['i386', 'x86_64'], "requires i386 or x86_64")
+    @unittest2.skipUnless(hasattr(os, "uname") and os.uname()[4] in ['i386', 'x86_64'],
+            "requires i386 or x86_64")
     def test_sbdebugger_create_target_with_file_and_target_triple(self):
         """Test the SBDebugger.CreateTargetWithFileAndTargetTriple() API."""
         # Invoke the default build rule.
@@ -36,7 +37,8 @@ class UniversalTestCase(TestBase):
         self.assertTrue(process, PROCESS_IS_VALID)
 
     @skipUnlessDarwin
-    @unittest2.skipUnless(os.uname()[4] in ['i386', 'x86_64'], "requires i386 or x86_64")
+    @unittest2.skipUnless(hasattr(os, "uname") and os.uname()[4] in ['i386', 'x86_64'],
+            "requires i386 or x86_64")
     def test_process_launch_for_universal(self):
         """Test process launch of a universal binary."""
         from lldbutil import print_registers
