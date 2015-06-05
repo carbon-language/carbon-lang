@@ -744,21 +744,10 @@ void ARMInstPrinter::printRegisterList(const MCInst *MI, unsigned OpNum,
                                        const MCSubtargetInfo &STI,
                                        raw_ostream &O) {
   O << "{";
-
-  // The backend may have given us a register list in non-ascending order. Sort
-  // it now.
-  std::vector<MCOperand> RegOps(MI->size() - OpNum);
-  std::copy(MI->begin() + OpNum, MI->end(), RegOps.begin());
-  std::sort(RegOps.begin(), RegOps.end(),
-            [this](const MCOperand &O1, const MCOperand &O2) -> bool {
-              return MRI.getEncodingValue(O1.getReg()) <
-                     MRI.getEncodingValue(O2.getReg());
-            });
-
-  for (unsigned i = 0, e = RegOps.size(); i != e; ++i) {
-    if (i != 0)
+  for (unsigned i = OpNum, e = MI->getNumOperands(); i != e; ++i) {
+    if (i != OpNum)
       O << ", ";
-    printRegName(O, RegOps[i].getReg());
+    printRegName(O, MI->getOperand(i).getReg());
   }
   O << "}";
 }

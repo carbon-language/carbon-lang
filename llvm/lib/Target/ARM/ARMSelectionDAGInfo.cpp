@@ -164,38 +164,41 @@ ARMSelectionDAGInfo::EmitTargetCodeForMemcpy(SelectionDAG &DAG, SDLoc dl,
   unsigned VTSize = 4;
   unsigned i = 0;
   // Emit a maximum of 4 loads in Thumb1 since we have fewer registers
-  const unsigned MaxLoadsInLDM = Subtarget.isThumb1Only() ? 4 : 6;
+  const unsigned MAX_LOADS_IN_LDM = Subtarget.isThumb1Only() ? 4 : 6;
   SDValue TFOps[6];
   SDValue Loads[6];
   uint64_t SrcOff = 0, DstOff = 0;
 
-  // FIXME: We should invent a VMCOPY pseudo-instruction that lowers to
-  // VLDM/VSTM and make this code emit it when appropriate. This would reduce
-  // pressure on the general purpose registers. However this seems harder to map
-  // onto the register allocator's view of the world.
+  // Emit up to MAX_LOADS_IN_LDM loads, then a TokenFactor barrier, then the
+  // same number of stores.  The loads and stores will get combined into
+  // ldm/stm later on.
+  while (EmittedNumMemOps < NumMemOps) {
+    for (i = 0;
+         i < MAX_LOADS_IN_LDM && EmittedNumMemOps + i < NumMemOps; ++i) {
+      Loads[i] = DAG.getLoad(VT, dl, Chain,
+                             DAG.getNode(ISD::ADD, dl, MVT::i32, Src,
+                                         DAG.getConstant(SrcOff, dl, MVT::i32)),
+                             SrcPtrInfo.getWithOffset(SrcOff), isVolatile,
+                             false, false, 0);
+      TFOps[i] = Loads[i].getValue(1);
+      SrcOff += VTSize;
+    }
+    Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other,
+                        makeArrayRef(TFOps, i));
 
-  // The number of MCOPY pseudo-instructions to emit. We use up to MaxLoadsInLDM
-  // registers per mcopy, which will get lowered into ldm/stm later on. This is
-  // a lower bound on the number of MCOPY operations we must emit.
-  unsigned NumMCOPYs = (NumMemOps + MaxLoadsInLDM - 1) / MaxLoadsInLDM;
+    for (i = 0;
+         i < MAX_LOADS_IN_LDM && EmittedNumMemOps + i < NumMemOps; ++i) {
+      TFOps[i] = DAG.getStore(Chain, dl, Loads[i],
+                              DAG.getNode(ISD::ADD, dl, MVT::i32, Dst,
+                                          DAG.getConstant(DstOff, dl, MVT::i32)),
+                              DstPtrInfo.getWithOffset(DstOff),
+                              isVolatile, false, 0);
+      DstOff += VTSize;
+    }
+    Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other,
+                        makeArrayRef(TFOps, i));
 
-  SDVTList VTs = DAG.getVTList(MVT::i32, MVT::i32, MVT::Other, MVT::Glue);
-
-  for (unsigned I = 0; I != NumMCOPYs; ++I) {
-    // Evenly distribute registers among MCOPY operations to reduce register
-    // pressure.
-    unsigned NextEmittedNumMemOps = NumMemOps * (I + 1) / NumMCOPYs;
-    unsigned NumRegs = NextEmittedNumMemOps - EmittedNumMemOps;
-
-    Dst = DAG.getNode(ARMISD::MCOPY, dl, VTs, Chain, Dst, Src,
-                      DAG.getConstant(NumRegs, dl, MVT::i32));
-    Src = Dst.getValue(1);
-    Chain = Dst.getValue(2);
-
-    DstPtrInfo = DstPtrInfo.getWithOffset(NumRegs * VTSize);
-    SrcPtrInfo = SrcPtrInfo.getWithOffset(NumRegs * VTSize);
-
-    EmittedNumMemOps = NextEmittedNumMemOps;
+    EmittedNumMemOps += i;
   }
 
   if (BytesLeft == 0)

@@ -7,8 +7,8 @@ define void @t1() #0 {
 entry:
 ; CHECK-LABEL: t1:
 ; CHECK: ldr r[[LB:[0-9]]],
-; CHECK-NEXT: ldr r[[SB:[0-9]]],
 ; CHECK-NEXT: ldm r[[LB]]!,
+; CHECK-NEXT: ldr r[[SB:[0-9]]],
 ; CHECK-NEXT: stm r[[SB]]!,
 ; CHECK-NEXT: ldrb {{.*}}, [r[[LB]]]
 ; CHECK-NEXT: strb {{.*}}, [r[[SB]]]
@@ -21,8 +21,8 @@ define void @t2() #0 {
 entry:
 ; CHECK-LABEL: t2:
 ; CHECK: ldr r[[LB:[0-9]]],
-; CHECK-NEXT: ldr r[[SB:[0-9]]],
 ; CHECK-NEXT: ldm r[[LB]]!,
+; CHECK-NEXT: ldr r[[SB:[0-9]]],
 ; CHECK-NEXT: stm r[[SB]]!,
 ; CHECK-NEXT: ldrh {{.*}}, [r[[LB]]]
 ; CHECK-NEXT: ldrb {{.*}}, [r[[LB]], #2]
