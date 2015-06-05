@@ -640,9 +640,13 @@ void ARMAsmPrinter::emitAttributes() {
     if (STI.hasFPARMv8())
       // FPv5 and FP-ARMv8 have the same instructions, so are modeled as one
       // FPU, but there are two different names for it depending on the CPU.
-      ATS.emitFPU(STI.hasD16() ? ARM::FK_FPV5_D16 : ARM::FK_FP_ARMV8);
+      ATS.emitFPU(STI.hasD16()
+                  ? (STI.isFPOnlySP() ? ARM::FK_FPV5_SP_D16 : ARM::FK_FPV5_D16)
+                  : ARM::FK_FP_ARMV8);
     else if (STI.hasVFP4())
-      ATS.emitFPU(STI.hasD16() ? ARM::FK_VFPV4_D16 : ARM::FK_VFPV4);
+      ATS.emitFPU(STI.hasD16()
+                  ? (STI.isFPOnlySP() ? ARM::FK_FPV4_SP_D16 : ARM::FK_VFPV4_D16)
+                  : ARM::FK_VFPV4);
     else if (STI.hasVFP3())
       ATS.emitFPU(STI.hasD16() ? ARM::FK_VFPV3_D16 : ARM::FK_VFPV3);
     else if (STI.hasVFP2())

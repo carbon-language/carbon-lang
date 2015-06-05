@@ -33,13 +33,16 @@ struct {
   ARM::FPURestriction Restriction;
 } FPUNames[] = {
   { "invalid",       ARM::FK_INVALID,       0, ARM::NS_None,   ARM::FR_None},
+  { "none",          ARM::FK_NONE,          0, ARM::NS_None,   ARM::FR_None},
   { "vfp",           ARM::FK_VFP,           2, ARM::NS_None,   ARM::FR_None},
   { "vfpv2",         ARM::FK_VFPV2,         2, ARM::NS_None,   ARM::FR_None},
   { "vfpv3",         ARM::FK_VFPV3,         3, ARM::NS_None,   ARM::FR_None},
   { "vfpv3-d16",     ARM::FK_VFPV3_D16,     3, ARM::NS_None,   ARM::FR_D16},
   { "vfpv4",         ARM::FK_VFPV4,         4, ARM::NS_None,   ARM::FR_None},
   { "vfpv4-d16",     ARM::FK_VFPV4_D16,     4, ARM::NS_None,   ARM::FR_D16},
+  { "fpv4-sp-d16",   ARM::FK_FPV4_SP_D16,   4, ARM::NS_None,   ARM::FR_SP_D16},
   { "fpv5-d16",      ARM::FK_FPV5_D16,      5, ARM::NS_None,   ARM::FR_D16},
+  { "fpv5-sp-d16",   ARM::FK_FPV5_SP_D16,   5, ARM::NS_None,   ARM::FR_SP_D16},
   { "fp-armv8",      ARM::FK_FP_ARMV8,      5, ARM::NS_None,   ARM::FR_None},
   { "neon",          ARM::FK_NEON,          3, ARM::NS_Neon,   ARM::FR_None},
   { "neon-vfpv4",    ARM::FK_NEON_VFPV4,    4, ARM::NS_Neon,   ARM::FR_None},
@@ -376,10 +379,9 @@ StringRef ARMTargetParser::getFPUSynonym(StringRef FPU) {
     .Case("vfp4", "vfpv4")
     .Case("vfp3-d16", "vfpv3-d16")
     .Case("vfp4-d16", "vfpv4-d16")
-    // FIXME: sp-16 is NOT the same as d16
-    .Cases("fp4-sp-d16", "fpv4-sp-d16", "vfpv4-d16")
+    .Cases("fp4-sp-d16", "vfpv4-sp-d16", "fpv4-sp-d16")
     .Cases("fp4-dp-d16", "fpv4-dp-d16", "vfpv4-d16")
-    .Cases("fp5-sp-d16", "fpv5-sp-d16", "fpv5-d16")
+    .Case("fp5-sp-d16", "fpv5-sp-d16")
     .Cases("fp5-dp-d16", "fpv5-dp-d16", "fpv5-d16")
     // FIXME: Clang uses it, but it's bogus, since neon defaults to vfpv3.
     .Case("neon-vfpv3", "neon")

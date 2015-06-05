@@ -32,13 +32,16 @@ namespace ARM {
   // FPU names.
   enum FPUKind {
     FK_INVALID = 0,
+    FK_NONE,
     FK_VFP,
     FK_VFPV2,
     FK_VFPV3,
     FK_VFPV3_D16,
     FK_VFPV4,
     FK_VFPV4_D16,
+    FK_FPV4_SP_D16,
     FK_FPV5_D16,
+    FK_FPV5_SP_D16,
     FK_FP_ARMV8,
     FK_NEON,
     FK_NEON_VFPV4,

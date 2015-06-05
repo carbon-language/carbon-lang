@@ -923,7 +923,7 @@
 ; CORTEX-M4-SOFT:  .eabi_attribute 7, 77
 ; CORTEX-M4-SOFT:  .eabi_attribute 8, 0
 ; CORTEX-M4-SOFT:  .eabi_attribute 9, 2
-; CORTEX-M4-SOFT:  .fpu vfpv4-d16
+; CORTEX-M4-SOFT:  .fpu fpv4-sp-d16
 ; CORTEX-M4-SOFT-NOT:   .eabi_attribute 19
 ;; We default to IEEE 754 compliance
 ; CORTEX-M4-SOFT:  .eabi_attribute 20, 1
@@ -953,7 +953,7 @@
 ; CORTEX-M4-HARD:  .eabi_attribute 7, 77
 ; CORTEX-M4-HARD:  .eabi_attribute 8, 0
 ; CORTEX-M4-HARD:  .eabi_attribute 9, 2
-; CORTEX-M4-HARD:  .fpu vfpv4-d16
+; CORTEX-M4-HARD:  .fpu fpv4-sp-d16
 ; CORTEX-M4-HARD-NOT:   .eabi_attribute 19
 ;; We default to IEEE 754 compliance
 ; CORTEX-M4-HARD:  .eabi_attribute 20, 1
@@ -984,7 +984,7 @@
 ; CORTEX-M7:  .eabi_attribute 8, 0
 ; CORTEX-M7:  .eabi_attribute 9, 2
 ; CORTEX-M7-SOFT-NOT: .fpu
-; CORTEX-M7-SINGLE:  .fpu fpv5-d16
+; CORTEX-M7-SINGLE:  .fpu fpv5-sp-d16
 ; CORTEX-M7-DOUBLE:  .fpu fpv5-d16
 ; CORTEX-M7:  .eabi_attribute 17, 1
 ; CORTEX-M7-NOT:   .eabi_attribute 19
