@@ -27,10 +27,6 @@ public:
 
     uint32_t
     GetRegisterCount () const override;
-
-private:
-    const lldb_private::RegisterInfo *m_register_info_p;
-    uint32_t m_register_info_count;
 };
 
 #endif
