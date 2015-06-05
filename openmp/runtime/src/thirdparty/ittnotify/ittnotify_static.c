@@ -119,7 +119,7 @@ static __itt_fini_ittlib_t* __itt_fini_ittlib_ptr = _N_(fini_ittlib);
 #define ITT_STUB(api,type,name,args,params,ptr,group,format)   \
 static type api ITT_VERSIONIZE(ITT_JOIN(_N_(name),_init)) args;\
 typedef type api ITT_JOIN(_N_(name),_t) args;                  \
-ITT_EXTERN_C ITT_JOIN(_N_(name),_t)* ITTNOTIFY_NAME(name) = ITT_VERSIONIZE(ITT_JOIN(_N_(name),_init)); \
+ITT_EXTERN_C_BEGIN ITT_JOIN(_N_(name),_t)* ITTNOTIFY_NAME(name) = ITT_VERSIONIZE(ITT_JOIN(_N_(name),_init)); ITT_EXTERN_C_END \
 static type api ITT_VERSIONIZE(ITT_JOIN(_N_(name),_init)) args \
 {                                                              \
     __itt_init_ittlib_name(NULL, __itt_group_all);             \
@@ -132,7 +132,7 @@ static type api ITT_VERSIONIZE(ITT_JOIN(_N_(name),_init)) args \
 #define ITT_STUBV(api,type,name,args,params,ptr,group,format)  \
 static type api ITT_VERSIONIZE(ITT_JOIN(_N_(name),_init)) args;\
 typedef type api ITT_JOIN(_N_(name),_t) args;                  \
-ITT_EXTERN_C ITT_JOIN(_N_(name),_t)* ITTNOTIFY_NAME(name) = ITT_VERSIONIZE(ITT_JOIN(_N_(name),_init)); \
+ITT_EXTERN_C_BEGIN ITT_JOIN(_N_(name),_t)* ITTNOTIFY_NAME(name) = ITT_VERSIONIZE(ITT_JOIN(_N_(name),_init)); ITT_EXTERN_C_END \
 static type api ITT_VERSIONIZE(ITT_JOIN(_N_(name),_init)) args \
 {                                                              \
     __itt_init_ittlib_name(NULL, __itt_group_all);             \
@@ -150,12 +150,12 @@ static type api ITT_VERSIONIZE(ITT_JOIN(_N_(name),_init)) args \
 #define ITT_STUB(api,type,name,args,params,ptr,group,format)   \
 static type api ITT_VERSIONIZE(ITT_JOIN(_N_(name),_init)) args;\
 typedef type api ITT_JOIN(_N_(name),_t) args;                  \
-ITT_EXTERN_C ITT_JOIN(_N_(name),_t)* ITTNOTIFY_NAME(name) = ITT_VERSIONIZE(ITT_JOIN(_N_(name),_init));
+ITT_EXTERN_C_BEGIN ITT_JOIN(_N_(name),_t)* ITTNOTIFY_NAME(name) = ITT_VERSIONIZE(ITT_JOIN(_N_(name),_init)); ITT_EXTERN_C_END
 
 #define ITT_STUBV(api,type,name,args,params,ptr,group,format)  \
 static type api ITT_VERSIONIZE(ITT_JOIN(_N_(name),_init)) args;\
 typedef type api ITT_JOIN(_N_(name),_t) args;                  \
-ITT_EXTERN_C ITT_JOIN(_N_(name),_t)* ITTNOTIFY_NAME(name) = ITT_VERSIONIZE(ITT_JOIN(_N_(name),_init));
+ITT_EXTERN_C_BEGIN ITT_JOIN(_N_(name),_t)* ITTNOTIFY_NAME(name) = ITT_VERSIONIZE(ITT_JOIN(_N_(name),_init)); ITT_EXTERN_C_END
 
 #define __ITT_INTERNAL_INIT
 #include "ittnotify_static.h"
