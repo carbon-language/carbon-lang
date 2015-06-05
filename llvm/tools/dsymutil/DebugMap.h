@@ -28,6 +28,7 @@
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/Format.h"
+#include "llvm/Support/Path.h"
 #include "llvm/Support/YAMLTraits.h"
 #include <vector>
 
@@ -208,8 +209,12 @@ template <> struct MappingTraits<dsymutil::DebugMapObject> {
         Entries.push_back(std::make_pair(Entry.getKey(), Entry.getValue()));
     }
 
-    dsymutil::DebugMapObject denormalize(IO &) {
-      dsymutil::DebugMapObject Res(Filename);
+    dsymutil::DebugMapObject denormalize(IO &IO) {
+      void *Ctxt = IO.getContext();
+      StringRef PrependPath = *reinterpret_cast<StringRef*>(Ctxt);
+      SmallString<80> Path(PrependPath);
+      sys::path::append(Path, Filename);
+      dsymutil::DebugMapObject Res(Path);
       for (auto &Entry : Entries) {
         auto &Mapping = Entry.second;
         Res.addSymbol(Entry.first, Mapping.ObjectAddress, Mapping.BinaryAddress,

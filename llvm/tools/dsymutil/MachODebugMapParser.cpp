@@ -243,13 +243,13 @@ void MachODebugMapParser::loadMainBinarySymbols() {
 }
 
 ErrorOr<std::unique_ptr<DebugMap>>
-parseYAMLDebugMap(StringRef InputFile, bool Verbose) {
+parseYAMLDebugMap(StringRef InputFile, StringRef PrependPath, bool Verbose) {
   auto ErrOrFile = MemoryBuffer::getFileOrSTDIN(InputFile);
   if (auto Err =ErrOrFile.getError())
     return Err;
 
   std::unique_ptr<DebugMap> Res;
-  yaml::Input yin((*ErrOrFile)->getBuffer());
+  yaml::Input yin((*ErrOrFile)->getBuffer(), &PrependPath);
   yin >> Res;
 
   if (auto EC = yin.error())
@@ -266,7 +266,7 @@ parseDebugMap(StringRef InputFile, StringRef PrependPath, bool Verbose, bool Inp
     MachODebugMapParser Parser(InputFile, PrependPath, Verbose);
     return Parser.parse();
   } else {
-    return parseYAMLDebugMap(InputFile, Verbose);
+    return parseYAMLDebugMap(InputFile, PrependPath, Verbose);
   }
 }
 }
