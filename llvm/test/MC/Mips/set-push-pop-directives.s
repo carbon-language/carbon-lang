@@ -51,3 +51,20 @@
 # CHECK:  b        1336
 # CHECK:  nop
 # CHECK:  addvi.b  $w15, $w13, 18
+
+    .set push
+    .set dsp
+    lbux    $7, $10($11)
+    .set pop
+
+    .set push
+    .set dsp
+    lbux    $7, $10($11)
+# CHECK-NOT: :[[@LINE-1]]:5: error: instruction requires a CPU feature not currently enabled
+    .set pop
+
+    .set push
+    .set dsp
+    lbux    $7, $10($11)
+# CHECK-NOT: :[[@LINE-1]]:5: error: instruction requires a CPU feature not currently enabled
+    .set pop
