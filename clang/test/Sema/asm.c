@@ -204,3 +204,20 @@ void fn6() {
             : "=rm"(a), "=rm"(a)
             : "11m"(a)) // expected-error {{invalid input constraint '11m' in asm}}
 }
+
+// PR14269
+typedef struct test16_foo {
+  unsigned int field1 : 1;
+  unsigned int field2 : 2;
+  unsigned int field3 : 3;
+} test16_foo;
+test16_foo x;
+void test16()
+{
+  __asm__("movl $5, %0"
+          : "=rm" (x.field2)); // expected-error {{reference to a bit-field in asm output with a memory constraint '=rm'}}
+  __asm__("movl $5, %0"
+          :
+          : "m" (x.field3)); // expected-error {{reference to a bit-field in asm input with a memory constraint 'm'}}
+}
+

@@ -154,6 +154,14 @@ StmtResult Sema::ActOnGCCAsmStmt(SourceLocation AsmLoc, bool IsSimple,
     if (CheckNakedParmReference(OutputExpr, *this))
       return StmtError();
 
+    // Bitfield can't be referenced with a pointer.
+    if (Info.allowsMemory() && OutputExpr->refersToBitField())
+      return StmtError(Diag(OutputExpr->getLocStart(),
+                            diag::err_asm_bitfield_in_memory_constraint)
+                       << 1
+                       << Info.getConstraintStr()
+                       << OutputExpr->getSourceRange());
+
     OutputConstraintInfos.push_back(Info);
 
     // If this is dependent, just continue.
@@ -229,6 +237,14 @@ StmtResult Sema::ActOnGCCAsmStmt(SourceLocation AsmLoc, bool IsSimple,
     // Referring to parameters is not allowed in naked functions.
     if (CheckNakedParmReference(InputExpr, *this))
       return StmtError();
+
+    // Bitfield can't be referenced with a pointer.
+    if (Info.allowsMemory() && InputExpr->refersToBitField())
+      return StmtError(Diag(InputExpr->getLocStart(),
+                            diag::err_asm_bitfield_in_memory_constraint)
+                       << 0
+                       << Info.getConstraintStr()
+                       << InputExpr->getSourceRange());
 
     // Only allow void types for memory constraints.
     if (Info.allowsMemory() && !Info.allowsRegister()) {
