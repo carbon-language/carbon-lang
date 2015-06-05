@@ -1326,7 +1326,7 @@ private:
       if (Current->is(TT_LambdaArrow))
         return prec::Comma;
       if (Current->is(TT_JsFatArrow))
-        return prec::Equality;
+        return prec::Assignment;
       if (Current->isOneOf(tok::semi, TT_InlineASMColon, TT_SelectorName,
                            TT_JsComputedPropertyName) ||
           (Current->is(tok::comment) && NextNonComment &&
