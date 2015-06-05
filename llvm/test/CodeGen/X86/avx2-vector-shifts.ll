@@ -300,6 +300,56 @@ define <16 x i16> @shl_16i16(<16 x i16> %r, <16 x i16> %a) nounwind {
   ret <16 x i16> %shl
 }
 
+define <32 x i8> @shl_32i8(<32 x i8> %r, <32 x i8> %a) nounwind {
+; CHECK-LABEL:  shl_32i8
+; CHECK:        vextracti128 $1, %ymm0, %xmm3
+; CHECK-NEXT:   vpsllw $4, %xmm3, %xmm2
+; CHECK-NEXT:   vmovdqa  {{.*#+}} xmm8 = [240,240,240,240,240,240,240,240,240,240,240,240,240,240,240,240]
+; CHECK-NEXT:   vpand %xmm8, %xmm2, %xmm5
+; CHECK-NEXT:   vextracti128 $1, %ymm1, %xmm2
+; CHECK-NEXT:   vpsllw $5, %xmm2, %xmm2
+; CHECK-NEXT:   vmovdqa  {{.*#+}} xmm9 = [224,224,224,224,224,224,224,224,224,224,224,224,224,224,224,224]
+; CHECK-NEXT:   vpand %xmm9, %xmm2, %xmm7
+; CHECK-NEXT:   vmovdqa {{.*#+}} xmm2 = [128,128,128,128,128,128,128,128,128,128,128,128,128,128,128,128]
+; CHECK-NEXT:   vpand %xmm7, %xmm2, %xmm4
+; CHECK-NEXT:   vpcmpeqb %xmm2, %xmm4, %xmm4
+; CHECK-NEXT:   vpblendvb %xmm4, %xmm5, %xmm3, %xmm3
+; CHECK-NEXT:   vpsllw $2, %xmm3, %xmm4
+; CHECK-NEXT:   vmovdqa  {{.*#+}} xmm5 = [252,252,252,252,252,252,252,252,252,252,252,252,252,252,252,252]
+; CHECK-NEXT:   vpand %xmm5, %xmm4, %xmm4
+; CHECK-NEXT:   vpaddb %xmm7, %xmm7, %xmm7
+; CHECK-NEXT:   vpand %xmm7, %xmm2, %xmm6
+; CHECK-NEXT:   vpcmpeqb %xmm2, %xmm6, %xmm6
+; CHECK-NEXT:   vpblendvb %xmm6, %xmm4, %xmm3, %xmm3
+; CHECK-NEXT:   vpaddb %xmm3, %xmm3, %xmm4
+; CHECK-NEXT:   vpaddb %xmm7, %xmm7, %xmm6
+; CHECK-NEXT:   vpand %xmm6, %xmm2, %xmm6
+; CHECK-NEXT:   vpcmpeqb %xmm2, %xmm6, %xmm6
+; CHECK-NEXT:   vpblendvb %xmm6, %xmm4, %xmm3, %xmm3
+; CHECK-NEXT:   vpsllw $4, %xmm0, %xmm4
+; CHECK-NEXT:   vpand %xmm8, %xmm4, %xmm4
+; CHECK-NEXT:   vpsllw $5, %xmm1, %xmm1
+; CHECK-NEXT:   vpand %xmm9, %xmm1, %xmm1
+; CHECK-NEXT:   vpand %xmm1, %xmm2, %xmm6
+; CHECK-NEXT:   vpcmpeqb %xmm2, %xmm6, %xmm6
+; CHECK-NEXT:   vpblendvb %xmm6, %xmm4, %xmm0, %xmm0
+; CHECK-NEXT:   vpsllw $2, %xmm0, %xmm4
+; CHECK-NEXT:   vpand %xmm5, %xmm4, %xmm4
+; CHECK-NEXT:   vpaddb %xmm1, %xmm1, %xmm1
+; CHECK-NEXT:   vpand %xmm1, %xmm2, %xmm5
+; CHECK-NEXT:   vpcmpeqb %xmm2, %xmm5, %xmm5
+; CHECK-NEXT:   vpblendvb %xmm5, %xmm4, %xmm0, %xmm0
+; CHECK-NEXT:   vpaddb %xmm0, %xmm0, %xmm4
+; CHECK-NEXT:   vpaddb %xmm1, %xmm1, %xmm1
+; CHECK-NEXT:   vpand %xmm1, %xmm2, %xmm1
+; CHECK-NEXT:   vpcmpeqb %xmm2, %xmm1, %xmm1
+; CHECK-NEXT:   vpblendvb %xmm1, %xmm4, %xmm0, %xmm0
+; CHECK-NEXT:   vinserti128 $1, %xmm3, %ymm0, %ymm0
+; CHECK-NEXT:   retq
+  %shl = shl <32 x i8> %r, %a
+  ret <32 x i8> %shl
+}
+
 define <8 x i16> @ashr_8i16(<8 x i16> %r, <8 x i16> %a) nounwind {
 ; CHECK-LABEL:  ashr_8i16
 ; CHECK:        vpmovzxwd {{.*#+}} ymm1 = xmm1[0],zero,xmm1[1],zero,xmm1[2],zero,xmm1[3],zero,xmm1[4],zero,xmm1[5],zero,xmm1[6],zero,xmm1[7],zero
@@ -329,6 +379,176 @@ define <16 x i16> @ashr_16i16(<16 x i16> %r, <16 x i16> %a) nounwind {
   ret <16 x i16> %ashr
 }
 
+define <32 x i8> @ashr_32i8(<32 x i8> %r, <32 x i8> %a) nounwind {
+; CHECK-LABEL:  ashr_32i8
+; CHECK:        vextracti128 $1, %ymm1, %xmm2
+; CHECK-NEXT:   vpextrb $1, %xmm2, %ecx
+; CHECK-NEXT:   vextracti128 $1, %ymm0, %xmm3
+; CHECK-NEXT:   vpextrb $1, %xmm3, %eax
+; CHECK-NEXT:   sarb %cl, %al
+; CHECK-NEXT:   vpextrb $0, %xmm2, %ecx
+; CHECK-NEXT:   vpextrb $0, %xmm3, %edx
+; CHECK-NEXT:   sarb %cl, %dl
+; CHECK-NEXT:   movzbl %al, %eax
+; CHECK-NEXT:   movzbl %dl, %edx
+; CHECK-NEXT:   vpextrb $2, %xmm2, %ecx
+; CHECK-NEXT:   vpextrb $2, %xmm3, %esi
+; CHECK-NEXT:   sarb %cl, %sil
+; CHECK-NEXT:   vmovd %edx, %xmm4
+; CHECK-NEXT:   vpinsrb $1, %eax, %xmm4, %xmm4
+; CHECK-NEXT:   movzbl %sil, %eax
+; CHECK-NEXT:   vpextrb $3, %xmm2, %ecx
+; CHECK-NEXT:   vpextrb $3, %xmm3, %edx
+; CHECK-NEXT:   sarb %cl, %dl
+; CHECK-NEXT:   vpinsrb $2, %eax, %xmm4, %xmm4
+; CHECK-NEXT:   movzbl %dl, %eax
+; CHECK-NEXT:   vpinsrb $3, %eax, %xmm4, %xmm4
+; CHECK-NEXT:   vpextrb $4, %xmm2, %ecx
+; CHECK-NEXT:   vpextrb $4, %xmm3, %eax
+; CHECK-NEXT:   sarb %cl, %al
+; CHECK-NEXT:   movzbl %al, %eax
+; CHECK-NEXT:   vpinsrb $4, %eax, %xmm4, %xmm4
+; CHECK-NEXT:   vpextrb $5, %xmm2, %ecx
+; CHECK-NEXT:   vpextrb $5, %xmm3, %eax
+; CHECK-NEXT:   sarb %cl, %al
+; CHECK-NEXT:   vpextrb $6, %xmm2, %ecx
+; CHECK-NEXT:   vpextrb $6, %xmm3, %edx
+; CHECK-NEXT:   sarb %cl, %dl
+; CHECK-NEXT:   movzbl %al, %eax
+; CHECK-NEXT:   vpinsrb $5, %eax, %xmm4, %xmm4
+; CHECK-NEXT:   movzbl %dl, %eax
+; CHECK-NEXT:   vpextrb $7, %xmm2, %ecx
+; CHECK-NEXT:   vpextrb $7, %xmm3, %edx
+; CHECK-NEXT:   sarb %cl, %dl
+; CHECK-NEXT:   vpinsrb $6, %eax, %xmm4, %xmm4
+; CHECK-NEXT:   movzbl %dl, %eax
+; CHECK-NEXT:   vpinsrb $7, %eax, %xmm4, %xmm4
+; CHECK-NEXT:   vpextrb $8, %xmm2, %ecx
+; CHECK-NEXT:   vpextrb $8, %xmm3, %eax
+; CHECK-NEXT:   sarb %cl, %al
+; CHECK-NEXT:   movzbl %al, %eax
+; CHECK-NEXT:   vpinsrb $8, %eax, %xmm4, %xmm4
+; CHECK-NEXT:   vpextrb $9, %xmm2, %ecx
+; CHECK-NEXT:   vpextrb $9, %xmm3, %eax
+; CHECK-NEXT:   sarb %cl, %al
+; CHECK-NEXT:   vpextrb $10, %xmm2, %ecx
+; CHECK-NEXT:   vpextrb $10, %xmm3, %edx
+; CHECK-NEXT:   sarb %cl, %dl
+; CHECK-NEXT:   movzbl %al, %eax
+; CHECK-NEXT:   vpinsrb $9, %eax, %xmm4, %xmm4
+; CHECK-NEXT:   movzbl %dl, %eax
+; CHECK-NEXT:   vpextrb $11, %xmm2, %ecx
+; CHECK-NEXT:   vpextrb $11, %xmm3, %edx
+; CHECK-NEXT:   sarb %cl, %dl
+; CHECK-NEXT:   vpinsrb $10, %eax, %xmm4, %xmm4
+; CHECK-NEXT:   movzbl %dl, %eax
+; CHECK-NEXT:   vpinsrb $11, %eax, %xmm4, %xmm4
+; CHECK-NEXT:   vpextrb $12, %xmm2, %ecx
+; CHECK-NEXT:   vpextrb $12, %xmm3, %eax
+; CHECK-NEXT:   sarb %cl, %al
+; CHECK-NEXT:   movzbl %al, %eax
+; CHECK-NEXT:   vpinsrb $12, %eax, %xmm4, %xmm4
+; CHECK-NEXT:   vpextrb $13, %xmm2, %ecx
+; CHECK-NEXT:   vpextrb $13, %xmm3, %eax
+; CHECK-NEXT:   sarb %cl, %al
+; CHECK-NEXT:   vpextrb $14, %xmm2, %ecx
+; CHECK-NEXT:   vpextrb $14, %xmm3, %edx
+; CHECK-NEXT:   sarb %cl, %dl
+; CHECK-NEXT:   movzbl %al, %eax
+; CHECK-NEXT:   vpinsrb $13, %eax, %xmm4, %xmm4
+; CHECK-NEXT:   vpextrb $15, %xmm2, %ecx
+; CHECK-NEXT:   vpextrb $15, %xmm3, %eax
+; CHECK-NEXT:   sarb %cl, %al
+; CHECK-NEXT:   vpextrb $1, %xmm1, %ecx
+; CHECK-NEXT:   vpextrb $1, %xmm0, %esi
+; CHECK-NEXT:   sarb %cl, %sil
+; CHECK-NEXT:   movzbl %dl, %ecx
+; CHECK-NEXT:   vpinsrb $14, %ecx, %xmm4, %xmm2
+; CHECK-NEXT:   vpextrb $0, %xmm1, %ecx
+; CHECK-NEXT:   vpextrb $0, %xmm0, %edx
+; CHECK-NEXT:   sarb %cl, %dl
+; CHECK-NEXT:   vpextrb $2, %xmm1, %ecx
+; CHECK-NEXT:   vpextrb $2, %xmm0, %edi
+; CHECK-NEXT:   sarb %cl, %dil
+; CHECK-NEXT:   movzbl %al, %eax
+; CHECK-NEXT:   vpinsrb $15, %eax, %xmm2, %xmm2
+; CHECK-NEXT:   movzbl %sil, %eax
+; CHECK-NEXT:   movzbl %dl, %ecx
+; CHECK-NEXT:   vmovd %ecx, %xmm3
+; CHECK-NEXT:   vpinsrb $1, %eax, %xmm3, %xmm3
+; CHECK-NEXT:   movzbl %dil, %eax
+; CHECK-NEXT:   vpextrb $3, %xmm1, %ecx
+; CHECK-NEXT:   vpextrb $3, %xmm0, %edx
+; CHECK-NEXT:   sarb %cl, %dl
+; CHECK-NEXT:   vpinsrb $2, %eax, %xmm3, %xmm3
+; CHECK-NEXT:   movzbl %dl, %eax
+; CHECK-NEXT:   vpinsrb $3, %eax, %xmm3, %xmm3
+; CHECK-NEXT:   vpextrb $4, %xmm1, %ecx
+; CHECK-NEXT:   vpextrb $4, %xmm0, %eax
+; CHECK-NEXT:   sarb %cl, %al
+; CHECK-NEXT:   movzbl %al, %eax
+; CHECK-NEXT:   vpinsrb $4, %eax, %xmm3, %xmm3
+; CHECK-NEXT:   vpextrb $5, %xmm1, %ecx
+; CHECK-NEXT:   vpextrb $5, %xmm0, %eax
+; CHECK-NEXT:   sarb %cl, %al
+; CHECK-NEXT:   vpextrb $6, %xmm1, %ecx
+; CHECK-NEXT:   vpextrb $6, %xmm0, %edx
+; CHECK-NEXT:   sarb %cl, %dl
+; CHECK-NEXT:   movzbl %al, %eax
+; CHECK-NEXT:   vpinsrb $5, %eax, %xmm3, %xmm3
+; CHECK-NEXT:   movzbl %dl, %eax
+; CHECK-NEXT:   vpextrb $7, %xmm1, %ecx
+; CHECK-NEXT:   vpextrb $7, %xmm0, %edx
+; CHECK-NEXT:   sarb %cl, %dl
+; CHECK-NEXT:   vpinsrb $6, %eax, %xmm3, %xmm3
+; CHECK-NEXT:   movzbl %dl, %eax
+; CHECK-NEXT:   vpinsrb $7, %eax, %xmm3, %xmm3
+; CHECK-NEXT:   vpextrb $8, %xmm1, %ecx
+; CHECK-NEXT:   vpextrb $8, %xmm0, %eax
+; CHECK-NEXT:   sarb %cl, %al
+; CHECK-NEXT:   movzbl %al, %eax
+; CHECK-NEXT:   vpinsrb $8, %eax, %xmm3, %xmm3
+; CHECK-NEXT:   vpextrb $9, %xmm1, %ecx
+; CHECK-NEXT:   vpextrb $9, %xmm0, %eax
+; CHECK-NEXT:   sarb %cl, %al
+; CHECK-NEXT:   vpextrb $10, %xmm1, %ecx
+; CHECK-NEXT:   vpextrb $10, %xmm0, %edx
+; CHECK-NEXT:   sarb %cl, %dl
+; CHECK-NEXT:   movzbl %al, %eax
+; CHECK-NEXT:   vpinsrb $9, %eax, %xmm3, %xmm3
+; CHECK-NEXT:   movzbl %dl, %eax
+; CHECK-NEXT:   vpextrb $11, %xmm1, %ecx
+; CHECK-NEXT:   vpextrb $11, %xmm0, %edx
+; CHECK-NEXT:   sarb %cl, %dl
+; CHECK-NEXT:   vpinsrb $10, %eax, %xmm3, %xmm3
+; CHECK-NEXT:   movzbl %dl, %eax
+; CHECK-NEXT:   vpinsrb $11, %eax, %xmm3, %xmm3
+; CHECK-NEXT:   vpextrb $12, %xmm1, %ecx
+; CHECK-NEXT:   vpextrb $12, %xmm0, %eax
+; CHECK-NEXT:   sarb %cl, %al
+; CHECK-NEXT:   movzbl %al, %eax
+; CHECK-NEXT:   vpinsrb $12, %eax, %xmm3, %xmm3
+; CHECK-NEXT:   vpextrb $13, %xmm1, %ecx
+; CHECK-NEXT:   vpextrb $13, %xmm0, %eax
+; CHECK-NEXT:   sarb %cl, %al
+; CHECK-NEXT:   vpextrb $14, %xmm1, %ecx
+; CHECK-NEXT:   vpextrb $14, %xmm0, %edx
+; CHECK-NEXT:   sarb %cl, %dl
+; CHECK-NEXT:   movzbl %al, %eax
+; CHECK-NEXT:   vpinsrb $13, %eax, %xmm3, %xmm3
+; CHECK-NEXT:   movzbl %dl, %eax
+; CHECK-NEXT:   vpextrb $15, %xmm1, %ecx
+; CHECK-NEXT:   vpextrb $15, %xmm0, %edx
+; CHECK-NEXT:   sarb %cl, %dl
+; CHECK-NEXT:   vpinsrb $14, %eax, %xmm3, %xmm0
+; CHECK-NEXT:   movzbl %dl, %eax
+; CHECK-NEXT:   vpinsrb $15, %eax, %xmm0, %xmm0
+; CHECK-NEXT:   vinserti128 $1, %xmm2, %ymm0, %ymm0
+; CHECK-NEXT:   retq
+  %ashr = ashr <32 x i8> %r, %a
+  ret <32 x i8> %ashr
+}
+
 define <8 x i16> @lshr_8i16(<8 x i16> %r, <8 x i16> %a) nounwind {
 ; CHECK-LABEL:  lshr_8i16
 ; CHECK:        vpmovzxwd {{.*#+}} ymm1 = xmm1[0],zero,xmm1[1],zero,xmm1[2],zero,xmm1[3],zero,xmm1[4],zero,xmm1[5],zero,xmm1[6],zero,xmm1[7],zero
@@ -356,4 +576,174 @@ define <16 x i16> @lshr_16i16(<16 x i16> %r, <16 x i16> %a) nounwind {
 ; CHECK-NEXT:   retq
   %lshr = lshr <16 x i16> %r, %a
   ret <16 x i16> %lshr
+}
+
+define <32 x i8> @lshr_32i8(<32 x i8> %r, <32 x i8> %a) nounwind {
+; CHECK-LABEL:  lshr_32i8
+; CHECK:        vextracti128 $1, %ymm1, %xmm2
+; CHECK-NEXT:   vpextrb $1, %xmm2, %ecx
+; CHECK-NEXT:   vextracti128 $1, %ymm0, %xmm3
+; CHECK-NEXT:   vpextrb $1, %xmm3, %eax
+; CHECK-NEXT:   shrb %cl, %al
+; CHECK-NEXT:   vpextrb $0, %xmm2, %ecx
+; CHECK-NEXT:   vpextrb $0, %xmm3, %edx
+; CHECK-NEXT:   shrb %cl, %dl
+; CHECK-NEXT:   movzbl %al, %eax
+; CHECK-NEXT:   movzbl %dl, %edx
+; CHECK-NEXT:   vpextrb $2, %xmm2, %ecx
+; CHECK-NEXT:   vpextrb $2, %xmm3, %esi
+; CHECK-NEXT:   shrb %cl, %sil
+; CHECK-NEXT:   vmovd %edx, %xmm4
+; CHECK-NEXT:   vpinsrb $1, %eax, %xmm4, %xmm4
+; CHECK-NEXT:   movzbl %sil, %eax
+; CHECK-NEXT:   vpextrb $3, %xmm2, %ecx
+; CHECK-NEXT:   vpextrb $3, %xmm3, %edx
+; CHECK-NEXT:   shrb %cl, %dl
+; CHECK-NEXT:   vpinsrb $2, %eax, %xmm4, %xmm4
+; CHECK-NEXT:   movzbl %dl, %eax
+; CHECK-NEXT:   vpinsrb $3, %eax, %xmm4, %xmm4
+; CHECK-NEXT:   vpextrb $4, %xmm2, %ecx
+; CHECK-NEXT:   vpextrb $4, %xmm3, %eax
+; CHECK-NEXT:   shrb %cl, %al
+; CHECK-NEXT:   movzbl %al, %eax
+; CHECK-NEXT:   vpinsrb $4, %eax, %xmm4, %xmm4
+; CHECK-NEXT:   vpextrb $5, %xmm2, %ecx
+; CHECK-NEXT:   vpextrb $5, %xmm3, %eax
+; CHECK-NEXT:   shrb %cl, %al
+; CHECK-NEXT:   vpextrb $6, %xmm2, %ecx
+; CHECK-NEXT:   vpextrb $6, %xmm3, %edx
+; CHECK-NEXT:   shrb %cl, %dl
+; CHECK-NEXT:   movzbl %al, %eax
+; CHECK-NEXT:   vpinsrb $5, %eax, %xmm4, %xmm4
+; CHECK-NEXT:   movzbl %dl, %eax
+; CHECK-NEXT:   vpextrb $7, %xmm2, %ecx
+; CHECK-NEXT:   vpextrb $7, %xmm3, %edx
+; CHECK-NEXT:   shrb %cl, %dl
+; CHECK-NEXT:   vpinsrb $6, %eax, %xmm4, %xmm4
+; CHECK-NEXT:   movzbl %dl, %eax
+; CHECK-NEXT:   vpinsrb $7, %eax, %xmm4, %xmm4
+; CHECK-NEXT:   vpextrb $8, %xmm2, %ecx
+; CHECK-NEXT:   vpextrb $8, %xmm3, %eax
+; CHECK-NEXT:   shrb %cl, %al
+; CHECK-NEXT:   movzbl %al, %eax
+; CHECK-NEXT:   vpinsrb $8, %eax, %xmm4, %xmm4
+; CHECK-NEXT:   vpextrb $9, %xmm2, %ecx
+; CHECK-NEXT:   vpextrb $9, %xmm3, %eax
+; CHECK-NEXT:   shrb %cl, %al
+; CHECK-NEXT:   vpextrb $10, %xmm2, %ecx
+; CHECK-NEXT:   vpextrb $10, %xmm3, %edx
+; CHECK-NEXT:   shrb %cl, %dl
+; CHECK-NEXT:   movzbl %al, %eax
+; CHECK-NEXT:   vpinsrb $9, %eax, %xmm4, %xmm4
+; CHECK-NEXT:   movzbl %dl, %eax
+; CHECK-NEXT:   vpextrb $11, %xmm2, %ecx
+; CHECK-NEXT:   vpextrb $11, %xmm3, %edx
+; CHECK-NEXT:   shrb %cl, %dl
+; CHECK-NEXT:   vpinsrb $10, %eax, %xmm4, %xmm4
+; CHECK-NEXT:   movzbl %dl, %eax
+; CHECK-NEXT:   vpinsrb $11, %eax, %xmm4, %xmm4
+; CHECK-NEXT:   vpextrb $12, %xmm2, %ecx
+; CHECK-NEXT:   vpextrb $12, %xmm3, %eax
+; CHECK-NEXT:   shrb %cl, %al
+; CHECK-NEXT:   movzbl %al, %eax
+; CHECK-NEXT:   vpinsrb $12, %eax, %xmm4, %xmm4
+; CHECK-NEXT:   vpextrb $13, %xmm2, %ecx
+; CHECK-NEXT:   vpextrb $13, %xmm3, %eax
+; CHECK-NEXT:   shrb %cl, %al
+; CHECK-NEXT:   vpextrb $14, %xmm2, %ecx
+; CHECK-NEXT:   vpextrb $14, %xmm3, %edx
+; CHECK-NEXT:   shrb %cl, %dl
+; CHECK-NEXT:   movzbl %al, %eax
+; CHECK-NEXT:   vpinsrb $13, %eax, %xmm4, %xmm4
+; CHECK-NEXT:   vpextrb $15, %xmm2, %ecx
+; CHECK-NEXT:   vpextrb $15, %xmm3, %eax
+; CHECK-NEXT:   shrb %cl, %al
+; CHECK-NEXT:   vpextrb $1, %xmm1, %ecx
+; CHECK-NEXT:   vpextrb $1, %xmm0, %esi
+; CHECK-NEXT:   shrb %cl, %sil
+; CHECK-NEXT:   movzbl %dl, %ecx
+; CHECK-NEXT:   vpinsrb $14, %ecx, %xmm4, %xmm2
+; CHECK-NEXT:   vpextrb $0, %xmm1, %ecx
+; CHECK-NEXT:   vpextrb $0, %xmm0, %edx
+; CHECK-NEXT:   shrb %cl, %dl
+; CHECK-NEXT:   vpextrb $2, %xmm1, %ecx
+; CHECK-NEXT:   vpextrb $2, %xmm0, %edi
+; CHECK-NEXT:   shrb %cl, %dil
+; CHECK-NEXT:   movzbl %al, %eax
+; CHECK-NEXT:   vpinsrb $15, %eax, %xmm2, %xmm2
+; CHECK-NEXT:   movzbl %sil, %eax
+; CHECK-NEXT:   movzbl %dl, %ecx
+; CHECK-NEXT:   vmovd %ecx, %xmm3
+; CHECK-NEXT:   vpinsrb $1, %eax, %xmm3, %xmm3
+; CHECK-NEXT:   movzbl %dil, %eax
+; CHECK-NEXT:   vpextrb $3, %xmm1, %ecx
+; CHECK-NEXT:   vpextrb $3, %xmm0, %edx
+; CHECK-NEXT:   shrb %cl, %dl
+; CHECK-NEXT:   vpinsrb $2, %eax, %xmm3, %xmm3
+; CHECK-NEXT:   movzbl %dl, %eax
+; CHECK-NEXT:   vpinsrb $3, %eax, %xmm3, %xmm3
+; CHECK-NEXT:   vpextrb $4, %xmm1, %ecx
+; CHECK-NEXT:   vpextrb $4, %xmm0, %eax
+; CHECK-NEXT:   shrb %cl, %al
+; CHECK-NEXT:   movzbl %al, %eax
+; CHECK-NEXT:   vpinsrb $4, %eax, %xmm3, %xmm3
+; CHECK-NEXT:   vpextrb $5, %xmm1, %ecx
+; CHECK-NEXT:   vpextrb $5, %xmm0, %eax
+; CHECK-NEXT:   shrb %cl, %al
+; CHECK-NEXT:   vpextrb $6, %xmm1, %ecx
+; CHECK-NEXT:   vpextrb $6, %xmm0, %edx
+; CHECK-NEXT:   shrb %cl, %dl
+; CHECK-NEXT:   movzbl %al, %eax
+; CHECK-NEXT:   vpinsrb $5, %eax, %xmm3, %xmm3
+; CHECK-NEXT:   movzbl %dl, %eax
+; CHECK-NEXT:   vpextrb $7, %xmm1, %ecx
+; CHECK-NEXT:   vpextrb $7, %xmm0, %edx
+; CHECK-NEXT:   shrb %cl, %dl
+; CHECK-NEXT:   vpinsrb $6, %eax, %xmm3, %xmm3
+; CHECK-NEXT:   movzbl %dl, %eax
+; CHECK-NEXT:   vpinsrb $7, %eax, %xmm3, %xmm3
+; CHECK-NEXT:   vpextrb $8, %xmm1, %ecx
+; CHECK-NEXT:   vpextrb $8, %xmm0, %eax
+; CHECK-NEXT:   shrb %cl, %al
+; CHECK-NEXT:   movzbl %al, %eax
+; CHECK-NEXT:   vpinsrb $8, %eax, %xmm3, %xmm3
+; CHECK-NEXT:   vpextrb $9, %xmm1, %ecx
+; CHECK-NEXT:   vpextrb $9, %xmm0, %eax
+; CHECK-NEXT:   shrb %cl, %al
+; CHECK-NEXT:   vpextrb $10, %xmm1, %ecx
+; CHECK-NEXT:   vpextrb $10, %xmm0, %edx
+; CHECK-NEXT:   shrb %cl, %dl
+; CHECK-NEXT:   movzbl %al, %eax
+; CHECK-NEXT:   vpinsrb $9, %eax, %xmm3, %xmm3
+; CHECK-NEXT:   movzbl %dl, %eax
+; CHECK-NEXT:   vpextrb $11, %xmm1, %ecx
+; CHECK-NEXT:   vpextrb $11, %xmm0, %edx
+; CHECK-NEXT:   shrb %cl, %dl
+; CHECK-NEXT:   vpinsrb $10, %eax, %xmm3, %xmm3
+; CHECK-NEXT:   movzbl %dl, %eax
+; CHECK-NEXT:   vpinsrb $11, %eax, %xmm3, %xmm3
+; CHECK-NEXT:   vpextrb $12, %xmm1, %ecx
+; CHECK-NEXT:   vpextrb $12, %xmm0, %eax
+; CHECK-NEXT:   shrb %cl, %al
+; CHECK-NEXT:   movzbl %al, %eax
+; CHECK-NEXT:   vpinsrb $12, %eax, %xmm3, %xmm3
+; CHECK-NEXT:   vpextrb $13, %xmm1, %ecx
+; CHECK-NEXT:   vpextrb $13, %xmm0, %eax
+; CHECK-NEXT:   shrb %cl, %al
+; CHECK-NEXT:   vpextrb $14, %xmm1, %ecx
+; CHECK-NEXT:   vpextrb $14, %xmm0, %edx
+; CHECK-NEXT:   shrb %cl, %dl
+; CHECK-NEXT:   movzbl %al, %eax
+; CHECK-NEXT:   vpinsrb $13, %eax, %xmm3, %xmm3
+; CHECK-NEXT:   movzbl %dl, %eax
+; CHECK-NEXT:   vpextrb $15, %xmm1, %ecx
+; CHECK-NEXT:   vpextrb $15, %xmm0, %edx
+; CHECK-NEXT:   shrb %cl, %dl
+; CHECK-NEXT:   vpinsrb $14, %eax, %xmm3, %xmm0
+; CHECK-NEXT:   movzbl %dl, %eax
+; CHECK-NEXT:   vpinsrb $15, %eax, %xmm0, %xmm0
+; CHECK-NEXT:   vinserti128 $1, %xmm2, %ymm0, %ymm0
+; CHECK-NEXT:   retq
+  %lshr = lshr <32 x i8> %r, %a
+  ret <32 x i8> %lshr
 }
