@@ -10,7 +10,8 @@
 // This file defines the TokenKind database.  This includes normal tokens like
 // tok::ampamp (corresponding to the && token) as well as keywords for various
 // languages.  Users of this file must optionally #define the TOK, KEYWORD,
-// CXX11_KEYWORD, ALIAS, or PPKEYWORD macros to make use of this file.
+// CXX11_KEYWORD, CONCEPTS_KEYWORD, ALIAS, or PPKEYWORD macros to make use of
+// this file.
 //
 //===----------------------------------------------------------------------===//
 
@@ -25,6 +26,9 @@
 #endif
 #ifndef CXX11_KEYWORD
 #define CXX11_KEYWORD(X,Y) KEYWORD(X,KEYCXX11|(Y))
+#endif
+#ifndef CONCEPTS_KEYWORD
+#define CONCEPTS_KEYWORD(X) KEYWORD(X,KEYCONCEPTS)
 #endif
 #ifndef TYPE_TRAIT
 #define TYPE_TRAIT(N,I,K) KEYWORD(I,K)
@@ -226,6 +230,8 @@ PUNCTUATOR(greatergreatergreater, ">>>")
 //              implementation namespace
 //   KEYNOCXX - This is a keyword in every non-C++ dialect.
 //   KEYCXX11 - This is a C++ keyword introduced to C++ in C++11
+//   KEYCONCEPTS - This is a keyword if the C++ extensions for concepts
+//                 are enabled.
 //   KEYGNU   - This is a keyword if GNU extensions are enabled
 //   KEYMS    - This is a keyword if Microsoft extensions are enabled
 //   KEYNOMS18 - This is a keyword that must never be enabled under
@@ -343,6 +349,10 @@ CXX11_KEYWORD(noexcept              , 0)
 CXX11_KEYWORD(nullptr               , 0)
 CXX11_KEYWORD(static_assert         , 0)
 CXX11_KEYWORD(thread_local          , 0)
+
+// C++ concepts TS keywords
+CONCEPTS_KEYWORD(concept)
+CONCEPTS_KEYWORD(requires)
 
 // GNU Extensions (in impl-reserved namespace)
 KEYWORD(_Decimal32                  , KEYALL)
@@ -738,6 +748,7 @@ ANNOTATION(module_end)
 #undef TYPE_TRAIT_2
 #undef TYPE_TRAIT_1
 #undef TYPE_TRAIT
+#undef CONCEPTS_KEYWORD
 #undef CXX11_KEYWORD
 #undef KEYWORD
 #undef PUNCTUATOR
