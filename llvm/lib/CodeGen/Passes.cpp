@@ -295,6 +295,24 @@ void TargetPassConfig::addPass(Pass *P, bool verifyAfter, bool printAfter) {
       if (verifyAfter)
         addVerifyPass(Banner);
     }
+
+    // Add the passes after the pass P if there is any.
+    for (SmallVectorImpl<std::pair<AnalysisID, IdentifyingPassPtr> >::iterator
+             I = Impl->InsertedPasses.begin(),
+             E = Impl->InsertedPasses.end();
+         I != E; ++I) {
+      if ((*I).first == PassID) {
+        assert((*I).second.isValid() && "Illegal Pass ID!");
+        Pass *NP;
+        if ((*I).second.isInstance())
+          NP = (*I).second.getInstance();
+        else {
+          NP = Pass::createPass((*I).second.getID());
+          assert(NP && "Pass ID not registered");
+        }
+        addPass(NP, false, false);
+      }
+    }
   } else {
     delete P;
   }
@@ -329,22 +347,6 @@ AnalysisID TargetPassConfig::addPass(AnalysisID PassID, bool verifyAfter,
   AnalysisID FinalID = P->getPassID();
   addPass(P, verifyAfter, printAfter); // Ends the lifetime of P.
 
-  // Add the passes after the pass P if there is any.
-  for (SmallVectorImpl<std::pair<AnalysisID, IdentifyingPassPtr> >::iterator
-         I = Impl->InsertedPasses.begin(), E = Impl->InsertedPasses.end();
-       I != E; ++I) {
-    if ((*I).first == PassID) {
-      assert((*I).second.isValid() && "Illegal Pass ID!");
-      Pass *NP;
-      if ((*I).second.isInstance())
-        NP = (*I).second.getInstance();
-      else {
-        NP = Pass::createPass((*I).second.getID());
-        assert(NP && "Pass ID not registered");
-      }
-      addPass(NP, false, false);
-    }
-  }
   return FinalID;
 }
 
