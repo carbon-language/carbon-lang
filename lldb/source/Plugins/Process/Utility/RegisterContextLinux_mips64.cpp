@@ -74,6 +74,13 @@ typedef struct _GPR
 #include "RegisterInfos_mips64.h"
 #undef DECLARE_REGISTER_INFOS_MIPS64_STRUCT
 
+//---------------------------------------------------------------------------
+// Include RegisterInfos_mips to declare our g_register_infos_mips structure.
+//---------------------------------------------------------------------------
+#define DECLARE_REGISTER_INFOS_MIPS_STRUCT
+#include "RegisterInfos_mips.h"
+#undef DECLARE_REGISTER_INFOS_MIPS_STRUCT
+
 static const RegisterInfo *
 GetRegisterInfoPtr (const ArchSpec &target_arch)
 {
@@ -81,9 +88,10 @@ GetRegisterInfoPtr (const ArchSpec &target_arch)
     {
         case llvm::Triple::mips64:
         case llvm::Triple::mips64el:
+            return g_register_infos_mips64;
         case llvm::Triple::mips:
         case llvm::Triple::mipsel:
-            return g_register_infos_mips64;
+            return g_register_infos_mips;
         default:
             assert(false && "Unhandled target architecture.");
             return nullptr;
@@ -97,9 +105,10 @@ GetRegisterInfoCount (const ArchSpec &target_arch)
     {
         case llvm::Triple::mips64:
         case llvm::Triple::mips64el:
+            return static_cast<uint32_t> (sizeof (g_register_infos_mips64) / sizeof (g_register_infos_mips64 [0]));
         case llvm::Triple::mips:
         case llvm::Triple::mipsel:
-            return static_cast<uint32_t> (sizeof (g_register_infos_mips64) / sizeof (g_register_infos_mips64 [0]));
+            return static_cast<uint32_t> (sizeof (g_register_infos_mips) / sizeof (g_register_infos_mips [0]));
         default:
             assert(false && "Unhandled target architecture.");
             return 0;

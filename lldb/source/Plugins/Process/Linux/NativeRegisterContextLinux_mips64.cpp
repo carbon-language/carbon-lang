@@ -592,6 +592,63 @@ NativeRegisterContextLinux_mips64::WriteAllRegisterValues (const lldb::DataBuffe
     return error;
 }
 
+Error
+NativeRegisterContextLinux_mips64::ReadFPR()
+{
+    void* buf = GetFPRBuffer();
+    if (!buf)
+        return Error("FPR buffer is NULL");
+
+    Error error = NativeRegisterContextLinux::ReadFPR();
+
+    if (IsFR0())
+    {
+         for (int i = 0; i < 16; i++)
+         {
+              // copy odd single from top of neighbouring even double
+              uint8_t * src = (uint8_t *)buf + 4 + (i * 16);
+              uint8_t * dst = (uint8_t *)buf + 8 + (i * 16);
+              *(uint32_t *) dst = *(uint32_t *) src;
+         }
+    }
+
+    return error;
+}
+
+Error
+NativeRegisterContextLinux_mips64::WriteFPR()
+{
+    void* buf = GetFPRBuffer();
+    if (!buf)
+        return Error("FPR buffer is NULL");
+
+    if (IsFR0())
+    {
+         for (int i = 0; i < 16; i++)
+         {
+             // copy odd single to top of neighbouring even double
+             uint8_t * src = (uint8_t *)buf + 8 + (i * 16);
+             uint8_t * dst = (uint8_t *)buf + 4 + (i * 16);
+             *(uint32_t *) dst = *(uint32_t *) src;
+         }
+    }
+
+    return NativeRegisterContextLinux::WriteFPR();
+}
+
+bool
+NativeRegisterContextLinux_mips64::IsFR0()
+{
+    const RegisterInfo *const reg_info_p = GetRegisterInfoAtIndex (36); // Status Register is at index 36 of the register array
+
+    RegisterValue reg_value;
+    ReadRegister (reg_info_p, reg_value);
+
+    uint64_t value = reg_value.GetAsUInt64();
+
+    return (!(value & 0x4000000));
+}
+
 bool
 NativeRegisterContextLinux_mips64::IsFPR(uint32_t reg_index) const
 {

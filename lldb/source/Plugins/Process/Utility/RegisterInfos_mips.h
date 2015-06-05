@@ -26,6 +26,10 @@
       eFormatHex, { kind1, kind2, kind3, kind4, gpr_##reg##_mips }, NULL, NULL }
 
 #define DEFINE_FPR(member, reg, alt, kind1, kind2, kind3, kind4)           \
+    { #reg, alt, sizeof(((FPR_mips*)NULL)->member) / 2, FPR_OFFSET(member), eEncodingUint,   \
+      eFormatHex, { kind1, kind2, kind3, kind4, fpr_##reg##_mips }, NULL, NULL }
+
+#define DEFINE_FPR_INFO(member, reg, alt, kind1, kind2, kind3, kind4)           \
     { #reg, alt, sizeof(((FPR_mips*)NULL)->member), FPR_OFFSET(member), eEncodingUint,   \
       eFormatHex, { kind1, kind2, kind3, kind4, fpr_##reg##_mips }, NULL, NULL }
 
@@ -104,8 +108,8 @@ g_register_infos_mips[] =
     DEFINE_FPR (fp_reg[29],  f29,   NULL,   gcc_dwarf_f29_mips,  gcc_dwarf_f29_mips,  LLDB_INVALID_REGNUM,    gdb_f29_mips),
     DEFINE_FPR (fp_reg[30],  f30,   NULL,   gcc_dwarf_f30_mips,  gcc_dwarf_f30_mips,  LLDB_INVALID_REGNUM,    gdb_f30_mips),
     DEFINE_FPR (fp_reg[31],  f31,   NULL,   gcc_dwarf_f31_mips,  gcc_dwarf_f31_mips,  LLDB_INVALID_REGNUM,    gdb_f31_mips),
-    DEFINE_FPR (fcsr,        fcsr,  NULL,   gcc_dwarf_fcsr_mips, gcc_dwarf_fcsr_mips, LLDB_INVALID_REGNUM,    gdb_fcsr_mips),
-    DEFINE_FPR (fir,         fir,   NULL,   gcc_dwarf_fir_mips,  gcc_dwarf_fir_mips,  LLDB_INVALID_REGNUM,    gdb_fir_mips)
+    DEFINE_FPR_INFO (fcsr,        fcsr,  NULL,   gcc_dwarf_fcsr_mips, gcc_dwarf_fcsr_mips, LLDB_INVALID_REGNUM,    gdb_fcsr_mips),
+    DEFINE_FPR_INFO (fir,         fir,   NULL,   gcc_dwarf_fir_mips,  gcc_dwarf_fir_mips,  LLDB_INVALID_REGNUM,    gdb_fir_mips)
 };
 static_assert((sizeof(g_register_infos_mips) / sizeof(g_register_infos_mips[0])) == k_num_registers_mips,
     "g_register_infos_mips has wrong number of register infos");

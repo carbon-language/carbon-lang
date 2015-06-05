@@ -47,6 +47,12 @@ namespace process_linux {
         WriteAllRegisterValues (const lldb::DataBufferSP &data_sp) override;
 
         Error
+        ReadFPR() override;
+
+        Error
+        WriteFPR() override;
+
+        Error
         IsWatchpointHit (uint32_t wp_index, bool &is_hit) override;
 
         Error
@@ -83,6 +89,9 @@ namespace process_linux {
         GetWriteRegisterValueOperation(uint32_t offset,
                                        const char* reg_name,
                                        const RegisterValue &value) override;
+
+        bool
+        IsFR0();
 
         bool
         IsFPR(uint32_t reg_index) const;
