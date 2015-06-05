@@ -58,7 +58,7 @@ public:
   virtual void setTargetAttributes(const Decl *D, llvm::GlobalValue *GV,
                                    CodeGen::CodeGenModule &M) const {}
 
-  /// EmitTargetMD - Provides a convenient hook to handle extra
+  /// emitTargetMD - Provides a convenient hook to handle extra
   /// target-specific metadata for the given global.
   virtual void emitTargetMD(const Decl *D, llvm::GlobalValue *GV,
                             CodeGen::CodeGenModule &M) const {}
