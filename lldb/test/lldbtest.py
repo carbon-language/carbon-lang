@@ -444,18 +444,20 @@ def run_adb_command(cmd, device_id):
     return p.returncode, stdout, stderr
 
 def android_device_api():
+    assert lldb.platform_url is not None
     device_id = None
-    if lldb.platform_url:
-        parsed = urlparse.urlparse(lldb.platform_url)
-        if parsed.scheme == "adb":
-            device_id = parsed.hostname
+    parsed_url = urlparse.urlparse(lldb.platform_url)
+    if parsed_url.scheme == "adb":
+        device_id = parsed_url.netloc.split(":")[0]
     retcode, stdout, stderr = run_adb_command(
         ["shell", "getprop", "ro.build.version.sdk"], device_id)
     if retcode == 0:
         return int(stdout)
     else:
         raise LookupError(
-            "Unable to determine the API level of the Android device.")
+            ">>> Unable to determine the API level of the Android device.\n"
+            ">>> stdout:\n%s\n"
+            ">>> stderr:\n%s\n" % (stdout, stderr))
 
 #
 # Decorators for categorizing test cases.
