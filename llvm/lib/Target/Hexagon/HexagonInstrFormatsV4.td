@@ -146,6 +146,11 @@ class EXTENDERInst<dag outs, dag ins, string asmstr, list<dag> pattern = []>
   : InstHexagon<outs, ins, asmstr, pattern, "", EXTENDER_tc_1_SLOT0123,
                 TypePREFIX>, OpcodeHexagon;
 
+class SUBInst<dag outs, dag ins, string asmstr, list<dag> pattern = [],
+              string cstr = "">
+  : InstHexagon<outs, ins, asmstr, pattern, "", PREFIX, TypeDUPLEX>,
+    OpcodeHexagon;
+
 class CJInst<dag outs, dag ins, string asmstr, list<dag> pattern = [],
               string cstr = "">
   : InstHexagon<outs, ins, asmstr, pattern, cstr, COMPOUND, TypeCOMPOUND>,
