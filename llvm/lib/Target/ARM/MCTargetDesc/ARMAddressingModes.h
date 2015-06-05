@@ -622,8 +622,6 @@ namespace ARM_AM {
     return Value;
   }
 
-  AMSubMode getLoadStoreMultipleSubMode(int Opcode);
-
   //===--------------------------------------------------------------------===//
   // Floating-point Immediates
   //
