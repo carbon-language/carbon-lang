@@ -3475,6 +3475,12 @@ void Linux::AddClangSystemIncludeArgs(const ArgList &DriverArgs,
   const StringRef PPC64LEMultiarchIncludeDirs[] = {
     "/usr/include/powerpc64le-linux-gnu"
   };
+  const StringRef SparcMultiarchIncludeDirs[] = {
+    "/usr/include/sparc-linux-gnu"
+  };
+  const StringRef Sparc64MultiarchIncludeDirs[] = {
+    "/usr/include/sparc64-linux-gnu"
+  };
   ArrayRef<StringRef> MultiarchIncludeDirs;
   if (getTriple().getArch() == llvm::Triple::x86_64) {
     MultiarchIncludeDirs = X86_64MultiarchIncludeDirs;
@@ -3502,6 +3508,10 @@ void Linux::AddClangSystemIncludeArgs(const ArgList &DriverArgs,
     MultiarchIncludeDirs = PPC64MultiarchIncludeDirs;
   } else if (getTriple().getArch() == llvm::Triple::ppc64le) {
     MultiarchIncludeDirs = PPC64LEMultiarchIncludeDirs;
+  } else if (getTriple().getArch() == llvm::Triple::sparc) {
+    MultiarchIncludeDirs = SparcMultiarchIncludeDirs;
+  } else if (getTriple().getArch() == llvm::Triple::sparcv9) {
+    MultiarchIncludeDirs = Sparc64MultiarchIncludeDirs;
   }
   for (StringRef Dir : MultiarchIncludeDirs) {
     if (llvm::sys::fs::exists(SysRoot + Dir)) {
