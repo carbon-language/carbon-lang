@@ -43,7 +43,7 @@ public:
   /// \name Lifetime Management
   /// @{
 
-  virtual void reset(){};
+  virtual void reset() {}
 
   /// @}
 
