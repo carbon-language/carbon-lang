@@ -622,10 +622,9 @@ void EmitAssemblyHelper::EmitAssembly(BackendAction Action,
     PrettyStackTraceString CrashInfo("Per-function optimization");
 
     PerFunctionPasses->doInitialization();
-    for (Module::iterator I = TheModule->begin(),
-           E = TheModule->end(); I != E; ++I)
-      if (!I->isDeclaration())
-        PerFunctionPasses->run(*I);
+    for (Function &F : *TheModule)
+      if (!F.isDeclaration())
+        PerFunctionPasses->run(F);
     PerFunctionPasses->doFinalization();
   }
 
