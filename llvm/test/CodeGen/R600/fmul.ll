@@ -73,4 +73,20 @@ define void @test_mul_2_k_inv(float addrspace(1)* %out, float %x) #0 {
   ret void
 }
 
+; There should be three multiplies here; %a should be used twice (once
+; negated), not duplicated into mul x, 5.0 and mul x, -5.0.
+; FUNC-LABEL: {{^}}test_mul_twouse:
+; SI: v_mul_f32
+; SI: v_mul_f32
+; SI: v_mul_f32
+; SI-NOT: v_mul_f32
+define void @test_mul_twouse(float addrspace(1)* %out, float %x, float %y) #0 {
+  %a = fmul float %x, 5.0
+  %b = fsub float -0.0, %a
+  %c = fmul float %b, %y
+  %d = fmul float %c, %a
+  store float %d, float addrspace(1)* %out
+  ret void
+}
+
 attributes #0 = { "less-precise-fpmad"="true" "no-infs-fp-math"="true" "no-nans-fp-math"="true" "unsafe-fp-math"="true" }
