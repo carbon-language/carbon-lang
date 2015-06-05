@@ -91,7 +91,7 @@ void DebugMap::dump() const { print(errs()); }
 namespace {
 struct YAMLContext {
   StringRef PrependPath;
-  Triple Triple;
+  Triple BinaryTriple;
 };
 }
 
@@ -176,7 +176,7 @@ void MappingTraits<dsymutil::DebugMap>::mapping(IO &io,
   io.mapRequired("triple", DM.BinaryTriple);
   io.mapOptional("objects", DM.Objects);
   if (void *Ctxt = io.getContext())
-    reinterpret_cast<YAMLContext *>(Ctxt)->Triple = DM.BinaryTriple;
+    reinterpret_cast<YAMLContext *>(Ctxt)->BinaryTriple = DM.BinaryTriple;
 }
 
 void MappingTraits<std::unique_ptr<dsymutil::DebugMap>>::mapping(
@@ -186,7 +186,7 @@ void MappingTraits<std::unique_ptr<dsymutil::DebugMap>>::mapping(
   io.mapRequired("triple", DM->BinaryTriple);
   io.mapOptional("objects", DM->Objects);
   if (void *Ctxt = io.getContext())
-    reinterpret_cast<YAMLContext *>(Ctxt)->Triple = DM->BinaryTriple;
+    reinterpret_cast<YAMLContext *>(Ctxt)->BinaryTriple = DM->BinaryTriple;
 }
 
 MappingTraits<dsymutil::DebugMapObject>::YamlDMO::YamlDMO(
