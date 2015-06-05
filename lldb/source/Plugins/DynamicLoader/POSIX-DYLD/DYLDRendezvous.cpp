@@ -120,9 +120,10 @@ DYLDRendezvous::DYLDRendezvous(Process *process)
         Module *exe_mod = m_process->GetTarget().GetExecutableModulePointer();
         if (exe_mod)
         {
-            exe_mod->GetPlatformFileSpec().GetPath(m_exe_path, PATH_MAX);
+            m_exe_file_spec = exe_mod->GetPlatformFileSpec();
             if (log)
-                log->Printf ("DYLDRendezvous::%s exe module executable path set: '%s'", __FUNCTION__, m_exe_path);
+                log->Printf ("DYLDRendezvous::%s exe module executable path set: '%s'",
+                        __FUNCTION__, m_exe_file_spec.GetCString());
         }
         else
         {
@@ -294,13 +295,13 @@ DYLDRendezvous::SOEntryIsMainExecutable(const SOEntry &entry)
 
     switch (os_type) {
         case llvm::Triple::FreeBSD:
-            return ::strcmp(entry.path.c_str(), m_exe_path) == 0;
+            return entry.file_spec == m_exe_file_spec;
         case llvm::Triple::Linux:
             switch (env_type) {
                 case llvm::Triple::Android:
-                    return ::strcmp(entry.path.c_str(), m_exe_path) == 0;
+                    return entry.file_spec == m_exe_file_spec;
                 default:
-                    return entry.path.empty();
+                    return !entry.file_spec;
             }
         default:
             return false;
@@ -405,9 +406,9 @@ DYLDRendezvous::ReadSOEntryFromMemory(lldb::addr_t addr, SOEntry &entry)
     
     if (!(addr = ReadPointer(addr, &entry.prev)))
         return false;
-    
-    entry.path = ReadStringFromMemory(entry.path_addr);
-    
+
+    entry.file_spec.SetFile(ReadStringFromMemory(entry.path_addr), false);
+
     return true;
 }
 
@@ -483,7 +484,7 @@ DYLDRendezvous::DumpToLog(Log *log) const
     
     for (int i = 1; I != E; ++I, ++i) 
     {
-        log->Printf("\n   SOEntry [%d] %s", i, I->path.c_str());
+        log->Printf("\n   SOEntry [%d] %s", i, I->file_spec.GetCString());
         log->Printf("      Base : %" PRIx64, I->base_addr);
         log->Printf("      Path : %" PRIx64, I->path_addr);
         log->Printf("      Dyn  : %" PRIx64, I->dyn_addr);
