@@ -836,7 +836,7 @@ void CodeGenModule::setNonAliasAttributes(const Decl *D,
   if (const SectionAttr *SA = D->getAttr<SectionAttr>())
     GO->setSection(SA->getName());
 
-  getTargetCodeGenInfo().SetTargetAttributes(D, GO, *this);
+  getTargetCodeGenInfo().setTargetAttributes(D, GO, *this);
 }
 
 void CodeGenModule::SetInternalFunctionAttributes(const Decl *D,
