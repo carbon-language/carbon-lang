@@ -3956,6 +3956,9 @@ TEST_F(FormatTest, TrailingReturnType) {
   verifyFormat("auto SomeFunction(A aaaaaaaaaaaaaaaaaaaaa) const\n"
                "    -> decltype(f(aaaaaaaaaaaaaaaaaaaaa)) {}");
   verifyFormat("auto doSomething(Aaaaaa *aaaaaa) -> decltype(aaaaaa->f()) {}");
+  verifyFormat("template <typename T>\n"
+               "auto aaaaaaaaaaaaaaaaaaaaaa(T t)\n"
+               "    -> decltype(eaaaaaaaaaaaaaaa<T>(t.a).aaaaaaaa());");
 
   // Not trailing return types.
   verifyFormat("void f() { auto a = b->c(); }");
@@ -6606,6 +6609,7 @@ TEST_F(FormatTest, UnderstandContextOfRecordTypeKeywords) {
 
   // FIXME: This is still incorrectly handled at the formatter side.
   verifyFormat("template <> struct X < 15, i<3 && 42 < 50 && 33 < 28> {};");
+  verifyFormat("int i = SomeFunction(a<b, a> b);");
 
   // FIXME:
   // This now gets parsed incorrectly as class definition.

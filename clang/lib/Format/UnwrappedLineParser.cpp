@@ -953,7 +953,7 @@ bool UnwrappedLineParser::tryToParseLambda() {
       nextToken();
       break;
     case tok::arrow:
-      FormatTok->Type = TT_TrailingReturnArrow;
+      FormatTok->Type = TT_LambdaArrow;
       nextToken();
       break;
     default:

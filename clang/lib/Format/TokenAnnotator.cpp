@@ -754,8 +754,8 @@ private:
     // recovered from an error (e.g. failure to find the matching >).
     if (!CurrentToken->isOneOf(TT_LambdaLSquare, TT_ForEachMacro,
                                TT_FunctionLBrace, TT_ImplicitStringLiteral,
-                               TT_InlineASMBrace, TT_JsFatArrow,
-                               TT_RegexLiteral, TT_TrailingReturnArrow))
+                               TT_InlineASMBrace, TT_JsFatArrow, TT_LambdaArrow,
+                               TT_RegexLiteral))
       CurrentToken->Type = TT_Unknown;
     CurrentToken->Role.reset();
     CurrentToken->MatchingParen = nullptr;
@@ -844,6 +844,8 @@ private:
       Contexts.back().IsExpression = true;
     } else if (Current.is(TT_TrailingReturnArrow)) {
       Contexts.back().IsExpression = false;
+    } else if (Current.is(TT_LambdaArrow)) {
+      Contexts.back().IsExpression = Style.Language == FormatStyle::LK_Java;
     } else if (Current.is(tok::l_paren) && !Line.MustBeDeclaration &&
                !Line.InPPDirective &&
                (!Current.Previous ||
@@ -1646,7 +1648,7 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
   }
   if (Right.is(TT_PointerOrReference))
     return 190;
-  if (Right.is(TT_TrailingReturnArrow))
+  if (Right.is(TT_LambdaArrow))
     return 110;
   if (Left.is(tok::equal) && Right.is(tok::l_brace))
     return 150;
@@ -1901,8 +1903,6 @@ bool TokenAnnotator::spaceRequiredBefore(const AnnotatedLine &Line,
   } else if (Style.Language == FormatStyle::LK_Java) {
     if (Left.is(tok::r_square) && Right.is(tok::l_brace))
       return true;
-    if (Left.is(TT_LambdaArrow) || Right.is(TT_LambdaArrow))
-      return true;
     if (Left.is(Keywords.kw_synchronized) && Right.is(tok::l_paren))
       return Style.SpaceBeforeParens != FormatStyle::SBPO_Never;
     if ((Left.isOneOf(tok::kw_static, tok::kw_public, tok::kw_private,
@@ -1927,7 +1927,8 @@ bool TokenAnnotator::spaceRequiredBefore(const AnnotatedLine &Line,
       (Right.is(tok::equal) || Left.is(tok::equal)))
     return false;
 
-  if (Right.is(TT_TrailingReturnArrow) || Left.is(TT_TrailingReturnArrow))
+  if (Right.isOneOf(TT_TrailingReturnArrow, TT_LambdaArrow) ||
+      Left.isOneOf(TT_TrailingReturnArrow, TT_LambdaArrow))
     return true;
   if (Left.is(tok::comma))
     return true;

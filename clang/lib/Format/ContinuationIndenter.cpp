@@ -329,7 +329,7 @@ void ContinuationIndenter::addTokenOnCurrentLine(LineState &State, bool DryRun,
       State.Column > getNewLineColumn(State))
     State.Stack.back().ContainsUnwrappedBuilder = true;
 
-  if (Current.is(TT_LambdaArrow))
+  if (Current.is(TT_LambdaArrow) && Style.Language == FormatStyle::LK_Java)
     State.Stack.back().NoLineBreak = true;
   if (Current.isMemberAccess() && Previous.is(tok::r_paren) &&
       (Previous.MatchingParen &&
