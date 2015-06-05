@@ -36,6 +36,13 @@ namespace {
 const uint32_t kReadTimeout = 1000000; // 1 second
 const char * kOKAY = "OKAY";
 const char * kFAIL = "FAIL";
+const char * kDATA = "DATA";
+const char * kDONE = "DONE";
+
+const char * kSEND = "SEND";
+const char * kRECV = "RECV";
+const char * kSTAT = "STAT";
+
 const size_t kSyncPacketLen = 8;
 // Maximum size of a filesync DATA packet.
 const size_t kMaxPushData = 2*1024;
@@ -264,7 +271,7 @@ AdbClient::PullFile (const FileSpec &remote_file, const FileSpec &local_file)
         return Error ("Unable to open local file %s", local_file_path.c_str());
 
     const auto remote_file_path = remote_file.GetPath (false);
-    error = SendSyncRequest ("RECV", remote_file_path.length (), remote_file_path.c_str ());
+    error = SendSyncRequest (kRECV, remote_file_path.length (), remote_file_path.c_str ());
     if (error.Fail ())
         return error;
 
@@ -274,7 +281,7 @@ AdbClient::PullFile (const FileSpec &remote_file, const FileSpec &local_file)
     {
         error = PullFileChunk (chunk, eof);
         if (error.Fail ())
-            return Error ("Failed to read file chunk: %s", error.AsCString ());
+            return error;
         if (!eof)
             dst.write (&chunk[0], chunk.size ());
     }
@@ -298,7 +305,7 @@ AdbClient::PushFile (const FileSpec &local_file, const FileSpec &remote_file)
     std::stringstream file_description;
     file_description << remote_file.GetPath(false).c_str() << "," << kDefaultMode;
     std::string file_description_str = file_description.str();
-    error = SendSyncRequest ("SEND", file_description_str.length(), file_description_str.c_str());
+    error = SendSyncRequest (kSEND, file_description_str.length(), file_description_str.c_str());
     if (error.Fail ())
         return error;
 
@@ -306,14 +313,30 @@ AdbClient::PushFile (const FileSpec &local_file, const FileSpec &remote_file)
     while (!src.eof() && !src.read(chunk, kMaxPushData).bad())
     {
         size_t chunk_size = src.gcount();
-        error = SendSyncRequest("DATA", chunk_size, chunk);
+        error = SendSyncRequest(kDATA, chunk_size, chunk);
         if (error.Fail ())
             return Error ("Failed to send file chunk: %s", error.AsCString ());
     }
-    error = SendSyncRequest("DONE", local_file.GetModificationTime().seconds(), nullptr);
+    error = SendSyncRequest(kDONE, local_file.GetModificationTime().seconds(), nullptr);
     if (error.Fail ())
         return error;
-    error = ReadResponseStatus();
+
+    std::string response_id;
+    uint32_t data_len;
+    error = ReadSyncHeader (response_id, data_len);
+    if (error.Fail ())
+        return Error ("Failed to read DONE response: %s", error.AsCString ());
+    if (response_id == kFAIL)
+    {
+        std::string error_message (data_len, 0);
+        error = ReadAllBytes (&error_message[0], data_len);
+        if (error.Fail ())
+            return Error ("Failed to read DONE error message: %s", error.AsCString ());
+        return Error ("Failed to push file: %s", error_message.c_str ());
+    }
+    else if (response_id != kOKAY)
+        return Error ("Got unexpected DONE response: %s", response_id.c_str ());
+
     // If there was an error reading the source file, finish the adb file
     // transfer first so that adb isn't expecting any more data.
     if (src.bad())
@@ -356,19 +379,29 @@ AdbClient::PullFileChunk (std::vector<char> &buffer, bool &eof)
     if (error.Fail ())
         return error;
 
-    if (response_id == "DATA")
+    if (response_id == kDATA)
     {
         buffer.resize (data_len, 0);
         error = ReadAllBytes (&buffer[0], data_len);
         if (error.Fail ())
             buffer.clear ();
     }
-    else if (response_id == "DONE")
+    else if (response_id == kDONE)
+    {
         eof = true;
+    }
+    else if (response_id == kFAIL)
+    {
+        std::string error_message (data_len, 0);
+        error = ReadAllBytes (&error_message[0], data_len);
+        if (error.Fail ())
+            return Error ("Failed to read pull error message: %s", error.AsCString ());
+        return Error ("Failed to pull file: %s", error_message.c_str ());
+    }
     else
-        error = GetResponseError (response_id.c_str ());
+        return Error ("Pull failed with unknown response: %s", response_id.c_str ());
 
-    return error;
+    return Error ();
 }
 
 Error
@@ -423,4 +456,40 @@ AdbClient::ReadAllBytes (void *buffer, size_t size)
         tota_read_bytes += read_bytes;
     }
     return error;
+}
+
+Error
+AdbClient::Stat (const FileSpec &remote_file, uint32_t &mode, uint32_t &size, uint32_t &mtime)
+{
+    auto error = StartSync ();
+    if (error.Fail ())
+        return error;
+
+    const std::string remote_file_path (remote_file.GetPath (false));
+    error = SendSyncRequest (kSTAT, remote_file_path.length (), remote_file_path.c_str ());
+    if (error.Fail ())
+        return Error ("Failed to send request: %s", error.AsCString ());
+
+    static const size_t stat_len = strlen (kSTAT);
+    static const size_t response_len = stat_len + (sizeof (uint32_t) * 3);
+
+    std::vector<char> buffer (response_len);
+    error = ReadAllBytes (&buffer[0], buffer.size ());
+    if (error.Fail ())
+        return Error ("Failed to read response: %s", error.AsCString ());
+
+    DataExtractor extractor (&buffer[0], buffer.size (), eByteOrderLittle, sizeof (void*));
+    offset_t offset = 0;
+
+    const void* command = extractor.GetData (&offset, stat_len);
+    if (!command)
+        return Error ("Failed to get response command");
+    const char* command_str = static_cast<const char*> (command);
+    if (strncmp (command_str, kSTAT, stat_len))
+        return Error ("Got invalid stat command: %s", command_str);
+
+    mode = extractor.GetU32 (&offset);
+    size = extractor.GetU32 (&offset);
+    mtime = extractor.GetU32 (&offset);
+    return Error ();
 }

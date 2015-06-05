@@ -59,6 +59,9 @@ public:
     Error
     PushFile (const FileSpec &local_file, const FileSpec &remote_file);
 
+    Error
+    Stat (const FileSpec &remote_file, uint32_t &mode, uint32_t &size, uint32_t &mtime);
+
 private:
     Error
     Connect ();
