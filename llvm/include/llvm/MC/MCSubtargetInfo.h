@@ -73,9 +73,7 @@ public:
 
   /// setFeatureBits - Set the feature bits.
   ///
-  void setFeatureBits(const FeatureBitset &FeatureBits_) {
-    FeatureBits = FeatureBits_;
-  }
+  void setFeatureBits(FeatureBitset& FeatureBits_) { FeatureBits = FeatureBits_; }
 
   /// InitMCProcessorInfo - Set or change the CPU (optionally supplemented with
   /// feature string). Recompute feature bits and scheduling model.

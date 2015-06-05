@@ -43,7 +43,7 @@ class MCInstrInfo;
 namespace {
 class MipsAssemblerOptions {
 public:
-  MipsAssemblerOptions(const FeatureBitset &Features_) :
+  MipsAssemblerOptions(uint64_t Features_) : 
     ATReg(1), Reorder(true), Macro(true), Features(Features_) {}
 
   MipsAssemblerOptions(const MipsAssemblerOptions *Opts) {
@@ -70,8 +70,8 @@ public:
   void setMacro() { Macro = true; }
   void setNoMacro() { Macro = false; }
 
-  const FeatureBitset &getFeatures() const { return Features; }
-  void setFeatures(const FeatureBitset &Features_) { Features = Features_; }
+  uint64_t getFeatures() const { return Features; }
+  void setFeatures(uint64_t Features_) { Features = Features_; }
 
   // Set of features that are either architecture features or referenced
   // by them (e.g.: FeatureNaN2008 implied by FeatureMips32r6).
@@ -84,7 +84,7 @@ private:
   unsigned ATReg;
   bool Reorder;
   bool Macro;
-  FeatureBitset Features;
+  uint64_t Features;
 };
 }
 
@@ -327,23 +327,23 @@ class MipsAsmParser : public MCTargetAsmParser {
     STI.setFeatureBits(FeatureBits);
     setAvailableFeatures(
         ComputeAvailableFeatures(STI.ToggleFeature(ArchFeature)));
-    AssemblerOptions.back()->setFeatures(STI.getFeatureBits());
+    AssemblerOptions.back()->setFeatures(getAvailableFeatures());
   }
 
   void setFeatureBits(uint64_t Feature, StringRef FeatureString) {
     if (!(STI.getFeatureBits()[Feature])) {
       setAvailableFeatures(
           ComputeAvailableFeatures(STI.ToggleFeature(FeatureString)));
-      AssemblerOptions.back()->setFeatures(STI.getFeatureBits());
     }
+    AssemblerOptions.back()->setFeatures(getAvailableFeatures());
   }
 
   void clearFeatureBits(uint64_t Feature, StringRef FeatureString) {
     if (STI.getFeatureBits()[Feature]) {
       setAvailableFeatures(
           ComputeAvailableFeatures(STI.ToggleFeature(FeatureString)));
-      AssemblerOptions.back()->setFeatures(STI.getFeatureBits());
     }
+    AssemblerOptions.back()->setFeatures(getAvailableFeatures());
   }
 
 public:
@@ -369,11 +369,11 @@ public:
     
     // Remember the initial assembler options. The user can not modify these.
     AssemblerOptions.push_back(
-                     make_unique<MipsAssemblerOptions>(STI.getFeatureBits()));
+                     make_unique<MipsAssemblerOptions>(getAvailableFeatures()));
     
     // Create an assembler options environment for the user to modify.
     AssemblerOptions.push_back(
-                     make_unique<MipsAssemblerOptions>(STI.getFeatureBits()));
+                     make_unique<MipsAssemblerOptions>(getAvailableFeatures()));
 
     getTargetStreamer().updateABIInfo(*this);
 
@@ -3603,9 +3603,7 @@ bool MipsAsmParser::parseSetPopDirective() {
     return reportParseError(Loc, ".set pop with no .set push");
 
   AssemblerOptions.pop_back();
-  setAvailableFeatures(
-      ComputeAvailableFeatures(AssemblerOptions.back()->getFeatures()));
-  STI.setFeatureBits(AssemblerOptions.back()->getFeatures());
+  setAvailableFeatures(AssemblerOptions.back()->getFeatures());
 
   getTargetStreamer().emitDirectiveSetPop();
   return false;
@@ -3675,9 +3673,7 @@ bool MipsAsmParser::parseSetMips0Directive() {
     return reportParseError("unexpected token, expected end of statement");
 
   // Reset assembler options to their initial values.
-  setAvailableFeatures(
-      ComputeAvailableFeatures(AssemblerOptions.front()->getFeatures()));
-  STI.setFeatureBits(AssemblerOptions.front()->getFeatures());
+  setAvailableFeatures(AssemblerOptions.front()->getFeatures());
   AssemblerOptions.back()->setFeatures(AssemblerOptions.front()->getFeatures());
 
   getTargetStreamer().emitDirectiveSetMips0();
