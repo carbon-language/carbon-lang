@@ -733,8 +733,10 @@ void DeclPrinter::VisitImportDecl(ImportDecl *D) {
 void DeclPrinter::VisitStaticAssertDecl(StaticAssertDecl *D) {
   Out << "static_assert(";
   D->getAssertExpr()->printPretty(Out, nullptr, Policy, Indentation);
-  Out << ", ";
-  D->getMessage()->printPretty(Out, nullptr, Policy, Indentation);
+  if (StringLiteral *SL = D->getMessage()) {
+    Out << ", ";
+    SL->printPretty(Out, nullptr, Policy, Indentation);
+  }
   Out << ")";
 }
 

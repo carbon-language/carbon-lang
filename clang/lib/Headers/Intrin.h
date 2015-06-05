@@ -546,13 +546,8 @@ _bittestandset(long *a, long b) {
 #if defined(__i386__) || defined(__x86_64__)
 static __inline__ unsigned char __attribute__((__always_inline__, __nodebug__))
 _interlockedbittestandset(long volatile *__BitBase, long __BitPos) {
-  unsigned char __Res;
-  __asm__ ("xor %0, %0\n"
-           "lock bts %2, %1\n"
-           "setc %0\n"
-           : "=r" (__Res), "+m"(*__BitBase)
-           : "Ir"(__BitPos));
-  return __Res;
+  long __OldVal = __atomic_fetch_or(__BitBase, 1 << __BitPos, 5);
+  return (__OldVal >> __BitPos) & 1;
 }
 #endif
 #ifdef __x86_64__

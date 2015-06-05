@@ -51,3 +51,12 @@ StaticAssertProtected<X> sap2; // expected-note {{instantiation}}
 
 static_assert(true); // expected-warning {{C++1z extension}}
 static_assert(false); // expected-error-re {{failed{{$}}}} expected-warning {{extension}}
+
+void PR23756() {
+  struct { // expected-note 2 {{no known conversion from}}
+  } _ = decltype(            // expected-error {{no viable conversion}}
+      ({                     // expected-warning {{no effect in an unevaluated context}}
+        static_assert(true); // expected-warning {{C++1z extension}}
+        1;
+      })){};
+}
