@@ -537,85 +537,13 @@ static void getARMHWDivFeatures(const Driver &D, const Arg *A,
 }
 
 // Handle -mfpu=.
-//
-// FIXME: Centralize feature selection, defaulting shouldn't be also in the
-// frontend target.
 static void getARMFPUFeatures(const Driver &D, const Arg *A,
                               const ArgList &Args,
                               std::vector<const char *> &Features) {
   StringRef FPU = A->getValue();
-
-  // FIXME: Why does "none" disable more than "invalid"?
-  if (FPU == "none") {
-    Features.push_back("-vfp2");
-    Features.push_back("-vfp3");
-    Features.push_back("-vfp4");
-    Features.push_back("-fp-armv8");
-    Features.push_back("-crypto");
-    Features.push_back("-neon");
-    return;
-  }
-
-  // FIXME: Make sure we differentiate sp-only.
-  if (FPU.find("-sp-") != StringRef::npos) {
-    Features.push_back("+fp-only-sp");
-  }
-
-  // All other FPU types, valid or invalid.
-  switch(llvm::ARMTargetParser::parseFPU(FPU)) {
-  case llvm::ARM::FK_INVALID:
-  case llvm::ARM::FK_SOFTVFP:
-    Features.push_back("-vfp2");
-    Features.push_back("-vfp3");
-    Features.push_back("-neon");
-    break;
-  case llvm::ARM::FK_VFP:
-  case llvm::ARM::FK_VFPV2:
-    Features.push_back("+vfp2");
-    Features.push_back("-neon");
-    break;
-  case llvm::ARM::FK_VFPV3_D16:
-    Features.push_back("+d16");
-    // fall-through
-  case llvm::ARM::FK_VFPV3:
-    Features.push_back("+vfp3");
-    Features.push_back("-neon");
-    break;
-  case llvm::ARM::FK_VFPV4_D16:
-    Features.push_back("+d16");
-    // fall-through
-  case llvm::ARM::FK_VFPV4:
-    Features.push_back("+vfp4");
-    Features.push_back("-neon");
-    break;
-  case llvm::ARM::FK_FPV5_D16:
-    Features.push_back("+d16");
-    // fall-through
-  case llvm::ARM::FK_FP_ARMV8:
-    Features.push_back("+fp-armv8");
-    Features.push_back("-neon");
-    Features.push_back("-crypto");
-    break;
-  case llvm::ARM::FK_NEON_FP_ARMV8:
-    Features.push_back("+fp-armv8");
-    Features.push_back("+neon");
-    Features.push_back("-crypto");
-    break;
-  case llvm::ARM::FK_CRYPTO_NEON_FP_ARMV8:
-    Features.push_back("+fp-armv8");
-    Features.push_back("+neon");
-    Features.push_back("+crypto");
-    break;
-  case llvm::ARM::FK_NEON:
-    Features.push_back("+neon");
-    break;
-  case llvm::ARM::FK_NEON_VFPV4:
-    Features.push_back("+neon");
-    Features.push_back("+vfp4");
-    break;
-  default:
+  unsigned FPUID = llvm::ARMTargetParser::parseFPU(FPU);
+  if (!llvm::ARMTargetParser::getFPUFeatures(FPUID, Features))
     D.Diag(diag::err_drv_clang_unsupported) << A->getAsString(Args);
-  }
 }
 
 static int getARMSubArchVersionNumber(const llvm::Triple &Triple) {

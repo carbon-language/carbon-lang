@@ -138,8 +138,8 @@
 // FPUNONE-A5-NOT:#define __ARM_NEON__ 1
 // FPUNONE-A5-NOT:#define __ARM_VFPV4__ 1
 
-// RUN: %clang -target armv7-none-linux-gnueabi -mcpu=cortex-a5 -mfpu=vfp3-d16 -x c -E -dM %s -o - | FileCheck --check-prefix=NONEON-A5 %s
-// RUN: %clang -target armv7-none-linux-gnueabi -mthumb -mcpu=cortex-a5 -mfpu=vfp3-d16 -x c -E -dM %s -o - | FileCheck --check-prefix=NONEON-A5 %s
+// RUN: %clang -target armv7-none-linux-gnueabi -mcpu=cortex-a5 -mfpu=vfp4-d16 -x c -E -dM %s -o - | FileCheck --check-prefix=NONEON-A5 %s
+// RUN: %clang -target armv7-none-linux-gnueabi -mthumb -mcpu=cortex-a5 -mfpu=vfp4-d16 -x c -E -dM %s -o - | FileCheck --check-prefix=NONEON-A5 %s
 // NONEON-A5-NOT:#define __ARM_NEON__ 1
 // NONEON-A5:#define __ARM_VFPV4__ 1
 
