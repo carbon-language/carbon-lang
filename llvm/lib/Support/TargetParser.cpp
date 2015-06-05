@@ -223,8 +223,6 @@ struct {
 
 } // namespace
 
-namespace llvm {
-
 // ======================================================= //
 // Information by ID
 // ======================================================= //
@@ -241,13 +239,13 @@ unsigned ARMTargetParser::getFPUVersion(unsigned FPUKind) {
   return FPUNames[FPUKind].FPUVersion;
 }
 
-unsigned getFPUNeonSupportLevel(unsigned FPUKind) {
+unsigned ARMTargetParser::getFPUNeonSupportLevel(unsigned FPUKind) {
   if (FPUKind >= ARM::FK_LAST)
     return 0;
   return FPUNames[FPUKind].NeonSupport;
 }
 
-unsigned getFPURestriction(unsigned FPUKind) {
+unsigned ARMTargetParser::getFPURestriction(unsigned FPUKind) {
   if (FPUKind >= ARM::FK_LAST)
     return 0;
   return FPUNames[FPUKind].Restriction;
@@ -587,5 +585,3 @@ unsigned ARMTargetParser::parseArchVersion(StringRef Arch) {
   }
   return 0;
 }
-
-} // namespace llvm
