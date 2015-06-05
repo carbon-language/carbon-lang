@@ -1397,7 +1397,7 @@ if not os.path.isdir(sdir_name):
         if exception.errno != errno.EEXIST:
             raise
 where_to_save_session = os.getcwd()
-fname = os.path.join(sdir_name, "TestStarted")
+fname = os.path.join(sdir_name, "TestStarted-%d" % os.getpid())
 with open(fname, "w") as f:
     print >> f, "Test started at: %s\n" % timestamp_started
     print >> f, svn_info
@@ -1774,7 +1774,7 @@ if useCategories and len(failuresPerCategory) > 0:
         sys.stderr.write("%s - %d\n" % (category,failuresPerCategory[category]))
 
 os.chdir(where_to_save_session)
-fname = os.path.join(sdir_name, "TestFinished")
+fname = os.path.join(sdir_name, "TestFinished-%d" % os.getpid())
 with open(fname, "w") as f:
     print >> f, "Test finished at: %s\n" % datetime.datetime.now().strftime("%Y-%m-%d-%H_%M_%S")
 
