@@ -19,6 +19,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/LEB128.h"
+#include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
@@ -358,8 +359,12 @@ std::error_code readCoverageMappingData(
     const char *CovBuf = Buf;
     Buf += CoverageSize;
     const char *CovEnd = Buf;
+
     if (Buf > End)
       return coveragemap_error::malformed;
+    // Each coverage map has an alignment of 8, so we need to adjust alignment
+    // before reading the next map.
+    Buf += alignmentAdjustment(Buf, 8);
 
     while (FunBuf < FunEnd) {
       // Read the function information
