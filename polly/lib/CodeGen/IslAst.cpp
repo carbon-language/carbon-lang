@@ -555,6 +555,9 @@ void IslAstInfo::printScop(raw_ostream &OS, Scop &S) const {
   OS << "else\n";
   OS << "    {  /* original code */ }\n\n";
 
+  free(RtCStr);
+  free(AstStr);
+
   isl_ast_expr_free(RunCondition);
   isl_union_map_free(Schedule);
   isl_ast_node_free(RootNode);
