@@ -25,8 +25,8 @@ const char *Triple::getArchTypeName(ArchType Kind) {
   case aarch64_be:  return "aarch64_be";
   case arm:         return "arm";
   case armeb:       return "armeb";
-  case bpf_le:      return "bpf_le";
-  case bpf_be:      return "bpf_be";
+  case bpfel:       return "bpfel";
+  case bpfeb:       return "bpfeb";
   case hexagon:     return "hexagon";
   case mips:        return "mips";
   case mipsel:      return "mipsel";
@@ -91,8 +91,8 @@ const char *Triple::getArchTypePrefix(ArchType Kind) {
   case amdgcn:
   case r600:        return "amdgpu";
 
-  case bpf_le:
-  case bpf_be:      return "bpf";
+  case bpfel:
+  case bpfeb:       return "bpf";
 
   case sparcv9:
   case sparcel:
@@ -198,13 +198,13 @@ const char *Triple::getEnvironmentTypeName(EnvironmentType Kind) {
 static Triple::ArchType parseBPFArch(StringRef ArchName) {
   if (ArchName.equals("bpf")) {
     if (sys::IsLittleEndianHost)
-      return Triple::bpf_le;
+      return Triple::bpfel;
     else
-      return Triple::bpf_be;
-  } else if (ArchName.equals("bpf_be")) {
-    return Triple::bpf_be;
-  } else if (ArchName.equals("bpf_le")) {
-    return Triple::bpf_le;
+      return Triple::bpfeb;
+  } else if (ArchName.equals("bpf_be") || ArchName.equals("bpfeb")) {
+    return Triple::bpfeb;
+  } else if (ArchName.equals("bpf_le") || ArchName.equals("bpfel")) {
+    return Triple::bpfel;
   } else {
     return Triple::UnknownArch;
   }
@@ -1009,8 +1009,8 @@ static unsigned getArchPointerBitWidth(llvm::Triple::ArchType Arch) {
   case llvm::Triple::aarch64:
   case llvm::Triple::aarch64_be:
   case llvm::Triple::amdgcn:
-  case llvm::Triple::bpf_le:
-  case llvm::Triple::bpf_be:
+  case llvm::Triple::bpfel:
+  case llvm::Triple::bpfeb:
   case llvm::Triple::le64:
   case llvm::Triple::mips64:
   case llvm::Triple::mips64el:
@@ -1047,8 +1047,8 @@ Triple Triple::get32BitArchVariant() const {
   case Triple::aarch64:
   case Triple::aarch64_be:
   case Triple::amdgcn:
-  case Triple::bpf_le:
-  case Triple::bpf_be:
+  case Triple::bpfel:
+  case Triple::bpfeb:
   case Triple::msp430:
   case Triple::systemz:
   case Triple::ppc64le:
@@ -1112,8 +1112,8 @@ Triple Triple::get64BitArchVariant() const {
 
   case Triple::aarch64:
   case Triple::aarch64_be:
-  case Triple::bpf_le:
-  case Triple::bpf_be:
+  case Triple::bpfel:
+  case Triple::bpfeb:
   case Triple::le64:
   case Triple::amdil64:
   case Triple::amdgcn:

@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=bpf_le -show-mc-encoding | FileCheck %s
+; RUN: llc < %s -march=bpfel -show-mc-encoding | FileCheck %s
 
 define void @test() #0 {
 entry:

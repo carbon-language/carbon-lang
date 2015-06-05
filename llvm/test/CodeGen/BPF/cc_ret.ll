@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=bpf_le | FileCheck %s
+; RUN: llc < %s -march=bpfel | FileCheck %s
 
 define void @test() #0 {
 entry:

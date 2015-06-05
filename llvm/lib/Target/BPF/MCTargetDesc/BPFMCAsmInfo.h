@@ -25,7 +25,7 @@ class Triple;
 class BPFMCAsmInfo : public MCAsmInfo {
 public:
   explicit BPFMCAsmInfo(const Triple &TT) {
-    if (TT.getArch() == Triple::bpf_be)
+    if (TT.getArch() == Triple::bpfeb)
       IsLittleEndian = false;
 
     PrivateGlobalPrefix = ".L";

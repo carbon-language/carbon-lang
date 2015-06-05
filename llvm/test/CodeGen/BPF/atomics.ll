@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=bpf_le -verify-machineinstrs -show-mc-encoding | FileCheck %s
+; RUN: llc < %s -march=bpfel -verify-machineinstrs -show-mc-encoding | FileCheck %s
 
 ; CHECK-LABEL: test_load_add_32
 ; CHECK: xadd32
