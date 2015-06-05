@@ -47,6 +47,11 @@ import lldbtest_config
 import lldbutil
 from _pyio import __metaclass__
 
+if sys.version_info.major < 3:
+    import urlparse
+else:
+    import urllib.parse as urlparse
+
 # dosep.py starts lots and lots of dotest instances
 # This option helps you find if two (or more) dotest instances are using the same
 # directory at the same time
@@ -429,6 +434,29 @@ def builder_module():
         return __import__("builder_freebsd")
     return __import__("builder_" + sys.platform)
 
+def run_adb_command(cmd, device_id):
+    device_id_args = []
+    if device_id:
+        device_id_args = ["-s", device_id]
+    full_cmd = ["adb"] + device_id_args + cmd
+    p = Popen(full_cmd, stdout=PIPE, stderr=PIPE)
+    stdout, stderr = p.communicate()
+    return p.returncode, stdout, stderr
+
+def android_device_api():
+    device_id = None
+    if lldb.platform_url:
+        parsed = urlparse.urlparse(lldb.platform_url)
+        if parsed.scheme == "adb":
+            device_id = parsed.hostname
+    retcode, stdout, stderr = run_adb_command(
+        ["shell", "getprop", "ro.build.version.sdk"], device_id)
+    if retcode == 0:
+        return int(stdout)
+    else:
+        raise LookupError(
+            "Unable to determine the API level of the Android device.")
+
 #
 # Decorators for categorizing test cases.
 #
@@ -654,10 +682,23 @@ def expectedFailureLinux(bugnumber=None, compilers=None):
 def expectedFailureWindows(bugnumber=None, compilers=None):
     return expectedFailureOS(['windows'], bugnumber, compilers)
 
-def expectedFailureAndroid(bugnumber=None):
+def expectedFailureAndroid(bugnumber=None, api_levels=None):
+    """ Mark a test as xfail for Android.
+
+    Arguments:
+        bugnumber - The LLVM pr associated with the problem.
+        api_levels - A sequence of numbers specifying the Android API levels
+            for which a test is expected to fail.
+    """
     def fn(self):
         triple = self.dbg.GetSelectedPlatform().GetTriple()
-        return re.match(".*-.*-.*-android", triple)
+        match = re.match(".*-.*-.*-android", triple)
+        if match:
+            if not api_levels:
+                return True
+            device_api = android_device_api()
+            return device_api and (device_api in api_levels)
+
     return expectedFailure(fn, bugnumber)
 
 def expectedFailureLLGS(bugnumber=None, compilers=None):

@@ -26,6 +26,7 @@ class ChangeProcessGroupTestCase(TestBase):
 
     @skipIfFreeBSD # Times out on FreeBSD llvm.org/pr23731
     @skipIfWindows # setpgid call does not exist on Windows
+    @expectedFailureAndroid("http://llvm.org/pr23762", api_levels=[16])
     @dwarf_test
     def test_setpgid_with_dwarf(self):
         self.buildDwarf()
