@@ -133,6 +133,8 @@ class ELFObjectWriter : public MCObjectWriter {
       return TargetObjectWriter->GetRelocType(Target, Fixup, IsPCRel);
     }
 
+    void align(unsigned Alignment);
+
   public:
     ELFObjectWriter(MCELFObjectTargetWriter *MOTW, raw_pwrite_stream &OS,
                     bool IsLittleEndian)
@@ -229,6 +231,11 @@ class ELFObjectWriter : public MCObjectWriter {
                       uint32_t GroupSymbolIndex, uint64_t Offset, uint64_t Size,
                       const MCSectionELF &Section);
   };
+}
+
+void ELFObjectWriter::align(unsigned Alignment) {
+  uint64_t Padding = OffsetToAlignment(OS.tell(), Alignment);
+  WriteZeros(Padding);
 }
 
 unsigned ELFObjectWriter::addToSectionTable(const MCSectionELF *Sec) {
@@ -758,10 +765,7 @@ void ELFObjectWriter::computeSymbolTable(
   SymtabSection->setAlignment(is64Bit() ? 8 : 4);
   SymbolTableIndex = addToSectionTable(SymtabSection);
 
-  uint64_t Padding =
-      OffsetToAlignment(OS.tell(), SymtabSection->getAlignment());
-  WriteZeros(Padding);
-
+  align(SymtabSection->getAlignment());
   uint64_t SecStart = OS.tell();
 
   // The first entry is the undefined symbol entry.
@@ -1196,8 +1200,7 @@ void ELFObjectWriter::writeObject(MCAssembler &Asm,
   for (MCSection &Sec : Asm) {
     MCSectionELF &Section = static_cast<MCSectionELF &>(Sec);
 
-    uint64_t Padding = OffsetToAlignment(OS.tell(), Section.getAlignment());
-    WriteZeros(Padding);
+    align(Section.getAlignment());
 
     // Remember the offset into the file for this section.
     uint64_t SecStart = OS.tell();
@@ -1234,8 +1237,7 @@ void ELFObjectWriter::writeObject(MCAssembler &Asm,
   }
 
   for (MCSectionELF *Group : Groups) {
-    uint64_t Padding = OffsetToAlignment(OS.tell(), Group->getAlignment());
-    WriteZeros(Padding);
+    align(Group->getAlignment());
 
     // Remember the offset into the file for this section.
     uint64_t SecStart = OS.tell();
@@ -1256,8 +1258,7 @@ void ELFObjectWriter::writeObject(MCAssembler &Asm,
   computeSymbolTable(Asm, Layout, SectionIndexMap, RevGroupMap, SectionOffsets);
 
   for (MCSectionELF *RelSection : Relocations) {
-    uint64_t Padding = OffsetToAlignment(OS.tell(), RelSection->getAlignment());
-    WriteZeros(Padding);
+    align(RelSection->getAlignment());
 
     // Remember the offset into the file for this section.
     uint64_t SecStart = OS.tell();
@@ -1276,8 +1277,7 @@ void ELFObjectWriter::writeObject(MCAssembler &Asm,
   }
 
   uint64_t NaturalAlignment = is64Bit() ? 8 : 4;
-  uint64_t Padding = OffsetToAlignment(OS.tell(), NaturalAlignment);
-  WriteZeros(Padding);
+  align(NaturalAlignment);
 
   const unsigned SectionHeaderOffset = OS.tell();
 
