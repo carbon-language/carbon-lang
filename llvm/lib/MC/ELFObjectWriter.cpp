@@ -1219,9 +1219,11 @@ void ELFObjectWriter::writeObject(MCAssembler &Asm,
         Group->setAlignment(4);
         Groups.push_back(Group);
       }
-      GroupMembers[SignatureSymbol].push_back(&Section);
+      std::vector<const MCSectionELF *> &Members =
+          GroupMembers[SignatureSymbol];
+      Members.push_back(&Section);
       if (RelSection)
-        GroupMembers[SignatureSymbol].push_back(RelSection);
+        Members.push_back(RelSection);
     }
 
     SectionIndexMap[&Section] = addToSectionTable(&Section);
