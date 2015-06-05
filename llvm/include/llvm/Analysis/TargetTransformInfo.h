@@ -221,19 +221,21 @@ public:
 
   /// Parameters that control the generic loop unrolling transformation.
   struct UnrollingPreferences {
-    /// The cost threshold for the unrolled loop, compared to
-    /// CodeMetrics.NumInsts aggregated over all basic blocks in the loop body.
-    /// The unrolling factor is set such that the unrolled loop body does not
-    /// exceed this cost. Set this to UINT_MAX to disable the loop body cost
+    /// The cost threshold for the unrolled loop. Should be relative to the
+    /// getUserCost values returned by this API, and the expectation is that
+    /// the unrolled loop's instructions when run through that interface should
+    /// not exceed this cost. However, this is only an estimate. Also, specific
+    /// loops may be unrolled even with a cost above this threshold if deemed
+    /// profitable. Set this to UINT_MAX to disable the loop body cost
     /// restriction.
     unsigned Threshold;
-    /// If complete unrolling could help other optimizations (e.g. InstSimplify)
-    /// to remove N% of instructions, then we can go beyond unroll threshold.
-    /// This value set the minimal percent for allowing that.
-    unsigned MinPercentOfOptimized;
-    /// The absolute cost threshold. We won't go beyond this even if complete
-    /// unrolling could result in optimizing out 90% of instructions.
-    unsigned AbsoluteThreshold;
+    /// If complete unrolling will reduce the cost of the loop below its
+    /// expected dynamic cost while rolled by this percentage, apply a discount
+    /// (below) to its unrolled cost.
+    unsigned PercentDynamicCostSavedThreshold;
+    /// The discount applied to the unrolled cost when the *dynamic* cost
+    /// savings of unrolling exceed the \c PercentDynamicCostSavedThreshold.
+    unsigned DynamicCostSavingsDiscount;
     /// The cost threshold for the unrolled loop when optimizing for size (set
     /// to UINT_MAX to disable).
     unsigned OptSizeThreshold;

@@ -38,24 +38,24 @@ using namespace llvm;
 #define DEBUG_TYPE "loop-unroll"
 
 static cl::opt<unsigned>
-UnrollThreshold("unroll-threshold", cl::init(150), cl::Hidden,
-  cl::desc("The cut-off point for automatic loop unrolling"));
+    UnrollThreshold("unroll-threshold", cl::init(150), cl::Hidden,
+                    cl::desc("The baseline cost threshold for loop unrolling"));
+
+static cl::opt<unsigned> UnrollPercentDynamicCostSavedThreshold(
+    "unroll-percent-dynamic-cost-saved-threshold", cl::init(20), cl::Hidden,
+    cl::desc("The percentage of estimated dynamic cost which must be saved by "
+             "unrolling to allow unrolling up to the max threshold."));
+
+static cl::opt<unsigned> UnrollDynamicCostSavingsDiscount(
+    "unroll-dynamic-cost-savings-discount", cl::init(2000), cl::Hidden,
+    cl::desc("This is the amount discounted from the total unroll cost when "
+             "the unrolled form has a high dynamic cost savings (triggered by "
+             "the '-unroll-perecent-dynamic-cost-saved-threshold' flag)."));
 
 static cl::opt<unsigned> UnrollMaxIterationsCountToAnalyze(
     "unroll-max-iteration-count-to-analyze", cl::init(0), cl::Hidden,
     cl::desc("Don't allow loop unrolling to simulate more than this number of"
              "iterations when checking full unroll profitability"));
-
-static cl::opt<unsigned> UnrollMinPercentOfOptimized(
-    "unroll-percent-of-optimized-for-complete-unroll", cl::init(20), cl::Hidden,
-    cl::desc("If complete unrolling could trigger further optimizations, and, "
-             "by that, remove the given percent of instructions, perform the "
-             "complete unroll even if it's beyond the threshold"));
-
-static cl::opt<unsigned> UnrollAbsoluteThreshold(
-    "unroll-absolute-threshold", cl::init(2000), cl::Hidden,
-    cl::desc("Don't unroll if the unrolled size is bigger than this threshold,"
-             " even if we can remove big portion of instructions later."));
 
 static cl::opt<unsigned>
 UnrollCount("unroll-count", cl::init(0), cl::Hidden,
@@ -82,16 +82,18 @@ namespace {
     static char ID; // Pass ID, replacement for typeid
     LoopUnroll(int T = -1, int C = -1, int P = -1, int R = -1) : LoopPass(ID) {
       CurrentThreshold = (T == -1) ? UnrollThreshold : unsigned(T);
-      CurrentAbsoluteThreshold = UnrollAbsoluteThreshold;
-      CurrentMinPercentOfOptimized = UnrollMinPercentOfOptimized;
+      CurrentPercentDynamicCostSavedThreshold =
+          UnrollPercentDynamicCostSavedThreshold;
+      CurrentDynamicCostSavingsDiscount = UnrollDynamicCostSavingsDiscount;
       CurrentCount = (C == -1) ? UnrollCount : unsigned(C);
       CurrentAllowPartial = (P == -1) ? UnrollAllowPartial : (bool)P;
       CurrentRuntime = (R == -1) ? UnrollRuntime : (bool)R;
 
       UserThreshold = (T != -1) || (UnrollThreshold.getNumOccurrences() > 0);
-      UserAbsoluteThreshold = (UnrollAbsoluteThreshold.getNumOccurrences() > 0);
-      UserPercentOfOptimized =
-          (UnrollMinPercentOfOptimized.getNumOccurrences() > 0);
+      UserPercentDynamicCostSavedThreshold =
+          (UnrollPercentDynamicCostSavedThreshold.getNumOccurrences() > 0);
+      UserDynamicCostSavingsDiscount =
+          (UnrollDynamicCostSavingsDiscount.getNumOccurrences() > 0);
       UserAllowPartial = (P != -1) ||
                          (UnrollAllowPartial.getNumOccurrences() > 0);
       UserRuntime = (R != -1) || (UnrollRuntime.getNumOccurrences() > 0);
@@ -115,18 +117,18 @@ namespace {
 
     unsigned CurrentCount;
     unsigned CurrentThreshold;
-    unsigned CurrentAbsoluteThreshold;
-    unsigned CurrentMinPercentOfOptimized;
-    bool     CurrentAllowPartial;
-    bool     CurrentRuntime;
-    bool     UserCount;            // CurrentCount is user-specified.
-    bool     UserThreshold;        // CurrentThreshold is user-specified.
-    bool UserAbsoluteThreshold;    // CurrentAbsoluteThreshold is
-                                   // user-specified.
-    bool UserPercentOfOptimized;   // CurrentMinPercentOfOptimized is
-                                   // user-specified.
-    bool     UserAllowPartial;     // CurrentAllowPartial is user-specified.
-    bool     UserRuntime;          // CurrentRuntime is user-specified.
+    unsigned CurrentPercentDynamicCostSavedThreshold;
+    unsigned CurrentDynamicCostSavingsDiscount;
+    bool CurrentAllowPartial;
+    bool CurrentRuntime;
+
+    // Flags for whether the 'current' settings are user-specified.
+    bool UserCount;
+    bool UserThreshold;
+    bool UserPercentDynamicCostSavedThreshold;
+    bool UserDynamicCostSavingsDiscount;
+    bool UserAllowPartial;
+    bool UserRuntime;
 
     bool runOnLoop(Loop *L, LPPassManager &LPM) override;
 
@@ -156,8 +158,9 @@ namespace {
     void getUnrollingPreferences(Loop *L, const TargetTransformInfo &TTI,
                                  TargetTransformInfo::UnrollingPreferences &UP) {
       UP.Threshold = CurrentThreshold;
-      UP.AbsoluteThreshold = CurrentAbsoluteThreshold;
-      UP.MinPercentOfOptimized = CurrentMinPercentOfOptimized;
+      UP.PercentDynamicCostSavedThreshold =
+          CurrentPercentDynamicCostSavedThreshold;
+      UP.DynamicCostSavingsDiscount = CurrentDynamicCostSavingsDiscount;
       UP.OptSizeThreshold = OptSizeUnrollThreshold;
       UP.PartialThreshold = CurrentThreshold;
       UP.PartialOptSizeThreshold = OptSizeUnrollThreshold;
@@ -186,8 +189,8 @@ namespace {
     void selectThresholds(const Loop *L, bool HasPragma,
                           const TargetTransformInfo::UnrollingPreferences &UP,
                           unsigned &Threshold, unsigned &PartialThreshold,
-                          unsigned &AbsoluteThreshold,
-                          unsigned &PercentOfOptimizedForCompleteUnroll) {
+                          unsigned &PercentDynamicCostSavedThreshold,
+                          unsigned &DynamicCostSavingsDiscount) {
       // Determine the current unrolling threshold.  While this is
       // normally set from UnrollThreshold, it is overridden to a
       // smaller value if the current function is marked as
@@ -195,11 +198,13 @@ namespace {
       // specified.
       Threshold = UserThreshold ? CurrentThreshold : UP.Threshold;
       PartialThreshold = UserThreshold ? CurrentThreshold : UP.PartialThreshold;
-      AbsoluteThreshold = UserAbsoluteThreshold ? CurrentAbsoluteThreshold
-                                                : UP.AbsoluteThreshold;
-      PercentOfOptimizedForCompleteUnroll = UserPercentOfOptimized
-                                                ? CurrentMinPercentOfOptimized
-                                                : UP.MinPercentOfOptimized;
+      PercentDynamicCostSavedThreshold =
+          UserPercentDynamicCostSavedThreshold
+              ? CurrentPercentDynamicCostSavedThreshold
+              : UP.PercentDynamicCostSavedThreshold;
+      DynamicCostSavingsDiscount = UserDynamicCostSavingsDiscount
+                                       ? CurrentDynamicCostSavingsDiscount
+                                       : UP.DynamicCostSavingsDiscount;
 
       if (!UserThreshold &&
           L->getHeader()->getParent()->hasFnAttribute(
@@ -220,9 +225,9 @@ namespace {
       }
     }
     bool canUnrollCompletely(Loop *L, unsigned Threshold,
-                             unsigned AbsoluteThreshold, uint64_t UnrolledSize,
-                             unsigned NumberOfOptimizedInstructions,
-                             unsigned PercentOfOptimizedForCompleteUnroll);
+                             unsigned PercentDynamicCostSavedThreshold,
+                             unsigned DynamicCostSavingsDiscount,
+                             unsigned UnrolledCost, unsigned RolledDynamicCost);
   };
 }
 
@@ -556,11 +561,12 @@ private:
 
 namespace {
 struct EstimatedUnrollCost {
-  /// \brief Count the number of optimized instructions.
-  unsigned NumberOfOptimizedInstructions;
+  /// \brief The estimated cost after unrolling.
+  unsigned UnrolledCost;
 
-  /// \brief Count the total number of instructions.
-  unsigned UnrolledLoopSize;
+  /// \brief The estimated dynamic cost of executing the instructions in the
+  /// rolled form.
+  unsigned RolledDynamicCost;
 };
 }
 
@@ -597,8 +603,15 @@ analyzeLoopUnrollCost(const Loop *L, unsigned TripCount, ScalarEvolution &SE,
   // each iteration. This cache is lazily self-populating.
   SCEVCache SC(*L, SE);
 
-  unsigned NumberOfOptimizedInstructions = 0;
-  unsigned UnrolledLoopSize = 0;
+  // The estimated cost of the unrolled form of the loop. We try to estimate
+  // this by simplifying as much as we can while computing the estimate.
+  unsigned UnrolledCost = 0;
+  // We also track the estimated dynamic (that is, actually executed) cost in
+  // the rolled form. This helps identify cases when the savings from unrolling
+  // aren't just exposing dead control flows, but actual reduced dynamic
+  // instructions due to the simplifications which we expect to occur after
+  // unrolling.
+  unsigned RolledDynamicCost = 0;
 
   // Simulate execution of each iteration of the loop counting instructions,
   // which would be simplified.
@@ -618,17 +631,20 @@ analyzeLoopUnrollCost(const Loop *L, unsigned TripCount, ScalarEvolution &SE,
       // it.  We don't change the actual IR, just count optimization
       // opportunities.
       for (Instruction &I : *BB) {
-        UnrolledLoopSize += TTI.getUserCost(&I);
+        unsigned InstCost = TTI.getUserCost(&I);
 
         // Visit the instruction to analyze its loop cost after unrolling,
-        // and if the visitor returns true, then we can optimize this
-        // instruction away.
-        if (Analyzer.visit(I))
-          NumberOfOptimizedInstructions += TTI.getUserCost(&I);
+        // and if the visitor returns false, include this instruction in the
+        // unrolled cost.
+        if (!Analyzer.visit(I))
+          UnrolledCost += InstCost;
+
+        // Also track this instructions expected cost when executing the rolled
+        // loop form.
+        RolledDynamicCost += InstCost;
 
         // If unrolled body turns out to be too big, bail out.
-        if (UnrolledLoopSize - NumberOfOptimizedInstructions >
-            MaxUnrolledLoopSize)
+        if (UnrolledCost > MaxUnrolledLoopSize)
           return None;
       }
 
@@ -640,10 +656,10 @@ analyzeLoopUnrollCost(const Loop *L, unsigned TripCount, ScalarEvolution &SE,
 
     // If we found no optimization opportunities on the first iteration, we
     // won't find them on later ones too.
-    if (!NumberOfOptimizedInstructions)
+    if (UnrolledCost == RolledDynamicCost)
       return None;
   }
-  return {{NumberOfOptimizedInstructions, UnrolledLoopSize}};
+  return {{UnrolledCost, RolledDynamicCost}};
 }
 
 /// ApproximateLoopSize - Approximate the size of the loop.
@@ -749,46 +765,56 @@ static void SetLoopAlreadyUnrolled(Loop *L) {
   L->setLoopID(NewLoopID);
 }
 
-bool LoopUnroll::canUnrollCompletely(
-    Loop *L, unsigned Threshold, unsigned AbsoluteThreshold,
-    uint64_t UnrolledSize, unsigned NumberOfOptimizedInstructions,
-    unsigned PercentOfOptimizedForCompleteUnroll) {
+bool LoopUnroll::canUnrollCompletely(Loop *L, unsigned Threshold,
+                                     unsigned PercentDynamicCostSavedThreshold,
+                                     unsigned DynamicCostSavingsDiscount,
+                                     unsigned UnrolledCost,
+                                     unsigned RolledDynamicCost) {
 
   if (Threshold == NoThreshold) {
     DEBUG(dbgs() << "  Can fully unroll, because no threshold is set.\n");
     return true;
   }
 
-  if (UnrolledSize <= Threshold) {
-    DEBUG(dbgs() << "  Can fully unroll, because unrolled size: "
-                 << UnrolledSize << "<" << Threshold << "\n");
+  if (UnrolledCost <= Threshold) {
+    DEBUG(dbgs() << "  Can fully unroll, because unrolled cost: "
+                 << UnrolledCost << "<" << Threshold << "\n");
     return true;
   }
 
-  assert(UnrolledSize && "UnrolledSize can't be 0 at this point.");
-  unsigned PercentOfOptimizedInstructions =
-      (uint64_t)NumberOfOptimizedInstructions * 100ull / UnrolledSize;
+  assert(UnrolledCost && "UnrolledCost can't be 0 at this point.");
+  assert(RolledDynamicCost >= UnrolledCost &&
+         "Cannot have a higher unrolled cost than a rolled cost!");
 
-  if (UnrolledSize <= AbsoluteThreshold &&
-      PercentOfOptimizedInstructions >= PercentOfOptimizedForCompleteUnroll) {
-    DEBUG(dbgs() << "  Can fully unroll, because unrolling will help removing "
-                 << PercentOfOptimizedInstructions
-                 << "% instructions (threshold: "
-                 << PercentOfOptimizedForCompleteUnroll << "%)\n");
-    DEBUG(dbgs() << "  Unrolled size (" << UnrolledSize
-                 << ") is less than the threshold (" << AbsoluteThreshold
-                 << ").\n");
+  // Compute the percentage of the dynamic cost in the rolled form that is
+  // saved when unrolled. If unrolling dramatically reduces the estimated
+  // dynamic cost of the loop, we use a higher threshold to allow more
+  // unrolling.
+  unsigned PercentDynamicCostSaved =
+      (uint64_t)(RolledDynamicCost - UnrolledCost) * 100ull / RolledDynamicCost;
+
+  if (PercentDynamicCostSaved >= PercentDynamicCostSavedThreshold &&
+      (int64_t)UnrolledCost - (int64_t)DynamicCostSavingsDiscount <=
+          (int64_t)Threshold) {
+    DEBUG(dbgs() << "  Can fully unroll, because unrolling will reduce the "
+                    "expected dynamic cost by " << PercentDynamicCostSaved
+                 << "% (threshold: " << PercentDynamicCostSavedThreshold
+                 << "%)\n"
+                 << "  and the unrolled cost (" << UnrolledCost
+                 << ") is less than the max threshold ("
+                 << DynamicCostSavingsDiscount << ").\n");
     return true;
   }
 
   DEBUG(dbgs() << "  Too large to fully unroll:\n");
-  DEBUG(dbgs() << "    Unrolled size: " << UnrolledSize << "\n");
-  DEBUG(dbgs() << "    Estimated number of optimized instructions: "
-               << NumberOfOptimizedInstructions << "\n");
-  DEBUG(dbgs() << "    Absolute threshold: " << AbsoluteThreshold << "\n");
-  DEBUG(dbgs() << "    Minimum percent of removed instructions: "
-               << PercentOfOptimizedForCompleteUnroll << "\n");
-  DEBUG(dbgs() << "    Threshold for small loops: " << Threshold << "\n");
+  DEBUG(dbgs() << "    Threshold: " << Threshold << "\n");
+  DEBUG(dbgs() << "    Max threshold: " << DynamicCostSavingsDiscount << "\n");
+  DEBUG(dbgs() << "    Percent cost saved threshold: "
+               << PercentDynamicCostSavedThreshold << "%\n");
+  DEBUG(dbgs() << "    Unrolled cost: " << UnrolledCost << "\n");
+  DEBUG(dbgs() << "    Rolled dynamic cost: " << RolledDynamicCost << "\n");
+  DEBUG(dbgs() << "    Percent cost saved: " << PercentDynamicCostSaved
+               << "\n");
   return false;
 }
 
@@ -899,9 +925,11 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
   }
 
   unsigned Threshold, PartialThreshold;
-  unsigned AbsoluteThreshold, PercentOfOptimizedForCompleteUnroll;
+  unsigned PercentDynamicCostSavedThreshold;
+  unsigned DynamicCostSavingsDiscount;
   selectThresholds(L, HasPragma, UP, Threshold, PartialThreshold,
-                   AbsoluteThreshold, PercentOfOptimizedForCompleteUnroll);
+                   PercentDynamicCostSavedThreshold,
+                   DynamicCostSavingsDiscount);
 
   // Given Count, TripCount and thresholds determine the type of
   // unrolling which is to be performed.
@@ -910,20 +938,18 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
   if (TripCount && Count == TripCount) {
     Unrolling = Partial;
     // If the loop is really small, we don't need to run an expensive analysis.
-    if (canUnrollCompletely(
-            L, Threshold, AbsoluteThreshold,
-            UnrolledSize, 0, 100)) {
+    if (canUnrollCompletely(L, Threshold, 100, DynamicCostSavingsDiscount,
+                            UnrolledSize, UnrolledSize)) {
       Unrolling = Full;
     } else {
       // The loop isn't that small, but we still can fully unroll it if that
       // helps to remove a significant number of instructions.
       // To check that, run additional analysis on the loop.
-      if (Optional<EstimatedUnrollCost> Cost =
-              analyzeLoopUnrollCost(L, TripCount, *SE, TTI, AbsoluteThreshold))
-        if (canUnrollCompletely(L, Threshold, AbsoluteThreshold,
-                                Cost->UnrolledLoopSize,
-                                Cost->NumberOfOptimizedInstructions,
-                                PercentOfOptimizedForCompleteUnroll)) {
+      if (Optional<EstimatedUnrollCost> Cost = analyzeLoopUnrollCost(
+              L, TripCount, *SE, TTI, Threshold + DynamicCostSavingsDiscount))
+        if (canUnrollCompletely(L, Threshold, PercentDynamicCostSavedThreshold,
+                                DynamicCostSavingsDiscount, Cost->UnrolledCost,
+                                Cost->RolledDynamicCost)) {
           Unrolling = Full;
         }
     }

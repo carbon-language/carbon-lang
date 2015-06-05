@@ -1,8 +1,8 @@
 ; In this test we check how heuristics for complete unrolling work. We have
 ; three knobs:
 ;  1) -unroll-threshold
-;  2) -unroll-absolute-threshold and
-;  3) -unroll-percent-of-optimized-for-complete-unroll
+;  3) -unroll-percent-dynamic-cost-saved-threshold and
+;  2) -unroll-dynamic-cost-savings-discount
 ;
 ; They control loop-unrolling according to the following rules:
 ;  * If size of unrolled loop exceeds the absoulte threshold, we don't unroll
@@ -17,10 +17,10 @@
 ; optimizations to remove ~55% of the instructions, the loop body size is 9,
 ; and unrolled size is 65.
 
-; RUN: opt < %s -S -loop-unroll -unroll-max-iteration-count-to-analyze=1000 -unroll-absolute-threshold=10  -unroll-threshold=10  -unroll-percent-of-optimized-for-complete-unroll=20 | FileCheck %s -check-prefix=TEST1
-; RUN: opt < %s -S -loop-unroll -unroll-max-iteration-count-to-analyze=1000 -unroll-absolute-threshold=100 -unroll-threshold=10  -unroll-percent-of-optimized-for-complete-unroll=20 | FileCheck %s -check-prefix=TEST2
-; RUN: opt < %s -S -loop-unroll -unroll-max-iteration-count-to-analyze=1000 -unroll-absolute-threshold=100 -unroll-threshold=10  -unroll-percent-of-optimized-for-complete-unroll=80 | FileCheck %s -check-prefix=TEST3
-; RUN: opt < %s -S -loop-unroll -unroll-max-iteration-count-to-analyze=1000 -unroll-absolute-threshold=100 -unroll-threshold=100 -unroll-percent-of-optimized-for-complete-unroll=80 | FileCheck %s -check-prefix=TEST4
+; RUN: opt < %s -S -loop-unroll -unroll-max-iteration-count-to-analyze=1000 -unroll-threshold=10  -unroll-percent-dynamic-cost-saved-threshold=20 -unroll-dynamic-cost-savings-discount=0 | FileCheck %s -check-prefix=TEST1
+; RUN: opt < %s -S -loop-unroll -unroll-max-iteration-count-to-analyze=1000 -unroll-threshold=10  -unroll-percent-dynamic-cost-saved-threshold=20 -unroll-dynamic-cost-savings-discount=90 | FileCheck %s -check-prefix=TEST2
+; RUN: opt < %s -S -loop-unroll -unroll-max-iteration-count-to-analyze=1000 -unroll-threshold=10  -unroll-percent-dynamic-cost-saved-threshold=80 -unroll-dynamic-cost-savings-discount=90 | FileCheck %s -check-prefix=TEST3
+; RUN: opt < %s -S -loop-unroll -unroll-max-iteration-count-to-analyze=1000 -unroll-threshold=100 -unroll-percent-dynamic-cost-saved-threshold=80 -unroll-dynamic-cost-savings-discount=0 | FileCheck %s -check-prefix=TEST4
 
 ; If the absolute threshold is too low, or if we can't optimize away requested
 ; percent of instructions, we shouldn't unroll:
