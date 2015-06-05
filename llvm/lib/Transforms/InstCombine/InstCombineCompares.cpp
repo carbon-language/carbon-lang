@@ -2149,6 +2149,7 @@ bool InstCombiner::OptimizeOverflowCheck(OverflowCheckFlavor OCF, Value *LHS,
       if (WillNotOverflowSignedAdd(LHS, RHS, OrigI))
         return SetResult(Builder->CreateNSWAdd(LHS, RHS), Builder->getFalse(),
                          true);
+    break;
   }
 
   case OCF_UNSIGNED_SUB:
