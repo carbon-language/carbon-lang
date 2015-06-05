@@ -103,6 +103,10 @@ public:
   FeatureBitset ToggleFeature(FeatureBitset Bits, StringRef String,
                          ArrayRef<SubtargetFeatureKV> FeatureTable);
 
+  /// Apply the feature flag and return the newly updated feature bits.
+  FeatureBitset ApplyFeatureFlag(FeatureBitset Bits, StringRef Feature,
+                                 ArrayRef<SubtargetFeatureKV> FeatureTable);
+
   /// Get feature bits of a CPU.
   FeatureBitset getFeatureBits(StringRef CPU,
                           ArrayRef<SubtargetFeatureKV> CPUTable,

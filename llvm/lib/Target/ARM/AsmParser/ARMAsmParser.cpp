@@ -9181,60 +9181,6 @@ bool ARMAsmParser::parseDirectiveCPU(SMLoc L) {
 
   return false;
 }
-
-// FIXME: This is duplicated in getARMFPUFeatures() in
-// tools/clang/lib/Driver/Tools.cpp
-static const struct {
-  const unsigned ID;
-  const FeatureBitset Enabled;
-  const FeatureBitset Disabled;
-} FPUs[] = {
-    {/* ID */ ARM::FK_VFP, 
-     /* Enabled */ {ARM::FeatureVFP2}, 
-     /* Disabled */ {ARM::FeatureNEON}},
-    {/* ID */ ARM::FK_VFPV2, 
-     /* Enabled */ {ARM::FeatureVFP2}, 
-     /* Disabled */ {ARM::FeatureNEON}},
-    {/* ID */ ARM::FK_VFPV3, 
-     /* Enabled */ {ARM::FeatureVFP2, ARM::FeatureVFP3},  
-     /* Disabled */ {ARM::FeatureNEON, ARM::FeatureD16}},
-    {/* ID */ ARM::FK_VFPV3_D16, 
-     /* Enabled */ {ARM::FeatureVFP2, ARM::FeatureVFP3, ARM::FeatureD16},
-     /* Disabled */ {ARM::FeatureNEON}},
-    {/* ID */ ARM::FK_VFPV4, 
-     /* Enabled */ {ARM::FeatureVFP2, ARM::FeatureVFP3, ARM::FeatureVFP4},
-     /* Disabled */ {ARM::FeatureNEON, ARM::FeatureD16}},
-    {/* ID */ ARM::FK_VFPV4_D16, 
-     /* Enabled */ {ARM::FeatureVFP2, ARM::FeatureVFP3, ARM::FeatureVFP4,
-                    ARM::FeatureD16},
-     /* Disabled */ {ARM::FeatureNEON}},
-    {/* ID */ ARM::FK_FPV5_D16, 
-     /* Enabled */ {ARM::FeatureVFP2, ARM::FeatureVFP3, ARM::FeatureVFP4,
-                    ARM::FeatureFPARMv8, ARM::FeatureD16},
-     /* Disabled */ {ARM::FeatureNEON, ARM::FeatureCrypto}},
-    {/* ID */ ARM::FK_FP_ARMV8, 
-     /* Enabled */ {ARM::FeatureVFP2, ARM::FeatureVFP3, ARM::FeatureVFP4,
-                    ARM::FeatureFPARMv8},
-     /* Disabled */ {ARM::FeatureNEON, ARM::FeatureCrypto, ARM::FeatureD16}},
-    {/* ID */ ARM::FK_NEON, 
-     /* Enabled */ {ARM::FeatureVFP2, ARM::FeatureVFP3, ARM::FeatureNEON}, 
-     /* Disabled */ {ARM::FeatureD16}},
-    {/* ID */ ARM::FK_NEON_VFPV4, 
-     /* Enabled */ {ARM::FeatureVFP2, ARM::FeatureVFP3, ARM::FeatureVFP4,
-                    ARM::FeatureNEON}, 
-     /* Disabled */ {ARM::FeatureD16}},
-    {/* ID */ ARM::FK_NEON_FP_ARMV8, 
-     /* Enabled */ {ARM::FeatureVFP2, ARM::FeatureVFP3, ARM::FeatureVFP4,
-                    ARM::FeatureFPARMv8, ARM::FeatureNEON},
-     /* Disabled */ {ARM::FeatureCrypto, ARM::FeatureD16}},
-    {/* ID */ ARM::FK_CRYPTO_NEON_FP_ARMV8,
-     /* Enabled */ {ARM::FeatureVFP2, ARM::FeatureVFP3, ARM::FeatureVFP4,
-                    ARM::FeatureFPARMv8, ARM::FeatureNEON, 
-                    ARM::FeatureCrypto},
-     /* Disabled */ {ARM::FeatureD16}},
-    {ARM::FK_SOFTVFP, {}, {}},
-};
-
 /// parseDirectiveFPU
 ///  ::= .fpu str
 bool ARMAsmParser::parseDirectiveFPU(SMLoc L) {
@@ -9242,23 +9188,15 @@ bool ARMAsmParser::parseDirectiveFPU(SMLoc L) {
   StringRef FPU = getParser().parseStringToEndOfStatement().trim();
 
   unsigned ID = ARMTargetParser::parseFPU(FPU);
-
-  if (ID == ARM::FK_INVALID) {
+  std::vector<const char *> Features;
+  if (!ARMTargetParser::getFPUFeatures(ID, Features)) {
     Error(FPUNameLoc, "Unknown FPU name");
     return false;
   }
 
-  for (const auto &Entry : FPUs) {
-    if (Entry.ID != ID)
-      continue;
-
-    // Need to toggle features that should be on but are off and that
-    // should off but are on.
-    FeatureBitset Toggle = (Entry.Enabled & ~STI.getFeatureBits()) |
-                           (Entry.Disabled & STI.getFeatureBits());
-    setAvailableFeatures(ComputeAvailableFeatures(STI.ToggleFeature(Toggle)));
-    break;
-  }
+  for (auto Feature : Features)
+    STI.ApplyFeatureFlag(Feature);
+  setAvailableFeatures(ComputeAvailableFeatures(STI.getFeatureBits()));
 
   getTargetStreamer().emitFPU(ID);
   return false;

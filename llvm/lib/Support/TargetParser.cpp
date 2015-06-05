@@ -22,27 +22,33 @@ using namespace llvm;
 
 namespace {
 
-// List of canonical FPU names (use getFPUSynonym).
+// List of canonical FPU names (use getFPUSynonym) and which architectural
+// features they correspond to (use getFPUFeatures).
 // FIXME: TableGen this.
 struct {
   const char * Name;
   ARM::FPUKind ID;
+  unsigned FPUVersion; //< Corresponds directly to the FP arch version number.
+  ARM::NeonSupportLevel NeonSupport;
+  ARM::FPURestriction Restriction;
 } FPUNames[] = {
-  { "invalid",              ARM::FK_INVALID },
-  { "vfp",                  ARM::FK_VFP },
-  { "vfpv2",                ARM::FK_VFPV2 },
-  { "vfpv3",                ARM::FK_VFPV3 },
-  { "vfpv3-d16",            ARM::FK_VFPV3_D16 },
-  { "vfpv4",                ARM::FK_VFPV4 },
-  { "vfpv4-d16",            ARM::FK_VFPV4_D16 },
-  { "fpv5-d16",             ARM::FK_FPV5_D16 },
-  { "fp-armv8",             ARM::FK_FP_ARMV8 },
-  { "neon",                 ARM::FK_NEON },
-  { "neon-vfpv4",           ARM::FK_NEON_VFPV4 },
-  { "neon-fp-armv8",        ARM::FK_NEON_FP_ARMV8 },
-  { "crypto-neon-fp-armv8", ARM::FK_CRYPTO_NEON_FP_ARMV8 },
-  { "softvfp",              ARM::FK_SOFTVFP }
+  { "invalid",       ARM::FK_INVALID,       0, ARM::NS_None,   ARM::FR_None},
+  { "vfp",           ARM::FK_VFP,           2, ARM::NS_None,   ARM::FR_None},
+  { "vfpv2",         ARM::FK_VFPV2,         2, ARM::NS_None,   ARM::FR_None},
+  { "vfpv3",         ARM::FK_VFPV3,         3, ARM::NS_None,   ARM::FR_None},
+  { "vfpv3-d16",     ARM::FK_VFPV3_D16,     3, ARM::NS_None,   ARM::FR_D16},
+  { "vfpv4",         ARM::FK_VFPV4,         4, ARM::NS_None,   ARM::FR_None},
+  { "vfpv4-d16",     ARM::FK_VFPV4_D16,     4, ARM::NS_None,   ARM::FR_D16},
+  { "fpv5-d16",      ARM::FK_FPV5_D16,      5, ARM::NS_None,   ARM::FR_D16},
+  { "fp-armv8",      ARM::FK_FP_ARMV8,      5, ARM::NS_None,   ARM::FR_None},
+  { "neon",          ARM::FK_NEON,          3, ARM::NS_Neon,   ARM::FR_None},
+  { "neon-vfpv4",    ARM::FK_NEON_VFPV4,    4, ARM::NS_Neon,   ARM::FR_None},
+  { "neon-fp-armv8", ARM::FK_NEON_FP_ARMV8, 5, ARM::NS_Neon,   ARM::FR_None},
+  { "crypto-neon-fp-armv8",
+              ARM::FK_CRYPTO_NEON_FP_ARMV8, 5, ARM::NS_Crypto, ARM::FR_None},
+  { "softvfp",       ARM::FK_SOFTVFP,       0, ARM::NS_None,   ARM::FR_None},
 };
+
 // List of canonical arch names (use getArchSynonym).
 // This table also provides the build attribute fields for CPU arch
 // and Arch ID, according to the Addenda to the ARM ABI, chapters
@@ -224,6 +230,95 @@ const char *ARMTargetParser::getFPUName(unsigned FPUKind) {
   if (FPUKind >= ARM::FK_LAST)
     return nullptr;
   return FPUNames[FPUKind].Name;
+}
+
+unsigned ARMTargetParser::getFPUVersion(unsigned FPUKind) {
+  if (FPUKind >= ARM::FK_LAST)
+    return 0;
+  return FPUNames[FPUKind].FPUVersion;
+}
+
+unsigned getFPUNeonSupportLevel(unsigned FPUKind) {
+  if (FPUKind >= ARM::FK_LAST)
+    return 0;
+  return FPUNames[FPUKind].NeonSupport;
+}
+
+unsigned getFPURestriction(unsigned FPUKind) {
+  if (FPUKind >= ARM::FK_LAST)
+    return 0;
+  return FPUNames[FPUKind].Restriction;
+}
+
+bool ARMTargetParser::getFPUFeatures(unsigned FPUKind,
+                                     std::vector<const char *> &Features) {
+
+  if (FPUKind >= ARM::FK_LAST || FPUKind == ARM::FK_INVALID)
+    return false;
+
+  // fp-only-sp and d16 subtarget features are independent of each other, so we
+  // must enable/disable both.
+  switch (FPUNames[FPUKind].Restriction) {
+  case ARM::FR_SP_D16:
+    Features.push_back("+fp-only-sp");
+    Features.push_back("+d16");
+    break;
+  case ARM::FR_D16:
+    Features.push_back("-fp-only-sp");
+    Features.push_back("+d16");
+    break;
+  case ARM::FR_None:
+    Features.push_back("-fp-only-sp");
+    Features.push_back("-d16");
+    break;
+  }
+
+  // FPU version subtarget features are inclusive of lower-numbered ones, so
+  // enable the one corresponding to this version and disable all that are
+  // higher.
+  switch (FPUNames[FPUKind].FPUVersion) {
+  case 5:
+    Features.push_back("+fp-armv8");
+    break;
+  case 4:
+    Features.push_back("+vfp4");
+    Features.push_back("-fp-armv8");
+    break;
+  case 3:
+    Features.push_back("+vfp3");
+    Features.push_back("-vfp4");
+    Features.push_back("-fp-armv8");
+    break;
+  case 2:
+    Features.push_back("+vfp2");
+    Features.push_back("-vfp3");
+    Features.push_back("-vfp4");
+    Features.push_back("-fp-armv8");
+    break;
+  case 0:
+    Features.push_back("-vfp2");
+    Features.push_back("-vfp3");
+    Features.push_back("-vfp4");
+    Features.push_back("-fp-armv8");
+    break;
+  }
+
+  // crypto includes neon, so we handle this similarly to FPU version.
+  switch (FPUNames[FPUKind].NeonSupport) {
+  case ARM::NS_Crypto:
+    Features.push_back("+crypto");
+    break;
+  case ARM::NS_Neon:
+    Features.push_back("+neon");
+    Features.push_back("-crypto");
+    break;
+  case ARM::NS_None:
+    Features.push_back("-neon");
+    Features.push_back("-crypto");
+    break;
+  }
+
+  return true;
 }
 
 const char *ARMTargetParser::getArchName(unsigned ArchKind) {

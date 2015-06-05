@@ -190,6 +190,38 @@ SubtargetFeatures::ToggleFeature(FeatureBitset Bits, StringRef Feature,
   return Bits;
 }
 
+FeatureBitset
+SubtargetFeatures::ApplyFeatureFlag(FeatureBitset Bits, StringRef Feature,
+                                    ArrayRef<SubtargetFeatureKV> FeatureTable) {
+
+  assert(hasFlag(Feature));
+
+  // Find feature in table.
+  const SubtargetFeatureKV *FeatureEntry =
+      Find(StripFlag(Feature), FeatureTable);
+  // If there is a match
+  if (FeatureEntry) {
+    // Enable/disable feature in bits
+    if (isEnabled(Feature)) {
+      Bits |=  FeatureEntry->Value;
+
+      // For each feature that this implies, set it.
+      SetImpliedBits(Bits, FeatureEntry, FeatureTable);
+    } else {
+      Bits &= ~FeatureEntry->Value;
+
+      // For each feature that implies this, clear it.
+      ClearImpliedBits(Bits, FeatureEntry, FeatureTable);
+    }
+  } else {
+    errs() << "'" << Feature
+           << "' is not a recognized feature for this target"
+           << " (ignoring feature)\n";
+  }
+
+  return Bits;
+}
+
 
 /// getFeatureBits - Get feature bits a CPU.
 ///
@@ -245,28 +277,7 @@ SubtargetFeatures::getFeatureBits(StringRef CPU,
     if (Feature == "+help")
       Help(CPUTable, FeatureTable);
 
-    // Find feature in table.
-    const SubtargetFeatureKV *FeatureEntry =
-        Find(StripFlag(Feature), FeatureTable);
-    // If there is a match
-    if (FeatureEntry) {
-      // Enable/disable feature in bits
-      if (isEnabled(Feature)) {
-        Bits |=  FeatureEntry->Value;
-
-        // For each feature that this implies, set it.
-        SetImpliedBits(Bits, FeatureEntry, FeatureTable);
-      } else {
-        Bits &= ~FeatureEntry->Value;
-
-        // For each feature that implies this, clear it.
-        ClearImpliedBits(Bits, FeatureEntry, FeatureTable);
-      }
-    } else {
-      errs() << "'" << Feature
-             << "' is not a recognized feature for this target"
-             << " (ignoring feature)\n";
-    }
+    Bits = ApplyFeatureFlag(Bits, Feature, FeatureTable);
   }
 
   return Bits;

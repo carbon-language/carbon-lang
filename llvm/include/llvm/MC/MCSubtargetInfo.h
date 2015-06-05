@@ -94,6 +94,10 @@ public:
   /// feature bits. This version will also change all implied bits.
   FeatureBitset ToggleFeature(StringRef FS);
 
+  /// Apply a feature flag and return the re-computed feature bits, including
+  /// all feature bits implied by the flag.
+  FeatureBitset ApplyFeatureFlag(StringRef FS);
+
   /// getSchedModelForCPU - Get the machine model of a CPU.
   ///
   MCSchedModel getSchedModelForCPU(StringRef CPU) const;

@@ -15,6 +15,10 @@
 #ifndef LLVM_SUPPORT_TARGETPARSER_H
 #define LLVM_SUPPORT_TARGETPARSER_H
 
+// FIXME: vector is used because that's what clang uses for subtarget feature
+// lists, but SmallVector would probably be better
+#include <vector>
+
 namespace llvm {
   class StringRef;
 
@@ -42,6 +46,20 @@ namespace ARM {
     FK_CRYPTO_NEON_FP_ARMV8,
     FK_SOFTVFP,
     FK_LAST
+  };
+
+  // An FPU name implies one of three levels of Neon support:
+  enum NeonSupportLevel {
+    NS_None = 0, //< No Neon
+    NS_Neon,     //< Neon
+    NS_Crypto    //< Neon with Crypto
+  };
+
+  // An FPU name restricts the FPU in one of three ways:
+  enum FPURestriction {
+    FR_None = 0, //< No restriction
+    FR_D16,      //< Only 16 D registers
+    FR_SP_D16    //< Only single-precision instructions, with 16 D registers
   };
 
   // Arch names.
@@ -139,6 +157,12 @@ public:
 
   // Information by ID
   static const char * getFPUName(unsigned FPUKind);
+  static     unsigned getFPUVersion(unsigned FPUKind);
+  static     unsigned getFPUNeonSupportLevel(unsigned FPUKind);
+  static     unsigned getFPURestriction(unsigned FPUKind);
+  // FIXME: This should be moved to TargetTuple once it exists
+  static       bool   getFPUFeatures(unsigned FPUKind,
+                                     std::vector<const char*> &Features);
   static const char * getArchName(unsigned ArchKind);
   static   unsigned   getArchAttr(unsigned ArchKind);
   static const char * getCPUAttr(unsigned ArchKind);

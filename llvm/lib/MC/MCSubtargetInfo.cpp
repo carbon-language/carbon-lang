@@ -81,6 +81,11 @@ FeatureBitset MCSubtargetInfo::ToggleFeature(StringRef FS) {
   return FeatureBits;
 }
 
+FeatureBitset MCSubtargetInfo::ApplyFeatureFlag(StringRef FS) {
+  SubtargetFeatures Features;
+  FeatureBits = Features.ApplyFeatureFlag(FeatureBits, FS, ProcFeatures);
+  return FeatureBits;
+}
 
 MCSchedModel
 MCSubtargetInfo::getSchedModelForCPU(StringRef CPU) const {
