@@ -223,7 +223,7 @@ void AllocatorOptions::CopyTo(Flags *f, CommonFlags *cf) {
 
 struct Allocator {
   static const uptr kMaxAllowedMallocSize =
-      FIRST_32_SECOND_64(3UL << 30, 64UL << 30);
+      FIRST_32_SECOND_64(3UL << 30, 1UL << 40);
   static const uptr kMaxThreadLocalQuarantine =
       FIRST_32_SECOND_64(1 << 18, 1 << 20);
 
@@ -354,7 +354,7 @@ struct Allocator {
     }
     CHECK(IsAligned(needed_size, min_alignment));
     if (size > kMaxAllowedMallocSize || needed_size > kMaxAllowedMallocSize) {
-      Report("WARNING: AddressSanitizer failed to allocate %p bytes\n",
+      Report("WARNING: AddressSanitizer failed to allocate 0x%zx bytes\n",
              (void*)size);
       return allocator.ReturnNullOrDie();
     }
