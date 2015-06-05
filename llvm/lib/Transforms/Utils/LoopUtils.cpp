@@ -491,6 +491,9 @@ bool llvm::isInductionPHI(PHINode *Phi, ScalarEvolution *SE,
 
   const DataLayout &DL = Phi->getModule()->getDataLayout();
   int64_t Size = static_cast<int64_t>(DL.getTypeAllocSize(PointerElementType));
+  if (!Size)
+    return false;
+
   int64_t CVSize = CV->getSExtValue();
   if (CVSize % Size)
     return false;
