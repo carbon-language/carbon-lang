@@ -128,7 +128,10 @@ void Writer::createSections() {
   }
 }
 
-// Create .idata section contents.
+// Create .idata section for the DLL-imported symbol table.
+// The format of this section is inherently Windows-specific.
+// IdataContents class abstracted away the details for us,
+// so we just let it create chunks and add them to the section.
 void Writer::createImportTables() {
   if (Symtab->ImportFiles.empty())
     return;
