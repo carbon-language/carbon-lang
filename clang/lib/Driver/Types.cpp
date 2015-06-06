@@ -45,7 +45,7 @@ types::ID types::getPreprocessedType(ID Id) {
 }
 
 const char *types::getTypeTempSuffix(ID Id, bool CLMode) {
-  if (Id == TY_Object && CLMode)
+  if ((Id == TY_Object || Id == TY_LTO_BC) && CLMode)
     return "obj";
   if (Id == TY_Image && CLMode)
     return "exe";

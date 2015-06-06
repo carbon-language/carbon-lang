@@ -273,3 +273,9 @@
 // RUN: %clang_cl /P /Fifoo.x /obar.x -### -- %s 2>&1 | FileCheck -check-prefix=FioRACE2 %s
 // FioRACE2: "-E"
 // FioRACE2: "-o" "bar.x"
+
+// RUN: %clang_cl /c /GL -### -- %s 2>&1 | FileCheck -check-prefix=LTO-DEFAULT %s
+// LTO-DEFAULT: "-emit-llvm-bc"{{.*}}"-o" "cl-outputs.obj"
+
+// RUN: %clang_cl /c /GL /Fofoo -### -- %s 2>&1 | FileCheck -check-prefix=LTO-FO %s
+// LTO-FO: "-emit-llvm-bc"{{.*}}"-o" "foo.obj"
