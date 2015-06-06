@@ -33,9 +33,6 @@ static const int FileAlignment = 512;
 static const int SectionAlignment = 4096;
 static const int DOSStubSize = 64;
 static const int NumberfOfDataDirectory = 16;
-static const int HeaderSize =
-    DOSStubSize + sizeof(PEMagic) + sizeof(coff_file_header) +
-    sizeof(pe32plus_header) + sizeof(data_directory) * NumberfOfDataDirectory;
 
 namespace lld {
 namespace coff {
@@ -166,7 +163,10 @@ void Writer::removeEmptySections() {
 // file offsets.
 void Writer::assignAddresses() {
   SizeOfHeaders = RoundUpToAlignment(
-      HeaderSize + sizeof(coff_section) * OutputSections.size(), PageSize);
+      DOSStubSize + sizeof(PEMagic) + sizeof(coff_file_header) +
+      sizeof(pe32plus_header) +
+      sizeof(data_directory) * NumberfOfDataDirectory +
+      sizeof(coff_section) * OutputSections.size(), PageSize);
   uint64_t RVA = 0x1000; // The first page is kept unmapped.
   uint64_t FileOff = SizeOfHeaders;
   for (OutputSection *Sec : OutputSections) {
