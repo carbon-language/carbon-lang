@@ -20,7 +20,7 @@ class LaunchInTerminalTestCase(TestBase):
 
     # If the test is being run under sudo, the spawned terminal won't retain that elevated
     # privilege so it can't open the socket to talk back to the test case
-    @unittest2.skipUnless(not hasattr(os, 'geteuid') or os.geteuid() != 0,
+    @unittest2.skipIf(hasattr(os, 'geteuid') and os.geteuid() == 0,
             "test cannot be run as root")
 
     # Do we need to disable this test if the testsuite is being run on a remote system?
