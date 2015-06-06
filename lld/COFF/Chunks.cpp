@@ -97,7 +97,6 @@ static void add64(uint8_t *P, int64_t V) { write64le(P, read64le(P) + V); }
 
 // Implements x64 PE/COFF relocations.
 void SectionChunk::applyReloc(uint8_t *Buf, const coff_relocation *Rel) {
-  using namespace llvm::COFF;
   uint8_t *Off = Buf + FileOff + Rel->VirtualAddress;
   SymbolBody *Body = File->getSymbolBody(Rel->SymbolTableIndex);
   uint64_t S = cast<Defined>(Body)->getRVA();
@@ -156,7 +155,6 @@ SectionRef SectionChunk::getSectionRef() {
 }
 
 uint32_t CommonChunk::getPermissions() const {
-  using namespace llvm::COFF;
   return IMAGE_SCN_CNT_UNINITIALIZED_DATA | IMAGE_SCN_MEM_READ |
          IMAGE_SCN_MEM_WRITE;
 }
