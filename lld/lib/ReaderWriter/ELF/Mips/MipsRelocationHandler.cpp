@@ -167,32 +167,31 @@ static MipsRelocationParams getRelocationParams(uint32_t rType) {
 
 /// \brief R_MIPS_32
 /// local/external: word32 S + A (truncate)
-static uint32_t reloc32(uint64_t S, int64_t A) { return S + A; }
+static int32_t reloc32(uint64_t S, int64_t A) { return S + A; }
 
 /// \brief R_MIPS_64
 /// local/external: word64 S + A (truncate)
-static uint64_t reloc64(uint64_t S, int64_t A) { return S + A; }
+static int64_t reloc64(uint64_t S, int64_t A) { return S + A; }
 
 /// \brief R_MIPS_SUB
 /// local/external: word64 S - A (truncate)
-static uint64_t relocSub(uint64_t S, int64_t A) { return S - A; }
+static int64_t relocSub(uint64_t S, int64_t A) { return S - A; }
 
 /// \brief R_MIPS_PC32
 /// local/external: word32 S + A - P (truncate)
-static uint32_t relocpc32(uint64_t P, uint64_t S, int64_t A) {
+static int32_t relocpc32(uint64_t P, uint64_t S, int64_t A) {
   return S + A - P;
 }
 
 /// \brief R_MIPS_26, R_MICROMIPS_26_S1
 /// local   : ((A | ((P + 4) & 0x3F000000)) + S) >> 2
-static uint32_t reloc26loc(uint64_t P, uint64_t S, int32_t A, uint32_t shift) {
-  uint32_t result = (A | ((P + 4) & (0xfc000000 << shift))) + S;
-  return result;
+static int32_t reloc26loc(uint64_t P, uint64_t S, int32_t A, uint32_t shift) {
+  return (A | ((P + 4) & (0xfc000000 << shift))) + S;
 }
 
 /// \brief LLD_R_MIPS_GLOBAL_26, LLD_R_MICROMIPS_GLOBAL_26_S1
 /// external: (sign-extend(A) + S) >> 2
-static uint32_t reloc26ext(uint64_t S, int32_t A, uint32_t shift) {
+static int32_t reloc26ext(uint64_t S, int32_t A, uint32_t shift) {
   A = shift == 1 ? llvm::SignExtend32<27>(A) : llvm::SignExtend32<28>(A);
   return A + S;
 }
@@ -202,14 +201,14 @@ static uint32_t reloc26ext(uint64_t S, int32_t A, uint32_t shift) {
 /// LLD_R_MIPS_HI16
 /// local/external: hi16 (AHL + S) - (short)(AHL + S) (truncate)
 /// _gp_disp      : hi16 (AHL + GP - P) - (short)(AHL + GP - P) (verify)
-static uint32_t relocHi16(uint64_t P, uint64_t S, int64_t AHL, bool isGPDisp) {
+static int32_t relocHi16(uint64_t P, uint64_t S, int64_t AHL, bool isGPDisp) {
   int32_t result = isGPDisp ? AHL + S - P : AHL + S;
   return (result + 0x8000) >> 16;
 }
 
 /// \brief R_MIPS_PCHI16
 /// local/external: hi16 (S + AHL - P)
-static uint32_t relocPcHi16(uint64_t P, uint64_t S, int64_t AHL) {
+static int32_t relocPcHi16(uint64_t P, uint64_t S, int64_t AHL) {
   int32_t result = S + AHL - P;
   return (result + 0x8000) >> 16;
 }
@@ -219,66 +218,63 @@ static uint32_t relocPcHi16(uint64_t P, uint64_t S, int64_t AHL) {
 /// LLD_R_MIPS_LO16
 /// local/external: lo16 AHL + S (truncate)
 /// _gp_disp      : lo16 AHL + GP - P + 4 (verify)
-static uint32_t relocLo16(uint64_t P, uint64_t S, int64_t AHL, bool isGPDisp,
-                          bool micro) {
-  int32_t result = isGPDisp ? AHL + S - P + (micro ? 3 : 4) : AHL + S;
-  return result;
+static int32_t relocLo16(uint64_t P, uint64_t S, int64_t AHL, bool isGPDisp,
+                         bool micro) {
+  return isGPDisp ? AHL + S - P + (micro ? 3 : 4) : AHL + S;
 }
 
 /// \brief R_MIPS_PCLO16
 /// local/external: lo16 (S + AHL - P)
-static uint32_t relocPcLo16(uint64_t P, uint64_t S, int64_t AHL) {
+static int32_t relocPcLo16(uint64_t P, uint64_t S, int64_t AHL) {
   AHL = llvm::SignExtend32<16>(AHL);
-  int32_t result = S + AHL - P;
-  return result;
+  return S + AHL - P;
 }
 
 /// \brief R_MIPS_GOT16, R_MIPS_CALL16, R_MICROMIPS_GOT16, R_MICROMIPS_CALL16
 /// rel16 G (verify)
-static uint64_t relocGOT(uint64_t S, uint64_t GP) {
-  int64_t G = (int64_t)(S - GP);
-  return G;
+static int64_t relocGOT(uint64_t S, uint64_t GP) {
+  return S - GP;
 }
 
 /// \brief R_MIPS_GOT_LO16, R_MIPS_CALL_LO16
 /// R_MICROMIPS_GOT_LO16, R_MICROMIPS_CALL_LO16
 /// rel16 G (truncate)
-static uint64_t relocGOTLo16(uint64_t S, uint64_t GP) {
+static int64_t relocGOTLo16(uint64_t S, uint64_t GP) {
   return S - GP;
 }
 
 /// \brief R_MIPS_GOT_HI16, R_MIPS_CALL_HI16,
 /// R_MICROMIPS_GOT_HI16, R_MICROMIPS_CALL_HI16
 /// rel16 %high(G) (truncate)
-static uint64_t relocGOTHi16(uint64_t S, uint64_t GP) {
+static int64_t relocGOTHi16(uint64_t S, uint64_t GP) {
   return (S - GP + 0x8000) >> 16;
 }
 
 /// R_MIPS_GOT_OFST, R_MICROMIPS_GOT_OFST
 /// rel16 offset of (S+A) from the page pointer (verify)
-static uint32_t relocGOTOfst(uint64_t S, int64_t A) {
-  uint64_t page = (S + A + 0x8000) & ~0xffff;
+static int32_t relocGOTOfst(uint64_t S, int64_t A) {
+  int64_t page = (S + A + 0x8000) & ~0xffff;
   return S + A - page;
 }
 
 /// \brief R_MIPS_GPREL16
 /// local: sign-extend(A) + S + GP0 - GP
 /// external: sign-extend(A) + S - GP
-static uint64_t relocGPRel16(uint64_t S, int64_t A, uint64_t GP) {
+static int64_t relocGPRel16(uint64_t S, int64_t A, uint64_t GP) {
   // We added GP0 to addendum for a local symbol during a Relocation pass.
   return llvm::SignExtend32<16>(A) + S - GP;
 }
 
 /// \brief R_MIPS_GPREL32
 /// local: rel32 A + S + GP0 - GP (truncate)
-static uint64_t relocGPRel32(uint64_t S, int64_t A, uint64_t GP) {
+static int64_t relocGPRel32(uint64_t S, int64_t A, uint64_t GP) {
   // We added GP0 to addendum for a local symbol during a Relocation pass.
   return A + S - GP;
 }
 
 /// \brief R_MIPS_PC18_S3, R_MICROMIPS_PC18_S3
 /// local/external: (S + A - P) >> 3 (P with cleared 3 less significant bits)
-static uint32_t relocPc18(uint64_t P, uint64_t S, int64_t A) {
+static int32_t relocPc18(uint64_t P, uint64_t S, int64_t A) {
   A = llvm::SignExtend32<21>(A);
   // FIXME (simon): Check that S + A has 8-byte alignment
   int32_t result = S + A - ((P | 7) ^ 7);
@@ -287,50 +283,44 @@ static uint32_t relocPc18(uint64_t P, uint64_t S, int64_t A) {
 
 /// \brief R_MIPS_PC19_S2, R_MICROMIPS_PC19_S2
 /// local/external: (S + A - P) >> 2
-static uint32_t relocPc19(uint64_t P, uint64_t S, int64_t A) {
+static int32_t relocPc19(uint64_t P, uint64_t S, int64_t A) {
   A = llvm::SignExtend32<21>(A);
   // FIXME (simon): Check that S + A has 4-byte alignment
-  int32_t result = S + A - P;
-  return result;
+  return S + A - P;
 }
 
 /// \brief R_MIPS_PC21_S2, R_MICROMIPS_PC21_S2
 /// local/external: (S + A - P) >> 2
-static uint32_t relocPc21(uint64_t P, uint64_t S, int64_t A) {
+static int32_t relocPc21(uint64_t P, uint64_t S, int64_t A) {
   A = llvm::SignExtend32<23>(A);
   // FIXME (simon): Check that S + A has 4-byte alignment
-  int32_t result = S + A - P;
-  return result;
+  return S + A - P;
 }
 
 /// \brief R_MIPS_PC26_S2, R_MICROMIPS_PC26_S2
 /// local/external: (S + A - P) >> 2
-static uint32_t relocPc26(uint64_t P, uint64_t S, int64_t A) {
+static int32_t relocPc26(uint64_t P, uint64_t S, int64_t A) {
   A = llvm::SignExtend32<28>(A);
   // FIXME (simon): Check that S + A has 4-byte alignment
-  int32_t result = S + A - P;
-  return result;
+  return S + A - P;
 }
 
 /// \brief R_MICROMIPS_PC7_S1
-static uint32_t relocPc7(uint64_t P, uint64_t S, int64_t A) {
+static int32_t relocPc7(uint64_t P, uint64_t S, int64_t A) {
   A = llvm::SignExtend32<8>(A);
-  int32_t result = S + A - P;
-  return result;
+  return S + A - P;
 }
 
 /// \brief R_MICROMIPS_PC10_S1
-static uint32_t relocPc10(uint64_t P, uint64_t S, int64_t A) {
+static int32_t relocPc10(uint64_t P, uint64_t S, int64_t A) {
   A = llvm::SignExtend32<11>(A);
-  int32_t result = S + A - P;
-  return result;
+  return S + A - P;
 }
 
 /// \brief R_MICROMIPS_PC16_S1
-static uint32_t relocPc16(uint64_t P, uint64_t S, int64_t A) {
+static int32_t relocPc16(uint64_t P, uint64_t S, int64_t A) {
   A = llvm::SignExtend32<17>(A);
-  int32_t result = S + A - P;
-  return result;
+  return S + A - P;
 }
 
 /// \brief R_MICROMIPS_PC23_S2
@@ -342,12 +332,11 @@ static uint32_t relocPc23(uint64_t P, uint64_t S, int64_t A) {
   if (result + 0x1000000 >= 0x2000000)
     llvm::errs() << "The addiupc instruction immediate "
                  << llvm::format_hex(result, 10) << " is out of range.\n";
-
   return result;
 }
 
 /// \brief LLD_R_MIPS_32_HI16, LLD_R_MIPS_64_HI16
-static uint64_t relocMaskLow16(uint64_t S, int64_t A) {
+static int64_t relocMaskLow16(uint64_t S, int64_t A) {
   return S + A + 0x8000;
 }
 
@@ -412,11 +401,11 @@ static uint32_t microShuffle(uint32_t ins) {
   return ((ins & 0xffff) << 16) | ((ins & 0xffff0000) >> 16);
 }
 
-static ErrorOr<uint64_t> calculateRelocation(Reference::KindValue kind,
-                                             Reference::Addend addend,
-                                             uint64_t tgtAddr, uint64_t relAddr,
-                                             uint64_t gpAddr, bool isGP,
-                                             bool isCrossJump) {
+static ErrorOr<int64_t> calculateRelocation(Reference::KindValue kind,
+                                            Reference::Addend addend,
+                                            uint64_t tgtAddr, uint64_t relAddr,
+                                            uint64_t gpAddr, bool isGP,
+                                            bool isCrossJump) {
   if (!tgtAddr) {
     isGP = false;
     isCrossJump = false;
