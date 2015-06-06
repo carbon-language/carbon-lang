@@ -2065,13 +2065,13 @@ std::error_code BitcodeReader::ResolveGlobalAndAliasInits() {
     if (ValID >= ValueList.size()) {
       AliasInits.push_back(AliasInitWorklist.back());
     } else {
-      if (Constant *C = dyn_cast_or_null<Constant>(ValueList[ValID])) {
-        GlobalAlias *Alias = AliasInitWorklist.back().first;
-        if (C->getType() != Alias->getType())
-          return Error("Alias and aliasee types don't match");
-        Alias->setAliasee(C);
-      } else
+      Constant *C = dyn_cast_or_null<Constant>(ValueList[ValID]);
+      if (!C)
         return Error("Expected a constant");
+      GlobalAlias *Alias = AliasInitWorklist.back().first;
+      if (C->getType() != Alias->getType())
+        return Error("Alias and aliasee types don't match");
+      Alias->setAliasee(C);
     }
     AliasInitWorklist.pop_back();
   }
