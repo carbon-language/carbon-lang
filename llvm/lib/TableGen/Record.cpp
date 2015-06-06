@@ -1569,8 +1569,7 @@ void Record::init() {
 void Record::checkName() {
   // Ensure the record name has string type.
   const TypedInit *TypedName = cast<const TypedInit>(Name);
-  RecTy *Type = TypedName->getType();
-  if (!isa<StringRecTy>(Type))
+  if (!isa<StringRecTy>(TypedName->getType()))
     PrintFatalError(getLoc(), "Record name is not a string!");
 }
 
