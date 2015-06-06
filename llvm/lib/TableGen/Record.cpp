@@ -927,9 +927,8 @@ static Init *ForeachHelper(Init *LHS, Init *MHS, Init *RHS, RecTy *Type,
   DagInit *MHSd = dyn_cast<DagInit>(MHS);
   if (MHSd && isa<DagRecTy>(Type)) {
     Init *Val = MHSd->getOperator();
-    Init *Result = EvaluateOperation(RHSo, LHS, Val,
-                                     Type, CurRec, CurMultiClass);
-    if (Result)
+    if (Init *Result = EvaluateOperation(RHSo, LHS, Val,
+                                         Type, CurRec, CurMultiClass))
       Val = Result;
 
     std::vector<std::pair<Init *, std::string> > args;
@@ -938,9 +937,8 @@ static Init *ForeachHelper(Init *LHS, Init *MHS, Init *RHS, RecTy *Type,
       std::string ArgName = MHSd->getArgName(i);
 
       // Process args
-      Init *Result = EvaluateOperation(RHSo, LHS, Arg, Type,
-                                       CurRec, CurMultiClass);
-      if (Result)
+      if (Init *Result = EvaluateOperation(RHSo, LHS, Arg, Type,
+                                           CurRec, CurMultiClass))
         Arg = Result;
 
       // TODO: Process arg names
@@ -1351,8 +1349,8 @@ Init *VarListElementInit:: resolveListElementReference(Record &R,
                                                        unsigned Elt) const {
   if (Init *Result = TI->resolveListElementReference(R, RV, Element)) {
     if (TypedInit *TInit = dyn_cast<TypedInit>(Result)) {
-      Init *Result2 = TInit->resolveListElementReference(R, RV, Elt);
-      if (Result2) return Result2;
+      if (Init *Result2 = TInit->resolveListElementReference(R, RV, Elt))
+        return Result2;
       return VarListElementInit::get(TInit, Elt);
     }
     return Result;
