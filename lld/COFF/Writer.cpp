@@ -71,7 +71,7 @@ void OutputSection::addPermissions(uint32_t C) {
 }
 
 // Write the section header to a given buffer.
-void OutputSection::writeHeader(uint8_t *Buf) {
+void OutputSection::writeHeaderTo(uint8_t *Buf) {
   auto *Hdr = reinterpret_cast<coff_section *>(Buf);
   *Hdr = Header;
   if (StringTableOff) {
@@ -275,7 +275,7 @@ void Writer::writeHeader() {
 
   // Write section table
   for (OutputSection *Sec : OutputSections) {
-    Sec->writeHeader(Buf);
+    Sec->writeHeaderTo(Buf);
     Buf += sizeof(coff_section);
   }
 

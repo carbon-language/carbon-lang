@@ -43,7 +43,7 @@ public:
   uint32_t getCharacteristics() { return Header.Characteristics; }
   uint64_t getRVA() { return Header.VirtualAddress; }
   uint64_t getFileOff() { return Header.PointerToRawData; }
-  void writeHeader(uint8_t *Buf);
+  void writeHeaderTo(uint8_t *Buf);
 
   // Returns the size of this section in an executable memory image.
   // This may be smaller than the raw size (the raw size is multiple
