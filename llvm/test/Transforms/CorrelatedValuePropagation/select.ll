@@ -51,3 +51,25 @@ else:
   ret i8 %b
 }
 
+@c = global i32 0, align 4
+@b = global i32 0, align 4
+
+; CHECK-LABEL: @PR23752(
+define i32 @PR23752() {
+entry:
+  br label %for.body
+
+for.body:
+  %phi = phi i32 [ 0, %entry ], [ %sel, %for.body ]
+  %sel = select i1 icmp sgt (i32* @b, i32* @c), i32 %phi, i32 1
+  %cmp = icmp ne i32 %sel, 1
+  br i1 %cmp, label %for.body, label %if.end
+
+; CHECK:      %[[sel:.*]] = select i1 icmp sgt (i32* @b, i32* @c), i32 0, i32 1
+; CHECK-NEXT: %[[cmp:.*]] = icmp ne i32 %[[sel]], 1
+; CHECK-NEXT: br i1 %[[cmp]]
+
+if.end:
+  ret i32 %sel
+; CHECK: ret i32 %[[sel]]
+}

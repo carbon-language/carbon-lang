@@ -113,10 +113,11 @@ bool CorrelatedValuePropagation::processPHI(PHINode *P) {
 
       Value *Condition = SI->getCondition();
       if (!Condition->getType()->isVectorTy()) {
-        if (Constant *C = LVI->getConstantOnEdge(Condition, P->getIncomingBlock(i), BB, P)) {
-          if (C == ConstantInt::getTrue(Condition->getType())) {
+        if (Constant *C = LVI->getConstantOnEdge(
+                Condition, P->getIncomingBlock(i), BB, P)) {
+          if (C->isOneValue()) {
             V = SI->getTrueValue();
-          } else {
+          } else if (C->isZeroValue()) {
             V = SI->getFalseValue();
           }
           // Once LVI learns to handle vector types, we could also add support
