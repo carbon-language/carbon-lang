@@ -28,8 +28,8 @@ class AttachDeniedTestCase(TestBase):
         exe = os.path.join(os.getcwd(), exe_name)
 
         # Use a file as a synchronization point between test and inferior.
-        pid_file_path = os.path.join(self.get_process_working_directory(),
-                                     "pid_file_%d" % (int(time.time())))
+        pid_file_path = lldbutil.append_to_process_working_directory(
+                "pid_file_%d" % (int(time.time())))
         self.addTearDownHook(lambda: self.run_platform_command("rm %s" % (pid_file_path)))
 
         # Spawn a new process

@@ -375,7 +375,7 @@ class TargetAPITestCase(TestBase):
         # The inferior should run to completion after "process.Continue()" call.
         local_path = "stdout.txt";
         if lldb.remote_platform:
-            stdout_path = lldbutil.append_to_remote_wd("lldb-stdout-redirect.txt")
+            stdout_path = lldbutil.append_to_process_working_directory("lldb-stdout-redirect.txt")
         else:
             stdout_path = local_path
         error = lldb.SBError()

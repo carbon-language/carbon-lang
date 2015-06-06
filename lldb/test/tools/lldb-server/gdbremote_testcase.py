@@ -395,7 +395,7 @@ class GdbRemoteTestCaseBase(TestBase):
                 inferior_exe_path = os.path.abspath("a.out")
 
             if lldb.remote_platform:
-                remote_path = lldbutil.append_to_remote_wd(os.path.basename(inferior_exe_path))
+                remote_path = lldbutil.append_to_process_working_directory(os.path.basename(inferior_exe_path))
                 remote_file_spec = lldb.SBFileSpec(remote_path, False)
                 err = lldb.remote_platform.Install(lldb.SBFileSpec(inferior_exe_path, True), remote_file_spec)
                 if err.Fail():

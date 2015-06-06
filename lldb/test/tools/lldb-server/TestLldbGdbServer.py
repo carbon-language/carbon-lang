@@ -95,7 +95,7 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
         exe_path = os.path.abspath('a.out')
         if not lldb.remote_platform:
             return [exe_path]
-        remote_path = lldbutil.append_to_remote_wd(os.path.basename(exe_path))
+        remote_path = lldbutil.append_to_process_working_directory(os.path.basename(exe_path))
         remote_file_spec = lldb.SBFileSpec(remote_path, False)
         err = lldb.remote_platform.Install(lldb.SBFileSpec(exe_path, True), remote_file_spec)
         if err.Fail():
