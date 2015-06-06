@@ -100,9 +100,9 @@ bool RecTy::typeIsConvertibleTo(const RecTy *RHS) const {
 }
 
 bool BitRecTy::typeIsConvertibleTo(const RecTy *RHS) const{
-  if(RecTy::typeIsConvertibleTo(RHS) || RHS->getRecTyKind() == IntRecTyKind)
+  if (RecTy::typeIsConvertibleTo(RHS) || RHS->getRecTyKind() == IntRecTyKind)
     return true;
-  if(const BitsRecTy *BitsTy = dyn_cast<BitsRecTy>(RHS))
+  if (const BitsRecTy *BitsTy = dyn_cast<BitsRecTy>(RHS))
     return BitsTy->getNumBits() == 1;
   return false;
 }
@@ -1914,23 +1914,23 @@ Init *llvm::QualifyName(Record &CurRec, MultiClass *CurMultiClass,
   RecTy *Type = cast<TypedInit>(Name)->getType();
 
   BinOpInit *NewName =
-    BinOpInit::get(BinOpInit::STRCONCAT, 
-                      BinOpInit::get(BinOpInit::STRCONCAT,
-                                        CurRec.getNameInit(),
-                                        StringInit::get(Scoper),
-                                        Type)->Fold(&CurRec, CurMultiClass),
-                      Name,
-                      Type);
+    BinOpInit::get(BinOpInit::STRCONCAT,
+                   BinOpInit::get(BinOpInit::STRCONCAT,
+                                  CurRec.getNameInit(),
+                                  StringInit::get(Scoper),
+                                  Type)->Fold(&CurRec, CurMultiClass),
+                   Name,
+                   Type);
 
   if (CurMultiClass && Scoper != "::") {
     NewName =
-      BinOpInit::get(BinOpInit::STRCONCAT, 
-                        BinOpInit::get(BinOpInit::STRCONCAT,
-                                          CurMultiClass->Rec.getNameInit(),
-                                          StringInit::get("::"),
-                                          Type)->Fold(&CurRec, CurMultiClass),
-                        NewName->Fold(&CurRec, CurMultiClass),
-                        Type);
+      BinOpInit::get(BinOpInit::STRCONCAT,
+                     BinOpInit::get(BinOpInit::STRCONCAT,
+                                    CurMultiClass->Rec.getNameInit(),
+                                    StringInit::get("::"),
+                                    Type)->Fold(&CurRec, CurMultiClass),
+                     NewName->Fold(&CurRec, CurMultiClass),
+                     Type);
   }
 
   return NewName->Fold(&CurRec, CurMultiClass);
