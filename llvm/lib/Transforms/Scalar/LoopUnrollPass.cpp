@@ -227,7 +227,7 @@ namespace {
     bool canUnrollCompletely(Loop *L, unsigned Threshold,
                              unsigned PercentDynamicCostSavedThreshold,
                              unsigned DynamicCostSavingsDiscount,
-                             unsigned UnrolledCost, unsigned RolledDynamicCost);
+                             uint64_t UnrolledCost, uint64_t RolledDynamicCost);
   };
 }
 
@@ -768,8 +768,8 @@ static void SetLoopAlreadyUnrolled(Loop *L) {
 bool LoopUnroll::canUnrollCompletely(Loop *L, unsigned Threshold,
                                      unsigned PercentDynamicCostSavedThreshold,
                                      unsigned DynamicCostSavingsDiscount,
-                                     unsigned UnrolledCost,
-                                     unsigned RolledDynamicCost) {
+                                     uint64_t UnrolledCost,
+                                     uint64_t RolledDynamicCost) {
 
   if (Threshold == NoThreshold) {
     DEBUG(dbgs() << "  Can fully unroll, because no threshold is set.\n");
