@@ -53,16 +53,16 @@ namespace ARM {
 
   // An FPU name implies one of three levels of Neon support:
   enum NeonSupportLevel {
-    NS_None = 0, //< No Neon
-    NS_Neon,     //< Neon
-    NS_Crypto    //< Neon with Crypto
+    NS_None = 0, ///< No Neon
+    NS_Neon,     ///< Neon
+    NS_Crypto    ///< Neon with Crypto
   };
 
   // An FPU name restricts the FPU in one of three ways:
   enum FPURestriction {
-    FR_None = 0, //< No restriction
-    FR_D16,      //< Only 16 D registers
-    FR_SP_D16    //< Only single-precision instructions, with 16 D registers
+    FR_None = 0, ///< No restriction
+    FR_D16,      ///< Only 16 D registers
+    FR_SP_D16    ///< Only single-precision instructions, with 16 D registers
   };
 
   // Arch names.

@@ -28,7 +28,7 @@ namespace {
 struct {
   const char * Name;
   ARM::FPUKind ID;
-  unsigned FPUVersion; //< Corresponds directly to the FP arch version number.
+  unsigned FPUVersion; ///< Corresponds directly to the FP arch version number.
   ARM::NeonSupportLevel NeonSupport;
   ARM::FPURestriction Restriction;
 } FPUNames[] = {
