@@ -37,6 +37,20 @@ static const int NumberfOfDataDirectory = 16;
 namespace lld {
 namespace coff {
 
+// The main function of the writer.
+std::error_code Writer::write(StringRef OutputPath) {
+  markLive();
+  createSections();
+  createImportTables();
+  assignAddresses();
+  removeEmptySections();
+  if (auto EC = openFile(OutputPath))
+    return EC;
+  writeHeader();
+  writeSections();
+  return Buffer->commit();
+}
+
 void OutputSection::setRVA(uint64_t RVA) {
   Header.VirtualAddress = RVA;
   for (Chunk *C : Chunks)
@@ -83,6 +97,9 @@ void OutputSection::writeHeaderTo(uint8_t *Buf) {
   }
 }
 
+// Set live bit on for each reachable chunk. Unmarked (unreachable)
+// COMDAT chunks will be ignored in the next step, so that they don't
+// come to the final output file.
 void Writer::markLive() {
   for (StringRef Name : Config->GCRoots)
     cast<Defined>(Symtab->find(Name))->markLive();
@@ -91,7 +108,9 @@ void Writer::markLive() {
       C->markLive();
 }
 
+// Create output section objects and add them to OutputSections.
 void Writer::createSections() {
+  // First, bin chunks by name.
   std::map<StringRef, std::vector<Chunk *>> Map;
   for (Chunk *C : Symtab->getChunks()) {
     if (!C->isLive()) {
@@ -105,15 +124,16 @@ void Writer::createSections() {
     Map[C->getSectionName().split('$').first].push_back(C);
   }
 
-  // Input sections are ordered by their names including '$' parts,
-  // which gives you some control over the output layout.
-  auto Comp = [](Chunk *A, Chunk *B) {
-    return A->getSectionName() < B->getSectionName();
-  };
+  // Then create an OutputSection for each section.
   for (auto &P : Map) {
     StringRef SectionName = P.first;
     std::vector<Chunk *> &Chunks = P.second;
-    std::stable_sort(Chunks.begin(), Chunks.end(), Comp);
+    // Input sections are ordered by their names including '$' parts,
+    // which gives you some control over the output layout.
+    std::stable_sort(Chunks.begin(), Chunks.end(),
+                     [](Chunk *A, Chunk *B) {
+                       return A->getSectionName() < B->getSectionName();
+                     });
     size_t SectIdx = OutputSections.size();
     auto Sec = new (CAlloc.Allocate()) OutputSection(SectionName, SectIdx);
     for (Chunk *C : Chunks) {
@@ -360,19 +380,6 @@ OutputSection *Writer::createSection(StringRef Name) {
   Sec->addPermissions(Perms);
   OutputSections.push_back(Sec);
   return Sec;
-}
-
-std::error_code Writer::write(StringRef OutputPath) {
-  markLive();
-  createSections();
-  createImportTables();
-  assignAddresses();
-  removeEmptySections();
-  if (auto EC = openFile(OutputPath))
-    return EC;
-  writeHeader();
-  writeSections();
-  return Buffer->commit();
 }
 
 } // namespace coff
