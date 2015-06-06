@@ -17,6 +17,7 @@
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/raw_ostream.h"
 
+using namespace llvm;
 using namespace llvm::object;
 using namespace llvm::support::endian;
 using namespace llvm::COFF;
@@ -24,6 +25,9 @@ using llvm::RoundUpToAlignment;
 
 namespace lld {
 namespace coff {
+
+const size_t LookupChunk::Size = sizeof(uint64_t);
+const size_t DirectoryChunk::Size = sizeof(ImportDirectoryTableEntry);
 
 SectionChunk::SectionChunk(ObjectFile *F, const coff_section *H, uint32_t SI)
     : File(F), Header(H), SectionIndex(SI) {
@@ -196,31 +200,80 @@ void DirectoryChunk::writeTo(uint8_t *Buf) {
   E->ImportAddressTableRVA = AddressTab->getRVA();
 }
 
-ImportTable::ImportTable(StringRef N,
-                         std::vector<DefinedImportData *> &Symbols) {
-  // Create the import table hader.
-  DLLName = new StringChunk(N);
-  DirTab = new DirectoryChunk(DLLName);
-
-  // Create lookup and address tables. If they have external names,
-  // we need to create HintName chunks to store the names.
-  // If they don't (if they are import-by-ordinals), we store only
-  // ordinal values to the table.
-  for (DefinedImportData *S : Symbols) {
-    if (S->getExternalName().empty()) {
-      LookupTables.push_back(new OrdinalOnlyChunk(S->getOrdinal()));
-      AddressTables.push_back(new OrdinalOnlyChunk(S->getOrdinal()));
-      continue;
-    }
-    Chunk *C = new HintNameChunk(S->getExternalName(), S->getOrdinal());
-    HintNameTables.push_back(C);
-    LookupTables.push_back(new LookupChunk(C));
-    AddressTables.push_back(new LookupChunk(C));
+// Returns a list of .idata contents.
+// See Microsoft PE/COFF spec 5.4 for details.
+std::vector<Chunk *> IdataContents::getChunks() {
+  create();
+  std::vector<Chunk *> V;
+  // The loader assumes a specific order of data.
+  // Add each type in the correct order.
+  for (std::unique_ptr<Chunk> &C : Dirs)
+    V.push_back(C.get());
+  for (std::unique_ptr<Chunk> &C : Lookups)
+    V.push_back(C.get());
+  for (std::unique_ptr<Chunk> &C : Addresses)
+    V.push_back(C.get());
+  for (std::unique_ptr<Chunk> &C : Hints)
+    V.push_back(C.get());
+  for (auto &P : DLLNames) {
+    std::unique_ptr<Chunk> &C = P.second;
+    V.push_back(C.get());
   }
-  for (int I = 0, E = Symbols.size(); I < E; ++I)
-    Symbols[I]->setLocation(AddressTables[I]);
-  DirTab->LookupTab = LookupTables[0];
-  DirTab->AddressTab = AddressTables[0];
+  return V;
+}
+
+void IdataContents::create() {
+  // Group DLL-imported symbols by DLL name because that's how
+  // symbols are layed out in the import descriptor table.
+  std::map<StringRef, std::vector<DefinedImportData *>> Map;
+  for (DefinedImportData *Sym : Imports)
+    Map[Sym->getDLLName()].push_back(Sym);
+
+  // Create .idata contents for each DLL.
+  for (auto &P : Map) {
+    StringRef Name = P.first;
+    std::vector<DefinedImportData *> &Syms = P.second;
+
+    // Sort symbols by name for each group.
+    std::sort(Syms.begin(), Syms.end(),
+              [](DefinedImportData *A, DefinedImportData *B) {
+                return A->getName() < B->getName();
+              });
+
+    // Create lookup and address tables. If they have external names,
+    // we need to create HintName chunks to store the names.
+    // If they don't (if they are import-by-ordinals), we store only
+    // ordinal values to the table.
+    size_t Base = Lookups.size();
+    for (DefinedImportData *S : Syms) {
+      uint16_t Ord = S->getOrdinal();
+      if (S->getExternalName().empty()) {
+        Lookups.push_back(make_unique<OrdinalOnlyChunk>(Ord));
+        Addresses.push_back(make_unique<OrdinalOnlyChunk>(Ord));
+        continue;
+      }
+      auto C = make_unique<HintNameChunk>(S->getExternalName(), Ord);
+      Lookups.push_back(make_unique<LookupChunk>(C.get()));
+      Addresses.push_back(make_unique<LookupChunk>(C.get()));
+      Hints.push_back(std::move(C));
+    }
+    // Terminate with null values.
+    Lookups.push_back(make_unique<NullChunk>(sizeof(uint64_t)));
+    Addresses.push_back(make_unique<NullChunk>(sizeof(uint64_t)));
+
+    for (int I = 0, E = Syms.size(); I < E; ++I)
+      Syms[I]->setLocation(Addresses[Base + I].get());
+
+    // Create the import table header.
+    if (!DLLNames.count(Name))
+      DLLNames[Name] = make_unique<StringChunk>(Name);
+    auto Dir = make_unique<DirectoryChunk>(DLLNames[Name].get());
+    Dir->LookupTab = Lookups[Base].get();
+    Dir->AddressTab = Addresses[Base].get();
+    Dirs.push_back(std::move(Dir));
+  }
+  // Add null terminator.
+  Dirs.push_back(make_unique<NullChunk>(DirectoryChunk::Size));
 }
 
 } // namespace coff

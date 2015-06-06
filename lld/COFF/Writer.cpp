@@ -128,83 +128,26 @@ void Writer::createSections() {
   }
 }
 
-std::map<StringRef, std::vector<DefinedImportData *>> Writer::binImports() {
-  // Group DLL-imported symbols by DLL name because that's how symbols
-  // are layed out in the import descriptor table.
-  std::map<StringRef, std::vector<DefinedImportData *>> Res;
-  OutputSection *Text = createSection(".text");
-  for (std::unique_ptr<ImportFile> &P : Symtab->ImportFiles) {
-    for (SymbolBody *B : P->getSymbols()) {
-      if (auto *Import = dyn_cast<DefinedImportData>(B)) {
-        Res[Import->getDLLName()].push_back(Import);
-        continue;
-      }
-      // Linker-created function thunks for DLL symbols are added to
-      // .text section.
-      Text->addChunk(cast<DefinedImportThunk>(B)->getChunk());
-    }
-  }
-
-  // Sort symbols by name for each group.
-  auto Comp = [](DefinedImportData *A, DefinedImportData *B) {
-    return A->getName() < B->getName();
-  };
-  for (auto &P : Res) {
-    std::vector<DefinedImportData *> &V = P.second;
-    std::sort(V.begin(), V.end(), Comp);
-  }
-  return Res;
-}
-
 // Create .idata section contents.
 void Writer::createImportTables() {
   if (Symtab->ImportFiles.empty())
     return;
-
-  std::vector<ImportTable> Tabs;
-  for (auto &P : binImports()) {
-    StringRef DLLName = P.first;
-    std::vector<DefinedImportData *> &Imports = P.second;
-    Tabs.emplace_back(DLLName, Imports);
+  OutputSection *Text = createSection(".text");
+  Idata.reset(new IdataContents());
+  for (std::unique_ptr<ImportFile> &File : Symtab->ImportFiles) {
+    for (SymbolBody *Body : File->getSymbols()) {
+      if (auto *Import = dyn_cast<DefinedImportData>(Body)) {
+        Idata->add(Import);
+        continue;
+      }
+      // Linker-created function thunks for DLL symbols are added to
+      // .text section.
+      Text->addChunk(cast<DefinedImportThunk>(Body)->getChunk());
+    }
   }
-  OutputSection *Idata = createSection(".idata");
-  size_t NumChunks = Idata->getChunks().size();
-
-  // Add the directory tables.
-  for (ImportTable &T : Tabs)
-    Idata->addChunk(T.DirTab);
-  Idata->addChunk(new NullChunk(sizeof(ImportDirectoryTableEntry)));
-  ImportDirectoryTableSize = (Tabs.size() + 1) * sizeof(ImportDirectoryTableEntry);
-
-  // Add the import lookup tables.
-  for (ImportTable &T : Tabs) {
-    for (Chunk *C : T.LookupTables)
-      Idata->addChunk(C);
-    Idata->addChunk(new NullChunk(sizeof(uint64_t)));
-  }
-
-  // Add the import address tables. Their contents are the same as the
-  // lookup tables.
-  for (ImportTable &T : Tabs) {
-    for (Chunk *C : T.AddressTables)
-      Idata->addChunk(C);
-    Idata->addChunk(new NullChunk(sizeof(uint64_t)));
-    ImportAddressTableSize += (T.AddressTables.size() + 1) * sizeof(uint64_t);
-  }
-  ImportAddressTable = Tabs[0].AddressTables[0];
-
-  // Add the hint name table.
-  for (ImportTable &T : Tabs)
-    for (Chunk *C : T.HintNameTables)
-      Idata->addChunk(C);
-
-  // Add DLL names.
-  for (ImportTable &T : Tabs)
-    Idata->addChunk(T.DLLName);
-
-  // Claim ownership of all chunks in the .idata section.
-  for (size_t I = NumChunks, E = Idata->getChunks().size(); I < E; ++I)
-    Chunks.push_back(std::unique_ptr<Chunk>(Idata->getChunks()[I]));
+  OutputSection *Sec = createSection(".idata");
+  for (Chunk *C : Idata->getChunks())
+    Sec->addChunk(C);
 }
 
 // The Windows loader doesn't seem to like empty sections,
@@ -307,12 +250,11 @@ void Writer::writeHeader() {
   // Write data directory
   auto *DataDirectory = reinterpret_cast<data_directory *>(Buf);
   Buf += sizeof(*DataDirectory) * NumberfOfDataDirectory;
-  if (OutputSection *Idata = findSection(".idata")) {
-    using namespace llvm::COFF;
-    DataDirectory[IMPORT_TABLE].RelativeVirtualAddress = Idata->getRVA();
-    DataDirectory[IMPORT_TABLE].Size = ImportDirectoryTableSize;
-    DataDirectory[IAT].RelativeVirtualAddress = ImportAddressTable->getRVA();
-    DataDirectory[IAT].Size = ImportAddressTableSize;
+  if (Idata) {
+    DataDirectory[IMPORT_TABLE].RelativeVirtualAddress = Idata->getDirRVA();
+    DataDirectory[IMPORT_TABLE].Size = Idata->getDirSize();
+    DataDirectory[IAT].RelativeVirtualAddress = Idata->getIATRVA();
+    DataDirectory[IAT].Size = Idata->getIATSize();
   }
 
   // Section table

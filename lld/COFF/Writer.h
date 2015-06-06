@@ -94,9 +94,7 @@ private:
   std::unique_ptr<llvm::FileOutputBuffer> Buffer;
   llvm::SpecificBumpPtrAllocator<OutputSection> CAlloc;
   std::vector<OutputSection *> OutputSections;
-  Chunk *ImportAddressTable = nullptr;
-  uint32_t ImportDirectoryTableSize = 0;
-  uint32_t ImportAddressTableSize = 0;
+  std::unique_ptr<IdataContents> Idata;
 
   uint64_t FileSize;
   uint64_t SizeOfImage;

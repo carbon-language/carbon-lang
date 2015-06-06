@@ -169,6 +169,8 @@ private:
 // All chunks below are for the DLL import descriptor table and
 // Windows-specific. You may need to read the Microsoft PE/COFF spec
 // to understand details about the data structures.
+// If you are not particularly interested, you can skip them and
+// still be able to understand the rest of the linker.
 
 static const uint8_t ImportThunkData[] = {
     0xff, 0x25, 0x00, 0x00, 0x00, 0x00, // JMP *0x0
@@ -202,8 +204,9 @@ private:
 class LookupChunk : public Chunk {
 public:
   explicit LookupChunk(Chunk *C) : HintName(C) {}
-  size_t getSize() const override { return sizeof(uint64_t); }
+  size_t getSize() const override { return Size; }
   void writeTo(uint8_t *Buf) override;
+  static const size_t Size;
   Chunk *HintName;
 };
 
@@ -222,17 +225,16 @@ public:
 class DirectoryChunk : public Chunk {
 public:
   explicit DirectoryChunk(Chunk *N) : DLLName(N) {}
-  size_t getSize() const override { return sizeof(ImportDirectoryTableEntry); }
+  size_t getSize() const override { return Size; }
   void writeTo(uint8_t *Buf) override;
-
+  static const size_t Size;
   Chunk *DLLName;
   Chunk *LookupTab;
   Chunk *AddressTab;
 };
 
-// A chunk for the import descriptor table representing.
+// A chunk representing null terminator in the import table.
 // Contents of this chunk is always null bytes.
-// This is used for terminating import tables.
 class NullChunk : public Chunk {
 public:
   explicit NullChunk(size_t N) : Size(N) {}
@@ -243,16 +245,28 @@ private:
   size_t Size;
 };
 
-// ImportTable creates a set of import table chunks for a given
-// DLL-imported symbols.
-class ImportTable {
+// IdataContents creates all chunks for the .idata section.
+// You are supposed to call add() to add symbols and then
+// call getChunks() to get a list of chunks.
+class IdataContents {
 public:
-  ImportTable(StringRef DLLName, std::vector<DefinedImportData *> &Symbols);
-  StringChunk *DLLName;
-  DirectoryChunk *DirTab;
-  std::vector<Chunk *> LookupTables;
-  std::vector<Chunk *> AddressTables;
-  std::vector<Chunk *> HintNameTables;
+  void add(DefinedImportData *Sym) { Imports.push_back(Sym); }
+  std::vector<Chunk *> getChunks();
+
+  uint64_t getDirRVA() { return Dirs[0]->getRVA(); }
+  uint64_t getDirSize() { return Dirs.size() * DirectoryChunk::Size; }
+  uint64_t getIATRVA() { return Addresses[0]->getRVA(); }
+  uint64_t getIATSize() { return Addresses.size() * LookupChunk::Size; }
+
+private:
+  void create();
+
+  std::vector<DefinedImportData *> Imports;
+  std::vector<std::unique_ptr<Chunk>> Dirs;
+  std::vector<std::unique_ptr<Chunk>> Lookups;
+  std::vector<std::unique_ptr<Chunk>> Addresses;
+  std::vector<std::unique_ptr<Chunk>> Hints;
+  std::map<StringRef, std::unique_ptr<Chunk>> DLLNames;
 };
 
 } // namespace coff
