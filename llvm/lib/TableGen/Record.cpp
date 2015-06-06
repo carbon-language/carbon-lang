@@ -891,7 +891,7 @@ static Init *EvaluateOperation(OpInit *RHSo, Init *LHS, Init *Arg,
       return ForeachHelper(LHS, Arg, RHSo, Type, CurRec, CurMultiClass);
 
   std::vector<Init *> NewOperands;
-  for (int i = 0; i < RHSo->getNumOperands(); ++i) {
+  for (unsigned i = 0; i < RHSo->getNumOperands(); ++i) {
     if (auto *RHSoo = dyn_cast<OpInit>(RHSo->getOperand(i))) {
       if (Init *Result = EvaluateOperation(RHSoo, LHS, Arg,
                                            Type, CurRec, CurMultiClass))
@@ -955,7 +955,7 @@ static Init *ForeachHelper(Init *LHS, Init *MHS, Init *RHS, RecTy *Type,
 
     for (Init *&Item : NewList) {
       NewOperands.clear();
-      for(int i = 0; i < RHSo->getNumOperands(); ++i) {
+      for(unsigned i = 0; i < RHSo->getNumOperands(); ++i) {
         // First, replace the foreach variable with the list item
         if (LHS->getAsString() == RHSo->getOperand(i)->getAsString())
           NewOperands.push_back(Item);

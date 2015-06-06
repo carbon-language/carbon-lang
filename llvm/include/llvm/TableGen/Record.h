@@ -660,8 +660,8 @@ public:
   // Clone - Clone this operator, replacing arguments with the new list
   virtual OpInit *clone(std::vector<Init *> &Operands) const = 0;
 
-  virtual int getNumOperands() const = 0;
-  virtual Init *getOperand(int i) const = 0;
+  virtual unsigned getNumOperands() const = 0;
+  virtual Init *getOperand(unsigned i) const = 0;
 
   // Fold - If possible, fold this to a simpler init.  Return this if not
   // possible to fold.
@@ -702,8 +702,8 @@ public:
     return UnOpInit::get(getOpcode(), *Operands.begin(), getType());
   }
 
-  int getNumOperands() const override { return 1; }
-  Init *getOperand(int i) const override {
+  unsigned getNumOperands() const override { return 1; }
+  Init *getOperand(unsigned i) const override {
     assert(i == 0 && "Invalid operand id for unary operator");
     return getOperand();
   }
@@ -750,8 +750,8 @@ public:
     return BinOpInit::get(getOpcode(), Operands[0], Operands[1], getType());
   }
 
-  int getNumOperands() const override { return 2; }
-  Init *getOperand(int i) const override {
+  unsigned getNumOperands() const override { return 2; }
+  Init *getOperand(unsigned i) const override {
     switch (i) {
     default: llvm_unreachable("Invalid operand id for binary operator");
     case 0: return getLHS();
@@ -805,8 +805,8 @@ public:
                            getType());
   }
 
-  int getNumOperands() const override { return 3; }
-  Init *getOperand(int i) const override {
+  unsigned getNumOperands() const override { return 3; }
+  Init *getOperand(unsigned i) const override {
     switch (i) {
     default: llvm_unreachable("Invalid operand id for ternary operator");
     case 0: return getLHS();
