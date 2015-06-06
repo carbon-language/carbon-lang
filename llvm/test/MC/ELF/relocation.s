@@ -54,6 +54,10 @@ bar:
 
         .quad	pr23272_2 - pr23272
         .quad	pr23272_3 - pr23272
+
+        .code16
+        call pr23771
+
 // CHECK:        Section {
 // CHECK:          Name: .rela.text
 // CHECK:          Relocations [
@@ -90,5 +94,6 @@ bar:
 // CHECK-NEXT:       0xD4 R_X86_64_SIZE32 blah 0xFFFFFFFFFFFFFFE0
 // CHECK-NEXT:       0xD8 R_X86_64_GOTPCREL foo 0x0
 // CHECK-NEXT:       0xDC R_X86_64_PLT32 foo 0x0
+// CHECK-NEXT:       0xF1 R_X86_64_PC16 pr23771 0xFFFFFFFFFFFFFFFE
 // CHECK-NEXT:     ]
 // CHECK-NEXT:   }
