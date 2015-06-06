@@ -1,18 +1,16 @@
 # Check that LLD shows an error if ADDIUPC immediate is out of range.
 
-# RUN: yaml2obj -format=elf %s > %t-obj
-# RUN: lld -flavor gnu -target mipsel -o %t-exe %t-obj 2>&1 | FileCheck %s
+# RUN: yaml2obj -format=elf %s > %t.o
+# RUN: not lld -flavor gnu -target mipsel -o %t.exe %t.o 2>&1 | FileCheck %s
 
-# CHECK: The addiupc instruction immediate 0x02000008 is out of range
+# CHECK: Relocation out of range in file {{.*}}: reference from __start+4 to T0+4 of type 173 (R_MICROMIPS_PC23_S2)
 
-!ELF
-FileHeader: !FileHeader
+FileHeader:
   Class:   ELFCLASS32
   Data:    ELFDATA2LSB
   Type:    ET_REL
   Machine: EM_MIPS
-  Flags:   [ EF_MIPS_CPIC, EF_MIPS_ABI_O32, EF_MIPS_ARCH_32R2,
-             EF_MIPS_MICROMIPS ]
+  Flags:   [EF_MIPS_CPIC, EF_MIPS_ABI_O32, EF_MIPS_ARCH_32R2, EF_MIPS_MICROMIPS]
 
 Sections:
 - Name:         .text
