@@ -190,7 +190,7 @@ supported include:
     for 'a' in 'c.'  This operation is analogous to $(subst) in GNU make.
 
 ``!foreach(a, b, c)``
-    For each member 'b' of dag or list 'a' apply operator 'c.'  'b' is a dummy
+    For each member of dag or list 'b' apply operator 'c.'  'a' is a dummy
     variable that should be declared as a member variable of an instantiated
     class.  This operation is analogous to $(foreach) in GNU make.
 
