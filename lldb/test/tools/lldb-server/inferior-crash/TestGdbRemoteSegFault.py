@@ -37,4 +37,4 @@ class TestGdbRemoteSegFault(gdbremote_testcase.GdbRemoteTestCaseBase):
     def test_inferior_seg_fault_received_llgs_dwarf(self):
         self.init_llgs_test()
         self.buildDwarf()
-        self.inferior_seg_fault_received(signal.SIGSEGV)
+        self.inferior_seg_fault_received(lldbutil.get_signal_number('SIGSEGV'))
