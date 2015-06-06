@@ -170,6 +170,9 @@ public:
   LTOModule *getModule() const { return M.get(); }
   LTOModule *releaseModule() { return M.release(); }
 
+  // Returns linker directives from module flags metadata if present.
+  StringRef getDirectives() { return Directives; }
+
 private:
   std::error_code parse() override;
 
@@ -177,6 +180,7 @@ private:
   std::vector<SymbolBody *> SymbolBodies;
   llvm::BumpPtrAllocator Alloc;
   std::unique_ptr<LTOModule> M;
+  std::string Directives;
 };
 
 } // namespace coff

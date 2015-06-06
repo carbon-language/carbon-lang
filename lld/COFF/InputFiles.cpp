@@ -263,6 +263,23 @@ std::error_code BitcodeFile::parse() {
       SymbolBodies.push_back(new (Alloc) DefinedBitcode(SymName));
     }
   }
+
+  // Extract any linker directives from the bitcode file, which are represented
+  // as module flags with the key "Linker Options".
+  llvm::SmallVector<llvm::Module::ModuleFlagEntry, 8> Flags;
+  M->getModule().getModuleFlagsMetadata(Flags);
+  for (auto &&Flag : Flags) {
+    if (Flag.Key->getString() != "Linker Options")
+      continue;
+
+    for (llvm::Metadata *Op : cast<llvm::MDNode>(Flag.Val)->operands()) {
+      for (llvm::Metadata *InnerOp : cast<llvm::MDNode>(Op)->operands()) {
+        Directives += " ";
+        Directives += cast<llvm::MDString>(InnerOp)->getString();
+      }
+    }
+  }
+
   return std::error_code();
 }
 

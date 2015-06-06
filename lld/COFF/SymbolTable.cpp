@@ -40,6 +40,17 @@ std::error_code SymbolTable::addFile(std::unique_ptr<InputFile> File) {
   return addImport(cast<ImportFile>(FileP));
 }
 
+std::error_code SymbolTable::addDirectives(StringRef Dir) {
+  if (Dir.empty())
+    return std::error_code();
+  std::vector<std::unique_ptr<InputFile>> Libs;
+  if (auto EC = Driver->parseDirectives(Dir, &Libs))
+    return EC;
+  for (std::unique_ptr<InputFile> &Lib : Libs)
+    addFile(std::move(Lib));
+  return std::error_code();
+}
+
 std::error_code SymbolTable::addObject(ObjectFile *File) {
   ObjectFiles.emplace_back(File);
   for (SymbolBody *Body : File->getSymbols())
@@ -49,15 +60,7 @@ std::error_code SymbolTable::addObject(ObjectFile *File) {
 
   // If an object file contains .drectve section, read it and add
   // files listed in the section.
-  StringRef Dir = File->getDirectives();
-  if (!Dir.empty()) {
-    std::vector<std::unique_ptr<InputFile>> Libs;
-    if (auto EC = Driver->parseDirectives(Dir, &Libs))
-      return EC;
-    for (std::unique_ptr<InputFile> &Lib : Libs)
-      addFile(std::move(Lib));
-  }
-  return std::error_code();
+  return addDirectives(File->getDirectives());
 }
 
 std::error_code SymbolTable::addArchive(ArchiveFile *File) {
@@ -75,8 +78,8 @@ std::error_code SymbolTable::addBitcode(BitcodeFile *File) {
       if (auto EC = resolve(Body))
         return EC;
 
-  // TODO: Handle linker directives.
-  return std::error_code();
+  // Add any linker directives from the module flags metadata.
+  return addDirectives(File->getDirectives());
 }
 
 std::error_code SymbolTable::addImport(ImportFile *File) {

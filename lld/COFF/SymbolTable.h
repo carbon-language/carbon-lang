@@ -77,6 +77,8 @@ public:
   std::error_code rename(StringRef From, StringRef To);
 
 private:
+  std::error_code addDirectives(StringRef Dir);
+
   std::error_code addObject(ObjectFile *File);
   std::error_code addArchive(ArchiveFile *File);
   std::error_code addImport(ImportFile *File);
