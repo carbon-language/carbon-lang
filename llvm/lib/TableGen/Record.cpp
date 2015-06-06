@@ -936,10 +936,8 @@ static Init *ForeachHelper(Init *LHS, Init *MHS, Init *RHS, RecTy *Type,
 
       std::vector<std::pair<Init *, std::string> > args;
       for (unsigned int i = 0; i < MHSd->getNumArgs(); ++i) {
-        Init *Arg;
-        std::string ArgName;
-        Arg = MHSd->getArg(i);
-        ArgName = MHSd->getArgName(i);
+        Init *Arg = MHSd->getArg(i);
+        std::string ArgName = MHSd->getArgName(i);
 
         // Process args
         Init *Result = EvaluateOperation(RHSo, LHS, Arg, Type,
