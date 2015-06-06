@@ -339,21 +339,25 @@ uint32_t Writer::getSizeOfInitializedData() {
 OutputSection *Writer::createSection(StringRef Name) {
   if (auto *Sec = findSection(Name))
     return Sec;
+  const auto DATA = IMAGE_SCN_CNT_INITIALIZED_DATA;
+  const auto BSS = IMAGE_SCN_CNT_UNINITIALIZED_DATA;
+  const auto CODE = IMAGE_SCN_CNT_CODE;
   const auto R = IMAGE_SCN_MEM_READ;
   const auto W = IMAGE_SCN_MEM_WRITE;
   const auto E = IMAGE_SCN_MEM_EXECUTE;
-  uint32_t Perm = StringSwitch<uint32_t>(Name)
-                      .Case(".bss", IMAGE_SCN_CNT_UNINITIALIZED_DATA | R | W)
-                      .Case(".data", IMAGE_SCN_CNT_INITIALIZED_DATA | R | W)
-                      .Case(".idata", IMAGE_SCN_CNT_INITIALIZED_DATA | R)
-                      .Case(".rdata", IMAGE_SCN_CNT_INITIALIZED_DATA | R)
-                      .Case(".text", IMAGE_SCN_CNT_CODE | R | E)
-                      .Default(0);
-  if (!Perm)
+  uint32_t Perms = StringSwitch<uint32_t>(Name)
+                       .Case(".bss", BSS | R | W)
+                       .Case(".data", DATA | R | W)
+                       .Case(".didat", DATA | R)
+                       .Case(".idata", DATA | R)
+                       .Case(".rdata", DATA | R)
+                       .Case(".text", CODE | R | E)
+                       .Default(0);
+  if (!Perms)
     llvm_unreachable("unknown section name");
   size_t SectIdx = OutputSections.size();
   auto Sec = new (CAlloc.Allocate()) OutputSection(Name, SectIdx);
-  Sec->addPermissions(Perm);
+  Sec->addPermissions(Perms);
   OutputSections.push_back(Sec);
   return Sec;
 }
