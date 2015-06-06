@@ -42,7 +42,10 @@ public:
   // Returns the size of this chunk (even if this is a common or BSS.)
   virtual size_t getSize() const = 0;
 
-  // Write this chunk to a mmap'ed file. Buf is pointing to beginning of file.
+  // Write this chunk to a mmap'ed file, assuming Buf is pointing to
+  // beginning of the file. Because this function may use RVA values
+  // of other chunks for relocations, you need to set them properly
+  // before calling this function.
   virtual void writeTo(uint8_t *Buf) {}
 
   // The writer sets and uses the addresses.
@@ -51,12 +54,6 @@ public:
   uint32_t getAlign() { return Align; }
   void setRVA(uint64_t V) { RVA = V; }
   void setFileOff(uint64_t V) { FileOff = V; }
-
-  // Applies relocations, assuming Buffer points to beginning of an
-  // mmap'ed output file. Because this function uses file offsets and
-  // RVA values of other chunks, you need to set them properly before
-  // calling this function.
-  virtual void applyRelocations(uint8_t *Buf) {}
 
   // Returns true if this has non-zero data. BSS chunks return
   // false. If false is returned, the space occupied by this chunk
@@ -116,7 +113,6 @@ public:
                uint32_t SectionIndex);
   size_t getSize() const override { return Header->SizeOfRawData; }
   void writeTo(uint8_t *Buf) override;
-  void applyRelocations(uint8_t *Buf) override;
   bool hasData() const override;
   uint32_t getPermissions() const override;
   StringRef getSectionName() const override { return SectionName; }
@@ -185,7 +181,6 @@ public:
   explicit ImportThunkChunk(Defined *S) : ImpSymbol(S) {}
   size_t getSize() const override { return sizeof(ImportThunkData); }
   void writeTo(uint8_t *Buf) override;
-  void applyRelocations(uint8_t *Buf) override;
 
 private:
   Defined *ImpSymbol;
@@ -207,9 +202,8 @@ private:
 class LookupChunk : public Chunk {
 public:
   explicit LookupChunk(Chunk *C) : HintName(C) {}
-  bool hasData() const override { return false; }
   size_t getSize() const override { return sizeof(uint64_t); }
-  void applyRelocations(uint8_t *Buf) override;
+  void writeTo(uint8_t *Buf) override;
   Chunk *HintName;
 };
 
@@ -219,7 +213,6 @@ public:
 class OrdinalOnlyChunk : public Chunk {
 public:
   explicit OrdinalOnlyChunk(uint16_t V) : Ordinal(V) {}
-  bool hasData() const override { return true; }
   size_t getSize() const override { return sizeof(uint64_t); }
   void writeTo(uint8_t *Buf) override;
   uint16_t Ordinal;
@@ -229,9 +222,8 @@ public:
 class DirectoryChunk : public Chunk {
 public:
   explicit DirectoryChunk(Chunk *N) : DLLName(N) {}
-  bool hasData() const override { return false; }
   size_t getSize() const override { return sizeof(ImportDirectoryTableEntry); }
-  void applyRelocations(uint8_t *Buf) override;
+  void writeTo(uint8_t *Buf) override;
 
   Chunk *DLLName;
   Chunk *LookupTab;

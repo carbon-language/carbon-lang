@@ -413,13 +413,6 @@ OutputSection *Writer::createSection(StringRef Name) {
   return Sec;
 }
 
-void Writer::applyRelocations() {
-  uint8_t *Buf = Buffer->getBufferStart();
-  for (OutputSection *Sec : OutputSections)
-    for (Chunk *C : Sec->getChunks())
-      C->applyRelocations(Buf);
-}
-
 std::error_code Writer::write(StringRef OutputPath) {
   markLive();
   createSections();
@@ -430,7 +423,6 @@ std::error_code Writer::write(StringRef OutputPath) {
     return EC;
   writeHeader();
   writeSections();
-  applyRelocations();
   return Buffer->commit();
 }
 

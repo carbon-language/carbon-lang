@@ -37,9 +37,16 @@ SectionChunk::SectionChunk(ObjectFile *F, const coff_section *H, uint32_t SI)
 void SectionChunk::writeTo(uint8_t *Buf) {
   if (!hasData())
     return;
+  // Copy section contents from source object file to output file.
   ArrayRef<uint8_t> Data;
   File->getCOFFObj()->getSectionContents(Header, Data);
   memcpy(Buf + FileOff, Data.data(), Data.size());
+
+  // Apply relocations.
+  for (const auto &I : getSectionRef().relocations()) {
+    const coff_relocation *Rel = File->getCOFFObj()->getCOFFRelocation(I);
+    applyReloc(Buf, Rel);
+  }
 }
 
 // Returns true if this chunk should be considered as a GC root.
@@ -78,13 +85,6 @@ void SectionChunk::markLive() {
 void SectionChunk::addAssociative(SectionChunk *Child) {
   Child->IsAssocChild = true;
   AssocChildren.push_back(Child);
-}
-
-void SectionChunk::applyRelocations(uint8_t *Buf) {
-  for (const auto &I : getSectionRef().relocations()) {
-    const coff_relocation *Rel = File->getCOFFObj()->getCOFFRelocation(I);
-    applyReloc(Buf, Rel);
-  }
 }
 
 static void add16(uint8_t *P, int32_t V) { write16le(P, read16le(P) + V); }
@@ -163,11 +163,8 @@ void StringChunk::writeTo(uint8_t *Buf) {
 
 void ImportThunkChunk::writeTo(uint8_t *Buf) {
   memcpy(Buf + FileOff, ImportThunkData, sizeof(ImportThunkData));
-}
-
-void ImportThunkChunk::applyRelocations(uint8_t *Buf) {
+  // The first two bytes is a JMP instruction. Fill its operand.
   uint32_t Operand = ImpSymbol->getRVA() - RVA - getSize();
-  // The first two bytes are a JMP instruction. Fill its operand.
   write32le(Buf + FileOff + 2, Operand);
 }
 
@@ -182,7 +179,7 @@ void HintNameChunk::writeTo(uint8_t *Buf) {
   memcpy(Buf + FileOff + 2, Name.data(), Name.size());
 }
 
-void LookupChunk::applyRelocations(uint8_t *Buf) {
+void LookupChunk::writeTo(uint8_t *Buf) {
   write32le(Buf + FileOff, HintName->getRVA());
 }
 
@@ -192,7 +189,7 @@ void OrdinalOnlyChunk::writeTo(uint8_t *Buf) {
   write64le(Buf + FileOff, (uint64_t(1) << 63) | Ordinal);
 }
 
-void DirectoryChunk::applyRelocations(uint8_t *Buf) {
+void DirectoryChunk::writeTo(uint8_t *Buf) {
   auto *E = (coff_import_directory_table_entry *)(Buf + FileOff);
   E->ImportLookupTableRVA = LookupTab->getRVA();
   E->NameRVA = DLLName->getRVA();
