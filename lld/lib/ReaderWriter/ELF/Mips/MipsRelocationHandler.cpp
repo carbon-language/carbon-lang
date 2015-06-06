@@ -187,15 +187,14 @@ static uint32_t relocpc32(uint64_t P, uint64_t S, int64_t A) {
 /// local   : ((A | ((P + 4) & 0x3F000000)) + S) >> 2
 static uint32_t reloc26loc(uint64_t P, uint64_t S, int32_t A, uint32_t shift) {
   uint32_t result = (A | ((P + 4) & (0xfc000000 << shift))) + S;
-  return result >> shift;
+  return result;
 }
 
 /// \brief LLD_R_MIPS_GLOBAL_26, LLD_R_MICROMIPS_GLOBAL_26_S1
 /// external: (sign-extend(A) + S) >> 2
 static uint32_t reloc26ext(uint64_t S, int32_t A, uint32_t shift) {
-  int32_t result =
-      shift == 1 ? llvm::SignExtend32<27>(A) : llvm::SignExtend32<28>(A);
-  return (result + S) >> shift;
+  A = shift == 1 ? llvm::SignExtend32<27>(A) : llvm::SignExtend32<28>(A);
+  return A + S;
 }
 
 /// \brief R_MIPS_HI16, R_MIPS_TLS_DTPREL_HI16, R_MIPS_TLS_TPREL_HI16,
@@ -283,7 +282,7 @@ static uint32_t relocPc18(uint64_t P, uint64_t S, int64_t A) {
   A = llvm::SignExtend32<21>(A);
   // FIXME (simon): Check that S + A has 8-byte alignment
   int32_t result = S + A - ((P | 7) ^ 7);
-  return result >> 3;
+  return result;
 }
 
 /// \brief R_MIPS_PC19_S2, R_MICROMIPS_PC19_S2
@@ -292,7 +291,7 @@ static uint32_t relocPc19(uint64_t P, uint64_t S, int64_t A) {
   A = llvm::SignExtend32<21>(A);
   // FIXME (simon): Check that S + A has 4-byte alignment
   int32_t result = S + A - P;
-  return result >> 2;
+  return result;
 }
 
 /// \brief R_MIPS_PC21_S2, R_MICROMIPS_PC21_S2
@@ -301,7 +300,7 @@ static uint32_t relocPc21(uint64_t P, uint64_t S, int64_t A) {
   A = llvm::SignExtend32<23>(A);
   // FIXME (simon): Check that S + A has 4-byte alignment
   int32_t result = S + A - P;
-  return result >> 2;
+  return result;
 }
 
 /// \brief R_MIPS_PC26_S2, R_MICROMIPS_PC26_S2
@@ -310,28 +309,28 @@ static uint32_t relocPc26(uint64_t P, uint64_t S, int64_t A) {
   A = llvm::SignExtend32<28>(A);
   // FIXME (simon): Check that S + A has 4-byte alignment
   int32_t result = S + A - P;
-  return result >> 2;
+  return result;
 }
 
 /// \brief R_MICROMIPS_PC7_S1
 static uint32_t relocPc7(uint64_t P, uint64_t S, int64_t A) {
   A = llvm::SignExtend32<8>(A);
   int32_t result = S + A - P;
-  return result >> 1;
+  return result;
 }
 
 /// \brief R_MICROMIPS_PC10_S1
 static uint32_t relocPc10(uint64_t P, uint64_t S, int64_t A) {
   A = llvm::SignExtend32<11>(A);
   int32_t result = S + A - P;
-  return result >> 1;
+  return result;
 }
 
 /// \brief R_MICROMIPS_PC16_S1
 static uint32_t relocPc16(uint64_t P, uint64_t S, int64_t A) {
   A = llvm::SignExtend32<17>(A);
   int32_t result = S + A - P;
-  return result >> 1;
+  return result;
 }
 
 /// \brief R_MICROMIPS_PC23_S2
@@ -344,12 +343,20 @@ static uint32_t relocPc23(uint64_t P, uint64_t S, int64_t A) {
     llvm::errs() << "The addiupc instruction immediate "
                  << llvm::format_hex(result, 10) << " is out of range.\n";
 
-  return result >> 2;
+  return result;
 }
 
 /// \brief LLD_R_MIPS_32_HI16, LLD_R_MIPS_64_HI16
 static uint64_t relocMaskLow16(uint64_t S, int64_t A) {
   return S + A + 0x8000;
+}
+
+static int64_t relocRel32(int64_t A) {
+  // If output relocation format is REL and the input one is RELA, the only
+  // method to transfer the relocation addend from the input relocation
+  // to the output dynamic relocation is to save this addend to the location
+  // modified by R_MIPS_REL32.
+  return A;
 }
 
 static std::error_code adjustJumpOpCode(uint64_t &ins, uint64_t tgt,
@@ -409,8 +416,11 @@ static ErrorOr<uint64_t> calculateRelocation(Reference::KindValue kind,
                                              Reference::Addend addend,
                                              uint64_t tgtAddr, uint64_t relAddr,
                                              uint64_t gpAddr, bool isGP,
-                                             CrossJumpMode jumpMode) {
-  bool isCrossJump = jumpMode !=  CrossJumpMode::None;
+                                             bool isCrossJump) {
+  if (!tgtAddr) {
+    isGP = false;
+    isCrossJump = false;
+  }
   switch (kind) {
   case R_MIPS_NONE:
     return 0;
@@ -504,6 +514,7 @@ static ErrorOr<uint64_t> calculateRelocation(Reference::KindValue kind,
     // We do not do JALR optimization now.
     return 0;
   case R_MIPS_REL32:
+    return relocRel32(addend);
   case R_MIPS_JUMP_SLOT:
   case R_MIPS_COPY:
   case R_MIPS_TLS_DTPMOD32:
@@ -572,6 +583,20 @@ static void relocWrite(uint64_t data, const MipsRelocationParams &params,
   }
 }
 
+static uint32_t getRelKind(const Reference &ref, size_t num) {
+  if (num == 0)
+    return ref.kindValue();
+  return (ref.tag() >> (8 * (num - 1))) & 0xff;
+}
+
+static uint8_t getRelShift(Reference::KindValue kind, bool isCrossJump) {
+  uint8_t shift = getRelocationParams(kind)._shift;
+  if (isCrossJump &&
+      (kind == R_MICROMIPS_26_S1 || kind == LLD_R_MICROMIPS_GLOBAL_26_S1))
+    return 2;
+  return shift;
+}
+
 template <class ELFT>
 std::error_code RelocationHandler<ELFT>::applyRelocation(
     ELFWriter &writer, llvm::FileOutputBuffer &buf, const AtomLayout &atom,
@@ -592,33 +617,28 @@ std::error_code RelocationHandler<ELFT>::applyRelocation(
     tgtAddr |= 1;
 
   CrossJumpMode jumpMode = getCrossJumpMode(ref);
+  bool isCrossJump = jumpMode != CrossJumpMode::None;
 
-  ErrorOr<uint64_t> res =
-      calculateRelocation(ref.kindValue(), ref.addend(), tgtAddr, relAddr,
-                          gpAddr, isGpDisp, jumpMode);
-  if (auto ec = res.getError())
-    return ec;
+  uint64_t sym = tgtAddr;
+  ErrorOr<int64_t> res = ref.addend();
+  Reference::KindValue lastRel = R_MIPS_NONE;
 
-  // If output relocation format is REL and the input one is RELA, the only
-  // method to transfer the relocation addend from the input relocation
-  // to the output dynamic relocation is to save this addend to the location
-  // modified by R_MIPS_REL32.
-  if (ref.kindValue() == R_MIPS_REL32 && !_ctx.isRelaOutputFormat())
-    res = ref.addend();
-
-  Reference::KindValue op = ref.kindValue();
-
-  // FIXME (simon): Handle r_ssym value.
-  for (auto tag = (ref.tag() & 0xffff); tag & 0xff; tag >>= 8) {
-    op = tag & 0xff;
-    res = calculateRelocation(op, *res, 0, relAddr, gpAddr, isGpDisp, jumpMode);
+  for (size_t relNum = 0; relNum < 3; ++relNum) {
+    Reference::KindValue kind = getRelKind(ref, relNum);
+    if (kind == R_MIPS_NONE)
+      break;
+    res = calculateRelocation(kind, *res, sym, relAddr, gpAddr, isGpDisp,
+                              isCrossJump);
     if (auto ec = res.getError())
       return ec;
+    res = *res >> getRelShift(kind, isCrossJump);
+    // FIXME (simon): Handle r_ssym value.
+    sym = 0;
+    lastRel = kind;
   }
 
-  auto params = getRelocationParams(op);
+  auto params = getRelocationParams(lastRel);
   uint64_t ins = relocRead(params, location);
-
   if (auto ec = adjustJumpOpCode(ins, tgtAddr, jumpMode))
     return ec;
 
