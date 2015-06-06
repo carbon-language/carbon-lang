@@ -187,6 +187,14 @@ static MipsRelocationParams getRelocationParams(uint32_t rType) {
   }
 }
 
+static int64_t getHi16(int64_t value) {
+  return ((value + 0x8000) >> 16) & 0xffff;
+}
+
+static int64_t maskLow16(int64_t value) {
+  return (value + 0x8000) & ~0xffff;
+}
+
 /// \brief R_MIPS_32
 /// local/external: word32 S + A (truncate)
 static int32_t reloc32(uint64_t S, int64_t A) { return S + A; }
@@ -224,15 +232,13 @@ static int32_t reloc26ext(uint64_t S, int32_t A, uint32_t shift) {
 /// local/external: hi16 (AHL + S) - (short)(AHL + S) (truncate)
 /// _gp_disp      : hi16 (AHL + GP - P) - (short)(AHL + GP - P) (verify)
 static int32_t relocHi16(uint64_t P, uint64_t S, int64_t AHL, bool isGPDisp) {
-  int32_t result = isGPDisp ? AHL + S - P : AHL + S;
-  return ((result + 0x8000) >> 16) & 0xffff;
+  return getHi16(isGPDisp ? AHL + S - P : AHL + S);
 }
 
 /// \brief R_MIPS_PCHI16
 /// local/external: hi16 (S + AHL - P)
 static int32_t relocPcHi16(uint64_t P, uint64_t S, int64_t AHL) {
-  int32_t result = S + AHL - P;
-  return (result + 0x8000) >> 16;
+  return getHi16(S + AHL - P);
 }
 
 /// \brief R_MIPS_LO16, R_MIPS_TLS_DTPREL_LO16, R_MIPS_TLS_TPREL_LO16,
@@ -269,13 +275,13 @@ static int64_t relocGOTLo16(uint64_t S, uint64_t GP) {
 /// R_MICROMIPS_GOT_HI16, R_MICROMIPS_CALL_HI16
 /// rel16 %high(G) (truncate)
 static int64_t relocGOTHi16(uint64_t S, uint64_t GP) {
-  return (S - GP + 0x8000) >> 16;
+  return getHi16(S - GP);
 }
 
 /// R_MIPS_GOT_OFST, R_MICROMIPS_GOT_OFST
 /// rel16 offset of (S+A) from the page pointer (verify)
 static int32_t relocGOTOfst(uint64_t S, int64_t A) {
-  int64_t page = (S + A + 0x8000) & ~0xffff;
+  int64_t page = maskLow16(S + A);
   return S + A - page;
 }
 
@@ -356,7 +362,7 @@ static uint32_t relocPc23(uint64_t P, uint64_t S, int64_t A) {
 
 /// \brief LLD_R_MIPS_32_HI16, LLD_R_MIPS_64_HI16
 static int64_t relocMaskLow16(uint64_t S, int64_t A) {
-  return S + A + 0x8000;
+  return maskLow16(S + A);
 }
 
 static int64_t relocRel32(int64_t A) {
