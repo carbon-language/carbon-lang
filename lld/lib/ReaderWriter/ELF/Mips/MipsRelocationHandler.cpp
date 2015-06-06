@@ -296,34 +296,37 @@ static int64_t relocGPRel32(uint64_t S, int64_t A, uint64_t GP) {
 
 /// \brief R_MIPS_PC18_S3, R_MICROMIPS_PC18_S3
 /// local/external: (S + A - P) >> 3 (P with cleared 3 less significant bits)
-static int32_t relocPc18(uint64_t P, uint64_t S, int64_t A) {
+static ErrorOr<int64_t> relocPc18(uint64_t P, uint64_t S, int64_t A) {
   A = llvm::SignExtend32<21>(A);
-  // FIXME (simon): Check that S + A has 8-byte alignment
-  int32_t result = S + A - ((P | 7) ^ 7);
-  return result;
+  if ((S + A) & 6)
+    return make_unaligned_range_reloc_error();
+  return S + A - ((P | 7) ^ 7);
 }
 
 /// \brief R_MIPS_PC19_S2, R_MICROMIPS_PC19_S2
 /// local/external: (S + A - P) >> 2
-static int32_t relocPc19(uint64_t P, uint64_t S, int64_t A) {
+static ErrorOr<int64_t> relocPc19(uint64_t P, uint64_t S, int64_t A) {
   A = llvm::SignExtend32<21>(A);
-  // FIXME (simon): Check that S + A has 4-byte alignment
+  if ((S + A) & 2)
+    return make_unaligned_range_reloc_error();
   return S + A - P;
 }
 
 /// \brief R_MIPS_PC21_S2, R_MICROMIPS_PC21_S2
 /// local/external: (S + A - P) >> 2
-static int32_t relocPc21(uint64_t P, uint64_t S, int64_t A) {
+static ErrorOr<int64_t> relocPc21(uint64_t P, uint64_t S, int64_t A) {
   A = llvm::SignExtend32<23>(A);
-  // FIXME (simon): Check that S + A has 4-byte alignment
+  if ((S + A) & 2)
+    return make_unaligned_range_reloc_error();
   return S + A - P;
 }
 
 /// \brief R_MIPS_PC26_S2, R_MICROMIPS_PC26_S2
 /// local/external: (S + A - P) >> 2
-static int32_t relocPc26(uint64_t P, uint64_t S, int64_t A) {
+static ErrorOr<int64_t> relocPc26(uint64_t P, uint64_t S, int64_t A) {
   A = llvm::SignExtend32<28>(A);
-  // FIXME (simon): Check that S + A has 4-byte alignment
+  if ((S + A) & 2)
+    return make_unaligned_range_reloc_error();
   return S + A - P;
 }
 
