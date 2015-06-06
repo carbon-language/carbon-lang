@@ -913,8 +913,6 @@ static Init *EvaluateOperation(OpInit *RHSo, Init *LHS, Init *Arg,
 
 static Init *ForeachHelper(Init *LHS, Init *MHS, Init *RHS, RecTy *Type,
                            Record *CurRec, MultiClass *CurMultiClass) {
-  DagInit *MHSd = dyn_cast<DagInit>(MHS);
-  ListInit *MHSl = dyn_cast<ListInit>(MHS);
 
   OpInit *RHSo = dyn_cast<OpInit>(RHS);
 
@@ -926,53 +924,54 @@ static Init *ForeachHelper(Init *LHS, Init *MHS, Init *RHS, RecTy *Type,
   if (!LHSt)
     PrintFatalError(CurRec->getLoc(), "!foreach requires typed variable\n");
 
-  if ((MHSd && isa<DagRecTy>(Type)) || (MHSl && isa<ListRecTy>(Type))) {
-    if (MHSd) {
-      Init *Val = MHSd->getOperator();
-      Init *Result = EvaluateOperation(RHSo, LHS, Val,
-                                       Type, CurRec, CurMultiClass);
+  DagInit *MHSd = dyn_cast<DagInit>(MHS);
+  if (MHSd && isa<DagRecTy>(Type)) {
+    Init *Val = MHSd->getOperator();
+    Init *Result = EvaluateOperation(RHSo, LHS, Val,
+                                     Type, CurRec, CurMultiClass);
+    if (Result)
+      Val = Result;
+
+    std::vector<std::pair<Init *, std::string> > args;
+    for (unsigned int i = 0; i < MHSd->getNumArgs(); ++i) {
+      Init *Arg = MHSd->getArg(i);
+      std::string ArgName = MHSd->getArgName(i);
+
+      // Process args
+      Init *Result = EvaluateOperation(RHSo, LHS, Arg, Type,
+                                       CurRec, CurMultiClass);
       if (Result)
-        Val = Result;
+        Arg = Result;
 
-      std::vector<std::pair<Init *, std::string> > args;
-      for (unsigned int i = 0; i < MHSd->getNumArgs(); ++i) {
-        Init *Arg = MHSd->getArg(i);
-        std::string ArgName = MHSd->getArgName(i);
+      // TODO: Process arg names
+      args.push_back(std::make_pair(Arg, ArgName));
+    }
 
-        // Process args
-        Init *Result = EvaluateOperation(RHSo, LHS, Arg, Type,
-                                         CurRec, CurMultiClass);
-        if (Result)
-          Arg = Result;
+    return DagInit::get(Val, "", args);
+  }
 
-        // TODO: Process arg names
-        args.push_back(std::make_pair(Arg, ArgName));
+  ListInit *MHSl = dyn_cast<ListInit>(MHS);
+  if (MHSl && isa<ListRecTy>(Type)) {
+    std::vector<Init *> NewOperands;
+    std::vector<Init *> NewList(MHSl->begin(), MHSl->end());
+
+    for (Init *&Item : NewList) {
+      NewOperands.clear();
+      for(int i = 0; i < RHSo->getNumOperands(); ++i) {
+        // First, replace the foreach variable with the list item
+        if (LHS->getAsString() == RHSo->getOperand(i)->getAsString())
+          NewOperands.push_back(Item);
+        else
+          NewOperands.push_back(RHSo->getOperand(i));
       }
 
-      return DagInit::get(Val, "", args);
+      // Now run the operator and use its result as the new list item
+      const OpInit *NewOp = RHSo->clone(NewOperands);
+      Init *NewItem = NewOp->Fold(CurRec, CurMultiClass);
+      if (NewItem != NewOp)
+        Item = NewItem;
     }
-    if (MHSl) {
-      std::vector<Init *> NewOperands;
-      std::vector<Init *> NewList(MHSl->begin(), MHSl->end());
-
-      for (Init *&Item : NewList) {
-        NewOperands.clear();
-        for(int i = 0; i < RHSo->getNumOperands(); ++i) {
-          // First, replace the foreach variable with the list item
-          if (LHS->getAsString() == RHSo->getOperand(i)->getAsString())
-            NewOperands.push_back(Item);
-          else
-            NewOperands.push_back(RHSo->getOperand(i));
-        }
-
-        // Now run the operator and use its result as the new list item
-        const OpInit *NewOp = RHSo->clone(NewOperands);
-        Init *NewItem = NewOp->Fold(CurRec, CurMultiClass);
-        if (NewItem != NewOp)
-          Item = NewItem;
-      }
-      return ListInit::get(NewList, MHSl->getType());
-    }
+    return ListInit::get(NewList, MHSl->getType());
   }
   return nullptr;
 }
