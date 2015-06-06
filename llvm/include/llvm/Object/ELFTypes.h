@@ -154,6 +154,7 @@ struct Elf_Sym_Base<ELFType<TargetEndianness, true>> {
 template <class ELFT>
 struct Elf_Sym_Impl : Elf_Sym_Base<ELFT> {
   using Elf_Sym_Base<ELFT>::st_info;
+  using Elf_Sym_Base<ELFT>::st_shndx;
   using Elf_Sym_Base<ELFT>::st_other;
 
   // These accessors and mutators correspond to the ELF32_ST_BIND,
@@ -176,6 +177,28 @@ struct Elf_Sym_Impl : Elf_Sym_Base<ELFT> {
     assert(v < 4 && "Invalid value for visibility");
     st_other = (st_other & ~0x3) | v;
   }
+
+  bool isAbsolute() const { return st_shndx == ELF::SHN_ABS; }
+  bool isCommon() const {
+    return !isUndefined() &&
+           !(st_shndx >= ELF::SHN_LORESERVE && st_shndx < ELF::SHN_ABS);
+  }
+  bool isDefined() const {
+    return !isUndefined() &&
+           (!(st_shndx >= ELF::SHN_LORESERVE &&
+              st_shndx <= ELF::SHN_HIRESERVE) ||
+            st_shndx == ELF::SHN_XINDEX);
+  }
+  bool isProcessorSpecific() const {
+    return st_shndx >= ELF::SHN_LOPROC && st_shndx <= ELF::SHN_HIPROC;
+  }
+  bool isOSSpecific() const {
+    return st_shndx >= ELF::SHN_LOOS && st_shndx <= ELF::SHN_HIOS;
+  }
+  bool isReserved() const {
+    return st_shndx > ELF::SHN_HIOS && st_shndx < ELF::SHN_ABS;
+  }
+  bool isUndefined() const { return st_shndx == ELF::SHN_UNDEF; }
 };
 
 /// Elf_Versym: This is the structure of entries in the SHT_GNU_versym section
