@@ -258,6 +258,21 @@ public:
     return CommonAlign;
   }
 
+  /// Declare this symbol as being 'common'.
+  ///
+  /// \param Size - The size of the symbol.
+  /// \param Align - The alignment of the symbol.
+  /// \return True if symbol was already declared as a different type
+  bool declareCommon(uint64_t Size, unsigned Align) {
+    assert(isCommon() || getOffset() == 0);
+    if(isCommon()) {
+      if(CommonSize != Size || CommonAlign != Align)
+       return true;
+    } else
+      setCommon(Size, Align);
+    return false;
+  }
+
   /// Is this a 'common' symbol.
   bool isCommon() const { return CommonAlign != -1U; }
 

@@ -320,7 +320,9 @@ void MCELFStreamer::EmitCommonSymbol(MCSymbol *S, uint64_t Size,
     struct LocalCommon L = {Symbol, Size, ByteAlignment};
     LocalCommons.push_back(L);
   } else {
-    Symbol->setCommon(Size, ByteAlignment);
+    if(Symbol->declareCommon(Size, ByteAlignment))
+      report_fatal_error("Symbol: " + Symbol->getName() +
+                         " redeclared as different type");
   }
 
   cast<MCSymbolELF>(Symbol)
