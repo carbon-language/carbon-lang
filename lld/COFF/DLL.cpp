@@ -183,8 +183,8 @@ void IdataContents::create() {
       Hints.push_back(std::move(C));
     }
     // Terminate with null values.
-    Lookups.push_back(make_unique<NullChunk>(sizeof(uint64_t)));
-    Addresses.push_back(make_unique<NullChunk>(sizeof(uint64_t)));
+    Lookups.push_back(make_unique<NullChunk>(LookupChunkSize));
+    Addresses.push_back(make_unique<NullChunk>(LookupChunkSize));
 
     for (int I = 0, E = Syms.size(); I < E; ++I)
       Syms[I]->setLocation(Addresses[Base + I].get());
