@@ -70,6 +70,9 @@ static cl::opt<bool>
 PrintImmHex("print-imm-hex", cl::init(false),
             cl::desc("Prefer hex format for immediate values"));
 
+static cl::list<std::string>
+DefineSymbol("defsym", cl::desc("Defines a symbol to be an integer constant"));
+
 enum OutputFileType {
   OFT_Null,
   OFT_AssemblyFile,
@@ -316,6 +319,26 @@ static int AsLexInput(SourceMgr &SrcMgr, MCAsmInfo &MAI,
   return Error;
 }
 
+static int fillCommandLineSymbols(MCAsmParser &Parser){
+  for(auto &I: DefineSymbol){
+    auto Pair = StringRef(I).split('=');
+    if(Pair.second.empty()){
+      errs() << "error: defsym must be of the form: sym=value: " << I;
+      return 1;
+    }
+    int64_t Value;
+    if(Pair.second.getAsInteger(0, Value)){
+      errs() << "error: Value is not an integer: " << Pair.second;
+      return 1;
+    }
+    auto &Context = Parser.getContext();
+    auto Symbol = Context.getOrCreateSymbol(Pair.first);
+    Parser.getStreamer().EmitAssignment(Symbol,
+                                        MCConstantExpr::create(Value, Context));
+  }
+  return 0;
+}
+
 static int AssembleInput(const char *ProgName, const Target *TheTarget,
                          SourceMgr &SrcMgr, MCContext &Ctx, MCStreamer &Str,
                          MCAsmInfo &MAI, MCSubtargetInfo &STI,
@@ -331,6 +354,9 @@ static int AssembleInput(const char *ProgName, const Target *TheTarget,
     return 1;
   }
 
+  int SymbolResult = fillCommandLineSymbols(*Parser);
+  if(SymbolResult)
+    return SymbolResult;
   Parser->setShowParsedOperands(ShowInstOperands);
   Parser->setTargetParser(*TAP);
 
