@@ -190,3 +190,44 @@ It should also be easy to apply relocations and write chunks concurrently.
 We created an experimental multi-threaded linker using the Microsoft
 ConcRT concurrency library, and it was able to link itself in 0.5
 seconds, so we think the design is promising.
+
+Glossary
+--------
+
+* RVA
+
+  Short for Relative Virtual Address.
+
+  Windows executables or DLLs are not position-independent; they are
+  linked against a fixed address called an image base. RVAs are
+  offsets from an image base.
+
+  Default image bases are 0x140000000 for executables and 0x18000000
+  for DLLs. For example, when we are creating an executable, we assume
+  that the executable will be loaded at address 0x140000000 by the
+  loader, so we apply relocations accordingly. Result texts and data
+  will contain raw absolute addresses.
+
+* VA
+
+  Short for Virtual Address. Equivalent to RVA + image base. It is
+  rarely used. We almost always use RVAs instead.
+
+* Base relocations
+
+  Relocation information for the loader. If the loader decides to map
+  an executable or a DLL to a different address than their image
+  bases, it fixes up binaries using information contained in the base
+  relocation table. A base relocation table consists of a list of
+  locations containing addresses. The loader adds a difference between
+  RVA and actual load address to all locations listed there.
+
+  Note 1: This run-time relocation mechanism is very simple compared
+  to ELF. There's no PLT or GOT. Images are relocated as a whole just
+  by shifting entire images in memory by some offsets. Although doing
+  this breaks text sharing, I think this mechanism is not actually bad
+  on today's computers.
+
+  Note 2: We do not support base relocations yet. But if you were
+  wondering how Windows manages to load two images having conflicting
+  addresses into the same memory space, this is how it works.
