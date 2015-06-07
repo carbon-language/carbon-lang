@@ -4809,7 +4809,7 @@ SDValue DAGCombiner::visitCTPOP(SDNode *N) {
   EVT VT = N->getValueType(0);
 
   // fold (ctpop c1) -> c2
-  if (isa<ConstantSDNode>(N0))
+  if (isConstantIntBuildVectorOrConstantInt(N0))
     return DAG.getNode(ISD::CTPOP, SDLoc(N), VT, N0);
   return SDValue();
 }

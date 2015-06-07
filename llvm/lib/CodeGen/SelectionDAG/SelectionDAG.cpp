@@ -2910,7 +2910,8 @@ SDValue SelectionDAG::getNode(unsigned Opcode, SDLoc DL,
       case ISD::FP_TO_UINT:
       case ISD::TRUNCATE:
       case ISD::UINT_TO_FP:
-      case ISD::SINT_TO_FP: {
+      case ISD::SINT_TO_FP:
+      case ISD::CTPOP: {
         EVT SVT = VT.getScalarType();
         EVT InVT = BV->getValueType(0);
         EVT InSVT = InVT.getScalarType();
