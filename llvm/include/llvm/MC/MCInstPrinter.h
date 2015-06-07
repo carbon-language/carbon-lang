@@ -89,8 +89,8 @@ public:
   bool getPrintImmHex() const { return PrintImmHex; }
   void setPrintImmHex(bool Value) { PrintImmHex = Value; }
 
-  HexStyle::Style getPrintHexStyleHex() const { return PrintHexStyle; }
-  void setPrintImmHex(HexStyle::Style Value) { PrintHexStyle = Value; }
+  HexStyle::Style getPrintHexStyle() const { return PrintHexStyle; }
+  void setPrintHexStyle(HexStyle::Style Value) { PrintHexStyle = Value; }
 
   /// Utility function to print immediates in decimal or hex.
   format_object<int64_t> formatImm(int64_t Value) const {
