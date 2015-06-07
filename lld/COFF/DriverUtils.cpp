@@ -193,8 +193,7 @@ ArgParser::parse(std::vector<const char *> Argv) {
 
 ErrorOr<std::unique_ptr<llvm::opt::InputArgList>>
 ArgParser::parse(int Argc, const char *Argv[]) {
-  std::vector<const char *> V;
-  V.insert(V.end(), Argv + 1, Argv + Argc);
+  std::vector<const char *> V(Argv + 1, Argv + Argc);
   return parse(V);
 }
 
@@ -213,9 +212,7 @@ std::vector<const char *> ArgParser::tokenize(StringRef S) {
   SmallVector<const char *, 16> Tokens;
   BumpPtrStringSaver Saver(&Alloc);
   llvm::cl::TokenizeWindowsCommandLine(S, Saver, Tokens);
-  std::vector<const char *> V;
-  V.insert(V.end(), &Tokens[0], &Tokens[0] + Tokens.size());
-  return V;
+  return std::vector<const char *>(Tokens.begin(), Tokens.end());
 }
 
 // Creates a new command line by replacing options starting with '@'
