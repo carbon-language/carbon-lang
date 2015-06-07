@@ -76,14 +76,15 @@ def setup_lock_and_counter(lock, counter, total):
     test_counter = counter
     total_tests = total
 
-def update_status(name = None, output = None):
+def update_status(name = None, command = None, output = None):
     global output_lock, test_counter, total_tests
     with output_lock:
         if output is not None:
             print >> sys.stderr
-            print >> sys.stderr, 'Test suite %s failed' % name
-            print >> sys.stderr, 'stdout:\n' + output[0]
-            print >> sys.stderr, 'stderr:\n' + output[1]
+            print >> sys.stderr, "Failed test suite: %s" % name
+            print >> sys.stderr, "Command invoked: %s" % ' '.join(command)
+            print >> sys.stderr, "stdout:\n%s" % output[0]
+            print >> sys.stderr, "stderr:\n%s" % output[1]
         sys.stderr.write("\r%*d out of %d test suites processed" %
             (len(str(total_tests)), test_counter.value, total_tests))
         test_counter.value += 1
@@ -125,7 +126,7 @@ def call_with_timeout(command, timeout, name):
     output = process.communicate()
     exit_status = process.returncode
     passes, failures = parse_test_results(output)
-    update_status(name, output if exit_status != 0 else None)
+    update_status(name, command, output if exit_status != 0 else None)
     return exit_status, passes, failures
 
 def process_dir(root, files, test_root, dotest_argv):
