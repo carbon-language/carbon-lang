@@ -1351,7 +1351,7 @@ public:
 
   /// Return true if the named field is unset.
   bool isValueUnset(StringRef FieldName) const {
-    return getValueInit(FieldName) == UnsetInit::get();
+    return isa<UnsetInit>(getValueInit(FieldName));
   }
 
   /// getValueAsString - This method looks up the specified field and returns
