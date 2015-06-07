@@ -35,6 +35,29 @@ class InputFile;
 // Entry point of the COFF linker.
 bool link(int Argc, const char *Argv[]);
 
+class ArgParser {
+public:
+  // Parses command line options.
+  ErrorOr<std::unique_ptr<llvm::opt::InputArgList>> parse(int Argc,
+                                                          const char *Argv[]);
+
+  // Tokenizes a given string and then parses as command line options.
+  ErrorOr<std::unique_ptr<llvm::opt::InputArgList>> parse(StringRef S) {
+    return parse(tokenize(S));
+  }
+
+private:
+  ErrorOr<std::unique_ptr<llvm::opt::InputArgList>>
+  parse(std::vector<const char *> Argv);
+
+  std::vector<const char *> tokenize(StringRef S);
+
+  ErrorOr<std::vector<const char *>>
+  replaceResponseFiles(std::vector<const char *>);
+
+  StringAllocator Alloc;
+};
+
 class LinkerDriver {
 public:
  LinkerDriver() : SearchPaths(getSearchPaths()) {}
@@ -46,6 +69,7 @@ public:
 
 private:
   StringAllocator Alloc;
+  ArgParser Parser;
 
   // Opens a file. Path has to be resolved already.
   ErrorOr<std::unique_ptr<InputFile>> openFile(StringRef Path);
@@ -67,9 +91,6 @@ private:
   // InputFiles have MemoryBufferRefs to them.
   std::vector<std::unique_ptr<MemoryBuffer>> OwningMBs;
 };
-
-ErrorOr<std::unique_ptr<llvm::opt::InputArgList>>
-parseArgs(int Argc, const char *Argv[]);
 
 // Functions below this line are defined in DriverUtils.cpp.
 

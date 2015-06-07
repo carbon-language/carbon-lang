@@ -159,13 +159,24 @@ public:
   COFFOptTable() : OptTable(infoTable, llvm::array_lengthof(infoTable), true) {}
 };
 
+// Parses a given list of options.
 ErrorOr<std::unique_ptr<llvm::opt::InputArgList>>
-parseArgs(int Argc, const char *Argv[]) {
+ArgParser::parse(std::vector<const char *> Argv) {
+  // First, replace respnose files (@<file>-style options).
+  auto ArgvOrErr = replaceResponseFiles(Argv);
+  if (auto EC = ArgvOrErr.getError()) {
+    llvm::errs() << "error while reading response file: " << EC.message()
+                 << "\n";
+    return EC;
+  }
+  Argv = std::move(ArgvOrErr.get());
+
+  // Make InputArgList from string vectors.
   COFFOptTable Table;
   unsigned MissingIndex;
   unsigned MissingCount;
-  std::unique_ptr<llvm::opt::InputArgList> Args(
-      Table.ParseArgs(&Argv[1], &Argv[Argc], MissingIndex, MissingCount));
+  std::unique_ptr<llvm::opt::InputArgList> Args(Table.ParseArgs(
+      &Argv[0], &Argv[0] + Argv.size(), MissingIndex, MissingCount));
   if (MissingCount) {
     llvm::errs() << "missing arg value for \""
                  << Args->getArgString(MissingIndex)
@@ -176,6 +187,55 @@ parseArgs(int Argc, const char *Argv[]) {
   for (auto *Arg : Args->filtered(OPT_UNKNOWN))
     llvm::errs() << "ignoring unknown argument: " << Arg->getSpelling() << "\n";
   return std::move(Args);
+}
+
+ErrorOr<std::unique_ptr<llvm::opt::InputArgList>>
+ArgParser::parse(int Argc, const char *Argv[]) {
+  std::vector<const char *> V;
+  V.insert(V.end(), Argv + 1, Argv + Argc);
+  return parse(V);
+}
+
+namespace {
+class BumpPtrStringSaver : public llvm::cl::StringSaver {
+public:
+  BumpPtrStringSaver(lld::coff::StringAllocator *A) : Alloc(A) {}
+  const char *SaveString(const char *S) override {
+    return Alloc->save(S).data();
+  }
+  lld::coff::StringAllocator *Alloc;
+};
+}
+
+std::vector<const char *> ArgParser::tokenize(StringRef S) {
+  SmallVector<const char *, 16> Tokens;
+  BumpPtrStringSaver Saver(&Alloc);
+  llvm::cl::TokenizeWindowsCommandLine(S, Saver, Tokens);
+  std::vector<const char *> V;
+  V.insert(V.end(), &Tokens[0], &Tokens[0] + Tokens.size());
+  return V;
+}
+
+// Creates a new command line by replaceing options starting with '@'
+// character. '@<filename>' is replaced by the file's contents.
+ErrorOr<std::vector<const char *>>
+ArgParser::replaceResponseFiles(std::vector<const char *> Argv) {
+  std::vector<const char *> V;
+  for (const char *S : Argv) {
+    if (S[0] != '@') {
+      V.push_back(S);
+      continue;
+    }
+    StringRef Path = S + 1;
+    auto BufOrErr = MemoryBuffer::getFile(Path);
+    if (auto EC = BufOrErr.getError())
+      return EC;
+    std::unique_ptr<MemoryBuffer> Buf = std::move(BufOrErr.get());
+    StringRef Str = Alloc.save(Buf->getBuffer());
+    std::vector<const char *> Tokens = tokenize(Str);
+    V.insert(V.end(), Tokens.begin(), Tokens.end());
+  }
+  return V;
 }
 
 void printHelp(const char *Argv0) {

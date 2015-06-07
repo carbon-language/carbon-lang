@@ -77,31 +77,12 @@ ErrorOr<std::unique_ptr<InputFile>> LinkerDriver::openFile(StringRef Path) {
   return std::unique_ptr<InputFile>(new ObjectFile(MBRef));
 }
 
-namespace {
-class BumpPtrStringSaver : public llvm::cl::StringSaver {
-public:
-  BumpPtrStringSaver(lld::coff::StringAllocator *A) : Alloc(A) {}
-  const char *SaveString(const char *S) override {
-    return Alloc->save(S).data();
-  }
-  lld::coff::StringAllocator *Alloc;
-};
-}
-
 // Parses .drectve section contents and returns a list of files
 // specified by /defaultlib.
 std::error_code
 LinkerDriver::parseDirectives(StringRef S,
                               std::vector<std::unique_ptr<InputFile>> *Res) {
-  SmallVector<const char *, 16> Tokens;
-  Tokens.push_back("link"); // argv[0] value. Will be ignored.
-  BumpPtrStringSaver Saver(&Alloc);
-  llvm::cl::TokenizeWindowsCommandLine(S, Saver, Tokens);
-  Tokens.push_back(nullptr);
-  int Argc = Tokens.size() - 1;
-  const char **Argv = &Tokens[0];
-
-  auto ArgsOrErr = parseArgs(Argc, Argv);
+  auto ArgsOrErr = Parser.parse(S);
   if (auto EC = ArgsOrErr.getError())
     return EC;
   std::unique_ptr<llvm::opt::InputArgList> Args = std::move(ArgsOrErr.get());
@@ -204,7 +185,7 @@ bool LinkerDriver::link(int Argc, const char *Argv[]) {
   llvm::InitializeAllDisassemblers();
 
   // Parse command line options.
-  auto ArgsOrErr = parseArgs(Argc, Argv);
+  auto ArgsOrErr = Parser.parse(Argc, Argv);
   if (auto EC = ArgsOrErr.getError()) {
     llvm::errs() << EC.message() << "\n";
     return false;
