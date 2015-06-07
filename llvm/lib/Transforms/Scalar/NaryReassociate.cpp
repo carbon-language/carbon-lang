@@ -317,8 +317,10 @@ static bool isGEPFoldable(GetElementPtrInst *GEP,
       BaseOffset += DL->getStructLayout(STy)->getElementOffset(Field);
     }
   }
+
+  unsigned AddrSpace = GEP->getPointerAddressSpace();
   return TTI->isLegalAddressingMode(GEP->getType()->getElementType(), BaseGV,
-                                    BaseOffset, HasBaseReg, Scale);
+                                    BaseOffset, HasBaseReg, Scale, AddrSpace);
 }
 
 Instruction *NaryReassociate::tryReassociateGEP(GetElementPtrInst *GEP) {
