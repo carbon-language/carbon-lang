@@ -4,6 +4,7 @@ add_public_tablegen_target(COFFOptionsTableGen)
 
 add_llvm_library(lldCOFF
   Chunks.cpp
+  DLL.cpp
   Driver.cpp
   DriverUtils.cpp
   InputFiles.cpp

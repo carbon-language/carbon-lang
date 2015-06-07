@@ -26,9 +26,6 @@ using llvm::RoundUpToAlignment;
 namespace lld {
 namespace coff {
 
-const size_t LookupChunk::Size = sizeof(uint64_t);
-const size_t DirectoryChunk::Size = sizeof(ImportDirectoryTableEntry);
-
 SectionChunk::SectionChunk(ObjectFile *F, const coff_section *H, uint32_t SI)
     : File(F), Header(H), SectionIndex(SI) {
   // Initialize SectionName.
@@ -168,110 +165,6 @@ void ImportThunkChunk::writeTo(uint8_t *Buf) {
   // The first two bytes is a JMP instruction. Fill its operand.
   uint32_t Operand = ImpSymbol->getRVA() - RVA - getSize();
   write32le(Buf + FileOff + 2, Operand);
-}
-
-size_t HintNameChunk::getSize() const {
-  // Starts with 2 byte Hint field, followed by a null-terminated string,
-  // ends with 0 or 1 byte padding.
-  return RoundUpToAlignment(Name.size() + 3, 2);
-}
-
-void HintNameChunk::writeTo(uint8_t *Buf) {
-  write16le(Buf + FileOff, Hint);
-  memcpy(Buf + FileOff + 2, Name.data(), Name.size());
-}
-
-void LookupChunk::writeTo(uint8_t *Buf) {
-  write32le(Buf + FileOff, HintName->getRVA());
-}
-
-void OrdinalOnlyChunk::writeTo(uint8_t *Buf) {
-  // An import-by-ordinal slot has MSB 1 to indicate that
-  // this is import-by-ordinal (and not import-by-name).
-  write64le(Buf + FileOff, (uint64_t(1) << 63) | Ordinal);
-}
-
-void DirectoryChunk::writeTo(uint8_t *Buf) {
-  auto *E = (coff_import_directory_table_entry *)(Buf + FileOff);
-  E->ImportLookupTableRVA = LookupTab->getRVA();
-  E->NameRVA = DLLName->getRVA();
-  E->ImportAddressTableRVA = AddressTab->getRVA();
-}
-
-// Returns a list of .idata contents.
-// See Microsoft PE/COFF spec 5.4 for details.
-std::vector<Chunk *> IdataContents::getChunks() {
-  create();
-  std::vector<Chunk *> V;
-  // The loader assumes a specific order of data.
-  // Add each type in the correct order.
-  for (std::unique_ptr<Chunk> &C : Dirs)
-    V.push_back(C.get());
-  for (std::unique_ptr<Chunk> &C : Lookups)
-    V.push_back(C.get());
-  for (std::unique_ptr<Chunk> &C : Addresses)
-    V.push_back(C.get());
-  for (std::unique_ptr<Chunk> &C : Hints)
-    V.push_back(C.get());
-  for (auto &P : DLLNames) {
-    std::unique_ptr<Chunk> &C = P.second;
-    V.push_back(C.get());
-  }
-  return V;
-}
-
-void IdataContents::create() {
-  // Group DLL-imported symbols by DLL name because that's how
-  // symbols are layed out in the import descriptor table.
-  std::map<StringRef, std::vector<DefinedImportData *>> Map;
-  for (DefinedImportData *Sym : Imports)
-    Map[Sym->getDLLName()].push_back(Sym);
-
-  // Create .idata contents for each DLL.
-  for (auto &P : Map) {
-    StringRef Name = P.first;
-    std::vector<DefinedImportData *> &Syms = P.second;
-
-    // Sort symbols by name for each group.
-    std::sort(Syms.begin(), Syms.end(),
-              [](DefinedImportData *A, DefinedImportData *B) {
-                return A->getName() < B->getName();
-              });
-
-    // Create lookup and address tables. If they have external names,
-    // we need to create HintName chunks to store the names.
-    // If they don't (if they are import-by-ordinals), we store only
-    // ordinal values to the table.
-    size_t Base = Lookups.size();
-    for (DefinedImportData *S : Syms) {
-      uint16_t Ord = S->getOrdinal();
-      if (S->getExternalName().empty()) {
-        Lookups.push_back(make_unique<OrdinalOnlyChunk>(Ord));
-        Addresses.push_back(make_unique<OrdinalOnlyChunk>(Ord));
-        continue;
-      }
-      auto C = make_unique<HintNameChunk>(S->getExternalName(), Ord);
-      Lookups.push_back(make_unique<LookupChunk>(C.get()));
-      Addresses.push_back(make_unique<LookupChunk>(C.get()));
-      Hints.push_back(std::move(C));
-    }
-    // Terminate with null values.
-    Lookups.push_back(make_unique<NullChunk>(sizeof(uint64_t)));
-    Addresses.push_back(make_unique<NullChunk>(sizeof(uint64_t)));
-
-    for (int I = 0, E = Syms.size(); I < E; ++I)
-      Syms[I]->setLocation(Addresses[Base + I].get());
-
-    // Create the import table header.
-    if (!DLLNames.count(Name))
-      DLLNames[Name] = make_unique<StringChunk>(Name);
-    auto Dir = make_unique<DirectoryChunk>(DLLNames[Name].get());
-    Dir->LookupTab = Lookups[Base].get();
-    Dir->AddressTab = Addresses[Base].get();
-    Dirs.push_back(std::move(Dir));
-  }
-  // Add null terminator.
-  Dirs.push_back(make_unique<NullChunk>(DirectoryChunk::Size));
 }
 
 } // namespace coff

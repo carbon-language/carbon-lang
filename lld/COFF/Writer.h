@@ -10,6 +10,7 @@
 #ifndef LLD_COFF_WRITER_H
 #define LLD_COFF_WRITER_H
 
+#include "DLL.h"
 #include "InputFiles.h"
 #include "SymbolTable.h"
 #include "llvm/Support/FileOutputBuffer.h"
