@@ -305,7 +305,8 @@ public:
   /// mode is legal for a load/store of any legal type.
   /// TODO: Handle pre/postinc as well.
   bool isLegalAddressingMode(Type *Ty, GlobalValue *BaseGV, int64_t BaseOffset,
-                             bool HasBaseReg, int64_t Scale) const;
+                             bool HasBaseReg, int64_t Scale,
+                             unsigned AddrSpace = 0) const;
 
   /// \brief Return true if the target works with masked instruction
   /// AVX2 allows masks for consecutive load and store for i32 and i64 elements.
@@ -321,7 +322,8 @@ public:
   /// If the AM is not supported, it returns a negative value.
   /// TODO: Handle pre/postinc as well.
   int getScalingFactorCost(Type *Ty, GlobalValue *BaseGV, int64_t BaseOffset,
-                           bool HasBaseReg, int64_t Scale) const;
+                           bool HasBaseReg, int64_t Scale,
+                           unsigned AddrSpace = 0) const;
 
   /// \brief Return true if it's free to truncate a value of type Ty1 to type
   /// Ty2. e.g. On x86 it's free to truncate a i32 value in register EAX to i16
@@ -541,12 +543,13 @@ public:
   virtual bool isLegalICmpImmediate(int64_t Imm) = 0;
   virtual bool isLegalAddressingMode(Type *Ty, GlobalValue *BaseGV,
                                      int64_t BaseOffset, bool HasBaseReg,
-                                     int64_t Scale) = 0;
+                                     int64_t Scale,
+                                     unsigned AddrSpace) = 0;
   virtual bool isLegalMaskedStore(Type *DataType, int Consecutive) = 0;
   virtual bool isLegalMaskedLoad(Type *DataType, int Consecutive) = 0;
   virtual int getScalingFactorCost(Type *Ty, GlobalValue *BaseGV,
                                    int64_t BaseOffset, bool HasBaseReg,
-                                   int64_t Scale) = 0;
+                                   int64_t Scale, unsigned AddrSpace) = 0;
   virtual bool isTruncateFree(Type *Ty1, Type *Ty2) = 0;
   virtual bool isProfitableToHoist(Instruction *I) = 0;
   virtual bool isTypeLegal(Type *Ty) = 0;
@@ -650,9 +653,10 @@ public:
     return Impl.isLegalICmpImmediate(Imm);
   }
   bool isLegalAddressingMode(Type *Ty, GlobalValue *BaseGV, int64_t BaseOffset,
-                             bool HasBaseReg, int64_t Scale) override {
+                             bool HasBaseReg, int64_t Scale,
+                             unsigned AddrSpace) override {
     return Impl.isLegalAddressingMode(Ty, BaseGV, BaseOffset, HasBaseReg,
-                                      Scale);
+                                      Scale, AddrSpace);
   }
   bool isLegalMaskedStore(Type *DataType, int Consecutive) override {
     return Impl.isLegalMaskedStore(DataType, Consecutive);
@@ -661,8 +665,10 @@ public:
     return Impl.isLegalMaskedLoad(DataType, Consecutive);
   }
   int getScalingFactorCost(Type *Ty, GlobalValue *BaseGV, int64_t BaseOffset,
-                           bool HasBaseReg, int64_t Scale) override {
-    return Impl.getScalingFactorCost(Ty, BaseGV, BaseOffset, HasBaseReg, Scale);
+                           bool HasBaseReg, int64_t Scale,
+                           unsigned AddrSpace) override {
+    return Impl.getScalingFactorCost(Ty, BaseGV, BaseOffset, HasBaseReg,
+                                     Scale, AddrSpace);
   }
   bool isTruncateFree(Type *Ty1, Type *Ty2) override {
     return Impl.isTruncateFree(Ty1, Ty2);

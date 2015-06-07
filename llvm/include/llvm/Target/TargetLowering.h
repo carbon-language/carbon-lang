@@ -1462,7 +1462,7 @@ public:
   ///
   /// TODO: Remove default argument
   virtual bool isLegalAddressingMode(const AddrMode &AM, Type *Ty,
-                                     unsigned AddrSpace = 0) const;
+                                     unsigned AddrSpace) const;
 
   /// \brief Return the cost of the scaling factor used in the addressing mode
   /// represented by AM for this target, for a load/store of the specified type.

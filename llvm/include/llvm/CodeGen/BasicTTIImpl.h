@@ -125,23 +125,24 @@ public:
   }
 
   bool isLegalAddressingMode(Type *Ty, GlobalValue *BaseGV, int64_t BaseOffset,
-                             bool HasBaseReg, int64_t Scale) {
+                             bool HasBaseReg, int64_t Scale,
+                             unsigned AddrSpace) {
     TargetLoweringBase::AddrMode AM;
     AM.BaseGV = BaseGV;
     AM.BaseOffs = BaseOffset;
     AM.HasBaseReg = HasBaseReg;
     AM.Scale = Scale;
-    return getTLI()->isLegalAddressingMode(AM, Ty);
+    return getTLI()->isLegalAddressingMode(AM, Ty, AddrSpace);
   }
 
   int getScalingFactorCost(Type *Ty, GlobalValue *BaseGV, int64_t BaseOffset,
-                           bool HasBaseReg, int64_t Scale) {
+                           bool HasBaseReg, int64_t Scale, unsigned AddrSpace) {
     TargetLoweringBase::AddrMode AM;
     AM.BaseGV = BaseGV;
     AM.BaseOffs = BaseOffset;
     AM.HasBaseReg = HasBaseReg;
     AM.Scale = Scale;
-    return getTLI()->getScalingFactorCost(AM, Ty);
+    return getTLI()->getScalingFactorCost(AM, Ty, AddrSpace);
   }
 
   bool isTruncateFree(Type *Ty1, Type *Ty2) {
