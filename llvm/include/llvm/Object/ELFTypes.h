@@ -180,14 +180,11 @@ struct Elf_Sym_Impl : Elf_Sym_Base<ELFT> {
 
   bool isAbsolute() const { return st_shndx == ELF::SHN_ABS; }
   bool isCommon() const {
-    return !isUndefined() &&
-           !(st_shndx >= ELF::SHN_LORESERVE && st_shndx < ELF::SHN_ABS);
+    return getType() == ELF::STT_COMMON || st_shndx == ELF::SHN_COMMON;
   }
   bool isDefined() const {
     return !isUndefined() &&
-           (!(st_shndx >= ELF::SHN_LORESERVE &&
-              st_shndx <= ELF::SHN_HIRESERVE) ||
-            st_shndx == ELF::SHN_XINDEX);
+           !(st_shndx >= ELF::SHN_LORESERVE && st_shndx < ELF::SHN_ABS);
   }
   bool isProcessorSpecific() const {
     return st_shndx >= ELF::SHN_LOPROC && st_shndx <= ELF::SHN_HIPROC;
