@@ -30,8 +30,8 @@ using namespace llvm::support::endian;
 using namespace llvm::COFF;
 using llvm::RoundUpToAlignment;
 
-const size_t LookupChunkSize = sizeof(uint64_t);
-const size_t DirectoryChunkSize = sizeof(ImportDirectoryTableEntry);
+static const size_t LookupChunkSize = sizeof(uint64_t);
+static const size_t DirectoryChunkSize = sizeof(ImportDirectoryTableEntry);
 
 namespace lld {
 namespace coff {
