@@ -32,6 +32,8 @@
 
 using namespace llvm::COFF;
 using namespace llvm;
+using llvm::cl::ExpandResponseFiles;
+using llvm::cl::TokenizeWindowsCommandLine;
 using llvm::sys::Process;
 
 namespace lld {
@@ -216,26 +218,14 @@ std::vector<const char *> ArgParser::tokenize(StringRef S) {
   return V;
 }
 
-// Creates a new command line by replaceing options starting with '@'
+// Creates a new command line by replacing options starting with '@'
 // character. '@<filename>' is replaced by the file's contents.
 ErrorOr<std::vector<const char *>>
 ArgParser::replaceResponseFiles(std::vector<const char *> Argv) {
-  std::vector<const char *> V;
-  for (const char *S : Argv) {
-    if (S[0] != '@') {
-      V.push_back(S);
-      continue;
-    }
-    StringRef Path = S + 1;
-    auto BufOrErr = MemoryBuffer::getFile(Path);
-    if (auto EC = BufOrErr.getError())
-      return EC;
-    std::unique_ptr<MemoryBuffer> Buf = std::move(BufOrErr.get());
-    StringRef Str = Alloc.save(Buf->getBuffer());
-    std::vector<const char *> Tokens = tokenize(Str);
-    V.insert(V.end(), Tokens.begin(), Tokens.end());
-  }
-  return V;
+  SmallVector<const char *, 256> Tokens(&Argv[0], &Argv[0] + Argv.size());
+  BumpPtrStringSaver Saver(&Alloc);
+  ExpandResponseFiles(Saver, TokenizeWindowsCommandLine, Tokens);
+  return std::vector<const char *>(Tokens.begin(), Tokens.end());
 }
 
 void printHelp(const char *Argv0) {
