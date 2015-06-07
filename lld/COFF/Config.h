@@ -29,6 +29,7 @@ public:
   bool Verbose = false;
   WindowsSubsystem Subsystem = llvm::COFF::IMAGE_SUBSYSTEM_UNKNOWN;
   StringRef EntryName;
+  std::string OutputFile;
 
   // Symbols in this set are considered as live by the garbage collector.
   std::set<StringRef> GCRoots;

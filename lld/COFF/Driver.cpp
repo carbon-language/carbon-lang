@@ -49,17 +49,11 @@ bool link(int Argc, const char *Argv[]) {
   return Driver->link(Argc, Argv);
 }
 
-static std::string getOutputPath(llvm::opt::InputArgList *Args) {
-  if (auto *Arg = Args->getLastArg(OPT_out))
-    return Arg->getValue();
-  for (auto *Arg : Args->filtered(OPT_INPUT)) {
-    if (!StringRef(Arg->getValue()).endswith_lower(".obj"))
-      continue;
-    SmallString<128> Val = StringRef(Arg->getValue());
-    llvm::sys::path::replace_extension(Val, ".exe");
-    return Val.str();
-  }
-  llvm_unreachable("internal error");
+// Drop directory components and replace extension with ".exe".
+static std::string getOutputPath(StringRef Path) {
+  auto P = Path.find_last_of("\\/");
+  StringRef S = (P == StringRef::npos) ? Path : Path.substr(P + 1);
+  return (S.substr(0, S.rfind('.')) + ".exe").str();
 }
 
 // Opens a file. Path has to be resolved already.
@@ -78,6 +72,8 @@ ErrorOr<std::unique_ptr<InputFile>> LinkerDriver::openFile(StringRef Path) {
     return std::unique_ptr<InputFile>(new ArchiveFile(MBRef));
   if (Magic == file_magic::bitcode)
     return std::unique_ptr<InputFile>(new BitcodeFile(MBRef));
+  if (Config->OutputFile == "")
+    Config->OutputFile = getOutputPath(Path);
   return std::unique_ptr<InputFile>(new ObjectFile(MBRef));
 }
 
@@ -225,6 +221,10 @@ bool LinkerDriver::link(int Argc, const char *Argv[]) {
     llvm::errs() << "no input files.\n";
     return false;
   }
+
+  // Handle /out
+  if (auto *Arg = Args->getLastArg(OPT_out))
+    Config->OutputFile = Arg->getValue();
 
   // Handle /verbose
   if (Args->hasArg(OPT_verbose))
@@ -412,7 +412,7 @@ bool LinkerDriver::link(int Argc, const char *Argv[]) {
 
   // Write the result.
   Writer Out(&Symtab);
-  if (auto EC = Out.write(getOutputPath(Args.get()))) {
+  if (auto EC = Out.write(Config->OutputFile)) {
     llvm::errs() << EC.message() << "\n";
     return false;
   }
