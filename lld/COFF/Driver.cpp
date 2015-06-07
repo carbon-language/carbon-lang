@@ -283,6 +283,21 @@ bool LinkerDriver::link(int Argc, const char *Argv[]) {
     }
   }
 
+  // Handle /opt
+  for (auto *Arg : Args->filtered(OPT_opt)) {
+    std::string S = StringRef(Arg->getValue()).lower();
+    if (S == "noref") {
+      Config->DoGC = false;
+      continue;
+    }
+    if (S != "ref" && S != "icf" && S != "noicf" &&
+        S != "lbr" && S != "nolbr" &&
+        !StringRef(S).startswith("icf=")) {
+      llvm::errs() << "/opt: unknown option: " << S << "\n";
+      return false;
+    }
+  }
+
   // Handle /failifmismatch
   if (auto EC = checkFailIfMismatch(Args.get())) {
     llvm::errs() << "/failifmismatch: " << EC.message() << "\n";

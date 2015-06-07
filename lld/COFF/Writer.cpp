@@ -101,6 +101,8 @@ void OutputSection::writeHeaderTo(uint8_t *Buf) {
 // COMDAT chunks will be ignored in the next step, so that they don't
 // come to the final output file.
 void Writer::markLive() {
+  if (!Config->DoGC)
+    return;
   for (StringRef Name : Config->GCRoots)
     cast<Defined>(Symtab->find(Name))->markLive();
   for (Chunk *C : Symtab->getChunks())
@@ -113,7 +115,7 @@ void Writer::createSections() {
   // First, bin chunks by name.
   std::map<StringRef, std::vector<Chunk *>> Map;
   for (Chunk *C : Symtab->getChunks()) {
-    if (!C->isLive()) {
+    if (Config->DoGC && !C->isLive()) {
       if (Config->Verbose)
         C->printDiscardedMessage();
       continue;
