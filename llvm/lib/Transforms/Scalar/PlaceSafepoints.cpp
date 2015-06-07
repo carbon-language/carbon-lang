@@ -496,7 +496,7 @@ template <typename T> static void unique_unsorted(std::vector<T> &vec) {
   }
 }
 
-static std::string GCSafepointPollName("gc.safepoint_poll");
+static const char *const GCSafepointPollName = "gc.safepoint_poll";
 
 static bool isGCSafepointPoll(Function &F) {
   return F.getName().equals(GCSafepointPollName);
