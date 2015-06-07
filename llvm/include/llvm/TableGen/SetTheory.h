@@ -58,7 +58,6 @@ namespace llvm {
 class DagInit;
 class Init;
 class Record;
-class RecordKeeper;
 
 class SetTheory {
 public:
