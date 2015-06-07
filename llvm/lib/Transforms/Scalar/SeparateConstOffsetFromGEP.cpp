@@ -852,9 +852,11 @@ bool SeparateConstOffsetFromGEP::splitGEP(GetElementPtrInst *GEP) {
     TargetTransformInfo &TTI =
         getAnalysis<TargetTransformInfoWrapperPass>().getTTI(
             *GEP->getParent()->getParent());
+    unsigned AddrSpace = GEP->getPointerAddressSpace();
     if (!TTI.isLegalAddressingMode(GEP->getType()->getElementType(),
                                    /*BaseGV=*/nullptr, AccumulativeByteOffset,
-                                   /*HasBaseReg=*/true, /*Scale=*/0)) {
+                                   /*HasBaseReg=*/true, /*Scale=*/0,
+                                   AddrSpace)) {
       return Changed;
     }
   }
