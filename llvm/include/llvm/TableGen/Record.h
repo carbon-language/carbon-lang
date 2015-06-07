@@ -1182,13 +1182,6 @@ class Record {
 
 public:
   // Constructs a record.
-  explicit Record(const std::string &N, ArrayRef<SMLoc> locs,
-                  RecordKeeper &records, bool Anonymous = false) :
-    ID(LastID++), Name(StringInit::get(N)), Locs(locs.begin(), locs.end()),
-    TrackedRecords(records), TheInit(nullptr), IsAnonymous(Anonymous),
-    ResolveFirst(false) {
-    init();
-  }
   explicit Record(Init *N, ArrayRef<SMLoc> locs, RecordKeeper &records,
                   bool Anonymous = false) :
     ID(LastID++), Name(N), Locs(locs.begin(), locs.end()),
@@ -1196,6 +1189,10 @@ public:
     ResolveFirst(false) {
     init();
   }
+  explicit Record(const std::string &N, ArrayRef<SMLoc> locs,
+                  RecordKeeper &records, bool Anonymous = false)
+    : Record(StringInit::get(N), locs, records, Anonymous) {}
+
 
   // When copy-constructing a Record, we must still guarantee a globally unique
   // ID number.  All other fields can be copied normally.
