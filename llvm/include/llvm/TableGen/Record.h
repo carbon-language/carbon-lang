@@ -1503,7 +1503,6 @@ struct LessRecordFieldName {
 };
 
 struct LessRecordRegister {
-  static size_t min(size_t a, size_t b) { return a < b ? a : b; }
   static bool ascii_isdigit(char x) { return x >= '0' && x <= '9'; }
 
   struct RecordParts {
