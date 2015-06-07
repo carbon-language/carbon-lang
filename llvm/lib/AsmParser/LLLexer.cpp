@@ -252,7 +252,7 @@ void LLLexer::SkipLineComment() {
   }
 }
 
-/// LexAt - Lex all tokens that start with an @ character:
+/// Lex all tokens that start with an @ character.
 ///   GlobalVar   @\"[^\"]*\"
 ///   GlobalVar   @[-a-zA-Z$._][-a-zA-Z$._0-9]*
 ///   GlobalVarID @[0-9]+
@@ -375,7 +375,7 @@ lltok::Kind LLLexer::LexVar(lltok::Kind Var, lltok::Kind VarID) {
   return lltok::Error;
 }
 
-/// LexPercent - Lex all tokens that start with a % character:
+/// Lex all tokens that start with a % character.
 ///   LocalVar   ::= %\"[^\"]*\"
 ///   LocalVar   ::= %[-a-zA-Z$._][-a-zA-Z$._0-9]*
 ///   LocalVarID ::= %[0-9]+
@@ -383,7 +383,7 @@ lltok::Kind LLLexer::LexPercent() {
   return LexVar(lltok::LocalVar, lltok::LocalVarID);
 }
 
-/// LexQuote - Lex all tokens that start with a " character:
+/// Lex all tokens that start with a " character.
 ///   QuoteLabel        "[^"]+":
 ///   StringConstant    "[^"]*"
 lltok::Kind LLLexer::LexQuote() {
@@ -404,7 +404,7 @@ lltok::Kind LLLexer::LexQuote() {
   return kind;
 }
 
-/// LexExclaim:
+/// Lex all tokens that start with a ! character.
 ///    !foo
 ///    !
 lltok::Kind LLLexer::LexExclaim() {
@@ -425,7 +425,7 @@ lltok::Kind LLLexer::LexExclaim() {
   return lltok::exclaim;
 }
 
-/// LexHash - Lex all tokens that start with a # character:
+/// Lex all tokens that start with a # character.
 ///    AttrGrpID ::= #[0-9]+
 lltok::Kind LLLexer::LexHash() {
   // Handle AttrGrpID: #[0-9]+
@@ -443,7 +443,7 @@ lltok::Kind LLLexer::LexHash() {
   return lltok::Error;
 }
 
-/// LexIdentifier: Handle several related productions:
+/// Lex a label, integer type, keyword, or hexadecimal integer constant.
 ///    Label           [-a-zA-Z$._0-9]+:
 ///    IntegerType     i[0-9]+
 ///    Keyword         sdiv, float, ...
@@ -800,9 +800,8 @@ lltok::Kind LLLexer::LexIdentifier() {
   return lltok::Error;
 }
 
-
-/// Lex0x: Handle productions that start with 0x, knowing that it matches and
-/// that this is not a label:
+/// Lex all tokens that start with a 0x prefix, knowing they match and are not
+/// labels.
 ///    HexFPConstant     0x[0-9A-Fa-f]+
 ///    HexFP80Constant   0xK[0-9A-Fa-f]+
 ///    HexFP128Constant  0xL[0-9A-Fa-f]+
@@ -860,7 +859,7 @@ lltok::Kind LLLexer::Lex0x() {
   }
 }
 
-/// LexIdentifier: Handle several related productions:
+/// Lex tokens for a label or a numeric constant, possibly starting with -.
 ///    Label             [-a-zA-Z$._0-9]+:
 ///    NInteger          -[0-9]+
 ///    FPConstant        [-+]?[0-9]+[.][0-9]*([eE][-+]?[0-9]+)?
@@ -938,6 +937,7 @@ lltok::Kind LLLexer::LexDigitOrNegative() {
   return lltok::APFloat;
 }
 
+/// Lex a floating point constant starting with +.
 ///    FPConstant  [-+]?[0-9]+[.][0-9]*([eE][-+]?[0-9]+)?
 lltok::Kind LLLexer::LexPositive() {
   // If the letter after the negative is a number, this is probably not a
