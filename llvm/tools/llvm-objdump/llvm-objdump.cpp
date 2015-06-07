@@ -149,6 +149,10 @@ static cl::alias
 PrivateHeadersShort("p", cl::desc("Alias for --private-headers"),
                     cl::aliasopt(PrivateHeaders));
 
+cl::opt<bool>
+    llvm::PrintImmHex("print-imm-hex",
+                      cl::desc("Use hex format for immediate values"));
+
 static StringRef ToolName;
 static int ReturnValue = EXIT_SUCCESS;
 
@@ -743,6 +747,7 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
       << '\n';
     return;
   }
+  IP->setPrintImmHex(PrintImmHex);
   PrettyPrinter &PIP = selectPrettyPrinter(Triple(TripleName));
 
   StringRef Fmt = Obj->getBytesInAddress() > 4 ? "\t\t%016" PRIx64 ":  " :

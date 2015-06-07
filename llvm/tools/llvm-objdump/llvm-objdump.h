@@ -51,6 +51,7 @@ extern cl::opt<bool> SectionHeaders;
 extern cl::opt<bool> SectionContents;
 extern cl::opt<bool> SymbolTable;
 extern cl::opt<bool> UnwindInfo;
+extern cl::opt<bool> PrintImmHex;
 
 // Various helper functions.
 bool error(std::error_code ec);

@@ -67,10 +67,6 @@ static cl::opt<bool> FullLeadingAddr("full-leading-addr",
 static cl::opt<bool> NoLeadingAddr("no-leading-addr",
                                    cl::desc("Print no leading address"));
 
-static cl::opt<bool>
-    PrintImmHex("print-imm-hex",
-                cl::desc("Use hex format for immediate values"));
-
 cl::opt<bool> llvm::UniversalHeaders("universal-headers",
                                      cl::desc("Print Mach-O universal headers "
                                               "(requires -macho)"));
