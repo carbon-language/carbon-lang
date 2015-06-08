@@ -105,7 +105,7 @@ namespace ShaderType {
 /// a separate piece of memory that is unique from other
 /// memory locations.
 namespace AMDGPUAS {
-enum AddressSpaces {
+enum AddressSpaces : unsigned {
   PRIVATE_ADDRESS  = 0, ///< Address space for private memory.
   GLOBAL_ADDRESS   = 1, ///< Address space for global memory (RAT0, VTX0).
   CONSTANT_ADDRESS = 2, ///< Address space for constant memory
