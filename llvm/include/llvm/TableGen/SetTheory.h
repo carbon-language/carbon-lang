@@ -47,9 +47,10 @@
 #ifndef LLVM_TABLEGEN_SETTHEORY_H
 #define LLVM_TABLEGEN_SETTHEORY_H
 
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/StringMap.h"
-#include "llvm/Support/SourceMgr.h"
+#include "llvm/Support/SMLoc.h"
 #include <map>
 #include <vector>
 
