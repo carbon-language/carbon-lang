@@ -290,17 +290,6 @@ public:
   /// Is this a 'common' symbol.
   bool isCommon() const { return CommonAlign != -1U; }
 
-  /// Get the (implementation defined) symbol flags.
-  uint32_t getFlags() const { return Flags; }
-
-  /// Set the (implementation defined) symbol flags.
-  void setFlags(uint32_t Value) const { Flags = Value; }
-
-  /// Modify the flags via a mask
-  void modifyFlags(uint32_t Value, uint32_t Mask) const {
-    Flags = (Flags & ~Mask) | Value;
-  }
-
   MCFragment *getFragment() const {
     if (!HasFragment)
       return nullptr;
@@ -322,6 +311,18 @@ public:
 
   /// dump - Print the value to stderr.
   void dump() const;
+
+protected:
+  /// Get the (implementation defined) symbol flags.
+  uint32_t getFlags() const { return Flags; }
+
+  /// Set the (implementation defined) symbol flags.
+  void setFlags(uint32_t Value) const { Flags = Value; }
+
+  /// Modify the flags via a mask
+  void modifyFlags(uint32_t Value, uint32_t Mask) const {
+    Flags = (Flags & ~Mask) | Value;
+  }
 };
 
 inline raw_ostream &operator<<(raw_ostream &OS, const MCSymbol &Sym) {
