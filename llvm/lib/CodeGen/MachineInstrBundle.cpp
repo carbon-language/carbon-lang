@@ -23,11 +23,15 @@ namespace {
   class UnpackMachineBundles : public MachineFunctionPass {
   public:
     static char ID; // Pass identification
-    UnpackMachineBundles() : MachineFunctionPass(ID) {
+    UnpackMachineBundles(std::function<bool(const Function &)> Ftor = nullptr)
+        : MachineFunctionPass(ID), PredicateFtor(Ftor) {
       initializeUnpackMachineBundlesPass(*PassRegistry::getPassRegistry());
     }
 
     bool runOnMachineFunction(MachineFunction &MF) override;
+
+  private:
+    std::function<bool(const Function &)> PredicateFtor;
   };
 } // end anonymous namespace
 
@@ -37,6 +41,9 @@ INITIALIZE_PASS(UnpackMachineBundles, "unpack-mi-bundles",
                 "Unpack machine instruction bundles", false, false)
 
 bool UnpackMachineBundles::runOnMachineFunction(MachineFunction &MF) {
+  if (PredicateFtor && !PredicateFtor(*MF.getFunction()))
+    return false;
+
   bool Changed = false;
   for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I) {
     MachineBasicBlock *MBB = &*I;
@@ -69,6 +76,10 @@ bool UnpackMachineBundles::runOnMachineFunction(MachineFunction &MF) {
   return Changed;
 }
 
+FunctionPass *
+llvm::createUnpackMachineBundles(std::function<bool(const Function &)> Ftor) {
+  return new UnpackMachineBundles(Ftor);
+}
 
 namespace {
   class FinalizeMachineBundles : public MachineFunctionPass {

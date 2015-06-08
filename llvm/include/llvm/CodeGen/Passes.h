@@ -21,7 +21,6 @@
 
 namespace llvm {
 
-class FunctionPass;
 class MachineFunctionPass;
 class PassConfigImpl;
 class PassInfo;
@@ -519,6 +518,8 @@ namespace llvm {
   /// IfConverter - This pass performs machine code if conversion.
   extern char &IfConverterID;
 
+  FunctionPass *createIfConverter(std::function<bool(const Function &)> Ftor);
+
   /// MachineBlockPlacement - This pass places basic blocks based on branch
   /// probabilities.
   extern char &MachineBlockPlacementID;
@@ -612,6 +613,9 @@ namespace llvm {
 
   /// UnpackMachineBundles - This pass unpack machine instruction bundles.
   extern char &UnpackMachineBundlesID;
+
+  FunctionPass *
+  createUnpackMachineBundles(std::function<bool(const Function &)> Ftor);
 
   /// FinalizeMachineBundles - This pass finalize machine instruction
   /// bundles (created earlier, e.g. during pre-RA scheduling).

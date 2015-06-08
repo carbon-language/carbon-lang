@@ -193,11 +193,18 @@ namespace {
 struct CFGSimplifyPass : public FunctionPass {
   static char ID; // Pass identification, replacement for typeid
   unsigned BonusInstThreshold;
-  CFGSimplifyPass(int T = -1) : FunctionPass(ID) {
+  std::function<bool(const Function &)> PredicateFtor;
+
+  CFGSimplifyPass(int T = -1,
+                  std::function<bool(const Function &)> Ftor = nullptr)
+      : FunctionPass(ID), PredicateFtor(Ftor) {
     BonusInstThreshold = (T == -1) ? UserBonusInstThreshold : unsigned(T);
     initializeCFGSimplifyPassPass(*PassRegistry::getPassRegistry());
   }
   bool runOnFunction(Function &F) override {
+    if (PredicateFtor && !PredicateFtor(F))
+      return false;
+
     if (skipOptnoneFunction(F))
       return false;
 
@@ -224,7 +231,9 @@ INITIALIZE_PASS_END(CFGSimplifyPass, "simplifycfg", "Simplify the CFG", false,
                     false)
 
 // Public interface to the CFGSimplification pass
-FunctionPass *llvm::createCFGSimplificationPass(int Threshold) {
-  return new CFGSimplifyPass(Threshold);
+FunctionPass *
+llvm::createCFGSimplificationPass(int Threshold,
+                                  std::function<bool(const Function &)> Ftor) {
+  return new CFGSimplifyPass(Threshold, Ftor);
 }
 

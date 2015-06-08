@@ -133,7 +133,7 @@ namespace {
   class Thumb2SizeReduce : public MachineFunctionPass {
   public:
     static char ID;
-    Thumb2SizeReduce();
+    Thumb2SizeReduce(std::function<bool(const Function &)> Ftor);
 
     const Thumb2InstrInfo *TII;
     const ARMSubtarget *STI;
@@ -198,11 +198,14 @@ namespace {
     };
 
     SmallVector<MBBInfo, 8> BlockInfo;
+
+    std::function<bool(const Function &)> PredicateFtor;
   };
   char Thumb2SizeReduce::ID = 0;
 }
 
-Thumb2SizeReduce::Thumb2SizeReduce() : MachineFunctionPass(ID) {
+Thumb2SizeReduce::Thumb2SizeReduce(std::function<bool(const Function &)> Ftor)
+    : MachineFunctionPass(ID), PredicateFtor(Ftor) {
   OptimizeSize = MinimizeSize = false;
   for (unsigned i = 0, e = array_lengthof(ReduceTable); i != e; ++i) {
     unsigned FromOpc = ReduceTable[i].WideOpc;
@@ -1000,6 +1003,9 @@ bool Thumb2SizeReduce::ReduceMBB(MachineBasicBlock &MBB) {
 }
 
 bool Thumb2SizeReduce::runOnMachineFunction(MachineFunction &MF) {
+  if (PredicateFtor && !PredicateFtor(*MF.getFunction()))
+    return false;
+
   STI = &static_cast<const ARMSubtarget &>(MF.getSubtarget());
   if (STI->isThumb1Only() || STI->prefers32BitThumb())
     return false;
@@ -1025,6 +1031,7 @@ bool Thumb2SizeReduce::runOnMachineFunction(MachineFunction &MF) {
 
 /// createThumb2SizeReductionPass - Returns an instance of the Thumb2 size
 /// reduction pass.
-FunctionPass *llvm::createThumb2SizeReductionPass() {
-  return new Thumb2SizeReduce();
+FunctionPass *llvm::createThumb2SizeReductionPass(
+    std::function<bool(const Function &)> Ftor) {
+  return new Thumb2SizeReduce(Ftor);
 }

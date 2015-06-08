@@ -16,10 +16,12 @@
 #define LLVM_TRANSFORMS_SCALAR_H
 
 #include "llvm/ADT/StringRef.h"
+#include <functional>
 
 namespace llvm {
 
 class BasicBlockPass;
+class Function;
 class FunctionPass;
 class ModulePass;
 class Pass;
@@ -245,7 +247,8 @@ FunctionPass *createJumpThreadingPass(int Threshold = -1);
 // CFGSimplification - Merge basic blocks, eliminate unreachable blocks,
 // simplify terminator instructions, etc...
 //
-FunctionPass *createCFGSimplificationPass(int Threshold = -1);
+FunctionPass *createCFGSimplificationPass(
+    int Threshold = -1, std::function<bool(const Function &)> Ftor = nullptr);
 
 //===----------------------------------------------------------------------===//
 //

@@ -170,9 +170,12 @@ namespace {
     bool PreRegAlloc;
     bool MadeChange;
     int FnNum;
+    std::function<bool(const Function &)> PredicateFtor;
+
   public:
     static char ID;
-    IfConverter() : MachineFunctionPass(ID), FnNum(-1) {
+    IfConverter(std::function<bool(const Function &)> Ftor = nullptr)
+        : MachineFunctionPass(ID), FnNum(-1), PredicateFtor(Ftor) {
       initializeIfConverterPass(*PassRegistry::getPassRegistry());
     }
 
@@ -270,6 +273,9 @@ INITIALIZE_PASS_DEPENDENCY(MachineBranchProbabilityInfo)
 INITIALIZE_PASS_END(IfConverter, "if-converter", "If Converter", false, false)
 
 bool IfConverter::runOnMachineFunction(MachineFunction &MF) {
+  if (PredicateFtor && !PredicateFtor(*MF.getFunction()))
+    return false;
+
   const TargetSubtargetInfo &ST = MF.getSubtarget();
   TLI = ST.getTargetLowering();
   TII = ST.getInstrInfo();
@@ -1690,4 +1696,9 @@ void IfConverter::MergeBlocks(BBInfo &ToBBI, BBInfo &FromBBI, bool AddEdges) {
   ToBBI.HasFallThrough = FromBBI.HasFallThrough;
   ToBBI.IsAnalyzed = false;
   FromBBI.IsAnalyzed = false;
+}
+
+FunctionPass *
+llvm::createIfConverter(std::function<bool(const Function &)> Ftor) {
+  return new IfConverter(Ftor);
 }
