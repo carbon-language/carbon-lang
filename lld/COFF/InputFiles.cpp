@@ -187,7 +187,7 @@ std::error_code ObjectFile::initializeSymbols() {
 SymbolBody *ObjectFile::createSymbolBody(StringRef Name, COFFSymbolRef Sym,
                                          const void *AuxP, bool IsFirst) {
   if (Sym.isUndefined())
-    return new Undefined(Name);
+    return new (Alloc) Undefined(Name);
   if (Sym.isCommon()) {
     Chunk *C = new (Alloc) CommonChunk(Sym);
     Chunks.push_back(C);
