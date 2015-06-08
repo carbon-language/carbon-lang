@@ -60,7 +60,7 @@ bool
 CMICmdArgValFile::Validate(CMICmdArgContext &vwArgContext)
 {
     if (vwArgContext.IsEmpty())
-        return MIstatus::success;
+        return m_bMandatory ? MIstatus::failure : MIstatus::success;
 
     // The GDB/MI spec suggests there is only parameter
 

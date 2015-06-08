@@ -445,7 +445,7 @@ class MiStackTestCase(lldbmi_testcase.MiTestCaseBase):
 
         # Test that -stack-select-frame requires 1 mandatory argument
         self.runCmd("-stack-select-frame")
-        self.expect("\^error,msg=\"Command 'stack-select-frame'\. Command Args\. Missing options, 1 or more required\"")
+        self.expect("\^error,msg=\"Command 'stack-select-frame'\. Command Args\. Validation failed. Mandatory args not found: frame\"")
 
         # Test that -stack-select-frame fails on invalid frame number
         self.runCmd("-stack-select-frame 99")

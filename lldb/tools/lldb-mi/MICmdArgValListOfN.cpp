@@ -74,7 +74,7 @@ CMICmdArgValListOfN::Validate(CMICmdArgContext &vwArgContext)
     }
 
     if (vwArgContext.IsEmpty())
-        return MIstatus::success;
+        return m_bMandatory ? MIstatus::failure : MIstatus::success;
 
     const CMIUtilString &rArg(vwArgContext.GetArgsLeftToParse());
     if (IsListOfN(rArg) && CreateList(rArg))

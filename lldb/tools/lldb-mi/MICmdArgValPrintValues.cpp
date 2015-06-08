@@ -62,7 +62,7 @@ bool
 CMICmdArgValPrintValues::Validate(CMICmdArgContext &vwArgContext)
 {
     if (vwArgContext.IsEmpty())
-        return MIstatus::success;
+        return m_bMandatory ? MIstatus::failure : MIstatus::success;
 
     const CMIUtilString strArg(vwArgContext.GetArgs()[0]);
     if (IsArgPrintValues(strArg) && ExtractPrintValues(strArg))

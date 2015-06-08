@@ -617,21 +617,6 @@ CMICmdCmdDataReadMemoryBytes::Execute(void)
         return MIstatus::failure;
     }
 
-    // FIXME: shouldn't have to ensure mandatory arguments are present, that should've been handled
-    // in ParseArgs(), unfortunately that seems kinda sorta broken right now if options are provided
-    // but mandatory arguments are missing, so here we go...
-    if (!pArgAddrExpr->GetFound())
-    {
-        SetError(CMIUtilString::Format(MIRSRC(IDS_CMD_ARGS_ERR_VALIDATION_MANDATORY), m_constStrArgAddrExpr.c_str()));
-        return MIstatus::failure;
-    }
-
-    if (!pArgNumBytes->GetFound())
-    {
-        SetError(CMIUtilString::Format(MIRSRC(IDS_CMD_ARGS_ERR_VALIDATION_MANDATORY), m_constStrArgNumBytes.c_str()));
-        return MIstatus::failure;
-    }
-
     CMICmnLLDBDebugSessionInfo &rSessionInfo(CMICmnLLDBDebugSessionInfo::Instance());
     lldb::SBProcess sbProcess = rSessionInfo.GetProcess();
     if (!sbProcess.IsValid())

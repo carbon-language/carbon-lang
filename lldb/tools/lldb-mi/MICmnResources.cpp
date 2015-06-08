@@ -178,7 +178,6 @@ const CMICmnResources::SRsrcTextData CMICmnResources::ms_pResourceId2TextData[] 
     {IDS_DRIVER_ERR_LOCAL_DEBUG_NOT_IMPL, "Driver. --executable argument given. Local debugging is not implemented."},
     {IDS_DRIVER_ERR_LOCAL_DEBUG_INIT, "Driver. --executable argument given. Initialising local debugging failed."},
     {IDS_STDERR_ERR_NOT_ALL_DATA_WRITTEN, "Stderr. Not all data was written to stream. The data '%s'"},
-    {IDS_CMD_ARGS_ERR_N_OPTIONS_REQUIRED, "Command Args. Missing options, %d or more required"},
     {IDS_CMD_ARGS_ERR_OPTION_NOT_FOUND, "Command Args. Option '%s' not found"},
     {IDS_CMD_ARGS_ERR_VALIDATION_MANDATORY, "Mandatory args not found: %s"},
     {IDS_CMD_ARGS_ERR_VALIDATION_INVALID, "Invalid args: %s"},

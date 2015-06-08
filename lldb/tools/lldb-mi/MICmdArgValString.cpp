@@ -108,7 +108,7 @@ bool
 CMICmdArgValString::Validate(CMICmdArgContext &vrwArgContext)
 {
     if (vrwArgContext.IsEmpty())
-        return MIstatus::success;
+        return m_bMandatory ? MIstatus::failure : MIstatus::success;
 
     if (m_bHandleQuotedString)
         return ValidateQuotedText(vrwArgContext);

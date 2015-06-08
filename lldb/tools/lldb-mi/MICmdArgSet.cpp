@@ -169,28 +169,24 @@ CMICmdArgSet::Validate(const CMIUtilString &vStrMiCmd, CMICmdArgContext &vwCmdAr
     m_cmdArgContext = vwCmdArgsText;
 
     // Iterate all the arguments or options required by a command
-    const MIuint nArgs = vwCmdArgsText.GetNumberArgsPresent();
-    MIuint nArgsMandatoryCnt = 0;
     SetCmdArgs_t::const_iterator it = m_setCmdArgs.begin();
     while (it != m_setCmdArgs.end())
     {
         const CMICmdArgValBase *pArg(*it);
-        const CMIUtilString &rArgName(pArg->GetName());
-        MIunused(rArgName);
-        if (pArg->GetIsMandatory())
-            nArgsMandatoryCnt++;
+
         if (!const_cast<CMICmdArgValBase *>(pArg)->Validate(vwCmdArgsText))
         {
-            if (pArg->GetIsMandatory() && !pArg->GetFound())
-                m_setCmdArgsThatAreMissing.push_back(const_cast<CMICmdArgValBase *>(pArg));
-            else if (pArg->GetFound())
+            if (pArg->GetFound())
             {
                 if (pArg->GetIsMissingOptions())
                     m_setCmdArgsMissingInfo.push_back(const_cast<CMICmdArgValBase *>(pArg));
                 else if (!pArg->GetValid())
                     m_setCmdArgsThatNotValid.push_back(const_cast<CMICmdArgValBase *>(pArg));
             }
+            else if (pArg->GetIsMandatory())
+                m_setCmdArgsThatAreMissing.push_back(const_cast<CMICmdArgValBase *>(pArg));
         }
+
         if (pArg->GetFound() && !pArg->GetIsHandledByCmd())
         {
             m_bIsArgsPresentButNotHandledByCmd = true;
@@ -201,14 +197,7 @@ CMICmdArgSet::Validate(const CMIUtilString &vStrMiCmd, CMICmdArgContext &vwCmdAr
         ++it;
     }
 
-    // Check that one or more argument objects have any issues to report...
-
-    if (nArgs < nArgsMandatoryCnt)
-    {
-        SetErrorDescription(CMIUtilString::Format(MIRSRC(IDS_CMD_ARGS_ERR_N_OPTIONS_REQUIRED), nArgsMandatoryCnt));
-        return MIstatus::failure;
-    }
-
+    // report any issues with arguments/options
     if (IsArgsPresentButNotHandledByCmd())
         WarningArgsNotHandledbyCmdLogFile(vStrMiCmd);
 
