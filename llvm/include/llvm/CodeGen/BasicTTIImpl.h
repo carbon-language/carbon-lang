@@ -523,6 +523,73 @@ public:
     return Cost;
   }
 
+  unsigned getInterleavedMemoryOpCost(unsigned Opcode, Type *VecTy,
+                                      unsigned Factor,
+                                      ArrayRef<unsigned> Indices,
+                                      unsigned Alignment,
+                                      unsigned AddressSpace) {
+    VectorType *VT = dyn_cast<VectorType>(VecTy);
+    assert(VT && "Expect a vector type for interleaved memory op");
+
+    unsigned NumElts = VT->getNumElements();
+    assert(Factor > 1 && NumElts % Factor == 0 && "Invalid interleave factor");
+
+    unsigned NumSubElts = NumElts / Factor;
+    VectorType *SubVT = VectorType::get(VT->getElementType(), NumSubElts);
+
+    // Firstly, the cost of load/store operation.
+    unsigned Cost = getMemoryOpCost(Opcode, VecTy, Alignment, AddressSpace);
+
+    // Then plus the cost of interleave operation.
+    if (Opcode == Instruction::Load) {
+      // The interleave cost is similar to extract sub vectors' elements
+      // from the wide vector, and insert them into sub vectors.
+      //
+      // E.g. An interleaved load of factor 2 (with one member of index 0):
+      //      %vec = load <8 x i32>, <8 x i32>* %ptr
+      //      %v0 = shuffle %vec, undef, <0, 2, 4, 6>         ; Index 0
+      // The cost is estimated as extract elements at 0, 2, 4, 6 from the
+      // <8 x i32> vector and insert them into a <4 x i32> vector.
+
+      assert(Indices.size() <= Factor &&
+             "Interleaved memory op has too many members");
+      for (unsigned Index : Indices) {
+        assert(Index < Factor && "Invalid index for interleaved memory op");
+
+        // Extract elements from loaded vector for each sub vector.
+        for (unsigned i = 0; i < NumSubElts; i++)
+          Cost += getVectorInstrCost(Instruction::ExtractElement, VT,
+                                     Index + i * Factor);
+      }
+
+      unsigned InsSubCost = 0;
+      for (unsigned i = 0; i < NumSubElts; i++)
+        InsSubCost += getVectorInstrCost(Instruction::InsertElement, SubVT, i);
+
+      Cost += Indices.size() * InsSubCost;
+    } else {
+      // The interleave cost is extract all elements from sub vectors, and
+      // insert them into the wide vector.
+      //
+      // E.g. An interleaved store of factor 2:
+      //      %v0_v1 = shuffle %v0, %v1, <0, 4, 1, 5, 2, 6, 3, 7>
+      //      store <8 x i32> %interleaved.vec, <8 x i32>* %ptr
+      // The cost is estimated as extract all elements from both <4 x i32>
+      // vectors and insert into the <8 x i32> vector.
+
+      unsigned ExtSubCost = 0;
+      for (unsigned i = 0; i < NumSubElts; i++)
+        ExtSubCost += getVectorInstrCost(Instruction::ExtractElement, SubVT, i);
+
+      Cost += Factor * ExtSubCost;
+
+      for (unsigned i = 0; i < NumElts; i++)
+        Cost += getVectorInstrCost(Instruction::InsertElement, VT, i);
+    }
+
+    return Cost;
+  }
+
   unsigned getIntrinsicInstrCost(Intrinsic::ID IID, Type *RetTy,
                                  ArrayRef<Type *> Tys) {
     unsigned ISD = 0;

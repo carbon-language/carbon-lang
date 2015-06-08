@@ -237,6 +237,13 @@ TargetTransformInfo::getMaskedMemoryOpCost(unsigned Opcode, Type *Src,
   return TTIImpl->getMaskedMemoryOpCost(Opcode, Src, Alignment, AddressSpace);
 }
 
+unsigned TargetTransformInfo::getInterleavedMemoryOpCost(
+    unsigned Opcode, Type *VecTy, unsigned Factor, ArrayRef<unsigned> Indices,
+    unsigned Alignment, unsigned AddressSpace) const {
+  return TTIImpl->getInterleavedMemoryOpCost(Opcode, VecTy, Factor, Indices,
+                                             Alignment, AddressSpace);
+}
+
 unsigned
 TargetTransformInfo::getIntrinsicInstrCost(Intrinsic::ID ID, Type *RetTy,
                                            ArrayRef<Type *> Tys) const {

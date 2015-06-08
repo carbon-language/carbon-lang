@@ -34,6 +34,10 @@
 // Variable uniformity checks are inspired by:
 //  Karrenberg, R. and Hack, S. Whole Function Vectorization.
 //
+// The interleaved access vectorization is based on the paper:
+//  Dorit Nuzman, Ira Rosen and Ayal Zaks.  Auto-Vectorization of Interleaved
+//  Data for SIMD
+//
 // Other ideas/concepts are from:
 //  A. Zaks and D. Nuzman. Autovectorization in GCC-two years later.
 //
@@ -133,6 +137,16 @@ TinyTripCountVectorThreshold("vectorizer-min-trip-count", cl::init(16),
 static cl::opt<bool> EnableMemAccessVersioning(
     "enable-mem-access-versioning", cl::init(true), cl::Hidden,
     cl::desc("Enable symblic stride memory access versioning"));
+
+static cl::opt<bool> EnableInterleavedMemAccesses(
+    "enable-interleaved-mem-accesses", cl::init(false), cl::Hidden,
+    cl::desc("Enable vectorization on interleaved memory accesses in a loop"));
+
+/// Maximum factor for an interleaved memory access.
+static cl::opt<unsigned> MaxInterleaveGroupFactor(
+    "max-interleave-group-factor", cl::Hidden,
+    cl::desc("Maximum factor for an interleaved access group (default = 8)"),
+    cl::init(8));
 
 /// We don't unroll loops with a known constant trip count below this number.
 static const unsigned TinyTripCountUnrollThreshold = 128;
@@ -351,6 +365,9 @@ protected:
   /// broadcast them into a vector.
   VectorParts &getVectorValue(Value *V);
 
+  /// Try to vectorize the interleaved access group that \p Instr belongs to.
+  void vectorizeInterleaveGroup(Instruction *Instr);
+
   /// Generate a shuffle sequence that will reverse the vector Vec.
   virtual Value *reverseVector(Value *Vec);
 
@@ -545,6 +562,219 @@ static void propagateMetadata(SmallVectorImpl<Value *> &To, const Instruction *F
       propagateMetadata(I, From);
 }
 
+/// \brief The group of interleaved loads/stores sharing the same stride and
+/// close to each other.
+///
+/// Each member in this group has an index starting from 0, and the largest
+/// index should be less than interleaved factor, which is equal to the absolute
+/// value of the access's stride.
+///
+/// E.g. An interleaved load group of factor 4:
+///        for (unsigned i = 0; i < 1024; i+=4) {
+///          a = A[i];                           // Member of index 0
+///          b = A[i+1];                         // Member of index 1
+///          d = A[i+3];                         // Member of index 3
+///          ...
+///        }
+///
+///      An interleaved store group of factor 4:
+///        for (unsigned i = 0; i < 1024; i+=4) {
+///          ...
+///          A[i]   = a;                         // Member of index 0
+///          A[i+1] = b;                         // Member of index 1
+///          A[i+2] = c;                         // Member of index 2
+///          A[i+3] = d;                         // Member of index 3
+///        }
+///
+/// Note: the interleaved load group could have gaps (missing members), but
+/// the interleaved store group doesn't allow gaps.
+class InterleaveGroup {
+public:
+  InterleaveGroup(Instruction *Instr, int Stride, unsigned Align)
+      : Align(Align), SmallestKey(0), LargestKey(0), InsertPos(Instr) {
+    assert(Align && "The alignment should be non-zero");
+
+    Factor = std::abs(Stride);
+    assert(Factor > 1 && "Invalid interleave factor");
+
+    Reverse = Stride < 0;
+    Members[0] = Instr;
+  }
+
+  bool isReverse() const { return Reverse; }
+  unsigned getFactor() const { return Factor; }
+  unsigned getAlignment() const { return Align; }
+  unsigned getNumMembers() const { return Members.size(); }
+
+  /// \brief Try to insert a new member \p Instr with index \p Index and
+  /// alignment \p NewAlign. The index is related to the leader and it could be
+  /// negative if it is the new leader.
+  ///
+  /// \returns false if the instruction doesn't belong to the group.
+  bool insertMember(Instruction *Instr, int Index, unsigned NewAlign) {
+    assert(NewAlign && "The new member's alignment should be non-zero");
+
+    int Key = Index + SmallestKey;
+
+    // Skip if there is already a member with the same index.
+    if (Members.count(Key))
+      return false;
+
+    if (Key > LargestKey) {
+      // The largest index is always less than the interleave factor.
+      if (Index >= static_cast<int>(Factor))
+        return false;
+
+      LargestKey = Key;
+    } else if (Key < SmallestKey) {
+      // The largest index is always less than the interleave factor.
+      if (LargestKey - Key >= static_cast<int>(Factor))
+        return false;
+
+      SmallestKey = Key;
+    }
+
+    // It's always safe to select the minimum alignment.
+    Align = std::min(Align, NewAlign);
+    Members[Key] = Instr;
+    return true;
+  }
+
+  /// \brief Get the member with the given index \p Index
+  ///
+  /// \returns nullptr if contains no such member.
+  Instruction *getMember(unsigned Index) const {
+    int Key = SmallestKey + Index;
+    if (!Members.count(Key))
+      return nullptr;
+
+    return Members.find(Key)->second;
+  }
+
+  /// \brief Get the index for the given member. Unlike the key in the member
+  /// map, the index starts from 0.
+  unsigned getIndex(Instruction *Instr) const {
+    for (auto I : Members)
+      if (I.second == Instr)
+        return I.first - SmallestKey;
+
+    llvm_unreachable("InterleaveGroup contains no such member");
+  }
+
+  Instruction *getInsertPos() const { return InsertPos; }
+  void setInsertPos(Instruction *Inst) { InsertPos = Inst; }
+
+private:
+  unsigned Factor; // Interleave Factor.
+  bool Reverse;
+  unsigned Align;
+  DenseMap<int, Instruction *> Members;
+  int SmallestKey;
+  int LargestKey;
+
+  // To avoid breaking dependences, vectorized instructions of an interleave
+  // group should be inserted at either the first load or the last store in
+  // program order.
+  //
+  // E.g. %even = load i32             // Insert Position
+  //      %add = add i32 %even         // Use of %even
+  //      %odd = load i32
+  //
+  //      store i32 %even
+  //      %odd = add i32               // Def of %odd
+  //      store i32 %odd               // Insert Position
+  Instruction *InsertPos;
+};
+
+/// \brief Drive the analysis of interleaved memory accesses in the loop.
+///
+/// Use this class to analyze interleaved accesses only when we can vectorize
+/// a loop. Otherwise it's meaningless to do analysis as the vectorization
+/// on interleaved accesses is unsafe.
+///
+/// The analysis collects interleave groups and records the relationships
+/// between the member and the group in a map.
+class InterleavedAccessInfo {
+public:
+  InterleavedAccessInfo(ScalarEvolution *SE, Loop *L, DominatorTree *DT)
+      : SE(SE), TheLoop(L), DT(DT) {}
+
+  ~InterleavedAccessInfo() {
+    SmallSet<InterleaveGroup *, 4> DelSet;
+    // Avoid releasing a pointer twice.
+    for (auto &I : InterleaveGroupMap)
+      DelSet.insert(I.second);
+    for (auto *Ptr : DelSet)
+      delete Ptr;
+  }
+
+  /// \brief Analyze the interleaved accesses and collect them in interleave
+  /// groups. Substitute symbolic strides using \p Strides.
+  void analyzeInterleaving(const ValueToValueMap &Strides);
+
+  /// \brief Check if \p Instr belongs to any interleave group.
+  bool isInterleaved(Instruction *Instr) const {
+    return InterleaveGroupMap.count(Instr);
+  }
+
+  /// \brief Get the interleave group that \p Instr belongs to.
+  ///
+  /// \returns nullptr if doesn't have such group.
+  InterleaveGroup *getInterleaveGroup(Instruction *Instr) const {
+    if (InterleaveGroupMap.count(Instr))
+      return InterleaveGroupMap.find(Instr)->second;
+    return nullptr;
+  }
+
+private:
+  ScalarEvolution *SE;
+  Loop *TheLoop;
+  DominatorTree *DT;
+
+  /// Holds the relationships between the members and the interleave group.
+  DenseMap<Instruction *, InterleaveGroup *> InterleaveGroupMap;
+
+  /// \brief The descriptor for a strided memory access.
+  struct StrideDescriptor {
+    StrideDescriptor(int Stride, const SCEV *Scev, unsigned Size,
+                     unsigned Align)
+        : Stride(Stride), Scev(Scev), Size(Size), Align(Align) {}
+
+    StrideDescriptor() : Stride(0), Scev(nullptr), Size(0), Align(0) {}
+
+    int Stride; // The access's stride. It is negative for a reverse access.
+    const SCEV *Scev; // The scalar expression of this access
+    unsigned Size;    // The size of the memory object.
+    unsigned Align;   // The alignment of this access.
+  };
+
+  /// \brief Create a new interleave group with the given instruction \p Instr,
+  /// stride \p Stride and alignment \p Align.
+  ///
+  /// \returns the newly created interleave group.
+  InterleaveGroup *createInterleaveGroup(Instruction *Instr, int Stride,
+                                         unsigned Align) {
+    assert(!InterleaveGroupMap.count(Instr) &&
+           "Already in an interleaved access group");
+    InterleaveGroupMap[Instr] = new InterleaveGroup(Instr, Stride, Align);
+    return InterleaveGroupMap[Instr];
+  }
+
+  /// \brief Release the group and remove all the relationships.
+  void releaseGroup(InterleaveGroup *Group) {
+    for (unsigned i = 0; i < Group->getFactor(); i++)
+      if (Instruction *Member = Group->getMember(i))
+        InterleaveGroupMap.erase(Member);
+
+    delete Group;
+  }
+
+  /// \brief Collect all the accesses with a constant stride in program order.
+  void collectConstStridedAccesses(
+      MapVector<Instruction *, StrideDescriptor> &StrideAccesses,
+      const ValueToValueMap &Strides);
+};
+
 /// LoopVectorizationLegality checks if it is legal to vectorize a loop, and
 /// to what vectorization factor.
 /// This class does not look at the profitability of vectorization, only the
@@ -565,8 +795,8 @@ public:
                             Function *F, const TargetTransformInfo *TTI,
                             LoopAccessAnalysis *LAA)
       : NumPredStores(0), TheLoop(L), SE(SE), TLI(TLI), TheFunction(F),
-        TTI(TTI), DT(DT), LAA(LAA), LAI(nullptr), Induction(nullptr),
-        WidestIndTy(nullptr), HasFunNoNaNAttr(false) {}
+        TTI(TTI), DT(DT), LAA(LAA), LAI(nullptr), InterleaveInfo(SE, L, DT),
+        Induction(nullptr), WidestIndTy(nullptr), HasFunNoNaNAttr(false) {}
 
   /// This enum represents the kinds of inductions that we support.
   enum InductionKind {
@@ -697,6 +927,16 @@ public:
     return LAI;
   }
 
+  /// \brief Check if \p Instr belongs to any interleaved access group.
+  bool isAccessInterleaved(Instruction *Instr) {
+    return InterleaveInfo.isInterleaved(Instr);
+  }
+
+  /// \brief Get the interleaved access group that \p Instr belongs to.
+  const InterleaveGroup *getInterleavedAccessGroup(Instruction *Instr) {
+    return InterleaveInfo.getInterleaveGroup(Instr);
+  }
+
   unsigned getMaxSafeDepDistBytes() { return LAI->getMaxSafeDepDistBytes(); }
 
   bool hasStride(Value *V) { return StrideSet.count(V); }
@@ -791,6 +1031,10 @@ private:
   // And the loop-accesses info corresponding to this loop.  This pointer is
   // null until canVectorizeMemory sets it up.
   const LoopAccessInfo *LAI;
+
+  /// The interleave access information contains groups of interleaved accesses
+  /// with the same stride and close to each other.
+  InterleavedAccessInfo InterleaveInfo;
 
   //  ---  vectorization state --- //
 
@@ -1657,12 +1901,261 @@ Value *InnerLoopVectorizer::reverseVector(Value *Vec) {
                                      "reverse");
 }
 
+// Get a mask to interleave \p NumVec vectors into a wide vector.
+// I.e.  <0, VF, VF*2, ..., VF*(NumVec-1), 1, VF+1, VF*2+1, ...>
+// E.g. For 2 interleaved vectors, if VF is 4, the mask is:
+//      <0, 4, 1, 5, 2, 6, 3, 7>
+static Constant *getInterleavedMask(IRBuilder<> &Builder, unsigned VF,
+                                    unsigned NumVec) {
+  SmallVector<Constant *, 16> Mask;
+  for (unsigned i = 0; i < VF; i++)
+    for (unsigned j = 0; j < NumVec; j++)
+      Mask.push_back(Builder.getInt32(j * VF + i));
+
+  return ConstantVector::get(Mask);
+}
+
+// Get the strided mask starting from index \p Start.
+// I.e.  <Start, Start + Stride, ..., Start + Stride*(VF-1)>
+static Constant *getStridedMask(IRBuilder<> &Builder, unsigned Start,
+                                unsigned Stride, unsigned VF) {
+  SmallVector<Constant *, 16> Mask;
+  for (unsigned i = 0; i < VF; i++)
+    Mask.push_back(Builder.getInt32(Start + i * Stride));
+
+  return ConstantVector::get(Mask);
+}
+
+// Get a mask of two parts: The first part consists of sequential integers
+// starting from 0, The second part consists of UNDEFs.
+// I.e. <0, 1, 2, ..., NumInt - 1, undef, ..., undef>
+static Constant *getSequentialMask(IRBuilder<> &Builder, unsigned NumInt,
+                                   unsigned NumUndef) {
+  SmallVector<Constant *, 16> Mask;
+  for (unsigned i = 0; i < NumInt; i++)
+    Mask.push_back(Builder.getInt32(i));
+
+  Constant *Undef = UndefValue::get(Builder.getInt32Ty());
+  for (unsigned i = 0; i < NumUndef; i++)
+    Mask.push_back(Undef);
+
+  return ConstantVector::get(Mask);
+}
+
+// Concatenate two vectors with the same element type. The 2nd vector should
+// not have more elements than the 1st vector. If the 2nd vector has less
+// elements, extend it with UNDEFs.
+static Value *ConcatenateTwoVectors(IRBuilder<> &Builder, Value *V1,
+                                    Value *V2) {
+  VectorType *VecTy1 = dyn_cast<VectorType>(V1->getType());
+  VectorType *VecTy2 = dyn_cast<VectorType>(V2->getType());
+  assert(VecTy1 && VecTy2 &&
+         VecTy1->getScalarType() == VecTy2->getScalarType() &&
+         "Expect two vectors with the same element type");
+
+  unsigned NumElts1 = VecTy1->getNumElements();
+  unsigned NumElts2 = VecTy2->getNumElements();
+  assert(NumElts1 >= NumElts2 && "Unexpect the first vector has less elements");
+
+  if (NumElts1 > NumElts2) {
+    // Extend with UNDEFs.
+    Constant *ExtMask =
+        getSequentialMask(Builder, NumElts2, NumElts1 - NumElts2);
+    V2 = Builder.CreateShuffleVector(V2, UndefValue::get(VecTy2), ExtMask);
+  }
+
+  Constant *Mask = getSequentialMask(Builder, NumElts1 + NumElts2, 0);
+  return Builder.CreateShuffleVector(V1, V2, Mask);
+}
+
+// Concatenate vectors in the given list. All vectors have the same type.
+static Value *ConcatenateVectors(IRBuilder<> &Builder,
+                                 ArrayRef<Value *> InputList) {
+  unsigned NumVec = InputList.size();
+  assert(NumVec > 1 && "Should be at least two vectors");
+
+  SmallVector<Value *, 8> ResList;
+  ResList.append(InputList.begin(), InputList.end());
+  do {
+    SmallVector<Value *, 8> TmpList;
+    for (unsigned i = 0; i < NumVec - 1; i += 2) {
+      Value *V0 = ResList[i], *V1 = ResList[i + 1];
+      assert((V0->getType() == V1->getType() || i == NumVec - 2) &&
+             "Only the last vector may have a different type");
+
+      TmpList.push_back(ConcatenateTwoVectors(Builder, V0, V1));
+    }
+
+    // Push the last vector if the total number of vectors is odd.
+    if (NumVec % 2 != 0)
+      TmpList.push_back(ResList[NumVec - 1]);
+
+    ResList = TmpList;
+    NumVec = ResList.size();
+  } while (NumVec > 1);
+
+  return ResList[0];
+}
+
+// Try to vectorize the interleave group that \p Instr belongs to.
+//
+// E.g. Translate following interleaved load group (factor = 3):
+//   for (i = 0; i < N; i+=3) {
+//     R = Pic[i];             // Member of index 0
+//     G = Pic[i+1];           // Member of index 1
+//     B = Pic[i+2];           // Member of index 2
+//     ... // do something to R, G, B
+//   }
+// To:
+//   %wide.vec = load <12 x i32>                       ; Read 4 tuples of R,G,B
+//   %R.vec = shuffle %wide.vec, undef, <0, 3, 6, 9>   ; R elements
+//   %G.vec = shuffle %wide.vec, undef, <1, 4, 7, 10>  ; G elements
+//   %B.vec = shuffle %wide.vec, undef, <2, 5, 8, 11>  ; B elements
+//
+// Or translate following interleaved store group (factor = 3):
+//   for (i = 0; i < N; i+=3) {
+//     ... do something to R, G, B
+//     Pic[i]   = R;           // Member of index 0
+//     Pic[i+1] = G;           // Member of index 1
+//     Pic[i+2] = B;           // Member of index 2
+//   }
+// To:
+//   %R_G.vec = shuffle %R.vec, %G.vec, <0, 1, 2, ..., 7>
+//   %B_U.vec = shuffle %B.vec, undef, <0, 1, 2, 3, u, u, u, u>
+//   %interleaved.vec = shuffle %R_G.vec, %B_U.vec,
+//        <0, 4, 8, 1, 5, 9, 2, 6, 10, 3, 7, 11>    ; Interleave R,G,B elements
+//   store <12 x i32> %interleaved.vec              ; Write 4 tuples of R,G,B
+void InnerLoopVectorizer::vectorizeInterleaveGroup(Instruction *Instr) {
+  const InterleaveGroup *Group = Legal->getInterleavedAccessGroup(Instr);
+  assert(Group && "Fail to get an interleaved access group.");
+
+  // Skip if current instruction is not the insert position.
+  if (Instr != Group->getInsertPos())
+    return;
+
+  LoadInst *LI = dyn_cast<LoadInst>(Instr);
+  StoreInst *SI = dyn_cast<StoreInst>(Instr);
+  Value *Ptr = LI ? LI->getPointerOperand() : SI->getPointerOperand();
+
+  // Prepare for the vector type of the interleaved load/store.
+  Type *ScalarTy = LI ? LI->getType() : SI->getValueOperand()->getType();
+  unsigned InterleaveFactor = Group->getFactor();
+  Type *VecTy = VectorType::get(ScalarTy, InterleaveFactor * VF);
+  Type *PtrTy = VecTy->getPointerTo(Ptr->getType()->getPointerAddressSpace());
+
+  // Prepare for the new pointers.
+  setDebugLocFromInst(Builder, Ptr);
+  VectorParts &PtrParts = getVectorValue(Ptr);
+  SmallVector<Value *, 2> NewPtrs;
+  unsigned Index = Group->getIndex(Instr);
+  for (unsigned Part = 0; Part < UF; Part++) {
+    // Extract the pointer for current instruction from the pointer vector. A
+    // reverse access uses the pointer in the last lane.
+    Value *NewPtr = Builder.CreateExtractElement(
+        PtrParts[Part],
+        Group->isReverse() ? Builder.getInt32(VF - 1) : Builder.getInt32(0));
+
+    // Notice current instruction could be any index. Need to adjust the address
+    // to the member of index 0.
+    //
+    // E.g.  a = A[i+1];     // Member of index 1 (Current instruction)
+    //       b = A[i];       // Member of index 0
+    // Current pointer is pointed to A[i+1], adjust it to A[i].
+    //
+    // E.g.  A[i+1] = a;     // Member of index 1
+    //       A[i]   = b;     // Member of index 0
+    //       A[i+2] = c;     // Member of index 2 (Current instruction)
+    // Current pointer is pointed to A[i+2], adjust it to A[i].
+    NewPtr = Builder.CreateGEP(NewPtr, Builder.getInt32(-Index));
+
+    // Cast to the vector pointer type.
+    NewPtrs.push_back(Builder.CreateBitCast(NewPtr, PtrTy));
+  }
+
+  setDebugLocFromInst(Builder, Instr);
+  Value *UndefVec = UndefValue::get(VecTy);
+
+  // Vectorize the interleaved load group.
+  if (LI) {
+    for (unsigned Part = 0; Part < UF; Part++) {
+      Instruction *NewLoadInstr = Builder.CreateAlignedLoad(
+          NewPtrs[Part], Group->getAlignment(), "wide.vec");
+
+      for (unsigned i = 0; i < InterleaveFactor; i++) {
+        Instruction *Member = Group->getMember(i);
+
+        // Skip the gaps in the group.
+        if (!Member)
+          continue;
+
+        Constant *StrideMask = getStridedMask(Builder, i, InterleaveFactor, VF);
+        Value *StridedVec = Builder.CreateShuffleVector(
+            NewLoadInstr, UndefVec, StrideMask, "strided.vec");
+
+        // If this member has different type, cast the result type.
+        if (Member->getType() != ScalarTy) {
+          VectorType *OtherVTy = VectorType::get(Member->getType(), VF);
+          StridedVec = Builder.CreateBitOrPointerCast(StridedVec, OtherVTy);
+        }
+
+        VectorParts &Entry = WidenMap.get(Member);
+        Entry[Part] =
+            Group->isReverse() ? reverseVector(StridedVec) : StridedVec;
+      }
+
+      propagateMetadata(NewLoadInstr, Instr);
+    }
+    return;
+  }
+
+  // The sub vector type for current instruction.
+  VectorType *SubVT = VectorType::get(ScalarTy, VF);
+
+  // Vectorize the interleaved store group.
+  for (unsigned Part = 0; Part < UF; Part++) {
+    // Collect the stored vector from each member.
+    SmallVector<Value *, 4> StoredVecs;
+    for (unsigned i = 0; i < InterleaveFactor; i++) {
+      // Interleaved store group doesn't allow a gap, so each index has a member
+      Instruction *Member = Group->getMember(i);
+      assert(Member && "Fail to get a member from an interleaved store group");
+
+      Value *StoredVec =
+          getVectorValue(dyn_cast<StoreInst>(Member)->getValueOperand())[Part];
+      if (Group->isReverse())
+        StoredVec = reverseVector(StoredVec);
+
+      // If this member has different type, cast it to an unified type.
+      if (StoredVec->getType() != SubVT)
+        StoredVec = Builder.CreateBitOrPointerCast(StoredVec, SubVT);
+
+      StoredVecs.push_back(StoredVec);
+    }
+
+    // Concatenate all vectors into a wide vector.
+    Value *WideVec = ConcatenateVectors(Builder, StoredVecs);
+
+    // Interleave the elements in the wide vector.
+    Constant *IMask = getInterleavedMask(Builder, VF, InterleaveFactor);
+    Value *IVec = Builder.CreateShuffleVector(WideVec, UndefVec, IMask,
+                                              "interleaved.vec");
+
+    Instruction *NewStoreInstr =
+        Builder.CreateAlignedStore(IVec, NewPtrs[Part], Group->getAlignment());
+    propagateMetadata(NewStoreInstr, Instr);
+  }
+}
+
 void InnerLoopVectorizer::vectorizeMemoryInstruction(Instruction *Instr) {
   // Attempt to issue a wide load.
   LoadInst *LI = dyn_cast<LoadInst>(Instr);
   StoreInst *SI = dyn_cast<StoreInst>(Instr);
 
   assert((LI || SI) && "Invalid Load/Store instruction");
+
+  // Try to vectorize the interleave group if this access is interleaved.
+  if (Legal->isAccessInterleaved(Instr))
+    return vectorizeInterleaveGroup(Instr);
 
   Type *ScalarDataTy = LI ? LI->getType() : SI->getValueOperand()->getType();
   Type *DataTy = VectorType::get(ScalarDataTy, VF);
@@ -3408,6 +3901,10 @@ bool LoopVectorizationLegality::canVectorize() {
          "")
         <<"!\n");
 
+  // Analyze interleaved memory accesses.
+  if (EnableInterleavedMemAccesses)
+    InterleaveInfo.analyzeInterleaving(Strides);
+
   // Okay! We can vectorize. At this point we don't have any other mem analysis
   // which may limit our maximum vectorization factor, so just return true with
   // no restrictions.
@@ -3921,6 +4418,166 @@ bool LoopVectorizationLegality::blockCanBePredicated(BasicBlock *BB,
   }
 
   return true;
+}
+
+void InterleavedAccessInfo::collectConstStridedAccesses(
+    MapVector<Instruction *, StrideDescriptor> &StrideAccesses,
+    const ValueToValueMap &Strides) {
+  // Holds load/store instructions in program order.
+  SmallVector<Instruction *, 16> AccessList;
+
+  for (auto *BB : TheLoop->getBlocks()) {
+    bool IsPred = LoopAccessInfo::blockNeedsPredication(BB, TheLoop, DT);
+
+    for (auto &I : *BB) {
+      if (!isa<LoadInst>(&I) && !isa<StoreInst>(&I))
+        continue;
+      // FIXME: Currently we can't handle mixed accesses and predicated accesses
+      if (IsPred)
+        return;
+
+      AccessList.push_back(&I);
+    }
+  }
+
+  if (AccessList.empty())
+    return;
+
+  auto &DL = TheLoop->getHeader()->getModule()->getDataLayout();
+  for (auto I : AccessList) {
+    LoadInst *LI = dyn_cast<LoadInst>(I);
+    StoreInst *SI = dyn_cast<StoreInst>(I);
+
+    Value *Ptr = LI ? LI->getPointerOperand() : SI->getPointerOperand();
+    int Stride = isStridedPtr(SE, Ptr, TheLoop, Strides);
+
+    // The factor of the corresponding interleave group.
+    unsigned Factor = std::abs(Stride);
+
+    // Ignore the access if the factor is too small or too large.
+    if (Factor < 2 || Factor > MaxInterleaveGroupFactor)
+      continue;
+
+    const SCEV *Scev = replaceSymbolicStrideSCEV(SE, Strides, Ptr);
+    PointerType *PtrTy = dyn_cast<PointerType>(Ptr->getType());
+    unsigned Size = DL.getTypeAllocSize(PtrTy->getElementType());
+
+    // An alignment of 0 means target ABI alignment.
+    unsigned Align = LI ? LI->getAlignment() : SI->getAlignment();
+    if (!Align)
+      Align = DL.getABITypeAlignment(PtrTy->getElementType());
+
+    StrideAccesses[I] = StrideDescriptor(Stride, Scev, Size, Align);
+  }
+}
+
+// Analyze interleaved accesses and collect them into interleave groups.
+//
+// Notice that the vectorization on interleaved groups will change instruction
+// orders and may break dependences. But the memory dependence check guarantees
+// that there is no overlap between two pointers of different strides, element
+// sizes or underlying bases.
+//
+// For pointers sharing the same stride, element size and underlying base, no
+// need to worry about Read-After-Write dependences and Write-After-Read
+// dependences.
+//
+// E.g. The RAW dependence:  A[i] = a;
+//                           b = A[i];
+// This won't exist as it is a store-load forwarding conflict, which has
+// already been checked and forbidden in the dependence check.
+//
+// E.g. The WAR dependence:  a = A[i];  // (1)
+//                           A[i] = b;  // (2)
+// The store group of (2) is always inserted at or below (2), and the load group
+// of (1) is always inserted at or above (1). The dependence is safe.
+void InterleavedAccessInfo::analyzeInterleaving(
+    const ValueToValueMap &Strides) {
+  DEBUG(dbgs() << "LV: Analyzing interleaved accesses...\n");
+
+  // Holds all the stride accesses.
+  MapVector<Instruction *, StrideDescriptor> StrideAccesses;
+  collectConstStridedAccesses(StrideAccesses, Strides);
+
+  if (StrideAccesses.empty())
+    return;
+
+  // Holds all interleaved store groups temporarily.
+  SmallSetVector<InterleaveGroup *, 4> StoreGroups;
+
+  // Search the load-load/write-write pair B-A in bottom-up order and try to
+  // insert B into the interleave group of A according to 3 rules:
+  //   1. A and B have the same stride.
+  //   2. A and B have the same memory object size.
+  //   3. B belongs to the group according to the distance.
+  //
+  // The bottom-up order can avoid breaking the Write-After-Write dependences
+  // between two pointers of the same base.
+  // E.g.  A[i]   = a;   (1)
+  //       A[i]   = b;   (2)
+  //       A[i+1] = c    (3)
+  // We form the group (2)+(3) in front, so (1) has to form groups with accesses
+  // above (1), which guarantees that (1) is always above (2).
+  for (auto I = StrideAccesses.rbegin(), E = StrideAccesses.rend(); I != E;
+       ++I) {
+    Instruction *A = I->first;
+    StrideDescriptor DesA = I->second;
+
+    InterleaveGroup *Group = getInterleaveGroup(A);
+    if (!Group) {
+      DEBUG(dbgs() << "LV: Creating an interleave group with:" << *A << '\n');
+      Group = createInterleaveGroup(A, DesA.Stride, DesA.Align);
+    }
+
+    if (A->mayWriteToMemory())
+      StoreGroups.insert(Group);
+
+    for (auto II = std::next(I); II != E; ++II) {
+      Instruction *B = II->first;
+      StrideDescriptor DesB = II->second;
+
+      // Ignore if B is already in a group or B is a different memory operation.
+      if (isInterleaved(B) || A->mayReadFromMemory() != B->mayReadFromMemory())
+        continue;
+
+      // Check the rule 1 and 2.
+      if (DesB.Stride != DesA.Stride || DesB.Size != DesA.Size)
+        continue;
+
+      // Calculate the distance and prepare for the rule 3.
+      const SCEVConstant *DistToA =
+          dyn_cast<SCEVConstant>(SE->getMinusSCEV(DesB.Scev, DesA.Scev));
+      if (!DistToA)
+        continue;
+
+      int DistanceToA = DistToA->getValue()->getValue().getSExtValue();
+
+      // Skip if the distance is not multiple of size as they are not in the
+      // same group.
+      if (DistanceToA % static_cast<int>(DesA.Size))
+        continue;
+
+      // The index of B is the index of A plus the related index to A.
+      int IndexB =
+          Group->getIndex(A) + DistanceToA / static_cast<int>(DesA.Size);
+
+      // Try to insert B into the group.
+      if (Group->insertMember(B, IndexB, DesB.Align)) {
+        DEBUG(dbgs() << "LV: Inserted:" << *B << '\n'
+                     << "    into the interleave group with" << *A << '\n');
+        InterleaveGroupMap[B] = Group;
+
+        // Set the first load in program order as the insert position.
+        if (B->mayReadFromMemory())
+          Group->setInsertPos(B);
+      }
+    } // Iteration on instruction B
+  }   // Iteration on instruction A
+
+  // Remove interleaved store groups with gaps.
+  for (InterleaveGroup *Group : StoreGroups)
+    if (Group->getNumMembers() != Group->getFactor())
+      releaseGroup(Group);
 }
 
 LoopVectorizationCostModel::VectorizationFactor
@@ -4574,6 +5231,46 @@ LoopVectorizationCostModel::getInstructionCost(Instruction *I, unsigned VF) {
     if (VF == 1)
       return TTI.getAddressComputationCost(VectorTy) +
         TTI.getMemoryOpCost(I->getOpcode(), VectorTy, Alignment, AS);
+
+    // For an interleaved access, calculate the total cost of the whole
+    // interleave group.
+    if (Legal->isAccessInterleaved(I)) {
+      auto Group = Legal->getInterleavedAccessGroup(I);
+      assert(Group && "Fail to get an interleaved access group.");
+
+      // Only calculate the cost once at the insert position.
+      if (Group->getInsertPos() != I)
+        return 0;
+
+      unsigned InterleaveFactor = Group->getFactor();
+      Type *WideVecTy =
+          VectorType::get(VectorTy->getVectorElementType(),
+                          VectorTy->getVectorNumElements() * InterleaveFactor);
+
+      // Holds the indices of existing members in an interleaved load group.
+      // An interleaved store group doesn't need this as it dones't allow gaps.
+      SmallVector<unsigned, 4> Indices;
+      if (LI) {
+        for (unsigned i = 0; i < InterleaveFactor; i++)
+          if (Group->getMember(i))
+            Indices.push_back(i);
+      }
+
+      // Calculate the cost of the whole interleaved group.
+      unsigned Cost = TTI.getInterleavedMemoryOpCost(
+          I->getOpcode(), WideVecTy, Group->getFactor(), Indices,
+          Group->getAlignment(), AS);
+
+      if (Group->isReverse())
+        Cost +=
+            Group->getNumMembers() *
+            TTI.getShuffleCost(TargetTransformInfo::SK_Reverse, VectorTy, 0);
+
+      // FIXME: The interleaved load group with a huge gap could be even more
+      // expensive than scalar operations. Then we could ignore such group and
+      // use scalar operations instead.
+      return Cost;
+    }
 
     // Scalarized loads/stores.
     int ConsecutiveStride = Legal->isConsecutivePtr(Ptr);

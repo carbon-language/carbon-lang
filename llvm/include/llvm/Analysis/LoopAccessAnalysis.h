@@ -501,6 +501,11 @@ const SCEV *replaceSymbolicStrideSCEV(ScalarEvolution *SE,
                                       const ValueToValueMap &PtrToStride,
                                       Value *Ptr, Value *OrigPtr = nullptr);
 
+/// \brief Check the stride of the pointer and ensure that it does not wrap in
+/// the address space.
+int isStridedPtr(ScalarEvolution *SE, Value *Ptr, const Loop *Lp,
+                 const ValueToValueMap &StridesMap);
+
 /// \brief This analysis provides dependence information for the memory accesses
 /// of a loop.
 ///

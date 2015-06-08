@@ -302,6 +302,14 @@ public:
     return 1;
   }
 
+  unsigned getInterleavedMemoryOpCost(unsigned Opcode, Type *VecTy,
+                                      unsigned Factor,
+                                      ArrayRef<unsigned> Indices,
+                                      unsigned Alignment,
+                                      unsigned AddressSpace) {
+    return 1;
+  }
+
   unsigned getIntrinsicInstrCost(Intrinsic::ID ID, Type *RetTy,
                                  ArrayRef<Type *> Tys) {
     return 1;

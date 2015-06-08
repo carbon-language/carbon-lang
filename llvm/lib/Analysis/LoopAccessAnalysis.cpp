@@ -289,11 +289,6 @@ static bool hasComputableBounds(ScalarEvolution *SE,
   return AR->isAffine();
 }
 
-/// \brief Check the stride of the pointer and ensure that it does not wrap in
-/// the address space.
-static int isStridedPtr(ScalarEvolution *SE, Value *Ptr, const Loop *Lp,
-                        const ValueToValueMap &StridesMap);
-
 bool AccessAnalysis::canCheckPtrAtRT(
     LoopAccessInfo::RuntimePointerCheck &RtCheck, unsigned &NumComparisons,
     ScalarEvolution *SE, Loop *TheLoop, const ValueToValueMap &StridesMap,
@@ -510,8 +505,8 @@ static bool isInBoundsGep(Value *Ptr) {
 }
 
 /// \brief Check whether the access through \p Ptr has a constant stride.
-static int isStridedPtr(ScalarEvolution *SE, Value *Ptr, const Loop *Lp,
-                        const ValueToValueMap &StridesMap) {
+int llvm::isStridedPtr(ScalarEvolution *SE, Value *Ptr, const Loop *Lp,
+                       const ValueToValueMap &StridesMap) {
   const Type *Ty = Ptr->getType();
   assert(Ty->isPointerTy() && "Unexpected non-ptr");
 
