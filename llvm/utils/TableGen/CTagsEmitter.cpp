@@ -80,9 +80,8 @@ void CTagsEmitter::run(raw_ostream &OS) {
   std::sort(Tags.begin(), Tags.end());
   OS << "!_TAG_FILE_FORMAT\t1\t/original ctags format/\n";
   OS << "!_TAG_FILE_SORTED\t1\t/0=unsorted, 1=sorted, 2=foldcase/\n";
-  for (std::vector<Tag>::const_iterator I = Tags.begin(), E = Tags.end();
-       I != E; ++I)
-    I->emit(OS);
+  for (const Tag &T : Tags)
+    T.emit(OS);
 }
 
 namespace llvm {
