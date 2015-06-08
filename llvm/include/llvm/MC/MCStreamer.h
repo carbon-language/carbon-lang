@@ -307,11 +307,15 @@ public:
   bool PopSection() {
     if (SectionStack.size() <= 1)
       return false;
-    MCSectionSubPair oldSection = SectionStack.pop_back_val().first;
-    MCSectionSubPair curSection = SectionStack.back().first;
+    auto I = SectionStack.end();
+    --I;
+    MCSectionSubPair OldSection = I->first;
+    --I;
+    MCSectionSubPair NewSection = I->first;
 
-    if (oldSection != curSection)
-      ChangeSection(curSection.first, curSection.second);
+    if (OldSection != NewSection)
+      ChangeSection(NewSection.first, NewSection.second);
+    SectionStack.pop_back();
     return true;
   }
 
