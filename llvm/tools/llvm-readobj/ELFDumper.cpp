@@ -141,19 +141,19 @@ static void
 getSectionNameIndex(const ELFO &Obj, typename ELFO::Elf_Sym_Iter Symbol,
                     StringRef &SectionName, unsigned &SectionIndex) {
   SectionIndex = Symbol->st_shndx;
-  if (SectionIndex == SHN_UNDEF) {
+  if (Symbol->isUndefined())
     SectionName = "Undefined";
-  } else if (SectionIndex >= SHN_LOPROC && SectionIndex <= SHN_HIPROC) {
+  else if (Symbol->isProcessorSpecific())
     SectionName = "Processor Specific";
-  } else if (SectionIndex >= SHN_LOOS && SectionIndex <= SHN_HIOS) {
+  else if (Symbol->isOSSpecific())
     SectionName = "Operating System Specific";
-  } else if (SectionIndex > SHN_HIOS && SectionIndex < SHN_ABS) {
+  else if (Symbol->isReserved())
     SectionName = "Reserved";
-  } else if (SectionIndex == SHN_ABS) {
+  else if (Symbol->isAbsolute())
     SectionName = "Absolute";
-  } else if (SectionIndex == SHN_COMMON) {
+  else if (Symbol->isCommon())
     SectionName = "Common";
-  } else {
+  else {
     if (SectionIndex == SHN_XINDEX)
       SectionIndex = Obj.getSymbolTableIndex(&*Symbol);
     assert(SectionIndex != SHN_XINDEX &&
