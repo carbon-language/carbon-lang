@@ -345,6 +345,10 @@ public:
     /// to needsChecking.
     bool needsAnyChecking(const SmallVectorImpl<int> *PtrPartition) const;
 
+    /// \brief Returns the number of run-time checks required according to
+    /// needsChecking.
+    unsigned getNumberOfChecks(const SmallVectorImpl<int> *PtrPartition) const;
+
     /// \brief Print the list run-time memory checks necessary.
     ///
     /// If \p PtrPartition is set, it contains the partition number for
@@ -385,7 +389,10 @@ public:
 
   /// \brief Number of memchecks required to prove independence of otherwise
   /// may-alias pointers.
-  unsigned getNumRuntimePointerChecks() const { return NumComparisons; }
+  unsigned getNumRuntimePointerChecks(
+    const SmallVectorImpl<int> *PtrPartition = nullptr) const {
+    return PtrRtCheck.getNumberOfChecks(PtrPartition);
+  }
 
   /// Return true if the block BB needs to be predicated in order for the loop
   /// to be vectorized.
@@ -459,10 +466,6 @@ private:
   /// \brief the Memory Dependence Checker which can determine the
   /// loop-independent and loop-carried dependences between memory accesses.
   MemoryDepChecker DepChecker;
-
-  /// \brief Number of memchecks required to prove independence of otherwise
-  /// may-alias pointers
-  unsigned NumComparisons;
 
   Loop *TheLoop;
   ScalarEvolution *SE;

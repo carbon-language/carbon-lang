@@ -177,15 +177,21 @@ void LoopAccessInfo::RuntimePointerCheck::print(
       }
 }
 
-bool LoopAccessInfo::RuntimePointerCheck::needsAnyChecking(
+unsigned LoopAccessInfo::RuntimePointerCheck::getNumberOfChecks(
     const SmallVectorImpl<int> *PtrPartition) const {
   unsigned NumPointers = Pointers.size();
+  unsigned CheckCount = 0;
 
   for (unsigned I = 0; I < NumPointers; ++I)
     for (unsigned J = I + 1; J < NumPointers; ++J)
       if (needsChecking(I, J, PtrPartition))
-        return true;
-  return false;
+        CheckCount++;
+  return CheckCount;
+}
+
+bool LoopAccessInfo::RuntimePointerCheck::needsAnyChecking(
+    const SmallVectorImpl<int> *PtrPartition) const {
+  return getNumberOfChecks(PtrPartition) != 0;
 }
 
 namespace {
@@ -220,10 +226,11 @@ public:
   }
 
   /// \brief Check whether we can check the pointers at runtime for
-  /// non-intersection.
+  /// non-intersection. Returns true when we have 0 pointers
+  /// (a check on 0 pointers for non-intersection will always return true).
   bool canCheckPtrAtRT(LoopAccessInfo::RuntimePointerCheck &RtCheck,
-                       unsigned &NumComparisons, ScalarEvolution *SE,
-                       Loop *TheLoop, const ValueToValueMap &Strides,
+                       bool &NeedRTCheck, ScalarEvolution *SE, Loop *TheLoop,
+                       const ValueToValueMap &Strides,
                        bool ShouldCheckStride = false);
 
   /// \brief Goes over all memory accesses, checks whether a RT check is needed
@@ -290,23 +297,22 @@ static bool hasComputableBounds(ScalarEvolution *SE,
 }
 
 bool AccessAnalysis::canCheckPtrAtRT(
-    LoopAccessInfo::RuntimePointerCheck &RtCheck, unsigned &NumComparisons,
+    LoopAccessInfo::RuntimePointerCheck &RtCheck, bool &NeedRTCheck,
     ScalarEvolution *SE, Loop *TheLoop, const ValueToValueMap &StridesMap,
     bool ShouldCheckStride) {
   // Find pointers with computable bounds. We are going to use this information
   // to place a runtime bound check.
   bool CanDoRT = true;
 
+  NeedRTCheck = false;
+  if (!IsRTCheckNeeded) return true;
+
   bool IsDepCheckNeeded = isDependencyCheckNeeded();
-  NumComparisons = 0;
 
   // We assign a consecutive id to access from different alias sets.
   // Accesses between different groups doesn't need to be checked.
   unsigned ASId = 1;
   for (auto &AS : AST) {
-    unsigned NumReadPtrChecks = 0;
-    unsigned NumWritePtrChecks = 0;
-
     // We assign consecutive id to access from different dependence sets.
     // Accesses within the same set don't need a runtime check.
     unsigned RunningDepId = 1;
@@ -316,11 +322,6 @@ bool AccessAnalysis::canCheckPtrAtRT(
       Value *Ptr = A.getValue();
       bool IsWrite = Accesses.count(MemAccessInfo(Ptr, true));
       MemAccessInfo Access(Ptr, IsWrite);
-
-      if (IsWrite)
-        ++NumWritePtrChecks;
-      else
-        ++NumReadPtrChecks;
 
       if (hasComputableBounds(SE, StridesMap, Ptr) &&
           // When we run after a failing dependency check we have to make sure
@@ -349,15 +350,14 @@ bool AccessAnalysis::canCheckPtrAtRT(
       }
     }
 
-    if (IsDepCheckNeeded && CanDoRT && RunningDepId == 2)
-      NumComparisons += 0; // Only one dependence set.
-    else {
-      NumComparisons += (NumWritePtrChecks * (NumReadPtrChecks +
-                                              NumWritePtrChecks - 1));
-    }
-
     ++ASId;
   }
+
+  // We need a runtime check if there are any accesses that need checking.
+  // However, some accesses cannot be checked (for example because we
+  // can't determine their bounds). In these cases we would need a check
+  // but wouldn't be able to add it.
+  NeedRTCheck = !CanDoRT || RtCheck.needsAnyChecking(nullptr);
 
   // If the pointers that we would use for the bounds comparison have different
   // address spaces, assume the values aren't directly comparable, so we can't
@@ -1207,22 +1207,17 @@ void LoopAccessInfo::analyzeLoop(const ValueToValueMap &Strides) {
   // Build dependence sets and check whether we need a runtime pointer bounds
   // check.
   Accesses.buildDependenceSets();
-  bool NeedRTCheck = Accesses.isRTCheckNeeded();
 
   // Find pointers with computable bounds. We are going to use this information
   // to place a runtime bound check.
-  bool CanDoRT = false;
-  if (NeedRTCheck)
-    CanDoRT = Accesses.canCheckPtrAtRT(PtrRtCheck, NumComparisons, SE, TheLoop,
-                                       Strides);
+  bool NeedRTCheck;
+  bool CanDoRT = Accesses.canCheckPtrAtRT(PtrRtCheck,
+                                          NeedRTCheck, SE,
+                                          TheLoop, Strides);
 
-  DEBUG(dbgs() << "LAA: We need to do " << NumComparisons <<
-        " pointer comparisons.\n");
-
-  // If we only have one set of dependences to check pointers among we don't
-  // need a runtime check.
-  if (NumComparisons == 0 && NeedRTCheck)
-    NeedRTCheck = false;
+  DEBUG(dbgs() << "LAA: We need to do "
+               << PtrRtCheck.getNumberOfChecks(nullptr)
+               << " pointer comparisons.\n");
 
   // Check that we found the bounds for the pointer.
   if (CanDoRT)
@@ -1255,10 +1250,11 @@ void LoopAccessInfo::analyzeLoop(const ValueToValueMap &Strides) {
       PtrRtCheck.reset();
       PtrRtCheck.Need = true;
 
-      CanDoRT = Accesses.canCheckPtrAtRT(PtrRtCheck, NumComparisons, SE,
+      CanDoRT = Accesses.canCheckPtrAtRT(PtrRtCheck, NeedRTCheck, SE,
                                          TheLoop, Strides, true);
+
       // Check that we found the bounds for the pointer.
-      if (!CanDoRT && NumComparisons > 0) {
+      if (NeedRTCheck && !CanDoRT) {
         emitAnalysis(LoopAccessReport()
                      << "cannot check memory dependencies at runtime");
         DEBUG(dbgs() << "LAA: Can't vectorize with memory checks\n");
@@ -1403,7 +1399,7 @@ LoopAccessInfo::LoopAccessInfo(Loop *L, ScalarEvolution *SE,
                                const TargetLibraryInfo *TLI, AliasAnalysis *AA,
                                DominatorTree *DT, LoopInfo *LI,
                                const ValueToValueMap &Strides)
-    : DepChecker(SE, L), NumComparisons(0), TheLoop(L), SE(SE), DL(DL),
+    : DepChecker(SE, L), TheLoop(L), SE(SE), DL(DL),
       TLI(TLI), AA(AA), DT(DT), LI(LI), NumLoads(0), NumStores(0),
       MaxSafeDepDistBytes(-1U), CanVecMem(false),
       StoreToLoopInvariantAddress(false) {
