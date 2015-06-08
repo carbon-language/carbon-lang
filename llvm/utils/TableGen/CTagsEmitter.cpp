@@ -24,8 +24,6 @@ using namespace llvm;
 
 #define DEBUG_TYPE "ctags-emitter"
 
-namespace llvm { extern SourceMgr SrcMgr; }
-
 namespace {
 
 class Tag {
