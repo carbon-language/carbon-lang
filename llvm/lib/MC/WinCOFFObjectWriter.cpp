@@ -25,7 +25,7 @@
 #include "llvm/MC/MCObjectWriter.h"
 #include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCSectionCOFF.h"
-#include "llvm/MC/MCSymbol.h"
+#include "llvm/MC/MCSymbolCOFF.h"
 #include "llvm/MC/MCValue.h"
 #include "llvm/MC/StringTableBuilder.h"
 #include "llvm/Support/COFF.h"
@@ -428,8 +428,8 @@ void WinCOFFObjectWriter::DefineSymbol(const MCSymbol &Symbol,
     const MCSymbol *Base = Layout.getBaseSymbol(Symbol);
     coff_symbol->Data.Value = getSymbolValue(Symbol, Layout);
 
-    coff_symbol->Data.Type =
-        (Symbol.getFlags() & COFF::SF_TypeMask) >> COFF::SF_TypeShift;
+    const MCSymbolCOFF &SymbolCOFF = cast<MCSymbolCOFF>(Symbol);
+    coff_symbol->Data.Type = SymbolCOFF.getType();
     coff_symbol->Data.StorageClass =
         (Symbol.getFlags() & COFF::SF_ClassMask) >> COFF::SF_ClassShift;
 
@@ -675,8 +675,8 @@ bool WinCOFFObjectWriter::isSymbolRefDifferenceFullyResolvedImpl(
   // MS LINK expects to be able to replace all references to a function with a
   // thunk to implement their /INCREMENTAL feature.  Make sure we don't optimize
   // away any relocations to functions.
-  if ((((SymA.getFlags() & COFF::SF_TypeMask) >> COFF::SF_TypeShift) >>
-       COFF::SCT_COMPLEX_TYPE_SHIFT) == COFF::IMAGE_SYM_DTYPE_FUNCTION)
+  uint16_t Type = cast<MCSymbolCOFF>(SymA).getType();
+  if ((Type >> COFF::SCT_COMPLEX_TYPE_SHIFT) == COFF::IMAGE_SYM_DTYPE_FUNCTION)
     return false;
   return MCObjectWriter::isSymbolRefDifferenceFullyResolvedImpl(Asm, SymA, FB,
                                                                 InSet, IsPCRel);

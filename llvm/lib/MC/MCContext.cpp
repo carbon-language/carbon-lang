@@ -20,6 +20,7 @@
 #include "llvm/MC/MCSectionELF.h"
 #include "llvm/MC/MCSectionMachO.h"
 #include "llvm/MC/MCStreamer.h"
+#include "llvm/MC/MCSymbolCOFF.h"
 #include "llvm/MC/MCSymbolELF.h"
 #include "llvm/Support/ELF.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -159,9 +160,16 @@ MCSymbol *MCContext::getOrCreateLSDASymbol(StringRef FuncName) {
 
 MCSymbol *MCContext::createSymbolImpl(const StringMapEntry<bool> *Name,
                                       bool IsTemporary) {
-  bool IsELF = MOFI && MOFI->getObjectFileType() == MCObjectFileInfo::IsELF;
-  if (IsELF)
-    return new (*this) MCSymbolELF(Name, IsTemporary);
+  if (MOFI) {
+    switch (MOFI->getObjectFileType()) {
+    case MCObjectFileInfo::IsCOFF:
+      return new (*this) MCSymbolCOFF(Name, IsTemporary);
+    case MCObjectFileInfo::IsELF:
+      return new (*this) MCSymbolELF(Name, IsTemporary);
+    case MCObjectFileInfo::IsMachO:
+      return new (*this) MCSymbol(MCSymbol::SymbolKindUnset, Name, IsTemporary);
+    }
+  }
   return new (*this) MCSymbol(MCSymbol::SymbolKindUnset, Name, IsTemporary);
 }
 

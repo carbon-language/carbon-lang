@@ -22,7 +22,7 @@
 #include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCSectionCOFF.h"
 #include "llvm/MC/MCStreamer.h"
-#include "llvm/MC/MCSymbol.h"
+#include "llvm/MC/MCSymbolCOFF.h"
 #include "llvm/MC/MCValue.h"
 #include "llvm/MC/MCWinCOFFStreamer.h"
 #include "llvm/Support/COFF.h"
@@ -149,7 +149,7 @@ void MCWinCOFFStreamer::EmitCOFFSymbolType(int Type) {
     FatalError("type value '" + Twine(Type) + "' out of range");
 
   getAssembler().registerSymbol(*CurSymbol);
-  CurSymbol->modifyFlags(Type << COFF::SF_TypeShift, COFF::SF_TypeMask);
+  cast<MCSymbolCOFF>(CurSymbol)->setType((uint16_t)Type);
 }
 
 void MCWinCOFFStreamer::EndCOFFSymbolDef() {
