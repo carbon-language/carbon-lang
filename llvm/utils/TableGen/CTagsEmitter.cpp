@@ -59,11 +59,7 @@ private:
 
 SMLoc CTagsEmitter::locate(const Record *R) {
   ArrayRef<SMLoc> Locs = R->getLoc();
-  if (Locs.empty()) {
-    SMLoc NullLoc;
-    return NullLoc;
-  }
-  return Locs.front();
+  return !Locs.empty() ? Locs.front() : SMLoc();
 }
 
 void CTagsEmitter::run(raw_ostream &OS) {
