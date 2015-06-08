@@ -162,7 +162,8 @@ Optional<StringRef> LinkerDriver::findLib(StringRef Filename) {
 // Parses LIB environment which contains a list of search paths.
 std::vector<StringRef> LinkerDriver::getSearchPaths() {
   std::vector<StringRef> Ret;
-  Ret.push_back(".");
+  // Add current directory as first item of the search paths.
+  Ret.push_back("");
   Optional<std::string> EnvOpt = Process::GetEnv("LIB");
   if (!EnvOpt.hasValue())
     return Ret;
