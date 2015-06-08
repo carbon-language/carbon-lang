@@ -158,23 +158,12 @@ std::error_code ObjectFile::initializeSymbols() {
     }
     COFFSymbolRef Sym = SymOrErr.get();
 
-    // Get a symbol name.
-    StringRef SymbolName;
-    if (auto EC = COFFObj->getSymbolName(Sym, SymbolName)) {
-      llvm::errs() << "broken object file: " << getName() << ": "
-                   << EC.message() << "\n";
-      return make_error_code(LLDError::BrokenFile);
-    }
-    // Skip special symbols.
-    if (SymbolName == "@comp.id" || SymbolName == "@feat.00")
-      continue;
-
     const void *AuxP = nullptr;
     if (Sym.getNumberOfAuxSymbols())
       AuxP = COFFObj->getSymbol(I + 1)->getRawPtr();
     bool IsFirst = (LastSectionNumber != Sym.getSectionNumber());
 
-    SymbolBody *Body = createSymbolBody(SymbolName, Sym, AuxP, IsFirst);
+    SymbolBody *Body = createSymbolBody(Sym, AuxP, IsFirst);
     if (Body) {
       SymbolBodies.push_back(Body);
       SparseSymbolBodies[I] = Body;
@@ -185,19 +174,28 @@ std::error_code ObjectFile::initializeSymbols() {
   return std::error_code();
 }
 
-SymbolBody *ObjectFile::createSymbolBody(StringRef Name, COFFSymbolRef Sym,
-                                         const void *AuxP, bool IsFirst) {
-  if (Sym.isUndefined())
+SymbolBody *ObjectFile::createSymbolBody(COFFSymbolRef Sym, const void *AuxP,
+                                         bool IsFirst) {
+  StringRef Name;
+  if (Sym.isUndefined()) {
+    COFFObj->getSymbolName(Sym, Name);
     return new (Alloc) Undefined(Name);
+  }
   if (Sym.isCommon()) {
     Chunk *C = new (Alloc) CommonChunk(Sym);
     Chunks.push_back(C);
-    return new (Alloc) DefinedRegular(Name, Sym, C);
+    return new (Alloc) DefinedRegular(COFFObj.get(), Sym, C);
   }
-  if (Sym.isAbsolute())
+  if (Sym.isAbsolute()) {
+    COFFObj->getSymbolName(Sym, Name);
+    // Skip special symbols.
+    if (Name == "@comp.id" || Name == "@feat.00")
+      return nullptr;
     return new (Alloc) DefinedAbsolute(Name, Sym.getValue());
+  }
   // TODO: Handle IMAGE_WEAK_EXTERN_SEARCH_ALIAS
   if (Sym.isWeakExternal()) {
+    COFFObj->getSymbolName(Sym, Name);
     auto *Aux = (const coff_aux_weak_external *)AuxP;
     return new (Alloc) Undefined(Name, &SparseSymbolBodies[Aux->TagIndex]);
   }
@@ -214,7 +212,7 @@ SymbolBody *ObjectFile::createSymbolBody(StringRef Name, COFFSymbolRef Sym,
     }
   }
   if (Chunk *C = SparseChunks[Sym.getSectionNumber()])
-    return new (Alloc) DefinedRegular(Name, Sym, C);
+    return new (Alloc) DefinedRegular(COFFObj.get(), Sym, C);
   return nullptr;
 }
 

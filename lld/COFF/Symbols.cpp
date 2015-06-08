@@ -69,6 +69,19 @@ int Undefined::compare(SymbolBody *Other) {
   return 1;
 }
 
+StringRef DefinedRegular::getName() {
+  // DefinedSymbol's name is read lazily for a performance reason.
+  // Non-external symbol names are never used by the linker.
+  // Their internal references are resolved not by name but by symbol index.
+  // And because they are not external, no one can refer them by name.
+  // Object files contain lots of non-external symbols, and creating
+  // StringRefs for them (which involves lots of strlen() on the string table)
+  // is a waste of time.
+  if (Name.empty())
+    COFFFile->getSymbolName(Sym, Name);
+  return Name;
+}
+
 ErrorOr<std::unique_ptr<InputFile>> Lazy::getMember() {
   auto MBRefOrErr = File->getMember(&Sym);
   if (auto EC = MBRefOrErr.getError())

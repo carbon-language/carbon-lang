@@ -23,6 +23,7 @@ namespace lld {
 namespace coff {
 
 using llvm::object::Archive;
+using llvm::object::COFFObjectFile;
 using llvm::object::COFFSymbolRef;
 using llvm::object::coff_import_header;
 
@@ -61,7 +62,7 @@ public:
   virtual bool isExternal() { return true; }
 
   // Returns the symbol name.
-  StringRef getName() { return Name; }
+  virtual StringRef getName() = 0;
 
   // A SymbolBody has a backreference to a Symbol. Originally they are
   // doubly-linked. A backreference will never change. But the pointer
@@ -78,11 +79,10 @@ public:
   virtual int compare(SymbolBody *Other) = 0;
 
 protected:
-  SymbolBody(Kind K, StringRef N) : SymbolKind(K), Name(N) {}
+  SymbolBody(Kind K) : SymbolKind(K) {}
 
 private:
   const Kind SymbolKind;
-  StringRef Name;
   Symbol *Backref = nullptr;
 };
 
@@ -90,7 +90,7 @@ private:
 // etc.
 class Defined : public SymbolBody {
 public:
-  Defined(Kind K, StringRef Name) : SymbolBody(K, Name) {}
+  Defined(Kind K) : SymbolBody(K) {}
 
   static bool classof(const SymbolBody *S) {
     Kind K = S->kind();
@@ -115,13 +115,14 @@ public:
 // Regular defined symbols read from object file symbol tables.
 class DefinedRegular : public Defined {
 public:
-  DefinedRegular(StringRef Name, COFFSymbolRef S, Chunk *C)
-      : Defined(DefinedRegularKind, Name), Sym(S), Data(C) {}
+  DefinedRegular(COFFObjectFile *F, COFFSymbolRef S, Chunk *C)
+      : Defined(DefinedRegularKind), COFFFile(F), Sym(S), Data(C) {}
 
   static bool classof(const SymbolBody *S) {
     return S->kind() == DefinedRegularKind;
   }
 
+  StringRef getName() override;
   uint64_t getRVA() override { return Data->getRVA() + Sym.getValue(); }
   bool isExternal() override { return Sym.isExternal(); }
   void markLive() override { Data->markLive(); }
@@ -133,6 +134,8 @@ public:
   uint32_t getCommonSize() const { return Sym.getValue(); }
 
 private:
+  StringRef Name;
+  COFFObjectFile *COFFFile;
   COFFSymbolRef Sym;
   Chunk *Data;
 };
@@ -140,17 +143,19 @@ private:
 // Absolute symbols.
 class DefinedAbsolute : public Defined {
 public:
-  DefinedAbsolute(StringRef Name, uint64_t VA)
-      : Defined(DefinedAbsoluteKind, Name), RVA(VA - Config->ImageBase) {}
+  DefinedAbsolute(StringRef N, uint64_t VA)
+      : Defined(DefinedAbsoluteKind), Name(N), RVA(VA - Config->ImageBase) {}
 
   static bool classof(const SymbolBody *S) {
     return S->kind() == DefinedAbsoluteKind;
   }
 
+  StringRef getName() override { return Name; }
   uint64_t getRVA() override { return RVA; }
   uint64_t getFileOff() override { llvm_unreachable("internal error"); }
 
 private:
+  StringRef Name;
   uint64_t RVA;
 };
 
@@ -162,9 +167,10 @@ private:
 class Lazy : public SymbolBody {
 public:
   Lazy(ArchiveFile *F, const Archive::Symbol S)
-      : SymbolBody(LazyKind, S.getName()), File(F), Sym(S) {}
+      : SymbolBody(LazyKind), Name(S.getName()), File(F), Sym(S) {}
 
   static bool classof(const SymbolBody *S) { return S->kind() == LazyKind; }
+  StringRef getName() override { return Name; }
 
   // Returns an object file for this symbol, or a nullptr if the file
   // was already returned.
@@ -173,6 +179,7 @@ public:
   int compare(SymbolBody *Other) override;
 
 private:
+  StringRef Name;
   ArchiveFile *File;
   const Archive::Symbol Sym;
 };
@@ -180,12 +187,13 @@ private:
 // Undefined symbols.
 class Undefined : public SymbolBody {
 public:
-  explicit Undefined(StringRef Name, SymbolBody **S = nullptr)
-      : SymbolBody(UndefinedKind, Name), Alias(S) {}
+  explicit Undefined(StringRef N, SymbolBody **S = nullptr)
+      : SymbolBody(UndefinedKind), Name(N), Alias(S) {}
 
   static bool classof(const SymbolBody *S) {
     return S->kind() == UndefinedKind;
   }
+  StringRef getName() override { return Name; }
 
   // An undefined symbol can have a fallback symbol which gives an
   // undefined symbol a second chance if it would remain undefined.
@@ -196,6 +204,7 @@ public:
   int compare(SymbolBody *Other) override;
 
 private:
+  StringRef Name;
   SymbolBody **Alias;
 };
 
@@ -207,15 +216,16 @@ private:
 // table in an output. The former has "__imp_" prefix.
 class DefinedImportData : public Defined {
 public:
-  DefinedImportData(StringRef D, StringRef Name, StringRef E,
+  DefinedImportData(StringRef D, StringRef N, StringRef E,
                     const coff_import_header *H)
-      : Defined(DefinedImportDataKind, Name), DLLName(D),
-        ExternalName(E), Hdr(H) {}
+      : Defined(DefinedImportDataKind), Name(N), DLLName(D), ExternalName(E),
+        Hdr(H) {}
 
   static bool classof(const SymbolBody *S) {
     return S->kind() == DefinedImportDataKind;
   }
 
+  StringRef getName() override { return Name; }
   uint64_t getRVA() override { return Location->getRVA(); }
   uint64_t getFileOff() override { return Location->getFileOff(); }
   StringRef getDLLName() { return DLLName; }
@@ -224,6 +234,7 @@ public:
   uint16_t getOrdinal() { return Hdr->OrdinalHint; }
 
 private:
+  StringRef Name;
   StringRef DLLName;
   StringRef ExternalName;
   const coff_import_header *Hdr;
@@ -237,31 +248,37 @@ private:
 // a regular name. A function pointer is given as a DefinedImportData.
 class DefinedImportThunk : public Defined {
 public:
-  DefinedImportThunk(StringRef Name, DefinedImportData *S)
-      : Defined(DefinedImportThunkKind, Name), Data(S) {}
+  DefinedImportThunk(StringRef N, DefinedImportData *S)
+      : Defined(DefinedImportThunkKind), Name(N), Data(S) {}
 
   static bool classof(const SymbolBody *S) {
     return S->kind() == DefinedImportThunkKind;
   }
 
+  StringRef getName() override { return Name; }
   uint64_t getRVA() override { return Data.getRVA(); }
   uint64_t getFileOff() override { return Data.getFileOff(); }
   Chunk *getChunk() { return &Data; }
 
 private:
+  StringRef Name;
   ImportThunkChunk Data;
 };
 
 class DefinedBitcode : public Defined {
 public:
-  DefinedBitcode(StringRef Name) : Defined(DefinedBitcodeKind, Name) {}
+  DefinedBitcode(StringRef N) : Defined(DefinedBitcodeKind), Name(N) {}
 
   static bool classof(const SymbolBody *S) {
     return S->kind() == DefinedBitcodeKind;
   }
 
+  StringRef getName() override { return Name; }
   uint64_t getRVA() override { llvm_unreachable("bitcode reached writer"); }
   uint64_t getFileOff() override { llvm_unreachable("bitcode reached writer"); }
+
+private:
+  StringRef Name;
 };
 
 } // namespace coff

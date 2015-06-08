@@ -111,8 +111,8 @@ private:
   std::error_code initializeChunks();
   std::error_code initializeSymbols();
 
-  SymbolBody *createSymbolBody(StringRef Name, COFFSymbolRef Sym,
-                               const void *Aux, bool IsFirst);
+  SymbolBody *createSymbolBody(COFFSymbolRef Sym, const void *Aux,
+                               bool IsFirst);
 
   std::unique_ptr<COFFObjectFile> COFFObj;
   StringRef Directives;
