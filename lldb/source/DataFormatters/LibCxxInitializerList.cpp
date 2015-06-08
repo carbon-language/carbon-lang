@@ -101,7 +101,7 @@ lldb_private::formatters::LibcxxInitializerListSyntheticFrontEnd::Update()
     m_num_elements = 0;
     m_children.clear();
     lldb::TemplateArgumentKind kind;
-    m_element_type = m_backend.GetClangType().GetTemplateArgument(0, kind);
+    m_element_type = ClangASTContext::GetTemplateArgument(m_backend.GetClangType(), 0, kind);
     if (kind != lldb::eTemplateArgumentKindType || false == m_element_type.IsValid())
         return false;
     

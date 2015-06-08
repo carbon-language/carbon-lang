@@ -21,7 +21,9 @@ using namespace lldb_private::formatters;
 bool
 lldb_private::formatters::CMTimeSummaryProvider (ValueObject& valobj, Stream& stream, const TypeSummaryOptions& options)
 {
-    ClangASTContext *ast_ctx = ClangASTContext::GetASTContext(valobj.GetClangType().GetASTContext());
+    if (!valobj.GetClangType().IsValid())
+        return false;
+    ClangASTContext *ast_ctx = valobj.GetClangType().GetTypeSystem()->AsClangASTContext();
     if (!ast_ctx)
         return false;
     

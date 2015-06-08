@@ -30,7 +30,7 @@ SBType::SBType() :
 }
 
 SBType::SBType (const ClangASTType &type) :
-    m_opaque_sp(new TypeImpl(ClangASTType(type.GetASTContext(),
+    m_opaque_sp(new TypeImpl(ClangASTType(type.GetTypeSystem(),
                                           type.GetOpaqueQualType())))
 {
 }
@@ -342,8 +342,13 @@ SBType::GetBasicType()
 SBType
 SBType::GetBasicType(lldb::BasicType basic_type)
 {
-    if (IsValid())
-        return SBType (ClangASTContext::GetBasicType (m_opaque_sp->GetClangASTContext(false), basic_type));
+    if (IsValid() && m_opaque_sp->IsValid())
+    {
+        ClangASTContext* ast = m_opaque_sp->GetTypeSystem(false)->AsClangASTContext();
+        if (ast)
+            return SBType (ClangASTContext::GetBasicType (ast->getASTContext(), basic_type));
+    }
+    
     return SBType();
 }
 
@@ -351,7 +356,7 @@ uint32_t
 SBType::GetNumberOfDirectBaseClasses ()
 {
     if (IsValid())
-        return m_opaque_sp->GetClangASTType(true).GetNumDirectBaseClasses();
+        return ClangASTContext::GetNumDirectBaseClasses(m_opaque_sp->GetClangASTType(true));
     return 0;
 }
 
@@ -359,7 +364,7 @@ uint32_t
 SBType::GetNumberOfVirtualBaseClasses ()
 {
     if (IsValid())
-        return m_opaque_sp->GetClangASTType(true).GetNumVirtualBaseClasses();
+        return ClangASTContext::GetNumVirtualBaseClasses(m_opaque_sp->GetClangASTType(true));
     return 0;
 }
 
@@ -398,7 +403,7 @@ SBType::GetDirectBaseClassAtIndex (uint32_t idx)
         if (this_type.IsValid())
         {
             uint32_t bit_offset = 0;
-            ClangASTType base_class_type (this_type.GetDirectBaseClassAtIndex(idx, &bit_offset));
+            ClangASTType base_class_type (ClangASTContext::GetDirectBaseClassAtIndex(this_type, idx, &bit_offset));
             if (base_class_type.IsValid())
             {
                 sb_type_member.reset (new TypeMemberImpl (TypeImplSP(new TypeImpl(base_class_type)), bit_offset));
@@ -419,7 +424,7 @@ SBType::GetVirtualBaseClassAtIndex (uint32_t idx)
         if (this_type.IsValid())
         {
             uint32_t bit_offset = 0;
-            ClangASTType base_class_type (this_type.GetVirtualBaseClassAtIndex(idx, &bit_offset));
+            ClangASTType base_class_type (ClangASTContext::GetVirtualBaseClassAtIndex(this_type, idx, &bit_offset));
             if (base_class_type.IsValid())
             {
                 sb_type_member.reset (new TypeMemberImpl (TypeImplSP(new TypeImpl(base_class_type)), bit_offset));
@@ -435,14 +440,14 @@ SBType::GetEnumMembers ()
     SBTypeEnumMemberList sb_enum_member_list;
     if (IsValid())
     {
-        const clang::EnumDecl *enum_decl = m_opaque_sp->GetClangASTType(true).GetFullyUnqualifiedType().GetAsEnumDecl();
+        const clang::EnumDecl *enum_decl = ClangASTContext::GetAsEnumDecl(m_opaque_sp->GetClangASTType(true).GetFullyUnqualifiedType());
         if (enum_decl)
         {
             clang::EnumDecl::enumerator_iterator enum_pos, enum_end_pos;
             for (enum_pos = enum_decl->enumerator_begin(), enum_end_pos = enum_decl->enumerator_end(); enum_pos != enum_end_pos; ++enum_pos)
             {
                 SBTypeEnumMember enum_member;
-                enum_member.reset(new TypeEnumMemberImpl(*enum_pos, ClangASTType(m_opaque_sp->GetClangASTContext(true), enum_decl->getIntegerType())));
+                enum_member.reset(new TypeEnumMemberImpl(*enum_pos, ClangASTType(m_opaque_sp->GetTypeSystem(true), enum_decl->getIntegerType().getAsOpaquePtr())));
                 sb_enum_member_list.Append(enum_member);
             }
         }
@@ -528,7 +533,7 @@ uint32_t
 SBType::GetNumberOfTemplateArguments ()
 {
     if (IsValid())
-        return m_opaque_sp->GetClangASTType(false).GetNumTemplateArguments();
+        return ClangASTContext::GetNumTemplateArguments(m_opaque_sp->GetClangASTType(false));
     return 0;
 }
 
@@ -538,7 +543,7 @@ SBType::GetTemplateArgumentType (uint32_t idx)
     if (IsValid())
     {
         TemplateArgumentKind kind = eTemplateArgumentKindNull;
-        ClangASTType template_arg_type = m_opaque_sp->GetClangASTType(false).GetTemplateArgument (idx, kind);
+        ClangASTType template_arg_type = ClangASTContext::GetTemplateArgument(m_opaque_sp->GetClangASTType(false), idx, kind);
         if (template_arg_type.IsValid())
             return SBType(template_arg_type);
     }
@@ -551,7 +556,7 @@ SBType::GetTemplateArgumentKind (uint32_t idx)
 {
     TemplateArgumentKind kind = eTemplateArgumentKindNull;
     if (IsValid())
-        m_opaque_sp->GetClangASTType(false).GetTemplateArgument (idx, kind);
+        ClangASTContext::GetTemplateArgument(m_opaque_sp->GetClangASTType(false), idx, kind);
     return kind;
 }
 

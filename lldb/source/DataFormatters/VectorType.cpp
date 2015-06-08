@@ -231,7 +231,7 @@ namespace lldb_private {
                 ClangASTType parent_type(m_backend.GetClangType());
                 ClangASTType element_type;
                 parent_type.IsVectorType(&element_type, nullptr);
-                m_child_type = ::GetClangTypeForFormat(m_parent_format, element_type, ClangASTContext::GetASTContext(parent_type.GetASTContext()));
+                m_child_type = ::GetClangTypeForFormat(m_parent_format, element_type, parent_type.GetTypeSystem()->AsClangASTContext());
                 m_num_children = ::CalculateNumChildren(parent_type,
                                                         m_child_type);
                 m_item_format = GetItemFormatForFormat(m_parent_format,

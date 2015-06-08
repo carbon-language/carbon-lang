@@ -154,7 +154,7 @@ FixupTypeAndOrName (const TypeAndOrName& type_andor_name,
         if (parent.IsPointerType())
             corrected_type = orig_type.GetPointerType ();
         else if (parent.IsPointerOrReferenceType())
-            corrected_type = orig_type.GetLValueReferenceType ();
+            corrected_type = ClangASTContext::GetLValueReferenceType(orig_type);
         ret.SetClangASTType(corrected_type);
     }
     else /*if (m_dynamic_type_info.HasName())*/

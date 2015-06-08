@@ -277,7 +277,7 @@ ClangASTSource::CompleteType (TagDecl *tag_decl)
                     if (!clang_type)
                         continue;
 
-                    const TagType *tag_type = clang_type.GetQualType()->getAs<TagType>();
+                    const TagType *tag_type = ClangASTContext::GetQualType(clang_type)->getAs<TagType>();
 
                     if (!tag_type)
                         continue;
@@ -316,7 +316,7 @@ ClangASTSource::CompleteType (TagDecl *tag_decl)
                 if (!clang_type)
                     continue;
 
-                const TagType *tag_type = clang_type.GetQualType()->getAs<TagType>();
+                const TagType *tag_type = ClangASTContext::GetQualType(clang_type)->getAs<TagType>();
 
                 if (!tag_type)
                     continue;
@@ -1886,9 +1886,13 @@ ClangASTSource::GuardedCopyType (const ClangASTType &src_type)
 {
     ClangASTMetrics::RegisterLLDBImport();
 
+    ClangASTContext* src_ast = src_type.GetTypeSystem()->AsClangASTContext();
+    if (!src_ast)
+        return ClangASTType();
+    
     SetImportInProgress(true);
 
-    QualType copied_qual_type = m_ast_importer->CopyType (m_ast_context, src_type.GetASTContext(), src_type.GetQualType());
+    QualType copied_qual_type = m_ast_importer->CopyType (m_ast_context, src_ast->getASTContext(), ClangASTContext::GetQualType(src_type));
 
     SetImportInProgress(false);
 
@@ -1908,16 +1912,20 @@ NameSearchContext::AddVarDecl(const ClangASTType &type)
     if (!type.IsValid())
         return NULL;
 
+    ClangASTContext* lldb_ast = type.GetTypeSystem()->AsClangASTContext();
+    if (!lldb_ast)
+        return NULL;
+    
     IdentifierInfo *ii = m_decl_name.getAsIdentifierInfo();
 
-    clang::ASTContext *ast = type.GetASTContext();
+    clang::ASTContext *ast = lldb_ast->getASTContext();
 
     clang::NamedDecl *Decl = VarDecl::Create(*ast,
                                              const_cast<DeclContext*>(m_decl_context),
                                              SourceLocation(),
                                              SourceLocation(),
                                              ii,
-                                             type.GetQualType(),
+                                             ClangASTContext::GetQualType(type),
                                              0,
                                              SC_Static);
     m_decls.push_back(Decl);
@@ -1935,12 +1943,16 @@ NameSearchContext::AddFunDecl (const ClangASTType &type, bool extern_c)
 
     if (m_function_types.count(type))
         return NULL;
+    
+    ClangASTContext* lldb_ast = type.GetTypeSystem()->AsClangASTContext();
+    if (!lldb_ast)
+        return NULL;
 
     m_function_types.insert(type);
 
-    QualType qual_type (type.GetQualType());
+    QualType qual_type (ClangASTContext::GetQualType(type));
 
-    clang::ASTContext *ast = type.GetASTContext();
+    clang::ASTContext *ast = lldb_ast->getASTContext();
 
     const bool isInlineSpecified = false;
     const bool hasWrittenPrototype = true;
@@ -2031,7 +2043,7 @@ NameSearchContext::AddTypeDecl(const ClangASTType &clang_type)
 {
     if (clang_type)
     {
-        QualType qual_type = clang_type.GetQualType();
+        QualType qual_type = ClangASTContext::GetQualType(clang_type);
 
         if (const TypedefType *typedef_type = llvm::dyn_cast<TypedefType>(qual_type))
         {

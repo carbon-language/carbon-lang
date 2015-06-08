@@ -313,11 +313,11 @@ ClangUserExpression::ScanContext(ExecutionContext &exe_ctx, Error &err)
                         return;
                     }
 
-                    if (self_clang_type.IsObjCClassType())
+                    if (ClangASTContext::IsObjCClassType(self_clang_type))
                     {
                         return;
                     }
-                    else if (self_clang_type.IsObjCObjectPointerType())
+                    else if (ClangASTContext::IsObjCObjectPointerType(self_clang_type))
                     {
                         m_objectivec = true;
                         m_needs_object_ptr = true;

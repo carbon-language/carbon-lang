@@ -575,14 +575,14 @@ IRForTarget::CreateResultVariable (llvm::Function &llvm_function)
             clang::QualType element_qual_type = pointer_pointertype->getPointeeType();
 
             m_result_type = lldb_private::TypeFromParser(element_qual_type.getAsOpaquePtr(),
-                                                         &result_decl->getASTContext());
+                                                         lldb_private::ClangASTContext::GetASTContext(&result_decl->getASTContext()));
         }
         else if (pointer_objcobjpointertype)
         {
             clang::QualType element_qual_type = clang::QualType(pointer_objcobjpointertype->getObjectType(), 0);
 
             m_result_type = lldb_private::TypeFromParser(element_qual_type.getAsOpaquePtr(),
-                                                         &result_decl->getASTContext());
+                                                         lldb_private::ClangASTContext::GetASTContext(&result_decl->getASTContext()));
         }
         else
         {
@@ -598,7 +598,7 @@ IRForTarget::CreateResultVariable (llvm::Function &llvm_function)
     else
     {
         m_result_type = lldb_private::TypeFromParser(result_var->getType().getAsOpaquePtr(),
-                                                     &result_decl->getASTContext());
+                                                     lldb_private::ClangASTContext::GetASTContext(&result_decl->getASTContext()));
     }
 
 
@@ -1241,7 +1241,7 @@ IRForTarget::RewritePersistentAlloc (llvm::Instruction *persistent_alloc)
     clang::VarDecl *decl = reinterpret_cast<clang::VarDecl *>(ptr);
 
     lldb_private::TypeFromParser result_decl_type (decl->getType().getAsOpaquePtr(),
-                                                   &decl->getASTContext());
+                                                   lldb_private::ClangASTContext::GetASTContext(&decl->getASTContext()));
 
     StringRef decl_name (decl->getName());
     lldb_private::ConstString persistent_variable_name (decl_name.data(), decl_name.size());
@@ -1539,7 +1539,7 @@ IRForTarget::MaybeHandleVariable (Value *llvm_value_ptr)
         {
             log->Printf("Type of \"%s\" is [clang \"%s\", llvm \"%s\"] [size %" PRIu64 ", align %" PRIu64 "]",
                         name.c_str(),
-                        clang_type.GetQualType().getAsString().c_str(),
+                        lldb_private::ClangASTContext::GetQualType(clang_type).getAsString().c_str(),
                         PrintType(value_type).c_str(),
                         value_size,
                         value_alignment);

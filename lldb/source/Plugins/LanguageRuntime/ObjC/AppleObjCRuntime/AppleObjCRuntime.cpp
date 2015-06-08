@@ -92,7 +92,7 @@ AppleObjCRuntime::GetObjectDescription (Stream &strm, Value &value, ExecutionCon
     ClangASTType clang_type = value.GetClangType();
     if (clang_type)
     {
-        if (!clang_type.IsObjCObjectPointerType())
+        if (!ClangASTContext::IsObjCObjectPointerType(clang_type))
         {
             strm.Printf ("Value doesn't point to an ObjC object.\n");
             return false;

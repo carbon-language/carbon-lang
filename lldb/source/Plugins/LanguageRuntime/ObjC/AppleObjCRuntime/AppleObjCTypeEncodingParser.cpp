@@ -139,7 +139,7 @@ AppleObjCTypeEncodingParser::BuildAggregate (clang::ASTContext &ast_ctx, lldb_ut
     ClangASTType union_type(lldb_ctx->CreateRecordType(nullptr, lldb::eAccessPublic, name.c_str(), kind, lldb::eLanguageTypeC));
     if (union_type)
     {
-        union_type.StartTagDeclarationDefinition();
+        ClangASTContext::StartTagDeclarationDefinition(union_type);
         
         unsigned int count = 0;
         for (auto element: elements)
@@ -150,13 +150,12 @@ AppleObjCTypeEncodingParser::BuildAggregate (clang::ASTContext &ast_ctx, lldb_ut
                 elem_name.Printf("__unnamed_%u",count);
                 element.name = std::string(elem_name.GetData());
             }
-            union_type.AddFieldToRecordType(element.name.c_str(), ClangASTType(&ast_ctx,element.type.getAsOpaquePtr()), lldb::eAccessPublic, element.bitfield);
+            ClangASTContext::AddFieldToRecordType(union_type, element.name.c_str(), ClangASTType(&ast_ctx, element.type), lldb::eAccessPublic, element.bitfield);
             ++count;
         }
-        
-        union_type.CompleteTagDeclarationDefinition();
+        ClangASTContext::CompleteTagDeclarationDefinition(union_type);
     }
-    return union_type.GetQualType();
+    return ClangASTContext::GetQualType(union_type);
 }
 
 clang::QualType
@@ -171,8 +170,8 @@ AppleObjCTypeEncodingParser::BuildArray (clang::ASTContext &ast_ctx, lldb_utilit
     ClangASTContext *lldb_ctx = ClangASTContext::GetASTContext(&ast_ctx);
     if (!lldb_ctx)
         return clang::QualType();
-    ClangASTType array_type(lldb_ctx->CreateArrayType(ClangASTType(&ast_ctx,element_type.getAsOpaquePtr()), size, false));
-    return array_type.GetQualType();
+    ClangASTType array_type(lldb_ctx->CreateArrayType(ClangASTType(&ast_ctx, element_type), size, false));
+    return ClangASTContext::GetQualType(array_type);
 }
 
 // the runtime can emit these in the form of @"SomeType", giving more specifics
@@ -263,7 +262,7 @@ AppleObjCTypeEncodingParser::BuildObjCObjectPointerType (clang::ASTContext &ast_
             return ast_ctx.getObjCIdType();
 #endif
         
-        return ClangASTContext::GetTypeForDecl(decls[0]).GetPointerType().GetQualType();
+        return ClangASTContext::GetQualType(ClangASTContext::GetTypeForDecl(decls[0]).GetPointerType());
     }
     else
     {
@@ -392,7 +391,7 @@ AppleObjCTypeEncodingParser::RealizeType (clang::ASTContext &ast_ctx, const char
     {
         StringLexer lexer(name);
         clang::QualType qual_type = BuildType(ast_ctx, lexer, for_expression);
-        return ClangASTType(&ast_ctx, qual_type.getAsOpaquePtr());
+        return ClangASTType(&ast_ctx, qual_type);
     }
     return ClangASTType();
 }

@@ -338,11 +338,11 @@ ValueObject::MaybeCalculateCompleteType ()
     ClangASTType class_type;
     bool is_pointer_type = false;
     
-    if (clang_type.IsObjCObjectPointerType(&class_type))
+    if (ClangASTContext::IsObjCObjectPointerType(clang_type, &class_type))
     {
         is_pointer_type = true;
     }
-    else if (clang_type.IsObjCObjectOrInterfaceType())
+    else if (ClangASTContext::IsObjCObjectOrInterfaceType(clang_type))
     {
         class_type = clang_type;
     }
@@ -2419,7 +2419,7 @@ ValueObject::GetBaseClassPath (Stream &s)
         bool parent_had_base_class = GetParent() && GetParent()->GetBaseClassPath (s);
         ClangASTType clang_type = GetClangType();
         std::string cxx_class_name;
-        bool this_had_base_class = clang_type.GetCXXClassName (cxx_class_name);
+        bool this_had_base_class = ClangASTContext::GetCXXClassName (clang_type, cxx_class_name);
         if (this_had_base_class)
         {
             if (parent_had_base_class)
