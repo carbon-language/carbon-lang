@@ -2143,7 +2143,7 @@ void AssemblyWriter::printModule(const Module *M) {
     Out << '\n';
 
     // Split the string into lines, to make it easier to read the .ll file.
-    StringRef Asm(M->getModuleInlineAsm());
+    StringRef Asm = M->getModuleInlineAsm();
     do {
       StringRef Front;
       std::tie(Front, Asm) = Asm.split('\n');
