@@ -54,15 +54,33 @@
 ; TEXT-01: Disassembly of section .text:
 ; TEXT-01-NEXT: .text:
 ; TEXT-01-NEXT: subq	$40, %rsp
-; TEXT-01-NEXT: callq	7
+; TEXT-01-NEXT: callq	23
 ; TEXT-01-NEXT: xorl	%eax, %eax
 ; TEXT-01-NEXT: addq	$40, %rsp
 ; TEXT-01-NEXT: retq
 ; TEXT-01-NEXT: retq
+; TEXT-01-NEXT: int3
+; TEXT-01-NEXT: int3
+; TEXT-01-NEXT: int3
+; TEXT-01-NEXT: int3
+; TEXT-01-NEXT: int3
+; TEXT-01-NEXT: int3
+; TEXT-01-NEXT: int3
+; TEXT-01-NEXT: int3
+; TEXT-01-NEXT: int3
+; TEXT-01-NEXT: int3
+; TEXT-01-NEXT: int3
+; TEXT-01-NEXT: int3
+; TEXT-01-NEXT: int3
+; TEXT-01-NEXT: int3
+; TEXT-01-NEXT: int3
+; TEXT-01-NEXT: retq
 
-; HEADERS-10: AddressOfEntryPoint: 0x2010
+; HEADERS-10: AddressOfEntryPoint: 0x2020
 ; TEXT-10: Disassembly of section .text:
 ; TEXT-10-NEXT: .text:
+; TEXT-10-NEXT: retq
+; TEXT-10-NEXT: nopw    %cs:(%rax,%rax)
 ; TEXT-10-NEXT: retq
 ; TEXT-10-NEXT: int3
 ; TEXT-10-NEXT: int3
@@ -80,7 +98,7 @@
 ; TEXT-10-NEXT: int3
 ; TEXT-10-NEXT: int3
 ; TEXT-10-NEXT: subq	$40, %rsp
-; TEXT-10-NEXT: callq	-25
+; TEXT-10-NEXT: callq	-41
 ; TEXT-10-NEXT: xorl	%eax, %eax
 ; TEXT-10-NEXT: addq	$40, %rsp
 ; TEXT-10-NEXT: retq
@@ -103,4 +121,8 @@ define i32 @f1() comdat($f1) {
 $f2 = comdat any
 define i32 @f2() comdat($f2) {
   ret i32 2
+}
+
+define internal void @internal() {
+  ret void
 }

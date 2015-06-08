@@ -4,3 +4,7 @@ target triple = "x86_64-pc-windows-msvc"
 define void @foo() {
   ret void
 }
+
+define internal void @internal() {
+  ret void
+}
