@@ -145,7 +145,7 @@ private:
 // A chunk for common symbols. Common chunks don't have actual data.
 class CommonChunk : public Chunk {
 public:
-  CommonChunk(const COFFSymbolRef S) : Sym(S) {}
+  CommonChunk(const COFFSymbolRef Sym);
   size_t getSize() const override { return Sym.getValue(); }
   bool hasData() const override { return false; }
   uint32_t getPermissions() const override;

@@ -151,6 +151,13 @@ SectionRef SectionChunk::getSectionRef() {
   return SectionRef(Ref, File->getCOFFObj());
 }
 
+CommonChunk::CommonChunk(const COFFSymbolRef S) : Sym(S) {
+  // Alignment is a section attribute, but common symbols don't
+  // belong to any section. How do we know common data alignments?
+  // Needs investigating. For now, we set a large number as an alignment.
+  Align = 16;
+}
+
 uint32_t CommonChunk::getPermissions() const {
   return IMAGE_SCN_CNT_UNINITIALIZED_DATA | IMAGE_SCN_MEM_READ |
          IMAGE_SCN_MEM_WRITE;
