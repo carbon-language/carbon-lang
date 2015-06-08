@@ -799,8 +799,10 @@ bool Parser::HandlePragmaLoopHint(LoopHint &Hint) {
          "PragmaLoopHintInfo::Toks must contain at least one token.");
 
   // If no option is specified the argument is assumed to be a constant expr.
+  bool OptionUnroll = false;
   bool StateOption = false;
-  if (OptionInfo) { // Pragma unroll does not specify an option.
+  if (OptionInfo) { // Pragma Unroll does not specify an option.
+    OptionUnroll = OptionInfo->isStr("unroll");
     StateOption = llvm::StringSwitch<bool>(OptionInfo->getName())
                       .Case("vectorize", true)
                       .Case("interleave", true)
@@ -812,14 +814,13 @@ bool Parser::HandlePragmaLoopHint(LoopHint &Hint) {
   if (Toks[0].is(tok::eof)) {
     ConsumeToken(); // The annotation token.
     Diag(Toks[0].getLocation(), diag::err_pragma_loop_missing_argument)
-        << /*StateArgument=*/StateOption << /*FullKeyword=*/PragmaUnroll;
+        << /*StateArgument=*/StateOption << /*FullKeyword=*/OptionUnroll;
     return false;
   }
 
   // Validate the argument.
   if (StateOption) {
     ConsumeToken(); // The annotation token.
-    bool OptionUnroll = OptionInfo->isStr("unroll");
     SourceLocation StateLoc = Toks[0].getLocation();
     IdentifierInfo *StateInfo = Toks[0].getIdentifierInfo();
     if (!StateInfo || ((OptionUnroll ? !StateInfo->isStr("full")
