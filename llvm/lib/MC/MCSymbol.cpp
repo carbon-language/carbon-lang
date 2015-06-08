@@ -42,8 +42,7 @@ void MCSymbol::setVariableValue(const MCExpr *Value) {
   assert(!IsUsed && "Cannot set a variable that has already been used.");
   assert(Value && "Invalid variable value!");
   this->Value = Value;
-  Section = nullptr;
-  HasFragment = false;
+  SectionOrFragment = nullptr;
 }
 
 void MCSymbol::print(raw_ostream &OS) const {

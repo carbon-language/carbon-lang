@@ -14,6 +14,7 @@
 #ifndef LLVM_MC_MCSYMBOL_H
 #define LLVM_MC_MCSYMBOL_H
 
+#include "llvm/ADT/PointerUnion.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCExpr.h"
@@ -58,16 +59,14 @@ protected:
   /// one pointer.
   /// FIXME: We might be able to simplify this by having the asm streamer create
   /// dummy fragments.
-  union {
-    /// The section the symbol is defined in. This is null for undefined
-    /// symbols, and the special AbsolutePseudoSection value for absolute
-    /// symbols. If this is a variable symbol, this caches the variable value's
-    /// section.
-    mutable MCSection *Section;
-
-    /// The fragment this symbol's value is relative to, if any.
-    mutable MCFragment *Fragment;
-  };
+  /// If this is a section, then it gives the symbol is defined in. This is null
+  /// for undefined symbols, and the special AbsolutePseudoSection value for
+  /// absolute symbols. If this is a variable symbol, this caches the variable
+  /// value's section.
+  ///
+  /// If this is a fragment, then it gives the fragment this symbol's value is
+  /// relative to, if any.
+  mutable PointerUnion<MCSection *, MCFragment *> SectionOrFragment;
 
   /// Value - If non-null, the value for a variable symbol.
   const MCExpr *Value;
@@ -90,8 +89,6 @@ protected:
 
   /// This symbol is private extern.
   mutable unsigned IsPrivateExtern : 1;
-
-  mutable unsigned HasFragment : 1;
 
   SymbolKind Kind : 2;
 
@@ -119,9 +116,9 @@ protected: // MCContext creates and uniques these.
   friend class MCExpr;
   friend class MCContext;
   MCSymbol(SymbolKind Kind, const StringMapEntry<bool> *Name, bool isTemporary)
-      : Name(Name), Section(nullptr), Value(nullptr), IsTemporary(isTemporary),
+      : Name(Name), Value(nullptr), IsTemporary(isTemporary),
         IsRedefinable(false), IsUsed(false), IsRegistered(false),
-        IsExternal(false), IsPrivateExtern(false), HasFragment(false),
+        IsExternal(false), IsPrivateExtern(false),
         Kind(Kind) {
     Offset = 0;
   }
@@ -132,7 +129,8 @@ private:
   MCSection *getSectionPtr() const {
     if (MCFragment *F = getFragment())
       return F->getParent();
-    assert(!HasFragment);
+    assert(!SectionOrFragment.is<MCFragment *>() && "Section or null expected");
+    MCSection *Section = SectionOrFragment.dyn_cast<MCSection *>();
     if (Section || !Value)
       return Section;
     return Section = Value->findAssociatedSection();
@@ -163,8 +161,7 @@ public:
   void redefineIfPossible() {
     if (IsRedefinable) {
       Value = nullptr;
-      Section = nullptr;
-      HasFragment = false;
+      SectionOrFragment = nullptr;
       IsRedefinable = false;
     }
   }
@@ -197,14 +194,13 @@ public:
   /// Mark the symbol as defined in the section \p S.
   void setSection(MCSection &S) {
     assert(!isVariable() && "Cannot set section of variable");
-    assert(!HasFragment);
-    Section = &S;
+    assert(!SectionOrFragment.is<MCFragment *>() && "Section or null expected");
+    SectionOrFragment = &S;
   }
 
   /// Mark the symbol as undefined.
   void setUndefined() {
-    HasFragment = false;
-    Section = nullptr;
+    SectionOrFragment = nullptr;
   }
 
   bool isELF() const { return Kind == SymbolKindELF; }
@@ -291,13 +287,10 @@ public:
   bool isCommon() const { return CommonAlign != -1U; }
 
   MCFragment *getFragment() const {
-    if (!HasFragment)
-      return nullptr;
-    return Fragment;
+    return SectionOrFragment.dyn_cast<MCFragment *>();
   }
   void setFragment(MCFragment *Value) const {
-    HasFragment = true;
-    Fragment = Value;
+    SectionOrFragment = Value;
   }
 
   bool isExternal() const { return IsExternal; }
