@@ -83,6 +83,9 @@ private:
   StructType *EHLinkRegistrationTy = nullptr;
   StructType *CXXEHRegistrationTy = nullptr;
   StructType *SEHRegistrationTy = nullptr;
+  Function *FrameRecover = nullptr;
+  Function *FrameAddress = nullptr;
+  Function *FrameEscape = nullptr;
 
   // Per-function state
   EHPersonality Personality = EHPersonality::Unknown;
@@ -109,6 +112,9 @@ char WinEHStatePass::ID = 0;
 
 bool WinEHStatePass::doInitialization(Module &M) {
   TheModule = &M;
+  FrameEscape = Intrinsic::getDeclaration(TheModule, Intrinsic::frameescape);
+  FrameRecover = Intrinsic::getDeclaration(TheModule, Intrinsic::framerecover);
+  FrameAddress = Intrinsic::getDeclaration(TheModule, Intrinsic::frameaddress);
   return false;
 }
 
@@ -118,6 +124,9 @@ bool WinEHStatePass::doFinalization(Module &M) {
   EHLinkRegistrationTy = nullptr;
   CXXEHRegistrationTy = nullptr;
   SEHRegistrationTy = nullptr;
+  FrameEscape = nullptr;
+  FrameRecover = nullptr;
+  FrameAddress = nullptr;
   return false;
 }
 
@@ -392,10 +401,6 @@ void WinEHStatePass::addCXXStateStores(Function &F, MachineModuleInfo &MMI) {
   int RegNodeEscapeIndex = escapeRegNode(F);
 
   // Only insert stores in catch handlers.
-  Function *FrameRecover =
-      Intrinsic::getDeclaration(TheModule, Intrinsic::framerecover);
-  Function *FrameAddress =
-      Intrinsic::getDeclaration(TheModule, Intrinsic::frameaddress);
   Constant *FI8 =
       ConstantExpr::getBitCast(&F, Type::getInt8PtrTy(TheModule->getContext()));
   for (auto P : FuncInfo.HandlerBaseState) {
@@ -437,8 +442,7 @@ int WinEHStatePass::escapeRegNode(Function &F) {
   // of the entry block.
   IRBuilder<> Builder(&F.getEntryBlock(),
                       EscapeCall ? EscapeCall : F.getEntryBlock().end());
-  Builder.CreateCall(
-      Intrinsic::getDeclaration(TheModule, Intrinsic::frameescape), Args);
+  Builder.CreateCall(FrameEscape, Args);
   if (EscapeCall)
     EscapeCall->eraseFromParent();
   return Args.size() - 1;
