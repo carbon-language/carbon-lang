@@ -807,6 +807,9 @@ public:
   bool getVisualStudioBinariesFolder(const char *clangProgramPath,
                                      std::string &path) const;
 
+  std::string ComputeEffectiveClangTriple(const llvm::opt::ArgList &Args,
+                                          types::ID InputType) const override;
+
 protected:
   void AddSystemIncludeWithSubfolder(const llvm::opt::ArgList &DriverArgs,
                                      llvm::opt::ArgStringList &CC1Args,

@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ToolChains.h"
+#include "Tools.h"
 #include "clang/Basic/CharInfo.h"
 #include "clang/Basic/Version.h"
 #include "clang/Driver/Compilation.h"
@@ -494,4 +495,24 @@ void MSVCToolChain::AddClangSystemIncludeArgs(const ArgList &DriverArgs,
 void MSVCToolChain::AddClangCXXStdlibIncludeArgs(const ArgList &DriverArgs,
                                                  ArgStringList &CC1Args) const {
   // FIXME: There should probably be logic here to find libc++ on Windows.
+}
+
+std::string
+MSVCToolChain::ComputeEffectiveClangTriple(const ArgList &Args,
+                                           types::ID InputType) const {
+  std::string TripleStr =
+      ToolChain::ComputeEffectiveClangTriple(Args, InputType);
+  llvm::Triple Triple(TripleStr);
+  VersionTuple MSVT =
+      tools::visualstudio::getMSVCVersion(/*D=*/nullptr, Triple, Args,
+                                          /*IsWindowsMSVC=*/true);
+  if (MSVT.empty())
+    return TripleStr;
+
+  MSVT = VersionTuple(MSVT.getMajor(), MSVT.getMinor().getValueOr(0),
+                      MSVT.getSubminor().getValueOr(0));
+
+  if (Triple.getEnvironment() == llvm::Triple::MSVC)
+    Triple.setEnvironmentName((Twine("msvc") + MSVT.getAsString()).str());
+  return Triple.getTriple();
 }

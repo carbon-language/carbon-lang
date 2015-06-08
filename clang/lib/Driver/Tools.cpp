@@ -2584,6 +2584,53 @@ static void appendUserToPath(SmallVectorImpl<char> &Result) {
   Result.append(UID.begin(), UID.end());
 }
 
+VersionTuple visualstudio::getMSVCVersion(const Driver *D,
+                                          const llvm::Triple &Triple,
+                                          const llvm::opt::ArgList &Args,
+                                          bool IsWindowsMSVC) {
+  if (Args.hasFlag(options::OPT_fms_extensions, options::OPT_fno_ms_extensions,
+                   IsWindowsMSVC) ||
+      Args.hasArg(options::OPT_fmsc_version) ||
+      Args.hasArg(options::OPT_fms_compatibility_version)) {
+    const Arg *MSCVersion = Args.getLastArg(options::OPT_fmsc_version);
+    const Arg *MSCompatibilityVersion =
+      Args.getLastArg(options::OPT_fms_compatibility_version);
+
+    if (MSCVersion && MSCompatibilityVersion) {
+      if (D)
+        D->Diag(diag::err_drv_argument_not_allowed_with)
+            << MSCVersion->getAsString(Args)
+            << MSCompatibilityVersion->getAsString(Args);
+      return VersionTuple();
+    }
+
+    if (MSCompatibilityVersion) {
+      VersionTuple MSVT;
+      if (MSVT.tryParse(MSCompatibilityVersion->getValue()) && D)
+        D->Diag(diag::err_drv_invalid_value)
+            << MSCompatibilityVersion->getAsString(Args)
+            << MSCompatibilityVersion->getValue();
+      return MSVT;
+    }
+
+    if (MSCVersion) {
+      unsigned Version = 0;
+      if (StringRef(MSCVersion->getValue()).getAsInteger(10, Version) && D)
+        D->Diag(diag::err_drv_invalid_value) << MSCVersion->getAsString(Args)
+                                             << MSCVersion->getValue();
+      return getMSCompatibilityVersion(Version);
+    }
+
+    unsigned Major, Minor, Micro;
+    Triple.getEnvironmentVersion(Major, Minor, Micro);
+    if (Major || Minor || Micro)
+      return VersionTuple(Major, Minor, Micro);
+
+    return VersionTuple(18);
+  }
+  return VersionTuple();
+}
+
 void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                          const InputInfo &Output,
                          const InputInfoList &Inputs,
@@ -4181,38 +4228,11 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("-fms-compatibility");
 
   // -fms-compatibility-version=18.00 is default.
-  VersionTuple MSVT;
-  if (Args.hasFlag(options::OPT_fms_extensions, options::OPT_fno_ms_extensions,
-                   IsWindowsMSVC) ||
-      Args.hasArg(options::OPT_fmsc_version) ||
-      Args.hasArg(options::OPT_fms_compatibility_version)) {
-    const Arg *MSCVersion = Args.getLastArg(options::OPT_fmsc_version);
-    const Arg *MSCompatibilityVersion =
-      Args.getLastArg(options::OPT_fms_compatibility_version);
-
-    if (MSCVersion && MSCompatibilityVersion)
-      D.Diag(diag::err_drv_argument_not_allowed_with)
-          << MSCVersion->getAsString(Args)
-          << MSCompatibilityVersion->getAsString(Args);
-
-    if (MSCompatibilityVersion) {
-      if (MSVT.tryParse(MSCompatibilityVersion->getValue()))
-        D.Diag(diag::err_drv_invalid_value)
-            << MSCompatibilityVersion->getAsString(Args)
-            << MSCompatibilityVersion->getValue();
-    } else if (MSCVersion) {
-      unsigned Version = 0;
-      if (StringRef(MSCVersion->getValue()).getAsInteger(10, Version))
-        D.Diag(diag::err_drv_invalid_value) << MSCVersion->getAsString(Args)
-                                            << MSCVersion->getValue();
-      MSVT = getMSCompatibilityVersion(Version);
-    } else {
-      MSVT = VersionTuple(18);
-    }
-
+  VersionTuple MSVT = visualstudio::getMSVCVersion(
+      &D, getToolChain().getTriple(), Args, IsWindowsMSVC);
+  if (!MSVT.empty())
     CmdArgs.push_back(
         Args.MakeArgString("-fms-compatibility-version=" + MSVT.getAsString()));
-  }
 
   bool IsMSVC2015Compatible = MSVT.getMajor() >= 19;
   if (ImplyVCPPCXXVer) {
