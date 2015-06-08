@@ -158,7 +158,7 @@ std::error_code SymbolTable::addMemberFile(Lazy *Body) {
   if (!File)
     return std::error_code();
   if (Config->Verbose)
-    llvm::dbgs() << "Loaded " << File->getShortName() << " for "
+    llvm::outs() << "Loaded " << File->getShortName() << " for "
                  << Body->getName() << "\n";
   return addFile(std::move(File));
 }

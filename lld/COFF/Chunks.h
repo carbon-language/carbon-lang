@@ -70,7 +70,7 @@ public:
   }
 
   // Called if the garbage collector decides to not include this chunk
-  // in a final output. It's supposed to print out a log message to stderr.
+  // in a final output. It's supposed to print out a log message to stdout.
   // It is illegal to call this function on non-section chunks because
   // only section chunks are subject of garbage collection.
   virtual void printDiscardedMessage() {

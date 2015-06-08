@@ -139,7 +139,7 @@ void SectionChunk::printDiscardedMessage() {
       continue;
     StringRef SymbolName;
     File->getCOFFObj()->getSymbolName(Sym, SymbolName);
-    llvm::dbgs() << "Discarded " << SymbolName << " from "
+    llvm::outs() << "Discarded " << SymbolName << " from "
                  << File->getShortName() << "\n";
     I += Sym.getNumberOfAuxSymbols();
   }
