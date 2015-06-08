@@ -585,7 +585,8 @@ ProcessWindows::DoHalt(bool &caused_stop)
 
 void ProcessWindows::DidLaunch()
 {
-    DidAttach(ArchSpec());
+    ArchSpec arch_spec;
+    DidAttach(arch_spec);
 }
 
 void
