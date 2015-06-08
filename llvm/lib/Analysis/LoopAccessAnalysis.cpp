@@ -678,6 +678,42 @@ bool MemoryDepChecker::couldPreventStoreLoadForward(unsigned Distance,
   return false;
 }
 
+/// \brief Check the dependence for two accesses with the same stride \p Stride.
+/// \p Distance is the positive distance and \p TypeByteSize is type size in
+/// bytes.
+///
+/// \returns true if they are independent.
+static bool areStridedAccessesIndependent(unsigned Distance, unsigned Stride,
+                                          unsigned TypeByteSize) {
+  assert(Stride > 1 && "The stride must be greater than 1");
+  assert(TypeByteSize > 0 && "The type size in byte must be non-zero");
+  assert(Distance > 0 && "The distance must be non-zero");
+
+  // Skip if the distance is not multiple of type byte size.
+  if (Distance % TypeByteSize)
+    return false;
+
+  unsigned ScaledDist = Distance / TypeByteSize;
+
+  // No dependence if the scaled distance is not multiple of the stride.
+  // E.g.
+  //      for (i = 0; i < 1024 ; i += 4)
+  //        A[i+2] = A[i] + 1;
+  //
+  // Two accesses in memory (scaled distance is 2, stride is 4):
+  //     | A[0] |      |      |      | A[4] |      |      |      |
+  //     |      |      | A[2] |      |      |      | A[6] |      |
+  //
+  // E.g.
+  //      for (i = 0; i < 1024 ; i += 3)
+  //        A[i+4] = A[i] + 1;
+  //
+  // Two accesses in memory (scaled distance is 4, stride is 3):
+  //     | A[0] |      |      | A[3] |      |      | A[6] |      |      |
+  //     |      |      |      |      | A[4] |      |      | A[7] |      |
+  return ScaledDist % Stride;
+}
+
 MemoryDepChecker::Dependence::DepType
 MemoryDepChecker::isDependent(const MemAccessInfo &A, unsigned AIdx,
                               const MemAccessInfo &B, unsigned BIdx,
@@ -778,34 +814,87 @@ MemoryDepChecker::isDependent(const MemAccessInfo &A, unsigned AIdx,
 
   unsigned Distance = (unsigned) Val.getZExtValue();
 
+  unsigned Stride = std::abs(StrideAPtr);
+  if (Stride > 1 &&
+      areStridedAccessesIndependent(Distance, Stride, TypeByteSize))
+    return Dependence::NoDep;
+
   // Bail out early if passed-in parameters make vectorization not feasible.
   unsigned ForcedFactor = (VectorizerParams::VectorizationFactor ?
                            VectorizerParams::VectorizationFactor : 1);
   unsigned ForcedUnroll = (VectorizerParams::VectorizationInterleave ?
                            VectorizerParams::VectorizationInterleave : 1);
+  // The minimum number of iterations for a vectorized/unrolled version.
+  unsigned MinNumIter = std::max(ForcedFactor * ForcedUnroll, 2U);
 
-  // The distance must be bigger than the size needed for a vectorized version
-  // of the operation and the size of the vectorized operation must not be
-  // bigger than the currrent maximum size.
-  if (Distance < 2*TypeByteSize ||
-      2*TypeByteSize > MaxSafeDepDistBytes ||
-      Distance < TypeByteSize * ForcedUnroll * ForcedFactor) {
-    DEBUG(dbgs() << "LAA: Failure because of Positive distance "
-        << Val.getSExtValue() << '\n');
+  // It's not vectorizable if the distance is smaller than the minimum distance
+  // needed for a vectroized/unrolled version. Vectorizing one iteration in
+  // front needs TypeByteSize * Stride. Vectorizing the last iteration needs
+  // TypeByteSize (No need to plus the last gap distance).
+  //
+  // E.g. Assume one char is 1 byte in memory and one int is 4 bytes.
+  //      foo(int *A) {
+  //        int *B = (int *)((char *)A + 14);
+  //        for (i = 0 ; i < 1024 ; i += 2)
+  //          B[i] = A[i] + 1;
+  //      }
+  //
+  // Two accesses in memory (stride is 2):
+  //     | A[0] |      | A[2] |      | A[4] |      | A[6] |      |
+  //                              | B[0] |      | B[2] |      | B[4] |
+  //
+  // Distance needs for vectorizing iterations except the last iteration:
+  // 4 * 2 * (MinNumIter - 1). Distance needs for the last iteration: 4.
+  // So the minimum distance needed is: 4 * 2 * (MinNumIter - 1) + 4.
+  //
+  // If MinNumIter is 2, it is vectorizable as the minimum distance needed is
+  // 12, which is less than distance.
+  //
+  // If MinNumIter is 4 (Say if a user forces the vectorization factor to be 4),
+  // the minimum distance needed is 28, which is greater than distance. It is
+  // not safe to do vectorization.
+  unsigned MinDistanceNeeded =
+      TypeByteSize * Stride * (MinNumIter - 1) + TypeByteSize;
+  if (MinDistanceNeeded > Distance) {
+    DEBUG(dbgs() << "LAA: Failure because of positive distance " << Distance
+                 << '\n');
+    return Dependence::Backward;
+  }
+
+  // Unsafe if the minimum distance needed is greater than max safe distance.
+  if (MinDistanceNeeded > MaxSafeDepDistBytes) {
+    DEBUG(dbgs() << "LAA: Failure because it needs at least "
+                 << MinDistanceNeeded << " size in bytes");
     return Dependence::Backward;
   }
 
   // Positive distance bigger than max vectorization factor.
-  MaxSafeDepDistBytes = Distance < MaxSafeDepDistBytes ?
-    Distance : MaxSafeDepDistBytes;
+  // FIXME: Should use max factor instead of max distance in bytes, which could
+  // not handle different types.
+  // E.g. Assume one char is 1 byte in memory and one int is 4 bytes.
+  //      void foo (int *A, char *B) {
+  //        for (unsigned i = 0; i < 1024; i++) {
+  //          A[i+2] = A[i] + 1;
+  //          B[i+2] = B[i] + 1;
+  //        }
+  //      }
+  //
+  // This case is currently unsafe according to the max safe distance. If we
+  // analyze the two accesses on array B, the max safe dependence distance
+  // is 2. Then we analyze the accesses on array A, the minimum distance needed
+  // is 8, which is less than 2 and forbidden vectorization, But actually
+  // both A and B could be vectorized by 2 iterations.
+  MaxSafeDepDistBytes =
+      Distance < MaxSafeDepDistBytes ? Distance : MaxSafeDepDistBytes;
 
   bool IsTrueDataDependence = (!AIsWrite && BIsWrite);
   if (IsTrueDataDependence &&
       couldPreventStoreLoadForward(Distance, TypeByteSize))
     return Dependence::BackwardVectorizableButPreventsForwarding;
 
-  DEBUG(dbgs() << "LAA: Positive distance " << Val.getSExtValue() <<
-        " with max VF = " << MaxSafeDepDistBytes / TypeByteSize << '\n');
+  DEBUG(dbgs() << "LAA: Positive distance " << Val.getSExtValue()
+               << " with max VF = "
+               << MaxSafeDepDistBytes / (TypeByteSize * Stride) << '\n');
 
   return Dependence::BackwardVectorizable;
 }
