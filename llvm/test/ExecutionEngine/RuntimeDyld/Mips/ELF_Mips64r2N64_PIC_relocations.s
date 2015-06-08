@@ -2,6 +2,15 @@
 # RUN: llc -mtriple=mips64el-unknown-linux -relocation-model=pic -filetype=obj -o %T/test_ELF_ExternalFunction_Mips64N64.o %S/Inputs/ExternalFunction.ll
 # RUN: llvm-rtdyld -triple=mips64el-unknown-linux -verify -map-section test_ELF_Mips64N64.o,.text=0x1000 -map-section test_ELF_ExternalFunction_Mips64N64.o,.text=0x10000 -check=%s %/T/test_ELF_Mips64N64.o %T/test_ELF_ExternalFunction_Mips64N64.o
 
+	.data
+# Test R_MIPS_PC32 relocation.
+# rtdyld-check: *{4}(R_MIPS_PC32) = (foo - R_MIPS_PC32)[31:0]
+R_MIPS_PC32:
+	.word foo-.
+# rtdyld-check: *{4}(R_MIPS_PC32 + 4) = (foo - tmp1)[31:0]
+tmp1:
+	.4byte foo-tmp1
+
 	.text
 	.abicalls
 	.section	.mdebug.abi64,"",@progbits

@@ -631,6 +631,10 @@ RuntimeDyldELF::evaluateMIPS64Relocation(const SectionEntry &Section,
     uint64_t FinalAddress = (Section.LoadAddress + Offset);
     return ((Value + Addend - FinalAddress - 4) >> 2) & 0xffff;
   }
+  case ELF::R_MIPS_PC32: {
+    uint64_t FinalAddress = (Section.LoadAddress + Offset);
+    return Value + Addend - FinalAddress;
+  }
   case ELF::R_MIPS_PC18_S3: {
     uint64_t FinalAddress = (Section.LoadAddress + Offset);
     return ((Value + Addend - ((FinalAddress | 7) ^ 7)) >> 3) & 0x3ffff;
@@ -669,6 +673,7 @@ void RuntimeDyldELF::applyMIPS64Relocation(uint8_t *TargetPtr,
       break;
     case ELF::R_MIPS_32:
     case ELF::R_MIPS_GPREL32:
+    case ELF::R_MIPS_PC32:
       writeBytesUnaligned(CalculatedValue & 0xffffffff, TargetPtr, 4);
       break;
     case ELF::R_MIPS_64:
