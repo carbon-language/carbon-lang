@@ -18,7 +18,7 @@
 #include "llvm/MC/MCMachOSymbolFlags.h"
 #include "llvm/MC/MCObjectWriter.h"
 #include "llvm/MC/MCSectionMachO.h"
-#include "llvm/MC/MCSymbol.h"
+#include "llvm/MC/MCSymbolMachO.h"
 #include "llvm/MC/MCValue.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -46,7 +46,7 @@ bool MachObjectWriter::doesSymbolRequireExternRelocation(const MCSymbol &S) {
 
   // References to weak definitions require external relocation entries; the
   // definition may not always be the one in the same object file.
-  if (S.getFlags() & SF_WeakDefinition)
+  if (cast<MCSymbolMachO>(S).isWeakDefinition())
     return true;
 
   // Otherwise, we can use an internal relocation.
@@ -327,7 +327,6 @@ void MachObjectWriter::writeNlist(MachSymbolData &MSD,
   const MCSymbol *AliasedSymbol = &findAliasedSymbol(*Symbol);
   uint8_t SectionIndex = MSD.SectionIndex;
   uint8_t Type = 0;
-  uint16_t Flags = Symbol->getFlags();
   uint64_t Address = 0;
   bool IsAlias = Symbol != AliasedSymbol;
 
@@ -371,22 +370,7 @@ void MachObjectWriter::writeNlist(MachSymbolData &MSD,
     // Common symbols are encoded with the size in the address
     // field, and their alignment in the flags.
     Address = Symbol->getCommonSize();
-
-    // Common alignment is packed into the 'desc' bits.
-    if (unsigned Align = Symbol->getCommonAlignment()) {
-      unsigned Log2Size = Log2_32(Align);
-      assert((1U << Log2Size) == Align && "Invalid 'common' alignment!");
-      if (Log2Size > 15)
-        report_fatal_error("invalid 'common' alignment '" +
-                           Twine(Align) + "' for '" + Symbol->getName() + "'",
-                           false);
-      // FIXME: Keep this mask with the SymbolFlags enumeration.
-      Flags = (Flags & 0xF0FF) | (Log2Size << 8);
-    }
   }
-
-  if (Layout.getAssembler().isThumbFunc(Symbol))
-    Flags |= SF_ThumbFunc;
 
   // struct nlist (12 bytes)
 
@@ -396,7 +380,7 @@ void MachObjectWriter::writeNlist(MachSymbolData &MSD,
 
   // The Mach-O streamer uses the lowest 16-bits of the flags for the 'desc'
   // value.
-  write16(Flags);
+  write16(cast<MCSymbolMachO>(Symbol)->getEncodedFlags());
   if (is64Bit())
     write64(Address);
   else
@@ -515,7 +499,7 @@ void MachObjectWriter::bindIndirectSymbols(MCAssembler &Asm) {
     bool Created;
     Asm.registerSymbol(*it->Symbol, &Created);
     if (Created)
-      it->Symbol->setFlags(it->Symbol->getFlags() | 0x0001);
+      cast<MCSymbolMachO>(it->Symbol)->setReferenceTypeUndefinedLazy(true);
   }
 }
 

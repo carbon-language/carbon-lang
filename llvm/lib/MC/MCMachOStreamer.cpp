@@ -23,7 +23,7 @@
 #include "llvm/MC/MCObjectStreamer.h"
 #include "llvm/MC/MCSection.h"
 #include "llvm/MC/MCSectionMachO.h"
-#include "llvm/MC/MCSymbol.h"
+#include "llvm/MC/MCSymbolMachO.h"
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/TargetRegistry.h"
@@ -172,7 +172,7 @@ void MCMachOStreamer::EmitEHSymAttributes(const MCSymbol *Symbol,
   getAssembler().registerSymbol(*Symbol);
   if (Symbol->isExternal())
     EmitSymbolAttribute(EHSymbol, MCSA_Global);
-  if (Symbol->getFlags() & SF_WeakDefinition)
+  if (cast<MCSymbolMachO>(Symbol)->isWeakDefinition())
     EmitSymbolAttribute(EHSymbol, MCSA_WeakDefinition);
   if (Symbol->isPrivateExtern())
     EmitSymbolAttribute(EHSymbol, MCSA_PrivateExtern);
@@ -197,7 +197,7 @@ void MCMachOStreamer::EmitLabel(MCSymbol *Symbol) {
   //
   // FIXME: Cleanup this code, these bits should be emitted based on semantic
   // properties, not on the order of definition, etc.
-  Symbol->setFlags(Symbol->getFlags() & ~SF_ReferenceTypeMask);
+  cast<MCSymbolMachO>(Symbol)->clearReferenceType();
 }
 
 void MCMachOStreamer::EmitDataRegion(DataRegionData::KindTy Kind) {
@@ -272,10 +272,13 @@ void MCMachOStreamer::EmitThumbFunc(MCSymbol *Symbol) {
   // Remember that the function is a thumb function. Fixup and relocation
   // values will need adjusted.
   getAssembler().setIsThumbFunc(Symbol);
+  cast<MCSymbolMachO>(Symbol)->setThumbFunc();
 }
 
-bool MCMachOStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
+bool MCMachOStreamer::EmitSymbolAttribute(MCSymbol *Sym,
                                           MCSymbolAttr Attribute) {
+  MCSymbolMachO *Symbol = cast<MCSymbolMachO>(Sym);
+
   // Indirect symbols are handled differently, to match how 'as' handles
   // them. This makes writing matching .o files easier.
   if (Attribute == MCSA_IndirectSymbol) {
@@ -324,25 +327,25 @@ bool MCMachOStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
     //
     // FIXME: Cleanup this code, these bits should be emitted based on semantic
     // properties, not on the order of definition, etc.
-    Symbol->setFlags(Symbol->getFlags() & ~SF_ReferenceTypeUndefinedLazy);
+    Symbol->setReferenceTypeUndefinedLazy(false);
     break;
 
   case MCSA_LazyReference:
     // FIXME: This requires -dynamic.
-    Symbol->setFlags(Symbol->getFlags() | SF_NoDeadStrip);
+    Symbol->setNoDeadStrip();
     if (Symbol->isUndefined())
-      Symbol->setFlags(Symbol->getFlags() | SF_ReferenceTypeUndefinedLazy);
+      Symbol->setReferenceTypeUndefinedLazy(true);
     break;
 
     // Since .reference sets the no dead strip bit, it is equivalent to
     // .no_dead_strip in practice.
   case MCSA_Reference:
   case MCSA_NoDeadStrip:
-    Symbol->setFlags(Symbol->getFlags() | SF_NoDeadStrip);
+    Symbol->setNoDeadStrip();
     break;
 
   case MCSA_SymbolResolver:
-    Symbol->setFlags(Symbol->getFlags() | SF_SymbolResolver);
+    Symbol->setSymbolResolver();
     break;
 
   case MCSA_PrivateExtern:
@@ -353,17 +356,18 @@ bool MCMachOStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
   case MCSA_WeakReference:
     // FIXME: This requires -dynamic.
     if (Symbol->isUndefined())
-      Symbol->setFlags(Symbol->getFlags() | SF_WeakReference);
+      Symbol->setWeakReference();
     break;
 
   case MCSA_WeakDefinition:
     // FIXME: 'as' enforces that this is defined and global. The manual claims
     // it has to be in a coalesced section, but this isn't enforced.
-    Symbol->setFlags(Symbol->getFlags() | SF_WeakDefinition);
+    Symbol->setWeakDefinition();
     break;
 
   case MCSA_WeakDefAutoPrivate:
-    Symbol->setFlags(Symbol->getFlags() | SF_WeakDefinition | SF_WeakReference);
+    Symbol->setWeakDefinition();
+    Symbol->setWeakReference();
     break;
   }
 
@@ -372,10 +376,8 @@ bool MCMachOStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
 
 void MCMachOStreamer::EmitSymbolDesc(MCSymbol *Symbol, unsigned DescValue) {
   // Encode the 'desc' value into the lowest implementation defined bits.
-  assert(DescValue == (DescValue & SF_DescFlagsMask) &&
-         "Invalid .desc value!");
   getAssembler().registerSymbol(*Symbol);
-  Symbol->setFlags(DescValue & SF_DescFlagsMask);
+  cast<MCSymbolMachO>(Symbol)->setDesc(DescValue);
 }
 
 void MCMachOStreamer::EmitCommonSymbol(MCSymbol *Symbol, uint64_t Size,
