@@ -22,6 +22,7 @@
 using namespace llvm::object;
 using namespace llvm::support::endian;
 using llvm::COFF::ImportHeader;
+using llvm::COFF::IMAGE_COMDAT_SELECT_ASSOCIATIVE;
 using llvm::RoundUpToAlignment;
 using llvm::sys::fs::identify_magic;
 using llvm::sys::fs::file_magic;
@@ -200,13 +201,16 @@ SymbolBody *ObjectFile::createSymbolBody(StringRef Name, COFFSymbolRef Sym,
     auto *Aux = (const coff_aux_weak_external *)AuxP;
     return new (Alloc) Undefined(Name, &SparseSymbolBodies[Aux->TagIndex]);
   }
+  // Handle associative sections
   if (IsFirst && AuxP) {
     if (Chunk *C = SparseChunks[Sym.getSectionNumber()]) {
       auto *Aux = reinterpret_cast<const coff_aux_section_definition *>(AuxP);
-      auto *Parent =
+      if (Aux->Selection == IMAGE_COMDAT_SELECT_ASSOCIATIVE) {
+        auto *Parent =
           (SectionChunk *)(SparseChunks[Aux->getNumber(Sym.isBigObj())]);
-      if (Parent)
-        Parent->addAssociative((SectionChunk *)C);
+        if (Parent)
+          Parent->addAssociative((SectionChunk *)C);
+      }
     }
   }
   if (Chunk *C = SparseChunks[Sym.getSectionNumber()])
