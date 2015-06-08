@@ -1,5 +1,6 @@
 add_llvm_library(LLVMObject
   Archive.cpp
+  ArchiveWriter.cpp
   Binary.cpp
   COFFObjectFile.cpp
   COFFYAML.cpp
