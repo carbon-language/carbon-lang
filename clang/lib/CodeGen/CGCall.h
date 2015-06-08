@@ -155,17 +155,25 @@ namespace CodeGen {
   /// ReturnValueSlot - Contains the address where the return value of a 
   /// function can be stored, and whether the address is volatile or not.
   class ReturnValueSlot {
-    llvm::PointerIntPair<llvm::Value *, 1, bool> Value;
+    llvm::PointerIntPair<llvm::Value *, 2, unsigned int> Value;
+
+    // Return value slot flags
+    enum Flags {
+      IS_VOLATILE = 0x1,
+      IS_UNUSED = 0x2,
+    };
 
   public:
     ReturnValueSlot() {}
-    ReturnValueSlot(llvm::Value *Value, bool IsVolatile)
-      : Value(Value, IsVolatile) {}
+    ReturnValueSlot(llvm::Value *Value, bool IsVolatile, bool IsUnused = false)
+      : Value(Value,
+              (IsVolatile ? IS_VOLATILE : 0) | (IsUnused ? IS_UNUSED : 0)) {}
 
     bool isNull() const { return !getValue(); }
-    
-    bool isVolatile() const { return Value.getInt(); }
+
+    bool isVolatile() const { return Value.getInt() & IS_VOLATILE; }
     llvm::Value *getValue() const { return Value.getPointer(); }
+    bool isUnused() const { return Value.getInt() & IS_UNUSED; }
   };
   
 }  // end namespace CodeGen
