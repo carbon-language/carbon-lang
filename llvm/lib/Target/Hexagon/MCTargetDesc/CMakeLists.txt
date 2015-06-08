@@ -4,6 +4,7 @@ add_llvm_library(LLVMHexagonDesc
   HexagonInstPrinter.cpp
   HexagonMCAsmInfo.cpp
   HexagonMCCodeEmitter.cpp
+  HexagonMCCompound.cpp
   HexagonMCDuplexInfo.cpp
   HexagonMCInstrInfo.cpp
   HexagonMCShuffler.cpp

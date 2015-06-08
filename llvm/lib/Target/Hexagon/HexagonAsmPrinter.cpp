@@ -200,11 +200,17 @@ void HexagonAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     HexagonLowerToMC(MI, MCB, *this);
     HexagonMCInstrInfo::padEndloop(MCB);
   }
+  // Examine the packet and try to find instructions that can be converted
+  // to compounds.
+  HexagonMCInstrInfo::tryCompound(*Subtarget->getInstrInfo(),
+                                  OutStreamer->getContext(), MCB);
   // Examine the packet and convert pairs of instructions to duplex
   // instructions when possible.
   SmallVector<DuplexCandidate, 8> possibleDuplexes;
-  possibleDuplexes = HexagonMCInstrInfo::getDuplexPossibilties(*Subtarget->getInstrInfo(), MCB);
-  HexagonMCShuffle(*Subtarget->getInstrInfo(), *Subtarget, OutStreamer->getContext(), MCB, possibleDuplexes);
+  possibleDuplexes = HexagonMCInstrInfo::getDuplexPossibilties(
+      *Subtarget->getInstrInfo(), MCB);
+  HexagonMCShuffle(*Subtarget->getInstrInfo(), *Subtarget,
+                   OutStreamer->getContext(), MCB, possibleDuplexes);
   EmitToStreamer(*OutStreamer, MCB);
 }
 

@@ -202,6 +202,14 @@ namespace HexagonII {
     HSIG_Compound
   };
 
+  // Hexagon Compound classes.
+  enum CompoundGroup {
+    HCG_None = 0,
+    HCG_A,
+    HCG_B,
+    HCG_C
+  };
+
   enum InstParseBits {
     INST_PARSE_MASK       = 0x0000c000,
     INST_PARSE_PACKET_END = 0x0000c000,

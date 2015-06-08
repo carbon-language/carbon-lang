@@ -223,6 +223,9 @@ void setOuterLoop(MCInst &MCI);
 
 // Would duplexing this instruction create a requirement to extend
 bool subInstWouldBeExtended(MCInst const &potentialDuplex);
+
+// Attempt to find and replace compound pairs 
+void tryCompound(MCInstrInfo const &MCII, MCContext &Context, MCInst &MCI);
 }
 }
 
