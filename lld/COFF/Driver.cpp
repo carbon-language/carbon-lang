@@ -334,6 +334,8 @@ bool LinkerDriver::link(int Argc, const char *Argv[]) {
       return false;
     }
     std::unique_ptr<InputFile> File = std::move(FileOrErr.get());
+    if (Config->Verbose)
+      llvm::outs() << "Reading " << File->getName() << "\n";
     if (auto EC = Symtab.addFile(std::move(File))) {
       llvm::errs() << Path << ": " << EC.message() << "\n";
       return false;

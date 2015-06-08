@@ -40,14 +40,20 @@ std::error_code SymbolTable::addFile(std::unique_ptr<InputFile> File) {
   return addImport(cast<ImportFile>(FileP));
 }
 
-std::error_code SymbolTable::addDirectives(StringRef Dir) {
-  if (Dir.empty())
+std::error_code SymbolTable::addDirectives(InputFile *File) {
+  StringRef S = File->getDirectives();
+  if (S.empty())
     return std::error_code();
   std::vector<std::unique_ptr<InputFile>> Libs;
-  if (auto EC = Driver->parseDirectives(Dir, &Libs))
+  if (auto EC = Driver->parseDirectives(S, &Libs))
     return EC;
-  for (std::unique_ptr<InputFile> &Lib : Libs)
+  for (std::unique_ptr<InputFile> &Lib : Libs) {
+    if (Config->Verbose) {
+      llvm::outs() << "Reading " << Lib->getName()
+                   << " for " << File->getName() << "\n";
+    }
     addFile(std::move(Lib));
+  }
   return std::error_code();
 }
 
@@ -60,7 +66,7 @@ std::error_code SymbolTable::addObject(ObjectFile *File) {
 
   // If an object file contains .drectve section, read it and add
   // files listed in the section.
-  return addDirectives(File->getDirectives());
+  return addDirectives(File);
 }
 
 std::error_code SymbolTable::addArchive(ArchiveFile *File) {
@@ -79,7 +85,7 @@ std::error_code SymbolTable::addBitcode(BitcodeFile *File) {
         return EC;
 
   // Add any linker directives from the module flags metadata.
-  return addDirectives(File->getDirectives());
+  return addDirectives(File);
 }
 
 std::error_code SymbolTable::addImport(ImportFile *File) {

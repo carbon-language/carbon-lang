@@ -54,6 +54,9 @@ public:
   // Sets a parent filename if this file is created from an archive.
   void setParentName(StringRef N) { ParentName = N; }
 
+  // Returns .drectve section contents if exist.
+  virtual StringRef getDirectives() { return ""; }
+
 protected:
   explicit InputFile(Kind K, MemoryBufferRef M) : MB(M), FileKind(K) {}
   MemoryBufferRef MB;
@@ -99,11 +102,10 @@ public:
   // underlying object file.
   SymbolBody *getSymbolBody(uint32_t SymbolIndex);
 
-  // Returns .drectve section contents if exist.
-  StringRef getDirectives() { return Directives; }
-
   // Returns the underying COFF file.
   COFFObjectFile *getCOFFObj() { return COFFObj.get(); }
+
+  StringRef getDirectives() override { return Directives; }
 
 private:
   std::error_code initializeChunks();
@@ -165,7 +167,7 @@ public:
   LTOModule *releaseModule() { return M.release(); }
 
   // Returns linker directives from module flags metadata if present.
-  StringRef getDirectives() { return Directives; }
+  StringRef getDirectives() override { return Directives; }
 
 private:
   std::error_code parse() override;
