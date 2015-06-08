@@ -132,13 +132,13 @@ void large_auto_object() {
 
 int large_combiner_test(S_large s) {
 // CHECK-LABEL: define i32 @large_combiner_test
-// CHECK: %1 = alloca %struct.Combiner
-// CHECK: %2 = alloca %struct.Combiner
-// CHECK: %3 = call %struct.Combiner* @_ZN8CombinerC1E7S_large(%struct.Combiner* %1, [9 x i32] %s.coerce)
-// CHECK: call void @_ZN8Combiner1fEv(%struct.Combiner* sret %2, %struct.Combiner* %1)
-// CHECK: %4 = getelementptr inbounds %struct.Combiner, %struct.Combiner* %2, i32 0, i32 0, i32 0, i32 0
-// CHECK: %5 = load i32, i32* %4
-// CHECK: ret i32 %5
+// CHECK: [[T1:%.*]] = alloca %struct.Combiner
+// CHECK: [[T2:%.*]] = alloca %struct.Combiner
+// CHECK: [[T3:%.*]] = call %struct.Combiner* @_ZN8CombinerC1E7S_large(%struct.Combiner* [[T1]], [9 x i32] %s.coerce)
+// CHECK: call void @_ZN8Combiner1fEv(%struct.Combiner* sret [[T2]], %struct.Combiner* [[T1]])
+// CHECK: [[T4:%.*]] = getelementptr inbounds %struct.Combiner, %struct.Combiner* [[T2]], i32 0, i32 0, i32 0, i32 0
+// CHECK: [[T5:%.*]] = load i32, i32* [[T4]]
+// CHECK: ret i32 [[T5]]
 
   return Combiner(s).f().a.a[0];
 }
