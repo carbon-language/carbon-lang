@@ -1764,7 +1764,7 @@ static unsigned MatchRegisterName(StringRef Name);
 /// }
 
 static unsigned matchVectorRegName(StringRef Name) {
-  return StringSwitch<unsigned>(Name)
+  return StringSwitch<unsigned>(Name.lower())
       .Case("v0", AArch64::Q0)
       .Case("v1", AArch64::Q1)
       .Case("v2", AArch64::Q2)
