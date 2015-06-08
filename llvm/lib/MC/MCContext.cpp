@@ -22,6 +22,7 @@
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbolCOFF.h"
 #include "llvm/MC/MCSymbolELF.h"
+#include "llvm/MC/MCSymbolMachO.h"
 #include "llvm/Support/ELF.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FileSystem.h"
@@ -167,7 +168,7 @@ MCSymbol *MCContext::createSymbolImpl(const StringMapEntry<bool> *Name,
     case MCObjectFileInfo::IsELF:
       return new (*this) MCSymbolELF(Name, IsTemporary);
     case MCObjectFileInfo::IsMachO:
-      return new (*this) MCSymbol(MCSymbol::SymbolKindUnset, Name, IsTemporary);
+      return new (*this) MCSymbolMachO(Name, IsTemporary);
     }
   }
   return new (*this) MCSymbol(MCSymbol::SymbolKindUnset, Name, IsTemporary);
