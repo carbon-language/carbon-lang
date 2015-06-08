@@ -120,30 +120,30 @@ void Writer::createSections() {
         C->printDiscardedMessage();
       continue;
     }
-    // '$' and all following characters in input section names are
-    // discarded when determining output section. So, .text$foo
-    // contributes to .text, for example. See PE/COFF spec 3.2.
-    Map[C->getSectionName().split('$').first].push_back(C);
+    Map[C->getSectionName()].push_back(C);
   }
 
   // Then create an OutputSection for each section.
+  // '$' and all following characters in input section names are
+  // discarded when determining output section. So, .text$foo
+  // contributes to .text, for example. See PE/COFF spec 3.2.
+  StringRef Name = Map.begin()->first.split('$').first;
+  auto Sec = new (CAlloc.Allocate()) OutputSection(Name, 0);
+  OutputSections.push_back(Sec);
   for (auto &P : Map) {
     StringRef SectionName = P.first;
+    StringRef Base = SectionName.split('$').first;
+    if (Base != Sec->getName()) {
+      size_t SectIdx = OutputSections.size();
+      Sec = new (CAlloc.Allocate()) OutputSection(Base, SectIdx);
+      OutputSections.push_back(Sec);
+    }
     std::vector<Chunk *> &Chunks = P.second;
-    // Input sections are ordered by their names including '$' parts,
-    // which gives you some control over the output layout.
-    std::stable_sort(Chunks.begin(), Chunks.end(),
-                     [](Chunk *A, Chunk *B) {
-                       return A->getSectionName() < B->getSectionName();
-                     });
-    size_t SectIdx = OutputSections.size();
-    auto Sec = new (CAlloc.Allocate()) OutputSection(SectionName, SectIdx);
     for (Chunk *C : Chunks) {
       C->setOutputSection(Sec);
       Sec->addChunk(C);
       Sec->addPermissions(C->getPermissions());
     }
-    OutputSections.push_back(Sec);
   }
 }
 
