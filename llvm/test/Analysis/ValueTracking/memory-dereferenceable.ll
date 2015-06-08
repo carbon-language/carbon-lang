@@ -10,6 +10,9 @@ declare zeroext i1 @return_i1()
 @globalstr = global [6 x i8] c"hello\00"
 @globali32ptr = external global i32*
 
+%struct.A = type { [8 x i8], [5 x i8] }
+@globalstruct = external global %struct.A
+
 define void @test(i32 addrspace(1)* dereferenceable(8) %dparam) gc "statepoint-example" {
 ; CHECK: The following are dereferenceable:
 ; CHECK: %globalptr
@@ -22,6 +25,8 @@ define void @test(i32 addrspace(1)* dereferenceable(8) %dparam) gc "statepoint-e
 ; CHECK-NOT: %d2_load
 ; CHECK-NOT: %d_or_null_load
 ; CHECK: %d_or_null_non_null_load
+; CHECK: %within_allocation
+; CHECK-NOT: %outside_allocation
 entry:
     %globalptr = getelementptr inbounds [6 x i8], [6 x i8]* @globalstr, i32 0, i32 0
     %load1 = load i8, i8* %globalptr
@@ -53,6 +58,14 @@ entry:
     ; Load from a non-null pointer with dereferenceable_or_null
     %d_or_null_non_null_load = load i32*, i32** @globali32ptr, !nonnull !2, !dereferenceable_or_null !0
     %load10 = load i32, i32* %d_or_null_non_null_load
+
+    ; It's OK to overrun static array size as long as we stay within underlying object size
+    %within_allocation = getelementptr inbounds %struct.A, %struct.A* @globalstruct, i64 0, i32 0, i64 10
+    %load11 = load i8, i8* %within_allocation
+
+    ; GEP is outside the underlying object size
+    %outside_allocation = getelementptr inbounds %struct.A, %struct.A* @globalstruct, i64 0, i32 1, i64 10
+    %load12 = load i8, i8* %outside_allocation
 
     ret void
 }

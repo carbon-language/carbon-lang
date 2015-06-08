@@ -2967,38 +2967,25 @@ static bool isDereferenceablePointer(const Value *V, const DataLayout &DL,
 
   // For GEPs, determine if the indexing lands within the allocated object.
   if (const GEPOperator *GEP = dyn_cast<GEPOperator>(V)) {
+    Type *VTy = GEP->getType();
+    Type *Ty = VTy->getPointerElementType();
+    const Value *Base = GEP->getPointerOperand();
+
     // Conservatively require that the base pointer be fully dereferenceable.
-    if (!Visited.insert(GEP->getOperand(0)).second)
+    if (!Visited.insert(Base).second)
       return false;
-    if (!isDereferenceablePointer(GEP->getOperand(0), DL, CtxI,
+    if (!isDereferenceablePointer(Base, DL, CtxI,
                                   DT, TLI, Visited))
       return false;
-    // Check the indices.
-    gep_type_iterator GTI = gep_type_begin(GEP);
-    for (User::const_op_iterator I = GEP->op_begin()+1,
-         E = GEP->op_end(); I != E; ++I) {
-      Value *Index = *I;
-      Type *Ty = *GTI++;
-      // Struct indices can't be out of bounds.
-      if (isa<StructType>(Ty))
-        continue;
-      ConstantInt *CI = dyn_cast<ConstantInt>(Index);
-      if (!CI)
-        return false;
-      // Zero is always ok.
-      if (CI->isZero())
-        continue;
-      // Check to see that it's within the bounds of an array.
-      ArrayType *ATy = dyn_cast<ArrayType>(Ty);
-      if (!ATy)
-        return false;
-      if (CI->getValue().getActiveBits() > 64)
-        return false;
-      if (CI->getZExtValue() >= ATy->getNumElements())
-        return false;
-    }
-    // Indices check out; this is dereferenceable.
-    return true;
+    
+    APInt Offset(DL.getPointerTypeSizeInBits(VTy), 0);
+    if (!GEP->accumulateConstantOffset(DL, Offset))
+      return false;
+    
+    // Check if the load is within the bounds of the underlying object.
+    uint64_t LoadSize = DL.getTypeStoreSize(Ty);
+    Type *BaseType = Base->getType()->getPointerElementType();
+    return (Offset + LoadSize).ule(DL.getTypeAllocSize(BaseType));
   }
 
   // For gc.relocate, look through relocations
