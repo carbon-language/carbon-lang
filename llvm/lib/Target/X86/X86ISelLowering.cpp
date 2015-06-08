@@ -10132,7 +10132,8 @@ static SDValue lowerVectorShuffleWithVALIGN(SDLoc DL, MVT VT,
     else if (Mask[i] - i != AlignVal)
       return SDValue();
   }
-  return DAG.getNode(X86ISD::VALIGN, DL, VT, V1, V2,
+  // Vector source operands should be swapped
+  return DAG.getNode(X86ISD::VALIGN, DL, VT, V2, V1,
                      DAG.getConstant(AlignVal, DL, MVT::i8));
 }
 
@@ -15167,6 +15168,30 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, const X86Subtarget *Subtarget
                                               Src1,Src2),
                                   Mask, PassThru, Subtarget, DAG);
     }
+    case INTR_TYPE_3OP_MASK: {
+      SDValue Src1 = Op.getOperand(1);
+      SDValue Src2 = Op.getOperand(2);
+      SDValue Src3 = Op.getOperand(3);
+      SDValue PassThru = Op.getOperand(4);
+      SDValue Mask = Op.getOperand(5);
+      // We specify 2 possible opcodes for intrinsics with rounding modes.
+      // First, we check if the intrinsic may have non-default rounding mode,
+      // (IntrData->Opc1 != 0), then we check the rounding mode operand.
+      unsigned IntrWithRoundingModeOpcode = IntrData->Opc1;
+      if (IntrWithRoundingModeOpcode != 0) {
+        SDValue Rnd = Op.getOperand(6);
+        unsigned Round = cast<ConstantSDNode>(Rnd)->getZExtValue();
+        if (Round != X86::STATIC_ROUNDING::CUR_DIRECTION) {
+          return getVectorMaskingNode(DAG.getNode(IntrWithRoundingModeOpcode,
+                                      dl, Op.getValueType(),
+                                      Src1, Src2, Src3, Rnd),
+                                      Mask, PassThru, Subtarget, DAG);
+        }
+      }
+      return getVectorMaskingNode(DAG.getNode(IntrData->Opc0, dl, VT,
+                                              Src1, Src2, Src3),
+                                  Mask, PassThru, Subtarget, DAG);
+    }
     case FMA_OP_MASK: {
       SDValue Src1 = Op.getOperand(1);
       SDValue Src2 = Op.getOperand(2);
@@ -15308,16 +15333,6 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, const X86Subtarget *Subtarget
     // but second operand for node/instruction.
     return DAG.getNode(X86ISD::VPERMV, dl, Op.getValueType(),
                        Op.getOperand(2), Op.getOperand(1));
-
-  case Intrinsic::x86_avx512_mask_valign_q_512:
-  case Intrinsic::x86_avx512_mask_valign_d_512:
-    // Vector source operands are swapped.
-    return getVectorMaskingNode(DAG.getNode(X86ISD::VALIGN, dl,
-                                            Op.getValueType(), Op.getOperand(2),
-                                            Op.getOperand(1),
-                                            Op.getOperand(3)),
-                                Op.getOperand(5), Op.getOperand(4),
-                                Subtarget, DAG);
 
   // ptest and testp intrinsics. The intrinsic these come from are designed to
   // return an integer value, not just an instruction so lower it to the ptest

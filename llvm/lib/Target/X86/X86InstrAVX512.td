@@ -5611,30 +5611,6 @@ def : Pat<(v8i64 (X86Shufp VR512:$src1,
                             (loadv8i64 addr:$src2), (i8 imm:$imm))),
           (VSHUFPDZrmi VR512:$src1, addr:$src2, imm:$imm)>;
 
-multiclass avx512_valign<X86VectorVTInfo _> {
-  defm rri : AVX512_maskable<0x03, MRMSrcReg, _, (outs _.RC:$dst),
-                     (ins _.RC:$src1, _.RC:$src2, u8imm:$src3),
-                     "valign"##_.Suffix,
-                     "$src3, $src2, $src1", "$src1, $src2, $src3",
-                     (_.VT (X86VAlign _.RC:$src2, _.RC:$src1,
-                                      (i8 imm:$src3)))>,
-             AVX512AIi8Base, EVEX_4V;
-
-  // Also match valign of packed floats.
-  def : Pat<(_.FloatVT (X86VAlign _.RC:$src1, _.RC:$src2, (i8 imm:$imm))),
-            (!cast<Instruction>(NAME##rri) _.RC:$src2, _.RC:$src1, imm:$imm)>;
-
-  let mayLoad = 1 in
-  def rmi : AVX512AIi8<0x03, MRMSrcMem, (outs _.RC:$dst),
-                     (ins _.RC:$src1, _.MemOp:$src2, u8imm:$src3),
-                     !strconcat("valign"##_.Suffix,
-                     "\t{$src3, $src2, $src1, $dst|"
-                         "$dst, $src1, $src2, $src3}"),
-                     []>, EVEX_4V;
-}
-defm VALIGND : avx512_valign<v16i32_info>, EVEX_V512, EVEX_CD8<32, CD8VF>;
-defm VALIGNQ : avx512_valign<v8i64_info>, VEX_W, EVEX_V512, EVEX_CD8<64, CD8VF>;
-
 // Helper fragments to match sext vXi1 to vXiY.
 def v16i1sextv16i32  : PatLeaf<(v16i32 (X86vsrai VR512:$src, (i8 31)))>;
 def v8i1sextv8i64  : PatLeaf<(v8i64 (X86vsrai VR512:$src, (i8 63)))>;
@@ -6121,7 +6097,7 @@ multiclass avx512_common_fp_sae_packed_imm<string OpcodeStr,
             AVX512VLVectorVTInfo _, bits<8> opc, SDNode OpNode, Predicate prd>{
   let Predicates = [prd] in {
     defm Z    : avx512_fp_packed_imm<opc, OpcodeStr, OpNode, _.info512>,
-                  avx512_fp_sae_packed_imm<opc, OpcodeStr, OpNode, _.info512>,
+                avx512_fp_sae_packed_imm<opc, OpcodeStr, OpNode, _.info512>,
                                   EVEX_V512;
 
   }
@@ -6130,6 +6106,17 @@ multiclass avx512_common_fp_sae_packed_imm<string OpcodeStr,
                                   EVEX_V128;
     defm Z256 : avx512_fp_packed_imm<opc, OpcodeStr, OpNode, _.info256>,
                                   EVEX_V256;
+  }
+}
+
+multiclass avx512_common_3Op_imm8<string OpcodeStr, AVX512VLVectorVTInfo _,
+                                bits<8> opc, SDNode OpNode>{
+  let Predicates = [HasAVX512] in {
+    defm Z    : avx512_3Op_imm8<opc, OpcodeStr, OpNode, _.info512>, EVEX_V512;
+  }
+  let Predicates = [HasAVX512, HasVLX] in {
+    defm Z128 : avx512_3Op_imm8<opc, OpcodeStr, OpNode, _.info128>, EVEX_V128;
+    defm Z256 : avx512_3Op_imm8<opc, OpcodeStr, OpNode, _.info256>, EVEX_V256;
   }
 }
 
@@ -6189,3 +6176,18 @@ defm VSHUFI32X4 : avx512_shuff_packed_128<"vshufi32x4",avx512vl_i32_info, 0x43>,
       AVX512AIi8Base, EVEX_4V, EVEX_CD8<32, CD8VF>;
 defm VSHUFI64X2 : avx512_shuff_packed_128<"vshufi64x2",avx512vl_i64_info, 0x43>,
       AVX512AIi8Base, EVEX_4V, EVEX_CD8<64, CD8VF>, VEX_W;
+
+multiclass avx512_valign<string OpcodeStr, AVX512VLVectorVTInfo VTInfo_I,
+                                                AVX512VLVectorVTInfo VTInfo_FP>{
+  defm NAME:       avx512_common_3Op_imm8<OpcodeStr, VTInfo_I, 0x03, X86VAlign>,
+                           AVX512AIi8Base, EVEX_4V;
+  let isCodeGenOnly = 1 in {
+    defm NAME#_FP: avx512_common_3Op_imm8<OpcodeStr, VTInfo_FP, 0x03, X86VAlign>,
+                           AVX512AIi8Base, EVEX_4V;
+  }
+}
+
+defm VALIGND: avx512_valign<"valignd", avx512vl_i32_info, avx512vl_f32_info>,
+                                                  EVEX_CD8<32, CD8VF>;
+defm VALIGNQ: avx512_valign<"valignq", avx512vl_i64_info, avx512vl_f64_info>,
+                                                  EVEX_CD8<64, CD8VF>, VEX_W;

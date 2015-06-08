@@ -1,4 +1,5 @@
 ; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=knl | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=skx | FileCheck %s --check-prefix=CHECK-SKX
 
 ; CHECK-LABEL: test1:
 ; CHECK: vpermps
@@ -250,3 +251,86 @@ define <8 x double> @test32(<8 x double> %a, <8 x double> %b) nounwind {
   %c = shufflevector <8 x double> %a, <8 x double> %b, <8 x i32> <i32 9, i32 1, i32 10, i32 2, i32 undef, i32 5, i32 15, i32 undef>
   ret <8 x double> %c
 }
+
+define <16 x i32> @test_align_v16i32_rr(<16 x i32> %a, <16 x i32> %b) nounwind {
+; CHECK-LABEL: test_align_v16i32_rr:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    valignd $3, %zmm0, %zmm1, %zmm0
+; CHECK-NEXT:    retq
+  %c = shufflevector <16 x i32> %a, <16 x i32> %b, <16 x i32> <i32 3, i32 4, i32 5, i32 undef, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 16, i32 17, i32 18>
+  ret <16 x i32> %c
+}
+
+define <16 x i32> @test_align_v16i32_rm(<16 x i32>* %a.ptr, <16 x i32> %b) nounwind {
+; CHECK-LABEL: test_align_v16i32_rm:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    valignd $3, (%rdi), %zmm0, %zmm0
+; CHECK-NEXT:    retq
+  %a = load <16 x i32>, <16 x i32>* %a.ptr
+  %c = shufflevector <16 x i32> %a, <16 x i32> %b, <16 x i32> <i32 3, i32 4, i32 5, i32 undef, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 16, i32 17, i32 18>
+  ret <16 x i32> %c
+}
+
+define <16 x i32> @test_align_v16i32_rm_mask(<16 x i32>* %a.ptr, <16 x i32> %b, <16 x i1> %mask) nounwind {
+; CHECK-LABEL: test_align_v16i32_rm_mask:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    vpmovsxbd %xmm1, %zmm1
+; CHECK-NEXT:    vpandd {{.*}}(%rip){1to16}, %zmm1, %zmm1
+; CHECK-NEXT:    vptestmd %zmm1, %zmm1, %k1
+; CHECK-NEXT:    vmovdqa32 (%rdi), %zmm1
+; CHECK-NEXT:    valignd $3, %zmm1, %zmm0, %zmm1 {%k1}
+; CHECK-NEXT:    vmovaps %zmm1, %zmm0
+; CHECK-NEXT:    retq
+;
+; CHECK-SKX-LABEL: test_align_v16i32_rm_mask:
+; CHECK-SKX:       ## BB#0:
+; CHECK-SKX-NEXT:    vpmovb2m %xmm1, %k1
+; CHECK-SKX-NEXT:    vmovdqa32 (%rdi), %zmm1
+; CHECK-SKX-NEXT:    valignd $3, %zmm1, %zmm0, %zmm1 {%k1}
+; CHECK-SKX-NEXT:    vmovaps %zmm1, %zmm0
+; CHECK-SKX-NEXT:    retq
+  %a = load <16 x i32>, <16 x i32>* %a.ptr
+  %c = shufflevector <16 x i32> %a, <16 x i32> %b, <16 x i32> <i32 3, i32 4, i32 5, i32 undef, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 16, i32 17, i32 18>
+  %res = select <16 x i1> %mask,<16 x i32> %c, <16 x i32> %a
+  ret <16 x i32> %res
+}
+
+define <8 x double> @test_align_v8f64_rr(<8 x double> %a, <8 x double> %b) nounwind {
+; CHECK-LABEL: test_align_v8f64_rr:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    valignq $3, %zmm0, %zmm1, %zmm0
+; CHECK-NEXT:    retq
+  %c = shufflevector <8 x double> %a, <8 x double> %b, <8 x i32> <i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10>
+  ret <8 x double> %c
+}
+
+define <8 x double> @test_align_v18f64_rm(<8 x double>* %a.ptr, <8 x double> %b) nounwind {
+; CHECK-LABEL: test_align_v18f64_rm:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    valignq $3, (%rdi), %zmm0, %zmm0
+; CHECK-NEXT:    retq
+  %a = load <8 x double>, <8 x double>* %a.ptr
+  %c = shufflevector <8 x double> %a, <8 x double> %b, <8 x i32> <i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10>
+  ret <8 x double> %c
+}
+
+define <8 x double> @test_align_v18f64_rm_mask(<8 x double>* %a.ptr, <8 x double> %b, <8 x i1> %mask) nounwind {
+; CHECK-LABEL: test_align_v18f64_rm_mask:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    vpmovsxwq %xmm1, %zmm1
+; CHECK-NEXT:    vpandq {{.*}}(%rip){1to8}, %zmm1, %zmm1
+; CHECK-NEXT:    vptestmq %zmm1, %zmm1, %k1
+; CHECK-NEXT:    valignq $3, (%rdi), %zmm0, %zmm0 {%k1} {z}
+; CHECK-NEXT:    retq
+;
+; CHECK-SKX-LABEL: test_align_v18f64_rm_mask:
+; CHECK-SKX:       ## BB#0:
+; CHECK-SKX-NEXT:    vpmovw2m %xmm1, %k1
+; CHECK-SKX-NEXT:    valignq $3, (%rdi), %zmm0, %zmm0 {%k1} {z}
+; CHECK-SKX-NEXT:    retq
+  %a = load <8 x double>, <8 x double>* %a.ptr
+  %c = shufflevector <8 x double> %a, <8 x double> %b, <8 x i32> <i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10>
+  %res = select <8 x i1> %mask,<8 x double> %c, <8 x double> zeroinitializer
+  ret <8 x double> %res
+}
+
