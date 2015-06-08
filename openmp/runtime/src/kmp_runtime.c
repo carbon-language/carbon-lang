@@ -553,7 +553,6 @@ __kmp_print_team_storage_map( const char *header, kmp_team_t *team, int team_id,
 
 static void __kmp_init_allocator() {}
 static void __kmp_fini_allocator() {}
-static void __kmp_fini_allocator_thread() {}
 
 /* ------------------------------------------------------------------------ */
 

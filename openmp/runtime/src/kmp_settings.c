@@ -23,8 +23,6 @@
 #include "kmp_i18n.h"
 #include "kmp_io.h"
 
-
-static int __kmp_env_isDefined( char const * name );
 static int __kmp_env_toPrint( char const * name, int flag );
 
 bool __kmp_env_format = 0; // 0 - old format; 1 - new format
@@ -133,21 +131,6 @@ __kmp_match_str( char const *token, char const *buf, const char **end) {
     return TRUE;
 }
 
-static char *
-__kmp_strip_quotes( char *target, int len) {
-    char *end = target + len - 1;
-
-    while(*target == '"' || *target == '\'') {
-        if(end <= target || (*end != '"' && *end != '\''))
-            return NULL;
-        *end = 0;
-        --end;
-        *target = 0;
-        ++target;
-    }
-    return target;
-}
-
 
 static size_t
 __kmp_round4k( size_t size ) {
@@ -161,48 +144,6 @@ __kmp_round4k( size_t size ) {
     return size;
 } // __kmp_round4k
 
-
-static int
-__kmp_convert_to_seconds( char const * data )
-{
-    int nvalues, value, factor;
-    char mult, extra;
-
-    if (data == NULL) return (0);
-    value = 0;
-    mult = '\0';
-    nvalues = KMP_SSCANF (data, "%d%c%c", &value, &mult, &extra);
-    if (nvalues < 1) return (0);
-    if (nvalues == 1) mult = '\0';
-    if (nvalues == 3) return (-1);
-
-    switch (mult) {
-    case 's': case 'S':
-        factor = 1;
-        break;
-    case '\0':
-        factor = 60;
-        break;
-    case 'm': case 'M':
-        factor = 60;
-        break;
-    case 'h': case 'H':
-        factor = 60 * 60;
-        break;
-    case 'd': case 'D':
-        factor = 24 * 60 * 60;
-        break;
-    default:
-        return (-1);
-    }
-
-    if (value > (INT_MAX / factor))
-        value = INT_MAX;
-    else
-        value *= factor;
-
-    return value;
-}
 
 /*
     Here, multipliers are like __kmp_convert_to_seconds, but floating-point
@@ -256,58 +197,6 @@ __kmp_convert_to_milliseconds( char const * data )
 
     return ret;
 }
-
-static kmp_uint64
-__kmp_convert_to_nanoseconds(         // R: Time in nanoseconds, or ~0 in case of error.
-    char const * str                  // I: String representing time.
-) {
-
-    double     value;    // Parsed value.
-    char       unit;     // Unit: 's', 'm', 'u', or 'n'.
-    char       extra;    // Buffer for extra character (if any).
-    int        rc;       // Return code of sscanf().
-    double     factor;   // Numeric factor corresponding to unit.
-    kmp_uint64 result;
-
-    if ( str == NULL || str[ 0 ] == 0 ) {    // No string or empty string.
-        return 0;                            // Default value.
-    }; // if
-    rc = KMP_SSCANF( str, "%lf%c%c", &value, &unit, &extra );
-    switch ( rc ) {
-        case 0: {             // Value is not parsed.
-            return ~ 0;
-        } break;
-        case 1: {             // One value parsed, no unit is specified.
-            unit = 's';       // Use default unit.
-        } break;
-        case 2: {             // Value and unit are parsed.
-            // Do nothing.
-        } break;
-        case 3: {             // Extra characters is specified.
-            return ~ 0;
-        } break;
-    }; // switch
-    switch ( unit ) {
-        case 's': {
-            factor = 1.0E+9;
-        } break;
-        case 'm': {
-            factor = 1.0E+6;
-        } break;
-        case 'u': {
-            factor = 1.0E+3;
-        } break;
-        case 'n': {
-            factor = 1.0;
-        } break;
-        default: {                           // Illegal unit.
-            return ~ 0;                      // Return error.
-        } break;
-    }; // switch
-    result = (kmp_uint64)( value * factor );
-    return result;
-
-}; // func __kmp_convert_to_nanoseconds
 
 
 static int
@@ -4868,17 +4757,6 @@ __kmp_stg_check_rivals(          // 0 -- Ok, 1 -- errors found.
 
 }; // __kmp_stg_check_rivals
 
-
-
-static int
-__kmp_env_isDefined( char const * name ) {
-    int rc = 0;
-    kmp_setting_t * setting = __kmp_stg_find( name );
-    if ( setting != NULL ) {
-        rc = setting->set;
-    }; // if
-    return rc;
-}
 
 static int
 __kmp_env_toPrint( char const * name, int flag ) {
