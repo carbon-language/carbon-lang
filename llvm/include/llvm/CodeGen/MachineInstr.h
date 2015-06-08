@@ -936,7 +936,7 @@ public:
   /// For normal instructions, this is derived from the MCInstrDesc.
   /// For inline assembly it is derived from the flag words.
   ///
-  /// Returns NULL if the static register classs constraint cannot be
+  /// Returns NULL if the static register class constraint cannot be
   /// determined.
   ///
   const TargetRegisterClass*
@@ -948,10 +948,10 @@ public:
   /// the given \p CurRC.
   /// If \p ExploreBundle is set and MI is part of a bundle, all the
   /// instructions inside the bundle will be taken into account. In other words,
-  /// this method accumulates all the constrains of the operand of this MI and
+  /// this method accumulates all the constraints of the operand of this MI and
   /// the related bundle if MI is a bundle or inside a bundle.
   ///
-  /// Returns the register class that statisfies both \p CurRC and the
+  /// Returns the register class that satisfies both \p CurRC and the
   /// constraints set by MI. Returns NULL if such a register class does not
   /// exist.
   ///
@@ -964,7 +964,7 @@ public:
   /// \brief Applies the constraints (def/use) implied by the \p OpIdx operand
   /// to the given \p CurRC.
   ///
-  /// Returns the register class that statisfies both \p CurRC and the
+  /// Returns the register class that satisfies both \p CurRC and the
   /// constraints set by \p OpIdx MI. Returns NULL if such a register class
   /// does not exist.
   ///
