@@ -171,7 +171,7 @@ FormatManager::GetPossibleMatches (ValueObject& valobj,
                                    bool did_strip_typedef,
                                    bool root_level)
 {
-    clang_type = ClangASTContext::RemoveFastQualifiers(clang_type);
+    clang_type = clang_type.RemoveFastQualifiers();
     ConstString type_name(clang_type.GetConstTypeName());
     if (valobj.GetBitfieldBitSize() > 0)
     {
@@ -201,7 +201,7 @@ FormatManager::GetPossibleMatches (ValueObject& valobj,
         if (non_ref_type.IsTypedefType())
         {
             ClangASTType deffed_referenced_type = non_ref_type.GetTypedefedType();
-            deffed_referenced_type = is_rvalue_ref ? ClangASTContext::GetRValueReferenceType(deffed_referenced_type) : ClangASTContext::GetRValueReferenceType(deffed_referenced_type);
+            deffed_referenced_type = is_rvalue_ref ? deffed_referenced_type.GetRValueReferenceType() : deffed_referenced_type.GetLValueReferenceType();
             GetPossibleMatches(valobj,
                                deffed_referenced_type,
                                reason | lldb_private::eFormatterChoiceCriterionNavigatedTypedefs,

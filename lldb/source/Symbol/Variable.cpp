@@ -555,13 +555,13 @@ PrivateAutoCompleteMembers (StackFrame *frame,
 {
 
     // We are in a type parsing child members
-    const uint32_t num_bases = ClangASTContext::GetNumDirectBaseClasses(clang_type);
+    const uint32_t num_bases = clang_type.GetNumDirectBaseClasses();
     
     if (num_bases > 0)
     {
         for (uint32_t i = 0; i < num_bases; ++i)
         {
-            ClangASTType base_class_type (ClangASTContext::GetDirectBaseClassAtIndex(clang_type, i, nullptr));
+            ClangASTType base_class_type (clang_type.GetDirectBaseClassAtIndex (i, nullptr));
             
             PrivateAutoCompleteMembers (frame,
                                         partial_member_name,
@@ -573,13 +573,13 @@ PrivateAutoCompleteMembers (StackFrame *frame,
         }
     }
 
-    const uint32_t num_vbases = ClangASTContext::GetNumVirtualBaseClasses(clang_type);
+    const uint32_t num_vbases = clang_type.GetNumVirtualBaseClasses();
     
     if (num_vbases > 0)
     {
         for (uint32_t i = 0; i < num_vbases; ++i)
         {
-            ClangASTType vbase_class_type (ClangASTContext::GetVirtualBaseClassAtIndex(clang_type, i,nullptr));
+            ClangASTType vbase_class_type (clang_type.GetVirtualBaseClassAtIndex(i,nullptr));
             
             PrivateAutoCompleteMembers (frame,
                                         partial_member_name,

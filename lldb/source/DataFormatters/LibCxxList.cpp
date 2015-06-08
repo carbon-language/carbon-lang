@@ -335,10 +335,10 @@ lldb_private::formatters::LibcxxStdListSyntheticFrontEnd::Update()
     if (list_type.IsReferenceType())
         list_type = list_type.GetNonReferenceType();
 
-    if (ClangASTContext::GetNumTemplateArguments(list_type) == 0)
+    if (list_type.GetNumTemplateArguments() == 0)
         return false;
     lldb::TemplateArgumentKind kind;
-    m_element_type = ClangASTContext::GetTemplateArgument(list_type, 0, kind);
+    m_element_type = list_type.GetTemplateArgument(0, kind);
     m_head = impl_sp->GetChildMemberWithName(ConstString("__next_"), true).get();
     m_tail = impl_sp->GetChildMemberWithName(ConstString("__prev_"), true).get();
     return false;

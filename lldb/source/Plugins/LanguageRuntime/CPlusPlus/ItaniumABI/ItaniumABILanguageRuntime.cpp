@@ -189,7 +189,7 @@ ItaniumABILanguageRuntime::GetDynamicTypeAndAddress (ValueObject &in_value,
                                 type_sp = class_types.GetTypeAtIndex(i);
                                 if (type_sp)
                                 {
-                                    if (ClangASTContext::IsCXXClassType(type_sp->GetClangFullType()))
+                                    if (type_sp->GetClangFullType().IsCXXClassType())
                                     {
                                         if (log)
                                             log->Printf ("0x%16.16" PRIx64 ": static-type = '%s' has multiple matching dynamic types, picking this one: uid={0x%" PRIx64 "}, type-name='%s'\n",

@@ -44,11 +44,11 @@ GetLLDBNSPairType (TargetSP target_sp)
             
             if (clang_type)
             {
-                ClangASTContext::StartTagDeclarationDefinition(clang_type);
+                clang_type.StartTagDeclarationDefinition();
                 ClangASTType id_clang_type = target_ast_context->GetBasicType (eBasicTypeObjCID);
-                ClangASTContext::AddFieldToRecordType(clang_type, "key", id_clang_type, lldb::eAccessPublic, 0);
-                ClangASTContext::AddFieldToRecordType(clang_type, "value", id_clang_type, lldb::eAccessPublic, 0);
-                ClangASTContext::CompleteTagDeclarationDefinition(clang_type);
+                clang_type.AddFieldToRecordType("key", id_clang_type, lldb::eAccessPublic, 0);
+                clang_type.AddFieldToRecordType("value", id_clang_type, lldb::eAccessPublic, 0);
+                clang_type.CompleteTagDeclarationDefinition();
             }
         }
     }

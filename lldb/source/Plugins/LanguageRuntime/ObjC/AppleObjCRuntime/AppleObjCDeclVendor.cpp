@@ -363,7 +363,7 @@ public:
         
         clang::Selector sel = ast_ctx.Selectors.getSelector(is_zero_argument ? 0 : selector_components.size(), selector_components.data());
         
-        clang::QualType ret_type = ClangASTContext::GetQualType(type_realizer_sp->RealizeType(interface_decl->getASTContext(), m_type_vector[0].c_str(), for_expression));
+        clang::QualType ret_type = type_realizer_sp->RealizeType(interface_decl->getASTContext(), m_type_vector[0].c_str(), for_expression).GetQualType();
         
         if (ret_type.isNull())
             return NULL;
@@ -390,7 +390,7 @@ public:
              ++ai)
         {
             const bool for_expression = true;
-            clang::QualType arg_type = ClangASTContext::GetQualType(type_realizer_sp->RealizeType(ast_ctx, m_type_vector[ai].c_str(), for_expression));
+            clang::QualType arg_type = type_realizer_sp->RealizeType(ast_ctx, m_type_vector[ai].c_str(), for_expression).GetQualType();
             
             if (arg_type.isNull())
                 return NULL; // well, we just wasted a bunch of time.  Wish we could delete the stuff we'd just made!
@@ -512,7 +512,7 @@ AppleObjCDeclVendor::FinishDecl(clang::ObjCInterfaceDecl *interface_decl)
                                                                           clang::SourceLocation(),
                                                                           clang::SourceLocation(),
                                                                           &m_ast_ctx.getASTContext()->Idents.get(name),
-                                                                          ClangASTContext::GetQualType(ivar_type),
+                                                                          ivar_type.GetQualType(),
                                                                           type_source_info,                      // TypeSourceInfo *
                                                                           clang::ObjCIvarDecl::Public,
                                                                           0,

@@ -408,6 +408,10 @@ ABISysV_arm::GetReturnValueObjectImpl (Thread &thread,
     if (!clang_type)
         return return_valobj_sp;
     
+    clang::ASTContext *ast_context = clang_type.GetASTContext();
+    if (!ast_context)
+        return return_valobj_sp;
+
     //value.SetContext (Value::eContextTypeClangType, clang_type.GetOpaqueQualType());
     value.SetClangType (clang_type);
             

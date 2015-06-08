@@ -424,8 +424,7 @@ ABIMacOSX_arm::GetReturnValueObjectImpl (Thread &thread,
     if (!clang_type)
         return return_valobj_sp;
     
-    ClangASTContext* ast = clang_type.GetTypeSystem()->AsClangASTContext();
-    clang::ASTContext *ast_context = ast ? ast->getASTContext() : nullptr;
+    clang::ASTContext *ast_context = clang_type.GetASTContext();
     if (!ast_context)
         return return_valobj_sp;
 

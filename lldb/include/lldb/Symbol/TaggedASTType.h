@@ -25,8 +25,8 @@ public:
     {
     }
 
-    TaggedASTType (void *type, TypeSystem * type_system) :
-        ClangASTType(type_system, type)
+    TaggedASTType (lldb::clang_type_t type, clang::ASTContext *ast_context) :
+        ClangASTType(ast_context, type)
     {
     }
     

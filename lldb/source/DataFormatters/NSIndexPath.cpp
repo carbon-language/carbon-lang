@@ -49,10 +49,7 @@ public:
     {
         m_impl.m_mode = Mode::Invalid;
         
-        TypeSystem* type_system = m_backend.GetClangType().GetTypeSystem();
-        if (!type_system)
-            return false;
-        m_ast_ctx = type_system->AsClangASTContext();
+        m_ast_ctx = ClangASTContext::GetASTContext(m_backend.GetClangType().GetASTContext());
         if (!m_ast_ctx)
             return false;
         

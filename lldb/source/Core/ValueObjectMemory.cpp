@@ -97,7 +97,7 @@ ValueObjectMemory::ValueObjectMemory (ExecutionContextScope *exe_scope,
     m_clang_type(ast_type)
 {
     // Do not attempt to construct one of these objects with no variable!
-    assert (m_clang_type.GetTypeSystem());
+    assert (m_clang_type.GetASTContext());
     assert (m_clang_type.GetOpaqueQualType());
     
     TargetSP target_sp (GetTargetSP());
