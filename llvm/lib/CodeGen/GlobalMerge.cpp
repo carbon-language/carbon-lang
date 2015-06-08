@@ -280,6 +280,8 @@ bool GlobalMerge::doMerge(SmallVectorImpl<GlobalVariable*> &Globals,
       // users, so look through ConstantExpr...
       Use *UI, *UE;
       if (ConstantExpr *CE = dyn_cast<ConstantExpr>(U.getUser())) {
+        if (CE->use_empty())
+          continue;
         UI = &*CE->use_begin();
         UE = nullptr;
       } else if (isa<Instruction>(U.getUser())) {
