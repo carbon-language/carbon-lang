@@ -968,7 +968,7 @@ static int dl_iterate_phdr_test_cb(struct dl_phdr_info *info, size_t size,
 static atomic_uint32_t android_api_level;
 
 static u32 AndroidDetectApiLevel() {
-  if (!dl_iterate_phdr)
+  if (!&dl_iterate_phdr)
     return 19; // K or lower
   bool base_name_seen = false;
   dl_iterate_phdr(dl_iterate_phdr_test_cb, &base_name_seen);
