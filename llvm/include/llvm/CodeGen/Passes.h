@@ -17,6 +17,7 @@
 
 #include "llvm/Pass.h"
 #include "llvm/Target/TargetMachine.h"
+#include <functional>
 #include <string>
 
 namespace llvm {
