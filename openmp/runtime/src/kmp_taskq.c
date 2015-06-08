@@ -42,7 +42,6 @@ __kmp_taskq_eo( int *gtid_ref, int *cid_ref, ident_t *loc_ref )
 {
     int                gtid = *gtid_ref;
     int                tid  = __kmp_tid_from_gtid( gtid );
-    kmp_uint32         spins;
     kmp_uint32         my_token;
     kmpc_task_queue_t *taskq;
     kmp_taskq_t       *tq   = & __kmp_threads[gtid] -> th.th_team -> t.t_taskq;
@@ -99,7 +98,6 @@ __kmp_taskq_xo( int *gtid_ref, int *cid_ref, ident_t *loc_ref )
 static void
 __kmp_taskq_check_ordered( kmp_int32 gtid, kmpc_thunk_t *thunk )
 {
-    kmp_uint32 spins;
     kmp_uint32 my_token;
     kmpc_task_queue_t *taskq;
 
@@ -1080,8 +1078,6 @@ __kmp_remove_queue_from_tree( kmp_taskq_t *tq, kmp_int32 global_tid, kmpc_task_q
     queue->tq_next_child = NULL;
 
     if (in_parallel) {
-        kmp_uint32 spins;
-
         KMP_DEBUG_REF_CTS(("line %d gtid %d: Q %p waiting for ref_count of %d to reach 1\n",
           __LINE__, global_tid, queue, queue->tq_ref_count));
 
@@ -1387,8 +1383,6 @@ __kmpc_taskq( ident_t *loc, kmp_int32 global_tid, kmpc_task_t taskq_task,
         /* master thread only executes this code */
 
         if( tq->tq_curr_thunk_capacity < nproc ) {
-            int i;
-
             if(tq->tq_curr_thunk)
                 __kmp_free(tq->tq_curr_thunk);
             else {

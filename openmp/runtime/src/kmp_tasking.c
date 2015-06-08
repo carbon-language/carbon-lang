@@ -1563,7 +1563,7 @@ __kmp_steal_task( kmp_info_t *victim, kmp_int32 gtid, kmp_task_team_t *task_team
     kmp_task_t * task;
     kmp_taskdata_t * taskdata;
     kmp_thread_data_t *victim_td, *threads_data;
-    kmp_int32 victim_tid, thread_tid;
+    kmp_int32 victim_tid;
 
     KMP_DEBUG_ASSERT( __kmp_tasking_mode != tskm_immediate_exec );
 
@@ -1676,7 +1676,6 @@ static inline int __kmp_execute_tasks_template(kmp_info_t *thread, kmp_int32 gti
                                                USE_ITT_BUILD_ARG(void * itt_sync_obj), kmp_int32 is_constrained)
 {
     kmp_task_team_t *     task_team;
-    kmp_team_t *          team;
     kmp_thread_data_t *   threads_data;
     kmp_task_t *          task;
     kmp_taskdata_t *      current_task = thread -> th.th_current_task;

@@ -654,7 +654,6 @@ __kmpc_barrier(ident_t *loc, kmp_int32 global_tid)
 {
     KMP_COUNT_BLOCK(OMP_BARRIER);
     KMP_TIME_BLOCK(OMP_barrier);
-    int explicit_barrier_flag;
     KC_TRACE( 10, ("__kmpc_barrier: called T#%d\n", global_tid ) );
 
     if (! TCR_4(__kmp_init_parallel))

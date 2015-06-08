@@ -80,7 +80,6 @@ __kmp_get_logical_id( int log_per_phy, int apic_id )
 {
    unsigned current_bit;
    int bits_seen;
-   unsigned mask;
 
    if (log_per_phy <= 1) return ( 0 );
 

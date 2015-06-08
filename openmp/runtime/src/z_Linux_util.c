@@ -687,7 +687,6 @@ __kmp_launch_worker( void *thr )
     void *padding = 0;
 #endif
     int gtid;
-    int error;
 
     gtid = ((kmp_info_t*)thr) -> th.th_info.ds.ds_gtid;
     __kmp_gtid_set_specific( gtid );
@@ -766,7 +765,6 @@ __kmp_launch_monitor( void *thr )
     struct timespec  interval;
     int yield_count;
     int yield_cycles = 0;
-    int error;
 
     KMP_MB();       /* Flush all pending memory write invalidates.  */
 
@@ -1278,7 +1276,7 @@ void __kmp_resume_monitor();
 void
 __kmp_reap_monitor( kmp_info_t *th )
 {
-    int          status, i;
+    int          status;
     void        *exit_val;
 
     KA_TRACE( 10, ("__kmp_reap_monitor: try to reap monitor thread with handle %#.8lx\n",

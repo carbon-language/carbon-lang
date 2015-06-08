@@ -275,7 +275,6 @@ __kmp_str_buf_print_size(
     char const * names[] = { "", "k", "M", "G", "T", "P", "E", "Z", "Y" };
     int const    units   = sizeof( names ) / sizeof( char const * );
     int          u       = 0;
-    int          rc;
     if ( size > 0 ) {
         while ( ( size % 1024 == 0 ) && ( u + 1 < units ) ) {
             size = size / 1024;
@@ -733,7 +732,6 @@ __kmp_str_to_size(         // R: Error code.
     size_t value    = 0;
     size_t factor   = 0;
     int    overflow = 0;
-    int    bad_unit = 0;
     int    i        = 0;
     int    digit;
 

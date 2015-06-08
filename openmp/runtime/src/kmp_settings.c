@@ -1582,7 +1582,6 @@ static void
 __kmp_stg_print_force_reduction( kmp_str_buf_t * buffer, char const * name, void * data ) {
 
     kmp_stg_fr_data_t * reduction = (kmp_stg_fr_data_t *) data;
-    char const *        value = NULL;
     if ( reduction->force ) {
         if( __kmp_force_reduction_method == critical_reduce_block) {
             __kmp_stg_print_str( buffer, name, "critical");
@@ -3998,7 +3997,6 @@ __kmp_stg_parse_adaptive_lock_props( const char *name, const char *value, void *
     int max_badness = 0;
 
     const char *next = value;
-    const char *scan = next;
 
     int total = 0;          // Count elements that were set. It'll be used as an array size
     int prev_comma = FALSE; // For correct processing sequential commas
@@ -5232,7 +5230,6 @@ void
 __kmp_env_print_2() {
 
     kmp_env_blk_t block;
-    int           i;
     kmp_str_buf_t buffer;
 
     __kmp_env_format = 1;

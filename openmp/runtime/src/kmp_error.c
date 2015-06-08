@@ -23,24 +23,6 @@
 
 #define MIN_STACK       100
 
-static char const * cons_text_fort[] = {
-    "(none)",
-    "PARALLEL",
-    "work-sharing",             /* this is not called DO because of lowering of SECTIONS and WORKSHARE directives */
-    "ORDERED work-sharing",     /* this is not called DO ORDERED because of lowering of SECTIONS directives */
-    "SECTIONS",
-    "work-sharing",             /* this is not called SINGLE because of lowering of SECTIONS and WORKSHARE directives */
-    "TASKQ",
-    "TASKQ",
-    "TASKQ ORDERED",
-    "CRITICAL",
-    "ORDERED",                  /* in PARALLEL */
-    "ORDERED",                  /* in PDO */
-    "ORDERED",                  /* in TASKQ */
-    "MASTER",
-    "REDUCE",
-    "BARRIER"
-};
 
 static char const * cons_text_c[] = {
     "(none)",
@@ -70,7 +52,6 @@ static char const * cons_text_c[] = {
     cons_text_c[ (p)->stack_data[ tos ].type ],       \
     get_src( (p)->stack_data[ tos ].ident )
 
-static int const cons_text_fort_num = sizeof( cons_text_fort ) / sizeof( char const * );
 static int const cons_text_c_num    = sizeof( cons_text_c    ) / sizeof( char const * );
 
 /* ------------------------------------------------------------------------ */

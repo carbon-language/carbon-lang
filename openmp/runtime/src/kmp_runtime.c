@@ -732,8 +732,6 @@ __kmp_parallel_deo( int *gtid_ref, int *cid_ref, ident_t *loc_ref )
     }
 #ifdef BUILD_PARALLEL_ORDERED
     if( !team->t.t_serialized ) {
-        kmp_uint32  spins;
-
         KMP_MB();
         KMP_WAIT_YIELD(&team->t.t_ordered.dt.t_value, __kmp_tid_from_gtid( gtid ), KMP_EQ, NULL);
         KMP_MB();
@@ -1288,7 +1286,6 @@ __kmp_serialized_parallel(ident_t *loc, kmp_int32 global_tid)
             /* this serial team was already used
              * TODO increase performance by making this locks more specific */
             kmp_team_t *new_team;
-            int tid = this_thr->th.th_info.ds.ds_tid;
 
             __kmp_acquire_bootstrap_lock( &__kmp_forkjoin_lock );
 
@@ -2749,7 +2746,6 @@ __kmp_get_schedule( int gtid, kmp_sched_t * kind, int * chunk )
 {
     kmp_info_t     *thread;
     enum sched_type th_type;
-    int             i;
 
     KF_TRACE( 10, ("__kmp_get_schedule: thread %d\n", gtid ));
     KMP_DEBUG_ASSERT( __kmp_init_serial );
@@ -3119,7 +3115,6 @@ __kmp_initialize_root( kmp_root_t *root )
     int           f;
     kmp_team_t   *root_team;
     kmp_team_t   *hot_team;
-    size_t        disp_size, dispatch_size, bar_size;
     int           hot_team_max_nth;
     kmp_r_sched_t r_sched = __kmp_get_schedule_global(); // get current state of scheduling globals
     kmp_internal_control_t r_icvs = __kmp_get_global_icvs();
@@ -4766,8 +4761,6 @@ __kmp_allocate_team( kmp_root_t *root, int new_nproc, int max_nproc,
     KMP_TIME_BLOCK(KMP_allocate_team);
     int f;
     kmp_team_t *team;
-    char *ptr;
-    size_t size;
     int use_hot_team = ! root->r.r_active;
     int level = 0;
 
@@ -5911,8 +5904,6 @@ __kmp_internal_end(void)
 void
 __kmp_internal_end_library( int gtid_req )
 {
-    int i;
-
     /* if we have already cleaned up, don't try again, it wouldn't be pretty */
     /* this shouldn't be a race condition because __kmp_internal_end() is the
      * only place to clear __kmp_serial_init */
