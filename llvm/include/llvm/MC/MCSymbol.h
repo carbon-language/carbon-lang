@@ -90,7 +90,9 @@ protected:
   /// This symbol is private extern.
   mutable unsigned IsPrivateExtern : 1;
 
-  SymbolKind Kind : 2;
+  /// LLVM RTTI discriminator. This is actually a SymbolKind enumerator, but is
+  /// unsigned to avoid sign extension and achieve better bitpacking with MSVC.
+  unsigned Kind : 2;
 
   /// Index field, for use by the object file implementation.
   mutable uint32_t Index = 0;
