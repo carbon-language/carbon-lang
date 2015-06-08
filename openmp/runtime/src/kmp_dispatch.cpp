@@ -1380,7 +1380,9 @@ __kmp_dispatch_next(
     typedef typename traits_t< T >::unsigned_t  UT;
     typedef typename traits_t< T >::signed_t    ST;
     typedef typename traits_t< T >::floating_t  DBL;
+#if ( KMP_STATIC_STEAL_ENABLED && KMP_ARCH_X86_64 )
     static const int ___kmp_size_type = sizeof( UT );
+#endif
 
     int                                   status;
     dispatch_private_info_template< T > * pr;

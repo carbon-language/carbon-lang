@@ -370,6 +370,7 @@ ___kmp_env_blk_parse_string(
     It is not clear how empty environment is represented. "\x00\x00"?
 */
 
+#if KMP_OS_WINDOWS
 static
 void
 ___kmp_env_blk_parse_windows(
@@ -436,7 +437,7 @@ ___kmp_env_blk_parse_windows(
     block->count = count;
 
 }; // ___kmp_env_blk_parse_windows
-
+#endif
 
 
 /*

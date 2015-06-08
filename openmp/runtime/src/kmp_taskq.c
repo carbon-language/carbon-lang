@@ -119,6 +119,8 @@ __kmp_taskq_check_ordered( kmp_int32 gtid, kmpc_thunk_t *thunk )
     }
 }
 
+#ifdef KMP_DEBUG
+
 static void
 __kmp_dump_TQF(kmp_int32 flags)
 {
@@ -377,6 +379,7 @@ __kmp_dump_task_queue_tree( kmp_taskq_t *tq, kmpc_task_queue_t *tqroot, kmp_int3
 
     __kmp_printf("\n");
 }
+#endif
 
 /* --------------------------------------------------------------------------- */
 

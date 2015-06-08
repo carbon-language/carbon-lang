@@ -71,7 +71,9 @@ void __kmp_cleanup( void );
 
 static void __kmp_initialize_info( kmp_info_t *, kmp_team_t *, int tid, int gtid );
 static void __kmp_initialize_team( kmp_team_t * team, int new_nproc, kmp_internal_control_t * new_icvs, ident_t * loc );
+#if OMP_40_ENABLED && KMP_AFFINITY_SUPPORTED
 static void __kmp_partition_places( kmp_team_t *team );
+#endif
 static void __kmp_do_serial_initialize( void );
 void __kmp_fork_barrier( int gtid, int tid );
 void __kmp_join_barrier( int gtid );
@@ -83,7 +85,9 @@ static int __kmp_load_balance_nproc( kmp_root_t * root, int set_nproc );
 #endif
 
 static int __kmp_expand_threads(int nWish, int nNeed);
+#if KMP_OS_WINDOWS
 static int __kmp_unregister_root_other_thread( int gtid );
+#endif
 static void __kmp_unregister_library( void ); // called by __kmp_internal_end()
 static void __kmp_reap_thread( kmp_info_t * thread, int is_root );
 static kmp_info_t *__kmp_thread_pool_insert_pt = NULL;
@@ -3961,6 +3965,7 @@ __kmp_unregister_root_current_thread( int gtid )
     __kmp_release_bootstrap_lock( &__kmp_forkjoin_lock );
 }
 
+#if KMP_OS_WINDOWS
 /* __kmp_forkjoin_lock must be already held
    Unregisters a root thread that is not the current thread.  Returns the number of
    __kmp_threads entries freed as a result.
@@ -3981,6 +3986,7 @@ __kmp_unregister_root_other_thread( int gtid )
     KC_TRACE( 10, ("__kmp_unregister_root_other_thread: T#%d unregistered\n", gtid ));
     return r;
 }
+#endif
 
 #if KMP_DEBUG
 void __kmp_task_info() {

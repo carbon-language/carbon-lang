@@ -42,6 +42,7 @@ __kmp_convert_to_double( char const * s )
     return result;
 }
 
+#ifdef KMP_DEBUG
 static unsigned int
 __kmp_readstr_with_sentinel(char *dest, char const * src, size_t len, char sentinel) {
     unsigned int i;
@@ -54,6 +55,7 @@ __kmp_readstr_with_sentinel(char *dest, char const * src, size_t len, char senti
     *dest = '\0';
     return i;
 }
+#endif
 
 static int
 __kmp_match_with_sentinel( char const * a, char const * b, size_t len, char sentinel ) {
@@ -349,6 +351,7 @@ __kmp_stg_parse_size(
     }; // if
 } // __kmp_stg_parse_size
 
+#if KMP_AFFINITY_SUPPORTED
 static void
 __kmp_stg_parse_str(
     char const *      name,
@@ -358,7 +361,7 @@ __kmp_stg_parse_str(
     KMP_INTERNAL_FREE( (void *) * out );
     * out = __kmp_str_format( "%s", value );
 } // __kmp_stg_parse_str
-
+#endif
 
 static void
 __kmp_stg_parse_int(
@@ -402,6 +405,7 @@ __kmp_stg_parse_int(
 } // __kmp_stg_parse_int
 
 
+#if KMP_DEBUG_ADAPTIVE_LOCKS
 static void
 __kmp_stg_parse_file(
     char const * name,
@@ -420,6 +424,7 @@ __kmp_stg_parse_file(
     KMP_INTERNAL_FREE(t);
     * out = __kmp_str_format( "%s", buffer );
 } // __kmp_stg_parse_file
+#endif
 
 #ifdef KMP_DEBUG
 static char * par_range_to_print = NULL;

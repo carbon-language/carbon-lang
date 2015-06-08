@@ -206,6 +206,7 @@ __kmp_free_cons_stack( void * ptr ) {
 }
 
 
+#if KMP_DEBUG
 static void
 dump_cons_stack( int gtid, struct cons_header * p ) {
     int i;
@@ -224,6 +225,7 @@ dump_cons_stack( int gtid, struct cons_header * p ) {
     __kmp_debug_printf( "%s", buffer.str );
     __kmp_str_buf_free( & buffer );
 }
+#endif
 
 void
 __kmp_push_parallel( int gtid, ident_t const * ident )

@@ -683,7 +683,9 @@ __kmp_launch_worker( void *thr )
     sigset_t    new_set, old_set;
 #endif /* KMP_BLOCK_SIGNALS */
     void *exit_val;
+#if KMP_OS_LINUX || KMP_OS_FREEBSD
     void *padding = 0;
+#endif
     int gtid;
     int error;
 
