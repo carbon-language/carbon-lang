@@ -102,7 +102,7 @@ bool MCWinCOFFStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
   default: return false;
   case MCSA_WeakReference:
   case MCSA_Weak:
-    Symbol->modifyFlags(COFF::SF_WeakExternal, COFF::SF_WeakExternal);
+    cast<MCSymbolCOFF>(Symbol)->setIsWeakExternal();
     Symbol->setExternal(true);
     break;
   case MCSA_Global:
@@ -137,8 +137,7 @@ void MCWinCOFFStreamer::EmitCOFFSymbolStorageClass(int StorageClass) {
                "' out of range");
 
   getAssembler().registerSymbol(*CurSymbol);
-  CurSymbol->modifyFlags(StorageClass << COFF::SF_ClassShift,
-                         COFF::SF_ClassMask);
+  cast<MCSymbolCOFF>(CurSymbol)->setClass((uint16_t)StorageClass);
 }
 
 void MCWinCOFFStreamer::EmitCOFFSymbolType(int Type) {
@@ -165,7 +164,7 @@ void MCWinCOFFStreamer::EmitCOFFSafeSEH(MCSymbol const *Symbol) {
       Triple::x86)
     return;
 
-  if (Symbol->getFlags() & COFF::SF_SafeSEH)
+  if (cast<MCSymbolCOFF>(Symbol)->isSafeSEH())
     return;
 
   MCSection *SXData = getContext().getObjectFileInfo()->getSXDataSection();
@@ -176,7 +175,7 @@ void MCWinCOFFStreamer::EmitCOFFSafeSEH(MCSymbol const *Symbol) {
   new MCSafeSEHFragment(Symbol, SXData);
 
   getAssembler().registerSymbol(*Symbol);
-  Symbol->modifyFlags(COFF::SF_SafeSEH, COFF::SF_SafeSEH);
+  cast<MCSymbolCOFF>(Symbol)->setIsSafeSEH();
 }
 
 void MCWinCOFFStreamer::EmitCOFFSectionIndex(MCSymbol const *Symbol) {

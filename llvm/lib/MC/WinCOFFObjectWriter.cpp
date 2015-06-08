@@ -228,7 +228,7 @@ bool COFFSymbol::should_keep() const {
   }
 
   // if this is a safeseh handler, keep it
-  if (MC && (MC->getFlags() & COFF::SF_SafeSEH))
+  if (MC && (cast<MCSymbolCOFF>(MC)->isSafeSEH()))
     return true;
 
   // if the section its in is being droped, drop it
@@ -394,7 +394,7 @@ void WinCOFFObjectWriter::DefineSymbol(const MCSymbol &Symbol,
   COFFSymbol *coff_symbol = GetOrCreateCOFFSymbol(&Symbol);
   SymbolMap[&Symbol] = coff_symbol;
 
-  if (Symbol.getFlags() & COFF::SF_WeakExternal) {
+  if (cast<MCSymbolCOFF>(Symbol).isWeakExternal()) {
     coff_symbol->Data.StorageClass = COFF::IMAGE_SYM_CLASS_WEAK_EXTERNAL;
 
     if (Symbol.isVariable()) {
@@ -430,8 +430,7 @@ void WinCOFFObjectWriter::DefineSymbol(const MCSymbol &Symbol,
 
     const MCSymbolCOFF &SymbolCOFF = cast<MCSymbolCOFF>(Symbol);
     coff_symbol->Data.Type = SymbolCOFF.getType();
-    coff_symbol->Data.StorageClass =
-        (Symbol.getFlags() & COFF::SF_ClassMask) >> COFF::SF_ClassShift;
+    coff_symbol->Data.StorageClass = SymbolCOFF.getClass();
 
     // If no storage class was specified in the streamer, define it here.
     if (coff_symbol->Data.StorageClass == COFF::IMAGE_SYM_CLASS_NULL) {
