@@ -2148,7 +2148,8 @@ __kmpc_unset_nest_lock( ident_t *loc, kmp_int32 gtid, void **user_lock )
     __kmp_itt_lock_releasing( lck );
 #endif /* USE_ITT_BUILD */
 
-    int release_status = RELEASE_NESTED_LOCK( lck, gtid );
+    int release_status;
+    release_status = RELEASE_NESTED_LOCK( lck, gtid );
 #if OMPT_SUPPORT && OMPT_BLAME
     if (ompt_status == ompt_status_track_callback) {
         if (release_status == KMP_LOCK_RELEASED) {

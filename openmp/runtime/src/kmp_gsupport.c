@@ -476,7 +476,9 @@ void
 xexpand(KMP_API_NAME_GOMP_PARALLEL_END)(void)
 {
     int gtid = __kmp_get_gtid();
-    kmp_info_t *thr = __kmp_threads[gtid];
+    kmp_info_t *thr;
+
+    thr = __kmp_threads[gtid];
 
     MKLOC(loc, "GOMP_parallel_end");
     KA_TRACE(20, ("GOMP_parallel_end: T#%d\n", gtid));

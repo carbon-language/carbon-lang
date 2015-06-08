@@ -1237,7 +1237,8 @@ __kmp_barrier(enum barrier_type bt, int gtid, int is_split, size_t reduce_size,
                 }
 #endif
 
-                kmp_task_team_t * task_team = this_thr->th.th_task_team;
+                kmp_task_team_t * task_team;
+                task_team = this_thr->th.th_task_team;
                 KMP_DEBUG_ASSERT(task_team->tt.tt_found_proxy_tasks == TRUE);
                 __kmp_task_team_wait(this_thr, team
                                                USE_ITT_BUILD_ARG(itt_sync_obj));
