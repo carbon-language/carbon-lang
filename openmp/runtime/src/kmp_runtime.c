@@ -329,7 +329,6 @@ __kmp_infinite_loop( void )
 void
 __kmp_print_storage_map_gtid( int gtid, void *p1, void *p2, size_t size, char const *format, ...) {
     char buffer[MAX_MESSAGE];
-    int node;
     va_list ap;
 
     va_start( ap, format);
@@ -337,6 +336,7 @@ __kmp_print_storage_map_gtid( int gtid, void *p1, void *p2, size_t size, char co
     __kmp_acquire_bootstrap_lock( & __kmp_stdio_lock );
     __kmp_vprintf( kmp_err, buffer, ap );
 #if KMP_PRINT_DATA_PLACEMENT
+    int node;
     if(gtid >= 0) {
         if(p1 <= p2 && (char*)p2 - (char*)p1 == size) {
             if( __kmp_storage_map_verbose ) {
@@ -7511,8 +7511,6 @@ __kmp_determine_reduction_method( ident_t *loc, kmp_int32 global_tid,
 
     int team_size;
 
-    int teamsize_cutoff = 4;
-
     KMP_DEBUG_ASSERT( loc );    // it would be nice to test ( loc != 0 )
     KMP_DEBUG_ASSERT( lck );    // it would be nice to test ( lck != 0 )
 
@@ -7535,6 +7533,9 @@ __kmp_determine_reduction_method( ident_t *loc, kmp_int32 global_tid,
         #if KMP_ARCH_X86_64 || KMP_ARCH_PPC64 || KMP_ARCH_AARCH64
 
             #if KMP_OS_LINUX || KMP_OS_FREEBSD || KMP_OS_WINDOWS || KMP_OS_DARWIN
+
+	    int teamsize_cutoff = 4;
+
 #if KMP_ARCH_X86_64 && (KMP_OS_LINUX || KMP_OS_WINDOWS)
                 if( __kmp_mic_type != non_mic ) {
                     teamsize_cutoff = 8;
