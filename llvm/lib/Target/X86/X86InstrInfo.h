@@ -307,6 +307,7 @@ public:
   /// references has been changed.
   MachineInstr *foldMemoryOperandImpl(MachineFunction &MF, MachineInstr *MI,
                                       ArrayRef<unsigned> Ops,
+                                      MachineBasicBlock::iterator InsertPt,
                                       int FrameIndex) const override;
 
   /// foldMemoryOperand - Same as the previous version except it allows folding
@@ -314,6 +315,7 @@ public:
   /// stack slot.
   MachineInstr *foldMemoryOperandImpl(MachineFunction &MF, MachineInstr *MI,
                                       ArrayRef<unsigned> Ops,
+                                      MachineBasicBlock::iterator InsertPt,
                                       MachineInstr *LoadMI) const override;
 
   /// canFoldMemoryOperand - Returns true if the specified load / store is
@@ -407,6 +409,7 @@ public:
   MachineInstr *foldMemoryOperandImpl(MachineFunction &MF, MachineInstr *MI,
                                       unsigned OpNum,
                                       ArrayRef<MachineOperand> MOs,
+                                      MachineBasicBlock::iterator InsertPt,
                                       unsigned Size, unsigned Alignment,
                                       bool AllowCommute) const;
 

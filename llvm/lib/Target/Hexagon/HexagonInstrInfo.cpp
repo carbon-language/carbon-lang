@@ -779,10 +779,9 @@ HexagonInstrInfo::expandPostRAPseudo(MachineBasicBlock::iterator MI) const {
   return false;
 }
 
-MachineInstr *HexagonInstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
-                                                      MachineInstr *MI,
-                                                      ArrayRef<unsigned> Ops,
-                                                      int FI) const {
+MachineInstr *HexagonInstrInfo::foldMemoryOperandImpl(
+    MachineFunction &MF, MachineInstr *MI, ArrayRef<unsigned> Ops,
+    MachineBasicBlock::iterator InsertPt, int FI) const {
   // Hexagon_TODO: Implement.
   return nullptr;
 }

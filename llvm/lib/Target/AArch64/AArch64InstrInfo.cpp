@@ -2066,10 +2066,9 @@ void llvm::emitFrameOffset(MachineBasicBlock &MBB,
       .setMIFlag(Flag);
 }
 
-MachineInstr *AArch64InstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
-                                                      MachineInstr *MI,
-                                                      ArrayRef<unsigned> Ops,
-                                                      int FrameIndex) const {
+MachineInstr *AArch64InstrInfo::foldMemoryOperandImpl(
+    MachineFunction &MF, MachineInstr *MI, ArrayRef<unsigned> Ops,
+    MachineBasicBlock::iterator InsertPt, int FrameIndex) const {
   // This is a bit of a hack. Consider this instruction:
   //
   //   %vreg0<def> = COPY %SP; GPR64all:%vreg0

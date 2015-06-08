@@ -152,17 +152,15 @@ bool AMDGPUInstrInfo::expandPostRAPseudo (MachineBasicBlock::iterator MI) const 
   return true;
 }
 
-MachineInstr *AMDGPUInstrInfo::foldMemoryOperandImpl(MachineFunction &MF,
-                                                     MachineInstr *MI,
-                                                     ArrayRef<unsigned> Ops,
-                                                     int FrameIndex) const {
+MachineInstr *AMDGPUInstrInfo::foldMemoryOperandImpl(
+    MachineFunction &MF, MachineInstr *MI, ArrayRef<unsigned> Ops,
+    MachineBasicBlock::iterator InsertPt, int FrameIndex) const {
 // TODO: Implement this function
   return nullptr;
 }
-MachineInstr *
-AMDGPUInstrInfo::foldMemoryOperandImpl(MachineFunction &MF, MachineInstr *MI,
-                                       ArrayRef<unsigned> Ops,
-                                       MachineInstr *LoadMI) const {
+MachineInstr *AMDGPUInstrInfo::foldMemoryOperandImpl(
+    MachineFunction &MF, MachineInstr *MI, ArrayRef<unsigned> Ops,
+    MachineBasicBlock::iterator InsertPt, MachineInstr *LoadMI) const {
   // TODO: Implement this function
   return nullptr;
 }
