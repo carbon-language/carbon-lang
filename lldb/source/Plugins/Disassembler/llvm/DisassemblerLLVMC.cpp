@@ -534,8 +534,8 @@ DisassemblerLLVMC::LLVMCDisassembler::SetStyle (bool use_hex_immed, HexImmediate
     m_instr_printer_ap->setPrintImmHex(use_hex_immed);
     switch(hex_style)
     {
-    case eHexStyleC:      m_instr_printer_ap->setPrintImmHex(llvm::HexStyle::C); break;
-    case eHexStyleAsm:    m_instr_printer_ap->setPrintImmHex(llvm::HexStyle::Asm); break;
+    case eHexStyleC:      m_instr_printer_ap->setPrintHexStyle(llvm::HexStyle::C); break;
+    case eHexStyleAsm:    m_instr_printer_ap->setPrintHexStyle(llvm::HexStyle::Asm); break;
     }
 }
 
