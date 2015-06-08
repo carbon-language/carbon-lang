@@ -3494,6 +3494,7 @@
         msr ID_MMFR1_EL1, x12
         msr ID_MMFR2_EL1, x12
         msr ID_MMFR3_EL1, x12
+        msr ID_MMFR4_EL1, x12
         msr ID_ISAR0_EL1, x12
         msr ID_ISAR1_EL1, x12
         msr ID_ISAR2_EL1, x12
@@ -3585,6 +3586,9 @@
 // CHECK-ERROR-NEXT:             ^
 // CHECK-ERROR-NEXT: error: expected writable system register or pstate
 // CHECK-ERROR-NEXT:         msr ID_MMFR3_EL1, x12
+// CHECK-ERROR-NEXT:             ^
+// CHECK-ERROR-NEXT: error: expected writable system register or pstate
+// CHECK-ERROR-NEXT:         msr ID_MMFR4_EL1, x12
 // CHECK-ERROR-NEXT:             ^
 // CHECK-ERROR-NEXT: error: expected writable system register or pstate
 // CHECK-ERROR-NEXT:         msr ID_ISAR0_EL1, x12

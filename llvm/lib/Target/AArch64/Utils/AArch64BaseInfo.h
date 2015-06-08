@@ -603,6 +603,7 @@ namespace AArch64SysReg {
     ISR_EL1           = 0xc608, // 11  000  1100  0001  000
     CNTPCT_EL0        = 0xdf01, // 11  011  1110  0000  001
     CNTVCT_EL0        = 0xdf02,  // 11  011  1110  0000  010
+    ID_MMFR4_EL1      = 0xc016,  // 11  000  0000  0010  110
 
     // Trace registers
     TRCSTATR          = 0x8818, // 10  001  0000  0011  000

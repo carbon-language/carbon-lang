@@ -175,6 +175,7 @@ const AArch64NamedImmMapper::Mapping AArch64SysReg::MRSMapper::MRSMappings[] = {
   {"id_mmfr1_el1", ID_MMFR1_EL1, {}},
   {"id_mmfr2_el1", ID_MMFR2_EL1, {}},
   {"id_mmfr3_el1", ID_MMFR3_EL1, {}},
+  {"id_mmfr4_el1", ID_MMFR4_EL1, {}},
   {"id_isar0_el1", ID_ISAR0_EL1, {}},
   {"id_isar1_el1", ID_ISAR1_EL1, {}},
   {"id_isar2_el1", ID_ISAR2_EL1, {}},
