@@ -35,6 +35,16 @@ class raw_ostream;
 /// Section member is set to indicate what section it lives in.  Otherwise, if
 /// it is a reference to an external entity, it has a null section.
 class MCSymbol {
+protected:
+  /// The kind of the symbol.  If it is any value other than unset then this
+  /// class is actually one of the appropriate subclasses of MCSymbol.
+  enum SymbolKind {
+    SymbolKindUnset,
+    SymbolKindCOFF,
+    SymbolKindELF,
+    SymbolKindMachO,
+  };
+
   // Special sentinal value for the absolute pseudo section.
   //
   // FIXME: Use a PointerInt wrapper for this?
@@ -83,7 +93,7 @@ class MCSymbol {
 
   mutable unsigned HasFragment : 1;
 
-  unsigned IsELF : 1;
+  SymbolKind Kind : 2;
 
   /// Index field, for use by the object file implementation.
   mutable uint32_t Index = 0;
@@ -108,11 +118,11 @@ class MCSymbol {
 protected: // MCContext creates and uniques these.
   friend class MCExpr;
   friend class MCContext;
-  MCSymbol(bool IsELF, const StringMapEntry<bool> *Name, bool isTemporary)
+  MCSymbol(SymbolKind Kind, const StringMapEntry<bool> *Name, bool isTemporary)
       : Name(Name), Section(nullptr), Value(nullptr), IsTemporary(isTemporary),
         IsRedefinable(false), IsUsed(false), IsRegistered(false),
         IsExternal(false), IsPrivateExtern(false), HasFragment(false),
-        IsELF(IsELF) {
+        Kind(Kind) {
     Offset = 0;
   }
 
@@ -197,7 +207,11 @@ public:
     Section = nullptr;
   }
 
-  bool isELF() const { return IsELF; }
+  bool isELF() const { return Kind == SymbolKindELF; }
+
+  bool isCOFF() const { return Kind == SymbolKindCOFF; }
+
+  bool isMachO() const { return Kind == SymbolKindMachO; }
 
   /// @}
   /// \name Variable Symbols

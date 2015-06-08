@@ -162,7 +162,7 @@ MCSymbol *MCContext::createSymbolImpl(const StringMapEntry<bool> *Name,
   bool IsELF = MOFI && MOFI->getObjectFileType() == MCObjectFileInfo::IsELF;
   if (IsELF)
     return new (*this) MCSymbolELF(Name, IsTemporary);
-  return new (*this) MCSymbol(false, Name, IsTemporary);
+  return new (*this) MCSymbol(MCSymbol::SymbolKindUnset, Name, IsTemporary);
 }
 
 MCSymbol *MCContext::createSymbol(StringRef Name, bool AlwaysAddSuffix,

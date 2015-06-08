@@ -19,7 +19,7 @@ class MCSymbolELF : public MCSymbol {
 
 public:
   MCSymbolELF(const StringMapEntry<bool> *Name, bool isTemporary)
-      : MCSymbol(true, Name, isTemporary) {}
+      : MCSymbol(SymbolKindELF, Name, isTemporary) {}
   void setSize(const MCExpr *SS) { SymbolSize = SS; }
 
   const MCExpr *getSize() const { return SymbolSize; }
