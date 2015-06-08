@@ -115,7 +115,23 @@ def err_integer_literal_too_large : Error<
 def ext_integer_literal_too_large_for_signed : ExtWarn<
   "integer literal is too large to be represented in a signed integer type, "
   "interpreting as unsigned">,
-  InGroup<DiagGroup<"implicitly-unsigned-literal">>;
+  InGroup<ImplicitlyUnsignedLiteral>;
+def warn_old_implicitly_unsigned_long : Warning<
+  "integer literal is too large to be represented in type 'long', "
+  "interpreting as 'unsigned long' per C89; this literal will "
+  "%select{have type 'long long'|be ill-formed}0 in C99 onwards">,
+  InGroup<C99Compat>;
+def warn_old_implicitly_unsigned_long_cxx : Warning<
+  "integer literal is too large to be represented in type 'long', "
+  "interpreting as 'unsigned long' per C++98; this literal will "
+  "%select{have type 'long long'|be ill-formed}0 in C++11 onwards">,
+  InGroup<CXX11Compat>;
+def ext_old_implicitly_unsigned_long_cxx : ExtWarn<
+  "integer literal is too large to be represented in type 'long' and is "
+  "subject to undefined behavior under C++98, interpreting as 'unsigned long'; "
+  "this literal will %select{have type 'long long'|be ill-formed}0 "
+  "in C++11 onwards">,
+  InGroup<CXX11Compat>;
 
 // SEH
 def err_seh_expected_handler : Error<
