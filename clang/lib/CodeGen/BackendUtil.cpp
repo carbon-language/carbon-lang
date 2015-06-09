@@ -283,7 +283,6 @@ void EmitAssemblyHelper::CreatePasses() {
   PMBuilder.SLPVectorize = CodeGenOpts.VectorizeSLP;
   PMBuilder.LoopVectorize = CodeGenOpts.VectorizeLoop;
 
-  PMBuilder.DisableTailCalls = CodeGenOpts.DisableTailCalls;
   PMBuilder.DisableUnitAtATime = !CodeGenOpts.UnitAtATime;
   PMBuilder.DisableUnrollLoops = !CodeGenOpts.UnrollLoops;
   PMBuilder.MergeFunctions = CodeGenOpts.MergeFunctions;
@@ -521,7 +520,6 @@ TargetMachine *EmitAssemblyHelper::CreateTargetMachine(bool MustCreateTM) {
   Options.NoZerosInBSS = CodeGenOpts.NoZeroInitializedInBSS;
   Options.UnsafeFPMath = CodeGenOpts.UnsafeFPMath;
   Options.StackAlignmentOverride = CodeGenOpts.StackAlignment;
-  Options.DisableTailCalls = CodeGenOpts.DisableTailCalls;
   Options.TrapFuncName = CodeGenOpts.TrapFuncName;
   Options.PositionIndependentExecutable = LangOpts.PIELevel != 0;
   Options.FunctionSections = CodeGenOpts.FunctionSections;

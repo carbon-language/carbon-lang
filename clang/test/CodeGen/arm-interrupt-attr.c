@@ -28,11 +28,11 @@ __attribute__((interrupt("UNDEF"))) void test_undef_interrupt() {
   // CHECK: define arm_aapcscc void @test_undef_interrupt() [[UNDEF_ATTR:#[0-9]+]]
 }
 
-// CHECK: attributes [[GENERIC_ATTR]] = { nounwind alignstack=8 {{"interrupt"[^=]}}
-// CHECK: attributes [[IRQ_ATTR]] = { nounwind alignstack=8 "interrupt"="IRQ"
-// CHECK: attributes [[FIQ_ATTR]] = { nounwind alignstack=8 "interrupt"="FIQ"
-// CHECK: attributes [[SWI_ATTR]] = { nounwind alignstack=8 "interrupt"="SWI"
-// CHECK: attributes [[ABORT_ATTR]] = { nounwind alignstack=8 "interrupt"="ABORT"
-// CHECK: attributes [[UNDEF_ATTR]] = { nounwind alignstack=8 "interrupt"="UNDEF"
+// CHECK: attributes [[GENERIC_ATTR]] = { {{.*}} {{"interrupt"[^=]}}
+// CHECK: attributes [[IRQ_ATTR]] = { {{.*}} "interrupt"="IRQ"
+// CHECK: attributes [[FIQ_ATTR]] = { {{.*}} "interrupt"="FIQ"
+// CHECK: attributes [[SWI_ATTR]] = { {{.*}} "interrupt"="SWI"
+// CHECK: attributes [[ABORT_ATTR]] = { {{.*}} "interrupt"="ABORT"
+// CHECK: attributes [[UNDEF_ATTR]] = { {{.*}} "interrupt"="UNDEF"
 
-// CHECK-APCS: attributes [[GENERIC_ATTR]] = { nounwind "interrupt"
+// CHECK-APCS: attributes [[GENERIC_ATTR]] = { {{.*}} "interrupt"
