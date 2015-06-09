@@ -108,6 +108,9 @@ OrcLazyJIT::TransformFtor OrcLazyJIT::createDebugDumper() {
   llvm_unreachable("Unknown DumpKind");
 }
 
+// Defined in lli.cpp.
+CodeGenOpt::Level getOptLevel();
+
 int llvm::runOrcLazyJIT(std::unique_ptr<Module> M, int ArgC, char* ArgV[]) {
   // Add the program's symbols into the JIT's search space.
   if (sys::DynamicLibrary::LoadLibraryPermanently(nullptr)) {
@@ -117,7 +120,9 @@ int llvm::runOrcLazyJIT(std::unique_ptr<Module> M, int ArgC, char* ArgV[]) {
 
   // Grab a target machine and try to build a factory function for the
   // target-specific Orc callback manager.
-  auto TM = std::unique_ptr<TargetMachine>(EngineBuilder().selectTarget());
+  EngineBuilder EB;
+  EB.setOptLevel(getOptLevel());
+  auto TM = std::unique_ptr<TargetMachine>(EB.selectTarget());
   auto &Context = getGlobalContext();
   auto CallbackMgrBuilder =
     OrcLazyJIT::createCallbackManagerBuilder(Triple(TM->getTargetTriple()));

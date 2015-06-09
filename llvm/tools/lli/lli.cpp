@@ -365,6 +365,19 @@ static void addCygMingExtraModule(ExecutionEngine *EE,
   EE->addModule(std::move(M));
 }
 
+CodeGenOpt::Level getOptLevel() {
+  switch (OptLevel) {
+  default:
+    errs() << "lli: Invalid optimization level.\n";
+    exit(1);
+  case '0': return CodeGenOpt::None;
+  case '1': return CodeGenOpt::Less;
+  case ' ':
+  case '2': return CodeGenOpt::Default;
+  case '3': return CodeGenOpt::Aggressive;
+  }
+  llvm_unreachable("Unrecognized opt level.");
+}
 
 //===----------------------------------------------------------------------===//
 // main Driver function
@@ -451,18 +464,7 @@ int main(int argc, char **argv, char * const *envp) {
     exit(1);
   }
 
-  CodeGenOpt::Level OLvl = CodeGenOpt::Default;
-  switch (OptLevel) {
-  default:
-    errs() << argv[0] << ": invalid optimization level.\n";
-    return 1;
-  case ' ': break;
-  case '0': OLvl = CodeGenOpt::None; break;
-  case '1': OLvl = CodeGenOpt::Less; break;
-  case '2': OLvl = CodeGenOpt::Default; break;
-  case '3': OLvl = CodeGenOpt::Aggressive; break;
-  }
-  builder.setOptLevel(OLvl);
+  builder.setOptLevel(getOptLevel());
 
   TargetOptions Options;
   if (FloatABIForCalls != FloatABI::Default)
