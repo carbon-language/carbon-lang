@@ -1,6 +1,6 @@
 ; REQUIRES: object-emission
-; RUN: %llc_dwarf -mtriple x86_64-apple-darwin14.0.0-elf -filetype=obj %s -o %t
-; RUN: %llc_dwarf -mtriple x86_64-apple-darwin14.0.0-elf -O0 -filetype=obj %s -o %t0
+; RUN: llc -mtriple x86_64-apple-darwin14.0.0-elf -filetype=obj %s -o %t
+; RUN: llc -mtriple x86_64-apple-darwin14.0.0-elf -O0 -filetype=obj %s -o %t0
 ; RUN: llvm-dwarfdump -debug-dump=loc %t | FileCheck %s
 ; RUN: llvm-dwarfdump -debug-dump=loc %t0 | FileCheck -check-prefix CHECK-O0 %s
 
