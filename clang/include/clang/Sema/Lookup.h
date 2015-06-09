@@ -302,10 +302,14 @@ public:
     if (!D->isInIdentifierNamespace(IDNS))
       return nullptr;
 
-    if (isHiddenDeclarationVisible() || isVisible(getSema(), D))
+    if (isVisible(getSema(), D))
       return D;
 
-    return getAcceptableDeclSlow(D);
+    if (auto *Visible = getAcceptableDeclSlow(D))
+      return Visible;
+
+    // Even if hidden declarations are visible, prefer a visible declaration.
+    return isHiddenDeclarationVisible() ? D : nullptr;
   }
 
 private:

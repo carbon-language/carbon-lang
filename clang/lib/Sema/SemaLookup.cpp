@@ -1180,6 +1180,16 @@ Module *Sema::getOwningModule(Decl *Entity) {
   assert(!Entity->isFromASTFile() &&
          "hidden entity from AST file has no owning module");
 
+  if (!getLangOpts().ModulesLocalVisibility) {
+    // If we're not tracking visibility locally, the only way a declaration
+    // can be hidden and local is if it's hidden because it's parent is (for
+    // instance, maybe this is a lazily-declared special member of an imported
+    // class).
+    auto *Parent = cast<NamedDecl>(Entity->getDeclContext());
+    assert(Parent->isHidden() && "unexpectedly hidden decl");
+    return getOwningModule(Parent);
+  }
+
   // It's local and hidden; grab or compute its owning module.
   M = Entity->getLocalOwningModule();
   if (M)
@@ -1218,9 +1228,11 @@ Module *Sema::getOwningModule(Decl *Entity) {
 }
 
 void Sema::makeMergedDefinitionVisible(NamedDecl *ND, SourceLocation Loc) {
-  auto *M = PP.getModuleContainingLocation(Loc);
-  assert(M && "hidden definition not in any module");
-  Context.mergeDefinitionIntoModule(ND, M);
+  if (auto *M = PP.getModuleContainingLocation(Loc))
+    Context.mergeDefinitionIntoModule(ND, M);
+  else
+    // We're not building a module; just make the definition visible.
+    ND->setHidden(false);
 }
 
 /// \brief Find the module in which the given declaration was defined.

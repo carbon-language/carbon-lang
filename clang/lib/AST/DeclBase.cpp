@@ -80,6 +80,10 @@ Module *Decl::getOwningModuleSlow() const {
   return getASTContext().getExternalSource()->getModule(getOwningModuleID());
 }
 
+bool Decl::hasLocalOwningModuleStorage() const {
+  return getASTContext().getLangOpts().ModulesLocalVisibility;
+}
+
 const char *Decl::getDeclKindName() const {
   switch (DeclKind) {
   default: llvm_unreachable("Declaration not in DeclNodes.inc!");
