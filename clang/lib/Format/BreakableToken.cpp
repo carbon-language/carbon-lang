@@ -183,7 +183,7 @@ void BreakableStringLiteral::insertBreak(unsigned LineIndex,
 }
 
 static StringRef getLineCommentIndentPrefix(StringRef Comment) {
-  static const char *const KnownPrefixes[] = { "///", "//" };
+  static const char *const KnownPrefixes[] = { "///", "//", "//!" };
   StringRef LongestPrefix;
   for (StringRef KnownPrefix : KnownPrefixes) {
     if (Comment.startswith(KnownPrefix)) {
@@ -210,6 +210,8 @@ BreakableLineComment::BreakableLineComment(
       Prefix = "// ";
     else if (Prefix == "///")
       Prefix = "/// ";
+    else if (Prefix == "//!")
+      Prefix = "//! ";
   }
 }
 

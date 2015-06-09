@@ -1337,6 +1337,16 @@ TEST_F(FormatTest, SplitsLongCxxComments) {
             "// one line",
             format("// A comment that doesn't fit on one line",
                    getLLVMStyleWithColumns(20)));
+  EXPECT_EQ("/// A comment that\n"
+            "/// doesn't fit on\n"
+            "/// one line",
+            format("/// A comment that doesn't fit on one line",
+                   getLLVMStyleWithColumns(20)));
+  EXPECT_EQ("//! A comment that\n"
+            "//! doesn't fit on\n"
+            "//! one line",
+            format("//! A comment that doesn't fit on one line",
+                   getLLVMStyleWithColumns(20)));
   EXPECT_EQ("// a b c d\n"
             "// e f  g\n"
             "// h i j k",
@@ -1357,6 +1367,12 @@ TEST_F(FormatTest, SplitsLongCxxComments) {
   EXPECT_EQ("// Add leading\n"
             "// whitespace",
             format("//Add leading whitespace", getLLVMStyleWithColumns(20)));
+  EXPECT_EQ("/// Add leading\n"
+            "/// whitespace",
+            format("///Add leading whitespace", getLLVMStyleWithColumns(20)));
+  EXPECT_EQ("//! Add leading\n"
+            "//! whitespace",
+            format("//!Add leading whitespace", getLLVMStyleWithColumns(20)));
   EXPECT_EQ("// whitespace", format("//whitespace", getLLVMStyle()));
   EXPECT_EQ("// Even if it makes the line exceed the column\n"
             "// limit",
