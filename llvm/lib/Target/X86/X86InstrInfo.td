@@ -2457,6 +2457,9 @@ include "X86InstrAVX512.td"
 include "X86InstrMMX.td"
 include "X86Instr3DNow.td"
 
+// MPX instructions
+include "X86InstrMPX.td"
+
 include "X86InstrVMX.td"
 include "X86InstrSVM.td"
 

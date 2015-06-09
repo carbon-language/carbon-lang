@@ -304,9 +304,9 @@ def RIZ : X86Reg<"riz", 4>;
 
 // Bound registers, used in MPX instructions
 def BND0 : X86Reg<"bnd0",   0>;
-def BND1 : X86Reg<"bnd1",   0>;
-def BND2 : X86Reg<"bnd2",   0>;
-def BND3 : X86Reg<"bnd3",   0>;
+def BND1 : X86Reg<"bnd1",   1>;
+def BND2 : X86Reg<"bnd2",   2>;
+def BND3 : X86Reg<"bnd3",   3>;
 
 //===----------------------------------------------------------------------===//
 // Register Class Definitions... now that we have all of the pieces, define the

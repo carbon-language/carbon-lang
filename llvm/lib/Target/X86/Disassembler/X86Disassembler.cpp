@@ -546,6 +546,8 @@ static void translateImmediate(MCInst &mcInst, uint64_t immediate,
   case TYPE_XMM512:
     mcInst.addOperand(MCOperand::createReg(X86::ZMM0 + (immediate >> 4)));
     return;
+  case TYPE_BNDR:
+    mcInst.addOperand(MCOperand::createReg(X86::BND0 + (immediate >> 4)));
   case TYPE_REL8:
     isBranch = true;
     pcrel = insn.startLocation + insn.immediateOffset + insn.immediateSize;
@@ -827,6 +829,7 @@ static bool translateRM(MCInst &mcInst, const OperandSpecifier &operand,
   case TYPE_VK16:
   case TYPE_DEBUGREG:
   case TYPE_CONTROLREG:
+  case TYPE_BNDR:
     return translateRMRegister(mcInst, insn);
   case TYPE_M:
   case TYPE_M8:
