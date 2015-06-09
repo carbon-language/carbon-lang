@@ -908,10 +908,6 @@ def warn_dealloc_in_category : Warning<
 InGroup<DeallocInCategory>;
 def err_gc_weak_property_strong_type : Error<
   "weak attribute declared on a __strong type property in GC mode">;
-def warn_receiver_is_weak : Warning <
-  "weak %select{receiver|property|implicit property}0 may be "
-  "unpredictably set to nil">,
-  InGroup<DiagGroup<"receiver-is-weak">>, DefaultIgnore;
 def warn_arc_repeated_use_of_weak : Warning <
   "weak %select{variable|property|implicit property|instance variable}0 %1 is "
   "accessed multiple times in this %select{function|method|block|lambda}2 "
@@ -7410,8 +7406,6 @@ def err_omp_unexpected_clause_value : Error<
   "expected %0 in OpenMP clause '%1'">;
 def err_omp_expected_var_name : Error<
   "expected variable name">;
-def err_omp_required_method : Error<
-  "%0 variable must have an accessible, unambiguous %select{default constructor|copy constructor|copy assignment operator|'%2'|destructor}1">;
 def note_omp_task_predetermined_firstprivate_here : Note<
   "predetermined as a firstprivate in a task construct here">;
 def err_omp_clause_ref_type_arg : Error<
