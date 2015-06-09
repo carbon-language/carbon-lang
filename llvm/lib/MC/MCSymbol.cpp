@@ -9,6 +9,7 @@
 
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCAsmInfo.h"
+#include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -17,6 +18,20 @@ using namespace llvm;
 
 // Sentinel value for the absolute pseudo section.
 MCSection *MCSymbol::AbsolutePseudoSection = reinterpret_cast<MCSection *>(1);
+
+void *MCSymbol::operator new(size_t s, NameEntryTy *Name, MCContext &Ctx) {
+  size_t Size = s + (Name ? sizeof(Name) : 0);
+
+  // For safety, ensure that the alignment of a pointer is enough for an
+  // MCSymbol.  This also ensures we don't need padding between the name and
+  // symbol.
+  assert(alignOf<MCSymbol>() <= alignof(NameEntryTy *) &&
+         "Bad alignment of MCSymbol");
+  void *Storage = Ctx.allocate(Size, alignof(NameEntryTy *));
+  NameEntryTy **Start = static_cast<NameEntryTy**>(Storage);
+  NameEntryTy **End = Start + (Name ? 1 : 0);
+  return End;
+}
 
 void MCSymbol::setVariableValue(const MCExpr *Value) {
   assert(!IsUsed && "Cannot set a variable that has already been used.");

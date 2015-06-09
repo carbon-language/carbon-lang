@@ -135,7 +135,7 @@ MCSymbolELF *MCContext::getOrCreateSectionSymbol(const MCSectionELF &Section) {
   }
 
   auto NameIter = UsedNames.insert(std::make_pair(Name, true)).first;
-  Sym = new (*this) MCSymbolELF(&*NameIter, /*isTemporary*/ false);
+  Sym = new (&*NameIter, *this) MCSymbolELF(&*NameIter, /*isTemporary*/ false);
 
   if (!OldSym)
     OldSym = Sym;
@@ -164,14 +164,15 @@ MCSymbol *MCContext::createSymbolImpl(const StringMapEntry<bool> *Name,
   if (MOFI) {
     switch (MOFI->getObjectFileType()) {
     case MCObjectFileInfo::IsCOFF:
-      return new (*this) MCSymbolCOFF(Name, IsTemporary);
+      return new (Name, *this) MCSymbolCOFF(Name, IsTemporary);
     case MCObjectFileInfo::IsELF:
-      return new (*this) MCSymbolELF(Name, IsTemporary);
+      return new (Name, *this) MCSymbolELF(Name, IsTemporary);
     case MCObjectFileInfo::IsMachO:
-      return new (*this) MCSymbolMachO(Name, IsTemporary);
+      return new (Name, *this) MCSymbolMachO(Name, IsTemporary);
     }
   }
-  return new (*this) MCSymbol(MCSymbol::SymbolKindUnset, Name, IsTemporary);
+  return new (Name, *this) MCSymbol(MCSymbol::SymbolKindUnset, Name,
+                                    IsTemporary);
 }
 
 MCSymbol *MCContext::createSymbol(StringRef Name, bool AlwaysAddSuffix,

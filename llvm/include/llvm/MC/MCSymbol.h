@@ -52,10 +52,6 @@ protected:
   // FIXME: Use a PointerInt wrapper for this?
   static MCSection *AbsolutePseudoSection;
 
-  /// Name - The name of the symbol.  The referred-to string data is actually
-  /// held by the StringMap that lives in MCContext.
-  const StringMapEntry<bool> *Name;
-
   /// If a symbol has a Fragment, the section is implied, so we only need
   /// one pointer.
   /// FIXME: We might be able to simplify this by having the asm streamer create
@@ -91,6 +87,11 @@ protected:
   /// This symbol is private extern.
   mutable unsigned IsPrivateExtern : 1;
 
+  /// True if this symbol is named.
+  /// A named symbol will have a pointer to the name allocated in the bytes
+  /// immediately prior to the MCSymbol.
+  unsigned HasName : 1;
+
   /// LLVM RTTI discriminator. This is actually a SymbolKind enumerator, but is
   /// unsigned to avoid sign extension and achieve better bitpacking with MSVC.
   unsigned Kind : 2;
@@ -118,15 +119,34 @@ protected:
 protected: // MCContext creates and uniques these.
   friend class MCExpr;
   friend class MCContext;
-  MCSymbol(SymbolKind Kind, const StringMapEntry<bool> *Name, bool isTemporary)
-      : Name(Name), Value(nullptr), IsTemporary(isTemporary),
+
+  typedef const StringMapEntry<bool> NameEntryTy;
+  MCSymbol(SymbolKind Kind, NameEntryTy *Name, bool isTemporary)
+      : Value(nullptr), IsTemporary(isTemporary),
         IsRedefinable(false), IsUsed(false), IsRegistered(false),
-        IsExternal(false), IsPrivateExtern(false),
+        IsExternal(false), IsPrivateExtern(false), HasName(!!Name),
         Kind(Kind) {
     Offset = 0;
+    if (Name)
+      getNameEntryPtr() = Name;
   }
 
+  // Provide custom new/delete as we will only allocate space for a name
+  // if we need one.
+  void *operator new(size_t s, NameEntryTy *Name, MCContext &Ctx);
+
 private:
+
+  void operator delete(void *);
+  /// \brief Placement delete - required by std, but never called.
+  void operator delete(void*, unsigned) {
+    llvm_unreachable("Constructor throws?");
+  }
+  /// \brief Placement delete - required by std, but never called.
+  void operator delete(void*, unsigned, bool) {
+    llvm_unreachable("Constructor throws?");
+  }
+
   MCSymbol(const MCSymbol &) = delete;
   void operator=(const MCSymbol &) = delete;
   MCSection *getSectionPtr() const {
@@ -139,9 +159,26 @@ private:
     return Section = Value->findAssociatedSection();
   }
 
+  /// \brief Get a reference to the name field.  Requires that we have a name
+  NameEntryTy *&getNameEntryPtr() {
+    assert(HasName && "Name is required");
+    NameEntryTy **Name = reinterpret_cast<NameEntryTy **>(this);
+    return *(Name - 1);
+  }
+  NameEntryTy *const &getNameEntryPtr() const {
+    assert(HasName && "Name is required");
+    NameEntryTy *const *Name = reinterpret_cast<NameEntryTy *const *>(this);
+    return *(Name - 1);
+  }
+
 public:
   /// getName - Get the symbol name.
-  StringRef getName() const { return Name ? Name->first() : ""; }
+  StringRef getName() const {
+    if (!HasName)
+      return StringRef();
+
+    return getNameEntryPtr()->first();
+  }
 
   bool isRegistered() const { return IsRegistered; }
   void setIsRegistered(bool Value) const { IsRegistered = Value; }
