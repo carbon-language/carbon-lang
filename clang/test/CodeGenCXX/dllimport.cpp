@@ -731,6 +731,7 @@ USECLASS(ExplicitInstantiationDeclImportedDefTemplate<int>);
 USEMEMFUNC(ExplicitInstantiationDeclImportedDefTemplate<int>, f);
 // M32-DAG: {{declare|define available_externally}} dllimport x86_thiscallcc void @"\01?f@?$ExplicitInstantiationDeclImportedDefTemplate@H@@QAEXXZ"
 // M32-DAG: {{declare|define available_externally}} dllimport x86_thiscallcc %struct.ExplicitInstantiationDeclImportedDefTemplate* @"\01??0?$ExplicitInstantiationDeclImportedDefTemplate@H@@QAE@XZ"
+// G32-DAG: define weak_odr x86_thiscallcc void @_ZN44ExplicitInstantiationDeclImportedDefTemplateIiE1fEv
 
 template <typename T> struct __declspec(dllimport) ExplicitInstantiationDeclExportedDefImportedTemplate { void f() {} ExplicitInstantiationDeclExportedDefImportedTemplate() {} };
 extern template struct __declspec(dllimport) ExplicitInstantiationDeclExportedDefImportedTemplate <int>;

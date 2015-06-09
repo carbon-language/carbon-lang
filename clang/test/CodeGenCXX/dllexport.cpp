@@ -694,8 +694,10 @@ USEMEMFUNC(ExplicitInstantiationDeclExportedTemplate<int>, f);
 template <typename T> struct ExplicitInstantiationDeclExportedDefTemplate { void f() {} ExplicitInstantiationDeclExportedDefTemplate() {} };
 extern template struct ExplicitInstantiationDeclExportedDefTemplate<int>;
 template struct __declspec(dllexport) ExplicitInstantiationDeclExportedDefTemplate<int>;
+USEMEMFUNC(ExplicitInstantiationDeclExportedDefTemplate<int>, f);
 // M32-DAG: define weak_odr dllexport x86_thiscallcc void @"\01?f@?$ExplicitInstantiationDeclExportedDefTemplate@H@@QAEXXZ"
 // M32-DAG: define weak_odr dllexport x86_thiscallcc %struct.ExplicitInstantiationDeclExportedDefTemplate* @"\01??0?$ExplicitInstantiationDeclExportedDefTemplate@H@@QAE@XZ"
+// G32-DAG: define weak_odr x86_thiscallcc void @_ZN44ExplicitInstantiationDeclExportedDefTemplateIiE1fEv
 
 namespace { struct InternalLinkageType {}; }
 struct __declspec(dllexport) PR23308 {
