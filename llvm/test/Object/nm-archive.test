@@ -24,6 +24,15 @@ RUN: rm -f %t2
 RUN: llvm-ar rcs %t2 %t1
 RUN: llvm-nm %t2 | FileCheck %s -check-prefix BITCODE
 
+RUN: rm -f %t2
+RUN: llvm-lib /out:%t2 %t1
+RUN: llvm-nm %t2 | FileCheck %s -check-prefix BITCODE
+
+RUN: rm -f %t2
+RUN: echo /out:%t2 %t1 > %t.rsp
+RUN: llvm-lib @%t.rsp
+RUN: llvm-nm %t2 | FileCheck %s -check-prefix BITCODE
+
 BITCODE:          U SomeOtherFunction
 BITCODE-NEXT:          T main
 BITCODE-NEXT:          U puts

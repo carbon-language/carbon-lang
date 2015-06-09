@@ -1,4 +1,4 @@
-;===- ./lib/LLVMBuild.txt --------------------------------------*- Conf -*--===;
+;===- ./lib/LibDriver/LLVMBuild.txt ----------------------------*- Conf -*--===;
 ;
 ;                     The LLVM Compiler Infrastructure
 ;
@@ -15,12 +15,8 @@
 ;
 ;===------------------------------------------------------------------------===;
 
-[common]
-subdirectories = Analysis AsmParser Bitcode CodeGen DebugInfo ExecutionEngine
- LibDriver LineEditor Linker IR IRReader LTO MC Object Option Passes ProfileData
- Support TableGen Target Transforms
-
 [component_0]
-type = Group
-name = Libraries
-parent = $ROOT
+type = Library
+name = LibDriver
+parent = Libraries
+required_libraries = Object Option Support

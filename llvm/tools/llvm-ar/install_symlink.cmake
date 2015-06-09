@@ -23,3 +23,9 @@ message("Creating llvm-ranlib")
 execute_process(
   COMMAND "${CMAKE_COMMAND}" -E ${LINK_OR_COPY} "llvm-ar${EXECUTABLE_SUFFIX}" "llvm-ranlib${EXECUTABLE_SUFFIX}"
   WORKING_DIRECTORY "${bindir}")
+
+message("Creating llvm-lib")
+
+execute_process(
+  COMMAND "${CMAKE_COMMAND}" -E ${LINK_OR_COPY} "llvm-ar${EXECUTABLE_SUFFIX}" "llvm-lib${EXECUTABLE_SUFFIX}"
+  WORKING_DIRECTORY "${bindir}")

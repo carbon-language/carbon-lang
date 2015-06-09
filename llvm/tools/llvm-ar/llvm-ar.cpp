@@ -15,6 +15,7 @@
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
+#include "llvm/LibDriver/LibDriver.h"
 #include "llvm/Object/Archive.h"
 #include "llvm/Object/ArchiveWriter.h"
 #include "llvm/Object/ObjectFile.h"
@@ -716,6 +717,15 @@ int main(int argc, char **argv) {
   PrettyStackTraceProgram X(argc, argv);
   llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
 
+  llvm::InitializeAllTargetInfos();
+  llvm::InitializeAllTargetMCs();
+  llvm::InitializeAllAsmParsers();
+
+  StringRef Stem = sys::path::stem(ToolName);
+  if (Stem.find("ranlib") == StringRef::npos &&
+      Stem.find("lib") != StringRef::npos)
+    return libDriverMain(argc, const_cast<const char **>(argv));
+
   // Have the command line options parsed and handle things
   // like --help and --version.
   cl::ParseCommandLineOptions(argc, argv,
@@ -723,14 +733,9 @@ int main(int argc, char **argv) {
     "  This program archives bitcode files into single libraries\n"
   );
 
-  llvm::InitializeAllTargetInfos();
-  llvm::InitializeAllTargetMCs();
-  llvm::InitializeAllAsmParsers();
-
-  StringRef Stem = sys::path::stem(ToolName);
   if (Stem.find("ar") != StringRef::npos)
     return ar_main();
   if (Stem.find("ranlib") != StringRef::npos)
     return ranlib_main();
-  fail("Not ranlib or ar!");
+  fail("Not ranlib, ar or lib!");
 }
