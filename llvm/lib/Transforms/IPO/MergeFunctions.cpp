@@ -1434,8 +1434,8 @@ void MergeFunctions::replaceFunctionInTree(FnTreeType::iterator &IterToF,
 
   // A total order is already guaranteed otherwise because we process strong
   // functions before weak functions.
-  assert((F->mayBeOverridden() && G->mayBeOverridden()) ||
-         (!F->mayBeOverridden() && !G->mayBeOverridden()) &&
+  assert(((F->mayBeOverridden() && G->mayBeOverridden()) ||
+          (!F->mayBeOverridden() && !G->mayBeOverridden())) &&
          "Only change functions if both are strong or both are weak");
   (void)F;
 
