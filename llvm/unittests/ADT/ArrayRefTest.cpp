@@ -40,7 +40,7 @@ TEST(ArrayRefTest, AllocatorCopy) {
   static const uint16_t Words2[] = { 11, 4003, 67, 64000, 13 };
   ArrayRef<uint16_t> Array2 = makeArrayRef(Words2, 5);
   ArrayRef<uint16_t> Array1c = Array1.copy(Alloc);
-  ArrayRef<uint16_t> Array2c = Array2.copy(Alloc);;
+  ArrayRef<uint16_t> Array2c = Array2.copy(Alloc);
   EXPECT_TRUE(Array1.equals(Array1c));
   EXPECT_NE(Array1.data(), Array1c.data());
   EXPECT_TRUE(Array2.equals(Array2c));

@@ -361,7 +361,7 @@ bool COFFAsmParser::ParseDirectiveSection(StringRef, SMLoc) {
   COFF::COMDATType Type = (COFF::COMDATType)0;
   StringRef COMDATSymName;
   if (getLexer().is(AsmToken::Comma)) {
-    Type = COFF::IMAGE_COMDAT_SELECT_ANY;;
+    Type = COFF::IMAGE_COMDAT_SELECT_ANY;
     Lex();
 
     Flags |= COFF::IMAGE_SCN_LNK_COMDAT;
