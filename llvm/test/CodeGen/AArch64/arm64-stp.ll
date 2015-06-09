@@ -99,3 +99,35 @@ entry:
   store <4 x i32> %p20, <4 x i32>* %p21, align 4
   ret void
 }
+
+; Read of %b to compute %tmp2 shouldn't prevent formation of stp
+; CHECK-LABEL: stp_int_rar_hazard
+; CHECK: stp w0, w1, [x2]
+; CHECK: ldr [[REG:w[0-9]+]], [x2, #8]
+; CHECK: add w0, [[REG]], w1
+; CHECK: ret
+define i32 @stp_int_rar_hazard(i32 %a, i32 %b, i32* nocapture %p) nounwind {
+  store i32 %a, i32* %p, align 4
+  %ld.ptr = getelementptr inbounds i32, i32* %p, i64 2
+  %tmp = load i32, i32* %ld.ptr, align 4
+  %tmp2 = add i32 %tmp, %b
+  %add.ptr = getelementptr inbounds i32, i32* %p, i64 1
+  store i32 %b, i32* %add.ptr, align 4
+  ret i32 %tmp2
+}
+
+; Read of %b to compute %tmp2 shouldn't prevent formation of stp
+; CHECK-LABEL: stp_int_rar_hazard_after
+; CHECK: ldr [[REG:w[0-9]+]], [x3, #4]
+; CHECK: add w0, [[REG]], w2
+; CHECK: stp w1, w2, [x3]
+; CHECK: ret
+define i32 @stp_int_rar_hazard_after(i32 %w0, i32 %a, i32 %b, i32* nocapture %p) nounwind {
+  store i32 %a, i32* %p, align 4
+  %ld.ptr = getelementptr inbounds i32, i32* %p, i64 1
+  %tmp = load i32, i32* %ld.ptr, align 4
+  %tmp2 = add i32 %tmp, %b
+  %add.ptr = getelementptr inbounds i32, i32* %p, i64 1
+  store i32 %b, i32* %add.ptr, align 4
+  ret i32 %tmp2
+}

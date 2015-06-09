@@ -623,7 +623,7 @@ AArch64LoadStoreOpt::findMatchingInsn(MachineBasicBlock::iterator I,
         // and first alias with the second, we can combine the second into the
         // first.
         if (!ModifiedRegs[MI->getOperand(0).getReg()] &&
-            !UsedRegs[MI->getOperand(0).getReg()] &&
+            !(MI->mayLoad() && UsedRegs[MI->getOperand(0).getReg()]) &&
             !mayAlias(MI, MemInsns, TII)) {
           MergeForward = false;
           return MBBI;
@@ -634,7 +634,8 @@ AArch64LoadStoreOpt::findMatchingInsn(MachineBasicBlock::iterator I,
         // first and the second alias with the first, we can combine the first
         // into the second.
         if (!ModifiedRegs[FirstMI->getOperand(0).getReg()] &&
-            !UsedRegs[FirstMI->getOperand(0).getReg()] &&
+            !(FirstMI->mayLoad() &&
+              UsedRegs[FirstMI->getOperand(0).getReg()]) &&
             !mayAlias(FirstMI, MemInsns, TII)) {
           MergeForward = true;
           return MBBI;
