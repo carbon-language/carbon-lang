@@ -269,12 +269,18 @@ std::error_code SymbolTable::addCombinedLTOObject() {
     if (!Body->isExternal())
       continue;
 
-    // Find an existing Symbol. We should not see any new symbols at this point.
+    // Find an existing Symbol. We should not see any new undefined symbols at
+    // this point.
     StringRef Name = Body->getName();
-    Symbol *Sym = Symtab[Name];
+    Symbol *&Sym = Symtab[Name];
     if (!Sym) {
-      llvm::errs() << "LTO: unexpected new symbol: " << Name << '\n';
-      return make_error_code(LLDError::BrokenFile);
+      if (!isa<Defined>(Body)) {
+        llvm::errs() << "LTO: undefined symbol: " << Name << '\n';
+        return make_error_code(LLDError::BrokenFile);
+      }
+      Sym = new (Alloc) Symbol(Body);
+      Body->setBackref(Sym);
+      continue;
     }
     Body->setBackref(Sym);
 
