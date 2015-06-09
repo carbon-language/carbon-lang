@@ -397,7 +397,9 @@ HexagonTargetLowering::LowerReturn(SDValue Chain,
 
 bool HexagonTargetLowering::mayBeEmittedAsTailCall(CallInst *CI) const {
   // If either no tail call or told not to tail call at all, don't.
-  if (!CI->isTailCall() || HTM.Options.DisableTailCalls)
+  auto Attr =
+      CI->getParent()->getParent()->getFnAttribute("disable-tail-calls");
+  if (!CI->isTailCall() || Attr.getValueAsString() == "true")
     return false;
 
   return true;
@@ -486,7 +488,8 @@ HexagonTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   else
     CCInfo.AnalyzeCallOperands(Outs, CC_Hexagon);
 
-  if (DAG.getTarget().Options.DisableTailCalls)
+  auto Attr = MF.getFunction()->getFnAttribute("disable-tail-calls");
+  if (Attr.getValueAsString() == "true")
     isTailCall = false;
 
   if (isTailCall) {

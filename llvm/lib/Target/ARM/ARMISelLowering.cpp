@@ -1483,9 +1483,10 @@ ARMTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   bool isStructRet    = (Outs.empty()) ? false : Outs[0].Flags.isSRet();
   bool isThisReturn   = false;
   bool isSibCall      = false;
+  auto Attr = MF.getFunction()->getFnAttribute("disable-tail-calls");
 
   // Disable tail calls if they're not supported.
-  if (!Subtarget->supportsTailCall() || MF.getTarget().Options.DisableTailCalls)
+  if (!Subtarget->supportsTailCall() || Attr.getValueAsString() == "true")
     isTailCall = false;
 
   if (isTailCall) {
@@ -2375,7 +2376,9 @@ bool ARMTargetLowering::mayBeEmittedAsTailCall(CallInst *CI) const {
   if (!Subtarget->supportsTailCall())
     return false;
 
-  if (!CI->isTailCall() || getTargetMachine().Options.DisableTailCalls)
+  auto Attr =
+      CI->getParent()->getParent()->getFnAttribute("disable-tail-calls");
+  if (!CI->isTailCall() || Attr.getValueAsString() == "true")
     return false;
 
   return !Subtarget->isThumb1Only();
