@@ -83,6 +83,9 @@ public:
   bool AddMachineRegPiece(unsigned MachineReg, unsigned PieceSizeInBits = 0,
                           unsigned PieceOffsetInBits = 0);
 
+  /// Emit a DW_OP_stack_value
+  void AddOpStackValue();
+
   /// Emit a signed constant.
   void AddSignedConstant(int Value);
   /// Emit an unsigned constant.

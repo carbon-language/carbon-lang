@@ -1562,6 +1562,8 @@ void DwarfDebug::emitDebugLoc() {
     Asm->OutStreamer->EmitLabel(List.Label);
     const DwarfCompileUnit *CU = List.CU;
     for (const auto &Entry : DebugLocs.getEntries(List)) {
+       if (Entry.BeginSym == Entry.EndSym)
+        continue;
       // Set up the range. This range is relative to the entry point of the
       // compile unit. This is a hard coded 0 for low_pc when we're emitting
       // ranges, or the DW_AT_low_pc on the compile unit otherwise.
