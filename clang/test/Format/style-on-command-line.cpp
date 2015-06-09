@@ -29,3 +29,7 @@ void f() {
 int*i;
 int j;
 }
+
+// On Windows, the 'rm' commands fail when the previous process is still alive.
+// This happens enough to make the test useless.
+// REQUIRES: shell
