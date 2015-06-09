@@ -512,7 +512,13 @@ MSVCToolChain::ComputeEffectiveClangTriple(const ArgList &Args,
   MSVT = VersionTuple(MSVT.getMajor(), MSVT.getMinor().getValueOr(0),
                       MSVT.getSubminor().getValueOr(0));
 
-  if (Triple.getEnvironment() == llvm::Triple::MSVC)
-    Triple.setEnvironmentName((Twine("msvc") + MSVT.getAsString()).str());
+  if (Triple.getEnvironment() == llvm::Triple::MSVC) {
+    StringRef ObjFmt = Triple.getEnvironmentName().split('-').second;
+    if (ObjFmt.empty())
+      Triple.setEnvironmentName((Twine("msvc") + MSVT.getAsString()).str());
+    else
+      Triple.setEnvironmentName(
+          (Twine("msvc") + MSVT.getAsString() + Twine('-') + ObjFmt).str());
+  }
   return Triple.getTriple();
 }
