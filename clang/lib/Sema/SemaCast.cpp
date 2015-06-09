@@ -1084,7 +1084,8 @@ static TryCastResult TryStaticCast(Sema &Self, ExprResult &SrcExpr,
 
         // Microsoft permits static_cast from 'pointer-to-void' to
         // 'pointer-to-function'.
-        if (Self.getLangOpts().MSVCCompat && DestPointee->isFunctionType()) {
+        if (!CStyle && Self.getLangOpts().MSVCCompat &&
+            DestPointee->isFunctionType()) {
           Self.Diag(OpRange.getBegin(), diag::ext_ms_cast_fn_obj) << OpRange;
           Kind = CK_BitCast;
           return TC_Success;
