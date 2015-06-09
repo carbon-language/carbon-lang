@@ -155,6 +155,10 @@ protected:
   /// Defaults to false.
   bool AllowAtInName;
 
+  /// If this is true, symbol names with invalid characters will be printed in
+  /// quotes.
+  bool SupportsQuotedNames;
+
   /// This is true if data region markers should be printed as
   /// ".data_region/.end_data_region" directives. If false, use "$d/$a" labels
   /// instead.
@@ -406,6 +410,10 @@ public:
                                             unsigned Encoding,
                                             MCStreamer &Streamer) const;
 
+  /// Return true if the identifier \p Name does not need quotes to be
+  /// syntactically correct.
+  virtual bool isValidUnquotedName(StringRef Name) const;
+
   bool usesSunStyleELFSectionSwitchSyntax() const {
     return SunStyleELFSectionSwitchSyntax;
   }
@@ -456,6 +464,7 @@ public:
   const char *getCode64Directive() const { return Code64Directive; }
   unsigned getAssemblerDialect() const { return AssemblerDialect; }
   bool doesAllowAtInName() const { return AllowAtInName; }
+  bool supportsNameQuoting() const { return SupportsQuotedNames; }
   bool doesSupportDataRegionDirectives() const {
     return UseDataRegionDirectives;
   }

@@ -445,6 +445,6 @@ void PPCInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
   }
   
   assert(Op.isExpr() && "unknown operand kind in printOperand");
-  O << *Op.getExpr();
+  Op.getExpr()->print(O, &MAI);
 }
 

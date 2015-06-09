@@ -72,7 +72,7 @@ public:
   /// \name Utility Methods
   /// @{
 
-  void print(raw_ostream &OS) const;
+  void print(raw_ostream &OS, const MCAsmInfo *MAI) const;
   void dump() const;
 
   /// @}
@@ -121,7 +121,7 @@ public:
 };
 
 inline raw_ostream &operator<<(raw_ostream &OS, const MCExpr &E) {
-  E.print(OS);
+  E.print(OS, nullptr);
   return OS;
 }
 
@@ -551,8 +551,7 @@ protected:
   MCTargetExpr() : MCExpr(Target) {}
   virtual ~MCTargetExpr() {}
 public:
-
-  virtual void printImpl(raw_ostream &OS) const = 0;
+  virtual void printImpl(raw_ostream &OS, const MCAsmInfo *MAI) const = 0;
   virtual bool evaluateAsRelocatableImpl(MCValue &Res,
                                          const MCAsmLayout *Layout,
                                          const MCFixup *Fixup) const = 0;

@@ -154,7 +154,7 @@ void X86ATTInstPrinter::printPCRelImm(const MCInst *MI, unsigned OpNo,
       O << formatHex((uint64_t)Address);
     } else {
       // Otherwise, just print the expression.
-      O << *Op.getExpr();
+      Op.getExpr()->print(O, &MAI);
     }
   }
 }
@@ -178,7 +178,9 @@ void X86ATTInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
 
   } else {
     assert(Op.isExpr() && "unknown operand kind in printOperand");
-    O << markup("<imm:") << '$' << *Op.getExpr() << markup(">");
+    O << markup("<imm:") << '$';
+    Op.getExpr()->print(O, &MAI);
+    O << markup(">");
   }
 }
 
@@ -203,7 +205,7 @@ void X86ATTInstPrinter::printMemReference(const MCInst *MI, unsigned Op,
       O << formatImm(DispVal);
   } else {
     assert(DispSpec.isExpr() && "non-immediate displacement for LEA?");
-    O << *DispSpec.getExpr();
+    DispSpec.getExpr()->print(O, &MAI);
   }
 
   if (IndexReg.getReg() || BaseReg.getReg()) {
@@ -273,7 +275,7 @@ void X86ATTInstPrinter::printMemOffset(const MCInst *MI, unsigned Op,
     O << formatImm(DispSpec.getImm());
   } else {
     assert(DispSpec.isExpr() && "non-immediate displacement?");
-    O << *DispSpec.getExpr();
+    DispSpec.getExpr()->print(O, &MAI);
   }
 
   O << markup(">");

@@ -165,10 +165,10 @@ class LLVM_LIBRARY_VISIBILITY NVPTXAsmPrinter : public AsmPrinter {
               }
               if (EmitGeneric && !isa<Function>(v) && !IsNonGenericPointer) {
                 O << "generic(";
-                O << *Name;
+                Name->print(O, AP.MAI);
                 O << ")";
               } else {
-                O << *Name;
+                Name->print(O, AP.MAI);
               }
             } else if (const ConstantExpr *CExpr = dyn_cast<ConstantExpr>(v0)) {
               const MCExpr *Expr =

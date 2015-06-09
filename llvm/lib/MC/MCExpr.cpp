@@ -30,10 +30,10 @@ STATISTIC(MCExprEvaluate, "Number of MCExpr evaluations");
 }
 }
 
-void MCExpr::print(raw_ostream &OS) const {
+void MCExpr::print(raw_ostream &OS, const MCAsmInfo *MAI) const {
   switch (getKind()) {
   case MCExpr::Target:
-    return cast<MCTargetExpr>(this)->printImpl(OS);
+    return cast<MCTargetExpr>(this)->printImpl(OS, MAI);
   case MCExpr::Constant:
     OS << cast<MCConstantExpr>(*this).getValue();
     return;
@@ -43,11 +43,13 @@ void MCExpr::print(raw_ostream &OS) const {
     const MCSymbol &Sym = SRE.getSymbol();
     // Parenthesize names that start with $ so that they don't look like
     // absolute names.
-    bool UseParens = !Sym.getName().empty() && Sym.getName()[0] == '$';
-    if (UseParens)
-      OS << '(' << Sym << ')';
-    else
-      OS << Sym;
+    bool UseParens = Sym.getName()[0] == '$';
+    if (UseParens) {
+      OS << '(';
+      Sym.print(OS, MAI);
+      OS << ')';
+    } else
+      Sym.print(OS, MAI);
 
     if (SRE.getKind() != MCSymbolRefExpr::VK_None)
       SRE.printVariantKind(OS);
@@ -63,7 +65,7 @@ void MCExpr::print(raw_ostream &OS) const {
     case MCUnaryExpr::Not:   OS << '~'; break;
     case MCUnaryExpr::Plus:  OS << '+'; break;
     }
-    OS << *UE.getSubExpr();
+    UE.getSubExpr()->print(OS, MAI);
     return;
   }
 
@@ -72,9 +74,11 @@ void MCExpr::print(raw_ostream &OS) const {
 
     // Only print parens around the LHS if it is non-trivial.
     if (isa<MCConstantExpr>(BE.getLHS()) || isa<MCSymbolRefExpr>(BE.getLHS())) {
-      OS << *BE.getLHS();
+      BE.getLHS()->print(OS, MAI);
     } else {
-      OS << '(' << *BE.getLHS() << ')';
+      OS << '(';
+      BE.getLHS()->print(OS, MAI);
+      OS << ')';
     }
 
     switch (BE.getOpcode()) {
@@ -111,9 +115,11 @@ void MCExpr::print(raw_ostream &OS) const {
 
     // Only print parens around the LHS if it is non-trivial.
     if (isa<MCConstantExpr>(BE.getRHS()) || isa<MCSymbolRefExpr>(BE.getRHS())) {
-      OS << *BE.getRHS();
+      BE.getRHS()->print(OS, MAI);
     } else {
-      OS << '(' << *BE.getRHS() << ')';
+      OS << '(';
+      BE.getRHS()->print(OS, MAI);
+      OS << ')';
     }
     return;
   }

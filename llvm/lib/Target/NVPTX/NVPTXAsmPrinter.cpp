@@ -467,7 +467,7 @@ void NVPTXAsmPrinter::EmitFunctionEntryLabel() {
     printReturnValStr(*MF, O);
   }
 
-  O << *CurrentFnSym;
+  CurrentFnSym->print(O, MAI);
 
   emitFunctionParamList(*MF, O);
 
@@ -624,7 +624,8 @@ void NVPTXAsmPrinter::emitDeclaration(const Function *F, raw_ostream &O) {
   else
     O << ".func ";
   printReturnValStr(F, O);
-  O << *getSymbol(F) << "\n";
+  getSymbol(F)->print(O, MAI);
+  O << "\n";
   emitFunctionParamList(F, O);
   O << ";\n";
 }
@@ -1171,7 +1172,7 @@ void NVPTXAsmPrinter::printModuleLevelGV(const GlobalVariable *GVar,
     else
       O << getPTXFundamentalTypeStr(ETy, false);
     O << " ";
-    O << *getSymbol(GVar);
+    getSymbol(GVar)->print(O, MAI);
 
     // Ptx allows variable initilization only for constant and global state
     // spaces.
@@ -1217,15 +1218,21 @@ void NVPTXAsmPrinter::printModuleLevelGV(const GlobalVariable *GVar,
           bufferAggregateConstant(Initializer, &aggBuffer);
           if (aggBuffer.numSymbols) {
             if (static_cast<const NVPTXTargetMachine &>(TM).is64Bit()) {
-              O << " .u64 " << *getSymbol(GVar) << "[";
+              O << " .u64 ";
+              getSymbol(GVar)->print(O, MAI);
+              O << "[";
               O << ElementSize / 8;
             } else {
-              O << " .u32 " << *getSymbol(GVar) << "[";
+              O << " .u32 ";
+              getSymbol(GVar)->print(O, MAI);
+              O << "[";
               O << ElementSize / 4;
             }
             O << "]";
           } else {
-            O << " .b8 " << *getSymbol(GVar) << "[";
+            O << " .b8 ";
+            getSymbol(GVar)->print(O, MAI);
+            O << "[";
             O << ElementSize;
             O << "]";
           }
@@ -1233,7 +1240,8 @@ void NVPTXAsmPrinter::printModuleLevelGV(const GlobalVariable *GVar,
           aggBuffer.print();
           O << "}";
         } else {
-          O << " .b8 " << *getSymbol(GVar);
+          O << " .b8 ";
+          getSymbol(GVar)->print(O, MAI);
           if (ElementSize) {
             O << "[";
             O << ElementSize;
@@ -1241,7 +1249,8 @@ void NVPTXAsmPrinter::printModuleLevelGV(const GlobalVariable *GVar,
           }
         }
       } else {
-        O << " .b8 " << *getSymbol(GVar);
+        O << " .b8 ";
+        getSymbol(GVar)->print(O, MAI);
         if (ElementSize) {
           O << "[";
           O << ElementSize;
@@ -1348,7 +1357,7 @@ void NVPTXAsmPrinter::emitPTXGlobalVariable(const GlobalVariable *GVar,
     O << " .";
     O << getPTXFundamentalTypeStr(ETy);
     O << " ";
-    O << *getSymbol(GVar);
+    getSymbol(GVar)->print(O, MAI);
     return;
   }
 
@@ -1363,7 +1372,9 @@ void NVPTXAsmPrinter::emitPTXGlobalVariable(const GlobalVariable *GVar,
   case Type::ArrayTyID:
   case Type::VectorTyID:
     ElementSize = TD->getTypeStoreSize(ETy);
-    O << " .b8 " << *getSymbol(GVar) << "[";
+    O << " .b8 ";
+    getSymbol(GVar)->print(O, MAI);
+    O << "[";
     if (ElementSize) {
       O << ElementSize;
     }
@@ -1405,11 +1416,13 @@ static unsigned int getOpenCLAlignment(const DataLayout *TD, Type *Ty) {
 
 void NVPTXAsmPrinter::printParamName(Function::const_arg_iterator I,
                                      int paramIndex, raw_ostream &O) {
-  O << *getSymbol(I->getParent()) << "_param_" << paramIndex;
+  getSymbol(I->getParent())->print(O, MAI);
+  O << "_param_" << paramIndex;
 }
 
 void NVPTXAsmPrinter::printParamName(int paramIndex, raw_ostream &O) {
-  O << *CurrentFnSym << "_param_" << paramIndex;
+  CurrentFnSym->print(O, MAI);
+  O << "_param_" << paramIndex;
 }
 
 void NVPTXAsmPrinter::emitFunctionParamList(const Function *F, raw_ostream &O) {
@@ -1443,21 +1456,24 @@ void NVPTXAsmPrinter::emitFunctionParamList(const Function *F, raw_ostream &O) {
               O << "\t.param .u64 .ptr .surfref ";
             else
               O << "\t.param .surfref ";
-            O << *CurrentFnSym << "_param_" << paramIndex;
+            CurrentFnSym->print(O, MAI);
+            O << "_param_" << paramIndex;
           }
           else { // Default image is read_only
             if (nvptxSubtarget->hasImageHandles())
               O << "\t.param .u64 .ptr .texref ";
             else
               O << "\t.param .texref ";
-            O << *CurrentFnSym << "_param_" << paramIndex;
+            CurrentFnSym->print(O, MAI);
+            O << "_param_" << paramIndex;
           }
         } else {
           if (nvptxSubtarget->hasImageHandles())
             O << "\t.param .u64 .ptr .samplerref ";
           else
             O << "\t.param .samplerref ";
-          O << *CurrentFnSym << "_param_" << paramIndex;
+          CurrentFnSym->print(O, MAI);
+          O << "_param_" << paramIndex;
         }
         continue;
       }
@@ -1713,10 +1729,10 @@ void NVPTXAsmPrinter::printScalarConstant(const Constant *CPV, raw_ostream &O) {
     }
     if (EmitGeneric && !isa<Function>(CPV) && !IsNonGenericPointer) {
       O << "generic(";
-      O << *getSymbol(GVar);
+      getSymbol(GVar)->print(O, MAI);
       O << ")";
     } else {
-      O << *getSymbol(GVar);
+      getSymbol(GVar)->print(O, MAI);
     }
     return;
   }
@@ -1730,14 +1746,14 @@ void NVPTXAsmPrinter::printScalarConstant(const Constant *CPV, raw_ostream &O) {
     if (const GlobalValue *GVar = dyn_cast<GlobalValue>(v)) {
       if (EmitGeneric && !isa<Function>(v) && !IsNonGenericPointer) {
         O << "generic(";
-        O << *getSymbol(GVar);
+        getSymbol(GVar)->print(O, MAI);
         O << ")";
       } else {
-        O << *getSymbol(GVar);
+        getSymbol(GVar)->print(O, MAI);
       }
       return;
     } else {
-      O << *lowerConstant(CPV);
+      lowerConstant(CPV)->print(O, MAI);
       return;
     }
   }
@@ -2120,7 +2136,7 @@ NVPTXAsmPrinter::lowerConstantForGV(const Constant *CV, bool ProcessingGeneric) 
 void NVPTXAsmPrinter::printMCExpr(const MCExpr &Expr, raw_ostream &OS) {
   switch (Expr.getKind()) {
   case MCExpr::Target:
-    return cast<MCTargetExpr>(&Expr)->printImpl(OS);
+    return cast<MCTargetExpr>(&Expr)->printImpl(OS, MAI);
   case MCExpr::Constant:
     OS << cast<MCConstantExpr>(Expr).getValue();
     return;
@@ -2128,7 +2144,7 @@ void NVPTXAsmPrinter::printMCExpr(const MCExpr &Expr, raw_ostream &OS) {
   case MCExpr::SymbolRef: {
     const MCSymbolRefExpr &SRE = cast<MCSymbolRefExpr>(Expr);
     const MCSymbol &Sym = SRE.getSymbol();
-    OS << Sym;
+    Sym.print(OS, MAI);
     return;
   }
 
@@ -2253,11 +2269,11 @@ void NVPTXAsmPrinter::printOperand(const MachineInstr *MI, int opNum,
     break;
 
   case MachineOperand::MO_GlobalAddress:
-    O << *getSymbol(MO.getGlobal());
+    getSymbol(MO.getGlobal())->print(O, MAI);
     break;
 
   case MachineOperand::MO_MachineBasicBlock:
-    O << *MO.getMBB()->getSymbol();
+    MO.getMBB()->getSymbol()->print(O, MAI);
     return;
 
   default:

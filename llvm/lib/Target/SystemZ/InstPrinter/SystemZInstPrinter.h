@@ -35,7 +35,8 @@ public:
                            raw_ostream &O);
 
   // Print the given operand.
-  static void printOperand(const MCOperand &MO, raw_ostream &O);
+  static void printOperand(const MCOperand &MO, const MCAsmInfo *MAI,
+                           raw_ostream &O);
 
   // Override MCInstPrinter.
   void printRegName(raw_ostream &O, unsigned RegNo) const override;

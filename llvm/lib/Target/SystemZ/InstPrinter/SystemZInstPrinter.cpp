@@ -37,13 +37,14 @@ void SystemZInstPrinter::printAddress(unsigned Base, int64_t Disp,
   }
 }
 
-void SystemZInstPrinter::printOperand(const MCOperand &MO, raw_ostream &O) {
+void SystemZInstPrinter::printOperand(const MCOperand &MO, const MCAsmInfo *MAI,
+                                      raw_ostream &O) {
   if (MO.isReg())
     O << '%' << getRegisterName(MO.getReg());
   else if (MO.isImm())
     O << MO.getImm();
   else if (MO.isExpr())
-    O << *MO.getExpr();
+    MO.getExpr()->print(O, MAI);
   else
     llvm_unreachable("Invalid operand");
 }
@@ -147,7 +148,7 @@ void SystemZInstPrinter::printPCRelOperand(const MCInst *MI, int OpNum,
     O << "0x";
     O.write_hex(MO.getImm());
   } else
-    O << *MO.getExpr();
+    MO.getExpr()->print(O, &MAI);
 }
 
 void SystemZInstPrinter::printPCRelTLSOperand(const MCInst *MI, int OpNum,
@@ -175,7 +176,7 @@ void SystemZInstPrinter::printPCRelTLSOperand(const MCInst *MI, int OpNum,
 
 void SystemZInstPrinter::printOperand(const MCInst *MI, int OpNum,
                                       raw_ostream &O) {
-  printOperand(MI->getOperand(OpNum), O);
+  printOperand(MI->getOperand(OpNum), &MAI, O);
 }
 
 void SystemZInstPrinter::printBDAddrOperand(const MCInst *MI, int OpNum,

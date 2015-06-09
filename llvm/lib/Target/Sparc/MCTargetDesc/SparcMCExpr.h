@@ -85,7 +85,7 @@ public:
   Sparc::Fixups getFixupKind() const { return getFixupKind(Kind); }
 
   /// @}
-  void printImpl(raw_ostream &OS) const override;
+  void printImpl(raw_ostream &OS, const MCAsmInfo *MAI) const override;
   bool evaluateAsRelocatableImpl(MCValue &Res,
                                  const MCAsmLayout *Layout,
                                  const MCFixup *Fixup) const override;

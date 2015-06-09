@@ -64,7 +64,7 @@ MipsMCExpr::create(MCSymbolRefExpr::VariantKind VK, const MCExpr *Expr,
   return new (Ctx) MipsMCExpr(Kind, Expr);
 }
 
-void MipsMCExpr::printImpl(raw_ostream &OS) const {
+void MipsMCExpr::printImpl(raw_ostream &OS, const MCAsmInfo *MAI) const {
   switch (Kind) {
   default: llvm_unreachable("Invalid kind!");
   case VK_Mips_LO: OS << "%lo"; break;
@@ -74,7 +74,7 @@ void MipsMCExpr::printImpl(raw_ostream &OS) const {
   }
 
   OS << '(';
-  Expr->print(OS);
+  Expr->print(OS, MAI);
   OS << ')';
 }
 

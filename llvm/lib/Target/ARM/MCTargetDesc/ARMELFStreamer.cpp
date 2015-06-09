@@ -214,7 +214,13 @@ ARMTargetAsmStreamer::AnnotateTLSDescriptorSequence(const MCSymbolRefExpr *S) {
 }
 
 void ARMTargetAsmStreamer::emitThumbSet(MCSymbol *Symbol, const MCExpr *Value) {
-  OS << "\t.thumb_set\t" << *Symbol << ", " << *Value << '\n';
+  const MCAsmInfo *MAI = Streamer.getContext().getAsmInfo();
+
+  OS << "\t.thumb_set\t";
+  Symbol->print(OS, MAI);
+  OS << ", ";
+  Value->print(OS, MAI);
+  OS << '\n';
 }
 
 void ARMTargetAsmStreamer::emitInst(uint32_t Inst, char Suffix) {

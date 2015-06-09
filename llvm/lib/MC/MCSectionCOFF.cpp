@@ -94,7 +94,7 @@ void MCSectionCOFF::PrintSwitchToSection(const MCAsmInfo &MAI,
         break;
     }
     assert(COMDATSymbol);
-    OS << *COMDATSymbol;
+    COMDATSymbol->print(OS, &MAI);
   }
   OS << '\n';
 }

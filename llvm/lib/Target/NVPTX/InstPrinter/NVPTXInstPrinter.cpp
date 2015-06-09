@@ -85,7 +85,7 @@ void NVPTXInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
     O << markup("<imm:") << formatImm(Op.getImm()) << markup(">");
   } else {
     assert(Op.isExpr() && "Unknown operand kind in printOperand");
-    O << *Op.getExpr();
+    Op.getExpr()->print(O, &MAI);
   }
 }
 

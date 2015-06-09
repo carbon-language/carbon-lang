@@ -21,6 +21,7 @@
 #include "llvm/Support/Compiler.h"
 
 namespace llvm {
+class MCAsmInfo;
 class MCExpr;
 class MCSymbol;
 class MCFragment;
@@ -302,7 +303,7 @@ public:
   void setPrivateExtern(bool Value) { IsPrivateExtern = Value; }
 
   /// print - Print the value to the stream \p OS.
-  void print(raw_ostream &OS) const;
+  void print(raw_ostream &OS, const MCAsmInfo *MAI) const;
 
   /// dump - Print the value to stderr.
   void dump() const;
@@ -321,7 +322,7 @@ protected:
 };
 
 inline raw_ostream &operator<<(raw_ostream &OS, const MCSymbol &Sym) {
-  Sym.print(OS);
+  Sym.print(OS, nullptr);
   return OS;
 }
 } // end namespace llvm

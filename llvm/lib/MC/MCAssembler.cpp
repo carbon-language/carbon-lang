@@ -1199,8 +1199,7 @@ void MCFragment::dump() {
   case MCFragment::FT_SafeSEH: {
     const MCSafeSEHFragment *F = cast<MCSafeSEHFragment>(this);
     OS << "\n       ";
-    OS << " Sym:";
-    F->getSymbol()->print(OS);
+    OS << " Sym:" << F->getSymbol();
     break;
   }
   }

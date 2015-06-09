@@ -206,7 +206,7 @@ void AArch64AsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNum,
     // FIXME: Can we get anything other than a plain symbol here?
     assert(!MO.getTargetFlags() && "Unknown operand target flag!");
 
-    O << *Sym;
+    Sym->print(O, MAI);
     printOffset(MO.getOffset(), O);
     break;
   }

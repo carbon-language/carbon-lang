@@ -164,7 +164,7 @@ void HexagonInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
   if (MO.isReg()) {
     printRegName(O, MO.getReg());
   } else if(MO.isExpr()) {
-    O << *MO.getExpr();
+    MO.getExpr()->print(O, &MAI);
   } else if(MO.isImm()) {
     printImmOperand(MI, OpNo, O);
   } else {
@@ -177,7 +177,7 @@ void HexagonInstPrinter::printImmOperand(const MCInst *MI, unsigned OpNo,
   const MCOperand& MO = MI->getOperand(OpNo);
 
   if(MO.isExpr()) {
-    O << *MO.getExpr();
+    MO.getExpr()->print(O, &MAI);
   } else if(MO.isImm()) {
     O << MI->getOperand(OpNo).getImm();
   } else {

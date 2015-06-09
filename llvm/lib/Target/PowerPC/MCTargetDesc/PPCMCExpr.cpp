@@ -24,7 +24,7 @@ PPCMCExpr::create(VariantKind Kind, const MCExpr *Expr,
   return new (Ctx) PPCMCExpr(Kind, Expr, isDarwin);
 }
 
-void PPCMCExpr::printImpl(raw_ostream &OS) const {
+void PPCMCExpr::printImpl(raw_ostream &OS, const MCAsmInfo *MAI) const {
   if (isDarwinSyntax()) {
     switch (Kind) {
     default: llvm_unreachable("Invalid kind!");
@@ -34,10 +34,10 @@ void PPCMCExpr::printImpl(raw_ostream &OS) const {
     }
 
     OS << '(';
-    getSubExpr()->print(OS);
+    getSubExpr()->print(OS, MAI);
     OS << ')';
   } else {
-    getSubExpr()->print(OS);
+    getSubExpr()->print(OS, MAI);
 
     switch (Kind) {
     default: llvm_unreachable("Invalid kind!");

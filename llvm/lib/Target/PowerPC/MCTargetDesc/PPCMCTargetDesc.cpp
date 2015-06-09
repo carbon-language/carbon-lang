@@ -16,6 +16,7 @@
 #include "PPCMCAsmInfo.h"
 #include "PPCTargetStreamer.h"
 #include "llvm/MC/MCCodeGenInfo.h"
+#include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCELFStreamer.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInstrInfo.h"
@@ -132,7 +133,13 @@ public:
     OS << "\t.abiversion " << AbiVersion << '\n';
   }
   void emitLocalEntry(MCSymbolELF *S, const MCExpr *LocalOffset) override {
-    OS << "\t.localentry\t" << *S << ", " << *LocalOffset << '\n';
+    const MCAsmInfo *MAI = Streamer.getContext().getAsmInfo();
+
+    OS << "\t.localentry\t";
+    S->print(OS, MAI);
+    OS << ", ";
+    LocalOffset->print(OS, MAI);
+    OS << '\n';
   }
 };
 

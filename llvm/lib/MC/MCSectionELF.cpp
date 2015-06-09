@@ -64,8 +64,10 @@ void MCSectionELF::PrintSwitchToSection(const MCAsmInfo &MAI,
 
   if (ShouldOmitSectionDirective(SectionName, MAI)) {
     OS << '\t' << getSectionName();
-    if (Subsection)
-      OS << '\t' << *Subsection;
+    if (Subsection) {
+      OS << '\t';
+      Subsection->print(OS, &MAI);
+    }
     OS << '\n';
     return;
   }
@@ -153,8 +155,11 @@ void MCSectionELF::PrintSwitchToSection(const MCAsmInfo &MAI,
 
   OS << '\n';
 
-  if (Subsection)
-    OS << "\t.subsection\t" << *Subsection << '\n';
+  if (Subsection) {
+    OS << "\t.subsection\t";
+    Subsection->print(OS, &MAI);
+    OS << '\n';
+  }
 }
 
 bool MCSectionELF::UseCodeAlign() const {

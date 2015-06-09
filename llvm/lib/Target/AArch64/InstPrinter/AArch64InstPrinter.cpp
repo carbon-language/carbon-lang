@@ -206,15 +206,15 @@ void AArch64InstPrinter::printInst(const MCInst *MI, raw_ostream &O,
     else
       O << "\tmovn\t";
 
-    O << getRegisterName(MI->getOperand(0).getReg()) << ", #"
-      << *MI->getOperand(1).getExpr();
+    O << getRegisterName(MI->getOperand(0).getReg()) << ", #";
+    MI->getOperand(1).getExpr()->print(O, &MAI);
     return;
   }
 
   if ((Opcode == AArch64::MOVKXi || Opcode == AArch64::MOVKWi) &&
       MI->getOperand(2).isExpr()) {
-    O << "\tmovk\t" << getRegisterName(MI->getOperand(0).getReg()) << ", #"
-      << *MI->getOperand(2).getExpr();
+    O << "\tmovk\t" << getRegisterName(MI->getOperand(0).getReg()) << ", #";
+    MI->getOperand(2).getExpr()->print(O, &MAI);
     return;
   }
 
@@ -908,7 +908,7 @@ void AArch64InstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
     O << '#' << Op.getImm();
   } else {
     assert(Op.isExpr() && "unknown operand kind in printOperand");
-    O << *Op.getExpr();
+    Op.getExpr()->print(O, &MAI);
   }
 }
 
@@ -966,7 +966,7 @@ void AArch64InstPrinter::printAddSubImm(const MCInst *MI, unsigned OpNum,
       *CommentStream << '=' << (Val << Shift) << '\n';
   } else {
     assert(MO.isExpr() && "Unexpected operand type!");
-    O << *MO.getExpr();
+    MO.getExpr()->print(O, &MAI);
     printShifter(MI, OpNum + 1, STI, O);
   }
 }
@@ -1091,7 +1091,7 @@ void AArch64InstPrinter::printUImm12Offset(const MCInst *MI, unsigned OpNum,
     O << "#" << (MO.getImm() * Scale);
   } else {
     assert(MO.isExpr() && "Unexpected operand type!");
-    O << *MO.getExpr();
+    MO.getExpr()->print(O, &MAI);
   }
 }
 
@@ -1103,7 +1103,8 @@ void AArch64InstPrinter::printAMIndexedWB(const MCInst *MI, unsigned OpNum,
       O << ", #" << (MO1.getImm() * Scale);
   } else {
     assert(MO1.isExpr() && "Unexpected operand type!");
-    O << ", " << *MO1.getExpr();
+    O << ", ";
+    MO1.getExpr()->print(O, &MAI);
   }
   O << ']';
 }
@@ -1286,7 +1287,7 @@ void AArch64InstPrinter::printAlignedLabel(const MCInst *MI, unsigned OpNum,
     O.write_hex(Address);
   } else {
     // Otherwise, just print the expression.
-    O << *MI->getOperand(OpNum).getExpr();
+    MI->getOperand(OpNum).getExpr()->print(O, &MAI);
   }
 }
 
@@ -1303,7 +1304,7 @@ void AArch64InstPrinter::printAdrpLabel(const MCInst *MI, unsigned OpNum,
   }
 
   // Otherwise, just print the expression.
-  O << *MI->getOperand(OpNum).getExpr();
+  MI->getOperand(OpNum).getExpr()->print(O, &MAI);
 }
 
 void AArch64InstPrinter::printBarrierOption(const MCInst *MI, unsigned OpNo,

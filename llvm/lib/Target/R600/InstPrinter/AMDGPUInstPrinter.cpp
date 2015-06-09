@@ -337,7 +337,7 @@ void AMDGPUInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
     }
   } else if (Op.isExpr()) {
     const MCExpr *Exp = Op.getExpr();
-    Exp->print(O);
+    Exp->print(O, &MAI);
   } else {
     llvm_unreachable("unknown operand type in printOperand");
   }

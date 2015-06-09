@@ -50,6 +50,7 @@ MCAsmInfo::MCAsmInfo() {
   Code64Directive = ".code64";
   AssemblerDialect = 0;
   AllowAtInName = false;
+  SupportsQuotedNames = true;
   UseDataRegionDirectives = false;
   ZeroDirective = "\t.zero\t";
   AsciiDirective = "\t.ascii\t";
@@ -136,4 +137,23 @@ MCAsmInfo::getExprForFDESymbol(const MCSymbol *Sym,
   Streamer.EmitLabel(PCSym);
   const MCExpr *PC = MCSymbolRefExpr::create(PCSym, Context);
   return MCBinaryExpr::createSub(Res, PC, Context);
+}
+
+static bool isAcceptableChar(char C) {
+  return (C >= 'a' && C <= 'z') || (C >= 'A' && C <= 'Z') ||
+         (C >= '0' && C <= '9') || C == '_' || C == '$' || C == '.' || C == '@';
+}
+
+bool MCAsmInfo::isValidUnquotedName(StringRef Name) const {
+  if (Name.empty())
+    return false;
+
+  // If any of the characters in the string is an unacceptable character, force
+  // quotes.
+  for (char C : Name) {
+    if (!isAcceptableChar(C))
+      return false;
+  }
+
+  return true;
 }
