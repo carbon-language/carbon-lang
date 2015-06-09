@@ -389,11 +389,21 @@ private:
 };
 
 class FunctionNode {
-  AssertingVH<Function> F;
+  mutable AssertingVH<Function> F;
 
 public:
   FunctionNode(Function *F) : F(F) {}
   Function *getFunc() const { return F; }
+
+  /// Replace the reference to the function F by the function G, assuming their
+  /// implementations are equal.
+  void replaceBy(Function *G) const {
+    assert(!(*this < FunctionNode(G)) && !(FunctionNode(G) < *this) &&
+           "The two functions must be equal");
+
+    F = G;
+  }
+
   void release() { F = 0; }
   bool operator<(const FunctionNode &RHS) const {
     return (FunctionComparator(F, RHS.getFunc()).compare()) == -1;
@@ -1122,6 +1132,9 @@ private:
   /// Replace G with an alias to F. Deletes G.
   void writeAlias(Function *F, Function *G);
 
+  /// Replace function F with function G in the function tree.
+  void replaceFunctionInTree(FnTreeType::iterator &IterToF, Function *G);
+
   /// The set of all distinct functions. Use the insert() and remove() methods
   /// to modify it.
   FnTreeType FnTree;
@@ -1414,6 +1427,20 @@ void MergeFunctions::mergeTwoFunctions(Function *F, Function *G) {
   ++NumFunctionsMerged;
 }
 
+/// Replace function F for function G in the map.
+void MergeFunctions::replaceFunctionInTree(FnTreeType::iterator &IterToF,
+                                           Function *G) {
+  Function *F = IterToF->getFunc();
+
+  // A total order is already guaranteed otherwise because we process strong
+  // functions before weak functions.
+  assert((F->mayBeOverridden() && G->mayBeOverridden()) ||
+         (!F->mayBeOverridden() && !G->mayBeOverridden()) &&
+         "Only change functions if both are strong or both are weak");
+
+  IterToF->replaceBy(G);
+}
+
 // Insert a ComparableFunction into the FnTree, or merge it away if equal to one
 // that was already inserted.
 bool MergeFunctions::insert(Function *NewFunction) {
@@ -1438,6 +1465,22 @@ bool MergeFunctions::insert(Function *NewFunction) {
       return false;
     }
   }
+
+  // Impose a total order (by name) on the replacement of functions. This is
+  // important when operating on more than one module independently to prevent
+  // cycles of thunks calling each other when the modules are linked together.
+  //
+  // When one function is weak and the other is strong there is an order imposed
+  // already. We process strong functions before weak functions.
+  if ((OldF.getFunc()->mayBeOverridden() && NewFunction->mayBeOverridden()) ||
+      (!OldF.getFunc()->mayBeOverridden() && !NewFunction->mayBeOverridden()))
+    if (OldF.getFunc()->getName() > NewFunction->getName()) {
+      // Swap the two functions.
+      Function *F = OldF.getFunc();
+      replaceFunctionInTree(Result.first, NewFunction);
+      NewFunction = F;
+      assert(OldF.getFunc() != F && "Must have swapped the functions.");
+    }
 
   // Never thunk a strong function to a weak function.
   assert(!OldF.getFunc()->mayBeOverridden() || NewFunction->mayBeOverridden());
