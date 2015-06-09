@@ -1356,11 +1356,23 @@ static void propagateDLLAttrToBaseClassTemplate(
     return;
   }
 
-  if (BaseTemplateSpec->getSpecializationKind() == TSK_Undeclared) {
-    // If the base class is not already specialized, we can do the propagation.
+  auto TSK = BaseTemplateSpec->getSpecializationKind();
+  if (!getDLLAttr(BaseTemplateSpec) &&
+      (TSK == TSK_Undeclared || TSK == TSK_ExplicitInstantiationDeclaration ||
+       TSK == TSK_ImplicitInstantiation)) {
+    // The template hasn't been instantiated yet (or it has, but only as an
+    // explicit instantiation declaration or implicit instantiation, which means
+    // we haven't codegenned any members yet), so propagate the attribute.
     auto *NewAttr = cast<InheritableAttr>(ClassAttr->clone(S.getASTContext()));
     NewAttr->setInherited(true);
     BaseTemplateSpec->addAttr(NewAttr);
+
+    // If the template is already instantiated, checkDLLAttributeRedeclaration()
+    // needs to be run again to work see the new attribute. Otherwise this will
+    // get run whenever the template is instantiated.
+    if (TSK != TSK_Undeclared)
+      S.checkClassLevelDLLAttribute(BaseTemplateSpec);
+
     return;
   }
 
@@ -4783,8 +4795,9 @@ void Sema::checkClassLevelDLLAttribute(CXXRecordDecl *Class) {
 
   TemplateSpecializationKind TSK = Class->getTemplateSpecializationKind();
 
-  // Don't dllexport explicit class template instantiation declarations.
-  if (ClassExported && TSK == TSK_ExplicitInstantiationDeclaration) {
+  // Ignore explicit dllexport on explicit class template instantiation declarations.
+  if (ClassExported && !ClassAttr->isInherited() &&
+      TSK == TSK_ExplicitInstantiationDeclaration) {
     Class->dropAttr<DLLExportAttr>();
     return;
   }
@@ -4832,12 +4845,15 @@ void Sema::checkClassLevelDLLAttribute(CXXRecordDecl *Class) {
     }
 
     if (MD && ClassExported) {
+      if (TSK == TSK_ExplicitInstantiationDeclaration)
+        // Don't go any further if this is just an explicit instantiation
+        // declaration.
+        continue;
+
       if (MD->isUserProvided()) {
         // Instantiate non-default class member functions ...
 
         // .. except for certain kinds of template specializations.
-        if (TSK == TSK_ExplicitInstantiationDeclaration)
-          continue;
         if (TSK == TSK_ImplicitInstantiation && !ClassAttr->isInherited())
           continue;
 

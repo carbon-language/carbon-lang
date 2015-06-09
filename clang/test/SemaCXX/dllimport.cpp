@@ -1274,13 +1274,13 @@ class __declspec(dllimport) DerivedFromImportedTemplate : public ImportedClassTe
 // ExportedClassTemplate is explicitly exported.
 class __declspec(dllimport) DerivedFromExportedTemplate : public ExportedClassTemplate<int> {};
 
-#ifdef MS
-// expected-note@+4{{class template 'ClassTemplate<double>' was instantiated here}}
-// expected-warning@+4{{propagating dll attribute to already instantiated base class template without dll attribute is not supported}}
-// expected-note@+3{{attribute is here}}
-#endif
 class DerivedFromTemplateD : public ClassTemplate<double> {};
+// Base class previously implicitly instantiated without attribute; it will get propagated.
 class __declspec(dllimport) DerivedFromTemplateD2 : public ClassTemplate<double> {};
+
+// Base class has explicit instantiation declaration; the attribute will get propagated.
+extern template class ClassTemplate<float>;
+class __declspec(dllimport) DerivedFromTemplateF : public ClassTemplate<float> {};
 
 class __declspec(dllimport) DerivedFromTemplateB : public ClassTemplate<bool> {};
 // The second derived class doesn't change anything, the attribute that was propagated first wins.
@@ -1329,3 +1329,7 @@ struct __declspec(dllimport) DerivedFromExplicitlyExportInstantiatedTemplate : p
 
 // Base class already instantiated with import attribute.
 struct __declspec(dllimport) DerivedFromExplicitlyImportInstantiatedTemplate : public ExplicitlyImportInstantiatedTemplate<int> {};
+
+template <typename T> struct ExplicitInstantiationDeclTemplateBase { void func() {} };
+extern template struct ExplicitInstantiationDeclTemplateBase<int>;
+struct __declspec(dllimport) DerivedFromExplicitInstantiationDeclTemplateBase : public ExplicitInstantiationDeclTemplateBase<int> {};
