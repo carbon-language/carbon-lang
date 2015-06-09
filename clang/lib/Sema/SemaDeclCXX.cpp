@@ -1364,26 +1364,18 @@ static void propagateDLLAttrToBaseClassTemplate(
     return;
   }
 
-  bool DifferentAttribute = false;
-  if (Attr *SpecializationAttr = getDLLAttr(BaseTemplateSpec)) {
-    if (!SpecializationAttr->isInherited()) {
-      // The template has previously been specialized or instantiated with an
-      // explicit attribute. We should not try to change it.
-      return;
-    }
-    if (SpecializationAttr->getKind() == ClassAttr->getKind()) {
-      // The specialization already has the right attribute.
-      return;
-    }
-    DifferentAttribute = true;
+  if (getDLLAttr(BaseTemplateSpec)) {
+    // The template has already been specialized or instantiated with an
+    // attribute, explicitly or through propagation. We should not try to change
+    // it.
+    return;
   }
 
   // The template was previously instantiated or explicitly specialized without
-  // a dll attribute, or the template was previously instantiated with a
-  // different inherited attribute. It's too late for us to change the
-  // attribute, so warn that this is unsupported.
+  // a dll attribute, It's too late for us to add an attribute, so warn that
+  // this is unsupported.
   S.Diag(BaseLoc, diag::warn_attribute_dll_instantiated_base_class)
-      << BaseTemplateSpec->isExplicitSpecialization() << DifferentAttribute;
+      << BaseTemplateSpec->isExplicitSpecialization();
   S.Diag(ClassAttr->getLocation(), diag::note_attribute);
   if (BaseTemplateSpec->isExplicitSpecialization()) {
     S.Diag(BaseTemplateSpec->getLocation(),

@@ -1282,13 +1282,9 @@ class __declspec(dllimport) DerivedFromExportedTemplate : public ExportedClassTe
 class DerivedFromTemplateD : public ClassTemplate<double> {};
 class __declspec(dllimport) DerivedFromTemplateD2 : public ClassTemplate<double> {};
 
-#ifdef MS
-// expected-note@+4{{class template 'ClassTemplate<bool>' was instantiated here}}
-// expected-warning@+4{{propagating dll attribute to already instantiated base class template with different dll attribute is not supported}}
-// expected-note@+3{{attribute is here}}
-#endif
-class __declspec(dllexport) DerivedFromTemplateB : public ClassTemplate<bool> {};
-class __declspec(dllimport) DerivedFromTemplateB2 : public ClassTemplate<bool> {};
+class __declspec(dllimport) DerivedFromTemplateB : public ClassTemplate<bool> {};
+// The second derived class doesn't change anything, the attribute that was propagated first wins.
+class __declspec(dllexport) DerivedFromTemplateB2 : public ClassTemplate<bool> {};
 
 template <typename T> struct ExplicitlySpecializedTemplate { void func() {} };
 #ifdef MS
