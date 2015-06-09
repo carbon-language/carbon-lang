@@ -249,22 +249,15 @@
 // Fi2: "-E"
 // Fi2: "-o" "foo.x"
 
+// To match MSVC behavior /o should be ignored for /P output.
+
 // RUN: %clang_cl /P /ofoo -### -- %s 2>&1 | FileCheck -check-prefix=Fio1 %s
 // Fio1: "-E"
-// Fio1: "-o" "foo.i"
+// Fio1: "-o" "cl-outputs.i"
 
-// RUN: %clang_cl /P /o foo -### -- %s 2>&1 | FileCheck -check-prefix=Fio2 %s
+// RUN: %clang_cl /P /o foo.x -### -- %s 2>&1 | FileCheck -check-prefix=Fio2 %s
 // Fio2: "-E"
-// Fio2: "-o" "foo.i"
-
-// RUN: %clang_cl /P /ofoo.x -### -- %s 2>&1 | FileCheck -check-prefix=Fio3 %s
-// Fio3: "-E"
-// Fio3: "-o" "foo.x"
-
-// RUN: %clang_cl /P /o foo.x -### -- %s 2>&1 | FileCheck -check-prefix=Fio4 %s
-// Fio4: "-E"
-// Fio4: "-o" "foo.x"
-
+// Fio2: "-o" "cl-outputs.i"
 
 // RUN: %clang_cl /P /obar.x /Fifoo.x -### -- %s 2>&1 | FileCheck -check-prefix=FioRACE1 %s
 // FioRACE1: "-E"
@@ -272,7 +265,7 @@
 
 // RUN: %clang_cl /P /Fifoo.x /obar.x -### -- %s 2>&1 | FileCheck -check-prefix=FioRACE2 %s
 // FioRACE2: "-E"
-// FioRACE2: "-o" "bar.x"
+// FioRACE2: "-o" "foo.x"
 
 // RUN: %clang_cl /c /GL -### -- %s 2>&1 | FileCheck -check-prefix=LTO-DEFAULT %s
 // LTO-DEFAULT: "-emit-llvm-bc"{{.*}}"-o" "cl-outputs.obj"
