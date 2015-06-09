@@ -16,6 +16,7 @@ add_llvm_library(lldCOFF
   ${LLVM_TARGETS_TO_BUILD}
   Core
   LTO
+  LibDriver
   MC
   MCDisassembler
   Support

@@ -16,6 +16,7 @@
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringSwitch.h"
+#include "llvm/LibDriver/LibDriver.h"
 #include "llvm/Option/Arg.h"
 #include "llvm/Option/ArgList.h"
 #include "llvm/Option/Option.h"
@@ -184,6 +185,11 @@ bool LinkerDriver::link(int Argc, const char *Argv[]) {
   llvm::InitializeAllAsmParsers();
   llvm::InitializeAllAsmPrinters();
   llvm::InitializeAllDisassemblers();
+
+  // If the first command line argument is "/lib", link.exe acts like lib.exe.
+  // We call our own implementation of lib.exe that understands bitcode files.
+  if (Argc > 1 && StringRef(Argv[1]).equals_lower("/lib"))
+    return llvm::libDriverMain(Argc - 1, Argv + 1) == 0;
 
   // Parse command line options.
   auto ArgsOrErr = Parser.parse(Argc, Argv);
