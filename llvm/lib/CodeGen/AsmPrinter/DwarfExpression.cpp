@@ -65,11 +65,6 @@ void DwarfExpression::AddShr(unsigned ShiftBy) {
   EmitOp(dwarf::DW_OP_shr);
 }
 
-void DwarfExpression::AddOpStackValue() {
-  if (DwarfVersion >= 4)
-    EmitOp(dwarf::DW_OP_stack_value);
-}
-
 bool DwarfExpression::AddMachineRegIndirect(unsigned MachineReg, int Offset) {
   if (isFrameRegister(MachineReg)) {
     // If variable offset is based in frame register then use fbreg.
@@ -177,14 +172,16 @@ void DwarfExpression::AddSignedConstant(int Value) {
   // value, so the producers and consumers started to rely on heuristics
   // to disambiguate the value vs. location status of the expression.
   // See PR21176 for more details.
-  AddOpStackValue();
+  if (DwarfVersion >= 4)
+    EmitOp(dwarf::DW_OP_stack_value);
 }
 
 void DwarfExpression::AddUnsignedConstant(unsigned Value) {
   EmitOp(dwarf::DW_OP_constu);
   EmitUnsigned(Value);
   // cf. comment in DwarfExpression::AddSignedConstant().
-  AddOpStackValue();
+  if (DwarfVersion >= 4)
+    EmitOp(dwarf::DW_OP_stack_value);
 }
 
 static unsigned getOffsetOrZero(unsigned OffsetInBits,
@@ -215,30 +212,15 @@ bool DwarfExpression::AddMachineRegExpression(const DIExpression *Expr,
                getOffsetOrZero(OffsetInBits, PieceOffsetInBits));
   }
   case dwarf::DW_OP_plus: {
+    // [DW_OP_reg,Offset,DW_OP_plus,DW_OP_deref] --> [DW_OP_breg,Offset].
     auto N = I.getNext();
-    unsigned Offset = I->getArg(0);
-    // First combine all DW_OP_plus until we hit either a DW_OP_deref or a
-    // DW_OP_bit_piece
-    while (N != E && N->getOp() == dwarf::DW_OP_plus) {
-      Offset += N->getArg(0);
-      ++I;
-      N = I.getNext();
-    }
     if (N != E && N->getOp() == dwarf::DW_OP_deref) {
-      // [DW_OP_reg,Offset,DW_OP_plus,DW_OP_deref] --> [DW_OP_breg,Offset].
+      unsigned Offset = I->getArg(0);
       ValidReg = AddMachineRegIndirect(MachineReg, Offset);
       std::advance(I, 2);
-    } else {
-      assert ((N == E) || (N->getOp() == dwarf::DW_OP_bit_piece));
-      if (Offset == 0) {
-        ValidReg = AddMachineRegPiece(MachineReg);
-      } else {
-        ValidReg = AddMachineRegIndirect(MachineReg, Offset);
-        AddOpStackValue();
-      }
-      ++I;
-    }
-    break;
+      break;
+    } else
+      ValidReg = AddMachineRegPiece(MachineReg);
   }
   case dwarf::DW_OP_deref: {
       // [DW_OP_reg,DW_OP_deref] --> [DW_OP_breg].
@@ -255,7 +237,6 @@ bool DwarfExpression::AddMachineRegExpression(const DIExpression *Expr,
 
   // Emit remaining elements of the expression.
   AddExpression(I, E, PieceOffsetInBits);
-
   return true;
 }
 
