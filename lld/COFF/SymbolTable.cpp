@@ -292,7 +292,25 @@ std::error_code SymbolTable::addCombinedLTOObject() {
       }
       Sym->Body = Body;
     }
+
+    // We may see new references to runtime library symbols such as __chkstk
+    // here. These symbols must be wholly defined in non-bitcode files.
+    if (auto *B = dyn_cast<Lazy>(Sym->Body)) {
+      size_t NumBitcodeFiles = BitcodeFiles.size();
+      if (auto EC = addMemberFile(B))
+        return EC;
+      if (BitcodeFiles.size() != NumBitcodeFiles) {
+        llvm::errs()
+            << "LTO: late loaded symbol created new bitcode reference: " << Name
+            << "\n";
+        return make_error_code(LLDError::BrokenFile);
+      }
+    }
   }
+
+  // New runtime library symbol references may have created undefined references.
+  if (reportRemainingUndefines())
+    return make_error_code(LLDError::BrokenFile);
 
   return std::error_code();
 }
