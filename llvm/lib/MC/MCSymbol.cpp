@@ -40,11 +40,7 @@ void *MCSymbol::operator new(size_t s, const StringMapEntry<bool> *Name,
 void MCSymbol::setVariableValue(const MCExpr *Value) {
   assert(!IsUsed && "Cannot set a variable that has already been used.");
   assert(Value && "Invalid variable value!");
-  assert((SymbolContents == SymContentsUnset ||
-          SymbolContents == SymContentsVariable) &&
-         "Cannot give common/offset symbol a variable value");
   this->Value = Value;
-  SymbolContents = SymContentsVariable;
   SectionOrFragment = nullptr;
 }
 
