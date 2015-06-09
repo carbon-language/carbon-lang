@@ -24,6 +24,7 @@
 #include "llvm/ADT/Triple.h"
 #include "llvm/ADT/TinyPtrVector.h"
 #include "llvm/Analysis/LibCallSemantics.h"
+#include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/CodeGen/WinEHFuncInfo.h"
 #include "llvm/IR/Dominators.h"
 #include "llvm/IR/Function.h"
@@ -124,6 +125,7 @@ private:
 
   // All fields are reset by runOnFunction.
   DominatorTree *DT = nullptr;
+  const TargetLibraryInfo *LibInfo = nullptr;
   EHPersonality Personality = EHPersonality::Unknown;
   CatchHandlerMapTy CatchHandlerMap;
   CleanupHandlerMapTy CleanupHandlerMap;
@@ -384,6 +386,7 @@ bool WinEHPrepare::runOnFunction(Function &Fn) {
     return false;
 
   DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
+  LibInfo = &getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
 
   // If there were any landing pads, prepareExceptionHandlers will make changes.
   prepareExceptionHandlers(Fn, LPads);
@@ -394,6 +397,7 @@ bool WinEHPrepare::doFinalization(Module &M) { return false; }
 
 void WinEHPrepare::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<DominatorTreeWrapperPass>();
+  AU.addRequired<TargetLibraryInfoWrapperPass>();
 }
 
 static bool isSelectorDispatch(BasicBlock *BB, BasicBlock *&CatchHandler,
@@ -1016,10 +1020,17 @@ bool WinEHPrepare::prepareExceptionHandlers(
   Builder.CreateCall(FrameEscapeFn, AllocasToEscape);
 
   if (SEHExceptionCodeSlot) {
-    if (SEHExceptionCodeSlot->hasNUses(0))
-      SEHExceptionCodeSlot->eraseFromParent();
-    else if (isAllocaPromotable(SEHExceptionCodeSlot))
+    if (isAllocaPromotable(SEHExceptionCodeSlot)) {
+      SmallPtrSet<BasicBlock *, 4> UserBlocks;
+      for (User *U : SEHExceptionCodeSlot->users()) {
+        if (auto *Inst = dyn_cast<Instruction>(U))
+          UserBlocks.insert(Inst->getParent());
+      }
       PromoteMemToReg(SEHExceptionCodeSlot, *DT);
+      // After the promotion, kill off dead instructions.
+      for (BasicBlock *BB : UserBlocks)
+        SimplifyInstructionsInBlock(BB, LibInfo);
+    }
   }
 
   // Clean up the handler action maps we created for this function
@@ -1029,6 +1040,7 @@ bool WinEHPrepare::prepareExceptionHandlers(
   CleanupHandlerMap.clear();
   HandlerToParentFP.clear();
   DT = nullptr;
+  LibInfo = nullptr;
   SEHExceptionCodeSlot = nullptr;
   EHBlocks.clear();
   NormalBlocks.clear();
@@ -1143,7 +1155,6 @@ void WinEHPrepare::completeNestedLandingPad(Function *ParentFn,
   ++II;
   // The instruction after the landing pad should now be a call to eh.actions.
   const Instruction *Recover = II;
-  assert(match(Recover, m_Intrinsic<Intrinsic::eh_actions>()));
   const IntrinsicInst *EHActions = cast<IntrinsicInst>(Recover);
 
   // Remap the return target in the nested handler.
@@ -2454,6 +2465,8 @@ void WinEHPrepare::findCleanupHandlers(LandingPadActions &Actions,
 void llvm::parseEHActions(
     const IntrinsicInst *II,
     SmallVectorImpl<std::unique_ptr<ActionHandler>> &Actions) {
+  assert(II->getIntrinsicID() == Intrinsic::eh_actions &&
+         "attempted to parse non eh.actions intrinsic");
   for (unsigned I = 0, E = II->getNumArgOperands(); I != E;) {
     uint64_t ActionKind =
         cast<ConstantInt>(II->getArgOperand(I))->getZExtValue();
@@ -2766,7 +2779,6 @@ void WinEHNumbering::calculateStateNumbers(const Function &F) {
     auto *ActionsCall = dyn_cast<IntrinsicInst>(LPI->getNextNode());
     if (!ActionsCall)
       continue;
-    assert(ActionsCall->getIntrinsicID() == Intrinsic::eh_actions);
     parseEHActions(ActionsCall, ActionList);
     if (ActionList.empty())
       continue;

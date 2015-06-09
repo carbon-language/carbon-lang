@@ -38,7 +38,14 @@ class WinException : public EHStreamer {
 
   void emitCSpecificHandlerTable();
 
+  /// Emit the EH table data for 32-bit and 64-bit functions using
+  /// the __CxxFrameHandler3 personality.
   void emitCXXFrameHandler3Table(const MachineFunction *MF);
+
+  /// Emit the EH table data for _except_handler3 and _except_handler4
+  /// personality functions. These are only used on 32-bit and do not use CFI
+  /// tables.
+  void emitExceptHandlerTable(const MachineFunction *MF);
 
   void extendIP2StateTable(const MachineFunction *MF, const Function *ParentF,
                            WinEHFuncInfo &FuncInfo);

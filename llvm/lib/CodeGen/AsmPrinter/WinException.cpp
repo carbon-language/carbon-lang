@@ -144,7 +144,7 @@ void WinException::endFunction(const MachineFunction *MF) {
     if (Per == EHPersonality::MSVC_Win64SEH)
       emitCSpecificHandlerTable();
     else if (Per == EHPersonality::MSVC_X86SEH)
-      emitCSpecificHandlerTable(); // FIXME
+      emitExceptHandlerTable(MF);
     else if (Per == EHPersonality::MSVC_CXX)
       emitCXXFrameHandler3Table(MF);
     else
@@ -538,6 +538,93 @@ void WinException::extendIP2StateTable(const MachineFunction *MF,
             std::make_pair(BeginLabel, LandingPad->WinEHState));
       LastEHState = LandingPad->WinEHState;
       LastLabel = LandingPad->EndLabels[P.RangeIndex];
+    }
+  }
+}
+
+/// Emit the language-specific data that _except_handler3 and 4 expect. This is
+/// functionally equivalent to the __C_specific_handler table, except it is
+/// indexed by state number instead of IP.
+void WinException::emitExceptHandlerTable(const MachineFunction *MF) {
+  auto &OS = *Asm->OutStreamer;
+
+  // Emit the __ehtable label that we use for llvm.x86.seh.lsda.
+  const Function *F = MF->getFunction();
+  StringRef FLinkageName = GlobalValue::getRealLinkageName(F->getName());
+  MCSymbol *LSDALabel = Asm->OutContext.getOrCreateLSDASymbol(FLinkageName);
+  OS.EmitLabel(LSDALabel);
+
+  const Function *Per = MMI->getPersonality();
+  StringRef PerName = Per->getName();
+  int BaseState = -1;
+  if (PerName == "_except_handler4") {
+    // The LSDA for _except_handler4 starts with this struct, followed by the
+    // scope table:
+    //
+    // struct EH4ScopeTable {
+    //   int32_t GSCookieOffset;
+    //   int32_t GSCookieXOROffset;
+    //   int32_t EHCookieOffset;
+    //   int32_t EHCookieXOROffset;
+    //   ScopeTableEntry ScopeRecord[];
+    // };
+    //
+    // Only the EHCookieOffset field appears to vary, and it appears to be the
+    // offset from the final saved SP value to the retaddr.
+    OS.EmitIntValue(-2, 4);
+    OS.EmitIntValue(0, 4);
+    // FIXME: Calculate.
+    OS.EmitIntValue(9999, 4);
+    OS.EmitIntValue(0, 4);
+    BaseState = -2;
+  }
+
+  // Build a list of pointers to LandingPadInfos and then sort by WinEHState.
+  const std::vector<LandingPadInfo> &PadInfos = MMI->getLandingPads();
+  SmallVector<const LandingPadInfo *, 4> LPads;
+  LPads.reserve((PadInfos.size()));
+  for (const LandingPadInfo &LPInfo : PadInfos)
+    LPads.push_back(&LPInfo);
+  std::sort(LPads.begin(), LPads.end(),
+            [](const LandingPadInfo *L, const LandingPadInfo *R) {
+              return L->WinEHState < R->WinEHState;
+            });
+
+  // For each action in each lpad, emit one of these:
+  // struct ScopeTableEntry {
+  //   int32_t EnclosingLevel;
+  //   int32_t (__cdecl *FilterOrFinally)();
+  //   void *HandlerLabel;
+  // };
+  //
+  // The "outermost" action will use BaseState as its enclosing level. Each
+  // other action will refer to the previous state as its enclosing level.
+  int CurState = 0;
+  for (const LandingPadInfo *LPInfo : LPads) {
+    int EnclosingLevel = BaseState;
+    assert(CurState + LPInfo->SEHHandlers.size() - 1 == LPInfo->WinEHState &&
+           "gaps in the SEH scope table");
+    for (const SEHHandler &Handler : LPInfo->SEHHandlers) {
+      // Emit the filter or finally function pointer, if present. Otherwise,
+      // emit '1' to indicate a catch-all.
+      const MCExpr *FilterOrFinally;
+      if (const Function *F = Handler.FilterOrFinally)
+        FilterOrFinally = create32bitRef(Asm->getSymbol(F));
+      else
+        FilterOrFinally = MCConstantExpr::create(1, Asm->OutContext);
+
+      // Compute the recovery address, which is a block address or null.
+      const BlockAddress *BA = Handler.RecoverBA;
+      const MCExpr *RecoverBBOrNull =
+          create32bitRef(BA ? Asm->GetBlockAddressSymbol(BA) : nullptr);
+
+      OS.EmitIntValue(EnclosingLevel, 4);
+      OS.EmitValue(FilterOrFinally, 4);
+      OS.EmitValue(RecoverBBOrNull, 4);
+
+      // The next state unwinds to this state.
+      EnclosingLevel = CurState;
+      CurState++;
     }
   }
 }

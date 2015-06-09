@@ -4983,6 +4983,7 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
     assert(Reg && "cannot get exception code on this platform");
     MVT PtrVT = TLI.getPointerTy();
     const TargetRegisterClass *PtrRC = TLI.getRegClassFor(PtrVT);
+    assert(FuncInfo.MBB->isLandingPad() && "eh.exceptioncode in non-lpad");
     unsigned VReg = FuncInfo.MBB->addLiveIn(Reg, PtrRC);
     SDValue N =
         DAG.getCopyFromReg(DAG.getEntryNode(), getCurSDLoc(), VReg, PtrVT);

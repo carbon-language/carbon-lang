@@ -34,6 +34,12 @@ catchall:
 ; CHECK: movl %[[next]], %fs:0
 ; CHECK: retl
 
+; CHECK: .section .xdata,"dr"
+; CHECK-LABEL: L__ehtable$use_except_handler3:
+; CHECK-NEXT:  .long   -1
+; CHECK-NEXT:  .long   1
+; CHECK-NEXT:  .long   Ltmp{{[0-9]+}}
+
 define void @use_except_handler4() {
   invoke void @may_throw_or_crash()
       to label %cont unwind label %catchall
@@ -63,6 +69,16 @@ catchall:
 ; CHECK: movl -16(%ebp), %[[next:[^ ,]*]]
 ; CHECK: movl %[[next]], %fs:0
 ; CHECK: retl
+
+; CHECK: .section .xdata,"dr"
+; CHECK-LABEL: L__ehtable$use_except_handler4:
+; CHECK-NEXT:  .long   -2
+; CHECK-NEXT:  .long   0
+; CHECK-NEXT:  .long   9999
+; CHECK-NEXT:  .long   0
+; CHECK-NEXT:  .long   -2
+; CHECK-NEXT:  .long   1
+; CHECK-NEXT:  .long   Ltmp{{[0-9]+}}
 
 define void @use_CxxFrameHandler3() {
   invoke void @may_throw_or_crash()

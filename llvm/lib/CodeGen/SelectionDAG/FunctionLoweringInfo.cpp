@@ -264,15 +264,22 @@ void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf,
   if (!isMSVCEHPersonality(Personality))
     return;
 
-  if (Personality == EHPersonality::MSVC_Win64SEH) {
+  if (Personality == EHPersonality::MSVC_Win64SEH ||
+      Personality == EHPersonality::MSVC_X86SEH) {
     addSEHHandlersForLPads(LPads);
-  } else if (Personality == EHPersonality::MSVC_CXX) {
-    const Function *WinEHParentFn = MMI.getWinEHParent(&fn);
-    WinEHFuncInfo &EHInfo = MMI.getWinEHFuncInfo(WinEHParentFn);
-    calculateWinCXXEHStateNumbers(WinEHParentFn, EHInfo);
+  }
 
-    // Copy the state numbers to LandingPadInfo for the current function, which
-    // could be a handler or the parent.
+  WinEHFuncInfo &EHInfo = MMI.getWinEHFuncInfo(&fn);
+  if (Personality == EHPersonality::MSVC_CXX) {
+    const Function *WinEHParentFn = MMI.getWinEHParent(&fn);
+    calculateWinCXXEHStateNumbers(WinEHParentFn, EHInfo);
+  }
+
+  // Copy the state numbers to LandingPadInfo for the current function, which
+  // could be a handler or the parent. This should happen for 32-bit SEH and
+  // C++ EH.
+  if (Personality == EHPersonality::MSVC_CXX ||
+      Personality == EHPersonality::MSVC_X86SEH) {
     for (const LandingPadInst *LP : LPads) {
       MachineBasicBlock *LPadMBB = MBBMap[LP->getParent()];
       MMI.addWinEHState(LPadMBB, EHInfo.LandingPadStateMap[LP]);
