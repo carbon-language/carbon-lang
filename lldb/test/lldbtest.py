@@ -671,6 +671,12 @@ def expectedFailureOS(oslist, bugnumber=None, compilers=None):
                 self.expectedCompiler(compilers))
     return expectedFailure(fn, bugnumber)
 
+def expectedFailureHostOS(oslist, bugnumber=None, compilers=None):
+    def fn(self):
+        return (getHostPlatform() in oslist and
+                self.expectedCompiler(compilers))
+    return expectedFailure(fn, bugnumber)
+
 def expectedFailureDarwin(bugnumber=None, compilers=None):
     # For legacy reasons, we support both "darwin" and "macosx" as OS X triples.
     return expectedFailureOS(getDarwinOSTriples(), bugnumber, compilers)
@@ -683,6 +689,9 @@ def expectedFailureLinux(bugnumber=None, compilers=None):
 
 def expectedFailureWindows(bugnumber=None, compilers=None):
     return expectedFailureOS(['windows'], bugnumber, compilers)
+
+def expectedFailureHostWindows(bugnumber=None, compilers=None):
+    return expectedFailureHostOS(['windows'], bugnumber, compilers)
 
 def expectedFailureAndroid(bugnumber=None, api_levels=None):
     """ Mark a test as xfail for Android.
