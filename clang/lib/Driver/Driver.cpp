@@ -140,10 +140,8 @@ InputArgList *Driver::ParseArgStrings(ArrayRef<const char *> ArgStrings) {
     }
   }
 
-  for (arg_iterator it = Args->filtered_begin(options::OPT_UNKNOWN),
-         ie = Args->filtered_end(); it != ie; ++it) {
-    Diags.Report(diag::err_drv_unknown_argument) << (*it) ->getAsString(*Args);
-  }
+  for (const Arg *A : Args->filtered(options::OPT_UNKNOWN))
+    Diags.Report(diag::err_drv_unknown_argument) << A->getAsString(*Args);
 
   return Args;
 }
@@ -347,9 +345,7 @@ Compilation *Driver::BuildCompilation(ArrayRef<const char *> ArgList) {
     DefaultTargetTriple = A->getValue();
   if (const Arg *A = Args->getLastArg(options::OPT_ccc_install_dir))
     Dir = InstalledDir = A->getValue();
-  for (arg_iterator it = Args->filtered_begin(options::OPT_B),
-         ie = Args->filtered_end(); it != ie; ++it) {
-    const Arg *A = *it;
+  for (const Arg *A : Args->filtered(options::OPT_B)) {
     A->claim();
     PrefixDirs.push_back(A->getValue(0));
   }
@@ -1467,9 +1463,8 @@ void Driver::BuildJobs(Compilation &C) const {
       if (Opt.getKind() == Option::FlagClass) {
         bool DuplicateClaimed = false;
 
-        for (arg_iterator it = C.getArgs().filtered_begin(&Opt),
-               ie = C.getArgs().filtered_end(); it != ie; ++it) {
-          if ((*it)->isClaimed()) {
+        for (const Arg *AA : C.getArgs().filtered(&Opt)) {
+          if (AA->isClaimed()) {
             DuplicateClaimed = true;
             break;
           }

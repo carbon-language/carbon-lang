@@ -239,10 +239,8 @@ static bool ParseAnalyzerArgs(AnalyzerOptions &Opts, ArgList &Args,
                          Opts.InlineMaxStackDepth, Diags);
 
   Opts.CheckersControlList.clear();
-  for (arg_iterator it = Args.filtered_begin(OPT_analyzer_checker,
-                                             OPT_analyzer_disable_checker),
-         ie = Args.filtered_end(); it != ie; ++it) {
-    const Arg *A = *it;
+  for (const Arg *A :
+       Args.filtered(OPT_analyzer_checker, OPT_analyzer_disable_checker)) {
     A->claim();
     bool enable = (A->getOption().getID() == OPT_analyzer_checker);
     // We can have a list of comma separated checker names, e.g:
@@ -255,9 +253,7 @@ static bool ParseAnalyzerArgs(AnalyzerOptions &Opts, ArgList &Args,
   }
 
   // Go through the analyzer configuration options.
-  for (arg_iterator it = Args.filtered_begin(OPT_analyzer_config),
-       ie = Args.filtered_end(); it != ie; ++it) {
-    const Arg *A = *it;
+  for (const Arg *A : Args.filtered(OPT_analyzer_config)) {
     A->claim();
     // We can have a list of comma separated config names, e.g:
     // '-analyzer-config key1=val1,key2=val2'
@@ -871,22 +867,17 @@ static InputKind ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args,
     Opts.ProgramAction = frontend::PluginAction;
     Opts.ActionName = A->getValue();
 
-    for (arg_iterator it = Args.filtered_begin(OPT_plugin_arg),
-           end = Args.filtered_end(); it != end; ++it) {
-      if ((*it)->getValue(0) == Opts.ActionName)
-        Opts.PluginArgs.emplace_back((*it)->getValue(1));
-    }
+    for (const Arg *AA : Args.filtered(OPT_plugin_arg))
+      if (AA->getValue(0) == Opts.ActionName)
+        Opts.PluginArgs.emplace_back(AA->getValue(1));
   }
 
   Opts.AddPluginActions = Args.getAllArgValues(OPT_add_plugin);
   Opts.AddPluginArgs.resize(Opts.AddPluginActions.size());
-  for (int i = 0, e = Opts.AddPluginActions.size(); i != e; ++i) {
-    for (arg_iterator it = Args.filtered_begin(OPT_plugin_arg),
-           end = Args.filtered_end(); it != end; ++it) {
-      if ((*it)->getValue(0) == Opts.AddPluginActions[i])
-        Opts.AddPluginArgs[i].emplace_back((*it)->getValue(1));
-    }
-  }
+  for (int i = 0, e = Opts.AddPluginActions.size(); i != e; ++i)
+    for (const Arg *A : Args.filtered(OPT_plugin_arg))
+      if (A->getValue(0) == Opts.AddPluginActions[i])
+        Opts.AddPluginArgs[i].emplace_back(A->getValue(1));
 
   if (const Arg *A = Args.getLastArg(OPT_code_completion_at)) {
     Opts.CodeCompletionAt =
@@ -1088,98 +1079,77 @@ static void ParseHeaderSearchArgs(HeaderSearchOptions &Opts, ArgList &Args) {
   Opts.ModulesValidateSystemHeaders =
       Args.hasArg(OPT_fmodules_validate_system_headers);
 
-  for (arg_iterator it = Args.filtered_begin(OPT_fmodules_ignore_macro),
-                    ie = Args.filtered_end();
-       it != ie; ++it) {
-    StringRef MacroDef = (*it)->getValue();
+  for (const Arg *A : Args.filtered(OPT_fmodules_ignore_macro)) {
+    StringRef MacroDef = A->getValue();
     Opts.ModulesIgnoreMacros.insert(MacroDef.split('=').first);
   }
 
   // Add -I..., -F..., and -index-header-map options in order.
   bool IsIndexHeaderMap = false;
-  for (arg_iterator it = Args.filtered_begin(OPT_I, OPT_F, 
-                                             OPT_index_header_map),
-       ie = Args.filtered_end(); it != ie; ++it) {
-    if ((*it)->getOption().matches(OPT_index_header_map)) {
+  for (const Arg *A : Args.filtered(OPT_I, OPT_F, OPT_index_header_map)) {
+    if (A->getOption().matches(OPT_index_header_map)) {
       // -index-header-map applies to the next -I or -F.
       IsIndexHeaderMap = true;
       continue;
     }
-        
-    frontend::IncludeDirGroup Group 
-      = IsIndexHeaderMap? frontend::IndexHeaderMap : frontend::Angled;
-    
-    Opts.AddPath((*it)->getValue(), Group,
-                 /*IsFramework=*/ (*it)->getOption().matches(OPT_F), true);
+
+    frontend::IncludeDirGroup Group =
+        IsIndexHeaderMap ? frontend::IndexHeaderMap : frontend::Angled;
+
+    Opts.AddPath(A->getValue(), Group,
+                 /*IsFramework=*/A->getOption().matches(OPT_F), true);
     IsIndexHeaderMap = false;
   }
 
   // Add -iprefix/-iwithprefix/-iwithprefixbefore options.
   StringRef Prefix = ""; // FIXME: This isn't the correct default prefix.
-  for (arg_iterator it = Args.filtered_begin(OPT_iprefix, OPT_iwithprefix,
-                                             OPT_iwithprefixbefore),
-         ie = Args.filtered_end(); it != ie; ++it) {
-    const Arg *A = *it;
+  for (const Arg *A :
+       Args.filtered(OPT_iprefix, OPT_iwithprefix, OPT_iwithprefixbefore)) {
     if (A->getOption().matches(OPT_iprefix))
       Prefix = A->getValue();
     else if (A->getOption().matches(OPT_iwithprefix))
-      Opts.AddPath(Prefix.str() + A->getValue(),
-                   frontend::After, false, true);
+      Opts.AddPath(Prefix.str() + A->getValue(), frontend::After, false, true);
     else
-      Opts.AddPath(Prefix.str() + A->getValue(),
-                   frontend::Angled, false, true);
+      Opts.AddPath(Prefix.str() + A->getValue(), frontend::Angled, false, true);
   }
 
-  for (arg_iterator it = Args.filtered_begin(OPT_idirafter),
-         ie = Args.filtered_end(); it != ie; ++it)
-    Opts.AddPath((*it)->getValue(), frontend::After, false, true);
-  for (arg_iterator it = Args.filtered_begin(OPT_iquote),
-         ie = Args.filtered_end(); it != ie; ++it)
-    Opts.AddPath((*it)->getValue(), frontend::Quoted, false, true);
-  for (arg_iterator it = Args.filtered_begin(OPT_isystem,
-         OPT_iwithsysroot), ie = Args.filtered_end(); it != ie; ++it)
-    Opts.AddPath((*it)->getValue(), frontend::System, false,
-                 !(*it)->getOption().matches(OPT_iwithsysroot));
-  for (arg_iterator it = Args.filtered_begin(OPT_iframework),
-         ie = Args.filtered_end(); it != ie; ++it)
-    Opts.AddPath((*it)->getValue(), frontend::System, true, true);
+  for (const Arg *A : Args.filtered(OPT_idirafter))
+    Opts.AddPath(A->getValue(), frontend::After, false, true);
+  for (const Arg *A : Args.filtered(OPT_iquote))
+    Opts.AddPath(A->getValue(), frontend::Quoted, false, true);
+  for (const Arg *A : Args.filtered(OPT_isystem, OPT_iwithsysroot))
+    Opts.AddPath(A->getValue(), frontend::System, false,
+                 !A->getOption().matches(OPT_iwithsysroot));
+  for (const Arg *A : Args.filtered(OPT_iframework))
+    Opts.AddPath(A->getValue(), frontend::System, true, true);
 
   // Add the paths for the various language specific isystem flags.
-  for (arg_iterator it = Args.filtered_begin(OPT_c_isystem),
-       ie = Args.filtered_end(); it != ie; ++it)
-    Opts.AddPath((*it)->getValue(), frontend::CSystem, false, true);
-  for (arg_iterator it = Args.filtered_begin(OPT_cxx_isystem),
-       ie = Args.filtered_end(); it != ie; ++it)
-    Opts.AddPath((*it)->getValue(), frontend::CXXSystem, false, true);
-  for (arg_iterator it = Args.filtered_begin(OPT_objc_isystem),
-       ie = Args.filtered_end(); it != ie; ++it)
-    Opts.AddPath((*it)->getValue(), frontend::ObjCSystem, false,true);
-  for (arg_iterator it = Args.filtered_begin(OPT_objcxx_isystem),
-       ie = Args.filtered_end(); it != ie; ++it)
-    Opts.AddPath((*it)->getValue(), frontend::ObjCXXSystem, false, true);
+  for (const Arg *A : Args.filtered(OPT_c_isystem))
+    Opts.AddPath(A->getValue(), frontend::CSystem, false, true);
+  for (const Arg *A : Args.filtered(OPT_cxx_isystem))
+    Opts.AddPath(A->getValue(), frontend::CXXSystem, false, true);
+  for (const Arg *A : Args.filtered(OPT_objc_isystem))
+    Opts.AddPath(A->getValue(), frontend::ObjCSystem, false,true);
+  for (const Arg *A : Args.filtered(OPT_objcxx_isystem))
+    Opts.AddPath(A->getValue(), frontend::ObjCXXSystem, false, true);
 
   // Add the internal paths from a driver that detects standard include paths.
-  for (arg_iterator I = Args.filtered_begin(OPT_internal_isystem,
-                                            OPT_internal_externc_isystem),
-                    E = Args.filtered_end();
-       I != E; ++I) {
+  for (const Arg *A :
+       Args.filtered(OPT_internal_isystem, OPT_internal_externc_isystem)) {
     frontend::IncludeDirGroup Group = frontend::System;
-    if ((*I)->getOption().matches(OPT_internal_externc_isystem))
+    if (A->getOption().matches(OPT_internal_externc_isystem))
       Group = frontend::ExternCSystem;
-    Opts.AddPath((*I)->getValue(), Group, false, true);
+    Opts.AddPath(A->getValue(), Group, false, true);
   }
 
   // Add the path prefixes which are implicitly treated as being system headers.
-  for (arg_iterator I = Args.filtered_begin(OPT_system_header_prefix,
-                                            OPT_no_system_header_prefix),
-                    E = Args.filtered_end();
-       I != E; ++I)
+  for (const Arg *A :
+       Args.filtered(OPT_system_header_prefix, OPT_no_system_header_prefix))
     Opts.AddSystemHeaderPrefix(
-        (*I)->getValue(), (*I)->getOption().matches(OPT_system_header_prefix));
+        A->getValue(), A->getOption().matches(OPT_system_header_prefix));
 
-  for (arg_iterator I = Args.filtered_begin(OPT_ivfsoverlay),
-       E = Args.filtered_end(); I != E; ++I)
-    Opts.AddVFSOverlayFile((*I)->getValue());
+  for (const Arg *A : Args.filtered(OPT_ivfsoverlay))
+    Opts.AddVFSOverlayFile(A->getValue());
 }
 
 void CompilerInvocation::setLangDefaults(LangOptions &Opts, InputKind IK,
@@ -1708,11 +1678,8 @@ static void ParsePreprocessorArgs(PreprocessorOptions &Opts, ArgList &Args,
   Opts.DisablePCHValidation = Args.hasArg(OPT_fno_validate_pch);
 
   Opts.DumpDeserializedPCHDecls = Args.hasArg(OPT_dump_deserialized_pch_decls);
-  for (arg_iterator it = Args.filtered_begin(OPT_error_on_deserialized_pch_decl),
-         ie = Args.filtered_end(); it != ie; ++it) {
-    const Arg *A = *it;
+  for (const Arg *A : Args.filtered(OPT_error_on_deserialized_pch_decl))
     Opts.DeserializedPCHDeclsToErrorOn.insert(A->getValue());
-  }
 
   if (const Arg *A = Args.getLastArg(OPT_preamble_bytes_EQ)) {
     StringRef Value(A->getValue());
@@ -1731,38 +1698,28 @@ static void ParsePreprocessorArgs(PreprocessorOptions &Opts, ArgList &Args,
   }
 
   // Add macros from the command line.
-  for (arg_iterator it = Args.filtered_begin(OPT_D, OPT_U),
-         ie = Args.filtered_end(); it != ie; ++it) {
-    if ((*it)->getOption().matches(OPT_D))
-      Opts.addMacroDef((*it)->getValue());
+  for (const Arg *A : Args.filtered(OPT_D, OPT_U)) {
+    if (A->getOption().matches(OPT_D))
+      Opts.addMacroDef(A->getValue());
     else
-      Opts.addMacroUndef((*it)->getValue());
+      Opts.addMacroUndef(A->getValue());
   }
 
   Opts.MacroIncludes = Args.getAllArgValues(OPT_imacros);
 
   // Add the ordered list of -includes.
-  for (arg_iterator it = Args.filtered_begin(OPT_include),
-         ie = Args.filtered_end(); it != ie; ++it) {
-    const Arg *A = *it;
+  for (const Arg *A : Args.filtered(OPT_include))
     Opts.Includes.emplace_back(A->getValue());
-  }
 
-  for (arg_iterator it = Args.filtered_begin(OPT_chain_include),
-         ie = Args.filtered_end(); it != ie; ++it) {
-    const Arg *A = *it;
+  for (const Arg *A : Args.filtered(OPT_chain_include))
     Opts.ChainedIncludes.emplace_back(A->getValue());
-  }
 
   // Include 'altivec.h' if -faltivec option present
   if (Args.hasArg(OPT_faltivec))
     Opts.Includes.emplace_back("altivec.h");
 
-  for (arg_iterator it = Args.filtered_begin(OPT_remap_file),
-         ie = Args.filtered_end(); it != ie; ++it) {
-    const Arg *A = *it;
-    std::pair<StringRef,StringRef> Split =
-      StringRef(A->getValue()).split(';');
+  for (const Arg *A : Args.filtered(OPT_remap_file)) {
+    std::pair<StringRef, StringRef> Split = StringRef(A->getValue()).split(';');
 
     if (Split.second.empty()) {
       Diags.Report(diag::err_drv_invalid_remap_file) << A->getAsString(Args);
@@ -1771,7 +1728,7 @@ static void ParsePreprocessorArgs(PreprocessorOptions &Opts, ArgList &Args,
 
     Opts.addRemappedFile(Split.first, Split.second);
   }
-  
+
   if (Arg *A = Args.getLastArg(OPT_fobjc_arc_cxxlib_EQ)) {
     StringRef Name = A->getValue();
     unsigned Library = llvm::StringSwitch<unsigned>(Name)
@@ -1874,9 +1831,8 @@ bool CompilerInvocation::CreateFromArgs(CompilerInvocation &Res,
   }
 
   // Issue errors on unknown arguments.
-  for (arg_iterator it = Args->filtered_begin(OPT_UNKNOWN),
-         ie = Args->filtered_end(); it != ie; ++it) {
-    Diags.Report(diag::err_drv_unknown_argument) << (*it)->getAsString(*Args);
+  for (const Arg *A : Args->filtered(OPT_UNKNOWN)) {
+    Diags.Report(diag::err_drv_unknown_argument) << A->getAsString(*Args);
     Success = false;
   }
 

@@ -2174,14 +2174,9 @@ static void GetHexagonLibraryPaths(
   //----------------------------------------------------------------------------
   // -L Args
   //----------------------------------------------------------------------------
-  for (arg_iterator
-         it = Args.filtered_begin(options::OPT_L),
-         ie = Args.filtered_end();
-       it != ie;
-       ++it) {
-    for (unsigned i = 0, e = (*it)->getNumValues(); i != e; ++i)
-      LibPaths->push_back((*it)->getValue(i));
-  }
+  for (const Arg *A : Args.filtered(options::OPT_L))
+    for (unsigned i = 0, e = A->getNumValues(); i != e; ++i)
+      LibPaths->push_back(A->getValue(i));
 
   //----------------------------------------------------------------------------
   // Other standard paths
