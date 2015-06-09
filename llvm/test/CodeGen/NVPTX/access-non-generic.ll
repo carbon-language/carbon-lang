@@ -101,6 +101,28 @@ define i32 @ld_int_from_global_float(float addrspace(1)* %input, i32 %i, i32 %j)
   ret i32 %5
 }
 
+define void @nested_const_expr() {
+; PTX-LABEL: nested_const_expr(
+  ; store 1 to bitcast(gep(addrspacecast(array), 0, 1))
+  store i32 1, i32* bitcast (float* getelementptr ([10 x float], [10 x float]* addrspacecast ([10 x float] addrspace(3)* @array to [10 x float]*), i64 0, i64 1) to i32*), align 4
+; PTX: mov.u32 %r1, 1;
+; PTX-NEXT: st.shared.u32 [array+4], %r1;
+  ret void
+}
+
+define void @rauw(float addrspace(1)* %input) {
+  %generic_input = addrspacecast float addrspace(1)* %input to float*
+  %addr = getelementptr float, float* %generic_input, i64 10
+  %v = load float, float* %addr
+  store float %v, float* %addr
+  ret void
+; IR-LABEL: @rauw(
+; IR-NEXT: %1 = getelementptr float, float addrspace(1)* %input, i64 10
+; IR-NEXT: %v = load float, float addrspace(1)* %1
+; IR-NEXT: store float %v, float addrspace(1)* %1
+; IR-NEXT: ret void
+}
+
 declare void @llvm.cuda.syncthreads() #3
 
 attributes #3 = { noduplicate nounwind }
