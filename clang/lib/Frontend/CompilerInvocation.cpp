@@ -1880,18 +1880,17 @@ bool CompilerInvocation::CreateFromArgs(CompilerInvocation &Res,
     Success = false;
   }
 
-  Success = ParseAnalyzerArgs(*Res.getAnalyzerOpts(), *Args, Diags) && Success;
-  Success = ParseMigratorArgs(Res.getMigratorOpts(), *Args) && Success;
+  Success &= ParseAnalyzerArgs(*Res.getAnalyzerOpts(), *Args, Diags);
+  Success &= ParseMigratorArgs(Res.getMigratorOpts(), *Args);
   ParseDependencyOutputArgs(Res.getDependencyOutputOpts(), *Args);
-  Success = ParseDiagnosticArgs(Res.getDiagnosticOpts(), *Args, &Diags)
-            && Success;
+  Success &= ParseDiagnosticArgs(Res.getDiagnosticOpts(), *Args, &Diags);
   ParseCommentArgs(Res.getLangOpts()->CommentOpts, *Args);
   ParseFileSystemArgs(Res.getFileSystemOpts(), *Args);
   // FIXME: We shouldn't have to pass the DashX option around here
   InputKind DashX = ParseFrontendArgs(Res.getFrontendOpts(), *Args, Diags);
   ParseTargetArgs(Res.getTargetOpts(), *Args);
-  Success = ParseCodeGenArgs(Res.getCodeGenOpts(), *Args, DashX, Diags,
-                             Res.getTargetOpts()) && Success;
+  Success &= ParseCodeGenArgs(Res.getCodeGenOpts(), *Args, DashX, Diags,
+                              Res.getTargetOpts());
   ParseHeaderSearchArgs(Res.getHeaderSearchOpts(), *Args);
   if (DashX != IK_AST && DashX != IK_LLVM_IR) {
     ParseLangArgs(*Res.getLangOpts(), *Args, DashX, Diags);
