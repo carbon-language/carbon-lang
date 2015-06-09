@@ -1,5 +1,5 @@
 // RUN: clang-interpreter %s | FileCheck %s
-// REQUIRES: native, examples
+// REQUIRES: native, examples, shell
 
 int printf(const char *, ...);
 
