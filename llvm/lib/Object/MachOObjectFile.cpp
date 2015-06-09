@@ -221,7 +221,7 @@ static std::error_code parseSegmentLoadCommand(
     Sections.push_back(Sec);
   }
   IsPageZeroSegment |= StringRef("__PAGEZERO").equals(S.segname);
-  return object_error::success;
+  return std::error_code();
 }
 
 MachOObjectFile::MachOObjectFile(MemoryBufferRef Object, bool IsLittleEndian,
@@ -336,7 +336,7 @@ std::error_code MachOObjectFile::getSymbolName(DataRefImpl Symb,
     report_fatal_error(
         "Symbol name entry points before beginning or past end of file.");
   Res = StringRef(Start);
-  return object_error::success;
+  return std::error_code();
 }
 
 unsigned MachOObjectFile::getSectionType(SectionRef Sec) const {
@@ -366,7 +366,7 @@ std::error_code MachOObjectFile::getIndirectName(DataRefImpl Symb,
     return object_error::parse_failed;
   const char *Start = &StringTable.data()[NValue];
   Res = StringRef(Start);
-  return object_error::success;
+  return std::error_code();
 }
 
 std::error_code MachOObjectFile::getSymbolAddress(DataRefImpl Symb,
@@ -386,7 +386,7 @@ std::error_code MachOObjectFile::getSymbolAddress(DataRefImpl Symb,
     else
       Res = Entry.n_value;
   }
-  return object_error::success;
+  return std::error_code();
 }
 
 uint32_t MachOObjectFile::getSymbolAlignment(DataRefImpl DRI) const {
@@ -417,7 +417,7 @@ std::error_code MachOObjectFile::getSymbolType(DataRefImpl Symb,
   // If this is a STAB debugging symbol, we can do nothing more.
   if (n_type & MachO::N_STAB) {
     Res = SymbolRef::ST_Debug;
-    return object_error::success;
+    return std::error_code();
   }
 
   switch (n_type & MachO::N_TYPE) {
@@ -428,7 +428,7 @@ std::error_code MachOObjectFile::getSymbolType(DataRefImpl Symb,
       Res = SymbolRef::ST_Function;
       break;
   }
-  return object_error::success;
+  return std::error_code();
 }
 
 uint32_t MachOObjectFile::getSymbolFlags(DataRefImpl DRI) const {
@@ -488,7 +488,7 @@ std::error_code MachOObjectFile::getSymbolSection(DataRefImpl Symb,
     Res = section_iterator(SectionRef(DRI, this));
   }
 
-  return object_error::success;
+  return std::error_code();
 }
 
 void MachOObjectFile::moveSectionNext(DataRefImpl &Sec) const {
@@ -499,7 +499,7 @@ std::error_code MachOObjectFile::getSectionName(DataRefImpl Sec,
                                                 StringRef &Result) const {
   ArrayRef<char> Raw = getSectionRawName(Sec);
   Result = parseSegmentOrSectionName(Raw.data());
-  return object_error::success;
+  return std::error_code();
 }
 
 uint64_t MachOObjectFile::getSectionAddress(DataRefImpl Sec) const {
@@ -530,7 +530,7 @@ std::error_code MachOObjectFile::getSectionContents(DataRefImpl Sec,
   }
 
   Res = this->getData().substr(Offset, Size);
-  return object_error::success;
+  return std::error_code();
 }
 
 uint64_t MachOObjectFile::getSectionAlignment(DataRefImpl Sec) const {
@@ -625,7 +625,7 @@ std::error_code MachOObjectFile::getRelocationAddress(DataRefImpl Rel,
   Sec.d.a = Rel.d.a;
   uint64_t SecAddress = getSectionAddress(Sec);
   Res = SecAddress + Offset;
-  return object_error::success;
+  return std::error_code();
 }
 
 std::error_code MachOObjectFile::getRelocationOffset(DataRefImpl Rel,
@@ -634,7 +634,7 @@ std::error_code MachOObjectFile::getRelocationOffset(DataRefImpl Rel,
          "Only implemented for MH_OBJECT");
   MachO::any_relocation_info RE = getRelocation(Rel);
   Res = getAnyRelocationAddress(RE);
-  return object_error::success;
+  return std::error_code();
 }
 
 symbol_iterator
@@ -667,7 +667,7 @@ std::error_code MachOObjectFile::getRelocationType(DataRefImpl Rel,
                                                    uint64_t &Res) const {
   MachO::any_relocation_info RE = getRelocation(Rel);
   Res = getAnyRelocationType(RE);
-  return object_error::success;
+  return std::error_code();
 }
 
 std::error_code
@@ -779,7 +779,7 @@ MachOObjectFile::getRelocationTypeName(DataRefImpl Rel,
       break;
   }
   Result.append(res.begin(), res.end());
-  return object_error::success;
+  return std::error_code();
 }
 
 std::error_code MachOObjectFile::getRelocationHidden(DataRefImpl Rel,
@@ -807,7 +807,7 @@ std::error_code MachOObjectFile::getRelocationHidden(DataRefImpl Rel,
     }
   }
 
-  return object_error::success;
+  return std::error_code();
 }
 
 uint8_t MachOObjectFile::getRelocationLength(DataRefImpl Rel) const {
@@ -990,7 +990,7 @@ std::error_code MachOObjectFile::getLibraryShortNameByIndex(unsigned Index,
   }
 
   Res = LibrariesShortNames[Index];
-  return object_error::success;
+  return std::error_code();
 }
 
 basic_symbol_iterator MachOObjectFile::symbol_begin_impl() const {

@@ -695,7 +695,7 @@ public:
       return object_error::parse_failed;
 
     Res = reinterpret_cast<coff_symbol_type *>(getSymbolTable()) + Index;
-    return object_error::success;
+    return std::error_code();
   }
   ErrorOr<COFFSymbolRef> getSymbol(uint32_t index) const {
     if (SymbolTable16) {
@@ -718,7 +718,7 @@ public:
     if (std::error_code EC = s.getError())
       return EC;
     Res = reinterpret_cast<const T *>(s->getRawPtr());
-    return object_error::success;
+    return std::error_code();
   }
   std::error_code getSymbolName(COFFSymbolRef Symbol, StringRef &Res) const;
 

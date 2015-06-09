@@ -476,7 +476,7 @@ inline std::error_code DiceRef::getOffset(uint32_t &Result) const {
     static_cast<const MachOObjectFile *>(OwningObject);
   MachO::data_in_code_entry Dice = MachOOF->getDice(DicePimpl);
   Result = Dice.offset;
-  return object_error::success;
+  return std::error_code();
 }
 
 inline std::error_code DiceRef::getLength(uint16_t &Result) const {
@@ -484,7 +484,7 @@ inline std::error_code DiceRef::getLength(uint16_t &Result) const {
     static_cast<const MachOObjectFile *>(OwningObject);
   MachO::data_in_code_entry Dice = MachOOF->getDice(DicePimpl);
   Result = Dice.length;
-  return object_error::success;
+  return std::error_code();
 }
 
 inline std::error_code DiceRef::getKind(uint16_t &Result) const {
@@ -492,7 +492,7 @@ inline std::error_code DiceRef::getKind(uint16_t &Result) const {
     static_cast<const MachOObjectFile *>(OwningObject);
   MachO::data_in_code_entry Dice = MachOOF->getDice(DicePimpl);
   Result = Dice.kind;
-  return object_error::success;
+  return std::error_code();
 }
 
 inline DataRefImpl DiceRef::getRawDataRefImpl() const {

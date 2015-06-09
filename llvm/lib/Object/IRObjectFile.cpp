@@ -195,7 +195,7 @@ std::error_code IRObjectFile::printSymbolName(raw_ostream &OS,
     unsigned Index = getAsmSymIndex(Symb);
     assert(Index <= AsmSymbols.size());
     OS << AsmSymbols[Index].first;
-    return object_error::success;;
+    return std::error_code();
   }
 
   if (Mang)
@@ -203,7 +203,7 @@ std::error_code IRObjectFile::printSymbolName(raw_ostream &OS,
   else
     OS << GV->getName();
 
-  return object_error::success;
+  return std::error_code();
 }
 
 uint32_t IRObjectFile::getSymbolFlags(DataRefImpl Symb) const {

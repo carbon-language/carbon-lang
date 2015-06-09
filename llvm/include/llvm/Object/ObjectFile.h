@@ -250,7 +250,7 @@ protected:
   virtual std::error_code getRelocationHidden(DataRefImpl Rel,
                                               bool &Result) const {
     Result = false;
-    return object_error::success;
+    return std::error_code();
   }
 
 public:

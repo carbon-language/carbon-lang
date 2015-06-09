@@ -271,5 +271,5 @@ std::error_code coff2yaml(raw_ostream &Out, const object::COFFObjectFile &Obj) {
   yaml::Output Yout(Out);
   Yout << Dumper.getYAMLObj();
 
-  return object::object_error::success;
+  return std::error_code();
 }

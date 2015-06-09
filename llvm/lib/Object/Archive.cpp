@@ -224,7 +224,7 @@ Archive::Archive(MemoryBufferRef Source, std::error_code &ec)
   child_iterator e = child_end();
 
   if (i == e) {
-    ec = object_error::success;
+    ec = std::error_code();
     return;
   }
 
@@ -254,7 +254,7 @@ Archive::Archive(MemoryBufferRef Source, std::error_code &ec)
     SymbolTable = i;
     ++i;
     FirstRegular = i;
-    ec = object_error::success;
+    ec = std::error_code();
     return;
   }
 
@@ -298,14 +298,14 @@ Archive::Archive(MemoryBufferRef Source, std::error_code &ec)
     StringTable = i;
     ++i;
     FirstRegular = i;
-    ec = object_error::success;
+    ec = std::error_code();
     return;
   }
 
   if (Name[0] != '/') {
     Format = has64SymTable ? K_MIPS64 : K_GNU;
     FirstRegular = i;
-    ec = object_error::success;
+    ec = std::error_code();
     return;
   }
 
@@ -320,7 +320,7 @@ Archive::Archive(MemoryBufferRef Source, std::error_code &ec)
   ++i;
   if (i == e) {
     FirstRegular = i;
-    ec = object_error::success;
+    ec = std::error_code();
     return;
   }
 
@@ -332,7 +332,7 @@ Archive::Archive(MemoryBufferRef Source, std::error_code &ec)
   }
 
   FirstRegular = i;
-  ec = object_error::success;
+  ec = std::error_code();
 }
 
 Archive::child_iterator Archive::child_begin(bool SkipInternal) const {

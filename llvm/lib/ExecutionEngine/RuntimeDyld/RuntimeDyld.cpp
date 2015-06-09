@@ -120,7 +120,7 @@ static std::error_code getOffset(const SymbolRef &Sym, uint64_t &Result) {
 
   if (Address == UnknownAddressOrSize) {
     Result = UnknownAddressOrSize;
-    return object_error::success;
+    return std::error_code();
   }
 
   const ObjectFile *Obj = Sym.getObject();
@@ -130,12 +130,12 @@ static std::error_code getOffset(const SymbolRef &Sym, uint64_t &Result) {
 
   if (SecI == Obj->section_end()) {
     Result = UnknownAddressOrSize;
-    return object_error::success;
+    return std::error_code();
   }
 
   uint64_t SectionAddress = SecI->getAddress();
   Result = Address - SectionAddress;
-  return object_error::success;
+  return std::error_code();
 }
 
 std::pair<unsigned, unsigned>

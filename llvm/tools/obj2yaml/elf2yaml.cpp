@@ -367,7 +367,7 @@ static std::error_code elf2yaml(raw_ostream &Out,
   yaml::Output Yout(Out);
   Yout << *YAML;
 
-  return object::object_error::success;
+  return std::error_code();
 }
 
 std::error_code elf2yaml(raw_ostream &Out, const object::ObjectFile &Obj) {

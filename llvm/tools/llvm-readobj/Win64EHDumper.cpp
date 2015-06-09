@@ -152,7 +152,7 @@ static std::error_code resolveRelocation(const Dumper::Context &Ctx,
     return EC;
 
   ResolvedSection = Ctx.COFF.getCOFFSection(*SI);
-  return object_error::success;
+  return std::error_code();
 }
 
 namespace llvm {

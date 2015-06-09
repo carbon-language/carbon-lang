@@ -142,7 +142,7 @@ std::error_code COFFDumper::resolveSymbolName(const coff_section *Section,
     return EC;
   if (std::error_code EC = Symbol.getName(Name))
     return EC;
-  return object_error::success;
+  return std::error_code();
 }
 
 static const EnumEntry<COFF::MachineTypes> ImageFileMachineType[] = {

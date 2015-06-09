@@ -120,7 +120,7 @@ MachOUniversalBinary::MachOUniversalBinary(MemoryBufferRef Source,
     ec = object_error::parse_failed;
     return;
   }
-  ec = object_error::success;
+  ec = std::error_code();
 }
 
 static bool getCTMForArch(Triple::ArchType Arch, MachO::CPUType &CTM) {

@@ -400,7 +400,7 @@ static std::error_code getRelocationValueString(const ELFObjectFile<ELFT> *Obj,
   }
   if (Result.empty())
     Result.append(res.begin(), res.end());
-  return object_error::success;
+  return std::error_code();
 }
 
 static std::error_code getRelocationValueString(const ELFObjectFileBase *Obj,
@@ -425,7 +425,7 @@ static std::error_code getRelocationValueString(const COFFObjectFile *Obj,
   if (std::error_code EC = SymI->getName(SymName))
     return EC;
   Result.append(SymName.begin(), SymName.end());
-  return object_error::success;
+  return std::error_code();
 }
 
 static void printRelocationTargetName(const MachOObjectFile *O,
@@ -569,7 +569,7 @@ static std::error_code getRelocationValueString(const MachOObjectFile *Obj,
     // Generic relocation types...
     switch (Type) {
     case MachO::GENERIC_RELOC_PAIR: // prints no info
-      return object_error::success;
+      return std::error_code();
     case MachO::GENERIC_RELOC_SECTDIFF: {
       DataRefImpl RelNext = Rel;
       Obj->moveRelocationNext(RelNext);
@@ -667,7 +667,7 @@ static std::error_code getRelocationValueString(const MachOObjectFile *Obj,
 
   fmt.flush();
   Result.append(fmtbuf.begin(), fmtbuf.end());
-  return object_error::success;
+  return std::error_code();
 }
 
 static std::error_code getRelocationValueString(const RelocationRef &Rel,

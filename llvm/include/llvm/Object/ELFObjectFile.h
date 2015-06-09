@@ -223,7 +223,7 @@ public:
 
   std::error_code getPlatformFlags(unsigned &Result) const override {
     Result = EF.getHeader()->e_flags;
-    return object_error::success;
+    return std::error_code();
   }
 
   const ELFFile<ELFT> *getELFFile() const { return &EF; }
@@ -257,7 +257,7 @@ std::error_code ELFObjectFile<ELFT>::getSymbolName(DataRefImpl Symb,
   if (!Name)
     return Name.getError();
   Result = *Name;
-  return object_error::success;
+  return std::error_code();
 }
 
 template <class ELFT>
@@ -271,7 +271,7 @@ std::error_code ELFObjectFile<ELFT>::getSymbolVersion(SymbolRef SymRef,
   if (!Ver)
     return Ver.getError();
   Version = *Ver;
-  return object_error::success;
+  return std::error_code();
 }
 
 template <class ELFT>
@@ -294,10 +294,10 @@ std::error_code ELFObjectFile<ELFT>::getSymbolAddress(DataRefImpl Symb,
   case ELF::SHN_COMMON:
   case ELF::SHN_UNDEF:
     Result = UnknownAddressOrSize;
-    return object_error::success;
+    return std::error_code();
   case ELF::SHN_ABS:
     Result = ESym->st_value;
-    return object_error::success;
+    return std::error_code();
   default:
     break;
   }
@@ -316,7 +316,7 @@ std::error_code ELFObjectFile<ELFT>::getSymbolAddress(DataRefImpl Symb,
       Result += Section->sh_addr;
   }
 
-  return object_error::success;
+  return std::error_code();
 }
 
 template <class ELFT>
@@ -336,7 +336,7 @@ template <class ELFT>
 std::error_code ELFObjectFile<ELFT>::getSymbolOther(DataRefImpl Symb,
                                                     uint8_t &Result) const {
   Result = toELFSymIter(Symb)->st_other;
-  return object_error::success;
+  return std::error_code();
 }
 
 template <class ELFT>
@@ -367,7 +367,7 @@ ELFObjectFile<ELFT>::getSymbolType(DataRefImpl Symb,
     Result = SymbolRef::ST_Other;
     break;
   }
-  return object_error::success;
+  return std::error_code();
 }
 
 template <class ELFT>
@@ -424,7 +424,7 @@ std::error_code
 ELFObjectFile<ELFT>::getSymbolSection(DataRefImpl Symb,
                                       section_iterator &Res) const {
   Res = getSymbolSection(getSymbol(Symb));
-  return object_error::success;
+  return std::error_code();
 }
 
 template <class ELFT>
@@ -439,7 +439,7 @@ std::error_code ELFObjectFile<ELFT>::getSectionName(DataRefImpl Sec,
   if (!Name)
     return Name.getError();
   Result = *Name;
-  return object_error::success;
+  return std::error_code();
 }
 
 template <class ELFT>
@@ -458,7 +458,7 @@ ELFObjectFile<ELFT>::getSectionContents(DataRefImpl Sec,
                                         StringRef &Result) const {
   Elf_Shdr_Iter EShdr = toELFShdrIter(Sec);
   Result = StringRef((const char *)base() + EShdr->sh_offset, EShdr->sh_size);
-  return object_error::success;
+  return std::error_code();
 }
 
 template <class ELFT>
@@ -613,7 +613,7 @@ ELFObjectFile<ELFT>::getRelocationAddress(DataRefImpl Rel,
     Result = ROffset;
   }
 
-  return object_error::success;
+  return std::error_code();
 }
 
 template <class ELFT>
@@ -623,7 +623,7 @@ ELFObjectFile<ELFT>::getRelocationOffset(DataRefImpl Rel,
   assert(EF.getHeader()->e_type == ELF::ET_REL &&
          "Only relocatable object files have relocation offsets");
   Result = getROffset(Rel);
-  return object_error::success;
+  return std::error_code();
 }
 
 template <class ELFT>
@@ -655,7 +655,7 @@ std::error_code ELFObjectFile<ELFT>::getRelocationType(DataRefImpl Rel,
     break;
   }
   }
-  return object_error::success;
+  return std::error_code();
 }
 
 template <class ELFT>
@@ -682,7 +682,7 @@ std::error_code ELFObjectFile<ELFT>::getRelocationTypeName(
   }
 
   EF.getRelocationTypeName(type, Result);
-  return object_error::success;
+  return std::error_code();
 }
 
 template <class ELFT>
@@ -695,11 +695,11 @@ ELFObjectFile<ELFT>::getRelocationAddend(DataRefImpl Rel,
     report_fatal_error("Invalid section type in Rel!");
   case ELF::SHT_REL: {
     Result = 0;
-    return object_error::success;
+    return std::error_code();
   }
   case ELF::SHT_RELA: {
     Result = getRela(Rel)->r_addend;
-    return object_error::success;
+    return std::error_code();
   }
   }
 }

@@ -22,8 +22,8 @@ namespace object {
 const std::error_category &object_category();
 
 enum class object_error {
-  success = 0,
-  arch_not_found,
+  // Error code 0 is absent. Use std::error_code() instead.
+  arch_not_found = 1,
   invalid_file_type,
   parse_failed,
   unexpected_eof,

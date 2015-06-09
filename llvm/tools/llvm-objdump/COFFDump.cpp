@@ -167,7 +167,7 @@ resolveSectionAndAddress(const COFFObjectFile *Obj, const SymbolRef &Sym,
   if (std::error_code EC = Sym.getSection(iter))
     return EC;
   ResolvedSection = Obj->getCOFFSection(*iter);
-  return object_error::success;
+  return std::error_code();
 }
 
 // Given a vector of relocations for a section and an offset into this section
@@ -182,7 +182,7 @@ static std::error_code resolveSymbol(const std::vector<RelocationRef> &Rels,
       return EC;
     if (Ofs == Offset) {
       Sym = *I->getSymbol();
-      return object_error::success;
+      return std::error_code();
     }
   }
   return object_error::parse_failed;
@@ -204,7 +204,7 @@ getSectionContents(const COFFObjectFile *Obj,
     return EC;
   if (std::error_code EC = Obj->getSectionContents(Section, Contents))
     return EC;
-  return object_error::success;
+  return std::error_code();
 }
 
 // Given a vector of relocations for a section and an offset into this section
@@ -217,7 +217,7 @@ static std::error_code resolveSymbolName(const std::vector<RelocationRef> &Rels,
     return EC;
   if (std::error_code EC = Sym.getName(Name))
     return EC;
-  return object_error::success;
+  return std::error_code();
 }
 
 static void printCOFFSymbolAddress(llvm::raw_ostream &Out,
