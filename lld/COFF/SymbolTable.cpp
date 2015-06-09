@@ -235,40 +235,17 @@ std::error_code SymbolTable::addCombinedLTOObject() {
   if (BitcodeFiles.empty())
     return std::error_code();
 
-  llvm::LTOCodeGenerator CG;
-
-  // All symbols referenced by non-bitcode objects must be preserved.
-  for (std::unique_ptr<ObjectFile> &File : ObjectFiles)
-    for (SymbolBody *Body : File->getSymbols())
-      if (auto *S = dyn_cast<DefinedBitcode>(Body->getReplacement()))
-        CG.addMustPreserveSymbol(S->getName());
-
-  // Likewise for other symbols that must be preserved.
-  for (StringRef Name : Config->GCRoots)
-    if (isa<DefinedBitcode>(Symtab[Name]->Body))
-      CG.addMustPreserveSymbol(Name);
-
-  CG.setModule(BitcodeFiles[0]->releaseModule());
-  for (unsigned I = 1, E = BitcodeFiles.size(); I != E; ++I)
-    CG.addModule(BitcodeFiles[I]->getModule());
-
-  std::string ErrMsg;
-  LTOObjectFile = CG.compile(false, false, false, ErrMsg);
-  if (!LTOObjectFile) {
-    llvm::errs() << ErrMsg << '\n';
-    return make_error_code(LLDError::BrokenFile);
-  }
-
   // Create an object file and add it to the symbol table by replacing any
   // DefinedBitcode symbols with the definitions in the object file.
-  auto Obj = new ObjectFile(LTOObjectFile->getMemBufferRef());
-  ObjectFiles.emplace_back(Obj);
-  if (auto EC = Obj->parse())
+  LTOCodeGenerator CG;
+  auto FileOrErr = createLTOObject(&CG);
+  if (auto EC = FileOrErr.getError())
     return EC;
+  ObjectFile *Obj = FileOrErr.get();
+
   for (SymbolBody *Body : Obj->getSymbols()) {
     if (!Body->isExternal())
       continue;
-
     // Find an existing Symbol. We should not see any new undefined symbols at
     // this point.
     StringRef Name = Body->getName();
@@ -311,8 +288,38 @@ std::error_code SymbolTable::addCombinedLTOObject() {
   // New runtime library symbol references may have created undefined references.
   if (reportRemainingUndefines())
     return make_error_code(LLDError::BrokenFile);
-
   return std::error_code();
+}
+
+// Combine and compile bitcode files and then return the result
+// as a regular COFF object file.
+ErrorOr<ObjectFile *> SymbolTable::createLTOObject(LTOCodeGenerator *CG) {
+  // All symbols referenced by non-bitcode objects must be preserved.
+  for (std::unique_ptr<ObjectFile> &File : ObjectFiles)
+    for (SymbolBody *Body : File->getSymbols())
+      if (auto *S = dyn_cast<DefinedBitcode>(Body->getReplacement()))
+        CG->addMustPreserveSymbol(S->getName());
+
+  // Likewise for other symbols that must be preserved.
+  for (StringRef Name : Config->GCRoots)
+    if (isa<DefinedBitcode>(Symtab[Name]->Body))
+      CG->addMustPreserveSymbol(Name);
+
+  CG->setModule(BitcodeFiles[0]->releaseModule());
+  for (unsigned I = 1, E = BitcodeFiles.size(); I != E; ++I)
+    CG->addModule(BitcodeFiles[I]->getModule());
+
+  std::string ErrMsg;
+  LTOMB = CG->compile(false, false, false, ErrMsg); // take MB ownership
+  if (!LTOMB) {
+    llvm::errs() << ErrMsg << '\n';
+    return make_error_code(LLDError::BrokenFile);
+  }
+  auto Obj = new ObjectFile(LTOMB->getMemBufferRef());
+  ObjectFiles.emplace_back(Obj);
+  if (auto EC = Obj->parse())
+    return EC;
+  return Obj;
 }
 
 } // namespace coff
