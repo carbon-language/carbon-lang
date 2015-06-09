@@ -1437,6 +1437,7 @@ void MergeFunctions::replaceFunctionInTree(FnTreeType::iterator &IterToF,
   assert((F->mayBeOverridden() && G->mayBeOverridden()) ||
          (!F->mayBeOverridden() && !G->mayBeOverridden()) &&
          "Only change functions if both are strong or both are weak");
+  (void)F;
 
   IterToF->replaceBy(G);
 }
