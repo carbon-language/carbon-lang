@@ -53,9 +53,3 @@ struct pair_t {
 
 // CHECK: struct pair_t p = {a: 3, .b = 4};
 struct pair_t p = {a: 3, .b = 4};
-
-void assembly() {
-  int added;
-  // CHECK: asm volatile ("addl %%ebx,%%eax" : "=a" (added) : "a" (1), "b" (2));
-  __asm__ __volatile__("addl %%ebx,%%eax" : "=a" (added) : "a" (1), "b" (2) );
-}
