@@ -15,11 +15,6 @@
   jal $25
   jal $4, $25
 
-  bne $2, 0, 1332
-  bne $2, 1, 1332
-  beq $2, 0, 1332
-  beq $2, 1, 1332
-
   add $4, $5, $6
 
   .set noreorder
@@ -46,15 +41,6 @@
 # CHECK-NOT: [[@LINE-1]]:3: warning: macro instruction expanded into multiple instructions
   jal $4, $25
 # CHECK-NOT: [[@LINE-1]]:3: warning: macro instruction expanded into multiple instructions
-
-  bne $2, 0, 1332
-# CHECK-NOT: [[@LINE-1]]:3: warning: macro instruction expanded into multiple instructions
-  bne $2, 1, 1332
-# CHECK: [[@LINE-1]]:3: warning: macro instruction expanded into multiple instructions
-  beq $2, 0, 1332
-# CHECK-NOT: [[@LINE-1]]:3: warning: macro instruction expanded into multiple instructions
-  beq $2, 1, 1332
-# CHECK: [[@LINE-1]]:3: warning: macro instruction expanded into multiple instructions
 
   add $4, $5, $6
 # CHECK-NOT: [[@LINE-1]]:3: warning: macro instruction expanded into multiple instructions

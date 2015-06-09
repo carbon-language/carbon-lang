@@ -22,7 +22,3 @@
   # 64-BIT: ori $5, $5, %lo(symbol)
   dli $5, 1
   # 32-BIT: :[[@LINE-1]]:3: error: instruction requires a 64-bit architecture
-  bne $2, 0x100010001, 1332
-  # 32-BIT: :[[@LINE-1]]:3: error: instruction requires a 32-bit immediate
-  beq $2, 0x100010001, 1332
-  # 32-BIT: :[[@LINE-1]]:3: error: instruction requires a 32-bit immediate
