@@ -136,7 +136,7 @@ protected: // MCContext creates and uniques these.
         Kind(Kind) {
     Offset = 0;
     if (Name)
-      getNameEntryPtr().NameEntry = Name;
+      getNameEntryPtr() = Name;
   }
 
   // Provide custom new/delete as we will only allocate space for a name
@@ -169,15 +169,13 @@ private:
   }
 
   /// \brief Get a reference to the name field.  Requires that we have a name
-  NameEntryStorageTy &getNameEntryPtr() {
+  const StringMapEntry<bool> *&getNameEntryPtr() {
     assert(HasName && "Name is required");
     NameEntryStorageTy *Name = reinterpret_cast<NameEntryStorageTy *>(this);
-    return *(Name - 1);
+    return (*(Name - 1)).NameEntry;
   }
-  const NameEntryStorageTy &getNameEntryPtr() const {
-    assert(HasName && "Name is required");
-    const auto *Name = reinterpret_cast<const NameEntryStorageTy *>(this);
-    return *(Name - 1);
+  const StringMapEntry<bool> *&getNameEntryPtr() const {
+    return const_cast<MCSymbol*>(this)->getNameEntryPtr();
   }
 
 public:
@@ -186,7 +184,7 @@ public:
     if (!HasName)
       return StringRef();
 
-    return getNameEntryPtr().NameEntry->first();
+    return getNameEntryPtr()->first();
   }
 
   bool isRegistered() const { return IsRegistered; }
