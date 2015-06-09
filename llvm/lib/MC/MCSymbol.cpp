@@ -28,9 +28,9 @@ void *MCSymbol::operator new(size_t s, const StringMapEntry<bool> *Name,
   // For safety, ensure that the alignment of a pointer is enough for an
   // MCSymbol.  This also ensures we don't need padding between the name and
   // symbol.
-  // FIXME: Use static_assert when constexpr is supported.
-  assert(alignOf<MCSymbol>() <= alignOf<NameEntryStorageTy>() &&
-         "Bad alignment of MCSymbol");
+  static_assert(AlignOf<MCSymbol>::Alignment <=
+                AlignOf<NameEntryStorageTy>::Alignment,
+                "Bad alignment of MCSymbol");
   void *Storage = Ctx.allocate(Size, alignOf<NameEntryStorageTy>());
   NameEntryStorageTy *Start = static_cast<NameEntryStorageTy*>(Storage);
   NameEntryStorageTy *End = Start + (Name ? 1 : 0);
