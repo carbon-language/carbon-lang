@@ -133,10 +133,6 @@ GetSymbolFromOperand(const MachineOperand &MO) const {
   StringRef Suffix;
 
   switch (MO.getTargetFlags()) {
-  case X86II::MO_DLLIMPORT:
-    // Handle dllimport linkage.
-    Name += "__imp_";
-    break;
   case X86II::MO_DARWIN_STUB:
     Suffix = "$stub";
     break;

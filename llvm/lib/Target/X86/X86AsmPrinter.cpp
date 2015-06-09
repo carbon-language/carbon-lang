@@ -94,11 +94,6 @@ static void printSymbolOperand(X86AsmPrinter &P, const MachineOperand &MO,
     else
       GVSym = P.getSymbol(GV);
 
-    // Handle dllimport linkage.
-    if (MO.getTargetFlags() == X86II::MO_DLLIMPORT)
-      GVSym =
-          P.OutContext.getOrCreateSymbol(Twine("__imp_") + GVSym->getName());
-
     if (MO.getTargetFlags() == X86II::MO_DARWIN_NONLAZY ||
         MO.getTargetFlags() == X86II::MO_DARWIN_NONLAZY_PIC_BASE) {
       MCSymbol *Sym = P.getSymbolWithGlobalValueBase(GV, "$non_lazy_ptr");
