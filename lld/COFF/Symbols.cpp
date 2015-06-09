@@ -71,7 +71,8 @@ int Undefined::compare(SymbolBody *Other) {
 
 StringRef DefinedRegular::getName() {
   // DefinedSymbol's name is read lazily for a performance reason.
-  // Non-external symbol names are never used by the linker.
+  // Non-external symbol names are never used by the linker
+  // except for logging or debugging.
   // Their internal references are resolved not by name but by symbol index.
   // And because they are not external, no one can refer them by name.
   // Object files contain lots of non-external symbols, and creating
