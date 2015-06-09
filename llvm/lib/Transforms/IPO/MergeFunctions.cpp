@@ -1397,28 +1397,26 @@ void MergeFunctions::mergeTwoFunctions(Function *F, Function *G) {
   if (F->mayBeOverridden()) {
     assert(G->mayBeOverridden());
 
+    // Make them both thunks to the same internal function.
+    Function *H = Function::Create(F->getFunctionType(), F->getLinkage(), "",
+                                   F->getParent());
+    H->copyAttributesFrom(F);
+    H->takeName(F);
+    removeUsers(F);
+    F->replaceAllUsesWith(H);
+
+    unsigned MaxAlignment = std::max(G->getAlignment(), H->getAlignment());
+
     if (HasGlobalAliases) {
-      // Make them both thunks to the same internal function.
-      Function *H = Function::Create(F->getFunctionType(), F->getLinkage(), "",
-                                     F->getParent());
-      H->copyAttributesFrom(F);
-      H->takeName(F);
-      removeUsers(F);
-      F->replaceAllUsesWith(H);
-
-      unsigned MaxAlignment = std::max(G->getAlignment(), H->getAlignment());
-
       writeAlias(F, G);
       writeAlias(F, H);
-
-      F->setAlignment(MaxAlignment);
-      F->setLinkage(GlobalValue::PrivateLinkage);
     } else {
-      // We can't merge them. Instead, pick one and update all direct callers
-      // to call it and hope that we improve the instruction cache hit rate.
-      replaceDirectCallers(G, F);
+      writeThunk(F, G);
+      writeThunk(F, H);
     }
 
+    F->setAlignment(MaxAlignment);
+    F->setLinkage(GlobalValue::PrivateLinkage);
     ++NumDoubleWeak;
   } else {
     writeThunkOrAlias(F, G);
