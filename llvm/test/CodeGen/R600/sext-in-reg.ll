@@ -450,13 +450,10 @@ define void @vgpr_sext_in_reg_v4i16_to_v4i32(<4 x i32> addrspace(1)* %out, <4 x 
   ret void
 }
 
-; FIXME: The BFE should really be eliminated. I think it should happen
-; when computeKnownBitsForTargetNode is implemented for imax.
-
 ; FUNC-LABEL: {{^}}sext_in_reg_to_illegal_type:
 ; SI: buffer_load_sbyte
 ; SI: v_max_i32
-; SI: v_bfe_i32
+; SI-NOT: bfe
 ; SI: buffer_store_short
 define void @sext_in_reg_to_illegal_type(i16 addrspace(1)* nocapture %out, i8 addrspace(1)* nocapture %src) nounwind {
   %tmp5 = load i8, i8 addrspace(1)* %src, align 1
