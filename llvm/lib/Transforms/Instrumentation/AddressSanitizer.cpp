@@ -1133,6 +1133,18 @@ bool AddressSanitizerModule::ShouldInstrumentGlobal(GlobalVariable *G) {
   if (G->hasSection()) {
     StringRef Section(G->getSection());
 
+    // Globals from llvm.metadata aren't emitted, do not instrument them.
+    if (Section == "llvm.metadata") return false;
+
+    // Callbacks put into the CRT initializer/terminator sections
+    // should not be instrumented.
+    // See https://code.google.com/p/address-sanitizer/issues/detail?id=305
+    // and http://msdn.microsoft.com/en-US/en-en/library/bb918180(v=vs.120).aspx
+    if (Section.startswith(".CRT")) {
+      DEBUG(dbgs() << "Ignoring a global initializer callback: " << *G << "\n");
+      return false;
+    }
+
     if (TargetTriple.isOSBinFormatMachO()) {
       StringRef ParsedSegment, ParsedSection;
       unsigned TAA = 0, StubSize = 0;
@@ -1140,8 +1152,8 @@ bool AddressSanitizerModule::ShouldInstrumentGlobal(GlobalVariable *G) {
       std::string ErrorCode = MCSectionMachO::ParseSectionSpecifier(
           Section, ParsedSegment, ParsedSection, TAA, TAAParsed, StubSize);
       if (!ErrorCode.empty()) {
-        report_fatal_error("Invalid section specifier '" + ParsedSection +
-                           "': " + ErrorCode + ".");
+        assert(false && "Invalid section specifier.");
+        return false;
       }
 
       // Ignore the globals from the __OBJC section. The ObjC runtime assumes
@@ -1171,18 +1183,6 @@ bool AddressSanitizerModule::ShouldInstrumentGlobal(GlobalVariable *G) {
         return false;
       }
     }
-
-    // Callbacks put into the CRT initializer/terminator sections
-    // should not be instrumented.
-    // See https://code.google.com/p/address-sanitizer/issues/detail?id=305
-    // and http://msdn.microsoft.com/en-US/en-en/library/bb918180(v=vs.120).aspx
-    if (Section.startswith(".CRT")) {
-      DEBUG(dbgs() << "Ignoring a global initializer callback: " << *G << "\n");
-      return false;
-    }
-
-    // Globals from llvm.metadata aren't emitted, do not instrument them.
-    if (Section == "llvm.metadata") return false;
   }
 
   return true;
