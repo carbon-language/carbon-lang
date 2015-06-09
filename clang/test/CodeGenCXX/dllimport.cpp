@@ -741,6 +741,12 @@ USEMEMFUNC(ExplicitInstantiationDeclExportedDefImportedTemplate<int>, f);
 // M32-DAG: {{declare|define available_externally}} dllimport x86_thiscallcc void @"\01?f@?$ExplicitInstantiationDeclExportedDefImportedTemplate@H@@QAEXXZ"
 // M32-DAG: {{declare|define available_externally}} dllimport x86_thiscallcc %struct.ExplicitInstantiationDeclExportedDefImportedTemplate* @"\01??0?$ExplicitInstantiationDeclExportedDefImportedTemplate@H@@QAE@XZ"
 
+template <typename T> struct PR23770BaseTemplate { void f() {} };
+template <typename T> struct PR23770DerivedTemplate : PR23770BaseTemplate<int> {};
+extern template struct PR23770DerivedTemplate<int>;
+template struct __declspec(dllimport) PR23770DerivedTemplate<int>;
+USEMEMFUNC(PR23770BaseTemplate<int>, f);
+// M32-DAG: declare dllimport x86_thiscallcc void @"\01?f@?$PR23770BaseTemplate@H@@QAEXXZ"
 
 //===----------------------------------------------------------------------===//
 // Classes with template base classes

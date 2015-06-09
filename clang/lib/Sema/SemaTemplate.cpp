@@ -7379,6 +7379,13 @@ Sema::ActOnExplicitInstantiation(Scope *S,
         A->setInherited(true);
         Def->addAttr(A);
         checkClassLevelDLLAttribute(Def);
+
+        // Propagate attribute to base class templates.
+        for (auto &B : Def->bases()) {
+          if (auto *BT = dyn_cast_or_null<ClassTemplateSpecializationDecl>(
+                  B.getType()->getAsCXXRecordDecl()))
+            propagateDLLAttrToBaseClassTemplate(Def, A, BT, B.getLocStart());
+        }
       }
     }
 
