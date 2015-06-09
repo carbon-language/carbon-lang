@@ -365,16 +365,25 @@ public:
     IsSourceImplementationFile () const;
 
     //------------------------------------------------------------------
-    /// Returns true if the filespec represents path that is relative
-    /// path to the current working directory.
+    /// Returns true if the filespec represents a relative path.
     ///
     /// @return
-    ///     \b true if the filespec represents a current working
-    ///     directory relative path, \b false otherwise.
+    ///     \b true if the filespec represents a relative path,
+    ///     \b false otherwise.
     //------------------------------------------------------------------
     bool
-    IsRelativeToCurrentWorkingDirectory () const;
-    
+    IsRelative() const;
+
+    //------------------------------------------------------------------
+    /// Returns true if the filespec represents an absolute path.
+    ///
+    /// @return
+    ///     \b true if the filespec represents an absolute path,
+    ///     \b false otherwise.
+    //------------------------------------------------------------------
+    bool
+    IsAbsolute() const;
+
     TimeValue
     GetModificationTime () const;
 

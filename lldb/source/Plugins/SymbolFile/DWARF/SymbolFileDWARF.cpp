@@ -977,7 +977,7 @@ SymbolFileDWARF::ParseCompileUnit (DWARFCompileUnit* dwarf_cu, uint32_t cu_idx)
                         {
                             // If we have a full path to the compile unit, we don't need to resolve
                             // the file.  This can be expensive e.g. when the source files are NFS mounted.
-                            if (cu_file_spec.IsRelativeToCurrentWorkingDirectory())
+                            if (cu_file_spec.IsRelative())
                             {
                                 // DWARF2/3 suggests the form hostname:pathname for compilation directory.
                                 // Remove the host part if present.

@@ -412,7 +412,7 @@ TargetList::CreateTargetInternal (Debugger &debugger,
         if (file.GetFileType() == FileSpec::eFileTypeDirectory)
             user_exe_path_is_bundle = true;
 
-        if (file.IsRelativeToCurrentWorkingDirectory() && user_exe_path)
+        if (file.IsRelative() && user_exe_path)
         {
             // Ignore paths that start with "./" and "../"
             if (!((user_exe_path[0] == '.' && user_exe_path[1] == '/') ||

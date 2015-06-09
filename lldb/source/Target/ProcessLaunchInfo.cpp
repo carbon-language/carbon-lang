@@ -423,7 +423,7 @@ ProcessLaunchInfo::ConvertArgumentsForLaunchingInShell (Error &error,
                 // is a relative path.
                 const char *argv0 = argv[0];
                 FileSpec arg_spec(argv0, false);
-                if (arg_spec.IsRelativeToCurrentWorkingDirectory())
+                if (arg_spec.IsRelative())
                 {
                     // We have a relative path to our executable which may not work if
                     // we just try to run "a.out" (without it being converted to "./a.out")

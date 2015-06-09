@@ -1484,7 +1484,7 @@ FileSpec::IsSourceImplementationFile () const
 }
 
 bool
-FileSpec::IsRelativeToCurrentWorkingDirectory () const
+FileSpec::IsRelative() const
 {
     const char *dir = m_directory.GetCString();
     llvm::StringRef directory(dir ? dir : "");
@@ -1518,4 +1518,10 @@ FileSpec::IsRelativeToCurrentWorkingDirectory () const
         return true;
     }
     return false;
+}
+
+bool
+FileSpec::IsAbsolute() const
+{
+    return !FileSpec::IsRelative();
 }

@@ -225,7 +225,7 @@ bool
 HostInfoLinux::ComputeSupportExeDirectory(FileSpec &file_spec)
 {
     if (HostInfoPosix::ComputeSupportExeDirectory(file_spec) &&
-            !file_spec.IsRelativeToCurrentWorkingDirectory() &&
+            file_spec.IsAbsolute() &&
             file_spec.Exists())
         return true;
     file_spec.GetDirectory() = GetProgramFileSpec().GetDirectory();

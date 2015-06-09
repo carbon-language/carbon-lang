@@ -215,7 +215,7 @@ PlatformAndroid::GetFile (const FileSpec& source,
         return PlatformLinux::GetFile(source, destination);
 
     FileSpec source_spec (source.GetPath (false), false, FileSpec::ePathSyntaxPosix);
-    if (source_spec.IsRelativeToCurrentWorkingDirectory ())
+    if (source_spec.IsRelative())
         source_spec = GetRemoteWorkingDirectory ().CopyByAppendingPathComponent (source_spec.GetCString (false));
 
     AdbClient adb (m_device_id);
@@ -232,7 +232,7 @@ PlatformAndroid::PutFile (const FileSpec& source,
         return PlatformLinux::PutFile (source, destination, uid, gid);
 
     FileSpec destination_spec (destination.GetPath (false), false, FileSpec::ePathSyntaxPosix);
-    if (destination_spec.IsRelativeToCurrentWorkingDirectory ())
+    if (destination_spec.IsRelative())
         destination_spec = GetRemoteWorkingDirectory ().CopyByAppendingPathComponent (destination_spec.GetCString (false));
 
     AdbClient adb (m_device_id);

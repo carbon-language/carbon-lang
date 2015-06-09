@@ -519,14 +519,14 @@ DWARFDebugLine::ParseSupportFiles (const lldb::ModuleSP &module_sp,
             debug_line_data.Skip_LEB128(&offset); // Skip mod_time
             debug_line_data.Skip_LEB128(&offset); // Skip length
 
-            if (file_spec.IsRelativeToCurrentWorkingDirectory())
+            if (file_spec.IsRelative())
             {
                 if (0 < dir_idx && dir_idx < include_directories.size())
                 {
                     const FileSpec &dir = include_directories[dir_idx];
                     file_spec.PrependPathComponent(dir);
                 }
-                if (file_spec.IsRelativeToCurrentWorkingDirectory())
+                if (file_spec.IsRelative())
                     file_spec.PrependPathComponent(cu_comp_dir);
             }
             std::string remapped_file;
