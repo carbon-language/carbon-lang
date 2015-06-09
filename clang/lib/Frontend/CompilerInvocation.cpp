@@ -425,7 +425,7 @@ static bool ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
   Opts.Autolink = !Args.hasArg(OPT_fno_autolink);
   Opts.SampleProfileFile = Args.getLastArgValue(OPT_fprofile_sample_use_EQ);
   Opts.ProfileInstrGenerate = Args.hasArg(OPT_fprofile_instr_generate) ||
-      Args.hasArg(OPT_fprofile_instr_generate_EQ);;
+      Args.hasArg(OPT_fprofile_instr_generate_EQ);
   Opts.InstrProfileOutput = Args.getLastArgValue(OPT_fprofile_instr_generate_EQ);
   Opts.InstrProfileInput = Args.getLastArgValue(OPT_fprofile_instr_use_EQ);
   Opts.CoverageMapping = Args.hasArg(OPT_fcoverage_mapping);

@@ -490,7 +490,7 @@ CXString clang_getTypeKindSpelling(enum CXTypeKind K) {
 }
 
 unsigned clang_equalTypes(CXType A, CXType B) {
-  return A.data[0] == B.data[0] && A.data[1] == B.data[1];;
+  return A.data[0] == B.data[0] && A.data[1] == B.data[1];
 }
 
 unsigned clang_isFunctionTypeVariadic(CXType X) {
