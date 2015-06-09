@@ -244,13 +244,7 @@ Value *PHITransAddr::PHITranslateSubExpr(Value *V, BasicBlock *CurBB,
             GEPI->getNumOperands() == GEPOps.size() &&
             GEPI->getParent()->getParent() == CurBB->getParent() &&
             (!DT || DT->dominates(GEPI->getParent(), PredBB))) {
-          bool Mismatch = false;
-          for (unsigned i = 0, e = GEPOps.size(); i != e; ++i)
-            if (GEPI->getOperand(i) != GEPOps[i]) {
-              Mismatch = true;
-              break;
-            }
-          if (!Mismatch)
+          if (std::equal(GEPOps.begin(), GEPOps.end(), GEPI->op_begin()))
             return GEPI;
         }
     }
