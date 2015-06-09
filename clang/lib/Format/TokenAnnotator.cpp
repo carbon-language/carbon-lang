@@ -2109,6 +2109,7 @@ bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
                                     const FormatToken &Right) {
   const FormatToken &Left = *Right.Previous;
 
+  // Language-specific stuff.
   if (Style.Language == FormatStyle::LK_Java) {
     if (Left.isOneOf(Keywords.kw_throws, Keywords.kw_extends,
                      Keywords.kw_implements))
@@ -2116,6 +2117,9 @@ bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
     if (Right.isOneOf(Keywords.kw_throws, Keywords.kw_extends,
                       Keywords.kw_implements))
       return true;
+  } else if (Style.Language == FormatStyle::LK_JavaScript) {
+    if (Left.is(TT_JsFatArrow) && Right.is(tok::l_brace))
+      return false;
   }
 
   if (Left.is(tok::at))

@@ -297,11 +297,11 @@ struct ParenState {
     if (VariablePos != Other.VariablePos)
       return VariablePos < Other.VariablePos;
     if (ContainsLineBreak != Other.ContainsLineBreak)
-      return ContainsLineBreak < Other.ContainsLineBreak;
+      return ContainsLineBreak;
     if (ContainsUnwrappedBuilder != Other.ContainsUnwrappedBuilder)
-      return ContainsUnwrappedBuilder < Other.ContainsUnwrappedBuilder;
+      return ContainsUnwrappedBuilder;
     if (NestedBlockInlined != Other.NestedBlockInlined)
-      return NestedBlockInlined < Other.NestedBlockInlined;
+      return NestedBlockInlined;
     return false;
   }
 };
