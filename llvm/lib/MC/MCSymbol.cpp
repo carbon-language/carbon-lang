@@ -25,9 +25,9 @@ void *MCSymbol::operator new(size_t s, NameEntryTy *Name, MCContext &Ctx) {
   // For safety, ensure that the alignment of a pointer is enough for an
   // MCSymbol.  This also ensures we don't need padding between the name and
   // symbol.
-  assert(alignOf<MCSymbol>() <= alignof(NameEntryTy *) &&
+  assert(alignOf<MCSymbol>() <= alignOf<NameEntryTy *>() &&
          "Bad alignment of MCSymbol");
-  void *Storage = Ctx.allocate(Size, alignof(NameEntryTy *));
+  void *Storage = Ctx.allocate(Size, alignOf<NameEntryTy *>());
   NameEntryTy **Start = static_cast<NameEntryTy**>(Storage);
   NameEntryTy **End = Start + (Name ? 1 : 0);
   return End;
