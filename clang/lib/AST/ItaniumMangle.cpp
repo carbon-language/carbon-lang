@@ -2010,7 +2010,11 @@ void CXXNameMangler::mangleType(const BuiltinType *T) {
   case BuiltinType::Half: Out << "Dh"; break;
   case BuiltinType::Float: Out << 'f'; break;
   case BuiltinType::Double: Out << 'd'; break;
-  case BuiltinType::LongDouble: Out << 'e'; break;
+  case BuiltinType::LongDouble:
+    Out << (getASTContext().getTargetInfo().useFloat128ManglingForLongDouble()
+                ? 'g'
+                : 'e');
+    break;
   case BuiltinType::NullPtr: Out << "Dn"; break;
 
 #define BUILTIN_TYPE(Id, SingletonId)

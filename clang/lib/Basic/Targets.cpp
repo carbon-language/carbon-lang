@@ -992,6 +992,12 @@ public:
   bool hasSjLjLowering() const override {
     return true;
   }
+
+  bool useFloat128ManglingForLongDouble() const override {
+    return LongDoubleWidth == 128 &&
+           LongDoubleFormat == &llvm::APFloat::PPCDoubleDouble &&
+           getTriple().isOSBinFormatELF();
+  }
 };
 
 const Builtin::Info PPCTargetInfo::BuiltinInfo[] = {
