@@ -120,20 +120,29 @@ protected: // MCContext creates and uniques these.
   friend class MCExpr;
   friend class MCContext;
 
-  typedef const StringMapEntry<bool> NameEntryTy;
-  MCSymbol(SymbolKind Kind, NameEntryTy *Name, bool isTemporary)
+  /// \brief The name for a symbol.
+  /// MCSymbol contains a uint64_t so is probably aligned to 8.  On a 32-bit
+  /// system, the name is a pointer so isn't going to satisfy the 8 byte
+  /// alignment of uint64_t.  Account for that here.
+  typedef union {
+    const StringMapEntry<bool> *NameEntry;
+    uint64_t AlignmentPadding;
+  } NameEntryStorageTy;
+
+  MCSymbol(SymbolKind Kind, const StringMapEntry<bool> *Name, bool isTemporary)
       : Value(nullptr), IsTemporary(isTemporary),
         IsRedefinable(false), IsUsed(false), IsRegistered(false),
         IsExternal(false), IsPrivateExtern(false), HasName(!!Name),
         Kind(Kind) {
     Offset = 0;
     if (Name)
-      getNameEntryPtr() = Name;
+      getNameEntryPtr().NameEntry = Name;
   }
 
   // Provide custom new/delete as we will only allocate space for a name
   // if we need one.
-  void *operator new(size_t s, NameEntryTy *Name, MCContext &Ctx);
+  void *operator new(size_t s, const StringMapEntry<bool> *Name,
+                     MCContext &Ctx);
 
 private:
 
@@ -160,14 +169,14 @@ private:
   }
 
   /// \brief Get a reference to the name field.  Requires that we have a name
-  NameEntryTy *&getNameEntryPtr() {
+  NameEntryStorageTy &getNameEntryPtr() {
     assert(HasName && "Name is required");
-    NameEntryTy **Name = reinterpret_cast<NameEntryTy **>(this);
+    NameEntryStorageTy *Name = reinterpret_cast<NameEntryStorageTy *>(this);
     return *(Name - 1);
   }
-  NameEntryTy *const &getNameEntryPtr() const {
+  const NameEntryStorageTy &getNameEntryPtr() const {
     assert(HasName && "Name is required");
-    NameEntryTy *const *Name = reinterpret_cast<NameEntryTy *const *>(this);
+    const auto *Name = reinterpret_cast<const NameEntryStorageTy *>(this);
     return *(Name - 1);
   }
 
@@ -177,7 +186,7 @@ public:
     if (!HasName)
       return StringRef();
 
-    return getNameEntryPtr()->first();
+    return getNameEntryPtr().NameEntry->first();
   }
 
   bool isRegistered() const { return IsRegistered; }

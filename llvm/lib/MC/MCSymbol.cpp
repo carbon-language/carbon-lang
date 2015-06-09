@@ -19,17 +19,20 @@ using namespace llvm;
 // Sentinel value for the absolute pseudo section.
 MCSection *MCSymbol::AbsolutePseudoSection = reinterpret_cast<MCSection *>(1);
 
-void *MCSymbol::operator new(size_t s, NameEntryTy *Name, MCContext &Ctx) {
-  size_t Size = s + (Name ? sizeof(Name) : 0);
+void *MCSymbol::operator new(size_t s, const StringMapEntry<bool> *Name,
+                             MCContext &Ctx) {
+  // We may need more space for a Name to account for alignment.  So allocate
+  // space for the storage type and not the name pointer.
+  size_t Size = s + (Name ? sizeof(NameEntryStorageTy) : 0);
 
   // For safety, ensure that the alignment of a pointer is enough for an
   // MCSymbol.  This also ensures we don't need padding between the name and
   // symbol.
-  assert(alignOf<MCSymbol>() <= alignOf<NameEntryTy *>() &&
+  assert(alignOf<MCSymbol>() <= alignOf<NameEntryStorageTy>() &&
          "Bad alignment of MCSymbol");
-  void *Storage = Ctx.allocate(Size, alignOf<NameEntryTy *>());
-  NameEntryTy **Start = static_cast<NameEntryTy**>(Storage);
-  NameEntryTy **End = Start + (Name ? 1 : 0);
+  void *Storage = Ctx.allocate(Size, alignOf<NameEntryStorageTy>());
+  NameEntryStorageTy *Start = static_cast<NameEntryStorageTy*>(Storage);
+  NameEntryStorageTy *End = Start + (Name ? 1 : 0);
   return End;
 }
 
