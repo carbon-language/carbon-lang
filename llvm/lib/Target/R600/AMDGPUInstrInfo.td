@@ -94,16 +94,6 @@ def AMDGPUfmin_legacy : SDNode<"AMDGPUISD::FMIN_LEGACY", SDTFPBinOp,
   []
 >;
 
-// out = min(a, b) a and b are signed ints
-def AMDGPUsmin : SDNode<"AMDGPUISD::SMIN", SDTIntBinOp,
-  [SDNPCommutative, SDNPAssociative]
->;
-
-// out = min(a, b) a and b are unsigned ints
-def AMDGPUumin : SDNode<"AMDGPUISD::UMIN", SDTIntBinOp,
-  [SDNPCommutative, SDNPAssociative]
->;
-
 // FIXME: TableGen doesn't like commutative instructions with more
 // than 2 operands.
 // out = max(a, b, c) a, b and c are floats

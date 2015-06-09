@@ -210,6 +210,10 @@ SITargetLowering::SITargetLowering(TargetMachine &TM,
   setTargetDAGCombine(ISD::FSUB);
   setTargetDAGCombine(ISD::FMINNUM);
   setTargetDAGCombine(ISD::FMAXNUM);
+  setTargetDAGCombine(ISD::SMIN);
+  setTargetDAGCombine(ISD::SMAX);
+  setTargetDAGCombine(ISD::UMIN);
+  setTargetDAGCombine(ISD::UMAX);
   setTargetDAGCombine(ISD::SELECT_CC);
   setTargetDAGCombine(ISD::SETCC);
   setTargetDAGCombine(ISD::AND);
@@ -1633,15 +1637,15 @@ static unsigned minMaxOpcToMin3Max3Opc(unsigned Opc) {
   switch (Opc) {
   case ISD::FMAXNUM:
     return AMDGPUISD::FMAX3;
-  case AMDGPUISD::SMAX:
+  case ISD::SMAX:
     return AMDGPUISD::SMAX3;
-  case AMDGPUISD::UMAX:
+  case ISD::UMAX:
     return AMDGPUISD::UMAX3;
   case ISD::FMINNUM:
     return AMDGPUISD::FMIN3;
-  case AMDGPUISD::SMIN:
+  case ISD::SMIN:
     return AMDGPUISD::SMIN3;
-  case AMDGPUISD::UMIN:
+  case ISD::UMIN:
     return AMDGPUISD::UMIN3;
   default:
     llvm_unreachable("Not a min/max opcode");
@@ -1727,10 +1731,10 @@ SDValue SITargetLowering::PerformDAGCombine(SDNode *N,
     return performSetCCCombine(N, DCI);
   case ISD::FMAXNUM: // TODO: What about fmax_legacy?
   case ISD::FMINNUM:
-  case AMDGPUISD::SMAX:
-  case AMDGPUISD::SMIN:
-  case AMDGPUISD::UMAX:
-  case AMDGPUISD::UMIN: {
+  case ISD::SMAX:
+  case ISD::SMIN:
+  case ISD::UMAX:
+  case ISD::UMIN: {
     if (DCI.getDAGCombineLevel() >= AfterLegalizeDAG &&
         N->getValueType(0) != MVT::f64 &&
         getTargetMachine().getOptLevel() > CodeGenOpt::None)

@@ -224,16 +224,16 @@ defm S_SUBB_U32 : SOP2_32 <sop2<0x05>, "s_subb_u32",
 } // End Uses = [SCC]
 
 defm S_MIN_I32 : SOP2_32 <sop2<0x06>, "s_min_i32",
-  [(set i32:$dst, (AMDGPUsmin i32:$src0, i32:$src1))]
+  [(set i32:$dst, (smin i32:$src0, i32:$src1))]
 >;
 defm S_MIN_U32 : SOP2_32 <sop2<0x07>, "s_min_u32",
-  [(set i32:$dst, (AMDGPUumin i32:$src0, i32:$src1))]
+  [(set i32:$dst, (umin i32:$src0, i32:$src1))]
 >;
 defm S_MAX_I32 : SOP2_32 <sop2<0x08>, "s_max_i32",
-  [(set i32:$dst, (AMDGPUsmax i32:$src0, i32:$src1))]
+  [(set i32:$dst, (smax i32:$src0, i32:$src1))]
 >;
 defm S_MAX_U32 : SOP2_32 <sop2<0x09>, "s_max_u32",
-  [(set i32:$dst, (AMDGPUumax i32:$src0, i32:$src1))]
+  [(set i32:$dst, (umax i32:$src0, i32:$src1))]
 >;
 } // End Defs = [SCC]
 

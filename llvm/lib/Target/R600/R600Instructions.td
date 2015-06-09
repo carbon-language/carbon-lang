@@ -781,10 +781,10 @@ def XOR_INT : R600_2OP_Helper <0x32, "XOR_INT", xor>;
 def NOT_INT : R600_1OP_Helper <0x33, "NOT_INT", not>;
 def ADD_INT : R600_2OP_Helper <0x34, "ADD_INT", add>;
 def SUB_INT : R600_2OP_Helper <0x35, "SUB_INT", sub>;
-def MAX_INT : R600_2OP_Helper <0x36, "MAX_INT", AMDGPUsmax>;
-def MIN_INT : R600_2OP_Helper <0x37, "MIN_INT", AMDGPUsmin>;
-def MAX_UINT : R600_2OP_Helper <0x38, "MAX_UINT", AMDGPUumax>;
-def MIN_UINT : R600_2OP_Helper <0x39, "MIN_UINT", AMDGPUumin>;
+def MAX_INT : R600_2OP_Helper <0x36, "MAX_INT", smax>;
+def MIN_INT : R600_2OP_Helper <0x37, "MIN_INT", smin>;
+def MAX_UINT : R600_2OP_Helper <0x38, "MAX_UINT", umax>;
+def MIN_UINT : R600_2OP_Helper <0x39, "MIN_UINT", umin>;
 
 def SETE_INT : R600_2OP <
   0x3A, "SETE_INT",

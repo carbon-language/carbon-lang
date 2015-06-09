@@ -314,6 +314,11 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM,
   setOperationAction(ISD::FP_TO_UINT, MVT::i64, Custom);
   setOperationAction(ISD::SELECT_CC, MVT::i64, Expand);
 
+  setOperationAction(ISD::SMIN, MVT::i32, Legal);
+  setOperationAction(ISD::UMIN, MVT::i32, Legal);
+  setOperationAction(ISD::SMAX, MVT::i32, Legal);
+  setOperationAction(ISD::UMAX, MVT::i32, Legal);
+
   if (!Subtarget->hasFFBH())
     setOperationAction(ISD::CTLZ_ZERO_UNDEF, MVT::i32, Expand);
 
@@ -975,17 +980,17 @@ SDValue AMDGPUTargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
                                                    Op.getOperand(2));
 
     case AMDGPUIntrinsic::AMDGPU_imax:
-      return DAG.getNode(AMDGPUISD::SMAX, DL, VT, Op.getOperand(1),
-                                                  Op.getOperand(2));
+      return DAG.getNode(ISD::SMAX, DL, VT, Op.getOperand(1),
+                                            Op.getOperand(2));
     case AMDGPUIntrinsic::AMDGPU_umax:
-      return DAG.getNode(AMDGPUISD::UMAX, DL, VT, Op.getOperand(1),
-                                                  Op.getOperand(2));
+      return DAG.getNode(ISD::UMAX, DL, VT, Op.getOperand(1),
+                                            Op.getOperand(2));
     case AMDGPUIntrinsic::AMDGPU_imin:
-      return DAG.getNode(AMDGPUISD::SMIN, DL, VT, Op.getOperand(1),
-                                                  Op.getOperand(2));
+      return DAG.getNode(ISD::SMIN, DL, VT, Op.getOperand(1),
+                                            Op.getOperand(2));
     case AMDGPUIntrinsic::AMDGPU_umin:
-      return DAG.getNode(AMDGPUISD::UMIN, DL, VT, Op.getOperand(1),
-                                                  Op.getOperand(2));
+      return DAG.getNode(ISD::UMIN, DL, VT, Op.getOperand(1),
+                                            Op.getOperand(2));
 
     case AMDGPUIntrinsic::AMDGPU_umul24:
       return DAG.getNode(AMDGPUISD::MUL_U24, DL, VT,
@@ -1063,7 +1068,7 @@ SDValue AMDGPUTargetLowering::LowerIntrinsicIABS(SDValue Op,
   SDValue Neg = DAG.getNode(ISD::SUB, DL, VT, DAG.getConstant(0, DL, VT),
                             Op.getOperand(1));
 
-  return DAG.getNode(AMDGPUISD::SMAX, DL, VT, Neg, Op.getOperand(1));
+  return DAG.getNode(ISD::SMAX, DL, VT, Neg, Op.getOperand(1));
 }
 
 /// Linear Interpolation
@@ -1162,7 +1167,7 @@ SDValue AMDGPUTargetLowering::CombineFMinMaxLegacy(SDLoc DL,
   return SDValue();
 }
 
-/// \brief Generate Min/Max node
+// FIXME: Remove this when combines added to DAGCombiner.
 SDValue AMDGPUTargetLowering::CombineIMinMax(SDLoc DL,
                                              EVT VT,
                                              SDValue LHS,
@@ -1178,22 +1183,22 @@ SDValue AMDGPUTargetLowering::CombineIMinMax(SDLoc DL,
   switch (CCOpcode) {
   case ISD::SETULE:
   case ISD::SETULT: {
-    unsigned Opc = (LHS == True) ? AMDGPUISD::UMIN : AMDGPUISD::UMAX;
+    unsigned Opc = (LHS == True) ? ISD::UMIN : ISD::UMAX;
     return DAG.getNode(Opc, DL, VT, LHS, RHS);
   }
   case ISD::SETLE:
   case ISD::SETLT: {
-    unsigned Opc = (LHS == True) ? AMDGPUISD::SMIN : AMDGPUISD::SMAX;
+    unsigned Opc = (LHS == True) ? ISD::SMIN : ISD::SMAX;
     return DAG.getNode(Opc, DL, VT, LHS, RHS);
   }
   case ISD::SETGT:
   case ISD::SETGE: {
-    unsigned Opc = (LHS == True) ? AMDGPUISD::SMAX : AMDGPUISD::SMIN;
+    unsigned Opc = (LHS == True) ? ISD::SMAX : ISD::SMIN;
     return DAG.getNode(Opc, DL, VT, LHS, RHS);
   }
   case ISD::SETUGE:
   case ISD::SETUGT: {
-    unsigned Opc = (LHS == True) ? AMDGPUISD::UMAX : AMDGPUISD::UMIN;
+    unsigned Opc = (LHS == True) ? ISD::UMAX : ISD::UMIN;
     return DAG.getNode(Opc, DL, VT, LHS, RHS);
   }
   default:
@@ -2657,11 +2662,7 @@ const char* AMDGPUTargetLowering::getTargetNodeName(unsigned Opcode) const {
   NODE_NAME_CASE(COS_HW)
   NODE_NAME_CASE(SIN_HW)
   NODE_NAME_CASE(FMAX_LEGACY)
-  NODE_NAME_CASE(SMAX)
-  NODE_NAME_CASE(UMAX)
   NODE_NAME_CASE(FMIN_LEGACY)
-  NODE_NAME_CASE(SMIN)
-  NODE_NAME_CASE(UMIN)
   NODE_NAME_CASE(FMAX3)
   NODE_NAME_CASE(SMAX3)
   NODE_NAME_CASE(UMAX3)
@@ -2807,14 +2808,6 @@ void AMDGPUTargetLowering::computeKnownBitsForTargetNode(
 
     break;
   }
-  case AMDGPUISD::SMAX:
-  case AMDGPUISD::UMAX:
-  case AMDGPUISD::SMIN:
-  case AMDGPUISD::UMIN:
-    computeKnownBitsForMinMax(Op.getOperand(0), Op.getOperand(1),
-                              KnownZero, KnownOne, DAG, Depth);
-    break;
-
   case AMDGPUISD::CARRY:
   case AMDGPUISD::BORROW: {
     KnownZero = APInt::getHighBitsSet(32, 31);
