@@ -1695,6 +1695,8 @@ bool GVN::PerformLoadPRE(LoadInst *LI, AvailValInBlkVect &ValuesPerBlock,
   LI->replaceAllUsesWith(V);
   if (isa<PHINode>(V))
     V->takeName(LI);
+  if (Instruction *I = dyn_cast<Instruction>(V))
+    I->setDebugLoc(LI->getDebugLoc());
   if (V->getType()->getScalarType()->isPointerTy())
     MD->invalidateCachedPointerInfo(V);
   markInstructionForDeletion(LI);
@@ -1761,6 +1763,8 @@ bool GVN::processNonLocalLoad(LoadInst *LI) {
 
     if (isa<PHINode>(V))
       V->takeName(LI);
+    if (Instruction *I = dyn_cast<Instruction>(V))
+      I->setDebugLoc(LI->getDebugLoc());
     if (V->getType()->getScalarType()->isPointerTy())
       MD->invalidateCachedPointerInfo(V);
     markInstructionForDeletion(LI);
