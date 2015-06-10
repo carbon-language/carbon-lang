@@ -245,7 +245,7 @@ bool MachineCombiner::preservesCriticalPathLen(
         dbgs() << " RootDepth + RootLatency + RootSlack "
                << RootDepth + RootLatency + RootSlack << "\n";);
 
-  /// True when the new sequence does not lenghten the critical path.
+  /// True when the new sequence does not lengthen the critical path.
   return ((NewRootDepth + NewRootLatency) <=
           (RootDepth + RootLatency + RootSlack));
 }
