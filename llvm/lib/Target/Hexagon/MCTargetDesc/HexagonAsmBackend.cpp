@@ -17,10 +17,13 @@
 #include "llvm/MC/MCELFObjectWriter.h"
 #include "llvm/MC/MCFixupKindInfo.h"
 #include "llvm/MC/MCInstrInfo.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/TargetRegistry.h"
 
 using namespace llvm;
 using namespace Hexagon;
+
+#define DEBUG_TYPE "hexagon-asm-backend"
 
 namespace {
 
@@ -278,8 +281,26 @@ public:
     llvm_unreachable("relaxInstruction() unimplemented");
   }
 
-  bool writeNopData(uint64_t /*Count*/,
-                    MCObjectWriter * /*OW*/) const override {
+  bool writeNopData(uint64_t Count,
+                    MCObjectWriter * OW) const override {
+    static const uint32_t Nopcode  = 0x7f000000, // Hard-coded NOP.
+                          ParseIn  = 0x00004000, // In packet parse-bits.
+                          ParseEnd = 0x0000c000; // End of packet parse-bits.
+
+    while(Count % HEXAGON_INSTR_SIZE) {
+      DEBUG(dbgs() << "Alignment not a multiple of the instruction size:" <<
+          Count % HEXAGON_INSTR_SIZE << "/" << HEXAGON_INSTR_SIZE << "\n");
+      --Count;
+      OW->write8(0);
+    }
+
+    while(Count) {
+      Count -= HEXAGON_INSTR_SIZE;
+      // Close the packet whenever a multiple of the maximum packet size remains
+      uint32_t ParseBits = (Count % (HEXAGON_PACKET_SIZE * HEXAGON_INSTR_SIZE))?
+                           ParseIn: ParseEnd;
+      OW->write32(Nopcode | ParseBits);
+    }
     return true;
   }
 };
