@@ -164,7 +164,8 @@ void MCWinCOFFStreamer::EmitCOFFSafeSEH(MCSymbol const *Symbol) {
       Triple::x86)
     return;
 
-  if (cast<MCSymbolCOFF>(Symbol)->isSafeSEH())
+  const MCSymbolCOFF *CSymbol = cast<MCSymbolCOFF>(Symbol);
+  if (CSymbol->isSafeSEH())
     return;
 
   MCSection *SXData = getContext().getObjectFileInfo()->getSXDataSection();
@@ -175,7 +176,12 @@ void MCWinCOFFStreamer::EmitCOFFSafeSEH(MCSymbol const *Symbol) {
   new MCSafeSEHFragment(Symbol, SXData);
 
   getAssembler().registerSymbol(*Symbol);
-  cast<MCSymbolCOFF>(Symbol)->setIsSafeSEH();
+  CSymbol->setIsSafeSEH();
+
+  // The Microsoft linker requires that the symbol type of a handler be
+  // function. Go ahead and oblige it here.
+  CSymbol->setType(COFF::IMAGE_SYM_DTYPE_FUNCTION
+                   << COFF::SCT_COMPLEX_TYPE_SHIFT);
 }
 
 void MCWinCOFFStreamer::EmitCOFFSectionIndex(MCSymbol const *Symbol) {

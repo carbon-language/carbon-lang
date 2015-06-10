@@ -126,3 +126,7 @@ catchall:
 ; CHECK-LABEL: ___ehhandler$use_CxxFrameHandler3:
 ; CHECK: movl $L__ehtable$use_CxxFrameHandler3, %eax
 ; CHECK: jmp  ___CxxFrameHandler3 # TAILCALL
+
+; CHECK: .safeseh __except_handler3
+; CHECK: .safeseh __except_handler4
+; CHECK: .safeseh ___ehhandler$use_CxxFrameHandler3

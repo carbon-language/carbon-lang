@@ -60,7 +60,7 @@ public:
 private:
   void emitExceptionRegistrationRecord(Function *F);
 
-  void linkExceptionRegistration(IRBuilder<> &Builder, Value *Handler);
+  void linkExceptionRegistration(IRBuilder<> &Builder, Function *Handler);
   void unlinkExceptionRegistration(IRBuilder<> &Builder);
   void addCXXStateStores(Function &F, MachineModuleInfo &MMI);
   void addSEHStateStores(Function &F, MachineModuleInfo &MMI);
@@ -365,11 +365,14 @@ Function *WinEHStatePass::generateLSDAInEAXThunk(Function *ParentFunc) {
 }
 
 void WinEHStatePass::linkExceptionRegistration(IRBuilder<> &Builder,
-                                               Value *Handler) {
+                                               Function *Handler) {
+  // Emit the .safeseh directive for this function.
+  Handler->addFnAttr("safeseh");
+
   Type *LinkTy = getEHLinkRegistrationType();
   // Handler = Handler
-  Handler = Builder.CreateBitCast(Handler, Builder.getInt8PtrTy());
-  Builder.CreateStore(Handler, Builder.CreateStructGEP(LinkTy, Link, 1));
+  Value *HandlerI8 = Builder.CreateBitCast(Handler, Builder.getInt8PtrTy());
+  Builder.CreateStore(HandlerI8, Builder.CreateStructGEP(LinkTy, Link, 1));
   // Next = [fs:00]
   Constant *FSZero =
       Constant::getNullValue(LinkTy->getPointerTo()->getPointerTo(257));

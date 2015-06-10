@@ -110,3 +110,5 @@ eh.resume:                                        ; preds = %catch.dispatch.4
 ; CHECK: movl $3, Lf$frame_escape_{{[0-9]+.*}}
 ; CHECK: movl $3, (%esp)
 ; CHECK: calll _may_throw
+
+; CHECK: .safeseh ___ehhandler$f
