@@ -2034,11 +2034,6 @@ void ASTDeclReader::VisitTemplateTypeParmDecl(TemplateTypeParmDecl *D) {
   D->setDeclaredWithTypename(Record[Idx++]);
 
   if (Record[Idx++])
-    // FIXME: Rebuild inherited default argument chain when linking together
-    // the redecl chain.
-    D->setInheritedDefaultArgument(
-        Reader.getContext(), ReadDeclAs<TemplateTypeParmDecl>(Record, Idx));
-  else
     D->setDefaultArgument(GetTypeSourceInfo(Record, Idx));
 }
 
@@ -2057,12 +2052,6 @@ void ASTDeclReader::VisitNonTypeTemplateParmDecl(NonTypeTemplateParmDecl *D) {
     // Rest of NonTypeTemplateParmDecl.
     D->ParameterPack = Record[Idx++];
     if (Record[Idx++])
-      // FIXME: Rebuild inherited default argument chain when linking together
-      // the redecl chain.
-      D->setInheritedDefaultArgument(
-          Reader.getContext(),
-          ReadDeclAs<NonTypeTemplateParmDecl>(Record, Idx));
-    else
       D->setDefaultArgument(Reader.ReadExpr(F));
   }
 }
@@ -2081,12 +2070,6 @@ void ASTDeclReader::VisitTemplateTemplateParmDecl(TemplateTemplateParmDecl *D) {
     // Rest of TemplateTemplateParmDecl.
     D->ParameterPack = Record[Idx++];
     if (Record[Idx++])
-      // FIXME: Rebuild inherited default argument chain when linking together
-      // the redecl chain.
-      D->setInheritedDefaultArgument(
-          Reader.getContext(),
-          ReadDeclAs<TemplateTemplateParmDecl>(Record, Idx));
-    else
       D->setDefaultArgument(Reader.getContext(),
                             Reader.ReadTemplateArgumentLoc(F, Record, Idx));
   }
@@ -2917,6 +2900,44 @@ void ASTDeclReader::attachPreviousDeclImpl(ASTReader &Reader, ...) {
   llvm_unreachable("attachPreviousDecl on non-redeclarable declaration");
 }
 
+/// Inherit the default template argument from \p From to \p To. Returns
+/// \c false if there is no default template for \p From.
+template <typename ParmDecl>
+static bool inheritDefaultTemplateArgument(ASTContext &Context, ParmDecl *From,
+                                           Decl *ToD) {
+  auto *To = cast<ParmDecl>(ToD);
+  if (!From->hasDefaultArgument())
+    return false;
+  if (!To->hasDefaultArgument())
+    To->setInheritedDefaultArgument(Context, From);
+  return true;
+}
+
+static void inheritDefaultTemplateArguments(ASTContext &Context,
+                                            TemplateDecl *From,
+                                            TemplateDecl *To) {
+  auto *FromTP = From->getTemplateParameters();
+  auto *ToTP = To->getTemplateParameters();
+  assert(FromTP->size() == ToTP->size() && "merged mismatched templates?");
+
+  for (unsigned I = 0, N = FromTP->size(); I != N; ++I) {
+    NamedDecl *FromParam = FromTP->getParam(N - I - 1);
+    NamedDecl *ToParam = ToTP->getParam(N - I - 1);
+
+    if (auto *FTTP = dyn_cast<TemplateTypeParmDecl>(FromParam)) {
+      if (inheritDefaultTemplateArgument(Context, FTTP, ToParam))
+        break;
+    } else if (auto *FNTTP = dyn_cast<NonTypeTemplateParmDecl>(FromParam)) {
+      if (inheritDefaultTemplateArgument(Context, FNTTP, ToParam))
+        break;
+    } else {
+      if (inheritDefaultTemplateArgument(
+              Context, cast<TemplateTemplateParmDecl>(FromParam), ToParam))
+        break;
+    }
+  }
+}
+
 void ASTDeclReader::attachPreviousDecl(ASTReader &Reader, Decl *D,
                                        Decl *Previous, Decl *Canon) {
   assert(D && Previous);
@@ -2943,6 +2964,12 @@ void ASTDeclReader::attachPreviousDecl(ASTReader &Reader, Decl *D,
   // be too.
   if (Previous->Used)
     D->Used = true;
+
+  // If the declaration declares a template, it may inherit default arguments
+  // from the previous declaration.
+  if (TemplateDecl *TD = dyn_cast<TemplateDecl>(D))
+    inheritDefaultTemplateArguments(Reader.getContext(),
+                                    cast<TemplateDecl>(Previous), TD);
 }
 
 template<typename DeclT>
