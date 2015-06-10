@@ -52,12 +52,9 @@ WinException::~WinException() {}
 void WinException::endModule() {
   auto &OS = *Asm->OutStreamer;
   const Module *M = MMI->getModule();
-  for (const Function &F : *M) {
-    if (F.hasFnAttribute("safeseh")) {
-      llvm::errs() << ".safeseh " << F.getName() << "\n";
+  for (const Function &F : *M)
+    if (F.hasFnAttribute("safeseh"))
       OS.EmitCOFFSafeSEH(Asm->getSymbol(&F));
-    }
-  }
 }
 
 void WinException::beginFunction(const MachineFunction *MF) {
