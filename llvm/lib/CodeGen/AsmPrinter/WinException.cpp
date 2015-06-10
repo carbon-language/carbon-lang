@@ -612,12 +612,10 @@ void WinException::emitExceptHandlerTable(const MachineFunction *MF) {
            "gaps in the SEH scope table");
     for (const SEHHandler &Handler : LPInfo->SEHHandlers) {
       // Emit the filter or finally function pointer, if present. Otherwise,
-      // emit '1' to indicate a catch-all.
-      const MCExpr *FilterOrFinally;
-      if (const Function *F = Handler.FilterOrFinally)
-        FilterOrFinally = create32bitRef(Asm->getSymbol(F));
-      else
-        FilterOrFinally = MCConstantExpr::create(1, Asm->OutContext);
+      // emit '0' to indicate a catch-all.
+      const Function *F = Handler.FilterOrFinally;
+      const MCExpr *FilterOrFinally =
+          create32bitRef(F ? Asm->getSymbol(F) : nullptr);
 
       // Compute the recovery address, which is a block address or null.
       const BlockAddress *BA = Handler.RecoverBA;

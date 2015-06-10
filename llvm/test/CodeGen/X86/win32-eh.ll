@@ -37,7 +37,7 @@ catchall:
 ; CHECK: .section .xdata,"dr"
 ; CHECK-LABEL: L__ehtable$use_except_handler3:
 ; CHECK-NEXT:  .long   -1
-; CHECK-NEXT:  .long   1
+; CHECK-NEXT:  .long   0
 ; CHECK-NEXT:  .long   Ltmp{{[0-9]+}}
 
 define void @use_except_handler4() {
@@ -77,7 +77,7 @@ catchall:
 ; CHECK-NEXT:  .long   9999
 ; CHECK-NEXT:  .long   0
 ; CHECK-NEXT:  .long   -2
-; CHECK-NEXT:  .long   1
+; CHECK-NEXT:  .long   0
 ; CHECK-NEXT:  .long   Ltmp{{[0-9]+}}
 
 define void @use_CxxFrameHandler3() {

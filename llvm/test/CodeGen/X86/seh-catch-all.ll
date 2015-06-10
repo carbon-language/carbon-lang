@@ -67,5 +67,5 @@ eh.resume:
 ; X86: .section .xdata,"dr"
 ; X86-NEXT: L__ehtable$main
 ; X86-NEXT: .long -1
-; X86-NEXT: .long 1
+; X86-NEXT: .long 0
 ; X86-NEXT: .long Ltmp{{[0-9]+}}
