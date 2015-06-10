@@ -9,11 +9,11 @@
 
 int main(int argc, char **argv) {
   size_t r;
-  char s1[] = "cc";
+  char s1[] = "bbc";
   char s2[] = {'a', 'b'};
   char s3 = 0;
   r = strspn(s1, s2);
   // CHECK:'s{{[2|3]}}' <== Memory access at offset {{[0-9]+ .*}}flows this variable
-  assert(r == 0);
+  assert(r >= 2);
   return 0;
 }

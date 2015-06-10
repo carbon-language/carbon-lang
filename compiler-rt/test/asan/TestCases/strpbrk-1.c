@@ -10,10 +10,10 @@
 int main(int argc, char **argv) {
   char *r;
   char s2[] = "ab";
-  char s1[] = {'c', 'd'};
-  char s3[] = "a";
+  char s1[] = {'c', 'a'};
+  char s3 = 0;
   r = strpbrk(s1, s2);
   // CHECK:'s{{[1|3]}}' <== Memory access at offset {{[0-9]+ .*}}flows this variable
-  assert(r <= s3);
+  assert(r == s1 + 1);
   return 0;
 }
