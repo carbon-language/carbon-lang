@@ -40,12 +40,12 @@ extern Target TheARMLETarget, TheThumbLETarget;
 extern Target TheARMBETarget, TheThumbBETarget;
 
 namespace ARM_MC {
-  std::string ParseARMTriple(StringRef TT, StringRef CPU);
+std::string ParseARMTriple(const Triple &TT, StringRef CPU);
 
-  /// Create a ARM MCSubtargetInfo instance. This is exposed so Asm parser, etc.
-  /// do not need to go through TargetRegistry.
-  MCSubtargetInfo *createARMMCSubtargetInfo(StringRef TT, StringRef CPU,
-                                            StringRef FS);
+/// Create a ARM MCSubtargetInfo instance. This is exposed so Asm parser, etc.
+/// do not need to go through TargetRegistry.
+MCSubtargetInfo *createARMMCSubtargetInfo(const Triple &TT, StringRef CPU,
+                                          StringRef FS);
 }
 
 MCTargetStreamer *createARMNullTargetStreamer(MCStreamer &S);

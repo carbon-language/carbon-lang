@@ -45,7 +45,7 @@ static MCRegisterInfo *createNVPTXMCRegisterInfo(StringRef TT) {
 }
 
 static MCSubtargetInfo *
-createNVPTXMCSubtargetInfo(StringRef TT, StringRef CPU, StringRef FS) {
+createNVPTXMCSubtargetInfo(const Triple &TT, StringRef CPU, StringRef FS) {
   MCSubtargetInfo *X = new MCSubtargetInfo();
   InitNVPTXMCSubtargetInfo(X, TT, CPU, FS);
   return X;

@@ -59,7 +59,7 @@ static cl::opt<bool>
 
 void MipsSubtarget::anchor() { }
 
-MipsSubtarget::MipsSubtarget(const std::string &TT, const std::string &CPU,
+MipsSubtarget::MipsSubtarget(const Triple &TT, const std::string &CPU,
                              const std::string &FS, bool little,
                              const MipsTargetMachine &TM)
     : MipsGenSubtargetInfo(TT, CPU, FS), MipsArchVersion(MipsDefault),
@@ -141,7 +141,8 @@ CodeGenOpt::Level MipsSubtarget::getOptLevelToEnablePostRAScheduler() const {
 MipsSubtarget &
 MipsSubtarget::initializeSubtargetDependencies(StringRef CPU, StringRef FS,
                                                const TargetMachine &TM) {
-  std::string CPUName = MIPS_MC::selectMipsCPU(TM.getTargetTriple(), CPU);
+  std::string CPUName =
+      MIPS_MC::selectMipsCPU(Triple(TM.getTargetTriple()), CPU);
 
   // Parse features string.
   ParseSubtargetFeatures(CPUName, FS);

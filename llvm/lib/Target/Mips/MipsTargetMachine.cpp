@@ -92,11 +92,14 @@ MipsTargetMachine::MipsTargetMachine(const Target &T, StringRef TT,
                         CPU, FS, Options, RM, CM, OL),
       isLittle(isLittle), TLOF(make_unique<MipsTargetObjectFile>()),
       ABI(MipsABIInfo::computeTargetABI(Triple(TT), CPU, Options.MCOptions)),
-      Subtarget(nullptr), DefaultSubtarget(TT, CPU, FS, isLittle, *this),
-      NoMips16Subtarget(TT, CPU, FS.empty() ? "-mips16" : FS.str() + ",-mips16",
+      Subtarget(nullptr),
+      DefaultSubtarget(Triple(TT), CPU, FS, isLittle, *this),
+      NoMips16Subtarget(Triple(TT), CPU,
+                        FS.empty() ? "-mips16" : FS.str() + ",-mips16",
                         isLittle, *this),
-      Mips16Subtarget(TT, CPU, FS.empty() ? "+mips16" : FS.str() + ",+mips16",
-                      isLittle, *this) {
+      Mips16Subtarget(Triple(TT), CPU,
+                      FS.empty() ? "+mips16" : FS.str() + ",+mips16", isLittle,
+                      *this) {
   Subtarget = &DefaultSubtarget;
   initAsmInfo();
 }
@@ -157,7 +160,8 @@ MipsTargetMachine::getSubtargetImpl(const Function &F) const {
     // creation will depend on the TM and the code generation flags on the
     // function that reside in TargetOptions.
     resetTargetOptions(F);
-    I = llvm::make_unique<MipsSubtarget>(TargetTriple, CPU, FS, isLittle, *this);
+    I = llvm::make_unique<MipsSubtarget>(Triple(TargetTriple), CPU, FS,
+                                         isLittle, *this);
   }
   return I.get();
 }

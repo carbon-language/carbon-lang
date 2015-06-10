@@ -52,16 +52,16 @@ namespace N86 {
 }
 
 namespace X86_MC {
-  std::string ParseX86Triple(StringRef TT);
+std::string ParseX86Triple(const Triple &TT);
 
-  unsigned getDwarfRegFlavour(Triple TT, bool isEH);
+unsigned getDwarfRegFlavour(Triple TT, bool isEH);
 
-  void InitLLVM2SEHRegisterMapping(MCRegisterInfo *MRI);
+void InitLLVM2SEHRegisterMapping(MCRegisterInfo *MRI);
 
-  /// Create a X86 MCSubtargetInfo instance. This is exposed so Asm parser, etc.
-  /// do not need to go through TargetRegistry.
-  MCSubtargetInfo *createX86MCSubtargetInfo(StringRef TT, StringRef CPU,
-                                            StringRef FS);
+/// Create a X86 MCSubtargetInfo instance. This is exposed so Asm parser, etc.
+/// do not need to go through TargetRegistry.
+MCSubtargetInfo *createX86MCSubtargetInfo(const Triple &TT, StringRef CPU,
+                                          StringRef FS);
 }
 
 MCCodeEmitter *createX86MCCodeEmitter(const MCInstrInfo &MCII,

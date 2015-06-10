@@ -49,8 +49,8 @@ static MCRegisterInfo *createAMDGPUMCRegisterInfo(StringRef TT) {
   return X;
 }
 
-static MCSubtargetInfo *createAMDGPUMCSubtargetInfo(StringRef TT, StringRef CPU,
-                                                   StringRef FS) {
+static MCSubtargetInfo *
+createAMDGPUMCSubtargetInfo(const Triple &TT, StringRef CPU, StringRef FS) {
   MCSubtargetInfo * X = new MCSubtargetInfo();
   InitAMDGPUMCSubtargetInfo(X, TT, CPU, FS);
   return X;

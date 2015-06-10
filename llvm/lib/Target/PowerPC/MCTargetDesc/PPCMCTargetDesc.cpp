@@ -63,8 +63,8 @@ static MCRegisterInfo *createPPCMCRegisterInfo(StringRef TT) {
   return X;
 }
 
-static MCSubtargetInfo *createPPCMCSubtargetInfo(StringRef TT, StringRef CPU,
-                                                 StringRef FS) {
+static MCSubtargetInfo *createPPCMCSubtargetInfo(const Triple &TT,
+                                                 StringRef CPU, StringRef FS) {
   MCSubtargetInfo *X = new MCSubtargetInfo();
   InitPPCMCSubtargetInfo(X, TT, CPU, FS);
   return X;

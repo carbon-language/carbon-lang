@@ -24,7 +24,7 @@ class ARMAsmBackend : public MCAsmBackend {
   bool IsLittleEndian; // Big or little endian.
 public:
   ARMAsmBackend(const Target &T, const Triple &TT, bool IsLittle)
-      : MCAsmBackend(), STI(ARM_MC::createARMMCSubtargetInfo(TT.str(), "", "")),
+      : MCAsmBackend(), STI(ARM_MC::createARMMCSubtargetInfo(TT, "", "")),
         isThumbMode(TT.getArchName().startswith("thumb")),
         IsLittleEndian(IsLittle) {}
 

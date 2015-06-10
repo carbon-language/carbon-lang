@@ -46,8 +46,8 @@ static MCRegisterInfo *createBPFMCRegisterInfo(StringRef TT) {
   return X;
 }
 
-static MCSubtargetInfo *createBPFMCSubtargetInfo(StringRef TT, StringRef CPU,
-                                                 StringRef FS) {
+static MCSubtargetInfo *createBPFMCSubtargetInfo(const Triple &TT,
+                                                 StringRef CPU, StringRef FS) {
   MCSubtargetInfo *X = new MCSubtargetInfo();
   InitBPFMCSubtargetInfo(X, TT, CPU, FS);
   return X;

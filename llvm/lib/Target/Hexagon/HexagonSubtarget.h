@@ -52,7 +52,7 @@ private:
   InstrItineraryData InstrItins;
 
 public:
-  HexagonSubtarget(StringRef TT, StringRef CPU, StringRef FS,
+  HexagonSubtarget(const Triple &TT, StringRef CPU, StringRef FS,
                    const TargetMachine &TM);
 
   /// getInstrItins - Return the instruction itineraries based on subtarget

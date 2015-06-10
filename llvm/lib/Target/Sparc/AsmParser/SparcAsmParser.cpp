@@ -76,7 +76,9 @@ class SparcAsmParser : public MCTargetAsmParser {
   bool matchSparcAsmModifiers(const MCExpr *&EVal, SMLoc &EndLoc);
   bool parseDirectiveWord(unsigned Size, SMLoc L);
 
-  bool is64Bit() const { return STI.getTargetTriple().startswith("sparcv9"); }
+  bool is64Bit() const {
+    return STI.getTargetTriple().getArchName().startswith("sparcv9");
+  }
 
   void expandSET(MCInst &Inst, SMLoc IDLoc,
                  SmallVectorImpl<MCInst> &Instructions);

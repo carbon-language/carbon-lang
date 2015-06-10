@@ -56,7 +56,7 @@ private:
   SystemZSubtarget &initializeSubtargetDependencies(StringRef CPU,
                                                     StringRef FS);
 public:
-  SystemZSubtarget(const std::string &TT, const std::string &CPU,
+  SystemZSubtarget(const Triple &TT, const std::string &CPU,
                    const std::string &FS, const TargetMachine &TM);
 
   const TargetFrameLowering *getFrameLowering() const override {

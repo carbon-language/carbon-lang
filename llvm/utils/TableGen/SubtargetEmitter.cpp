@@ -1437,7 +1437,7 @@ void SubtargetEmitter::run(raw_ostream &OS) {
   // MCInstrInfo initialization routine.
   OS << "static inline void Init" << Target
      << "MCSubtargetInfo(MCSubtargetInfo *II, "
-     << "StringRef TT, StringRef CPU, StringRef FS) {\n";
+     << "const Triple &TT, StringRef CPU, StringRef FS) {\n";
   OS << "  II->InitMCSubtargetInfo(TT, CPU, FS, ";
   if (NumFeatures)
     OS << Target << "FeatureKV, ";
@@ -1482,10 +1482,11 @@ void SubtargetEmitter::run(raw_ostream &OS) {
   OS << "namespace llvm {\n";
   OS << "class DFAPacketizer;\n";
   OS << "struct " << ClassName << " : public TargetSubtargetInfo {\n"
-     << "  explicit " << ClassName << "(StringRef TT, StringRef CPU, "
+     << "  explicit " << ClassName << "(const Triple &TT, StringRef CPU, "
      << "StringRef FS);\n"
      << "public:\n"
-     << "  unsigned resolveSchedClass(unsigned SchedClass, const MachineInstr *DefMI,"
+     << "  unsigned resolveSchedClass(unsigned SchedClass, "
+     << " const MachineInstr *DefMI,"
      << " const TargetSchedModel *SchedModel) const override;\n"
      << "  DFAPacketizer *createDFAPacketizer(const InstrItineraryData *IID)"
      << " const;\n"
@@ -1515,7 +1516,7 @@ void SubtargetEmitter::run(raw_ostream &OS) {
     OS << "extern const unsigned " << Target << "ForwardingPaths[];\n";
   }
 
-  OS << ClassName << "::" << ClassName << "(StringRef TT, StringRef CPU, "
+  OS << ClassName << "::" << ClassName << "(const Triple &TT, StringRef CPU, "
      << "StringRef FS)\n"
      << "  : TargetSubtargetInfo() {\n"
      << "  InitMCSubtargetInfo(TT, CPU, FS, ";

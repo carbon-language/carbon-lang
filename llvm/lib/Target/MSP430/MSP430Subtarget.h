@@ -41,7 +41,7 @@ public:
   /// This constructor initializes the data members to match that
   /// of the specified triple.
   ///
-  MSP430Subtarget(const std::string &TT, const std::string &CPU,
+  MSP430Subtarget(const Triple &TT, const std::string &CPU,
                   const std::string &FS, const TargetMachine &TM);
 
   MSP430Subtarget &initializeSubtargetDependencies(StringRef CPU, StringRef FS);

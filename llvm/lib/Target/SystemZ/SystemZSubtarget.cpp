@@ -32,8 +32,7 @@ SystemZSubtarget::initializeSubtargetDependencies(StringRef CPU, StringRef FS) {
   return *this;
 }
 
-SystemZSubtarget::SystemZSubtarget(const std::string &TT,
-                                   const std::string &CPU,
+SystemZSubtarget::SystemZSubtarget(const Triple &TT, const std::string &CPU,
                                    const std::string &FS,
                                    const TargetMachine &TM)
     : SystemZGenSubtargetInfo(TT, CPU, FS), HasDistinctOps(false),
@@ -41,9 +40,9 @@ SystemZSubtarget::SystemZSubtarget(const std::string &TT,
       HasPopulationCount(false), HasFastSerialization(false),
       HasInterlockedAccess1(false), HasMiscellaneousExtensions(false),
       HasTransactionalExecution(false), HasProcessorAssist(false),
-      HasVector(false),
-      TargetTriple(TT), InstrInfo(initializeSubtargetDependencies(CPU, FS)),
-      TLInfo(TM, *this), TSInfo(*TM.getDataLayout()), FrameLowering() {}
+      HasVector(false), TargetTriple(TT),
+      InstrInfo(initializeSubtargetDependencies(CPU, FS)), TLInfo(TM, *this),
+      TSInfo(*TM.getDataLayout()), FrameLowering() {}
 
 // Return true if GV binds locally under reloc model RM.
 static bool bindsLocally(const GlobalValue *GV, Reloc::Model RM) {

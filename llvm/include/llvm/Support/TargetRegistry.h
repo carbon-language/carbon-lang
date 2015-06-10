@@ -98,7 +98,7 @@ public:
   typedef MCInstrInfo *(*MCInstrInfoCtorFnTy)(void);
   typedef MCInstrAnalysis *(*MCInstrAnalysisCtorFnTy)(const MCInstrInfo *Info);
   typedef MCRegisterInfo *(*MCRegInfoCtorFnTy)(StringRef TT);
-  typedef MCSubtargetInfo *(*MCSubtargetInfoCtorFnTy)(StringRef TT,
+  typedef MCSubtargetInfo *(*MCSubtargetInfoCtorFnTy)(const Triple &TT,
                                                       StringRef CPU,
                                                       StringRef Features);
   typedef TargetMachine *(*TargetMachineCtorTy)(
@@ -334,18 +334,18 @@ public:
 
   /// createMCSubtargetInfo - Create a MCSubtargetInfo implementation.
   ///
-  /// \param Triple This argument is used to determine the target machine
+  /// \param TheTriple This argument is used to determine the target machine
   /// feature set; it should always be provided. Generally this should be
   /// either the target triple from the module, or the target triple of the
   /// host if that does not exist.
   /// \param CPU This specifies the name of the target CPU.
   /// \param Features This specifies the string representation of the
   /// additional target features.
-  MCSubtargetInfo *createMCSubtargetInfo(StringRef Triple, StringRef CPU,
+  MCSubtargetInfo *createMCSubtargetInfo(StringRef TheTriple, StringRef CPU,
                                          StringRef Features) const {
     if (!MCSubtargetInfoCtorFn)
       return nullptr;
-    return MCSubtargetInfoCtorFn(Triple, CPU, Features);
+    return MCSubtargetInfoCtorFn(Triple(TheTriple), CPU, Features);
   }
 
   /// createTargetMachine - Create a target specific machine implementation
@@ -1056,7 +1056,7 @@ template <class MCSubtargetInfoImpl> struct RegisterMCSubtargetInfo {
   }
 
 private:
-  static MCSubtargetInfo *Allocator(StringRef /*TT*/, StringRef /*CPU*/,
+  static MCSubtargetInfo *Allocator(const Triple & /*TT*/, StringRef /*CPU*/,
                                     StringRef /*FS*/) {
     return new MCSubtargetInfoImpl();
   }

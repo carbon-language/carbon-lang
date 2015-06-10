@@ -46,8 +46,8 @@ static MCRegisterInfo *createXCoreMCRegisterInfo(StringRef TT) {
   return X;
 }
 
-static MCSubtargetInfo *createXCoreMCSubtargetInfo(StringRef TT, StringRef CPU,
-                                                   StringRef FS) {
+static MCSubtargetInfo *
+createXCoreMCSubtargetInfo(const Triple &TT, StringRef CPU, StringRef FS) {
   MCSubtargetInfo *X = new MCSubtargetInfo();
   InitXCoreMCSubtargetInfo(X, TT, CPU, FS);
   return X;

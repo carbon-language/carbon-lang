@@ -84,10 +84,10 @@ SystemZTargetMachine::SystemZTargetMachine(const Target &T, StringRef TT,
                                            const TargetOptions &Options,
                                            Reloc::Model RM, CodeModel::Model CM,
                                            CodeGenOpt::Level OL)
-    : LLVMTargetMachine(T, computeDataLayout(TT, CPU, FS),
-                        TT, CPU, FS, Options, RM, CM, OL),
+    : LLVMTargetMachine(T, computeDataLayout(TT, CPU, FS), TT, CPU, FS, Options,
+                        RM, CM, OL),
       TLOF(make_unique<TargetLoweringObjectFileELF>()),
-      Subtarget(TT, CPU, FS, *this) {
+      Subtarget(Triple(TT), CPU, FS, *this) {
   initAsmInfo();
 }
 

@@ -34,17 +34,12 @@ MCSubtargetInfo::InitCPUSchedModel(StringRef CPU) {
     CPUSchedModel = MCSchedModel::GetDefaultSchedModel();
 }
 
-void
-MCSubtargetInfo::InitMCSubtargetInfo(StringRef TT, StringRef C, StringRef FS,
-                                     ArrayRef<SubtargetFeatureKV> PF,
-                                     ArrayRef<SubtargetFeatureKV> PD,
-                                     const SubtargetInfoKV *ProcSched,
-                                     const MCWriteProcResEntry *WPR,
-                                     const MCWriteLatencyEntry *WL,
-                                     const MCReadAdvanceEntry *RA,
-                                     const InstrStage *IS,
-                                     const unsigned *OC,
-                                     const unsigned *FP) {
+void MCSubtargetInfo::InitMCSubtargetInfo(
+    const Triple &TT, StringRef C, StringRef FS,
+    ArrayRef<SubtargetFeatureKV> PF, ArrayRef<SubtargetFeatureKV> PD,
+    const SubtargetInfoKV *ProcSched, const MCWriteProcResEntry *WPR,
+    const MCWriteLatencyEntry *WL, const MCReadAdvanceEntry *RA,
+    const InstrStage *IS, const unsigned *OC, const unsigned *FP) {
   TargetTriple = TT;
   CPU = C;
   ProcFeatures = PF;

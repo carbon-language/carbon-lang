@@ -97,7 +97,7 @@ X86TargetMachine::X86TargetMachine(const Target &T, StringRef TT, StringRef CPU,
     : LLVMTargetMachine(T, computeDataLayout(Triple(TT)), TT, CPU, FS, Options,
                         RM, CM, OL),
       TLOF(createTLOF(Triple(getTargetTriple()))),
-      Subtarget(TT, CPU, FS, *this, Options.StackAlignmentOverride) {
+      Subtarget(Triple(TT), CPU, FS, *this, Options.StackAlignmentOverride) {
   // Windows stack unwinder gets confused when execution flow "falls through"
   // after a call to 'noreturn' function.
   // To prevent that, we emit a trap for 'unreachable' IR instructions.
@@ -148,7 +148,7 @@ X86TargetMachine::getSubtargetImpl(const Function &F) const {
     // creation will depend on the TM and the code generation flags on the
     // function that reside in TargetOptions.
     resetTargetOptions(F);
-    I = llvm::make_unique<X86Subtarget>(TargetTriple, CPU, FS, *this,
+    I = llvm::make_unique<X86Subtarget>(Triple(TargetTriple), CPU, FS, *this,
                                         Options.StackAlignmentOverride);
   }
   return I.get();

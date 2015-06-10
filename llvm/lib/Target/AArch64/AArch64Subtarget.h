@@ -29,6 +29,7 @@
 namespace llvm {
 class GlobalValue;
 class StringRef;
+class Triple;
 
 class AArch64Subtarget : public AArch64GenSubtargetInfo {
 protected:
@@ -71,7 +72,7 @@ private:
 public:
   /// This constructor initializes the data members to match that
   /// of the specified triple.
-  AArch64Subtarget(const std::string &TT, const std::string &CPU,
+  AArch64Subtarget(const Triple &TT, const std::string &CPU,
                    const std::string &FS, const TargetMachine &TM,
                    bool LittleEndian);
 

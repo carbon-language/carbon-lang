@@ -48,7 +48,7 @@ static MCRegisterInfo *createHexagonMCRegisterInfo(StringRef TT) {
 }
 
 static MCSubtargetInfo *
-createHexagonMCSubtargetInfo(StringRef TT, StringRef CPU, StringRef FS) {
+createHexagonMCSubtargetInfo(const Triple &TT, StringRef CPU, StringRef FS) {
   MCSubtargetInfo *X = new MCSubtargetInfo();
   InitHexagonMCSubtargetInfo(X, TT, CPU, FS);
   return X;

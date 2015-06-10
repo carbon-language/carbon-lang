@@ -287,7 +287,7 @@ X86Subtarget &X86Subtarget::initializeSubtargetDependencies(StringRef CPU,
   return *this;
 }
 
-X86Subtarget::X86Subtarget(const std::string &TT, const std::string &CPU,
+X86Subtarget::X86Subtarget(const Triple &TT, const std::string &CPU,
                            const std::string &FS, const X86TargetMachine &TM,
                            unsigned StackAlignOverride)
     : X86GenSubtargetInfo(TT, CPU, FS), X86ProcFamily(Others),

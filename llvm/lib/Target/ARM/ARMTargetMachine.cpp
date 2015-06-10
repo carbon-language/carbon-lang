@@ -180,7 +180,7 @@ ARMBaseTargetMachine::ARMBaseTargetMachine(const Target &T, StringRef TT,
                         CPU, FS, Options, RM, CM, OL),
       TargetABI(computeTargetABI(Triple(TT), CPU, Options)),
       TLOF(createTLOF(Triple(getTargetTriple()))),
-      Subtarget(TT, CPU, FS, *this, isLittle), isLittle(isLittle) {
+      Subtarget(Triple(TT), CPU, FS, *this, isLittle), isLittle(isLittle) {
 
   // Default to triple-appropriate float ABI
   if (Options.FloatABIType == FloatABI::Default)
@@ -221,7 +221,8 @@ ARMBaseTargetMachine::getSubtargetImpl(const Function &F) const {
     // creation will depend on the TM and the code generation flags on the
     // function that reside in TargetOptions.
     resetTargetOptions(F);
-    I = llvm::make_unique<ARMSubtarget>(TargetTriple, CPU, FS, *this, isLittle);
+    I = llvm::make_unique<ARMSubtarget>(Triple(TargetTriple), CPU, FS, *this,
+                                        isLittle);
   }
   return I.get();
 }

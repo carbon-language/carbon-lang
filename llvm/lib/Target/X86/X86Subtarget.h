@@ -253,9 +253,8 @@ public:
   /// This constructor initializes the data members to match that
   /// of the specified triple.
   ///
-  X86Subtarget(const std::string &TT, const std::string &CPU,
-               const std::string &FS, const X86TargetMachine &TM,
-               unsigned StackAlignOverride);
+  X86Subtarget(const Triple &TT, const std::string &CPU, const std::string &FS,
+               const X86TargetMachine &TM, unsigned StackAlignOverride);
 
   const X86TargetLowering *getTargetLowering() const override {
     return &TLInfo;

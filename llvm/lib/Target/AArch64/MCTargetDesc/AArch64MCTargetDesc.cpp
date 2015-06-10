@@ -41,7 +41,7 @@ static MCInstrInfo *createAArch64MCInstrInfo() {
 }
 
 static MCSubtargetInfo *
-createAArch64MCSubtargetInfo(StringRef TT, StringRef CPU, StringRef FS) {
+createAArch64MCSubtargetInfo(const Triple &TT, StringRef CPU, StringRef FS) {
   MCSubtargetInfo *X = new MCSubtargetInfo();
 
   if (CPU.empty())
