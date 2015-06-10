@@ -40,7 +40,7 @@ void User::replaceUsesOfWith(Value *From, Value *To) {
 //                         User allocHungoffUses Implementation
 //===----------------------------------------------------------------------===//
 
-Use *User::allocHungoffUses(unsigned N, bool IsPhi) {
+void User::allocHungoffUses(unsigned N, bool IsPhi) {
   // Allocate the array of Uses, followed by a pointer (with bottom bit set) to
   // the User.
   size_t size = N * sizeof(Use) + sizeof(Use::UserRef);
@@ -49,11 +49,9 @@ Use *User::allocHungoffUses(unsigned N, bool IsPhi) {
   Use *Begin = static_cast<Use*>(::operator new(size));
   Use *End = Begin + N;
   (void) new(End) Use::UserRef(const_cast<User*>(this), 1);
-  Use *Uses = Use::initTags(Begin, End);
-  OperandList = Uses;
+  OperandList = Use::initTags(Begin, End);
   // Tag this operand list as being a hung off.
   HasHungOffUses = true;
-  return Uses;
 }
 
 void User::growHungoffUses(unsigned NewNumUses, bool IsPhi) {

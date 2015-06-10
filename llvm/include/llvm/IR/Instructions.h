@@ -2234,7 +2234,7 @@ class PHINode : public Instruction {
     : Instruction(Ty, Instruction::PHI, nullptr, 0, InsertBefore),
       ReservedSpace(NumReservedValues) {
     setName(NameStr);
-    OperandList = allocHungoffUses(ReservedSpace);
+    allocHungoffUses(ReservedSpace);
   }
 
   PHINode(Type *Ty, unsigned NumReservedValues, const Twine &NameStr,
@@ -2242,14 +2242,14 @@ class PHINode : public Instruction {
     : Instruction(Ty, Instruction::PHI, nullptr, 0, InsertAtEnd),
       ReservedSpace(NumReservedValues) {
     setName(NameStr);
-    OperandList = allocHungoffUses(ReservedSpace);
+    allocHungoffUses(ReservedSpace);
   }
 protected:
   // allocHungoffUses - this is more complicated than the generic
   // User::allocHungoffUses, because we have to allocate Uses for the incoming
   // values and pointers to the incoming blocks, all in one allocation.
-  Use *allocHungoffUses(unsigned N) {
-    return User::allocHungoffUses(N, /* IsPhi */ true);
+  void allocHungoffUses(unsigned N) {
+    User::allocHungoffUses(N, /* IsPhi */ true);
   }
 
   PHINode *clone_impl() const override;
