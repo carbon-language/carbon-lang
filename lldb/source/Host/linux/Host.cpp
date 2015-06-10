@@ -37,7 +37,7 @@
 #include "lldb/Symbol/ObjectFile.h"
 #include "Plugins/Process/Linux/ProcFileReader.h"
 #include "Plugins/Process/Utility/LinuxSignals.h"
-
+#include "Plugins/Process/Utility/MipsLinuxSignals.h"
 using namespace lldb;
 using namespace lldb_private;
 
@@ -390,11 +390,24 @@ Host::GetEnvironment (StringList &env)
     return i;
 }
 
+// TODO: Generalize this with a function Host::GetSignals() as discussed at http://reviews.llvm.org/D10180 
 const lldb_private::UnixSignalsSP&
 Host::GetUnixSignals ()
 {
-    static const lldb_private::UnixSignalsSP s_unix_signals_sp (new process_linux::LinuxSignals ());
-    return s_unix_signals_sp;
+    ArchSpec target_arch = HostInfoBase::GetArchitecture();
+    if(target_arch.GetTriple ().getArch () == llvm::Triple::mips64 ||
+       target_arch.GetTriple ().getArch () == llvm::Triple::mips64el ||
+       target_arch.GetTriple ().getArch () == llvm::Triple::mips ||
+       target_arch.GetTriple ().getArch () == llvm::Triple::mipsel) {
+        static const lldb_private::UnixSignalsSP s_unix_signals_sp (new process_linux::MipsLinuxSignals ());
+        return s_unix_signals_sp;
+    }
+    else
+    {
+        static const lldb_private::UnixSignalsSP s_unix_signals_sp (new process_linux::LinuxSignals ());
+        return s_unix_signals_sp;
+    }
+
 }
 
 Error
