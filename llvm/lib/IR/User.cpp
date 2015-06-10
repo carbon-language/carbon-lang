@@ -56,6 +56,33 @@ Use *User::allocHungoffUses(unsigned N, bool IsPhi) {
   return Uses;
 }
 
+void User::growHungoffUses(unsigned NewNumUses, bool IsPhi) {
+  assert(HasHungOffUses && "realloc must have hung off uses");
+
+  unsigned OldNumUses = getNumOperands();
+
+  // We don't support shrinking the number of uses.  We wouldn't have enough
+  // space to copy the old uses in to the new space.
+  assert(NewNumUses > OldNumUses && "realloc must grow num uses");
+
+  Use *OldOps = OperandList;
+  allocHungoffUses(NewNumUses, IsPhi);
+  Use *NewOps = OperandList;
+
+  // Now copy from the old operands list to the new one.
+  std::copy(OldOps, OldOps + OldNumUses, NewOps);
+
+  // If this is a Phi, then we need to copy the BB pointers too.
+  if (IsPhi) {
+    auto *OldPtr =
+        reinterpret_cast<char *>(OldOps + OldNumUses) + sizeof(Use::UserRef);
+    auto *NewPtr =
+        reinterpret_cast<char *>(NewOps + NewNumUses) + sizeof(Use::UserRef);
+    std::copy(OldPtr, OldPtr + (OldNumUses * sizeof(BasicBlock *)), NewPtr);
+  }
+  Use::zap(OldOps, OldOps + OldNumUses, true);
+}
+
 //===----------------------------------------------------------------------===//
 //                         User operator new Implementations
 //===----------------------------------------------------------------------===//

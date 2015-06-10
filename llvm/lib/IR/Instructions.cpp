@@ -128,16 +128,8 @@ void PHINode::growOperands() {
   unsigned NumOps = e + e / 2;
   if (NumOps < 2) NumOps = 2;      // 2 op PHI nodes are VERY common.
 
-  Use *OldOps = op_begin();
-  BasicBlock **OldBlocks = block_begin();
-
   ReservedSpace = NumOps;
-  OperandList = allocHungoffUses(ReservedSpace);
-
-  std::copy(OldOps, OldOps + e, op_begin());
-  std::copy(OldBlocks, OldBlocks + e, block_begin());
-
-  Use::zap(OldOps, OldOps + e, true);
+  growHungoffUses(ReservedSpace, /* IsPhi */ true);
 }
 
 /// hasConstantValue - If the specified PHI node always merges together the same
@@ -218,14 +210,7 @@ void LandingPadInst::growOperands(unsigned Size) {
   unsigned e = getNumOperands();
   if (ReservedSpace >= e + Size) return;
   ReservedSpace = (e + Size / 2) * 2;
-
-  Use *NewOps = allocHungoffUses(ReservedSpace);
-  Use *OldOps = OperandList;
-  for (unsigned i = 0; i != e; ++i)
-      NewOps[i] = OldOps[i];
-
-  OperandList = NewOps;
-  Use::zap(OldOps, OldOps + e, true);
+  growHungoffUses(ReservedSpace);
 }
 
 void LandingPadInst::addClause(Constant *Val) {
@@ -3363,13 +3348,7 @@ void SwitchInst::growOperands() {
   unsigned NumOps = e*3;
 
   ReservedSpace = NumOps;
-  Use *NewOps = allocHungoffUses(NumOps);
-  Use *OldOps = OperandList;
-  for (unsigned i = 0; i != e; ++i) {
-      NewOps[i] = OldOps[i];
-  }
-  OperandList = NewOps;
-  Use::zap(OldOps, OldOps + e, true);
+  growHungoffUses(ReservedSpace);
 }
 
 
@@ -3406,12 +3385,7 @@ void IndirectBrInst::growOperands() {
   unsigned NumOps = e*2;
   
   ReservedSpace = NumOps;
-  Use *NewOps = allocHungoffUses(NumOps);
-  Use *OldOps = OperandList;
-  for (unsigned i = 0; i != e; ++i)
-    NewOps[i] = OldOps[i];
-  OperandList = NewOps;
-  Use::zap(OldOps, OldOps + e, true);
+  growHungoffUses(ReservedSpace);
 }
 
 IndirectBrInst::IndirectBrInst(Value *Address, unsigned NumCases,

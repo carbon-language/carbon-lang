@@ -58,6 +58,11 @@ protected:
   /// \param IsPhi identifies callers which are phi nodes and which need
   /// N BasicBlock* allocated along with N
   Use *allocHungoffUses(unsigned N, bool IsPhi = false);
+
+  /// \brief Grow the number of hung off uses.  Note that allocHungoffUses
+  /// should be called if there are no uses.
+  void growHungoffUses(unsigned N, bool IsPhi = false);
+
 public:
   ~User() override {
     // drop the hung off uses.
