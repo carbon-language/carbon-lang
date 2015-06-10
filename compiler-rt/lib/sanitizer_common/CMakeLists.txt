@@ -128,23 +128,28 @@ add_custom_target(sanitizer_common)
 set(SANITIZER_RUNTIME_LIBRARIES)
 if(APPLE)
   # Build universal binary on APPLE.
-  foreach(os ${SANITIZER_COMMON_SUPPORTED_DARWIN_OS})
-    add_compiler_rt_darwin_object_library(RTSanitizerCommon ${os}
-      ARCH ${SANITIZER_COMMON_SUPPORTED_ARCH}
-      SOURCES ${SANITIZER_SOURCES} ${SANITIZER_LIBCDEP_SOURCES}
-      CFLAGS ${SANITIZER_CFLAGS}
-      DEFS ${SANITIZER_COMMON_DEFINITIONS})
+
+  add_compiler_rt_object_libraries(RTSanitizerCommon
+    OS ${SANITIZER_COMMON_SUPPORTED_OS}
+    ARCH ${SANITIZER_COMMON_SUPPORTED_ARCH}
+    SOURCES ${SANITIZER_SOURCES} ${SANITIZER_LIBCDEP_SOURCES}
+    CFLAGS ${SANITIZER_CFLAGS}
+    DEFS ${SANITIZER_COMMON_DEFINITIONS})
+  foreach(os ${SANITIZER_COMMON_SUPPORTED_OS})
     list(APPEND SANITIZER_RUNTIME_LIBRARIES RTSanitizerCommon.${os})
   endforeach()
 else()
   # Otherwise, build separate libraries for each target.
+  
+  add_compiler_rt_object_libraries(RTSanitizerCommon
+    ARCH ${SANITIZER_COMMON_SUPPORTED_ARCH}
+    SOURCES ${SANITIZER_SOURCES} CFLAGS ${SANITIZER_CFLAGS}
+    DEFS ${SANITIZER_COMMON_DEFINITIONS})
+  add_compiler_rt_object_libraries(RTSanitizerCommonLibc
+    ARCH ${SANITIZER_COMMON_SUPPORTED_ARCH}
+    SOURCES ${SANITIZER_LIBCDEP_SOURCES} CFLAGS ${SANITIZER_CFLAGS}
+    DEFS ${SANITIZER_COMMON_DEFINITIONS})
   foreach(arch ${SANITIZER_COMMON_SUPPORTED_ARCH})
-    add_compiler_rt_object_library(RTSanitizerCommon ${arch}
-      SOURCES ${SANITIZER_SOURCES} CFLAGS ${SANITIZER_CFLAGS}
-      DEFS ${SANITIZER_COMMON_DEFINITIONS})
-    add_compiler_rt_object_library(RTSanitizerCommonLibc ${arch}
-      SOURCES ${SANITIZER_LIBCDEP_SOURCES} CFLAGS ${SANITIZER_CFLAGS}
-      DEFS ${SANITIZER_COMMON_DEFINITIONS})
     list(APPEND SANITIZER_RUNTIME_LIBRARIES RTSanitizerCommon.${arch}
                                             RTSanitizerCommonLibc.${arch})
   endforeach()

@@ -3,40 +3,47 @@ include(ExternalProject)
 include(LLVMParseArguments)
 include(CompilerRTUtils)
 
-# Tries to add "object library" target for a given architecture
-# with name "<name>.<arch>" if architecture can be targeted.
-# add_compiler_rt_object_library(<name> <arch>
-#                                SOURCES <source files>
-#                                CFLAGS <compile flags>
-#                                DEFS <compile definitions>)
-macro(add_compiler_rt_object_library name arch)
-  if(CAN_TARGET_${arch})
-    parse_arguments(LIB "SOURCES;CFLAGS;DEFS" "" ${ARGN})
-    add_library(${name}.${arch} OBJECT ${LIB_SOURCES})
-    set_target_compile_flags(${name}.${arch}
-      ${CMAKE_CXX_FLAGS} ${TARGET_${arch}_CFLAGS} ${LIB_CFLAGS})
-    set_property(TARGET ${name}.${arch} APPEND PROPERTY
-      COMPILE_DEFINITIONS ${LIB_DEFS})
+# Tries to add an "object library" target for a given list of OSs and/or
+# architectures with name "<name>.<arch>" for non-Darwin platforms if
+# architecture can be targeted, and "<name>.<os>" for Darwin platforms.
+# add_compiler_rt_object_libraries(<name>
+#                                  OS <os>
+#                                  ARCH <arch>
+#                                  SOURCES <source files>
+#                                  CFLAGS <compile flags>
+#                                  DEFS <compile definitions>)
+function(add_compiler_rt_object_libraries name)
+  parse_arguments(LIB "OS;ARCH;SOURCES;CFLAGS;DEFS" "" ${ARGN})
+  set(libnames)
+  if(APPLE)
+    foreach(os ${LIB_OS})
+      set(libname "${name}.${os}")
+      set(libnames ${libnames} ${libname})
+      set(extra_cflags_${libname} ${DARWIN_${os}_CFLAGS})
+    endforeach()
   else()
-    message(FATAL_ERROR "Archtecture ${arch} can't be targeted")
+    foreach(arch ${LIB_ARCH})
+      set(libname "${name}.${arch}")
+      set(libnames ${libnames} ${libname})
+      set(extra_cflags_${libname} ${TARGET_${arch}_CFLAGS})
+      if(NOT CAN_TARGET_${arch})
+        message(FATAL_ERROR "Archtecture ${arch} can't be targeted")
+        return()
+      endif()
+    endforeach()
   endif()
-endmacro()
-
-# Same as above, but adds universal osx library for either OSX or iOS simulator
-# with name "<name>.<os>" targeting multiple architectures.
-# add_compiler_rt_darwin_object_library(<name> <os> ARCH <architectures>
-#                                                   SOURCES <source files>
-#                                                   CFLAGS <compile flags>
-#                                                   DEFS <compile definitions>)
-macro(add_compiler_rt_darwin_object_library name os)
-  parse_arguments(LIB "ARCH;SOURCES;CFLAGS;DEFS" "" ${ARGN})
-  set(libname "${name}.${os}")
-  add_library(${libname} OBJECT ${LIB_SOURCES})
-  set_target_compile_flags(${libname} ${LIB_CFLAGS} ${DARWIN_${os}_CFLAGS})
-  set_target_properties(${libname} PROPERTIES OSX_ARCHITECTURES "${LIB_ARCH}")
-  set_property(TARGET ${libname} APPEND PROPERTY
-    COMPILE_DEFINITIONS ${LIB_DEFS})
-endmacro()
+  
+  foreach(libname ${libnames})
+    add_library(${libname} OBJECT ${LIB_SOURCES})
+    set_target_compile_flags(${libname}
+      ${CMAKE_CXX_FLAGS} ${extra_cflags_${libname}} ${LIB_CFLAGS})
+    set_property(TARGET ${libname} APPEND PROPERTY
+      COMPILE_DEFINITIONS ${LIB_DEFS})
+    if(APPLE)
+      set_target_properties(${libname} PROPERTIES OSX_ARCHITECTURES "${LIB_ARCH}")
+    endif()
+  endforeach()
+endfunction()
 
 # Adds static or shared runtime for a given architecture and puts it in the
 # proper directory in the build and install trees.

@@ -27,7 +27,8 @@ if(CAN_TARGET_x86_64 AND UNIX AND NOT APPLE AND NOT ANDROID)
     CFLAGS ${DD_CFLAGS})
   add_dependencies(dd clang_rt.dd-${arch})
 
-  add_compiler_rt_object_library(RTDD ${arch}
+  add_compiler_rt_object_libraries(RTDD
+    ARCH ${arch}
     SOURCES ${DD_SOURCES} CFLAGS ${DD_CFLAGS})
 
   add_compiler_rt_runtime(clang_rt.dyndd-${arch} ${arch} SHARED

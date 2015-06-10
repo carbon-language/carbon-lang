@@ -12,18 +12,8 @@ include_directories(..)
 set(INTERCEPTION_CFLAGS ${SANITIZER_COMMON_CFLAGS})
 append_no_rtti_flag(INTERCEPTION_CFLAGS)
 
-if(APPLE)
-  # Build universal binary on APPLE.
-  foreach(os ${SANITIZER_COMMON_SUPPORTED_DARWIN_OS})
-    add_compiler_rt_darwin_object_library(RTInterception ${os}
-      ARCH ${SANITIZER_COMMON_SUPPORTED_ARCH}
-      SOURCES ${INTERCEPTION_SOURCES}
-      CFLAGS ${INTERCEPTION_CFLAGS})
-  endforeach()
-else()
-  # Otherwise, build separate libraries for each target.
-  foreach(arch ${SANITIZER_COMMON_SUPPORTED_ARCH})
-    add_compiler_rt_object_library(RTInterception ${arch}
-      SOURCES ${INTERCEPTION_SOURCES} CFLAGS ${INTERCEPTION_CFLAGS})
-  endforeach()
-endif()
+add_compiler_rt_object_libraries(RTInterception
+    OS ${SANITIZER_COMMON_SUPPORTED_OS}
+    ARCH ${SANITIZER_COMMON_SUPPORTED_ARCH}
+    SOURCES ${INTERCEPTION_SOURCES}
+    CFLAGS ${INTERCEPTION_CFLAGS})
