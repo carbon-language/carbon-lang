@@ -2248,7 +2248,7 @@ protected:
   // allocHungoffUses - this is more complicated than the generic
   // User::allocHungoffUses, because we have to allocate Uses for the incoming
   // values and pointers to the incoming blocks, all in one allocation.
-  Use *allocHungoffUses(unsigned N) const {
+  Use *allocHungoffUses(unsigned N) {
     return User::allocHungoffUses(N, /* IsPhi */ true);
   }
 

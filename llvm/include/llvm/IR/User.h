@@ -57,7 +57,7 @@ protected:
   /// (with bottom bit set) to the User.
   /// \param IsPhi identifies callers which are phi nodes and which need
   /// N BasicBlock* allocated along with N
-  Use *allocHungoffUses(unsigned N, bool IsPhi = false) const;
+  Use *allocHungoffUses(unsigned N, bool IsPhi = false);
   void dropHungoffUses() {
     Use::zap(OperandList, OperandList + NumOperands, true);
     OperandList = nullptr;
