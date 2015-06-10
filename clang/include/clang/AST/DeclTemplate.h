@@ -217,6 +217,57 @@ public:
   }
 };
 
+/// Storage for a default argument.
+template<typename ParmDecl, typename ArgType>
+class DefaultArgStorage {
+  llvm::PointerUnion<ArgType, ParmDecl*> ValueOrInherited;
+
+  static ParmDecl *getParmOwningDefaultArg(ParmDecl *Parm) {
+    const DefaultArgStorage &Storage = Parm->getDefaultArgStorage();
+    if (auto *Prev = Storage.ValueOrInherited.template dyn_cast<ParmDecl*>())
+      Parm = Prev;
+    assert(
+        Parm->getDefaultArgStorage().ValueOrInherited.template is<ArgType>() &&
+        "should only be one level of indirection");
+    return Parm;
+  }
+
+public:
+  DefaultArgStorage() : ValueOrInherited(ArgType()) {}
+
+  /// Determine whether there is a default argument for this parameter.
+  bool isSet() const { return !ValueOrInherited.isNull(); }
+  /// Determine whether the default argument for this parameter was inherited
+  /// from a previous declaration of the same entity.
+  bool isInherited() const { return ValueOrInherited.template is<ParmDecl*>(); }
+  /// Get the default argument's value.
+  ArgType get() const {
+    const DefaultArgStorage *Storage = this;
+    if (auto *Prev = ValueOrInherited.template dyn_cast<ParmDecl*>())
+      Storage = &Prev->getDefaultArgStorage();
+    return Storage->ValueOrInherited.template get<ArgType>();
+  }
+  /// Get the parameter from which we inherit the default argument, if any.
+  /// This is the parameter on which the default argument was actually written.
+  const ParmDecl *getInheritedFrom() const {
+    return ValueOrInherited.template dyn_cast<ParmDecl*>();
+  }
+  /// Set the default argument.
+  void set(ArgType Arg) {
+    assert(!isSet() && "default argument already set");
+    ValueOrInherited = Arg;
+  }
+  /// Set that the default argument was inherited from another parameter.
+  void setInherited(const ASTContext &C, ParmDecl *InheritedFrom) {
+    assert(!isSet() && "default argument already set");
+    ValueOrInherited = getParmOwningDefaultArg(InheritedFrom);
+  }
+  /// Remove the default argument, even if it was inherited.
+  void clear() {
+    ValueOrInherited = ArgType();
+  }
+};
+
 //===----------------------------------------------------------------------===//
 // Kinds of Templates
 //===----------------------------------------------------------------------===//
@@ -942,18 +993,16 @@ class TemplateTypeParmDecl : public TypeDecl {
   /// If false, it was declared with the 'class' keyword.
   bool Typename : 1;
 
-  /// \brief Whether this template type parameter inherited its
-  /// default argument.
-  bool InheritedDefault : 1;
-
   /// \brief The default template argument, if any.
-  TypeSourceInfo *DefaultArgument;
+  typedef DefaultArgStorage<TemplateTypeParmDecl, TypeSourceInfo *>
+      DefArgStorage;
+  DefArgStorage DefaultArgument;
 
   TemplateTypeParmDecl(DeclContext *DC, SourceLocation KeyLoc,
                        SourceLocation IdLoc, IdentifierInfo *Id,
                        bool Typename)
     : TypeDecl(TemplateTypeParm, DC, IdLoc, Id, KeyLoc), Typename(Typename),
-      InheritedDefault(false), DefaultArgument() { }
+      DefaultArgument() { }
 
   /// Sema creates these on the stack during auto type deduction.
   friend class Sema;
@@ -974,35 +1023,45 @@ public:
   /// If not, it was declared with the 'class' keyword.
   bool wasDeclaredWithTypename() const { return Typename; }
 
+  const DefArgStorage &getDefaultArgStorage() const { return DefaultArgument; }
+
   /// \brief Determine whether this template parameter has a default
   /// argument.
-  bool hasDefaultArgument() const { return DefaultArgument != nullptr; }
+  bool hasDefaultArgument() const { return DefaultArgument.isSet(); }
 
   /// \brief Retrieve the default argument, if any.
-  QualType getDefaultArgument() const { return DefaultArgument->getType(); }
+  QualType getDefaultArgument() const {
+    return DefaultArgument.get()->getType();
+  }
 
   /// \brief Retrieves the default argument's source information, if any.
-  TypeSourceInfo *getDefaultArgumentInfo() const { return DefaultArgument; }
+  TypeSourceInfo *getDefaultArgumentInfo() const {
+    return DefaultArgument.get();
+  }
 
   /// \brief Retrieves the location of the default argument declaration.
   SourceLocation getDefaultArgumentLoc() const;
 
   /// \brief Determines whether the default argument was inherited
   /// from a previous declaration of this template.
-  bool defaultArgumentWasInherited() const { return InheritedDefault; }
+  bool defaultArgumentWasInherited() const {
+    return DefaultArgument.isInherited();
+  }
 
-  /// \brief Set the default argument for this template parameter, and
-  /// whether that default argument was inherited from another
-  /// declaration.
-  void setDefaultArgument(TypeSourceInfo *DefArg, bool Inherited) {
-    DefaultArgument = DefArg;
-    InheritedDefault = Inherited;
+  /// \brief Set the default argument for this template parameter.
+  void setDefaultArgument(TypeSourceInfo *DefArg) {
+    DefaultArgument.set(DefArg);
+  }
+  /// \brief Set that this default argument was inherited from another
+  /// parameter.
+  void setInheritedDefaultArgument(const ASTContext &C,
+                                   TemplateTypeParmDecl *Prev) {
+    DefaultArgument.setInherited(C, Prev);
   }
 
   /// \brief Removes the default argument of this template parameter.
   void removeDefaultArgument() {
-    DefaultArgument = nullptr;
-    InheritedDefault = false;
+    DefaultArgument.clear();
   }
 
   /// \brief Set whether this template type parameter was declared with
@@ -1034,7 +1093,8 @@ class NonTypeTemplateParmDecl
   : public DeclaratorDecl, protected TemplateParmPosition {
   /// \brief The default template argument, if any, and whether or not
   /// it was inherited.
-  llvm::PointerIntPair<Expr*, 1, bool> DefaultArgumentAndInherited;
+  typedef DefaultArgStorage<NonTypeTemplateParmDecl, Expr*> DefArgStorage;
+  DefArgStorage DefaultArgument;
 
   // FIXME: Collapse this into TemplateParamPosition; or, just move depth/index
   // down here to save memory.
@@ -1055,9 +1115,8 @@ class NonTypeTemplateParmDecl
                           IdentifierInfo *Id, QualType T,
                           bool ParameterPack, TypeSourceInfo *TInfo)
     : DeclaratorDecl(NonTypeTemplateParm, DC, IdLoc, Id, T, TInfo, StartLoc),
-      TemplateParmPosition(D, P), DefaultArgumentAndInherited(nullptr, false),
-      ParameterPack(ParameterPack), ExpandedParameterPack(false),
-      NumExpandedTypes(0)
+      TemplateParmPosition(D, P), ParameterPack(ParameterPack),
+      ExpandedParameterPack(false), NumExpandedTypes(0)
   { }
 
   NonTypeTemplateParmDecl(DeclContext *DC, SourceLocation StartLoc,
@@ -1097,16 +1156,14 @@ public:
 
   SourceRange getSourceRange() const override LLVM_READONLY;
 
+  const DefArgStorage &getDefaultArgStorage() const { return DefaultArgument; }
+
   /// \brief Determine whether this template parameter has a default
   /// argument.
-  bool hasDefaultArgument() const {
-    return DefaultArgumentAndInherited.getPointer() != nullptr;
-  }
+  bool hasDefaultArgument() const { return DefaultArgument.isSet(); }
 
   /// \brief Retrieve the default argument, if any.
-  Expr *getDefaultArgument() const {
-    return DefaultArgumentAndInherited.getPointer();
-  }
+  Expr *getDefaultArgument() const { return DefaultArgument.get(); }
 
   /// \brief Retrieve the location of the default argument, if any.
   SourceLocation getDefaultArgumentLoc() const;
@@ -1114,22 +1171,20 @@ public:
   /// \brief Determines whether the default argument was inherited
   /// from a previous declaration of this template.
   bool defaultArgumentWasInherited() const {
-    return DefaultArgumentAndInherited.getInt();
+    return DefaultArgument.isInherited();
   }
 
   /// \brief Set the default argument for this template parameter, and
   /// whether that default argument was inherited from another
   /// declaration.
-  void setDefaultArgument(Expr *DefArg, bool Inherited) {
-    DefaultArgumentAndInherited.setPointer(DefArg);
-    DefaultArgumentAndInherited.setInt(Inherited);
+  void setDefaultArgument(Expr *DefArg) { DefaultArgument.set(DefArg); }
+  void setInheritedDefaultArgument(const ASTContext &C,
+                                   NonTypeTemplateParmDecl *Parm) {
+    DefaultArgument.setInherited(C, Parm);
   }
 
   /// \brief Removes the default argument of this template parameter.
-  void removeDefaultArgument() {
-    DefaultArgumentAndInherited.setPointer(nullptr);
-    DefaultArgumentAndInherited.setInt(false);
-  }
+  void removeDefaultArgument() { DefaultArgument.clear(); }
 
   /// \brief Whether this parameter is a non-type template parameter pack.
   ///
@@ -1217,10 +1272,10 @@ class TemplateTemplateParmDecl : public TemplateDecl,
 {
   void anchor() override;
 
-  /// DefaultArgument - The default template argument, if any.
-  TemplateArgumentLoc DefaultArgument;
-  /// Whether or not the default argument was inherited.
-  bool DefaultArgumentWasInherited;
+  /// \brief The default template argument, if any.
+  typedef DefaultArgStorage<TemplateTemplateParmDecl, TemplateArgumentLoc *>
+      DefArgStorage;
+  DefArgStorage DefaultArgument;
 
   /// \brief Whether this parameter is a parameter pack.
   bool ParameterPack;
@@ -1237,8 +1292,7 @@ class TemplateTemplateParmDecl : public TemplateDecl,
                            unsigned D, unsigned P, bool ParameterPack,
                            IdentifierInfo *Id, TemplateParameterList *Params)
     : TemplateDecl(TemplateTemplateParm, DC, L, Id, Params),
-      TemplateParmPosition(D, P), DefaultArgument(),
-      DefaultArgumentWasInherited(false), ParameterPack(ParameterPack),
+      TemplateParmPosition(D, P), ParameterPack(ParameterPack),
       ExpandedParameterPack(false), NumExpandedParams(0)
     { }
 
@@ -1322,15 +1376,16 @@ public:
     return reinterpret_cast<TemplateParameterList *const *>(this + 1)[I];
   }
 
+  const DefArgStorage &getDefaultArgStorage() const { return DefaultArgument; }
+
   /// \brief Determine whether this template parameter has a default
   /// argument.
-  bool hasDefaultArgument() const {
-    return !DefaultArgument.getArgument().isNull();
-  }
+  bool hasDefaultArgument() const { return DefaultArgument.isSet(); }
 
   /// \brief Retrieve the default argument, if any.
   const TemplateArgumentLoc &getDefaultArgument() const {
-    return DefaultArgument;
+    static const TemplateArgumentLoc None;
+    return DefaultArgument.isSet() ? *DefaultArgument.get() : None;
   }
 
   /// \brief Retrieve the location of the default argument, if any.
@@ -1339,22 +1394,21 @@ public:
   /// \brief Determines whether the default argument was inherited
   /// from a previous declaration of this template.
   bool defaultArgumentWasInherited() const {
-    return DefaultArgumentWasInherited;
+    return DefaultArgument.isInherited();
   }
 
   /// \brief Set the default argument for this template parameter, and
   /// whether that default argument was inherited from another
   /// declaration.
-  void setDefaultArgument(const TemplateArgumentLoc &DefArg, bool Inherited) {
-    DefaultArgument = DefArg;
-    DefaultArgumentWasInherited = Inherited;
+  void setDefaultArgument(const ASTContext &C,
+                          const TemplateArgumentLoc &DefArg);
+  void setInheritedDefaultArgument(const ASTContext &C,
+                                   TemplateTemplateParmDecl *Prev) {
+    DefaultArgument.setInherited(C, Prev);
   }
 
   /// \brief Removes the default argument of this template parameter.
-  void removeDefaultArgument() {
-    DefaultArgument = TemplateArgumentLoc();
-    DefaultArgumentWasInherited = false;
-  }
+  void removeDefaultArgument() { DefaultArgument.clear(); }
 
   SourceRange getSourceRange() const override LLVM_READONLY {
     SourceLocation End = getLocation();

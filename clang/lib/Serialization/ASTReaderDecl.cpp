@@ -2033,9 +2033,13 @@ void ASTDeclReader::VisitTemplateTypeParmDecl(TemplateTypeParmDecl *D) {
 
   D->setDeclaredWithTypename(Record[Idx++]);
 
-  bool Inherited = Record[Idx++];
-  TypeSourceInfo *DefArg = GetTypeSourceInfo(Record, Idx);
-  D->setDefaultArgument(DefArg, Inherited);
+  if (Record[Idx++])
+    // FIXME: Rebuild inherited default argument chain when linking together
+    // the redecl chain.
+    D->setInheritedDefaultArgument(
+        Reader.getContext(), ReadDeclAs<TemplateTypeParmDecl>(Record, Idx));
+  else
+    D->setDefaultArgument(GetTypeSourceInfo(Record, Idx));
 }
 
 void ASTDeclReader::VisitNonTypeTemplateParmDecl(NonTypeTemplateParmDecl *D) {
@@ -2052,11 +2056,14 @@ void ASTDeclReader::VisitNonTypeTemplateParmDecl(NonTypeTemplateParmDecl *D) {
   } else {
     // Rest of NonTypeTemplateParmDecl.
     D->ParameterPack = Record[Idx++];
-    if (Record[Idx++]) {
-      Expr *DefArg = Reader.ReadExpr(F);
-      bool Inherited = Record[Idx++];
-      D->setDefaultArgument(DefArg, Inherited);
-   }
+    if (Record[Idx++])
+      // FIXME: Rebuild inherited default argument chain when linking together
+      // the redecl chain.
+      D->setInheritedDefaultArgument(
+          Reader.getContext(),
+          ReadDeclAs<NonTypeTemplateParmDecl>(Record, Idx));
+    else
+      D->setDefaultArgument(Reader.ReadExpr(F));
   }
 }
 
@@ -2072,10 +2079,16 @@ void ASTDeclReader::VisitTemplateTemplateParmDecl(TemplateTemplateParmDecl *D) {
       Data[I] = Reader.ReadTemplateParameterList(F, Record, Idx);
   } else {
     // Rest of TemplateTemplateParmDecl.
-    TemplateArgumentLoc Arg = Reader.ReadTemplateArgumentLoc(F, Record, Idx);
-    bool IsInherited = Record[Idx++];
-    D->setDefaultArgument(Arg, IsInherited);
     D->ParameterPack = Record[Idx++];
+    if (Record[Idx++])
+      // FIXME: Rebuild inherited default argument chain when linking together
+      // the redecl chain.
+      D->setInheritedDefaultArgument(
+          Reader.getContext(),
+          ReadDeclAs<TemplateTemplateParmDecl>(Record, Idx));
+    else
+      D->setDefaultArgument(Reader.getContext(),
+                            Reader.ReadTemplateArgumentLoc(F, Record, Idx));
   }
 }
 

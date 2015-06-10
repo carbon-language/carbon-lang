@@ -504,14 +504,14 @@ TemplateTypeParmDecl::CreateDeserialized(const ASTContext &C, unsigned ID) {
 
 SourceLocation TemplateTypeParmDecl::getDefaultArgumentLoc() const {
   return hasDefaultArgument()
-    ? DefaultArgument->getTypeLoc().getBeginLoc()
-    : SourceLocation();
+             ? getDefaultArgumentInfo()->getTypeLoc().getBeginLoc()
+             : SourceLocation();
 }
 
 SourceRange TemplateTypeParmDecl::getSourceRange() const {
   if (hasDefaultArgument() && !defaultArgumentWasInherited())
     return SourceRange(getLocStart(),
-                       DefaultArgument->getTypeLoc().getEndLoc());
+                       getDefaultArgumentInfo()->getTypeLoc().getEndLoc());
   else
     return TypeDecl::getSourceRange();
 }
@@ -543,10 +543,8 @@ NonTypeTemplateParmDecl::NonTypeTemplateParmDecl(DeclContext *DC,
                                                  unsigned NumExpandedTypes,
                                                 TypeSourceInfo **ExpandedTInfos)
   : DeclaratorDecl(NonTypeTemplateParm, DC, IdLoc, Id, T, TInfo, StartLoc),
-    TemplateParmPosition(D, P), DefaultArgumentAndInherited(nullptr, false),
-    ParameterPack(true), ExpandedParameterPack(true),
-    NumExpandedTypes(NumExpandedTypes)
-{
+    TemplateParmPosition(D, P), ParameterPack(true),
+    ExpandedParameterPack(true), NumExpandedTypes(NumExpandedTypes) {
   if (ExpandedTypes && ExpandedTInfos) {
     void **TypesAndInfos = reinterpret_cast<void **>(this + 1);
     for (unsigned I = 0; I != NumExpandedTypes; ++I) {
@@ -621,8 +619,7 @@ TemplateTemplateParmDecl::TemplateTemplateParmDecl(
     IdentifierInfo *Id, TemplateParameterList *Params,
     unsigned NumExpansions, TemplateParameterList * const *Expansions)
   : TemplateDecl(TemplateTemplateParm, DC, L, Id, Params),
-    TemplateParmPosition(D, P), DefaultArgument(),
-    DefaultArgumentWasInherited(false), ParameterPack(true),
+    TemplateParmPosition(D, P), ParameterPack(true),
     ExpandedParameterPack(true), NumExpandedParams(NumExpansions) {
   if (Expansions)
     std::memcpy(reinterpret_cast<void*>(this + 1), Expansions,
@@ -661,6 +658,14 @@ TemplateTemplateParmDecl::CreateDeserialized(ASTContext &C, unsigned ID,
   return new (C, ID, sizeof(TemplateParameterList*) * NumExpansions)
       TemplateTemplateParmDecl(nullptr, SourceLocation(), 0, 0, nullptr,
                                nullptr, NumExpansions, nullptr);
+}
+
+void TemplateTemplateParmDecl::setDefaultArgument(
+    const ASTContext &C, const TemplateArgumentLoc &DefArg) {
+  if (DefArg.getArgument().isNull())
+    DefaultArgument.set(nullptr);
+  else
+    DefaultArgument.set(new (C) TemplateArgumentLoc(DefArg));
 }
 
 //===----------------------------------------------------------------------===//

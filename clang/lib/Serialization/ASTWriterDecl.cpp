@@ -1381,7 +1381,10 @@ void ASTDeclWriter::VisitTemplateTypeParmDecl(TemplateTypeParmDecl *D) {
 
   Record.push_back(D->wasDeclaredWithTypename());
   Record.push_back(D->defaultArgumentWasInherited());
-  Writer.AddTypeSourceInfo(D->getDefaultArgumentInfo(), Record);
+  if (D->defaultArgumentWasInherited())
+    Writer.AddDeclRef(D->getDefaultArgStorage().getInheritedFrom(), Record);
+  else
+    Writer.AddTypeSourceInfo(D->getDefaultArgumentInfo(), Record);
 
   Code = serialization::DECL_TEMPLATE_TYPE_PARM;
 }
@@ -1408,11 +1411,11 @@ void ASTDeclWriter::VisitNonTypeTemplateParmDecl(NonTypeTemplateParmDecl *D) {
   } else {
     // Rest of NonTypeTemplateParmDecl.
     Record.push_back(D->isParameterPack());
-    Record.push_back(D->getDefaultArgument() != nullptr);
-    if (D->getDefaultArgument()) {
+    Record.push_back(D->defaultArgumentWasInherited());
+    if (D->defaultArgumentWasInherited())
+      Writer.AddDeclRef(D->getDefaultArgStorage().getInheritedFrom(), Record);
+    else
       Writer.AddStmt(D->getDefaultArgument());
-      Record.push_back(D->defaultArgumentWasInherited());
-    }
     Code = serialization::DECL_NON_TYPE_TEMPLATE_PARM;
   }
 }
@@ -1437,9 +1440,12 @@ void ASTDeclWriter::VisitTemplateTemplateParmDecl(TemplateTemplateParmDecl *D) {
     Code = serialization::DECL_EXPANDED_TEMPLATE_TEMPLATE_PARM_PACK;
   } else {
     // Rest of TemplateTemplateParmDecl.
-    Writer.AddTemplateArgumentLoc(D->getDefaultArgument(), Record);
-    Record.push_back(D->defaultArgumentWasInherited());
     Record.push_back(D->isParameterPack());
+    Record.push_back(D->defaultArgumentWasInherited());
+    if (D->defaultArgumentWasInherited())
+      Writer.AddDeclRef(D->getDefaultArgStorage().getInheritedFrom(), Record);
+    else
+      Writer.AddTemplateArgumentLoc(D->getDefaultArgument(), Record);
     Code = serialization::DECL_TEMPLATE_TEMPLATE_PARM;
   }
 }
