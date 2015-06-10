@@ -24,6 +24,10 @@
 #include "llvm/Target/TargetOptions.h"
 using namespace llvm;
 
+static cl::opt<bool> EnableMachineCombinerPass("x86-machine-combiner",
+                               cl::desc("Enable the machine combiner pass"),
+                               cl::init(true), cl::Hidden);
+
 extern "C" void LLVMInitializeX86Target() {
   // Register the target.
   RegisterTargetMachine<X86TargetMachine> X(TheX86_32Target);
@@ -224,6 +228,8 @@ bool X86PassConfig::addInstSelector() {
 
 bool X86PassConfig::addILPOpts() {
   addPass(&EarlyIfConverterID);
+  if (EnableMachineCombinerPass)
+    addPass(&MachineCombinerID);
   return true;
 }
 
