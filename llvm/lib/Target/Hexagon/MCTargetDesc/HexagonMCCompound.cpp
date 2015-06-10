@@ -40,39 +40,39 @@ enum OpcodeIndex {
   tp1_jump_t
 };
 
-unsigned tstBitOpcode[8] = {J4_tstbit0_fp0_jump_nt, J4_tstbit0_fp0_jump_t,
-                            J4_tstbit0_fp1_jump_nt, J4_tstbit0_fp1_jump_t,
-                            J4_tstbit0_tp0_jump_nt, J4_tstbit0_tp0_jump_t,
-                            J4_tstbit0_tp1_jump_nt, J4_tstbit0_tp1_jump_t};
-unsigned cmpeqBitOpcode[8] = {J4_cmpeq_fp0_jump_nt, J4_cmpeq_fp0_jump_t,
-                              J4_cmpeq_fp1_jump_nt, J4_cmpeq_fp1_jump_t,
-                              J4_cmpeq_tp0_jump_nt, J4_cmpeq_tp0_jump_t,
-                              J4_cmpeq_tp1_jump_nt, J4_cmpeq_tp1_jump_t};
-unsigned cmpgtBitOpcode[8] = {J4_cmpgt_fp0_jump_nt, J4_cmpgt_fp0_jump_t,
-                              J4_cmpgt_fp1_jump_nt, J4_cmpgt_fp1_jump_t,
-                              J4_cmpgt_tp0_jump_nt, J4_cmpgt_tp0_jump_t,
-                              J4_cmpgt_tp1_jump_nt, J4_cmpgt_tp1_jump_t};
-unsigned cmpgtuBitOpcode[8] = {J4_cmpgtu_fp0_jump_nt, J4_cmpgtu_fp0_jump_t,
-                               J4_cmpgtu_fp1_jump_nt, J4_cmpgtu_fp1_jump_t,
-                               J4_cmpgtu_tp0_jump_nt, J4_cmpgtu_tp0_jump_t,
-                               J4_cmpgtu_tp1_jump_nt, J4_cmpgtu_tp1_jump_t};
-unsigned cmpeqiBitOpcode[8] = {J4_cmpeqi_fp0_jump_nt, J4_cmpeqi_fp0_jump_t,
-                               J4_cmpeqi_fp1_jump_nt, J4_cmpeqi_fp1_jump_t,
-                               J4_cmpeqi_tp0_jump_nt, J4_cmpeqi_tp0_jump_t,
-                               J4_cmpeqi_tp1_jump_nt, J4_cmpeqi_tp1_jump_t};
-unsigned cmpgtiBitOpcode[8] = {J4_cmpgti_fp0_jump_nt, J4_cmpgti_fp0_jump_t,
-                               J4_cmpgti_fp1_jump_nt, J4_cmpgti_fp1_jump_t,
-                               J4_cmpgti_tp0_jump_nt, J4_cmpgti_tp0_jump_t,
-                               J4_cmpgti_tp1_jump_nt, J4_cmpgti_tp1_jump_t};
-unsigned cmpgtuiBitOpcode[8] = {J4_cmpgtui_fp0_jump_nt, J4_cmpgtui_fp0_jump_t,
-                                J4_cmpgtui_fp1_jump_nt, J4_cmpgtui_fp1_jump_t,
-                                J4_cmpgtui_tp0_jump_nt, J4_cmpgtui_tp0_jump_t,
-                                J4_cmpgtui_tp1_jump_nt, J4_cmpgtui_tp1_jump_t};
-unsigned cmpeqn1BitOpcode[8] = {J4_cmpeqn1_fp0_jump_nt, J4_cmpeqn1_fp0_jump_t,
-                                J4_cmpeqn1_fp1_jump_nt, J4_cmpeqn1_fp1_jump_t,
-                                J4_cmpeqn1_tp0_jump_nt, J4_cmpeqn1_tp0_jump_t,
-                                J4_cmpeqn1_tp1_jump_nt, J4_cmpeqn1_tp1_jump_t};
-unsigned cmpgtn1BitOpcode[8] = {
+static const unsigned tstBitOpcode[8] = {
+    J4_tstbit0_fp0_jump_nt, J4_tstbit0_fp0_jump_t,  J4_tstbit0_fp1_jump_nt,
+    J4_tstbit0_fp1_jump_t,  J4_tstbit0_tp0_jump_nt, J4_tstbit0_tp0_jump_t,
+    J4_tstbit0_tp1_jump_nt, J4_tstbit0_tp1_jump_t};
+static const unsigned cmpeqBitOpcode[8] = {
+    J4_cmpeq_fp0_jump_nt, J4_cmpeq_fp0_jump_t,  J4_cmpeq_fp1_jump_nt,
+    J4_cmpeq_fp1_jump_t,  J4_cmpeq_tp0_jump_nt, J4_cmpeq_tp0_jump_t,
+    J4_cmpeq_tp1_jump_nt, J4_cmpeq_tp1_jump_t};
+static const unsigned cmpgtBitOpcode[8] = {
+    J4_cmpgt_fp0_jump_nt, J4_cmpgt_fp0_jump_t,  J4_cmpgt_fp1_jump_nt,
+    J4_cmpgt_fp1_jump_t,  J4_cmpgt_tp0_jump_nt, J4_cmpgt_tp0_jump_t,
+    J4_cmpgt_tp1_jump_nt, J4_cmpgt_tp1_jump_t};
+static const unsigned cmpgtuBitOpcode[8] = {
+    J4_cmpgtu_fp0_jump_nt, J4_cmpgtu_fp0_jump_t,  J4_cmpgtu_fp1_jump_nt,
+    J4_cmpgtu_fp1_jump_t,  J4_cmpgtu_tp0_jump_nt, J4_cmpgtu_tp0_jump_t,
+    J4_cmpgtu_tp1_jump_nt, J4_cmpgtu_tp1_jump_t};
+static const unsigned cmpeqiBitOpcode[8] = {
+    J4_cmpeqi_fp0_jump_nt, J4_cmpeqi_fp0_jump_t,  J4_cmpeqi_fp1_jump_nt,
+    J4_cmpeqi_fp1_jump_t,  J4_cmpeqi_tp0_jump_nt, J4_cmpeqi_tp0_jump_t,
+    J4_cmpeqi_tp1_jump_nt, J4_cmpeqi_tp1_jump_t};
+static const unsigned cmpgtiBitOpcode[8] = {
+    J4_cmpgti_fp0_jump_nt, J4_cmpgti_fp0_jump_t,  J4_cmpgti_fp1_jump_nt,
+    J4_cmpgti_fp1_jump_t,  J4_cmpgti_tp0_jump_nt, J4_cmpgti_tp0_jump_t,
+    J4_cmpgti_tp1_jump_nt, J4_cmpgti_tp1_jump_t};
+static const unsigned cmpgtuiBitOpcode[8] = {
+    J4_cmpgtui_fp0_jump_nt, J4_cmpgtui_fp0_jump_t,  J4_cmpgtui_fp1_jump_nt,
+    J4_cmpgtui_fp1_jump_t,  J4_cmpgtui_tp0_jump_nt, J4_cmpgtui_tp0_jump_t,
+    J4_cmpgtui_tp1_jump_nt, J4_cmpgtui_tp1_jump_t};
+static const unsigned cmpeqn1BitOpcode[8] = {
+    J4_cmpeqn1_fp0_jump_nt, J4_cmpeqn1_fp0_jump_t,  J4_cmpeqn1_fp1_jump_nt,
+    J4_cmpeqn1_fp1_jump_t,  J4_cmpeqn1_tp0_jump_nt, J4_cmpeqn1_tp0_jump_t,
+    J4_cmpeqn1_tp1_jump_nt, J4_cmpeqn1_tp1_jump_t};
+static const unsigned cmpgtn1BitOpcode[8] = {
     J4_cmpgtn1_fp0_jump_nt, J4_cmpgtn1_fp0_jump_t,  J4_cmpgtn1_fp1_jump_nt,
     J4_cmpgtn1_fp1_jump_t,  J4_cmpgtn1_tp0_jump_nt, J4_cmpgtn1_tp0_jump_t,
     J4_cmpgtn1_tp1_jump_nt, J4_cmpgtn1_tp1_jump_t,
