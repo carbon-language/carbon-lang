@@ -306,7 +306,8 @@ class InitListChecker {
                                            QualType CurrentObjectType,
                                            InitListExpr *StructuredList,
                                            unsigned StructuredIndex,
-                                           SourceRange InitRange);
+                                           SourceRange InitRange,
+                                           bool IsFullyOverwritten = false);
   void UpdateStructuredListElement(InitListExpr *StructuredList,
                                    unsigned &StructuredIndex,
                                    Expr *expr);
@@ -317,11 +318,33 @@ class InitListChecker {
                                      SourceLocation Loc,
                                      const InitializedEntity &Entity,
                                      bool VerifyOnly);
+
+  // Explanation on the "FillWithNoInit" mode:
+  //
+  // Assume we have the following definitions (Case#1):
+  // struct P { char x[6][6]; } xp = { .x[1] = "bar" };
+  // struct PP { struct P lp; } l = { .lp = xp, .lp.x[1][2] = 'f' };
+  //
+  // l.lp.x[1][0..1] should not be filled with implicit initializers because the
+  // "base" initializer "xp" will provide values for them; l.lp.x[1] will be "baf".
+  //
+  // But if we have (Case#2):
+  // struct PP l = { .lp = xp, .lp.x[1] = { [2] = 'f' } };
+  //
+  // l.lp.x[1][0..1] are implicitly initialized and do not use values from the
+  // "base" initializer; l.lp.x[1] will be "\0\0f\0\0\0".
+  //
+  // To distinguish Case#1 from Case#2, and also to avoid leaving many "holes"
+  // in the InitListExpr, the "holes" in Case#1 are filled not with empty
+  // initializers but with special "NoInitExpr" place holders, which tells the
+  // CodeGen not to generate any initializers for these parts.
   void FillInEmptyInitForField(unsigned Init, FieldDecl *Field,
                                const InitializedEntity &ParentEntity,
-                               InitListExpr *ILE, bool &RequiresSecondPass);
+                               InitListExpr *ILE, bool &RequiresSecondPass,
+                               bool FillWithNoInit = false);
   void FillInEmptyInitializations(const InitializedEntity &Entity,
-                                  InitListExpr *ILE, bool &RequiresSecondPass);
+                                  InitListExpr *ILE, bool &RequiresSecondPass,
+                                  bool FillWithNoInit = false);
   bool CheckFlexibleArrayInit(const InitializedEntity &Entity,
                               Expr *InitExpr, FieldDecl *Field,
                               bool TopLevelObject);
@@ -455,12 +478,26 @@ void InitListChecker::CheckEmptyInitializable(const InitializedEntity &Entity,
 void InitListChecker::FillInEmptyInitForField(unsigned Init, FieldDecl *Field,
                                         const InitializedEntity &ParentEntity,
                                               InitListExpr *ILE,
-                                              bool &RequiresSecondPass) {
+                                              bool &RequiresSecondPass,
+                                              bool FillWithNoInit) {
   SourceLocation Loc = ILE->getLocEnd();
   unsigned NumInits = ILE->getNumInits();
   InitializedEntity MemberEntity
     = InitializedEntity::InitializeMember(Field, &ParentEntity);
+
+  if (const RecordType *RType = ILE->getType()->getAs<RecordType>())
+    if (!RType->getDecl()->isUnion())
+      assert(Init < NumInits && "This ILE should have been expanded");
+
   if (Init >= NumInits || !ILE->getInit(Init)) {
+    if (FillWithNoInit) {
+      Expr *Filler = new (SemaRef.Context) NoInitExpr(Field->getType());
+      if (Init < NumInits)
+        ILE->setInit(Init, Filler);
+      else
+        ILE->updateInit(SemaRef.Context, Init, Filler);
+      return;
+    }
     // C++1y [dcl.init.aggr]p7:
     //   If there are fewer initializer-clauses in the list than there are
     //   members in the aggregate, then each member not explicitly initialized
@@ -516,7 +553,11 @@ void InitListChecker::FillInEmptyInitForField(unsigned Init, FieldDecl *Field,
   } else if (InitListExpr *InnerILE
                = dyn_cast<InitListExpr>(ILE->getInit(Init)))
     FillInEmptyInitializations(MemberEntity, InnerILE,
-                               RequiresSecondPass);
+                               RequiresSecondPass, FillWithNoInit);
+  else if (DesignatedInitUpdateExpr *InnerDIUE
+               = dyn_cast<DesignatedInitUpdateExpr>(ILE->getInit(Init)))
+    FillInEmptyInitializations(MemberEntity, InnerDIUE->getUpdater(),
+                               RequiresSecondPass, /*FillWithNoInit =*/ true);
 }
 
 /// Recursively replaces NULL values within the given initializer list
@@ -525,7 +566,8 @@ void InitListChecker::FillInEmptyInitForField(unsigned Init, FieldDecl *Field,
 void
 InitListChecker::FillInEmptyInitializations(const InitializedEntity &Entity,
                                             InitListExpr *ILE,
-                                            bool &RequiresSecondPass) {
+                                            bool &RequiresSecondPass,
+                                            bool FillWithNoInit) {
   assert((ILE->getType() != SemaRef.Context.VoidTy) &&
          "Should not have void type");
 
@@ -533,16 +575,27 @@ InitListChecker::FillInEmptyInitializations(const InitializedEntity &Entity,
     const RecordDecl *RDecl = RType->getDecl();
     if (RDecl->isUnion() && ILE->getInitializedFieldInUnion())
       FillInEmptyInitForField(0, ILE->getInitializedFieldInUnion(),
-                              Entity, ILE, RequiresSecondPass);
+                              Entity, ILE, RequiresSecondPass, FillWithNoInit);
     else if (RDecl->isUnion() && isa<CXXRecordDecl>(RDecl) &&
              cast<CXXRecordDecl>(RDecl)->hasInClassInitializer()) {
       for (auto *Field : RDecl->fields()) {
         if (Field->hasInClassInitializer()) {
-          FillInEmptyInitForField(0, Field, Entity, ILE, RequiresSecondPass);
+          FillInEmptyInitForField(0, Field, Entity, ILE, RequiresSecondPass,
+                                  FillWithNoInit);
           break;
         }
       }
     } else {
+      // The fields beyond ILE->getNumInits() are default initialized, so in
+      // order to leave them uninitialized, the ILE is expanded and the extra
+      // fields are then filled with NoInitExpr.
+      unsigned NumFields = 0;
+      for (auto *Field : RDecl->fields())
+        if (!Field->isUnnamedBitfield())
+          ++NumFields;
+      if (ILE->getNumInits() < NumFields)
+        ILE->resizeInits(SemaRef.Context, NumFields);
+
       unsigned Init = 0;
       for (auto *Field : RDecl->fields()) {
         if (Field->isUnnamedBitfield())
@@ -551,7 +604,8 @@ InitListChecker::FillInEmptyInitializations(const InitializedEntity &Entity,
         if (hadError)
           return;
 
-        FillInEmptyInitForField(Init, Field, Entity, ILE, RequiresSecondPass);
+        FillInEmptyInitForField(Init, Field, Entity, ILE, RequiresSecondPass,
+                                FillWithNoInit);
         if (hadError)
           return;
 
@@ -594,13 +648,23 @@ InitListChecker::FillInEmptyInitializations(const InitializedEntity &Entity,
       ElementEntity.setElementIndex(Init);
 
     Expr *InitExpr = (Init < NumInits ? ILE->getInit(Init) : nullptr);
-    if (!InitExpr && !ILE->hasArrayFiller()) {
-      ExprResult ElementInit = PerformEmptyInit(SemaRef, ILE->getLocEnd(),
-                                                ElementEntity,
-                                                /*VerifyOnly*/false);
-      if (ElementInit.isInvalid()) {
-        hadError = true;
-        return;
+    if (!InitExpr && Init < NumInits && ILE->hasArrayFiller())
+      ILE->setInit(Init, ILE->getArrayFiller());
+    else if (!InitExpr && !ILE->hasArrayFiller()) {
+      Expr *Filler = nullptr;
+
+      if (FillWithNoInit)
+        Filler = new (SemaRef.Context) NoInitExpr(ElementType);
+      else {
+        ExprResult ElementInit = PerformEmptyInit(SemaRef, ILE->getLocEnd(),
+                                                  ElementEntity,
+                                                  /*VerifyOnly*/false);
+        if (ElementInit.isInvalid()) {
+          hadError = true;
+          return;
+        }
+
+        Filler = ElementInit.getAs<Expr>();
       }
 
       if (hadError) {
@@ -609,29 +673,34 @@ InitListChecker::FillInEmptyInitializations(const InitializedEntity &Entity,
         // For arrays, just set the expression used for value-initialization
         // of the "holes" in the array.
         if (ElementEntity.getKind() == InitializedEntity::EK_ArrayElement)
-          ILE->setArrayFiller(ElementInit.getAs<Expr>());
+          ILE->setArrayFiller(Filler);
         else
-          ILE->setInit(Init, ElementInit.getAs<Expr>());
+          ILE->setInit(Init, Filler);
       } else {
         // For arrays, just set the expression used for value-initialization
         // of the rest of elements and exit.
         if (ElementEntity.getKind() == InitializedEntity::EK_ArrayElement) {
-          ILE->setArrayFiller(ElementInit.getAs<Expr>());
+          ILE->setArrayFiller(Filler);
           return;
         }
 
-        if (!isa<ImplicitValueInitExpr>(ElementInit.get())) {
+        if (!isa<ImplicitValueInitExpr>(Filler) && !isa<NoInitExpr>(Filler)) {
           // Empty initialization requires a constructor call, so
           // extend the initializer list to include the constructor
           // call and make a note that we'll need to take another pass
           // through the initializer list.
-          ILE->updateInit(SemaRef.Context, Init, ElementInit.getAs<Expr>());
+          ILE->updateInit(SemaRef.Context, Init, Filler);
           RequiresSecondPass = true;
         }
       }
     } else if (InitListExpr *InnerILE
                  = dyn_cast_or_null<InitListExpr>(InitExpr))
-      FillInEmptyInitializations(ElementEntity, InnerILE, RequiresSecondPass);
+      FillInEmptyInitializations(ElementEntity, InnerILE, RequiresSecondPass,
+                                 FillWithNoInit);
+    else if (DesignatedInitUpdateExpr *InnerDIUE
+                 = dyn_cast_or_null<DesignatedInitUpdateExpr>(InitExpr))
+      FillInEmptyInitializations(ElementEntity, InnerDIUE->getUpdater(),
+                                 RequiresSecondPass, /*FillWithNoInit =*/ true);
   }
 }
 
@@ -966,13 +1035,26 @@ void InitListChecker::CheckSubElementType(const InitializedEntity &Entity,
                               StructuredList, StructuredIndex);
 
   if (InitListExpr *SubInitList = dyn_cast<InitListExpr>(expr)) {
-    if (!SemaRef.getLangOpts().CPlusPlus) {
+    if (SubInitList->getNumInits() == 1 &&
+        IsStringInit(SubInitList->getInit(0), ElemType, SemaRef.Context) ==
+        SIF_None) {
+      expr = SubInitList->getInit(0);
+    } else if (!SemaRef.getLangOpts().CPlusPlus) {
       InitListExpr *InnerStructuredList
         = getStructuredSubobjectInit(IList, Index, ElemType,
                                      StructuredList, StructuredIndex,
-                                     SubInitList->getSourceRange());
+                                     SubInitList->getSourceRange(), true);
       CheckExplicitInitList(Entity, SubInitList, ElemType,
                             InnerStructuredList);
+
+      if (!hadError && !VerifyOnly) {
+        bool RequiresSecondPass = false;
+        FillInEmptyInitializations(Entity, InnerStructuredList,
+                                   RequiresSecondPass);
+        if (RequiresSecondPass && !hadError)
+          FillInEmptyInitializations(Entity, InnerStructuredList,
+                                     RequiresSecondPass);
+      }
       ++StructuredIndex;
       ++Index;
       return;
@@ -1913,11 +1995,66 @@ InitListChecker::CheckDesignatedInitializer(const InitializedEntity &Entity,
 
     // Determine the structural initializer list that corresponds to the
     // current subobject.
-    StructuredList = IsFirstDesignator? SyntacticToSemantic.lookup(IList)
-      : getStructuredSubobjectInit(IList, Index, CurrentObjectType,
-                                   StructuredList, StructuredIndex,
-                                   SourceRange(D->getLocStart(),
-                                               DIE->getLocEnd()));
+    if (IsFirstDesignator)
+      StructuredList = SyntacticToSemantic.lookup(IList);
+    else {
+      Expr *ExistingInit = StructuredIndex < StructuredList->getNumInits() ?
+          StructuredList->getInit(StructuredIndex) : nullptr;
+      if (!ExistingInit && StructuredList->hasArrayFiller())
+        ExistingInit = StructuredList->getArrayFiller();
+
+      if (!ExistingInit)
+        StructuredList =
+          getStructuredSubobjectInit(IList, Index, CurrentObjectType,
+                                     StructuredList, StructuredIndex,
+                                     SourceRange(D->getLocStart(),
+                                                 DIE->getLocEnd()));
+      else if (InitListExpr *Result = dyn_cast<InitListExpr>(ExistingInit))
+        StructuredList = Result;
+      else {
+        if (DesignatedInitUpdateExpr *E =
+                dyn_cast<DesignatedInitUpdateExpr>(ExistingInit))
+          StructuredList = E->getUpdater();
+        else {
+          DesignatedInitUpdateExpr *DIUE =
+              new (SemaRef.Context) DesignatedInitUpdateExpr(SemaRef.Context,
+                                        D->getLocStart(), ExistingInit,
+                                        DIE->getLocEnd());
+          StructuredList->updateInit(SemaRef.Context, StructuredIndex, DIUE);
+          StructuredList = DIUE->getUpdater();
+        }
+
+        // We need to check on source range validity because the previous
+        // initializer does not have to be an explicit initializer. e.g.,
+        //
+        // struct P { int a, b; };
+        // struct PP { struct P p } l = { { .a = 2 }, .p.b = 3 };
+        //
+        // There is an overwrite taking place because the first braced initializer
+        // list "{ .a = 2 }" already provides value for .p.b (which is zero).
+        if (ExistingInit->getSourceRange().isValid()) {
+          // We are creating an initializer list that initializes the
+          // subobjects of the current object, but there was already an
+          // initialization that completely initialized the current
+          // subobject, e.g., by a compound literal:
+          //
+          // struct X { int a, b; };
+          // struct X xs[] = { [0] = (struct X) { 1, 2 }, [0].b = 3 };
+          //
+          // Here, xs[0].a == 0 and xs[0].b == 3, since the second,
+          // designated initializer re-initializes the whole
+          // subobject [0], overwriting previous initializers.
+          SemaRef.Diag(D->getLocStart(),
+                       diag::warn_subobject_initializer_overrides)
+            << SourceRange(D->getLocStart(), DIE->getLocEnd());
+  
+          SemaRef.Diag(ExistingInit->getLocStart(),
+                       diag::note_previous_initializer)
+            << /*FIXME:has side effects=*/0
+            << ExistingInit->getSourceRange();
+        }
+      }
+    }
     assert(StructuredList && "Expected a structured initializer list");
   }
 
@@ -2367,7 +2504,8 @@ InitListChecker::getStructuredSubobjectInit(InitListExpr *IList, unsigned Index,
                                             QualType CurrentObjectType,
                                             InitListExpr *StructuredList,
                                             unsigned StructuredIndex,
-                                            SourceRange InitRange) {
+                                            SourceRange InitRange,
+                                            bool IsFullyOverwritten) {
   if (VerifyOnly)
     return nullptr; // No structured list in verification-only mode.
   Expr *ExistingInit = nullptr;
@@ -2377,7 +2515,16 @@ InitListChecker::getStructuredSubobjectInit(InitListExpr *IList, unsigned Index,
     ExistingInit = StructuredList->getInit(StructuredIndex);
 
   if (InitListExpr *Result = dyn_cast_or_null<InitListExpr>(ExistingInit))
-    return Result;
+    // There might have already been initializers for subobjects of the current
+    // object, but a subsequent initializer list will overwrite the entirety
+    // of the current object. (See DR 253 and C99 6.7.8p21). e.g.,
+    //
+    // struct P { char x[6]; };
+    // struct P l = { .x[2] = 'x', .x = { [0] = 'f' } };
+    //
+    // The first designated initializer is ignored, and l.x is just "f".
+    if (!IsFullyOverwritten)
+      return Result;
 
   if (ExistingInit) {
     // We are creating an initializer list that initializes the
@@ -2469,13 +2616,22 @@ void InitListChecker::UpdateStructuredListElement(InitListExpr *StructuredList,
   if (Expr *PrevInit = StructuredList->updateInit(SemaRef.Context,
                                                   StructuredIndex, expr)) {
     // This initializer overwrites a previous initializer. Warn.
-    SemaRef.Diag(expr->getLocStart(),
-                  diag::warn_initializer_overrides)
-      << expr->getSourceRange();
-    SemaRef.Diag(PrevInit->getLocStart(),
-                  diag::note_previous_initializer)
-      << /*FIXME:has side effects=*/0
-      << PrevInit->getSourceRange();
+    // We need to check on source range validity because the previous
+    // initializer does not have to be an explicit initializer.
+    // struct P { int a, b; };
+    // struct PP { struct P p } l = { { .a = 2 }, .p.b = 3 };
+    // There is an overwrite taking place because the first braced initializer
+    // list "{ .a = 2 }' already provides value for .p.b (which is zero).
+    if (PrevInit->getSourceRange().isValid()) {
+      SemaRef.Diag(expr->getLocStart(),
+                   diag::warn_initializer_overrides)
+        << expr->getSourceRange();
+
+      SemaRef.Diag(PrevInit->getLocStart(),
+                   diag::note_previous_initializer)
+        << /*FIXME:has side effects=*/0
+        << PrevInit->getSourceRange();
+    }
   }
 
   ++StructuredIndex;

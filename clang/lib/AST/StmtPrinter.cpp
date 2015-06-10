@@ -1430,6 +1430,22 @@ void StmtPrinter::VisitDesignatedInitExpr(DesignatedInitExpr *Node) {
   PrintExpr(Node->getInit());
 }
 
+void StmtPrinter::VisitDesignatedInitUpdateExpr(
+    DesignatedInitUpdateExpr *Node) {
+  OS << "{";
+  OS << "/*base*/";
+  PrintExpr(Node->getBase());
+  OS << ", ";
+
+  OS << "/*updater*/";
+  PrintExpr(Node->getUpdater());
+  OS << "}";
+}
+
+void StmtPrinter::VisitNoInitExpr(NoInitExpr *Node) {
+  OS << "/*no init*/";
+}
+
 void StmtPrinter::VisitImplicitValueInitExpr(ImplicitValueInitExpr *Node) {
   if (Policy.LangOpts.CPlusPlus) {
     OS << "/*implicit*/";

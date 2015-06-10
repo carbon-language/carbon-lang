@@ -235,11 +235,13 @@ CXCursor cxcursor::MakeCXCursor(const Stmt *S, const Decl *Parent,
   case Stmt::CXXUuidofExprClass:
   case Stmt::ChooseExprClass:
   case Stmt::DesignatedInitExprClass:
+  case Stmt::DesignatedInitUpdateExprClass:
   case Stmt::ExprWithCleanupsClass:
   case Stmt::ExpressionTraitExprClass:
   case Stmt::ExtVectorElementExprClass:
   case Stmt::ImplicitCastExprClass:
   case Stmt::ImplicitValueInitExprClass:
+  case Stmt::NoInitExprClass:
   case Stmt::MaterializeTemporaryExprClass:
   case Stmt::ObjCIndirectCopyRestoreExprClass:
   case Stmt::OffsetOfExprClass:

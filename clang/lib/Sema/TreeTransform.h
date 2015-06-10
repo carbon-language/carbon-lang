@@ -7950,6 +7950,25 @@ TreeTransform<Derived>::TransformDesignatedInitExpr(DesignatedInitExpr *E) {
                                                 E->usesGNUSyntax(), Init.get());
 }
 
+// Seems that if TransformInitListExpr() only works on the syntactic form of an
+// InitListExpr, then a DesignatedInitUpdateExpr is not encountered.
+template<typename Derived>
+ExprResult
+TreeTransform<Derived>::TransformDesignatedInitUpdateExpr(
+    DesignatedInitUpdateExpr *E) {
+  llvm_unreachable("Unexpected DesignatedInitUpdateExpr in syntactic form of "
+                   "initializer");
+  return ExprError();
+}
+
+template<typename Derived>
+ExprResult
+TreeTransform<Derived>::TransformNoInitExpr(
+    NoInitExpr *E) {
+  llvm_unreachable("Unexpected NoInitExpr in syntactic form of initializer");
+  return ExprError();
+}
+
 template<typename Derived>
 ExprResult
 TreeTransform<Derived>::TransformImplicitValueInitExpr(

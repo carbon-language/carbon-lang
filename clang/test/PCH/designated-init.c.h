@@ -40,3 +40,25 @@ static void *FooTable[256] = {
         },
     }
 };
+
+struct P1 {
+    struct Q1 {
+      char a[6];
+      char b[6];
+    } q;
+};
+
+struct P1 l1 = {
+    (struct Q1){ "foo", "bar" },
+               .q.b = { "boo" },
+               .q.b = { [1] = 'x' }
+};
+
+extern struct Q1 *foo();
+static struct P1 test_foo() {
+  struct P1 l = { *foo(),
+                  .q.b = { "boo" },
+                  .q.b = { [1] = 'x' }
+                };
+  return l;
+}

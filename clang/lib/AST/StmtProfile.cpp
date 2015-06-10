@@ -744,6 +744,18 @@ void StmtProfiler::VisitDesignatedInitExpr(const DesignatedInitExpr *S) {
   }
 }
 
+// Seems that if VisitInitListExpr() only works on the syntactic form of an
+// InitListExpr, then a DesignatedInitUpdateExpr is not encountered.
+void StmtProfiler::VisitDesignatedInitUpdateExpr(
+    const DesignatedInitUpdateExpr *S) {
+  llvm_unreachable("Unexpected DesignatedInitUpdateExpr in syntactic form of "
+                   "initializer");
+}
+
+void StmtProfiler::VisitNoInitExpr(const NoInitExpr *S) {
+  llvm_unreachable("Unexpected NoInitExpr in syntactic form of initializer");
+}
+
 void StmtProfiler::VisitImplicitValueInitExpr(const ImplicitValueInitExpr *S) {
   VisitExpr(S);
 }

@@ -1041,6 +1041,7 @@ CanThrowResult Sema::canThrow(const Expr *E) {
   case Expr::CXXReinterpretCastExprClass:
   case Expr::CXXStdInitializerListExprClass:
   case Expr::DesignatedInitExprClass:
+  case Expr::DesignatedInitUpdateExprClass:
   case Expr::ExprWithCleanupsClass:
   case Expr::ExtVectorElementExprClass:
   case Expr::InitListExprClass:
@@ -1135,6 +1136,7 @@ CanThrowResult Sema::canThrow(const Expr *E) {
   case Expr::ImaginaryLiteralClass:
   case Expr::ImplicitValueInitExprClass:
   case Expr::IntegerLiteralClass:
+  case Expr::NoInitExprClass:
   case Expr::ObjCEncodeExprClass:
   case Expr::ObjCStringLiteralClass:
   case Expr::ObjCBoolLiteralExprClass:

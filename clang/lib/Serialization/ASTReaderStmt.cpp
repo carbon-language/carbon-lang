@@ -801,6 +801,16 @@ void ASTStmtReader::VisitDesignatedInitExpr(DesignatedInitExpr *E) {
                     Designators.data(), Designators.size());
 }
 
+void ASTStmtReader::VisitDesignatedInitUpdateExpr(DesignatedInitUpdateExpr *E) {
+  VisitExpr(E);
+  E->setBase(Reader.ReadSubExpr());
+  E->setUpdater(Reader.ReadSubExpr());
+}
+
+void ASTStmtReader::VisitNoInitExpr(NoInitExpr *E) {
+  VisitExpr(E);
+}
+
 void ASTStmtReader::VisitImplicitValueInitExpr(ImplicitValueInitExpr *E) {
   VisitExpr(E);
 }
@@ -2549,8 +2559,16 @@ Stmt *ASTReader::ReadStmtFromStream(ModuleFile &F) {
 
       break;
 
+    case EXPR_DESIGNATED_INIT_UPDATE:
+      S = new (Context) DesignatedInitUpdateExpr(Empty);
+      break;
+
     case EXPR_IMPLICIT_VALUE_INIT:
       S = new (Context) ImplicitValueInitExpr(Empty);
+      break;
+
+    case EXPR_NO_INIT:
+      S = new (Context) NoInitExpr(Empty);
       break;
 
     case EXPR_VA_ARG:

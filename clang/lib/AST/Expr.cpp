@@ -2772,6 +2772,11 @@ bool Expr::isConstantInitializer(ASTContext &Ctx, bool IsForRef,
     const Expr *Exp = cast<CompoundLiteralExpr>(this)->getInitializer();
     return Exp->isConstantInitializer(Ctx, false, Culprit);
   }
+  case DesignatedInitUpdateExprClass: {
+    const DesignatedInitUpdateExpr *DIUE = cast<DesignatedInitUpdateExpr>(this);
+    return DIUE->getBase()->isConstantInitializer(Ctx, false, Culprit) &&
+           DIUE->getUpdater()->isConstantInitializer(Ctx, false, Culprit);
+  }
   case InitListExprClass: {
     const InitListExpr *ILE = cast<InitListExpr>(this);
     if (ILE->getType()->isArrayType()) {
@@ -2818,6 +2823,7 @@ bool Expr::isConstantInitializer(ASTContext &Ctx, bool IsForRef,
     break;
   }
   case ImplicitValueInitExprClass:
+  case NoInitExprClass:
     return true;
   case ParenExprClass:
     return cast<ParenExpr>(this)->getSubExpr()
@@ -2925,6 +2931,7 @@ bool Expr::HasSideEffects(const ASTContext &Ctx,
   case UnaryExprOrTypeTraitExprClass:
   case AddrLabelExprClass:
   case GNUNullExprClass:
+  case NoInitExprClass:
   case CXXBoolLiteralExprClass:
   case CXXNullPtrLiteralExprClass:
   case CXXThisExprClass:
@@ -2983,6 +2990,7 @@ bool Expr::HasSideEffects(const ASTContext &Ctx,
   case CompoundLiteralExprClass:
   case ExtVectorElementExprClass:
   case DesignatedInitExprClass:
+  case DesignatedInitUpdateExprClass:
   case ParenListExprClass:
   case CXXPseudoDestructorExprClass:
   case CXXStdInitializerListExprClass:
@@ -3987,6 +3995,25 @@ void DesignatedInitExpr::ExpandDesignator(const ASTContext &C, unsigned Idx,
             NewDesignators + Idx + NumNewDesignators);
   Designators = NewDesignators;
   NumDesignators = NumDesignators - 1 + NumNewDesignators;
+}
+
+DesignatedInitUpdateExpr::DesignatedInitUpdateExpr(const ASTContext &C,
+    SourceLocation lBraceLoc, Expr *baseExpr, SourceLocation rBraceLoc)
+  : Expr(DesignatedInitUpdateExprClass, baseExpr->getType(), VK_RValue,
+         OK_Ordinary, false, false, false, false) {
+  BaseAndUpdaterExprs[0] = baseExpr;
+
+  InitListExpr *ILE = new (C) InitListExpr(C, lBraceLoc, None, rBraceLoc);
+  ILE->setType(baseExpr->getType());
+  BaseAndUpdaterExprs[1] = ILE;
+}
+
+SourceLocation DesignatedInitUpdateExpr::getLocStart() const {
+  return getBase()->getLocStart();
+}
+
+SourceLocation DesignatedInitUpdateExpr::getLocEnd() const {
+  return getBase()->getLocEnd();
 }
 
 ParenListExpr::ParenListExpr(const ASTContext& C, SourceLocation lparenloc,

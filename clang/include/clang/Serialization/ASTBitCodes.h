@@ -1211,8 +1211,12 @@ namespace clang {
       EXPR_INIT_LIST,
       /// \brief A DesignatedInitExpr record.
       EXPR_DESIGNATED_INIT,
+      /// \brief A DesignatedInitUpdateExpr record.
+      EXPR_DESIGNATED_INIT_UPDATE,
       /// \brief An ImplicitValueInitExpr record.
       EXPR_IMPLICIT_VALUE_INIT,
+      /// \brief An NoInitExpr record.
+      EXPR_NO_INIT,
       /// \brief A VAArgExpr record.
       EXPR_VA_ARG,
       /// \brief An AddrLabelExpr record.

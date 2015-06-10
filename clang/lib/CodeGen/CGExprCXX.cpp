@@ -958,6 +958,25 @@ void CodeGenFunction::EmitNewArrayInitializer(
     if (ILE->getNumInits() == 0 && TryMemsetInitialization())
       return;
 
+  // If we have a struct whose every field is value-initialized, we can
+  // usually use memset.
+  if (auto *ILE = dyn_cast<InitListExpr>(Init)) {
+    if (const RecordType *RType = ILE->getType()->getAs<RecordType>()) {
+      if (RType->getDecl()->isStruct()) {
+        unsigned NumFields = 0;
+        for (auto *Field : RType->getDecl()->fields())
+          if (!Field->isUnnamedBitfield())
+            ++NumFields;
+        if (ILE->getNumInits() == NumFields)
+          for (unsigned i = 0, e = ILE->getNumInits(); i != e; ++i)
+            if (!isa<ImplicitValueInitExpr>(ILE->getInit(i)))
+              --NumFields;
+        if (ILE->getNumInits() == NumFields && TryMemsetInitialization())
+          return;
+      }
+    }
+  }
+
   // Create the loop blocks.
   llvm::BasicBlock *EntryBB = Builder.GetInsertBlock();
   llvm::BasicBlock *LoopBB = createBasicBlock("new.loop");
