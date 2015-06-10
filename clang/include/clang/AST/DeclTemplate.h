@@ -217,6 +217,8 @@ public:
   }
 };
 
+void *allocateDefaultArgStorageChain(const ASTContext &C);
+
 /// Storage for a default argument. This is conceptually either empty, or an
 /// argument value, or a pointer to a previous declaration that had a default
 /// argument.
@@ -283,9 +285,6 @@ public:
   }
   /// Set that the default argument was inherited from another parameter.
   void setInherited(const ASTContext &C, ParmDecl *InheritedFrom) {
-    // Defined in DeclTemplate.cpp.
-    extern void *allocateDefaultArgStorageChain(const ASTContext &C);
-
     assert(!isInherited() && "default argument already inherited");
     InheritedFrom = getParmOwningDefaultArg(InheritedFrom);
     if (!isSet())
