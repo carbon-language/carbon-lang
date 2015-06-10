@@ -7,7 +7,6 @@ template<typename T> struct A;
 template<typename T> struct B;
 template<typename T> struct C;
 template<typename T = int> struct D;
-template<typename T = int> struct E {};
 
 #include "b.h"
 
@@ -16,13 +15,8 @@ template<typename T> struct B {};
 template<typename T = int> struct B;
 template<typename T = int> struct C;
 template<typename T> struct D {};
-template<typename T> struct F {};
-
-#include "c.h"
 
 A<> a;
 B<> b;
 extern C<> c;
 D<> d;
-E<> e;
-F<> f;
