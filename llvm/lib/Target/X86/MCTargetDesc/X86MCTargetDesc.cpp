@@ -219,15 +219,14 @@ static MCInstPrinter *createX86MCInstPrinter(const Triple &T,
   return nullptr;
 }
 
-static MCRelocationInfo *createX86MCRelocationInfo(StringRef TT,
+static MCRelocationInfo *createX86MCRelocationInfo(const Triple &TheTriple,
                                                    MCContext &Ctx) {
-  Triple TheTriple(TT);
   if (TheTriple.isOSBinFormatMachO() && TheTriple.getArch() == Triple::x86_64)
     return createX86_64MachORelocationInfo(Ctx);
   else if (TheTriple.isOSBinFormatELF())
     return createX86_64ELFRelocationInfo(Ctx);
   // Default to the stock relocation info.
-  return llvm::createMCRelocationInfo(TT, Ctx);
+  return llvm::createMCRelocationInfo(TheTriple, Ctx);
 }
 
 static MCInstrAnalysis *createX86MCInstrAnalysis(const MCInstrInfo *Info) {

@@ -69,7 +69,7 @@ MCStreamer *createMachOStreamer(MCContext &Ctx, MCAsmBackend &TAB,
                                 bool RelaxAll, bool DWARFMustBeAtTheEnd,
                                 bool LabelSections = false);
 
-MCRelocationInfo *createMCRelocationInfo(StringRef TT, MCContext &Ctx);
+MCRelocationInfo *createMCRelocationInfo(const Triple &TT, MCContext &Ctx);
 
 MCSymbolizer *createMCSymbolizer(StringRef TT, LLVMOpInfoCallback GetOpInfo,
                                  LLVMSymbolLookupCallback SymbolLookUp,
@@ -147,7 +147,7 @@ public:
       bool IsVerboseAsm);
   typedef MCTargetStreamer *(*ObjectTargetStreamerCtorTy)(
       MCStreamer &S, const MCSubtargetInfo &STI);
-  typedef MCRelocationInfo *(*MCRelocationInfoCtorTy)(StringRef TT,
+  typedef MCRelocationInfo *(*MCRelocationInfoCtorTy)(const Triple &TT,
                                                       MCContext &Ctx);
   typedef MCSymbolizer *(*MCSymbolizerCtorTy)(
       StringRef TT, LLVMOpInfoCallback GetOpInfo,
@@ -507,7 +507,7 @@ public:
     MCRelocationInfoCtorTy Fn = MCRelocationInfoCtorFn
                                     ? MCRelocationInfoCtorFn
                                     : llvm::createMCRelocationInfo;
-    return Fn(TT, Ctx);
+    return Fn(Triple(TT), Ctx);
   }
 
   /// createMCSymbolizer - Create a target specific MCSymbolizer.
