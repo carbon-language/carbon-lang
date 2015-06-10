@@ -330,41 +330,23 @@ static bool isBetterKnownHeader(const ModuleMap::KnownHeader &New,
   return false;
 }
 
-ModuleMap::KnownHeader
-ModuleMap::findModuleForHeader(const FileEntry *File,
-                               Module *RequestingModule) {
-  HeadersMap::iterator Known = findKnownHeader(File);
-
+ModuleMap::KnownHeader ModuleMap::findModuleForHeader(const FileEntry *File) {
   auto MakeResult = [&](ModuleMap::KnownHeader R) -> ModuleMap::KnownHeader {
     if (R.getRole() & ModuleMap::TextualHeader)
       return ModuleMap::KnownHeader();
     return R;
   };
 
+  HeadersMap::iterator Known = findKnownHeader(File);
   if (Known != Headers.end()) {
     ModuleMap::KnownHeader Result;
-
     // Iterate over all modules that 'File' is part of to find the best fit.
-    for (SmallVectorImpl<KnownHeader>::iterator I = Known->second.begin(),
-                                                E = Known->second.end();
-         I != E; ++I) {
+    for (KnownHeader &H : Known->second) {
       // Cannot use a module if it is unavailable.
-      if (!I->getModule()->isAvailable())
+      if (!H.getModule()->isAvailable())
         continue;
-
-      // If 'File' is part of 'RequestingModule', 'RequestingModule' is the
-      // module we are looking for.
-      if (I->getModule() == RequestingModule)
-        return MakeResult(*I);
-
-      // If uses need to be specified explicitly, we are only allowed to return
-      // modules that are explicitly used by the requesting module.
-      if (RequestingModule && LangOpts.ModulesDeclUse &&
-          !RequestingModule->directlyUses(I->getModule()))
-        continue;
-
-      if (!Result || isBetterKnownHeader(*I, Result))
-        Result = *I;
+      if (!Result || isBetterKnownHeader(H, Result))
+        Result = H;
     }
     return MakeResult(Result);
   }

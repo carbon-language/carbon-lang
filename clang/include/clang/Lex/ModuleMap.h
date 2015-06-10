@@ -268,15 +268,10 @@ public:
   ///
   /// \param File The header file that is likely to be included.
   ///
-  /// \param RequestingModule Specifies the module the header is intended to be
-  /// used from.  Used to disambiguate if a header is present in multiple
-  /// modules.
-  ///
   /// \returns The module KnownHeader, which provides the module that owns the
   /// given header file.  The KnownHeader is default constructed to indicate
   /// that no module owns this header file.
-  KnownHeader findModuleForHeader(const FileEntry *File,
-                                  Module *RequestingModule = nullptr);
+  KnownHeader findModuleForHeader(const FileEntry *File);
 
   /// \brief Reports errors if a module must not include a specific file.
   ///
