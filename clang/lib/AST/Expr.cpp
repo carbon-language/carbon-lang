@@ -2887,6 +2887,28 @@ bool Expr::isConstantInitializer(ASTContext &Ctx, bool IsForRef,
   return false;
 }
 
+namespace {
+  /// \brief Look for any side effects within a Stmt.
+  class SideEffectFinder : public ConstEvaluatedExprVisitor<SideEffectFinder> {
+    typedef ConstEvaluatedExprVisitor<SideEffectFinder> Inherited;
+    const bool IncludePossibleEffects;
+    bool HasSideEffects;
+
+  public:
+    explicit SideEffectFinder(const ASTContext &Context, bool IncludePossible)
+      : Inherited(Context),
+        IncludePossibleEffects(IncludePossible), HasSideEffects(false) { }
+
+    bool hasSideEffects() const { return HasSideEffects; }
+
+    void VisitExpr(const Expr *E) {
+      if (!HasSideEffects &&
+          E->HasSideEffects(Context, IncludePossibleEffects))
+        HasSideEffects = true;
+    }
+  };
+}
+
 bool Expr::HasSideEffects(const ASTContext &Ctx,
                           bool IncludePossibleEffects) const {
   // In circumstances where we care about definite side effects instead of
@@ -2974,13 +2996,19 @@ bool Expr::HasSideEffects(const ASTContext &Ctx,
   case CompoundAssignOperatorClass:
   case VAArgExprClass:
   case AtomicExprClass:
-  case StmtExprClass:
   case CXXThrowExprClass:
   case CXXNewExprClass:
   case CXXDeleteExprClass:
   case ExprWithCleanupsClass:
     // These always have a side-effect.
     return true;
+
+  case StmtExprClass: {
+    // StmtExprs have a side-effect if any substatement does.
+    SideEffectFinder Finder(Ctx, IncludePossibleEffects);
+    Finder.Visit(cast<StmtExpr>(this)->getSubStmt());
+    return Finder.hasSideEffects();
+  }
 
   case ParenExprClass:
   case ArraySubscriptExprClass:

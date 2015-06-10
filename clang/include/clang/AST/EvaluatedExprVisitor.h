@@ -28,6 +28,7 @@ class ASTContext;
 /// of its potentially-evaluated subexpressions, recursively.
 template<template <typename> class Ptr, typename ImplClass>
 class EvaluatedExprVisitorBase : public StmtVisitorBase<Ptr, ImplClass, void> {
+protected:
   const ASTContext &Context;
 
 public:
