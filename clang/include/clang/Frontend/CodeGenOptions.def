@@ -67,6 +67,8 @@ CODEGENOPT(InstrumentFunctions , 1, 0) ///< Set when -finstrument-functions is
 CODEGENOPT(InstrumentForProfiling , 1, 0) ///< Set when -pg is enabled.
 CODEGENOPT(LessPreciseFPMAD  , 1, 0) ///< Enable less precise MAD instructions to
                                      ///< be generated.
+CODEGENOPT(PrepareForLTO     , 1, 0) ///< Set when -flto is enabled on the
+                                     ///< compile step.
 CODEGENOPT(MergeAllConstants , 1, 1) ///< Merge identical constants.
 CODEGENOPT(MergeFunctions    , 1, 0) ///< Set when -fmerge-functions is enabled.
 CODEGENOPT(MSVolatile        , 1, 0) ///< Set when /volatile:ms is enabled.

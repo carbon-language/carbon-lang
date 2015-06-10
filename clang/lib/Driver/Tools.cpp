@@ -2703,6 +2703,10 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     assert((isa<CompileJobAction>(JA) || isa<BackendJobAction>(JA)) &&
            "Invalid action for clang tool.");
 
+    if (JA.getType() == types::TY_LTO_IR ||
+        JA.getType() == types::TY_LTO_BC) {
+      CmdArgs.push_back("-flto");
+    }
     if (JA.getType() == types::TY_Nothing) {
       CmdArgs.push_back("-fsyntax-only");
     } else if (JA.getType() == types::TY_LLVM_IR ||
