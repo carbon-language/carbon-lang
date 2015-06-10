@@ -394,7 +394,7 @@ define <8 x i64> @test27(<8 x i64> %x, i64* %yb.ptr, <8 x i64> %x1, <8 x i64> %y
 ; KNL-LABEL: test28
 ; KNL: vpcmpgtq
 ; KNL: vpcmpgtq
-; KNL: kxorw
+; KNL: kxnorw
 define <8 x i32>@test28(<8 x i64> %x, <8 x i64> %y, <8 x i64> %x1, <8 x i64> %y1) {
   %x_gt_y = icmp sgt <8 x i64> %x, %y
   %x1_gt_y1 = icmp sgt <8 x i64> %x1, %y1
@@ -406,7 +406,7 @@ define <8 x i32>@test28(<8 x i64> %x, <8 x i64> %y, <8 x i64> %x1, <8 x i64> %y1
 ; KNL-LABEL: test29
 ; KNL: vpcmpgtd
 ; KNL: vpcmpgtd
-; KNL: kxnorw
+; KNL: kxorw
 define <16 x i8>@test29(<16 x i32> %x, <16 x i32> %y, <16 x i32> %x1, <16 x i32> %y1) {
   %x_gt_y = icmp sgt <16 x i32> %x, %y
   %x1_gt_y1 = icmp sgt <16 x i32> %x1, %y1

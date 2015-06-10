@@ -2044,11 +2044,11 @@ defm : avx512_binop_pat<xor,  KXORWrr>;
 def : Pat<(xor (xor VK16:$src1, VK16:$src2), (v16i1 immAllOnesV)),
           (KXNORWrr VK16:$src1, VK16:$src2)>;
 def : Pat<(xor (xor VK8:$src1, VK8:$src2), (v8i1 immAllOnesV)),
-          (KXNORBrr VK8:$src1, VK8:$src2)>;
+          (KXNORBrr VK8:$src1, VK8:$src2)>, Requires<[HasDQI]>;
 def : Pat<(xor (xor VK32:$src1, VK32:$src2), (v32i1 immAllOnesV)),
-          (KXNORDrr VK32:$src1, VK32:$src2)>;
+          (KXNORDrr VK32:$src1, VK32:$src2)>, Requires<[HasBWI]>;
 def : Pat<(xor (xor VK64:$src1, VK64:$src2), (v64i1 immAllOnesV)),
-          (KXNORQrr VK64:$src1, VK64:$src2)>;
+          (KXNORQrr VK64:$src1, VK64:$src2)>, Requires<[HasBWI]>;
 
 let Predicates = [NoDQI] in
 def : Pat<(xor (xor VK8:$src1, VK8:$src2), (v8i1 immAllOnesV)),
