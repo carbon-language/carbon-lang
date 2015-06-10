@@ -6424,7 +6424,7 @@ void X86InstrInfo::genAlternativeCodeSequence(
            Pattern == MachineCombinerPattern::MC_REASSOC_XA_YB)
     Prev = MRI.getUniqueVRegDef(Root.getOperand(2).getReg());
   else
-    assert("Unknown pattern for machine combiner");
+    llvm_unreachable("Unknown pattern for machine combiner");
   
   reassociateOps(Root, *Prev, Pattern, InsInstrs, DelInstrs, InstIdxForVirtReg);
   return;
