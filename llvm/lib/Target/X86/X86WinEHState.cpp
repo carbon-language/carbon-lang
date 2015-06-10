@@ -263,7 +263,6 @@ void WinEHStatePass::emitExceptionRegistrationRecord(Function *F) {
   if (Personality == EHPersonality::MSVC_CXX) {
     RegNodeTy = getCXXEHRegistrationType();
     RegNode = Builder.CreateAlloca(RegNodeTy);
-    // FIXME: We can skip this in -GS- mode, when we figure that out.
     // SavedESP = llvm.stacksave()
     Value *SP = Builder.CreateCall(
         Intrinsic::getDeclaration(TheModule, Intrinsic::stacksave), {});
@@ -490,6 +489,7 @@ void WinEHStatePass::addSEHStateStores(Function &F, MachineModuleInfo &MMI) {
 
   // Iterate all the instructions and emit state number stores.
   int CurState = 0;
+  SmallPtrSet<BasicBlock *, 4> ExceptBlocks;
   for (BasicBlock &BB : F) {
     for (auto I = BB.begin(), E = BB.end(); I != E; ++I) {
       if (auto *CI = dyn_cast<CallInst>(I)) {
@@ -517,10 +517,28 @@ void WinEHStatePass::addSEHStateStores(Function &F, MachineModuleInfo &MMI) {
           assert(!ActionList.empty());
           CurState += ActionList.size();
           State += ActionList.size() - 1;
+
+          // Remember all the __except block targets.
+          for (auto &Handler : ActionList) {
+            if (auto *CH = dyn_cast<CatchHandler>(Handler.get())) {
+              auto *BA = cast<BlockAddress>(CH->getHandlerBlockOrFunc());
+              ExceptBlocks.insert(BA->getBasicBlock());
+            }
+          }
         }
         insertStateNumberStore(RegNode, II, State);
       }
     }
+  }
+
+  // Insert llvm.stackrestore into each __except block.
+  Function *StackRestore =
+      Intrinsic::getDeclaration(TheModule, Intrinsic::stackrestore);
+  for (BasicBlock *ExceptBB : ExceptBlocks) {
+    IRBuilder<> Builder(ExceptBB->begin());
+    Value *SP =
+        Builder.CreateLoad(Builder.CreateStructGEP(RegNodeTy, RegNode, 0));
+    Builder.CreateCall(StackRestore, {SP});
   }
 }
 

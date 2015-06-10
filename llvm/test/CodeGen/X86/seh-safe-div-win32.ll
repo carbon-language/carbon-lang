@@ -77,11 +77,15 @@ __try.cont:
 
 ; CHECK: [[handler0:Ltmp[0-9]+]]: # Block address taken
 ; CHECK: # %handler0
+; 	Restore SP
+; CHECK: movl {{.*}}(%ebp), %esp
 ; CHECK: calll _puts
 ; CHECK: jmp [[cont_bb]]
 
 ; CHECK: [[handler1:Ltmp[0-9]+]]: # Block address taken
 ; CHECK: # %handler1
+; 	Restore SP
+; CHECK: movl {{.*}}(%ebp), %esp
 ; CHECK: calll _puts
 ; CHECK: jmp [[cont_bb]]
 
