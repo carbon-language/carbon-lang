@@ -52,7 +52,12 @@ protected:
       : Value(ty, vty), OperandList(OpList) {
     NumOperands = NumOps;
   }
-  Use *allocHungoffUses(unsigned) const;
+
+  /// \brief Allocate the array of Uses, followed by a pointer
+  /// (with bottom bit set) to the User.
+  /// \param IsPhi identifies callers which are phi nodes and which need
+  /// N BasicBlock* allocated along with N
+  Use *allocHungoffUses(unsigned N, bool IsPhi = false) const;
   void dropHungoffUses() {
     Use::zap(OperandList, OperandList + NumOperands, true);
     OperandList = nullptr;

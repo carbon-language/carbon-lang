@@ -13,6 +13,7 @@
 #include "llvm/IR/Operator.h"
 
 namespace llvm {
+class BasicBlock;
 
 //===----------------------------------------------------------------------===//
 //                                 User Class
@@ -39,10 +40,12 @@ void User::replaceUsesOfWith(Value *From, Value *To) {
 //                         User allocHungoffUses Implementation
 //===----------------------------------------------------------------------===//
 
-Use *User::allocHungoffUses(unsigned N) const {
+Use *User::allocHungoffUses(unsigned N, bool IsPhi) const {
   // Allocate the array of Uses, followed by a pointer (with bottom bit set) to
   // the User.
   size_t size = N * sizeof(Use) + sizeof(Use::UserRef);
+  if (IsPhi)
+    size += N * sizeof(BasicBlock *);
   Use *Begin = static_cast<Use*>(::operator new(size));
   Use *End = Begin + N;
   (void) new(End) Use::UserRef(const_cast<User*>(this), 1);

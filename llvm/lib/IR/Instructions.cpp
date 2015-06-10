@@ -97,18 +97,6 @@ PHINode::~PHINode() {
   dropHungoffUses();
 }
 
-Use *PHINode::allocHungoffUses(unsigned N) const {
-  // Allocate the array of Uses of the incoming values, followed by a pointer
-  // (with bottom bit set) to the User, followed by the array of pointers to
-  // the incoming basic blocks.
-  size_t size = N * sizeof(Use) + sizeof(Use::UserRef)
-    + N * sizeof(BasicBlock*);
-  Use *Begin = static_cast<Use*>(::operator new(size));
-  Use *End = Begin + N;
-  (void) new(End) Use::UserRef(const_cast<PHINode*>(this), 1);
-  return Use::initTags(Begin, End);
-}
-
 // removeIncomingValue - Remove an incoming value.  This is useful if a
 // predecessor basic block is deleted.
 Value *PHINode::removeIncomingValue(unsigned Idx, bool DeletePHIIfEmpty) {
