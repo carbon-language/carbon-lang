@@ -217,18 +217,35 @@ public:
   }
 };
 
-/// Storage for a default argument.
+/// Storage for a default argument. This is conceptually either empty, or an
+/// argument value, or a pointer to a previous declaration that had a default
+/// argument.
+///
+/// However, this is complicated by modules: while we require all the default
+/// arguments for a template to be equivalent, there may be more than one, and
+/// we need to track all the originating parameters to determine if the default
+/// argument is visible.
 template<typename ParmDecl, typename ArgType>
 class DefaultArgStorage {
-  llvm::PointerUnion<ArgType, ParmDecl*> ValueOrInherited;
+  /// Storage for both the value *and* another parameter from which we inherit
+  /// the default argument. This is used when multiple default arguments for a
+  /// parameter are merged together from different modules.
+  struct Chain {
+    ParmDecl *PrevDeclWithDefaultArg;
+    ArgType Value;
+  };
+  static_assert(sizeof(Chain) == sizeof(void *) * 2,
+                "non-pointer argument type?");
+
+  llvm::PointerUnion3<ArgType, ParmDecl*, Chain*> ValueOrInherited;
 
   static ParmDecl *getParmOwningDefaultArg(ParmDecl *Parm) {
     const DefaultArgStorage &Storage = Parm->getDefaultArgStorage();
     if (auto *Prev = Storage.ValueOrInherited.template dyn_cast<ParmDecl*>())
       Parm = Prev;
-    assert(
-        Parm->getDefaultArgStorage().ValueOrInherited.template is<ArgType>() &&
-        "should only be one level of indirection");
+    assert(!Parm->getDefaultArgStorage()
+                .ValueOrInherited.template is<ParmDecl *>() &&
+           "should only be one level of indirection");
     return Parm;
   }
 
@@ -240,17 +257,24 @@ public:
   /// Determine whether the default argument for this parameter was inherited
   /// from a previous declaration of the same entity.
   bool isInherited() const { return ValueOrInherited.template is<ParmDecl*>(); }
-  /// Get the default argument's value.
+  /// Get the default argument's value. This does not consider whether the
+  /// default argument is visible.
   ArgType get() const {
     const DefaultArgStorage *Storage = this;
     if (auto *Prev = ValueOrInherited.template dyn_cast<ParmDecl*>())
       Storage = &Prev->getDefaultArgStorage();
+    if (auto *C = ValueOrInherited.template dyn_cast<Chain*>())
+      return C->Value;
     return Storage->ValueOrInherited.template get<ArgType>();
   }
   /// Get the parameter from which we inherit the default argument, if any.
   /// This is the parameter on which the default argument was actually written.
   const ParmDecl *getInheritedFrom() const {
-    return ValueOrInherited.template dyn_cast<ParmDecl*>();
+    if (auto *D = ValueOrInherited.template dyn_cast<ParmDecl*>())
+      return D;
+    if (auto *C = ValueOrInherited.template dyn_cast<Chain*>())
+      return C->PrevDeclWithDefaultArg;
+    return nullptr;
   }
   /// Set the default argument.
   void set(ArgType Arg) {
@@ -259,8 +283,16 @@ public:
   }
   /// Set that the default argument was inherited from another parameter.
   void setInherited(const ASTContext &C, ParmDecl *InheritedFrom) {
-    assert(!isSet() && "default argument already set");
-    ValueOrInherited = getParmOwningDefaultArg(InheritedFrom);
+    // Defined in DeclTemplate.cpp.
+    extern void *allocateDefaultArgStorageChain(const ASTContext &C);
+
+    assert(!isInherited() && "default argument already inherited");
+    InheritedFrom = getParmOwningDefaultArg(InheritedFrom);
+    if (!isSet())
+      ValueOrInherited = InheritedFrom;
+    else
+      ValueOrInherited = new (allocateDefaultArgStorageChain(C))
+          Chain{InheritedFrom, ValueOrInherited.template get<ArgType>()};
   }
   /// Remove the default argument, even if it was inherited.
   void clear() {

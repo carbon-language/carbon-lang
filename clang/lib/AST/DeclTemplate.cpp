@@ -124,6 +124,12 @@ static void AdoptTemplateParameterList(TemplateParameterList *Params,
   }
 }
 
+namespace clang {
+void *allocateDefaultArgStorageChain(const ASTContext &C) {
+  return new (C) char[sizeof(void*) * 2];
+}
+}
+
 //===----------------------------------------------------------------------===//
 // RedeclarableTemplateDecl Implementation
 //===----------------------------------------------------------------------===//

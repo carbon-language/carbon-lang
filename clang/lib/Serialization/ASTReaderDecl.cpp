@@ -2908,8 +2908,7 @@ static bool inheritDefaultTemplateArgument(ASTContext &Context, ParmDecl *From,
   auto *To = cast<ParmDecl>(ToD);
   if (!From->hasDefaultArgument())
     return false;
-  if (!To->hasDefaultArgument())
-    To->setInheritedDefaultArgument(Context, From);
+  To->setInheritedDefaultArgument(Context, From);
   return true;
 }
 

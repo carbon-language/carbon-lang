@@ -1325,6 +1325,9 @@ public:
     return hasVisibleDefinition(const_cast<NamedDecl*>(D), &Hidden);
   }
 
+  /// Determine if the template parameter \p D has a visible default argument.
+  bool hasVisibleDefaultArgument(const NamedDecl *D);
+
   bool RequireCompleteType(SourceLocation Loc, QualType T,
                            TypeDiagnoser &Diagnoser);
   bool RequireCompleteType(SourceLocation Loc, QualType T,
