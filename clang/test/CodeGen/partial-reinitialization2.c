@@ -16,7 +16,7 @@ union ULP3 { struct LP3 l3; };
 void test1(void)
 {
   // CHECK: call void @llvm.memcpy{{.*}}%struct.P1, %struct.P1* @g1{{.*}}i64 6, i32 {{[0-9]}}, i1 false)
-  // CHECK: store i8 120, i8* %arrayinit
+  // CHECK: store i8 120, i8* %
 
   struct LP1 l = { .p1 = g1, .p1.x[2] = 'x' };
 }
@@ -25,7 +25,7 @@ void test1(void)
 void test2(void)
 {
   // CHECK: call void @llvm.memcpy{{.*}}%struct.P1, %struct.P1* @g1{{.*}}i64 6, i32 {{[0-9]}}, i1 false)
-  // CHECK: store i8 114, i8* %arrayinit
+  // CHECK: store i8 114, i8* %
 
   struct LP1 l = { .p1 = g1, .p1.x[1] = 'r' };
 }
@@ -34,7 +34,7 @@ void test2(void)
 void test3(void)
 {
   // CHECK: call void @llvm.memcpy{{.*}}%struct.P2* @g2{{.*}}i64 12, i32 {{[0-9]}}, i1 false)
-  // CHECK: store i32 10, i32* %b
+  // CHECK: store i32 10, i32* %
 
   struct LP2 l = { .p2 = g2, .p2.b = 10 };
 }
@@ -67,7 +67,7 @@ void test4(void)
   // CHECK: store{{.*}}[[CALL]], {{.*}}[[TMP0:%[a-z0-9]+]]
   // CHECK: [[TMP1:%[a-z0-9]+]] = bitcast {{.*}}[[TMP0]]
   // CHECK: call void @llvm.memcpy{{.*}}[[TMP1]], i64 12, i32 {{[0-9]}}, i1 false)
-  // CHECK: store i32 100, i32* %a
+  // CHECK: store i32 100, i32* %
 
   struct LUP2 { union UP2 up; } var = { get123(), .up.p2.a = 100 };
 }
@@ -84,7 +84,7 @@ void test5(void)
   // CHECK: call void @llvm.memset{{.*}}i8 0, i64 6, i32 {{[0-9]}}, i1 false)
 
   // .l3.p1[1].x[1] = 'x'
-  // CHECK: store i8 120, i8* %arrayinit
+  // CHECK: store i8 120, i8* %
 
   struct LLP3 var = { .l3 = g3, .l3.p1 = { [0] = g1 }, .l3.p1[1].x[1] = 'x' };
 }
@@ -100,7 +100,7 @@ void test6(void)
   // CHECK: [[TMP1:%[a-z0-9]+]] = bitcast {{.*}}[[TMP0]]
   // CHECK: call void @llvm.memcpy{{.*}}[[TMP1]], i64 12, i32 {{[0-9]}}, i1 false)
 
-  // CHECK: store i32 10, i32* %b
+  // CHECK: store i32 10, i32* %
 
   struct LLP2P2 { struct LP2P2 lp; } var =  { get456789(),
                                               .lp.p1 = get235(),
