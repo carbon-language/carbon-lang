@@ -223,14 +223,14 @@ bool MachineCombiner::preservesCriticalPathLen(
     DenseMap<unsigned, unsigned> &InstrIdxForVirtReg) {
 
   assert(TSchedModel.hasInstrSchedModel() && "Missing machine model\n");
-  // NewRoot is the last instruction in the \p InsInstrs vector
-  // Get depth and latency of NewRoot
+  // NewRoot is the last instruction in the \p InsInstrs vector.
+  // Get depth and latency of NewRoot.
   unsigned NewRootIdx = InsInstrs.size() - 1;
   MachineInstr *NewRoot = InsInstrs[NewRootIdx];
   unsigned NewRootDepth = getDepth(InsInstrs, InstrIdxForVirtReg, BlockTrace);
   unsigned NewRootLatency = getLatency(Root, NewRoot, BlockTrace);
 
-  // Get depth, latency and slack of Root
+  // Get depth, latency and slack of Root.
   unsigned RootDepth = BlockTrace.getInstrCycles(Root).Depth;
   unsigned RootLatency = TSchedModel.computeInstrLatency(Root);
   unsigned RootSlack = BlockTrace.getInstrSlack(Root);
@@ -284,7 +284,7 @@ bool MachineCombiner::preservesResourceLen(
   ArrayRef<const MCSchedClassDesc *> MSCInsArr = makeArrayRef(InsInstrsSC);
   ArrayRef<const MCSchedClassDesc *> MSCDelArr = makeArrayRef(DelInstrsSC);
 
-  // Compute new resource length
+  // Compute new resource length.
   unsigned ResLenAfterCombine =
       BlockTrace.getResourceLength(MBBarr, MSCInsArr, MSCDelArr);
 
@@ -383,7 +383,7 @@ bool MachineCombiner::combineInstructions(MachineBasicBlock *MBB) {
 
           Traces->invalidate(MBB);
           Traces->verifyAnalysis();
-          // Eagerly stop after the first pattern fired
+          // Eagerly stop after the first pattern fires.
           break;
         } else {
           // Cleanup instructions of the alternative code sequence. There is no
