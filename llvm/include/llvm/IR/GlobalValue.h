@@ -83,11 +83,12 @@ protected:
 
   unsigned ThreadLocal : 3; // Is this symbol "Thread Local", if so, what is
                             // the desired model?
+  static const unsigned GlobalValueSubClassDataBits = 19;
 
 private:
   // Give subclasses access to what otherwise would be wasted padding.
   // (19 + 3 + 2 + 1 + 2 + 5) == 32.
-  unsigned SubClassData : 19;
+  unsigned SubClassData : GlobalValueSubClassDataBits;
 
 protected:
   /// \brief The intrinsic ID for this subclass (which must be a Function).
@@ -98,12 +99,11 @@ protected:
   /// This is stored here to save space in Function on 64-bit hosts.
   Intrinsic::ID IntID;
 
-  static const unsigned GlobalValueSubClassDataBits = 19;
   unsigned getGlobalValueSubClassData() const {
     return SubClassData;
   }
   void setGlobalValueSubClassData(unsigned V) {
-    assert(V < (1 << 19) && "It will not fit");
+    assert(V < (1 << GlobalValueSubClassDataBits) && "It will not fit");
     SubClassData = V;
   }
 
