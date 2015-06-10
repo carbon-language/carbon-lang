@@ -154,10 +154,8 @@ bool Argument::hasNoCaptureAttr() const {
 /// it in its containing function.
 bool Argument::hasStructRetAttr() const {
   if (!getType()->isPointerTy()) return false;
-  if (this != getParent()->arg_begin())
-    return false; // StructRet param must be first param
   return getParent()->getAttributes().
-    hasAttribute(1, Attribute::StructRet);
+    hasAttribute(getArgNo()+1, Attribute::StructRet);
 }
 
 /// hasReturnedAttr - Return true if this argument has the returned attribute on

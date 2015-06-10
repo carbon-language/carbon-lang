@@ -245,6 +245,24 @@ CallGraphNode *ArgPromotion::PromoteArguments(CallGraphNode *CGN) {
     Argument *PtrArg = PointerArgs[i];
     Type *AgTy = cast<PointerType>(PtrArg->getType())->getElementType();
 
+    // Replace sret attribute with noalias. This reduces register pressure by
+    // avoiding a register copy.
+    if (PtrArg->hasStructRetAttr()) {
+      unsigned ArgNo = PtrArg->getArgNo();
+      F->setAttributes(
+          F->getAttributes()
+              .removeAttribute(F->getContext(), ArgNo + 1, Attribute::StructRet)
+              .addAttribute(F->getContext(), ArgNo + 1, Attribute::NoAlias));
+      for (Use &U : F->uses()) {
+        CallSite CS(U.getUser());
+        CS.setAttributes(
+            CS.getAttributes()
+                .removeAttribute(F->getContext(), ArgNo + 1,
+                                 Attribute::StructRet)
+                .addAttribute(F->getContext(), ArgNo + 1, Attribute::NoAlias));
+      }
+    }
+
     // If this is a byval argument, and if the aggregate type is small, just
     // pass the elements, which is always safe, if the passed value is densely
     // packed or if we can prove the padding bytes are never accessed. This does
