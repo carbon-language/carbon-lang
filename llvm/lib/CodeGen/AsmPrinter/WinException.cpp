@@ -602,7 +602,8 @@ void WinException::emitExceptHandlerTable(const MachineFunction *MF) {
   int CurState = 0;
   for (const LandingPadInfo *LPInfo : LPads) {
     int EnclosingLevel = BaseState;
-    assert(CurState + LPInfo->SEHHandlers.size() - 1 == LPInfo->WinEHState &&
+    assert(CurState + int(LPInfo->SEHHandlers.size()) - 1 ==
+               LPInfo->WinEHState &&
            "gaps in the SEH scope table");
     for (const SEHHandler &Handler : LPInfo->SEHHandlers) {
       // Emit the filter or finally function pointer, if present. Otherwise,
