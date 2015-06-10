@@ -93,10 +93,6 @@ PHINode::PHINode(const PHINode &PN)
   SubclassOptionalData = PN.SubclassOptionalData;
 }
 
-PHINode::~PHINode() {
-  dropHungoffUses();
-}
-
 // removeIncomingValue - Remove an incoming value.  This is useful if a
 // predecessor basic block is deleted.
 Value *PHINode::removeIncomingValue(unsigned Idx, bool DeletePHIIfEmpty) {
@@ -188,10 +184,6 @@ LandingPadInst::LandingPadInst(const LandingPadInst &LP)
     OL[I] = InOL[I];
 
   setCleanup(LP.isCleanup());
-}
-
-LandingPadInst::~LandingPadInst() {
-  dropHungoffUses();
 }
 
 LandingPadInst *LandingPadInst::Create(Type *RetTy, Value *PersonalityFn,
@@ -3325,10 +3317,6 @@ SwitchInst::SwitchInst(const SwitchInst &SI)
   SubclassOptionalData = SI.SubclassOptionalData;
 }
 
-SwitchInst::~SwitchInst() {
-  dropHungoffUses();
-}
-
 
 /// addCase - Add an entry to the switch instruction...
 ///
@@ -3448,10 +3436,6 @@ IndirectBrInst::IndirectBrInst(const IndirectBrInst &IBI)
   for (unsigned i = 0, E = IBI.getNumOperands(); i != E; ++i)
     OL[i] = InOL[i];
   SubclassOptionalData = IBI.SubclassOptionalData;
-}
-
-IndirectBrInst::~IndirectBrInst() {
-  dropHungoffUses();
 }
 
 /// addDestination - Add a destination.

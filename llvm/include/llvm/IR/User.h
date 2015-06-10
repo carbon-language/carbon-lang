@@ -58,14 +58,16 @@ protected:
   /// \param IsPhi identifies callers which are phi nodes and which need
   /// N BasicBlock* allocated along with N
   Use *allocHungoffUses(unsigned N, bool IsPhi = false);
-  void dropHungoffUses() {
-    Use::zap(OperandList, OperandList + NumOperands, true);
-    OperandList = nullptr;
-    // Reset NumOperands so User::operator delete() does the right thing.
-    NumOperands = 0;
-  }
 public:
-  ~User() override { Use::zap(OperandList, OperandList + NumOperands); }
+  ~User() override {
+    // drop the hung off uses.
+    Use::zap(OperandList, OperandList + NumOperands, HasHungOffUses);
+    if (HasHungOffUses) {
+      OperandList = nullptr;
+      // Reset NumOperands so User::operator delete() does the right thing.
+      NumOperands = 0;
+    }
+  }
   /// \brief Free memory allocated for User and Use objects.
   void operator delete(void *Usr);
   /// \brief Placement delete - required by std, but never called.
