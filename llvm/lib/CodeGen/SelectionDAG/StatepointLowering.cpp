@@ -113,13 +113,95 @@ StatepointLoweringState::allocateStackSlot(EVT ValueType,
   llvm_unreachable("infinite loop?");
 }
 
+/// Utility function for reservePreviousStackSlotForValue. Tries to find
+/// stack slot index to which we have spilled value for previous statepoints.
+/// LookUpDepth specifies maximum DFS depth this function is allowed to look.
+static Optional<int> findPreviousSpillSlot(const Value *Val,
+                                           SelectionDAGBuilder &Builder,
+                                           int LookUpDepth) {
+  // Can not look any futher - give up now
+  if (LookUpDepth <= 0)
+    return Optional<int>();
+
+  // Spill location is known for gc relocates
+  if (isGCRelocate(Val)) {
+    GCRelocateOperands RelocOps(cast<Instruction>(Val));
+
+    FunctionLoweringInfo::StatepointSpilledValueMapTy &SpillMap =
+        Builder.FuncInfo.StatepointRelocatedValues[RelocOps.getStatepoint()];
+
+    auto It = SpillMap.find(RelocOps.getDerivedPtr());
+    if (It == SpillMap.end())
+      return Optional<int>();
+
+    return It->second;
+  }
+
+  // Look through bitcast instructions.
+  if (const BitCastInst *Cast = dyn_cast<BitCastInst>(Val)) {
+    return findPreviousSpillSlot(Cast->getOperand(0), Builder, LookUpDepth - 1);
+  }
+
+  // Look through phi nodes
+  // All incoming values should have same known stack slot, otherwise result
+  // is unknown.
+  if (const PHINode *Phi = dyn_cast<PHINode>(Val)) {
+    Optional<int> MergedResult = None;
+
+    for (auto &IncomingValue : Phi->incoming_values()) {
+      Optional<int> SpillSlot =
+          findPreviousSpillSlot(IncomingValue, Builder, LookUpDepth - 1);
+      if (!SpillSlot.hasValue())
+        return Optional<int>();
+
+      if (MergedResult.hasValue() && *MergedResult != *SpillSlot)
+        return Optional<int>();
+
+      MergedResult = SpillSlot;
+    }
+    return MergedResult;
+  }
+
+  // TODO: We can do better for PHI nodes. In cases like this:
+  //   ptr = phi(relocated_pointer, not_relocated_pointer)
+  //   statepoint(ptr)
+  // We will return that stack slot for ptr is unknown. And later we might
+  // assign different stack slots for ptr and relocated_pointer. This limits
+  // llvm's ability to remove redundant stores.
+  // Unfortunately it's hard to accomplish in current infrastructure.
+  // We use this function to eliminate spill store completely, while
+  // in example we still need to emit store, but instead of any location
+  // we need to use special "preferred" location.
+
+  // TODO: handle simple updates.  If a value is modified and the original
+  // value is no longer live, it would be nice to put the modified value in the
+  // same slot.  This allows folding of the memory accesses for some
+  // instructions types (like an increment).
+  //   statepoint (i)
+  //   i1 = i+1
+  //   statepoint (i1)
+  // However we need to be careful for cases like this:
+  //   statepoint(i)
+  //   i1 = i+1
+  //   statepoint(i, i1)
+  // Here we want to reserve spill slot for 'i', but not for 'i+1'. If we just
+  // put handling of simple modifications in this function like it's done
+  // for bitcasts we might end up reserving i's slot for 'i+1' because order in
+  // which we visit values is unspecified.
+
+  // Don't know any information about this instruction
+  return Optional<int>();
+}
+
 /// Try to find existing copies of the incoming values in stack slots used for
 /// statepoint spilling.  If we can find a spill slot for the incoming value,
 /// mark that slot as allocated, and reuse the same slot for this safepoint.
 /// This helps to avoid series of loads and stores that only serve to resuffle
 /// values on the stack between calls.
-static void reservePreviousStackSlotForValue(SDValue Incoming,
+static void reservePreviousStackSlotForValue(const Value *IncomingValue,
                                              SelectionDAGBuilder &Builder) {
+
+  SDValue Incoming = Builder.getValue(IncomingValue);
 
   if (isa<ConstantSDNode>(Incoming) || isa<FrameIndexSDNode>(Incoming)) {
     // We won't need to spill this, so no need to check for previously
@@ -127,70 +209,41 @@ static void reservePreviousStackSlotForValue(SDValue Incoming,
     return;
   }
 
-  SDValue Loc = Builder.StatepointLowering.getLocation(Incoming);
-  if (Loc.getNode()) {
+  SDValue OldLocation = Builder.StatepointLowering.getLocation(Incoming);
+  if (OldLocation.getNode())
     // duplicates in input
     return;
+
+  const int LookUpDepth = 6;
+  Optional<int> Index =
+      findPreviousSpillSlot(IncomingValue, Builder, LookUpDepth);
+  if (!Index.hasValue())
+    return;
+
+  auto Itr = std::find(Builder.FuncInfo.StatepointStackSlots.begin(),
+                       Builder.FuncInfo.StatepointStackSlots.end(), *Index);
+  assert(Itr != Builder.FuncInfo.StatepointStackSlots.end() &&
+         "value spilled to the unknown stack slot");
+
+  // This is one of our dedicated lowering slots
+  const int Offset =
+      std::distance(Builder.FuncInfo.StatepointStackSlots.begin(), Itr);
+  if (Builder.StatepointLowering.isStackSlotAllocated(Offset)) {
+    // stack slot already assigned to someone else, can't use it!
+    // TODO: currently we reserve space for gc arguments after doing
+    // normal allocation for deopt arguments.  We should reserve for
+    // _all_ deopt and gc arguments, then start allocating.  This
+    // will prevent some moves being inserted when vm state changes,
+    // but gc state doesn't between two calls.
+    return;
   }
+  // Reserve this stack slot
+  Builder.StatepointLowering.reserveStackSlot(Offset);
 
-  // Search back for the load from a stack slot pattern to find the original
-  // slot we allocated for this value.  We could extend this to deal with
-  // simple modification patterns, but simple dealing with trivial load/store
-  // sequences helps a lot already.
-  if (LoadSDNode *Load = dyn_cast<LoadSDNode>(Incoming)) {
-    if (auto *FI = dyn_cast<FrameIndexSDNode>(Load->getBasePtr())) {
-      const int Index = FI->getIndex();
-      auto Itr = std::find(Builder.FuncInfo.StatepointStackSlots.begin(),
-                           Builder.FuncInfo.StatepointStackSlots.end(), Index);
-      if (Itr == Builder.FuncInfo.StatepointStackSlots.end()) {
-        // not one of the lowering stack slots, can't reuse!
-        // TODO: Actually, we probably could reuse the stack slot if the value
-        // hasn't changed at all, but we'd need to look for intervening writes
-        return;
-      } else {
-        // This is one of our dedicated lowering slots
-        const int Offset =
-            std::distance(Builder.FuncInfo.StatepointStackSlots.begin(), Itr);
-        if (Builder.StatepointLowering.isStackSlotAllocated(Offset)) {
-          // stack slot already assigned to someone else, can't use it!
-          // TODO: currently we reserve space for gc arguments after doing
-          // normal allocation for deopt arguments.  We should reserve for
-          // _all_ deopt and gc arguments, then start allocating.  This
-          // will prevent some moves being inserted when vm state changes,
-          // but gc state doesn't between two calls.
-          return;
-        }
-        // Reserve this stack slot
-        Builder.StatepointLowering.reserveStackSlot(Offset);
-      }
-
-      // Cache this slot so we find it when going through the normal
-      // assignment loop.
-      SDValue Loc =
-          Builder.DAG.getTargetFrameIndex(Index, Incoming.getValueType());
-
-      Builder.StatepointLowering.setLocation(Incoming, Loc);
-    }
-  }
-
-  // TODO: handle case where a reloaded value flows through a phi to
-  // another safepoint.  e.g.
-  // bb1:
-  //  a' = relocated...
-  // bb2: % pred: bb1, bb3, bb4, etc.
-  //  a_phi = phi(a', ...)
-  // statepoint ... a_phi
-  // NOTE: This will require reasoning about cross basic block values.  This is
-  // decidedly non trivial and this might not be the right place to do it.  We
-  // don't really have the information we need here...
-
-  // TODO: handle simple updates.  If a value is modified and the original
-  // value is no longer live, it would be nice to put the modified value in the
-  // same slot.  This allows folding of the memory accesses for some
-  // instructions types (like an increment).
-  // statepoint (i)
-  // i1 = i+1
-  // statepoint (i1)
+  // Cache this slot so we find it when going through the normal
+  // assignment loop.
+  SDValue Loc = Builder.DAG.getTargetFrameIndex(*Index, Incoming.getValueType());
+  Builder.StatepointLowering.setLocation(Incoming, Loc);
 }
 
 /// Remove any duplicate (as SDValues) from the derived pointer pairs.  This
@@ -458,15 +511,11 @@ static void lowerStatepointMetaArgs(SmallVectorImpl<SDValue> &Ops,
   // doesn't change semantics at all.  It is important for performance that we
   // reserve slots for both deopt and gc values before lowering either.
   for (const Value *V : StatepointSite.vm_state_args()) {
-    SDValue Incoming = Builder.getValue(V);
-    reservePreviousStackSlotForValue(Incoming, Builder);
+    reservePreviousStackSlotForValue(V, Builder);
   }
   for (unsigned i = 0; i < Bases.size(); ++i) {
-    const Value *Base = Bases[i];
-    reservePreviousStackSlotForValue(Builder.getValue(Base), Builder);
-
-    const Value *Ptr = Ptrs[i];
-    reservePreviousStackSlotForValue(Builder.getValue(Ptr), Builder);
+    reservePreviousStackSlotForValue(Bases[i], Builder);
+    reservePreviousStackSlotForValue(Ptrs[i], Builder);
   }
 
   // First, prefix the list with the number of unique values to be
