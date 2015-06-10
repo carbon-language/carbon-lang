@@ -1358,7 +1358,7 @@ void AArch64InstPrinter::printSystemPStateField(const MCInst *MI, unsigned OpNo,
   StringRef Name =
       AArch64PState::PStateMapper().toString(Val, STI.getFeatureBits(), Valid);
   if (Valid)
-    O << StringRef(Name.str()).upper();
+    O << Name.upper();
   else
     O << "#" << Val;
 }
