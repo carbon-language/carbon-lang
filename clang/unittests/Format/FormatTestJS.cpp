@@ -146,6 +146,10 @@ TEST_F(FormatTestJS, ContainerLiterals) {
   // Enum style top level assignment.
   verifyFormat("X = {\n  a: 123\n};");
   verifyFormat("X.Y = {\n  a: 123\n};");
+  // But only on the top level, otherwise its a plain object literal assignment.
+  verifyFormat("function x() {\n"
+               "  y = {z: 1};\n"
+               "}");
   verifyFormat("x = foo && {a: 123};");
 
   // Arrow functions in object literals.
