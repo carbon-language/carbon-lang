@@ -30,9 +30,21 @@ SectionChunk::SectionChunk(ObjectFile *F, const coff_section *H, uint32_t SI)
     : File(F), Header(H), SectionIndex(SI) {
   // Initialize SectionName.
   File->getCOFFObj()->getSectionName(Header, SectionName);
+
   // Bit [20:24] contains section alignment.
   unsigned Shift = ((Header->Characteristics & 0xF00000) >> 20) - 1;
   Align = uint32_t(1) << Shift;
+
+  // When a new chunk is created, we don't if if it's going to make it
+  // to the final output. Initially all sections are unmarked in terms
+  // of garbage collection. The writer will call markLive() to mark
+  // all reachable section chunks.
+  Live = false;
+
+  // COMDAT sections are not GC root. Non-text sections are not
+  // subject of garbage collection (thus they are root).
+  if (!isCOMDAT() && !(Header->Characteristics & IMAGE_SCN_CNT_CODE))
+    Root = true;
 }
 
 void SectionChunk::writeTo(uint8_t *Buf) {
@@ -50,22 +62,7 @@ void SectionChunk::writeTo(uint8_t *Buf) {
   }
 }
 
-// Returns true if this chunk should be considered as a GC root.
-bool SectionChunk::isRoot() {
-  // COMDAT sections are live only when they are referenced by something else.
-  if (isCOMDAT())
-    return false;
-
-  // Associative sections are live if their parent COMDATs are live,
-  // and vice versa, so they are not considered live by themselves.
-  if (IsAssocChild)
-    return false;
-
-  // Only code is subject of dead-stripping.
-  return !(Header->Characteristics & IMAGE_SCN_CNT_CODE);
-}
-
-void SectionChunk::markLive() {
+void SectionChunk::mark() {
   if (Live)
     return;
   Live = true;
@@ -84,8 +81,10 @@ void SectionChunk::markLive() {
 }
 
 void SectionChunk::addAssociative(SectionChunk *Child) {
-  Child->IsAssocChild = true;
   AssocChildren.push_back(Child);
+  // Associative sections are live if their parent COMDATs are live,
+  // and vice versa, so they are not considered live by themselves.
+  Child->Root = false;
 }
 
 static void add16(uint8_t *P, int16_t V) { write16le(P, read16le(P) + V); }

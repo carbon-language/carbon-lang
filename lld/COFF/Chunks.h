@@ -83,9 +83,9 @@ public:
   virtual bool isCOMDAT() const { return false; }
 
   // Used by the garbage collector.
-  virtual bool isRoot() { return false; }
-  virtual bool isLive() { return true; }
-  virtual void markLive() {}
+  bool isRoot() { return Root; }
+  bool isLive() { return Live; }
+  void markLive() { if (!Live) mark(); }
 
   // An output section has pointers to chunks in the section, and each
   // chunk has a back pointer to an output section.
@@ -99,11 +99,16 @@ protected:
   // The offset from beginning of the output file. The writer sets a value.
   uint64_t FileOff = 0;
 
+  // The output section for this chunk.
+  OutputSection *Out = nullptr;
+
   // The alignment of this chunk. The writer uses the value.
   uint32_t Align = 1;
 
-  // The output section for this chunk.
-  OutputSection *Out = nullptr;
+  // Used by the garbage collector.
+  virtual void mark() {}
+  bool Live = true;
+  bool Root = false;
 };
 
 // A chunk corresponding a section of an input file.
@@ -119,15 +124,12 @@ public:
   void printDiscardedMessage() override;
   bool isCOMDAT() const override;
 
-  bool isRoot() override;
-  void markLive() override;
-  bool isLive() override { return Live; }
-
   // Adds COMDAT associative sections to this COMDAT section. A chunk
   // and its children are treated as a group by the garbage collector.
   void addAssociative(SectionChunk *Child);
 
 private:
+  void mark() override;
   SectionRef getSectionRef();
   void applyReloc(uint8_t *Buf, const coff_relocation *Rel);
 
@@ -137,9 +139,7 @@ private:
   const coff_section *Header;
   uint32_t SectionIndex;
   StringRef SectionName;
-  bool Live = false;
   std::vector<Chunk *> AssocChildren;
-  bool IsAssocChild = false;
 };
 
 // A chunk for common symbols. Common chunks don't have actual data.
