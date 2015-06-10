@@ -370,25 +370,25 @@ namespace {
 
   /// A visitor which checks whether an initializer uses 'this' in a
   /// way which requires the vtable to be properly set.
-  struct DynamicThisUseChecker : EvaluatedExprVisitor<DynamicThisUseChecker> {
-    typedef EvaluatedExprVisitor<DynamicThisUseChecker> super;
+  struct DynamicThisUseChecker : ConstEvaluatedExprVisitor<DynamicThisUseChecker> {
+    typedef ConstEvaluatedExprVisitor<DynamicThisUseChecker> super;
 
     bool UsesThis;
 
-    DynamicThisUseChecker(ASTContext &C) : super(C), UsesThis(false) {}
+    DynamicThisUseChecker(const ASTContext &C) : super(C), UsesThis(false) {}
 
     // Black-list all explicit and implicit references to 'this'.
     //
     // Do we need to worry about external references to 'this' derived
     // from arbitrary code?  If so, then anything which runs arbitrary
     // external code might potentially access the vtable.
-    void VisitCXXThisExpr(CXXThisExpr *E) { UsesThis = true; }
+    void VisitCXXThisExpr(const CXXThisExpr *E) { UsesThis = true; }
   };
 }
 
 static bool BaseInitializerUsesThis(ASTContext &C, const Expr *Init) {
   DynamicThisUseChecker Checker(C);
-  Checker.Visit(const_cast<Expr*>(Init));
+  Checker.Visit(Init);
   return Checker.UsesThis;
 }
 

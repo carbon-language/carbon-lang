@@ -598,7 +598,7 @@ public:
 
   /// \brief Determine whether this expression involves a call to any function
   /// that is not trivial.
-  bool hasNonTrivialCall(ASTContext &Ctx);
+  bool hasNonTrivialCall(const ASTContext &Ctx) const;
 
   /// EvaluateKnownConstInt - Call EvaluateAsRValue and return the folded
   /// integer. This must be called on an expression that constant folds to an
@@ -2273,7 +2273,7 @@ public:
 
   /// \brief Returns \c true if this is a call to a builtin which does not
   /// evaluate side-effects within its arguments.
-  bool isUnevaluatedBuiltinCall(ASTContext &Ctx) const;
+  bool isUnevaluatedBuiltinCall(const ASTContext &Ctx) const;
 
   /// getCallReturnType - Get the return type of the call expr. This is not
   /// always the type of the expr itself, if the return type is a reference
