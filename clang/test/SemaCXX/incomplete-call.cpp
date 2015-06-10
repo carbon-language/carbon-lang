@@ -47,3 +47,15 @@ struct C; // expected-note{{forward declaration}}
 void test_incomplete_object_call(C& c) {
   c(); // expected-error{{incomplete type in call to object of type}}
 }
+
+namespace pr18542 {
+  struct X {
+    int count;
+    template<typename CharT> class basic_istream;
+    template<typename CharT>
+      void basic_istream<CharT>::read() { // expected-error{{out-of-line definition of 'read' from class 'basic_istream<CharT>' without definition}}
+        count = 0;
+      }
+  };
+}
+
