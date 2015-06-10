@@ -519,7 +519,8 @@ void RuntimeDyldELF::resolveMIPSRelocation(const SectionEntry &Section,
 }
 
 void RuntimeDyldELF::setMipsABI(const ObjectFile &Obj) {
-  if (!StringRef(Triple::getArchTypePrefix(Arch)).equals("mips")) {
+  if (Arch == Triple::UnknownArch ||
+      !StringRef(Triple::getArchTypePrefix(Arch)).equals("mips")) {
     IsMipsO32ABI = false;
     IsMipsN64ABI = false;
     return;
