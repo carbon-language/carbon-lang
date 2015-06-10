@@ -15,7 +15,8 @@ namespace {
 class ARMAsmBackendELF : public ARMAsmBackend {
 public:
   uint8_t OSABI;
-  ARMAsmBackendELF(const Target &T, StringRef TT, uint8_t OSABI, bool IsLittle)
+  ARMAsmBackendELF(const Target &T, const Triple &TT, uint8_t OSABI,
+                   bool IsLittle)
       : ARMAsmBackend(T, TT, IsLittle), OSABI(OSABI) {}
 
   MCObjectWriter *createObjectWriter(raw_pwrite_stream &OS) const override {

@@ -230,11 +230,11 @@ namespace {
 
 MCAsmBackend *llvm::createPPCAsmBackend(const Target &T,
                                         const MCRegisterInfo &MRI,
-                                        StringRef TT, StringRef CPU) {
-  if (Triple(TT).isOSDarwin())
+                                        const Triple &TT, StringRef CPU) {
+  if (TT.isOSDarwin())
     return new DarwinPPCAsmBackend(T);
 
-  uint8_t OSABI = MCELFObjectTargetWriter::getOSABI(Triple(TT).getOS());
-  bool IsLittleEndian = Triple(TT).getArch() == Triple::ppc64le;
+  uint8_t OSABI = MCELFObjectTargetWriter::getOSABI(TT.getOS());
+  bool IsLittleEndian = TT.getArch() == Triple::ppc64le;
   return new ELFPPCAsmBackend(T, IsLittleEndian, OSABI);
 }

@@ -112,7 +112,7 @@ public:
       TargetMachine &TM, std::unique_ptr<MCStreamer> &&Streamer);
   typedef MCAsmBackend *(*MCAsmBackendCtorTy)(const Target &T,
                                               const MCRegisterInfo &MRI,
-                                              StringRef TT, StringRef CPU);
+                                              const Triple &TT, StringRef CPU);
   typedef MCTargetAsmParser *(*MCAsmParserCtorTy)(
       MCSubtargetInfo &STI, MCAsmParser &P, const MCInstrInfo &MII,
       const MCTargetOptions &Options);
@@ -369,12 +369,12 @@ public:
 
   /// createMCAsmBackend - Create a target specific assembly parser.
   ///
-  /// \param Triple The target triple string.
-  MCAsmBackend *createMCAsmBackend(const MCRegisterInfo &MRI, StringRef Triple,
-                                   StringRef CPU) const {
+  /// \param TheTriple The target triple string.
+  MCAsmBackend *createMCAsmBackend(const MCRegisterInfo &MRI,
+                                   StringRef TheTriple, StringRef CPU) const {
     if (!MCAsmBackendCtorFn)
       return nullptr;
-    return MCAsmBackendCtorFn(*this, MRI, Triple, CPU);
+    return MCAsmBackendCtorFn(*this, MRI, Triple(TheTriple), CPU);
   }
 
   /// createMCAsmParser - Create a target specific assembly parser.
@@ -1112,8 +1112,8 @@ template <class MCAsmBackendImpl> struct RegisterMCAsmBackend {
 
 private:
   static MCAsmBackend *Allocator(const Target &T, const MCRegisterInfo &MRI,
-                                 StringRef Triple, StringRef CPU) {
-    return new MCAsmBackendImpl(T, MRI, Triple, CPU);
+                                 const Triple &TheTriple, StringRef CPU) {
+    return new MCAsmBackendImpl(T, MRI, TheTriple, CPU);
   }
 };
 

@@ -139,7 +139,6 @@ public:
 
 MCAsmBackend *llvm::createAMDGPUAsmBackend(const Target &T,
                                            const MCRegisterInfo &MRI,
-                                           StringRef TT,
-                                           StringRef CPU) {
+                                           const Triple &TT, StringRef CPU) {
   return new ELFAMDGPUAsmBackend(T);
 }

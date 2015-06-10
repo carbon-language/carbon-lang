@@ -297,10 +297,8 @@ namespace {
 
 } // end anonymous namespace
 
-
 MCAsmBackend *llvm::createSparcAsmBackend(const Target &T,
                                           const MCRegisterInfo &MRI,
-                                          StringRef TT,
-                                          StringRef CPU) {
-  return new ELFSparcAsmBackend(T, Triple(TT).getOS());
+                                          const Triple &TT, StringRef CPU) {
+  return new ELFSparcAsmBackend(T, TT.getOS());
 }

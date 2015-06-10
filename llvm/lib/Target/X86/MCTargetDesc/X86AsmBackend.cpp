@@ -790,10 +790,8 @@ public:
 
 MCAsmBackend *llvm::createX86_32AsmBackend(const Target &T,
                                            const MCRegisterInfo &MRI,
-                                           StringRef TT,
+                                           const Triple &TheTriple,
                                            StringRef CPU) {
-  Triple TheTriple(TT);
-
   if (TheTriple.isOSBinFormatMachO())
     return new DarwinX86_32AsmBackend(T, MRI, CPU);
 
@@ -806,10 +804,8 @@ MCAsmBackend *llvm::createX86_32AsmBackend(const Target &T,
 
 MCAsmBackend *llvm::createX86_64AsmBackend(const Target &T,
                                            const MCRegisterInfo &MRI,
-                                           StringRef TT,
+                                           const Triple &TheTriple,
                                            StringRef CPU) {
-  Triple TheTriple(TT);
-
   if (TheTriple.isOSBinFormatMachO()) {
     MachO::CPUSubTypeX86 CS =
         StringSwitch<MachO::CPUSubTypeX86>(TheTriple.getArchName())
