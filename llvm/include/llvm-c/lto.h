@@ -62,7 +62,8 @@ typedef enum {
     LTO_SYMBOL_SCOPE_HIDDEN                = 0x00001000,
     LTO_SYMBOL_SCOPE_PROTECTED             = 0x00002000,
     LTO_SYMBOL_SCOPE_DEFAULT               = 0x00001800,
-    LTO_SYMBOL_SCOPE_DEFAULT_CAN_BE_HIDDEN = 0x00002800
+    LTO_SYMBOL_SCOPE_DEFAULT_CAN_BE_HIDDEN = 0x00002800,
+    LTO_SYMBOL_COMDAT                      = 0x00004000
 } lto_symbol_attributes;
 
 /**

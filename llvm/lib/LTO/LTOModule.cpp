@@ -468,6 +468,9 @@ void LTOModule::addDefinedSymbol(const char *Name, const GlobalValue *def,
   else
     attr |= LTO_SYMBOL_SCOPE_DEFAULT;
 
+  if (def->hasComdat())
+    attr |= LTO_SYMBOL_COMDAT;
+
   auto Iter = _defines.insert(Name).first;
 
   // fill information structure
