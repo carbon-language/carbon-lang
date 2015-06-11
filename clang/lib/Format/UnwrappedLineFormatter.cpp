@@ -51,11 +51,13 @@ public:
   /// next.
   void nextLine(const AnnotatedLine &Line) {
     Offset = getIndentOffset(*Line.First);
+    // Update the indent level cache size so that we can rely on it
+    // having the right size in adjustToUnmodifiedline.
+    while (IndentForLevel.size() <= Line.Level)
+      IndentForLevel.push_back(-1);
     if (Line.InPPDirective) {
       Indent = Line.Level * Style.IndentWidth + AdditionalIndent;
     } else {
-      while (IndentForLevel.size() <= Line.Level)
-        IndentForLevel.push_back(-1);
       IndentForLevel.resize(Line.Level + 1);
       Indent = getIndent(IndentForLevel, Line.Level);
     }
