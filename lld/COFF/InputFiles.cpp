@@ -266,7 +266,9 @@ std::error_code BitcodeFile::parse() {
     if (SymbolDef == LTO_SYMBOL_DEFINITION_UNDEFINED) {
       SymbolBodies.push_back(new (Alloc) Undefined(SymName));
     } else {
-      SymbolBodies.push_back(new (Alloc) DefinedBitcode(SymName));
+      bool Replaceable = (SymbolDef == LTO_SYMBOL_DEFINITION_TENTATIVE ||
+                          (Attrs & LTO_SYMBOL_COMDAT));
+      SymbolBodies.push_back(new (Alloc) DefinedBitcode(SymName, Replaceable));
     }
   }
 

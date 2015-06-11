@@ -267,7 +267,8 @@ private:
 
 class DefinedBitcode : public Defined {
 public:
-  DefinedBitcode(StringRef N) : Defined(DefinedBitcodeKind), Name(N) {}
+  DefinedBitcode(StringRef N, bool R)
+      : Defined(DefinedBitcodeKind), Name(N), Replaceable(R) {}
 
   static bool classof(const SymbolBody *S) {
     return S->kind() == DefinedBitcodeKind;
@@ -276,9 +277,12 @@ public:
   StringRef getName() override { return Name; }
   uint64_t getRVA() override { llvm_unreachable("bitcode reached writer"); }
   uint64_t getFileOff() override { llvm_unreachable("bitcode reached writer"); }
+  int compare(SymbolBody *Other) override;
+  bool isReplaceable() const { return Replaceable; }
 
 private:
   StringRef Name;
+  bool Replaceable;
 };
 
 } // namespace coff

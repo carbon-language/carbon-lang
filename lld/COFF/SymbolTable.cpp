@@ -268,6 +268,14 @@ std::error_code SymbolTable::addCombinedLTOObject() {
         return make_error_code(LLDError::BrokenFile);
       }
       Sym->Body = Body;
+    } else {
+      int comp = Sym->Body->compare(Body);
+      if (comp < 0)
+        Sym->Body = Body;
+      if (comp == 0) {
+        llvm::errs() << "LTO: unexpected duplicate symbol: " << Name << "\n";
+        return make_error_code(LLDError::BrokenFile);
+      }
     }
 
     // We may see new references to runtime library symbols such as __chkstk
@@ -299,6 +307,13 @@ ErrorOr<ObjectFile *> SymbolTable::createLTOObject(LTOCodeGenerator *CG) {
     for (SymbolBody *Body : File->getSymbols())
       if (auto *S = dyn_cast<DefinedBitcode>(Body->getReplacement()))
         CG->addMustPreserveSymbol(S->getName());
+
+  // Likewise for bitcode symbols which we initially resolved to non-bitcode.
+  for (std::unique_ptr<BitcodeFile> &File : BitcodeFiles)
+    for (SymbolBody *Body : File->getSymbols())
+      if (isa<DefinedBitcode>(Body) &&
+          !isa<DefinedBitcode>(Body->getReplacement()))
+        CG->addMustPreserveSymbol(Body->getName());
 
   // Likewise for other symbols that must be preserved.
   for (StringRef Name : Config->GCRoots)
