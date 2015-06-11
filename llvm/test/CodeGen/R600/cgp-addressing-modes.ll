@@ -1,5 +1,5 @@
 ; RUN: opt -S -codegenprepare -mtriple=amdgcn-unknown-unknown < %s | FileCheck -check-prefix=OPT %s
-; RUN: llc -march=amdgcn -mattr=-promote-alloca < %s | FileCheck -check-prefix=GCN %s
+; RUN: llc -march=amdgcn -mcpu=bonaire -mattr=-promote-alloca < %s | FileCheck -check-prefix=GCN %s
 
 declare i32 @llvm.r600.read.tidig.x() #0
 
