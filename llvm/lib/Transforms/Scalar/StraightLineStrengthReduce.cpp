@@ -265,8 +265,10 @@ static bool isGEPFoldable(GetElementPtrInst *GEP,
       BaseOffset += DL->getStructLayout(STy)->getElementOffset(Field);
     }
   }
+
+  unsigned AddrSpace = GEP->getPointerAddressSpace();
   return TTI->isLegalAddressingMode(GEP->getType()->getElementType(), BaseGV,
-                                    BaseOffset, HasBaseReg, Scale);
+                                    BaseOffset, HasBaseReg, Scale, AddrSpace);
 }
 
 // Returns whether (Base + Index * Stride) can be folded to an addressing mode.
