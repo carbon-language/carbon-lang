@@ -679,7 +679,7 @@ static void getARMTargetFeatures(const Driver &D, const llvm::Triple &Triple,
   // getARMArch is used here instead of just checking the -march value in order
   // to handle -march=native correctly.
   if (const Arg *A = Args.getLastArg(options::OPT_march_EQ)) {
-    StringRef Arch = arm::getARMArch(Args, Triple);
+    std::string Arch = arm::getARMArch(Args, Triple);
     if (llvm::ARMTargetParser::parseArch(Arch) == llvm::ARM::AK_INVALID)
       D.Diag(diag::err_drv_clang_unsupported) << A->getAsString(Args);
   }
@@ -689,7 +689,7 @@ static void getARMTargetFeatures(const Driver &D, const llvm::Triple &Triple,
   // getLLVMArchSuffixForARM which also needs an architecture.
   if (const Arg *A = Args.getLastArg(options::OPT_mcpu_EQ)) {
     std::string CPU = arm::getARMTargetCPU(Args, Triple);
-    StringRef Arch = arm::getARMArch(Args, Triple);
+    std::string Arch = arm::getARMArch(Args, Triple);
     if (strcmp(arm::getLLVMArchSuffixForARM(CPU, Arch), "") == 0)
       D.Diag(diag::err_drv_clang_unsupported) << A->getAsString(Args);
   }
@@ -5631,9 +5631,9 @@ void hexagon::Link::ConstructJob(Compilation &C, const JobAction &JA,
 }
 // Hexagon tools end.
 
-const StringRef arm::getARMArch(const ArgList &Args,
-                                const llvm::Triple &Triple) {
-  StringRef MArch;
+const std::string arm::getARMArch(const ArgList &Args,
+                                  const llvm::Triple &Triple) {
+  std::string MArch;
   if (Arg *A = Args.getLastArg(options::OPT_march_EQ)) {
     // Otherwise, if we have -march= choose the base CPU for that arch.
     MArch = A->getValue();
@@ -5641,6 +5641,7 @@ const StringRef arm::getARMArch(const ArgList &Args,
     // Otherwise, use the Arch from the triple.
     MArch = Triple.getArchName();
   }
+  MArch = StringRef(MArch).lower();
 
   // Handle -march=native.
   if (MArch == "native") {
@@ -5662,7 +5663,7 @@ const StringRef arm::getARMArch(const ArgList &Args,
 /// Get the (LLVM) name of the minimum ARM CPU for the arch we are targeting.
 const char *arm::getARMCPUForMArch(const ArgList &Args,
                                    const llvm::Triple &Triple) {
-  StringRef MArch = getARMArch(Args, Triple);
+  std::string MArch = getARMArch(Args, Triple);
   // getARMCPUForArch defaults to the triple if MArch is empty, but empty MArch
   // here means an -march=native that we can't handle, so instead return no CPU.
   if (MArch.empty())

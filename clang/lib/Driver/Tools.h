@@ -227,8 +227,8 @@ namespace hexagon {
 namespace arm {
   std::string getARMTargetCPU(const llvm::opt::ArgList &Args,
                               const llvm::Triple &Triple);
-  const StringRef getARMArch(const llvm::opt::ArgList &Args,
-                             const llvm::Triple &Triple);
+  const std::string getARMArch(const llvm::opt::ArgList &Args,
+                               const llvm::Triple &Triple);
   const char* getARMCPUForMArch(const llvm::opt::ArgList &Args,
                                 const llvm::Triple &Triple);
   const char* getLLVMArchSuffixForARM(StringRef CPU, StringRef Arch);
