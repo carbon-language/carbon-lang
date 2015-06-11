@@ -22,9 +22,9 @@
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/Metadata.h"
 #include "llvm/IR/Module.h"
-#include "llvm/Support/Atomic.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Regex.h"
+#include <atomic>
 #include <string>
 
 using namespace llvm;
@@ -87,8 +87,8 @@ PassRemarksAnalysis(
 }
 
 int llvm::getNextAvailablePluginDiagnosticKind() {
-  static sys::cas_flag PluginKindID = DK_FirstPluginKind;
-  return (int)sys::AtomicIncrement(&PluginKindID);
+  static std::atomic<int> PluginKindID(DK_FirstPluginKind);
+  return ++PluginKindID;
 }
 
 DiagnosticInfoInlineAsm::DiagnosticInfoInlineAsm(const Instruction &I,
