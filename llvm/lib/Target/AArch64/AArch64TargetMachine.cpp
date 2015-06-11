@@ -67,11 +67,6 @@ EnableAtomicTidy("aarch64-atomic-cfg-tidy", cl::Hidden,
                           " to make use of cmpxchg flow-based information"),
                  cl::init(true));
 
-static cl::opt<bool> AArch64InterleavedAccessOpt(
-    "aarch64-interleaved-access-opt",
-    cl::desc("Optimize interleaved memory accesses in the AArch64 backend"),
-    cl::init(false), cl::Hidden);
-
 static cl::opt<bool>
 EnableEarlyIfConversion("aarch64-enable-early-ifcvt", cl::Hidden,
                         cl::desc("Run early if-conversion"),
@@ -229,9 +224,6 @@ void AArch64PassConfig::addIRPasses() {
   // ldrex/strex loops to simplify this, but it needs tidying up.
   if (TM->getOptLevel() != CodeGenOpt::None && EnableAtomicTidy)
     addPass(createCFGSimplificationPass());
-
-  if (TM->getOptLevel() != CodeGenOpt::None && AArch64InterleavedAccessOpt)
-    addPass(createAArch64InterleavedAccessPass());
 
   TargetPassConfig::addIRPasses();
 
