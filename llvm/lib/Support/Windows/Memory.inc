@@ -78,7 +78,15 @@ MemoryBlock Memory::allocateMappedMemory(size_t NumBytes,
   // While we'd be happy to allocate single pages, the Windows allocation
   // granularity may be larger than a single page (in practice, it is 64K)
   // so mapping less than that will create an unreachable fragment of memory.
-  static const size_t Granularity = getAllocationGranularity();
+  // Avoid using one-time initialization of static locals here, since they
+  // aren't thread safe with MSVC.
+  static volatile size_t GranularityCached;
+  size_t Granularity = GranularityCached;
+  if (Granularity == 0) {
+    Granularity = getAllocationGranularity();
+    GranularityCached = Granularity;
+  }
+
   const size_t NumBlocks = (NumBytes+Granularity-1)/Granularity;
 
   uintptr_t Start = NearBlock ? reinterpret_cast<uintptr_t>(NearBlock->base()) +
