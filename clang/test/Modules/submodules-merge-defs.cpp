@@ -3,9 +3,13 @@
 // RUN: %clang_cc1 -x c++ -std=c++11 -fmodules-cache-path=%t -fmodules -I %S/Inputs/submodules-merge-defs %s -verify -fno-modules-error-recovery
 // RUN: %clang_cc1 -x c++ -std=c++11 -fmodules-cache-path=%t -fmodules -I %S/Inputs/submodules-merge-defs %s -verify -fno-modules-error-recovery -fmodules-local-submodule-visibility -DTEXTUAL
 // RUN: %clang_cc1 -x c++ -std=c++11 -fmodules-cache-path=%t -fmodules -I %S/Inputs/submodules-merge-defs %s -verify -fno-modules-error-recovery -fmodules-local-submodule-visibility
+// RUN: %clang_cc1 -x c++ -std=c++11 -fmodules-cache-path=%t -fmodule-maps -I %S/Inputs/submodules-merge-defs %s -verify -fno-modules-error-recovery -fmodules-local-submodule-visibility -DTEXTUAL -DEARLY_INDIRECT_INCLUDE
 
 // Trigger import of definitions, but don't make them visible.
 #include "empty.h"
+#ifdef EARLY_INDIRECT_INCLUDE
+#include "indirect.h"
+#endif
 
 A pre_a; // expected-error {{must be imported}} expected-error {{must use 'struct'}}
 // expected-note@defs.h:1 +{{here}}
@@ -54,3 +58,10 @@ int post_use_dx = use_dx(post_dx);
 int post_e = E(0);
 int post_ff = F<char>().f();
 int post_fg = F<char>().g<int>();
+#ifdef EARLY_INDIRECT_INCLUDE
+// FIXME: Properly track the owning module for a member specialization.
+// expected-error@defs.h:34 {{redefinition}}
+// expected-note@defs.h:34 {{previous definition}}
+// expected-error@-5 {{no matching member function}}
+// expected-note@defs.h:34 {{substitution failure}}
+#endif

@@ -5153,7 +5153,7 @@ bool Sema::RequireCompleteType(SourceLocation Loc, QualType T,
 ///        in order to provide a definition of this entity.
 bool Sema::hasVisibleDefinition(NamedDecl *D, NamedDecl **Suggested) {
   // Easy case: if we don't have modules, all declarations are visible.
-  if (!getLangOpts().Modules)
+  if (!getLangOpts().Modules && !getLangOpts().ModulesLocalVisibility)
     return true;
 
   // If this definition was instantiated from a template, map back to the

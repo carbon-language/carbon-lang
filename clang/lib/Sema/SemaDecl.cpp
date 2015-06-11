@@ -1788,7 +1788,7 @@ static void filterNonConflictingPreviousDecls(Sema &S,
                                               NamedDecl *decl,
                                               LookupResult &previous){
   // This is only interesting when modules are enabled.
-  if (!S.getLangOpts().Modules)
+  if (!S.getLangOpts().Modules && !S.getLangOpts().ModulesLocalVisibility)
     return;
 
   // Empty sets are uninteresting.
@@ -1818,7 +1818,7 @@ static void filterNonConflictingPreviousTypedefDecls(Sema &S,
                                                      TypedefNameDecl *Decl,
                                                      LookupResult &Previous) {
   // This is only interesting when modules are enabled.
-  if (!S.getLangOpts().Modules)
+  if (!S.getLangOpts().Modules && !S.getLangOpts().ModulesLocalVisibility)
     return;
 
   // Empty sets are uninteresting.
@@ -13488,7 +13488,8 @@ EnumConstantDecl *Sema::CheckEnumConstant(EnumDecl *Enum,
 
 Sema::SkipBodyInfo Sema::shouldSkipAnonEnumBody(Scope *S, IdentifierInfo *II,
                                                 SourceLocation IILoc) {
-  if (!getLangOpts().Modules || !getLangOpts().CPlusPlus)
+  if (!(getLangOpts().Modules || getLangOpts().ModulesLocalVisibility) ||
+      !getLangOpts().CPlusPlus)
     return SkipBodyInfo();
 
   // We have an anonymous enum definition. Look up the first enumerator to

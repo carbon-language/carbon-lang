@@ -14,3 +14,8 @@ module "merged-defs" {
   header "merged-defs.h"
   use "stuff"
 }
+
+module "indirect" {
+  header "indirect.h"
+  use "merged-defs"
+}
