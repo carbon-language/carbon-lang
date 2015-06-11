@@ -88,8 +88,8 @@ namespace {
 
     // These functions are temporary abstractions around LiveVariables and
     // LiveIntervals, so they can go away when LiveVariables does.
-    bool isLiveIn(unsigned Reg, MachineBasicBlock *MBB);
-    bool isLiveOutPastPHIs(unsigned Reg, MachineBasicBlock *MBB);
+    bool isLiveIn(unsigned Reg, const MachineBasicBlock *MBB);
+    bool isLiveOutPastPHIs(unsigned Reg, const MachineBasicBlock *MBB);
 
     typedef std::pair<unsigned, unsigned> BBVRegPair;
     typedef DenseMap<BBVRegPair, unsigned> VRegPHIUse;
@@ -143,16 +143,16 @@ bool PHIElimination::runOnMachineFunction(MachineFunction &MF) {
   // updating LiveIntervals, so we disable it.
   if (!DisableEdgeSplitting && (LV || LIS)) {
     MachineLoopInfo *MLI = getAnalysisIfAvailable<MachineLoopInfo>();
-    for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I)
-      Changed |= SplitPHIEdges(MF, *I, MLI);
+    for (auto &MBB : MF)
+      Changed |= SplitPHIEdges(MF, MBB, MLI);
   }
 
   // Populate VRegPHIUseCount
   analyzePHINodes(MF);
 
   // Eliminate PHI instructions by inserting copies into predecessor blocks.
-  for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I)
-    Changed |= EliminatePHINodes(MF, *I);
+  for (auto &MBB : MF)
+    Changed |= EliminatePHINodes(MF, MBB);
 
   // Remove dead IMPLICIT_DEF instructions.
   for (MachineInstr *DefMI : ImpDefs) {
@@ -623,7 +623,7 @@ bool PHIElimination::SplitPHIEdges(MachineFunction &MF,
   return Changed;
 }
 
-bool PHIElimination::isLiveIn(unsigned Reg, MachineBasicBlock *MBB) {
+bool PHIElimination::isLiveIn(unsigned Reg, const MachineBasicBlock *MBB) {
   assert((LV || LIS) &&
          "isLiveIn() requires either LiveVariables or LiveIntervals");
   if (LIS)
@@ -632,7 +632,8 @@ bool PHIElimination::isLiveIn(unsigned Reg, MachineBasicBlock *MBB) {
     return LV->isLiveIn(Reg, *MBB);
 }
 
-bool PHIElimination::isLiveOutPastPHIs(unsigned Reg, MachineBasicBlock *MBB) {
+bool PHIElimination::isLiveOutPastPHIs(unsigned Reg,
+                                       const MachineBasicBlock *MBB) {
   assert((LV || LIS) &&
          "isLiveOutPastPHIs() requires either LiveVariables or LiveIntervals");
   // LiveVariables considers uses in PHIs to be in the predecessor basic block,
@@ -642,11 +643,9 @@ bool PHIElimination::isLiveOutPastPHIs(unsigned Reg, MachineBasicBlock *MBB) {
   // out of the block.
   if (LIS) {
     const LiveInterval &LI = LIS->getInterval(Reg);
-    for (MachineBasicBlock::succ_iterator SI = MBB->succ_begin(),
-         SE = MBB->succ_end(); SI != SE; ++SI) {
-      if (LI.liveAt(LIS->getMBBStartIdx(*SI)))
+    for (const MachineBasicBlock *SI : MBB->successors())
+      if (LI.liveAt(LIS->getMBBStartIdx(SI)))
         return true;
-    }
     return false;
   } else {
     return LV->isLiveOut(Reg, *MBB);
