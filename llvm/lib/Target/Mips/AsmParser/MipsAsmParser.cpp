@@ -208,6 +208,9 @@ class MipsAsmParser : public MCTargetAsmParser {
   bool expandLoadStoreMultiple(MCInst &Inst, SMLoc IDLoc,
                                SmallVectorImpl<MCInst> &Instructions);
 
+  bool expandBranchImm(MCInst &Inst, SMLoc IDLoc,
+                       SmallVectorImpl<MCInst> &Instructions);
+
   void createNop(bool hasShortDelaySlot, SMLoc IDLoc,
                  SmallVectorImpl<MCInst> &Instructions);
 
@@ -1619,6 +1622,8 @@ bool MipsAsmParser::needsExpansion(MCInst &Inst) {
   case Mips::SWM_MM:
   case Mips::JalOneReg:
   case Mips::JalTwoReg:
+  case Mips::BneImm:
+  case Mips::BeqImm:
     return true;
   default:
     return false;
@@ -1645,6 +1650,9 @@ bool MipsAsmParser::expandInstruction(MCInst &Inst, SMLoc IDLoc,
   case Mips::JalOneReg:
   case Mips::JalTwoReg:
     return expandJalWithRegs(Inst, IDLoc, Instructions);
+  case Mips::BneImm:
+  case Mips::BeqImm:
+    return expandBranchImm(Inst, IDLoc, Instructions);
   }
 }
 
@@ -2032,6 +2040,59 @@ bool MipsAsmParser::expandUncondBranchMMPseudo(
   if (AssemblerOptions.back()->isReorder())
     createNop(true, IDLoc, Instructions);
 
+  return false;
+}
+
+bool MipsAsmParser::expandBranchImm(MCInst &Inst, SMLoc IDLoc,
+                                    SmallVectorImpl<MCInst> &Instructions) {
+  const MCOperand &DstRegOp = Inst.getOperand(0);
+  assert(DstRegOp.isReg() && "expected register operand kind");
+
+  const MCOperand &ImmOp = Inst.getOperand(1);
+  assert(ImmOp.isImm() && "expected immediate operand kind");
+
+  const MCOperand &MemOffsetOp = Inst.getOperand(2);
+  assert(MemOffsetOp.isImm() && "expected immediate operand kind");
+
+  unsigned OpCode = 0;
+  switch(Inst.getOpcode()) {
+    case Mips::BneImm:
+      OpCode = Mips::BNE;
+      break;
+    case Mips::BeqImm:
+      OpCode = Mips::BEQ;
+      break;
+    default:
+      llvm_unreachable("Unknown immediate branch pseudo-instruction.");
+      break;
+  }
+
+  int64_t ImmValue = ImmOp.getImm();
+  if (ImmValue == 0) {
+    MCInst BranchInst;
+    BranchInst.setOpcode(OpCode);
+    BranchInst.addOperand(DstRegOp);
+    BranchInst.addOperand(MCOperand::createReg(Mips::ZERO));
+    BranchInst.addOperand(MemOffsetOp);
+    Instructions.push_back(BranchInst);
+  } else {
+    warnIfNoMacro(IDLoc);
+
+    unsigned ATReg = getATReg(IDLoc);
+    if (!ATReg)
+      return true;
+
+    if (loadImmediate(ImmValue, ATReg, Mips::NoRegister, !isGP64bit(), IDLoc,
+                      Instructions))
+      return true;
+
+    MCInst BranchInst;
+    BranchInst.setOpcode(OpCode);
+    BranchInst.addOperand(DstRegOp);
+    BranchInst.addOperand(MCOperand::createReg(ATReg));
+    BranchInst.addOperand(MemOffsetOp);
+    Instructions.push_back(BranchInst);
+  }
   return false;
 }
 

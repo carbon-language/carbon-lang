@@ -27,8 +27,6 @@ def uimm16_64      : Operand<i64> {
 // Signed Operand
 def simm10_64 : Operand<i64>;
 
-def imm64: Operand<i64>;
-
 // Transformation Function - get Imm - 32.
 def Subtract32 : SDNodeXForm<imm, [{
   return getImm(N, (unsigned)N->getZExtValue() - 32);
