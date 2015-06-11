@@ -90,7 +90,7 @@ __try.cont:
 ; CHECK: jmp [[cont_bb]]
 
 ; CHECK: .section .xdata,"dr"
-; CHECK-NEXT: L__ehtable$safe_div:
+; CHECK: L__ehtable$safe_div:
 ; CHECK-NEXT: .long -1
 ; CHECK-NEXT: .long _safe_div_filt0
 ; CHECK-NEXT: .long [[handler0]]

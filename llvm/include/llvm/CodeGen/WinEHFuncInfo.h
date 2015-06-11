@@ -144,14 +144,15 @@ struct WinEHFuncInfo {
   SmallVector<WinEHUnwindMapEntry, 4> UnwindMap;
   SmallVector<WinEHTryBlockMapEntry, 4> TryBlockMap;
   SmallVector<std::pair<MCSymbol *, int>, 4> IPToStateList;
-  int UnwindHelpFrameIdx;
-  int UnwindHelpFrameOffset;
+  int UnwindHelpFrameIdx = INT_MAX;
+  int UnwindHelpFrameOffset = -1;
+  unsigned NumIPToStateFuncsVisited = 0;
 
-  unsigned NumIPToStateFuncsVisited;
+  /// frameescape index of the 32-bit EH registration node. Set by
+  /// WinEHStatePass and used indirectly by SEH filter functions of the parent.
+  int EHRegNodeEscapeIndex = INT_MAX;
 
-  WinEHFuncInfo()
-      : UnwindHelpFrameIdx(INT_MAX), UnwindHelpFrameOffset(-1),
-        NumIPToStateFuncsVisited(0) {}
+  WinEHFuncInfo() {}
 };
 
 /// Analyze the IR in ParentFn and it's handlers to build WinEHFuncInfo, which

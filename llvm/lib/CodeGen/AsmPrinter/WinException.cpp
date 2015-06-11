@@ -449,7 +449,7 @@ void WinException::emitCXXFrameHandler3Table(const MachineFunction *MF) {
               Asm->OutContext.getOrCreateParentFrameOffsetSymbol(
                   GlobalValue::getRealLinkageName(HT.Handler->getName()));
           const MCSymbolRefExpr *ParentFrameOffsetRef = MCSymbolRefExpr::create(
-              ParentFrameOffset, MCSymbolRefExpr::VK_None, Asm->OutContext);
+              ParentFrameOffset, Asm->OutContext);
           OS.EmitValue(ParentFrameOffsetRef, 4); // ParentFrameOffset
         }
       }
@@ -551,11 +551,26 @@ void WinException::extendIP2StateTable(const MachineFunction *MF,
 /// functionally equivalent to the __C_specific_handler table, except it is
 /// indexed by state number instead of IP.
 void WinException::emitExceptHandlerTable(const MachineFunction *MF) {
-  auto &OS = *Asm->OutStreamer;
+  MCStreamer &OS = *Asm->OutStreamer;
+
+  // Define the EH registration node offset label in terms of its frameescape
+  // label. The WinEHStatePass ensures that the registration node is passed to
+  // frameescape. This allows SEH filter functions to access the
+  // EXCEPTION_POINTERS field, which is filled in by the _except_handlerN.
+  const Function *F = MF->getFunction();
+  WinEHFuncInfo &FuncInfo = MMI->getWinEHFuncInfo(F);
+  assert(FuncInfo.EHRegNodeEscapeIndex != INT_MAX &&
+         "no EH reg node frameescape index");
+  StringRef FLinkageName = GlobalValue::getRealLinkageName(F->getName());
+  MCSymbol *ParentFrameOffset =
+      Asm->OutContext.getOrCreateParentFrameOffsetSymbol(FLinkageName);
+  MCSymbol *FrameAllocSym = Asm->OutContext.getOrCreateFrameAllocSymbol(
+      FLinkageName, FuncInfo.EHRegNodeEscapeIndex);
+  const MCSymbolRefExpr *FrameAllocSymRef =
+      MCSymbolRefExpr::create(FrameAllocSym, Asm->OutContext);
+  OS.EmitAssignment(ParentFrameOffset, FrameAllocSymRef);
 
   // Emit the __ehtable label that we use for llvm.x86.seh.lsda.
-  const Function *F = MF->getFunction();
-  StringRef FLinkageName = GlobalValue::getRealLinkageName(F->getName());
   MCSymbol *LSDALabel = Asm->OutContext.getOrCreateLSDASymbol(FLinkageName);
   OS.EmitLabel(LSDALabel);
 

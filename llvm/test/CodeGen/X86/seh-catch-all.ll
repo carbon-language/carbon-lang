@@ -1,6 +1,4 @@
-; RUN: llc -mtriple=x86_64-windows-msvc < %s | FileCheck %s --check-prefix=X64
-; RUN: sed -e 's/__C_specific_handler/_except_handler3/' %s | \
-; RUN:         llc -mtriple=i686-windows-msvc | FileCheck %s --check-prefix=X86
+; RUN: llc -mtriple=x86_64-windows-msvc < %s | FileCheck %s
 
 @str = linkonce_odr unnamed_addr constant [27 x i8] c"GetExceptionCode(): 0x%lx\0A\00", align 1
 
@@ -31,41 +29,17 @@ eh.resume:
 
 ; Check that we can get the exception code from eax to the printf.
 
-; X64-LABEL: main:
-; X64: callq crash
-; X64: retq
-; X64: # Block address taken
-; X64: leaq str(%rip), %rcx
-; X64: movl %eax, %edx
-; X64: callq printf
+; CHECK-LABEL: main:
+; CHECK: callq crash
+; CHECK: retq
+; CHECK: # Block address taken
+; CHECK: leaq str(%rip), %rcx
+; CHECK: movl %eax, %edx
+; CHECK: callq printf
 
-; X64: .seh_handlerdata
-; X64-NEXT: .long 1
-; X64-NEXT: .long .Ltmp{{[0-9]+}}@IMGREL
-; X64-NEXT: .long .Ltmp{{[0-9]+}}@IMGREL+1
-; X64-NEXT: .long 1
-; X64-NEXT: .long .Ltmp{{[0-9]+}}@IMGREL
-
-; X86-LABEL: _main:
-; 	The EH code load should be this offset +4.
-; X86: movl %esp, -24(%ebp)
-; X86: movl $L__ehtable$main,
-; 	EH state 0
-; X86: movl $0, -4(%ebp)
-; X86: calll _crash
-; X86: retl
-; X86: # Block address taken
-; X86: movl -20(%ebp), %[[ptrs:[^ ,]*]]
-; X86: movl (%[[ptrs]]), %[[rec:[^ ,]*]]
-; X86: movl (%[[rec]]), %[[code:[^ ,]*]]
-; 	EH state -1
-; X86: movl $-1, -4(%ebp)
-; X86-DAG: movl %[[code]], 4(%esp)
-; X86-DAG: movl $_str, (%esp)
-; X86: calll _printf
-
-; X86: .section .xdata,"dr"
-; X86-NEXT: L__ehtable$main
-; X86-NEXT: .long -1
-; X86-NEXT: .long 0
-; X86-NEXT: .long Ltmp{{[0-9]+}}
+; CHECK: .seh_handlerdata
+; CHECK-NEXT: .long 1
+; CHECK-NEXT: .long .Ltmp{{[0-9]+}}@IMGREL
+; CHECK-NEXT: .long .Ltmp{{[0-9]+}}@IMGREL+1
+; CHECK-NEXT: .long 1
+; CHECK-NEXT: .long .Ltmp{{[0-9]+}}@IMGREL

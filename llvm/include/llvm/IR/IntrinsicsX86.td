@@ -18,9 +18,12 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
 }
 
 //===----------------------------------------------------------------------===//
-// SEH LSDA for Windows
+// SEH intrinsics for Windows
 let TargetPrefix = "x86" in {
   def int_x86_seh_lsda : Intrinsic<[llvm_ptr_ty], [llvm_ptr_ty], [IntrNoMem]>;
+  def int_x86_seh_exceptioninfo : Intrinsic<[llvm_ptr_ty],
+                                            [llvm_ptr_ty, llvm_ptr_ty],
+					    [IntrReadMem]>;
 }
 
 //===----------------------------------------------------------------------===//

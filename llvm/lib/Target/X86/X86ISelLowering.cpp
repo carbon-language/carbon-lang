@@ -15506,23 +15506,6 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, const X86Subtarget *Subtarget
         DAG.getTargetExternalSymbol(Name.data(), VT, X86II::MO_NOPREFIX);
     return DAG.getNode(X86ISD::Wrapper, dl, VT, Result);
   }
-
-  case Intrinsic::eh_exceptioninfo: {
-    // Compute the symbol for the LSDA. We know it'll get emitted later.
-    MachineFunction &MF = DAG.getMachineFunction();
-    SDValue Op1 = Op.getOperand(1);
-    auto *Fn = cast<Function>(cast<GlobalAddressSDNode>(Op1)->getGlobal());
-    MCSymbol *LSDASym = MF.getMMI().getContext().getOrCreateLSDASymbol(
-        GlobalValue::getRealLinkageName(Fn->getName()));
-    StringRef Name = LSDASym->getName();
-    assert(Name.data()[Name.size()] == '\0' && "not null terminated");
-
-    // Generate a simple absolute symbol reference. This intrinsic is only
-    // supported on 32-bit Windows, which isn't PIC.
-    SDValue Result =
-        DAG.getTargetExternalSymbol(Name.data(), VT, X86II::MO_NOPREFIX);
-    return DAG.getNode(X86ISD::Wrapper, dl, VT, Result);
-  }
   }
 }
 
@@ -15707,14 +15690,49 @@ static SDValue LowerREADCYCLECOUNTER(SDValue Op, const X86Subtarget *Subtarget,
   return DAG.getMergeValues(Results, DL);
 }
 
+static SDValue LowerEXCEPTIONINFO(SDValue Op, const X86Subtarget *Subtarget,
+                                  SelectionDAG &DAG) {
+  MachineFunction &MF = DAG.getMachineFunction();
+  SDLoc dl(Op);
+  SDValue FnOp = Op.getOperand(2);
+  SDValue FPOp = Op.getOperand(3);
+
+  // Compute the symbol for the parent EH registration. We know it'll get
+  // emitted later.
+  auto *Fn = cast<Function>(cast<GlobalAddressSDNode>(FnOp)->getGlobal());
+  MCSymbol *ParentFrameSym =
+      MF.getMMI().getContext().getOrCreateParentFrameOffsetSymbol(
+          GlobalValue::getRealLinkageName(Fn->getName()));
+  StringRef Name = ParentFrameSym->getName();
+  assert(Name.data()[Name.size()] == '\0' && "not null terminated");
+
+  // Create a TargetExternalSymbol for the label to avoid any target lowering
+  // that would make this PC relative.
+  MVT PtrVT = Op.getSimpleValueType();
+  SDValue OffsetSym = DAG.getTargetExternalSymbol(Name.data(), PtrVT);
+  SDValue OffsetVal =
+      DAG.getNode(ISD::FRAME_ALLOC_RECOVER, dl, PtrVT, OffsetSym);
+
+  // Add the offset to the FP.
+  SDValue Add = DAG.getNode(ISD::ADD, dl, PtrVT, FPOp, OffsetVal);
+
+  // Load the second field of the struct, which is 4 bytes in. See
+  // WinEHStatePass for more info.
+  Add = DAG.getNode(ISD::ADD, dl, PtrVT, Add, DAG.getConstant(4, dl, PtrVT));
+  return DAG.getLoad(PtrVT, dl, DAG.getEntryNode(), Add, MachinePointerInfo(),
+                     false, false, false, 0);
+}
 
 static SDValue LowerINTRINSIC_W_CHAIN(SDValue Op, const X86Subtarget *Subtarget,
                                       SelectionDAG &DAG) {
   unsigned IntNo = cast<ConstantSDNode>(Op.getOperand(1))->getZExtValue();
 
   const IntrinsicData* IntrData = getIntrinsicWithChain(IntNo);
-  if (!IntrData)
+  if (!IntrData) {
+    if (IntNo == Intrinsic::x86_seh_exceptioninfo)
+      return LowerEXCEPTIONINFO(Op, Subtarget, DAG);
     return SDValue();
+  }
 
   SDLoc dl(Op);
   switch(IntrData->Type) {

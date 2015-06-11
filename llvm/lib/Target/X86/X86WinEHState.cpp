@@ -67,8 +67,6 @@ private:
   void addCXXStateStoresToFunclet(Value *ParentRegNode, WinEHFuncInfo &FuncInfo,
                                   Function &F, int BaseState);
   void insertStateNumberStore(Value *ParentRegNode, Instruction *IP, int State);
-  iplist<Instruction>::iterator
-  rewriteExceptionInfoIntrinsics(IntrinsicInst *Intrin);
 
   Value *emitEHLSDA(IRBuilder<> &Builder, Function *F);
 
@@ -487,6 +485,12 @@ void WinEHStatePass::addCXXStateStoresToFunclet(Value *ParentRegNode,
 void WinEHStatePass::addSEHStateStores(Function &F, MachineModuleInfo &MMI) {
   WinEHFuncInfo &FuncInfo = MMI.getWinEHFuncInfo(&F);
 
+  // Remember and return the index that we used. We save it in WinEHFuncInfo so
+  // that we can lower llvm.x86.seh.exceptioninfo later in filter functions
+  // without too much trouble.
+  int RegNodeEscapeIndex = escapeRegNode(F);
+  FuncInfo.EHRegNodeEscapeIndex = RegNodeEscapeIndex;
+
   // Iterate all the instructions and emit state number stores.
   int CurState = 0;
   SmallPtrSet<BasicBlock *, 4> ExceptBlocks;
@@ -495,7 +499,6 @@ void WinEHStatePass::addSEHStateStores(Function &F, MachineModuleInfo &MMI) {
       if (auto *CI = dyn_cast<CallInst>(I)) {
         auto *Intrin = dyn_cast<IntrinsicInst>(CI);
         if (Intrin) {
-          I = rewriteExceptionInfoIntrinsics(Intrin);
           // Calls that "don't throw" are considered to be able to throw asynch
           // exceptions, but intrinsics cannot.
           continue;
@@ -540,32 +543,6 @@ void WinEHStatePass::addSEHStateStores(Function &F, MachineModuleInfo &MMI) {
         Builder.CreateLoad(Builder.CreateStructGEP(RegNodeTy, RegNode, 0));
     Builder.CreateCall(StackRestore, {SP});
   }
-}
-
-/// Rewrite llvm.eh.exceptioncode and llvm.eh.exceptioninfo to memory loads in
-/// IR.
-iplist<Instruction>::iterator
-WinEHStatePass::rewriteExceptionInfoIntrinsics(IntrinsicInst *Intrin) {
-  Intrinsic::ID ID = Intrin->getIntrinsicID();
-  if (ID != Intrinsic::eh_exceptioncode && ID != Intrinsic::eh_exceptioninfo)
-    return Intrin;
-
-  // RegNode->ExceptionPointers
-  IRBuilder<> Builder(Intrin);
-  Value *Ptrs =
-      Builder.CreateLoad(Builder.CreateStructGEP(RegNodeTy, RegNode, 1));
-  Value *Res;
-  if (ID == Intrinsic::eh_exceptioncode) {
-    // Ptrs->ExceptionRecord->Code
-    Ptrs = Builder.CreateBitCast(
-        Ptrs, Builder.getInt32Ty()->getPointerTo()->getPointerTo());
-    Value *Rec = Builder.CreateLoad(Ptrs);
-    Res = Builder.CreateLoad(Rec);
-  } else {
-    Res = Ptrs;
-  }
-  Intrin->replaceAllUsesWith(Res);
-  return Intrin->eraseFromParent();
 }
 
 void WinEHStatePass::insertStateNumberStore(Value *ParentRegNode,

@@ -526,13 +526,12 @@ bool WinCOFFObjectWriter::ExportSymbol(const MCSymbol &Symbol,
   if (!Symbol.isTemporary())
     return true;
 
-  // Absolute temporary labels are never visible.
-  if (!Symbol.isInSection())
+  // Temporary variable symbols are invisible.
+  if (Symbol.isVariable())
     return false;
 
-  // For now, all non-variable symbols are exported,
-  // the linker will sort the rest out for us.
-  return !Symbol.isVariable();
+  // Absolute temporary labels are never visible.
+  return !Symbol.isAbsolute();
 }
 
 bool WinCOFFObjectWriter::IsPhysicalSection(COFFSection *S) {
