@@ -1142,7 +1142,9 @@ def:Pat<(vpkudum_unary_shuffle v16i8:$vA, undef),
 def:Pat<(vpkudum_swapped_shuffle v16i8:$vA, v16i8:$vB),
         (VPKUDUM $vB, $vA)>;
 
-
+def VGBBD : VX2_Int_Ty2<1292, "vgbbd", int_ppc_altivec_vgbbd, v16i8, v16i8>;
+def VBPERMQ : VX1_Int_Ty2<1356, "vbpermq", int_ppc_altivec_vbpermq,
+                          v2i64, v16i8>;
 } // end HasP8Altivec
 
 // Crypto instructions (from builtins)

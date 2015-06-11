@@ -686,6 +686,12 @@
 # CHECK-BE: vrsqrtefp 2, 3                  # encoding: [0x10,0x40,0x19,0x4a]
 # CHECK-LE: vrsqrtefp 2, 3                  # encoding: [0x4a,0x19,0x40,0x10]
             vrsqrtefp 2, 3
+# CHECK-BE: vgbbd 2, 3                      # encoding: [0x10,0x40,0x1d,0x0c]
+# CHECK-LE: vgbbd 2, 3                      # encoding: [0x0c,0x1d,0x40,0x10]
+            vgbbd 2, 3
+# CHECK-BE: vbpermq 2, 5, 17                # encoding: [0x10,0x45,0x8d,0x4c]
+# CHECK-LE: vbpermq 2, 5, 17                # encoding: [0x4c,0x8d,0x45,0x10]
+            vbpermq 2, 5, 17
 
 # Vector count leading zero instructions
 # CHECK-BE: vclzb 2, 3                      # encoding: [0x10,0x40,0x1f,0x02]
