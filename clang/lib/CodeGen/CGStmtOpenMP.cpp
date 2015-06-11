@@ -647,30 +647,32 @@ static void EmitPrivateLoopCounters(CodeGenFunction &CGF,
 static void emitPreCond(CodeGenFunction &CGF, const OMPLoopDirective &S,
                         const Expr *Cond, llvm::BasicBlock *TrueBlock,
                         llvm::BasicBlock *FalseBlock, uint64_t TrueCount) {
-  CodeGenFunction::OMPPrivateScope PreCondScope(CGF);
-  EmitPrivateLoopCounters(CGF, PreCondScope, S.counters());
-  const VarDecl *IVDecl =
-      cast<VarDecl>(cast<DeclRefExpr>(S.getIterationVariable())->getDecl());
-  bool IsRegistered = PreCondScope.addPrivate(IVDecl, [&]() -> llvm::Value *{
-    // Emit var without initialization.
-    auto VarEmission = CGF.EmitAutoVarAlloca(*IVDecl);
-    CGF.EmitAutoVarCleanups(VarEmission);
-    return VarEmission.getAllocatedAddress();
-  });
-  assert(IsRegistered && "counter already registered as private");
-  // Silence the warning about unused variable.
-  (void)IsRegistered;
-  (void)PreCondScope.Privatize();
-  // Initialize internal counter to 0 to calculate initial values of real
-  // counters.
-  LValue IV = CGF.EmitLValue(S.getIterationVariable());
-  CGF.EmitStoreOfScalar(
-      llvm::ConstantInt::getNullValue(
-          IV.getAddress()->getType()->getPointerElementType()),
-      CGF.EmitLValue(S.getIterationVariable()), /*isInit=*/true);
-  // Get initial values of real counters.
-  for (auto I : S.updates()) {
-    CGF.EmitIgnoredExpr(I);
+  {
+    CodeGenFunction::OMPPrivateScope PreCondScope(CGF);
+    EmitPrivateLoopCounters(CGF, PreCondScope, S.counters());
+    const VarDecl *IVDecl =
+        cast<VarDecl>(cast<DeclRefExpr>(S.getIterationVariable())->getDecl());
+    bool IsRegistered = PreCondScope.addPrivate(IVDecl, [&]() -> llvm::Value *{
+      // Emit var without initialization.
+      auto VarEmission = CGF.EmitAutoVarAlloca(*IVDecl);
+      CGF.EmitAutoVarCleanups(VarEmission);
+      return VarEmission.getAllocatedAddress();
+    });
+    assert(IsRegistered && "counter already registered as private");
+    // Silence the warning about unused variable.
+    (void)IsRegistered;
+    (void)PreCondScope.Privatize();
+    // Initialize internal counter to 0 to calculate initial values of real
+    // counters.
+    LValue IV = CGF.EmitLValue(S.getIterationVariable());
+    CGF.EmitStoreOfScalar(
+        llvm::ConstantInt::getNullValue(
+            IV.getAddress()->getType()->getPointerElementType()),
+        CGF.EmitLValue(S.getIterationVariable()), /*isInit=*/true);
+    // Get initial values of real counters.
+    for (auto I : S.updates()) {
+      CGF.EmitIgnoredExpr(I);
+    }
   }
   // Check that loop is executed at least one time.
   CGF.EmitBranchOnBoolExpr(Cond, TrueBlock, FalseBlock, TrueCount);
