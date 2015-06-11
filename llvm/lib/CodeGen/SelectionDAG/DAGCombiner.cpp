@@ -387,13 +387,6 @@ namespace {
       unsigned SequenceNum;
     };
 
-    /// This is a helper function for MergeStoresOfConstantsOrVecElts. Returns a
-    /// constant build_vector of the stored constant values in Stores.
-    SDValue getMergedConstantVectorStore(SelectionDAG &DAG,
-                                         SDLoc SL,
-                                         ArrayRef<MemOpLink> Stores,
-                                         EVT Ty) const;
-
     /// This is a helper function for MergeConsecutiveStores. When the source
     /// elements of the consecutive stores are all constants or all extracted
     /// vector elements, try to merge them into one larger store.
@@ -10583,17 +10576,6 @@ struct BaseIndexOffset {
 };
 } // namespace
 
-SDValue DAGCombiner::getMergedConstantVectorStore(SelectionDAG &DAG,
-                                                  SDLoc SL,
-                                                  ArrayRef<MemOpLink> Stores,
-                                                  EVT Ty) const {
-  SmallVector<SDValue, 8> BuildVector;
-
-  for (const MemOpLink &Store : Stores)
-    BuildVector.push_back(cast<StoreSDNode>(Store.MemNode)->getValue());
-  return DAG.getNode(ISD::BUILD_VECTOR, SL, Ty, BuildVector);
-}
-
 bool DAGCombiner::MergeStoresOfConstantsOrVecElts(
                   SmallVectorImpl<MemOpLink> &StoreNodes, EVT MemVT,
                   unsigned NumElem, bool IsConstantSrc, bool UseVector) {
@@ -10624,7 +10606,12 @@ bool DAGCombiner::MergeStoresOfConstantsOrVecElts(
     EVT Ty = EVT::getVectorVT(*DAG.getContext(), MemVT, NumElem);
     assert(TLI.isTypeLegal(Ty) && "Illegal vector store");
     if (IsConstantSrc) {
-      StoredVal = getMergedConstantVectorStore(DAG, DL, StoreNodes, Ty);
+      // A vector store with a constant source implies that the constant is
+      // zero; we only handle merging stores of constant zeros because the zero
+      // can be materialized without a load.
+      // It may be beneficial to loosen this restriction to allow non-zero
+      // store merging.
+      StoredVal = DAG.getConstant(0, DL, Ty);
     } else {
       SmallVector<SDValue, 8> Ops;
       for (unsigned i = 0; i < NumElem ; ++i) {

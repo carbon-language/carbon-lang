@@ -89,11 +89,7 @@ define void @merge_global_store_2_constants_i32_f32(i32 addrspace(1)* %out) #0 {
 }
 
 ; GCN-LABEL: {{^}}merge_global_store_2_constants_f32_i32:
-; SI-DAG: s_mov_b32 [[SLO:s[0-9]+]], 4.0
-; SI-DAG: s_movk_i32 [[SHI:s[0-9]+]], 0x7b{{$}}
-; SI-DAG: v_mov_b32_e32 v[[VLO:[0-9]+]], [[SLO]]
-; SI-DAG: v_mov_b32_e32 v[[VHI:[0-9]+]], [[SHI]]
-; GCN: buffer_store_dwordx2 v{{\[}}[[VLO]]:[[VHI]]{{\]}}
+; GCN: buffer_store_dwordx2
 define void @merge_global_store_2_constants_f32_i32(float addrspace(1)* %out) #0 {
   %out.gep.1 = getelementptr float, float addrspace(1)* %out, i32 1
   %out.gep.1.bc = bitcast float addrspace(1)* %out.gep.1 to i32 addrspace(1)*
@@ -103,11 +99,7 @@ define void @merge_global_store_2_constants_f32_i32(float addrspace(1)* %out) #0
 }
 
 ; GCN-LABEL: {{^}}merge_global_store_4_constants_i32:
-; GCN-DAG: v_mov_b32_e32 v[[HI:[0-9]+]], 0x14d{{$}}
-; GCN-DAG: v_mov_b32_e32 v{{[0-9]+}}, 0x1c8{{$}}
-; GCN-DAG: v_mov_b32_e32 v{{[0-9]+}}, 0x7b{{$}}
-; GCN-DAG: v_mov_b32_e32 v[[LO:[0-9]+]], 0x4d2{{$}}
-; GCN: buffer_store_dwordx4 v{{\[}}[[LO]]:[[HI]]{{\]}}
+; GCN: buffer_store_dwordx4
 define void @merge_global_store_4_constants_i32(i32 addrspace(1)* %out) #0 {
   %out.gep.1 = getelementptr i32, i32 addrspace(1)* %out, i32 1
   %out.gep.2 = getelementptr i32, i32 addrspace(1)* %out, i32 2
