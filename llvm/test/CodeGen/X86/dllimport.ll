@@ -57,3 +57,7 @@ define void @use() nounwind {
 
   ret void
 }
+
+; CHECK: _fp:
+; CHECK-NEXT: .long _fun
+@fp = constant void ()* @fun

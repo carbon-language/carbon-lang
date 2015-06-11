@@ -198,6 +198,9 @@ std::error_code IRObjectFile::printSymbolName(raw_ostream &OS,
     return std::error_code();
   }
 
+  if (GV->hasDLLImportStorageClass())
+    OS << "__imp_";
+
   if (Mang)
     Mang->getNameWithPrefix(OS, GV, false);
   else
