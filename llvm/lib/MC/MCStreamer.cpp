@@ -638,6 +638,25 @@ void MCStreamer::EmitInstruction(const MCInst &Inst,
       visitUsedExpr(*Inst.getOperand(i).getExpr());
 }
 
+void MCStreamer::emitAbsoluteSymbolDiff(const MCSymbol *Hi, const MCSymbol *Lo,
+                                        unsigned Size) {
+  // Get the Hi-Lo expression.
+  const MCExpr *Diff =
+      MCBinaryExpr::createSub(MCSymbolRefExpr::create(Hi, Context),
+                              MCSymbolRefExpr::create(Lo, Context), Context);
+
+  const MCAsmInfo *MAI = Context.getAsmInfo();
+  if (!MAI->doesSetDirectiveSuppressesReloc()) {
+    EmitValue(Diff, Size);
+    return;
+  }
+
+  // Otherwise, emit with .set (aka assignment).
+  MCSymbol *SetLabel = Context.createTempSymbol("set", true);
+  EmitAssignment(SetLabel, Diff);
+  EmitSymbolValue(SetLabel, Size);
+}
+
 void MCStreamer::EmitAssemblerFlag(MCAssemblerFlag Flag) {}
 void MCStreamer::EmitThumbFunc(MCSymbol *Func) {}
 void MCStreamer::EmitSymbolDesc(MCSymbol *Symbol, unsigned DescValue) {}

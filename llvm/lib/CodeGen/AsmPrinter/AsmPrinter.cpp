@@ -1590,25 +1590,7 @@ void AsmPrinter::EmitInt32(int Value) const {
 /// .set if it avoids relocations.
 void AsmPrinter::EmitLabelDifference(const MCSymbol *Hi, const MCSymbol *Lo,
                                      unsigned Size) const {
-  if (!MAI->doesDwarfUseRelocationsAcrossSections())
-    if (OutStreamer->emitAbsoluteSymbolDiff(Hi, Lo, Size))
-      return;
-
-  // Get the Hi-Lo expression.
-  const MCExpr *Diff =
-    MCBinaryExpr::createSub(MCSymbolRefExpr::create(Hi, OutContext),
-                            MCSymbolRefExpr::create(Lo, OutContext),
-                            OutContext);
-
-  if (!MAI->doesSetDirectiveSuppressesReloc()) {
-    OutStreamer->EmitValue(Diff, Size);
-    return;
-  }
-
-  // Otherwise, emit with .set (aka assignment).
-  MCSymbol *SetLabel = createTempSymbol("set");
-  OutStreamer->EmitAssignment(SetLabel, Diff);
-  OutStreamer->EmitSymbolValue(SetLabel, Size);
+  OutStreamer->emitAbsoluteSymbolDiff(Hi, Lo, Size);
 }
 
 /// EmitLabelPlusOffset - Emit something like ".long Label+Offset"

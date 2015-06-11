@@ -636,14 +636,12 @@ public:
                                      unsigned Isa, unsigned Discriminator,
                                      StringRef FileName);
 
-  /// Emit the absolute difference between two symbols if possible.
+  /// Emit the absolute difference between two symbols.
   ///
   /// \pre Offset of \c Hi is greater than the offset \c Lo.
   /// \return true on success.
-  virtual bool emitAbsoluteSymbolDiff(const MCSymbol *Hi, const MCSymbol *Lo,
-                                      unsigned Size) {
-    return false;
-  }
+  virtual void emitAbsoluteSymbolDiff(const MCSymbol *Hi, const MCSymbol *Lo,
+                                      unsigned Size);
 
   virtual MCSymbol *getDwarfLineTableSymbol(unsigned CUID);
   virtual void EmitCFISections(bool EH, bool Debug);
