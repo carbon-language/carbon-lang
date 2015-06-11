@@ -818,7 +818,6 @@ bool NVPTXAsmPrinter::doInitialization(Module &M) {
   raw_svector_ostream OS1(Str1);
 
   MMI = getAnalysisIfAvailable<MachineModuleInfo>();
-  MMI->AnalyzeModule(M);
 
   // We need to call the parent's one explicitly.
   //bool Result = AsmPrinter::doInitialization(M);
