@@ -112,10 +112,6 @@ void Mangler::getNameWithPrefix(raw_ostream &OS, const GlobalValue *GV,
     return;
   }
 
-  // dllimported symbols have a __imp_ prefix.
-  if (GV->hasDLLImportStorageClass())
-    OS << "__imp_";
-
   StringRef Name = GV->getName();
   char Prefix = DL->getGlobalPrefix();
 

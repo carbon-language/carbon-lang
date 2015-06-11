@@ -297,12 +297,17 @@ namespace ARMII {
     /// just that part of the flag set.
     MO_OPTION_MASK = 0x3f,
 
+    /// MO_DLLIMPORT - On a symbol operand, this represents that the reference
+    /// to the symbol is for an import stub.  This is used for DLL import
+    /// storage class indication on Windows.
+    MO_DLLIMPORT = 0x40,
+
     /// MO_NONLAZY - This is an independent flag, on a symbol operand "FOO" it
     /// represents a symbol which, if indirect, will get special Darwin mangling
     /// as a non-lazy-ptr indirect symbol (i.e. "L_FOO$non_lazy_ptr"). Can be
     /// combined with MO_LO16, MO_HI16 or MO_NO_FLAG (in a constant-pool, for
     /// example).
-    MO_NONLAZY = 0x40,
+    MO_NONLAZY = 0x80,
 
     // It's undefined behaviour if an enum overflows the range between its
     // smallest and largest values, but since these are |ed together, it can

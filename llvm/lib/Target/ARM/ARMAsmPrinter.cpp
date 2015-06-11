@@ -851,7 +851,16 @@ MCSymbol *ARMAsmPrinter::GetARMGVSymbol(const GlobalValue *GV,
   } else if (Subtarget->isTargetCOFF()) {
     assert(Subtarget->isTargetWindows() &&
            "Windows is the only supported COFF target");
-    return getSymbol(GV);
+
+    bool IsIndirect = (TargetFlags & ARMII::MO_DLLIMPORT);
+    if (!IsIndirect)
+      return getSymbol(GV);
+
+    SmallString<128> Name;
+    Name = "__imp_";
+    getNameWithPrefix(Name, GV);
+
+    return OutContext.getOrCreateSymbol(Name);
   } else if (Subtarget->isTargetELF()) {
     return getSymbol(GV);
   }
