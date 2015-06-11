@@ -14,9 +14,6 @@
 #ifndef LLVM_EXECUTIONENGINE_ORC_LOGICALDYLIB_H
 #define LLVM_EXECUTIONENGINE_ORC_LOGICALDYLIB_H
 
-#include "llvm/ADT/iterator.h"
-#include "llvm/ADT/Optional.h"
-
 namespace llvm {
 namespace orc {
 

@@ -91,11 +91,10 @@ public:
     auto Resolver =
       std::shared_ptr<RuntimeDyld::SymbolResolver>(
         orc::createLambdaResolver(
-          [this](const std::string &Name) {              
+          [this](const std::string &Name) {
             if (auto Sym = CODLayer.findSymbol(Name, true))
               return RuntimeDyld::SymbolInfo(Sym.getAddress(),
                                              Sym.getFlags());
-                
             if (auto Sym = CXXRuntimeOverrides.searchOverrides(Name))
               return Sym;
 
