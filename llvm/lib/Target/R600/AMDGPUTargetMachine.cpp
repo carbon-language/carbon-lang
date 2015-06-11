@@ -51,11 +51,10 @@ static MachineSchedRegistry
 SchedCustomRegistry("r600", "Run R600's custom scheduler",
                     createR600MachineScheduler);
 
-static std::string computeDataLayout(StringRef TT) {
-  Triple Triple(TT);
+static std::string computeDataLayout(const Triple &TT) {
   std::string Ret = "e-p:32:32";
 
-  if (Triple.getArch() == Triple::amdgcn) {
+  if (TT.getArch() == Triple::amdgcn) {
     // 32-bit private, local, and region pointers. 64-bit global and constant.
     Ret += "-p1:64:64-p2:64:64-p3:32:32-p4:64:64-p5:32:32-p24:64:64";
   }
@@ -71,8 +70,8 @@ AMDGPUTargetMachine::AMDGPUTargetMachine(const Target &T, StringRef TT,
                                          TargetOptions Options, Reloc::Model RM,
                                          CodeModel::Model CM,
                                          CodeGenOpt::Level OptLevel)
-    : LLVMTargetMachine(T, computeDataLayout(TT), TT, CPU, FS, Options, RM, CM,
-                        OptLevel),
+    : LLVMTargetMachine(T, computeDataLayout(Triple(TT)), TT, CPU, FS, Options,
+                        RM, CM, OptLevel),
       TLOF(new TargetLoweringObjectFileELF()),
       Subtarget(Triple(TT), CPU, FS, *this), IntrinsicInfo() {
   setRequiresStructuredCFG(true);
