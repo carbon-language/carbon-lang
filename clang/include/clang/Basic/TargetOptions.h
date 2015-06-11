@@ -45,6 +45,8 @@ public:
   /// The list of target specific features to enable or disable -- this should
   /// be a list of strings starting with by '+' or '-'.
   std::vector<std::string> Features;
+  
+  std::vector<std::string> Reciprocals;
 };
 
 }  // end namespace clang

@@ -1550,6 +1550,137 @@ static void AddGoldPlugin(const ToolChain &ToolChain, const ArgList &Args,
     CmdArgs.push_back(Args.MakeArgString(Twine("-plugin-opt=mcpu=") + CPU));
 }
 
+/// This is a helper function for validating the optional refinement step
+/// parameter in reciprocal argument strings. Return false if there is an error
+/// parsing the refinement step. Otherwise, return true and set the Position
+/// of the refinement step in the input string.
+static bool getRefinementStep(const StringRef &In, const Driver &D,
+                                const Arg &A, size_t &Position) {
+  const char RefinementStepToken = ':';
+  Position = In.find(RefinementStepToken);
+  if (Position != StringRef::npos) {
+    StringRef Option = A.getOption().getName();
+    StringRef RefStep = In.substr(Position + 1);
+    // Allow exactly one numeric character for the additional refinement
+    // step parameter. This is reasonable for all currently-supported
+    // operations and architectures because we would expect that a larger value
+    // of refinement steps would cause the estimate "optimization" to
+    // under-perform the native operation. Also, if the estimate does not
+    // converge quickly, it probably will not ever converge, so further
+    // refinement steps will not produce a better answer.
+    if (RefStep.size() != 1) {
+      D.Diag(diag::err_drv_invalid_value) << Option << RefStep;
+      return false;
+    }
+    char RefStepChar = RefStep[0];
+    if (RefStepChar < '0' || RefStepChar > '9') {
+      D.Diag(diag::err_drv_invalid_value) << Option << RefStep;
+      return false;
+    }
+  }
+  return true;
+}
+
+/// The -mrecip flag requires processing of many optional parameters.
+static void ParseMRecip(const Driver &D, const ArgList &Args,
+                        ArgStringList &OutStrings) {
+  StringRef DisabledPrefixIn = "!";
+  StringRef DisabledPrefixOut = "!";
+  StringRef EnabledPrefixOut = "";
+  StringRef Out = "-mrecip=";
+
+  Arg *A = Args.getLastArg(options::OPT_mrecip, options::OPT_mrecip_EQ);
+  if (!A)
+    return;
+
+  unsigned NumOptions = A->getNumValues();
+  if (NumOptions == 0) {
+    // No option is the same as "all".
+    OutStrings.push_back(Args.MakeArgString(Out + "all"));
+    return;
+  }
+
+  // Pass through "all", "none", or "default" with an optional refinement step.
+  if (NumOptions == 1) {
+    StringRef Val = A->getValue(0);
+    size_t RefStepLoc;
+    if (!getRefinementStep(Val, D, *A, RefStepLoc))
+      return;
+    StringRef ValBase = Val.slice(0, RefStepLoc);
+    if (ValBase == "all" || ValBase == "none" || ValBase == "default") {
+      OutStrings.push_back(Args.MakeArgString(Out + Val));
+      return;
+    }
+  }
+
+  // Each reciprocal type may be enabled or disabled individually.
+  // Check each input value for validity, concatenate them all back together,
+  // and pass through.
+
+  llvm::StringMap<bool> OptionStrings;
+  OptionStrings.insert(std::make_pair("divd",       false));
+  OptionStrings.insert(std::make_pair("divf",       false));
+  OptionStrings.insert(std::make_pair("vec-divd",   false));
+  OptionStrings.insert(std::make_pair("vec-divf",   false));
+  OptionStrings.insert(std::make_pair("sqrtd",      false));
+  OptionStrings.insert(std::make_pair("sqrtf",      false));
+  OptionStrings.insert(std::make_pair("vec-sqrtd",  false));
+  OptionStrings.insert(std::make_pair("vec-sqrtf",  false));
+
+  for (unsigned i = 0; i != NumOptions; ++i) {
+    StringRef Val = A->getValue(i);
+
+    bool IsDisabled = Val.startswith(DisabledPrefixIn);
+    // Ignore the disablement token for string matching.
+    if (IsDisabled)
+      Val = Val.substr(1);
+
+    size_t RefStep;
+    if (!getRefinementStep(Val, D, *A, RefStep))
+      return;
+
+    StringRef ValBase = Val.slice(0, RefStep);
+    llvm::StringMap<bool>::iterator OptionIter = OptionStrings.find(ValBase);
+    if (OptionIter == OptionStrings.end()) {
+      // Try again specifying float suffix.
+      OptionIter = OptionStrings.find(ValBase.str() + 'f');
+      if (OptionIter == OptionStrings.end()) {
+        // The input name did not match any known option string.
+        D.Diag(diag::err_drv_unknown_argument) << Val;
+        return;
+      }
+      // The option was specified without a float or double suffix.
+      // Make sure that the double entry was not already specified.
+      // The float entry will be checked below.
+      if (OptionStrings[ValBase.str() + 'd']) {
+        D.Diag(diag::err_drv_invalid_value) << A->getOption().getName() << Val;
+        return;
+      }
+    }
+    
+    if (OptionIter->second == true) {
+      // Duplicate option specified.
+      D.Diag(diag::err_drv_invalid_value) << A->getOption().getName() << Val;
+      return;
+    }
+
+    // Mark the matched option as found. Do not allow duplicate specifiers.
+    OptionIter->second = true;
+
+    // If the precision was not specified, also mark the double entry as found.
+    if (ValBase.back() != 'f' && ValBase.back() != 'd')
+      OptionStrings[ValBase.str() + 'd'] = true;
+
+    // Build the output string.
+    StringRef Prefix = IsDisabled ? DisabledPrefixOut : EnabledPrefixOut;
+    Out = Args.MakeArgString(Out + Prefix + Val);
+    if (i != NumOptions - 1)
+      Out = Args.MakeArgString(Out + ",");
+  }
+
+  OutStrings.push_back(Args.MakeArgString(Out));
+}
+
 static void getX86TargetFeatures(const Driver &D, const llvm::Triple &Triple,
                                  const ArgList &Args,
                                  std::vector<const char *> &Features) {
@@ -3155,6 +3286,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       CmdArgs.push_back(Args.MakeArgString("-ffp-contract=fast"));
     }
   }
+  
+  ParseMRecip(getToolChain().getDriver(), Args, CmdArgs);
 
   // We separately look for the '-ffast-math' and '-ffinite-math-only' flags,
   // and if we find them, tell the frontend to provide the appropriate
