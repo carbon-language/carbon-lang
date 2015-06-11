@@ -281,3 +281,13 @@
 // RUN:   | FileCheck -check-prefix=NOODDSPREG --implicit-check-not=-modd-spreg %s
 // NOODDSPREG: as{{(.exe)?}}"
 // NOODDSPREG: -mno-odd-spreg
+//
+// RUN: %clang -target mips-linux-gnu -### -no-integrated-as -mdouble-float -msingle-float -c %s 2>&1 \
+// RUN:   | FileCheck -check-prefix=SINGLEFLOAT --implicit-check-not=-mdouble-float %s
+// SINGLEFLOAT: as{{(.exe)?}}"
+// SINGLEFLOAT: -msingle-float
+//
+// RUN: %clang -target mips-linux-gnu -### -no-integrated-as -msingle-float -mdouble-float -c %s 2>&1 \
+// RUN:   | FileCheck -check-prefix=DOUBLEFLOAT --implicit-check-not=-msingle-float %s
+// DOUBLEFLOAT: as{{(.exe)?}}"
+// DOUBLEFLOAT: -mdouble-float
