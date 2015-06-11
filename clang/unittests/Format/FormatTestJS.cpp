@@ -24,7 +24,10 @@ protected:
     DEBUG(llvm::errs() << "---\n");
     DEBUG(llvm::errs() << Code << "\n\n");
     std::vector<tooling::Range> Ranges(1, tooling::Range(Offset, Length));
-    tooling::Replacements Replaces = reformat(Style, Code, Ranges);
+    bool IncompleteFormat = false;
+    tooling::Replacements Replaces =
+        reformat(Style, Code, Ranges, "<stdin>", &IncompleteFormat);
+    EXPECT_FALSE(IncompleteFormat);
     std::string Result = applyAllReplacements(Code, Replaces);
     EXPECT_NE("", Result);
     DEBUG(llvm::errs() << "\n" << Result << "\n\n");

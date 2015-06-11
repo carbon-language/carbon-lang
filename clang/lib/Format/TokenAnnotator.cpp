@@ -558,7 +558,7 @@ private:
       break;
     case tok::question:
       if (Style.Language == FormatStyle::LK_JavaScript && Tok->Next &&
-          Tok->Next->isOneOf(tok::semi, tok::colon, tok::r_paren,
+          Tok->Next->isOneOf(tok::semi, tok::comma, tok::colon, tok::r_paren,
                              tok::r_brace)) {
         // Question marks before semicolons, colons, etc. indicate optional
         // types (fields, parameters), e.g.
