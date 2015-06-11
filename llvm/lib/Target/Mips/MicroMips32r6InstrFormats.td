@@ -221,3 +221,22 @@ class CMP_BRANCH_1R_BOTH_OFF16_FM_MMR6<bits<6> funct> : MipsR6Inst {
   let Inst{20-16} = rt;
   let Inst{15-0}  = offset;
 }
+
+class ERET_FM_MMR6<string instr_asm> : MMR6Arch<instr_asm> {
+  bits<32> Inst;
+
+  let Inst{31-26} = 0x00;
+  let Inst{25-16} = 0x00;
+  let Inst{15-6}  = 0x3cd;
+  let Inst{5-0}   = 0x3c;
+}
+
+class ERETNC_FM_MMR6<string instr_asm> : MMR6Arch<instr_asm> {
+  bits<32> Inst;
+
+  let Inst{31-26} = 0x00;
+  let Inst{25-17} = 0x00;
+  let Inst{16-16} = 0x01;
+  let Inst{15-6}  = 0x3cd;
+  let Inst{5-0}   = 0x3c;
+}
