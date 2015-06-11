@@ -814,9 +814,12 @@ bool Driver::HandleImmediateArgs(const Compilation &C) {
   return true;
 }
 
+// Display an action graph human-readably.  Action A is the "sink" node
+// and latest-occuring action. Traversal is in pre-order, visiting the
+// inputs to each action before printing the action itself.
 static unsigned PrintActions1(const Compilation &C, Action *A,
                               std::map<Action*, unsigned> &Ids) {
-  if (Ids.count(A))
+  if (Ids.count(A)) // A was already visited.
     return Ids[A];
 
   std::string str;
@@ -847,6 +850,8 @@ static unsigned PrintActions1(const Compilation &C, Action *A,
   return Id;
 }
 
+// Print the action graphs in a compilation C.
+// For example "clang -c file1.c file2.c" is composed of two subgraphs.
 void Driver::PrintActions(const Compilation &C) const {
   std::map<Action*, unsigned> Ids;
   for (ActionList::const_iterator it = C.getActions().begin(),
