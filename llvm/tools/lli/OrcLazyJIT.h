@@ -89,22 +89,26 @@ public:
     //   2) Check for C++ runtime overrides.
     //   3) Search the host process (LLI)'s symbol table.
     auto Resolver =
-      orc::createLambdaResolver(
-        [this](const std::string &Name) {
+      std::shared_ptr<RuntimeDyld::SymbolResolver>(
+        orc::createLambdaResolver(
+          [this](const std::string &Name) {              
+            if (auto Sym = CODLayer.findSymbol(Name, true))
+              return RuntimeDyld::SymbolInfo(Sym.getAddress(),
+                                             Sym.getFlags());
+                
+            if (auto Sym = CXXRuntimeOverrides.searchOverrides(Name))
+              return Sym;
 
-          if (auto Sym = CODLayer.findSymbol(Name, true))
-            return RuntimeDyld::SymbolInfo(Sym.getAddress(), Sym.getFlags());
+            if (auto Addr =
+                RTDyldMemoryManager::getSymbolAddressInProcess(Name))
+              return RuntimeDyld::SymbolInfo(Addr, JITSymbolFlags::Exported);
 
-          if (auto Sym = CXXRuntimeOverrides.searchOverrides(Name))
-            return Sym;
-
-          if (auto Addr = RTDyldMemoryManager::getSymbolAddressInProcess(Name))
-            return RuntimeDyld::SymbolInfo(Addr, JITSymbolFlags::Exported);
-
-          return RuntimeDyld::SymbolInfo(nullptr);
-        },
-        [](const std::string &Name) { return RuntimeDyld::SymbolInfo(nullptr); }
-      );
+            return RuntimeDyld::SymbolInfo(nullptr);
+          },
+          [](const std::string &Name) {
+            return RuntimeDyld::SymbolInfo(nullptr);
+          }
+        ));
 
     // Add the module to the JIT.
     std::vector<std::unique_ptr<Module>> S;
