@@ -113,6 +113,7 @@ static void ConnectProlog(Loop *L, Value *BECount, unsigned Count,
   // Create a branch around the orignal loop, which is taken if there are no
   // iterations remaining to be executed after running the prologue.
   Instruction *InsertPt = PrologEnd->getTerminator();
+  IRBuilder<> B(InsertPt);
 
   assert(Count != 0 && "nonsensical Count!");
 
@@ -120,9 +121,8 @@ static void ConnectProlog(Loop *L, Value *BECount, unsigned Count,
   // (since Count is a power of 2).  This means %xtraiter is (BECount + 1) and
   // and all of the iterations of this loop were executed by the prologue.  Note
   // that if BECount <u (Count - 1) then (BECount + 1) cannot unsigned-overflow.
-  Instruction *BrLoopExit =
-    new ICmpInst(InsertPt, ICmpInst::ICMP_ULT, BECount,
-                 ConstantInt::get(BECount->getType(), Count - 1));
+  Value *BrLoopExit =
+      B.CreateICmpULT(BECount, ConstantInt::get(BECount->getType(), Count - 1));
   BasicBlock *Exit = L->getUniqueExitBlock();
   assert(Exit && "Loop must have a single exit block only");
   // Split the exit to maintain loop canonicalization guarantees
@@ -130,7 +130,7 @@ static void ConnectProlog(Loop *L, Value *BECount, unsigned Count,
   SplitBlockPredecessors(Exit, Preds, ".unr-lcssa", AA, DT, LI,
                          P->mustPreserveAnalysisID(LCSSAID));
   // Add the branch to the exit block (around the unrolled loop)
-  BranchInst::Create(Exit, NewPH, BrLoopExit, InsertPt);
+  B.CreateCondBr(BrLoopExit, Exit, NewPH);
   InsertPt->eraseFromParent();
 }
 
@@ -184,23 +184,22 @@ static void CloneLoopBlocks(Loop *L, Value *NewIter, const bool UnrollProlog,
       VMap.erase((*BB)->getTerminator());
       BasicBlock *FirstLoopBB = cast<BasicBlock>(VMap[Header]);
       BranchInst *LatchBR = cast<BranchInst>(NewBB->getTerminator());
+      IRBuilder<> Builder(LatchBR);
       if (UnrollProlog) {
-        LatchBR->eraseFromParent();
-        BranchInst::Create(InsertBot, NewBB);
+        Builder.CreateBr(InsertBot);
       } else {
         PHINode *NewIdx = PHINode::Create(NewIter->getType(), 2, "prol.iter",
                                           FirstLoopBB->getFirstNonPHI());
-        IRBuilder<> Builder(LatchBR);
         Value *IdxSub =
             Builder.CreateSub(NewIdx, ConstantInt::get(NewIdx->getType(), 1),
                               NewIdx->getName() + ".sub");
         Value *IdxCmp =
             Builder.CreateIsNotNull(IdxSub, NewIdx->getName() + ".cmp");
-        BranchInst::Create(FirstLoopBB, InsertBot, IdxCmp, NewBB);
+        Builder.CreateCondBr(IdxCmp, FirstLoopBB, InsertBot);
         NewIdx->addIncoming(NewIter, InsertTop);
         NewIdx->addIncoming(IdxSub, NewBB);
-        LatchBR->eraseFromParent();
       }
+      LatchBR->eraseFromParent();
     }
   }
 
@@ -370,7 +369,7 @@ bool llvm::UnrollRuntimeLoopProlog(Loop *L, unsigned Count,
 
   // Branch to either the extra iterations or the cloned/unrolled loop
   // We will fix up the true branch label when adding loop body copies
-  BranchInst::Create(PEnd, PEnd, BranchVal, PreHeaderBR);
+  B.CreateCondBr(BranchVal, PEnd, PEnd);
   assert(PreHeaderBR->isUnconditional() &&
          PreHeaderBR->getSuccessor(0) == PEnd &&
          "CFG edges in Preheader are not correct");
