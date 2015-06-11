@@ -9494,6 +9494,7 @@ static void getDefaultArgExprsForConstructors(Sema &S, CXXRecordDecl *Class) {
 
       Expr *DefaultArg = S.BuildCXXDefaultArgExpr(Class->getLocation(), CD,
                                                   CD->getParamDecl(I)).get();
+      S.DiscardCleanupsInEvaluationContext();
       S.Context.addDefaultArgExprForConstructor(CD, I, DefaultArg);
     }
   }

@@ -532,6 +532,22 @@ struct __declspec(dllexport) InheritFromTemplate : SomeTemplate<int> {};
 
 // M32-DAG: define weak_odr dllexport x86_thiscallcc void @"\01??_F?$SomeTemplate@H@@QAEXXZ"
 
+namespace PR23801 {
+template <typename>
+struct S {
+  ~S() {}
+};
+struct A {
+  A(int);
+  S<int> s;
+};
+struct __declspec(dllexport) B {
+  B(A = 0) {}
+};
+}
+//
+// M32-DAG: define weak_odr dllexport x86_thiscallcc void @"\01??_FB@PR23801@@QAEXXZ"
+
 struct __declspec(dllexport) T {
   // Copy assignment operator:
   // M32-DAG: define weak_odr dllexport x86_thiscallcc dereferenceable({{[0-9]+}}) %struct.T* @"\01??4T@@QAEAAU0@ABU0@@Z"
