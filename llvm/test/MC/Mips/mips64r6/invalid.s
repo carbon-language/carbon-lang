@@ -10,3 +10,7 @@
         jalr.hb $31 # ASM: :[[@LINE]]:9: error: source and destination must be different
         jalr.hb $31, $31 # ASM: :[[@LINE]]:9: error: source and destination must be different
         ldc2    $8,-21181($at)   # ASM: :[[@LINE]]:{{[0-9]+}}: error: instruction requires a CPU feature not currently enabled
+        break 1024        # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
+        break 1024, 5     # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
+        break 7, 1024     # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
+        break 1024, 1024  # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction

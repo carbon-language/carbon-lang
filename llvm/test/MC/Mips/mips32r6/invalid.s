@@ -12,3 +12,7 @@
         ldc2    $8,-21181($at)   # ASM: :[[@LINE]]:{{[0-9]+}}: error: instruction requires a CPU feature not currently enabled
         sdc2    $20,23157($s2)   # ASM: :[[@LINE]]:{{[0-9]+}}: error: instruction requires a CPU feature not currently enabled
         swc2    $25,24880($s0)   # ASM: :[[@LINE]]:{{[0-9]+}}: error: instruction requires a CPU feature not currently enabled
+        break 1024        # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
+        break 1024, 5     # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
+        break 7, 1024     # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
+        break 1024, 1024  # CHECK: :[[@LINE]]:{{[0-9]+}}: error: invalid operand for instruction
