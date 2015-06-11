@@ -83,7 +83,9 @@ function(append_cpp_flags input_cpp_flags)
 
     ##################################
     # Other conditional definitions
-    append_definitions("-D KMP_USE_ASSERT")
+    if(${LIBOMP_ENABLE_ASSERTIONS})
+        append_definitions("-D KMP_USE_ASSERT")
+    endif()
     append_definitions("-D KMP_DYNAMIC_LIB") 
     if(${STUBS_LIBRARY}) 
         append_definitions("-D KMP_STUB") 

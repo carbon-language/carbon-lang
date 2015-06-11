@@ -173,13 +173,18 @@ else()
     check_variable(cmake_build_type_lowercase  "${build_type_possible_values}")
 endif()
 
-# Allow user to choose a suffix for the installation directory, or if part of
-# LLVM build then just use LLVM_LIBDIR_SUFFIX
 if(${LIBOMP_STANDALONE_BUILD})
+    # Allow user to choose a suffix for the installation directory, or if part of
+    # LLVM build then just use LLVM_LIBDIR_SUFFIX
     set(LIBOMP_LIBDIR_SUFFIX "" CACHE STRING
         "suffix of lib installation directory e.g., 64 => lib64")
+    # Should assertions be enabled?  They are on by default, or it part of
+    # LLVM build then just use LLVM_ENABLE_ASSERTIONS
+    set(LIBOMP_ENABLE_ASSERTIONS TRUE CACHE BOOL
+        "enable assertions?")
 else()
     set(LIBOMP_LIBDIR_SUFFIX ${LLVM_LIBDIR_SUFFIX})
+    set(LIBOMP_ENABLE_ASSERTIONS ${LLVM_ENABLE_ASSERTIONS})
 endif()
 
 # Check valid values
