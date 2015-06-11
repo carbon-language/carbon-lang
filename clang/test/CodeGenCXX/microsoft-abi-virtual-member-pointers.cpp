@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -fno-rtti -emit-llvm -triple=i386-pc-win32 %s -o - | FileCheck %s --check-prefix=CHECK32
-// RUN: %clang_cc1 -fno-rtti -emit-llvm -triple=x86_64-pc-win32 %s -o - | FileCheck %s --check-prefix=CHECK64
+// RUN: %clang_cc1 -std=c++11 -fno-rtti -emit-llvm -triple=i386-pc-win32 %s -o - | FileCheck %s --check-prefix=CHECK32
+// RUN: %clang_cc1 -std=c++11 -fno-rtti -emit-llvm -triple=x86_64-pc-win32 %s -o - | FileCheck %s --check-prefix=CHECK64
 
 struct S {
   int x, y, z;
@@ -13,12 +13,15 @@ struct U {
   U(const U &);
 };
 
+struct B;
+
 struct C {
   virtual void foo();
   virtual int bar(int, double);
   virtual S baz(int);
   virtual S qux(U);
   virtual void thud(...);
+  virtual void (B::*plugh())();
 };
 
 namespace {
@@ -46,6 +49,8 @@ void f() {
 
   void (C::*ptr6)(...);
   ptr6 = &C::thud;
+
+  auto ptr7 = &C::plugh;
 
 
 // CHECK32-LABEL: define void @"\01?f@@YAXXZ"()
@@ -162,6 +167,20 @@ void f() {
 //
 // CHECK64-LABEL: define linkonce_odr void @"\01??_9C@@$BCA@AA"(%struct.C* %this, ...) {{.*}} comdat align 2 {
 // CHECK64: [[VPTR:%.*]] = getelementptr inbounds void (%struct.C*, ...)*, void (%struct.C*, ...)** %{{.*}}, i64 4
+// CHECK64: [[CALLEE:%.*]] = load void (%struct.C*, ...)*, void (%struct.C*, ...)** [[VPTR]]
+// CHECK64: musttail call void (%struct.C*, ...) [[CALLEE]](%struct.C* %{{.*}}, ...)
+// CHECK64: ret void
+// CHECK64: }
+
+// CHECK32: define linkonce_odr x86_thiscallcc void @"\01??_9C@@$BBE@AE"(%struct.C* %this, ...) {{.*}} comdat align 2 {
+// CHECK32: [[VPTR:%.*]] = getelementptr inbounds void (%struct.C*, ...)*, void (%struct.C*, ...)** %{{.*}}, i64 5
+// CHECK32: [[CALLEE:%.*]] = load void (%struct.C*, ...)*, void (%struct.C*, ...)** [[VPTR]]
+// CHECK32: musttail call x86_thiscallcc void (%struct.C*, ...) [[CALLEE]](%struct.C* %{{.*}}, ...)
+// CHECK32: ret void
+// CHECK32: }
+
+// CHECK64: define linkonce_odr void @"\01??_9C@@$BCI@AA"(%struct.C* %this, ...) {{.*}} comdat align 2 {
+// CHECK64: [[VPTR:%.*]] = getelementptr inbounds void (%struct.C*, ...)*, void (%struct.C*, ...)** %{{.*}}, i64 5
 // CHECK64: [[CALLEE:%.*]] = load void (%struct.C*, ...)*, void (%struct.C*, ...)** [[VPTR]]
 // CHECK64: musttail call void (%struct.C*, ...) [[CALLEE]](%struct.C* %{{.*}}, ...)
 // CHECK64: ret void
