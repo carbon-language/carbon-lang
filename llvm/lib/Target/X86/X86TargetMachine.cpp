@@ -94,14 +94,15 @@ static std::string computeDataLayout(const Triple &TT) {
 
 /// X86TargetMachine ctor - Create an X86 target.
 ///
-X86TargetMachine::X86TargetMachine(const Target &T, StringRef TT, StringRef CPU,
-                                   StringRef FS, const TargetOptions &Options,
+X86TargetMachine::X86TargetMachine(const Target &T, const Triple &TT,
+                                   StringRef CPU, StringRef FS,
+                                   const TargetOptions &Options,
                                    Reloc::Model RM, CodeModel::Model CM,
                                    CodeGenOpt::Level OL)
-    : LLVMTargetMachine(T, computeDataLayout(Triple(TT)), TT, CPU, FS, Options,
-                        RM, CM, OL),
+    : LLVMTargetMachine(T, computeDataLayout(TT), TT, CPU, FS, Options, RM, CM,
+                        OL),
       TLOF(createTLOF(Triple(getTargetTriple()))),
-      Subtarget(Triple(TT), CPU, FS, *this, Options.StackAlignmentOverride) {
+      Subtarget(TT, CPU, FS, *this, Options.StackAlignmentOverride) {
   // Windows stack unwinder gets confused when execution flow "falls through"
   // after a call to 'noreturn' function.
   // To prevent that, we emit a trap for 'unreachable' IR instructions.

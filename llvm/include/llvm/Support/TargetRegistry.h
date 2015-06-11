@@ -1094,7 +1094,7 @@ private:
                                   StringRef FS, const TargetOptions &Options,
                                   Reloc::Model RM, CodeModel::Model CM,
                                   CodeGenOpt::Level OL) {
-    return new TargetMachineImpl(T, TT, CPU, FS, Options, RM, CM, OL);
+    return new TargetMachineImpl(T, Triple(TT), CPU, FS, Options, RM, CM, OL);
   }
 };
 

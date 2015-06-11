@@ -165,14 +165,16 @@ static PPCTargetMachine::PPCABI computeTargetABI(const Triple &TT,
 // with what are (currently) non-function specific overrides as it goes into the
 // LLVMTargetMachine constructor and then using the stored value in the
 // Subtarget constructor below it.
-PPCTargetMachine::PPCTargetMachine(const Target &T, StringRef TT, StringRef CPU,
-                                   StringRef FS, const TargetOptions &Options,
+PPCTargetMachine::PPCTargetMachine(const Target &T, const Triple &TT,
+                                   StringRef CPU, StringRef FS,
+                                   const TargetOptions &Options,
                                    Reloc::Model RM, CodeModel::Model CM,
                                    CodeGenOpt::Level OL)
-    : LLVMTargetMachine(T, getDataLayoutString(Triple(TT)), TT, CPU,
-                        computeFSAdditions(FS, OL, TT), Options, RM, CM, OL),
+    : LLVMTargetMachine(T, getDataLayoutString(TT), TT, CPU,
+                        computeFSAdditions(FS, OL, TT.str()), Options, RM, CM,
+                        OL),
       TLOF(createTLOF(Triple(getTargetTriple()))),
-      TargetABI(computeTargetABI(Triple(TT), Options)) {
+      TargetABI(computeTargetABI(TT, Options)) {
   initAsmInfo();
 }
 
@@ -180,23 +182,21 @@ PPCTargetMachine::~PPCTargetMachine() {}
 
 void PPC32TargetMachine::anchor() { }
 
-PPC32TargetMachine::PPC32TargetMachine(const Target &T, StringRef TT,
+PPC32TargetMachine::PPC32TargetMachine(const Target &T, const Triple &TT,
                                        StringRef CPU, StringRef FS,
                                        const TargetOptions &Options,
                                        Reloc::Model RM, CodeModel::Model CM,
                                        CodeGenOpt::Level OL)
-  : PPCTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL) {
-}
+    : PPCTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL) {}
 
 void PPC64TargetMachine::anchor() { }
 
-PPC64TargetMachine::PPC64TargetMachine(const Target &T, StringRef TT,
-                                       StringRef CPU,  StringRef FS,
+PPC64TargetMachine::PPC64TargetMachine(const Target &T, const Triple &TT,
+                                       StringRef CPU, StringRef FS,
                                        const TargetOptions &Options,
                                        Reloc::Model RM, CodeModel::Model CM,
                                        CodeGenOpt::Level OL)
-  : PPCTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL) {
-}
+    : PPCTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL) {}
 
 const PPCSubtarget *
 PPCTargetMachine::getSubtargetImpl(const Function &F) const {

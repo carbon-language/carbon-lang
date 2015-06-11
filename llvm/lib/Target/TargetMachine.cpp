@@ -38,7 +38,7 @@ using namespace llvm;
 //
 
 TargetMachine::TargetMachine(const Target &T, StringRef DataLayoutString,
-                             StringRef TT, StringRef CPU, StringRef FS,
+                             const Triple &TT, StringRef CPU, StringRef FS,
                              const TargetOptions &Options)
     : TheTarget(T), DL(DataLayoutString), TargetTriple(TT), TargetCPU(CPU),
       TargetFS(FS), CodeGenInfo(nullptr), AsmInfo(nullptr), MRI(nullptr),

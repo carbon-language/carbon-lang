@@ -65,15 +65,15 @@ static std::string computeDataLayout(const Triple &TT) {
   return Ret;
 }
 
-AMDGPUTargetMachine::AMDGPUTargetMachine(const Target &T, StringRef TT,
+AMDGPUTargetMachine::AMDGPUTargetMachine(const Target &T, const Triple &TT,
                                          StringRef CPU, StringRef FS,
                                          TargetOptions Options, Reloc::Model RM,
                                          CodeModel::Model CM,
                                          CodeGenOpt::Level OptLevel)
-    : LLVMTargetMachine(T, computeDataLayout(Triple(TT)), TT, CPU, FS, Options,
-                        RM, CM, OptLevel),
-      TLOF(new TargetLoweringObjectFileELF()),
-      Subtarget(Triple(TT), CPU, FS, *this), IntrinsicInfo() {
+    : LLVMTargetMachine(T, computeDataLayout(TT), TT, CPU, FS, Options, RM, CM,
+                        OptLevel),
+      TLOF(new TargetLoweringObjectFileELF()), Subtarget(TT, CPU, FS, *this),
+      IntrinsicInfo() {
   setRequiresStructuredCFG(true);
   initAsmInfo();
 }
@@ -86,20 +86,21 @@ AMDGPUTargetMachine::~AMDGPUTargetMachine() {
 // R600 Target Machine (R600 -> Cayman)
 //===----------------------------------------------------------------------===//
 
-R600TargetMachine::R600TargetMachine(const Target &T, StringRef TT, StringRef FS,
-                    StringRef CPU, TargetOptions Options, Reloc::Model RM,
-                    CodeModel::Model CM, CodeGenOpt::Level OL) :
-    AMDGPUTargetMachine(T, TT, FS, CPU, Options, RM, CM, OL) { }
-
+R600TargetMachine::R600TargetMachine(const Target &T, const Triple &TT,
+                                     StringRef FS, StringRef CPU,
+                                     TargetOptions Options, Reloc::Model RM,
+                                     CodeModel::Model CM, CodeGenOpt::Level OL)
+    : AMDGPUTargetMachine(T, TT, FS, CPU, Options, RM, CM, OL) {}
 
 //===----------------------------------------------------------------------===//
 // GCN Target Machine (SI+)
 //===----------------------------------------------------------------------===//
 
-GCNTargetMachine::GCNTargetMachine(const Target &T, StringRef TT, StringRef FS,
-                    StringRef CPU, TargetOptions Options, Reloc::Model RM,
-                    CodeModel::Model CM, CodeGenOpt::Level OL) :
-    AMDGPUTargetMachine(T, TT, FS, CPU, Options, RM, CM, OL) { }
+GCNTargetMachine::GCNTargetMachine(const Target &T, const Triple &TT,
+                                   StringRef FS, StringRef CPU,
+                                   TargetOptions Options, Reloc::Model RM,
+                                   CodeModel::Model CM, CodeGenOpt::Level OL)
+    : AMDGPUTargetMachine(T, TT, FS, CPU, Options, RM, CM, OL) {}
 
 //===----------------------------------------------------------------------===//
 // AMDGPU Pass Setup

@@ -78,15 +78,15 @@ static std::string computeDataLayout(const Triple &TT, StringRef CPU,
   return Ret;
 }
 
-SystemZTargetMachine::SystemZTargetMachine(const Target &T, StringRef TT,
+SystemZTargetMachine::SystemZTargetMachine(const Target &T, const Triple &TT,
                                            StringRef CPU, StringRef FS,
                                            const TargetOptions &Options,
                                            Reloc::Model RM, CodeModel::Model CM,
                                            CodeGenOpt::Level OL)
-    : LLVMTargetMachine(T, computeDataLayout(Triple(TT), CPU, FS), TT, CPU, FS,
-                        Options, RM, CM, OL),
+    : LLVMTargetMachine(T, computeDataLayout(TT, CPU, FS), TT, CPU, FS, Options,
+                        RM, CM, OL),
       TLOF(make_unique<TargetLoweringObjectFileELF>()),
-      Subtarget(Triple(TT), CPU, FS, *this) {
+      Subtarget(TT, CPU, FS, *this) {
   initAsmInfo();
 }
 

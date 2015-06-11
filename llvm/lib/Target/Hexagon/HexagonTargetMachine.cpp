@@ -68,7 +68,7 @@ namespace llvm {
 
 /// Hexagon_TODO: Do I need an aggregate alignment?
 ///
-HexagonTargetMachine::HexagonTargetMachine(const Target &T, StringRef TT,
+HexagonTargetMachine::HexagonTargetMachine(const Target &T, const Triple &TT,
                                            StringRef CPU, StringRef FS,
                                            const TargetOptions &Options,
                                            Reloc::Model RM, CodeModel::Model CM,
@@ -76,7 +76,7 @@ HexagonTargetMachine::HexagonTargetMachine(const Target &T, StringRef TT,
     : LLVMTargetMachine(T, "e-m:e-p:32:32-i1:32-i64:64-a:0-n32", TT, CPU, FS,
                         Options, RM, CM, OL),
       TLOF(make_unique<HexagonTargetObjectFile>()),
-      Subtarget(Triple(TT), CPU, FS, *this) {
+      Subtarget(TT, CPU, FS, *this) {
     initAsmInfo();
 }
 

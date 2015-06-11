@@ -29,8 +29,8 @@ class X86TargetMachine final : public LLVMTargetMachine {
   mutable StringMap<std::unique_ptr<X86Subtarget>> SubtargetMap;
 
 public:
-  X86TargetMachine(const Target &T, StringRef TT, StringRef CPU, StringRef FS,
-                   const TargetOptions &Options, Reloc::Model RM,
+  X86TargetMachine(const Target &T, const Triple &TT, StringRef CPU,
+                   StringRef FS, const TargetOptions &Options, Reloc::Model RM,
                    CodeModel::Model CM, CodeGenOpt::Level OL);
   ~X86TargetMachine() override;
   const X86Subtarget *getSubtargetImpl(const Function &F) const override;

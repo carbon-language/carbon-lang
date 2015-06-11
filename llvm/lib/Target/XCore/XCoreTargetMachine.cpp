@@ -22,7 +22,7 @@ using namespace llvm;
 
 /// XCoreTargetMachine ctor - Create an ILP32 architecture model
 ///
-XCoreTargetMachine::XCoreTargetMachine(const Target &T, StringRef TT,
+XCoreTargetMachine::XCoreTargetMachine(const Target &T, const Triple &TT,
                                        StringRef CPU, StringRef FS,
                                        const TargetOptions &Options,
                                        Reloc::Model RM, CodeModel::Model CM,
@@ -31,7 +31,7 @@ XCoreTargetMachine::XCoreTargetMachine(const Target &T, StringRef TT,
           T, "e-m:e-p:32:32-i1:8:32-i8:8:32-i16:16:32-i64:32-f64:32-a:0:32-n32",
           TT, CPU, FS, Options, RM, CM, OL),
       TLOF(make_unique<XCoreTargetObjectFile>()),
-      Subtarget(Triple(TT), CPU, FS, *this) {
+      Subtarget(TT, CPU, FS, *this) {
   initAsmInfo();
 }
 

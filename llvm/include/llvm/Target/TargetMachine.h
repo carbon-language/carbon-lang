@@ -15,6 +15,7 @@
 #define LLVM_TARGET_TARGETMACHINE_H
 
 #include "llvm/ADT/StringRef.h"
+#include "llvm/ADT/Triple.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/CodeGen.h"
@@ -68,7 +69,7 @@ class TargetMachine {
   void operator=(const TargetMachine &) = delete;
 protected: // Can only create subclasses.
   TargetMachine(const Target &T, StringRef DataLayoutString,
-                StringRef TargetTriple, StringRef CPU, StringRef FS,
+                const Triple &TargetTriple, StringRef CPU, StringRef FS,
                 const TargetOptions &Options);
 
   /// The Target that this machine was created for.
@@ -79,7 +80,7 @@ protected: // Can only create subclasses.
 
   /// Triple string, CPU name, and target feature strings the TargetMachine
   /// instance is created with.
-  std::string TargetTriple;
+  Triple TargetTriple;
   std::string TargetCPU;
   std::string TargetFS;
 
@@ -103,7 +104,8 @@ public:
 
   const Target &getTarget() const { return TheTarget; }
 
-  StringRef getTargetTriple() const { return TargetTriple; }
+  // FIXME: Either rename to getTargetName() or make it return a triple.
+  StringRef getTargetTriple() const { return TargetTriple.str(); }
   StringRef getTargetCPU() const { return TargetCPU; }
   StringRef getTargetFeatureString() const { return TargetFS; }
 
@@ -238,7 +240,7 @@ public:
 class LLVMTargetMachine : public TargetMachine {
 protected: // Can only create subclasses.
   LLVMTargetMachine(const Target &T, StringRef DataLayoutString,
-                    StringRef TargetTriple, StringRef CPU, StringRef FS,
+                    const Triple &TargetTriple, StringRef CPU, StringRef FS,
                     TargetOptions Options, Reloc::Model RM, CodeModel::Model CM,
                     CodeGenOpt::Level OL);
 

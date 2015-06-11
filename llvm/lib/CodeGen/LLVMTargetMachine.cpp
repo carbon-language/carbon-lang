@@ -72,12 +72,12 @@ void LLVMTargetMachine::initAsmInfo() {
 
 LLVMTargetMachine::LLVMTargetMachine(const Target &T,
                                      StringRef DataLayoutString,
-                                     StringRef Triple, StringRef CPU,
+                                     const Triple &TT, StringRef CPU,
                                      StringRef FS, TargetOptions Options,
                                      Reloc::Model RM, CodeModel::Model CM,
                                      CodeGenOpt::Level OL)
-    : TargetMachine(T, DataLayoutString, Triple, CPU, FS, Options) {
-  CodeGenInfo = T.createMCCodeGenInfo(Triple, RM, CM, OL);
+    : TargetMachine(T, DataLayoutString, TT, CPU, FS, Options) {
+  CodeGenInfo = T.createMCCodeGenInfo(TT.str(), RM, CM, OL);
 }
 
 TargetIRAnalysis LLVMTargetMachine::getTargetIRAnalysis() {

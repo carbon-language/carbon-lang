@@ -54,15 +54,15 @@ static std::string computeDataLayout(const Triple &T, bool is64Bit) {
 
 /// SparcTargetMachine ctor - Create an ILP32 architecture model
 ///
-SparcTargetMachine::SparcTargetMachine(const Target &T, StringRef TT,
+SparcTargetMachine::SparcTargetMachine(const Target &T, const Triple &TT,
                                        StringRef CPU, StringRef FS,
                                        const TargetOptions &Options,
                                        Reloc::Model RM, CodeModel::Model CM,
                                        CodeGenOpt::Level OL, bool is64bit)
-    : LLVMTargetMachine(T, computeDataLayout(Triple(TT), is64bit), TT, CPU, FS,
-                        Options, RM, CM, OL),
+    : LLVMTargetMachine(T, computeDataLayout(TT, is64bit), TT, CPU, FS, Options,
+                        RM, CM, OL),
       TLOF(make_unique<SparcELFTargetObjectFile>()),
-      Subtarget(Triple(TT), CPU, FS, *this, is64bit) {
+      Subtarget(TT, CPU, FS, *this, is64bit) {
   initAsmInfo();
 }
 
@@ -106,19 +106,16 @@ void SparcPassConfig::addPreEmitPass(){
 
 void SparcV8TargetMachine::anchor() { }
 
-SparcV8TargetMachine::SparcV8TargetMachine(const Target &T,
-                                           StringRef TT, StringRef CPU,
-                                           StringRef FS,
+SparcV8TargetMachine::SparcV8TargetMachine(const Target &T, const Triple &TT,
+                                           StringRef CPU, StringRef FS,
                                            const TargetOptions &Options,
-                                           Reloc::Model RM,
-                                           CodeModel::Model CM,
+                                           Reloc::Model RM, CodeModel::Model CM,
                                            CodeGenOpt::Level OL)
-  : SparcTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL, false) {
-}
+    : SparcTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL, false) {}
 
 void SparcV9TargetMachine::anchor() { }
 
-SparcV9TargetMachine::SparcV9TargetMachine(const Target &T, StringRef TT,
+SparcV9TargetMachine::SparcV9TargetMachine(const Target &T, const Triple &TT,
                                            StringRef CPU, StringRef FS,
                                            const TargetOptions &Options,
                                            Reloc::Model RM, CodeModel::Model CM,
@@ -127,7 +124,7 @@ SparcV9TargetMachine::SparcV9TargetMachine(const Target &T, StringRef TT,
 
 void SparcelTargetMachine::anchor() {}
 
-SparcelTargetMachine::SparcelTargetMachine(const Target &T, StringRef TT,
+SparcelTargetMachine::SparcelTargetMachine(const Target &T, const Triple &TT,
                                            StringRef CPU, StringRef FS,
                                            const TargetOptions &Options,
                                            Reloc::Model RM, CodeModel::Model CM,

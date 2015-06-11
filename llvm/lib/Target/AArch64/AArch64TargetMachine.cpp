@@ -120,7 +120,7 @@ static std::string computeDataLayout(const Triple &TT, bool LittleEndian) {
 
 /// TargetMachine ctor - Create an AArch64 architecture model.
 ///
-AArch64TargetMachine::AArch64TargetMachine(const Target &T, StringRef TT,
+AArch64TargetMachine::AArch64TargetMachine(const Target &T, const Triple &TT,
                                            StringRef CPU, StringRef FS,
                                            const TargetOptions &Options,
                                            Reloc::Model RM, CodeModel::Model CM,
@@ -163,21 +163,19 @@ AArch64TargetMachine::getSubtargetImpl(const Function &F) const {
 
 void AArch64leTargetMachine::anchor() { }
 
-AArch64leTargetMachine::
-AArch64leTargetMachine(const Target &T, StringRef TT,
-                       StringRef CPU, StringRef FS, const TargetOptions &Options,
-                       Reloc::Model RM, CodeModel::Model CM,
-                       CodeGenOpt::Level OL)
-  : AArch64TargetMachine(T, TT, CPU, FS, Options, RM, CM, OL, true) {}
+AArch64leTargetMachine::AArch64leTargetMachine(
+    const Target &T, const Triple &TT, StringRef CPU, StringRef FS,
+    const TargetOptions &Options, Reloc::Model RM, CodeModel::Model CM,
+    CodeGenOpt::Level OL)
+    : AArch64TargetMachine(T, TT, CPU, FS, Options, RM, CM, OL, true) {}
 
 void AArch64beTargetMachine::anchor() { }
 
-AArch64beTargetMachine::
-AArch64beTargetMachine(const Target &T, StringRef TT,
-                       StringRef CPU, StringRef FS, const TargetOptions &Options,
-                       Reloc::Model RM, CodeModel::Model CM,
-                       CodeGenOpt::Level OL)
-  : AArch64TargetMachine(T, TT, CPU, FS, Options, RM, CM, OL, false) {}
+AArch64beTargetMachine::AArch64beTargetMachine(
+    const Target &T, const Triple &TT, StringRef CPU, StringRef FS,
+    const TargetOptions &Options, Reloc::Model RM, CodeModel::Model CM,
+    CodeGenOpt::Level OL)
+    : AArch64TargetMachine(T, TT, CPU, FS, Options, RM, CM, OL, false) {}
 
 namespace {
 /// AArch64 Code Generator Pass Configuration Options.
