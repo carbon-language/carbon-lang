@@ -10507,7 +10507,8 @@ DiagnoseTwoPhaseLookup(Sema &SemaRef, SourceLocation FnLoc,
                        const CXXScopeSpec &SS, LookupResult &R,
                        OverloadCandidateSet::CandidateSetKind CSK,
                        TemplateArgumentListInfo *ExplicitTemplateArgs,
-                       ArrayRef<Expr *> Args) {
+                       ArrayRef<Expr *> Args,
+                       bool *DoDiagnoseEmptyLookup = nullptr) {
   if (SemaRef.ActiveTemplateInstantiations.empty() || !SS.isEmpty())
     return false;
 
@@ -10524,6 +10525,8 @@ DiagnoseTwoPhaseLookup(Sema &SemaRef, SourceLocation FnLoc,
         // Don't diagnose names we find in classes; we get much better
         // diagnostics for these from DiagnoseEmptyLookup.
         R.clear();
+        if (DoDiagnoseEmptyLookup)
+          *DoDiagnoseEmptyLookup = true;
         return false;
       }
 
@@ -10673,15 +10676,16 @@ BuildRecoveryCallExpr(Sema &SemaRef, Scope *S, Expr *Fn,
 
   LookupResult R(SemaRef, ULE->getName(), ULE->getNameLoc(),
                  Sema::LookupOrdinaryName);
+  bool DoDiagnoseEmptyLookup = EmptyLookup;
   if (!DiagnoseTwoPhaseLookup(SemaRef, Fn->getExprLoc(), SS, R,
                               OverloadCandidateSet::CSK_Normal,
-                              ExplicitTemplateArgs, Args) &&
-      (!EmptyLookup ||
-       SemaRef.DiagnoseEmptyLookup(
-           S, SS, R,
-           MakeValidator(SemaRef, dyn_cast<MemberExpr>(Fn), Args.size(),
-                         ExplicitTemplateArgs != nullptr, AllowTypoCorrection),
-           ExplicitTemplateArgs, Args)))
+                              ExplicitTemplateArgs, Args,
+                              &DoDiagnoseEmptyLookup) &&
+    (!DoDiagnoseEmptyLookup || SemaRef.DiagnoseEmptyLookup(
+        S, SS, R,
+        MakeValidator(SemaRef, dyn_cast<MemberExpr>(Fn), Args.size(),
+                      ExplicitTemplateArgs != nullptr, AllowTypoCorrection),
+        ExplicitTemplateArgs, Args)))
     return ExprError();
 
   assert(!R.empty() && "lookup results empty despite recovery");
@@ -10746,25 +10750,27 @@ bool Sema::buildOverloadedCallSet(Scope *S, Expr *Fn,
   // functions, including those from argument-dependent lookup.
   AddOverloadedCallCandidates(ULE, Args, *CandidateSet);
 
-  // If we found nothing, try to recover.
-  // BuildRecoveryCallExpr diagnoses the error itself, so we just bail
-  // out if it fails.
-  if (CandidateSet->empty()) {
-    // In Microsoft mode, if we are inside a template class member function then
-    // create a type dependent CallExpr. The goal is to postpone name lookup
-    // to instantiation time to be able to search into type dependent base
-    // classes.
-    if (getLangOpts().MSVCCompat && CurContext->isDependentContext() &&
-        (isa<FunctionDecl>(CurContext) || isa<CXXRecordDecl>(CurContext))) {
-      CallExpr *CE = new (Context) CallExpr(Context, Fn, Args,
-                                            Context.DependentTy, VK_RValue,
-                                            RParenLoc);
+  if (getLangOpts().MSVCCompat && CurContext->isDependentContext() &&
+      (isa<FunctionDecl>(CurContext) || isa<CXXRecordDecl>(CurContext))) {
+
+    OverloadCandidateSet::iterator Best;
+    if (CandidateSet->empty() ||
+        CandidateSet->BestViableFunction(*this, Fn->getLocStart(), Best) ==
+            OR_No_Viable_Function) {
+      // In Microsoft mode, if we are inside a template class member function then
+      // create a type dependent CallExpr. The goal is to postpone name lookup
+      // to instantiation time to be able to search into type dependent base
+      // classes.
+      CallExpr *CE = new (Context) CallExpr(
+          Context, Fn, Args, Context.DependentTy, VK_RValue, RParenLoc);
       CE->setTypeDependent(true);
       *Result = CE;
       return true;
     }
-    return false;
   }
+
+  if (CandidateSet->empty())
+    return false;
 
   UnbridgedCasts.restore();
   return false;

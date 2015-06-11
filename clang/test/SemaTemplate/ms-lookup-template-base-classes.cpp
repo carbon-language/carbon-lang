@@ -547,3 +547,19 @@ struct E : D<T>
   XXX x; // expected-error {{unknown type name}}
 };
 }
+
+namespace PR23810 {
+void f(int);
+struct Base {
+  void f(); // expected-note{{must qualify identifier to find this declaration in dependent base class}}
+};
+template <typename T> struct Template : T {
+  void member() {
+    f(); // expected-warning {{found via unqualified lookup into dependent bases}}
+  }
+};
+void test() {
+  Template<Base> x;
+  x.member(); // expected-note{{requested here}}
+};
+}
