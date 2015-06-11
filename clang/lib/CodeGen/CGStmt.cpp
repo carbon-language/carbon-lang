@@ -1750,6 +1750,16 @@ llvm::Value* CodeGenFunction::EmitAsmInput(
                                          const TargetInfo::ConstraintInfo &Info,
                                            const Expr *InputExpr,
                                            std::string &ConstraintStr) {
+  // If this can't be a register or memory, i.e., has to be a constant
+  // (immediate or symbolic), try to emit it as such.
+  if (!Info.allowsRegister() && !Info.allowsMemory()) {
+    llvm::APSInt Result;
+    if (InputExpr->isIntegerConstantExpr(Result, getContext()))
+      return llvm::ConstantInt::get(getLLVMContext(), Result);
+    assert(!Info.requiresImmediateConstant() &&
+           "Required-immediate inlineasm arg isn't constant?");
+  }
+
   if (Info.allowsRegister() || !Info.allowsMemory())
     if (CodeGenFunction::hasScalarEvaluationKind(InputExpr->getType()))
       return EmitScalarExpr(InputExpr);
