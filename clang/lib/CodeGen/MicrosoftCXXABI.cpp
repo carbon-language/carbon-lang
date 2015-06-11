@@ -2423,20 +2423,15 @@ MicrosoftCXXABI::BuildMemberPointer(const CXXRecordDecl *RD,
     FirstField = CGM.GetAddrOfFunction(MD, Ty);
     FirstField = llvm::ConstantExpr::getBitCast(FirstField, CGM.VoidPtrTy);
   } else {
-    if (FPT->getCallConv() == CC_X86FastCall) {
-      CGM.ErrorUnsupported(MD, "pointer to fastcall virtual member function");
-      FirstField = llvm::Constant::getNullValue(CGM.VoidPtrTy);
-    } else {
-      auto &VTableContext = CGM.getMicrosoftVTableContext();
-      MicrosoftVTableContext::MethodVFTableLocation ML =
-          VTableContext.getMethodVFTableLocation(MD);
-      llvm::Function *Thunk = EmitVirtualMemPtrThunk(MD, ML);
-      FirstField = llvm::ConstantExpr::getBitCast(Thunk, CGM.VoidPtrTy);
-      // Include the vfptr adjustment if the method is in a non-primary vftable.
-      NonVirtualBaseAdjustment += ML.VFPtrOffset;
-      if (ML.VBase)
-        VBTableIndex = VTableContext.getVBTableIndex(RD, ML.VBase) * 4;
-    }
+    auto &VTableContext = CGM.getMicrosoftVTableContext();
+    MicrosoftVTableContext::MethodVFTableLocation ML =
+        VTableContext.getMethodVFTableLocation(MD);
+    llvm::Function *Thunk = EmitVirtualMemPtrThunk(MD, ML);
+    FirstField = llvm::ConstantExpr::getBitCast(Thunk, CGM.VoidPtrTy);
+    // Include the vfptr adjustment if the method is in a non-primary vftable.
+    NonVirtualBaseAdjustment += ML.VFPtrOffset;
+    if (ML.VBase)
+      VBTableIndex = VTableContext.getVBTableIndex(RD, ML.VBase) * 4;
   }
 
   // The rest of the fields are common with data member pointers.
