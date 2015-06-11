@@ -29,9 +29,9 @@ entry:
 define %shifttype8i16 @shift8i16(%shifttype8i16 %a, %shifttype8i16 %b) {
 entry:
   ; SSE2: shift8i16
-  ; SSE2: cost of 80 {{.*}} lshr
+  ; SSE2: cost of 32 {{.*}} lshr
   ; SSE2-CODEGEN: shift8i16
-  ; SSE2-CODEGEN: shrl %cl
+  ; SSE2-CODEGEN: psrlw
 
   %0 = lshr %shifttype8i16 %a , %b
   ret %shifttype8i16 %0
@@ -41,9 +41,9 @@ entry:
 define %shifttype16i16 @shift16i16(%shifttype16i16 %a, %shifttype16i16 %b) {
 entry:
   ; SSE2: shift16i16
-  ; SSE2: cost of 160 {{.*}} lshr
+  ; SSE2: cost of 64 {{.*}} lshr
   ; SSE2-CODEGEN: shift16i16
-  ; SSE2-CODEGEN: shrl %cl
+  ; SSE2-CODEGEN: psrlw
 
   %0 = lshr %shifttype16i16 %a , %b
   ret %shifttype16i16 %0
@@ -53,9 +53,9 @@ entry:
 define %shifttype32i16 @shift32i16(%shifttype32i16 %a, %shifttype32i16 %b) {
 entry:
   ; SSE2: shift32i16
-  ; SSE2: cost of 320 {{.*}} lshr
+  ; SSE2: cost of 128 {{.*}} lshr
   ; SSE2-CODEGEN: shift32i16
-  ; SSE2-CODEGEN: shrl %cl
+  ; SSE2-CODEGEN: psrlw
 
   %0 = lshr %shifttype32i16 %a , %b
   ret %shifttype32i16 %0
@@ -209,9 +209,9 @@ entry:
 define %shifttype8i8 @shift8i8(%shifttype8i8 %a, %shifttype8i8 %b) {
 entry:
   ; SSE2: shift8i8
-  ; SSE2: cost of 80 {{.*}} lshr
+  ; SSE2: cost of 32 {{.*}} lshr
   ; SSE2-CODEGEN: shift8i8
-  ; SSE2-CODEGEN: shrl %cl
+  ; SSE2-CODEGEN: psrlw
 
   %0 = lshr %shifttype8i8 %a , %b
   ret %shifttype8i8 %0
@@ -221,9 +221,9 @@ entry:
 define %shifttype16i8 @shift16i8(%shifttype16i8 %a, %shifttype16i8 %b) {
 entry:
   ; SSE2: shift16i8
-  ; SSE2: cost of 160 {{.*}} lshr
+  ; SSE2: cost of 26 {{.*}} lshr
   ; SSE2-CODEGEN: shift16i8
-  ; SSE2-CODEGEN: shrb %cl
+  ; SSE2-CODEGEN: psrlw
 
   %0 = lshr %shifttype16i8 %a , %b
   ret %shifttype16i8 %0
@@ -233,9 +233,9 @@ entry:
 define %shifttype32i8 @shift32i8(%shifttype32i8 %a, %shifttype32i8 %b) {
 entry:
   ; SSE2: shift32i8
-  ; SSE2: cost of 320 {{.*}} lshr
+  ; SSE2: cost of 52 {{.*}} lshr
   ; SSE2-CODEGEN: shift32i8
-  ; SSE2-CODEGEN: shrb %cl
+  ; SSE2-CODEGEN: psrlw
 
   %0 = lshr %shifttype32i8 %a , %b
   ret %shifttype32i8 %0

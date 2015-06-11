@@ -12,8 +12,8 @@ define <16 x i8> @shift(<16 x i8> %a, <16 x i8> %b) nounwind {
 
   ; Make sure we're masking and pcmp'ing the VSELECT conditon vector.
   ; CHECK-WO-SSE4: psllw $5, [[REG1:%xmm.]]
-  ; CHECK-WO-SSE4: pand [[REG1]], [[REG2:%xmm.]]
-  ; CHECK-WO-SSE4: pcmpeqb {{%xmm., }}[[REG2]]
+  ; CHECK-WO-SSE4: pxor [[REG2:%xmm.]], [[REG2:%xmm.]]
+  ; CHECK-WO-SSE4: pcmpgtb {{%xmm., }}[[REG2]]
   %1 = shl <16 x i8> %a, %b
   ret <16 x i8> %1
 }
