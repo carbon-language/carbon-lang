@@ -419,6 +419,22 @@ BitVector X86RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   return Reserved;
 }
 
+void X86RegisterInfo::adjustStackMapLiveOutMask(uint32_t *Mask) const {
+  // Check if the EFLAGS register is marked as live-out. This shouldn't happen,
+  // because the calling convention defines the EFLAGS register as NOT
+  // preserved.
+  //
+  // Unfortunatelly the EFLAGS show up as live-out after branch folding. Adding
+  // an assert to track this and clear the register afterwards to avoid
+  // unnecessary crashes during release builds.
+  assert(!(Mask[X86::EFLAGS / 32] & (1U << (X86::EFLAGS % 32))) &&
+         "EFLAGS are not live-out from a patchpoint.");
+
+  // Also clean other registers that don't need preserving (IP).
+  for (auto Reg : {X86::EFLAGS, X86::RIP, X86::EIP, X86::IP})
+    Mask[Reg / 32] &= ~(1U << (Reg % 32));
+}
+
 //===----------------------------------------------------------------------===//
 // Stack Frame Processing methods
 //===----------------------------------------------------------------------===//

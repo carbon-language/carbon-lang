@@ -104,6 +104,8 @@ public:
   /// register scavenger to determine what registers are free.
   BitVector getReservedRegs(const MachineFunction &MF) const override;
 
+  void adjustStackMapLiveOutMask(uint32_t *Mask) const override;
+
   bool hasBasePointer(const MachineFunction &MF) const;
 
   bool canRealignStack(const MachineFunction &MF) const;
