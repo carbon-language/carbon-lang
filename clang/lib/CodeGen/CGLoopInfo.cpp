@@ -8,6 +8,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "CGLoopInfo.h"
+#include "clang/AST/Attr.h"
+#include "clang/Sema/LoopHint.h"
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/InstrTypes.h"
@@ -76,7 +78,33 @@ LoopInfo::LoopInfo(BasicBlock *Header, const LoopAttributes &Attrs)
   LoopID = createMetadata(Header->getContext(), Attrs);
 }
 
-void LoopInfoStack::push(BasicBlock *Header) {
+void LoopInfoStack::push(BasicBlock *Header, ArrayRef<const Attr *> Attrs) {
+  for (const auto *Attr : Attrs) {
+    const LoopHintAttr *LH = dyn_cast<LoopHintAttr>(Attr);
+
+    // Skip non loop hint attributes
+    if (!LH)
+      continue;
+
+    LoopHintAttr::OptionType Option = LH->getOption();
+    LoopHintAttr::LoopHintState State = LH->getState();
+    switch (Option) {
+    case LoopHintAttr::Vectorize:
+    case LoopHintAttr::Interleave:
+      if (State == LoopHintAttr::AssumeSafety) {
+        // Apply "llvm.mem.parallel_loop_access" metadata to load/stores.
+        setParallel(true);
+      }
+      break;
+    case LoopHintAttr::VectorizeWidth:
+    case LoopHintAttr::InterleaveCount:
+    case LoopHintAttr::Unroll:
+    case LoopHintAttr::UnrollCount:
+      // Nothing to do here for these loop hints.
+      break;
+    }
+  }
+
   Active.push_back(LoopInfo(Header, StagedAttrs));
   // Clear the attributes so nested loops do not inherit them.
   StagedAttrs.clear();

@@ -682,7 +682,7 @@ void CodeGenFunction::EmitWhileStmt(const WhileStmt &S,
   JumpDest LoopHeader = getJumpDestInCurrentScope("while.cond");
   EmitBlock(LoopHeader.getBlock());
 
-  LoopStack.push(LoopHeader.getBlock());
+  LoopStack.push(LoopHeader.getBlock(), WhileAttrs);
 
   // Create an exit block for when the condition fails, which will
   // also become the break target.
@@ -776,7 +776,7 @@ void CodeGenFunction::EmitDoStmt(const DoStmt &S,
   // Emit the body of the loop.
   llvm::BasicBlock *LoopBody = createBasicBlock("do.body");
 
-  LoopStack.push(LoopBody);
+  LoopStack.push(LoopBody, DoAttrs);
 
   EmitBlockWithFallThrough(LoopBody, &S);
   {
@@ -842,7 +842,7 @@ void CodeGenFunction::EmitForStmt(const ForStmt &S,
   llvm::BasicBlock *CondBlock = Continue.getBlock();
   EmitBlock(CondBlock);
 
-  LoopStack.push(CondBlock);
+  LoopStack.push(CondBlock, ForAttrs);
 
   // If the for loop doesn't have an increment we can just use the
   // condition as the continue block.  Otherwise we'll need to create
@@ -940,7 +940,7 @@ CodeGenFunction::EmitCXXForRangeStmt(const CXXForRangeStmt &S,
   llvm::BasicBlock *CondBlock = createBasicBlock("for.cond");
   EmitBlock(CondBlock);
 
-  LoopStack.push(CondBlock);
+  LoopStack.push(CondBlock, ForAttrs);
 
   // If there are any cleanups between here and the loop-exit scope,
   // create a block to stage a loop exit along.

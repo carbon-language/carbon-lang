@@ -105,6 +105,8 @@ static Attr *handleLoopHintAttr(Sema &S, Stmt *St, const AttributeList &A,
     if (StateLoc && StateLoc->Ident) {
       if (StateLoc->Ident->isStr("disable"))
         State = LoopHintAttr::Disable;
+      else if (StateLoc->Ident->isStr("assume_safety"))
+        State = LoopHintAttr::AssumeSafety;
       else
         State = LoopHintAttr::Enable;
     }
@@ -159,7 +161,7 @@ CheckForIncompatibleAttributes(Sema &S,
     const LoopHintAttr *PrevAttr;
     if (Option == LoopHintAttr::Vectorize ||
         Option == LoopHintAttr::Interleave || Option == LoopHintAttr::Unroll) {
-      // Enable|disable hint.  For example, vectorize(enable).
+      // Enable|Disable|AssumeSafety hint.  For example, vectorize(enable).
       PrevAttr = CategoryState.StateAttr;
       CategoryState.StateAttr = LH;
     } else {

@@ -823,9 +823,11 @@ bool Parser::HandlePragmaLoopHint(LoopHint &Hint) {
     ConsumeToken(); // The annotation token.
     SourceLocation StateLoc = Toks[0].getLocation();
     IdentifierInfo *StateInfo = Toks[0].getIdentifierInfo();
-    if (!StateInfo || ((OptionUnroll ? !StateInfo->isStr("full")
-                                     : !StateInfo->isStr("enable")) &&
-                       !StateInfo->isStr("disable"))) {
+    if (!StateInfo ||
+        ((OptionUnroll ? !StateInfo->isStr("full")
+                       : !StateInfo->isStr("enable") &&
+                             !StateInfo->isStr("assume_safety")) &&
+         !StateInfo->isStr("disable"))) {
       Diag(Toks[0].getLocation(), diag::err_pragma_invalid_keyword)
           << /*FullKeyword=*/OptionUnroll;
       return false;
@@ -1954,6 +1956,7 @@ static bool ParseLoopHintValue(Preprocessor &PP, Token &Tok, Token PragmaName,
 ///  loop-hint-keyword:
 ///    'enable'
 ///    'disable'
+///    'assume_safety'
 ///
 ///  unroll-hint-keyword:
 ///    'full'
