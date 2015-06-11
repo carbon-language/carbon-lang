@@ -15,18 +15,7 @@
 #include "clang/Basic/VirtualFileSystem.h"
 #include "llvm/Support/Path.h"
 
-// FIXME: This is terrible, we need this for ::close.
-#if !defined(_MSC_VER) && !defined(__MINGW32__)
-#include <unistd.h>
-#include <sys/uio.h>
-#else
-#include <io.h>
-#endif
 using namespace clang;
-
-#if defined(_MSC_VER)
-#define S_ISDIR(s) ((_S_IFDIR & s) !=0)
-#endif
 
 void FileSystemStatCache::anchor() { }
 

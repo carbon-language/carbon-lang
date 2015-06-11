@@ -25,15 +25,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Allocator.h"
 #include <memory>
-// FIXME: Enhance libsystem to support inode and other fields in stat.
-#include <sys/types.h>
 #include <map>
-
-#ifdef _MSC_VER
-typedef unsigned short mode_t;
-#endif
-
-struct stat;
 
 namespace llvm {
 class MemoryBuffer;
