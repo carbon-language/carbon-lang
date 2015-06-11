@@ -2423,12 +2423,7 @@ MicrosoftCXXABI::BuildMemberPointer(const CXXRecordDecl *RD,
     FirstField = CGM.GetAddrOfFunction(MD, Ty);
     FirstField = llvm::ConstantExpr::getBitCast(FirstField, CGM.VoidPtrTy);
   } else {
-    if (!CGM.getTypes().isFuncTypeConvertible(
-            MD->getType()->castAs<FunctionType>())) {
-      CGM.ErrorUnsupported(MD, "pointer to virtual member function with "
-                               "incomplete return or parameter type");
-      FirstField = llvm::Constant::getNullValue(CGM.VoidPtrTy);
-    } else if (FPT->getCallConv() == CC_X86FastCall) {
+    if (FPT->getCallConv() == CC_X86FastCall) {
       CGM.ErrorUnsupported(MD, "pointer to fastcall virtual member function");
       FirstField = llvm::Constant::getNullValue(CGM.VoidPtrTy);
     } else {
