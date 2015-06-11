@@ -184,7 +184,7 @@ private:
       makeStub(*StubF, *FnBodyPtr);
       CCInfo.setCompileAction(
         [this, &LD, LMH, &F]() {
-          return extractAndCompile(LD, LMH, F);
+          return this->extractAndCompile(LD, LMH, F);
         });
     }
 
