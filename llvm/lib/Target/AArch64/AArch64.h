@@ -38,6 +38,7 @@ FunctionPass *createAArch64LoadStoreOptimizationPass();
 ModulePass *createAArch64PromoteConstantPass();
 FunctionPass *createAArch64ConditionOptimizerPass();
 FunctionPass *createAArch64AddressTypePromotionPass();
+FunctionPass *createAArch64InterleavedAccessPass();
 FunctionPass *createAArch64A57FPLoadBalancing();
 FunctionPass *createAArch64A53Fix835769();
 

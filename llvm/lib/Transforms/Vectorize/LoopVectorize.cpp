@@ -139,7 +139,7 @@ static cl::opt<bool> EnableMemAccessVersioning(
     cl::desc("Enable symblic stride memory access versioning"));
 
 static cl::opt<bool> EnableInterleavedMemAccesses(
-    "enable-interleaved-mem-accesses", cl::init(false), cl::Hidden,
+    "enable-interleaved-mem-accesses", cl::init(true), cl::Hidden,
     cl::desc("Enable vectorization on interleaved memory accesses in a loop"));
 
 /// Maximum factor for an interleaved memory access.
