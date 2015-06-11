@@ -655,6 +655,7 @@ class FLAT <bits<7> op, dag outs, dag ins, string asm, list<dag> pattern> :
 
   let UseNamedOperandTable = 1;
   let hasSideEffects = 0;
+  let SchedRW = [WriteVMEM];
 }
 
 class MIMG <bits<7> op, dag outs, dag ins, string asm, list<dag> pattern> :
