@@ -1,15 +1,11 @@
-// RUN: %clang_cc1 -fms-extensions -triple i686-pc-windows-msvc %s -emit-llvm -o - | FileCheck %s
+// RUN: %clang_cc1 -fms-extensions -triple i686-pc-windows-msvc %s -emit-llvm-only -verify
+
+// We reject this because LLVM doesn't forward the second regparm through the
+// thunk.
 
 struct A {
-  virtual void __fastcall f(int a, int b);
+  virtual void __fastcall f(int a, int b); // expected-error {{cannot compile this pointer to fastcall virtual member function yet}}
 };
 void (__fastcall A::*doit())(int, int) {
   return &A::f;
 }
-
-// CHECK: define linkonce_odr x86_fastcallcc void @"\01??_9A@@$BA@AI"(%struct.A* inreg %this, ...) {{.*}} comdat align 2 {
-// CHECK: [[VPTR:%.*]] = getelementptr inbounds void (%struct.A*, ...)*, void (%struct.A*, ...)** %vtable, i64 0
-// CHECK: [[CALLEE:%.*]] = load void (%struct.A*, ...)*, void (%struct.A*, ...)** [[VPTR]]
-// CHECK: musttail call x86_fastcallcc void (%struct.A*, ...) [[CALLEE]](%struct.A* inreg %{{.*}}, ...)
-// CHECK: ret void
-// CHECK: }
