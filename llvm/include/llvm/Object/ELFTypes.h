@@ -156,11 +156,13 @@ struct Elf_Sym_Impl : Elf_Sym_Base<ELFT> {
   using Elf_Sym_Base<ELFT>::st_info;
   using Elf_Sym_Base<ELFT>::st_shndx;
   using Elf_Sym_Base<ELFT>::st_other;
+  using Elf_Sym_Base<ELFT>::st_value;
 
   // These accessors and mutators correspond to the ELF32_ST_BIND,
   // ELF32_ST_TYPE, and ELF32_ST_INFO macros defined in the ELF specification:
   unsigned char getBinding() const { return st_info >> 4; }
   unsigned char getType() const { return st_info & 0x0f; }
+  uint64_t getValue() const { return st_value; }
   void setBinding(unsigned char b) { setBindingAndType(b, getType()); }
   void setType(unsigned char t) { setBindingAndType(getBinding(), t); }
   void setBindingAndType(unsigned char b, unsigned char t) {
