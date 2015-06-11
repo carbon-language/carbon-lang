@@ -265,7 +265,7 @@ public:
     const DefaultArgStorage *Storage = this;
     if (auto *Prev = ValueOrInherited.template dyn_cast<ParmDecl*>())
       Storage = &Prev->getDefaultArgStorage();
-    if (auto *C = ValueOrInherited.template dyn_cast<Chain*>())
+    if (auto *C = Storage->ValueOrInherited.template dyn_cast<Chain*>())
       return C->Value;
     return Storage->ValueOrInherited.template get<ArgType>();
   }

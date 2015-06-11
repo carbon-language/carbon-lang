@@ -40,6 +40,9 @@ int pre_ff = F<int>().f(); // expected-error +{{must be imported}}
 int pre_fg = F<int>().g<int>(); // expected-error +{{must be imported}}
 // expected-note@defs.h:26 +{{here}}
 
+J<> pre_j; // expected-error {{must be imported}} expected-error {{too few}}
+// expected-note@defs.h:49 +{{here}}
+
 // Make definitions from second module visible.
 #ifdef TEXTUAL
 #include "import-and-redefine.h"
@@ -65,3 +68,6 @@ int post_fg = F<char>().g<int>();
 // expected-error@-5 {{no matching member function}}
 // expected-note@defs.h:34 {{substitution failure}}
 #endif
+J<> post_j;
+template<typename T, int N, template<typename> class K> struct J;
+J<> post_j2;
