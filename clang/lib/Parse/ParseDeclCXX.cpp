@@ -2724,12 +2724,13 @@ void Parser::SkipCXXMemberSpecification(SourceLocation RecordLoc,
     ParseScope ClassScope(this, Scope::ClassScope|Scope::DeclScope);
     ParsingClassDefinition ParsingDef(*this, TagDecl, /*NonNestedClass*/ true,
                                       TagType == DeclSpec::TST_interface);
-    Actions.ActOnTagStartSkippedDefinition(getCurScope(), TagDecl);
+    auto OldContext =
+        Actions.ActOnTagStartSkippedDefinition(getCurScope(), TagDecl);
 
     // Parse the bases but don't attach them to the class.
     ParseBaseClause(nullptr);
 
-    Actions.ActOnTagFinishSkippedDefinition();
+    Actions.ActOnTagFinishSkippedDefinition(OldContext);
 
     if (!Tok.is(tok::l_brace)) {
       Diag(PP.getLocForEndOfToken(PrevTokLocation),

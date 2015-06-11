@@ -1081,6 +1081,22 @@ void Sema::PopDeclContext() {
   assert(CurContext && "Popped translation unit!");
 }
 
+Sema::SkippedDefinitionContext Sema::ActOnTagStartSkippedDefinition(Scope *S,
+                                                                    Decl *D) {
+  // Unlike PushDeclContext, the context to which we return is not necessarily
+  // the containing DC of TD, because the new context will be some pre-existing
+  // TagDecl definition instead of a fresh one.
+  auto Result = static_cast<SkippedDefinitionContext>(CurContext);
+  CurContext = cast<TagDecl>(D)->getDefinition();
+  assert(CurContext && "skipping definition of undefined tag");
+  S->setEntity(CurContext);
+  return Result;
+}
+
+void Sema::ActOnTagFinishSkippedDefinition(SkippedDefinitionContext Context) {
+  CurContext = static_cast<decltype(CurContext)>(Context);
+}
+
 /// EnterDeclaratorContext - Used when we must lookup names in the context
 /// of a declarator's nested name specifier.
 ///

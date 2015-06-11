@@ -1850,10 +1850,10 @@ public:
   /// struct, or union).
   void ActOnTagStartDefinition(Scope *S, Decl *TagDecl);
 
+  typedef void *SkippedDefinitionContext;
+
   /// \brief Invoked when we enter a tag definition that we're skipping.
-  void ActOnTagStartSkippedDefinition(Scope *S, Decl *TD) {
-    PushDeclContext(S, cast<DeclContext>(TD));
-  }
+  SkippedDefinitionContext ActOnTagStartSkippedDefinition(Scope *S, Decl *TD);
 
   Decl *ActOnObjCContainerStartDefinition(Decl *IDecl);
 
@@ -1870,9 +1870,7 @@ public:
   void ActOnTagFinishDefinition(Scope *S, Decl *TagDecl,
                                 SourceLocation RBraceLoc);
 
-  void ActOnTagFinishSkippedDefinition() {
-    PopDeclContext();
-  }
+  void ActOnTagFinishSkippedDefinition(SkippedDefinitionContext Context);
 
   void ActOnObjCContainerFinishDefinition();
 
