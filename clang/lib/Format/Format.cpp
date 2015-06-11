@@ -1122,7 +1122,10 @@ private:
       Column = FormatTok->LastLineColumnWidth;
     }
 
-    if (std::find(ForEachMacros.begin(), ForEachMacros.end(),
+    if (!(Tokens.size() > 0 && Tokens.back()->Tok.getIdentifierInfo() &&
+          Tokens.back()->Tok.getIdentifierInfo()->getPPKeywordID() ==
+              tok::pp_define) &&
+        std::find(ForEachMacros.begin(), ForEachMacros.end(),
                   FormatTok->Tok.getIdentifierInfo()) != ForEachMacros.end())
       FormatTok->Type = TT_ForEachMacro;
 
