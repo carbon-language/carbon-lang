@@ -354,7 +354,7 @@ R600InstrInfo::ExtractSrcs(MachineInstr *MI,
                            const DenseMap<unsigned, unsigned> &PV,
                            unsigned &ConstCount) const {
   ConstCount = 0;
-  const SmallVector<std::pair<MachineOperand *, int64_t>, 3> Srcs = getSrcs(MI);
+  ArrayRef<std::pair<MachineOperand *, int64_t>> Srcs = getSrcs(MI);
   const std::pair<int, unsigned> DummyPair(-1, 0);
   std::vector<std::pair<int, unsigned> > Result;
   unsigned i = 0;
@@ -628,8 +628,7 @@ R600InstrInfo::fitsConstReadLimitations(const std::vector<MachineInstr *> &MIs)
     if (!isALUInstr(MI->getOpcode()))
       continue;
 
-    const SmallVectorImpl<std::pair<MachineOperand *, int64_t> > &Srcs =
-        getSrcs(MI);
+    ArrayRef<std::pair<MachineOperand *, int64_t>> Srcs = getSrcs(MI);
 
     for (unsigned j = 0, e = Srcs.size(); j < e; j++) {
       std::pair<MachineOperand *, unsigned> Src = Srcs[j];
@@ -782,7 +781,7 @@ unsigned
 R600InstrInfo::InsertBranch(MachineBasicBlock &MBB,
                             MachineBasicBlock *TBB,
                             MachineBasicBlock *FBB,
-                            const SmallVectorImpl<MachineOperand> &Cond,
+                            ArrayRef<MachineOperand> Cond,
                             DebugLoc DL) const {
   assert(TBB && "InsertBranch must not be told to insert a fallthrough");
 
@@ -1000,15 +999,15 @@ R600InstrInfo::DefinesPredicate(MachineInstr *MI,
 
 
 bool
-R600InstrInfo::SubsumesPredicate(const SmallVectorImpl<MachineOperand> &Pred1,
-                       const SmallVectorImpl<MachineOperand> &Pred2) const {
+R600InstrInfo::SubsumesPredicate(ArrayRef<MachineOperand> Pred1,
+                                 ArrayRef<MachineOperand> Pred2) const {
   return false;
 }
 
 
 bool
 R600InstrInfo::PredicateInstruction(MachineInstr *MI,
-                      const SmallVectorImpl<MachineOperand> &Pred) const {
+                                    ArrayRef<MachineOperand> Pred) const {
   int PIdx = MI->findFirstPredOperandIdx();
 
   if (MI->getOpcode() == AMDGPU::CF_ALU) {

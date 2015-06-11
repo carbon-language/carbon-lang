@@ -229,7 +229,7 @@ bool SparcInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
 unsigned
 SparcInstrInfo::InsertBranch(MachineBasicBlock &MBB,MachineBasicBlock *TBB,
                              MachineBasicBlock *FBB,
-                             const SmallVectorImpl<MachineOperand> &Cond,
+                             ArrayRef<MachineOperand> Cond,
                              DebugLoc DL) const {
   assert(TBB && "InsertBranch must not be told to insert a fallthrough");
   assert((Cond.size() == 1 || Cond.size() == 0) &&

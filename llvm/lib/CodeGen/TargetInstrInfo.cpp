@@ -219,9 +219,8 @@ TargetInstrInfo::isUnpredicatedTerminator(const MachineInstr *MI) const {
   return !isPredicated(MI);
 }
 
-
-bool TargetInstrInfo::PredicateInstruction(MachineInstr *MI,
-                            const SmallVectorImpl<MachineOperand> &Pred) const {
+bool TargetInstrInfo::PredicateInstruction(
+    MachineInstr *MI, ArrayRef<MachineOperand> Pred) const {
   bool MadeChange = false;
 
   assert(!MI->isBundle() &&

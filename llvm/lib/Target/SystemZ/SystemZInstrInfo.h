@@ -149,8 +149,7 @@ public:
                      bool AllowModify) const override;
   unsigned RemoveBranch(MachineBasicBlock &MBB) const override;
   unsigned InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
-                        MachineBasicBlock *FBB,
-                        const SmallVectorImpl<MachineOperand> &Cond,
+                        MachineBasicBlock *FBB, ArrayRef<MachineOperand> Cond,
                         DebugLoc DL) const override;
   bool analyzeCompare(const MachineInstr *MI, unsigned &SrcReg,
                       unsigned &SrcReg2, int &Mask, int &Value) const override;
@@ -167,8 +166,7 @@ public:
                            unsigned NumCyclesF, unsigned ExtraPredCyclesF,
                            const BranchProbability &Probability) const override;
   bool PredicateInstruction(MachineInstr *MI,
-                            const SmallVectorImpl<MachineOperand> &Pred) const
-    override;
+                            ArrayRef<MachineOperand> Pred) const override;
   void copyPhysReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI,
                    DebugLoc DL, unsigned DestReg, unsigned SrcReg,
                    bool KillSrc) const override;

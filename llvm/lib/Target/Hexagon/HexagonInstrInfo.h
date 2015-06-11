@@ -69,8 +69,7 @@ public:
   unsigned RemoveBranch(MachineBasicBlock &MBB) const override;
 
   unsigned InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
-                        MachineBasicBlock *FBB,
-                        const SmallVectorImpl<MachineOperand> &Cond,
+                        MachineBasicBlock *FBB, ArrayRef<MachineOperand> Cond,
                         DebugLoc DL) const override;
 
   bool analyzeCompare(const MachineInstr *MI,
@@ -129,7 +128,7 @@ public:
   bool isBranch(const MachineInstr *MI) const;
   bool isPredicable(MachineInstr *MI) const override;
   bool PredicateInstruction(MachineInstr *MI,
-                    const SmallVectorImpl<MachineOperand> &Cond) const override;
+                            ArrayRef<MachineOperand> Cond) const override;
 
   bool isProfitableToIfCvt(MachineBasicBlock &MBB, unsigned NumCycles,
                            unsigned ExtraPredCycles,
@@ -149,8 +148,8 @@ public:
   bool isPredicatedNew(unsigned Opcode) const;
   bool DefinesPredicate(MachineInstr *MI,
                         std::vector<MachineOperand> &Pred) const override;
-  bool SubsumesPredicate(const SmallVectorImpl<MachineOperand> &Pred1,
-                   const SmallVectorImpl<MachineOperand> &Pred2) const override;
+  bool SubsumesPredicate(ArrayRef<MachineOperand> Pred1,
+                         ArrayRef<MachineOperand> Pred2) const override;
 
   bool
   ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const override;
@@ -222,11 +221,10 @@ public:
   bool NonExtEquivalentExists (const MachineInstr *MI) const;
   short getNonExtOpcode(const MachineInstr *MI) const;
   bool PredOpcodeHasJMP_c(Opcode_t Opcode) const;
-  bool predOpcodeHasNot(const SmallVectorImpl<MachineOperand> &Cond) const;
+  bool predOpcodeHasNot(ArrayRef<MachineOperand> Cond) const;
   bool isEndLoopN(Opcode_t Opcode) const;
-  bool getPredReg(const SmallVectorImpl<MachineOperand> &Cond,
-                  unsigned &PredReg, unsigned &PredRegPos,
-                  unsigned &PredRegFlags) const;
+  bool getPredReg(ArrayRef<MachineOperand> Cond, unsigned &PredReg,
+                  unsigned &PredRegPos, unsigned &PredRegFlags) const;
   int getCondOpcode(int Opc, bool sense) const;
 
 };

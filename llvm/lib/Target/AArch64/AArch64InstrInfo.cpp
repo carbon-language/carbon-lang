@@ -255,7 +255,7 @@ unsigned AArch64InstrInfo::RemoveBranch(MachineBasicBlock &MBB) const {
 
 void AArch64InstrInfo::instantiateCondBranch(
     MachineBasicBlock &MBB, DebugLoc DL, MachineBasicBlock *TBB,
-    const SmallVectorImpl<MachineOperand> &Cond) const {
+    ArrayRef<MachineOperand> Cond) const {
   if (Cond[0].getImm() != -1) {
     // Regular Bcc
     BuildMI(&MBB, DL, get(AArch64::Bcc)).addImm(Cond[0].getImm()).addMBB(TBB);
@@ -272,7 +272,7 @@ void AArch64InstrInfo::instantiateCondBranch(
 
 unsigned AArch64InstrInfo::InsertBranch(
     MachineBasicBlock &MBB, MachineBasicBlock *TBB, MachineBasicBlock *FBB,
-    const SmallVectorImpl<MachineOperand> &Cond, DebugLoc DL) const {
+    ArrayRef<MachineOperand> Cond, DebugLoc DL) const {
   // Shouldn't be a fall through.
   assert(TBB && "InsertBranch must not be told to insert a fallthrough");
 
@@ -369,7 +369,7 @@ static unsigned canFoldIntoCSel(const MachineRegisterInfo &MRI, unsigned VReg,
 }
 
 bool AArch64InstrInfo::canInsertSelect(
-    const MachineBasicBlock &MBB, const SmallVectorImpl<MachineOperand> &Cond,
+    const MachineBasicBlock &MBB, ArrayRef<MachineOperand> Cond,
     unsigned TrueReg, unsigned FalseReg, int &CondCycles, int &TrueCycles,
     int &FalseCycles) const {
   // Check register classes.
@@ -412,7 +412,7 @@ bool AArch64InstrInfo::canInsertSelect(
 void AArch64InstrInfo::insertSelect(MachineBasicBlock &MBB,
                                     MachineBasicBlock::iterator I, DebugLoc DL,
                                     unsigned DstReg,
-                                    const SmallVectorImpl<MachineOperand> &Cond,
+                                    ArrayRef<MachineOperand> Cond,
                                     unsigned TrueReg, unsigned FalseReg) const {
   MachineRegisterInfo &MRI = MBB.getParent()->getRegInfo();
 

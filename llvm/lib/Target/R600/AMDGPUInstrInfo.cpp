@@ -234,10 +234,9 @@ bool AMDGPUInstrInfo::isPredicated(const MachineInstr *MI) const {
   // TODO: Implement this function
   return false;
 }
-bool
-AMDGPUInstrInfo::SubsumesPredicate(const SmallVectorImpl<MachineOperand> &Pred1,
-                                  const SmallVectorImpl<MachineOperand> &Pred2)
-  const {
+
+bool AMDGPUInstrInfo::SubsumesPredicate(ArrayRef<MachineOperand> Pred1,
+                                        ArrayRef<MachineOperand> Pred2) const {
   // TODO: Implement this function
   return false;
 }
