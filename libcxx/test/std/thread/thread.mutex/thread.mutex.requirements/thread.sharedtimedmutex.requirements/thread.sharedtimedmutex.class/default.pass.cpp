@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 // UNSUPPORTED: libcpp-has-no-threads
+// UNSUPPORTED: c++03, c++98, c++11
 
 // <shared_mutex>
 
@@ -19,7 +20,5 @@
 
 int main()
 {
-#if _LIBCPP_STD_VER > 11
     std::shared_timed_mutex m;
-#endif
 }
