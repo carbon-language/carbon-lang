@@ -210,10 +210,10 @@ struct FormatStyle {
   enum ShortFunctionStyle {
     /// \brief Never merge functions into a single line.
     SFS_None,
-    /// \brief Only merge functions defined inside a class.
-    SFS_Inline,
     /// \brief Only merge empty functions.
     SFS_Empty,
+    /// \brief Only merge functions defined inside a class. Implies "empty".
+    SFS_Inline,
     /// \brief Merge all functions fitting on a single line.
     SFS_All,
   };

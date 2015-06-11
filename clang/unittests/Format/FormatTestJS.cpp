@@ -252,6 +252,7 @@ TEST_F(FormatTestJS, FormatsFreestandingFunctions) {
                "  function inner2(a, b) { return a; }\n"
                "  inner2(a, b);\n"
                "}");
+  verifyFormat("function f() {}");
 }
 
 TEST_F(FormatTestJS, ArrayLiterals) {
@@ -707,12 +708,9 @@ TEST_F(FormatTestJS, Modules) {
   verifyFormat("export function fn() {\n"
                "  return 'fn';\n"
                "}");
-  verifyFormat("export function A() {\n"
-               "}\n"
-               "export default function B() {\n"
-               "}\n"
-               "export function C() {\n"
-               "}");
+  verifyFormat("export function A() {}\n"
+               "export default function B() {}\n"
+               "export function C() {}");
   verifyFormat("export const x = 12;");
   verifyFormat("export default class X {}");
   verifyFormat("export {X, Y} from 'some/module.js';");
@@ -819,12 +817,12 @@ TEST_F(FormatTestJS, TypeArguments) {
   verifyFormat("foo<Y>(a);");
   verifyFormat("var x: X<Y>[];");
   verifyFormat("class C extends D<E> implements F<G>, H<I> {}");
-  verifyFormat("function f(a: List<any> = null) {\n}");
-  verifyFormat("function f(): List<any> {\n}");
+  verifyFormat("function f(a: List<any> = null) {}");
+  verifyFormat("function f(): List<any> {}");
 }
 
 TEST_F(FormatTestJS, OptionalTypes) {
-  verifyFormat("function x(a?: b, c?, d?) {\n}");
+  verifyFormat("function x(a?: b, c?, d?) {}");
   verifyFormat("class X {\n"
                "  y?: z;\n"
                "  z?;\n"
@@ -838,8 +836,7 @@ TEST_F(FormatTestJS, OptionalTypes) {
                "  aaaaaaaa?: string,\n"
                "  aaaaaaaaaaaaaaa?: boolean,\n"
                "  aaaaaa?: List<string>\n"
-               "}) {\n"
-               "}");
+               "}) {}");
 }
 
 TEST_F(FormatTestJS, IndexSignature) {

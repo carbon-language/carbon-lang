@@ -155,23 +155,21 @@ the configuration (without a prefix: ``Auto``).
 
   This applies to round brackets (parentheses), angle brackets and square
   brackets. This will result in formattings like
-
-  .. code-block:: c++
-
-    someLongFunction(argument1,
-    argument2);
+  \code
+  someLongFunction(argument1,
+  argument2);
+  \endcode
 
 **AlignConsecutiveAssignments** (``bool``)
   If ``true``, aligns consecutive assignments.
 
   This will align the assignment operators of consecutive lines. This
   will result in formattings like
-
-  .. code-block:: c++
-
-    int aaaa = 12;
-    int b    = 23;
-    int ccc  = 23;
+  \code
+  int aaaa = 12;
+  int b    = 23;
+  int ccc  = 23;
+  \endcode
 
 **AlignEscapedNewlinesLeft** (``bool``)
   If ``true``, aligns escaped newlines as far left as possible.
@@ -204,10 +202,10 @@ the configuration (without a prefix: ``Auto``).
 
   * ``SFS_None`` (in configuration: ``None``)
     Never merge functions into a single line.
-  * ``SFS_Inline`` (in configuration: ``Inline``)
-    Only merge functions defined inside a class.
   * ``SFS_Empty`` (in configuration: ``Empty``)
     Only merge empty functions.
+  * ``SFS_Inline`` (in configuration: ``Inline``)
+    Only merge functions defined inside a class. Implies "empty".
   * ``SFS_All`` (in configuration: ``All``)
     Merge all functions fitting on a single line.
 
@@ -343,11 +341,10 @@ the configuration (without a prefix: ``Auto``).
   instead of as function calls.
 
   These are expected to be macros of the form:
-
-    .. code-block:: c++
-
-      FOREACH(<variable-declaration>, ...)
-      <loop-body>
+  \code
+  FOREACH(<variable-declaration>, ...)
+  <loop-body>
+  \endcode
 
   For example: BOOST_FOREACH.
 
