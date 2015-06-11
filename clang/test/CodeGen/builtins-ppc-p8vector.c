@@ -3,6 +3,8 @@
 // RUN: %clang_cc1 -faltivec -target-feature +power8-vector -triple powerpc64le-unknown-unknown -emit-llvm %s -o - | FileCheck %s -check-prefix=CHECK-LE
 // RUN: not %clang_cc1 -faltivec -triple powerpc64-unknown-unknown -emit-llvm %s -o - 2>&1 | FileCheck %s -check-prefix=CHECK-PPC
 
+vector signed char vsc = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5 };
+vector unsigned char vuc = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5 };
 vector int vi = { -1, 2, -3, 4 };
 vector unsigned int vui = { 1, 2, 3, 4 };
 vector bool int vbi = {0, -1, -1, 0};
@@ -11,6 +13,8 @@ vector signed long long vsll = { 1, 2 };
 vector unsigned long long vull = { 1, 2 };
 
 int res_i;
+vector signed char res_vsc;
+vector unsigned char res_vuc;
 vector int res_vi;
 vector unsigned int res_vui;
 vector bool int res_vbi;
@@ -737,4 +741,23 @@ void test1() {
 // CHECK: @llvm.ppc.altivec.vminud
 // CHECK-LE: @llvm.ppc.altivec.vminud
 
+  /* vec_vbpermq */
+  res_vsll = vec_vbpermq(vsc, vsc);
+// CHECK: llvm.ppc.altivec.vbpermq
+// CHECK-LE: llvm.ppc.altivec.vbpermq
+
+  res_vull = vec_vbpermq(vuc, vuc);
+// CHECK: llvm.ppc.altivec.vbpermq
+// CHECK-LE: llvm.ppc.altivec.vbpermq
+// CHECK-PPC: warning: implicit declaration of function 'vec_vbpermq'
+
+  /* vec_vgbbd */
+  res_vsc = vec_vgbbd(vsc);
+// CHECK: llvm.ppc.altivec.vgbbd
+// CHECK-LE: llvm.ppc.altivec.vgbbd
+
+  res_vuc = vec_vgbbd(vuc);
+// CHECK: llvm.ppc.altivec.vgbbd
+// CHECK-LE: llvm.ppc.altivec.vgbbd
+// CHECK-PPC: warning: implicit declaration of function 'vec_vgbbd'
 }

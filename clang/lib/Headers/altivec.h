@@ -12012,6 +12012,29 @@ static vector unsigned long long __ATTRS_o_ai __builtin_crypto_vpmsumb(
     vector unsigned long long __a, vector unsigned long long __b) {
   return __builtin_altivec_crypto_vpmsumd(__a, __b);
 }
+
+static vector signed char __ATTRS_o_ai vec_vgbbd (vector signed char __a)
+{
+  return __builtin_altivec_vgbbd((vector unsigned char) __a);
+}
+
+static vector unsigned char __ATTRS_o_ai vec_vgbbd (vector unsigned char __a)
+{
+  return __builtin_altivec_vgbbd(__a);
+}
+
+static vector long long __ATTRS_o_ai
+vec_vbpermq (vector signed char __a, vector signed char __b)
+{
+  return __builtin_altivec_vbpermq((vector unsigned char) __a,
+                                   (vector unsigned char) __b);
+}
+
+static vector long long __ATTRS_o_ai
+vec_vbpermq (vector unsigned char __a, vector unsigned char __b)
+{
+  return __builtin_altivec_vbpermq(__a, __b);
+}
 #endif
 
 #undef __ATTRS_o_ai
