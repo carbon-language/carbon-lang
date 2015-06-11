@@ -508,7 +508,7 @@ void WinEHStatePass::addSEHStateStores(Function &F, MachineModuleInfo &MMI) {
         // Look up the state number of the landingpad this unwinds to.
         LandingPadInst *LPI = II->getUnwindDest()->getLandingPadInst();
         auto InsertionPair =
-            FuncInfo.LandingPadStateMap.insert(std::make_pair(LPI, 0));
+            FuncInfo.LandingPadStateMap.insert(std::make_pair(LPI, CurState));
         auto Iter = InsertionPair.first;
         int &State = Iter->second;
         bool Inserted = InsertionPair.second;

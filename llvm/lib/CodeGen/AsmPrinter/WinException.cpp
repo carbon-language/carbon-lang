@@ -613,8 +613,8 @@ void WinException::emitExceptHandlerTable(const MachineFunction *MF) {
   // For each action in each lpad, emit one of these:
   // struct ScopeTableEntry {
   //   int32_t EnclosingLevel;
-  //   int32_t (__cdecl *FilterOrFinally)();
-  //   void *HandlerLabel;
+  //   int32_t (__cdecl *Filter)();
+  //   void *HandlerOrFinally;
   // };
   //
   // The "outermost" action will use BaseState as its enclosing level. Each
@@ -625,21 +625,20 @@ void WinException::emitExceptHandlerTable(const MachineFunction *MF) {
     assert(CurState + int(LPInfo->SEHHandlers.size()) - 1 ==
                LPInfo->WinEHState &&
            "gaps in the SEH scope table");
-    for (const SEHHandler &Handler : LPInfo->SEHHandlers) {
-      // Emit the filter or finally function pointer, if present. Otherwise,
-      // emit '0' to indicate a catch-all.
-      const Function *F = Handler.FilterOrFinally;
-      const MCExpr *FilterOrFinally =
-          create32bitRef(F ? Asm->getSymbol(F) : nullptr);
-
-      // Compute the recovery address, which is a block address or null.
+    for (auto I = LPInfo->SEHHandlers.rbegin(), E = LPInfo->SEHHandlers.rend();
+         I != E; ++I) {
+      const SEHHandler &Handler = *I;
       const BlockAddress *BA = Handler.RecoverBA;
-      const MCExpr *RecoverBBOrNull =
-          create32bitRef(BA ? Asm->GetBlockAddressSymbol(BA) : nullptr);
+      const Function *F = Handler.FilterOrFinally;
+      assert(F && "cannot catch all in 32-bit SEH without filter function");
+      const MCExpr *FilterOrNull =
+          create32bitRef(BA ? Asm->getSymbol(F) : nullptr);
+      const MCExpr *ExceptOrFinally = create32bitRef(
+          BA ? Asm->GetBlockAddressSymbol(BA) : Asm->getSymbol(F));
 
       OS.EmitIntValue(EnclosingLevel, 4);
-      OS.EmitValue(FilterOrFinally, 4);
-      OS.EmitValue(RecoverBBOrNull, 4);
+      OS.EmitValue(FilterOrNull, 4);
+      OS.EmitValue(ExceptOrFinally, 4);
 
       // The next state unwinds to this state.
       EnclosingLevel = CurState;
