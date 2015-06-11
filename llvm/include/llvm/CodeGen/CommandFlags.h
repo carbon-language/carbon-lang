@@ -151,7 +151,7 @@ FuseFPOps("fp-contract",
               clEnumValN(FPOpFusion::Standard, "on",
                          "Only fuse 'blessed' FP ops."),
               clEnumValN(FPOpFusion::Strict, "off",
-                         "Only fuse FP ops when the result won't be effected."),
+                         "Only fuse FP ops when the result won't be affected."),
               clEnumValEnd));
 
 cl::list<std::string>
