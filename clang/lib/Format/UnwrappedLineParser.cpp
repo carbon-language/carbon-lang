@@ -854,6 +854,7 @@ void UnwrappedLineParser::parseStructuralElement() {
            Style.Language == FormatStyle::LK_Java) &&
           FormatTok->is(Keywords.kw_interface)) {
         parseRecord();
+        addUnwrappedLine();
         break;
       }
 

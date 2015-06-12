@@ -665,7 +665,8 @@ TEST_F(FormatTestJS, ClassDeclarations) {
 TEST_F(FormatTestJS, InterfaceDeclarations) {
   verifyFormat("interface I {\n"
                "  x: string;\n"
-               "}");
+               "}\n"
+               "var y;");
 }
 
 TEST_F(FormatTestJS, MetadataAnnotations) {
