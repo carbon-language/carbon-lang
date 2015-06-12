@@ -276,7 +276,8 @@ bool ARMTargetParser::getFPUFeatures(unsigned FPUKind,
 
   // FPU version subtarget features are inclusive of lower-numbered ones, so
   // enable the one corresponding to this version and disable all that are
-  // higher.
+  // higher. We also have to make sure to disable fp16 when vfp4 is disabled,
+  // as +vfp4 implies +fp16 but -vfp4 does not imply -fp16.
   switch (FPUNames[FPUKind].FPUVersion) {
   case 5:
     Features.push_back("+fp-armv8");
@@ -287,18 +288,21 @@ bool ARMTargetParser::getFPUFeatures(unsigned FPUKind,
     break;
   case 3:
     Features.push_back("+vfp3");
+    Features.push_back("-fp16");
     Features.push_back("-vfp4");
     Features.push_back("-fp-armv8");
     break;
   case 2:
     Features.push_back("+vfp2");
     Features.push_back("-vfp3");
+    Features.push_back("-fp16");
     Features.push_back("-vfp4");
     Features.push_back("-fp-armv8");
     break;
   case 0:
     Features.push_back("-vfp2");
     Features.push_back("-vfp3");
+    Features.push_back("-fp16");
     Features.push_back("-vfp4");
     Features.push_back("-fp-armv8");
     break;
