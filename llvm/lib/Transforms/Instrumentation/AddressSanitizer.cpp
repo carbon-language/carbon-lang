@@ -106,10 +106,8 @@ static const char *const kAsanUnpoisonStackMemoryName =
 static const char *const kAsanOptionDetectUAR =
     "__asan_option_detect_stack_use_after_return";
 
-static const char *const kAsanAllocaPoison =
-    "__asan_alloca_poison";
-static const char *const kAsanAllocasUnpoison =
-    "__asan_allocas_unpoison";
+static const char *const kAsanAllocaPoison = "__asan_alloca_poison";
+static const char *const kAsanAllocasUnpoison = "__asan_allocas_unpoison";
 
 // Accesses sizes are powers of two: 1, 2, 4, 8, 16.
 static const size_t kNumberOfAccessSizes = 5;
@@ -410,8 +408,7 @@ struct AddressSanitizer : public FunctionPass {
   /// If it is an interesting memory access, return the PointerOperand
   /// and set IsWrite/Alignment. Otherwise return nullptr.
   Value *isInterestingMemoryAccess(Instruction *I, bool *IsWrite,
-                                   uint64_t *TypeSize,
-                                   unsigned *Alignment);
+                                   uint64_t *TypeSize, unsigned *Alignment);
   void instrumentMop(ObjectSizeOffsetVisitor &ObjSizeVis, Instruction *I,
                      bool UseCalls, const DataLayout &DL);
   void instrumentPointerComparisonOrSubtraction(Instruction *I);
@@ -588,7 +585,7 @@ struct FunctionStackPoisoner : public InstVisitor<FunctionStackPoisoner> {
                                         Value *SavedStack) {
     IRBuilder<> IRB(InstBefore);
     IRB.CreateCall(AsanAllocasUnpoisonFunc,
-                    {IRB.CreateLoad(DynamicAllocaLayout),
+                   {IRB.CreateLoad(DynamicAllocaLayout),
                     IRB.CreatePtrToInt(SavedStack, IntptrTy)});
   }
 
@@ -1706,8 +1703,7 @@ void FunctionStackPoisoner::poisonStack() {
   if (ClInstrumentAllocas && DynamicAllocaVec.size() > 0) {
     // Handle dynamic allocas.
     createDynamicAllocasInitStorage();
-    for (auto &AI : DynamicAllocaVec)
-      handleDynamicAllocaCall(AI);
+    for (auto &AI : DynamicAllocaVec) handleDynamicAllocaCall(AI);
 
     unpoisonDynamicAllocas();
   }
@@ -1901,9 +1897,9 @@ void FunctionStackPoisoner::poisonAlloca(Value *V, uint64_t Size,
   // For now just insert the call to ASan runtime.
   Value *AddrArg = IRB.CreatePointerCast(V, IntptrTy);
   Value *SizeArg = ConstantInt::get(IntptrTy, Size);
-  IRB.CreateCall(DoPoison ? AsanPoisonStackMemoryFunc
-                          : AsanUnpoisonStackMemoryFunc,
-                 {AddrArg, SizeArg});
+  IRB.CreateCall(
+      DoPoison ? AsanPoisonStackMemoryFunc : AsanUnpoisonStackMemoryFunc,
+      {AddrArg, SizeArg});
 }
 
 // Handling llvm.lifetime intrinsics for a given %alloca:
