@@ -75,11 +75,7 @@ class Parser {
       return;
 
     MoreLATokens.push_back(Tok);
-    for (const Token *I = &Toks.back(),
-         *B = &Toks.front();
-         I != B; --I) {
-      MoreLATokens.push_back(*I);
-    }
+    MoreLATokens.append(Toks.rbegin(), std::prev(Toks.rend()));
 
     Tok = Toks[0];
   }

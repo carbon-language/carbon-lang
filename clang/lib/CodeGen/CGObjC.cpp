@@ -2996,13 +2996,9 @@ CodeGenFunction::GenerateObjCAtomicGetterCopyHelperFunction(
   
   SmallVector<Expr*, 4> ConstructorArgs;
   ConstructorArgs.push_back(&SRC);
-  CXXConstructExpr::arg_iterator A = CXXConstExpr->arg_begin();
-  ++A;
-  
-  for (CXXConstructExpr::arg_iterator AEnd = CXXConstExpr->arg_end();
-       A != AEnd; ++A)
-    ConstructorArgs.push_back(*A);
-  
+  ConstructorArgs.append(std::next(CXXConstExpr->arg_begin()),
+                         CXXConstExpr->arg_end());
+
   CXXConstructExpr *TheCXXConstructExpr =
     CXXConstructExpr::Create(C, Ty, SourceLocation(),
                              CXXConstExpr->getConstructor(),

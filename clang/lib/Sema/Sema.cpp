@@ -722,11 +722,7 @@ void Sema::ActOnEndOfTranslationUnit() {
         ModMap.resolveConflicts(Mod, /*Complain=*/false);
 
         // Queue the submodules, so their exports will also be resolved.
-        for (Module::submodule_iterator Sub = Mod->submodule_begin(),
-                                     SubEnd = Mod->submodule_end();
-             Sub != SubEnd; ++Sub) {
-          Stack.push_back(*Sub);
-        }
+        Stack.append(Mod->submodule_begin(), Mod->submodule_end());
       }
     }
 

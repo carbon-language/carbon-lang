@@ -190,8 +190,7 @@ namespace clang {
         assert(D->isCanonicalDecl() && "non-canonical decl in set");
         Writer.AddDeclRef(D, Record);
       }
-      for (DeclID ID : LazySpecializations)
-        Record.push_back(ID);
+      Record.append(LazySpecializations.begin(), LazySpecializations.end());
     }
   };
 }

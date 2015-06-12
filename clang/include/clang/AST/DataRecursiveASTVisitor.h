@@ -531,10 +531,7 @@ bool RecursiveASTVisitor<Derived>::TraverseStmt(Stmt *S) {
       }
     }
 
-    for (SmallVectorImpl<Stmt *>::reverse_iterator RI = StmtsToEnqueue.rbegin(),
-                                                   RE = StmtsToEnqueue.rend();
-         RI != RE; ++RI)
-      Queue.push_back(*RI);
+    Queue.append(StmtsToEnqueue.rbegin(), StmtsToEnqueue.rend());
   }
 
   return true;

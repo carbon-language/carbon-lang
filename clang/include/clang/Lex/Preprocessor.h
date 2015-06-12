@@ -455,8 +455,9 @@ class Preprocessor : public RefCountedBase<Preprocessor> {
 
     void overrideActiveModuleMacros(Preprocessor &PP, IdentifierInfo *II) {
       if (auto *Info = getModuleInfo(PP, II)) {
-        for (auto *Active : Info->ActiveModuleMacros)
-          Info->OverriddenMacros.push_back(Active);
+        Info->OverriddenMacros.insert(Info->OverriddenMacros.end(),
+                                      Info->ActiveModuleMacros.begin(),
+                                      Info->ActiveModuleMacros.end());
         Info->ActiveModuleMacros.clear();
         Info->IsAmbiguous = false;
       }

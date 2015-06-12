@@ -321,18 +321,10 @@ void DiagnosticsEngine::Report(const StoredDiagnostic &storedDiag) {
   NumDiagArgs = 0;
 
   DiagRanges.clear();
-  DiagRanges.reserve(storedDiag.range_size());
-  for (StoredDiagnostic::range_iterator
-         RI = storedDiag.range_begin(),
-         RE = storedDiag.range_end(); RI != RE; ++RI)
-    DiagRanges.push_back(*RI);
+  DiagRanges.append(storedDiag.range_begin(), storedDiag.range_end());
 
   DiagFixItHints.clear();
-  DiagFixItHints.reserve(storedDiag.fixit_size());
-  for (StoredDiagnostic::fixit_iterator
-         FI = storedDiag.fixit_begin(),
-         FE = storedDiag.fixit_end(); FI != FE; ++FI)
-    DiagFixItHints.push_back(*FI);
+  DiagFixItHints.append(storedDiag.fixit_begin(), storedDiag.fixit_end());
 
   assert(Client && "DiagnosticConsumer not set!");
   Level DiagLevel = storedDiag.getLevel();
