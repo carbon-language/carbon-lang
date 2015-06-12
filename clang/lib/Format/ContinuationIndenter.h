@@ -148,15 +148,12 @@ struct ParenState {
   ParenState(unsigned Indent, unsigned IndentLevel, unsigned LastSpace,
              bool AvoidBinPacking, bool NoLineBreak)
       : Indent(Indent), IndentLevel(IndentLevel), LastSpace(LastSpace),
-        NestedBlockIndent(Indent), FirstLessLess(0), QuestionColumn(0),
-        ColonPos(0), StartOfFunctionCall(0), StartOfArraySubscripts(0),
-        NestedNameSpecifierContinuation(0), CallContinuation(0), VariablePos(0),
-        BreakBeforeClosingBrace(false), AvoidBinPacking(AvoidBinPacking),
-        BreakBeforeParameter(false), NoLineBreak(NoLineBreak),
-        LastOperatorWrapped(true), ContainsLineBreak(false),
-        ContainsUnwrappedBuilder(false), AlignColons(true),
-        ObjCSelectorNameFound(false), HasMultipleNestedBlocks(false),
-        NestedBlockInlined(false) {}
+        NestedBlockIndent(Indent), BreakBeforeClosingBrace(false),
+        AvoidBinPacking(AvoidBinPacking), BreakBeforeParameter(false),
+        NoLineBreak(NoLineBreak), LastOperatorWrapped(true),
+        ContainsLineBreak(false), ContainsUnwrappedBuilder(false),
+        AlignColons(true), ObjCSelectorNameFound(false),
+        HasMultipleNestedBlocks(false), NestedBlockInlined(false) {}
 
   /// \brief The position to which a specific parenthesis level needs to be
   /// indented.
@@ -180,33 +177,33 @@ struct ParenState {
   ///
   /// Used to align "<<" operators. 0 if no such operator has been encountered
   /// on a level.
-  unsigned FirstLessLess;
+  unsigned FirstLessLess = 0;
 
   /// \brief The column of a \c ? in a conditional expression;
-  unsigned QuestionColumn;
+  unsigned QuestionColumn = 0;
 
   /// \brief The position of the colon in an ObjC method declaration/call.
-  unsigned ColonPos;
+  unsigned ColonPos = 0;
 
   /// \brief The start of the most recent function in a builder-type call.
-  unsigned StartOfFunctionCall;
+  unsigned StartOfFunctionCall = 0;
 
   /// \brief Contains the start of array subscript expressions, so that they
   /// can be aligned.
-  unsigned StartOfArraySubscripts;
+  unsigned StartOfArraySubscripts = 0;
 
   /// \brief If a nested name specifier was broken over multiple lines, this
   /// contains the start column of the second line. Otherwise 0.
-  unsigned NestedNameSpecifierContinuation;
+  unsigned NestedNameSpecifierContinuation = 0;
 
   /// \brief If a call expression was broken over multiple lines, this
   /// contains the start column of the second line. Otherwise 0.
-  unsigned CallContinuation;
+  unsigned CallContinuation = 0;
 
   /// \brief The column of the first variable name in a variable declaration.
   ///
   /// Used to align further variables if necessary.
-  unsigned VariablePos;
+  unsigned VariablePos = 0;
 
   /// \brief Whether a newline needs to be inserted before the block's closing
   /// brace.
