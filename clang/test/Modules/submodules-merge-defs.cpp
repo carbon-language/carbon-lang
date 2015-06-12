@@ -13,8 +13,8 @@
 
 A pre_a; // expected-error {{must be imported}} expected-error {{must use 'struct'}}
 // expected-note@defs.h:1 +{{here}}
-// FIXME: We should warn that use_a is being used without being imported.
-int pre_use_a = use_a(pre_a); // expected-error {{'A' must be imported}}
+// expected-note@defs.h:2 +{{here}}
+int pre_use_a = use_a(pre_a); // expected-error {{'A' must be imported}} expected-error {{'use_a' must be imported}}
 
 B::Inner2 pre_bi; // expected-error +{{must be imported}}
 // expected-note@defs.h:4 +{{here}}

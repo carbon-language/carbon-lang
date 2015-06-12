@@ -3032,6 +3032,9 @@ void Sema::ArgumentDependentLookup(DeclarationName Name, SourceLocation Loc,
       if (!isa<FunctionDecl>(D) && !isa<FunctionTemplateDecl>(D))
         continue;
 
+      if (!isVisible(D) && !(D = findAcceptableDecl(*this, D)))
+        continue;
+
       Result.insert(D);
     }
   }

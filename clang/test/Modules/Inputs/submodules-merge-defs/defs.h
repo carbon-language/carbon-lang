@@ -55,3 +55,9 @@ namespace NS {
   template<> struct B<int> : B<int*> {};
   inline void f() {}
 }
+
+namespace StaticInline {
+  struct X {};
+  static inline void f(X);
+  static inline void g(X x) { f(x); }
+}
