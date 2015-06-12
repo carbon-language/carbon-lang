@@ -337,7 +337,7 @@ namespace {
       AU.addPreserved<MemoryDependenceAnalysis>();
     }
 
-    // Helper fuctions
+    // Helper functions
     bool processStore(StoreInst *SI, BasicBlock::iterator &BBI);
     bool processMemSet(MemSetInst *SI, BasicBlock::iterator &BBI);
     bool processMemCpy(MemCpyInst *M);
