@@ -389,8 +389,8 @@ private:
   const GOTAtom *getLocalGOTEntry(const Reference &ref);
   const GOTAtom *getLocalGOTPageEntry(const Reference &ref);
   const GOTAtom *getGlobalGOTEntry(const Atom *a);
-  const GOTAtom *getTLSGOTEntry(const Atom *a);
-  const GOTAtom *getTLSGdGOTEntry(const Atom *a);
+  const GOTAtom *getTLSGOTEntry(const Atom *a, Reference::Addend addend);
+  const GOTAtom *getTLSGdGOTEntry(const Atom *a, Reference::Addend addend);
   const GOTAtom *getTLSLdmGOTEntry(const Atom *a);
   const GOTPLTAtom *getGOTPLTEntry(const Atom *a);
   const PLTAtom *getPLTEntry(const Atom *a);
@@ -588,7 +588,7 @@ void RelocationPass<ELFT>::handleReference(const MipsELFDefinedAtom<ELFT> &atom,
     break;
   case R_MIPS_TLS_GD:
   case R_MICROMIPS_TLS_GD:
-    ref.setTarget(getTLSGdGOTEntry(ref.target()));
+    ref.setTarget(getTLSGdGOTEntry(ref.target(), ref.addend()));
     break;
   case R_MIPS_TLS_LDM:
   case R_MICROMIPS_TLS_LDM:
@@ -596,7 +596,7 @@ void RelocationPass<ELFT>::handleReference(const MipsELFDefinedAtom<ELFT> &atom,
     break;
   case R_MIPS_TLS_GOTTPREL:
   case R_MICROMIPS_TLS_GOTTPREL:
-    ref.setTarget(getTLSGOTEntry(ref.target()));
+    ref.setTarget(getTLSGOTEntry(ref.target(), ref.addend()));
     break;
   }
 }
@@ -932,7 +932,8 @@ const GOTAtom *RelocationPass<ELFT>::getGlobalGOTEntry(const Atom *a) {
 }
 
 template <typename ELFT>
-const GOTAtom *RelocationPass<ELFT>::getTLSGOTEntry(const Atom *a) {
+const GOTAtom *RelocationPass<ELFT>::getTLSGOTEntry(const Atom *a,
+                                                    Reference::Addend addend) {
   auto got = _gotTLSMap.find(a);
   if (got != _gotTLSMap.end())
     return got->second;
@@ -943,13 +944,15 @@ const GOTAtom *RelocationPass<ELFT>::getTLSGOTEntry(const Atom *a) {
   _tlsGotVector.push_back(ga);
   Reference::KindValue relKind =
       ELFT::Is64Bits ? R_MIPS_TLS_TPREL64 : R_MIPS_TLS_TPREL32;
-  ga->addReferenceELF_Mips(relKind, 0, a, 0);
+  ga->addReferenceELF_Mips(relKind, 0, a, addend);
 
   return ga;
 }
 
 template <typename ELFT>
-const GOTAtom *RelocationPass<ELFT>::getTLSGdGOTEntry(const Atom *a) {
+const GOTAtom *
+RelocationPass<ELFT>::getTLSGdGOTEntry(const Atom *a,
+                                       Reference::Addend addend) {
   auto got = _gotTLSGdMap.find(a);
   if (got != _gotTLSGdMap.end())
     return got->second;
@@ -959,11 +962,11 @@ const GOTAtom *RelocationPass<ELFT>::getTLSGdGOTEntry(const Atom *a) {
 
   _tlsGotVector.push_back(ga);
   if (ELFT::Is64Bits) {
-    ga->addReferenceELF_Mips(R_MIPS_TLS_DTPMOD64, 0, a, 0);
-    ga->addReferenceELF_Mips(R_MIPS_TLS_DTPREL64, 8, a, 0);
+    ga->addReferenceELF_Mips(R_MIPS_TLS_DTPMOD64, 0, a, addend);
+    ga->addReferenceELF_Mips(R_MIPS_TLS_DTPREL64, 8, a, addend);
   } else {
-    ga->addReferenceELF_Mips(R_MIPS_TLS_DTPMOD32, 0, a, 0);
-    ga->addReferenceELF_Mips(R_MIPS_TLS_DTPREL32, 4, a, 0);
+    ga->addReferenceELF_Mips(R_MIPS_TLS_DTPMOD32, 0, a, addend);
+    ga->addReferenceELF_Mips(R_MIPS_TLS_DTPREL32, 4, a, addend);
   }
 
   return ga;

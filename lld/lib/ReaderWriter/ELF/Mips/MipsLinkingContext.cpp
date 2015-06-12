@@ -70,13 +70,14 @@ bool MipsLinkingContext::isDynamicRelocation(const Reference &r) const {
   switch (r.kindValue()) {
   case llvm::ELF::R_MIPS_COPY:
   case llvm::ELF::R_MIPS_REL32:
+    return true;
   case llvm::ELF::R_MIPS_TLS_DTPMOD32:
   case llvm::ELF::R_MIPS_TLS_DTPREL32:
   case llvm::ELF::R_MIPS_TLS_TPREL32:
   case llvm::ELF::R_MIPS_TLS_DTPMOD64:
   case llvm::ELF::R_MIPS_TLS_DTPREL64:
   case llvm::ELF::R_MIPS_TLS_TPREL64:
-    return true;
+    return isDynamic();
   default:
     return false;
   }

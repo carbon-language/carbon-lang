@@ -172,12 +172,11 @@ static MipsRelocationParams getRelocationParams(uint32_t rType) {
   case R_MIPS_TLS_DTPMOD32:
   case R_MIPS_TLS_DTPREL32:
   case R_MIPS_TLS_TPREL32:
-    // Ignore runtime relocations.
-    return {4, 0x0, 0, false, dummyCheck};
+    return {4, 0xffffffff, 0, false, dummyCheck};
   case R_MIPS_TLS_DTPMOD64:
   case R_MIPS_TLS_DTPREL64:
   case R_MIPS_TLS_TPREL64:
-    return {8, 0x0, 0, false, dummyCheck};
+    return {8, 0xffffffffffffffffull, 0, false, dummyCheck};
   case LLD_R_MIPS_GLOBAL_GOT:
   case LLD_R_MIPS_STO_PLT:
     // Do nothing.
@@ -365,6 +364,16 @@ static int64_t relocMaskLow16(uint64_t S, int64_t A) {
   return maskLow16(S + A);
 }
 
+/// R_MIPS_TLS_TPREL32, R_MIPS_TLS_TPREL64
+static int64_t relocTlsTpRel(uint64_t S, int64_t A) {
+  return S + A - 0x7000;
+}
+
+/// R_MIPS_TLS_DTPREL32, R_MIPS_TLS_DTPREL64
+static int64_t relocTlsDTpRel(uint64_t S, int64_t A) {
+  return S + A - 0x8000;
+}
+
 static int64_t relocRel32(int64_t A) {
   // If output relocation format is REL and the input one is RELA, the only
   // method to transfer the relocation addend from the input relocation
@@ -430,7 +439,7 @@ static ErrorOr<int64_t> calculateRelocation(Reference::KindValue kind,
                                             Reference::Addend addend,
                                             uint64_t tgtAddr, uint64_t relAddr,
                                             uint64_t gpAddr, bool isGP,
-                                            bool isCrossJump) {
+                                            bool isCrossJump, bool isDynamic) {
   switch (kind) {
   case R_MIPS_NONE:
     return 0;
@@ -527,18 +536,23 @@ static ErrorOr<int64_t> calculateRelocation(Reference::KindValue kind,
     return relocRel32(addend);
   case R_MIPS_JUMP_SLOT:
   case R_MIPS_COPY:
-  case R_MIPS_TLS_DTPMOD32:
-  case R_MIPS_TLS_DTPREL32:
-  case R_MIPS_TLS_TPREL32:
-  case R_MIPS_TLS_DTPMOD64:
-  case R_MIPS_TLS_DTPREL64:
-  case R_MIPS_TLS_TPREL64:
     // Ignore runtime relocations.
     return 0;
+  case R_MIPS_TLS_DTPMOD32:
+  case R_MIPS_TLS_DTPMOD64:
+    return isDynamic ? 0 : 1;
+  case R_MIPS_TLS_DTPREL32:
+  case R_MIPS_TLS_DTPREL64:
+    if (isDynamic)
+      return 0;
+    return relocTlsDTpRel(tgtAddr, addend);
+  case R_MIPS_TLS_TPREL32:
+  case R_MIPS_TLS_TPREL64:
+    if (isDynamic)
+      return 0;
+    return relocTlsTpRel(tgtAddr, addend);
   case R_MIPS_PC32:
     return relocpc32(relAddr, tgtAddr, addend);
-  case LLD_R_MIPS_GLOBAL_GOT:
-    // Do nothing.
   case LLD_R_MIPS_32_HI16:
   case LLD_R_MIPS_64_HI16:
     return relocMaskLow16(tgtAddr, addend);
@@ -551,6 +565,7 @@ static ErrorOr<int64_t> calculateRelocation(Reference::KindValue kind,
   case LLD_R_MIPS_LO16:
     return relocLo16(0, tgtAddr, 0, false, false);
   case LLD_R_MIPS_STO_PLT:
+  case LLD_R_MIPS_GLOBAL_GOT:
     // Do nothing.
     return 0;
   default:
@@ -643,7 +658,7 @@ std::error_code RelocationHandler<ELFT>::applyRelocation(
       break;
     auto params = getRelocationParams(kind);
     res = calculateRelocation(kind, *res, sym, relAddr, gpAddr, isGpDisp,
-                              isCrossJump);
+                              isCrossJump, _ctx.isDynamic());
     if (auto ec = res.getError())
       return ec;
     // Check result for the last relocation only.
