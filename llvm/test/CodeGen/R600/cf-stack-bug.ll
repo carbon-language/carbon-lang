@@ -1,12 +1,29 @@
-; RUN: llc -march=r600 -mcpu=redwood -debug-only=r600cf %s -o - 2>&1 | FileCheck %s --check-prefix=BUG64 --check-prefix=FUNC
-; RUN: llc -march=r600 -mcpu=sumo -debug-only=r600cf %s -o - 2>&1 | FileCheck %s --check-prefix=BUG64 --check-prefix=FUNC
-; RUN: llc -march=r600 -mcpu=barts -debug-only=r600cf %s -o - 2>&1 | FileCheck %s --check-prefix=BUG64 --check-prefix=FUNC
-; RUN: llc -march=r600 -mcpu=turks -debug-only=r600cf %s -o - 2>&1 | FileCheck %s --check-prefix=BUG64 --check-prefix=FUNC
-; RUN: llc -march=r600 -mcpu=caicos -debug-only=r600cf %s -o - 2>&1 | FileCheck %s --check-prefix=BUG64 --check-prefix=FUNC
-; RUN: llc -march=r600 -mcpu=cedar -debug-only=r600cf %s -o - 2>&1 | FileCheck %s --check-prefix=BUG32 --check-prefix=FUNC
-; RUN: llc -march=r600 -mcpu=juniper -debug-only=r600cf %s -o - 2>&1 | FileCheck %s --check-prefix=NOBUG --check-prefix=FUNC
-; RUN: llc -march=r600 -mcpu=cypress -debug-only=r600cf %s -o - 2>&1 | FileCheck %s --check-prefix=NOBUG --check-prefix=FUNC
-; RUN: llc -march=r600 -mcpu=cayman -debug-only=r600cf %s -o - 2>&1 | FileCheck %s --check-prefix=NOBUG --check-prefix=FUNC
+; RUN: llc -march=r600 -mcpu=redwood -debug-only=r600cf %s -o - 2>%t | FileCheck %s --check-prefix=FUNC
+; RUN: FileCheck --check-prefix=BUG64 %s < %t
+
+; RUN: llc -march=r600 -mcpu=sumo -debug-only=r600cf %s -o - 2>%t | FileCheck %s --check-prefix=FUNC
+; RUN: FileCheck --check-prefix=BUG64 %s < %t
+
+; RUN: llc -march=r600 -mcpu=barts -debug-only=r600cf %s -o - 2>%t | FileCheck %s --check-prefix=FUNC
+; RUN: FileCheck --check-prefix=BUG64 %s < %t
+
+; RUN: llc -march=r600 -mcpu=turks -debug-only=r600cf %s -o - 2>%t | FileCheck %s --check-prefix=FUNC
+; RUN: FileCheck --check-prefix=BUG64 %s < %t
+
+; RUN: llc -march=r600 -mcpu=caicos -debug-only=r600cf %s -o - 2>%t | FileCheck %s --check-prefix=FUNC
+; RUN: FileCheck --check-prefix=BUG64 %s < %t
+
+; RUN: llc -march=r600 -mcpu=cedar -debug-only=r600cf %s -o - 2>%t | FileCheck %s --check-prefix=FUNC
+; RUN: FileCheck --check-prefix=BUG32 %s < %t
+
+; RUN: llc -march=r600 -mcpu=juniper -debug-only=r600cf %s -o - 2>%t | FileCheck %s --check-prefix=FUNC
+; RUN: FileCheck --check-prefix=NOBUG %s < %t
+
+; RUN: llc -march=r600 -mcpu=cypress -debug-only=r600cf %s -o - 2>%t | FileCheck %s --check-prefix=FUNC
+; RUN: FileCheck --check-prefix=NOBUG %s < %t
+
+; RUN: llc -march=r600 -mcpu=cayman -debug-only=r600cf %s -o - 2>%t | FileCheck %s --check-prefix=FUNC
+; RUN: FileCheck --check-prefix=NOBUG %s < %t
 
 ; REQUIRES: asserts
 
