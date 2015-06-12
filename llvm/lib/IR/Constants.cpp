@@ -2389,6 +2389,7 @@ GetElementPtrConstantExpr::GetElementPtrConstantExpr(
                    IdxList.size() + 1),
       SrcElementTy(SrcElementTy) {
   Op<0>() = C;
+  Use *OperandList = getOperandList();
   for (unsigned i = 0, E = IdxList.size(); i != E; ++i)
     OperandList[i+1] = IdxList[i];
 }
@@ -2851,6 +2852,7 @@ void ConstantArray::replaceUsesOfWithOnConstant(Value *From, Value *To,
 
   // Keep track of whether all the values in the array are "ToC".
   bool AllSame = true;
+  Use *OperandList = getOperandList();
   for (Use *O = OperandList, *E = OperandList+getNumOperands(); O != E; ++O) {
     Constant *Val = cast<Constant>(O->get());
     if (Val == From) {
@@ -2887,6 +2889,7 @@ void ConstantStruct::replaceUsesOfWithOnConstant(Value *From, Value *To,
   assert(isa<Constant>(To) && "Cannot make Constant refer to non-constant!");
   Constant *ToC = cast<Constant>(To);
 
+  Use *OperandList = getOperandList();
   unsigned OperandToUpdate = U-OperandList;
   assert(getOperand(OperandToUpdate) == From && "ReplaceAllUsesWith broken!");
 
@@ -2955,6 +2958,7 @@ void ConstantVector::replaceUsesOfWithOnConstant(Value *From, Value *To,
   }
 
   // Update to the new value.
+  Use *OperandList = getOperandList();
   if (Constant *C = getContext().pImpl->VectorConstants.replaceOperandsInPlace(
           Values, this, From, ToC, NumUpdated, U - OperandList))
     replaceUsesOfWithOnConstantImpl(C);
@@ -2983,6 +2987,7 @@ void ConstantExpr::replaceUsesOfWithOnConstant(Value *From, Value *ToV,
   }
 
   // Update to the new value.
+  Use *OperandList = getOperandList();
   if (Constant *C = getContext().pImpl->ExprConstants.replaceOperandsInPlace(
           NewOps, this, From, To, NumUpdated, U - OperandList))
     replaceUsesOfWithOnConstantImpl(C);

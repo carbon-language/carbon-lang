@@ -49,7 +49,7 @@ void User::allocHungoffUses(unsigned N, bool IsPhi) {
   Use *Begin = static_cast<Use*>(::operator new(size));
   Use *End = Begin + N;
   (void) new(End) Use::UserRef(const_cast<User*>(this), 1);
-  OperandList = Use::initTags(Begin, End);
+  setOperandList(Use::initTags(Begin, End));
   // Tag this operand list as being a hung off.
   HasHungOffUses = true;
 }
@@ -63,9 +63,9 @@ void User::growHungoffUses(unsigned NewNumUses, bool IsPhi) {
   // space to copy the old uses in to the new space.
   assert(NewNumUses > OldNumUses && "realloc must grow num uses");
 
-  Use *OldOps = OperandList;
+  Use *OldOps = getOperandList();
   allocHungoffUses(NewNumUses, IsPhi);
-  Use *NewOps = OperandList;
+  Use *NewOps = getOperandList();
 
   // Now copy from the old operands list to the new one.
   std::copy(OldOps, OldOps + OldNumUses, NewOps);
@@ -90,7 +90,7 @@ void *User::operator new(size_t s, unsigned Us) {
   Use *Start = static_cast<Use*>(Storage);
   Use *End = Start + Us;
   User *Obj = reinterpret_cast<User*>(End);
-  Obj->OperandList = Start;
+  Obj->setOperandList(Start);
   Obj->HasHungOffUses = false;
   Obj->NumOperands = Us;
   Use::initTags(Start, End);

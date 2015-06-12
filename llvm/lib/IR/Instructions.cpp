@@ -172,7 +172,8 @@ LandingPadInst::LandingPadInst(const LandingPadInst &LP)
                   LP.getNumOperands()),
       ReservedSpace(LP.getNumOperands()) {
   allocHungoffUses(LP.getNumOperands());
-  Use *OL = OperandList, *InOL = LP.OperandList;
+  Use *OL = getOperandList();
+  const Use *InOL = LP.getOperandList();
   for (unsigned I = 0, E = ReservedSpace; I != E; ++I)
     OL[I] = InOL[I];
 
@@ -219,7 +220,7 @@ void LandingPadInst::addClause(Constant *Val) {
   growOperands(1);
   assert(OpNo < ReservedSpace && "Growing didn't work!");
   ++NumOperands;
-  OperandList[OpNo] = Val;
+  getOperandList()[OpNo] = Val;
 }
 
 //===----------------------------------------------------------------------===//
@@ -3295,7 +3296,8 @@ SwitchInst::SwitchInst(const SwitchInst &SI)
   : TerminatorInst(SI.getType(), Instruction::Switch, nullptr, 0) {
   init(SI.getCondition(), SI.getDefaultDest(), SI.getNumOperands());
   NumOperands = SI.getNumOperands();
-  Use *OL = OperandList, *InOL = SI.OperandList;
+  Use *OL = getOperandList();
+  const Use *InOL = SI.getOperandList();
   for (unsigned i = 2, E = SI.getNumOperands(); i != E; i += 2) {
     OL[i] = InOL[i];
     OL[i+1] = InOL[i+1];
@@ -3327,7 +3329,7 @@ void SwitchInst::removeCase(CaseIt i) {
   assert(2 + idx*2 < getNumOperands() && "Case index out of range!!!");
 
   unsigned NumOps = getNumOperands();
-  Use *OL = OperandList;
+  Use *OL = getOperandList();
 
   // Overwrite this case with the end of the list.
   if (2 + (idx + 1) * 2 != NumOps) {
@@ -3407,7 +3409,8 @@ IndirectBrInst::IndirectBrInst(const IndirectBrInst &IBI)
     : TerminatorInst(Type::getVoidTy(IBI.getContext()), Instruction::IndirectBr,
                      nullptr, IBI.getNumOperands()) {
   allocHungoffUses(IBI.getNumOperands());
-  Use *OL = OperandList, *InOL = IBI.OperandList;
+  Use *OL = getOperandList();
+  const Use *InOL = IBI.getOperandList();
   for (unsigned i = 0, E = IBI.getNumOperands(); i != E; ++i)
     OL[i] = InOL[i];
   SubclassOptionalData = IBI.SubclassOptionalData;
@@ -3422,7 +3425,7 @@ void IndirectBrInst::addDestination(BasicBlock *DestBB) {
   // Initialize some new operands.
   assert(OpNo < ReservedSpace && "Growing didn't work!");
   NumOperands = OpNo+1;
-  OperandList[OpNo] = DestBB;
+  getOperandList()[OpNo] = DestBB;
 }
 
 /// removeDestination - This method removes the specified successor from the
@@ -3431,7 +3434,7 @@ void IndirectBrInst::removeDestination(unsigned idx) {
   assert(idx < getNumOperands()-1 && "Successor index out of range!");
   
   unsigned NumOps = getNumOperands();
-  Use *OL = OperandList;
+  Use *OL = getOperandList();
 
   // Replace this value with the last one.
   OL[idx+1] = OL[NumOps-1];

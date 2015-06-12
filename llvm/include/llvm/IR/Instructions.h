@@ -2482,17 +2482,17 @@ public:
   /// Get the value of the clause at index Idx. Use isCatch/isFilter to
   /// determine what type of clause this is.
   Constant *getClause(unsigned Idx) const {
-    return cast<Constant>(OperandList[Idx + 1]);
+    return cast<Constant>(getOperandList()[Idx + 1]);
   }
 
   /// isCatch - Return 'true' if the clause and index Idx is a catch clause.
   bool isCatch(unsigned Idx) const {
-    return !isa<ArrayType>(OperandList[Idx + 1]->getType());
+    return !isa<ArrayType>(getOperandList()[Idx + 1]->getType());
   }
 
   /// isFilter - Return 'true' if the clause and index Idx is a filter clause.
   bool isFilter(unsigned Idx) const {
-    return isa<ArrayType>(OperandList[Idx + 1]->getType());
+    return isa<ArrayType>(getOperandList()[Idx + 1]->getType());
   }
 
   /// getNumClauses - Get the number of clauses for this landing pad.

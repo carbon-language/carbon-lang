@@ -45,11 +45,14 @@ protected:
   /// prefixed to some derived class instance.  For nodes of resizable variable
   /// arity (e.g. PHINodes, SwitchInst etc.), this memory will be dynamically
   /// allocated and should be destroyed by the classes' virtual dtor.
-  Use *OperandList;
+  Use *LegacyOperandList;
 
+protected:
   void *operator new(size_t s, unsigned Us);
+
   User(Type *ty, unsigned vty, Use *OpList, unsigned NumOps)
-      : Value(ty, vty), OperandList(OpList) {
+      : Value(ty, vty) {
+    setOperandList(OpList);
     NumOperands = NumOps;
   }
 
@@ -66,9 +69,9 @@ protected:
 public:
   ~User() override {
     // drop the hung off uses.
-    Use::zap(OperandList, OperandList + NumOperands, HasHungOffUses);
+    Use::zap(getOperandList(), getOperandList() + NumOperands, HasHungOffUses);
     if (HasHungOffUses) {
-      OperandList = nullptr;
+      setOperandList(nullptr);
       // Reset NumOperands so User::operator delete() does the right thing.
       NumOperands = 0;
     }
@@ -95,25 +98,32 @@ protected:
   template <int Idx> const Use &Op() const {
     return OpFrom<Idx>(this);
   }
+private:
+  void setOperandList(Use *NewList) {
+    LegacyOperandList = NewList;
+  }
 public:
+  Use *getOperandList() const {
+    return LegacyOperandList;
+  }
   Value *getOperand(unsigned i) const {
     assert(i < NumOperands && "getOperand() out of range!");
-    return OperandList[i];
+    return getOperandList()[i];
   }
   void setOperand(unsigned i, Value *Val) {
     assert(i < NumOperands && "setOperand() out of range!");
     assert((!isa<Constant>((const Value*)this) ||
             isa<GlobalValue>((const Value*)this)) &&
            "Cannot mutate a constant with setOperand!");
-    OperandList[i] = Val;
+    getOperandList()[i] = Val;
   }
   const Use &getOperandUse(unsigned i) const {
     assert(i < NumOperands && "getOperandUse() out of range!");
-    return OperandList[i];
+    return getOperandList()[i];
   }
   Use &getOperandUse(unsigned i) {
     assert(i < NumOperands && "getOperandUse() out of range!");
-    return OperandList[i];
+    return getOperandList()[i];
   }
 
   unsigned getNumOperands() const { return NumOperands; }
@@ -126,10 +136,14 @@ public:
   typedef iterator_range<op_iterator> op_range;
   typedef iterator_range<const_op_iterator> const_op_range;
 
-  inline op_iterator       op_begin()       { return OperandList; }
-  inline const_op_iterator op_begin() const { return OperandList; }
-  inline op_iterator       op_end()         { return OperandList+NumOperands; }
-  inline const_op_iterator op_end()   const { return OperandList+NumOperands; }
+  inline op_iterator       op_begin()       { return getOperandList(); }
+  inline const_op_iterator op_begin() const { return getOperandList(); }
+  inline op_iterator       op_end()         {
+    return getOperandList() + NumOperands;
+  }
+  inline const_op_iterator op_end()   const {
+    return getOperandList() + NumOperands;
+  }
   inline op_range operands() {
     return op_range(op_begin(), op_end());
   }
