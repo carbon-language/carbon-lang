@@ -15,6 +15,7 @@
 #include "llvm/IR/Module.h"
 #include "llvm/Linker/Linker.h"
 #include "llvm/Support/SourceMgr.h"
+#include "llvm-c/Linker.h"
 #include "gtest/gtest.h"
 
 using namespace llvm;
@@ -125,6 +126,22 @@ TEST_F(LinkModuleTest, BlockAddress) {
   delete LinkedModule;
 }
 
+static Module *getExternal(LLVMContext &Ctx, StringRef FuncName) {
+  // Create a module with an empty externally-linked function
+  Module *M = new Module("ExternalModule", Ctx);
+  FunctionType *FTy = FunctionType::get(
+      Type::getVoidTy(Ctx), Type::getInt8PtrTy(Ctx), false /*=isVarArgs*/);
+
+  Function *F =
+      Function::Create(FTy, Function::ExternalLinkage, FuncName, M);
+  F->setCallingConv(CallingConv::C);
+
+  BasicBlock *BB = BasicBlock::Create(Ctx, "", F);
+  IRBuilder<> Builder(BB);
+  Builder.CreateRetVoid();
+  return M;
+}
+
 static Module *getInternal(LLVMContext &Ctx) {
   Module *InternalM = new Module("InternalModule", Ctx);
   FunctionType *FTy = FunctionType::get(
@@ -176,6 +193,29 @@ TEST_F(LinkModuleTest, TypeMerge) {
 
   EXPECT_EQ(M1->getNamedGlobal("t1")->getType(),
             M1->getNamedGlobal("t2")->getType());
+}
+
+TEST_F(LinkModuleTest, CAPISuccess) {
+  std::unique_ptr<Module> DestM(getExternal(Ctx, "foo"));
+  std::unique_ptr<Module> SourceM(getExternal(Ctx, "bar"));
+  char *errout = nullptr;
+  LLVMBool result = LLVMLinkModules(wrap(DestM.get()), wrap(SourceM.get()),
+                                    LLVMLinkerDestroySource, &errout);
+  EXPECT_EQ(0, result);
+  EXPECT_EQ(nullptr, errout);
+  // "bar" is present in destination module
+  EXPECT_NE(nullptr, DestM->getFunction("bar"));
+}
+
+TEST_F(LinkModuleTest, CAPIFailure) {
+  // Symbol clash between two modules
+  std::unique_ptr<Module> DestM(getExternal(Ctx, "foo"));
+  std::unique_ptr<Module> SourceM(getExternal(Ctx, "foo"));
+  char *errout = nullptr;
+  LLVMBool result = LLVMLinkModules(wrap(DestM.get()), wrap(SourceM.get()),
+                                    LLVMLinkerDestroySource, &errout);
+  EXPECT_EQ(1, result);
+  EXPECT_STREQ("Linking globals named 'foo': symbol multiply defined!", errout);
 }
 
 } // end anonymous namespace

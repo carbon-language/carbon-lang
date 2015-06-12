@@ -1802,7 +1802,9 @@ LLVMBool LLVMLinkModules(LLVMModuleRef Dest, LLVMModuleRef Src,
   LLVMBool Result = Linker::LinkModules(
       D, unwrap(Src), [&](const DiagnosticInfo &DI) { DI.print(DP); });
 
-  if (OutMessages && Result)
+  if (OutMessages && Result) {
+    Stream.flush();
     *OutMessages = strdup(Message.c_str());
+  }
   return Result;
 }
