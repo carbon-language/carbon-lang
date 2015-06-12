@@ -320,6 +320,17 @@ function(clang_tablegen)
   endif()
 endfunction(clang_tablegen)
 
+macro(set_clang_windows_version_resource_properties name)
+  if(DEFINED windows_resource_file)
+    set_windows_version_resource_properties(${name} ${windows_resource_file}
+      VERSION_MAJOR ${CLANG_VERSION_MAJOR}
+      VERSION_MINOR ${CLANG_VERSION_MINOR}
+      VERSION_PATCHLEVEL ${CLANG_VERSION_PATCHLEVEL}
+      VERSION_STRING "${CLANG_VERSION} (${BACKEND_PACKAGE_STRING})"
+      PRODUCT_NAME "clang")
+  endif()
+endmacro()
+
 macro(add_clang_library name)
   cmake_parse_arguments(ARG
     ""
@@ -377,11 +388,13 @@ macro(add_clang_library name)
   endif()
 
   set_target_properties(${name} PROPERTIES FOLDER "Clang libraries")
+  set_clang_windows_version_resource_properties(${name})
 endmacro(add_clang_library)
 
 macro(add_clang_executable name)
   add_llvm_executable( ${name} ${ARGN} )
   set_target_properties(${name} PROPERTIES FOLDER "Clang executables")
+  set_clang_windows_version_resource_properties(${name})
 endmacro(add_clang_executable)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
