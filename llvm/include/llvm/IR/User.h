@@ -166,18 +166,18 @@ public:
   typedef iterator_range<op_iterator> op_range;
   typedef iterator_range<const_op_iterator> const_op_range;
 
-  inline op_iterator       op_begin()       { return getOperandList(); }
-  inline const_op_iterator op_begin() const { return getOperandList(); }
-  inline op_iterator       op_end()         {
+  op_iterator       op_begin()       { return getOperandList(); }
+  const_op_iterator op_begin() const { return getOperandList(); }
+  op_iterator       op_end()         {
     return getOperandList() + NumUserOperands;
   }
-  inline const_op_iterator op_end()   const {
+  const_op_iterator op_end()   const {
     return getOperandList() + NumUserOperands;
   }
-  inline op_range operands() {
+  op_range operands() {
     return op_range(op_begin(), op_end());
   }
-  inline const_op_range operands() const {
+  const_op_range operands() const {
     return const_op_range(op_begin(), op_end());
   }
 
@@ -192,13 +192,13 @@ public:
     Value *operator->() const { return operator*(); }
   };
 
-  inline value_op_iterator value_op_begin() {
+  value_op_iterator value_op_begin() {
     return value_op_iterator(op_begin());
   }
-  inline value_op_iterator value_op_end() {
+  value_op_iterator value_op_end() {
     return value_op_iterator(op_end());
   }
-  inline iterator_range<value_op_iterator> operand_values() {
+  iterator_range<value_op_iterator> operand_values() {
     return iterator_range<value_op_iterator>(value_op_begin(), value_op_end());
   }
 
