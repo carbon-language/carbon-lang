@@ -1512,6 +1512,9 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
           // While we're here iterating check for a different target cpu.
           if (Feature.startswith("arch="))
             TargetCPU = Feature.split("=").second;
+	  else if (Feature.startswith("tune="))
+	    // We don't support cpu tuning this way currently.
+	    ;
 	  else
 	    Features.push_back("+" + Feature.str());
 	}
