@@ -1515,6 +1515,11 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
 	  else if (Feature.startswith("tune="))
 	    // We don't support cpu tuning this way currently.
 	    ;
+	  else if (Feature.startswith("fpmath="))
+	    // TODO: Support the fpmath option this way. It will require checking
+	    // overall feature validity for the function with the rest of the
+	    // attributes on the function.
+	    ;
 	  else if (Feature.startswith("mno-"))
             Features.push_back("-" + Feature.split("-").second.str());
           else
