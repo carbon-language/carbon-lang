@@ -67,7 +67,8 @@ public:
                  bool isExternallyInitialized = false);
 
   ~GlobalVariable() override {
-    NumOperands = 1; // FIXME: needed by operator delete
+    // FIXME: needed by operator delete
+    setGlobalVariableNumOperands(1);
   }
 
   /// Provide fast operand accessors

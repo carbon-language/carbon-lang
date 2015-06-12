@@ -53,7 +53,8 @@ protected:
   User(Type *ty, unsigned vty, Use *OpList, unsigned NumOps)
       : Value(ty, vty) {
     setOperandList(OpList);
-    NumOperands = NumOps;
+    assert(NumOps < (1u << NumUserOperandsBits) && "Too many operands");
+    NumUserOperands = NumOps;
   }
 
   /// \brief Allocate the array of Uses, followed by a pointer
@@ -69,11 +70,12 @@ protected:
 public:
   ~User() override {
     // drop the hung off uses.
-    Use::zap(getOperandList(), getOperandList() + NumOperands, HasHungOffUses);
+    Use::zap(getOperandList(), getOperandList() + NumUserOperands,
+             HasHungOffUses);
     if (HasHungOffUses) {
       setOperandList(nullptr);
       // Reset NumOperands so User::operator delete() does the right thing.
-      NumOperands = 0;
+      NumUserOperands = 0;
     }
   }
   /// \brief Free memory allocated for User and Use objects.
@@ -107,26 +109,48 @@ public:
     return LegacyOperandList;
   }
   Value *getOperand(unsigned i) const {
-    assert(i < NumOperands && "getOperand() out of range!");
+    assert(i < NumUserOperands && "getOperand() out of range!");
     return getOperandList()[i];
   }
   void setOperand(unsigned i, Value *Val) {
-    assert(i < NumOperands && "setOperand() out of range!");
+    assert(i < NumUserOperands && "setOperand() out of range!");
     assert((!isa<Constant>((const Value*)this) ||
             isa<GlobalValue>((const Value*)this)) &&
            "Cannot mutate a constant with setOperand!");
     getOperandList()[i] = Val;
   }
   const Use &getOperandUse(unsigned i) const {
-    assert(i < NumOperands && "getOperandUse() out of range!");
+    assert(i < NumUserOperands && "getOperandUse() out of range!");
     return getOperandList()[i];
   }
   Use &getOperandUse(unsigned i) {
-    assert(i < NumOperands && "getOperandUse() out of range!");
+    assert(i < NumUserOperands && "getOperandUse() out of range!");
     return getOperandList()[i];
   }
 
-  unsigned getNumOperands() const { return NumOperands; }
+  unsigned getNumOperands() const { return NumUserOperands; }
+
+  /// Set the number of operands on a GlobalVariable.
+  ///
+  /// GlobalVariable always allocates space for a single operands, but
+  /// doesn't always use it.
+  ///
+  /// FIXME: As that the number of operands is used to find the start of
+  /// the allocated memory in operator delete, we need to always think we have
+  /// 1 operand before delete.
+  void setGlobalVariableNumOperands(unsigned NumOps) {
+    assert(NumOps <= 1 && "GlobalVariable can only have 0 or 1 operands");
+    NumUserOperands = NumOps;
+  }
+
+  /// \brief Subclasses with hung off uses need to manage the operand count
+  /// themselves.  In these instances, the operand count isn't used to find the
+  /// OperandList, so there's no issue in having the operand count change.
+  void setNumHungOffUseOperands(unsigned NumOps) {
+    assert(HasHungOffUses && "Must have hung off uses to use this method");
+    assert(NumOps < (1u << NumUserOperandsBits) && "Too many operands");
+    NumUserOperands = NumOps;
+  }
 
   // ---------------------------------------------------------------------------
   // Operand Iterator interface...
@@ -139,10 +163,10 @@ public:
   inline op_iterator       op_begin()       { return getOperandList(); }
   inline const_op_iterator op_begin() const { return getOperandList(); }
   inline op_iterator       op_end()         {
-    return getOperandList() + NumOperands;
+    return getOperandList() + NumUserOperands;
   }
   inline const_op_iterator op_end()   const {
-    return getOperandList() + NumOperands;
+    return getOperandList() + NumUserOperands;
   }
   inline op_range operands() {
     return op_range(op_begin(), op_end());

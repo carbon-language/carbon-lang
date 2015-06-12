@@ -2350,12 +2350,12 @@ public:
     assert(BB && "PHI node got a null basic block!");
     assert(getType() == V->getType() &&
            "All operands to PHI node must be the same type as the PHI node!");
-    if (NumOperands == ReservedSpace)
+    if (getNumOperands() == ReservedSpace)
       growOperands();  // Get more space!
     // Initialize some new operands.
-    ++NumOperands;
-    setIncomingValue(NumOperands - 1, V);
-    setIncomingBlock(NumOperands - 1, BB);
+    setNumHungOffUseOperands(getNumOperands() + 1);
+    setIncomingValue(getNumOperands() - 1, V);
+    setIncomingBlock(getNumOperands() - 1, BB);
   }
 
   /// removeIncomingValue - Remove an incoming value.  This is useful if a

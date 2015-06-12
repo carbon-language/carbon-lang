@@ -86,13 +86,14 @@ void User::growHungoffUses(unsigned NewNumUses, bool IsPhi) {
 //===----------------------------------------------------------------------===//
 
 void *User::operator new(size_t s, unsigned Us) {
+  assert(Us < (1u << NumUserOperandsBits) && "Too many operands");
   void *Storage = ::operator new(s + sizeof(Use) * Us);
   Use *Start = static_cast<Use*>(Storage);
   Use *End = Start + Us;
   User *Obj = reinterpret_cast<User*>(End);
   Obj->setOperandList(Start);
   Obj->HasHungOffUses = false;
-  Obj->NumOperands = Us;
+  Obj->NumUserOperands = Us;
   Use::initTags(Start, End);
   return Obj;
 }
@@ -103,7 +104,7 @@ void *User::operator new(size_t s, unsigned Us) {
 
 void User::operator delete(void *Usr) {
   User *Start = static_cast<User*>(Usr);
-  Use *Storage = static_cast<Use*>(Usr) - Start->NumOperands;
+  Use *Storage = static_cast<Use*>(Usr) - Start->NumUserOperands;
   // If there were hung-off uses, they will have been freed already and
   // NumOperands reset to 0, so here we just free the User itself.
   ::operator delete(Storage);
