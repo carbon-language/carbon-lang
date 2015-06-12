@@ -523,7 +523,7 @@ MCAsmBackend *llvm::createAArch64leAsmBackend(const Target &T,
                                               const MCRegisterInfo &MRI,
                                               const Triple &TheTriple,
                                               StringRef CPU) {
-  if (TheTriple.isOSDarwin())
+  if (TheTriple.isOSBinFormatMachO())
     return new DarwinAArch64AsmBackend(T, MRI);
 
   assert(TheTriple.isOSBinFormatELF() && "Expect either MachO or ELF target");

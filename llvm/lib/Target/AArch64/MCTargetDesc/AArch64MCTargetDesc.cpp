@@ -60,7 +60,7 @@ static MCRegisterInfo *createAArch64MCRegisterInfo(StringRef Triple) {
 static MCAsmInfo *createAArch64MCAsmInfo(const MCRegisterInfo &MRI,
                                          const Triple &TheTriple) {
   MCAsmInfo *MAI;
-  if (TheTriple.isOSDarwin())
+  if (TheTriple.isOSBinFormatMachO())
     MAI = new AArch64MCAsmInfoDarwin();
   else {
     assert(TheTriple.isOSBinFormatELF() && "Only expect Darwin or ELF");
