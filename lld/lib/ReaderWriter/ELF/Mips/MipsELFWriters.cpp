@@ -49,9 +49,6 @@ void MipsELFWriter<ELFT>::setELFHeader(ELFHeader<ELFT> &elfHeader) {
 
 template <class ELFT>
 void MipsELFWriter<ELFT>::finalizeMipsRuntimeAtomValues() {
-  if (!_ctx.isDynamic())
-    return;
-
   auto gotSection = _targetLayout.findOutputSection(".got");
   auto got = gotSection ? gotSection->virtualAddr() : 0;
   auto gp = gotSection ? got + _targetLayout.getGPOffset() : 0;
@@ -64,12 +61,11 @@ void MipsELFWriter<ELFT>::finalizeMipsRuntimeAtomValues() {
 template <class ELFT>
 std::unique_ptr<RuntimeFile<ELFT>> MipsELFWriter<ELFT>::createRuntimeFile() {
   auto file = llvm::make_unique<RuntimeFile<ELFT>>(_ctx, "Mips runtime file");
-  if (_ctx.isDynamic()) {
-    file->addAbsoluteAtom("_gp");
-    file->addAbsoluteAtom("_gp_disp");
-    file->addAbsoluteAtom("__gnu_local_gp");
+  file->addAbsoluteAtom("_gp");
+  file->addAbsoluteAtom("_gp_disp");
+  file->addAbsoluteAtom("__gnu_local_gp");
+  if (_ctx.isDynamic())
     file->addAtom(*new (file->allocator()) MipsDynamicAtom(*file));
-  }
   return file;
 }
 
