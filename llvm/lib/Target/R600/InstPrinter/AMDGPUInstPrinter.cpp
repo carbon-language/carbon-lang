@@ -424,7 +424,7 @@ void AMDGPUInstPrinter::printLiteral(const MCInst *MI, unsigned OpNo,
 
 void AMDGPUInstPrinter::printLast(const MCInst *MI, unsigned OpNo,
                                   raw_ostream &O) {
-  printIfSet(MI, OpNo, O.indent(25 - O.GetNumBytesInBuffer()), "*", " ");
+  printIfSet(MI, OpNo, O, "*", " ");
 }
 
 void AMDGPUInstPrinter::printNeg(const MCInst *MI, unsigned OpNo,
