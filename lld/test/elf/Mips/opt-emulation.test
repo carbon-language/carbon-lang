@@ -8,7 +8,7 @@
 # LE-O32:      DataEncoding: LittleEndian (0x1)
 # LE-O32:      FileVersion: 1
 # LE-O32:      OS/ABI: SystemV (0x0)
-# LE-O32:      ABIVersion: 0
+# LE-O32:      ABIVersion: 1
 # LE-O32:      Machine: EM_MIPS (0x8)
 # LE-O32:      Version: 1
 # LE-O32:      Flags [ (0x70001005)

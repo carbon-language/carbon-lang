@@ -434,6 +434,17 @@ template <class ELFT> bool MipsAbiInfoHandler<ELFT>::isMipsR6() const {
   return _abiFlags->_isa == Arch32r6 || _abiFlags->_isa == Arch64r6;
 }
 
+template <class ELFT> bool MipsAbiInfoHandler<ELFT>::isFp64() const {
+  assert(_abiFlags.hasValue());
+  return _abiFlags->_fpAbi == Val_GNU_MIPS_ABI_FP_64 ||
+         _abiFlags->_fpAbi == Val_GNU_MIPS_ABI_FP_64A;
+}
+
+template <class ELFT> bool MipsAbiInfoHandler<ELFT>::isCPicOnly() const {
+  assert(_abiFlags.hasValue());
+  return _abiFlags->_isCPic && !_abiFlags->_isPic;
+}
+
 template <class ELFT> uint32_t MipsAbiInfoHandler<ELFT>::getFlags() const {
   std::lock_guard<std::mutex> lock(_mutex);
   uint32_t flags = 0;

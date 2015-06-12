@@ -36,11 +36,14 @@ void MipsELFWriter<ELFT>::setELFHeader(ELFHeader<ELFT> &elfHeader) {
   elfHeader.e_version(1);
   elfHeader.e_ident(llvm::ELF::EI_VERSION, llvm::ELF::EV_CURRENT);
   elfHeader.e_ident(llvm::ELF::EI_OSABI, llvm::ELF::ELFOSABI_NONE);
-  if (_targetLayout.findOutputSection(".got.plt"))
-    elfHeader.e_ident(llvm::ELF::EI_ABIVERSION, 1);
-  else
-    elfHeader.e_ident(llvm::ELF::EI_ABIVERSION, 0);
 
+  unsigned char abiVer = 0;
+  if (_ctx.getOutputELFType() == ET_EXEC && _abiInfo.isCPicOnly())
+    abiVer = 1;
+  if (_abiInfo.isFp64())
+    abiVer = 3;
+
+  elfHeader.e_ident(llvm::ELF::EI_ABIVERSION, abiVer);
   elfHeader.e_flags(_abiInfo.getFlags());
 }
 
