@@ -521,6 +521,18 @@ TEST_F(FormatTestJS, ReturnStatements) {
                "}");
 }
 
+TEST_F(FormatTestJS, AutomaticSemicolonInsertion) {
+  // The following statements must not wrap, as otherwise the program meaning
+  // would change due to automatic semicolon insertion.
+  // See http://www.ecma-international.org/ecma-262/5.1/#sec-7.9.1.
+  verifyFormat("return aaaaa;", getGoogleJSStyleWithColumns(10));
+  verifyFormat("continue aaaaa;", getGoogleJSStyleWithColumns(10));
+  verifyFormat("break aaaaa;", getGoogleJSStyleWithColumns(10));
+  verifyFormat("throw aaaaa;", getGoogleJSStyleWithColumns(10));
+  verifyFormat("aaaaaaaaa++;", getGoogleJSStyleWithColumns(10));
+  verifyFormat("aaaaaaaaa--;", getGoogleJSStyleWithColumns(10));
+}
+
 TEST_F(FormatTestJS, ClosureStyleCasts) {
   verifyFormat("var x = /** @type {foo} */ (bar);");
 }
