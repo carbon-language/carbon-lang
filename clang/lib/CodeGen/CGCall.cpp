@@ -1515,8 +1515,10 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
 	  else if (Feature.startswith("tune="))
 	    // We don't support cpu tuning this way currently.
 	    ;
-	  else
-	    Features.push_back("+" + Feature.str());
+	  else if (Feature.startswith("mno-"))
+            Features.push_back("-" + Feature.split("-").second.str());
+          else
+            Features.push_back("+" + Feature.str());
 	}
       }
     }
