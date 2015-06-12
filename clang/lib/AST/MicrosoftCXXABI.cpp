@@ -179,8 +179,9 @@ MSVtorDispAttr::Mode CXXRecordDecl::getMSVtorDispMode() const {
 //     // slot.
 //     void *FunctionPointerOrVirtualThunk;
 //
-//     // An offset to add to the address of the vbtable pointer after (possibly)
-//     // selecting the virtual base but before resolving and calling the function.
+//     // An offset to add to the address of the vbtable pointer after
+//     // (possibly) selecting the virtual base but before resolving and calling
+//     // the function.
 //     // Only needed if the class has any virtual bases or bases at a non-zero
 //     // offset.
 //     int NonVirtualBaseAdjustment;
