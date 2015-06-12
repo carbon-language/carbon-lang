@@ -33,6 +33,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/IR/CallSite.h"
 #include "llvm/IR/DataLayout.h"
+#include "llvm/IR/DebugInfo.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/InlineAsm.h"
@@ -385,9 +386,14 @@ void SanitizerCoverageModule::InjectCoverageAtBlock(Function &F, BasicBlock &BB,
   }
 
   bool IsEntryBB = &BB == &F.getEntryBlock();
-  DebugLoc EntryLoc = IsEntryBB && IP->getDebugLoc()
-                          ? IP->getDebugLoc().getFnDebugLoc()
-                          : IP->getDebugLoc();
+  DebugLoc EntryLoc;
+  if (IsEntryBB) {
+    if (auto SP = getDISubprogram(&F))
+      EntryLoc = DebugLoc::get(SP->getScopeLine(), 0, SP);
+  } else {
+    EntryLoc = IP->getDebugLoc();
+  }
+
   IRBuilder<> IRB(IP);
   IRB.SetCurrentDebugLocation(EntryLoc);
   SmallVector<Value *, 1> Indices;
