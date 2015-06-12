@@ -1725,7 +1725,8 @@ void UnwrappedLineParser::parseJavaScriptEs6ImportExport() {
     return;
   }
 
-  if (FormatTok->isOneOf(tok::kw_const, tok::kw_class, Keywords.kw_var))
+  if (FormatTok->isOneOf(tok::kw_const, tok::kw_class, tok::kw_enum,
+                         Keywords.kw_var))
     return; // Fall through to parsing the corresponding structure.
 
   if (FormatTok->is(tok::l_brace)) {

@@ -747,6 +747,11 @@ TEST_F(FormatTestJS, Modules) {
                "  a: 1,\n"
                "  b: 2\n"
                "};");
+  verifyFormat("export enum Foo {\n"
+               "  BAR,\n"
+               "  // adsdasd\n"
+               "  BAZ\n"
+               "}");
 }
 
 TEST_F(FormatTestJS, TemplateStrings) {
