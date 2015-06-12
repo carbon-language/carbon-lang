@@ -24,8 +24,8 @@ CallGraph::CallGraph(Module &M)
     : M(M), Root(nullptr), ExternalCallingNode(getOrInsertFunction(nullptr)),
       CallsExternalNode(new CallGraphNode(nullptr)) {
   // Add every function to the call graph.
-  for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
-    addToCallGraph(I);
+  for (Function &F : M)
+    addToCallGraph(&F);
 
   // If we didn't find a main function, use the external call graph node
   if (!Root)
@@ -40,13 +40,11 @@ CallGraph::~CallGraph() {
 // Reset all node's use counts to zero before deleting them to prevent an
 // assertion from firing.
 #ifndef NDEBUG
-  for (FunctionMapTy::iterator I = FunctionMap.begin(), E = FunctionMap.end();
-       I != E; ++I)
-    I->second->allReferencesDropped();
+  for (auto &I : FunctionMap)
+    I.second->allReferencesDropped();
 #endif
-  for (FunctionMapTy::iterator I = FunctionMap.begin(), E = FunctionMap.end();
-       I != E; ++I)
-    delete I->second;
+  for (auto &I : FunctionMap)
+    delete I.second;
 }
 
 void CallGraph::addToCallGraph(Function *F) {
