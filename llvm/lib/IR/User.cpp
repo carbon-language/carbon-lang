@@ -41,6 +41,7 @@ void User::replaceUsesOfWith(Value *From, Value *To) {
 //===----------------------------------------------------------------------===//
 
 void User::allocHungoffUses(unsigned N, bool IsPhi) {
+  assert(HasHungOffUses && "alloc must have hung off uses");
   // Allocate the array of Uses, followed by a pointer (with bottom bit set) to
   // the User.
   size_t size = N * sizeof(Use) + sizeof(Use::UserRef);
@@ -50,8 +51,6 @@ void User::allocHungoffUses(unsigned N, bool IsPhi) {
   Use *End = Begin + N;
   (void) new(End) Use::UserRef(const_cast<User*>(this), 1);
   setOperandList(Use::initTags(Begin, End));
-  // Tag this operand list as being a hung off.
-  HasHungOffUses = true;
 }
 
 void User::growHungoffUses(unsigned NewNumUses, bool IsPhi) {
@@ -85,9 +84,9 @@ void User::growHungoffUses(unsigned NewNumUses, bool IsPhi) {
 //                         User operator new Implementations
 //===----------------------------------------------------------------------===//
 
-void *User::operator new(size_t s, unsigned Us) {
+void *User::operator new(size_t Size, unsigned Us) {
   assert(Us < (1u << NumUserOperandsBits) && "Too many operands");
-  void *Storage = ::operator new(s + sizeof(Use) * Us);
+  void *Storage = ::operator new(Size + sizeof(Use) * Us);
   Use *Start = static_cast<Use*>(Storage);
   Use *End = Start + Us;
   User *Obj = reinterpret_cast<User*>(End);
@@ -95,6 +94,15 @@ void *User::operator new(size_t s, unsigned Us) {
   Obj->HasHungOffUses = false;
   Obj->NumUserOperands = Us;
   Use::initTags(Start, End);
+  return Obj;
+}
+
+void *User::operator new(size_t Size) {
+  void *Storage = ::operator new(Size);
+  User *Obj = reinterpret_cast<User*>(Storage);
+  Obj->setOperandList(nullptr);
+  Obj->HasHungOffUses = true;
+  Obj->NumUserOperands = 0;
   return Obj;
 }
 

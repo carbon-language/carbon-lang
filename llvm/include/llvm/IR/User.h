@@ -34,7 +34,6 @@ struct OperandTraits;
 
 class User : public Value {
   User(const User &) = delete;
-  void *operator new(size_t) = delete;
   template <unsigned>
   friend struct HungoffOperandTraits;
   virtual void anchor();
@@ -48,7 +47,16 @@ protected:
   Use *LegacyOperandList;
 
 protected:
-  void *operator new(size_t s, unsigned Us);
+  /// Allocate a User with an operand pointer co-allocated.
+  ///
+  /// This is used for subclasses which need to allocate a variable number
+  /// of operands, ie, 'hung off uses'.
+  void *operator new(size_t Size);
+
+  /// Allocate a User with the operands co-allocated.
+  ///
+  /// This is used for subclasses which have a fixed number of operands.
+  void *operator new(size_t Size, unsigned Us);
 
   User(Type *ty, unsigned vty, Use *OpList, unsigned NumOps)
       : Value(ty, vty) {
