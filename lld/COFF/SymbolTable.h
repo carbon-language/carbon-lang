@@ -99,7 +99,7 @@ private:
   llvm::BumpPtrAllocator Alloc;
 };
 
-} // namespace pecoff
+} // namespace coff
 } // namespace lld
 
 #endif

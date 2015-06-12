@@ -104,7 +104,7 @@ private:
   std::vector<std::unique_ptr<Chunk>> Chunks;
 };
 
-} // namespace pecoff
+} // namespace coff
 } // namespace lld
 
 #endif
