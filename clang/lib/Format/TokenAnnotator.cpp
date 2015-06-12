@@ -1081,7 +1081,7 @@ private:
     // there is also an identifier before the ().
     else if (LeftOfParens && Tok.Next &&
              (LeftOfParens->Tok.getIdentifierInfo() == nullptr ||
-              LeftOfParens->is(tok::kw_return)) &&
+              LeftOfParens->isOneOf(tok::kw_return, tok::kw_case)) &&
              !LeftOfParens->isOneOf(TT_OverloadedOperator, tok::at,
                                     TT_TemplateCloser)) {
       if (Tok.Next->isOneOf(tok::identifier, tok::numeric_constant)) {
