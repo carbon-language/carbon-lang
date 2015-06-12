@@ -53,6 +53,7 @@
 #include <cassert>
 #include <cstring>
 #include <iterator>
+#include <string>
 #include <utility>
 
 namespace llvm {
