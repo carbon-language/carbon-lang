@@ -184,10 +184,7 @@ struct Elf_Sym_Impl : Elf_Sym_Base<ELFT> {
   bool isCommon() const {
     return getType() == ELF::STT_COMMON || st_shndx == ELF::SHN_COMMON;
   }
-  bool isDefined() const {
-    return !isUndefined() &&
-           !(st_shndx >= ELF::SHN_LORESERVE && st_shndx < ELF::SHN_ABS);
-  }
+  bool isDefined() const { return !isUndefined(); }
   bool isProcessorSpecific() const {
     return st_shndx >= ELF::SHN_LOPROC && st_shndx <= ELF::SHN_HIPROC;
   }
@@ -195,7 +192,7 @@ struct Elf_Sym_Impl : Elf_Sym_Base<ELFT> {
     return st_shndx >= ELF::SHN_LOOS && st_shndx <= ELF::SHN_HIOS;
   }
   bool isReserved() const {
-    return st_shndx > ELF::SHN_HIOS && st_shndx < ELF::SHN_ABS;
+    return st_shndx >= ELF::SHN_LORESERVE && st_shndx <= ELF::SHN_HIRESERVE;
   }
   bool isUndefined() const { return st_shndx == ELF::SHN_UNDEF; }
 };
