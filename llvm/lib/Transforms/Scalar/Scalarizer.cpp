@@ -636,7 +636,9 @@ bool Scalarizer::visitStoreInst(StoreInst &SI) {
 // Delete the instructions that we scalarized.  If a full vector result
 // is still needed, recreate it using InsertElements.
 bool Scalarizer::finish() {
-  if (Gathered.empty())
+  // The presence of data in Gathered or Scattered indicates changes
+  // made to the Function.
+  if (Gathered.empty() && Scattered.empty())
     return false;
   for (GatherList::iterator GMI = Gathered.begin(), GME = Gathered.end();
        GMI != GME; ++GMI) {
