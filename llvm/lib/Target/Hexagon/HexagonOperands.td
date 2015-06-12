@@ -461,6 +461,46 @@ let PrintMethod = "printExtOperand" in {
   def u6_3Ext : Operand<i32>;
 }
 
+def s10ExtPred  : PatLeaf<(i32 imm), [{
+  int64_t v = (int64_t)N->getSExtValue();
+  if (isInt<10>(v))
+    return true;
+
+  // Return true if extending this immediate is profitable and the value
+  // can fit in a 32-bit signed field.
+  return isConstExtProfitable(Node) && isInt<32>(v);
+}]>;
+
+def s8ExtPred  : PatLeaf<(i32 imm), [{
+  int64_t v = (int64_t)N->getSExtValue();
+  if (isInt<8>(v))
+    return true;
+
+  // Return true if extending this immediate is profitable and the value
+  // can fit in a 32-bit signed field.
+  return isConstExtProfitable(Node) && isInt<32>(v);
+}]>;
+
+def u8ExtPred  : PatLeaf<(i32 imm), [{
+  int64_t v = (int64_t)N->getSExtValue();
+  if (isUInt<8>(v))
+    return true;
+
+  // Return true if extending this immediate is profitable and the value
+  // can fit in a 32-bit unsigned field.
+  return isConstExtProfitable(Node) && isUInt<32>(v);
+}]>;
+
+def u9ExtPred  : PatLeaf<(i32 imm), [{
+  int64_t v = (int64_t)N->getSExtValue();
+  if (isUInt<9>(v))
+    return true;
+
+  // Return true if extending this immediate is profitable and the value
+  // can fit in a 32-bit unsigned field.
+  return isConstExtProfitable(Node) && isUInt<32>(v);
+}]>;
+
 
 // This complex pattern exists only to create a machine instruction operand
 // of type "frame index". There doesn't seem to be a way to do that directly
