@@ -291,44 +291,40 @@ ValueEnumerator::ValueEnumerator(const Module &M,
     UseListOrders = predictUseListOrder(M);
 
   // Enumerate the global variables.
-  for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
-       I != E; ++I)
-    EnumerateValue(I);
+  for (const GlobalVariable &GV : M.globals())
+    EnumerateValue(&GV);
 
   // Enumerate the functions.
-  for (Module::const_iterator I = M.begin(), E = M.end(); I != E; ++I) {
-    EnumerateValue(I);
-    EnumerateAttributes(cast<Function>(I)->getAttributes());
+  for (const Function & F : M) {
+    EnumerateValue(&F);
+    EnumerateAttributes(F.getAttributes());
   }
 
   // Enumerate the aliases.
-  for (Module::const_alias_iterator I = M.alias_begin(), E = M.alias_end();
-       I != E; ++I)
-    EnumerateValue(I);
+  for (const GlobalAlias &GA : M.aliases())
+    EnumerateValue(&GA);
 
   // Remember what is the cutoff between globalvalue's and other constants.
   unsigned FirstConstant = Values.size();
 
   // Enumerate the global variable initializers.
-  for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
-       I != E; ++I)
-    if (I->hasInitializer())
-      EnumerateValue(I->getInitializer());
+  for (const GlobalVariable &GV : M.globals())
+    if (GV.hasInitializer())
+      EnumerateValue(GV.getInitializer());
 
   // Enumerate the aliasees.
-  for (Module::const_alias_iterator I = M.alias_begin(), E = M.alias_end();
-       I != E; ++I)
-    EnumerateValue(I->getAliasee());
+  for (const GlobalAlias &GA : M.aliases())
+    EnumerateValue(GA.getAliasee());
 
   // Enumerate the prefix data constants.
-  for (Module::const_iterator I = M.begin(), E = M.end(); I != E; ++I)
-    if (I->hasPrefixData())
-      EnumerateValue(I->getPrefixData());
+  for (const Function &F : M)
+    if (F.hasPrefixData())
+      EnumerateValue(F.getPrefixData());
 
   // Enumerate the prologue data constants.
-  for (Module::const_iterator I = M.begin(), E = M.end(); I != E; ++I)
-    if (I->hasPrologueData())
-      EnumerateValue(I->getPrologueData());
+  for (const Function &F : M)
+    if (F.hasPrologueData())
+      EnumerateValue(F.getPrologueData());
 
   // Enumerate the metadata type.
   //
