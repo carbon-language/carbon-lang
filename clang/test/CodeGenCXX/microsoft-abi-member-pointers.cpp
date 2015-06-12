@@ -678,6 +678,17 @@ static_assert(sizeof(int A::*) == 12, "");
 // CHECK-LABEL: define void @"\01?test@pr20007_pragma2@@YAXXZ"
 }
 
+namespace pr23823 {
+struct Base { void Method(); };
+struct Child : Base {};
+void use(void (Child::*const &)());
+void f() { use(&Child::Method); }
+#pragma pointers_to_members(full_generality, virtual_inheritance)
+static_assert(sizeof(int Base::*) == 4, "");
+static_assert(sizeof(int Child::*) == 4, "");
+#pragma pointers_to_members(best_case)
+}
+
 namespace pr19987 {
 template <typename T>
 struct S {
