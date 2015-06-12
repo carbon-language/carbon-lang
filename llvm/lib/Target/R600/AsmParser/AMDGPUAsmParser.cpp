@@ -376,6 +376,10 @@ public:
   OperandMatchResultTy parseSWaitCntOps(OperandVector &Operands);
   OperandMatchResultTy parseSOppBrTarget(OperandVector &Operands);
 
+  OperandMatchResultTy parseFlatOptionalOps(OperandVector &Operands);
+  OperandMatchResultTy parseFlatAtomicOptionalOps(OperandVector &Operands);
+  void cvtFlat(MCInst &Inst, const OperandVector &Operands);
+
   void cvtMubuf(MCInst &Inst, const OperandVector &Operands);
   OperandMatchResultTy parseOffset(OperandVector &Operands);
   OperandMatchResultTy parseMubufOptionalOps(OperandVector &Operands);
@@ -1089,6 +1093,67 @@ AMDGPUAsmParser::parseSOppBrTarget(OperandVector &Operands) {
       Parser.Lex();
       return MatchOperand_Success;
   }
+}
+
+//===----------------------------------------------------------------------===//
+// flat
+//===----------------------------------------------------------------------===//
+
+static const OptionalOperand FlatOptionalOps [] = {
+  {"glc",    AMDGPUOperand::ImmTyGLC, true, 0, nullptr},
+  {"slc",    AMDGPUOperand::ImmTySLC, true, 0, nullptr},
+  {"tfe",    AMDGPUOperand::ImmTyTFE, true, 0, nullptr}
+};
+
+static const OptionalOperand FlatAtomicOptionalOps [] = {
+  {"slc",    AMDGPUOperand::ImmTySLC, true, 0, nullptr},
+  {"tfe",    AMDGPUOperand::ImmTyTFE, true, 0, nullptr}
+};
+
+AMDGPUAsmParser::OperandMatchResultTy
+AMDGPUAsmParser::parseFlatOptionalOps(OperandVector &Operands) {
+  return parseOptionalOps(FlatOptionalOps, Operands);
+}
+
+AMDGPUAsmParser::OperandMatchResultTy
+AMDGPUAsmParser::parseFlatAtomicOptionalOps(OperandVector &Operands) {
+  return parseOptionalOps(FlatAtomicOptionalOps, Operands);
+}
+
+void AMDGPUAsmParser::cvtFlat(MCInst &Inst,
+                               const OperandVector &Operands) {
+  std::map<AMDGPUOperand::ImmTy, unsigned> OptionalIdx;
+
+  for (unsigned i = 1, e = Operands.size(); i != e; ++i) {
+    AMDGPUOperand &Op = ((AMDGPUOperand &)*Operands[i]);
+
+    // Add the register arguments
+    if (Op.isReg()) {
+      Op.addRegOperands(Inst, 1);
+      continue;
+    }
+
+    // Handle 'glc' token which is sometimes hard-coded into the
+    // asm string.  There are no MCInst operands for these.
+    if (Op.isToken())
+      continue;
+
+    // Handle optional arguments
+    OptionalIdx[Op.getImmTy()] = i;
+
+  }
+
+  // flat atomic instructions don't have a glc argument.
+  if (OptionalIdx.count(AMDGPUOperand::ImmTyGLC)) {
+    unsigned GLCIdx = OptionalIdx[AMDGPUOperand::ImmTyGLC];
+    ((AMDGPUOperand &)*Operands[GLCIdx]).addImmOperands(Inst, 1);
+  }
+
+  unsigned SLCIdx = OptionalIdx[AMDGPUOperand::ImmTySLC];
+  unsigned TFEIdx = OptionalIdx[AMDGPUOperand::ImmTyTFE];
+
+  ((AMDGPUOperand &)*Operands[SLCIdx]).addImmOperands(Inst, 1);
+  ((AMDGPUOperand &)*Operands[TFEIdx]).addImmOperands(Inst, 1);
 }
 
 //===----------------------------------------------------------------------===//

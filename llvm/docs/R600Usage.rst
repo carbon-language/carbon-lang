@@ -24,6 +24,11 @@ DS Instructions
 ---------------
 All DS instructions are supported.
 
+FLAT Instructions
+------------------
+These instructions are only present in the Sea Islands and Volcanic Islands
+instruction set.  All FLAT instructions are supported for these architectures
+
 MUBUF Instructions
 ------------------
 All non-atomic MUBUF instructions are supported.

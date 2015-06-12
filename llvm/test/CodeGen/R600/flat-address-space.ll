@@ -8,7 +8,7 @@
 
 
 ; CHECK-LABEL: {{^}}branch_use_flat_i32:
-; CHECK: flat_store_dword {{v[0-9]+}}, {{v\[[0-9]+:[0-9]+\]}}, [M0, FLAT_SCRATCH]
+; CHECK: flat_store_dword {{v[0-9]+}}, {{v\[[0-9]+:[0-9]+\]}}
 ; CHECK: s_endpgm
 define void @branch_use_flat_i32(i32 addrspace(1)* noalias %out, i32 addrspace(1)* %gptr, i32 addrspace(3)* %lptr, i32 %x, i32 %c) #0 {
 entry:

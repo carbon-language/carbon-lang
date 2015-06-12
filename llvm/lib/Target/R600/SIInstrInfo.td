@@ -390,26 +390,37 @@ class GDSBaseMatchClass <string parser> : AsmOperandClass {
 def GDSMatchClass : GDSBaseMatchClass <"parseDSOptionalOps">;
 def GDS01MatchClass : GDSBaseMatchClass <"parseDSOff01OptionalOps">;
 
-def GLCMatchClass : AsmOperandClass {
-  let Name = "GLC";
+class GLCBaseMatchClass <string parser> : AsmOperandClass {
+  let Name = "GLC"#parser;
   let PredicateMethod = "isImm";
-  let ParserMethod = "parseMubufOptionalOps";
+  let ParserMethod = parser; 
   let RenderMethod = "addImmOperands";
 }
 
-def SLCMatchClass : AsmOperandClass {
-  let Name = "SLC";
+def GLCMubufMatchClass : GLCBaseMatchClass <"parseMubufOptionalOps">;
+def GLCFlatMatchClass : GLCBaseMatchClass <"parseFlatOptionalOps">;
+
+class SLCBaseMatchClass <string parser> : AsmOperandClass {
+  let Name = "SLC"#parser;
   let PredicateMethod = "isImm";
-  let ParserMethod = "parseMubufOptionalOps";
+  let ParserMethod = parser;
   let RenderMethod = "addImmOperands";
 }
 
-def TFEMatchClass : AsmOperandClass {
-  let Name = "TFE";
+def SLCMubufMatchClass : SLCBaseMatchClass <"parseMubufOptionalOps">;
+def SLCFlatMatchClass : SLCBaseMatchClass <"parseFlatOptionalOps">;
+def SLCFlatAtomicMatchClass : SLCBaseMatchClass <"parseFlatAtomicOptionalOps">;
+
+class TFEBaseMatchClass <string parser> : AsmOperandClass {
+  let Name = "TFE"#parser;
   let PredicateMethod = "isImm";
-  let ParserMethod = "parseMubufOptionalOps";
+  let ParserMethod = parser;
   let RenderMethod = "addImmOperands";
 }
+
+def TFEMubufMatchClass : TFEBaseMatchClass <"parseMubufOptionalOps">;
+def TFEFlatMatchClass : TFEBaseMatchClass <"parseFlatOptionalOps">;
+def TFEFlatAtomicMatchClass : TFEBaseMatchClass <"parseFlatAtomicOptionalOps">;
 
 def OModMatchClass : AsmOperandClass {
   let Name = "OMod";
@@ -463,18 +474,31 @@ def gds : gds_base <GDSMatchClass>;
 
 def gds01 : gds_base <GDS01MatchClass>;
 
-def glc : Operand <i1> {
+class glc_base <AsmOperandClass mc> : Operand <i1> {
   let PrintMethod = "printGLC";
-  let ParserMatchClass = GLCMatchClass;
+  let ParserMatchClass = mc;
 }
-def slc : Operand <i1> {
+
+def glc : glc_base <GLCMubufMatchClass>;
+def glc_flat : glc_base <GLCFlatMatchClass>;
+
+class slc_base <AsmOperandClass mc> : Operand <i1> {
   let PrintMethod = "printSLC";
-  let ParserMatchClass = SLCMatchClass;
+  let ParserMatchClass = mc;
 }
-def tfe : Operand <i1> {
+
+def slc : slc_base <SLCMubufMatchClass>;
+def slc_flat : slc_base <SLCFlatMatchClass>;
+def slc_flat_atomic : slc_base <SLCFlatAtomicMatchClass>;
+
+class tfe_base <AsmOperandClass mc> : Operand <i1> {
   let PrintMethod = "printTFE";
-  let ParserMatchClass = TFEMatchClass;
+  let ParserMatchClass = mc;
 }
+
+def tfe : tfe_base <TFEMubufMatchClass>;
+def tfe_flat : tfe_base <TFEFlatMatchClass>;
+def tfe_flat_atomic : tfe_base <TFEFlatAtomicMatchClass>;
 
 def omod : Operand <i32> {
   let PrintMethod = "printOModSI";
@@ -2335,28 +2359,46 @@ multiclass MUBUF_Store_Helper <mubuf op, string name, RegisterClass vdataClass,
 
 class FLAT_Load_Helper <bits<7> op, string asm, RegisterClass regClass> :
       FLAT <op, (outs regClass:$vdst),
-                (ins VReg_64:$addr),
-            asm#" $vdst, $addr, [M0, FLAT_SCRATCH]", []> {
-  let glc = 0;
-  let slc = 0;
-  let tfe = 0;
+                (ins VReg_64:$addr, glc_flat:$glc, slc_flat:$slc, tfe_flat:$tfe),
+            asm#" $vdst, $addr"#"$glc"#"$slc"#"$tfe", []> {
   let data = 0;
   let mayLoad = 1;
 }
 
 class FLAT_Store_Helper <bits<7> op, string name, RegisterClass vdataClass> :
-      FLAT <op, (outs), (ins vdataClass:$data, VReg_64:$addr),
-          name#" $data, $addr, [M0, FLAT_SCRATCH]",
+      FLAT <op, (outs), (ins vdataClass:$data, VReg_64:$addr,
+                             glc_flat:$glc, slc_flat:$slc, tfe_flat:$tfe),
+          name#" $data, $addr"#"$glc"#"$slc"#"$tfe",
          []> {
 
   let mayLoad = 0;
   let mayStore = 1;
 
   // Encoding
-  let glc = 0;
-  let slc = 0;
-  let tfe = 0;
   let vdst = 0;
+}
+
+multiclass FLAT_ATOMIC <bits<7> op, string name, RegisterClass vdst_rc,
+                        RegisterClass data_rc = vdst_rc> {
+
+  let mayLoad = 1, mayStore = 1 in {
+    def "" : FLAT <op, (outs),
+                  (ins VReg_64:$addr, data_rc:$data, slc_flat_atomic:$slc,
+                       tfe_flat_atomic:$tfe),
+                   name#" $addr, $data"#"$slc"#"$tfe", []>,
+             AtomicNoRet <NAME, 0> {
+      let glc = 0;
+      let vdst = 0;
+    }
+
+    def _RTN : FLAT <op, (outs vdst_rc:$vdst),
+                     (ins VReg_64:$addr, data_rc:$data, slc_flat_atomic:$slc,
+                          tfe_flat_atomic:$tfe),
+                     name#" $vdst, $addr, $data glc"#"$slc"#"$tfe", []>,
+               AtomicNoRet <NAME, 1> {
+      let glc = 1;
+    }
+  }
 }
 
 class MIMG_Mask <string op, int channels> {
