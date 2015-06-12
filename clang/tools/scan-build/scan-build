@@ -766,7 +766,7 @@ ENDTEXT
           my $x = shift @fname;
           print OUT $x;
           if ($#fname >= 0) {
-            print OUT "<span class=\"W\"> </span>/";
+            print OUT "/";
           }
         }
       }
