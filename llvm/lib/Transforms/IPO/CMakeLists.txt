@@ -3,7 +3,6 @@ add_llvm_library(LLVMipo
   BarrierNoopPass.cpp
   ConstantMerge.cpp
   DeadArgumentElimination.cpp
-  ElimAvailExtern.cpp
   ExtractGV.cpp
   FunctionAttrs.cpp
   GlobalDCE.cpp
