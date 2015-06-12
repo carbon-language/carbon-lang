@@ -2397,6 +2397,20 @@ static void handleSectionAttr(Sema &S, Decl *D, const AttributeList &Attr) {
     D->addAttr(NewAttr);
 }
 
+static void handleTargetAttr(Sema &S, Decl *D, const AttributeList &Attr) {
+  // TODO: Validation should use a backend target library that specifies
+  // the allowable subtarget features and cpus. We could use something like a
+  // TargetCodeGenInfo hook here to do validation.
+  StringRef Str;
+  SourceLocation LiteralLoc;
+  if (!S.checkStringLiteralArgumentAttr(Attr, 0, Str, &LiteralLoc))
+    return;
+  unsigned Index = Attr.getAttributeSpellingListIndex();
+  TargetAttr *NewAttr =
+      ::new (S.Context) TargetAttr(Attr.getRange(), S.Context, Str, Index);
+  D->addAttr(NewAttr);
+}
+
 
 static void handleCleanupAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   VarDecl *VD = cast<VarDecl>(D);
@@ -4715,6 +4729,9 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
     break;
   case AttributeList::AT_Section:
     handleSectionAttr(S, D, Attr);
+    break;
+  case AttributeList::AT_Target:
+    handleTargetAttr(S, D, Attr);
     break;
   case AttributeList::AT_Unavailable:
     handleAttrWithMessage<UnavailableAttr>(S, D, Attr);

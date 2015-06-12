@@ -1250,6 +1250,14 @@ def Pascal : InheritableAttr {
   let Documentation = [Undocumented];
 }
 
+def Target : InheritableAttr {
+  let Spellings = [GCC<"target">];
+  let Args = [StringArgument<"features">];
+  let Subjects =
+      SubjectList<[Function], ErrorDiag, "ExpectedFunctionMethodOrClass">;
+  let Documentation = [Undocumented];
+}
+
 def TransparentUnion : InheritableAttr {
   let Spellings = [GCC<"transparent_union">];
 //  let Subjects = SubjectList<[Record, TypedefName]>;
