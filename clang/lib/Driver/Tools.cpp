@@ -850,7 +850,7 @@ static std::string getAArch64TargetCPU(const ArgList &Args) {
     CPU = A->getValue();
   } else if ((A = Args.getLastArg(options::OPT_mcpu_EQ))) {
     StringRef Mcpu = A->getValue();
-    CPU = Mcpu.split("+").first;
+    CPU = Mcpu.split("+").first.lower();
   }
 
   // Handle CPU name is 'native'.
@@ -1893,7 +1893,8 @@ getAArch64ArchFeaturesFromMcpu(const Driver &D, StringRef Mcpu,
                                const ArgList &Args,
                                std::vector<const char *> &Features) {
   StringRef CPU;
-  if (!DecodeAArch64Mcpu(D, Mcpu, CPU, Features))
+  std::string McpuLowerCase = Mcpu.lower();
+  if (!DecodeAArch64Mcpu(D, McpuLowerCase, CPU, Features))
     return false;
 
   return true;
@@ -1919,7 +1920,8 @@ getAArch64MicroArchFeaturesFromMcpu(const Driver &D, StringRef Mcpu,
                                     std::vector<const char *> &Features) {
   StringRef CPU;
   std::vector<const char *> DecodedFeature;
-  if (!DecodeAArch64Mcpu(D, Mcpu, CPU, DecodedFeature))
+  std::string McpuLowerCase = Mcpu.lower();
+  if (!DecodeAArch64Mcpu(D, McpuLowerCase, CPU, DecodedFeature))
     return false;
 
   return getAArch64MicroArchFeaturesFromMtune(D, CPU, Args, Features);
