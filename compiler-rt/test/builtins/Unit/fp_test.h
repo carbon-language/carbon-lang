@@ -38,6 +38,7 @@ static inline double fromRep64(uint64_t x)
     return ret;
 }
 
+#if __LDBL_MANT_DIG__ == 113
 static inline long double fromRep128(uint64_t hi, uint64_t lo)
 {
     __uint128_t x = ((__uint128_t)hi << 64) + lo;
@@ -45,6 +46,7 @@ static inline long double fromRep128(uint64_t hi, uint64_t lo)
     memcpy(&ret, &x, 16);
     return ret;
 }
+#endif
 
 static inline uint16_t toRep16(uint16_t x)
 {
@@ -65,12 +67,14 @@ static inline uint64_t toRep64(double x)
     return ret;
 }
 
+#if __LDBL_MANT_DIG__ == 113
 static inline __uint128_t toRep128(long double x)
 {
     __uint128_t ret;
     memcpy(&ret, &x, 16);
     return ret;
 }
+#endif
 
 static inline int compareResultH(uint16_t result,
                                  uint16_t expected)
@@ -126,6 +130,7 @@ static inline int compareResultD(double result,
     return 1;
 }
 
+#if __LDBL_MANT_DIG__ == 113
 // return 0 if equal
 // use two 64-bit integers intead of one 128-bit integer
 // because 128-bit integer constant can't be assigned directly
@@ -149,6 +154,7 @@ static inline int compareResultLD(long double result,
     }
     return 1;
 }
+#endif
 
 static inline int compareResultCMP(int result,
                                    enum EXPECTED_RESULT expected)
@@ -220,10 +226,12 @@ static inline double makeQNaN64()
     return fromRep64(0x7ff8000000000000UL);
 }
 
+#if __LDBL_MANT_DIG__ == 113
 static inline long double makeQNaN128()
 {
     return fromRep128(0x7fff800000000000UL, 0x0UL);
 }
+#endif
 
 static inline uint16_t makeNaN16(uint16_t rand)
 {
@@ -240,10 +248,12 @@ static inline double makeNaN64(uint64_t rand)
     return fromRep64(0x7ff0000000000000UL | (rand & 0xfffffffffffffUL));
 }
 
+#if __LDBL_MANT_DIG__ == 113
 static inline long double makeNaN128(uint64_t rand)
 {
     return fromRep128(0x7fff000000000000UL | (rand & 0xffffffffffffUL), 0x0UL);
 }
+#endif
 
 static inline uint16_t makeInf16()
 {
@@ -260,7 +270,9 @@ static inline double makeInf64()
     return fromRep64(0x7ff0000000000000UL);
 }
 
+#if __LDBL_MANT_DIG__ == 113
 static inline long double makeInf128()
 {
     return fromRep128(0x7fff000000000000UL, 0x0UL);
 }
+#endif
