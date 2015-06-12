@@ -2690,20 +2690,15 @@ std::error_code BitcodeReader::GlobalCleanup() {
     return Error("Malformed global initializer set");
 
   // Look for intrinsic functions which need to be upgraded at some point
-  for (Module::iterator FI = TheModule->begin(), FE = TheModule->end();
-       FI != FE; ++FI) {
+  for (Function &F : *TheModule) {
     Function *NewFn;
-    if (UpgradeIntrinsicFunction(FI, NewFn))
-      UpgradedIntrinsics.push_back(std::make_pair(FI, NewFn));
+    if (UpgradeIntrinsicFunction(&F, NewFn))
+      UpgradedIntrinsics.push_back(std::make_pair(&F, NewFn));
   }
 
   // Look for global variables which need to be renamed.
-  for (Module::global_iterator
-         GI = TheModule->global_begin(), GE = TheModule->global_end();
-       GI != GE;) {
-    GlobalVariable *GV = GI++;
-    UpgradeGlobalVariable(GV);
-  }
+  for (GlobalVariable &GV : TheModule->globals())
+    UpgradeGlobalVariable(&GV);
 
   // Force deallocation of memory for these vectors to favor the client that
   // want lazy deserialization.
