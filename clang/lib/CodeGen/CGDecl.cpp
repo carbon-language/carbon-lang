@@ -864,20 +864,17 @@ llvm::Value *CodeGenFunction::EmitLifetimeStart(uint64_t Size,
     return nullptr;
 
   llvm::Value *SizeV = llvm::ConstantInt::get(Int64Ty, Size);
-  llvm::Value *Args[] = {
-      SizeV,
-      new llvm::BitCastInst(Addr, Int8PtrTy, "", Builder.GetInsertBlock())};
-  llvm::CallInst *C = llvm::CallInst::Create(CGM.getLLVMLifetimeStartFn(), Args,
-                                             "", Builder.GetInsertBlock());
+  Addr = Builder.CreateBitCast(Addr, Int8PtrTy);
+  llvm::CallInst *C =
+      Builder.CreateCall(CGM.getLLVMLifetimeStartFn(), {SizeV, Addr});
   C->setDoesNotThrow();
   return SizeV;
 }
 
 void CodeGenFunction::EmitLifetimeEnd(llvm::Value *Size, llvm::Value *Addr) {
-  llvm::Value *Args[] = {Size, new llvm::BitCastInst(Addr, Int8PtrTy, "",
-                                                     Builder.GetInsertBlock())};
-  llvm::CallInst *C = llvm::CallInst::Create(CGM.getLLVMLifetimeEndFn(), Args,
-                                             "", Builder.GetInsertBlock());
+  Addr = Builder.CreateBitCast(Addr, Int8PtrTy);
+  llvm::CallInst *C =
+      Builder.CreateCall(CGM.getLLVMLifetimeEndFn(), {Size, Addr});
   C->setDoesNotThrow();
 }
 
