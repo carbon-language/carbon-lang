@@ -2117,13 +2117,12 @@ const ToolChain &Driver::getToolChain(const ArgList &Args,
 }
 
 bool Driver::ShouldUseClangCompiler(const JobAction &JA) const {
-  // Check if user requested no clang, or clang doesn't understand this type (we
-  // only handle single inputs for now).
+  // Say "no" if there is not exactly one input of a type clang understands.
   if (JA.size() != 1 ||
       !types::isAcceptedByClang((*JA.begin())->getType()))
     return false;
 
-  // Otherwise make sure this is an action clang understands.
+  // And say "no" if this is not a kind of action clang understands.
   if (!isa<PreprocessJobAction>(JA) && !isa<PrecompileJobAction>(JA) &&
       !isa<CompileJobAction>(JA) && !isa<BackendJobAction>(JA))
     return false;
