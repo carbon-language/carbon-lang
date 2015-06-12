@@ -563,3 +563,13 @@ void test() {
   x.member(); // expected-note{{requested here}}
 };
 }
+
+namespace PR23823 {
+// Don't delay lookup in SFINAE context.
+template <typename T> decltype(g(T())) check(); // expected-note{{candidate template ignored: substitution failure [with T = int]: use of undeclared identifier 'g'}}
+decltype(check<int>()) x; // expected-error{{no matching function for call to 'check'}}
+
+void h();
+template <typename T> decltype(h(T())) check2(); // expected-note{{candidate template ignored: substitution failure [with T = int]: no matching function for call to 'h'}}
+decltype(check2<int>()) y; // expected-error{{no matching function for call to 'check2'}}
+}

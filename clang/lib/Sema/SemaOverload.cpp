@@ -10750,7 +10750,8 @@ bool Sema::buildOverloadedCallSet(Scope *S, Expr *Fn,
   // functions, including those from argument-dependent lookup.
   AddOverloadedCallCandidates(ULE, Args, *CandidateSet);
 
-  if (getLangOpts().MSVCCompat && CurContext->isDependentContext() &&
+  if (getLangOpts().MSVCCompat &&
+      CurContext->isDependentContext() && !isSFINAEContext() &&
       (isa<FunctionDecl>(CurContext) || isa<CXXRecordDecl>(CurContext))) {
 
     OverloadCandidateSet::iterator Best;
