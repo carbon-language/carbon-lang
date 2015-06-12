@@ -148,15 +148,15 @@ struct ParenState {
   ParenState(unsigned Indent, unsigned IndentLevel, unsigned LastSpace,
              bool AvoidBinPacking, bool NoLineBreak)
       : Indent(Indent), IndentLevel(IndentLevel), LastSpace(LastSpace),
-        NestedBlockIndent(Indent), FirstLessLess(0),
-        BreakBeforeClosingBrace(false), QuestionColumn(0),
-        AvoidBinPacking(AvoidBinPacking), BreakBeforeParameter(false),
-        NoLineBreak(NoLineBreak), LastOperatorWrapped(true), ColonPos(0),
-        StartOfFunctionCall(0), StartOfArraySubscripts(0),
+        NestedBlockIndent(Indent), FirstLessLess(0), QuestionColumn(0),
+        ColonPos(0), StartOfFunctionCall(0), StartOfArraySubscripts(0),
         NestedNameSpecifierContinuation(0), CallContinuation(0), VariablePos(0),
-        ContainsLineBreak(false), ContainsUnwrappedBuilder(0),
-        AlignColons(true), ObjCSelectorNameFound(false),
-        HasMultipleNestedBlocks(false), NestedBlockInlined(false) {}
+        BreakBeforeClosingBrace(false), AvoidBinPacking(AvoidBinPacking),
+        BreakBeforeParameter(false), NoLineBreak(NoLineBreak),
+        LastOperatorWrapped(true), ContainsLineBreak(false),
+        ContainsUnwrappedBuilder(false), AlignColons(true),
+        ObjCSelectorNameFound(false), HasMultipleNestedBlocks(false),
+        NestedBlockInlined(false) {}
 
   /// \brief The position to which a specific parenthesis level needs to be
   /// indented.
@@ -182,30 +182,8 @@ struct ParenState {
   /// on a level.
   unsigned FirstLessLess;
 
-  /// \brief Whether a newline needs to be inserted before the block's closing
-  /// brace.
-  ///
-  /// We only want to insert a newline before the closing brace if there also
-  /// was a newline after the beginning left brace.
-  bool BreakBeforeClosingBrace;
-
   /// \brief The column of a \c ? in a conditional expression;
   unsigned QuestionColumn;
-
-  /// \brief Avoid bin packing, i.e. multiple parameters/elements on multiple
-  /// lines, in this context.
-  bool AvoidBinPacking;
-
-  /// \brief Break after the next comma (or all the commas in this context if
-  /// \c AvoidBinPacking is \c true).
-  bool BreakBeforeParameter;
-
-  /// \brief Line breaking in this context would break a formatting rule.
-  bool NoLineBreak;
-
-  /// \brief True if the last binary operator on this level was wrapped to the
-  /// next line.
-  bool LastOperatorWrapped;
 
   /// \brief The position of the colon in an ObjC method declaration/call.
   unsigned ColonPos;
@@ -230,40 +208,62 @@ struct ParenState {
   /// Used to align further variables if necessary.
   unsigned VariablePos;
 
+  /// \brief Whether a newline needs to be inserted before the block's closing
+  /// brace.
+  ///
+  /// We only want to insert a newline before the closing brace if there also
+  /// was a newline after the beginning left brace.
+  bool BreakBeforeClosingBrace : 1;
+
+  /// \brief Avoid bin packing, i.e. multiple parameters/elements on multiple
+  /// lines, in this context.
+  bool AvoidBinPacking : 1;
+
+  /// \brief Break after the next comma (or all the commas in this context if
+  /// \c AvoidBinPacking is \c true).
+  bool BreakBeforeParameter : 1;
+
+  /// \brief Line breaking in this context would break a formatting rule.
+  bool NoLineBreak : 1;
+
+  /// \brief True if the last binary operator on this level was wrapped to the
+  /// next line.
+  bool LastOperatorWrapped : 1;
+
   /// \brief \c true if this \c ParenState already contains a line-break.
   ///
   /// The first line break in a certain \c ParenState causes extra penalty so
   /// that clang-format prefers similar breaks, i.e. breaks in the same
   /// parenthesis.
-  bool ContainsLineBreak;
+  bool ContainsLineBreak : 1;
 
   /// \brief \c true if this \c ParenState contains multiple segments of a
   /// builder-type call on one line.
-  bool ContainsUnwrappedBuilder;
+  bool ContainsUnwrappedBuilder : 1;
 
   /// \brief \c true if the colons of the curren ObjC method expression should
   /// be aligned.
   ///
   /// Not considered for memoization as it will always have the same value at
   /// the same token.
-  bool AlignColons;
+  bool AlignColons : 1;
 
   /// \brief \c true if at least one selector name was found in the current
   /// ObjC method expression.
   ///
   /// Not considered for memoization as it will always have the same value at
   /// the same token.
-  bool ObjCSelectorNameFound;
+  bool ObjCSelectorNameFound : 1;
 
   /// \brief \c true if there are multiple nested blocks inside these parens.
   ///
   /// Not considered for memoization as it will always have the same value at
   /// the same token.
-  bool HasMultipleNestedBlocks;
+  bool HasMultipleNestedBlocks : 1;
 
   // \brief The start of a nested block (e.g. lambda introducer in C++ or
   // "function" in JavaScript) is not wrapped to a new line.
-  bool NestedBlockInlined;
+  bool NestedBlockInlined : 1;
 
   bool operator<(const ParenState &Other) const {
     if (Indent != Other.Indent)
