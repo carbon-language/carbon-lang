@@ -22,4 +22,14 @@ subdirectories = ChildTarget
 type = Tool
 name = lli
 parent = Tools
-required_libraries = AsmParser BitReader IRReader Instrumentation Interpreter MCJIT NativeCodeGen SelectionDAG TransformUtils Native
+required_libraries =
+ AsmParser
+ BitReader
+ IRReader
+ Instrumentation
+ Interpreter
+ MCJIT
+ Native
+ NativeCodeGen
+ SelectionDAG
+ TransformUtils

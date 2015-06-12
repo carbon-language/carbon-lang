@@ -16,9 +16,28 @@
 ;===------------------------------------------------------------------------===;
 
 [common]
-subdirectories = Analysis AsmParser Bitcode CodeGen DebugInfo ExecutionEngine
- LibDriver LineEditor Linker IR IRReader LTO MC Object Option Passes ProfileData
- Support TableGen Target Transforms
+subdirectories =
+ Analysis
+ AsmParser
+ Bitcode
+ CodeGen
+ DebugInfo
+ ExecutionEngine
+ LibDriver
+ LineEditor
+ Linker
+ IR
+ IRReader
+ LTO
+ MC
+ Object
+ Option
+ Passes
+ ProfileData
+ Support
+ TableGen
+ Target
+ Transforms
 
 [component_0]
 type = Group

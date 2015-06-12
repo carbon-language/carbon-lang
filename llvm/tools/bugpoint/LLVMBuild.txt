@@ -19,4 +19,14 @@
 type = Tool
 name = bugpoint
 parent = Tools
-required_libraries = AsmParser BitReader BitWriter CodeGen IRReader IPO Instrumentation Linker Scalar ObjCARC
+required_libraries =
+ AsmParser
+ BitReader
+ BitWriter
+ CodeGen
+ IRReader
+ IPO
+ Instrumentation
+ Linker
+ ObjCARC
+ Scalar
