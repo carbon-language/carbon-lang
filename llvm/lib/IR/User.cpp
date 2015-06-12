@@ -90,19 +90,20 @@ void *User::operator new(size_t Size, unsigned Us) {
   Use *Start = static_cast<Use*>(Storage);
   Use *End = Start + Us;
   User *Obj = reinterpret_cast<User*>(End);
-  Obj->setOperandList(Start);
-  Obj->HasHungOffUses = false;
   Obj->NumUserOperands = Us;
+  Obj->HasHungOffUses = false;
   Use::initTags(Start, End);
   return Obj;
 }
 
 void *User::operator new(size_t Size) {
-  void *Storage = ::operator new(Size);
-  User *Obj = reinterpret_cast<User*>(Storage);
-  Obj->setOperandList(nullptr);
-  Obj->HasHungOffUses = true;
+  // Allocate space for a single Use*
+  void *Storage = ::operator new(Size + sizeof(Use *));
+  Use **HungOffOperandList = static_cast<Use **>(Storage);
+  User *Obj = reinterpret_cast<User *>(HungOffOperandList + 1);
   Obj->NumUserOperands = 0;
+  Obj->HasHungOffUses = true;
+  *HungOffOperandList = nullptr;
   return Obj;
 }
 
@@ -111,11 +112,21 @@ void *User::operator new(size_t Size) {
 //===----------------------------------------------------------------------===//
 
 void User::operator delete(void *Usr) {
-  User *Start = static_cast<User*>(Usr);
-  Use *Storage = static_cast<Use*>(Usr) - Start->NumUserOperands;
-  // If there were hung-off uses, they will have been freed already and
-  // NumOperands reset to 0, so here we just free the User itself.
-  ::operator delete(Storage);
+  // Hung off uses use a single Use* before the User, while other subclasses
+  // use a Use[] allocated prior to the user.
+  User *Obj = static_cast<User *>(Usr);
+  if (Obj->HasHungOffUses) {
+    Use **HungOffOperandList = static_cast<Use **>(Usr) - 1;
+    // drop the hung off uses.
+    Use::zap(*HungOffOperandList, *HungOffOperandList + Obj->NumUserOperands,
+             /* Delete */ true);
+    ::operator delete(HungOffOperandList);
+  } else {
+    Use *Storage = static_cast<Use *>(Usr) - Obj->NumUserOperands;
+    Use::zap(Storage, Storage + Obj->NumUserOperands,
+             /* Delete */ false);
+    ::operator delete(Storage);
+  }
 }
 
 //===----------------------------------------------------------------------===//

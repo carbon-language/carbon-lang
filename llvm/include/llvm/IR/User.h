@@ -37,14 +37,6 @@ class User : public Value {
   template <unsigned>
   friend struct HungoffOperandTraits;
   virtual void anchor();
-protected:
-  /// \brief This is a pointer to the array of Uses for this User.
-  ///
-  /// For nodes of fixed arity (e.g. a binary operator) this array will live
-  /// prefixed to some derived class instance.  For nodes of resizable variable
-  /// arity (e.g. PHINodes, SwitchInst etc.), this memory will be dynamically
-  /// allocated and should be destroyed by the classes' virtual dtor.
-  Use *LegacyOperandList;
 
 protected:
   /// Allocate a User with an operand pointer co-allocated.
@@ -60,9 +52,12 @@ protected:
 
   User(Type *ty, unsigned vty, Use *OpList, unsigned NumOps)
       : Value(ty, vty) {
-    setOperandList(OpList);
     assert(NumOps < (1u << NumUserOperandsBits) && "Too many operands");
     NumUserOperands = NumOps;
+    // If we have hung off uses, then the operand list should initially be
+    // null.
+    assert((!HasHungOffUses || !getOperandList()) &&
+           "Error in initializing hung off uses for User");
   }
 
   /// \brief Allocate the array of Uses, followed by a pointer
@@ -77,14 +72,6 @@ protected:
 
 public:
   ~User() override {
-    // drop the hung off uses.
-    Use::zap(getOperandList(), getOperandList() + NumUserOperands,
-             HasHungOffUses);
-    if (HasHungOffUses) {
-      setOperandList(nullptr);
-      // Reset NumOperands so User::operator delete() does the right thing.
-      NumUserOperands = 0;
-    }
   }
   /// \brief Free memory allocated for User and Use objects.
   void operator delete(void *Usr);
@@ -109,12 +96,23 @@ protected:
     return OpFrom<Idx>(this);
   }
 private:
+  Use *&getHungOffOperands() { return *(reinterpret_cast<Use **>(this) - 1); }
+
+  Use *getIntrusiveOperands() {
+    return reinterpret_cast<Use *>(this) - NumUserOperands;
+  }
+
   void setOperandList(Use *NewList) {
-    LegacyOperandList = NewList;
+    assert(HasHungOffUses &&
+           "Setting operand list only required for hung off uses");
+    getHungOffOperands() = NewList;
   }
 public:
-  Use *getOperandList() const {
-    return LegacyOperandList;
+  Use *getOperandList() {
+    return HasHungOffUses ? getHungOffOperands() : getIntrusiveOperands();
+  }
+  const Use *getOperandList() const {
+    return const_cast<User *>(this)->getOperandList();
   }
   Value *getOperand(unsigned i) const {
     assert(i < NumUserOperands && "getOperand() out of range!");
