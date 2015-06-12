@@ -53,30 +53,35 @@ for.end:
 ; %1 is partially redundant if %0 can be widened to a 64-bit load.
 
 ; CHECK-LABEL: define i32 @overaligned_load
+; CHECK: if.then:
+; CHECK:   %0 = load i64
+; CHECK:   [[LSHR:%[0-9]+]] = lshr i64 %0, 32, !dbg [[LSHR_LOC:![0-9]+]]
+; CHECK:   trunc i64 [[LSHR]] to i32
 ; CHECK: if.end:
 ; CHECK-NOT: %1 = load i32, i32*
+; CHECK: [[LSHR_LOC]] = !DILocation(line: 101, column: 1, scope: !{{.*}})
 
 define i32 @overaligned_load(i32 %a, i32* nocapture %b) {
 entry:
-  %cmp = icmp sgt i32 %a, 0
-  br i1 %cmp, label %if.then, label %if.else
+  %cmp = icmp sgt i32 %a, 0, !dbg !14
+  br i1 %cmp, label %if.then, label %if.else, !dbg !14
 
 if.then:
-  %0 = load i32, i32* getelementptr inbounds (%struct.S1, %struct.S1* @s1, i64 0, i32 0), align 8, !tbaa !5
-  br label %if.end
+  %0 = load i32, i32* getelementptr inbounds (%struct.S1, %struct.S1* @s1, i64 0, i32 0), align 8, !tbaa !5, !dbg !15
+  br label %if.end, !dbg !15
 
 if.else:
-  %arrayidx = getelementptr inbounds i32, i32* %b, i64 2
-  store i32 10, i32* %arrayidx, align 4, !tbaa !5
-  br label %if.end
+  %arrayidx = getelementptr inbounds i32, i32* %b, i64 2, !dbg !16
+  store i32 10, i32* %arrayidx, align 4, !tbaa !5, !dbg !16
+  br label %if.end, !dbg !16
 
 if.end:
   %i.0 = phi i32 [ %0, %if.then ], [ 0, %if.else ]
   %p.0 = phi i32* [ getelementptr inbounds (%struct.S1, %struct.S1* @s1, i64 0, i32 0), %if.then ], [ %b, %if.else ]
-  %add.ptr = getelementptr inbounds i32, i32* %p.0, i64 1
-  %1 = load i32, i32* %add.ptr, align 4, !tbaa !5
-  %add1 = add nsw i32 %1, %i.0
-  ret i32 %add1
+  %add.ptr = getelementptr inbounds i32, i32* %p.0, i64 1, !dbg !17
+  %1 = load i32, i32* %add.ptr, align 4, !tbaa !5, !dbg !17
+  %add1 = add nsw i32 %1, %i.0, !dbg !17
+  ret i32 %add1, !dbg !17
 }
 
 !1 = !{!2, !2, i64 0}
@@ -85,3 +90,18 @@ if.end:
 !4 = !{!"Simple C/C++ TBAA"}
 !5 = !{!6, !6, i64 0}
 !6 = !{!"int", !3, i64 0}
+
+!llvm.module.flags = !{!7, !8, !9}
+!7 = !{i32 2, !"Dwarf Version", i32 4}
+!8 = !{i32 2, !"Debug Info Version", i32 3}
+!9 = !{i32 1, !"PIC Level", i32 2}
+
+!10 = !{}
+!11 = !DISubroutineType(types: !10)
+!12 = !DIFile(filename: "test.cpp", directory: "/tmp")
+!13 = !DISubprogram(name: "test", scope: !12, file: !12, line: 99, type: !11, isLocal: false, isDefinition: true, scopeLine: 100, flags: DIFlagPrototyped, isOptimized: false, function: i32 (i32, i32*)* @overaligned_load, variables: !10)
+!14 = !DILocation(line: 100, column: 1, scope: !13)
+!15 = !DILocation(line: 101, column: 1, scope: !13)
+!16 = !DILocation(line: 102, column: 1, scope: !13)
+!17 = !DILocation(line: 103, column: 1, scope: !13)
+
