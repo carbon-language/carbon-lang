@@ -651,7 +651,6 @@ __assoc_state<_Rp>::set_value(_Arg& __arg)
 #endif
     ::new(&__value_) _Rp(_VSTD::forward<_Arg>(__arg));
     this->__state_ |= base::__constructed | base::ready;
-    __lk.unlock();
     __cv_.notify_all();
 }
 
@@ -672,7 +671,6 @@ __assoc_state<_Rp>::set_value_at_thread_exit(_Arg& __arg)
     ::new(&__value_) _Rp(_VSTD::forward<_Arg>(__arg));
     this->__state_ |= base::__constructed;
     __thread_local_data()->__make_ready_at_thread_exit(this);
-    __lk.unlock();
 }
 
 template <class _Rp>
@@ -733,7 +731,6 @@ __assoc_state<_Rp&>::set_value(_Rp& __arg)
 #endif
     __value_ = _VSTD::addressof(__arg);
     this->__state_ |= base::__constructed | base::ready;
-    __lk.unlock();
     __cv_.notify_all();
 }
 
@@ -749,7 +746,6 @@ __assoc_state<_Rp&>::set_value_at_thread_exit(_Rp& __arg)
     __value_ = _VSTD::addressof(__arg);
     this->__state_ |= base::__constructed;
     __thread_local_data()->__make_ready_at_thread_exit(this);
-    __lk.unlock();
 }
 
 template <class _Rp>
