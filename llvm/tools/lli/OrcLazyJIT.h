@@ -55,7 +55,7 @@ public:
       CompileLayer(ObjectLayer, orc::SimpleCompiler(*this->TM)),
       IRDumpLayer(CompileLayer, createDebugDumper()),
       CCMgr(BuildCallbackMgr(IRDumpLayer, CCMgrMemMgr, Context)),
-      CODLayer(IRDumpLayer, *CCMgr),
+      CODLayer(IRDumpLayer, *CCMgr, false),
       CXXRuntimeOverrides([this](const std::string &S) { return mangle(S); }) {}
 
   ~OrcLazyJIT() {

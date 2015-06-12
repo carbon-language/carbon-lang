@@ -46,23 +46,39 @@ private:
   // variables.
   class GlobalDeclMaterializer : public ValueMaterializer {
   public:
-    GlobalDeclMaterializer(Module &Dst) : Dst(Dst) {}
+    typedef std::set<const Function*> StubSet;
+
+    GlobalDeclMaterializer(Module &Dst, const StubSet *StubsToClone = nullptr)
+        : Dst(Dst), StubsToClone(StubsToClone) {}
+
     Value* materializeValueFor(Value *V) final {
       if (auto *GV = dyn_cast<GlobalVariable>(V))
         return cloneGlobalVariableDecl(Dst, *GV);
-      else if (auto *F = dyn_cast<Function>(V))
-        return cloneFunctionDecl(Dst, *F);
+      else if (auto *F = dyn_cast<Function>(V)) {
+        auto *ClonedF = cloneFunctionDecl(Dst, *F);
+        if (StubsToClone && StubsToClone->count(F)) {
+          GlobalVariable *FnBodyPtr =
+            createImplPointer(*ClonedF->getType(), *ClonedF->getParent(),
+                              ClonedF->getName() + "$orc_addr", nullptr);
+          makeStub(*ClonedF, *FnBodyPtr);
+          ClonedF->setLinkage(GlobalValue::AvailableExternallyLinkage);
+          ClonedF->addFnAttr(Attribute::AlwaysInline);
+        }
+        return ClonedF;
+      }
       // Else.
       return nullptr;
     }
   private:
     Module &Dst;
+    const StubSet *StubsToClone;
   };
 
   typedef typename BaseLayerT::ModuleSetHandleT BaseLayerModuleSetHandleT;
 
   struct LogicalModuleResources {
     std::shared_ptr<Module> SourceModule;
+    std::set<const Function*> StubsToClone;
   };
 
   struct LogicalDylibResources {
@@ -83,8 +99,10 @@ public:
   typedef typename LogicalDylibList::iterator ModuleSetHandleT;
 
   /// @brief Construct a compile-on-demand layer instance.
-  CompileOnDemandLayer(BaseLayerT &BaseLayer, CompileCallbackMgrT &CallbackMgr)
-      : BaseLayer(BaseLayer), CompileCallbackMgr(CallbackMgr) {}
+  CompileOnDemandLayer(BaseLayerT &BaseLayer, CompileCallbackMgrT &CallbackMgr,
+                       bool CloneStubsIntoPartitions)
+      : BaseLayer(BaseLayer), CompileCallbackMgr(CallbackMgr),
+        CloneStubsIntoPartitions(CloneStubsIntoPartitions) {}
 
   /// @brief Add a module to the compile-on-demand layer.
   template <typename ModuleSetT, typename MemoryManagerPtrT,
@@ -97,14 +115,14 @@ public:
            "User supplied memory managers not supported with COD yet.");
 
     LogicalDylibs.push_back(CODLogicalDylib(BaseLayer));
-    auto &LDLResources = LogicalDylibs.back().getDylibResources();
+    auto &LDResources = LogicalDylibs.back().getDylibResources();
 
-    LDLResources.ExternalSymbolResolver =
+    LDResources.ExternalSymbolResolver =
       [Resolver](const std::string &Name) {
         return Resolver->findSymbol(Name);
       };
 
-    LDLResources.Partitioner =
+    LDResources.Partitioner =
       [](Function &F) {
         std::set<Function*> Partition;
         Partition.insert(&F);
@@ -152,7 +170,8 @@ private:
 
     // Create a logical module handle for SrcM within the logical dylib.
     auto LMH = LD.createLogicalModule();
-    LD.getLogicalModuleResources(LMH).SourceModule = SrcM;
+    auto &LMResources =  LD.getLogicalModuleResources(LMH);
+    LMResources.SourceModule = SrcM;
 
     // Create the GVs-and-stubs module.
     auto GVsAndStubsM = llvm::make_unique<Module>(
@@ -170,6 +189,10 @@ private:
       // Skip declarations.
       if (F.isDeclaration())
         continue;
+
+      // Record all functions defined by this module.
+      if (CloneStubsIntoPartitions)
+        LMResources.StubsToClone.insert(&F);
 
       // For each definition: create a callback, a stub, and a function body
       // pointer. Initialize the function body pointer to point at the callback,
@@ -274,7 +297,8 @@ private:
   BaseLayerModuleSetHandleT emitPartition(CODLogicalDylib &LD,
                                           LogicalModuleHandle LMH,
                                           const std::set<Function*> &Partition) {
-    Module &SrcM = *LD.getLogicalModuleResources(LMH).SourceModule;
+    auto &LMResources = LD.getLogicalModuleResources(LMH);
+    Module &SrcM = *LMResources.SourceModule;
 
     // Create the module.
     std::string NewName(SrcM.getName());
@@ -286,7 +310,7 @@ private:
     auto M = llvm::make_unique<Module>(NewName, SrcM.getContext());
     M->setDataLayout(SrcM.getDataLayout());
     ValueToValueMapTy VMap;
-    GlobalDeclMaterializer GDM(*M);
+    GlobalDeclMaterializer GDM(*M, &LMResources.StubsToClone);
 
     // Create decls in the new module.
     for (auto *F : Partition)
@@ -294,7 +318,7 @@ private:
 
     // Move the function bodies.
     for (auto *F : Partition)
-      moveFunctionBody(*F, VMap);
+      moveFunctionBody(*F, VMap, &GDM);
 
     // Create memory manager and symbol resolver.
     auto MemMgr = llvm::make_unique<SectionMemoryManager>();
@@ -320,6 +344,7 @@ private:
   BaseLayerT &BaseLayer;
   CompileCallbackMgrT &CompileCallbackMgr;
   LogicalDylibList LogicalDylibs;
+  bool CloneStubsIntoPartitions;
 };
 
 } // End namespace orc.

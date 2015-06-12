@@ -30,8 +30,6 @@ Constant* createIRTypedAddress(FunctionType &FT, TargetAddress Addr) {
 
 GlobalVariable* createImplPointer(PointerType &PT, Module &M,
                                   const Twine &Name, Constant *Initializer) {
-  if (!Initializer)
-    Initializer = Constant::getNullValue(&PT);
   auto IP = new GlobalVariable(M, &PT, false, GlobalValue::ExternalLinkage,
                                Initializer, Name, nullptr,
                                GlobalValue::NotThreadLocal, 0, true);
