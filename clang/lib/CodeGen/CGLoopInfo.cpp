@@ -78,7 +78,8 @@ LoopInfo::LoopInfo(BasicBlock *Header, const LoopAttributes &Attrs)
   LoopID = createMetadata(Header->getContext(), Attrs);
 }
 
-void LoopInfoStack::push(BasicBlock *Header, ArrayRef<const Attr *> Attrs) {
+void LoopInfoStack::push(BasicBlock *Header,
+                         ArrayRef<const clang::Attr *> Attrs) {
   for (const auto *Attr : Attrs) {
     const LoopHintAttr *LH = dyn_cast<LoopHintAttr>(Attr);
 
