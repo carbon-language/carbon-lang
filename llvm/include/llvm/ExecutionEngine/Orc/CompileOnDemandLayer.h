@@ -262,12 +262,12 @@ private:
     // Grab the name of the function being called here.
     std::string CalledFnName = Mangle(F.getName(), SrcM.getDataLayout());
 
-    const auto &Partition = LD.getDylibResources().Partitioner(F);
+    auto Partition = LD.getDylibResources().Partitioner(F);
     auto PartitionH = emitPartition(LD, LMH, Partition);
 
     TargetAddress CalledAddr = 0;
     for (auto *SubF : Partition) {
-      std::string FName(SubF->getName());
+      std::string FName = SubF->getName();
       auto FnBodySym =
         BaseLayer.findSymbolIn(PartitionH, Mangle(FName, SrcM.getDataLayout()),
                                false);
@@ -279,7 +279,7 @@ private:
       assert(FnBodySym && "Couldn't find function body.");
       assert(FnPtrSym && "Couldn't find function body pointer.");
 
-      auto FnBodyAddr = FnBodySym.getAddress();
+      TargetAddress FnBodyAddr = FnBodySym.getAddress();
       void *FnPtrAddr = reinterpret_cast<void*>(
           static_cast<uintptr_t>(FnPtrSym.getAddress()));
 
@@ -294,14 +294,15 @@ private:
     return CalledAddr;
   }
 
+  template <typename PartitionT>
   BaseLayerModuleSetHandleT emitPartition(CODLogicalDylib &LD,
                                           LogicalModuleHandle LMH,
-                                          const std::set<Function*> &Partition) {
+                                          const PartitionT &Partition) {
     auto &LMResources = LD.getLogicalModuleResources(LMH);
     Module &SrcM = *LMResources.SourceModule;
 
     // Create the module.
-    std::string NewName(SrcM.getName());
+    std::string NewName = SrcM.getName();
     for (auto *F : Partition) {
       NewName += ".";
       NewName += F->getName();
