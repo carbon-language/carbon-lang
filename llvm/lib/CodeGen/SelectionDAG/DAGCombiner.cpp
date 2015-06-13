@@ -255,6 +255,7 @@ namespace {
     SDValue visitSRA(SDNode *N);
     SDValue visitSRL(SDNode *N);
     SDValue visitRotate(SDNode *N);
+    SDValue visitBSWAP(SDNode *N);
     SDValue visitCTLZ(SDNode *N);
     SDValue visitCTLZ_ZERO_UNDEF(SDNode *N);
     SDValue visitCTTZ(SDNode *N);
@@ -1335,6 +1336,7 @@ SDValue DAGCombiner::visit(SDNode *N) {
   case ISD::SRL:                return visitSRL(N);
   case ISD::ROTR:
   case ISD::ROTL:               return visitRotate(N);
+  case ISD::BSWAP:              return visitBSWAP(N);
   case ISD::CTLZ:               return visitCTLZ(N);
   case ISD::CTLZ_ZERO_UNDEF:    return visitCTLZ_ZERO_UNDEF(N);
   case ISD::CTTZ:               return visitCTTZ(N);
@@ -4761,6 +4763,16 @@ SDValue DAGCombiner::visitSRL(SDNode *N) {
     }
   }
 
+  return SDValue();
+}
+
+SDValue DAGCombiner::visitBSWAP(SDNode *N) {
+  SDValue N0 = N->getOperand(0);
+  EVT VT = N->getValueType(0);
+
+  // fold (bswap c1) -> c2
+  if (isConstantIntBuildVectorOrConstantInt(N0))
+    return DAG.getNode(ISD::BSWAP, SDLoc(N), VT, N0);
   return SDValue();
 }
 
