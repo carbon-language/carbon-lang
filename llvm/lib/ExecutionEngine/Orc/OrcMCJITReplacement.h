@@ -229,7 +229,7 @@ public:
   }
 
   GenericValue runFunction(Function *F,
-                           const std::vector<GenericValue> &ArgValues) override;
+                           ArrayRef<GenericValue> ArgValues) override;
 
   void setObjectCache(ObjectCache *NewCache) override {
     CompileLayer.setObjectCache(NewCache);

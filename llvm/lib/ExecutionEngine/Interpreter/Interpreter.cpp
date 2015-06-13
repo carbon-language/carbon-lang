@@ -67,7 +67,7 @@ Interpreter::~Interpreter() {
 
 void Interpreter::runAtExitHandlers () {
   while (!AtExitHandlers.empty()) {
-    callFunction(AtExitHandlers.back(), std::vector<GenericValue>());
+    callFunction(AtExitHandlers.back(), None);
     AtExitHandlers.pop_back();
     run();
   }
@@ -75,9 +75,8 @@ void Interpreter::runAtExitHandlers () {
 
 /// run - Start execution with the specified function and arguments.
 ///
-GenericValue
-Interpreter::runFunction(Function *F,
-                         const std::vector<GenericValue> &ArgValues) {
+GenericValue Interpreter::runFunction(Function *F,
+                                      ArrayRef<GenericValue> ArgValues) {
   assert (F && "Function *F was null at entry to run()");
 
   // Try extra hard not to pass extra args to a function that isn't
@@ -87,10 +86,9 @@ Interpreter::runFunction(Function *F,
   // parameters than it is declared to take. This does not attempt to
   // take into account gratuitous differences in declared types,
   // though.
-  std::vector<GenericValue> ActualArgs;
-  const unsigned ArgCount = F->getFunctionType()->getNumParams();
-  for (unsigned i = 0; i < ArgCount; ++i)
-    ActualArgs.push_back(ArgValues[i]);
+  const size_t ArgCount = F->getFunctionType()->getNumParams();
+  ArrayRef<GenericValue> ActualArgs =
+      ArgValues.slice(0, std::min(ArgValues.size(), ArgCount));
 
   // Set up the function call.
   callFunction(F, ActualArgs);

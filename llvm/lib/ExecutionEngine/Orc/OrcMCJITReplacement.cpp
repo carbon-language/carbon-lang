@@ -25,7 +25,7 @@ namespace orc {
 
 GenericValue
 OrcMCJITReplacement::runFunction(Function *F,
-                                 const std::vector<GenericValue> &ArgValues) {
+                                 ArrayRef<GenericValue> ArgValues) {
   assert(F && "Function *F was null at entry to run()");
 
   void *FPtr = getPointerToFunction(F);
