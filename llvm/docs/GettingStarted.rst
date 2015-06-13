@@ -711,7 +711,7 @@ used by people developing LLVM.
 |                         | as ``LLVM_ALL_TARGETS``, and can be set to include |
 |                         | out-of-tree targets. The default value includes:   |
 |                         | ``AArch64, ARM, CppBackend, Hexagon,               |
-|                         | Mips, MSP430, NVPTX, PowerPC, R600, Sparc,         |
+|                         | Mips, MSP430, NVPTX, PowerPC, AMDGPU, Sparc,       |
 |                         | SystemZ, X86, XCore``.                             |
 +-------------------------+----------------------------------------------------+
 | LLVM_ENABLE_DOXYGEN     | Build doxygen-based documentation from the source  |

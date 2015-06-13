@@ -1,11 +1,11 @@
-============================
-User Guide for R600 Back-end
-============================
+==============================
+User Guide for AMDGPU Back-end
+==============================
 
 Introduction
 ============
 
-The R600 back-end provides ISA code generation for AMD GPUs, starting with
+The AMDGPU back-end provides ISA code generation for AMD GPUs, starting with
 the R600 family up until the current Volcanic Islands (GCN Gen 3).
 
 
@@ -14,7 +14,7 @@ Assembler
 
 The assembler is currently considered experimental.
 
-For syntax examples look in test/MC/R600.
+For syntax examples look in test/MC/AMDGPU.
 
 Below some of the currently supported features (modulo bugs).  These
 all apply to the Southern Islands ISA, Sea Islands and Volcanic Islands

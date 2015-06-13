@@ -1097,7 +1097,7 @@ if test "$llvm_cv_enable_crash_overrides" = "yes" ; then
 fi
 
 dnl List all possible targets
-ALL_TARGETS="X86 Sparc PowerPC ARM AArch64 Mips XCore MSP430 CppBackend NVPTX Hexagon SystemZ R600 BPF"
+ALL_TARGETS="X86 Sparc PowerPC ARM AArch64 Mips XCore MSP430 CppBackend NVPTX Hexagon SystemZ AMDGPU BPF"
 AC_SUBST(ALL_TARGETS,$ALL_TARGETS)
 
 dnl Allow specific targets to be specified for building (or not)
@@ -1132,7 +1132,8 @@ case "$enableval" in
         hexagon)  TARGETS_TO_BUILD="Hexagon $TARGETS_TO_BUILD" ;;
         nvptx)    TARGETS_TO_BUILD="NVPTX $TARGETS_TO_BUILD" ;;
         systemz)  TARGETS_TO_BUILD="SystemZ $TARGETS_TO_BUILD" ;;
-        r600)     TARGETS_TO_BUILD="R600 $TARGETS_TO_BUILD" ;;
+        amdgpu)  ;&
+        r600)     TARGETS_TO_BUILD="AMDGPU $TARGETS_TO_BUILD" ;;
         host) case "$llvm_cv_target_arch" in
             x86)         TARGETS_TO_BUILD="X86 $TARGETS_TO_BUILD" ;;
             x86_64)      TARGETS_TO_BUILD="X86 $TARGETS_TO_BUILD" ;;

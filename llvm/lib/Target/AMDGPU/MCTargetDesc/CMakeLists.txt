@@ -1,5 +1,5 @@
 
-add_llvm_library(LLVMR600Desc
+add_llvm_library(LLVMAMDGPUDesc
   AMDGPUAsmBackend.cpp
   AMDGPUELFObjectWriter.cpp
   AMDGPUMCCodeEmitter.cpp

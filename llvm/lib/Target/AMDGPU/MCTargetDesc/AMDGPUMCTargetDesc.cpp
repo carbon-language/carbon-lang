@@ -72,7 +72,7 @@ static MCInstPrinter *createAMDGPUMCInstPrinter(const Triple &T,
   return new AMDGPUInstPrinter(MAI, MII, MRI);
 }
 
-extern "C" void LLVMInitializeR600TargetMC() {
+extern "C" void LLVMInitializeAMDGPUTargetMC() {
   for (Target *T : {&TheAMDGPUTarget, &TheGCNTarget}) {
     RegisterMCAsmInfo<AMDGPUMCAsmInfo> X(*T);
 

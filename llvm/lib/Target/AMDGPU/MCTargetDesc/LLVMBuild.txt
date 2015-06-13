@@ -1,4 +1,4 @@
-;===- ./lib/Target/R600/AsmParser/LLVMBuild.txt -------------*- Conf -*--===;
+;===- ./lib/Target/AMDGPU/MCTargetDesc/LLVMBuild.txt -------------*- Conf -*--===;
 ;
 ;                     The LLVM Compiler Infrastructure
 ;
@@ -17,7 +17,7 @@
 
 [component_0]
 type = Library
-name = R600AsmParser
-parent = R600
-required_libraries = MC MCParser R600Desc R600Info Support
-add_to_library_groups = R600
+name = AMDGPUDesc
+parent = AMDGPU
+required_libraries = MC AMDGPUAsmPrinter AMDGPUInfo Support
+add_to_library_groups = AMDGPU

@@ -12,7 +12,7 @@ tablegen(LLVM AMDGPUGenAsmWriter.inc -gen-asm-writer)
 tablegen(LLVM AMDGPUGenAsmMatcher.inc -gen-asm-matcher)
 add_public_tablegen_target(AMDGPUCommonTableGen)
 
-add_llvm_target(R600CodeGen
+add_llvm_target(AMDGPUCodeGen
   AMDILCFGStructurizer.cpp
   AMDGPUAlwaysInlinePass.cpp
   AMDGPUAsmPrinter.cpp

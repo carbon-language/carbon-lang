@@ -1,4 +1,4 @@
-;===- ./lib/Target/R600/InstPrinter/LLVMBuild.txt -----------*- Conf -*--===;
+;===- ./lib/Target/AMDIL/LLVMBuild.txt -------------------------*- Conf -*--===;
 ;
 ;                     The LLVM Compiler Infrastructure
 ;
@@ -15,10 +15,19 @@
 ;
 ;===------------------------------------------------------------------------===;
 
-[component_0]
-type = Library
-name = R600AsmPrinter
-parent = R600
-required_libraries = MC Support
-add_to_library_groups = R600
+[common]
+subdirectories = AsmParser InstPrinter MCTargetDesc TargetInfo
 
+[component_0]
+type = TargetGroup
+name = AMDGPU
+parent = Target
+has_asmparser = 1
+has_asmprinter = 1
+
+[component_1]
+type = Library
+name = AMDGPUCodeGen
+parent = AMDGPU
+required_libraries = Analysis AsmPrinter CodeGen Core IPO MC AMDGPUAsmParser AMDGPUAsmPrinter AMDGPUDesc AMDGPUInfo Scalar SelectionDAG Support Target TransformUtils
+add_to_library_groups = AMDGPU

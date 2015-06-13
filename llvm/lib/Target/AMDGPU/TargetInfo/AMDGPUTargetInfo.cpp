@@ -23,7 +23,7 @@ Target llvm::TheAMDGPUTarget;
 Target llvm::TheGCNTarget;
 
 /// \brief Extern function to initialize the targets for the AMDGPU backend
-extern "C" void LLVMInitializeR600TargetInfo() {
+extern "C" void LLVMInitializeAMDGPUTargetInfo() {
   RegisterTarget<Triple::r600, false>
     R600(TheAMDGPUTarget, "r600", "AMD GPUs HD2XXX-HD6XXX");
   RegisterTarget<Triple::amdgcn, false> GCN(TheGCNTarget, "amdgcn", "AMD GCN GPUs");

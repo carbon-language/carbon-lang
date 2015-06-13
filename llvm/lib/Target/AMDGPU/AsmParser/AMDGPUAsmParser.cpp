@@ -1369,7 +1369,7 @@ void AMDGPUAsmParser::cvtVOP3(MCInst &Inst, const OperandVector &Operands) {
 }
 
 /// Force static initialization.
-extern "C" void LLVMInitializeR600AsmParser() {
+extern "C" void LLVMInitializeAMDGPUAsmParser() {
   RegisterMCAsmParser<AMDGPUAsmParser> A(TheAMDGPUTarget);
   RegisterMCAsmParser<AMDGPUAsmParser> B(TheGCNTarget);
 }

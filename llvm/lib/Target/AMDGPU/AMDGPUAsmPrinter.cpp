@@ -80,7 +80,7 @@ createAMDGPUAsmPrinterPass(TargetMachine &tm,
   return new AMDGPUAsmPrinter(tm, std::move(Streamer));
 }
 
-extern "C" void LLVMInitializeR600AsmPrinter() {
+extern "C" void LLVMInitializeAMDGPUAsmPrinter() {
   TargetRegistry::RegisterAsmPrinter(TheAMDGPUTarget, createAMDGPUAsmPrinterPass);
   TargetRegistry::RegisterAsmPrinter(TheGCNTarget, createAMDGPUAsmPrinterPass);
 }

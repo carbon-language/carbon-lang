@@ -19,6 +19,7 @@
 ; will typically require only insertion of a line.
 [common]
 subdirectories =
+ AMDGPU
  ARM
  AArch64
  BPF
@@ -28,7 +29,6 @@ subdirectories =
  NVPTX
  Mips
  PowerPC
- R600
  Sparc
  SystemZ
  X86
