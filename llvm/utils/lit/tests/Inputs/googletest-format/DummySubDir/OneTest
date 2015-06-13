@@ -21,6 +21,7 @@ elif not sys.argv[1].startswith("--gtest_filter="):
 test_name = sys.argv[1].split('=',1)[1]
 if test_name == 'FirstTest.subTestA':
     print('I am subTest A, I PASS')
+    print('[  PASSED  ] 1 test.')
     sys.exit(0)
 elif test_name == 'FirstTest.subTestB':
     print('I am subTest B, I FAIL')
@@ -29,6 +30,7 @@ elif test_name == 'FirstTest.subTestB':
 elif test_name in ('ParameterizedTest/0.subTest',
                    'ParameterizedTest/1.subTest'):
     print('I am a parameterized test, I also PASS')
+    print('[  PASSED  ] 1 test.')
     sys.exit(0)
 else:
     raise SystemExit("error: invalid test name: %r" % (test_name,))

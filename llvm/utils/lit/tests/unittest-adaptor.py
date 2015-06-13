@@ -3,8 +3,8 @@
 # RUN: %{python} %s %{inputs}/unittest-adaptor 2> %t.err
 # RUN: FileCheck < %t.err %s
 #
-# CHECK: unittest-adaptor :: test-one.txt ... ok
-# CHECK: unittest-adaptor :: test-two.txt ... FAIL
+# CHECK-DAG: unittest-adaptor :: test-two.txt ... FAIL
+# CHECK-DAG: unittest-adaptor :: test-one.txt ... ok
 
 import unittest
 import sys
