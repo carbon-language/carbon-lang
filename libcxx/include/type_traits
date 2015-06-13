@@ -1789,7 +1789,8 @@ struct __member_pointer_traits_imp<_Rp (_Class::*)(_Param..., ...) const volatil
     typedef _Rp (_FnType) (_Param..., ...);
 };
 
-#if __has_feature(cxx_reference_qualified_functions)
+#if __has_feature(cxx_reference_qualified_functions) || \
+    (defined(_GNUC_VER) && _GNUC_VER >= 409)
 
 template <class _Rp, class _Class, class ..._Param>
 struct __member_pointer_traits_imp<_Rp (_Class::*)(_Param...) &, true, false>
@@ -1919,7 +1920,7 @@ struct __member_pointer_traits_imp<_Rp (_Class::*)(_Param..., ...) const volatil
     typedef _Rp (_FnType) (_Param..., ...);
 };
 
-#endif  // __has_feature(cxx_reference_qualified_functions)
+#endif  // __has_feature(cxx_reference_qualified_functions) || _GNUC_VER >= 409
 
 #else  // _LIBCPP_HAS_NO_VARIADICS
 
@@ -2691,7 +2692,7 @@ struct _LIBCPP_TYPE_VIS_ONLY is_move_constructible
 
 #ifndef _LIBCPP_HAS_NO_VARIADICS
 
-#if __has_feature(is_trivially_constructible)
+#if __has_feature(is_trivially_constructible) || _GNUC_VER >= 501
 
 template <class _Tp, class... _Args>
 struct _LIBCPP_TYPE_VIS_ONLY is_trivially_constructible
@@ -2750,7 +2751,7 @@ struct _LIBCPP_TYPE_VIS_ONLY is_trivially_constructible
 {
 };
 
-#if __has_feature(is_trivially_constructible)
+#if __has_feature(is_trivially_constructible) || _GNUC_VER >= 501
 
 template <class _Tp>
 struct _LIBCPP_TYPE_VIS_ONLY is_trivially_constructible<_Tp, __is_construct::__nat,
@@ -2838,7 +2839,7 @@ template <class _Tp> struct _LIBCPP_TYPE_VIS_ONLY is_trivially_move_constructibl
 
 // is_trivially_assignable
 
-#if __has_feature(is_trivially_assignable)
+#if __has_feature(is_trivially_assignable) || _GNUC_VER >= 501
 
 template <class _Tp, class _Arg>
 struct is_trivially_assignable
@@ -3276,6 +3277,8 @@ template <class _Tp> struct _LIBCPP_TYPE_VIS_ONLY is_standard_layout
 template <class _Tp> struct _LIBCPP_TYPE_VIS_ONLY is_trivially_copyable
 #if __has_feature(is_trivially_copyable)
     : public integral_constant<bool, __is_trivially_copyable(_Tp)>
+#elif _GNUC_VER >= 501
+    : public integral_constant<bool, !is_volatile<_Tp>::value && __is_trivially_copyable(_Tp)>
 #else
     : integral_constant<bool, is_scalar<typename remove_all_extents<_Tp>::type>::value>
 #endif
@@ -3284,7 +3287,7 @@ template <class _Tp> struct _LIBCPP_TYPE_VIS_ONLY is_trivially_copyable
 // is_trivial;
 
 template <class _Tp> struct _LIBCPP_TYPE_VIS_ONLY is_trivial
-#if __has_feature(is_trivial) || (_GNUC_VER >= 407)
+#if __has_feature(is_trivial) || _GNUC_VER >= 407
     : public integral_constant<bool, __is_trivial(_Tp)>
 #else
     : integral_constant<bool, is_trivially_copyable<_Tp>::value &&
