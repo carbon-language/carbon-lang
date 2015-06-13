@@ -39,12 +39,12 @@ the other tools.
 This stage handles tokenization of the input source file, macro expansion,
 #include expansion and handling of other preprocessor directives.  The output of
 this stage is typically called a ".i" (for C), ".ii" (for C++), ".mi" (for 
-Objective-C) , or ".mii" (for Objective-C++) file.
+Objective-C), or ".mii" (for Objective-C++) file.
 
 =item B<Parsing and Semantic Analysis>
 
 This stage parses the input file, translating preprocessor tokens into a parse
-tree.  Once in the form of a parser tree, it applies semantic analysis to compute
+tree.  Once in the form of a parse tree, it applies semantic analysis to compute
 types for expressions as well and determine whether the code is well formed. This
 stage is responsible for generating most of the compiler warnings as well as
 parse errors.  The output of this stage is an "Abstract Syntax Tree" (AST).
@@ -330,13 +330,13 @@ all by the program.
 
 =item B<-fexceptions>
 
-Enable generation of unwind information, this allows exceptions to be thrown
+Enable generation of unwind information. This allows exceptions to be thrown
 through Clang compiled stack frames.  This is on by default in x86-64.
 
 =item B<-ftrapv>
 
 Generate code to catch integer overflow errors.  Signed integer overflow is
-undefined in C, with this flag, extra code is generated to detect this and abort
+undefined in C. With this flag, extra code is generated to detect this and abort
 when it happens.
 
 
@@ -389,7 +389,7 @@ Display available options.
 
 =item B<-Qunused-arguments>
 
-Don't emit warning for unused driver arguments.
+Do not emit any warnings for unused driver arguments.
 
 =item B<-Wa,>I<args>
 
@@ -578,7 +578,7 @@ write temporary files used during the compilation process.
 
 If this environment variable is present, it is treated as a delimited
 list of paths to be added to the default system include path list. The
-delimiter is the platform dependent delimitor, as used in the I<PATH>
+delimiter is the platform dependent delimiter, as used in the I<PATH>
 environment variable.
 
 Empty components in the environment variable are ignored.
@@ -592,7 +592,7 @@ which are only used when processing the appropriate language.
 =item B<MACOSX_DEPLOYMENT_TARGET>
 
 If -mmacosx-version-min is unspecified, the default deployment target
-is read from this environment variable.  This option only affects darwin
+is read from this environment variable.  This option only affects Darwin
 targets.
 
 =back
