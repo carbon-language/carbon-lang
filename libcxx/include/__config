@@ -577,7 +577,22 @@ template <unsigned> struct __static_assert_check {};
 #endif  // _LIBCPP_HAS_NO_STATIC_ASSERT
 
 #ifdef _LIBCPP_HAS_NO_DECLTYPE
-#define decltype(x) __typeof__(x)
+# if defined(__clang__)
+#  define _CLANG_VER (__clang_major__ * 100 + __clang_minor__)
+# else
+#  define _CLANG_VER 0
+# endif
+// Clang 3.0 and GCC 4.6 provide __decltype in all standard modes.
+// XCode 5.0 is based off of Clang 3.3 SVN. We require Clang 3.3
+// be sure we have __decltype.
+#if (defined(__apple_build_version__) && _CLANG_VER >= 500) || \
+    (!defined(__apple_build_version__) && _CLANG_VER >= 303) || \
+    _GNUC_VER >= 406
+#  define decltype(__x) __decltype(__x)
+#else
+#  define decltype(__x) __typeof__(__x)
+#endif
+#undef _CLANG_VER
 #endif
 
 #ifdef _LIBCPP_HAS_NO_CONSTEXPR
