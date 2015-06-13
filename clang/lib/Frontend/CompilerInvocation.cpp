@@ -321,6 +321,29 @@ GenerateOptimizationRemarkRegex(DiagnosticsEngine &Diags, ArgList &Args,
   return Pattern;
 }
 
+static bool parseDiagnosticLevelMask(StringRef FlagName,
+                                     const std::vector<std::string> &Levels,
+                                     DiagnosticsEngine *Diags,
+                                     DiagnosticLevelMask &M) {
+  bool Success = true;
+  for (const auto &Level : Levels) {
+    DiagnosticLevelMask const PM =
+      llvm::StringSwitch<DiagnosticLevelMask>(Level)
+        .Case("note",    DiagnosticLevelMask::Note)
+        .Case("remark",  DiagnosticLevelMask::Remark)
+        .Case("warning", DiagnosticLevelMask::Warning)
+        .Case("error",   DiagnosticLevelMask::Error)
+        .Default(DiagnosticLevelMask::None);
+    if (PM == DiagnosticLevelMask::None) {
+      Success = false;
+      if (Diags)
+        Diags->Report(diag::err_drv_invalid_value) << FlagName << Level;
+    }
+    M = M | PM;
+  }
+  return Success;
+}
+
 static void parseSanitizerKinds(StringRef FlagName,
                                 const std::vector<std::string> &Sanitizers,
                                 DiagnosticsEngine &Diags, SanitizerSet &S) {
@@ -748,11 +771,18 @@ bool clang::ParseDiagnosticArgs(DiagnosticOptions &Opts, ArgList &Args,
       << Args.getLastArg(OPT_fdiagnostics_format)->getAsString(Args)
       << Format;
   }
-  
+
   Opts.ShowSourceRanges = Args.hasArg(OPT_fdiagnostics_print_source_range_info);
   Opts.ShowParseableFixits = Args.hasArg(OPT_fdiagnostics_parseable_fixits);
   Opts.ShowPresumedLoc = !Args.hasArg(OPT_fno_diagnostics_use_presumed_location);
   Opts.VerifyDiagnostics = Args.hasArg(OPT_verify);
+  DiagnosticLevelMask DiagMask = DiagnosticLevelMask::None;
+  Success &= parseDiagnosticLevelMask("-verify-ignore-unexpected=",
+    Args.getAllArgValues(OPT_verify_ignore_unexpected_EQ),
+    Diags, DiagMask);
+  if (Args.hasArg(OPT_verify_ignore_unexpected))
+    DiagMask = DiagnosticLevelMask::All;
+  Opts.setVerifyIgnoreUnexpected(DiagMask);
   Opts.ElideType = !Args.hasArg(OPT_fno_elide_type);
   Opts.ShowTemplateTree = Args.hasArg(OPT_fdiagnostics_show_template_tree);
   Opts.ErrorLimit = getLastArgIntValue(Args, OPT_ferror_limit, 0, Diags);

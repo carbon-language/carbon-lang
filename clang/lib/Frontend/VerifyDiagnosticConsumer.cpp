@@ -691,7 +691,8 @@ static unsigned CheckLists(DiagnosticsEngine &Diags, SourceManager &SourceMgr,
                            const char *Label,
                            DirectiveList &Left,
                            const_diag_iterator d2_begin,
-                           const_diag_iterator d2_end) {
+                           const_diag_iterator d2_end,
+                           bool IgnoreUnexpected) {
   std::vector<Directive *> LeftOnly;
   DiagList Right(d2_begin, d2_end);
 
@@ -727,7 +728,8 @@ static unsigned CheckLists(DiagnosticsEngine &Diags, SourceManager &SourceMgr,
   }
   // Now all that's left in Right are those that were not matched.
   unsigned num = PrintExpected(Diags, SourceMgr, LeftOnly, Label);
-  num += PrintUnexpected(Diags, &SourceMgr, Right.begin(), Right.end(), Label);
+  if (!IgnoreUnexpected)
+    num += PrintUnexpected(Diags, &SourceMgr, Right.begin(), Right.end(), Label);
   return num;
 }
 
@@ -745,21 +747,28 @@ static unsigned CheckResults(DiagnosticsEngine &Diags, SourceManager &SourceMgr,
   //   Seen \ Expected - set seen but not expected
   unsigned NumProblems = 0;
 
+  const DiagnosticLevelMask DiagMask =
+    Diags.getDiagnosticOptions().getVerifyIgnoreUnexpected();
+
   // See if there are error mismatches.
   NumProblems += CheckLists(Diags, SourceMgr, "error", ED.Errors,
-                            Buffer.err_begin(), Buffer.err_end());
+                            Buffer.err_begin(), Buffer.err_end(),
+                            bool(DiagnosticLevelMask::Error & DiagMask));
 
   // See if there are warning mismatches.
   NumProblems += CheckLists(Diags, SourceMgr, "warning", ED.Warnings,
-                            Buffer.warn_begin(), Buffer.warn_end());
+                            Buffer.warn_begin(), Buffer.warn_end(),
+                            bool(DiagnosticLevelMask::Warning & DiagMask));
 
   // See if there are remark mismatches.
   NumProblems += CheckLists(Diags, SourceMgr, "remark", ED.Remarks,
-                            Buffer.remark_begin(), Buffer.remark_end());
+                            Buffer.remark_begin(), Buffer.remark_end(),
+                            bool(DiagnosticLevelMask::Remark & DiagMask));
 
   // See if there are note mismatches.
   NumProblems += CheckLists(Diags, SourceMgr, "note", ED.Notes,
-                            Buffer.note_begin(), Buffer.note_end());
+                            Buffer.note_begin(), Buffer.note_end(),
+                            bool(DiagnosticLevelMask::Note & DiagMask));
 
   return NumProblems;
 }
@@ -854,12 +863,20 @@ void VerifyDiagnosticConsumer::CheckDiagnostics() {
     // Check that the expected diagnostics occurred.
     NumErrors += CheckResults(Diags, *SrcManager, *Buffer, ED);
   } else {
-    NumErrors += (PrintUnexpected(Diags, nullptr, Buffer->err_begin(),
-                                  Buffer->err_end(), "error") +
-                  PrintUnexpected(Diags, nullptr, Buffer->warn_begin(),
-                                  Buffer->warn_end(), "warn") +
-                  PrintUnexpected(Diags, nullptr, Buffer->note_begin(),
-                                  Buffer->note_end(), "note"));
+    const DiagnosticLevelMask DiagMask =
+        ~Diags.getDiagnosticOptions().getVerifyIgnoreUnexpected();
+    if (bool(DiagnosticLevelMask::Error & DiagMask))
+      NumErrors += PrintUnexpected(Diags, nullptr, Buffer->err_begin(),
+                                   Buffer->err_end(), "error");
+    if (bool(DiagnosticLevelMask::Warning & DiagMask))
+      NumErrors += PrintUnexpected(Diags, nullptr, Buffer->warn_begin(),
+                                   Buffer->warn_end(), "warn");
+    if (bool(DiagnosticLevelMask::Remark & DiagMask))
+      NumErrors += PrintUnexpected(Diags, nullptr, Buffer->remark_begin(),
+                                   Buffer->remark_end(), "remark");
+    if (bool(DiagnosticLevelMask::Note & DiagMask))
+      NumErrors += PrintUnexpected(Diags, nullptr, Buffer->note_begin(),
+                                   Buffer->note_end(), "note");
   }
 
   Diags.setClient(CurClient, Owner.release() != nullptr);

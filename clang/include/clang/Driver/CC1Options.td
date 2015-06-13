@@ -301,6 +301,10 @@ def fmessage_length : Separate<["-"], "fmessage-length">, MetaVarName<"<N>">,
   HelpText<"Format message diagnostics so that they fit within N columns or fewer, when possible.">;
 def verify : Flag<["-"], "verify">,
   HelpText<"Verify diagnostic output using comment directives">;
+def verify_ignore_unexpected : Flag<["-"], "verify-ignore-unexpected">,
+  HelpText<"Ignore unexpected diagnostic messages">;
+def verify_ignore_unexpected_EQ : CommaJoined<["-"], "verify-ignore-unexpected=">,
+  HelpText<"Ignore unexpected diagnostic messages">;
 def Wno_rewrite_macros : Flag<["-"], "Wno-rewrite-macros">,
   HelpText<"Silence ObjC rewriting warnings">;
 

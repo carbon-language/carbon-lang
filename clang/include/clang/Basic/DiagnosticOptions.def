@@ -69,7 +69,10 @@ ENUM_DIAGOPT(ShowOverloads, OverloadsShown, 1,
 DIAGOPT(VerifyDiagnostics, 1, 0) /// Check that diagnostics match the expected
                                  /// diagnostics, indicated by markers in the
                                  /// input source file.
-
+ENUM_DIAGOPT(VerifyIgnoreUnexpected, DiagnosticLevelMask, 4,
+             DiagnosticLevelMask::None) /// Ignore unexpected diagnostics of
+                                        /// the specified levels when using
+                                        /// -verify.
 DIAGOPT(ElideType, 1, 0)         /// Elide identical types in template diffing
 DIAGOPT(ShowTemplateTree, 1, 0)  /// Print a template tree when diffing
 DIAGOPT(CLFallbackMode, 1, 0)    /// Format for clang-cl fallback mode
