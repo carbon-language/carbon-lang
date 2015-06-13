@@ -29,6 +29,7 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/Program.h"
+#include "llvm/Support/StringSaver.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 #include <map>
@@ -54,14 +55,12 @@ using namespace lld;
 
 namespace {
 
-class BumpPtrStringSaver : public llvm::cl::StringSaver {
+class BumpPtrStringSaver final : public llvm::StringSaver {
 public:
-  const char *SaveString(const char *str) override {
-    size_t len = strlen(str);
+  BumpPtrStringSaver() : llvm::StringSaver(_alloc) {}
+  const char *saveImpl(StringRef Str) override {
     std::lock_guard<std::mutex> lock(_allocMutex);
-    char *copy = _alloc.Allocate<char>(len + 1);
-    memcpy(copy, str, len + 1);
-    return copy;
+    return llvm::StringSaver::saveImpl(Str);
   }
 
 private:

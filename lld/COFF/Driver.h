@@ -10,12 +10,13 @@
 #ifndef LLD_COFF_DRIVER_H
 #define LLD_COFF_DRIVER_H
 
-#include "Memory.h"
+#include "lld/Core/LLVM.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Object/COFF.h"
 #include "llvm/Option/Arg.h"
 #include "llvm/Option/ArgList.h"
+#include "llvm/Support/StringSaver.h"
 #include <memory>
 #include <set>
 #include <system_error>
@@ -37,6 +38,7 @@ bool link(int Argc, const char *Argv[]);
 
 class ArgParser {
 public:
+  ArgParser() : Alloc(AllocAux) {}
   // Parses command line options.
   ErrorOr<std::unique_ptr<llvm::opt::InputArgList>> parse(int Argc,
                                                           const char *Argv[]);
@@ -55,12 +57,13 @@ private:
   ErrorOr<std::vector<const char *>>
   replaceResponseFiles(std::vector<const char *>);
 
-  StringAllocator Alloc;
+  llvm::BumpPtrAllocator AllocAux;
+  llvm::BumpPtrStringSaver Alloc;
 };
 
 class LinkerDriver {
 public:
- LinkerDriver() : SearchPaths(getSearchPaths()) {}
+  LinkerDriver() : Alloc(AllocAux), SearchPaths(getSearchPaths()) {}
   bool link(int Argc, const char *Argv[]);
 
   // Used by the resolver to parse .drectve section contents.
@@ -68,7 +71,8 @@ public:
   parseDirectives(StringRef S, std::vector<std::unique_ptr<InputFile>> *Res);
 
 private:
-  StringAllocator Alloc;
+  llvm::BumpPtrAllocator AllocAux;
+  llvm::BumpPtrStringSaver Alloc;
   ArgParser Parser;
 
   // Opens a file. Path has to be resolved already.

@@ -277,6 +277,8 @@ public:
     return is64Bit() ? "__delayLoadHelper2" : "___delayLoadHelper2@8";
   }
 
+  llvm::BumpPtrAllocator &getAllocator() { return _allocator; }
+
   StringRef allocate(StringRef ref) const {
     _allocMutex.lock();
     char *x = _allocator.Allocate<char>(ref.size() + 1);

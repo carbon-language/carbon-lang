@@ -29,6 +29,7 @@
 #include "llvm/Support/Path.h"
 #include "llvm/Support/Process.h"
 #include "llvm/Support/Program.h"
+#include "llvm/Support/StringSaver.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 #include <cctype>
@@ -694,20 +695,6 @@ static void processLibEnv(PECOFFLinkingContext &ctx) {
       ctx.appendInputSearchPath(ctx.allocate(path));
 }
 
-namespace {
-class DriverStringSaver : public llvm::cl::StringSaver {
-public:
-  DriverStringSaver(PECOFFLinkingContext &ctx) : _ctx(ctx) {}
-
-  const char *SaveString(const char *s) override {
-    return _ctx.allocate(StringRef(s)).data();
-  }
-
-private:
-  PECOFFLinkingContext &_ctx;
-};
-}
-
 // Tokenize command line options in a given file and add them to result.
 static bool readResponseFile(StringRef path, PECOFFLinkingContext &ctx,
                              std::vector<const char *> &result) {
@@ -716,7 +703,7 @@ static bool readResponseFile(StringRef path, PECOFFLinkingContext &ctx,
     return false;
   StringRef contentsStr(reinterpret_cast<const char *>(contents.data()),
                         contents.size());
-  DriverStringSaver saver(ctx);
+  llvm::BumpPtrStringSaver saver(ctx.getAllocator());
   SmallVector<const char *, 0> args;
   llvm::cl::TokenizeWindowsCommandLine(contentsStr, saver, args);
   for (const char *s : args)

@@ -11,13 +11,13 @@
 #define LLD_COFF_INPUT_FILES_H
 
 #include "Chunks.h"
-#include "Memory.h"
 #include "Symbols.h"
 #include "lld/Core/LLVM.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/LTO/LTOModule.h"
 #include "llvm/Object/Archive.h"
 #include "llvm/Object/COFF.h"
+#include "llvm/Support/StringSaver.h"
 #include <memory>
 #include <set>
 #include <vector>
@@ -144,7 +144,8 @@ private:
 // for details about the format.
 class ImportFile : public InputFile {
 public:
-  explicit ImportFile(MemoryBufferRef M) : InputFile(ImportKind, M) {}
+  explicit ImportFile(MemoryBufferRef M)
+      : InputFile(ImportKind, M), StringAlloc(StringAllocAux) {}
   static bool classof(const InputFile *F) { return F->kind() == ImportKind; }
   std::vector<SymbolBody *> &getSymbols() override { return SymbolBodies; }
 
@@ -153,7 +154,8 @@ private:
 
   std::vector<SymbolBody *> SymbolBodies;
   llvm::BumpPtrAllocator Alloc;
-  StringAllocator StringAlloc;
+  llvm::BumpPtrAllocator StringAllocAux;
+  llvm::BumpPtrStringSaver StringAlloc;
 };
 
 // Used for LTO.

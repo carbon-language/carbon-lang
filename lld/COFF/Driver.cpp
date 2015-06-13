@@ -10,7 +10,6 @@
 #include "Config.h"
 #include "Driver.h"
 #include "InputFiles.h"
-#include "Memory.h"
 #include "SymbolTable.h"
 #include "Writer.h"
 #include "llvm/ADT/Optional.h"

@@ -16,7 +16,6 @@
 #include "Config.h"
 #include "Driver.h"
 #include "Error.h"
-#include "Memory.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringSwitch.h"
@@ -197,20 +196,9 @@ ArgParser::parse(int Argc, const char *Argv[]) {
   return parse(V);
 }
 
-namespace {
-class BumpPtrStringSaver : public llvm::cl::StringSaver {
-public:
-  BumpPtrStringSaver(lld::coff::StringAllocator *A) : Alloc(A) {}
-  const char *SaveString(const char *S) override {
-    return Alloc->save(S).data();
-  }
-  lld::coff::StringAllocator *Alloc;
-};
-}
-
 std::vector<const char *> ArgParser::tokenize(StringRef S) {
   SmallVector<const char *, 16> Tokens;
-  BumpPtrStringSaver Saver(&Alloc);
+  BumpPtrStringSaver Saver(AllocAux);
   llvm::cl::TokenizeWindowsCommandLine(S, Saver, Tokens);
   return std::vector<const char *>(Tokens.begin(), Tokens.end());
 }
@@ -220,7 +208,7 @@ std::vector<const char *> ArgParser::tokenize(StringRef S) {
 ErrorOr<std::vector<const char *>>
 ArgParser::replaceResponseFiles(std::vector<const char *> Argv) {
   SmallVector<const char *, 256> Tokens(&Argv[0], &Argv[0] + Argv.size());
-  BumpPtrStringSaver Saver(&Alloc);
+  BumpPtrStringSaver Saver(AllocAux);
   ExpandResponseFiles(Saver, TokenizeWindowsCommandLine, Tokens);
   return std::vector<const char *>(Tokens.begin(), Tokens.end());
 }
