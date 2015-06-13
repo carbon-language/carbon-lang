@@ -161,10 +161,8 @@ using tuple_element_t = typename tuple_element <_Ip, _Tp...>::type;
 
 // __tuple_leaf
 
-template <size_t _Ip, class _Hp, bool=is_empty<_Hp>::value
-#if __has_feature(is_final)
-                                 && !__is_final(_Hp)
-#endif
+template <size_t _Ip, class _Hp,
+          bool=is_empty<_Hp>::value && !__libcpp_is_final<_Hp>::value
          >
 class __tuple_leaf;
 

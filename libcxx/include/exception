@@ -195,9 +195,7 @@ void
 throw_with_nested(_Tp&& __t, typename enable_if<
                   is_class<typename remove_reference<_Tp>::type>::value &&
                   !is_base_of<nested_exception, typename remove_reference<_Tp>::type>::value
-#if _LIBCPP_STD_VER > 11 && __has_feature(is_final)
-                  && !is_final<typename remove_reference<_Tp>::type>::value
-#endif
+                  && !__libcpp_is_final<typename remove_reference<_Tp>::type>::value
                                     >::type* = 0)
 #else  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 throw_with_nested (_Tp& __t, typename enable_if<
@@ -217,9 +215,7 @@ void
 throw_with_nested(_Tp&& __t, typename enable_if<
                   !is_class<typename remove_reference<_Tp>::type>::value ||
                   is_base_of<nested_exception, typename remove_reference<_Tp>::type>::value
-#if _LIBCPP_STD_VER > 11 && __has_feature(is_final)
-                  || is_final<typename remove_reference<_Tp>::type>::value
-#endif
+                  || __libcpp_is_final<typename remove_reference<_Tp>::type>::value
                                     >::type* = 0)
 #else  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 throw_with_nested (_Tp& __t, typename enable_if<

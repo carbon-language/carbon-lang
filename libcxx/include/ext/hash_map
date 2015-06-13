@@ -203,6 +203,7 @@ template <class Key, class T, class Hash, class Pred, class Alloc>
 #include <__hash_table>
 #include <functional>
 #include <stdexcept>
+#include <type_traits>
 #include <ext/__hash>
 
 #if __DEPRECATED
@@ -213,16 +214,16 @@ template <class Key, class T, class Hash, class Pred, class Alloc>
 #endif
 #endif
 
+#if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
 #pragma GCC system_header
+#endif
 
 namespace __gnu_cxx {
 
 using namespace std;
 
-template <class _Tp, class _Hash, bool = is_empty<_Hash>::value
-#if __has_feature(is_final)
-                                         && !__is_final(_Hash)
-#endif
+template <class _Tp, class _Hash,
+          bool = is_empty<_Hash>::value && !__libcpp_is_final<_Hash>::value
         >
 class __hash_map_hasher
     : private _Hash
@@ -255,10 +256,8 @@ public:
         {return __hash_(__x);}
 };
 
-template <class _Tp, class _Pred, bool = is_empty<_Pred>::value
-#if __has_feature(is_final)
-                                         && !__is_final(_Pred)
-#endif
+template <class _Tp, class _Pred,
+          bool = is_empty<_Pred>::value && !__libcpp_is_final<_Pred>::value
          >
 class __hash_map_equal
     : private _Pred

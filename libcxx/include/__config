@@ -77,10 +77,8 @@
 #ifdef _WIN32
 #  define _LIBCPP_LITTLE_ENDIAN 1
 #  define _LIBCPP_BIG_ENDIAN    0
-// Compiler intrinsics (GCC or MSVC)
-#  if defined(__clang__) \
-   || (defined(_MSC_VER) && _MSC_VER >= 1400) \
-   || (defined(__GNUC__) && _GNUC_VER > 403)
+// Compiler intrinsics (MSVC)
+#if defined(_MSC_VER) && _MSC_VER >= 1400
 #    define _LIBCPP_HAS_IS_BASE_OF
 #  endif
 #  if defined(_MSC_VER) && !defined(__clang__)
@@ -94,12 +92,6 @@
 #    define _LIBCPP_MSVCRT // Using Microsoft's C Runtime library
 #  endif
 #endif  // _WIN32
-
-#ifdef __linux__
-#  if defined(__GNUC__) && _GNUC_VER >= 403
-#    define _LIBCPP_HAS_IS_BASE_OF
-#  endif
-#endif
 
 #ifdef __sun__
 # include <sys/isa_defs.h>
@@ -320,6 +312,10 @@ typedef __char32_t char32_t;
 #  define _LIBCPP_HAS_IS_BASE_OF
 #endif
 
+#if __has_feature(is_final)
+#  define _LIBCPP_HAS_IS_FINAL
+#endif
+
 // Objective-C++ features (opt-in)
 #if __has_feature(objc_arc)
 #define _LIBCPP_HAS_OBJC_ARC
@@ -403,6 +399,11 @@ namespace std {
 #if _GNUC_VER >= 407
 #define _LIBCPP_UNDERLYING_TYPE(T) __underlying_type(T)
 #define _LIBCPP_IS_LITERAL(T) __is_literal_type(T)
+#define _LIBCPP_HAS_IS_FINAL
+#endif
+
+#if defined(__GNUC__) && _GNUC_VER >= 403
+#  define _LIBCPP_HAS_IS_BASE_OF
 #endif
 
 #if !__EXCEPTIONS
@@ -537,6 +538,7 @@ namespace std {
 #define _LIBCPP_HAS_NO_NULLPTR
 #define _LIBCPP_HAS_NO_UNICODE_CHARS
 #define _LIBCPP_HAS_IS_BASE_OF
+#define _LIBCPP_HAS_IS_FINAL
 #define _LIBCPP_HAS_NO_VARIABLE_TEMPLATES
 
 #if defined(_AIX)

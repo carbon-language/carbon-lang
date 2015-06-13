@@ -428,6 +428,7 @@ swap(multimap<Key, T, Compare, Allocator>& x,
 #include <utility>
 #include <functional>
 #include <initializer_list>
+#include <type_traits>
 
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
 #pragma GCC system_header
@@ -435,10 +436,8 @@ swap(multimap<Key, T, Compare, Allocator>& x,
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
-template <class _Key, class _CP, class _Compare, bool = is_empty<_Compare>::value
-#if __has_feature(is_final)
-                                                        && !__is_final(_Compare)
-#endif
+template <class _Key, class _CP, class _Compare,
+          bool = is_empty<_Compare>::value && !__libcpp_is_final<_Compare>::value
          >
 class __map_value_compare
     : private _Compare

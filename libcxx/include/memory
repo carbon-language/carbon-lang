@@ -1982,14 +1982,9 @@ public:
 template <class _T1, class _T2, bool = is_same<typename remove_cv<_T1>::type,
                                                      typename remove_cv<_T2>::type>::value,
                                 bool = is_empty<_T1>::value
-#if __has_feature(is_final)
-                                       && !__is_final(_T1)
-#endif
-                                ,
+                                       && !__libcpp_is_final<_T1>::value,
                                 bool = is_empty<_T2>::value
-#if __has_feature(is_final)
-                                       && !__is_final(_T2)
-#endif
+                                       && !__libcpp_is_final<_T2>::value
          >
 struct __libcpp_compressed_pair_switch;
 
