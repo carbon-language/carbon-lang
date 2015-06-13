@@ -184,9 +184,9 @@ class PLT0Atom : public PLTAtom {
 public:
   PLT0Atom(const Atom *got, const File &f) : PLTAtom(f, ".plt") {
     // Setup reference to fixup the PLT0 entry.
-    addReferenceELF_Mips(LLD_R_MIPS_HI16, 0, got, 0);
-    addReferenceELF_Mips(LLD_R_MIPS_LO16, 4, got, 0);
-    addReferenceELF_Mips(LLD_R_MIPS_LO16, 8, got, 0);
+    addReferenceELF_Mips(R_MIPS_HI16, 0, got, 0);
+    addReferenceELF_Mips(R_MIPS_LO16, 4, got, 0);
+    addReferenceELF_Mips(R_MIPS_LO16, 8, got, 0);
   }
 
   ArrayRef<uint8_t> rawContent() const override {
@@ -212,9 +212,9 @@ class PLTAAtom : public PLTAtom {
 public:
   PLTAAtom(const GOTPLTAtom *got, const File &f) : PLTAtom(f, ".plt") {
     // Setup reference to fixup the PLT entry.
-    addReferenceELF_Mips(LLD_R_MIPS_HI16, 0, got, 0);
-    addReferenceELF_Mips(LLD_R_MIPS_LO16, 4, got, 0);
-    addReferenceELF_Mips(LLD_R_MIPS_LO16, 12, got, 0);
+    addReferenceELF_Mips(R_MIPS_HI16, 0, got, 0);
+    addReferenceELF_Mips(R_MIPS_LO16, 4, got, 0);
+    addReferenceELF_Mips(R_MIPS_LO16, 12, got, 0);
   }
 
   ArrayRef<uint8_t> rawContent() const override {

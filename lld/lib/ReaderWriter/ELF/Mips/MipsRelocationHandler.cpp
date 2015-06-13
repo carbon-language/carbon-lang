@@ -119,8 +119,6 @@ static MipsRelocationParams getRelocationParams(uint32_t rType) {
   case R_MIPS_TLS_DTPREL_LO16:
   case R_MIPS_TLS_TPREL_HI16:
   case R_MIPS_TLS_TPREL_LO16:
-  case LLD_R_MIPS_HI16:
-  case LLD_R_MIPS_LO16:
     return {4, 0xffff, 0, false, dummyCheck};
   case R_MICROMIPS_GOT_HI16:
   case R_MICROMIPS_GOT_LO16:
@@ -226,8 +224,7 @@ static int32_t reloc26ext(uint64_t S, int32_t A, uint32_t shift) {
 }
 
 /// \brief R_MIPS_HI16, R_MIPS_TLS_DTPREL_HI16, R_MIPS_TLS_TPREL_HI16,
-/// R_MICROMIPS_HI16, R_MICROMIPS_TLS_DTPREL_HI16, R_MICROMIPS_TLS_TPREL_HI16,
-/// LLD_R_MIPS_HI16
+/// R_MICROMIPS_HI16, R_MICROMIPS_TLS_DTPREL_HI16, R_MICROMIPS_TLS_TPREL_HI16
 /// local/external: hi16 (AHL + S) - (short)(AHL + S) (truncate)
 /// _gp_disp      : hi16 (AHL + GP - P) - (short)(AHL + GP - P) (verify)
 static int32_t relocHi16(uint64_t P, uint64_t S, int64_t AHL, bool isGPDisp) {
@@ -241,8 +238,7 @@ static int32_t relocPcHi16(uint64_t P, uint64_t S, int64_t AHL) {
 }
 
 /// \brief R_MIPS_LO16, R_MIPS_TLS_DTPREL_LO16, R_MIPS_TLS_TPREL_LO16,
-/// R_MICROMIPS_LO16, R_MICROMIPS_TLS_DTPREL_LO16, R_MICROMIPS_TLS_TPREL_LO16,
-/// LLD_R_MIPS_LO16
+/// R_MICROMIPS_LO16, R_MICROMIPS_TLS_DTPREL_LO16, R_MICROMIPS_TLS_TPREL_LO16
 /// local/external: lo16 AHL + S (truncate)
 /// _gp_disp      : lo16 AHL + GP - P + 4 (verify)
 static int32_t relocLo16(uint64_t P, uint64_t S, int64_t AHL, bool isGPDisp,
@@ -560,10 +556,6 @@ static ErrorOr<int64_t> calculateRelocation(Reference::KindValue kind,
     return reloc26ext(tgtAddr, addend, 2);
   case LLD_R_MICROMIPS_GLOBAL_26_S1:
     return reloc26ext(tgtAddr, addend, isCrossJump ? 2 : 1);
-  case LLD_R_MIPS_HI16:
-    return relocHi16(0, tgtAddr, 0, false);
-  case LLD_R_MIPS_LO16:
-    return relocLo16(0, tgtAddr, 0, false, false);
   case LLD_R_MIPS_STO_PLT:
   case LLD_R_MIPS_GLOBAL_GOT:
     // Do nothing.
