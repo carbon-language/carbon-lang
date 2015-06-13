@@ -633,10 +633,6 @@ static inline void __c11_atomic_signal_fence(memory_order __order) {
   __atomic_signal_fence(__gcc_atomic::__to_gcc_order(__order));
 }
 
-static inline bool __c11_atomic_is_lock_free(size_t __size) {
-  return __atomic_is_lock_free(__size, 0);
-}
-
 template <typename _Tp>
 static inline void __c11_atomic_store(volatile _Atomic(_Tp)* __a,  _Tp __val,
                                       memory_order __order) {
@@ -827,10 +823,16 @@ struct __atomic_base  // false
 
     _LIBCPP_INLINE_VISIBILITY
     bool is_lock_free() const volatile _NOEXCEPT
-        {return __c11_atomic_is_lock_free(sizeof(_Tp));}
+    {
+#if __has_feature(cxx_atomic)
+    return __c11_atomic_is_lock_free(sizeof(_Tp));
+#else
+    return __atomic_is_lock_free(sizeof(_Tp), 0);
+#endif
+    }
     _LIBCPP_INLINE_VISIBILITY
     bool is_lock_free() const _NOEXCEPT
-        {return __c11_atomic_is_lock_free(sizeof(_Tp));}
+        {return static_cast<__atomic_base const volatile*>(this)->is_lock_free();}
     _LIBCPP_INLINE_VISIBILITY
     void store(_Tp __d, memory_order __m = memory_order_seq_cst) volatile _NOEXCEPT
         {__c11_atomic_store(&__a_, __d, __m);}
