@@ -479,19 +479,15 @@ struct __member_pointer_traits_imp
 };
 
 
-namespace __libcpp_is_member_function_pointer_imp {
-    template <typename _Tp>
-    char __test(typename std::__member_pointer_traits_imp<_Tp, true, false>::_FnType *);
-
-    template <typename>
-    std::__two __test(...);
-};
-    
 template <class _Tp> struct __libcpp_is_member_function_pointer
-    : public integral_constant<bool, sizeof(__libcpp_is_member_function_pointer_imp::__test<_Tp>(nullptr)) == 1> {};
+    : public false_type {};
+
+template <class _Ret, class _Class>
+struct __libcpp_is_member_function_pointer<_Ret _Class::*>
+    : public is_function<_Ret> {};
 
 template <class _Tp> struct _LIBCPP_TYPE_VIS_ONLY is_member_function_pointer
-    : public __libcpp_is_member_function_pointer<typename remove_cv<_Tp>::type> {};
+    : public __libcpp_is_member_function_pointer<typename remove_cv<_Tp>::type>::type {};
 
 // is_member_pointer
 
