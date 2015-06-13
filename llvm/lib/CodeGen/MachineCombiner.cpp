@@ -373,8 +373,7 @@ bool MachineCombiner::combineInstructions(MachineBasicBlock *MBB) {
                                       InstrIdxForVirtReg) &&
              preservesResourceLen(MBB, BlockTrace, InsInstrs, DelInstrs))) {
           for (auto *InstrPtr : InsInstrs)
-            MBB->insert((MachineBasicBlock::iterator) & MI,
-                        (MachineInstr *)InstrPtr);
+            MBB->insert((MachineBasicBlock::iterator) &MI, InstrPtr);
           for (auto *InstrPtr : DelInstrs)
             InstrPtr->eraseFromParentAndMarkDBGValuesForRemoval();
 
@@ -390,7 +389,7 @@ bool MachineCombiner::combineInstructions(MachineBasicBlock *MBB) {
           // use for them.
           for (auto *InstrPtr : InsInstrs) {
             MachineFunction *MF = MBB->getParent();
-            MF->DeleteMachineInstr((MachineInstr *)InstrPtr);
+            MF->DeleteMachineInstr(InstrPtr);
           }
         }
         InstrIdxForVirtReg.clear();
