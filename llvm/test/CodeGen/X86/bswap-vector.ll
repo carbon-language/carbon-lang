@@ -287,6 +287,80 @@ entry:
 }
 
 ;
+; Double BSWAP -> Identity
+;
+
+define <8 x i16> @identity_v8i16(<8 x i16> %v) {
+; CHECK-ALL-LABEL: identity_v8i16:
+; CHECK-ALL:       # BB#0: # %entry
+; CHECK-ALL:         retq
+entry:
+  %bs1 = call <8 x i16> @llvm.bswap.v8i16(<8 x i16> %v)
+  %bs2 = call <8 x i16> @llvm.bswap.v8i16(<8 x i16> %bs1)
+  ret <8 x i16> %bs2
+}
+
+define <4 x i32> @identity_v4i32(<4 x i32> %v) {
+; CHECK-ALL-LABEL: identity_v4i32:
+; CHECK-ALL:       # BB#0: # %entry
+; CHECK-ALL-NEXT:    retq
+entry:
+  %bs1 = call <4 x i32> @llvm.bswap.v4i32(<4 x i32> %v)
+  %bs2 = call <4 x i32> @llvm.bswap.v4i32(<4 x i32> %bs1)
+  ret <4 x i32> %bs2
+}
+
+define <2 x i64> @identity_v2i64(<2 x i64> %v) {
+; CHECK-ALL-LABEL: identity_v2i64:
+; CHECK-ALL:       # BB#0: # %entry
+; CHECK-ALL-NEXT:    retq
+entry:
+  %bs1 = call <2 x i64> @llvm.bswap.v2i64(<2 x i64> %v)
+  %bs2 = call <2 x i64> @llvm.bswap.v2i64(<2 x i64> %bs1)
+  ret <2 x i64> %bs2
+}
+
+define <16 x i16> @identity_v16i16(<16 x i16> %v) {
+; CHECK-ALL-LABEL: identity_v16i16:
+; CHECK-ALL:       # BB#0: # %entry
+; CHECK-ALL-NEXT:    retq
+entry:
+  %bs1 = call <16 x i16> @llvm.bswap.v16i16(<16 x i16> %v)
+  %bs2 = call <16 x i16> @llvm.bswap.v16i16(<16 x i16> %bs1)
+  ret <16 x i16> %bs2
+}
+
+define <8 x i32> @identity_v8i32(<8 x i32> %v) {
+; CHECK-ALL-LABEL: identity_v8i32:
+; CHECK-ALL:       # BB#0: # %entry
+; CHECK-ALL-NEXT:    retq
+entry:
+  %bs1 = call <8 x i32> @llvm.bswap.v8i32(<8 x i32> %v)
+  %bs2 = call <8 x i32> @llvm.bswap.v8i32(<8 x i32> %bs1)
+  ret <8 x i32> %bs2
+}
+
+define <4 x i64> @identity_v4i64(<4 x i64> %v) {
+; CHECK-ALL-LABEL: identity_v4i64:
+; CHECK-ALL:       # BB#0: # %entry
+; CHECK-ALL-NEXT:    retq
+entry:
+  %bs1 = call <4 x i64> @llvm.bswap.v4i64(<4 x i64> %v)
+  %bs2 = call <4 x i64> @llvm.bswap.v4i64(<4 x i64> %bs1)
+  ret <4 x i64> %bs2
+}
+
+define <4 x i16> @identity_v4i16(<4 x i16> %v) {
+; CHECK-ALL-LABEL: identity_v4i16:
+; CHECK-ALL:       # BB#0: # %entry
+; CHECK-ALL-NEXT:    retq
+entry:
+  %bs1 = call <4 x i16> @llvm.bswap.v4i16(<4 x i16> %v)
+  %bs2 = call <4 x i16> @llvm.bswap.v4i16(<4 x i16> %bs1)
+  ret <4 x i16> %bs2
+}
+
+;
 ; Constant Folding
 ;
 

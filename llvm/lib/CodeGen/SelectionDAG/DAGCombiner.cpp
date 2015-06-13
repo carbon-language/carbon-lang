@@ -4773,6 +4773,9 @@ SDValue DAGCombiner::visitBSWAP(SDNode *N) {
   // fold (bswap c1) -> c2
   if (isConstantIntBuildVectorOrConstantInt(N0))
     return DAG.getNode(ISD::BSWAP, SDLoc(N), VT, N0);
+  // fold (bswap (bswap x)) -> x
+  if (N0.getOpcode() == ISD::BSWAP)
+    return N0->getOperand(0);
   return SDValue();
 }
 
