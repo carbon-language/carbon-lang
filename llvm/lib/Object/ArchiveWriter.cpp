@@ -18,6 +18,7 @@
 #include "llvm/Object/Archive.h"
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Object/SymbolicFile.h"
+#include "llvm/Support/Errc.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/Path.h"
@@ -70,7 +71,7 @@ NewArchiveIterator::getFD(sys::fs::file_status &NewStatus) const {
   // Linux cannot open directories with open(2), although
   // cygwin and *bsd can.
   if (NewStatus.type() == sys::fs::file_type::directory_file)
-    return make_error_code(std::errc::is_a_directory);
+    return make_error_code(errc::is_a_directory);
 
   return NewFD;
 }

@@ -19,6 +19,7 @@
 #include "llvm/ProfileData/CoverageMappingReader.h"
 #include "llvm/ProfileData/InstrProfReader.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/Errc.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/Path.h"
@@ -154,11 +155,11 @@ ErrorOr<int64_t> CounterMappingContext::evaluate(const Counter &C) const {
     return 0;
   case Counter::CounterValueReference:
     if (C.getCounterID() >= CounterValues.size())
-      return std::make_error_code(std::errc::argument_out_of_domain);
+      return make_error_code(errc::argument_out_of_domain);
     return CounterValues[C.getCounterID()];
   case Counter::Expression: {
     if (C.getExpressionID() >= Expressions.size())
-      return std::make_error_code(std::errc::argument_out_of_domain);
+      return make_error_code(errc::argument_out_of_domain);
     const auto &E = Expressions[C.getExpressionID()];
     ErrorOr<int64_t> LHS = evaluate(E.LHS);
     if (!LHS)

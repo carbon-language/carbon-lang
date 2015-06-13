@@ -67,8 +67,8 @@ TEST(ErrorOr, Covariant) {
 }
 
 TEST(ErrorOr, Comparison) {
-  ErrorOr<int> x(std::errc::no_such_file_or_directory);
-  EXPECT_EQ(x, std::errc::no_such_file_or_directory);
+  ErrorOr<int> x(errc::no_such_file_or_directory);
+  EXPECT_EQ(x, errc::no_such_file_or_directory);
 }
 
 // ErrorOr<int*> x(nullptr);
