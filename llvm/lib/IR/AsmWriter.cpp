@@ -2169,23 +2169,21 @@ void AssemblyWriter::printModule(const Module *M) {
 
   // Output all globals.
   if (!M->global_empty()) Out << '\n';
-  for (Module::const_global_iterator I = M->global_begin(), E = M->global_end();
-       I != E; ++I) {
-    printGlobal(I); Out << '\n';
+  for (const GlobalVariable &GV : M->globals()) {
+    printGlobal(&GV); Out << '\n';
   }
 
   // Output all aliases.
   if (!M->alias_empty()) Out << "\n";
-  for (Module::const_alias_iterator I = M->alias_begin(), E = M->alias_end();
-       I != E; ++I)
-    printAlias(I);
+  for (const GlobalAlias &GA : M->aliases())
+    printAlias(&GA);
 
   // Output global use-lists.
   printUseLists(nullptr);
 
   // Output all of the functions.
-  for (Module::const_iterator I = M->begin(), E = M->end(); I != E; ++I)
-    printFunction(I);
+  for (const Function &F : *M)
+    printFunction(&F);
   assert(UseListOrders.empty() && "All use-lists should have been consumed");
 
   // Output all attribute groups.
@@ -2197,9 +2195,8 @@ void AssemblyWriter::printModule(const Module *M) {
   // Output named metadata.
   if (!M->named_metadata_empty()) Out << '\n';
 
-  for (Module::const_named_metadata_iterator I = M->named_metadata_begin(),
-       E = M->named_metadata_end(); I != E; ++I)
-    printNamedMDNode(I);
+  for (const NamedMDNode &Node : M->named_metadata())
+    printNamedMDNode(&Node);
 
   // Output metadata.
   if (!Machine.mdn_empty()) {
