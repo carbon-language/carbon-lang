@@ -83,6 +83,7 @@ add_llvm_library(LLVMSupport
   StringExtras.cpp
   StringMap.cpp
   StringPool.cpp
+  StringSaver.cpp
   StringRef.cpp
   SystemUtils.cpp
   TargetParser.cpp

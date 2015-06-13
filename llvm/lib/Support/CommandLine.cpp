@@ -32,6 +32,7 @@
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Path.h"
+#include "llvm/Support/StringSaver.h"
 #include "llvm/Support/raw_ostream.h"
 #include <cstdlib>
 #include <map>
@@ -78,7 +79,6 @@ void parser<double>::anchor() {}
 void parser<float>::anchor() {}
 void parser<std::string>::anchor() {}
 void parser<char>::anchor() {}
-void StringSaver::anchor() {}
 
 //===----------------------------------------------------------------------===//
 
@@ -564,7 +564,7 @@ void cl::TokenizeGNUCommandLine(StringRef Src, StringSaver &Saver,
     // End the token if this is whitespace.
     if (isWhitespace(Src[I])) {
       if (!Token.empty())
-        NewArgv.push_back(Saver.SaveString(Token.c_str()));
+        NewArgv.push_back(Saver.save(Token.c_str()));
       Token.clear();
       continue;
     }
@@ -575,7 +575,7 @@ void cl::TokenizeGNUCommandLine(StringRef Src, StringSaver &Saver,
 
   // Append the last token after hitting EOF with no whitespace.
   if (!Token.empty())
-    NewArgv.push_back(Saver.SaveString(Token.c_str()));
+    NewArgv.push_back(Saver.save(Token.c_str()));
   // Mark the end of response files
   if (MarkEOLs)
     NewArgv.push_back(nullptr);
@@ -656,7 +656,7 @@ void cl::TokenizeWindowsCommandLine(StringRef Src, StringSaver &Saver,
     if (State == UNQUOTED) {
       // Whitespace means the end of the token.
       if (isWhitespace(Src[I])) {
-        NewArgv.push_back(Saver.SaveString(Token.c_str()));
+        NewArgv.push_back(Saver.save(Token.c_str()));
         Token.clear();
         State = INIT;
         // Mark the end of lines in response files
@@ -691,7 +691,7 @@ void cl::TokenizeWindowsCommandLine(StringRef Src, StringSaver &Saver,
   }
   // Append the last token after hitting EOF with no whitespace.
   if (!Token.empty())
-    NewArgv.push_back(Saver.SaveString(Token.c_str()));
+    NewArgv.push_back(Saver.save(Token.c_str()));
   // Mark the end of response files
   if (MarkEOLs)
     NewArgv.push_back(nullptr);
@@ -779,26 +779,6 @@ bool cl::ExpandResponseFiles(StringSaver &Saver, TokenizerCallback Tokenizer,
   return AllExpanded;
 }
 
-namespace {
-class StrDupSaver : public StringSaver {
-  std::vector<char *> Dups;
-
-public:
-  ~StrDupSaver() override {
-    for (std::vector<char *>::iterator I = Dups.begin(), E = Dups.end(); I != E;
-         ++I) {
-      char *Dup = *I;
-      free(Dup);
-    }
-  }
-  const char *SaveString(const char *Str) override {
-    char *Dup = strdup(Str);
-    Dups.push_back(Dup);
-    return Dup;
-  }
-};
-}
-
 /// ParseEnvironmentOptions - An alternative entry point to the
 /// CommandLine library, which allows you to read the program's name
 /// from the caller (as PROGNAME) and its command-line arguments from
@@ -818,8 +798,9 @@ void cl::ParseEnvironmentOptions(const char *progName, const char *envVar,
   // Get program's "name", which we wouldn't know without the caller
   // telling us.
   SmallVector<const char *, 20> newArgv;
-  StrDupSaver Saver;
-  newArgv.push_back(Saver.SaveString(progName));
+  BumpPtrAllocator A;
+  BumpPtrStringSaver Saver(A);
+  newArgv.push_back(Saver.save(progName));
 
   // Parse the value of the environment variable into a "command line"
   // and hand it off to ParseCommandLineOptions().
@@ -840,7 +821,8 @@ void CommandLineParser::ParseCommandLineOptions(int argc,
 
   // Expand response files.
   SmallVector<const char *, 20> newArgv(argv, argv + argc);
-  StrDupSaver Saver;
+  BumpPtrAllocator A;
+  BumpPtrStringSaver Saver(A);
   ExpandResponseFiles(Saver, TokenizeGNUCommandLine, newArgv);
   argv = &newArgv[0];
   argc = static_cast<int>(newArgv.size());

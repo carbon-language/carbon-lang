@@ -19,6 +19,7 @@
 #include "llvm/Option/ArgList.h"
 #include "llvm/Option/Option.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/StringSaver.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/raw_ostream.h"
 
@@ -67,30 +68,10 @@ static std::string getOutputPath(llvm::opt::InputArgList *Args) {
   llvm_unreachable("internal error");
 }
 
-namespace {
-// FIXME: Should re-use StringSaver from lld.
-class StrDupSaver : public cl::StringSaver {
-  std::vector<char *> Dups;
-
-public:
-  ~StrDupSaver() override {
-    for (std::vector<char *>::iterator I = Dups.begin(), E = Dups.end(); I != E;
-         ++I) {
-      char *Dup = *I;
-      free(Dup);
-    }
-  }
-  const char *SaveString(const char *Str) override {
-    char *Dup = strdup(Str);
-    Dups.push_back(Dup);
-    return Dup;
-  }
-};
-}
-
 int llvm::libDriverMain(int Argc, const char **Argv) {
   SmallVector<const char *, 20> NewArgv(Argv, Argv + Argc);
-  StrDupSaver Saver;
+  BumpPtrAllocator Alloc;
+  BumpPtrStringSaver Saver(Alloc);
   cl::ExpandResponseFiles(Saver, cl::TokenizeWindowsCommandLine, NewArgv);
   Argv = &NewArgv[0];
   Argc = static_cast<int>(NewArgv.size());
