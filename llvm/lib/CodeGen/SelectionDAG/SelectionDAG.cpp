@@ -3082,6 +3082,14 @@ SDValue SelectionDAG::getNode(unsigned Opcode, SDLoc DL,
     if (OpOpcode == ISD::UNDEF)
       return getUNDEF(VT);
     break;
+  case ISD::BSWAP:
+    assert(VT.isInteger() && VT == Operand.getValueType() &&
+           "Invalid BSWAP!");
+    assert((VT.getScalarSizeInBits() % 16 == 0) &&
+           "BSWAP types must be a multiple of 16 bits!");
+    if (OpOpcode == ISD::UNDEF)
+      return getUNDEF(VT);
+    break;
   case ISD::BITCAST:
     // Basic sanity checking.
     assert(VT.getSizeInBits() == Operand.getValueType().getSizeInBits()
