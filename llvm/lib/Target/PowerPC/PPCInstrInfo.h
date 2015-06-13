@@ -106,7 +106,7 @@ public:
                                               UseNode, UseIdx);
   }
 
-  bool hasLowDefLatency(const InstrItineraryData *ItinData,
+  bool hasLowDefLatency(const TargetSchedModel &SchedModel,
                         const MachineInstr *DefMI,
                         unsigned DefIdx) const override {
     // Machine LICM should hoist all instructions in low-register-pressure

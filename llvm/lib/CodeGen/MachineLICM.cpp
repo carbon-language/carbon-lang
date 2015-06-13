@@ -27,7 +27,7 @@
 #include "llvm/CodeGen/MachineMemOperand.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/PseudoSourceValue.h"
-#include "llvm/MC/MCInstrItineraries.h"
+#include "llvm/CodeGen/TargetSchedule.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
@@ -74,7 +74,7 @@ namespace {
     const TargetRegisterInfo *TRI;
     const MachineFrameInfo *MFI;
     MachineRegisterInfo *MRI;
-    const InstrItineraryData *InstrItins;
+    TargetSchedModel SchedModel;
     bool PreRegAlloc;
 
     // Various analyses that we use...
@@ -338,12 +338,13 @@ bool MachineLICM::runOnMachineFunction(MachineFunction &MF) {
     return false;
 
   Changed = FirstInLoop = false;
-  TII = MF.getSubtarget().getInstrInfo();
-  TLI = MF.getSubtarget().getTargetLowering();
-  TRI = MF.getSubtarget().getRegisterInfo();
+  const TargetSubtargetInfo &ST = MF.getSubtarget();
+  TII = ST.getInstrInfo();
+  TLI = ST.getTargetLowering();
+  TRI = ST.getRegisterInfo();
   MFI = MF.getFrameInfo();
   MRI = &MF.getRegInfo();
-  InstrItins = MF.getSubtarget().getInstrItineraryData();
+  SchedModel.init(ST.getSchedModel(), &ST, TII);
 
   PreRegAlloc = MRI->isSSA();
 
@@ -1046,7 +1047,7 @@ bool MachineLICM::HasLoopPHIUse(const MachineInstr *MI) const {
 /// it 'high'.
 bool MachineLICM::HasHighOperandLatency(MachineInstr &MI,
                                         unsigned DefIdx, unsigned Reg) const {
-  if (!InstrItins || InstrItins->isEmpty() || MRI->use_nodbg_empty(Reg))
+  if (MRI->use_nodbg_empty(Reg))
     return false;
 
   for (MachineInstr &UseMI : MRI->use_nodbg_instructions(Reg)) {
@@ -1062,7 +1063,7 @@ bool MachineLICM::HasHighOperandLatency(MachineInstr &MI,
       if (MOReg != Reg)
         continue;
 
-      if (TII->hasHighOperandLatency(InstrItins, MRI, &MI, DefIdx, &UseMI, i))
+      if (TII->hasHighOperandLatency(SchedModel, MRI, &MI, DefIdx, &UseMI, i))
         return true;
     }
 
@@ -1078,8 +1079,6 @@ bool MachineLICM::HasHighOperandLatency(MachineInstr &MI,
 bool MachineLICM::IsCheapInstruction(MachineInstr &MI) const {
   if (TII->isAsCheapAsAMove(&MI) || MI.isCopyLike())
     return true;
-  if (!InstrItins || InstrItins->isEmpty())
-    return false;
 
   bool isCheap = false;
   unsigned NumDefs = MI.getDesc().getNumDefs();
@@ -1092,7 +1091,7 @@ bool MachineLICM::IsCheapInstruction(MachineInstr &MI) const {
     if (TargetRegisterInfo::isPhysicalRegister(Reg))
       continue;
 
-    if (!TII->hasLowDefLatency(InstrItins, &MI, i))
+    if (!TII->hasLowDefLatency(SchedModel, &MI, i))
       return false;
     isCheap = true;
   }

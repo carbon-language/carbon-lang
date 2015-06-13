@@ -40,6 +40,7 @@ class TargetRegisterClass;
 class TargetRegisterInfo;
 class BranchProbability;
 class TargetSubtargetInfo;
+class TargetSchedModel;
 class DFAPacketizer;
 
 template<class T> class SmallVectorImpl;
@@ -1054,7 +1055,7 @@ public:
   /// determine whether it makes sense to hoist an instruction out even in a
   /// high register pressure situation.
   virtual
-  bool hasHighOperandLatency(const InstrItineraryData *ItinData,
+  bool hasHighOperandLatency(const TargetSchedModel &SchedModel,
                              const MachineRegisterInfo *MRI,
                              const MachineInstr *DefMI, unsigned DefIdx,
                              const MachineInstr *UseMI, unsigned UseIdx) const {
@@ -1064,7 +1065,7 @@ public:
   /// Compute operand latency of a def of 'Reg'. Return true
   /// if the target considered it 'low'.
   virtual
-  bool hasLowDefLatency(const InstrItineraryData *ItinData,
+  bool hasLowDefLatency(const TargetSchedModel &SchedModel,
                         const MachineInstr *DefMI, unsigned DefIdx) const;
 
   /// Perform target-specific instruction verification.

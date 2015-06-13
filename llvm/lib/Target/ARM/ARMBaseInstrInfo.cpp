@@ -28,6 +28,7 @@
 #include "llvm/CodeGen/MachineMemOperand.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/SelectionDAGNodes.h"
+#include "llvm/CodeGen/TargetSchedule.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/GlobalValue.h"
@@ -3993,7 +3994,7 @@ int ARMBaseInstrInfo::getInstrLatency(const InstrItineraryData *ItinData,
 }
 
 bool ARMBaseInstrInfo::
-hasHighOperandLatency(const InstrItineraryData *ItinData,
+hasHighOperandLatency(const TargetSchedModel &SchedModel,
                       const MachineRegisterInfo *MRI,
                       const MachineInstr *DefMI, unsigned DefIdx,
                       const MachineInstr *UseMI, unsigned UseIdx) const {
@@ -4005,9 +4006,8 @@ hasHighOperandLatency(const InstrItineraryData *ItinData,
     return true;
 
   // Hoist VFP / NEON instructions with 4 or higher latency.
-  int Latency = computeOperandLatency(ItinData, DefMI, DefIdx, UseMI, UseIdx);
-  if (Latency < 0)
-    Latency = getInstrLatency(ItinData, DefMI);
+  unsigned Latency
+    = SchedModel.computeOperandLatency(DefMI, DefIdx, UseMI, UseIdx);
   if (Latency <= 3)
     return false;
   return DDomain == ARMII::DomainVFP || DDomain == ARMII::DomainNEON ||
@@ -4015,8 +4015,9 @@ hasHighOperandLatency(const InstrItineraryData *ItinData,
 }
 
 bool ARMBaseInstrInfo::
-hasLowDefLatency(const InstrItineraryData *ItinData,
+hasLowDefLatency(const TargetSchedModel &SchedModel,
                  const MachineInstr *DefMI, unsigned DefIdx) const {
+  const InstrItineraryData *ItinData = SchedModel.getInstrItineraries();
   if (!ItinData || ItinData->isEmpty())
     return false;
 

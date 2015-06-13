@@ -19,6 +19,7 @@
 #include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/CodeGen/ScoreboardHazardRecognizer.h"
 #include "llvm/CodeGen/StackMaps.h"
+#include "llvm/CodeGen/TargetSchedule.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCInstrItineraries.h"
@@ -801,9 +802,10 @@ getInstrLatency(const InstrItineraryData *ItinData,
   return ItinData->getStageLatency(MI->getDesc().getSchedClass());
 }
 
-bool TargetInstrInfo::hasLowDefLatency(const InstrItineraryData *ItinData,
+bool TargetInstrInfo::hasLowDefLatency(const TargetSchedModel &SchedModel,
                                        const MachineInstr *DefMI,
                                        unsigned DefIdx) const {
+  const InstrItineraryData *ItinData = SchedModel.getInstrItineraries();
   if (!ItinData || ItinData->isEmpty())
     return false;
 
