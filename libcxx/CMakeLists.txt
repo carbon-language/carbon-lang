@@ -104,27 +104,6 @@ set_property(CACHE LIBCXX_CXX_ABI PROPERTY STRINGS ;${CXXABIS})
 # link with libunwind or libgcc_s while running the test cases.
 option(LIBCXXABI_USE_LLVM_UNWINDER "Build and use the LLVM unwinder." OFF)
 
-# TODO(ericwf): Remove these options by March/25/2015.
-# These CMake options have been removed in favor of a generic option
-# "LIBCXX_CXX_ABI_INCLUDE_PATHS". Issue an explicit error message explaining
-# the change for anybody that still uses them.
-if (DEFINED LIBCXX_LIBCXXABI_INCLUDE_PATHS)
-  message(FATAL_ERROR
-    "The option \"LIBCXX_LIBCXXABI_INCLUDE_PATHS\" has been removed. "
-    "Use \"LIBCXX_CXX_ABI_INCLUDE_PATHS\" instead "
-    "and clean your build directory.")
-elseif(DEFINED LIBCXX_LIBSUPCXX_INCLUDE_PATHS)
-  message(FATAL_ERROR
-    "The option \"LIBCXX_LIBSUPCXX_INCLUDE_PATHS\" has been removed. "
-    "Use \"LIBCXX_CXX_ABI_INCLUDE_PATHS\" instead "
-    "and clean your build directory.")
-elseif(DEFINED LIBCXX_LIBCXXRT_INCLUDE_PATHS)
-  message(FATAL_ERROR
-    "The option \"LIBCXX_LIBCXXRT_INCLUDE_PATHS\" has been removed. "
-    "Use \"LIBCXX_CXX_ABI_INCLUDE_PATHS\" instead "
-    "and clean your build directory.")
-endif()
-
 #===============================================================================
 # Configure System
 #===============================================================================
