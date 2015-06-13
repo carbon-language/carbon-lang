@@ -147,7 +147,7 @@ class MipsSubtarget : public MipsGenSubtargetInfo {
 
 public:
   /// This overrides the PostRAScheduler bit in the SchedModel for each CPU.
-  bool enablePostMachineScheduler() const override;
+  bool enablePostRAScheduler() const override;
   void getCriticalPathRCs(RegClassVector &CriticalPathRCs) const override;
   CodeGenOpt::Level getOptLevelToEnablePostRAScheduler() const override;
 

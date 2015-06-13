@@ -274,7 +274,7 @@ public:
   // Scheduling customization.
   bool enableMachineScheduler() const override;
   // This overrides the PostRAScheduler bit in the SchedModel for each CPU.
-  bool enablePostMachineScheduler() const override;
+  bool enablePostRAScheduler() const override;
   AntiDepBreakMode getAntiDepBreakMode() const override;
   void getCriticalPathRCs(RegClassVector &CriticalPathRCs) const override;
 

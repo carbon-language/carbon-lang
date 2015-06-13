@@ -126,7 +126,7 @@ MipsSubtarget::MipsSubtarget(const Triple &TT, const std::string &CPU,
 }
 
 /// This overrides the PostRAScheduler bit in the SchedModel for any CPU.
-bool MipsSubtarget::enablePostMachineScheduler() const { return true; }
+bool MipsSubtarget::enablePostRAScheduler() const { return true; }
 
 void MipsSubtarget::getCriticalPathRCs(RegClassVector &CriticalPathRCs) const {
   CriticalPathRCs.clear();

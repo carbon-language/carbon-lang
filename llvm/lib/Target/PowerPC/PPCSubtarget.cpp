@@ -175,7 +175,7 @@ bool PPCSubtarget::enableMachineScheduler() const {
 }
 
 // This overrides the PostRAScheduler bit in the SchedModel for each CPU.
-bool PPCSubtarget::enablePostMachineScheduler() const { return true; }
+bool PPCSubtarget::enablePostRAScheduler() const { return true; }
 
 PPCGenSubtargetInfo::AntiDepBreakMode PPCSubtarget::getAntiDepBreakMode() const {
   return TargetSubtargetInfo::ANTIDEP_ALL;

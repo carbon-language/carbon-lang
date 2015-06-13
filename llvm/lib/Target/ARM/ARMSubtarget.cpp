@@ -337,7 +337,7 @@ bool ARMSubtarget::hasSinCos() const {
 }
 
 // This overrides the PostRAScheduler bit in the SchedModel for any CPU.
-bool ARMSubtarget::enablePostMachineScheduler() const {
+bool ARMSubtarget::enablePostRAScheduler() const {
   return (!isThumb() || hasThumb2());
 }
 

@@ -347,7 +347,7 @@ bool PostMachineScheduler::runOnMachineFunction(MachineFunction &mf) {
   if (skipOptnoneFunction(*mf.getFunction()))
     return false;
 
-  if (!mf.getSubtarget().enablePostMachineScheduler()) {
+  if (!mf.getSubtarget().enablePostRAScheduler()) {
     DEBUG(dbgs() << "Subtarget disables post-MI-sched.\n");
     return false;
   }
