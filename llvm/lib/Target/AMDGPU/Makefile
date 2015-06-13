@@ -8,7 +8,7 @@
 ##===----------------------------------------------------------------------===##
 
 LEVEL = ../../..
-LIBRARYNAME = LLVMR600CodeGen
+LIBRARYNAME = LLVMAMDGPUCodeGen
 TARGET = AMDGPU
 
 # Make sure that tblgen is run, first thing.

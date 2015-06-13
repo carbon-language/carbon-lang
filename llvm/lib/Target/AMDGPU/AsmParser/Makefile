@@ -1,4 +1,4 @@
-##===- lib/Target/R600/AsmParser/Makefile ----------------*- Makefile -*-===##
+##===- lib/Target/AMDGPU/AsmParser/Makefile ----------------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #
@@ -7,9 +7,9 @@
 #
 ##===----------------------------------------------------------------------===##
 LEVEL = ../../../..
-LIBRARYNAME = LLVMR600AsmParser
+LIBRARYNAME = LLVMAMDGPUAsmParser
 
-# Hack: we need to include 'main' R600 target directory to grab private headers
+# Hack: we need to include 'main' AMDGPU target directory to grab private headers
 CPP.Flags += -I$(PROJ_OBJ_DIR)/.. -I$(PROJ_SRC_DIR)/..
 
 include $(LEVEL)/Makefile.common
