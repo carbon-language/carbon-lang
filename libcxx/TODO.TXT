@@ -38,8 +38,6 @@ Misc Tasks
 ==========
 * Find all sequences of >2 underscores and eradicate them.
 * run clang-tidy on libc++
-* Look at test/std/utilities/meta/meta.trans/meta.trans.other/result_of.pass.cpp;
-  why are the tests duplicated?
 * Document the "conditionally-supported" bits of libc++
 * Look at basic_string's move assignment operator, re LWG 2063 and POCMA
 * libc++ is missing try_emplace

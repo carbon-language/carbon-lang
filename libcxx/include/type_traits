@@ -219,6 +219,9 @@ _LIBCPP_BEGIN_NAMESPACE_STD
 template <class>
 struct __void_t { typedef void type; };
 
+template <class T>
+struct __identity { typedef T type; };
+
 template <class _Tp, bool>
 struct _LIBCPP_TYPE_VIS_ONLY __dependent_type : public _Tp {};
 
@@ -2252,7 +2255,7 @@ struct __result_of_mp;
 
 template <class _MP, class _Tp>
 struct __result_of_mp<_MP, _Tp, true>
-    : public common_type<typename __member_pointer_traits<_MP>::_ReturnType>
+    : public __identity<typename __member_pointer_traits<_MP>::_ReturnType>
 {
 };
 
@@ -2320,7 +2323,7 @@ template <class _Fn>
 class _LIBCPP_TYPE_VIS_ONLY result_of<_Fn()>
     : public __result_of<_Fn(),
                          is_class<typename remove_reference<_Fn>::type>::value ||
-                         is_function<typename remove_reference<_Fn>::type>::value,
+                         is_function<typename remove_pointer<typename remove_reference<_Fn>::type>::type>::value,
                          is_member_pointer<typename remove_reference<_Fn>::type>::value
                         >
 {
@@ -2330,7 +2333,7 @@ template <class _Fn, class _A0>
 class _LIBCPP_TYPE_VIS_ONLY result_of<_Fn(_A0)>
     : public __result_of<_Fn(_A0),
                          is_class<typename remove_reference<_Fn>::type>::value ||
-                         is_function<typename remove_reference<_Fn>::type>::value,
+                         is_function<typename remove_pointer<typename remove_reference<_Fn>::type>::type>::value,
                          is_member_pointer<typename remove_reference<_Fn>::type>::value
                         >
 {
@@ -2340,7 +2343,7 @@ template <class _Fn, class _A0, class _A1>
 class _LIBCPP_TYPE_VIS_ONLY result_of<_Fn(_A0, _A1)>
     : public __result_of<_Fn(_A0, _A1),
                          is_class<typename remove_reference<_Fn>::type>::value ||
-                         is_function<typename remove_reference<_Fn>::type>::value,
+                         is_function<typename remove_pointer<typename remove_reference<_Fn>::type>::type>::value,
                          is_member_pointer<typename remove_reference<_Fn>::type>::value
                         >
 {
@@ -2350,7 +2353,7 @@ template <class _Fn, class _A0, class _A1, class _A2>
 class _LIBCPP_TYPE_VIS_ONLY result_of<_Fn(_A0, _A1, _A2)>
     : public __result_of<_Fn(_A0, _A1, _A2),
                          is_class<typename remove_reference<_Fn>::type>::value ||
-                         is_function<typename remove_reference<_Fn>::type>::value,
+                         is_function<typename remove_pointer<typename remove_reference<_Fn>::type>::type>::value,
                          is_member_pointer<typename remove_reference<_Fn>::type>::value
                         >
 {
