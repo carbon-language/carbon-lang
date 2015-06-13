@@ -896,11 +896,21 @@ public:
         iterator __emplace_hint_multi(const_iterator __p, _Args&&... __args);
 #endif  // !defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES) && !defined(_LIBCPP_HAS_NO_VARIADICS)
 
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    template <class _ValueTp>
+    _LIBCPP_INLINE_VISIBILITY
+    pair<iterator, bool> __insert_unique_value(_ValueTp&& __x);
+#else
+    _LIBCPP_INLINE_VISIBILITY
+    pair<iterator, bool> __insert_unique_value(const value_type& __x);
+#endif
+
     pair<iterator, bool> __insert_unique(const value_type& __x);
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    pair<iterator, bool> __insert_unique(value_type&& __x);
     template <class _Pp>
-        pair<iterator, bool> __insert_unique(_Pp&& __x);
+    pair<iterator, bool> __insert_unique(_Pp&& __x);
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
@@ -1739,6 +1749,26 @@ template <class _Tp, class _Hash, class _Equal, class _Alloc>
 pair<typename __hash_table<_Tp, _Hash, _Equal, _Alloc>::iterator, bool>
 __hash_table<_Tp, _Hash, _Equal, _Alloc>::__insert_unique(const value_type& __x)
 {
+    return __insert_unique_value(__x);
+}
+
+
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+template <class _Tp, class _Hash, class _Equal, class _Alloc>
+template <class _ValueTp>
+_LIBCPP_INLINE_VISIBILITY
+pair<typename __hash_table<_Tp, _Hash, _Equal, _Alloc>::iterator, bool>
+__hash_table<_Tp, _Hash, _Equal, _Alloc>::__insert_unique_value(_ValueTp&& __x)
+#else
+template <class _Tp, class _Hash, class _Equal, class _Alloc>
+_LIBCPP_INLINE_VISIBILITY
+pair<typename __hash_table<_Tp, _Hash, _Equal, _Alloc>::iterator, bool>
+__hash_table<_Tp, _Hash, _Equal, _Alloc>::__insert_unique_value(const value_type& __x)
+#endif
+{
+#if defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES)
+    typedef const value_type& _ValueTp;
+#endif
     size_t __hash = hash_function()(__x);
     size_type __bc = bucket_count();
     bool __inserted = false;
@@ -1760,7 +1790,7 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__insert_unique(const value_type& __x)
         }
     }
     {
-        __node_holder __h = __construct_node(__x, __hash);
+        __node_holder __h = __construct_node(_VSTD::forward<_ValueTp>(__x), __hash);
         if (size()+1 > __bc * max_load_factor() || __bc == 0)
         {
             rehash(_VSTD::max<size_type>(2 * __bc + !__is_hash_power2(__bc),
@@ -1842,6 +1872,13 @@ __hash_table<_Tp, _Hash, _Equal, _Alloc>::__emplace_hint_multi(
 }
 
 #endif  // _LIBCPP_HAS_NO_VARIADICS
+
+template <class _Tp, class _Hash, class _Equal, class _Alloc>
+pair<typename __hash_table<_Tp, _Hash, _Equal, _Alloc>::iterator, bool>
+__hash_table<_Tp, _Hash, _Equal, _Alloc>::__insert_unique(value_type&& __x)
+{
+    return __insert_unique_value(_VSTD::move(__x));
+}
 
 template <class _Tp, class _Hash, class _Equal, class _Alloc>
 template <class _Pp>
