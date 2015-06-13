@@ -14,7 +14,7 @@
 // struct once_flag;
 
 // template<class Callable, class ...Args>
-//   void call_once(once_flag& flag, Callable func, Args&&... args);
+//   void call_once(once_flag& flag, Callable&& func, Args&&... args);
 
 #include <mutex>
 #include <thread>
@@ -153,6 +153,35 @@ public:
     }
 };
 
+class NonCopyable
+{
+#if !defined(__clang__)
+   // GCC 4.8 complains about the following being private
+public:
+    NonCopyable(const NonCopyable&)
+    {
+    }
+#else
+    NonCopyable(const NonCopyable&);
+#endif
+public:
+    NonCopyable() {}
+
+    void operator()(int&) {}
+};
+
+#if __cplusplus >= 201103L
+// reference qualifiers on functions are a C++11 extension
+struct RefQual
+{
+    int lv_called, rv_called;
+
+    RefQual() : lv_called(0), rv_called(0) {}
+
+    void operator()() & { ++lv_called; }
+    void operator()() && { ++rv_called; }
+};
+#endif
 #endif
 
 int main()
@@ -204,5 +233,22 @@ int main()
         std::once_flag f;
         std::call_once(f, MoveOnly(), MoveOnly());
     }
+    // check LWG2442: call_once() shouldn't DECAY_COPY()
+    {
+        std::once_flag f;
+        int i = 0;
+        std::call_once(f, NonCopyable(), i);
+    }
+#if __cplusplus >= 201103L
+// reference qualifiers on functions are a C++11 extension
+    {
+        std::once_flag f1, f2;
+        RefQual rq;
+        std::call_once(f1, rq);
+        assert(rq.lv_called == 1);
+        std::call_once(f2, std::move(rq));
+        assert(rq.rv_called == 1);
+    }
+#endif
 #endif  // _LIBCPP_HAS_NO_VARIADICS
 }
