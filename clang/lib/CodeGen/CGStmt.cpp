@@ -1754,7 +1754,7 @@ llvm::Value* CodeGenFunction::EmitAsmInput(
   // (immediate or symbolic), try to emit it as such.
   if (!Info.allowsRegister() && !Info.allowsMemory()) {
     llvm::APSInt Result;
-    if (InputExpr->isIntegerConstantExpr(Result, getContext()))
+    if (InputExpr->EvaluateAsInt(Result, getContext()))
       return llvm::ConstantInt::get(getLLVMContext(), Result);
     assert(!Info.requiresImmediateConstant() &&
            "Required-immediate inlineasm arg isn't constant?");
