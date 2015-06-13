@@ -45,7 +45,7 @@ using namespace llvm;
 // MachineFunction implementation
 //===----------------------------------------------------------------------===//
 
-// Out of line virtual method.
+// Out-of-line virtual method.
 MachineFunctionInfo::~MachineFunctionInfo() {}
 
 void ilist_traits<MachineBasicBlock>::deleteNode(MachineBasicBlock *MBB) {
@@ -114,8 +114,8 @@ MachineFunction::~MachineFunction() {
   }
 }
 
-/// getOrCreateJumpTableInfo - Get the JumpTableInfo for this function, if it
-/// does already exist, allocate one.
+/// Get the JumpTableInfo for this function.
+/// If it does not already exist, allocate one.
 MachineJumpTableInfo *MachineFunction::
 getOrCreateJumpTableInfo(unsigned EntryKind) {
   if (JumpTableInfo) return JumpTableInfo;
@@ -130,11 +130,10 @@ bool MachineFunction::shouldSplitStack() {
   return getFunction()->hasFnAttribute("split-stack");
 }
 
-/// RenumberBlocks - This discards all of the MachineBasicBlock numbers and
-/// recomputes them.  This guarantees that the MBB numbers are sequential,
-/// dense, and match the ordering of the blocks within the function.  If a
-/// specific MachineBasicBlock is specified, only that block and those after
-/// it are renumbered.
+/// This discards all of the MachineBasicBlock numbers and recomputes them.
+/// This guarantees that the MBB numbers are sequential, dense, and match the
+/// ordering of the blocks within the function.  If a specific MachineBasicBlock
+/// is specified, only that block and those after it are renumbered.
 void MachineFunction::RenumberBlocks(MachineBasicBlock *MBB) {
   if (empty()) { MBBNumbering.clear(); return; }
   MachineFunction::iterator MBBI, E = end();
@@ -172,9 +171,7 @@ void MachineFunction::RenumberBlocks(MachineBasicBlock *MBB) {
   MBBNumbering.resize(BlockNo);
 }
 
-/// CreateMachineInstr - Allocate a new MachineInstr. Use this instead
-/// of `new MachineInstr'.
-///
+/// Allocate a new MachineInstr. Use this instead of `new MachineInstr'.
 MachineInstr *
 MachineFunction::CreateMachineInstr(const MCInstrDesc &MCID,
                                     DebugLoc DL, bool NoImp) {
@@ -182,17 +179,15 @@ MachineFunction::CreateMachineInstr(const MCInstrDesc &MCID,
     MachineInstr(*this, MCID, DL, NoImp);
 }
 
-/// CloneMachineInstr - Create a new MachineInstr which is a copy of the
-/// 'Orig' instruction, identical in all ways except the instruction
-/// has no parent, prev, or next.
-///
+/// Create a new MachineInstr which is a copy of the 'Orig' instruction,
+/// identical in all ways except the instruction has no parent, prev, or next.
 MachineInstr *
 MachineFunction::CloneMachineInstr(const MachineInstr *Orig) {
   return new (InstructionRecycler.Allocate<MachineInstr>(Allocator))
              MachineInstr(*this, *Orig);
 }
 
-/// DeleteMachineInstr - Delete the given MachineInstr.
+/// Delete the given MachineInstr.
 ///
 /// This function also serves as the MachineInstr destructor - the real
 /// ~MachineInstr() destructor must be empty.
@@ -208,17 +203,15 @@ MachineFunction::DeleteMachineInstr(MachineInstr *MI) {
   InstructionRecycler.Deallocate(Allocator, MI);
 }
 
-/// CreateMachineBasicBlock - Allocate a new MachineBasicBlock. Use this
-/// instead of `new MachineBasicBlock'.
-///
+/// Allocate a new MachineBasicBlock. Use this instead of
+/// `new MachineBasicBlock'.
 MachineBasicBlock *
 MachineFunction::CreateMachineBasicBlock(const BasicBlock *bb) {
   return new (BasicBlockRecycler.Allocate<MachineBasicBlock>(Allocator))
              MachineBasicBlock(*this, bb);
 }
 
-/// DeleteMachineBasicBlock - Delete the given MachineBasicBlock.
-///
+/// Delete the given MachineBasicBlock.
 void
 MachineFunction::DeleteMachineBasicBlock(MachineBasicBlock *MBB) {
   assert(MBB->getParent() == this && "MBB parent mismatch!");
@@ -430,7 +423,7 @@ void MachineFunction::viewCFGOnly() const
 #endif // NDEBUG
 }
 
-/// addLiveIn - Add the specified physical register as a live-in value and
+/// Add the specified physical register as a live-in value and
 /// create a corresponding virtual register for it.
 unsigned MachineFunction::addLiveIn(unsigned PReg,
                                     const TargetRegisterClass *RC) {
@@ -454,7 +447,7 @@ unsigned MachineFunction::addLiveIn(unsigned PReg,
   return VReg;
 }
 
-/// getJTISymbol - Return the MCSymbol for the specified non-empty jump table.
+/// Return the MCSymbol for the specified non-empty jump table.
 /// If isLinkerPrivate is specified, an 'l' label is returned, otherwise a
 /// normal 'L' label is returned.
 MCSymbol *MachineFunction::getJTISymbol(unsigned JTI, MCContext &Ctx,
@@ -471,8 +464,7 @@ MCSymbol *MachineFunction::getJTISymbol(unsigned JTI, MCContext &Ctx,
   return Ctx.getOrCreateSymbol(Name);
 }
 
-/// getPICBaseSymbol - Return a function-local symbol to represent the PIC
-/// base.
+/// Return a function-local symbol to represent the PIC base.
 MCSymbol *MachineFunction::getPICBaseSymbol() const {
   const DataLayout *DL = getTarget().getDataLayout();
   return Ctx.getOrCreateSymbol(Twine(DL->getPrivateGlobalPrefix())+
@@ -483,8 +475,7 @@ MCSymbol *MachineFunction::getPICBaseSymbol() const {
 //  MachineFrameInfo implementation
 //===----------------------------------------------------------------------===//
 
-/// ensureMaxAlignment - Make sure the function is at least Align bytes
-/// aligned.
+/// Make sure the function is at least Align bytes aligned.
 void MachineFrameInfo::ensureMaxAlignment(unsigned Align) {
   if (!StackRealignable || !RealignOption)
     assert(Align <= StackAlignment &&
@@ -492,7 +483,7 @@ void MachineFrameInfo::ensureMaxAlignment(unsigned Align) {
   if (MaxAlignment < Align) MaxAlignment = Align;
 }
 
-/// clampStackAlignment - Clamp the alignment if requested and emit a warning.
+/// Clamp the alignment if requested and emit a warning.
 static inline unsigned clampStackAlignment(bool ShouldClamp, unsigned Align,
                                            unsigned StackAlign) {
   if (!ShouldClamp || Align <= StackAlign)
@@ -503,9 +494,8 @@ static inline unsigned clampStackAlignment(bool ShouldClamp, unsigned Align,
   return StackAlign;
 }
 
-/// CreateStackObject - Create a new statically sized stack object, returning
-/// a nonnegative identifier to represent it.
-///
+/// Create a new statically sized stack object, returning a nonnegative
+/// identifier to represent it.
 int MachineFrameInfo::CreateStackObject(uint64_t Size, unsigned Alignment,
                       bool isSS, const AllocaInst *Alloca) {
   assert(Size != 0 && "Cannot allocate zero size stack objects!");
@@ -519,10 +509,8 @@ int MachineFrameInfo::CreateStackObject(uint64_t Size, unsigned Alignment,
   return Index;
 }
 
-/// CreateSpillStackObject - Create a new statically sized stack object that
-/// represents a spill slot, returning a nonnegative identifier to represent
-/// it.
-///
+/// Create a new statically sized stack object that represents a spill slot,
+/// returning a nonnegative identifier to represent it.
 int MachineFrameInfo::CreateSpillStackObject(uint64_t Size,
                                              unsigned Alignment) {
   Alignment = clampStackAlignment(!StackRealignable || !RealignOption,
@@ -533,11 +521,9 @@ int MachineFrameInfo::CreateSpillStackObject(uint64_t Size,
   return Index;
 }
 
-/// CreateVariableSizedObject - Notify the MachineFrameInfo object that a
-/// variable sized object has been created.  This must be created whenever a
-/// variable sized object is created, whether or not the index returned is
-/// actually used.
-///
+/// Notify the MachineFrameInfo object that a variable sized object has been
+/// created. This must be created whenever a variable sized object is created,
+/// whether or not the index returned is actually used.
 int MachineFrameInfo::CreateVariableSizedObject(unsigned Alignment,
                                                 const AllocaInst *Alloca) {
   HasVarSizedObjects = true;
@@ -548,11 +534,10 @@ int MachineFrameInfo::CreateVariableSizedObject(unsigned Alignment,
   return (int)Objects.size()-NumFixedObjects-1;
 }
 
-/// CreateFixedObject - Create a new object at a fixed location on the stack.
+/// Create a new object at a fixed location on the stack.
 /// All fixed objects should be created before other objects are created for
 /// efficiency. By default, fixed objects are immutable. This returns an
 /// index with a negative value.
-///
 int MachineFrameInfo::CreateFixedObject(uint64_t Size, int64_t SPOffset,
                                         bool Immutable, bool isAliased) {
   assert(Size != 0 && "Cannot allocate zero size fixed stack objects!");
@@ -569,8 +554,8 @@ int MachineFrameInfo::CreateFixedObject(uint64_t Size, int64_t SPOffset,
   return -++NumFixedObjects;
 }
 
-/// CreateFixedSpillStackObject - Create a spill slot at a fixed location
-/// on the stack.  Returns an index with a negative value.
+/// Create a spill slot at a fixed location on the stack.
+/// Returns an index with a negative value.
 int MachineFrameInfo::CreateFixedSpillStackObject(uint64_t Size,
                                                   int64_t SPOffset) {
   unsigned Align = MinAlign(SPOffset, StackAlignment);
@@ -700,7 +685,7 @@ void MachineFrameInfo::dump(const MachineFunction &MF) const {
 //  MachineJumpTableInfo implementation
 //===----------------------------------------------------------------------===//
 
-/// getEntrySize - Return the size of each entry in the jump table.
+/// Return the size of each entry in the jump table.
 unsigned MachineJumpTableInfo::getEntrySize(const DataLayout &TD) const {
   // The size of a jump table entry is 4 bytes unless the entry is just the
   // address of a block, in which case it is the pointer size.
@@ -719,7 +704,7 @@ unsigned MachineJumpTableInfo::getEntrySize(const DataLayout &TD) const {
   llvm_unreachable("Unknown jump table encoding!");
 }
 
-/// getEntryAlignment - Return the alignment of each entry in the jump table.
+/// Return the alignment of each entry in the jump table.
 unsigned MachineJumpTableInfo::getEntryAlignment(const DataLayout &TD) const {
   // The alignment of a jump table entry is the alignment of int32 unless the
   // entry is just the address of a block, in which case it is the pointer
@@ -739,8 +724,7 @@ unsigned MachineJumpTableInfo::getEntryAlignment(const DataLayout &TD) const {
   llvm_unreachable("Unknown jump table encoding!");
 }
 
-/// createJumpTableIndex - Create a new jump table entry in the jump table info.
-///
+/// Create a new jump table entry in the jump table info.
 unsigned MachineJumpTableInfo::createJumpTableIndex(
                                const std::vector<MachineBasicBlock*> &DestBBs) {
   assert(!DestBBs.empty() && "Cannot create an empty jump table!");
@@ -748,8 +732,8 @@ unsigned MachineJumpTableInfo::createJumpTableIndex(
   return JumpTables.size()-1;
 }
 
-/// ReplaceMBBInJumpTables - If Old is the target of any jump tables, update
-/// the jump tables to branch to New instead.
+/// If Old is the target of any jump tables, update the jump tables to branch
+/// to New instead.
 bool MachineJumpTableInfo::ReplaceMBBInJumpTables(MachineBasicBlock *Old,
                                                   MachineBasicBlock *New) {
   assert(Old != New && "Not making a change?");
@@ -759,8 +743,8 @@ bool MachineJumpTableInfo::ReplaceMBBInJumpTables(MachineBasicBlock *Old,
   return MadeChange;
 }
 
-/// ReplaceMBBInJumpTable - If Old is a target of the jump tables, update
-/// the jump table to branch to New instead.
+/// If Old is a target of the jump tables, update the jump table to branch to
+/// New instead.
 bool MachineJumpTableInfo::ReplaceMBBInJumpTable(unsigned Idx,
                                                  MachineBasicBlock *Old,
                                                  MachineBasicBlock *New) {
@@ -858,8 +842,8 @@ MachineConstantPool::~MachineConstantPool() {
     delete *I;
 }
 
-/// CanShareConstantPoolEntry - Test whether the given two constants
-/// can be allocated the same constant pool entry.
+/// Test whether the given two constants can be allocated the same constant pool
+/// entry.
 static bool CanShareConstantPoolEntry(const Constant *A, const Constant *B,
                                       const DataLayout *TD) {
   // Handle the trivial case quickly.
@@ -901,10 +885,8 @@ static bool CanShareConstantPoolEntry(const Constant *A, const Constant *B,
   return A == B;
 }
 
-/// getConstantPoolIndex - Create a new entry in the constant pool or return
-/// an existing one.  User must specify the log2 of the minimum required
-/// alignment for the object.
-///
+/// Create a new entry in the constant pool or return an existing one.
+/// User must specify the log2 of the minimum required alignment for the object.
 unsigned MachineConstantPool::getConstantPoolIndex(const Constant *C,
                                                    unsigned Alignment) {
   assert(Alignment && "Alignment must be specified!");
