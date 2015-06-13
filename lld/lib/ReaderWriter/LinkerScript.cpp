@@ -16,6 +16,7 @@
 
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/Support/Errc.h"
 #include "llvm/Support/ELF.h"
 
 namespace lld {
@@ -106,7 +107,7 @@ static llvm::ErrorOr<uint64_t> parseDecimal(StringRef str) {
   for (auto &c : str) {
     res *= 10;
     if (c < '0' || c > '9')
-      return llvm::ErrorOr<uint64_t>(std::make_error_code(std::errc::io_error));
+      return llvm::ErrorOr<uint64_t>(make_error_code(llvm::errc::io_error));
     res += c - '0';
   }
   return res;
@@ -117,7 +118,7 @@ static llvm::ErrorOr<uint64_t> parseOctal(StringRef str) {
   for (auto &c : str) {
     res <<= 3;
     if (c < '0' || c > '7')
-      return llvm::ErrorOr<uint64_t>(std::make_error_code(std::errc::io_error));
+      return llvm::ErrorOr<uint64_t>(make_error_code(llvm::errc::io_error));
     res += c - '0';
   }
   return res;
@@ -128,7 +129,7 @@ static llvm::ErrorOr<uint64_t> parseBinary(StringRef str) {
   for (auto &c : str) {
     res <<= 1;
     if (c != '0' && c != '1')
-      return llvm::ErrorOr<uint64_t>(std::make_error_code(std::errc::io_error));
+      return llvm::ErrorOr<uint64_t>(make_error_code(llvm::errc::io_error));
     res += c - '0';
   }
   return res;
@@ -145,7 +146,7 @@ static llvm::ErrorOr<uint64_t> parseHex(StringRef str) {
     else if (c >= 'A' && c <= 'F')
       res += c - 'A' + 10;
     else
-      return llvm::ErrorOr<uint64_t>(std::make_error_code(std::errc::io_error));
+      return llvm::ErrorOr<uint64_t>(make_error_code(llvm::errc::io_error));
   }
   return res;
 }
@@ -1637,7 +1638,7 @@ llvm::ErrorOr<InputSectionsCmd::VectorTy> Parser::parseExcludeFile() {
 
   if (!expectAndConsume(Token::l_paren, "expected ("))
     return llvm::ErrorOr<InputSectionsCmd::VectorTy>(
-        std::make_error_code(std::errc::io_error));
+        make_error_code(llvm::errc::io_error));
 
   while (_tok._kind == Token::identifier) {
     res.push_back(new (_alloc) InputSectionName(*this, _tok._range, true));
@@ -1646,7 +1647,7 @@ llvm::ErrorOr<InputSectionsCmd::VectorTy> Parser::parseExcludeFile() {
 
   if (!expectAndConsume(Token::r_paren, "expected )"))
     return llvm::ErrorOr<InputSectionsCmd::VectorTy>(
-        std::make_error_code(std::errc::io_error));
+        make_error_code(llvm::errc::io_error));
   return llvm::ErrorOr<InputSectionsCmd::VectorTy>(std::move(res));
 }
 
