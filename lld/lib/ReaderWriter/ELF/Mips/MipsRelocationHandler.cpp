@@ -87,6 +87,8 @@ static MipsRelocationParams getRelocationParams(uint32_t rType) {
   case R_MIPS_26:
   case LLD_R_MIPS_GLOBAL_26:
     return {4, 0x3ffffff, 2, false, dummyCheck};
+  case R_MIPS_PC16:
+    return {4, 0xffff, 2, false, signedCheck<18>};
   case R_MIPS_PC18_S3:
     return {4, 0x3ffff, 3, false, signedCheck<21>};
   case R_MIPS_PC19_S2:
@@ -295,6 +297,15 @@ static int64_t relocGPRel32(uint64_t S, int64_t A, uint64_t GP) {
   return A + S - GP;
 }
 
+/// \brief R_MIPS_PC16
+/// local/external: (S + A - P) >> 2
+static ErrorOr<int64_t> relocPc16(uint64_t P, uint64_t S, int64_t A) {
+  A = llvm::SignExtend32<18>(A);
+  if ((S + A) & 3)
+    return make_unaligned_range_reloc_error();
+  return S + A - P;
+}
+
 /// \brief R_MIPS_PC18_S3, R_MICROMIPS_PC18_S3
 /// local/external: (S + A - P) >> 3 (P with cleared 3 less significant bits)
 static ErrorOr<int64_t> relocPc18(uint64_t P, uint64_t S, int64_t A) {
@@ -344,7 +355,7 @@ static int32_t relocPc10(uint64_t P, uint64_t S, int64_t A) {
 }
 
 /// \brief R_MICROMIPS_PC16_S1
-static int32_t relocPc16(uint64_t P, uint64_t S, int64_t A) {
+static int32_t relocPc16Micro(uint64_t P, uint64_t S, int64_t A) {
   A = llvm::SignExtend32<17>(A);
   return S + A - P;
 }
@@ -489,6 +500,8 @@ static ErrorOr<int64_t> calculateRelocation(Reference::KindValue kind,
   case R_MIPS_GOT_OFST:
   case R_MICROMIPS_GOT_OFST:
     return relocGOTOfst(tgtAddr, addend);
+  case R_MIPS_PC16:
+    return relocPc16(relAddr, tgtAddr, addend);
   case R_MIPS_PC18_S3:
   case R_MICROMIPS_PC18_S3:
     return relocPc18(relAddr, tgtAddr, addend);
@@ -506,7 +519,7 @@ static ErrorOr<int64_t> calculateRelocation(Reference::KindValue kind,
   case R_MICROMIPS_PC10_S1:
     return relocPc10(relAddr, tgtAddr, addend);
   case R_MICROMIPS_PC16_S1:
-    return relocPc16(relAddr, tgtAddr, addend);
+    return relocPc16Micro(relAddr, tgtAddr, addend);
   case R_MICROMIPS_PC23_S2:
     return relocPc23(relAddr, tgtAddr, addend);
   case R_MIPS_TLS_DTPREL_HI16:
