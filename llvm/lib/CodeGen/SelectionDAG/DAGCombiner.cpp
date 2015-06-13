@@ -5141,7 +5141,7 @@ SDValue DAGCombiner::visitMSCATTER(SDNode *N) {
   std::tie(IndexLo, IndexHi) = DAG.SplitVector(MSC->getIndex(), DL);
 
   MachineMemOperand *MMO = DAG.getMachineFunction().
-    getMachineMemOperand(MSC->getPointerInfo(), 
+    getMachineMemOperand(MSC->getPointerInfo(),
                           MachineMemOperand::MOStore,  LoMemVT.getStoreSize(),
                           Alignment, MSC->getAAInfo(), MSC->getRanges());
 
@@ -5280,7 +5280,7 @@ SDValue DAGCombiner::visitMGATHER(SDNode *N) {
   std::tie(IndexLo, IndexHi) = DAG.SplitVector(Index, DL);
 
   MachineMemOperand *MMO = DAG.getMachineFunction().
-    getMachineMemOperand(MGT->getPointerInfo(), 
+    getMachineMemOperand(MGT->getPointerInfo(),
                           MachineMemOperand::MOLoad,  LoMemVT.getStoreSize(),
                           Alignment, MGT->getAAInfo(), MGT->getRanges());
 
@@ -8078,7 +8078,7 @@ SDValue DAGCombiner::visitFMUL(SDNode *N) {
       auto *BV1 = dyn_cast<BuildVectorSDNode>(N1);
       auto *BV00 = dyn_cast<BuildVectorSDNode>(N00);
       auto *BV01 = dyn_cast<BuildVectorSDNode>(N01);
-      
+
       // Check 1: Make sure that the first operand of the inner multiply is NOT
       // a constant. Otherwise, we may induce infinite looping.
       if (!(isConstOrConstSplatFP(N00) || (BV00 && BV00->isConstant()))) {
@@ -12093,7 +12093,7 @@ static SDValue combineConcatVectorOfScalars(SDNode *N, SelectionDAG &DAG) {
   }
 
   // If any of the operands is a floating point scalar bitcast to a vector,
-  // use floating point types throughout, and bitcast everything.  
+  // use floating point types throughout, and bitcast everything.
   // Replace UNDEFs by another scalar UNDEF node, of the final desired type.
   if (AnyFP) {
     SVT = EVT::getFloatingPointVT(OpVT.getSizeInBits());
@@ -12924,7 +12924,7 @@ SDValue DAGCombiner::XformToShuffleWithZero(SDNode *N) {
   SDValue RHS = N->getOperand(1);
   SDLoc dl(N);
 
-  // Make sure we're not running after operation legalization where it 
+  // Make sure we're not running after operation legalization where it
   // may have custom lowered the vector shuffles.
   if (LegalOperations)
     return SDValue();
