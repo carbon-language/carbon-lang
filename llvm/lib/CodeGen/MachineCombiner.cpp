@@ -387,10 +387,9 @@ bool MachineCombiner::combineInstructions(MachineBasicBlock *MBB) {
         } else {
           // Cleanup instructions of the alternative code sequence. There is no
           // use for them.
-          for (auto *InstrPtr : InsInstrs) {
-            MachineFunction *MF = MBB->getParent();
+          MachineFunction *MF = MBB->getParent();
+          for (auto *InstrPtr : InsInstrs)
             MF->DeleteMachineInstr(InstrPtr);
-          }
         }
         InstrIdxForVirtReg.clear();
       }
