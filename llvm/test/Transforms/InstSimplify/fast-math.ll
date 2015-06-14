@@ -114,3 +114,80 @@ define double @fdiv_zero_by_x(double %X) {
   ret double %r
 ; CHECK: ret double 0
 }
+
+define float @fdiv_self(float %f)  {
+  %div = fdiv nnan ninf float %f, %f
+  ret float %div
+; CHECK-LABEL: fdiv_self
+; CHECK: ret float 1.000000e+00
+}
+
+define float @fdiv_self_invalid1(float %f)  {
+  %div = fdiv ninf float %f, %f
+  ret float %div
+; CHECK-LABEL: fdiv_self_invalid1
+; CHECK: %div = fdiv ninf float %f, %f
+; CHECK-NEXT: ret float %div
+}
+
+define float @fdiv_self_invalid2(float %f)  {
+  %div = fdiv nnan float %f, %f
+  ret float %div
+; CHECK-LABEL: fdiv_self_invalid2
+; CHECK: %div = fdiv nnan float %f, %f
+; CHECK-NEXT: ret float %div
+}
+
+define float @fdiv_self_invalid3(float %f)  {
+  %div = fdiv float %f, %f
+  ret float %div
+; CHECK-LABEL: fdiv_self_invalid3
+; CHECK: %div = fdiv float %f, %f
+; CHECK-NEXT: ret float %div
+}
+
+define float @fdiv_neg(float %f) {
+  %neg = fsub fast float -0.000000e+00, %f
+  %div = fdiv nnan ninf float %neg, %f
+  ret float %div
+; CHECK-LABEL: fdiv_neg
+; CHECK: ret float -1.000000e+00
+}
+
+define float @fdiv_neg_invalid1(float %f) {
+  %neg = fsub fast float -0.000000e+00, %f
+  %div = fdiv ninf float %neg, %f
+  ret float %div
+; CHECK-LABEL: fdiv_neg_invalid1
+; CHECK: %neg = fsub fast float -0.000000e+00, %f
+; CHECK-NEXT: %div = fdiv ninf float %neg, %f
+; CHECK-NEXT: ret float %div
+}
+
+define float @fdiv_neg_invalid2(float %f) {
+  %neg = fsub fast float -0.000000e+00, %f
+  %div = fdiv nnan float %neg, %f
+  ret float %div
+; CHECK-LABEL: fdiv_neg_invalid2
+; CHECK: %neg = fsub fast float -0.000000e+00, %f
+; CHECK-NEXT: %div = fdiv nnan float %neg, %f
+; CHECK-NEXT: ret float %div
+}
+
+define float @fdiv_neg_invalid3(float %f) {
+  %neg = fsub fast float -0.000000e+00, %f
+  %div = fdiv float %neg, %f
+  ret float %div
+; CHECK-LABEL: fdiv_neg_invalid3
+; CHECK: %neg = fsub fast float -0.000000e+00, %f
+; CHECK-NEXT: %div = fdiv float %neg, %f
+; CHECK-NEXT: ret float %div
+}
+
+define float @fdiv_neg_swapped(float %f) {
+  %neg = fsub float 0.000000e+00, %f
+  %div = fdiv nnan ninf float %f, %neg
+  ret float %div
+; CHECK-LABEL: fdiv_neg_swapped
+; CHECK: ret float -1.000000e+00
+}
