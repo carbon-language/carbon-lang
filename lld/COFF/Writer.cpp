@@ -370,14 +370,14 @@ OutputSection *Writer::createSection(StringRef Name) {
   const auto CODE = IMAGE_SCN_CNT_CODE;
   const auto R = IMAGE_SCN_MEM_READ;
   const auto W = IMAGE_SCN_MEM_WRITE;
-  const auto E = IMAGE_SCN_MEM_EXECUTE;
+  const auto X = IMAGE_SCN_MEM_EXECUTE;
   uint32_t Perms = StringSwitch<uint32_t>(Name)
                        .Case(".bss", BSS | R | W)
                        .Case(".data", DATA | R | W)
                        .Case(".didat", DATA | R)
                        .Case(".idata", DATA | R)
                        .Case(".rdata", DATA | R)
-                       .Case(".text", CODE | R | E)
+                       .Case(".text", CODE | R | X)
                        .Default(0);
   if (!Perms)
     llvm_unreachable("unknown section name");
