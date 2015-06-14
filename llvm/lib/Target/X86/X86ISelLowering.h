@@ -417,6 +417,10 @@ namespace llvm {
       COMPRESS,
       EXPAND,
 
+      //Convert Unsigned/Integer to Scalar Floating-Point Value
+      //with rounding mode
+      SINT_TO_FP_RND,
+      UINT_TO_FP_RND,
       // Save xmm argument registers to the stack, according to %al. An operator
       // is needed so that this can be expanded with control flow.
       VASTART_SAVE_XMM_REGS,

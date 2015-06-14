@@ -4205,15 +4205,32 @@ let hasSideEffects = 0 in {
 } // hasSideEffects = 0
 }
 
+multiclass avx512_vcvtsi_round<bits<8> opc, SDNode OpNode, RegisterClass SrcRC,
+                    X86VectorVTInfo DstVT, X86MemOperand x86memop, string asm> {
+  def rrb_Int : SI<opc, MRMSrcReg, (outs DstVT.RC:$dst),
+              (ins DstVT.RC:$src1, SrcRC:$src2, AVX512RC:$rc),
+              !strconcat(asm,"\t{$src2, $rc, $src1, $dst|$dst, $src1, $rc, $src2}"),
+              [(set DstVT.RC:$dst,
+                    (OpNode (DstVT.VT DstVT.RC:$src1),
+                             SrcRC:$src2,
+                             (i32 imm:$rc)))]>, EVEX_4V, EVEX_B, EVEX_RC;
+}
+
+multiclass avx512_vcvtsi_common<bits<8> opc, SDNode OpNode, RegisterClass SrcRC,
+                    X86VectorVTInfo DstVT, X86MemOperand x86memop, string asm> {
+  defm NAME : avx512_vcvtsi_round<opc, OpNode, SrcRC, DstVT, x86memop, asm>,
+              avx512_vcvtsi<opc, SrcRC, DstVT.FRC, x86memop, asm>, VEX_LIG;
+}
+
 let Predicates = [HasAVX512] in {
-defm VCVTSI2SSZ   : avx512_vcvtsi<0x2A, GR32, FR32X, i32mem, "cvtsi2ss{l}">,
-                                  XS, VEX_LIG, EVEX_CD8<32, CD8VT1>;
-defm VCVTSI642SSZ : avx512_vcvtsi<0x2A, GR64, FR32X, i64mem, "cvtsi2ss{q}">,
-                                  XS, VEX_W, VEX_LIG, EVEX_CD8<64, CD8VT1>;
-defm VCVTSI2SDZ   : avx512_vcvtsi<0x2A, GR32, FR64X, i32mem, "cvtsi2sd{l}">,
-                                  XD, VEX_LIG, EVEX_CD8<32, CD8VT1>;
-defm VCVTSI642SDZ : avx512_vcvtsi<0x2A, GR64, FR64X, i64mem, "cvtsi2sd{q}">,
-                                  XD, VEX_W, VEX_LIG, EVEX_CD8<64, CD8VT1>;
+defm VCVTSI2SSZ  : avx512_vcvtsi_common<0x2A, X86SintToFpRnd, GR32,
+           v4f32x_info, i32mem, "cvtsi2ss{l}">, XS, EVEX_CD8<32, CD8VT1>;
+defm VCVTSI642SSZ: avx512_vcvtsi_common<0x2A, X86SintToFpRnd, GR64,
+           v4f32x_info, i64mem, "cvtsi2ss{q}">, XS, VEX_W, EVEX_CD8<64, CD8VT1>;
+defm VCVTSI2SDZ  : avx512_vcvtsi_common<0x2A, X86SintToFpRnd, GR32,
+           v2f64x_info, i32mem, "cvtsi2sd{l}">, XD, EVEX_CD8<32, CD8VT1>;
+defm VCVTSI642SDZ: avx512_vcvtsi_common<0x2A, X86SintToFpRnd, GR64,
+           v2f64x_info, i64mem, "cvtsi2sd{q}">, XD, VEX_W, EVEX_CD8<64, CD8VT1>;
 
 def : Pat<(f32 (sint_to_fp (loadi32 addr:$src))),
           (VCVTSI2SSZrm (f32 (IMPLICIT_DEF)), addr:$src)>;
@@ -4233,14 +4250,14 @@ def : Pat<(f64 (sint_to_fp GR32:$src)),
 def : Pat<(f64 (sint_to_fp GR64:$src)),
           (VCVTSI642SDZrr (f64 (IMPLICIT_DEF)), GR64:$src)>;
 
-defm VCVTUSI2SSZ   : avx512_vcvtsi<0x7B, GR32, FR32X, i32mem, "cvtusi2ss{l}">,
-                                  XS, VEX_LIG, EVEX_CD8<32, CD8VT1>;
-defm VCVTUSI642SSZ : avx512_vcvtsi<0x7B, GR64, FR32X, i64mem, "cvtusi2ss{q}">,
-                                  XS, VEX_W, VEX_LIG, EVEX_CD8<64, CD8VT1>;
+defm VCVTUSI2SSZ   : avx512_vcvtsi_common<0x7B, X86SuintToFpRnd, GR32,
+          v4f32x_info, i32mem, "cvtusi2ss{l}">, XS, EVEX_CD8<32, CD8VT1>;
+defm VCVTUSI642SSZ : avx512_vcvtsi_common<0x7B, X86SuintToFpRnd, GR64,
+          v4f32x_info, i64mem, "cvtusi2ss{q}">, XS, VEX_W, EVEX_CD8<64, CD8VT1>;
 defm VCVTUSI2SDZ   : avx512_vcvtsi<0x7B, GR32, FR64X, i32mem, "cvtusi2sd{l}">,
-                                  XD, VEX_LIG, EVEX_CD8<32, CD8VT1>;
-defm VCVTUSI642SDZ : avx512_vcvtsi<0x7B, GR64, FR64X, i64mem, "cvtusi2sd{q}">,
-                                  XD, VEX_W, VEX_LIG, EVEX_CD8<64, CD8VT1>;
+          XD, VEX_LIG, EVEX_CD8<32, CD8VT1>;
+defm VCVTUSI642SDZ : avx512_vcvtsi_common<0x7B, X86SuintToFpRnd, GR64,
+          v2f64x_info, i64mem, "cvtusi2sd{q}">, XD, VEX_W, EVEX_CD8<64, CD8VT1>;
 
 def : Pat<(f32 (uint_to_fp (loadi32 addr:$src))),
           (VCVTUSI2SSZrm (f32 (IMPLICIT_DEF)), addr:$src)>;

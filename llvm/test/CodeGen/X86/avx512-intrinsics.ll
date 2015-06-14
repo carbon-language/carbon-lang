@@ -2807,3 +2807,43 @@ define <2 x double> @test_max_sd(<2 x double> %a0, <2 x double> %a1) {
   %res = call <2 x double> @llvm.x86.avx512.mask.max.sd.round(<2 x double>%a0, <2 x double> %a1, <2 x double> zeroinitializer, i8 -1, i32 4)
   ret <2 x double> %res
 }
+
+define <2 x double> @test_x86_avx512_cvtsi2sd32(<2 x double> %a, i32 %b) {
+; CHECK-LABEL: test_x86_avx512_cvtsi2sd32:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    vcvtsi2sdl %edi, {rz-sae}, %xmm0, %xmm0 
+; CHECK-NEXT:    retq 
+  %res = call <2 x double> @llvm.x86.avx512.cvtsi2sd32(<2 x double> %a, i32 %b, i32 3) ; <<<2 x double>> [#uses=1]
+  ret <2 x double> %res
+}
+declare <2 x double> @llvm.x86.avx512.cvtsi2sd32(<2 x double>, i32, i32) nounwind readnone
+
+define <2 x double> @test_x86_avx512_cvtsi2sd64(<2 x double> %a, i64 %b) {
+; CHECK-LABEL: test_x86_avx512_cvtsi2sd64:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    vcvtsi2sdq %rdi, {rz-sae}, %xmm0, %xmm0 
+; CHECK-NEXT:    retq 
+  %res = call <2 x double> @llvm.x86.avx512.cvtsi2sd64(<2 x double> %a, i64 %b, i32 3) ; <<<2 x double>> [#uses=1]
+  ret <2 x double> %res
+}
+declare <2 x double> @llvm.x86.avx512.cvtsi2sd64(<2 x double>, i64, i32) nounwind readnone
+
+define <4 x float> @test_x86_avx512_cvtsi2ss32(<4 x float> %a, i32 %b) {
+; CHECK-LABEL: test_x86_avx512_cvtsi2ss32:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    vcvtsi2ssl %edi, {rz-sae}, %xmm0, %xmm0 
+; CHECK-NEXT:    retq 
+  %res = call <4 x float> @llvm.x86.avx512.cvtsi2ss32(<4 x float> %a, i32 %b, i32 3) ; <<<4 x float>> [#uses=1]
+  ret <4 x float> %res
+}
+declare <4 x float> @llvm.x86.avx512.cvtsi2ss32(<4 x float>, i32, i32) nounwind readnone
+
+define <4 x float> @test_x86_avx512_cvtsi2ss64(<4 x float> %a, i64 %b) {
+; CHECK-LABEL: test_x86_avx512_cvtsi2ss64:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    vcvtsi2ssq %rdi, {rz-sae}, %xmm0, %xmm0 
+; CHECK-NEXT:    retq 
+  %res = call <4 x float> @llvm.x86.avx512.cvtsi2ss64(<4 x float> %a, i64 %b, i32 3) ; <<<4 x float>> [#uses=1]
+  ret <4 x float> %res
+}
+declare <4 x float> @llvm.x86.avx512.cvtsi2ss64(<4 x float>, i64, i32) nounwind readnone

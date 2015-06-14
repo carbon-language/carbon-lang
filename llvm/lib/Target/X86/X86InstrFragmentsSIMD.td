@@ -350,6 +350,12 @@ def X86expand  : SDNode<"X86ISD::EXPAND", SDTypeProfile<1, 3,
                               [SDTCisSameAs<0, 3>,
                                SDTCisVec<3>, SDTCisVec<1>, SDTCisInt<1>]>, []>;
 
+def SDTintToFPRound: SDTypeProfile<1, 3, [SDTCisVec<0>, SDTCisFP<0>,
+                               SDTCisSameAs<0,1>, SDTCisInt<2>, SDTCisInt<3>]>;
+
+def X86SintToFpRnd   : SDNode<"X86ISD::SINT_TO_FP_RND",  SDTintToFPRound>;
+def X86SuintToFpRnd  : SDNode<"X86ISD::UINT_TO_FP_RND",  SDTintToFPRound>;
+
 //===----------------------------------------------------------------------===//
 // SSE Complex Patterns
 //===----------------------------------------------------------------------===//
