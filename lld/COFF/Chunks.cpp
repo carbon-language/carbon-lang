@@ -64,8 +64,7 @@ void SectionChunk::writeTo(uint8_t *Buf) {
 }
 
 void SectionChunk::mark() {
-  if (Live)
-    return;
+  assert(!Live);
   Live = true;
 
   // Mark all symbols listed in the relocation table for this section.
