@@ -70,6 +70,7 @@ void OutputSection::setFileOffset(uint64_t Off) {
 
 void OutputSection::addChunk(Chunk *C) {
   Chunks.push_back(C);
+  C->setOutputSection(this);
   uint64_t Off = Header.VirtualSize;
   Off = RoundUpToAlignment(Off, C->getAlign());
   C->setRVA(Off);
@@ -140,7 +141,6 @@ void Writer::createSections() {
     }
     std::vector<Chunk *> &Chunks = P.second;
     for (Chunk *C : Chunks) {
-      C->setOutputSection(Sec);
       Sec->addChunk(C);
       Sec->addPermissions(C->getPermissions());
     }
