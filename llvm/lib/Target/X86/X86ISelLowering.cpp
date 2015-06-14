@@ -9383,6 +9383,30 @@ static SDValue lowerV2X128VectorShuffle(SDLoc DL, MVT VT, SDValue V1,
                      DAG.getConstant(PermMask, DL, MVT::i8));
 }
 
+/// \brief Handle lowering 4-lane 128-bit shuffles.
+static SDValue lowerV4X128VectorShuffle(SDLoc DL, MVT VT, SDValue V1,
+                                        SDValue V2, ArrayRef<int> WidenedMask,
+                                        SelectionDAG &DAG) {
+
+  assert(WidenedMask.size() == 4 && "Unexpected mask size for 128bit shuffle!");
+  // form a 128-bit permutation.
+  // convert the 64-bit shuffle mask selection values into 128-bit selection
+  // bits defined by a vshuf64x2 instruction's immediate control byte.
+  unsigned PermMask = 0, Imm = 0;
+
+  for (int i = 0, Size = WidenedMask.size(); i < Size; ++i) {
+    if(WidenedMask[i] == SM_SentinelZero)
+      return SDValue();
+
+    // use first element in place of undef musk
+    Imm = (WidenedMask[i] == SM_SentinelUndef) ? 0 : WidenedMask[i];
+    PermMask |= (Imm % 4) << (i * 2);
+  }
+
+  return DAG.getNode(X86ISD::SHUF128, DL, VT, V1, V2,
+                     DAG.getConstant(PermMask, DL, MVT::i8));
+}
+
 /// \brief Lower a vector shuffle by first fixing the 128-bit lanes and then
 /// shuffling each lane.
 ///
@@ -10176,6 +10200,10 @@ static SDValue lowerV8X64VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   ArrayRef<int> Mask = SVOp->getMask();
   assert(Mask.size() == 8 && "Unexpected mask size for v8 shuffle!");
 
+  SmallVector<int, 4> WidenedMask;
+  if (canWidenShuffleElements(Mask, WidenedMask))
+    if(SDValue Op = lowerV4X128VectorShuffle(DL, VT, V1, V2, WidenedMask, DAG))
+      return Op;
   // X86 has dedicated unpack instructions that can handle specific blend
   // operations: UNPCKH and UNPCKL.
   if (isShuffleEquivalent(V1, V2, Mask, {0, 8, 2, 10, 4, 12, 6, 14}))

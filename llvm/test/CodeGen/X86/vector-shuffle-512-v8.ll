@@ -88,7 +88,7 @@ define <8 x double> @shuffle_v8f64_70000000(<8 x double> %a, <8 x double> %b) {
 define <8 x double> @shuffle_v8f64_01014545(<8 x double> %a, <8 x double> %b) {
 ; ALL-LABEL: shuffle_v8f64_01014545:
 ; ALL:       # BB#0:
-; ALL-NEXT:    vpermpd $68, %zmm0, %zmm0
+; ALL-NEXT:    vshuff64x2 $160, %zmm0, %zmm0, %zmm0
 ; ALL-NEXT:    retq
   %shuffle = shufflevector <8 x double> %a, <8 x double> %b, <8 x i32> <i32 0, i32 1, i32 0, i32 1, i32 4, i32 5, i32 4, i32 5>
   ret <8 x double> %shuffle
@@ -650,7 +650,7 @@ define <8 x i64> @shuffle_v8i64_70000000(<8 x i64> %a, <8 x i64> %b) {
 define <8 x i64> @shuffle_v8i64_01014545(<8 x i64> %a, <8 x i64> %b) {
 ; ALL-LABEL: shuffle_v8i64_01014545:
 ; ALL:       # BB#0:
-; ALL-NEXT:    vpermq $68, %zmm0, %zmm0
+; ALL-NEXT:    vshufi64x2 $160, %zmm0, %zmm0, %zmm0
 ; ALL-NEXT:    retq
   %shuffle = shufflevector <8 x i64> %a, <8 x i64> %b, <8 x i32> <i32 0, i32 1, i32 0, i32 1, i32 4, i32 5, i32 4, i32 5>
   ret <8 x i64> %shuffle
