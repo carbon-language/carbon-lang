@@ -76,7 +76,7 @@ private:
   ArgParser Parser;
 
   // Opens a file. Path has to be resolved already.
-  ErrorOr<std::unique_ptr<InputFile>> openFile(StringRef Path);
+  ErrorOr<MemoryBufferRef> openFile(StringRef Path);
 
   // Searches a file from search paths.
   Optional<StringRef> findFile(StringRef Filename);
@@ -120,6 +120,11 @@ std::error_code parseSubsystem(StringRef Arg, WindowsSubsystem *Sys,
 // This feature used in the directive section to reject
 // incompatible objects.
 std::error_code checkFailIfMismatch(llvm::opt::InputArgList *Args);
+
+// Convert Windows resource files (.res files) to a .obj file
+// using cvtres.exe.
+ErrorOr<std::unique_ptr<MemoryBuffer>>
+convertResToCOFF(const std::vector<MemoryBufferRef> &MBs);
 
 // Create enum with OPT_xxx values for each option in Options.td
 enum {

@@ -31,9 +31,10 @@ SectionChunk::SectionChunk(ObjectFile *F, const coff_section *H, uint32_t SI)
   // Initialize SectionName.
   File->getCOFFObj()->getSectionName(Header, SectionName);
 
-  // Bit [20:24] contains section alignment.
-  unsigned Shift = ((Header->Characteristics & 0xF00000) >> 20) - 1;
-  Align = uint32_t(1) << Shift;
+  // Bit [20:24] contains section alignment. Both 0 and 1 mean alignment 1.
+  unsigned Shift = (Header->Characteristics >> 20) & 0xF;
+  if (Shift > 0)
+    Align = uint32_t(1) << (Shift - 1);
 
   // When a new chunk is created, we don't if if it's going to make it
   // to the final output. Initially all sections are unmarked in terms

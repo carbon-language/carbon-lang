@@ -24,8 +24,8 @@
 #include "llvm/Option/ArgList.h"
 #include "llvm/Option/Option.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/Support/Path.h"
 #include "llvm/Support/Process.h"
+#include "llvm/Support/Program.h"
 #include "llvm/Support/raw_ostream.h"
 #include <memory>
 
@@ -135,6 +135,45 @@ std::error_code checkFailIfMismatch(llvm::opt::InputArgList *Args) {
     Config->MustMatch[K] = V;
   }
   return std::error_code();
+}
+
+// Convert Windows resource files (.res files) to a .obj file
+// using cvtres.exe.
+ErrorOr<std::unique_ptr<MemoryBuffer>>
+convertResToCOFF(const std::vector<MemoryBufferRef> &MBs) {
+  // Find cvtres.exe.
+  std::string Prog = "cvtres.exe";
+  ErrorOr<std::string> ExeOrErr = llvm::sys::findProgramByName(Prog);
+  if (auto EC = ExeOrErr.getError()) {
+    llvm::errs() << "unable to find " << Prog << " in PATH: "
+                 << EC.message() << "\n";
+    return make_error_code(LLDError::InvalidOption);
+  }
+  llvm::BumpPtrAllocator Alloc;
+  llvm::BumpPtrStringSaver S(Alloc);
+  const char *Exe = S.save(ExeOrErr.get());
+
+  // Create an output file path.
+  SmallString<128> Path;
+  if (llvm::sys::fs::createTemporaryFile("resource", "obj", Path))
+    return make_error_code(LLDError::InvalidOption);
+
+  // Execute cvtres.exe.
+  std::vector<const char *> Args;
+  Args.push_back(Exe);
+  Args.push_back("/machine:x64");
+  Args.push_back("/readonly");
+  Args.push_back("/nologo");
+  Args.push_back(S.save("/out:" + Path));
+  for (MemoryBufferRef MB : MBs)
+    Args.push_back(S.save(MB.getBufferIdentifier()));
+  Args.push_back(nullptr);
+  llvm::errs() << "\n";
+  if (llvm::sys::ExecuteAndWait(Args[0], Args.data()) != 0) {
+    llvm::errs() << Exe << " failed\n";
+    return make_error_code(LLDError::InvalidOption);
+  }
+  return MemoryBuffer::getFile(Path);
 }
 
 // Create OptTable

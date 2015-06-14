@@ -281,6 +281,10 @@ void Writer::writeHeader() {
     DataDirectory[IAT].RelativeVirtualAddress = Idata->getIATRVA();
     DataDirectory[IAT].Size = Idata->getIATSize();
   }
+  if (OutputSection *Sec = findSection(".rsrc")) {
+    DataDirectory[RESOURCE_TABLE].RelativeVirtualAddress = Sec->getRVA();
+    DataDirectory[RESOURCE_TABLE].Size = Sec->getRawSize();
+  }
 
   // Section table
   // Name field in the section table is 8 byte long. Longer names need

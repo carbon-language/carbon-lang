@@ -25,6 +25,7 @@
 #include "llvm/Support/Process.h"
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Support/raw_ostream.h"
+#include <algorithm>
 #include <memory>
 
 using namespace llvm;
@@ -58,23 +59,26 @@ static std::string getOutputPath(StringRef Path) {
 
 // Opens a file. Path has to be resolved already.
 // Newly created memory buffers are owned by this driver.
-ErrorOr<std::unique_ptr<InputFile>> LinkerDriver::openFile(StringRef Path) {
+ErrorOr<MemoryBufferRef> LinkerDriver::openFile(StringRef Path) {
   auto MBOrErr = MemoryBuffer::getFile(Path);
   if (auto EC = MBOrErr.getError())
     return EC;
   std::unique_ptr<MemoryBuffer> MB = std::move(MBOrErr.get());
   MemoryBufferRef MBRef = MB->getMemBufferRef();
   OwningMBs.push_back(std::move(MB)); // take ownership
+  return MBRef;
+}
 
+static std::unique_ptr<InputFile> createFile(MemoryBufferRef MB) {
   // File type is detected by contents, not by file extension.
-  file_magic Magic = identify_magic(MBRef.getBuffer());
+  file_magic Magic = identify_magic(MB.getBuffer());
   if (Magic == file_magic::archive)
-    return std::unique_ptr<InputFile>(new ArchiveFile(MBRef));
+    return std::unique_ptr<InputFile>(new ArchiveFile(MB));
   if (Magic == file_magic::bitcode)
-    return std::unique_ptr<InputFile>(new BitcodeFile(MBRef));
+    return std::unique_ptr<InputFile>(new BitcodeFile(MB));
   if (Config->OutputFile == "")
-    Config->OutputFile = getOutputPath(Path);
-  return std::unique_ptr<InputFile>(new ObjectFile(MBRef));
+    Config->OutputFile = getOutputPath(MB.getBufferIdentifier());
+  return std::unique_ptr<InputFile>(new ObjectFile(MB));
 }
 
 // Parses .drectve section contents and returns a list of files
@@ -94,10 +98,10 @@ LinkerDriver::parseDirectives(StringRef S,
   // Handle /defaultlib
   for (auto *Arg : Args->filtered(OPT_defaultlib)) {
     if (Optional<StringRef> Path = findLib(Arg->getValue())) {
-      auto FileOrErr = openFile(*Path);
-      if (auto EC = FileOrErr.getError())
+      ErrorOr<MemoryBufferRef> MBOrErr = openFile(*Path);
+      if (auto EC = MBOrErr.getError())
         return EC;
-      std::unique_ptr<InputFile> File = std::move(FileOrErr.get());
+      std::unique_ptr<InputFile> File = createFile(MBOrErr.get());
       Res->push_back(std::move(File));
     }
   }
@@ -312,13 +316,22 @@ bool LinkerDriver::link(int Argc, const char *Argv[]) {
 
   // Create a list of input files. Files can be given as arguments
   // for /defaultlib option.
-  std::vector<StringRef> Inputs;
+  std::vector<StringRef> InputPaths;
+  std::vector<MemoryBufferRef> Inputs;
   for (auto *Arg : Args->filtered(OPT_INPUT))
     if (Optional<StringRef> Path = findFile(Arg->getValue()))
-      Inputs.push_back(*Path);
+      InputPaths.push_back(*Path);
   for (auto *Arg : Args->filtered(OPT_defaultlib))
     if (Optional<StringRef> Path = findLib(Arg->getValue()))
-      Inputs.push_back(*Path);
+      InputPaths.push_back(*Path);
+  for (StringRef Path : InputPaths) {
+    ErrorOr<MemoryBufferRef> MBOrErr = openFile(Path);
+    if (auto EC = MBOrErr.getError()) {
+      llvm::errs() << "cannot open " << Path << ": " << EC.message() << "\n";
+      return false;
+    }
+    Inputs.push_back(MBOrErr.get());
+  }
 
   // Create a symbol table.
   SymbolTable Symtab;
@@ -331,19 +344,32 @@ bool LinkerDriver::link(int Argc, const char *Argv[]) {
     Config->GCRoots.insert(Sym);
   }
 
+  // Windows specific -- Input files can be Windows resource files (.res files).
+  // We invoke cvtres.exe to convert resource files to a regular COFF file
+  // then link the result file normally.
+  auto IsResource = [](MemoryBufferRef MB) {
+    return identify_magic(MB.getBuffer()) == file_magic::windows_resource;
+  };
+  auto It = std::stable_partition(Inputs.begin(), Inputs.end(), IsResource);
+  if (It != Inputs.begin()) {
+    std::vector<MemoryBufferRef> Files(Inputs.begin(), It);
+    auto MBOrErr = convertResToCOFF(Files);
+    if (MBOrErr.getError())
+      return false;
+    std::unique_ptr<MemoryBuffer> MB = std::move(MBOrErr.get());
+    Inputs = std::vector<MemoryBufferRef>(It, Inputs.end());
+    Inputs.push_back(MB->getMemBufferRef());
+    OwningMBs.push_back(std::move(MB)); // take ownership
+  }
+
   // Parse all input files and put all symbols to the symbol table.
   // The symbol table will take care of name resolution.
-  for (StringRef Path : Inputs) {
-    auto FileOrErr = openFile(Path);
-    if (auto EC = FileOrErr.getError()) {
-      llvm::errs() << Path << ": " << EC.message() << "\n";
-      return false;
-    }
-    std::unique_ptr<InputFile> File = std::move(FileOrErr.get());
+  for (MemoryBufferRef MB : Inputs) {
+    std::unique_ptr<InputFile> File = createFile(MB);
     if (Config->Verbose)
       llvm::outs() << "Reading " << File->getName() << "\n";
     if (auto EC = Symtab.addFile(std::move(File))) {
-      llvm::errs() << Path << ": " << EC.message() << "\n";
+      llvm::errs() << File->getName() << ": " << EC.message() << "\n";
       return false;
     }
   }
