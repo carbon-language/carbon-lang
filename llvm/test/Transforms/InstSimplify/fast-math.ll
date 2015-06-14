@@ -70,17 +70,17 @@ define float @fadd_fsub_0(float %a) {
   ret float %ret
 }
 
-; fsub nnan ninf x, x ==> 0.0
+; fsub nnan x, x ==> 0.0
 ; CHECK-LABEL: @fsub_x_x(
 define float @fsub_x_x(float %a) {
 ; X - X ==> 0
-  %zero1 = fsub nnan ninf float %a, %a
+  %zero1 = fsub nnan float %a, %a
 
 ; Dont fold
 ; CHECK: %no_zero1 = fsub
   %no_zero1 = fsub ninf float %a, %a
 ; CHECK: %no_zero2 = fsub
-  %no_zero2 = fsub nnan float %a, %a
+  %no_zero2 = fsub float %a, %a
 ; CHECK: %no_zero = fadd
   %no_zero = fadd float %no_zero1, %no_zero2
 

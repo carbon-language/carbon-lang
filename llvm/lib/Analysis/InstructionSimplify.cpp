@@ -854,8 +854,8 @@ static Value *SimplifyFSubInst(Value *Op0, Value *Op1, FastMathFlags FMF,
       return X;
   }
 
-  // fsub nnan ninf x, x ==> 0.0
-  if (FMF.noNaNs() && FMF.noInfs() && Op0 == Op1)
+  // fsub nnan x, x ==> 0.0
+  if (FMF.noNaNs() && Op0 == Op1)
     return Constant::getNullValue(Op0->getType());
 
   return nullptr;
