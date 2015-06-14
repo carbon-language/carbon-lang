@@ -17,84 +17,90 @@
 #include <cassert>
 
 #include "min_allocator.h"
+#include "test_allocator.h"
+#include "count_new.hpp"
+#include "../function_types.h"
 
-class A
+class DummyClass {};
+
+template <class FuncType, class AllocType>
+void test_FunctionObject(AllocType& alloc)
 {
-    int data_[10];
-public:
-    static int count;
-
-    A()
+    assert(globalMemCounter.checkOutstandingNewEq(0));
     {
-        ++count;
-        for (int i = 0; i < 10; ++i)
-            data_[i] = i;
+    FunctionObject target;
+    assert(FunctionObject::count == 1);
+    assert(globalMemCounter.checkOutstandingNewEq(0));
+    std::function<FuncType> f2(std::allocator_arg, alloc, target);
+    assert(FunctionObject::count == 2);
+    assert(globalMemCounter.checkOutstandingNewEq(1));
+    assert(f2.template target<FunctionObject>());
+    assert(f2.template target<FuncType>() == 0);
+    assert(f2.template target<FuncType*>() == 0);
     }
+    assert(FunctionObject::count == 0);
+    assert(globalMemCounter.checkOutstandingNewEq(0));
+}
 
-    A(const A&) {++count;}
 
-    ~A() {--count;}
-
-    int operator()(int i) const
+template <class FuncType, class AllocType>
+void test_FreeFunction(AllocType& alloc)
+{
+    assert(globalMemCounter.checkOutstandingNewEq(0));
     {
-        for (int j = 0; j < 10; ++j)
-            i += data_[j];
-        return i;
+    FuncType* target = &FreeFunction;
+    assert(globalMemCounter.checkOutstandingNewEq(0));
+    std::function<FuncType> f2(std::allocator_arg, alloc, target);
+    assert(globalMemCounter.checkOutstandingNewEq(0));
+    assert(f2.template target<FuncType*>());
+    assert(*f2.template target<FuncType*>() == target);
+    assert(f2.template target<FuncType>() == 0);
+    assert(f2.template target<DummyClass>() == 0);
     }
+    assert(globalMemCounter.checkOutstandingNewEq(0));
+}
 
-    int foo(int) const {return 1;}
-};
+template <class TargetType, class FuncType, class AllocType>
+void test_MemFunClass(AllocType& alloc)
+{
+    assert(globalMemCounter.checkOutstandingNewEq(0));
+    {
+    TargetType target = &MemFunClass::foo;
+    assert(globalMemCounter.checkOutstandingNewEq(0));
+    std::function<FuncType> f2(std::allocator_arg, alloc, target);
+    assert(globalMemCounter.checkOutstandingNewEq(0));
+    assert(f2.template target<TargetType>());
+    assert(*f2.template target<TargetType>() == target);
+    assert(f2.template target<FuncType*>() == 0);
+    }
+    assert(globalMemCounter.checkOutstandingNewEq(0));
+}
 
-int A::count = 0;
+template <class Alloc>
+void test_for_alloc(Alloc& alloc) {
+    test_FunctionObject<int()>(alloc);
+    test_FunctionObject<int(int)>(alloc);
+    test_FunctionObject<int(int, int)>(alloc);
+    test_FunctionObject<int(int, int, int)>(alloc);
 
-int g(int) {return 0;}
+    test_FreeFunction<int()>(alloc);
+    test_FreeFunction<int(int)>(alloc);
+    test_FreeFunction<int(int, int)>(alloc);
+    test_FreeFunction<int(int, int, int)>(alloc);
 
-class Foo {
-public:
-  void bar(int k) { }
-};
+    test_MemFunClass<int(MemFunClass::*)() const, int(MemFunClass&)>(alloc);
+    test_MemFunClass<int(MemFunClass::*)(int) const, int(MemFunClass&, int)>(alloc);
+    test_MemFunClass<int(MemFunClass::*)(int, int) const, int(MemFunClass&, int, int)>(alloc);
+}
 
 int main()
 {
     {
-    std::function<int(int)> f(std::allocator_arg, bare_allocator<A>(), A());
-    assert(A::count == 1);
-    assert(f.target<A>());
-    assert(f.target<int(*)(int)>() == 0);
-    }
-    assert(A::count == 0);
-    {
-    std::function<int(int)> f(std::allocator_arg, bare_allocator<int(*)(int)>(), g);
-    assert(f.target<int(*)(int)>());
-    assert(f.target<A>() == 0);
+        bare_allocator<DummyClass> bare_alloc;
+        test_for_alloc(bare_alloc);
     }
     {
-    std::function<int(int)> f(std::allocator_arg, bare_allocator<int(*)(int)>(),
-                              (int (*)(int))0);
-    assert(!f);
-    assert(f.target<int(*)(int)>() == 0);
-    assert(f.target<A>() == 0);
-    }
-    {
-    std::function<int(const A*, int)> f(std::allocator_arg,
-                                        bare_allocator<int(A::*)(int)const>(),
-                                        &A::foo);
-    assert(f);
-    assert(f.target<int (A::*)(int) const>() != 0);
-    }
-#if __cplusplus >= 201103L
-    {
-    Foo f;
-    std::function<void(int)> fun = std::bind(&Foo::bar, &f, std::placeholders::_1);
-    fun(10);
-    }
-#endif
-    {
-    std::function<void(int)> fun(std::allocator_arg,
-                                 bare_allocator<int(*)(int)>(),
-                                 &g);
-    assert(fun);
-    assert(fun.target<int(*)(int)>() != 0);
-    fun(10);
+        non_default_test_allocator<DummyClass> non_default_alloc(42);
+        test_for_alloc(non_default_alloc);
     }
 }

@@ -333,7 +333,8 @@ template<class _Fp, class _Alloc, class _Rp>
 __base<_Rp()>*
 __func<_Fp, _Alloc, _Rp()>::__clone() const
 {
-    typedef typename _Alloc::template rebind<__func>::other _Ap;
+    typedef allocator_traits<_Alloc> __alloc_traits;
+    typedef typename __rebind_alloc_helper<__alloc_traits, __func>::type _Ap;
     _Ap __a(__f_.second());
     typedef __allocator_destructor<_Ap> _Dp;
     unique_ptr<__func, _Dp> __hold(__a.allocate(1), _Dp(__a, 1));
@@ -359,7 +360,8 @@ template<class _Fp, class _Alloc, class _Rp>
 void
 __func<_Fp, _Alloc, _Rp()>::destroy_deallocate()
 {
-    typedef typename _Alloc::template rebind<__func>::other _Ap;
+    typedef allocator_traits<_Alloc> __alloc_traits;
+    typedef typename __rebind_alloc_helper<__alloc_traits, __func>::type _Ap;
     _Ap __a(__f_.second());
     __f_.~__compressed_pair<_Fp, _Alloc>();
     __a.deallocate(this, 1);
@@ -417,7 +419,8 @@ template<class _Fp, class _Alloc, class _Rp, class _A0>
 __base<_Rp(_A0)>*
 __func<_Fp, _Alloc, _Rp(_A0)>::__clone() const
 {
-    typedef typename _Alloc::template rebind<__func>::other _Ap;
+    typedef allocator_traits<_Alloc> __alloc_traits;
+    typedef typename __rebind_alloc_helper<__alloc_traits, __func>::type _Ap;
     _Ap __a(__f_.second());
     typedef __allocator_destructor<_Ap> _Dp;
     unique_ptr<__func, _Dp> __hold(__a.allocate(1), _Dp(__a, 1));
@@ -443,7 +446,8 @@ template<class _Fp, class _Alloc, class _Rp, class _A0>
 void
 __func<_Fp, _Alloc, _Rp(_A0)>::destroy_deallocate()
 {
-    typedef typename _Alloc::template rebind<__func>::other _Ap;
+    typedef allocator_traits<_Alloc> __alloc_traits;
+    typedef typename __rebind_alloc_helper<__alloc_traits, __func>::type _Ap;
     _Ap __a(__f_.second());
     __f_.~__compressed_pair<_Fp, _Alloc>();
     __a.deallocate(this, 1);
@@ -501,7 +505,8 @@ template<class _Fp, class _Alloc, class _Rp, class _A0, class _A1>
 __base<_Rp(_A0, _A1)>*
 __func<_Fp, _Alloc, _Rp(_A0, _A1)>::__clone() const
 {
-    typedef typename _Alloc::template rebind<__func>::other _Ap;
+    typedef allocator_traits<_Alloc> __alloc_traits;
+    typedef typename __rebind_alloc_helper<__alloc_traits, __func>::type _Ap;
     _Ap __a(__f_.second());
     typedef __allocator_destructor<_Ap> _Dp;
     unique_ptr<__func, _Dp> __hold(__a.allocate(1), _Dp(__a, 1));
@@ -527,7 +532,8 @@ template<class _Fp, class _Alloc, class _Rp, class _A0, class _A1>
 void
 __func<_Fp, _Alloc, _Rp(_A0, _A1)>::destroy_deallocate()
 {
-    typedef typename _Alloc::template rebind<__func>::other _Ap;
+    typedef allocator_traits<_Alloc> __alloc_traits;
+    typedef typename __rebind_alloc_helper<__alloc_traits, __func>::type _Ap;
     _Ap __a(__f_.second());
     __f_.~__compressed_pair<_Fp, _Alloc>();
     __a.deallocate(this, 1);
@@ -585,7 +591,8 @@ template<class _Fp, class _Alloc, class _Rp, class _A0, class _A1, class _A2>
 __base<_Rp(_A0, _A1, _A2)>*
 __func<_Fp, _Alloc, _Rp(_A0, _A1, _A2)>::__clone() const
 {
-    typedef typename _Alloc::template rebind<__func>::other _Ap;
+    typedef allocator_traits<_Alloc> __alloc_traits;
+    typedef typename __rebind_alloc_helper<__alloc_traits, __func>::type _Ap;
     _Ap __a(__f_.second());
     typedef __allocator_destructor<_Ap> _Dp;
     unique_ptr<__func, _Dp> __hold(__a.allocate(1), _Dp(__a, 1));
@@ -611,7 +618,8 @@ template<class _Fp, class _Alloc, class _Rp, class _A0, class _A1, class _A2>
 void
 __func<_Fp, _Alloc, _Rp(_A0, _A1, _A2)>::destroy_deallocate()
 {
-    typedef typename _Alloc::template rebind<__func>::other _Ap;
+    typedef allocator_traits<_Alloc> __alloc_traits;
+    typedef typename __rebind_alloc_helper<__alloc_traits, __func>::type _Ap;
     _Ap __a(__f_.second());
     __f_.~__compressed_pair<_Fp, _Alloc>();
     __a.deallocate(this, 1);
@@ -794,7 +802,7 @@ function<_Rp()>::function(allocator_arg_t, const _Alloc& __a0, _Fp __f,
         if (sizeof(_FF) <= sizeof(__buf_))
         {
             __f_ = (__base*)&__buf_;
-            ::new (__f_) _FF(__f);
+            ::new (__f_) _FF(__f, __a0);
         }
         else
         {
@@ -1091,7 +1099,7 @@ function<_Rp(_A0)>::function(allocator_arg_t, const _Alloc& __a0, _Fp __f,
         if (sizeof(_FF) <= sizeof(__buf_))
         {
             __f_ = (__base*)&__buf_;
-            ::new (__f_) _FF(__f);
+            ::new (__f_) _FF(__f, __a0);
         }
         else
         {
@@ -1388,7 +1396,7 @@ function<_Rp(_A0, _A1)>::function(allocator_arg_t, const _Alloc& __a0, _Fp __f,
         if (sizeof(_FF) <= sizeof(__buf_))
         {
             __f_ = (__base*)&__buf_;
-            ::new (__f_) _FF(__f);
+            ::new (__f_) _FF(__f, __a0);
         }
         else
         {
@@ -1685,7 +1693,7 @@ function<_Rp(_A0, _A1, _A2)>::function(allocator_arg_t, const _Alloc& __a0, _Fp 
         if (sizeof(_FF) <= sizeof(__buf_))
         {
             __f_ = (__base*)&__buf_;
-            ::new (__f_) _FF(__f);
+            ::new (__f_) _FF(__f, __a0);
         }
         else
         {
