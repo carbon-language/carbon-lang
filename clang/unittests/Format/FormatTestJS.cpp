@@ -809,6 +809,11 @@ TEST_F(FormatTestJS, TemplateStrings) {
             "var y;",
             format("var x =\n `/*a`;\n"
                    "var y;"));
+  // Unterminated string literals in a template string.
+  verifyFormat("var x = `'`;  // comment with matching quote '\n"
+               "var y;");
+  verifyFormat("var x = `\"`;  // comment with matching quote \"\n"
+               "var y;");
   // Backticks in a comment - not a template string.
   EXPECT_EQ("var x = 1  // `/*a`;\n"
             "    ;",
