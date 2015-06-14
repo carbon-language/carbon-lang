@@ -432,6 +432,8 @@ void t37() {
 // CHECK: mov eax, $$4294967292
   __asm mov eax, ~15
 // CHECK: mov eax, $$4294967280
+  __asm mov eax, 6 ^ 3
+// CHECK: mov eax, $$5
 // CHECK: "~{eax},~{dirflag},~{fpsr},~{flags}"()
 }
 
