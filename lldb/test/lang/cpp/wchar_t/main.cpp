@@ -26,5 +26,7 @@ int main (int argc, char const *argv[])
     const wchar_t *mazeltov = L"מזל טוב";
     wchar_t *ws_NULL = nullptr;
     wchar_t *ws_empty = L"";
+  	wchar_t array[200], * array_source = L"Hey, I'm a super wchar_t string, éõñž";
+  	memcpy(array, array_source, 39 * sizeof(wchar_t));
     return 0; // Set break point at this line.
 }
