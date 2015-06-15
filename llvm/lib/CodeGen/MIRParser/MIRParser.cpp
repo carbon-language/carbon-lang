@@ -20,6 +20,7 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MIRYamlMapping.h"
 #include "llvm/IR/DiagnosticInfo.h"
+#include "llvm/IR/Instructions.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Support/LineIterator.h"
@@ -60,8 +61,12 @@ public:
 
   /// Parse the machine function in the current YAML document.
   ///
+  /// \param NoLLVMIR - set to true when the MIR file doesn't have LLVM IR.
+  /// A dummy IR function is created and inserted into the given module when
+  /// this parameter is true.
+  ///
   /// Return true if an error occurred.
-  bool parseMachineFunction(yaml::Input &In);
+  bool parseMachineFunction(yaml::Input &In, Module &M, bool NoLLVMIR);
 
   /// Initialize the machine function to the state that's described in the MIR
   /// file.
@@ -73,6 +78,9 @@ private:
   /// Return a MIR diagnostic converted from an LLVM assembly diagnostic.
   SMDiagnostic diagFromLLVMAssemblyDiag(const SMDiagnostic &Error,
                                         SMRange SourceRange);
+
+  /// Create an empty function with the given name.
+  void createDummyFunction(StringRef Name, Module &M);
 };
 
 } // end namespace llvm
@@ -121,6 +129,7 @@ std::unique_ptr<Module> MIRParserImpl::parse() {
   }
 
   std::unique_ptr<Module> M;
+  bool NoLLVMIR = false;
   // Parse the block scalar manually so that we can return unique pointer
   // without having to go trough YAML traits.
   if (const auto *BSN =
@@ -138,11 +147,12 @@ std::unique_ptr<Module> MIRParserImpl::parse() {
   } else {
     // Create an new, empty module.
     M = llvm::make_unique<Module>(Filename, Context);
+    NoLLVMIR = true;
   }
 
   // Parse the machine functions.
   do {
-    if (parseMachineFunction(In))
+    if (parseMachineFunction(In, *M, NoLLVMIR))
       return nullptr;
     In.nextDocument();
   } while (In.setCurrentDocument());
@@ -150,7 +160,8 @@ std::unique_ptr<Module> MIRParserImpl::parse() {
   return M;
 }
 
-bool MIRParserImpl::parseMachineFunction(yaml::Input &In) {
+bool MIRParserImpl::parseMachineFunction(yaml::Input &In, Module &M,
+                                         bool NoLLVMIR) {
   auto MF = llvm::make_unique<yaml::MachineFunction>();
   yaml::yamlize(In, *MF, false);
   if (In.error())
@@ -160,7 +171,17 @@ bool MIRParserImpl::parseMachineFunction(yaml::Input &In) {
     return error(Twine("redefinition of machine function '") + FunctionName +
                  "'");
   Functions.insert(std::make_pair(FunctionName, std::move(MF)));
+  if (NoLLVMIR)
+    createDummyFunction(FunctionName, M);
   return false;
+}
+
+void MIRParserImpl::createDummyFunction(StringRef Name, Module &M) {
+  auto &Context = M.getContext();
+  Function *F = cast<Function>(M.getOrInsertFunction(
+      Name, FunctionType::get(Type::getVoidTy(Context), false)));
+  BasicBlock *BB = BasicBlock::Create(Context, "entry", F);
+  new UnreachableInst(Context, BB);
 }
 
 bool MIRParserImpl::initializeMachineFunction(MachineFunction &MF) {
