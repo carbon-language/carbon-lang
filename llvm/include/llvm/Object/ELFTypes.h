@@ -192,7 +192,9 @@ struct Elf_Sym_Impl : Elf_Sym_Base<ELFT> {
     return st_shndx >= ELF::SHN_LOOS && st_shndx <= ELF::SHN_HIOS;
   }
   bool isReserved() const {
-    return st_shndx >= ELF::SHN_LORESERVE && st_shndx <= ELF::SHN_HIRESERVE;
+    // ELF::SHN_HIRESERVE is 0xffff so st_shndx <= ELF::SHN_HIRESERVE is always
+    // true and some compilers warn about it.
+    return st_shndx >= ELF::SHN_LORESERVE;
   }
   bool isUndefined() const { return st_shndx == ELF::SHN_UNDEF; }
 };
