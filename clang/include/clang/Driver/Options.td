@@ -713,12 +713,6 @@ def fmodules_strict_decluse : Flag <["-"], "fmodules-strict-decluse">, Group<f_G
   HelpText<"Like -fmodules-decluse but requires all headers to be in modules">;
 def fno_modules_search_all : Flag <["-"], "fno-modules-search-all">, Group<f_Group>,
   Flags<[DriverOption, CC1Option]>;
-def fmodules_implicit_maps :
-  Flag <["-"], "fmodules-implicit-maps">,
-  Group<f_Group>, Flags<[DriverOption, CC1Option]>;
-def fno_modules_implicit_maps :
-  Flag <["-"], "fno-modules-implicit-maps">,
-  Group<f_Group>, Flags<[DriverOption, CC1Option]>;
 def fno_implicit_modules :
   Flag <["-"], "fno-implicit-modules">,
   Group<f_Group>, Flags<[DriverOption, CC1Option]>;

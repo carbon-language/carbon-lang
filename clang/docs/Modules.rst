@@ -175,7 +175,7 @@ Command-line parameters
   Enable the modules feature.
 
 ``-fmodule-maps``
-  Enable interpretation of module maps. This option is implied by ``-fmodules``.
+  Enable implicit search for module map files named ``module.modulemap`` and similar. This option is implied by ``-fmodules``. If this is disabled, module map files will only be loaded if they are explicitly specified via ``-fmodule-map-file`` or transitively used by another module map file.
 
 ``-fmodules-cache-path=<directory>``
   Specify the path to the modules cache. If not provided, Clang will select a system-appropriate default.
@@ -206,9 +206,6 @@ Command-line parameters
 
 ``-fmodules-search-all``
   If a symbol is not found, search modules referenced in the current module maps but not imported for symbols, so the error message can reference the module by name.  Note that if the global module index has not been built before, this might take some time as it needs to build all the modules.  Note that this option doesn't apply in module builds, to avoid the recursion.
-
-``-fno-modules-implicit-maps``
-  Suppresses the implicit search for files called ``module.modulemap`` and similar. Instead, module files need to be explicitly specified via ``-fmodule-map-file`` or transitively used.
 
 ``-fno-implicit-modules``
   All modules used by the build must be specified with ``-fmodule-file``.
