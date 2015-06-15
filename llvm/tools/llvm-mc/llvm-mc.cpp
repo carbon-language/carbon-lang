@@ -383,7 +383,6 @@ int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv, "llvm machine code playground\n");
   MCTargetOptions MCOptions = InitMCTargetOptionsFromFlags();
   TripleName = Triple::normalize(TripleName);
-  Triple TheTriple(TripleName);
   setDwarfDebugFlags(argc, argv);
 
   setDwarfDebugProducer();
@@ -392,6 +391,9 @@ int main(int argc, char **argv) {
   const Target *TheTarget = GetTarget(ProgName);
   if (!TheTarget)
     return 1;
+  // Now that GetTarget() has (potentially) replaced TripleName, it's safe to
+  // construct the Triple object.
+  Triple TheTriple(TripleName);
 
   ErrorOr<std::unique_ptr<MemoryBuffer>> BufferPtr =
       MemoryBuffer::getFileOrSTDIN(InputFilename);
@@ -429,7 +431,7 @@ int main(int argc, char **argv) {
   // MCObjectFileInfo needs a MCContext reference in order to initialize itself.
   MCObjectFileInfo MOFI;
   MCContext Ctx(MAI.get(), MRI.get(), &MOFI, &SrcMgr);
-  MOFI.InitMCObjectFileInfo(TripleName, RelocModel, CMModel, Ctx);
+  MOFI.InitMCObjectFileInfo(TheTriple, RelocModel, CMModel, Ctx);
 
   if (SaveTempLabels)
     Ctx.setAllowTemporaryLabels(false);
