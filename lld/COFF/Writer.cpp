@@ -84,7 +84,7 @@ void OutputSection::addChunk(Chunk *C) {
 }
 
 void OutputSection::addPermissions(uint32_t C) {
-  Header.Characteristics = Header.Characteristics | (C & PermMask);
+  Header.Characteristics |= C & PermMask;
 }
 
 // Write the section header to a given buffer.
@@ -241,10 +241,10 @@ void Writer::writeHeader() {
   Buf += sizeof(*COFF);
   COFF->Machine = MachineType;
   COFF->NumberOfSections = OutputSections.size();
-  COFF->Characteristics =
-      (IMAGE_FILE_EXECUTABLE_IMAGE | IMAGE_FILE_LARGE_ADDRESS_AWARE);
+  COFF->Characteristics = IMAGE_FILE_EXECUTABLE_IMAGE;
+  COFF->Characteristics |= IMAGE_FILE_LARGE_ADDRESS_AWARE;
   if (!Config->Relocatable)
-    COFF->Characteristics = COFF->Characteristics | IMAGE_FILE_RELOCS_STRIPPED;
+    COFF->Characteristics |= IMAGE_FILE_RELOCS_STRIPPED;
   COFF->SizeOfOptionalHeader =
       sizeof(pe32plus_header) + sizeof(data_directory) * NumberfOfDataDirectory;
 
