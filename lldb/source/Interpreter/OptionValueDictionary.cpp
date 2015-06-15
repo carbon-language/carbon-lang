@@ -117,6 +117,12 @@ OptionValueDictionary::SetArgs (const Args &args, VarSetOperationType op)
                 llvm::StringRef key_and_value(args.GetArgumentAtIndex(i));
                 if (!key_and_value.empty())
                 {
+                    if (key_and_value.find('=') == llvm::StringRef::npos)
+                    {
+                        error.SetErrorString("assign operation takes one or more key=value arguments");
+                        return error;
+                    }
+
                     std::pair<llvm::StringRef, llvm::StringRef> kvp(key_and_value.split('='));
                     llvm::StringRef key = kvp.first;
                     bool key_valid = false;
