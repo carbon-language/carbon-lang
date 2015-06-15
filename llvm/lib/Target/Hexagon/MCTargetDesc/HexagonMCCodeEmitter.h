@@ -44,8 +44,6 @@ public:
   uint32_t parseBits(size_t Instruction, size_t Last, MCInst const &MCB,
                     MCInst const &MCI) const;
 
-  MCSubtargetInfo const &getSubtargetInfo() const;
-
   void encodeInstruction(MCInst const &MI, raw_ostream &OS,
                          SmallVectorImpl<MCFixup> &Fixups,
                          MCSubtargetInfo const &STI) const override;
@@ -65,10 +63,6 @@ public:
   unsigned getMachineOpValue(MCInst const &MI, MCOperand const &MO,
                              SmallVectorImpl<MCFixup> &Fixups,
                              MCSubtargetInfo const &STI) const;
-
-private:
-  HexagonMCCodeEmitter(HexagonMCCodeEmitter const &) = delete;
-  void operator=(HexagonMCCodeEmitter const &) = delete;
 }; // class HexagonMCCodeEmitter
 
 } // namespace llvm

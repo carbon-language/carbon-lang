@@ -30,6 +30,7 @@ static cl::opt<unsigned> MaxLoopRange(
     cl::desc("Restrict range of loopN instructions (testing only)"));
 
 namespace llvm {
+  FunctionPass *createHexagonFixupHwLoops();
   void initializeHexagonFixupHwLoopsPass(PassRegistry&);
 }
 

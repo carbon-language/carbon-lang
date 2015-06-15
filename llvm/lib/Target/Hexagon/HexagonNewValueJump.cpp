@@ -60,6 +60,7 @@ static cl::opt<bool> DisableNewValueJumps("disable-nvjump", cl::Hidden,
     cl::desc("Disable New Value Jumps"));
 
 namespace llvm {
+  FunctionPass *createHexagonNewValueJump();
   void initializeHexagonNewValueJumpPass(PassRegistry&);
 }
 

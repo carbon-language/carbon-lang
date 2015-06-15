@@ -57,6 +57,7 @@ static cl::opt<bool> PacketizeVolatiles("hexagon-packetize-volatiles",
       cl::desc("Allow non-solo packetization of volatile memory references"));
 
 namespace llvm {
+  FunctionPass *createHexagonPacketizer();
   void initializeHexagonPacketizerPass(PassRegistry&);
 }
 

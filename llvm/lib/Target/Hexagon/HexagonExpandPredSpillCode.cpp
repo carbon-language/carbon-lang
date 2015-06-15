@@ -41,6 +41,7 @@ using namespace llvm;
 
 
 namespace llvm {
+  FunctionPass *createHexagonExpandPredSpillCode();
   void initializeHexagonExpandPredSpillCodePass(PassRegistry&);
 }
 

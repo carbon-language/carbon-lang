@@ -24,6 +24,7 @@
 using namespace llvm;
 
 namespace llvm {
+  FunctionPass *createHexagonRemoveExtendArgs(const HexagonTargetMachine &TM);
   void initializeHexagonRemoveExtendArgsPass(PassRegistry&);
 }
 

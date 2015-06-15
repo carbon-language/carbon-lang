@@ -49,6 +49,7 @@ MaxNumOfInstsBetweenNewValueStoreAndTFR("max-num-inst-between-tfr-and-nv-store",
                             "consider the store still to be newifiable"));
 
 namespace llvm {
+  FunctionPass *createHexagonCopyToCombine();
   void initializeHexagonCopyToCombinePass(PassRegistry&);
 }
 

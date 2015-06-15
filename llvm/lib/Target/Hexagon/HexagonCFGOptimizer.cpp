@@ -28,6 +28,7 @@ using namespace llvm;
 #define DEBUG_TYPE "hexagon_cfg"
 
 namespace llvm {
+  FunctionPass *createHexagonCFGOptimizer();
   void initializeHexagonCFGOptimizerPass(PassRegistry&);
 }
 

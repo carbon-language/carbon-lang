@@ -63,6 +63,7 @@ static cl::opt<bool> HWCreatePreheader("hexagon-hwloop-preheader",
 STATISTIC(NumHWLoops, "Number of loops converted to hardware loops");
 
 namespace llvm {
+  FunctionPass *createHexagonHardwareLoops();
   void initializeHexagonHardwareLoopsPass(PassRegistry&);
 }
 
