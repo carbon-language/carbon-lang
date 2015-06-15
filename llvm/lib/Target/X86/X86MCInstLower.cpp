@@ -864,6 +864,28 @@ void X86AsmPrinter::LowerSTATEPOINT(const MachineInstr &MI,
   SM.recordStatepoint(MI);
 }
 
+void X86AsmPrinter::LowerFAULTING_LOAD_OP(const MachineInstr &MI,
+                                       X86MCInstLower &MCIL) {
+  // FAULTING_LOAD_OP <def>, <handler label>, <load opcode>, <load operands>
+
+  unsigned LoadDefRegister = MI.getOperand(0).getReg();
+  MCSymbol *HandlerLabel = MI.getOperand(1).getMCSymbol();
+  unsigned LoadOpcode = MI.getOperand(2).getImm();
+  unsigned LoadOperandsBeginIdx = 3;
+
+  FM.recordFaultingOp(FaultMaps::FaultingLoad, HandlerLabel);
+
+  MCInst LoadMI;
+  LoadMI.setOpcode(LoadOpcode);
+  LoadMI.addOperand(MCOperand::createReg(LoadDefRegister));
+  for (auto I = MI.operands_begin() + LoadOperandsBeginIdx,
+            E = MI.operands_end();
+       I != E; ++I)
+    if (auto MaybeOperand = MCIL.LowerMachineOperand(&MI, *I))
+      LoadMI.addOperand(MaybeOperand.getValue());
+
+  OutStreamer->EmitInstruction(LoadMI, getSubtargetInfo());
+}
 
 // Lower a stackmap of the form:
 // <id>, <shadowBytes>, ...
@@ -1118,6 +1140,9 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
   }
   case TargetOpcode::STATEPOINT:
     return LowerSTATEPOINT(*MI, MCInstLowering);
+
+  case TargetOpcode::FAULTING_LOAD_OP:
+    return LowerFAULTING_LOAD_OP(*MI, MCInstLowering);
 
   case TargetOpcode::STACKMAP:
     return LowerSTACKMAP(*MI);

@@ -881,6 +881,12 @@ def FRAME_ALLOC : Instruction {
   let hasSideEffects = 0;
   let hasCtrlDep = 1;
 }
+def FAULTING_LOAD_OP : Instruction {
+  let OutOperandList = (outs unknown:$dst);
+  let InOperandList = (ins variable_ops);
+  let usesCustomInserter = 1;
+  let mayLoad = 1;
+}
 }
 
 //===----------------------------------------------------------------------===//

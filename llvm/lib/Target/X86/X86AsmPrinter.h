@@ -12,6 +12,7 @@
 
 #include "X86Subtarget.h"
 #include "llvm/CodeGen/AsmPrinter.h"
+#include "llvm/CodeGen/FaultMaps.h"
 #include "llvm/CodeGen/StackMaps.h"
 #include "llvm/Target/TargetMachine.h"
 
@@ -27,6 +28,7 @@ class MCSymbol;
 class LLVM_LIBRARY_VISIBILITY X86AsmPrinter : public AsmPrinter {
   const X86Subtarget *Subtarget;
   StackMaps SM;
+  FaultMaps FM;
 
   void GenerateExportDirective(const MCSymbol *Sym, bool IsData);
 
@@ -83,13 +85,15 @@ class LLVM_LIBRARY_VISIBILITY X86AsmPrinter : public AsmPrinter {
   void LowerSTACKMAP(const MachineInstr &MI);
   void LowerPATCHPOINT(const MachineInstr &MI, X86MCInstLower &MCIL);
   void LowerSTATEPOINT(const MachineInstr &MI, X86MCInstLower &MCIL);
+  void LowerFAULTING_LOAD_OP(const MachineInstr &MI, X86MCInstLower &MCIL);
 
   void LowerTlsAddr(X86MCInstLower &MCInstLowering, const MachineInstr &MI);
 
  public:
    explicit X86AsmPrinter(TargetMachine &TM,
                           std::unique_ptr<MCStreamer> Streamer)
-       : AsmPrinter(TM, std::move(Streamer)), SM(*this), SMShadowTracker(TM) {}
+       : AsmPrinter(TM, std::move(Streamer)), SM(*this), FM(*this),
+         SMShadowTracker(TM) {}
 
   const char *getPassName() const override {
     return "X86 Assembly / Object Emitter";

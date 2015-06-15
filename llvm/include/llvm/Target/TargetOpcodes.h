@@ -122,6 +122,12 @@ enum {
   /// label. Created by the llvm.frameallocate intrinsic. It has two arguments:
   /// the symbol for the label and the frame index of the stack allocation.
   FRAME_ALLOC = 21,
+
+  /// Loading instruction that may page fault, bundled with associated
+  /// information on how to handle such a page fault.  It is intended to support
+  /// "zero cost" null checks in managed languages by allowing LLVM to fold
+  /// comparisions into existing memory operations.
+  FAULTING_LOAD_OP = 22,
 };
 } // end namespace TargetOpcode
 } // end namespace llvm

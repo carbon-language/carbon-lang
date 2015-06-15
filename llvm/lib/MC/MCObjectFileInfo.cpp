@@ -238,6 +238,9 @@ void MCObjectFileInfo::initMachOMCObjectFileInfo(Triple T) {
   StackMapSection = Ctx->getMachOSection("__LLVM_STACKMAPS", "__llvm_stackmaps",
                                          0, SectionKind::getMetadata());
 
+  FaultMapSection = Ctx->getMachOSection("__LLVM_FAULTMAPS", "__llvm_faultmaps",
+                                         0, SectionKind::getMetadata());
+
   TLSExtraDataSection = TLSTLVSection;
 }
 
@@ -518,6 +521,9 @@ void MCObjectFileInfo::initELFMCObjectFileInfo(Triple T) {
 
   StackMapSection =
       Ctx->getELFSection(".llvm_stackmaps", ELF::SHT_PROGBITS, ELF::SHF_ALLOC);
+
+  FaultMapSection =
+      Ctx->getELFSection(".llvm_faultmaps", ELF::SHT_PROGBITS, ELF::SHF_ALLOC);
 }
 
 void MCObjectFileInfo::initCOFFMCObjectFileInfo(Triple T) {

@@ -139,6 +139,9 @@ protected:
   /// StackMap section.
   MCSection *StackMapSection;
 
+  /// FaultMap section.
+  MCSection *FaultMapSection;
+
   /// EH frame section.
   ///
   /// It is initialized on demand so it can be overwritten (with uniquing).
@@ -262,6 +265,7 @@ public:
   MCSection *getTLSBSSSection() const { return TLSBSSSection; }
 
   MCSection *getStackMapSection() const { return StackMapSection; }
+  MCSection *getFaultMapSection() const { return FaultMapSection; }
 
   // ELF specific sections.
   MCSection *getDataRelSection() const { return DataRelSection; }

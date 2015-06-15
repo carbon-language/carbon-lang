@@ -674,6 +674,7 @@ void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {
     }
 
     SM.serializeToStackMapSection();
+    FM.serializeToFaultMapSection();
 
     // Funny Darwin hack: This flag tells the linker that no global symbols
     // contain code that falls through to other global symbols (e.g. the obvious
@@ -726,8 +727,10 @@ void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {
     }
   }
 
-  if (TT.isOSBinFormatELF())
+  if (TT.isOSBinFormatELF()) {
     SM.serializeToStackMapSection();
+    FM.serializeToFaultMapSection();
+  }
 }
 
 //===----------------------------------------------------------------------===//
