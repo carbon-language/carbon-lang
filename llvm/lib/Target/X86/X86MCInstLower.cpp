@@ -17,6 +17,7 @@
 #include "InstPrinter/X86ATTInstPrinter.h"
 #include "MCTargetDesc/X86BaseInfo.h"
 #include "Utils/X86ShuffleDecode.h"
+#include "llvm/ADT/Optional.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
@@ -50,6 +51,8 @@ class X86MCInstLower {
 public:
   X86MCInstLower(const MachineFunction &MF, X86AsmPrinter &asmprinter);
 
+  Optional<MCOperand> LowerMachineOperand(const MachineInstr *MI,
+                                          const MachineOperand &MO) const;
   void Lower(const MachineInstr *MI, MCInst &OutMI) const;
 
   MCSymbol *GetSymbolFromOperand(const MachineOperand &MO) const;
@@ -402,47 +405,43 @@ static unsigned getRetOpcode(const X86Subtarget &Subtarget) {
   return Subtarget.is64Bit() ? X86::RETQ : X86::RETL;
 }
 
+Optional<MCOperand>
+X86MCInstLower::LowerMachineOperand(const MachineInstr *MI,
+                                    const MachineOperand &MO) const {
+  switch (MO.getType()) {
+  default:
+    MI->dump();
+    llvm_unreachable("unknown operand type");
+  case MachineOperand::MO_Register:
+    // Ignore all implicit register operands.
+    if (MO.isImplicit())
+      return None;
+    return MCOperand::createReg(MO.getReg());
+  case MachineOperand::MO_Immediate:
+    return MCOperand::createImm(MO.getImm());
+  case MachineOperand::MO_MachineBasicBlock:
+  case MachineOperand::MO_GlobalAddress:
+  case MachineOperand::MO_ExternalSymbol:
+    return LowerSymbolOperand(MO, GetSymbolFromOperand(MO));
+  case MachineOperand::MO_JumpTableIndex:
+    return LowerSymbolOperand(MO, AsmPrinter.GetJTISymbol(MO.getIndex()));
+  case MachineOperand::MO_ConstantPoolIndex:
+    return LowerSymbolOperand(MO, AsmPrinter.GetCPISymbol(MO.getIndex()));
+  case MachineOperand::MO_BlockAddress:
+    return LowerSymbolOperand(
+        MO, AsmPrinter.GetBlockAddressSymbol(MO.getBlockAddress()));
+  case MachineOperand::MO_RegisterMask:
+    // Ignore call clobbers.
+    return None;
+  }
+}
+
 void X86MCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
   OutMI.setOpcode(MI->getOpcode());
 
-  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
-    const MachineOperand &MO = MI->getOperand(i);
-
-    MCOperand MCOp;
-    switch (MO.getType()) {
-    default:
-      MI->dump();
-      llvm_unreachable("unknown operand type");
-    case MachineOperand::MO_Register:
-      // Ignore all implicit register operands.
-      if (MO.isImplicit()) continue;
-      MCOp = MCOperand::createReg(MO.getReg());
-      break;
-    case MachineOperand::MO_Immediate:
-      MCOp = MCOperand::createImm(MO.getImm());
-      break;
-    case MachineOperand::MO_MachineBasicBlock:
-    case MachineOperand::MO_GlobalAddress:
-    case MachineOperand::MO_ExternalSymbol:
-      MCOp = LowerSymbolOperand(MO, GetSymbolFromOperand(MO));
-      break;
-    case MachineOperand::MO_JumpTableIndex:
-      MCOp = LowerSymbolOperand(MO, AsmPrinter.GetJTISymbol(MO.getIndex()));
-      break;
-    case MachineOperand::MO_ConstantPoolIndex:
-      MCOp = LowerSymbolOperand(MO, AsmPrinter.GetCPISymbol(MO.getIndex()));
-      break;
-    case MachineOperand::MO_BlockAddress:
-      MCOp = LowerSymbolOperand(MO,
-                     AsmPrinter.GetBlockAddressSymbol(MO.getBlockAddress()));
-      break;
-    case MachineOperand::MO_RegisterMask:
-      // Ignore call clobbers.
-      continue;
-    }
-
-    OutMI.addOperand(MCOp);
-  }
+  for (const MachineOperand &MO : MI->operands())
+    if (auto MaybeMCOp = LowerMachineOperand(MI, MO))
+      OutMI.addOperand(MaybeMCOp.getValue());
 
   // Handle a few special cases to eliminate operand modifiers.
 ReSimplify:
