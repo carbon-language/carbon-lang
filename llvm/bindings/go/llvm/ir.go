@@ -160,6 +160,8 @@ const (
 	InAllocaAttribute           Attribute = 1 << 43
 	NonNullAttribute            Attribute = 1 << 44
 	JumpTableAttribute          Attribute = 1 << 45
+	ConvergentAttribute         Attribute = 1 << 46
+	SafeStackAttribute          Attribute = 1 << 47
 )
 
 //-------------------------------------------------------------------------

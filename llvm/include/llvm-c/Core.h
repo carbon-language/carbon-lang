@@ -161,15 +161,15 @@ typedef enum {
     /* FIXME: These attributes are currently not included in the C API as
        a temporary measure until the API/ABI impact to the C API is understood
        and the path forward agreed upon.
-    LLVMAddressSafety = 1ULL << 32,
-    LLVMStackProtectStrongAttribute = 1ULL<<33,
-    LLVMCold = 1ULL << 34,
-    LLVMOptimizeNone = 1ULL << 35,
-    LLVMInAllocaAttribute = 1ULL << 36,
-    LLVMNonNullAttribute = 1ULL << 37,
-    LLVMJumpTableAttribute = 1ULL << 38,
-    LLVMDereferenceableAttribute = 1ULL << 39,
-    LLVMDereferenceableOrNullAttribute = 1ULL << 40,
+    LLVMSanitizeAddressAttribute = 1ULL << 32,
+    LLVMStackProtectStrongAttribute = 1ULL<<35,
+    LLVMColdAttribute = 1ULL << 40,
+    LLVMOptimizeNoneAttribute = 1ULL << 42,
+    LLVMInAllocaAttribute = 1ULL << 43,
+    LLVMNonNullAttribute = 1ULL << 44,
+    LLVMJumpTableAttribute = 1ULL << 45,
+    LLVMConvergentAttribute = 1ULL << 46,
+    LLVMSafeStackAttribute = 1ULL << 47,
     */
 } LLVMAttribute;
 
