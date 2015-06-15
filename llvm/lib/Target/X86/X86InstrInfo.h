@@ -179,6 +179,12 @@ class X86InstrInfo final : public X86GenInstrInfo {
 
   virtual void anchor();
 
+  bool AnalyzeBranchImpl(MachineBasicBlock &MBB, MachineBasicBlock *&TBB,
+                         MachineBasicBlock *&FBB,
+                         SmallVectorImpl<MachineOperand> &Cond,
+                         SmallVectorImpl<MachineInstr *> &CondBranches,
+                         bool AllowModify) const;
+
 public:
   explicit X86InstrInfo(X86Subtarget &STI);
 
@@ -271,6 +277,10 @@ public:
   bool getMemOpBaseRegImmOfs(MachineInstr *LdSt, unsigned &BaseReg,
                              unsigned &Offset,
                              const TargetRegisterInfo *TRI) const override;
+  bool AnalyzeBranchPredicate(MachineBasicBlock &MBB,
+                              TargetInstrInfo::MachineBranchPredicate &MBP,
+                              bool AllowModify = false) const override;
+
   unsigned RemoveBranch(MachineBasicBlock &MBB) const override;
   unsigned InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
                         MachineBasicBlock *FBB, ArrayRef<MachineOperand> Cond,

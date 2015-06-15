@@ -387,6 +387,51 @@ public:
     return true;
   }
 
+  /// Represents a predicate at the MachineFunction level.  The control flow a
+  /// MachineBranchPredicate represents is:
+  ///
+  ///  Reg <def>= LHS `Predicate` RHS         == ConditionDef
+  ///  if Reg then goto TrueDest else goto FalseDest
+  ///
+  struct MachineBranchPredicate {
+    enum ComparePredicate {
+      PRED_EQ,     // True if two values are equal
+      PRED_NE,     // True if two values are not equal
+      PRED_INVALID // Sentinel value
+    };
+
+    ComparePredicate Predicate;
+    MachineOperand LHS;
+    MachineOperand RHS;
+    MachineBasicBlock *TrueDest;
+    MachineBasicBlock *FalseDest;
+    MachineInstr *ConditionDef;
+
+    /// SingleUseCondition is true if ConditionDef is dead except for the
+    /// branch(es) at the end of the basic block.
+    ///
+    bool SingleUseCondition;
+
+    explicit MachineBranchPredicate()
+        : Predicate(PRED_INVALID), LHS(MachineOperand::CreateImm(0)),
+          RHS(MachineOperand::CreateImm(0)), TrueDest(nullptr),
+          FalseDest(nullptr), ConditionDef(nullptr), SingleUseCondition(false) {
+    }
+  };
+
+  /// Analyze the branching code at the end of MBB and parse it into the
+  /// MachineBranchPredicate structure if possible.  Returns false on success
+  /// and true on failure.
+  ///
+  /// If AllowModify is true, then this routine is allowed to modify the basic
+  /// block (e.g. delete instructions after the unconditional branch).
+  ///
+  virtual bool AnalyzeBranchPredicate(MachineBasicBlock &MBB,
+                                      MachineBranchPredicate &MBP,
+                                      bool AllowModify = false) const {
+    return true;
+  }
+
   /// Remove the branching code at the end of the specific MBB.
   /// This is only invoked in cases where AnalyzeBranch returns success. It
   /// returns the number of instructions that were removed.
