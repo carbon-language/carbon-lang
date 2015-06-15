@@ -345,6 +345,16 @@ int X86FrameLowering::mergeSPUpdates(MachineBasicBlock &MBB,
   return Offset;
 }
 
+/// Wraps up getting a CFI index and building a MachineInstr for it.
+static void BuildCFI(MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI,
+                     DebugLoc DL, const TargetInstrInfo &TII,
+                     MCCFIInstruction CFIInst) {
+  MachineFunction &MF = *MBB.getParent();
+  unsigned CFIIndex = MF.getMMI().addFrameInst(CFIInst);
+  BuildMI(MBB, MBBI, DL, TII.get(TargetOpcode::CFI_INSTRUCTION))
+      .addCFIIndex(CFIIndex);
+}
+
 void
 X86FrameLowering::emitCalleeSavedFrameMoves(MachineBasicBlock &MBB,
                                             MachineBasicBlock::iterator MBBI,
@@ -366,11 +376,8 @@ X86FrameLowering::emitCalleeSavedFrameMoves(MachineBasicBlock &MBB,
     unsigned Reg = I->getReg();
 
     unsigned DwarfReg = MRI->getDwarfRegNum(Reg, true);
-    unsigned CFIIndex =
-        MMI.addFrameInst(MCCFIInstruction::createOffset(nullptr, DwarfReg,
-                                                        Offset));
-    BuildMI(MBB, MBBI, DL, TII.get(TargetOpcode::CFI_INSTRUCTION))
-        .addCFIIndex(CFIIndex);
+    BuildCFI(MBB, MBBI, DL, TII,
+             MCCFIInstruction::createOffset(nullptr, DwarfReg, Offset));
   }
 }
 
@@ -691,18 +698,14 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF,
       // Mark the place where EBP/RBP was saved.
       // Define the current CFA rule to use the provided offset.
       assert(StackSize);
-      unsigned CFIIndex = MMI.addFrameInst(
-          MCCFIInstruction::createDefCfaOffset(nullptr, 2 * stackGrowth));
-      BuildMI(MBB, MBBI, DL, TII.get(TargetOpcode::CFI_INSTRUCTION))
-          .addCFIIndex(CFIIndex);
+      BuildCFI(MBB, MBBI, DL, TII,
+               MCCFIInstruction::createDefCfaOffset(nullptr, 2 * stackGrowth));
 
       // Change the rule for the FramePtr to be an "offset" rule.
       unsigned DwarfFramePtr = RegInfo->getDwarfRegNum(MachineFramePtr, true);
-      CFIIndex = MMI.addFrameInst(
-          MCCFIInstruction::createOffset(nullptr,
-                                         DwarfFramePtr, 2 * stackGrowth));
-      BuildMI(MBB, MBBI, DL, TII.get(TargetOpcode::CFI_INSTRUCTION))
-          .addCFIIndex(CFIIndex);
+      BuildCFI(MBB, MBBI, DL, TII,
+               MCCFIInstruction::createOffset(nullptr, DwarfFramePtr,
+                                              2 * stackGrowth));
     }
 
     if (NeedsWinEH) {
@@ -724,10 +727,8 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF,
       // Mark effective beginning of when frame pointer becomes valid.
       // Define the current CFA to use the EBP/RBP register.
       unsigned DwarfFramePtr = RegInfo->getDwarfRegNum(MachineFramePtr, true);
-      unsigned CFIIndex = MMI.addFrameInst(
-          MCCFIInstruction::createDefCfaRegister(nullptr, DwarfFramePtr));
-      BuildMI(MBB, MBBI, DL, TII.get(TargetOpcode::CFI_INSTRUCTION))
-          .addCFIIndex(CFIIndex);
+      BuildCFI(MBB, MBBI, DL, TII,
+               MCCFIInstruction::createDefCfaRegister(nullptr, DwarfFramePtr));
     }
 
     // Mark the FramePtr as live-in in every block.
@@ -752,10 +753,8 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF,
       // Mark callee-saved push instruction.
       // Define the current CFA rule to use the provided offset.
       assert(StackSize);
-      unsigned CFIIndex = MMI.addFrameInst(
-          MCCFIInstruction::createDefCfaOffset(nullptr, StackOffset));
-      BuildMI(MBB, MBBI, DL, TII.get(TargetOpcode::CFI_INSTRUCTION))
-          .addCFIIndex(CFIIndex);
+      BuildCFI(MBB, MBBI, DL, TII,
+               MCCFIInstruction::createDefCfaOffset(nullptr, StackOffset));
       StackOffset += stackGrowth;
     }
 
@@ -950,12 +949,8 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF,
     if (!HasFP && NumBytes) {
       // Define the current CFA rule to use the provided offset.
       assert(StackSize);
-      unsigned CFIIndex = MMI.addFrameInst(
-          MCCFIInstruction::createDefCfaOffset(nullptr,
-                                               -StackSize + stackGrowth));
-
-      BuildMI(MBB, MBBI, DL, TII.get(TargetOpcode::CFI_INSTRUCTION))
-          .addCFIIndex(CFIIndex);
+      BuildCFI(MBB, MBBI, DL, TII, MCCFIInstruction::createDefCfaOffset(
+                                       nullptr, -StackSize + stackGrowth));
     }
 
     // Emit DWARF info specifying the offsets of the callee-saved registers.
