@@ -252,6 +252,8 @@ std::string Attribute::getAsString(bool InAttrGrp) const {
     return "sspreq";
   if (hasAttribute(Attribute::StackProtectStrong))
     return "sspstrong";
+  if (hasAttribute(Attribute::SafeStack))
+    return "safestack";
   if (hasAttribute(Attribute::StructRet))
     return "sret";
   if (hasAttribute(Attribute::SanitizeThread))
@@ -437,6 +439,7 @@ uint64_t AttributeImpl::getAttrMask(Attribute::AttrKind Val) {
   case Attribute::NonNull:         return 1ULL << 44;
   case Attribute::JumpTable:       return 1ULL << 45;
   case Attribute::Convergent:      return 1ULL << 46;
+  case Attribute::SafeStack:       return 1ULL << 47;
   case Attribute::Dereferenceable:
     llvm_unreachable("dereferenceable attribute not supported in raw format");
     break;

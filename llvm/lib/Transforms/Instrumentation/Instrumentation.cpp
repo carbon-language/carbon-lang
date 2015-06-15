@@ -30,6 +30,7 @@ void llvm::initializeInstrumentation(PassRegistry &Registry) {
   initializeThreadSanitizerPass(Registry);
   initializeSanitizerCoverageModulePass(Registry);
   initializeDataFlowSanitizerPass(Registry);
+  initializeSafeStackPass(Registry);
 }
 
 /// LLVMInitializeInstrumentation - C binding for

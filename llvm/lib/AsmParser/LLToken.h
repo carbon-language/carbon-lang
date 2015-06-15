@@ -135,6 +135,7 @@ namespace lltok {
     kw_ssp,
     kw_sspreq,
     kw_sspstrong,
+    kw_safestack,
     kw_sret,
     kw_sanitize_thread,
     kw_sanitize_memory,

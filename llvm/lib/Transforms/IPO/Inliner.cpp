@@ -93,19 +93,26 @@ static void AdjustCallerSSPLevel(Function *Caller, Function *Callee) {
   // clutter to the IR.
   AttrBuilder B;
   B.addAttribute(Attribute::StackProtect)
-    .addAttribute(Attribute::StackProtectStrong);
+    .addAttribute(Attribute::StackProtectStrong)
+    .addAttribute(Attribute::StackProtectReq);
   AttributeSet OldSSPAttr = AttributeSet::get(Caller->getContext(),
                                               AttributeSet::FunctionIndex,
                                               B);
 
-  if (Callee->hasFnAttribute(Attribute::StackProtectReq)) {
+  if (Callee->hasFnAttribute(Attribute::SafeStack)) {
+    Caller->removeAttributes(AttributeSet::FunctionIndex, OldSSPAttr);
+    Caller->addFnAttr(Attribute::SafeStack);
+  } else if (Callee->hasFnAttribute(Attribute::StackProtectReq) &&
+             !Caller->hasFnAttribute(Attribute::SafeStack)) {
     Caller->removeAttributes(AttributeSet::FunctionIndex, OldSSPAttr);
     Caller->addFnAttr(Attribute::StackProtectReq);
   } else if (Callee->hasFnAttribute(Attribute::StackProtectStrong) &&
+             !Caller->hasFnAttribute(Attribute::SafeStack) &&
              !Caller->hasFnAttribute(Attribute::StackProtectReq)) {
     Caller->removeAttributes(AttributeSet::FunctionIndex, OldSSPAttr);
     Caller->addFnAttr(Attribute::StackProtectStrong);
   } else if (Callee->hasFnAttribute(Attribute::StackProtect) &&
+             !Caller->hasFnAttribute(Attribute::SafeStack) &&
              !Caller->hasFnAttribute(Attribute::StackProtectReq) &&
              !Caller->hasFnAttribute(Attribute::StackProtectStrong))
     Caller->addFnAttr(Attribute::StackProtect);

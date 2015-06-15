@@ -1319,6 +1319,15 @@ example:
     ``setjmp`` is an example of such a function. The compiler disables
     some optimizations (like tail calls) in the caller of these
     functions.
+``safestack``
+    This attribute indicates that
+    `SafeStack <http://clang.llvm.org/docs/SafeStack.html>`_
+    protection is enabled for this function.
+
+    If a function that has a ``safestack`` attribute is inlined into a
+    function that doesn't have a ``safestack`` attribute or which has an
+    ``ssp``, ``sspstrong`` or ``sspreq`` attribute, then the resulting
+    function will have a ``safestack`` attribute.
 ``sanitize_address``
     This attribute indicates that AddressSanitizer checks
     (dynamic address safety analysis) are enabled for this function.

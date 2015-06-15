@@ -513,6 +513,7 @@ void CppWriter::printAttributes(const AttributeSet &PAL,
       HANDLE_ATTR(StackProtect);
       HANDLE_ATTR(StackProtectReq);
       HANDLE_ATTR(StackProtectStrong);
+      HANDLE_ATTR(SafeStack);
       HANDLE_ATTR(NoCapture);
       HANDLE_ATTR(NoRedZone);
       HANDLE_ATTR(NoImplicitFloat);

@@ -1251,6 +1251,7 @@ void Verifier::VerifyAttributeTypes(AttributeSet Attrs, unsigned Idx,
         I->getKindAsEnum() == Attribute::StackProtect ||
         I->getKindAsEnum() == Attribute::StackProtectReq ||
         I->getKindAsEnum() == Attribute::StackProtectStrong ||
+        I->getKindAsEnum() == Attribute::SafeStack ||
         I->getKindAsEnum() == Attribute::NoRedZone ||
         I->getKindAsEnum() == Attribute::NoImplicitFloat ||
         I->getKindAsEnum() == Attribute::Naked ||

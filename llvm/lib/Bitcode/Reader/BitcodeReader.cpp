@@ -1146,6 +1146,8 @@ static Attribute::AttrKind getAttrFromCode(uint64_t Code) {
     return Attribute::StackProtectReq;
   case bitc::ATTR_KIND_STACK_PROTECT_STRONG:
     return Attribute::StackProtectStrong;
+  case bitc::ATTR_KIND_SAFESTACK:
+    return Attribute::SafeStack;
   case bitc::ATTR_KIND_STRUCT_RET:
     return Attribute::StructRet;
   case bitc::ATTR_KIND_SANITIZE_ADDRESS:
