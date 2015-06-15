@@ -1254,15 +1254,15 @@ bool ModuleLinker::linkGlobalValueBody(GlobalValue &Src) {
 /// Insert all of the named MDNodes in Src into the Dest module.
 void ModuleLinker::linkNamedMDNodes() {
   const NamedMDNode *SrcModFlags = SrcM->getModuleFlagsMetadata();
-  for (Module::const_named_metadata_iterator I = SrcM->named_metadata_begin(),
-       E = SrcM->named_metadata_end(); I != E; ++I) {
+  for (const NamedMDNode &NMD : SrcM->named_metadata()) {
     // Don't link module flags here. Do them separately.
-    if (&*I == SrcModFlags) continue;
-    NamedMDNode *DestNMD = DstM->getOrInsertNamedMetadata(I->getName());
+    if (&NMD == SrcModFlags)
+      continue;
+    NamedMDNode *DestNMD = DstM->getOrInsertNamedMetadata(NMD.getName());
     // Add Src elements into Dest node.
-    for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
-      DestNMD->addOperand(MapMetadata(I->getOperand(i), ValueMap, RF_None,
-                                      &TypeMap, &ValMaterializer));
+    for (const MDNode *op : NMD.operands())
+      DestNMD->addOperand(
+          MapMetadata(op, ValueMap, RF_None, &TypeMap, &ValMaterializer));
   }
 }
 
@@ -1542,9 +1542,8 @@ bool ModuleLinker::run() {
 
   // Insert all of the globals in src into the DstM module... without linking
   // initializers (which could refer to functions not yet mapped over).
-  for (Module::global_iterator I = SrcM->global_begin(),
-       E = SrcM->global_end(); I != E; ++I)
-    if (linkGlobalValueProto(I))
+  for (GlobalVariable &GV : SrcM->globals())
+    if (linkGlobalValueProto(&GV))
       return true;
 
   // Link the functions together between the two modules, without doing function
@@ -1552,18 +1551,17 @@ bool ModuleLinker::run() {
   // function...  We do this so that when we begin processing function bodies,
   // all of the global values that may be referenced are available in our
   // ValueMap.
-  for (Module::iterator I = SrcM->begin(), E = SrcM->end(); I != E; ++I)
-    if (linkGlobalValueProto(I))
+  for (Function &F :*SrcM)
+    if (linkGlobalValueProto(&F))
       return true;
 
   // If there were any aliases, link them now.
-  for (Module::alias_iterator I = SrcM->alias_begin(),
-       E = SrcM->alias_end(); I != E; ++I)
-    if (linkGlobalValueProto(I))
+  for (GlobalAlias &GA : SrcM->aliases())
+    if (linkGlobalValueProto(&GA))
       return true;
 
-  for (unsigned i = 0, e = AppendingVars.size(); i != e; ++i)
-    linkAppendingVarInit(AppendingVars[i]);
+  for (const AppendingVarInfo &AppendingVar : AppendingVars)
+    linkAppendingVarInit(AppendingVar);
 
   for (const auto &Entry : DstM->getComdatSymbolTable()) {
     const Comdat &C = Entry.getValue();
