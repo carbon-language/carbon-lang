@@ -191,6 +191,20 @@ We created an experimental multi-threaded linker using the Microsoft
 ConcRT concurrency library, and it was able to link itself in 0.5
 seconds, so we think the design is promising.
 
+Link-Time Optimization
+----------------------
+
+LTO is implemented by handling LLVM bitcode files as input files.
+The linker resolves symbols in bitcode files normally. If all symbols
+are successfully resolved, it then calls an LLVM libLTO function
+with all bitcode files to convert them to one big regular COFF file.
+Finally, the linker replaces bitcode symbols with COFF symbols,
+so that we can link the input files as if they were in COFF format
+from the beginning.
+
+The details are described in this document.
+http://llvm.org/docs/LinkTimeOptimization.html
+
 Glossary
 --------
 
