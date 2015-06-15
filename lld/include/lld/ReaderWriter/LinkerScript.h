@@ -816,7 +816,6 @@ public:
       : _name(name), _type(type), _includeFileHdr(includeFileHdr),
         _includePHDRs(includePHDRs), _at(at), _flags(flags) {}
 
-  ~PHDR() = delete;
   StringRef name() const { return _name; }
 
   void dump(raw_ostream &os) const;
