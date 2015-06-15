@@ -1,6 +1,6 @@
 // Test for "sancov.py missing ...".
 
-// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:coverage=1:coverage_dir=%T/coverage-missing
+// RUN: export ASAN_OPTIONS=$ASAN_OPTIONS:coverage=1:coverage_dir=%T/coverage-missing
 
 // First case: coverage from executable. main() is called on every code path.
 // RUN: %clangxx_asan -fsanitize-coverage=func %s -o %t -DFOOBAR -DMAIN
