@@ -332,8 +332,8 @@ static bool isNonASCII(char c) {
   return c & 0x80;
 }
 
-void SMDiagnostic::print(const char *ProgName, raw_ostream &S,
-                         bool ShowColors) const {
+void SMDiagnostic::print(const char *ProgName, raw_ostream &S, bool ShowColors,
+                         bool ShowKindLabel) const {
   // Display colors only if OS supports colors.
   ShowColors &= S.has_colors();
 
@@ -357,27 +357,29 @@ void SMDiagnostic::print(const char *ProgName, raw_ostream &S,
     S << ": ";
   }
 
-  switch (Kind) {
-  case SourceMgr::DK_Error:
-    if (ShowColors)
-      S.changeColor(raw_ostream::RED, true);
-    S << "error: ";
-    break;
-  case SourceMgr::DK_Warning:
-    if (ShowColors)
-      S.changeColor(raw_ostream::MAGENTA, true);
-    S << "warning: ";
-    break;
-  case SourceMgr::DK_Note:
-    if (ShowColors)
-      S.changeColor(raw_ostream::BLACK, true);
-    S << "note: ";
-    break;
-  }
+  if (ShowKindLabel) {
+    switch (Kind) {
+    case SourceMgr::DK_Error:
+      if (ShowColors)
+        S.changeColor(raw_ostream::RED, true);
+      S << "error: ";
+      break;
+    case SourceMgr::DK_Warning:
+      if (ShowColors)
+        S.changeColor(raw_ostream::MAGENTA, true);
+      S << "warning: ";
+      break;
+    case SourceMgr::DK_Note:
+      if (ShowColors)
+        S.changeColor(raw_ostream::BLACK, true);
+      S << "note: ";
+      break;
+    }
 
-  if (ShowColors) {
-    S.resetColor();
-    S.changeColor(raw_ostream::SAVEDCOLOR, true);
+    if (ShowColors) {
+      S.resetColor();
+      S.changeColor(raw_ostream::SAVEDCOLOR, true);
+    }
   }
 
   S << Message << '\n';

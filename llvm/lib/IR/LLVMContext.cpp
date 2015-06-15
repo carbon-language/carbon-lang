@@ -199,6 +199,19 @@ static bool isDiagnosticEnabled(const DiagnosticInfo &DI) {
   return true;
 }
 
+static const char *getDiagnosticMessagePrefix(DiagnosticSeverity Severity) {
+  switch (Severity) {
+  case DS_Error:
+    return "error";
+  case DS_Warning:
+    return "warning";
+  case DS_Remark:
+    return "remark";
+  case DS_Note:
+    return "note";
+  }
+}
+
 void LLVMContext::diagnose(const DiagnosticInfo &DI) {
   // If there is a report handler, use it.
   if (pImpl->DiagnosticHandler) {
@@ -211,25 +224,12 @@ void LLVMContext::diagnose(const DiagnosticInfo &DI) {
     return;
 
   // Otherwise, print the message with a prefix based on the severity.
-  std::string MsgStorage;
-  raw_string_ostream Stream(MsgStorage);
-  DiagnosticPrinterRawOStream DP(Stream);
+  DiagnosticPrinterRawOStream DP(errs());
+  errs() << getDiagnosticMessagePrefix(DI.getSeverity()) << ": ";
   DI.print(DP);
-  Stream.flush();
-  switch (DI.getSeverity()) {
-  case DS_Error:
-    errs() << "error: " << MsgStorage << "\n";
+  errs() << "\n";
+  if (DI.getSeverity() == DS_Error)
     exit(1);
-  case DS_Warning:
-    errs() << "warning: " << MsgStorage << "\n";
-    break;
-  case DS_Remark:
-    errs() << "remark: " << MsgStorage << "\n";
-    break;
-  case DS_Note:
-    errs() << "note: " << MsgStorage << "\n";
-    break;
-  }
 }
 
 void LLVMContext::emitError(unsigned LocCookie, const Twine &ErrorStr) {

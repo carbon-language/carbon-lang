@@ -210,6 +210,7 @@ static int compileModule(char **argv, LLVMContext &Context) {
   // Load the module to be compiled...
   SMDiagnostic Err;
   std::unique_ptr<Module> M;
+  std::unique_ptr<MIRParser> MIR;
   Triple TheTriple;
 
   bool SkipModule = MCPU == "help" ||
@@ -217,9 +218,13 @@ static int compileModule(char **argv, LLVMContext &Context) {
 
   // If user just wants to list available options, skip module loading
   if (!SkipModule) {
-    if (StringRef(InputFilename).endswith_lower(".mir"))
-      M = parseMIRFile(InputFilename, Err, Context);
-    else
+    if (StringRef(InputFilename).endswith_lower(".mir")) {
+      MIR = createMIRParserFromFile(InputFilename, Err, Context);
+      if (MIR) {
+        M = MIR->parseLLVMModule();
+        assert(M && "parseLLVMModule should exit on failure");
+      }
+    } else
       M = parseIRFile(InputFilename, Err, Context);
     if (!M) {
       Err.print(argv[0], errs());
@@ -350,7 +355,7 @@ static int compileModule(char **argv, LLVMContext &Context) {
 
     // Ask the target to add backend passes as necessary.
     if (Target->addPassesToEmitFile(PM, *OS, FileType, NoVerify, StartAfterID,
-                                    StopAfterID)) {
+                                    StopAfterID, MIR.get())) {
       errs() << argv[0] << ": target does not support generation of this"
              << " file type!\n";
       return 1;

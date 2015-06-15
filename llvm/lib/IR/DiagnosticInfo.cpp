@@ -170,6 +170,10 @@ bool DiagnosticInfoOptimizationRemarkAnalysis::isEnabled() const {
          PassRemarksAnalysisOptLoc.Pattern->match(getPassName());
 }
 
+void DiagnosticInfoMIRParser::print(DiagnosticPrinter &DP) const {
+  DP << Diagnostic;
+}
+
 void llvm::emitOptimizationRemark(LLVMContext &Ctx, const char *PassName,
                                   const Function &Fn, const DebugLoc &DLoc,
                                   const Twine &Msg) {

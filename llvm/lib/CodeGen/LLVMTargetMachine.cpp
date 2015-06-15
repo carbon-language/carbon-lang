@@ -87,11 +87,11 @@ TargetIRAnalysis LLVMTargetMachine::getTargetIRAnalysis() {
 }
 
 /// addPassesToX helper drives creation and initialization of TargetPassConfig.
-static MCContext *addPassesToGenerateCode(LLVMTargetMachine *TM,
-                                          PassManagerBase &PM,
-                                          bool DisableVerify,
-                                          AnalysisID StartAfter,
-                                          AnalysisID StopAfter) {
+static MCContext *
+addPassesToGenerateCode(LLVMTargetMachine *TM, PassManagerBase &PM,
+                        bool DisableVerify, AnalysisID StartAfter,
+                        AnalysisID StopAfter,
+                        MachineFunctionInitializer *MFInitializer = nullptr) {
 
   // Add internal analysis passes from the target machine.
   PM.add(createTargetTransformInfoWrapperPass(TM->getTargetIRAnalysis()));
@@ -121,7 +121,7 @@ static MCContext *addPassesToGenerateCode(LLVMTargetMachine *TM,
   PM.add(MMI);
 
   // Set up a MachineFunction for the rest of CodeGen to work on.
-  PM.add(new MachineFunctionAnalysis(*TM));
+  PM.add(new MachineFunctionAnalysis(*TM, MFInitializer));
 
   // Enable FastISel with -fast, but allow that to be overridden.
   if (EnableFastISelOption == cl::BOU_TRUE ||
@@ -142,10 +142,11 @@ static MCContext *addPassesToGenerateCode(LLVMTargetMachine *TM,
 
 bool LLVMTargetMachine::addPassesToEmitFile(
     PassManagerBase &PM, raw_pwrite_stream &Out, CodeGenFileType FileType,
-    bool DisableVerify, AnalysisID StartAfter, AnalysisID StopAfter) {
+    bool DisableVerify, AnalysisID StartAfter, AnalysisID StopAfter,
+    MachineFunctionInitializer *MFInitializer) {
   // Add common CodeGen passes.
-  MCContext *Context = addPassesToGenerateCode(this, PM, DisableVerify,
-                                               StartAfter, StopAfter);
+  MCContext *Context = addPassesToGenerateCode(
+      this, PM, DisableVerify, StartAfter, StopAfter, MFInitializer);
   if (!Context)
     return true;
 

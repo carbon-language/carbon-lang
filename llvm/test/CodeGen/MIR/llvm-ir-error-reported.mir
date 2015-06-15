@@ -4,7 +4,7 @@
 
 --- |
   
-  ; CHECK: [[@LINE+3]]:15: error: use of undefined value '%a'
+  ; CHECK: [[@LINE+3]]:15: use of undefined value '%a'
   define i32 @foo(i32 %x, i32 %y) {
     %z = alloca i32, align 4
     store i32 %a, i32* %z, align 4
