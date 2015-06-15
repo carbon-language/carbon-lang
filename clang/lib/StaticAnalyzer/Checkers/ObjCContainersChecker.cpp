@@ -29,7 +29,8 @@ using namespace ento;
 
 namespace {
 class ObjCContainersChecker : public Checker< check::PreStmt<CallExpr>,
-                                             check::PostStmt<CallExpr> > {
+                                             check::PostStmt<CallExpr>,
+                                             check::PointerEscape> {
   mutable std::unique_ptr<BugType> BT;
   inline void initBugType() const {
     if (!BT)
@@ -52,6 +53,10 @@ public:
 
   void checkPostStmt(const CallExpr *CE, CheckerContext &C) const;
   void checkPreStmt(const CallExpr *CE, CheckerContext &C) const;
+  ProgramStateRef checkPointerEscape(ProgramStateRef State,
+                                     const InvalidatedSymbols &Escaped,
+                                     const CallEvent *Call,
+                                     PointerEscapeKind Kind) const;
 };
 } // end anonymous namespace
 
@@ -146,6 +151,24 @@ void ObjCContainersChecker::checkPreStmt(const CallExpr *CE,
   }
 }
 
+ProgramStateRef
+ObjCContainersChecker::checkPointerEscape(ProgramStateRef State,
+                                          const InvalidatedSymbols &Escaped,
+                                          const CallEvent *Call,
+                                          PointerEscapeKind Kind) const {
+  for (InvalidatedSymbols::const_iterator I = Escaped.begin(),
+                                          E = Escaped.end();
+                                          I != E; ++I) {
+    SymbolRef Sym = *I;
+    // When a symbol for a mutable array escapes, we can't reason precisely
+    // about its size any more -- so remove it from the map.
+    // Note that we aren't notified here when a CFMutableArrayRef escapes as a
+    // CFArrayRef. This is because CFArrayRef is typedef'd as a pointer to a
+    // const-qualified type.
+    State = State->remove<ArraySizeMap>(Sym);
+  }
+  return State;
+}
 /// Register checker.
 void ento::registerObjCContainersChecker(CheckerManager &mgr) {
   mgr.registerChecker<ObjCContainersChecker>();
