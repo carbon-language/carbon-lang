@@ -25,30 +25,30 @@ class MCStreamer;
 
 class FaultMaps {
 public:
-  enum FaultType { FaultingLoad = 1, FaultTypeMax };
+  enum FaultKind { FaultingLoad = 1, FaultKindMax };
 
-  static const char *faultTypeToString(FaultType);
+  static const char *faultTypeToString(FaultKind);
 
   explicit FaultMaps(AsmPrinter &AP);
 
-  void recordFaultingOp(FaultType FaultTy, const MCSymbol *HandlerLabel);
+  void recordFaultingOp(FaultKind FaultTy, const MCSymbol *HandlerLabel);
   void serializeToFaultMapSection();
 
 private:
   static const char *WFMP;
 
   struct FaultInfo {
-    FaultType FaultType;
+    FaultKind Kind;
     const MCExpr *FaultingOffsetExpr;
     const MCExpr *HandlerOffsetExpr;
 
     FaultInfo()
-        : FaultType(FaultTypeMax), FaultingOffsetExpr(nullptr),
+        : Kind(FaultKindMax), FaultingOffsetExpr(nullptr),
           HandlerOffsetExpr(nullptr) {}
 
-    explicit FaultInfo(FaultMaps::FaultType FType, const MCExpr *FaultingOffset,
+    explicit FaultInfo(FaultMaps::FaultKind Kind, const MCExpr *FaultingOffset,
                        const MCExpr *HandlerOffset)
-        : FaultType(FType), FaultingOffsetExpr(FaultingOffset),
+        : Kind(Kind), FaultingOffsetExpr(FaultingOffset),
           HandlerOffsetExpr(HandlerOffset) {}
   };
 

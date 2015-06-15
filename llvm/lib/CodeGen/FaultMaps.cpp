@@ -25,7 +25,7 @@ const char *FaultMaps::WFMP = "Fault Maps: ";
 
 FaultMaps::FaultMaps(AsmPrinter &AP) : AP(AP) {}
 
-void FaultMaps::recordFaultingOp(FaultType FaultTy,
+void FaultMaps::recordFaultingOp(FaultKind FaultTy,
                                  const MCSymbol *HandlerLabel) {
   MCContext &OutContext = AP.OutStreamer->getContext();
   MCSymbol *FaultingLabel = OutContext.createTempSymbol();
@@ -89,8 +89,8 @@ void FaultMaps::emitFunctionInfo(const MCSymbol *FnLabel,
 
   for (auto &Fault : FFI) {
     DEBUG(dbgs() << WFMP << "    fault type: "
-          << faultTypeToString(Fault.FaultType) << "\n");
-    OS.EmitIntValue(Fault.FaultType, 4);
+          << faultTypeToString(Fault.Kind) << "\n");
+    OS.EmitIntValue(Fault.Kind, 4);
 
     DEBUG(dbgs() << WFMP << "    faulting PC offset: "
           << *Fault.FaultingOffsetExpr << "\n");
@@ -103,7 +103,7 @@ void FaultMaps::emitFunctionInfo(const MCSymbol *FnLabel,
 }
 
 
-const char *FaultMaps::faultTypeToString(FaultMaps::FaultType FT) {
+const char *FaultMaps::faultTypeToString(FaultMaps::FaultKind FT) {
   switch (FT) {
   default:
     llvm_unreachable("unhandled fault type!");

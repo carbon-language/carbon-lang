@@ -47,7 +47,7 @@ The format of this section is
     uint32 : NumFaultingPCs
     uint32 : Reserved (expected to be 0)
     FunctionFaultInfo[NumFaultingPCs] {
-      uint32  : FaultType = FaultMaps::FaultingLoad (only legal value currently)
+      uint32  : FaultKind = FaultMaps::FaultingLoad (only legal value currently)
       uint32  : FaultingPCOffset
       uint32  : handlerPCOffset
     }
