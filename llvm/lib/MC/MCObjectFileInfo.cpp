@@ -729,8 +729,7 @@ void MCObjectFileInfo::initCOFFMCObjectFileInfo(Triple T) {
       SectionKind::getDataRel());
 }
 
-void MCObjectFileInfo::InitMCObjectFileInfo(const Triple &TheTriple,
-                                            Reloc::Model relocm,
+void MCObjectFileInfo::InitMCObjectFileInfo(StringRef T, Reloc::Model relocm,
                                             CodeModel::Model cm,
                                             MCContext &ctx) {
   RelocM = relocm;
@@ -754,7 +753,7 @@ void MCObjectFileInfo::InitMCObjectFileInfo(const Triple &TheTriple,
   DwarfAccelNamespaceSection = nullptr; // Used only by selected targets.
   DwarfAccelTypesSection = nullptr;     // Used only by selected targets.
 
-  TT = TheTriple;
+  TT = Triple(T);
 
   Triple::ArchType Arch = TT.getArch();
   // FIXME: Checking for Arch here to filter out bogus triples such as
@@ -776,12 +775,6 @@ void MCObjectFileInfo::InitMCObjectFileInfo(const Triple &TheTriple,
     Env = IsELF;
     initELFMCObjectFileInfo(TT);
   }
-}
-
-void MCObjectFileInfo::InitMCObjectFileInfo(StringRef TT, Reloc::Model RM,
-                                            CodeModel::Model CM,
-                                            MCContext &ctx) {
-  InitMCObjectFileInfo(Triple(TT), RM, CM, ctx);
 }
 
 MCSection *MCObjectFileInfo::getDwarfTypesSection(uint64_t Hash) const {

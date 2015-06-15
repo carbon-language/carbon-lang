@@ -44,8 +44,8 @@ void TargetLoweringObjectFile::Initialize(MCContext &ctx,
                                           const TargetMachine &TM) {
   Ctx = &ctx;
   DL = TM.getDataLayout();
-  InitMCObjectFileInfo(Triple(TM.getTargetTriple()), TM.getRelocationModel(),
-                       TM.getCodeModel(), *Ctx);
+  InitMCObjectFileInfo(TM.getTargetTriple(),
+                       TM.getRelocationModel(), TM.getCodeModel(), *Ctx);
 }
 
 TargetLoweringObjectFile::~TargetLoweringObjectFile() {

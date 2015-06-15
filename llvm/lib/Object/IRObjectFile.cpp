@@ -45,22 +45,22 @@ IRObjectFile::IRObjectFile(MemoryBufferRef Object, std::unique_ptr<Module> Mod)
   if (InlineAsm.empty())
     return;
 
-  Triple TT(M->getTargetTriple());
+  StringRef Triple = M->getTargetTriple();
   std::string Err;
-  const Target *T = TargetRegistry::lookupTarget(TT.str(), Err);
+  const Target *T = TargetRegistry::lookupTarget(Triple, Err);
   if (!T)
     return;
 
-  std::unique_ptr<MCRegisterInfo> MRI(T->createMCRegInfo(TT.str()));
+  std::unique_ptr<MCRegisterInfo> MRI(T->createMCRegInfo(Triple));
   if (!MRI)
     return;
 
-  std::unique_ptr<MCAsmInfo> MAI(T->createMCAsmInfo(*MRI, TT.str()));
+  std::unique_ptr<MCAsmInfo> MAI(T->createMCAsmInfo(*MRI, Triple));
   if (!MAI)
     return;
 
   std::unique_ptr<MCSubtargetInfo> STI(
-      T->createMCSubtargetInfo(TT.str(), "", ""));
+      T->createMCSubtargetInfo(Triple, "", ""));
   if (!STI)
     return;
 
@@ -70,7 +70,7 @@ IRObjectFile::IRObjectFile(MemoryBufferRef Object, std::unique_ptr<Module> Mod)
 
   MCObjectFileInfo MOFI;
   MCContext MCCtx(MAI.get(), MRI.get(), &MOFI);
-  MOFI.InitMCObjectFileInfo(TT, Reloc::Default, CodeModel::Default, MCCtx);
+  MOFI.InitMCObjectFileInfo(Triple, Reloc::Default, CodeModel::Default, MCCtx);
   std::unique_ptr<RecordStreamer> Streamer(new RecordStreamer(MCCtx));
   T->createNullTargetStreamer(*Streamer);
 
