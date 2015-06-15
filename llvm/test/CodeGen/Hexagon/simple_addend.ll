@@ -1,4 +1,4 @@
-; RUN: llc -march=hexagon -filetype=obj -o - < %s | llvm-objdump -d -r - | FileCheck %s
+; RUN: llc -march=hexagon -filetype=obj -o - < %s | llvm-readobj -relocations | FileCheck %s
 
 declare void @bar(i32);
 
