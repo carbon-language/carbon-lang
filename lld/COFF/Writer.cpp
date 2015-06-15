@@ -290,7 +290,7 @@ void Writer::writeHeader() {
   }
   if (OutputSection *Sec = findSection(".rsrc")) {
     DataDirectory[RESOURCE_TABLE].RelativeVirtualAddress = Sec->getRVA();
-    DataDirectory[RESOURCE_TABLE].Size = Sec->getRawSize();
+    DataDirectory[RESOURCE_TABLE].Size = Sec->getVirtualSize();
   }
   if (OutputSection *Sec = findSection(".reloc")) {
     DataDirectory[BASE_RELOCATION_TABLE].RelativeVirtualAddress = Sec->getRVA();

@@ -11,4 +11,4 @@ EXE: {{H.e.l.l.o}}
 # RUN: llvm-readobj -file-headers %t.exe | FileCheck  --check-prefix=HEADER %s
 
 HEADER: ResourceTableRVA: 0x1000
-HEADER: ResourceTableSize: 0x200
+HEADER: ResourceTableSize: 0x88
