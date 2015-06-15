@@ -1334,47 +1334,26 @@ static std::string getR600TargetGPU(const ArgList &Args) {
   return "";
 }
 
-static void getSparcTargetFeatures(const ArgList &Args,
-                                   std::vector<const char *> &Features) {
-  bool SoftFloatABI = true;
-  if (Arg *A =
-          Args.getLastArg(options::OPT_msoft_float, options::OPT_mhard_float)) {
-    if (A->getOption().matches(options::OPT_mhard_float))
-      SoftFloatABI = false;
-  }
-  if (SoftFloatABI)
-    Features.push_back("+soft-float");
-}
-
 void Clang::AddSparcTargetArgs(const ArgList &Args,
                              ArgStringList &CmdArgs) const {
   const Driver &D = getToolChain().getDriver();
+  std::string Triple = getToolChain().ComputeEffectiveClangTriple(Args);
 
-  // Select the float ABI as determined by -msoft-float and -mhard-float.
-  StringRef FloatABI;
-  if (Arg *A = Args.getLastArg(options::OPT_msoft_float,
-                               options::OPT_mhard_float)) {
+  bool SoftFloatABI = false;
+  if (Arg *A =
+          Args.getLastArg(options::OPT_msoft_float, options::OPT_mhard_float)) {
     if (A->getOption().matches(options::OPT_msoft_float))
-      FloatABI = "soft";
-    else if (A->getOption().matches(options::OPT_mhard_float))
-      FloatABI = "hard";
+      SoftFloatABI = true;
   }
 
-  // If unspecified, choose the default based on the platform.
-  if (FloatABI.empty()) {
-    // Assume "soft", but warn the user we are guessing.
-    FloatABI = "soft";
-    D.Diag(diag::warn_drv_assuming_mfloat_abi_is) << "soft";
-  }
-
-  if (FloatABI == "soft") {
-    // Floating point operations and argument passing are soft.
-    //
-    // FIXME: This changes CPP defines, we need -target-soft-float.
-    CmdArgs.push_back("-msoft-float");
-  } else {
-    assert(FloatABI == "hard" && "Invalid float abi!");
-    CmdArgs.push_back("-mhard-float");
+  // Only the hard-float ABI on Sparc is standardized, and it is the
+  // default. GCC also supports a nonstandard soft-float ABI mode, and
+  // perhaps LLVM should implement that, too. However, since llvm
+  // currently does not support Sparc soft-float, at all, display an
+  // error if it's requested.
+  if (SoftFloatABI) {
+    D.Diag(diag::err_drv_unsupported_opt_for_target)
+        << "-msoft-float" << Triple;
   }
 }
 
@@ -1995,11 +1974,6 @@ static void getTargetFeatures(const Driver &D, const llvm::Triple &Triple,
   case llvm::Triple::ppc64:
   case llvm::Triple::ppc64le:
     getPPCTargetFeatures(Args, Features);
-    break;
-  case llvm::Triple::sparc:
-  case llvm::Triple::sparcel:
-  case llvm::Triple::sparcv9:
-    getSparcTargetFeatures(Args, Features);
     break;
   case llvm::Triple::systemz:
     getSystemZTargetFeatures(Args, Features);
