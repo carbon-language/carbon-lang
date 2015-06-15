@@ -104,6 +104,16 @@ struct packed_endian_specific_integral {
     return *this;
   }
 
+  packed_endian_specific_integral &operator|=(value_type newValue) {
+    *this = *this | newValue;
+    return *this;
+  }
+
+  packed_endian_specific_integral &operator&=(value_type newValue) {
+    *this = *this & newValue;
+    return *this;
+  }
+
 private:
   AlignedCharArray<PickAlignment<value_type, alignment>::value,
                    sizeof(value_type)> Value;
