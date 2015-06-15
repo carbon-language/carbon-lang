@@ -688,7 +688,8 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
   //     foo();
   //     bar();
   //   }, a, b, c);
-  if (Current.isNot(tok::comment) && Previous && Previous->is(tok::l_brace) &&
+  if (Current.isNot(tok::comment) && Previous &&
+      Previous->isOneOf(tok::l_brace, TT_ArrayInitializerLSquare) &&
       State.Stack.size() > 1) {
     if (State.Stack[State.Stack.size() - 2].NestedBlockInlined && Newline)
       for (unsigned i = 0, e = State.Stack.size() - 1; i != e; ++i)
