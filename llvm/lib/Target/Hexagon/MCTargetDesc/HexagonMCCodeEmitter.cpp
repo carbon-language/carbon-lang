@@ -342,6 +342,36 @@ static Hexagon::Fixups getFixupNoBits(MCInstrInfo const &MCII, const MCInst &MI,
   return LastTargetFixupKind;
 }
 
+namespace llvm {
+extern const MCInstrDesc HexagonInsts[];
+}
+
+namespace {
+  bool isPCRel (unsigned Kind) {
+    switch(Kind){
+    case fixup_Hexagon_B22_PCREL:
+    case fixup_Hexagon_B15_PCREL:
+    case fixup_Hexagon_B7_PCREL:
+    case fixup_Hexagon_B13_PCREL:
+    case fixup_Hexagon_B9_PCREL:
+    case fixup_Hexagon_B32_PCREL_X:
+    case fixup_Hexagon_B22_PCREL_X:
+    case fixup_Hexagon_B15_PCREL_X:
+    case fixup_Hexagon_B13_PCREL_X:
+    case fixup_Hexagon_B9_PCREL_X:
+    case fixup_Hexagon_B7_PCREL_X:
+    case fixup_Hexagon_32_PCREL:
+    case fixup_Hexagon_PLT_B22_PCREL:
+    case fixup_Hexagon_GD_PLT_B22_PCREL:
+    case fixup_Hexagon_LD_PLT_B22_PCREL:
+    case fixup_Hexagon_6_PCREL_X:
+      return true;
+    default:
+      return false;
+    }
+  }
+}
+
 unsigned HexagonMCCodeEmitter::getExprOpValue(const MCInst &MI,
                                               const MCOperand &MO,
                                               const MCExpr *ME,
@@ -363,7 +393,7 @@ unsigned HexagonMCCodeEmitter::getExprOpValue(const MCInst &MI,
     Res = getExprOpValue(MI, MO, cast<MCBinaryExpr>(ME)->getLHS(), Fixups, STI);
     Res +=
         getExprOpValue(MI, MO, cast<MCBinaryExpr>(ME)->getRHS(), Fixups, STI);
-    return Res;
+    return 0;
   }
 
   assert(MK == MCExpr::SymbolRef);
@@ -662,8 +692,13 @@ unsigned HexagonMCCodeEmitter::getExprOpValue(const MCInst &MI,
     break;
   }
 
-  MCFixup fixup =
-      MCFixup::create(*Addend, MO.getExpr(), MCFixupKind(FixupKind));
+  MCExpr const *FixupExpression = (*Addend > 0 && isPCRel(FixupKind)) ?
+    MCBinaryExpr::createAdd(MO.getExpr(),
+                            MCConstantExpr::create(*Addend, MCT), MCT) :
+    MO.getExpr();
+
+  MCFixup fixup = MCFixup::create(*Addend, FixupExpression, 
+                                  MCFixupKind(FixupKind), MI.getLoc());
   Fixups.push_back(fixup);
   // All of the information is in the fixup.
   return (0);
