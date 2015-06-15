@@ -132,13 +132,13 @@ public:
 class BitcodeReader : public GVMaterializer {
   LLVMContext &Context;
   DiagnosticHandlerFunction DiagnosticHandler;
-  Module *TheModule;
+  Module *TheModule = nullptr;
   std::unique_ptr<MemoryBuffer> Buffer;
   std::unique_ptr<BitstreamReader> StreamFile;
   BitstreamCursor Stream;
-  DataStreamer *LazyStreamer;
-  uint64_t NextUnreadBit;
-  bool SeenValueSymbolTable;
+  DataStreamer *Streamer;
+  uint64_t NextUnreadBit = 0;
+  bool SeenValueSymbolTable = false;
 
   std::vector<Type*> TypeList;
   BitcodeReaderValueList ValueList;
@@ -180,7 +180,7 @@ class BitcodeReader : public GVMaterializer {
   // Several operations happen after the module header has been read, but
   // before function bodies are processed. This keeps track of whether
   // we've done this yet.
-  bool SeenFirstFunctionBody;
+  bool SeenFirstFunctionBody = false;
 
   /// DeferredFunctionInfo - When function bodies are initially scanned, this
   /// map contains info about where to find deferred function body in the
@@ -205,17 +205,17 @@ class BitcodeReader : public GVMaterializer {
   /// relative to the instruction ID: basic block numbers, and types.
   /// Once the old style function blocks have been phased out, we would
   /// not need this flag.
-  bool UseRelativeIDs;
+  bool UseRelativeIDs = false;
 
   /// True if all functions will be materialized, negating the need to process
   /// (e.g.) blockaddress forward references.
-  bool WillMaterializeAllForwardRefs;
+  bool WillMaterializeAllForwardRefs = false;
 
   /// Functions that have block addresses taken.  This is usually empty.
   SmallPtrSet<const Function *, 4> BlockAddressesTaken;
 
   /// True if any Metadata block has been materialized.
-  bool IsMetadataMaterialized;
+  bool IsMetadataMaterialized = false;
 
   bool StripDebugInfo = false;
 
@@ -224,10 +224,10 @@ public:
   std::error_code Error(BitcodeError E);
   std::error_code Error(const Twine &Message);
 
-  explicit BitcodeReader(MemoryBuffer *buffer, LLVMContext &C,
-                         DiagnosticHandlerFunction DiagnosticHandler);
-  explicit BitcodeReader(DataStreamer *streamer, LLVMContext &C,
-                         DiagnosticHandlerFunction DiagnosticHandler);
+  BitcodeReader(MemoryBuffer *Buffer, LLVMContext &Context,
+                DiagnosticHandlerFunction DiagnosticHandler);
+  BitcodeReader(DataStreamer *Streamer, LLVMContext &Context,
+                DiagnosticHandlerFunction DiagnosticHandler);
   ~BitcodeReader() override { FreeState(); }
 
   std::error_code materializeForwardReferencedFunctions();
@@ -425,21 +425,19 @@ static DiagnosticHandlerFunction getDiagHandler(DiagnosticHandlerFunction F,
   return [&C](const DiagnosticInfo &DI) { C.diagnose(DI); };
 }
 
-BitcodeReader::BitcodeReader(MemoryBuffer *buffer, LLVMContext &C,
+BitcodeReader::BitcodeReader(MemoryBuffer *Buffer, LLVMContext &Context,
                              DiagnosticHandlerFunction DiagnosticHandler)
-    : Context(C), DiagnosticHandler(getDiagHandler(DiagnosticHandler, C)),
-      TheModule(nullptr), Buffer(buffer), LazyStreamer(nullptr),
-      NextUnreadBit(0), SeenValueSymbolTable(false), ValueList(C),
-      MDValueList(C), SeenFirstFunctionBody(false), UseRelativeIDs(false),
-      WillMaterializeAllForwardRefs(false), IsMetadataMaterialized(false) {}
+    : Context(Context),
+      DiagnosticHandler(getDiagHandler(DiagnosticHandler, Context)),
+      Buffer(Buffer), Streamer(nullptr), ValueList(Context),
+      MDValueList(Context) {}
 
-BitcodeReader::BitcodeReader(DataStreamer *streamer, LLVMContext &C,
+BitcodeReader::BitcodeReader(DataStreamer *Streamer, LLVMContext &Context,
                              DiagnosticHandlerFunction DiagnosticHandler)
-    : Context(C), DiagnosticHandler(getDiagHandler(DiagnosticHandler, C)),
-      TheModule(nullptr), Buffer(nullptr), LazyStreamer(streamer),
-      NextUnreadBit(0), SeenValueSymbolTable(false), ValueList(C),
-      MDValueList(C), SeenFirstFunctionBody(false), UseRelativeIDs(false),
-      WillMaterializeAllForwardRefs(false), IsMetadataMaterialized(false) {}
+    : Context(Context),
+      DiagnosticHandler(getDiagHandler(DiagnosticHandler, Context)),
+      Buffer(nullptr), Streamer(Streamer), ValueList(Context),
+      MDValueList(Context) {}
 
 std::error_code BitcodeReader::materializeForwardReferencedFunctions() {
   if (WillMaterializeAllForwardRefs)
@@ -2789,7 +2787,7 @@ std::error_code BitcodeReader::ParseModule(bool Resume,
         // the bitcode. If the bitcode file is old, the symbol table will be
         // at the end instead and will not have been seen yet. In this case,
         // just finish the parse now.
-        if (LazyStreamer && SeenValueSymbolTable) {
+        if (Streamer && SeenValueSymbolTable) {
           NextUnreadBit = Stream.GetCurrentBitNo();
           return std::error_code();
         }
@@ -3040,7 +3038,7 @@ std::error_code BitcodeReader::ParseModule(bool Resume,
       if (!isProto) {
         Func->setIsMaterializable(true);
         FunctionsWithBodies.push_back(Func);
-        if (LazyStreamer)
+        if (Streamer)
           DeferredFunctionInfo[Func] = 0;
       }
       break;
@@ -3136,7 +3134,7 @@ std::error_code BitcodeReader::ParseBitcodeInto(Module *M,
         TheModule = M;
         if (std::error_code EC = ParseModule(false, ShouldLazyLoadMetadata))
           return EC;
-        if (LazyStreamer)
+        if (Streamer)
           return std::error_code();
         break;
       default:
@@ -4446,7 +4444,7 @@ std::error_code BitcodeReader::materialize(GlobalValue *GV) {
   assert(DFII != DeferredFunctionInfo.end() && "Deferred function not found!");
   // If its position is recorded as 0, its body is somewhere in the stream
   // but we haven't seen it yet.
-  if (DFII->second == 0 && LazyStreamer)
+  if (DFII->second == 0 && Streamer)
     if (std::error_code EC = FindFunctionInStream(F, DFII))
       return EC;
 
@@ -4562,7 +4560,7 @@ std::vector<StructType *> BitcodeReader::getIdentifiedStructTypes() const {
 }
 
 std::error_code BitcodeReader::InitStream() {
-  if (LazyStreamer)
+  if (Streamer)
     return InitLazyStream();
   return InitStreamFromBuffer();
 }
@@ -4589,7 +4587,7 @@ std::error_code BitcodeReader::InitStreamFromBuffer() {
 std::error_code BitcodeReader::InitLazyStream() {
   // Check and strip off the bitcode wrapper; BitstreamReader expects never to
   // see it.
-  auto OwnedBytes = llvm::make_unique<StreamingMemoryObject>(LazyStreamer);
+  auto OwnedBytes = llvm::make_unique<StreamingMemoryObject>(Streamer);
   StreamingMemoryObject &Bytes = *OwnedBytes;
   StreamFile = llvm::make_unique<BitstreamReader>(std::move(OwnedBytes));
   Stream.init(&*StreamFile);
