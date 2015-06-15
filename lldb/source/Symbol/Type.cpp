@@ -589,16 +589,27 @@ Type::ResolveClangType (ResolveState clang_type_resolve_state)
                 break;
             }
         }
+
+        // When we have a EncodingUID, our "m_flags.clang_type_resolve_state" is set to eResolveStateUnresolved
+        // so we need to update it to say that we now have a forward declaration since that is what we created
+        // above.
+        if (m_clang_type.IsValid())
+            m_flags.clang_type_resolve_state = eResolveStateForward;
+
     }
-    
+
     // Check if we have a forward reference to a class/struct/union/enum?
-    if (m_clang_type.IsValid() && m_flags.clang_type_resolve_state < clang_type_resolve_state)
+    if (clang_type_resolve_state == eResolveStateLayout || clang_type_resolve_state == eResolveStateFull)
     {
-        m_flags.clang_type_resolve_state = eResolveStateFull;
-        if (!m_clang_type.IsDefined ())
+        // Check if we have a forward reference to a class/struct/union/enum?
+        if (m_clang_type.IsValid() && m_flags.clang_type_resolve_state < clang_type_resolve_state)
         {
-            // We have a forward declaration, we need to resolve it to a complete definition.
-            m_symbol_file->ResolveClangOpaqueTypeDefinition (m_clang_type);
+            m_flags.clang_type_resolve_state = eResolveStateFull;
+            if (!m_clang_type.IsDefined ())
+            {
+                // We have a forward declaration, we need to resolve it to a complete definition.
+                m_symbol_file->ResolveClangOpaqueTypeDefinition (m_clang_type);
+            }
         }
     }
     
