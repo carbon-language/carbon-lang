@@ -73,6 +73,7 @@ add_llvm_library(LLVMCodeGen
   MachineSink.cpp
   MachineTraceMetrics.cpp
   MachineVerifier.cpp
+  MIRPrinter.cpp
   MIRPrintingPass.cpp
   OcamlGC.cpp
   OptimizePHIs.cpp
