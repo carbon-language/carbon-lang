@@ -56,6 +56,8 @@ public:
     case LinkerScriptReaderError::unrecognized_function_in_expr:
       return "Unrecognized function call when evaluating linker script "
              "expression";
+    case LinkerScriptReaderError::unknown_phdr_ids:
+      return "Unknown header identifiers (missing in PHDRS command) are used";
     }
     llvm_unreachable("An enumerator of LinkerScriptReaderError does not have a "
                      "message defined.");

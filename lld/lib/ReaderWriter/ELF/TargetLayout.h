@@ -209,6 +209,9 @@ public:
   // Output sections with the same name into a OutputSection
   void createOutputSections();
 
+  // Check that output section has proper segment set
+  void checkOutputSectionSegment(const OutputSection<ELFT> *sec);
+
   /// \brief Sort the sections by their order as defined by the layout,
   /// preparing all sections to be assigned to a segment.
   virtual void sortInputSections();

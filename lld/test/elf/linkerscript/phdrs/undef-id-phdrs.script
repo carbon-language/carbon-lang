@@ -1,0 +1,12 @@
+ENTRY(_start)
+
+PHDRS
+{
+  phdr PT_LOAD;
+}
+
+SECTIONS
+{
+  .text : { *(.text) } :phdr_wrong
+  .data : { *(.data) }
+}

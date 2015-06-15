@@ -320,10 +320,22 @@ template <class ELFT> void TargetLayout<ELFT>::createOutputSections() {
     } else {
       outputSection = new (_allocator.Allocate<OutputSection<ELFT>>())
           OutputSection<ELFT>(section->outputSectionName());
+      checkOutputSectionSegment(outputSection);
       _outputSections.push_back(outputSection);
       outputSectionInsert.first->second = outputSection;
     }
     outputSection->appendSection(section);
+  }
+}
+
+// Check that output section has proper segment set
+template <class ELFT>
+void TargetLayout<ELFT>::checkOutputSectionSegment(
+    const OutputSection<ELFT> *sec) {
+  std::vector<const script::PHDR *> phdrs;
+  if (_linkerScriptSema.getPHDRsForOutputSection(sec->name(), phdrs)) {
+    llvm::report_fatal_error(
+        "Linker script has wrong segments set for output sections");
   }
 }
 

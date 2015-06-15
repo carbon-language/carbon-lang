@@ -20,6 +20,7 @@
 #include "lld/Core/range.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringSet.h"
 #include "llvm/ADT/StringSwitch.h"
@@ -777,6 +778,8 @@ public:
   const_iterator begin() const { return _outputSectionCommands.begin(); }
   const_iterator end() const { return _outputSectionCommands.end(); }
   StringRef name() const { return _sectionName; }
+  bool isDiscarded() const { return _discard; }
+  ArrayRef<StringRef> PHDRs() const { return _phdrs; }
 
 private:
   StringRef _sectionName;
@@ -814,8 +817,12 @@ public:
         _includePHDRs(includePHDRs), _at(at), _flags(flags) {}
 
   ~PHDR() = delete;
+  StringRef name() const { return _name; }
 
   void dump(raw_ostream &os) const;
+
+  /// Special header that discards output sections assigned to it.
+  static const PHDR *NONE;
 
 private:
   StringRef _name;
@@ -1320,6 +1327,13 @@ public:
   /// has been performed (by calling evalExpr() for all expressions).
   uint64_t getLinkerScriptExprValue(StringRef name) const;
 
+  /// Retrieve all the headers the given output section is assigned to.
+  /// Error is returned if the output section is assigned to headers with
+  /// missing declarations.
+  std::error_code
+  getPHDRsForOutputSection(StringRef name,
+                           std::vector<const PHDR *> &phdrs) const;
+
   void dump() const;
 
 private:
@@ -1361,6 +1375,9 @@ private:
   bool localCompare(int order, const SectionKey &lhs,
                     const SectionKey &rhs) const;
 
+  /// Build map that matches output section names to segments they should be
+  /// put into.
+  std::error_code buildSectionToPHDR();
 
   /// Our goal with all linearizeAST overloaded functions is to
   /// traverse the linker script AST while putting nodes in a vector and
@@ -1427,6 +1444,9 @@ private:
       _cacheSectionOrder, _cacheExpressionOrder;
   llvm::DenseSet<int> _deliveredExprs;
   mutable llvm::StringSet<> _definedSymbols;
+
+  bool _parsedPHDRS;
+  llvm::StringMap<llvm::SmallVector<const PHDR *, 2>> _sectionToPHDR;
 
   Expression::SymbolTableTy _symbolTable;
 };

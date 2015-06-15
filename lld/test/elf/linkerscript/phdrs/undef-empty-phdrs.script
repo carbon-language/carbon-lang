@@ -1,0 +1,11 @@
+ENTRY(_start)
+
+PHDRS
+{
+}
+
+SECTIONS
+{
+  .text : { *(.text) }
+  .data : { *(.data) } :phdr
+}
