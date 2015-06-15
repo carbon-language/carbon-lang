@@ -707,30 +707,28 @@ static void upgradeDLLImportExportLinkage(llvm::GlobalValue *GV, unsigned Val) {
 
 namespace llvm {
 namespace {
-  /// \brief A class for maintaining the slot number definition
-  /// as a placeholder for the actual definition for forward constants defs.
-  class ConstantPlaceHolder : public ConstantExpr {
-    void operator=(const ConstantPlaceHolder &) = delete;
-  public:
-    // allocate space for exactly one operand
-    void *operator new(size_t s) {
-      return User::operator new(s, 1);
-    }
-    explicit ConstantPlaceHolder(Type *Ty, LLVMContext& Context)
+/// \brief A class for maintaining the slot number definition
+/// as a placeholder for the actual definition for forward constants defs.
+class ConstantPlaceHolder : public ConstantExpr {
+  void operator=(const ConstantPlaceHolder &) = delete;
+
+public:
+  // allocate space for exactly one operand
+  void *operator new(size_t s) { return User::operator new(s, 1); }
+  explicit ConstantPlaceHolder(Type *Ty, LLVMContext &Context)
       : ConstantExpr(Ty, Instruction::UserOp1, &Op<0>(), 1) {
-      Op<0>() = UndefValue::get(Type::getInt32Ty(Context));
-    }
+    Op<0>() = UndefValue::get(Type::getInt32Ty(Context));
+  }
 
-    /// \brief Methods to support type inquiry through isa, cast, and dyn_cast.
-    static bool classof(const Value *V) {
-      return isa<ConstantExpr>(V) &&
-             cast<ConstantExpr>(V)->getOpcode() == Instruction::UserOp1;
-    }
+  /// \brief Methods to support type inquiry through isa, cast, and dyn_cast.
+  static bool classof(const Value *V) {
+    return isa<ConstantExpr>(V) &&
+           cast<ConstantExpr>(V)->getOpcode() == Instruction::UserOp1;
+  }
 
-
-    /// Provide fast operand accessors
-    DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
-  };
+  /// Provide fast operand accessors
+  DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
+};
 }
 
 // FIXME: can we inherit this from ConstantExpr?
