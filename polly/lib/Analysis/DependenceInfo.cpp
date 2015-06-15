@@ -351,7 +351,7 @@ void Dependences::calculateDependences(Scop &S) {
   // 2) Intersect them with the actual RAW & WAW dependences to the get the
   //    actual reduction dependences. This will ensure the load/store memory
   //    addresses were __identical__ in the two iterations of the statement.
-  // 3) Relax the original RAW and WAW dependences by substracting the actual
+  // 3) Relax the original RAW and WAW dependences by subtracting the actual
   //    reduction dependences. Binary reductions (sum += A[i]) cause both, and
   //    the same, RAW and WAW dependences.
   // 4) Add the privatization dependences which are widened versions of
