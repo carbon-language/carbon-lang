@@ -38,7 +38,6 @@ add_llvm_target(AArch64CodeGen
   AArch64PBQPRegAlloc.cpp
   AArch64RegisterInfo.cpp
   AArch64SelectionDAGInfo.cpp
-  AArch64InterleavedAccess.cpp
   AArch64StorePairSuppress.cpp
   AArch64Subtarget.cpp
   AArch64TargetMachine.cpp

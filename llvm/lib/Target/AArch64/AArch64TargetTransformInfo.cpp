@@ -407,18 +407,6 @@ unsigned AArch64TTIImpl::getMemoryOpCost(unsigned Opcode, Type *Src,
   return LT.first;
 }
 
-unsigned AArch64TTIImpl::getInterleavedMemoryOpCost(
-    unsigned Opcode, Type *VecTy, unsigned Factor, ArrayRef<unsigned> Indices,
-    unsigned Alignment, unsigned AddressSpace) {
-  assert(isa<VectorType>(VecTy) && "Expect vector types");
-
-  if (Factor > 1 && Factor < 5 && isTypeLegal(VecTy))
-    return Factor;
-
-  return BaseT::getInterleavedMemoryOpCost(Opcode, VecTy, Factor, Indices,
-                                           Alignment, AddressSpace);
-}
-
 unsigned AArch64TTIImpl::getCostOfKeepingLiveOverCall(ArrayRef<Type *> Tys) {
   unsigned Cost = 0;
   for (auto *I : Tys) {
