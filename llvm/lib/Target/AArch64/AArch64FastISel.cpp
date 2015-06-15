@@ -1678,6 +1678,9 @@ unsigned AArch64FastISel::emitAnd_ri(MVT RetVT, unsigned LHSReg, bool LHSIsKill,
 
 unsigned AArch64FastISel::emitLoad(MVT VT, MVT RetVT, Address Addr,
                                    bool WantZExt, MachineMemOperand *MMO) {
+  if(!TLI.allowsMisalignedMemoryAccesses(VT))
+    return 0;
+
   // Simplify this down to something we can handle.
   if (!simplifyAddress(Addr, VT))
     return 0;
@@ -1962,6 +1965,9 @@ bool AArch64FastISel::selectLoad(const Instruction *I) {
 
 bool AArch64FastISel::emitStore(MVT VT, unsigned SrcReg, Address Addr,
                                 MachineMemOperand *MMO) {
+  if(!TLI.allowsMisalignedMemoryAccesses(VT))
+    return false;
+
   // Simplify this down to something we can handle.
   if (!simplifyAddress(Addr, VT))
     return false;
