@@ -2092,7 +2092,7 @@ class DIObjCProperty : public DINode {
   static DIObjCProperty *
   getImpl(LLVMContext &Context, StringRef Name, DIFile *File, unsigned Line,
           StringRef GetterName, StringRef SetterName, unsigned Attributes,
-          DIType *Type, StorageType Storage, bool ShouldCreate = true) {
+          DITypeRef Type, StorageType Storage, bool ShouldCreate = true) {
     return getImpl(Context, getCanonicalMDString(Context, Name), File, Line,
                    getCanonicalMDString(Context, GetterName),
                    getCanonicalMDString(Context, SetterName), Attributes, Type,
@@ -2114,7 +2114,7 @@ public:
   DEFINE_MDNODE_GET(DIObjCProperty,
                     (StringRef Name, DIFile *File, unsigned Line,
                      StringRef GetterName, StringRef SetterName,
-                     unsigned Attributes, DIType *Type),
+                     unsigned Attributes, DITypeRef Type),
                     (Name, File, Line, GetterName, SetterName, Attributes,
                      Type))
   DEFINE_MDNODE_GET(DIObjCProperty,
@@ -2132,12 +2132,7 @@ public:
   DIFile *getFile() const { return cast_or_null<DIFile>(getRawFile()); }
   StringRef getGetterName() const { return getStringOperand(2); }
   StringRef getSetterName() const { return getStringOperand(3); }
-
-  /// \brief Get the type.
-  ///
-  /// \note Objective-C doesn't have an ODR, so there is no benefit in storing
-  /// a type ref here.
-  DIType *getType() const { return cast_or_null<DIType>(getRawType()); }
+  DITypeRef getType() const { return DITypeRef(getRawType()); }
 
   StringRef getFilename() const {
     if (auto *F = getFile())

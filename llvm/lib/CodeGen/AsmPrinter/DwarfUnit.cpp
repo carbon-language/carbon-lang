@@ -931,7 +931,7 @@ void DwarfUnit::constructTypeDIE(DIE &Buffer, const DICompositeType *CTy) {
         StringRef PropertyName = Property->getName();
         addString(ElemDie, dwarf::DW_AT_APPLE_property_name, PropertyName);
         if (Property->getType())
-          addType(ElemDie, Property->getType());
+          addType(ElemDie, resolve(Property->getType()));
         addSourceLine(ElemDie, Property);
         StringRef GetterName = Property->getGetterName();
         if (!GetterName.empty())

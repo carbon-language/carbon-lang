@@ -1945,7 +1945,7 @@ TEST_F(DIObjCPropertyTest, get) {
   StringRef GetterName = "getter";
   StringRef SetterName = "setter";
   unsigned Attributes = 7;
-  DIType *Type = cast<DIBasicType>(getBasicType("basic"));
+  DITypeRef Type = getBasicType("basic");
 
   auto *N = DIObjCProperty::get(Context, Name, File, Line, GetterName,
                                 SetterName, Attributes, Type);
@@ -1975,7 +1975,7 @@ TEST_F(DIObjCPropertyTest, get) {
                                    SetterName, Attributes + 1, Type));
   EXPECT_NE(N, DIObjCProperty::get(Context, Name, File, Line, GetterName,
                                    SetterName, Attributes,
-                                   cast<DIBasicType>(getBasicType("other"))));
+                                   getBasicType("other")));
 
   TempDIObjCProperty Temp = N->clone();
   EXPECT_EQ(N, MDNode::replaceWithUniqued(std::move(Temp)));
