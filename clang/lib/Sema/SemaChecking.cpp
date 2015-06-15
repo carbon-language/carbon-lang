@@ -836,6 +836,16 @@ bool Sema::CheckARMBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
       SemaBuiltinConstantArgRange(TheCall, 2, 0, 1);
   }
 
+  if (BuiltinID == ARM::BI__builtin_arm_rsr64 ||
+      BuiltinID == ARM::BI__builtin_arm_wsr64)
+    return SemaBuiltinARMSpecialReg(BuiltinID, TheCall, 0, 3, false);
+
+  if (BuiltinID == ARM::BI__builtin_arm_rsr ||
+      BuiltinID == ARM::BI__builtin_arm_rsrp ||
+      BuiltinID == ARM::BI__builtin_arm_wsr ||
+      BuiltinID == ARM::BI__builtin_arm_wsrp)
+    return SemaBuiltinARMSpecialReg(BuiltinID, TheCall, 0, 5, true);
+
   if (CheckNeonBuiltinFunctionCall(BuiltinID, TheCall))
     return true;
 
@@ -875,6 +885,16 @@ bool Sema::CheckAArch64BuiltinFunctionCall(unsigned BuiltinID,
       SemaBuiltinConstantArgRange(TheCall, 3, 0, 1) ||
       SemaBuiltinConstantArgRange(TheCall, 4, 0, 1);
   }
+
+  if (BuiltinID == AArch64::BI__builtin_arm_rsr64 ||
+      BuiltinID == AArch64::BI__builtin_arm_wsr64)
+    return SemaBuiltinARMSpecialReg(BuiltinID, TheCall, 0, 5, false);
+
+  if (BuiltinID == AArch64::BI__builtin_arm_rsr ||
+      BuiltinID == AArch64::BI__builtin_arm_rsrp ||
+      BuiltinID == AArch64::BI__builtin_arm_wsr ||
+      BuiltinID == AArch64::BI__builtin_arm_wsrp)
+    return SemaBuiltinARMSpecialReg(BuiltinID, TheCall, 0, 5, true);
 
   if (CheckNeonBuiltinFunctionCall(BuiltinID, TheCall))
     return true;
@@ -2589,6 +2609,107 @@ bool Sema::SemaBuiltinConstantArgRange(CallExpr *TheCall, int ArgNum,
   if (Result.getSExtValue() < Low || Result.getSExtValue() > High)
     return Diag(TheCall->getLocStart(), diag::err_argument_invalid_range)
       << Low << High << Arg->getSourceRange();
+
+  return false;
+}
+
+/// SemaBuiltinARMSpecialReg - Handle a check if argument ArgNum of CallExpr
+/// TheCall is an ARM/AArch64 special register string literal.
+bool Sema::SemaBuiltinARMSpecialReg(unsigned BuiltinID, CallExpr *TheCall,
+                                    int ArgNum, unsigned ExpectedFieldNum,
+                                    bool AllowName) {
+  bool IsARMBuiltin = BuiltinID == ARM::BI__builtin_arm_rsr64 ||
+                      BuiltinID == ARM::BI__builtin_arm_wsr64 ||
+                      BuiltinID == ARM::BI__builtin_arm_rsr ||
+                      BuiltinID == ARM::BI__builtin_arm_rsrp ||
+                      BuiltinID == ARM::BI__builtin_arm_wsr ||
+                      BuiltinID == ARM::BI__builtin_arm_wsrp;
+  bool IsAArch64Builtin = BuiltinID == AArch64::BI__builtin_arm_rsr64 ||
+                          BuiltinID == AArch64::BI__builtin_arm_wsr64 ||
+                          BuiltinID == AArch64::BI__builtin_arm_rsr ||
+                          BuiltinID == AArch64::BI__builtin_arm_rsrp ||
+                          BuiltinID == AArch64::BI__builtin_arm_wsr ||
+                          BuiltinID == AArch64::BI__builtin_arm_wsrp;
+  assert((IsARMBuiltin || IsAArch64Builtin) && "Unexpected ARM builtin.");
+
+  // We can't check the value of a dependent argument.
+  Expr *Arg = TheCall->getArg(ArgNum);
+  if (Arg->isTypeDependent() || Arg->isValueDependent())
+    return false;
+
+  // Check if the argument is a string literal.
+  if (!isa<StringLiteral>(Arg->IgnoreParenImpCasts()))
+    return Diag(TheCall->getLocStart(), diag::err_expr_not_string_literal)
+           << Arg->getSourceRange();
+
+  // Check the type of special register given.
+  StringRef Reg = cast<StringLiteral>(Arg->IgnoreParenImpCasts())->getString();
+  SmallVector<StringRef, 6> Fields;
+  Reg.split(Fields, ":");
+
+  if (Fields.size() != ExpectedFieldNum && !(AllowName && Fields.size() == 1))
+    return Diag(TheCall->getLocStart(), diag::err_arm_invalid_specialreg)
+           << Arg->getSourceRange();
+
+  // If the string is the name of a register then we cannot check that it is
+  // valid here but if the string is of one the forms described in ACLE then we
+  // can check that the supplied fields are integers and within the valid
+  // ranges.
+  if (Fields.size() > 1) {
+    bool FiveFields = Fields.size() == 5;
+
+    bool ValidString = true;
+    if (IsARMBuiltin) {
+      ValidString &= Fields[0].startswith_lower("cp") ||
+                     Fields[0].startswith_lower("p");
+      if (ValidString)
+        Fields[0] =
+          Fields[0].drop_front(Fields[0].startswith_lower("cp") ? 2 : 1);
+
+      ValidString &= Fields[2].startswith_lower("c");
+      if (ValidString)
+        Fields[2] = Fields[2].drop_front(1);
+
+      if (FiveFields) {
+        ValidString &= Fields[3].startswith_lower("c");
+        if (ValidString)
+          Fields[3] = Fields[3].drop_front(1);
+      }
+    }
+
+    SmallVector<int, 5> Ranges;
+    if (FiveFields)
+      Ranges.append({IsAArch64Builtin ? 1 : 15, 7, 7, 15, 15});
+    else
+      Ranges.append({15, 7, 15});
+
+    for (unsigned i=0; i<Fields.size(); ++i) {
+      int IntField;
+      ValidString &= !Fields[i].getAsInteger(10, IntField);
+      ValidString &= (IntField >= 0 && IntField <= Ranges[i]);
+    }
+
+    if (!ValidString)
+      return Diag(TheCall->getLocStart(), diag::err_arm_invalid_specialreg)
+             << Arg->getSourceRange();
+
+  } else if (IsAArch64Builtin && Fields.size() == 1) {
+    // If the register name is one of those that appear in the condition below
+    // and the special register builtin being used is one of the write builtins,
+    // then we require that the argument provided for writing to the register
+    // is an integer constant expression. This is because it will be lowered to
+    // an MSR (immediate) instruction, so we need to know the immediate at
+    // compile time.
+    if (TheCall->getNumArgs() != 2)
+      return false;
+
+    std::string RegLower = Reg.lower();
+    if (RegLower != "spsel" && RegLower != "daifset" && RegLower != "daifclr" &&
+        RegLower != "pan" && RegLower != "uao")
+      return false;
+
+    return SemaBuiltinConstantArgRange(TheCall, 1, 0, 15);
+  }
 
   return false;
 }

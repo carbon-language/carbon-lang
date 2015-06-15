@@ -108,6 +108,7 @@ def err_ice_ambiguous_conversion : Error<
 def err_ice_too_large : Error<
   "integer constant expression evaluates to value %0 that cannot be "
   "represented in a %1-bit %select{signed|unsigned}2 integer type">;
+def err_expr_not_string_literal : Error<"expression is not a string literal">;
 
 // Semantic analysis of constant literals.
 def ext_predef_outside_function : Warning<
@@ -424,6 +425,7 @@ def warn_redecl_library_builtin : Warning<
   "incompatible redeclaration of library function %0">,
   InGroup<DiagGroup<"incompatible-library-redeclaration">>;
 def err_builtin_definition : Error<"definition of builtin function %0">;
+def err_arm_invalid_specialreg : Error<"invalid special register for builtin">;
 def warn_builtin_unknown : Warning<"use of unknown builtin %0">,
   InGroup<ImplicitFunctionDeclare>, DefaultError;
 def warn_dyn_class_memaccess : Warning<

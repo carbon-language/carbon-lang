@@ -84,6 +84,14 @@ BUILTIN(__builtin_arm_isb, "vUi", "nc")
 // Prefetch
 BUILTIN(__builtin_arm_prefetch, "vvC*UiUi", "nc")
 
+// System registers (ACLE)
+BUILTIN(__builtin_arm_rsr, "UicC*", "nc")
+BUILTIN(__builtin_arm_rsr64, "LLUicC*", "nc")
+BUILTIN(__builtin_arm_rsrp, "v*cC*", "nc")
+BUILTIN(__builtin_arm_wsr, "vcC*Ui", "nc")
+BUILTIN(__builtin_arm_wsr64, "vcC*LLUi", "nc")
+BUILTIN(__builtin_arm_wsrp, "vcC*vC*", "nc")
+
 // MSVC
 LANGBUILTIN(__emit, "vIUiC", "", ALL_MS_LANGUAGES)
 

@@ -53,4 +53,12 @@ BUILTIN(__builtin_arm_isb, "vUi", "nc")
 // Prefetch
 BUILTIN(__builtin_arm_prefetch, "vvC*UiUiUiUi", "nc")
 
+// System Registers
+BUILTIN(__builtin_arm_rsr, "UicC*", "nc")
+BUILTIN(__builtin_arm_rsr64, "LUicC*", "nc")
+BUILTIN(__builtin_arm_rsrp, "v*cC*", "nc")
+BUILTIN(__builtin_arm_wsr, "vcC*Ui", "nc")
+BUILTIN(__builtin_arm_wsr64, "vcC*LUi", "nc")
+BUILTIN(__builtin_arm_wsrp, "vcC*vC*", "nc")
+
 #undef BUILTIN
