@@ -368,8 +368,8 @@ void *test_rsrp() {
 }
 
 // ARM-LABEL: test_wsr
-// AArch64: call void @llvm.write_register.i64(metadata !1, i64 %1)
-// AArch32: call void @llvm.write_register.i32(metadata !3, i32 %v)
+// AArch64: call void @llvm.write_register.i64(metadata !1, i64 %{{.*}})
+// AArch32: call void @llvm.write_register.i32(metadata !3, i32 %{{.*}})
 void test_wsr(uint32_t v) {
 #ifdef __ARM_32BIT_STATE
   __arm_wsr("cp1:2:c3:c4:5", v);
@@ -379,8 +379,8 @@ void test_wsr(uint32_t v) {
 }
 
 // ARM-LABEL: test_wsr64
-// AArch64: call void @llvm.write_register.i64(metadata !1, i64 %v)
-// AArch32: call void @llvm.write_register.i64(metadata !4, i64 %v)
+// AArch64: call void @llvm.write_register.i64(metadata !1, i64 %{{.*}})
+// AArch32: call void @llvm.write_register.i64(metadata !4, i64 %{{.*}})
 void test_wsr64(uint64_t v) {
 #ifdef __ARM_32BIT_STATE
   __arm_wsr64("cp1:2:c3", v);
@@ -390,8 +390,8 @@ void test_wsr64(uint64_t v) {
 }
 
 // ARM-LABEL: test_wsrp
-// AArch64: call void @llvm.write_register.i64(metadata !2, i64 %1)
-// AArch32: call void @llvm.write_register.i32(metadata !5, i32 %1)
+// AArch64: call void @llvm.write_register.i64(metadata !2, i64 %{{.*}})
+// AArch32: call void @llvm.write_register.i32(metadata !5, i32 %{{.*}})
 void test_wsrp(void *v) {
   __arm_wsrp("sysreg", v);
 }
