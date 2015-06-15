@@ -12,12 +12,15 @@
 ; RUN:    -shared %t.o -o %t3.o
 ; RUN: llvm-dis %t3.o.bc -o - | FileCheck %s
 ; RUN: llvm-dis %t3.o.opt.bc -o - | FileCheck --check-prefix=OPT %s
+; RUN: llvm-nm %t3.o.o | FileCheck --check-prefix=NM %s
 
 ; RUN: rm -f %t4.o
 ; RUN: %gold -plugin %llvmshlibdir/LLVMgold.so \
 ; RUN:     -m elf_x86_64 --plugin-opt=disable-output \
 ; RUN:    -shared %t.o -o %t4.o
 ; RUN: not test -a %t4.o
+
+; NM: T f3
 
 target triple = "x86_64-unknown-linux-gnu"
 
