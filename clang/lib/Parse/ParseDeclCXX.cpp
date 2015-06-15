@@ -3780,7 +3780,7 @@ SourceLocation Parser::SkipCXX11Attributes() {
   return EndLoc;
 }
 
-/// ParseMicrosoftAttributes - Parse a Microsoft attribute [Attr]
+/// ParseMicrosoftAttributes - Parse Microsoft attributes [Attr]
 ///
 /// [MS] ms-attribute:
 ///             '[' token-seq ']'
@@ -3792,13 +3792,15 @@ void Parser::ParseMicrosoftAttributes(ParsedAttributes &attrs,
                                       SourceLocation *endLoc) {
   assert(Tok.is(tok::l_square) && "Not a Microsoft attribute list");
 
-  while (Tok.is(tok::l_square)) {
+  do {
     // FIXME: If this is actually a C++11 attribute, parse it as one.
-    ConsumeBracket();
+    BalancedDelimiterTracker T(*this, tok::l_square);
+    T.consumeOpen();
     SkipUntil(tok::r_square, StopAtSemi | StopBeforeMatch);
-    if (endLoc) *endLoc = Tok.getLocation();
-    ExpectAndConsume(tok::r_square);
-  }
+    T.consumeClose();
+    if (endLoc)
+      *endLoc = T.getCloseLocation();
+  } while (Tok.is(tok::l_square));
 }
 
 void Parser::ParseMicrosoftIfExistsClassDeclaration(DeclSpec::TST TagType,
