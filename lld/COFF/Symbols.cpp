@@ -21,67 +21,66 @@ using llvm::sys::fs::file_magic;
 namespace lld {
 namespace coff {
 
-// As an approximation, regular symbols win over bitcode symbols, but we
-// definitely have a conflict if the regular symbol is not replaceable and
-// neither is the bitcode symbol. We do not replicate the rest of the symbol
-// resolution logic here; symbol resolution will be done accurately after
-// lowering bitcode symbols to regular symbols in addCombinedLTOObject().
-static int compareRegularBitcode(DefinedRegular *R, DefinedBitcode *B) {
-  if (!R->isCommon() && !R->isCOMDAT() && !B->isReplaceable())
-    return 0;
-  return 1;
-}
-
-// Returns 1, 0 or -1 if this symbol should take precedence over the
-// Other in the symbol table, tie or lose, respectively.
-int Defined::compare(SymbolBody *Other) {
-  if (!isa<Defined>(Other))
+// Returns 1, 0 or -1 if this symbol should take precedence
+// over the Other, tie or lose, respectively.
+int DefinedRegular::compare(SymbolBody *Other) {
+  if (Other->kind() < kind())
+    return -Other->compare(this);
+  auto *R = dyn_cast<DefinedRegular>(Other);
+  if (!R)
     return 1;
-  auto *X = dyn_cast<DefinedRegular>(this);
-  if (!X)
-    return 0;
-
-  if (auto *B = dyn_cast<DefinedBitcode>(Other))
-    return compareRegularBitcode(X, B);
-
-  auto *Y = dyn_cast<DefinedRegular>(Other);
-  if (!Y)
-    return 0;
 
   // Common symbols are weaker than other types of defined symbols.
-  if (X->isCommon() && Y->isCommon())
-    return (X->getCommonSize() < Y->getCommonSize()) ? -1 : 1;
+  if (isCommon() && R->isCommon())
+    return (getCommonSize() < R->getCommonSize()) ? -1 : 1;
   // TODO: we are not sure if regular defined symbol and common
   // symbols are allowed to have the same name.
-  if (X->isCommon())
+  if (isCommon())
     return -1;
-  if (Y->isCommon())
+  if (R->isCommon())
     return 1;
-
-  if (X->isCOMDAT() && Y->isCOMDAT())
+  if (isCOMDAT() && R->isCOMDAT())
     return 1;
   return 0;
 }
 
 int DefinedBitcode::compare(SymbolBody *Other) {
+  assert(Other->kind() >= kind());
   if (!isa<Defined>(Other))
     return 1;
 
-  if (auto *R = dyn_cast<DefinedRegular>(Other))
-    return -compareRegularBitcode(R, this);
-
   if (auto *B = dyn_cast<DefinedBitcode>(Other)) {
-    if (!isReplaceable() && !B->isReplaceable())
+    if (!Replaceable && !B->Replaceable)
       return 0;
     // Non-replaceable symbols win.
-    return isReplaceable() ? -1 : 1;
+    return Replaceable ? -1 : 1;
+  }
+
+  // As an approximation, regular symbols win over bitcode symbols,
+  // but we definitely have a conflict if the regular symbol is not
+  // replaceable and neither is the bitcode symbol. We do not
+  // replicate the rest of the symbol resolution logic here; symbol
+  // resolution will be done accurately after lowering bitcode symbols
+  // to regular symbols in addCombinedLTOObject().
+  if (auto *R = dyn_cast<DefinedRegular>(Other)) {
+    if (!R->isCommon() && !R->isCOMDAT() && !Replaceable)
+      return 0;
+    return -1;
   }
   return 0;
 }
 
-int Lazy::compare(SymbolBody *Other) {
+int Defined::compare(SymbolBody *Other) {
+  if (Other->kind() < kind())
+    return -Other->compare(this);
   if (isa<Defined>(Other))
-    return -1;
+    return 0;
+  return 1;
+}
+
+int Lazy::compare(SymbolBody *Other) {
+  if (Other->kind() < kind())
+    return -Other->compare(this);
 
   // Undefined symbols with weak aliases will turn into defined
   // symbols if they remain undefined, so we don't need to resolve
@@ -93,10 +92,8 @@ int Lazy::compare(SymbolBody *Other) {
 }
 
 int Undefined::compare(SymbolBody *Other) {
-  if (isa<Defined>(Other))
-    return -1;
-  if (isa<Lazy>(Other))
-    return getWeakAlias() ? 1 : -1;
+  if (Other->kind() < kind())
+    return -Other->compare(this);
   if (cast<Undefined>(Other)->getWeakAlias())
     return -1;
   return 1;

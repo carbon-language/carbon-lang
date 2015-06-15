@@ -45,14 +45,14 @@ class SymbolBody {
 public:
   enum Kind {
     DefinedFirst,
-    DefinedRegularKind,
+    DefinedBitcodeKind,
     DefinedAbsoluteKind,
     DefinedImportDataKind,
     DefinedImportThunkKind,
-    DefinedBitcodeKind,
+    DefinedRegularKind,
     DefinedLast,
-    UndefinedKind,
     LazyKind,
+    UndefinedKind,
   };
 
   Kind kind() const { return SymbolKind; }
@@ -128,6 +128,7 @@ public:
   void markLive() override { Data->markLive(); }
   uint64_t getFileOff() override { return Data->getFileOff() + Sym.getValue(); }
   bool isCOMDAT() const { return Data->isCOMDAT(); }
+  int compare(SymbolBody *Other) override;
 
   // Returns true if this is a common symbol.
   bool isCommon() const { return Sym.isCommon(); }
@@ -278,7 +279,6 @@ public:
   uint64_t getRVA() override { llvm_unreachable("bitcode reached writer"); }
   uint64_t getFileOff() override { llvm_unreachable("bitcode reached writer"); }
   int compare(SymbolBody *Other) override;
-  bool isReplaceable() const { return Replaceable; }
 
 private:
   StringRef Name;
