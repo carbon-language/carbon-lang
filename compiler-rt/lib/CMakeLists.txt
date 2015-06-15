@@ -34,3 +34,6 @@ if(COMPILER_RT_HAS_TSAN)
   add_subdirectory(tsan/dd)
 endif()
 
+if(COMPILER_RT_HAS_SAFESTACK)
+  add_subdirectory(safestack)
+endif()
