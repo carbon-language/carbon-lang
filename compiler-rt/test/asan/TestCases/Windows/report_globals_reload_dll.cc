@@ -1,7 +1,7 @@
 // Make sure we can handle reloading the same DLL multiple times.
 // RUN: %clang_cl_asan -LD -O0 -DDLL %s -Fe%t.dll
 // RUN: %clang_cl_asan -O0 -DEXE %s -Fe%te.exe
-// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:report_globals=1 %run %te.exe %t.dll 2>&1 | FileCheck %s
+// RUN: env ASAN_OPTIONS=%ASAN_OPTIONS%:report_globals=1 %run %te.exe %t.dll 2>&1 | FileCheck %s
 
 #include <windows.h>
 #include <stdio.h>
