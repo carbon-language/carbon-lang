@@ -239,13 +239,13 @@ public:
   std::vector<StructType *> getIdentifiedStructTypes() const override;
   void dematerialize(GlobalValue *GV) override;
 
-  /// @brief Main interface to parsing a bitcode buffer.
-  /// @returns true if an error occurred.
+  /// \brief Main interface to parsing a bitcode buffer.
+  /// \returns true if an error occurred.
   std::error_code parseBitcodeInto(Module *M,
                                    bool ShouldLazyLoadMetadata = false);
 
-  /// @brief Cheap mechanism to just extract module triple
-  /// @returns true if an error occurred.
+  /// \brief Cheap mechanism to just extract module triple
+  /// \returns true if an error occurred.
   ErrorOr<std::string> parseTriple();
 
   static uint64_t decodeSignRotatedValue(uint64_t V);
@@ -707,7 +707,7 @@ static void upgradeDLLImportExportLinkage(llvm::GlobalValue *GV, unsigned Val) {
 
 namespace llvm {
 namespace {
-  /// @brief A class for maintaining the slot number definition
+  /// \brief A class for maintaining the slot number definition
   /// as a placeholder for the actual definition for forward constants defs.
   class ConstantPlaceHolder : public ConstantExpr {
     void operator=(const ConstantPlaceHolder &) = delete;
@@ -721,7 +721,7 @@ namespace {
       Op<0>() = UndefValue::get(Type::getInt32Ty(Context));
     }
 
-    /// @brief Methods to support type inquiry through isa, cast, and dyn_cast.
+    /// \brief Methods to support type inquiry through isa, cast, and dyn_cast.
     static bool classof(const Value *V) {
       return isa<ConstantExpr>(V) &&
              cast<ConstantExpr>(V)->getOpcode() == Instruction::UserOp1;
