@@ -4661,6 +4661,50 @@ static NamedDecl *getDefinitionToImport(NamedDecl *D) {
   return nullptr;
 }
 
+void Sema::diagnoseMissingImport(SourceLocation Loc, NamedDecl *Decl,
+                                 bool NeedDefinition, bool Recover) {
+  assert(!isVisible(Decl) && "missing import for non-hidden decl?");
+
+  // Suggest importing a module providing the definition of this entity, if
+  // possible.
+  NamedDecl *Def = getDefinitionToImport(Decl);
+  if (!Def)
+    Def = Decl;
+
+  // FIXME: Add a Fix-It that imports the corresponding module or includes
+  // the header.
+  Module *Owner = getOwningModule(Decl);
+  assert(Owner && "definition of hidden declaration is not in a module");
+
+  auto Merged = Context.getModulesWithMergedDefinition(Decl);
+  if (!Merged.empty()) {
+    std::string ModuleList;
+    ModuleList += "\n        ";
+    ModuleList += Owner->getFullModuleName();
+    unsigned N = 0;
+    for (Module *M : Merged) {
+      ModuleList += "\n        ";
+      if (++N == 5 && Merged.size() != N) {
+        ModuleList += "[...]";
+        break;
+      }
+      ModuleList += M->getFullModuleName();
+    }
+
+    Diag(Loc, diag::err_module_private_declaration_multiple)
+      << NeedDefinition << Decl << ModuleList;
+  } else {
+    Diag(Loc, diag::err_module_private_declaration)
+      << NeedDefinition << Decl << Owner->getFullModuleName();
+  }
+  Diag(Decl->getLocation(), NeedDefinition ? diag::note_previous_definition
+                                           : diag::note_previous_declaration);
+
+  // Try to recover by implicitly importing this module.
+  if (Recover)
+    createImplicitModuleImportForErrorRecovery(Loc, Owner);
+}
+
 /// \brief Diagnose a successfully-corrected typo. Separated from the correction
 /// itself to allow external validation of the result, etc.
 ///
@@ -4687,23 +4731,8 @@ void Sema::diagnoseTypo(const TypoCorrection &Correction,
     NamedDecl *Decl = Correction.getCorrectionDecl();
     assert(Decl && "import required but no declaration to import");
 
-    // Suggest importing a module providing the definition of this entity, if
-    // possible.
-    NamedDecl *Def = getDefinitionToImport(Decl);
-    if (!Def)
-      Def = Decl;
-    Module *Owner = getOwningModule(Def);
-    assert(Owner && "definition of hidden declaration is not in a module");
-
-    Diag(Correction.getCorrectionRange().getBegin(),
-         diag::err_module_private_declaration)
-      << Def << Owner->getFullModuleName();
-    Diag(Def->getLocation(), diag::note_previous_declaration);
-
-    // Recover by implicitly importing this module.
-    if (ErrorRecovery)
-      createImplicitModuleImportForErrorRecovery(
-          Correction.getCorrectionRange().getBegin(), Owner);
+    diagnoseMissingImport(Correction.getCorrectionRange().getBegin(), Decl,
+                          /*NeedDefinition*/ false, ErrorRecovery);
     return;
   }
 

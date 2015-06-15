@@ -7637,9 +7637,11 @@ def err_module_private_local_class : Error<
   "local %select{struct|interface|union|class|enum}0 cannot be declared "
   "__module_private__">;
 def err_module_private_declaration : Error<
-  "declaration of %0 must be imported from module '%1' before it is required">;
-def err_module_private_definition : Error<
-  "definition of %0 must be imported from module '%1' before it is required">;
+  "%select{declaration|definition}0 of %1 must be imported from "
+  "module '%2' before it is required">;
+def err_module_private_declaration_multiple : Error<
+  "%select{declaration|definition}0 of %1 must be imported from "
+  "one of the following modules before it is required:%2">;
 def err_module_import_in_extern_c : Error<
   "import of C++ module '%0' appears within extern \"C\" language linkage "
   "specification">;

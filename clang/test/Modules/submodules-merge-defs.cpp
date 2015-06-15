@@ -4,6 +4,7 @@
 // RUN: %clang_cc1 -x c++ -std=c++11 -fmodules-cache-path=%t -fmodules -I %S/Inputs/submodules-merge-defs %s -verify -fno-modules-error-recovery -fmodules-local-submodule-visibility -DTEXTUAL
 // RUN: %clang_cc1 -x c++ -std=c++11 -fmodules-cache-path=%t -fmodules -I %S/Inputs/submodules-merge-defs %s -verify -fno-modules-error-recovery -fmodules-local-submodule-visibility
 // RUN: %clang_cc1 -x c++ -std=c++11 -fmodules-cache-path=%t -fmodule-maps -I %S/Inputs/submodules-merge-defs %s -verify -fno-modules-error-recovery -fmodules-local-submodule-visibility -DTEXTUAL -DEARLY_INDIRECT_INCLUDE
+// RUN: %clang_cc1 -x c++ -std=c++11 -fmodules-cache-path=%t -fmodules -I %S/Inputs/submodules-merge-defs %s -verify -fno-modules-error-recovery -fmodules-local-submodule-visibility -fmodule-feature use_defs_twice -DIMPORT_USE_2
 
 // Trigger import of definitions, but don't make them visible.
 #include "empty.h"
@@ -11,7 +12,14 @@
 #include "indirect.h"
 #endif
 
-A pre_a; // expected-error {{must be imported}} expected-error {{must use 'struct'}}
+A pre_a; // expected-error {{must use 'struct'}}
+#ifdef IMPORT_USE_2
+// expected-error-re@-2 {{must be imported from one of {{.*}}stuff.use{{.*}}stuff.use-2}}
+#elif EARLY_INDIRECT_INCLUDE
+// expected-error@-4 {{must be imported from module 'merged-defs'}}
+#else
+// expected-error@-6 {{must be imported from module 'stuff.use'}}
+#endif
 // expected-note@defs.h:1 +{{here}}
 // expected-note@defs.h:2 +{{here}}
 int pre_use_a = use_a(pre_a); // expected-error {{'A' must be imported}} expected-error {{'use_a' must be imported}}
@@ -46,6 +54,8 @@ J<> pre_j; // expected-error {{must be imported}} expected-error {{too few}}
 // Make definitions from second module visible.
 #ifdef TEXTUAL
 #include "import-and-redefine.h"
+#elif defined IMPORT_USE_2
+#include "use-defs-2.h"
 #else
 #include "merged-defs.h"
 #endif
@@ -61,13 +71,6 @@ int post_use_dx = use_dx(post_dx);
 int post_e = E(0);
 int post_ff = F<char>().f();
 int post_fg = F<char>().g<int>();
-#ifdef EARLY_INDIRECT_INCLUDE
-// FIXME: Properly track the owning module for a member specialization.
-// expected-error@defs.h:34 {{redefinition}}
-// expected-note@defs.h:34 {{previous definition}}
-// expected-error@-5 {{no matching member function}}
-// expected-note@defs.h:34 {{substitution failure}}
-#endif
 J<> post_j;
 template<typename T, int N, template<typename> class K> struct J;
 J<> post_j2;

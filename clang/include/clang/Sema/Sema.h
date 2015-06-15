@@ -1730,6 +1730,11 @@ public:
   void createImplicitModuleImportForErrorRecovery(SourceLocation Loc,
                                                   Module *Mod);
 
+  /// \brief Diagnose that the specified declaration needs to be visible but
+  /// isn't, and suggest a module import that would resolve the problem.
+  void diagnoseMissingImport(SourceLocation Loc, NamedDecl *Decl,
+                             bool NeedDefinition, bool Recover = true);
+
   /// \brief Retrieve a suitable printing policy.
   PrintingPolicy getPrintingPolicy() const {
     return getPrintingPolicy(Context, PP);

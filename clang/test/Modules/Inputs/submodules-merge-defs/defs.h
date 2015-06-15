@@ -31,7 +31,7 @@ template<typename T> struct F {
 template<typename T> int F<T>::f() { return 0; }
 template<typename T> template<typename U> int F<T>::g() { return 0; }
 template<typename T> int F<T>::n = 0;
-template<> template<typename U> int F<char>::g() { return 0; }
+//template<> template<typename U> int F<char>::g() { return 0; } // FIXME: Re-enable this once we support merging member specializations.
 template<> struct F<void> { int h(); };
 inline int F<void>::h() { return 0; }
 template<typename T> struct F<T *> { int i(); };
