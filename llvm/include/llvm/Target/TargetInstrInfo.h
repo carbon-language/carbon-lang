@@ -827,10 +827,11 @@ public:
     return false;
   }
 
-  /// Get the base register and byte offset of a load/store instr.
-  virtual bool getLdStBaseRegImmOfs(MachineInstr *LdSt,
-                                    unsigned &BaseReg, unsigned &Offset,
-                                    const TargetRegisterInfo *TRI) const {
+  /// Get the base register and byte offset of an instruction that reads/writes
+  /// memory.
+  virtual bool getMemOpBaseRegImmOfs(MachineInstr *MemOp, unsigned &BaseReg,
+                                     unsigned &Offset,
+                                     const TargetRegisterInfo *TRI) const {
     return false;
   }
 

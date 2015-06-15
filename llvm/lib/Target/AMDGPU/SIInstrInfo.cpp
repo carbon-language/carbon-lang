@@ -200,9 +200,9 @@ static bool isStride64(unsigned Opc) {
   }
 }
 
-bool SIInstrInfo::getLdStBaseRegImmOfs(MachineInstr *LdSt,
-                                       unsigned &BaseReg, unsigned &Offset,
-                                       const TargetRegisterInfo *TRI) const {
+bool SIInstrInfo::getMemOpBaseRegImmOfs(MachineInstr *LdSt, unsigned &BaseReg,
+                                        unsigned &Offset,
+                                        const TargetRegisterInfo *TRI) const {
   unsigned Opc = LdSt->getOpcode();
   if (isDS(Opc)) {
     const MachineOperand *OffsetImm = getNamedOperand(*LdSt,
@@ -1053,8 +1053,8 @@ bool SIInstrInfo::checkInstOffsetsDoNotOverlap(MachineInstr *MIa,
   unsigned BaseReg0, Offset0;
   unsigned BaseReg1, Offset1;
 
-  if (getLdStBaseRegImmOfs(MIa, BaseReg0, Offset0, &RI) &&
-      getLdStBaseRegImmOfs(MIb, BaseReg1, Offset1, &RI)) {
+  if (getMemOpBaseRegImmOfs(MIa, BaseReg0, Offset0, &RI) &&
+      getMemOpBaseRegImmOfs(MIb, BaseReg1, Offset1, &RI)) {
     assert(MIa->hasOneMemOperand() && MIb->hasOneMemOperand() &&
            "read2 / write2 not expected here yet");
     unsigned Width0 = (*MIa->memoperands_begin())->getSize();

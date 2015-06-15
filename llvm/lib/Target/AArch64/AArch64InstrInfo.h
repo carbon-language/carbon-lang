@@ -90,13 +90,13 @@ public:
   /// Hint that pairing the given load or store is unprofitable.
   void suppressLdStPair(MachineInstr *MI) const;
 
-  bool getLdStBaseRegImmOfs(MachineInstr *LdSt, unsigned &BaseReg,
-                            unsigned &Offset,
-                            const TargetRegisterInfo *TRI) const override;
+  bool getMemOpBaseRegImmOfs(MachineInstr *LdSt, unsigned &BaseReg,
+                             unsigned &Offset,
+                             const TargetRegisterInfo *TRI) const override;
 
-  bool getLdStBaseRegImmOfsWidth(MachineInstr *LdSt, unsigned &BaseReg,
-                                 int &Offset, int &Width,
-                                 const TargetRegisterInfo *TRI) const;
+  bool getMemOpBaseRegImmOfsWidth(MachineInstr *LdSt, unsigned &BaseReg,
+                                  int &Offset, int &Width,
+                                  const TargetRegisterInfo *TRI) const;
 
   bool enableClusterLoads() const override { return true; }
 
