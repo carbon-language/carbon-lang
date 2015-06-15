@@ -42,6 +42,8 @@ std::error_code Writer::write(StringRef OutputPath) {
   markLive();
   createSections();
   createImportTables();
+  if (Config->Relocatable)
+    createSection(".reloc");
   assignAddresses();
   removeEmptySections();
   if (auto EC = openFile(OutputPath))
@@ -192,6 +194,8 @@ void Writer::assignAddresses() {
   uint64_t RVA = 0x1000; // The first page is kept unmapped.
   uint64_t FileOff = SizeOfHeaders;
   for (OutputSection *Sec : OutputSections) {
+    if (Sec->getName() == ".reloc")
+      addBaserels(Sec);
     Sec->setRVA(RVA);
     Sec->setFileOffset(FileOff);
     RVA += RoundUpToAlignment(Sec->getVirtualSize(), PageSize);
@@ -238,8 +242,9 @@ void Writer::writeHeader() {
   COFF->Machine = MachineType;
   COFF->NumberOfSections = OutputSections.size();
   COFF->Characteristics =
-      (IMAGE_FILE_EXECUTABLE_IMAGE | IMAGE_FILE_RELOCS_STRIPPED |
-       IMAGE_FILE_LARGE_ADDRESS_AWARE);
+      (IMAGE_FILE_EXECUTABLE_IMAGE | IMAGE_FILE_LARGE_ADDRESS_AWARE);
+  if (!Config->Relocatable)
+    COFF->Characteristics = COFF->Characteristics | IMAGE_FILE_RELOCS_STRIPPED;
   COFF->SizeOfOptionalHeader =
       sizeof(pe32plus_header) + sizeof(data_directory) * NumberfOfDataDirectory;
 
@@ -265,6 +270,8 @@ void Writer::writeHeader() {
   PE->SizeOfStackCommit = Config->StackCommit;
   PE->SizeOfHeapReserve = Config->HeapReserve;
   PE->SizeOfHeapCommit = Config->HeapCommit;
+  if (Config->Relocatable)
+    PE->DLLCharacteristics = IMAGE_DLL_CHARACTERISTICS_DYNAMIC_BASE;
   PE->NumberOfRvaAndSize = NumberfOfDataDirectory;
   if (OutputSection *Text = findSection(".text")) {
     PE->BaseOfCode = Text->getRVA();
@@ -284,6 +291,10 @@ void Writer::writeHeader() {
   if (OutputSection *Sec = findSection(".rsrc")) {
     DataDirectory[RESOURCE_TABLE].RelativeVirtualAddress = Sec->getRVA();
     DataDirectory[RESOURCE_TABLE].Size = Sec->getRawSize();
+  }
+  if (OutputSection *Sec = findSection(".reloc")) {
+    DataDirectory[BASE_RELOCATION_TABLE].RelativeVirtualAddress = Sec->getRVA();
+    DataDirectory[BASE_RELOCATION_TABLE].Size = Sec->getVirtualSize();
   }
 
   // Section table
@@ -368,6 +379,7 @@ OutputSection *Writer::createSection(StringRef Name) {
   const auto DATA = IMAGE_SCN_CNT_INITIALIZED_DATA;
   const auto BSS = IMAGE_SCN_CNT_UNINITIALIZED_DATA;
   const auto CODE = IMAGE_SCN_CNT_CODE;
+  const auto DISCARDABLE = IMAGE_SCN_MEM_DISCARDABLE;
   const auto R = IMAGE_SCN_MEM_READ;
   const auto W = IMAGE_SCN_MEM_WRITE;
   const auto X = IMAGE_SCN_MEM_EXECUTE;
@@ -377,6 +389,7 @@ OutputSection *Writer::createSection(StringRef Name) {
                        .Case(".didat", DATA | R)
                        .Case(".idata", DATA | R)
                        .Case(".rdata", DATA | R)
+                       .Case(".reloc", DATA | DISCARDABLE | R)
                        .Case(".text", CODE | R | X)
                        .Default(0);
   if (!Perms)
@@ -386,6 +399,43 @@ OutputSection *Writer::createSection(StringRef Name) {
   Sec->addPermissions(Perms);
   OutputSections.push_back(Sec);
   return Sec;
+}
+
+// Dest is .reloc section. Add contents to that section.
+void Writer::addBaserels(OutputSection *Dest) {
+  std::vector<uint32_t> V;
+  Defined *ImageBase = cast<Defined>(Symtab->find("__ImageBase"));
+  for (OutputSection *Sec : OutputSections) {
+    if (Sec == Dest)
+      continue;
+    // Collect all locations for base relocations.
+    for (Chunk *C : Sec->getChunks())
+      C->getBaserels(&V, ImageBase);
+    // Add the addresses to .reloc section.
+    if (!V.empty())
+      addBaserelBlocks(Dest, V);
+    V.clear();
+  }
+}
+
+// Add addresses to .reloc section. Note that addresses are grouped by page.
+void Writer::addBaserelBlocks(OutputSection *Dest, std::vector<uint32_t> &V) {
+  const uint32_t Mask = ~uint32_t(PageSize - 1);
+  uint32_t Page = V[0] & Mask;
+  size_t I = 0, J = 1;
+  for (size_t E = V.size(); J < E; ++J) {
+    uint32_t P = V[J] & Mask;
+    if (P == Page)
+      continue;
+    BaserelChunk *Buf = BAlloc.Allocate();
+    Dest->addChunk(new (Buf) BaserelChunk(Page, &V[I], &V[0] + J));
+    I = J;
+    Page = P;
+  }
+  if (I == J)
+    return;
+  BaserelChunk *Buf = BAlloc.Allocate();
+  Dest->addChunk(new (Buf) BaserelChunk(Page, &V[I], &V[0] + J));
 }
 
 } // namespace coff

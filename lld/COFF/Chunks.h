@@ -92,6 +92,10 @@ public:
   void setOutputSection(OutputSection *O) { Out = O; }
   OutputSection *getOutputSection() { return Out; }
 
+  // Windows-specific.
+  // Collect all locations that contain absolute addresses for base relocations.
+  virtual void getBaserels(std::vector<uint32_t> *Res, Defined *ImageBase) {}
+
 protected:
   // The RVA of this chunk in the output. The writer sets a value.
   uint64_t RVA = 0;
@@ -123,6 +127,7 @@ public:
   StringRef getSectionName() const override { return SectionName; }
   void printDiscardedMessage() override;
   bool isCOMDAT() const override;
+  void getBaserels(std::vector<uint32_t> *Res, Defined *ImageBase) override;
 
   // Adds COMDAT associative sections to this COMDAT section. A chunk
   // and its children are treated as a group by the garbage collector.
@@ -181,6 +186,19 @@ public:
 
 private:
   Defined *ImpSymbol;
+};
+
+// Windows-specific.
+// This class represents a block in .reloc section.
+// See the PE/COFF spec 5.6 for details.
+class BaserelChunk : public Chunk {
+public:
+  BaserelChunk(uint32_t Page, uint32_t *Begin, uint32_t *End);
+  size_t getSize() const override { return Data.size(); }
+  void writeTo(uint8_t *Buf) override;
+
+private:
+  std::vector<uint8_t> Data;
 };
 
 } // namespace coff

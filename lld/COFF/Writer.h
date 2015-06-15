@@ -87,6 +87,8 @@ private:
 
   OutputSection *findSection(StringRef Name);
   OutputSection *createSection(StringRef Name);
+  void addBaserels(OutputSection *Dest);
+  void addBaserelBlocks(OutputSection *Dest, std::vector<uint32_t> &V);
 
   uint32_t getSizeOfInitializedData();
   std::map<StringRef, std::vector<DefinedImportData *>> binImports();
@@ -94,6 +96,7 @@ private:
   SymbolTable *Symtab;
   std::unique_ptr<llvm::FileOutputBuffer> Buffer;
   llvm::SpecificBumpPtrAllocator<OutputSection> CAlloc;
+  llvm::SpecificBumpPtrAllocator<BaserelChunk> BAlloc;
   std::vector<OutputSection *> OutputSections;
   std::unique_ptr<IdataContents> Idata;
 

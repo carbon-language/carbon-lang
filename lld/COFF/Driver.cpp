@@ -225,6 +225,10 @@ bool LinkerDriver::link(int Argc, const char *Argv[]) {
   if (auto *Arg = Args->getLastArg(OPT_entry))
     Config->EntryName = Arg->getValue();
 
+  // Handle /fixed
+  if (Args->hasArg(OPT_fixed))
+    Config->Relocatable = false;
+
   // Handle /machine
   auto MTOrErr = getMachineType(Args.get());
   if (auto EC = MTOrErr.getError()) {

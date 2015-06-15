@@ -222,12 +222,8 @@ Glossary
   locations containing addresses. The loader adds a difference between
   RVA and actual load address to all locations listed there.
 
-  Note 1: This run-time relocation mechanism is very simple compared
-  to ELF. There's no PLT or GOT. Images are relocated as a whole just
+  Note that this run-time relocation mechanism is much simpler than ELF.
+  There's no PLT or GOT. Images are relocated as a whole just
   by shifting entire images in memory by some offsets. Although doing
   this breaks text sharing, I think this mechanism is not actually bad
   on today's computers.
-
-  Note 2: We do not support base relocations yet. But if you were
-  wondering how Windows manages to load two images having conflicting
-  addresses into the same memory space, this is how it works.
