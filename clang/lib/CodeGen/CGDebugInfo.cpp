@@ -590,18 +590,29 @@ llvm::DIType *CGDebugInfo::CreateType(const PointerType *Ty,
                                Ty->getPointeeType(), Unit);
 }
 
+/// \return whether a C++ mangling exists for the type defined by TD.
+static bool hasCXXMangling(const TagDecl *TD, llvm::DICompileUnit *TheCU) {
+  switch (TheCU->getSourceLanguage()) {
+  case llvm::dwarf::DW_LANG_C_plus_plus:
+    return true;
+  case llvm::dwarf::DW_LANG_ObjC_plus_plus:
+    return isa<CXXRecordDecl>(TD) || isa<EnumDecl>(TD);
+  default:
+    return false;
+  }
+}
+
 /// In C++ mode, types have linkage, so we can rely on the ODR and
 /// on their mangled names, if they're external.
 static SmallString<256> getUniqueTagTypeName(const TagType *Ty,
                                              CodeGenModule &CGM,
                                              llvm::DICompileUnit *TheCU) {
   SmallString<256> FullName;
-  // FIXME: ODR should apply to ObjC++ exactly the same wasy it does to C++.
-  // For now, only apply ODR with C++.
   const TagDecl *TD = Ty->getDecl();
-  if (TheCU->getSourceLanguage() != llvm::dwarf::DW_LANG_C_plus_plus ||
-      !TD->isExternallyVisible())
+
+  if (!hasCXXMangling(TD, TheCU) || !TD->isExternallyVisible())
     return FullName;
+
   // Microsoft Mangler does not have support for mangleCXXRTTIName yet.
   if (CGM.getTarget().getCXXABI().isMicrosoft())
     return FullName;
