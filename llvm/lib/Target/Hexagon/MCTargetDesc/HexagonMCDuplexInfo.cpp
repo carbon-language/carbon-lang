@@ -394,8 +394,7 @@ unsigned HexagonMCInstrInfo::getDuplexCandidateGroup(MCInst const &MCI) {
     Src1Reg = MCI.getOperand(0).getReg();
     if (HexagonMCInstrInfo::isIntRegForSubInst(Src1Reg) &&
         MCI.getOperand(1).isImm() && isUInt<4>(MCI.getOperand(1).getImm()) &&
-        MCI.getOperand(2).isImm() && MCI.getOperand(2).isImm() &&
-        isUInt<1>(MCI.getOperand(2).getImm())) {
+        MCI.getOperand(2).isImm() && isUInt<1>(MCI.getOperand(2).getImm())) {
       return HexagonII::HSIG_S2;
     }
     break;
