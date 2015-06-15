@@ -1,6 +1,6 @@
 // Test ASan detection of stack-overflow condition when Linux sends SIGBUS.
 
-// RUN: %clangxx_asan -O0 %s -o %t && env ASAN_OPTIONS=use_sigaltstack=1 not %run %t 2>&1 | FileCheck %s
+// RUN: %clangxx_asan -O0 %s -o %t && env ASAN_OPTIONS=$ASAN_OPTIONS:use_sigaltstack=1 not %run %t 2>&1 | FileCheck %s
 
 #include <assert.h>
 #include <stdio.h>

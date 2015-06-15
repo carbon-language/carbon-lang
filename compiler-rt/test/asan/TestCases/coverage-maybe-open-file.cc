@@ -4,8 +4,8 @@
 // RUN: %clangxx_asan -fsanitize-coverage=func %s -o %t
 // RUN: rm -rf %T/coverage-maybe-open-file
 // RUN: mkdir -p %T/coverage-maybe-open-file && cd %T/coverage-maybe-open-file
-// RUN: ASAN_OPTIONS=coverage=1 %run %t | FileCheck %s --check-prefix=CHECK-success
-// RUN: ASAN_OPTIONS=coverage=0 %run %t | FileCheck %s --check-prefix=CHECK-fail
+// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:coverage=1 %run %t | FileCheck %s --check-prefix=CHECK-success
+// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:coverage=0 %run %t | FileCheck %s --check-prefix=CHECK-fail
 // RUN: [ "$(cat test.sancov.packed)" == "test" ]
 // RUN: cd .. && rm -rf %T/coverage-maybe-open-file
 

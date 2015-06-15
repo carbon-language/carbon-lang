@@ -12,9 +12,9 @@
 // RUN: %clangxx_asan %s -ldl -pthread -o %t
 // RUN: %run %t 0 3
 // RUN: %run %t 2 3
-// RUN: ASAN_OPTIONS=verbosity=2 %run %t 10 2 2>&1 | FileCheck %s
-// RUN: ASAN_OPTIONS=verbosity=2:intercept_tls_get_addr=1 %run %t 10 2 2>&1 | FileCheck %s
-// RUN: ASAN_OPTIONS=verbosity=2:intercept_tls_get_addr=0 %run %t 10 2 2>&1 | FileCheck %s --check-prefix=CHECK0
+// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:verbosity=2 %run %t 10 2 2>&1 | FileCheck %s
+// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:verbosity=2:intercept_tls_get_addr=1 %run %t 10 2 2>&1 | FileCheck %s
+// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:verbosity=2:intercept_tls_get_addr=0 %run %t 10 2 2>&1 | FileCheck %s --check-prefix=CHECK0
 // CHECK: __tls_get_addr
 // CHECK: Creating thread 0
 // CHECK: __tls_get_addr

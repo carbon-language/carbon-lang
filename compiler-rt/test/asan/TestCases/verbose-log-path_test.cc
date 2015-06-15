@@ -2,7 +2,7 @@
 
 // Good log_path.
 // RUN: rm -f %T/asan.log.*
-// RUN: env ASAN_OPTIONS=log_path=%T/asan.log:log_exe_name=1 not %run %T/verbose-log-path_test-binary 2> %t.out
+// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:log_path=%T/asan.log:log_exe_name=1 not %run %T/verbose-log-path_test-binary 2> %t.out
 // RUN: FileCheck %s --check-prefix=CHECK-ERROR < %T/asan.log.verbose-log-path_test-binary.*
 
 // FIXME: only FreeBSD and Linux have verbose log paths now.

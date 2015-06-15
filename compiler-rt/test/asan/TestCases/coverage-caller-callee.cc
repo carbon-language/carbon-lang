@@ -2,12 +2,12 @@
 // and various numbers of callers and callees.
 
 // RUN: %clangxx_asan -fsanitize-coverage=edge,indirect-calls %s -o %t
-// RUN: ASAN_OPTIONS=coverage=1:verbosity=1 %run %t 10 1 2>&1 | FileCheck %s --check-prefix=CHECK-10-1
-// RUN: ASAN_OPTIONS=coverage=1:verbosity=1 %run %t 9  2 2>&1 | FileCheck %s --check-prefix=CHECK-9-2
-// RUN: ASAN_OPTIONS=coverage=1:verbosity=1 %run %t 7  3 2>&1 | FileCheck %s --check-prefix=CHECK-7-3
-// RUN: ASAN_OPTIONS=coverage=1:verbosity=1 %run %t 17 1 2>&1 | FileCheck %s --check-prefix=CHECK-17-1
-// RUN: ASAN_OPTIONS=coverage=1:verbosity=1 %run %t 15 2 2>&1 | FileCheck %s --check-prefix=CHECK-15-2
-// RUN: ASAN_OPTIONS=coverage=1:verbosity=1 %run %t 18 3 2>&1 | FileCheck %s --check-prefix=CHECK-18-3
+// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:coverage=1:verbosity=1 %run %t 10 1 2>&1 | FileCheck %s --check-prefix=CHECK-10-1
+// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:coverage=1:verbosity=1 %run %t 9  2 2>&1 | FileCheck %s --check-prefix=CHECK-9-2
+// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:coverage=1:verbosity=1 %run %t 7  3 2>&1 | FileCheck %s --check-prefix=CHECK-7-3
+// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:coverage=1:verbosity=1 %run %t 17 1 2>&1 | FileCheck %s --check-prefix=CHECK-17-1
+// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:coverage=1:verbosity=1 %run %t 15 2 2>&1 | FileCheck %s --check-prefix=CHECK-15-2
+// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:coverage=1:verbosity=1 %run %t 18 3 2>&1 | FileCheck %s --check-prefix=CHECK-18-3
 // RUN: rm -f caller-callee*.sancov
 //
 // REQUIRES: asan-64-bits

@@ -1,6 +1,6 @@
 // RUN: %clang_asan -O0 %s -o %t
-// RUN: env ASAN_OPTIONS=verbosity=0 %run %t 2>&1 | FileCheck %s --check-prefix=CHECK-PPC64-V0
-// RUN: env ASAN_OPTIONS=verbosity=2 %run %t 2>&1 | FileCheck %s --check-prefix=CHECK-PPC64
+// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:verbosity=0 %run %t 2>&1 | FileCheck %s --check-prefix=CHECK-PPC64-V0
+// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:verbosity=2 %run %t 2>&1 | FileCheck %s --check-prefix=CHECK-PPC64
 // REQUIRES: powerpc64-supported-target
 
 #include <stdio.h>

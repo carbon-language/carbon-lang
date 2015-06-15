@@ -5,7 +5,7 @@
 // RUN: not %run %t 2>&1 | FileCheck --check-prefix=CHECK-CRASH %s
 
 // RUN: echo "interceptor_via_lib:"`basename %dynamiclib` > %t.supp
-// RUN: ASAN_OPTIONS="suppressions='%t.supp'" %run %t 2>&1 | FileCheck --check-prefix=CHECK-IGNORE %s
+// RUN: env ASAN_OPTIONS="$ASAN_OPTIONS:suppressions='%t.supp'" %run %t 2>&1 | FileCheck --check-prefix=CHECK-IGNORE %s
 
 // XFAIL: android
 

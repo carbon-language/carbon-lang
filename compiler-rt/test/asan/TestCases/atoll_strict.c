@@ -1,14 +1,14 @@
 // Test strict_string_checks option in atoll function
 // RUN: %clang_asan %s -o %t
 // RUN: %run %t test1 2>&1
-// RUN: ASAN_OPTIONS=strict_string_checks=false %run %t test1 2>&1
-// RUN: ASAN_OPTIONS=strict_string_checks=true not %run %t test1 2>&1 | FileCheck %s --check-prefix=CHECK1
+// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:strict_string_checks=false %run %t test1 2>&1
+// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:strict_string_checks=true not %run %t test1 2>&1 | FileCheck %s --check-prefix=CHECK1
 // RUN: %run %t test2 2>&1
-// RUN: ASAN_OPTIONS=strict_string_checks=false %run %t test2 2>&1
-// RUN: ASAN_OPTIONS=strict_string_checks=true not %run %t test2 2>&1 | FileCheck %s --check-prefix=CHECK2
+// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:strict_string_checks=false %run %t test2 2>&1
+// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:strict_string_checks=true not %run %t test2 2>&1 | FileCheck %s --check-prefix=CHECK2
 // RUN: %run %t test3 2>&1
-// RUN: ASAN_OPTIONS=strict_string_checks=false %run %t test3 2>&1
-// RUN: ASAN_OPTIONS=strict_string_checks=true not %run %t test3 2>&1 | FileCheck %s --check-prefix=CHECK3
+// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:strict_string_checks=false %run %t test3 2>&1
+// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:strict_string_checks=true not %run %t test3 2>&1 | FileCheck %s --check-prefix=CHECK3
 
 #include <assert.h>
 #include <stdlib.h>

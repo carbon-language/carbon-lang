@@ -2,7 +2,7 @@
 // symbolizer still works.
 
 // RUN: rm -f %t.log.*
-// RUN: %clangxx_asan -O0 %s -o %t 2>&1 && ASAN_OPTIONS=log_path=%t.log:verbosity=2 not %run %t 2>&1
+// RUN: %clangxx_asan -O0 %s -o %t 2>&1 && ASAN_OPTIONS=$ASAN_OPTIONS:log_path=%t.log:verbosity=2 not %run %t 2>&1
 // RUN: FileCheck %s --check-prefix=CHECK-FILE < %t.log.*
 
 #include <assert.h>

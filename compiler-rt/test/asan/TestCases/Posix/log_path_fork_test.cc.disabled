@@ -1,7 +1,7 @@
 // RUN: %clangxx_asan  %s -o %t
 // RUN: rm -f %t.log.*
 // Set verbosity to 1 so that the log files are opened prior to fork().
-// RUN: env ASAN_OPTIONS="log_path=%t.log verbosity=1" not %run %t 2> %t.out
+// RUN: env ASAN_OPTIONS="$ASAN_OPTIONS:log_path=%t.log verbosity=1" not %run %t 2> %t.out
 // RUN: for f in %t.log.* ; do FileCheck %s < $f; done
 // RUN: [ `ls %t.log.* | wc -l` == 2 ]
 

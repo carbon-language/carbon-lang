@@ -1,7 +1,7 @@
 // RUN: %clangxx_asan -fsanitize-coverage=func %s -o %t
 // RUN: rm -rf %T/coverage-fork-direct
 // RUN: mkdir -p %T/coverage-fork-direct && cd %T/coverage-fork-direct
-// RUN: (ASAN_OPTIONS=coverage=1:coverage_direct=1:verbosity=1 %run %t; \
+// RUN: (ASAN_OPTIONS=$ASAN_OPTIONS:coverage=1:coverage_direct=1:verbosity=1 %run %t; \
 // RUN:  %sancov rawunpack *.sancov.raw; %sancov print *.sancov) 2>&1
 //
 // XFAIL: android

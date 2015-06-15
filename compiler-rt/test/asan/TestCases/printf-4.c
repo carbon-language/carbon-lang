@@ -1,8 +1,8 @@
 // RUN: %clang_asan -O2 %s -o %t
 // We need replace_str=0 and replace_intrin=0 to avoid reporting errors in
 // strlen() and memcpy() called by puts().
-// RUN: env ASAN_OPTIONS=replace_str=0:replace_intrin=0:check_printf=1 not %run %t 2>&1 | FileCheck --check-prefix=CHECK-ON %s
-// RUN: env ASAN_OPTIONS=replace_str=0:replace_intrin=0 not %run %t 2>&1 | FileCheck --check-prefix=CHECK-ON %s
+// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:replace_str=0:replace_intrin=0:check_printf=1 not %run %t 2>&1 | FileCheck --check-prefix=CHECK-ON %s
+// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:replace_str=0:replace_intrin=0 not %run %t 2>&1 | FileCheck --check-prefix=CHECK-ON %s
 
 // FIXME: printf is not intercepted on Windows yet.
 // XFAIL: win32

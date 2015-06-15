@@ -1,6 +1,6 @@
 // RUN: %clang_asan -O2 %s -o %t
-// RUN: env ASAN_OPTIONS=check_printf=1 not %run %t 2>&1 | FileCheck --check-prefix=CHECK-ON %s
-// RUN: env ASAN_OPTIONS=check_printf=0 %run %t 2>&1 | FileCheck --check-prefix=CHECK-OFF %s
+// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:check_printf=1 not %run %t 2>&1 | FileCheck --check-prefix=CHECK-ON %s
+// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:check_printf=0 %run %t 2>&1 | FileCheck --check-prefix=CHECK-OFF %s
 // RUN: not %run %t 2>&1 | FileCheck --check-prefix=CHECK-ON %s
 
 // FIXME: printf is not intercepted on Windows yet.

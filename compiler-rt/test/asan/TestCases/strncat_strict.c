@@ -1,11 +1,11 @@
 // Test strict_string_checks option in strncat function
 // RUN: %clang_asan %s -o %t
 // RUN: not %run %t test1 2>&1 | FileCheck %s --check-prefix=CHECK1-NONSTRICT --check-prefix=CHECK1
-// RUN: ASAN_OPTIONS=strict_string_checks=false not  %run %t test1 2>&1 | FileCheck %s --check-prefix=CHECK1-NONSTRICT --check-prefix=CHECK1
-// RUN: ASAN_OPTIONS=strict_string_checks=true not %run %t test1 2>&1 | FileCheck %s --check-prefix=CHECK1-STRICT --check-prefix=CHECK1
+// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:strict_string_checks=false not  %run %t test1 2>&1 | FileCheck %s --check-prefix=CHECK1-NONSTRICT --check-prefix=CHECK1
+// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:strict_string_checks=true not %run %t test1 2>&1 | FileCheck %s --check-prefix=CHECK1-STRICT --check-prefix=CHECK1
 // RUN: not %run %t test2 2>&1 | FileCheck %s --check-prefix=CHECK2-NONSTRICT --check-prefix=CHECK2
-// RUN: ASAN_OPTIONS=strict_string_checks=false not  %run %t test2 2>&1 | FileCheck %s --check-prefix=CHECK2-NONSTRICT --check-prefix=CHECK2
-// RUN: ASAN_OPTIONS=strict_string_checks=true not %run %t test2 2>&1 | FileCheck %s --check-prefix=CHECK2-STRICT --check-prefix=CHECK2
+// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:strict_string_checks=false not  %run %t test2 2>&1 | FileCheck %s --check-prefix=CHECK2-NONSTRICT --check-prefix=CHECK2
+// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:strict_string_checks=true not %run %t test2 2>&1 | FileCheck %s --check-prefix=CHECK2-STRICT --check-prefix=CHECK2
 
 #include <assert.h>
 #include <stdlib.h>

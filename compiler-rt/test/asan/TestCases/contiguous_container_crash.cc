@@ -2,7 +2,7 @@
 // RUN: not %run %t crash 2>&1 | FileCheck --check-prefix=CHECK-CRASH %s
 // RUN: not %run %t bad-bounds 2>&1 | FileCheck --check-prefix=CHECK-BAD-BOUNDS %s
 // RUN: not %run %t bad-alignment 2>&1 | FileCheck --check-prefix=CHECK-BAD-ALIGNMENT %s
-// RUN: env ASAN_OPTIONS=detect_container_overflow=0 %run %t crash
+// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:detect_container_overflow=0 %run %t crash
 //
 // Test crash due to __sanitizer_annotate_contiguous_container.
 

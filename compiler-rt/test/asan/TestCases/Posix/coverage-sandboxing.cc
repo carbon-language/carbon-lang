@@ -1,6 +1,6 @@
 // RUN: %clangxx_asan -fsanitize-coverage=bb -DSHARED %s -shared -o %dynamiclib -fPIC %ld_flags_rpath_so
 // RUN: %clangxx_asan -fsanitize-coverage=func %s -o %t %ld_flags_rpath_exe
-// RUN: export ASAN_OPTIONS=coverage=1:verbosity=1
+// RUN: export ASAN_OPTIONS=$ASAN_OPTIONS:coverage=1:verbosity=1
 // RUN: rm -rf %T/coverage_sandboxing_test
 // RUN: mkdir %T/coverage_sandboxing_test && cd %T/coverage_sandboxing_test
 // RUN: mkdir vanilla && cd vanilla

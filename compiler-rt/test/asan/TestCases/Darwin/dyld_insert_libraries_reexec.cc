@@ -7,10 +7,10 @@
 // RUN:   | sed -e 's/.*"\(.*libclang_rt.asan_osx_dynamic.dylib\)".*/\1/'` \
 // RUN:   %T/dyld_insert_libraries_reexec/libclang_rt.asan_osx_dynamic.dylib
 // RUN: %clangxx_asan %s -o %T/dyld_insert_libraries_reexec/a.out
-// RUN: DYLD_INSERT_LIBRARIES=@executable_path/libclang_rt.asan_osx_dynamic.dylib \
-// RUN:   ASAN_OPTIONS=verbosity=1 %run %T/dyld_insert_libraries_reexec/a.out 2>&1 \
+// RUN: env DYLD_INSERT_LIBRARIES=@executable_path/libclang_rt.asan_osx_dynamic.dylib \
+// RUN:   ASAN_OPTIONS=$ASAN_OPTIONS:verbosity=1 %run %T/dyld_insert_libraries_reexec/a.out 2>&1 \
 // RUN:   | FileCheck %s
-// RUN: ASAN_OPTIONS=verbosity=1 %run %T/dyld_insert_libraries_reexec/a.out 2>&1 \
+// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:verbosity=1 %run %T/dyld_insert_libraries_reexec/a.out 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-NOINSERT %s
 
 #include <stdio.h>

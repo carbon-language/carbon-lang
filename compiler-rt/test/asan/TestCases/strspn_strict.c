@@ -1,7 +1,7 @@
 // Test strict_str`ing_checks option in strspn function
 // RUN: %clang_asan %s -o %t && %run %t 2>&1
-// RUN: ASAN_OPTIONS=strict_string_checks=false %run %t 2>&1
-// RUN: ASAN_OPTIONS=strict_string_checks=true not %run %t 2>&1 | FileCheck %s
+// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:strict_string_checks=false %run %t 2>&1
+// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:strict_string_checks=true not %run %t 2>&1 | FileCheck %s
 
 #include <assert.h>
 #include <stdlib.h>

@@ -1,5 +1,5 @@
-// RUN: %clangxx_asan -O0 -g %s -o %t && ASAN_OPTIONS=handle_ioctl=1 not %run %t 2>&1 | FileCheck %s
-// RUN: %clangxx_asan -O3 -g %s -o %t && ASAN_OPTIONS=handle_ioctl=1 not %run %t 2>&1 | FileCheck %s
+// RUN: %clangxx_asan -O0 -g %s -o %t && ASAN_OPTIONS=$ASAN_OPTIONS:handle_ioctl=1 not %run %t 2>&1 | FileCheck %s
+// RUN: %clangxx_asan -O3 -g %s -o %t && ASAN_OPTIONS=$ASAN_OPTIONS:handle_ioctl=1 not %run %t 2>&1 | FileCheck %s
 
 // RUN: %clangxx_asan -O0 -g %s -o %t && %run %t
 // RUN: %clangxx_asan -O3 -g %s -o %t && %run %t

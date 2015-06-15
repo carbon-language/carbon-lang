@@ -3,7 +3,7 @@
 
 // RUN: %clangxx_asan -O0 -DSHARED_LIB %s -fPIC -shared -o %t-so.so
 // RUN: %clangxx_asan -O0 %s %libdl -Wl,--export-dynamic -o %t
-// RUN: env ASAN_OPTIONS=strict_init_order=true %run %t 2>&1
+// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:strict_init_order=true %run %t 2>&1
 
 #if defined(SHARED_LIB)
 #include <stdio.h>

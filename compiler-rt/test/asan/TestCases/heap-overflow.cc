@@ -2,7 +2,7 @@
 // RUN: %clangxx_asan -O1 %s -o %t && not %run %t 2>&1 | FileCheck %s
 // RUN: %clangxx_asan -O2 %s -o %t && not %run %t 2>&1 | FileCheck %s
 // RUN: %clangxx_asan -O3 %s -o %t && not %run %t 2>&1 | FileCheck %s
-// RUN: env ASAN_OPTIONS=print_stats=1 not %run %t 2>&1 | FileCheck %s
+// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:print_stats=1 not %run %t 2>&1 | FileCheck %s
 
 // FIXME: Fix this test under GCC.
 // REQUIRES: Clang

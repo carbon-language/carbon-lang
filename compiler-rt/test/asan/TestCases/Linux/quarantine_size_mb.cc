@@ -1,10 +1,10 @@
 // Test quarantine_size_mb (and the deprecated quarantine_size)
 // RUN: %clangxx_asan  %s -o %t
-// RUN: ASAN_OPTIONS=quarantine_size=10485760:verbosity=1:hard_rss_limit_mb=50 %run %t  2>&1  | FileCheck %s  --check-prefix=Q10
-// RUN: ASAN_OPTIONS=quarantine_size_mb=10:verbosity=1:hard_rss_limit_mb=50    %run %t  2>&1  | FileCheck %s  --check-prefix=Q10
-// RUN: ASAN_OPTIONS=quarantine_size_mb=10:quarantine_size=20:verbosity=1  not  %run %t  2>&1 | FileCheck %s  --check-prefix=BOTH
-// RUN: ASAN_OPTIONS=quarantine_size_mb=1000:hard_rss_limit_mb=50 not  %run %t           2>&1 | FileCheck %s  --check-prefix=RSS_LIMIT
-// RUN: ASAN_OPTIONS=hard_rss_limit_mb=50                         not  %run %t           2>&1 | FileCheck %s  --check-prefix=RSS_LIMIT
+// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:quarantine_size=10485760:verbosity=1:hard_rss_limit_mb=50 %run %t  2>&1 | FileCheck %s  --check-prefix=Q10
+// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:quarantine_size_mb=10:verbosity=1:hard_rss_limit_mb=50    %run %t  2>&1 | FileCheck %s  --check-prefix=Q10
+// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:quarantine_size_mb=10:quarantine_size=20:verbosity=1  not %run %t  2>&1 | FileCheck %s  --check-prefix=BOTH
+// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:quarantine_size_mb=1000:hard_rss_limit_mb=50 not  %run %t          2>&1 | FileCheck %s  --check-prefix=RSS_LIMIT
+// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:hard_rss_limit_mb=50                         not  %run %t          2>&1 | FileCheck %s  --check-prefix=RSS_LIMIT
 #include <string.h>
 char *g;
 

@@ -5,17 +5,17 @@
 // RUN: %clangxx_asan -O0 -DSHARED_LIB %s -fPIC -shared -o %t-so.so
 // RUN: %clangxx -O0 %s -c -o %t.o
 // RUN: %clangxx_asan -O0 %t.o %libdl -o %t
-// RUN: ASAN_OPTIONS=start_deactivated=1,allocator_may_return_null=0 \
+// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:start_deactivated=1,allocator_may_return_null=0 \
 // RUN:   ASAN_ACTIVATION_OPTIONS=allocator_may_return_null=1 not %run %t 2>&1 | FileCheck %s --check-prefix=CHECK
-// RUN: ASAN_OPTIONS=start_deactivated=1 \
+// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:start_deactivated=1 \
 // RUN:   ASAN_ACTIVATION_OPTIONS=help=1 not %run %t 2>&1 | FileCheck %s --check-prefix=CHECK-HELP
-// RUN: ASAN_OPTIONS=start_deactivated=1,verbosity=1 \
+// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:start_deactivated=1,verbosity=1 \
 // RUN:   ASAN_ACTIVATION_OPTIONS=help=1,handle_segv=0 not %run %t 2>&1 | FileCheck %s --check-prefix=CHECK-UNSUPPORTED
-// RUN: ASAN_OPTIONS=start_deactivated=1 \
+// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:start_deactivated=1 \
 // RUN:   ASAN_ACTIVATION_OPTIONS=help=1,handle_segv=0 not %run %t 2>&1 | FileCheck %s --check-prefix=CHECK-UNSUPPORTED-V0
 
 // Check that verbosity=1 in activation flags affects reporting of unrecognized activation flags.
-// RUN: ASAN_OPTIONS=start_deactivated=1 \
+// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:start_deactivated=1 \
 // RUN:   ASAN_ACTIVATION_OPTIONS=help=1,handle_segv=0,verbosity=1 not %run %t 2>&1 | FileCheck %s --check-prefix=CHECK-UNSUPPORTED
 
 // XFAIL: arm-linux-gnueabi

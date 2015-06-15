@@ -3,7 +3,7 @@
 // RUN: %clangxx_asan -fsanitize-coverage=func -DSHARED %s -shared -o %dynamiclib1 -fPIC
 // RUN: %clangxx_asan -fsanitize-coverage=func -DSHARED %s -shared -o %dynamiclib2 -fPIC
 // RUN: %clangxx_asan -fsanitize-coverage=func %s %libdl -o %t
-// RUN: export ASAN_OPTIONS=coverage=1:verbosity=1
+// RUN: export ASAN_OPTIONS=$ASAN_OPTIONS:coverage=1:verbosity=1
 // RUN: mkdir -p %T/coverage-module-unloaded && cd %T/coverage-module-unloaded
 // RUN: %run %t %dynamiclib1 %dynamiclib2 2>&1        | FileCheck %s
 // RUN: %run %t %dynamiclib1 %dynamiclib2 foo 2>&1    | FileCheck %s

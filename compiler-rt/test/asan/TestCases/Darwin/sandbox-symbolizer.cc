@@ -6,11 +6,11 @@
 // RUN: %clangxx_asan -O0 %s -o %t 
 // RUN: not %run sandbox-exec -p '(version 1)(allow default)(deny process-fork)' %t 2>&1 | FileCheck %s
 // RUN: not %run sandbox-exec -p '(version 1)(allow default)(deny mach-priv-task-port)' %t 2>&1 | FileCheck %s
-// RUN: ASAN_SYMBOLIZER_PATH="" not %run sandbox-exec -p '(version 1)(allow default)(deny mach-priv-task-port)' %t 2>&1 | FileCheck %s
+// RUN: env ASAN_SYMBOLIZER_PATH="" not %run sandbox-exec -p '(version 1)(allow default)(deny mach-priv-task-port)' %t 2>&1 | FileCheck %s
 // RUN: %clangxx_asan -O3 %s -o %t 
 // RUN: not %run sandbox-exec -p '(version 1)(allow default)(deny process-fork)' %t 2>&1 | FileCheck %s
 // RUN: not %run sandbox-exec -p '(version 1)(allow default)(deny mach-priv-task-port)' %t 2>&1 | FileCheck %s
-// RUN: ASAN_SYMBOLIZER_PATH="" not %run sandbox-exec -p '(version 1)(allow default)(deny mach-priv-task-port)' %t 2>&1 | FileCheck %s
+// RUN: env ASAN_SYMBOLIZER_PATH="" not %run sandbox-exec -p '(version 1)(allow default)(deny mach-priv-task-port)' %t 2>&1 | FileCheck %s
 
 #include <stdlib.h>
 int main() {

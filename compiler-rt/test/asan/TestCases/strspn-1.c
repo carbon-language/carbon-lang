@@ -2,7 +2,7 @@
 // RUN: %clang_asan %s -o %t && ASAN_OPTIONS=strict_string_checks=true not %run %t 2>&1 | FileCheck %s
 
 // Test intercept_strspn asan option
-// RUN: ASAN_OPTIONS=intercept_strspn=false %run %t 2>&1
+// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:intercept_strspn=false %run %t 2>&1
 
 #include <assert.h>
 #include <string.h>

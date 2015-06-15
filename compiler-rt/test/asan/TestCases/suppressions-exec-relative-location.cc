@@ -9,18 +9,18 @@
 // RUN: %clangxx_asan -O0 %s -o %T/suppressions-exec-relative-location/exec
 // RUN: echo "interceptor_via_fun:crash_function" > \
 // RUN:   %T/suppressions-exec-relative-location/supp.txt
-// RUN: ASAN_OPTIONS="suppressions=supp.txt" \
+// RUN: env ASAN_OPTIONS="$ASAN_OPTIONS:suppressions=supp.txt" \
 // RUN:   %run %T/suppressions-exec-relative-location/exec 2>&1 | \
 // RUN:   FileCheck --check-prefix=CHECK-IGNORE %s
 // RUN: rm -rf %T/suppressions-exec-relative-location
 
 // If the wrong absolute path is given, we don't try to construct
 // a relative path with it.
-// RUN: ASAN_OPTIONS="suppressions='/absolute/path'" not %run %t 2>&1 | \
+// RUN: env ASAN_OPTIONS="$ASAN_OPTIONS:suppressions='/absolute/path'" not %run %t 2>&1 | \
 // RUN:   FileCheck --check-prefix=CHECK-WRONG-FILE-NAME %s
 
 // Test that we reject directory as filename.
-// RUN: ASAN_OPTIONS="suppressions='folder/only/'" not %run %t 2>&1 | \
+// RUN: env ASAN_OPTIONS="$ASAN_OPTIONS:suppressions='folder/only/'" not %run %t 2>&1 | \
 // RUN:   FileCheck --check-prefix=CHECK-WRONG-FILE-NAME %s
 
 // XFAIL: android

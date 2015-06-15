@@ -1,7 +1,7 @@
 // Test __sanitizer_reset_coverage().
 
 // RUN: %clangxx_asan -fsanitize-coverage=func %s -o %t
-// RUN: ASAN_OPTIONS=coverage=1 %run %t
+// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:coverage=1 %run %t
 
 #include <sanitizer/coverage_interface.h>
 #include <stdio.h>

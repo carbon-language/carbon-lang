@@ -3,16 +3,16 @@
 // RUN: rm -rf $DIR
 // RUN: mkdir $DIR
 // RUN: %clangxx_asan -fsanitize-coverage=func %s -o %t
-// RUN: ASAN_OPTIONS=coverage_dir=$DIR:coverage=1:coverage_order_pcs=0 %run %t
+// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:coverage_dir=$DIR:coverage=1:coverage_order_pcs=0 %run %t
 // RUN: mv $DIR/*sancov $DIR/A
 
-// RUN: ASAN_OPTIONS=coverage_dir=$DIR:coverage=1:coverage_order_pcs=0 %run %t 1
+// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:coverage_dir=$DIR:coverage=1:coverage_order_pcs=0 %run %t 1
 // RUN: mv $DIR/*sancov $DIR/B
 
-// RUN: ASAN_OPTIONS=coverage_dir=$DIR:coverage=1:coverage_order_pcs=1 %run %t
+// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:coverage_dir=$DIR:coverage=1:coverage_order_pcs=1 %run %t
 // RUN: mv $DIR/*sancov $DIR/C
 
-// RUN: ASAN_OPTIONS=coverage_dir=$DIR:coverage=1:coverage_order_pcs=1 %run %t 1
+// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:coverage_dir=$DIR:coverage=1:coverage_order_pcs=1 %run %t 1
 // RUN: mv $DIR/*sancov $DIR/D
 //
 // RUN: (%sancov print $DIR/A; %sancov print $DIR/B; %sancov print $DIR/C; %sancov print $DIR/D) | FileCheck %s

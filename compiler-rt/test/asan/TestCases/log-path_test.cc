@@ -9,21 +9,21 @@
 
 // Good log_path.
 // RUN: rm -f %t.log.*
-// RUN: env ASAN_OPTIONS=log_path=%t.log not %run %t 2> %t.out
+// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:log_path=%t.log not %run %t 2> %t.out
 // RUN: FileCheck %s --check-prefix=CHECK-ERROR < %t.log.*
 
 // Invalid log_path.
-// RUN: env ASAN_OPTIONS=log_path=/dev/null/INVALID not %run %t 2> %t.out
+// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:log_path=/dev/null/INVALID not %run %t 2> %t.out
 // RUN: FileCheck %s --check-prefix=CHECK-INVALID < %t.out
 
 // Too long log_path.
-// RUN: env ASAN_OPTIONS=log_path=`for((i=0;i<10000;i++)); do echo -n $i; done` \
+// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:log_path=`for((i=0;i<10000;i++)); do echo -n $i; done` \
 // RUN:   not %run %t 2> %t.out
 // RUN: FileCheck %s --check-prefix=CHECK-LONG < %t.out
 
 // Run w/o errors should not produce any log.
 // RUN: rm -f %t.log.*
-// RUN: env ASAN_OPTIONS=log_path=%t.log  %run %t ARG ARG ARG
+// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:log_path=%t.log  %run %t ARG ARG ARG
 // RUN: not cat %t.log.*
 
 // FIXME: log_path is not supported on Windows yet.

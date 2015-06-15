@@ -1,7 +1,7 @@
 // Test to make sure basic initialization order errors are caught.
 
 // RUN: %clangxx_asan -O0 %s %p/Helpers/initialization-bug-extra2.cc -o %t-INIT-ORDER-EXE
-// RUN: env ASAN_OPTIONS=check_initialization_order=true not %run %t-INIT-ORDER-EXE 2>&1 | FileCheck %s
+// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:check_initialization_order=true not %run %t-INIT-ORDER-EXE 2>&1 | FileCheck %s
 
 // Do not test with optimization -- the error may be optimized away.
 
