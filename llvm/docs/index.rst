@@ -260,6 +260,7 @@ For API clients and LLVM developers.
    Statepoints
    MergeFunctions
    BitSets
+   FaultMaps
 
 :doc:`WritingAnLLVMPass`
    Information on how to write LLVM transformations and analyses.
@@ -361,6 +362,9 @@ For API clients and LLVM developers.
 
 :doc:`InAlloca`
   Description of the ``inalloca`` argument attribute.
+
+:doc:`FaultMaps`
+  LLVM support for folding control flow into faulting machine instructions.
 
 Development Process Documentation
 =================================
