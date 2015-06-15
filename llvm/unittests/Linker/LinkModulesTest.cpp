@@ -216,7 +216,7 @@ TEST_F(LinkModuleTest, CAPIFailure) {
                                     LLVMLinkerDestroySource, &errout);
   EXPECT_EQ(1, result);
   EXPECT_STREQ("Linking globals named 'foo': symbol multiply defined!", errout);
-  std::free(errout);
+  LLVMDisposeMessage(errout);
 }
 
 } // end anonymous namespace
