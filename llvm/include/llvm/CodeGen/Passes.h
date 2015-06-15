@@ -552,6 +552,10 @@ namespace llvm {
   /// MachineCSE - This pass performs global CSE on machine instructions.
   extern char &MachineCSEID;
 
+  /// ImplicitNullChecks - This pass folds null pointer checks into nearby
+  /// memory operations.
+  extern char &ImplicitNullChecksID;
+
   /// MachineLICM - This pass performs LICM on machine instructions.
   extern char &MachineLICMID;
 

@@ -72,6 +72,10 @@ static cl::opt<bool> DisableCopyProp("disable-copyprop", cl::Hidden,
     cl::desc("Disable Copy Propagation pass"));
 static cl::opt<bool> DisablePartialLibcallInlining("disable-partial-libcall-inlining",
     cl::Hidden, cl::desc("Disable Partial Libcall Inlining"));
+static cl::opt<bool> EnableImplicitNullChecks(
+    "enable-implicit-null-checks",
+    cl::desc("Fold null checks into faulting memory operations"),
+    cl::init(false));
 static cl::opt<bool> PrintLSR("print-lsr-output", cl::Hidden,
     cl::desc("Print LLVM IR produced by the loop-reduce pass"));
 static cl::opt<bool> PrintISelInput("print-isel-input", cl::Hidden,
@@ -542,6 +546,9 @@ void TargetPassConfig::addMachinePasses() {
 
   // Run pre-sched2 passes.
   addPreSched2();
+
+  if (EnableImplicitNullChecks)
+    addPass(&ImplicitNullChecksID);
 
   // Second pass scheduler.
   if (getOptLevel() != CodeGenOpt::None) {

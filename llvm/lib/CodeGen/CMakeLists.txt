@@ -27,6 +27,7 @@ add_llvm_library(LLVMCodeGen
   GCStrategy.cpp
   GlobalMerge.cpp
   IfConversion.cpp
+  ImplicitNullChecks.cpp
   InlineSpiller.cpp
   InterferenceCache.cpp
   IntrinsicLowering.cpp
