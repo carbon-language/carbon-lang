@@ -1190,6 +1190,7 @@ static bool HasFeature(const Preprocessor &PP, const IdentifierInfo *II) {
       .Case("is_trivially_copyable", LangOpts.CPlusPlus)
       .Case("is_union", LangOpts.CPlusPlus)
       .Case("modules", LangOpts.Modules)
+      .Case("safe_stack", LangOpts.Sanitize.has(SanitizerKind::SafeStack))
       .Case("tls", PP.getTargetInfo().isTLSSupported())
       .Case("underlying_type", LangOpts.CPlusPlus)
       .Default(false);

@@ -980,6 +980,8 @@ are listed below.
       flow analysis.
    -  ``-fsanitize=cfi``: :doc:`control flow integrity <ControlFlowIntegrity>`
       checks. Implies ``-flto``.
+   -  ``-fsanitize=safe-stack``: :doc:`safe stack <SafeStack>`
+      protection against stack-based memory corruption errors.
 
    The following more fine-grained checks are also available:
 

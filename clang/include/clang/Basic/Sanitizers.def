@@ -87,6 +87,9 @@ SANITIZER("cfi-vcall", CFIVCall)
 SANITIZER_GROUP("cfi", CFI,
                 CFIDerivedCast | CFIUnrelatedCast | CFINVCall | CFIVCall)
 
+// Safe Stack
+SANITIZER("safe-stack", SafeStack)
+
 // -fsanitize=undefined-trap includes sanitizers from -fsanitize=undefined
 // that can be used without runtime support, generally by providing extra
 // -fsanitize-undefined-trap-on-error flag.

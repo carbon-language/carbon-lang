@@ -2433,6 +2433,8 @@ collectSanitizerRuntimes(const ToolChain &TC, const ArgList &Args,
     if (SanArgs.linkCXXRuntimes())
       StaticRuntimes.push_back("ubsan_standalone_cxx");
   }
+  if (SanArgs.needsSafeStackRt())
+    StaticRuntimes.push_back("safestack");
 }
 
 // Should be called before we add system libraries (C++ ABI, libstdc++/libc++,
@@ -4001,7 +4003,12 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   // -stack-protector=0 is default.
   unsigned StackProtectorLevel = 0;
-  if (Arg *A = Args.getLastArg(options::OPT_fno_stack_protector,
+  if (getToolChain().getSanitizerArgs().needsSafeStackRt()) {
+    Args.ClaimAllArgs(options::OPT_fno_stack_protector);
+    Args.ClaimAllArgs(options::OPT_fstack_protector_all);
+    Args.ClaimAllArgs(options::OPT_fstack_protector_strong);
+    Args.ClaimAllArgs(options::OPT_fstack_protector);
+  } else if (Arg *A = Args.getLastArg(options::OPT_fno_stack_protector,
                                options::OPT_fstack_protector_all,
                                options::OPT_fstack_protector_strong,
                                options::OPT_fstack_protector)) {
@@ -6363,6 +6370,15 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
   if (!Args.hasArg(options::OPT_nostdlib) &&
       !Args.hasArg(options::OPT_nostartfiles))
     getMachOToolChain().addStartObjectFileArgs(Args, CmdArgs);
+
+  // SafeStack requires its own runtime libraries
+  // These libraries should be linked first, to make sure the
+  // __safestack_init constructor executes before everything else
+  if (getToolChain().getSanitizerArgs().needsSafeStackRt()) {
+    getMachOToolChain().AddLinkRuntimeLib(Args, CmdArgs,
+                                          "libclang_rt.safestack_osx.a",
+                                          /*AlwaysLink=*/true);
+  }
 
   Args.AddAllArgs(CmdArgs, options::OPT_L);
 

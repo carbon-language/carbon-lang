@@ -47,6 +47,9 @@ class SanitizerArgs {
   }
   bool needsUbsanRt() const;
   bool needsDfsanRt() const { return Sanitizers.has(SanitizerKind::DataFlow); }
+  bool needsSafeStackRt() const {
+    return Sanitizers.has(SanitizerKind::SafeStack);
+  }
 
   bool requiresPIE() const;
   bool needsUnwindTables() const;
