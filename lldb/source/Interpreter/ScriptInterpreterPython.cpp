@@ -45,6 +45,8 @@
 #include "lldb/Host/windows/ConnectionGenericFileWindows.h"
 #endif
 
+#include "llvm/ADT/StringRef.h"
+
 using namespace lldb;
 using namespace lldb_private;
 
@@ -2615,6 +2617,16 @@ ScriptInterpreterPython::LoadScriptingModule(const char *pathname, bool can_relo
 bool
 ScriptInterpreterPython::IsReservedWord (const char* word)
 {
+    if (!word || !word[0])
+        return false;
+    
+    llvm::StringRef word_sr(word);
+
+    // filter out a few characters that would just confuse us
+    // and that are clearly not keyword material anyway
+    if (word_sr.find_first_of("'\"") != llvm::StringRef::npos)
+        return false;
+    
     StreamString command_stream;
     command_stream.Printf("keyword.iskeyword('%s')", word);
     bool result;
