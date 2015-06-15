@@ -156,6 +156,9 @@ bool MIRParserImpl::parseMachineFunction(yaml::Input &In) {
   if (In.error())
     return true;
   auto FunctionName = MF->Name;
+  if (Functions.find(FunctionName) != Functions.end())
+    return error(Twine("redefinition of machine function '") + FunctionName +
+                 "'");
   Functions.insert(std::make_pair(FunctionName, std::move(MF)));
   return false;
 }
