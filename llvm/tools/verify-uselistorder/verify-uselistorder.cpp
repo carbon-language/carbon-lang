@@ -159,14 +159,14 @@ std::unique_ptr<Module> TempFile::readBitcode(LLVMContext &Context) const {
   }
 
   MemoryBuffer *Buffer = BufferOr.get().get();
-  ErrorOr<Module *> ModuleOr =
+  ErrorOr<std::unique_ptr<Module>> ModuleOr =
       parseBitcodeFile(Buffer->getMemBufferRef(), Context);
   if (!ModuleOr) {
     errs() << "verify-uselistorder: error: " << ModuleOr.getError().message()
            << "\n";
     return nullptr;
   }
-  return std::unique_ptr<Module>(ModuleOr.get());
+  return std::move(ModuleOr.get());
 }
 
 std::unique_ptr<Module> TempFile::readAssembly(LLVMContext &Context) const {

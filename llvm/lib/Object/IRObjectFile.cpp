@@ -304,12 +304,12 @@ llvm::object::IRObjectFile::create(MemoryBufferRef Object,
   std::unique_ptr<MemoryBuffer> Buff(
       MemoryBuffer::getMemBuffer(BCOrErr.get(), false));
 
-  ErrorOr<Module *> MOrErr =
+  ErrorOr<std::unique_ptr<Module>> MOrErr =
       getLazyBitcodeModule(std::move(Buff), Context, nullptr,
                            /*ShouldLazyLoadMetadata*/ true);
   if (std::error_code EC = MOrErr.getError())
     return EC;
 
-  std::unique_ptr<Module> M(MOrErr.get());
+  std::unique_ptr<Module> &M = MOrErr.get();
   return llvm::make_unique<IRObjectFile>(Object, std::move(M));
 }

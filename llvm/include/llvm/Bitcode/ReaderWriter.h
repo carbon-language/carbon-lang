@@ -32,7 +32,7 @@ namespace llvm {
   /// deserialization of function bodies. If ShouldLazyLoadMetadata is true,
   /// lazily load metadata as well. If successful, this moves Buffer. On
   /// error, this *does not* move Buffer.
-  ErrorOr<Module *>
+  ErrorOr<std::unique_ptr<Module>>
   getLazyBitcodeModule(std::unique_ptr<MemoryBuffer> &&Buffer,
                        LLVMContext &Context,
                        DiagnosticHandlerFunction DiagnosticHandler = nullptr,
@@ -52,7 +52,7 @@ namespace llvm {
                          DiagnosticHandlerFunction DiagnosticHandler = nullptr);
 
   /// Read the specified bitcode file, returning the module.
-  ErrorOr<Module *>
+  ErrorOr<std::unique_ptr<Module>>
   parseBitcodeFile(MemoryBufferRef Buffer, LLVMContext &Context,
                    DiagnosticHandlerFunction DiagnosticHandler = nullptr);
 

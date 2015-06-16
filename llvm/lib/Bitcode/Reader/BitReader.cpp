@@ -39,7 +39,7 @@ LLVMBool LLVMParseBitcodeInContext(LLVMContextRef ContextRef,
   raw_string_ostream Stream(Message);
   DiagnosticPrinterRawOStream DP(Stream);
 
-  ErrorOr<Module *> ModuleOrErr = parseBitcodeFile(
+  ErrorOr<std::unique_ptr<Module>> ModuleOrErr = parseBitcodeFile(
       Buf, Ctx, [&](const DiagnosticInfo &DI) { DI.print(DP); });
   if (ModuleOrErr.getError()) {
     if (OutMessage) {
@@ -50,7 +50,7 @@ LLVMBool LLVMParseBitcodeInContext(LLVMContextRef ContextRef,
     return 1;
   }
 
-  *OutModule = wrap(ModuleOrErr.get());
+  *OutModule = wrap(ModuleOrErr.get().release());
   return 0;
 }
 
@@ -64,7 +64,7 @@ LLVMBool LLVMGetBitcodeModuleInContext(LLVMContextRef ContextRef,
   std::string Message;
   std::unique_ptr<MemoryBuffer> Owner(unwrap(MemBuf));
 
-  ErrorOr<Module *> ModuleOrErr =
+  ErrorOr<std::unique_ptr<Module>> ModuleOrErr =
       getLazyBitcodeModule(std::move(Owner), *unwrap(ContextRef));
   Owner.release();
 
@@ -75,7 +75,7 @@ LLVMBool LLVMGetBitcodeModuleInContext(LLVMContextRef ContextRef,
     return 1;
   }
 
-  *OutM = wrap(ModuleOrErr.get());
+  *OutM = wrap(ModuleOrErr.get().release());
 
   return 0;
 

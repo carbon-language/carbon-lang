@@ -147,9 +147,10 @@ LTOModule *LTOModule::createInContext(const void *mem, size_t length,
   return makeLTOModule(Buffer, options, errMsg, Context);
 }
 
-static Module *parseBitcodeFileImpl(MemoryBufferRef Buffer,
-                                    LLVMContext &Context, bool ShouldBeLazy,
-                                    std::string &ErrMsg) {
+static std::unique_ptr<Module> parseBitcodeFileImpl(MemoryBufferRef Buffer,
+                                                    LLVMContext &Context,
+                                                    bool ShouldBeLazy,
+                                                    std::string &ErrMsg) {
 
   // Find the buffer.
   ErrorOr<MemoryBufferRef> MBOrErr =
@@ -168,22 +169,22 @@ static Module *parseBitcodeFileImpl(MemoryBufferRef Buffer,
 
   if (!ShouldBeLazy) {
     // Parse the full file.
-    ErrorOr<Module *> M =
+    ErrorOr<std::unique_ptr<Module>> M =
         parseBitcodeFile(*MBOrErr, Context, DiagnosticHandler);
     if (!M)
       return nullptr;
-    return *M;
+    return std::move(*M);
   }
 
   // Parse lazily.
   std::unique_ptr<MemoryBuffer> LightweightBuf =
       MemoryBuffer::getMemBuffer(*MBOrErr, false);
-  ErrorOr<Module *> M = getLazyBitcodeModule(std::move(LightweightBuf), Context,
-                                             DiagnosticHandler,
-                                             true/*ShouldLazyLoadMetadata*/);
+  ErrorOr<std::unique_ptr<Module>> M =
+      getLazyBitcodeModule(std::move(LightweightBuf), Context,
+                           DiagnosticHandler, true /*ShouldLazyLoadMetadata*/);
   if (!M)
     return nullptr;
-  return *M;
+  return std::move(*M);
 }
 
 LTOModule *LTOModule::makeLTOModule(MemoryBufferRef Buffer,
@@ -197,9 +198,9 @@ LTOModule *LTOModule::makeLTOModule(MemoryBufferRef Buffer,
 
   // If we own a context, we know this is being used only for symbol
   // extraction, not linking.  Be lazy in that case.
-  std::unique_ptr<Module> M(parseBitcodeFileImpl(
+  std::unique_ptr<Module> M = parseBitcodeFileImpl(
       Buffer, *Context,
-      /* ShouldBeLazy */ static_cast<bool>(OwnedContext), errMsg));
+      /* ShouldBeLazy */ static_cast<bool>(OwnedContext), errMsg);
   if (!M)
     return nullptr;
 

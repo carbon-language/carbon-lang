@@ -34,14 +34,14 @@ getLazyIRModule(std::unique_ptr<MemoryBuffer> Buffer, SMDiagnostic &Err,
                 LLVMContext &Context) {
   if (isBitcode((const unsigned char *)Buffer->getBufferStart(),
                 (const unsigned char *)Buffer->getBufferEnd())) {
-    ErrorOr<Module *> ModuleOrErr =
+    ErrorOr<std::unique_ptr<Module>> ModuleOrErr =
         getLazyBitcodeModule(std::move(Buffer), Context);
     if (std::error_code EC = ModuleOrErr.getError()) {
       Err = SMDiagnostic(Buffer->getBufferIdentifier(), SourceMgr::DK_Error,
                          EC.message());
       return nullptr;
     }
-    return std::unique_ptr<Module>(ModuleOrErr.get());
+    return std::move(ModuleOrErr.get());
   }
 
   return parseAssembly(Buffer->getMemBufferRef(), Err, Context);
@@ -67,13 +67,14 @@ std::unique_ptr<Module> llvm::parseIR(MemoryBufferRef Buffer, SMDiagnostic &Err,
                      TimePassesIsEnabled);
   if (isBitcode((const unsigned char *)Buffer.getBufferStart(),
                 (const unsigned char *)Buffer.getBufferEnd())) {
-    ErrorOr<Module *> ModuleOrErr = parseBitcodeFile(Buffer, Context);
+    ErrorOr<std::unique_ptr<Module>> ModuleOrErr =
+        parseBitcodeFile(Buffer, Context);
     if (std::error_code EC = ModuleOrErr.getError()) {
       Err = SMDiagnostic(Buffer.getBufferIdentifier(), SourceMgr::DK_Error,
                          EC.message());
       return nullptr;
     }
-    return std::unique_ptr<Module>(ModuleOrErr.get());
+    return std::move(ModuleOrErr.get());
   }
 
   return parseAssembly(Buffer, Err, Context);
