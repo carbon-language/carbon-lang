@@ -418,16 +418,17 @@ public:
   /// Emit reference to a ttype global with a specified encoding.
   void EmitTTypeReference(const GlobalValue *GV, unsigned Encoding) const;
 
-  /// Emit the 4-byte offset of Label from the start of its section.  This can
-  /// be done with a special directive if the target supports it (e.g. cygwin)
-  /// or by emitting it as an offset from a label at the start of the section.
-  void emitSectionOffset(const MCSymbol *Label) const;
+  /// Emit a reference to a symbol for use in dwarf. Different object formats
+  /// represent this in different ways. Some use a relocation others encode
+  /// the label offset in its section.
+  void emitDwarfSymbolReference(const MCSymbol *Label,
+                                bool ForceOffset = false) const;
 
   /// Emit the 4-byte offset of a string from the start of its section.
   ///
   /// When possible, emit a DwarfStringPool section offset without any
   /// relocations, and without using the symbol.  Otherwise, defers to \a
-  /// emitSectionOffset().
+  /// emitDwarfSymbolReference().
   void emitDwarfStringOffset(DwarfStringPoolEntryRef S) const;
 
   /// Get the value for DW_AT_APPLE_isa. Zero if no isa encoding specified.

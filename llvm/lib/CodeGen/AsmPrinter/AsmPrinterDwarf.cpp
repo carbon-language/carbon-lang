@@ -157,24 +157,20 @@ void AsmPrinter::EmitTTypeReference(const GlobalValue *GV,
     OutStreamer->EmitIntValue(0, GetSizeOfEncodedValue(Encoding));
 }
 
-/// EmitSectionOffset - Emit the 4-byte offset of Label from the start of its
-/// section.  This can be done with a special directive if the target supports
-/// it (e.g. cygwin) or by emitting it as an offset from a label at the start
-/// of the section.
-///
-/// SectionLabel is a temporary label emitted at the start of the section that
-/// Label lives in.
-void AsmPrinter::emitSectionOffset(const MCSymbol *Label) const {
-  // On COFF targets, we have to emit the special .secrel32 directive.
-  if (MAI->needsDwarfSectionOffsetDirective()) {
-    OutStreamer->EmitCOFFSecRel32(Label);
-    return;
-  }
+void AsmPrinter::emitDwarfSymbolReference(const MCSymbol *Label,
+                                          bool ForceOffset) const {
+  if (!ForceOffset) {
+    // On COFF targets, we have to emit the special .secrel32 directive.
+    if (MAI->needsDwarfSectionOffsetDirective()) {
+      OutStreamer->EmitCOFFSecRel32(Label);
+      return;
+    }
 
-  // If the format uses relocations with dwarf, refer to the symbol directly.
-  if (MAI->doesDwarfUseRelocationsAcrossSections()) {
-    OutStreamer->EmitSymbolValue(Label, 4);
-    return;
+    // If the format uses relocations with dwarf, refer to the symbol directly.
+    if (MAI->doesDwarfUseRelocationsAcrossSections()) {
+      OutStreamer->EmitSymbolValue(Label, 4);
+      return;
+    }
   }
 
   // Otherwise, emit it as a label difference from the start of the section.
@@ -183,7 +179,7 @@ void AsmPrinter::emitSectionOffset(const MCSymbol *Label) const {
 
 void AsmPrinter::emitDwarfStringOffset(DwarfStringPoolEntryRef S) const {
   if (MAI->doesDwarfUseRelocationsAcrossSections()) {
-    emitSectionOffset(S.getSymbol());
+    emitDwarfSymbolReference(S.getSymbol());
     return;
   }
 
