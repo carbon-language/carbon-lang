@@ -1262,8 +1262,40 @@ LazyValueInfo::getPredicateAt(unsigned Pred, Value *V, Constant *C,
                               Instruction *CxtI) {
   const DataLayout &DL = CxtI->getModule()->getDataLayout();
   LVILatticeVal Result = getCache(PImpl, AC, &DL, DT).getValueAt(V, CxtI);
+  Tristate Ret = getPredicateResult(Pred, C, Result, DL, TLI);
+  if (Ret != Unknown)
+    return Ret;
 
-  return getPredicateResult(Pred, C, Result, DL, TLI);
+  // TODO: Move this logic inside getValueAt so that it can be cached rather
+  // than re-queried on each call.  This would also allow us to merge the
+  // underlying lattice values to get more information 
+  if (CxtI) {
+    // For a comparison where the V is outside this block, it's possible
+    // that we've branched on it before.  Look to see if the value is known
+    // on all incoming edges.
+    BasicBlock *BB = CxtI->getParent();
+    pred_iterator PI = pred_begin(BB), PE = pred_end(BB);
+    if (PI != PE &&
+        (!isa<Instruction>(V) ||
+         cast<Instruction>(V)->getParent() != BB)) {
+      // For predecessor edge, determine if the comparison is true or false
+      // on that edge.  If they're all true or all false, we can conclude 
+      // the value of the comparison in this block.
+      Tristate Baseline = getPredicateOnEdge(Pred, V, C, *PI, BB, CxtI);
+      if (Baseline != Unknown) {
+        // Check that all remaining incoming values match the first one.
+        while (++PI != PE) {
+          Tristate Ret = getPredicateOnEdge(Pred, V, C, *PI, BB, CxtI);
+          if (Ret != Baseline) break;
+        }
+        // If we terminated early, then one of the values didn't match.
+        if (PI == PE) {
+          return Baseline;
+        }
+      }
+    }
+  }
+  return Unknown;
 }
 
 void LazyValueInfo::threadEdge(BasicBlock *PredBB, BasicBlock *OldSucc,
