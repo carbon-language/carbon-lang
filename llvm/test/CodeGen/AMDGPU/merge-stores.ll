@@ -89,7 +89,11 @@ define void @merge_global_store_2_constants_i32_f32(i32 addrspace(1)* %out) #0 {
 }
 
 ; GCN-LABEL: {{^}}merge_global_store_2_constants_f32_i32:
-; GCN: buffer_store_dwordx2
+; SI-DAG: s_mov_b32 [[SLO:s[0-9]+]], 4.0
+; SI-DAG: s_movk_i32 [[SHI:s[0-9]+]], 0x7b{{$}}
+; SI-DAG: v_mov_b32_e32 v[[VLO:[0-9]+]], [[SLO]]
+; SI-DAG: v_mov_b32_e32 v[[VHI:[0-9]+]], [[SHI]]
+; GCN: buffer_store_dwordx2 v{{\[}}[[VLO]]:[[VHI]]{{\]}}
 define void @merge_global_store_2_constants_f32_i32(float addrspace(1)* %out) #0 {
   %out.gep.1 = getelementptr float, float addrspace(1)* %out, i32 1
   %out.gep.1.bc = bitcast float addrspace(1)* %out.gep.1 to i32 addrspace(1)*
@@ -99,7 +103,11 @@ define void @merge_global_store_2_constants_f32_i32(float addrspace(1)* %out) #0
 }
 
 ; GCN-LABEL: {{^}}merge_global_store_4_constants_i32:
-; GCN: buffer_store_dwordx4
+; GCN-DAG: v_mov_b32_e32 v[[HI:[0-9]+]], 0x14d{{$}}
+; GCN-DAG: v_mov_b32_e32 v{{[0-9]+}}, 0x1c8{{$}}
+; GCN-DAG: v_mov_b32_e32 v{{[0-9]+}}, 0x7b{{$}}
+; GCN-DAG: v_mov_b32_e32 v[[LO:[0-9]+]], 0x4d2{{$}}
+; GCN: buffer_store_dwordx4 v{{\[}}[[LO]]:[[HI]]{{\]}}
 define void @merge_global_store_4_constants_i32(i32 addrspace(1)* %out) #0 {
   %out.gep.1 = getelementptr i32, i32 addrspace(1)* %out, i32 1
   %out.gep.2 = getelementptr i32, i32 addrspace(1)* %out, i32 2
@@ -527,6 +535,95 @@ define void @merge_local_store_4_constants_i32(i32 addrspace(3)* %out) #0 {
   store i32 456, i32 addrspace(3)* %out.gep.2
   store i32 333, i32 addrspace(3)* %out.gep.3
   store i32 1234, i32 addrspace(3)* %out
+  ret void
+}
+
+; GCN-LABEL: {{^}}merge_global_store_5_constants_i32:
+; GCN-DAG: v_mov_b32_e32 v[[LO:[0-9]+]], 9{{$}}
+; GCN-DAG: v_mov_b32_e32 v[[HI4:[0-9]+]], -12{{$}}
+; GCN: buffer_store_dwordx4 v{{\[}}[[LO]]:[[HI4]]{{\]}}
+; GCN: v_mov_b32_e32 v[[HI:[0-9]+]], 11{{$}}
+; GCN: buffer_store_dword v[[HI]]
+define void @merge_global_store_5_constants_i32(i32 addrspace(1)* %out) {
+  store i32 9, i32 addrspace(1)* %out, align 4
+  %idx1 = getelementptr inbounds i32, i32 addrspace(1)* %out, i64 1
+  store i32 12, i32 addrspace(1)* %idx1, align 4
+  %idx2 = getelementptr inbounds i32, i32 addrspace(1)* %out, i64 2
+  store i32 16, i32 addrspace(1)* %idx2, align 4
+  %idx3 = getelementptr inbounds i32, i32 addrspace(1)* %out, i64 3
+  store i32 -12, i32 addrspace(1)* %idx3, align 4
+  %idx4 = getelementptr inbounds i32, i32 addrspace(1)* %out, i64 4
+  store i32 11, i32 addrspace(1)* %idx4, align 4
+  ret void
+}
+
+; GCN-LABEL: {{^}}merge_global_store_6_constants_i32:
+; GCN: buffer_store_dwordx4
+; GCN: buffer_store_dwordx2
+define void @merge_global_store_6_constants_i32(i32 addrspace(1)* %out) {
+  store i32 13, i32 addrspace(1)* %out, align 4
+  %idx1 = getelementptr inbounds i32, i32 addrspace(1)* %out, i64 1
+  store i32 15, i32 addrspace(1)* %idx1, align 4
+  %idx2 = getelementptr inbounds i32, i32 addrspace(1)* %out, i64 2
+  store i32 62, i32 addrspace(1)* %idx2, align 4
+  %idx3 = getelementptr inbounds i32, i32 addrspace(1)* %out, i64 3
+  store i32 63, i32 addrspace(1)* %idx3, align 4
+  %idx4 = getelementptr inbounds i32, i32 addrspace(1)* %out, i64 4
+  store i32 11, i32 addrspace(1)* %idx4, align 4
+  %idx5 = getelementptr inbounds i32, i32 addrspace(1)* %out, i64 5
+  store i32 123, i32 addrspace(1)* %idx5, align 4
+  ret void
+}
+
+; GCN-LABEL: {{^}}merge_global_store_7_constants_i32:
+; GCN: buffer_store_dwordx4
+; GCN: buffer_store_dwordx2
+; GCN: buffer_store_dword v
+define void @merge_global_store_7_constants_i32(i32 addrspace(1)* %out) {
+  store i32 34, i32 addrspace(1)* %out, align 4
+  %idx1 = getelementptr inbounds i32, i32 addrspace(1)* %out, i64 1
+  store i32 999, i32 addrspace(1)* %idx1, align 4
+  %idx2 = getelementptr inbounds i32, i32 addrspace(1)* %out, i64 2
+  store i32 65, i32 addrspace(1)* %idx2, align 4
+  %idx3 = getelementptr inbounds i32, i32 addrspace(1)* %out, i64 3
+  store i32 33, i32 addrspace(1)* %idx3, align 4
+  %idx4 = getelementptr inbounds i32, i32 addrspace(1)* %out, i64 4
+  store i32 98, i32 addrspace(1)* %idx4, align 4
+  %idx5 = getelementptr inbounds i32, i32 addrspace(1)* %out, i64 5
+  store i32 91, i32 addrspace(1)* %idx5, align 4
+  %idx6 = getelementptr inbounds i32, i32 addrspace(1)* %out, i64 6
+  store i32 212, i32 addrspace(1)* %idx6, align 4
+  ret void
+}
+
+; GCN-LABEL: {{^}}merge_global_store_8_constants_i32:
+; XGCN: buffer_store_dwordx4
+; XGCN: buffer_store_dwordx4
+
+; GCN: buffer_store_dword v
+; GCN: buffer_store_dword v
+; GCN: buffer_store_dword v
+; GCN: buffer_store_dword v
+; GCN: buffer_store_dword v
+; GCN: buffer_store_dword v
+; GCN: buffer_store_dword v
+; GCN: buffer_store_dword v
+define void @merge_global_store_8_constants_i32(i32 addrspace(1)* %out) {
+  store i32 34, i32 addrspace(1)* %out, align 4
+  %idx1 = getelementptr inbounds i32, i32 addrspace(1)* %out, i64 1
+  store i32 999, i32 addrspace(1)* %idx1, align 4
+  %idx2 = getelementptr inbounds i32, i32 addrspace(1)* %out, i64 2
+  store i32 65, i32 addrspace(1)* %idx2, align 4
+  %idx3 = getelementptr inbounds i32, i32 addrspace(1)* %out, i64 3
+  store i32 33, i32 addrspace(1)* %idx3, align 4
+  %idx4 = getelementptr inbounds i32, i32 addrspace(1)* %out, i64 4
+  store i32 98, i32 addrspace(1)* %idx4, align 4
+  %idx5 = getelementptr inbounds i32, i32 addrspace(1)* %out, i64 5
+  store i32 91, i32 addrspace(1)* %idx5, align 4
+  %idx6 = getelementptr inbounds i32, i32 addrspace(1)* %out, i64 6
+  store i32 212, i32 addrspace(1)* %idx6, align 4
+  %idx7 = getelementptr inbounds i32, i32 addrspace(1)* %out, i64 7
+  store i32 999, i32 addrspace(1)* %idx7, align 4
   ret void
 }
 
