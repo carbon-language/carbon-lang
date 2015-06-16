@@ -98,13 +98,12 @@ static std::string getDataLayoutString(const Triple &T) {
   return Ret;
 }
 
-static std::string computeFSAdditions(StringRef FS, CodeGenOpt::Level OL, StringRef TT) {
+static std::string computeFSAdditions(StringRef FS, CodeGenOpt::Level OL,
+                                      const Triple &TT) {
   std::string FullFS = FS;
-  Triple TargetTriple(TT);
 
   // Make sure 64-bit features are available when CPUname is generic
-  if (TargetTriple.getArch() == Triple::ppc64 ||
-      TargetTriple.getArch() == Triple::ppc64le) {
+  if (TT.getArch() == Triple::ppc64 || TT.getArch() == Triple::ppc64le) {
     if (!FullFS.empty())
       FullFS = "+64bit," + FullFS;
     else
@@ -171,8 +170,7 @@ PPCTargetMachine::PPCTargetMachine(const Target &T, const Triple &TT,
                                    Reloc::Model RM, CodeModel::Model CM,
                                    CodeGenOpt::Level OL)
     : LLVMTargetMachine(T, getDataLayoutString(TT), TT, CPU,
-                        computeFSAdditions(FS, OL, TT.str()), Options, RM, CM,
-                        OL),
+                        computeFSAdditions(FS, OL, TT), Options, RM, CM, OL),
       TLOF(createTLOF(Triple(getTargetTriple()))),
       TargetABI(computeTargetABI(TT, Options)) {
   initAsmInfo();

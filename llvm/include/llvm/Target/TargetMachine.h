@@ -105,8 +105,7 @@ public:
 
   const Target &getTarget() const { return TheTarget; }
 
-  // FIXME: Either rename to getTargetName() or make it return a triple.
-  StringRef getTargetTriple() const { return TargetTriple.str(); }
+  const Triple &getTargetTriple() const { return TargetTriple; }
   StringRef getTargetCPU() const { return TargetCPU; }
   StringRef getTargetFeatureString() const { return TargetFS; }
 

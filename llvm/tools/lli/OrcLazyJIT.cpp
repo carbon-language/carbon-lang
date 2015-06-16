@@ -131,7 +131,7 @@ int llvm::runOrcLazyJIT(std::unique_ptr<Module> M, int ArgC, char* ArgV[]) {
   // manager for this target. Bail out.
   if (!CallbackMgrBuilder) {
     errs() << "No callback manager available for target '"
-           << TM->getTargetTriple() << "'.\n";
+           << TM->getTargetTriple().str() << "'.\n";
     return 1;
   }
 

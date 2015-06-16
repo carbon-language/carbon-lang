@@ -151,7 +151,7 @@ void AsmPrinter::EmitToStreamer(MCStreamer &S, const MCInst &Inst) {
 }
 
 StringRef AsmPrinter::getTargetTriple() const {
-  return TM.getTargetTriple();
+  return TM.getTargetTriple().str();
 }
 
 /// getCurrentSection() - Return the current section we are emitting to.
@@ -221,7 +221,8 @@ bool AsmPrinter::doInitialization(Module &M) {
     // We're at the module level. Construct MCSubtarget from the default CPU
     // and target triple.
     std::unique_ptr<MCSubtargetInfo> STI(TM.getTarget().createMCSubtargetInfo(
-        TM.getTargetTriple(), TM.getTargetCPU(), TM.getTargetFeatureString()));
+        TM.getTargetTriple().str(), TM.getTargetCPU(),
+        TM.getTargetFeatureString()));
     OutStreamer->AddComment("Start of file scope inline assembly");
     OutStreamer->AddBlankLine();
     EmitInlineAsm(M.getModuleInlineAsm()+"\n", *STI, TM.Options.MCOptions);
@@ -231,7 +232,7 @@ bool AsmPrinter::doInitialization(Module &M) {
 
   if (MAI->doesSupportDebugInformation()) {
     bool skip_dwarf = false;
-    if (Triple(TM.getTargetTriple()).isKnownWindowsMSVCEnvironment()) {
+    if (TM.getTargetTriple().isKnownWindowsMSVCEnvironment()) {
       Handlers.push_back(HandlerInfo(new WinCodeViewLineTables(this),
                                      DbgTimerName,
                                      CodeViewLineTablesGroupName));
@@ -1041,8 +1042,7 @@ bool AsmPrinter::doFinalization(Module &M) {
   if (!ModuleFlags.empty())
     TLOF.emitModuleFlags(*OutStreamer, ModuleFlags, *Mang, TM);
 
-  Triple TT(TM.getTargetTriple());
-  if (TT.isOSBinFormatELF()) {
+  if (TM.getTargetTriple().isOSBinFormatELF()) {
     MachineModuleInfoELF &MMIELF = MMI->getObjFileInfo<MachineModuleInfoELF>();
 
     // Output stubs for external and common global variables.
