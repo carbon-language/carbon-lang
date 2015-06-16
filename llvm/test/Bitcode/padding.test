@@ -1,0 +1,13 @@
+Test that both llvm-dis (uses a data streamer) and opt (no data streamer)
+handle a .bc file padded with '\n' at the end.
+
+This files can be produced under a peculiar situation:
+
+* A .bc is produced os OS X, but without a darwin triple, so it has no
+  wrapper.
+* It is included in a .a archive
+* ranlib is ran on that archive. It will pad the members to make them multiple
+  of 8 bytes.
+
+RUN: llvm-dis -disable-output %p/Inputs/padding.bc
+RUN: opt -disable-output %p/Inputs/padding.bc
