@@ -16,6 +16,7 @@
 
 #include "llvm/Support/DataStream.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Program.h"
 #include <string>
@@ -73,16 +74,13 @@ public:
 
 }
 
-namespace llvm {
-DataStreamer *getDataFileStreamer(const std::string &Filename,
-                                  std::string *StrError) {
-  DataFileStreamer *s = new DataFileStreamer();
+std::unique_ptr<DataStreamer>
+llvm::getDataFileStreamer(const std::string &Filename, std::string *StrError) {
+  std::unique_ptr<DataFileStreamer> s = make_unique<DataFileStreamer>();
   if (std::error_code e = s->OpenFile(Filename)) {
     *StrError = std::string("Could not open ") + Filename + ": " +
         e.message() + "\n";
     return nullptr;
   }
-  return s;
-}
-
+  return std::move(s);
 }

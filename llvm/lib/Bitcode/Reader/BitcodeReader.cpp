@@ -136,7 +136,7 @@ class BitcodeReader : public GVMaterializer {
   std::unique_ptr<MemoryBuffer> Buffer;
   std::unique_ptr<BitstreamReader> StreamFile;
   BitstreamCursor Stream;
-  DataStreamer *Streamer;
+  bool IsStreamed;
   uint64_t NextUnreadBit = 0;
   bool SeenValueSymbolTable = false;
 
@@ -223,7 +223,7 @@ public:
 
   BitcodeReader(MemoryBuffer *Buffer, LLVMContext &Context,
                 DiagnosticHandlerFunction DiagnosticHandler);
-  BitcodeReader(DataStreamer *Streamer, LLVMContext &Context,
+  BitcodeReader(LLVMContext &Context,
                 DiagnosticHandlerFunction DiagnosticHandler);
   ~BitcodeReader() override { freeState(); }
 
@@ -241,7 +241,8 @@ public:
 
   /// \brief Main interface to parsing a bitcode buffer.
   /// \returns true if an error occurred.
-  std::error_code parseBitcodeInto(Module *M,
+  std::error_code parseBitcodeInto(std::unique_ptr<DataStreamer> Streamer,
+                                   Module *M,
                                    bool ShouldLazyLoadMetadata = false);
 
   /// \brief Cheap mechanism to just extract module triple
@@ -368,9 +369,9 @@ private:
   std::error_code parseMetadataAttachment(Function &F);
   ErrorOr<std::string> parseModuleTriple();
   std::error_code parseUseLists();
-  std::error_code initStream();
+  std::error_code initStream(std::unique_ptr<DataStreamer> Streamer);
   std::error_code initStreamFromBuffer();
-  std::error_code initLazyStream();
+  std::error_code initLazyStream(std::unique_ptr<DataStreamer> Streamer);
   std::error_code findFunctionInStream(
       Function *F,
       DenseMap<Function *, uint64_t>::iterator DeferredFunctionInfoIterator);
@@ -426,14 +427,14 @@ BitcodeReader::BitcodeReader(MemoryBuffer *Buffer, LLVMContext &Context,
                              DiagnosticHandlerFunction DiagnosticHandler)
     : Context(Context),
       DiagnosticHandler(getDiagHandler(DiagnosticHandler, Context)),
-      Buffer(Buffer), Streamer(nullptr), ValueList(Context),
+      Buffer(Buffer), IsStreamed(false), ValueList(Context),
       MDValueList(Context) {}
 
-BitcodeReader::BitcodeReader(DataStreamer *Streamer, LLVMContext &Context,
+BitcodeReader::BitcodeReader(LLVMContext &Context,
                              DiagnosticHandlerFunction DiagnosticHandler)
     : Context(Context),
       DiagnosticHandler(getDiagHandler(DiagnosticHandler, Context)),
-      Buffer(nullptr), Streamer(Streamer), ValueList(Context),
+      Buffer(nullptr), IsStreamed(true), ValueList(Context),
       MDValueList(Context) {}
 
 std::error_code BitcodeReader::materializeForwardReferencedFunctions() {
@@ -2778,7 +2779,7 @@ std::error_code BitcodeReader::parseModule(bool Resume,
         // the bitcode. If the bitcode file is old, the symbol table will be
         // at the end instead and will not have been seen yet. In this case,
         // just finish the parse now.
-        if (Streamer && SeenValueSymbolTable) {
+        if (IsStreamed && SeenValueSymbolTable) {
           NextUnreadBit = Stream.GetCurrentBitNo();
           return std::error_code();
         }
@@ -3029,7 +3030,7 @@ std::error_code BitcodeReader::parseModule(bool Resume,
       if (!isProto) {
         Func->setIsMaterializable(true);
         FunctionsWithBodies.push_back(Func);
-        if (Streamer)
+        if (IsStreamed)
           DeferredFunctionInfo[Func] = 0;
       }
       break;
@@ -3077,11 +3078,12 @@ std::error_code BitcodeReader::parseModule(bool Resume,
   }
 }
 
-std::error_code BitcodeReader::parseBitcodeInto(Module *M,
-                                                bool ShouldLazyLoadMetadata) {
+std::error_code
+BitcodeReader::parseBitcodeInto(std::unique_ptr<DataStreamer> Streamer,
+                                Module *M, bool ShouldLazyLoadMetadata) {
   TheModule = M;
 
-  if (std::error_code EC = initStream())
+  if (std::error_code EC = initStream(std::move(Streamer)))
     return EC;
 
   // Sniff for the signature.
@@ -3154,7 +3156,7 @@ ErrorOr<std::string> BitcodeReader::parseModuleTriple() {
 }
 
 ErrorOr<std::string> BitcodeReader::parseTriple() {
-  if (std::error_code EC = initStream())
+  if (std::error_code EC = initStream(nullptr))
     return EC;
 
   // Sniff for the signature.
@@ -4399,7 +4401,7 @@ std::error_code BitcodeReader::materialize(GlobalValue *GV) {
   assert(DFII != DeferredFunctionInfo.end() && "Deferred function not found!");
   // If its position is recorded as 0, its body is somewhere in the stream
   // but we haven't seen it yet.
-  if (DFII->second == 0 && Streamer)
+  if (DFII->second == 0 && IsStreamed)
     if (std::error_code EC = findFunctionInStream(F, DFII))
       return EC;
 
@@ -4514,9 +4516,10 @@ std::vector<StructType *> BitcodeReader::getIdentifiedStructTypes() const {
   return IdentifiedStructTypes;
 }
 
-std::error_code BitcodeReader::initStream() {
+std::error_code
+BitcodeReader::initStream(std::unique_ptr<DataStreamer> Streamer) {
   if (Streamer)
-    return initLazyStream();
+    return initLazyStream(std::move(Streamer));
   return initStreamFromBuffer();
 }
 
@@ -4539,10 +4542,12 @@ std::error_code BitcodeReader::initStreamFromBuffer() {
   return std::error_code();
 }
 
-std::error_code BitcodeReader::initLazyStream() {
+std::error_code
+BitcodeReader::initLazyStream(std::unique_ptr<DataStreamer> Streamer) {
   // Check and strip off the bitcode wrapper; BitstreamReader expects never to
   // see it.
-  auto OwnedBytes = llvm::make_unique<StreamingMemoryObject>(Streamer);
+  auto OwnedBytes =
+      llvm::make_unique<StreamingMemoryObject>(std::move(Streamer));
   StreamingMemoryObject &Bytes = *OwnedBytes;
   StreamFile = llvm::make_unique<BitstreamReader>(std::move(OwnedBytes));
   Stream.init(&*StreamFile);
@@ -4617,7 +4622,8 @@ getLazyBitcodeModuleImpl(std::unique_ptr<MemoryBuffer> &&Buffer,
   };
 
   // Delay parsing Metadata if ShouldLazyLoadMetadata is true.
-  if (std::error_code EC = R->parseBitcodeInto(M.get(), ShouldLazyLoadMetadata))
+  if (std::error_code EC =
+          R->parseBitcodeInto(nullptr, M.get(), ShouldLazyLoadMetadata))
     return cleanupOnError(EC);
 
   if (!WillMaterializeAll)
@@ -4636,14 +4642,13 @@ ErrorOr<std::unique_ptr<Module>> llvm::getLazyBitcodeModule(
                                   DiagnosticHandler, ShouldLazyLoadMetadata);
 }
 
-ErrorOr<std::unique_ptr<Module>>
-llvm::getStreamedBitcodeModule(StringRef Name, DataStreamer *Streamer,
-                               LLVMContext &Context,
-                               DiagnosticHandlerFunction DiagnosticHandler) {
+ErrorOr<std::unique_ptr<Module>> llvm::getStreamedBitcodeModule(
+    StringRef Name, std::unique_ptr<DataStreamer> Streamer,
+    LLVMContext &Context, DiagnosticHandlerFunction DiagnosticHandler) {
   std::unique_ptr<Module> M = make_unique<Module>(Name, Context);
-  BitcodeReader *R = new BitcodeReader(Streamer, Context, DiagnosticHandler);
+  BitcodeReader *R = new BitcodeReader(Context, DiagnosticHandler);
   M->setMaterializer(R);
-  if (std::error_code EC = R->parseBitcodeInto(M.get()))
+  if (std::error_code EC = R->parseBitcodeInto(std::move(Streamer), M.get()))
     return EC;
   return std::move(M);
 }

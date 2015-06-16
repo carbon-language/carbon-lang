@@ -123,9 +123,10 @@ MemoryObject *getNonStreamedMemoryObject(const unsigned char *Start,
   return new RawMemoryObject(Start, End);
 }
 
-StreamingMemoryObject::StreamingMemoryObject(DataStreamer *streamer) :
-  Bytes(kChunkSize), Streamer(streamer), BytesRead(0), BytesSkipped(0),
-  ObjectSize(0), EOFReached(false) {
-  BytesRead = streamer->GetBytes(&Bytes[0], kChunkSize);
+StreamingMemoryObject::StreamingMemoryObject(
+    std::unique_ptr<DataStreamer> Streamer)
+    : Bytes(kChunkSize), Streamer(std::move(Streamer)), BytesRead(0),
+      BytesSkipped(0), ObjectSize(0), EOFReached(false) {
+  BytesRead = this->Streamer->GetBytes(&Bytes[0], kChunkSize);
 }
 }

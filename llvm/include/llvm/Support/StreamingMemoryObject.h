@@ -24,7 +24,7 @@ namespace llvm {
 /// setKnownObjectSize methods which are not applicable to non-streamed objects.
 class StreamingMemoryObject : public MemoryObject {
 public:
-  StreamingMemoryObject(DataStreamer *streamer);
+  StreamingMemoryObject(std::unique_ptr<DataStreamer> Streamer);
   uint64_t getExtent() const override;
   uint64_t readBytes(uint8_t *Buf, uint64_t Size,
                      uint64_t Address) const override;

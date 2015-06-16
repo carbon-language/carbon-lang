@@ -7,6 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/StreamingMemoryObject.h"
 #include "gtest/gtest.h"
 #include <string.h>
@@ -23,14 +24,14 @@ class NullDataStreamer : public DataStreamer {
 }
 
 TEST(StreamingMemoryObject, Test) {
-  auto *DS = new NullDataStreamer();
-  StreamingMemoryObject O(DS);
+  auto DS = make_unique<NullDataStreamer>();
+  StreamingMemoryObject O(std::move(DS));
   EXPECT_TRUE(O.isValidAddress(32 * 1024));
 }
 
 TEST(StreamingMemoryObject, TestSetKnownObjectSize) {
-  auto *DS = new NullDataStreamer();
-  StreamingMemoryObject O(DS);
+  auto DS = make_unique<NullDataStreamer>();
+  StreamingMemoryObject O(std::move(DS));
   uint8_t Buf[32];
   EXPECT_EQ((uint64_t) 16, O.readBytes(Buf, 16, 0));
   O.setKnownObjectSize(24);

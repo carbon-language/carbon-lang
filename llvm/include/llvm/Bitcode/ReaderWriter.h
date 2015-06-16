@@ -41,7 +41,8 @@ namespace llvm {
   /// Read the header of the specified stream and prepare for lazy
   /// deserialization and streaming of function bodies.
   ErrorOr<std::unique_ptr<Module>> getStreamedBitcodeModule(
-      StringRef Name, DataStreamer *Streamer, LLVMContext &Context,
+      StringRef Name, std::unique_ptr<DataStreamer> Streamer,
+      LLVMContext &Context,
       DiagnosticHandlerFunction DiagnosticHandler = nullptr);
 
   /// Read the header of the specified bitcode buffer and extract just the

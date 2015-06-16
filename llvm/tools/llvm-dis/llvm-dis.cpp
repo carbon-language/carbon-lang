@@ -148,7 +148,8 @@ int main(int argc, char **argv) {
   std::unique_ptr<Module> M;
 
   // Use the bitcode streaming interface
-  DataStreamer *Streamer = getDataFileStreamer(InputFilename, &ErrorMessage);
+  std::unique_ptr<DataStreamer> Streamer =
+      getDataFileStreamer(InputFilename, &ErrorMessage);
   if (Streamer) {
     std::string DisplayFilename;
     if (InputFilename == "-")
@@ -156,7 +157,7 @@ int main(int argc, char **argv) {
     else
       DisplayFilename = InputFilename;
     ErrorOr<std::unique_ptr<Module>> MOrErr =
-        getStreamedBitcodeModule(DisplayFilename, Streamer, Context);
+        getStreamedBitcodeModule(DisplayFilename, std::move(Streamer), Context);
     M = std::move(*MOrErr);
     M->materializeAllPermanently();
   } else {
