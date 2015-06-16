@@ -403,6 +403,13 @@ namespace {
                                          EVT MemVT, unsigned NumElem,
                                          bool IsConstantSrc, bool UseVector);
 
+    /// This is a helper function for MergeConsecutiveStores.
+    /// Stores that may be merged are placed in StoreNodes.
+    /// Loads that may alias with those stores are placed in AliasLoadNodes.
+    void getStoreMergeAndAliasCandidates(
+        StoreSDNode* St, SmallVectorImpl<MemOpLink> &StoreNodes,
+        SmallVectorImpl<LSBaseSDNode*> &AliasLoadNodes);
+    
     /// Merge consecutive store operations into a wide store.
     /// This optimization uses wide integers or vectors when possible.
     /// \return True if some memory operations were changed.
@@ -10724,62 +10731,25 @@ static bool allowableAlignment(const SelectionDAG &DAG,
   return (Align >= ABIAlignment);
 }
 
-bool DAGCombiner::MergeConsecutiveStores(StoreSDNode* St) {
-  if (OptLevel == CodeGenOpt::None)
-    return false;
-
-  EVT MemVT = St->getMemoryVT();
-  int64_t ElementSizeBytes = MemVT.getSizeInBits()/8;
-  bool NoVectors = DAG.getMachineFunction().getFunction()->hasFnAttribute(
-      Attribute::NoImplicitFloat);
-
-  // This function cannot currently deal with non-byte-sized memory sizes.
-  if (ElementSizeBytes * 8 != MemVT.getSizeInBits())
-    return false;
-
-  // Don't merge vectors into wider inputs.
-  if (MemVT.isVector() || !MemVT.isSimple())
-    return false;
-
-  // Perform an early exit check. Do not bother looking at stored values that
-  // are not constants, loads, or extracted vector elements.
-  SDValue StoredVal = St->getValue();
-  bool IsLoadSrc = isa<LoadSDNode>(StoredVal);
-  bool IsConstantSrc = isa<ConstantSDNode>(StoredVal) ||
-                       isa<ConstantFPSDNode>(StoredVal);
-  bool IsExtractVecEltSrc = (StoredVal.getOpcode() == ISD::EXTRACT_VECTOR_ELT);
-
-  if (!IsConstantSrc && !IsLoadSrc && !IsExtractVecEltSrc)
-    return false;
-
-  // Only look at ends of store sequences.
-  SDValue Chain = SDValue(St, 0);
-  if (Chain->hasOneUse() && Chain->use_begin()->getOpcode() == ISD::STORE)
-    return false;
-
+void DAGCombiner::getStoreMergeAndAliasCandidates(
+    StoreSDNode* St, SmallVectorImpl<MemOpLink> &StoreNodes,
+    SmallVectorImpl<LSBaseSDNode*> &AliasLoadNodes) {
   // This holds the base pointer, index, and the offset in bytes from the base
   // pointer.
   BaseIndexOffset BasePtr = BaseIndexOffset::match(St->getBasePtr());
 
   // We must have a base and an offset.
   if (!BasePtr.Base.getNode())
-    return false;
+    return;
 
   // Do not handle stores to undef base pointers.
   if (BasePtr.Base.getOpcode() == ISD::UNDEF)
-    return false;
-
-  // Save the LoadSDNodes that we find in the chain.
-  // We need to make sure that these nodes do not interfere with
-  // any of the store nodes.
-  SmallVector<LSBaseSDNode*, 8> AliasLoadNodes;
-
-  // Save the StoreSDNodes that we find in the chain.
-  SmallVector<MemOpLink, 8> StoreNodes;
+    return;
 
   // Walk up the chain and look for nodes with offsets from the same
   // base pointer. Stop when reaching an instruction with a different kind
   // or instruction which has a different base pointer.
+  EVT MemVT = St->getMemoryVT();
   unsigned Seq = 0;
   StoreSDNode *Index = St;
   while (Index) {
@@ -10836,7 +10806,51 @@ bool DAGCombiner::MergeConsecutiveStores(StoreSDNode* St) {
       }
     }
   }
+}
 
+bool DAGCombiner::MergeConsecutiveStores(StoreSDNode* St) {
+  if (OptLevel == CodeGenOpt::None)
+    return false;
+
+  EVT MemVT = St->getMemoryVT();
+  int64_t ElementSizeBytes = MemVT.getSizeInBits()/8;
+  bool NoVectors = DAG.getMachineFunction().getFunction()->hasFnAttribute(
+      Attribute::NoImplicitFloat);
+
+  // This function cannot currently deal with non-byte-sized memory sizes.
+  if (ElementSizeBytes * 8 != MemVT.getSizeInBits())
+    return false;
+
+  // Don't merge vectors into wider inputs.
+  if (MemVT.isVector() || !MemVT.isSimple())
+    return false;
+
+  // Perform an early exit check. Do not bother looking at stored values that
+  // are not constants, loads, or extracted vector elements.
+  SDValue StoredVal = St->getValue();
+  bool IsLoadSrc = isa<LoadSDNode>(StoredVal);
+  bool IsConstantSrc = isa<ConstantSDNode>(StoredVal) ||
+                       isa<ConstantFPSDNode>(StoredVal);
+  bool IsExtractVecEltSrc = (StoredVal.getOpcode() == ISD::EXTRACT_VECTOR_ELT);
+
+  if (!IsConstantSrc && !IsLoadSrc && !IsExtractVecEltSrc)
+    return false;
+
+  // Only look at ends of store sequences.
+  SDValue Chain = SDValue(St, 0);
+  if (Chain->hasOneUse() && Chain->use_begin()->getOpcode() == ISD::STORE)
+    return false;
+
+  // Save the LoadSDNodes that we find in the chain.
+  // We need to make sure that these nodes do not interfere with
+  // any of the store nodes.
+  SmallVector<LSBaseSDNode*, 8> AliasLoadNodes;
+  
+  // Save the StoreSDNodes that we find in the chain.
+  SmallVector<MemOpLink, 8> StoreNodes;
+
+  getStoreMergeAndAliasCandidates(St, StoreNodes, AliasLoadNodes);
+  
   // Check if there is anything to merge.
   if (StoreNodes.size() < 2)
     return false;
