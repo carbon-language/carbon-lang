@@ -1,5 +1,5 @@
 // RUN: rm -rf %t
-// RUN: not %clang_cc1 -fmodules-cache-path=%t -fmodules -F %S/Inputs -DgetModuleVersion="epic fail" %s 2>&1 | FileCheck %s
+// RUN: not %clang_cc1 -fmodules-cache-path=%t -fmodules -fimplicit-module-maps -F %S/Inputs -DgetModuleVersion="epic fail" %s 2>&1 | FileCheck %s
 
 @import Module;
 @import DependsOnModule;

@@ -1,5 +1,5 @@
 // RUN: rm -rf %t
-// RUN: not %clang_cc1 -x objective-c -fmodules-cache-path=%t -fmodules -I %S/Inputs/submodules %s 2>&1 | FileCheck %s
+// RUN: not %clang_cc1 -x objective-c -fmodules-cache-path=%t -fmodules -fimplicit-module-maps -I %S/Inputs/submodules %s 2>&1 | FileCheck %s
 
 // FIXME: cannot use -verify, because the error from inside the module build has
 // a different source manager than the verifier.

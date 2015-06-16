@@ -98,8 +98,9 @@ public:
   /// Note: Only used for testing!
   unsigned DisableModuleHash : 1;
 
-  /// \brief Interpret module maps.  This option is implied by full modules.
-  unsigned ModuleMaps : 1;
+  /// \brief Implicit module maps.  This option is enabld by default when
+  /// modules is enabled.
+  unsigned ImplicitModuleMaps : 1;
 
   /// \brief Set the 'home directory' of a module map file to the current
   /// working directory (or the home directory of the module map file that
@@ -166,7 +167,7 @@ public:
 
 public:
   HeaderSearchOptions(StringRef _Sysroot = "/")
-    : Sysroot(_Sysroot), DisableModuleHash(0), ModuleMaps(0),
+    : Sysroot(_Sysroot), DisableModuleHash(0), ImplicitModuleMaps(0),
       ModuleMapFileHomeIsCwd(0),
       ModuleCachePruneInterval(7*24*60*60),
       ModuleCachePruneAfter(31*24*60*60),

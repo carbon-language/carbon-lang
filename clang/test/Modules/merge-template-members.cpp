@@ -1,7 +1,7 @@
 // RUN: rm -rf %t
-// RUN: %clang_cc1 -fmodules -fmodules-cache-path=%t -I%S/Inputs/merge-template-members -verify -emit-llvm-only %s -DTEST=1
-// RUN: %clang_cc1 -fmodules -fmodules-cache-path=%t -I%S/Inputs/merge-template-members -verify -emit-llvm-only %s -DTEST=2
-// RUN: %clang_cc1 -fmodules -fmodules-cache-path=%t -I%S/Inputs/merge-template-members -verify -emit-llvm-only %s -DTEST=3
+// RUN: %clang_cc1 -fmodules -fimplicit-module-maps -fmodules-cache-path=%t -I%S/Inputs/merge-template-members -verify -emit-llvm-only %s -DTEST=1
+// RUN: %clang_cc1 -fmodules -fimplicit-module-maps -fmodules-cache-path=%t -I%S/Inputs/merge-template-members -verify -emit-llvm-only %s -DTEST=2
+// RUN: %clang_cc1 -fmodules -fimplicit-module-maps -fmodules-cache-path=%t -I%S/Inputs/merge-template-members -verify -emit-llvm-only %s -DTEST=3
 // expected-no-diagnostics
 
 #if TEST == 1

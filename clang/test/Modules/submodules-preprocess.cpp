@@ -1,5 +1,5 @@
 // RUN: rm -rf %t
-// RUN: %clang_cc1 -fmodules -x objective-c++ -Eonly -fmodules-cache-path=%t -I %S/Inputs/submodules %s -verify
+// RUN: %clang_cc1 -fmodules -fimplicit-module-maps -x objective-c++ -Eonly -fmodules-cache-path=%t -I %S/Inputs/submodules %s -verify
 // FIXME: When we have a syntax for modules in C++, use that.
 
 @import std.vector;

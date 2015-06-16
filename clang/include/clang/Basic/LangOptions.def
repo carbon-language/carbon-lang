@@ -128,7 +128,6 @@ COMPATIBLE_LANGOPT(ModulesDeclUse    , 1, 0, "require declaration of module uses
 LANGOPT(ModulesSearchAll  , 1, 1, "search even non-imported modules to find unresolved references")
 COMPATIBLE_LANGOPT(ModulesStrictDeclUse, 1, 0, "require declaration of module uses and all headers to be in modules")
 LANGOPT(ModulesErrorRecovery, 1, 1, "automatically import modules as needed when performing error recovery")
-BENIGN_LANGOPT(ModulesImplicitMaps, 1, 1, "use files called module.modulemap implicitly as module maps")
 BENIGN_LANGOPT(ImplicitModules, 1, 1, "build modules that are not specified via -fmodule-file")
 COMPATIBLE_LANGOPT(ModulesLocalVisibility, 1, 0, "local submodule visibility")
 COMPATIBLE_LANGOPT(Optimize          , 1, 0, "__OPTIMIZE__ predefined macro")

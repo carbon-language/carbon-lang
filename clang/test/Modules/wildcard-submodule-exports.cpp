@@ -1,5 +1,5 @@
 // RUN: rm -rf %t
-// RUN: %clang_cc1 -x objective-c++ -fmodules-cache-path=%t -fmodules -I %S/Inputs/wildcard-submodule-exports %s -verify
+// RUN: %clang_cc1 -x objective-c++ -fmodules-cache-path=%t -fmodules -fimplicit-module-maps -I %S/Inputs/wildcard-submodule-exports %s -verify
 // FIXME: When we have a syntax for modules in C++, use that.
 
 @import C.One;

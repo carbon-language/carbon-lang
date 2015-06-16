@@ -1,5 +1,5 @@
 // RUN: rm -rf %t
-// RUN: %clang_cc1 -fmodules -fmodules-cache-path=%t -I %S/Inputs/attr-unavailable %s -fsyntax-only -verify
+// RUN: %clang_cc1 -fmodules -fimplicit-module-maps -fmodules-cache-path=%t -I %S/Inputs/attr-unavailable %s -fsyntax-only -verify
 
 @import two;
 void f(id x) {

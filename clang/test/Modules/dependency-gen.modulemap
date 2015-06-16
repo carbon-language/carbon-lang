@@ -1,7 +1,7 @@
 // RUN: cd %S
 // RUN: rm -f %t.cpm %t-base.pcm %t-base.d %t.d
-// RUN: %clang_cc1 -I. -x c++ -fmodule-maps -fmodule-name=test-base -fno-modules-implicit-maps -fmodules -emit-module -fno-validate-pch -fmodules-strict-decluse Inputs/dependency-gen-base.modulemap -dependency-file %t-base.d -MT %t-base.pcm -o %t-base.pcm -fmodule-map-file-home-is-cwd
-// RUN: %clang_cc1 -I. -x c++ -fmodule-maps -fmodule-name=test -fno-modules-implicit-maps -fmodules -emit-module -fno-validate-pch -fmodules-strict-decluse -fmodule-file=%t-base.pcm %s -dependency-file %t.d -MT %t.pcm -o %t.pcm -fmodule-map-file-home-is-cwd
+// RUN: %clang_cc1 -I. -x c++ -fmodule-name=test-base -fmodules -emit-module -fno-validate-pch -fmodules-strict-decluse Inputs/dependency-gen-base.modulemap -dependency-file %t-base.d -MT %t-base.pcm -o %t-base.pcm -fmodule-map-file-home-is-cwd
+// RUN: %clang_cc1 -I. -x c++ -fmodule-name=test -fmodules -emit-module -fno-validate-pch -fmodules-strict-decluse -fmodule-file=%t-base.pcm %s -dependency-file %t.d -MT %t.pcm -o %t.pcm -fmodule-map-file-home-is-cwd
 // RUN: FileCheck %s < %t.d
 module "test" {
   export *

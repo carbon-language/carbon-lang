@@ -1,6 +1,6 @@
 // RUN: rm -rf %t
-// RUN: %clang -fsyntax-only -fmodules -fmodules-cache-path=%t -D__need_wint_t %s -I%S/Inputs/System/usr/include -Xclang -verify
-// RUN: %clang -fsyntax-only -std=c99 -fmodules -fmodules-cache-path=%t -D__need_wint_t %s -I%S/Inputs/System/usr/include -Xclang -verify
+// RUN: %clang_cc1 -fsyntax-only -fmodules -fimplicit-module-maps -fmodules-cache-path=%t %s -I%S/Inputs/System/usr/include -verify
+// RUN: %clang_cc1 -fsyntax-only -std=c99 -fmodules -fimplicit-module-maps -fmodules-cache-path=%t %s -I%S/Inputs/System/usr/include -verify
 // expected-no-diagnostics
 
 #ifdef __SSE__

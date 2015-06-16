@@ -5,7 +5,7 @@
 // RUN:   -v \
 // RUN:   -iquote Inputs/macro-ambiguity/a/quote \
 // RUN:   -isystem Inputs/macro-ambiguity/a/system \
-// RUN:   -fno-implicit-modules -fno-modules-implicit-maps \
+// RUN:   -fno-implicit-modules \
 // RUN:   -fmodule-map-file-home-is-cwd \
 // RUN:   -emit-module -fmodule-name=a -o %t/a.pcm \
 // RUN:   Inputs/macro-ambiguity/module.modulemap
@@ -14,7 +14,7 @@
 // RUN:   -v \
 // RUN:   -iquote Inputs/macro-ambiguity/b/quote \
 // RUN:   -isystem Inputs/macro-ambiguity/b/system \
-// RUN:   -fno-implicit-modules -fno-modules-implicit-maps \
+// RUN:   -fno-implicit-modules \
 // RUN:   -fmodule-map-file-home-is-cwd \
 // RUN:   -emit-module -fmodule-name=b -o %t/b.pcm \
 // RUN:   Inputs/macro-ambiguity/module.modulemap
@@ -23,7 +23,7 @@
 // RUN:   -v \
 // RUN:   -iquote Inputs/macro-ambiguity/c/quote \
 // RUN:   -isystem Inputs/macro-ambiguity/c/system \
-// RUN:   -fno-implicit-modules -fno-modules-implicit-maps \
+// RUN:   -fno-implicit-modules \
 // RUN:   -fmodule-map-file-home-is-cwd \
 // RUN:   -emit-module -fmodule-name=c -o %t/c.pcm \
 // RUN:   Inputs/macro-ambiguity/module.modulemap
@@ -32,7 +32,7 @@
 // RUN:   -v \
 // RUN:   -iquote Inputs/macro-ambiguity/d/quote \
 // RUN:   -isystem Inputs/macro-ambiguity/d/system \
-// RUN:   -fno-implicit-modules -fno-modules-implicit-maps \
+// RUN:   -fno-implicit-modules \
 // RUN:   -fmodule-map-file-home-is-cwd \
 // RUN:   -emit-module -fmodule-name=d -o %t/d.pcm \
 // RUN:   Inputs/macro-ambiguity/module.modulemap
@@ -49,7 +49,7 @@
 // RUN:   -isystem Inputs/macro-ambiguity/d/system \
 // RUN:   -iquote Inputs/macro-ambiguity/e/quote \
 // RUN:   -isystem Inputs/macro-ambiguity/e/system \
-// RUN:   -fno-implicit-modules -fno-modules-implicit-maps \
+// RUN:   -fno-implicit-modules \
 // RUN:   -fmodule-map-file-home-is-cwd \
 // RUN:   -fmodule-map-file=Inputs/macro-ambiguity/module.modulemap \
 // RUN:   -fmodule-file=%t/a.pcm \
@@ -70,7 +70,7 @@
 // RUN:   -isystem Inputs/macro-ambiguity/d/system \
 // RUN:   -iquote Inputs/macro-ambiguity/e/quote \
 // RUN:   -isystem Inputs/macro-ambiguity/e/system \
-// RUN:   -fno-implicit-modules -fno-modules-implicit-maps \
+// RUN:   -fno-implicit-modules \
 // RUN:   -fmodule-map-file-home-is-cwd \
 // RUN:   -fmodule-map-file=Inputs/macro-ambiguity/module.modulemap \
 // RUN:   -fmodule-file=%t/a.pcm \

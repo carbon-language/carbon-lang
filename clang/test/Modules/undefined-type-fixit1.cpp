@@ -1,5 +1,5 @@
 // RUN: rm -rf %t
-// RUN: %clang_cc1 -fmodules-cache-path=%t -fmodules -fmodules-search-all -I %S/Inputs/undefined-type-fixit %s -verify
+// RUN: %clang_cc1 -fmodules-cache-path=%t -fmodules -fimplicit-module-maps -fmodules-search-all -I %S/Inputs/undefined-type-fixit %s -verify
 
 //#include "public1.h"
 #include "public2.h"

@@ -1,5 +1,5 @@
 // RUN: rm -rf %t
-// RUN: %clang_cc1 -x objective-c++ -fmodules -fmodules-cache-path=%t -I %S/Inputs/odr %s -verify -std=c++11
+// RUN: %clang_cc1 -x objective-c++ -fmodules -fimplicit-module-maps -fmodules-cache-path=%t -I %S/Inputs/odr %s -verify -std=c++11
 
 // expected-error@a.h:8 {{'X::n' from module 'a' is not present in definition of 'X' provided earlier}}
 struct X { // expected-note {{definition has no member 'n'}}

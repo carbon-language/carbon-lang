@@ -1,5 +1,5 @@
 // RUN: rm -rf %t
-// RUN: %clang_cc1 -fmodules -fno-modules-error-recovery -fmodules-local-submodule-visibility -fmodules-cache-path=%t -I%S/Inputs/submodule-visibility -verify %s
+// RUN: %clang_cc1 -fmodules -fimplicit-module-maps -fno-modules-error-recovery -fmodules-local-submodule-visibility -fmodules-cache-path=%t -I%S/Inputs/submodule-visibility -verify %s
 
 #include "cycle1.h"
 C1 c1;

@@ -1,7 +1,7 @@
 // RUN: rm -rf %t
-// RUN: %clang_cc1 -fmodules -fno-objc-infer-related-result-type -Werror -Wno-error=incomplete-umbrella -fmodules-cache-path=%t -F %S/Inputs -I %S/Inputs -verify %s
-// RUN: %clang_cc1 -fmodules -fno-objc-infer-related-result-type -Werror -Wno-error=incomplete-umbrella -x objective-c++ -fmodules-cache-path=%t -F %S/Inputs -I %S/Inputs -verify %s
-// RUN: %clang_cc1 -fmodules -fno-objc-infer-related-result-type -Werror -Wno-error=incomplete-umbrella -fmodules-cache-path=%t -F %S/Inputs -I %S/Inputs -verify %s
+// RUN: %clang_cc1 -fmodules -fimplicit-module-maps -fno-objc-infer-related-result-type -Werror -Wno-error=incomplete-umbrella -fmodules-cache-path=%t -F %S/Inputs -I %S/Inputs -verify %s
+// RUN: %clang_cc1 -fmodules -fimplicit-module-maps -fno-objc-infer-related-result-type -Werror -Wno-error=incomplete-umbrella -x objective-c++ -fmodules-cache-path=%t -F %S/Inputs -I %S/Inputs -verify %s
+// RUN: %clang_cc1 -fmodules -fimplicit-module-maps -fno-objc-infer-related-result-type -Werror -Wno-error=incomplete-umbrella -fmodules-cache-path=%t -F %S/Inputs -I %S/Inputs -verify %s
 #define FOO
 @import Module;
 @interface OtherClass

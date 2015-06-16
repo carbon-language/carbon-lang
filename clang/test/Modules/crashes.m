@@ -1,5 +1,5 @@
 // RUN: rm -rf %t.mcp
-// RUN: %clang_cc1 -fmodules-cache-path=%t.mcp -fmodules -F %S/Inputs -fobjc-arc %s -verify
+// RUN: %clang_cc1 -fmodules-cache-path=%t.mcp -fmodules -fimplicit-module-maps -F %S/Inputs -fobjc-arc %s -verify
 
 @import Module;
 

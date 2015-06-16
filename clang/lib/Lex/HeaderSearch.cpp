@@ -158,7 +158,7 @@ std::string HeaderSearch::getModuleFileName(StringRef ModuleName,
 Module *HeaderSearch::lookupModule(StringRef ModuleName, bool AllowSearch) {
   // Look in the module map to determine if there is a module by this name.
   Module *Module = ModMap.findModule(ModuleName);
-  if (Module || !AllowSearch || !LangOpts.ModulesImplicitMaps)
+  if (Module || !AllowSearch || !HSOpts->ImplicitModuleMaps)
     return Module;
   
   // Look through the various header search paths to load any available module
@@ -1076,7 +1076,7 @@ StringRef HeaderSearch::getUniqueFrameworkName(StringRef Framework) {
 bool HeaderSearch::hasModuleMap(StringRef FileName, 
                                 const DirectoryEntry *Root,
                                 bool IsSystem) {
-  if (!HSOpts->ModuleMaps || !LangOpts.ModulesImplicitMaps)
+  if (!HSOpts->ImplicitModuleMaps)
     return false;
 
   SmallVector<const DirectoryEntry *, 2> FixUpDirectories;
@@ -1203,7 +1203,7 @@ HeaderSearch::loadModuleMapFileImpl(const FileEntry *File, bool IsSystem,
 
 const FileEntry *
 HeaderSearch::lookupModuleMapFile(const DirectoryEntry *Dir, bool IsFramework) {
-  if (!LangOpts.ModulesImplicitMaps)
+  if (!HSOpts->ImplicitModuleMaps)
     return nullptr;
   // For frameworks, the preferred spelling is Modules/module.modulemap, but
   // module.map at the framework root is also accepted.
@@ -1241,7 +1241,7 @@ Module *HeaderSearch::loadFrameworkModule(StringRef Name,
 
 
   // Try to infer a module map from the framework directory.
-  if (LangOpts.ModulesImplicitMaps)
+  if (HSOpts->ImplicitModuleMaps)
     return ModMap.inferFrameworkModule(Name, Dir, IsSystem, /*Parent=*/nullptr);
 
   return nullptr;
@@ -1282,7 +1282,7 @@ HeaderSearch::loadModuleMapFile(const DirectoryEntry *Dir, bool IsSystem,
 void HeaderSearch::collectAllModules(SmallVectorImpl<Module *> &Modules) {
   Modules.clear();
 
-  if (LangOpts.ModulesImplicitMaps) {
+  if (HSOpts->ImplicitModuleMaps) {
     // Load module maps for each of the header search directories.
     for (unsigned Idx = 0, N = SearchDirs.size(); Idx != N; ++Idx) {
       bool IsSystem = SearchDirs[Idx].isSystemHeaderDirectory();
@@ -1333,7 +1333,7 @@ void HeaderSearch::collectAllModules(SmallVectorImpl<Module *> &Modules) {
 }
 
 void HeaderSearch::loadTopLevelSystemModules() {
-  if (!LangOpts.ModulesImplicitMaps)
+  if (!HSOpts->ImplicitModuleMaps)
     return;
 
   // Load module maps for each of the header search directories.
@@ -1351,7 +1351,7 @@ void HeaderSearch::loadTopLevelSystemModules() {
 }
 
 void HeaderSearch::loadSubdirectoryModuleMaps(DirectoryLookup &SearchDir) {
-  assert(LangOpts.ModulesImplicitMaps &&
+  assert(HSOpts->ImplicitModuleMaps &&
          "Should not be loading subdirectory module maps");
 
   if (SearchDir.haveSearchedAllModuleMaps())

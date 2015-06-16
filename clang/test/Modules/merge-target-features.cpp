@@ -3,7 +3,7 @@
 //
 // RUN: %clang_cc1 -fmodules -x c++ -fmodules-cache-path=%t \
 // RUN:   -iquote Inputs/merge-target-features \
-// RUN:   -fno-implicit-modules -fno-modules-implicit-maps \
+// RUN:   -fno-implicit-modules \
 // RUN:   -fmodule-map-file-home-is-cwd \
 // RUN:   -emit-module -fmodule-name=foo -o %t/foo.pcm \
 // RUN:   -triple i386-unknown-unknown \
@@ -12,7 +12,7 @@
 //
 // RUN: not %clang_cc1 -fmodules -x c++ -fmodules-cache-path=%t \
 // RUN:   -iquote Inputs/merge-target-features \
-// RUN:   -fno-implicit-modules -fno-modules-implicit-maps \
+// RUN:   -fno-implicit-modules \
 // RUN:   -fmodule-map-file-home-is-cwd \
 // RUN:   -fmodule-map-file=Inputs/merge-target-features/module.modulemap \
 // RUN:   -fmodule-file=%t/foo.pcm \
@@ -24,7 +24,7 @@
 //
 // RUN: %clang_cc1 -fmodules -x c++ -fmodules-cache-path=%t \
 // RUN:   -iquote Inputs/merge-target-features \
-// RUN:   -fno-implicit-modules -fno-modules-implicit-maps \
+// RUN:   -fno-implicit-modules \
 // RUN:   -fmodule-map-file-home-is-cwd \
 // RUN:   -fmodule-map-file=Inputs/merge-target-features/module.modulemap \
 // RUN:   -fmodule-file=%t/foo.pcm \
@@ -36,7 +36,7 @@
 //
 // RUN: %clang_cc1 -fmodules -x c++ -fmodules-cache-path=%t \
 // RUN:   -iquote Inputs/merge-target-features \
-// RUN:   -fno-implicit-modules -fno-modules-implicit-maps \
+// RUN:   -fno-implicit-modules \
 // RUN:   -fmodule-map-file-home-is-cwd \
 // RUN:   -fmodule-map-file=Inputs/merge-target-features/module.modulemap \
 // RUN:   -fmodule-file=%t/foo.pcm \
@@ -48,7 +48,7 @@
 //
 // RUN: not %clang_cc1 -fmodules -x c++ -fmodules-cache-path=%t \
 // RUN:   -iquote Inputs/merge-target-features \
-// RUN:   -fno-implicit-modules -fno-modules-implicit-maps \
+// RUN:   -fno-implicit-modules \
 // RUN:   -fmodule-map-file-home-is-cwd \
 // RUN:   -fmodule-map-file=Inputs/merge-target-features/module.modulemap \
 // RUN:   -fmodule-file=%t/foo.pcm \

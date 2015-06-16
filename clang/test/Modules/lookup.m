@@ -1,8 +1,8 @@
 // RUN: rm -rf %t
-// RUN: %clang_cc1 -fmodules -fmodules-cache-path=%t -emit-module -x objective-c -fmodule-name=lookup_left_objc %S/Inputs/module.map
-// RUN: %clang_cc1 -fmodules -fmodules-cache-path=%t -emit-module -x objective-c -fmodule-name=lookup_right_objc %S/Inputs/module.map
-// RUN: %clang_cc1 -fmodules -x objective-c -fmodules-cache-path=%t -I %S/Inputs -verify %s
-// RUN: %clang_cc1 -fmodules -ast-print -x objective-c -fmodules-cache-path=%t -I %S/Inputs %s | FileCheck -check-prefix=CHECK-PRINT %s
+// RUN: %clang_cc1 -fmodules -fimplicit-module-maps -fmodules-cache-path=%t -emit-module -x objective-c -fmodule-name=lookup_left_objc %S/Inputs/module.map
+// RUN: %clang_cc1 -fmodules -fimplicit-module-maps -fmodules-cache-path=%t -emit-module -x objective-c -fmodule-name=lookup_right_objc %S/Inputs/module.map
+// RUN: %clang_cc1 -fmodules -fimplicit-module-maps -x objective-c -fmodules-cache-path=%t -I %S/Inputs -verify %s
+// RUN: %clang_cc1 -fmodules -fimplicit-module-maps -ast-print -x objective-c -fmodules-cache-path=%t -I %S/Inputs %s | FileCheck -check-prefix=CHECK-PRINT %s
 
 @import lookup_left_objc;
 @import lookup_right_objc;

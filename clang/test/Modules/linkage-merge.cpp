@@ -1,5 +1,5 @@
 // RUN: rm -rf %t
-// RUN: %clang_cc1 -verify -fmodules -fmodules-cache-path=%t -I %S/Inputs %s
+// RUN: %clang_cc1 -verify -fmodules -fimplicit-module-maps -fmodules-cache-path=%t -I %S/Inputs %s
 
 #include "linkage-merge-bar.h"
 

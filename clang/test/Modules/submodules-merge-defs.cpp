@@ -1,10 +1,10 @@
 // RUN: rm -rf %t
-// RUN: %clang_cc1 -x c++ -std=c++11 -fmodules-cache-path=%t -fmodules -I %S/Inputs/submodules-merge-defs %s -verify -fno-modules-error-recovery -DTEXTUAL
-// RUN: %clang_cc1 -x c++ -std=c++11 -fmodules-cache-path=%t -fmodules -I %S/Inputs/submodules-merge-defs %s -verify -fno-modules-error-recovery
-// RUN: %clang_cc1 -x c++ -std=c++11 -fmodules-cache-path=%t -fmodules -I %S/Inputs/submodules-merge-defs %s -verify -fno-modules-error-recovery -fmodules-local-submodule-visibility -DTEXTUAL
-// RUN: %clang_cc1 -x c++ -std=c++11 -fmodules-cache-path=%t -fmodules -I %S/Inputs/submodules-merge-defs %s -verify -fno-modules-error-recovery -fmodules-local-submodule-visibility
-// RUN: %clang_cc1 -x c++ -std=c++11 -fmodules-cache-path=%t -fmodule-maps -I %S/Inputs/submodules-merge-defs %s -verify -fno-modules-error-recovery -fmodules-local-submodule-visibility -DTEXTUAL -DEARLY_INDIRECT_INCLUDE
-// RUN: %clang_cc1 -x c++ -std=c++11 -fmodules-cache-path=%t -fmodules -I %S/Inputs/submodules-merge-defs %s -verify -fno-modules-error-recovery -fmodules-local-submodule-visibility -fmodule-feature use_defs_twice -DIMPORT_USE_2
+// RUN: %clang_cc1 -x c++ -std=c++11 -fmodules-cache-path=%t -fmodules -fimplicit-module-maps -I %S/Inputs/submodules-merge-defs %s -verify -fno-modules-error-recovery -DTEXTUAL
+// RUN: %clang_cc1 -x c++ -std=c++11 -fmodules-cache-path=%t -fmodules -fimplicit-module-maps -I %S/Inputs/submodules-merge-defs %s -verify -fno-modules-error-recovery
+// RUN: %clang_cc1 -x c++ -std=c++11 -fmodules-cache-path=%t -fmodules -fimplicit-module-maps -I %S/Inputs/submodules-merge-defs %s -verify -fno-modules-error-recovery -fmodules-local-submodule-visibility -DTEXTUAL
+// RUN: %clang_cc1 -x c++ -std=c++11 -fmodules-cache-path=%t -fmodules -fimplicit-module-maps -I %S/Inputs/submodules-merge-defs %s -verify -fno-modules-error-recovery -fmodules-local-submodule-visibility
+// RUN: %clang_cc1 -x c++ -std=c++11 -fmodules-cache-path=%t -fimplicit-module-maps -I %S/Inputs/submodules-merge-defs %s -verify -fno-modules-error-recovery -fmodules-local-submodule-visibility -DTEXTUAL -DEARLY_INDIRECT_INCLUDE
+// RUN: %clang_cc1 -x c++ -std=c++11 -fmodules-cache-path=%t -fmodules -fimplicit-module-maps -I %S/Inputs/submodules-merge-defs %s -verify -fno-modules-error-recovery -fmodules-local-submodule-visibility -fmodule-feature use_defs_twice -DIMPORT_USE_2
 
 // Trigger import of definitions, but don't make them visible.
 #include "empty.h"

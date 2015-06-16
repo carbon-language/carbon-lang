@@ -1,5 +1,5 @@
 // RUN: rm -rf %t
-// RUN: %clang_cc1 -x objective-c -fmodules-cache-path=%t -fmodules -I %S/Inputs/private0 -I %S/Inputs/private1 -I %S/Inputs/private2 %s -verify
+// RUN: %clang_cc1 -x objective-c -fmodules-cache-path=%t -fmodules -fimplicit-module-maps -I %S/Inputs/private0 -I %S/Inputs/private1 -I %S/Inputs/private2 %s -verify
 
 #include "common.h"
 @import libPrivateN2;

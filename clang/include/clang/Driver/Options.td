@@ -692,7 +692,7 @@ def fmodules : Flag <["-"], "fmodules">, Group<f_Group>,
   Flags<[DriverOption, CC1Option]>,
   HelpText<"Enable the 'modules' language feature">;
 def fmodule_maps : Flag <["-"], "fmodule-maps">, Group<f_Group>,
-  Flags<[DriverOption,CC1Option]>,
+  Flags<[DriverOption]>,
   HelpText<"Read module maps to understand the structure of library headers">;
 def fmodule_name : JoinedOrSeparate<["-"], "fmodule-name=">, Group<f_Group>,
   Flags<[DriverOption,CC1Option]>, MetaVarName<"<name>">,

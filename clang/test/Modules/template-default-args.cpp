@@ -1,5 +1,5 @@
 // RUN: rm -rf %t
-// RUN: %clang_cc1 -fmodules -verify -fmodules-cache-path=%t -I %S/Inputs/template-default-args -std=c++11 %s
+// RUN: %clang_cc1 -fmodules -fimplicit-module-maps -verify -fmodules-cache-path=%t -I %S/Inputs/template-default-args -std=c++11 %s
 
 template<typename T> struct A;
 template<typename T> struct B;

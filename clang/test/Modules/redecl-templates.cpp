@@ -1,6 +1,6 @@
 // RUN: rm -rf %t
 // RUN: %clang_cc1 -x c++ -I %S/Inputs/redecl-templates %s -verify -std=c++14
-// RUN: %clang_cc1 -x c++ -fmodules -fmodules-cache-path=%t -I %S/Inputs/redecl-templates %s -verify -std=c++14
+// RUN: %clang_cc1 -x c++ -fmodules -fimplicit-module-maps -fmodules-cache-path=%t -I %S/Inputs/redecl-templates %s -verify -std=c++14
 // expected-no-diagnostics
 
 template<int N> struct A {};

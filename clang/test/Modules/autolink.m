@@ -1,7 +1,7 @@
 // RUN: rm -rf %t
-// RUN: %clang_cc1 -emit-pch -fmodules-cache-path=%t -fmodules -o %t.pch -I %S/Inputs -x objective-c-header %S/Inputs/autolink-sub3.pch
-// RUN: %clang_cc1 -emit-llvm -o - -fmodules-cache-path=%t -fmodules -F %S/Inputs -I %S/Inputs -include-pch %t.pch %s | FileCheck %s
-// RUN: %clang_cc1 -emit-llvm -fno-autolink -o - -fmodules-cache-path=%t -fmodules -F %S/Inputs -I %S/Inputs -include-pch %t.pch %s | FileCheck --check-prefix=CHECK-AUTOLINK-DISABLED %s
+// RUN: %clang_cc1 -emit-pch -fmodules-cache-path=%t -fmodules -fimplicit-module-maps -o %t.pch -I %S/Inputs -x objective-c-header %S/Inputs/autolink-sub3.pch
+// RUN: %clang_cc1 -emit-llvm -o - -fmodules-cache-path=%t -fmodules -fimplicit-module-maps -F %S/Inputs -I %S/Inputs -include-pch %t.pch %s | FileCheck %s
+// RUN: %clang_cc1 -emit-llvm -fno-autolink -o - -fmodules-cache-path=%t -fmodules -fimplicit-module-maps -F %S/Inputs -I %S/Inputs -include-pch %t.pch %s | FileCheck --check-prefix=CHECK-AUTOLINK-DISABLED %s
 
 @import autolink.sub2;
 

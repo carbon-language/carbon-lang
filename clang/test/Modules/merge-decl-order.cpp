@@ -1,5 +1,5 @@
 // RUN: rm -rf %t
-// RUN: %clang_cc1 -fmodules -fmodules-cache-path=%t -I%S/Inputs/merge-decl-order -verify %s
+// RUN: %clang_cc1 -fmodules -fimplicit-module-maps -fmodules-cache-path=%t -I%S/Inputs/merge-decl-order -verify %s
 // expected-no-diagnostics
 
 // Check that we include all decls from 'a' before the decls from 'b' in foo's

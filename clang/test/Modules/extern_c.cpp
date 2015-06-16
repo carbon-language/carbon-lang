@@ -1,16 +1,16 @@
 // RUN: rm -rf %t
-// RUN: %clang_cc1 -fmodules -verify -fmodules-cache-path=%t -I %S/Inputs %s
-// RUN: %clang_cc1 -fmodules -verify -fmodules-cache-path=%t -I %S/Inputs %s -DEXTERN_C
-// RUN: %clang_cc1 -fmodules -verify -fmodules-cache-path=%t -I %S/Inputs %s -DEXTERN_CXX
-// RUN: %clang_cc1 -fmodules -verify -fmodules-cache-path=%t -I %S/Inputs %s -DEXTERN_C -DEXTERN_CXX
-// RUN: %clang_cc1 -fmodules -verify -fmodules-cache-path=%t -I %S/Inputs %s -DEXTERN_C -DNAMESPACE
-// RUN: %clang_cc1 -fmodules -verify -fmodules-cache-path=%t -I %S/Inputs %s -DCXX_HEADER
-// RUN: %clang_cc1 -fmodules -verify -fmodules-cache-path=%t -I %S/Inputs %s -DCXX_HEADER -DEXTERN_C
-// RUN: %clang_cc1 -fmodules -verify -fmodules-cache-path=%t -I %S/Inputs %s -DCXX_HEADER -DEXTERN_CXX
-// RUN: %clang_cc1 -fmodules -verify -fmodules-cache-path=%t -I %S/Inputs %s -DCXX_HEADER -DEXTERN_C -DEXTERN_CXX
-// RUN: %clang_cc1 -fmodules -verify -fmodules-cache-path=%t -I %S/Inputs %s -DCXX_HEADER -DEXTERN_C -DNAMESPACE
-// RUN: %clang_cc1 -fmodules -verify -fmodules-cache-path=%t -I %S/Inputs -x c %s
-// RUN: %clang_cc1 -fmodules -verify -fmodules-cache-path=%t -I %S/Inputs/elsewhere -I %S/Inputs %s -DEXTERN_C -DINDIRECT
+// RUN: %clang_cc1 -fmodules -fimplicit-module-maps -verify -fmodules-cache-path=%t -I %S/Inputs %s
+// RUN: %clang_cc1 -fmodules -fimplicit-module-maps -verify -fmodules-cache-path=%t -I %S/Inputs %s -DEXTERN_C
+// RUN: %clang_cc1 -fmodules -fimplicit-module-maps -verify -fmodules-cache-path=%t -I %S/Inputs %s -DEXTERN_CXX
+// RUN: %clang_cc1 -fmodules -fimplicit-module-maps -verify -fmodules-cache-path=%t -I %S/Inputs %s -DEXTERN_C -DEXTERN_CXX
+// RUN: %clang_cc1 -fmodules -fimplicit-module-maps -verify -fmodules-cache-path=%t -I %S/Inputs %s -DEXTERN_C -DNAMESPACE
+// RUN: %clang_cc1 -fmodules -fimplicit-module-maps -verify -fmodules-cache-path=%t -I %S/Inputs %s -DCXX_HEADER
+// RUN: %clang_cc1 -fmodules -fimplicit-module-maps -verify -fmodules-cache-path=%t -I %S/Inputs %s -DCXX_HEADER -DEXTERN_C
+// RUN: %clang_cc1 -fmodules -fimplicit-module-maps -verify -fmodules-cache-path=%t -I %S/Inputs %s -DCXX_HEADER -DEXTERN_CXX
+// RUN: %clang_cc1 -fmodules -fimplicit-module-maps -verify -fmodules-cache-path=%t -I %S/Inputs %s -DCXX_HEADER -DEXTERN_C -DEXTERN_CXX
+// RUN: %clang_cc1 -fmodules -fimplicit-module-maps -verify -fmodules-cache-path=%t -I %S/Inputs %s -DCXX_HEADER -DEXTERN_C -DNAMESPACE
+// RUN: %clang_cc1 -fmodules -fimplicit-module-maps -verify -fmodules-cache-path=%t -I %S/Inputs -x c %s
+// RUN: %clang_cc1 -fmodules -fimplicit-module-maps -verify -fmodules-cache-path=%t -I %S/Inputs/elsewhere -I %S/Inputs %s -DEXTERN_C -DINDIRECT
 
 #ifdef INDIRECT
 #include "c-header-indirect.h"
