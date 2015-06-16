@@ -157,3 +157,75 @@
 // RUN:     -G 16 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-MIPS-G %s
 // CHECK-MIPS-G: "-mllvm" "-mips-ssection-threshold=16"
+//
+// -msoft-float (unknown vendor)
+// RUN: %clang -target mips-linux-gnu -### -c %s -msoft-float 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-SOFTFLOAT %s
+// CHECK-SOFTFLOAT: "-target-feature" "+soft-float"
+// CHECK-SOFTFLOAT-NOT: "-target-feature" "+fpxx"
+//
+// -msoft-float -mfpxx (unknown vendor)
+// RUN: %clang -target mips-linux-gnu -### -c %s -msoft-float -mfpxx 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-SOFTFLOAT-FPXX %s
+// CHECK-SOFTFLOAT-FPXX: "-target-feature" "+soft-float"
+// CHECK-SOFTFLOAT-FPXX: "-target-feature" "+fpxx"
+//
+// -msoft-float (MTI)
+// RUN: %clang -target mips-mti-linux-gnu -### -c %s -msoft-float 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-MTI-SOFTFLOAT %s
+// CHECK-MTI-SOFTFLOAT: "-target-feature" "+soft-float"
+// CHECK-MTI-SOFTFLOAT-NOT: "-target-feature" "+fpxx"
+//
+// -msoft-float -mfpxx (MTI)
+// RUN: %clang -target mips-mti-linux-gnu -### -c %s -msoft-float -mfpxx 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-MTI-SOFTFLOAT-FPXX %s
+// CHECK-MTI-SOFTFLOAT-FPXX: "-target-feature" "+soft-float"
+// CHECK-MTI-SOFTFLOAT-FPXX: "-target-feature" "+fpxx"
+//
+// -msoft-float (IMG)
+// RUN: %clang -target mips-img-linux-gnu -### -c %s -msoft-float 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-IMG-SOFTFLOAT %s
+// CHECK-IMG-SOFTFLOAT: "-target-feature" "+soft-float"
+// CHECK-IMG-SOFTFLOAT-NOT: "-target-feature" "+fpxx"
+//
+// -msoft-float -mfpxx (IMG)
+// RUN: %clang -target mips-img-linux-gnu -### -c %s -msoft-float -mfpxx 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-IMG-SOFTFLOAT-FPXX %s
+// CHECK-IMG-SOFTFLOAT-FPXX: "-target-feature" "+soft-float"
+// CHECK-IMG-SOFTFLOAT-FPXX: "-target-feature" "+fpxx"
+//
+// -msingle-float (unknown vendor)
+// RUN: %clang -target mips-linux-gnu -### -c %s -msingle-float 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-SINGLEFLOAT %s
+// CHECK-SINGLEFLOAT: "-target-feature" "+single-float"
+// CHECK-SINGLEFLOAT-NOT: "-target-feature" "+fpxx"
+//
+// -msingle-float -mfpxx (unknown vendor)
+// RUN: %clang -target mips-linux-gnu -### -c %s -msingle-float -mfpxx 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-SINGLEFLOAT-FPXX %s
+// CHECK-SINGLEFLOAT-FPXX: "-target-feature" "+single-float"
+// CHECK-SINGLEFLOAT-FPXX: "-target-feature" "+fpxx"
+//
+// -msingle-float (MTI)
+// RUN: %clang -target mips-mti-linux-gnu -### -c %s -msingle-float 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-MTI-SINGLEFLOAT %s
+// CHECK-MTI-SINGLEFLOAT: "-target-feature" "+single-float"
+// CHECK-MTI-SINGLEFLOAT-NOT: "-target-feature" "+fpxx"
+//
+// -msingle-float -mfpxx (MTI)
+// RUN: %clang -target mips-mti-linux-gnu -### -c %s -msingle-float -mfpxx 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-MTI-SINGLEFLOAT-FPXX %s
+// CHECK-MTI-SINGLEFLOAT-FPXX: "-target-feature" "+single-float"
+// CHECK-MTI-SINGLEFLOAT-FPXX: "-target-feature" "+fpxx"
+//
+// -msingle-float (IMG)
+// RUN: %clang -target mips-img-linux-gnu -### -c %s -msingle-float 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-IMG-SINGLEFLOAT %s
+// CHECK-IMG-SINGLEFLOAT: "-target-feature" "+single-float"
+// CHECK-IMG-SINGLEFLOAT-NOT: "-target-feature" "+fpxx"
+//
+// -msingle-float -mfpxx (IMG)
+// RUN: %clang -target mips-img-linux-gnu -### -c %s -msingle-float -mfpxx 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-IMG-SINGLEFLOAT-FPXX %s
+// CHECK-IMG-SINGLEFLOAT-FPXX: "-target-feature" "+single-float"
+// CHECK-IMG-SINGLEFLOAT-FPXX: "-target-feature" "+fpxx"

@@ -249,7 +249,9 @@ namespace mips {
   bool isUCLibc(const llvm::opt::ArgList &Args);
   bool isNaN2008(const llvm::opt::ArgList &Args, const llvm::Triple &Triple);
   bool isFPXXDefault(const llvm::Triple &Triple, StringRef CPUName,
-                     StringRef ABIName);
+                     StringRef ABIName, StringRef FloatABI);
+  bool shouldUseFPXX(const llvm::opt::ArgList &Args, const llvm::Triple &Triple,
+                     StringRef CPUName, StringRef ABIName, StringRef FloatABI);
 }
 
 namespace ppc {

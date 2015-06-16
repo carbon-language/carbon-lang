@@ -1116,7 +1116,7 @@ static void getMIPSTargetFeatures(const Driver &D, const llvm::Triple &Triple,
       Features.push_back(Args.MakeArgString("+nooddspreg"));
     } else
       Features.push_back(Args.MakeArgString("+fp64"));
-  } else if (mips::isFPXXDefault(Triple, CPUName, ABIName)) {
+  } else if (mips::shouldUseFPXX(Args, Triple, CPUName, ABIName, FloatABI)) {
     Features.push_back(Args.MakeArgString("+fpxx"));
     Features.push_back(Args.MakeArgString("+nooddspreg"));
   }
@@ -5878,7 +5878,7 @@ bool mips::isNaN2008(const ArgList &Args, const llvm::Triple &Triple) {
 }
 
 bool mips::isFPXXDefault(const llvm::Triple &Triple, StringRef CPUName,
-                         StringRef ABIName) {
+                         StringRef ABIName, StringRef FloatABI) {
   if (Triple.getVendor() != llvm::Triple::ImaginationTechnologies &&
       Triple.getVendor() != llvm::Triple::MipsTechnologies)
     return false;
@@ -5886,11 +5886,30 @@ bool mips::isFPXXDefault(const llvm::Triple &Triple, StringRef CPUName,
   if (ABIName != "32")
     return false;
 
+  // FPXX shouldn't be used if either -msoft-float or -mfloat-abi=soft is
+  // present.
+  if (FloatABI == "soft")
+    return false;
+
   return llvm::StringSwitch<bool>(CPUName)
              .Cases("mips2", "mips3", "mips4", "mips5", true)
              .Cases("mips32", "mips32r2", "mips32r3", "mips32r5", true)
              .Cases("mips64", "mips64r2", "mips64r3", "mips64r5", true)
              .Default(false);
+}
+
+bool mips::shouldUseFPXX(const ArgList &Args, const llvm::Triple &Triple,
+                         StringRef CPUName, StringRef ABIName,
+                         StringRef FloatABI) {
+  bool UseFPXX = isFPXXDefault(Triple, CPUName, ABIName, FloatABI);
+
+  // FPXX shouldn't be used if -msingle-float is present.
+  if (Arg *A = Args.getLastArg(options::OPT_msingle_float,
+                               options::OPT_mdouble_float))
+    if (A->getOption().matches(options::OPT_msingle_float))
+      UseFPXX = false;
+
+  return UseFPXX;
 }
 
 llvm::Triple::ArchType darwin::getArchTypeForMachOArchName(StringRef Str) {
@@ -7703,12 +7722,13 @@ void gnutools::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
     }
 
     // Add the last -mfp32/-mfpxx/-mfp64 or -mfpxx if it is enabled by default.
+    StringRef MIPSFloatABI = getMipsFloatABI(getToolChain().getDriver(), Args);
     if (Arg *A = Args.getLastArg(options::OPT_mfp32, options::OPT_mfpxx,
                                  options::OPT_mfp64)) {
       A->claim();
       A->render(Args, CmdArgs);
-    } else if (mips::isFPXXDefault(getToolChain().getTriple(), CPUName,
-                                   ABIName))
+    } else if (mips::shouldUseFPXX(Args, getToolChain().getTriple(), CPUName,
+                                   ABIName, MIPSFloatABI))
       CmdArgs.push_back("-mfpxx");
 
     // Pass on -mmips16 or -mno-mips16. However, the assembler equivalent of

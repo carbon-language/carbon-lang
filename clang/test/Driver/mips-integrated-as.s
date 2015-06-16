@@ -209,3 +209,87 @@
 // RUN:   FileCheck -check-prefix=ABICALLS-OFF %s
 // ABICALLS-OFF: -cc1as
 // ABICALLS-OFF: "-target-feature" "+noabicalls"
+
+// RUN: %clang -target mips-linux-gnu -### -fintegrated-as -msoft-float -c %s 2>&1 | \
+// RUN:   FileCheck -check-prefix=SOFTFLOAT-IMPLICIT-FPXX --implicit-check-not=-mfpxx %s
+// SOFTFLOAT-IMPLICIT-FPXX: -cc1as
+// SOFTFLOAT-IMPLICIT-FPXX: "-target-feature" "+soft-float"
+// SOFTFLOAT-IMPLICIT-FPXX-NOT: "-target-feature" "+fpxx"
+// SOFTFLOAT-IMPLICIT-FPXX-NOT: "-target-feature" "+nooddspreg"
+
+// RUN: %clang -target mips-linux-gnu -### -fintegrated-as -msoft-float -mfpxx -c %s 2>&1 | \
+// RUN:   FileCheck -check-prefix=SOFTFLOAT-EXPLICIT-FPXX %s
+// SOFTFLOAT-EXPLICIT-FPXX: -cc1as
+// SOFTFLOAT-EXPLICIT-FPXX: "-target-feature" "+soft-float"
+// SOFTFLOAT-EXPLICIT-FPXX: "-target-feature" "+fpxx"
+// SOFTFLOAT-EXPLICIT-FPXX: "-target-feature" "+nooddspreg"
+
+// RUN: %clang -target mips-mti-linux-gnu -### -fintegrated-as -msoft-float -c %s 2>&1 | \
+// RUN:   FileCheck -check-prefix=MTI-SOFTFLOAT-IMPLICIT-FPXX --implicit-check-not=-mfpxx %s
+// MTI-SOFTFLOAT-IMPLICIT-FPXX: -cc1as
+// MTI-SOFTFLOAT-IMPLICIT-FPXX: "-target-feature" "+soft-float"
+// MTI-SOFTFLOAT-IMPLICIT-FPXX-NOT: "-target-feature" "+fpxx"
+// MTI-SOFTFLOAT-IMPLICIT-FPXX-NOT: "-target-feature" "+nooddspreg"
+
+// RUN: %clang -target mips-mti-linux-gnu -### -fintegrated-as -msoft-float -mfpxx -c %s 2>&1 | \
+// RUN:   FileCheck -check-prefix=MTI-SOFTFLOAT-EXPLICIT-FPXX %s
+// MTI-SOFTFLOAT-EXPLICIT-FPXX: -cc1as
+// MTI-SOFTFLOAT-EXPLICIT-FPXX: "-target-feature" "+soft-float"
+// MTI-SOFTFLOAT-EXPLICIT-FPXX: "-target-feature" "+fpxx"
+// MTI-SOFTFLOAT-EXPLICIT-FPXX: "-target-feature" "+nooddspreg"
+
+// RUN: %clang -target mips-img-linux-gnu -### -fintegrated-as -msoft-float -c %s 2>&1 | \
+// RUN:   FileCheck -check-prefix=IMG-SOFTFLOAT-IMPLICIT-FPXX --implicit-check-not=-mfpxx %s
+// IMG-SOFTFLOAT-IMPLICIT-FPXX: -cc1as
+// IMG-SOFTFLOAT-IMPLICIT-FPXX: "-target-feature" "+soft-float"
+// IMG-SOFTFLOAT-IMPLICIT-FPXX-NOT: "-target-feature" "+fpxx"
+// IMG-SOFTFLOAT-IMPLICIT-FPXX-NOT: "-target-feature" "+nooddspreg"
+
+// RUN: %clang -target mips-img-linux-gnu -### -fintegrated-as -msoft-float -mfpxx -c %s 2>&1 | \
+// RUN:   FileCheck -check-prefix=IMG-SOFTFLOAT-EXPLICIT-FPXX %s
+// IMG-SOFTFLOAT-EXPLICIT-FPXX: -cc1as
+// IMG-SOFTFLOAT-EXPLICIT-FPXX: "-target-feature" "+soft-float"
+// IMG-SOFTFLOAT-EXPLICIT-FPXX: "-target-feature" "+fpxx"
+// IMG-SOFTFLOAT-EXPLICIT-FPXX: "-target-feature" "+nooddspreg"
+
+// RUN: %clang -target mips-linux-gnu -### -fintegrated-as -msingle-float -c %s 2>&1 | \
+// RUN:   FileCheck -check-prefix=SINGLEFLOAT-IMPLICIT-FPXX --implicit-check-not=-mfpxx %s
+// SINGLEFLOAT-IMPLICIT-FPXX: -cc1as
+// SINGLEFLOAT-IMPLICIT-FPXX: "-target-feature" "+single-float"
+// SINGLEFLOAT-IMPLICIT-FPXX-NOT: "-target-feature" "+fpxx"
+// SINGLEFLOAT-IMPLICIT-FPXX-NOT: "-target-feature" "+nooddspreg"
+
+// RUN: %clang -target mips-linux-gnu -### -fintegrated-as -msingle-float -mfpxx -c %s 2>&1 | \
+// RUN:   FileCheck -check-prefix=SINGLEFLOAT-EXPLICIT-FPXX %s
+// SINGLEFLOAT-EXPLICIT-FPXX: -cc1as
+// SINGLEFLOAT-EXPLICIT-FPXX: "-target-feature" "+single-float"
+// SINGLEFLOAT-EXPLICIT-FPXX: "-target-feature" "+fpxx"
+// SINGLEFLOAT-EXPLICIT-FPXX: "-target-feature" "+nooddspreg"
+
+// RUN: %clang -target mips-mti-linux-gnu -### -fintegrated-as -msingle-float -c %s 2>&1 | \
+// RUN:   FileCheck -check-prefix=MTI-SINGLEFLOAT-IMPLICIT-FPXX --implicit-check-not=-mfpxx %s
+// MTI-SINGLEFLOAT-IMPLICIT-FPXX: -cc1as
+// MTI-SINGLEFLOAT-IMPLICIT-FPXX: "-target-feature" "+single-float"
+// MTI-SINGLEFLOAT-IMPLICIT-FPXX-NOT: "-target-feature" "+fpxx"
+// MTI-SINGLEFLOAT-IMPLICIT-FPXX-NOT: "-target-feature" "+nooddspreg"
+
+// RUN: %clang -target mips-mti-linux-gnu -### -fintegrated-as -msingle-float -mfpxx -c %s 2>&1 | \
+// RUN:   FileCheck -check-prefix=MTI-SINGLEFLOAT-EXPLICIT-FPXX %s
+// MTI-SINGLEFLOAT-EXPLICIT-FPXX: -cc1as
+// MTI-SINGLEFLOAT-EXPLICIT-FPXX: "-target-feature" "+single-float"
+// MTI-SINGLEFLOAT-EXPLICIT-FPXX: "-target-feature" "+fpxx"
+// MTI-SINGLEFLOAT-EXPLICIT-FPXX: "-target-feature" "+nooddspreg"
+
+// RUN: %clang -target mips-img-linux-gnu -### -fintegrated-as -msingle-float -c %s 2>&1 | \
+// RUN:   FileCheck -check-prefix=IMG-SINGLEFLOAT-IMPLICIT-FPXX --implicit-check-not=-mfpxx %s
+// IMG-SINGLEFLOAT-IMPLICIT-FPXX: -cc1as
+// IMG-SINGLEFLOAT-IMPLICIT-FPXX: "-target-feature" "+single-float"
+// IMG-SINGLEFLOAT-IMPLICIT-FPXX-NOT: "-target-feature" "+fpxx"
+// IMG-SINGLEFLOAT-IMPLICIT-FPXX-NOT: "-target-feature" "+nooddspreg"
+
+// RUN: %clang -target mips-img-linux-gnu -### -fintegrated-as -msingle-float -mfpxx -c %s 2>&1 | \
+// RUN:   FileCheck -check-prefix=IMG-SINGLEFLOAT-EXPLICIT-FPXX %s
+// IMG-SINGLEFLOAT-EXPLICIT-FPXX: -cc1as
+// IMG-SINGLEFLOAT-EXPLICIT-FPXX: "-target-feature" "+single-float"
+// IMG-SINGLEFLOAT-EXPLICIT-FPXX: "-target-feature" "+fpxx"
+// IMG-SINGLEFLOAT-EXPLICIT-FPXX: "-target-feature" "+nooddspreg"
