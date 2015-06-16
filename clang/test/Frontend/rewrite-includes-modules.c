@@ -1,5 +1,5 @@
 // RUN: rm -rf %t
-// RUN: %clang_cc1 -fmodules -fmodules-cache-path=%t -x objective-c %s -F %S/../Modules/Inputs -E -frewrite-includes -o - | FileCheck %s
+// RUN: %clang_cc1 -fmodules -fimplicit-module-maps -fmodules-cache-path=%t -x objective-c %s -F %S/../Modules/Inputs -E -frewrite-includes -o - | FileCheck %s
 
 int bar();
 #include <Module/Module.h>

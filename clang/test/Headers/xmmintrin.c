@@ -2,7 +2,7 @@
 //
 // RUN: rm -rf %t
 // RUN: %clang_cc1 %s -ffreestanding -triple x86_64-apple-macosx10.9.0 -emit-llvm -o - \
-// RUN:     -fmodules -fmodules-cache-path=%t -isystem %S/Inputs/include \
+// RUN:     -fmodules -fimplicit-module-maps -fmodules-cache-path=%t -isystem %S/Inputs/include \
 // RUN:     | FileCheck %s
 
 #include <xmmintrin.h>
