@@ -8,9 +8,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "RewriterTestContext.h"
+#include "clang/Tooling/Core/Replacement.h"
 #include "gtest/gtest.h"
 
 namespace clang {
+namespace tooling {
+namespace {
 
 TEST(Rewriter, OverwritesChangedFiles) {
   RewriterTestContext Context;
@@ -34,4 +37,14 @@ TEST(Rewriter, ContinuesOverwritingFilesOnError) {
             Context.getFileContentFromDisk("working.cpp")); 
 }
 
+TEST(Rewriter, AdjacentInsertAndDelete) {
+  Replacements Replaces;
+  Replaces.emplace("<file>", 6, 6, "");
+  Replaces.emplace("<file>", 6, 0, "replaced\n");
+  EXPECT_EQ("line1\nreplaced\nline3\nline4",
+            applyAllReplacements("line1\nline2\nline3\nline4", Replaces));
+}
+
+} // end namespace
+} // end namespace tooling
 } // end namespace clang

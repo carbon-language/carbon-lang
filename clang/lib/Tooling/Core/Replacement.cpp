@@ -88,8 +88,13 @@ std::string Replacement::toString() const {
 bool operator<(const Replacement &LHS, const Replacement &RHS) {
   if (LHS.getOffset() != RHS.getOffset())
     return LHS.getOffset() < RHS.getOffset();
+
+  // Apply longer replacements first, specifically so that deletions are
+  // executed before insertions. It is (hopefully) never the intention to
+  // delete parts of newly inserted code.
   if (LHS.getLength() != RHS.getLength())
-    return LHS.getLength() < RHS.getLength();
+    return LHS.getLength() > RHS.getLength();
+
   if (LHS.getFilePath() != RHS.getFilePath())
     return LHS.getFilePath() < RHS.getFilePath();
   return LHS.getReplacementText() < RHS.getReplacementText();
