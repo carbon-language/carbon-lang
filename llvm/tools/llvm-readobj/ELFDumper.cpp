@@ -58,6 +58,7 @@ public:
   void printAttributes() override;
   void printMipsPLTGOT() override;
   void printMipsABIFlags() override;
+  void printMipsReginfo() override;
 
 private:
   typedef ELFFile<ELFT> ELFO;
@@ -1423,4 +1424,31 @@ template <class ELFT> void ELFDumper<ELFT>::printMipsABIFlags() {
   W.printNumber("CPR2 size", getMipsRegisterSize(Flags->cpr2_size));
   W.printFlags("Flags 1", Flags->flags1, makeArrayRef(ElfMipsFlags1));
   W.printHex("Flags 2", Flags->flags2);
+}
+
+template <class ELFT> void ELFDumper<ELFT>::printMipsReginfo() {
+  const Elf_Shdr *Shdr = findSectionByName(*Obj, ".reginfo");
+  if (!Shdr) {
+    W.startLine() << "There is no .reginfo section in the file.\n";
+    return;
+  }
+  ErrorOr<ArrayRef<uint8_t>> Sec = Obj->getSectionContents(Shdr);
+  if (!Sec) {
+    W.startLine() << "The .reginfo section is empty.\n";
+    return;
+  }
+  if (Sec->size() != sizeof(Elf_Mips_RegInfo<ELFT>)) {
+    W.startLine() << "The .reginfo section has a wrong size.\n";
+    return;
+  }
+
+  auto *Reginfo = reinterpret_cast<const Elf_Mips_RegInfo<ELFT> *>(Sec->data());
+
+  DictScope GS(W, "MIPS RegInfo");
+  W.printHex("GP", Reginfo->ri_gp_value);
+  W.printHex("General Mask", Reginfo->ri_gprmask);
+  W.printHex("Co-Proc Mask0", Reginfo->ri_cprmask[0]);
+  W.printHex("Co-Proc Mask1", Reginfo->ri_cprmask[1]);
+  W.printHex("Co-Proc Mask2", Reginfo->ri_cprmask[2]);
+  W.printHex("Co-Proc Mask3", Reginfo->ri_cprmask[3]);
 }

@@ -43,6 +43,7 @@ public:
   // Only implemented for MIPS ELF at this time.
   virtual void printMipsPLTGOT() { }
   virtual void printMipsABIFlags() { }
+  virtual void printMipsReginfo() { }
 
   // Only implemented for PE/COFF.
   virtual void printCOFFImports() { }
