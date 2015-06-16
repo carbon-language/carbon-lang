@@ -186,6 +186,10 @@ class MipsAsmParser : public MCTargetAsmParser {
                      bool Is32BitImm, SMLoc IDLoc,
                      SmallVectorImpl<MCInst> &Instructions);
 
+  bool loadSymbolAddress(const MCExpr *SymExpr, unsigned DstReg,
+                         bool Is32BitSym, SMLoc IDLoc,
+                         SmallVectorImpl<MCInst> &Instructions);
+
   bool expandLoadImm(MCInst &Inst, bool Is32BitImm, SMLoc IDLoc,
                      SmallVectorImpl<MCInst> &Instructions);
 
@@ -196,10 +200,6 @@ class MipsAsmParser : public MCTargetAsmParser {
                             SmallVectorImpl<MCInst> &Instructions);
   bool expandUncondBranchMMPseudo(MCInst &Inst, SMLoc IDLoc,
                                   SmallVectorImpl<MCInst> &Instructions);
-
-  void expandLoadAddressSym(const MCOperand &DstRegOp, const MCOperand &SymOp,
-                            bool Is32BitSym, SMLoc IDLoc,
-                            SmallVectorImpl<MCInst> &Instructions);
 
   void expandMemInst(MCInst &Inst, SMLoc IDLoc,
                      SmallVectorImpl<MCInst> &Instructions, bool isLoad,
@@ -1913,7 +1913,10 @@ MipsAsmParser::expandLoadAddressReg(MCInst &Inst, bool Is32BitImm, SMLoc IDLoc,
   assert((ImmOp.isImm() || ImmOp.isExpr()) &&
          "expected immediate operand kind");
   if (!ImmOp.isImm()) {
-    expandLoadAddressSym(DstRegOp, ImmOp, Is32BitImm, IDLoc, Instructions);
+    if (loadSymbolAddress(ImmOp.getExpr(), DstRegOp.getReg(), Is32BitImm, IDLoc,
+                          Instructions))
+      return true;
+
     return false;
   }
   const MCOperand &SrcRegOp = Inst.getOperand(1);
@@ -1936,7 +1939,10 @@ MipsAsmParser::expandLoadAddressImm(MCInst &Inst, bool Is32BitImm, SMLoc IDLoc,
   assert((ImmOp.isImm() || ImmOp.isExpr()) &&
          "expected immediate operand kind");
   if (!ImmOp.isImm()) {
-    expandLoadAddressSym(DstRegOp, ImmOp, Is32BitImm, IDLoc, Instructions);
+    if (loadSymbolAddress(ImmOp.getExpr(), DstRegOp.getReg(), Is32BitImm, IDLoc,
+                          Instructions))
+      return true;
+
     return false;
   }
 
@@ -1947,17 +1953,16 @@ MipsAsmParser::expandLoadAddressImm(MCInst &Inst, bool Is32BitImm, SMLoc IDLoc,
   return false;
 }
 
-void MipsAsmParser::expandLoadAddressSym(
-    const MCOperand &DstRegOp, const MCOperand &SymOp, bool Is32BitSym,
-    SMLoc IDLoc, SmallVectorImpl<MCInst> &Instructions) {
+bool MipsAsmParser::loadSymbolAddress(const MCExpr *SymExpr, unsigned DstReg,
+                                      bool Is32BitSym, SMLoc IDLoc,
+                                      SmallVectorImpl<MCInst> &Instructions) {
   warnIfNoMacro(IDLoc);
 
   if (Is32BitSym && isABI_N64())
     Warning(IDLoc, "instruction loads the 32-bit address of a 64-bit symbol");
 
   MCInst tmpInst;
-  unsigned RegNo = DstRegOp.getReg();
-  const MCSymbolRefExpr *Symbol = cast<MCSymbolRefExpr>(SymOp.getExpr());
+  const MCSymbolRefExpr *Symbol = cast<MCSymbolRefExpr>(SymExpr);
   const MCSymbolRefExpr *HiExpr =
       MCSymbolRefExpr::create(Symbol->getSymbol().getName(),
                               MCSymbolRefExpr::VK_Mips_ABS_HI, getContext());
@@ -1980,28 +1985,29 @@ void MipsAsmParser::expandLoadAddressSym(
                                 MCSymbolRefExpr::VK_Mips_HIGHER, getContext());
 
     tmpInst.setOpcode(Mips::LUi);
-    tmpInst.addOperand(MCOperand::createReg(RegNo));
+    tmpInst.addOperand(MCOperand::createReg(DstReg));
     tmpInst.addOperand(MCOperand::createExpr(HighestExpr));
     Instructions.push_back(tmpInst);
 
-    createLShiftOri<0>(MCOperand::createExpr(HigherExpr), RegNo, SMLoc(),
+    createLShiftOri<0>(MCOperand::createExpr(HigherExpr), DstReg, SMLoc(),
                        Instructions);
-    createLShiftOri<16>(MCOperand::createExpr(HiExpr), RegNo, SMLoc(),
+    createLShiftOri<16>(MCOperand::createExpr(HiExpr), DstReg, SMLoc(),
                         Instructions);
-    createLShiftOri<16>(MCOperand::createExpr(LoExpr), RegNo, SMLoc(),
+    createLShiftOri<16>(MCOperand::createExpr(LoExpr), DstReg, SMLoc(),
                         Instructions);
   } else {
     // Otherwise, expand to:
     // la d,sym => lui  d,hi16(sym)
     //             ori  d,d,lo16(sym)
     tmpInst.setOpcode(Mips::LUi);
-    tmpInst.addOperand(MCOperand::createReg(RegNo));
+    tmpInst.addOperand(MCOperand::createReg(DstReg));
     tmpInst.addOperand(MCOperand::createExpr(HiExpr));
     Instructions.push_back(tmpInst);
 
-    createLShiftOri<0>(MCOperand::createExpr(LoExpr), RegNo, SMLoc(),
+    createLShiftOri<0>(MCOperand::createExpr(LoExpr), DstReg, SMLoc(),
                        Instructions);
   }
+  return false;
 }
 
 bool MipsAsmParser::expandUncondBranchMMPseudo(
