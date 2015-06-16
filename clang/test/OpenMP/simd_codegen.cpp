@@ -182,6 +182,8 @@ void simple(float *a, float *b, float *c, float *d) {
   }
 
   int A;
+  // CHECK: store i32 -1, i32* [[A:%.+]],
+  A = -1;
   #pragma omp simd lastprivate(A)
 // Clause 'lastprivate' implementation is not completed yet.
 // Test checks that one iteration is separated in presence of lastprivate.
@@ -198,13 +200,18 @@ void simple(float *a, float *b, float *c, float *d) {
 // CHECK: [[IV7_0:%.+]] = load i64, i64* [[OMP_IV7]]{{.*}}!llvm.mem.parallel_loop_access ![[SIMPLE_LOOP7_ID]]
 // CHECK-NEXT: [[LC_IT_1:%.+]] = mul nsw i64 [[IV7_0]], 3
 // CHECK-NEXT: [[LC_IT_2:%.+]] = add nsw i64 -10, [[LC_IT_1]]
-// CHECK-NEXT: store i64 [[LC_IT_2]], i64* {{.+}}, !llvm.mem.parallel_loop_access ![[SIMPLE_LOOP7_ID]]
+// CHECK-NEXT: store i64 [[LC_IT_2]], i64* [[LC:%[^,]+]],{{.+}}!llvm.mem.parallel_loop_access ![[SIMPLE_LOOP7_ID]]
+// CHECK-NEXT: [[LC_VAL:%.+]] = load i64, i64* [[LC]]{{.+}}!llvm.mem.parallel_loop_access ![[SIMPLE_LOOP7_ID]]
+// CHECK-NEXT: [[CONV:%.+]] = trunc i64 [[LC_VAL]] to i32
+// CHECK-NEXT: store i32 [[CONV]], i32* [[A_PRIV:%[^,]+]],{{.+}}!llvm.mem.parallel_loop_access ![[SIMPLE_LOOP7_ID]]
     A = i;
 // CHECK: [[IV7_2:%.+]] = load i64, i64* [[OMP_IV7]]{{.*}}!llvm.mem.parallel_loop_access ![[SIMPLE_LOOP7_ID]]
 // CHECK-NEXT: [[ADD7_2:%.+]] = add nsw i64 [[IV7_2]], 1
 // CHECK-NEXT: store i64 [[ADD7_2]], i64* [[OMP_IV7]]{{.*}}!llvm.mem.parallel_loop_access ![[SIMPLE_LOOP7_ID]]
   }
 // CHECK: [[SIMPLE_LOOP7_END]]
+// CHECK-NEXT: [[A_PRIV_VAL:%.+]] = load i32, i32* [[A_PRIV]],
+// CHECK-NEXT: store i32 [[A_PRIV_VAL]], i32* [[A]],
 // CHECK-NEXT: ret void
 }
 
