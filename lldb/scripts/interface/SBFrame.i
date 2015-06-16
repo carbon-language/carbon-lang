@@ -273,6 +273,13 @@ public:
     %pythoncode %{
         def get_all_variables(self):
             return self.GetVariables(True,True,True,True)
+        
+        def get_parent_frame(self):
+            parent_idx = self.idx + 1
+            if parent_idx >= 0 and parent_idx < len(self.thread.frame):
+                return self.thread.frame[parent_idx]
+            else:
+                return SBFrame()
 
         def get_arguments(self):
             return self.GetVariables(True,False,False,False)
@@ -381,6 +388,9 @@ public:
 
         __swig_getmethods__["reg"] = get_registers_access
         if _newclass: reg = property(get_registers_access, None, doc='''A read only property that returns an helper object providing a flattened indexable view of the CPU registers for this stack frame''')
+
+        __swig_getmethods__["parent"] = get_parent_frame
+        if _newclass: parent = property(get_parent_frame, None, doc='''A read only property that returns the parent (caller) frame of the current frame.''')
 
     %}
 };
