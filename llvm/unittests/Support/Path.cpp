@@ -16,7 +16,7 @@
 #include "gtest/gtest.h"
 
 #ifdef LLVM_ON_WIN32
-#include <Windows.h>
+#include <windows.h>
 #include <winerror.h>
 #endif
 
