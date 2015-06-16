@@ -3098,7 +3098,7 @@ void InnerLoopVectorizer::vectorizeLoop() {
     RecurrenceDescriptor::RecurrenceKind RK = RdxDesc.getRecurrenceKind();
     TrackingVH<Value> ReductionStartValue = RdxDesc.getRecurrenceStartValue();
     Instruction *LoopExitInst = RdxDesc.getLoopExitInstr();
-    RecurrenceInstDesc::MinMaxRecurrenceKind MinMaxKind =
+    RecurrenceDescriptor::MinMaxRecurrenceKind MinMaxKind =
         RdxDesc.getMinMaxRecurrenceKind();
     setDebugLocFromInst(Builder, ReductionStartValue);
 

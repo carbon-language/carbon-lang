@@ -54,42 +54,6 @@ struct LICMSafetyInfo {
 /// special case of chains of recurrences (CR). See ScalarEvolution for CR
 /// references.
 
-/// This POD struct holds information about a potential recurrence operation.
-class RecurrenceInstDesc {
-
-public:
-  // This enum represents the kind of minmax recurrence.
-  enum MinMaxRecurrenceKind {
-    MRK_Invalid,
-    MRK_UIntMin,
-    MRK_UIntMax,
-    MRK_SIntMin,
-    MRK_SIntMax,
-    MRK_FloatMin,
-    MRK_FloatMax
-  };
-  RecurrenceInstDesc(bool IsRecur, Instruction *I)
-      : IsRecurrence(IsRecur), PatternLastInst(I), MinMaxKind(MRK_Invalid) {}
-
-  RecurrenceInstDesc(Instruction *I, MinMaxRecurrenceKind K)
-      : IsRecurrence(true), PatternLastInst(I), MinMaxKind(K) {}
-
-  bool isRecurrence() { return IsRecurrence; }
-
-  MinMaxRecurrenceKind getMinMaxKind() { return MinMaxKind; }
-
-  Instruction *getPatternInst() { return PatternLastInst; }
-
-private:
-  // Is this instruction a recurrence candidate.
-  bool IsRecurrence;
-  // The last instruction in a min/max pattern (select of the select(icmp())
-  // pattern), or the current recurrence instruction otherwise.
-  Instruction *PatternLastInst;
-  // If this is a min/max pattern the comparison predicate.
-  MinMaxRecurrenceKind MinMaxKind;
-};
-
 /// This struct holds information about recurrence variables.
 class RecurrenceDescriptor {
 
@@ -108,23 +72,58 @@ public:
     RK_FloatMinMax    ///< Min/max implemented in terms of select(cmp()).
   };
 
+  // This enum represents the kind of minmax recurrence.
+  enum MinMaxRecurrenceKind {
+    MRK_Invalid,
+    MRK_UIntMin,
+    MRK_UIntMax,
+    MRK_SIntMin,
+    MRK_SIntMax,
+    MRK_FloatMin,
+    MRK_FloatMax
+  };
+
   RecurrenceDescriptor()
       : StartValue(nullptr), LoopExitInstr(nullptr), Kind(RK_NoRecurrence),
-        MinMaxKind(RecurrenceInstDesc::MRK_Invalid) {}
+        MinMaxKind(MRK_Invalid) {}
 
   RecurrenceDescriptor(Value *Start, Instruction *Exit, RecurrenceKind K,
-                       RecurrenceInstDesc::MinMaxRecurrenceKind MK)
+                       MinMaxRecurrenceKind MK)
       : StartValue(Start), LoopExitInstr(Exit), Kind(K), MinMaxKind(MK) {}
+
+  /// This POD struct holds information about a potential recurrence operation.
+  class InstDesc {
+
+  public:
+    InstDesc(bool IsRecur, Instruction *I)
+        : IsRecurrence(IsRecur), PatternLastInst(I), MinMaxKind(MRK_Invalid) {}
+
+    InstDesc(Instruction *I, MinMaxRecurrenceKind K)
+        : IsRecurrence(true), PatternLastInst(I), MinMaxKind(K) {}
+
+    bool isRecurrence() { return IsRecurrence; }
+
+    MinMaxRecurrenceKind getMinMaxKind() { return MinMaxKind; }
+
+    Instruction *getPatternInst() { return PatternLastInst; }
+
+  private:
+    // Is this instruction a recurrence candidate.
+    bool IsRecurrence;
+    // The last instruction in a min/max pattern (select of the select(icmp())
+    // pattern), or the current recurrence instruction otherwise.
+    Instruction *PatternLastInst;
+    // If this is a min/max pattern the comparison predicate.
+    MinMaxRecurrenceKind MinMaxKind;
+  };
 
   /// Returns a struct describing if the instruction 'I' can be a recurrence
   /// variable of type 'Kind'. If the recurrence is a min/max pattern of
   /// select(icmp()) this function advances the instruction pointer 'I' from the
   /// compare instruction to the select instruction and stores this pointer in
   /// 'PatternLastInst' member of the returned struct.
-  static RecurrenceInstDesc isRecurrenceInstr(Instruction *I,
-                                              RecurrenceKind Kind,
-                                              RecurrenceInstDesc &Prev,
-                                              bool HasFunNoNaNAttr);
+  static InstDesc isRecurrenceInstr(Instruction *I, RecurrenceKind Kind,
+                                    InstDesc &Prev, bool HasFunNoNaNAttr);
 
   /// Returns true if instuction I has multiple uses in Insts
   static bool hasMultipleUsesOf(Instruction *I,
@@ -136,8 +135,7 @@ public:
   /// Returns a struct describing if the instruction if the instruction is a
   /// Select(ICmp(X, Y), X, Y) instruction pattern corresponding to a min(X, Y)
   /// or max(X, Y).
-  static RecurrenceInstDesc isMinMaxSelectCmpPattern(Instruction *I,
-                                                     RecurrenceInstDesc &Prev);
+  static InstDesc isMinMaxSelectCmpPattern(Instruction *I, InstDesc &Prev);
 
   /// Returns identity corresponding to the RecurrenceKind.
   static Constant *getRecurrenceIdentity(RecurrenceKind K, Type *Tp);
@@ -147,8 +145,7 @@ public:
   static unsigned getRecurrenceBinOp(RecurrenceKind Kind);
 
   /// Returns a Min/Max operation corresponding to MinMaxRecurrenceKind.
-  static Value *createMinMaxOp(IRBuilder<> &Builder,
-                               RecurrenceInstDesc::MinMaxRecurrenceKind RK,
+  static Value *createMinMaxOp(IRBuilder<> &Builder, MinMaxRecurrenceKind RK,
                                Value *Left, Value *Right);
 
   /// Returns true if Phi is a reduction of type Kind and adds it to the
@@ -164,9 +161,7 @@ public:
 
   RecurrenceKind getRecurrenceKind() { return Kind; }
 
-  RecurrenceInstDesc::MinMaxRecurrenceKind getMinMaxRecurrenceKind() {
-    return MinMaxKind;
-  }
+  MinMaxRecurrenceKind getMinMaxRecurrenceKind() { return MinMaxKind; }
 
   TrackingVH<Value> getRecurrenceStartValue() { return StartValue; }
 
@@ -181,7 +176,7 @@ private:
   // The kind of the recurrence.
   RecurrenceKind Kind;
   // If this a min/max recurrence the kind of recurrence.
-  RecurrenceInstDesc::MinMaxRecurrenceKind MinMaxKind;
+  MinMaxRecurrenceKind MinMaxKind;
 };
 
 BasicBlock *InsertPreheaderForLoop(Loop *L, Pass *P);
