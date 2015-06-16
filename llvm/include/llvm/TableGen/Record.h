@@ -1012,7 +1012,6 @@ public:
     return I->getKind() == IK_FieldInit;
   }
   static FieldInit *get(Init *R, const std::string &FN);
-  static FieldInit *get(Init *R, const Init *FN);
 
   Init *getBit(unsigned Bit) const override;
 
