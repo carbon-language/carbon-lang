@@ -16,6 +16,17 @@ entry:
   ret <4 x i32> %vmull15.i.i
 }
 
+define <4 x i32> @test_vmull_high_n_s16_imm(<8 x i16> %a) #0 {
+; CHECK-LABEL: test_vmull_high_n_s16_imm:
+; CHECK-NEXT: movi [[REPLICATE:v[0-9]+]].8h, #0x1d
+; CHECK-NEXT: smull2 {{v[0-9]+}}.4s, {{v[0-9]+}}.8h, [[REPLICATE]].8h
+; CHECK-NEXT: ret
+entry:
+  %shuffle.i.i = shufflevector <8 x i16> %a, <8 x i16> undef, <4 x i32> <i32 4, i32 5, i32 6, i32 7>
+  %vmull15.i.i = call <4 x i32> @llvm.aarch64.neon.smull.v4i32(<4 x i16> %shuffle.i.i, <4 x i16> <i16 29, i16 29, i16 29, i16 29>)
+  ret <4 x i32> %vmull15.i.i
+}
+
 define <2 x i64> @test_vmull_high_n_s32(<4 x i32> %a, i32 %b) #0 {
 ; CHECK-LABEL: test_vmull_high_n_s32:
 ; CHECK-NEXT: dup [[REPLICATE:v[0-9]+]].4s, w0
@@ -26,6 +37,17 @@ entry:
   %vecinit.i.i = insertelement <2 x i32> undef, i32 %b, i32 0
   %vecinit1.i.i = insertelement <2 x i32> %vecinit.i.i, i32 %b, i32 1
   %vmull9.i.i = call <2 x i64> @llvm.aarch64.neon.smull.v2i64(<2 x i32> %shuffle.i.i, <2 x i32> %vecinit1.i.i)
+  ret <2 x i64> %vmull9.i.i
+}
+
+define <2 x i64> @test_vmull_high_n_s32_imm(<4 x i32> %a) #0 {
+; CHECK-LABEL: test_vmull_high_n_s32_imm:
+; CHECK-NEXT: movi [[REPLICATE:v[0-9]+]].4s, #0x1, msl #8
+; CHECK-NEXT: smull2 {{v[0-9]+}}.2d, {{v[0-9]+}}.4s, [[REPLICATE]].4s
+; CHECK-NEXT: ret
+entry:
+  %shuffle.i.i = shufflevector <4 x i32> %a, <4 x i32> undef, <2 x i32> <i32 2, i32 3>
+  %vmull9.i.i = call <2 x i64> @llvm.aarch64.neon.smull.v2i64(<2 x i32> %shuffle.i.i, <2 x i32> <i32 511, i32 511>)
   ret <2 x i64> %vmull9.i.i
 }
 
@@ -44,6 +66,17 @@ entry:
   ret <4 x i32> %vmull15.i.i
 }
 
+define <4 x i32> @test_vmull_high_n_u16_imm(<8 x i16> %a) #0 {
+; CHECK-LABEL: test_vmull_high_n_u16_imm:
+; CHECK-NEXT: movi [[REPLICATE:v[0-9]+]].8h, #0x11, lsl #8
+; CHECK-NEXT: umull2 {{v[0-9]+}}.4s, {{v[0-9]+}}.8h, [[REPLICATE]].8h
+; CHECK-NEXT: ret
+entry:
+  %shuffle.i.i = shufflevector <8 x i16> %a, <8 x i16> undef, <4 x i32> <i32 4, i32 5, i32 6, i32 7>
+  %vmull15.i.i = call <4 x i32> @llvm.aarch64.neon.umull.v4i32(<4 x i16> %shuffle.i.i, <4 x i16> <i16 4352, i16 4352, i16 4352, i16 4352>)
+  ret <4 x i32> %vmull15.i.i
+}
+
 define <2 x i64> @test_vmull_high_n_u32(<4 x i32> %a, i32 %b) #0 {
 ; CHECK-LABEL: test_vmull_high_n_u32:
 ; CHECK-NEXT: dup [[REPLICATE:v[0-9]+]].4s, w0
@@ -54,6 +87,17 @@ entry:
   %vecinit.i.i = insertelement <2 x i32> undef, i32 %b, i32 0
   %vecinit1.i.i = insertelement <2 x i32> %vecinit.i.i, i32 %b, i32 1
   %vmull9.i.i = call <2 x i64> @llvm.aarch64.neon.umull.v2i64(<2 x i32> %shuffle.i.i, <2 x i32> %vecinit1.i.i)
+  ret <2 x i64> %vmull9.i.i
+}
+
+define <2 x i64> @test_vmull_high_n_u32_imm(<4 x i32> %a) #0 {
+; CHECK-LABEL: test_vmull_high_n_u32_imm:
+; CHECK-NEXT: mvni [[REPLICATE:v[0-9]+]].4s, #0x1, msl #8
+; CHECK-NEXT: umull2 {{v[0-9]+}}.2d, {{v[0-9]+}}.4s, [[REPLICATE]].4s
+; CHECK-NEXT: ret
+entry:
+  %shuffle.i.i = shufflevector <4 x i32> %a, <4 x i32> undef, <2 x i32> <i32 2, i32 3>
+  %vmull9.i.i = call <2 x i64> @llvm.aarch64.neon.umull.v2i64(<2 x i32> %shuffle.i.i, <2 x i32> <i32 4294966784, i32 4294966784>)
   ret <2 x i64> %vmull9.i.i
 }
 
@@ -72,6 +116,17 @@ entry:
   ret <4 x i32> %vqdmull15.i.i
 }
 
+define <4 x i32> @test_vqdmull_high_n_s16_imm(<8 x i16> %a) #0 {
+; CHECK-LABEL: test_vqdmull_high_n_s16_imm:
+; CHECK-NEXT: mvni [[REPLICATE:v[0-9]+]].8h, #0x11, lsl #8
+; CHECK-NEXT: sqdmull2 {{v[0-9]+}}.4s, {{v[0-9]+}}.8h, [[REPLICATE]].8h
+; CHECK-NEXT: ret
+entry:
+  %shuffle.i.i = shufflevector <8 x i16> %a, <8 x i16> undef, <4 x i32> <i32 4, i32 5, i32 6, i32 7>
+  %vqdmull15.i.i = call <4 x i32> @llvm.aarch64.neon.sqdmull.v4i32(<4 x i16> %shuffle.i.i, <4 x i16> <i16 61183, i16 61183, i16 61183, i16 61183>)
+  ret <4 x i32> %vqdmull15.i.i
+}
+
 define <2 x i64> @test_vqdmull_high_n_s32(<4 x i32> %a, i32 %b) #0 {
 ; CHECK-LABEL: test_vqdmull_high_n_s32:
 ; CHECK-NEXT: dup [[REPLICATE:v[0-9]+]].4s, w0
@@ -82,6 +137,17 @@ entry:
   %vecinit.i.i = insertelement <2 x i32> undef, i32 %b, i32 0
   %vecinit1.i.i = insertelement <2 x i32> %vecinit.i.i, i32 %b, i32 1
   %vqdmull9.i.i = call <2 x i64> @llvm.aarch64.neon.sqdmull.v2i64(<2 x i32> %shuffle.i.i, <2 x i32> %vecinit1.i.i)
+  ret <2 x i64> %vqdmull9.i.i
+}
+
+define <2 x i64> @test_vqdmull_high_n_s32_imm(<4 x i32> %a) #0 {
+; CHECK-LABEL: test_vqdmull_high_n_s32_imm:
+; CHECK-NEXT: movi [[REPLICATE:v[0-9]+]].4s, #0x1d
+; CHECK-NEXT: sqdmull2 {{v[0-9]+}}.2d, {{v[0-9]+}}.4s, [[REPLICATE]].4s
+; CHECK-NEXT: ret
+entry:
+  %shuffle.i.i = shufflevector <4 x i32> %a, <4 x i32> undef, <2 x i32> <i32 2, i32 3>
+  %vqdmull9.i.i = call <2 x i64> @llvm.aarch64.neon.sqdmull.v2i64(<2 x i32> %shuffle.i.i, <2 x i32> <i32 29, i32 29>)
   ret <2 x i64> %vqdmull9.i.i
 }
 
@@ -101,6 +167,18 @@ entry:
   ret <4 x i32> %add.i.i
 }
 
+define <4 x i32> @test_vmlal_high_n_s16_imm(<4 x i32> %a, <8 x i16> %b) #0 {
+; CHECK-LABEL: test_vmlal_high_n_s16_imm:
+; CHECK-NEXT: movi [[REPLICATE:v[0-9]+]].8h, #0x1d
+; CHECK-NEXT: smlal2 {{v[0-9]+}}.4s, {{v[0-9]+}}.8h, [[REPLICATE]].8h
+; CHECK-NEXT: ret
+entry:
+  %shuffle.i.i = shufflevector <8 x i16> %b, <8 x i16> undef, <4 x i32> <i32 4, i32 5, i32 6, i32 7>
+  %vmull2.i.i.i = call <4 x i32> @llvm.aarch64.neon.smull.v4i32(<4 x i16> %shuffle.i.i, <4 x i16> <i16 29, i16 29, i16 29, i16 29>)
+  %add.i.i = add <4 x i32> %vmull2.i.i.i, %a
+  ret <4 x i32> %add.i.i
+}
+
 define <2 x i64> @test_vmlal_high_n_s32(<2 x i64> %a, <4 x i32> %b, i32 %c) #0 {
 ; CHECK-LABEL: test_vmlal_high_n_s32:
 ; CHECK-NEXT: dup [[REPLICATE:v[0-9]+]].4s, w0
@@ -111,6 +189,18 @@ entry:
   %vecinit.i.i = insertelement <2 x i32> undef, i32 %c, i32 0
   %vecinit1.i.i = insertelement <2 x i32> %vecinit.i.i, i32 %c, i32 1
   %vmull2.i.i.i = call <2 x i64> @llvm.aarch64.neon.smull.v2i64(<2 x i32> %shuffle.i.i, <2 x i32> %vecinit1.i.i)
+  %add.i.i = add <2 x i64> %vmull2.i.i.i, %a
+  ret <2 x i64> %add.i.i
+}
+
+define <2 x i64> @test_vmlal_high_n_s32_imm(<2 x i64> %a, <4 x i32> %b) #0 {
+; CHECK-LABEL: test_vmlal_high_n_s32_imm:
+; CHECK-NEXT: movi [[REPLICATE:v[0-9]+]].4s, #0x1d
+; CHECK-NEXT: smlal2 {{v[0-9]+}}.2d, {{v[0-9]+}}.4s, [[REPLICATE]].4s
+; CHECK-NEXT: ret
+entry:
+  %shuffle.i.i = shufflevector <4 x i32> %b, <4 x i32> undef, <2 x i32> <i32 2, i32 3>
+  %vmull2.i.i.i = call <2 x i64> @llvm.aarch64.neon.smull.v2i64(<2 x i32> %shuffle.i.i, <2 x i32> <i32 29, i32 29>)
   %add.i.i = add <2 x i64> %vmull2.i.i.i, %a
   ret <2 x i64> %add.i.i
 }
@@ -131,6 +221,18 @@ entry:
   ret <4 x i32> %add.i.i
 }
 
+define <4 x i32> @test_vmlal_high_n_u16_imm(<4 x i32> %a, <8 x i16> %b) #0 {
+; CHECK-LABEL: test_vmlal_high_n_u16_imm:
+; CHECK-NEXT: movi [[REPLICATE:v[0-9]+]].8h, #0x1d
+; CHECK-NEXT: umlal2 {{v[0-9]+}}.4s, {{v[0-9]+}}.8h, [[REPLICATE]].8h
+; CHECK-NEXT: ret
+entry:
+  %shuffle.i.i = shufflevector <8 x i16> %b, <8 x i16> undef, <4 x i32> <i32 4, i32 5, i32 6, i32 7>
+  %vmull2.i.i.i = call <4 x i32> @llvm.aarch64.neon.umull.v4i32(<4 x i16> %shuffle.i.i, <4 x i16> <i16 29, i16 29, i16 29, i16 29>)
+  %add.i.i = add <4 x i32> %vmull2.i.i.i, %a
+  ret <4 x i32> %add.i.i
+}
+
 define <2 x i64> @test_vmlal_high_n_u32(<2 x i64> %a, <4 x i32> %b, i32 %c) #0 {
 ; CHECK-LABEL: test_vmlal_high_n_u32:
 ; CHECK-NEXT: dup [[REPLICATE:v[0-9]+]].4s, w0
@@ -141,6 +243,18 @@ entry:
   %vecinit.i.i = insertelement <2 x i32> undef, i32 %c, i32 0
   %vecinit1.i.i = insertelement <2 x i32> %vecinit.i.i, i32 %c, i32 1
   %vmull2.i.i.i = call <2 x i64> @llvm.aarch64.neon.umull.v2i64(<2 x i32> %shuffle.i.i, <2 x i32> %vecinit1.i.i)
+  %add.i.i = add <2 x i64> %vmull2.i.i.i, %a
+  ret <2 x i64> %add.i.i
+}
+
+define <2 x i64> @test_vmlal_high_n_u32_imm(<2 x i64> %a, <4 x i32> %b) #0 {
+; CHECK-LABEL: test_vmlal_high_n_u32_imm:
+; CHECK-NEXT: movi [[REPLICATE:v[0-9]+]].4s, #0x1d
+; CHECK-NEXT: umlal2 {{v[0-9]+}}.2d, {{v[0-9]+}}.4s, [[REPLICATE]].4s
+; CHECK-NEXT: ret
+entry:
+  %shuffle.i.i = shufflevector <4 x i32> %b, <4 x i32> undef, <2 x i32> <i32 2, i32 3>
+  %vmull2.i.i.i = call <2 x i64> @llvm.aarch64.neon.umull.v2i64(<2 x i32> %shuffle.i.i, <2 x i32> <i32 29, i32 29>)
   %add.i.i = add <2 x i64> %vmull2.i.i.i, %a
   ret <2 x i64> %add.i.i
 }
@@ -161,6 +275,18 @@ entry:
   ret <4 x i32> %vqdmlal17.i.i
 }
 
+define <4 x i32> @test_vqdmlal_high_n_s16_imm(<4 x i32> %a, <8 x i16> %b) #0 {
+; CHECK-LABEL: test_vqdmlal_high_n_s16_imm:
+; CHECK-NEXT: movi [[REPLICATE:v[0-9]+]].8h, #0x1d
+; CHECK-NEXT: sqdmlal2 {{v[0-9]+}}.4s, {{v[0-9]+}}.8h, [[REPLICATE]].8h
+; CHECK-NEXT: ret
+entry:
+  %shuffle.i.i = shufflevector <8 x i16> %b, <8 x i16> undef, <4 x i32> <i32 4, i32 5, i32 6, i32 7>
+  %vqdmlal15.i.i = call <4 x i32> @llvm.aarch64.neon.sqdmull.v4i32(<4 x i16> %shuffle.i.i, <4 x i16> <i16 29, i16 29, i16 29, i16 29>)
+  %vqdmlal17.i.i = call <4 x i32> @llvm.aarch64.neon.sqadd.v4i32(<4 x i32> %a, <4 x i32> %vqdmlal15.i.i)
+  ret <4 x i32> %vqdmlal17.i.i
+}
+
 define <2 x i64> @test_vqdmlal_high_n_s32(<2 x i64> %a, <4 x i32> %b, i32 %c) #0 {
 ; CHECK-LABEL: test_vqdmlal_high_n_s32:
 ; CHECK-NEXT: dup [[REPLICATE:v[0-9]+]].4s, w0
@@ -171,6 +297,18 @@ entry:
   %vecinit.i.i = insertelement <2 x i32> undef, i32 %c, i32 0
   %vecinit1.i.i = insertelement <2 x i32> %vecinit.i.i, i32 %c, i32 1
   %vqdmlal9.i.i = call <2 x i64> @llvm.aarch64.neon.sqdmull.v2i64(<2 x i32> %shuffle.i.i, <2 x i32> %vecinit1.i.i)
+  %vqdmlal11.i.i = call <2 x i64> @llvm.aarch64.neon.sqadd.v2i64(<2 x i64> %a, <2 x i64> %vqdmlal9.i.i)
+  ret <2 x i64> %vqdmlal11.i.i
+}
+
+define <2 x i64> @test_vqdmlal_high_n_s32_imm(<2 x i64> %a, <4 x i32> %b) #0 {
+; CHECK-LABEL: test_vqdmlal_high_n_s32_imm:
+; CHECK-NEXT: movi [[REPLICATE:v[0-9]+]].4s, #0x1d
+; CHECK-NEXT: sqdmlal2 {{v[0-9]+}}.2d, {{v[0-9]+}}.4s, [[REPLICATE]].4s
+; CHECK-NEXT: ret
+entry:
+  %shuffle.i.i = shufflevector <4 x i32> %b, <4 x i32> undef, <2 x i32> <i32 2, i32 3>
+  %vqdmlal9.i.i = call <2 x i64> @llvm.aarch64.neon.sqdmull.v2i64(<2 x i32> %shuffle.i.i, <2 x i32> <i32 29, i32 29>)
   %vqdmlal11.i.i = call <2 x i64> @llvm.aarch64.neon.sqadd.v2i64(<2 x i64> %a, <2 x i64> %vqdmlal9.i.i)
   ret <2 x i64> %vqdmlal11.i.i
 }
@@ -191,6 +329,18 @@ entry:
   ret <4 x i32> %sub.i.i
 }
 
+define <4 x i32> @test_vmlsl_high_n_s16_imm(<4 x i32> %a, <8 x i16> %b) #0 {
+; CHECK-LABEL: test_vmlsl_high_n_s16_imm:
+; CHECK-NEXT: movi [[REPLICATE:v[0-9]+]].8h, #0x1d
+; CHECK-NEXT: smlsl2 {{v[0-9]+}}.4s, {{v[0-9]+}}.8h, [[REPLICATE]].8h
+; CHECK-NEXT: ret
+entry:
+  %shuffle.i.i = shufflevector <8 x i16> %b, <8 x i16> undef, <4 x i32> <i32 4, i32 5, i32 6, i32 7>
+  %vmull2.i.i.i = call <4 x i32> @llvm.aarch64.neon.smull.v4i32(<4 x i16> %shuffle.i.i, <4 x i16> <i16 29, i16 29, i16 29, i16 29>)
+  %sub.i.i = sub <4 x i32> %a, %vmull2.i.i.i
+  ret <4 x i32> %sub.i.i
+}
+
 define <2 x i64> @test_vmlsl_high_n_s32(<2 x i64> %a, <4 x i32> %b, i32 %c) #0 {
 ; CHECK-LABEL: test_vmlsl_high_n_s32:
 ; CHECK-NEXT: dup [[REPLICATE:v[0-9]+]].4s, w0
@@ -201,6 +351,18 @@ entry:
   %vecinit.i.i = insertelement <2 x i32> undef, i32 %c, i32 0
   %vecinit1.i.i = insertelement <2 x i32> %vecinit.i.i, i32 %c, i32 1
   %vmull2.i.i.i = call <2 x i64> @llvm.aarch64.neon.smull.v2i64(<2 x i32> %shuffle.i.i, <2 x i32> %vecinit1.i.i)
+  %sub.i.i = sub <2 x i64> %a, %vmull2.i.i.i
+  ret <2 x i64> %sub.i.i
+}
+
+define <2 x i64> @test_vmlsl_high_n_s32_imm(<2 x i64> %a, <4 x i32> %b) #0 {
+; CHECK-LABEL: test_vmlsl_high_n_s32_imm:
+; CHECK-NEXT: movi [[REPLICATE:v[0-9]+]].4s, #0x1d
+; CHECK-NEXT: smlsl2 {{v[0-9]+}}.2d, {{v[0-9]+}}.4s, [[REPLICATE]].4s
+; CHECK-NEXT: ret
+entry:
+  %shuffle.i.i = shufflevector <4 x i32> %b, <4 x i32> undef, <2 x i32> <i32 2, i32 3>
+  %vmull2.i.i.i = call <2 x i64> @llvm.aarch64.neon.smull.v2i64(<2 x i32> %shuffle.i.i, <2 x i32> <i32 29, i32 29>)
   %sub.i.i = sub <2 x i64> %a, %vmull2.i.i.i
   ret <2 x i64> %sub.i.i
 }
@@ -221,6 +383,18 @@ entry:
   ret <4 x i32> %sub.i.i
 }
 
+define <4 x i32> @test_vmlsl_high_n_u16_imm(<4 x i32> %a, <8 x i16> %b) #0 {
+; CHECK-LABEL: test_vmlsl_high_n_u16_imm:
+; CHECK-NEXT: movi [[REPLICATE:v[0-9]+]].8h, #0x1d
+; CHECK-NEXT: umlsl2 {{v[0-9]+}}.4s, {{v[0-9]+}}.8h, [[REPLICATE]].8h
+; CHECK-NEXT: ret
+entry:
+  %shuffle.i.i = shufflevector <8 x i16> %b, <8 x i16> undef, <4 x i32> <i32 4, i32 5, i32 6, i32 7>
+  %vmull2.i.i.i = call <4 x i32> @llvm.aarch64.neon.umull.v4i32(<4 x i16> %shuffle.i.i, <4 x i16> <i16 29, i16 29, i16 29, i16 29>)
+  %sub.i.i = sub <4 x i32> %a, %vmull2.i.i.i
+  ret <4 x i32> %sub.i.i
+}
+
 define <2 x i64> @test_vmlsl_high_n_u32(<2 x i64> %a, <4 x i32> %b, i32 %c) #0 {
 ; CHECK-LABEL: test_vmlsl_high_n_u32:
 ; CHECK-NEXT: dup [[REPLICATE:v[0-9]+]].4s, w0
@@ -231,6 +405,18 @@ entry:
   %vecinit.i.i = insertelement <2 x i32> undef, i32 %c, i32 0
   %vecinit1.i.i = insertelement <2 x i32> %vecinit.i.i, i32 %c, i32 1
   %vmull2.i.i.i = call <2 x i64> @llvm.aarch64.neon.umull.v2i64(<2 x i32> %shuffle.i.i, <2 x i32> %vecinit1.i.i)
+  %sub.i.i = sub <2 x i64> %a, %vmull2.i.i.i
+  ret <2 x i64> %sub.i.i
+}
+
+define <2 x i64> @test_vmlsl_high_n_u32_imm(<2 x i64> %a, <4 x i32> %b) #0 {
+; CHECK-LABEL: test_vmlsl_high_n_u32_imm:
+; CHECK-NEXT: movi [[REPLICATE:v[0-9]+]].4s, #0x1d
+; CHECK-NEXT: umlsl2 {{v[0-9]+}}.2d, {{v[0-9]+}}.4s, [[REPLICATE]].4s
+; CHECK-NEXT: ret
+entry:
+  %shuffle.i.i = shufflevector <4 x i32> %b, <4 x i32> undef, <2 x i32> <i32 2, i32 3>
+  %vmull2.i.i.i = call <2 x i64> @llvm.aarch64.neon.umull.v2i64(<2 x i32> %shuffle.i.i, <2 x i32> <i32 29, i32 29>)
   %sub.i.i = sub <2 x i64> %a, %vmull2.i.i.i
   ret <2 x i64> %sub.i.i
 }
@@ -251,6 +437,18 @@ entry:
   ret <4 x i32> %vqdmlsl17.i.i
 }
 
+define <4 x i32> @test_vqdmlsl_high_n_s16_imm(<4 x i32> %a, <8 x i16> %b) #0 {
+; CHECK-LABEL: test_vqdmlsl_high_n_s16_imm:
+; CHECK-NEXT: movi [[REPLICATE:v[0-9]+]].8h, #0x1d
+; CHECK-NEXT: sqdmlsl2 {{v[0-9]+}}.4s, {{v[0-9]+}}.8h, [[REPLICATE]].8h
+; CHECK-NEXT: ret
+entry:
+  %shuffle.i.i = shufflevector <8 x i16> %b, <8 x i16> undef, <4 x i32> <i32 4, i32 5, i32 6, i32 7>
+  %vqdmlsl15.i.i = call <4 x i32> @llvm.aarch64.neon.sqdmull.v4i32(<4 x i16> %shuffle.i.i, <4 x i16> <i16 29, i16 29, i16 29, i16 29>)
+  %vqdmlsl17.i.i = call <4 x i32> @llvm.aarch64.neon.sqsub.v4i32(<4 x i32> %a, <4 x i32> %vqdmlsl15.i.i)
+  ret <4 x i32> %vqdmlsl17.i.i
+}
+
 define <2 x i64> @test_vqdmlsl_high_n_s32(<2 x i64> %a, <4 x i32> %b, i32 %c) #0 {
 ; CHECK-LABEL: test_vqdmlsl_high_n_s32:
 ; CHECK-NEXT: dup [[REPLICATE:v[0-9]+]].4s, w0
@@ -261,6 +459,18 @@ entry:
   %vecinit.i.i = insertelement <2 x i32> undef, i32 %c, i32 0
   %vecinit1.i.i = insertelement <2 x i32> %vecinit.i.i, i32 %c, i32 1
   %vqdmlsl9.i.i = call <2 x i64> @llvm.aarch64.neon.sqdmull.v2i64(<2 x i32> %shuffle.i.i, <2 x i32> %vecinit1.i.i)
+  %vqdmlsl11.i.i = call <2 x i64> @llvm.aarch64.neon.sqsub.v2i64(<2 x i64> %a, <2 x i64> %vqdmlsl9.i.i)
+  ret <2 x i64> %vqdmlsl11.i.i
+}
+
+define <2 x i64> @test_vqdmlsl_high_n_s32_imm(<2 x i64> %a, <4 x i32> %b) #0 {
+; CHECK-LABEL: test_vqdmlsl_high_n_s32_imm:
+; CHECK-NEXT: movi [[REPLICATE:v[0-9]+]].4s, #0x1d
+; CHECK-NEXT: sqdmlsl2 {{v[0-9]+}}.2d, {{v[0-9]+}}.4s, [[REPLICATE]].4s
+; CHECK-NEXT: ret
+entry:
+  %shuffle.i.i = shufflevector <4 x i32> %b, <4 x i32> undef, <2 x i32> <i32 2, i32 3>
+  %vqdmlsl9.i.i = call <2 x i64> @llvm.aarch64.neon.sqdmull.v2i64(<2 x i32> %shuffle.i.i, <2 x i32> <i32 29, i32 29>)
   %vqdmlsl11.i.i = call <2 x i64> @llvm.aarch64.neon.sqsub.v2i64(<2 x i64> %a, <2 x i64> %vqdmlsl9.i.i)
   ret <2 x i64> %vqdmlsl11.i.i
 }

@@ -7580,21 +7580,26 @@ static SDValue tryCombineFixedPointConvert(SDNode *N,
 //
 // This routine does the actual conversion of such DUPs, once outer routines
 // have determined that everything else is in order.
+// It also supports immediate DUP-like nodes (MOVI/MVNi), which we can fold
+// similarly here.
 static SDValue tryExtendDUPToExtractHigh(SDValue N, SelectionDAG &DAG) {
-  // We can handle most types of duplicate, but the lane ones have an extra
-  // operand saying *which* lane, so we need to know.
-  bool IsDUPLANE;
   switch (N.getOpcode()) {
   case AArch64ISD::DUP:
-    IsDUPLANE = false;
-    break;
   case AArch64ISD::DUPLANE8:
   case AArch64ISD::DUPLANE16:
   case AArch64ISD::DUPLANE32:
   case AArch64ISD::DUPLANE64:
-    IsDUPLANE = true;
+  case AArch64ISD::MOVI:
+  case AArch64ISD::MOVIshift:
+  case AArch64ISD::MOVIedit:
+  case AArch64ISD::MOVImsl:
+  case AArch64ISD::MVNIshift:
+  case AArch64ISD::MVNImsl:
     break;
   default:
+    // FMOV could be supported, but isn't very useful, as it would only occur
+    // if you passed a bitcast' floating point immediate to an eligible long
+    // integer op (addl, smull, ...).
     return SDValue();
   }
 
@@ -7604,17 +7609,11 @@ static SDValue tryExtendDUPToExtractHigh(SDValue N, SelectionDAG &DAG) {
 
   MVT ElementTy = NarrowTy.getVectorElementType();
   unsigned NumElems = NarrowTy.getVectorNumElements();
-  MVT NewDUPVT = MVT::getVectorVT(ElementTy, NumElems * 2);
+  MVT NewVT = MVT::getVectorVT(ElementTy, NumElems * 2);
 
   SDLoc dl(N);
-  SDValue NewDUP;
-  if (IsDUPLANE)
-    NewDUP = DAG.getNode(N.getOpcode(), dl, NewDUPVT, N.getOperand(0),
-                         N.getOperand(1));
-  else
-    NewDUP = DAG.getNode(AArch64ISD::DUP, dl, NewDUPVT, N.getOperand(0));
-
-  return DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, NarrowTy, NewDUP,
+  return DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, NarrowTy,
+                     DAG.getNode(N->getOpcode(), dl, NewVT, N->ops()),
                      DAG.getConstant(NumElems, dl, MVT::i64));
 }
 
@@ -8913,6 +8912,14 @@ static SDValue performSelectCCCombine(SDNode *N, SelectionDAG &DAG) {
   return DAG.getNode(Opcode, SDLoc(N), N->getValueType(0), LHS, RHS);
 }
 
+/// Get rid of unnecessary NVCASTs (that don't change the type).
+static SDValue performNVCASTCombine(SDNode *N) {
+  if (N->getValueType(0) == N->getOperand(0).getValueType())
+    return N->getOperand(0);
+
+  return SDValue();
+}
+
 SDValue AArch64TargetLowering::PerformDAGCombine(SDNode *N,
                                                  DAGCombinerInfo &DCI) const {
   SelectionDAG &DAG = DCI.DAG;
@@ -8955,6 +8962,8 @@ SDValue AArch64TargetLowering::PerformDAGCombine(SDNode *N,
     return performCONDCombine(N, DCI, DAG, 2, 3);
   case AArch64ISD::DUP:
     return performPostLD1Combine(N, DCI, false);
+  case AArch64ISD::NVCAST:
+    return performNVCASTCombine(N);
   case ISD::INSERT_VECTOR_ELT:
     return performPostLD1Combine(N, DCI, true);
   case ISD::INTRINSIC_VOID:
