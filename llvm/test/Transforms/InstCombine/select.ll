@@ -1265,7 +1265,7 @@ define i32 @test77(i1 %flag, i32* %x) {
 ; load does.
 ; CHECK-LABEL: @test77(
 ; CHECK: %[[A:.*]] = alloca i32, align 1
-; CHECK: call void @scribble_on_i32(i32* %[[A]])
+; CHECK: call void @scribble_on_i32(i32* nonnull %[[A]])
 ; CHECK: store i32 0, i32* %x
 ; CHECK: %[[P:.*]] = select i1 %flag, i32* %[[A]], i32* %x
 ; CHECK: load i32, i32* %[[P]]
