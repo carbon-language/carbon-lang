@@ -41,14 +41,11 @@ int64_t const outerLoopMask = 1 << outerLoopOffset;
 
 size_t const bundleInstructionsOffset = 1;
 
-// Returns the number of instructions in the bundle
-size_t bundleSize(MCInst const &MCI);
-
 // Returns a iterator range of instructions in this bundle
 iterator_range<MCInst::const_iterator> bundleInstructions(MCInst const &MCI);
 
-// Return the extender for instruction at Index or nullptr if none
-MCInst const *extenderForIndex(MCInst const &MCB, size_t Index);
+// Returns the number of instructions in the bundle
+size_t bundleSize(MCInst const &MCI);
 
 // Create a duplex instruction given the two subinsts
 MCInst *deriveDuplex(MCContext &Context, unsigned iClass, MCInst const &inst0,
@@ -56,6 +53,9 @@ MCInst *deriveDuplex(MCContext &Context, unsigned iClass, MCInst const &inst0,
 
 // Convert this instruction in to a duplex subinst
 MCInst deriveSubInst(MCInst const &Inst);
+
+// Return the extender for instruction at Index or nullptr if none
+MCInst const *extenderForIndex(MCInst const &MCB, size_t Index);
 
 // Return memory access size
 HexagonII::MemAccessSize getAccessSize(MCInstrInfo const &MCII,
