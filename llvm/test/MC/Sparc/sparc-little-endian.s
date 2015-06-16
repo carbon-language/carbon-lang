@@ -1,5 +1,5 @@
-! RUN: llvm-mc %s -arch=sparcel -show-encoding | FileCheck %s
-! RUN: llvm-mc -arch=sparcel -filetype=obj < %s | llvm-objdump -d - | FileCheck %s --check-prefix=CHECK-OBJ
+! RUN: llvm-mc %s -triple=sparcel-linux-gnu -show-encoding | FileCheck %s
+! RUN: llvm-mc -triple=sparcel-linux-gnu -filetype=obj < %s | llvm-objdump -d - | FileCheck %s --check-prefix=CHECK-OBJ
 
         ! CHECK-OBJ: .text:
         .BB0:
