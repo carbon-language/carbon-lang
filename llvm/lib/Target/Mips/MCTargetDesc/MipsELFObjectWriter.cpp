@@ -64,13 +64,47 @@ MipsELFObjectWriter::~MipsELFObjectWriter() {}
 unsigned MipsELFObjectWriter::GetRelocType(const MCValue &Target,
                                            const MCFixup &Fixup,
                                            bool IsPCRel) const {
-  // determine the type of the relocation
+  // Determine the type of the relocation.
   unsigned Kind = (unsigned)Fixup.getKind();
 
   switch (Kind) {
+  case Mips::fixup_Mips_16:
+  case FK_Data_2:
+    return IsPCRel ? ELF::R_MIPS_PC16 : ELF::R_MIPS_16;
   case Mips::fixup_Mips_32:
   case FK_Data_4:
     return IsPCRel ? ELF::R_MIPS_PC32 : ELF::R_MIPS_32;
+  }
+
+  if (IsPCRel) {
+    switch (Kind) {
+    case Mips::fixup_Mips_Branch_PCRel:
+    case Mips::fixup_Mips_PC16:
+      return ELF::R_MIPS_PC16;
+    case Mips::fixup_MICROMIPS_PC7_S1:
+      return ELF::R_MICROMIPS_PC7_S1;
+    case Mips::fixup_MICROMIPS_PC10_S1:
+      return ELF::R_MICROMIPS_PC10_S1;
+    case Mips::fixup_MICROMIPS_PC16_S1:
+      return ELF::R_MICROMIPS_PC16_S1;
+    case Mips::fixup_MIPS_PC19_S2:
+      return ELF::R_MIPS_PC19_S2;
+    case Mips::fixup_MIPS_PC18_S3:
+      return ELF::R_MIPS_PC18_S3;
+    case Mips::fixup_MIPS_PC21_S2:
+      return ELF::R_MIPS_PC21_S2;
+    case Mips::fixup_MIPS_PC26_S2:
+      return ELF::R_MIPS_PC26_S2;
+    case Mips::fixup_MIPS_PCHI16:
+      return ELF::R_MIPS_PCHI16;
+    case Mips::fixup_MIPS_PCLO16:
+      return ELF::R_MIPS_PCLO16;
+    }
+
+    llvm_unreachable("invalid PC-relative fixup kind!");
+  }
+
+  switch (Kind) {
   case Mips::fixup_Mips_64:
   case FK_Data_8:
     return ELF::R_MIPS_64;
@@ -110,9 +144,6 @@ unsigned MipsELFObjectWriter::GetRelocType(const MCValue &Target,
     return ELF::R_MIPS_TLS_DTPREL_HI16;
   case Mips::fixup_Mips_DTPREL_LO:
     return ELF::R_MIPS_TLS_DTPREL_LO16;
-  case Mips::fixup_Mips_Branch_PCRel:
-  case Mips::fixup_Mips_PC16:
-    return ELF::R_MIPS_PC16;
   case Mips::fixup_Mips_GOT_PAGE:
     return ELF::R_MIPS_GOT_PAGE;
   case Mips::fixup_Mips_GOT_OFST:
@@ -153,12 +184,6 @@ unsigned MipsELFObjectWriter::GetRelocType(const MCValue &Target,
     return ELF::R_MICROMIPS_LO16;
   case Mips::fixup_MICROMIPS_GOT16:
     return ELF::R_MICROMIPS_GOT16;
-  case Mips::fixup_MICROMIPS_PC7_S1:
-    return ELF::R_MICROMIPS_PC7_S1;
-  case Mips::fixup_MICROMIPS_PC10_S1:
-    return ELF::R_MICROMIPS_PC10_S1;
-  case Mips::fixup_MICROMIPS_PC16_S1:
-    return ELF::R_MICROMIPS_PC16_S1;
   case Mips::fixup_MICROMIPS_CALL16:
     return ELF::R_MICROMIPS_CALL16;
   case Mips::fixup_MICROMIPS_GOT_DISP:
@@ -179,19 +204,8 @@ unsigned MipsELFObjectWriter::GetRelocType(const MCValue &Target,
     return ELF::R_MICROMIPS_TLS_TPREL_HI16;
   case Mips::fixup_MICROMIPS_TLS_TPREL_LO16:
     return ELF::R_MICROMIPS_TLS_TPREL_LO16;
-  case Mips::fixup_MIPS_PC19_S2:
-    return ELF::R_MIPS_PC19_S2;
-  case Mips::fixup_MIPS_PC18_S3:
-    return ELF::R_MIPS_PC18_S3;
-  case Mips::fixup_MIPS_PC21_S2:
-    return ELF::R_MIPS_PC21_S2;
-  case Mips::fixup_MIPS_PC26_S2:
-    return ELF::R_MIPS_PC26_S2;
-  case Mips::fixup_MIPS_PCHI16:
-    return ELF::R_MIPS_PCHI16;
-  case Mips::fixup_MIPS_PCLO16:
-    return ELF::R_MIPS_PCLO16;
   }
+
   llvm_unreachable("invalid fixup kind!");
 }
 
