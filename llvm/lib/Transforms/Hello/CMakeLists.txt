@@ -12,4 +12,7 @@ endif()
 
 add_llvm_loadable_module( LLVMHello
   Hello.cpp
+
+  DEPENDS
+  intrinsics_gen
   )

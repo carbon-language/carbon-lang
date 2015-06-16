@@ -5,4 +5,7 @@ add_llvm_library(LLVMRuntimeDyld
   RuntimeDyldCOFF.cpp
   RuntimeDyldELF.cpp
   RuntimeDyldMachO.cpp
+
+  DEPENDS
+  intrinsics_gen
   )

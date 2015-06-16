@@ -6,4 +6,7 @@ add_llvm_library(LLVMOrcJIT
 
   ADDITIONAL_HEADER_DIRS
   ${LLVM_MAIN_INCLUDE_DIR}/llvm/ExecutionEngine/Orc
+
+  DEPENDS
+  intrinsics_gen
   )

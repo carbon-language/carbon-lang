@@ -46,3 +46,5 @@ set(ADTSources
 add_llvm_unittest(ADTTests
   ${ADTSources}
   )
+
+add_dependencies(ADTTests intrinsics_gen)
