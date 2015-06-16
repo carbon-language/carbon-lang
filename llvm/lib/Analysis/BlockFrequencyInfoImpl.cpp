@@ -286,7 +286,7 @@ bool BlockFrequencyInfoImplBase::addToDist(Distribution &Dist,
 
   if (isLoopHeader(Resolved)) {
     DEBUG(debugSuccessor("backedge"));
-    Dist.addBackedge(OuterLoop->getHeader(), Weight);
+    Dist.addBackedge(Resolved, Weight);
     return true;
   }
 
@@ -349,7 +349,10 @@ void BlockFrequencyInfoImplBase::computeLoopScale(LoopData &Loop) {
 
   // LoopScale == 1 / ExitMass
   // ExitMass == HeadMass - BackedgeMass
-  BlockMass ExitMass = BlockMass::getFull() - Loop.BackedgeMass;
+  BlockMass TotalBackedgeMass;
+  for (auto &Mass : Loop.BackedgeMass)
+    TotalBackedgeMass += Mass;
+  BlockMass ExitMass = BlockMass::getFull() - TotalBackedgeMass;
 
   // Block scale stores the inverse of the scale. If this is an infinite loop,
   // its exit mass will be zero. In this case, use an arbitrary scale for the
@@ -358,7 +361,7 @@ void BlockFrequencyInfoImplBase::computeLoopScale(LoopData &Loop) {
       ExitMass.isEmpty() ? InifiniteLoopScale : ExitMass.toScaled().inverse();
 
   DEBUG(dbgs() << " - exit-mass = " << ExitMass << " (" << BlockMass::getFull()
-               << " - " << Loop.BackedgeMass << ")\n"
+               << " - " << TotalBackedgeMass << ")\n"
                << " - scale = " << Loop.Scale << "\n");
 }
 
@@ -375,6 +378,19 @@ void BlockFrequencyInfoImplBase::packageLoop(LoopData &Loop) {
   Loop.IsPackaged = true;
 }
 
+#ifndef NDEBUG
+static void debugAssign(const BlockFrequencyInfoImplBase &BFI,
+                        const DitheringDistributer &D, const BlockNode &T,
+                        const BlockMass &M, const char *Desc) {
+  dbgs() << "  => assign " << M << " (" << D.RemMass << ")";
+  if (Desc)
+    dbgs() << " [" << Desc << "]";
+  if (T.isValid())
+    dbgs() << " to " << BFI.getBlockName(T);
+  dbgs() << "\n";
+}
+#endif
+
 void BlockFrequencyInfoImplBase::distributeMass(const BlockNode &Source,
                                                 LoopData *OuterLoop,
                                                 Distribution &Dist) {
@@ -384,25 +400,12 @@ void BlockFrequencyInfoImplBase::distributeMass(const BlockNode &Source,
   // Distribute mass to successors as laid out in Dist.
   DitheringDistributer D(Dist, Mass);
 
-#ifndef NDEBUG
-  auto debugAssign = [&](const BlockNode &T, const BlockMass &M,
-                         const char *Desc) {
-    dbgs() << "  => assign " << M << " (" << D.RemMass << ")";
-    if (Desc)
-      dbgs() << " [" << Desc << "]";
-    if (T.isValid())
-      dbgs() << " to " << getBlockName(T);
-    dbgs() << "\n";
-  };
-  (void)debugAssign;
-#endif
-
   for (const Weight &W : Dist.Weights) {
     // Check for a local edge (non-backedge and non-exit).
     BlockMass Taken = D.takeMass(W.Amount);
     if (W.Type == Weight::Local) {
       Working[W.TargetNode.Index].getMass() += Taken;
-      DEBUG(debugAssign(W.TargetNode, Taken, nullptr));
+      DEBUG(debugAssign(*this, D, W.TargetNode, Taken, nullptr));
       continue;
     }
 
@@ -411,15 +414,16 @@ void BlockFrequencyInfoImplBase::distributeMass(const BlockNode &Source,
 
     // Check for a backedge.
     if (W.Type == Weight::Backedge) {
-      OuterLoop->BackedgeMass += Taken;
-      DEBUG(debugAssign(BlockNode(), Taken, "back"));
+      auto ix = OuterLoop->headerIndexFor(W.TargetNode);
+      OuterLoop->BackedgeMass[ix] += Taken;
+      DEBUG(debugAssign(*this, D, W.TargetNode, Taken, "back"));
       continue;
     }
 
     // This must be an exit.
     assert(W.Type == Weight::Exit);
     OuterLoop->Exits.push_back(std::make_pair(W.TargetNode, Taken));
-    DEBUG(debugAssign(W.TargetNode, Taken, "exit"));
+    DEBUG(debugAssign(*this, D, W.TargetNode, Taken, "exit"));
   }
 }
 
@@ -713,10 +717,44 @@ BlockFrequencyInfoImplBase::analyzeIrreducible(
 void
 BlockFrequencyInfoImplBase::updateLoopWithIrreducible(LoopData &OuterLoop) {
   OuterLoop.Exits.clear();
-  OuterLoop.BackedgeMass = BlockMass::getEmpty();
+  for (auto &Mass : OuterLoop.BackedgeMass)
+    Mass = BlockMass::getEmpty();
   auto O = OuterLoop.Nodes.begin() + 1;
   for (auto I = O, E = OuterLoop.Nodes.end(); I != E; ++I)
     if (!Working[I->Index].isPackaged())
       *O++ = *I;
   OuterLoop.Nodes.erase(O, OuterLoop.Nodes.end());
+}
+
+void BlockFrequencyInfoImplBase::adjustLoopHeaderMass(LoopData &Loop) {
+  assert(Loop.isIrreducible() && "this only makes sense on irreducible loops");
+
+  // Since the loop has more than one header block, the mass flowing back into
+  // each header will be different. Adjust the mass in each header loop to
+  // reflect the masses flowing through back edges.
+  //
+  // To do this, we distribute the initial mass using the backedge masses
+  // as weights for the distribution.
+  BlockMass LoopMass = BlockMass::getFull();
+  Distribution Dist;
+
+  DEBUG(dbgs() << "adjust-loop-header-mass:\n");
+  for (uint32_t H = 0; H < Loop.NumHeaders; ++H) {
+    auto &HeaderNode = Loop.Nodes[H];
+    auto &BackedgeMass = Loop.BackedgeMass[Loop.headerIndexFor(HeaderNode)];
+    DEBUG(dbgs() << " - Add back edge mass for node "
+                 << getBlockName(HeaderNode) << ": " << BackedgeMass << "\n");
+    Dist.addLocal(HeaderNode, BackedgeMass.getMass());
+  }
+
+  DitheringDistributer D(Dist, LoopMass);
+
+  DEBUG(dbgs() << " Distribute loop mass " << LoopMass
+               << " to headers using above weights\n");
+  for (const Weight &W : Dist.Weights) {
+    BlockMass Taken = D.takeMass(W.Amount);
+    assert(W.Type == Weight::Local && "all weights should be local");
+    Working[W.TargetNode.Index].getMass() = Taken;
+    DEBUG(debugAssign(*this, D, W.TargetNode, Taken, nullptr));
+  }
 }

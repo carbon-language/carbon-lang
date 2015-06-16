@@ -130,9 +130,6 @@ exit:
 ; At the first step, c1 and c2 each get 1/3 of the entry.  At each subsequent
 ; step, c1 and c2 each get 1/3 of what's left in c1 and c2 combined.  This
 ; infinite series sums to 1.
-;
-; Since the currently algorithm *always* assumes entry blocks are equal,
-; -block-freq gets the right answers here.
 define void @crossloops(i2 %x) {
 ; CHECK-LABEL: Printing analysis {{.*}} for function 'crossloops':
 ; CHECK-NEXT: block-frequency-info: crossloops
@@ -386,7 +383,7 @@ exit:
 ;
 ; This testcases uses non-trivial branch weights.  The CHECK statements here
 ; will start to fail if we change -block-freq to be more accurate.  Currently,
-; we expect left, right and top to be treated as equal headers.
+; loop headers are affected by the weight of their corresponding back edges.
 define void @nonentry_header(i1 %x, i2 %y) {
 ; CHECK-LABEL: Printing analysis {{.*}} for function 'nonentry_header':
 ; CHECK-NEXT: block-frequency-info: nonentry_header
@@ -395,15 +392,15 @@ entry:
   br i1 %x, label %left, label %right, !prof !21
 
 left:
-; CHECK-NEXT: left: float = 3.0,
+; CHECK-NEXT: left: float = 0.14{{[0-9]*}},
   br i1 %x, label %top, label %bottom, !prof !22
 
 right:
-; CHECK-NEXT: right: float = 3.0,
+; CHECK-NEXT: right: float = 0.42{{[0-9]*}},
   br i1 %x, label %top, label %bottom, !prof !22
 
 top:
-; CHECK-NEXT: top: float = 3.0,
+; CHECK-NEXT: top: float = 8.43{{[0-9]*}},
   switch i2 %y, label %exit [ i2 0, label %left
                               i2 1, label %right
                               i2 2, label %bottom ], !prof !23

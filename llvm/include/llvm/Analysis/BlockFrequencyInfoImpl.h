@@ -196,23 +196,26 @@ public:
   struct LoopData {
     typedef SmallVector<std::pair<BlockNode, BlockMass>, 4> ExitMap;
     typedef SmallVector<BlockNode, 4> NodeList;
-    LoopData *Parent;       ///< The parent loop.
-    bool IsPackaged;        ///< Whether this has been packaged.
-    uint32_t NumHeaders;    ///< Number of headers.
-    ExitMap Exits;          ///< Successor edges (and weights).
-    NodeList Nodes;         ///< Header and the members of the loop.
-    BlockMass BackedgeMass; ///< Mass returned to loop header.
+    typedef SmallVector<BlockMass, 1> HeaderMassList;
+    LoopData *Parent;            ///< The parent loop.
+    bool IsPackaged;             ///< Whether this has been packaged.
+    uint32_t NumHeaders;         ///< Number of headers.
+    ExitMap Exits;               ///< Successor edges (and weights).
+    NodeList Nodes;              ///< Header and the members of the loop.
+    HeaderMassList BackedgeMass; ///< Mass returned to each loop header.
     BlockMass Mass;
     Scaled64 Scale;
 
     LoopData(LoopData *Parent, const BlockNode &Header)
-        : Parent(Parent), IsPackaged(false), NumHeaders(1), Nodes(1, Header) {}
+        : Parent(Parent), IsPackaged(false), NumHeaders(1), Nodes(1, Header),
+          BackedgeMass(1) {}
     template <class It1, class It2>
     LoopData(LoopData *Parent, It1 FirstHeader, It1 LastHeader, It2 FirstOther,
              It2 LastOther)
         : Parent(Parent), IsPackaged(false), Nodes(FirstHeader, LastHeader) {
       NumHeaders = Nodes.size();
       Nodes.insert(Nodes.end(), FirstOther, LastOther);
+      BackedgeMass.resize(NumHeaders);
     }
     bool isHeader(const BlockNode &Node) const {
       if (isIrreducible())
@@ -222,6 +225,14 @@ public:
     }
     BlockNode getHeader() const { return Nodes[0]; }
     bool isIrreducible() const { return NumHeaders > 1; }
+
+    HeaderMassList::difference_type headerIndexFor(const BlockNode &B) {
+      assert(isHeader(B) && "this is only valid on loop header blocks");
+      if (isIrreducible())
+        return std::lower_bound(Nodes.begin(), Nodes.begin() + NumHeaders, B) -
+               Nodes.begin();
+      return 0;
+    }
 
     NodeList::const_iterator members_begin() const {
       return Nodes.begin() + NumHeaders;
@@ -430,6 +441,16 @@ public:
 
   /// \brief Compute the loop scale for a loop.
   void computeLoopScale(LoopData &Loop);
+
+  /// Adjust the mass of all headers in an irreducible loop.
+  ///
+  /// Initially, irreducible loops are assumed to distribute their mass
+  /// equally among its headers. This can lead to wrong frequency estimates
+  /// since some headers may be executed more frequently than others.
+  ///
+  /// This adjusts header mass distribution so it matches the weights of
+  /// the backedges going into each of the loop headers.
+  void adjustLoopHeaderMass(LoopData &Loop);
 
   /// \brief Package up a loop.
   void packageLoop(LoopData &Loop);
@@ -735,11 +756,6 @@ void IrreducibleGraph::addEdges(const BlockNode &Node,
 ///         as sub-loops, rather than arbitrarily shoving the problematic
 ///         blocks into the headers of the main irreducible SCC.
 ///
-///       - Backedge frequencies are assumed to be evenly split between the
-///         headers of a given irreducible SCC.  Instead, we could track the
-///         backedge mass separately for each header, and adjust their relative
-///         frequencies.
-///
 ///       - Entry frequencies are assumed to be evenly split between the
 ///         headers of a given irreducible SCC, which is the only option if we
 ///         need to compute mass in the SCC before its parent loop.  Instead,
@@ -1042,6 +1058,8 @@ bool BlockFrequencyInfoImpl<BT>::computeMassInLoop(LoopData &Loop) {
     for (const BlockNode &M : Loop.Nodes)
       if (!propagateMassToSuccessors(&Loop, M))
         llvm_unreachable("unhandled irreducible control flow");
+
+    adjustLoopHeaderMass(Loop);
   } else {
     Working[Loop.getHeader().Index].getMass() = BlockMass::getFull();
     if (!propagateMassToSuccessors(&Loop, Loop.getHeader()))
