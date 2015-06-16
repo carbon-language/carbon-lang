@@ -3079,7 +3079,7 @@ std::error_code BitcodeReader::parseModule(bool Resume,
 
 std::error_code BitcodeReader::parseBitcodeInto(Module *M,
                                                 bool ShouldLazyLoadMetadata) {
-  TheModule = nullptr;
+  TheModule = M;
 
   if (std::error_code EC = initStream())
     return EC;
@@ -3097,8 +3097,6 @@ std::error_code BitcodeReader::parseBitcodeInto(Module *M,
   // need to understand them all.
   while (1) {
     if (Stream.AtEndOfStream()) {
-      if (TheModule)
-        return std::error_code();
       // We didn't really read a proper Module.
       return error("Malformed IR file");
     }
@@ -3106,47 +3104,14 @@ std::error_code BitcodeReader::parseBitcodeInto(Module *M,
     BitstreamEntry Entry =
       Stream.advance(BitstreamCursor::AF_DontAutoprocessAbbrevs);
 
-    switch (Entry.Kind) {
-    case BitstreamEntry::Error:
+    if (Entry.Kind != BitstreamEntry::SubBlock)
       return error("Malformed block");
-    case BitstreamEntry::EndBlock:
-      return std::error_code();
 
-    case BitstreamEntry::SubBlock:
-      switch (Entry.ID) {
-      case bitc::BLOCKINFO_BLOCK_ID:
-        if (Stream.ReadBlockInfoBlock())
-          return error("Malformed block");
-        break;
-      case bitc::MODULE_BLOCK_ID:
-        // Reject multiple MODULE_BLOCK's in a single bitstream.
-        if (TheModule)
-          return error("Invalid multiple blocks");
-        TheModule = M;
-        if (std::error_code EC = parseModule(false, ShouldLazyLoadMetadata))
-          return EC;
-        if (Streamer)
-          return std::error_code();
-        break;
-      default:
-        if (Stream.SkipBlock())
-          return error("Invalid record");
-        break;
-      }
-      continue;
-    case BitstreamEntry::Record:
-      // There should be no records in the top-level of blocks.
+    if (Entry.ID == bitc::MODULE_BLOCK_ID)
+      return parseModule(false, ShouldLazyLoadMetadata);
 
-      // The ranlib in Xcode 4 will align archive members by appending newlines
-      // to the end of them. If this file size is a multiple of 4 but not 8, we
-      // have to read and ignore these final 4 bytes :-(
-      if (Stream.getAbbrevIDWidth() == 2 && Entry.ID == 2 &&
-          Stream.Read(6) == 2 && Stream.Read(24) == 0xa0a0a &&
-          Stream.AtEndOfStream())
-        return std::error_code();
-
+    if (Stream.SkipBlock())
       return error("Invalid record");
-    }
   }
 }
 
