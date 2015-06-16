@@ -872,7 +872,7 @@ public:
 
   /// ReductionList contains the reduction descriptors for all
   /// of the reductions that were found in the loop.
-  typedef DenseMap<PHINode*, ReductionDescriptor> ReductionList;
+  typedef DenseMap<PHINode *, RecurrenceDescriptor> ReductionList;
 
   /// InductionList saves induction variables and maps them to the
   /// induction descriptor.
@@ -3093,13 +3093,13 @@ void InnerLoopVectorizer::vectorizeLoop() {
     // Find the reduction variable descriptor.
     assert(Legal->getReductionVars()->count(RdxPhi) &&
            "Unable to find the reduction variable");
-    ReductionDescriptor RdxDesc = (*Legal->getReductionVars())[RdxPhi];
+    RecurrenceDescriptor RdxDesc = (*Legal->getReductionVars())[RdxPhi];
 
-    ReductionDescriptor::ReductionKind RK = RdxDesc.getReductionKind();
-    TrackingVH<Value> ReductionStartValue = RdxDesc.getReductionStartValue();
+    RecurrenceDescriptor::RecurrenceKind RK = RdxDesc.getRecurrenceKind();
+    TrackingVH<Value> ReductionStartValue = RdxDesc.getRecurrenceStartValue();
     Instruction *LoopExitInst = RdxDesc.getLoopExitInstr();
-    ReductionInstDesc::MinMaxReductionKind MinMaxKind =
-        RdxDesc.getMinMaxReductionKind();
+    RecurrenceInstDesc::MinMaxRecurrenceKind MinMaxKind =
+        RdxDesc.getMinMaxRecurrenceKind();
     setDebugLocFromInst(Builder, ReductionStartValue);
 
     // We need to generate a reduction vector from the incoming scalar.
@@ -3116,8 +3116,8 @@ void InnerLoopVectorizer::vectorizeLoop() {
     // one for multiplication, -1 for And.
     Value *Identity;
     Value *VectorStart;
-    if (RK == ReductionDescriptor::RK_IntegerMinMax ||
-        RK == ReductionDescriptor::RK_FloatMinMax) {
+    if (RK == RecurrenceDescriptor::RK_IntegerMinMax ||
+        RK == RecurrenceDescriptor::RK_FloatMinMax) {
       // MinMax reduction have the start value as their identify.
       if (VF == 1) {
         VectorStart = Identity = ReductionStartValue;
@@ -3127,8 +3127,8 @@ void InnerLoopVectorizer::vectorizeLoop() {
       }
     } else {
       // Handle other reduction kinds:
-      Constant *Iden =
-          ReductionDescriptor::getReductionIdentity(RK, VecTy->getScalarType());
+      Constant *Iden = RecurrenceDescriptor::getRecurrenceIdentity(
+          RK, VecTy->getScalarType());
       if (VF == 1) {
         Identity = Iden;
         // This vector is the Identity vector where the first element is the
@@ -3185,7 +3185,7 @@ void InnerLoopVectorizer::vectorizeLoop() {
 
     // Reduce all of the unrolled parts into a single vector.
     Value *ReducedPartRdx = RdxParts[0];
-    unsigned Op = ReductionDescriptor::getReductionBinOp(RK);
+    unsigned Op = RecurrenceDescriptor::getRecurrenceBinOp(RK);
     setDebugLocFromInst(Builder, ReducedPartRdx);
     for (unsigned part = 1; part < UF; ++part) {
       if (Op != Instruction::ICmp && Op != Instruction::FCmp)
@@ -3194,7 +3194,7 @@ void InnerLoopVectorizer::vectorizeLoop() {
             Builder.CreateBinOp((Instruction::BinaryOps)Op, RdxParts[part],
                                 ReducedPartRdx, "bin.rdx"));
       else
-        ReducedPartRdx = ReductionDescriptor::createMinMaxOp(
+        ReducedPartRdx = RecurrenceDescriptor::createMinMaxOp(
             Builder, MinMaxKind, ReducedPartRdx, RdxParts[part]);
     }
 
@@ -3226,8 +3226,8 @@ void InnerLoopVectorizer::vectorizeLoop() {
           TmpVec = addFastMathFlag(Builder.CreateBinOp(
               (Instruction::BinaryOps)Op, TmpVec, Shuf, "bin.rdx"));
         else
-          TmpVec = ReductionDescriptor::createMinMaxOp(Builder, MinMaxKind,
-                                                       TmpVec, Shuf);
+          TmpVec = RecurrenceDescriptor::createMinMaxOp(Builder, MinMaxKind,
+                                                        TmpVec, Shuf);
       }
 
       // The result is in the first element of the vector.
@@ -4040,8 +4040,8 @@ bool LoopVectorizationLegality::canVectorizeInstrs() {
           continue;
         }
 
-        if (ReductionDescriptor::isReductionPHI(Phi, TheLoop,
-                                                Reductions[Phi])) {
+        if (RecurrenceDescriptor::isReductionPHI(Phi, TheLoop,
+                                                 Reductions[Phi])) {
           AllowedExit.insert(Reductions[Phi].getLoopExitInstr());
           continue;
         }
