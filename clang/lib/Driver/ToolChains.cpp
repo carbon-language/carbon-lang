@@ -42,10 +42,6 @@ using namespace llvm::opt;
 MachO::MachO(const Driver &D, const llvm::Triple &Triple,
                        const ArgList &Args)
   : ToolChain(D, Triple, Args) {
-  getProgramPaths().push_back(getDriver().getInstalledDir());
-  if (getDriver().getInstalledDir() != getDriver().Dir)
-    getProgramPaths().push_back(getDriver().Dir);
-
   // We expect 'as', 'ld', etc. to be adjacent to our install dir.
   getProgramPaths().push_back(getDriver().getInstalledDir());
   if (getDriver().getInstalledDir() != getDriver().Dir)
