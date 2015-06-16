@@ -39,8 +39,8 @@ TEST(Rewriter, ContinuesOverwritingFilesOnError) {
 
 TEST(Rewriter, AdjacentInsertAndDelete) {
   Replacements Replaces;
-  Replaces.emplace("<file>", 6, 6, "");
-  Replaces.emplace("<file>", 6, 0, "replaced\n");
+  Replaces.insert(Replacement("<file>", 6, 6, ""));
+  Replaces.insert(Replacement("<file>", 6, 0, "replaced\n"));
   EXPECT_EQ("line1\nreplaced\nline3\nline4",
             applyAllReplacements("line1\nline2\nline3\nline4", Replaces));
 }
