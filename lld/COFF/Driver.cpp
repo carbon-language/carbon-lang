@@ -226,8 +226,14 @@ bool LinkerDriver::link(int Argc, const char *Argv[]) {
     Config->EntryName = Arg->getValue();
 
   // Handle /fixed
-  if (Args->hasArg(OPT_fixed))
+  if (Args->hasArg(OPT_fixed)) {
+    if (Args->hasArg(OPT_dynamicbase)) {
+      llvm::errs() << "/fixed must not be specified with /dynamicbase\n";
+      return false;
+    }
     Config->Relocatable = false;
+    Config->DynamicBase = false;
+  }
 
   // Handle /machine
   auto MTOrErr = getMachineType(Args.get());
@@ -317,6 +323,14 @@ bool LinkerDriver::link(int Argc, const char *Argv[]) {
     llvm::errs() << "/failifmismatch: " << EC.message() << "\n";
     return false;
   }
+
+  // Handle miscellaneous boolean flags.
+  if (Args->hasArg(OPT_allowbind_no))      Config->AllowBind = false;
+  if (Args->hasArg(OPT_allowisolation_no)) Config->AllowIsolation = false;
+  if (Args->hasArg(OPT_dynamicbase_no))    Config->DynamicBase = false;
+  if (Args->hasArg(OPT_highentropyva_no))  Config->HighEntropyVA = false;
+  if (Args->hasArg(OPT_nxcompat_no))       Config->NxCompat = false;
+  if (Args->hasArg(OPT_tsaware_no))        Config->TerminalServerAware = false;
 
   // Create a list of input files. Files can be given as arguments
   // for /defaultlib option.

@@ -270,8 +270,18 @@ void Writer::writeHeader() {
   PE->SizeOfStackCommit = Config->StackCommit;
   PE->SizeOfHeapReserve = Config->HeapReserve;
   PE->SizeOfHeapCommit = Config->HeapCommit;
-  if (Config->Relocatable)
-    PE->DLLCharacteristics = IMAGE_DLL_CHARACTERISTICS_DYNAMIC_BASE;
+  if (Config->DynamicBase)
+    PE->DLLCharacteristics |= IMAGE_DLL_CHARACTERISTICS_DYNAMIC_BASE;
+  if (Config->HighEntropyVA)
+    PE->DLLCharacteristics |= IMAGE_DLL_CHARACTERISTICS_HIGH_ENTROPY_VA;
+  if (!Config->AllowBind)
+    PE->DLLCharacteristics |= IMAGE_DLL_CHARACTERISTICS_NO_BIND;
+  if (Config->NxCompat)
+    PE->DLLCharacteristics |= IMAGE_DLL_CHARACTERISTICS_NX_COMPAT;
+  if (!Config->AllowIsolation)
+    PE->DLLCharacteristics |= IMAGE_DLL_CHARACTERISTICS_NO_ISOLATION;
+  if (Config->TerminalServerAware)
+    PE->DLLCharacteristics |= IMAGE_DLL_CHARACTERISTICS_TERMINAL_SERVER_AWARE;
   PE->NumberOfRvaAndSize = NumberfOfDataDirectory;
   if (OutputSection *Text = findSection(".text")) {
     PE->BaseOfCode = Text->getRVA();

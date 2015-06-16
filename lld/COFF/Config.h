@@ -51,6 +51,12 @@ public:
   uint32_t MinorImageVersion = 0;
   uint32_t MajorOSVersion = 6;
   uint32_t MinorOSVersion = 0;
+  bool DynamicBase = true;
+  bool HighEntropyVA = true;
+  bool AllowBind = true;
+  bool NxCompat = true;
+  bool AllowIsolation = true;
+  bool TerminalServerAware = true;
 };
 
 extern Configuration *Config;
