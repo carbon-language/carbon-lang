@@ -1391,6 +1391,24 @@ static IntrinsicInst *FindInitTrampoline(Value *Callee) {
 // visitCallSite - Improvements for call and invoke instructions.
 //
 Instruction *InstCombiner::visitCallSite(CallSite CS) {
+
+  // Mark any parameters that are known to be non-null with the nonnull
+  // attribute.  This is helpful for inlining calls to functions with null
+  // checks on their arguments.
+  unsigned ArgNo = 0;
+  for (Value *V : CS.args()) {
+    if (!CS.paramHasAttr(ArgNo+1, Attribute::NonNull) &&
+        isKnownNonNull(V)) {
+      AttributeSet AS = CS.getAttributes();
+      AS = AS.addAttribute(CS.getInstruction()->getContext(), ArgNo+1,
+                           Attribute::NonNull);
+      CS.setAttributes(AS);
+      return CS.getInstruction();
+    }
+    ArgNo++;
+  }
+  assert(ArgNo == CS.arg_size() && "sanity check");
+  
   if (isAllocLikeFn(CS.getInstruction(), TLI))
     return visitAllocSite(*CS.getInstruction());
 
