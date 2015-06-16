@@ -400,19 +400,24 @@ static void AddNodeIDOperands(FoldingSetNodeID &ID,
     ID.AddInteger(Op.getResNo());
   }
 }
+/// Add logical or fast math flag values to FoldingSetNodeID value.
+static void AddNodeIDFlags(FoldingSetNodeID &ID, unsigned Opcode,
+                           const SDNodeFlags *Flags) {
+  if (!Flags || !isBinOpWithFlags(Opcode))
+    return;
 
-static void AddBinaryNodeIDCustom(FoldingSetNodeID &ID, bool nuw, bool nsw,
-                                  bool exact) {
-  ID.AddBoolean(nuw);
-  ID.AddBoolean(nsw);
-  ID.AddBoolean(exact);
+  unsigned RawFlags = Flags->getRawFlags();
+  // If no flags are set, do not alter the ID. We must match the ID of nodes
+  // that were created without explicitly specifying flags. This also saves time
+  // and allows a gradual increase in API usage of the optional optimization
+  // flags.
+  if (RawFlags != 0)
+    ID.AddInteger(RawFlags);
 }
 
-/// AddBinaryNodeIDCustom - Add BinarySDNodes special infos
-static void AddBinaryNodeIDCustom(FoldingSetNodeID &ID, unsigned Opcode,
-                                  bool nuw, bool nsw, bool exact) {
-  if (isBinOpWithFlags(Opcode))
-    AddBinaryNodeIDCustom(ID, nuw, nsw, exact);
+static void AddNodeIDFlags(FoldingSetNodeID &ID, const SDNode *N) {
+  if (auto *Node = dyn_cast<BinaryWithFlagsSDNode>(N))
+    AddNodeIDFlags(ID, Node->getOpcode(), &Node->Flags);
 }
 
 static void AddNodeIDNode(FoldingSetNodeID &ID, unsigned short OpC,
@@ -507,20 +512,6 @@ static void AddNodeIDCustom(FoldingSetNodeID &ID, const SDNode *N) {
     ID.AddInteger(ST->getPointerInfo().getAddrSpace());
     break;
   }
-  case ISD::SDIV:
-  case ISD::UDIV:
-  case ISD::SRA:
-  case ISD::SRL:
-  case ISD::MUL:
-  case ISD::ADD:
-  case ISD::SUB:
-  case ISD::SHL: {
-    const BinaryWithFlagsSDNode *BinNode = cast<BinaryWithFlagsSDNode>(N);
-    AddBinaryNodeIDCustom(
-        ID, N->getOpcode(), BinNode->Flags.hasNoUnsignedWrap(),
-        BinNode->Flags.hasNoSignedWrap(), BinNode->Flags.hasExact());
-    break;
-  }
   case ISD::ATOMIC_CMP_SWAP:
   case ISD::ATOMIC_CMP_SWAP_WITH_SUCCESS:
   case ISD::ATOMIC_SWAP:
@@ -563,6 +554,8 @@ static void AddNodeIDCustom(FoldingSetNodeID &ID, const SDNode *N) {
     break;
   }
   } // end switch (N->getOpcode())
+
+  AddNodeIDFlags(ID, N);
 
   // Target specific memory nodes could also have address spaces to check.
   if (N->isTargetMemoryOpcode())
@@ -960,14 +953,16 @@ void SelectionDAG::allnodes_clear() {
 
 BinarySDNode *SelectionDAG::GetBinarySDNode(unsigned Opcode, SDLoc DL,
                                             SDVTList VTs, SDValue N1,
-                                            SDValue N2, bool nuw, bool nsw,
-                                            bool exact) {
+                                            SDValue N2,
+                                            const SDNodeFlags *Flags) {
   if (isBinOpWithFlags(Opcode)) {
+    // If no flags were passed in, use a default flags object.
+    SDNodeFlags F;
+    if (Flags == nullptr)
+      Flags = &F;
+
     BinaryWithFlagsSDNode *FN = new (NodeAllocator) BinaryWithFlagsSDNode(
-        Opcode, DL.getIROrder(), DL.getDebugLoc(), VTs, N1, N2);
-    FN->Flags.setNoUnsignedWrap(nuw);
-    FN->Flags.setNoSignedWrap(nsw);
-    FN->Flags.setExact(exact);
+        Opcode, DL.getIROrder(), DL.getDebugLoc(), VTs, N1, N2, *Flags);
 
     return FN;
   }
@@ -3269,7 +3264,7 @@ SDValue SelectionDAG::FoldConstantArithmetic(unsigned Opcode, SDLoc DL, EVT VT,
 }
 
 SDValue SelectionDAG::getNode(unsigned Opcode, SDLoc DL, EVT VT, SDValue N1,
-                              SDValue N2, bool nuw, bool nsw, bool exact) {
+                              SDValue N2, const SDNodeFlags *Flags) {
   ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1.getNode());
   ConstantSDNode *N2C = dyn_cast<ConstantSDNode>(N2.getNode());
   switch (Opcode) {
@@ -3756,22 +3751,20 @@ SDValue SelectionDAG::getNode(unsigned Opcode, SDLoc DL, EVT VT, SDValue N1,
   // Memoize this node if possible.
   BinarySDNode *N;
   SDVTList VTs = getVTList(VT);
-  const bool BinOpHasFlags = isBinOpWithFlags(Opcode);
   if (VT != MVT::Glue) {
     SDValue Ops[] = {N1, N2};
     FoldingSetNodeID ID;
     AddNodeIDNode(ID, Opcode, VTs, Ops);
-    if (BinOpHasFlags)
-      AddBinaryNodeIDCustom(ID, Opcode, nuw, nsw, exact);
+    AddNodeIDFlags(ID, Opcode, Flags);
     void *IP = nullptr;
     if (SDNode *E = FindNodeOrInsertPos(ID, DL.getDebugLoc(), IP))
       return SDValue(E, 0);
 
-    N = GetBinarySDNode(Opcode, DL, VTs, N1, N2, nuw, nsw, exact);
+    N = GetBinarySDNode(Opcode, DL, VTs, N1, N2, Flags);
 
     CSEMap.InsertNode(N, IP);
   } else {
-    N = GetBinarySDNode(Opcode, DL, VTs, N1, N2, nuw, nsw, exact);
+    N = GetBinarySDNode(Opcode, DL, VTs, N1, N2, Flags);
   }
 
   InsertNode(N);
@@ -6075,13 +6068,12 @@ SelectionDAG::getTargetInsertSubreg(int SRIdx, SDLoc DL, EVT VT,
 /// getNodeIfExists - Get the specified node if it's already available, or
 /// else return NULL.
 SDNode *SelectionDAG::getNodeIfExists(unsigned Opcode, SDVTList VTList,
-                                      ArrayRef<SDValue> Ops, bool nuw, bool nsw,
-                                      bool exact) {
+                                      ArrayRef<SDValue> Ops,
+                                      const SDNodeFlags *Flags) {
   if (VTList.VTs[VTList.NumVTs - 1] != MVT::Glue) {
     FoldingSetNodeID ID;
     AddNodeIDNode(ID, Opcode, VTList, Ops);
-    if (isBinOpWithFlags(Opcode))
-      AddBinaryNodeIDCustom(ID, nuw, nsw, exact);
+    AddNodeIDFlags(ID, Opcode, Flags);
     void *IP = nullptr;
     if (SDNode *E = FindNodeOrInsertPos(ID, DebugLoc(), IP))
       return E;

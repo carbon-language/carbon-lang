@@ -2671,8 +2671,9 @@ SDValue TargetLowering::BuildExactSDIV(SDValue Op1, SDValue Op2, SDLoc dl,
     // TODO: For UDIV use SRL instead of SRA.
     SDValue Amt =
         DAG.getConstant(ShAmt, dl, getShiftAmountTy(Op1.getValueType()));
-    Op1 = DAG.getNode(ISD::SRA, dl, Op1.getValueType(), Op1, Amt, false, false,
-                      true);
+    SDNodeFlags Flags;
+    Flags.setExact(true);
+    Op1 = DAG.getNode(ISD::SRA, dl, Op1.getValueType(), Op1, Amt, &Flags);
     d = d.ashr(ShAmt);
   }
 
