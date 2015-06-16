@@ -37,7 +37,9 @@ static void exitWithError(const Twine &Message, StringRef Whence = "") {
   ::exit(1);
 }
 
+namespace {
 enum ProfileKinds { instr, sample };
+}
 
 static void mergeInstrProfile(const cl::list<std::string> &Inputs,
                               StringRef OutputFilename) {
