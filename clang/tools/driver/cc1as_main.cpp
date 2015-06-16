@@ -323,8 +323,8 @@ static bool ExecuteAssembler(AssemblerInvocation &Opts,
 
   MCContext Ctx(MAI.get(), MRI.get(), MOFI.get(), &SrcMgr);
   // FIXME: Assembler behavior can change with -static.
-  MOFI->InitMCObjectFileInfo(Opts.Triple,
-                             Reloc::Default, CodeModel::Default, Ctx);
+  MOFI->InitMCObjectFileInfo(Triple(Opts.Triple), Reloc::Default,
+                             CodeModel::Default, Ctx);
   if (Opts.SaveTemporaryLabels)
     Ctx.setAllowTemporaryLabels(false);
   if (Opts.GenDwarfForAssembly)

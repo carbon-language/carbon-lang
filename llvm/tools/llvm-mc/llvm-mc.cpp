@@ -431,7 +431,7 @@ int main(int argc, char **argv) {
   // MCObjectFileInfo needs a MCContext reference in order to initialize itself.
   MCObjectFileInfo MOFI;
   MCContext Ctx(MAI.get(), MRI.get(), &MOFI, &SrcMgr);
-  MOFI.InitMCObjectFileInfo(TripleName, RelocModel, CMModel, Ctx);
+  MOFI.InitMCObjectFileInfo(TheTriple, RelocModel, CMModel, Ctx);
 
   if (SaveTempLabels)
     Ctx.setAllowTemporaryLabels(false);
