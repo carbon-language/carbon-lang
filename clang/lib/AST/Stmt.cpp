@@ -1636,7 +1636,7 @@ OMPSimdDirective::Create(const ASTContext &C, SourceLocation StartLoc,
   Dir->setLastIteration(Exprs.LastIteration);
   Dir->setCalcLastIteration(Exprs.CalcLastIteration);
   Dir->setPreCond(Exprs.PreCond);
-  Dir->setCond(Exprs.Cond, Exprs.SeparatedCond);
+  Dir->setCond(Exprs.Cond);
   Dir->setInit(Exprs.Init);
   Dir->setInc(Exprs.Inc);
   Dir->setCounters(Exprs.Counters);
@@ -1675,7 +1675,7 @@ OMPForDirective::Create(const ASTContext &C, SourceLocation StartLoc,
   Dir->setLastIteration(Exprs.LastIteration);
   Dir->setCalcLastIteration(Exprs.CalcLastIteration);
   Dir->setPreCond(Exprs.PreCond);
-  Dir->setCond(Exprs.Cond, Exprs.SeparatedCond);
+  Dir->setCond(Exprs.Cond);
   Dir->setInit(Exprs.Init);
   Dir->setInc(Exprs.Inc);
   Dir->setIsLastIterVariable(Exprs.IL);
@@ -1721,7 +1721,7 @@ OMPForSimdDirective::Create(const ASTContext &C, SourceLocation StartLoc,
   Dir->setLastIteration(Exprs.LastIteration);
   Dir->setCalcLastIteration(Exprs.CalcLastIteration);
   Dir->setPreCond(Exprs.PreCond);
-  Dir->setCond(Exprs.Cond, Exprs.SeparatedCond);
+  Dir->setCond(Exprs.Cond);
   Dir->setInit(Exprs.Init);
   Dir->setInc(Exprs.Inc);
   Dir->setIsLastIterVariable(Exprs.IL);
@@ -1876,7 +1876,7 @@ OMPParallelForDirective *OMPParallelForDirective::Create(
   Dir->setLastIteration(Exprs.LastIteration);
   Dir->setCalcLastIteration(Exprs.CalcLastIteration);
   Dir->setPreCond(Exprs.PreCond);
-  Dir->setCond(Exprs.Cond, Exprs.SeparatedCond);
+  Dir->setCond(Exprs.Cond);
   Dir->setInit(Exprs.Init);
   Dir->setInc(Exprs.Inc);
   Dir->setIsLastIterVariable(Exprs.IL);
@@ -1920,7 +1920,7 @@ OMPParallelForSimdDirective *OMPParallelForSimdDirective::Create(
   Dir->setLastIteration(Exprs.LastIteration);
   Dir->setCalcLastIteration(Exprs.CalcLastIteration);
   Dir->setPreCond(Exprs.PreCond);
-  Dir->setCond(Exprs.Cond, Exprs.SeparatedCond);
+  Dir->setCond(Exprs.Cond);
   Dir->setInit(Exprs.Init);
   Dir->setInc(Exprs.Inc);
   Dir->setIsLastIterVariable(Exprs.IL);

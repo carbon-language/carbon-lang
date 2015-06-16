@@ -2189,8 +2189,7 @@ public:
 private:
 
   /// Helpers for the OpenMP loop directives.
-  void EmitOMPLoopBody(const OMPLoopDirective &Directive,
-                       bool SeparateIter = false);
+  void EmitOMPLoopBody(const OMPLoopDirective &Directive);
   void EmitOMPSimdFinal(const OMPLoopDirective &S);
   /// \brief Emit code for the worksharing loop-based directive.
   /// \return true, if this construct has any lastprivate clause, false -
