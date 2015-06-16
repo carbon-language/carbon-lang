@@ -1570,7 +1570,7 @@ public:
         
         // Define the first (and only) variant of this arg.
         cmd_arg.arg_type = eArgTypeFilename;
-        cmd_arg.arg_repetition = eArgRepeatPlain;
+        cmd_arg.arg_repetition = eArgRepeatPlus;
         
         // There is only one variant this argument could be; put it into the argument entry.
         arg1.push_back (cmd_arg);
@@ -1670,7 +1670,6 @@ protected:
     bool
     DoExecute (Args& command, CommandReturnObject &result)
     {
-        
         if (m_interpreter.GetDebugger().GetScriptLanguage() != lldb::eScriptLanguagePython)
         {
             result.AppendError ("only scripting language supported for module importing is currently Python");
@@ -1679,36 +1678,40 @@ protected:
         }
         
         size_t argc = command.GetArgumentCount();
-        
-        if (argc != 1)
+        if (0 == argc)
         {
-            result.AppendError ("'command script import' requires one argument");
+            result.AppendError("command script import needs one or more arguments");
             result.SetStatus (eReturnStatusFailed);
             return false;
         }
         
-        std::string path = command.GetArgumentAtIndex(0);
-        Error error;
-        
-        const bool init_session = true;
-        // FIXME: this is necessary because CommandObject::CheckRequirements() assumes that
-        // commands won't ever be recursively invoked, but it's actually possible to craft
-        // a Python script that does other "command script imports" in __lldb_init_module
-        // the real fix is to have recursive commands possible with a CommandInvocation object
-        // separate from the CommandObject itself, so that recursive command invocations
-        // won't stomp on each other (wrt to execution contents, options, and more)
-        m_exe_ctx.Clear();
-        if (m_interpreter.GetScriptInterpreter()->LoadScriptingModule(path.c_str(),
-                                                                      m_options.m_allow_reload,
-                                                                      init_session,
-                                                                      error))
+        for (int i = 0;
+             i < argc;
+             i++)
         {
-            result.SetStatus (eReturnStatusSuccessFinishNoResult);
-        }
-        else
-        {
-            result.AppendErrorWithFormat("module importing failed: %s", error.AsCString());
-            result.SetStatus (eReturnStatusFailed);
+            std::string path = command.GetArgumentAtIndex(i);
+            Error error;
+            
+            const bool init_session = true;
+            // FIXME: this is necessary because CommandObject::CheckRequirements() assumes that
+            // commands won't ever be recursively invoked, but it's actually possible to craft
+            // a Python script that does other "command script imports" in __lldb_init_module
+            // the real fix is to have recursive commands possible with a CommandInvocation object
+            // separate from the CommandObject itself, so that recursive command invocations
+            // won't stomp on each other (wrt to execution contents, options, and more)
+            m_exe_ctx.Clear();
+            if (m_interpreter.GetScriptInterpreter()->LoadScriptingModule(path.c_str(),
+                                                                          m_options.m_allow_reload,
+                                                                          init_session,
+                                                                          error))
+            {
+                result.SetStatus (eReturnStatusSuccessFinishNoResult);
+            }
+            else
+            {
+                result.AppendErrorWithFormat("module importing failed: %s", error.AsCString());
+                result.SetStatus (eReturnStatusFailed);
+            }
         }
         
         return result.Succeeded();
