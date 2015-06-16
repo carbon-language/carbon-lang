@@ -54,7 +54,7 @@ std::string X86_MC::ParseX86Triple(const Triple &TT) {
   return FS;
 }
 
-unsigned X86_MC::getDwarfRegFlavour(Triple TT, bool isEH) {
+unsigned X86_MC::getDwarfRegFlavour(const Triple &TT, bool isEH) {
   if (TT.getArch() == Triple::x86_64)
     return DWARFFlavour::X86_64;
 

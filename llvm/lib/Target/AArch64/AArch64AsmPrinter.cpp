@@ -121,7 +121,7 @@ private:
 //===----------------------------------------------------------------------===//
 
 void AArch64AsmPrinter::EmitEndOfAsmFile(Module &M) {
-  Triple TT(TM.getTargetTriple());
+  const Triple &TT = TM.getTargetTriple();
   if (TT.isOSBinFormatMachO()) {
     // Funny Darwin hack: This flag tells the linker that no global symbols
     // contain code that falls through to other global symbols (e.g. the obvious

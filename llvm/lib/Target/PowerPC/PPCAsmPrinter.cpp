@@ -440,7 +440,7 @@ void PPCAsmPrinter::EmitTlsCall(const MachineInstr *MI,
 void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   MCInst TmpInst;
   bool isPPC64 = Subtarget->isPPC64();
-  bool isDarwin = Triple(TM.getTargetTriple()).isOSDarwin();
+  bool isDarwin = TM.getTargetTriple().isOSDarwin();
   const Module *M = MF->getFunction()->getParent();
   PICLevel::Level PL = M->getPICLevel();
   
@@ -1511,7 +1511,7 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
 static AsmPrinter *
 createPPCAsmPrinterPass(TargetMachine &tm,
                         std::unique_ptr<MCStreamer> &&Streamer) {
-  if (Triple(tm.getTargetTriple()).isMacOSX())
+  if (tm.getTargetTriple().isMacOSX())
     return new PPCDarwinAsmPrinter(tm, std::move(Streamer));
   return new PPCLinuxAsmPrinter(tm, std::move(Streamer));
 }

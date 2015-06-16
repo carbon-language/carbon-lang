@@ -41,10 +41,10 @@ BPFTargetMachine::BPFTargetMachine(const Target &T, const Triple &TT,
                                    const TargetOptions &Options,
                                    Reloc::Model RM, CodeModel::Model CM,
                                    CodeGenOpt::Level OL)
-    : LLVMTargetMachine(T, computeDataLayout(TT), TT, CPU, FS,
-                        Options, RM, CM, OL),
+    : LLVMTargetMachine(T, computeDataLayout(TT), TT, CPU, FS, Options, RM, CM,
+                        OL),
       TLOF(make_unique<TargetLoweringObjectFileELF>()),
-      Subtarget(Triple(TT), CPU, FS, *this) {
+      Subtarget(TT, CPU, FS, *this) {
   initAsmInfo();
 }
 namespace {

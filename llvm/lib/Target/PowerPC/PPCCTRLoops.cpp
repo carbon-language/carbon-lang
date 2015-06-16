@@ -417,8 +417,8 @@ bool PPCCTRLoops::mightUseCTR(const Triple &TT, BasicBlock *BB) {
 bool PPCCTRLoops::convertToCTRLoop(Loop *L) {
   bool MadeChange = false;
 
-  Triple TT = Triple(L->getHeader()->getParent()->getParent()->
-                     getTargetTriple());
+  const Triple TT =
+      Triple(L->getHeader()->getParent()->getParent()->getTargetTriple());
   if (!TT.isArch32Bit() && !TT.isArch64Bit())
     return MadeChange; // Unknown arch. type.
 

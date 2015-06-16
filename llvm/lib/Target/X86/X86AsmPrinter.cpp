@@ -511,7 +511,7 @@ bool X86AsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
 }
 
 void X86AsmPrinter::EmitStartOfAsmFile(Module &M) {
-  Triple TT(TM.getTargetTriple());
+  const Triple &TT = TM.getTargetTriple();
 
   if (TT.isOSBinFormatMachO())
     OutStreamer->SwitchSection(getObjFileLowering().getTextSection());
@@ -585,7 +585,7 @@ void X86AsmPrinter::GenerateExportDirective(const MCSymbol *Sym, bool IsData) {
   SmallString<128> Directive;
   raw_svector_ostream OS(Directive);
   StringRef Name = Sym->getName();
-  Triple TT(TM.getTargetTriple());
+  const Triple &TT = TM.getTargetTriple();
 
   if (TT.isKnownWindowsMSVCEnvironment())
     OS << " /EXPORT:";
@@ -610,7 +610,7 @@ void X86AsmPrinter::GenerateExportDirective(const MCSymbol *Sym, bool IsData) {
 }
 
 void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {
-  Triple TT(TM.getTargetTriple());
+  const Triple &TT = TM.getTargetTriple();
 
   if (TT.isOSBinFormatMachO()) {
     // All darwin targets use mach-o.

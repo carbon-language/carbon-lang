@@ -57,7 +57,7 @@ public:
     return isThumb(STI) && STI.getFeatureBits()[ARM::FeatureThumb2];
   }
   bool isTargetMachO(const MCSubtargetInfo &STI) const {
-    Triple TT(STI.getTargetTriple());
+    const Triple &TT = STI.getTargetTriple();
     return TT.isOSBinFormatMachO();
   }
 

@@ -171,7 +171,7 @@ PPCTargetMachine::PPCTargetMachine(const Target &T, const Triple &TT,
                                    CodeGenOpt::Level OL)
     : LLVMTargetMachine(T, getDataLayoutString(TT), TT, CPU,
                         computeFSAdditions(FS, OL, TT), Options, RM, CM, OL),
-      TLOF(createTLOF(Triple(getTargetTriple()))),
+      TLOF(createTLOF(getTargetTriple())),
       TargetABI(computeTargetABI(TT, Options)) {
   initAsmInfo();
 }
@@ -215,7 +215,7 @@ PPCTargetMachine::getSubtargetImpl(const Function &F) const {
     // function that reside in TargetOptions.
     resetTargetOptions(F);
     I = llvm::make_unique<PPCSubtarget>(
-        Triple(TargetTriple), CPU,
+        TargetTriple, CPU,
         // FIXME: It would be good to have the subtarget additions here
         // not necessary. Anything that turns them on/off (overrides) ends
         // up being put at the end of the feature string, but the defaults
@@ -262,9 +262,8 @@ void PPCPassConfig::addIRPasses() {
 
   // For the BG/Q (or if explicitly requested), add explicit data prefetch
   // intrinsics.
-  bool UsePrefetching =
-    Triple(TM->getTargetTriple()).getVendor() == Triple::BGQ &&           
-    getOptLevel() != CodeGenOpt::None;
+  bool UsePrefetching = TM->getTargetTriple().getVendor() == Triple::BGQ &&
+                        getOptLevel() != CodeGenOpt::None;
   if (EnablePrefetch.getNumOccurrences() > 0)
     UsePrefetching = EnablePrefetch;
   if (UsePrefetching)
@@ -318,7 +317,7 @@ void PPCPassConfig::addMachineSSAOptimization() {
   TargetPassConfig::addMachineSSAOptimization();
   // For little endian, remove where possible the vector swap instructions
   // introduced at code generation to normalize vector element order.
-  if (Triple(TM->getTargetTriple()).getArch() == Triple::ppc64le &&
+  if (TM->getTargetTriple().getArch() == Triple::ppc64le &&
       !DisableVSXSwapRemoval)
     addPass(createPPCVSXSwapRemovalPass());
 }

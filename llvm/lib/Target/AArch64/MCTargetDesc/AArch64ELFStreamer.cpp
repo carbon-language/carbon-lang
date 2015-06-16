@@ -208,7 +208,7 @@ MCELFStreamer *createAArch64ELFStreamer(MCContext &Context, MCAsmBackend &TAB,
 
 MCTargetStreamer *
 createAArch64ObjectTargetStreamer(MCStreamer &S, const MCSubtargetInfo &STI) {
-  Triple TT(STI.getTargetTriple());
+  const Triple &TT = STI.getTargetTriple();
   if (TT.getObjectFormat() == Triple::ELF)
     return new AArch64TargetELFStreamer(S);
   return nullptr;

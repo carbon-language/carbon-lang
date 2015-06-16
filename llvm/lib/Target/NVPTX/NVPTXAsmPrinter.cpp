@@ -808,7 +808,7 @@ bool NVPTXAsmPrinter::doInitialization(Module &M) {
   // Construct a default subtarget off of the TargetMachine defaults. The
   // rest of NVPTX isn't friendly to change subtargets per function and
   // so the default TargetMachine will have all of the options.
-  const Triple TT(TM.getTargetTriple());
+  const Triple &TT = TM.getTargetTriple();
   StringRef CPU = TM.getTargetCPU();
   StringRef FS = TM.getTargetFeatureString();
   const NVPTXTargetMachine &NTM = static_cast<const NVPTXTargetMachine &>(TM);
@@ -846,7 +846,7 @@ bool NVPTXAsmPrinter::doInitialization(Module &M) {
   }
 
   // If we're not NVCL we're CUDA, go ahead and emit filenames.
-  if (Triple(TM.getTargetTriple()).getOS() != Triple::NVCL)
+  if (TM.getTargetTriple().getOS() != Triple::NVCL)
     recordAndEmitFilenames(M);
 
   GlobalsEmitted = false;

@@ -429,7 +429,7 @@ void ARMAsmPrinter::emitInlineAsmEnd(const MCSubtargetInfo &StartInfo,
 }
 
 void ARMAsmPrinter::EmitStartOfAsmFile(Module &M) {
-  Triple TT(TM.getTargetTriple());
+  const Triple &TT = TM.getTargetTriple();
   // Use unified assembler syntax.
   OutStreamer->EmitAssemblerFlag(MCAF_SyntaxUnified);
 
@@ -473,7 +473,7 @@ emitNonLazySymbolPointer(MCStreamer &OutStreamer, MCSymbol *StubLabel,
 
 
 void ARMAsmPrinter::EmitEndOfAsmFile(Module &M) {
-  Triple TT(TM.getTargetTriple());
+  const Triple &TT = TM.getTargetTriple();
   if (TT.isOSBinFormatMachO()) {
     // All darwin targets use mach-o.
     const TargetLoweringObjectFileMachO &TLOFMacho =
@@ -564,7 +564,7 @@ void ARMAsmPrinter::emitAttributes() {
   // anyhow.
   // FIXME: For ifunc related functions we could iterate over and look
   // for a feature string that doesn't match the default one.
-  const Triple TT(TM.getTargetTriple());
+  const Triple &TT = TM.getTargetTriple();
   StringRef CPU = TM.getTargetCPU();
   StringRef FS = TM.getTargetFeatureString();
   std::string ArchFS = ARM_MC::ParseARMTriple(TT, CPU);

@@ -54,7 +54,7 @@ namespace N86 {
 namespace X86_MC {
 std::string ParseX86Triple(const Triple &TT);
 
-unsigned getDwarfRegFlavour(Triple TT, bool isEH);
+unsigned getDwarfRegFlavour(const Triple &TT, bool isEH);
 
 void InitLLVM2SEHRegisterMapping(MCRegisterInfo *MRI);
 

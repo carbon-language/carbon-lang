@@ -47,7 +47,7 @@ unsigned MipsABIInfo::GetCalleeAllocdArgSizeInBytes(CallingConv::ID CC) const {
   llvm_unreachable("Unhandled ABI");
 }
 
-MipsABIInfo MipsABIInfo::computeTargetABI(Triple TT, StringRef CPU,
+MipsABIInfo MipsABIInfo::computeTargetABI(const Triple &TT, StringRef CPU,
                                           const MCTargetOptions &Options) {
   if (Options.getABIName().startswith("o32"))
     return MipsABIInfo::O32();

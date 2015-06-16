@@ -105,7 +105,7 @@ private:
 public:
   unsigned getISAEncoding() override {
     // ARM/Darwin adds ISA to the DWARF info for each function.
-    Triple TT(TM.getTargetTriple());
+    const Triple &TT = TM.getTargetTriple();
     if (!TT.isOSBinFormatMachO())
       return 0;
     bool isThumb = TT.getArch() == Triple::thumb ||

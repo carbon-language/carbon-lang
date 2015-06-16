@@ -128,9 +128,9 @@ AArch64TargetMachine::AArch64TargetMachine(const Target &T, const Triple &TT,
                                            bool LittleEndian)
     // This nested ternary is horrible, but DL needs to be properly
     // initialized before TLInfo is constructed.
-    : LLVMTargetMachine(T, computeDataLayout(Triple(TT), LittleEndian), TT, CPU,
-                        FS, Options, RM, CM, OL),
-      TLOF(createTLOF(Triple(getTargetTriple()))),
+    : LLVMTargetMachine(T, computeDataLayout(TT, LittleEndian), TT, CPU, FS,
+                        Options, RM, CM, OL),
+      TLOF(createTLOF(getTargetTriple())),
       isLittle(LittleEndian) {
   initAsmInfo();
 }
@@ -155,8 +155,8 @@ AArch64TargetMachine::getSubtargetImpl(const Function &F) const {
     // creation will depend on the TM and the code generation flags on the
     // function that reside in TargetOptions.
     resetTargetOptions(F);
-    I = llvm::make_unique<AArch64Subtarget>(Triple(TargetTriple), CPU, FS,
-                                            *this, isLittle);
+    I = llvm::make_unique<AArch64Subtarget>(TargetTriple, CPU, FS, *this,
+                                            isLittle);
   }
   return I.get();
 }
@@ -267,7 +267,7 @@ bool AArch64PassConfig::addInstSelector() {
 
   // For ELF, cleanup any local-dynamic TLS accesses (i.e. combine as many
   // references to _TLS_MODULE_BASE_ as possible.
-  if (Triple(TM->getTargetTriple()).isOSBinFormatELF() &&
+  if (TM->getTargetTriple().isOSBinFormatELF() &&
       getOptLevel() != CodeGenOpt::None)
     addPass(createAArch64CleanupLocalDynamicTLSPass());
 
@@ -322,6 +322,6 @@ void AArch64PassConfig::addPreEmitPass() {
   // range of their destination.
   addPass(createAArch64BranchRelaxation());
   if (TM->getOptLevel() != CodeGenOpt::None && EnableCollectLOH &&
-      Triple(TM->getTargetTriple()).isOSBinFormatMachO())
+      TM->getTargetTriple().isOSBinFormatMachO())
     addPass(createAArch64CollectLOHPass());
 }
