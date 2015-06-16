@@ -27,7 +27,6 @@
 #define LLVM_IR_CALLSITE_H
 
 #include "llvm/ADT/PointerIntPair.h"
-#include "llvm/ADT/iterator_range.h"
 #include "llvm/IR/Attributes.h"
 #include "llvm/IR/CallingConv.h"
 #include "llvm/IR/Instructions.h"
@@ -151,9 +150,6 @@ public:
   }
 
   IterTy arg_end() const { return (*this)->op_end() - getArgumentEndOffset(); }
-  iterator_range<IterTy> args() const {
-    return iterator_range<IterTy>(arg_begin(), arg_end());
-  }
   bool arg_empty() const { return arg_end() == arg_begin(); }
   unsigned arg_size() const { return unsigned(arg_end() - arg_begin()); }
 
