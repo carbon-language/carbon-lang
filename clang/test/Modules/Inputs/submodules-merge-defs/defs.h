@@ -61,3 +61,14 @@ namespace StaticInline {
   static inline void f(X);
   static inline void g(X x) { f(x); }
 }
+
+namespace FriendDefArg {
+  template<typename = int> struct A;
+  template<int = 0> struct B;
+  template<template<typename> class = A> struct C;
+  template<typename U> struct Y {
+    template<typename> friend struct A;
+    template<int> friend struct B;
+    template<template<typename> class> friend struct C;
+  };
+}
