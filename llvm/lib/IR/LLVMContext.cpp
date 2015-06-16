@@ -210,6 +210,7 @@ static const char *getDiagnosticMessagePrefix(DiagnosticSeverity Severity) {
   case DS_Note:
     return "note";
   }
+  llvm_unreachable("Unknown DiagnosticSeverity");
 }
 
 void LLVMContext::diagnose(const DiagnosticInfo &DI) {
