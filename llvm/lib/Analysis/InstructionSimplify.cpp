@@ -1126,13 +1126,13 @@ static Value *SimplifyFDivInst(Value *Op0, Value *Op1, FastMathFlags FMF,
   if (FMF.noNaNs() && FMF.noSignedZeros() && match(Op0, m_AnyZero()))
     return Op0;
 
-  if (FMF.noNaNs() && FMF.noInfs()) {
-    // X / X -> 1.0 iff NaNs and infinities are ignored.
+  if (FMF.noNaNs()) {
+    // X / X -> 1.0 is legal when NaNs are ignored.
     if (Op0 == Op1)
       return ConstantFP::get(Op0->getType(), 1.0);
 
     // -X /  X -> -1.0 and
-    //  X / -X -> -1.0 iff NaNs and infinities are ignored.
+    //  X / -X -> -1.0 are legal when NaNs are ignored.
     // We can ignore signed zeros because +-0.0/+-0.0 is NaN and ignored.
     if ((BinaryOperator::isFNeg(Op0, /*IgnoreZeroSign=*/true) &&
          BinaryOperator::getFNegArgument(Op0) == Op1) ||
