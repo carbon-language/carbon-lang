@@ -2668,3 +2668,211 @@ define <32 x i8> @test_mask_subs_epu8_rmkz_256(<32 x i8> %a, <32 x i8>* %ptr_b, 
 }
 
 declare <32 x i8> @llvm.x86.avx512.mask.psubus.b.256(<32 x i8>, <32 x i8>, <32 x i8>, i32)
+
+declare <16 x i8> @llvm.x86.avx512.mask.pmaxs.b.128(<16 x i8>, <16 x i8>, <16 x i8>, i16)
+
+; CHECK-LABEL: @test_int_x86_avx512_mask_pmaxs_b_128
+; CHECK-NOT: call 
+; CHECK: vpmaxsb %xmm
+; CHECK: {%k1} 
+define <16 x i8>@test_int_x86_avx512_mask_pmaxs_b_128(<16 x i8> %x0, <16 x i8> %x1, <16 x i8> %x2, i16 %mask) {
+  %res = call <16 x i8> @llvm.x86.avx512.mask.pmaxs.b.128(<16 x i8> %x0, <16 x i8> %x1, <16 x i8> %x2 ,i16 %mask)
+  %res1 = call <16 x i8> @llvm.x86.avx512.mask.pmaxs.b.128(<16 x i8> %x0, <16 x i8> %x1, <16 x i8> zeroinitializer, i16 %mask)
+  %res2 = add <16 x i8> %res, %res1
+  ret <16 x i8> %res2
+}
+
+declare <32 x i8> @llvm.x86.avx512.mask.pmaxs.b.256(<32 x i8>, <32 x i8>, <32 x i8>, i32)
+
+; CHECK-LABEL: @test_int_x86_avx512_mask_pmaxs_b_256
+; CHECK-NOT: call 
+; CHECK: vpmaxsb %ymm
+; CHECK: {%k1} 
+define <32 x i8>@test_int_x86_avx512_mask_pmaxs_b_256(<32 x i8> %x0, <32 x i8> %x1, <32 x i8> %x2, i32 %x3) {
+  %res = call <32 x i8> @llvm.x86.avx512.mask.pmaxs.b.256(<32 x i8> %x0, <32 x i8> %x1, <32 x i8> %x2, i32 %x3)
+  %res1 = call <32 x i8> @llvm.x86.avx512.mask.pmaxs.b.256(<32 x i8> %x0, <32 x i8> %x1, <32 x i8> %x2, i32 -1)
+  %res2 = add <32 x i8> %res, %res1
+  ret <32 x i8> %res2
+}
+
+declare <8 x i16> @llvm.x86.avx512.mask.pmaxs.w.128(<8 x i16>, <8 x i16>, <8 x i16>, i8)
+
+; CHECK-LABEL: @test_int_x86_avx512_mask_pmaxs_w_128
+; CHECK-NOT: call 
+; CHECK: vpmaxsw %xmm
+; CHECK: {%k1} 
+define <8 x i16>@test_int_x86_avx512_mask_pmaxs_w_128(<8 x i16> %x0, <8 x i16> %x1, <8 x i16> %x2, i8 %x3) {
+  %res = call <8 x i16> @llvm.x86.avx512.mask.pmaxs.w.128(<8 x i16> %x0, <8 x i16> %x1, <8 x i16> %x2, i8 %x3)
+  %res1 = call <8 x i16> @llvm.x86.avx512.mask.pmaxs.w.128(<8 x i16> %x0, <8 x i16> %x1, <8 x i16> %x2, i8 -1)
+  %res2 = add <8 x i16> %res, %res1
+  ret <8 x i16> %res2
+}
+
+declare <16 x i16> @llvm.x86.avx512.mask.pmaxs.w.256(<16 x i16>, <16 x i16>, <16 x i16>, i16)
+
+; CHECK-LABEL: @test_int_x86_avx512_mask_pmaxs_w_256
+; CHECK-NOT: call 
+; CHECK: vpmaxsw %ymm
+; CHECK: {%k1} 
+define <16 x i16>@test_int_x86_avx512_mask_pmaxs_w_256(<16 x i16> %x0, <16 x i16> %x1, <16 x i16> %x2, i16 %mask) {
+  %res = call <16 x i16> @llvm.x86.avx512.mask.pmaxs.w.256(<16 x i16> %x0, <16 x i16> %x1, <16 x i16> %x2, i16 %mask)
+  %res1 = call <16 x i16> @llvm.x86.avx512.mask.pmaxs.w.256(<16 x i16> %x0, <16 x i16> %x1, <16 x i16> zeroinitializer, i16 %mask)
+  %res2 = add <16 x i16> %res, %res1
+  ret <16 x i16> %res2
+}
+
+declare <16 x i8> @llvm.x86.avx512.mask.pmaxu.b.128(<16 x i8>, <16 x i8>, <16 x i8>, i16)
+
+; CHECK-LABEL: @test_int_x86_avx512_mask_pmaxu_b_128
+; CHECK-NOT: call 
+; CHECK: vpmaxub %xmm
+; CHECK: {%k1} 
+define <16 x i8>@test_int_x86_avx512_mask_pmaxu_b_128(<16 x i8> %x0, <16 x i8> %x1, <16 x i8> %x2,i16 %mask) {
+  %res = call <16 x i8> @llvm.x86.avx512.mask.pmaxu.b.128(<16 x i8> %x0, <16 x i8> %x1, <16 x i8> %x2, i16 %mask)
+  %res1 = call <16 x i8> @llvm.x86.avx512.mask.pmaxu.b.128(<16 x i8> %x0, <16 x i8> %x1, <16 x i8> zeroinitializer, i16 %mask)
+  %res2 = add <16 x i8> %res, %res1
+  ret <16 x i8> %res2
+}
+
+declare <32 x i8> @llvm.x86.avx512.mask.pmaxu.b.256(<32 x i8>, <32 x i8>, <32 x i8>, i32)
+
+; CHECK-LABEL: @test_int_x86_avx512_mask_pmaxu_b_256
+; CHECK-NOT: call 
+; CHECK: vpmaxub %ymm
+; CHECK: {%k1} 
+define <32 x i8>@test_int_x86_avx512_mask_pmaxu_b_256(<32 x i8> %x0, <32 x i8> %x1, <32 x i8> %x2, i32 %x3) {
+  %res = call <32 x i8> @llvm.x86.avx512.mask.pmaxu.b.256(<32 x i8> %x0, <32 x i8> %x1, <32 x i8> %x2, i32 %x3)
+  %res1 = call <32 x i8> @llvm.x86.avx512.mask.pmaxu.b.256(<32 x i8> %x0, <32 x i8> %x1, <32 x i8> %x2, i32 -1)
+  %res2 = add <32 x i8> %res, %res1
+  ret <32 x i8> %res2
+}
+
+declare <8 x i16> @llvm.x86.avx512.mask.pmaxu.w.128(<8 x i16>, <8 x i16>, <8 x i16>, i8)
+
+; CHECK-LABEL: @test_int_x86_avx512_mask_pmaxu_w_128
+; CHECK-NOT: call 
+; CHECK: vpmaxuw %xmm
+; CHECK: {%k1} 
+define <8 x i16>@test_int_x86_avx512_mask_pmaxu_w_128(<8 x i16> %x0, <8 x i16> %x1, <8 x i16> %x2, i8 %x3) {
+  %res = call <8 x i16> @llvm.x86.avx512.mask.pmaxu.w.128(<8 x i16> %x0, <8 x i16> %x1, <8 x i16> %x2, i8 %x3)
+  %res1 = call <8 x i16> @llvm.x86.avx512.mask.pmaxu.w.128(<8 x i16> %x0, <8 x i16> %x1, <8 x i16> %x2, i8 -1)
+  %res2 = add <8 x i16> %res, %res1
+  ret <8 x i16> %res2
+}
+
+declare <16 x i16> @llvm.x86.avx512.mask.pmaxu.w.256(<16 x i16>, <16 x i16>, <16 x i16>, i16)
+
+; CHECK-LABEL: @test_int_x86_avx512_mask_pmaxu_w_256
+; CHECK-NOT: call 
+; CHECK: vpmaxuw %ymm
+; CHECK: {%k1} 
+define <16 x i16>@test_int_x86_avx512_mask_pmaxu_w_256(<16 x i16> %x0, <16 x i16> %x1, <16 x i16> %x2, i16 %mask) {
+  %res = call <16 x i16> @llvm.x86.avx512.mask.pmaxu.w.256(<16 x i16> %x0, <16 x i16> %x1, <16 x i16> %x2, i16 %mask)
+  %res1 = call <16 x i16> @llvm.x86.avx512.mask.pmaxu.w.256(<16 x i16> %x0, <16 x i16> %x1, <16 x i16> zeroinitializer, i16 %mask)
+  %res2 = add <16 x i16> %res, %res1
+  ret <16 x i16> %res2
+}
+
+declare <16 x i8> @llvm.x86.avx512.mask.pmins.b.128(<16 x i8>, <16 x i8>, <16 x i8>, i16)
+
+; CHECK-LABEL: @test_int_x86_avx512_mask_pmins_b_128
+; CHECK-NOT: call 
+; CHECK: vpminsb %xmm
+; CHECK: {%k1} 
+define <16 x i8>@test_int_x86_avx512_mask_pmins_b_128(<16 x i8> %x0, <16 x i8> %x1, <16 x i8> %x2, i16 %mask) {
+  %res = call <16 x i8> @llvm.x86.avx512.mask.pmins.b.128(<16 x i8> %x0, <16 x i8> %x1, <16 x i8> %x2, i16 %mask)
+  %res1 = call <16 x i8> @llvm.x86.avx512.mask.pmins.b.128(<16 x i8> %x0, <16 x i8> %x1, <16 x i8> zeroinitializer, i16 %mask)
+  %res2 = add <16 x i8> %res, %res1
+  ret <16 x i8> %res2
+}
+
+declare <32 x i8> @llvm.x86.avx512.mask.pmins.b.256(<32 x i8>, <32 x i8>, <32 x i8>, i32)
+
+; CHECK-LABEL: @test_int_x86_avx512_mask_pmins_b_256
+; CHECK-NOT: call 
+; CHECK: vpminsb %ymm
+; CHECK: {%k1} 
+define <32 x i8>@test_int_x86_avx512_mask_pmins_b_256(<32 x i8> %x0, <32 x i8> %x1, <32 x i8> %x2, i32 %x3) {
+  %res = call <32 x i8> @llvm.x86.avx512.mask.pmins.b.256(<32 x i8> %x0, <32 x i8> %x1, <32 x i8> %x2, i32 %x3)
+  %res1 = call <32 x i8> @llvm.x86.avx512.mask.pmins.b.256(<32 x i8> %x0, <32 x i8> %x1, <32 x i8> %x2, i32 -1)
+  %res2 = add <32 x i8> %res, %res1
+  ret <32 x i8> %res2
+}
+
+declare <8 x i16> @llvm.x86.avx512.mask.pmins.w.128(<8 x i16>, <8 x i16>, <8 x i16>, i8)
+
+; CHECK-LABEL: @test_int_x86_avx512_mask_pmins_w_128
+; CHECK-NOT: call 
+; CHECK: vpminsw %xmm
+; CHECK: {%k1} 
+define <8 x i16>@test_int_x86_avx512_mask_pmins_w_128(<8 x i16> %x0, <8 x i16> %x1, <8 x i16> %x2, i8 %x3) {
+  %res = call <8 x i16> @llvm.x86.avx512.mask.pmins.w.128(<8 x i16> %x0, <8 x i16> %x1, <8 x i16> %x2, i8 %x3)
+  %res1 = call <8 x i16> @llvm.x86.avx512.mask.pmins.w.128(<8 x i16> %x0, <8 x i16> %x1, <8 x i16> %x2, i8 -1)
+  %res2 = add <8 x i16> %res, %res1
+  ret <8 x i16> %res2
+}
+
+declare <16 x i16> @llvm.x86.avx512.mask.pmins.w.256(<16 x i16>, <16 x i16>, <16 x i16>, i16)
+
+; CHECK-LABEL: @test_int_x86_avx512_mask_pmins_w_256
+; CHECK-NOT: call 
+; CHECK: vpminsw %ymm
+; CHECK: {%k1} 
+define <16 x i16>@test_int_x86_avx512_mask_pmins_w_256(<16 x i16> %x0, <16 x i16> %x1, <16 x i16> %x2, i16 %mask) {
+  %res = call <16 x i16> @llvm.x86.avx512.mask.pmins.w.256(<16 x i16> %x0, <16 x i16> %x1, <16 x i16> %x2, i16 %mask)
+  %res1 = call <16 x i16> @llvm.x86.avx512.mask.pmins.w.256(<16 x i16> %x0, <16 x i16> %x1, <16 x i16> zeroinitializer, i16 %mask)
+  %res2 = add <16 x i16> %res, %res1
+  ret <16 x i16> %res2
+}
+
+declare <16 x i8> @llvm.x86.avx512.mask.pminu.b.128(<16 x i8>, <16 x i8>, <16 x i8>, i16)
+
+; CHECK-LABEL: @test_int_x86_avx512_mask_pminu_b_128
+; CHECK-NOT: call 
+; CHECK: vpminub %xmm
+; CHECK: {%k1} 
+define <16 x i8>@test_int_x86_avx512_mask_pminu_b_128(<16 x i8> %x0, <16 x i8> %x1, <16 x i8> %x2, i16 %mask) {
+  %res = call <16 x i8> @llvm.x86.avx512.mask.pminu.b.128(<16 x i8> %x0, <16 x i8> %x1, <16 x i8> %x2, i16 %mask)
+  %res1 = call <16 x i8> @llvm.x86.avx512.mask.pminu.b.128(<16 x i8> %x0, <16 x i8> %x1, <16 x i8> zeroinitializer, i16 %mask)
+  %res2 = add <16 x i8> %res, %res1
+  ret <16 x i8> %res2
+}
+
+declare <32 x i8> @llvm.x86.avx512.mask.pminu.b.256(<32 x i8>, <32 x i8>, <32 x i8>, i32)
+
+; CHECK-LABEL: @test_int_x86_avx512_mask_pminu_b_256
+; CHECK-NOT: call 
+; CHECK: vpminub %ymm
+; CHECK: {%k1} 
+define <32 x i8>@test_int_x86_avx512_mask_pminu_b_256(<32 x i8> %x0, <32 x i8> %x1, <32 x i8> %x2, i32 %x3) {
+  %res = call <32 x i8> @llvm.x86.avx512.mask.pminu.b.256(<32 x i8> %x0, <32 x i8> %x1, <32 x i8> %x2, i32 %x3)
+  %res1 = call <32 x i8> @llvm.x86.avx512.mask.pminu.b.256(<32 x i8> %x0, <32 x i8> %x1, <32 x i8> %x2, i32 -1)
+  %res2 = add <32 x i8> %res, %res1
+  ret <32 x i8> %res2
+}
+
+declare <8 x i16> @llvm.x86.avx512.mask.pminu.w.128(<8 x i16>, <8 x i16>, <8 x i16>, i8)
+
+; CHECK-LABEL: @test_int_x86_avx512_mask_pminu_w_128
+; CHECK-NOT: call 
+; CHECK: vpminuw %xmm
+; CHECK: {%k1} 
+define <8 x i16>@test_int_x86_avx512_mask_pminu_w_128(<8 x i16> %x0, <8 x i16> %x1, <8 x i16> %x2, i8 %x3) {
+  %res = call <8 x i16> @llvm.x86.avx512.mask.pminu.w.128(<8 x i16> %x0, <8 x i16> %x1, <8 x i16> %x2, i8 %x3)
+  %res1 = call <8 x i16> @llvm.x86.avx512.mask.pminu.w.128(<8 x i16> %x0, <8 x i16> %x1, <8 x i16> %x2, i8 -1)
+  %res2 = add <8 x i16> %res, %res1
+  ret <8 x i16> %res2
+}
+
+declare <16 x i16> @llvm.x86.avx512.mask.pminu.w.256(<16 x i16>, <16 x i16>, <16 x i16>, i16)
+
+; CHECK-LABEL: @test_int_x86_avx512_mask_pminu_w_256
+; CHECK-NOT: call 
+; CHECK: vpminuw %ymm
+; CHECK: {%k1} 
+define <16 x i16>@test_int_x86_avx512_mask_pminu_w_256(<16 x i16> %x0, <16 x i16> %x1, <16 x i16> %x2, i16 %mask) {
+  %res = call <16 x i16> @llvm.x86.avx512.mask.pminu.w.256(<16 x i16> %x0, <16 x i16> %x1, <16 x i16> %x2, i16 %mask)
+  %res1 = call <16 x i16> @llvm.x86.avx512.mask.pminu.w.256(<16 x i16> %x0, <16 x i16> %x1, <16 x i16> zeroinitializer, i16 %mask)
+  %res2 = add <16 x i16> %res, %res1
+  ret <16 x i16> %res2
+}

@@ -3278,30 +3278,6 @@ defm VPMINUW : avx512_binop_rm_vl_w<0x3A, "vpminu", X86umin,
 defm VPMINU : avx512_binop_rm_vl_dq<0x3B, 0x3B, "vpminu", X86umin,
                                      SSE_INTALU_ITINS_P, HasAVX512, 1>, T8PD;
 
-def : Pat <(v16i32 (int_x86_avx512_mask_pmaxs_d_512 (v16i32 VR512:$src1),
-                    (v16i32 VR512:$src2), (v16i32 immAllZerosV), (i16 -1))),
-           (VPMAXSDZrr VR512:$src1, VR512:$src2)>;
-def : Pat <(v16i32 (int_x86_avx512_mask_pmaxu_d_512 (v16i32 VR512:$src1),
-                    (v16i32 VR512:$src2), (v16i32 immAllZerosV), (i16 -1))),
-           (VPMAXUDZrr VR512:$src1, VR512:$src2)>;
-def : Pat <(v8i64 (int_x86_avx512_mask_pmaxs_q_512 (v8i64 VR512:$src1),
-                (v8i64 VR512:$src2), (bc_v8i64 (v16i32 immAllZerosV)), (i8 -1))),
-           (VPMAXSQZrr VR512:$src1, VR512:$src2)>;
-def : Pat <(v8i64 (int_x86_avx512_mask_pmaxu_q_512 (v8i64 VR512:$src1),
-                (v8i64 VR512:$src2), (bc_v8i64 (v16i32 immAllZerosV)), (i8 -1))),
-           (VPMAXUQZrr VR512:$src1, VR512:$src2)>;
-def : Pat <(v16i32 (int_x86_avx512_mask_pmins_d_512 (v16i32 VR512:$src1),
-                    (v16i32 VR512:$src2), (v16i32 immAllZerosV), (i16 -1))),
-           (VPMINSDZrr VR512:$src1, VR512:$src2)>;
-def : Pat <(v16i32 (int_x86_avx512_mask_pminu_d_512 (v16i32 VR512:$src1),
-                    (v16i32 VR512:$src2), (v16i32 immAllZerosV), (i16 -1))),
-           (VPMINUDZrr VR512:$src1, VR512:$src2)>;
-def : Pat <(v8i64 (int_x86_avx512_mask_pmins_q_512 (v8i64 VR512:$src1),
-                (v8i64 VR512:$src2), (bc_v8i64 (v16i32 immAllZerosV)), (i8 -1))),
-           (VPMINSQZrr VR512:$src1, VR512:$src2)>;
-def : Pat <(v8i64 (int_x86_avx512_mask_pminu_q_512 (v8i64 VR512:$src1),
-                (v8i64 VR512:$src2), (bc_v8i64 (v16i32 immAllZerosV)), (i8 -1))),
-           (VPMINUQZrr VR512:$src1, VR512:$src2)>;
 //===----------------------------------------------------------------------===//
 // AVX-512 - Unpack Instructions
 //===----------------------------------------------------------------------===//
