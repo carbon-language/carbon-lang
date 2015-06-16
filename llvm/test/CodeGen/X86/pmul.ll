@@ -1,5 +1,6 @@
 ; RUN: llc < %s -mtriple=x86_64-unknown-unknown | FileCheck %s --check-prefix=ALL --check-prefix=SSE2
 ; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=sse4.1 | FileCheck %s --check-prefix=ALL --check-prefix=SSE41
+; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mcpu=core-avx2 | FileCheck %s --check-prefix=AVX2
 
 define <16 x i8> @mul8c(<16 x i8> %i) nounwind  {
 ; SSE2-LABEL: mul8c:
@@ -75,10 +76,6 @@ define <2 x i64> @b(<2 x i64> %i) nounwind  {
 ; ALL-NEXT:    movdqa {{.*#+}} xmm1 = [117,117]
 ; ALL-NEXT:    movdqa %xmm0, %xmm2
 ; ALL-NEXT:    pmuludq %xmm1, %xmm2
-; ALL-NEXT:    pxor %xmm3, %xmm3
-; ALL-NEXT:    pmuludq %xmm0, %xmm3
-; ALL-NEXT:    psllq $32, %xmm3
-; ALL-NEXT:    paddq %xmm3, %xmm2
 ; ALL-NEXT:    psrlq $32, %xmm0
 ; ALL-NEXT:    pmuludq %xmm1, %xmm0
 ; ALL-NEXT:    psllq $32, %xmm0
@@ -248,3 +245,35 @@ entry:
   %A = mul <2 x i64> %i, %j
   ret <2 x i64> %A
 }
+
+define <4 x i64> @b1(<4 x i64> %i) nounwind  {
+; AVX2-LABEL: @b1
+; AVX2: vpbroadcastq
+; AVX2-NEXT: vpmuludq
+; AVX2-NEXT: vpsrlq  $32 
+; AVX2-NEXT: vpmuludq
+; AVX2-NEXT: vpsllq  $32
+; AVX2-NEXT: vpaddq
+; AVX2-NEXT: retq
+entry:
+  %A = mul <4 x i64> %i, < i64 117, i64 117, i64 117, i64 117 >
+  ret <4 x i64> %A
+}
+
+define <4 x i64> @b2(<4 x i64> %i, <4 x i64> %j) nounwind  {
+; AVX2-LABEL: @b2
+; AVX2:  vpmuludq
+; AVX2-NEXT: vpsrlq  $32
+; AVX2-NEXT: vpmuludq
+; AVX2-NEXT: vpsllq  $32
+; AVX2-NEXT: vpaddq
+; AVX2-NEXT: vpsrlq  $32
+; AVX2-NEXT: vpmuludq
+; AVX2-NEXT: vpsllq  $32
+; AVX2-NEXT: vpaddq
+; AVX2-NEXT: retq
+entry:
+  %A = mul <4 x i64> %i, %j
+  ret <4 x i64> %A
+}
+

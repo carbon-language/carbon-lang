@@ -16530,6 +16530,8 @@ static SDValue LowerMUL(SDValue Op, const X86Subtarget *Subtarget,
   SDValue Ahi = getTargetVShiftByConstNode(X86ISD::VSRLI, dl, VT, A, 32, DAG);
   SDValue Bhi = getTargetVShiftByConstNode(X86ISD::VSRLI, dl, VT, B, 32, DAG);
 
+  SDValue AhiBlo = Ahi;
+  SDValue AloBhi = Bhi;
   // Bit cast to 32-bit vectors for MULUDQ
   EVT MulVT = (VT == MVT::v2i64) ? MVT::v4i32 :
                                   (VT == MVT::v4i64) ? MVT::v8i32 : MVT::v16i32;
@@ -16539,11 +16541,15 @@ static SDValue LowerMUL(SDValue Op, const X86Subtarget *Subtarget,
   Bhi = DAG.getBitcast(MulVT, Bhi);
 
   SDValue AloBlo = DAG.getNode(X86ISD::PMULUDQ, dl, VT, A, B);
-  SDValue AloBhi = DAG.getNode(X86ISD::PMULUDQ, dl, VT, A, Bhi);
-  SDValue AhiBlo = DAG.getNode(X86ISD::PMULUDQ, dl, VT, Ahi, B);
-
-  AloBhi = getTargetVShiftByConstNode(X86ISD::VSHLI, dl, VT, AloBhi, 32, DAG);
-  AhiBlo = getTargetVShiftByConstNode(X86ISD::VSHLI, dl, VT, AhiBlo, 32, DAG);
+  // After shifting right const values the result may be all-zero.
+  if (!ISD::isBuildVectorAllZeros(Ahi.getNode())) {
+    AhiBlo = DAG.getNode(X86ISD::PMULUDQ, dl, VT, Ahi, B);
+    AhiBlo = getTargetVShiftByConstNode(X86ISD::VSHLI, dl, VT, AhiBlo, 32, DAG);
+  }
+  if (!ISD::isBuildVectorAllZeros(Bhi.getNode())) {
+    AloBhi = DAG.getNode(X86ISD::PMULUDQ, dl, VT, A, Bhi);
+    AloBhi = getTargetVShiftByConstNode(X86ISD::VSHLI, dl, VT, AloBhi, 32, DAG);
+  }
 
   SDValue Res = DAG.getNode(ISD::ADD, dl, VT, AloBlo, AloBhi);
   return DAG.getNode(ISD::ADD, dl, VT, Res, AhiBlo);
