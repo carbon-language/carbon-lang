@@ -691,9 +691,10 @@ def fmodules_validate_system_headers : Flag<["-"], "fmodules-validate-system-hea
 def fmodules : Flag <["-"], "fmodules">, Group<f_Group>,
   Flags<[DriverOption, CC1Option]>,
   HelpText<"Enable the 'modules' language feature">;
-def fmodule_maps : Flag <["-"], "fmodule-maps">, Group<f_Group>,
-  Flags<[DriverOption]>,
-  HelpText<"Read module maps to understand the structure of library headers">;
+def fimplicit_module_maps : Flag <["-"], "fimplicit-module-maps">, Group<f_Group>,
+  Flags<[DriverOption, CC1Option]>,
+  HelpText<"Implicitly search the file system for module map files.">;
+def fmodule_maps : Flag <["-"], "fmodule-maps">, Alias<fimplicit_module_maps>;
 def fmodule_name : JoinedOrSeparate<["-"], "fmodule-name=">, Group<f_Group>,
   Flags<[DriverOption,CC1Option]>, MetaVarName<"<name>">,
   HelpText<"Specify the name of the module to build">;
@@ -774,8 +775,9 @@ def fno_merge_all_constants : Flag<["-"], "fno-merge-all-constants">, Group<f_Gr
     Flags<[CC1Option]>, HelpText<"Disallow merging of constants">;
 def fno_modules : Flag <["-"], "fno-modules">, Group<f_Group>,
   Flags<[DriverOption]>;
-def fno_module_maps : Flag <["-"], "fno-module-maps">, Group<f_Group>,
+def fno_implicit_module_maps : Flag <["-"], "fno-implicit-module-maps">, Group<f_Group>,
   Flags<[DriverOption]>;
+def fno_module_maps : Flag <["-"], "fno-module-maps">, Alias<fno_implicit_module_maps>;
 def fno_modules_decluse : Flag <["-"], "fno-modules-decluse">, Group<f_Group>,
   Flags<[DriverOption]>;
 def fno_modules_strict_decluse : Flag <["-"], "fno-strict-modules-decluse">, Group<f_Group>,

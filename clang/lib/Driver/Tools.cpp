@@ -4151,8 +4151,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   // -fmodule-maps enables implicit reading of module map files. By default,
   // this is enabled if we are using precompiled modules.
-  if (Args.hasFlag(options::OPT_fmodule_maps, options::OPT_fno_module_maps,
-                   HaveModules)) {
+  if (Args.hasFlag(options::OPT_fimplicit_module_maps,
+                   options::OPT_fno_implicit_module_maps, HaveModules)) {
     CmdArgs.push_back("-fimplicit-module-maps");
   }
 
