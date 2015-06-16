@@ -173,6 +173,9 @@ bool MIRParserImpl::parseMachineFunction(yaml::Input &In, Module &M,
   Functions.insert(std::make_pair(FunctionName, std::move(MF)));
   if (NoLLVMIR)
     createDummyFunction(FunctionName, M);
+  else if (!M.getFunction(FunctionName))
+    return error(Twine("function '") + FunctionName +
+                 "' isn't defined in the provided LLVM IR");
   return false;
 }
 
