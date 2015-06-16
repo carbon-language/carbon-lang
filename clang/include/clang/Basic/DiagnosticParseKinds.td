@@ -1000,6 +1000,9 @@ def err_pragma_invalid_keyword : Error<
 def warn_pragma_unroll_cuda_value_in_parens : Warning<
   "argument to '#pragma unroll' should not be in parentheses in CUDA C/C++">,
   InGroup<CudaCompat>;
+
+def err_empty_attribute_block : Error<"empty attribute block is not allowed">;
+
 } // end of Parse Issue category.
 
 let CategoryName = "Modules Issue" in {
