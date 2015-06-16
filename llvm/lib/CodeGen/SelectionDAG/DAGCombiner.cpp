@@ -10664,8 +10664,8 @@ bool DAGCombiner::MergeStoresOfConstantsOrVecElts(
     // elements, so this path implies a store of constants.
     assert(IsConstantSrc && "Merged vector elements should use vector store");
 
-    unsigned StoreBW = NumElem * ElementSizeBytes * 8;
-    APInt StoreInt(StoreBW, 0);
+    unsigned SizeInBits = NumElem * ElementSizeBytes * 8;
+    APInt StoreInt(SizeInBits, 0);
 
     // Construct a single integer constant which is made of the smaller
     // constant inputs.
@@ -10674,18 +10674,18 @@ bool DAGCombiner::MergeStoresOfConstantsOrVecElts(
       unsigned Idx = IsLE ? (NumElem - 1 - i) : i;
       StoreSDNode *St  = cast<StoreSDNode>(StoreNodes[Idx].MemNode);
       SDValue Val = St->getValue();
-      StoreInt <<= ElementSizeBytes*8;
+      StoreInt <<= ElementSizeBytes * 8;
       if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Val)) {
-        StoreInt |= C->getAPIntValue().zext(StoreBW);
+        StoreInt |= C->getAPIntValue().zext(SizeInBits);
       } else if (ConstantFPSDNode *C = dyn_cast<ConstantFPSDNode>(Val)) {
-        StoreInt |= C->getValueAPF().bitcastToAPInt().zext(StoreBW);
+        StoreInt |= C->getValueAPF().bitcastToAPInt().zext(SizeInBits);
       } else {
         llvm_unreachable("Invalid constant element type");
       }
     }
 
     // Create the new Load and Store operations.
-    EVT StoreTy = EVT::getIntegerVT(*DAG.getContext(), StoreBW);
+    EVT StoreTy = EVT::getIntegerVT(*DAG.getContext(), SizeInBits);
     StoredVal = DAG.getConstant(StoreInt, DL, StoreTy);
   }
 
@@ -10813,7 +10813,7 @@ bool DAGCombiner::MergeConsecutiveStores(StoreSDNode* St) {
     return false;
 
   EVT MemVT = St->getMemoryVT();
-  int64_t ElementSizeBytes = MemVT.getSizeInBits()/8;
+  int64_t ElementSizeBytes = MemVT.getSizeInBits() / 8;
   bool NoVectors = DAG.getMachineFunction().getFunction()->hasFnAttribute(
       Attribute::NoImplicitFloat);
 
@@ -10916,8 +10916,8 @@ bool DAGCombiner::MergeConsecutiveStores(StoreSDNode* St) {
       }
 
       // Find a legal type for the constant store.
-      unsigned StoreBW = (i+1) * ElementSizeBytes * 8;
-      EVT StoreTy = EVT::getIntegerVT(*DAG.getContext(), StoreBW);
+      unsigned SizeInBits = (i+1) * ElementSizeBytes * 8;
+      EVT StoreTy = EVT::getIntegerVT(*DAG.getContext(), SizeInBits);
       if (TLI.isTypeLegal(StoreTy) &&
           allowableAlignment(DAG, TLI, StoreTy, FirstStoreAS,
                              FirstStoreAlign)) {
@@ -11079,8 +11079,8 @@ bool DAGCombiner::MergeConsecutiveStores(StoreSDNode* St) {
     }
 
     // Find a legal type for the integer store.
-    unsigned StoreBW = (i+1) * ElementSizeBytes * 8;
-    StoreTy = EVT::getIntegerVT(*DAG.getContext(), StoreBW);
+    unsigned SizeInBits = (i+1) * ElementSizeBytes * 8;
+    StoreTy = EVT::getIntegerVT(*DAG.getContext(), SizeInBits);
     if (TLI.isTypeLegal(StoreTy) &&
         allowableAlignment(DAG, TLI, StoreTy, FirstStoreAS, FirstStoreAlign) &&
         allowableAlignment(DAG, TLI, StoreTy, FirstLoadAS, FirstLoadAlign))
@@ -11134,8 +11134,8 @@ bool DAGCombiner::MergeConsecutiveStores(StoreSDNode* St) {
   if (UseVectorTy) {
     JointMemOpVT = EVT::getVectorVT(*DAG.getContext(), MemVT, NumElem);
   } else {
-    unsigned StoreBW = NumElem * ElementSizeBytes * 8;
-    JointMemOpVT = EVT::getIntegerVT(*DAG.getContext(), StoreBW);
+    unsigned SizeInBits = NumElem * ElementSizeBytes * 8;
+    JointMemOpVT = EVT::getIntegerVT(*DAG.getContext(), SizeInBits);
   }
 
   SDLoc LoadDL(LoadNodes[0].MemNode);
