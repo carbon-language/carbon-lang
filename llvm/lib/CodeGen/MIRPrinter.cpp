@@ -58,6 +58,9 @@ template <> struct BlockScalarTraits<Module> {
 void MIRPrinter::print(const MachineFunction &MF) {
   yaml::MachineFunction YamlMF;
   YamlMF.Name = MF.getName();
+  YamlMF.Alignment = MF.getAlignment();
+  YamlMF.ExposesReturnsTwice = MF.exposesReturnsTwice();
+  YamlMF.HasInlineAsm = MF.hasInlineAsm();
   yaml::Output Out(OS);
   Out << YamlMF;
 }

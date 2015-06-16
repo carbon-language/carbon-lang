@@ -190,6 +190,11 @@ bool MIRParserImpl::initializeMachineFunction(MachineFunction &MF) {
     return error(Twine("no machine function information for function '") +
                  MF.getName() + "' in the MIR file");
   // TODO: Recreate the machine function.
+  const yaml::MachineFunction &YamlMF = *It->getValue();
+  if (YamlMF.Alignment)
+    MF.setAlignment(YamlMF.Alignment);
+  MF.setExposesReturnsTwice(YamlMF.ExposesReturnsTwice);
+  MF.setHasInlineAsm(YamlMF.HasInlineAsm);
   return false;
 }
 

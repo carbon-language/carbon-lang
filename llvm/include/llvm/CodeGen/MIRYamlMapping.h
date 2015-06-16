@@ -26,11 +26,17 @@ namespace yaml {
 
 struct MachineFunction {
   StringRef Name;
+  unsigned Alignment;
+  bool ExposesReturnsTwice;
+  bool HasInlineAsm;
 };
 
 template <> struct MappingTraits<MachineFunction> {
   static void mapping(IO &YamlIO, MachineFunction &MF) {
     YamlIO.mapRequired("name", MF.Name);
+    YamlIO.mapOptional("alignment", MF.Alignment);
+    YamlIO.mapOptional("exposesReturnsTwice", MF.ExposesReturnsTwice);
+    YamlIO.mapOptional("hasInlineAsm", MF.HasInlineAsm);
   }
 };
 

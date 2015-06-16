@@ -10,15 +10,49 @@
   define i32 @bar() {
     ret i32 0
   }
+
+  define i32 @func() {
+    ret i32 0
+  }
+
+  define i32 @func2() {
+    ret i32 0
+  }
   
 ...
 ---
 # CHECK: name: foo
+# CHECK-NEXT: alignment:
+# CHECK-NEXT: exposesReturnsTwice: false
+# CHECK-NEXT: hasInlineAsm: false
 # CHECK-NEXT: ...
 name:            foo
 ...
 ---
 # CHECK: name: bar
+# CHECK-NEXT: alignment:
+# CHECK-NEXT: exposesReturnsTwice: false
+# CHECK-NEXT: hasInlineAsm: false
 # CHECK-NEXT: ...
 name:            bar
+...
+---
+# CHECK: name: func
+# CHECK-NEXT: alignment: 8
+# CHECK-NEXT: exposesReturnsTwice: false
+# CHECK-NEXT: hasInlineAsm: false
+# CHECK-NEXT: ...
+name:            func
+alignment:       8
+...
+---
+# CHECK: name: func2
+# CHECK-NEXT: alignment: 16
+# CHECK-NEXT: exposesReturnsTwice: true
+# CHECK-NEXT: hasInlineAsm: true
+# CHECK-NEXT: ...
+name:            func2
+alignment:       16
+exposesReturnsTwice: true
+hasInlineAsm:    true
 ...
