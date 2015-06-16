@@ -1184,6 +1184,13 @@ void PPCAsmParser::ProcessInstruction(MCInst &Inst,
     Inst = TmpInst;
     break;
   }
+  case PPC::MFTB: {
+    if (STI.getFeatureBits()[PPC::FeatureMFTB]) {
+      assert(Inst.getNumOperands() == 2 && "Expecting two operands");
+      Inst.setOpcode(PPC::MFSPR);
+    }
+    break;
+  }
   }
 }
 
