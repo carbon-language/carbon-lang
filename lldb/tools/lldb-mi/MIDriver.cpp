@@ -370,16 +370,16 @@ CMIDriver::DoParseArgs(const int argc, const char *argv[], FILE *vpStdOut, bool 
 // Details: Check the arguments that were passed to this program to make sure they are
 //          valid and to get their argument values (if any). The following are options
 //          that are only handled by *this driver:
-//              --executable
+//              --executable <file>
+//              --source <file> or -s <file>
 //          The application's options --interpreter and --executable in code act very similar.
 //          The --executable is necessary to differentiate whether the MI Driver is being
 //          used by a client (e.g. Eclipse) or from the command line. Eclipse issues the option
 //          --interpreter and also passes additional arguments which can be interpreted as an
-//          executable if called from the command line. Using --executable tells the MI
-//          Driver is being called the command line and that the executable argument is indeed
-//          a specified executable an so actions commands to set up the executable for a
-//          debug session. Using --interpreter on the commnd line does not action additional
-//          commands to initialise a debug session and so be able to launch the process.
+//          executable if called from the command line. Using --executable tells the MI Driver
+//          it is being called from the command line and to prepare to launch the executable
+//          argument for a debug session. Using --interpreter on the commnd line does not
+//          issue additional commands to initialise a debug session.
 // Type:    Overridden.
 // Args:    argc        - (R)   An integer that contains the count of arguments that follow in
 //                              argv. The argc parameter is always greater than or equal to 1.
@@ -1260,7 +1260,8 @@ CMIDriver::IsDriverDebuggingArgExecutable(void) const
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details: Execute commands from prepared source file
+// Details: Execute commands from command source file in specified mode, and
+//          set exit-flag if needed.
 // Type:    Method.
 // Args:    vbAsyncMode       - (R) True = execute commands in asynchronous mode, false = otherwise.
 // Return:  MIstatus::success - Function succeeded.
