@@ -293,6 +293,9 @@ namespace llvm {
       // Vector FP round.
       VFPROUND,
 
+      // Vector signed integer to double.
+      CVTDQ2PD,
+
       // 128-bit vector logical left / right shift
       VSHLDQ, VSRLDQ,
 

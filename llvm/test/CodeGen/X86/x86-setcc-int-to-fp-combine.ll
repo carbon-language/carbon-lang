@@ -27,12 +27,8 @@ define void @foo1(<4 x float> %val, <4 x float> %test, <4 x double>* %p) nounwin
 ; CHECK-NEXT: .long 1                       ## 0x1
 ; CHECK-NEXT: .long 1                       ## 0x1
 ; CHECK-LABEL: foo1:
-;   FIXME: The operation gets scalarized. If/when the compiler learns to better
-;          use [V]CVTDQ2PD, this will need updated.
-; CHECK: cvtsi2sdq
-; CHECK: cvtsi2sdq
-; CHECK: cvtsi2sdq
-; CHECK: cvtsi2sdq
+; CHECK: cvtdq2pd
+; CHECK: cvtdq2pd
   %cmp = fcmp oeq <4 x float> %val, %test
   %ext = zext <4 x i1> %cmp to <4 x i32>
   %result = sitofp <4 x i32> %ext to <4 x double>
