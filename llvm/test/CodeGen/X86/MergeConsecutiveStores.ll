@@ -463,6 +463,67 @@ define void @merge_vec_element_store(<8 x float> %v, float* %ptr) {
 ; CHECK-NEXT: retq
 }
 
+; PR21711 - Merge vector stores into wider vector stores.
+; These should be merged into 32-byte stores.
+define void @merge_vec_extract_stores(<8 x float> %v1, <8 x float> %v2, <4 x float>* %ptr) {
+  %idx0 = getelementptr inbounds <4 x float>, <4 x float>* %ptr, i64 3
+  %idx1 = getelementptr inbounds <4 x float>, <4 x float>* %ptr, i64 4
+  %idx2 = getelementptr inbounds <4 x float>, <4 x float>* %ptr, i64 5
+  %idx3 = getelementptr inbounds <4 x float>, <4 x float>* %ptr, i64 6
+  %shuffle0 = shufflevector <8 x float> %v1, <8 x float> undef, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
+  %shuffle1 = shufflevector <8 x float> %v1, <8 x float> undef, <4 x i32> <i32 4, i32 5, i32 6, i32 7>
+  %shuffle2 = shufflevector <8 x float> %v2, <8 x float> undef, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
+  %shuffle3 = shufflevector <8 x float> %v2, <8 x float> undef, <4 x i32> <i32 4, i32 5, i32 6, i32 7>
+  store <4 x float> %shuffle0, <4 x float>* %idx0, align 16
+  store <4 x float> %shuffle1, <4 x float>* %idx1, align 16
+  store <4 x float> %shuffle2, <4 x float>* %idx2, align 16
+  store <4 x float> %shuffle3, <4 x float>* %idx3, align 16
+  ret void
+
+; CHECK-LABEL: merge_vec_extract_stores
+; CHECK:      vmovaps %xmm0, 48(%rdi)
+; CHECK-NEXT: vextractf128 $1, %ymm0, 64(%rdi)
+; CHECK-NEXT: vmovaps %xmm1, 80(%rdi)
+; CHECK-NEXT: vextractf128 $1, %ymm1, 96(%rdi)
+; CHECK-NEXT: vzeroupper
+; CHECK-NEXT: retq
+}
+
+; Merging vector stores when sourced from vector loads is not currently handled.
+define void @merge_vec_stores_from_loads(<4 x float>* %v, <4 x float>* %ptr) {
+  %load_idx0 = getelementptr inbounds <4 x float>, <4 x float>* %v, i64 0
+  %load_idx1 = getelementptr inbounds <4 x float>, <4 x float>* %v, i64 1
+  %v0 = load <4 x float>, <4 x float>* %load_idx0
+  %v1 = load <4 x float>, <4 x float>* %load_idx1
+  %store_idx0 = getelementptr inbounds <4 x float>, <4 x float>* %ptr, i64 0
+  %store_idx1 = getelementptr inbounds <4 x float>, <4 x float>* %ptr, i64 1
+  store <4 x float> %v0, <4 x float>* %store_idx0, align 16
+  store <4 x float> %v1, <4 x float>* %store_idx1, align 16
+  ret void
+
+; CHECK-LABEL: merge_vec_stores_from_loads
+; CHECK:      vmovaps
+; CHECK-NEXT: vmovaps
+; CHECK-NEXT: vmovaps
+; CHECK-NEXT: vmovaps
+; CHECK-NEXT: retq
+}
+
+; Merging vector stores when sourced from a constant vector is not currently handled. 
+define void @merge_vec_stores_of_constants(<4 x i32>* %ptr) {
+  %idx0 = getelementptr inbounds <4 x i32>, <4 x i32>* %ptr, i64 3
+  %idx1 = getelementptr inbounds <4 x i32>, <4 x i32>* %ptr, i64 4
+  store <4 x i32> <i32 0, i32 0, i32 0, i32 0>, <4 x i32>* %idx0, align 16
+  store <4 x i32> <i32 0, i32 0, i32 0, i32 0>, <4 x i32>* %idx1, align 16
+  ret void
+
+; CHECK-LABEL: merge_vec_stores_of_constants
+; CHECK:      vxorps
+; CHECK-NEXT: vmovaps
+; CHECK-NEXT: vmovaps
+; CHECK-NEXT: retq
+}
+
 ; This is a minimized test based on real code that was failing.
 ; We could merge stores (and loads) like this...
 
