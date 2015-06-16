@@ -649,14 +649,14 @@ CodeGenAction::CreateASTConsumer(CompilerInstance &CI, StringRef InFile) {
       return nullptr;
     }
 
-    ErrorOr<llvm::Module *> ModuleOrErr =
+    ErrorOr<std::unique_ptr<llvm::Module>> ModuleOrErr =
         getLazyBitcodeModule(std::move(*BCBuf), *VMContext);
     if (std::error_code EC = ModuleOrErr.getError()) {
       CI.getDiagnostics().Report(diag::err_cannot_open_file)
         << LinkBCFile << EC.message();
       return nullptr;
     }
-    LinkModuleToUse = ModuleOrErr.get();
+    LinkModuleToUse = ModuleOrErr.get().release();
   }
 
   CoverageSourceInfo *CoverageInfo = nullptr;
