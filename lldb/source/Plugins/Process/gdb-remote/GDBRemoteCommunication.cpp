@@ -171,6 +171,12 @@ GDBRemoteCommunication::~GDBRemoteCommunication()
     {
         Disconnect();
     }
+
+    // Stop the communications read thread which is used to parse all
+    // incoming packets.  This function will block until the read
+    // thread returns.
+    if (m_read_thread_enabled)
+        StopReadThread();
 }
 
 char
@@ -295,7 +301,7 @@ GDBRemoteCommunication::PacketResult
 GDBRemoteCommunication::GetAck ()
 {
     StringExtractorGDBRemote packet;
-    PacketResult result = WaitForPacketWithTimeoutMicroSecondsNoLock (packet, GetPacketTimeoutInMicroSeconds (), false);
+    PacketResult result = ReadPacket (packet, GetPacketTimeoutInMicroSeconds (), false);
     if (result == PacketResult::Success)
     {
         if (packet.GetResponseType() == StringExtractorGDBRemote::ResponseType::eAck)
@@ -322,6 +328,62 @@ GDBRemoteCommunication::WaitForNotRunningPrivate (const TimeValue *timeout_ptr)
 {
     return m_private_is_running.WaitForValueEqualTo (false, timeout_ptr, NULL);
 }
+
+GDBRemoteCommunication::PacketResult
+GDBRemoteCommunication::ReadPacket (StringExtractorGDBRemote &response, uint32_t timeout_usec, bool sync_on_timeout)
+{
+   if (m_read_thread_enabled)
+       return PopPacketFromQueue (response, timeout_usec);
+   else
+       return WaitForPacketWithTimeoutMicroSecondsNoLock (response, timeout_usec, sync_on_timeout);
+}
+
+
+// This function is called when a packet is requested.
+// A whole packet is popped from the packet queue and returned to the caller.
+// Packets are placed into this queue from the communication read thread.
+// See GDBRemoteCommunication::AppendBytesToCache.
+GDBRemoteCommunication::PacketResult
+GDBRemoteCommunication::PopPacketFromQueue (StringExtractorGDBRemote &response, uint32_t timeout_usec)
+{
+    // Calculate absolute timeout value
+    TimeValue timeout = TimeValue::Now();
+    timeout.OffsetWithMicroSeconds(timeout_usec);
+
+    do
+    {
+        // scope for the mutex
+        {
+            // lock down the packet queue
+            Mutex::Locker locker(m_packet_queue_mutex);
+
+            // Wait on condition variable.
+            if (m_packet_queue.size() == 0)
+                m_condition_queue_not_empty.Wait(m_packet_queue_mutex, &timeout);
+
+            if (m_packet_queue.size() > 0)
+            {
+                // get the front element of the queue
+                response = m_packet_queue.front();
+
+                // remove the front element
+                m_packet_queue.pop();
+
+                // we got a packet
+                return PacketResult::Success;
+            }
+         }
+
+         // Disconnected
+         if (!IsConnected())
+             return PacketResult::ErrorDisconnected;
+
+      // Loop while not timed out
+    } while (TimeValue::Now() < timeout);
+
+    return PacketResult::ErrorReplyTimeout;
+}
+
 
 GDBRemoteCommunication::PacketResult
 GDBRemoteCommunication::WaitForPacketWithTimeoutMicroSecondsNoLock (StringExtractorGDBRemote &packet, uint32_t timeout_usec, bool sync_on_timeout)
@@ -1093,4 +1155,54 @@ GDBRemoteCommunication::ScopedTimeout::ScopedTimeout (GDBRemoteCommunication& gd
 GDBRemoteCommunication::ScopedTimeout::~ScopedTimeout ()
 {
     m_gdb_comm.SetPacketTimeout (m_saved_timeout);
+}
+
+// This function is called via the Communications class read thread when bytes become available
+// for this connection. This function will consume all incoming bytes and try to parse whole
+// packets as they become available. Full packets are placed in a queue, so that all packet
+// requests can simply pop from this queue. Async notification packets will be dispatched
+// immediately to the ProcessGDBRemote Async thread via an event.
+void GDBRemoteCommunication::AppendBytesToCache (const uint8_t * bytes, size_t len, bool broadcast, lldb::ConnectionStatus status)
+{
+    StringExtractorGDBRemote packet;
+
+    while (true)
+    {
+        PacketType type = CheckForPacket(bytes, len, packet);
+
+        // scrub the data so we do not pass it back to CheckForPacket
+        // on future passes of the loop
+        bytes = nullptr;
+        len = 0;
+
+        // we may have received no packet so lets bail out
+        if (type == PacketType::Invalid)
+            break;
+
+        if (type == PacketType::Standard)
+        {
+            // scope for the mutex
+            {
+                // lock down the packet queue
+                Mutex::Locker locker(m_packet_queue_mutex);
+                // push a new packet into the queue
+                m_packet_queue.push(packet);
+                // Signal condition variable that we have a packet
+                m_condition_queue_not_empty.Signal();
+
+            }
+        }
+
+        if (type == PacketType::Notify)
+        {
+            // put this packet into an event
+            const char *pdata = packet.GetStringRef().c_str();
+
+            // as the communication class, we are a broadcaster and the
+            // async thread is tuned to listen to us
+            BroadcastEvent(
+                eBroadcastBitGdbReadThreadGotNotify,
+                new EventDataBytes(pdata));
+        }
+    }
 }

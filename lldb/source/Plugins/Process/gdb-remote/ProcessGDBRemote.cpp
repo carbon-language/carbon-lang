@@ -1151,6 +1151,12 @@ ProcessGDBRemote::ConnectToDebugserver (const char *connect_url)
         return error;
     }
 
+
+    // Start the communications read thread so all incoming data can be
+    // parsed into packets and queued as they arrive.
+    if (GetTarget().GetNonStopModeEnabled())
+        m_gdb_comm.StartReadThread();
+
     // We always seem to be able to open a connection to a local port
     // so we need to make sure we can then send data to it. If we can't
     // then we aren't actually connected to anything, so try and do the

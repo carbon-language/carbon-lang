@@ -145,7 +145,7 @@ GDBRemoteCommunicationClient::HandshakeWithServer (Error *error_ptr)
         PacketResult packet_result = PacketResult::Success;
         const uint32_t timeout_usec = 10 * 1000; // Wait for 10 ms for a response
         while (packet_result == PacketResult::Success)
-            packet_result = WaitForPacketWithTimeoutMicroSecondsNoLock (response, timeout_usec, false);
+            packet_result = ReadPacket (response, timeout_usec, false);
 
         // The return value from QueryNoAckModeSupported() is true if the packet
         // was sent and _any_ response (including UNIMPLEMENTED) was received),
@@ -654,7 +654,7 @@ GDBRemoteCommunicationClient::SendPacketAndWaitForResponseNoLock (const char *pa
 {
     PacketResult packet_result = SendPacketNoLock (payload, payload_length);
     if (packet_result == PacketResult::Success)
-        packet_result = WaitForPacketWithTimeoutMicroSecondsNoLock (response, GetPacketTimeoutInMicroSeconds (), true);
+        packet_result = ReadPacket (response, GetPacketTimeoutInMicroSeconds (), true);
     return packet_result;
 }
 
@@ -670,6 +670,12 @@ GDBRemoteCommunicationClient::SendPacketAndWaitForResponse
     PacketResult packet_result = PacketResult::ErrorSendFailed;
     Mutex::Locker locker;
     Log *log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS));
+
+    // In order to stop async notifications from being processed in the middle of the
+    // send/recieve sequence Hijack the broadcast. Then rebroadcast any events when we are done.
+    static Listener hijack_listener("lldb.NotifyHijacker");
+    HijackBroadcaster(&hijack_listener, eBroadcastBitGdbReadThreadGotNotify);    
+
     if (GetSequenceMutex (locker))
     {
         packet_result = SendPacketAndWaitForResponseNoLock (payload, payload_length, response);
@@ -761,6 +767,15 @@ GDBRemoteCommunicationClient::SendPacketAndWaitForResponse
                 log->Printf("error: failed to get packet sequence mutex, not sending packet '%*s'", (int) payload_length, payload);
         }
     }
+
+    // Remove our Hijacking listner from the broadcast.
+    RestoreBroadcaster();
+
+    // If a notification event occured, rebroadcast since it can now be processed safely.  
+    EventSP event_sp;
+    if (hijack_listener.GetNextEvent(event_sp))
+        BroadcastEvent(event_sp);
+
     return packet_result;
 }
 
@@ -902,9 +917,9 @@ GDBRemoteCommunicationClient::SendContinuePacketAndWaitForResponse
         got_async_packet = false;
 
         if (log)
-            log->Printf ("GDBRemoteCommunicationClient::%s () WaitForPacket(%s)", __FUNCTION__, continue_packet.c_str());
+            log->Printf ("GDBRemoteCommunicationClient::%s () ReadPacket(%s)", __FUNCTION__, continue_packet.c_str());
 
-        if (WaitForPacketWithTimeoutMicroSecondsNoLock(response, UINT32_MAX, false) == PacketResult::Success)
+        if (ReadPacket(response, UINT32_MAX, false) == PacketResult::Success)
         {
             if (response.Empty())
                 state = eStateInvalid;
@@ -961,7 +976,7 @@ GDBRemoteCommunicationClient::SendContinuePacketAndWaitForResponse
                                 // packet to make sure it doesn't get in the way
                                 StringExtractorGDBRemote extra_stop_reply_packet;
                                 uint32_t timeout_usec = 1000;
-                                if (WaitForPacketWithTimeoutMicroSecondsNoLock (extra_stop_reply_packet, timeout_usec, false) == PacketResult::Success)
+                                if (ReadPacket (extra_stop_reply_packet, timeout_usec, false) == PacketResult::Success)
                                 {
                                     switch (extra_stop_reply_packet.GetChar())
                                     {
@@ -1139,7 +1154,7 @@ GDBRemoteCommunicationClient::SendContinuePacketAndWaitForResponse
         else
         {
             if (log)
-                log->Printf ("GDBRemoteCommunicationClient::%s () WaitForPacket(...) => false", __FUNCTION__);
+                log->Printf ("GDBRemoteCommunicationClient::%s () ReadPacket(...) => false", __FUNCTION__);
             state = eStateInvalid;
         }
     }
