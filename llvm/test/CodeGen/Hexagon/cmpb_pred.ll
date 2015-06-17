@@ -1,4 +1,3 @@
-; XFAIL:
 ; RUN: llc -march=hexagon -mcpu=hexagonv5  < %s | FileCheck %s
 ; Generate various cmpb instruction followed by if (p0) .. if (!p0)...
 target triple = "hexagon"
@@ -64,7 +63,7 @@ entry:
 
 define i32 @Func_3g(i32) nounwind readnone {
 entry:
-; CHECK: mux
+; CHECK-NOT: mux
   %conv = and i32 %0, 255
   %cmp = icmp ult i32 %conv, 3
   %selv = zext i1 %cmp to i32

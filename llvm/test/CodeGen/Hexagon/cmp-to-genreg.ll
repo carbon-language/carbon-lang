@@ -1,4 +1,4 @@
-; RUN: llc -march=hexagon -mcpu=hexagonv4 < %s | FileCheck %s
+; RUN: llc -march=hexagon < %s | FileCheck %s
 ; Check that we generate compare to general register.
 
 define i32 @compare1(i32 %a) nounwind {
