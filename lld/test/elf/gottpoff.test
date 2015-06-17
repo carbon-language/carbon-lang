@@ -7,7 +7,7 @@
 #RUN: llvm-readobj -r %t | FileCheck %s
 #
 #CHECK:   Section (5) .rela.dyn {
-#CHECK:    0x401098 R_X86_64_TPOFF64 - 0x0
+#CHECK:    0x401098 R_X86_64_TPOFF64 tls2 0x0
 #CHECK:   }
 
 ---

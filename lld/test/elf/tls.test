@@ -22,7 +22,7 @@ YAML:    offset: 25
 YAML:    target: tls2
 
 YAML:  name: GOTTPOFF
-YAML:  kind: R_X86_64_PC32
+YAML:  kind: R_X86_64_GOTTPOFF
 YAML:  target: [[GOTNAME:[a-zA-Z0-9_]+]]
 
 YAML:  type: got

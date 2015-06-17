@@ -3,6 +3,7 @@ add_llvm_library(lldX86_64ELFTarget
   X86_64TargetHandler.cpp
   X86_64RelocationHandler.cpp
   X86_64RelocationPass.cpp
+  X86_64SectionChunks.cpp
   LINK_LIBS
     lldELF
     lldReaderWriter

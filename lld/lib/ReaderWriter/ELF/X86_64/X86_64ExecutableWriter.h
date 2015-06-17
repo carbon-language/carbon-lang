@@ -18,7 +18,7 @@ namespace elf {
 class X86_64ExecutableWriter : public ExecutableWriter<ELF64LE> {
 public:
   X86_64ExecutableWriter(X86_64LinkingContext &ctx, X86_64TargetLayout &layout)
-      : ExecutableWriter(ctx, layout) {}
+      : ExecutableWriter(ctx, layout), _targetLayout(layout) {}
 
 protected:
   // Add any runtime files and their atoms to the output
@@ -32,6 +32,23 @@ protected:
       gotFile->addAtom(*new (gotFile->allocator()) DynamicAtom(*gotFile));
     result.push_back(std::move(gotFile));
   }
+
+  void buildDynamicSymbolTable(const File &file) override {
+    for (auto sec : this->_layout.sections()) {
+      if (auto section = dyn_cast<AtomSection<ELF64LE>>(sec)) {
+        for (const auto &atom : section->atoms()) {
+          if (_targetLayout.getGOTSection().hasGlobalGOTEntry(atom->_atom)) {
+            this->_dynamicSymbolTable->addSymbol(atom->_atom, section->ordinal(),
+                                                 atom->_virtualAddr, atom);
+          }
+        }
+      }
+    }
+
+    ExecutableWriter<ELF64LE>::buildDynamicSymbolTable(file);
+  }
+
+  X86_64TargetLayout &_targetLayout;
 };
 
 } // namespace elf

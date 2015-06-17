@@ -188,11 +188,12 @@ protected:
     return got->second;
   }
 
-  /// \brief Create a TPOFF64 GOT entry and change the relocation to a PC32 to
-  /// the GOT.
-  void handleGOTTPOFF(const Reference &ref) {
-    const_cast<Reference &>(ref).setTarget(getGOTTPOFF(ref.target()));
-    const_cast<Reference &>(ref).setKindValue(R_X86_64_PC32);
+  /// \brief Create a TPOFF64 GOT entry.
+  std::error_code handleGOTTPOFF(const Reference &ref) {
+    if (isa<DefinedAtom>(ref.target())) {
+      const_cast<Reference &>(ref).setTarget(getGOTTPOFF(ref.target()));
+    }
+    return std::error_code();
   }
 
   /// \brief Create a TLS GOT entry with DTPMOD64/DTPOFF64 dynamic relocations.

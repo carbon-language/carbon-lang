@@ -14,19 +14,33 @@
 #include "TargetLayout.h"
 #include "X86_64LinkingContext.h"
 #include "X86_64RelocationHandler.h"
+#include "X86_64SectionChunks.h"
 #include "lld/Core/Simple.h"
 
 namespace lld {
 namespace elf {
 
+
 class X86_64TargetLayout : public TargetLayout<ELF64LE> {
 public:
-  X86_64TargetLayout(X86_64LinkingContext &ctx) : TargetLayout(ctx) {}
+  X86_64TargetLayout(X86_64LinkingContext &ctx) : TargetLayout(ctx),
+    _gotSection(new (this->_allocator) X86_64GOTSection(ctx)) {}
+
+  AtomSection<ELF64LE> *
+  createSection(StringRef name, int32_t type,
+                DefinedAtom::ContentPermissions permissions,
+                TargetLayout<ELF64LE>::SectionOrder order) override {
+    if (type == DefinedAtom::typeGOT && name == ".got")
+      return _gotSection;
+    return TargetLayout<ELF64LE>::createSection(name, type, permissions, order);
+  }
 
   void finalizeOutputSectionLayout() override {
     sortOutputSectionByPriority<ELF64LE>(".init_array");
     sortOutputSectionByPriority<ELF64LE>(".fini_array");
   }
+
+ const X86_64GOTSection &getGOTSection() const { return *_gotSection; }
 
 private:
   uint32_t getPriority(StringRef sectionName) const {
@@ -55,6 +69,9 @@ private:
                 return getPriority(lhsName) < getPriority(rhsName);
               });
   }
+
+private:
+  X86_64GOTSection *_gotSection;
 };
 
 class X86_64TargetHandler : public TargetHandler {

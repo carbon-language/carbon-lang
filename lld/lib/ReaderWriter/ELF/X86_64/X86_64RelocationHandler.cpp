@@ -94,18 +94,14 @@ std::error_code X86_64TargetRelocationHandler::applyRelocation(
   case R_X86_64_PC16:
     relocPC16(loc, reloc, target, ref.addend());
     break;
-  case R_X86_64_TPOFF64:
   case R_X86_64_DTPOFF32:
-  case R_X86_64_TPOFF32: {
+  case R_X86_64_TPOFF32:
     _tlsSize = _layout.getTLSSize();
-    if (ref.kindValue() == R_X86_64_TPOFF32 ||
-        ref.kindValue() == R_X86_64_DTPOFF32) {
-      write32le(loc, target - _tlsSize);
-    } else {
-      write64le(loc, target - _tlsSize);
-    }
+    write32le(loc, target - _tlsSize);
     break;
-  }
+  case R_X86_64_GOTTPOFF:
+    relocPC32(loc, reloc, target, ref.addend());
+    break;
   case R_X86_64_TLSGD: {
     relocPC32(loc, reloc, target, ref.addend());
     break;
@@ -141,6 +137,7 @@ std::error_code X86_64TargetRelocationHandler::applyRelocation(
   case R_X86_64_GLOB_DAT:
   case R_X86_64_DTPMOD64:
   case R_X86_64_DTPOFF64:
+  case R_X86_64_TPOFF64:
     break;
   default:
     return make_unhandled_reloc_error();
