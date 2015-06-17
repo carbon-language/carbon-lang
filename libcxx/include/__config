@@ -21,10 +21,6 @@
 #define _GNUC_VER 0
 #endif
 
-#if !_WIN32
-#include <unistd.h>
-#endif
-
 #define _LIBCPP_VERSION 1101
 
 #define _LIBCPP_ABI_VERSION 1
