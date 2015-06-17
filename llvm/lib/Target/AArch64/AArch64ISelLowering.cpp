@@ -76,9 +76,6 @@ cl::opt<bool> EnableAArch64ELFLocalDynamicTLSGeneration(
     cl::desc("Allow AArch64 Local Dynamic TLS code generation"),
     cl::init(false));
 
-/// Value type used for condition codes.
-static const MVT MVT_CC = MVT::i32;
-
 AArch64TargetLowering::AArch64TargetLowering(const TargetMachine &TM,
                                              const AArch64Subtarget &STI)
     : TargetLowering(TM), Subtarget(&STI) {
@@ -810,9 +807,6 @@ const char *AArch64TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case AArch64ISD::ADCS:              return "AArch64ISD::ADCS";
   case AArch64ISD::SBCS:              return "AArch64ISD::SBCS";
   case AArch64ISD::ANDS:              return "AArch64ISD::ANDS";
-  case AArch64ISD::CCMP:              return "AArch64ISD::CCMP";
-  case AArch64ISD::CCMN:              return "AArch64ISD::CCMN";
-  case AArch64ISD::FCCMP:             return "AArch64ISD::FCCMP";
   case AArch64ISD::FCMP:              return "AArch64ISD::FCMP";
   case AArch64ISD::FMIN:              return "AArch64ISD::FMIN";
   case AArch64ISD::FMAX:              return "AArch64ISD::FMAX";
@@ -1171,131 +1165,8 @@ static SDValue emitComparison(SDValue LHS, SDValue RHS, ISD::CondCode CC,
     LHS = LHS.getOperand(0);
   }
 
-  return DAG.getNode(Opcode, dl, DAG.getVTList(VT, MVT_CC), LHS, RHS)
+  return DAG.getNode(Opcode, dl, DAG.getVTList(VT, MVT::i32), LHS, RHS)
       .getValue(1);
-}
-
-static SDValue emitConditionalComparison(SDValue LHS, SDValue RHS,
-                                         ISD::CondCode CC, SDValue CCOp,
-                                         SDValue Condition, unsigned NZCV,
-                                         SDLoc DL, SelectionDAG &DAG) {
-  unsigned Opcode = 0;
-  if (LHS.getValueType().isFloatingPoint())
-    Opcode = AArch64ISD::FCCMP;
-  else if (RHS.getOpcode() == ISD::SUB) {
-    SDValue SubOp0 = RHS.getOperand(0);
-    if (const ConstantSDNode *SubOp0C = dyn_cast<ConstantSDNode>(SubOp0))
-      if (SubOp0C->isNullValue() && (CC == ISD::SETEQ || CC == ISD::SETNE)) {
-        // See emitComparison() on why we can only do this for SETEQ and SETNE.
-        Opcode = AArch64ISD::CCMN;
-        RHS = RHS.getOperand(1);
-      }
-  }
-  if (Opcode == 0)
-    Opcode = AArch64ISD::CCMP;
-
-  SDValue NZCVOp = DAG.getConstant(NZCV, DL, MVT::i32);
-  return DAG.getNode(Opcode, DL, MVT_CC, LHS, RHS, NZCVOp, Condition, CCOp);
-}
-
-/// Returns true if @p Val is a tree of AND/OR/SETCC operations.
-static bool isConjunctionDisjunctionTree(const SDValue Val, unsigned Depth) {
-  if (!Val.hasOneUse())
-    return false;
-  if (Val->getOpcode() == ISD::SETCC)
-    return true;
-  // Protect against stack overflow.
-  if (Depth > 1000)
-    return false;
-  if (Val->getOpcode() == ISD::AND || Val->getOpcode() == ISD::OR) {
-    SDValue O0 = Val->getOperand(0);
-    SDValue O1 = Val->getOperand(1);
-    return isConjunctionDisjunctionTree(O0, Depth+1) &&
-           isConjunctionDisjunctionTree(O1, Depth+1);
-  }
-  return false;
-}
-
-/// Emit conjunction or disjunction tree with the CMP/FCMP followed by a chain
-/// of CCMP/CFCMP ops. For example (SETCC_0 & SETCC_1) with condition cond0 and
-/// cond1 can be transformed into "CMP; CCMP" with CCMP executing on cond_0
-/// and setting flags to inversed(cond_1) otherwise.
-/// This recursive function produces DAG nodes that produce condition flags
-/// suitable to determine the truth value of @p Val (which is AND/OR/SETCC)
-/// by testing the result for the condition set to @p OutCC. If @p Negate is
-/// set the opposite truth value is produced. If @p CCOp and @p Condition are
-/// given then conditional comparison are created so that false is reported
-/// when they are false.
-static SDValue emitConjunctionDisjunctionTree(
-    SelectionDAG &DAG, SDValue Val, AArch64CC::CondCode &OutCC, bool Negate,
-    SDValue CCOp = SDValue(), AArch64CC::CondCode Condition = AArch64CC::AL) {
-  assert(isConjunctionDisjunctionTree(Val, 0));
-  // We're at a tree leaf, produce a c?f?cmp.
-  unsigned Opcode = Val->getOpcode();
-  if (Opcode == ISD::SETCC) {
-    SDValue LHS = Val->getOperand(0);
-    SDValue RHS = Val->getOperand(1);
-    ISD::CondCode CC = cast<CondCodeSDNode>(Val->getOperand(2))->get();
-    bool isInteger = LHS.getValueType().isInteger();
-    if (Negate)
-      CC = getSetCCInverse(CC, isInteger);
-    SDLoc DL(Val);
-    // Determine OutCC and handle FP special case.
-    if (isInteger) {
-      OutCC = changeIntCCToAArch64CC(CC);
-    } else {
-      assert(LHS.getValueType().isFloatingPoint());
-      AArch64CC::CondCode ExtraCC;
-      changeFPCCToAArch64CC(CC, OutCC, ExtraCC);
-      // Surpisingly some floating point conditions can't be tested with a
-      // single condition code. Construct an additional comparison in this case.
-      // See comment below on how we deal with OR conditions.
-      if (ExtraCC != AArch64CC::AL) {
-        SDValue ExtraCmp;
-        if (!CCOp.getNode())
-          ExtraCmp = emitComparison(LHS, RHS, CC, DL, DAG);
-        else {
-          SDValue ConditionOp = DAG.getConstant(Condition, DL, MVT_CC);
-          // Note that we want the inverse of ExtraCC, so NZCV is not inversed.
-          unsigned NZCV = AArch64CC::getNZCVToSatisfyCondCode(ExtraCC);
-          ExtraCmp = emitConditionalComparison(LHS, RHS, CC, CCOp, ConditionOp,
-                                               NZCV, DL, DAG);
-        }
-        CCOp = ExtraCmp;
-        Condition = AArch64CC::getInvertedCondCode(ExtraCC);
-        OutCC = AArch64CC::getInvertedCondCode(OutCC);
-      }
-    }
-
-    // Produce a normal comparison if we are first in the chain
-    if (!CCOp.getNode())
-      return emitComparison(LHS, RHS, CC, DL, DAG);
-    // Otherwise produce a ccmp.
-    SDValue ConditionOp = DAG.getConstant(Condition, DL, MVT_CC);
-    AArch64CC::CondCode InvOutCC = AArch64CC::getInvertedCondCode(OutCC);
-    unsigned NZCV = AArch64CC::getNZCVToSatisfyCondCode(InvOutCC);
-    return emitConditionalComparison(LHS, RHS, CC, CCOp, ConditionOp, NZCV, DL,
-                                     DAG);
-  }
-
-  // Construct comparison sequence for the left hand side.
-  SDValue LHS = Val->getOperand(0);
-  SDValue RHS = Val->getOperand(1);
-
-  // We can only implement AND-like behaviour here, but negation is free. So we
-  // use (not (and (not x) (not y))) to implement (or x y).
-  bool isOr = Val->getOpcode() == ISD::OR;
-  assert((isOr || Val->getOpcode() == ISD::AND) && "Should have AND or OR.");
-  Negate ^= isOr;
-
-  AArch64CC::CondCode RHSCC;
-  SDValue CmpR =
-      emitConjunctionDisjunctionTree(DAG, RHS, RHSCC, isOr, CCOp, Condition);
-  SDValue CmpL =
-      emitConjunctionDisjunctionTree(DAG, LHS, OutCC, isOr, CmpR, RHSCC);
-  if (Negate)
-    OutCC = AArch64CC::getInvertedCondCode(OutCC);
-  return CmpL;
 }
 
 static SDValue getAArch64Cmp(SDValue LHS, SDValue RHS, ISD::CondCode CC,
@@ -1356,55 +1227,47 @@ static SDValue getAArch64Cmp(SDValue LHS, SDValue RHS, ISD::CondCode CC,
       }
     }
   }
+  // The imm operand of ADDS is an unsigned immediate, in the range 0 to 4095.
+  // For the i8 operand, the largest immediate is 255, so this can be easily
+  // encoded in the compare instruction. For the i16 operand, however, the
+  // largest immediate cannot be encoded in the compare.
+  // Therefore, use a sign extending load and cmn to avoid materializing the -1
+  // constant. For example,
+  // movz w1, #65535
+  // ldrh w0, [x0, #0]
+  // cmp w0, w1
+  // >
+  // ldrsh w0, [x0, #0]
+  // cmn w0, #1
+  // Fundamental, we're relying on the property that (zext LHS) == (zext RHS)
+  // if and only if (sext LHS) == (sext RHS). The checks are in place to ensure
+  // both the LHS and RHS are truely zero extended and to make sure the
+  // transformation is profitable.
   if ((CC == ISD::SETEQ || CC == ISD::SETNE) && isa<ConstantSDNode>(RHS)) {
-    const ConstantSDNode *RHSC = cast<ConstantSDNode>(RHS);
-
-    // The imm operand of ADDS is an unsigned immediate, in the range 0 to 4095.
-    // For the i8 operand, the largest immediate is 255, so this can be easily
-    // encoded in the compare instruction. For the i16 operand, however, the
-    // largest immediate cannot be encoded in the compare.
-    // Therefore, use a sign extending load and cmn to avoid materializing the
-    // -1 constant. For example,
-    // movz w1, #65535
-    // ldrh w0, [x0, #0]
-    // cmp w0, w1
-    // >
-    // ldrsh w0, [x0, #0]
-    // cmn w0, #1
-    // Fundamental, we're relying on the property that (zext LHS) == (zext RHS)
-    // if and only if (sext LHS) == (sext RHS). The checks are in place to
-    // ensure both the LHS and RHS are truely zero extended and to make sure the
-    // transformation is profitable.
-    if ((RHSC->getZExtValue() >> 16 == 0) && isa<LoadSDNode>(LHS) &&
-        cast<LoadSDNode>(LHS)->getExtensionType() == ISD::ZEXTLOAD &&
-        cast<LoadSDNode>(LHS)->getMemoryVT() == MVT::i16 &&
-        LHS.getNode()->hasNUsesOfValue(1, 0)) {
-      int16_t ValueofRHS = cast<ConstantSDNode>(RHS)->getZExtValue();
-      if (ValueofRHS < 0 && isLegalArithImmed(-ValueofRHS)) {
-        SDValue SExt =
-            DAG.getNode(ISD::SIGN_EXTEND_INREG, dl, LHS.getValueType(), LHS,
-                        DAG.getValueType(MVT::i16));
-        Cmp = emitComparison(SExt, DAG.getConstant(ValueofRHS, dl,
-                                                   RHS.getValueType()),
-                             CC, dl, DAG);
-        AArch64CC = changeIntCCToAArch64CC(CC);
-        goto CreateCCNode;
+    if ((cast<ConstantSDNode>(RHS)->getZExtValue() >> 16 == 0) &&
+        isa<LoadSDNode>(LHS)) {
+      if (cast<LoadSDNode>(LHS)->getExtensionType() == ISD::ZEXTLOAD &&
+          cast<LoadSDNode>(LHS)->getMemoryVT() == MVT::i16 &&
+          LHS.getNode()->hasNUsesOfValue(1, 0)) {
+        int16_t ValueofRHS = cast<ConstantSDNode>(RHS)->getZExtValue();
+        if (ValueofRHS < 0 && isLegalArithImmed(-ValueofRHS)) {
+          SDValue SExt =
+              DAG.getNode(ISD::SIGN_EXTEND_INREG, dl, LHS.getValueType(), LHS,
+                          DAG.getValueType(MVT::i16));
+          Cmp = emitComparison(SExt,
+                               DAG.getConstant(ValueofRHS, dl,
+                                               RHS.getValueType()),
+                               CC, dl, DAG);
+          AArch64CC = changeIntCCToAArch64CC(CC);
+          AArch64cc = DAG.getConstant(AArch64CC, dl, MVT::i32);
+          return Cmp;
+        }
       }
     }
-
-    if ((RHSC->isNullValue() || RHSC->isOne()) &&
-        isConjunctionDisjunctionTree(LHS, 0)) {
-      bool Negate = (CC == ISD::SETNE) ^ RHSC->isNullValue();
-      Cmp = emitConjunctionDisjunctionTree(DAG, LHS, AArch64CC, Negate);
-      goto CreateCCNode;
-    }
   }
-
   Cmp = emitComparison(LHS, RHS, CC, dl, DAG);
   AArch64CC = changeIntCCToAArch64CC(CC);
-
-CreateCCNode:
-  AArch64cc = DAG.getConstant(AArch64CC, dl, MVT_CC);
+  AArch64cc = DAG.getConstant(AArch64CC, dl, MVT::i32);
   return Cmp;
 }
 
@@ -9268,9 +9131,4 @@ Value *AArch64TargetLowering::emitStoreConditional(IRBuilder<> &Builder,
 bool AArch64TargetLowering::functionArgumentNeedsConsecutiveRegisters(
     Type *Ty, CallingConv::ID CallConv, bool isVarArg) const {
   return Ty->isArrayTy();
-}
-
-bool AArch64TargetLowering::shouldNormalizeToSelectSequence(LLVMContext &,
-                                                            EVT) const {
-  return false;
 }
