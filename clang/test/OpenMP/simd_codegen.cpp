@@ -41,9 +41,9 @@ void simple(float *a, float *b, float *c, float *d) {
   #pragma omp simd linear(k : 3)
 // CHECK: [[K0:%.+]] = call {{.*}}i64 @{{.*}}get_val
 // CHECK-NEXT: store i64 [[K0]], i64* [[K_VAR:%[^,]+]]
+// CHECK: store i32 0, i32* [[OMP_IV2:%[^,]+]]
 // CHECK: [[K0LOAD:%.+]] = load i64, i64* [[K_VAR]]
 // CHECK-NEXT: store i64 [[K0LOAD]], i64* [[LIN0:%[^,]+]]
-// CHECK: store i32 0, i32* [[OMP_IV2:%[^,]+]]
 
 // CHECK: [[IV2:%.+]] = load i32, i32* [[OMP_IV2]]{{.*}}!llvm.mem.parallel_loop_access ![[SIMPLE_LOOP2_ID:[0-9]+]]
 // CHECK-NEXT: [[CMP2:%.+]] = icmp slt i32 [[IV2]], 9
@@ -84,16 +84,16 @@ void simple(float *a, float *b, float *c, float *d) {
 
 // Init linear private var.
 // CHECK: store i32 12, i32* [[LIN_VAR:%[^,]+]]
-// CHECK: [[LIN_LOAD:%.+]] = load i32, i32* [[LIN_VAR]]
-// CHECK-NEXT: store i32 [[LIN_LOAD]], i32* [[LIN_START:%[^,]+]]
-// CHECK: [[GLIN_LOAD:%.+]] = load double*, double** [[GLIN_VAR:@[^,]+]]
-// CHECK-NEXT: store double* [[GLIN_LOAD]], double** [[GLIN_START:%[^,]+]]
-
 // CHECK: store i64 0, i64* [[OMP_IV3:%[^,]+]]
 
+// CHECK: [[LIN_LOAD:%.+]] = load i32, i32* [[LIN_VAR]]
+// CHECK-NEXT: store i32 [[LIN_LOAD]], i32* [[LIN_START:%[^,]+]]
 // Remember linear step.
 // CHECK: [[CALL_VAL:%.+]] = invoke
 // CHECK: store i64 [[CALL_VAL]], i64* [[LIN_STEP:%[^,]+]]
+
+// CHECK: [[GLIN_LOAD:%.+]] = load double*, double** [[GLIN_VAR:@[^,]+]]
+// CHECK-NEXT: store double* [[GLIN_LOAD]], double** [[GLIN_START:%[^,]+]]
 
 // CHECK: [[IV3:%.+]] = load i64, i64* [[OMP_IV3]]{{.*}}!llvm.mem.parallel_loop_access ![[SIMPLE_LOOP3_ID:[0-9]+]]
 // CHECK-NEXT: [[CMP3:%.+]] = icmp ult i64 [[IV3]], 4
