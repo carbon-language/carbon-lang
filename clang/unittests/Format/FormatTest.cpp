@@ -150,8 +150,8 @@ TEST_F(FormatTest, OnlyGeneratesNecessaryReplacements) {
             "\r\n"
             "*/\r\n",
             format("/*\r\n"
-            "\r\n"
-            "*/\r\n"));
+                   "\r\n"
+                   "*/\r\n"));
   EXPECT_EQ(0, ReplacementCount);
 }
 
@@ -2664,7 +2664,8 @@ TEST_F(FormatTest, MacroDefinitionsWithIncompleteCode) {
                          "#define b     \\\n"
                          "  }           \\\n"
                          "  a\n"
-                         "a", getLLVMStyleWithColumns(15));
+                         "a",
+                         getLLVMStyleWithColumns(15));
   verifyFormat("#define A     \\\n"
                "  {           \\\n"
                "    {\n"
@@ -2892,8 +2893,7 @@ TEST_F(FormatTest, EscapedNewlines) {
   EXPECT_EQ(
       "#define A \\\n  int i;  \\\n  int j;",
       format("#define A \\\nint i;\\\n  int j;", getLLVMStyleWithColumns(11)));
-  EXPECT_EQ(
-      "#define A\n\nint i;", format("#define A \\\n\n int i;"));
+  EXPECT_EQ("#define A\n\nint i;", format("#define A \\\n\n int i;"));
   EXPECT_EQ("template <class T> f();", format("\\\ntemplate <class T> f();"));
   EXPECT_EQ("/* \\  \\  \\\n*/", format("\\\n/* \\  \\  \\\n*/"));
   EXPECT_EQ("<a\n\\\\\n>", format("<a\n\\\\\n>"));
@@ -6115,20 +6115,19 @@ TEST_F(FormatTest, LayoutCxx11BraceInitializers) {
       "std::this_thread::sleep_for(\n"
       "    std::chrono::nanoseconds{ std::chrono::seconds{ 1 } } / 5);",
       ExtraSpaces);
-  verifyFormat(
-      "std::vector<MyValues> aaaaaaaaaaaaaaaaaaa{\n"
-      "    aaaaaaa,\n"
-      "    aaaaaaaaaa,\n"
-      "    aaaaa,\n"
-      "    aaaaaaaaaaaaaaa,\n"
-      "    aaa,\n"
-      "    aaaaaaaaaa,\n"
-      "    a,\n"
-      "    aaaaaaaaaaaaaaaaaaaaa,\n"
-      "    aaaaaaaaaaaa,\n"
-      "    aaaaaaaaaaaaaaaaaaa + aaaaaaaaaaaaaaaaaaa,\n"
-      "    aaaaaaa,\n"
-      "    a};");
+  verifyFormat("std::vector<MyValues> aaaaaaaaaaaaaaaaaaa{\n"
+               "    aaaaaaa,\n"
+               "    aaaaaaaaaa,\n"
+               "    aaaaa,\n"
+               "    aaaaaaaaaaaaaaa,\n"
+               "    aaa,\n"
+               "    aaaaaaaaaa,\n"
+               "    a,\n"
+               "    aaaaaaaaaaaaaaaaaaaaa,\n"
+               "    aaaaaaaaaaaa,\n"
+               "    aaaaaaaaaaaaaaaaaaa + aaaaaaaaaaaaaaaaaaa,\n"
+               "    aaaaaaa,\n"
+               "    a};");
   verifyFormat("vector<int> foo = { ::SomeGlobalFunction() };", ExtraSpaces);
 }
 
@@ -8945,13 +8944,15 @@ TEST_F(FormatTest, GetsCorrectBasedOnStyle) {
   Styles[2].Language = FormatStyle::LK_JavaScript;
   EXPECT_EQ(0, parseConfiguration("Language: JavaScript\n"
                                   "BasedOnStyle: Google",
-                                  &Styles[2]).value());
+                                  &Styles[2])
+                   .value());
 
   Styles[3] = getLLVMStyle();
   Styles[3].Language = FormatStyle::LK_JavaScript;
   EXPECT_EQ(0, parseConfiguration("BasedOnStyle: Google\n"
                                   "Language: JavaScript",
-                                  &Styles[3]).value());
+                                  &Styles[3])
+                   .value());
 
   Styles[4] = getLLVMStyle();
   Styles[4].Language = FormatStyle::LK_JavaScript;
@@ -8961,7 +8962,8 @@ TEST_F(FormatTest, GetsCorrectBasedOnStyle) {
                                   "---\n"
                                   "BasedOnStyle: Google\n"
                                   "Language: JavaScript",
-                                  &Styles[4]).value());
+                                  &Styles[4])
+                   .value());
   EXPECT_ALL_STYLES_EQUAL(Styles);
 }
 
@@ -9260,7 +9262,8 @@ TEST_F(FormatTest, UsesLanguageForBasedOnStyle) {
                                   "Language: JavaScript\n"
                                   "IndentWidth: 76\n"
                                   "...\n",
-                                  &Style).value());
+                                  &Style)
+                   .value());
   EXPECT_FALSE(Style.BreakBeforeTernaryOperators);
   EXPECT_EQ(76u, Style.IndentWidth);
   EXPECT_EQ(FormatStyle::LK_JavaScript, Style.Language);
@@ -9933,8 +9936,7 @@ TEST_F(FormatTest, FormatsBlocksWithZeroColumnWidth) {
 
   ZeroColumn.AllowShortBlocksOnASingleLine = true;
   EXPECT_EQ("void (^largeBlock)(void) = ^{ int i; };",
-            format("void   (^largeBlock)(void) = ^{ int   i; };",
-                   ZeroColumn));
+            format("void   (^largeBlock)(void) = ^{ int   i; };", ZeroColumn));
   ZeroColumn.AllowShortBlocksOnASingleLine = false;
   EXPECT_EQ("void (^largeBlock)(void) = ^{\n"
             "  int i;\n"

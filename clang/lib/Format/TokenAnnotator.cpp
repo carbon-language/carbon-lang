@@ -1844,7 +1844,8 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
                            tok::kw_new, tok::kw_delete) &&
               (!Left.Previous || Left.Previous->isNot(tok::period))))) ||
            (Style.SpaceBeforeParens == FormatStyle::SBPO_Always &&
-            (Left.is(tok::identifier) || Left.isFunctionLikeKeyword() || Left.is(tok::r_paren)) &&
+            (Left.is(tok::identifier) || Left.isFunctionLikeKeyword() ||
+             Left.is(tok::r_paren)) &&
             Line.Type != LT_PreprocessorDirective);
   }
   if (Left.is(tok::at) && Right.Tok.getObjCKeywordID() != tok::objc_not_keyword)
@@ -2015,11 +2016,10 @@ bool TokenAnnotator::mustBreakBefore(const AnnotatedLine &Line,
     if (Right.is(tok::char_constant) && Left.is(tok::plus) && Left.Previous &&
         Left.Previous->is(tok::char_constant))
       return true;
-    if (Left.is(TT_DictLiteral) && Left.is(tok::l_brace) &&
-        Line.Level == 0 && Left.Previous &&
-        Left.Previous->is(tok::equal) &&
-        Line.First->isOneOf(tok::identifier, Keywords.kw_import,
-                            tok::kw_export, tok::kw_const) &&
+    if (Left.is(TT_DictLiteral) && Left.is(tok::l_brace) && Line.Level == 0 &&
+        Left.Previous && Left.Previous->is(tok::equal) &&
+        Line.First->isOneOf(tok::identifier, Keywords.kw_import, tok::kw_export,
+                            tok::kw_const) &&
         // kw_var is a pseudo-token that's a tok::identifier, so matches above.
         !Line.startsWith(Keywords.kw_var))
       // Object literals on the top level of a file are treated as "enum-style".
@@ -2064,7 +2064,7 @@ bool TokenAnnotator::mustBreakBefore(const AnnotatedLine &Line,
            Left.isNot(TT_CtorInitializerColon) &&
            (Right.NewlinesBefore > 0 && Right.HasUnescapedNewline);
   if (Left.isTrailingComment())
-   return true;
+    return true;
   if (Left.isStringLiteral() &&
       (Right.isStringLiteral() || Right.is(TT_ObjCStringLiteral)))
     return true;

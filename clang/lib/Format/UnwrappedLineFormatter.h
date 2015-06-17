@@ -52,7 +52,8 @@ private:
 
   /// \brief Returns the column limit for a line, taking into account whether we
   /// need an escaped newline due to a continued preprocessor directive.
-  unsigned getColumnLimit(bool InPPDirective, const AnnotatedLine *NextLine) const;
+  unsigned getColumnLimit(bool InPPDirective,
+                          const AnnotatedLine *NextLine) const;
 
   // Cache to store the penalty of formatting a vector of AnnotatedLines
   // starting from a specific additional offset. Improves performance if there

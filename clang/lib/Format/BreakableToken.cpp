@@ -183,7 +183,7 @@ void BreakableStringLiteral::insertBreak(unsigned LineIndex,
 }
 
 static StringRef getLineCommentIndentPrefix(StringRef Comment) {
-  static const char *const KnownPrefixes[] = { "///", "//", "//!" };
+  static const char *const KnownPrefixes[] = {"///", "//", "//!"};
   StringRef LongestPrefix;
   for (StringRef KnownPrefix : KnownPrefixes) {
     if (Comment.startswith(KnownPrefix)) {
@@ -239,9 +239,8 @@ void BreakableLineComment::replaceWhitespace(unsigned LineIndex,
       /*Spaces=*/1);
 }
 
-void
-BreakableLineComment::replaceWhitespaceBefore(unsigned LineIndex,
-                                              WhitespaceManager &Whitespaces) {
+void BreakableLineComment::replaceWhitespaceBefore(
+    unsigned LineIndex, WhitespaceManager &Whitespaces) {
   if (OriginalPrefix != Prefix) {
     Whitespaces.replaceWhitespaceInToken(Tok, OriginalPrefix.size(), 0, "", "",
                                          /*InPPDirective=*/false,
@@ -415,9 +414,8 @@ void BreakableBlockComment::replaceWhitespace(unsigned LineIndex,
       /*Newlines=*/0, /*IndentLevel=*/0, /*Spaces=*/1);
 }
 
-void
-BreakableBlockComment::replaceWhitespaceBefore(unsigned LineIndex,
-                                               WhitespaceManager &Whitespaces) {
+void BreakableBlockComment::replaceWhitespaceBefore(
+    unsigned LineIndex, WhitespaceManager &Whitespaces) {
   if (LineIndex == 0)
     return;
   StringRef Prefix = Decoration;

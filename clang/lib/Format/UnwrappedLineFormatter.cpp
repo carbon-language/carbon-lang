@@ -445,9 +445,9 @@ private:
 
   const FormatStyle &Style;
   const AdditionalKeywords &Keywords;
-  const SmallVectorImpl<AnnotatedLine*>::const_iterator End;
+  const SmallVectorImpl<AnnotatedLine *>::const_iterator End;
 
-  SmallVectorImpl<AnnotatedLine*>::const_iterator Next;
+  SmallVectorImpl<AnnotatedLine *>::const_iterator Next;
 };
 
 static void markFinalized(FormatToken *Tok) {

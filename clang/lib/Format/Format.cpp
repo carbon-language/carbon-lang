@@ -174,7 +174,8 @@ template <> struct MappingTraits<FormatStyle> {
     IO.mapOptional("AlignEscapedNewlinesLeft", Style.AlignEscapedNewlinesLeft);
     IO.mapOptional("AlignOperands", Style.AlignOperands);
     IO.mapOptional("AlignTrailingComments", Style.AlignTrailingComments);
-    IO.mapOptional("AlignConsecutiveAssignments", Style.AlignConsecutiveAssignments);
+    IO.mapOptional("AlignConsecutiveAssignments",
+                   Style.AlignConsecutiveAssignments);
     IO.mapOptional("AllowAllParametersOfDeclarationOnNextLine",
                    Style.AllowAllParametersOfDeclarationOnNextLine);
     IO.mapOptional("AllowShortBlocksOnASingleLine",
@@ -1258,7 +1259,8 @@ public:
   }
 
   tooling::Replacements format(SmallVectorImpl<AnnotatedLine *> &AnnotatedLines,
-                               FormatTokenLexer &Tokens, bool *IncompleteFormat) {
+                               FormatTokenLexer &Tokens,
+                               bool *IncompleteFormat) {
     TokenAnnotator Annotator(Style, Tokens.getKeywords());
     for (unsigned i = 0, e = AnnotatedLines.size(); i != e; ++i) {
       Annotator.annotate(*AnnotatedLines[i]);
@@ -1504,8 +1506,7 @@ tooling::Replacements reformat(const FormatStyle &Style,
 
 tooling::Replacements reformat(const FormatStyle &Style, StringRef Code,
                                ArrayRef<tooling::Range> Ranges,
-                               StringRef FileName,
-                               bool *IncompleteFormat) {
+                               StringRef FileName, bool *IncompleteFormat) {
   if (Style.DisableFormat)
     return tooling::Replacements();
 

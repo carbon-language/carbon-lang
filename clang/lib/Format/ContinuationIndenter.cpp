@@ -714,7 +714,7 @@ unsigned ContinuationIndenter::moveStateToNextToken(LineState &State,
   if (Current.is(TT_ObjCStringLiteral) && State.StartOfStringLiteral == 0)
     State.StartOfStringLiteral = State.Column + 1;
   else if (!Current.isOneOf(tok::comment, tok::identifier, tok::hash) &&
-             !Current.isStringLiteral())
+           !Current.isStringLiteral())
     State.StartOfStringLiteral = 0;
 
   State.Column += Current.ColumnWidth;
@@ -892,7 +892,7 @@ void ContinuationIndenter::moveStatePastScopeOpener(LineState &State,
         // be a line break within this call.
         for (const FormatToken *Tok = &Current;
              Tok && Tok != Current.MatchingParen; Tok = Tok->Next) {
-          if (Tok->MustBreakBefore || 
+          if (Tok->MustBreakBefore ||
               (Tok->CanBreakBefore && Tok->NewlinesBefore > 0)) {
             BreakBeforeParameter = true;
             break;

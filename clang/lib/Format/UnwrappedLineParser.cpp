@@ -251,7 +251,6 @@ void UnwrappedLineParser::parse() {
       assert(PPLevelBranchIndex.back() <= PPLevelBranchCount.back());
     }
   } while (!PPLevelBranchIndex.empty());
-
 }
 
 void UnwrappedLineParser::parseFile() {
@@ -887,8 +886,7 @@ void UnwrappedLineParser::parseStructuralElement() {
                 ? FormatTok->NewlinesBefore > 0
                 : CommentsBeforeNextToken.front()->NewlinesBefore > 0;
 
-        if (FollowedByNewline &&
-            (Text.size() >= 5 || FunctionLike) &&
+        if (FollowedByNewline && (Text.size() >= 5 || FunctionLike) &&
             tokenCanStartNewLine(FormatTok->Tok) && Text == Text.upper()) {
           addUnwrappedLine();
           return;
@@ -1048,7 +1046,7 @@ void UnwrappedLineParser::tryToParseJSFunction() {
     if (FormatTok->is(tok::l_brace))
       tryToParseBracedList();
     else
-      while(FormatTok->isNot(tok::l_brace) && !eof())
+      while (FormatTok->isNot(tok::l_brace) && !eof())
         nextToken();
   }
 
@@ -1081,7 +1079,7 @@ bool UnwrappedLineParser::parseBracedList(bool ContinueOnSemicolons) {
         nextToken();
         // Fat arrows can be followed by simple expressions or by child blocks
         // in curly braces.
-        if (FormatTok->is(tok::l_brace)){
+        if (FormatTok->is(tok::l_brace)) {
           parseChildBlock();
           continue;
         }
@@ -1590,7 +1588,6 @@ void UnwrappedLineParser::parseJavaEnumBody() {
 void UnwrappedLineParser::parseRecord() {
   const FormatToken &InitialToken = *FormatTok;
   nextToken();
-
 
   // The actual identifier can be a nested name specifier, and in macros
   // it is often token-pasted.
