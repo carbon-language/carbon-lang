@@ -43,6 +43,12 @@
 # CHECK:                             #   fixup A - offset: 0, value: symbol@ABS_HI, kind: fixup_Mips_HI16
 # CHECK: ori     $8, $8, %lo(symbol) # encoding: [A,A,0x08,0x35]
 # CHECK:                             #   fixup A - offset: 0, value: symbol@ABS_LO, kind: fixup_Mips_LO16
+  la $8, symbol($9)
+# CHECK: lui  $8, %hi(symbol)        # encoding: [A,A,0x08,0x3c]
+# CHECK:                             #   fixup A - offset: 0, value: symbol@ABS_HI, kind: fixup_Mips_HI16
+# CHECK: ori  $8, $8, %lo(symbol)    # encoding: [A,A,0x08,0x35]
+# CHECK:                             #   fixup A - offset: 0, value: symbol@ABS_LO, kind: fixup_Mips_LO16
+# CHECK: addu $8, $8, $9             # encoding: [0x21,0x40,0x09,0x01]
 
 # LW/SW and LDC1/SDC1 of symbol address, done by MipsAsmParser::expandMemInst():
   .set noat

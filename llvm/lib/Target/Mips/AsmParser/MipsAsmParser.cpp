@@ -186,9 +186,9 @@ class MipsAsmParser : public MCTargetAsmParser {
                      bool Is32BitImm, SMLoc IDLoc,
                      SmallVectorImpl<MCInst> &Instructions);
 
-  bool loadSymbolAddress(const MCExpr *SymExpr, unsigned DstReg,
-                         bool Is32BitSym, SMLoc IDLoc,
-                         SmallVectorImpl<MCInst> &Instructions);
+  bool loadAndAddSymbolAddress(const MCExpr *SymExpr, unsigned DstReg,
+                               unsigned SrcReg, bool Is32BitSym, SMLoc IDLoc,
+                               SmallVectorImpl<MCInst> &Instructions);
 
   bool expandLoadImm(MCInst &Inst, bool Is32BitImm, SMLoc IDLoc,
                      SmallVectorImpl<MCInst> &Instructions);
@@ -1929,18 +1929,20 @@ MipsAsmParser::expandLoadAddressReg(MCInst &Inst, bool Is32BitImm, SMLoc IDLoc,
   const MCOperand &DstRegOp = Inst.getOperand(0);
   assert(DstRegOp.isReg() && "expected register operand kind");
 
+  const MCOperand &SrcRegOp = Inst.getOperand(1);
+  assert(SrcRegOp.isReg() && "expected register operand kind");
+
   const MCOperand &ImmOp = Inst.getOperand(2);
   assert((ImmOp.isImm() || ImmOp.isExpr()) &&
          "expected immediate operand kind");
   if (!ImmOp.isImm()) {
-    if (loadSymbolAddress(ImmOp.getExpr(), DstRegOp.getReg(), Is32BitImm, IDLoc,
-                          Instructions))
+    if (loadAndAddSymbolAddress(ImmOp.getExpr(), DstRegOp.getReg(),
+                                SrcRegOp.getReg(), Is32BitImm, IDLoc,
+                                Instructions))
       return true;
 
     return false;
   }
-  const MCOperand &SrcRegOp = Inst.getOperand(1);
-  assert(SrcRegOp.isReg() && "expected register operand kind");
 
   if (loadImmediate(ImmOp.getImm(), DstRegOp.getReg(), SrcRegOp.getReg(),
                     Is32BitImm, IDLoc, Instructions))
@@ -1959,8 +1961,9 @@ MipsAsmParser::expandLoadAddressImm(MCInst &Inst, bool Is32BitImm, SMLoc IDLoc,
   assert((ImmOp.isImm() || ImmOp.isExpr()) &&
          "expected immediate operand kind");
   if (!ImmOp.isImm()) {
-    if (loadSymbolAddress(ImmOp.getExpr(), DstRegOp.getReg(), Is32BitImm, IDLoc,
-                          Instructions))
+    if (loadAndAddSymbolAddress(ImmOp.getExpr(), DstRegOp.getReg(),
+                                Mips::NoRegister, Is32BitImm, IDLoc,
+                                Instructions))
       return true;
 
     return false;
@@ -1973,9 +1976,9 @@ MipsAsmParser::expandLoadAddressImm(MCInst &Inst, bool Is32BitImm, SMLoc IDLoc,
   return false;
 }
 
-bool MipsAsmParser::loadSymbolAddress(const MCExpr *SymExpr, unsigned DstReg,
-                                      bool Is32BitSym, SMLoc IDLoc,
-                                      SmallVectorImpl<MCInst> &Instructions) {
+bool MipsAsmParser::loadAndAddSymbolAddress(
+    const MCExpr *SymExpr, unsigned DstReg, unsigned SrcReg, bool Is32BitSym,
+    SMLoc IDLoc, SmallVectorImpl<MCInst> &Instructions) {
   warnIfNoMacro(IDLoc);
 
   if (Is32BitSym && isABI_N64())
@@ -2024,6 +2027,10 @@ bool MipsAsmParser::loadSymbolAddress(const MCExpr *SymExpr, unsigned DstReg,
     createLShiftOri<0>(MCOperand::createExpr(LoExpr), DstReg, SMLoc(),
                        Instructions);
   }
+
+  if (SrcReg != Mips::NoRegister)
+    createAddu(DstReg, DstReg, SrcReg, Instructions);
+
   return false;
 }
 
