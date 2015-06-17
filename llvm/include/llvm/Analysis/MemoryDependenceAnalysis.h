@@ -287,7 +287,7 @@ namespace llvm {
       /// conflicting tags.
       AAMDNodes AATags;
 
-      NonLocalPointerInfo() : Size(AliasAnalysis::UnknownSize) {}
+      NonLocalPointerInfo() : Size(MemoryLocation::UnknownSize) {}
     };
 
     /// CachedNonLocalPointerInfo - This map stores the cached results of doing

@@ -317,7 +317,7 @@ static uint64_t getPointerSize(const Value *V, const DataLayout &DL,
   uint64_t Size;
   if (getObjectSize(V, Size, DL, TLI))
     return Size;
-  return AliasAnalysis::UnknownSize;
+  return MemoryLocation::UnknownSize;
 }
 
 namespace {
@@ -346,8 +346,8 @@ static OverwriteResult isOverwrite(const MemoryLocation &Later,
   if (P1 == P2) {
     // If we don't know the sizes of either access, then we can't do a
     // comparison.
-    if (Later.Size == AliasAnalysis::UnknownSize ||
-        Earlier.Size == AliasAnalysis::UnknownSize)
+    if (Later.Size == MemoryLocation::UnknownSize ||
+        Earlier.Size == MemoryLocation::UnknownSize)
       return OverwriteUnknown;
 
     // Make sure that the Later size is >= the Earlier size.
@@ -357,8 +357,8 @@ static OverwriteResult isOverwrite(const MemoryLocation &Later,
 
   // Otherwise, we have to have size information, and the later store has to be
   // larger than the earlier one.
-  if (Later.Size == AliasAnalysis::UnknownSize ||
-      Earlier.Size == AliasAnalysis::UnknownSize)
+  if (Later.Size == MemoryLocation::UnknownSize ||
+      Earlier.Size == MemoryLocation::UnknownSize)
     return OverwriteUnknown;
 
   // Check to see if the later store is to the entire object (either a global,
@@ -374,7 +374,7 @@ static OverwriteResult isOverwrite(const MemoryLocation &Later,
 
   // If the "Later" store is to a recognizable object, get its size.
   uint64_t ObjectSize = getPointerSize(UO2, DL, TLI);
-  if (ObjectSize != AliasAnalysis::UnknownSize)
+  if (ObjectSize != MemoryLocation::UnknownSize)
     if (ObjectSize == Later.Size && ObjectSize >= Earlier.Size)
       return OverwriteComplete;
 

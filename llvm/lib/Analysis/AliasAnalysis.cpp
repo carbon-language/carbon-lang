@@ -429,7 +429,7 @@ void AliasAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
 /// if known, or a conservative value otherwise.
 ///
 uint64_t AliasAnalysis::getTypeStoreSize(Type *Ty) {
-  return DL ? DL->getTypeStoreSize(Ty) : UnknownSize;
+  return DL ? DL->getTypeStoreSize(Ty) : MemoryLocation::UnknownSize;
 }
 
 /// canBasicBlockModify - Return true if it is possible for execution of the

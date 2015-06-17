@@ -162,9 +162,11 @@ ScalarEvolutionAliasAnalysis::alias(const MemoryLocation &LocA,
   Value *AO = GetBaseValue(AS);
   Value *BO = GetBaseValue(BS);
   if ((AO && AO != LocA.Ptr) || (BO && BO != LocB.Ptr))
-    if (alias(MemoryLocation(AO ? AO : LocA.Ptr, AO ? +UnknownSize : LocA.Size,
+    if (alias(MemoryLocation(AO ? AO : LocA.Ptr,
+                             AO ? +MemoryLocation::UnknownSize : LocA.Size,
                              AO ? AAMDNodes() : LocA.AATags),
-              MemoryLocation(BO ? BO : LocB.Ptr, BO ? +UnknownSize : LocB.Size,
+              MemoryLocation(BO ? BO : LocB.Ptr,
+                             BO ? +MemoryLocation::UnknownSize : LocB.Size,
                              BO ? AAMDNodes() : LocB.AATags)) == NoAlias)
       return NoAlias;
 

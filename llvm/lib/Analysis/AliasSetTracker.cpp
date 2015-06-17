@@ -337,8 +337,8 @@ bool AliasSetTracker::add(VAArgInst *VAAI) {
   VAAI->getAAMetadata(AAInfo);
 
   bool NewPtr;
-  addPointer(VAAI->getOperand(0), AliasAnalysis::UnknownSize, 
-             AAInfo, AliasSet::ModRef, NewPtr);
+  addPointer(VAAI->getOperand(0), MemoryLocation::UnknownSize, AAInfo,
+             AliasSet::ModRef, NewPtr);
   return NewPtr;
 }
 
@@ -471,7 +471,7 @@ bool AliasSetTracker::remove(VAArgInst *VAAI) {
   VAAI->getAAMetadata(AAInfo);
 
   AliasSet *AS = findAliasSetForPointer(VAAI->getOperand(0),
-                                        AliasAnalysis::UnknownSize, AAInfo);
+                                        MemoryLocation::UnknownSize, AAInfo);
   if (!AS) return false;
   remove(*AS);
   return true;

@@ -18,9 +18,10 @@
 //
 // This API identifies memory regions with the MemoryLocation class. The pointer
 // component specifies the base memory address of the region. The Size specifies
-// the maximum size (in address units) of the memory region, or UnknownSize if
-// the size is not known. The TBAA tag identifies the "type" of the memory
-// reference; see the TypeBasedAliasAnalysis class for details.
+// the maximum size (in address units) of the memory region, or
+// MemoryLocation::UnknownSize if the size is not known. The TBAA tag
+// identifies the "type" of the memory reference; see the
+// TypeBasedAliasAnalysis class for details.
 //
 // Some non-obvious details include:
 //  - Pointers that point to two completely different objects in memory never
@@ -80,11 +81,6 @@ public:
   AliasAnalysis() : DL(nullptr), TLI(nullptr), AA(nullptr) {}
   virtual ~AliasAnalysis();  // We want to be subclassed
 
-  /// UnknownSize - This is a special value which can be used with the
-  /// size arguments in alias queries to indicate that the caller does not
-  /// know the sizes of the potential memory references.
-  static uint64_t const UnknownSize = MemoryLocation::UnknownSize;
-
   /// getTargetLibraryInfo - Return a pointer to the current TargetLibraryInfo
   /// object, or null if no TargetLibraryInfo object is available.
   ///
@@ -130,7 +126,8 @@ public:
 
   /// alias - A convenience wrapper.
   AliasResult alias(const Value *V1, const Value *V2) {
-    return alias(V1, UnknownSize, V2, UnknownSize);
+    return alias(V1, MemoryLocation::UnknownSize, V2,
+                 MemoryLocation::UnknownSize);
   }
 
   /// isNoAlias - A trivial helper function to check to see if the specified

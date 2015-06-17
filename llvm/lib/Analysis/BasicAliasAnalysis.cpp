@@ -105,7 +105,7 @@ static uint64_t getObjectSize(const Value *V, const DataLayout &DL,
   uint64_t Size;
   if (getObjectSize(V, Size, DL, &TLI, RoundToAlign))
     return Size;
-  return AliasAnalysis::UnknownSize;
+  return MemoryLocation::UnknownSize;
 }
 
 /// isObjectSmallerThan - Return true if we can prove that the object specified
@@ -146,7 +146,7 @@ static bool isObjectSmallerThan(const Value *V, uint64_t Size,
   // reads a bit past the end given sufficient alignment.
   uint64_t ObjectSize = getObjectSize(V, DL, TLI, /*RoundToAlign*/true);
 
-  return ObjectSize != AliasAnalysis::UnknownSize && ObjectSize < Size;
+  return ObjectSize != MemoryLocation::UnknownSize && ObjectSize < Size;
 }
 
 /// isObjectSize - Return true if we can prove that the object specified
@@ -154,7 +154,7 @@ static bool isObjectSmallerThan(const Value *V, uint64_t Size,
 static bool isObjectSize(const Value *V, uint64_t Size,
                          const DataLayout &DL, const TargetLibraryInfo &TLI) {
   uint64_t ObjectSize = getObjectSize(V, DL, TLI);
-  return ObjectSize != AliasAnalysis::UnknownSize && ObjectSize == Size;
+  return ObjectSize != MemoryLocation::UnknownSize && ObjectSize == Size;
 }
 
 //===----------------------------------------------------------------------===//
@@ -855,8 +855,8 @@ aliasSameBasePointerGEPs(const GEPOperator *GEP1, uint64_t V1Size,
 
   // If we don't know the size of the accesses through both GEPs, we can't
   // determine whether the struct fields accessed can't alias.
-  if (V1Size == AliasAnalysis::UnknownSize ||
-      V2Size == AliasAnalysis::UnknownSize)
+  if (V1Size == MemoryLocation::UnknownSize ||
+      V2Size == MemoryLocation::UnknownSize)
     return AliasAnalysis::MayAlias;
 
   ConstantInt *C1 =
@@ -970,8 +970,9 @@ BasicAliasAnalysis::aliasGEP(const GEPOperator *GEP1, uint64_t V1Size,
   // derived pointer.
   if (const GEPOperator *GEP2 = dyn_cast<GEPOperator>(V2)) {
     // Do the base pointers alias?
-    AliasResult BaseAlias = aliasCheck(UnderlyingV1, UnknownSize, AAMDNodes(),
-                                       UnderlyingV2, UnknownSize, AAMDNodes());
+    AliasResult BaseAlias =
+        aliasCheck(UnderlyingV1, MemoryLocation::UnknownSize, AAMDNodes(),
+                   UnderlyingV2, MemoryLocation::UnknownSize, AAMDNodes());
 
     // Check for geps of non-aliasing underlying pointers where the offsets are
     // identical.
@@ -1062,11 +1063,12 @@ BasicAliasAnalysis::aliasGEP(const GEPOperator *GEP1, uint64_t V1Size,
     // pointer, we know they cannot alias.
 
     // If both accesses are unknown size, we can't do anything useful here.
-    if (V1Size == UnknownSize && V2Size == UnknownSize)
+    if (V1Size == MemoryLocation::UnknownSize &&
+        V2Size == MemoryLocation::UnknownSize)
       return MayAlias;
 
-    AliasResult R = aliasCheck(UnderlyingV1, UnknownSize, AAMDNodes(),
-                               V2, V2Size, V2AAInfo);
+    AliasResult R = aliasCheck(UnderlyingV1, MemoryLocation::UnknownSize,
+                               AAMDNodes(), V2, V2Size, V2AAInfo);
     if (R != MustAlias)
       // If V2 may alias GEP base pointer, conservatively returns MayAlias.
       // If V2 is known not to alias GEP base pointer, then the two values
@@ -1106,7 +1108,7 @@ BasicAliasAnalysis::aliasGEP(const GEPOperator *GEP1, uint64_t V1Size,
   // greater, we know they do not overlap.
   if (GEP1BaseOffset != 0 && GEP1VariableIndices.empty()) {
     if (GEP1BaseOffset >= 0) {
-      if (V2Size != UnknownSize) {
+      if (V2Size != MemoryLocation::UnknownSize) {
         if ((uint64_t)GEP1BaseOffset < V2Size)
           return PartialAlias;
         return NoAlias;
@@ -1120,7 +1122,8 @@ BasicAliasAnalysis::aliasGEP(const GEPOperator *GEP1, uint64_t V1Size,
       // GEP1             V2
       // We need to know that V2Size is not unknown, otherwise we might have
       // stripped a gep with negative index ('gep <ptr>, -1, ...).
-      if (V1Size != UnknownSize && V2Size != UnknownSize) {
+      if (V1Size != MemoryLocation::UnknownSize &&
+          V2Size != MemoryLocation::UnknownSize) {
         if (-(uint64_t)GEP1BaseOffset < V1Size)
           return PartialAlias;
         return NoAlias;
@@ -1171,8 +1174,9 @@ BasicAliasAnalysis::aliasGEP(const GEPOperator *GEP1, uint64_t V1Size,
     // mod Modulo. Check whether that difference guarantees that the
     // two locations do not alias.
     uint64_t ModOffset = (uint64_t)GEP1BaseOffset & (Modulo - 1);
-    if (V1Size != UnknownSize && V2Size != UnknownSize &&
-        ModOffset >= V2Size && V1Size <= Modulo - ModOffset)
+    if (V1Size != MemoryLocation::UnknownSize &&
+        V2Size != MemoryLocation::UnknownSize && ModOffset >= V2Size &&
+        V1Size <= Modulo - ModOffset)
       return NoAlias;
 
     // If we know all the variables are positive, then GEP1 >= GEP1BasePtr.
@@ -1410,8 +1414,10 @@ BasicAliasAnalysis::aliasCheck(const Value *V1, uint64_t V1Size,
   // If the size of one access is larger than the entire object on the other
   // side, then we know such behavior is undefined and can assume no alias.
   if (DL)
-    if ((V1Size != UnknownSize && isObjectSmallerThan(O2, V1Size, *DL, *TLI)) ||
-        (V2Size != UnknownSize && isObjectSmallerThan(O1, V2Size, *DL, *TLI)))
+    if ((V1Size != MemoryLocation::UnknownSize &&
+         isObjectSmallerThan(O2, V1Size, *DL, *TLI)) ||
+        (V2Size != MemoryLocation::UnknownSize &&
+         isObjectSmallerThan(O1, V2Size, *DL, *TLI)))
       return NoAlias;
 
   // Check the cache before climbing up use-def chains. This also terminates
@@ -1464,8 +1470,10 @@ BasicAliasAnalysis::aliasCheck(const Value *V1, uint64_t V1Size,
   // accesses is accessing the entire object, then the accesses must
   // overlap in some way.
   if (DL && O1 == O2)
-    if ((V1Size != UnknownSize && isObjectSize(O1, V1Size, *DL, *TLI)) ||
-        (V2Size != UnknownSize && isObjectSize(O2, V2Size, *DL, *TLI)))
+    if ((V1Size != MemoryLocation::UnknownSize &&
+         isObjectSize(O1, V1Size, *DL, *TLI)) ||
+        (V2Size != MemoryLocation::UnknownSize &&
+         isObjectSize(O2, V2Size, *DL, *TLI)))
       return AliasCache[Locs] = PartialAlias;
 
   AliasResult Result =
