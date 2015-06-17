@@ -24,6 +24,8 @@
 #include "llvm/Option/ArgList.h"
 #include "llvm/Option/Option.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/FileUtilities.h"
+#include "llvm/Support/Path.h"
 #include "llvm/Support/Process.h"
 #include "llvm/Support/Program.h"
 #include "llvm/Support/raw_ostream.h"
@@ -267,6 +269,75 @@ convertResToCOFF(const std::vector<MemoryBufferRef> &MBs) {
     return make_error_code(LLDError::InvalidOption);
   }
   return MemoryBuffer::getFile(Path);
+}
+
+static std::string writeToTempFile(StringRef Contents) {
+  SmallString<128> Path;
+  int FD;
+  if (llvm::sys::fs::createTemporaryFile("tmp", "def", FD, Path)) {
+    llvm::errs() << "failed to create a temporary file\n";
+    return "";
+  }
+  llvm::raw_fd_ostream OS(FD, /*shouldClose*/ true);
+  OS << Contents;
+  return Path.str();
+}
+
+/// Creates a .def file containing the list of exported symbols.
+static std::string createModuleDefinitionFile() {
+  std::string S;
+  llvm::raw_string_ostream OS(S);
+  OS << "LIBRARY \"" << llvm::sys::path::filename(Config->OutputFile) << "\"\n"
+     << "EXPORTS\n";
+  for (Export &E : Config->Exports) {
+    OS << "  " << E.ExtName;
+    if (E.Ordinal > 0)
+      OS << " @" << E.Ordinal;
+    if (E.Noname)
+      OS << " NONAME";
+    if (E.Data)
+      OS << " DATA";
+    if (E.Private)
+      OS << " PRIVATE";
+    OS << "\n";
+  }
+  OS.flush();
+  return S;
+}
+
+// Creates a .def file and runs lib.exe on it to create an import library.
+std::error_code writeImportLibrary() {
+  std::string Prog = "lib.exe";
+  ErrorOr<std::string> ExeOrErr = llvm::sys::findProgramByName(Prog);
+  if (auto EC = ExeOrErr.getError()) {
+    llvm::errs() << "unable to find " << Prog << " in PATH: "
+                 << EC.message() << "\n";
+    return make_error_code(LLDError::InvalidOption);
+  }
+  llvm::BumpPtrAllocator Alloc;
+  llvm::BumpPtrStringSaver S(Alloc);
+  const char *Exe = S.save(ExeOrErr.get());
+
+  std::string Contents = createModuleDefinitionFile();
+  StringRef Def = S.save(StringRef(writeToTempFile(Contents)));
+  llvm::FileRemover TempFile(Def);
+
+  SmallString<128> Out = StringRef(Config->OutputFile);
+  sys::path::replace_extension(Out, ".lib");
+
+  std::vector<const char *> Args;
+  Args.push_back(Exe);
+  Args.push_back("/nologo");
+  Args.push_back("/machine:x64");
+  Args.push_back(S.save("/def:" + Def));
+  Args.push_back(S.save("/out:" + Out));
+  Args.push_back(nullptr);
+
+  if (sys::ExecuteAndWait(Exe, Args.data()) != 0) {
+    llvm::errs() << Exe << " failed\n";
+    return make_error_code(LLDError::InvalidOption);
+  }
+  return std::error_code();
 }
 
 // Create OptTable

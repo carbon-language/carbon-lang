@@ -500,6 +500,11 @@ bool LinkerDriver::link(int Argc, const char *Argv[]) {
     }
   }
 
+  // Windows specific -- when we are creating a .dll file, we also
+  // need to create a .lib file.
+  if (!Config->Exports.empty())
+    writeImportLibrary();
+
   // Windows specific -- fix up dllexported symbols.
   if (!Config->Exports.empty()) {
     for (Export &E : Config->Exports)
