@@ -39,6 +39,41 @@ using llvm::sys::Process;
 
 namespace lld {
 namespace coff {
+namespace {
+
+class Executor {
+public:
+  explicit Executor(StringRef S) : Saver(Alloc), Prog(Saver.save(S)) {}
+  void add(StringRef S)    { Args.push_back(Saver.save(S)); }
+  void add(std::string &S) { Args.push_back(Saver.save(S)); }
+  void add(Twine S)        { Args.push_back(Saver.save(S)); }
+  void add(const char *S)  { Args.push_back(Saver.save(S)); }
+
+  std::error_code run() {
+    ErrorOr<std::string> ExeOrErr = llvm::sys::findProgramByName(Prog);
+    if (auto EC = ExeOrErr.getError()) {
+      llvm::errs() << "unable to find " << Prog << " in PATH: "
+                   << EC.message() << "\n";
+      return make_error_code(LLDError::InvalidOption);
+    }
+    const char *Exe = Saver.save(ExeOrErr.get());
+    Args.insert(Args.begin(), Exe);
+    Args.push_back(nullptr);
+    if (llvm::sys::ExecuteAndWait(Args[0], Args.data()) != 0) {
+      llvm::errs() << Exe << " failed\n";
+      return make_error_code(LLDError::InvalidOption);
+    }
+    return std::error_code();
+  }
+
+private:
+  llvm::BumpPtrAllocator Alloc;
+  llvm::BumpPtrStringSaver Saver;
+  StringRef Prog;
+  std::vector<const char *> Args;
+};
+
+} // anonymous namespace
 
 // Returns /machine's value.
 ErrorOr<MachineTypes> getMachineType(llvm::opt::InputArgList *Args) {
@@ -236,38 +271,21 @@ std::error_code checkFailIfMismatch(llvm::opt::InputArgList *Args) {
 // using cvtres.exe.
 ErrorOr<std::unique_ptr<MemoryBuffer>>
 convertResToCOFF(const std::vector<MemoryBufferRef> &MBs) {
-  // Find cvtres.exe.
-  std::string Prog = "cvtres.exe";
-  ErrorOr<std::string> ExeOrErr = llvm::sys::findProgramByName(Prog);
-  if (auto EC = ExeOrErr.getError()) {
-    llvm::errs() << "unable to find " << Prog << " in PATH: "
-                 << EC.message() << "\n";
-    return make_error_code(LLDError::InvalidOption);
-  }
-  llvm::BumpPtrAllocator Alloc;
-  llvm::BumpPtrStringSaver S(Alloc);
-  const char *Exe = S.save(ExeOrErr.get());
-
   // Create an output file path.
   SmallString<128> Path;
   if (llvm::sys::fs::createTemporaryFile("resource", "obj", Path))
     return make_error_code(LLDError::InvalidOption);
 
   // Execute cvtres.exe.
-  std::vector<const char *> Args;
-  Args.push_back(Exe);
-  Args.push_back("/machine:x64");
-  Args.push_back("/readonly");
-  Args.push_back("/nologo");
-  Args.push_back(S.save("/out:" + Path));
+  Executor E("cvtres.exe");
+  E.add("/machine:x64");
+  E.add("/readonly");
+  E.add("/nologo");
+  E.add("/out:" + Path);
   for (MemoryBufferRef MB : MBs)
-    Args.push_back(S.save(MB.getBufferIdentifier()));
-  Args.push_back(nullptr);
-  llvm::errs() << "\n";
-  if (llvm::sys::ExecuteAndWait(Args[0], Args.data()) != 0) {
-    llvm::errs() << Exe << " failed\n";
-    return make_error_code(LLDError::InvalidOption);
-  }
+    E.add(MB.getBufferIdentifier());
+  if (auto EC = E.run())
+    return EC;
   return MemoryBuffer::getFile(Path);
 }
 
@@ -307,37 +325,18 @@ static std::string createModuleDefinitionFile() {
 
 // Creates a .def file and runs lib.exe on it to create an import library.
 std::error_code writeImportLibrary() {
-  std::string Prog = "lib.exe";
-  ErrorOr<std::string> ExeOrErr = llvm::sys::findProgramByName(Prog);
-  if (auto EC = ExeOrErr.getError()) {
-    llvm::errs() << "unable to find " << Prog << " in PATH: "
-                 << EC.message() << "\n";
-    return make_error_code(LLDError::InvalidOption);
-  }
-  llvm::BumpPtrAllocator Alloc;
-  llvm::BumpPtrStringSaver S(Alloc);
-  const char *Exe = S.save(ExeOrErr.get());
-
   std::string Contents = createModuleDefinitionFile();
-  StringRef Def = S.save(StringRef(writeToTempFile(Contents)));
+  std::string Def = writeToTempFile(Contents);
   llvm::FileRemover TempFile(Def);
-
   SmallString<128> Out = StringRef(Config->OutputFile);
   sys::path::replace_extension(Out, ".lib");
 
-  std::vector<const char *> Args;
-  Args.push_back(Exe);
-  Args.push_back("/nologo");
-  Args.push_back("/machine:x64");
-  Args.push_back(S.save("/def:" + Def));
-  Args.push_back(S.save("/out:" + Out));
-  Args.push_back(nullptr);
-
-  if (sys::ExecuteAndWait(Exe, Args.data()) != 0) {
-    llvm::errs() << Exe << " failed\n";
-    return make_error_code(LLDError::InvalidOption);
-  }
-  return std::error_code();
+  Executor E("lib.exe");
+  E.add("/nologo");
+  E.add("/machine:x64");
+  E.add(Twine("/def:") + Def);
+  E.add("/out:" + Out);
+  return E.run();
 }
 
 // Create OptTable
