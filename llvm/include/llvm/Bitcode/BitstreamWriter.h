@@ -18,6 +18,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Bitcode/BitCodes.h"
+#include "llvm/Support/Endian.h"
 #include <vector>
 
 namespace llvm {
