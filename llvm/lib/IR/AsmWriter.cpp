@@ -725,33 +725,28 @@ void SlotTracker::processModule() {
   ST_DEBUG("begin processModule!\n");
 
   // Add all of the unnamed global variables to the value table.
-  for (Module::const_global_iterator I = TheModule->global_begin(),
-         E = TheModule->global_end(); I != E; ++I) {
-    if (!I->hasName())
-      CreateModuleSlot(I);
+  for (const GlobalVariable &Var : TheModule->globals()) {
+    if (!Var.hasName())
+      CreateModuleSlot(&Var);
   }
 
   // Add metadata used by named metadata.
-  for (Module::const_named_metadata_iterator
-         I = TheModule->named_metadata_begin(),
-         E = TheModule->named_metadata_end(); I != E; ++I) {
-    const NamedMDNode *NMD = I;
-    for (unsigned i = 0, e = NMD->getNumOperands(); i != e; ++i)
-      CreateMetadataSlot(NMD->getOperand(i));
+  for (const NamedMDNode &NMD : TheModule->named_metadata()) {
+    for (unsigned i = 0, e = NMD.getNumOperands(); i != e; ++i)
+      CreateMetadataSlot(NMD.getOperand(i));
   }
 
-  for (Module::const_iterator I = TheModule->begin(), E = TheModule->end();
-       I != E; ++I) {
-    if (!I->hasName())
+  for (const Function &F : *TheModule) {
+    if (!F.hasName())
       // Add all the unnamed functions to the table.
-      CreateModuleSlot(I);
+      CreateModuleSlot(&F);
 
     if (ShouldInitializeAllMetadata)
-      processFunctionMetadata(*I);
+      processFunctionMetadata(F);
 
     // Add all the function attributes to the table.
     // FIXME: Add attributes of other objects?
-    AttributeSet FnAttrs = I->getAttributes().getFnAttributes();
+    AttributeSet FnAttrs = F.getAttributes().getFnAttributes();
     if (FnAttrs.hasAttributes(AttributeSet::FunctionIndex))
       CreateAttributeSetSlot(FnAttrs);
   }
