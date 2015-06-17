@@ -223,12 +223,12 @@ std::error_code ELFFile<ELFT>::createSymbolsFromAtomizableSections() {
     if (std::error_code ec = symbolName.getError())
       return ec;
 
-    if (isAbsoluteSymbol(&*SymI)) {
+    if (SymI->isAbsolute()) {
       ELFAbsoluteAtom<ELFT> *absAtom = createAbsoluteAtom(
           *symbolName, &*SymI, (int64_t)getSymbolValue(&*SymI));
       addAtom(*absAtom);
       _symbolToAtomMapping.insert(std::make_pair(&*SymI, absAtom));
-    } else if (isUndefinedSymbol(&*SymI)) {
+    } else if (SymI->isUndefined()) {
       if (_useWrap &&
           (_wrapSymbolMap.find(*symbolName) != _wrapSymbolMap.end())) {
         auto wrapAtom = _wrapSymbolMap.find(*symbolName);
@@ -245,7 +245,7 @@ std::error_code ELFFile<ELFT>::createSymbolsFromAtomizableSections() {
       commonAtom->setOrdinal(++_ordinal);
       addAtom(*commonAtom);
       _symbolToAtomMapping.insert(std::make_pair(&*SymI, commonAtom));
-    } else if (isDefinedSymbol(&*SymI)) {
+    } else if (SymI->isDefined()) {
       _sectionSymbols[section].push_back(SymI);
     } else {
       llvm::errs() << "Unable to create atom for: " << *symbolName << "\n";

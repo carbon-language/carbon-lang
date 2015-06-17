@@ -197,11 +197,6 @@ protected:
     return _objFile->getSectionContents(shdr);
   }
 
-  /// Returns true if the symbol is a undefined symbol.
-  bool isUndefinedSymbol(const Elf_Sym *sym) const {
-    return (sym->st_shndx == llvm::ELF::SHN_UNDEF);
-  }
-
   /// Determines if the target wants to create an atom for a section that has no
   /// symbol references.
   bool handleSectionWithNoSymbols(const Elf_Shdr *shdr,
@@ -223,11 +218,6 @@ protected:
   ELFUndefinedAtom<ELFT> *createUndefinedAtom(StringRef symName,
                                               const Elf_Sym *sym) {
     return new (_readerStorage) ELFUndefinedAtom<ELFT>(*this, symName, sym);
-  }
-
-  /// Returns true if the symbol is a absolute symbol.
-  bool isAbsoluteSymbol(const Elf_Sym *sym) const {
-    return (sym->st_shndx == llvm::ELF::SHN_ABS);
   }
 
   /// Process the Absolute symbol and create an atom for it.
@@ -279,17 +269,6 @@ protected:
   virtual ELFCommonAtom<ELFT> *createCommonAtom(StringRef symName,
                                                 const Elf_Sym *sym) {
     return new (_readerStorage) ELFCommonAtom<ELFT>(*this, symName, sym);
-  }
-
-  /// Returns true if the symbol is a defined symbol.
-  virtual bool isDefinedSymbol(const Elf_Sym *sym) const {
-    return (sym->getType() == llvm::ELF::STT_NOTYPE ||
-            sym->getType() == llvm::ELF::STT_OBJECT ||
-            sym->getType() == llvm::ELF::STT_FUNC ||
-            sym->getType() == llvm::ELF::STT_GNU_IFUNC ||
-            sym->getType() == llvm::ELF::STT_SECTION ||
-            sym->getType() == llvm::ELF::STT_FILE ||
-            sym->getType() == llvm::ELF::STT_TLS);
   }
 
   /// Creates an atom for a given defined symbol.
