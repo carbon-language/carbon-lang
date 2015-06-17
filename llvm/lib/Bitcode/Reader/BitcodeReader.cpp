@@ -4603,11 +4603,11 @@ const std::error_category &llvm::BitcodeErrorCategory() {
 /// \a parseBitcodeFile().  If this is truly lazy, then we need to eagerly pull
 /// in forward-referenced functions from block address references.
 ///
-/// \param[in] WillMaterializeAll Set to \c true if the caller promises to
-/// materialize everything -- in particular, if this isn't truly lazy.
+/// \param[in] MaterializeAll Set to \c true if we should materialize
+/// everything.
 static ErrorOr<std::unique_ptr<Module>>
 getLazyBitcodeModuleImpl(std::unique_ptr<MemoryBuffer> &&Buffer,
-                         LLVMContext &Context, bool WillMaterializeAll,
+                         LLVMContext &Context, bool MaterializeAll,
                          DiagnosticHandlerFunction DiagnosticHandler,
                          bool ShouldLazyLoadMetadata = false) {
   std::unique_ptr<Module> M =
@@ -4626,10 +4626,15 @@ getLazyBitcodeModuleImpl(std::unique_ptr<MemoryBuffer> &&Buffer,
           R->parseBitcodeInto(nullptr, M.get(), ShouldLazyLoadMetadata))
     return cleanupOnError(EC);
 
-  if (!WillMaterializeAll)
+  if (MaterializeAll) {
+    // Read in the entire module, and destroy the BitcodeReader.
+    if (std::error_code EC = M->materializeAllPermanently())
+      return EC;
+  } else {
     // Resolve forward references from blockaddresses.
     if (std::error_code EC = R->materializeForwardReferencedFunctions())
       return cleanupOnError(EC);
+  }
 
   Buffer.release(); // The BitcodeReader owns it now.
   return std::move(M);
@@ -4657,19 +4662,10 @@ ErrorOr<std::unique_ptr<Module>>
 llvm::parseBitcodeFile(MemoryBufferRef Buffer, LLVMContext &Context,
                        DiagnosticHandlerFunction DiagnosticHandler) {
   std::unique_ptr<MemoryBuffer> Buf = MemoryBuffer::getMemBuffer(Buffer, false);
-  ErrorOr<std::unique_ptr<Module>> ModuleOrErr = getLazyBitcodeModuleImpl(
-      std::move(Buf), Context, true, DiagnosticHandler);
-  if (!ModuleOrErr)
-    return ModuleOrErr;
-  std::unique_ptr<Module> &M = ModuleOrErr.get();
-  // Read in the entire module, and destroy the BitcodeReader.
-  if (std::error_code EC = M->materializeAllPermanently())
-    return EC;
-
+  return getLazyBitcodeModuleImpl(std::move(Buf), Context, true,
+                                  DiagnosticHandler);
   // TODO: Restore the use-lists to the in-memory state when the bitcode was
   // written.  We must defer until the Module has been fully materialized.
-
-  return std::move(M);
 }
 
 std::string
