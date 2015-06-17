@@ -22,6 +22,7 @@
 #include "llvm/ADT/iterator.h"
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/IR/Value.h"
+#include "llvm/Support/AlignOf.h"
 #include "llvm/Support/ErrorHandling.h"
 
 namespace llvm {
@@ -226,6 +227,11 @@ public:
     return isa<Instruction>(V) || isa<Constant>(V);
   }
 };
+// Either Use objects, or a Use pointer can be prepended to User.
+static_assert(AlignOf<Use>::Alignment >= AlignOf<User>::Alignment,
+              "Alignment sufficient after objects prepended to User");
+static_assert(AlignOf<Use *>::Alignment >= AlignOf<User>::Alignment,
+              "Alignment sufficient after objects prepended to User");
 
 template<> struct simplify_type<User::op_iterator> {
   typedef Value* SimpleType;

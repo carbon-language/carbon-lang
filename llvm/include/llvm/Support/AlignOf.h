@@ -44,9 +44,18 @@ private:
 ///  compile-time constant (e.g., for template instantiation).
 template <typename T>
 struct AlignOf {
+#ifndef _MSC_VER
+  // Avoid warnings from GCC like:
+  //   comparison between 'enum llvm::AlignOf<X>::<anonymous>' and 'enum
+  //   llvm::AlignOf<Y>::<anonymous>' [-Wenum-compare]
+  // by using constexpr instead of enum.
+  // (except on MSVC, since it doesn't support constexpr yet).
+  static constexpr unsigned Alignment =
+      static_cast<unsigned int>(sizeof(AlignmentCalcImpl<T>) - sizeof(T));
+#else
   enum { Alignment =
          static_cast<unsigned int>(sizeof(AlignmentCalcImpl<T>) - sizeof(T)) };
-
+#endif
   enum { Alignment_GreaterEqual_2Bytes = Alignment >= 2 ? 1 : 0 };
   enum { Alignment_GreaterEqual_4Bytes = Alignment >= 4 ? 1 : 0 };
   enum { Alignment_GreaterEqual_8Bytes = Alignment >= 8 ? 1 : 0 };
@@ -57,6 +66,10 @@ struct AlignOf {
   enum { Alignment_LessEqual_8Bytes = Alignment <= 8 ? 1 : 0 };
   enum { Alignment_LessEqual_16Bytes = Alignment <= 16 ? 1 : 0 };
 };
+
+#ifndef _MSC_VER
+template <typename T> constexpr unsigned AlignOf<T>::Alignment;
+#endif
 
 /// alignOf - A templated function that returns the minimum alignment of
 ///  of a type.  This provides no extra functionality beyond the AlignOf

@@ -381,20 +381,35 @@ StringRef MDString::getString() const {
 // MDNode implementation.
 //
 
+// Assert that the MDNode types will not be unaligned by the objects
+// prepended to them.
+#define HANDLE_MDNODE_LEAF(CLASS)                                              \
+  static_assert(llvm::AlignOf<uint64_t>::Alignment >=                          \
+                    llvm::AlignOf<CLASS>::Alignment,                           \
+                "Alignment sufficient after objects prepended to " #CLASS);
+#include "llvm/IR/Metadata.def"
+
 void *MDNode::operator new(size_t Size, unsigned NumOps) {
-  void *Ptr = ::operator new(Size + NumOps * sizeof(MDOperand));
+  size_t OpSize = NumOps * sizeof(MDOperand);
+  // uint64_t is the most aligned type we need support (ensured by static_assert
+  // above)
+  OpSize = RoundUpToAlignment(OpSize, llvm::alignOf<uint64_t>());
+  void *Ptr = reinterpret_cast<char *>(::operator new(OpSize + Size)) + OpSize;
   MDOperand *O = static_cast<MDOperand *>(Ptr);
-  for (MDOperand *E = O + NumOps; O != E; ++O)
-    (void)new (O) MDOperand;
-  return O;
+  for (MDOperand *E = O - NumOps; O != E; --O)
+    (void)new (O - 1) MDOperand;
+  return Ptr;
 }
 
 void MDNode::operator delete(void *Mem) {
   MDNode *N = static_cast<MDNode *>(Mem);
+  size_t OpSize = N->NumOperands * sizeof(MDOperand);
+  OpSize = RoundUpToAlignment(OpSize, llvm::alignOf<uint64_t>());
+
   MDOperand *O = static_cast<MDOperand *>(Mem);
   for (MDOperand *E = O - N->NumOperands; O != E; --O)
     (O - 1)->~MDOperand();
-  ::operator delete(O);
+  ::operator delete(reinterpret_cast<char *>(Mem) - OpSize);
 }
 
 MDNode::MDNode(LLVMContext &Context, unsigned ID, StorageType Storage,

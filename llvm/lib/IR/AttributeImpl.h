@@ -181,6 +181,9 @@ public:
       AttrList[I].Profile(ID);
   }
 };
+static_assert(AlignOf<AttributeSetNode>::Alignment >=
+                  AlignOf<Attribute>::Alignment,
+              "Alignment sufficient for objects appended to AttributeSetNode");
 
 //===----------------------------------------------------------------------===//
 /// \class
@@ -189,9 +192,11 @@ public:
 class AttributeSetImpl : public FoldingSetNode {
   friend class AttributeSet;
 
-  LLVMContext &Context;
-
+public:
   typedef std::pair<unsigned, AttributeSetNode*> IndexAttrPair;
+
+private:
+  LLVMContext &Context;
   unsigned NumAttrs; ///< Number of entries in this set.
 
   /// \brief Return a pointer to the IndexAttrPair for the specified slot.
@@ -206,6 +211,7 @@ public:
   AttributeSetImpl(LLVMContext &C,
                    ArrayRef<std::pair<unsigned, AttributeSetNode *> > Attrs)
       : Context(C), NumAttrs(Attrs.size()) {
+
 #ifndef NDEBUG
     if (Attrs.size() >= 2) {
       for (const std::pair<unsigned, AttributeSetNode *> *i = Attrs.begin() + 1,
@@ -267,6 +273,9 @@ public:
 
   void dump() const;
 };
+static_assert(AlignOf<AttributeSetImpl>::Alignment >=
+                  AlignOf<AttributeSetImpl::IndexAttrPair>::Alignment,
+              "Alignment sufficient for objects appended to AttributeSetImpl");
 
 } // end llvm namespace
 
