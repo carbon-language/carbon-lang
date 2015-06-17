@@ -7,7 +7,7 @@
 
 %struct.A = type { i32* }
 
-define void @"\01-[MyFunction Name:]"() {
+define void @"\01-[MyFunction Name:]"() personality i8* bitcast (i32 (...)* @__gxx_personality_sj0 to i8*) {
 entry:
   %save_filt.1 = alloca i32
   %save_eptr.0 = alloca i8*
@@ -39,7 +39,7 @@ return:                                           ; preds = %invcont
   ret void
 
 lpad:                                             ; preds = %entry
-  %exn = landingpad {i8*, i32} personality i8* bitcast (i32 (...)* @__gxx_personality_sj0 to i8*)
+  %exn = landingpad {i8*, i32}
            cleanup
   %eh_ptr = extractvalue {i8*, i32} %exn, 0
   store i8* %eh_ptr, i8** %eh_exception

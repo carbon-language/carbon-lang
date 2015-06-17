@@ -55,7 +55,7 @@ entry:
 declare i32 @fake_personality_function()
 
 ; When a statepoint is an invoke rather than a call
-define <2 x i64 addrspace(1)*> @test4(<2 x i64 addrspace(1)*>* %ptr) gc "statepoint-example" {
+define <2 x i64 addrspace(1)*> @test4(<2 x i64 addrspace(1)*>* %ptr) gc "statepoint-example" personality i32 ()* @fake_personality_function {
 ; CHECK-LABEL: test4
 ; CHECK: load
 ; CHECK-NEXT: extractelement
@@ -86,7 +86,7 @@ normal_return:                                    ; preds = %entry
 ; CHECK-NEXT: insertelement
 ; CHECK-NEXT: ret <2 x i64 addrspace(1)*> %14
 exceptional_return:                               ; preds = %entry
-  %landing_pad4 = landingpad { i8*, i32 } personality i32 ()* @fake_personality_function
+  %landing_pad4 = landingpad { i8*, i32 }
           cleanup
   ret <2 x i64 addrspace(1)*> %obj
 }

@@ -52,7 +52,7 @@ equal:
 }
 
 ; Basic test for invoke statepoints
-define i8 addrspace(1)* @test3(i8 addrspace(1)* %obj, i8 addrspace(1)* %obj1) gc "statepoint-example" {
+define i8 addrspace(1)* @test3(i8 addrspace(1)* %obj, i8 addrspace(1)* %obj1) gc "statepoint-example" personality i32 ()* @"personality_function" {
 ; CHECK-LABEL: test3
 entry:
   ; CHECK-LABEL: entry
@@ -73,7 +73,7 @@ exceptional_return:
   ; CHECK-LABEL: exceptional_return
   ; CHECK: gc.relocate
   ; CHECK: gc.relocate
-  %landing_pad = landingpad { i8*, i32 } personality i32 ()* @"personality_function"
+  %landing_pad = landingpad { i8*, i32 }
           cleanup
   %relocate_token = extractvalue { i8*, i32 } %landing_pad, 1
   %obj.relocated1 = call coldcc i8 addrspace(1)* @llvm.experimental.gc.relocate.p1i8(i32 %relocate_token, i32 12, i32 12)

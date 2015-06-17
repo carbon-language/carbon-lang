@@ -2097,7 +2097,7 @@ entry:
 ; test18a: Addr-of a variable passed into an invoke instruction.
 ;          no ssp attribute
 ; Requires no protector.
-define i32 @test18a()  {
+define i32 @test18a() personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
 entry:
 ; LINUX-I386-LABEL: test18a:
 ; LINUX-I386-NOT: calll __stack_chk_fail
@@ -2125,7 +2125,7 @@ invoke.cont:
   ret i32 0
 
 lpad:
-  %0 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %0 = landingpad { i8*, i32 }
           catch i8* null
   ret i32 0
 }
@@ -2134,7 +2134,7 @@ lpad:
 ;          ssp attribute
 ; Requires no protector.
 ; Function Attrs: ssp 
-define i32 @test18b() #0 {
+define i32 @test18b() #0 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
 entry:
 ; LINUX-I386-LABEL: test18b:
 ; LINUX-I386-NOT: calll __stack_chk_fail
@@ -2162,7 +2162,7 @@ invoke.cont:
   ret i32 0
 
 lpad:
-  %0 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %0 = landingpad { i8*, i32 }
           catch i8* null
   ret i32 0
 }
@@ -2171,7 +2171,7 @@ lpad:
 ;          sspstrong attribute
 ; Requires protector.
 ; Function Attrs: sspstrong 
-define i32 @test18c() #1 {
+define i32 @test18c() #1 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
 entry:
 ; LINUX-I386-LABEL: test18c:
 ; LINUX-I386: mov{{l|q}} %gs:
@@ -2199,7 +2199,7 @@ invoke.cont:
   ret i32 0
 
 lpad:
-  %0 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %0 = landingpad { i8*, i32 }
           catch i8* null
   ret i32 0
 }
@@ -2208,7 +2208,7 @@ lpad:
 ;          sspreq attribute
 ; Requires protector.
 ; Function Attrs: sspreq 
-define i32 @test18d() #2 {
+define i32 @test18d() #2 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
 entry:
 ; LINUX-I386-LABEL: test18d:
 ; LINUX-I386: mov{{l|q}} %gs:
@@ -2236,7 +2236,7 @@ invoke.cont:
   ret i32 0
 
 lpad:
-  %0 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %0 = landingpad { i8*, i32 }
           catch i8* null
   ret i32 0
 }
@@ -2244,7 +2244,7 @@ lpad:
 ;           (GEP followed by an invoke)
 ;          no ssp attribute
 ; Requires no protector.
-define i32 @test19a()  {
+define i32 @test19a() personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
 entry:
 ; LINUX-I386-LABEL: test19a:
 ; LINUX-I386-NOT: calll __stack_chk_fail
@@ -2274,7 +2274,7 @@ invoke.cont:
   ret i32 0
 
 lpad:
-  %0 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %0 = landingpad { i8*, i32 }
           catch i8* null
   ret i32 0
 }
@@ -2284,7 +2284,7 @@ lpad:
 ;          ssp attribute
 ; Requires no protector.
 ; Function Attrs: ssp 
-define i32 @test19b() #0 {
+define i32 @test19b() #0 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
 entry:
 ; LINUX-I386-LABEL: test19b:
 ; LINUX-I386-NOT: calll __stack_chk_fail
@@ -2314,7 +2314,7 @@ invoke.cont:
   ret i32 0
 
 lpad:
-  %0 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %0 = landingpad { i8*, i32 }
           catch i8* null
   ret i32 0
 }
@@ -2324,7 +2324,7 @@ lpad:
 ;          sspstrong attribute
 ; Requires protector.
 ; Function Attrs: sspstrong 
-define i32 @test19c() #1 {
+define i32 @test19c() #1 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
 entry:
 ; LINUX-I386-LABEL: test19c:
 ; LINUX-I386: mov{{l|q}} %gs:
@@ -2354,7 +2354,7 @@ invoke.cont:
   ret i32 0
 
 lpad:
-  %0 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %0 = landingpad { i8*, i32 }
           catch i8* null
   ret i32 0
 }
@@ -2364,7 +2364,7 @@ lpad:
 ;          sspreq attribute
 ; Requires protector.
 ; Function Attrs: sspreq 
-define i32 @test19d() #2 {
+define i32 @test19d() #2 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
 entry:
 ; LINUX-I386-LABEL: test19d:
 ; LINUX-I386: mov{{l|q}} %gs:
@@ -2398,7 +2398,7 @@ invoke.cont:
   ret i32 0
 
 lpad:
-  %0 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %0 = landingpad { i8*, i32 }
           catch i8* null
   ret i32 0
 }

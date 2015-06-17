@@ -2353,7 +2353,8 @@ Instruction *InstCombiner::visitLandingPadInst(LandingPadInst &LI) {
   // The logic here should be correct for any real-world personality function.
   // However if that turns out not to be true, the offending logic can always
   // be conditioned on the personality function, like the catch-all logic is.
-  EHPersonality Personality = classifyEHPersonality(LI.getPersonalityFn());
+  EHPersonality Personality =
+      classifyEHPersonality(LI.getParent()->getParent()->getPersonalityFn());
 
   // Simplify the list of clauses, eg by removing repeated catch clauses
   // (these are often created by inlining).
@@ -2620,7 +2621,6 @@ Instruction *InstCombiner::visitLandingPadInst(LandingPadInst &LI) {
   // with a new one.
   if (MakeNewInstruction) {
     LandingPadInst *NLI = LandingPadInst::Create(LI.getType(),
-                                                 LI.getPersonalityFn(),
                                                  NewClauses.size());
     for (unsigned i = 0, e = NewClauses.size(); i != e; ++i)
       NLI->addClause(NewClauses[i]);
@@ -2691,7 +2691,8 @@ bool InstCombiner::run() {
     }
 
     // Instruction isn't dead, see if we can constant propagate it.
-    if (!I->use_empty() && isa<Constant>(I->getOperand(0))) {
+    if (!I->use_empty() &&
+        (I->getNumOperands() == 0 || isa<Constant>(I->getOperand(0)))) {
       if (Constant *C = ConstantFoldInstruction(I, DL, TLI)) {
         DEBUG(dbgs() << "IC: ConstFold to: " << *C << " from: " << *I << '\n');
 
@@ -2846,7 +2847,8 @@ static bool AddReachableCodeToWorklist(BasicBlock *BB, const DataLayout &DL,
       }
 
       // ConstantProp instruction if trivially constant.
-      if (!Inst->use_empty() && isa<Constant>(Inst->getOperand(0)))
+      if (!Inst->use_empty() &&
+          (Inst->getNumOperands() == 0 || isa<Constant>(Inst->getOperand(0))))
         if (Constant *C = ConstantFoldInstruction(Inst, DL, TLI)) {
           DEBUG(dbgs() << "IC: ConstFold to: " << *C << " from: "
                        << *Inst << '\n');

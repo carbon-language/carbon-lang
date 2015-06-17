@@ -18,7 +18,7 @@ declare i8* @returner()
 ; CHECK:   call void @objc_release(i8* %zipFile) [[NUW]], !clang.imprecise_release !0
 ; CHECK:   ret void
 ; CHECK-NEXT: }
-define void @test0(i8* %zipFile) {
+define void @test0(i8* %zipFile) personality i32 (...)* @__gxx_personality_v0 {
 entry:
   call i8* @objc_retain(i8* %zipFile) nounwind
   call void @use_pointer(i8* %zipFile)
@@ -30,7 +30,7 @@ invoke.cont:                                      ; preds = %entry
   ret void
 
 lpad:                                             ; preds = %entry
-  %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+  %exn = landingpad {i8*, i32}
            cleanup
   call void @objc_release(i8* %zipFile) nounwind, !clang.imprecise_release !0
   ret void
@@ -50,7 +50,7 @@ lpad:                                             ; preds = %entry
 ; CHECK: done:
 ; CHECK-NEXT: ret void
 ; CHECK-NEXT: }
-define void @test1(i8* %zipFile) {
+define void @test1(i8* %zipFile) personality i32 (...)* @__gxx_personality_v0 {
 entry:
   call i8* @objc_retain(i8* %zipFile) nounwind
   call void @use_pointer(i8* %zipFile)
@@ -62,7 +62,7 @@ invoke.cont:                                      ; preds = %entry
   br label %done
 
 lpad:                                             ; preds = %entry
-  %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+  %exn = landingpad {i8*, i32}
            cleanup
   call void @callee()
   br label %done
@@ -75,7 +75,7 @@ done:
 ; The optimizer should ignore invoke unwind paths consistently.
 ; PR12265
 
-; CHECK: define void @test2() {
+; CHECK: define void @test2() personality i8* bitcast (i32 (...)* @__objc_personality_v0 to i8*) {
 ; CHECK: invoke.cont:
 ; CHECK-NEXT: call i8* @objc_retain
 ; CHECK-NOT: @objc_r
@@ -85,7 +85,7 @@ done:
 ; CHECK: finally.rethrow:
 ; CHECK-NOT: @objc
 ; CHECK: }
-define void @test2() {
+define void @test2() personality i8* bitcast (i32 (...)* @__objc_personality_v0 to i8*) {
 entry:
   %call = invoke i8* bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to i8* ()*)()
           to label %invoke.cont unwind label %finally.rethrow, !clang.arc.no_objc_arc_exceptions !0
@@ -101,7 +101,7 @@ finally.cont:                                     ; preds = %invoke.cont
   ret void
 
 finally.rethrow:                                  ; preds = %invoke.cont, %entry
-  %tmp2 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__objc_personality_v0 to i8*)
+  %tmp2 = landingpad { i8*, i32 }
           catch i8* null
   unreachable
 }
@@ -113,7 +113,7 @@ finally.rethrow:                                  ; preds = %invoke.cont, %entry
 ; CHECK-NEXT: call void @objc_release(i8* %p) [[NUW]]
 ; CHECK-NEXT: ret void
 ; CHECK-NEXT: }
-define void @test3(i8* %p, i1 %b) {
+define void @test3(i8* %p, i1 %b) personality i8* bitcast (i32 (...)* @__objc_personality_v0 to i8*) {
 entry:
   %0 = call i8* @objc_retain(i8* %p)
   call void @callee()
@@ -128,7 +128,7 @@ if.else:
           to label %if.end unwind label %lpad, !clang.arc.no_objc_arc_exceptions !0
 
 lpad:
-  %r = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__objc_personality_v0 to i8*)
+  %r = landingpad { i8*, i32 }
        cleanup
   ret void
 
@@ -141,7 +141,7 @@ if.end:
 
 ; CHECK-LABEL: define void @test4(
 ; CHECK: lpad:
-; CHECK-NEXT: %r = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__objc_personality_v0 to i8*)
+; CHECK-NEXT: %r = landingpad { i8*, i32 }
 ; CHECK-NEXT: cleanup
 ; CHECK-NEXT: call void @objc_release(i8* %p) [[NUW]]
 ; CHECK-NEXT: ret void
@@ -149,7 +149,7 @@ if.end:
 ; CHECK-NEXT: call void @objc_release(i8* %p) [[NUW]]
 ; CHECK-NEXT: ret void
 ; CHECK-NEXT: }
-define void @test4(i8* %p, i1 %b) {
+define void @test4(i8* %p, i1 %b) personality i8* bitcast (i32 (...)* @__objc_personality_v0 to i8*) {
 entry:
   %0 = call i8* @objc_retain(i8* %p)
   call void @callee()
@@ -164,7 +164,7 @@ if.else:
           to label %if.end unwind label %lpad
 
 lpad:
-  %r = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__objc_personality_v0 to i8*)
+  %r = landingpad { i8*, i32 }
        cleanup
   call void @objc_release(i8* %p)
   ret void
@@ -180,13 +180,13 @@ if.end:
 ; CHECK-LABEL: define void @test5(
 ; CHECK: call i8* @objc_retainAutoreleasedReturnValue(i8* %z)
 ; CHECK: }
-define void @test5() {
+define void @test5() personality i8* bitcast (i32 (...)* @__objc_personality_v0 to i8*) {
 entry:
   %z = invoke i8* @returner()
           to label %if.end unwind label %lpad, !clang.arc.no_objc_arc_exceptions !0
 
 lpad:
-  %r13 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__objc_personality_v0 to i8*)
+  %r13 = landingpad { i8*, i32 }
           cleanup
   ret void
 
@@ -200,13 +200,13 @@ if.end:
 ; CHECK-LABEL: define void @test6(
 ; CHECK: call i8* @objc_retain(i8* %z)
 ; CHECK: }
-define void @test6() {
+define void @test6() personality i8* bitcast (i32 (...)* @__objc_personality_v0 to i8*) {
 entry:
   %z = invoke i8* @returner()
           to label %if.end unwind label %lpad, !clang.arc.no_objc_arc_exceptions !0
 
 lpad:
-  %r13 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__objc_personality_v0 to i8*)
+  %r13 = landingpad { i8*, i32 }
           cleanup
   ret void
 

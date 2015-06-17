@@ -2,7 +2,8 @@
 
 target datalayout = "f64:64:64-v64:64:64"
 
-define void @test_phi_in_landingpad() {
+define void @test_phi_in_landingpad() personality i8*
+          bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
 entry:
   invoke void @foo()
           to label %inner unwind label %lpad
@@ -16,8 +17,7 @@ inner:
 lpad:
   %x1 = phi double [ undef, %entry ], [ undef, %inner ]
   %y1 = phi double [ undef, %entry ], [ undef, %inner ]
-  landingpad { i8*, i32 } personality i8*
-          bitcast (i32 (...)* @__gxx_personality_v0 to i8*) catch i8* null
+  landingpad { i8*, i32 } catch i8* null
   br label %done
 
 done:

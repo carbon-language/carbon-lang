@@ -40,7 +40,7 @@ entry:
 
 declare void @__cxa_throw(i8*, i8*, i8*)
 
-define i32 @main() ssp {
+define i32 @main() ssp personality i8* bitcast (i32 (...)* @__gxx_personality_sj0 to i8*) {
 entry:
   %puts.i = tail call i32 @puts(i8* getelementptr inbounds ([14 x i8], [14 x i8]* @str, i32 0, i32 0)) ; <i32> [#uses=0]
   %exception.i = tail call i8* @__cxa_allocate_exception(i32 4) nounwind ; <i8*> [#uses=2]
@@ -71,7 +71,7 @@ try.cont:                                         ; preds = %lpad
   ret i32 %conv
 
 lpad:                                             ; preds = %entry
-  %exn.ptr = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_sj0 to i8*)
+  %exn.ptr = landingpad { i8*, i32 }
            catch i8* bitcast (%0* @_ZTI1A to i8*)
            catch i8* null
   %exn = extractvalue { i8*, i32 } %exn.ptr, 0

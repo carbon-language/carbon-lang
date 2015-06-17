@@ -39,7 +39,7 @@ entry:
 }
 
 ; Function Attrs: uwtable
-define i32 @main() #1 {
+define i32 @main() #1 personality i8* bitcast (i32 (...)* @__C_specific_handler to i8*) {
 entry:
   %myres = alloca i32, align 4
   %exn.slot = alloca i8*
@@ -59,7 +59,7 @@ invoke.cont2:                                     ; preds = %invoke.cont
   ret i32 0
 
 lpad:                                             ; preds = %entry
-  %2 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__C_specific_handler to i8*)
+  %2 = landingpad { i8*, i32 }
           cleanup
   %3 = extractvalue { i8*, i32 } %2, 0
   store i8* %3, i8** %exn.slot
@@ -70,7 +70,7 @@ lpad:                                             ; preds = %entry
           to label %invoke.cont3 unwind label %lpad1
 
 lpad1:                                            ; preds = %lpad, %invoke.cont
-  %6 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__C_specific_handler to i8*)
+  %6 = landingpad { i8*, i32 }
           cleanup
   %7 = extractvalue { i8*, i32 } %6, 0
   store i8* %7, i8** %exn.slot

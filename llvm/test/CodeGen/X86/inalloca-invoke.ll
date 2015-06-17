@@ -11,7 +11,7 @@ declare void @begin(%Iter* sret)
 declare void @plus(%Iter* sret, %Iter*, i32)
 declare void @reverse(%frame.reverse* inalloca align 4)
 
-define i32 @main() {
+define i32 @main() personality i32 (...)* @pers {
   %temp.lvalue = alloca %Iter
   br label %blah
 
@@ -49,7 +49,7 @@ invoke.cont5:                                     ; preds = %invoke.cont
   ret i32 0
 
 lpad:                                             ; preds = %invoke.cont, %entry
-  %lp = landingpad { i8*, i32 } personality i32 (...)* @pers
+  %lp = landingpad { i8*, i32 }
           cleanup
   unreachable
 }

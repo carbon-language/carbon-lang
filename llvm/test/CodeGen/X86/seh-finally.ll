@@ -6,7 +6,7 @@
 
 declare void @crash()
 
-define i32 @main() {
+define i32 @main() personality i8* bitcast (i32 (...)* @__C_specific_handler to i8*) {
 entry:
   invoke void @crash()
           to label %invoke.cont unwind label %lpad
@@ -17,7 +17,7 @@ invoke.cont:                                      ; preds = %entry
   ret i32 0
 
 lpad:                                             ; preds = %entry
-  %0 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__C_specific_handler to i8*)
+  %0 = landingpad { i8*, i32 }
           cleanup
   %1 = extractvalue { i8*, i32 } %0, 0
   %2 = extractvalue { i8*, i32 } %0, 1
@@ -28,7 +28,7 @@ invoke.cont1:                                     ; preds = %lpad
   resume { i8*, i32 } %0
 
 terminate.lpad:                                   ; preds = %lpad
-  %3 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__C_specific_handler to i8*)
+  %3 = landingpad { i8*, i32 }
           catch i8* null
   call void @abort()
   unreachable

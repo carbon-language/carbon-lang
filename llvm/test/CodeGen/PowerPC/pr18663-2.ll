@@ -46,7 +46,7 @@ declare void @_ZN4Foam7IOerror4exitEi() #0
 ; Function Attrs: inlinehint
 declare void @_ZN4Foam8fileName12stripInvalidEv() #2 align 2
 
-define void @_ZN4Foam3CSVINS_6VectorIdEEE4readEv() #0 align 2 {
+define void @_ZN4Foam3CSVINS_6VectorIdEEE4readEv() #0 align 2 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
 entry:
   invoke void @_ZN4Foam6string6expandEb()
           to label %invoke.cont unwind label %lpad
@@ -66,7 +66,7 @@ _ZN4Foam6stringC2ERKS0_.exit.i:                   ; preds = %invoke.cont
           to label %invoke.cont2 unwind label %lpad.i
 
 lpad.i:                                           ; preds = %_ZN4Foam6stringC2ERKS0_.exit.i
-  %0 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %0 = landingpad { i8*, i32 }
           cleanup
   br label %ehcleanup142
 
@@ -90,17 +90,17 @@ memptr.end.i:                                     ; preds = %invoke.cont8
           to label %if.end unwind label %lpad5
 
 lpad:                                             ; preds = %if.then.i.i.i.i176, %entry
-  %1 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %1 = landingpad { i8*, i32 }
           cleanup
   br label %ehcleanup142
 
 lpad3:                                            ; preds = %invoke.cont2
-  %2 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %2 = landingpad { i8*, i32 }
           cleanup
   br label %ehcleanup142
 
 lpad5:                                            ; preds = %memptr.end.i, %invoke.cont8, %if.then
-  %3 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %3 = landingpad { i8*, i32 }
           cleanup
   br label %ehcleanup142
 
@@ -119,12 +119,12 @@ invoke.cont.i.i.i:                                ; preds = %.noexc205
   unreachable
 
 lpad.i.i.i:                                       ; preds = %.noexc205
-  %4 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %4 = landingpad { i8*, i32 }
           cleanup
   br label %ehcleanup142
 
 lpad19:                                           ; preds = %for.body
-  %5 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %5 = landingpad { i8*, i32 }
           cleanup
   br label %ehcleanup142
 

@@ -206,7 +206,7 @@ class InvokeInst;
     llvm_unreachable("invalid enum");
   }
 
-  bool canSimplifyInvokeNoUnwind(const InvokeInst *II);
+  bool canSimplifyInvokeNoUnwind(const Function *F);
 
 } // end namespace llvm
 

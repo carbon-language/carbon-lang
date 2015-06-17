@@ -1556,9 +1556,9 @@ public:
     return Insert(InsertValueInst::Create(Agg, Val, Idxs), Name);
   }
 
-  LandingPadInst *CreateLandingPad(Type *Ty, Value *PersFn, unsigned NumClauses,
+  LandingPadInst *CreateLandingPad(Type *Ty, unsigned NumClauses,
                                    const Twine &Name = "") {
-    return Insert(LandingPadInst::Create(Ty, PersFn, NumClauses), Name);
+    return Insert(LandingPadInst::Create(Ty, NumClauses), Name);
   }
 
   //===--------------------------------------------------------------------===//

@@ -10,13 +10,13 @@ declare void @gc_call()
 declare i32* @fake_personality_function()
 
 ; Function Attrs: nounwind
-define i64* addrspace(1)* @test() gc "statepoint-example" {
+define i64* addrspace(1)* @test() gc "statepoint-example" personality i32* ()* @fake_personality_function {
 entry:
   %obj = invoke i64* addrspace(1)* @non_gc_call()
           to label %normal_dest unwind label %unwind_dest
 
 unwind_dest: 
-  %lpad = landingpad { i8*, i32 } personality i32* ()* @fake_personality_function
+  %lpad = landingpad { i8*, i32 }
           cleanup
   resume { i8*, i32 } undef
 

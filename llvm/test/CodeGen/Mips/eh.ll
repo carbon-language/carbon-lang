@@ -4,7 +4,7 @@
 @g1 = global double 0.000000e+00, align 8
 @_ZTId = external constant i8*
 
-define void @_Z1fd(double %i2) {
+define void @_Z1fd(double %i2) personality i32 (...)* @__gxx_personality_v0 {
 entry:
 ; CHECK-EL:  addiu $sp, $sp
 ; CHECK-EL:  .cfi_def_cfa_offset
@@ -26,7 +26,7 @@ lpad:                                             ; preds = %entry
 ; CHECK-EL:  # %lpad
 ; CHECK-EL:  bne $5
 
-  %exn.val = landingpad { i8*, i32 } personality i32 (...)* @__gxx_personality_v0
+  %exn.val = landingpad { i8*, i32 }
            cleanup
            catch i8* bitcast (i8** @_ZTId to i8*)
   %exn = extractvalue { i8*, i32 } %exn.val, 0

@@ -46,7 +46,7 @@ declare void @f(void()*)
 
 declare void @p()
 
-define void @bar() {
+define void @bar() personality void()* @p {
 bb0:
   call void @foo1()
   call void @f(void()* @foo2)
@@ -56,6 +56,6 @@ bb1:
 bb2:
   ret void
 clean:
-  landingpad {i32, i32} personality void()* @p cleanup
+  landingpad {i32, i32} cleanup
   ret void
 }

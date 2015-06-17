@@ -6,7 +6,7 @@ declare void @fn()
 
 
 ; CHECK-LABEL: @test1
-define void @test1() {
+define void @test1() personality i32 (...)* @__gxx_personality_v0 {
 entry:
 ; CHECK-LABEL: entry:
 ; CHECK: to label %invoke2 unwind label %lpad2
@@ -23,17 +23,17 @@ invoke.cont:
   ret void
 
 lpad1:
-  %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+  %exn = landingpad {i8*, i32}
          cleanup
   br label %shared_resume
 
 lpad2:
 ; CHECK-LABEL: lpad2:
-; CHECK: landingpad { i8*, i32 } personality i32 (...)* @__gxx_personality_v0
+; CHECK: landingpad { i8*, i32 }
 ; CHECK-NEXT: cleanup
 ; CHECK-NEXT: call void @fn()
 ; CHECK-NEXT: ret void
-  %exn2 = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+  %exn2 = landingpad {i8*, i32}
           cleanup
   br label %shared_resume
 
@@ -43,7 +43,7 @@ shared_resume:
 }
 
 ; Don't trigger if blocks aren't the same/empty
-define void @neg1() {
+define void @neg1() personality i32 (...)* @__gxx_personality_v0 {
 ; CHECK-LABEL: @neg1
 entry:
 ; CHECK-LABEL: entry:
@@ -61,13 +61,13 @@ invoke.cont:
   ret void
 
 lpad1:
-  %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+  %exn = landingpad {i8*, i32}
          filter [0 x i8*] zeroinitializer
   call void @fn()
   br label %shared_resume
 
 lpad2:
-  %exn2 = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+  %exn2 = landingpad {i8*, i32}
           cleanup
   br label %shared_resume
 
@@ -77,7 +77,7 @@ shared_resume:
 }
 
 ; Should not trigger when the landing pads are not the exact same
-define void @neg2() {
+define void @neg2() personality i32 (...)* @__gxx_personality_v0 {
 ; CHECK-LABEL: @neg2
 entry:
 ; CHECK-LABEL: entry:
@@ -95,12 +95,12 @@ invoke.cont:
   ret void
 
 lpad1:
-  %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+  %exn = landingpad {i8*, i32}
          filter [0 x i8*] zeroinitializer
   br label %shared_resume
 
 lpad2:
-  %exn2 = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+  %exn2 = landingpad {i8*, i32}
           cleanup
   br label %shared_resume
 

@@ -10,7 +10,7 @@ declare i8* @__cxa_begin_catch(i8*)
 declare void @__cxa_end_catch()
 declare void @_ZSt9terminatev()
 
-define void @inner1() {
+define void @inner1() personality i32 (...)* @__gxx_personality_v0 {
 entry:
   invoke void @f() to label %cont1 unwind label %terminate.lpad
 
@@ -27,7 +27,7 @@ cont4:
   ret void
 
 terminate.lpad:
-  landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+  landingpad {i8*, i32}
             catch i8* null
   call void @_ZSt9terminatev() noreturn nounwind
   unreachable

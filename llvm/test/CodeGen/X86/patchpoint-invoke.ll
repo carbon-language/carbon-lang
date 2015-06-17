@@ -2,7 +2,7 @@
 
 ; Test invoking of patchpoints
 ;
-define i64 @patchpoint_invoke(i64 %p1, i64 %p2) {
+define i64 @patchpoint_invoke(i64 %p1, i64 %p2) personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
 entry:
 ; CHECK-LABEL: patchpoint_invoke:
 ; CHECK-NEXT:  [[FUNC_BEGIN:.L.*]]:
@@ -25,7 +25,7 @@ success:
   ret i64 %result
 
 threw:
-  %0 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %0 = landingpad { i8*, i32 }
           catch i8* null
   ret i64 0
 }

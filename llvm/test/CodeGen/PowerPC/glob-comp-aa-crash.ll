@@ -17,7 +17,7 @@ target triple = "powerpc64-bgq-linux"
 declare i32 @__gxx_personality_v0(...)
 
 ; Function Attrs: optsize
-define void @_ZNSt3__117__assoc_sub_state4copyEv(%"class.std::__1::__assoc_sub_state"* %this) #0 align 2 {
+define void @_ZNSt3__117__assoc_sub_state4copyEv(%"class.std::__1::__assoc_sub_state"* %this) #0 align 2 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
 entry:
   %__lk = alloca %"class.std::__1::unique_lock", align 8
   %ref.tmp = alloca %"class.std::__exception_ptr::exception_ptr", align 8
@@ -50,14 +50,14 @@ invoke.cont4:                                     ; preds = %if.then
   unreachable
 
 lpad:                                             ; preds = %entry
-  %1 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %1 = landingpad { i8*, i32 }
           cleanup
   %2 = extractvalue { i8*, i32 } %1, 0
   %3 = extractvalue { i8*, i32 } %1, 1
   br label %ehcleanup
 
 lpad3:                                            ; preds = %if.then
-  %4 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %4 = landingpad { i8*, i32 }
           cleanup
   %5 = extractvalue { i8*, i32 } %4, 0
   %6 = extractvalue { i8*, i32 } %4, 1

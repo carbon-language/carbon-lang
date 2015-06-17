@@ -10,7 +10,7 @@ define void @invoke(%FunTy* %x) {
   ret void
 }
 
-define i32 @main(i32 %argc) {
+define i32 @main(i32 %argc) personality i32 (...)* @__gxx_personality_v0 {
   %retval = call i32 @test( i32 %argc )           ; <i32> [#uses=2]
   %two = add i32 %retval, %retval         ; <i32> [#uses=1]
   %retval2 = invoke i32 @test( i32 %argc )
@@ -22,7 +22,7 @@ Next:
   ret i32 %two2
 
 Error:
-  %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+  %exn = landingpad {i8*, i32}
             cleanup
   ret i32 -1
 }

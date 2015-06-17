@@ -30,7 +30,7 @@ define void @test2() {
 declare i8* @strdup(i8*)
 declare void @foo2(i8*)
 
-define void @test3() uwtable {
+define void @test3() uwtable personality i32 (i32, i64, i8*, i8*)* @__gxx_personality_v0 {
 ; CHECK-LABEL: @test3(
 ; CHECK-NOT: bb1:
 ; CHECK-NOT: bb2:
@@ -41,7 +41,7 @@ bb1:
   store i8* %ptr, i8** @glbl
   unreachable
 bb2:
-  %tmp1 = landingpad { i8*, i32 } personality i32 (i32, i64, i8*, i8*)* @__gxx_personality_v0
+  %tmp1 = landingpad { i8*, i32 }
           cleanup
   resume { i8*, i32 } %tmp1
 }

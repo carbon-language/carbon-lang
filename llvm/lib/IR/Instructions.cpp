@@ -153,18 +153,16 @@ Value *PHINode::hasConstantValue() const {
 //                       LandingPadInst Implementation
 //===----------------------------------------------------------------------===//
 
-LandingPadInst::LandingPadInst(Type *RetTy, Value *PersonalityFn,
-                               unsigned NumReservedValues, const Twine &NameStr,
-                               Instruction *InsertBefore)
-  : Instruction(RetTy, Instruction::LandingPad, nullptr, 0, InsertBefore) {
-  init(PersonalityFn, 1 + NumReservedValues, NameStr);
+LandingPadInst::LandingPadInst(Type *RetTy, unsigned NumReservedValues,
+                               const Twine &NameStr, Instruction *InsertBefore)
+    : Instruction(RetTy, Instruction::LandingPad, nullptr, 0, InsertBefore) {
+  init(NumReservedValues, NameStr);
 }
 
-LandingPadInst::LandingPadInst(Type *RetTy, Value *PersonalityFn,
-                               unsigned NumReservedValues, const Twine &NameStr,
-                               BasicBlock *InsertAtEnd)
-  : Instruction(RetTy, Instruction::LandingPad, nullptr, 0, InsertAtEnd) {
-  init(PersonalityFn, 1 + NumReservedValues, NameStr);
+LandingPadInst::LandingPadInst(Type *RetTy, unsigned NumReservedValues,
+                               const Twine &NameStr, BasicBlock *InsertAtEnd)
+    : Instruction(RetTy, Instruction::LandingPad, nullptr, 0, InsertAtEnd) {
+  init(NumReservedValues, NameStr);
 }
 
 LandingPadInst::LandingPadInst(const LandingPadInst &LP)
@@ -180,28 +178,22 @@ LandingPadInst::LandingPadInst(const LandingPadInst &LP)
   setCleanup(LP.isCleanup());
 }
 
-LandingPadInst *LandingPadInst::Create(Type *RetTy, Value *PersonalityFn,
-                                       unsigned NumReservedClauses,
+LandingPadInst *LandingPadInst::Create(Type *RetTy, unsigned NumReservedClauses,
                                        const Twine &NameStr,
                                        Instruction *InsertBefore) {
-  return new LandingPadInst(RetTy, PersonalityFn, NumReservedClauses, NameStr,
-                            InsertBefore);
+  return new LandingPadInst(RetTy, NumReservedClauses, NameStr, InsertBefore);
 }
 
-LandingPadInst *LandingPadInst::Create(Type *RetTy, Value *PersonalityFn,
-                                       unsigned NumReservedClauses,
+LandingPadInst *LandingPadInst::Create(Type *RetTy, unsigned NumReservedClauses,
                                        const Twine &NameStr,
                                        BasicBlock *InsertAtEnd) {
-  return new LandingPadInst(RetTy, PersonalityFn, NumReservedClauses, NameStr,
-                            InsertAtEnd);
+  return new LandingPadInst(RetTy, NumReservedClauses, NameStr, InsertAtEnd);
 }
 
-void LandingPadInst::init(Value *PersFn, unsigned NumReservedValues,
-                          const Twine &NameStr) {
+void LandingPadInst::init(unsigned NumReservedValues, const Twine &NameStr) {
   ReservedSpace = NumReservedValues;
-  setNumHungOffUseOperands(1);
+  setNumHungOffUseOperands(0);
   allocHungoffUses(ReservedSpace);
-  Op<0>() = PersFn;
   setName(NameStr);
   setCleanup(false);
 }
@@ -211,7 +203,7 @@ void LandingPadInst::init(Value *PersFn, unsigned NumReservedValues,
 void LandingPadInst::growOperands(unsigned Size) {
   unsigned e = getNumOperands();
   if (ReservedSpace >= e + Size) return;
-  ReservedSpace = (e + Size / 2) * 2;
+  ReservedSpace = (std::max(e, 1U) + Size / 2) * 2;
   growHungoffUses(ReservedSpace);
 }
 

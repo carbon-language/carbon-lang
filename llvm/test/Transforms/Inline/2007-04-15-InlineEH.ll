@@ -12,7 +12,7 @@ entry:
 	unreachable
 }
 
-define fastcc void @bc__support__high_resolution_time__initialize_clock_rate() {
+define fastcc void @bc__support__high_resolution_time__initialize_clock_rate() personality i32 (...)* @__gxx_personality_v0 {
 entry:
 	invoke void @gnat__os_lib__getenv( %struct.gnat__strings__string_access* null )
 			to label %invcont unwind label %cleanup144
@@ -33,7 +33,7 @@ invcont67:		; preds = %invcont65
 	ret void
 
 cleanup144:		; preds = %invcont65, %invcont64, %invcont, %entry
-        %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+        %exn = landingpad {i8*, i32}
                  cleanup
 	resume { i8*, i32 } %exn
 }

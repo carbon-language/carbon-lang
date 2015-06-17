@@ -43,7 +43,7 @@ $"\01??_C@_06PNOAJMHG@e?3?5?$CFd?6?$AA@" = comdat any
 declare void @_CxxThrowException(i8*, %eh.ThrowInfo*)
 
 ; Function Attrs: uwtable
-define i32 @main() #1 {
+define i32 @main() #1 personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*) {
 entry:
   %tmp.i = alloca i32, align 4
   %e = alloca i32, align 4
@@ -57,7 +57,7 @@ entry:
   unreachable
 
 lpad1:                                            ; preds = %entry
-  %1 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
+  %1 = landingpad { i8*, i32 }
           catch %eh.CatchHandlerType* @llvm.eh.handlertype.H.0
   %recover = call i8* (...) @llvm.eh.actions(i32 1, i8* bitcast (%eh.CatchHandlerType* @llvm.eh.handlertype.H.0 to i8*), i32 0, i8* (i8*, i8*)* @main.catch)
   indirectbr i8* %recover, [label %try.cont.split]
@@ -90,7 +90,7 @@ declare void @llvm.lifetime.start(i64, i8* nocapture) #3
 ; Function Attrs: nounwind
 declare i8* @llvm.eh.actions(...) #3
 
-define internal i8* @main.catch(i8*, i8*) #5 {
+define internal i8* @main.catch(i8*, i8*) #5 personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*) {
 entry:
   %e.i8 = call i8* @llvm.framerecover(i8* bitcast (i32 ()* @main to i8*), i8* %1, i32 0)
   %e = bitcast i8* %e.i8 to i32*
@@ -104,7 +104,7 @@ entry.split:                                      ; preds = %entry
   ret i8* blockaddress(@main, %try.cont.split)
 
 stub:                                             ; preds = %entry
-  %4 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
+  %4 = landingpad { i8*, i32 }
           cleanup
   %recover = call i8* (...) @llvm.eh.actions()
   unreachable

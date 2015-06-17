@@ -126,13 +126,13 @@ entry:
 	unreachable
 }
 
-define fastcc void @_ZSt19__throw_logic_errorPKc() {
+define fastcc void @_ZSt19__throw_logic_errorPKc() personality i32 (...)* @__gxx_personality_v0 {
 entry:
 	invoke fastcc void @_ZNSt11logic_errorC1ERKSs( )
 			to label %try_exit.0 unwind label %try_catch.0
 
 try_catch.0:		; preds = %entry
-        %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+        %exn = landingpad {i8*, i32}
                  catch i8* null
 	resume { i8*, i32 } %exn
 
@@ -157,13 +157,13 @@ entry:
 	unreachable
 }
 
-define fastcc void @_ZNSt12length_errorC1ERKSs() {
+define fastcc void @_ZNSt12length_errorC1ERKSs() personality i32 (...)* @__gxx_personality_v0 {
 entry:
 	invoke fastcc void @_ZNSsC1ERKSs( )
 			to label %_ZNSt11logic_errorC2ERKSs.exit unwind label %invoke_catch.i
 
 invoke_catch.i:		; preds = %entry
-        %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+        %exn = landingpad {i8*, i32}
                  catch i8* null
 	resume { i8*, i32 } %exn
 
@@ -195,14 +195,14 @@ endif.1.i:		; preds = %then.1.i, %entry
 	unreachable
 }
 
-define fastcc void @_ZNSsC1ERKSs() {
+define fastcc void @_ZNSsC1ERKSs() personality i32 (...)* @__gxx_personality_v0 {
 entry:
 	call fastcc void @_ZNSs4_Rep7_M_grabERKSaIcES2_( )
 	invoke fastcc void @_ZNSaIcEC1ERKS_( )
 			to label %invoke_cont.1 unwind label %invoke_catch.1
 
 invoke_catch.1:		; preds = %entry
-        %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+        %exn = landingpad {i8*, i32}
                  catch i8* null
 	call fastcc void @_ZNSaIcED1Ev( )
 	resume { i8*, i32 } %exn

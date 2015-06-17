@@ -50,7 +50,7 @@ $_TI1H = comdat any
 ; CHECK: }
 
 ; Function Attrs: uwtable
-define void @"\01?test@@YAXXZ"() #0 {
+define void @"\01?test@@YAXXZ"() #0 personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*) {
 entry:
   %o = alloca %class.Obj, align 1
   %tmp = alloca i32, align 4
@@ -62,7 +62,7 @@ entry:
           to label %unreachable unwind label %lpad
 
 lpad:                                             ; preds = %entry
-  %1 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
+  %1 = landingpad { i8*, i32 }
           catch i8* null
   %2 = extractvalue { i8*, i32 } %1, 0
   store i8* %2, i8** %exn.slot
@@ -78,7 +78,7 @@ catch:                                            ; preds = %lpad
           to label %unreachable unwind label %lpad1
 
 lpad1:                                            ; preds = %catch
-  %4 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
+  %4 = landingpad { i8*, i32 }
           cleanup
   %5 = extractvalue { i8*, i32 } %4, 0
   store i8* %5, i8** %exn.slot
@@ -113,7 +113,7 @@ unreachable:                                      ; preds = %catch, %entry
 ; CHECK: [[SPLIT_LABEL]]
 ;
 ; CHECK: [[LPAD_LABEL]]
-; CHECK:   landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
+; CHECK:   landingpad { i8*, i32 }
 ; CHECK:           cleanup
 ; CHECK:   unreachable
 ; CHECK: }

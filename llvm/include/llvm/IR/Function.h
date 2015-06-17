@@ -25,6 +25,7 @@
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/CallingConv.h"
 #include "llvm/IR/GlobalObject.h"
+#include "llvm/IR/OperandTraits.h"
 #include "llvm/Support/Compiler.h"
 
 namespace llvm {
@@ -119,10 +120,21 @@ private:
 public:
   static Function *Create(FunctionType *Ty, LinkageTypes Linkage,
                           const Twine &N = "", Module *M = nullptr) {
-    return new(0) Function(Ty, Linkage, N, M);
+    return new(1) Function(Ty, Linkage, N, M);
   }
 
   ~Function() override;
+
+  /// \brief Provide fast operand accessors
+  DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
+
+  /// \brief Get the personality function associated with this function.
+  bool hasPersonalityFn() const { return getNumOperands() != 0; }
+  Constant *getPersonalityFn() const {
+    assert(hasPersonalityFn());
+    return cast<Constant>(Op<0>());
+  }
+  void setPersonalityFn(Constant *C);
 
   Type *getReturnType() const;           // Return the type of the ret val
   FunctionType *getFunctionType() const; // Return the FunctionType for me
@@ -600,6 +612,11 @@ inline ValueSymbolTable *
 ilist_traits<Argument>::getSymTab(Function *F) {
   return F ? &F->getValueSymbolTable() : nullptr;
 }
+
+template <>
+struct OperandTraits<Function> : public OptionalOperandTraits<Function> {};
+
+DEFINE_TRANSPARENT_OPERAND_ACCESSORS(Function, Value)
 
 } // End llvm namespace
 

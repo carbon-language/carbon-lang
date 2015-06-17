@@ -47,12 +47,12 @@ for.end:                                          ; preds = %length.exit, %entry
 ; CHECK: catch.preheader.split-lp:
 ; CHECK:   br label %catch, !dbg [[LPAD_PREHEADER_LOC]]
 
-define void @with_landingpad() uwtable ssp {
+define void @with_landingpad() uwtable ssp personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
 entry:
   invoke void @f1() to label %try.cont19 unwind label %catch, !dbg !13
 
 catch:                                            ; preds = %if.else, %entry
-  %0 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %0 = landingpad { i8*, i32 }
           catch i8* bitcast ({ i8*, i8*, i8* }* @catchtypeinfo to i8*), !dbg !13
   invoke void @f3() to label %if.else unwind label %eh.resume, !dbg !13
 
@@ -63,7 +63,7 @@ try.cont19:                                       ; preds = %if.else, %entry
   ret void, !dbg !13
 
 eh.resume:                                        ; preds = %catch
-  %1 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %1 = landingpad { i8*, i32 }
           cleanup catch i8* bitcast ({ i8*, i8*, i8* }* @catchtypeinfo to i8*), !dbg !13
   resume { i8*, i32 } undef, !dbg !13
 }

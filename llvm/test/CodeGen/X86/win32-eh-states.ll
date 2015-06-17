@@ -30,7 +30,7 @@ $"\01??_R0H@8" = comdat any
 @"\01??_R0H@8" = linkonce_odr global %rtti.TypeDescriptor2 { i8** @"\01??_7type_info@@6B@", i8* null, [3 x i8] c".H\00" }, comdat
 @llvm.eh.handlertype.H.0 = private unnamed_addr constant %eh.CatchHandlerType { i32 0, i8* bitcast (%rtti.TypeDescriptor2* @"\01??_R0H@8" to i8*) }, section "llvm.metadata"
 
-define void @f() #0 {
+define void @f() #0 personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*) {
 entry:
   invoke void @may_throw(i32 1)
           to label %invoke.cont unwind label %lpad
@@ -46,14 +46,14 @@ try.cont.9:                                       ; preds = %invoke.cont.3, %inv
   ret void
 
 lpad:                                             ; preds = %catch, %entry
-  %0 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
+  %0 = landingpad { i8*, i32 }
           catch %eh.CatchHandlerType* @llvm.eh.handlertype.H.0
   %1 = extractvalue { i8*, i32 } %0, 0
   %2 = extractvalue { i8*, i32 } %0, 1
   br label %catch.dispatch.4
 
 lpad.1:                                           ; preds = %invoke.cont
-  %3 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
+  %3 = landingpad { i8*, i32 }
           catch i8* bitcast (%eh.CatchHandlerType* @llvm.eh.handlertype.H.0 to i8*)
   %4 = extractvalue { i8*, i32 } %3, 0
   %5 = extractvalue { i8*, i32 } %3, 1

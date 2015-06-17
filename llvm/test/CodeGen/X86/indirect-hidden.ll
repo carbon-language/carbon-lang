@@ -8,10 +8,10 @@
 
 declare void @throws()
 
-define void @get_indirect_hidden() {
+define void @get_indirect_hidden() personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
   invoke void @throws() to label %end unwind label %lpad
 lpad:
-  %tmp = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %tmp = landingpad { i8*, i32 }
           catch i8* bitcast (i8** @hidden_typeid to i8*)
   br label %end
 
@@ -19,10 +19,10 @@ end:
   ret void
 }
 
-define void @get_indirect() {
+define void @get_indirect() personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
   invoke void @throws() to label %end unwind label %lpad
 lpad:
-  %tmp = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %tmp = landingpad { i8*, i32 }
           catch i8* bitcast (i8** @normal_typeid to i8*)
   br label %end
 

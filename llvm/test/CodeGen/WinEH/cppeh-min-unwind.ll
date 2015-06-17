@@ -30,7 +30,7 @@ target triple = "x86_64-pc-windows-msvc"
 ; CHECK:           to label %invoke.cont unwind label %[[LPAD_LABEL:lpad[0-9]*]]
 
 ; Function Attrs: uwtable
-define void @_Z4testv() #0 {
+define void @_Z4testv() #0 personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*) {
 entry:
   %obj = alloca %class.SomeClass, align 4
   %exn.slot = alloca i8*
@@ -44,13 +44,13 @@ invoke.cont:                                      ; preds = %entry
   ret void
 
 ; CHECK: [[LPAD_LABEL]]:{{[ ]+}}; preds = %entry
-; CHECK:   landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
+; CHECK:   landingpad { i8*, i32 }
 ; CHECK-NEXT:           cleanup
 ; CHECK-NEXT:   [[RECOVER:\%.+]] = call i8* (...) @llvm.eh.actions(i32 0, void (i8*, i8*)* @_Z4testv.cleanup)
 ; CHECK-NEXT:   indirectbr i8* [[RECOVER]], []
 
 lpad:                                             ; preds = %entry
-  %tmp = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
+  %tmp = landingpad { i8*, i32 }
           cleanup
   %tmp1 = extractvalue { i8*, i32 } %tmp, 0
   store i8* %tmp1, i8** %exn.slot

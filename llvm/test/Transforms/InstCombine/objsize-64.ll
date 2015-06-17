@@ -18,7 +18,7 @@ define i64 @f1(i8 **%esc) {
 
 
 ; CHECK-LABEL: @f2(
-define i64 @f2(i8** %esc) nounwind uwtable ssp {
+define i64 @f2(i8** %esc) nounwind uwtable ssp personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
 entry:
 ; CHECK: invoke noalias i8* @_Znwm(i64 13)
   %call = invoke noalias i8* @_Znwm(i64 13)
@@ -31,7 +31,7 @@ invoke.cont:
   ret i64 %0
 
 lpad:
-  %1 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %1 = landingpad { i8*, i32 }
           filter [0 x i8*] zeroinitializer
   %2 = extractvalue { i8*, i32 } %1, 0
   tail call void @__cxa_call_unexpected(i8* %2) noreturn nounwind

@@ -7,7 +7,7 @@
 	%"struct.std::locale::facet" = type { i32 (...)**, i32 }
 	%"struct.std::string" = type { %"struct.std::basic_string<char,std::char_traits<char>,std::allocator<char> >::_Alloc_hider" }
 
-define void @_ZNKSt6locale4nameEv(%"struct.std::string"* %agg.result) {
+define void @_ZNKSt6locale4nameEv(%"struct.std::string"* %agg.result) personality i32 (...)* @__gxx_personality_v0 {
 entry:
 	%tmp105 = icmp eq i8* null, null		; <i1> [#uses=1]
 	br i1 %tmp105, label %cond_true, label %cond_true222
@@ -45,7 +45,7 @@ cond_next1328:		; preds = %cond_true235, %cond_true
 	ret void
 
 cond_true1402:		; preds = %invcont282, %cond_false280, %cond_true235, %cond_true
-  %lpad = landingpad { i8*, i32 } personality i32 (...)* @__gxx_personality_v0
+  %lpad = landingpad { i8*, i32 }
             cleanup
   ret void
 }

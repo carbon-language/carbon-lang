@@ -1289,7 +1289,7 @@ entry:
 ; CHECK: %tmp1 = tail call i8* @objc_retain(i8* %tmp) [[NUW]]
 ; CHECK-NEXT: invoke
 ; CHECK: }
-define void @test20(double* %self) {
+define void @test20(double* %self) personality i32 (...)* @__gxx_personality_v0 {
 if.then12:
   %tmp = bitcast double* %self to i8*
   %tmp1 = call i8* @objc_retain(i8* %tmp) nounwind
@@ -1302,7 +1302,7 @@ invoke.cont23:                                    ; preds = %if.then12
 
 lpad20:                                           ; preds = %invoke.cont23, %if.then12
   %tmp502 = phi double* [ undef, %invoke.cont23 ], [ %self, %if.then12 ]
-  %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+  %exn = landingpad {i8*, i32}
            cleanup
   unreachable
 

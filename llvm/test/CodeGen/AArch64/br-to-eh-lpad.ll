@@ -7,12 +7,12 @@
 ; that case, the machine verifier, which relies on analyzing branches for this
 ; kind of verification, is unable to check anything, so accepts the CFG.
 
-define void @test_branch_to_landingpad() {
+define void @test_branch_to_landingpad() personality i8* bitcast (i32 (...)* @__objc_personality_v0 to i8*) {
 entry:
   br i1 undef, label %if.end50.thread, label %if.then6
 
 lpad:
-  %0 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__objc_personality_v0 to i8*)
+  %0 = landingpad { i8*, i32 }
           catch %struct._objc_typeinfo.12.129.194.285.350.493.519.532.571.597.623.765* @"OBJC_EHTYPE_$_NSString"
           catch %struct._objc_typeinfo.12.129.194.285.350.493.519.532.571.597.623.765* @OBJC_EHTYPE_id
           catch i8* null
@@ -46,7 +46,7 @@ invoke.cont43:
   unreachable
 
 lpad40:
-  %1 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__objc_personality_v0 to i8*)
+  %1 = landingpad { i8*, i32 }
           catch i8* null
   br label %finally.catchall
 

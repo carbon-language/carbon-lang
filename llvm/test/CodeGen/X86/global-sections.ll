@@ -61,12 +61,12 @@ bb5:
 
 declare void @G()
 
-define void @F3(i32 %y) {
+define void @F3(i32 %y) personality i8* bitcast (void ()* @G to i8*) {
 bb0:
   invoke void @G()
           to label %bb2 unwind label %bb1
 bb1:
-  landingpad { i8*, i32 } personality i8* bitcast (void ()* @G to i8*)
+  landingpad { i8*, i32 }
           catch i8* null
   br label %bb2
 bb2:

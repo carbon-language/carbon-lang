@@ -17,7 +17,7 @@ target triple = "armv5e--netbsd-eabi"
 @_ZTS9exception = linkonce_odr constant [11 x i8] c"9exception\00"
 @_ZTI9exception = linkonce_odr unnamed_addr constant { i8*, i8* } { i8* bitcast (i8** getelementptr inbounds (i8*, i8** @_ZTVN10__cxxabiv117__class_type_infoE, i32 2) to i8*), i8* getelementptr inbounds ([11 x i8], [11 x i8]* @_ZTS9exception, i32 0, i32 0) }
 
-define void @f() uwtable {
+define void @f() uwtable personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
   %1 = alloca i8*
   %2 = alloca i32
   %e = alloca %struct.exception*, align 4
@@ -26,7 +26,7 @@ define void @f() uwtable {
 
   br label %16
 
-  %5 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %5 = landingpad { i8*, i32 }
           catch i8* bitcast ({ i8*, i8* }* @_ZTI9exception to i8*)
   %6 = extractvalue { i8*, i32 } %5, 0
   store i8* %6, i8** %1

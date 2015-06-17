@@ -12,13 +12,13 @@ declare void @abort()
 ; inlined function caused "catch i8* @exception_outer" to appear
 ; multiple times in the resulting landingpad.
 
-define internal void @inner_multiple_resume() {
+define internal void @inner_multiple_resume() personality i8* null {
   invoke void @external_func()
       to label %cont unwind label %lpad
 cont:
   ret void
 lpad:
-  %lp = landingpad i32 personality i8* null
+  %lp = landingpad i32
       catch i8* @exception_inner
   %cond = load i1, i1* @condition
   br i1 %cond, label %resume1, label %resume2
@@ -28,13 +28,13 @@ resume2:
   resume i32 2
 }
 
-define void @outer_multiple_resume() {
+define void @outer_multiple_resume() personality i8* null {
   invoke void @inner_multiple_resume()
       to label %cont unwind label %lpad
 cont:
   ret void
 lpad:
-  %lp = landingpad i32 personality i8* null
+  %lp = landingpad i32
       catch i8* @exception_outer
   resume i32 %lp
 }
@@ -50,25 +50,25 @@ lpad:
 ; inlined function caused "catch i8* @exception_outer" to appear
 ; multiple times in the resulting landingpad.
 
-define internal void @inner_resume_and_call() {
+define internal void @inner_resume_and_call() personality i8* null {
   call void @external_func()
   invoke void @external_func()
       to label %cont unwind label %lpad
 cont:
   ret void
 lpad:
-  %lp = landingpad i32 personality i8* null
+  %lp = landingpad i32
       catch i8* @exception_inner
   resume i32 %lp
 }
 
-define void @outer_resume_and_call() {
+define void @outer_resume_and_call() personality i8* null {
   invoke void @inner_resume_and_call()
       to label %cont unwind label %lpad
 cont:
   ret void
 lpad:
-  %lp = landingpad i32 personality i8* null
+  %lp = landingpad i32
       catch i8* @exception_outer
   resume i32 %lp
 }
@@ -86,26 +86,26 @@ lpad:
 ; function (since the outer function's landingpad will not be
 ; reachable), but it's OK to include this clause.
 
-define internal void @inner_no_resume_or_call() {
+define internal void @inner_no_resume_or_call() personality i8* null {
   invoke void @external_func()
       to label %cont unwind label %lpad
 cont:
   ret void
 lpad:
-  %lp = landingpad i32 personality i8* null
+  %lp = landingpad i32
       catch i8* @exception_inner
   ; A landingpad might have no "resume" if a C++ destructor aborts.
   call void @abort() noreturn nounwind
   unreachable
 }
 
-define void @outer_no_resume_or_call() {
+define void @outer_no_resume_or_call() personality i8* null {
   invoke void @inner_no_resume_or_call()
       to label %cont unwind label %lpad
 cont:
   ret void
 lpad:
-  %lp = landingpad i32 personality i8* null
+  %lp = landingpad i32
       catch i8* @exception_outer
   resume i32 %lp
 }

@@ -741,7 +741,7 @@ global variable. The operand fields are:
 MODULE_CODE_FUNCTION Record
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-``[FUNCTION, type, callingconv, isproto, linkage, paramattr, alignment, section, visibility, gc, prologuedata, dllstorageclass, comdat, prefixdata]``
+``[FUNCTION, type, callingconv, isproto, linkage, paramattr, alignment, section, visibility, gc, prologuedata, dllstorageclass, comdat, prefixdata, personalityfn]``
 
 The ``FUNCTION`` record (code 8) marks the declaration or definition of a
 function. The operand fields are:
@@ -795,6 +795,8 @@ function. The operand fields are:
 * *prefixdata*: If non-zero, the value index of the prefix data for this function,
   plus 1.
 
+* *personalityfn*: If non-zero, the value index of the personality function for this function,
+  plus 1.
 
 MODULE_CODE_ALIAS Record
 ^^^^^^^^^^^^^^^^^^^^^^^^

@@ -13,27 +13,33 @@ entry:
   ret i32 0
 }
 
+; CHECK-LABEL: define void @landingpadInstr1
+; CHECK-SAME: personality i32 (...)* @__gxx_personality_v0
 define void @landingpadInstr1(i1 %cond1, <2 x i1> %cond2, <2 x i8> %x1, <2 x i8> %x2){
 entry:
-; CHECK: %res = landingpad { i8*, i32 } personality i32 (...)* @__gxx_personality_v0
+; CHECK: %res = landingpad { i8*, i32 }
   %res = landingpad { i8*, i32 } personality i32 (...)* @__gxx_personality_v0 
 ; CHECK: catch i8** @_ZTIi
   catch i8** @_ZTIi
   ret void
 }
 
+; CHECK-LABEL: define void @landingpadInstr2
+; CHECK-SAME: personality i32 (...)* @__gxx_personality_v0
 define void @landingpadInstr2(i1 %cond1, <2 x i1> %cond2, <2 x i8> %x1, <2 x i8> %x2){
 entry:
-; CHECK: %res = landingpad { i8*, i32 } personality i32 (...)* @__gxx_personality_v0
+; CHECK: %res = landingpad { i8*, i32 }
   %res = landingpad { i8*, i32 } personality i32 (...)* @__gxx_personality_v0
 ; CHECK: cleanup
   cleanup
   ret void
 }
 
+; CHECK-LABEL: define void @landingpadInstr3
+; CHECK-SAME: personality i32 (...)* @__gxx_personality_v0
 define void @landingpadInstr3(i1 %cond1, <2 x i1> %cond2, <2 x i8> %x1, <2 x i8> %x2){
 entry:
-; CHECK: %res = landingpad { i8*, i32 } personality i32 (...)* @__gxx_personality_v0 
+; CHECK: %res = landingpad { i8*, i32 }
   %res = landingpad { i8*, i32 } personality i32 (...)* @__gxx_personality_v0
 ; CHECK: catch i8** @_ZTIi
   catch i8** @_ZTIi

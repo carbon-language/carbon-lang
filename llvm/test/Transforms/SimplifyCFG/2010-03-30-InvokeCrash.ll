@@ -5,7 +5,7 @@ target triple = "x86_64-unknown-linux-gnu"
 
 declare void @bar(i32)
 
-define void @foo() {
+define void @foo() personality i32 (...)* @__gxx_personality_v0 {
 entry:
  invoke void @bar(i32 undef)
          to label %r unwind label %u
@@ -14,7 +14,7 @@ r:                                                ; preds = %entry
  ret void
 
 u:                                                ; preds = %entry
- %val = landingpad { i8*, i32 } personality i32 (...)* @__gxx_personality_v0
+ %val = landingpad { i8*, i32 }
           cleanup
  resume { i8*, i32 } %val
 }

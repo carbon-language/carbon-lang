@@ -1,6 +1,6 @@
 ; RUN: llc < %s -mtriple=i386-pc-mingw32
 
-define void @func() nounwind {
+define void @func() nounwind personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
 invoke.cont:
   %call = tail call i8* @malloc()
   %a = invoke i32 @bar()
@@ -10,7 +10,7 @@ bb1:
   ret void
 
 lpad:
-  %exn.ptr = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %exn.ptr = landingpad { i8*, i32 }
            catch i8* null
   %exn = extractvalue { i8*, i32 } %exn.ptr, 0
   %eh.selector = extractvalue { i8*, i32 } %exn.ptr, 1

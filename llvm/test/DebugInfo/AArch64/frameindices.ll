@@ -83,7 +83,7 @@ entry:
   ret void, !dbg !73
 }
 
-define void @_Z3f16v() #0 {
+define void @_Z3f16v() #0 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
 entry:
   %agg.tmp.i.i = alloca %struct.A, align 8
   %d = alloca %struct.B, align 1
@@ -127,7 +127,7 @@ invoke.cont:                                      ; preds = %call.i.i.noexc
   ret void, !dbg !94
 
 lpad:                                             ; preds = %call.i.i.noexc, %entry
-  %3 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %3 = landingpad { i8*, i32 }
           cleanup, !dbg !94
   call void @llvm.dbg.value(metadata %struct.B* %d, i64 0, metadata !39, metadata !79), !dbg !82
   %call2 = call %struct.B* @_ZN1BD1Ev(%struct.B* %d) #3, !dbg !94

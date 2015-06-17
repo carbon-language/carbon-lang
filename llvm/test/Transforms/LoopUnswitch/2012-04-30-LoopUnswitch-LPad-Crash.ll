@@ -8,7 +8,7 @@ target triple = "x86_64-apple-macosx10.7.0"
 %class.B.21.41.65.101.137.157.177.197.237.241.245.249.261.293.301.337.345.378 = type { %class.A.20.40.64.100.136.156.176.196.236.240.244.248.260.292.300.336.344.377* }
 %class.A.20.40.64.100.136.156.176.196.236.240.244.248.260.292.300.336.344.377 = type { i8 }
 
-define void @_Z23get_reconstruction_pathv() uwtable ssp {
+define void @_Z23get_reconstruction_pathv() uwtable ssp personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
 entry:
   %c = alloca %class.D.22.42.66.102.138.158.178.198.238.242.246.250.262.294.302.338.346.379, align 8
   br label %for.cond
@@ -33,7 +33,7 @@ invoke.cont6:                                     ; preds = %invoke.cont4
   br i1 undef, label %for.cond3, label %for.end
 
 lpad:                                             ; preds = %for.end, %invoke.cont4, %for.cond3, %invoke.cont, %for.cond
-  %0 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %0 = landingpad { i8*, i32 }
           cleanup
   resume { i8*, i32 } undef
 

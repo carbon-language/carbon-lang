@@ -1,7 +1,7 @@
 ; RUN: llc < %s -mtriple=thumbv7-apple-darwin10
 ; <rdar://problem/8264008>
 
-define linkonce_odr arm_apcscc void @func1() {
+define linkonce_odr arm_apcscc void @func1() personality i8* bitcast (i32 (...)* @__gxx_personality_sj0 to i8*) {
 entry:
   %save_filt.936 = alloca i32                     ; <i32*> [#uses=2]
   %save_eptr.935 = alloca i8*                     ; <i8**> [#uses=2]
@@ -34,7 +34,7 @@ return:                                           ; preds = %entry
   ret void
 
 lpad:                                             ; preds = %bb
-  %eh_ptr = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_sj0 to i8*)
+  %eh_ptr = landingpad { i8*, i32 }
               cleanup
   %exn = extractvalue { i8*, i32 } %eh_ptr, 0
   store i8* %exn, i8** %eh_exception

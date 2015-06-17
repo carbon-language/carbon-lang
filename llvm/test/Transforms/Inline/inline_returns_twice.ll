@@ -37,7 +37,7 @@ entry:
   ret i32 %add
 }
 
-define i32 @inner3() {
+define i32 @inner3() personality i8* null {
 entry:
   %invoke = invoke i32 @a() returns_twice
       to label %cont unwind label %lpad
@@ -47,7 +47,7 @@ cont:
   ret i32 %add
 
 lpad:
-  %lp = landingpad i32 personality i8* null cleanup
+  %lp = landingpad i32 cleanup
   resume i32 %lp
 }
 
@@ -60,7 +60,7 @@ entry:
   ret i32 %add
 }
 
-define i32 @inner4() returns_twice {
+define i32 @inner4() returns_twice personality i8* null {
 entry:
   %invoke = invoke i32 @a() returns_twice
       to label %cont unwind label %lpad
@@ -70,7 +70,7 @@ cont:
   ret i32 %add
 
 lpad:
-  %lp = landingpad i32 personality i8* null cleanup
+  %lp = landingpad i32 cleanup
   resume i32 %lp
 }
 

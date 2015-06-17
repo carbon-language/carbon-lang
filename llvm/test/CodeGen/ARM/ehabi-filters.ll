@@ -14,7 +14,7 @@ declare void @__cxa_throw(i8*, i8*, i8*)
 
 declare void @__cxa_call_unexpected(i8*)
 
-define i32 @main() {
+define i32 @main() personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
 ; CHECK-LABEL: main:
 entry:
   %exception.i = tail call i8* @__cxa_allocate_exception(i32 4) nounwind
@@ -24,7 +24,7 @@ entry:
           to label %unreachable.i unwind label %lpad.i
 
 lpad.i:                                           ; preds = %entry
-  %1 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %1 = landingpad { i8*, i32 }
           filter [1 x i8*] [i8* bitcast (i8** @_ZTIi to i8*)]
           catch i8* bitcast (i8** @_ZTIi to i8*)
 ; CHECK: .long	_ZTIi(target2)          @ TypeInfo 1
@@ -45,7 +45,7 @@ unreachable.i:                                    ; preds = %entry
   unreachable
 
 lpad:                                             ; preds = %ehspec.unexpected.i
-  %4 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %4 = landingpad { i8*, i32 }
           catch i8* bitcast (i8** @_ZTIi to i8*)
   br label %lpad.body
 

@@ -29,7 +29,7 @@ entry:
 
 declare i32 @__gxx_personality_v0(...)
 
-define i64 @Invoke1(i8** %esc) nounwind uwtable ssp sanitize_address {
+define i64 @Invoke1(i8** %esc) nounwind uwtable ssp sanitize_address personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
 entry:
   invoke void @MyNoReturnFunc(i32 1)
           to label %invoke.cont unwind label %lpad
@@ -38,7 +38,7 @@ invoke.cont:
   ret i64 0
 
 lpad:
-  %0 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %0 = landingpad { i8*, i32 }
           filter [0 x i8*] zeroinitializer
   ret i64 1
 }

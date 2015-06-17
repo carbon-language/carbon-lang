@@ -13,7 +13,7 @@
 @.str33 = external constant [29 x i32]		; <[29 x i32]*> [#uses=1]
 @.str89 = external constant [5 x i32]		; <[5 x i32]*> [#uses=1]
 
-define void @_ZNK10wxDateTime6FormatEPKwRKNS_8TimeZoneE(%struct.wxString* noalias sret  %agg.result, %struct.wxDateTime* %this, i32* %format, %"struct.wxDateTime::TimeZone"* %tz, i1 %foo) {
+define void @_ZNK10wxDateTime6FormatEPKwRKNS_8TimeZoneE(%struct.wxString* noalias sret  %agg.result, %struct.wxDateTime* %this, i32* %format, %"struct.wxDateTime::TimeZone"* %tz, i1 %foo) personality i32 (...)* @__gxx_personality_v0 {
 entry:
 	br i1 %foo, label %bb116.i, label %bb115.critedge.i
 bb115.critedge.i:		; preds = %entry
@@ -151,11 +151,11 @@ bb7819:		; preds = %bb3314
 bb7834:		; preds = %bb7806, %invcont5831
 	br label %bb3261
 lpad:		; preds = %bb7806, %bb5968, %invcont5814, %bb440.i8663, %bb155.i8541, %bb5657, %bb3306
-        %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+        %exn = landingpad {i8*, i32}
                  cleanup
 	ret void
 lpad8185:		; preds = %invcont5831
-        %exn8185 = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+        %exn8185 = landingpad {i8*, i32}
                  cleanup
 	ret void
 }

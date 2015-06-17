@@ -47,7 +47,7 @@ entry:
 }
 
 ; We can annotate the range of the return value of an INVOKE.
-define void @invoke_all(i8* %x) {
+define void @invoke_all(i8* %x) personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
 entry:
   %v1 = invoke i8 @f1(i8* %x) to label %cont unwind label %lpad, !range !0
   %v2 = invoke i8 @f2(i8* %x) to label %cont unwind label %lpad, !range !1
@@ -59,7 +59,7 @@ cont:
   ret void
 
 lpad:
-  %4 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %4 = landingpad { i8*, i32 }
           filter [0 x i8*] zeroinitializer
   ret void
 }

@@ -10,7 +10,7 @@ declare void @filt1()
 declare void @_Z1fv()
 declare i32 @llvm.eh.typeid.for(i8*)
 
-define i32 @main() uwtable {
+define i32 @main() uwtable personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
 entry:
   invoke void @_Z1fv()
           to label %try.cont unwind label %lpad
@@ -19,7 +19,7 @@ try.cont:
   ret i32 0
 
 lpad:
-  %0 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %0 = landingpad { i8*, i32 }
           cleanup
           catch i8* bitcast (void ()* @filt0 to i8*)
           catch i8* bitcast (void ()* @filt1 to i8*)

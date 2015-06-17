@@ -10,14 +10,14 @@ define i32 @f1(i32 %x) {
 }
 
 declare i32 @g()
-define void @f2(i32 %x) {
+define void @f2(i32 %x) personality i32 ()* @g {
 bb0:
   %y1 = invoke i32 @g() to label %bb1 unwind label %bb2
 bb1:
   ret void
 bb2:
   %y2 = phi i32 [%y1, %bb0]
-  %y3 = landingpad i32 personality i32 ()* @g
+  %y3 = landingpad i32
           cleanup
   ret void
 ; CHECK: Instruction does not dominate all uses!
@@ -26,13 +26,13 @@ bb2:
 ; CHECK-NEXT:  %y2 = phi i32 [ %y1, %bb0 ]
 }
 
-define void @f3(i32 %x) {
+define void @f3(i32 %x) personality i32 ()* @g {
 bb0:
   %y1 = invoke i32 @g() to label %bb1 unwind label %bb2
 bb1:
   ret void
 bb2:
-  %y2 = landingpad i32 personality i32 ()* @g
+  %y2 = landingpad i32
           cleanup
   br label %bb3
 bb3:

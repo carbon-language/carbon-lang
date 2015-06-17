@@ -99,7 +99,7 @@ declare i32 @__sprintf_chk(i8*, i32, i64, i8*, ...)
 %"class.__gnu_cxx::hash_map" = type { %"class.__gnu_cxx::hashtable" }
 %"class.__gnu_cxx::hashtable" = type { i64, i64, i64, i64, i64, i64 }
 
-define void @main() uwtable ssp {
+define void @main() uwtable ssp personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
 entry:
   %X = alloca %"class.__gnu_cxx::hash_map", align 8
   br i1 undef, label %cond.true, label %cond.end
@@ -117,7 +117,7 @@ exit.i:                                           ; preds = %cond.end
   unreachable
 
 lpad2.i.i.i.i:                                    ; preds = %cond.end
-  %0 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %0 = landingpad { i8*, i32 }
           cleanup
   br i1 undef, label %lpad.body.i.i, label %if.then.i.i.i.i.i.i.i.i
 

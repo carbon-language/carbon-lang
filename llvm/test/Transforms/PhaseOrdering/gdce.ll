@@ -67,7 +67,7 @@ entry:
   ret void
 }
 
-define linkonce_odr void @_ZN4BaseD0Ev(%class.Base* %this) unnamed_addr uwtable ssp align 2 {
+define linkonce_odr void @_ZN4BaseD0Ev(%class.Base* %this) unnamed_addr uwtable ssp align 2 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
 entry:
   %this.addr = alloca %class.Base*, align 8
   %exn.slot = alloca i8*
@@ -83,7 +83,7 @@ invoke.cont:                                      ; preds = %entry
   ret void
 
 lpad:                                             ; preds = %entry
-  %1 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %1 = landingpad { i8*, i32 }
           cleanup
   %2 = extractvalue { i8*, i32 } %1, 0
   store i8* %2, i8** %exn.slot

@@ -10,7 +10,7 @@ define internal void @foo(i32* %p, i32* %q) {
 
 declare void @llvm.memcpy.i32(i8* nocapture, i8* nocapture, i32, i32) nounwind
 
-define i32 @main() {
+define i32 @main() personality i32 (...)* @__gxx_personality_v0 {
 	%a = alloca i32		; <i32*> [#uses=3]
 	%b = alloca i32		; <i32*> [#uses=2]
 	store i32 1, i32* %a, align 4
@@ -23,7 +23,7 @@ invcont:
 	ret i32 %retval
 
 lpad:
-        %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+        %exn = landingpad {i8*, i32}
             catch i8* null
 	unreachable
 }

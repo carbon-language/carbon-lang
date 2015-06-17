@@ -8,7 +8,7 @@ target triple = "x86_64-apple-darwin"
 ; Make sure we are generating "call asm" instead of "invoke asm".
 ; CHECK: call void asm
 ; CHECK-LABEL: @callee_with_asm
-define void @caller() {
+define void @caller() personality i8* bitcast (i32 (...)* @__objc_personality_v0 to i8*) {
   br i1 undef, label %1, label %4
 
 ; <label>:1
@@ -16,7 +16,7 @@ define void @caller() {
           to label %4 unwind label %2
 
 ; <label>:2
-  %3 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__objc_personality_v0 to i8*)
+  %3 = landingpad { i8*, i32 }
           cleanup
   resume { i8*, i32 } undef
 

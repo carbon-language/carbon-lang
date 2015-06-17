@@ -6,7 +6,7 @@
 
 declare void @bar(%struct.__CFString*, %struct.__CFString*)
 
-define noalias i8* @foo(i8* nocapture %inRefURL) noreturn ssp {
+define noalias i8* @foo(i8* nocapture %inRefURL) noreturn ssp personality i8* bitcast (i32 (...)* @__gxx_personality_sj0 to i8*) {
 entry:
   %call = tail call %struct.__CFString* @bar3()
   %call2 = invoke i8* @bar2()
@@ -17,14 +17,14 @@ for.cond:                                         ; preds = %entry, %for.cond
           to label %for.cond unwind label %lpad5
 
 lpad:                                             ; preds = %entry
-  %0 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_sj0 to i8*)
+  %0 = landingpad { i8*, i32 }
           cleanup
   %1 = extractvalue { i8*, i32 } %0, 0
   %2 = extractvalue { i8*, i32 } %0, 1
   br label %ehcleanup
 
 lpad5:                                            ; preds = %for.cond
-  %3 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_sj0 to i8*)
+  %3 = landingpad { i8*, i32 }
           cleanup
   %4 = extractvalue { i8*, i32 } %3, 0
   %5 = extractvalue { i8*, i32 } %3, 1
@@ -32,7 +32,7 @@ lpad5:                                            ; preds = %for.cond
           to label %ehcleanup unwind label %terminate.lpad.i.i16
 
 terminate.lpad.i.i16:                             ; preds = %lpad5
-  %6 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_sj0 to i8*)
+  %6 = landingpad { i8*, i32 }
           catch i8* null
   tail call void @terminatev() noreturn nounwind
   unreachable
@@ -45,7 +45,7 @@ ehcleanup:                                        ; preds = %lpad5, %lpad
           to label %_ZN5SmartIPK10__CFStringED1Ev.exit unwind label %terminate.lpad.i.i
 
 terminate.lpad.i.i:                               ; preds = %ehcleanup
-  %8 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_sj0 to i8*)
+  %8 = landingpad { i8*, i32 }
           catch i8* null
   tail call void @terminatev() noreturn nounwind
   unreachable
@@ -90,7 +90,7 @@ declare void @terminatev()
 
 @.str = private unnamed_addr constant [12 x i8] c"some_string\00", align 1
 
-define void @_Z4foo1c(i8 signext %a) {
+define void @_Z4foo1c(i8 signext %a) personality i8* bitcast (i32 (...)* @__gxx_personality_sj0 to i8*) {
 entry:
   %s1 = alloca %"class.std::__1::basic_string", align 4
   call void @_ZNSt3__112basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEE6__initEPKcm(%"class.std::__1::basic_string"* %s1, i8* getelementptr inbounds ([12 x i8], [12 x i8]* @.str, i32 0, i32 0), i32 11)
@@ -131,14 +131,14 @@ invoke.cont6:                                     ; preds = %_ZNSt3__113__vector
   ret void
 
 lpad.body:                                        ; preds = %entry
-  %2 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_sj0 to i8*)
+  %2 = landingpad { i8*, i32 }
           cleanup
   %3 = extractvalue { i8*, i32 } %2, 0
   %4 = extractvalue { i8*, i32 } %2, 1
   br label %ehcleanup
 
 lpad2:                                            ; preds = %invoke.cont
-  %5 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_sj0 to i8*)
+  %5 = landingpad { i8*, i32 }
           cleanup
   %6 = extractvalue { i8*, i32 } %5, 0
   %7 = extractvalue { i8*, i32 } %5, 1
@@ -161,7 +161,7 @@ eh.resume:                                        ; preds = %ehcleanup
   resume { i8*, i32 } %lpad.val13
 
 terminate.lpad:                                   ; preds = %ehcleanup
-  %8 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_sj0 to i8*)
+  %8 = landingpad { i8*, i32 }
           catch i8* null
   %9 = extractvalue { i8*, i32 } %8, 0
   call void @__clang_call_terminate(i8* %9)

@@ -19,7 +19,7 @@ declare void @llvm.frameescape(...)
 declare dllimport void @EnterCriticalSection(%struct._RTL_CRITICAL_SECTION*)
 declare dllimport void @LeaveCriticalSection(%struct._RTL_CRITICAL_SECTION*)
 
-define void @use_finally() {
+define void @use_finally() personality i8* bitcast (i32 (...)* @__C_specific_handler to i8*) {
 entry:
   invoke void @may_crash()
           to label %invoke.cont unwind label %lpad
@@ -29,7 +29,7 @@ invoke.cont:                                      ; preds = %entry
   ret void
 
 lpad:                                             ; preds = %entry
-  %0 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__C_specific_handler to i8*)
+  %0 = landingpad { i8*, i32 }
           cleanup
   %call.i2 = tail call i32 @puts(i8* null)
   resume { i8*, i32 } %0
@@ -44,7 +44,7 @@ lpad:                                             ; preds = %entry
 ; CHECK-NEXT: indirectbr i8* %recover, []
 
 ; Function Attrs: nounwind uwtable
-define i32 @call_may_crash_locked() {
+define i32 @call_may_crash_locked() personality i8* bitcast (i32 (...)* @__C_specific_handler to i8*) {
 entry:
   %p = alloca %struct._RTL_CRITICAL_SECTION, align 8
   call void (...) @llvm.frameescape(%struct._RTL_CRITICAL_SECTION* %p)
@@ -60,7 +60,7 @@ invoke.cont:                                      ; preds = %entry
   ret i32 42
 
 lpad:                                             ; preds = %entry
-  %tmp7 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__C_specific_handler to i8*)
+  %tmp7 = landingpad { i8*, i32 }
             cleanup
   %tmp8 = call i8* @llvm.frameaddress(i32 0)
   %tmp9 = call i8* @llvm.framerecover(i8* bitcast (i32 ()* @call_may_crash_locked to i8*), i8* %tmp8, i32 0)

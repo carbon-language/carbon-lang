@@ -8,7 +8,7 @@ declare i8* @_Znwm(i64)
 
 
 ; CHECK-LABEL: @f1(
-define i64 @f1() nounwind uwtable ssp {
+define i64 @f1() nounwind uwtable ssp personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
 entry:
 ; CHECK: nvoke noalias i8* undef()
   %call = invoke noalias i8* undef()
@@ -20,7 +20,7 @@ invoke.cont:
   ret i64 %0
 
 lpad:
-  %1 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %1 = landingpad { i8*, i32 }
           filter [0 x i8*] zeroinitializer
   %2 = extractvalue { i8*, i32 } %1, 0
   tail call void @__cxa_call_unexpected(i8* %2) noreturn nounwind
@@ -28,7 +28,7 @@ lpad:
 }
 
 ; CHECK-LABEL: @f2(
-define i64 @f2() nounwind uwtable ssp {
+define i64 @f2() nounwind uwtable ssp personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
 entry:
 ; CHECK: nvoke noalias i8* null()
   %call = invoke noalias i8* null()
@@ -40,7 +40,7 @@ invoke.cont:
   ret i64 %0
 
 lpad:
-  %1 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %1 = landingpad { i8*, i32 }
           filter [0 x i8*] zeroinitializer
   %2 = extractvalue { i8*, i32 } %1, 0
   tail call void @__cxa_call_unexpected(i8* %2) noreturn nounwind
@@ -48,7 +48,7 @@ lpad:
 }
 
 ; CHECK-LABEL: @f3(
-define void @f3() nounwind uwtable ssp {
+define void @f3() nounwind uwtable ssp personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
 ; CHECK: invoke void @llvm.donothing()
   %call = invoke noalias i8* @_Znwm(i64 13)
           to label %invoke.cont unwind label %lpad
@@ -57,7 +57,7 @@ invoke.cont:
   ret void
 
 lpad:
-  %1 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %1 = landingpad { i8*, i32 }
           filter [0 x i8*] zeroinitializer
   %2 = extractvalue { i8*, i32 } %1, 0
   tail call void @__cxa_call_unexpected(i8* %2) noreturn nounwind

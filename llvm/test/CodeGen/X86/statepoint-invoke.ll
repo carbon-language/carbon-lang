@@ -9,7 +9,7 @@ declare i32 @"personality_function"()
 
 define i64 addrspace(1)* @test_basic(i64 addrspace(1)* %obj,
                                      i64 addrspace(1)* %obj1)
-gc "statepoint-example" {
+gc "statepoint-example" personality i32 ()* @"personality_function" {
 entry:
   ; CHECK: Ltmp{{[0-9]+}}:
   ; CHECK: callq some_call
@@ -31,7 +31,7 @@ exceptional_return:
   ; CHECK: Ltmp{{[0-9]+}}:
   ; CHECK: movq
   ; CHECK: retq
-  %landing_pad = landingpad { i8*, i32 } personality i32 ()* @"personality_function"
+  %landing_pad = landingpad { i8*, i32 }
           cleanup
   %relocate_token = extractvalue { i8*, i32 } %landing_pad, 1
   %obj.relocated1 = call coldcc i64 addrspace(1)* @llvm.experimental.gc.relocate.p1i64(i32 %relocate_token, i32 13, i32 13)
@@ -46,7 +46,7 @@ exceptional_return:
 
 define i64 addrspace(1)* @test_result(i64 addrspace(1)* %obj,
                                       i64 addrspace(1)* %obj1)
-  gc "statepoint-example" {
+  gc "statepoint-example" personality i32 ()* @personality_function {
 entry:
   ; CHECK: .Ltmp{{[0-9]+}}:
   ; CHECK: callq some_other_call
@@ -63,7 +63,7 @@ normal_return:
 exceptional_return:
   ; CHECK: .Ltmp{{[0-9]+}}:
   ; CHECK: movq
-  %landing_pad = landingpad { i8*, i32 } personality i32 ()* @personality_function
+  %landing_pad = landingpad { i8*, i32 }
           cleanup
   %relocate_token = extractvalue { i8*, i32 } %landing_pad, 1
   %obj.relocated = call coldcc i64 addrspace(1)* @llvm.experimental.gc.relocate.p1i64(i32 %relocate_token, i32 13, i32 13)
@@ -76,7 +76,7 @@ exceptional_return:
 ; CHECK: .align 4
 
 define i64 addrspace(1)* @test_same_val(i1 %cond, i64 addrspace(1)* %val1, i64 addrspace(1)* %val2, i64 addrspace(1)* %val3)
-  gc "statepoint-example" {
+  gc "statepoint-example" personality i32 ()* @"personality_function" {
 entry:
   br i1 %cond, label %left, label %right
 
@@ -120,14 +120,14 @@ normal_return:
   ret i64 addrspace(1)* %ret
 
 exceptional_return.left:
-  %landing_pad = landingpad { i8*, i32 } personality i32 ()* @"personality_function"
+  %landing_pad = landingpad { i8*, i32 }
           cleanup
   %relocate_token = extractvalue { i8*, i32 } %landing_pad, 1
   %val.relocated2 = call coldcc i64 addrspace(1)* @llvm.experimental.gc.relocate.p1i64(i32 %relocate_token, i32 13, i32 13)
   ret i64 addrspace(1)* %val.relocated2
 
 exceptional_return.right:
-  %landing_pad1 = landingpad { i8*, i32 } personality i32 ()* @"personality_function"
+  %landing_pad1 = landingpad { i8*, i32 }
           cleanup
   %relocate_token1 = extractvalue { i8*, i32 } %landing_pad1, 1
   %val.relocated3 = call coldcc i64 addrspace(1)* @llvm.experimental.gc.relocate.p1i64(i32 %relocate_token1, i32 13, i32 13)
@@ -135,7 +135,7 @@ exceptional_return.right:
 }
 
 define i64 addrspace(1)* @test_null_undef(i64 addrspace(1)* %val1)
-       gc "statepoint-example" {
+       gc "statepoint-example" personality i32 ()* @"personality_function" {
 ; CHECK-LABEL: test_null_undef:
 entry:
   ; CHECK: callq some_call
@@ -152,7 +152,7 @@ normal_return:
   ret i64 addrspace(1)* %null.relocated
 
 exceptional_return:
-  %landing_pad = landingpad { i8*, i32 } personality i32 ()* @"personality_function"
+  %landing_pad = landingpad { i8*, i32 }
           cleanup
   %relocate_token = extractvalue { i8*, i32 } %landing_pad, 1
   %null.relocated2 = call coldcc i64 addrspace(1)* @llvm.experimental.gc.relocate.p1i64(i32 %relocate_token, i32 13, i32 13)
@@ -161,7 +161,7 @@ exceptional_return:
 }
 
 define i64 addrspace(1)* @test_alloca_and_const(i64 addrspace(1)* %val1)
-       gc "statepoint-example" {
+       gc "statepoint-example" personality i32 ()* @"personality_function" {
 ; CHECK-LABEL: test_alloca_and_const:
 entry:
   %a = alloca i32
@@ -183,7 +183,7 @@ exceptional_return:
   ; CHECK: movl	$15
   ; CHECK-NEXT: popq
   ; CHECK-NEXT: retq
-  %landing_pad = landingpad { i8*, i32 } personality i32 ()* @"personality_function"
+  %landing_pad = landingpad { i8*, i32 }
           cleanup
   %relocate_token = extractvalue { i8*, i32 } %landing_pad, 1
   %aa.rel2 = call coldcc i64 addrspace(1)* @llvm.experimental.gc.relocate.p1i64(i32 %relocate_token, i32 14, i32 14)

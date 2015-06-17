@@ -61,7 +61,7 @@ target triple = "powerpc64-bgq-linux"
 @.str28 = external unnamed_addr constant [7 x i8], align 1
 @_ZN4Foam4PoutE = external global %"class.Foam::prefixOSstream.27", align 8
 
-define void @_ZN4Foam13checkTopologyERKNS_8polyMeshEbb(i1 zeroext %allTopology) #0 {
+define void @_ZN4Foam13checkTopologyERKNS_8polyMeshEbb(i1 zeroext %allTopology) #0 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
 entry:
   br i1 undef, label %for.body, label %for.cond.cleanup
 
@@ -124,7 +124,7 @@ _ZNK4Foam8ZoneMeshINS_9pointZoneENS_8polyMeshEE15checkDefinitionEb.exit: ; preds
           to label %_ZN4Foam4wordC2EPKcb.exit unwind label %lpad.i
 
 lpad.i:                                           ; preds = %_ZNK4Foam8ZoneMeshINS_9pointZoneENS_8polyMeshEE15checkDefinitionEb.exit
-  %0 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %0 = landingpad { i8*, i32 }
           cleanup
   resume { i8*, i32 } %0
 
@@ -157,7 +157,7 @@ for.cond.cleanup69:                               ; preds = %_ZNSsD2Ev.exit
   br i1 undef, label %if.then121, label %if.else
 
 lpad:                                             ; preds = %_ZN4Foam4wordC2EPKcb.exit
-  %1 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %1 = landingpad { i8*, i32 }
           cleanup
   br i1 undef, label %_ZNSsD2Ev.exit1578, label %if.then.i.i1570, !prof !1
 
@@ -181,7 +181,7 @@ if.else:                                          ; preds = %for.cond.cleanup69
           to label %_ZN4Foam4wordC2EPKcb.exit1701 unwind label %lpad.i1689
 
 lpad.i1689:                                       ; preds = %if.else
-  %2 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %2 = landingpad { i8*, i32 }
           cleanup
   unreachable
 
@@ -200,12 +200,12 @@ if.then178:                                       ; preds = %invoke.cont176
   unreachable
 
 lpad165:                                          ; preds = %_ZN4Foam4wordC2EPKcb.exit1701
-  %3 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %3 = landingpad { i8*, i32 }
           cleanup
   unreachable
 
 lpad175:                                          ; preds = %invoke.cont169
-  %4 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %4 = landingpad { i8*, i32 }
           cleanup
   invoke void @_ZN4Foam8pointSetD1Ev()
           to label %eh.resume unwind label %terminate.lpad
@@ -215,7 +215,7 @@ if.end213:                                        ; preds = %invoke.cont176
           to label %_ZN4Foam4wordC2EPKcb.exit1777 unwind label %lpad.i1765
 
 lpad.i1765:                                       ; preds = %if.end213
-  %5 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %5 = landingpad { i8*, i32 }
           cleanup
   br i1 undef, label %eh.resume.i1776, label %if.then.i.i.i1767, !prof !1
 
@@ -247,12 +247,12 @@ invoke.cont231:                                   ; preds = %_ZNSsD2Ev.exit1792
           to label %invoke.cont243 unwind label %lpad230
 
 lpad217:                                          ; preds = %_ZN4Foam4wordC2EPKcb.exit1777
-  %6 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %6 = landingpad { i8*, i32 }
           cleanup
   br label %eh.resume
 
 lpad230:                                          ; preds = %invoke.cont231, %_ZNSsD2Ev.exit1792
-  %7 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %7 = landingpad { i8*, i32 }
           cleanup
   invoke void @_ZN4Foam7faceSetD1Ev()
           to label %eh.resume unwind label %terminate.lpad
@@ -262,7 +262,7 @@ invoke.cont243:                                   ; preds = %invoke.cont231
           to label %_ZN4Foam4wordC2EPKcb.exit1862 unwind label %lpad.i1850
 
 lpad.i1850:                                       ; preds = %invoke.cont243
-  %8 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %8 = landingpad { i8*, i32 }
           cleanup
   unreachable
 
@@ -283,7 +283,7 @@ if.then292:                                       ; preds = %_ZNSsD2Ev.exit1877
   unreachable
 
 lpad276:                                          ; preds = %_ZN4Foam4wordC2EPKcb.exit1862
-  %9 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %9 = landingpad { i8*, i32 }
           cleanup
   unreachable
 
@@ -314,7 +314,7 @@ invoke.cont676:                                   ; preds = %invoke.cont674
           to label %if.end878 unwind label %lpad663
 
 lpad663:                                          ; preds = %invoke.cont670, %if.end660, %invoke.cont668, %invoke.cont674, %invoke.cont676
-  %10 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %10 = landingpad { i8*, i32 }
           cleanup
   br i1 undef, label %_ZN4Foam4ListIiED2Ev.exit.i3073, label %delete.notnull.i.i3071
 
@@ -342,7 +342,7 @@ if.else888:                                       ; preds = %_ZN4Foam11regionSpl
           to label %_ZN4Foam4wordC2EPKcb.exit3098 unwind label %lpad.i3086
 
 lpad.i3086:                                       ; preds = %if.else888
-  %11 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %11 = landingpad { i8*, i32 }
           cleanup
   unreachable
 
@@ -371,7 +371,7 @@ invoke.cont906:                                   ; preds = %call.i3116.noexc
   unreachable
 
 lpad898:                                          ; preds = %_ZN4Foam4wordC2EPKcb.exit3098
-  %12 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %12 = landingpad { i8*, i32 }
           cleanup
   br i1 undef, label %_ZNSsD2Ev.exit3204, label %if.then.i.i3196, !prof !1
 
@@ -382,7 +382,7 @@ _ZNSsD2Ev.exit3204:                               ; preds = %lpad898
   unreachable
 
 lpad905.loopexit.split-lp:                        ; preds = %call.i3116.noexc, %_ZNSsD2Ev.exit3113
-  %lpad.loopexit.split-lp = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %lpad.loopexit.split-lp = landingpad { i8*, i32 }
           cleanup
   invoke void @_ZN4Foam8pointSetD1Ev()
           to label %eh.resume unwind label %terminate.lpad
@@ -391,7 +391,7 @@ eh.resume:                                        ; preds = %_ZN4Foam4ListIiED2E
   resume { i8*, i32 } undef
 
 terminate.lpad:                                   ; preds = %_ZN4Foam4ListIiED2Ev.exit.i3073, %lpad230, %lpad175, %lpad905.loopexit.split-lp
-  %13 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %13 = landingpad { i8*, i32 }
           catch i8* null
   unreachable
 }

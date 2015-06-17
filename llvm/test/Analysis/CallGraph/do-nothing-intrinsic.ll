@@ -1,11 +1,11 @@
 ; RUN: opt < %s -basiccg
 ; PR13903
 
-define void @main() {
+define void @main() personality i8 0 {
   invoke void @llvm.donothing()
           to label %ret unwind label %unw
 unw:
-  %tmp = landingpad i8 personality i8 0 cleanup
+  %tmp = landingpad i8 cleanup
   br label %ret
 ret:
   ret void

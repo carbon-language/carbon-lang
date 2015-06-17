@@ -76,7 +76,7 @@ declare %class.btCapsuleShape* @_ZN14btCapsuleShapeC1Eff(%class.btCapsuleShape*,
 
 declare %class.btMatrix3x3* @_ZN11btTransform8getBasisEv(%class.btTransform*) nounwind inlinehint ssp align 2
 
-define %class.RagDoll* @_ZN7RagDollC2EP15btDynamicsWorldRK9btVector3f(%class.RagDoll* %this, %class.btDynamicsWorld* %ownerWorld, %class.btVector3* %positionOffset, float %scale) unnamed_addr ssp align 2 {
+define %class.RagDoll* @_ZN7RagDollC2EP15btDynamicsWorldRK9btVector3f(%class.RagDoll* %this, %class.btDynamicsWorld* %ownerWorld, %class.btVector3* %positionOffset, float %scale) unnamed_addr ssp align 2 personality i8* bitcast (i32 (...)* @__gxx_personality_sj0 to i8*) {
 entry:
   %retval = alloca %class.RagDoll*, align 4
   %this.addr = alloca %class.RagDoll*, align 4
@@ -635,7 +635,7 @@ for.inc:                                          ; preds = %for.body
   br label %for.cond
 
 lpad:                                             ; preds = %entry
-  %67 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_sj0 to i8*)
+  %67 = landingpad { i8*, i32 }
           cleanup
   %68 = extractvalue { i8*, i32 } %67, 0
   store i8* %68, i8** %exn.slot
@@ -648,7 +648,7 @@ invoke.cont4:                                     ; preds = %lpad
   br label %eh.resume
 
 lpad8:                                            ; preds = %invoke.cont
-  %70 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_sj0 to i8*)
+  %70 = landingpad { i8*, i32 }
           cleanup
   %71 = extractvalue { i8*, i32 } %70, 0
   store i8* %71, i8** %exn.slot
@@ -661,7 +661,7 @@ invoke.cont11:                                    ; preds = %lpad8
   br label %eh.resume
 
 lpad17:                                           ; preds = %invoke.cont9
-  %73 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_sj0 to i8*)
+  %73 = landingpad { i8*, i32 }
           cleanup
   %74 = extractvalue { i8*, i32 } %73, 0
   store i8* %74, i8** %exn.slot
@@ -674,7 +674,7 @@ invoke.cont20:                                    ; preds = %lpad17
   br label %eh.resume
 
 lpad26:                                           ; preds = %invoke.cont18
-  %76 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_sj0 to i8*)
+  %76 = landingpad { i8*, i32 }
           cleanup
   %77 = extractvalue { i8*, i32 } %76, 0
   store i8* %77, i8** %exn.slot
@@ -687,7 +687,7 @@ invoke.cont29:                                    ; preds = %lpad26
   br label %eh.resume
 
 lpad35:                                           ; preds = %invoke.cont27
-  %79 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_sj0 to i8*)
+  %79 = landingpad { i8*, i32 }
           cleanup
   %80 = extractvalue { i8*, i32 } %79, 0
   store i8* %80, i8** %exn.slot
@@ -700,7 +700,7 @@ invoke.cont38:                                    ; preds = %lpad35
   br label %eh.resume
 
 lpad44:                                           ; preds = %invoke.cont36
-  %82 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_sj0 to i8*)
+  %82 = landingpad { i8*, i32 }
           cleanup
   %83 = extractvalue { i8*, i32 } %82, 0
   store i8* %83, i8** %exn.slot
@@ -713,7 +713,7 @@ invoke.cont47:                                    ; preds = %lpad44
   br label %eh.resume
 
 lpad53:                                           ; preds = %invoke.cont45
-  %85 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_sj0 to i8*)
+  %85 = landingpad { i8*, i32 }
           cleanup
   %86 = extractvalue { i8*, i32 } %85, 0
   store i8* %86, i8** %exn.slot
@@ -726,7 +726,7 @@ invoke.cont56:                                    ; preds = %lpad53
   br label %eh.resume
 
 lpad62:                                           ; preds = %invoke.cont54
-  %88 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_sj0 to i8*)
+  %88 = landingpad { i8*, i32 }
           cleanup
   %89 = extractvalue { i8*, i32 } %88, 0
   store i8* %89, i8** %exn.slot
@@ -739,7 +739,7 @@ invoke.cont65:                                    ; preds = %lpad62
   br label %eh.resume
 
 lpad71:                                           ; preds = %invoke.cont63
-  %91 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_sj0 to i8*)
+  %91 = landingpad { i8*, i32 }
           cleanup
   %92 = extractvalue { i8*, i32 } %91, 0
   store i8* %92, i8** %exn.slot
@@ -752,7 +752,7 @@ invoke.cont74:                                    ; preds = %lpad71
   br label %eh.resume
 
 lpad80:                                           ; preds = %invoke.cont72
-  %94 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_sj0 to i8*)
+  %94 = landingpad { i8*, i32 }
           cleanup
   %95 = extractvalue { i8*, i32 } %94, 0
   store i8* %95, i8** %exn.slot
@@ -765,7 +765,7 @@ invoke.cont83:                                    ; preds = %lpad80
   br label %eh.resume
 
 lpad89:                                           ; preds = %invoke.cont81
-  %97 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_sj0 to i8*)
+  %97 = landingpad { i8*, i32 }
           cleanup
   %98 = extractvalue { i8*, i32 } %97, 0
   store i8* %98, i8** %exn.slot
@@ -1264,7 +1264,7 @@ invoke.cont517:                                   ; preds = %invoke.cont488
   ret %class.RagDoll* %200
 
 lpad258:                                          ; preds = %for.end
-  %201 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_sj0 to i8*)
+  %201 = landingpad { i8*, i32 }
           cleanup
   %202 = extractvalue { i8*, i32 } %201, 0
   store i8* %202, i8** %exn.slot
@@ -1274,7 +1274,7 @@ lpad258:                                          ; preds = %for.end
   br label %eh.resume
 
 lpad284:                                          ; preds = %invoke.cont259
-  %204 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_sj0 to i8*)
+  %204 = landingpad { i8*, i32 }
           cleanup
   %205 = extractvalue { i8*, i32 } %204, 0
   store i8* %205, i8** %exn.slot
@@ -1284,7 +1284,7 @@ lpad284:                                          ; preds = %invoke.cont259
   br label %eh.resume
 
 lpad313:                                          ; preds = %invoke.cont285
-  %207 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_sj0 to i8*)
+  %207 = landingpad { i8*, i32 }
           cleanup
   %208 = extractvalue { i8*, i32 } %207, 0
   store i8* %208, i8** %exn.slot
@@ -1294,7 +1294,7 @@ lpad313:                                          ; preds = %invoke.cont285
   br label %eh.resume
 
 lpad342:                                          ; preds = %invoke.cont314
-  %210 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_sj0 to i8*)
+  %210 = landingpad { i8*, i32 }
           cleanup
   %211 = extractvalue { i8*, i32 } %210, 0
   store i8* %211, i8** %exn.slot
@@ -1304,7 +1304,7 @@ lpad342:                                          ; preds = %invoke.cont314
   br label %eh.resume
 
 lpad371:                                          ; preds = %invoke.cont343
-  %213 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_sj0 to i8*)
+  %213 = landingpad { i8*, i32 }
           cleanup
   %214 = extractvalue { i8*, i32 } %213, 0
   store i8* %214, i8** %exn.slot
@@ -1314,7 +1314,7 @@ lpad371:                                          ; preds = %invoke.cont343
   br label %eh.resume
 
 lpad400:                                          ; preds = %invoke.cont372
-  %216 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_sj0 to i8*)
+  %216 = landingpad { i8*, i32 }
           cleanup
   %217 = extractvalue { i8*, i32 } %216, 0
   store i8* %217, i8** %exn.slot
@@ -1324,7 +1324,7 @@ lpad400:                                          ; preds = %invoke.cont372
   br label %eh.resume
 
 lpad429:                                          ; preds = %invoke.cont401
-  %219 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_sj0 to i8*)
+  %219 = landingpad { i8*, i32 }
           cleanup
   %220 = extractvalue { i8*, i32 } %219, 0
   store i8* %220, i8** %exn.slot
@@ -1334,7 +1334,7 @@ lpad429:                                          ; preds = %invoke.cont401
   br label %eh.resume
 
 lpad458:                                          ; preds = %invoke.cont430
-  %222 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_sj0 to i8*)
+  %222 = landingpad { i8*, i32 }
           cleanup
   %223 = extractvalue { i8*, i32 } %222, 0
   store i8* %223, i8** %exn.slot
@@ -1344,7 +1344,7 @@ lpad458:                                          ; preds = %invoke.cont430
   br label %eh.resume
 
 lpad487:                                          ; preds = %invoke.cont459
-  %225 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_sj0 to i8*)
+  %225 = landingpad { i8*, i32 }
           cleanup
   %226 = extractvalue { i8*, i32 } %225, 0
   store i8* %226, i8** %exn.slot
@@ -1354,7 +1354,7 @@ lpad487:                                          ; preds = %invoke.cont459
   br label %eh.resume
 
 lpad516:                                          ; preds = %invoke.cont488
-  %228 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_sj0 to i8*)
+  %228 = landingpad { i8*, i32 }
           cleanup
   %229 = extractvalue { i8*, i32 } %228, 0
   store i8* %229, i8** %exn.slot
@@ -1371,7 +1371,7 @@ eh.resume:                                        ; preds = %lpad516, %lpad487, 
   resume { i8*, i32 } %lpad.val526
 
 terminate.lpad:                                   ; preds = %lpad89, %lpad80, %lpad71, %lpad62, %lpad53, %lpad44, %lpad35, %lpad26, %lpad17, %lpad8, %lpad
-  %231 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_sj0 to i8*)
+  %231 = landingpad { i8*, i32 }
           catch i8* null
   call void @_ZSt9terminatev() noreturn nounwind
   unreachable

@@ -67,12 +67,12 @@ bb7:                                              ; preds = %bb6, %bb6, %bb5
 ; call, handle the case where it's an invoke in a different basic block.
 ; rdar://11714057
 
-; CHECK: define void @_Z6doTestP8NSString() {
+; CHECK: define void @_Z6doTestP8NSString() personality i8* bitcast (i32 (...)* @__gxx_personality_sj0 to i8*) {
 ; CHECK: invoke.cont:                                      ; preds = %entry
 ; CHECK-NEXT: call void asm sideeffect "mov\09r7, r7\09\09@ marker for objc_retainAutoreleaseReturnValue", ""()
 ; CHECK-NEXT: %tmp = tail call i8* @objc_retainAutoreleasedReturnValue(i8* %call) [[NUW:#[0-9]+]]
 ; CHECK: }
-define void @_Z6doTestP8NSString() {
+define void @_Z6doTestP8NSString() personality i8* bitcast (i32 (...)* @__gxx_personality_sj0 to i8*) {
 entry:
   %call = invoke i8* bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to i8* ()*)()
           to label %invoke.cont unwind label %lpad
@@ -82,7 +82,7 @@ invoke.cont:                                      ; preds = %entry
   unreachable
 
 lpad:                                             ; preds = %entry
-  %tmp1 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_sj0 to i8*)
+  %tmp1 = landingpad { i8*, i32 }
           cleanup
   resume { i8*, i32 } undef
 }

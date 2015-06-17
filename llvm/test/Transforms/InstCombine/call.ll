@@ -123,7 +123,7 @@ define void @test7() {
 ; rdar://7590304
 declare void @test8a()
 
-define i8* @test8() {
+define i8* @test8() personality i32 (...)* @__gxx_personality_v0 {
 ; CHECK-LABEL: @test8(
 ; CHECK-NEXT: invoke void @test8a()
 ; Don't turn this into "unreachable": the callee and caller don't agree in
@@ -136,7 +136,7 @@ invoke.cont:                                      ; preds = %entry
   unreachable
 
 try.handler:                                      ; preds = %entry
-  %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+  %exn = landingpad {i8*, i32}
             cleanup
   ret i8* null
 }

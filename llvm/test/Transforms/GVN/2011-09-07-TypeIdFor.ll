@@ -17,13 +17,13 @@ declare void @__cxa_end_catch()
 
 declare i32 @__gxx_personality_v0(i32, i64, i8*, i8*)
 
-define void @_Z3foov() uwtable {
+define void @_Z3foov() uwtable personality i32 (i32, i64, i8*, i8*)* @__gxx_personality_v0 {
 entry:
   invoke void @_Z4barv()
           to label %return unwind label %lpad
 
 lpad:                                             ; preds = %entry
-  %0 = landingpad { i8*, i32 } personality i32 (i32, i64, i8*, i8*)* @__gxx_personality_v0
+  %0 = landingpad { i8*, i32 }
           catch %struct.__fundamental_type_info_pseudo* @_ZTIi
           catch %struct.__fundamental_type_info_pseudo* @_ZTIb
           catch %struct.__fundamental_type_info_pseudo* @_ZTIi

@@ -259,8 +259,8 @@ void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf,
 
   // If this is an MSVC EH personality, we need to do a bit more work.
   EHPersonality Personality = EHPersonality::Unknown;
-  if (!LPads.empty())
-    Personality = classifyEHPersonality(LPads.back()->getPersonalityFn());
+  if (Fn->hasPersonalityFn())
+    Personality = classifyEHPersonality(Fn->getPersonalityFn());
   if (!isMSVCEHPersonality(Personality))
     return;
 
@@ -546,8 +546,10 @@ void llvm::ComputeUsesVAFloatArgument(const CallInst &I,
 /// landingpad instruction and add them to the specified machine module info.
 void llvm::AddLandingPadInfo(const LandingPadInst &I, MachineModuleInfo &MMI,
                              MachineBasicBlock *MBB) {
-  MMI.addPersonality(MBB,
-                     cast<Function>(I.getPersonalityFn()->stripPointerCasts()));
+  MMI.addPersonality(
+      MBB,
+      cast<Function>(
+          I.getParent()->getParent()->getPersonalityFn()->stripPointerCasts()));
 
   if (I.isCleanup())
     MMI.addCleanup(MBB);

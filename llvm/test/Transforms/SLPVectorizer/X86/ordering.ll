@@ -21,7 +21,7 @@ entry:
 declare i8* @objc_msgSend(i8*, i8*, ...)
 declare i32 @personality_v0(...)
 
-define void @invoketest() {
+define void @invoketest() personality i8* bitcast (i32 (...)* @personality_v0 to i8*) {
 entry:
   br i1 undef, label %cond.true, label %cond.false
 
@@ -67,7 +67,7 @@ if.then63:
   br label %if.end98
 
 lpad:
-  %l = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @personality_v0 to i8*)
+  %l = landingpad { i8*, i32 }
           cleanup
   resume { i8*, i32 } %l
 

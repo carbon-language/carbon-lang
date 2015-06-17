@@ -150,6 +150,7 @@ class BitcodeReader : public GVMaterializer {
   std::vector<std::pair<GlobalAlias*, unsigned> > AliasInits;
   std::vector<std::pair<Function*, unsigned> > FunctionPrefixes;
   std::vector<std::pair<Function*, unsigned> > FunctionPrologues;
+  std::vector<std::pair<Function*, unsigned> > FunctionPersonalityFns;
 
   SmallVector<Instruction*, 64> InstsWithTBAATag;
 
@@ -2031,11 +2032,13 @@ std::error_code BitcodeReader::resolveGlobalAndAliasInits() {
   std::vector<std::pair<GlobalAlias*, unsigned> > AliasInitWorklist;
   std::vector<std::pair<Function*, unsigned> > FunctionPrefixWorklist;
   std::vector<std::pair<Function*, unsigned> > FunctionPrologueWorklist;
+  std::vector<std::pair<Function*, unsigned> > FunctionPersonalityFnWorklist;
 
   GlobalInitWorklist.swap(GlobalInits);
   AliasInitWorklist.swap(AliasInits);
   FunctionPrefixWorklist.swap(FunctionPrefixes);
   FunctionPrologueWorklist.swap(FunctionPrologues);
+  FunctionPersonalityFnWorklist.swap(FunctionPersonalityFns);
 
   while (!GlobalInitWorklist.empty()) {
     unsigned ValID = GlobalInitWorklist.back().second;
@@ -2091,6 +2094,19 @@ std::error_code BitcodeReader::resolveGlobalAndAliasInits() {
         return error("Expected a constant");
     }
     FunctionPrologueWorklist.pop_back();
+  }
+
+  while (!FunctionPersonalityFnWorklist.empty()) {
+    unsigned ValID = FunctionPersonalityFnWorklist.back().second;
+    if (ValID >= ValueList.size()) {
+      FunctionPersonalityFns.push_back(FunctionPersonalityFnWorklist.back());
+    } else {
+      if (Constant *C = dyn_cast_or_null<Constant>(ValueList[ValID]))
+        FunctionPersonalityFnWorklist.back().first->setPersonalityFn(C);
+      else
+        return error("Expected a constant");
+    }
+    FunctionPersonalityFnWorklist.pop_back();
   }
 
   return std::error_code();
@@ -3022,6 +3038,9 @@ std::error_code BitcodeReader::parseModule(bool Resume,
 
       if (Record.size() > 13 && Record[13] != 0)
         FunctionPrefixes.push_back(std::make_pair(Func, Record[13]-1));
+
+      if (Record.size() > 14 && Record[14] != 0)
+        FunctionPersonalityFns.push_back(std::make_pair(Func, Record[14] - 1));
 
       ValueList.push_back(Func);
 
@@ -3976,21 +3995,35 @@ std::error_code BitcodeReader::parseFunctionBody(Function *F) {
       break;
     }
 
-    case bitc::FUNC_CODE_INST_LANDINGPAD: {
+    case bitc::FUNC_CODE_INST_LANDINGPAD:
+    case bitc::FUNC_CODE_INST_LANDINGPAD_OLD: {
       // LANDINGPAD: [ty, val, val, num, (id0,val0 ...)?]
       unsigned Idx = 0;
-      if (Record.size() < 4)
-        return error("Invalid record");
+      if (BitCode == bitc::FUNC_CODE_INST_LANDINGPAD) {
+        if (Record.size() < 3)
+          return error("Invalid record");
+      } else {
+        assert(BitCode == bitc::FUNC_CODE_INST_LANDINGPAD_OLD);
+        if (Record.size() < 4)
+          return error("Invalid record");
+      }
       Type *Ty = getTypeByID(Record[Idx++]);
       if (!Ty)
         return error("Invalid record");
-      Value *PersFn = nullptr;
-      if (getValueTypePair(Record, Idx, NextValueNo, PersFn))
-        return error("Invalid record");
+      if (BitCode == bitc::FUNC_CODE_INST_LANDINGPAD_OLD) {
+        Value *PersFn = nullptr;
+        if (getValueTypePair(Record, Idx, NextValueNo, PersFn))
+          return error("Invalid record");
+
+        if (!F->hasPersonalityFn())
+          F->setPersonalityFn(cast<Constant>(PersFn));
+        else if (F->getPersonalityFn() != cast<Constant>(PersFn))
+          return error("Personality function mismatch");
+      }
 
       bool IsCleanup = !!Record[Idx++];
       unsigned NumClauses = Record[Idx++];
-      LandingPadInst *LP = LandingPadInst::Create(Ty, PersFn, NumClauses);
+      LandingPadInst *LP = LandingPadInst::Create(Ty, NumClauses);
       LP->setCleanup(IsCleanup);
       for (unsigned J = 0; J != NumClauses; ++J) {
         LandingPadInst::ClauseType CT =

@@ -45,7 +45,7 @@ $"\01??_R0?AVSomeClass@@@8" = comdat any
 @"llvm.eh.handlermapentry.reference.?AVSomeClass@@" = private unnamed_addr constant %eh.HandlerMapEntry { i32 8, i32 trunc (i64 sub nuw nsw (i64 ptrtoint (%rtti.TypeDescriptor15* @"\01??_R0?AVSomeClass@@@8" to i64), i64 ptrtoint (i8* @__ImageBase to i64)) to i32) }, section "llvm.metadata"
 
 
-; CHECK: define void @"\01?test@@YAXXZ"() #0 {
+; CHECK: define void @"\01?test@@YAXXZ"() #0 personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*) {
 ; CHECK: entry:
 ; CHECK:   [[OBJ_PTR:\%.+]] = alloca %class.SomeClass*, align 8
 ; CHECK:   [[LL_PTR:\%.+]] = alloca i64, align 8
@@ -55,7 +55,7 @@ $"\01??_R0?AVSomeClass@@@8" = comdat any
 ; CHECK:           to label %invoke.cont unwind label %[[LPAD_LABEL:lpad[0-9]*]]
 
 ; Function Attrs: uwtable
-define void @"\01?test@@YAXXZ"() #0 {
+define void @"\01?test@@YAXXZ"() #0 personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*) {
 entry:
   %exn.slot = alloca i8*
   %ehselector.slot = alloca i32
@@ -69,7 +69,7 @@ invoke.cont:                                      ; preds = %entry
   br label %try.cont
 
 ; CHECK: [[LPAD_LABEL]]:{{[ ]+}}; preds = %entry
-; CHECK:   landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
+; CHECK:   landingpad { i8*, i32 }
 ; CHECK-NEXT:           catch %eh.HandlerMapEntry* @llvm.eh.handlermapentry.H
 ; CHECK-NEXT:           catch %eh.HandlerMapEntry* @llvm.eh.handlermapentry._J
 ; CHECK-NEXT:           catch %eh.HandlerMapEntry* @"llvm.eh.handlermapentry.reference.?AVSomeClass@@"
@@ -82,7 +82,7 @@ invoke.cont:                                      ; preds = %entry
 ; CHECK-NEXT:   indirectbr i8* [[RECOVER]], [label %ret]
 
 lpad:                                             ; preds = %entry
-  %0 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
+  %0 = landingpad { i8*, i32 }
           catch %eh.HandlerMapEntry* @llvm.eh.handlermapentry.H
           catch %eh.HandlerMapEntry* @llvm.eh.handlermapentry._J
           catch %eh.HandlerMapEntry* @"llvm.eh.handlermapentry.reference.?AVSomeClass@@"

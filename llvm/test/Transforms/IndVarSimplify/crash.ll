@@ -62,7 +62,7 @@ declare void @__go_undefer()
 
 declare i32 @__gccgo_personality_v0(i32, i64, i8*, i8*)
 
-define void @main.main() uwtable {
+define void @main.main() uwtable personality i32 (i32, i64, i8*, i8*)* @__gccgo_personality_v0 {
 entry:
   invoke void @__go_panic() noreturn
           to label %0 unwind label %"5.i"
@@ -75,12 +75,12 @@ entry:
           to label %main.f.exit unwind label %"7.i"
 
 "5.i":                                            ; preds = %entry
-  %1 = landingpad { i8*, i32 } personality i32 (i32, i64, i8*, i8*)* @__gccgo_personality_v0
+  %1 = landingpad { i8*, i32 }
           catch i8* null
   br label %"3.i"
 
 "7.i":                                            ; preds = %"3.i"
-  %2 = landingpad { i8*, i32 } personality i32 (i32, i64, i8*, i8*)* @__gccgo_personality_v0
+  %2 = landingpad { i8*, i32 }
           catch i8* null
   br label %"3.i"
 

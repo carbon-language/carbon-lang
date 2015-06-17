@@ -177,7 +177,7 @@ bool PruneEH::SimplifyFunction(Function *F) {
   bool MadeChange = false;
   for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB) {
     if (InvokeInst *II = dyn_cast<InvokeInst>(BB->getTerminator()))
-      if (II->doesNotThrow() && canSimplifyInvokeNoUnwind(II)) {
+      if (II->doesNotThrow() && canSimplifyInvokeNoUnwind(F)) {
         SmallVector<Value*, 8> Args(II->op_begin(), II->op_end() - 3);
         // Insert a call instruction before the invoke.
         CallInst *Call = CallInst::Create(II->getCalledValue(), Args, "", II);

@@ -9,7 +9,7 @@
 declare void @might_throw()
 declare void @cleanup()
 
-define i32 @simple_cleanup_catch() {
+define i32 @simple_cleanup_catch() personality i32 (...)* @__gxx_personality_v0 {
   invoke void @might_throw()
           to label %cont unwind label %lpad
 
@@ -22,7 +22,7 @@ cont:
 ; CHECK: ret i32 0
 
 lpad:
-  %ehvals = landingpad { i8*, i32 } personality i32 (...)* @__gxx_personality_v0
+  %ehvals = landingpad { i8*, i32 }
       cleanup
       catch i8* @int_typeinfo
   %ehptr = extractvalue { i8*, i32 } %ehvals, 0
@@ -33,7 +33,7 @@ lpad:
   br i1 %int_match, label %catch_int, label %eh.resume
 
 ; CHECK: lpad:
-; CHECK: landingpad { i8*, i32 } personality i32 (...)* @__gxx_personality_v0
+; CHECK: landingpad { i8*, i32 }
 ; CHECK: call void @cleanup()
 ; CHECK: call i32 @llvm.eh.typeid.for
 ; CHECK: br i1
@@ -54,7 +54,7 @@ eh.resume:
 }
 
 
-define i32 @catch_no_resume() {
+define i32 @catch_no_resume() personality i32 (...)* @__gxx_personality_v0 {
   invoke void @might_throw()
           to label %cont unwind label %lpad
 
@@ -62,7 +62,7 @@ cont:
   ret i32 0
 
 lpad:
-  %ehvals = landingpad { i8*, i32 } personality i32 (...)* @__gxx_personality_v0
+  %ehvals = landingpad { i8*, i32 }
       catch i8* @int_typeinfo
   %ehptr = extractvalue { i8*, i32 } %ehvals, 0
   %ehsel = extractvalue { i8*, i32 } %ehvals, 1
@@ -81,18 +81,18 @@ eh.resume:
 
 ; Check that we can prune the unreachable resume instruction.
 
-; CHECK-LABEL: define i32 @catch_no_resume() {
+; CHECK-LABEL: define i32 @catch_no_resume() personality i32 (...)* @__gxx_personality_v0 {
 ; CHECK: invoke void @might_throw()
 ; CHECK: ret i32 0
 ; CHECK: lpad:
-; CHECK: landingpad { i8*, i32 } personality i32 (...)* @__gxx_personality_v0
+; CHECK: landingpad { i8*, i32 }
 ; CHECK-NOT: br i1
 ; CHECK: ret i32 1
 ; CHECK-NOT: call void @_Unwind_Resume
 ; CHECK: {{^[}]}}
 
 
-define i32 @catch_cleanup_merge() {
+define i32 @catch_cleanup_merge() personality i32 (...)* @__gxx_personality_v0 {
   invoke void @might_throw()
           to label %inner_invoke unwind label %outer_lpad
 inner_invoke:
@@ -102,12 +102,12 @@ cont:
   ret i32 0
 
 outer_lpad:
-  %ehvals1 = landingpad { i8*, i32 } personality i32 (...)* @__gxx_personality_v0
+  %ehvals1 = landingpad { i8*, i32 }
       catch i8* @int_typeinfo
   br label %catch.dispatch
 
 inner_lpad:
-  %ehvals2 = landingpad { i8*, i32 } personality i32 (...)* @__gxx_personality_v0
+  %ehvals2 = landingpad { i8*, i32 }
       cleanup
       catch i8* @int_typeinfo
   call void @cleanup()
@@ -138,11 +138,11 @@ eh.resume:
 ; CHECK: ret i32 0
 ;
 ; CHECK: outer_lpad:
-; CHECK: landingpad { i8*, i32 } personality i32 (...)* @__gxx_personality_v0
+; CHECK: landingpad { i8*, i32 }
 ; CHECK: br label %catch.dispatch
 ;
 ; CHECK: inner_lpad:
-; CHECK: landingpad { i8*, i32 } personality i32 (...)* @__gxx_personality_v0
+; CHECK: landingpad { i8*, i32 }
 ; CHECK: call void @cleanup()
 ; CHECK: br label %catch.dispatch
 ;

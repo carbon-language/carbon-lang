@@ -6,7 +6,7 @@
 ; Addr-of a variable passed into an invoke instruction.
 ;  safestack attribute
 ; Requires protector and stack restore after landing pad.
-define i32 @foo() uwtable safestack {
+define i32 @foo() uwtable safestack personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
 entry:
   ; CHECK: %[[SP:.*]] = load i8*, i8** @__safestack_unsafe_stack_ptr
   ; CHECK: %[[STATICTOP:.*]] = getelementptr i8, i8* %[[SP]], i32 -16
@@ -23,7 +23,7 @@ invoke.cont:
 lpad:
   ; CHECK: landingpad
   ; CHECK-NEXT: catch
-  %0 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %0 = landingpad { i8*, i32 }
           catch i8* null
   ; CHECK-NEXT: store i8* %[[STATICTOP]], i8** @__safestack_unsafe_stack_ptr
   ret i32 0

@@ -548,6 +548,10 @@ void AsmPrinter::EmitFunctionHeader() {
   if (F->hasPrefixData())
     EmitGlobalConstant(F->getPrefixData());
 
+  // Emit the personality function.
+  if (F->hasPersonalityFn())
+    EmitGlobalConstant(F->getPersonalityFn());
+
   // Emit the CurrentFnSym.  This is a virtual function to allow targets to
   // do their wild and crazy things as required.
   EmitFunctionEntryLabel();

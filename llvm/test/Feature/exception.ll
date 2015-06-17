@@ -6,7 +6,7 @@
 @_ZTId = external constant i8*
 @_ZTIPKc = external constant i8*
 
-define void @_Z3barv() uwtable optsize ssp {
+define void @_Z3barv() uwtable optsize ssp personality i32 (...)* @__gxx_personality_v0 {
 entry:
   invoke void @_Z3quxv() optsize
           to label %try.cont unwind label %lpad
@@ -15,7 +15,7 @@ try.cont:                                         ; preds = %entry, %invoke.cont
   ret void
 
 lpad:                                             ; preds = %entry
-  %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+  %exn = landingpad {i8*, i32}
             cleanup
             catch i8** @_ZTIc
             filter [2 x i8**] [i8** @_ZTIPKc, i8** @_ZTId]

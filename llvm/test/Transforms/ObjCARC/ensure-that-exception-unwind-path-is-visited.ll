@@ -34,7 +34,7 @@ target triple = "x86_64-apple-macosx10.9.0"
 @"\01L_OBJC_SELECTOR_REFERENCES_5" = internal global i8* getelementptr inbounds ([14 x i8], [14 x i8]* @"\01L_OBJC_METH_VAR_NAME_4", i64 0, i64 0), section "__DATA, __objc_selrefs, literal_pointers, no_dead_strip"
 @llvm.used = appending global [6 x i8*] [i8* bitcast (%struct._class_t** @"\01L_OBJC_CLASSLIST_REFERENCES_$_" to i8*), i8* getelementptr inbounds ([4 x i8], [4 x i8]* @"\01L_OBJC_METH_VAR_NAME_", i32 0, i32 0), i8* bitcast (i8** @"\01L_OBJC_SELECTOR_REFERENCES_" to i8*), i8* bitcast (%struct._class_t** @"\01L_OBJC_CLASSLIST_REFERENCES_$_1" to i8*), i8* getelementptr inbounds ([14 x i8], [14 x i8]* @"\01L_OBJC_METH_VAR_NAME_4", i32 0, i32 0), i8* bitcast (i8** @"\01L_OBJC_SELECTOR_REFERENCES_5" to i8*)], section "llvm.metadata"
 
-define i32 @main() uwtable ssp {
+define i32 @main() uwtable ssp personality i8* bitcast (i32 (...)* @__objc_personality_v0 to i8*) {
 entry:
   %tmp = load %struct._class_t*, %struct._class_t** @"\01L_OBJC_CLASSLIST_REFERENCES_$_", align 8, !dbg !37
   %tmp1 = load i8*, i8** @"\01L_OBJC_SELECTOR_REFERENCES_", align 8, !dbg !37, !invariant.load !38
@@ -54,7 +54,7 @@ eh.cont:                                          ; preds = %entry
   br label %if.end, !dbg !43
 
 lpad:                                             ; preds = %entry
-  %tmp4 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__objc_personality_v0 to i8*)
+  %tmp4 = landingpad { i8*, i32 }
           catch i8* null, !dbg !40
   %tmp5 = extractvalue { i8*, i32 } %tmp4, 0, !dbg !40
   %exn.adjusted = call i8* @objc_begin_catch(i8* %tmp5) nounwind, !dbg !44

@@ -11,7 +11,7 @@ declare i32 @__C_specific_handler(...)
 declare i32 @__gxx_personality_seh0(...)
 declare i32 @llvm.eh.typeid.for(i8*) readnone nounwind
 
-define i32 @use_seh() {
+define i32 @use_seh() personality i32 (...)* @__C_specific_handler {
 entry:
   invoke void @maybe_throw()
       to label %cont unwind label %lpad
@@ -20,7 +20,7 @@ cont:
   ret i32 0
 
 lpad:
-  %ehvals = landingpad { i8*, i32 } personality i32 (...)* @__C_specific_handler
+  %ehvals = landingpad { i8*, i32 }
       cleanup
       catch i8* bitcast (i32 (i8*, i8*)* @filt_g to i8*)
   %ehsel = extractvalue { i8*, i32 } %ehvals, 1
@@ -51,7 +51,7 @@ define internal i32 @filt_g(i8*, i8*) {
 
 ; A MinGW64-ish EH style. It could happen if a binary uses both MSVC CRT and
 ; mingw CRT and is linked with LTO.
-define i32 @use_gcc() {
+define i32 @use_gcc() personality i32 (...)* @__gxx_personality_seh0 {
 entry:
   invoke void @maybe_throw()
       to label %cont unwind label %lpad
@@ -60,7 +60,7 @@ cont:
   ret i32 0
 
 lpad:
-  %ehvals = landingpad { i8*, i32 } personality i32 (...)* @__gxx_personality_seh0
+  %ehvals = landingpad { i8*, i32 }
       cleanup
       catch i8* bitcast (i8** @_ZTIi to i8*)
   %ehsel = extractvalue { i8*, i32 } %ehvals, 1

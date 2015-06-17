@@ -10,13 +10,13 @@ entry:
   ret i32 %div
 }
 
-define i32 @main() nounwind {
+define i32 @main() nounwind personality i8* bitcast (i32 (...)* @__C_specific_handler to i8*) {
 entry:
   %call = invoke i32 @div(i32 10, i32 0)
           to label %__try.cont unwind label %lpad
 
 lpad:
-  %0 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__C_specific_handler to i8*)
+  %0 = landingpad { i8*, i32 }
           catch i8* null
   br label %__try.cont
 

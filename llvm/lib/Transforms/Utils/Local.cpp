@@ -1173,10 +1173,11 @@ static void changeToCall(InvokeInst *II) {
   II->eraseFromParent();
 }
 
-static bool markAliveBlocks(BasicBlock *BB,
+static bool markAliveBlocks(Function &F,
                             SmallPtrSetImpl<BasicBlock*> &Reachable) {
 
   SmallVector<BasicBlock*, 128> Worklist;
+  BasicBlock *BB = F.begin();
   Worklist.push_back(BB);
   Reachable.insert(BB);
   bool Changed = false;
@@ -1247,7 +1248,7 @@ static bool markAliveBlocks(BasicBlock *BB,
       if (isa<ConstantPointerNull>(Callee) || isa<UndefValue>(Callee)) {
         changeToUnreachable(II, true);
         Changed = true;
-      } else if (II->doesNotThrow() && canSimplifyInvokeNoUnwind(II)) {
+      } else if (II->doesNotThrow() && canSimplifyInvokeNoUnwind(&F)) {
         if (II->use_empty() && II->onlyReadsMemory()) {
           // jump to the normal destination branch.
           BranchInst::Create(II->getNormalDest(), II);
@@ -1272,7 +1273,7 @@ static bool markAliveBlocks(BasicBlock *BB,
 /// otherwise.
 bool llvm::removeUnreachableBlocks(Function &F) {
   SmallPtrSet<BasicBlock*, 128> Reachable;
-  bool Changed = markAliveBlocks(F.begin(), Reachable);
+  bool Changed = markAliveBlocks(F, Reachable);
 
   // If there are unreachable blocks in the CFG...
   if (Reachable.size() == F.size())

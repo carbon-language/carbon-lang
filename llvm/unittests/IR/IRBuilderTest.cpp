@@ -104,8 +104,7 @@ TEST_F(IRBuilderTest, CreateCondBr) {
 
 TEST_F(IRBuilderTest, LandingPadName) {
   IRBuilder<> Builder(BB);
-  LandingPadInst *LP = Builder.CreateLandingPad(Builder.getInt32Ty(),
-                                                Builder.getInt32(0), 0, "LP");
+  LandingPadInst *LP = Builder.CreateLandingPad(Builder.getInt32Ty(), 0, "LP");
   EXPECT_EQ(LP->getName(), "LP");
 }
 

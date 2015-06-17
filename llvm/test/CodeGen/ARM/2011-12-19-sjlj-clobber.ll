@@ -8,7 +8,7 @@
 %0 = type opaque
 %struct.NSConstantString = type { i32*, i32, i8*, i32 }
 
-define i32 @asdf(i32 %a, i32 %b, i8** %c, i8* %d) {
+define i32 @asdf(i32 %a, i32 %b, i8** %c, i8* %d) personality i8* bitcast (i32 (...)* @__objc_personality_v0 to i8*) {
 bb:
   %tmp = alloca i32, align 4
   %tmp1 = alloca i32, align 4
@@ -37,7 +37,7 @@ bb14:                                             ; preds = %bb11
   unreachable
 
 bb15:                                             ; preds = %bb11, %bb
-  %tmp16 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__objc_personality_v0 to i8*)
+  %tmp16 = landingpad { i8*, i32 }
           catch i8* null
   %tmp17 = extractvalue { i8*, i32 } %tmp16, 0
   store i8* %tmp17, i8** %tmp4

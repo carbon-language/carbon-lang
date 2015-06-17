@@ -10,7 +10,7 @@ declare void @extern_fn(i32*)
 declare i32 @extern_fn2(i32)
 declare i32 @__gcc_personality_v0(i32, i64, i8*, i8*)
 
-define void @odd_fn(i1) noinline {
+define void @odd_fn(i1) noinline personality i32 (i32, i64, i8*, i8*)* @__gcc_personality_v0 {
   %retptr1 = alloca i32
   %retptr2 = alloca i32
   br i1 %0, label %then, label %else
@@ -30,7 +30,7 @@ join:                                             ; preds = %then, %else
   ret void
 
 unwind:                                           ; preds = %then
-  %info = landingpad { i8*, i32 } personality i32 (i32, i64, i8*, i8*)* @__gcc_personality_v0
+  %info = landingpad { i8*, i32 }
           cleanup
   call void @extern_fn(i32* null)
   unreachable

@@ -3,7 +3,7 @@
 
 declare i32 @test1f()
 
-define i32 @test1() {
+define i32 @test1() personality i32 (...)* @__gxx_personality_v0 {
 entry:
   %whichFlag = alloca i32
   %A = invoke i32 @test1f()
@@ -18,7 +18,7 @@ bb15:
   ret i32 %B
 
 lpad86:
-  %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+  %exn = landingpad {i8*, i32}
            cleanup
   br label %bb15
   

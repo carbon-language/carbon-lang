@@ -11,7 +11,7 @@ declare void @_ZN13CStdOutStream5FlushEv()
 
 declare i32 @__gxx_personality_v0(...)
 
-define void @_Z11GetPasswordP13CStdOutStreamb() {
+define void @_Z11GetPasswordP13CStdOutStreamb() personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
 entry:
   br label %for.cond.i.i
 
@@ -41,7 +41,7 @@ for.cond.i.i30:                                   ; preds = %for.cond.i.i30, %in
   br label %for.cond.i.i30
 
 lpad:                                             ; preds = %invoke.cont4, %invoke.cont, %_ZN11CStringBaseIcEC2EPKc.exit.critedge
-  %1 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %1 = landingpad { i8*, i32 }
           cleanup
   resume { i8*, i32 } undef
 }

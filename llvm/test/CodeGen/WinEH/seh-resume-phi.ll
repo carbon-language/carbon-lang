@@ -9,13 +9,13 @@ declare void @cleanup()
 declare i32 @__C_specific_handler(...)
 declare i32 @llvm.eh.typeid.for(i8*)
 
-define void @resume_phi() {
+define void @resume_phi() personality i32 (...)* @__C_specific_handler {
 entry:
   invoke void @might_crash(i8* null)
           to label %return unwind label %lpad1
 
 lpad1:
-  %ehvals1 = landingpad { i8*, i32 } personality i32 (...)* @__C_specific_handler
+  %ehvals1 = landingpad { i8*, i32 }
           catch i32 ()* @filt
   %ehptr1 = extractvalue { i8*, i32 } %ehvals1, 0
   %ehsel1 = extractvalue { i8*, i32 } %ehvals1, 1
@@ -28,7 +28,7 @@ __except:
           to label %return unwind label %lpad2
 
 lpad2:
-  %ehvals2 = landingpad { i8*, i32 } personality i32 (...)* @__C_specific_handler
+  %ehvals2 = landingpad { i8*, i32 }
           cleanup
   %ehptr2 = extractvalue { i8*, i32 } %ehvals2, 0
   %ehsel2 = extractvalue { i8*, i32 } %ehvals2, 1

@@ -1,5 +1,5 @@
 ; RUN: opt < %s -inline -prune-eh -disable-output
-define void @f2() {
+define void @f2() personality i32 (...)* @__gxx_personality_v0 {
     invoke void @f6()
         to label %ok1 unwind label %lpad1
 
@@ -7,7 +7,7 @@ ok1:
     ret void
 
 lpad1:
-    landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+    landingpad {i8*, i32}
             cleanup
     invoke void @f4()
         to label %ok2 unwind label %lpad2
@@ -17,7 +17,7 @@ ok2:
     unreachable
 
 lpad2:
-    %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+    %exn = landingpad {i8*, i32}
             cleanup
     unreachable
 }

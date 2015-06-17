@@ -7,7 +7,7 @@
 
 @_ZTIi = external constant i8*
 
-define i32 @main() #0 {
+define i32 @main() #0 personality i8* bitcast (i32 (...)* @__gxx_personality_sj0 to i8*) {
 entry:
   %exception = tail call i8* @__cxa_allocate_exception(i32 4) #1
   %0 = bitcast i8* %exception to i32*
@@ -16,7 +16,7 @@ entry:
           to label %unreachable unwind label %lpad
 
 lpad:                                             ; preds = %entry
-  %1 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_sj0 to i8*)
+  %1 = landingpad { i8*, i32 }
           catch i8* null
   %2 = extractvalue { i8*, i32 } %1, 0
   %3 = tail call i8* @__cxa_begin_catch(i8* %2) #1

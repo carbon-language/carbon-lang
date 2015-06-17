@@ -2249,11 +2249,8 @@ LLVMValueRef LLVMBuildInvoke(LLVMBuilderRef B, LLVMValueRef Fn,
 }
 
 LLVMValueRef LLVMBuildLandingPad(LLVMBuilderRef B, LLVMTypeRef Ty,
-                                 LLVMValueRef PersFn, unsigned NumClauses,
-                                 const char *Name) {
-  return wrap(unwrap(B)->CreateLandingPad(unwrap(Ty),
-                                          cast<Function>(unwrap(PersFn)),
-                                          NumClauses, Name));
+                                 unsigned NumClauses, const char *Name) {
+  return wrap(unwrap(B)->CreateLandingPad(unwrap(Ty), NumClauses, Name));
 }
 
 LLVMValueRef LLVMBuildResume(LLVMBuilderRef B, LLVMValueRef Exn) {

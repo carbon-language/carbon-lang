@@ -16,13 +16,13 @@ define void @throwException() {
   unreachable
 }
 
-define i32 @main() {
+define i32 @main() personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
 entry:
   invoke void @throwException()
           to label %try.cont unwind label %lpad
 
 lpad:
-  %p = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %p = landingpad { i8*, i32 }
           catch i8* bitcast (i8** @_ZTIi to i8*)
   %e = extractvalue { i8*, i32 } %p, 0
   call i8* @__cxa_begin_catch(i8* %e)

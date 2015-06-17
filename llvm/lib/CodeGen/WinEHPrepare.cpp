@@ -111,7 +111,7 @@ private:
   bool outlineHandler(ActionHandler *Action, Function *SrcFn,
                       LandingPadInst *LPad, BasicBlock *StartBB,
                       FrameVarInfoMap &VarInfo);
-  void addStubInvokeToHandlerIfNeeded(Function *Handler, Value *PersonalityFn);
+  void addStubInvokeToHandlerIfNeeded(Function *Handler);
 
   void mapLandingPadBlocks(LandingPadInst *LPad, LandingPadActions &Actions);
   CatchHandler *findCatchHandler(BasicBlock *BB, BasicBlock *&NextBB,
@@ -379,7 +379,7 @@ bool WinEHPrepare::runOnFunction(Function &Fn) {
     return false;
 
   // Classify the personality to see what kind of preparation we need.
-  Personality = classifyEHPersonality(LPads.back()->getPersonalityFn());
+  Personality = classifyEHPersonality(Fn.getPersonalityFn());
 
   // Do nothing if this is not an MSVC personality.
   if (!isMSVCEHPersonality(Personality))
@@ -1265,8 +1265,7 @@ static bool isCatchBlock(BasicBlock *BB) {
   return false;
 }
 
-static BasicBlock *createStubLandingPad(Function *Handler,
-                                        Value *PersonalityFn) {
+static BasicBlock *createStubLandingPad(Function *Handler) {
   // FIXME: Finish this!
   LLVMContext &Context = Handler->getContext();
   BasicBlock *StubBB = BasicBlock::Create(Context, "stub");
@@ -1275,7 +1274,7 @@ static BasicBlock *createStubLandingPad(Function *Handler,
   LandingPadInst *LPad = Builder.CreateLandingPad(
       llvm::StructType::get(Type::getInt8PtrTy(Context),
                             Type::getInt32Ty(Context), nullptr),
-      PersonalityFn, 0);
+      0);
   // Insert a call to llvm.eh.actions so that we don't try to outline this lpad.
   Function *ActionIntrin =
       Intrinsic::getDeclaration(Handler->getParent(), Intrinsic::eh_actions);
@@ -1290,8 +1289,7 @@ static BasicBlock *createStubLandingPad(Function *Handler,
 // landing pad if none is found.  The code that generates the .xdata tables for
 // the handler needs at least one landing pad to identify the parent function's
 // personality.
-void WinEHPrepare::addStubInvokeToHandlerIfNeeded(Function *Handler,
-                                                  Value *PersonalityFn) {
+void WinEHPrepare::addStubInvokeToHandlerIfNeeded(Function *Handler) {
   ReturnInst *Ret = nullptr;
   UnreachableInst *Unreached = nullptr;
   for (BasicBlock &BB : *Handler) {
@@ -1323,7 +1321,7 @@ void WinEHPrepare::addStubInvokeToHandlerIfNeeded(Function *Handler,
   // parent block.  We want to replace that with an invoke call, so we can
   // erase it now.
   OldRetBB->getTerminator()->eraseFromParent();
-  BasicBlock *StubLandingPad = createStubLandingPad(Handler, PersonalityFn);
+  BasicBlock *StubLandingPad = createStubLandingPad(Handler);
   Function *F =
       Intrinsic::getDeclaration(Handler->getParent(), Intrinsic::donothing);
   InvokeInst::Create(F, NewRetBB, StubLandingPad, None, "", OldRetBB);
@@ -1379,6 +1377,7 @@ bool WinEHPrepare::outlineHandler(ActionHandler *Action, Function *SrcFn,
     Handler = createHandlerFunc(Type::getVoidTy(Context),
                                 SrcFn->getName() + ".cleanup", M, ParentFP);
   }
+  Handler->setPersonalityFn(SrcFn->getPersonalityFn());
   HandlerToParentFP[Handler] = ParentFP;
   Handler->addFnAttr("wineh-parent", SrcFn->getName());
   BasicBlock *Entry = &Handler->getEntryBlock();
@@ -1456,7 +1455,7 @@ bool WinEHPrepare::outlineHandler(ActionHandler *Action, Function *SrcFn,
   ClonedEntryBB->eraseFromParent();
 
   // Make sure we can identify the handler's personality later.
-  addStubInvokeToHandlerIfNeeded(Handler, LPad->getPersonalityFn());
+  addStubInvokeToHandlerIfNeeded(Handler);
 
   if (auto *CatchAction = dyn_cast<CatchHandler>(Action)) {
     WinEHCatchDirector *CatchDirector =

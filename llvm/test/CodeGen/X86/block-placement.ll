@@ -546,7 +546,7 @@ exit:
 
 declare i32 @__gxx_personality_v0(...)
 
-define void @test_eh_lpad_successor() {
+define void @test_eh_lpad_successor() personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
 ; Some times the landing pad ends up as the first successor of an invoke block.
 ; When this happens, a strange result used to fall out of updateTerminators: we
 ; didn't correctly locate the fallthrough successor, assuming blindly that the
@@ -564,7 +564,7 @@ preheader:
   br label %loop
 
 lpad:
-  %lpad.val = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %lpad.val = landingpad { i8*, i32 }
           cleanup
   resume { i8*, i32 } %lpad.val
 
@@ -574,7 +574,7 @@ loop:
 
 declare void @fake_throw() noreturn
 
-define void @test_eh_throw() {
+define void @test_eh_throw() personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
 ; For blocks containing a 'throw' (or similar functionality), we have
 ; a no-return invoke. In this case, only EH successors will exist, and
 ; fallthrough simply won't occur. Make sure we don't crash trying to update
@@ -591,7 +591,7 @@ continue:
   unreachable
 
 cleanup:
-  %0 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %0 = landingpad { i8*, i32 }
           cleanup
   unreachable
 }

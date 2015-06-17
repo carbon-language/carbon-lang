@@ -22,7 +22,7 @@ target triple = "i386-pc-linux-gnu"
 @.str = external constant [1 x i8], align 1
 @_ZTVN2kc22impl_fileline_FileLineE = external constant [13 x i32 (...)*], align 32
 
-define void @_ZN2kc22impl_fileline_FileLineC2EPNS_20impl_casestring__StrEi(%"struct.kc::impl_fileline_FileLine"* %this, %"struct.kc::impl_casestring__Str"* %_file, i32 %_line) align 2 {
+define void @_ZN2kc22impl_fileline_FileLineC2EPNS_20impl_casestring__StrEi(%"struct.kc::impl_fileline_FileLine"* %this, %"struct.kc::impl_casestring__Str"* %_file, i32 %_line) align 2 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
 entry:
   %this_addr = alloca %"struct.kc::impl_fileline_FileLine"*, align 4
   %_file_addr = alloca %"struct.kc::impl_casestring__Str"*, align 4
@@ -75,7 +75,7 @@ bb2:                                              ; preds = %bb1, %invcont
   ret void
 
 lpad:                                             ; preds = %bb
-  %eh_ptr = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %eh_ptr = landingpad { i8*, i32 }
               cleanup
   %exn = extractvalue { i8*, i32 } %eh_ptr, 0
   store i8* %exn, i8** %eh_exception
@@ -148,7 +148,7 @@ return:                                           ; preds = %bb1, %entry
   ret void
 }
 
-define void @_ZN2kc22impl_fileline_FileLineC1EPNS_20impl_casestring__StrEi(%"struct.kc::impl_fileline_FileLine"* %this, %"struct.kc::impl_casestring__Str"* %_file, i32 %_line) align 2 {
+define void @_ZN2kc22impl_fileline_FileLineC1EPNS_20impl_casestring__StrEi(%"struct.kc::impl_fileline_FileLine"* %this, %"struct.kc::impl_casestring__Str"* %_file, i32 %_line) align 2 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
 entry:
   %this_addr = alloca %"struct.kc::impl_fileline_FileLine"*, align 4
   %_file_addr = alloca %"struct.kc::impl_casestring__Str"*, align 4
@@ -201,7 +201,7 @@ bb2:                                              ; preds = %bb1, %invcont
   ret void
 
 lpad:                                             ; preds = %bb
-  %eh_ptr = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %eh_ptr = landingpad { i8*, i32 }
               cleanup
   %exn = extractvalue { i8*, i32 } %eh_ptr, 0
   store i8* %exn, i8** %eh_exception

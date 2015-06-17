@@ -93,6 +93,9 @@ static OrderMap orderModule(const Module &M) {
     if (F.hasPrologueData())
       if (!isa<GlobalValue>(F.getPrologueData()))
         orderValue(F.getPrologueData(), OM);
+    if (F.hasPersonalityFn())
+      if (!isa<GlobalValue>(F.getPersonalityFn()))
+        orderValue(F.getPersonalityFn(), OM);
   }
   OM.LastGlobalConstantID = OM.size();
 
@@ -274,6 +277,8 @@ static UseListOrderStack predictUseListOrder(const Module &M) {
       predictValueUseListOrder(F.getPrefixData(), nullptr, OM, Stack);
     if (F.hasPrologueData())
       predictValueUseListOrder(F.getPrologueData(), nullptr, OM, Stack);
+    if (F.hasPersonalityFn())
+      predictValueUseListOrder(F.getPersonalityFn(), nullptr, OM, Stack);
   }
 
   return Stack;
@@ -325,6 +330,11 @@ ValueEnumerator::ValueEnumerator(const Module &M,
   for (const Function &F : M)
     if (F.hasPrologueData())
       EnumerateValue(F.getPrologueData());
+
+  // Enumerate the personality functions.
+  for (Module::const_iterator I = M.begin(), E = M.end(); I != E; ++I)
+    if (I->hasPersonalityFn())
+      EnumerateValue(I->getPersonalityFn());
 
   // Enumerate the metadata type.
   //

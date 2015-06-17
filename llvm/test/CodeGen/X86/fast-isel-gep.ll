@@ -89,7 +89,7 @@ define i64 @test5(i8* %A, i32 %I, i64 %B) nounwind {
 ; PR9500, rdar://9156159 - Don't do non-local address mode folding,
 ; because it may require values which wouldn't otherwise be live out
 ; of their blocks.
-define void @test6() {
+define void @test6() personality i32 (...)* @__gxx_personality_v0 {
 if.end:                                           ; preds = %if.then, %invoke.cont
   %tmp15 = load i64, i64* undef
   %dec = add i64 %tmp15, 13
@@ -103,7 +103,7 @@ invoke.cont16:                                    ; preds = %if.then14
   unreachable
 
 lpad:                                             ; preds = %if.end19, %if.then14, %if.end, %entry
-  %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+  %exn = landingpad {i8*, i32}
             cleanup
   unreachable
 }

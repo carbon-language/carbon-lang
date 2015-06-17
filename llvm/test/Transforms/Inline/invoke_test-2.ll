@@ -6,7 +6,7 @@
 
 declare void @might_throw()
 
-define internal i32 @callee() {
+define internal i32 @callee() personality i32 (...)* @__gxx_personality_v0 {
         invoke void @might_throw( )
                         to label %cont unwind label %exc
 
@@ -14,13 +14,13 @@ cont:           ; preds = %0
         ret i32 0
 
 exc:            ; preds = %0
-        %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+        %exn = landingpad {i8*, i32}
                  cleanup
         ret i32 1
 }
 
 ; caller returns true if might_throw throws an exception... callee cannot throw.
-define i32 @caller() {
+define i32 @caller() personality i32 (...)* @__gxx_personality_v0 {
         %X = invoke i32 @callee( )
                         to label %cont unwind label %UnreachableExceptionHandler                ; <i32> [#uses=1]
 
@@ -28,7 +28,7 @@ cont:           ; preds = %0
         ret i32 %X
 
 UnreachableExceptionHandler:            ; preds = %0
-        %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+        %exn = landingpad {i8*, i32}
                  cleanup
         ret i32 -1
 }

@@ -101,7 +101,7 @@ declare void @_d_eh_resume_unwind(i8*)
 
 declare i32 @bar()
 
-define i32 @foo4() #0 {
+define i32 @foo4() #0 personality i32 (i32, i32, i64, i8*, i8*)* @_d_eh_personality {
 entry:
   %step = alloca i32, align 4
   store i32 0, i32* %step
@@ -115,7 +115,7 @@ finally:
   br label %endtryfinally
 
 landingpad:
-  %landing_pad = landingpad { i8*, i32 } personality i32 (i32, i32, i64, i8*, i8*)* @_d_eh_personality
+  %landing_pad = landingpad { i8*, i32 }
           cleanup
   %tmp3 = extractvalue { i8*, i32 } %landing_pad, 0
   store i32 2, i32* %step

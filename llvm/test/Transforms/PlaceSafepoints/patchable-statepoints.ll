@@ -3,7 +3,7 @@
 declare void @f()
 declare i32 @personality_function()
 
-define void @test_id() gc "statepoint-example" {
+define void @test_id() gc "statepoint-example" personality i32 ()* @personality_function {
 ; CHECK-LABEL: @test_id(
 entry:
 ; CHECK-LABEL: entry:
@@ -14,11 +14,11 @@ normal_return:
   ret void
 
 exceptional_return:
-  %landing_pad4 = landingpad {i8*, i32} personality i32 ()* @personality_function cleanup
+  %landing_pad4 = landingpad {i8*, i32} cleanup
   ret void
 }
 
-define void @test_num_patch_bytes() gc "statepoint-example" {
+define void @test_num_patch_bytes() gc "statepoint-example" personality i32 ()* @personality_function {
 ; CHECK-LABEL: @test_num_patch_bytes(
 entry:
 ; CHECK-LABEL: entry:
@@ -29,7 +29,7 @@ normal_return:
   ret void
 
 exceptional_return:
-  %landing_pad4 = landingpad {i8*, i32} personality i32 ()* @personality_function cleanup
+  %landing_pad4 = landingpad {i8*, i32} cleanup
   ret void
 }
 

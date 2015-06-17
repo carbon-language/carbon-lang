@@ -12,13 +12,13 @@ declare void @llvm.eh.endcatch()
 @_ZTIi = external constant i8*
 
 ; Function Attrs: uwtable
-define void @test_ref_clean() {
+define void @test_ref_clean() personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*) {
 entry:
   invoke void @_Z9may_throwv()
           to label %try.cont unwind label %lpad
 
 lpad:                                             ; preds = %entry
-  %0 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
+  %0 = landingpad { i8*, i32 }
           catch i8* bitcast (i8** @_ZTIi to i8*)
   %exn = extractvalue { i8*, i32 } %0, 0
   %sel = extractvalue { i8*, i32 } %0, 1
@@ -43,7 +43,7 @@ eh.resume:                                        ; preds = %catch.dispatch
 }
 
 ; Function Attrs: uwtable
-define void @test_ref_clean_multibranch() {
+define void @test_ref_clean_multibranch() personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*) {
 entry:
   invoke void @_Z9may_throwv()
           to label %invoke.cont unwind label %lpad
@@ -53,7 +53,7 @@ invoke.cont:
           to label %invoke.cont unwind label %lpad1
 
 lpad:                                             ; preds = %entry
-  %0 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
+  %0 = landingpad { i8*, i32 }
           catch i8* bitcast (i8** @_ZTIi to i8*)
   %exn = extractvalue { i8*, i32 } %0, 0
   %sel = extractvalue { i8*, i32 } %0, 1
@@ -65,7 +65,7 @@ lpad:                                             ; preds = %entry
           to label %try.cont unwind label %lpad
 
 lpad1:                                            ; preds = %entry
-  %l1.0 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
+  %l1.0 = landingpad { i8*, i32 }
 		  cleanup
           catch i8* bitcast (i8** @_ZTIi to i8*)
   %exn1 = extractvalue { i8*, i32 } %l1.0, 0

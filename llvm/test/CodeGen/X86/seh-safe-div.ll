@@ -23,14 +23,14 @@
 @str1 = internal constant [27 x i8] c"EXCEPTION_ACCESS_VIOLATION\00"
 @str2 = internal constant [29 x i8] c"EXCEPTION_INT_DIVIDE_BY_ZERO\00"
 
-define i32 @safe_div(i32* %n, i32* %d) {
+define i32 @safe_div(i32* %n, i32* %d) personality i8* bitcast (i32 (...)* @__C_specific_handler to i8*) {
 entry:
   %r = alloca i32, align 4
   invoke void @try_body(i32* %r, i32* %n, i32* %d)
           to label %__try.cont unwind label %lpad
 
 lpad:
-  %vals = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__C_specific_handler to i8*)
+  %vals = landingpad { i8*, i32 }
           catch i8* bitcast (i32 (i8*, i8*)* @safe_div_filt0 to i8*)
           catch i8* bitcast (i32 (i8*, i8*)* @safe_div_filt1 to i8*)
   %ehptr = extractvalue { i8*, i32 } %vals, 0

@@ -59,7 +59,7 @@ declare fastcc void @list_Rplacd1284() nounwind ssp
 ;============================
 ; PR5208
 
-define void @AAA() {
+define void @AAA() personality i32 (...)* @__gxx_personality_v0 {
 entry:
   %A = alloca i8, i32 undef, align 1
   invoke fastcc void @XXX()
@@ -69,7 +69,7 @@ invcont98:
   unreachable
 
 lpad156:                            
-  %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+  %exn = landingpad {i8*, i32}
             cleanup
   unreachable
 }
@@ -78,7 +78,7 @@ declare i32 @__gxx_personality_v0(...)
 
 declare fastcc void @YYY()
 
-define internal fastcc void @XXX() {
+define internal fastcc void @XXX() personality i32 (...)* @__gxx_personality_v0 {
 entry:
   %B = alloca i8, i32 undef, align 1
   invoke fastcc void @YYY()
@@ -88,7 +88,7 @@ bb260:
   ret void
 
 lpad:                               
-  %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+  %exn = landingpad {i8*, i32}
             cleanup
   resume { i8*, i32 } %exn
 }
@@ -102,7 +102,7 @@ entry:
   ret void
 }
 
-define void @f4(i32 %size) ssp {
+define void @f4(i32 %size) ssp personality i32 (...)* @__gxx_personality_v0 {
 entry:
   invoke void @f1(void ()* @f3)
           to label %invcont3 unwind label %lpad18
@@ -111,7 +111,7 @@ invcont3:                                         ; preds = %bb1
   ret void
 
 lpad18:                                           ; preds = %invcont3, %bb1
-  %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+  %exn = landingpad {i8*, i32}
             cleanup
   unreachable
 }

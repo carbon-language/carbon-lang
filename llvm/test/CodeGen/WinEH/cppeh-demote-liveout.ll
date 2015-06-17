@@ -19,14 +19,14 @@ declare i32 @llvm.eh.typeid.for(i8*)
 
 @typeinfo.int = external global i32
 
-define i32 @liveout_catch(i32 %p) {
+define i32 @liveout_catch(i32 %p) personality i32 (...)* @__CxxFrameHandler3 {
 entry:
   %val.entry = add i32 %p, 1
   invoke void @might_throw()
       to label %ret unwind label %lpad
 
 lpad:
-  %ehvals = landingpad { i8*, i32 } personality i32 (...)* @__CxxFrameHandler3
+  %ehvals = landingpad { i8*, i32 }
       cleanup
       catch i32* @typeinfo.int
   %ehptr = extractvalue { i8*, i32 } %ehvals, 0

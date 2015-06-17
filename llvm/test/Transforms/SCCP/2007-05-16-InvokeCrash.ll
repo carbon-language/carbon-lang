@@ -1,7 +1,7 @@
 ; RUN: opt < %s -sccp -disable-output
 ; PR1431
 
-define void @_ada_bench() {
+define void @_ada_bench() personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
 entry:
 	br label %cond_next
 cond_next:		; preds = %cond_next, %entry
@@ -31,7 +31,7 @@ bb149:		; preds = %bb114
 bb177:		; preds = %bb149
 	unreachable
 cleanup:		; preds = %bb149, %bb114, %bb67
-        %val = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+        %val = landingpad { i8*, i32 }
                  cleanup
 	resume { i8*, i32 } %val
 }

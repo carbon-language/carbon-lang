@@ -34,7 +34,7 @@ entry:
 ; CHECK: @objc_release(
 ; CHECK: @objc_release(
 ; CHECK: }
-define void @test1(i8* %call88) nounwind {
+define void @test1(i8* %call88) nounwind personality i32 (...)* @__gxx_personality_v0 {
 entry:
   %tmp1 = call i8* @objc_retainAutoreleasedReturnValue(i8* %call88) nounwind
   %call94 = invoke i8* bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to i8* (i8*)*)(i8* %tmp1)
@@ -51,12 +51,12 @@ invoke.cont102:                                   ; preds = %invoke.cont93
   unreachable
 
 lpad91:                                           ; preds = %entry
-  %exn91 = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+  %exn91 = landingpad {i8*, i32}
               cleanup
   unreachable
 
 lpad100:                                          ; preds = %invoke.cont93
-  %exn100 = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+  %exn100 = landingpad {i8*, i32}
               cleanup
   call void @objc_release(i8* %tmp2) nounwind, !clang.imprecise_release !0
   unreachable

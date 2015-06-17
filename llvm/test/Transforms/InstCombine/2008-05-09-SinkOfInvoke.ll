@@ -9,7 +9,7 @@ declare i32** @__ctype_toupper_loc() readnone
 
 declare i32** @__ctype_tolower_loc() readnone 
 
-define void @_ZNSt5ctypeIcEC2EPiPKtbm(%"struct.std::ctype<char>"* %this, i32* %unnamed_arg, i16* %__table, i8 zeroext  %__del, i64 %__refs) {
+define void @_ZNSt5ctypeIcEC2EPiPKtbm(%"struct.std::ctype<char>"* %this, i32* %unnamed_arg, i16* %__table, i8 zeroext  %__del, i64 %__refs) personality i32 (...)* @__gxx_personality_v0 {
 entry:
 	%tmp8 = invoke i32* @_ZNSt6locale5facet15_S_get_c_localeEv( )
 			to label %invcont unwind label %lpad		; <i32*> [#uses=0]
@@ -29,7 +29,7 @@ invcont37:		; preds = %invcont31
 	ret void
 
 lpad:		; preds = %invcont31, %invcont, %entry
-        %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+        %exn = landingpad {i8*, i32}
                  cleanup
 	unreachable
 }

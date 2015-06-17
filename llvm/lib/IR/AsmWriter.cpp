@@ -109,6 +109,10 @@ static OrderMap orderModule(const Module *M) {
       if (!isa<GlobalValue>(F.getPrologueData()))
         orderValue(F.getPrologueData(), OM);
 
+    if (F.hasPersonalityFn())
+      if (!isa<GlobalValue>(F.getPersonalityFn()))
+        orderValue(F.getPersonalityFn(), OM);
+
     orderValue(&F, OM);
 
     if (F.isDeclaration())
@@ -2540,6 +2544,10 @@ void AssemblyWriter::printFunction(const Function *F) {
     Out << " prologue ";
     writeOperand(F->getPrologueData(), true);
   }
+  if (F->hasPersonalityFn()) {
+    Out << " personality ";
+    writeOperand(F->getPersonalityFn(), /*PrintType=*/true);
+  }
 
   SmallVector<std::pair<unsigned, MDNode *>, 4> MDs;
   F->getAllMetadata(MDs);
@@ -2782,8 +2790,8 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
   } else if (const LandingPadInst *LPI = dyn_cast<LandingPadInst>(&I)) {
     Out << ' ';
     TypePrinter.print(I.getType(), Out);
-    Out << " personality ";
-    writeOperand(I.getOperand(0), true); Out << '\n';
+    if (LPI->isCleanup() || LPI->getNumClauses() != 0)
+      Out << '\n';
 
     if (LPI->isCleanup())
       Out << "          cleanup";

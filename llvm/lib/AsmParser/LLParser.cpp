@@ -4057,7 +4057,7 @@ bool LLParser::ParseTypeAndBasicBlock(BasicBlock *&BB, LocTy &Loc,
 /// FunctionHeader
 ///   ::= OptionalLinkage OptionalVisibility OptionalCallingConv OptRetAttrs
 ///       OptUnnamedAddr Type GlobalName '(' ArgList ')' OptFuncAttrs OptSection
-///       OptionalAlign OptGC OptionalPrefix OptionalPrologue
+///       OptionalAlign OptGC OptionalPrefix OptionalPrologue OptPersonalityFn
 bool LLParser::ParseFunctionHeader(Function *&Fn, bool isDefine) {
   // Parse the linkage.
   LocTy LinkageLoc = Lex.getLoc();
@@ -4139,6 +4139,7 @@ bool LLParser::ParseFunctionHeader(Function *&Fn, bool isDefine) {
   LocTy UnnamedAddrLoc;
   Constant *Prefix = nullptr;
   Constant *Prologue = nullptr;
+  Constant *PersonalityFn = nullptr;
   Comdat *C;
 
   if (ParseArgumentList(ArgList, isVarArg) ||
@@ -4155,7 +4156,9 @@ bool LLParser::ParseFunctionHeader(Function *&Fn, bool isDefine) {
       (EatIfPresent(lltok::kw_prefix) &&
        ParseGlobalTypeAndValue(Prefix)) ||
       (EatIfPresent(lltok::kw_prologue) &&
-       ParseGlobalTypeAndValue(Prologue)))
+       ParseGlobalTypeAndValue(Prologue)) ||
+      (EatIfPresent(lltok::kw_personality) &&
+       ParseGlobalTypeAndValue(PersonalityFn)))
     return true;
 
   if (FuncAttrs.contains(Attribute::Builtin))
@@ -4254,6 +4257,7 @@ bool LLParser::ParseFunctionHeader(Function *&Fn, bool isDefine) {
   Fn->setAlignment(Alignment);
   Fn->setSection(Section);
   Fn->setComdat(C);
+  Fn->setPersonalityFn(PersonalityFn);
   if (!GC.empty()) Fn->setGC(GC.c_str());
   Fn->setPrefixData(Prefix);
   Fn->setPrologueData(Prologue);
@@ -5105,14 +5109,11 @@ int LLParser::ParsePHI(Instruction *&Inst, PerFunctionState &PFS) {
 ///   ::= 'filter' TypeAndValue ( ',' TypeAndValue )*
 bool LLParser::ParseLandingPad(Instruction *&Inst, PerFunctionState &PFS) {
   Type *Ty = nullptr; LocTy TyLoc;
-  Value *PersFn; LocTy PersFnLoc;
 
-  if (ParseType(Ty, TyLoc) ||
-      ParseToken(lltok::kw_personality, "expected 'personality'") ||
-      ParseTypeAndValue(PersFn, PersFnLoc, PFS))
+  if (ParseType(Ty, TyLoc))
     return true;
 
-  std::unique_ptr<LandingPadInst> LP(LandingPadInst::Create(Ty, PersFn, 0));
+  std::unique_ptr<LandingPadInst> LP(LandingPadInst::Create(Ty, 0));
   LP->setCleanup(EatIfPresent(lltok::kw_cleanup));
 
   while (Lex.getKind() == lltok::kw_catch || Lex.getKind() == lltok::kw_filter){

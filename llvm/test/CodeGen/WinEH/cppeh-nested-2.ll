@@ -49,7 +49,7 @@ target triple = "x86_64-pc-windows-msvc"
 ; CHECK:           to label %invoke.cont unwind label %[[LPAD_LABEL:lpad[0-9]*]]
 
 ; Function Attrs: uwtable
-define void @_Z4testv() #0 {
+define void @_Z4testv() #0 personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*) {
 entry:
   %outer = alloca %class.Outer, align 1
   %exn.slot = alloca i8*
@@ -91,13 +91,13 @@ invoke.cont5:                                     ; preds = %invoke.cont4
   br label %try.cont
 
 ; CHECK: [[LPAD_LABEL]]:
-; CHECK:   landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
+; CHECK:   landingpad { i8*, i32 }
 ; CHECK-NEXT:           catch i8* bitcast (i8** @_ZTIf to i8*)
 ; CHECK-NEXT:   [[RECOVER:\%.+]] = call i8* (...) @llvm.eh.actions(i32 1, i8* bitcast (i8** @_ZTIf to i8*), i32 0, i8* (i8*, i8*)* @_Z4testv.catch)
 ; CHECK-NEXT:   indirectbr i8* [[RECOVER]], [label %try.cont19]
 
 lpad:                                             ; preds = %try.cont, %entry
-  %tmp = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
+  %tmp = landingpad { i8*, i32 }
           catch i8* bitcast (i8** @_ZTIf to i8*)
   %tmp1 = extractvalue { i8*, i32 } %tmp, 0
   store i8* %tmp1, i8** %exn.slot
@@ -106,7 +106,7 @@ lpad:                                             ; preds = %try.cont, %entry
   br label %catch.dispatch11
 
 ; CHECK: [[LPAD1_LABEL]]:
-; CHECK:   landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
+; CHECK:   landingpad { i8*, i32 }
 ; CHECK-NEXT:           cleanup
 ; CHECK-NEXT:           catch i8* bitcast (i8** @_ZTIi to i8*)
 ; CHECK-NEXT:           catch i8* bitcast (i8** @_ZTIf to i8*)
@@ -117,7 +117,7 @@ lpad:                                             ; preds = %try.cont, %entry
 ; CHECK-NEXT:   indirectbr i8* [[RECOVER1]], [label %try.cont, label %try.cont19]
 
 lpad1:                                            ; preds = %invoke.cont4, %invoke.cont
-  %tmp3 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
+  %tmp3 = landingpad { i8*, i32 }
           cleanup
           catch i8* bitcast (i8** @_ZTIi to i8*)
           catch i8* bitcast (i8** @_ZTIf to i8*)
@@ -128,7 +128,7 @@ lpad1:                                            ; preds = %invoke.cont4, %invo
   br label %catch.dispatch
 
 ; CHECK: [[LPAD3_LABEL]]:
-; CHECK:   landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
+; CHECK:   landingpad { i8*, i32 }
 ; CHECK-NEXT:           cleanup
 ; CHECK-NEXT:           catch i8* bitcast (i8** @_ZTIi to i8*)
 ; CHECK-NEXT:           catch i8* bitcast (i8** @_ZTIf to i8*)
@@ -140,7 +140,7 @@ lpad1:                                            ; preds = %invoke.cont4, %invo
 ; CHECK-NEXT:   indirectbr i8* [[RECOVER3]], [label %try.cont, label %try.cont19]
 
 lpad3:                                            ; preds = %invoke.cont2
-  %tmp6 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
+  %tmp6 = landingpad { i8*, i32 }
           cleanup
           catch i8* bitcast (i8** @_ZTIi to i8*)
           catch i8* bitcast (i8** @_ZTIf to i8*)
@@ -189,7 +189,7 @@ invoke.cont9:                                     ; preds = %try.cont
 ; CHECK-NOT: lpad7:
 
 lpad7:                                            ; preds = %catch
-  %tmp14 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
+  %tmp14 = landingpad { i8*, i32 }
           cleanup
           catch i8* bitcast (i8** @_ZTIf to i8*)
   %tmp15 = extractvalue { i8*, i32 } %tmp14, 0
@@ -263,7 +263,7 @@ eh.resume:                                        ; preds = %catch.dispatch11
 ; CHECK:   ret i8* blockaddress(@_Z4testv, %try.cont)
 ;
 ; CHECK: [[LPAD7_LABEL]]:{{[ ]+}}; preds = %entry
-; CHECK:   [[LPAD7_VAL:\%.+]] = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
+; CHECK:   [[LPAD7_VAL:\%.+]] = landingpad { i8*, i32 }
 ; (FIXME) The nested handler body isn't being populated yet.
 ; CHECK: }
 

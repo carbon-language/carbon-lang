@@ -124,7 +124,7 @@ entry:
 }
 
 ; Function Attrs: uwtable
-define i32 @main(i32 %argc, i8** %argv) #2 {
+define i32 @main(i32 %argc, i8** %argv) #2 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
 entry:
   %retval = alloca i32, align 4
   %argc.addr = alloca i32, align 4
@@ -161,7 +161,7 @@ invoke.cont:                                      ; preds = %entry
   ret i32 %1, !dbg !116
 
 lpad:                                             ; preds = %entry
-  %2 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %2 = landingpad { i8*, i32 }
           cleanup, !dbg !116
   %3 = extractvalue { i8*, i32 } %2, 0, !dbg !116
   store i8* %3, i8** %exn.slot, !dbg !116
@@ -181,7 +181,7 @@ eh.resume:                                        ; preds = %invoke.cont1
   resume { i8*, i32 } %lpad.val2, !dbg !119
 
 terminate.lpad:                                   ; preds = %lpad
-  %5 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %5 = landingpad { i8*, i32 }
           catch i8* null, !dbg !121
   %6 = extractvalue { i8*, i32 } %5, 0, !dbg !121
   call void @__clang_call_terminate(i8* %6) #5, !dbg !121
@@ -212,7 +212,7 @@ declare i8* @__cxa_begin_catch(i8*)
 declare void @_ZSt9terminatev()
 
 ; Function Attrs: uwtable
-define linkonce_odr void @_ZN1AD0Ev(%class.A* %this) unnamed_addr #2 align 2 {
+define linkonce_odr void @_ZN1AD0Ev(%class.A* %this) unnamed_addr #2 align 2 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
 entry:
   %this.addr = alloca %class.A*, align 8
   %exn.slot = alloca i8*
@@ -229,7 +229,7 @@ invoke.cont:                                      ; preds = %entry
   ret void, !dbg !129
 
 lpad:                                             ; preds = %entry
-  %1 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %1 = landingpad { i8*, i32 }
           cleanup, !dbg !131
   %2 = extractvalue { i8*, i32 } %1, 0, !dbg !131
   store i8* %2, i8** %exn.slot, !dbg !131

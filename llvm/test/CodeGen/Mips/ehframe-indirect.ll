@@ -7,7 +7,7 @@
 
 @_ZTISt9exception = external constant i8*
 
-define i32 @main() {
+define i32 @main() personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
 ; ALL: .cfi_startproc
 ; ALL: .cfi_personality 128, DW.ref.__gxx_personality_v0
 
@@ -17,8 +17,7 @@ entry:
 ; ALL: jalr
 
 lpad:
-  %0 = landingpad { i8*, i32 } personality i8*
-    bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %0 = landingpad { i8*, i32 }
     catch i8* null
     catch i8* bitcast (i8** @_ZTISt9exception to i8*)
   ret i32 0

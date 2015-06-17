@@ -15,14 +15,14 @@ target datalayout = "e-m:w-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-pc-windows-msvc"
 
 ; Function Attrs: uwtable
-define void @do_except() #0 {
+define void @do_except() #0 personality i8* bitcast (i32 (...)* @__C_specific_handler to i8*) {
 entry:
   call void (...) @llvm.frameescape()
   invoke void @g() #5
           to label %__try.cont unwind label %lpad1
 
 lpad1:                                            ; preds = %entry
-  %ehvals = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__C_specific_handler to i8*)
+  %ehvals = landingpad { i8*, i32 }
           catch i8* bitcast (i32 (i8*, i8*)* @"\01?filt$0@0@do_except@@" to i8*)
   %recover = call i8* (...) @llvm.eh.actions(i32 1, i8* bitcast (i32 (i8*, i8*)* @"\01?filt$0@0@do_except@@" to i8*), i32 -1, i8* blockaddress(@do_except, %__try.cont))
   indirectbr i8* %recover, [label %__try.cont]

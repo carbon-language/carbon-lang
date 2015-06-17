@@ -227,7 +227,7 @@ Value *SjLjEHPrepare::setupFunctionContext(Function &F,
   // Personality function
   IRBuilder<> Builder(EntryBB->getTerminator());
   if (!PersonalityFn)
-    PersonalityFn = LPads[0]->getPersonalityFn();
+    PersonalityFn = F.getPersonalityFn();
   Value *PersonalityFieldPtr = Builder.CreateConstGEP2_32(
       FunctionContextTy, FuncCtx, 0, 3, "pers_fn_gep");
   Builder.CreateStore(

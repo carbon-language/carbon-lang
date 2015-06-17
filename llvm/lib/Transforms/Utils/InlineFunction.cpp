@@ -949,35 +949,23 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI,
   }
 
   // Get the personality function from the callee if it contains a landing pad.
-  Value *CalleePersonality = nullptr;
-  for (Function::const_iterator I = CalledFunc->begin(), E = CalledFunc->end();
-       I != E; ++I)
-    if (const InvokeInst *II = dyn_cast<InvokeInst>(I->getTerminator())) {
-      const BasicBlock *BB = II->getUnwindDest();
-      const LandingPadInst *LP = BB->getLandingPadInst();
-      CalleePersonality = LP->getPersonalityFn();
-      break;
-    }
+  Constant *CalledPersonality =
+      CalledFunc->hasPersonalityFn() ? CalledFunc->getPersonalityFn() : nullptr;
 
   // Find the personality function used by the landing pads of the caller. If it
   // exists, then check to see that it matches the personality function used in
   // the callee.
-  if (CalleePersonality) {
-    for (Function::const_iterator I = Caller->begin(), E = Caller->end();
-         I != E; ++I)
-      if (const InvokeInst *II = dyn_cast<InvokeInst>(I->getTerminator())) {
-        const BasicBlock *BB = II->getUnwindDest();
-        const LandingPadInst *LP = BB->getLandingPadInst();
-
-        // If the personality functions match, then we can perform the
-        // inlining. Otherwise, we can't inline.
-        // TODO: This isn't 100% true. Some personality functions are proper
-        //       supersets of others and can be used in place of the other.
-        if (LP->getPersonalityFn() != CalleePersonality)
-          return false;
-
-        break;
-      }
+  Constant *CallerPersonality =
+      Caller->hasPersonalityFn() ? Caller->getPersonalityFn() : nullptr;
+  if (CalledPersonality) {
+    if (!CallerPersonality)
+      Caller->setPersonalityFn(CalledPersonality);
+    // If the personality functions match, then we can perform the
+    // inlining. Otherwise, we can't inline.
+    // TODO: This isn't 100% true. Some personality functions are proper
+    //       supersets of others and can be used in place of the other.
+    else if (CalledPersonality != CallerPersonality)
+      return false;
   }
 
   // Get an iterator to the last basic block in the function, which will have

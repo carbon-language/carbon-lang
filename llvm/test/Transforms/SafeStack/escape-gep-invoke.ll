@@ -9,7 +9,7 @@
 ;   (GEP followed by an invoke)
 ;  safestack attribute
 ; Requires protector.
-define i32 @foo() uwtable safestack {
+define i32 @foo() uwtable safestack personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
 entry:
   ; CHECK: __safestack_unsafe_stack_ptr
   %c = alloca %struct.pair, align 4
@@ -25,7 +25,7 @@ invoke.cont:
   ret i32 0
 
 lpad:
-  %0 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %0 = landingpad { i8*, i32 }
           catch i8* null
   ret i32 0
 }

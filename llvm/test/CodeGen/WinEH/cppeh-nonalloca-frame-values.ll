@@ -72,7 +72,7 @@ $"\01??_R0H@8" = comdat any
 ; CHECK:   br label %for.body
 
 ; Function Attrs: uwtable
-define void @"\01?test@@YAXXZ"() #0 {
+define void @"\01?test@@YAXXZ"() #0 personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*) {
 entry:
   %e = alloca i32, align 4
   %ExceptionVal = alloca [10 x i32], align 16
@@ -112,13 +112,13 @@ invoke.cont:                                      ; preds = %for.body
   br label %try.cont
 
 ; CHECK: [[LPAD_LABEL:lpad[0-9]*]]:{{[ ]+}}; preds = %for.body
-; CHECK:   landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
+; CHECK:   landingpad { i8*, i32 }
 ; CHECK-NEXT:           catch i8* bitcast (%rtti.TypeDescriptor2* @"\01??_R0H@8" to i8*)
 ; CHECK-NEXT:   [[RECOVER:\%.+]] = call i8* (...) @llvm.eh.actions(i32 1, i8* bitcast (%rtti.TypeDescriptor2* @"\01??_R0H@8" to i8*), i32 0, i8* (i8*, i8*)* @"\01?test@@YAXXZ.catch")
 ; CHECK-NEXT:   indirectbr i8* [[RECOVER]], [label %[[SPLIT_RECOVER_BB:.*]]]
 
 lpad:                                             ; preds = %for.body
-  %2 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
+  %2 = landingpad { i8*, i32 }
           catch i8* bitcast (%rtti.TypeDescriptor2* @"\01??_R0H@8" to i8*)
   %3 = extractvalue { i8*, i32 } %2, 1
   %4 = tail call i32 @llvm.eh.typeid.for(i8* bitcast (%rtti.TypeDescriptor2* @"\01??_R0H@8" to i8*)) #1

@@ -25,13 +25,13 @@ declare void @__cxa_end_catch()
 
 declare void @_ZSt9terminatev()
 
-define hidden double @t(%0* %self, i8* nocapture %_cmd) optsize ssp {
+define hidden double @t(%0* %self, i8* nocapture %_cmd) optsize ssp personality i8* bitcast (i32 (...)* @__gxx_personality_sj0 to i8*) {
 entry:
   %call = invoke double undef(%class.FunctionInterpreter.3.15.31* undef) optsize
           to label %try.cont unwind label %lpad
 
 lpad:                                             ; preds = %entry
-  %0 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_sj0 to i8*)
+  %0 = landingpad { i8*, i32 }
           catch i8* bitcast ({ i8*, i8* }* @_ZTI13ParseErrorMsg to i8*)
   br i1 undef, label %catch, label %eh.resume
 
@@ -47,7 +47,7 @@ try.cont:                                         ; preds = %invoke.cont2, %entr
   ret double %value.0
 
 lpad1:                                            ; preds = %catch
-  %1 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_sj0 to i8*)
+  %1 = landingpad { i8*, i32 }
           cleanup
   invoke void @__cxa_end_catch()
           to label %eh.resume unwind label %terminate.lpad
@@ -56,7 +56,7 @@ eh.resume:                                        ; preds = %lpad1, %lpad
   resume { i8*, i32 } undef
 
 terminate.lpad:                                   ; preds = %lpad1
-  %2 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_sj0 to i8*)
+  %2 = landingpad { i8*, i32 }
           catch i8* null
   unreachable
 }

@@ -91,7 +91,7 @@ $"\01??_C@_03PMGGPEJJ@?$CFd?6?$AA@" = comdat any
 ; CHECK: }
 
 ; Function Attrs: uwtable
-define i32 @main() #0 {
+define i32 @main() #0 personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*) {
 entry:
   %retval = alloca i32, align 4
   %tmp = alloca i8, align 1
@@ -111,7 +111,7 @@ entry:
           to label %unreachable unwind label %lpad
 
 lpad:                                             ; preds = %entry
-  %0 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
+  %0 = landingpad { i8*, i32 }
           catch %eh.CatchHandlerType* @llvm.eh.handlertype.D.0
           catch %eh.CatchHandlerType* @llvm.eh.handlertype.H.0
           catch i8* null
@@ -146,7 +146,7 @@ try.cont:                                         ; preds = %invoke.cont
           to label %unreachable unwind label %lpad4
 
 lpad2:                                            ; preds = %catch
-  %6 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
+  %6 = landingpad { i8*, i32 }
           catch %eh.CatchHandlerType* @llvm.eh.handlertype.H.0
           catch i8* null
   %7 = extractvalue { i8*, i32 } %6, 0
@@ -157,7 +157,7 @@ lpad2:                                            ; preds = %catch
   br label %catch.dispatch5
 
 lpad4:                                            ; preds = %try.cont
-  %9 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
+  %9 = landingpad { i8*, i32 }
           catch %eh.CatchHandlerType* @llvm.eh.handlertype.H.0
           catch i8* null
   %10 = extractvalue { i8*, i32 } %9, 0
@@ -200,7 +200,7 @@ invoke.cont11:                                    ; preds = %catch8
   br label %try.cont19
 
 lpad10:                                           ; preds = %catch8
-  %15 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
+  %15 = landingpad { i8*, i32 }
           cleanup
   %16 = extractvalue { i8*, i32 } %15, 0
   store i8* %16, i8** %exn.slot
@@ -210,7 +210,7 @@ lpad10:                                           ; preds = %catch8
   br label %eh.resume
 
 lpad16:                                           ; preds = %catch13
-  %18 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
+  %18 = landingpad { i8*, i32 }
           cleanup
   %19 = extractvalue { i8*, i32 } %18, 0
   store i8* %19, i8** %exn.slot
@@ -220,7 +220,7 @@ lpad16:                                           ; preds = %catch13
   br label %eh.resume
 
 lpad21:                                           ; preds = %try.cont19
-  %21 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
+  %21 = landingpad { i8*, i32 }
           catch i8* bitcast (%eh.CatchHandlerType* @llvm.eh.handlertype.D.0 to i8*)
           catch i8* bitcast (%eh.CatchHandlerType* @llvm.eh.handlertype.H.0 to i8*)
           catch i8* null
@@ -255,7 +255,7 @@ try.cont33:                                       ; preds = %invoke.cont31
           to label %unreachable unwind label %lpad35
 
 lpad30:                                           ; preds = %catch25
-  %27 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
+  %27 = landingpad { i8*, i32 }
           catch i8* bitcast (%eh.CatchHandlerType* @llvm.eh.handlertype.H.0 to i8*)
           catch i8* bitcast (%eh.CatchHandlerType* @llvm.eh.handlertype.D.0 to i8*)
           catch i8* null
@@ -267,7 +267,7 @@ lpad30:                                           ; preds = %catch25
   br label %catch.dispatch36
 
 lpad35:                                           ; preds = %try.cont33
-  %30 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
+  %30 = landingpad { i8*, i32 }
           catch i8* bitcast (%eh.CatchHandlerType* @llvm.eh.handlertype.H.0 to i8*)
           catch i8* bitcast (%eh.CatchHandlerType* @llvm.eh.handlertype.D.0 to i8*)
           catch i8* null
@@ -326,7 +326,7 @@ invoke.cont43:                                    ; preds = %catch40
   br label %try.cont60
 
 lpad42:                                           ; preds = %catch40
-  %38 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
+  %38 = landingpad { i8*, i32 }
           cleanup
   %39 = extractvalue { i8*, i32 } %38, 0
   store i8* %39, i8** %exn.slot
@@ -336,7 +336,7 @@ lpad42:                                           ; preds = %catch40
   br label %eh.resume
 
 lpad50:                                           ; preds = %catch45
-  %41 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
+  %41 = landingpad { i8*, i32 }
           cleanup
   %42 = extractvalue { i8*, i32 } %41, 0
   store i8* %42, i8** %exn.slot
@@ -346,7 +346,7 @@ lpad50:                                           ; preds = %catch45
   br label %eh.resume
 
 lpad57:                                           ; preds = %catch53
-  %44 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
+  %44 = landingpad { i8*, i32 }
           cleanup
   %45 = extractvalue { i8*, i32 } %44, 0
   store i8* %45, i8** %exn.slot

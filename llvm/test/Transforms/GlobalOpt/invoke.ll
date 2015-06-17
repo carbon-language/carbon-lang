@@ -11,7 +11,7 @@ define i32 @one() {
   ret i32 1
 }
 
-define void @_GLOBAL__I_a() {
+define void @_GLOBAL__I_a() personality i8* undef {
 bb:
   %tmp1 = invoke i32 @one()
           to label %bb2 unwind label %bb4
@@ -21,7 +21,7 @@ bb2:                                              ; preds = %bb
   ret void
 
 bb4:                                              ; preds = %bb
-  %tmp5 = landingpad { i8*, i32 } personality i8* undef
+  %tmp5 = landingpad { i8*, i32 }
           filter [0 x i8*] zeroinitializer
   unreachable
 }

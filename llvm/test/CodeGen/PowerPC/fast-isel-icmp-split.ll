@@ -9,7 +9,7 @@ target triple = "powerpc64-bgq-linux"
 %"class.boost::serialization::extended_type_info.129.150" = type { i32 (...)**, i32, i8* }
 
 ; Function Attrs: noinline
-define void @_ZN5boost13serialization18extended_type_info4findEPKc() #0 align 2 {
+define void @_ZN5boost13serialization18extended_type_info4findEPKc() #0 align 2 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
 entry:
   br i1 undef, label %cond.true, label %cond.false
 
@@ -42,7 +42,7 @@ if.then:                                          ; preds = %invoke.cont.2
   br label %cleanup
 
 lpad:                                             ; preds = %cond.end
-  %2 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %2 = landingpad { i8*, i32 }
           cleanup
   br label %eh.resume
 

@@ -9,7 +9,7 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 %"union.llvm::SmallVectorBase::U" = type { x86_fp80 }
 
 ; Function Attrs: ssp uwtable
-define void @_Z4testv() #0 {
+define void @_Z4testv() #0 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
 ; CHECK: @_Z4testv()
 ; CHECK: invoke.cont:
 ; CHECK: br i1 true, label %new.notnull.i11, label %if.end.i14
@@ -98,7 +98,7 @@ _ZN4llvm11SmallVectorIiLj8EED1Ev.exit21:          ; preds = %invoke.cont3, %if.t
   ret void
 
 lpad:                                             ; preds = %if.end.i14, %if.end.i, %invoke.cont2
-  %12 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %12 = landingpad { i8*, i32 }
           cleanup
   %13 = load i8*, i8** %BeginX.i.i.i.i.i.i, align 16, !tbaa !4
   %cmp.i.i.i.i = icmp eq i8* %13, %1

@@ -217,7 +217,7 @@ namespace llvm {
     std::unique_ptr<Module> makeLLVMModule(DPass *P) {
       const char *ModuleStrig =
         "declare i32 @g()\n" \
-        "define void @f(i32 %x) {\n" \
+        "define void @f(i32 %x) personality i32 ()* @g {\n" \
         "bb0:\n" \
         "  %y1 = add i32 %x, 1\n" \
         "  %y2 = add i32 %x, 1\n" \
@@ -226,7 +226,7 @@ namespace llvm {
         "  %y4 = add i32 %x, 1\n" \
         "  br label %bb4\n" \
         "bb2:\n" \
-        "  %y5 = landingpad i32 personality i32 ()* @g\n" \
+        "  %y5 = landingpad i32\n" \
         "          cleanup\n" \
         "  br label %bb4\n" \
         "bb3:\n" \

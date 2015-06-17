@@ -50,6 +50,9 @@ void TypeFinder::run(const Module &M, bool onlyNamed) {
     if (FI->hasPrologueData())
       incorporateValue(FI->getPrologueData());
 
+    if (FI->hasPersonalityFn())
+      incorporateValue(FI->getPersonalityFn());
+
     // First incorporate the arguments.
     for (Function::const_arg_iterator AI = FI->arg_begin(),
            AE = FI->arg_end(); AI != AE; ++AI)

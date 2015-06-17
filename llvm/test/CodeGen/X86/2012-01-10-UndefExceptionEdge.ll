@@ -16,7 +16,7 @@ target triple = "i386-apple-macosx10.7"
 
 declare void @llvm.memset.p0i8.i32(i8* nocapture, i8, i32, i32, i1) nounwind
 
-define void @f(i32* nocapture %arg, i32* nocapture %arg1, i32* nocapture %arg2, i32* nocapture %arg3, i32 %arg4, i32 %arg5) optsize ssp {
+define void @f(i32* nocapture %arg, i32* nocapture %arg1, i32* nocapture %arg2, i32* nocapture %arg3, i32 %arg4, i32 %arg5) optsize ssp personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
 bb:
   br i1 undef, label %bb6, label %bb7
 
@@ -43,7 +43,7 @@ bb11:                                             ; preds = %bb7
 
 bb20:                                             ; preds = %bb43, %bb41, %bb29, %bb7
   %tmp21 = phi i32 [ undef, %bb7 ], [ %tmp12, %bb43 ], [ %tmp12, %bb29 ], [ %tmp12, %bb41 ]
-  %tmp22 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %tmp22 = landingpad { i8*, i32 }
           catch i8* bitcast ({ i8*, i8* }* @Exception to i8*)
   br i1 undef, label %bb23, label %bb69
 

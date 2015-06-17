@@ -40,7 +40,7 @@ unreached:
 
 ; Need to delete unreachable gc.statepoint invoke - tested seperately given
 ; a correct implementation could only remove the instructions, not the block
-define void @test8() gc "statepoint-example" {
+define void @test8() gc "statepoint-example" personality i32 ()* undef {
 ; CHECK-LABEL: test8
 ; CHECK-NOT: gc.statepoint
   ret void
@@ -53,7 +53,7 @@ normal_return:                                    ; preds = %entry
   ret void
 
 exceptional_return:                               ; preds = %entry
-  %landing_pad4 = landingpad { i8*, i32 } personality i32 ()* undef
+  %landing_pad4 = landingpad { i8*, i32 }
           cleanup
   ret void
 }

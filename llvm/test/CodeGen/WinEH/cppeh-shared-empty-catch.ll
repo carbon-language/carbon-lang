@@ -34,7 +34,7 @@ $"\01??_R0H@8" = comdat any
 ; CHECK:   invoke void @"\01?g@@YAXXZ"()
 
 ; Function Attrs: nounwind
-define void @"\01?f@@YAXXZ"() #0 {
+define void @"\01?f@@YAXXZ"() #0 personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*) {
 entry:
   invoke void @"\01?g@@YAXXZ"()
           to label %invoke.cont unwind label %lpad
@@ -48,7 +48,7 @@ invoke.cont:                                      ; preds = %entry
           to label %unreachable unwind label %lpad1
 
 lpad:                                             ; preds = %entry
-  %0 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
+  %0 = landingpad { i8*, i32 }
           catch i8* null
   %1 = extractvalue { i8*, i32 } %0, 0
   br label %catch2
@@ -56,14 +56,14 @@ lpad:                                             ; preds = %entry
 ; Note: Even though this landing pad has two catch clauses, it only has one action because both
 ;       handlers do the same thing.
 ; CHECK: [[LPAD1_LABEL]]:
-; CHECK:   landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
+; CHECK:   landingpad { i8*, i32 }
 ; CHECK-NEXT:           catch %eh.CatchHandlerType* @llvm.eh.handlertype.H.0
 ; CHECK-NEXT:           catch i8* null
 ; CHECK-NEXT:   [[RECOVER:\%.+]] = call i8* (...) @llvm.eh.actions(i32 1, i8* null, i32 -1, i8* (i8*, i8*)* @"\01?f@@YAXXZ.catch")
 ; CHECK-NEXT:   indirectbr i8* [[RECOVER]], [label %try.cont4]
 
 lpad1:                                            ; preds = %invoke.cont
-  %2 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
+  %2 = landingpad { i8*, i32 }
           catch %eh.CatchHandlerType* @llvm.eh.handlertype.H.0
           catch i8* null
   %3 = extractvalue { i8*, i32 } %2, 0

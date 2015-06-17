@@ -7,7 +7,7 @@ target triple = "i386-apple-darwin10.0"
 
 declare i32 @_ZN11HullLibrary16CreateConvexHullERK8HullDescR10HullResult(i8*, i8* nocapture, i8* nocapture) ssp align 2
 
-define void @_ZN17btSoftBodyHelpers4DrawEP10btSoftBodyP12btIDebugDrawi(i8* %psb, i8* %idraw, i32 %drawflags) ssp align 2 {
+define void @_ZN17btSoftBodyHelpers4DrawEP10btSoftBodyP12btIDebugDrawi(i8* %psb, i8* %idraw, i32 %drawflags) ssp align 2 personality i32 (...)* @__gxx_personality_v0 {
 entry:
   br i1 undef, label %bb92, label %bb58
 
@@ -60,7 +60,7 @@ bb92:                                             ; preds = %entry
   unreachable
 
 lpad159:                                          ; preds = %bb58
-  %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+  %exn = landingpad {i8*, i32}
             cleanup
   unreachable
 }

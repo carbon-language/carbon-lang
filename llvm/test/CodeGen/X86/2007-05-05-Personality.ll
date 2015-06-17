@@ -12,13 +12,13 @@
 
 @error = external global i8
 
-define void @_ada_x() {
+define void @_ada_x() personality i8* bitcast (i32 (...)* @__gnat_eh_personality to i8*) {
 entry:
   invoke void @raise()
           to label %eh_then unwind label %unwind
 
 unwind:                                           ; preds = %entry
-  %eh_ptr = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gnat_eh_personality to i8*)
+  %eh_ptr = landingpad { i8*, i32 }
               catch i8* @error
   %eh_select = extractvalue { i8*, i32 } %eh_ptr, 1
   %eh_typeid = tail call i32 @llvm.eh.typeid.for(i8* @error)

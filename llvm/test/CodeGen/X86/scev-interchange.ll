@@ -51,7 +51,7 @@ declare fastcc void @_ZN11FE_Q_Helper12_GLOBAL__N_116invert_numberingERKSt6vecto
 
 declare fastcc void @_ZN4FE_QILi3EE14get_dpo_vectorEj(%"struct.std::vector<int,std::allocator<int> >"* noalias nocapture sret, i32)
 
-define fastcc void @_ZN4FE_QILi3EEC1Ej(i32 %degree) {
+define fastcc void @_ZN4FE_QILi3EEC1Ej(i32 %degree) personality i32 (...)* @__gxx_personality_v0 {
 entry:
 	invoke fastcc void @_ZNSt6vectorIbSaIbEEC1EmRKbRKS0_(%"struct.std::vector<bool,std::allocator<bool> >"* undef, i64 1, i8* undef)
 			to label %invcont.i unwind label %lpad.i
@@ -149,7 +149,7 @@ bb71.i:		; preds = %bb.i.i.i262.i, %bb66.i
 			to label %_ZNSt12_Vector_baseIjSaIjEEC2EmRKS0_.exit.i.i.i.i.i unwind label %lpad.i.i.i.i.i.i		; <i8*> [#uses=0]
 
 lpad.i.i.i.i.i.i:		; preds = %bb71.i
-        %exn.i.i.i.i.i.i = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+        %exn.i.i.i.i.i.i = landingpad {i8*, i32}
                  cleanup
 	unreachable
 
@@ -164,7 +164,7 @@ _ZNSt6vectorIjSaIjEED1Ev.exit.i.i:		; preds = %_ZNSt12_Vector_baseIjSaIjEEC2EmRK
 			to label %_ZNSt12_Vector_baseIjSaIjEEC2EmRKS0_.exit.i.i.i12.i.i unwind label %lpad.i.i.i.i8.i.i		; <i8*> [#uses=0]
 
 lpad.i.i.i.i8.i.i:		; preds = %_ZNSt6vectorIjSaIjEED1Ev.exit.i.i
-        %exn.i.i.i.i8.i.i = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+        %exn.i.i.i.i8.i.i = landingpad {i8*, i32}
                  cleanup
 	invoke void @_Unwind_Resume(i8* undef)
 			to label %.noexc.i9.i.i unwind label %lpad.i19.i.i
@@ -183,7 +183,7 @@ bb50.i.i.i:		; preds = %bb.i.i.i.i.i.i.i.i.i.i, %_ZNSt12_Vector_baseIjSaIjEEC2Em
 			to label %bb83.i unwind label %lpad188.i
 
 lpad.i19.i.i:		; preds = %lpad.i.i.i.i8.i.i
-        %exn.i19.i.i = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+        %exn.i19.i.i = landingpad {i8*, i32}
                  cleanup
 	unreachable
 
@@ -198,7 +198,7 @@ invcont84.i:		; preds = %bb83.i
 			to label %_ZNSt12_Vector_baseIjSaIjEEC2EmRKS0_.exit.i.i.i.i unwind label %lpad.i.i.i.i315.i		; <i8*> [#uses=0]
 
 lpad.i.i.i.i315.i:		; preds = %invcont84.i
-        %exn.i.i.i.i315.i = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+        %exn.i.i.i.i315.i = landingpad {i8*, i32}
                  cleanup
 	invoke void @_Unwind_Resume(i8* undef)
 			to label %.noexc.i316.i unwind label %lpad.i352.i
@@ -217,7 +217,7 @@ bb50.i.i:		; preds = %bb.i.i.i.i.i.i.i.i320.i, %_ZNSt12_Vector_baseIjSaIjEEC2EmR
 			to label %invcont86.i unwind label %lpad200.i
 
 lpad.i352.i:		; preds = %lpad.i.i.i.i315.i
-        %exn.i352.i = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+        %exn.i352.i = landingpad {i8*, i32}
                  cleanup
 	unreachable
 
@@ -242,7 +242,7 @@ invcont101.i:		; preds = %bb100.i
 			to label %_ZN10FullMatrixIdEC1Ejj.exit.i.i unwind label %lpad.i.i.i.i.i
 
 lpad.i.i.i.i.i:		; preds = %invcont101.i
-        %exn.i.i.i.i.i = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+        %exn.i.i.i.i.i = landingpad {i8*, i32}
                  cleanup
 	unreachable
 
@@ -251,7 +251,7 @@ _ZN10FullMatrixIdEC1Ejj.exit.i.i:		; preds = %invcont101.i
 			to label %_ZN10FullMatrixIdEC1Ejj.exit28.i.i unwind label %lpad.i.i.i27.i.i
 
 lpad.i.i.i27.i.i:		; preds = %_ZN10FullMatrixIdEC1Ejj.exit.i.i
-        %exn.i.i.i27.i.i = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+        %exn.i.i.i27.i.i = landingpad {i8*, i32}
                  cleanup
 	invoke void @_Unwind_Resume(i8* undef)
 			to label %.noexc.i.i unwind label %lpad.i.i
@@ -272,7 +272,7 @@ bb.i.i.i297.i.i:		; preds = %bb58.i.i
 	unreachable
 
 lpad.i.i:		; preds = %lpad.i.i.i27.i.i
-        %exn.i.i = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+        %exn.i.i = landingpad {i8*, i32}
                  cleanup
 	unreachable
 
@@ -312,67 +312,67 @@ bb29.loopexit.i.i:		; preds = %.noexc232.i
 	br label %bb9.i216.i
 
 lpad.i:		; preds = %entry
-        %exn.i = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+        %exn.i = landingpad {i8*, i32}
                  cleanup
 	unreachable
 
 lpad120.i:		; preds = %invcont.i
-        %exn120.i = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+        %exn120.i = landingpad {i8*, i32}
                  cleanup
 	unreachable
 
 lpad124.i:		; preds = %invcont1.i
-        %exn124.i = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+        %exn124.i = landingpad {i8*, i32}
                  cleanup
 	unreachable
 
 lpad128.i:		; preds = %invcont3.i
-        %exn128.i = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+        %exn128.i = landingpad {i8*, i32}
                  cleanup
 	unreachable
 
 lpad132.i:		; preds = %invcont4.i
-        %exn132.i = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+        %exn132.i = landingpad {i8*, i32}
                  cleanup
 	unreachable
 
 lpad136.i:		; preds = %invcont6.i
-        %exn136.i = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+        %exn136.i = landingpad {i8*, i32}
                  cleanup
 	unreachable
 
 lpad140.i:		; preds = %bb21.i, %invcont7.i
-        %exn140.i = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+        %exn140.i = landingpad {i8*, i32}
                  cleanup
 	unreachable
 
 lpad144.i:		; preds = %bb10.i168.i, %invcont9.i
-        %exn144.i = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+        %exn144.i = landingpad {i8*, i32}
                  cleanup
 	unreachable
 
 lpad148.i:		; preds = %invcont10.i
-        %exn148.i = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+        %exn148.i = landingpad {i8*, i32}
                  cleanup
 	unreachable
 
 lpad188.i:		; preds = %bb50.i.i.i
-        %exn188.i = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+        %exn188.i = landingpad {i8*, i32}
                  cleanup
 	unreachable
 
 lpad196.i:		; preds = %bb.i191.i
-        %exn196 = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+        %exn196 = landingpad {i8*, i32}
                  cleanup
 	unreachable
 
 lpad200.i:		; preds = %bb50.i.i
-        %exn200.i = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+        %exn200.i = landingpad {i8*, i32}
                  cleanup
 	unreachable
 
 lpad204.i:		; preds = %invcont86.i
-        %exn204.i = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+        %exn204.i = landingpad {i8*, i32}
                  cleanup
 	unreachable
 }

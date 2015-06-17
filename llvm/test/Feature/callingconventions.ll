@@ -25,7 +25,7 @@ define coldcc void @bar2() {
         ret void
 }
 
-define cc42 void @bar3() {
+define cc42 void @bar3() personality i32 (...)* @__gxx_personality_v0 {
   invoke fastcc void @foo( )
     to label %Ok unwind label %U
 
@@ -33,12 +33,12 @@ Ok:
   ret void
 
 U:
-  %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+  %exn = landingpad {i8*, i32}
             cleanup
   resume { i8*, i32 } %exn
 }
 
-define void @bar4() {
+define void @bar4() personality i32 (...)* @__gxx_personality_v0 {
   call cc42 void @bar( )
   invoke cc42 void @bar3( )
     to label %Ok unwind label %U
@@ -47,7 +47,7 @@ Ok:
   ret void
 
 U:
-  %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+  %exn = landingpad {i8*, i32}
             cleanup
   resume { i8*, i32 } %exn
 }

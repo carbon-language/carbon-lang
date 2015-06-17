@@ -19,7 +19,7 @@ declare i8* @__cxa_begin_catch(i8*) nounwind
 
 declare %"struct.std::ctype<char>"* @_ZSt9use_facetISt5ctypeIcEERKT_RKSt6locale(%"struct.std::locale"*)
 
-define %"struct.std::basic_istream<char,std::char_traits<char> >"* @_ZStrsIcSt11char_traitsIcEERSt13basic_istreamIT_T0_ES6_PS3_(%"struct.std::basic_istream<char,std::char_traits<char> >"* %__in, i8* nocapture %__s) {
+define %"struct.std::basic_istream<char,std::char_traits<char> >"* @_ZStrsIcSt11char_traitsIcEERSt13basic_istreamIT_T0_ES6_PS3_(%"struct.std::basic_istream<char,std::char_traits<char> >"* %__in, i8* nocapture %__s) personality i32 (...)* @__gxx_personality_v0 {
 entry:
   %0 = invoke %"struct.std::ctype<char>"* @_ZSt9use_facetISt5ctypeIcEERKT_RKSt6locale(%"struct.std::locale"* undef)
           to label %invcont8 unwind label %lpad74 ; <%"struct.std::ctype<char>"*> [#uses=0]
@@ -62,14 +62,14 @@ invcont38:                                        ; preds = %invcont25, %bb1.i, 
 
 lpad:                                             ; preds = %bb.i93, %invcont24, %bb1.i, %invcont8
   %__extracted.1 = phi i32 [ 0, %invcont8 ], [ %2, %bb1.i ], [ undef, %bb.i93 ], [ undef, %invcont24 ] ; <i32> [#uses=0]
-  %lpad1 = landingpad { i8*, i32 } personality i32 (...)* @__gxx_personality_v0
+  %lpad1 = landingpad { i8*, i32 }
             catch i8* null
   %eh_ptr = extractvalue { i8*, i32 } %lpad1, 0
   %6 = call i8* @__cxa_begin_catch(i8* %eh_ptr) nounwind ; <i8*> [#uses=0]
   unreachable
 
 lpad74:                                           ; preds = %entry
-  %lpad2 = landingpad { i8*, i32 } personality i32 (...)* @__gxx_personality_v0
+  %lpad2 = landingpad { i8*, i32 }
             cleanup
   unreachable
 }

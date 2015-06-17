@@ -3,7 +3,7 @@
 
 declare void @foo()
 
-define i32 @test(i1 %cond) {
+define i32 @test(i1 %cond) personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
 Entry:
 	br i1 %cond, label %Inv, label %Cont
 Inv:		; preds = %Entry
@@ -12,7 +12,7 @@ Inv:		; preds = %Entry
 Ok:		; preds = %Inv
 	br label %Cont
 LPad:
-        %val = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+        %val = landingpad { i8*, i32 }
                  catch i8* null
         br label %Cont
 Cont:		; preds = %Ok, %Inv, %Entry

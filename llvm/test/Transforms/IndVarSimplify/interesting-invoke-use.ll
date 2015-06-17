@@ -11,7 +11,7 @@ target triple = "i386-pc-linux-gnu"
 @.str7 = external constant [24 x i8]            ; <[24 x i8]*> [#uses=1]
 @C.17.316 = external constant %struct.string___XUB              ; <%struct.string___XUB*> [#uses=1]
 
-define void @_ada_c35503g() {
+define void @_ada_c35503g() personality i32 (...)* @__gxx_personality_v0 {
 entry:
   br label %bb
 
@@ -47,7 +47,7 @@ bb178:          ; preds = %invcont127
   br label %bb123
 
 lpad266:                ; preds = %invcont129, %bb128, %bb123
-  %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+  %exn = landingpad {i8*, i32}
             cleanup
   unreachable
 }

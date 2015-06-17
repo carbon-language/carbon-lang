@@ -6,7 +6,7 @@ declare i8* @_Znwm(i32)
 
 declare i8* @__cxa_begin_catch(i8*) nounwind 
 
-define i32 @main(i32 %argc, i8** %argv) {
+define i32 @main(i32 %argc, i8** %argv) personality i32 (...)* @__gxx_personality_v0 {
 entry:
 	br i1 false, label %bb37, label %bb34
 
@@ -21,7 +21,7 @@ tmp12.i.i.i.i.i.noexc65:		; preds = %bb37
 	unreachable
 
 lpad243:		; preds = %bb37
-        %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+        %exn = landingpad {i8*, i32}
                  cleanup
 	%eh_ptr244 = extractvalue { i8*, i32 } %exn, 0
 	store i32 (...)** getelementptr ([5 x i32 (...)*], [5 x i32 (...)*]* @_ZTVN10Evaluation10GridOutputILi3EEE, i32 0, i32 2), i32 (...)*** null, align 8

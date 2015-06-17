@@ -59,7 +59,7 @@ bb:
 
 ; Check that instcombine doesn't insert GEPs before landingpad.
 
-define i32 @test3(%struct3* %dm, i1 %tmp4, i64 %tmp9, i64 %tmp19, i64 %tmp20, i64 %tmp21) {
+define i32 @test3(%struct3* %dm, i1 %tmp4, i64 %tmp9, i64 %tmp19, i64 %tmp20, i64 %tmp21) personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
 bb:
   %tmp = getelementptr inbounds %struct3, %struct3* %dm, i64 0
   br i1 %tmp4, label %bb1, label %bb2
@@ -84,7 +84,7 @@ bb4:
   ret i32 0
 
 bb5:
-  %tmp27 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) catch i8* bitcast (i8** @_ZTIi to i8*)
+  %tmp27 = landingpad { i8*, i32 } catch i8* bitcast (i8** @_ZTIi to i8*)
   %tmp34 = getelementptr inbounds %struct4, %struct4* %phi, i64 %tmp21, i32 1
   %tmp35 = getelementptr inbounds %struct2, %struct2* %tmp34, i64 0, i32 1
   %tmp25 = load i32, i32* %tmp35, align 4
@@ -92,7 +92,7 @@ bb5:
 
 ; CHECK-LABEL: @test3(
 ; CHECK: bb5:
-; CHECK-NEXT: {{.*}}landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+; CHECK-NEXT: {{.*}}landingpad { i8*, i32 }
 }
 
 @_ZTIi = external constant i8*

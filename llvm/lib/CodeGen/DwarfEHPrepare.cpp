@@ -181,25 +181,20 @@ size_t DwarfEHPrepare::pruneUnreachableResumes(
 bool DwarfEHPrepare::InsertUnwindResumeCalls(Function &Fn) {
   SmallVector<ResumeInst*, 16> Resumes;
   SmallVector<LandingPadInst*, 16> CleanupLPads;
-  bool FoundLP = false;
   for (BasicBlock &BB : Fn) {
     if (auto *RI = dyn_cast<ResumeInst>(BB.getTerminator()))
       Resumes.push_back(RI);
-    if (auto *LP = BB.getLandingPadInst()) {
+    if (auto *LP = BB.getLandingPadInst())
       if (LP->isCleanup())
         CleanupLPads.push_back(LP);
-      // Check the personality on the first landingpad. Don't do anything if
-      // it's for MSVC.
-      if (!FoundLP) {
-        FoundLP = true;
-        EHPersonality Pers = classifyEHPersonality(LP->getPersonalityFn());
-        if (isMSVCEHPersonality(Pers))
-          return false;
-      }
-    }
   }
 
   if (Resumes.empty())
+    return false;
+
+  // Check the personality, don't do anything if it's for MSVC.
+  EHPersonality Pers = classifyEHPersonality(Fn.getPersonalityFn());
+  if (isMSVCEHPersonality(Pers))
     return false;
 
   LLVMContext &Ctx = Fn.getContext();

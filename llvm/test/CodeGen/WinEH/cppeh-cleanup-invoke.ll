@@ -26,7 +26,7 @@ $"\01??_R0H@8" = comdat any
 @"\01??_R0H@8" = linkonce_odr global %rtti.TypeDescriptor2 { i8** @"\01??_7type_info@@6B@", i8* null, [3 x i8] c".H\00" }, comdat
 @llvm.eh.handlertype.H.0 = private unnamed_addr constant %eh.CatchHandlerType { i32 0, i8* bitcast (%rtti.TypeDescriptor2* @"\01??_R0H@8" to i8*) }, section "llvm.metadata"
 
-define i32 @main() {
+define i32 @main() personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*) {
 entry:
   %o = alloca %struct.HasDtor, align 1
   invoke void @may_throw()
@@ -37,14 +37,14 @@ invoke.cont2:                                     ; preds = %invoke.cont
   br label %try.cont
 
 lpad:                                             ; preds = %entry
-  %0 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
+  %0 = landingpad { i8*, i32 }
           catch %eh.CatchHandlerType* @llvm.eh.handlertype.H.0
   %1 = extractvalue { i8*, i32 } %0, 0
   %2 = extractvalue { i8*, i32 } %0, 1
   br label %catch.dispatch
 
 lpad1:                                            ; preds = %invoke.cont
-  %3 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
+  %3 = landingpad { i8*, i32 }
           cleanup
           catch %eh.CatchHandlerType* @llvm.eh.handlertype.H.0
   %4 = extractvalue { i8*, i32 } %3, 0

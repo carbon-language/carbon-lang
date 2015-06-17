@@ -82,7 +82,7 @@ define internal {i64,i64} @test4a() {
   ret {i64,i64} %b
 }
 
-define i64 @test4b() {
+define i64 @test4b() personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
   %a = invoke {i64,i64} @test4a()
           to label %A unwind label %B
 A:
@@ -90,7 +90,7 @@ A:
   %c = call i64 @test4c(i64 %b)
   ret i64 %c
 B:
-  %val = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %val = landingpad { i8*, i32 }
            catch i8* null
   ret i64 0
 }
@@ -116,14 +116,14 @@ define internal {i64,i64} @test5a() {
   ret {i64,i64} %b
 }
 
-define i64 @test5b() {
+define i64 @test5b() personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
   %a = invoke {i64,i64} @test5a()
           to label %A unwind label %B
 A:
   %c = call i64 @test5c({i64,i64} %a)
   ret i64 %c
 B:
-  %val = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %val = landingpad { i8*, i32 }
            catch i8* null
   ret i64 0
 }

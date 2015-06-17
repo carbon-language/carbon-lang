@@ -21,13 +21,13 @@
 
 @_ZTIi = external constant i8*
 
-define i32 @_Z3barv() {
+define i32 @_Z3barv() personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
 entry:
   invoke void @_Z3foov()
           to label %return unwind label %lpad
 
 lpad:                                             ; preds = %entry
-  %0 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %0 = landingpad { i8*, i32 }
           catch i8* bitcast (i8** @_ZTIi to i8*)
   %1 = extractvalue { i8*, i32 } %0, 1
   %2 = tail call i32 @llvm.eh.typeid.for(i8* bitcast (i8** @_ZTIi to i8*)) nounwind

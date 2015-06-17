@@ -635,8 +635,9 @@ attributes <paramattrs>`), optional :ref:`function attributes <fnattrs>`,
 an optional section, an optional alignment,
 an optional :ref:`comdat <langref_comdats>`,
 an optional :ref:`garbage collector name <gc>`, an optional :ref:`prefix <prefixdata>`,
-an optional :ref:`prologue <prologuedata>`, an opening
-curly brace, a list of basic blocks, and a closing curly brace.
+an optional :ref:`prologue <prologuedata>`,
+an optional :ref:`personality <personalityfn>`,
+an opening curly brace, a list of basic blocks, and a closing curly brace.
 
 LLVM function declarations consist of the "``declare``" keyword, an
 optional :ref:`linkage type <linkage>`, an optional :ref:`visibility
@@ -683,7 +684,8 @@ Syntax::
            [cconv] [ret attrs]
            <ResultType> @<FunctionName> ([argument list])
            [unnamed_addr] [fn Attrs] [section "name"] [comdat [($name)]]
-           [align N] [gc] [prefix Constant] [prologue Constant] { ... }
+           [align N] [gc] [prefix Constant] [prologue Constant]
+           [personality Constant] { ... }
 
 The argument list is a comma seperated sequence of arguments where each
 argument is of the following form
@@ -1129,6 +1131,14 @@ x86_64 architecture, where the first two bytes encode ``jmp .+10``:
 A function may have prologue data but no body.  This has similar semantics
 to the ``available_externally`` linkage in that the data may be used by the
 optimizers but will not be emitted in the object file.
+
+.. _personalityfn:
+
+Personality Function
+-------------
+
+The ``personality`` attribute permits functions to specify what function
+to use for exception handling.
 
 .. _attrgrp:
 
@@ -7283,8 +7293,8 @@ Syntax:
 
 ::
 
-      <resultval> = landingpad <resultty> personality <type> <pers_fn> <clause>+
-      <resultval> = landingpad <resultty> personality <type> <pers_fn> cleanup <clause>*
+      <resultval> = landingpad <resultty> <clause>+
+      <resultval> = landingpad <resultty> cleanup <clause>*
 
       <clause> := catch <type> <value>
       <clause> := filter <array constant type> <array constant>
@@ -7296,14 +7306,13 @@ The '``landingpad``' instruction is used by `LLVM's exception handling
 system <ExceptionHandling.html#overview>`_ to specify that a basic block
 is a landing pad --- one where the exception lands, and corresponds to the
 code found in the ``catch`` portion of a ``try``/``catch`` sequence. It
-defines values supplied by the personality function (``pers_fn``) upon
+defines values supplied by the :ref:`personality function <personalityfn>` upon
 re-entry to the function. The ``resultval`` has the type ``resultty``.
 
 Arguments:
 """"""""""
 
-This instruction takes a ``pers_fn`` value. This is the personality
-function associated with the unwinding mechanism. The optional
+The optional
 ``cleanup`` flag indicates that the landing pad block is a cleanup.
 
 A ``clause`` begins with the clause type --- ``catch`` or ``filter`` --- and
@@ -7318,7 +7327,7 @@ Semantics:
 """"""""""
 
 The '``landingpad``' instruction defines the values which are set by the
-personality function (``pers_fn``) upon re-entry to the function, and
+:ref:`personality function <personalityfn>` upon re-entry to the function, and
 therefore the "result type" of the ``landingpad`` instruction. As with
 calling conventions, how the personality function results are
 represented in LLVM IR is target specific.
@@ -7341,8 +7350,6 @@ The ``landingpad`` instruction has several restrictions:
    pad block.
 -  A basic block that is not a landing pad block may not include a
    '``landingpad``' instruction.
--  All '``landingpad``' instructions in a function must have the same
-   personality function.
 
 Example:
 """"""""
@@ -7350,13 +7357,13 @@ Example:
 .. code-block:: llvm
 
       ;; A landing pad which can catch an integer.
-      %res = landingpad { i8*, i32 } personality i32 (...)* @__gxx_personality_v0
+      %res = landingpad { i8*, i32 }
                catch i8** @_ZTIi
       ;; A landing pad that is a cleanup.
-      %res = landingpad { i8*, i32 } personality i32 (...)* @__gxx_personality_v0
+      %res = landingpad { i8*, i32 }
                cleanup
       ;; A landing pad which can catch an integer and can only throw a double.
-      %res = landingpad { i8*, i32 } personality i32 (...)* @__gxx_personality_v0
+      %res = landingpad { i8*, i32 }
                catch i8** @_ZTIi
                filter [1 x i8**] [@_ZTId]
 

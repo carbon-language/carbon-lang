@@ -13,7 +13,7 @@ target triple = "i386-apple-darwin10.0.0"
 ; CHECK: movl %esi,{{.*}}(%ebp) 
 ; CHECK: calll __Z6throwsv
 
-define i8* @_Z4test1SiS_(%struct.S* byval %s1, i32 %n, %struct.S* byval %s2) ssp {
+define i8* @_Z4test1SiS_(%struct.S* byval %s1, i32 %n, %struct.S* byval %s2) ssp personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
 entry:
   %retval = alloca i8*, align 4                   ; <i8**> [#uses=2]
   %n.addr = alloca i32, align 4                   ; <i32*> [#uses=1]
@@ -30,13 +30,13 @@ invoke.cont:                                      ; preds = %entry
   br label %finally
 
 terminate.handler:                                ; preds = %match.end
-  %1 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %1 = landingpad { i8*, i32 }
            cleanup
   call void @_ZSt9terminatev() noreturn nounwind
   unreachable
 
 try.handler:                                      ; preds = %entry
-  %exc1.ptr = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %exc1.ptr = landingpad { i8*, i32 }
            catch i8* null
   %exc1 = extractvalue { i8*, i32 } %exc1.ptr, 0
   %selector = extractvalue { i8*, i32 } %exc1.ptr, 1
@@ -57,7 +57,7 @@ invoke.cont2:                                     ; preds = %match
   br label %match.end
 
 match.handler:                                    ; preds = %match
-  %exc3 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %exc3 = landingpad { i8*, i32 }
            cleanup
   %7 = extractvalue { i8*, i32 } %exc3, 0
   store i8* %7, i8** %_rethrow

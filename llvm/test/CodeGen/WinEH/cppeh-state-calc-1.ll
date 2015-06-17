@@ -68,7 +68,7 @@ $_TI1D = comdat any
 @_TI1D = linkonce_odr unnamed_addr constant %eh.ThrowInfo { i32 0, i32 0, i32 0, i32 trunc (i64 sub nuw nsw (i64 ptrtoint (%eh.CatchableTypeArray.1* @_CTA1D to i64), i64 ptrtoint (i8* @__ImageBase to i64)) to i32) }, section ".xdata", comdat
 
 ; Function Attrs: nounwind uwtable
-define void @"\01?test@@YAXXZ"() #0 {
+define void @"\01?test@@YAXXZ"() #0 personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*) {
 entry:
   %tmp = alloca i32, align 4
   %x = alloca i32, align 4
@@ -84,7 +84,7 @@ entry:
           to label %unreachable unwind label %lpad
 
 lpad:                                             ; preds = %entry
-  %1 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
+  %1 = landingpad { i8*, i32 }
           catch i8* bitcast (%eh.CatchHandlerType* @llvm.eh.handlertype.H.0 to i8*)
           catch %eh.CatchHandlerType* @llvm.eh.handlertype.D.0
           catch %eh.CatchHandlerType* @llvm.eh.handlertype.H.0
@@ -99,7 +99,7 @@ try.cont:                                         ; preds = %lpad
           to label %unreachable unwind label %lpad3
 
 lpad3:                                            ; preds = %try.cont
-  %2 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
+  %2 = landingpad { i8*, i32 }
           catch %eh.CatchHandlerType* @llvm.eh.handlertype.D.0
           catch %eh.CatchHandlerType* @llvm.eh.handlertype.H.0
           catch i8* null
@@ -114,7 +114,7 @@ try.cont10:                                       ; preds = %lpad3, %lpad
           to label %unreachable unwind label %lpad12
 
 lpad12:                                           ; preds = %try.cont10
-  %4 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
+  %4 = landingpad { i8*, i32 }
           catch %eh.CatchHandlerType* @llvm.eh.handlertype.H.0
           catch i8* null
   %recover2 = call i8* (...) @llvm.eh.actions(i32 1, i8* bitcast (%eh.CatchHandlerType* @llvm.eh.handlertype.H.0 to i8*), i32 2, i8* (i8*, i8*)* @"\01?test@@YAXXZ.catch2", i32 1, i8* null, i32 -1, i8* (i8*, i8*)* @"\01?test@@YAXXZ.catch3")
@@ -164,7 +164,7 @@ declare void @"\01?catch_one@@YAXXZ"() #1
 ; Function Attrs: nounwind
 declare i8* @llvm.eh.actions(...) #3
 
-define internal i8* @"\01?test@@YAXXZ.catch"(i8*, i8*) #4 {
+define internal i8* @"\01?test@@YAXXZ.catch"(i8*, i8*) #4 personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*) {
 entry:
   %x.i8 = call i8* @llvm.framerecover(i8* bitcast (void ()* @"\01?test@@YAXXZ" to i8*), i8* %1, i32 0)
   %x = bitcast i8* %x.i8 to i32*
@@ -177,7 +177,7 @@ entry.split:                                      ; preds = %entry
   ret i8* blockaddress(@"\01?test@@YAXXZ", %try.cont)
 
 stub:                                             ; preds = %entry
-  %3 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
+  %3 = landingpad { i8*, i32 }
           cleanup
   %recover = call i8* (...) @llvm.eh.actions()
   unreachable
@@ -186,7 +186,7 @@ stub:                                             ; preds = %entry
 ; Function Attrs: nounwind readnone
 declare void @llvm.donothing() #2
 
-define internal i8* @"\01?test@@YAXXZ.catch1"(i8*, i8*) #4 {
+define internal i8* @"\01?test@@YAXXZ.catch1"(i8*, i8*) #4 personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*) {
 entry:
   call void @"\01?catch_a@@YAXXZ"() #3
   invoke void @llvm.donothing()
@@ -196,13 +196,13 @@ entry.split:                                      ; preds = %entry
   ret i8* blockaddress(@"\01?test@@YAXXZ", %try.cont10)
 
 stub:                                             ; preds = %entry
-  %2 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
+  %2 = landingpad { i8*, i32 }
           cleanup
   %recover = call i8* (...) @llvm.eh.actions()
   unreachable
 }
 
-define internal i8* @"\01?test@@YAXXZ.catch2"(i8*, i8*) #4 {
+define internal i8* @"\01?test@@YAXXZ.catch2"(i8*, i8*) #4 personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*) {
 entry:
   %x21.i8 = call i8* @llvm.framerecover(i8* bitcast (void ()* @"\01?test@@YAXXZ" to i8*), i8* %1, i32 2)
   %x21 = bitcast i8* %x21.i8 to i32*
@@ -215,13 +215,13 @@ entry.split:                                      ; preds = %entry
   ret i8* blockaddress(@"\01?test@@YAXXZ", %try.cont22)
 
 stub:                                             ; preds = %entry
-  %3 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
+  %3 = landingpad { i8*, i32 }
           cleanup
   %recover = call i8* (...) @llvm.eh.actions()
   unreachable
 }
 
-define internal i8* @"\01?test@@YAXXZ.catch3"(i8*, i8*) #4 {
+define internal i8* @"\01?test@@YAXXZ.catch3"(i8*, i8*) #4 personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*) {
 entry:
   call void @"\01?catch_all@@YAXXZ"() #3
   invoke void @llvm.donothing()
@@ -231,7 +231,7 @@ entry.split:                                      ; preds = %entry
   ret i8* blockaddress(@"\01?test@@YAXXZ", %try.cont22)
 
 stub:                                             ; preds = %entry
-  %2 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
+  %2 = landingpad { i8*, i32 }
           cleanup
   %recover = call i8* (...) @llvm.eh.actions()
   unreachable

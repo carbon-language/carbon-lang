@@ -248,8 +248,8 @@ void Function::eraseFromParent() {
 
 Function::Function(FunctionType *Ty, LinkageTypes Linkage, const Twine &name,
                    Module *ParentModule)
-    : GlobalObject(PointerType::getUnqual(Ty), Value::FunctionVal, nullptr, 0,
-                   Linkage, name),
+    : GlobalObject(PointerType::getUnqual(Ty), Value::FunctionVal,
+                   OperandTraits<Function>::op_begin(this), 0, Linkage, name),
       Ty(Ty) {
   assert(FunctionType::isValidReturnType(getReturnType()) &&
          "invalid return type");
@@ -279,6 +279,9 @@ Function::~Function() {
 
   // Remove the function from the on-the-side GC table.
   clearGC();
+
+  // FIXME: needed by operator delete
+  setFunctionNumOperands(1);
 }
 
 void Function::BuildLazyArguments() const {
@@ -331,6 +334,8 @@ void Function::dropAllReferences() {
 
   // Metadata is stored in a side-table.
   clearMetadata();
+
+  setPersonalityFn(nullptr);
 }
 
 void Function::addAttribute(unsigned i, Attribute::AttrKind attr) {
@@ -426,6 +431,10 @@ void Function::copyAttributesFrom(const GlobalValue *Src) {
     setPrologueData(SrcF->getPrologueData());
   else
     setPrologueData(nullptr);
+  if (SrcF->hasPersonalityFn())
+    setPersonalityFn(SrcF->getPersonalityFn());
+  else
+    setPersonalityFn(nullptr);
 }
 
 /// \brief This does the actual lookup of an intrinsic ID which
@@ -975,4 +984,23 @@ Optional<uint64_t> Function::getEntryCount() const {
         return CI->getValue().getZExtValue();
       }
   return None;
+}
+
+void Function::setPersonalityFn(Constant *C) {
+  if (!C) {
+    if (hasPersonalityFn()) {
+      // Note, the num operands is used to compute the offset of the operand, so
+      // the order here matters.  Clearing the operand then clearing the num
+      // operands ensures we have the correct offset to the operand.
+      Op<0>().set(nullptr);
+      setFunctionNumOperands(0);
+    }
+  } else {
+    // Note, the num operands is used to compute the offset of the operand, so
+    // the order here matters.  We need to set num operands to 1 first so that
+    // we get the correct offset to the first operand when we set it.
+    if (!hasPersonalityFn())
+      setFunctionNumOperands(1);
+    Op<0>().set(C);
+  }
 }

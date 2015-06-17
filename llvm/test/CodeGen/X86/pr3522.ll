@@ -5,7 +5,7 @@
 target triple = "i386-pc-linux-gnu"
 @.str = external constant [13 x i8]		; <[13 x i8]*> [#uses=1]
 
-define void @_ada_c34018a() {
+define void @_ada_c34018a() personality i32 (...)* @__gxx_personality_v0 {
 entry:
 	%0 = tail call i32 @report__ident_int(i32 90)		; <i32> [#uses=1]
 	%1 = trunc i32 %0 to i8		; <i8> [#uses=1]
@@ -22,7 +22,7 @@ return:		; preds = %lpad
 	ret void
 
 lpad:		; preds = %entry
-        %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+        %exn = landingpad {i8*, i32}
                  cleanup
 	%2 = icmp eq i8 %1, 90		; <i1> [#uses=1]
 	br i1 %2, label %return, label %bb22

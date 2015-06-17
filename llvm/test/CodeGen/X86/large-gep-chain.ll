@@ -13,7 +13,7 @@
 @7 = external unnamed_addr constant [27 x i8], align 1
 @8 = external unnamed_addr constant [63 x i8], align 1
 
-define void @main() uwtable ssp {
+define void @main() uwtable ssp personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
 bb:
   br i1 undef, label %bb1, label %bb2
 
@@ -25313,7 +25313,7 @@ bb25275:                                          ; preds = %bb25274
   br label %bb25272
 
 bb25276:                                          ; preds = %bb25283, %bb25274, %bb25273
-  %tmp25277 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %tmp25277 = landingpad { i8*, i32 }
           cleanup
   br label %bb25361
 
@@ -25383,7 +25383,7 @@ bb25297:                                          ; preds = %bb25296
   br label %bb25300
 
 bb25298:                                          ; preds = %bb25296, %bb25295, %bb25290, %bb25287
-  %tmp25299 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %tmp25299 = landingpad { i8*, i32 }
           cleanup
   br label %bb25360
 
@@ -25461,7 +25461,7 @@ bb25323:                                          ; preds = %bb25319
           to label %bb25326 unwind label %bb25324
 
 bb25324:                                          ; preds = %bb25357, %bb25344, %bb25343, %bb25342, %bb25337, %bb25334, %bb25333, %bb25323, %bb25313, %bb25307, %bb25306
-  %tmp25325 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %tmp25325 = landingpad { i8*, i32 }
           cleanup
   br label %bb25359
 
@@ -25562,7 +25562,7 @@ bb25354:                                          ; preds = %bb25353
   br label %bb25358
 
 bb25355:                                          ; preds = %bb25353, %bb25352, %bb25351
-  %tmp25356 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %tmp25356 = landingpad { i8*, i32 }
           cleanup
   br label %bb25359
 

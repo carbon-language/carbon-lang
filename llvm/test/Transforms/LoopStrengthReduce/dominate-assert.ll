@@ -4,7 +4,7 @@
 declare i8* @_Znwm()
 declare i32 @__gxx_personality_v0(...)
 declare void @g()
-define void @f() {
+define void @f() personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
 bb0:
   br label %bb1
 bb1:
@@ -18,7 +18,7 @@ bb3:
   %v3 = invoke noalias i8* @_Znwm()
           to label %bb5 unwind label %bb4
 bb4:
-  %v4 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %v4 = landingpad { i8*, i32 }
           cleanup
   br label %bb9
 bb5:
@@ -32,7 +32,7 @@ bb6:
 bb7:
   unreachable
 bb8:
-  %v7 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %v7 = landingpad { i8*, i32 }
           cleanup
   br label %bb9
 bb9:
@@ -40,7 +40,7 @@ bb9:
 }
 
 
-define void @h() {
+define void @h() personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
 bb1:
   invoke void @g() optsize
           to label %bb2 unwind label %bb5
@@ -54,17 +54,17 @@ bb3:
 bb4:
   ret void
 bb5:
-  %tmp = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %tmp = landingpad { i8*, i32 }
           cleanup
   invoke void @g() optsize
           to label %bb4 unwind label %bb7
 bb6:
-  %tmp1 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %tmp1 = landingpad { i8*, i32 }
           cleanup
   %arraydestroy.isempty = icmp eq i8* undef, %arrayctor.cur
   ret void
 bb7:
-  %lpad.nonloopexit = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %lpad.nonloopexit = landingpad { i8*, i32 }
           catch i8* null
   ret void
 }

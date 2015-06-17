@@ -9,7 +9,7 @@
 
 %struct.ComplexType = type { i32 }
 
-define i32 @t(i32 %clientPort, i32 %pluginID, i32 %requestID, i32 %objectID, i64 %serverIdentifier, i64 %argumentsData, i32 %argumentsLength) ssp {
+define i32 @t(i32 %clientPort, i32 %pluginID, i32 %requestID, i32 %objectID, i64 %serverIdentifier, i64 %argumentsData, i32 %argumentsLength) ssp personality i32 (...)* @__gxx_personality_v0 {
 entry:
 ; CHECK: _t:
 ; CHECK: movl 16(%rbp),
@@ -34,7 +34,7 @@ invcont2:                                         ; preds = %invcont1
   ret i32 0
 
 lpad:                                             ; preds = %invcont1, %invcont, %entry
-  %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+  %exn = landingpad {i8*, i32}
             cleanup
   %8 = call i32 @vm_deallocate(i32 undef, i64 0, i64 %0) ; <i32> [#uses=0]
   unreachable

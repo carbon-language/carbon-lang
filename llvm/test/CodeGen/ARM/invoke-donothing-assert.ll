@@ -4,7 +4,7 @@
 ; <rdar://problem/13228754> & <rdar://problem/13316637>
 
 ; CHECK: .globl  _foo
-define void @foo() {
+define void @foo() personality i8* bitcast (i32 (...)* @__gxx_personality_sj0 to i8*) {
 invoke.cont:
   invoke void @callA() 
           to label %invoke.cont25 unwind label %lpad2
@@ -20,12 +20,12 @@ invoke.cont75:
   ret void
 
 lpad2:
-  %0 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_sj0 to i8*)
+  %0 = landingpad { i8*, i32 }
           cleanup
   br label %eh.resume
 
 lpad15:
-  %1 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_sj0 to i8*)
+  %1 = landingpad { i8*, i32 }
           cleanup
   br label %eh.resume
 
@@ -34,7 +34,7 @@ eh.resume:
 }
 
 ; CHECK: .globl _bar
-define linkonce_odr void @bar(i32* %a) {
+define linkonce_odr void @bar(i32* %a) personality i8* bitcast (i32 (...)* @__gxx_personality_sj0 to i8*) {
 if.end.i.i.i:
   invoke void @llvm.donothing()
           to label %call.i.i.i.noexc unwind label %eh.resume
@@ -58,7 +58,7 @@ _ZN3lol5ArrayIivvvvvvvED1Ev.exit:
   ret void
 
 eh.resume:
-  %1 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_sj0 to i8*)
+  %1 = landingpad { i8*, i32 }
           cleanup
   %2 = extractvalue { i8*, i32 } %1, 0
   %3 = extractvalue { i8*, i32 } %1, 1

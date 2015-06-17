@@ -205,6 +205,8 @@ ValueMapping::ValueMapping(const Module &M) {
       map(F.getPrefixData());
     if (F.hasPrologueData())
       map(F.getPrologueData());
+    if (F.hasPersonalityFn())
+      map(F.getPersonalityFn());
   }
 
   // Function bodies.
@@ -474,6 +476,8 @@ static void changeUseLists(Module &M, Changer changeValueUseList) {
       changeValueUseList(F.getPrefixData());
     if (F.hasPrologueData())
       changeValueUseList(F.getPrologueData());
+    if (F.hasPersonalityFn())
+      changeValueUseList(F.getPersonalityFn());
   }
 
   // Function bodies.

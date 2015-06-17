@@ -14,7 +14,7 @@ declare i8* @llvm.framerecover(i8*, i8*, i32)
 declare void @llvm.frameescape(...)
 declare i8* @llvm.x86.seh.exceptioninfo(i8*, i8*)
 
-define i32 @main() {
+define i32 @main() personality i8* bitcast (i32 (...)* @_except_handler3 to i8*) {
 entry:
   %__exceptioncode = alloca i32, align 4
   call void (...) @llvm.frameescape(i32* %__exceptioncode)
@@ -22,7 +22,7 @@ entry:
           to label %__try.cont unwind label %lpad
 
 lpad:                                             ; preds = %entry
-  %0 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @_except_handler3 to i8*)
+  %0 = landingpad { i8*, i32 }
           catch i8* bitcast (i32 ()* @"filt$main" to i8*)
   %1 = extractvalue { i8*, i32 } %0, 1
   %2 = call i32 @llvm.eh.typeid.for(i8* bitcast (i32 ()* @"filt$main" to i8*)) #4

@@ -39,7 +39,7 @@ declare i32 @__gxx_personality_v0(...);
 !0 = !{i16 0, i16 32768} ; [0, 32767]
 !1 = !{i16 0, i16 32769} ; [0, 32768]
 
-define i16 @add_bounded_values(i16 %a, i16 %b) {
+define i16 @add_bounded_values(i16 %a, i16 %b) personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
 ; CHECK-LABEL: @add_bounded_values(
 entry:
   %c = call i16 @bounded(i16 %a), !range !0
@@ -50,12 +50,12 @@ cont:
 ; CHECK: add nuw i16 %c, %d
   ret i16 %e
 lpad:
-  %0 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %0 = landingpad { i8*, i32 }
           filter [0 x i8*] zeroinitializer
   ret i16 42
 }
 
-define i16 @add_bounded_values_2(i16 %a, i16 %b) {
+define i16 @add_bounded_values_2(i16 %a, i16 %b) personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
 ; CHECK-LABEL: @add_bounded_values_2(
 entry:
   %c = call i16 @bounded(i16 %a), !range !1
@@ -67,7 +67,7 @@ cont:
 ; CHECK: add i16 %c, %d
   ret i16 %e
 lpad:
-  %0 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %0 = landingpad { i8*, i32 }
           filter [0 x i8*] zeroinitializer
   ret i16 42
 }

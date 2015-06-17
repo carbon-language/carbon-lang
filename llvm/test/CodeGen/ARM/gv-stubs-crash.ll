@@ -3,7 +3,7 @@
 
 @Exn = external hidden unnamed_addr constant { i8*, i8* }
 
-define hidden void @func(i32* %this, i32* %e) optsize align 2 {
+define hidden void @func(i32* %this, i32* %e) optsize align 2 personality i8* bitcast (i32 (...)* @__gxx_personality_sj0 to i8*) {
   %e.ld = load i32, i32* %e, align 4
   %inv = invoke zeroext i1 @func2(i32* %this, i32 %e.ld) optsize
           to label %ret unwind label %lpad
@@ -12,7 +12,7 @@ ret:
   ret void
 
 lpad:
-  %lp = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_sj0 to i8*)
+  %lp = landingpad { i8*, i32 }
           catch i8* bitcast ({ i8*, i8* }* @Exn to i8*)
   br label %.loopexit4
 

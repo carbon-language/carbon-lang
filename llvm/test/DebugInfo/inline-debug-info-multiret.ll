@@ -57,7 +57,7 @@ declare void @llvm.dbg.declare(metadata, metadata, metadata) #1
 
 declare i32 @_Z8test_exti(i32)
 
-define i32 @_Z5test2v()  {
+define i32 @_Z5test2v() personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
 entry:
   %exn.slot = alloca i8*
   %ehselector.slot = alloca i32
@@ -70,7 +70,7 @@ invoke.cont:                                      ; preds = %entry
   br label %try.cont, !dbg !23
 
 lpad:                                             ; preds = %entry
-  %1 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %1 = landingpad { i8*, i32 }
           catch i8* bitcast (i8** @_ZTIi to i8*), !dbg !21
   %2 = extractvalue { i8*, i32 } %1, 0, !dbg !21
   store i8* %2, i8** %exn.slot, !dbg !21

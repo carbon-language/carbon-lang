@@ -6,7 +6,7 @@ declare i64 addrspace(1)* @gc_call()
 declare i32 @llvm.experimental.gc.statepoint.p0f_p1i64f(i64, i32, i64 addrspace(1)* ()*, i32, i32, ...)
 declare i32* @fake_personality_function()
 
-define i32 @test() gc "statepoint-example" {
+define i32 @test() gc "statepoint-example" personality i32* ()* @fake_personality_function {
 ; CHECK-LABEL: test
 entry:
   ; CHECK-LABEL: entry:
@@ -15,7 +15,7 @@ entry:
                 to label %normal unwind label %exception
 
 exception:
-  %lpad = landingpad { i8*, i32 } personality i32* ()* @fake_personality_function
+  %lpad = landingpad { i8*, i32 }
           cleanup
   ret i32 0
 

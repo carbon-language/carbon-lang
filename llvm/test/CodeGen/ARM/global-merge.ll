@@ -15,13 +15,13 @@
 ; CHECK: ZTIi
 @_ZTIi = internal global i8* null
 
-define i32 @_Z9exceptioni(i32 %arg) {
+define i32 @_Z9exceptioni(i32 %arg) personality i8* bitcast (i32 (...)* @__gxx_personality_sj0 to i8*) {
 bb:
   %tmp = invoke i32 @_Z14throwSomethingi(i32 %arg)
           to label %bb9 unwind label %bb1
 
 bb1:                                              ; preds = %bb
-  %tmp2 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_sj0 to i8*)
+  %tmp2 = landingpad { i8*, i32 }
           catch i8* bitcast (i8** @_ZTIi to i8*)
   %tmp3 = extractvalue { i8*, i32 } %tmp2, 1
   %tmp4 = tail call i32 @llvm.eh.typeid.for(i8* bitcast (i8** @_ZTIi to i8*))

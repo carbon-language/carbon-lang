@@ -55,7 +55,7 @@ define i32 @reserve_first(i32 addrspace(1)* %a, i32 addrspace(1)* %b, i32 addrsp
 }
 
 ; Test that stack slots are reused for invokes
-define i32 @back_to_back_invokes(i32 addrspace(1)* %a, i32 addrspace(1)* %b, i32 addrspace(1)* %c) #1 gc "statepoint-example" {
+define i32 @back_to_back_invokes(i32 addrspace(1)* %a, i32 addrspace(1)* %b, i32 addrspace(1)* %c) #1 gc "statepoint-example" personality i32 ()* @"personality_function" {
 ; CHECK-LABEL: back_to_back_invokes
 entry:
   ; The exact stores don't matter, but there need to be three stack slots created
@@ -85,12 +85,12 @@ normal_return2:
   ret i32 1
 
 exceptional_return:
-  %landing_pad = landingpad { i8*, i32 } personality i32 ()* @"personality_function"
+  %landing_pad = landingpad { i8*, i32 }
           cleanup
   ret i32 0
 
 exceptional_return2:
-  %landing_pad2 = landingpad { i8*, i32 } personality i32 ()* @"personality_function"
+  %landing_pad2 = landingpad { i8*, i32 }
           cleanup
   ret i32 0
 }

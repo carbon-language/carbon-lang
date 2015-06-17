@@ -35,7 +35,7 @@ target triple = "x86_64-pc-windows-msvc"
 ; CHECK: }
 
 ; Function Attrs: nounwind uwtable
-define void @"\01?test@@YAXXZ"() #0 {
+define void @"\01?test@@YAXXZ"() #0 personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*) {
 entry:
   %o = alloca %class.Obj, align 1
   %exn.slot = alloca i8*
@@ -48,7 +48,7 @@ invoke.cont:                                      ; preds = %entry
   br label %try.cont
 
 lpad:                                             ; preds = %entry
-  %0 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
+  %0 = landingpad { i8*, i32 }
           catch i8* null
   %1 = extractvalue { i8*, i32 } %0, 0
   store i8* %1, i8** %exn.slot

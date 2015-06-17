@@ -137,7 +137,7 @@ entry:
 
 declare i32 @fake_personality_function()
 
-define void @"test_invoke"(i32 addrspace(1)* %base) gc "statepoint-example" {
+define void @"test_invoke"(i32 addrspace(1)* %base) gc "statepoint-example" personality i32 ()* @fake_personality_function {
 ; CHECK-LABEL: test_invoke
 entry:
   %ptr.gep = getelementptr i32, i32 addrspace(1)* %base, i32 15
@@ -163,7 +163,7 @@ normal:
 
 exception:
   ; CHECK-LABEL: exception:
-  %landing_pad4 = landingpad { i8*, i32 } personality i32 ()* @fake_personality_function
+  %landing_pad4 = landingpad { i8*, i32 }
           cleanup
   ; CHECK: gc.relocate
   ; CHECK: bitcast

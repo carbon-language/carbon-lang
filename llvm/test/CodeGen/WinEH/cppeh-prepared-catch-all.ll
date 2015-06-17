@@ -18,13 +18,13 @@ declare void @llvm.eh.begincatch(i8* nocapture, i8* nocapture) #2
 declare void @llvm.eh.endcatch() #2
 
 ; Function Attrs: nounwind uwtable
-define void @test_catch_all() #0 {
+define void @test_catch_all() #0 personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*) {
 entry:
   invoke void @may_throw()
           to label %try.cont unwind label %lpad
 
 lpad:                                             ; preds = %entry
-  %0 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
+  %0 = landingpad { i8*, i32 }
           catch i8* null
   %1 = extractvalue { i8*, i32 } %0, 0
   tail call void @llvm.eh.begincatch(i8* %1, i8* null) #2

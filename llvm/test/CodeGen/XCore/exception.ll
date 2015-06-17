@@ -47,7 +47,7 @@ entry:
 ; CHECK: entsp 4
 ; CHECK: .cfi_def_cfa_offset 16
 ; CHECK: .cfi_offset 15, 0
-define void @fn_catch() {
+define void @fn_catch() personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
 entry:
 
 ; N.B. we alloc no variables, hence force compiler to spill
@@ -77,7 +77,7 @@ cont:
 ; CHECK: ldw r6, r0[0]
 ; CHECK: bl __cxa_end_catch
 lpad:
-  %0 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %0 = landingpad { i8*, i32 }
           cleanup
           catch i8* bitcast (i8** @_ZTIi to i8*)
           catch i8* bitcast (i8** @_ZTId to i8*)

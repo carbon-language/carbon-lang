@@ -2,7 +2,7 @@
 ; PR10733
 declare void @_Znam()
 
-define void @_ZNK14gIndexOdometer15AfterExcisionOfERi() uwtable align 2 {
+define void @_ZNK14gIndexOdometer15AfterExcisionOfERi() uwtable align 2 personality i32 (i32, i64, i8*, i8*)* @__gxx_personality_v0 {
 _ZN6Gambit5ArrayIiEC2Ej.exit36:
   br label %"9"
 
@@ -19,7 +19,7 @@ _ZN6Gambit5ArrayIiEC2Ej.exit36:
 
 lpad27:                                           ; preds = %"10", %"9"
   %0 = phi i32 [ undef, %"9" ], [ %tmp, %"10" ]
-  %1 = landingpad { i8*, i32 } personality i32 (i32, i64, i8*, i8*)* @__gxx_personality_v0
+  %1 = landingpad { i8*, i32 }
           cleanup
   resume { i8*, i32 } zeroinitializer
 }

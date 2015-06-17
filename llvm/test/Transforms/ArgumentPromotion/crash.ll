@@ -1,7 +1,7 @@
 ; RUN: opt -inline -argpromotion < %s
 ; rdar://7879828
 
-define void @foo() {
+define void @foo() personality i32 (...)* @__gxx_personality_v0 {
   invoke void @foo2()
           to label %if.end432 unwind label %for.end520 
 
@@ -9,7 +9,7 @@ if.end432:
   unreachable
 
 for.end520: 
-  %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+  %exn = landingpad {i8*, i32}
            cleanup
   unreachable
 }

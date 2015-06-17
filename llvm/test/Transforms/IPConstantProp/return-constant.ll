@@ -15,13 +15,13 @@ define i1 @caller(i1 %C) {
         ret i1 %Y
 }
 
-define i1 @invokecaller(i1 %C) {
+define i1 @invokecaller(i1 %C) personality i32 (...)* @__gxx_personality_v0 {
         %X = invoke i32 @foo( i1 %C ) to label %OK unwind label %FAIL             ; <i32> [#uses=1]
 OK:
         %Y = icmp ne i32 %X, 0          ; <i1> [#uses=1]
         ret i1 %Y 
 FAIL:
-        %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+        %exn = landingpad {i8*, i32}
                  cleanup
         ret i1 false
 }

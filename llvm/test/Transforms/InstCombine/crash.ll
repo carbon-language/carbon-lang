@@ -131,11 +131,11 @@ define i32 @test5a() {
        ret i32 0
 }
 
-define void @test5() {
+define void @test5() personality i32 (...)* @__gxx_personality_v0 {
   store i1 true, i1* undef
   %r = invoke i32 @test5a() to label %exit unwind label %unwind
 unwind:
-  %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+  %exn = landingpad {i8*, i32}
           cleanup
   br label %exit
 exit:
@@ -159,7 +159,7 @@ entry:
 %class.RuleBasedBreakIterator = type { i64 ()* }
 %class.UStack = type { i8** }
 
-define i32 @_ZN22RuleBasedBreakIterator15checkDictionaryEi(%class.RuleBasedBreakIterator* %this, i32 %x) align 2 {
+define i32 @_ZN22RuleBasedBreakIterator15checkDictionaryEi(%class.RuleBasedBreakIterator* %this, i32 %x) align 2 personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
 entry:
   %breaks = alloca %class.UStack, align 4         ; <%class.UStack*> [#uses=3]
   call void @_ZN6UStackC1Ei(%class.UStack* %breaks, i32 0)
@@ -167,13 +167,13 @@ entry:
   br i1 %tobool, label %cond.end, label %cond.false
 
 terminate.handler:                                ; preds = %ehcleanup
-  %exc = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %exc = landingpad { i8*, i32 }
            cleanup
   call void @_ZSt9terminatev() noreturn nounwind
   unreachable
 
 ehcleanup:                                        ; preds = %cond.false
-  %exc1 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %exc1 = landingpad { i8*, i32 }
            catch i8* null
   invoke void @_ZN6UStackD1Ev(%class.UStack* %breaks)
           to label %cont unwind label %terminate.handler
@@ -207,7 +207,7 @@ declare void @_Unwind_Resume_or_Rethrow(i8*)
 
 
 ; rdar://7590304
-define i8* @test10(i8* %self, i8* %tmp3) {
+define i8* @test10(i8* %self, i8* %tmp3) personality i32 (...)* @__gxx_personality_v0 {
 entry:
   store i1 true, i1* undef
   store i1 true, i1* undef
@@ -218,7 +218,7 @@ invoke.cont:                                      ; preds = %entry
   unreachable
 
 try.handler:                                      ; preds = %entry
-  %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+  %exn = landingpad {i8*, i32}
            catch i8* null
   ret i8* %self
 }
@@ -376,7 +376,7 @@ return:                                           ; No predecessors!
 declare void @test18b() noreturn
 declare void @test18foo(double**)
 declare void @test18a() noreturn
-define fastcc void @test18x(i8* %t0, i1 %b) uwtable align 2 {
+define fastcc void @test18x(i8* %t0, i1 %b) uwtable align 2 personality i32 (...)* @__gxx_personality_v0 {
 entry:
   br i1 %b, label %e1, label %e2
 e1:
@@ -389,7 +389,7 @@ e2:
           to label %u unwind label %lpad
 lpad:
   %t5 = phi double** [ %t2, %e1 ], [ %t4, %e2 ]
-  %lpad.nonloopexit262 = landingpad { i8*, i32 } personality i32 (...)* @__gxx_personality_v0
+  %lpad.nonloopexit262 = landingpad { i8*, i32 }
           cleanup
   call void @test18foo(double** %t5)
   unreachable

@@ -9,7 +9,7 @@ target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f3
 @.str32190 = external constant [92 x i8], align 1		; <[92 x i8]*> [#uses=1]
 @.str41 = external constant [25 x i8], align 1		; <[25 x i8]*> [#uses=1]
 
-define void @_ZN8EtherBus10initializeEv() {
+define void @_ZN8EtherBus10initializeEv() personality i32 (...)* @__gxx_personality_v0 {
 entry:
 	br i1 undef, label %_ZN7cObjectnwEj.exit, label %bb.i
 
@@ -110,17 +110,17 @@ bb106:		; preds = %invcont105, %bb61
 			to label %.noexc unwind label %lpad119		; <i8*> [#uses=1]
 
 lpad:		; preds = %_ZN7cObjectnwEj.exit
-        %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+        %exn = landingpad {i8*, i32}
                  cleanup
 	br label %Unwind
 
 lpad119:		; preds = %bb106, %invcont104, %invcont103, %bb102, %bb49, %bb34, %bb12, %invcont10, %invcont9, %bb8
-        %exn119 = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+        %exn119 = landingpad {i8*, i32}
                  cleanup
 	unreachable
 
 lpad123:		; preds = %.noexc
-        %exn123 = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+        %exn123 = landingpad {i8*, i32}
                  cleanup
 	%tmp5 = icmp eq i8* %tmp4, null		; <i1> [#uses=1]
 	br i1 %tmp5, label %Unwind, label %bb.i2

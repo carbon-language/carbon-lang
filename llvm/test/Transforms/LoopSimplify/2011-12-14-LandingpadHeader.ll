@@ -3,7 +3,7 @@
 
 @catchtypeinfo = external unnamed_addr constant { i8*, i8*, i8* }
 
-define void @main() uwtable ssp {
+define void @main() uwtable ssp personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
 entry:
   invoke void @f1()
           to label %try.cont19 unwind label %catch
@@ -17,7 +17,7 @@ entry:
 ; CHECK: br label %catch
 
 catch:                                            ; preds = %if.else, %entry
-  %0 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %0 = landingpad { i8*, i32 }
           catch i8* bitcast ({ i8*, i8*, i8* }* @catchtypeinfo to i8*)
   invoke void @f3()
           to label %if.else unwind label %eh.resume
@@ -30,7 +30,7 @@ try.cont19:                                       ; preds = %if.else, %entry
   ret void
 
 eh.resume:                                        ; preds = %catch
-  %1 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %1 = landingpad { i8*, i32 }
           cleanup
           catch i8* bitcast ({ i8*, i8*, i8* }* @catchtypeinfo to i8*)
   resume { i8*, i32 } undef

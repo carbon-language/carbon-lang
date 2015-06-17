@@ -74,7 +74,7 @@ bb:
 %A = type { %B }
 %B = type { i32 }
 
-define void @_Z3Foov() ssp {
+define void @_Z3Foov() ssp personality i8* bitcast (i32 (...)* @__gxx_personality_sj0 to i8*) {
 entry:
   br i1 true, label %exit, label %false
 
@@ -83,7 +83,7 @@ false:
           to label %exit unwind label %lpad
 
 lpad:
-  %0 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_sj0 to i8*)
+  %0 = landingpad { i8*, i32 }
           catch i8* null
   unreachable
 

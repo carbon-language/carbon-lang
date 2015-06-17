@@ -42,7 +42,7 @@ entry:
   ret void
 }
 
-define void @_Z3fn1v() uwtable {
+define void @_Z3fn1v() uwtable personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*) {
 entry:
   %call = call noalias i8* @_Znwm() #8
   invoke void @_ZN24CompositeEditCommandImplC2Ev()
@@ -68,13 +68,13 @@ invoke.cont7:                                     ; preds = %_ZN15EditCommandImp
   ret void
 
 lpad:                                             ; preds = %entry
-  %4 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %4 = landingpad { i8*, i32 }
           cleanup
   call void @_ZdlPv() #9
   unreachable
 
 lpad1:                                            ; preds = %_ZN1DC1Ev.exit, %_ZN15EditCommandImpl5applyEv.exit
-  %5 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %5 = landingpad { i8*, i32 }
           cleanup
   %6 = load i32, i32* %1, align 4
   %tobool.i.i.i = icmp eq i32 %6, 0
@@ -91,7 +91,7 @@ _ZN1BI1DED1Ev.exit:                               ; preds = %lpad1, %if.then.i.i
   resume { i8*, i32 } undef
 
 terminate.lpad:                                   ; No predecessors!
-  %7 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  %7 = landingpad { i8*, i32 }
           catch i8* null
   unreachable
 }

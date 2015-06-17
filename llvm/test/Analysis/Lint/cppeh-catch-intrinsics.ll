@@ -13,7 +13,7 @@ declare void @llvm.eh.endcatch()
 @_ZTIi = external constant i8*
 
 ; Function Attrs: uwtable
-define void @test_missing_endcatch() {
+define void @test_missing_endcatch() personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*) {
 ; CHECK: Some paths from llvm.eh.begincatch may not reach llvm.eh.endcatch
 ; CHECK-NEXT: call void @llvm.eh.begincatch(i8* %exn, i8* null)
 entry:
@@ -21,7 +21,7 @@ entry:
           to label %try.cont unwind label %lpad
 
 lpad:                                             ; preds = %entry
-  %0 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
+  %0 = landingpad { i8*, i32 }
           catch i8* bitcast (i8** @_ZTIi to i8*)
   %exn = extractvalue { i8*, i32 } %0, 0
   %sel = extractvalue { i8*, i32 } %0, 1
@@ -45,7 +45,7 @@ eh.resume:                                        ; preds = %catch.dispatch
 }
 
 ; Function Attrs: uwtable
-define void @test_missing_begincatch() {
+define void @test_missing_begincatch() personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*) {
 ; CHECK: llvm.eh.endcatch may be reachable without passing llvm.eh.begincatch
 ; CHECK-NEXT:  call void @llvm.eh.endcatch()
 entry:
@@ -53,7 +53,7 @@ entry:
           to label %try.cont unwind label %lpad
 
 lpad:                                             ; preds = %entry
-  %0 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
+  %0 = landingpad { i8*, i32 }
           catch i8* bitcast (i8** @_ZTIi to i8*)
   %exn = extractvalue { i8*, i32 } %0, 0
   %sel = extractvalue { i8*, i32 } %0, 1
@@ -77,7 +77,7 @@ eh.resume:                                        ; preds = %catch.dispatch
 }
 
 ; Function Attrs: uwtable
-define void @test_multiple_begin() {
+define void @test_multiple_begin() personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*) {
 ; CHECK: llvm.eh.begincatch may be called a second time before llvm.eh.endcatch
 ; CHECK-NEXT: call void @llvm.eh.begincatch(i8* %exn, i8* null)
 ; CHECK-NEXT: call void @llvm.eh.begincatch(i8* %exn, i8* null)
@@ -86,7 +86,7 @@ entry:
           to label %try.cont unwind label %lpad
 
 lpad:                                             ; preds = %entry
-  %0 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
+  %0 = landingpad { i8*, i32 }
           catch i8* bitcast (i8** @_ZTIi to i8*)
   %exn = extractvalue { i8*, i32 } %0, 0
   %sel = extractvalue { i8*, i32 } %0, 1
@@ -112,7 +112,7 @@ eh.resume:                                        ; preds = %catch.dispatch
 }
 
 ; Function Attrs: uwtable
-define void @test_multiple_end() {
+define void @test_multiple_end() personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*) {
 ; CHECK: llvm.eh.endcatch may be called a second time after llvm.eh.begincatch
 ; CHECK-NEXT:  call void @llvm.eh.endcatch()
 ; CHECK-NEXT:  call void @llvm.eh.endcatch()
@@ -121,7 +121,7 @@ entry:
           to label %try.cont unwind label %lpad
 
 lpad:                                             ; preds = %entry
-  %0 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
+  %0 = landingpad { i8*, i32 }
           catch i8* bitcast (i8** @_ZTIi to i8*)
   %exn = extractvalue { i8*, i32 } %0, 0
   %sel = extractvalue { i8*, i32 } %0, 1
@@ -166,7 +166,7 @@ try.cont:                                         ; preds = %invoke.cont2, %entr
 }
 
 ; Function Attrs: uwtable
-define void @test_branch_to_begincatch_with_no_lpad(i32 %fake.sel) {
+define void @test_branch_to_begincatch_with_no_lpad(i32 %fake.sel) personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*) {
 ; CHECK: llvm.eh.begincatch may be reachable without passing a landingpad
 ; CHECK-NEXT: call void @llvm.eh.begincatch(i8* %exn2, i8* null)
 entry:
@@ -175,7 +175,7 @@ entry:
           to label %catch unwind label %lpad
 
 lpad:                                             ; preds = %entry
-  %0 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
+  %0 = landingpad { i8*, i32 }
           catch i8* bitcast (i8** @_ZTIi to i8*)
   %exn = extractvalue { i8*, i32 } %0, 0
   %sel = extractvalue { i8*, i32 } %0, 1
@@ -211,7 +211,7 @@ eh.resume:                                        ; preds = %catch.dispatch
 }
 
 ; Function Attrs: uwtable
-define void @test_branch_missing_endcatch() {
+define void @test_branch_missing_endcatch() personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*) {
 ; CHECK: Some paths from llvm.eh.begincatch may not reach llvm.eh.endcatch
 ; CHECK-NEXT: call void @llvm.eh.begincatch(i8* %exn2, i8* null)
 entry:
@@ -223,7 +223,7 @@ invoke.cont:
           to label %invoke.cont unwind label %lpad1
 
 lpad:                                             ; preds = %entry
-  %0 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
+  %0 = landingpad { i8*, i32 }
           catch i8* bitcast (i8** @_ZTIi to i8*)
   %exn = extractvalue { i8*, i32 } %0, 0
   %sel = extractvalue { i8*, i32 } %0, 1
@@ -235,7 +235,7 @@ lpad:                                             ; preds = %entry
           to label %try.cont unwind label %lpad
 
 lpad1:                                            ; preds = %entry
-  %l1.0 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
+  %l1.0 = landingpad { i8*, i32 }
 		  cleanup
           catch i8* bitcast (i8** @_ZTIi to i8*)
   %exn1 = extractvalue { i8*, i32 } %l1.0, 0
