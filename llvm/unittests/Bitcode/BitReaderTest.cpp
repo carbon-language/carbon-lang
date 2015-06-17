@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ADT/SmallString.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/AsmParser/Parser.h"
 #include "llvm/Bitcode/BitstreamWriter.h"
 #include "llvm/Bitcode/ReaderWriter.h"
@@ -16,6 +17,7 @@
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Verifier.h"
+#include "llvm/Support/DataStream.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/SourceMgr.h"
@@ -56,6 +58,49 @@ static std::unique_ptr<Module> getLazyModuleFromAssembly(LLVMContext &Context,
   ErrorOr<std::unique_ptr<Module>> ModuleOrErr =
       getLazyBitcodeModule(std::move(Buffer), Context);
   return std::move(ModuleOrErr.get());
+}
+
+class BufferDataStreamer : public DataStreamer {
+  std::unique_ptr<MemoryBuffer> Buffer;
+  unsigned Pos = 0;
+  size_t GetBytes(unsigned char *Out, size_t Len) override {
+    StringRef Buf = Buffer->getBuffer();
+    size_t Left = Buf.size() - Pos;
+    Len = std::min(Left, Len);
+    memcpy(Out, Buffer->getBuffer().substr(Pos).data(), Len);
+    Pos += Len;
+    return Len;
+  }
+
+public:
+  BufferDataStreamer(std::unique_ptr<MemoryBuffer> Buffer)
+      : Buffer(std::move(Buffer)) {}
+};
+
+static std::unique_ptr<Module>
+getStreamedModuleFromAssembly(LLVMContext &Context, SmallString<1024> &Mem,
+                              const char *Assembly) {
+  writeModuleToBuffer(parseAssembly(Assembly), Mem);
+  std::unique_ptr<MemoryBuffer> Buffer =
+      MemoryBuffer::getMemBuffer(Mem.str(), "test", false);
+  auto Streamer = make_unique<BufferDataStreamer>(std::move(Buffer));
+  ErrorOr<std::unique_ptr<Module>> ModuleOrErr =
+      getStreamedBitcodeModule("test", std::move(Streamer), Context);
+  return std::move(ModuleOrErr.get());
+}
+
+TEST(BitReaderTest, MateralizeForwardRefWithStream) {
+  SmallString<1024> Mem;
+
+  LLVMContext Context;
+  std::unique_ptr<Module> M = getStreamedModuleFromAssembly(
+      Context, Mem, "@table = constant i8* blockaddress(@func, %bb)\n"
+                    "define void @func() {\n"
+                    "  unreachable\n"
+                    "bb:\n"
+                    "  unreachable\n"
+                    "}\n");
+  EXPECT_FALSE(M->getFunction("func")->empty());
 }
 
 TEST(BitReaderTest, DematerializeFunctionPreservesLinkageType) {

@@ -4597,6 +4597,35 @@ const std::error_category &llvm::BitcodeErrorCategory() {
 // External interface
 //===----------------------------------------------------------------------===//
 
+static ErrorOr<std::unique_ptr<Module>>
+getBitcodeModuleImpl(std::unique_ptr<DataStreamer> Streamer, StringRef Name,
+                     BitcodeReader *R, LLVMContext &Context,
+                     bool MaterializeAll, bool ShouldLazyLoadMetadata) {
+  std::unique_ptr<Module> M = make_unique<Module>(Name, Context);
+  M->setMaterializer(R);
+
+  auto cleanupOnError = [&](std::error_code EC) {
+    R->releaseBuffer(); // Never take ownership on error.
+    return EC;
+  };
+
+  // Delay parsing Metadata if ShouldLazyLoadMetadata is true.
+  if (std::error_code EC = R->parseBitcodeInto(std::move(Streamer), M.get(),
+                                               ShouldLazyLoadMetadata))
+    return cleanupOnError(EC);
+
+  if (MaterializeAll) {
+    // Read in the entire module, and destroy the BitcodeReader.
+    if (std::error_code EC = M->materializeAllPermanently())
+      return cleanupOnError(EC);
+  } else {
+    // Resolve forward references from blockaddresses.
+    if (std::error_code EC = R->materializeForwardReferencedFunctions())
+      return cleanupOnError(EC);
+  }
+  return std::move(M);
+}
+
 /// \brief Get a lazy one-at-time loading module from bitcode.
 ///
 /// This isn't always used in a lazy context.  In particular, it's also used by
@@ -4610,34 +4639,17 @@ getLazyBitcodeModuleImpl(std::unique_ptr<MemoryBuffer> &&Buffer,
                          LLVMContext &Context, bool MaterializeAll,
                          DiagnosticHandlerFunction DiagnosticHandler,
                          bool ShouldLazyLoadMetadata = false) {
-  std::unique_ptr<Module> M =
-      make_unique<Module>(Buffer->getBufferIdentifier(), Context);
   BitcodeReader *R =
       new BitcodeReader(Buffer.get(), Context, DiagnosticHandler);
-  M->setMaterializer(R);
 
-  auto cleanupOnError = [&](std::error_code EC) {
-    R->releaseBuffer(); // Never take ownership on error.
-    return EC;
-  };
-
-  // Delay parsing Metadata if ShouldLazyLoadMetadata is true.
-  if (std::error_code EC =
-          R->parseBitcodeInto(nullptr, M.get(), ShouldLazyLoadMetadata))
-    return cleanupOnError(EC);
-
-  if (MaterializeAll) {
-    // Read in the entire module, and destroy the BitcodeReader.
-    if (std::error_code EC = M->materializeAllPermanently())
-      return EC;
-  } else {
-    // Resolve forward references from blockaddresses.
-    if (std::error_code EC = R->materializeForwardReferencedFunctions())
-      return cleanupOnError(EC);
-  }
+  ErrorOr<std::unique_ptr<Module>> Ret =
+      getBitcodeModuleImpl(nullptr, Buffer->getBufferIdentifier(), R, Context,
+                           MaterializeAll, ShouldLazyLoadMetadata);
+  if (!Ret)
+    return Ret;
 
   Buffer.release(); // The BitcodeReader owns it now.
-  return std::move(M);
+  return Ret;
 }
 
 ErrorOr<std::unique_ptr<Module>> llvm::getLazyBitcodeModule(
@@ -4652,10 +4664,9 @@ ErrorOr<std::unique_ptr<Module>> llvm::getStreamedBitcodeModule(
     LLVMContext &Context, DiagnosticHandlerFunction DiagnosticHandler) {
   std::unique_ptr<Module> M = make_unique<Module>(Name, Context);
   BitcodeReader *R = new BitcodeReader(Context, DiagnosticHandler);
-  M->setMaterializer(R);
-  if (std::error_code EC = R->parseBitcodeInto(std::move(Streamer), M.get()))
-    return EC;
-  return std::move(M);
+
+  return getBitcodeModuleImpl(std::move(Streamer), Name, R, Context, false,
+                              false);
 }
 
 ErrorOr<std::unique_ptr<Module>>
