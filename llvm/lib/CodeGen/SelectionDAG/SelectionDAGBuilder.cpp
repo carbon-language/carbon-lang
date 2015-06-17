@@ -2929,8 +2929,7 @@ void SelectionDAGBuilder::visitLoad(const LoadInst &I) {
     Root = TLI.prepareVolatileOrAtomicLoad(Root, dl, DAG);
 
   SmallVector<SDValue, 4> Values(NumValues);
-  SmallVector<SDValue, 4> Chains(std::min(unsigned(MaxParallelChains),
-                                          NumValues));
+  SmallVector<SDValue, 4> Chains(std::min(MaxParallelChains, NumValues));
   EVT PtrVT = Ptr.getValueType();
   unsigned ChainI = 0;
   for (unsigned i = 0; i != NumValues; ++i, ++ChainI) {
@@ -2994,8 +2993,7 @@ void SelectionDAGBuilder::visitStore(const StoreInst &I) {
   SDValue Ptr = getValue(PtrV);
 
   SDValue Root = getRoot();
-  SmallVector<SDValue, 4> Chains(std::min(unsigned(MaxParallelChains),
-                                          NumValues));
+  SmallVector<SDValue, 4> Chains(std::min(MaxParallelChains, NumValues));
   EVT PtrVT = Ptr.getValueType();
   bool isVolatile = I.isVolatile();
   bool isNonTemporal = I.getMetadata(LLVMContext::MD_nontemporal) != nullptr;
