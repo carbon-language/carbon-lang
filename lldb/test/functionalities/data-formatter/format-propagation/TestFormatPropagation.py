@@ -83,6 +83,9 @@ class FormatPropagationTestCase(TestBase):
         Y.SetFormat(lldb.eFormatDefault)
         self.assertTrue(X.GetValue() == "0x00000004", "X is not hex as it asked")
         self.assertTrue(Y.GetValue() == "2", "Y is not defaulted")
+        
+        # check that 'frame variable' propagates the format correctly
+        self.expect('frame variable -f x', substrs=['0x00000004', '0x00000002'])
 
 if __name__ == '__main__':
     import atexit

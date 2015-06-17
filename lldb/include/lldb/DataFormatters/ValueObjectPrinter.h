@@ -22,6 +22,8 @@
 #include "lldb/Core/ValueObject.h"
 #include "lldb/DataFormatters/TypeSummary.h"
 
+#include "llvm/ADT/Optional.h"
+
 namespace lldb_private {
 
 struct DumpValueObjectOptions
@@ -371,6 +373,9 @@ protected:
     bool
     PrintChildrenOneLiner (bool hide_names);
     
+    lldb::Format
+    GetFormatForChildElements ();
+    
 private:
     
     ValueObject *m_orig_valobj;
@@ -391,6 +396,7 @@ private:
     std::string m_summary;
     std::string m_error;
     std::pair<TypeValidatorResult,std::string> m_validation;
+    llvm::Optional<lldb::Format> m_children_format;
     
     friend struct StringSummaryFormat;
     
