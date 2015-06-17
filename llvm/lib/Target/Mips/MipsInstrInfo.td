@@ -1691,7 +1691,21 @@ def BneImm : MipsAsmPseudoInst<(outs GPR32Opnd:$rt),
 def BeqImm : MipsAsmPseudoInst<(outs GPR32Opnd:$rt),
                                (ins imm64:$imm64, brtarget:$offset),
                                "beq\t$rt, $imm64, $offset">;
+
+class CondBranchPseudo<string instr_asm> :
+  MipsAsmPseudoInst<(outs), (ins GPR32Opnd:$rs, GPR32Opnd:$rt,
+                                 brtarget:$offset),
+                    !strconcat(instr_asm, "\t$rs, $rt, $offset")>;
 }
+
+def BLT : CondBranchPseudo<"blt">;
+def BLE : CondBranchPseudo<"ble">;
+def BGE : CondBranchPseudo<"bge">;
+def BGT : CondBranchPseudo<"bgt">;
+def BLTU : CondBranchPseudo<"bltu">;
+def BLEU : CondBranchPseudo<"bleu">;
+def BGEU : CondBranchPseudo<"bgeu">;
+def BGTU : CondBranchPseudo<"bgtu">;
 
 //===----------------------------------------------------------------------===//
 //  Arbitrary patterns that map to one or more instructions

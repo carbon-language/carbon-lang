@@ -1,0 +1,21 @@
+# RUN: not llvm-mc %s -arch=mips -mcpu=mips32 2>&1 | FileCheck %s
+
+# Check for errors when using conditional branch pseudos after .set noat.
+  .set noat
+local_label:
+  blt $7, $8, local_label
+# CHECK: :[[@LINE-1]]:3: error: pseudo-instruction requires $at, which is not available
+  bltu $7, $8, local_label
+# CHECK: :[[@LINE-1]]:3: error: pseudo-instruction requires $at, which is not available
+  ble $7, $8, local_label
+# CHECK: :[[@LINE-1]]:3: error: pseudo-instruction requires $at, which is not available
+  bleu $7, $8, local_label
+# CHECK: :[[@LINE-1]]:3: error: pseudo-instruction requires $at, which is not available
+  bge $7, $8, local_label
+# CHECK: :[[@LINE-1]]:3: error: pseudo-instruction requires $at, which is not available
+  bgeu $7, $8, local_label
+# CHECK: :[[@LINE-1]]:3: error: pseudo-instruction requires $at, which is not available
+  bgt $7, $8, local_label
+# CHECK: :[[@LINE-1]]:3: error: pseudo-instruction requires $at, which is not available
+  bgtu $7, $8, local_label
+# CHECK: :[[@LINE-1]]:3: error: pseudo-instruction requires $at, which is not available
