@@ -2,7 +2,8 @@
 
 target datalayout = "e-p:32:32"
 
-; CHECK: @data ={{.*}} alias
+; CHECK: @{{[0-9]+}} = alias
+; CHECK: @{{[0-9]+}} = alias
 @0 = constant i32 1
 @1 = constant [2 x i32] [i32 2, i32 3]
 

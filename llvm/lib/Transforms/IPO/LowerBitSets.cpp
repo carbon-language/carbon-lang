@@ -556,9 +556,8 @@ void LowerBitSets::buildBitSetsFromGlobals(
     } else {
       GlobalAlias *GAlias =
           GlobalAlias::create(Globals[I]->getType(), Globals[I]->getLinkage(),
-                              "data", CombinedGlobalElemPtr, M);
-      if (Globals[I]->hasName())
-        GAlias->takeName(Globals[I]);
+                              "", CombinedGlobalElemPtr, M);
+      GAlias->takeName(Globals[I]);
       Globals[I]->replaceAllUsesWith(GAlias);
     }
     Globals[I]->eraseFromParent();
