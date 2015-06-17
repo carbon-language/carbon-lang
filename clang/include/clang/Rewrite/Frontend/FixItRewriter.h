@@ -27,7 +27,7 @@ class FileEntry;
 
 class FixItOptions {
 public:
-  FixItOptions() : FixWhatYouCan(false),
+  FixItOptions() : InPlace(false), FixWhatYouCan(false),
                    FixOnlyWarnings(false), Silent(false) { }
 
   virtual ~FixItOptions();
@@ -40,6 +40,10 @@ public:
   /// otherwise.
   ///
   virtual std::string RewriteFilename(const std::string &Filename, int &fd) = 0;
+
+  /// True if files should be updated in place. RewriteFilename is only called
+  /// if this is false.
+  bool InPlace;
 
   /// \brief Whether to abort fixing a file when not all errors could be fixed.
   bool FixWhatYouCan;

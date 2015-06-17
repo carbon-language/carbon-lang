@@ -81,6 +81,13 @@ bool FixItRewriter::WriteFixedFiles(
   RewritesReceiver Rec(Rewrite);
   Editor.applyRewrites(Rec);
 
+  if (FixItOpts->InPlace) {
+    // Overwriting open files on Windows is tricky, but the rewriter can do it
+    // for us.
+    Rewrite.overwriteChangedFiles();
+    return false;
+  }
+
   for (iterator I = buffer_begin(), E = buffer_end(); I != E; ++I) {
     const FileEntry *Entry = Rewrite.getSourceMgr().getFileEntryForID(I->first);
     int fd;
