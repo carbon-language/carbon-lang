@@ -188,6 +188,7 @@ template <class ELFT> void Segment<ELFT>::assignVirtualAddress(uint64_t addr) {
   uint64_t tlsStartAddr = 0;
   bool alignSegments = this->_ctx.alignSegments();
   StringRef prevOutputSectionName = StringRef();
+  uint64_t tbssMemsize = 0;
 
   // If this is first section in the segment, page align the section start
   // address. The linker needs to align the data section to a page boundary
@@ -231,8 +232,12 @@ template <class ELFT> void Segment<ELFT>::assignVirtualAddress(uint64_t addr) {
     // segment. If we see a tbss section, don't add memory size to addr The
     // fileOffset is automatically taken care of since TBSS section does not
     // end up using file size
-    if ((*si)->order() != TargetLayout<ELFT>::ORDER_TBSS)
+    if ((*si)->order() != TargetLayout<ELFT>::ORDER_TBSS) {
       curSliceSize = (*si)->memSize();
+      tbssMemsize = 0;
+    } else {
+      tbssMemsize = (*si)->memSize();
+    }
     ++currSection;
     ++si;
   }
@@ -292,6 +297,8 @@ template <class ELFT> void Segment<ELFT>::assignVirtualAddress(uint64_t addr) {
       slice->setVirtualAddr(curSliceAddress);
       // Start new slice
       curSliceAddress = newAddr;
+      if ((*si)->order() == TargetLayout<ELFT>::ORDER_TBSS)
+        curSliceAddress += tbssMemsize;
       (*si)->setVirtualAddr(curSliceAddress);
       startSectionIter = si;
       startSection = currSection;
@@ -302,6 +309,8 @@ template <class ELFT> void Segment<ELFT>::assignVirtualAddress(uint64_t addr) {
     } else {
       if (sliceAlign < (*si)->alignment())
         sliceAlign = (*si)->alignment();
+      if ((*si)->order() == TargetLayout<ELFT>::ORDER_TBSS)
+        newAddr += tbssMemsize;
       (*si)->setVirtualAddr(newAddr);
       // Handle TLS.
       if (auto section = dyn_cast<Section<ELFT>>(*si)) {
@@ -318,10 +327,16 @@ template <class ELFT> void Segment<ELFT>::assignVirtualAddress(uint64_t addr) {
       // any segment. If we see a tbss section, don't add memory size to addr
       // The fileOffset is automatically taken care of since TBSS section does
       // not end up using file size.
-      if ((*si)->order() != TargetLayout<ELFT>::ORDER_TBSS)
+      if ((*si)->order() != TargetLayout<ELFT>::ORDER_TBSS) {
         curSliceSize = newAddr - curSliceAddress + (*si)->memSize();
-      else
-        curSliceSize = newAddr - curSliceAddress;
+        tbssMemsize = 0;
+      } else {
+        // Although TBSS section does not contribute to memory of any segment,
+        // we still need to keep track its total size to correct write it
+        // down.  Since it is done based on curSliceAddress, we need to add
+        // add it to virtual address.
+        tbssMemsize = (*si)->memSize();
+      }
     }
     prevOutputSectionName = curOutputSectionName;
     ++currSection;
