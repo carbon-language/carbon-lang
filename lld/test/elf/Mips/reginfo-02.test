@@ -3,43 +3,47 @@
 # RUN: yaml2obj -format=elf -docnum 1 %s > %t1.o
 # RUN: yaml2obj -format=elf -docnum 2 %s > %t2.o
 # RUN: lld -flavor gnu -target mipsel -shared -o %t.so %t1.o %t2.o
-# RUN: llvm-readobj -program-headers -s %t.so | FileCheck -check-prefix=SEC %s
-# RUN: llvm-objdump -s -t %t.so | FileCheck -check-prefix=RAW %s
+# RUN: llvm-readobj -program-headers -s -t -mips-reginfo %t.so | FileCheck %s
 
-# SEC:      Index: 1
-# SEC-NEXT: Name: .reginfo (1)
-# SEC-NEXT: Type: SHT_MIPS_REGINFO
-# SEC-NEXT: Flags [
-# SEC-NEXT:   SHF_ALLOC
-# SEC-NEXT: ]
-# SEC-NEXT: Address: {{[0-9A-F]+}}
-# SEC-NEXT: Offset: {{[0-9A-F]+}}
-# SEC-NEXT: Size: 24
-# SEC-NEXT: Link: 0
-# SEC-NEXT: Info: 0
-# SEC-NEXT: AddressAlignment: 4
-# SEC-NEXT: EntrySize: 24
+# CHECK:      Index: 1
+# CHECK-NEXT: Name: .reginfo (1)
+# CHECK-NEXT: Type: SHT_MIPS_REGINFO
+# CHECK-NEXT: Flags [
+# CHECK-NEXT:   SHF_ALLOC
+# CHECK-NEXT: ]
+# CHECK-NEXT: Address: {{[0-9A-F]+}}
+# CHECK-NEXT: Offset: {{[0-9A-F]+}}
+# CHECK-NEXT: Size: 24
+# CHECK-NEXT: Link: 0
+# CHECK-NEXT: Info: 0
+# CHECK-NEXT: AddressAlignment: 4
+# CHECK-NEXT: EntrySize: 24
 
-# SEC:      ProgramHeaders [
-# SEC-NEXT:   ProgramHeader {
-# SEC-NEXT:     Type: PT_MIPS_REGINFO
-# SEC-NEXT:     Offset: 0x{{[0-9A-F]+}}
-# SEC-NEXT:     VirtualAddress: 0x{{[0-9A-F]+}}
-# SEC-NEXT:     PhysicalAddress: 0x{{[0-9A-F]+}}
-# SEC-NEXT:     FileSize: 24
-# SEC-NEXT:     MemSize: 24
-# SEC-NEXT:     Flags [
-# SEC-NEXT:       PF_R
-# SEC-NEXT:     ]
-# SEC-NEXT:     Alignment: 4
-# SEC-NEXT:   }
+# CHECK:      Name: _gp
+# CHECK-NEXT: 0x8FF0
 
-# RAW:      Contents of section .reginfo:
-# RAW-NEXT:  {{[0-9a-f]+}} f0000001 e0000002 d0000003 c0000004
-# RAW-NEXT:  {{[0-9a-f]+}} b0000005 f08f0000
+# CHECK:      ProgramHeaders [
+# CHECK-NEXT:   ProgramHeader {
+# CHECK-NEXT:     Type: PT_MIPS_REGINFO
+# CHECK-NEXT:     Offset: 0x{{[0-9A-F]+}}
+# CHECK-NEXT:     VirtualAddress: 0x{{[0-9A-F]+}}
+# CHECK-NEXT:     PhysicalAddress: 0x{{[0-9A-F]+}}
+# CHECK-NEXT:     FileSize: 24
+# CHECK-NEXT:     MemSize: 24
+# CHECK-NEXT:     Flags [
+# CHECK-NEXT:       PF_R
+# CHECK-NEXT:     ]
+# CHECK-NEXT:     Alignment: 4
+# CHECK-NEXT:   }
 
-# RAW: SYMBOL TABLE:
-# RAW: 00008ff0 g *ABS* 00000000 _gp
+# CHECK:      MIPS RegInfo {
+# CHECK-NEXT:   GP: 0x8FF0
+# CHECK-NEXT:   General Mask: 0x10000F0
+# CHECK-NEXT:   Co-Proc Mask0: 0x20000E0
+# CHECK-NEXT:   Co-Proc Mask1: 0x30000D0
+# CHECK-NEXT:   Co-Proc Mask2: 0x40000C0
+# CHECK-NEXT:   Co-Proc Mask3: 0x50000B0
+# CHECK-NEXT: }
 
 # t1.o
 ---

@@ -5,14 +5,19 @@
 # RUN: lld -flavor gnu -target mipsel -shared -o %t.so %t.so.o
 # RUN: yaml2obj -format=elf -docnum 2 %s > %t.exe.o
 # RUN: lld -flavor gnu -target mipsel -e T0 -o %t.exe %t.so %t.exe.o
-# RUN: llvm-objdump -s -t %t.exe | FileCheck %s
+# RUN: llvm-readobj -t -mips-reginfo %t.exe | FileCheck %s
 
-# CHECK:      Contents of section .reginfo:
-# CHECK-NEXT:  {{[0-9a-f]+}} 44444444 44444444 44444444 44444444
-# CHECK-NEXT:  {{[0-9a-f]+}} 44444444 f08f4000
+# CHECK:      Name: _gp
+# CHECK-NEXT: 0x408FF0
 
-# CHECK: SYMBOL TABLE:
-# CHECK: 00408ff0 g *ABS* 00000000 _gp
+# CHECK:      MIPS RegInfo {
+# CHECK-NEXT:   GP: 0x408FF0
+# CHECK-NEXT:   General Mask: 0x44444444
+# CHECK-NEXT:   Co-Proc Mask0: 0x44444444
+# CHECK-NEXT:   Co-Proc Mask1: 0x44444444
+# CHECK-NEXT:   Co-Proc Mask2: 0x44444444
+# CHECK-NEXT:   Co-Proc Mask3: 0x44444444
+# CHECK-NEXT: }
 
 # t.so.o
 ---

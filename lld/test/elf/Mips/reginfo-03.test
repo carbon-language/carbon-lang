@@ -2,14 +2,19 @@
 
 # RUN: yaml2obj -format=elf %s > %t.o
 # RUN: lld -flavor gnu -target mipsel -shared -o %t.so %t.o
-# RUN: llvm-objdump -s -t %t.so | FileCheck %s
+# RUN: llvm-readobj -t -mips-reginfo %t.so | FileCheck %s
 
-# CHECK:      Contents of section .reginfo:
-# CHECK-NEXT:  {{[0-9a-f]+}} 00000000 00000000 00000000 00000000
-# CHECK-NEXT:  {{[0-9a-f]+}} 00000000 f08f0000
+# CHECK:      Name: _gp
+# CHECK-NEXT: 0x8FF0
 
-# CHECK: SYMBOL TABLE:
-# CHECK: 00008ff0 g *ABS* 00000000 _gp
+# CHECK:      MIPS RegInfo {
+# CHECK-NEXT:   GP: 0x8FF0
+# CHECK-NEXT:   General Mask: 0x0
+# CHECK-NEXT:   Co-Proc Mask0: 0x0
+# CHECK-NEXT:   Co-Proc Mask1: 0x0
+# CHECK-NEXT:   Co-Proc Mask2: 0x0
+# CHECK-NEXT:   Co-Proc Mask3: 0x0
+# CHECK-NEXT: }
 
 FileHeader:
   Class:   ELFCLASS32
