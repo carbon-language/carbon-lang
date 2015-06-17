@@ -4167,25 +4167,45 @@ defm VFNMSUBSDZ  : avx512_fma3s_rm<0xAF, "vfnmsub213sd", X86Fnmsub, FR64X,
 // AVX-512  Scalar convert from sign integer to float/double
 //===----------------------------------------------------------------------===//
 
-multiclass avx512_vcvtsi<bits<8> opc, RegisterClass SrcRC, RegisterClass DstRC,
-                          X86MemOperand x86memop, string asm> {
-let hasSideEffects = 0 in {
-  def rr : SI<opc, MRMSrcReg, (outs DstRC:$dst), (ins DstRC:$src1, SrcRC:$src),
+multiclass avx512_vcvtsi<bits<8> opc, SDNode OpNode, RegisterClass SrcRC,
+                    X86VectorVTInfo DstVT, X86MemOperand x86memop,
+                    PatFrag ld_frag, string asm> {
+  let hasSideEffects = 0 in {
+    def rr : SI<opc, MRMSrcReg, (outs DstVT.FRC:$dst),
+              (ins DstVT.FRC:$src1, SrcRC:$src),
               !strconcat(asm,"\t{$src, $src1, $dst|$dst, $src1, $src}"), []>,
               EVEX_4V;
-  let mayLoad = 1 in
-  def rm : SI<opc, MRMSrcMem, (outs DstRC:$dst),
-              (ins DstRC:$src1, x86memop:$src),
+    let mayLoad = 1 in
+      def rm : SI<opc, MRMSrcMem, (outs DstVT.FRC:$dst),
+              (ins DstVT.FRC:$src1, x86memop:$src),
               !strconcat(asm,"\t{$src, $src1, $dst|$dst, $src1, $src}"), []>,
               EVEX_4V;
-} // hasSideEffects = 0
+  } // hasSideEffects = 0
+  let isCodeGenOnly = 1 in {
+    def rr_Int : SI<opc, MRMSrcReg, (outs DstVT.RC:$dst),
+                  (ins DstVT.RC:$src1, SrcRC:$src2),
+                  !strconcat(asm,"\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+                  [(set DstVT.RC:$dst,
+                        (OpNode (DstVT.VT DstVT.RC:$src1),
+                                 SrcRC:$src2,
+                                 (i32 FROUND_CURRENT)))]>, EVEX_4V;
+
+    def rm_Int : SI<opc, MRMSrcMem, (outs DstVT.RC:$dst),
+                  (ins DstVT.RC:$src1, x86memop:$src2),
+                  !strconcat(asm,"\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+                  [(set DstVT.RC:$dst,
+                        (OpNode (DstVT.VT DstVT.RC:$src1),
+                                 (ld_frag addr:$src2),
+                                 (i32 FROUND_CURRENT)))]>, EVEX_4V;
+  }//isCodeGenOnly = 1
 }
 
 multiclass avx512_vcvtsi_round<bits<8> opc, SDNode OpNode, RegisterClass SrcRC,
-                    X86VectorVTInfo DstVT, X86MemOperand x86memop, string asm> {
+                    X86VectorVTInfo DstVT, string asm> {
   def rrb_Int : SI<opc, MRMSrcReg, (outs DstVT.RC:$dst),
               (ins DstVT.RC:$src1, SrcRC:$src2, AVX512RC:$rc),
-              !strconcat(asm,"\t{$src2, $rc, $src1, $dst|$dst, $src1, $rc, $src2}"),
+              !strconcat(asm,
+                  "\t{$src2, $rc, $src1, $dst|$dst, $src1, $rc, $src2}"),
               [(set DstVT.RC:$dst,
                     (OpNode (DstVT.VT DstVT.RC:$src1),
                              SrcRC:$src2,
@@ -4193,20 +4213,26 @@ multiclass avx512_vcvtsi_round<bits<8> opc, SDNode OpNode, RegisterClass SrcRC,
 }
 
 multiclass avx512_vcvtsi_common<bits<8> opc, SDNode OpNode, RegisterClass SrcRC,
-                    X86VectorVTInfo DstVT, X86MemOperand x86memop, string asm> {
-  defm NAME : avx512_vcvtsi_round<opc, OpNode, SrcRC, DstVT, x86memop, asm>,
-              avx512_vcvtsi<opc, SrcRC, DstVT.FRC, x86memop, asm>, VEX_LIG;
+                    X86VectorVTInfo DstVT, X86MemOperand x86memop,
+                    PatFrag ld_frag, string asm> {
+  defm NAME : avx512_vcvtsi_round<opc, OpNode, SrcRC, DstVT, asm>,
+              avx512_vcvtsi<opc, OpNode, SrcRC, DstVT, x86memop, ld_frag, asm>,
+                        VEX_LIG;
 }
 
 let Predicates = [HasAVX512] in {
 defm VCVTSI2SSZ  : avx512_vcvtsi_common<0x2A, X86SintToFpRnd, GR32,
-           v4f32x_info, i32mem, "cvtsi2ss{l}">, XS, EVEX_CD8<32, CD8VT1>;
+                                 v4f32x_info, i32mem, loadi32, "cvtsi2ss{l}">,
+                                 XS, EVEX_CD8<32, CD8VT1>;
 defm VCVTSI642SSZ: avx512_vcvtsi_common<0x2A, X86SintToFpRnd, GR64,
-           v4f32x_info, i64mem, "cvtsi2ss{q}">, XS, VEX_W, EVEX_CD8<64, CD8VT1>;
+                                 v4f32x_info, i64mem, loadi64, "cvtsi2ss{q}">,
+                                 XS, VEX_W, EVEX_CD8<64, CD8VT1>;
 defm VCVTSI2SDZ  : avx512_vcvtsi_common<0x2A, X86SintToFpRnd, GR32,
-           v2f64x_info, i32mem, "cvtsi2sd{l}">, XD, EVEX_CD8<32, CD8VT1>;
+                                 v2f64x_info, i32mem, loadi32, "cvtsi2sd{l}">,
+                                 XD, EVEX_CD8<32, CD8VT1>;
 defm VCVTSI642SDZ: avx512_vcvtsi_common<0x2A, X86SintToFpRnd, GR64,
-           v2f64x_info, i64mem, "cvtsi2sd{q}">, XD, VEX_W, EVEX_CD8<64, CD8VT1>;
+                                 v2f64x_info, i64mem, loadi64, "cvtsi2sd{q}">,
+                                 XD, VEX_W, EVEX_CD8<64, CD8VT1>;
 
 def : Pat<(f32 (sint_to_fp (loadi32 addr:$src))),
           (VCVTSI2SSZrm (f32 (IMPLICIT_DEF)), addr:$src)>;
@@ -4227,13 +4253,17 @@ def : Pat<(f64 (sint_to_fp GR64:$src)),
           (VCVTSI642SDZrr (f64 (IMPLICIT_DEF)), GR64:$src)>;
 
 defm VCVTUSI2SSZ   : avx512_vcvtsi_common<0x7B, X86SuintToFpRnd, GR32,
-          v4f32x_info, i32mem, "cvtusi2ss{l}">, XS, EVEX_CD8<32, CD8VT1>;
+                                  v4f32x_info, i32mem, loadi32,
+                                  "cvtusi2ss{l}">, XS, EVEX_CD8<32, CD8VT1>;
 defm VCVTUSI642SSZ : avx512_vcvtsi_common<0x7B, X86SuintToFpRnd, GR64,
-          v4f32x_info, i64mem, "cvtusi2ss{q}">, XS, VEX_W, EVEX_CD8<64, CD8VT1>;
-defm VCVTUSI2SDZ   : avx512_vcvtsi<0x7B, GR32, FR64X, i32mem, "cvtusi2sd{l}">,
-          XD, VEX_LIG, EVEX_CD8<32, CD8VT1>;
+                                  v4f32x_info, i64mem, loadi64, "cvtusi2ss{q}">,
+                                  XS, VEX_W, EVEX_CD8<64, CD8VT1>;
+defm VCVTUSI2SDZ   : avx512_vcvtsi<0x7B, X86SuintToFpRnd, GR32, v2f64x_info,
+                                  i32mem, loadi32, "cvtusi2sd{l}">,
+                                  XD, VEX_LIG, EVEX_CD8<32, CD8VT1>;
 defm VCVTUSI642SDZ : avx512_vcvtsi_common<0x7B, X86SuintToFpRnd, GR64,
-          v2f64x_info, i64mem, "cvtusi2sd{q}">, XD, VEX_W, EVEX_CD8<64, CD8VT1>;
+                                  v2f64x_info, i64mem, loadi64, "cvtusi2sd{q}">,
+                                  XD, VEX_W, EVEX_CD8<64, CD8VT1>;
 
 def : Pat<(f32 (uint_to_fp (loadi32 addr:$src))),
           (VCVTUSI2SSZrm (f32 (IMPLICIT_DEF)), addr:$src)>;
@@ -4314,18 +4344,9 @@ let isCodeGenOnly = 1 in {
             int_x86_sse2_cvtsi642sd, i64mem, loadi64, "cvtsi2sd{q}",
             SSE_CVT_Scalar, 0>, XD, EVEX_4V, VEX_W;
 
-  defm Int_VCVTUSI2SSZ : sse12_cvt_sint_3addr<0x2A, GR32, VR128X,
-            int_x86_avx512_cvtusi2ss, i32mem, loadi32, "cvtusi2ss{l}",
-            SSE_CVT_Scalar, 0>, XS, EVEX_4V;
-  defm Int_VCVTUSI2SS64Z : sse12_cvt_sint_3addr<0x2A, GR64, VR128X,
-            int_x86_avx512_cvtusi642ss, i64mem, loadi64, "cvtusi2ss{q}",
-            SSE_CVT_Scalar, 0>, XS, EVEX_4V, VEX_W;
   defm Int_VCVTUSI2SDZ : sse12_cvt_sint_3addr<0x2A, GR32, VR128X,
             int_x86_avx512_cvtusi2sd, i32mem, loadi32, "cvtusi2sd{l}",
             SSE_CVT_Scalar, 0>, XD, EVEX_4V;
-  defm Int_VCVTUSI2SD64Z : sse12_cvt_sint_3addr<0x2A, GR64, VR128X,
-            int_x86_avx512_cvtusi642sd, i64mem, loadi64, "cvtusi2sd{q}",
-            SSE_CVT_Scalar, 0>, XD, EVEX_4V, VEX_W;
 } // isCodeGenOnly = 1
 
 // Convert float/double to signed/unsigned int 32/64 with truncation

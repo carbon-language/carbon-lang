@@ -2022,6 +2022,8 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
     Value *CopyOp, *ConvertOp;
 
     switch (I.getNumArgOperands()) {
+    case 3:
+      assert(isa<ConstantInt>(I.getArgOperand(2)) && "Invalid rounding mode");
     case 2:
       CopyOp = I.getArgOperand(0);
       ConvertOp = I.getArgOperand(1);

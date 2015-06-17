@@ -176,13 +176,6 @@ define <2 x double> @test_x86_sse2_cvtsi642sd(<2 x double> %a0, i64 %a1) {
 }
 declare <2 x double> @llvm.x86.sse2.cvtsi642sd(<2 x double>, i64) nounwind readnone
 
-define <2 x double> @test_x86_avx512_cvtusi642sd(<2 x double> %a0, i64 %a1) {
-  ; CHECK: vcvtusi2sdq {{.*}}encoding: [0x62
-  %res = call <2 x double> @llvm.x86.avx512.cvtusi642sd(<2 x double> %a0, i64 %a1) ; <<2 x double>> [#uses=1]
-  ret <2 x double> %res
-}
-declare <2 x double> @llvm.x86.avx512.cvtusi642sd(<2 x double>, i64) nounwind readnone
-
 define i64 @test_x86_sse2_cvttsd2si64(<2 x double> %a0) {
   ; CHECK: vcvttsd2si {{.*}}encoding: [0x62
   %res = call i64 @llvm.x86.sse2.cvttsd2si64(<2 x double> %a0) ; <i64> [#uses=1]
@@ -2823,6 +2816,103 @@ define <4 x float> @test_x86_avx512_cvtsi2ss64(<4 x float> %a, i64 %b) {
   ret <4 x float> %res
 }
 declare <4 x float> @llvm.x86.avx512.cvtsi2ss64(<4 x float>, i64, i32) nounwind readnone
+
+define <4 x float> @test_x86_avx512__mm_cvt_roundu32_ss (<4 x float> %a, i32 %b)
+; CHECK-LABEL: test_x86_avx512__mm_cvt_roundu32_ss:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    vcvtusi2ssl %edi, {rd-sae}, %xmm0, %xmm0 
+; CHECK-NEXT:    retq 
+{
+  %res = call <4 x float> @llvm.x86.avx512.cvtusi2ss(<4 x float> %a, i32 %b, i32 1) ; <<<4 x float>> [#uses=1]
+  ret <4 x float> %res
+}
+
+define <4 x float> @test_x86_avx512__mm_cvt_roundu32_ss_mem(<4 x float> %a, i32* %ptr)
+; CHECK-LABEL: test_x86_avx512__mm_cvt_roundu32_ss_mem:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    movl (%rdi), %eax 
+; CHECK-NEXT:    vcvtusi2ssl %eax, {rd-sae}, %xmm0, %xmm0 
+; CHECK-NEXT:    retq 
+{
+  %b = load i32, i32* %ptr
+  %res = call <4 x float> @llvm.x86.avx512.cvtusi2ss(<4 x float> %a, i32 %b, i32 1) ; <<<4 x float>> [#uses=1]
+  ret <4 x float> %res
+}
+
+define <4 x float> @test_x86_avx512__mm_cvtu32_ss(<4 x float> %a, i32 %b)
+; CHECK-LABEL: test_x86_avx512__mm_cvtu32_ss:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    vcvtusi2ssl %edi, %xmm0, %xmm0 
+; CHECK-NEXT:    retq 
+{
+  %res = call <4 x float> @llvm.x86.avx512.cvtusi2ss(<4 x float> %a, i32 %b, i32 4) ; <<<4 x float>> [#uses=1]
+  ret <4 x float> %res
+}
+
+define <4 x float> @test_x86_avx512__mm_cvtu32_ss_mem(<4 x float> %a, i32* %ptr)
+; CHECK-LABEL: test_x86_avx512__mm_cvtu32_ss_mem:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    vcvtusi2ssl (%rdi), %xmm0, %xmm0
+; CHECK-NEXT:    retq 
+{
+  %b = load i32, i32* %ptr
+  %res = call <4 x float> @llvm.x86.avx512.cvtusi2ss(<4 x float> %a, i32 %b, i32 4) ; <<<4 x float>> [#uses=1]
+  ret <4 x float> %res
+}
+declare <4 x float> @llvm.x86.avx512.cvtusi2ss(<4 x float>, i32, i32) nounwind readnone
+
+define <4 x float> @_mm_cvt_roundu64_ss (<4 x float> %a, i64 %b)
+; CHECK-LABEL: _mm_cvt_roundu64_ss:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    vcvtusi2ssq %rdi, {rd-sae}, %xmm0, %xmm0 
+; CHECK-NEXT:    retq 
+{
+  %res = call <4 x float> @llvm.x86.avx512.cvtusi642ss(<4 x float> %a, i64 %b, i32 1) ; <<<4 x float>> [#uses=1]
+  ret <4 x float> %res
+}
+
+define <4 x float> @_mm_cvtu64_ss(<4 x float> %a, i64 %b)
+; CHECK-LABEL: _mm_cvtu64_ss:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    vcvtusi2ssq %rdi, %xmm0, %xmm0 
+; CHECK-NEXT:    retq 
+{
+  %res = call <4 x float> @llvm.x86.avx512.cvtusi642ss(<4 x float> %a, i64 %b, i32 4) ; <<<4 x float>> [#uses=1]
+  ret <4 x float> %res
+}
+declare <4 x float> @llvm.x86.avx512.cvtusi642ss(<4 x float>, i64, i32) nounwind readnone
+
+define <2 x double> @test_x86_avx512_mm_cvtu32_sd(<2 x double> %a, i32 %b)
+; CHECK-LABEL: test_x86_avx512_mm_cvtu32_sd:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    vcvtusi2sdl %edi, %xmm0, %xmm0 
+; CHECK-NEXT:    retq 
+{
+  %res = call <2 x double> @llvm.x86.avx512.cvtusi2sd(<2 x double> %a, i32 %b) ; <<<2 x double>> [#uses=1]
+  ret <2 x double> %res
+}
+declare <2 x double> @llvm.x86.avx512.cvtusi2sd(<2 x double>, i32) nounwind readnone
+
+define <2 x double> @test_x86_avx512_mm_cvtu64_sd(<2 x double> %a, i64 %b)
+; CHECK-LABEL: test_x86_avx512_mm_cvtu64_sd:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    vcvtusi2sdq %rdi, {rd-sae}, %xmm0, %xmm0 
+; CHECK-NEXT:    retq 
+{
+  %res = call <2 x double> @llvm.x86.avx512.cvtusi642sd(<2 x double> %a, i64 %b, i32 1) ; <<<2 x double>> [#uses=1]
+  ret <2 x double> %res
+}
+
+define <2 x double> @test_x86_avx512__mm_cvt_roundu64_sd(<2 x double> %a, i64 %b)
+; CHECK-LABEL: test_x86_avx512__mm_cvt_roundu64_sd:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    vcvtusi2sdq %rdi, %xmm0, %xmm0 
+; CHECK-NEXT:    retq 
+{
+  %res = call <2 x double> @llvm.x86.avx512.cvtusi642sd(<2 x double> %a, i64 %b, i32 4) ; <<<2 x double>> [#uses=1]
+  ret <2 x double> %res
+}
+declare <2 x double> @llvm.x86.avx512.cvtusi642sd(<2 x double>, i64, i32) nounwind readnone
 
 define <8 x i64> @test_vpmaxq(<8 x i64> %a0, <8 x i64> %a1) {
   ; CHECK: vpmaxsq {{.*}}encoding: [0x62,0xf2,0xfd,0x48,0x3d,0xc1]
