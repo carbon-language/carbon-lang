@@ -83,11 +83,11 @@ EnableFMFInDAG("enable-fmf-dag", cl::init(false), cl::Hidden,
                 cl::desc("Enable fast-math-flags for DAG nodes"));
 
 // Limit the width of DAG chains. This is important in general to prevent
-// prevent DAG-based analysis from blowing up. For example, alias analysis and
+// DAG-based analysis from blowing up. For example, alias analysis and
 // load clustering may not complete in reasonable time. It is difficult to
 // recognize and avoid this situation within each individual analysis, and
 // future analyses are likely to have the same behavior. Limiting DAG width is
-// the safe approach, and will be especially important with global DAGs.
+// the safe approach and will be especially important with global DAGs.
 //
 // MaxParallelChains default is arbitrarily high to avoid affecting
 // optimization, but could be lowered to improve compile time. Any ld-ld-st-st
