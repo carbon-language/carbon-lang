@@ -89,14 +89,14 @@ bool X86ExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
       const bool Uses64BitFramePtr =
           STI->isTarget64BitLP64() || STI->isTargetNaCl64();
       // Check if we should use LEA for SP.
+      const X86FrameLowering *TFI = STI->getFrameLowering();
       bool UseLEAForSP = STI->useLeaForSP() &&
                          X86FL->canUseLEAForSPInEpilogue(*MBB.getParent());
       unsigned StackPtr = TRI->getStackRegister();
       // Check for possible merge with preceding ADD instruction.
-      StackAdj += X86FrameLowering::mergeSPUpdates(MBB, MBBI, StackPtr, true);
-      X86FrameLowering::emitSPUpdate(MBB, MBBI, StackPtr, StackAdj, Is64Bit,
-                                     Uses64BitFramePtr, UseLEAForSP, *TII,
-                                     *TRI);
+      StackAdj += TFI->mergeSPUpdates(MBB, MBBI, StackPtr, true);
+      TFI->emitSPUpdate(MBB, MBBI, StackPtr, StackAdj, Is64Bit,
+                        Uses64BitFramePtr, UseLEAForSP, *TII, *TRI);
     }
 
     // Jump to label or value in register.
