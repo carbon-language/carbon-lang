@@ -367,6 +367,7 @@ struct language_name_pair language_names[] =
     {   "fortran03",        eLanguageTypeFortran03      },
     {   "fortran08",        eLanguageTypeFortran08      },
     // Vendor Extensions
+    {   "mipsassem",        eLanguageTypeMipsAssembler  },
     {   "renderscript",     eLanguageTypeExtRenderScript},
     // Now synonyms, in arbitrary order
     {   "objc",             eLanguageTypeObjC           },

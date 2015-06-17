@@ -187,6 +187,9 @@ public:
     uint32_t
     GetProducerVersionUpdate();
 
+    static lldb::LanguageType
+    LanguageTypeFromDWARF(uint64_t val);
+
     lldb::LanguageType
     GetLanguageType();
 

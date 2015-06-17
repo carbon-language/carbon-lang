@@ -1070,6 +1070,22 @@ DWARFCompileUnit::GetProducerVersionUpdate()
 }
 
 LanguageType
+DWARFCompileUnit::LanguageTypeFromDWARF(uint64_t val) 
+{
+    // Note: user languages between lo_user and hi_user
+    // must be handled explicitly here.
+    switch (val)
+    {
+    case DW_LANG_Mips_Assembler:
+        return eLanguageTypeMipsAssembler;
+    case 0x8e57: // FIXME: needs to be added to llvm
+        return eLanguageTypeExtRenderScript;
+    default:
+        return static_cast<LanguageType>(val);
+    }
+}
+
+LanguageType
 DWARFCompileUnit::GetLanguageType()
 {
     if (m_language_type != eLanguageTypeUnknown)
@@ -1077,8 +1093,8 @@ DWARFCompileUnit::GetLanguageType()
 
     const DWARFDebugInfoEntry *die = GetCompileUnitDIEOnly();
     if (die)
-        m_language_type = static_cast<LanguageType>(
-            die->GetAttributeValueAsUnsigned(m_dwarf2Data, this, DW_AT_language, eLanguageTypeUnknown));
+        m_language_type = LanguageTypeFromDWARF(
+            die->GetAttributeValueAsUnsigned(m_dwarf2Data, this, DW_AT_language, 0));
     return m_language_type;
 }
 

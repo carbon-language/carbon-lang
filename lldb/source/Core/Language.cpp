@@ -46,7 +46,25 @@ g_languages[] =
     { { "objc++"  , NULL          , "Objective-C++"       } },
     { { "upc"     , NULL          , "Unified Parallel C"  } },
     { { "d"       , NULL          , "D"                   } },
-    { { "python"  , NULL          , "Python"              } }
+    { { "python"  , NULL          , "Python"              } },
+    { { "opencl"  , "OpenCL"          , "OpenCL"           } },
+    { { "go"      , "Go"              , "Go"               } },
+    { { "modula3" , "Modula3"         , "Modula 3"         } },
+    { { "haskell" , "Haskell"         , "Haskell"          } },
+    { { "c++03"   , "C_plus_plus_03"  , "ISO C++:2003"     } },
+    { { "c++11"   , "C_plus_plus_11"  , "ISO C++:2011"     } },
+    { { "ocaml"   , "OCaml"           , "OCaml"            } },
+    { { "rust"    , "Rust"            , "Rust"             } },
+    { { "c11"     , "C11"             , "ISO C:2011"       } },
+    { { "swift"   , "Swift"           , "Swift"            } },
+    { { "julia"   , "Julia"           , "Julia"            } },
+    { { "dylan"   , "Dylan"           , "Dylan"            } },
+    { { "c++14"   , "C_plus_plus_14"  , "ISO C++:2014"     } },
+    { { "f03"     , "Fortran03"       , "ISO Fortran 2003" } },
+    { { "f08"     , "Fortran08"       , "ISO Fortran 2008" } },
+    // Vendor Extensions
+    { { "mipsassem"    , "Mips_Assembler" , "Mips Assembler" } },
+    { { "renderscript" , "RenderScript"   , "RenderScript"   } }
 };
 
 static const size_t g_num_languages = llvm::array_lengthof(g_languages);

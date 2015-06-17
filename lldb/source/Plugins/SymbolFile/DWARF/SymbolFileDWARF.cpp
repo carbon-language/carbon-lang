@@ -989,7 +989,7 @@ SymbolFileDWARF::ParseCompileUnit (DWARFCompileUnit* dwarf_cu, uint32_t cu_idx)
                             if (module_sp->RemapSourceFile(cu_file_spec.GetCString(), remapped_file))
                                 cu_file_spec.SetFile(remapped_file, false);
 
-                            LanguageType cu_language = (LanguageType)cu_die->GetAttributeValueAsUnsigned(this, dwarf_cu, DW_AT_language, 0);
+                            LanguageType cu_language = DWARFCompileUnit::LanguageTypeFromDWARF(cu_die->GetAttributeValueAsUnsigned(this, dwarf_cu, DW_AT_language, 0));
 
                             cu_sp.reset(new CompileUnit (module_sp,
                                                          dwarf_cu,
@@ -1192,11 +1192,7 @@ SymbolFileDWARF::ParseCompileUnitLanguage (const SymbolContext& sc)
     {
         const DWARFDebugInfoEntry *die = dwarf_cu->GetCompileUnitDIEOnly();
         if (die)
-        {
-            const uint32_t language = die->GetAttributeValueAsUnsigned(this, dwarf_cu, DW_AT_language, 0);
-            if (language)
-                return (lldb::LanguageType)language;
-        }
+            return DWARFCompileUnit::LanguageTypeFromDWARF(die->GetAttributeValueAsUnsigned(this, dwarf_cu, DW_AT_language, 0));
     }
     return eLanguageTypeUnknown;
 }
