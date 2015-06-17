@@ -22,6 +22,7 @@ extern "C" void use_cxx() {
 // Make sure we use __CxxFrameHandler3 for C++ EH.
 
 // CXXEH-LABEL: define void @use_cxx()
+// CXXEH-SAME:  personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
 // CXXEH: call %struct.HasCleanup* @"\01??0HasCleanup@@QEAA@XZ"(%struct.HasCleanup* %{{.*}})
 // CXXEH: invoke void @might_throw()
 // CXXEH:       to label %[[cont:[^ ]*]] unwind label %[[lpad:[^ ]*]]
@@ -31,7 +32,7 @@ extern "C" void use_cxx() {
 // CXXEH: ret void
 //
 // CXXEH: [[lpad]]
-// CXXEH: landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
+// CXXEH: landingpad { i8*, i32 }
 // CXXEH-NEXT: cleanup
 // CXXEH: call void @"\01??1HasCleanup@@QEAA@XZ"(%struct.HasCleanup* %{{.*}})
 // CXXEH: br label %[[resume:[^ ]*]]
@@ -59,6 +60,7 @@ extern "C" void use_seh() {
 // Make sure we use __C_specific_handler for SEH.
 
 // CHECK-LABEL: define void @use_seh()
+// CHECK-SAME:  personality i8* bitcast (i32 (...)* @__C_specific_handler to i8*)
 // CHECK: invoke void @might_throw() #[[NOINLINE:[0-9]+]]
 // CHECK:       to label %[[cont:[^ ]*]] unwind label %[[lpad:[^ ]*]]
 //
@@ -66,7 +68,7 @@ extern "C" void use_seh() {
 // CHECK: br label %[[ret:[^ ]*]]
 //
 // CHECK: [[lpad]]
-// CHECK: landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__C_specific_handler to i8*)
+// CHECK: landingpad { i8*, i32 }
 // CHECK-NEXT: catch i8*
 //
 // CHECK: br label %[[ret]]
@@ -86,15 +88,17 @@ void use_seh_in_lambda() {
 }
 
 // CXXEH-LABEL: define void @"\01?use_seh_in_lambda@@YAXXZ"()
-// CXXEH: landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
+// CXXEH-SAME:  personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*)
+// CXXEH: landingpad { i8*, i32 }
 
 // NOCXX-LABEL: define void @"\01?use_seh_in_lambda@@YAXXZ"()
 // NOCXX-NOT: invoke
 // NOCXX: ret void
 
 // CHECK-LABEL: define internal void @"\01??R<lambda_0>@?use_seh_in_lambda@@YAXXZ@QEBAXXZ"(%class.anon* %this)
+// CXXEH-SAME:  personality i8* bitcast (i32 (...)* @__C_specific_handler to i8*)
 // CHECK: invoke void @might_throw() #[[NOINLINE]]
-// CHECK: landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__C_specific_handler to i8*)
+// CHECK: landingpad { i8*, i32 }
 
 static int my_unique_global;
 
@@ -114,10 +118,11 @@ void use_inline() {
   use_seh_in_inline_func();
 }
 
-// CHECK-LABEL: define linkonce_odr void @use_seh_in_inline_func() #{{[0-9]+}} comdat {
+// CHECK-LABEL: define linkonce_odr void @use_seh_in_inline_func() #{{[0-9]+}} comdat
+// CHECK-SAME:  personality i8* bitcast (i32 (...)* @__C_specific_handler to i8*)
 // CHECK: invoke void @might_throw()
 //
-// CHECK: landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__C_specific_handler to i8*)
+// CHECK: landingpad { i8*, i32 }
 // CHECK-NEXT: catch i8* bitcast (i32 (i8*, i8*)* @"\01?filt$0@0@use_seh_in_inline_func@@" to i8*)
 //
 // CHECK: invoke void @might_throw()
@@ -126,7 +131,7 @@ void use_inline() {
 // CHECK: call void @"\01?fin$0@0@use_seh_in_inline_func@@"(i8 0, i8* %[[fp]])
 // CHECK: ret void
 //
-// CHECK: landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__C_specific_handler to i8*)
+// CHECK: landingpad { i8*, i32 }
 // CHECK-NEXT: cleanup
 // CHECK: %[[fp:[^ ]*]] = call i8* @llvm.frameaddress(i32 0)
 // CHECK: call void @"\01?fin$0@0@use_seh_in_inline_func@@"(i8 1, i8* %[[fp]])

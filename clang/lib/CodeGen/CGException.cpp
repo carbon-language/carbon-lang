@@ -698,13 +698,15 @@ llvm::BasicBlock *CodeGenFunction::EmitLandingPad() {
 
   const EHPersonality &personality = EHPersonality::get(*this);
 
+  if (!CurFn->hasPersonalityFn())
+    CurFn->setPersonalityFn(getOpaquePersonalityFn(CGM, personality));
+
   // Create and configure the landing pad.
   llvm::BasicBlock *lpad = createBasicBlock("lpad");
   EmitBlock(lpad);
 
-  llvm::LandingPadInst *LPadInst =
-    Builder.CreateLandingPad(llvm::StructType::get(Int8PtrTy, Int32Ty, nullptr),
-                             getOpaquePersonalityFn(CGM, personality), 0);
+  llvm::LandingPadInst *LPadInst = Builder.CreateLandingPad(
+      llvm::StructType::get(Int8PtrTy, Int32Ty, nullptr), 0);
 
   llvm::Value *LPadExn = Builder.CreateExtractValue(LPadInst, 0);
   Builder.CreateStore(LPadExn, getExceptionSlot());
@@ -1193,9 +1195,12 @@ llvm::BasicBlock *CodeGenFunction::getTerminateLandingPad() {
 
   // Tell the backend that this is a landing pad.
   const EHPersonality &Personality = EHPersonality::get(*this);
-  llvm::LandingPadInst *LPadInst =
-    Builder.CreateLandingPad(llvm::StructType::get(Int8PtrTy, Int32Ty, nullptr),
-                             getOpaquePersonalityFn(CGM, Personality), 0);
+
+  if (!CurFn->hasPersonalityFn())
+    CurFn->setPersonalityFn(getOpaquePersonalityFn(CGM, Personality));
+
+  llvm::LandingPadInst *LPadInst = Builder.CreateLandingPad(
+      llvm::StructType::get(Int8PtrTy, Int32Ty, nullptr), 0);
   LPadInst->addClause(getCatchAllValue(*this));
 
   llvm::Value *Exn = 0;

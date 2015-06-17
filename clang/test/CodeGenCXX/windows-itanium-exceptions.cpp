@@ -20,7 +20,8 @@ void attempt() {
 // CHECK:   unreachable
 // CHECK: }
 
-// CHECK: define {{.*}}void @_Z7attemptv() {{.*}} {
+// CHECK: define {{.*}}void @_Z7attemptv()
+// CHECK-SAME: personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
 // CHECK:   %exn.slot = alloca i8*
 // CHECK:   %ehselector.slot = alloca i32
 // CHECK:   invoke {{.*}}void @_Z6exceptv()
@@ -28,7 +29,7 @@ void attempt() {
 // CHECK: invoke.cont:
 // CHECK:    br label %try.cont
 // CHECK: lpad:
-// CHECK:    %0 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+// CHECK:    %0 = landingpad { i8*, i32 }
 // CHECK:      catch i8* null
 // CHECK:    %1 = extractvalue { i8*, i32 } %0, 0
 // CHECK:    store i8* %1, i8** %exn.slot

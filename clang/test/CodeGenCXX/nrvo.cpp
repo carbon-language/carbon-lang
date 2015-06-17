@@ -44,6 +44,7 @@ X test1(bool B) {
 
 // CHECK-LABEL: define void @_Z5test2b
 // CHECK-EH-LABEL: define void @_Z5test2b
+// CHECK-EH-SAME:  personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
 X test2(bool B) {
   // No NRVO.
 
@@ -82,7 +83,7 @@ X test2(bool B) {
   // -> %cleanup, %lpad1
 
   // %lpad: landing pad for ctor of 'y', dtor of 'y'
-  // CHECK-EH:      [[CAUGHTVAL:%.*]] = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  // CHECK-EH:      [[CAUGHTVAL:%.*]] = landingpad { i8*, i32 }
   // CHECK-EH-NEXT:   cleanup
   // CHECK-EH-NEXT: extractvalue { i8*, i32 } [[CAUGHTVAL]], 0
   // CHECK-EH-NEXT: extractvalue { i8*, i32 } [[CAUGHTVAL]], 1
@@ -116,7 +117,7 @@ X test2(bool B) {
   // CHECK-EH:      resume { i8*, i32 }
 
   // %terminate.lpad: terminate landing pad.
-  // CHECK-EH:      [[T0:%.*]] = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  // CHECK-EH:      [[T0:%.*]] = landingpad { i8*, i32 }
   // CHECK-EH-NEXT:   catch i8* null
   // CHECK-EH-NEXT: [[T1:%.*]] = extractvalue { i8*, i32 } [[T0]], 0
   // CHECK-EH-NEXT: call void @__clang_call_terminate(i8* [[T1]]) [[NR_NUW:#[0-9]+]]

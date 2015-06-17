@@ -30,7 +30,7 @@ void test1() {
   // CHECK-NEXT: call void @_Block_object_dispose(i8* [[T1]], i32 8)
   // CHECK-NEXT: ret void
 
-  // CHECK:      landingpad { i8*, i32 } personality
+  // CHECK:      landingpad { i8*, i32 }
   // CHECK-NEXT:   cleanup
   // CHECK:      [[T1:%.*]] = bitcast [[N_T]]* [[N]] to i8*
   // CHECK-NEXT: call void @_Block_object_dispose(i8* [[T1]], i32 8)

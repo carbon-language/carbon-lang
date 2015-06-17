@@ -291,7 +291,7 @@ namespace test7 {
 
   // Static and guard tested at top of file
 
-  // CHECK-LABEL: define void @_ZN5test74testEv()
+  // CHECK-LABEL: define void @_ZN5test74testEv() {{.*}} personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
   void test() {
     // CHECK:      [[T0:%.*]] = load atomic i8, i8* bitcast (i32* @_ZGVZN5test74testEvE1x to i8*) acquire, align 1
     // CHECK-NEXT: [[T1:%.*]] = and i8 [[T0]], 1
@@ -311,7 +311,7 @@ namespace test7 {
     // CHECK:      ret void
     static int x = foo();
 
-    // CHECK:      landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+    // CHECK:      landingpad { i8*, i32 }
     // CHECK-NEXT:   cleanup
     // CHECK:      call void @__cxa_guard_abort(i32* @_ZGVZN5test74testEvE1x)
     // CHECK:      resume { i8*, i32 }
@@ -326,7 +326,7 @@ namespace test8 {
 
   // Static and guard tested at top of file
 
-  // CHECK-LABEL: define void @_ZN5test84testEv()
+  // CHECK-LABEL: define void @_ZN5test84testEv() {{.*}} personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
   void test() {
     // CHECK:      [[T0:%.*]] = load atomic i8, i8* bitcast (i32* @_ZGVZN5test84testEvE1x to i8*) acquire, align 1
     // CHECK-NEXT: [[T1:%.*]] = and i8 [[T0]], 1
@@ -351,7 +351,7 @@ namespace test8 {
     // CHECK:      ret void
     static A x;
 
-    // CHECK:      landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+    // CHECK:      landingpad { i8*, i32 }
     // CHECK-NEXT:   cleanup
     // CHECK:      call void @__cxa_guard_abort(i32* @_ZGVZN5test84testEvE1x)
     // CHECK:      resume { i8*, i32 }

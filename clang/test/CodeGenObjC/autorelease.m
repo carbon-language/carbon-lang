@@ -46,7 +46,7 @@ int tryTo(int (*f)(void)) {
 // CHECK-NEXT: [[T2:%.*]] = invoke i32 [[T1]]()
 // CHECK:      store i32 [[T2]], i32* [[RET]]
 // CHECK:      invoke void @objc_autoreleasePoolPop(i8* [[T0]])
-// CHECK:      landingpad { i8*, i32 } personality
+// CHECK:      landingpad { i8*, i32 }
 // CHECK-NEXT:   catch i8* null
 // CHECK:      call i8* @objc_begin_catch
 // CHECK-NEXT: store i32 0, i32* [[RET]]

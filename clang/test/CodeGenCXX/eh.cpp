@@ -102,6 +102,7 @@ namespace test6 {
 // PR7127
 namespace test7 {
 // CHECK-LABEL:      define i32 @_ZN5test73fooEv() 
+// CHECK-SAME:  personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
   int foo() {
 // CHECK:      [[CAUGHTEXNVAR:%.*]] = alloca i8*
 // CHECK-NEXT: [[SELECTORVAR:%.*]] = alloca i32
@@ -115,7 +116,7 @@ namespace test7 {
         throw 1;
       }
 
-// CHECK:      [[CAUGHTVAL:%.*]] = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+// CHECK:      [[CAUGHTVAL:%.*]] = landingpad { i8*, i32 }
 // CHECK-NEXT:   catch i8* bitcast (i8** @_ZTIi to i8*)
 // CHECK-NEXT:   catch i8* null
 // CHECK-NEXT: [[CAUGHTEXN:%.*]] = extractvalue { i8*, i32 } [[CAUGHTVAL]], 0
@@ -137,7 +138,7 @@ namespace test7 {
         throw;
       }
     }
-// CHECK:      [[CAUGHTVAL:%.*]] = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+// CHECK:      [[CAUGHTVAL:%.*]] = landingpad { i8*, i32 }
 // CHECK-NEXT:   catch i8* null
 // CHECK-NEXT: [[CAUGHTEXN:%.*]] = extractvalue { i8*, i32 } [[CAUGHTVAL]], 0
 // CHECK-NEXT: store i8* [[CAUGHTEXN]], i8** [[CAUGHTEXNVAR]]
@@ -186,11 +187,12 @@ namespace test9 {
 
 
   // CHECK-LABEL: define void @_ZN5test91AC2Ev(%"struct.test9::A"* %this) unnamed_addr
+  // CHECK-SAME:  personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
   A::A() try {
   // CHECK:      invoke void @_ZN5test96opaqueEv()
     opaque();
   } catch (int x) {
-  // CHECK:      landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  // CHECK:      landingpad { i8*, i32 }
   // CHECK-NEXT:   catch i8* bitcast (i8** @_ZTIi to i8*)
 
   // CHECK:      call i8* @__cxa_begin_catch

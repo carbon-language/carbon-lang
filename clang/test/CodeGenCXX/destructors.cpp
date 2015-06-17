@@ -191,10 +191,11 @@ namespace test3 {
   // CHECK4: ret void
 
   // CHECK4-LABEL: define internal void @_ZN5test312_GLOBAL__N_11DD0Ev(%"struct.test3::(anonymous namespace)::D"* %this) unnamed_addr
+  // CHECK4-SAME:  personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
   // CHECK4: invoke void {{.*}} @_ZN5test312_GLOBAL__N_11CD2Ev
   // CHECK4: call void @_ZdlPv({{.*}}) [[NUW:#[0-9]+]]
   // CHECK4: ret void
-  // CHECK4: landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  // CHECK4: landingpad { i8*, i32 }
   // CHECK4-NEXT: cleanup
   // CHECK4: call void @_ZdlPv({{.*}}) [[NUW]]
   // CHECK4: resume { i8*, i32 }
@@ -210,10 +211,11 @@ namespace test3 {
   // CHECK4: ret void
 
   // CHECK4-LABEL: define internal void @_ZN5test312_GLOBAL__N_11CD0Ev(%"struct.test3::(anonymous namespace)::C"* %this) unnamed_addr
+  // CHECK4-SAME:  personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
   // CHECK4: invoke void @_ZN5test312_GLOBAL__N_11CD2Ev(
   // CHECK4: call void @_ZdlPv({{.*}}) [[NUW]]
   // CHECK4: ret void
-  // CHECK4: landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+  // CHECK4: landingpad { i8*, i32 }
   // CHECK4-NEXT: cleanup
   // CHECK4: call void @_ZdlPv({{.*}}) [[NUW]]
   // CHECK4: resume { i8*, i32 }

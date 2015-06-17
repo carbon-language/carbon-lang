@@ -6,12 +6,13 @@ void opaque();
 namespace test0 {
 
   // CHECK-LABEL: define void @_ZN5test03fooEv
+  // CHECK-SAME:  personality i8* bitcast (i32 (...)* @__objc_personality_v0 to i8*)
   void foo() {
     try {
       // CHECK: invoke void @_Z6opaquev
       opaque();
     } catch (OCType *T) {
-      // CHECK:      landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__objc_personality_v0 to i8*)
+      // CHECK:      landingpad { i8*, i32 }
       // CHECK-NEXT:   catch %struct._objc_typeinfo* @"OBJC_EHTYPE_$_OCType"
     }
   }

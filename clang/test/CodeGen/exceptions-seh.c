@@ -19,12 +19,12 @@ int safe_div(int numerator, int denominator, int *res) {
   *res = myres;
   return success;
 }
-// CHECK-LABEL: define i32 @safe_div(i32 %numerator, i32 %denominator, i32* %res)
+// CHECK-LABEL: define i32 @safe_div(i32 %numerator, i32 %denominator, i32* %res) {{.*}} personality i8* bitcast (i32 (...)* @__C_specific_handler to i8*)
 // CHECK: invoke void @try_body(i32 %{{.*}}, i32 %{{.*}}, i32* %{{.*}}) #[[NOINLINE:[0-9]+]]
 // CHECK:       to label %{{.*}} unwind label %[[lpad:[^ ]*]]
 //
 // CHECK: [[lpad]]
-// CHECK: landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__C_specific_handler to i8*)
+// CHECK: landingpad { i8*, i32 }
 // CHECK-NEXT: catch i8* null
 // CHECK-NOT: br i1
 // CHECK: br label %[[except:[^ ]*]]
@@ -46,7 +46,7 @@ int filter_expr_capture(void) {
   return r;
 }
 
-// CHECK-LABEL: define i32 @filter_expr_capture()
+// CHECK-LABEL: define i32 @filter_expr_capture() {{.*}} personality i8* bitcast (i32 (...)* @__C_specific_handler to i8*)
 // CHECK: call void (...) @llvm.frameescape(i32* %[[r:[^ ,]*]])
 // CHECK: store i32 42, i32* %[[r]]
 // CHECK: invoke void @j() #[[NOINLINE]]
@@ -77,7 +77,7 @@ int nested_try(void) {
   }
   return r;
 }
-// CHECK-LABEL: define i32 @nested_try()
+// CHECK-LABEL: define i32 @nested_try() {{.*}} personality i8* bitcast (i32 (...)* @__C_specific_handler to i8*)
 // CHECK: store i32 42, i32* %[[r:[^ ,]*]]
 // CHECK: invoke void @j() #[[NOINLINE]]
 // CHECK:       to label %[[cont:[^ ]*]] unwind label %[[lpad:[^ ]*]]
@@ -87,7 +87,7 @@ int nested_try(void) {
 // CHECK: br label %[[inner_try_cont:[^ ]*]]
 //
 // CHECK: [[lpad]]
-// CHECK: landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__C_specific_handler to i8*)
+// CHECK: landingpad { i8*, i32 }
 // CHECK: catch i8* bitcast (i32 (i8*, i8*)* @"\01?filt$1@0@nested_try@@" to i8*)
 // CHECK: catch i8* bitcast (i32 (i8*, i8*)* @"\01?filt$0@0@nested_try@@" to i8*)
 // CHECK: store i8* %{{.*}}, i8** %[[ehptr_slot:[^ ]*]]
@@ -125,7 +125,7 @@ void basic_finally(void) {
     --g;
   }
 }
-// CHECK-LABEL: define void @basic_finally()
+// CHECK-LABEL: define void @basic_finally() {{.*}} personality i8* bitcast (i32 (...)* @__C_specific_handler to i8*)
 // CHECK: load i32, i32* @g
 // CHECK: add i32 %{{.*}}, 1
 // CHECK: store i32 %{{.*}}, i32* @g
@@ -139,7 +139,7 @@ void basic_finally(void) {
 // CHECK: ret void
 //
 // CHECK: [[lpad]]
-// CHECK: landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__C_specific_handler to i8*)
+// CHECK: landingpad { i8*, i32 }
 // CHECK-NEXT: cleanup
 // CHECK: %[[fp:[^ ]*]] = call i8* @llvm.frameaddress(i32 0)
 // CHECK: call void @"\01?fin$0@0@basic_finally@@"(i8 1, i8* %[[fp]])
