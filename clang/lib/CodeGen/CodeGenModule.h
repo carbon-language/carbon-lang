@@ -1115,6 +1115,11 @@ public:
   void EmitVTableBitSetEntries(llvm::GlobalVariable *VTable,
                                const VTableLayout &VTLayout);
 
+  /// Create a bitset entry for the given vtable.
+  llvm::MDTuple *CreateVTableBitSetEntry(llvm::GlobalVariable *VTable,
+                                         CharUnits Offset,
+                                         const CXXRecordDecl *RD);
+
   /// \breif Get the declaration of std::terminate for the platform.
   llvm::Constant *getTerminateFn();
 

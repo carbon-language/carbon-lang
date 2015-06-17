@@ -848,7 +848,8 @@ void CodeGenModule::EmitVTableBitSetEntries(llvm::GlobalVariable *VTable,
       !LangOpts.Sanitize.has(SanitizerKind::CFIUnrelatedCast))
     return;
 
-  llvm::Metadata *VTableMD = llvm::ConstantAsMetadata::get(VTable);
+  CharUnits PointerWidth =
+      Context.toCharUnitsFromBits(Context.getTargetInfo().getPointerWidth(0));
 
   std::vector<llvm::MDTuple *> BitsetEntries;
   // Create a bit set entry for each address point.
@@ -857,23 +858,8 @@ void CodeGenModule::EmitVTableBitSetEntries(llvm::GlobalVariable *VTable,
     if (AP.first.getBase()->isInStdNamespace())
       continue;
 
-    std::string OutName;
-    llvm::raw_string_ostream Out(OutName);
-    getCXXABI().getMangleContext().mangleCXXVTableBitSet(AP.first.getBase(),
-                                                         Out);
-
-    CharUnits PointerWidth =
-        Context.toCharUnitsFromBits(Context.getTargetInfo().getPointerWidth(0));
-    uint64_t AddrPointOffset = AP.second * PointerWidth.getQuantity();
-
-    llvm::Metadata *BitsetOps[] = {
-        llvm::MDString::get(getLLVMContext(), Out.str()),
-        VTableMD,
-        llvm::ConstantAsMetadata::get(
-            llvm::ConstantInt::get(Int64Ty, AddrPointOffset))};
-    llvm::MDTuple *BitsetEntry =
-        llvm::MDTuple::get(getLLVMContext(), BitsetOps);
-    BitsetEntries.push_back(BitsetEntry);
+    BitsetEntries.push_back(CreateVTableBitSetEntry(
+        VTable, PointerWidth * AP.second, AP.first.getBase()));
   }
 
   // Sort the bit set entries for determinism.
