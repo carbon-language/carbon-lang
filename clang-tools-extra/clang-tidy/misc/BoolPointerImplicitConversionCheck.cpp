@@ -12,14 +12,14 @@
 using namespace clang::ast_matchers;
 
 namespace clang {
-namespace ast_matchers {
+namespace {
 
 AST_MATCHER(CastExpr, isPointerToBoolean) {
   return Node.getCastKind() == CK_PointerToBoolean;
 }
 AST_MATCHER(QualType, isBoolean) { return Node->isBooleanType(); }
 
-} // namespace ast_matchers
+} // namespace
 
 namespace tidy {
 namespace misc {

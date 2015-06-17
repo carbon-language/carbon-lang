@@ -21,7 +21,7 @@
 using namespace clang::ast_matchers;
 
 namespace clang {
-namespace ast_matchers {
+namespace {
 
 AST_MATCHER_P(Expr, hasSideEffect, bool, CheckFunctionCalls) {
   const Expr *E = &Node;
@@ -68,7 +68,7 @@ AST_MATCHER_P(Expr, hasSideEffect, bool, CheckFunctionCalls) {
   return isa<CXXNewExpr>(E) || isa<CXXDeleteExpr>(E) || isa<CXXThrowExpr>(E);
 }
 
-} // namespace ast_matchers
+} // namespace
 
 namespace tidy {
 

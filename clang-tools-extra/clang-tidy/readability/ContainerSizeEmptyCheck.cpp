@@ -38,16 +38,14 @@ static bool isContainer(llvm::StringRef ClassName) {
 }
 
 namespace clang {
-namespace ast_matchers {
+namespace {
 AST_MATCHER(QualType, isBoolType) { return Node->isBooleanType(); }
 
 AST_MATCHER(NamedDecl, stlContainer) {
   return isContainer(Node.getQualifiedNameAsString());
 }
-} // namespace ast_matchers
-} // namespace clang
+} // namespace
 
-namespace clang {
 namespace tidy {
 namespace readability {
 

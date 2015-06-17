@@ -15,12 +15,11 @@
 using namespace clang::ast_matchers;
 
 namespace clang {
-
-namespace ast_matchers {
+namespace {
 AST_MATCHER(DeclRefExpr, hasExplicitTemplateArgs) {
   return Node.hasExplicitTemplateArgs();
 }
-} // namespace ast_matchers
+} // namespace
 
 namespace tidy {
 namespace google {
