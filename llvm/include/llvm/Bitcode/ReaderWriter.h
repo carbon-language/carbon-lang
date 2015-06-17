@@ -15,6 +15,7 @@
 #define LLVM_BITCODE_READERWRITER_H
 
 #include "llvm/IR/DiagnosticInfo.h"
+#include "llvm/Support/Endian.h"
 #include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include <memory>
@@ -133,14 +134,8 @@ namespace llvm {
     // Must contain the header!
     if (BufEnd-BufPtr < KnownHeaderSize) return true;
 
-    unsigned Offset = ( BufPtr[OffsetField  ]        |
-                       (BufPtr[OffsetField+1] << 8)  |
-                       (BufPtr[OffsetField+2] << 16) |
-                       (BufPtr[OffsetField+3] << 24));
-    unsigned Size   = ( BufPtr[SizeField    ]        |
-                       (BufPtr[SizeField  +1] << 8)  |
-                       (BufPtr[SizeField  +2] << 16) |
-                       (BufPtr[SizeField  +3] << 24));
+    unsigned Offset = support::endian::read32le(&BufPtr[OffsetField]);
+    unsigned Size = support::endian::read32le(&BufPtr[SizeField]);
 
     // Verify that Offset+Size fits in the file.
     if (VerifyBufferSize && Offset+Size > unsigned(BufEnd-BufPtr))

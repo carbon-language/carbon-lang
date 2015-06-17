@@ -63,10 +63,7 @@ class BitstreamWriter {
   // BackpatchWord - Backpatch a 32-bit word in the output with the specified
   // value.
   void BackpatchWord(unsigned ByteNo, unsigned NewWord) {
-    Out[ByteNo++] = (unsigned char)(NewWord >>  0);
-    Out[ByteNo++] = (unsigned char)(NewWord >>  8);
-    Out[ByteNo++] = (unsigned char)(NewWord >> 16);
-    Out[ByteNo  ] = (unsigned char)(NewWord >> 24);
+    support::endian::write32le(&Out[ByteNo], NewWord);
   }
 
   void WriteByte(unsigned char Value) {
@@ -74,12 +71,9 @@ class BitstreamWriter {
   }
 
   void WriteWord(unsigned Value) {
-    unsigned char Bytes[4] = {
-      (unsigned char)(Value >>  0),
-      (unsigned char)(Value >>  8),
-      (unsigned char)(Value >> 16),
-      (unsigned char)(Value >> 24) };
-    Out.append(&Bytes[0], &Bytes[4]);
+    Value = support::endian::byte_swap<uint32_t, support::little>(Value);
+    Out.append(reinterpret_cast<const char *>(&Value),
+               reinterpret_cast<const char *>(&Value + 1));
   }
 
   unsigned GetBufferOffset() const {
