@@ -300,7 +300,8 @@ X86Subtarget::X86Subtarget(const Triple &TT, const std::string &CPU,
                   TargetTriple.getEnvironment() == Triple::CODE16),
       TSInfo(*TM.getDataLayout()),
       InstrInfo(initializeSubtargetDependencies(CPU, FS)), TLInfo(TM, *this),
-      FrameLowering(*this, getStackAlignment()) {
+      FrameLowering(TargetFrameLowering::StackGrowsDown, getStackAlignment(),
+                    is64Bit() ? -8 : -4) {
   // Determine the PICStyle based on the target selected.
   if (TM.getRelocationModel() == Reloc::Static) {
     // Unless we're in PIC or DynamicNoPIC mode, set the PIC style to None.
