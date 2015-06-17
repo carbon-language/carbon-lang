@@ -18,6 +18,7 @@
 
 // C++ Includes
 #include <fstream>
+#include <mutex>
 #include <sstream>
 #include <string>
 #include <unordered_map>
@@ -52,14 +53,15 @@
 #include <linux/unistd.h>
 #include <sys/socket.h>
 
+#include <sys/syscall.h>
 #include <sys/types.h>
-#include <sys/uio.h>
 #include <sys/user.h>
 #include <sys/wait.h>
 
 #include "lldb/Host/linux/Personality.h"
 #include "lldb/Host/linux/Ptrace.h"
 #include "lldb/Host/linux/Signalfd.h"
+#include "lldb/Host/linux/Uio.h"
 #include "lldb/Host/android/Android.h"
 
 #define LLDB_PERSONALITY_GET_CURRENT_SETTINGS  0xffffffff
@@ -75,6 +77,40 @@ using namespace lldb_private::process_linux;
 using namespace llvm;
 
 // Private bits we only need internally.
+
+static bool ProcessVmReadvSupported()
+{
+    static bool is_supported;
+    static std::once_flag flag;
+
+    std::call_once(flag, [] {
+        Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
+
+        uint32_t source = 0x47424742;
+        uint32_t dest = 0;
+
+        struct iovec local, remote;
+        remote.iov_base = &source;
+        local.iov_base = &dest;
+        remote.iov_len = local.iov_len = sizeof source;
+
+        // We shall try if cross-process-memory reads work by attempting to read a value from our own process.
+        ssize_t res = process_vm_readv(getpid(), &local, 1, &remote, 1, 0);
+        is_supported = (res == sizeof(source) && source == dest);
+        if (log)
+        {
+            if (is_supported)
+                log->Printf("%s: Detected kernel support for process_vm_readv syscall. Fast memory reads enabled.",
+                        __FUNCTION__);
+            else
+                log->Printf("%s: syscall process_vm_readv failed (error: %s). Fast memory reads disabled.",
+                        __FUNCTION__, strerror(errno));
+        }
+    });
+
+    return is_supported;
+}
+
 namespace
 {
     const UnixSignals&
@@ -242,7 +278,6 @@ namespace
                 log->Printf ("NativeProcessLinux::%s() [%p]:0x%lx (0x%lx)", __FUNCTION__,
                         (void*)vm_addr, print_dst, (unsigned long)data);
             }
-
             vm_addr += word_size;
             dst += word_size;
         }
@@ -3245,6 +3280,32 @@ NativeProcessLinux::RemoveWatchpoint (lldb::addr_t addr)
 Error
 NativeProcessLinux::ReadMemory (lldb::addr_t addr, void *buf, size_t size, size_t &bytes_read)
 {
+    if (ProcessVmReadvSupported()) {
+        // The process_vm_readv path is about 50 times faster than ptrace api. We want to use
+        // this syscall if it is supported.
+
+        const ::pid_t pid = GetID();
+
+        struct iovec local_iov, remote_iov;
+        local_iov.iov_base = buf;
+        local_iov.iov_len = size;
+        remote_iov.iov_base = reinterpret_cast<void *>(addr);
+        remote_iov.iov_len = size;
+
+        bytes_read = process_vm_readv(pid, &local_iov, 1, &remote_iov, 1, 0);
+        const bool success = bytes_read == size;
+
+        Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
+        if (log)
+            log->Printf ("NativeProcessLinux::%s using process_vm_readv to read %zd bytes from inferior address 0x%" PRIx64": %s",
+                    __FUNCTION__, size, addr, success ? "Success" : strerror(errno));
+
+        if (success)
+            return Error();
+        // else
+        //     the call failed for some reason, let's retry the read using ptrace api.
+    }
+
     ReadOperation op(addr, buf, size, bytes_read);
     m_monitor_up->DoOperation(&op);
     return op.GetError ();

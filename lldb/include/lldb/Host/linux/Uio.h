@@ -1,0 +1,23 @@
+//===-- Uio.h ---------------------------------------------------*- C++ -*-===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+
+#ifndef liblldb_Host_linux_Uio_h_
+#define liblldb_Host_linux_Uio_h_
+
+#include <sys/uio.h>
+
+// Android does not define the process_vm_readv wrapper
+#ifdef __ANDROID_NDK__
+ssize_t process_vm_readv(::pid_t pid,
+			 const struct iovec *local_iov, unsigned long liovcnt,
+			 const struct iovec *remote_iov, unsigned long riovcnt,
+			 unsigned long flags);
+#endif
+
+#endif // liblldb_Host_linux_Uio_h_
