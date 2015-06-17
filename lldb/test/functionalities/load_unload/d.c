@@ -8,6 +8,10 @@
 //===----------------------------------------------------------------------===//
 int
 d_function ()
-{
-    return 700; // Find this line number within d_dunction().
+{ // Find this line number within d_dunction().
+#ifdef HIDDEN
+    return 12345;
+#else
+    return 700;
+#endif
 }

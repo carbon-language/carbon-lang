@@ -735,6 +735,28 @@ def skipIfRemote(func):
             func(*args, **kwargs)
     return wrapper
 
+def skipUnlessListedRemote(remote_list=None):
+    def myImpl(func):
+        if isinstance(func, type) and issubclass(func, unittest2.TestCase):
+            raise Exception("@skipIfRemote can only be used to decorate a "
+                            "test method")
+
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            if remote_list and lldb.remote_platform:
+                self = args[0]
+                triple = self.dbg.GetSelectedPlatform().GetTriple()
+                for r in remote_list:
+                    if r in triple:
+                        func(*args, **kwargs)
+                        return
+                self.skipTest("skip on remote platform %s" % str(triple))
+            else:
+                func(*args, **kwargs)
+        return wrapper
+
+    return myImpl
+
 def skipIfRemoteDueToDeadlock(func):
     """Decorate the item to skip tests if testing remotely due to the test deadlocking."""
     if isinstance(func, type) and issubclass(func, unittest2.TestCase):
