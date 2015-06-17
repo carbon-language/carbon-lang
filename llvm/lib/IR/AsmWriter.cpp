@@ -730,6 +730,11 @@ void SlotTracker::processModule() {
       CreateModuleSlot(&Var);
   }
 
+  for (const GlobalAlias &A : TheModule->aliases()) {
+    if (!A.hasName())
+      CreateModuleSlot(&A);
+  }
+
   // Add metadata used by named metadata.
   for (const NamedMDNode &NMD : TheModule->named_metadata()) {
     for (unsigned i = 0, e = NMD.getNumOperands(); i != e; ++i)
@@ -2356,13 +2361,9 @@ void AssemblyWriter::printAlias(const GlobalAlias *GA) {
   if (GA->isMaterializable())
     Out << "; Materializable\n";
 
-  // Don't crash when dumping partially built GA
-  if (!GA->hasName())
-    Out << "<<nameless>> = ";
-  else {
-    PrintLLVMName(Out, GA);
-    Out << " = ";
-  }
+  WriteAsOperandInternal(Out, GA, &TypePrinter, &Machine, GA->getParent());
+  Out << " = ";
+
   PrintLinkage(GA->getLinkage(), Out);
   PrintVisibility(GA->getVisibility(), Out);
   PrintDLLStorageClass(GA->getDLLStorageClass(), Out);

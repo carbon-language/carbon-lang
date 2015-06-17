@@ -670,6 +670,9 @@ bool LLParser::ParseAlias(const std::string &Name, LocTy NameLoc, unsigned L,
   GA->setDLLStorageClass((GlobalValue::DLLStorageClassTypes)DLLStorageClass);
   GA->setUnnamedAddr(UnnamedAddr);
 
+  if (Name.empty())
+    NumberedVals.push_back(GA.get());
+
   // See if this value already exists in the symbol table.  If so, it is either
   // a redefinition or a definition of a forward reference.
   if (GlobalValue *Val = M->getNamedValue(Name)) {

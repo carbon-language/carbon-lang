@@ -584,7 +584,6 @@ void Verifier::visitAliaseeSubExpr(SmallPtrSetImpl<const GlobalAlias*> &Visited,
 }
 
 void Verifier::visitGlobalAlias(const GlobalAlias &GA) {
-  Assert(!GA.getName().empty(), "Alias name cannot be empty!", &GA);
   Assert(GlobalAlias::isValidLinkage(GA.getLinkage()),
          "Alias should have private, internal, linkonce, weak, linkonce_odr, "
          "weak_odr, or external linkage!",
