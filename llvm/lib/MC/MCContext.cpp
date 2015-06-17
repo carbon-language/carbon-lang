@@ -176,14 +176,14 @@ MCSymbol *MCContext::createSymbolImpl(const StringMapEntry<bool> *Name,
 }
 
 MCSymbol *MCContext::createSymbol(StringRef Name, bool AlwaysAddSuffix,
-                                  bool IsTemporary) {
-  if (IsTemporary && !UseNamesOnTempLabels)
+                                  bool CanBeUnnamed) {
+  if (CanBeUnnamed && !UseNamesOnTempLabels)
     return createSymbolImpl(nullptr, true);
 
   // Determine whether this is an user writter assembler temporary or normal
   // label, if used.
-  IsTemporary = false;
-  if (AllowTemporaryLabels)
+  bool IsTemporary = CanBeUnnamed;
+  if (AllowTemporaryLabels && !IsTemporary)
     IsTemporary = Name.startswith(MAI->getPrivateGlobalPrefix());
 
   SmallString<128> NewName = Name;
@@ -206,10 +206,11 @@ MCSymbol *MCContext::createSymbol(StringRef Name, bool AlwaysAddSuffix,
   llvm_unreachable("Infinite loop");
 }
 
-MCSymbol *MCContext::createTempSymbol(const Twine &Name, bool AlwaysAddSuffix) {
+MCSymbol *MCContext::createTempSymbol(const Twine &Name, bool AlwaysAddSuffix,
+                                      bool CanBeUnnamed) {
   SmallString<128> NameSV;
   raw_svector_ostream(NameSV) << MAI->getPrivateGlobalPrefix() << Name;
-  return createSymbol(NameSV, AlwaysAddSuffix, true);
+  return createSymbol(NameSV, AlwaysAddSuffix, CanBeUnnamed);
 }
 
 MCSymbol *MCContext::createLinkerPrivateTempSymbol() {
@@ -218,8 +219,8 @@ MCSymbol *MCContext::createLinkerPrivateTempSymbol() {
   return createSymbol(NameSV, true, false);
 }
 
-MCSymbol *MCContext::createTempSymbol() {
-  return createTempSymbol("tmp", true);
+MCSymbol *MCContext::createTempSymbol(bool CanBeUnnamed) {
+  return createTempSymbol("tmp", true, CanBeUnnamed);
 }
 
 unsigned MCContext::NextInstance(unsigned LocalLabelVal) {
@@ -240,7 +241,7 @@ MCSymbol *MCContext::getOrCreateDirectionalLocalSymbol(unsigned LocalLabelVal,
                                                        unsigned Instance) {
   MCSymbol *&Sym = LocalSymbols[std::make_pair(LocalLabelVal, Instance)];
   if (!Sym)
-    Sym = createTempSymbol();
+    Sym = createTempSymbol(false);
   return Sym;
 }
 
