@@ -18,6 +18,7 @@
 #include "llvm/Object/Archive.h"
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Object/SymbolicFile.h"
+#include "llvm/Support/EndianStream.h"
 #include "llvm/Support/Errc.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Format.h"
@@ -83,9 +84,7 @@ static void printWithSpacePadding(raw_fd_ostream &OS, T Data, unsigned Size,
   OS << Data;
   unsigned SizeSoFar = OS.tell() - OldPos;
   if (Size > SizeSoFar) {
-    unsigned Remaining = Size - SizeSoFar;
-    for (unsigned I = 0; I < Remaining; ++I)
-      OS << ' ';
+    OS.indent(Size - SizeSoFar);
   } else if (Size < SizeSoFar) {
     assert(MayTruncate && "Data doesn't fit in Size");
     // Some of the data this is used for (like UID) can be larger than the
@@ -94,12 +93,8 @@ static void printWithSpacePadding(raw_fd_ostream &OS, T Data, unsigned Size,
   }
 }
 
-static void print32BE(raw_fd_ostream &Out, unsigned Val) {
-  // FIXME: Should use Endian.h here.
-  for (int I = 3; I >= 0; --I) {
-    char V = (Val >> (8 * I)) & 0xff;
-    Out << V;
-  }
+static void print32BE(raw_ostream &Out, uint32_t Val) {
+  support::endian::Writer<support::big>(Out).write(Val);
 }
 
 static void printRestOfMemberHeader(raw_fd_ostream &Out,
