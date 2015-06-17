@@ -647,6 +647,8 @@ private:
     if ( this->preflightKey(Key, Required, false, UseDefault, SaveInfo) ) {
       yamlize(*this, Val, Required);
       this->postflightKey(SaveInfo);
+    } else if (UseDefault) {
+      Val = T();
     }
   }
 

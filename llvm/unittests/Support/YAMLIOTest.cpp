@@ -68,6 +68,21 @@ namespace yaml {
 }
 }
 
+struct FooBarOptional {
+  int Foo;
+  int Bar;
+};
+
+namespace llvm {
+namespace yaml {
+template <> struct MappingTraits<FooBarOptional> {
+  static void mapping(IO &YamlIO, FooBarOptional &Obj) {
+    YamlIO.mapRequired("foo", Obj.Foo);
+    YamlIO.mapOptional("bar", Obj.Bar);
+  }
+};
+}
+}
 
 //
 // Test the reading of a yaml mapping
@@ -90,6 +105,19 @@ TEST(YAMLIO, TestMapRead) {
     EXPECT_FALSE(yin.error());
     EXPECT_EQ(doc.foo, 3);
     EXPECT_EQ(doc.bar, 5);
+  }
+}
+
+TEST(YAMLIO, TestMapReadOptional) {
+  FooBarOptional Doc;
+  Doc.Bar = 42;
+  {
+    Input In("---\nfoo:  3\n...\n");
+    In >> Doc;
+
+    EXPECT_FALSE(In.error());
+    EXPECT_EQ(Doc.Foo, 3);
+    EXPECT_EQ(Doc.Bar, 0);
   }
 }
 
