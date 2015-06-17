@@ -2242,7 +2242,7 @@ void CGOpenMPRuntime::emitReduction(CodeGenFunction &CGF, SourceLocation Loc,
                                     ArrayRef<const Expr *> LHSExprs,
                                     ArrayRef<const Expr *> RHSExprs,
                                     ArrayRef<const Expr *> ReductionOps,
-                                    bool WithNowait) {
+                                    bool WithNowait, bool SimpleReduction) {
   // Next code should be emitted for reduction:
   //
   // static kmp_critical_name lock = { 0 };
@@ -2272,8 +2272,21 @@ void CGOpenMPRuntime::emitReduction(CodeGenFunction &CGF, SourceLocation Loc,
   // break;
   // default:;
   // }
+  //
+  // if SimpleReduction is true, only the next code is generated:
+  //  ...
+  //  <LHSExprs>[i] = RedOp<i>(*<LHSExprs>[i], *<RHSExprs>[i]);
+  //  ...
 
   auto &C = CGM.getContext();
+
+  if (SimpleReduction) {
+    CodeGenFunction::RunCleanupsScope Scope(CGF);
+    for (auto *E : ReductionOps) {
+      CGF.EmitIgnoredExpr(E);
+    }
+    return;
+  }
 
   // 1. Build a list of reduction variables.
   // void *RedList[<n>] = {<ReductionVars>[0], ..., <ReductionVars>[<n>-1]};

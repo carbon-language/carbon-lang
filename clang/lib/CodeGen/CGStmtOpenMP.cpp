@@ -443,7 +443,9 @@ void CodeGenFunction::EmitOMPReductionClauseFinal(
     CGM.getOpenMPRuntime().emitReduction(
         *this, D.getLocEnd(), LHSExprs, RHSExprs, ReductionOps,
         D.getSingleClause(OMPC_nowait) ||
-            isOpenMPParallelDirective(D.getDirectiveKind()));
+            isOpenMPParallelDirective(D.getDirectiveKind()) ||
+            D.getDirectiveKind() == OMPD_simd,
+        D.getDirectiveKind() == OMPD_simd);
   }
 }
 
@@ -807,6 +809,7 @@ void CodeGenFunction::EmitOMPSimdDirective(const OMPSimdDirective &S) {
       EmitPrivateLoopCounters(CGF, LoopScope, S.counters());
       EmitPrivateLinearVars(CGF, S, LoopScope);
       CGF.EmitOMPPrivateClause(S, LoopScope);
+      CGF.EmitOMPReductionClauseInit(S, LoopScope);
       HasLastprivateClause = CGF.EmitOMPLastprivateClauseInit(S, LoopScope);
       (void)LoopScope.Privatize();
       CGF.EmitOMPInnerLoop(S, LoopScope.requiresCleanups(),
@@ -820,6 +823,7 @@ void CodeGenFunction::EmitOMPSimdDirective(const OMPSimdDirective &S) {
       if (HasLastprivateClause) {
         CGF.EmitOMPLastprivateClauseFinal(S);
       }
+      CGF.EmitOMPReductionClauseFinal(S);
     }
     CGF.EmitOMPSimdFinal(S);
     // Emit: if (PreCond) - end.
