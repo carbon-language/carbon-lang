@@ -37,18 +37,23 @@
 #define _XABORT_NESTED    (1 << 5)
 #define _XABORT_CODE(x)   (((x) >> 24) & 0xFF)
 
-static __inline__ unsigned int __attribute__((__always_inline__, __nodebug__))
+/* Define the default attributes for the functions in this file. */
+#define DEFAULT_FN_ATTRS __attribute__((__always_inline__, __nodebug__))
+
+static __inline__ unsigned int DEFAULT_FN_ATTRS
 _xbegin(void)
 {
   return __builtin_ia32_xbegin();
 }
 
-static __inline__ void __attribute__((__always_inline__, __nodebug__))
+static __inline__ void DEFAULT_FN_ATTRS
 _xend(void)
 {
   __builtin_ia32_xend();
 }
 
 #define _xabort(imm) __builtin_ia32_xabort((imm))
+
+#undef DEFAULT_FN_ATTRS
 
 #endif /* __RTMINTRIN_H */

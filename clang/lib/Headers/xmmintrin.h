@@ -40,182 +40,185 @@ typedef float __m128 __attribute__((__vector_size__(16)));
 #include <mm_malloc.h>
 #endif
 
-static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
+/* Define the default attributes for the functions in this file. */
+#define DEFAULT_FN_ATTRS __attribute__((__always_inline__, __nodebug__))
+
+static __inline__ __m128 DEFAULT_FN_ATTRS
 _mm_add_ss(__m128 __a, __m128 __b)
 {
   __a[0] += __b[0];
   return __a;
 }
 
-static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128 DEFAULT_FN_ATTRS
 _mm_add_ps(__m128 __a, __m128 __b)
 {
   return __a + __b;
 }
 
-static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128 DEFAULT_FN_ATTRS
 _mm_sub_ss(__m128 __a, __m128 __b)
 {
   __a[0] -= __b[0];
   return __a;
 }
 
-static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128 DEFAULT_FN_ATTRS
 _mm_sub_ps(__m128 __a, __m128 __b)
 {
   return __a - __b;
 }
 
-static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128 DEFAULT_FN_ATTRS
 _mm_mul_ss(__m128 __a, __m128 __b)
 {
   __a[0] *= __b[0];
   return __a;
 }
 
-static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128 DEFAULT_FN_ATTRS
 _mm_mul_ps(__m128 __a, __m128 __b)
 {
   return __a * __b;
 }
 
-static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128 DEFAULT_FN_ATTRS
 _mm_div_ss(__m128 __a, __m128 __b)
 {
   __a[0] /= __b[0];
   return __a;
 }
 
-static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128 DEFAULT_FN_ATTRS
 _mm_div_ps(__m128 __a, __m128 __b)
 {
   return __a / __b;
 }
 
-static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128 DEFAULT_FN_ATTRS
 _mm_sqrt_ss(__m128 __a)
 {
   __m128 __c = __builtin_ia32_sqrtss(__a);
   return (__m128) { __c[0], __a[1], __a[2], __a[3] };
 }
 
-static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128 DEFAULT_FN_ATTRS
 _mm_sqrt_ps(__m128 __a)
 {
   return __builtin_ia32_sqrtps(__a);
 }
 
-static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128 DEFAULT_FN_ATTRS
 _mm_rcp_ss(__m128 __a)
 {
   __m128 __c = __builtin_ia32_rcpss(__a);
   return (__m128) { __c[0], __a[1], __a[2], __a[3] };
 }
 
-static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128 DEFAULT_FN_ATTRS
 _mm_rcp_ps(__m128 __a)
 {
   return __builtin_ia32_rcpps(__a);
 }
 
-static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128 DEFAULT_FN_ATTRS
 _mm_rsqrt_ss(__m128 __a)
 {
   __m128 __c = __builtin_ia32_rsqrtss(__a);
   return (__m128) { __c[0], __a[1], __a[2], __a[3] };
 }
 
-static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128 DEFAULT_FN_ATTRS
 _mm_rsqrt_ps(__m128 __a)
 {
   return __builtin_ia32_rsqrtps(__a);
 }
 
-static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128 DEFAULT_FN_ATTRS
 _mm_min_ss(__m128 __a, __m128 __b)
 {
   return __builtin_ia32_minss(__a, __b);
 }
 
-static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128 DEFAULT_FN_ATTRS
 _mm_min_ps(__m128 __a, __m128 __b)
 {
   return __builtin_ia32_minps(__a, __b);
 }
 
-static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128 DEFAULT_FN_ATTRS
 _mm_max_ss(__m128 __a, __m128 __b)
 {
   return __builtin_ia32_maxss(__a, __b);
 }
 
-static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128 DEFAULT_FN_ATTRS
 _mm_max_ps(__m128 __a, __m128 __b)
 {
   return __builtin_ia32_maxps(__a, __b);
 }
 
-static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128 DEFAULT_FN_ATTRS
 _mm_and_ps(__m128 __a, __m128 __b)
 {
   return (__m128)((__v4si)__a & (__v4si)__b);
 }
 
-static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128 DEFAULT_FN_ATTRS
 _mm_andnot_ps(__m128 __a, __m128 __b)
 {
   return (__m128)(~(__v4si)__a & (__v4si)__b);
 }
 
-static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128 DEFAULT_FN_ATTRS
 _mm_or_ps(__m128 __a, __m128 __b)
 {
   return (__m128)((__v4si)__a | (__v4si)__b);
 }
 
-static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128 DEFAULT_FN_ATTRS
 _mm_xor_ps(__m128 __a, __m128 __b)
 {
   return (__m128)((__v4si)__a ^ (__v4si)__b);
 }
 
-static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128 DEFAULT_FN_ATTRS
 _mm_cmpeq_ss(__m128 __a, __m128 __b)
 {
   return (__m128)__builtin_ia32_cmpeqss(__a, __b);
 }
 
-static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128 DEFAULT_FN_ATTRS
 _mm_cmpeq_ps(__m128 __a, __m128 __b)
 {
   return (__m128)__builtin_ia32_cmpeqps(__a, __b);
 }
 
-static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128 DEFAULT_FN_ATTRS
 _mm_cmplt_ss(__m128 __a, __m128 __b)
 {
   return (__m128)__builtin_ia32_cmpltss(__a, __b);
 }
 
-static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128 DEFAULT_FN_ATTRS
 _mm_cmplt_ps(__m128 __a, __m128 __b)
 {
   return (__m128)__builtin_ia32_cmpltps(__a, __b);
 }
 
-static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128 DEFAULT_FN_ATTRS
 _mm_cmple_ss(__m128 __a, __m128 __b)
 {
   return (__m128)__builtin_ia32_cmpless(__a, __b);
 }
 
-static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128 DEFAULT_FN_ATTRS
 _mm_cmple_ps(__m128 __a, __m128 __b)
 {
   return (__m128)__builtin_ia32_cmpleps(__a, __b);
 }
 
-static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128 DEFAULT_FN_ATTRS
 _mm_cmpgt_ss(__m128 __a, __m128 __b)
 {
   return (__m128)__builtin_shufflevector(__a,
@@ -223,13 +226,13 @@ _mm_cmpgt_ss(__m128 __a, __m128 __b)
                                          4, 1, 2, 3);
 }
 
-static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128 DEFAULT_FN_ATTRS
 _mm_cmpgt_ps(__m128 __a, __m128 __b)
 {
   return (__m128)__builtin_ia32_cmpltps(__b, __a);
 }
 
-static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128 DEFAULT_FN_ATTRS
 _mm_cmpge_ss(__m128 __a, __m128 __b)
 {
   return (__m128)__builtin_shufflevector(__a,
@@ -237,49 +240,49 @@ _mm_cmpge_ss(__m128 __a, __m128 __b)
                                          4, 1, 2, 3);
 }
 
-static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128 DEFAULT_FN_ATTRS
 _mm_cmpge_ps(__m128 __a, __m128 __b)
 {
   return (__m128)__builtin_ia32_cmpleps(__b, __a);
 }
 
-static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128 DEFAULT_FN_ATTRS
 _mm_cmpneq_ss(__m128 __a, __m128 __b)
 {
   return (__m128)__builtin_ia32_cmpneqss(__a, __b);
 }
 
-static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128 DEFAULT_FN_ATTRS
 _mm_cmpneq_ps(__m128 __a, __m128 __b)
 {
   return (__m128)__builtin_ia32_cmpneqps(__a, __b);
 }
 
-static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128 DEFAULT_FN_ATTRS
 _mm_cmpnlt_ss(__m128 __a, __m128 __b)
 {
   return (__m128)__builtin_ia32_cmpnltss(__a, __b);
 }
 
-static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128 DEFAULT_FN_ATTRS
 _mm_cmpnlt_ps(__m128 __a, __m128 __b)
 {
   return (__m128)__builtin_ia32_cmpnltps(__a, __b);
 }
 
-static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128 DEFAULT_FN_ATTRS
 _mm_cmpnle_ss(__m128 __a, __m128 __b)
 {
   return (__m128)__builtin_ia32_cmpnless(__a, __b);
 }
 
-static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128 DEFAULT_FN_ATTRS
 _mm_cmpnle_ps(__m128 __a, __m128 __b)
 {
   return (__m128)__builtin_ia32_cmpnleps(__a, __b);
 }
 
-static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128 DEFAULT_FN_ATTRS
 _mm_cmpngt_ss(__m128 __a, __m128 __b)
 {
   return (__m128)__builtin_shufflevector(__a,
@@ -287,13 +290,13 @@ _mm_cmpngt_ss(__m128 __a, __m128 __b)
                                          4, 1, 2, 3);
 }
 
-static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128 DEFAULT_FN_ATTRS
 _mm_cmpngt_ps(__m128 __a, __m128 __b)
 {
   return (__m128)__builtin_ia32_cmpnltps(__b, __a);
 }
 
-static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128 DEFAULT_FN_ATTRS
 _mm_cmpnge_ss(__m128 __a, __m128 __b)
 {
   return (__m128)__builtin_shufflevector(__a,
@@ -301,115 +304,115 @@ _mm_cmpnge_ss(__m128 __a, __m128 __b)
                                          4, 1, 2, 3);
 }
 
-static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128 DEFAULT_FN_ATTRS
 _mm_cmpnge_ps(__m128 __a, __m128 __b)
 {
   return (__m128)__builtin_ia32_cmpnleps(__b, __a);
 }
 
-static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128 DEFAULT_FN_ATTRS
 _mm_cmpord_ss(__m128 __a, __m128 __b)
 {
   return (__m128)__builtin_ia32_cmpordss(__a, __b);
 }
 
-static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128 DEFAULT_FN_ATTRS
 _mm_cmpord_ps(__m128 __a, __m128 __b)
 {
   return (__m128)__builtin_ia32_cmpordps(__a, __b);
 }
 
-static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128 DEFAULT_FN_ATTRS
 _mm_cmpunord_ss(__m128 __a, __m128 __b)
 {
   return (__m128)__builtin_ia32_cmpunordss(__a, __b);
 }
 
-static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128 DEFAULT_FN_ATTRS
 _mm_cmpunord_ps(__m128 __a, __m128 __b)
 {
   return (__m128)__builtin_ia32_cmpunordps(__a, __b);
 }
 
-static __inline__ int __attribute__((__always_inline__, __nodebug__))
+static __inline__ int DEFAULT_FN_ATTRS
 _mm_comieq_ss(__m128 __a, __m128 __b)
 {
   return __builtin_ia32_comieq(__a, __b);
 }
 
-static __inline__ int __attribute__((__always_inline__, __nodebug__))
+static __inline__ int DEFAULT_FN_ATTRS
 _mm_comilt_ss(__m128 __a, __m128 __b)
 {
   return __builtin_ia32_comilt(__a, __b);
 }
 
-static __inline__ int __attribute__((__always_inline__, __nodebug__))
+static __inline__ int DEFAULT_FN_ATTRS
 _mm_comile_ss(__m128 __a, __m128 __b)
 {
   return __builtin_ia32_comile(__a, __b);
 }
 
-static __inline__ int __attribute__((__always_inline__, __nodebug__))
+static __inline__ int DEFAULT_FN_ATTRS
 _mm_comigt_ss(__m128 __a, __m128 __b)
 {
   return __builtin_ia32_comigt(__a, __b);
 }
 
-static __inline__ int __attribute__((__always_inline__, __nodebug__))
+static __inline__ int DEFAULT_FN_ATTRS
 _mm_comige_ss(__m128 __a, __m128 __b)
 {
   return __builtin_ia32_comige(__a, __b);
 }
 
-static __inline__ int __attribute__((__always_inline__, __nodebug__))
+static __inline__ int DEFAULT_FN_ATTRS
 _mm_comineq_ss(__m128 __a, __m128 __b)
 {
   return __builtin_ia32_comineq(__a, __b);
 }
 
-static __inline__ int __attribute__((__always_inline__, __nodebug__))
+static __inline__ int DEFAULT_FN_ATTRS
 _mm_ucomieq_ss(__m128 __a, __m128 __b)
 {
   return __builtin_ia32_ucomieq(__a, __b);
 }
 
-static __inline__ int __attribute__((__always_inline__, __nodebug__))
+static __inline__ int DEFAULT_FN_ATTRS
 _mm_ucomilt_ss(__m128 __a, __m128 __b)
 {
   return __builtin_ia32_ucomilt(__a, __b);
 }
 
-static __inline__ int __attribute__((__always_inline__, __nodebug__))
+static __inline__ int DEFAULT_FN_ATTRS
 _mm_ucomile_ss(__m128 __a, __m128 __b)
 {
   return __builtin_ia32_ucomile(__a, __b);
 }
 
-static __inline__ int __attribute__((__always_inline__, __nodebug__))
+static __inline__ int DEFAULT_FN_ATTRS
 _mm_ucomigt_ss(__m128 __a, __m128 __b)
 {
   return __builtin_ia32_ucomigt(__a, __b);
 }
 
-static __inline__ int __attribute__((__always_inline__, __nodebug__))
+static __inline__ int DEFAULT_FN_ATTRS
 _mm_ucomige_ss(__m128 __a, __m128 __b)
 {
   return __builtin_ia32_ucomige(__a, __b);
 }
 
-static __inline__ int __attribute__((__always_inline__, __nodebug__))
+static __inline__ int DEFAULT_FN_ATTRS
 _mm_ucomineq_ss(__m128 __a, __m128 __b)
 {
   return __builtin_ia32_ucomineq(__a, __b);
 }
 
-static __inline__ int __attribute__((__always_inline__, __nodebug__))
+static __inline__ int DEFAULT_FN_ATTRS
 _mm_cvtss_si32(__m128 __a)
 {
   return __builtin_ia32_cvtss2si(__a);
 }
 
-static __inline__ int __attribute__((__always_inline__, __nodebug__))
+static __inline__ int DEFAULT_FN_ATTRS
 _mm_cvt_ss2si(__m128 __a)
 {
   return _mm_cvtss_si32(__a);
@@ -417,7 +420,7 @@ _mm_cvt_ss2si(__m128 __a)
 
 #ifdef __x86_64__
 
-static __inline__ long long __attribute__((__always_inline__, __nodebug__))
+static __inline__ long long DEFAULT_FN_ATTRS
 _mm_cvtss_si64(__m128 __a)
 {
   return __builtin_ia32_cvtss2si64(__a);
@@ -425,56 +428,56 @@ _mm_cvtss_si64(__m128 __a)
 
 #endif
 
-static __inline__ __m64 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m64 DEFAULT_FN_ATTRS
 _mm_cvtps_pi32(__m128 __a)
 {
   return (__m64)__builtin_ia32_cvtps2pi(__a);
 }
 
-static __inline__ __m64 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m64 DEFAULT_FN_ATTRS
 _mm_cvt_ps2pi(__m128 __a)
 {
   return _mm_cvtps_pi32(__a);
 }
 
-static __inline__ int __attribute__((__always_inline__, __nodebug__))
+static __inline__ int DEFAULT_FN_ATTRS
 _mm_cvttss_si32(__m128 __a)
 {
   return __a[0];
 }
 
-static __inline__ int __attribute__((__always_inline__, __nodebug__))
+static __inline__ int DEFAULT_FN_ATTRS
 _mm_cvtt_ss2si(__m128 __a)
 {
   return _mm_cvttss_si32(__a);
 }
 
-static __inline__ long long __attribute__((__always_inline__, __nodebug__))
+static __inline__ long long DEFAULT_FN_ATTRS
 _mm_cvttss_si64(__m128 __a)
 {
   return __a[0];
 }
 
-static __inline__ __m64 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m64 DEFAULT_FN_ATTRS
 _mm_cvttps_pi32(__m128 __a)
 {
   return (__m64)__builtin_ia32_cvttps2pi(__a);
 }
 
-static __inline__ __m64 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m64 DEFAULT_FN_ATTRS
 _mm_cvtt_ps2pi(__m128 __a)
 {
   return _mm_cvttps_pi32(__a);
 }
 
-static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128 DEFAULT_FN_ATTRS
 _mm_cvtsi32_ss(__m128 __a, int __b)
 {
   __a[0] = __b;
   return __a;
 }
 
-static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128 DEFAULT_FN_ATTRS
 _mm_cvt_si2ss(__m128 __a, int __b)
 {
   return _mm_cvtsi32_ss(__a, __b);
@@ -482,7 +485,7 @@ _mm_cvt_si2ss(__m128 __a, int __b)
 
 #ifdef __x86_64__
 
-static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128 DEFAULT_FN_ATTRS
 _mm_cvtsi64_ss(__m128 __a, long long __b)
 {
   __a[0] = __b;
@@ -491,25 +494,25 @@ _mm_cvtsi64_ss(__m128 __a, long long __b)
 
 #endif
 
-static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128 DEFAULT_FN_ATTRS
 _mm_cvtpi32_ps(__m128 __a, __m64 __b)
 {
   return __builtin_ia32_cvtpi2ps(__a, (__v2si)__b);
 }
 
-static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128 DEFAULT_FN_ATTRS
 _mm_cvt_pi2ps(__m128 __a, __m64 __b)
 {
   return _mm_cvtpi32_ps(__a, __b);
 }
 
-static __inline__ float __attribute__((__always_inline__, __nodebug__))
+static __inline__ float DEFAULT_FN_ATTRS
 _mm_cvtss_f32(__m128 __a)
 {
   return __a[0];
 }
 
-static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128 DEFAULT_FN_ATTRS
 _mm_loadh_pi(__m128 __a, const __m64 *__p)
 {
   typedef float __mm_loadh_pi_v2f32 __attribute__((__vector_size__(8)));
@@ -521,7 +524,7 @@ _mm_loadh_pi(__m128 __a, const __m64 *__p)
   return __builtin_shufflevector(__a, __bb, 0, 1, 4, 5);
 }
 
-static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128 DEFAULT_FN_ATTRS
 _mm_loadl_pi(__m128 __a, const __m64 *__p)
 {
   typedef float __mm_loadl_pi_v2f32 __attribute__((__vector_size__(8)));
@@ -533,7 +536,7 @@ _mm_loadl_pi(__m128 __a, const __m64 *__p)
   return __builtin_shufflevector(__a, __bb, 4, 5, 2, 3);
 }
 
-static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128 DEFAULT_FN_ATTRS
 _mm_load_ss(const float *__p)
 {
   struct __mm_load_ss_struct {
@@ -543,7 +546,7 @@ _mm_load_ss(const float *__p)
   return (__m128){ __u, 0, 0, 0 };
 }
 
-static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128 DEFAULT_FN_ATTRS
 _mm_load1_ps(const float *__p)
 {
   struct __mm_load1_ps_struct {
@@ -555,13 +558,13 @@ _mm_load1_ps(const float *__p)
 
 #define        _mm_load_ps1(p) _mm_load1_ps(p)
 
-static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128 DEFAULT_FN_ATTRS
 _mm_load_ps(const float *__p)
 {
   return *(__m128*)__p;
 }
 
-static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128 DEFAULT_FN_ATTRS
 _mm_loadu_ps(const float *__p)
 {
   struct __loadu_ps {
@@ -570,63 +573,63 @@ _mm_loadu_ps(const float *__p)
   return ((struct __loadu_ps*)__p)->__v;
 }
 
-static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128 DEFAULT_FN_ATTRS
 _mm_loadr_ps(const float *__p)
 {
   __m128 __a = _mm_load_ps(__p);
   return __builtin_shufflevector(__a, __a, 3, 2, 1, 0);
 }
 
-static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128 DEFAULT_FN_ATTRS
 _mm_set_ss(float __w)
 {
   return (__m128){ __w, 0, 0, 0 };
 }
 
-static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128 DEFAULT_FN_ATTRS
 _mm_set1_ps(float __w)
 {
   return (__m128){ __w, __w, __w, __w };
 }
 
 /* Microsoft specific. */
-static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128 DEFAULT_FN_ATTRS
 _mm_set_ps1(float __w)
 {
     return _mm_set1_ps(__w);
 }
 
-static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128 DEFAULT_FN_ATTRS
 _mm_set_ps(float __z, float __y, float __x, float __w)
 {
   return (__m128){ __w, __x, __y, __z };
 }
 
-static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128 DEFAULT_FN_ATTRS
 _mm_setr_ps(float __z, float __y, float __x, float __w)
 {
   return (__m128){ __z, __y, __x, __w };
 }
 
-static __inline__ __m128 __attribute__((__always_inline__))
+static __inline__ __m128 DEFAULT_FN_ATTRS
 _mm_setzero_ps(void)
 {
   return (__m128){ 0, 0, 0, 0 };
 }
 
-static __inline__ void __attribute__((__always_inline__))
+static __inline__ void DEFAULT_FN_ATTRS
 _mm_storeh_pi(__m64 *__p, __m128 __a)
 {
   __builtin_ia32_storehps((__v2si *)__p, __a);
 }
 
-static __inline__ void __attribute__((__always_inline__))
+static __inline__ void DEFAULT_FN_ATTRS
 _mm_storel_pi(__m64 *__p, __m128 __a)
 {
   __builtin_ia32_storelps((__v2si *)__p, __a);
 }
 
-static __inline__ void __attribute__((__always_inline__))
+static __inline__ void DEFAULT_FN_ATTRS
 _mm_store_ss(float *__p, __m128 __a)
 {
   struct __mm_store_ss_struct {
@@ -635,32 +638,32 @@ _mm_store_ss(float *__p, __m128 __a)
   ((struct __mm_store_ss_struct*)__p)->__u = __a[0];
 }
 
-static __inline__ void __attribute__((__always_inline__, __nodebug__))
+static __inline__ void DEFAULT_FN_ATTRS
 _mm_storeu_ps(float *__p, __m128 __a)
 {
   __builtin_ia32_storeups(__p, __a);
 }
 
-static __inline__ void __attribute__((__always_inline__, __nodebug__))
+static __inline__ void DEFAULT_FN_ATTRS
 _mm_store1_ps(float *__p, __m128 __a)
 {
   __a = __builtin_shufflevector(__a, __a, 0, 0, 0, 0);
   _mm_storeu_ps(__p, __a);
 }
 
-static __inline__ void __attribute__((__always_inline__, __nodebug__))
+static __inline__ void DEFAULT_FN_ATTRS
 _mm_store_ps1(float *__p, __m128 __a)
 {
     return _mm_store1_ps(__p, __a);
 }
 
-static __inline__ void __attribute__((__always_inline__, __nodebug__))
+static __inline__ void DEFAULT_FN_ATTRS
 _mm_store_ps(float *__p, __m128 __a)
 {
   *(__m128 *)__p = __a;
 }
 
-static __inline__ void __attribute__((__always_inline__, __nodebug__))
+static __inline__ void DEFAULT_FN_ATTRS
 _mm_storer_ps(float *__p, __m128 __a)
 {
   __a = __builtin_shufflevector(__a, __a, 3, 2, 1, 0);
@@ -679,32 +682,32 @@ _mm_storer_ps(float *__p, __m128 __a)
 #define _mm_prefetch(a, sel) (__builtin_prefetch((void *)(a), 0, (sel)))
 #endif
 
-static __inline__ void __attribute__((__always_inline__, __nodebug__))
+static __inline__ void DEFAULT_FN_ATTRS
 _mm_stream_pi(__m64 *__p, __m64 __a)
 {
   __builtin_ia32_movntq(__p, __a);
 }
 
-static __inline__ void __attribute__((__always_inline__, __nodebug__))
+static __inline__ void DEFAULT_FN_ATTRS
 _mm_stream_ps(float *__p, __m128 __a)
 {
   __builtin_ia32_movntps(__p, __a);
 }
 
-static __inline__ void __attribute__((__always_inline__, __nodebug__))
+static __inline__ void DEFAULT_FN_ATTRS
 _mm_sfence(void)
 {
   __builtin_ia32_sfence();
 }
 
-static __inline__ int __attribute__((__always_inline__, __nodebug__))
+static __inline__ int DEFAULT_FN_ATTRS
 _mm_extract_pi16(__m64 __a, int __n)
 {
   __v4hi __b = (__v4hi)__a;
   return (unsigned short)__b[__n & 3];
 }
 
-static __inline__ __m64 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m64 DEFAULT_FN_ATTRS
 _mm_insert_pi16(__m64 __a, int __d, int __n)
 {
    __v4hi __b = (__v4hi)__a;
@@ -712,37 +715,37 @@ _mm_insert_pi16(__m64 __a, int __d, int __n)
    return (__m64)__b;
 }
 
-static __inline__ __m64 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m64 DEFAULT_FN_ATTRS
 _mm_max_pi16(__m64 __a, __m64 __b)
 {
   return (__m64)__builtin_ia32_pmaxsw((__v4hi)__a, (__v4hi)__b);
 }
 
-static __inline__ __m64 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m64 DEFAULT_FN_ATTRS
 _mm_max_pu8(__m64 __a, __m64 __b)
 {
   return (__m64)__builtin_ia32_pmaxub((__v8qi)__a, (__v8qi)__b);
 }
 
-static __inline__ __m64 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m64 DEFAULT_FN_ATTRS
 _mm_min_pi16(__m64 __a, __m64 __b)
 {
   return (__m64)__builtin_ia32_pminsw((__v4hi)__a, (__v4hi)__b);
 }
 
-static __inline__ __m64 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m64 DEFAULT_FN_ATTRS
 _mm_min_pu8(__m64 __a, __m64 __b)
 {
   return (__m64)__builtin_ia32_pminub((__v8qi)__a, (__v8qi)__b);
 }
 
-static __inline__ int __attribute__((__always_inline__, __nodebug__))
+static __inline__ int DEFAULT_FN_ATTRS
 _mm_movemask_pi8(__m64 __a)
 {
   return __builtin_ia32_pmovmskb((__v8qi)__a);
 }
 
-static __inline__ __m64 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m64 DEFAULT_FN_ATTRS
 _mm_mulhi_pu16(__m64 __a, __m64 __b)
 {
   return (__m64)__builtin_ia32_pmulhuw((__v4hi)__a, (__v4hi)__b);
@@ -752,37 +755,37 @@ _mm_mulhi_pu16(__m64 __a, __m64 __b)
   __m64 __a = (a); \
   (__m64)__builtin_ia32_pshufw((__v4hi)__a, (n)); })
 
-static __inline__ void __attribute__((__always_inline__, __nodebug__))
+static __inline__ void DEFAULT_FN_ATTRS
 _mm_maskmove_si64(__m64 __d, __m64 __n, char *__p)
 {
   __builtin_ia32_maskmovq((__v8qi)__d, (__v8qi)__n, __p);
 }
 
-static __inline__ __m64 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m64 DEFAULT_FN_ATTRS
 _mm_avg_pu8(__m64 __a, __m64 __b)
 {
   return (__m64)__builtin_ia32_pavgb((__v8qi)__a, (__v8qi)__b);
 }
 
-static __inline__ __m64 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m64 DEFAULT_FN_ATTRS
 _mm_avg_pu16(__m64 __a, __m64 __b)
 {
   return (__m64)__builtin_ia32_pavgw((__v4hi)__a, (__v4hi)__b);
 }
 
-static __inline__ __m64 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m64 DEFAULT_FN_ATTRS
 _mm_sad_pu8(__m64 __a, __m64 __b)
 {
   return (__m64)__builtin_ia32_psadbw((__v8qi)__a, (__v8qi)__b);
 }
 
-static __inline__ unsigned int __attribute__((__always_inline__, __nodebug__))
+static __inline__ unsigned int DEFAULT_FN_ATTRS
 _mm_getcsr(void)
 {
   return __builtin_ia32_stmxcsr();
 }
 
-static __inline__ void __attribute__((__always_inline__, __nodebug__))
+static __inline__ void DEFAULT_FN_ATTRS
 _mm_setcsr(unsigned int __i)
 {
   __builtin_ia32_ldmxcsr(__i);
@@ -796,37 +799,37 @@ _mm_setcsr(unsigned int __i)
                                   (((mask) & 0x30) >> 4) + 4, \
                                   (((mask) & 0xc0) >> 6) + 4); })
 
-static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128 DEFAULT_FN_ATTRS
 _mm_unpackhi_ps(__m128 __a, __m128 __b)
 {
   return __builtin_shufflevector(__a, __b, 2, 6, 3, 7);
 }
 
-static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128 DEFAULT_FN_ATTRS
 _mm_unpacklo_ps(__m128 __a, __m128 __b)
 {
   return __builtin_shufflevector(__a, __b, 0, 4, 1, 5);
 }
 
-static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128 DEFAULT_FN_ATTRS
 _mm_move_ss(__m128 __a, __m128 __b)
 {
   return __builtin_shufflevector(__a, __b, 4, 1, 2, 3);
 }
 
-static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128 DEFAULT_FN_ATTRS
 _mm_movehl_ps(__m128 __a, __m128 __b)
 {
   return __builtin_shufflevector(__a, __b, 6, 7, 2, 3);
 }
 
-static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128 DEFAULT_FN_ATTRS
 _mm_movelh_ps(__m128 __a, __m128 __b)
 {
   return __builtin_shufflevector(__a, __b, 0, 1, 4, 5);
 }
 
-static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128 DEFAULT_FN_ATTRS
 _mm_cvtpi16_ps(__m64 __a)
 {
   __m64 __b, __c;
@@ -844,7 +847,7 @@ _mm_cvtpi16_ps(__m64 __a)
   return __r;
 }
 
-static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128 DEFAULT_FN_ATTRS
 _mm_cvtpu16_ps(__m64 __a)
 {
   __m64 __b, __c;
@@ -861,7 +864,7 @@ _mm_cvtpu16_ps(__m64 __a)
   return __r;
 }
 
-static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128 DEFAULT_FN_ATTRS
 _mm_cvtpi8_ps(__m64 __a)
 {
   __m64 __b;
@@ -873,7 +876,7 @@ _mm_cvtpi8_ps(__m64 __a)
   return _mm_cvtpi16_ps(__b);
 }
 
-static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128 DEFAULT_FN_ATTRS
 _mm_cvtpu8_ps(__m64 __a)
 {
   __m64 __b;
@@ -884,7 +887,7 @@ _mm_cvtpu8_ps(__m64 __a)
   return _mm_cvtpi16_ps(__b);
 }
 
-static __inline__ __m128 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128 DEFAULT_FN_ATTRS
 _mm_cvtpi32x2_ps(__m64 __a, __m64 __b)
 {
   __m128 __c;
@@ -896,7 +899,7 @@ _mm_cvtpi32x2_ps(__m64 __a, __m64 __b)
   return _mm_cvtpi32_ps(__c, __a);
 }
 
-static __inline__ __m64 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m64 DEFAULT_FN_ATTRS
 _mm_cvtps_pi16(__m128 __a)
 {
   __m64 __b, __c;
@@ -908,7 +911,7 @@ _mm_cvtps_pi16(__m128 __a)
   return _mm_packs_pi32(__b, __c);
 }
 
-static __inline__ __m64 __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m64 DEFAULT_FN_ATTRS
 _mm_cvtps_pi8(__m128 __a)
 {
   __m64 __b, __c;
@@ -919,7 +922,7 @@ _mm_cvtps_pi8(__m128 __a)
   return _mm_packs_pi16(__b, __c);
 }
 
-static __inline__ int __attribute__((__always_inline__, __nodebug__))
+static __inline__ int DEFAULT_FN_ATTRS
 _mm_movemask_ps(__m128 __a)
 {
   return __builtin_ia32_movmskps(__a);
@@ -992,6 +995,8 @@ do { \
 #define _m_psadbw _mm_sad_pu8
 #define _m_ _mm_
 #define _m_ _mm_
+
+#undef DEFAULT_FN_ATTRS
 
 /* Ugly hack for backwards-compatibility (compatible with gcc) */
 #if defined(__SSE2__) && !__has_feature(modules)

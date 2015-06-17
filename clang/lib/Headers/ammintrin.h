@@ -30,6 +30,9 @@
 
 #include <pmmintrin.h>
 
+/* Define the default attributes for the functions in this file. */
+#define DEFAULT_FN_ATTRS __attribute__((__always_inline__, __nodebug__))
+
 /// \brief Extracts the specified bits from the lower 64 bits of the 128-bit
 ///    integer vector operand at the index idx and of the length len.
 ///
@@ -81,7 +84,7 @@
 ///    non-zero, the result is undefined. 
 /// \returns A 128-bit vector whose lower 64 bits contain the bits extracted 
 ///    from the source operand.
-static __inline__ __m128i __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128i DEFAULT_FN_ATTRS
 _mm_extract_si64(__m128i __x, __m128i __y)
 {
   return (__m128i)__builtin_ia32_extrq((__v2di)__x, (__v16qi)__y);
@@ -157,7 +160,7 @@ _mm_extract_si64(__m128i __x, __m128i __y)
 ///    lower bits of source operand __y. The upper 64 bits of the return value 
 ///    are undefined.
 
-static __inline__ __m128i __attribute__((__always_inline__, __nodebug__))
+static __inline__ __m128i DEFAULT_FN_ATTRS
 _mm_insert_si64(__m128i __x, __m128i __y)
 {
   return (__m128i)__builtin_ia32_insertq((__v2di)__x, (__v2di)__y);
@@ -178,7 +181,7 @@ _mm_insert_si64(__m128i __x, __m128i __y)
 /// \param __a
 ///    The 64-bit double-precision floating-point register value to
 ///    be stored.
-static __inline__ void __attribute__((__always_inline__, __nodebug__))
+static __inline__ void DEFAULT_FN_ATTRS
 _mm_stream_sd(double *__p, __m128d __a)
 {
   __builtin_ia32_movntsd(__p, (__v2df)__a);
@@ -199,11 +202,13 @@ _mm_stream_sd(double *__p, __m128d __a)
 /// \param __a
 ///    The 32-bit single-precision floating-point register value to
 ///    be stored.
-static __inline__ void __attribute__((__always_inline__, __nodebug__))
+static __inline__ void DEFAULT_FN_ATTRS
 _mm_stream_ss(float *__p, __m128 __a)
 {
   __builtin_ia32_movntss(__p, (__v4sf)__a);
 }
+
+#undef DEFAULT_FN_ATTRS
 
 #endif /* __SSE4A__ */
 

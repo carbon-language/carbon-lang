@@ -27,7 +27,6 @@
 #ifndef __AVX512ERINTRIN_H
 #define __AVX512ERINTRIN_H
 
-
 // exp2a23
 #define _mm512_exp2a23_round_pd(A, R) __extension__ ({ \
   (__m512d)__builtin_ia32_exp2pd_mask((__v8df)(__m512d)(A), \
