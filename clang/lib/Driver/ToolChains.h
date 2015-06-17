@@ -474,8 +474,6 @@ public:
   void CheckObjCARC() const override;
 
   bool UseSjLjExceptions() const override;
-
-  SanitizerMask getSupportedSanitizers() const override;
 };
 
 /// DarwinClang - The Darwin toolchain used by Clang.
@@ -618,7 +616,6 @@ public:
 
   bool UseSjLjExceptions() const override;
   bool isPIEDefault() const override;
-  SanitizerMask getSupportedSanitizers() const override;
 protected:
   Tool *buildAssembler() const override;
   Tool *buildLinker() const override;
@@ -682,7 +679,6 @@ public:
   AddClangCXXStdlibIncludeArgs(const llvm::opt::ArgList &DriverArgs,
                                llvm::opt::ArgStringList &CC1Args) const override;
   bool isPIEDefault() const override;
-  SanitizerMask getSupportedSanitizers() const override;
 
   std::string Linker;
   std::vector<std::string> ExtraOpts;
@@ -813,7 +809,6 @@ public:
 
   std::string ComputeEffectiveClangTriple(const llvm::opt::ArgList &Args,
                                           types::ID InputType) const override;
-  SanitizerMask getSupportedSanitizers() const override;
 
 protected:
   void AddSystemIncludeWithSubfolder(const llvm::opt::ArgList &DriverArgs,

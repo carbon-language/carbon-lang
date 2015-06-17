@@ -399,10 +399,26 @@ void DarwinClang::AddLinkRuntimeLibArgs(const ArgList &Args,
 
 
   const SanitizerArgs &Sanitize = getSanitizerArgs();
-  if (Sanitize.needsAsanRt())
-    AddLinkSanitizerLibArgs(Args, CmdArgs, "asan");
-  if (Sanitize.needsUbsanRt())
-    AddLinkSanitizerLibArgs(Args, CmdArgs, "ubsan");
+
+  if (Sanitize.needsAsanRt()) {
+    if (!isTargetMacOS() && !isTargetIOSSimulator()) {
+      // FIXME: Move this check to SanitizerArgs::filterUnsupportedKinds.
+      getDriver().Diag(diag::err_drv_clang_unsupported_per_platform)
+          << "-fsanitize=address";
+    } else {
+      AddLinkSanitizerLibArgs(Args, CmdArgs, "asan");
+    }
+  }
+
+  if (Sanitize.needsUbsanRt()) {
+    if (!isTargetMacOS() && !isTargetIOSSimulator()) {
+      // FIXME: Move this check to SanitizerArgs::filterUnsupportedKinds.
+      getDriver().Diag(diag::err_drv_clang_unsupported_per_platform)
+          << "-fsanitize=undefined";
+    } else {
+      AddLinkSanitizerLibArgs(Args, CmdArgs, "ubsan");
+    }
+  }
 
   // Otherwise link libSystem, then the dynamic runtime library, and finally any
   // target specific static runtime library.
@@ -1079,18 +1095,6 @@ void Darwin::CheckObjCARC() const {
   if (isTargetIOSBased()|| (isTargetMacOS() && !isMacosxVersionLT(10, 6)))
     return;
   getDriver().Diag(diag::err_arc_unsupported_on_toolchain);
-}
-
-SanitizerMask Darwin::getSupportedSanitizers() const {
-  SanitizerMask Res = ToolChain::getSupportedSanitizers();
-  if (isTargetMacOS() || isTargetIOSSimulator()) {
-    // ASan and UBSan are available on Mac OS and on iOS simulator.
-    Res |= SanitizerKind::Address;
-    Res |= SanitizerKind::Vptr;
-  }
-  if (isTargetMacOS())
-    Res |= SanitizerKind::SafeStack;
-  return Res;
 }
 
 /// Generic_GCC - A tool chain using the 'gcc' command to perform
@@ -2733,24 +2737,6 @@ bool FreeBSD::isPIEDefault() const {
   return getSanitizerArgs().requiresPIE();
 }
 
-SanitizerMask FreeBSD::getSupportedSanitizers() const {
-  const bool IsX86 = getTriple().getArch() == llvm::Triple::x86;
-  const bool IsX86_64 = getTriple().getArch() == llvm::Triple::x86_64;
-  const bool IsMIPS64 = getTriple().getArch() == llvm::Triple::mips64 ||
-                        getTriple().getArch() == llvm::Triple::mips64el;
-  SanitizerMask Res = ToolChain::getSupportedSanitizers();
-  Res |= SanitizerKind::Address;
-  Res |= SanitizerKind::Vptr;
-  if (IsX86_64 || IsMIPS64) {
-    Res |= SanitizerKind::Leak;
-    Res |= SanitizerKind::Thread;
-  }
-  if (IsX86 || IsX86_64) {
-    Res |= SanitizerKind::SafeStack;
-  }
-  return Res;
-}
-
 /// NetBSD - NetBSD tool chain which can call as(1) and ld(1) directly.
 
 NetBSD::NetBSD(const Driver &D, const llvm::Triple& Triple, const ArgList &Args)
@@ -3653,27 +3639,6 @@ void Linux::AddClangCXXStdlibIncludeArgs(const ArgList &DriverArgs,
 
 bool Linux::isPIEDefault() const {
   return getSanitizerArgs().requiresPIE();
-}
-
-SanitizerMask Linux::getSupportedSanitizers() const {
-  const bool IsX86 = getTriple().getArch() == llvm::Triple::x86;
-  const bool IsX86_64 = getTriple().getArch() == llvm::Triple::x86_64;
-  const bool IsMIPS64 = getTriple().getArch() == llvm::Triple::mips64 ||
-                        getTriple().getArch() == llvm::Triple::mips64el;
-  SanitizerMask Res = ToolChain::getSupportedSanitizers();
-  Res |= SanitizerKind::Address;
-  Res |= SanitizerKind::Vptr;
-  if (IsX86_64 || IsMIPS64) {
-    Res |= SanitizerKind::DataFlow;
-    Res |= SanitizerKind::Leak;
-    Res |= SanitizerKind::Memory;
-    Res |= SanitizerKind::Thread;
-  }
-  if (IsX86 || IsX86_64) {
-    Res |= SanitizerKind::Function;
-    Res |= SanitizerKind::SafeStack;
-  }
-  return Res;
 }
 
 /// DragonFly - DragonFly tool chain which can call as(1) and ld(1) directly.

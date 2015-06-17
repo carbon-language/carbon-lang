@@ -10,7 +10,6 @@
 #ifndef LLVM_CLANG_DRIVER_TOOLCHAIN_H
 #define LLVM_CLANG_DRIVER_TOOLCHAIN_H
 
-#include "clang/Basic/Sanitizers.h"
 #include "clang/Driver/Action.h"
 #include "clang/Driver/Multilib.h"
 #include "clang/Driver/Types.h"
@@ -349,11 +348,6 @@ public:
   virtual bool
   AddFastMathRuntimeIfAvailable(const llvm::opt::ArgList &Args,
                                 llvm::opt::ArgStringList &CmdArgs) const;
-
-  /// \brief Return sanitizers which are available in this toolchain.
-  virtual SanitizerMask getSupportedSanitizers() const {
-    return getSanitizersWithNoRequiredRuntime();
-  }
 };
 
 } // end namespace driver

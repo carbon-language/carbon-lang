@@ -73,9 +73,6 @@ SanitizerMask parseSanitizerValue(StringRef Value, bool AllowGroups);
 /// this group enables.
 SanitizerMask expandSanitizerGroups(SanitizerMask Kinds);
 
-/// Returns the mask of sanitizers which can be used without runtime library.
-SanitizerMask getSanitizersWithNoRequiredRuntime();
-
 }  // end namespace clang
 
 #endif
