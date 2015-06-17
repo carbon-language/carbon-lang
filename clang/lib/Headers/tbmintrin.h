@@ -21,10 +21,6 @@
  *===-----------------------------------------------------------------------===
  */
 
-#ifndef __TBM__
-#error "TBM instruction set is not enabled"
-#endif
-
 #ifndef __X86INTRIN_H
 #error "Never use <tbmintrin.h> directly; include <x86intrin.h> instead."
 #endif
@@ -33,7 +29,7 @@
 #define __TBMINTRIN_H
 
 /* Define the default attributes for the functions in this file. */
-#define DEFAULT_FN_ATTRS __attribute__((__always_inline__, __nodebug__))
+#define DEFAULT_FN_ATTRS __attribute__((__always_inline__, __nodebug__, __target__("tbm")))
 
 #define __bextri_u32(a, b) (__builtin_ia32_bextri_u32((a), (b)))
 

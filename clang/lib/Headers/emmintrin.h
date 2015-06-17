@@ -24,10 +24,6 @@
 #ifndef __EMMINTRIN_H
 #define __EMMINTRIN_H
 
-#ifndef __SSE2__
-#error "SSE2 instruction set not enabled"
-#else
-
 #include <xmmintrin.h>
 
 typedef double __m128d __attribute__((__vector_size__(16)));
@@ -40,7 +36,7 @@ typedef short __v8hi __attribute__((__vector_size__(16)));
 typedef char __v16qi __attribute__((__vector_size__(16)));
 
 /* Define the default attributes for the functions in this file. */
-#define DEFAULT_FN_ATTRS __attribute__((__always_inline__, __nodebug__))
+#define DEFAULT_FN_ATTRS __attribute__((__always_inline__, __nodebug__, __target__("sse2")))
 
 static __inline__ __m128d DEFAULT_FN_ATTRS
 _mm_add_sd(__m128d __a, __m128d __b)
@@ -1474,7 +1470,5 @@ _mm_pause(void)
 #undef DEFAULT_FN_ATTRS
 
 #define _MM_SHUFFLE2(x, y) (((x) << 1) | (y))
-
-#endif /* __SSE2__ */
 
 #endif /* __EMMINTRIN_H */

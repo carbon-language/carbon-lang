@@ -24,14 +24,10 @@
 #ifndef __AMMINTRIN_H
 #define __AMMINTRIN_H
 
-#ifndef __SSE4A__
-#error "SSE4A instruction set not enabled"
-#else
-
 #include <pmmintrin.h>
 
 /* Define the default attributes for the functions in this file. */
-#define DEFAULT_FN_ATTRS __attribute__((__always_inline__, __nodebug__))
+#define DEFAULT_FN_ATTRS __attribute__((__always_inline__, __nodebug__, __target__("sse4a")))
 
 /// \brief Extracts the specified bits from the lower 64 bits of the 128-bit
 ///    integer vector operand at the index idx and of the length len.
@@ -209,7 +205,5 @@ _mm_stream_ss(float *__p, __m128 __a)
 }
 
 #undef DEFAULT_FN_ATTRS
-
-#endif /* __SSE4A__ */
 
 #endif /* __AMMINTRIN_H */

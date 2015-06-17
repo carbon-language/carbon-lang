@@ -24,14 +24,10 @@
 #ifndef _SMMINTRIN_H
 #define _SMMINTRIN_H
 
-#ifndef __SSE4_1__
-#error "SSE4.1 instruction set not enabled"
-#else
-
 #include <tmmintrin.h>
 
 /* Define the default attributes for the functions in this file. */
-#define DEFAULT_FN_ATTRS __attribute__((__always_inline__, __nodebug__))
+#define DEFAULT_FN_ATTRS __attribute__((__always_inline__, __nodebug__, __target__("sse4.1")))
 
 /* SSE4 Rounding macros. */
 #define _MM_FROUND_TO_NEAREST_INT    0x00
@@ -379,9 +375,13 @@ _mm_minpos_epu16(__m128i __V)
   return (__m128i) __builtin_ia32_phminposuw128((__v8hi)__V);
 }
 
+/* Handle the sse4.2 definitions here. */
+
 /* These definitions are normally in nmmintrin.h, but gcc puts them in here
    so we'll do the same.  */
-#ifdef __SSE4_2__
+
+#undef DEFAULT_FN_ATTRS
+#define DEFAULT_FN_ATTRS __attribute__((__always_inline__, __nodebug__, __target__("sse4.2")))
 
 /* These specify the type of data that we're comparing.  */
 #define _SIDD_UBYTE_OPS                 0x00
@@ -480,8 +480,5 @@ _mm_crc32_u64(unsigned long long __C, unsigned long long __D)
 #ifdef __POPCNT__
 #include <popcntintrin.h>
 #endif
-
-#endif /* __SSE4_2__ */
-#endif /* __SSE4_1__ */
 
 #endif /* _SMMINTRIN_H */

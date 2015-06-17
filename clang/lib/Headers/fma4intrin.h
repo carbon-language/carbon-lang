@@ -28,14 +28,10 @@
 #ifndef __FMA4INTRIN_H
 #define __FMA4INTRIN_H
 
-#ifndef __FMA4__
-# error "FMA4 instruction set is not enabled"
-#else
-
 #include <pmmintrin.h>
 
 /* Define the default attributes for the functions in this file. */
-#define DEFAULT_FN_ATTRS __attribute__((__always_inline__, __nodebug__))
+#define DEFAULT_FN_ATTRS __attribute__((__always_inline__, __nodebug__, __target__("fma4")))
 
 static __inline__ __m128 DEFAULT_FN_ATTRS
 _mm_macc_ps(__m128 __A, __m128 __B, __m128 __C)
@@ -230,7 +226,5 @@ _mm256_msubadd_pd(__m256d __A, __m256d __B, __m256d __C)
 }
 
 #undef DEFAULT_FN_ATTRS
-
-#endif /* __FMA4__ */
 
 #endif /* __FMA4INTRIN_H */

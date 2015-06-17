@@ -25,15 +25,11 @@
 #error "Never use <lzcntintrin.h> directly; include <x86intrin.h> instead."
 #endif
 
-#ifndef __LZCNT__
-# error "LZCNT instruction is not enabled"
-#endif /* __LZCNT__ */
-
 #ifndef __LZCNTINTRIN_H
 #define __LZCNTINTRIN_H
 
 /* Define the default attributes for the functions in this file. */
-#define DEFAULT_FN_ATTRS __attribute__((__always_inline__, __nodebug__))
+#define DEFAULT_FN_ATTRS __attribute__((__always_inline__, __nodebug__, __target__("lzcnt")))
 
 static __inline__ unsigned short DEFAULT_FN_ATTRS
 __lzcnt16(unsigned short __X)
