@@ -48,7 +48,15 @@ int pre_ff = F<int>().f(); // expected-error +{{must be imported}}
 int pre_fg = F<int>().g<int>(); // expected-error +{{must be imported}}
 // expected-note@defs.h:26 +{{here}}
 
-J<> pre_j; // expected-error {{must be imported}} expected-error {{too few}}
+J<> pre_j; // expected-error {{declaration of 'J' must be imported}}
+#ifdef IMPORT_USE_2
+// FIXME-error-re@-2 {{default argument of 'J' must be imported from one of {{.*}}stuff.use{{.*}}stuff.use-2}}
+// expected-error@-3 {{default argument of 'J' must be imported from module 'stuff.use'}}
+#elif EARLY_INDIRECT_INCLUDE
+// expected-error@-5 {{default argument of 'J' must be imported from module 'merged-defs'}}
+#else
+// expected-error@-7 {{default argument of 'J' must be imported from module 'stuff.use'}}
+#endif
 // expected-note@defs.h:49 +{{here}}
 
 // Make definitions from second module visible.

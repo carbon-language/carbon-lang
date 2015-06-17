@@ -666,6 +666,11 @@ TemplateTemplateParmDecl::CreateDeserialized(ASTContext &C, unsigned ID,
                                nullptr, NumExpansions, nullptr);
 }
 
+SourceLocation TemplateTemplateParmDecl::getDefaultArgumentLoc() const {
+  return hasDefaultArgument() ? getDefaultArgument().getLocation()
+                              : SourceLocation();
+}
+
 void TemplateTemplateParmDecl::setDefaultArgument(
     const ASTContext &C, const TemplateArgumentLoc &DefArg) {
   if (DefArg.getArgument().isNull())

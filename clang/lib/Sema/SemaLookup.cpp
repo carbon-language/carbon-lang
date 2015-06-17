@@ -1285,7 +1285,9 @@ bool Sema::hasVisibleMergedDefinition(NamedDecl *Def) {
 }
 
 template<typename ParmDecl>
-static bool hasVisibleDefaultArgument(Sema &S, const ParmDecl *D) {
+static bool
+hasVisibleDefaultArgument(Sema &S, const ParmDecl *D,
+                          llvm::SmallVectorImpl<Module *> *Modules) {
   if (!D->hasDefaultArgument())
     return false;
 
@@ -1294,18 +1296,23 @@ static bool hasVisibleDefaultArgument(Sema &S, const ParmDecl *D) {
     if (!DefaultArg.isInherited() && S.isVisible(D))
       return true;
 
+    if (!DefaultArg.isInherited() && Modules)
+      Modules->push_back(S.getOwningModule(const_cast<ParmDecl*>(D)));
+
     // If there was a previous default argument, maybe its parameter is visible.
     D = DefaultArg.getInheritedFrom();
   }
   return false;
 }
 
-bool Sema::hasVisibleDefaultArgument(const NamedDecl *D) {
+bool Sema::hasVisibleDefaultArgument(const NamedDecl *D,
+                                     llvm::SmallVectorImpl<Module *> *Modules) {
   if (auto *P = dyn_cast<TemplateTypeParmDecl>(D))
-    return ::hasVisibleDefaultArgument(*this, P);
+    return ::hasVisibleDefaultArgument(*this, P, Modules);
   if (auto *P = dyn_cast<NonTypeTemplateParmDecl>(D))
-    return ::hasVisibleDefaultArgument(*this, P);
-  return ::hasVisibleDefaultArgument(*this, cast<TemplateTemplateParmDecl>(D));
+    return ::hasVisibleDefaultArgument(*this, P, Modules);
+  return ::hasVisibleDefaultArgument(*this, cast<TemplateTemplateParmDecl>(D),
+                                     Modules);
 }
 
 /// \brief Determine whether a declaration is visible to name lookup.
@@ -4676,33 +4683,59 @@ void Sema::diagnoseMissingImport(SourceLocation Loc, NamedDecl *Decl,
   Module *Owner = getOwningModule(Decl);
   assert(Owner && "definition of hidden declaration is not in a module");
 
+  llvm::SmallVector<Module*, 8> OwningModules;
+  OwningModules.push_back(Owner);
   auto Merged = Context.getModulesWithMergedDefinition(Decl);
-  if (!Merged.empty()) {
+  OwningModules.insert(OwningModules.end(), Merged.begin(), Merged.end());
+
+  diagnoseMissingImport(Loc, Decl, Decl->getLocation(), OwningModules,
+                        NeedDefinition ? MissingImportKind::Definition
+                                       : MissingImportKind::Declaration,
+                        Recover);
+}
+
+void Sema::diagnoseMissingImport(SourceLocation UseLoc, NamedDecl *Decl,
+                                 SourceLocation DeclLoc,
+                                 ArrayRef<Module *> Modules,
+                                 MissingImportKind MIK, bool Recover) {
+  assert(!Modules.empty());
+
+  if (Modules.size() > 1) {
     std::string ModuleList;
-    ModuleList += "\n        ";
-    ModuleList += Owner->getFullModuleName();
     unsigned N = 0;
-    for (Module *M : Merged) {
+    for (Module *M : Modules) {
       ModuleList += "\n        ";
-      if (++N == 5 && Merged.size() != N) {
+      if (++N == 5 && N != Modules.size()) {
         ModuleList += "[...]";
         break;
       }
       ModuleList += M->getFullModuleName();
     }
 
-    Diag(Loc, diag::err_module_private_declaration_multiple)
-      << NeedDefinition << Decl << ModuleList;
+    Diag(UseLoc, diag::err_module_unimported_use_multiple)
+      << (int)MIK << Decl << ModuleList;
   } else {
-    Diag(Loc, diag::err_module_private_declaration)
-      << NeedDefinition << Decl << Owner->getFullModuleName();
+    Diag(UseLoc, diag::err_module_unimported_use)
+      << (int)MIK << Decl << Modules[0]->getFullModuleName();
   }
-  Diag(Decl->getLocation(), NeedDefinition ? diag::note_previous_definition
-                                           : diag::note_previous_declaration);
+
+  unsigned DiagID;
+  switch (MIK) {
+  case MissingImportKind::Declaration:
+    DiagID = diag::note_previous_declaration;
+    break;
+  case MissingImportKind::Definition:
+    DiagID = diag::note_previous_definition;
+    break;
+  case MissingImportKind::DefaultArgument:
+    DiagID = diag::note_default_argument_declared_here;
+    break;
+  }
+  Diag(DeclLoc, DiagID);
 
   // Try to recover by implicitly importing this module.
   if (Recover)
-    createImplicitModuleImportForErrorRecovery(Loc, Owner);
+    createImplicitModuleImportForErrorRecovery(UseLoc, Modules[0]);
 }
 
 /// \brief Diagnose a successfully-corrected typo. Separated from the correction
