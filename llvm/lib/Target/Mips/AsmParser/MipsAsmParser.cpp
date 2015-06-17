@@ -2105,7 +2105,6 @@ bool MipsAsmParser::expandBranchImm(MCInst &Inst, SMLoc IDLoc,
 void MipsAsmParser::expandMemInst(MCInst &Inst, SMLoc IDLoc,
                                   SmallVectorImpl<MCInst> &Instructions,
                                   bool isLoad, bool isImmOpnd) {
-  const MCSymbolRefExpr *SR;
   MCInst TempInst;
   unsigned ImmOffset, HiOffset, LoOffset;
   const MCExpr *ExprOffset;
@@ -2172,16 +2171,8 @@ void MipsAsmParser::expandMemInst(MCInst &Inst, SMLoc IDLoc,
   if (isImmOpnd)
     TempInst.addOperand(MCOperand::createImm(HiOffset));
   else {
-    if (ExprOffset->getKind() == MCExpr::SymbolRef) {
-      SR = static_cast<const MCSymbolRefExpr *>(ExprOffset);
-      const MCSymbolRefExpr *HiExpr = MCSymbolRefExpr::create(
-          SR->getSymbol().getName(), MCSymbolRefExpr::VK_Mips_ABS_HI,
-          getContext());
-      TempInst.addOperand(MCOperand::createExpr(HiExpr));
-    } else {
-      const MCExpr *HiExpr = evaluateRelocExpr(ExprOffset, "hi");
-      TempInst.addOperand(MCOperand::createExpr(HiExpr));
-    }
+    const MCExpr *HiExpr = evaluateRelocExpr(ExprOffset, "hi");
+    TempInst.addOperand(MCOperand::createExpr(HiExpr));
   }
   // Add the instruction to the list.
   Instructions.push_back(TempInst);
@@ -2204,15 +2195,8 @@ void MipsAsmParser::expandMemInst(MCInst &Inst, SMLoc IDLoc,
   if (isImmOpnd)
     TempInst.addOperand(MCOperand::createImm(LoOffset));
   else {
-    if (ExprOffset->getKind() == MCExpr::SymbolRef) {
-      const MCSymbolRefExpr *LoExpr = MCSymbolRefExpr::create(
-          SR->getSymbol().getName(), MCSymbolRefExpr::VK_Mips_ABS_LO,
-          getContext());
-      TempInst.addOperand(MCOperand::createExpr(LoExpr));
-    } else {
-      const MCExpr *LoExpr = evaluateRelocExpr(ExprOffset, "lo");
-      TempInst.addOperand(MCOperand::createExpr(LoExpr));
-    }
+    const MCExpr *LoExpr = evaluateRelocExpr(ExprOffset, "lo");
+    TempInst.addOperand(MCOperand::createExpr(LoExpr));
   }
   Instructions.push_back(TempInst);
   TempInst.clear();
@@ -2642,7 +2626,7 @@ const MCExpr *MipsAsmParser::evaluateRelocExpr(const MCExpr *Expr,
 
   if (const MCSymbolRefExpr *MSRE = dyn_cast<MCSymbolRefExpr>(Expr)) {
     // It's a symbol, create a symbolic expression from the symbol.
-    StringRef Symbol = MSRE->getSymbol().getName();
+    const MCSymbol *Symbol = &MSRE->getSymbol();
     MCSymbolRefExpr::VariantKind VK = getVariantKind(RelocStr);
     Res = MCSymbolRefExpr::create(Symbol, VK, getContext());
     return Res;
