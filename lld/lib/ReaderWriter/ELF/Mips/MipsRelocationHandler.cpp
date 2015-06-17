@@ -101,6 +101,7 @@ static MipsRelocationParams getRelocationParams(uint32_t rType) {
     return {4, 0xffff, 0, false, gpDispCheck<16>};
   case R_MIPS_LO16:
     return {4, 0xffff, 0, false, dummyCheck};
+  case R_MIPS_16:
   case R_MIPS_PCHI16:
   case R_MIPS_PCLO16:
   case R_MIPS_GOT16:
@@ -438,6 +439,8 @@ static ErrorOr<int64_t> calculateRelocation(Reference::KindValue kind,
   switch (kind) {
   case R_MIPS_NONE:
     return 0;
+  case R_MIPS_16:
+    return tgtAddr + llvm::SignExtend32<16>(addend);
   case R_MIPS_32:
   case R_MIPS_64:
     return tgtAddr + addend;
