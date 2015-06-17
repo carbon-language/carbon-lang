@@ -24,17 +24,15 @@ add_compiler_rt_object_libraries(RTLSanCommon
     SOURCES ${LSAN_COMMON_SOURCES}
     CFLAGS ${LSAN_CFLAGS})
 
-if(NOT APPLE)
-  foreach(arch ${LSAN_SUPPORTED_ARCH})
-    add_compiler_rt_runtime(clang_rt.lsan-${arch} ${arch} STATIC
-      SOURCES ${LSAN_SOURCES}
-              $<TARGET_OBJECTS:RTInterception.${arch}>
-              $<TARGET_OBJECTS:RTSanitizerCommon.${arch}>
-              $<TARGET_OBJECTS:RTSanitizerCommonLibc.${arch}>
-              $<TARGET_OBJECTS:RTLSanCommon.${arch}>
-      CFLAGS ${LSAN_CFLAGS})
-    add_dependencies(lsan clang_rt.lsan-${arch})
-  endforeach()
-endif()
+foreach(arch ${LSAN_SUPPORTED_ARCH})
+  add_compiler_rt_runtime(clang_rt.lsan-${arch} ${arch} STATIC
+    SOURCES ${LSAN_SOURCES}
+            $<TARGET_OBJECTS:RTInterception.${arch}>
+            $<TARGET_OBJECTS:RTSanitizerCommon.${arch}>
+            $<TARGET_OBJECTS:RTSanitizerCommonLibc.${arch}>
+            $<TARGET_OBJECTS:RTLSanCommon.${arch}>
+    CFLAGS ${LSAN_CFLAGS})
+  add_dependencies(lsan clang_rt.lsan-${arch})
+endforeach()
 
 add_dependencies(compiler-rt lsan)
