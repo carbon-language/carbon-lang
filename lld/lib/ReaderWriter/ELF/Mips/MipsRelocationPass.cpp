@@ -568,6 +568,8 @@ void RelocationPass<ELFT>::handleReference(const MipsELFDefinedAtom<ELFT> &atom,
     // Nothing to do. We create GOT page entry in the R_MIPS_GOT_PAGE handler.
     break;
   case R_MIPS_GPREL16:
+  case R_MICROMIPS_GPREL16:
+  case R_MICROMIPS_GPREL7_S2:
     if (isLocal(ref.target()))
       ref.setAddend(ref.addend() + atom.file().getGP0());
     break;
@@ -612,6 +614,8 @@ static bool isConstrainSym(const MipsELFDefinedAtom<ELFT> &atom,
   case R_MICROMIPS_JALR:
   case R_MIPS_GPREL16:
   case R_MIPS_GPREL32:
+  case R_MICROMIPS_GPREL16:
+  case R_MICROMIPS_GPREL7_S2:
     return false;
   default:
     return true;
