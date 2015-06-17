@@ -392,15 +392,15 @@ entry:
   br i1 %x, label %left, label %right, !prof !21
 
 left:
-; CHECK-NEXT: left: float = 0.14{{[0-9]*}},
+; CHECK-NEXT: left: float = 0.14
   br i1 %x, label %top, label %bottom, !prof !22
 
 right:
-; CHECK-NEXT: right: float = 0.42{{[0-9]*}},
+; CHECK-NEXT: right: float = 0.42
   br i1 %x, label %top, label %bottom, !prof !22
 
 top:
-; CHECK-NEXT: top: float = 8.43{{[0-9]*}},
+; CHECK-NEXT: top: float = 8.43
   switch i2 %y, label %exit [ i2 0, label %left
                               i2 1, label %right
                               i2 2, label %bottom ], !prof !23

@@ -226,7 +226,7 @@ public:
     BlockNode getHeader() const { return Nodes[0]; }
     bool isIrreducible() const { return NumHeaders > 1; }
 
-    HeaderMassList::difference_type headerIndexFor(const BlockNode &B) {
+    HeaderMassList::difference_type getHeaderIndex(const BlockNode &B) {
       assert(isHeader(B) && "this is only valid on loop header blocks");
       if (isIrreducible())
         return std::lower_bound(Nodes.begin(), Nodes.begin() + NumHeaders, B) -
@@ -715,6 +715,17 @@ void IrreducibleGraph::addEdges(const BlockNode &Node,
 ///
 ///         - Distribute the mass accordingly, dithering to minimize mass loss,
 ///           as described in \a distributeMass().
+///
+///     In the case of irreducible loops, instead of a single loop header,
+///     there will be several. The computation of backedge masses is similar
+///     but instead of having a single backedge mass, there will be one
+///     backedge per loop header. In these cases, each backedge will carry
+///     a mass proportional to the edge weights along the corresponding
+///     path.
+///
+///     At the end of propagation, the full mass assigned to the loop will be
+///     distributed among the loop headers proportionally according to the
+///     mass flowing through their backedges.
 ///
 ///     Finally, calculate the loop scale from the accumulated backedge mass.
 ///

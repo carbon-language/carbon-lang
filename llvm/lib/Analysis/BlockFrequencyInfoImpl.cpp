@@ -414,8 +414,7 @@ void BlockFrequencyInfoImplBase::distributeMass(const BlockNode &Source,
 
     // Check for a backedge.
     if (W.Type == Weight::Backedge) {
-      auto ix = OuterLoop->headerIndexFor(W.TargetNode);
-      OuterLoop->BackedgeMass[ix] += Taken;
+      OuterLoop->BackedgeMass[OuterLoop->getHeaderIndex(W.TargetNode)] += Taken;
       DEBUG(debugAssign(*this, D, W.TargetNode, Taken, "back"));
       continue;
     }
@@ -741,7 +740,7 @@ void BlockFrequencyInfoImplBase::adjustLoopHeaderMass(LoopData &Loop) {
   DEBUG(dbgs() << "adjust-loop-header-mass:\n");
   for (uint32_t H = 0; H < Loop.NumHeaders; ++H) {
     auto &HeaderNode = Loop.Nodes[H];
-    auto &BackedgeMass = Loop.BackedgeMass[Loop.headerIndexFor(HeaderNode)];
+    auto &BackedgeMass = Loop.BackedgeMass[Loop.getHeaderIndex(HeaderNode)];
     DEBUG(dbgs() << " - Add back edge mass for node "
                  << getBlockName(HeaderNode) << ": " << BackedgeMass << "\n");
     Dist.addLocal(HeaderNode, BackedgeMass.getMass());
