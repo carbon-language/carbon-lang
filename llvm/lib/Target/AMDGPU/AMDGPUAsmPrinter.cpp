@@ -338,8 +338,10 @@ void AMDGPUAsmPrinter::getSIProgramInfo(SIProgramInfo &ProgInfo,
   ProgInfo.NumSGPR = MaxSGPR + 1;
 
   if (STM.hasSGPRInitBug()) {
-    if (ProgInfo.NumSGPR > AMDGPUSubtarget::FIXED_SGPR_COUNT_FOR_INIT_BUG)
-      llvm_unreachable("Too many SGPRs used with the SGPR init bug");
+    if (ProgInfo.NumSGPR > AMDGPUSubtarget::FIXED_SGPR_COUNT_FOR_INIT_BUG) {
+      LLVMContext &Ctx = MF.getFunction()->getContext();
+      Ctx.emitError("too many SGPRs used with the SGPR init bug");
+    }
 
     ProgInfo.NumSGPR = AMDGPUSubtarget::FIXED_SGPR_COUNT_FOR_INIT_BUG;
   }
