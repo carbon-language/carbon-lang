@@ -194,18 +194,6 @@ static int64_t maskLow16(int64_t value) {
   return (value + 0x8000) & ~0xffff;
 }
 
-/// \brief R_MIPS_32
-/// local/external: word32 S + A (truncate)
-static int32_t reloc32(uint64_t S, int64_t A) { return S + A; }
-
-/// \brief R_MIPS_64
-/// local/external: word64 S + A (truncate)
-static int64_t reloc64(uint64_t S, int64_t A) { return S + A; }
-
-/// \brief R_MIPS_SUB
-/// local/external: word64 S - A (truncate)
-static int64_t relocSub(uint64_t S, int64_t A) { return S - A; }
-
 /// \brief R_MIPS_PC32
 /// local/external: word32 S + A - P (truncate)
 static int32_t relocpc32(uint64_t P, uint64_t S, int64_t A) {
@@ -451,11 +439,10 @@ static ErrorOr<int64_t> calculateRelocation(Reference::KindValue kind,
   case R_MIPS_NONE:
     return 0;
   case R_MIPS_32:
-    return reloc32(tgtAddr, addend);
   case R_MIPS_64:
-    return reloc64(tgtAddr, addend);
+    return tgtAddr + addend;
   case R_MIPS_SUB:
-    return relocSub(tgtAddr, addend);
+    return tgtAddr - addend;
   case R_MIPS_26:
     return reloc26loc(relAddr, tgtAddr, addend, 2);
   case R_MICROMIPS_26_S1:
