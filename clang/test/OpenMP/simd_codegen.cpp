@@ -210,10 +210,10 @@ void simple(float *a, float *b, float *c, float *d) {
 // CHECK-NEXT: [[A_PRIV_VAL:%.+]] = load i32, i32* [[A_PRIV]],
 // CHECK-NEXT: store i32 [[A_PRIV_VAL]], i32* [[A]],
   int R;
-  // CHECK: store i32 -1, i32* [[R:%.+]],
+  // CHECK: store i32 -1, i32* [[R:%[^,]+]],
   R = -1;
-// CHECK: store i64 0, i64* [[OMP_IV8:%[^,]+]]
-// CHECK: store i32 1, i32* [[R_PRIV:%.+]],
+// CHECK: store i64 0, i64* [[OMP_IV8:%[^,]+]],
+// CHECK: store i32 1, i32* [[R_PRIV:%[^,]+]],
   #pragma omp simd reduction(*:R)
 // CHECK: br label %[[SIMD_LOOP8_COND:[^,]+]]
 // CHECK: [[SIMD_LOOP8_COND]]
@@ -235,9 +235,9 @@ void simple(float *a, float *b, float *c, float *d) {
 // CHECK-NEXT: store i64 [[ADD8_2]], i64* [[OMP_IV8]]{{.*}}!llvm.mem.parallel_loop_access ![[SIMPLE_LOOP8_ID]]
   }
 // CHECK: [[SIMPLE_LOOP8_END]]
-// CHECK-NEXT: [[R_VAL:%.+]] = load i32, i32* [[R]],
-// CHECK-NEXT: [[R_PRIV_VAL:%.+]] = load i32, i32* [[R_PRIV]],
-// CHECK-NEXT: [[RED:%.+]] = mul nsw i32 [[R_VAL]], [[R_PRIV_VAL]]
+// CHECK-DAG: [[R_VAL:%.+]] = load i32, i32* [[R]],
+// CHECK-DAG: [[R_PRIV_VAL:%.+]] = load i32, i32* [[R_PRIV]],
+// CHECK: [[RED:%.+]] = mul nsw i32 [[R_VAL]], [[R_PRIV_VAL]]
 // CHECK-NEXT: store i32 [[RED]], i32* [[R]],
 // CHECK-NEXT: ret void
 }
