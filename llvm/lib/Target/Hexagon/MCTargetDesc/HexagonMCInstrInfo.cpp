@@ -35,6 +35,21 @@ size_t HexagonMCInstrInfo::bundleSize(MCInst const &MCI) {
     return (1);
 }
 
+void HexagonMCInstrInfo::clampExtended(MCInstrInfo const &MCII, MCInst &MCI) {
+  assert(HexagonMCInstrInfo::isExtendable(MCII, MCI) ||
+         HexagonMCInstrInfo::isExtended(MCII, MCI));
+  MCOperand &exOp =
+      MCI.getOperand(HexagonMCInstrInfo::getExtendableOp(MCII, MCI));
+  // If the extended value is a constant, then use it for the extended and
+  // for the extender instructions, masking off the lower 6 bits and
+  // including the assumed bits.
+  if (exOp.isImm()) {
+    unsigned Shift = HexagonMCInstrInfo::getExtentAlignment(MCII, MCI);
+    int64_t Bits = exOp.getImm();
+    exOp.setImm((Bits & 0x3f) << Shift);
+  }
+}
+
 MCInst *HexagonMCInstrInfo::deriveDuplex(MCContext &Context, unsigned iClass,
                                          MCInst const &inst0,
                                          MCInst const &inst1) {

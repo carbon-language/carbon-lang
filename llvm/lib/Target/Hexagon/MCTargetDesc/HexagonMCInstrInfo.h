@@ -47,6 +47,9 @@ iterator_range<MCInst::const_iterator> bundleInstructions(MCInst const &MCI);
 // Returns the number of instructions in the bundle
 size_t bundleSize(MCInst const &MCI);
 
+// Clamp off upper 26 bits of extendable operand for emission
+void clampExtended(MCInstrInfo const &MCII, MCInst &MCI);
+
 // Create a duplex instruction given the two subinsts
 MCInst *deriveDuplex(MCContext &Context, unsigned iClass, MCInst const &inst0,
                      MCInst const &inst1);
@@ -224,7 +227,7 @@ void setOuterLoop(MCInst &MCI);
 // Would duplexing this instruction create a requirement to extend
 bool subInstWouldBeExtended(MCInst const &potentialDuplex);
 
-// Attempt to find and replace compound pairs 
+// Attempt to find and replace compound pairs
 void tryCompound(MCInstrInfo const &MCII, MCContext &Context, MCInst &MCI);
 }
 }

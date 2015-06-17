@@ -11,16 +11,20 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "HexagonMCTargetDesc.h"
 #include "HexagonMCAsmInfo.h"
+#include "HexagonMCELFStreamer.h"
+#include "HexagonMCTargetDesc.h"
 #include "MCTargetDesc/HexagonInstPrinter.h"
 #include "llvm/MC/MCCodeGenInfo.h"
+#include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCELFStreamer.h"
 #include "llvm/MC/MCInstrInfo.h"
+#include "llvm/MC/MCObjectStreamer.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/MachineLocation.h"
+#include "llvm/Support/ELF.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/TargetRegistry.h"
 
@@ -54,6 +58,41 @@ createHexagonMCSubtargetInfo(const Triple &TT, StringRef CPU, StringRef FS) {
   return X;
 }
 
+namespace {
+class HexagonTargetELFStreamer : public HexagonTargetStreamer {
+public:
+  MCELFStreamer &getStreamer() {
+    return static_cast<MCELFStreamer &>(Streamer);
+  }
+  HexagonTargetELFStreamer(MCStreamer &S, MCSubtargetInfo const &STI)
+      : HexagonTargetStreamer(S) {
+    auto Bits = STI.getFeatureBits();
+    unsigned Flags;
+    if (Bits.to_ullong() & llvm::Hexagon::ArchV5)
+      Flags = ELF::EF_HEXAGON_MACH_V5;
+    else
+      Flags = ELF::EF_HEXAGON_MACH_V4;
+    getStreamer().getAssembler().setELFHeaderEFlags(Flags);
+  }
+  void EmitCommonSymbolSorted(MCSymbol *Symbol, uint64_t Size,
+                              unsigned ByteAlignment,
+                              unsigned AccessSize) override {
+    HexagonMCELFStreamer &HexagonELFStreamer =
+        static_cast<HexagonMCELFStreamer &>(getStreamer());
+    HexagonELFStreamer.HexagonMCEmitCommonSymbol(Symbol, Size, ByteAlignment,
+                                                 AccessSize);
+  }
+  void EmitLocalCommonSymbolSorted(MCSymbol *Symbol, uint64_t Size,
+                                   unsigned ByteAlignment,
+                                   unsigned AccessSize) override {
+    HexagonMCELFStreamer &HexagonELFStreamer =
+        static_cast<HexagonMCELFStreamer &>(getStreamer());
+    HexagonELFStreamer.HexagonMCEmitLocalCommonSymbol(
+        Symbol, Size, ByteAlignment, AccessSize);
+  }
+};
+}
+
 static MCAsmInfo *createHexagonMCAsmInfo(const MCRegisterInfo &MRI,
                                          const Triple &TT) {
   MCAsmInfo *MAI = new HexagonMCAsmInfo(TT);
@@ -82,9 +121,20 @@ static MCInstPrinter *createHexagonMCInstPrinter(const Triple &T,
                                                  const MCInstrInfo &MII,
                                                  const MCRegisterInfo &MRI) {
   if (SyntaxVariant == 0)
-    return(new HexagonInstPrinter(MAI, MII, MRI));
+    return (new HexagonInstPrinter(MAI, MII, MRI));
   else
-   return nullptr;
+    return nullptr;
+}
+
+static MCStreamer *createMCStreamer(Triple const &T, MCContext &Context,
+                                    MCAsmBackend &MAB, raw_pwrite_stream &OS,
+                                    MCCodeEmitter *Emitter, bool RelaxAll) {
+  return createHexagonELFStreamer(Context, MAB, OS, Emitter);
+}
+
+static MCTargetStreamer *
+createHexagonObjectTargetStreamer(MCStreamer &S, MCSubtargetInfo const &STI) {
+  return new HexagonTargetELFStreamer(S, STI);
 }
 
 // Force static initialization.
@@ -116,7 +166,13 @@ extern "C" void LLVMInitializeHexagonTargetMC() {
   TargetRegistry::RegisterMCAsmBackend(TheHexagonTarget,
                                        createHexagonAsmBackend);
 
+  // Register the obj streamer
+  TargetRegistry::RegisterELFStreamer(TheHexagonTarget, createMCStreamer);
+
   // Register the MC Inst Printer
   TargetRegistry::RegisterMCInstPrinter(TheHexagonTarget,
                                         createHexagonMCInstPrinter);
+
+  TargetRegistry::RegisterObjectTargetStreamer(
+      TheHexagonTarget, createHexagonObjectTargetStreamer);
 }
