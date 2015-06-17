@@ -83,7 +83,6 @@ ValueObjectPrinter::Init (ValueObject* valobj,
     m_value.assign("");
     m_summary.assign("");
     m_error.assign("");
-    m_children_format.reset();
 }
 
 bool
@@ -503,25 +502,12 @@ ValueObjectPrinter::PrintChildrenPreamble ()
     }
 }
 
-lldb::Format
-ValueObjectPrinter::GetFormatForChildElements ()
-{
-    // we special case vector types here because for a vector type the format is not trivially passed down but is one of the things
-    // the synthetic child provider uses to decide how to produce children in the first place - in general this might be something
-    // we'd want to expose in some cleaner way, but until there is more than one instance of this, it's hard to design this capability
-    // in a sensible way, so for now, leave this alone as a special case
-    if (m_children_format.hasValue())
-        return m_children_format.getValue();
-    
-    return (m_children_format = m_clang_type.IsVectorType(nullptr, nullptr) ? lldb::eFormatInvalid : options.m_format).getValue();
-}
-
 void
 ValueObjectPrinter::PrintChild (ValueObjectSP child_sp,
                                 uint32_t curr_ptr_depth)
 {
     DumpValueObjectOptions child_options(options);
-    child_options.SetFormat(GetFormatForChildElements()).SetSummary().SetRootValueObjectName();
+    child_options.SetFormat(options.m_format).SetSummary().SetRootValueObjectName();
     child_options.SetScopeChecked(true).SetHideName(options.m_hide_name).SetHideValue(options.m_hide_value)
     .SetOmitSummaryDepth(child_options.m_omit_summary_depth > 1 ? child_options.m_omit_summary_depth - 1 : 0);
     if (child_sp.get())
@@ -644,7 +630,7 @@ ValueObjectPrinter::PrintChildrenOneLiner (bool hide_names)
                 }
                 child_sp->DumpPrintableRepresentation(*m_stream,
                                                       ValueObject::eValueObjectRepresentationStyleSummary,
-                                                      GetFormatForChildElements(),
+                                                      lldb::eFormatInvalid,
                                                       ValueObject::ePrintableRepresentationSpecialCasesDisable);
             }
         }
