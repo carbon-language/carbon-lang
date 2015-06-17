@@ -24690,18 +24690,19 @@ static SDValue PerformSINT_TO_FPCombine(SDNode *N, SelectionDAG &DAG,
                                         const X86Subtarget *Subtarget) {
   // First try to optimize away the conversion entirely when it's
   // conditionally from a constant. Vectors only.
-  SDValue Res = performVectorCompareAndMaskUnaryOpCombine(N, DAG);
-  if (Res != SDValue())
+  if (SDValue Res = performVectorCompareAndMaskUnaryOpCombine(N, DAG))
     return Res;
 
   // Now move on to more general possibilities.
   SDValue Op0 = N->getOperand(0);
   EVT InVT = Op0->getValueType(0);
 
-  // SINT_TO_FP(v4i8) -> SINT_TO_FP(SEXT(v4i8 to v4i32))
-  if (InVT == MVT::v8i8 || InVT == MVT::v4i8) {
+  // SINT_TO_FP(vXi8) -> SINT_TO_FP(SEXT(vXi8 to vXi32))
+  // SINT_TO_FP(vXi16) -> SINT_TO_FP(SEXT(vXi16 to vXi32))
+  if (InVT == MVT::v8i8 || InVT == MVT::v4i8 ||
+      InVT == MVT::v8i16 || InVT == MVT::v4i16) {
     SDLoc dl(N);
-    MVT DstVT = InVT == MVT::v4i8 ? MVT::v4i32 : MVT::v8i32;
+    MVT DstVT = MVT::getVectorVT(MVT::i32, InVT.getVectorNumElements());
     SDValue P = DAG.getNode(ISD::SIGN_EXTEND, dl, DstVT, Op0);
     return DAG.getNode(ISD::SINT_TO_FP, dl, N->getValueType(0), P);
   }
@@ -24710,7 +24711,7 @@ static SDValue PerformSINT_TO_FPCombine(SDNode *N, SelectionDAG &DAG,
   // a 32-bit target where SSE doesn't support i64->FP operations.
   if (Op0.getOpcode() == ISD::LOAD) {
     LoadSDNode *Ld = cast<LoadSDNode>(Op0.getNode());
-    EVT VT = Ld->getValueType(0);
+    EVT LdVT = Ld->getValueType(0);
 
     // This transformation is not supported if the result type is f16
     if (N->getValueType(0) == MVT::f16)
@@ -24718,9 +24719,9 @@ static SDValue PerformSINT_TO_FPCombine(SDNode *N, SelectionDAG &DAG,
 
     if (!Ld->isVolatile() && !N->getValueType(0).isVector() &&
         ISD::isNON_EXTLoad(Op0.getNode()) && Op0.hasOneUse() &&
-        !Subtarget->is64Bit() && VT == MVT::i64) {
+        !Subtarget->is64Bit() && LdVT == MVT::i64) {
       SDValue FILDChain = Subtarget->getTargetLowering()->BuildFILD(
-          SDValue(N, 0), Ld->getValueType(0), Ld->getChain(), Op0, DAG);
+          SDValue(N, 0), LdVT, Ld->getChain(), Op0, DAG);
       DAG.ReplaceAllUsesOfValueWith(Op0.getValue(1), FILDChain.getValue(1));
       return FILDChain;
     }
