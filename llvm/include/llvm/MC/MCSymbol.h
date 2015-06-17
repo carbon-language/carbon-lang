@@ -95,6 +95,9 @@ protected:
   /// unsigned to avoid sign extension and achieve better bitpacking with MSVC.
   unsigned Kind : 2;
 
+  /// True if we have created a relocation that uses this symbol.
+  mutable unsigned IsUsedInReloc : 1;
+
   /// Index field, for use by the object file implementation.
   mutable uint32_t Index = 0;
 
@@ -129,10 +132,10 @@ protected: // MCContext creates and uniques these.
   } NameEntryStorageTy;
 
   MCSymbol(SymbolKind Kind, const StringMapEntry<bool> *Name, bool isTemporary)
-      : Value(nullptr), IsTemporary(isTemporary),
-        IsRedefinable(false), IsUsed(false), IsRegistered(false),
-        IsExternal(false), IsPrivateExtern(false), HasName(!!Name),
-        Kind(Kind) {
+      : Value(nullptr), IsTemporary(isTemporary), IsRedefinable(false),
+        IsUsed(false), IsRegistered(false), IsExternal(false),
+        IsPrivateExtern(false), HasName(!!Name), Kind(Kind),
+        IsUsedInReloc(false) {
     Offset = 0;
     if (Name)
       getNameEntryPtr() = Name;
@@ -188,6 +191,9 @@ public:
 
   bool isRegistered() const { return IsRegistered; }
   void setIsRegistered(bool Value) const { IsRegistered = Value; }
+
+  void setUsedInReloc() const { IsUsedInReloc = true; }
+  bool isUsedInReloc() const { return IsUsedInReloc; }
 
   /// \name Accessors
   /// @{

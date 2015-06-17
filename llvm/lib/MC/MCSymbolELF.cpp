@@ -36,10 +36,7 @@ enum {
   ELF_WeakrefUsedInReloc_Shift = 11,
 
   // One bit.
-  ELF_UsedInReloc_Shift = 12,
-
-  // One bit.
-  ELF_BindingSet_Shift = 13
+  ELF_BindingSet_Shift = 12
 };
 }
 
@@ -173,15 +170,6 @@ void MCSymbolELF::setOther(unsigned Other) {
 unsigned MCSymbolELF::getOther() const {
   unsigned Other = (getFlags() & (0x7 << ELF_STO_Shift)) >> ELF_STO_Shift;
   return Other << 5;
-}
-
-void MCSymbolELF::setUsedInReloc() const {
-  uint32_t OtherFlags = getFlags() & ~(0x1 << ELF_UsedInReloc_Shift);
-  setFlags(OtherFlags | (1 << ELF_UsedInReloc_Shift));
-}
-
-bool MCSymbolELF::isUsedInReloc() const {
-  return getFlags() & (0x1 << ELF_UsedInReloc_Shift);
 }
 
 void MCSymbolELF::setIsWeakrefUsedInReloc() const {

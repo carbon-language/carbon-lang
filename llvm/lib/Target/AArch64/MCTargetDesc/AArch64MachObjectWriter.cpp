@@ -287,7 +287,7 @@ void AArch64MachObjectWriter::recordRelocation(
     if (Symbol->isTemporary() && (Value || !CanUseLocalRelocation)) {
       const MCSection &Sec = Symbol->getSection();
       if (!Asm.getContext().getAsmInfo()->isSectionAtomizableBySymbols(Sec))
-        Asm.addLocalUsedInReloc(*Symbol);
+        Symbol->setUsedInReloc();
     }
 
     const MCSymbol *Base = Asm.getAtom(*Symbol);

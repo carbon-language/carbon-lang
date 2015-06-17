@@ -621,8 +621,6 @@ private:
 
   SymbolDataListType Symbols;
 
-  DenseSet<const MCSymbol *> LocalsUsedInReloc;
-
   std::vector<IndirectSymbolData> IndirectSymbols;
 
   std::vector<DataRegionData> DataRegions;
@@ -713,9 +711,6 @@ private:
                                         MCFragment &F, const MCFixup &Fixup);
 
 public:
-  void addLocalUsedInReloc(const MCSymbol &Sym);
-  bool isLocalUsedInReloc(const MCSymbol &Sym) const;
-
   /// Compute the effective fragment size assuming it is laid out at the given
   /// \p SectionAddress and \p FragmentOffset.
   uint64_t computeFragmentSize(const MCAsmLayout &Layout,

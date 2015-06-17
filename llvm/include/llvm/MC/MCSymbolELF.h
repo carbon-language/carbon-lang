@@ -38,9 +38,6 @@ public:
 
   bool isBindingSet() const;
 
-  void setUsedInReloc() const;
-  bool isUsedInReloc() const;
-
   void setIsWeakrefUsedInReloc() const;
   bool isWeakrefUsedInReloc() const;
 
