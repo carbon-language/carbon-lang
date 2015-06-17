@@ -756,5 +756,3 @@ if ($Action eq 'compile' or $Action eq 'link') {
     }
   }
 }
-
-exit($Status >> 8);
