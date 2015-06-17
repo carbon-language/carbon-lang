@@ -262,26 +262,64 @@ uint64_t llvm::computeBundlePadding(const MCAssembler &Assembler,
 
 /* *** */
 
-MCFragment::MCFragment() : Kind(FragmentType(~0)) {
+void ilist_node_traits<MCFragment>::deleteNode(MCFragment *V) {
+  V->destroy();
 }
 
-MCFragment::~MCFragment() {
+MCFragment::MCFragment() : Kind(FragmentType(~0)), HasInstructions(false),
+                           AlignToBundleEnd(false), BundlePadding(0) {
 }
 
-MCFragment::MCFragment(FragmentType Kind, MCSection *Parent)
-    : Kind(Kind), Parent(Parent), Atom(nullptr), Offset(~UINT64_C(0)) {
+MCFragment::~MCFragment() { }
+
+MCFragment::MCFragment(FragmentType Kind, bool HasInstructions,
+                       uint8_t BundlePadding, MCSection *Parent)
+    : Kind(Kind), HasInstructions(HasInstructions), AlignToBundleEnd(false),
+      BundlePadding(BundlePadding), Parent(Parent), Atom(nullptr),
+      Offset(~UINT64_C(0)) {
   if (Parent)
     Parent->getFragmentList().push_back(this);
 }
 
-/* *** */
+void MCFragment::destroy() {
+  // First check if we are the sentinal.
+  if (Kind == FragmentType(~0)) {
+    delete this;
+    return;
+  }
 
-MCEncodedFragment::~MCEncodedFragment() {
-}
-
-/* *** */
-
-MCEncodedFragmentWithFixups::~MCEncodedFragmentWithFixups() {
+  switch (Kind) {
+    case FT_Align:
+      delete cast<MCAlignFragment>(this);
+      return;
+    case FT_Data:
+      delete cast<MCDataFragment>(this);
+      return;
+    case FT_CompactEncodedInst:
+      delete cast<MCCompactEncodedInstFragment>(this);
+      return;
+    case FT_Fill:
+      delete cast<MCFillFragment>(this);
+      return;
+    case FT_Relaxable:
+      delete cast<MCRelaxableFragment>(this);
+      return;
+    case FT_Org:
+      delete cast<MCOrgFragment>(this);
+      return;
+    case FT_Dwarf:
+      delete cast<MCDwarfLineAddrFragment>(this);
+      return;
+    case FT_DwarfFrame:
+      delete cast<MCDwarfCallFrameFragment>(this);
+      return;
+    case FT_LEB:
+      delete cast<MCLEBFragment>(this);
+      return;
+    case FT_SafeSEH:
+      delete cast<MCSafeSEHFragment>(this);
+      return;
+  }
 }
 
 /* *** */
@@ -454,9 +492,11 @@ uint64_t MCAssembler::computeFragmentSize(const MCAsmLayout &Layout,
                                           const MCFragment &F) const {
   switch (F.getKind()) {
   case MCFragment::FT_Data:
+    return cast<MCDataFragment>(F).getContents().size();
   case MCFragment::FT_Relaxable:
+    return cast<MCRelaxableFragment>(F).getContents().size();
   case MCFragment::FT_CompactEncodedInst:
-    return cast<MCEncodedFragment>(F).getContents().size();
+    return cast<MCCompactEncodedInstFragment>(F).getContents().size();
   case MCFragment::FT_Fill:
     return cast<MCFillFragment>(F).getSize();
 
@@ -562,13 +602,6 @@ void MCAsmLayout::layoutFragment(MCFragment *F) {
   }
 }
 
-/// \brief Write the contents of a fragment to the given object writer. Expects
-///        a MCEncodedFragment.
-static void writeFragmentContents(const MCFragment &F, MCObjectWriter *OW) {
-  const MCEncodedFragment &EF = cast<MCEncodedFragment>(F);
-  OW->writeBytes(EF.getContents());
-}
-
 void MCAssembler::registerSymbol(const MCSymbol &Symbol, bool *Created) {
   bool New = !Symbol.isRegistered();
   if (Created)
@@ -671,17 +704,17 @@ static void writeFragment(const MCAssembler &Asm, const MCAsmLayout &Layout,
 
   case MCFragment::FT_Data: 
     ++stats::EmittedDataFragments;
-    writeFragmentContents(F, OW);
+    OW->writeBytes(cast<MCDataFragment>(F).getContents());
     break;
 
   case MCFragment::FT_Relaxable:
     ++stats::EmittedRelaxableFragments;
-    writeFragmentContents(F, OW);
+    OW->writeBytes(cast<MCRelaxableFragment>(F).getContents());
     break;
 
   case MCFragment::FT_CompactEncodedInst:
     ++stats::EmittedCompactEncodedInstFragments;
-    writeFragmentContents(F, OW);
+    OW->writeBytes(cast<MCCompactEncodedInstFragment>(F).getContents());
     break;
 
   case MCFragment::FT_Fill: {
@@ -870,18 +903,29 @@ void MCAssembler::Finish() {
   for (MCAssembler::iterator it = begin(), ie = end(); it != ie; ++it) {
     for (MCSection::iterator it2 = it->begin(), ie2 = it->end(); it2 != ie2;
          ++it2) {
-      MCEncodedFragmentWithFixups *F =
-        dyn_cast<MCEncodedFragmentWithFixups>(it2);
-      if (F) {
-        for (MCEncodedFragmentWithFixups::fixup_iterator it3 = F->fixup_begin(),
-             ie3 = F->fixup_end(); it3 != ie3; ++it3) {
-          MCFixup &Fixup = *it3;
-          uint64_t FixedValue;
-          bool IsPCRel;
-          std::tie(FixedValue, IsPCRel) = handleFixup(Layout, *F, Fixup);
-          getBackend().applyFixup(Fixup, F->getContents().data(),
-                                  F->getContents().size(), FixedValue, IsPCRel);
-        }
+      MCEncodedFragment *F = dyn_cast<MCEncodedFragment>(it2);
+      // Data and relaxable fragments both have fixups.  So only process
+      // those here.
+      // FIXME: Is there a better way to do this?  MCEncodedFragmentWithFixups
+      // being templated makes this tricky.
+      if (!F || isa<MCCompactEncodedInstFragment>(F))
+        continue;
+      ArrayRef<MCFixup> Fixups;
+      MutableArrayRef<char> Contents;
+      if (auto *FragWithFixups = dyn_cast<MCDataFragment>(F)) {
+        Fixups = FragWithFixups->getFixups();
+        Contents = FragWithFixups->getContents();
+      } else if (auto *FragWithFixups = dyn_cast<MCRelaxableFragment>(F)) {
+        Fixups = FragWithFixups->getFixups();
+        Contents = FragWithFixups->getContents();
+      } else
+        llvm_unreachable("Unknow fragment with fixups!");
+      for (const MCFixup &Fixup : Fixups) {
+        uint64_t FixedValue;
+        bool IsPCRel;
+        std::tie(FixedValue, IsPCRel) = handleFixup(Layout, *F, Fixup);
+        getBackend().applyFixup(Fixup, Contents.data(),
+                                Contents.size(), FixedValue, IsPCRel);
       }
     }
   }
@@ -1218,17 +1262,3 @@ void MCAssembler::dump() {
   OS << "]>\n";
 }
 #endif
-
-// anchors for MC*Fragment vtables
-void MCEncodedFragment::anchor() { }
-void MCEncodedFragmentWithFixups::anchor() { }
-void MCDataFragment::anchor() { }
-void MCCompactEncodedInstFragment::anchor() { }
-void MCRelaxableFragment::anchor() { }
-void MCAlignFragment::anchor() { }
-void MCFillFragment::anchor() { }
-void MCOrgFragment::anchor() { }
-void MCLEBFragment::anchor() { }
-void MCSafeSEHFragment::anchor() { }
-void MCDwarfLineAddrFragment::anchor() { }
-void MCDwarfCallFrameFragment::anchor() { }

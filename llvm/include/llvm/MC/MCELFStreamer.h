@@ -93,7 +93,7 @@ private:
   void fixSymbolsInTLSFixups(const MCExpr *expr);
 
   /// \brief Merge the content of the fragment \p EF into the fragment \p DF.
-  void mergeFragment(MCDataFragment *, MCEncodedFragmentWithFixups *);
+  void mergeFragment(MCDataFragment *, MCDataFragment *);
 
   bool SeenIdent;
 

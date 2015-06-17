@@ -45,7 +45,7 @@ MCELFStreamer::~MCELFStreamer() {
 }
 
 void MCELFStreamer::mergeFragment(MCDataFragment *DF,
-                                  MCEncodedFragmentWithFixups *EF) {
+                                  MCDataFragment *EF) {
   MCAssembler &Assembler = getAssembler();
 
   if (Assembler.isBundlingEnabled() && Assembler.getRelaxAll()) {
