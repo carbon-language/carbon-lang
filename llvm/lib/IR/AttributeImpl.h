@@ -181,9 +181,9 @@ public:
       AttrList[I].Profile(ID);
   }
 };
-static_assert(AlignOf<AttributeSetNode>::Alignment >=
-                  AlignOf<Attribute>::Alignment,
-              "Alignment sufficient for objects appended to AttributeSetNode");
+static_assert(
+    AlignOf<AttributeSetNode>::Alignment >= AlignOf<Attribute>::Alignment,
+    "Alignment is insufficient for objects appended to AttributeSetNode");
 
 //===----------------------------------------------------------------------===//
 /// \class
@@ -273,9 +273,10 @@ public:
 
   void dump() const;
 };
-static_assert(AlignOf<AttributeSetImpl>::Alignment >=
-                  AlignOf<AttributeSetImpl::IndexAttrPair>::Alignment,
-              "Alignment sufficient for objects appended to AttributeSetImpl");
+static_assert(
+    AlignOf<AttributeSetImpl>::Alignment >=
+        AlignOf<AttributeSetImpl::IndexAttrPair>::Alignment,
+    "Alignment is insufficient for objects appended to AttributeSetImpl");
 
 } // end llvm namespace
 

@@ -384,9 +384,9 @@ StringRef MDString::getString() const {
 // Assert that the MDNode types will not be unaligned by the objects
 // prepended to them.
 #define HANDLE_MDNODE_LEAF(CLASS)                                              \
-  static_assert(llvm::AlignOf<uint64_t>::Alignment >=                          \
-                    llvm::AlignOf<CLASS>::Alignment,                           \
-                "Alignment sufficient after objects prepended to " #CLASS);
+  static_assert(                                                               \
+      llvm::AlignOf<uint64_t>::Alignment >= llvm::AlignOf<CLASS>::Alignment,   \
+      "Alignment is insufficient after objects prepended to " #CLASS);
 #include "llvm/IR/Metadata.def"
 
 void *MDNode::operator new(size_t Size, unsigned NumOps) {

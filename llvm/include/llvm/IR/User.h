@@ -229,9 +229,9 @@ public:
 };
 // Either Use objects, or a Use pointer can be prepended to User.
 static_assert(AlignOf<Use>::Alignment >= AlignOf<User>::Alignment,
-              "Alignment sufficient after objects prepended to User");
+              "Alignment is insufficient after objects prepended to User");
 static_assert(AlignOf<Use *>::Alignment >= AlignOf<User>::Alignment,
-              "Alignment sufficient after objects prepended to User");
+              "Alignment is insufficient after objects prepended to User");
 
 template<> struct simplify_type<User::op_iterator> {
   typedef Value* SimpleType;
