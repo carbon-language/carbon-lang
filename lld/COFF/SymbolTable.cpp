@@ -189,6 +189,14 @@ Defined *SymbolTable::find(StringRef Name) {
 
 // Windows specific -- Link default entry point name.
 ErrorOr<StringRef> SymbolTable::findDefaultEntry() {
+  // If it's DLL, the rule is easy.
+  if (Config->DLL) {
+    StringRef Sym = "_DllMainCRTStartup";
+    if (auto EC = resolve(new (Alloc) Undefined(Sym)))
+      return EC;
+    return Sym;
+  }
+
   // User-defined main functions and their corresponding entry points.
   static const char *Entries[][2] = {
       {"main", "mainCRTStartup"},

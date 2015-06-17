@@ -114,6 +114,99 @@ std::error_code parseSubsystem(StringRef Arg, WindowsSubsystem *Sys,
   return std::error_code();
 }
 
+// Parse a string in the form of
+// "<name>[=<internalname>][,@ordinal[,NONAME]][,DATA][,PRIVATE]".
+// Used for parsing /export arguments.
+ErrorOr<Export> parseExport(StringRef Arg) {
+  Export E;
+  StringRef Rest;
+  std::tie(E.Name, Rest) = Arg.split(",");
+  if (E.Name.empty())
+    goto err;
+  if (E.Name.find('=') != StringRef::npos) {
+    std::tie(E.ExtName, E.Name) = E.Name.split("=");
+    if (E.Name.empty())
+      goto err;
+  } else {
+    E.ExtName = E.Name;
+  }
+
+  while (!Rest.empty()) {
+    StringRef Tok;
+    std::tie(Tok, Rest) = Rest.split(",");
+    if (Tok.equals_lower("noname")) {
+      if (E.Ordinal == 0)
+        goto err;
+      E.Noname = true;
+      continue;
+    }
+    if (Tok.equals_lower("data")) {
+      E.Data = true;
+      continue;
+    }
+    if (Tok.equals_lower("private")) {
+      E.Private = true;
+      continue;
+    }
+    if (Tok.startswith("@")) {
+      int32_t Ord;
+      if (Tok.substr(1).getAsInteger(0, Ord))
+        goto err;
+      if (Ord <= 0 || 65535 < Ord)
+        goto err;
+      E.Ordinal = Ord;
+      continue;
+    }
+    goto err;
+  }
+  return E;
+
+err:
+  llvm::errs() << "invalid /export: " << Arg << "\n";
+  return make_error_code(LLDError::InvalidOption);
+}
+
+// Performs error checking on all /export arguments.
+// It also sets ordinals.
+std::error_code fixupExports() {
+  // Symbol ordinals must be unique.
+  std::set<uint16_t> Ords;
+  for (Export &E : Config->Exports) {
+    if (E.Ordinal == 0)
+      continue;
+    if (!Ords.insert(E.Ordinal).second) {
+      llvm::errs() << "duplicate export ordinal: " << E.Name << "\n";
+      return make_error_code(LLDError::InvalidOption);
+    }
+  }
+
+  // Uniquefy by name.
+  std::set<StringRef> Names;
+  std::vector<Export> V;
+  for (Export &E : Config->Exports) {
+    if (!Names.insert(E.Name).second) {
+      llvm::errs() << "warning: duplicate /export option: " << E.Name << "\n";
+      continue;
+    }
+    V.push_back(E);
+  }
+  Config->Exports = std::move(V);
+
+  // Sort by name.
+  std::sort(
+      Config->Exports.begin(), Config->Exports.end(),
+      [](const Export &A, const Export &B) { return A.ExtName < B.ExtName; });
+
+  // Assign unique ordinals if default (= 0).
+  uint16_t Max = 0;
+  for (Export &E : Config->Exports)
+    Max = std::max(Max, E.Ordinal);
+  for (Export &E : Config->Exports)
+    if (E.Ordinal == 0)
+      E.Ordinal = ++Max;
+  return std::error_code();
+}
+
 // Parses a string in the form of "key=value" and check
 // if value matches previous values for the same key.
 std::error_code checkFailIfMismatch(llvm::opt::InputArgList *Args) {

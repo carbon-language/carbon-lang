@@ -23,6 +23,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Object/COFF.h"
 #include "llvm/Support/Endian.h"
+#include "llvm/Support/Path.h"
 
 using namespace llvm;
 using namespace llvm::object;
@@ -31,10 +32,11 @@ using namespace llvm::COFF;
 using llvm::RoundUpToAlignment;
 
 static const size_t LookupChunkSize = sizeof(uint64_t);
-static const size_t DirectoryChunkSize = sizeof(ImportDirectoryTableEntry);
 
 namespace lld {
 namespace coff {
+
+// Import table
 
 // A chunk for the import descriptor table.
 class HintNameChunk : public Chunk {
@@ -88,10 +90,10 @@ public:
 };
 
 // A chunk for the import descriptor table.
-class DirectoryChunk : public Chunk {
+class ImportDirectoryChunk : public Chunk {
 public:
-  explicit DirectoryChunk(Chunk *N) : DLLName(N) {}
-  size_t getSize() const override { return DirectoryChunkSize; }
+  explicit ImportDirectoryChunk(Chunk *N) : DLLName(N) {}
+  size_t getSize() const override { return sizeof(ImportDirectoryTableEntry); }
 
   void writeTo(uint8_t *Buf) override {
     auto *E = (coff_import_directory_table_entry *)(Buf + FileOff);
@@ -118,7 +120,7 @@ private:
 };
 
 uint64_t IdataContents::getDirSize() {
-  return Dirs.size() * DirectoryChunkSize;
+  return Dirs.size() * sizeof(ImportDirectoryTableEntry);
 }
 
 uint64_t IdataContents::getIATSize() {
@@ -192,13 +194,120 @@ void IdataContents::create() {
     // Create the import table header.
     if (!DLLNames.count(Name))
       DLLNames[Name] = make_unique<StringChunk>(Name);
-    auto Dir = make_unique<DirectoryChunk>(DLLNames[Name].get());
+    auto Dir = make_unique<ImportDirectoryChunk>(DLLNames[Name].get());
     Dir->LookupTab = Lookups[Base].get();
     Dir->AddressTab = Addresses[Base].get();
     Dirs.push_back(std::move(Dir));
   }
   // Add null terminator.
-  Dirs.push_back(make_unique<NullChunk>(DirectoryChunkSize));
+  Dirs.push_back(make_unique<NullChunk>(sizeof(ImportDirectoryTableEntry)));
+}
+
+// Export table
+// Read Microsoft PE/COFF spec 5.3 for details.
+
+// A chunk for the export descriptor table.
+class ExportDirectoryChunk : public Chunk {
+public:
+  ExportDirectoryChunk(int I, int J, Chunk *D, Chunk *A, Chunk *N, Chunk *O)
+      : MaxOrdinal(I), NameTabSize(J), DLLName(D), AddressTab(A), NameTab(N),
+        OrdinalTab(O) {}
+
+  size_t getSize() const override {
+    return sizeof(export_directory_table_entry);
+  }
+
+  void writeTo(uint8_t *Buf) override {
+    auto *E = (export_directory_table_entry *)(Buf + FileOff);
+    E->NameRVA = DLLName->getRVA();
+    E->OrdinalBase = 0;
+    E->AddressTableEntries = MaxOrdinal + 1;
+    E->NumberOfNamePointers = NameTabSize;
+    E->ExportAddressTableRVA = AddressTab->getRVA();
+    E->NamePointerRVA = NameTab->getRVA();
+    E->OrdinalTableRVA = OrdinalTab->getRVA();
+  }
+
+  uint16_t MaxOrdinal;
+  uint16_t NameTabSize;
+  Chunk *DLLName;
+  Chunk *AddressTab;
+  Chunk *NameTab;
+  Chunk *OrdinalTab;
+};
+
+class AddressTableChunk : public Chunk {
+public:
+  explicit AddressTableChunk(size_t MaxOrdinal) : Size(MaxOrdinal + 1) {}
+  size_t getSize() const override { return Size * 4; }
+
+  void writeTo(uint8_t *Buf) override {
+    for (Export &E : Config->Exports)
+      write32le(Buf + FileOff + E.Ordinal * 4, E.Sym->getRVA());
+  }
+
+private:
+  size_t Size;
+};
+
+class NamePointersChunk : public Chunk {
+public:
+  explicit NamePointersChunk(std::vector<Chunk *> &V) : Chunks(V) {}
+  size_t getSize() const override { return Chunks.size() * 4; }
+
+  void writeTo(uint8_t *Buf) override {
+    uint8_t *P = Buf + FileOff;
+    for (Chunk *C : Chunks) {
+      write32le(P, C->getRVA());
+      P += 4;
+    }
+  }
+
+private:
+  std::vector<Chunk *> Chunks;
+};
+
+class ExportOrdinalChunk : public Chunk {
+public:
+  explicit ExportOrdinalChunk(size_t I) : Size(I) {}
+  size_t getSize() const override { return Size * 2; }
+
+  void writeTo(uint8_t *Buf) override {
+    uint8_t *P = Buf + FileOff;
+    for (Export &E : Config->Exports) {
+      if (E.Noname)
+        continue;
+      write16le(P, E.Ordinal);
+      P += 2;
+    }
+  }
+
+private:
+  size_t Size;
+};
+
+EdataContents::EdataContents() {
+  uint16_t MaxOrdinal = 0;
+  for (Export &E : Config->Exports)
+    MaxOrdinal = std::max(MaxOrdinal, E.Ordinal);
+
+  auto *DLLName = new StringChunk(sys::path::filename(Config->OutputFile));
+  auto *AddressTab = new AddressTableChunk(MaxOrdinal);
+  std::vector<Chunk *> Names;
+  for (Export &E : Config->Exports)
+    if (!E.Noname)
+      Names.push_back(new StringChunk(E.ExtName));
+  auto *NameTab = new NamePointersChunk(Names);
+  auto *OrdinalTab = new ExportOrdinalChunk(Names.size());
+  auto *Dir = new ExportDirectoryChunk(MaxOrdinal, Names.size(), DLLName,
+                                       AddressTab, NameTab, OrdinalTab);
+  Chunks.push_back(std::unique_ptr<Chunk>(Dir));
+  Chunks.push_back(std::unique_ptr<Chunk>(DLLName));
+  Chunks.push_back(std::unique_ptr<Chunk>(AddressTab));
+  Chunks.push_back(std::unique_ptr<Chunk>(NameTab));
+  Chunks.push_back(std::unique_ptr<Chunk>(OrdinalTab));
+  for (Chunk *C : Names)
+    Chunks.push_back(std::unique_ptr<Chunk>(C));
 }
 
 } // namespace coff

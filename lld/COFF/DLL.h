@@ -17,7 +17,7 @@ namespace lld {
 namespace coff {
 
 // Windows-specific.
-// IdataContents creates all chunks for the .idata section.
+// IdataContents creates all chunks for the DLL import table.
 // You are supposed to call add() to add symbols and then
 // call getChunks() to get a list of chunks.
 class IdataContents {
@@ -39,6 +39,14 @@ private:
   std::vector<std::unique_ptr<Chunk>> Addresses;
   std::vector<std::unique_ptr<Chunk>> Hints;
   std::map<StringRef, std::unique_ptr<Chunk>> DLLNames;
+};
+
+// Windows-specific.
+// EdataContents creates all chunks for the DLL export table.
+class EdataContents {
+public:
+  EdataContents();
+  std::vector<std::unique_ptr<Chunk>> Chunks;
 };
 
 } // namespace coff

@@ -22,9 +22,21 @@ namespace coff {
 
 using llvm::COFF::WindowsSubsystem;
 using llvm::StringRef;
+class Defined;
 
-class Configuration {
-public:
+// Represents an /export option.
+struct Export {
+  StringRef Name;
+  StringRef ExtName;
+  Defined *Sym = nullptr;
+  uint16_t Ordinal = 0;
+  bool Noname = false;
+  bool Data = false;
+  bool Private = false;
+};
+
+// Global configuration.
+struct Configuration {
   llvm::COFF::MachineTypes MachineType = llvm::COFF::IMAGE_FILE_MACHINE_AMD64;
   bool Verbose = false;
   WindowsSubsystem Subsystem = llvm::COFF::IMAGE_SUBSYSTEM_UNKNOWN;
@@ -38,6 +50,10 @@ public:
 
   std::set<StringRef> NoDefaultLibs;
   bool NoDefaultLibAll = false;
+
+  // True if we are creating a DLL.
+  bool DLL = false;
+  std::vector<Export> Exports;
 
   // Used by /failifmismatch option.
   std::map<StringRef, StringRef> MustMatch;

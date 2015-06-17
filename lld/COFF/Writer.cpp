@@ -42,6 +42,7 @@ std::error_code Writer::write(StringRef OutputPath) {
   markLive();
   createSections();
   createImportTables();
+  createExportTable();
   if (Config->Relocatable)
     createSection(".reloc");
   assignAddresses();
@@ -174,6 +175,15 @@ void Writer::createImportTables() {
     Sec->addChunk(C);
 }
 
+void Writer::createExportTable() {
+  if (Config->Exports.empty())
+    return;
+  Edata.reset(new EdataContents());
+  OutputSection *Sec = createSection(".edata");
+  for (std::unique_ptr<Chunk> &C : Edata->Chunks)
+    Sec->addChunk(C.get());
+}
+
 // The Windows loader doesn't seem to like empty sections,
 // so we remove them if any.
 void Writer::removeEmptySections() {
@@ -243,6 +253,8 @@ void Writer::writeHeader() {
   COFF->NumberOfSections = OutputSections.size();
   COFF->Characteristics = IMAGE_FILE_EXECUTABLE_IMAGE;
   COFF->Characteristics |= IMAGE_FILE_LARGE_ADDRESS_AWARE;
+  if (Config->DLL)
+    COFF->Characteristics |= IMAGE_FILE_DLL;
   if (!Config->Relocatable)
     COFF->Characteristics |= IMAGE_FILE_RELOCS_STRIPPED;
   COFF->SizeOfOptionalHeader =
@@ -292,6 +304,10 @@ void Writer::writeHeader() {
   // Write data directory
   auto *DataDirectory = reinterpret_cast<data_directory *>(Buf);
   Buf += sizeof(*DataDirectory) * NumberfOfDataDirectory;
+  if (OutputSection *Sec = findSection(".edata")) {
+    DataDirectory[EXPORT_TABLE].RelativeVirtualAddress = Sec->getRVA();
+    DataDirectory[EXPORT_TABLE].Size = Sec->getVirtualSize();
+  }
   if (Idata) {
     DataDirectory[IMPORT_TABLE].RelativeVirtualAddress = Idata->getDirRVA();
     DataDirectory[IMPORT_TABLE].Size = Idata->getDirSize();
@@ -397,6 +413,7 @@ OutputSection *Writer::createSection(StringRef Name) {
                        .Case(".bss", BSS | R | W)
                        .Case(".data", DATA | R | W)
                        .Case(".didat", DATA | R)
+                       .Case(".edata", DATA | R)
                        .Case(".idata", DATA | R)
                        .Case(".rdata", DATA | R)
                        .Case(".reloc", DATA | DISCARDABLE | R)

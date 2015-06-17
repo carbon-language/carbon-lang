@@ -91,6 +91,14 @@ LinkerDriver::parseDirectives(StringRef S,
     return EC;
   std::unique_ptr<llvm::opt::InputArgList> Args = std::move(ArgsOrErr.get());
 
+  // Handle /export
+  for (auto *Arg : Args->filtered(OPT_export)) {
+    ErrorOr<Export> E = parseExport(Arg->getValue());
+    if (auto EC = E.getError())
+      return EC;
+    Config->Exports.push_back(E.get());
+  }
+
   // Handle /failifmismatch
   if (auto EC = checkFailIfMismatch(Args.get()))
     return EC;
@@ -180,6 +188,17 @@ std::vector<StringRef> LinkerDriver::getSearchPaths() {
   return Ret;
 }
 
+static WindowsSubsystem inferSubsystem() {
+  if (Config->DLL)
+    return IMAGE_SUBSYSTEM_WINDOWS_GUI;
+  return StringSwitch<WindowsSubsystem>(Config->EntryName)
+      .Case("mainCRTStartup", IMAGE_SUBSYSTEM_WINDOWS_CUI)
+      .Case("wmainCRTStartup", IMAGE_SUBSYSTEM_WINDOWS_CUI)
+      .Case("WinMainCRTStartup", IMAGE_SUBSYSTEM_WINDOWS_GUI)
+      .Case("wWinMainCRTStartup", IMAGE_SUBSYSTEM_WINDOWS_GUI)
+      .Default(IMAGE_SUBSYSTEM_UNKNOWN);
+}
+
 bool LinkerDriver::link(int Argc, const char *Argv[]) {
   // Needed for LTO.
   llvm::InitializeAllTargetInfos();
@@ -220,6 +239,10 @@ bool LinkerDriver::link(int Argc, const char *Argv[]) {
   // Handle /verbose
   if (Args->hasArg(OPT_verbose))
     Config->Verbose = true;
+
+  // Handle /dll
+  if (Args->hasArg(OPT_dll))
+    Config->DLL = true;
 
   // Handle /entry
   if (auto *Arg = Args->getLastArg(OPT_entry))
@@ -318,6 +341,14 @@ bool LinkerDriver::link(int Argc, const char *Argv[]) {
     }
   }
 
+  // Handle /export
+  for (auto *Arg : Args->filtered(OPT_export)) {
+    ErrorOr<Export> E = parseExport(Arg->getValue());
+    if (E.getError())
+      return false;
+    Config->Exports.push_back(E.get());
+  }
+
   // Handle /failifmismatch
   if (auto EC = checkFailIfMismatch(Args.get())) {
     llvm::errs() << "/failifmismatch: " << EC.message() << "\n";
@@ -414,6 +445,15 @@ bool LinkerDriver::link(int Argc, const char *Argv[]) {
     }
   }
 
+  // Windows specific -- Make sure we resolve all dllexported symbols.
+  // (We don't cache the size here because Symtab.resolve() may add
+  // new entries to Config->Exports.)
+  for (size_t I = 0; I < Config->Exports.size(); ++I) {
+    StringRef Sym = Config->Exports[I].Name;
+    Symtab.addUndefined(Sym);
+    Config->GCRoots.insert(Sym);
+  }
+
   // Windows specific -- If entry point name is not given, we need to
   // infer that from user-defined entry name. The symbol table takes
   // care of details.
@@ -441,17 +481,19 @@ bool LinkerDriver::link(int Argc, const char *Argv[]) {
   // Windows specific -- if no /subsystem is given, we need to infer
   // that from entry point name.
   if (Config->Subsystem == IMAGE_SUBSYSTEM_UNKNOWN) {
-    Config->Subsystem =
-      StringSwitch<WindowsSubsystem>(Config->EntryName)
-          .Case("mainCRTStartup", IMAGE_SUBSYSTEM_WINDOWS_CUI)
-          .Case("wmainCRTStartup", IMAGE_SUBSYSTEM_WINDOWS_CUI)
-          .Case("WinMainCRTStartup", IMAGE_SUBSYSTEM_WINDOWS_GUI)
-          .Case("wWinMainCRTStartup", IMAGE_SUBSYSTEM_WINDOWS_GUI)
-          .Default(IMAGE_SUBSYSTEM_UNKNOWN);
+    Config->Subsystem = inferSubsystem();
     if (Config->Subsystem == IMAGE_SUBSYSTEM_UNKNOWN) {
       llvm::errs() << "subsystem must be defined\n";
       return false;
     }
+  }
+
+  // Windows specific -- fix up dllexported symbols.
+  if (!Config->Exports.empty()) {
+    for (Export &E : Config->Exports)
+      E.Sym = Symtab.find(E.Name);
+    if (fixupExports())
+      return false;
   }
 
   // Write the result.

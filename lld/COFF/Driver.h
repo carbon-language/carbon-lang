@@ -10,6 +10,7 @@
 #ifndef LLD_COFF_DRIVER_H
 #define LLD_COFF_DRIVER_H
 
+#include "Config.h"
 #include "lld/Core/LLVM.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/StringRef.h"
@@ -114,6 +115,10 @@ std::error_code parseVersion(StringRef Arg, uint32_t *Major, uint32_t *Minor);
 // Parses a string in the form of "<subsystem>[,<integer>[.<integer>]]".
 std::error_code parseSubsystem(StringRef Arg, WindowsSubsystem *Sys,
                                uint32_t *Major, uint32_t *Minor);
+
+// Used for dllexported symbols.
+ErrorOr<Export> parseExport(StringRef Arg);
+std::error_code fixupExports();
 
 // Parses a string in the form of "key=value" and check
 // if value matches previous values for the key.

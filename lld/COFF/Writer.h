@@ -78,6 +78,7 @@ private:
   void markLive();
   void createSections();
   void createImportTables();
+  void createExportTable();
   void assignAddresses();
   void removeEmptySections();
   std::error_code openFile(StringRef OutputPath);
@@ -99,6 +100,7 @@ private:
   llvm::SpecificBumpPtrAllocator<BaserelChunk> BAlloc;
   std::vector<OutputSection *> OutputSections;
   std::unique_ptr<IdataContents> Idata;
+  std::unique_ptr<EdataContents> Edata;
 
   uint64_t FileSize;
   uint64_t SizeOfImage;
