@@ -92,9 +92,11 @@ int __attribute__((__target__("rdrnd"))) rdrand16_step_wrap(unsigned short *p) {
   return _rdrand16_step(p);
 }
 
+#if defined(__x86_64__)
 unsigned int __attribute__((__target__("fsgsbase"))) readfsbase_u32_wrap(void) {
   return _readfsbase_u32();
 }
+#endif
 
 unsigned int __attribute__((__target__("rtm"))) xbegin_wrap(void) {
   return _xbegin();
