@@ -59,7 +59,7 @@ public:
       I->Tok->Previous = Current;
       Current = Current->Next;
       Current->Children.clear();
-      for (const auto& Child : Node.Children) {
+      for (const auto &Child : Node.Children) {
         Children.push_back(new AnnotatedLine(Child));
         Current->Children.push_back(Children.back());
       }
@@ -78,6 +78,12 @@ public:
       Current->Role.reset();
       Current = Current->Next;
     }
+  }
+
+  /// \c true if this line starts with the given tokens in order, ignoring
+  /// comments.
+  template <typename... Ts> bool startsWith(Ts... Tokens) const {
+    return startsWith(First, Tokens...);
   }
 
   FormatToken *First;
@@ -107,6 +113,18 @@ private:
   // Disallow copying.
   AnnotatedLine(const AnnotatedLine &) = delete;
   void operator=(const AnnotatedLine &) = delete;
+
+  template <typename A, typename... Ts>
+  bool startsWith(FormatToken *Tok, A K1) const {
+    while (Tok && Tok->is(tok::comment))
+      Tok = Tok->Next;
+    return Tok && Tok->is(K1);
+  }
+
+  template <typename A, typename... Ts>
+  bool startsWith(FormatToken *Tok, A K1, Ts... Tokens) const {
+    return startsWith(Tok, K1) && startsWith(Tok->Next, Tokens...);
+  }
 };
 
 /// \brief Determines extra information about the tokens comprising an
