@@ -1135,7 +1135,7 @@ optimizers but will not be emitted in the object file.
 .. _personalityfn:
 
 Personality Function
--------------
+--------------------
 
 The ``personality`` attribute permits functions to specify what function
 to use for exception handling.
