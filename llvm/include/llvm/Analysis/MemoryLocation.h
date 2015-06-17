@@ -26,6 +26,7 @@ class LoadInst;
 class StoreInst;
 class MemTransferInst;
 class MemIntrinsic;
+class TargetLibraryInfo;
 
 /// Representation for a specific memory location.
 ///
@@ -86,6 +87,10 @@ public:
   /// Return a location representing the destination of a memory set or
   /// transfer.
   static MemoryLocation getForDest(const MemIntrinsic *MI);
+
+  /// Return a location representing a particular argument of a call.
+  static MemoryLocation getForArgument(ImmutableCallSite CS, unsigned ArgIdx,
+                                       const TargetLibraryInfo &TLI);
 
   explicit MemoryLocation(const Value *Ptr = nullptr,
                           uint64_t Size = UnknownSize,

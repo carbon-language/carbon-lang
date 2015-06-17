@@ -55,12 +55,9 @@ namespace {
     bool pointsToConstantMemory(const Location &Loc, bool OrLocal) override {
       return false;
     }
-    Location getArgLocation(ImmutableCallSite CS, unsigned ArgIdx,
-                            ModRefResult &Mask) override {
-      Mask = ModRef;
-      AAMDNodes AATags;
-      CS->getAAMetadata(AATags);
-      return Location(CS.getArgument(ArgIdx), UnknownSize, AATags);
+    ModRefResult getArgModRefInfo(ImmutableCallSite CS,
+                                  unsigned ArgIdx) override {
+      return ModRef;
     }
 
     ModRefResult getModRefInfo(ImmutableCallSite CS,

@@ -485,8 +485,8 @@ namespace {
     bool pointsToConstantMemory(const Location &Loc, bool OrLocal) override;
 
     /// Get the location associated with a pointer argument of a callsite.
-    Location getArgLocation(ImmutableCallSite CS, unsigned ArgIdx,
-                            ModRefResult &Mask) override;
+    ModRefResult getArgModRefInfo(ImmutableCallSite CS,
+                                  unsigned ArgIdx) override;
 
     /// getModRefBehavior - Return the behavior when calling the given
     /// call site.
@@ -652,6 +652,8 @@ BasicAliasAnalysis::pointsToConstantMemory(const Location &Loc, bool OrLocal) {
   return Worklist.empty();
 }
 
+// FIXME: This code is duplicated with MemoryLocation and should be hoisted to
+// some common utility location.
 static bool isMemsetPattern16(const Function *MS,
                               const TargetLibraryInfo &TLI) {
   if (TLI.has(LibFunc::memset_pattern16) &&
@@ -715,84 +717,33 @@ BasicAliasAnalysis::getModRefBehavior(const Function *F) {
   return ModRefBehavior(AliasAnalysis::getModRefBehavior(F) & Min);
 }
 
-AliasAnalysis::Location
-BasicAliasAnalysis::getArgLocation(ImmutableCallSite CS, unsigned ArgIdx,
-                                   ModRefResult &Mask) {
-  Location Loc = AliasAnalysis::getArgLocation(CS, ArgIdx, Mask);
-  const TargetLibraryInfo &TLI =
-      getAnalysis<TargetLibraryInfoWrapperPass>().getTLI();
-  const IntrinsicInst *II = dyn_cast<IntrinsicInst>(CS.getInstruction());
-  if (II != nullptr)
+AliasAnalysis::ModRefResult
+BasicAliasAnalysis::getArgModRefInfo(ImmutableCallSite CS, unsigned ArgIdx) {
+  if (const IntrinsicInst *II = dyn_cast<IntrinsicInst>(CS.getInstruction()))
     switch (II->getIntrinsicID()) {
-    default: break;
+    default:
+      break;
     case Intrinsic::memset:
     case Intrinsic::memcpy:
-    case Intrinsic::memmove: {
+    case Intrinsic::memmove:
       assert((ArgIdx == 0 || ArgIdx == 1) &&
              "Invalid argument index for memory intrinsic");
-      if (ConstantInt *LenCI = dyn_cast<ConstantInt>(II->getArgOperand(2)))
-        Loc.Size = LenCI->getZExtValue();
-      assert(Loc.Ptr == II->getArgOperand(ArgIdx) &&
-             "Memory intrinsic location pointer not argument?");
-      Mask = ArgIdx ? Ref : Mod;
-      break;
-    }
-    case Intrinsic::lifetime_start:
-    case Intrinsic::lifetime_end:
-    case Intrinsic::invariant_start: {
-      assert(ArgIdx == 1 && "Invalid argument index");
-      assert(Loc.Ptr == II->getArgOperand(ArgIdx) &&
-             "Intrinsic location pointer not argument?");
-      Loc.Size = cast<ConstantInt>(II->getArgOperand(0))->getZExtValue();
-      break;
-    }
-    case Intrinsic::invariant_end: {
-      assert(ArgIdx == 2 && "Invalid argument index");
-      assert(Loc.Ptr == II->getArgOperand(ArgIdx) &&
-             "Intrinsic location pointer not argument?");
-      Loc.Size = cast<ConstantInt>(II->getArgOperand(1))->getZExtValue();
-      break;
-    }
-    case Intrinsic::arm_neon_vld1: {
-      assert(ArgIdx == 0 && "Invalid argument index");
-      assert(Loc.Ptr == II->getArgOperand(ArgIdx) &&
-             "Intrinsic location pointer not argument?");
-      // LLVM's vld1 and vst1 intrinsics currently only support a single
-      // vector register.
-      if (DL)
-        Loc.Size = DL->getTypeStoreSize(II->getType());
-      break;
-    }
-    case Intrinsic::arm_neon_vst1: {
-      assert(ArgIdx == 0 && "Invalid argument index");
-      assert(Loc.Ptr == II->getArgOperand(ArgIdx) &&
-             "Intrinsic location pointer not argument?");
-      if (DL)
-        Loc.Size = DL->getTypeStoreSize(II->getArgOperand(1)->getType());
-      break;
-    }
+      return ArgIdx ? Ref : Mod;
     }
 
   // We can bound the aliasing properties of memset_pattern16 just as we can
   // for memcpy/memset.  This is particularly important because the
   // LoopIdiomRecognizer likes to turn loops into calls to memset_pattern16
   // whenever possible.
-  else if (CS.getCalledFunction() &&
-           isMemsetPattern16(CS.getCalledFunction(), TLI)) {
+  if (CS.getCalledFunction() &&
+      isMemsetPattern16(CS.getCalledFunction(), *TLI)) {
     assert((ArgIdx == 0 || ArgIdx == 1) &&
            "Invalid argument index for memset_pattern16");
-    if (ArgIdx == 1)
-      Loc.Size = 16;
-    else if (const ConstantInt *LenCI =
-             dyn_cast<ConstantInt>(CS.getArgument(2)))
-      Loc.Size = LenCI->getZExtValue();
-    assert(Loc.Ptr == CS.getArgument(ArgIdx) &&
-           "memset_pattern16 location pointer not argument?");
-    Mask = ArgIdx ? Ref : Mod;
+    return ArgIdx ? Ref : Mod;
   }
   // FIXME: Handle memset_pattern4 and memset_pattern8 also.
 
-  return Loc;
+  return AliasAnalysis::getArgModRefInfo(CS, ArgIdx);
 }
 
 static bool isAssumeIntrinsic(ImmutableCallSite CS) {

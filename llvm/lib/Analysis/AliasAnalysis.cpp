@@ -60,11 +60,10 @@ bool AliasAnalysis::pointsToConstantMemory(const Location &Loc,
   return AA->pointsToConstantMemory(Loc, OrLocal);
 }
 
-AliasAnalysis::Location
-AliasAnalysis::getArgLocation(ImmutableCallSite CS, unsigned ArgIdx,
-                              AliasAnalysis::ModRefResult &Mask) {
+AliasAnalysis::ModRefResult
+AliasAnalysis::getArgModRefInfo(ImmutableCallSite CS, unsigned ArgIdx) {
   assert(AA && "AA didn't call InitializeAliasAnalysis in its run method!");
-  return AA->getArgLocation(CS, ArgIdx, Mask);
+  return AA->getArgModRefInfo(CS, ArgIdx);
 }
 
 void AliasAnalysis::deleteValue(Value *V) {
@@ -122,11 +121,10 @@ AliasAnalysis::getModRefInfo(ImmutableCallSite CS,
         const Value *Arg = *AI;
         if (!Arg->getType()->isPointerTy())
           continue;
-        ModRefResult ArgMask;
-        Location CSLoc =
-          getArgLocation(CS, (unsigned) std::distance(CS.arg_begin(), AI),
-                         ArgMask);
-        if (!isNoAlias(CSLoc, Loc)) {
+        unsigned ArgIdx = std::distance(CS.arg_begin(), AI);
+        Location ArgLoc = MemoryLocation::getForArgument(CS, ArgIdx, *TLI);
+        if (!isNoAlias(ArgLoc, Loc)) {
+          ModRefResult ArgMask = getArgModRefInfo(CS, ArgIdx);
           doesAlias = true;
           AllArgsMask = ModRefResult(AllArgsMask | ArgMask);
         }
@@ -183,18 +181,18 @@ AliasAnalysis::getModRefInfo(ImmutableCallSite CS1, ImmutableCallSite CS2) {
         const Value *Arg = *I;
         if (!Arg->getType()->isPointerTy())
           continue;
-        ModRefResult ArgMask;
-        Location CS2Loc =
-          getArgLocation(CS2, (unsigned) std::distance(CS2.arg_begin(), I),
-                         ArgMask);
-        // ArgMask indicates what CS2 might do to CS2Loc, and the dependence of
+        unsigned CS2ArgIdx = std::distance(CS2.arg_begin(), I);
+        Location CS2ArgLoc = MemoryLocation::getForArgument(CS2, CS2ArgIdx, *TLI);
+
+        // ArgMask indicates what CS2 might do to CS2ArgLoc, and the dependence of
         // CS1 on that location is the inverse.
+        ModRefResult ArgMask = getArgModRefInfo(CS2, CS2ArgIdx);
         if (ArgMask == Mod)
           ArgMask = ModRef;
         else if (ArgMask == Ref)
           ArgMask = Mod;
 
-        R = ModRefResult((R | (getModRefInfo(CS1, CS2Loc) & ArgMask)) & Mask);
+        R = ModRefResult((R | (getModRefInfo(CS1, CS2ArgLoc) & ArgMask)) & Mask);
         if (R == Mask)
           break;
       }
@@ -212,13 +210,14 @@ AliasAnalysis::getModRefInfo(ImmutableCallSite CS1, ImmutableCallSite CS2) {
         const Value *Arg = *I;
         if (!Arg->getType()->isPointerTy())
           continue;
-        ModRefResult ArgMask;
-        Location CS1Loc = getArgLocation(
-            CS1, (unsigned)std::distance(CS1.arg_begin(), I), ArgMask);
-        // ArgMask indicates what CS1 might do to CS1Loc; if CS1 might Mod
-        // CS1Loc, then we care about either a Mod or a Ref by CS2. If CS1
+        unsigned CS1ArgIdx = std::distance(CS1.arg_begin(), I);
+        Location CS1ArgLoc = MemoryLocation::getForArgument(CS1, CS1ArgIdx, *TLI);
+
+        // ArgMask indicates what CS1 might do to CS1ArgLoc; if CS1 might Mod
+        // CS1ArgLoc, then we care about either a Mod or a Ref by CS2. If CS1
         // might Ref, then we care only about a Mod by CS2.
-        ModRefResult ArgR = getModRefInfo(CS2, CS1Loc);
+        ModRefResult ArgMask = getArgModRefInfo(CS1, CS1ArgIdx);
+        ModRefResult ArgR = getModRefInfo(CS2, CS1ArgLoc);
         if (((ArgMask & Mod) != NoModRef && (ArgR & ModRef) != NoModRef) ||
             ((ArgMask & Ref) != NoModRef && (ArgR & Mod)    != NoModRef))
           R = ModRefResult((R | ArgMask) & Mask);
