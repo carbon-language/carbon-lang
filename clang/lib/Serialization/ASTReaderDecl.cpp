@@ -365,6 +365,27 @@ namespace clang {
     void VisitObjCPropertyDecl(ObjCPropertyDecl *D);
     void VisitObjCPropertyImplDecl(ObjCPropertyImplDecl *D);
     void VisitOMPThreadPrivateDecl(OMPThreadPrivateDecl *D);
+
+    /// We've merged the definition \p MergedDef into the existing definition
+    /// \p Def. Ensure that \p Def is made visible whenever \p MergedDef is made
+    /// visible.
+    void mergeDefinitionVisibility(NamedDecl *Def, NamedDecl *MergedDef) {
+      if (Def->isHidden()) {
+        // If MergedDef is visible or becomes visible, make the definition visible.
+        if (!MergedDef->isHidden())
+          Def->Hidden = false;
+        else if (Reader.getContext().getLangOpts().ModulesLocalVisibility) {
+          Reader.getContext().mergeDefinitionIntoModule(
+              Def, MergedDef->getImportedOwningModule(),
+              /*NotifyListeners*/ false);
+          Reader.PendingMergedDefinitionsToDeduplicate.insert(Def);
+        } else {
+          auto SubmoduleID = MergedDef->getOwningModuleID();
+          assert(SubmoduleID && "hidden definition in no module");
+          Reader.HiddenNamesMap[Reader.getSubmodule(SubmoduleID)].push_back(Def);
+        }
+      }
+    }
   };
 }
 
@@ -588,6 +609,7 @@ void ASTDeclReader::VisitEnumDecl(EnumDecl *ED) {
     if (EnumDecl *&OldDef = Reader.EnumDefinitions[ED->getCanonicalDecl()]) {
       Reader.MergedDeclContexts.insert(std::make_pair(ED, OldDef));
       ED->IsCompleteDefinition = false;
+      mergeDefinitionVisibility(OldDef, ED);
     } else {
       OldDef = ED;
     }
@@ -1400,23 +1422,7 @@ void ASTDeclReader::MergeDefinitionData(
   if (DD.Definition != MergeDD.Definition) {
     Reader.MergedLookups[DD.Definition].push_back(MergeDD.Definition);
     DD.Definition->setHasExternalVisibleStorage();
-
-    if (DD.Definition->isHidden()) {
-      // If MergeDD is visible or becomes visible, make the definition visible.
-      if (!MergeDD.Definition->isHidden())
-        DD.Definition->Hidden = false;
-      else if (Reader.getContext().getLangOpts().ModulesLocalVisibility) {
-        Reader.getContext().mergeDefinitionIntoModule(
-            DD.Definition, MergeDD.Definition->getImportedOwningModule(),
-            /*NotifyListeners*/ false);
-        Reader.PendingMergedDefinitionsToDeduplicate.insert(DD.Definition);
-      } else {
-        auto SubmoduleID = MergeDD.Definition->getOwningModuleID();
-        assert(SubmoduleID && "hidden definition in no module");
-        Reader.HiddenNamesMap[Reader.getSubmodule(SubmoduleID)].push_back(
-            DD.Definition);
-      }
-    }
+    mergeDefinitionVisibility(DD.Definition, MergeDD.Definition);
   }
 
   auto PFDI = Reader.PendingFakeDefinitionData.find(&DD);
