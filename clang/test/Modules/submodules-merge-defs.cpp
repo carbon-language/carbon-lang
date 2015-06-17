@@ -82,3 +82,4 @@ J<> post_j;
 template<typename T, int N, template<typename> class K> struct J;
 J<> post_j2;
 FriendDefArg::Y<int> friend_def_arg;
+FriendDefArg::D<> friend_def_arg_d;

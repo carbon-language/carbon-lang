@@ -2924,13 +2924,13 @@ static void inheritDefaultTemplateArguments(ASTContext &Context,
     NamedDecl *ToParam = ToTP->getParam(N - I - 1);
 
     if (auto *FTTP = dyn_cast<TemplateTypeParmDecl>(FromParam)) {
-      if (inheritDefaultTemplateArgument(Context, FTTP, ToParam))
+      if (!inheritDefaultTemplateArgument(Context, FTTP, ToParam))
         break;
     } else if (auto *FNTTP = dyn_cast<NonTypeTemplateParmDecl>(FromParam)) {
-      if (inheritDefaultTemplateArgument(Context, FNTTP, ToParam))
+      if (!inheritDefaultTemplateArgument(Context, FNTTP, ToParam))
         break;
     } else {
-      if (inheritDefaultTemplateArgument(
+      if (!inheritDefaultTemplateArgument(
               Context, cast<TemplateTemplateParmDecl>(FromParam), ToParam))
         break;
     }

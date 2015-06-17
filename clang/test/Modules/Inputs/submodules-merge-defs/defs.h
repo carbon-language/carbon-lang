@@ -66,9 +66,11 @@ namespace FriendDefArg {
   template<typename = int> struct A;
   template<int = 0> struct B;
   template<template<typename> class = A> struct C;
+  template<typename = int, int = 0, template<typename> class = A> struct D {};
   template<typename U> struct Y {
     template<typename> friend struct A;
     template<int> friend struct B;
     template<template<typename> class> friend struct C;
+    template<typename, int, template<typename> class> friend struct D;
   };
 }
