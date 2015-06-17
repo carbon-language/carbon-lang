@@ -56,3 +56,9 @@ SanitizerMask clang::expandSanitizerGroups(SanitizerMask Kinds) {
 #include "clang/Basic/Sanitizers.def"
   return Kinds;
 }
+
+SanitizerMask clang::getSanitizersWithNoRequiredRuntime() {
+  return SanitizerKind::UndefinedTrap | SanitizerKind::CFI |
+         SanitizerKind::CFICastStrict | SanitizerKind::UnsignedIntegerOverflow |
+         SanitizerKind::LocalBounds;
+}
