@@ -1228,13 +1228,17 @@ Module *Sema::getOwningModule(Decl *Entity) {
 }
 
 void Sema::makeMergedDefinitionVisible(NamedDecl *ND, SourceLocation Loc) {
-  // FIXME: If ND is a template declaration, make the template parameters
-  // visible too. They're not (necessarily) within its DeclContext.
   if (auto *M = PP.getModuleContainingLocation(Loc))
     Context.mergeDefinitionIntoModule(ND, M);
   else
     // We're not building a module; just make the definition visible.
     ND->setHidden(false);
+
+  // If ND is a template declaration, make the template parameters
+  // visible too. They're not (necessarily) within a mergeable DeclContext.
+  if (auto *TD = dyn_cast<TemplateDecl>(ND))
+    for (auto *Param : *TD->getTemplateParameters())
+      makeMergedDefinitionVisible(Param, Loc);
 }
 
 /// \brief Find the module in which the given declaration was defined.
@@ -1296,8 +1300,12 @@ hasVisibleDefaultArgument(Sema &S, const ParmDecl *D,
     if (!DefaultArg.isInherited() && S.isVisible(D))
       return true;
 
-    if (!DefaultArg.isInherited() && Modules)
-      Modules->push_back(S.getOwningModule(const_cast<ParmDecl*>(D)));
+    if (!DefaultArg.isInherited() && Modules) {
+      auto *NonConstD = const_cast<ParmDecl*>(D);
+      Modules->push_back(S.getOwningModule(NonConstD));
+      const auto &Merged = S.Context.getModulesWithMergedDefinition(NonConstD);
+      Modules->insert(Modules->end(), Merged.begin(), Merged.end());
+    }
 
     // If there was a previous default argument, maybe its parameter is visible.
     D = DefaultArg.getInheritedFrom();
