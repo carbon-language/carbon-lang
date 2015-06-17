@@ -83,7 +83,7 @@ getStreamedModuleFromAssembly(LLVMContext &Context, SmallString<1024> &Mem,
   writeModuleToBuffer(parseAssembly(Assembly), Mem);
   std::unique_ptr<MemoryBuffer> Buffer =
       MemoryBuffer::getMemBuffer(Mem.str(), "test", false);
-  auto Streamer = make_unique<BufferDataStreamer>(std::move(Buffer));
+  auto Streamer = llvm::make_unique<BufferDataStreamer>(std::move(Buffer));
   ErrorOr<std::unique_ptr<Module>> ModuleOrErr =
       getStreamedBitcodeModule("test", std::move(Streamer), Context);
   return std::move(ModuleOrErr.get());
