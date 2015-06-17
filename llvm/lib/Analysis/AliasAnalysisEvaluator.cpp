@@ -47,8 +47,8 @@ static cl::opt<bool> EvalAAMD("evaluate-aa-metadata", cl::ReallyHidden);
 
 namespace {
   class AAEval : public FunctionPass {
-    unsigned NoAlias, MayAlias, PartialAlias, MustAlias;
-    unsigned NoModRef, Mod, Ref, ModRef;
+    unsigned NoAliasCount, MayAliasCount, PartialAliasCount, MustAliasCount;
+    unsigned NoModRefCount, ModCount, RefCount, ModRefCount;
 
   public:
     static char ID; // Pass identification, replacement for typeid
@@ -62,8 +62,8 @@ namespace {
     }
 
     bool doInitialization(Module &M) override {
-      NoAlias = MayAlias = PartialAlias = MustAlias = 0;
-      NoModRef = Mod = Ref = ModRef = 0;
+      NoAliasCount = MayAliasCount = PartialAliasCount = MustAliasCount = 0;
+      NoModRefCount = ModCount = RefCount = ModRefCount = 0;
 
       if (PrintAll) {
         PrintNoAlias = PrintMayAlias = true;
@@ -198,17 +198,21 @@ bool AAEval::runOnFunction(Function &F) {
       switch (AA.alias(*I1, I1Size, *I2, I2Size)) {
       case AliasAnalysis::NoAlias:
         PrintResults("NoAlias", PrintNoAlias, *I1, *I2, F.getParent());
-        ++NoAlias; break;
+        ++NoAliasCount;
+        break;
       case AliasAnalysis::MayAlias:
         PrintResults("MayAlias", PrintMayAlias, *I1, *I2, F.getParent());
-        ++MayAlias; break;
+        ++MayAliasCount;
+        break;
       case AliasAnalysis::PartialAlias:
         PrintResults("PartialAlias", PrintPartialAlias, *I1, *I2,
                      F.getParent());
-        ++PartialAlias; break;
+        ++PartialAliasCount;
+        break;
       case AliasAnalysis::MustAlias:
         PrintResults("MustAlias", PrintMustAlias, *I1, *I2, F.getParent());
-        ++MustAlias; break;
+        ++MustAliasCount;
+        break;
       }
     }
   }
@@ -224,19 +228,23 @@ bool AAEval::runOnFunction(Function &F) {
         case AliasAnalysis::NoAlias:
           PrintLoadStoreResults("NoAlias", PrintNoAlias, *I1, *I2,
                                 F.getParent());
-          ++NoAlias; break;
+          ++NoAliasCount;
+          break;
         case AliasAnalysis::MayAlias:
           PrintLoadStoreResults("MayAlias", PrintMayAlias, *I1, *I2,
                                 F.getParent());
-          ++MayAlias; break;
+          ++MayAliasCount;
+          break;
         case AliasAnalysis::PartialAlias:
           PrintLoadStoreResults("PartialAlias", PrintPartialAlias, *I1, *I2,
                                 F.getParent());
-          ++PartialAlias; break;
+          ++PartialAliasCount;
+          break;
         case AliasAnalysis::MustAlias:
           PrintLoadStoreResults("MustAlias", PrintMustAlias, *I1, *I2,
                                 F.getParent());
-          ++MustAlias; break;
+          ++MustAliasCount;
+          break;
         }
       }
     }
@@ -250,19 +258,23 @@ bool AAEval::runOnFunction(Function &F) {
         case AliasAnalysis::NoAlias:
           PrintLoadStoreResults("NoAlias", PrintNoAlias, *I1, *I2,
                                 F.getParent());
-          ++NoAlias; break;
+          ++NoAliasCount;
+          break;
         case AliasAnalysis::MayAlias:
           PrintLoadStoreResults("MayAlias", PrintMayAlias, *I1, *I2,
                                 F.getParent());
-          ++MayAlias; break;
+          ++MayAliasCount;
+          break;
         case AliasAnalysis::PartialAlias:
           PrintLoadStoreResults("PartialAlias", PrintPartialAlias, *I1, *I2,
                                 F.getParent());
-          ++PartialAlias; break;
+          ++PartialAliasCount;
+          break;
         case AliasAnalysis::MustAlias:
           PrintLoadStoreResults("MustAlias", PrintMustAlias, *I1, *I2,
                                 F.getParent());
-          ++MustAlias; break;
+          ++MustAliasCount;
+          break;
         }
       }
     }
@@ -282,16 +294,20 @@ bool AAEval::runOnFunction(Function &F) {
       switch (AA.getModRefInfo(*C, *V, Size)) {
       case AliasAnalysis::NoModRef:
         PrintModRefResults("NoModRef", PrintNoModRef, I, *V, F.getParent());
-        ++NoModRef; break;
+        ++NoModRefCount;
+        break;
       case AliasAnalysis::Mod:
         PrintModRefResults("Just Mod", PrintMod, I, *V, F.getParent());
-        ++Mod; break;
+        ++ModCount;
+        break;
       case AliasAnalysis::Ref:
         PrintModRefResults("Just Ref", PrintRef, I, *V, F.getParent());
-        ++Ref; break;
+        ++RefCount;
+        break;
       case AliasAnalysis::ModRef:
         PrintModRefResults("Both ModRef", PrintModRef, I, *V, F.getParent());
-        ++ModRef; break;
+        ++ModRefCount;
+        break;
       }
     }
   }
@@ -305,16 +321,20 @@ bool AAEval::runOnFunction(Function &F) {
       switch (AA.getModRefInfo(*C, *D)) {
       case AliasAnalysis::NoModRef:
         PrintModRefResults("NoModRef", PrintNoModRef, *C, *D, F.getParent());
-        ++NoModRef; break;
+        ++NoModRefCount;
+        break;
       case AliasAnalysis::Mod:
         PrintModRefResults("Just Mod", PrintMod, *C, *D, F.getParent());
-        ++Mod; break;
+        ++ModCount;
+        break;
       case AliasAnalysis::Ref:
         PrintModRefResults("Just Ref", PrintRef, *C, *D, F.getParent());
-        ++Ref; break;
+        ++RefCount;
+        break;
       case AliasAnalysis::ModRef:
         PrintModRefResults("Both ModRef", PrintModRef, *C, *D, F.getParent());
-        ++ModRef; break;
+        ++ModRefCount;
+        break;
       }
     }
   }
@@ -328,43 +348,47 @@ static void PrintPercent(unsigned Num, unsigned Sum) {
 }
 
 bool AAEval::doFinalization(Module &M) {
-  unsigned AliasSum = NoAlias + MayAlias + PartialAlias + MustAlias;
+  unsigned AliasSum =
+      NoAliasCount + MayAliasCount + PartialAliasCount + MustAliasCount;
   errs() << "===== Alias Analysis Evaluator Report =====\n";
   if (AliasSum == 0) {
     errs() << "  Alias Analysis Evaluator Summary: No pointers!\n";
   } else {
     errs() << "  " << AliasSum << " Total Alias Queries Performed\n";
-    errs() << "  " << NoAlias << " no alias responses ";
-    PrintPercent(NoAlias, AliasSum);
-    errs() << "  " << MayAlias << " may alias responses ";
-    PrintPercent(MayAlias, AliasSum);
-    errs() << "  " << PartialAlias << " partial alias responses ";
-    PrintPercent(PartialAlias, AliasSum);
-    errs() << "  " << MustAlias << " must alias responses ";
-    PrintPercent(MustAlias, AliasSum);
+    errs() << "  " << NoAliasCount << " no alias responses ";
+    PrintPercent(NoAliasCount, AliasSum);
+    errs() << "  " << MayAliasCount << " may alias responses ";
+    PrintPercent(MayAliasCount, AliasSum);
+    errs() << "  " << PartialAliasCount << " partial alias responses ";
+    PrintPercent(PartialAliasCount, AliasSum);
+    errs() << "  " << MustAliasCount << " must alias responses ";
+    PrintPercent(MustAliasCount, AliasSum);
     errs() << "  Alias Analysis Evaluator Pointer Alias Summary: "
-           << NoAlias*100/AliasSum  << "%/" << MayAlias*100/AliasSum << "%/"
-           << PartialAlias*100/AliasSum << "%/"
-           << MustAlias*100/AliasSum << "%\n";
+           << NoAliasCount * 100 / AliasSum << "%/"
+           << MayAliasCount * 100 / AliasSum << "%/"
+           << PartialAliasCount * 100 / AliasSum << "%/"
+           << MustAliasCount * 100 / AliasSum << "%\n";
   }
 
   // Display the summary for mod/ref analysis
-  unsigned ModRefSum = NoModRef + Mod + Ref + ModRef;
+  unsigned ModRefSum = NoModRefCount + ModCount + RefCount + ModRefCount;
   if (ModRefSum == 0) {
-    errs() << "  Alias Analysis Mod/Ref Evaluator Summary: no mod/ref!\n";
+    errs() << "  Alias Analysis Mod/Ref Evaluator Summary: no "
+              "mod/ref!\n";
   } else {
     errs() << "  " << ModRefSum << " Total ModRef Queries Performed\n";
-    errs() << "  " << NoModRef << " no mod/ref responses ";
-    PrintPercent(NoModRef, ModRefSum);
-    errs() << "  " << Mod << " mod responses ";
-    PrintPercent(Mod, ModRefSum);
-    errs() << "  " << Ref << " ref responses ";
-    PrintPercent(Ref, ModRefSum);
-    errs() << "  " << ModRef << " mod & ref responses ";
-    PrintPercent(ModRef, ModRefSum);
+    errs() << "  " << NoModRefCount << " no mod/ref responses ";
+    PrintPercent(NoModRefCount, ModRefSum);
+    errs() << "  " << ModCount << " mod responses ";
+    PrintPercent(ModCount, ModRefSum);
+    errs() << "  " << RefCount << " ref responses ";
+    PrintPercent(RefCount, ModRefSum);
+    errs() << "  " << ModRefCount << " mod & ref responses ";
+    PrintPercent(ModRefCount, ModRefSum);
     errs() << "  Alias Analysis Evaluator Mod/Ref Summary: "
-           << NoModRef*100/ModRefSum  << "%/" << Mod*100/ModRefSum << "%/"
-           << Ref*100/ModRefSum << "%/" << ModRef*100/ModRefSum << "%\n";
+           << NoModRefCount * 100 / ModRefSum << "%/"
+           << ModCount * 100 / ModRefSum << "%/" << RefCount * 100 / ModRefSum
+           << "%/" << ModRefCount * 100 / ModRefSum << "%\n";
   }
 
   return false;
