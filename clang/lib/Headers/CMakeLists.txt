@@ -62,6 +62,7 @@ set(files
   x86intrin.h
   xmmintrin.h
   xopintrin.h
+  xtestintrin.h
   )
 
 set(output_dir ${LLVM_LIBRARY_OUTPUT_INTDIR}/clang/${CLANG_VERSION}/include)

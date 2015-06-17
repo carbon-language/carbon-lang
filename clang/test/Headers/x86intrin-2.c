@@ -130,4 +130,8 @@ __m128 __attribute__((__target__("f16c"))) mm_cvtph_ps_wrap(__m128i a) {
   return _mm_cvtph_ps(a);
 }
 
+int __attribute__((__target__("rtm"))) xtest_wrap(void) {
+  return _xtest();
+}
+
 #endif
