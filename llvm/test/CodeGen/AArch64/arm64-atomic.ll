@@ -14,6 +14,22 @@ define i32 @val_compare_and_swap(i32* %p, i32 %cmp, i32 %new) #0 {
   ret i32 %val
 }
 
+define i32 @val_compare_and_swap_from_load(i32* %p, i32 %cmp, i32* %pnew) #0 {
+; CHECK-LABEL: val_compare_and_swap_from_load:
+; CHECK-NEXT: ldr    [[NEW:w[0-9]+]], [x2]
+; CHECK-NEXT: [[LABEL:.?LBB[0-9]+_[0-9]+]]:
+; CHECK-NEXT: ldaxr  [[RESULT:w[0-9]+]], [x0]
+; CHECK-NEXT: cmp    [[RESULT]], w1
+; CHECK-NEXT: b.ne   [[LABEL2:.?LBB[0-9]+_[0-9]+]]
+; CHECK-NEXT: stxr   [[SCRATCH_REG:w[0-9]+]], [[NEW]], [x0]
+; CHECK-NEXT: cbnz   [[SCRATCH_REG]], [[LABEL]]
+; CHECK-NEXT: [[LABEL2]]:
+  %new = load i32, i32* %pnew
+  %pair = cmpxchg i32* %p, i32 %cmp, i32 %new acquire acquire
+  %val = extractvalue { i32, i1 } %pair, 0
+  ret i32 %val
+}
+
 define i32 @val_compare_and_swap_rel(i32* %p, i32 %cmp, i32 %new) #0 {
 ; CHECK-LABEL: val_compare_and_swap_rel:
 ; CHECK-NEXT: [[LABEL:.?LBB[0-9]+_[0-9]+]]:

@@ -135,8 +135,8 @@ class TypePromotionTransaction;
     /// multiple load/stores of the same address.
     ValueMap<Value*, Value*> SunkAddrs;
 
-    /// Keeps track of all truncates inserted for the current function.
-    SetOfInstrs InsertedTruncsSet;
+    /// Keeps track of all instructions inserted for the current function.
+    SetOfInstrs InsertedInsts;
     /// Keeps track of the type of the related instruction before their
     /// promotion for the current function.
     InstrToOrigTy PromotedInsts;
@@ -205,7 +205,7 @@ bool CodeGenPrepare::runOnFunction(Function &F) {
 
   bool EverMadeChange = false;
   // Clear per function information.
-  InsertedTruncsSet.clear();
+  InsertedInsts.clear();
   PromotedInsts.clear();
 
   ModifiedDT = false;
@@ -1406,6 +1406,9 @@ bool CodeGenPrepare::OptimizeCallInst(CallInst *CI, bool& ModifiedDT) {
         return false;
       // Sink a zext feeding stlxr/stxr before it, so it can be folded into it.
       ExtVal->moveBefore(CI);
+      // Mark this instruction as "inserted by CGP", so that other
+      // optimizations don't touch it.
+      InsertedInsts.insert(ExtVal);
       return true;
     }
     }
@@ -2107,8 +2110,8 @@ class AddressingModeMatcher {
   /// part of the return value of this addressing mode matching stuff.
   ExtAddrMode &AddrMode;
 
-  /// The truncate instruction inserted by other CodeGenPrepare optimizations.
-  const SetOfInstrs &InsertedTruncs;
+  /// The instructions inserted by other CodeGenPrepare optimizations.
+  const SetOfInstrs &InsertedInsts;
   /// A map from the instructions to their type before promotion.
   InstrToOrigTy &PromotedInsts;
   /// The ongoing transaction where every action should be registered.
@@ -2122,14 +2125,14 @@ class AddressingModeMatcher {
   AddressingModeMatcher(SmallVectorImpl<Instruction *> &AMI,
                         const TargetMachine &TM, Type *AT, unsigned AS,
                         Instruction *MI, ExtAddrMode &AM,
-                        const SetOfInstrs &InsertedTruncs,
+                        const SetOfInstrs &InsertedInsts,
                         InstrToOrigTy &PromotedInsts,
                         TypePromotionTransaction &TPT)
       : AddrModeInsts(AMI), TM(TM),
         TLI(*TM.getSubtargetImpl(*MI->getParent()->getParent())
                  ->getTargetLowering()),
         AccessTy(AT), AddrSpace(AS), MemoryInst(MI), AddrMode(AM),
-        InsertedTruncs(InsertedTruncs), PromotedInsts(PromotedInsts), TPT(TPT) {
+        InsertedInsts(InsertedInsts), PromotedInsts(PromotedInsts), TPT(TPT) {
     IgnoreProfitability = false;
   }
 public:
@@ -2137,8 +2140,7 @@ public:
   /// Match - Find the maximal addressing mode that a load/store of V can fold,
   /// give an access type of AccessTy.  This returns a list of involved
   /// instructions in AddrModeInsts.
-  /// \p InsertedTruncs The truncate instruction inserted by other
-  /// CodeGenPrepare
+  /// \p InsertedInsts The instructions inserted by other CodeGenPrepare
   /// optimizations.
   /// \p PromotedInsts maps the instructions to their type before promotion.
   /// \p The ongoing transaction where every action should be registered.
@@ -2146,13 +2148,13 @@ public:
                            Instruction *MemoryInst,
                            SmallVectorImpl<Instruction*> &AddrModeInsts,
                            const TargetMachine &TM,
-                           const SetOfInstrs &InsertedTruncs,
+                           const SetOfInstrs &InsertedInsts,
                            InstrToOrigTy &PromotedInsts,
                            TypePromotionTransaction &TPT) {
     ExtAddrMode Result;
 
     bool Success = AddressingModeMatcher(AddrModeInsts, TM, AccessTy, AS,
-                                         MemoryInst, Result, InsertedTruncs,
+                                         MemoryInst, Result, InsertedInsts,
                                          PromotedInsts, TPT).MatchAddr(V, 0);
     (void)Success; assert(Success && "Couldn't select *anything*?");
     return Result;
@@ -2361,12 +2363,12 @@ public:
   /// action to promote the operand of \p Ext instead of using Ext.
   /// \return NULL if no promotable action is possible with the current
   /// sign extension.
-  /// \p InsertedTruncs keeps track of all the truncate instructions inserted by
-  /// the others CodeGenPrepare optimizations. This information is important
+  /// \p InsertedInsts keeps track of all the instructions inserted by the
+  /// other CodeGenPrepare optimizations. This information is important
   /// because we do not want to promote these instructions as CodeGenPrepare
   /// will reinsert them later. Thus creating an infinite loop: create/remove.
   /// \p PromotedInsts maps the instructions to their type before promotion.
-  static Action getAction(Instruction *Ext, const SetOfInstrs &InsertedTruncs,
+  static Action getAction(Instruction *Ext, const SetOfInstrs &InsertedInsts,
                           const TargetLowering &TLI,
                           const InstrToOrigTy &PromotedInsts);
 };
@@ -2439,7 +2441,7 @@ bool TypePromotionHelper::canGetThrough(const Instruction *Inst,
 }
 
 TypePromotionHelper::Action TypePromotionHelper::getAction(
-    Instruction *Ext, const SetOfInstrs &InsertedTruncs,
+    Instruction *Ext, const SetOfInstrs &InsertedInsts,
     const TargetLowering &TLI, const InstrToOrigTy &PromotedInsts) {
   assert((isa<SExtInst>(Ext) || isa<ZExtInst>(Ext)) &&
          "Unexpected instruction type");
@@ -2455,7 +2457,7 @@ TypePromotionHelper::Action TypePromotionHelper::getAction(
   // Do not promote if the operand has been added by codegenprepare.
   // Otherwise, it means we are undoing an optimization that is likely to be
   // redone, thus causing potential infinite loop.
-  if (isa<TruncInst>(ExtOpnd) && InsertedTruncs.count(ExtOpnd))
+  if (isa<TruncInst>(ExtOpnd) && InsertedInsts.count(ExtOpnd))
     return nullptr;
 
   // SExt or Trunc instructions.
@@ -2839,7 +2841,7 @@ bool AddressingModeMatcher::MatchOperationAddr(User *AddrInst, unsigned Opcode,
     // Try to move this ext out of the way of the addressing mode.
     // Ask for a method for doing so.
     TypePromotionHelper::Action TPH =
-        TypePromotionHelper::getAction(Ext, InsertedTruncs, TLI, PromotedInsts);
+        TypePromotionHelper::getAction(Ext, InsertedInsts, TLI, PromotedInsts);
     if (!TPH)
       return false;
 
@@ -3157,7 +3159,7 @@ IsProfitableToFoldIntoAddressingMode(Instruction *I, ExtAddrMode &AMBefore,
     TypePromotionTransaction::ConstRestorationPt LastKnownGood =
         TPT.getRestorationPoint();
     AddressingModeMatcher Matcher(MatchedAddrModeInsts, TM, AddressAccessTy, AS,
-                                  MemoryInst, Result, InsertedTruncs,
+                                  MemoryInst, Result, InsertedInsts,
                                   PromotedInsts, TPT);
     Matcher.IgnoreProfitability = true;
     bool Success = Matcher.MatchAddr(Address, 0);
@@ -3240,7 +3242,7 @@ bool CodeGenPrepare::OptimizeMemoryInst(Instruction *MemoryInst, Value *Addr,
     SmallVector<Instruction*, 16> NewAddrModeInsts;
     ExtAddrMode NewAddrMode = AddressingModeMatcher::Match(
       V, AccessTy, AddrSpace, MemoryInst, NewAddrModeInsts, *TM,
-      InsertedTruncsSet, PromotedInsts, TPT);
+      InsertedInsts, PromotedInsts, TPT);
 
     // This check is broken into two cases with very similar code to avoid using
     // getNumUses() as much as possible. Some values have a lot of uses, so
@@ -3652,7 +3654,7 @@ bool CodeGenPrepare::ExtLdPromotion(TypePromotionTransaction &TPT,
       continue;
     // Get the action to perform the promotion.
     TypePromotionHelper::Action TPH = TypePromotionHelper::getAction(
-        I, InsertedTruncsSet, *TLI, PromotedInsts);
+        I, InsertedInsts, *TLI, PromotedInsts);
     // Check if we can promote.
     if (!TPH)
       continue;
@@ -3828,7 +3830,7 @@ bool CodeGenPrepare::OptimizeExtUses(Instruction *I) {
     if (!InsertedTrunc) {
       BasicBlock::iterator InsertPt = UserBB->getFirstInsertionPt();
       InsertedTrunc = new TruncInst(I, Src->getType(), "", InsertPt);
-      InsertedTruncsSet.insert(InsertedTrunc);
+      InsertedInsts.insert(InsertedTrunc);
     }
 
     // Replace a use of the {s|z}ext source with a use of the result.
@@ -4357,6 +4359,11 @@ bool CodeGenPrepare::OptimizeExtractElementInst(Instruction *Inst) {
 }
 
 bool CodeGenPrepare::OptimizeInst(Instruction *I, bool& ModifiedDT) {
+  // Bail out if we inserted the instruction to prevent optimizations from
+  // stepping on each other's toes.
+  if (InsertedInsts.count(I))
+    return false;
+
   if (PHINode *P = dyn_cast<PHINode>(I)) {
     // It is possible for very late stage optimizations (such as SimplifyCFG)
     // to introduce PHI nodes too late to be cleaned up.  If we detect such a
