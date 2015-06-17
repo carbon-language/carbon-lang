@@ -774,7 +774,15 @@ void UnwrappedLineParser::parseStructuralElement() {
         parseBracedList();
       break;
     case tok::kw_enum:
+      // parseEnum falls through and does not yet add an unwrapped line as an
+      // enum definition can start a structural element.
       parseEnum();
+      // This does not apply for Java and JavaScript.
+      if (Style.Language == FormatStyle::LK_Java ||
+          Style.Language == FormatStyle::LK_JavaScript) {
+        addUnwrappedLine();
+        return;
+      }
       break;
     case tok::kw_typedef:
       nextToken();
@@ -1512,8 +1520,8 @@ void UnwrappedLineParser::parseEnum() {
     addUnwrappedLine();
   }
 
-  // We fall through to parsing a structural element afterwards, so that in
-  // enum A {} n, m;
+  // There is no addUnwrappedLine() here so that we fall through to parsing a
+  // structural element afterwards. Thus, in "enum A {} n, m;",
   // "} n, m;" will end up in one unwrapped line.
 }
 
@@ -1630,9 +1638,9 @@ void UnwrappedLineParser::parseRecord() {
     parseBlock(/*MustBeDeclaration=*/true, /*AddLevel=*/true,
                /*MunchSemi=*/false);
   }
-  // We fall through to parsing a structural element afterwards, so
-  // class A {} n, m;
-  // will end up in one unwrapped line.
+  // There is no addUnwrappedLine() here so that we fall through to parsing a
+  // structural element afterwards. Thus, in "class A {} n, m;",
+  // "} n, m;" will end up in one unwrapped line.
 }
 
 void UnwrappedLineParser::parseObjCProtocolList() {
