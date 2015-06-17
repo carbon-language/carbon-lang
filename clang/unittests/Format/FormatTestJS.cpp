@@ -690,6 +690,14 @@ TEST_F(FormatTestJS, InterfaceDeclarations) {
 
 TEST_F(FormatTestJS, EnumDeclarations) {
   verifyFormat("enum Foo {\n"
+               "  A = 1,\n"
+               "  B\n"
+               "}");
+  verifyFormat("export /* somecomment*/ enum Foo {\n"
+               "  A = 1,\n"
+               "  B\n"
+               "}");
+  verifyFormat("enum Foo {\n"
                "  A = 1,  // comment\n"
                "  B\n"
                "}\n"

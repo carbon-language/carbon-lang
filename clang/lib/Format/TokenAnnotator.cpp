@@ -2010,6 +2010,40 @@ bool TokenAnnotator::mustBreakBefore(const AnnotatedLine &Line,
   if (Right.NewlinesBefore > 1)
     return true;
 
+  if (Style.Language == FormatStyle::LK_JavaScript) {
+    // FIXME: This might apply to other languages and token kinds.
+    if (Right.is(tok::char_constant) && Left.is(tok::plus) && Left.Previous &&
+        Left.Previous->is(tok::char_constant))
+      return true;
+    if (Left.is(TT_DictLiteral) && Left.is(tok::l_brace) &&
+        Line.Level == 0 && Left.Previous &&
+        Left.Previous->is(tok::equal) &&
+        Line.First->isOneOf(tok::identifier, Keywords.kw_import,
+                            tok::kw_export, tok::kw_const) &&
+        // kw_var is a pseudo-token that's a tok::identifier, so matches above.
+        !Line.startsWith(Keywords.kw_var))
+      // Object literals on the top level of a file are treated as "enum-style".
+      // Each key/value pair is put on a separate line, instead of bin-packing.
+      return true;
+    if (Left.is(tok::l_brace) && Line.Level == 0 &&
+        (Line.startsWith(tok::kw_enum) ||
+         Line.startsWith(tok::kw_export, tok::kw_enum)))
+      // JavaScript top-level enum key/value pairs are put on separate lines
+      // instead of bin-packing.
+      return true;
+    if (Right.is(tok::r_brace) && Left.is(tok::l_brace) &&
+        !Left.Children.empty())
+      // Support AllowShortFunctionsOnASingleLine for JavaScript.
+      return Style.AllowShortFunctionsOnASingleLine == FormatStyle::SFS_None ||
+             (Left.NestingLevel == 0 && Line.Level == 0 &&
+              Style.AllowShortFunctionsOnASingleLine ==
+                  FormatStyle::SFS_Inline);
+  } else if (Style.Language == FormatStyle::LK_Java) {
+    if (Right.is(tok::plus) && Left.is(tok::string_literal) && Right.Next &&
+        Right.Next->is(tok::string_literal))
+      return true;
+  }
+
   // If the last token before a '}' is a comma or a trailing comment, the
   // intention is to insert a line break after it in order to make shuffling
   // around entries easier.
@@ -2060,12 +2094,6 @@ bool TokenAnnotator::mustBreakBefore(const AnnotatedLine &Line,
     return true;
   if (Right.is(TT_InlineASMBrace))
     return Right.HasUnescapedNewline;
-  if (Style.Language == FormatStyle::LK_JavaScript && Right.is(tok::r_brace) &&
-      Left.is(tok::l_brace) && !Left.Children.empty())
-    // Support AllowShortFunctionsOnASingleLine for JavaScript.
-    return Style.AllowShortFunctionsOnASingleLine == FormatStyle::SFS_None ||
-           (Left.NestingLevel == 0 && Line.Level == 0 &&
-            Style.AllowShortFunctionsOnASingleLine == FormatStyle::SFS_Inline);
   if (isAllmanBrace(Left) || isAllmanBrace(Right))
     return Style.BreakBeforeBraces == FormatStyle::BS_Allman ||
            Style.BreakBeforeBraces == FormatStyle::BS_GNU;
@@ -2081,27 +2109,6 @@ bool TokenAnnotator::mustBreakBefore(const AnnotatedLine &Line,
       Right.isNot(TT_LeadingJavaAnnotation) && Right.isNot(tok::l_paren) &&
       Line.Last->is(tok::l_brace))
     return true;
-
-  if (Style.Language == FormatStyle::LK_JavaScript) {
-    // FIXME: This might apply to other languages and token kinds.
-    if (Right.is(tok::char_constant) && Left.is(tok::plus) && Left.Previous &&
-        Left.Previous->is(tok::char_constant))
-      return true;
-    if (Left.is(TT_DictLiteral) && Left.is(tok::l_brace) &&
-        Line.Level == 0 && Left.Previous &&
-        Left.Previous->is(tok::equal) &&
-        Line.First->isOneOf(tok::identifier, Keywords.kw_import,
-                            tok::kw_export, tok::kw_const) &&
-        // kw_var is a pseudo-token that's a tok::identifier, so matches above.
-        !Line.startsWith(Keywords.kw_var))
-      // Object literals on the top level of a file are treated as "enum-style".
-      // Each key/value pair is put on a separate line, instead of bin-packing.
-      return true;
-  } else if (Style.Language == FormatStyle::LK_Java) {
-    if (Right.is(tok::plus) && Left.is(tok::string_literal) && Right.Next &&
-        Right.Next->is(tok::string_literal))
-      return true;
-  }
 
   return false;
 }
