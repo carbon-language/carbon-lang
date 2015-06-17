@@ -1963,12 +1963,11 @@ bool MipsAsmParser::loadSymbolAddress(const MCExpr *SymExpr, unsigned DstReg,
 
   MCInst tmpInst;
   const MCSymbolRefExpr *Symbol = cast<MCSymbolRefExpr>(SymExpr);
-  const MCSymbolRefExpr *HiExpr =
-      MCSymbolRefExpr::create(Symbol->getSymbol().getName(),
-                              MCSymbolRefExpr::VK_Mips_ABS_HI, getContext());
-  const MCSymbolRefExpr *LoExpr =
-      MCSymbolRefExpr::create(Symbol->getSymbol().getName(),
-                              MCSymbolRefExpr::VK_Mips_ABS_LO, getContext());
+  const MCSymbolRefExpr *HiExpr = MCSymbolRefExpr::create(
+      &Symbol->getSymbol(), MCSymbolRefExpr::VK_Mips_ABS_HI, getContext());
+  const MCSymbolRefExpr *LoExpr = MCSymbolRefExpr::create(
+      &Symbol->getSymbol(), MCSymbolRefExpr::VK_Mips_ABS_LO, getContext());
+
   if (!Is32BitSym) {
     // If it's a 64-bit architecture, expand to:
     // la d,sym => lui  d,highest(sym)
@@ -1977,12 +1976,10 @@ bool MipsAsmParser::loadSymbolAddress(const MCExpr *SymExpr, unsigned DstReg,
     //             ori  d,d,hi16(sym)
     //             dsll d,d,16
     //             ori  d,d,lo16(sym)
-    const MCSymbolRefExpr *HighestExpr =
-        MCSymbolRefExpr::create(Symbol->getSymbol().getName(),
-                                MCSymbolRefExpr::VK_Mips_HIGHEST, getContext());
-    const MCSymbolRefExpr *HigherExpr =
-        MCSymbolRefExpr::create(Symbol->getSymbol().getName(),
-                                MCSymbolRefExpr::VK_Mips_HIGHER, getContext());
+    const MCSymbolRefExpr *HighestExpr = MCSymbolRefExpr::create(
+        &Symbol->getSymbol(), MCSymbolRefExpr::VK_Mips_HIGHEST, getContext());
+    const MCSymbolRefExpr *HigherExpr = MCSymbolRefExpr::create(
+        &Symbol->getSymbol(), MCSymbolRefExpr::VK_Mips_HIGHER, getContext());
 
     tmpInst.setOpcode(Mips::LUi);
     tmpInst.addOperand(MCOperand::createReg(DstReg));
