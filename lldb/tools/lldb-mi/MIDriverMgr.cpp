@@ -626,6 +626,7 @@ CMIDriverMgr::GetHelpOnCmdLineArgOptions(void) const
         MIRSRC(IDE_MI_APP_ARG_VERSION),
         MIRSRC(IDE_MI_APP_ARG_VERSION_LONG),
         MIRSRC(IDE_MI_APP_ARG_INTERPRETER),
+        MIRSRC(IDE_MI_APP_ARG_SOURCE),
         MIRSRC(IDE_MI_APP_ARG_EXECUTEABLE),
         CMIUtilString::Format(MIRSRC(IDE_MI_APP_ARG_APP_LOG), CMICmnLogMediumFile::Instance().GetFileName().c_str()),
         MIRSRC(IDE_MI_APP_ARG_APP_LOG_DIR),
