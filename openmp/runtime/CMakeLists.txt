@@ -333,6 +333,9 @@ endif()
 if(${LIBOMP_USE_ADAPTIVE_LOCKS} AND NOT(${IA32} OR ${INTEL64}))
     error_say("Adaptive locks (TSX) functionality is only supported on x86 Architecture")
 endif()
+if(${LIBOMP_OMPT_SUPPORT} AND ${WINDOWS})
+    error_say("OpenMP Tools Interface is not supported on Windows")
+endif()
 
 ###############################################
 # - Create the suffix for the export directory

@@ -139,14 +139,14 @@ Should the Fortran modules be created (requires Fortran compiler)
 Should include stats-gathering code?
 
 -DLIBOMP_OMPT_SUPPORT=off|on
-Should OMPT support be turned on?
-If ompt_support is off, then both ompt_blame and ompt_trace are ignored.
+Should OMPT support be turned on? (Not supported on Windows)
+If LIBOMP_OMPT_SUPPORT is off, then both ompt_blame and ompt_trace are ignored.
 
 -DLIBOMP_OMPT_BLAME=on|off
-should OMPT blame functionality be turned on?
+Should OMPT blame functionality be turned on?
 
 -DLIBOMP_OMPT_TRACE=on|off
-should OMPT trace functionality be turned on?
+Should OMPT trace functionality be turned on?
 
 =====================
 ==== Micro tests ====
