@@ -27,8 +27,9 @@ entry:
 ; CHECK: cvta.to.global.u64 %rd[[A1_REG:[0-9]+]], %rd[[A_REG]]
 ; FIXME: casting A1_REG to A2_REG is unnecessary; A2_REG is essentially A_REG
 ; CHECK: cvta.global.u64 %rd[[A2_REG:[0-9]+]], %rd[[A1_REG]]
+; CHECK: cvta.local.u64 %rd[[SP_REG:[0-9]+]]
 ; CHECK: ld.global.f32 %f[[A0_REG:[0-9]+]], [%rd[[A1_REG]]]
-; CHECK: st.f32 [%SP+0], %f[[A0_REG]]
+; CHECK: st.local.f32 [{{%rd[0-9]+}}], %f[[A0_REG]]
 
   %0 = load float, float* %a, align 4
   %1 = bitcast [16 x i8]* %buf to float*
@@ -49,7 +50,6 @@ entry:
   %7 = bitcast i8* %arrayidx7 to float*
   store float %6, float* %7, align 4
 
-; CHECK: add.u64 %rd[[SP_REG:[0-9]+]], %SP, 0
 ; CHECK:        .param .b64 param0;
 ; CHECK-NEXT:   st.param.b64  [param0+0], %rd[[A2_REG]]
 ; CHECK-NEXT:   .param .b64 param1;

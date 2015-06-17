@@ -70,6 +70,7 @@ MachineFunctionPass *createNVPTXPrologEpilogPass();
 MachineFunctionPass *createNVPTXReplaceImageHandlesPass();
 FunctionPass *createNVPTXImageOptimizerPass();
 FunctionPass *createNVPTXLowerKernelArgsPass(const NVPTXTargetMachine *TM);
+BasicBlockPass *createNVPTXLowerAllocaPass();
 
 bool isImageOrSamplerVal(const Value *, const Module *);
 

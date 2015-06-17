@@ -54,6 +54,7 @@ void initializeNVPTXAllocaHoistingPass(PassRegistry &);
 void initializeNVPTXAssignValidGlobalNamesPass(PassRegistry&);
 void initializeNVPTXFavorNonGenericAddrSpacesPass(PassRegistry &);
 void initializeNVPTXLowerKernelArgsPass(PassRegistry &);
+void initializeNVPTXLowerAllocaPass(PassRegistry &);
 }
 
 extern "C" void LLVMInitializeNVPTXTarget() {
@@ -70,6 +71,7 @@ extern "C" void LLVMInitializeNVPTXTarget() {
   initializeNVPTXFavorNonGenericAddrSpacesPass(
     *PassRegistry::getPassRegistry());
   initializeNVPTXLowerKernelArgsPass(*PassRegistry::getPassRegistry());
+  initializeNVPTXLowerAllocaPass(*PassRegistry::getPassRegistry());
 }
 
 static std::string computeDataLayout(bool is64Bit) {
@@ -166,12 +168,11 @@ void NVPTXPassConfig::addIRPasses() {
   addPass(createNVPTXAssignValidGlobalNamesPass());
   addPass(createGenericToNVVMPass());
   addPass(createNVPTXLowerKernelArgsPass(&getNVPTXTargetMachine()));
-  addPass(createNVPTXFavorNonGenericAddrSpacesPass());
   // NVPTXLowerKernelArgs emits alloca for byval parameters which can often
-  // be eliminated by SROA. We do not run SROA right after NVPTXLowerKernelArgs
-  // because we plan to merge NVPTXLowerKernelArgs and
-  // NVPTXFavorNonGenericAddrSpaces into one pass.
+  // be eliminated by SROA.
   addPass(createSROAPass());
+  addPass(createNVPTXLowerAllocaPass());
+  addPass(createNVPTXFavorNonGenericAddrSpacesPass());
   // FavorNonGenericAddrSpaces shortcuts unnecessary addrspacecasts, and leave
   // them unused. We could remove dead code in an ad-hoc manner, but that
   // requires manual work and might be error-prone.

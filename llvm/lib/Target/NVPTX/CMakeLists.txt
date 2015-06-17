@@ -21,6 +21,7 @@ set(NVPTXCodeGen_sources
   NVPTXInstrInfo.cpp
   NVPTXLowerAggrCopies.cpp
   NVPTXLowerKernelArgs.cpp
+  NVPTXLowerAlloca.cpp
   NVPTXMCExpr.cpp
   NVPTXPrologEpilogPass.cpp
   NVPTXRegisterInfo.cpp
