@@ -60,6 +60,11 @@
 # CHECK:                                 #   fixup A - offset: 0, value: ($tmp0)@ABS_HI, kind: fixup_Mips_HI16
 # CHECK: lw  $8, %lo($tmp0)($8)          # encoding: [A,A,0x08,0x8d]
 # CHECK:                                 #   fixup A - offset: 0, value: ($tmp0)@ABS_LO, kind: fixup_Mips_LO16
+  sw $8, 1f
+# CHECK: lui $1, %hi($tmp0)              # encoding: [A,A,0x01,0x3c]
+# CHECK:                                 #   fixup A - offset: 0, value: ($tmp0)@ABS_HI, kind: fixup_Mips_HI16
+# CHECK: sw  $8, %lo($tmp0)($1)          # encoding: [A,A,0x28,0xac]
+# CHECK:                                 #   fixup A - offset: 0, value: ($tmp0)@ABS_LO, kind: fixup_Mips_LO16
 
   lw $10, 655483($4)
 # CHECK: lui     $10, 10                 # encoding: [0x0a,0x00,0x0a,0x3c]
