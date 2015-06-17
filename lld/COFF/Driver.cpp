@@ -355,6 +355,18 @@ bool LinkerDriver::link(int Argc, const char *Argv[]) {
     return false;
   }
 
+  // Handle /def
+  if (auto *Arg = Args->getLastArg(OPT_deffile)) {
+    ErrorOr<MemoryBufferRef> MBOrErr = openFile(Arg->getValue());
+    if (auto EC = MBOrErr.getError()) {
+      llvm::errs() << "/def: " << EC.message() << "\n";
+      return false;
+    }
+    // parseModuleDefs mutates Config object.
+    if (parseModuleDefs(MBOrErr.get()))
+      return false;
+  }
+
   // Handle miscellaneous boolean flags.
   if (Args->hasArg(OPT_allowbind_no))      Config->AllowBind = false;
   if (Args->hasArg(OPT_allowisolation_no)) Config->AllowIsolation = false;

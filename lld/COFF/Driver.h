@@ -97,6 +97,8 @@ private:
   std::vector<std::unique_ptr<MemoryBuffer>> OwningMBs;
 };
 
+std::error_code parseModuleDefs(MemoryBufferRef MB);
+
 // Functions below this line are defined in DriverUtils.cpp.
 
 void printHelp(const char *Argv0);

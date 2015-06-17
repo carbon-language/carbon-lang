@@ -39,7 +39,7 @@ CHECK3-NEXT:       4        0
 CHECK3-NEXT:       5   0x1008
 CHECK3-NEXT:       6   0x1010  exportfn2
 
-# RUN: lld -flavor link2 /out:%t.dll /dll %t.obj /export:f1=exportfn1 /export:f2@4=exportfn2
+# RUN: lld -flavor link2 /out:%t.dll /dll %t.obj /export:f1=exportfn1 /export:f2=exportfn2
 # RUN: llvm-objdump -p %t.dll | FileCheck -check-prefix=CHECK4 %s
 
 CHECK4:      Export Table:
@@ -49,3 +49,17 @@ CHECK4-NEXT:       0        0
 CHECK4-NEXT:       1   0x1010  exportfn3
 CHECK4-NEXT:       2   0x1008  f1
 CHECK4-NEXT:       3   0x1010  f2
+
+# RUN: echo "EXPORTS exportfn1 @3" > %t.def
+# RUN: echo "fn2=exportfn2 @2" >> %t.def
+# RUN: lld -flavor link2 /out:%t.dll /dll %t.obj /def:%t.def
+# RUN: llvm-objdump -p %t.dll | FileCheck -check-prefix=CHECK5 %s
+
+CHECK5:      Export Table:
+CHECK5:      DLL name: export.test.tmp.dll
+CHECK5:      Ordinal      RVA  Name
+CHECK5-NEXT:       0        0
+CHECK5-NEXT:       1        0
+CHECK5-NEXT:       2   0x1010  fn2
+CHECK5-NEXT:       3   0x1008  exportfn1
+CHECK5-NEXT:       4   0x1010  exportfn3
