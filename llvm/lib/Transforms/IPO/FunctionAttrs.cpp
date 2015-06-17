@@ -208,8 +208,7 @@ bool FunctionAttrs::AddReadAttrs(const CallGraphSCC &SCC) {
                 AAMDNodes AAInfo;
                 I->getAAMetadata(AAInfo);
 
-                AliasAnalysis::Location Loc(Arg,
-                                            AliasAnalysis::UnknownSize, AAInfo);
+                MemoryLocation Loc(Arg, AliasAnalysis::UnknownSize, AAInfo);
                 if (!AA->pointsToConstantMemory(Loc, /*OrLocal=*/true)) {
                   if (MRB & AliasAnalysis::Mod)
                     // Writes non-local memory.  Give up.
@@ -232,20 +231,20 @@ bool FunctionAttrs::AddReadAttrs(const CallGraphSCC &SCC) {
       } else if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
         // Ignore non-volatile loads from local memory. (Atomic is okay here.)
         if (!LI->isVolatile()) {
-          AliasAnalysis::Location Loc = MemoryLocation::get(LI);
+          MemoryLocation Loc = MemoryLocation::get(LI);
           if (AA->pointsToConstantMemory(Loc, /*OrLocal=*/true))
             continue;
         }
       } else if (StoreInst *SI = dyn_cast<StoreInst>(I)) {
         // Ignore non-volatile stores to local memory. (Atomic is okay here.)
         if (!SI->isVolatile()) {
-          AliasAnalysis::Location Loc = MemoryLocation::get(SI);
+          MemoryLocation Loc = MemoryLocation::get(SI);
           if (AA->pointsToConstantMemory(Loc, /*OrLocal=*/true))
             continue;
         }
       } else if (VAArgInst *VI = dyn_cast<VAArgInst>(I)) {
         // Ignore vaargs on local memory.
-        AliasAnalysis::Location Loc = MemoryLocation::get(VI);
+        MemoryLocation Loc = MemoryLocation::get(VI);
         if (AA->pointsToConstantMemory(Loc, /*OrLocal=*/true))
           continue;
       }

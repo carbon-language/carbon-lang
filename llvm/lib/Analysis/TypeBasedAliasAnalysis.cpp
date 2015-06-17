@@ -300,12 +300,14 @@ namespace {
 
   private:
     void getAnalysisUsage(AnalysisUsage &AU) const override;
-    AliasResult alias(const Location &LocA, const Location &LocB) override;
-    bool pointsToConstantMemory(const Location &Loc, bool OrLocal) override;
+    AliasResult alias(const MemoryLocation &LocA,
+                      const MemoryLocation &LocB) override;
+    bool pointsToConstantMemory(const MemoryLocation &Loc,
+                                bool OrLocal) override;
     ModRefBehavior getModRefBehavior(ImmutableCallSite CS) override;
     ModRefBehavior getModRefBehavior(const Function *F) override;
     ModRefResult getModRefInfo(ImmutableCallSite CS,
-                               const Location &Loc) override;
+                               const MemoryLocation &Loc) override;
     ModRefResult getModRefInfo(ImmutableCallSite CS1,
                                ImmutableCallSite CS2) override;
   };
@@ -453,8 +455,8 @@ TypeBasedAliasAnalysis::PathAliases(const MDNode *A,
 }
 
 AliasAnalysis::AliasResult
-TypeBasedAliasAnalysis::alias(const Location &LocA,
-                              const Location &LocB) {
+TypeBasedAliasAnalysis::alias(const MemoryLocation &LocA,
+                              const MemoryLocation &LocB) {
   if (!EnableTBAA)
     return AliasAnalysis::alias(LocA, LocB);
 
@@ -473,7 +475,7 @@ TypeBasedAliasAnalysis::alias(const Location &LocA,
   return NoAlias;
 }
 
-bool TypeBasedAliasAnalysis::pointsToConstantMemory(const Location &Loc,
+bool TypeBasedAliasAnalysis::pointsToConstantMemory(const MemoryLocation &Loc,
                                                     bool OrLocal) {
   if (!EnableTBAA)
     return AliasAnalysis::pointsToConstantMemory(Loc, OrLocal);
@@ -515,7 +517,7 @@ TypeBasedAliasAnalysis::getModRefBehavior(const Function *F) {
 
 AliasAnalysis::ModRefResult
 TypeBasedAliasAnalysis::getModRefInfo(ImmutableCallSite CS,
-                                      const Location &Loc) {
+                                      const MemoryLocation &Loc) {
   if (!EnableTBAA)
     return AliasAnalysis::getModRefInfo(CS, Loc);
 

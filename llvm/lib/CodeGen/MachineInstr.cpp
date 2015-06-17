@@ -1450,9 +1450,9 @@ bool MachineInstr::isInvariantLoad(AliasAnalysis *AA) const {
 
     if (const Value *V = (*I)->getValue()) {
       // If we have an AliasAnalysis, ask it whether the memory is constant.
-      if (AA && AA->pointsToConstantMemory(
-                      AliasAnalysis::Location(V, (*I)->getSize(),
-                                              (*I)->getAAInfo())))
+      if (AA &&
+          AA->pointsToConstantMemory(
+              MemoryLocation(V, (*I)->getSize(), (*I)->getAAInfo())))
         continue;
     }
 

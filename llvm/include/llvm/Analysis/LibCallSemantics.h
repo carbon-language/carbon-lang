@@ -48,8 +48,7 @@ class InvokeInst;
     enum LocResult {
       Yes, No, Unknown
     };
-    LocResult (*isLocation)(ImmutableCallSite CS,
-                            const AliasAnalysis::Location &Loc);
+    LocResult (*isLocation)(ImmutableCallSite CS, const MemoryLocation &Loc);
   };
   
   /// LibCallFunctionInfo - Each record in the array of FunctionInfo structs

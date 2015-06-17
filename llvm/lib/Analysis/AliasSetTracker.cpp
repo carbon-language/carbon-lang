@@ -45,13 +45,9 @@ void AliasSet::mergeSetIn(AliasSet &AS, AliasSetTracker &AST) {
     PointerRec *R = AS.getSomePointer();
 
     // If the pointers are not a must-alias pair, this set becomes a may alias.
-    if (AA.alias(AliasAnalysis::Location(L->getValue(),
-                                         L->getSize(),
-                                         L->getAAInfo()),
-                 AliasAnalysis::Location(R->getValue(),
-                                         R->getSize(),
-                                         R->getAAInfo()))
-        != AliasAnalysis::MustAlias)
+    if (AA.alias(MemoryLocation(L->getValue(), L->getSize(), L->getAAInfo()),
+                 MemoryLocation(R->getValue(), R->getSize(), R->getAAInfo())) !=
+        AliasAnalysis::MustAlias)
       AliasTy = MayAlias;
   }
 
@@ -106,9 +102,8 @@ void AliasSet::addPointer(AliasSetTracker &AST, PointerRec &Entry,
     if (PointerRec *P = getSomePointer()) {
       AliasAnalysis &AA = AST.getAliasAnalysis();
       AliasAnalysis::AliasResult Result =
-        AA.alias(AliasAnalysis::Location(P->getValue(), P->getSize(),
-                                         P->getAAInfo()),
-                 AliasAnalysis::Location(Entry.getValue(), Size, AAInfo));
+          AA.alias(MemoryLocation(P->getValue(), P->getSize(), P->getAAInfo()),
+                   MemoryLocation(Entry.getValue(), Size, AAInfo));
       if (Result != AliasAnalysis::MustAlias)
         AliasTy = MayAlias;
       else                  // First entry of must alias must have maximum size!
@@ -156,26 +151,24 @@ bool AliasSet::aliasesPointer(const Value *Ptr, uint64_t Size,
     // SOME value in the set.
     PointerRec *SomePtr = getSomePointer();
     assert(SomePtr && "Empty must-alias set??");
-    return AA.alias(AliasAnalysis::Location(SomePtr->getValue(),
-                                            SomePtr->getSize(),
-                                            SomePtr->getAAInfo()),
-                    AliasAnalysis::Location(Ptr, Size, AAInfo));
+    return AA.alias(MemoryLocation(SomePtr->getValue(), SomePtr->getSize(),
+                                   SomePtr->getAAInfo()),
+                    MemoryLocation(Ptr, Size, AAInfo));
   }
 
   // If this is a may-alias set, we have to check all of the pointers in the set
   // to be sure it doesn't alias the set...
   for (iterator I = begin(), E = end(); I != E; ++I)
-    if (AA.alias(AliasAnalysis::Location(Ptr, Size, AAInfo),
-                 AliasAnalysis::Location(I.getPointer(), I.getSize(),
-                                         I.getAAInfo())))
+    if (AA.alias(MemoryLocation(Ptr, Size, AAInfo),
+                 MemoryLocation(I.getPointer(), I.getSize(), I.getAAInfo())))
       return true;
 
   // Check the unknown instructions...
   if (!UnknownInsts.empty()) {
     for (unsigned i = 0, e = UnknownInsts.size(); i != e; ++i)
       if (AA.getModRefInfo(UnknownInsts[i],
-                           AliasAnalysis::Location(Ptr, Size, AAInfo)) !=
-            AliasAnalysis::NoModRef)
+                           MemoryLocation(Ptr, Size, AAInfo)) !=
+          AliasAnalysis::NoModRef)
         return true;
   }
 
@@ -196,10 +189,9 @@ bool AliasSet::aliasesUnknownInst(const Instruction *Inst,
   }
 
   for (iterator I = begin(), E = end(); I != E; ++I)
-    if (AA.getModRefInfo(Inst, AliasAnalysis::Location(I.getPointer(),
-                                                       I.getSize(),
-                                                       I.getAAInfo())) !=
-           AliasAnalysis::NoModRef)
+    if (AA.getModRefInfo(
+            Inst, MemoryLocation(I.getPointer(), I.getSize(), I.getAAInfo())) !=
+        AliasAnalysis::NoModRef)
       return true;
 
   return false;

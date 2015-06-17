@@ -47,7 +47,7 @@ protected:
       }
       bool runOnFunction(Function &) override {
         AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
-        EXPECT_EQ(AA.getModRefInfo(I, AliasAnalysis::Location()), ExpectResult);
+        EXPECT_EQ(AA.getModRefInfo(I, MemoryLocation()), ExpectResult);
         EXPECT_EQ(AA.getModRefInfo(I), ExpectResult);
         return false;
       }

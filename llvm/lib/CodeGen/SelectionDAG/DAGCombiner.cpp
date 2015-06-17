@@ -13885,12 +13885,10 @@ bool DAGCombiner::isAlias(LSBaseSDNode *Op0, LSBaseSDNode *Op1) const {
     int64_t Overlap2 = (Op1->getMemoryVT().getSizeInBits() >> 3) +
         Op1->getSrcValueOffset() - MinOffset;
     AliasAnalysis::AliasResult AAResult =
-        AA.alias(AliasAnalysis::Location(Op0->getMemOperand()->getValue(),
-                                         Overlap1,
-                                         UseTBAA ? Op0->getAAInfo() : AAMDNodes()),
-                 AliasAnalysis::Location(Op1->getMemOperand()->getValue(),
-                                         Overlap2,
-                                         UseTBAA ? Op1->getAAInfo() : AAMDNodes()));
+        AA.alias(MemoryLocation(Op0->getMemOperand()->getValue(), Overlap1,
+                                UseTBAA ? Op0->getAAInfo() : AAMDNodes()),
+                 MemoryLocation(Op1->getMemOperand()->getValue(), Overlap2,
+                                UseTBAA ? Op1->getAAInfo() : AAMDNodes()));
     if (AAResult == AliasAnalysis::NoAlias)
       return false;
   }

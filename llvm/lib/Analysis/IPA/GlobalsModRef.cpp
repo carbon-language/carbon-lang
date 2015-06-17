@@ -115,9 +115,10 @@ namespace {
     //------------------------------------------------
     // Implement the AliasAnalysis API
     //
-    AliasResult alias(const Location &LocA, const Location &LocB) override;
+    AliasResult alias(const MemoryLocation &LocA,
+                      const MemoryLocation &LocB) override;
     ModRefResult getModRefInfo(ImmutableCallSite CS,
-                               const Location &Loc) override;
+                               const MemoryLocation &Loc) override;
     ModRefResult getModRefInfo(ImmutableCallSite CS1,
                                ImmutableCallSite CS2) override {
       return AliasAnalysis::getModRefInfo(CS1, CS2);
@@ -478,9 +479,8 @@ void GlobalsModRef::AnalyzeCallGraph(CallGraph &CG, Module &M) {
 /// alias - If one of the pointers is to a global that we are tracking, and the
 /// other is some random pointer, we know there cannot be an alias, because the
 /// address of the global isn't taken.
-AliasAnalysis::AliasResult
-GlobalsModRef::alias(const Location &LocA,
-                     const Location &LocB) {
+AliasAnalysis::AliasResult GlobalsModRef::alias(const MemoryLocation &LocA,
+                                                const MemoryLocation &LocB) {
   // Get the base object these pointers point to.
   const Value *UV1 = GetUnderlyingObject(LocA.Ptr, *DL);
   const Value *UV2 = GetUnderlyingObject(LocB.Ptr, *DL);
@@ -535,8 +535,7 @@ GlobalsModRef::alias(const Location &LocA,
 }
 
 AliasAnalysis::ModRefResult
-GlobalsModRef::getModRefInfo(ImmutableCallSite CS,
-                             const Location &Loc) {
+GlobalsModRef::getModRefInfo(ImmutableCallSite CS, const MemoryLocation &Loc) {
   unsigned Known = ModRef;
 
   // If we are asking for mod/ref info of a direct call with a pointer to a

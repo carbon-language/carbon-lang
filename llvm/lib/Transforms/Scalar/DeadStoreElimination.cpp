@@ -78,7 +78,7 @@ namespace {
     bool runOnBasicBlock(BasicBlock &BB);
     bool HandleFree(CallInst *F);
     bool handleEndBlock(BasicBlock &BB);
-    void RemoveAccessedObjects(const AliasAnalysis::Location &LoadedLoc,
+    void RemoveAccessedObjects(const MemoryLocation &LoadedLoc,
                                SmallSetVector<Value *, 16> &DeadStackObjects,
                                const DataLayout &DL);
 
@@ -194,37 +194,37 @@ static bool hasMemoryWrite(Instruction *I, const TargetLibraryInfo *TLI) {
 /// getLocForWrite - Return a Location stored to by the specified instruction.
 /// If isRemovable returns true, this function and getLocForRead completely
 /// describe the memory operations for this instruction.
-static AliasAnalysis::Location
-getLocForWrite(Instruction *Inst, AliasAnalysis &AA) {
+static MemoryLocation getLocForWrite(Instruction *Inst, AliasAnalysis &AA) {
   if (StoreInst *SI = dyn_cast<StoreInst>(Inst))
     return MemoryLocation::get(SI);
 
   if (MemIntrinsic *MI = dyn_cast<MemIntrinsic>(Inst)) {
     // memcpy/memmove/memset.
-    AliasAnalysis::Location Loc = MemoryLocation::getForDest(MI);
+    MemoryLocation Loc = MemoryLocation::getForDest(MI);
     return Loc;
   }
 
   IntrinsicInst *II = dyn_cast<IntrinsicInst>(Inst);
-  if (!II) return AliasAnalysis::Location();
+  if (!II)
+    return MemoryLocation();
 
   switch (II->getIntrinsicID()) {
-  default: return AliasAnalysis::Location(); // Unhandled intrinsic.
+  default:
+    return MemoryLocation(); // Unhandled intrinsic.
   case Intrinsic::init_trampoline:
     // FIXME: We don't know the size of the trampoline, so we can't really
     // handle it here.
-    return AliasAnalysis::Location(II->getArgOperand(0));
+    return MemoryLocation(II->getArgOperand(0));
   case Intrinsic::lifetime_end: {
     uint64_t Len = cast<ConstantInt>(II->getArgOperand(0))->getZExtValue();
-    return AliasAnalysis::Location(II->getArgOperand(1), Len);
+    return MemoryLocation(II->getArgOperand(1), Len);
   }
   }
 }
 
 /// getLocForRead - Return the location read by the specified "hasMemoryWrite"
 /// instruction if any.
-static AliasAnalysis::Location
-getLocForRead(Instruction *Inst, AliasAnalysis &AA) {
+static MemoryLocation getLocForRead(Instruction *Inst, AliasAnalysis &AA) {
   assert(hasMemoryWrite(Inst, AA.getTargetLibraryInfo()) &&
          "Unknown instruction case");
 
@@ -232,7 +232,7 @@ getLocForRead(Instruction *Inst, AliasAnalysis &AA) {
   // instructions (memcpy/memmove).
   if (MemTransferInst *MTI = dyn_cast<MemTransferInst>(Inst))
     return MemoryLocation::getForSource(MTI);
-  return AliasAnalysis::Location();
+  return MemoryLocation();
 }
 
 
@@ -333,8 +333,8 @@ namespace {
 /// completely overwrites a store to the 'Earlier' location.
 /// 'OverwriteEnd' if the end of the 'Earlier' location is completely
 /// overwritten by 'Later', or 'OverwriteUnknown' if nothing can be determined
-static OverwriteResult isOverwrite(const AliasAnalysis::Location &Later,
-                                   const AliasAnalysis::Location &Earlier,
+static OverwriteResult isOverwrite(const MemoryLocation &Later,
+                                   const MemoryLocation &Earlier,
                                    const DataLayout &DL,
                                    const TargetLibraryInfo *TLI,
                                    int64_t &EarlierOff, int64_t &LaterOff) {
@@ -441,11 +441,11 @@ static OverwriteResult isOverwrite(const AliasAnalysis::Location &Later,
 /// This function detects when it is unsafe to remove a dependent instruction
 /// because the DSE inducing instruction may be a self-read.
 static bool isPossibleSelfRead(Instruction *Inst,
-                               const AliasAnalysis::Location &InstStoreLoc,
+                               const MemoryLocation &InstStoreLoc,
                                Instruction *DepWrite, AliasAnalysis &AA) {
   // Self reads can only happen for instructions that read memory.  Get the
   // location read.
-  AliasAnalysis::Location InstReadLoc = getLocForRead(Inst, AA);
+  MemoryLocation InstReadLoc = getLocForRead(Inst, AA);
   if (!InstReadLoc.Ptr) return false;  // Not a reading instruction.
 
   // If the read and written loc obviously don't alias, it isn't a read.
@@ -459,7 +459,7 @@ static bool isPossibleSelfRead(Instruction *Inst,
   // Here we don't know if A/B may alias, but we do know that B/B are must
   // aliases, so removing the first memcpy is safe (assuming it writes <= #
   // bytes as the second one.
-  AliasAnalysis::Location DepReadLoc = getLocForRead(DepWrite, AA);
+  MemoryLocation DepReadLoc = getLocForRead(DepWrite, AA);
 
   if (DepReadLoc.Ptr && AA.isMustAlias(InstReadLoc.Ptr, DepReadLoc.Ptr))
     return false;
@@ -525,7 +525,7 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
     }
 
     // Figure out what location is being stored to.
-    AliasAnalysis::Location Loc = getLocForWrite(Inst, *AA);
+    MemoryLocation Loc = getLocForWrite(Inst, *AA);
 
     // If we didn't get a useful location, fail.
     if (!Loc.Ptr)
@@ -540,7 +540,7 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
       //
       // Find out what memory location the dependent instruction stores.
       Instruction *DepWrite = InstDep.getInst();
-      AliasAnalysis::Location DepLoc = getLocForWrite(DepWrite, *AA);
+      MemoryLocation DepLoc = getLocForWrite(DepWrite, *AA);
       // If we didn't get a useful location, or if it isn't a size, bail out.
       if (!DepLoc.Ptr)
         break;
@@ -645,7 +645,7 @@ static void FindUnconditionalPreds(SmallVectorImpl<BasicBlock *> &Blocks,
 bool DSE::HandleFree(CallInst *F) {
   bool MadeChange = false;
 
-  AliasAnalysis::Location Loc = AliasAnalysis::Location(F->getOperand(0));
+  MemoryLocation Loc = MemoryLocation(F->getOperand(0));
   SmallVector<BasicBlock *, 16> Blocks;
   Blocks.push_back(F->getParent());
   const DataLayout &DL = F->getModule()->getDataLayout();
@@ -809,7 +809,7 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
       continue;
     }
 
-    AliasAnalysis::Location LoadedLoc;
+    MemoryLocation LoadedLoc;
 
     // If we encounter a use of the pointer, it is no longer considered dead
     if (LoadInst *L = dyn_cast<LoadInst>(BBI)) {
@@ -845,7 +845,7 @@ bool DSE::handleEndBlock(BasicBlock &BB) {
 /// RemoveAccessedObjects - Check to see if the specified location may alias any
 /// of the stack objects in the DeadStackObjects set.  If so, they become live
 /// because the location is being loaded.
-void DSE::RemoveAccessedObjects(const AliasAnalysis::Location &LoadedLoc,
+void DSE::RemoveAccessedObjects(const MemoryLocation &LoadedLoc,
                                 SmallSetVector<Value *, 16> &DeadStackObjects,
                                 const DataLayout &DL) {
   const Value *UnderlyingPointer = GetUnderlyingObject(LoadedLoc.Ptr, DL);
@@ -864,8 +864,8 @@ void DSE::RemoveAccessedObjects(const AliasAnalysis::Location &LoadedLoc,
   // Remove objects that could alias LoadedLoc.
   DeadStackObjects.remove_if([&](Value *I) {
     // See if the loaded location could alias the stack location.
-    AliasAnalysis::Location StackLoc(
-        I, getPointerSize(I, DL, AA->getTargetLibraryInfo()));
+    MemoryLocation StackLoc(I,
+                            getPointerSize(I, DL, AA->getTargetLibraryInfo()));
     return !AA->isNoAlias(StackLoc, LoadedLoc);
   });
 }

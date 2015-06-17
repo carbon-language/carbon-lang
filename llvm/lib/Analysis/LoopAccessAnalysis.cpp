@@ -210,7 +210,7 @@ public:
       : DL(Dl), AST(*AA), LI(LI), DepCands(DA), IsRTCheckNeeded(false) {}
 
   /// \brief Register a load  and whether it is only read from.
-  void addLoad(AliasAnalysis::Location &Loc, bool IsReadOnly) {
+  void addLoad(MemoryLocation &Loc, bool IsReadOnly) {
     Value *Ptr = const_cast<Value*>(Loc.Ptr);
     AST.add(Ptr, AliasAnalysis::UnknownSize, Loc.AATags);
     Accesses.insert(MemAccessInfo(Ptr, false));
@@ -219,7 +219,7 @@ public:
   }
 
   /// \brief Register a store.
-  void addStore(AliasAnalysis::Location &Loc) {
+  void addStore(MemoryLocation &Loc) {
     Value *Ptr = const_cast<Value*>(Loc.Ptr);
     AST.add(Ptr, AliasAnalysis::UnknownSize, Loc.AATags);
     Accesses.insert(MemAccessInfo(Ptr, true));
@@ -1150,7 +1150,7 @@ void LoopAccessInfo::analyzeLoop(const ValueToValueMap &Strides) {
     if (Seen.insert(Ptr).second) {
       ++NumReadWrites;
 
-      AliasAnalysis::Location Loc = MemoryLocation::get(ST);
+      MemoryLocation Loc = MemoryLocation::get(ST);
       // The TBAA metadata could have a control dependency on the predication
       // condition, so we cannot rely on it when determining whether or not we
       // need runtime pointer checks.
@@ -1186,7 +1186,7 @@ void LoopAccessInfo::analyzeLoop(const ValueToValueMap &Strides) {
       IsReadOnlyPtr = true;
     }
 
-    AliasAnalysis::Location Loc = MemoryLocation::get(LD);
+    MemoryLocation Loc = MemoryLocation::get(LD);
     // The TBAA metadata could have a control dependency on the predication
     // condition, so we cannot rely on it when determining whether or not we
     // need runtime pointer checks.

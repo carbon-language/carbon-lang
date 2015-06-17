@@ -98,16 +98,18 @@ namespace {
     }
     
     // FIXME: We could count these too...
-    bool pointsToConstantMemory(const Location &Loc, bool OrLocal) override {
+    bool pointsToConstantMemory(const MemoryLocation &Loc,
+                                bool OrLocal) override {
       return getAnalysis<AliasAnalysis>().pointsToConstantMemory(Loc, OrLocal);
     }
 
     // Forwarding functions: just delegate to a real AA implementation, counting
     // the number of responses...
-    AliasResult alias(const Location &LocA, const Location &LocB) override;
+    AliasResult alias(const MemoryLocation &LocA,
+                      const MemoryLocation &LocB) override;
 
     ModRefResult getModRefInfo(ImmutableCallSite CS,
-                               const Location &Loc) override;
+                               const MemoryLocation &Loc) override;
     ModRefResult getModRefInfo(ImmutableCallSite CS1,
                                ImmutableCallSite CS2) override {
       return AliasAnalysis::getModRefInfo(CS1,CS2);
@@ -124,7 +126,8 @@ ModulePass *llvm::createAliasAnalysisCounterPass() {
 }
 
 AliasAnalysis::AliasResult
-AliasAnalysisCounter::alias(const Location &LocA, const Location &LocB) {
+AliasAnalysisCounter::alias(const MemoryLocation &LocA,
+                            const MemoryLocation &LocB) {
   AliasResult R = getAnalysis<AliasAnalysis>().alias(LocA, LocB);
 
   const char *AliasString = nullptr;
@@ -150,7 +153,7 @@ AliasAnalysisCounter::alias(const Location &LocA, const Location &LocB) {
 
 AliasAnalysis::ModRefResult
 AliasAnalysisCounter::getModRefInfo(ImmutableCallSite CS,
-                                    const Location &Loc) {
+                                    const MemoryLocation &Loc) {
   ModRefResult R = getAnalysis<AliasAnalysis>().getModRefInfo(CS, Loc);
 
   const char *MRString = nullptr;

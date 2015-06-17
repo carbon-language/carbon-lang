@@ -58,7 +58,8 @@ ObjCARCAliasAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
 }
 
 AliasAnalysis::AliasResult
-ObjCARCAliasAnalysis::alias(const Location &LocA, const Location &LocB) {
+ObjCARCAliasAnalysis::alias(const MemoryLocation &LocA,
+                            const MemoryLocation &LocB) {
   if (!EnableARCOpts)
     return AliasAnalysis::alias(LocA, LocB);
 
@@ -67,8 +68,8 @@ ObjCARCAliasAnalysis::alias(const Location &LocA, const Location &LocB) {
   const Value *SA = GetRCIdentityRoot(LocA.Ptr);
   const Value *SB = GetRCIdentityRoot(LocB.Ptr);
   AliasResult Result =
-    AliasAnalysis::alias(Location(SA, LocA.Size, LocA.AATags),
-                         Location(SB, LocB.Size, LocB.AATags));
+      AliasAnalysis::alias(MemoryLocation(SA, LocA.Size, LocA.AATags),
+                           MemoryLocation(SB, LocB.Size, LocB.AATags));
   if (Result != MayAlias)
     return Result;
 
@@ -77,7 +78,7 @@ ObjCARCAliasAnalysis::alias(const Location &LocA, const Location &LocB) {
   const Value *UA = GetUnderlyingObjCPtr(SA, *DL);
   const Value *UB = GetUnderlyingObjCPtr(SB, *DL);
   if (UA != SA || UB != SB) {
-    Result = AliasAnalysis::alias(Location(UA), Location(UB));
+    Result = AliasAnalysis::alias(MemoryLocation(UA), MemoryLocation(UB));
     // We can't use MustAlias or PartialAlias results here because
     // GetUnderlyingObjCPtr may return an offsetted pointer value.
     if (Result == NoAlias)
@@ -89,24 +90,23 @@ ObjCARCAliasAnalysis::alias(const Location &LocA, const Location &LocB) {
   return MayAlias;
 }
 
-bool
-ObjCARCAliasAnalysis::pointsToConstantMemory(const Location &Loc,
-                                             bool OrLocal) {
+bool ObjCARCAliasAnalysis::pointsToConstantMemory(const MemoryLocation &Loc,
+                                                  bool OrLocal) {
   if (!EnableARCOpts)
     return AliasAnalysis::pointsToConstantMemory(Loc, OrLocal);
 
   // First, strip off no-ops, including ObjC-specific no-ops, and try making
   // a precise alias query.
   const Value *S = GetRCIdentityRoot(Loc.Ptr);
-  if (AliasAnalysis::pointsToConstantMemory(Location(S, Loc.Size, Loc.AATags),
-                                            OrLocal))
+  if (AliasAnalysis::pointsToConstantMemory(
+          MemoryLocation(S, Loc.Size, Loc.AATags), OrLocal))
     return true;
 
   // If that failed, climb to the underlying object, including climbing through
   // ObjC-specific no-ops, and try making an imprecise alias query.
   const Value *U = GetUnderlyingObjCPtr(S, *DL);
   if (U != S)
-    return AliasAnalysis::pointsToConstantMemory(Location(U), OrLocal);
+    return AliasAnalysis::pointsToConstantMemory(MemoryLocation(U), OrLocal);
 
   // If that failed, fail. We don't need to chain here, since that's covered
   // by the earlier precise query.
@@ -135,7 +135,8 @@ ObjCARCAliasAnalysis::getModRefBehavior(const Function *F) {
 }
 
 AliasAnalysis::ModRefResult
-ObjCARCAliasAnalysis::getModRefInfo(ImmutableCallSite CS, const Location &Loc) {
+ObjCARCAliasAnalysis::getModRefInfo(ImmutableCallSite CS,
+                                    const MemoryLocation &Loc) {
   if (!EnableARCOpts)
     return AliasAnalysis::getModRefInfo(CS, Loc);
 

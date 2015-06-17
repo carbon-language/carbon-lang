@@ -2914,7 +2914,7 @@ void SelectionDAGBuilder::visitLoad(const LoadInst &I) {
     // Serialize volatile loads with other side effects.
     Root = getRoot();
   else if (AA->pointsToConstantMemory(
-             AliasAnalysis::Location(SV, AA->getTypeStoreSize(Ty), AAInfo))) {
+               MemoryLocation(SV, AA->getTypeStoreSize(Ty), AAInfo))) {
     // Do not serialize (non-volatile) loads of constant memory with anything.
     Root = DAG.getEntryNode();
     ConstantMemory = true;
@@ -3163,10 +3163,8 @@ void SelectionDAGBuilder::visitMaskedLoad(const CallInst &I) {
   const MDNode *Ranges = I.getMetadata(LLVMContext::MD_range);
 
   SDValue InChain = DAG.getRoot();
-  if (AA->pointsToConstantMemory(
-      AliasAnalysis::Location(PtrOperand,
-                              AA->getTypeStoreSize(I.getType()),
-                              AAInfo))) {
+  if (AA->pointsToConstantMemory(MemoryLocation(
+          PtrOperand, AA->getTypeStoreSize(I.getType()), AAInfo))) {
     // Do not serialize (non-volatile) loads of constant memory with anything.
     InChain = DAG.getEntryNode();
   }
@@ -3208,10 +3206,9 @@ void SelectionDAGBuilder::visitMaskedGather(const CallInst &I) {
   Value *BasePtr = Ptr;
   bool UniformBase = getUniformBase(BasePtr, Base, Index, this);
   bool ConstantMemory = false;
-  if (UniformBase && AA->pointsToConstantMemory(
-      AliasAnalysis::Location(BasePtr,
-	                            AA->getTypeStoreSize(I.getType()),
-                              AAInfo))) {
+  if (UniformBase &&
+      AA->pointsToConstantMemory(
+          MemoryLocation(BasePtr, AA->getTypeStoreSize(I.getType()), AAInfo))) {
     // Do not serialize (non-volatile) loads of constant memory with anything.
     Root = DAG.getEntryNode();
     ConstantMemory = true;

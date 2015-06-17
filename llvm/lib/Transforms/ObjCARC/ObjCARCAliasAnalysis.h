@@ -56,12 +56,14 @@ namespace objcarc {
     }
 
     void getAnalysisUsage(AnalysisUsage &AU) const override;
-    AliasResult alias(const Location &LocA, const Location &LocB) override;
-    bool pointsToConstantMemory(const Location &Loc, bool OrLocal) override;
+    AliasResult alias(const MemoryLocation &LocA,
+                      const MemoryLocation &LocB) override;
+    bool pointsToConstantMemory(const MemoryLocation &Loc,
+                                bool OrLocal) override;
     ModRefBehavior getModRefBehavior(ImmutableCallSite CS) override;
     ModRefBehavior getModRefBehavior(const Function *F) override;
     ModRefResult getModRefInfo(ImmutableCallSite CS,
-                               const Location &Loc) override;
+                               const MemoryLocation &Loc) override;
     ModRefResult getModRefInfo(ImmutableCallSite CS1,
                                ImmutableCallSite CS2) override;
   };

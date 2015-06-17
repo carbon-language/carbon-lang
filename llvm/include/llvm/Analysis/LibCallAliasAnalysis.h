@@ -39,8 +39,8 @@ namespace llvm {
     ~LibCallAliasAnalysis() override;
 
     ModRefResult getModRefInfo(ImmutableCallSite CS,
-                               const Location &Loc) override;
- 
+                               const MemoryLocation &Loc) override;
+
     ModRefResult getModRefInfo(ImmutableCallSite CS1,
                                ImmutableCallSite CS2) override {
       // TODO: Could compare two direct calls against each other if we cared to.
@@ -64,7 +64,7 @@ namespace llvm {
   private:
     ModRefResult AnalyzeLibCallDetails(const LibCallFunctionInfo *FI,
                                        ImmutableCallSite CS,
-                                       const Location &Loc);
+                                       const MemoryLocation &Loc);
   };
 }  // End of llvm namespace
 

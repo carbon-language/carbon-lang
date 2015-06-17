@@ -459,7 +459,8 @@ namespace {
       AU.addRequired<TargetLibraryInfoWrapperPass>();
     }
 
-    AliasResult alias(const Location &LocA, const Location &LocB) override {
+    AliasResult alias(const MemoryLocation &LocA,
+                      const MemoryLocation &LocB) override {
       assert(AliasCache.empty() && "AliasCache must be cleared after use!");
       assert(notDifferentParent(LocA.Ptr, LocB.Ptr) &&
              "BasicAliasAnalysis doesn't support interprocedural queries.");
@@ -475,14 +476,15 @@ namespace {
     }
 
     ModRefResult getModRefInfo(ImmutableCallSite CS,
-                               const Location &Loc) override;
+                               const MemoryLocation &Loc) override;
 
     ModRefResult getModRefInfo(ImmutableCallSite CS1,
                                ImmutableCallSite CS2) override;
 
     /// pointsToConstantMemory - Chase pointers until we find a (constant
     /// global) or not.
-    bool pointsToConstantMemory(const Location &Loc, bool OrLocal) override;
+    bool pointsToConstantMemory(const MemoryLocation &Loc,
+                                bool OrLocal) override;
 
     /// Get the location associated with a pointer argument of a callsite.
     ModRefResult getArgModRefInfo(ImmutableCallSite CS,
@@ -508,7 +510,7 @@ namespace {
 
   private:
     // AliasCache - Track alias queries to guard against recursion.
-    typedef std::pair<Location, Location> LocPair;
+    typedef std::pair<MemoryLocation, MemoryLocation> LocPair;
     typedef SmallDenseMap<LocPair, AliasResult, 8> AliasCacheTy;
     AliasCacheTy AliasCache;
 
@@ -592,8 +594,8 @@ ImmutablePass *llvm::createBasicAliasAnalysisPass() {
 /// pointsToConstantMemory - Returns whether the given pointer value
 /// points to memory that is local to the function, with global constants being
 /// considered local to all functions.
-bool
-BasicAliasAnalysis::pointsToConstantMemory(const Location &Loc, bool OrLocal) {
+bool BasicAliasAnalysis::pointsToConstantMemory(const MemoryLocation &Loc,
+                                                bool OrLocal) {
   assert(Visited.empty() && "Visited must be cleared after use!");
 
   unsigned MaxLookup = 8;
@@ -765,7 +767,7 @@ bool BasicAliasAnalysis::doInitialization(Module &M) {
 /// simple "address taken" analysis on local objects.
 AliasAnalysis::ModRefResult
 BasicAliasAnalysis::getModRefInfo(ImmutableCallSite CS,
-                                  const Location &Loc) {
+                                  const MemoryLocation &Loc) {
   assert(notDifferentParent(CS.getInstruction(), Loc.Ptr) &&
          "AliasAnalysis query involving multiple functions!");
 
@@ -801,7 +803,7 @@ BasicAliasAnalysis::getModRefInfo(ImmutableCallSite CS,
       // is impossible to alias the pointer we're checking.  If not, we have to
       // assume that the call could touch the pointer, even though it doesn't
       // escape.
-      if (!isNoAlias(Location(*CI), Location(Object))) {
+      if (!isNoAlias(MemoryLocation(*CI), MemoryLocation(Object))) {
         PassedAsArg = true;
         break;
       }
@@ -1253,8 +1255,8 @@ BasicAliasAnalysis::aliasPHI(const PHINode *PN, uint64_t PNSize,
   // on corresponding edges.
   if (const PHINode *PN2 = dyn_cast<PHINode>(V2))
     if (PN2->getParent() == PN->getParent()) {
-      LocPair Locs(Location(PN, PNSize, PNAAInfo),
-                   Location(V2, V2Size, V2AAInfo));
+      LocPair Locs(MemoryLocation(PN, PNSize, PNAAInfo),
+                   MemoryLocation(V2, V2Size, V2AAInfo));
       if (PN > V2)
         std::swap(Locs.first, Locs.second);
       // Analyse the PHIs' inputs under the assumption that the PHIs are
@@ -1414,8 +1416,8 @@ BasicAliasAnalysis::aliasCheck(const Value *V1, uint64_t V1Size,
 
   // Check the cache before climbing up use-def chains. This also terminates
   // otherwise infinitely recursive queries.
-  LocPair Locs(Location(V1, V1Size, V1AAInfo),
-               Location(V2, V2Size, V2AAInfo));
+  LocPair Locs(MemoryLocation(V1, V1Size, V1AAInfo),
+               MemoryLocation(V2, V2Size, V2AAInfo));
   if (V1 > V2)
     std::swap(Locs.first, Locs.second);
   std::pair<AliasCacheTy::iterator, bool> Pair =
@@ -1467,8 +1469,8 @@ BasicAliasAnalysis::aliasCheck(const Value *V1, uint64_t V1Size,
       return AliasCache[Locs] = PartialAlias;
 
   AliasResult Result =
-    AliasAnalysis::alias(Location(V1, V1Size, V1AAInfo),
-                         Location(V2, V2Size, V2AAInfo));
+      AliasAnalysis::alias(MemoryLocation(V1, V1Size, V1AAInfo),
+                           MemoryLocation(V2, V2Size, V2AAInfo));
   return AliasCache[Locs] = Result;
 }
 

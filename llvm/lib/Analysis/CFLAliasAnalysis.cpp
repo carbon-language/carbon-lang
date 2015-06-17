@@ -219,9 +219,10 @@ public:
     return Iter->second;
   }
 
-  AliasResult query(const Location &LocA, const Location &LocB);
+  AliasResult query(const MemoryLocation &LocA, const MemoryLocation &LocB);
 
-  AliasResult alias(const Location &LocA, const Location &LocB) override {
+  AliasResult alias(const MemoryLocation &LocA,
+                    const MemoryLocation &LocB) override {
     if (LocA.Ptr == LocB.Ptr) {
       if (LocA.Size == LocB.Size) {
         return MustAlias;
@@ -1109,9 +1110,8 @@ void CFLAliasAnalysis::scan(Function *Fn) {
   Handles.push_front(FunctionHandle(Fn, this));
 }
 
-AliasAnalysis::AliasResult
-CFLAliasAnalysis::query(const AliasAnalysis::Location &LocA,
-                        const AliasAnalysis::Location &LocB) {
+AliasAnalysis::AliasResult CFLAliasAnalysis::query(const MemoryLocation &LocA,
+                                                   const MemoryLocation &LocB) {
   auto *ValA = const_cast<Value *>(LocA.Ptr);
   auto *ValB = const_cast<Value *>(LocB.Ptr);
 

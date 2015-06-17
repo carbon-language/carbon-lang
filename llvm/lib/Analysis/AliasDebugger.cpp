@@ -94,7 +94,8 @@ namespace {
     //------------------------------------------------
     // Implement the AliasAnalysis API
     //
-    AliasResult alias(const Location &LocA, const Location &LocB) override {
+    AliasResult alias(const MemoryLocation &LocA,
+                      const MemoryLocation &LocB) override {
       assert(Vals.find(LocA.Ptr) != Vals.end() &&
              "Never seen value in AA before");
       assert(Vals.find(LocB.Ptr) != Vals.end() &&
@@ -103,7 +104,7 @@ namespace {
     }
 
     ModRefResult getModRefInfo(ImmutableCallSite CS,
-                               const Location &Loc) override {
+                               const MemoryLocation &Loc) override {
       assert(Vals.find(Loc.Ptr) != Vals.end() && "Never seen value in AA before");
       return AliasAnalysis::getModRefInfo(CS, Loc);
     }
@@ -113,7 +114,8 @@ namespace {
       return AliasAnalysis::getModRefInfo(CS1,CS2);
     }
 
-    bool pointsToConstantMemory(const Location &Loc, bool OrLocal) override {
+    bool pointsToConstantMemory(const MemoryLocation &Loc,
+                                bool OrLocal) override {
       assert(Vals.find(Loc.Ptr) != Vals.end() && "Never seen value in AA before");
       return AliasAnalysis::pointsToConstantMemory(Loc, OrLocal);
     }

@@ -315,12 +315,12 @@ static bool InTreeUserNeedToExtract(Value *Scalar, Instruction *UserInst,
 }
 
 /// \returns the AA location that is being access by the instruction.
-static AliasAnalysis::Location getLocation(Instruction *I, AliasAnalysis *AA) {
+static MemoryLocation getLocation(Instruction *I, AliasAnalysis *AA) {
   if (StoreInst *SI = dyn_cast<StoreInst>(I))
     return MemoryLocation::get(SI);
   if (LoadInst *LI = dyn_cast<LoadInst>(I))
     return MemoryLocation::get(LI);
-  return AliasAnalysis::Location();
+  return MemoryLocation();
 }
 
 /// \returns True if the instruction is not a volatile or atomic load/store.
@@ -515,7 +515,7 @@ private:
   ///
   /// \p Loc1 is the location of \p Inst1. It is passed explicitly because it
   /// is invariant in the calling loop.
-  bool isAliased(const AliasAnalysis::Location &Loc1, Instruction *Inst1,
+  bool isAliased(const MemoryLocation &Loc1, Instruction *Inst1,
                  Instruction *Inst2) {
 
     // First check if the result is already in the cache.
@@ -524,7 +524,7 @@ private:
     if (result.hasValue()) {
       return result.getValue();
     }
-    AliasAnalysis::Location Loc2 = getLocation(Inst2, AA);
+    MemoryLocation Loc2 = getLocation(Inst2, AA);
     bool aliased = true;
     if (Loc1.Ptr && Loc2.Ptr && isSimple(Inst1) && isSimple(Inst2)) {
       // Do the alias check.
@@ -2903,7 +2903,7 @@ void BoUpSLP::BlockScheduling::calculateDependencies(ScheduleData *SD,
         ScheduleData *DepDest = BundleMember->NextLoadStore;
         if (DepDest) {
           Instruction *SrcInst = BundleMember->Inst;
-          AliasAnalysis::Location SrcLoc = getLocation(SrcInst, SLP->AA);
+          MemoryLocation SrcLoc = getLocation(SrcInst, SLP->AA);
           bool SrcMayWrite = BundleMember->Inst->mayWriteToMemory();
           unsigned numAliased = 0;
           unsigned DistToSrc = 1;

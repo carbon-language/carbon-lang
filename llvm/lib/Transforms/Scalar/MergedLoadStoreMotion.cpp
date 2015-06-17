@@ -144,9 +144,8 @@ private:
   // Routines for sinking stores
   StoreInst *canSinkFromBlock(BasicBlock *BB, StoreInst *SI);
   PHINode *getPHIOperand(BasicBlock *BB, StoreInst *S0, StoreInst *S1);
-  bool isStoreSinkBarrierInRange(const Instruction& Start,
-                                 const Instruction& End,
-                                 AliasAnalysis::Location Loc);
+  bool isStoreSinkBarrierInRange(const Instruction &Start,
+                                 const Instruction &End, MemoryLocation Loc);
   bool sinkStore(BasicBlock *BB, StoreInst *SinkCand, StoreInst *ElseInst);
   bool mergeStores(BasicBlock *BB);
   // The mergeLoad/Store algorithms could have Size0 * Size1 complexity,
@@ -241,7 +240,7 @@ bool MergedLoadStoreMotion::isDiamondHead(BasicBlock *BB) {
 bool MergedLoadStoreMotion::isLoadHoistBarrierInRange(const Instruction& Start, 
                                                       const Instruction& End,
                                                       LoadInst* LI) {
-  AliasAnalysis::Location Loc = MemoryLocation::get(LI);
+  MemoryLocation Loc = MemoryLocation::get(LI);
   return AA->canInstructionRangeModRef(Start, End, Loc, AliasAnalysis::Mod);
 }
 
@@ -266,8 +265,8 @@ LoadInst *MergedLoadStoreMotion::canHoistFromBlock(BasicBlock *BB1,
     LoadInst *Load1 = dyn_cast<LoadInst>(Inst);
     BasicBlock *BB0 = Load0->getParent();
 
-    AliasAnalysis::Location Loc0 = MemoryLocation::get(Load0);
-    AliasAnalysis::Location Loc1 = MemoryLocation::get(Load1);
+    MemoryLocation Loc0 = MemoryLocation::get(Load0);
+    MemoryLocation Loc1 = MemoryLocation::get(Load1);
     if (AA->isMustAlias(Loc0, Loc1) && Load0->isSameOperationAs(Load1) &&
         !isLoadHoistBarrierInRange(BB1->front(), *Load1, Load1) &&
         !isLoadHoistBarrierInRange(BB0->front(), *Load0, Load0)) {
@@ -400,10 +399,9 @@ bool MergedLoadStoreMotion::mergeLoads(BasicBlock *BB) {
 /// happening it is considered a sink barrier.
 ///
 
-bool MergedLoadStoreMotion::isStoreSinkBarrierInRange(const Instruction& Start,
-                                                      const Instruction& End,
-                                                      AliasAnalysis::Location
-                                                      Loc) {
+bool MergedLoadStoreMotion::isStoreSinkBarrierInRange(const Instruction &Start,
+                                                      const Instruction &End,
+                                                      MemoryLocation Loc) {
   return AA->canInstructionRangeModRef(Start, End, Loc, AliasAnalysis::ModRef);
 }
 
@@ -425,8 +423,8 @@ StoreInst *MergedLoadStoreMotion::canSinkFromBlock(BasicBlock *BB1,
 
     StoreInst *Store1 = cast<StoreInst>(Inst);
 
-    AliasAnalysis::Location Loc0 = MemoryLocation::get(Store0);
-    AliasAnalysis::Location Loc1 = MemoryLocation::get(Store1);
+    MemoryLocation Loc0 = MemoryLocation::get(Store0);
+    MemoryLocation Loc1 = MemoryLocation::get(Store1);
     if (AA->isMustAlias(Loc0, Loc1) && Store0->isSameOperationAs(Store1) &&
       !isStoreSinkBarrierInRange(*(std::next(BasicBlock::iterator(Store1))),
                                  BB1->back(), Loc1) &&

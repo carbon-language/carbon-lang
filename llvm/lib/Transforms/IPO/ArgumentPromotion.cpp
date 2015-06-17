@@ -571,7 +571,7 @@ bool ArgPromotion::isSafeToPromoteArgument(Argument *Arg,
     LoadInst *Load = Loads[i];
     BasicBlock *BB = Load->getParent();
 
-    AliasAnalysis::Location Loc = MemoryLocation::get(Load);
+    MemoryLocation Loc = MemoryLocation::get(Load);
     if (AA.canInstructionRangeModRef(BB->front(), *Load, Loc,
         AliasAnalysis::Mod))
       return false;  // Pointer is invalidated!

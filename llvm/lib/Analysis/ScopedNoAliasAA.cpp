@@ -99,12 +99,13 @@ protected:
 
 private:
   void getAnalysisUsage(AnalysisUsage &AU) const override;
-  AliasResult alias(const Location &LocA, const Location &LocB) override;
-  bool pointsToConstantMemory(const Location &Loc, bool OrLocal) override;
+  AliasResult alias(const MemoryLocation &LocA,
+                    const MemoryLocation &LocB) override;
+  bool pointsToConstantMemory(const MemoryLocation &Loc, bool OrLocal) override;
   ModRefBehavior getModRefBehavior(ImmutableCallSite CS) override;
   ModRefBehavior getModRefBehavior(const Function *F) override;
   ModRefResult getModRefInfo(ImmutableCallSite CS,
-                             const Location &Loc) override;
+                             const MemoryLocation &Loc) override;
   ModRefResult getModRefInfo(ImmutableCallSite CS1,
                              ImmutableCallSite CS2) override;
 };
@@ -176,8 +177,8 @@ ScopedNoAliasAA::mayAliasInScopes(const MDNode *Scopes,
   return true;
 }
 
-AliasAnalysis::AliasResult
-ScopedNoAliasAA::alias(const Location &LocA, const Location &LocB) {
+AliasAnalysis::AliasResult ScopedNoAliasAA::alias(const MemoryLocation &LocA,
+                                                  const MemoryLocation &LocB) {
   if (!EnableScopedNoAlias)
     return AliasAnalysis::alias(LocA, LocB);
 
@@ -198,7 +199,7 @@ ScopedNoAliasAA::alias(const Location &LocA, const Location &LocB) {
   return AliasAnalysis::alias(LocA, LocB);
 }
 
-bool ScopedNoAliasAA::pointsToConstantMemory(const Location &Loc,
+bool ScopedNoAliasAA::pointsToConstantMemory(const MemoryLocation &Loc,
                                              bool OrLocal) {
   return AliasAnalysis::pointsToConstantMemory(Loc, OrLocal);
 }
@@ -214,7 +215,8 @@ ScopedNoAliasAA::getModRefBehavior(const Function *F) {
 }
 
 AliasAnalysis::ModRefResult
-ScopedNoAliasAA::getModRefInfo(ImmutableCallSite CS, const Location &Loc) {
+ScopedNoAliasAA::getModRefInfo(ImmutableCallSite CS,
+                               const MemoryLocation &Loc) {
   if (!EnableScopedNoAlias)
     return AliasAnalysis::getModRefInfo(CS, Loc);
 

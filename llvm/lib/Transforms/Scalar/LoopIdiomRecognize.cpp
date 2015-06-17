@@ -844,7 +844,7 @@ static bool mayLoopAccessLocation(Value *Ptr,AliasAnalysis::ModRefResult Access,
   // operand in the store.  Store to &A[i] of 100 will always return may alias
   // with store of &A[100], we need to StoreLoc to be "A" with size of 100,
   // which will then no-alias a store to &A[100].
-  AliasAnalysis::Location StoreLoc(Ptr, AccessSize);
+  MemoryLocation StoreLoc(Ptr, AccessSize);
 
   for (Loop::block_iterator BI = L->block_begin(), E = L->block_end(); BI != E;
        ++BI)
