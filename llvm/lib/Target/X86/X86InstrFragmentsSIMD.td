@@ -187,6 +187,7 @@ def X86addus   : SDNode<"X86ISD::ADDUS", SDTIntBinOp>;
 def X86subus   : SDNode<"X86ISD::SUBUS", SDTIntBinOp>;
 def X86adds    : SDNode<"X86ISD::ADDS", SDTIntBinOp>;
 def X86subs    : SDNode<"X86ISD::SUBS", SDTIntBinOp>;
+def X86avg     : SDNode<"X86ISD::AVG" , SDTIntBinOp>;
 def X86ptest   : SDNode<"X86ISD::PTEST", SDTX86CmpPTest>;
 def X86testp   : SDNode<"X86ISD::TESTP", SDTX86CmpPTest>;
 def X86kortest : SDNode<"X86ISD::KORTEST", SDTX86CmpPTest>;

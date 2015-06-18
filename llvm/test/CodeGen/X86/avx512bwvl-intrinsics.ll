@@ -2876,3 +2876,55 @@ define <16 x i16>@test_int_x86_avx512_mask_pminu_w_256(<16 x i16> %x0, <16 x i16
   %res2 = add <16 x i16> %res, %res1
   ret <16 x i16> %res2
 }
+
+declare <16 x i8> @llvm.x86.avx512.mask.pavg.b.128(<16 x i8>, <16 x i8>, <16 x i8>, i16)
+
+; CHECK-LABEL: @test_int_x86_avx512_mask_pavg_b_128
+; CHECK-NOT: call 
+; CHECK: vpavgb %xmm
+; CHECK: {%k1} 
+define <16 x i8>@test_int_x86_avx512_mask_pavg_b_128(<16 x i8> %x0, <16 x i8> %x1, <16 x i8> %x2, i16 %x3) {
+  %res = call <16 x i8> @llvm.x86.avx512.mask.pavg.b.128(<16 x i8> %x0, <16 x i8> %x1, <16 x i8> %x2, i16 %x3)
+  %res1 = call <16 x i8> @llvm.x86.avx512.mask.pavg.b.128(<16 x i8> %x0, <16 x i8> %x1, <16 x i8> %x2, i16 -1)
+  %res2 = add <16 x i8> %res, %res1
+  ret <16 x i8> %res2
+}
+
+declare <32 x i8> @llvm.x86.avx512.mask.pavg.b.256(<32 x i8>, <32 x i8>, <32 x i8>, i32)
+
+; CHECK-LABEL: @test_int_x86_avx512_mask_pavg_b_256
+; CHECK-NOT: call 
+; CHECK: vpavgb %ymm
+; CHECK: {%k1} 
+define <32 x i8>@test_int_x86_avx512_mask_pavg_b_256(<32 x i8> %x0, <32 x i8> %x1, <32 x i8> %x2, i32 %x3) {
+  %res = call <32 x i8> @llvm.x86.avx512.mask.pavg.b.256(<32 x i8> %x0, <32 x i8> %x1, <32 x i8> %x2, i32 %x3)
+  %res1 = call <32 x i8> @llvm.x86.avx512.mask.pavg.b.256(<32 x i8> %x0, <32 x i8> %x1, <32 x i8> %x2, i32 -1)
+  %res2 = add <32 x i8> %res, %res1
+  ret <32 x i8> %res2
+}
+
+declare <8 x i16> @llvm.x86.avx512.mask.pavg.w.128(<8 x i16>, <8 x i16>, <8 x i16>, i8)
+
+; CHECK-LABEL: @test_int_x86_avx512_mask_pavg_w_128
+; CHECK-NOT: call 
+; CHECK: vpavgw %xmm
+; CHECK: {%k1} 
+define <8 x i16>@test_int_x86_avx512_mask_pavg_w_128(<8 x i16> %x0, <8 x i16> %x1, <8 x i16> %x2, i8 %x3) {
+  %res = call <8 x i16> @llvm.x86.avx512.mask.pavg.w.128(<8 x i16> %x0, <8 x i16> %x1, <8 x i16> %x2, i8 %x3)
+  %res1 = call <8 x i16> @llvm.x86.avx512.mask.pavg.w.128(<8 x i16> %x0, <8 x i16> %x1, <8 x i16> %x2, i8 -1)
+  %res2 = add <8 x i16> %res, %res1
+  ret <8 x i16> %res2
+}
+
+declare <16 x i16> @llvm.x86.avx512.mask.pavg.w.256(<16 x i16>, <16 x i16>, <16 x i16>, i16)
+
+; CHECK-LABEL: @test_int_x86_avx512_mask_pavg_w_256
+; CHECK-NOT: call 
+; CHECK: vpavgw %ymm
+; CHECK: {%k1} 
+define <16 x i16>@test_int_x86_avx512_mask_pavg_w_256(<16 x i16> %x0, <16 x i16> %x1, <16 x i16> %x2, i16 %x3) {
+  %res = call <16 x i16> @llvm.x86.avx512.mask.pavg.w.256(<16 x i16> %x0, <16 x i16> %x1, <16 x i16> %x2, i16 %x3)
+  %res1 = call <16 x i16> @llvm.x86.avx512.mask.pavg.w.256(<16 x i16> %x0, <16 x i16> %x1, <16 x i16> %x2, i16 -1)
+  %res2 = add <16 x i16> %res, %res1
+  ret <16 x i16> %res2
+}

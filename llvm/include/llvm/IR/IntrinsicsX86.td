@@ -3877,6 +3877,24 @@ let TargetPrefix = "x86" in {
   def int_x86_avx512_mask_pmull_q_512 : GCCBuiltin<"__builtin_ia32_pmullq512_mask">,
               Intrinsic<[llvm_v8i64_ty], [llvm_v8i64_ty, llvm_v8i64_ty,
                      llvm_v8i64_ty, llvm_i8_ty], [IntrNoMem]>;
+  def int_x86_avx512_mask_pavg_b_512 : GCCBuiltin<"__builtin_ia32_pavgb512_mask">,
+          Intrinsic<[llvm_v64i8_ty], [llvm_v64i8_ty, llvm_v64i8_ty, 
+                    llvm_v64i8_ty, llvm_i64_ty], [IntrNoMem]>;
+  def int_x86_avx512_mask_pavg_w_512 : GCCBuiltin<"__builtin_ia32_pavgw512_mask">,
+          Intrinsic<[llvm_v32i16_ty], [llvm_v32i16_ty, llvm_v32i16_ty,  
+                    llvm_v32i16_ty, llvm_i32_ty], [IntrNoMem]>;
+  def int_x86_avx512_mask_pavg_b_128 : GCCBuiltin<"__builtin_ia32_pavgb128_mask">,
+          Intrinsic<[llvm_v16i8_ty], [llvm_v16i8_ty, llvm_v16i8_ty,  
+                    llvm_v16i8_ty, llvm_i16_ty], [IntrNoMem]>;
+  def int_x86_avx512_mask_pavg_b_256 : GCCBuiltin<"__builtin_ia32_pavgb256_mask">,
+          Intrinsic<[llvm_v32i8_ty], [llvm_v32i8_ty, llvm_v32i8_ty,  
+                    llvm_v32i8_ty, llvm_i32_ty], [IntrNoMem]>;
+  def int_x86_avx512_mask_pavg_w_128 : GCCBuiltin<"__builtin_ia32_pavgw128_mask">,
+          Intrinsic<[llvm_v8i16_ty], [llvm_v8i16_ty, llvm_v8i16_ty,  
+                    llvm_v8i16_ty, llvm_i8_ty], [IntrNoMem]>;
+  def int_x86_avx512_mask_pavg_w_256 : GCCBuiltin<"__builtin_ia32_pavgw256_mask">,
+          Intrinsic<[llvm_v16i16_ty], [llvm_v16i16_ty, llvm_v16i16_ty, 
+                    llvm_v16i16_ty, llvm_i16_ty], [IntrNoMem]>;
 }
 
 // Gather and Scatter ops

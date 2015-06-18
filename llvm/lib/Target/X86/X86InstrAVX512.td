@@ -3126,7 +3126,8 @@ defm VPMULLW : avx512_binop_rm_vl_w<0xD5, "vpmull", mul,
                                    SSE_INTALU_ITINS_P, HasBWI, 1>;
 defm VPMULLQ : avx512_binop_rm_vl_q<0x40, "vpmull", mul,
                                    SSE_INTALU_ITINS_P, HasDQI, 1>, T8PD;
-
+defm VPAVG : avx512_binop_rm_vl_bw<0xE0, 0xE3, "vpavg", X86avg,
+                                    SSE_INTALU_ITINS_P, HasBWI, 1>;
                                    
 multiclass avx512_binop_all<bits<8> opc, string OpcodeStr, OpndItins itins,
                             SDNode OpNode, bit IsCommutable = 0> {

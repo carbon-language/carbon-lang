@@ -218,7 +218,8 @@ namespace llvm {
       // Integer add/sub with signed saturation.
       ADDS,
       SUBS,
-
+      // Unsigned Integer average 
+      AVG,
       /// Integer horizontal add.
       HADD,
 
