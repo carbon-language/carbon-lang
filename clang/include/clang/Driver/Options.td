@@ -561,8 +561,13 @@ def fno_sanitize_recover_EQ
     : CommaJoined<["-"], "fno-sanitize-recover=">,
       Group<f_clang_Group>,
       HelpText<"Disable recovery for specified sanitizers">;
+def fsanitize_trap_EQ : CommaJoined<["-"], "fsanitize-trap=">, Group<f_clang_Group>,
+                        Flags<[CC1Option, CoreOption]>,
+                        HelpText<"Enable trapping for specified sanitizers">;
+def fno_sanitize_trap_EQ : CommaJoined<["-"], "fno-sanitize-trap=">, Group<f_clang_Group>,
+                           HelpText<"Disable trapping for specified sanitizers">;
 def fsanitize_undefined_trap_on_error : Flag<["-"], "fsanitize-undefined-trap-on-error">,
-                                        Group<f_clang_Group>, Flags<[CC1Option]>;
+                                        Group<f_clang_Group>;
 def fno_sanitize_undefined_trap_on_error : Flag<["-"], "fno-sanitize-undefined-trap-on-error">,
                                            Group<f_clang_Group>;
 def fsanitize_link_cxx_runtime : Flag<["-"], "fsanitize-link-c++-runtime">,

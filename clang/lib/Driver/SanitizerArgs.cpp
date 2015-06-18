@@ -34,6 +34,8 @@ enum : SanitizerMask {
   Unrecoverable = Address | Unreachable | Return,
   LegacyFsanitizeRecoverMask = Undefined | Integer,
   NeedsLTO = CFI,
+  TrappingSupported =
+      (Undefined & ~Vptr) | UnsignedIntegerOverflow | LocalBounds,
 };
 
 enum CoverageFeature {
@@ -116,8 +118,59 @@ static bool getDefaultBlacklist(const Driver &D, SanitizerMask Kinds,
   return false;
 }
 
+/// Sets group bits for every group that has at least one representative already
+/// enabled in \p Kinds.
+static SanitizerMask setGroupBits(SanitizerMask Kinds) {
+#define SANITIZER(NAME, ID)
+#define SANITIZER_GROUP(NAME, ID, ALIAS)                                       \
+  if (Kinds & SanitizerKind::ID)                                               \
+    Kinds |= SanitizerKind::ID##Group;
+#include "clang/Basic/Sanitizers.def"
+  return Kinds;
+}
+
+static SanitizerMask parseSanitizeTrapArgs(const Driver &D,
+                                           const llvm::opt::ArgList &Args) {
+  SanitizerMask TrapRemove = 0; // During the loop below, the accumulated set of
+                                // sanitizers disabled by the current sanitizer
+                                // argument or any argument after it.
+  SanitizerMask TrappingKinds = 0;
+  SanitizerMask TrappingSupportedWithGroups = setGroupBits(TrappingSupported);
+
+  for (ArgList::const_reverse_iterator I = Args.rbegin(), E = Args.rend();
+       I != E; ++I) {
+    const auto *Arg = *I;
+    if (Arg->getOption().matches(options::OPT_fsanitize_trap_EQ)) {
+      Arg->claim();
+      SanitizerMask Add = parseArgValues(D, Arg, true);
+      Add &= ~TrapRemove;
+      if (SanitizerMask InvalidValues = Add & ~TrappingSupportedWithGroups) {
+        SanitizerSet S;
+        S.Mask = InvalidValues;
+        D.Diag(diag::err_drv_unsupported_option_argument) << "-fsanitize-trap"
+                                                          << toString(S);
+      }
+      TrappingKinds |= expandSanitizerGroups(Add) & ~TrapRemove;
+    } else if (Arg->getOption().matches(options::OPT_fno_sanitize_trap_EQ)) {
+      Arg->claim();
+      TrapRemove |= expandSanitizerGroups(parseArgValues(D, Arg, true));
+    } else if (Arg->getOption().matches(
+                   options::OPT_fsanitize_undefined_trap_on_error)) {
+      Arg->claim();
+      TrappingKinds |=
+          expandSanitizerGroups(UndefinedGroup & ~TrapRemove) & ~TrapRemove;
+    } else if (Arg->getOption().matches(
+                   options::OPT_fno_sanitize_undefined_trap_on_error)) {
+      Arg->claim();
+      TrapRemove |= expandSanitizerGroups(UndefinedGroup);
+    }
+  }
+
+  return TrappingKinds;
+}
+
 bool SanitizerArgs::needsUbsanRt() const {
-  return !UbsanTrapOnError && (Sanitizers.Mask & NeedsUbsanRt) &&
+  return (Sanitizers.Mask & NeedsUbsanRt & ~TrapSanitizers.Mask) &&
          !Sanitizers.has(Address) &&
          !Sanitizers.has(Memory) &&
          !Sanitizers.has(Thread);
@@ -138,12 +191,12 @@ bool SanitizerArgs::needsLTO() const {
 void SanitizerArgs::clear() {
   Sanitizers.clear();
   RecoverableSanitizers.clear();
+  TrapSanitizers.clear();
   BlacklistFiles.clear();
   CoverageFeatures = 0;
   MsanTrackOrigins = 0;
   AsanFieldPadding = 0;
   AsanZeroBaseShadow = false;
-  UbsanTrapOnError = false;
   AsanSharedRuntime = false;
   LinkCXXRuntimes = false;
 }
@@ -166,6 +219,9 @@ SanitizerArgs::SanitizerArgs(const ToolChain &TC,
   ToolChain::RTTIMode RTTIMode = TC.getRTTIMode();
 
   const Driver &D = TC.getDriver();
+  SanitizerMask TrappingKinds = parseSanitizeTrapArgs(D, Args);
+  NotSupported |= TrappingKinds & NotAllowedWithTrap;
+
   for (ArgList::const_reverse_iterator I = Args.rbegin(), E = Args.rend();
        I != E; ++I) {
     const auto *Arg = *I;
@@ -180,7 +236,14 @@ SanitizerArgs::SanitizerArgs(const ToolChain &TC,
       // sanitizers in Add are those which have been explicitly enabled.
       // Diagnose them.
       if (SanitizerMask KindsToDiagnose =
-              Add & NotSupported & ~DiagnosedKinds) {
+              Add & TrappingKinds & NotAllowedWithTrap & ~DiagnosedKinds) {
+        std::string Desc = describeSanitizeArg(*I, KindsToDiagnose);
+        D.Diag(diag::err_drv_argument_not_allowed_with)
+            << Desc << "-fsanitize-trap=undefined";
+        DiagnosedKinds |= KindsToDiagnose;
+        Add &= ~KindsToDiagnose;
+      }
+      if (SanitizerMask KindsToDiagnose = Add & NotSupported & ~DiagnosedKinds) {
         // Only diagnose the new kinds.
         std::string Desc = describeSanitizeArg(*I, KindsToDiagnose);
         D.Diag(diag::err_drv_unsupported_opt_for_target)
@@ -232,17 +295,6 @@ SanitizerArgs::SanitizerArgs(const ToolChain &TC,
       (RTTIMode == ToolChain::RM_DisabledImplicitly ||
        RTTIMode == ToolChain::RM_DisabledExplicitly)) {
     Kinds &= ~Vptr;
-  }
-
-  // Warn about undefined sanitizer options that require runtime support.
-  UbsanTrapOnError =
-    Args.hasFlag(options::OPT_fsanitize_undefined_trap_on_error,
-                 options::OPT_fno_sanitize_undefined_trap_on_error, false);
-  if (UbsanTrapOnError && (Kinds & NotAllowedWithTrap)) {
-    D.Diag(clang::diag::err_drv_argument_not_allowed_with)
-        << lastArgumentForMask(D, Args, NotAllowedWithTrap)
-        << "-fsanitize-undefined-trap-on-error";
-    Kinds &= ~NotAllowedWithTrap;
   }
 
   // Warn about incompatible groups of sanitizers.
@@ -304,6 +356,8 @@ SanitizerArgs::SanitizerArgs(const ToolChain &TC,
   }
   RecoverableKinds &= Kinds;
   RecoverableKinds &= ~Unrecoverable;
+
+  TrappingKinds &= Kinds;
 
   // Setup blacklist files.
   // Add default blacklist from resource directory.
@@ -460,6 +514,7 @@ SanitizerArgs::SanitizerArgs(const ToolChain &TC,
   // Finally, initialize the set of available and recoverable sanitizers.
   Sanitizers.Mask |= Kinds;
   RecoverableSanitizers.Mask |= RecoverableKinds;
+  TrapSanitizers.Mask |= TrappingKinds;
 }
 
 static std::string toString(const clang::SanitizerSet &Sanitizers) {
@@ -484,8 +539,9 @@ void SanitizerArgs::addArgs(const llvm::opt::ArgList &Args,
     CmdArgs.push_back(Args.MakeArgString("-fsanitize-recover=" +
                                          toString(RecoverableSanitizers)));
 
-  if (UbsanTrapOnError)
-    CmdArgs.push_back("-fsanitize-undefined-trap-on-error");
+  if (!TrapSanitizers.empty())
+    CmdArgs.push_back(
+        Args.MakeArgString("-fsanitize-trap=" + toString(TrapSanitizers)));
 
   for (const auto &BLPath : BlacklistFiles) {
     SmallString<64> BlacklistOpt("-fsanitize-blacklist=");
@@ -528,7 +584,9 @@ SanitizerMask parseArgValues(const Driver &D, const llvm::opt::Arg *A,
   assert((A->getOption().matches(options::OPT_fsanitize_EQ) ||
           A->getOption().matches(options::OPT_fno_sanitize_EQ) ||
           A->getOption().matches(options::OPT_fsanitize_recover_EQ) ||
-          A->getOption().matches(options::OPT_fno_sanitize_recover_EQ)) &&
+          A->getOption().matches(options::OPT_fno_sanitize_recover_EQ) ||
+          A->getOption().matches(options::OPT_fsanitize_trap_EQ) ||
+          A->getOption().matches(options::OPT_fno_sanitize_trap_EQ)) &&
          "Invalid argument in parseArgValues!");
   SanitizerMask Kinds = 0;
   for (int i = 0, n = A->getNumValues(); i != n; ++i) {

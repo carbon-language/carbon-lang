@@ -23,13 +23,13 @@ class ToolChain;
 class SanitizerArgs {
   SanitizerSet Sanitizers;
   SanitizerSet RecoverableSanitizers;
+  SanitizerSet TrapSanitizers;
 
   std::vector<std::string> BlacklistFiles;
   int CoverageFeatures;
   int MsanTrackOrigins;
   int AsanFieldPadding;
   bool AsanZeroBaseShadow;
-  bool UbsanTrapOnError;
   bool AsanSharedRuntime;
   bool LinkCXXRuntimes;
 

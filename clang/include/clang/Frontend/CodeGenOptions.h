@@ -197,6 +197,9 @@ public:
   /// continued when possible).
   SanitizerSet SanitizeRecover;
 
+  /// Set of sanitizer checks that trap rather than diagnose.
+  SanitizerSet SanitizeTrap;
+
 public:
   // Define accessors/mutators for code generation options of enumeration type.
 #define CODEGENOPT(Name, Bits, Default)
