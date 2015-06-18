@@ -11056,9 +11056,8 @@ static SDValue LowerINSERT_SUBVECTOR(SDValue Op, const X86Subtarget *Subtarget,
     if (auto *Idx2 = dyn_cast<ConstantSDNode>(Vec.getOperand(2))) {
       if (Idx2->getZExtValue() == 0) {
         SDValue Ops[] = { SubVec2, SubVec };
-        SDValue LD = EltsFromConsecutiveLoads(OpVT, Ops, dl, DAG, false);
-        if (LD.getNode())
-          return LD;
+        if (SDValue Ld = EltsFromConsecutiveLoads(OpVT, Ops, dl, DAG, false))
+          return Ld;
       }
     }
   }
