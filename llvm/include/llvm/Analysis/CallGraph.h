@@ -56,6 +56,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/IR/CallSite.h"
 #include "llvm/IR/Function.h"
+#include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/ValueHandle.h"
 #include "llvm/Pass.h"
 #include <map>
@@ -229,7 +230,8 @@ public:
   /// \brief Adds a function to the list of functions called by this one.
   void addCalledFunction(CallSite CS, CallGraphNode *M) {
     assert(!CS.getInstruction() || !CS.getCalledFunction() ||
-           !CS.getCalledFunction()->isIntrinsic());
+           !CS.getCalledFunction()->isIntrinsic() ||
+           !Intrinsic::isLeaf(CS.getCalledFunction()->getIntrinsicID()));
     CalledFunctions.emplace_back(CS.getInstruction(), M);
     M->AddRef();
   }

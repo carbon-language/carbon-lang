@@ -217,8 +217,10 @@ bool CGPassManager::RefreshCallGraph(CallGraphSCC &CurSCC,
           // another value. This can happen when constant folding happens
           // of well known functions etc.
           !CallSite(I->first) ||
-           (CallSite(I->first).getCalledFunction() &&
-            CallSite(I->first).getCalledFunction()->isIntrinsic())) {
+          (CallSite(I->first).getCalledFunction() &&
+           CallSite(I->first).getCalledFunction()->isIntrinsic() &&
+           Intrinsic::isLeaf(
+               CallSite(I->first).getCalledFunction()->getIntrinsicID()))) {
         assert(!CheckingMode &&
                "CallGraphSCCPass did not update the CallGraph correctly!");
         

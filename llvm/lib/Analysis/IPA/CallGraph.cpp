@@ -79,8 +79,10 @@ void CallGraph::addToCallGraph(Function *F) {
       CallSite CS(cast<Value>(II));
       if (CS) {
         const Function *Callee = CS.getCalledFunction();
-        if (!Callee)
+        if (!Callee || !Intrinsic::isLeaf(Callee->getIntrinsicID()))
           // Indirect calls of intrinsics are not allowed so no need to check.
+          // We can be more precise here by using TargetArg returned by
+          // Intrinsic::isLeaf.
           Node->addCalledFunction(CS, CallsExternalNode);
         else if (!Callee->isIntrinsic())
           Node->addCalledFunction(CS, getOrInsertFunction(Callee));
