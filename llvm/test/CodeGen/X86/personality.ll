@@ -41,8 +41,10 @@ declare void @__cxa_end_catch()
 
 declare i32 @__gxx_personality_v0(...)
 
+; X64-NOT: .quad ___gxx_personality_v0
 ; X64: .cfi_personality 155, ___gxx_personality_v0
 
+; X32-NOT: .long ___gxx_personality_v0
 ; X32: .cfi_personality 155, L___gxx_personality_v0$non_lazy_ptr
 
 ; X32:        .section	__IMPORT,__pointers,non_lazy_symbol_pointers
