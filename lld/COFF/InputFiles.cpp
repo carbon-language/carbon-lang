@@ -269,6 +269,14 @@ std::error_code BitcodeFile::parse() {
       bool Replaceable = (SymbolDef == LTO_SYMBOL_DEFINITION_TENTATIVE ||
                           (Attrs & LTO_SYMBOL_COMDAT));
       SymbolBodies.push_back(new (Alloc) DefinedBitcode(SymName, Replaceable));
+
+      const llvm::GlobalValue *GV = M->getSymbolGV(I);
+      if (GV && GV->hasDLLExportStorageClass()) {
+        Directives += " /export:";
+        Directives += SymName;
+        if (!GV->getValueType()->isFunctionTy())
+          Directives += ",data";
+      }
     }
   }
 
