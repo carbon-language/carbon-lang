@@ -316,9 +316,6 @@ public:
   /// Darwin - The base Darwin tool chain.
 class LLVM_LIBRARY_VISIBILITY Darwin : public MachO {
 public:
-  /// The host version.
-  unsigned DarwinVersion[3];
-
   /// Whether the information on the target has been initialized.
   //
   // FIXME: This should be eliminated. What we want to do is make this part of

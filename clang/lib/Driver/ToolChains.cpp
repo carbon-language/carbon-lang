@@ -60,12 +60,6 @@ Darwin::Darwin(const Driver & D, const llvm::Triple & Triple,
   llvm::raw_string_ostream(MacosxVersionMin)
     << Major << '.' << Minor << '.' << Micro;
 
-  // FIXME: DarwinVersion is only used to find GCC's libexec directory.
-  // It should be removed when we stop supporting that.
-  DarwinVersion[0] = Minor + 4;
-  DarwinVersion[1] = Micro;
-  DarwinVersion[2] = 0;
-
   // Compute the initial iOS version from the triple
   Triple.getiOSVersion(Major, Minor, Micro);
   llvm::raw_string_ostream(iOSVersionMin)
