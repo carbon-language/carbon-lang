@@ -16,23 +16,18 @@ bb1: tail call void @g(i32 1) br label %return
 bb2: tail call void @g(i32 1) br label %return
 return: ret void
 
-; Should be lowered as straight compares in -O0 mode.
-; NOOPT-LABEL: basic
-; NOOPT: subl $1, %eax
-; NOOPT: je
-; NOOPT: subl $3, %eax
-; NOOPT: je
-; NOOPT: subl $4, %eax
-; NOOPT: je
-; NOOPT: subl $5, %eax
-; NOOPT: je
-
-; Jump table otherwise.
+; Lowered as a jump table, both with and without optimization.
 ; CHECK-LABEL: basic
 ; CHECK: decl
 ; CHECK: cmpl $4
 ; CHECK: ja
 ; CHECK: jmpq *.LJTI
+; NOOPT-LABEL: basic
+; NOOPT: decl
+; NOOPT: subl $4
+; NOOPT: ja
+; NOOPT: movq .LJTI
+; NOOPT: jmpq
 }
 
 
@@ -205,6 +200,21 @@ return: ret void
 ; CHECK: leal -5
 ; CHECK: cmpl $10
 ; CHECK: jmpq *.LJTI
+
+; At -O0, we don't build jump tables for only parts of a switch.
+; NOOPT-LABEL: optimal_jump_table1
+; NOOPT: testl %edi, %edi
+; NOOPT: je
+; NOOPT: subl $5, %eax
+; NOOPT: je
+; NOOPT: subl $6, %eax
+; NOOPT: je
+; NOOPT: subl $12, %eax
+; NOOPT: je
+; NOOPT: subl $13, %eax
+; NOOPT: je
+; NOOPT: subl $15, %eax
+; NOOPT: je
 }
 
 

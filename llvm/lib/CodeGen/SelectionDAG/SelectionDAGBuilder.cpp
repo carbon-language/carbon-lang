@@ -7504,6 +7504,31 @@ void SelectionDAGBuilder::findJumpTables(CaseClusterVector &Clusters,
   const int64_t N = Clusters.size();
   const unsigned MinJumpTableSize = TLI.getMinimumJumpTableEntries();
 
+  // TotalCases[i]: Total nbr of cases in Clusters[0..i].
+  SmallVector<unsigned, 8> TotalCases(N);
+
+  for (unsigned i = 0; i < N; ++i) {
+    APInt Hi = Clusters[i].High->getValue();
+    APInt Lo = Clusters[i].Low->getValue();
+    TotalCases[i] = (Hi - Lo).getLimitedValue() + 1;
+    if (i != 0)
+      TotalCases[i] += TotalCases[i - 1];
+  }
+
+  if (N >= MinJumpTableSize && isDense(Clusters, &TotalCases[0], 0, N - 1)) {
+    // Cheap case: the whole range might be suitable for jump table.
+    CaseCluster JTCluster;
+    if (buildJumpTable(Clusters, 0, N - 1, SI, DefaultMBB, JTCluster)) {
+      Clusters[0] = JTCluster;
+      Clusters.resize(1);
+      return;
+    }
+  }
+
+  // The algorithm below is not suitable for -O0.
+  if (TM.getOptLevel() == CodeGenOpt::None)
+    return;
+
   // Split Clusters into minimum number of dense partitions. The algorithm uses
   // the same idea as Kannan & Proebsting "Correction to 'Producing Good Code
   // for the Case Statement'" (1994), but builds the MinPartitions array in
@@ -7517,16 +7542,6 @@ void SelectionDAGBuilder::findJumpTables(CaseClusterVector &Clusters,
   SmallVector<unsigned, 8> LastElement(N);
   // NumTables[i]: nbr of >= MinJumpTableSize partitions from Clusters[i..N-1].
   SmallVector<unsigned, 8> NumTables(N);
-  // TotalCases[i]: Total nbr of cases in Clusters[0..i].
-  SmallVector<unsigned, 8> TotalCases(N);
-
-  for (unsigned i = 0; i < N; ++i) {
-    APInt Hi = Clusters[i].High->getValue();
-    APInt Lo = Clusters[i].Low->getValue();
-    TotalCases[i] = (Hi - Lo).getLimitedValue() + 1;
-    if (i != 0)
-      TotalCases[i] += TotalCases[i - 1];
-  }
 
   // Base case: There is only one way to partition Clusters[N-1].
   MinPartitions[N - 1] = 1;
@@ -7713,6 +7728,10 @@ void SelectionDAGBuilder::findBitTestClusters(CaseClusterVector &Clusters,
   for (unsigned i = 1; i < Clusters.size(); ++i)
     assert(Clusters[i-1].High->getValue().slt(Clusters[i].Low->getValue()));
 #endif
+
+  // The algorithm below is not suitable for -O0.
+  if (TM.getOptLevel() == CodeGenOpt::None)
+    return;
 
   // If target does not have legal shift left, do not emit bit tests at all.
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
@@ -8129,11 +8148,8 @@ void SelectionDAGBuilder::visitSwitch(const SwitchInst &SI) {
     return;
   }
 
-  if (TM.getOptLevel() != CodeGenOpt::None) {
-    findJumpTables(Clusters, &SI, DefaultMBB);
-    findBitTestClusters(Clusters, &SI);
-  }
-
+  findJumpTables(Clusters, &SI, DefaultMBB);
+  findBitTestClusters(Clusters, &SI);
 
   DEBUG({
     dbgs() << "Case clusters: ";
