@@ -687,7 +687,7 @@ DisassemblerLLVMC::DisassemblerLLVMC (const ArchSpec &arch, const char *flavor_s
     if (arch.GetTriple().getArch() == llvm::Triple::arm)
     {
         std::string thumb_triple(thumb_arch.GetTriple().getTriple());
-        m_alternate_disasm_ap.reset(new LLVMCDisassembler(thumb_triple.c_str(), nullptr, flavor, *this));
+        m_alternate_disasm_ap.reset(new LLVMCDisassembler(thumb_triple.c_str(), "", flavor, *this));
         if (!m_alternate_disasm_ap->IsValid())
         {
             m_disasm_ap.reset();
