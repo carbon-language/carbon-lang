@@ -4025,10 +4025,10 @@ static bool isMemSrcFromString(SDValue Src, StringRef &Str) {
   return getConstantStringInfo(G->getGlobal(), Str, SrcDelta, false);
 }
 
-/// FindOptimalMemOpLowering - Determines the optimial series memory ops
-/// to replace the memset / memcpy. Return true if the number of memory ops
-/// is below the threshold. It returns the types of the sequence of
-/// memory ops to perform memset / memcpy by reference.
+/// Determines the optimal series of memory ops to replace the memset / memcpy.
+/// Return true if the number of memory ops is below the threshold (Limit).
+/// It returns the types of the sequence of memory ops to perform
+/// memset / memcpy by reference.
 static bool FindOptimalMemOpLowering(std::vector<EVT> &MemOps,
                                      unsigned Limit, uint64_t Size,
                                      unsigned DstAlign, unsigned SrcAlign,
