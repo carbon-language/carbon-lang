@@ -31,7 +31,7 @@ public:
 
   const X86Subtarget &STI;
   const TargetInstrInfo &TII;
-  const X86RegisterInfo *RegInfo;
+  const X86RegisterInfo *TRI;
 
   unsigned SlotSize;
 
