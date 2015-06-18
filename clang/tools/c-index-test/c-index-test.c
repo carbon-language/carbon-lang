@@ -2101,7 +2101,7 @@ int perform_code_completion(int argc, const char **argv, int timing_only) {
                                      clang_defaultReparseOptions(TU));
 
   if (Err != CXError_Success) {
-    fprintf(stderr, "Unable to reparse translation init!\n");
+    fprintf(stderr, "Unable to reparse translation unit!\n");
     describeLibclangFailure(Err);
     clang_disposeTranslationUnit(TU);
     return 1;
