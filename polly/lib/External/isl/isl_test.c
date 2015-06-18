@@ -3378,6 +3378,44 @@ static int test_conflicting_context_schedule(isl_ctx *ctx)
 	return 0;
 }
 
+/* Check that the dependence carrying step is not confused by
+ * a bound on the coefficient size.
+ * In particular, force the scheduler to move to a dependence carrying
+ * step by demanding outer coincidence and bound the size of
+ * the coefficients.  Earlier versions of isl would take this
+ * bound into account while carrying dependences, breaking
+ * fundamental assumptions.
+ */
+static int test_bounded_coefficients_schedule(isl_ctx *ctx)
+{
+	const char *domain, *dep;
+	isl_union_set *I;
+	isl_union_map *D;
+	isl_schedule_constraints *sc;
+	isl_schedule *schedule;
+
+	domain = "{ C[i0, i1] : 2 <= i0 <= 3999 and 0 <= i1 <= -1 + i0 }";
+	dep = "{ C[i0, i1] -> C[i0, 1 + i1] : i0 <= 3999 and i1 >= 0 and "
+						"i1 <= -2 + i0; "
+		"C[i0, -1 + i0] -> C[1 + i0, 0] : i0 <= 3998 and i0 >= 1 }";
+	I = isl_union_set_read_from_str(ctx, domain);
+	D = isl_union_map_read_from_str(ctx, dep);
+	sc = isl_schedule_constraints_on_domain(I);
+	sc = isl_schedule_constraints_set_validity(sc, isl_union_map_copy(D));
+	sc = isl_schedule_constraints_set_coincidence(sc, D);
+	isl_options_set_schedule_outer_coincidence(ctx, 1);
+	isl_options_set_schedule_max_coefficient(ctx, 20);
+	schedule = isl_schedule_constraints_compute_schedule(sc);
+	isl_options_set_schedule_max_coefficient(ctx, -1);
+	isl_options_set_schedule_outer_coincidence(ctx, 0);
+	isl_schedule_free(schedule);
+
+	if (!schedule)
+		return -1;
+
+	return 0;
+}
+
 int test_schedule(isl_ctx *ctx)
 {
 	const char *D, *W, *R, *V, *P, *S;
@@ -3674,6 +3712,9 @@ int test_schedule(isl_ctx *ctx)
 		return -1;
 
 	if (test_conflicting_context_schedule(ctx) < 0)
+		return -1;
+
+	if (test_bounded_coefficients_schedule(ctx) < 0)
 		return -1;
 
 	return 0;
@@ -5128,7 +5169,7 @@ static int test_ast_gen1(isl_ctx *ctx)
 }
 
 /* Check that the AST generator handles domains that are integrally disjoint
- * but not ratinoally disjoint.
+ * but not rationally disjoint.
  */
 static int test_ast_gen2(isl_ctx *ctx)
 {

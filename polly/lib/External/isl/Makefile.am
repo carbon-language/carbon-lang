@@ -11,8 +11,8 @@ lib_LTLIBRARIES = libisl.la
 noinst_PROGRAMS = isl_test isl_polyhedron_sample isl_pip \
 	isl_polyhedron_minimize isl_polytope_scan \
 	isl_polyhedron_detect_equalities isl_cat \
-	isl_closure isl_bound isl_codegen
-TESTS = isl_test codegen_test.sh pip_test.sh bound_test.sh
+	isl_closure isl_bound isl_codegen isl_test_int
+TESTS = isl_test codegen_test.sh pip_test.sh bound_test.sh isl_test_int
 
 if IMATH_FOR_MP
 
@@ -21,7 +21,6 @@ MP_SRC = \
 	isl_imath.c \
 	isl_imath.h \
 	isl_int_imath.h \
-	isl_val_imath.c \
 	imath_wrap/gmp_compat.h \
 	imath_wrap/imath.h \
 	imath_wrap/imrat.h \
@@ -29,6 +28,17 @@ MP_SRC = \
 	imath_wrap/gmp_compat.c \
 	imath_wrap/imath.c \
 	imath_wrap/imrat.c
+
+noinst_PROGRAMS += isl_test_imath
+TESTS += isl_test_imath
+
+if SMALL_INT_OPT
+MP_SRC += isl_int_sioimath.h \
+	isl_int_sioimath.c \
+	isl_val_sioimath.c
+else
+MP_SRC += isl_val_imath.c
+endif
 
 DEPRECATED_SRC =
 MP_INCLUDE_H =
@@ -178,6 +188,14 @@ libisl_la_LDFLAGS = -version-info @versioninfo@ \
 isl_test_LDFLAGS = @MP_LDFLAGS@
 isl_test_LDADD = libisl.la @MP_LIBS@
 
+isl_test_int_LDFLAGS = @MP_LDFLAGS@
+isl_test_int_LDADD = libisl.la @MP_LIBS@
+
+if IMATH_FOR_MP
+isl_test_imath_LDFLAGS = @MP_LDFLAGS@
+isl_test_imath_LDADD = libisl.la @MP_LIBS@
+endif
+
 isl_polyhedron_sample_LDADD = libisl.la
 isl_polyhedron_sample_SOURCES = \
 	polyhedron_sample.c
@@ -305,6 +323,7 @@ EXTRA_DIST = \
 	isl_pw_templ.c \
 	isl_union_templ.c \
 	isl.py \
+	doc/CodingStyle \
 	doc/SubmittingPatches \
 	doc/chicago.bst \
 	doc/chicago.sty \

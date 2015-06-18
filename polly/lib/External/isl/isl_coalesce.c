@@ -272,6 +272,8 @@ static enum isl_change invert_change(enum isl_change change)
 	case isl_change_fuse:
 		return isl_change_fuse;
 	}
+
+	return isl_change_error;
 }
 
 /* Add the valid constraints of the basic map represented by "info"

@@ -76,7 +76,7 @@ struct isl_schedule_constraints {
 	isl_union_map *constraint[isl_edge_last + 1];
 };
 
- __isl_give isl_schedule_constraints *isl_schedule_constraints_copy(
+__isl_give isl_schedule_constraints *isl_schedule_constraints_copy(
 	__isl_keep isl_schedule_constraints *sc)
 {
 	isl_ctx *ctx;
@@ -533,7 +533,7 @@ struct isl_sched_edge {
  * edge_table contains pointers into the edge array, hashed on the source
  *	and sink spaces; there is one such table for each type;
  *	a given edge may be referenced from more than one table
- *	if the corresponding relation appears in more than of the
+ *	if the corresponding relation appears in more than one of the
  *	sets of dependences
  *
  * node_table contains pointers into the node array, hashed on the space
@@ -3150,7 +3150,7 @@ static __isl_give isl_schedule_node *insert_current_band(
 }
 
 /* Update the dependence relations based on the current schedule,
- * add the current band to "node" and the continue with the computation
+ * add the current band to "node" and then continue with the computation
  * of the next band.
  * Return the updated schedule node.
  */
@@ -3358,12 +3358,12 @@ static int count_all_constraints(struct isl_sched_graph *graph,
  * such that the schedule carries as many dependences as possible.
  * In particular, for each dependence i, we bound the dependence distance
  * from below by e_i, with 0 <= e_i <= 1 and then maximize the sum
- * of all e_i's.  Dependence with e_i = 0 in the solution are simply
+ * of all e_i's.  Dependences with e_i = 0 in the solution are simply
  * respected, while those with e_i > 0 (in practice e_i = 1) are carried.
  * Note that if the dependence relation is a union of basic maps,
  * then we have to consider each basic map individually as it may only
  * be possible to carry the dependences expressed by some of those
- * basic maps and not all off them.
+ * basic maps and not all of them.
  * Below, we consider each of those basic maps as a separate "edge".
  *
  * All variables of the LP are non-negative.  The actual coefficients
@@ -3407,8 +3407,6 @@ static int setup_carry_lp(isl_ctx *ctx, struct isl_sched_graph *graph)
 	}
 
 	if (count_all_constraints(graph, &n_eq, &n_ineq) < 0)
-		return -1;
-	if (count_bound_coefficient_constraints(ctx, graph, &n_eq, &n_ineq) < 0)
 		return -1;
 
 	dim = isl_space_set_alloc(ctx, 0, total);
@@ -3461,8 +3459,6 @@ static int setup_carry_lp(isl_ctx *ctx, struct isl_sched_graph *graph)
 		isl_int_set_si(graph->lp->ineq[k][0], 1);
 	}
 
-	if (add_bound_coefficient_constraints(ctx, graph) < 0)
-		return -1;
 	if (add_all_constraints(graph) < 0)
 		return -1;
 
@@ -4230,7 +4226,7 @@ static __isl_give isl_schedule_node *compute_component_schedule(
  * We first check if the graph is connected (through validity and conditional
  * validity dependences) and, if not, compute a schedule
  * for each component separately.
- * If schedule_fuse is set to minimal fusion, then we check for strongly
+ * If the schedule_serialize_sccs option is set, then we check for strongly
  * connected components instead and compute a separate schedule for
  * each such strongly connected component.
  */
@@ -4243,7 +4239,7 @@ static __isl_give isl_schedule_node *compute_schedule(isl_schedule_node *node,
 		return NULL;
 
 	ctx = isl_schedule_node_get_ctx(node);
-	if (ctx->opt->schedule_fuse == ISL_SCHEDULE_FUSE_MIN) {
+	if (isl_options_get_schedule_serialize_sccs(ctx)) {
 		if (detect_sccs(ctx, graph) < 0)
 			return isl_schedule_node_free(node);
 	} else {

@@ -22,7 +22,7 @@ __isl_give isl_space *isl_qpolynomial_get_domain_space(
 __isl_give isl_space *isl_qpolynomial_get_space(__isl_keep isl_qpolynomial *qp);
 unsigned isl_qpolynomial_dim(__isl_keep isl_qpolynomial *qp,
 	enum isl_dim_type type);
-int isl_qpolynomial_involves_dims(__isl_keep isl_qpolynomial *qp,
+isl_bool isl_qpolynomial_involves_dims(__isl_keep isl_qpolynomial *qp,
 	enum isl_dim_type type, unsigned first, unsigned n);
 
 __isl_give isl_val *isl_qpolynomial_get_constant_val(

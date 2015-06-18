@@ -148,6 +148,9 @@
 /* use imath to implement isl_int */
 #define USE_IMATH_FOR_MP 1
 
+/* Use small integer optimization */
+#undef USE_SMALL_INT_OPT
+
 /* Version number of package */
 #undef VERSION
 

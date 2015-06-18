@@ -12,15 +12,24 @@ More specific rules:
 	  (except at the end of a line)
 	- no space between function name and arguments
 	- use a single space after control keywords such as if, for and while
+	- use a single space between the type of a cast and the value
+	  that is being cast
 	- no whitespace at the end of a line
 	- opening brace of a function is placed on a new line
 	- opening brace of other blocks stays on the same line
 	- the body of a control statement is placed on the next line(s)
+	- an else appears on the same line as the closing brace of
+	  the then branch, if there is such a closing brace
+	- if either the then or the else branch of an if has braces,
+	  then they both have braces
 	- no parentheses around argument of return keyword
 	- use only C style comments (/* ... */)
 	- no comments inside function bodies;
 	  if some part of a function deserves additional comments, then
 	  extract it out into a separate function first
+	- no #ifs inside function bodies
+	- variables are declared at the start of a block, before any
+	  other statements
 
 There are some exceptions to the general rule of using
 the same style as the surrounding code, most notably

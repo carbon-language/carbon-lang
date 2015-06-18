@@ -2384,22 +2384,23 @@ static int set_active(__isl_keep isl_qpolynomial *qp, int *active)
 	return up_set_active(qp->upoly, active, d);
 }
 
-int isl_qpolynomial_involves_dims(__isl_keep isl_qpolynomial *qp,
+isl_bool isl_qpolynomial_involves_dims(__isl_keep isl_qpolynomial *qp,
 	enum isl_dim_type type, unsigned first, unsigned n)
 {
 	int i;
 	int *active = NULL;
-	int involves = 0;
+	isl_bool involves = isl_bool_false;
 
 	if (!qp)
-		return -1;
+		return isl_bool_error;
 	if (n == 0)
-		return 0;
+		return isl_bool_false;
 
 	isl_assert(qp->dim->ctx,
-		    first + n <= isl_qpolynomial_dim(qp, type), return -1);
+		    first + n <= isl_qpolynomial_dim(qp, type),
+		    return isl_bool_error);
 	isl_assert(qp->dim->ctx, type == isl_dim_param ||
-				 type == isl_dim_in, return -1);
+				 type == isl_dim_in, return isl_bool_error);
 
 	active = isl_calloc_array(qp->dim->ctx, int,
 					isl_space_dim(qp->dim, isl_dim_all));
@@ -2410,7 +2411,7 @@ int isl_qpolynomial_involves_dims(__isl_keep isl_qpolynomial *qp,
 		first += isl_space_dim(qp->dim, isl_dim_param);
 	for (i = 0; i < n; ++i)
 		if (active[first + i]) {
-			involves = 1;
+			involves = isl_bool_true;
 			break;
 		}
 
@@ -2419,7 +2420,7 @@ int isl_qpolynomial_involves_dims(__isl_keep isl_qpolynomial *qp,
 	return involves;
 error:
 	free(active);
-	return -1;
+	return isl_bool_error;
 }
 
 /* Remove divs that do not appear in the quasi-polynomial, nor in any

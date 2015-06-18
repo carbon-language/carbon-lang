@@ -10,6 +10,7 @@ Makefile.in
 aclocal.m4
 autom4te.cache/
 config.guess
+isl_config.h
 isl_config.h.in
 isl_config.h.in~
 compile
@@ -20,6 +21,7 @@ configure
 depcomp
 doc/Makefile
 doc/Makefile.in
+gitversion.h
 include/isl/config.h
 include/isl/stdint.h
 include/stamp-h2

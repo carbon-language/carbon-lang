@@ -2505,10 +2505,11 @@ __isl_give isl_aff *isl_aff_move_dims(__isl_take isl_aff *aff,
 
 	if (dst_type == isl_dim_out || src_type == isl_dim_out)
 		isl_die(isl_aff_get_ctx(aff), isl_error_invalid,
-			"cannot move output/set dimension", isl_aff_free(aff));
+			"cannot move output/set dimension",
+			return isl_aff_free(aff));
 	if (dst_type == isl_dim_div || src_type == isl_dim_div)
 		isl_die(isl_aff_get_ctx(aff), isl_error_invalid,
-			"cannot move divs", isl_aff_free(aff));
+			"cannot move divs", return isl_aff_free(aff));
 	if (dst_type == isl_dim_in)
 		dst_type = isl_dim_set;
 	if (src_type == isl_dim_in)
@@ -2516,11 +2517,11 @@ __isl_give isl_aff *isl_aff_move_dims(__isl_take isl_aff *aff,
 
 	if (src_pos + n > isl_local_space_dim(aff->ls, src_type))
 		isl_die(isl_aff_get_ctx(aff), isl_error_invalid,
-			"range out of bounds", isl_aff_free(aff));
+			"range out of bounds", return isl_aff_free(aff));
 	if (dst_type == src_type)
 		isl_die(isl_aff_get_ctx(aff), isl_error_unsupported,
 			"moving dims within the same type not supported",
-			isl_aff_free(aff));
+			return isl_aff_free(aff));
 
 	aff = isl_aff_cow(aff);
 	if (!aff)

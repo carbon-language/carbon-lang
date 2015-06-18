@@ -20,6 +20,8 @@ ISL_ARG_PHANTOM_BOOL('h', "help", NULL, "print this help, then exit")
 
 static void set_default_choice(struct isl_arg *arg, void *opt)
 {
+	if (arg->offset == (size_t) -1)
+		return;
 	*(unsigned *)(((char *)opt) + arg->offset) = arg->u.choice.default_value;
 }
 

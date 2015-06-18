@@ -249,6 +249,11 @@ have been renamed to C<isl_constraint_alloc_equality> and
 C<isl_constraint_alloc_inequality>.  The original names have been
 kept for backward compatibility, but they will be removed in the future.
 
+=item * The C<schedule_fuse> option has been replaced
+by the C<schedule_serialize_sccs> option.  The effect
+of setting the C<schedule_fuse> option to C<ISL_SCHEDULE_FUSE_MIN>
+is now obtained by turning on the C<schedule_serialize_sccs> option.
+
 =back
 
 =head1 License
@@ -281,8 +286,9 @@ Note that by default C<isl> requires C<GMP>, which is released
 under the GNU Lesser General Public License (LGPL).  This means
 that code linked against C<isl> is also linked against LGPL code.
 
-When configuring with C<--with-int=imath>, C<isl> will link against C<imath>, a
-library for exact integer arithmetic released under the MIT license.
+When configuring with C<--with-int=imath> or C<--with-int=imath-32>, C<isl>
+will link against C<imath>, a library for exact integer arithmetic released
+under the MIT license.
 
 =head1 Installation
 
@@ -359,10 +365,13 @@ Below we discuss some of the more common options.
 
 Installation prefix for C<isl>
 
-=item C<--with-int=[gmp|imath]>
+=item C<--with-int=[gmp|imath|imath-32]>
 
 Select the integer library to be used by C<isl>, the default is C<gmp>.
-Note that C<isl> may run significantly slower if you use C<imath>.
+With C<imath-32>, C<isl> will use 32 bit integers, but fall back to C<imath>
+for values out of the 32 bit range. In most applications, C<isl> will run
+fastest with the C<imath-32> option, followed by C<gmp> and C<imath>, the
+slowest.
 
 =item C<--with-gmp-prefix>
 
@@ -548,6 +557,10 @@ in which the object was created.
 	#include <isl/flow.h>
 	isl_ctx *isl_restriction_get_ctx(
 		__isl_keep isl_restriction *restr);
+	isl_ctx *isl_union_access_info_get_ctx(
+		__isl_keep isl_union_access_info *access);
+	isl_ctx *isl_union_flow_get_ctx(
+		__isl_keep isl_union_flow *flow);
 
 	#include <isl/schedule.h>
 	isl_ctx *isl_schedule_get_ctx(
@@ -3769,6 +3782,11 @@ the following functions can be used.
 		enum isl_dim_type type, unsigned first, unsigned n);
 	isl_bool isl_multi_pw_aff_involves_dims(
 		__isl_keep isl_multi_pw_aff *mpa,
+		enum isl_dim_type type, unsigned first, unsigned n);
+
+	#include <isl/polynomial.h>
+	isl_bool isl_qpolynomial_involves_dims(
+		__isl_keep isl_qpolynomial *qp,
 		enum isl_dim_type type, unsigned first, unsigned n);
 
 Similarly, the following functions can be used to check whether
@@ -8247,7 +8265,7 @@ while the output C<isl_union_flow> object describes
 the resulting dependence relations and the subsets of the
 sink relations for which no source was found.
 
-An C<isl_union_access_info> is created, modified and freed using
+An C<isl_union_access_info> is created, modified, copied and freed using
 the following functions.
 
 	#include <isl/flow.h>
@@ -8270,6 +8288,9 @@ the following functions.
 	isl_union_access_info_set_schedule_map(
 		__isl_take isl_union_access_info *access,
 		__isl_take isl_union_map *schedule_map);
+	__isl_give isl_union_access_info *
+	isl_union_access_info_copy(
+		__isl_keep isl_union_access_info *access);
 	__isl_null isl_union_access_info *
 	isl_union_access_info_free(
 		__isl_take isl_union_access_info *access);
@@ -8647,8 +8668,9 @@ L</"Schedule Trees">.
 		isl_ctx *ctx, int val);
 	int isl_options_get_schedule_max_constant_term(
 		isl_ctx *ctx);
-	isl_stat isl_options_set_schedule_fuse(isl_ctx *ctx, int val);
-	int isl_options_get_schedule_fuse(isl_ctx *ctx);
+	isl_stat isl_options_set_schedule_serialize_sccs(
+		isl_ctx *ctx, int val);
+	int isl_options_get_schedule_serialize_sccs(isl_ctx *ctx);
 	isl_stat isl_options_set_schedule_maximize_band_depth(
 		isl_ctx *ctx, int val);
 	int isl_options_get_schedule_maximize_band_depth(
@@ -8689,13 +8711,14 @@ increase the speed of the scheduling calculation and may also prevent fusing of
 unrelated dimensions. A value of -1 means that this option does not introduce
 bounds on the constant coefficients.
 
-=item * schedule_fuse
+=item * schedule_serialize_sccs
 
-This option controls the level of fusion.
-If this option is set to C<ISL_SCHEDULE_FUSE_MIN>, then loops in the
-resulting schedule will be distributed as much as possible.
-If this option is set to C<ISL_SCHEDULE_FUSE_MAX>, then C<isl> will
-try to fuse loops in the resulting schedule.
+If this option is set, then all strongly connected components
+in the dependence graph are serialized as soon as they are detected.
+This means in particular that instances of statements will only
+appear in the same band node if these statements belong
+to the same strongly connected component at the point where
+the band node is constructed.
 
 =item * schedule_maximize_band_depth
 
@@ -8704,7 +8727,7 @@ where we detect splitting is necessary. Instead, we
 backtrack and split bands as early as possible. This
 reduces the number of splits and maximizes the width of
 the bands. Wider bands give more possibilities for tiling.
-Note that if the C<schedule_fuse> option is set to C<ISL_SCHEDULE_FUSE_MIN>,
+Note that if the C<schedule_serialize_sccs> options is set,
 then bands will be split as early as possible, even if there is no need.
 The C<schedule_maximize_band_depth> option therefore has no effect in this case.
 

@@ -406,16 +406,16 @@ bool IslScheduleOptimizer::runOnScop(Scop &S) {
   DEBUG(dbgs() << "Proximity := " << stringFromIslObj(Proximity) << ";\n");
   DEBUG(dbgs() << "Validity := " << stringFromIslObj(Validity) << ";\n");
 
-  int IslFusionStrategy;
+  unsigned IslSerializeSCCs;
 
   if (FusionStrategy == "max") {
-    IslFusionStrategy = ISL_SCHEDULE_FUSE_MAX;
+    IslSerializeSCCs = 0;
   } else if (FusionStrategy == "min") {
-    IslFusionStrategy = ISL_SCHEDULE_FUSE_MIN;
+    IslSerializeSCCs = 1;
   } else {
     errs() << "warning: Unknown fusion strategy. Falling back to maximal "
               "fusion.\n";
-    IslFusionStrategy = ISL_SCHEDULE_FUSE_MAX;
+    IslSerializeSCCs = 0;
   }
 
   int IslMaximizeBands;
@@ -430,7 +430,7 @@ bool IslScheduleOptimizer::runOnScop(Scop &S) {
     IslMaximizeBands = 1;
   }
 
-  isl_options_set_schedule_fuse(S.getIslCtx(), IslFusionStrategy);
+  isl_options_set_schedule_serialize_sccs(S.getIslCtx(), IslSerializeSCCs);
   isl_options_set_schedule_maximize_band_depth(S.getIslCtx(), IslMaximizeBands);
   isl_options_set_schedule_max_constant_term(S.getIslCtx(), MaxConstantTerm);
   isl_options_set_schedule_max_coefficient(S.getIslCtx(), MaxCoefficient);

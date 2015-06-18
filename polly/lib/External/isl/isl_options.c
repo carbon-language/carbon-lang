@@ -72,11 +72,29 @@ static struct isl_arg_choice convex[] = {
 	{0}
 };
 
+#define		ISL_SCHEDULE_FUSE_MAX			0
+#define		ISL_SCHEDULE_FUSE_MIN			1
+
 static struct isl_arg_choice fuse[] = {
 	{"max",		ISL_SCHEDULE_FUSE_MAX},
 	{"min",		ISL_SCHEDULE_FUSE_MIN},
 	{0}
 };
+
+/* Callback for setting the "schedule-fuse" option.
+ * This (now hidden) option tries to mimic an option that was
+ * replaced by the schedule-serialize-sccs option.
+ * Setting the old option to ISL_SCHEDULE_FUSE_MIN is now
+ * expressed by turning on the schedule-serialize-sccs option.
+ */
+static int set_fuse(void *opt, unsigned val)
+{
+	struct isl_options *options = opt;
+
+	options->schedule_serialize_sccs = (val == ISL_SCHEDULE_FUSE_MIN);
+
+	return 0;
+}
 
 static struct isl_arg_choice separation_bounds[] = {
 	{"explicit",	ISL_AST_BUILD_SEPARATION_BOUNDS_EXPLICIT},
@@ -142,8 +160,12 @@ ISL_ARG_BOOL(struct isl_options, schedule_separate_components, 0,
 ISL_ARG_CHOICE(struct isl_options, schedule_algorithm, 0,
 	"schedule-algorithm", isl_schedule_algorithm_choice,
 	ISL_SCHEDULE_ALGORITHM_ISL, "scheduling algorithm to use")
-ISL_ARG_CHOICE(struct isl_options, schedule_fuse, 0, "schedule-fuse", fuse,
-	ISL_SCHEDULE_FUSE_MAX, "level of fusion during scheduling")
+ISL_ARG_BOOL(struct isl_options, schedule_serialize_sccs, 0,
+	"schedule-serialize-sccs", 0,
+	"serialize strongly connected components in dependence graph")
+ISL_ARG_PHANTOM_USER_CHOICE_F(0, "schedule-fuse", fuse, &set_fuse,
+	ISL_SCHEDULE_FUSE_MAX, "level of fusion during scheduling",
+	ISL_ARG_HIDDEN)
 ISL_ARG_BOOL(struct isl_options, tile_scale_tile_loops, 0,
 	"tile-scale-tile-loops", 1, "scale tile loops")
 ISL_ARG_BOOL(struct isl_options, tile_shift_point_loops, 0,
@@ -239,10 +261,10 @@ ISL_CTX_SET_CHOICE_DEF(isl_options, struct isl_options, isl_options_args,
 ISL_CTX_GET_CHOICE_DEF(isl_options, struct isl_options, isl_options_args,
 	schedule_algorithm)
 
-ISL_CTX_SET_CHOICE_DEF(isl_options, struct isl_options, isl_options_args,
-	schedule_fuse)
-ISL_CTX_GET_CHOICE_DEF(isl_options, struct isl_options, isl_options_args,
-	schedule_fuse)
+ISL_CTX_SET_BOOL_DEF(isl_options, struct isl_options, isl_options_args,
+	schedule_serialize_sccs)
+ISL_CTX_GET_BOOL_DEF(isl_options, struct isl_options, isl_options_args,
+	schedule_serialize_sccs)
 
 ISL_CTX_SET_BOOL_DEF(isl_options, struct isl_options, isl_options_args,
 	tile_scale_tile_loops)

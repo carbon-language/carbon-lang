@@ -1,3 +1,15 @@
+version: 0.15
+date: Thu Jun 11 12:45:33 CEST 2015
+changes:
+	- improve coalescing
+	- add isl_union_access_info_compute_flow
+	- add mark nodes in AST
+	- add isl_union_pw_aff and isl_multi_union_pw_aff
+	- add schedule trees
+	- deprecate band forests
+	- deprecate separation_class AST generation option
+	- introduce isl_bool and isl_stat types
+---
 version: 0.14.1
 date: Thu Apr  9 12:57:23 CEST 2015
 changes:

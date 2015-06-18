@@ -983,7 +983,7 @@ error:
 
 /* Compute x, y and g such that g = gcd(a,b) and a*x+b*y = g.
  */
-static void isl_int_gcdext(isl_int g, isl_int x, isl_int y,
+static void isl_int_gcdext(isl_int *g, isl_int *x, isl_int *y,
 	isl_int a, isl_int b)
 {
 	isl_int d, tmp;
@@ -995,27 +995,27 @@ static void isl_int_gcdext(isl_int g, isl_int x, isl_int y,
 	isl_int_init(tmp);
 	isl_int_set(a_copy, a);
 	isl_int_set(b_copy, b);
-	isl_int_abs(g, a_copy);
+	isl_int_abs(*g, a_copy);
 	isl_int_abs(d, b_copy);
-	isl_int_set_si(x, 1);
-	isl_int_set_si(y, 0);
+	isl_int_set_si(*x, 1);
+	isl_int_set_si(*y, 0);
 	while (isl_int_is_pos(d)) {
-		isl_int_fdiv_q(tmp, g, d);
-		isl_int_submul(x, tmp, y);
-		isl_int_submul(g, tmp, d);
-		isl_int_swap(g, d);
-		isl_int_swap(x, y);
+		isl_int_fdiv_q(tmp, *g, d);
+		isl_int_submul(*x, tmp, *y);
+		isl_int_submul(*g, tmp, d);
+		isl_int_swap(*g, d);
+		isl_int_swap(*x, *y);
 	}
 	if (isl_int_is_zero(a_copy))
-		isl_int_set_si(x, 0);
+		isl_int_set_si(*x, 0);
 	else if (isl_int_is_neg(a_copy))
-		isl_int_neg(x, x);
+		isl_int_neg(*x, *x);
 	if (isl_int_is_zero(b_copy))
-		isl_int_set_si(y, 0);
+		isl_int_set_si(*y, 0);
 	else {
-		isl_int_mul(tmp, a_copy, x);
-		isl_int_sub(tmp, g, tmp);
-		isl_int_divexact(y, tmp, b_copy);
+		isl_int_mul(tmp, a_copy, *x);
+		isl_int_sub(tmp, *g, tmp);
+		isl_int_divexact(*y, tmp, b_copy);
 	}
 	isl_int_clear(d);
 	isl_int_clear(tmp);
@@ -1048,7 +1048,7 @@ __isl_give isl_val *isl_val_gcdext(__isl_take isl_val *v1,
 	b = isl_val_alloc(ctx);
 	if (!v1 || !a || !b)
 		goto error;
-	isl_int_gcdext(v1->n, a->n, b->n, v1->n, v2->n);
+	isl_int_gcdext(&v1->n, &a->n, &b->n, v1->n, v2->n);
 	if (x) {
 		isl_int_set_si(a->d, 1);
 		*x = a;

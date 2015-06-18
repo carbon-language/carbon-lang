@@ -21,8 +21,12 @@
 #endif
 
 #ifdef USE_IMATH_FOR_MP
+#ifdef USE_SMALL_INT_OPT
+#include <isl_int_sioimath.h>
+#else /* USE_SMALL_INT_OPT */
 #include <isl_int_imath.h>
-#endif
+#endif /* USE_SMALL_INT_OPT */
+#endif /* USE_IMATH_FOR_MP */
 
 #define isl_int_is_zero(i)	(isl_int_sgn(i) == 0)
 #define isl_int_is_one(i)	(isl_int_cmp_si(i,1) == 0)
@@ -32,6 +36,7 @@
 #define isl_int_is_nonpos(i)	(isl_int_sgn(i) <= 0)
 #define isl_int_is_nonneg(i)	(isl_int_sgn(i) >= 0)
 
+#ifndef USE_SMALL_INT_OPT
 #define isl_int_print(out,i,width)					\
 	do {								\
 		char *s;						\
@@ -39,6 +44,7 @@
 		fprintf(out, "%*s", width, s);				\
 		isl_int_free_str(s);                                        \
 	} while (0)
+#endif /* USE_SMALL_INT_OPT */
 
 __isl_give isl_printer *isl_printer_print_isl_int(__isl_take isl_printer *p,
 	isl_int i);
