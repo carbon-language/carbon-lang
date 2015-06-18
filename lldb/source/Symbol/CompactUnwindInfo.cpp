@@ -775,7 +775,8 @@ CompactUnwindInfo::CreateUnwindPlan_x86_64 (Target &target, FunctionInfo &functi
         case UNWIND_X86_64_MODE_STACK_IND:
         {
             // The clang in Xcode 6 is emitting incorrect compact unwind encodings for this
-            // style of unwind.  It was fixed in llvm r217020.
+            // style of unwind.  It was fixed in llvm r217020.  
+            // The clang in Xcode 7 has this fixed.
             return false;
         }
         break;
