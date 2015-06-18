@@ -121,6 +121,12 @@ LinkerDriver::parseDirectives(StringRef S,
     case OPT_incl:
       Config->Includes.insert(Arg->getValue());
       break;
+    case OPT_merge:
+      // Ignore /merge for now.
+      break;
+    case OPT_nodefaultlib:
+      Config->NoDefaultLibs.insert(doFindLib(Arg->getValue()));
+      break;
     default:
       llvm::errs() << Arg->getSpelling() << " is not allowed in .drectve\n";
       return make_error_code(LLDError::InvalidOption);
