@@ -287,6 +287,8 @@ function(set_windows_version_resource_properties name resource_file)
   endif()
 
   set_property(SOURCE ${resource_file}
+               PROPERTY COMPILE_FLAGS /nologo)
+  set_property(SOURCE ${resource_file}
                PROPERTY COMPILE_DEFINITIONS
                "RC_VERSION_FIELD_1=${ARG_VERSION_MAJOR}"
                "RC_VERSION_FIELD_2=${ARG_VERSION_MINOR}"
