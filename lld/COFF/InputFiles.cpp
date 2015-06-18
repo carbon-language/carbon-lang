@@ -256,12 +256,13 @@ std::error_code BitcodeFile::parse() {
     return make_error_code(LLDError::BrokenFile);
   }
 
+  llvm::BumpPtrStringSaver Saver(Alloc);
   for (unsigned I = 0, E = M->getSymbolCount(); I != E; ++I) {
     lto_symbol_attributes Attrs = M->getSymbolAttributes(I);
     if ((Attrs & LTO_SYMBOL_SCOPE_MASK) == LTO_SYMBOL_SCOPE_INTERNAL)
       continue;
 
-    StringRef SymName = M->getSymbolName(I);
+    StringRef SymName = Saver.save(M->getSymbolName(I));
     int SymbolDef = Attrs & LTO_SYMBOL_DEFINITION_MASK;
     if (SymbolDef == LTO_SYMBOL_DEFINITION_UNDEFINED) {
       SymbolBodies.push_back(new (Alloc) Undefined(SymName));
