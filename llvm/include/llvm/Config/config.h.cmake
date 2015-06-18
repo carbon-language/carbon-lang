@@ -131,6 +131,9 @@
 /* Define to 1 if you have the `m' library (-lm). */
 #undef HAVE_LIBM
 
+/* Define to 1 if you have the `ole32' library (-lole32). */
+#undef HAVE_LIBOLE32
+
 /* Define to 1 if you have the `psapi' library (-lpsapi). */
 #cmakedefine HAVE_LIBPSAPI ${HAVE_LIBPSAPI}
 
