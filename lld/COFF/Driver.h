@@ -119,6 +119,16 @@ std::error_code parseVersion(StringRef Arg, uint32_t *Major, uint32_t *Minor);
 std::error_code parseSubsystem(StringRef Arg, WindowsSubsystem *Sys,
                                uint32_t *Major, uint32_t *Minor);
 
+// Parses a string in the form of "EMBED[,=<integer>]|NO".
+std::error_code parseManifest(StringRef Arg);
+
+// Parses a string in the form of "level=<string>|uiAccess=<string>"
+std::error_code parseManifestUAC(StringRef Arg);
+
+// Create a resource file containing a manifest XML.
+ErrorOr<std::unique_ptr<MemoryBuffer>> createManifestRes();
+std::error_code createSideBySideManifest();
+
 // Used for dllexported symbols.
 ErrorOr<Export> parseExport(StringRef Arg);
 std::error_code fixupExports();

@@ -60,7 +60,10 @@ public:
     Args.insert(Args.begin(), Exe);
     Args.push_back(nullptr);
     if (llvm::sys::ExecuteAndWait(Args[0], Args.data()) != 0) {
-      llvm::errs() << Exe << " failed\n";
+      for (const char *S : Args)
+        if (S)
+          llvm::errs() << S << " ";
+      llvm::errs() << "failed\n";
       return make_error_code(LLDError::InvalidOption);
     }
     return std::error_code();
@@ -148,6 +151,163 @@ std::error_code parseSubsystem(StringRef Arg, WindowsSubsystem *Sys,
   if (!Ver.empty())
     if (auto EC = parseVersion(Ver, Major, Minor))
       return EC;
+  return std::error_code();
+}
+
+// Parses a string in the form of "EMBED[,=<integer>]|NO".
+// Results are directly written to Config.
+std::error_code parseManifest(StringRef Arg) {
+  if (Arg.equals_lower("no")) {
+    Config->Manifest = Configuration::No;
+    return std::error_code();
+  }
+  if (!Arg.startswith_lower("embed"))
+    return make_error_code(LLDError::InvalidOption);
+  Config->Manifest = Configuration::Embed;
+  Arg = Arg.substr(strlen("embed"));
+  if (Arg.empty())
+    return std::error_code();
+  if (!Arg.startswith_lower(",id="))
+    return make_error_code(LLDError::InvalidOption);
+  Arg = Arg.substr(strlen(",id="));
+  if (Arg.getAsInteger(0, Config->ManifestID))
+    return make_error_code(LLDError::InvalidOption);
+  return std::error_code();
+}
+
+// Parses a string in the form of "level=<string>|uiAccess=<string>|NO".
+// Results are directly written to Config.
+std::error_code parseManifestUAC(StringRef Arg) {
+  if (Arg.equals_lower("no")) {
+    Config->ManifestUAC = false;
+    return std::error_code();
+  }
+  for (;;) {
+    Arg = Arg.ltrim();
+    if (Arg.empty())
+      return std::error_code();
+    if (Arg.startswith_lower("level=")) {
+      Arg = Arg.substr(strlen("level="));
+      std::tie(Config->ManifestLevel, Arg) = Arg.split(" ");
+      continue;
+    }
+    if (Arg.startswith_lower("uiaccess=")) {
+      Arg = Arg.substr(strlen("uiaccess="));
+      std::tie(Config->ManifestUIAccess, Arg) = Arg.split(" ");
+      continue;
+    }
+    return make_error_code(LLDError::InvalidOption);
+  }
+}
+
+// Quote each line with "". Existing double-quote is converted
+// to two double-quotes.
+static void quoteAndPrint(raw_ostream &Out, StringRef S) {
+  while (!S.empty()) {
+    StringRef Line;
+    std::tie(Line, S) = S.split("\n");
+    if (Line.empty())
+      continue;
+    Out << '\"';
+    for (int I = 0, E = Line.size(); I != E; ++I) {
+      if (Line[I] == '\"') {
+        Out << "\"\"";
+      } else {
+        Out << Line[I];
+      }
+    }
+    Out << "\"\n";
+  }
+}
+
+// Create a manifest file contents.
+static std::string createManifestXml() {
+  std::string S;
+  llvm::raw_string_ostream OS(S);
+  // Emit the XML. Note that we do *not* verify that the XML attributes are
+  // syntactically correct. This is intentional for link.exe compatibility.
+  OS << "<?xml version=\"1.0\" standalone=\"yes\"?>\n"
+     << "<assembly xmlns=\"urn:schemas-microsoft-com:asm.v1\"\n"
+     << "          manifestVersion=\"1.0\">\n";
+  if (Config->ManifestUAC) {
+    OS << "  <trustInfo>\n"
+       << "    <security>\n"
+       << "      <requestedPrivileges>\n"
+       << "         <requestedExecutionLevel level=" << Config->ManifestLevel
+       << " uiAccess=" << Config->ManifestUIAccess << "/>\n"
+       << "      </requestedPrivileges>\n"
+       << "    </security>\n"
+       << "  </trustInfo>\n";
+    if (!Config->ManifestDependency.empty()) {
+      OS << "  <dependency>\n"
+         << "    <dependentAssembly>\n"
+         << "      <assemblyIdentity " << Config->ManifestDependency << " />\n"
+         << "    </dependentAssembly>\n"
+         << "  </dependency>\n";
+    }
+  }
+  OS << "</assembly>\n";
+  OS.flush();
+  return S;
+}
+
+// Create a resource file containing a manifest XML.
+ErrorOr<std::unique_ptr<MemoryBuffer>> createManifestRes() {
+  // Create a temporary file for the resource script file.
+  SmallString<128> RCPath;
+  if (sys::fs::createTemporaryFile("tmp", "rc", RCPath)) {
+    llvm::errs() << "cannot create a temporary file\n";
+    return make_error_code(LLDError::InvalidOption);
+  }
+  FileRemover RCRemover(RCPath);
+
+  // Open the temporary file for writing.
+  std::error_code EC;
+  llvm::raw_fd_ostream Out(RCPath, EC, sys::fs::F_Text);
+  if (EC) {
+    llvm::errs() << "failed to open " << RCPath << ": " << EC.message() << "\n";
+    return make_error_code(LLDError::InvalidOption);
+  }
+
+  // Write resource script to the RC file.
+  Out << "#define LANG_ENGLISH 9\n"
+      << "#define SUBLANG_DEFAULT 1\n"
+      << "#define APP_MANIFEST " << Config->ManifestID << "\n"
+      << "#define RT_MANIFEST 24\n"
+      << "LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT\n"
+      << "APP_MANIFEST RT_MANIFEST {\n";
+  quoteAndPrint(Out, createManifestXml());
+  Out << "}\n";
+  Out.close();
+
+  // Create output resource file.
+  SmallString<128> ResPath;
+  if (sys::fs::createTemporaryFile("tmp", "res", ResPath)) {
+    llvm::errs() << "cannot create a temporary file\n";
+    return make_error_code(LLDError::InvalidOption);
+  }
+
+  Executor E("rc.exe");
+  E.add("/fo");
+  E.add(ResPath.str());
+  E.add("/nologo");
+  E.add(RCPath.str());
+  if (auto EC = E.run())
+    return EC;
+  return MemoryBuffer::getFile(ResPath);
+}
+
+std::error_code createSideBySideManifest() {
+  std::string Path = Config->ManifestFile;
+  if (Path == "")
+    Path = (Twine(Config->OutputFile) + ".manifest").str();
+  std::error_code EC;
+  llvm::raw_fd_ostream Out(Path, EC, llvm::sys::fs::F_Text);
+  if (EC) {
+    llvm::errs() << EC.message() << "\n";
+    return EC;
+  }
+  Out << createManifestXml();
   return std::error_code();
 }
 

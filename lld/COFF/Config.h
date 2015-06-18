@@ -37,6 +37,8 @@ struct Export {
 
 // Global configuration.
 struct Configuration {
+  enum ManifestKind { SideBySide, Embed, No };
+
   llvm::COFF::MachineTypes MachineType = llvm::COFF::IMAGE_FILE_MACHINE_AMD64;
   bool Verbose = false;
   WindowsSubsystem Subsystem = llvm::COFF::IMAGE_SUBSYSTEM_UNKNOWN;
@@ -54,6 +56,15 @@ struct Configuration {
   // True if we are creating a DLL.
   bool DLL = false;
   std::vector<Export> Exports;
+
+  // Options for manifest files.
+  ManifestKind Manifest = SideBySide;
+  int ManifestID = 1;
+  StringRef ManifestDependency;
+  bool ManifestUAC = true;
+  StringRef ManifestLevel = "'asInvoker'";
+  StringRef ManifestUIAccess = "'false'";
+  StringRef ManifestFile;
 
   // Used by /failifmismatch option.
   std::map<StringRef, StringRef> MustMatch;

@@ -241,8 +241,10 @@ bool LinkerDriver::link(int Argc, const char *Argv[]) {
     Config->Verbose = true;
 
   // Handle /dll
-  if (Args->hasArg(OPT_dll))
+  if (Args->hasArg(OPT_dll)) {
     Config->DLL = true;
+    Config->ManifestID = 2;
+  }
 
   // Handle /entry
   if (auto *Arg = Args->getLastArg(OPT_entry))
@@ -367,6 +369,30 @@ bool LinkerDriver::link(int Argc, const char *Argv[]) {
       return false;
   }
 
+  // Handle /manifest
+  if (auto *Arg = Args->getLastArg(OPT_manifest_colon)) {
+    if (auto EC = parseManifest(Arg->getValue())) {
+      llvm::errs() << "/manifest: " << EC.message() << "\n";
+      return false;
+    }
+  }
+
+  // Handle /manifestuac
+  if (auto *Arg = Args->getLastArg(OPT_manifestuac)) {
+    if (auto EC = parseManifestUAC(Arg->getValue())) {
+      llvm::errs() << "/manifestuac: " << EC.message() << "\n";
+      return false;
+    }
+  }
+
+  // Handle /manifestdependency
+  if (auto *Arg = Args->getLastArg(OPT_manifestdependency))
+    Config->ManifestDependency = Arg->getValue();
+
+  // Handle /manifestfile
+  if (auto *Arg = Args->getLastArg(OPT_manifestfile))
+    Config->ManifestFile = Arg->getValue();
+
   // Handle miscellaneous boolean flags.
   if (Args->hasArg(OPT_allowbind_no))      Config->AllowBind = false;
   if (Args->hasArg(OPT_allowisolation_no)) Config->AllowIsolation = false;
@@ -403,6 +429,16 @@ bool LinkerDriver::link(int Argc, const char *Argv[]) {
     StringRef Sym = Arg->getValue();
     Symtab.addUndefined(Sym);
     Config->GCRoots.insert(Sym);
+  }
+
+  // Windows specific -- Create a resource file containing a manifest file.
+  if (Config->Manifest == Configuration::Embed) {
+    auto MBOrErr = createManifestRes();
+    if (MBOrErr.getError())
+      return false;
+    std::unique_ptr<MemoryBuffer> MB = std::move(MBOrErr.get());
+    Inputs.push_back(MB->getMemBufferRef());
+    OwningMBs.push_back(std::move(MB)); // take ownership
   }
 
   // Windows specific -- Input files can be Windows resource files (.res files).
@@ -512,6 +548,11 @@ bool LinkerDriver::link(int Argc, const char *Argv[]) {
     if (fixupExports())
       return false;
   }
+
+  // Windows specific -- Create a side-by-side manifest file.
+  if (Config->Manifest == Configuration::SideBySide)
+    if (createSideBySideManifest())
+      return false;
 
   // Write the result.
   Writer Out(&Symtab);
