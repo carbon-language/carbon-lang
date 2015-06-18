@@ -741,7 +741,7 @@ CGOpenMPRuntime::createRuntimeFunction(OpenMPRTLFunction Function) {
     break;
   }
   case OMPRTL__kmpc_end_ordered: {
-    // Build void __kmpc_ordered(ident_t *loc, kmp_int32 global_tid);
+    // Build void __kmpc_end_ordered(ident_t *loc, kmp_int32 global_tid);
     llvm::Type *TypeParams[] = {getIdentTyPointerTy(), CGM.Int32Ty};
     llvm::FunctionType *FnTy =
         llvm::FunctionType::get(CGM.VoidTy, TypeParams, /*isVarArg=*/false);
@@ -754,6 +754,22 @@ CGOpenMPRuntime::createRuntimeFunction(OpenMPRTLFunction Function) {
     llvm::FunctionType *FnTy =
         llvm::FunctionType::get(CGM.Int32Ty, TypeParams, /*isVarArg=*/false);
     RTLFn = CGM.CreateRuntimeFunction(FnTy, "__kmpc_omp_taskwait");
+    break;
+  }
+  case OMPRTL__kmpc_taskgroup: {
+    // Build void __kmpc_taskgroup(ident_t *loc, kmp_int32 global_tid);
+    llvm::Type *TypeParams[] = {getIdentTyPointerTy(), CGM.Int32Ty};
+    llvm::FunctionType *FnTy =
+        llvm::FunctionType::get(CGM.VoidTy, TypeParams, /*isVarArg=*/false);
+    RTLFn = CGM.CreateRuntimeFunction(FnTy, "__kmpc_taskgroup");
+    break;
+  }
+  case OMPRTL__kmpc_end_taskgroup: {
+    // Build void __kmpc_end_taskgroup(ident_t *loc, kmp_int32 global_tid);
+    llvm::Type *TypeParams[] = {getIdentTyPointerTy(), CGM.Int32Ty};
+    llvm::FunctionType *FnTy =
+        llvm::FunctionType::get(CGM.VoidTy, TypeParams, /*isVarArg=*/false);
+    RTLFn = CGM.CreateRuntimeFunction(FnTy, "__kmpc_end_taskgroup");
     break;
   }
   }
@@ -1238,6 +1254,25 @@ void CGOpenMPRuntime::emitTaskyieldCall(CodeGenFunction &CGF,
       emitUpdateLocation(CGF, Loc), getThreadID(CGF, Loc),
       llvm::ConstantInt::get(CGM.IntTy, /*V=*/0, /*isSigned=*/true)};
   CGF.EmitRuntimeCall(createRuntimeFunction(OMPRTL__kmpc_omp_taskyield), Args);
+}
+
+void CGOpenMPRuntime::emitTaskgroupRegion(CodeGenFunction &CGF,
+                                          const RegionCodeGenTy &TaskgroupOpGen,
+                                          SourceLocation Loc) {
+  // __kmpc_taskgroup(ident_t *, gtid);
+  // TaskgroupOpGen();
+  // __kmpc_end_taskgroup(ident_t *, gtid);
+  // Prepare arguments and build a call to __kmpc_taskgroup
+  {
+    CodeGenFunction::RunCleanupsScope Scope(CGF);
+    llvm::Value *Args[] = {emitUpdateLocation(CGF, Loc), getThreadID(CGF, Loc)};
+    CGF.EmitRuntimeCall(createRuntimeFunction(OMPRTL__kmpc_taskgroup), Args);
+    // Build a call to __kmpc_end_taskgroup
+    CGF.EHStack.pushCleanup<CallEndCleanup<std::extent<decltype(Args)>::value>>(
+        NormalAndEHCleanup, createRuntimeFunction(OMPRTL__kmpc_end_taskgroup),
+        llvm::makeArrayRef(Args));
+    emitInlinedDirective(CGF, TaskgroupOpGen);
+  }
 }
 
 static llvm::Value *emitCopyprivateCopyFunction(

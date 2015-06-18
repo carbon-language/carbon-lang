@@ -1612,6 +1612,16 @@ void CodeGenFunction::EmitOMPTaskwaitDirective(const OMPTaskwaitDirective &S) {
   CGM.getOpenMPRuntime().emitTaskwaitCall(*this, S.getLocStart());
 }
 
+void CodeGenFunction::EmitOMPTaskgroupDirective(
+    const OMPTaskgroupDirective &S) {
+  LexicalScope Scope(*this, S.getSourceRange());
+  auto &&CodeGen = [&S](CodeGenFunction &CGF) {
+    CGF.EmitStmt(cast<CapturedStmt>(S.getAssociatedStmt())->getCapturedStmt());
+    CGF.EnsureInsertPoint();
+  };
+  CGM.getOpenMPRuntime().emitTaskgroupRegion(*this, CodeGen, S.getLocStart());
+}
+
 void CodeGenFunction::EmitOMPFlushDirective(const OMPFlushDirective &S) {
   CGM.getOpenMPRuntime().emitFlush(*this, [&]() -> ArrayRef<const Expr *> {
     if (auto C = S.getSingleClause(/*K*/ OMPC_flush)) {

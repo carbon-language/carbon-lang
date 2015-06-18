@@ -510,6 +510,10 @@ void StmtProfiler::VisitOMPTaskwaitDirective(const OMPTaskwaitDirective *S) {
   VisitOMPExecutableDirective(S);
 }
 
+void StmtProfiler::VisitOMPTaskgroupDirective(const OMPTaskgroupDirective *S) {
+  VisitOMPExecutableDirective(S);
+}
+
 void StmtProfiler::VisitOMPFlushDirective(const OMPFlushDirective *S) {
   VisitOMPExecutableDirective(S);
 }

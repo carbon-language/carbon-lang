@@ -1455,6 +1455,53 @@ public:
   }
 };
 
+/// \brief This represents '#pragma omp taskgroup' directive.
+///
+/// \code
+/// #pragma omp taskgroup
+/// \endcode
+///
+class OMPTaskgroupDirective : public OMPExecutableDirective {
+  friend class ASTStmtReader;
+  /// \brief Build directive with the given start and end location.
+  ///
+  /// \param StartLoc Starting location of the directive kind.
+  /// \param EndLoc Ending location of the directive.
+  ///
+  OMPTaskgroupDirective(SourceLocation StartLoc, SourceLocation EndLoc)
+      : OMPExecutableDirective(this, OMPTaskgroupDirectiveClass, OMPD_taskgroup,
+                               StartLoc, EndLoc, 0, 1) {}
+
+  /// \brief Build an empty directive.
+  ///
+  explicit OMPTaskgroupDirective()
+      : OMPExecutableDirective(this, OMPTaskgroupDirectiveClass, OMPD_taskgroup,
+                               SourceLocation(), SourceLocation(), 0, 1) {}
+
+public:
+  /// \brief Creates directive.
+  ///
+  /// \param C AST context.
+  /// \param StartLoc Starting location of the directive kind.
+  /// \param EndLoc Ending Location of the directive.
+  /// \param AssociatedStmt Statement, associated with the directive.
+  ///
+  static OMPTaskgroupDirective *Create(const ASTContext &C,
+                                       SourceLocation StartLoc,
+                                       SourceLocation EndLoc,
+                                       Stmt *AssociatedStmt);
+
+  /// \brief Creates an empty directive.
+  ///
+  /// \param C AST context.
+  ///
+  static OMPTaskgroupDirective *CreateEmpty(const ASTContext &C, EmptyShell);
+
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == OMPTaskgroupDirectiveClass;
+  }
+};
+
 /// \brief This represents '#pragma omp flush' directive.
 ///
 /// \code

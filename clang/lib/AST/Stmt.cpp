@@ -1777,7 +1777,7 @@ OMPSectionDirective *OMPSectionDirective::Create(const ASTContext &C,
                                                  SourceLocation StartLoc,
                                                  SourceLocation EndLoc,
                                                  Stmt *AssociatedStmt) {
-  unsigned Size = llvm::RoundUpToAlignment(sizeof(OMPSectionsDirective),
+  unsigned Size = llvm::RoundUpToAlignment(sizeof(OMPSectionDirective),
                                            llvm::alignOf<Stmt *>());
   void *Mem = C.Allocate(Size + sizeof(Stmt *));
   OMPSectionDirective *Dir = new (Mem) OMPSectionDirective(StartLoc, EndLoc);
@@ -2039,6 +2039,27 @@ OMPTaskwaitDirective *OMPTaskwaitDirective::CreateEmpty(const ASTContext &C,
                                                         EmptyShell) {
   void *Mem = C.Allocate(sizeof(OMPTaskwaitDirective));
   return new (Mem) OMPTaskwaitDirective();
+}
+
+OMPTaskgroupDirective *OMPTaskgroupDirective::Create(const ASTContext &C,
+                                                     SourceLocation StartLoc,
+                                                     SourceLocation EndLoc,
+                                                     Stmt *AssociatedStmt) {
+  unsigned Size = llvm::RoundUpToAlignment(sizeof(OMPTaskgroupDirective),
+                                           llvm::alignOf<Stmt *>());
+  void *Mem = C.Allocate(Size + sizeof(Stmt *));
+  OMPTaskgroupDirective *Dir =
+      new (Mem) OMPTaskgroupDirective(StartLoc, EndLoc);
+  Dir->setAssociatedStmt(AssociatedStmt);
+  return Dir;
+}
+
+OMPTaskgroupDirective *OMPTaskgroupDirective::CreateEmpty(const ASTContext &C,
+                                                          EmptyShell) {
+  unsigned Size = llvm::RoundUpToAlignment(sizeof(OMPTaskgroupDirective),
+                                           llvm::alignOf<Stmt *>());
+  void *Mem = C.Allocate(Size + sizeof(Stmt *));
+  return new (Mem) OMPTaskgroupDirective();
 }
 
 OMPFlushDirective *OMPFlushDirective::Create(const ASTContext &C,

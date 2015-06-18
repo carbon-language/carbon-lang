@@ -570,6 +570,9 @@ CXCursor cxcursor::MakeCXCursor(const Stmt *S, const Decl *Parent,
   case Stmt::OMPTaskwaitDirectiveClass:
     K = CXCursor_OMPTaskwaitDirective;
     break;
+  case Stmt::OMPTaskgroupDirectiveClass:
+    K = CXCursor_OMPTaskgroupDirective;
+    break;
   case Stmt::OMPFlushDirectiveClass:
     K = CXCursor_OMPFlushDirective;
     break;

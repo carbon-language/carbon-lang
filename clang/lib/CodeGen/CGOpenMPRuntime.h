@@ -131,6 +131,10 @@ private:
     // Call to kmp_int32 __kmpc_omp_taskwait(ident_t *loc, kmp_int32
     // global_tid);
     OMPRTL__kmpc_omp_taskwait,
+    // Call to void __kmpc_taskgroup(ident_t *loc, kmp_int32 global_tid);
+    OMPRTL__kmpc_taskgroup,
+    // Call to void __kmpc_end_taskgroup(ident_t *loc, kmp_int32 global_tid);
+    OMPRTL__kmpc_end_taskgroup,
   };
 
   /// \brief Values for bit flags used in the ident_t to describe the fields.
@@ -388,6 +392,13 @@ public:
   /// \brief Emits code for a taskyield directive.
   virtual void emitTaskyieldCall(CodeGenFunction &CGF, SourceLocation Loc);
 
+  /// \brief Emit a taskgroup region.
+  /// \param TaskgroupOpGen Generator for the statement associated with the
+  /// given taskgroup region.
+  virtual void emitTaskgroupRegion(CodeGenFunction &CGF,
+                                   const RegionCodeGenTy &TaskgroupOpGen,
+                                   SourceLocation Loc);
+
   /// \brief Emits a single region.
   /// \param SingleOpGen Generator for the statement associated with the given
   /// single region.
@@ -401,7 +412,7 @@ public:
 
   /// \brief Emit an ordered region.
   /// \param OrderedOpGen Generator for the statement associated with the given
-  /// critical region.
+  /// ordered region.
   virtual void emitOrderedRegion(CodeGenFunction &CGF,
                                  const RegionCodeGenTy &OrderedOpGen,
                                  SourceLocation Loc);
