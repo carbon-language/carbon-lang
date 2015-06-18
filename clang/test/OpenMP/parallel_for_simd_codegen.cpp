@@ -111,7 +111,7 @@ void simple(float *a, float *b, float *c, float *d) {
 // Update linear vars after loop, as the loop was operating on a private version.
 // CHECK: [[LIN0_2:%.+]] = load i64, i64* [[LIN0]]
 // CHECK-NEXT: [[LIN_ADD2:%.+]] = add nsw i64 [[LIN0_2]], 27
-// CHECK-NEXT: store i64 [[LIN_ADD2]], i64* [[K_VAR]]
+// CHECK-NEXT: store i64 [[LIN_ADD2]], i64* %{{.+}}
 // CHECK: call i32 @__kmpc_cancel_barrier(%ident_t* {{.+}}, i32 %{{.+}})
 
   int lin = 12;
