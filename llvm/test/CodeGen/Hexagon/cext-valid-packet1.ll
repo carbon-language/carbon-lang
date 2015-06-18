@@ -1,5 +1,4 @@
-; RUN: llc -march=hexagon -mcpu=hexagonv4 < %s | FileCheck %s
-; XFAIL:
+; RUN: llc -march=hexagon < %s | FileCheck %s
 
 ; Check that the packetizer generates valid packets with constant
 ; extended instructions.

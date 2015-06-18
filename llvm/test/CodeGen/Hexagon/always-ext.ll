@@ -4,9 +4,11 @@
 ; due to a store that has a must-extend operand.
 
 ; CHECK: CuSuiteAdd.exit.us
+; CHECK: {
 ; CHECK-NOT: call abort
 ; CHECK: memw(##0)
 ; CHECK: memw(r{{[0-9+]}}{{ *}}<<{{ *}}#2{{ *}}+{{ *}}##4)
+; CHECK: }
 
 %struct.CuTest.1.28.31.37.40.43.52.55.67.85.111 = type { i8*, void (%struct.CuTest.1.28.31.37.40.43.52.55.67.85.111*)*, i32, i32, i8*, [23 x i32]* }
 %struct.CuSuite.2.29.32.38.41.44.53.56.68.86.112 = type { i32, [1024 x %struct.CuTest.1.28.31.37.40.43.52.55.67.85.111*], i32 }
