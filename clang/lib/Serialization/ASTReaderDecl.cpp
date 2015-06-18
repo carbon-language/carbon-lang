@@ -389,6 +389,48 @@ namespace clang {
   };
 }
 
+namespace {
+/// Iterator over the redeclarations of a declaration that have already
+/// been merged into the same redeclaration chain.
+template<typename DeclT>
+class MergedRedeclIterator {
+  DeclT *Start, *Canonical, *Current;
+public:
+  MergedRedeclIterator() : Current(nullptr) {}
+  MergedRedeclIterator(DeclT *Start)
+      : Start(Start), Canonical(nullptr), Current(Start) {}
+
+  DeclT *operator*() { return Current; }
+
+  MergedRedeclIterator &operator++() {
+    if (Current->isFirstDecl()) {
+      Canonical = Current;
+      Current = Current->getMostRecentDecl();
+    } else
+      Current = Current->getPreviousDecl();
+
+    // If we started in the merged portion, we'll reach our start position
+    // eventually. Otherwise, we'll never reach it, but the second declaration
+    // we reached was the canonical declaration, so stop when we see that one
+    // again.
+    if (Current == Start || Current == Canonical)
+      Current = nullptr;
+    return *this;
+  }
+
+  friend bool operator!=(const MergedRedeclIterator &A,
+                         const MergedRedeclIterator &B) {
+    return A.Current != B.Current;
+  }
+};
+}
+template<typename DeclT>
+llvm::iterator_range<MergedRedeclIterator<DeclT>> merged_redecls(DeclT *D) {
+  return llvm::iterator_range<MergedRedeclIterator<DeclT>>(
+      MergedRedeclIterator<DeclT>(D),
+      MergedRedeclIterator<DeclT>());
+}
+
 uint64_t ASTDeclReader::GetCurrentCursorOffset() {
   return F.DeclsCursor.GetCurrentBitNo() + F.GlobalBitOffset;
 }
@@ -606,7 +648,18 @@ void ASTDeclReader::VisitEnumDecl(EnumDecl *ED) {
   if (ED->IsCompleteDefinition &&
       Reader.getContext().getLangOpts().Modules &&
       Reader.getContext().getLangOpts().CPlusPlus) {
-    if (EnumDecl *&OldDef = Reader.EnumDefinitions[ED->getCanonicalDecl()]) {
+    EnumDecl *&OldDef = Reader.EnumDefinitions[ED->getCanonicalDecl()];
+    if (!OldDef) {
+      // This is the first time we've seen an imported definition. Look for a
+      // local definition before deciding that we are the first definition.
+      for (auto *D : merged_redecls(ED->getCanonicalDecl())) {
+        if (!D->isFromASTFile() && D->isCompleteDefinition()) {
+          OldDef = D;
+          break;
+        }
+      }
+    }
+    if (OldDef) {
       Reader.MergedDeclContexts.insert(std::make_pair(ED, OldDef));
       ED->IsCompleteDefinition = false;
       mergeDefinitionVisibility(OldDef, ED);
@@ -3622,48 +3675,6 @@ void ASTReader::loadObjCCategories(serialization::GlobalDeclID ID,
   ObjCCategoriesVisitor Visitor(*this, ID, D, CategoriesDeserialized,
                                 PreviousGeneration);
   ModuleMgr.visit(ObjCCategoriesVisitor::visit, &Visitor);
-}
-
-namespace {
-/// Iterator over the redeclarations of a declaration that have already
-/// been merged into the same redeclaration chain.
-template<typename DeclT>
-class MergedRedeclIterator {
-  DeclT *Start, *Canonical, *Current;
-public:
-  MergedRedeclIterator() : Current(nullptr) {}
-  MergedRedeclIterator(DeclT *Start)
-      : Start(Start), Canonical(nullptr), Current(Start) {}
-
-  DeclT *operator*() { return Current; }
-
-  MergedRedeclIterator &operator++() {
-    if (Current->isFirstDecl()) {
-      Canonical = Current;
-      Current = Current->getMostRecentDecl();
-    } else
-      Current = Current->getPreviousDecl();
-
-    // If we started in the merged portion, we'll reach our start position
-    // eventually. Otherwise, we'll never reach it, but the second declaration
-    // we reached was the canonical declaration, so stop when we see that one
-    // again.
-    if (Current == Start || Current == Canonical)
-      Current = nullptr;
-    return *this;
-  }
-
-  friend bool operator!=(const MergedRedeclIterator &A,
-                         const MergedRedeclIterator &B) {
-    return A.Current != B.Current;
-  }
-};
-}
-template<typename DeclT>
-llvm::iterator_range<MergedRedeclIterator<DeclT>> merged_redecls(DeclT *D) {
-  return llvm::iterator_range<MergedRedeclIterator<DeclT>>(
-      MergedRedeclIterator<DeclT>(D),
-      MergedRedeclIterator<DeclT>());
 }
 
 template<typename DeclT, typename Fn>
