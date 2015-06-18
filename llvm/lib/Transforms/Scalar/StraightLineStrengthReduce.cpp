@@ -632,6 +632,15 @@ void StraightLineStrengthReduce::rewriteCandidateWithBasis(
       // trivially dead.
       RecursivelyDeleteTriviallyDeadInstructions(Bump);
     } else {
+      // It's tempting to preserve nsw on Bump and/or Reduced. However, it's
+      // usually unsound, e.g.,
+      //
+      // X = (-2 +nsw 1) *nsw INT_MAX
+      // Y = (-2 +nsw 3) *nsw INT_MAX
+      //   =>
+      // Y = X + 2 * INT_MAX
+      //
+      // Neither + and * in the resultant expression are nsw.
       Reduced = Builder.CreateAdd(Basis.Ins, Bump);
     }
     break;
