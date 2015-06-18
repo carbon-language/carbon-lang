@@ -187,6 +187,14 @@ Defined *SymbolTable::find(StringRef Name) {
   return nullptr;
 }
 
+std::error_code SymbolTable::resolveIfPossible(StringRef Name) {
+  auto It = Symtab.find(Name);
+  if (It != Symtab.end())
+    if (auto *B = dyn_cast<Lazy>(It->second->Body))
+      return addMemberFile(B);
+  return std::error_code();
+}
+
 // Windows specific -- Link default entry point name.
 ErrorOr<StringRef> SymbolTable::findDefaultEntry() {
   // If it's DLL, the rule is easy.
@@ -205,6 +213,7 @@ ErrorOr<StringRef> SymbolTable::findDefaultEntry() {
       {"wWinMain", "wWinMainCRTStartup"},
   };
   for (auto E : Entries) {
+    resolveIfPossible(E[1]);
     if (find(E[1]))
       return StringRef(E[1]);
     if (!find(E[0]))
