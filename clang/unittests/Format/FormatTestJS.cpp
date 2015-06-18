@@ -294,6 +294,10 @@ TEST_F(FormatTestJS, FunctionLiterals) {
   verifyFormat("var func = function() {\n"
                "  return 1;\n"
                "};");
+  verifyFormat("var func =  //\n"
+               "    function() {\n"
+               "  return 1;\n"
+               "};");
   verifyFormat("return {\n"
                "  body: {\n"
                "    setAttribute: function(key, val) { this[key] = val; },\n"

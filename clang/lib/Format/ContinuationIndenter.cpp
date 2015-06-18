@@ -418,7 +418,21 @@ unsigned ContinuationIndenter::addTokenOnNewLine(LineState &State,
     Penalty += Style.PenaltyBreakFirstLessLess;
 
   State.Column = getNewLineColumn(State);
-  State.Stack.back().NestedBlockIndent = State.Column;
+
+  // Indent nested blocks relative to this column, unless in a very specific
+  // JavaScript special case where:
+  //
+  //   var loooooong_name =
+  //       function() {
+  //     // code
+  //   }
+  //
+  // is common and should be formatted like a free-standing function.
+  if (Style.Language != FormatStyle::LK_JavaScript ||
+      Current.NestingLevel != 0 || !PreviousNonComment->is(tok::equal) ||
+      !Current.is(Keywords.kw_function))
+    State.Stack.back().NestedBlockIndent = State.Column;
+
   if (NextNonComment->isMemberAccess()) {
     if (State.Stack.back().CallContinuation == 0)
       State.Stack.back().CallContinuation = State.Column;
