@@ -52,6 +52,7 @@ set( LLDB_USED_LIBS
   lldbPluginABISysV_hexagon
   lldbPluginABISysV_ppc
   lldbPluginABISysV_ppc64
+  lldbPluginABISysV_mips
   lldbPluginInstructionARM
   lldbPluginInstructionARM64
   lldbPluginInstructionMIPS
