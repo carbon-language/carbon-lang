@@ -1,66 +1,72 @@
-; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=corei7-avx | FileCheck %s --check-prefix=SANDYB --check-prefix=CHECK
-; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=core-avx-i | FileCheck %s --check-prefix=SANDYB --check-prefix=CHECK
-; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=btver2 | FileCheck %s --check-prefix=BTVER2 --check-prefix=CHECK
-; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=core-avx2 | FileCheck %s --check-prefix=HASWELL --check-prefix=CHECK
+; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=avx,+slow-unaligned-mem-32 | FileCheck %s --check-prefix=AVXSLOW
+; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=avx,-slow-unaligned-mem-32 | FileCheck %s --check-prefix=AVXFAST
+; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=avx2 | FileCheck %s --check-prefix=AVX2
 
-; On Sandy Bridge or Ivy Bridge, we should not generate an unaligned 32-byte load
-; because that is slower than two 16-byte loads. 
-; Other AVX-capable chips don't have that problem.
+; Don't generate an unaligned 32-byte load on this test if that is slower than two 16-byte loads.
 
 define <8 x float> @load32bytes(<8 x float>* %Ap) {
-  ; CHECK-LABEL: load32bytes
-
-  ; SANDYB: vmovaps
-  ; SANDYB: vinsertf128
-  ; SANDYB: retq
-
-  ; BTVER2: vmovups
-  ; BTVER2: retq
-
-  ; HASWELL: vmovups
-  ; HASWELL: retq
-
+; AVXSLOW-LABEL: load32bytes:
+; AVXSLOW:       # BB#0:
+; AVXSLOW-NEXT:    vmovaps (%rdi), %xmm0
+; AVXSLOW-NEXT:    vinsertf128 $1, 16(%rdi), %ymm0, %ymm0
+; AVXSLOW-NEXT:    retq
+;
+; AVXFAST-LABEL: load32bytes:
+; AVXFAST:       # BB#0:
+; AVXFAST-NEXT:    vmovups (%rdi), %ymm0
+; AVXFAST-NEXT:    retq
+;
+; AVX2-LABEL: load32bytes:
+; AVX2:       # BB#0:
+; AVX2-NEXT:    vmovups (%rdi), %ymm0
+; AVX2-NEXT:    retq
   %A = load <8 x float>, <8 x float>* %Ap, align 16
   ret <8 x float> %A
 }
 
-; On Sandy Bridge or Ivy Bridge, we should not generate an unaligned 32-byte store
-; because that is slowerthan two 16-byte stores. 
-; Other AVX-capable chips don't have that problem.
+; Don't generate an unaligned 32-byte store on this test if that is slower than two 16-byte loads.
 
 define void @store32bytes(<8 x float> %A, <8 x float>* %P) {
-  ; CHECK-LABEL: store32bytes
-
-  ; SANDYB: vextractf128
-  ; SANDYB: vmovaps
-  ; SANDYB: retq
-
-  ; BTVER2: vmovups
-  ; BTVER2: retq
-
-  ; HASWELL: vmovups
-  ; HASWELL: retq
-
+; AVXSLOW-LABEL: store32bytes:
+; AVXSLOW:       # BB#0:
+; AVXSLOW-NEXT:    vextractf128 $1, %ymm0, 16(%rdi)
+; AVXSLOW-NEXT:    vmovaps %xmm0, (%rdi)
+; AVXSLOW-NEXT:    vzeroupper
+; AVXSLOW-NEXT:    retq
+;
+; AVXFAST-LABEL: store32bytes:
+; AVXFAST:       # BB#0:
+; AVXFAST-NEXT:    vmovups %ymm0, (%rdi)
+; AVXFAST-NEXT:    vzeroupper
+; AVXFAST-NEXT:    retq
+;
+; AVX2-LABEL: store32bytes:
+; AVX2:       # BB#0:
+; AVX2-NEXT:    vmovups %ymm0, (%rdi)
+; AVX2-NEXT:    vzeroupper
+; AVX2-NEXT:    retq
   store <8 x float> %A, <8 x float>* %P, align 16
   ret void
 }
 
-; Merge two consecutive 16-byte subvector loads into a single 32-byte load
-; if it's faster.
+; Merge two consecutive 16-byte subvector loads into a single 32-byte load if it's faster.
 
 define <8 x float> @combine_16_byte_loads_no_intrinsic(<4 x float>* %ptr) {
-  ; CHECK-LABEL: combine_16_byte_loads_no_intrinsic
-
-  ; SANDYB: vmovups
-  ; SANDYB-NEXT: vinsertf128
-  ; SANDYB-NEXT: retq
-
-  ; BTVER2: vmovups
-  ; BTVER2-NEXT: retq
-
-  ; HASWELL: vmovups
-  ; HASWELL-NEXT: retq
-
+; AVXSLOW-LABEL: combine_16_byte_loads_no_intrinsic:
+; AVXSLOW:       # BB#0:
+; AVXSLOW-NEXT:    vmovups 48(%rdi), %xmm0
+; AVXSLOW-NEXT:    vinsertf128 $1, 64(%rdi), %ymm0, %ymm0
+; AVXSLOW-NEXT:    retq
+;
+; AVXFAST-LABEL: combine_16_byte_loads_no_intrinsic:
+; AVXFAST:       # BB#0:
+; AVXFAST-NEXT:    vmovups 48(%rdi), %ymm0
+; AVXFAST-NEXT:    retq
+;
+; AVX2-LABEL: combine_16_byte_loads_no_intrinsic:
+; AVX2:       # BB#0:
+; AVX2-NEXT:    vmovups 48(%rdi), %ymm0
+; AVX2-NEXT:    retq
   %ptr1 = getelementptr inbounds <4 x float>, <4 x float>* %ptr, i64 3
   %ptr2 = getelementptr inbounds <4 x float>, <4 x float>* %ptr, i64 4
   %v1 = load <4 x float>, <4 x float>* %ptr1, align 1
@@ -69,21 +75,24 @@ define <8 x float> @combine_16_byte_loads_no_intrinsic(<4 x float>* %ptr) {
   ret <8 x float> %v3
 }
 
-; Swap the order of the shufflevector operands to ensure that the
-; pattern still matches.
+; Swap the order of the shufflevector operands to ensure that the pattern still matches.
+
 define <8 x float> @combine_16_byte_loads_no_intrinsic_swap(<4 x float>* %ptr) {
-  ; CHECK-LABEL: combine_16_byte_loads_no_intrinsic_swap
-
-  ; SANDYB: vmovups
-  ; SANDYB-NEXT: vinsertf128
-  ; SANDYB-NEXT: retq
-
-  ; BTVER2: vmovups
-  ; BTVER2-NEXT: retq
-
-  ; HASWELL: vmovups
-  ; HASWELL-NEXT: retq
-
+; AVXSLOW-LABEL: combine_16_byte_loads_no_intrinsic_swap:
+; AVXSLOW:       # BB#0:
+; AVXSLOW-NEXT:    vmovups 64(%rdi), %xmm0
+; AVXSLOW-NEXT:    vinsertf128 $1, 80(%rdi), %ymm0, %ymm0
+; AVXSLOW-NEXT:    retq
+;
+; AVXFAST-LABEL: combine_16_byte_loads_no_intrinsic_swap:
+; AVXFAST:       # BB#0:
+; AVXFAST-NEXT:    vmovups 64(%rdi), %ymm0
+; AVXFAST-NEXT:    retq
+;
+; AVX2-LABEL: combine_16_byte_loads_no_intrinsic_swap:
+; AVX2:       # BB#0:
+; AVX2-NEXT:    vmovups 64(%rdi), %ymm0
+; AVX2-NEXT:    retq
   %ptr1 = getelementptr inbounds <4 x float>, <4 x float>* %ptr, i64 4
   %ptr2 = getelementptr inbounds <4 x float>, <4 x float>* %ptr, i64 5
   %v1 = load <4 x float>, <4 x float>* %ptr1, align 1
@@ -94,28 +103,29 @@ define <8 x float> @combine_16_byte_loads_no_intrinsic_swap(<4 x float>* %ptr) {
 
 ; Check each element type other than float to make sure it is handled correctly.
 ; Use the loaded values with an 'add' to make sure we're using the correct load type.
-; Even though BtVer2 has fast 32-byte loads, we should not generate those for
-; 256-bit integer vectors because BtVer2 doesn't have AVX2.
+; Don't generate 32-byte loads for integer ops unless we have AVX2.
 
 define <4 x i64> @combine_16_byte_loads_i64(<2 x i64>* %ptr, <4 x i64> %x) {
-  ; CHECK-LABEL: combine_16_byte_loads_i64
-
-  ; SANDYB: vextractf128
-  ; SANDYB-NEXT: vpaddq
-  ; SANDYB-NEXT: vpaddq
-  ; SANDYB-NEXT: vinsertf128
-  ; SANDYB-NEXT: retq
-
-  ; BTVER2: vextractf128
-  ; BTVER2-NEXT: vpaddq
-  ; BTVER2-NEXT: vpaddq
-  ; BTVER2-NEXT: vinsertf128
-  ; BTVER2-NEXT: retq
-
-  ; HASWELL-NOT: vextract
-  ; HASWELL: vpaddq
-  ; HASWELL-NEXT: retq
-
+; AVXSLOW-LABEL: combine_16_byte_loads_i64:
+; AVXSLOW:       # BB#0:
+; AVXSLOW-NEXT:    vextractf128 $1, %ymm0, %xmm1
+; AVXSLOW-NEXT:    vpaddq 96(%rdi), %xmm1, %xmm1
+; AVXSLOW-NEXT:    vpaddq 80(%rdi), %xmm0, %xmm0
+; AVXSLOW-NEXT:    vinsertf128 $1, %xmm1, %ymm0, %ymm0
+; AVXSLOW-NEXT:    retq
+;
+; AVXFAST-LABEL: combine_16_byte_loads_i64:
+; AVXFAST:       # BB#0:
+; AVXFAST-NEXT:    vextractf128 $1, %ymm0, %xmm1
+; AVXFAST-NEXT:    vpaddq 96(%rdi), %xmm1, %xmm1
+; AVXFAST-NEXT:    vpaddq 80(%rdi), %xmm0, %xmm0
+; AVXFAST-NEXT:    vinsertf128 $1, %xmm1, %ymm0, %ymm0
+; AVXFAST-NEXT:    retq
+;
+; AVX2-LABEL: combine_16_byte_loads_i64:
+; AVX2:       # BB#0:
+; AVX2-NEXT:    vpaddq 80(%rdi), %ymm0, %ymm0
+; AVX2-NEXT:    retq
   %ptr1 = getelementptr inbounds <2 x i64>, <2 x i64>* %ptr, i64 5
   %ptr2 = getelementptr inbounds <2 x i64>, <2 x i64>* %ptr, i64 6
   %v1 = load <2 x i64>, <2 x i64>* %ptr1, align 1
@@ -126,24 +136,26 @@ define <4 x i64> @combine_16_byte_loads_i64(<2 x i64>* %ptr, <4 x i64> %x) {
 }
 
 define <8 x i32> @combine_16_byte_loads_i32(<4 x i32>* %ptr, <8 x i32> %x) {
-  ; CHECK-LABEL: combine_16_byte_loads_i32
-
-  ; SANDYB: vextractf128
-  ; SANDYB-NEXT: vpaddd
-  ; SANDYB-NEXT: vpaddd
-  ; SANDYB-NEXT: vinsertf128
-  ; SANDYB-NEXT: retq
-
-  ; BTVER2: vextractf128
-  ; BTVER2-NEXT: vpaddd
-  ; BTVER2-NEXT: vpaddd
-  ; BTVER2-NEXT: vinsertf128
-  ; BTVER2-NEXT: retq
-
-  ; HASWELL-NOT: vextract
-  ; HASWELL: vpaddd
-  ; HASWELL-NEXT: retq
-
+; AVXSLOW-LABEL: combine_16_byte_loads_i32:
+; AVXSLOW:       # BB#0:
+; AVXSLOW-NEXT:    vextractf128 $1, %ymm0, %xmm1
+; AVXSLOW-NEXT:    vpaddd 112(%rdi), %xmm1, %xmm1
+; AVXSLOW-NEXT:    vpaddd 96(%rdi), %xmm0, %xmm0
+; AVXSLOW-NEXT:    vinsertf128 $1, %xmm1, %ymm0, %ymm0
+; AVXSLOW-NEXT:    retq
+;
+; AVXFAST-LABEL: combine_16_byte_loads_i32:
+; AVXFAST:       # BB#0:
+; AVXFAST-NEXT:    vextractf128 $1, %ymm0, %xmm1
+; AVXFAST-NEXT:    vpaddd 112(%rdi), %xmm1, %xmm1
+; AVXFAST-NEXT:    vpaddd 96(%rdi), %xmm0, %xmm0
+; AVXFAST-NEXT:    vinsertf128 $1, %xmm1, %ymm0, %ymm0
+; AVXFAST-NEXT:    retq
+;
+; AVX2-LABEL: combine_16_byte_loads_i32:
+; AVX2:       # BB#0:
+; AVX2-NEXT:    vpaddd 96(%rdi), %ymm0, %ymm0
+; AVX2-NEXT:    retq
   %ptr1 = getelementptr inbounds <4 x i32>, <4 x i32>* %ptr, i64 6
   %ptr2 = getelementptr inbounds <4 x i32>, <4 x i32>* %ptr, i64 7
   %v1 = load <4 x i32>, <4 x i32>* %ptr1, align 1
@@ -154,24 +166,26 @@ define <8 x i32> @combine_16_byte_loads_i32(<4 x i32>* %ptr, <8 x i32> %x) {
 }
 
 define <16 x i16> @combine_16_byte_loads_i16(<8 x i16>* %ptr, <16 x i16> %x) {
-  ; CHECK-LABEL: combine_16_byte_loads_i16
-
-  ; SANDYB: vextractf128
-  ; SANDYB-NEXT: vpaddw
-  ; SANDYB-NEXT: vpaddw
-  ; SANDYB-NEXT: vinsertf128
-  ; SANDYB-NEXT: retq
-
-  ; BTVER2: vextractf128
-  ; BTVER2-NEXT: vpaddw
-  ; BTVER2-NEXT: vpaddw
-  ; BTVER2-NEXT: vinsertf128
-  ; BTVER2-NEXT: retq
-
-  ; HASWELL-NOT: vextract
-  ; HASWELL: vpaddw
-  ; HASWELL-NEXT: retq
-
+; AVXSLOW-LABEL: combine_16_byte_loads_i16:
+; AVXSLOW:       # BB#0:
+; AVXSLOW-NEXT:    vextractf128 $1, %ymm0, %xmm1
+; AVXSLOW-NEXT:    vpaddw 128(%rdi), %xmm1, %xmm1
+; AVXSLOW-NEXT:    vpaddw 112(%rdi), %xmm0, %xmm0
+; AVXSLOW-NEXT:    vinsertf128 $1, %xmm1, %ymm0, %ymm0
+; AVXSLOW-NEXT:    retq
+;
+; AVXFAST-LABEL: combine_16_byte_loads_i16:
+; AVXFAST:       # BB#0:
+; AVXFAST-NEXT:    vextractf128 $1, %ymm0, %xmm1
+; AVXFAST-NEXT:    vpaddw 128(%rdi), %xmm1, %xmm1
+; AVXFAST-NEXT:    vpaddw 112(%rdi), %xmm0, %xmm0
+; AVXFAST-NEXT:    vinsertf128 $1, %xmm1, %ymm0, %ymm0
+; AVXFAST-NEXT:    retq
+;
+; AVX2-LABEL: combine_16_byte_loads_i16:
+; AVX2:       # BB#0:
+; AVX2-NEXT:    vpaddw 112(%rdi), %ymm0, %ymm0
+; AVX2-NEXT:    retq
   %ptr1 = getelementptr inbounds <8 x i16>, <8 x i16>* %ptr, i64 7
   %ptr2 = getelementptr inbounds <8 x i16>, <8 x i16>* %ptr, i64 8
   %v1 = load <8 x i16>, <8 x i16>* %ptr1, align 1
@@ -182,24 +196,26 @@ define <16 x i16> @combine_16_byte_loads_i16(<8 x i16>* %ptr, <16 x i16> %x) {
 }
 
 define <32 x i8> @combine_16_byte_loads_i8(<16 x i8>* %ptr, <32 x i8> %x) {
-  ; CHECK-LABEL: combine_16_byte_loads_i8
-
-  ; SANDYB: vextractf128
-  ; SANDYB-NEXT: vpaddb
-  ; SANDYB-NEXT: vpaddb
-  ; SANDYB-NEXT: vinsertf128
-  ; SANDYB-NEXT: retq
-
-  ; BTVER2: vextractf128
-  ; BTVER2-NEXT: vpaddb
-  ; BTVER2-NEXT: vpaddb
-  ; BTVER2-NEXT: vinsertf128
-  ; BTVER2-NEXT: retq
-
-  ; HASWELL-NOT: vextract
-  ; HASWELL: vpaddb
-  ; HASWELL-NEXT: retq
-
+; AVXSLOW-LABEL: combine_16_byte_loads_i8:
+; AVXSLOW:       # BB#0:
+; AVXSLOW-NEXT:    vextractf128 $1, %ymm0, %xmm1
+; AVXSLOW-NEXT:    vpaddb 144(%rdi), %xmm1, %xmm1
+; AVXSLOW-NEXT:    vpaddb 128(%rdi), %xmm0, %xmm0
+; AVXSLOW-NEXT:    vinsertf128 $1, %xmm1, %ymm0, %ymm0
+; AVXSLOW-NEXT:    retq
+;
+; AVXFAST-LABEL: combine_16_byte_loads_i8:
+; AVXFAST:       # BB#0:
+; AVXFAST-NEXT:    vextractf128 $1, %ymm0, %xmm1
+; AVXFAST-NEXT:    vpaddb 144(%rdi), %xmm1, %xmm1
+; AVXFAST-NEXT:    vpaddb 128(%rdi), %xmm0, %xmm0
+; AVXFAST-NEXT:    vinsertf128 $1, %xmm1, %ymm0, %ymm0
+; AVXFAST-NEXT:    retq
+;
+; AVX2-LABEL: combine_16_byte_loads_i8:
+; AVX2:       # BB#0:
+; AVX2-NEXT:    vpaddb 128(%rdi), %ymm0, %ymm0
+; AVX2-NEXT:    retq
   %ptr1 = getelementptr inbounds <16 x i8>, <16 x i8>* %ptr, i64 8
   %ptr2 = getelementptr inbounds <16 x i8>, <16 x i8>* %ptr, i64 9
   %v1 = load <16 x i8>, <16 x i8>* %ptr1, align 1
@@ -210,21 +226,22 @@ define <32 x i8> @combine_16_byte_loads_i8(<16 x i8>* %ptr, <32 x i8> %x) {
 }
 
 define <4 x double> @combine_16_byte_loads_double(<2 x double>* %ptr, <4 x double> %x) {
-  ; CHECK-LABEL: combine_16_byte_loads_double
-
-  ; SANDYB: vmovupd
-  ; SANDYB-NEXT: vinsertf128
-  ; SANDYB-NEXT: vaddpd
-  ; SANDYB-NEXT: retq
-
-  ; BTVER2-NOT: vinsertf128
-  ; BTVER2: vaddpd
-  ; BTVER2-NEXT: retq
-
-  ; HASWELL-NOT: vinsertf128
-  ; HASWELL: vaddpd
-  ; HASWELL-NEXT: retq
-
+; AVXSLOW-LABEL: combine_16_byte_loads_double:
+; AVXSLOW:       # BB#0:
+; AVXSLOW-NEXT:    vmovupd 144(%rdi), %xmm1
+; AVXSLOW-NEXT:    vinsertf128 $1, 160(%rdi), %ymm1, %ymm1
+; AVXSLOW-NEXT:    vaddpd %ymm0, %ymm1, %ymm0
+; AVXSLOW-NEXT:    retq
+;
+; AVXFAST-LABEL: combine_16_byte_loads_double:
+; AVXFAST:       # BB#0:
+; AVXFAST-NEXT:    vaddpd 144(%rdi), %ymm0, %ymm0
+; AVXFAST-NEXT:    retq
+;
+; AVX2-LABEL: combine_16_byte_loads_double:
+; AVX2:       # BB#0:
+; AVX2-NEXT:    vaddpd 144(%rdi), %ymm0, %ymm0
+; AVX2-NEXT:    retq
   %ptr1 = getelementptr inbounds <2 x double>, <2 x double>* %ptr, i64 9
   %ptr2 = getelementptr inbounds <2 x double>, <2 x double>* %ptr, i64 10
   %v1 = load <2 x double>, <2 x double>* %ptr1, align 1
