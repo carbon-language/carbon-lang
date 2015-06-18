@@ -88,7 +88,7 @@ private:
   std::error_code addBitcode(BitcodeFile *File);
 
   std::error_code resolve(SymbolBody *Body);
-  std::error_code resolveIfPossible(StringRef Name);
+  std::error_code resolveLazy(StringRef Name);
   std::error_code addMemberFile(Lazy *Body);
   ErrorOr<ObjectFile *> createLTOObject(llvm::LTOCodeGenerator *CG);
 

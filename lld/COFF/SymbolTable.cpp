@@ -187,7 +187,7 @@ Defined *SymbolTable::find(StringRef Name) {
   return nullptr;
 }
 
-std::error_code SymbolTable::resolveIfPossible(StringRef Name) {
+std::error_code SymbolTable::resolveLazy(StringRef Name) {
   auto It = Symtab.find(Name);
   if (It != Symtab.end())
     if (auto *B = dyn_cast<Lazy>(It->second->Body))
@@ -213,7 +213,7 @@ ErrorOr<StringRef> SymbolTable::findDefaultEntry() {
       {"wWinMain", "wWinMainCRTStartup"},
   };
   for (auto E : Entries) {
-    resolveIfPossible(E[1]);
+    resolveLazy(E[1]);
     if (find(E[1]))
       return StringRef(E[1]);
     if (!find(E[0]))
