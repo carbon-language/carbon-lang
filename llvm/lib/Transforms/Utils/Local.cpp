@@ -14,6 +14,8 @@
 
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/DenseSet.h"
+#include "llvm/ADT/Hashing.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
@@ -828,64 +830,45 @@ bool llvm::TryToSimplifyUncondBranchFromEmptyBlock(BasicBlock *BB) {
 /// orders them so it usually won't matter.
 ///
 bool llvm::EliminateDuplicatePHINodes(BasicBlock *BB) {
-  bool Changed = false;
-
   // This implementation doesn't currently consider undef operands
   // specially. Theoretically, two phis which are identical except for
   // one having an undef where the other doesn't could be collapsed.
 
-  // Map from PHI hash values to PHI nodes. If multiple PHIs have
-  // the same hash value, the element is the first PHI in the
-  // linked list in CollisionMap.
-  DenseMap<uintptr_t, PHINode *> HashMap;
+  struct PHIDenseMapInfo {
+    static PHINode *getEmptyKey() {
+      return DenseMapInfo<PHINode *>::getEmptyKey();
+    }
+    static PHINode *getTombstoneKey() {
+      return DenseMapInfo<PHINode *>::getTombstoneKey();
+    }
+    static unsigned getHashValue(PHINode *PN) {
+      // Compute a hash value on the operands. Instcombine will likely have
+      // sorted them, which helps expose duplicates, but we have to check all
+      // the operands to be safe in case instcombine hasn't run.
+      return static_cast<unsigned>(hash_combine(
+          hash_combine_range(PN->value_op_begin(), PN->value_op_end()),
+          hash_combine_range(PN->block_begin(), PN->block_end())));
+    }
+    static bool isEqual(PHINode *LHS, PHINode *RHS) {
+      if (LHS == getEmptyKey() || LHS == getTombstoneKey() ||
+          RHS == getEmptyKey() || RHS == getTombstoneKey())
+        return LHS == RHS;
+      return LHS->isIdenticalTo(RHS);
+    }
+  };
 
-  // Maintain linked lists of PHI nodes with common hash values.
-  DenseMap<PHINode *, PHINode *> CollisionMap;
+  // Set of unique PHINodes.
+  DenseSet<PHINode *, PHIDenseMapInfo> PHISet;
 
   // Examine each PHI.
-  for (BasicBlock::iterator I = BB->begin();
-       PHINode *PN = dyn_cast<PHINode>(I++); ) {
-    // Compute a hash value on the operands. Instcombine will likely have sorted
-    // them, which helps expose duplicates, but we have to check all the
-    // operands to be safe in case instcombine hasn't run.
-    uintptr_t Hash = 0;
-    // This hash algorithm is quite weak as hash functions go, but it seems
-    // to do a good enough job for this particular purpose, and is very quick.
-    for (User::op_iterator I = PN->op_begin(), E = PN->op_end(); I != E; ++I) {
-      Hash ^= reinterpret_cast<uintptr_t>(static_cast<Value *>(*I));
-      Hash = (Hash << 7) | (Hash >> (sizeof(uintptr_t) * CHAR_BIT - 7));
-    }
-    for (PHINode::block_iterator I = PN->block_begin(), E = PN->block_end();
-         I != E; ++I) {
-      Hash ^= reinterpret_cast<uintptr_t>(static_cast<BasicBlock *>(*I));
-      Hash = (Hash << 7) | (Hash >> (sizeof(uintptr_t) * CHAR_BIT - 7));
-    }
-    // Avoid colliding with the DenseMap sentinels ~0 and ~0-1.
-    Hash >>= 1;
-    // If we've never seen this hash value before, it's a unique PHI.
-    std::pair<DenseMap<uintptr_t, PHINode *>::iterator, bool> Pair =
-      HashMap.insert(std::make_pair(Hash, PN));
-    if (Pair.second) continue;
-    // Otherwise it's either a duplicate or a hash collision.
-    for (PHINode *OtherPN = Pair.first->second; ; ) {
-      if (OtherPN->isIdenticalTo(PN)) {
-        // A duplicate. Replace this PHI with its duplicate.
-        PN->replaceAllUsesWith(OtherPN);
-        PN->eraseFromParent();
-        Changed = true;
-        break;
-      }
-      // A non-duplicate hash collision.
-      DenseMap<PHINode *, PHINode *>::iterator I = CollisionMap.find(OtherPN);
-      if (I == CollisionMap.end()) {
-        // Set this PHI to be the head of the linked list of colliding PHIs.
-        PHINode *Old = Pair.first->second;
-        Pair.first->second = PN;
-        CollisionMap[PN] = Old;
-        break;
-      }
-      // Proceed to the next PHI in the list.
-      OtherPN = I->second;
+  bool Changed = false;
+  for (auto I = BB->begin(); PHINode *PN = dyn_cast<PHINode>(I++);) {
+    auto Inserted = PHISet.insert(PN);
+    if (!Inserted.second) {
+      // A duplicate. Replace this PHI with its duplicate.
+      PN->replaceAllUsesWith(*Inserted.first);
+      PN->eraseFromParent();
+      Changed = true;
     }
   }
 
