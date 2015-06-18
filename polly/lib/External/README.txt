@@ -8,10 +8,10 @@ We currently have the following external libraries.
 # isl
 License: MIT-STYLE
 Details: isl/LICENSE
-Version: b3e0fa7a05d
+Version: isl-0.15-3-g532568a
 
 # imath
 License: MIT-STYLE
 Details: isl/imath/LICENSE
-Version: 4d707e5ef2
+Version: 23b2b1f51c3b0299a2d8f73b04c33c86c9746bb0
 
