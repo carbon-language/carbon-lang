@@ -525,7 +525,7 @@ CompactUnwindInfo::GetCompactUnwindInfoForFunction (Target &target, Address addr
     }
 
     auto next_it = it + 1;
-    if (next_it != m_indexes.begin())
+    if (next_it != m_indexes.end())
     {
         // initialize the function offset end range to be the start of the 
         // next index offset.  If we find an entry which is at the end of
