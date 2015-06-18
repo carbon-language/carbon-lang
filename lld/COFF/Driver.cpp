@@ -338,6 +338,10 @@ bool LinkerDriver::link(int Argc, const char *Argv[]) {
     if (parseAlternateName(Arg->getValue()))
       return false;
 
+  // Handle /implib
+  if (auto *Arg = Args->getLastArg(OPT_implib))
+    Config->Implib = Arg->getValue();
+
   // Handle /opt
   for (auto *Arg : Args->filtered(OPT_opt)) {
     std::string S = StringRef(Arg->getValue()).lower();

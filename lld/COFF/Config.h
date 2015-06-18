@@ -55,6 +55,7 @@ struct Configuration {
 
   // True if we are creating a DLL.
   bool DLL = false;
+  StringRef Implib;
   std::vector<Export> Exports;
 
   // Options for manifest files.

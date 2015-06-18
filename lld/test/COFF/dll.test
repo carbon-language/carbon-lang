@@ -28,6 +28,10 @@ EXPORT-LTO-NEXT:       3   0x1030  exportfn3
 # RUN: lld -flavor link2 /out:%t2.exe %t2.obj %t.lib
 # RUN: llvm-readobj -coff-imports %t2.exe | FileCheck -check-prefix=IMPORT %s
 
+# RUN: lld -flavor link2 /out:%t.dll /dll %t.obj /implib:%t2.lib /export:exportfn1 /export:exportfn2
+# RUN: lld -flavor link2 /out:%t2.exe %t2.obj %t2.lib
+# RUN: llvm-readobj -coff-imports %t2.exe | FileCheck -check-prefix=IMPORT %s
+
 # RUN: lld -flavor link2 /out:%t2.lto.exe %t2.obj %t.lto.lib
 # RUN: llvm-readobj -coff-imports %t2.lto.exe | FileCheck -check-prefix=IMPORT %s
 

@@ -507,14 +507,18 @@ std::error_code writeImportLibrary() {
   std::string Contents = createModuleDefinitionFile();
   std::string Def = writeToTempFile(Contents);
   llvm::FileRemover TempFile(Def);
-  SmallString<128> Out = StringRef(Config->OutputFile);
-  sys::path::replace_extension(Out, ".lib");
 
   Executor E("lib.exe");
   E.add("/nologo");
   E.add("/machine:x64");
   E.add(Twine("/def:") + Def);
-  E.add("/out:" + Out);
+  if (Config->Implib.empty()) {
+    SmallString<128> Out = StringRef(Config->OutputFile);
+    sys::path::replace_extension(Out, ".lib");
+    E.add("/out:" + Out);
+  } else {
+    E.add("/out:" + Config->Implib);
+  }
   return E.run();
 }
 
