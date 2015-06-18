@@ -599,6 +599,28 @@ define <8 x double> @test_load_aligned_pd(<8 x double> %data, i8* %ptr, i8 %mask
   ret <8 x double> %res
 }
 
+define <16 x float> @test_vpermt2ps(<16 x float>%x, <16 x float>%y, <16 x i32>%perm) {
+; CHECK: vpermt2ps {{.*}}encoding: [0x62,0xf2,0x6d,0x48,0x7f,0xc1]
+  %res = call <16 x float> @llvm.x86.avx512.mask.vpermt.ps.512(<16 x i32>%perm, <16 x float>%x, <16 x float>%y, i16 -1)
+  ret <16 x float> %res
+}
+
+define <16 x float> @test_vpermt2ps_mask(<16 x float>%x, <16 x float>%y, <16 x i32>%perm, i16 %mask) {
+; CHECK-LABEL: test_vpermt2ps_mask:
+; CHECK: vpermt2ps %zmm1, %zmm2, %zmm0 {%k1} ## encoding: [0x62,0xf2,0x6d,0x49,0x7f,0xc1]
+  %res = call <16 x float> @llvm.x86.avx512.mask.vpermt.ps.512(<16 x i32>%perm, <16 x float>%x, <16 x float>%y, i16 %mask)
+  ret <16 x float> %res
+}
+
+declare <16 x float> @llvm.x86.avx512.mask.vpermt.ps.512(<16 x i32>, <16 x float>, <16 x float>, i16)
+
+define <8 x i64> @test_vmovntdqa(i8 *%x) {
+; CHECK-LABEL: test_vmovntdqa:
+; CHECK: vmovntdqa (%rdi), %zmm0 ## encoding: [0x62,0xf2,0x7d,0x48,0x2a,0x07]
+  %res = call <8 x i64> @llvm.x86.avx512.movntdqa(i8* %x)
+  ret <8 x i64> %res
+}
+
 declare <8 x i64> @llvm.x86.avx512.movntdqa(i8*)
 
 define <8 x i64> @test_valign_q(<8 x i64> %a, <8 x i64> %b) {
