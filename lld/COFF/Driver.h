@@ -139,7 +139,7 @@ std::error_code fixupExports();
 // if value matches previous values for the key.
 // This feature used in the directive section to reject
 // incompatible objects.
-std::error_code checkFailIfMismatch(llvm::opt::InputArgList *Args);
+std::error_code checkFailIfMismatch(StringRef Arg);
 
 // Convert Windows resource files (.res files) to a .obj file
 // using cvtres.exe.

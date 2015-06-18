@@ -425,24 +425,20 @@ std::error_code fixupExports() {
 
 // Parses a string in the form of "key=value" and check
 // if value matches previous values for the same key.
-std::error_code checkFailIfMismatch(llvm::opt::InputArgList *Args) {
-  for (auto *Arg : Args->filtered(OPT_failifmismatch)) {
-    StringRef K, V;
-    std::tie(K, V) = StringRef(Arg->getValue()).split('=');
-    if (K.empty() || V.empty()) {
-      llvm::errs() << "/failifmismatch: invalid argument: "
-                   << Arg->getValue() << "\n";
-      return make_error_code(LLDError::InvalidOption);
-    }
-    StringRef Existing = Config->MustMatch[K];
-    if (!Existing.empty() && V != Existing) {
-      llvm::errs() << "/failifmismatch: mismatch detected: "
-                   << Existing << " and " << V
-                   << " for key " << K << "\n";
-      return make_error_code(LLDError::InvalidOption);
-    }
-    Config->MustMatch[K] = V;
+std::error_code checkFailIfMismatch(StringRef Arg) {
+  StringRef K, V;
+  std::tie(K, V) = Arg.split('=');
+  if (K.empty() || V.empty()) {
+    llvm::errs() << "/failifmismatch: invalid argument: " << Arg << "\n";
+    return make_error_code(LLDError::InvalidOption);
   }
+  StringRef Existing = Config->MustMatch[K];
+  if (!Existing.empty() && V != Existing) {
+    llvm::errs() << "/failifmismatch: mismatch detected: "
+                 << Existing << " and " << V << " for key " << K << "\n";
+    return make_error_code(LLDError::InvalidOption);
+  }
+  Config->MustMatch[K] = V;
   return std::error_code();
 }
 

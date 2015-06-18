@@ -105,8 +105,9 @@ LinkerDriver::parseDirectives(StringRef S,
       return EC;
 
   // Handle /failifmismatch
-  if (auto EC = checkFailIfMismatch(Args.get()))
-    return EC;
+  for (auto *Arg : Args->filtered(OPT_failifmismatch))
+    if (auto EC = checkFailIfMismatch(Arg->getValue()))
+      return EC;
 
   // Handle /defaultlib
   for (auto *Arg : Args->filtered(OPT_defaultlib)) {
@@ -366,10 +367,9 @@ bool LinkerDriver::link(int Argc, const char *Argv[]) {
   }
 
   // Handle /failifmismatch
-  if (auto EC = checkFailIfMismatch(Args.get())) {
-    llvm::errs() << "/failifmismatch: " << EC.message() << "\n";
-    return false;
-  }
+  for (auto *Arg : Args->filtered(OPT_failifmismatch))
+    if (checkFailIfMismatch(Arg->getValue()))
+      return false;
 
   // Handle /def
   if (auto *Arg = Args->getLastArg(OPT_deffile)) {
