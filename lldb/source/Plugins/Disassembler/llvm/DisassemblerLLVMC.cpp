@@ -415,7 +415,7 @@ protected:
 
 
 
-DisassemblerLLVMC::LLVMCDisassembler::LLVMCDisassembler (const char *triple, unsigned flavor, DisassemblerLLVMC &owner):
+DisassemblerLLVMC::LLVMCDisassembler::LLVMCDisassembler (const char *triple, const char *cpu, unsigned flavor, DisassemblerLLVMC &owner):
     m_is_valid(true)
 {
     std::string Error;
@@ -431,7 +431,7 @@ DisassemblerLLVMC::LLVMCDisassembler::LLVMCDisassembler (const char *triple, uns
 
     std::string features_str;
 
-    m_subtarget_info_ap.reset(curr_target->createMCSubtargetInfo(triple, "",
+    m_subtarget_info_ap.reset(curr_target->createMCSubtargetInfo(triple, cpu,
                                                                 features_str));
 
     std::unique_ptr<llvm::MCRegisterInfo> reg_info(curr_target->createMCRegInfo(triple));
@@ -637,7 +637,45 @@ DisassemblerLLVMC::DisassemblerLLVMC (const ArchSpec &arch, const char *flavor_s
         triple = thumb_arch.GetTriple().getTriple().c_str();
     }
 
-    m_disasm_ap.reset (new LLVMCDisassembler(triple, flavor, *this));
+    const char *cpu = "";
+    
+    switch (arch.GetCore())
+    {
+        case ArchSpec::eCore_mips32:
+        case ArchSpec::eCore_mips32el:
+            cpu = "mips32"; break;
+        case ArchSpec::eCore_mips32r2:
+        case ArchSpec::eCore_mips32r2el:
+            cpu = "mips32r2"; break;
+        case ArchSpec::eCore_mips32r3:
+        case ArchSpec::eCore_mips32r3el:
+            cpu = "mips32r3"; break;
+        case ArchSpec::eCore_mips32r5:
+        case ArchSpec::eCore_mips32r5el:
+            cpu = "mips32r5"; break;
+        case ArchSpec::eCore_mips32r6:
+        case ArchSpec::eCore_mips32r6el:
+            cpu = "mips32r6"; break;
+        case ArchSpec::eCore_mips64:
+        case ArchSpec::eCore_mips64el:
+            cpu = "mips64"; break;
+        case ArchSpec::eCore_mips64r2:
+        case ArchSpec::eCore_mips64r2el:
+            cpu = "mips64r2"; break;
+        case ArchSpec::eCore_mips64r3:
+        case ArchSpec::eCore_mips64r3el:
+            cpu = "mips64r3"; break;
+        case ArchSpec::eCore_mips64r5:
+        case ArchSpec::eCore_mips64r5el:
+            cpu = "mips64r5"; break;
+        case ArchSpec::eCore_mips64r6:
+        case ArchSpec::eCore_mips64r6el:
+            cpu = "mips64r6"; break;
+        default:
+            cpu = ""; break;
+    }
+    
+    m_disasm_ap.reset (new LLVMCDisassembler(triple, cpu, flavor, *this));
     if (!m_disasm_ap->IsValid())
     {
         // We use m_disasm_ap.get() to tell whether we are valid or not, so if this isn't good for some reason,
@@ -649,7 +687,7 @@ DisassemblerLLVMC::DisassemblerLLVMC (const ArchSpec &arch, const char *flavor_s
     if (arch.GetTriple().getArch() == llvm::Triple::arm)
     {
         std::string thumb_triple(thumb_arch.GetTriple().getTriple());
-        m_alternate_disasm_ap.reset(new LLVMCDisassembler(thumb_triple.c_str(), flavor, *this));
+        m_alternate_disasm_ap.reset(new LLVMCDisassembler(thumb_triple.c_str(), nullptr, flavor, *this));
         if (!m_alternate_disasm_ap->IsValid())
         {
             m_disasm_ap.reset();

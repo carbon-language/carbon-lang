@@ -41,7 +41,7 @@ class DisassemblerLLVMC : public lldb_private::Disassembler
     class LLVMCDisassembler
     {
     public:
-        LLVMCDisassembler (const char *triple, unsigned flavor, DisassemblerLLVMC &owner);
+        LLVMCDisassembler (const char *triple, const char *cpu, unsigned flavor, DisassemblerLLVMC &owner);
 
         ~LLVMCDisassembler();
 

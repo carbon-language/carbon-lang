@@ -266,6 +266,36 @@ protected:
     Emulate_JR (llvm::MCInst& insn);
 
     bool
+    Emulate_BC1F (llvm::MCInst& insn);
+
+    bool
+    Emulate_BC1T (llvm::MCInst& insn);
+
+    bool
+    Emulate_BC1FL (llvm::MCInst& insn);
+
+    bool
+    Emulate_BC1TL (llvm::MCInst& insn);
+
+    bool
+    Emulate_BC1EQZ (llvm::MCInst& insn);
+
+    bool
+    Emulate_BC1NEZ (llvm::MCInst& insn);
+
+    bool
+    Emulate_BC1ANY2F  (llvm::MCInst& insn);
+
+    bool
+    Emulate_BC1ANY2T  (llvm::MCInst& insn);
+
+    bool
+    Emulate_BC1ANY4F  (llvm::MCInst& insn);
+
+    bool
+    Emulate_BC1ANY4T  (llvm::MCInst& insn);
+
+    bool
     nonvolatile_reg_p (uint64_t regnum);
 
     const char *
