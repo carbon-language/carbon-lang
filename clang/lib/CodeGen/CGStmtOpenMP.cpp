@@ -574,22 +574,32 @@ void CodeGenFunction::EmitOMPInnerLoop(
   EmitBlock(LoopExit.getBlock());
 }
 
-static void emitLinearClauseInit(CodeGenFunction &CGF,
-                                 const OMPLoopDirective &D) {
+void CodeGenFunction::EmitOMPLinearClauseInit(const OMPLoopDirective &D) {
   // Emit inits for the linear variables.
   for (auto &&I = D.getClausesOfKind(OMPC_linear); I; ++I) {
     auto *C = cast<OMPLinearClause>(*I);
     for (auto Init : C->inits()) {
       auto *VD = cast<VarDecl>(cast<DeclRefExpr>(Init)->getDecl());
-      CGF.EmitVarDecl(*VD);
+      auto *OrigVD = cast<VarDecl>(
+          cast<DeclRefExpr>(VD->getInit()->IgnoreImpCasts())->getDecl());
+      DeclRefExpr DRE(const_cast<VarDecl *>(OrigVD),
+                      CapturedStmtInfo->lookup(OrigVD) != nullptr,
+                      VD->getInit()->getType(), VK_LValue,
+                      VD->getInit()->getExprLoc());
+      AutoVarEmission Emission = EmitAutoVarAlloca(*VD);
+      EmitExprAsInit(&DRE, VD,
+                     MakeAddrLValue(Emission.getAllocatedAddress(),
+                                    VD->getType(), Emission.Alignment),
+                     /*capturedByInit=*/false);
+      EmitAutoVarCleanups(Emission);
     }
     // Emit the linear steps for the linear clauses.
     // If a step is not constant, it is pre-calculated before the loop.
     if (auto CS = cast_or_null<BinaryOperator>(C->getCalcStep()))
       if (auto SaveRef = cast<DeclRefExpr>(CS->getLHS())) {
-        CGF.EmitVarDecl(*cast<VarDecl>(SaveRef->getDecl()));
+        EmitVarDecl(*cast<VarDecl>(SaveRef->getDecl()));
         // Emit calculation of the linear step.
-        CGF.EmitIgnoredExpr(CS);
+        EmitIgnoredExpr(CS);
       }
   }
 }
@@ -740,7 +750,7 @@ void CodeGenFunction::EmitOMPSimdFinal(const OMPLoopDirective &D) {
   auto IC = D.counters().begin();
   for (auto F : D.finals()) {
     auto *OrigVD = cast<VarDecl>(cast<DeclRefExpr>((*IC))->getDecl());
-    if (LocalDeclMap.lookup(OrigVD)) {
+    if (LocalDeclMap.lookup(OrigVD) || CapturedStmtInfo->lookup(OrigVD)) {
       DeclRefExpr DRE(const_cast<VarDecl *>(OrigVD),
                       CapturedStmtInfo->lookup(OrigVD) != nullptr,
                       (*IC)->getType(), VK_LValue, (*IC)->getExprLoc());
@@ -799,7 +809,7 @@ void CodeGenFunction::EmitOMPSimdDirective(const OMPSimdDirective &S) {
     CGF.EmitOMPSimdInit(S);
 
     emitAlignedClause(CGF, S);
-    emitLinearClauseInit(CGF, S);
+    CGF.EmitOMPLinearClauseInit(S);
     bool HasLastprivateClause;
     {
       OMPPrivateScope LoopScope(CGF);
@@ -1071,7 +1081,7 @@ bool CodeGenFunction::EmitOMPWorksharingLoop(const OMPLoopDirective &S) {
     }
 
     emitAlignedClause(*this, S);
-    emitLinearClauseInit(*this, S);
+    EmitOMPLinearClauseInit(S);
     // Emit 'then' code.
     {
       // Emit helper vars inits.
@@ -1441,8 +1451,20 @@ void CodeGenFunction::EmitOMPParallelForDirective(
 }
 
 void CodeGenFunction::EmitOMPParallelForSimdDirective(
-    const OMPParallelForSimdDirective &) {
-  llvm_unreachable("CodeGen for 'omp parallel for simd' is not supported yet.");
+    const OMPParallelForSimdDirective &S) {
+  // Emit directive as a combined directive that consists of two implicit
+  // directives: 'parallel' with 'for' directive.
+  LexicalScope Scope(*this, S.getSourceRange());
+  (void)emitScheduleClause(*this, S, /*OuterRegion=*/true);
+  auto &&CodeGen = [&S](CodeGenFunction &CGF) {
+    CGF.EmitOMPWorksharingLoop(S);
+    // Emit implicit barrier at the end of parallel region, but this barrier
+    // is at the end of 'for' directive, so emit it as the implicit barrier for
+    // this 'for' directive.
+    CGF.CGM.getOpenMPRuntime().emitBarrierCall(CGF, S.getLocStart(),
+                                               OMPD_parallel);
+  };
+  emitCommonOMPParallelDirective(*this, S, CodeGen);
 }
 
 void CodeGenFunction::EmitOMPParallelSectionsDirective(

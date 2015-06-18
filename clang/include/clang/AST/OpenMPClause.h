@@ -1752,7 +1752,7 @@ public:
 
   StmtRange children() {
     return StmtRange(reinterpret_cast<Stmt **>(varlist_begin()),
-                     reinterpret_cast<Stmt **>(getFinals().end() + 2));
+                     reinterpret_cast<Stmt **>(varlist_end()));
   }
 
   static bool classof(const OMPClause *T) {
@@ -1837,7 +1837,7 @@ public:
 
   StmtRange children() {
     return StmtRange(reinterpret_cast<Stmt **>(varlist_begin()),
-                     reinterpret_cast<Stmt **>(varlist_end() + 1));
+                     reinterpret_cast<Stmt **>(varlist_end()));
   }
 
   static bool classof(const OMPClause *T) {
