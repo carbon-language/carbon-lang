@@ -32,7 +32,7 @@ namespace coff {
 
 // Returns the last element of a path, which is supposed to be a filename.
 static StringRef getBasename(StringRef Path) {
-  size_t Pos = Path.rfind('\\');
+  size_t Pos = Path.find_last_of("\\/");
   if (Pos == StringRef::npos)
     return Path;
   return Path.substr(Pos + 1);
