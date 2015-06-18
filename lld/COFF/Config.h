@@ -66,8 +66,11 @@ struct Configuration {
   StringRef ManifestUIAccess = "'false'";
   StringRef ManifestFile;
 
-  // Used by /failifmismatch option.
+  // Used for /failifmismatch.
   std::map<StringRef, StringRef> MustMatch;
+
+  // Used for /alternatename.
+  std::vector<std::pair<StringRef, StringRef>> AlternateNames;
 
   uint64_t ImageBase = 0x140000000;
   uint64_t StackReserve = 1024 * 1024;

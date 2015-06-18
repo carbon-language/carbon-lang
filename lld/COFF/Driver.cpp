@@ -99,6 +99,11 @@ LinkerDriver::parseDirectives(StringRef S,
     Config->Exports.push_back(E.get());
   }
 
+  // Handle /alternatename
+  for (auto *Arg : Args->filtered(OPT_alternatename))
+    if (auto EC = parseAlternateName(Arg->getValue()))
+      return EC;
+
   // Handle /failifmismatch
   if (auto EC = checkFailIfMismatch(Args.get()))
     return EC;
@@ -328,6 +333,11 @@ bool LinkerDriver::link(int Argc, const char *Argv[]) {
     }
   }
 
+  // Handle /alternatename
+  for (auto *Arg : Args->filtered(OPT_alternatename))
+    if (parseAlternateName(Arg->getValue()))
+      return false;
+
   // Handle /opt
   for (auto *Arg : Args->filtered(OPT_opt)) {
     std::string S = StringRef(Arg->getValue()).lower();
@@ -471,28 +481,6 @@ bool LinkerDriver::link(int Argc, const char *Argv[]) {
     }
   }
 
-  // Add weak aliases. Weak aliases is a mechanism to give remaining
-  // undefined symbols final chance to be resolved successfully.
-  // This is symbol renaming.
-  for (auto *Arg : Args->filtered(OPT_alternatename)) {
-    // Parse a string of the form of "/alternatename:From=To".
-    StringRef From, To;
-    std::tie(From, To) = StringRef(Arg->getValue()).split('=');
-    if (From.empty() || To.empty()) {
-      llvm::errs() << "/alternatename: invalid argument: "
-                   << Arg->getValue() << "\n";
-      return false;
-    }
-    // If From is already resolved to a Defined type, do nothing.
-    // Otherwise, rename it to see if To can be resolved instead.
-    if (Symtab.find(From))
-      continue;
-    if (auto EC = Symtab.rename(From, To)) {
-      llvm::errs() << EC.message() << "\n";
-      return false;
-    }
-  }
-
   // Windows specific -- Make sure we resolve all dllexported symbols.
   // (We don't cache the size here because Symtab.resolve() may add
   // new entries to Config->Exports.)
@@ -514,6 +502,24 @@ bool LinkerDriver::link(int Argc, const char *Argv[]) {
     Config->EntryName = EntryOrErr.get();
   }
   Config->GCRoots.insert(Config->EntryName);
+
+  // Add weak aliases. Weak aliases is a mechanism to give remaining
+  // undefined symbols final chance to be resolved successfully.
+  // This is symbol renaming.
+  for (size_t I = 0; I < Config->AlternateNames.size(); ++I) {
+    StringRef From = Config->AlternateNames[I].first;
+    StringRef To = Config->AlternateNames[I].second;
+    // If From is already resolved to a Defined type, do nothing.
+    // Otherwise, rename it to see if To can be resolved instead.
+    if (Symtab.find(From))
+      continue;
+    if (Config->Verbose)
+      llvm::outs() << "/alternatename:" << From << "=" << To << "\n";
+    if (auto EC = Symtab.rename(From, To)) {
+      llvm::errs() << EC.message() << "\n";
+      return false;
+    }
+  }
 
   // Make sure we have resolved all symbols.
   if (Symtab.reportRemainingUndefines())

@@ -154,6 +154,25 @@ std::error_code parseSubsystem(StringRef Arg, WindowsSubsystem *Sys,
   return std::error_code();
 }
 
+// Parse a string of the form of "<from>=<to>".
+// Results are directly written to Config.
+std::error_code parseAlternateName(StringRef S) {
+  StringRef From, To;
+  std::tie(From, To) = S.split('=');
+  if (From.empty() || To.empty()) {
+    llvm::errs() << "/alternatename: invalid argument: " << S << "\n";
+    return make_error_code(LLDError::InvalidOption);
+  }
+  for (std::pair<StringRef, StringRef> &P : Config->AlternateNames) {
+    if (From == P.first) {
+      llvm::errs() << "/alternatename: conflicts: " << S << "\n";
+      return make_error_code(LLDError::InvalidOption);
+    }
+  }
+  Config->AlternateNames.push_back(std::make_pair(From, To));
+  return std::error_code();
+}
+
 // Parses a string in the form of "EMBED[,=<integer>]|NO".
 // Results are directly written to Config.
 std::error_code parseManifest(StringRef Arg) {
