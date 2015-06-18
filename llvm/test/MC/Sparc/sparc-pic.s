@@ -7,9 +7,16 @@
 ! CHECK-NEXT:   0x{{[0-9,A-F]+}} R_SPARC_PC10 _GLOBAL_OFFSET_TABLE_ 0x8
 ! CHECK-NEXT:   0x{{[0-9,A-F]+}} R_SPARC_GOT22 AGlobalVar 0x0
 ! CHECK-NEXT:   0x{{[0-9,A-F]+}} R_SPARC_GOT10 AGlobalVar 0x0
+! CHECK-NEXT:   0x{{[0-9,A-F]+}} R_SPARC_GOT22 .LC0 0x0
+! CHECK-NEXT:   0x{{[0-9,A-F]+}} R_SPARC_GOT10 .LC0 0x0
 ! CHECK-NEXT:   0x{{[0-9,A-F]+}} R_SPARC_WPLT30 bar 0x0
 ! CHECK:      ]
 
+        .section        ".rodata"
+        .align 8
+.LC0:
+        .asciz   "string"
+        .section ".text"
         .text
         .globl  foo
         .align  4
@@ -29,8 +36,11 @@ foo:
         add %i1, %o7, %i1
         sethi %hi(AGlobalVar), %i2
         add %i2, %lo(AGlobalVar), %i2
-        ldx [%i1+%i2], %i1
-        ldx [%i1], %i1
+        ldx [%i1+%i2], %i3
+        ldx [%i3], %i3
+        sethi %hi(.LC0), %i2
+        add %i2, %lo(.LC0), %i2
+        ldx [%i1+%i2], %i4
         call bar
         add %i0, %i1, %o0
         ret
@@ -46,4 +56,3 @@ foo:
 AGlobalVar:
         .xword  0                       ! 0x0
         .size   AGlobalVar, 8
-

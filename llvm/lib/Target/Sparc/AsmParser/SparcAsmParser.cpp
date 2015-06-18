@@ -947,6 +947,8 @@ bool SparcAsmParser::matchRegisterName(const AsmToken &Tok,
   return false;
 }
 
+// Determine if an expression contains a reference to the symbol
+// "_GLOBAL_OFFSET_TABLE_".
 static bool hasGOTReference(const MCExpr *Expr) {
   switch (Expr->getKind()) {
   case MCExpr::Target:
@@ -997,6 +999,13 @@ bool SparcAsmParser::matchSparcAsmModifiers(const MCExpr *&EVal,
     return false;
 
   bool isPIC = getContext().getObjectFileInfo()->getRelocM() == Reloc::PIC_;
+
+  // Ugly: if a sparc assembly expression says "%hi(...)" but the
+  // expression within contains _GLOBAL_OFFSET_TABLE_, it REALLY means
+  // %pc22. Same with %lo -> %pc10. Worse, if it doesn't contain that,
+  // the meaning depends on whether the assembler was invoked with
+  // -KPIC or not: if so, it really means %got22/%got10; if not, it
+  // actually means what it said! Sigh, historical mistakes...
 
   switch(VK) {
   default: break;
