@@ -1,6 +1,6 @@
 // RUN: %clang_cc1 -fsyntax-only -Wused-but-marked-unused -Wunused-function -Wunneeded-internal-declaration -verify %s
 // RUN: %clang_cc1 -fsyntax-only -verify -Wunused %s
-// RUN: %clang_cc1 -fsyntax-only -verify -Wall %s
+// RUN: %clang_cc1 -fsyntax-only -verify -Wall -Wno-infinite-recursion %s
 
 void foo() {}
 static void f2() {} 
