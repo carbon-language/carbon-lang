@@ -29,6 +29,12 @@ struct MachineFunction {
   unsigned Alignment;
   bool ExposesReturnsTwice;
   bool HasInlineAsm;
+
+  MachineFunction() {
+    Alignment = 0;
+    ExposesReturnsTwice = false;
+    HasInlineAsm = false;
+  }
 };
 
 template <> struct MappingTraits<MachineFunction> {
