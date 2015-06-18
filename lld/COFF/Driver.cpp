@@ -9,6 +9,7 @@
 
 #include "Config.h"
 #include "Driver.h"
+#include "Error.h"
 #include "InputFiles.h"
 #include "SymbolTable.h"
 #include "Writer.h"
@@ -91,32 +92,35 @@ LinkerDriver::parseDirectives(StringRef S,
     return EC;
   std::unique_ptr<llvm::opt::InputArgList> Args = std::move(ArgsOrErr.get());
 
-  // Handle /export
-  for (auto *Arg : Args->filtered(OPT_export)) {
-    ErrorOr<Export> E = parseExport(Arg->getValue());
-    if (auto EC = E.getError())
-      return EC;
-    Config->Exports.push_back(E.get());
-  }
-
-  // Handle /alternatename
-  for (auto *Arg : Args->filtered(OPT_alternatename))
-    if (auto EC = parseAlternateName(Arg->getValue()))
-      return EC;
-
-  // Handle /failifmismatch
-  for (auto *Arg : Args->filtered(OPT_failifmismatch))
-    if (auto EC = checkFailIfMismatch(Arg->getValue()))
-      return EC;
-
-  // Handle /defaultlib
-  for (auto *Arg : Args->filtered(OPT_defaultlib)) {
-    if (Optional<StringRef> Path = findLib(Arg->getValue())) {
-      ErrorOr<MemoryBufferRef> MBOrErr = openFile(*Path);
-      if (auto EC = MBOrErr.getError())
+  for (auto *Arg : *Args) {
+    switch (Arg->getOption().getID()) {
+    case OPT_alternatename:
+      if (auto EC = parseAlternateName(Arg->getValue()))
         return EC;
-      std::unique_ptr<InputFile> File = createFile(MBOrErr.get());
-      Res->push_back(std::move(File));
+      break;
+    case OPT_defaultlib:
+      if (Optional<StringRef> Path = findLib(Arg->getValue())) {
+        ErrorOr<MemoryBufferRef> MBOrErr = openFile(*Path);
+        if (auto EC = MBOrErr.getError())
+          return EC;
+        std::unique_ptr<InputFile> File = createFile(MBOrErr.get());
+        Res->push_back(std::move(File));
+      }
+      break;
+    case OPT_export: {
+      ErrorOr<Export> E = parseExport(Arg->getValue());
+      if (auto EC = E.getError())
+        return EC;
+      Config->Exports.push_back(E.get());
+      break;
+    }
+    case OPT_failifmismatch:
+      if (auto EC = checkFailIfMismatch(Arg->getValue()))
+        return EC;
+      break;
+    default:
+      llvm::errs() << Arg->getSpelling() << " is not allowed in .drectve\n";
+      return make_error_code(LLDError::InvalidOption);
     }
   }
   return std::error_code();

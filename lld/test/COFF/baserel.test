@@ -127,10 +127,6 @@ sections:
     Characteristics: [ IMAGE_SCN_CNT_INITIALIZED_DATA, IMAGE_SCN_MEM_READ, IMAGE_SCN_MEM_WRITE ]
     Alignment:       4
     SectionData:     48656C6C6F0048656C6C6F20576F726C6400
-  - Name:            .drectve
-    Characteristics: [ IMAGE_SCN_LNK_INFO, IMAGE_SCN_LNK_REMOVE ]
-    Alignment:       2147483648
-    SectionData:     2F454E5452593A6D61696E20
 symbols:
   - Name:            "@comp.id"
     Value:           10394907
@@ -204,18 +200,6 @@ symbols:
     SimpleType:      IMAGE_SYM_TYPE_NULL
     ComplexType:     IMAGE_SYM_DTYPE_NULL
     StorageClass:    IMAGE_SYM_CLASS_STATIC
-  - Name:            .drectve
-    Value:           0
-    SectionNumber:   3
-    SimpleType:      IMAGE_SYM_TYPE_NULL
-    ComplexType:     IMAGE_SYM_DTYPE_NULL
-    StorageClass:    IMAGE_SYM_CLASS_STATIC
-    SectionDefinition:
-      Length:          12
-      NumberOfRelocations: 0
-      NumberOfLinenumbers: 0
-      CheckSum:        0
-      Number:          0
   - Name:            abs_symbol
     Value:           0xDEADBEEF
     SectionNumber:   -1
