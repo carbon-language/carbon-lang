@@ -1,5 +1,5 @@
 // RUN: llvm-mc -triple=arm64-apple-ios -filetype=obj < %s | \
-// RUN: llvm-readobj -sections -section-relocations -section-data | \
+// RUN: llvm-readobj --expand-relocs -sections -section-relocations -section-data | \
 // RUN: FileCheck %s
 //
 // rdar://13070556
@@ -23,10 +23,42 @@
 // CHECK-NEXT:   Reserved1:
 // CHECK-NEXT:   Reserved2:
 // CHECK-NEXT:   Relocations [
-// CHECK-NEXT:     0x60 0 3 0 ARM64_RELOC_UNSIGNED 0 0x1
-// CHECK-NEXT:     0x40 0 3 0 ARM64_RELOC_UNSIGNED 0 0x1
-// CHECK-NEXT:     0x20 0 3 0 ARM64_RELOC_UNSIGNED 0 0x1
-// CHECK-NEXT:     0x0 0 3 0 ARM64_RELOC_UNSIGNED 0 0x1
+// CHECK-NEXT:     Relocation {
+// CHECK-NEXT:       Offset: 0x60
+// CHECK-NEXT:       PCRel: 0
+// CHECK-NEXT:       Length: 3
+// CHECK-NEXT:       Extern: 0
+// CHECK-NEXT:       Type: ARM64_RELOC_UNSIGNED (0)
+// CHECK-NEXT:       Symbol: 0x1
+// CHECK-NEXT:       Scattered: 0
+// CHECK-NEXT:     }
+// CHECK-NEXT:     Relocation {
+// CHECK-NEXT:       Offset: 0x40
+// CHECK-NEXT:       PCRel: 0
+// CHECK-NEXT:       Length: 3
+// CHECK-NEXT:       Extern: 0
+// CHECK-NEXT:       Type: ARM64_RELOC_UNSIGNED (0)
+// CHECK-NEXT:       Symbol: 0x1
+// CHECK-NEXT:       Scattered: 0
+// CHECK-NEXT:     }
+// CHECK-NEXT:     Relocation {
+// CHECK-NEXT:       Offset: 0x20
+// CHECK-NEXT:       PCRel: 0
+// CHECK-NEXT:       Length: 3
+// CHECK-NEXT:       Extern: 0
+// CHECK-NEXT:       Type: ARM64_RELOC_UNSIGNED (0)
+// CHECK-NEXT:       Symbol: 0x1
+// CHECK-NEXT:       Scattered: 0
+// CHECK-NEXT:     }
+// CHECK-NEXT:     Relocation {
+// CHECK-NEXT:       Offset: 0x0
+// CHECK-NEXT:       PCRel: 0
+// CHECK-NEXT:       Length: 3
+// CHECK-NEXT:       Extern: 0
+// CHECK-NEXT:       Type: ARM64_RELOC_UNSIGNED (0)
+// CHECK-NEXT:       Symbol: 0x1
+// CHECK-NEXT:       Scattered: 0
+// CHECK-NEXT:     }
 // CHECK-NEXT:   ]
 // CHECK-NEXT:   SectionData (
 // CHECK-NEXT:     0000: 00000000 00000000 08000000 00000002
