@@ -726,10 +726,10 @@ MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(Token &MacroName,
 
   unsigned NumActuals = 0;
   while (Tok.isNot(tok::r_paren)) {
-    if (ContainsCodeCompletionTok && (Tok.is(tok::eof) || Tok.is(tok::eod)))
+    if (ContainsCodeCompletionTok && Tok.isOneOf(tok::eof, tok::eod))
       break;
 
-    assert((Tok.is(tok::l_paren) || Tok.is(tok::comma)) &&
+    assert(Tok.isOneOf(tok::l_paren, tok::comma) &&
            "only expect argument separators here");
 
     unsigned ArgTokenStart = ArgTokens.size();
@@ -744,7 +744,7 @@ MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(Token &MacroName,
       // an argument value in a macro could expand to ',' or '(' or ')'.
       LexUnexpandedToken(Tok);
 
-      if (Tok.is(tok::eof) || Tok.is(tok::eod)) { // "#if f(<eof>" & "#if f(\n"
+      if (Tok.isOneOf(tok::eof, tok::eod)) { // "#if f(<eof>" & "#if f(\n"
         if (!ContainsCodeCompletionTok) {
           Diag(MacroName, diag::err_unterm_macro_invoc);
           Diag(MI->getDefinitionLoc(), diag::note_macro_here)
@@ -1747,7 +1747,7 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
       Diag(Tok.getLocation(), diag::err_pp_identifier_arg_not_identifier)
         << Tok.getKind();
       // Don't walk past anything that's not a real token.
-      if (Tok.is(tok::eof) || Tok.is(tok::eod) || Tok.isAnnotation())
+      if (Tok.isOneOf(tok::eof, tok::eod) || Tok.isAnnotation())
         return;
     }
 

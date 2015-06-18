@@ -330,7 +330,7 @@ void Parser::ParseObjCInterfaceDeclList(tok::ObjCKeywordKind contextKey,
     
   while (1) {
     // If this is a method prototype, parse it.
-    if (Tok.is(tok::minus) || Tok.is(tok::plus)) {
+    if (Tok.isOneOf(tok::minus, tok::plus)) {
       if (Decl *methodPrototype =
           ParseObjCMethodPrototype(MethodImplKind, false))
         allMethods.push_back(methodPrototype);
@@ -641,7 +641,7 @@ void Parser::ParseObjCPropertyAttribute(ObjCDeclSpec &DS) {
 ///
 Decl *Parser::ParseObjCMethodPrototype(tok::ObjCKeywordKind MethodImplKind,
                                        bool MethodDefinition) {
-  assert((Tok.is(tok::minus) || Tok.is(tok::plus)) && "expected +/-");
+  assert(Tok.isOneOf(tok::minus, tok::plus) && "expected +/-");
 
   tok::TokenKind methodType = Tok.getKind();
   SourceLocation mLoc = ConsumeToken();
@@ -2170,8 +2170,8 @@ ExprResult Parser::ParseObjCAtExpression(SourceLocation AtLoc) {
 bool Parser::ParseObjCXXMessageReceiver(bool &IsExpr, void *&TypeOrExpr) {
   InMessageExpressionRAIIObject InMessage(*this, true);
 
-  if (Tok.is(tok::identifier) || Tok.is(tok::coloncolon) || 
-      Tok.is(tok::kw_typename) || Tok.is(tok::annot_cxxscope))
+  if (Tok.isOneOf(tok::identifier, tok::coloncolon, tok::kw_typename,
+                  tok::annot_cxxscope))
     TryAnnotateTypeOrScopeToken();
 
   if (!Actions.isSimpleTypeSpecifier(Tok.getKind())) {
@@ -2265,7 +2265,7 @@ bool Parser::isStartOfObjCClassMessageMissingOpenBracket() {
   
   if (!Type.get().isNull() && Type.get()->isObjCObjectOrInterfaceType()) {
     const Token &AfterNext = GetLookAheadToken(2);
-    if (AfterNext.is(tok::colon) || AfterNext.is(tok::r_square)) {
+    if (AfterNext.isOneOf(tok::colon, tok::r_square)) {
       if (Tok.is(tok::identifier))
         TryAnnotateTypeOrScopeToken();
       
@@ -2891,9 +2891,8 @@ void Parser::ParseLexedObjCMethodDefs(LexedMethod &LM, bool parseMethod) {
   // Consume the previously pushed token.
   ConsumeAnyToken(/*ConsumeCodeCompletionTok=*/true);
     
-  assert((Tok.is(tok::l_brace) || Tok.is(tok::kw_try) ||
-          Tok.is(tok::colon)) && 
-          "Inline objective-c method not starting with '{' or 'try' or ':'");
+  assert(Tok.isOneOf(tok::l_brace, tok::kw_try, tok::colon) && 
+         "Inline objective-c method not starting with '{' or 'try' or ':'");
   // Enter a scope for the method or c-function body.
   ParseScope BodyScope(this,
                        parseMethod

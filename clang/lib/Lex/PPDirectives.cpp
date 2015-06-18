@@ -2009,8 +2009,8 @@ static bool isConfigurationPattern(Token &MacroName, MacroInfo *MI,
   }
 
   // #define inline
-  if ((MacroName.is(tok::kw_extern) || MacroName.is(tok::kw_inline) ||
-       MacroName.is(tok::kw_static) || MacroName.is(tok::kw_const)) &&
+  if (MacroName.isOneOf(tok::kw_extern, tok::kw_inline, tok::kw_static,
+                        tok::kw_const) &&
       MI->getNumTokens() == 0) {
     return true;
   }

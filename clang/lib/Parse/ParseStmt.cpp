@@ -119,15 +119,12 @@ namespace {
 class StatementFilterCCC : public CorrectionCandidateCallback {
 public:
   StatementFilterCCC(Token nextTok) : NextToken(nextTok) {
-    WantTypeSpecifiers = nextTok.is(tok::l_paren) || nextTok.is(tok::less) ||
-                         nextTok.is(tok::identifier) || nextTok.is(tok::star) ||
-                         nextTok.is(tok::amp) || nextTok.is(tok::l_square);
-    WantExpressionKeywords = nextTok.is(tok::l_paren) ||
-                             nextTok.is(tok::identifier) ||
-                             nextTok.is(tok::arrow) || nextTok.is(tok::period);
-    WantRemainingKeywords = nextTok.is(tok::l_paren) || nextTok.is(tok::semi) ||
-                            nextTok.is(tok::identifier) ||
-                            nextTok.is(tok::l_brace);
+    WantTypeSpecifiers = nextTok.isOneOf(tok::l_paren, tok::less, tok::l_square,
+                                         tok::identifier, tok::star, tok::amp);
+    WantExpressionKeywords =
+        nextTok.isOneOf(tok::l_paren, tok::identifier, tok::arrow, tok::period);
+    WantRemainingKeywords =
+        nextTok.isOneOf(tok::l_paren, tok::semi, tok::identifier, tok::l_brace);
     WantCXXNamedCasts = false;
   }
 
@@ -1427,7 +1424,7 @@ bool Parser::isForRangeIdentifier() {
   if (Next.is(tok::colon))
     return true;
 
-  if (Next.is(tok::l_square) || Next.is(tok::kw_alignas)) {
+  if (Next.isOneOf(tok::l_square, tok::kw_alignas)) {
     TentativeParsingAction PA(*this);
     ConsumeToken();
     SkipCXX11Attributes();

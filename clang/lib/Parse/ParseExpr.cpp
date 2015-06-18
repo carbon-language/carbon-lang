@@ -470,8 +470,7 @@ class CastExpressionIdValidator : public CorrectionCandidateCallback {
     if (!AllowNonTypes || !CorrectionCandidateCallback::ValidateCandidate(candidate))
       return false;
 
-    if (!(NextToken.is(tok::equal) || NextToken.is(tok::arrow) ||
-          NextToken.is(tok::period)))
+    if (!NextToken.isOneOf(tok::equal, tok::arrow, tok::period))
       return true;
 
     for (auto *C : candidate) {
@@ -829,11 +828,9 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
         }
       }
 
-      if (Next.is(tok::coloncolon) ||
-          (!ColonIsSacred && Next.is(tok::colon)) ||
-          Next.is(tok::less) ||
-          Next.is(tok::l_paren) ||
-          Next.is(tok::l_brace)) {
+      if ((!ColonIsSacred && Next.is(tok::colon)) ||
+          Next.isOneOf(tok::coloncolon, tok::less, tok::l_paren,
+                       tok::l_brace)) {
         // If TryAnnotateTypeOrScopeToken annotates the token, tail recurse.
         if (TryAnnotateTypeOrScopeToken())
           return ExprError();
@@ -931,7 +928,7 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
     auto Validator = llvm::make_unique<CastExpressionIdValidator>(
         Tok, isTypeCast != NotTypeCast, isTypeCast != IsTypeCast);
     Validator->IsAddressOfOperand = isAddressOfOperand;
-    if (Tok.is(tok::periodstar) || Tok.is(tok::arrowstar)) {
+    if (Tok.isOneOf(tok::periodstar, tok::arrowstar)) {
       Validator->WantExpressionKeywords = false;
       Validator->WantRemainingKeywords = false;
     } else {
@@ -1639,10 +1636,9 @@ Parser::ParseExprAfterUnaryExprOrTypeTrait(const Token &OpTok,
                                            ParsedType &CastTy,
                                            SourceRange &CastRange) {
 
-  assert((OpTok.is(tok::kw_typeof)    || OpTok.is(tok::kw_sizeof) ||
-          OpTok.is(tok::kw___alignof) || OpTok.is(tok::kw_alignof) ||
-          OpTok.is(tok::kw__Alignof)  || OpTok.is(tok::kw_vec_step)) &&
-          "Not a typeof/sizeof/alignof/vec_step expression!");
+  assert(OpTok.isOneOf(tok::kw_typeof,  tok::kw_sizeof,   tok::kw___alignof,
+                       tok::kw_alignof, tok::kw__Alignof, tok::kw_vec_step) &&
+         "Not a typeof/sizeof/alignof/vec_step expression!");
 
   ExprResult Operand;
 
@@ -1650,8 +1646,8 @@ Parser::ParseExprAfterUnaryExprOrTypeTrait(const Token &OpTok,
   if (Tok.isNot(tok::l_paren)) {
     // If construct allows a form without parenthesis, user may forget to put
     // pathenthesis around type name.
-    if (OpTok.is(tok::kw_sizeof)  || OpTok.is(tok::kw___alignof) ||
-        OpTok.is(tok::kw_alignof) || OpTok.is(tok::kw__Alignof)) {
+    if (OpTok.isOneOf(tok::kw_sizeof, tok::kw___alignof, tok::kw_alignof,
+                      tok::kw__Alignof)) {
       if (isTypeIdUnambiguously()) {
         DeclSpec DS(AttrFactory);
         ParseSpecifierQualifierList(DS);
@@ -1725,9 +1721,8 @@ Parser::ParseExprAfterUnaryExprOrTypeTrait(const Token &OpTok,
 /// [C++11] 'alignof' '(' type-id ')'
 /// \endverbatim
 ExprResult Parser::ParseUnaryExprOrTypeTraitExpression() {
-  assert((Tok.is(tok::kw_sizeof) || Tok.is(tok::kw___alignof) ||
-          Tok.is(tok::kw_alignof) || Tok.is(tok::kw__Alignof) ||
-          Tok.is(tok::kw_vec_step)) &&
+  assert(Tok.isOneOf(tok::kw_sizeof, tok::kw___alignof, tok::kw_alignof,
+                     tok::kw__Alignof, tok::kw_vec_step) &&
          "Not a sizeof/alignof/vec_step expression!");
   Token OpTok = Tok;
   ConsumeToken();
@@ -1778,7 +1773,7 @@ ExprResult Parser::ParseUnaryExprOrTypeTraitExpression() {
                                                 RParenLoc);
   }
 
-  if (OpTok.is(tok::kw_alignof) || OpTok.is(tok::kw__Alignof))
+  if (OpTok.isOneOf(tok::kw_alignof, tok::kw__Alignof))
     Diag(OpTok, diag::warn_cxx98_compat_alignof);
 
   EnterExpressionEvaluationContext Unevaluated(Actions, Sema::Unevaluated,
@@ -1793,8 +1788,7 @@ ExprResult Parser::ParseUnaryExprOrTypeTraitExpression() {
                                                           CastRange);
 
   UnaryExprOrTypeTrait ExprKind = UETT_SizeOf;
-  if (OpTok.is(tok::kw_alignof) || OpTok.is(tok::kw___alignof) ||
-      OpTok.is(tok::kw__Alignof))
+  if (OpTok.isOneOf(tok::kw_alignof, tok::kw___alignof, tok::kw__Alignof))
     ExprKind = UETT_AlignOf;
   else if (OpTok.is(tok::kw_vec_step))
     ExprKind = UETT_VecStep;
@@ -1806,7 +1800,7 @@ ExprResult Parser::ParseUnaryExprOrTypeTraitExpression() {
                                                  CastTy.getAsOpaquePtr(),
                                                  CastRange);
 
-  if (OpTok.is(tok::kw_alignof) || OpTok.is(tok::kw__Alignof))
+  if (OpTok.isOneOf(tok::kw_alignof, tok::kw__Alignof))
     Diag(OpTok, diag::ext_alignof_expr) << OpTok.getIdentifierInfo();
 
   // If we get here, the operand to the sizeof/alignof was an expresion.
@@ -2107,10 +2101,10 @@ Parser::ParseParenExpression(ParenParseOption &ExprType, bool stopIfCastExpr,
 
   // Diagnose use of bridge casts in non-arc mode.
   bool BridgeCast = (getLangOpts().ObjC2 &&
-                     (Tok.is(tok::kw___bridge) || 
-                      Tok.is(tok::kw___bridge_transfer) ||
-                      Tok.is(tok::kw___bridge_retained) ||
-                      Tok.is(tok::kw___bridge_retain)));
+                     Tok.isOneOf(tok::kw___bridge,
+                                 tok::kw___bridge_transfer,
+                                 tok::kw___bridge_retained,
+                                 tok::kw___bridge_retain));
   if (BridgeCast && !getLangOpts().ObjCAutoRefCount) {
     if (!TryConsumeToken(tok::kw___bridge)) {
       StringRef BridgeCastName = Tok.getName();

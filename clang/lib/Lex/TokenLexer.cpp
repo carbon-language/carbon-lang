@@ -185,7 +185,7 @@ void TokenLexer::ExpandFunctionArguments() {
     if (i != 0 && !Tokens[i-1].is(tok::hashhash) && CurTok.hasLeadingSpace())
       NextTokGetsSpace = true;
 
-    if (CurTok.is(tok::hash) || CurTok.is(tok::hashat)) {
+    if (CurTok.isOneOf(tok::hash, tok::hashat)) {
       int ArgNo = Macro->getArgumentNum(Tokens[i+1].getIdentifierInfo());
       assert(ArgNo != -1 && "Token following # is not an argument?");
 
