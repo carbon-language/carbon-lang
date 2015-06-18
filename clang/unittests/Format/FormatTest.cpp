@@ -4647,11 +4647,16 @@ TEST_F(FormatTest, AlwaysBreakBeforeMultilineStrings) {
   verifyFormat("aaaa(qqq, \"bbbb\"\n"
                "          \"cccc\");",
                NoBreak);
-  verifyFormat("aaaa(qqq, \"bbbb\"\n"
-               "          \"cccc\");",
+  verifyFormat("aaaa(qqq,\n"
+               "     \"bbbb\"\n"
+               "     \"cccc\");",
                Break);
-  verifyFormat("aaaa(qqq, L\"bbbb\"\n"
-               "          L\"cccc\");",
+  verifyFormat("aaaa(qqq,\n"
+               "     L\"bbbb\"\n"
+               "     L\"cccc\");",
+               Break);
+  verifyFormat("aaaaa(aaaaaa, aaaaaaa(\"aaaa\"\n"
+               "                      \"bbbb\"));",
                Break);
 
   // As we break before unary operators, breaking right after them is bad.

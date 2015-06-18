@@ -169,7 +169,8 @@ bool ContinuationIndenter::mustBreak(const LineState &State) {
     return false;
 
   if (Style.AlwaysBreakBeforeMultilineStrings &&
-      NewLineColumn == State.FirstIndent + Style.ContinuationIndentWidth &&
+      (NewLineColumn == State.FirstIndent + Style.ContinuationIndentWidth ||
+       Previous.is(tok::comma)) &&
       !Previous.isOneOf(tok::kw_return, tok::lessless, tok::at) &&
       !Previous.isOneOf(TT_InlineASMColon, TT_ConditionalExpr) &&
       nextIsMultilineString(State))
