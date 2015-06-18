@@ -2915,3 +2915,4 @@ EmulateInstructionMIPS64::Emulate_BC1ANY4T (llvm::MCInst& insn)
         return false;
 
     return true;
+}
