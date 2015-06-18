@@ -1,5 +1,5 @@
-; RUN: opt -mtriple=x86_64-apple-darwin -mcpu=core2 -cost-model -analyze < %s | FileCheck --check-prefix=SSE2 %s
-; RUN: opt -mtriple=x86_64-apple-darwin -mcpu=knl -cost-model -analyze < %s | FileCheck --check-prefix=AVX512F %s
+; RUN: opt -mtriple=x86_64-apple-darwin -mattr=+sse2 -cost-model -analyze < %s | FileCheck --check-prefix=SSE2 %s
+; RUN: opt -mtriple=x86_64-apple-darwin -mattr=+avx512f -cost-model -analyze < %s | FileCheck --check-prefix=AVX512F %s
 
 define <2 x double> @sitofpv2i8v2double(<2 x i8> %a) {
   ; SSE2: sitofpv2i8v2double

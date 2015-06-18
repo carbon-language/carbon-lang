@@ -1,10 +1,10 @@
-; RUN: llc -mtriple=x86_64-apple-darwin -mcpu=core2 < %s | FileCheck --check-prefix=SSE2-CODEGEN %s
-; RUN: opt -mtriple=x86_64-apple-darwin -mcpu=core2 -cost-model -analyze < %s | FileCheck --check-prefix=SSE2 %s
+; RUN: llc -mtriple=x86_64-apple-darwin -mattr=+sse2 < %s | FileCheck --check-prefix=SSE2-CODEGEN %s
+; RUN: opt -mtriple=x86_64-apple-darwin -mattr=+sse2 -cost-model -analyze < %s | FileCheck --check-prefix=SSE2 %s
 
 ; In X86TargetTransformInfo::getCastInstrCost we have code that depends on
 ; getSimpleVT on a value type. On AVX2 we execute this code. Make sure we exit
 ; early if the type is not a simple value type before we call this function.
-; RUN: opt -mtriple=x86_64-apple-darwin -mcpu=core-avx2 -cost-model -analyze < %s
+; RUN: opt -mtriple=x86_64-apple-darwin -mattr=+avx2 -cost-model -analyze < %s
 
 define <2 x double> @uitofpv2i8v2double(<2 x i8> %a) {
   ; SSE2: uitofpv2i8v2double
