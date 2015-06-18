@@ -185,7 +185,11 @@ GDBRemoteCommunicationServerCommon::Handle_qHostInfo (StringExtractorGDBRemote &
     else
         response.Printf("watchpoint_exceptions_received:after;");
 #else
-    response.Printf("watchpoint_exceptions_received:after;");
+    if (host_arch.GetMachine() == llvm::Triple::mips64 ||
+        host_arch.GetMachine() == llvm::Triple::mips64el)
+        response.Printf("watchpoint_exceptions_received:before;");
+    else
+        response.Printf("watchpoint_exceptions_received:after;");
 #endif
 
     switch (lldb::endian::InlHostByteOrder())

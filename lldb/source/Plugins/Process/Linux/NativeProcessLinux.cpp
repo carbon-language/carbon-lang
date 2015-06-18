@@ -2011,6 +2011,27 @@ NativeProcessLinux::MonitorSIGTRAP(const siginfo_t *info, lldb::pid_t pid)
         break;
 
     case SI_KERNEL:
+#if defined __mips__
+        // For mips there is no special signal for watchpoint
+        // So we check for watchpoint in kernel trap
+        if (thread_sp)
+        {
+            // If a watchpoint was hit, report it
+            uint32_t wp_index;
+            Error error = thread_sp->GetRegisterContext()->GetWatchpointHitIndex(wp_index, NULL);
+            if (error.Fail() && log)
+                log->Printf("NativeProcessLinux::%s() "
+                            "received error while checking for watchpoint hits, "
+                            "pid = %" PRIu64 " error = %s",
+                            __FUNCTION__, pid, error.AsCString());
+            if (wp_index != LLDB_INVALID_INDEX32)
+            {
+                MonitorWatchpoint(pid, thread_sp, wp_index);
+                break;
+            }
+        }
+        // NO BREAK
+#endif
     case TRAP_BRKPT:
         MonitorBreakpoint(pid, thread_sp);
         break;
