@@ -1996,7 +1996,6 @@ TEST_F(FormatTest, FormatsEnum) {
   verifyFormat("enum X E {} d;");
   verifyFormat("enum __attribute__((...)) E {} d;");
   verifyFormat("enum __declspec__((...)) E {} d;");
-  verifyFormat("enum X f() {\n  a();\n  return 42;\n}");
   verifyFormat("enum {\n"
                "  Bar = Foo<int, int>::value\n"
                "};",
@@ -2025,6 +2024,19 @@ TEST_F(FormatTest, FormatsEnum) {
                "  TWO\n"
                "};\n"
                "int i;");
+  // Not enums.
+  verifyFormat("enum X f() {\n"
+               "  a();\n"
+               "  return 42;\n"
+               "}");
+  verifyFormat("enum ::X f() {\n"
+               "  a();\n"
+               "  return 42;\n"
+               "}");
+  verifyFormat("enum ns::X f() {\n"
+               "  a();\n"
+               "  return 42;\n"
+               "}");
 }
 
 TEST_F(FormatTest, FormatsEnumsWithErrors) {

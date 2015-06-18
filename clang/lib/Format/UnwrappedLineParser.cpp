@@ -1491,6 +1491,8 @@ void UnwrappedLineParser::parseEnum() {
   while (FormatTok->Tok.getIdentifierInfo() ||
          FormatTok->isOneOf(tok::colon, tok::coloncolon, tok::less,
                             tok::greater, tok::comma, tok::question)) {
+    if (FormatTok->is(tok::coloncolon))
+      nextToken();
     nextToken();
     // We can have macros or attributes in between 'enum' and the enum name.
     if (FormatTok->is(tok::l_paren))
