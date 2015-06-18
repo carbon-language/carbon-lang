@@ -75,6 +75,31 @@ define <8 x float> @combine_16_byte_loads_no_intrinsic(<4 x float>* %ptr) {
   ret <8 x float> %v3
 }
 
+define <8 x float> @combine_16_byte_loads_aligned(<4 x float>* %ptr) {
+;; FIXME: The first load is 32-byte aligned, so the second load should get merged.
+; AVXSLOW-LABEL: combine_16_byte_loads_aligned:
+; AVXSLOW:       # BB#0:
+; AVXSLOW-NEXT:    vmovaps 48(%rdi), %xmm0
+; AVXSLOW-NEXT:    vinsertf128 $1, 64(%rdi), %ymm0, %ymm0
+; AVXSLOW-NEXT:    retq
+;
+; AVXFAST-LABEL: combine_16_byte_loads_aligned:
+; AVXFAST:       # BB#0:
+; AVXFAST-NEXT:    vmovaps 48(%rdi), %ymm0
+; AVXFAST-NEXT:    retq
+;
+; AVX2-LABEL: combine_16_byte_loads_aligned:
+; AVX2:       # BB#0:
+; AVX2-NEXT:    vmovaps 48(%rdi), %ymm0
+; AVX2-NEXT:    retq
+  %ptr1 = getelementptr inbounds <4 x float>, <4 x float>* %ptr, i64 3
+  %ptr2 = getelementptr inbounds <4 x float>, <4 x float>* %ptr, i64 4
+  %v1 = load <4 x float>, <4 x float>* %ptr1, align 32
+  %v2 = load <4 x float>, <4 x float>* %ptr2, align 1
+  %v3 = shufflevector <4 x float> %v1, <4 x float> %v2, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
+  ret <8 x float> %v3
+}
+
 ; Swap the order of the shufflevector operands to ensure that the pattern still matches.
 
 define <8 x float> @combine_16_byte_loads_no_intrinsic_swap(<4 x float>* %ptr) {
