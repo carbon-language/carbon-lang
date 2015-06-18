@@ -61,17 +61,11 @@ createHexagonMCSubtargetInfo(const Triple &TT, StringRef CPU, StringRef FS) {
 
 namespace {
 class HexagonTargetAsmStreamer : public HexagonTargetStreamer {
-  MCContext &Ctx;
-  formatted_raw_ostream &OS;
-  bool isVerboseAsm;
-  MCInstPrinter &IP;
 public:
   HexagonTargetAsmStreamer(MCStreamer &S,
-                           formatted_raw_ostream &OS, bool isVerboseAsm,
-                           MCInstPrinter &IP)
-      : HexagonTargetStreamer(S), Ctx(Ctx), OS(OS), isVerboseAsm(isVerboseAsm),
-        IP(IP) {}
-  MCStreamer &getStreamer() { return Streamer; }
+                           formatted_raw_ostream &, bool,
+                           MCInstPrinter &)
+      : HexagonTargetStreamer(S) {}
   void prettyPrintAsm(MCInstPrinter &InstPrinter, raw_ostream &OS,
                       const MCInst &Inst, const MCSubtargetInfo &STI) override {
     assert(HexagonMCInstrInfo::isBundle(Inst));
