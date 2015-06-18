@@ -335,15 +335,6 @@ public:
   mutable VersionTuple TargetVersion;
 
 private:
-  /// The default macosx-version-min of this tool chain; empty until
-  /// initialized.
-  std::string MacosxVersionMin;
-
-  /// The default ios-version-min of this tool chain; empty until
-  /// initialized.
-  std::string iOSVersionMin;
-
-private:
   void AddDeploymentTarget(llvm::opt::DerivedArgList &Args) const;
 
 public:
