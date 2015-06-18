@@ -42,6 +42,14 @@
 # define DEBUGSERVER_BASENAME    "lldb-server"
 #endif
 
+#if defined (HAVE_LIBCOMPRESSION)
+#include <compression.h>
+#endif
+
+#if defined (HAVE_LIBZ)
+#include <zlib.h>
+#endif
+
 using namespace lldb;
 using namespace lldb_private;
 using namespace lldb_private::process_gdb_remote;
@@ -158,6 +166,7 @@ GDBRemoteCommunication::GDBRemoteCommunication(const char *comm_name,
     m_private_is_running (false),
     m_history (512),
     m_send_acks (true),
+    m_compression_type (CompressionType::None),
     m_listen_url ()
 {
 }
@@ -546,6 +555,226 @@ GDBRemoteCommunication::WaitForPacketWithTimeoutMicroSecondsNoLock (StringExtrac
         return PacketResult::ErrorReplyFailed;
 }
 
+bool
+GDBRemoteCommunication::DecompressPacket ()
+{
+    Log *log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PACKETS));
+
+    if (!CompressionIsEnabled())
+        return true;
+
+    size_t pkt_size = m_bytes.size();
+    if (pkt_size < 6)
+        return true;
+    if (m_bytes[0] != '$' && m_bytes[0] != '%')
+        return true;
+    if (m_bytes[1] != 'C' && m_bytes[1] != 'N')
+        return true;
+    if (m_bytes[pkt_size - 3] != '#')
+        return true;
+    if (!::isxdigit (m_bytes[pkt_size - 2]) || !::isxdigit (m_bytes[pkt_size - 1]))
+        return true;
+
+    size_t content_length = pkt_size - 5;   // not counting '$', 'C' | 'N', '#', & the two hex checksum chars
+    size_t content_start = 2;               // The first character of the compressed/not-compressed text of the packet
+    size_t hash_mark_idx = pkt_size - 3;    // The '#' character marking the end of the packet
+    size_t checksum_idx = pkt_size - 2;     // The first character of the two hex checksum characters
+
+    // Compressed packets ("$C") start with a base10 number which is the size of the uncompressed payload,
+    // then a : and then the compressed data.  e.g. $C1024:<binary>#00
+    // Update content_start and content_length to only include the <binary> part of the packet.
+
+    uint64_t decompressed_bufsize = ULONG_MAX;
+    if (m_bytes[1] == 'C')
+    {
+        size_t i = content_start;
+        while (i < hash_mark_idx && isdigit(m_bytes[i]))
+            i++;
+        if (i < hash_mark_idx && m_bytes[i] == ':')
+        {
+            i++;
+            content_start = i;
+            content_length = hash_mark_idx - content_start;
+            std::string bufsize_str (m_bytes.data() + 2, i - 2 - 1);
+            errno = 0;
+            decompressed_bufsize = ::strtoul (bufsize_str.c_str(), NULL, 10);
+            if (errno != 0 || decompressed_bufsize == ULONG_MAX)
+            {
+                m_bytes.erase (0, pkt_size);
+                return false;
+            }
+        }
+    }
+
+    if (GetSendAcks ())
+    {
+        char packet_checksum_cstr[3];
+        packet_checksum_cstr[0] = m_bytes[checksum_idx];
+        packet_checksum_cstr[1] = m_bytes[checksum_idx + 1];
+        packet_checksum_cstr[2] = '\0';
+        long packet_checksum = strtol (packet_checksum_cstr, NULL, 16);
+
+        long actual_checksum = CalculcateChecksum (m_bytes.data() + 1, hash_mark_idx - 1);
+        bool success = packet_checksum == actual_checksum;
+        if (!success)
+        {
+            if (log)
+                log->Printf ("error: checksum mismatch: %.*s expected 0x%2.2x, got 0x%2.2x", 
+                             (int)(pkt_size), 
+                             m_bytes.c_str(),
+                             (uint8_t)packet_checksum,
+                             (uint8_t)actual_checksum);
+        }
+        // Send the ack or nack if needed
+        if (!success)
+        {
+            SendNack();
+            m_bytes.erase (0, pkt_size);
+            return false;
+        }
+        else
+        {
+            SendAck();
+        }
+    }
+
+    if (m_bytes[1] == 'N')
+    {
+        // This packet was not compressed -- delete the 'N' character at the 
+        // start and the packet may be processed as-is.
+        m_bytes.erase(1, 1);
+        return true;
+    }
+
+    // Reverse the gdb-remote binary escaping that was done to the compressed text to
+    // guard characters like '$', '#', '}', etc.
+    std::vector<uint8_t> unescaped_content;
+    unescaped_content.reserve (content_length);
+    size_t i = content_start;
+    while (i < hash_mark_idx)
+    {
+        if (m_bytes[i] == '}')
+        {
+            i++;
+            unescaped_content.push_back (m_bytes[i] ^ 0x20);
+        }
+        else
+        {
+            unescaped_content.push_back (m_bytes[i]);
+        }
+        i++;
+    }
+
+    uint8_t *decompressed_buffer = nullptr;
+    size_t decompressed_bytes = 0;
+
+    if (decompressed_bufsize != ULONG_MAX)
+    {
+        decompressed_buffer = (uint8_t *) malloc (decompressed_bufsize + 1);
+        if (decompressed_buffer == nullptr)
+        {
+            m_bytes.erase (0, pkt_size);
+            return false;
+        }
+
+    }
+
+#if defined (HAVE_LIBCOMPRESSION)
+    // libcompression is weak linked so check that compression_decode_buffer() is available
+    if (compression_decode_buffer != NULL &&
+        (m_compression_type == CompressionType::ZlibDeflate 
+         || m_compression_type == CompressionType::LZFSE
+         || m_compression_type == CompressionType::LZ4))
+    {
+        compression_algorithm compression_type;
+        if (m_compression_type == CompressionType::ZlibDeflate)
+            compression_type = COMPRESSION_ZLIB;
+        else if (m_compression_type == CompressionType::LZFSE)
+            compression_type = COMPRESSION_LZFSE;
+        else if (m_compression_type == CompressionType::LZ4)
+            compression_type = COMPRESSION_LZ4_RAW;
+        else if (m_compression_type == CompressionType::LZMA)
+            compression_type = COMPRESSION_LZMA;
+
+
+        // If we have the expected size of the decompressed payload, we can allocate
+        // the right-sized buffer and do it.  If we don't have that information, we'll
+        // need to try decoding into a big buffer and if the buffer wasn't big enough,
+        // increase it and try again.
+
+        if (decompressed_bufsize != ULONG_MAX && decompressed_buffer != nullptr)
+        {
+            decompressed_bytes = compression_decode_buffer (decompressed_buffer, decompressed_bufsize + 10 ,
+                                                        (uint8_t*) unescaped_content.data(),
+                                                        unescaped_content.size(),
+                                                        NULL,
+                                                        compression_type);
+        }
+    }
+#endif
+
+#if defined (HAVE_LIBZ)
+    if (decompressed_bytes == 0 
+        && decompressed_bufsize != ULONG_MAX
+        && decompressed_buffer != nullptr 
+        && m_compression_type == CompressionType::ZlibDeflate)
+    {
+        z_stream stream;
+        memset (&stream, 0, sizeof (z_stream));
+        stream.next_in = (Bytef *) unescaped_content.data();
+        stream.avail_in = (uInt) unescaped_content.size();
+        stream.total_in = 0;
+        stream.next_out = (Bytef *) decompressed_buffer;
+        stream.avail_out = decompressed_bufsize;
+        stream.total_out = 0;
+        stream.zalloc = Z_NULL;
+        stream.zfree = Z_NULL;
+        stream.opaque = Z_NULL;
+
+        if (inflateInit2 (&stream, -15) == Z_OK)
+        {
+            int status = inflate (&stream, Z_NO_FLUSH);
+            inflateEnd (&stream);
+            if (status == Z_STREAM_END)
+            {
+                decompressed_bytes = stream.total_out;
+            }
+        }
+    }
+#endif
+
+    if (decompressed_bytes == 0 || decompressed_buffer == nullptr)
+    {
+        if (decompressed_buffer)
+            free (decompressed_buffer);
+        m_bytes.erase (0, pkt_size);
+        return false;
+    }
+
+    std::string new_packet;
+    new_packet.reserve (decompressed_bytes + 6);
+    new_packet.push_back (m_bytes[0]);
+    new_packet.append ((const char *) decompressed_buffer, decompressed_bytes);
+    new_packet.push_back ('#');
+    if (GetSendAcks ())
+    {
+        uint8_t decompressed_checksum = CalculcateChecksum ((const char *) decompressed_buffer, decompressed_bytes);
+        char decompressed_checksum_str[3];
+        snprintf (decompressed_checksum_str, 3, "%02x", decompressed_checksum);
+        new_packet.append (decompressed_checksum_str);
+    }
+    else
+    {
+        new_packet.push_back ('0');
+        new_packet.push_back ('0');
+    }
+
+    m_bytes = new_packet;
+
+    free (decompressed_buffer);
+    return true;
+}
+
 GDBRemoteCommunication::PacketType
 GDBRemoteCommunication::CheckForPacket (const uint8_t *src, size_t src_len, StringExtractorGDBRemote &packet)
 {
@@ -580,6 +809,17 @@ GDBRemoteCommunication::CheckForPacket (const uint8_t *src, size_t src_len, Stri
         size_t content_length = 0;
         size_t total_length = 0;
         size_t checksum_idx = std::string::npos;
+
+        // Size of packet before it is decompressed, for logging purposes
+        size_t original_packet_size = m_bytes.size();
+        if (CompressionIsEnabled())
+        {
+            if (DecompressPacket() == false)
+            {
+                packet.Clear();
+                return GDBRemoteCommunication::PacketType::Standard;
+            }
+        }
 
         switch (m_bytes[0])
         {
@@ -664,12 +904,10 @@ GDBRemoteCommunication::CheckForPacket (const uint8_t *src, size_t src_len, Stri
             assert (content_length <= m_bytes.size());
             assert (total_length <= m_bytes.size());
             assert (content_length <= total_length);
-            const size_t content_end = content_start + content_length;
+            size_t content_end = content_start + content_length;
 
             bool success = true;
             std::string &packet_str = packet.GetStringRef();
-            
-            
             if (log)
             {
                 // If logging was just enabled and we have history, then dump out what
@@ -693,7 +931,10 @@ GDBRemoteCommunication::CheckForPacket (const uint8_t *src, size_t src_len, Stri
                 {
                     StreamString strm;
                     // Packet header...
-                    strm.Printf("<%4" PRIu64 "> read packet: %c", (uint64_t)total_length, m_bytes[0]);
+                    if (CompressionIsEnabled())
+                        strm.Printf("<%4" PRIu64 ":%" PRIu64 "> read packet: %c", (uint64_t) original_packet_size, (uint64_t)total_length, m_bytes[0]);
+                    else
+                        strm.Printf("<%4" PRIu64 "> read packet: %c", (uint64_t)total_length, m_bytes[0]);
                     for (size_t i=content_start; i<content_end; ++i)
                     {
                         // Remove binary escaped bytes when displaying the packet...
@@ -716,7 +957,10 @@ GDBRemoteCommunication::CheckForPacket (const uint8_t *src, size_t src_len, Stri
                 }
                 else
                 {
-                    log->Printf("<%4" PRIu64 "> read packet: %.*s", (uint64_t)total_length, (int)(total_length), m_bytes.c_str());
+                    if (CompressionIsEnabled())
+                        log->Printf("<%4" PRIu64 ":%" PRIu64 "> read packet: %.*s", (uint64_t) original_packet_size, (uint64_t)total_length, (int)(total_length), m_bytes.c_str());
+                    else
+                        log->Printf("<%4" PRIu64 "> read packet: %.*s", (uint64_t)total_length, (int)(total_length), m_bytes.c_str());
                 }
             }
 

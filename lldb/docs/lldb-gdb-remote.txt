@@ -1384,3 +1384,66 @@ for this region.
 //
 // on the wire.
 //----------------------------------------------------------------------
+
+//----------------------------------------------------------------------
+// "QEnableCompression"
+//
+// BRIEF
+//  This packet enables compression of the packets that the debug stub sends to lldb.
+//  If the debug stub can support compression, it indictes this in the reply of the 
+//  "qSupported" packet.  e.g.
+//   LLDB SENDS:    qSupported:xmlRegisters=i386,arm,mips
+//   STUB REPLIES:  qXfer:features:read+;SupportedCompressions=lzfse,zlib-deflate,lz4,lzma;DefaultCompressionMinSize=384
+//
+//  If lldb knows how to use any of these compression algorithms, it can ask that this
+//  compression mode be enabled.  It may optionally change the minimum packet size 
+//  where compression is used.  Typically small packets do not benefit from compression,
+//  as well as compression headers -- compression is most beneficial with larger packets.
+//
+//  QEnableCompression:type:zlib-deflate;
+//  or
+//  QEnableCompression:type:zlib-deflate;minsize:512;
+//
+//  The debug stub should reply with an uncompressed "OK" packet to indicate that the
+//  request was accepted.  All further packets the stub sends will use this compression.
+//
+//  Packets are compressed as the last step before they are sent from the stub, and 
+//  decompressed as the first step after they are received.  The packet format in compressed
+//  mode becomes one of two:
+//
+//   $N<uncompressed payload>#00
+//
+//   $C<size of uncompressed payload in base10>:<compressed payload>#00
+//
+//  Where "#00" is the actual checksum value if noack mode is not enabled.  The checksum
+//  value is for the "N<uncompressed payload>" or 
+//  "C<size of uncompressed payload in base10>:<compressed payload>" bytes in the packet.
+//
+//  The size of the uncompressed payload in base10 is provided because it will simplify
+//  decompression if the final buffer size needed is known ahead of time.
+//
+//  Compression on low-latency connections is unlikely to be an improvement.  Particularly
+//  when the debug stub and lldb are running on the same host.  It should only be used
+//  for slow connections, and likely only for larger packets.
+//
+//  Example compression algorithsm that may be used include
+//
+//    zlib-deflate
+//       The raw DEFLATE format as described in IETF RFC 1951.  With the ZLIB library, you
+//       can compress to this format with an initialization like 
+//           deflateInit2 (&stream, 5, Z_DEFLATED, -15, 8, Z_DEFAULT_STRATEGY)
+//       and you can decompress with an initialization like
+//           inflateInit2 (&stream, -15)
+//
+//    lz4
+//       https://en.wikipedia.org/wiki/LZ4_(compression_algorithm)
+//       https://github.com/Cyan4973/lz4
+//       The libcompression APIs on darwin systems call this COMPRESSION_LZ4_RAW.
+//
+//    lzfse
+//       An Apple proprietary compression algorithm implemented in libcompression.
+//
+//    lzma
+//       libcompression implements "LZMA level 6", the default compression for the
+//       open source LZMA implementation.
+//----------------------------------------------------------------------

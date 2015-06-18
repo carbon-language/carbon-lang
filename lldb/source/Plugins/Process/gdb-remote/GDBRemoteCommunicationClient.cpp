@@ -43,6 +43,10 @@
 #include "ProcessGDBRemoteLog.h"
 #include "lldb/Host/Config.h"
 
+#if defined (HAVE_LIBCOMPRESSION)
+#include <compression.h>
+#endif
+
 using namespace lldb;
 using namespace lldb_private;
 using namespace lldb_private::process_gdb_remote;
@@ -422,6 +426,59 @@ GDBRemoteCommunicationClient::GetRemoteQSupported ()
             m_supports_qXfer_libraries_read = eLazyBoolYes;
         if (::strstr (response_cstr, "qXfer:features:read+"))
             m_supports_qXfer_features_read = eLazyBoolYes;
+
+
+        // Look for a list of compressions in the features list e.g.
+        // qXfer:features:read+;PacketSize=20000;qEcho+;SupportedCompressions=zlib-deflate,lzma
+        const char *features_list = ::strstr (response_cstr, "qXfer:features:");
+        if (features_list)
+        {
+            const char *compressions = ::strstr (features_list, "SupportedCompressions=");
+            if (compressions)
+            {
+                std::vector<std::string> supported_compressions;
+                compressions += sizeof ("SupportedCompressions=") - 1;
+                const char *end_of_compressions = strchr (compressions, ';');
+                if (end_of_compressions == NULL)
+                {
+                    end_of_compressions = strchr (compressions, '\0');
+                }
+                const char *current_compression = compressions;
+                while (current_compression < end_of_compressions)
+                {
+                    const char *next_compression_name = strchr (current_compression, ',');
+                    const char *end_of_this_word = next_compression_name;
+                    if (next_compression_name == NULL || end_of_compressions < next_compression_name)
+                    {
+                        end_of_this_word = end_of_compressions;
+                    }
+
+                    if (end_of_this_word)
+                    {
+                        if (end_of_this_word == current_compression)
+                        {
+                            current_compression++;
+                        }
+                        else
+                        {
+                            std::string this_compression (current_compression, end_of_this_word - current_compression);
+                            supported_compressions.push_back (this_compression);
+                            current_compression = end_of_this_word + 1;
+                        }
+                    }
+                    else
+                    {
+                        supported_compressions.push_back (current_compression);
+                        current_compression = end_of_compressions;
+                    }
+                }
+
+                if (supported_compressions.size() > 0)
+                {
+                    MaybeEnableCompression (supported_compressions);
+                }
+            }
+        }
 
         if (::strstr (response_cstr, "qEcho"))
             m_supports_qEcho = eLazyBoolYes;
@@ -1627,6 +1684,105 @@ GDBRemoteCommunicationClient::GetGDBServerVersion()
         }
     }
     return m_qGDBServerVersion_is_valid == eLazyBoolYes;
+}
+
+void
+GDBRemoteCommunicationClient::MaybeEnableCompression (std::vector<std::string> supported_compressions)
+{
+    CompressionType avail_type = CompressionType::None;
+    std::string avail_name;
+
+#if defined (HAVE_LIBCOMPRESSION)
+    // libcompression is weak linked so test if compression_decode_buffer() is available
+    if (compression_decode_buffer != NULL && avail_type == CompressionType::None)
+    {
+        for (auto compression : supported_compressions)
+        {
+            if (compression == "lzfse")
+            {
+                avail_type = CompressionType::LZFSE;
+                avail_name = compression;
+                break;
+            }
+        }
+    }
+#endif
+
+#if defined (HAVE_LIBCOMPRESSION)
+    // libcompression is weak linked so test if compression_decode_buffer() is available
+    if (compression_decode_buffer != NULL && avail_type == CompressionType::None)
+    {
+        for (auto compression : supported_compressions)
+        {
+            if (compression == "zlib-deflate")
+            {
+                avail_type = CompressionType::ZlibDeflate;
+                avail_name = compression;
+                break;
+            }
+        }
+    }
+#endif
+
+#if defined (HAVE_LIBZ)
+    if (avail_type == CompressionType::None)
+    {
+        for (auto compression : supported_compressions)
+        {
+            if (compression == "zlib-deflate")
+            {
+                avail_type = CompressionType::ZlibDeflate;
+                avail_name = compression;
+                break;
+            }
+        }
+    }
+#endif
+
+#if defined (HAVE_LIBCOMPRESSION)
+    // libcompression is weak linked so test if compression_decode_buffer() is available
+    if (compression_decode_buffer != NULL && avail_type == CompressionType::None)
+    {
+        for (auto compression : supported_compressions)
+        {
+            if (compression == "lz4")
+            {
+                avail_type = CompressionType::LZ4;
+                avail_name = compression;
+                break;
+            }
+        }
+    }
+#endif
+
+#if defined (HAVE_LIBCOMPRESSION)
+    // libcompression is weak linked so test if compression_decode_buffer() is available
+    if (compression_decode_buffer != NULL && avail_type == CompressionType::None)
+    {
+        for (auto compression : supported_compressions)
+        {
+            if (compression == "lzma")
+            {
+                avail_type = CompressionType::LZMA;
+                avail_name = compression;
+                break;
+            }
+        }
+    }
+#endif
+
+    if (avail_type != CompressionType::None)
+    {
+        StringExtractorGDBRemote response;
+        std::string packet = "QEnableCompression:type:" + avail_name + ";";
+        if (SendPacketAndWaitForResponse (packet.c_str(), response, false) !=  PacketResult::Success)
+            return;
+    
+        if (response.IsOKResponse())
+        {
+            m_compression_type = avail_type;
+        }
+    }
 }
 
 const char *

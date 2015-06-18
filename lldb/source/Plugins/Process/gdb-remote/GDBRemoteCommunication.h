@@ -41,6 +41,15 @@ typedef enum
     eWatchpointReadWrite
 } GDBStoppointType;
 
+enum class CompressionType
+{
+    None = 0,       // no compression
+    ZlibDeflate,    // zlib's deflate compression scheme, requires zlib or Apple's libcompression
+    LZFSE,          // an Apple compression scheme, requires Apple's libcompression
+    LZ4,            // lz compression - called "lz4 raw" in libcompression terms, compat with https://code.google.com/p/lz4/
+    LZMA,           // Lempel–Ziv–Markov chain algorithm
+};
+
 class ProcessGDBRemote;
 
 class GDBRemoteCommunication : public Communication
@@ -296,6 +305,22 @@ protected:
     bool
     WaitForNotRunningPrivate (const TimeValue *timeout_ptr);
 
+    bool
+    CompressionIsEnabled ()
+    {
+        return m_compression_type != CompressionType::None;
+    }
+
+    // If compression is enabled, decompress the packet in m_bytes and update
+    // m_bytes with the uncompressed version.
+    // Returns 'true' packet was decompressed and m_bytes is the now-decompressed text.
+    // Returns 'false' if unable to decompress or if the checksum was invalid.
+    //
+    // NB: Once the packet has been decompressed, checksum cannot be computed based
+    // on m_bytes.  The checksum was for the compressed packet.
+    bool
+    DecompressPacket ();
+
     //------------------------------------------------------------------
     // Classes that inherit from GDBRemoteCommunication can see and modify these
     //------------------------------------------------------------------
@@ -315,6 +340,7 @@ protected:
                         // false if this class represents a debug session for
                         // a single process
     
+    CompressionType m_compression_type;
 
     Error
     StartListenThread (const char *hostname = "127.0.0.1", uint16_t port = 0);

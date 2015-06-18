@@ -564,6 +564,11 @@ protected:
     bool
     GetGDBServerVersion();
 
+    // Given the list of compression types that the remote debug stub can support,
+    // possibly enable compression if we find an encoding we can handle.
+    void
+    MaybeEnableCompression (std::vector<std::string> supported_compressions);
+
     //------------------------------------------------------------------
     // Classes that inherit from GDBRemoteCommunicationClient can see and modify these
     //------------------------------------------------------------------
@@ -643,6 +648,7 @@ protected:
     uint32_t m_gdb_server_version; // from reply to qGDBServerVersion, zero if qGDBServerVersion is not supported
     uint32_t m_default_packet_timeout;
     uint64_t m_max_packet_size;  // as returned by qSupported
+
     
     bool
     DecodeProcessInfoResponse (StringExtractorGDBRemote &response, 

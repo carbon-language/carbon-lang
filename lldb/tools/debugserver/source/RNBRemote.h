@@ -1,4 +1,4 @@
-//===-- RNBRemote.h ---------------------------------------------*- C++ -*-===//
+
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -29,6 +29,8 @@ class RNBContext;
 class PThreadEvents;
 
 enum event_loop_mode { debug_nub, gdb_remote_protocol, done };
+
+enum class compression_types { zlib_deflate, lz4, lzma, lzfse, none };
 
 class RNBRemote
 {
@@ -120,6 +122,7 @@ public:
         memory_region_info,             // 'qMemoryRegionInfo:'
         get_profile_data,               // 'qGetProfileData'
         set_enable_profiling,           // 'QSetEnableAsyncProfiling'
+        enable_compression,             // 'QEnableCompression:'
         watchpoint_support_info,        // 'qWatchpointSupportInfo:'
         allocate_memory,                // '_M'
         deallocate_memory,              // '_m'
@@ -235,6 +238,7 @@ public:
     rnb_err_t HandlePacket_MemoryRegionInfo (const char *p);
     rnb_err_t HandlePacket_GetProfileData(const char *p);
     rnb_err_t HandlePacket_SetEnableAsyncProfiling(const char *p);
+    rnb_err_t HandlePacket_QEnableCompression(const char *p);
     rnb_err_t HandlePacket_WatchpointSupportInfo (const char *p);
     rnb_err_t HandlePacket_qSpeedTest (const char *p);
     rnb_err_t HandlePacket_qXfer (const char *p);
@@ -309,12 +313,19 @@ protected:
 
     rnb_err_t       GetPacket (std::string &packet_data, RNBRemote::Packet& packet_info, bool wait);
     rnb_err_t       SendPacket (const std::string &);
+    std::string     CompressString (const std::string &);
 
     void CreatePacketTable ();
     rnb_err_t GetPacketPayload (std::string &);
 
     nub_thread_t
     ExtractThreadIDFromThreadSuffix (const char *p);
+
+    void
+    EnableCompressionNextSendPacket (compression_types);
+
+    compression_types
+    GetCompressionType ();
 
     RNBContext      m_ctx;              // process context
     RNBSocket       m_comm;             // communication port
@@ -336,6 +347,11 @@ protected:
                                                                 // "$g;thread:TTTT" instead of "$g"
                                                                 // "$GVVVVVVVVVVVVVV;thread:TTTT;#00 instead of "$GVVVVVVVVVVVVVV"
     bool            m_list_threads_in_stop_reply;
+
+    size_t          m_compression_minsize;                      // only packets larger than this size will be compressed
+    bool            m_enable_compression_next_send_packet;
+
+    compression_types m_compression_mode;
 };
 
 /* We translate the /usr/include/mach/exception_types.h exception types

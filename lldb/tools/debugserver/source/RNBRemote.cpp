@@ -35,6 +35,14 @@
 #include "Utility/StringExtractor.h"
 #include "MacOSX/Genealogy.h"
 
+#if defined (HAVE_LIBCOMPRESSION)
+#include <compression.h>
+#endif
+
+#if defined (HAVE_LIBZ)
+#include <zlib.h>
+#endif
+
 #include <iomanip>
 #include <sstream>
 #include <unordered_set>
@@ -83,7 +91,10 @@ RNBRemote::RNBRemote () :
     m_extended_mode(false),
     m_noack_mode(false),
     m_thread_suffix_supported (false),
-    m_list_threads_in_stop_reply (false)
+    m_list_threads_in_stop_reply (false),
+    m_compression_minsize (384),
+    m_enable_compression_next_send_packet (false),
+    m_compression_mode (compression_types::none)
 {
     DNBLogThreadedIf (LOG_RNB_REMOTE, "%s", __PRETTY_FUNCTION__);
     CreatePacketTable ();
@@ -207,6 +218,7 @@ RNBRemote::CreatePacketTable  ()
     t.push_back (Packet (memory_region_info,            &RNBRemote::HandlePacket_MemoryRegionInfo, NULL, "qMemoryRegionInfo", "Return size and attributes of a memory region that contains the given address"));
     t.push_back (Packet (get_profile_data,              &RNBRemote::HandlePacket_GetProfileData, NULL, "qGetProfileData", "Return profiling data of the current target."));
     t.push_back (Packet (set_enable_profiling,          &RNBRemote::HandlePacket_SetEnableAsyncProfiling, NULL, "QSetEnableAsyncProfiling", "Enable or disable the profiling of current target."));
+    t.push_back (Packet (enable_compression,            &RNBRemote::HandlePacket_QEnableCompression, NULL, "QEnableCompression:", "Enable compression for the remainder of the connection"));
     t.push_back (Packet (watchpoint_support_info,       &RNBRemote::HandlePacket_WatchpointSupportInfo, NULL, "qWatchpointSupportInfo", "Return the number of supported hardware watchpoints"));
     t.push_back (Packet (set_process_event,             &RNBRemote::HandlePacket_QSetProcessEvent, NULL, "QSetProcessEvent:", "Set a process event, to be passed to the process, can be set before the process is started, or after."));
     t.push_back (Packet (set_detach_on_error,           &RNBRemote::HandlePacket_QSetDetachOnError, NULL, "QSetDetachOnError:", "Set whether debugserver will detach (1) or kill (0) from the process it is controlling if it loses connection to lldb."));
@@ -310,11 +322,146 @@ RNBRemote::SendAsyncProfileDataPacket (char *buf, nub_size_t buf_size)
     return SendPacket(packet);
 }
 
+// Given a std::string packet contents to send, possibly encode/compress it.
+// If compression is enabled, the returned std::string will be in one of two
+// forms:
+// 
+//    N<original packet contents uncompressed>
+//    C<size of original decompressed packet>:<packet compressed with the requested compression scheme>
+//
+// If compression is not requested, the original packet contents are returned
+
+std::string 
+RNBRemote::CompressString (const std::string &orig)
+{
+    std::string compressed;
+    compression_types compression_type = GetCompressionType();
+    if (compression_type != compression_types::none)
+    {
+        bool compress_this_packet = false;
+
+        if (orig.size() > m_compression_minsize)
+        {
+            compress_this_packet = true;
+        }
+
+        if (compress_this_packet)
+        {
+            const size_t encoded_data_buf_size = orig.size() + 128;
+            std::vector<uint8_t> encoded_data (encoded_data_buf_size);
+            size_t compressed_size = 0;
+
+#if defined (HAVE_LIBCOMPRESSION)
+            if (compression_decode_buffer && compression_type == compression_types::lz4)
+            {
+                compressed_size = compression_encode_buffer (encoded_data.data(), 
+                                                             encoded_data_buf_size,
+                                                             (uint8_t*) orig.c_str(),
+                                                             orig.size(),
+                                                             nullptr,
+                                                             COMPRESSION_LZ4_RAW);
+            }
+            if (compression_decode_buffer && compression_type == compression_types::zlib_deflate)
+            {
+                compressed_size = compression_encode_buffer (encoded_data.data(), 
+                                                             encoded_data_buf_size,
+                                                             (uint8_t*) orig.c_str(),
+                                                             orig.size(),
+                                                             nullptr,
+                                                             COMPRESSION_ZLIB);
+            }
+            if (compression_decode_buffer && compression_type == compression_types::lzma)
+            {
+                compressed_size = compression_encode_buffer (encoded_data.data(), 
+                                                             encoded_data_buf_size,
+                                                             (uint8_t*) orig.c_str(),
+                                                             orig.size(),
+                                                             nullptr,
+                                                             COMPRESSION_LZMA);
+            }
+            if (compression_decode_buffer && compression_type == compression_types::lzfse)
+            {
+                compressed_size = compression_encode_buffer (encoded_data.data(), 
+                                                             encoded_data_buf_size,
+                                                             (uint8_t*) orig.c_str(),
+                                                             orig.size(),
+                                                             nullptr,
+                                                             COMPRESSION_LZFSE);
+            }
+#endif
+
+#if defined (HAVE_LIBZ)
+            if (compressed_size == 0 && compression_type == compression_types::zlib_deflate)
+            {
+                z_stream stream;
+                memset (&stream, 0, sizeof (z_stream));
+                stream.next_in = (Bytef *) orig.c_str();
+                stream.avail_in = (uInt) orig.size();
+                stream.next_out = (Bytef *) encoded_data.data();
+                stream.avail_out = (uInt) encoded_data_buf_size;
+                stream.zalloc = Z_NULL;
+                stream.zfree = Z_NULL;
+                stream.opaque = Z_NULL;
+                deflateInit2 (&stream, 5, Z_DEFLATED, -15, 8, Z_DEFAULT_STRATEGY);
+                int compress_status = deflate (&stream, Z_FINISH);
+                deflateEnd (&stream);
+                if (compress_status == Z_STREAM_END && stream.total_out > 0)
+                {
+                    compressed_size = stream.total_out;
+                }
+            }
+#endif
+
+            if (compressed_size > 0)
+            {
+                compressed.clear ();
+                compressed.reserve (compressed_size);
+                compressed = "C";
+                char numbuf[16];
+                snprintf (numbuf, sizeof (numbuf), "%zu:", orig.size());
+                numbuf[sizeof (numbuf) - 1] = '\0';
+                compressed.append (numbuf);
+
+                for (size_t i = 0; i < compressed_size; i++)
+                {
+                    uint8_t byte = encoded_data[i];
+                    if (byte == '#' || byte == '$' || byte == '}' || byte == '*' || byte == '\0')
+                    {
+                        compressed.push_back (0x7d);
+                        compressed.push_back (byte ^ 0x20);
+                    }
+                    else
+                    {
+                        compressed.push_back (byte);
+                    }
+                }
+            }
+            else
+            {
+                compressed = "N" + orig;
+            }
+        }
+        else
+        {
+            compressed = "N" + orig;
+        }
+    }
+    else
+    {
+        compressed = orig;
+    }
+
+    return compressed;
+}
+
 rnb_err_t
 RNBRemote::SendPacket (const std::string &s)
 {
     DNBLogThreadedIf (LOG_RNB_MAX, "%8d RNBRemote::%s (%s) called", (uint32_t)m_comm.Timer().ElapsedMicroSeconds(true), __FUNCTION__, s.c_str());
-    std::string sendpacket = "$" + s + "#";
+
+    std::string s_compressed = CompressString (s);
+
+    std::string sendpacket = "$" + s_compressed + "#";
     int cksum = 0;
     char hexbuf[5];
 
@@ -324,8 +471,8 @@ RNBRemote::SendPacket (const std::string &s)
     }
     else
     {
-        for (int i = 0; i != s.size(); ++i)
-            cksum += s[i];
+        for (int i = 0; i != s_compressed.size(); ++i)
+            cksum += s_compressed[i];
         snprintf (hexbuf, sizeof hexbuf, "%02x", cksum & 0xff);
         sendpacket += hexbuf;
     }
@@ -3096,8 +3243,39 @@ rnb_err_t
 RNBRemote::HandlePacket_qSupported (const char *p)
 {
     uint32_t max_packet_size = 128 * 1024;  // 128KBytes is a reasonable max packet size--debugger can always use less
-    char buf[64];
+    char buf[256];
     snprintf (buf, sizeof(buf), "qXfer:features:read+;PacketSize=%x;qEcho+", max_packet_size);
+
+    // By default, don't enable compression.  It's only worth doing when we are working
+    // with a low speed communication channel.
+    bool enable_compression = false;
+
+    // Enable compression when debugserver is running on a watchOS device where communication may be over Bluetooth.
+#if defined (TARGET_OS_WATCH) && TARGET_OS_WATCH == 1
+    enable_compression = true;
+#endif
+
+#if defined (HAVE_LIBCOMPRESSION)
+    // libcompression is weak linked so test if compression_decode_buffer() is available
+    if (enable_compression && compression_decode_buffer != NULL)
+    {
+        strcat (buf, ";SupportedCompressions=lzfse,zlib-deflate,lz4,lzma;DefaultCompressionMinSize=");
+        char numbuf[16];
+        snprintf (numbuf, sizeof (numbuf), "%zu", m_compression_minsize);
+        numbuf[sizeof (numbuf) - 1] = '\0';
+        strcat (buf, numbuf);
+    }
+#elif defined (HAVE_LIBZ)
+    if (enable_compression)
+    {
+        strcat (buf, ";SupportedCompressions=zlib-deflate;DefaultCompressionMinSize=");
+        char numbuf[16];
+        snprintf (numbuf, sizeof (numbuf), "%zu", m_compression_minsize);
+        numbuf[sizeof (numbuf) - 1] = '\0';
+        strcat (buf, numbuf);
+    }
+#endif
+
     return SendPacket (buf);
 }
 
@@ -3765,6 +3943,72 @@ RNBRemote::HandlePacket_SetEnableAsyncProfiling (const char *p)
     return SendPacket ("OK");
 }
 
+// QEnableCompression:type:<COMPRESSION-TYPE>;minsize:<MINIMUM PACKET SIZE TO COMPRESS>;
+//
+// type: must be a type previously reported by the qXfer:features: SupportedCompressions list
+//
+// minsize: is optional; by default the qXfer:features: DefaultCompressionMinSize value is used
+// debugserver may have a better idea of what a good minimum packet size to compress is than lldb. 
+
+rnb_err_t
+RNBRemote::HandlePacket_QEnableCompression (const char *p)
+{
+    p += sizeof ("QEnableCompression:") - 1;
+
+    size_t new_compression_minsize = m_compression_minsize;
+    const char *new_compression_minsize_str = strstr (p, "minsize:");
+    if (new_compression_minsize_str)
+    {
+        new_compression_minsize_str += strlen ("minsize:");
+        errno = 0;
+        new_compression_minsize = strtoul (new_compression_minsize_str, NULL, 10);
+        if (errno != 0 || new_compression_minsize == ULONG_MAX)
+        {
+            new_compression_minsize = m_compression_minsize;
+        }
+    }
+
+#if defined (HAVE_LIBCOMPRESSION)
+    if (compression_decode_buffer != NULL)
+    {
+        if (strstr (p, "type:zlib-deflate;") != nullptr)
+        {
+            EnableCompressionNextSendPacket (compression_types::zlib_deflate);
+            m_compression_minsize = new_compression_minsize;
+            return SendPacket ("OK");
+        }
+        else if (strstr (p, "type:lz4;") != nullptr)
+        {
+            EnableCompressionNextSendPacket (compression_types::lz4);
+            m_compression_minsize = new_compression_minsize;
+            return SendPacket ("OK");
+        }
+        else if (strstr (p, "type:lzma;") != nullptr)
+        {
+            EnableCompressionNextSendPacket (compression_types::lzma);
+            m_compression_minsize = new_compression_minsize;
+            return SendPacket ("OK");
+        }
+        else if (strstr (p, "type:lzfse;") != nullptr)
+        {
+            EnableCompressionNextSendPacket (compression_types::lzfse);
+            m_compression_minsize = new_compression_minsize;
+            return SendPacket ("OK");
+        }
+    }
+#endif
+
+#if defined (HAVE_LIBZ)
+    if (strstr (p, "type:zlib-deflate;") != nullptr)
+    {
+        EnableCompressionNextSendPacket (compression_types::zlib_deflate);
+        m_compression_minsize = new_compression_minsize;
+        return SendPacket ("OK");
+    }
+#endif
+
+    return SendPacket ("E88");
+}
 
 rnb_err_t
 RNBRemote::HandlePacket_qSpeedTest (const char *p)
@@ -4450,6 +4694,14 @@ RNBRemote::HandlePacket_qXfer (const char *command)
                     }
                 }
             }
+            else
+            {
+                SendPacket ("E85");
+            }
+        }
+        else
+        {
+            SendPacket ("E86");
         }
     }
     return SendPacket ("E82");
@@ -4941,3 +5193,26 @@ RNBRemote::HandlePacket_qProcessInfo (const char *p)
     return SendPacket (rep.str());
 }
 
+void
+RNBRemote::EnableCompressionNextSendPacket (compression_types type)
+{
+    m_compression_mode = type;
+    m_enable_compression_next_send_packet = true;
+}
+
+compression_types
+RNBRemote::GetCompressionType ()
+{
+    // The first packet we send back to the debugger after a QEnableCompression request
+    // should be uncompressed -- so we can indicate whether the compression was enabled
+    // or not via OK / Enn returns.  After that, all packets sent will be using the
+    // compression protocol.
+
+    if (m_enable_compression_next_send_packet)
+    {
+        // One time, we send back "None" as our compression type
+        m_enable_compression_next_send_packet = false;
+        return compression_types::none;
+    }
+    return m_compression_mode;
+}

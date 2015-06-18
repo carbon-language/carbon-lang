@@ -6900,10 +6900,16 @@
 				GCC_WARN_UNUSED_LABEL = YES;
 				GCC_WARN_UNUSED_VALUE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				LLDB_COMPRESSION_CFLAGS = "";
+				"LLDB_COMPRESSION_CFLAGS[sdk=macosx10.11]" = "-DHAVE_LIBCOMPRESSION=1";
+				LLDB_COMPRESSION_LDFLAGS = "";
+				"LLDB_COMPRESSION_LDFLAGS[sdk=macosx10.11]" = "-weak-lcompression";
 				LLDB_DISABLE_PYTHON = 0;
 				"LLDB_DISABLE_PYTHON[sdk=iphoneos*]" = 1;
 				LLDB_FRAMEWORK_INSTALL_DIR = /Applications/Xcode.app/Contents/SharedFrameworks;
 				LLDB_TOOLS_INSTALL_DIR = /usr/bin;
+				LLDB_ZLIB_CFLAGS = "-DHAVE_LIBZ=1";
+				LLDB_ZLIB_LDFLAGS = "-lz";
 				LLVM_BUILD_DIR = "$(SRCROOT)/llvm-build/$(LLVM_CONFIGURATION)";
 				LLVM_BUILD_DIR_ARCH = "$(CURRENT_ARCH)/";
 				LLVM_CONFIGURATION = "Release+Asserts";
@@ -6913,6 +6919,12 @@
 				OTHER_CFLAGS = (
 					"-flimit-debug-info",
 					"-Wparentheses",
+					"$(LLDB_ZLIB_CFLAGS)",
+					"$(LLDB_COMPRESSION_CFLAGS)",
+				);
+				OTHER_LDFLAGS = (
+					"$(LLDB_COMPRESSION_LDFLAGS)",
+					"$(LLDB_ZLIB_LDFLAGS)",
 				);
 				SDKROOT = "";
 				STRIP_INSTALLED_PRODUCT = NO;
@@ -6969,10 +6981,16 @@
 				GCC_WARN_UNUSED_LABEL = YES;
 				GCC_WARN_UNUSED_VALUE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				LLDB_COMPRESSION_CFLAGS = "";
+				"LLDB_COMPRESSION_CFLAGS[sdk=macosx10.11]" = "-DHAVE_LIBCOMPRESSION=1";
+				LLDB_COMPRESSION_LDFLAGS = "";
+				"LLDB_COMPRESSION_LDFLAGS[sdk=macosx10.11]" = "-weak-lcompression";
 				LLDB_DISABLE_PYTHON = 0;
 				"LLDB_DISABLE_PYTHON[sdk=iphoneos*]" = 1;
 				LLDB_FRAMEWORK_INSTALL_DIR = /Applications/Xcode.app/Contents/SharedFrameworks;
 				LLDB_TOOLS_INSTALL_DIR = /usr/bin;
+				LLDB_ZLIB_CFLAGS = "-DHAVE_LIBZ=1";
+				LLDB_ZLIB_LDFLAGS = "-lz";
 				LLVM_BUILD_DIR = "$(SRCROOT)/llvm-build/$(LLVM_CONFIGURATION)";
 				LLVM_BUILD_DIR_ARCH = "$(CURRENT_ARCH)/";
 				LLVM_CONFIGURATION = "Release+Asserts";
@@ -6982,6 +7000,12 @@
 				OTHER_CFLAGS = (
 					"-flimit-debug-info",
 					"-Wparentheses",
+					"$(LLDB_ZLIB_CFLAGS)",
+					"$(LLDB_COMPRESSION_CFLAGS)",
+				);
+				OTHER_LDFLAGS = (
+					"$(LLDB_COMPRESSION_LDFLAGS)",
+					"$(LLDB_ZLIB_LDFLAGS)",
 				);
 				SDKROOT = "";
 				STRIP_INSTALLED_PRODUCT = NO;
@@ -7212,6 +7236,12 @@
 					"$(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)",
 					"$(inherited)",
 				);
+				LLDB_COMPRESSION_CFLAGS = "";
+				"LLDB_COMPRESSION_CFLAGS[sdk=macosx10.11]" = "-DHAVE_LIBCOMPRESSION=1";
+				LLDB_COMPRESSION_LDFLAGS = "";
+				"LLDB_COMPRESSION_LDFLAGS[sdk=macosx10.11]" = "-weak-lcompression";
+				LLDB_ZLIB_CFLAGS = "-DHAVE_LIBZ=1";
+				LLDB_ZLIB_LDFLAGS = "-lz";
 				OTHER_CPLUSPLUSFLAGS = (
 					"-I/System/Library/Frameworks/Python.framework/Versions/2.7/include/python2.7",
 					"-fno-rtti",
@@ -7278,6 +7308,12 @@
 					"$(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)",
 					"$(inherited)",
 				);
+				LLDB_COMPRESSION_CFLAGS = "";
+				"LLDB_COMPRESSION_CFLAGS[sdk=macosx10.11]" = "-DHAVE_LIBCOMPRESSION=1";
+				LLDB_COMPRESSION_LDFLAGS = "";
+				"LLDB_COMPRESSION_LDFLAGS[sdk=macosx10.11]" = "-weak-lcompression";
+				LLDB_ZLIB_CFLAGS = "-DHAVE_LIBZ=1";
+				LLDB_ZLIB_LDFLAGS = "-lz";
 				OTHER_CPLUSPLUSFLAGS = (
 					"-I/System/Library/Frameworks/Python.framework/Versions/2.7/include/python2.7",
 					"-fno-rtti",
@@ -7386,6 +7422,12 @@
 				);
 				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
 				HEADER_SEARCH_PATHS = /usr/include/libxml2;
+				LLDB_COMPRESSION_CFLAGS = "";
+				"LLDB_COMPRESSION_CFLAGS[sdk=macosx10.11]" = "-DHAVE_LIBCOMPRESSION=1";
+				LLDB_COMPRESSION_LDFLAGS = "";
+				"LLDB_COMPRESSION_LDFLAGS[sdk=macosx10.11]" = "-weak-lcompression";
+				LLDB_ZLIB_CFLAGS = "-DHAVE_LIBZ=1";
+				LLDB_ZLIB_LDFLAGS = "-lz";
 				MACH_O_TYPE = staticlib;
 				OTHER_CPLUSPLUSFLAGS = (
 					"-I/System/Library/Frameworks/Python.framework/Versions/2.7/include/python2.7",
@@ -7425,6 +7467,12 @@
 				);
 				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
 				HEADER_SEARCH_PATHS = /usr/include/libxml2;
+				LLDB_COMPRESSION_CFLAGS = "";
+				"LLDB_COMPRESSION_CFLAGS[sdk=macosx10.11]" = "-DHAVE_LIBCOMPRESSION=1";
+				LLDB_COMPRESSION_LDFLAGS = "";
+				"LLDB_COMPRESSION_LDFLAGS[sdk=macosx10.11]" = "-weak-lcompression";
+				LLDB_ZLIB_CFLAGS = "-DHAVE_LIBZ=1";
+				LLDB_ZLIB_LDFLAGS = "-lz";
 				MACH_O_TYPE = staticlib;
 				OTHER_CPLUSPLUSFLAGS = (
 					"-I/System/Library/Frameworks/Python.framework/Versions/2.7/include/python2.7",
@@ -7464,6 +7512,12 @@
 				);
 				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
 				HEADER_SEARCH_PATHS = /usr/include/libxml2;
+				LLDB_COMPRESSION_CFLAGS = "";
+				"LLDB_COMPRESSION_CFLAGS[sdk=macosx10.11]" = "-DHAVE_LIBCOMPRESSION=1";
+				LLDB_COMPRESSION_LDFLAGS = "";
+				"LLDB_COMPRESSION_LDFLAGS[sdk=macosx10.11]" = "-weak-lcompression";
+				LLDB_ZLIB_CFLAGS = "-DHAVE_LIBZ=1";
+				LLDB_ZLIB_LDFLAGS = "-lz";
 				MACH_O_TYPE = staticlib;
 				OTHER_CPLUSPLUSFLAGS = (
 					"-I/System/Library/Frameworks/Python.framework/Versions/2.7/include/python2.7",
@@ -7541,12 +7595,18 @@
 				GCC_WARN_UNUSED_LABEL = YES;
 				GCC_WARN_UNUSED_VALUE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				LLDB_COMPRESSION_CFLAGS = "";
+				"LLDB_COMPRESSION_CFLAGS[sdk=macosx10.11]" = "-DHAVE_LIBCOMPRESSION=1";
+				LLDB_COMPRESSION_LDFLAGS = "";
+				"LLDB_COMPRESSION_LDFLAGS[sdk=macosx10.11]" = "-weak-lcompression";
 				LLDB_DISABLE_PYTHON = 0;
 				"LLDB_DISABLE_PYTHON[sdk=iphoneos*]" = 1;
 				LLDB_FRAMEWORK_INSTALL_DIR = /Applications/Xcode.app/Contents/SharedFrameworks;
 				"LLDB_FRAMEWORK_INSTALL_DIR[sdk=iphoneos*]" = /System/Library/PrivateFrameworks;
 				LLDB_TOOLS_INSTALL_DIR = /Applications/Xcode.app/Contents/Developer/usr/bin;
 				"LLDB_TOOLS_INSTALL_DIR[sdk=iphoneos*]" = /usr/local/bin;
+				LLDB_ZLIB_CFLAGS = "-DHAVE_LIBZ=1";
+				LLDB_ZLIB_LDFLAGS = "-lz";
 				LLVM_BUILD_DIR = "$(OBJROOT)/llvm";
 				LLVM_BUILD_DIR_ARCH = "$(CURRENT_ARCH)/";
 				LLVM_CONFIGURATION = Release;
@@ -7555,6 +7615,12 @@
 				OTHER_CFLAGS = (
 					"-flimit-debug-info",
 					"-Wparentheses",
+					"$(LLDB_ZLIB_CFLAGS)",
+					"$(LLDB_COMPRESSION_CFLAGS)",
+				);
+				OTHER_LDFLAGS = (
+					"$(LLDB_COMPRESSION_LDFLAGS)",
+					"$(LLDB_ZLIB_LDFLAGS)",
 				);
 				SDKROOT = "";
 				STRIP_INSTALLED_PRODUCT = NO;
@@ -7632,6 +7698,12 @@
 					"$(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)",
 					"$(inherited)",
 				);
+				LLDB_COMPRESSION_CFLAGS = "";
+				"LLDB_COMPRESSION_CFLAGS[sdk=macosx10.11]" = "-DHAVE_LIBCOMPRESSION=1";
+				LLDB_COMPRESSION_LDFLAGS = "";
+				"LLDB_COMPRESSION_LDFLAGS[sdk=macosx10.11]" = "-weak-lcompression";
+				LLDB_ZLIB_CFLAGS = "-DHAVE_LIBZ=1";
+				LLDB_ZLIB_LDFLAGS = "-lz";
 				OTHER_CPLUSPLUSFLAGS = (
 					"-I/System/Library/Frameworks/Python.framework/Versions/2.7/include/python2.7",
 					"-fno-rtti",
@@ -8221,10 +8293,16 @@
 				GCC_WARN_UNUSED_LABEL = YES;
 				GCC_WARN_UNUSED_VALUE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				LLDB_COMPRESSION_CFLAGS = "";
+				"LLDB_COMPRESSION_CFLAGS[sdk=macosx10.11internal]" = "-DHAVE_LIBCOMPRESSION=1";
+				LLDB_COMPRESSION_LDFLAGS = "";
+				"LLDB_COMPRESSION_LDFLAGS[sdk=macosx10.11]" = "-weak-lcompression";
 				LLDB_DISABLE_PYTHON = 0;
 				"LLDB_DISABLE_PYTHON[sdk=iphoneos*]" = 1;
 				LLDB_FRAMEWORK_INSTALL_DIR = /Applications/Xcode.app/Contents/SharedFrameworks;
 				LLDB_TOOLS_INSTALL_DIR = /usr/bin;
+				LLDB_ZLIB_CFLAGS = "-DHAVE_LIBZ=1";
+				LLDB_ZLIB_LDFLAGS = "-lz";
 				LLVM_BUILD_DIR = "$(SRCROOT)/llvm-build/$(LLVM_CONFIGURATION)";
 				LLVM_BUILD_DIR_ARCH = "$(CURRENT_ARCH)/";
 				LLVM_CONFIGURATION = "Debug+Asserts";
@@ -8234,6 +8312,12 @@
 				OTHER_CFLAGS = (
 					"-flimit-debug-info",
 					"-Wparentheses",
+					"$(LLDB_ZLIB_CFLAGS)",
+					"$(LLDB_COMPRESSION_CFLAGS)",
+				);
+				OTHER_LDFLAGS = (
+					"$(LLDB_COMPRESSION_LDFLAGS)",
+					"$(LLDB_ZLIB_LDFLAGS)",
 				);
 				SDKROOT = "";
 				STRIP_INSTALLED_PRODUCT = NO;
@@ -8325,6 +8409,12 @@
 					"$(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)",
 					"$(inherited)",
 				);
+				LLDB_COMPRESSION_CFLAGS = "";
+				"LLDB_COMPRESSION_CFLAGS[sdk=macosx10.11]" = "-DHAVE_LIBCOMPRESSION=1";
+				LLDB_COMPRESSION_LDFLAGS = "";
+				"LLDB_COMPRESSION_LDFLAGS[sdk=macosx10.11]" = "-weak-lcompression";
+				LLDB_ZLIB_CFLAGS = "-DHAVE_LIBZ=1";
+				LLDB_ZLIB_LDFLAGS = "-lz";
 				OTHER_CPLUSPLUSFLAGS = (
 					"-I/System/Library/Frameworks/Python.framework/Versions/2.7/include/python2.7",
 					"-fno-rtti",
@@ -8390,6 +8480,12 @@
 				);
 				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
 				HEADER_SEARCH_PATHS = /usr/include/libxml2;
+				LLDB_COMPRESSION_CFLAGS = "";
+				"LLDB_COMPRESSION_CFLAGS[sdk=macosx10.11]" = "-DHAVE_LIBCOMPRESSION=1";
+				LLDB_COMPRESSION_LDFLAGS = "";
+				"LLDB_COMPRESSION_LDFLAGS[sdk=macosx10.11]" = "-weak-lcompression";
+				LLDB_ZLIB_CFLAGS = "-DHAVE_LIBZ=1";
+				LLDB_ZLIB_LDFLAGS = "-lz";
 				MACH_O_TYPE = staticlib;
 				OTHER_CPLUSPLUSFLAGS = (
 					"-I/System/Library/Frameworks/Python.framework/Versions/2.7/include/python2.7",
