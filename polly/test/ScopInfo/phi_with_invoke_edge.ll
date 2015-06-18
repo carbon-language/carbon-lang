@@ -3,7 +3,7 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 
 declare i32 @generic_personality_v0(i32, i64, i8*, i8*)
 
-define i16 @v() {
+define i16 @v() personality i32 (i32, i64, i8*, i8*)* @generic_personality_v0 {
 entry:
   br i1 undef, label %bb16, label %invcont12
 
@@ -21,6 +21,6 @@ bb9:                                             ; preds = %bb3
   ret i16 0
 
 lpad22:                                           ; preds = %invcont12
-  %d = landingpad { i8*, i32 } personality i32 (i32, i64, i8*, i8*)* @generic_personality_v0 cleanup catch i32* null
+  %d = landingpad { i8*, i32 } cleanup catch i32* null
   unreachable
 }

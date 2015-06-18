@@ -5,7 +5,7 @@ declare i32 @funa() align 2
 
 declare i32 @generic_personality_v0(i32, i64, i8*, i8*)
 
-define void @funb() align 2 {
+define void @funb() personality i32 (i32, i64, i8*, i8*)* @generic_personality_v0 {
 entry:
   br label %bb117
 
@@ -14,7 +14,7 @@ bb117:                                            ; preds = %bb56
           to label %bb121 unwind label %invcont118 ; <%struct.btHullTriangle*> [#uses=1]
 
 invcont118:                                       ; preds = %bb117
-  %d = landingpad { i8*, i32 } personality i32 (i32, i64, i8*, i8*)* @generic_personality_v0 cleanup catch i32* null
+  %d = landingpad { i8*, i32 } cleanup catch i32* null
   br label %bb121
 
 bb121:                                            ; preds = %bb120, %invcont118
