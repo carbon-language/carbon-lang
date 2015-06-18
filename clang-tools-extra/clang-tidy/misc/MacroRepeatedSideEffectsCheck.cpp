@@ -20,16 +20,14 @@ namespace misc {
 namespace {
 class MacroRepeatedPPCallbacks : public PPCallbacks {
 public:
-  MacroRepeatedPPCallbacks(ClangTidyCheck &Check, SourceManager &SM,
-                           Preprocessor &PP)
-      : Check(Check), SM(SM), PP(PP) {}
+  MacroRepeatedPPCallbacks(ClangTidyCheck &Check, Preprocessor &PP)
+      : Check(Check), PP(PP) {}
 
   void MacroExpands(const Token &MacroNameTok, const MacroDefinition &MD,
                     SourceRange Range, const MacroArgs *Args) override;
 
 private:
   ClangTidyCheck &Check;
-  SourceManager &SM;
   Preprocessor &PP;
 
   unsigned CountArgumentExpansions(const MacroInfo *MI,
@@ -135,7 +133,7 @@ void MacroRepeatedSideEffectsCheck::registerPPCallbacks(
     CompilerInstance &Compiler) {
   Compiler.getPreprocessor().addPPCallbacks(
       ::llvm::make_unique<MacroRepeatedPPCallbacks>(
-          *this, Compiler.getSourceManager(), Compiler.getPreprocessor()));
+          *this, Compiler.getPreprocessor()));
 }
 
 } // namespace misc
