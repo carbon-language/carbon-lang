@@ -264,54 +264,14 @@ bool BranchFolder::OptimizeFunction(MachineFunction &MF,
 //  Tail Merging of Blocks
 //===----------------------------------------------------------------------===//
 
-/// HashMachineInstr - Compute a hash value for MI and its operands.
-static unsigned HashMachineInstr(const MachineInstr *MI) {
-  unsigned Hash = MI->getOpcode();
-  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
-    const MachineOperand &Op = MI->getOperand(i);
-
-    // Merge in bits from the operand if easy.
-    unsigned OperandHash = 0;
-    switch (Op.getType()) {
-    case MachineOperand::MO_Register:          OperandHash = Op.getReg(); break;
-    case MachineOperand::MO_Immediate:         OperandHash = Op.getImm(); break;
-    case MachineOperand::MO_MachineBasicBlock:
-      OperandHash = Op.getMBB()->getNumber();
-      break;
-    case MachineOperand::MO_FrameIndex:
-    case MachineOperand::MO_ConstantPoolIndex:
-    case MachineOperand::MO_JumpTableIndex:
-      OperandHash = Op.getIndex();
-      break;
-    case MachineOperand::MO_GlobalAddress:
-    case MachineOperand::MO_ExternalSymbol:
-      // Global address / external symbol are too hard, don't bother, but do
-      // pull in the offset.
-      OperandHash = Op.getOffset();
-      break;
-    default: break;
-    }
-
-    Hash += ((OperandHash << 3) | Op.getType()) << (i&31);
-  }
-  return Hash;
-}
-
 /// HashEndOfMBB - Hash the last instruction in the MBB.
 static unsigned HashEndOfMBB(const MachineBasicBlock *MBB) {
-  MachineBasicBlock::const_iterator I = MBB->end();
-  if (I == MBB->begin())
-    return 0;   // Empty MBB.
-
-  --I;
-  // Skip debug info so it will not affect codegen.
-  while (I->isDebugValue()) {
-    if (I==MBB->begin())
-      return 0;      // MBB empty except for debug info.
-    --I;
-  }
-
-  return HashMachineInstr(I);
+  auto LastInst = MBB->getLastNonDebugInstr();
+  if (LastInst == MBB->end())
+    return 0;
+  // Hash the instruction and all operands. MachineInstrExpressionTrait ignores
+  // vreg defs when computing the hash but we're post-regalloc here.
+  return MachineInstrExpressionTrait::getHashValue(LastInst);
 }
 
 /// ComputeCommonTailLength - Given two machine basic blocks, compute the number
