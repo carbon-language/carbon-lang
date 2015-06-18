@@ -3157,6 +3157,16 @@ StmtResult Sema::ActOnOpenMPForSimdDirective(
   assert((CurContext->isDependentContext() || B.builtAll()) &&
          "omp for simd loop exprs were not built");
 
+  if (!CurContext->isDependentContext()) {
+    // Finalize the clauses that need pre-built expressions for CodeGen.
+    for (auto C : Clauses) {
+      if (auto LC = dyn_cast<OMPLinearClause>(C))
+        if (FinishOpenMPLinearClause(*LC, cast<DeclRefExpr>(B.IterationVarRef),
+                                     B.NumIterations, *this, CurScope))
+          return StmtError();
+    }
+  }
+
   getCurFunction()->setHasBranchProtectedScope();
   return OMPForSimdDirective::Create(Context, StartLoc, EndLoc, NestedLoopCount,
                                      Clauses, AStmt, B);
