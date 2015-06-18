@@ -217,7 +217,7 @@ SBModule::GetUUIDString () const
     if (module_sp)
     {
         // We are going to return a "const char *" value through the public
-        // API, so we need to constify it so it gets added permanently the the
+        // API, so we need to constify it so it gets added permanently the
         // string pool and then we don't need to worry about the lifetime of the
         // string as it will never go away once it has been put into the ConstString
         // string pool

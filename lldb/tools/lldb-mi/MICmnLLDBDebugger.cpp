@@ -334,7 +334,7 @@ CMICmnLLDBDebugger::InitStdStreams(void)
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details: Set up the events from the SBDebugger's we would to listent to.
+// Details: Set up the events from the SBDebugger's we would like to listen to.
 // Type:    Method.
 // Args:    None.
 // Return:  MIstatus::success - Functionality succeeded.
@@ -687,7 +687,7 @@ CMICmnLLDBDebugger::ClientGetTheirMask(const CMIUtilString &vClientName, const C
         vwEventMask = (*it).second;
     }
 
-    SetErrorDescription(CMIUtilString::Format(MIRSRC(IDS_LLDBDEBUGGER_ERR_CLIENTNOTREGISTERD), vClientName.c_str()));
+    SetErrorDescription(CMIUtilString::Format(MIRSRC(IDS_LLDBDEBUGGER_ERR_CLIENTNOTREGISTERED), vClientName.c_str()));
 
     return MIstatus::failure;
 }
@@ -696,7 +696,7 @@ CMICmnLLDBDebugger::ClientGetTheirMask(const CMIUtilString &vClientName, const C
 // Details: Momentarily wait for an events being broadcast and inspect those that do
 //          come this way. Check if the target should exit event if so start shutting
 //          down this thread and the application. Any other events pass on to the
-//          Out-of-band handler to futher determine what kind of event arrived.
+//          Out-of-band handler to further determine what kind of event arrived.
 //          This function runs in the thread "MI debugger event".
 // Type:    Method.
 // Args:    vrbIsAlive  - (W) False = yes exit event monitoring thread, true = continue.

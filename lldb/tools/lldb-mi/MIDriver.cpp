@@ -73,7 +73,7 @@ CMIDriver::~CMIDriver(void)
 //++ ------------------------------------------------------------------------------------
 // Details: Set whether *this driver (the parent) is enabled to pass a command to its
 //          fall through (child) driver to interpret the command and do work instead
-//          (if *this driver decides it can't hanled the command).
+//          (if *this driver decides it can't handle the command).
 // Type:    Method.
 // Args:    vbYes   - (R) True = yes fall through, false = do not pass on command.
 // Return:  MIstatus::success - Functional succeeded.
@@ -90,7 +90,7 @@ CMIDriver::SetEnableFallThru(const bool vbYes)
 //++ ------------------------------------------------------------------------------------
 // Details: Get whether *this driver (the parent) is enabled to pass a command to its
 //          fall through (child) driver to interpret the command and do work instead
-//          (if *this driver decides it can't hanled the command).
+//          (if *this driver decides it can't handle the command).
 // Type:    Method.
 // Args:    None.
 // Return:  bool - True = yes fall through, false = do not pass on command.
@@ -378,7 +378,7 @@ CMIDriver::DoParseArgs(const int argc, const char *argv[], FILE *vpStdOut, bool 
 //          --interpreter and also passes additional arguments which can be interpreted as an
 //          executable if called from the command line. Using --executable tells the MI Driver
 //          it is being called from the command line and to prepare to launch the executable
-//          argument for a debug session. Using --interpreter on the commnd line does not
+//          argument for a debug session. Using --interpreter on the command line does not
 //          issue additional commands to initialise a debug session.
 // Type:    Overridden.
 // Args:    argc        - (R)   An integer that contains the count of arguments that follow in
@@ -944,7 +944,7 @@ CMIDriver::InterpretCommandThisDriver(const CMIUtilString &vTextLine, bool &vwbC
 
     // Check for escape character, may be cursor control characters
     // This code is not necessary for application operation, just want to keep tabs on what
-    // is been given to the driver to try and intepret.
+    // has been given to the driver to try and interpret.
     if (vMITextLine.at(0) == 27)
     {
         CMIUtilString logInput(MIRSRC(IDS_STDIN_INPUT_CTRL_CHARS));

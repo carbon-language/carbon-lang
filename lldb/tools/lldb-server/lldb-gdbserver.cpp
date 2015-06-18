@@ -219,7 +219,7 @@ handle_attach (GDBRemoteCommunicationServerLLGS &gdb_server, const std::string &
 {
     assert (!attach_target.empty () && "attach_target cannot be empty");
 
-    // First check if the attach_target is convertable to a long. If so, we'll use it as a pid.
+    // First check if the attach_target is convertible to a long. If so, we'll use it as a pid.
     char *end_p = nullptr;
     const long int pid = strtol (attach_target.c_str (), &end_p, 10);
 
@@ -676,7 +676,7 @@ main_gdbserver (int argc, char *argv[])
     argc -= 1;
     argv += 1;
 
-    // Any arguments left over are for the the program that we need to launch. If there
+    // Any arguments left over are for the program that we need to launch. If there
     // are no arguments, then the GDB server will start up and wait for an 'A' packet
     // to launch a program, or a vAttach packet to attach to an existing process, unless
     // explicitly asked to attach with the --attach={pid|program_name} form.

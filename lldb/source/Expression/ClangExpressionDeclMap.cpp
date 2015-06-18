@@ -1088,7 +1088,7 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
             {
                 // This branch will get hit if we are executing code in the context of a function that
                 // claims to have an object pointer (through DW_AT_object_pointer?) but is not formally a
-                // method of the class.  In that case, just look up the "this" variable in the the current
+                // method of the class.  In that case, just look up the "this" variable in the current
                 // scope and use its type.
                 // FIXME: This code is formally correct, but clang doesn't currently emit DW_AT_object_pointer
                 // for C++ so it hasn't actually been tested.
@@ -1207,7 +1207,7 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
             {
                 // This branch will get hit if we are executing code in the context of a function that
                 // claims to have an object pointer (through DW_AT_object_pointer?) but is not formally a
-                // method of the class.  In that case, just look up the "self" variable in the the current
+                // method of the class.  In that case, just look up the "self" variable in the current
                 // scope and use its type.
 
                 VariableList *vars = frame->GetVariableList(false);

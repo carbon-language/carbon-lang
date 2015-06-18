@@ -1515,7 +1515,7 @@ IRForTarget::MaybeHandleVariable (Value *llvm_value_ptr)
 
         if (name[0] == '$')
         {
-            // The $__lldb_expr_result name indicates the the return value has allocated as
+            // The $__lldb_expr_result name indicates the return value has allocated as
             // a static variable.  Per the comment at ASTResultSynthesizer::SynthesizeBodyResult,
             // accesses to this static variable need to be redirected to the result of dereferencing
             // a pointer that is passed in as one of the arguments.

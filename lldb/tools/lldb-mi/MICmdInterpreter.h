@@ -46,7 +46,7 @@ class CMICmdInterpreter : public CMICmnBase, public MI::ISingleton<CMICmdInterpr
     void operator=(const CMICmdInterpreter &);
 
     bool HasCmdFactoryGotMiCmd(const SMICmdData &vCmdData) const;
-    bool MiHasCmdTokenEndingHypthen(const CMIUtilString &vTextLine);
+    bool MiHasCmdTokenEndingHyphen(const CMIUtilString &vTextLine);
     bool MiHasCmdTokenEndingAlpha(const CMIUtilString &vTextLine);
     bool MiHasCmd(const CMIUtilString &vTextLine);
     bool MiHasCmdTokenPresent(const CMIUtilString &vTextLine);

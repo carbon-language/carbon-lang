@@ -66,7 +66,7 @@ class StopHookMechanismTestCase(TestBase):
         child.expect_exact(prompt)
         child.sendline('target stop-hook list')
 
-        # Now run the program, expect to stop at the the first breakpoint which is within the stop-hook range.
+        # Now run the program, expect to stop at the first breakpoint which is within the stop-hook range.
         child.expect_exact(prompt)
         child.sendline('run')
         # Make sure we see the stop hook text from the stop of the process from the run hitting the first breakpoint

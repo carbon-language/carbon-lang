@@ -175,7 +175,7 @@ public:
     ///     occur. This can be NULL if no error status is desired.
     ///
     /// @return
-    ///     @li \b true when the a master files descriptor is
+    ///     @li \b true when the master files descriptor is
     ///         successfully opened.
     ///     @li \b false if anything goes wrong.
     ///
@@ -207,7 +207,7 @@ public:
     ///     occur. This can be NULL if no error status is desired.
     ///
     /// @return
-    ///     @li \b true when the a master files descriptor is
+    ///     @li \b true when the master files descriptor is
     ///         successfully opened.
     ///     @li \b false if anything goes wrong.
     ///

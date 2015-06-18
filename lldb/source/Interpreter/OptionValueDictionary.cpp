@@ -130,7 +130,7 @@ OptionValueDictionary::SetArgs (const Args &args, VarSetOperationType op)
                     {
                         if (key.front() == '[')
                         {
-                            // Key name starts with '[', so the the key value must be in single or double quotes like:
+                            // Key name starts with '[', so the key value must be in single or double quotes like:
                             // ['<key>']
                             // ["<key>"]
                             if ((key.size() > 2) && (key.back() == ']'))
@@ -324,7 +324,7 @@ OptionValueDictionary::GetSubValue (const ExecutionContext *exe_ctx, const char 
         }
         if (!value_sp && error.AsCString() == nullptr)
         {
-            error.SetErrorStringWithFormat ("invalid value path '%s', %s values only support '[<key>]' subvalues where <key> a string value optionally delimitted by single or double quotes",
+            error.SetErrorStringWithFormat ("invalid value path '%s', %s values only support '[<key>]' subvalues where <key> a string value optionally delimited by single or double quotes",
                                             name,
                                             GetTypeAsCString());
         }

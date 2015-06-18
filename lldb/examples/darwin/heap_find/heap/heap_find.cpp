@@ -1,4 +1,4 @@
-//===-- head_find.c ---------------------------------------------*- C++ -*-===//
+//===-- heap_find.c ---------------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -903,7 +903,7 @@ find_pointer_in_heap (const void * addr, int check_vm_regions)
 {
     g_matches.clear();
     // Setup "info" to look for a malloc block that contains data
-    // that is the a pointer 
+    // that is the pointer
     if (addr)
     {
         range_contains_data_callback_info_t data_info;
@@ -933,7 +933,7 @@ find_pointer_in_memory (uint64_t memory_addr, uint64_t memory_size, const void *
 {
     g_matches.clear();
     // Setup "info" to look for a malloc block that contains data
-    // that is the a pointer 
+    // that is the pointer
     range_contains_data_callback_info_t data_info;
     data_info.type = eDataTypeContainsData;      // Check each block for data
     data_info.data.buffer = (uint8_t *)&addr;    // What data? The pointer value passed in
@@ -960,7 +960,7 @@ find_objc_objects_in_memory (void *isa, int check_vm_regions)
     if (g_objc_classes.Update())
     {
         // Setup "info" to look for a malloc block that contains data
-        // that is the a pointer 
+        // that is the pointer
         range_contains_data_callback_info_t data_info;
         data_info.type = eDataTypeObjC;      // Check each block for data
         data_info.objc.match_isa = isa;
@@ -989,7 +989,7 @@ get_heap_info (int sort_type)
         // Reset all stats
         g_objc_class_snapshot.Reset ();
         // Setup "info" to look for a malloc block that contains data
-        // that is the a pointer 
+        // that is the pointer
         range_contains_data_callback_info_t data_info;
         data_info.type = eDataTypeHeapInfo; // Check each block for data
         data_info.match_count = 0;          // Initialize the match count to zero

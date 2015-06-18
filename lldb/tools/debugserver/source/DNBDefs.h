@@ -329,7 +329,7 @@ struct DNBExecutableImageInfo
     char        name[PATH_MAX]; // Name of the executable image (usually a full path)
     uint32_t    state;          // State of the executable image (see enum DNBSharedLibraryState)
     nub_addr_t  header_addr;    // Executable header address
-    uuid_t      uuid;           // Unique indentifier for matching with symbols
+    uuid_t      uuid;           // Unique identifier for matching with symbols
     uint32_t    num_segments;   // Number of contiguous memory segments to in SEGMENTS array
     DNBSegment  *segments;      // Array of contiguous memory segments in executable
 };

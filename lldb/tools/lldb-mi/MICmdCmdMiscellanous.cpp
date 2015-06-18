@@ -399,7 +399,7 @@ CMICmdCmdListThreadGroups::CreateSelf(void)
 // Throws:  None.
 //--
 CMICmdCmdInterpreterExec::CMICmdCmdInterpreterExec(void)
-    : m_constStrArgNamedInterpreter("intepreter")
+    : m_constStrArgNamedInterpreter("interpreter")
     , m_constStrArgNamedCommand("command")
 {
     // Command factory matches this name with that received from the stdin stream

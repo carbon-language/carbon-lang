@@ -149,9 +149,9 @@ CompileUnit::GetFunctionAtIndex (size_t idx)
 }
 
 //----------------------------------------------------------------------
-// Find functions using the a Mangled::Tokens token list. This
-// function currently implements an interative approach designed to find
-// all instances of certain functions. It isn't designed to the the
+// Find functions using the Mangled::Tokens token list. This
+// function currently implements an interactive approach designed to find
+// all instances of certain functions. It isn't designed to the
 // quickest way to lookup functions as it will need to iterate through
 // all functions and see if they match, though it does provide a powerful
 // and context sensitive way to search for all functions with a certain
@@ -292,7 +292,7 @@ CompileUnit::FindLineEntry (uint32_t start_idx, uint32_t line, const FileSpec* f
     else
     {
         // All the line table entries actually point to the version of the Compile
-        // Unit that is in the support files (the one at 0 was artifically added.)
+        // Unit that is in the support files (the one at 0 was artificially added.)
         // So prefer the one further on in the support files if it exists...
         FileSpecList &support_files = GetSupportFiles();
         const bool full = true;

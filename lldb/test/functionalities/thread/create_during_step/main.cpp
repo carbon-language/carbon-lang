@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 // This test is intended to create a situation in which one thread will be
-// created while a the debugger is stepping in another thread.
+// created while the debugger is stepping in another thread.
 
 #include <pthread.h>
 #include <atomic>

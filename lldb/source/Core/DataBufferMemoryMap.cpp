@@ -284,9 +284,9 @@ DataBufferMemoryMap::MemoryMapFromFileDescriptor (int fd,
 
                                     // Save the actual mmap'ed size
                                     m_mmap_size = length + page_offset;
-                                    // Our data is at an offset into the the mapped data
+                                    // Our data is at an offset into the mapped data
                                     m_data = m_mmap_addr + page_offset;
-                                    // Our pretend size is the size that was requestd
+                                    // Our pretend size is the size that was requested
                                     m_size = length;
                                 }
                             }

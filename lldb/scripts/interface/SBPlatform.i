@@ -84,7 +84,7 @@ public:
 };
 
 %feature("docstring",
-"A class that represents the a platform that can represent the current host or a remote host debug platform.
+"A class that represents a platform that can represent the current host or a remote host debug platform.
 
 The SBPlatform class represents the current host, or a remote host.
 It can be connected to a remote platform in order to provide ways

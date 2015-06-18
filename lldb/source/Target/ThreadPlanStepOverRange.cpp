@@ -246,7 +246,7 @@ ThreadPlanStepOverRange::ShouldStop (Event *event_ptr)
                          && sc.comp_unit == m_addr_context.comp_unit
                          && sc.function == m_addr_context.function)
                     {
-                        // Okay, find the next occurance of this file in the line table:
+                        // Okay, find the next occurrence of this file in the line table:
                         LineTable *line_table = m_addr_context.comp_unit->GetLineTable();
                         if (line_table)
                         {
@@ -259,7 +259,7 @@ ThreadPlanStepOverRange::ShouldStop (Event *event_ptr)
                                 bool step_past_remaining_inline = false;
                                 if (entry_idx > 0)
                                 {
-                                    // We require the the previous line entry and the current line entry come
+                                    // We require the previous line entry and the current line entry come
                                     // from the same file.
                                     // The other requirement is that the previous line table entry be part of an
                                     // inlined block, we don't want to step past cases where people have inlined

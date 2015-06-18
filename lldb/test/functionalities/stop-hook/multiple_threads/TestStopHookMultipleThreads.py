@@ -62,7 +62,7 @@ class StopHookForMultipleThreadsTestCase(TestBase):
         child.sendline('breakpoint set -f main.cpp -l %d' % self.thread_function)
         child.expect_exact(prompt)
 
-        # Now run the program, expect to stop at the the first breakpoint which is within the stop-hook range.
+        # Now run the program, expect to stop at the first breakpoint which is within the stop-hook range.
         child.sendline('run')
         child.expect_exact("Process")   # 'Process 2415 launched', 'Process 2415 stopped'
         child.expect_exact(prompt)

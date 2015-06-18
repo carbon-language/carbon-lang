@@ -5158,7 +5158,7 @@ ClangASTType::AddMethodToCXXRecordType (const char *name,
             {
                 // Check the number of operator parameters. Sometimes we have
                 // seen bad DWARF that doesn't correctly describe operators and
-                // if we try to create a methed and add it to the class, clang
+                // if we try to create a method and add it to the class, clang
                 // will assert and crash, so we need to make sure things are
                 // acceptable.
                 if (!ClangASTContext::CheckOverloadedOperatorKindParameterCount (op_kind, num_params))
@@ -6145,7 +6145,7 @@ ClangASTType::DumpValue (ExecutionContext *exe_ctx,
             for (field = record_decl->field_begin(), field_end = record_decl->field_end(); field != field_end; ++field, ++field_idx, ++child_idx)
             {
                 // Print the starting squiggly bracket (if this is the
-                // first member) or comman (for member 2 and beyong) for
+                // first member) or comma (for member 2 and beyond) for
                 // the struct/union/class member.
                 if (child_idx == 0)
                     s->PutChar('{');
@@ -6260,7 +6260,7 @@ ClangASTType::DumpValue (ExecutionContext *exe_ctx,
                 for (element_idx = 0; element_idx < element_count; ++element_idx)
                 {
                     // Print the starting squiggly bracket (if this is the
-                    // first member) or comman (for member 2 and beyong) for
+                    // first member) or comma (for member 2 and beyond) for
                     // the struct/union/class member.
                     if (element_idx == 0)
                         s->PutChar('{');
@@ -6367,7 +6367,7 @@ ClangASTType::DumpValue (ExecutionContext *exe_ctx,
         break;
 
     default:
-        // We are down the a scalar type that we just need to display.
+        // We are down to a scalar type that we just need to display.
         data.Dump(s,
                   data_byte_offset,
                   format,
@@ -6476,7 +6476,7 @@ ClangASTType::DumpTypeValue (Stream *s,
             // format was not enum, just fall through and dump the value as requested....
                 
         default:
-            // We are down the a scalar type that we just need to display.
+            // We are down to a scalar type that we just need to display.
             {
                 uint32_t item_count = 1;
                 // A few formats, we might need to modify our size and count for depending

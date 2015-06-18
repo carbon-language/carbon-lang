@@ -418,7 +418,7 @@ Enter your Python command(s). Type 'DONE' to end.
 		<code>
 			<font color=blue>class</font> CommandObjectType:<br/>
 			&nbsp;&nbsp;&nbsp;&nbsp;<font color=blue>def</font> __init__(self, debugger, session_dict):<br/>
-			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i>this call should initialize the command with respect to the command interpeter for the passed-in debugger</i> <br/>
+			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i>this call should initialize the command with respect to the command interpreter for the passed-in debugger</i> <br/>
 			&nbsp;&nbsp;&nbsp;&nbsp;<font color=blue>def</font> __call__(self, debugger, command, exe_ctx, result): <br/>
 			&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i>this is the actual bulk of the command, akin to Python command functions</i> <br/>
 			&nbsp;&nbsp;&nbsp;&nbsp;<font color=blue>def</font> get_short_help(self): <br/>
@@ -444,7 +444,7 @@ Enter your Python command(s). Type 'DONE' to end.
 
         <p>where <b>debugger</b> and <b>internal_dict</b> are as above, that function will get run when the module is loaded
            allowing you to add whatever commands you want into the current debugger. Note that
-           this function will only be run when using the LLDB comand <b>command script import</b>,
+           this function will only be run when using the LLDB command <b>command script import</b>,
            it will not get run if anyone imports your module from another module. 
            If you want to always run code when your module is loaded from LLDB
            <u>or</u> when loaded via an <b>import</b> statement in python code

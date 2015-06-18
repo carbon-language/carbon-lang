@@ -105,8 +105,8 @@ CMICmdInterpreter::ValidateIsMi(const CMIUtilString &vTextLine, bool &vwbYesVali
     m_miCmdData.Clear();
     m_miCmdData.strMiCmd = vTextLine;
 
-    // The following change m_miCmdData as valid parts are indentified
-    vwbYesValid = (MiHasCmdTokenEndingHypthen(vTextLine) || MiHasCmdTokenEndingAlpha(vTextLine));
+    // The following change m_miCmdData as valid parts are identified
+    vwbYesValid = (MiHasCmdTokenEndingHyphen(vTextLine) || MiHasCmdTokenEndingAlpha(vTextLine));
     vwbYesValid = vwbYesValid && MiHasCmd(vTextLine);
     if (vwbYesValid)
     {
@@ -150,9 +150,9 @@ CMICmdInterpreter::HasCmdFactoryGotMiCmd(const SMICmdData &vCmd) const
 // Throws:  None.
 //--
 bool
-CMICmdInterpreter::MiHasCmdTokenEndingHypthen(const CMIUtilString &vTextLine)
+CMICmdInterpreter::MiHasCmdTokenEndingHyphen(const CMIUtilString &vTextLine)
 {
-    // The hythen is mandatory
+    // The hyphen is mandatory
     const MIint nPos = vTextLine.find("-", 0);
     if ((nPos == (MIint)std::string::npos))
         return false;
@@ -206,7 +206,7 @@ CMICmdInterpreter::MiHasCmdTokenEndingAlpha(const CMIUtilString &vTextLine)
 
 //++ ------------------------------------------------------------------------------------
 // Details: Does the command entered match the criteria for a MI command format.
-//          Is the command token present before the hypen?
+//          Is the command token present before the hyphen?
 // Type:    Method.
 // Args:    vTextLine - (R) Text data to interpret.
 // Return:  bool  - True = yes command token present, false = token not present.
@@ -221,7 +221,7 @@ CMICmdInterpreter::MiHasCmdTokenPresent(const CMIUtilString &vTextLine)
 
 //++ ------------------------------------------------------------------------------------
 // Details: Does the command name entered match the criteria for a MI command format.
-//          Is a recogised command present? The command name is entered into the
+//          Is a recognised command present? The command name is entered into the
 //          command meta data structure whether correct or not for reporting or later
 //          command execution purposes. Command options is present are also put into the
 //          command meta data structure.

@@ -55,7 +55,7 @@ CMIUtilString::CMIUtilString(const MIchar *const *vpData)
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details: CMIUtilString assigment operator.
+// Details: CMIUtilString assignment operator.
 // Type:    Method.
 // Args:    vpRhs   - Pointer to UTF8 text data.
 // Return:  CMIUtilString & - *this string.
@@ -75,7 +75,7 @@ CMIUtilString &CMIUtilString::operator=(const MIchar *vpRhs)
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details: CMIUtilString assigment operator.
+// Details: CMIUtilString assignment operator.
 // Type:    Method.
 // Args:    vrRhs   - The other string to copy from.
 // Return:  CMIUtilString & - *this string.
@@ -244,7 +244,7 @@ CMIUtilString::Split(const CMIUtilString &vDelimiter, VecString_t &vwVecSplits) 
 // Details: Splits string into array of strings using delimiter. However the string is
 //          also considered for text surrounded by quotes. Text with quotes including the
 //          delimiter is treated as a whole. If multiple delimiter are found in sequence
-//          then they are not added to the list of splits. Quotes that are embedded in the
+//          then they are not added to the list of splits. Quotes that are embedded in
 //          the string as string formatted quotes are ignored (proceeded by a '\\') i.e.
 //          "\"MI GDB local C++.cpp\":88".
 // Type:    Method.
@@ -422,7 +422,7 @@ CMIUtilString::IsHexadecimalNumber(void) const
 // Details: Extract the number from the string. The number can be either a hexadecimal or
 //          natural number. It cannot contain other non-numeric characters.
 // Type:    Method.
-// Args:    vwrNumber   - (W) Number exracted from the string.
+// Args:    vwrNumber   - (W) Number extracted from the string.
 // Return:  bool - True = yes number, false not a number.
 // Throws:  None.
 //--
@@ -448,7 +448,7 @@ CMIUtilString::ExtractNumber(MIint64 &vwrNumber) const
 //++ ------------------------------------------------------------------------------------
 // Details: Extract the number from the hexadecimal string..
 // Type:    Method.
-// Args:    vwrNumber   - (W) Number exracted from the string.
+// Args:    vwrNumber   - (W) Number extracted from the string.
 // Return:  bool - True = yes number, false not a number.
 // Throws:  None.
 //--
@@ -668,7 +668,7 @@ CMIUtilString::IsQuoted(void) const
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details: Find first occurence in *this string which maches the pattern.
+// Details: Find first occurrence in *this string which matches the pattern.
 // Type:    Method.
 // Args:    vrPattern   - (R) The pattern to search for.
 //          vnPos       - (R) The starting position at which to start searching. (Dflt = 0)
@@ -682,7 +682,7 @@ CMIUtilString::FindFirst(const CMIUtilString &vrPattern, const MIuint vnPos /* =
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details: Find first occurence in *this string which maches the pattern and isn't surrounded by quotes.
+// Details: Find first occurrence in *this string which matches the pattern and isn't surrounded by quotes.
 // Type:    Method.
 // Args:    vrPattern                 - (R) The pattern to search for.
 //          vbSkipQuotedText          - (R) True = don't look at quoted text, false = otherwise.
@@ -728,7 +728,7 @@ CMIUtilString::FindFirst(const CMIUtilString &vrPattern, const bool vbSkipQuoted
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details: Find first occurence in *this string which doesn't mach to the pattern.
+// Details: Find first occurrence in *this string which doesn't match the pattern.
 // Type:    Method.
 // Args:    vrPattern   - (R) The pattern to search for.
 //          vnPos       - (R) Position of the first character in the string to be considered in the search. (Dflt = 0)
@@ -755,7 +755,7 @@ CMIUtilString::FindFirstNot(const CMIUtilString &vrPattern, const MIuint vnPos /
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details: Find first occurence of not escaped quotation mark in *this string.
+// Details: Find first occurrence of not escaped quotation mark in *this string.
 // Type:    Method.
 // Args:    vnPos   - (R) Position of the first character in the string to be considered in the search.
 // Return:  MIuint - The position of the quotation mark.

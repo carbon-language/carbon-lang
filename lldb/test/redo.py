@@ -44,7 +44,7 @@ def usage():
     print"""\
 Usage: redo.py [-F filename_component] [-n] [session_dir] [-d]
 where options:
--F : only consider the test for re-run if the session filename conatins the filename component
+-F : only consider the test for re-run if the session filename contains the filename component
      for example: -F x86_64
 -n : when running the tests, do not turn on trace mode, i.e, no '-t' option
      is passed to the test driver (this will run the tests faster)

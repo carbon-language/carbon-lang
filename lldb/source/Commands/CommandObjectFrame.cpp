@@ -554,7 +554,7 @@ protected:
                         if (dump_variable)
                         {
                             // Use the variable object code to make sure we are
-                            // using the same APIs as the the public API will be
+                            // using the same APIs as the public API will be
                             // using...
                             valobj_sp = frame->GetValueObjectForFrameVariable (var_sp, 
                                                                                m_varobj_options.use_dynamic);

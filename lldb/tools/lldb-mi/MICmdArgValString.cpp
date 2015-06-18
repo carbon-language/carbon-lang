@@ -271,7 +271,7 @@ CMICmdArgValString::IsStringArgQuotedText(const CMIUtilString &vrTxt) const
     if (nPos == (MIint)(vrTxt.length() - 1))
         return false;
 
-    // Quote must be the first character in the string or be preceeded by a space
+    // Quote must be the first character in the string or be preceded by a space
     // Also check for embedded string formating quote
     const MIchar cBckSlash = '\\';
     const MIchar cSpace = ' ';
@@ -313,7 +313,7 @@ CMICmdArgValString::IsStringArgQuotedTextEmbedded(const CMIUtilString &vrTxt) co
     if (nPos == (MIint)std::string::npos)
         return false;
 
-    // Slash must be the first character in the string or be preceeded by a space
+    // Slash must be the first character in the string or be preceded by a space
     const MIchar cSpace = ' ';
     if ((nPos > 0) && (vrTxt[nPos - 1] != cSpace))
         return false;

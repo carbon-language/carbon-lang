@@ -12,11 +12,11 @@
 // SBFunction, SBSymbol, and SBAddress.
 //
 // When stopped on breakppint 1, we can get the line entry using SBFrame API
-// SBFrame.GetLineEntry().  We'll get the start address for the the line entry
+// SBFrame.GetLineEntry().  We'll get the start address for the line entry
 // with the SBAddress type, resolve the symbol context using the SBTarget API
 // SBTarget.ResolveSymbolContextForAddress() in order to get the SBSymbol.
 //
-// We then stop at breakpoint 2, get the SBFrame, and the the SBFunction object.
+// We then stop at breakpoint 2, get the SBFrame, and the SBFunction object.
 //
 // The address from calling GetStartAddress() on the symbol and the function
 // should point to the same address, and we also verify that.

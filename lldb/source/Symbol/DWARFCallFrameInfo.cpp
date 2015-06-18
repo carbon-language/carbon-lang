@@ -197,7 +197,7 @@ DWARFCallFrameInfo::ParseCIE (const dw_offset_t cie_offset)
             const size_t aug_str_len = strlen(cie_sp->augmentation);
             // A 'z' may be present as the first character of the string.
             // If present, the Augmentation Data field shall be present.
-            // The contents of the Augmentation Data shall be intepreted
+            // The contents of the Augmentation Data shall be interpreted
             // according to other characters in the Augmentation String.
             if (cie_sp->augmentation[0] == 'z')
             {

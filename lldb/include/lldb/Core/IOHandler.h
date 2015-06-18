@@ -313,7 +313,7 @@ namespace lldb_private {
         }
         
         //------------------------------------------------------------------
-        /// Called when a new line is created or one of an identifed set of
+        /// Called when a new line is created or one of an identified set of
         /// indentation characters is typed.
         ///
         /// This function determines how much indentation should be added
@@ -327,7 +327,7 @@ namespace lldb_private {
         ///     following the line containing the cursor are not included.
         ///
         /// @param[in] cursor_position
-        ///     The number of characters preceeding the cursor on the final
+        ///     The number of characters preceding the cursor on the final
         ///     line at the time.
         ///
         /// @return

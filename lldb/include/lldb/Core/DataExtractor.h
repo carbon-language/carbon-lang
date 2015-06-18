@@ -234,7 +234,7 @@ public:
     /// bytes into the contained data, into the stream \a s. \a
     /// num_per_line objects will be dumped on each line before a new
     /// line will be output. If \a base_addr is a valid address, then
-    /// each new line of output will be prededed by the address value
+    /// each new line of output will be preceded by the address value
     /// plus appropriate offset, and a colon and space. Bitfield values
     /// can be dumped by calling this function multiple times with the
     /// same start offset, format and size, yet differing \a
@@ -574,7 +574,7 @@ public:
     GetSharedDataOffset () const;
 
     //------------------------------------------------------------------
-    /// Get a the data start pointer.
+    /// Get the data start pointer.
     ///
     /// @return
     ///     Returns a pointer to the first byte contained in this
@@ -908,7 +908,7 @@ public:
     ///
     /// @return
     ///     \a dst if all values were properly extracted and copied,
-    ///     NULL otherise.
+    ///     NULL otherwise.
     //------------------------------------------------------------------
     void *
     GetU8 (lldb::offset_t *offset_ptr, void *dst, uint32_t count) const;
@@ -955,7 +955,7 @@ public:
     ///
     /// @return
     ///     \a dst if all values were properly extracted and copied,
-    ///     NULL otherise.
+    ///     NULL otherwise.
     //------------------------------------------------------------------
     void *
     GetU16 (lldb::offset_t *offset_ptr, void *dst, uint32_t count) const;
@@ -1002,7 +1002,7 @@ public:
     ///
     /// @return
     ///     \a dst if all values were properly extracted and copied,
-    ///     NULL otherise.
+    ///     NULL otherwise.
     //------------------------------------------------------------------
     void *
     GetU32 (lldb::offset_t *offset_ptr, void *dst, uint32_t count) const;
@@ -1049,7 +1049,7 @@ public:
     ///
     /// @return
     ///     \a dst if all values were properly extracted and copied,
-    ///     NULL otherise.
+    ///     NULL otherwise.
     //------------------------------------------------------------------
     void *
     GetU64 ( lldb::offset_t *offset_ptr, void *dst, uint32_t count) const;
@@ -1328,7 +1328,7 @@ protected:
     const uint8_t * m_end;          ///< A pointer to the byte that is past the end of the data.
     lldb::ByteOrder m_byte_order;   ///< The byte order of the data we are extracting from.
     uint32_t m_addr_size;           ///< The address size to use when extracting pointers or addresses
-    mutable lldb::DataBufferSP m_data_sp; ///< The shared pointer to data that can be shared among multilple instances
+    mutable lldb::DataBufferSP m_data_sp; ///< The shared pointer to data that can be shared among multiple instances
     const uint32_t m_target_byte_size;
 };
 

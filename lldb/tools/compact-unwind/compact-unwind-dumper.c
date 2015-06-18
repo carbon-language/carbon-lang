@@ -1051,7 +1051,7 @@ print_second_level_index_regular (struct baton baton)
         // UNWIND_SECOND_LEVEL_REGULAR entries have a funcOffset which includes the 
         // functionOffset from the containing index table already.  UNWIND_SECOND_LEVEL_COMPRESSED
         // entries only have the offset from the containing index table functionOffset.
-        // So strip off the contianing index table functionOffset value here so they can
+        // So strip off the containing index table functionOffset value here so they can
         // be treated the same at the lower layers.
 
         print_function_encoding (baton, idx, encoding, (uint32_t) -1, func_offset - baton.first_level_index_entry.functionOffset);

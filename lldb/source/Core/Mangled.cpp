@@ -191,7 +191,7 @@ Mangled::Clear ()
 
 
 //----------------------------------------------------------------------
-// Compare the the string values.
+// Compare the string values.
 //----------------------------------------------------------------------
 int
 Mangled::Compare (const Mangled& a, const Mangled& b)

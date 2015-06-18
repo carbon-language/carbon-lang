@@ -234,7 +234,7 @@ SoftwareBreakpoint::DoDisable ()
         if (error.Success ())
         {
             bool verify = false;
-            // Make sure we have the a breakpoint opcode exists at this address
+            // Make sure the breakpoint opcode exists at this address
             if (::memcmp (curr_break_op, m_trap_opcodes, m_opcode_size) == 0)
             {
                 break_op_found = true;
