@@ -302,46 +302,36 @@ MACHO-PPC-NEXT:       Relocation {
 MACHO-PPC-NEXT:         Offset: 0x24
 MACHO-PPC-NEXT:         PCRel: 0
 MACHO-PPC-NEXT:         Length: 2
-MACHO-PPC-NEXT:         Extern: N/A
 MACHO-PPC-NEXT:         Type: PPC_RELOC_LO16_SECTDIFF (11)
-MACHO-PPC-NEXT:         Symbol: 0x64
-MACHO-PPC-NEXT:         Scattered: 1
+MACHO-PPC-NEXT:         Value: 0x64
 MACHO-PPC-NEXT:       }
 MACHO-PPC-NEXT:       Relocation {
 MACHO-PPC-NEXT:         Offset: 0x0
 MACHO-PPC-NEXT:         PCRel: 0
 MACHO-PPC-NEXT:         Length: 2
-MACHO-PPC-NEXT:         Extern: N/A
 MACHO-PPC-NEXT:         Type: PPC_RELOC_PAIR (1)
-MACHO-PPC-NEXT:         Symbol: 0xC
-MACHO-PPC-NEXT:         Scattered: 1
+MACHO-PPC-NEXT:         Value: 0xC
 MACHO-PPC-NEXT:       }
 MACHO-PPC-NEXT:       Relocation {
 MACHO-PPC-NEXT:         Offset: 0x1C
 MACHO-PPC-NEXT:         PCRel: 0
 MACHO-PPC-NEXT:         Length: 2
-MACHO-PPC-NEXT:         Extern: N/A
 MACHO-PPC-NEXT:         Type: PPC_RELOC_HA16_SECTDIFF (12)
-MACHO-PPC-NEXT:         Symbol: 0x64
-MACHO-PPC-NEXT:         Scattered: 1
+MACHO-PPC-NEXT:         Value: 0x64
 MACHO-PPC-NEXT:       }
 MACHO-PPC-NEXT:       Relocation {
 MACHO-PPC-NEXT:         Offset: 0x58
 MACHO-PPC-NEXT:         PCRel: 0
 MACHO-PPC-NEXT:         Length: 2
-MACHO-PPC-NEXT:         Extern: N/A
 MACHO-PPC-NEXT:         Type: PPC_RELOC_PAIR (1)
-MACHO-PPC-NEXT:         Symbol: 0xC
-MACHO-PPC-NEXT:         Scattered: 1
+MACHO-PPC-NEXT:         Value: 0xC
 MACHO-PPC-NEXT:       }
 MACHO-PPC-NEXT:       Relocation {
 MACHO-PPC-NEXT:         Offset: 0x18
 MACHO-PPC-NEXT:         PCRel: 1
 MACHO-PPC-NEXT:         Length: 2
-MACHO-PPC-NEXT:         Extern: 0
 MACHO-PPC-NEXT:         Type: PPC_RELOC_BR24 (3)
-MACHO-PPC-NEXT:         Symbol: 0x2
-MACHO-PPC-NEXT:         Scattered: 0
+MACHO-PPC-NEXT:         Section: __picsymbolstub1 (2)
 MACHO-PPC-NEXT:       }
 MACHO-PPC-NEXT:     ]
 MACHO-PPC-NEXT:     Symbols [
@@ -385,37 +375,29 @@ MACHO-PPC-NEXT:       Relocation {
 MACHO-PPC-NEXT:         Offset: 0x14
 MACHO-PPC-NEXT:         PCRel: 0
 MACHO-PPC-NEXT:         Length: 2
-MACHO-PPC-NEXT:         Extern: N/A
 MACHO-PPC-NEXT:         Type: PPC_RELOC_LO16_SECTDIFF (11)
-MACHO-PPC-NEXT:         Symbol: 0x68
-MACHO-PPC-NEXT:         Scattered: 1
+MACHO-PPC-NEXT:         Value: 0x68
 MACHO-PPC-NEXT:       }
 MACHO-PPC-NEXT:       Relocation {
 MACHO-PPC-NEXT:         Offset: 0x0
 MACHO-PPC-NEXT:         PCRel: 0
 MACHO-PPC-NEXT:         Length: 2
-MACHO-PPC-NEXT:         Extern: N/A
 MACHO-PPC-NEXT:         Type: PPC_RELOC_PAIR (1)
-MACHO-PPC-NEXT:         Symbol: 0x48
-MACHO-PPC-NEXT:         Scattered: 1
+MACHO-PPC-NEXT:         Value: 0x48
 MACHO-PPC-NEXT:       }
 MACHO-PPC-NEXT:       Relocation {
 MACHO-PPC-NEXT:         Offset: 0xC
 MACHO-PPC-NEXT:         PCRel: 0
 MACHO-PPC-NEXT:         Length: 2
-MACHO-PPC-NEXT:         Extern: N/A
 MACHO-PPC-NEXT:         Type: PPC_RELOC_HA16_SECTDIFF (12)
-MACHO-PPC-NEXT:         Symbol: 0x68
-MACHO-PPC-NEXT:         Scattered: 1
+MACHO-PPC-NEXT:         Value: 0x68
 MACHO-PPC-NEXT:       }
 MACHO-PPC-NEXT:       Relocation {
 MACHO-PPC-NEXT:         Offset: 0x20
 MACHO-PPC-NEXT:         PCRel: 0
 MACHO-PPC-NEXT:         Length: 2
-MACHO-PPC-NEXT:         Extern: N/A
 MACHO-PPC-NEXT:         Type: PPC_RELOC_PAIR (1)
-MACHO-PPC-NEXT:         Symbol: 0x48
-MACHO-PPC-NEXT:         Scattered: 1
+MACHO-PPC-NEXT:         Value: 0x48
 MACHO-PPC-NEXT:       }
 MACHO-PPC-NEXT:     ]
 MACHO-PPC-NEXT:     Symbols [
@@ -501,10 +483,8 @@ MACHO-PPC-NEXT:       Relocation {
 MACHO-PPC-NEXT:         Offset: 0x0
 MACHO-PPC-NEXT:         PCRel: 0
 MACHO-PPC-NEXT:         Length: 2
-MACHO-PPC-NEXT:         Extern: 1
 MACHO-PPC-NEXT:         Type: PPC_RELOC_VANILLA (0)
-MACHO-PPC-NEXT:         Symbol: dyld_stub_binding_helper
-MACHO-PPC-NEXT:         Scattered: 0
+MACHO-PPC-NEXT:         Symbol: dyld_stub_binding_helper (5)
 MACHO-PPC-NEXT:       }
 MACHO-PPC-NEXT:     ]
 MACHO-PPC-NEXT:     Symbols [
@@ -539,46 +519,36 @@ MACHO-PPC64-NEXT:       Relocation {
 MACHO-PPC64-NEXT:         Offset: 0x24
 MACHO-PPC64-NEXT:         PCRel: 0
 MACHO-PPC64-NEXT:         Length: 2
-MACHO-PPC64-NEXT:         Extern: N/A
 MACHO-PPC64-NEXT:         Type:  (14)
-MACHO-PPC64-NEXT:         Symbol: 0x64
-MACHO-PPC64-NEXT:         Scattered: 1
+MACHO-PPC64-NEXT:         Value: 0x64
 MACHO-PPC64-NEXT:       }
 MACHO-PPC64-NEXT:       Relocation {
 MACHO-PPC64-NEXT:         Offset: 0x0
 MACHO-PPC64-NEXT:         PCRel: 0
 MACHO-PPC64-NEXT:         Length: 2
-MACHO-PPC64-NEXT:         Extern: N/A
 MACHO-PPC64-NEXT:         Type:  (1)
-MACHO-PPC64-NEXT:         Symbol: 0xC
-MACHO-PPC64-NEXT:         Scattered: 1
+MACHO-PPC64-NEXT:         Value: 0xC
 MACHO-PPC64-NEXT:       }
 MACHO-PPC64-NEXT:       Relocation {
 MACHO-PPC64-NEXT:         Offset: 0x1C
 MACHO-PPC64-NEXT:         PCRel: 0
 MACHO-PPC64-NEXT:         Length: 2
-MACHO-PPC64-NEXT:         Extern: N/A
 MACHO-PPC64-NEXT:         Type:  (12)
-MACHO-PPC64-NEXT:         Symbol: 0x64
-MACHO-PPC64-NEXT:         Scattered: 1
+MACHO-PPC64-NEXT:         Value: 0x64
 MACHO-PPC64-NEXT:       }
 MACHO-PPC64-NEXT:       Relocation {
 MACHO-PPC64-NEXT:         Offset: 0x58
 MACHO-PPC64-NEXT:         PCRel: 0
 MACHO-PPC64-NEXT:         Length: 2
-MACHO-PPC64-NEXT:         Extern: N/A
 MACHO-PPC64-NEXT:         Type:  (1)
-MACHO-PPC64-NEXT:         Symbol: 0xC
-MACHO-PPC64-NEXT:         Scattered: 1
+MACHO-PPC64-NEXT:         Value: 0xC
 MACHO-PPC64-NEXT:       }
 MACHO-PPC64-NEXT:       Relocation {
 MACHO-PPC64-NEXT:         Offset: 0x18
 MACHO-PPC64-NEXT:         PCRel: 1
 MACHO-PPC64-NEXT:         Length: 2
-MACHO-PPC64-NEXT:         Extern: 0
 MACHO-PPC64-NEXT:         Type:  (3)
-MACHO-PPC64-NEXT:         Symbol: 0x2
-MACHO-PPC64-NEXT:         Scattered: 0
+MACHO-PPC64-NEXT:         Section: __picsymbolstub1 (2)
 MACHO-PPC64-NEXT:       }
 MACHO-PPC64-NEXT:     ]
 MACHO-PPC64-NEXT:     Symbols [
@@ -622,37 +592,29 @@ MACHO-PPC64-NEXT:       Relocation {
 MACHO-PPC64-NEXT:         Offset: 0x14
 MACHO-PPC64-NEXT:         PCRel: 0
 MACHO-PPC64-NEXT:         Length: 2
-MACHO-PPC64-NEXT:         Extern: N/A
 MACHO-PPC64-NEXT:         Type:  (14)
-MACHO-PPC64-NEXT:         Symbol: 0x6C
-MACHO-PPC64-NEXT:         Scattered: 1
+MACHO-PPC64-NEXT:         Value: 0x6C
 MACHO-PPC64-NEXT:       }
 MACHO-PPC64-NEXT:       Relocation {
 MACHO-PPC64-NEXT:         Offset: 0x0
 MACHO-PPC64-NEXT:         PCRel: 0
 MACHO-PPC64-NEXT:         Length: 2
-MACHO-PPC64-NEXT:         Extern: N/A
 MACHO-PPC64-NEXT:         Type:  (1)
-MACHO-PPC64-NEXT:         Symbol: 0x48
-MACHO-PPC64-NEXT:         Scattered: 1
+MACHO-PPC64-NEXT:         Value: 0x48
 MACHO-PPC64-NEXT:       }
 MACHO-PPC64-NEXT:       Relocation {
 MACHO-PPC64-NEXT:         Offset: 0xC
 MACHO-PPC64-NEXT:         PCRel: 0
 MACHO-PPC64-NEXT:         Length: 2
-MACHO-PPC64-NEXT:         Extern: N/A
 MACHO-PPC64-NEXT:         Type:  (12)
-MACHO-PPC64-NEXT:         Symbol: 0x6C
-MACHO-PPC64-NEXT:         Scattered: 1
+MACHO-PPC64-NEXT:         Value: 0x6C
 MACHO-PPC64-NEXT:       }
 MACHO-PPC64-NEXT:       Relocation {
 MACHO-PPC64-NEXT:         Offset: 0x24
 MACHO-PPC64-NEXT:         PCRel: 0
 MACHO-PPC64-NEXT:         Length: 2
-MACHO-PPC64-NEXT:         Extern: N/A
 MACHO-PPC64-NEXT:         Type:  (1)
-MACHO-PPC64-NEXT:         Symbol: 0x48
-MACHO-PPC64-NEXT:         Scattered: 1
+MACHO-PPC64-NEXT:         Value: 0x48
 MACHO-PPC64-NEXT:       }
 MACHO-PPC64-NEXT:     ]
 MACHO-PPC64-NEXT:     Symbols [
@@ -738,10 +700,8 @@ MACHO-PPC64-NEXT:       Relocation {
 MACHO-PPC64-NEXT:         Offset: 0x0
 MACHO-PPC64-NEXT:         PCRel: 0
 MACHO-PPC64-NEXT:         Length: 3
-MACHO-PPC64-NEXT:         Extern: 1
 MACHO-PPC64-NEXT:         Type:  (0)
-MACHO-PPC64-NEXT:         Symbol: dyld_stub_binding_helper
-MACHO-PPC64-NEXT:         Scattered: 0
+MACHO-PPC64-NEXT:         Symbol: dyld_stub_binding_helper (5)
 MACHO-PPC64-NEXT:       }
 MACHO-PPC64-NEXT:     ]
 MACHO-PPC64-NEXT:     Symbols [
@@ -775,82 +735,64 @@ MACHO-ARM-NEXT:       Relocation {
 MACHO-ARM-NEXT:         Offset: 0x38
 MACHO-ARM-NEXT:         PCRel: 0
 MACHO-ARM-NEXT:         Length: 2
-MACHO-ARM-NEXT:         Extern: N/A
 MACHO-ARM-NEXT:         Type: ARM_RELOC_SECTDIFF (2)
-MACHO-ARM-NEXT:         Symbol: 0x40
-MACHO-ARM-NEXT:         Scattered: 1
+MACHO-ARM-NEXT:         Value: 0x40
 MACHO-ARM-NEXT:       }
 MACHO-ARM-NEXT:       Relocation {
 MACHO-ARM-NEXT:         Offset: 0x0
 MACHO-ARM-NEXT:         PCRel: 0
 MACHO-ARM-NEXT:         Length: 2
-MACHO-ARM-NEXT:         Extern: N/A
 MACHO-ARM-NEXT:         Type: ARM_RELOC_PAIR (1)
-MACHO-ARM-NEXT:         Symbol: 0x28
-MACHO-ARM-NEXT:         Scattered: 1
+MACHO-ARM-NEXT:         Value: 0x28
 MACHO-ARM-NEXT:       }
 MACHO-ARM-NEXT:       Relocation {
 MACHO-ARM-NEXT:         Offset: 0x20
 MACHO-ARM-NEXT:         PCRel: 1
 MACHO-ARM-NEXT:         Length: 2
-MACHO-ARM-NEXT:         Extern: 1
 MACHO-ARM-NEXT:         Type: ARM_RELOC_BR24 (5)
 MACHO-ARM-NEXT:         Symbol: _g
-MACHO-ARM-NEXT:         Scattered: 0
 MACHO-ARM-NEXT:       }
 MACHO-ARM-NEXT:       Relocation {
 MACHO-ARM-NEXT:         Offset: 0x1C
 MACHO-ARM-NEXT:         PCRel: 0
 MACHO-ARM-NEXT:         Length: 1
-MACHO-ARM-NEXT:         Extern: 1
 MACHO-ARM-NEXT:         Type: ARM_RELOC_HALF (8)
 MACHO-ARM-NEXT:         Symbol: _g
-MACHO-ARM-NEXT:         Scattered: 0
 MACHO-ARM-NEXT:       }
 MACHO-ARM-NEXT:       Relocation {
 MACHO-ARM-NEXT:         Offset: 0x0
 MACHO-ARM-NEXT:         PCRel: 0
 MACHO-ARM-NEXT:         Length: 1
-MACHO-ARM-NEXT:         Extern: 0
 MACHO-ARM-NEXT:         Type: ARM_RELOC_PAIR (1)
-MACHO-ARM-NEXT:         Symbol: 0xFFFFFF
-MACHO-ARM-NEXT:         Scattered: 0
+MACHO-ARM-NEXT:         Section: -
 MACHO-ARM-NEXT:       }
 MACHO-ARM-NEXT:       Relocation {
 MACHO-ARM-NEXT:         Offset: 0x18
 MACHO-ARM-NEXT:         PCRel: 0
 MACHO-ARM-NEXT:         Length: 0
-MACHO-ARM-NEXT:         Extern: 1
 MACHO-ARM-NEXT:         Type: ARM_RELOC_HALF (8)
 MACHO-ARM-NEXT:         Symbol: _g
-MACHO-ARM-NEXT:         Scattered: 0
 MACHO-ARM-NEXT:       }
 MACHO-ARM-NEXT:       Relocation {
 MACHO-ARM-NEXT:         Offset: 0x0
 MACHO-ARM-NEXT:         PCRel: 0
 MACHO-ARM-NEXT:         Length: 0
-MACHO-ARM-NEXT:         Extern: 0
 MACHO-ARM-NEXT:         Type: ARM_RELOC_PAIR (1)
-MACHO-ARM-NEXT:         Symbol: 0xFFFFFF
-MACHO-ARM-NEXT:         Scattered: 0
+MACHO-ARM-NEXT:         Section: -
 MACHO-ARM-NEXT:       }
 MACHO-ARM-NEXT:       Relocation {
 MACHO-ARM-NEXT:         Offset: 0xC
 MACHO-ARM-NEXT:         PCRel: 0
 MACHO-ARM-NEXT:         Length: 2
-MACHO-ARM-NEXT:         Extern: N/A
 MACHO-ARM-NEXT:         Type: ARM_RELOC_SECTDIFF (2)
-MACHO-ARM-NEXT:         Symbol: 0x44
-MACHO-ARM-NEXT:         Scattered: 1
+MACHO-ARM-NEXT:         Value: 0x44
 MACHO-ARM-NEXT:       }
 MACHO-ARM-NEXT:       Relocation {
 MACHO-ARM-NEXT:         Offset: 0x0
 MACHO-ARM-NEXT:         PCRel: 0
 MACHO-ARM-NEXT:         Length: 2
-MACHO-ARM-NEXT:         Extern: N/A
 MACHO-ARM-NEXT:         Type: ARM_RELOC_PAIR (1)
-MACHO-ARM-NEXT:         Symbol: 0x4
-MACHO-ARM-NEXT:         Scattered: 1
+MACHO-ARM-NEXT:         Value: 0x4
 MACHO-ARM-NEXT:       }
 MACHO-ARM-NEXT:     ]
 MACHO-ARM-NEXT:     Symbols [

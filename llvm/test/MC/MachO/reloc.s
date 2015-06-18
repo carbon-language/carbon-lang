@@ -59,19 +59,15 @@ _f1:
 // CHECK-NEXT:      Offset: 0x6
 // CHECK-NEXT:      PCRel: 1
 // CHECK-NEXT:      Length: 2
-// CHECK-NEXT:      Extern: 0
 // CHECK-NEXT:      Type: GENERIC_RELOC_VANILLA (0)
-// CHECK-NEXT:      Symbol: 0x3
-// CHECK-NEXT:      Scattered: 0
+// CHECK-NEXT:      Section: __const
 // CHECK-NEXT:    }
 // CHECK-NEXT:    Relocation {
 // CHECK-NEXT:      Offset: 0x1
 // CHECK-NEXT:      PCRel: 1
 // CHECK-NEXT:      Length: 2
-// CHECK-NEXT:      Extern: 0
 // CHECK-NEXT:      Type: GENERIC_RELOC_VANILLA (0)
-// CHECK-NEXT:      Symbol: 0x0
-// CHECK-NEXT:      Scattered: 0
+// CHECK-NEXT:      Section: - (0)
 // CHECK-NEXT:    }
 // CHECK-NEXT:  }
 // CHECK-NEXT:  Section __data {
@@ -79,100 +75,78 @@ _f1:
 // CHECK-NEXT:      Offset: 0x2F
 // CHECK-NEXT:      PCRel: 0
 // CHECK-NEXT:      Length: 2
-// CHECK-NEXT:      Extern: 1
 // CHECK-NEXT:      Type: GENERIC_RELOC_VANILLA (0)
 // CHECK-NEXT:      Symbol: _f1
-// CHECK-NEXT:      Scattered: 0
 // CHECK-NEXT:    }
 // CHECK-NEXT:    Relocation {
 // CHECK-NEXT:      Offset: 0x2B
 // CHECK-NEXT:      PCRel: 0
 // CHECK-NEXT:      Length: 2
-// CHECK-NEXT:      Extern: 1
 // CHECK-NEXT:      Type: GENERIC_RELOC_VANILLA (0)
 // CHECK-NEXT:      Symbol: _f1
-// CHECK-NEXT:      Scattered: 0
 // CHECK-NEXT:    }
 // CHECK-NEXT:    Relocation {
 // CHECK-NEXT:      Offset: 0x2A
 // CHECK-NEXT:      PCRel: 0
 // CHECK-NEXT:      Length: 0
-// CHECK-NEXT:      Extern: N/A
 // CHECK-NEXT:      Type: GENERIC_RELOC_VANILLA (0)
-// CHECK-NEXT:      Symbol: 0x1D
-// CHECK-NEXT:      Scattered: 1
+// CHECK-NEXT:      Value: 0x1D
 // CHECK-NEXT:    }
 // CHECK-NEXT:    Relocation {
 // CHECK-NEXT:      Offset: 0x28
 // CHECK-NEXT:      PCRel: 0
 // CHECK-NEXT:      Length: 1
-// CHECK-NEXT:      Extern: N/A
 // CHECK-NEXT:      Type: GENERIC_RELOC_VANILLA (0)
-// CHECK-NEXT:      Symbol: 0x1D
-// CHECK-NEXT:      Scattered: 1
+// CHECK-NEXT:      Value: 0x1D
 // CHECK-NEXT:    }
 // CHECK-NEXT:    Relocation {
 // CHECK-NEXT:      Offset: 0x24
 // CHECK-NEXT:      PCRel: 0
 // CHECK-NEXT:      Length: 2
-// CHECK-NEXT:      Extern: N/A
 // CHECK-NEXT:      Type: GENERIC_RELOC_VANILLA (0)
-// CHECK-NEXT:      Symbol: 0x1D
-// CHECK-NEXT:      Scattered: 1
+// CHECK-NEXT:      Value: 0x1D
 // CHECK-NEXT:    }
 // CHECK-NEXT:    Relocation {
 // CHECK-NEXT:      Offset: 0x20
 // CHECK-NEXT:      PCRel: 0
 // CHECK-NEXT:      Length: 2
-// CHECK-NEXT:      Extern: N/A
 // CHECK-NEXT:      Type: GENERIC_RELOC_VANILLA (0)
-// CHECK-NEXT:      Symbol: 0x1D
-// CHECK-NEXT:      Scattered: 1
+// CHECK-NEXT:      Value: 0x1D
 // CHECK-NEXT:    }
 // CHECK-NEXT:    Relocation {
 // CHECK-NEXT:      Offset: 0x14
 // CHECK-NEXT:      PCRel: 0
 // CHECK-NEXT:      Length: 2
-// CHECK-NEXT:      Extern: N/A
 // CHECK-NEXT:      Type: GENERIC_RELOC_LOCAL_SECTDIFF (4)
-// CHECK-NEXT:      Symbol: 0x21
-// CHECK-NEXT:      Scattered: 1
+// CHECK-NEXT:      Value: 0x21
 // CHECK-NEXT:    }
 // CHECK-NEXT:    Relocation {
 // CHECK-NEXT:      Offset: 0x0
 // CHECK-NEXT:      PCRel: 0
 // CHECK-NEXT:      Length: 2
-// CHECK-NEXT:      Extern: N/A
 // CHECK-NEXT:      Type: GENERIC_RELOC_PAIR (1)
-// CHECK-NEXT:      Symbol: 0x29
-// CHECK-NEXT:      Scattered: 1
+// CHECK-NEXT:      Value: 0x29
 // CHECK-NEXT:    }
 // CHECK-NEXT:    Relocation {
 // CHECK-NEXT:      Offset: 0x8
 // CHECK-NEXT:      PCRel: 0
 // CHECK-NEXT:      Length: 2
-// CHECK-NEXT:      Extern: 0
 // CHECK-NEXT:      Type: GENERIC_RELOC_VANILLA (0)
-// CHECK-NEXT:      Symbol: 0x2
-// CHECK-NEXT:      Scattered: 0
+// CHECK-NEXT:      Section: __data
 // CHECK-NEXT:    }
 // CHECK-NEXT:    Relocation {
 // CHECK-NEXT:      Offset: 0x4
 // CHECK-NEXT:      PCRel: 0
 // CHECK-NEXT:      Length: 2
-// CHECK-NEXT:      Extern: 1
 // CHECK-NEXT:      Type: GENERIC_RELOC_VANILLA (0)
 // CHECK-NEXT:      Symbol: undef
-// CHECK-NEXT:      Scattered: 0
 // CHECK-NEXT:    }
 // CHECK-NEXT:    Relocation {
 // CHECK-NEXT:      Offset: 0x0
 // CHECK-NEXT:      PCRel: 0
 // CHECK-NEXT:      Length: 2
-// CHECK-NEXT:      Extern: 1
 // CHECK-NEXT:      Type: GENERIC_RELOC_VANILLA (0)
 // CHECK-NEXT:      Symbol: undef
-// CHECK-NEXT:      Scattered: 0
 // CHECK-NEXT:    }
 // CHECK-NEXT:  }
 // CHECK-NEXT:  Section __const {
@@ -180,37 +154,29 @@ _f1:
 // CHECK-NEXT:      Offset: 0x8
 // CHECK-NEXT:      PCRel: 0
 // CHECK-NEXT:      Length: 2
-// CHECK-NEXT:      Extern: 0
 // CHECK-NEXT:      Type: GENERIC_RELOC_VANILLA (0)
-// CHECK-NEXT:      Symbol: 0x1
-// CHECK-NEXT:      Scattered: 0
+// CHECK-NEXT:      Section: __text
 // CHECK-NEXT:    }
 // CHECK-NEXT:    Relocation {
 // CHECK-NEXT:      Offset: 0x4
 // CHECK-NEXT:      PCRel: 0
 // CHECK-NEXT:      Length: 2
-// CHECK-NEXT:      Extern: 0
 // CHECK-NEXT:      Type: GENERIC_RELOC_VANILLA (0)
-// CHECK-NEXT:      Symbol: 0x3
-// CHECK-NEXT:      Scattered: 0
+// CHECK-NEXT:      Section: __const
 // CHECK-NEXT:    }
 // CHECK-NEXT:    Relocation {
 // CHECK-NEXT:      Offset: 0x0
 // CHECK-NEXT:      PCRel: 0
 // CHECK-NEXT:      Length: 2
-// CHECK-NEXT:      Extern: N/A
 // CHECK-NEXT:      Type: GENERIC_RELOC_LOCAL_SECTDIFF (4)
-// CHECK-NEXT:      Symbol: 0x1D
-// CHECK-NEXT:      Scattered: 1
+// CHECK-NEXT:      Value: 0x1D
 // CHECK-NEXT:    }
 // CHECK-NEXT:    Relocation {
 // CHECK-NEXT:      Offset: 0x0
 // CHECK-NEXT:      PCRel: 0
 // CHECK-NEXT:      Length: 2
-// CHECK-NEXT:      Extern: N/A
 // CHECK-NEXT:      Type: GENERIC_RELOC_PAIR (1)
-// CHECK-NEXT:      Symbol: 0x40
-// CHECK-NEXT:      Scattered: 1
+// CHECK-NEXT:      Value: 0x40
 // CHECK-NEXT:    }
 // CHECK-NEXT:  }
 // CHECK-NEXT:]

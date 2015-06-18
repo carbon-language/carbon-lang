@@ -8,10 +8,8 @@
 ; CHECK-NEXT:       Offset: 0x0
 ; CHECK-NEXT:       PCRel: 0
 ; CHECK-NEXT:       Length: 2
-; CHECK-NEXT:       Extern: 1
 ; CHECK-NEXT:       Type: ARM64_RELOC_PAGEOFF12 (4)
 ; CHECK-NEXT:       Symbol: ltmp1
-; CHECK-NEXT:       Scattered: 0
 ; CHECK-NEXT:     }
 ; CHECK-NEXT:   }
 ; CHECK-NEXT: ]

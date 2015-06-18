@@ -2012,9 +2012,11 @@ MachOObjectFile::getAnyRelocationSection(
                                    const MachO::any_relocation_info &RE) const {
   if (isRelocationScattered(RE) || getPlainRelocationExternal(RE))
     return *section_end();
-  unsigned SecNum = getPlainRelocationSymbolNum(RE) - 1;
+  unsigned SecNum = getPlainRelocationSymbolNum(RE);
+  if (SecNum == MachO::R_ABS || SecNum > Sections.size())
+    return *section_end();
   DataRefImpl DRI;
-  DRI.d.a = SecNum;
+  DRI.d.a = SecNum - 1;
   return SectionRef(DRI, this);
 }
 

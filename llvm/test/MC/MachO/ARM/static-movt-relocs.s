@@ -12,37 +12,29 @@ foo:
 @ CHECK-NEXT:       Offset: 0x4
 @ CHECK-NEXT:       PCRel: 0
 @ CHECK-NEXT:       Length: 3
-@ CHECK-NEXT:       Extern: 1
 @ CHECK-NEXT:       Type: ARM_RELOC_HALF (8)
 @ CHECK-NEXT:       Symbol: bar
-@ CHECK-NEXT:       Scattered: 0
 @ CHECK-NEXT:     }
 @ CHECK-NEXT:     Relocation {
 @ CHECK-NEXT:       Offset: 0x10
 @ CHECK-NEXT:       PCRel: 0
 @ CHECK-NEXT:       Length: 3
-@ CHECK-NEXT:       Extern: 0
 @ CHECK-NEXT:       Type: ARM_RELOC_PAIR (1)
-@ CHECK-NEXT:       Symbol: 0xFFFFFF
-@ CHECK-NEXT:       Scattered: 0
+@ CHECK-NEXT:       Section: -
 @ CHECK-NEXT:     }
 @ CHECK-NEXT:     Relocation {
 @ CHECK-NEXT:       Offset: 0x0
 @ CHECK-NEXT:       PCRel: 0
 @ CHECK-NEXT:       Length: 2
-@ CHECK-NEXT:       Extern: 1
 @ CHECK-NEXT:       Type: ARM_RELOC_HALF (8)
 @ CHECK-NEXT:       Symbol: bar
-@ CHECK-NEXT:       Scattered: 0
 @ CHECK-NEXT:     }
 @ CHECK-NEXT:     Relocation {
 @ CHECK-NEXT:       Offset: 0x0
 @ CHECK-NEXT:       PCRel: 0
 @ CHECK-NEXT:       Length: 2
-@ CHECK-NEXT:       Extern: 0
 @ CHECK-NEXT:       Type: ARM_RELOC_PAIR (1)
-@ CHECK-NEXT:       Symbol: 0xFFFFFF
-@ CHECK-NEXT:       Scattered: 0
+@ CHECK-NEXT:       Section: -
 @ CHECK-NEXT:     }
 @ CHECK-NEXT:   }
 @ CHECK-NEXT: ]

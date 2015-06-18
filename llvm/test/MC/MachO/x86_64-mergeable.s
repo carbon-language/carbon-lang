@@ -23,37 +23,29 @@ L1:
 // CHECK-NEXT:       Offset: 0x18
 // CHECK-NEXT:       PCRel: 0
 // CHECK-NEXT:       Length: 3
-// CHECK-NEXT:       Extern: 1
 // CHECK-NEXT:       Type: X86_64_RELOC_UNSIGNED (0)
 // CHECK-NEXT:       Symbol: L1
-// CHECK-NEXT:       Scattered: 0
 // CHECK-NEXT:     }
 // CHECK-NEXT:     Relocation {
 // CHECK-NEXT:       Offset: 0x10
 // CHECK-NEXT:       PCRel: 0
 // CHECK-NEXT:       Length: 3
-// CHECK-NEXT:       Extern: 0
 // CHECK-NEXT:       Type: X86_64_RELOC_UNSIGNED (0)
-// CHECK-NEXT:       Symbol: 0x3
-// CHECK-NEXT:       Scattered: 0
+// CHECK-NEXT:       Section: __cstring (3)
 // CHECK-NEXT:     }
 // CHECK-NEXT:     Relocation {
 // CHECK-NEXT:       Offset: 0x8
 // CHECK-NEXT:       PCRel: 0
 // CHECK-NEXT:       Length: 3
-// CHECK-NEXT:       Extern: 1
 // CHECK-NEXT:       Type: X86_64_RELOC_UNSIGNED (0)
 // CHECK-NEXT:       Symbol: L0
-// CHECK-NEXT:       Scattered: 0
 // CHECK-NEXT:     }
 // CHECK-NEXT:     Relocation {
 // CHECK-NEXT:       Offset: 0x0
 // CHECK-NEXT:       PCRel: 0
 // CHECK-NEXT:       Length: 3
-// CHECK-NEXT:       Extern: 0
 // CHECK-NEXT:       Type: X86_64_RELOC_UNSIGNED (0)
-// CHECK-NEXT:       Symbol: 0x2
-// CHECK-NEXT:       Scattered: 0
+// CHECK-NEXT:       Section: __literal4 (2)
 // CHECK-NEXT:     }
 // CHECK-NEXT:   }
 // CHECK-NEXT: ]

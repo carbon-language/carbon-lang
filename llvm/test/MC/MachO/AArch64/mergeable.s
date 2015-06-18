@@ -25,37 +25,29 @@ L1:
 // CHECK-NEXT:       Offset: 0x18
 // CHECK-NEXT:       PCRel: 0
 // CHECK-NEXT:       Length: 3
-// CHECK-NEXT:       Extern: 1
 // CHECK-NEXT:       Type: ARM64_RELOC_UNSIGNED (0)
 // CHECK-NEXT:       Symbol: L1
-// CHECK-NEXT:       Scattered: 0
 // CHECK-NEXT:     }
 // CHECK-NEXT:     Relocation {
 // CHECK-NEXT:       Offset: 0x10
 // CHECK-NEXT:       PCRel: 0
 // CHECK-NEXT:       Length: 3
-// CHECK-NEXT:       Extern: 1
 // CHECK-NEXT:       Type: ARM64_RELOC_UNSIGNED (0)
 // CHECK-NEXT:       Symbol: L1
-// CHECK-NEXT:       Scattered: 0
 // CHECK-NEXT:     }
 // CHECK-NEXT:     Relocation {
 // CHECK-NEXT:       Offset: 0x8
 // CHECK-NEXT:       PCRel: 0
 // CHECK-NEXT:       Length: 3
-// CHECK-NEXT:       Extern: 1
 // CHECK-NEXT:       Type: ARM64_RELOC_UNSIGNED (0)
 // CHECK-NEXT:       Symbol: L0
-// CHECK-NEXT:       Scattered: 0
 // CHECK-NEXT:     }
 // CHECK-NEXT:     Relocation {
 // CHECK-NEXT:       Offset: 0x0
 // CHECK-NEXT:       PCRel: 0
 // CHECK-NEXT:       Length: 3
-// CHECK-NEXT:       Extern: 1
 // CHECK-NEXT:       Type: ARM64_RELOC_UNSIGNED (0)
 // CHECK-NEXT:       Symbol: L0
-// CHECK-NEXT:       Scattered: 0
 // CHECK-NEXT:     }
 // CHECK-NEXT:   }
 // CHECK-NEXT: ]

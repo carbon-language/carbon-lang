@@ -93,46 +93,36 @@ L6:
 // CHECK-NEXT:       Offset: 0x20
 // CHECK-NEXT:       PCRel: 0
 // CHECK-NEXT:       Length: 3
-// CHECK-NEXT:       Extern: 0
 // CHECK-NEXT:       Type: X86_64_RELOC_UNSIGNED (0)
-// CHECK-NEXT:       Symbol: 0x4
-// CHECK-NEXT:       Scattered: 0
+// CHECK-NEXT:       Section: __literal8
 // CHECK-NEXT:     }
 // CHECK-NEXT:     Relocation {
 // CHECK-NEXT:       Offset: 0x18
 // CHECK-NEXT:       PCRel: 0
 // CHECK-NEXT:       Length: 3
-// CHECK-NEXT:       Extern: 1
 // CHECK-NEXT:       Type: X86_64_RELOC_UNSIGNED (0)
 // CHECK-NEXT:       Symbol: f6
-// CHECK-NEXT:       Scattered: 0
 // CHECK-NEXT:     }
 // CHECK-NEXT:     Relocation {
 // CHECK-NEXT:       Offset: 0x10
 // CHECK-NEXT:       PCRel: 0
 // CHECK-NEXT:       Length: 3
-// CHECK-NEXT:       Extern: 0
 // CHECK-NEXT:       Type: X86_64_RELOC_UNSIGNED (0)
-// CHECK-NEXT:       Symbol: 0x4
-// CHECK-NEXT:       Scattered: 0
+// CHECK-NEXT:       Section: __literal8
 // CHECK-NEXT:     }
 // CHECK-NEXT:     Relocation {
 // CHECK-NEXT:       Offset: 0x8
 // CHECK-NEXT:       PCRel: 1
 // CHECK-NEXT:       Length: 2
-// CHECK-NEXT:       Extern: 1
 // CHECK-NEXT:       Type: X86_64_RELOC_GOT (4)
 // CHECK-NEXT:       Symbol: _foo
-// CHECK-NEXT:       Scattered: 0
 // CHECK-NEXT:     }
 // CHECK-NEXT:     Relocation {
 // CHECK-NEXT:       Offset: 0x4
 // CHECK-NEXT:       PCRel: 1
 // CHECK-NEXT:       Length: 2
-// CHECK-NEXT:       Extern: 1
 // CHECK-NEXT:       Type: X86_64_RELOC_GOT (4)
 // CHECK-NEXT:       Symbol: _foobar
-// CHECK-NEXT:       Scattered: 0
 // CHECK-NEXT:     }
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Section __text {
@@ -140,289 +130,225 @@ L6:
 // CHECK-NEXT:       Offset: 0xDA
 // CHECK-NEXT:       PCRel: 1
 // CHECK-NEXT:       Length: 2
-// CHECK-NEXT:       Extern: 1
 // CHECK-NEXT:       Type: X86_64_RELOC_GOT (4)
 // CHECK-NEXT:       Symbol: _foo
-// CHECK-NEXT:       Scattered: 0
 // CHECK-NEXT:     }
 // CHECK-NEXT:     Relocation {
 // CHECK-NEXT:       Offset: 0xD3
 // CHECK-NEXT:       PCRel: 1
 // CHECK-NEXT:       Length: 2
-// CHECK-NEXT:       Extern: 0
 // CHECK-NEXT:       Type: X86_64_RELOC_SIGNED (1)
-// CHECK-NEXT:       Symbol: 0x4
-// CHECK-NEXT:       Scattered: 0
+// CHECK-NEXT:       Section: __literal8
 // CHECK-NEXT:     }
 // CHECK-NEXT:     Relocation {
 // CHECK-NEXT:       Offset: 0xCD
 // CHECK-NEXT:       PCRel: 1
 // CHECK-NEXT:       Length: 2
-// CHECK-NEXT:       Extern: 1
 // CHECK-NEXT:       Type: X86_64_RELOC_SIGNED (1)
 // CHECK-NEXT:       Symbol: f6
-// CHECK-NEXT:       Scattered: 0
 // CHECK-NEXT:     }
 // CHECK-NEXT:     Relocation {
 // CHECK-NEXT:       Offset: 0xC7
 // CHECK-NEXT:       PCRel: 1
 // CHECK-NEXT:       Length: 2
-// CHECK-NEXT:       Extern: 0
 // CHECK-NEXT:       Type: X86_64_RELOC_SIGNED (1)
-// CHECK-NEXT:       Symbol: 0x4
-// CHECK-NEXT:       Scattered: 0
+// CHECK-NEXT:       Section: __literal8
 // CHECK-NEXT:     }
 // CHECK-NEXT:     Relocation {
 // CHECK-NEXT:       Offset: 0xC1
 // CHECK-NEXT:       PCRel: 1
 // CHECK-NEXT:       Length: 2
-// CHECK-NEXT:       Extern: 0
 // CHECK-NEXT:       Type: X86_64_RELOC_SIGNED (1)
-// CHECK-NEXT:       Symbol: 0x1
-// CHECK-NEXT:       Scattered: 0
+// CHECK-NEXT:       Section: __data
 // CHECK-NEXT:     }
 // CHECK-NEXT:     Relocation {
 // CHECK-NEXT:       Offset: 0xA5
 // CHECK-NEXT:       PCRel: 0
 // CHECK-NEXT:       Length: 3
-// CHECK-NEXT:       Extern: 1
 // CHECK-NEXT:       Type: X86_64_RELOC_SUBTRACTOR (5)
 // CHECK-NEXT:       Symbol: _prev
-// CHECK-NEXT:       Scattered: 0
 // CHECK-NEXT:     }
 // CHECK-NEXT:     Relocation {
 // CHECK-NEXT:       Offset: 0xA5
 // CHECK-NEXT:       PCRel: 0
 // CHECK-NEXT:       Length: 3
-// CHECK-NEXT:       Extern: 1
 // CHECK-NEXT:       Type: X86_64_RELOC_UNSIGNED (0)
 // CHECK-NEXT:       Symbol: _foo
-// CHECK-NEXT:       Scattered: 0
 // CHECK-NEXT:     }
 // CHECK-NEXT:     Relocation {
 // CHECK-NEXT:       Offset: 0x9D
 // CHECK-NEXT:       PCRel: 0
 // CHECK-NEXT:       Length: 3
-// CHECK-NEXT:       Extern: 1
 // CHECK-NEXT:       Type: X86_64_RELOC_SUBTRACTOR (5)
 // CHECK-NEXT:       Symbol: _prev
-// CHECK-NEXT:       Scattered: 0
 // CHECK-NEXT:     }
 // CHECK-NEXT:     Relocation {
 // CHECK-NEXT:       Offset: 0x9D
 // CHECK-NEXT:       PCRel: 0
 // CHECK-NEXT:       Length: 3
-// CHECK-NEXT:       Extern: 1
 // CHECK-NEXT:       Type: X86_64_RELOC_UNSIGNED (0)
 // CHECK-NEXT:       Symbol: _foo
-// CHECK-NEXT:       Scattered: 0
 // CHECK-NEXT:     }
 // CHECK-NEXT:     Relocation {
 // CHECK-NEXT:       Offset: 0x95
 // CHECK-NEXT:       PCRel: 0
 // CHECK-NEXT:       Length: 3
-// CHECK-NEXT:       Extern: 1
 // CHECK-NEXT:       Type: X86_64_RELOC_UNSIGNED (0)
 // CHECK-NEXT:       Symbol: _prev
-// CHECK-NEXT:       Scattered: 0
 // CHECK-NEXT:     }
 // CHECK-NEXT:     Relocation {
 // CHECK-NEXT:       Offset: 0x8D
 // CHECK-NEXT:       PCRel: 0
 // CHECK-NEXT:       Length: 3
-// CHECK-NEXT:       Extern: 1
 // CHECK-NEXT:       Type: X86_64_RELOC_UNSIGNED (0)
 // CHECK-NEXT:       Symbol: _prev
-// CHECK-NEXT:       Scattered: 0
 // CHECK-NEXT:     }
 // CHECK-NEXT:     Relocation {
 // CHECK-NEXT:       Offset: 0x79
 // CHECK-NEXT:       PCRel: 1
 // CHECK-NEXT:       Length: 2
-// CHECK-NEXT:       Extern: 1
 // CHECK-NEXT:       Type: X86_64_RELOC_SIGNED_4 (8)
 // CHECK-NEXT:       Symbol: _prev
-// CHECK-NEXT:       Scattered: 0
 // CHECK-NEXT:     }
 // CHECK-NEXT:     Relocation {
 // CHECK-NEXT:       Offset: 0x71
 // CHECK-NEXT:       PCRel: 1
 // CHECK-NEXT:       Length: 2
-// CHECK-NEXT:       Extern: 1
 // CHECK-NEXT:       Type: X86_64_RELOC_SIGNED_2 (7)
 // CHECK-NEXT:       Symbol: _prev
-// CHECK-NEXT:       Scattered: 0
 // CHECK-NEXT:     }
 // CHECK-NEXT:     Relocation {
 // CHECK-NEXT:       Offset: 0x69
 // CHECK-NEXT:       PCRel: 1
 // CHECK-NEXT:       Length: 2
-// CHECK-NEXT:       Extern: 1
 // CHECK-NEXT:       Type: X86_64_RELOC_SIGNED_1 (6)
 // CHECK-NEXT:       Symbol: _prev
-// CHECK-NEXT:       Scattered: 0
 // CHECK-NEXT:     }
 // CHECK-NEXT:     Relocation {
 // CHECK-NEXT:       Offset: 0x63
 // CHECK-NEXT:       PCRel: 1
 // CHECK-NEXT:       Length: 2
-// CHECK-NEXT:       Extern: 1
 // CHECK-NEXT:       Type: X86_64_RELOC_SIGNED (1)
 // CHECK-NEXT:       Symbol: _prev
-// CHECK-NEXT:       Scattered: 0
 // CHECK-NEXT:     }
 // CHECK-NEXT:     Relocation {
 // CHECK-NEXT:       Offset: 0x5C
 // CHECK-NEXT:       PCRel: 1
 // CHECK-NEXT:       Length: 2
-// CHECK-NEXT:       Extern: 1
 // CHECK-NEXT:       Type: X86_64_RELOC_SIGNED (1)
 // CHECK-NEXT:       Symbol: _prev
-// CHECK-NEXT:       Scattered: 0
 // CHECK-NEXT:     }
 // CHECK-NEXT:     Relocation {
 // CHECK-NEXT:       Offset: 0x55
 // CHECK-NEXT:       PCRel: 0
 // CHECK-NEXT:       Length: 2
-// CHECK-NEXT:       Extern: 1
 // CHECK-NEXT:       Type: X86_64_RELOC_SUBTRACTOR (5)
 // CHECK-NEXT:       Symbol: _bar
-// CHECK-NEXT:       Scattered: 0
 // CHECK-NEXT:     }
 // CHECK-NEXT:     Relocation {
 // CHECK-NEXT:       Offset: 0x55
 // CHECK-NEXT:       PCRel: 0
 // CHECK-NEXT:       Length: 2
-// CHECK-NEXT:       Extern: 1
 // CHECK-NEXT:       Type: X86_64_RELOC_UNSIGNED (0)
 // CHECK-NEXT:       Symbol: _foo
-// CHECK-NEXT:       Scattered: 0
 // CHECK-NEXT:     }
 // CHECK-NEXT:     Relocation {
 // CHECK-NEXT:       Offset: 0x4D
 // CHECK-NEXT:       PCRel: 0
 // CHECK-NEXT:       Length: 3
-// CHECK-NEXT:       Extern: 1
 // CHECK-NEXT:       Type: X86_64_RELOC_SUBTRACTOR (5)
 // CHECK-NEXT:       Symbol: _bar
-// CHECK-NEXT:       Scattered: 0
 // CHECK-NEXT:     }
 // CHECK-NEXT:     Relocation {
 // CHECK-NEXT:       Offset: 0x4D
 // CHECK-NEXT:       PCRel: 0
 // CHECK-NEXT:       Length: 3
-// CHECK-NEXT:       Extern: 1
 // CHECK-NEXT:       Type: X86_64_RELOC_UNSIGNED (0)
 // CHECK-NEXT:       Symbol: _foo
-// CHECK-NEXT:       Scattered: 0
 // CHECK-NEXT:     }
 // CHECK-NEXT:     Relocation {
 // CHECK-NEXT:       Offset: 0x45
 // CHECK-NEXT:       PCRel: 0
 // CHECK-NEXT:       Length: 3
-// CHECK-NEXT:       Extern: 1
 // CHECK-NEXT:       Type: X86_64_RELOC_SUBTRACTOR (5)
 // CHECK-NEXT:       Symbol: _bar
-// CHECK-NEXT:       Scattered: 0
 // CHECK-NEXT:     }
 // CHECK-NEXT:     Relocation {
 // CHECK-NEXT:       Offset: 0x45
 // CHECK-NEXT:       PCRel: 0
 // CHECK-NEXT:       Length: 3
-// CHECK-NEXT:       Extern: 1
 // CHECK-NEXT:       Type: X86_64_RELOC_UNSIGNED (0)
 // CHECK-NEXT:       Symbol: _foo
-// CHECK-NEXT:       Scattered: 0
 // CHECK-NEXT:     }
 // CHECK-NEXT:     Relocation {
 // CHECK-NEXT:       Offset: 0x3D
 // CHECK-NEXT:       PCRel: 0
 // CHECK-NEXT:       Length: 3
-// CHECK-NEXT:       Extern: 1
 // CHECK-NEXT:       Type: X86_64_RELOC_UNSIGNED (0)
 // CHECK-NEXT:       Symbol: _foo
-// CHECK-NEXT:       Scattered: 0
 // CHECK-NEXT:     }
 // CHECK-NEXT:     Relocation {
 // CHECK-NEXT:       Offset: 0x35
 // CHECK-NEXT:       PCRel: 0
 // CHECK-NEXT:       Length: 3
-// CHECK-NEXT:       Extern: 1
 // CHECK-NEXT:       Type: X86_64_RELOC_UNSIGNED (0)
 // CHECK-NEXT:       Symbol: _foo
-// CHECK-NEXT:       Scattered: 0
 // CHECK-NEXT:     }
 // CHECK-NEXT:     Relocation {
 // CHECK-NEXT:       Offset: 0x2D
 // CHECK-NEXT:       PCRel: 1
 // CHECK-NEXT:       Length: 2
-// CHECK-NEXT:       Extern: 1
 // CHECK-NEXT:       Type: X86_64_RELOC_SIGNED_4 (8)
 // CHECK-NEXT:       Symbol: _foo
-// CHECK-NEXT:       Scattered: 0
 // CHECK-NEXT:     }
 // CHECK-NEXT:     Relocation {
 // CHECK-NEXT:       Offset: 0x26
 // CHECK-NEXT:       PCRel: 1
 // CHECK-NEXT:       Length: 2
-// CHECK-NEXT:       Extern: 1
 // CHECK-NEXT:       Type: X86_64_RELOC_SIGNED_1 (6)
 // CHECK-NEXT:       Symbol: _foo
-// CHECK-NEXT:       Scattered: 0
 // CHECK-NEXT:     }
 // CHECK-NEXT:     Relocation {
 // CHECK-NEXT:       Offset: 0x20
 // CHECK-NEXT:       PCRel: 1
 // CHECK-NEXT:       Length: 2
-// CHECK-NEXT:       Extern: 1
 // CHECK-NEXT:       Type: X86_64_RELOC_SIGNED (1)
 // CHECK-NEXT:       Symbol: _foo
-// CHECK-NEXT:       Scattered: 0
 // CHECK-NEXT:     }
 // CHECK-NEXT:     Relocation {
 // CHECK-NEXT:       Offset: 0x1A
 // CHECK-NEXT:       PCRel: 1
 // CHECK-NEXT:       Length: 2
-// CHECK-NEXT:       Extern: 1
 // CHECK-NEXT:       Type: X86_64_RELOC_SIGNED (1)
 // CHECK-NEXT:       Symbol: _foo
-// CHECK-NEXT:       Scattered: 0
 // CHECK-NEXT:     }
 // CHECK-NEXT:     Relocation {
 // CHECK-NEXT:       Offset: 0x14
 // CHECK-NEXT:       PCRel: 1
 // CHECK-NEXT:       Length: 2
-// CHECK-NEXT:       Extern: 1
 // CHECK-NEXT:       Type: X86_64_RELOC_GOT (4)
 // CHECK-NEXT:       Symbol: _foo
-// CHECK-NEXT:       Scattered: 0
 // CHECK-NEXT:     }
 // CHECK-NEXT:     Relocation {
 // CHECK-NEXT:       Offset: 0xE
 // CHECK-NEXT:       PCRel: 1
 // CHECK-NEXT:       Length: 2
-// CHECK-NEXT:       Extern: 1
 // CHECK-NEXT:       Type: X86_64_RELOC_GOT_LOAD (3)
 // CHECK-NEXT:       Symbol: _foo
-// CHECK-NEXT:       Scattered: 0
 // CHECK-NEXT:     }
 // CHECK-NEXT:     Relocation {
 // CHECK-NEXT:       Offset: 0x7
 // CHECK-NEXT:       PCRel: 1
 // CHECK-NEXT:       Length: 2
-// CHECK-NEXT:       Extern: 1
 // CHECK-NEXT:       Type: X86_64_RELOC_BRANCH (2)
 // CHECK-NEXT:       Symbol: _foo
-// CHECK-NEXT:       Scattered: 0
 // CHECK-NEXT:     }
 // CHECK-NEXT:     Relocation {
 // CHECK-NEXT:       Offset: 0x2
 // CHECK-NEXT:       PCRel: 1
 // CHECK-NEXT:       Length: 2
-// CHECK-NEXT:       Extern: 1
 // CHECK-NEXT:       Type: X86_64_RELOC_BRANCH (2)
 // CHECK-NEXT:       Symbol: _foo
-// CHECK-NEXT:       Scattered: 0
 // CHECK-NEXT:     }
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Section __debug_frame {
@@ -430,19 +356,15 @@ L6:
 // CHECK-NEXT:       Offset: 0x8
 // CHECK-NEXT:       PCRel: 0
 // CHECK-NEXT:       Length: 3
-// CHECK-NEXT:       Extern: 1
 // CHECK-NEXT:       Type: X86_64_RELOC_UNSIGNED (0)
 // CHECK-NEXT:       Symbol: _ext_foo
-// CHECK-NEXT:       Scattered: 0
 // CHECK-NEXT:     }
 // CHECK-NEXT:     Relocation {
 // CHECK-NEXT:       Offset: 0x0
 // CHECK-NEXT:       PCRel: 0
 // CHECK-NEXT:       Length: 3
-// CHECK-NEXT:       Extern: 0
 // CHECK-NEXT:       Type: X86_64_RELOC_UNSIGNED (0)
-// CHECK-NEXT:       Symbol: 0x2
-// CHECK-NEXT:       Scattered: 0
+// CHECK-NEXT:       Section: __text
 // CHECK-NEXT:     }
 // CHECK-NEXT:   }
 // CHECK-NEXT: ]

@@ -66,46 +66,36 @@ L_.str:                                 ; @.str
 ; DARWIN-G4-DUMP:      Offset: 0x34
 ; DARWIN-G4-DUMP:      PCRel: 1
 ; DARWIN-G4-DUMP:      Length: 2
-; DARWIN-G4-DUMP:      Extern: 0
 ; DARWIN-G4-DUMP:      Type: PPC_RELOC_BR24 (3)
-; DARWIN-G4-DUMP:      Symbol: 0x3
-; DARWIN-G4-DUMP:      Scattered: 0
+; DARWIN-G4-DUMP:      Section: __picsymbolstub1
 ; DARWIN-G4-DUMP:    }
 ; DARWIN-G4-DUMP:    Relocation {
 ; DARWIN-G4-DUMP:      Offset: 0x30
 ; DARWIN-G4-DUMP:      PCRel: 0
 ; DARWIN-G4-DUMP:      Length: 2
-; DARWIN-G4-DUMP:      Extern: N/A
 ; DARWIN-G4-DUMP:      Type: PPC_RELOC_LO16_SECTDIFF (11)
-; DARWIN-G4-DUMP:      Symbol: 0x74
-; DARWIN-G4-DUMP:      Scattered: 1
+; DARWIN-G4-DUMP:      Value: 0x74
 ; DARWIN-G4-DUMP:    }
 ; DARWIN-G4-DUMP:    Relocation {
 ; DARWIN-G4-DUMP:      Offset: 0x0
 ; DARWIN-G4-DUMP:      PCRel: 0
 ; DARWIN-G4-DUMP:      Length: 2
-; DARWIN-G4-DUMP:      Extern: N/A
 ; DARWIN-G4-DUMP:      Type: PPC_RELOC_PAIR (1)
-; DARWIN-G4-DUMP:      Symbol: 0x14
-; DARWIN-G4-DUMP:      Scattered: 1
+; DARWIN-G4-DUMP:      Value: 0x14
 ; DARWIN-G4-DUMP:    }
 ; DARWIN-G4-DUMP:    Relocation {
 ; DARWIN-G4-DUMP:      Offset: 0x2C
 ; DARWIN-G4-DUMP:      PCRel: 0
 ; DARWIN-G4-DUMP:      Length: 2
-; DARWIN-G4-DUMP:      Extern: N/A
 ; DARWIN-G4-DUMP:      Type: PPC_RELOC_HA16_SECTDIFF (12)
-; DARWIN-G4-DUMP:      Symbol: 0x74
-; DARWIN-G4-DUMP:      Scattered: 1
+; DARWIN-G4-DUMP:      Value: 0x74
 ; DARWIN-G4-DUMP:    }
 ; DARWIN-G4-DUMP:    Relocation {
 ; DARWIN-G4-DUMP:      Offset: 0x60
 ; DARWIN-G4-DUMP:      PCRel: 0
 ; DARWIN-G4-DUMP:      Length: 2
-; DARWIN-G4-DUMP:      Extern: N/A
 ; DARWIN-G4-DUMP:      Type: PPC_RELOC_PAIR (1)
-; DARWIN-G4-DUMP:      Symbol: 0x14
-; DARWIN-G4-DUMP:      Scattered: 1
+; DARWIN-G4-DUMP:      Value: 0x14
 ; DARWIN-G4-DUMP:    }
 ; DARWIN-G4-DUMP:  }
 ; DARWIN-G4-DUMP:  Section __picsymbolstub1 {
@@ -113,37 +103,29 @@ L_.str:                                 ; @.str
 ; DARWIN-G4-DUMP:      Offset: 0x14
 ; DARWIN-G4-DUMP:      PCRel: 0
 ; DARWIN-G4-DUMP:      Length: 2
-; DARWIN-G4-DUMP:      Extern: N/A
 ; DARWIN-G4-DUMP:      Type: PPC_RELOC_LO16_SECTDIFF (11)
-; DARWIN-G4-DUMP:      Symbol: 0x70
-; DARWIN-G4-DUMP:      Scattered: 1
+; DARWIN-G4-DUMP:      Value: 0x70
 ; DARWIN-G4-DUMP:    }
 ; DARWIN-G4-DUMP:    Relocation {
 ; DARWIN-G4-DUMP:      Offset: 0x0
 ; DARWIN-G4-DUMP:      PCRel: 0
 ; DARWIN-G4-DUMP:      Length: 2
-; DARWIN-G4-DUMP:      Extern: N/A
 ; DARWIN-G4-DUMP:      Type: PPC_RELOC_PAIR (1)
-; DARWIN-G4-DUMP:      Symbol: 0x58
-; DARWIN-G4-DUMP:      Scattered: 1
+; DARWIN-G4-DUMP:      Value: 0x58
 ; DARWIN-G4-DUMP:    }
 ; DARWIN-G4-DUMP:    Relocation {
 ; DARWIN-G4-DUMP:      Offset: 0xC
 ; DARWIN-G4-DUMP:      PCRel: 0
 ; DARWIN-G4-DUMP:      Length: 2
-; DARWIN-G4-DUMP:      Extern: N/A
 ; DARWIN-G4-DUMP:      Type: PPC_RELOC_HA16_SECTDIFF (12)
-; DARWIN-G4-DUMP:      Symbol: 0x70
-; DARWIN-G4-DUMP:      Scattered: 1
+; DARWIN-G4-DUMP:      Value: 0x70
 ; DARWIN-G4-DUMP:    }
 ; DARWIN-G4-DUMP:    Relocation {
 ; DARWIN-G4-DUMP:      Offset: 0x18
 ; DARWIN-G4-DUMP:      PCRel: 0
 ; DARWIN-G4-DUMP:      Length: 2
-; DARWIN-G4-DUMP:      Extern: N/A
 ; DARWIN-G4-DUMP:      Type: PPC_RELOC_PAIR (1)
-; DARWIN-G4-DUMP:      Symbol: 0x58
-; DARWIN-G4-DUMP:      Scattered: 1
+; DARWIN-G4-DUMP:      Value: 0x58
 ; DARWIN-G4-DUMP:    }
 ; DARWIN-G4-DUMP:  }
 ; DARWIN-G4-DUMP:  Section __la_symbol_ptr {
@@ -151,10 +133,8 @@ L_.str:                                 ; @.str
 ; DARWIN-G4-DUMP:      Offset: 0x0
 ; DARWIN-G4-DUMP:      PCRel: 0
 ; DARWIN-G4-DUMP:      Length: 2
-; DARWIN-G4-DUMP:      Extern: 1
 ; DARWIN-G4-DUMP:      Type: PPC_RELOC_VANILLA (0)
 ; DARWIN-G4-DUMP:      Symbol: dyld_stub_binding_helper
-; DARWIN-G4-DUMP:      Scattered: 0
 ; DARWIN-G4-DUMP:    }
 ; DARWIN-G4-DUMP:  }
 ; DARWIN-G4-DUMP:]

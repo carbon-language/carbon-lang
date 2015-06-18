@@ -9,10 +9,8 @@
 // CHECK-NEXT:       Offset: 0x0
 // CHECK-NEXT:       PCRel: 0
 // CHECK-NEXT:       Length: 3
-// CHECK-NEXT:       Extern: 1
 // CHECK-NEXT:       Type: ARM64_RELOC_UNSIGNED (0)
 // CHECK-NEXT:       Symbol: Lbar
-// CHECK-NEXT:       Scattered: 0
 // CHECK-NEXT:     }
 // CHECK-NEXT:   }
 // CHECK-NEXT: ]

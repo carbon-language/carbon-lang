@@ -469,35 +469,47 @@ void MachODumper::printRelocation(const MachOObjectFile *Obj,
   DataRefImpl DR = Reloc.getRawDataRefImpl();
   MachO::any_relocation_info RE = Obj->getRelocation(DR);
   bool IsScattered = Obj->isRelocationScattered(RE);
-  SmallString<32> SymbolNameOrOffset("0x");
-  if (IsScattered) {
-    // Scattered relocations don't really have an associated symbol
-    // for some reason, even if one exists in the symtab at the correct address.
-    SymbolNameOrOffset += utohexstr(Obj->getScatteredRelocationValue(RE));
-  } else {
+  bool IsExtern = !IsScattered && Obj->getPlainRelocationExternal(RE);
+
+  StringRef TargetName;
+  if (IsExtern) {
     symbol_iterator Symbol = Reloc.getSymbol();
     if (Symbol != Obj->symbol_end()) {
-      StringRef SymbolName;
-      if (error(Symbol->getName(SymbolName)))
+      if (error(Symbol->getName(TargetName)))
         return;
-      SymbolNameOrOffset = SymbolName;
-    } else
-      SymbolNameOrOffset += utohexstr(Obj->getPlainRelocationSymbolNum(RE));
+    }
+  } else if (!IsScattered) {
+    section_iterator SecI = Reloc.getSection();
+    if (SecI != Obj->section_end()) {
+      if (error(SecI->getName(TargetName)))
+        return;
+    }
   }
+  if (TargetName.empty())
+    TargetName = "-";
 
   if (opts::ExpandRelocs) {
     DictScope Group(W, "Relocation");
     W.printHex("Offset", Offset);
     W.printNumber("PCRel", Obj->getAnyRelocationPCRel(RE));
     W.printNumber("Length", Obj->getAnyRelocationLength(RE));
-    if (IsScattered)
-      W.printString("Extern", StringRef("N/A"));
-    else
-      W.printNumber("Extern", Obj->getPlainRelocationExternal(RE));
     W.printNumber("Type", RelocName, Obj->getAnyRelocationType(RE));
-    W.printString("Symbol", SymbolNameOrOffset);
-    W.printNumber("Scattered", IsScattered);
+    if (IsScattered) {
+      W.printHex("Value", Obj->getScatteredRelocationValue(RE));
+    } else {
+      const char *Kind = IsExtern ? "Symbol" : "Section";
+      W.printNumber(Kind, TargetName, Obj->getPlainRelocationSymbolNum(RE));
+    }
   } else {
+    SmallString<32> SymbolNameOrOffset("0x");
+    if (IsScattered) {
+      // Scattered relocations don't really have an associated symbol for some
+      // reason, even if one exists in the symtab at the correct address.
+      SymbolNameOrOffset += utohexstr(Obj->getScatteredRelocationValue(RE));
+    } else {
+      SymbolNameOrOffset = TargetName;
+    }
+
     raw_ostream& OS = W.startLine();
     OS << W.hex(Offset)
        << " " << Obj->getAnyRelocationPCRel(RE)

@@ -27,37 +27,29 @@
 // CHECK-NEXT:       Offset: 0x60
 // CHECK-NEXT:       PCRel: 0
 // CHECK-NEXT:       Length: 3
-// CHECK-NEXT:       Extern: 0
 // CHECK-NEXT:       Type: ARM64_RELOC_UNSIGNED (0)
-// CHECK-NEXT:       Symbol: 0x1
-// CHECK-NEXT:       Scattered: 0
+// CHECK-NEXT:       Section: __text (1)
 // CHECK-NEXT:     }
 // CHECK-NEXT:     Relocation {
 // CHECK-NEXT:       Offset: 0x40
 // CHECK-NEXT:       PCRel: 0
 // CHECK-NEXT:       Length: 3
-// CHECK-NEXT:       Extern: 0
 // CHECK-NEXT:       Type: ARM64_RELOC_UNSIGNED (0)
-// CHECK-NEXT:       Symbol: 0x1
-// CHECK-NEXT:       Scattered: 0
+// CHECK-NEXT:       Section: __text (1)
 // CHECK-NEXT:     }
 // CHECK-NEXT:     Relocation {
 // CHECK-NEXT:       Offset: 0x20
 // CHECK-NEXT:       PCRel: 0
 // CHECK-NEXT:       Length: 3
-// CHECK-NEXT:       Extern: 0
 // CHECK-NEXT:       Type: ARM64_RELOC_UNSIGNED (0)
-// CHECK-NEXT:       Symbol: 0x1
-// CHECK-NEXT:       Scattered: 0
+// CHECK-NEXT:       Section: __text (1)
 // CHECK-NEXT:     }
 // CHECK-NEXT:     Relocation {
 // CHECK-NEXT:       Offset: 0x0
 // CHECK-NEXT:       PCRel: 0
 // CHECK-NEXT:       Length: 3
-// CHECK-NEXT:       Extern: 0
 // CHECK-NEXT:       Type: ARM64_RELOC_UNSIGNED (0)
-// CHECK-NEXT:       Symbol: 0x1
-// CHECK-NEXT:       Scattered: 0
+// CHECK-NEXT:       Section: __text (1)
 // CHECK-NEXT:     }
 // CHECK-NEXT:   ]
 // CHECK-NEXT:   SectionData (

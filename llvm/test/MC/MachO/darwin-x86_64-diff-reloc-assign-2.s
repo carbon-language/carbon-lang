@@ -14,19 +14,15 @@ L_var2:
 // CHECK-NEXT:       Offset: 0x4
 // CHECK-NEXT:       PCRel: 0
 // CHECK-NEXT:       Length: 2
-// CHECK-NEXT:       Extern: 0
 // CHECK-NEXT:       Type: X86_64_RELOC_SUBTRACTOR (5)
-// CHECK-NEXT:       Symbol: 0x2
-// CHECK-NEXT:       Scattered: 0
+// CHECK-NEXT:       Section: __data (2)
 // CHECK-NEXT:     }
 // CHECK-NEXT:     Relocation {
 // CHECK-NEXT:       Offset: 0x4
 // CHECK-NEXT:       PCRel: 0
 // CHECK-NEXT:       Length: 2
-// CHECK-NEXT:       Extern: 0
 // CHECK-NEXT:       Type: X86_64_RELOC_UNSIGNED (0)
-// CHECK-NEXT:       Symbol: 0x2
-// CHECK-NEXT:       Scattered: 0
+// CHECK-NEXT:       Section: __data (2)
 // CHECK-NEXT:     }
 // CHECK-NEXT:   }
 // CHECK-NEXT: ]
