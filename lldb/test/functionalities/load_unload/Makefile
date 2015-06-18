@@ -38,7 +38,7 @@ endif
 all: a.out $(LIB_A) $(LIB_B) $(LIB_C) $(LIB_D) hidden/$(LIB_D)
 
 a.out: main.o $(LIB_D)
-	$(CC) $(CFLAGS) -o a.out main.o -L. -lloadunload_d $(LIB_DL)
+	$(CC) $(CFLAGS) -o a.out main.o -L. -pie -lloadunload_d $(LIB_DL)
 
 main.o: main.c
 	$(CC) $(CFLAGS) -c main.c
