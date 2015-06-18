@@ -16,6 +16,7 @@
 #include "lldb/lldb-types.h"
 #include "lldb/Core/Error.h"
 #include "lldb/Host/Mutex.h"
+#include "llvm/ADT/StringRef.h"
 
 #include "NativeBreakpointList.h"
 #include "NativeWatchpointList.h"
@@ -292,6 +293,9 @@ namespace lldb_private
 
         virtual Error
         GetLoadedModuleFileSpec(const char* module_path, FileSpec& file_spec) = 0;
+
+        virtual Error
+        GetFileLoadAddress(const llvm::StringRef& file_name, lldb::addr_t& load_addr) = 0;
 
     protected:
         lldb::pid_t m_pid;

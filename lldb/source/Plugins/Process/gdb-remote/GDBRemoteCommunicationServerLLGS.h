@@ -236,6 +236,9 @@ protected:
     PacketResult
     Handle_qWatchpointSupportInfo (StringExtractorGDBRemote &packet);
 
+    PacketResult
+    Handle_qFileLoadAddress (StringExtractorGDBRemote &packet);
+
     void
     SetCurrentThreadID (lldb::tid_t tid);
 

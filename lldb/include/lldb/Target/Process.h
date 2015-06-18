@@ -3036,6 +3036,28 @@ public:
     virtual bool
     GetModuleSpec(const FileSpec& module_file_spec, const ArchSpec& arch, ModuleSpec &module_spec);
 
+    //------------------------------------------------------------------
+    /// Try to find the load address of a file.
+    /// The load address is defined as the address of the first memory
+    /// region what contains data mapped from the specified file.
+    ///
+    /// @param[in] file 
+    ///     The name of the file whose load address we are looking for
+    ///
+    /// @param[out] is_loaded
+    ///     \b True if the file is loaded into the memory and false
+    ///     otherwise.
+    ///
+    /// @param[out] load_addr
+    ///     The load address of the file if it is loaded into the
+    ///     processes address space, LLDB_INVALID_ADDRESS otherwise.
+    //------------------------------------------------------------------
+    virtual Error
+    GetFileLoadAddress(const FileSpec& file, bool& is_loaded, lldb::addr_t& load_addr)
+    {
+        return Error("Not supported");
+    }
+
 protected:
 
     //------------------------------------------------------------------

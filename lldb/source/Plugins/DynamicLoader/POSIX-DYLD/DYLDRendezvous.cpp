@@ -412,6 +412,17 @@ DYLDRendezvous::ReadSOEntryFromMemory(lldb::addr_t addr, SOEntry &entry)
 
     entry.file_spec.SetFile(ReadStringFromMemory(entry.path_addr), false);
 
+    // The base_addr is not filled in for some case.
+    // Try to figure it out based on the load address of the object file.
+    if (entry.base_addr == 0)
+    {
+        lldb::addr_t load_addr = LLDB_INVALID_ADDRESS;
+        bool is_loaded = false;
+        Error error = m_process->GetFileLoadAddress(entry.file_spec, is_loaded, load_addr);
+        if (error.Success() && is_loaded)
+            entry.base_addr = load_addr;
+    }
+
     return true;
 }
 

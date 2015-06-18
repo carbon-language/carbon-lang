@@ -238,8 +238,11 @@ public:
                   const ArchSpec& arch,
                   ModuleSpec &module_spec) override;
 
-    virtual size_t
-    LoadModules () override;
+    size_t
+    LoadModules() override;
+
+    Error
+    GetFileLoadAddress(const FileSpec& file, bool& is_loaded, lldb::addr_t& load_addr) override;
 
 protected:
     friend class ThreadGDBRemote;

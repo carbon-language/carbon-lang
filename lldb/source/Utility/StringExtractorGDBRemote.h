@@ -61,6 +61,7 @@ public:
         eServerPacketType_qSpeedTest,
         eServerPacketType_qUserName,
         eServerPacketType_qGetWorkingDir,
+        eServerPacketType_qFileLoadAddress,
         eServerPacketType_QEnvironment,
         eServerPacketType_QLaunchArch,
         eServerPacketType_QSetDisableASLR,

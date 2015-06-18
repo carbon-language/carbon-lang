@@ -152,6 +152,9 @@ namespace process_linux {
         Error
         GetLoadedModuleFileSpec(const char* module_path, FileSpec& file_spec) override;
 
+        Error
+        GetFileLoadAddress(const llvm::StringRef& file_name, lldb::addr_t& load_addr) override;
+
         // ---------------------------------------------------------------------
         // Interface used by NativeRegisterContext-derived classes.
         // ---------------------------------------------------------------------

@@ -988,6 +988,24 @@ for this region.
 //----------------------------------------------------------------------
 
 //----------------------------------------------------------------------
+// qFileLoadAddress:<file_path>
+//
+// BRIEF
+//  Get the load address of a memory mapped file.
+//  The load address is defined as the address of the first memory
+//  region what contains data mapped from the specified file.
+//
+// RESPONSE
+//  <unsinged-hex64> - Load address of the file in big endian encoding
+//  "E01" - the requested file isn't loaded
+//  "EXX" - for any other errors
+//
+// PRIORITY TO IMPLEMENT
+//  Low, required if dynamic linker don't fill in the load address of
+//  some object file in the rendezvous data structure.
+//----------------------------------------------------------------------
+
+//----------------------------------------------------------------------
 // qModuleInfo:<module_path>;<arch triple>
 //
 // BRIEF

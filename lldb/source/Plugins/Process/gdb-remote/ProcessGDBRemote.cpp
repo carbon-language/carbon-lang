@@ -4121,6 +4121,47 @@ ProcessGDBRemote::LoadModules ()
     return new_modules.GetSize();
 }
 
+Error
+ProcessGDBRemote::GetFileLoadAddress(const FileSpec& file, bool& is_loaded, lldb::addr_t& load_addr)
+{
+    is_loaded = false;
+    load_addr = LLDB_INVALID_ADDRESS;
+
+    std::string file_path = file.GetPath(false);
+    if (file_path.empty ())
+        return Error("Empty file name specified");
+
+    StreamString packet;
+    packet.PutCString("qFileLoadAddress:");
+    packet.PutCStringAsRawHex8(file_path.c_str());
+
+    StringExtractorGDBRemote response;
+    if (m_gdb_comm.SendPacketAndWaitForResponse(packet.GetString().c_str(), response, false) != GDBRemoteCommunication::PacketResult::Success)
+        return Error("Sending qFileLoadAddress packet failed");
+
+    if (response.IsErrorResponse())
+    {
+        if (response.GetError() == 1)
+        {
+            // The file is not loaded into the inferior
+            is_loaded = false;
+            load_addr = LLDB_INVALID_ADDRESS;
+            return Error();
+        }
+
+        return Error("Fetching file load address from remote server returned an error");
+    }
+
+    if (response.IsNormalResponse())
+    {
+        is_loaded = true;
+        load_addr = response.GetHexMaxU64(false, LLDB_INVALID_ADDRESS);
+        return Error();
+    }
+
+    return Error("Unknown error happened during sending the load address packet");
+}
+
 class CommandObjectProcessGDBRemoteSpeedTest: public CommandObjectParsed
 {
 public:

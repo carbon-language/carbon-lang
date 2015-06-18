@@ -53,6 +53,7 @@
 using namespace lldb;
 using namespace lldb_private;
 using namespace lldb_private::process_gdb_remote;
+using namespace llvm;
 
 //----------------------------------------------------------------------
 // GDBRemote Errors
@@ -134,6 +135,8 @@ GDBRemoteCommunicationServerLLGS::RegisterPacketHandlers()
                                   &GDBRemoteCommunicationServerLLGS::Handle_qC);
     RegisterMemberFunctionHandler(StringExtractorGDBRemote::eServerPacketType_qfThreadInfo,
                                   &GDBRemoteCommunicationServerLLGS::Handle_qfThreadInfo);
+    RegisterMemberFunctionHandler(StringExtractorGDBRemote::eServerPacketType_qFileLoadAddress,
+                                  &GDBRemoteCommunicationServerLLGS::Handle_qFileLoadAddress);
     RegisterMemberFunctionHandler(StringExtractorGDBRemote::eServerPacketType_qGetWorkingDir,
                                   &GDBRemoteCommunicationServerLLGS::Handle_qGetWorkingDir);
     RegisterMemberFunctionHandler(StringExtractorGDBRemote::eServerPacketType_qMemoryRegionInfo,
@@ -2597,6 +2600,34 @@ GDBRemoteCommunicationServerLLGS::Handle_qWatchpointSupportInfo (StringExtractor
     uint32_t num = m_debugged_process_sp->GetMaxWatchpoints();
     StreamGDBRemote response;
     response.Printf ("num:%d;", num);
+    return SendPacketNoLock(response.GetData(), response.GetSize());
+}
+
+GDBRemoteCommunication::PacketResult
+GDBRemoteCommunicationServerLLGS::Handle_qFileLoadAddress (StringExtractorGDBRemote &packet)
+{
+    // Fail if we don't have a current process.
+    if (!m_debugged_process_sp ||
+            m_debugged_process_sp->GetID () == LLDB_INVALID_PROCESS_ID)
+        return SendErrorResponse(67);
+
+    packet.SetFilePos(strlen("qFileLoadAddress:"));
+    if (packet.GetBytesLeft() == 0)
+        return SendErrorResponse(68);
+
+    std::string file_name;
+    packet.GetHexByteString(file_name);
+
+    lldb::addr_t file_load_address = LLDB_INVALID_ADDRESS;
+    Error error = m_debugged_process_sp->GetFileLoadAddress(file_name, file_load_address);
+    if (error.Fail())
+        return SendErrorResponse(69);
+
+    if (file_load_address == LLDB_INVALID_ADDRESS)
+        return SendErrorResponse(1); // File not loaded
+
+    StreamGDBRemote response;
+    response.PutHex64(file_load_address);
     return SendPacketNoLock(response.GetData(), response.GetSize());
 }
 

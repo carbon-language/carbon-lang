@@ -3649,6 +3649,39 @@ NativeProcessLinux::GetLoadedModuleFileSpec(const char* module_path, FileSpec& f
 }
 
 Error
+NativeProcessLinux::GetFileLoadAddress(const llvm::StringRef& file_name, lldb::addr_t& load_addr)
+{
+    load_addr = LLDB_INVALID_ADDRESS;
+    Error error = ProcFileReader::ProcessLineByLine (GetID (), "maps",
+        [&] (const std::string &line) -> bool
+        {
+            StringRef maps_row(line);
+ 
+            SmallVector<StringRef, 16> maps_columns;
+            maps_row.split(maps_columns, StringRef(" "), -1, false);
+ 
+            if (maps_columns.size() < 6)
+            {
+                // Return true to continue reading the proc file
+                return true;
+            }
+
+            if (maps_columns[5] == file_name)
+            {
+                StringExtractor addr_extractor(maps_columns[0].str().c_str());
+                load_addr = addr_extractor.GetHexMaxU64(false, LLDB_INVALID_ADDRESS); 
+
+                // Return false to stop reading the proc file further
+                return false;
+            }
+ 
+            // Return true to continue reading the proc file
+            return true;
+        });
+    return error; 
+}
+
+Error
 NativeProcessLinux::ResumeThread(
         lldb::tid_t tid,
         NativeThreadLinux::ResumeThreadFunction request_thread_resume_function,
