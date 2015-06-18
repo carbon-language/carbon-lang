@@ -118,6 +118,9 @@ LinkerDriver::parseDirectives(StringRef S,
       if (auto EC = checkFailIfMismatch(Arg->getValue()))
         return EC;
       break;
+    case OPT_incl:
+      Config->Includes.insert(Arg->getValue());
+      break;
     default:
       llvm::errs() << Arg->getSpelling() << " is not allowed in .drectve\n";
       return make_error_code(LLDError::InvalidOption);
@@ -343,6 +346,10 @@ bool LinkerDriver::link(int Argc, const char *Argv[]) {
     if (parseAlternateName(Arg->getValue()))
       return false;
 
+  // Handle /include
+  for (auto *Arg : Args->filtered(OPT_incl))
+    Config->Includes.insert(Arg->getValue());
+
   // Handle /implib
   if (auto *Arg = Args->getLastArg(OPT_implib))
     Config->Implib = Arg->getValue();
@@ -443,11 +450,8 @@ bool LinkerDriver::link(int Argc, const char *Argv[]) {
 
   // Add undefined symbols given via the command line.
   // (/include is equivalent to Unix linker's -u option.)
-  for (auto *Arg : Args->filtered(OPT_incl)) {
-    StringRef Sym = Arg->getValue();
+  for (StringRef Sym : Config->Includes)
     Symtab.addUndefined(Sym);
-    Config->GCRoots.insert(Sym);
-  }
 
   // Windows specific -- Create a resource file containing a manifest file.
   if (Config->Manifest == Configuration::Embed) {
@@ -495,7 +499,6 @@ bool LinkerDriver::link(int Argc, const char *Argv[]) {
   for (size_t I = 0; I < Config->Exports.size(); ++I) {
     StringRef Sym = Config->Exports[I].Name;
     Symtab.addUndefined(Sym);
-    Config->GCRoots.insert(Sym);
   }
 
   // Windows specific -- If entry point name is not given, we need to
@@ -509,7 +512,6 @@ bool LinkerDriver::link(int Argc, const char *Argv[]) {
     }
     Config->EntryName = EntryOrErr.get();
   }
-  Config->GCRoots.insert(Config->EntryName);
 
   // Add weak aliases. Weak aliases is a mechanism to give remaining
   // undefined symbols final chance to be resolved successfully.
@@ -532,6 +534,13 @@ bool LinkerDriver::link(int Argc, const char *Argv[]) {
   // Make sure we have resolved all symbols.
   if (Symtab.reportRemainingUndefines())
     return false;
+
+  // Initialize a list of GC root.
+  for (StringRef Sym : Config->Includes)
+    Config->GCRoots.insert(Sym);
+  for (Export &E : Config->Exports)
+    Config->GCRoots.insert(E.Name);
+  Config->GCRoots.insert(Config->EntryName);
 
   // Do LTO by compiling bitcode input files to a native COFF file
   // then link that file.

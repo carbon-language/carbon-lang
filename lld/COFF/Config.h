@@ -53,6 +53,9 @@ struct Configuration {
   std::set<StringRef> NoDefaultLibs;
   bool NoDefaultLibAll = false;
 
+  // Used for /include.
+  std::set<StringRef> Includes;
+
   // True if we are creating a DLL.
   bool DLL = false;
   StringRef Implib;
