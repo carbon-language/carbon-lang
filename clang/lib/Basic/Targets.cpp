@@ -1861,6 +1861,7 @@ public:
       break;
     case GK_SOUTHERN_ISLANDS:
     case GK_SEA_ISLANDS:
+    case GK_VOLCANIC_ISLANDS:
       DescriptionString = DescriptionStringSI;
       hasFP64 = true;
       hasFMAF = true;
