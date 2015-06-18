@@ -29,6 +29,10 @@
 /* Installation directory for documentation */
 #cmakedefine LLVM_DOCSDIR "${LLVM_DOCSDIR}"
 
+/* Define if LLVM is built with asserts and checks that change the layout of
+   client-visible data structures.  */
+#cmakedefine LLVM_ENABLE_ABI_BREAKING_CHECKS
+
 /* Define if threads enabled */
 #cmakedefine01 LLVM_ENABLE_THREADS
 
@@ -100,9 +104,5 @@
 
 /* Define if we link Polly to the tools */
 #cmakedefine LINK_POLLY_INTO_TOOLS
-
-/* Define if LLVM is built with asserts and checks that change the layout of
-   client-visible data structures.  */
-#cmakedefine LLVM_ENABLE_ABI_BREAKING_CHECKS
 
 #endif
