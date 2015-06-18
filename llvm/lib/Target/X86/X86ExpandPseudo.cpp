@@ -84,14 +84,9 @@ bool X86ExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
     int StackAdj = StackAdjust.getImm();
 
     if (StackAdj) {
-      // standard x86_64 and NaCl use 64-bit frame/stack pointers, x32 - 32-bit.
-      // Check if we should use LEA for SP.
-      const X86FrameLowering *TFI = STI->getFrameLowering();
-      bool UseLEAForSP = STI->useLeaForSP() &&
-                         X86FL->canUseLEAForSPInEpilogue(*MBB.getParent());
       // Check for possible merge with preceding ADD instruction.
-      StackAdj += TFI->mergeSPUpdates(MBB, MBBI, true);
-      TFI->emitSPUpdate(MBB, MBBI, StackAdj, UseLEAForSP);
+      StackAdj += X86FL->mergeSPUpdates(MBB, MBBI, true);
+      X86FL->emitSPUpdate(MBB, MBBI, StackAdj, /*InEpilogue=*/true);
     }
 
     // Jump to label or value in register.

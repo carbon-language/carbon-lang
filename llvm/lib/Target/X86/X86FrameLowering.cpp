@@ -214,20 +214,36 @@ static bool isEAXLiveIn(MachineFunction &MF) {
   return false;
 }
 
+/// Check whether or not the terminators of \p MBB needs to read EFLAGS.
+static bool terminatorsNeedFlagsAsInput(const MachineBasicBlock &MBB) {
+  for (const MachineInstr &MI : MBB.terminators()) {
+    bool BreakNext = false;
+    for (const MachineOperand &MO : MI.operands()) {
+      if (!MO.isReg())
+        continue;
+      unsigned Reg = MO.getReg();
+      if (Reg != X86::EFLAGS)
+        continue;
+
+      // This terminator needs an eflag that is not defined
+      // by a previous terminator.
+      if (!MO.isDef())
+        return true;
+      BreakNext = true;
+    }
+    if (BreakNext)
+      break;
+  }
+  return false;
+}
+
 /// emitSPUpdate - Emit a series of instructions to increment / decrement the
 /// stack pointer by a constant value.
 void X86FrameLowering::emitSPUpdate(MachineBasicBlock &MBB,
                                     MachineBasicBlock::iterator &MBBI,
-                                    int64_t NumBytes, bool UseLEA) const {
+                                    int64_t NumBytes, bool InEpilogue) const {
   bool isSub = NumBytes < 0;
   uint64_t Offset = isSub ? -NumBytes : NumBytes;
-  unsigned Opc;
-  if (UseLEA)
-    Opc = getLEArOpcode(Uses64BitFramePtr);
-  else
-    Opc = isSub
-      ? getSUBriOpcode(Uses64BitFramePtr, Offset)
-      : getADDriOpcode(Uses64BitFramePtr, Offset);
 
   uint64_t Chunk = (1LL << 31) - 1;
   DebugLoc DL = MBB.findDebugLoc(MBBI);
@@ -244,7 +260,7 @@ void X86FrameLowering::emitSPUpdate(MachineBasicBlock &MBB,
         Reg = findDeadCallerSavedReg(MBB, MBBI, RegInfo, Is64Bit);
 
       if (Reg) {
-        Opc = Is64Bit ? X86::MOV64ri : X86::MOV32ri;
+        unsigned Opc = Is64Bit ? X86::MOV64ri : X86::MOV32ri;
         BuildMI(MBB, MBBI, DL, TII.get(Opc), Reg)
           .addImm(Offset);
         Opc = isSub
@@ -266,7 +282,7 @@ void X86FrameLowering::emitSPUpdate(MachineBasicBlock &MBB,
         ? (unsigned)(Is64Bit ? X86::RAX : X86::EAX)
         : findDeadCallerSavedReg(MBB, MBBI, RegInfo, Is64Bit);
       if (Reg) {
-        Opc = isSub
+        unsigned Opc = isSub
           ? (Is64Bit ? X86::PUSH64r : X86::PUSH32r)
           : (Is64Bit ? X86::POP64r  : X86::POP32r);
         MachineInstr *MI = BuildMI(MBB, MBBI, DL, TII.get(Opc))
@@ -278,23 +294,57 @@ void X86FrameLowering::emitSPUpdate(MachineBasicBlock &MBB,
       }
     }
 
-    MachineInstr *MI = nullptr;
-
-    if (UseLEA) {
-      MI =  addRegOffset(BuildMI(MBB, MBBI, DL, TII.get(Opc), StackPtr),
-                          StackPtr, false, isSub ? -ThisVal : ThisVal);
-    } else {
-      MI = BuildMI(MBB, MBBI, DL, TII.get(Opc), StackPtr)
-            .addReg(StackPtr)
-            .addImm(ThisVal);
-      MI->getOperand(3).setIsDead(); // The EFLAGS implicit def is dead.
-    }
-
+    MachineInstrBuilder MI = BuildStackAdjustment(
+        MBB, MBBI, DL, isSub ? -ThisVal : ThisVal, InEpilogue);
     if (isSub)
-      MI->setFlag(MachineInstr::FrameSetup);
+      MI.setMIFlag(MachineInstr::FrameSetup);
 
     Offset -= ThisVal;
   }
+}
+
+MachineInstrBuilder X86FrameLowering::BuildStackAdjustment(
+    MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI, DebugLoc DL,
+    int64_t Offset, bool InEpilogue) const {
+  assert(Offset != 0 && "zero offset stack adjustment requested");
+
+  // On Atom, using LEA to adjust SP is preferred, but using it in the epilogue
+  // is tricky.
+  bool UseLEA;
+  if (!InEpilogue) {
+    UseLEA = STI.useLeaForSP();
+  } else {
+    // If we can use LEA for SP but we shouldn't, check that none
+    // of the terminators uses the eflags. Otherwise we will insert
+    // a ADD that will redefine the eflags and break the condition.
+    // Alternatively, we could move the ADD, but this may not be possible
+    // and is an optimization anyway.
+    UseLEA = canUseLEAForSPInEpilogue(*MBB.getParent());
+    if (UseLEA && !STI.useLeaForSP())
+      UseLEA = terminatorsNeedFlagsAsInput(MBB);
+    // If that assert breaks, that means we do not do the right thing
+    // in canUseAsEpilogue.
+    assert((UseLEA || !terminatorsNeedFlagsAsInput(MBB)) &&
+           "We shouldn't have allowed this insertion point");
+  }
+
+  MachineInstrBuilder MI;
+  if (UseLEA) {
+    MI = addRegOffset(BuildMI(MBB, MBBI, DL,
+                              TII.get(getLEArOpcode(Uses64BitFramePtr)),
+                              StackPtr),
+                      StackPtr, false, Offset);
+  } else {
+    bool IsSub = Offset < 0;
+    uint64_t AbsOffset = IsSub ? -Offset : Offset;
+    unsigned Opc = IsSub ? getSUBriOpcode(Uses64BitFramePtr, AbsOffset)
+                         : getADDriOpcode(Uses64BitFramePtr, AbsOffset);
+    MI = BuildMI(MBB, MBBI, DL, TII.get(Opc), StackPtr)
+             .addReg(StackPtr)
+             .addImm(AbsOffset);
+    MI->getOperand(3).setIsDead(); // The EFLAGS implicit def is dead.
+  }
+  return MI;
 }
 
 /// mergeSPUpdatesUp - Merge two stack-manipulating instructions upper iterator.
@@ -602,7 +652,6 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF,
   bool NeedsWinCFI = IsWin64Prologue && Fn->needsUnwindTableEntry();
   bool NeedsDwarfCFI =
       !IsWin64Prologue && (MMI.hasDebugInfo() || Fn->needsUnwindTableEntry());
-  bool UseLEA = STI.useLeaForSP();
   unsigned FramePtr = RegInfo->getFrameRegister(MF);
   const unsigned MachineFramePtr =
       STI.isTarget64BitILP32()
@@ -652,14 +701,9 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF,
   // applies to tail call optimized functions where the callee argument stack
   // size is bigger than the callers.
   if (TailCallReturnAddrDelta < 0) {
-    MachineInstr *MI =
-      BuildMI(MBB, MBBI, DL,
-              TII.get(getSUBriOpcode(Uses64BitFramePtr, -TailCallReturnAddrDelta)),
-              StackPtr)
-        .addReg(StackPtr)
-        .addImm(-TailCallReturnAddrDelta)
+    BuildStackAdjustment(MBB, MBBI, DL, TailCallReturnAddrDelta,
+                         /*InEpilogue=*/false)
         .setMIFlag(MachineInstr::FrameSetup);
-    MI->getOperand(3).setIsDead(); // The EFLAGS implicit def is dead.
   }
 
   // Mapping for machine moves:
@@ -856,7 +900,7 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF,
       MBB.insert(MBBI, MI);
     }
   } else if (NumBytes) {
-    emitSPUpdate(MBB, MBBI, -(int64_t)NumBytes, UseLEA);
+    emitSPUpdate(MBB, MBBI, -(int64_t)NumBytes, /*InEpilogue=*/false);
   }
 
   if (NeedsWinCFI && NumBytes)
@@ -958,29 +1002,6 @@ bool X86FrameLowering::canUseLEAForSPInEpilogue(
   return !MF.getTarget().getMCAsmInfo()->usesWindowsCFI() || hasFP(MF);
 }
 
-/// Check whether or not the terminators of \p MBB needs to read EFLAGS.
-static bool terminatorsNeedFlagsAsInput(const MachineBasicBlock &MBB) {
-  for (const MachineInstr &MI : MBB.terminators()) {
-    bool BreakNext = false;
-    for (const MachineOperand &MO : MI.operands()) {
-      if (!MO.isReg())
-        continue;
-      unsigned Reg = MO.getReg();
-      if (Reg != X86::EFLAGS)
-        continue;
-
-      // This terminator needs an eflag that is not defined
-      // by a previous terminator.
-      if (!MO.isDef())
-        return true;
-      BreakNext = true;
-    }
-    if (BreakNext)
-      break;
-  }
-  return false;
-}
-
 void X86FrameLowering::emitEpilogue(MachineFunction &MF,
                                     MachineBasicBlock &MBB) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
@@ -999,18 +1020,6 @@ void X86FrameLowering::emitEpilogue(MachineFunction &MF,
   bool IsWin64Prologue = MF.getTarget().getMCAsmInfo()->usesWindowsCFI();
   bool NeedsWinCFI =
       IsWin64Prologue && MF.getFunction()->needsUnwindTableEntry();
-  bool UseLEAForSP = canUseLEAForSPInEpilogue(MF);
-  // If we can use LEA for SP but we shouldn't, check that none
-  // of the terminators uses the eflags. Otherwise we will insert
-  // a ADD that will redefine the eflags and break the condition.
-  // Alternatively, we could move the ADD, but this may not be possible
-  // and is an optimization anyway.
-  if (UseLEAForSP && !STI.useLeaForSP())
-    UseLEAForSP = terminatorsNeedFlagsAsInput(MBB);
-  // If that assert breaks, that means we do not do the right thing
-  // in canUseAsEpilogue.
-  assert((UseLEAForSP || !terminatorsNeedFlagsAsInput(MBB)) &&
-         "We shouldn't have allowed this insertion point");
 
   // Get the number of bytes to allocate from the FrameInfo.
   uint64_t StackSize = MFI->getStackSize();
@@ -1087,7 +1096,7 @@ void X86FrameLowering::emitEpilogue(MachineFunction &MF,
     }
   } else if (NumBytes) {
     // Adjust stack pointer back: ESP += numbytes.
-    emitSPUpdate(MBB, MBBI, NumBytes, UseLEAForSP);
+    emitSPUpdate(MBB, MBBI, NumBytes, /*InEpilogue=*/true);
     --MBBI;
   }
 
@@ -1108,7 +1117,7 @@ void X86FrameLowering::emitEpilogue(MachineFunction &MF,
 
     // Check for possible merge with preceding ADD instruction.
     Offset += mergeSPUpdates(MBB, MBBI, true);
-    emitSPUpdate(MBB, MBBI, Offset, UseLEAForSP);
+    emitSPUpdate(MBB, MBBI, Offset, /*InEpilogue=*/true);
   }
 }
 
@@ -1880,54 +1889,29 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
     unsigned StackAlign = getStackAlignment();
     Amount = RoundUpToAlignment(Amount, StackAlign);
 
-    MachineInstr *New = nullptr;
-
     // Factor out the amount that gets handled inside the sequence
     // (Pushes of argument for frame setup, callee pops for frame destroy)
     Amount -= InternalAmt;
 
     if (Amount) {
-      if (Opcode == TII.getCallFrameSetupOpcode()) {
-        New = BuildMI(MF, DL, TII.get(getSUBriOpcode(IsLP64, Amount)), StackPtr)
-          .addReg(StackPtr).addImm(Amount);
-      } else {
-        assert(Opcode == TII.getCallFrameDestroyOpcode());
-
-        unsigned Opc = getADDriOpcode(IsLP64, Amount);
-        New = BuildMI(MF, DL, TII.get(Opc), StackPtr)
-          .addReg(StackPtr).addImm(Amount);
-      }
+      // Add Amount to SP to destroy a frame, and subtract to setup.
+      int Offset = isDestroy ? Amount : -Amount;
+      BuildStackAdjustment(MBB, I, DL, Offset, /*InEpilogue=*/false);
     }
-
-    if (New) {
-      // The EFLAGS implicit def is dead.
-      New->getOperand(3).setIsDead();
-
-      // Replace the pseudo instruction with a new instruction.
-      MBB.insert(I, New);
-    }
-
     return;
   }
 
-  if (Opcode == TII.getCallFrameDestroyOpcode() && InternalAmt) {
+  if (isDestroy && InternalAmt) {
     // If we are performing frame pointer elimination and if the callee pops
     // something off the stack pointer, add it back.  We do this until we have
     // more advanced stack pointer tracking ability.
-    unsigned Opc = getSUBriOpcode(IsLP64, InternalAmt);
-    MachineInstr *New = BuildMI(MF, DL, TII.get(Opc), StackPtr)
-      .addReg(StackPtr).addImm(InternalAmt);
-
-    // The EFLAGS implicit def is dead.
-    New->getOperand(3).setIsDead();
-
     // We are not tracking the stack pointer adjustment by the callee, so make
     // sure we restore the stack pointer immediately after the call, there may
     // be spill code inserted between the CALL and ADJCALLSTACKUP instructions.
     MachineBasicBlock::iterator B = MBB.begin();
     while (I != B && !std::prev(I)->isCall())
       --I;
-    MBB.insert(I, New);
+    BuildStackAdjustment(MBB, I, DL, -InternalAmt, /*InEpilogue=*/false);
   }
 }
 
