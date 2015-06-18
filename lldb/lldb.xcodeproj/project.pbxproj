@@ -856,6 +856,8 @@
 		966C6B7918E6A56A0093F5EC /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 966C6B7818E6A56A0093F5EC /* libz.dylib */; };
 		966C6B7A18E6A56A0093F5EC /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 966C6B7818E6A56A0093F5EC /* libz.dylib */; };
 		966C6B7C18E6A56A0093F5EC /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 966C6B7818E6A56A0093F5EC /* libz.dylib */; };
+		9694FA711B32AA64005EBB16 /* ABISysV_mips.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9694FA6F1B32AA64005EBB16 /* ABISysV_mips.cpp */; };
+		9694FA721B32AA64005EBB16 /* ABISysV_mips.h in Headers */ = {isa = PBXBuildFile; fileRef = 9694FA701B32AA64005EBB16 /* ABISysV_mips.h */; };
 		9A19A6AF1163BBB200E0D453 /* SBValue.h in Headers */ = {isa = PBXBuildFile; fileRef = 9A19A6A51163BB7E00E0D453 /* SBValue.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		9A19A6B01163BBB300E0D453 /* SBValue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9A19A6AD1163BB9800E0D453 /* SBValue.cpp */; };
 		9A22A161135E30370024DDC3 /* EmulateInstructionARM.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9A22A15D135E30370024DDC3 /* EmulateInstructionARM.cpp */; };
@@ -2599,6 +2601,8 @@
 		964463EB1A330C0500154ED8 /* CompactUnwindInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CompactUnwindInfo.cpp; path = source/Symbol/CompactUnwindInfo.cpp; sourceTree = "<group>"; };
 		964463ED1A330C1B00154ED8 /* CompactUnwindInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CompactUnwindInfo.h; path = include/lldb/Symbol/CompactUnwindInfo.h; sourceTree = "<group>"; };
 		966C6B7818E6A56A0093F5EC /* libz.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libz.dylib; path = /usr/lib/libz.dylib; sourceTree = "<absolute>"; };
+		9694FA6F1B32AA64005EBB16 /* ABISysV_mips.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ABISysV_mips.cpp; path = "SysV-mips/ABISysV_mips.cpp"; sourceTree = "<group>"; };
+		9694FA701B32AA64005EBB16 /* ABISysV_mips.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ABISysV_mips.h; path = "SysV-mips/ABISysV_mips.h"; sourceTree = "<group>"; };
 		9A19A6A51163BB7E00E0D453 /* SBValue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SBValue.h; path = include/lldb/API/SBValue.h; sourceTree = "<group>"; };
 		9A19A6AD1163BB9800E0D453 /* SBValue.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBValue.cpp; path = source/API/SBValue.cpp; sourceTree = "<group>"; };
 		9A22A15D135E30370024DDC3 /* EmulateInstructionARM.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = EmulateInstructionARM.cpp; sourceTree = "<group>"; };
@@ -4789,6 +4793,7 @@
 				26DB3E0E1379E7AD0080DC73 /* MacOSX-i386 */,
 				AF20F7621AF18F5E00751A6E /* SysV-arm */,
 				AF20F7631AF18F6800751A6E /* SysV-arm64 */,
+				9694FA6E1B32AA35005EBB16 /* SysV-mips */,
 				AF77E08B1A033C3E0096C0EA /* SysV-ppc */,
 				AF77E08C1A033C4B0096C0EA /* SysV-ppc64 */,
 				26DB3E121379E7AD0080DC73 /* SysV-x86_64 */,
@@ -5249,6 +5254,15 @@
 			name = DataFormatters;
 			sourceTree = "<group>";
 		};
+		9694FA6E1B32AA35005EBB16 /* SysV-mips */ = {
+			isa = PBXGroup;
+			children = (
+				9694FA6F1B32AA64005EBB16 /* ABISysV_mips.cpp */,
+				9694FA701B32AA64005EBB16 /* ABISysV_mips.h */,
+			);
+			name = "SysV-mips";
+			sourceTree = "<group>";
+		};
 		AF11CB34182CA85A00D9B618 /* SystemRuntime */ = {
 			isa = PBXGroup;
 			children = (
@@ -5447,6 +5461,7 @@
 				26A527C214E24F5F00F3A14A /* ProcessMachCore.h in Headers */,
 				26B75B451AD6E29A001F7A57 /* MipsLinuxSignals.h in Headers */,
 				257E47181AA56C2000A62F81 /* ModuleCache.h in Headers */,
+				9694FA721B32AA64005EBB16 /* ABISysV_mips.h in Headers */,
 				26BC17AC18C7F4CB00D2196D /* ProcessElfCore.h in Headers */,
 				26A527C414E24F5F00F3A14A /* ThreadMachCore.h in Headers */,
 				26474CD318D0CB710073DEBA /* RegisterInfos_i386.h in Headers */,
@@ -6277,6 +6292,7 @@
 				2689009C13353E4200698AC0 /* PlatformRemoteiOS.cpp in Sources */,
 				2689009D13353E4200698AC0 /* GDBRemoteCommunication.cpp in Sources */,
 				2689009E13353E4200698AC0 /* GDBRemoteRegisterContext.cpp in Sources */,
+				9694FA711B32AA64005EBB16 /* ABISysV_mips.cpp in Sources */,
 				2689009F13353E4200698AC0 /* ProcessGDBRemote.cpp in Sources */,
 				268900A013353E4200698AC0 /* ProcessGDBRemoteLog.cpp in Sources */,
 				268900A113353E4200698AC0 /* ThreadGDBRemote.cpp in Sources */,
