@@ -479,11 +479,20 @@ void SSAIfConv::rewritePHIOperands() {
   // Convert all PHIs to select instructions inserted before FirstTerm.
   for (unsigned i = 0, e = PHIs.size(); i != e; ++i) {
     PHIInfo &PI = PHIs[i];
+    unsigned DstReg = 0;
+    
     DEBUG(dbgs() << "If-converting " << *PI.PHI);
-    unsigned PHIDst = PI.PHI->getOperand(0).getReg();
-    unsigned DstReg = MRI->createVirtualRegister(MRI->getRegClass(PHIDst));
-    TII->insertSelect(*Head, FirstTerm, HeadDL, DstReg, Cond, PI.TReg, PI.FReg);
-    DEBUG(dbgs() << "          --> " << *std::prev(FirstTerm));
+    if (PI.TReg == PI.FReg) {
+      // We do not need the select instruction if both incoming values are
+      // equal.
+      DstReg = PI.TReg;
+    } else {
+      unsigned PHIDst = PI.PHI->getOperand(0).getReg();
+      DstReg = MRI->createVirtualRegister(MRI->getRegClass(PHIDst));
+      TII->insertSelect(*Head, FirstTerm, HeadDL,
+                         DstReg, Cond, PI.TReg, PI.FReg);
+      DEBUG(dbgs() << "          --> " << *std::prev(FirstTerm));
+    }
 
     // Rewrite PHI operands TPred -> (DstReg, Head), remove FPred.
     for (unsigned i = PI.PHI->getNumOperands(); i != 1; i -= 2) {
