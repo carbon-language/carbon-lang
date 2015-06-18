@@ -330,8 +330,8 @@ namespace
 
     //------------------------------------------------------------------------------
     /// @class ReadWatchPointRegOperation
-    /// @brief Implements NativeProcessLinux::ReadWatchPointRegisterValue.
-    class ReadWatchPointRegOperation : public Operation
+    /// @brief Implements NativeRegisterContextLinux_mips64::ReadWatchPointRegisterValue.
+    class ReadWatchPointRegOperation : public NativeProcessLinux::Operation
     {
     public:
         ReadWatchPointRegOperation (
@@ -351,8 +351,8 @@ namespace
 
     //------------------------------------------------------------------------------
     /// @class SetWatchPointRegOperation
-    /// @brief Implements NativeProcessLinux::SetWatchPointRegisterValue.
-    class SetWatchPointRegOperation : public Operation
+    /// @brief Implements NativeRegisterContextLinux_mips64::SetWatchPointRegisterValue.
+    class SetWatchPointRegOperation : public NativeProcessLinux::Operation
     {
     public:
         SetWatchPointRegOperation (
@@ -769,6 +769,7 @@ GetWatchHi (struct pt_watch_regs *regs, uint32_t index)
         return regs->mips64.watchhi[index];
     else
         log->Printf("Invalid watch register style");
+    return 0;
 }
 
 static void
@@ -781,6 +782,7 @@ SetWatchHi (struct pt_watch_regs *regs, uint32_t index, uint16_t value)
         regs->mips64.watchhi[index] = value;
     else
         log->Printf("Invalid watch register style");
+    return;
 }
 
 static lldb::addr_t
@@ -793,6 +795,7 @@ GetWatchLo (struct pt_watch_regs *regs, uint32_t index)
         return regs->mips64.watchlo[index];
     else
         log->Printf("Invalid watch register style");
+    return LLDB_INVALID_ADDRESS;
 }
 
 static void
@@ -805,6 +808,7 @@ SetWatchLo (struct pt_watch_regs *regs, uint32_t index, uint64_t value)
         regs->mips64.watchlo[index] = value;
     else
         log->Printf("Invalid watch register style");
+    return;
 }
 
 static uint32_t
@@ -817,6 +821,7 @@ GetIRWMask (struct pt_watch_regs *regs, uint32_t index)
         return regs->mips64.watch_masks[index] & IRW;
     else
         log->Printf("Invalid watch register style");
+    return 0;
 }
 
 static uint32_t
@@ -829,6 +834,7 @@ GetRegMask (struct pt_watch_regs *regs, uint32_t index)
         return regs->mips64.watch_masks[index] & ~IRW;
     else
         log->Printf("Invalid watch register style");
+    return 0;
 }
 
 static lldb::addr_t
@@ -1117,15 +1123,15 @@ NativeRegisterContextLinux_mips64::GetWriteRegisterValueOperation(uint32_t offse
 }
 
 NativeProcessLinux::OperationUP
-NativeRegisterContextLinux_mips64::GetReadWatchPointRegisterValue(lldb::tid_t tid, void* watch_readback)
+NativeRegisterContextLinux_mips64::GetReadWatchPointRegisterValueOperation(lldb::tid_t tid, void* watch_readback)
 {
     return NativeProcessLinux::OperationUP(new ReadWatchPointRegOperation(m_thread.GetID(), watch_readback));
 }
 
 NativeProcessLinux::OperationUP
-NativeRegisterContextLinux_mips64::GetWriteWatchPointRegisterValue(lldb::tid_t tid, void* watch_reg_value)
+NativeRegisterContextLinux_mips64::GetWriteWatchPointRegisterValueOperation(lldb::tid_t tid, void* watch_reg_value)
 {
-    return NativeProcessLinux::OperationUP(new SetWatchPointRegOperation(m_thread.GetID(), watch_readback));
+    return NativeProcessLinux::OperationUP(new SetWatchPointRegOperation(m_thread.GetID(), watch_reg_value));
 }
 
 #endif // defined (__mips__)

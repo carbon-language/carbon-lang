@@ -96,12 +96,12 @@ namespace process_linux {
                                        const RegisterValue &value) override;
 
         NativeProcessLinux::OperationUP
-        GetReadWatchPointRegisterValue(lldb::tid_t tid,
-                                       void* watch_readback);
+        GetReadWatchPointRegisterValueOperation(lldb::tid_t tid,
+                                                void* watch_readback);
 
         NativeProcessLinux::OperationUP
-        GetWriteWatchPointRegisterValue(lldb::tid_t tid,
-                                       void* watch_readback);
+        GetWriteWatchPointRegisterValueOperation(lldb::tid_t tid,
+                                                 void* watch_readback);
 
         bool
         IsFR0();
