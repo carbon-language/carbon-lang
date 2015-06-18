@@ -12,7 +12,7 @@ TOOLNAME = lldb-server
 
 LLVMLibsOptions += -llldb -llldbUtility
 
-USEDLIBS := LLVMSupport.a
+LINK_COMPONENTS := support
 
 include $(LLDB_LEVEL)/Makefile
 
