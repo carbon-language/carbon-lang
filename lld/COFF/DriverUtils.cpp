@@ -163,13 +163,12 @@ std::error_code parseAlternateName(StringRef S) {
     llvm::errs() << "/alternatename: invalid argument: " << S << "\n";
     return make_error_code(LLDError::InvalidOption);
   }
-  for (std::pair<StringRef, StringRef> &P : Config->AlternateNames) {
-    if (From == P.first) {
-      llvm::errs() << "/alternatename: conflicts: " << S << "\n";
-      return make_error_code(LLDError::InvalidOption);
-    }
+  auto It = Config->AlternateNames.find(From);
+  if (It != Config->AlternateNames.end() && It->second != To) {
+    llvm::errs() << "/alternatename: conflicts: " << S << "\n";
+    return make_error_code(LLDError::InvalidOption);
   }
-  Config->AlternateNames.push_back(std::make_pair(From, To));
+  Config->AlternateNames.insert(It, std::make_pair(From, To));
   return std::error_code();
 }
 

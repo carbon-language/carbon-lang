@@ -71,7 +71,7 @@ struct Configuration {
   std::map<StringRef, StringRef> MustMatch;
 
   // Used for /alternatename.
-  std::vector<std::pair<StringRef, StringRef>> AlternateNames;
+  std::map<StringRef, StringRef> AlternateNames;
 
   uint64_t ImageBase = 0x140000000;
   uint64_t StackReserve = 1024 * 1024;

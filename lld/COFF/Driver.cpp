@@ -514,9 +514,9 @@ bool LinkerDriver::link(int Argc, const char *Argv[]) {
   // Add weak aliases. Weak aliases is a mechanism to give remaining
   // undefined symbols final chance to be resolved successfully.
   // This is symbol renaming.
-  for (size_t I = 0; I < Config->AlternateNames.size(); ++I) {
-    StringRef From = Config->AlternateNames[I].first;
-    StringRef To = Config->AlternateNames[I].second;
+  for (auto &P : Config->AlternateNames) {
+    StringRef From = P.first;
+    StringRef To = P.second;
     // If From is already resolved to a Defined type, do nothing.
     // Otherwise, rename it to see if To can be resolved instead.
     if (Symtab.find(From))

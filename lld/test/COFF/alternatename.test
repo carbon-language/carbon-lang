@@ -1,6 +1,10 @@
 # RUN: yaml2obj < %p/Inputs/ret42.yaml > %t.obj
 # RUN: lld -flavor link2 /entry:foo /subsystem:console \
 # RUN:   /alternatename:foo=mainCRTStartup /out:%t.exe %t.obj
+# RUN: lld -flavor link2 /entry:foo /subsystem:console \
+# RUN:   /alternatename:foo=mainCRTStartup \
+# RUN:   /alternatename:foo=mainCRTStartup \
+# RUN:   /out:%t.exe %t.obj
 
 # RUN: yaml2obj < %s > %t.obj
 # RUN: lld -flavor link2 /entry:foo /subsystem:console /out:%t.exe %t.obj
