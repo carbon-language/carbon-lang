@@ -464,6 +464,12 @@ static void emitCommonOMPParallelDirective(CodeGenFunction &CGF,
     CGF.CGM.getOpenMPRuntime().emitNumThreadsClause(
         CGF, NumThreads, NumThreadsClause->getLocStart());
   }
+  if (auto *C = S.getSingleClause(OMPC_proc_bind)) {
+    CodeGenFunction::RunCleanupsScope NumThreadsScope(CGF);
+    auto *ProcBindClause = cast<OMPProcBindClause>(C);
+    CGF.CGM.getOpenMPRuntime().emitProcBindClause(
+        CGF, ProcBindClause->getProcBindKind(), ProcBindClause->getLocStart());
+  }
   const Expr *IfCond = nullptr;
   if (auto C = S.getSingleClause(OMPC_if)) {
     IfCond = cast<OMPIfClause>(C)->getCondition();

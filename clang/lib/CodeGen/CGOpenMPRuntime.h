@@ -135,6 +135,9 @@ private:
     OMPRTL__kmpc_taskgroup,
     // Call to void __kmpc_end_taskgroup(ident_t *loc, kmp_int32 global_tid);
     OMPRTL__kmpc_end_taskgroup,
+    // Call to void __kmpc_push_proc_bind(ident_t *loc, kmp_int32 global_tid,
+    // int proc_bind);
+    OMPRTL__kmpc_push_proc_bind,
   };
 
   /// \brief Values for bit flags used in the ident_t to describe the fields.
@@ -514,6 +517,12 @@ public:
   virtual void emitNumThreadsClause(CodeGenFunction &CGF,
                                     llvm::Value *NumThreads,
                                     SourceLocation Loc);
+
+  /// \brief Emit call to void __kmpc_push_proc_bind(ident_t *loc, kmp_int32
+  /// global_tid, int proc_bind) to generate code for 'proc_bind' clause.
+  virtual void emitProcBindClause(CodeGenFunction &CGF,
+                                  OpenMPProcBindClauseKind ProcBind,
+                                  SourceLocation Loc);
 
   /// \brief Returns address of the threadprivate variable for the current
   /// thread.

@@ -772,6 +772,15 @@ CGOpenMPRuntime::createRuntimeFunction(OpenMPRTLFunction Function) {
     RTLFn = CGM.CreateRuntimeFunction(FnTy, "__kmpc_end_taskgroup");
     break;
   }
+  case OMPRTL__kmpc_push_proc_bind: {
+    // Build void __kmpc_push_proc_bind(ident_t *loc, kmp_int32 global_tid,
+    // int proc_bind)
+    llvm::Type *TypeParams[] = {getIdentTyPointerTy(), CGM.Int32Ty, CGM.IntTy};
+    llvm::FunctionType *FnTy =
+        llvm::FunctionType::get(CGM.VoidTy, TypeParams, /*isVarArg*/ false);
+    RTLFn = CGM.CreateRuntimeFunction(FnTy, "__kmpc_push_proc_bind");
+    break;
+  }
   }
   return RTLFn;
 }
@@ -1633,6 +1642,39 @@ void CGOpenMPRuntime::emitNumThreadsClause(CodeGenFunction &CGF,
       CGF.Builder.CreateIntCast(NumThreads, CGF.Int32Ty, /*isSigned*/ true)};
   CGF.EmitRuntimeCall(createRuntimeFunction(OMPRTL__kmpc_push_num_threads),
                       Args);
+}
+
+void CGOpenMPRuntime::emitProcBindClause(CodeGenFunction &CGF,
+                                         OpenMPProcBindClauseKind ProcBind,
+                                         SourceLocation Loc) {
+  // Constants for proc bind value accepted by the runtime.
+  enum ProcBindTy {
+    ProcBindFalse = 0,
+    ProcBindTrue,
+    ProcBindMaster,
+    ProcBindClose,
+    ProcBindSpread,
+    ProcBindIntel,
+    ProcBindDefault
+  } RuntimeProcBind;
+  switch (ProcBind) {
+  case OMPC_PROC_BIND_master:
+    RuntimeProcBind = ProcBindMaster;
+    break;
+  case OMPC_PROC_BIND_close:
+    RuntimeProcBind = ProcBindClose;
+    break;
+  case OMPC_PROC_BIND_spread:
+    RuntimeProcBind = ProcBindSpread;
+    break;
+  case OMPC_PROC_BIND_unknown:
+    llvm_unreachable("Unsupported proc_bind value.");
+  }
+  // Build call __kmpc_push_proc_bind(&loc, global_tid, proc_bind)
+  llvm::Value *Args[] = {
+      emitUpdateLocation(CGF, Loc), getThreadID(CGF, Loc),
+      llvm::ConstantInt::get(CGM.IntTy, RuntimeProcBind, /*isSigned=*/true)};
+  CGF.EmitRuntimeCall(createRuntimeFunction(OMPRTL__kmpc_push_proc_bind), Args);
 }
 
 void CGOpenMPRuntime::emitFlush(CodeGenFunction &CGF, ArrayRef<const Expr *>,
