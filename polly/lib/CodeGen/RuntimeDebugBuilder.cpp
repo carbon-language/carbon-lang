@@ -70,7 +70,7 @@ void RuntimeDebugBuilder::createGPUVAPrinter(PollyIRBuilder &Builder,
 
   int Offset = 0;
   for (auto Val : Values) {
-    auto Ptr = Builder.CreateGEP(DataPtr, {Builder.getInt64(Offset)});
+    auto Ptr = Builder.CreateGEP(DataPtr, Builder.getInt64(Offset));
     Type *Ty = Val->getType();
 
     if (Ty->isFloatingPointTy()) {
