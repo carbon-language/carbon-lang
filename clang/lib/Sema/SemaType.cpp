@@ -25,6 +25,7 @@
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Basic/PartialDiagnostic.h"
 #include "clang/Basic/TargetInfo.h"
+#include "clang/Lex/Preprocessor.h"
 #include "clang/Parse/ParseDiagnostic.h"
 #include "clang/Sema/DeclSpec.h"
 #include "clang/Sema/DelayedDiagnostic.h"
@@ -2553,6 +2554,211 @@ getCCForDeclaratorChunk(Sema &S, Declarator &D,
   return CC;
 }
 
+namespace {
+  /// A simple notion of pointer kinds, which matches up with the various
+  /// pointer declarators.
+  enum class SimplePointerKind {
+    Pointer,
+    BlockPointer,
+    MemberPointer,
+  };
+}
+
+IdentifierInfo *Sema::getNullabilityKeyword(NullabilityKind nullability) {
+  switch (nullability) {
+  case NullabilityKind::NonNull:
+    if (!Ident___nonnull)
+      Ident___nonnull = PP.getIdentifierInfo("__nonnull");
+    return Ident___nonnull;
+
+  case NullabilityKind::Nullable:
+    if (!Ident___nullable)
+      Ident___nullable = PP.getIdentifierInfo("__nullable");
+    return Ident___nullable;
+
+  case NullabilityKind::Unspecified:
+    if (!Ident___null_unspecified)
+      Ident___null_unspecified = PP.getIdentifierInfo("__null_unspecified");
+    return Ident___null_unspecified;
+  }
+}
+
+/// Retrieve the identifier "NSError".
+IdentifierInfo *Sema::getNSErrorIdent() {
+  if (!Ident_NSError)
+    Ident_NSError = PP.getIdentifierInfo("NSError");
+
+  return Ident_NSError;
+}
+
+/// Check whether there is a nullability attribute of any kind in the given
+/// attribute list.
+static bool hasNullabilityAttr(const AttributeList *attrs) {
+  for (const AttributeList *attr = attrs; attr;
+       attr = attr->getNext()) {
+    if (attr->getKind() == AttributeList::AT_TypeNonNull ||
+        attr->getKind() == AttributeList::AT_TypeNullable ||
+        attr->getKind() == AttributeList::AT_TypeNullUnspecified)
+      return true;
+  }
+
+  return false;
+}
+
+namespace {
+  /// Describes the kind of a pointer a declarator describes.
+  enum class PointerDeclaratorKind {
+    // Not a pointer.
+    NonPointer,
+    // Single-level pointer.
+    SingleLevelPointer,
+    // Multi-level pointer (of any pointer kind).
+    MultiLevelPointer,
+    // CFErrorRef*
+    CFErrorRefPointer,
+    // NSError**
+    NSErrorPointerPointer,
+  };
+}
+
+/// Classify the given declarator, whose type-specified is \c type, based on
+/// what kind of pointer it refers to.
+///
+/// This is used to determine the default nullability.
+static PointerDeclaratorKind classifyPointerDeclarator(Sema &S,
+                                                       QualType type,
+                                                       Declarator &declarator) {
+  unsigned numNormalPointers = 0;
+
+  // For any dependent type, we consider it a non-pointer.
+  if (type->isDependentType())
+    return PointerDeclaratorKind::NonPointer;
+
+  // Look through the declarator chunks to identify pointers.
+  for (unsigned i = 0, n = declarator.getNumTypeObjects(); i != n; ++i) {
+    DeclaratorChunk &chunk = declarator.getTypeObject(i);
+    switch (chunk.Kind) {
+    case DeclaratorChunk::Array:
+    case DeclaratorChunk::Function:
+      break;
+
+    case DeclaratorChunk::BlockPointer:
+    case DeclaratorChunk::MemberPointer:
+      return numNormalPointers > 0 ? PointerDeclaratorKind::MultiLevelPointer
+                                   : PointerDeclaratorKind::SingleLevelPointer;
+
+    case DeclaratorChunk::Paren:
+    case DeclaratorChunk::Reference:
+      continue;
+
+    case DeclaratorChunk::Pointer:
+      ++numNormalPointers;
+      if (numNormalPointers > 2)
+        return PointerDeclaratorKind::MultiLevelPointer;
+      continue;
+    }
+  }
+
+  // Then, dig into the type specifier itself.
+  unsigned numTypeSpecifierPointers = 0;
+  do {
+    // Decompose normal pointers.
+    if (auto ptrType = type->getAs<PointerType>()) {
+      ++numNormalPointers;
+
+      if (numNormalPointers > 2)
+        return PointerDeclaratorKind::MultiLevelPointer;
+
+      type = ptrType->getPointeeType();
+      ++numTypeSpecifierPointers;
+      continue;
+    }
+
+    // Decompose block pointers.
+    if (type->getAs<BlockPointerType>()) {
+      return numNormalPointers > 0 ? PointerDeclaratorKind::MultiLevelPointer
+                                   : PointerDeclaratorKind::SingleLevelPointer;
+    }
+
+    // Decompose member pointers.
+    if (type->getAs<MemberPointerType>()) {
+      return numNormalPointers > 0 ? PointerDeclaratorKind::MultiLevelPointer
+                                   : PointerDeclaratorKind::SingleLevelPointer;
+    }
+
+    // Look at Objective-C object pointers.
+    if (auto objcObjectPtr = type->getAs<ObjCObjectPointerType>()) {
+      ++numNormalPointers;
+      ++numTypeSpecifierPointers;
+
+      // If this is NSError**, report that.
+      if (auto objcClassDecl = objcObjectPtr->getInterfaceDecl()) {
+        if (objcClassDecl->getIdentifier() == S.getNSErrorIdent() &&
+            numNormalPointers == 2 && numTypeSpecifierPointers < 2) {
+          return PointerDeclaratorKind::NSErrorPointerPointer;
+        }
+      }
+
+      break;
+    }
+
+    // Look at Objective-C class types.
+    if (auto objcClass = type->getAs<ObjCInterfaceType>()) {
+      if (objcClass->getInterface()->getIdentifier() == S.getNSErrorIdent()) {
+        if (numNormalPointers == 2 && numTypeSpecifierPointers < 2)
+          return PointerDeclaratorKind::NSErrorPointerPointer;;
+      }
+
+      break;
+    }
+
+    // If at this point we haven't seen a pointer, we won't see one.
+    if (numNormalPointers == 0)
+      return PointerDeclaratorKind::NonPointer;
+
+    if (auto recordType = type->getAs<RecordType>()) {
+      RecordDecl *recordDecl = recordType->getDecl();
+
+      bool isCFError = false;
+      if (S.CFError) {
+        // If we already know about CFError, test it directly.
+        isCFError = (S.CFError == recordDecl);
+      } else {
+        // Check whether this is CFError, which we identify based on its bridge
+        // to NSError.
+        if (recordDecl->getTagKind() == TTK_Struct && numNormalPointers > 0) {
+          if (auto bridgeAttr = recordDecl->getAttr<ObjCBridgeAttr>()) {
+            if (bridgeAttr->getBridgedType() == S.getNSErrorIdent()) {
+              S.CFError = recordDecl;
+              isCFError = true;
+            }
+          }
+        }
+      }
+
+      // If this is CFErrorRef*, report it as such.
+      if (isCFError && numNormalPointers == 2 && numTypeSpecifierPointers < 2) {
+        return PointerDeclaratorKind::CFErrorRefPointer;
+      }
+      break;
+    }
+
+    break;
+  } while (true);
+
+
+  switch (numNormalPointers) {
+  case 0:
+    return PointerDeclaratorKind::NonPointer;
+
+  case 1:
+    return PointerDeclaratorKind::SingleLevelPointer;
+
+  default:
+    return PointerDeclaratorKind::MultiLevelPointer;
+  }
+}
+
 static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
                                                 QualType declSpecType,
                                                 TypeSourceInfo *TInfo) {
@@ -2620,6 +2826,183 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
     }
   }
 
+  // Determine whether we should infer __nonnull on pointer types.
+  Optional<NullabilityKind> inferNullability;
+  bool inferNullabilityCS = false;
+
+  // Are we in an assume-nonnull region?
+  bool inAssumeNonNullRegion = false;
+  if (S.PP.getPragmaAssumeNonNullLoc().isValid() &&
+      !state.getDeclarator().isObjCWeakProperty() &&
+      !S.deduceWeakPropertyFromType(T)) {
+    inAssumeNonNullRegion = true;
+  }
+
+  // Whether to complain about missing nullability specifiers or not.
+  enum {
+    /// Never complain.
+    CAMN_No,
+    /// Complain on the inner pointers (but not the outermost
+    /// pointer).
+    CAMN_InnerPointers,
+    /// Complain about any pointers that don't have nullability
+    /// specified or inferred.
+    CAMN_Yes
+  } complainAboutMissingNullability = CAMN_No;
+  unsigned NumPointersRemaining = 0;
+
+  if (IsTypedefName) {
+    // For typedefs, we do not infer any nullability (the default),
+    // and we only complain about missing nullability specifiers on
+    // inner pointers.
+    complainAboutMissingNullability = CAMN_InnerPointers;
+
+    if (T->canHaveNullability()) {
+      ++NumPointersRemaining;
+    }
+
+    for (unsigned i = 0, n = D.getNumTypeObjects(); i != n; ++i) {
+      DeclaratorChunk &chunk = D.getTypeObject(i);
+      switch (chunk.Kind) {
+      case DeclaratorChunk::Array:
+      case DeclaratorChunk::Function:
+        break;
+
+      case DeclaratorChunk::BlockPointer:
+      case DeclaratorChunk::MemberPointer:
+        ++NumPointersRemaining;
+        break;
+
+      case DeclaratorChunk::Paren:
+      case DeclaratorChunk::Reference:
+        continue;
+
+      case DeclaratorChunk::Pointer:
+        ++NumPointersRemaining;
+        continue;
+      }
+    }
+  } else {
+    bool isFunctionOrMethod = false;
+    switch (auto context = state.getDeclarator().getContext()) {
+    case Declarator::ObjCParameterContext:
+    case Declarator::ObjCResultContext:
+    case Declarator::PrototypeContext:
+    case Declarator::TrailingReturnContext:
+      isFunctionOrMethod = true;
+      // fallthrough
+
+    case Declarator::MemberContext:
+      if (state.getDeclarator().isObjCIvar() && !isFunctionOrMethod) {
+        complainAboutMissingNullability = CAMN_No;
+        break;
+      }
+      // fallthrough
+
+    case Declarator::FileContext:
+    case Declarator::KNRTypeListContext:
+      complainAboutMissingNullability = CAMN_Yes;
+
+      // Nullability inference depends on the type and declarator.
+      switch (classifyPointerDeclarator(S, T, D)) {
+      case PointerDeclaratorKind::NonPointer:
+      case PointerDeclaratorKind::MultiLevelPointer:
+        // Cannot infer nullability.
+        break;
+
+      case PointerDeclaratorKind::SingleLevelPointer:
+        // Infer __nonnull if we are in an assumes-nonnull region.
+        if (inAssumeNonNullRegion) {
+          inferNullability = NullabilityKind::NonNull;
+          inferNullabilityCS = (context == Declarator::ObjCParameterContext ||
+                                context == Declarator::ObjCResultContext);
+        }
+        break;
+
+      case PointerDeclaratorKind::CFErrorRefPointer:
+      case PointerDeclaratorKind::NSErrorPointerPointer:
+        // Within a function or method signature, infer __nullable at both
+        // levels.
+        if (isFunctionOrMethod && inAssumeNonNullRegion)
+          inferNullability = NullabilityKind::Nullable;
+        break;
+      }
+      break;
+
+    case Declarator::ConversionIdContext:
+      complainAboutMissingNullability = CAMN_Yes;
+      break;
+
+    case Declarator::AliasDeclContext:
+    case Declarator::AliasTemplateContext:
+    case Declarator::BlockContext:
+    case Declarator::BlockLiteralContext:
+    case Declarator::ConditionContext:
+    case Declarator::CXXCatchContext:
+    case Declarator::CXXNewContext:
+    case Declarator::ForContext:
+    case Declarator::LambdaExprContext:
+    case Declarator::LambdaExprParameterContext:
+    case Declarator::ObjCCatchContext:
+    case Declarator::TemplateParamContext:
+    case Declarator::TemplateTypeArgContext:
+    case Declarator::TypeNameContext:
+      // Don't infer in these contexts.
+      break;
+    }
+  }
+
+  // Local function that checks the nullability for a given pointer declarator.
+  // Returns true if __nonnull was inferred.
+  auto inferPointerNullability = [&](SimplePointerKind pointerKind,
+                                     SourceLocation pointerLoc,
+                                     AttributeList *&attrs) -> AttributeList * {
+    // We've seen a pointer.
+    if (NumPointersRemaining > 0)
+      --NumPointersRemaining;
+
+    // If a nullability attribute is present, there's nothing to do.
+    if (hasNullabilityAttr(attrs))
+      return nullptr;
+
+    // If we're supposed to infer nullability, do so now.
+    if (inferNullability) {
+      AttributeList *nullabilityAttr = state.getDeclarator().getAttributePool()
+                                         .create(
+                                           S.getNullabilityKeyword(
+                                             *inferNullability),
+                                           SourceRange(pointerLoc),
+                                           nullptr, SourceLocation(),
+                                           nullptr, 0,
+                                           AttributeList::AS_Keyword);
+      if (inferNullabilityCS)
+        nullabilityAttr->setContextSensitiveKeywordAttribute();
+
+      spliceAttrIntoList(*nullabilityAttr, attrs);
+      return nullabilityAttr;
+    }
+
+    return nullptr;
+  };
+
+  // If the type itself could have nullability but does not, infer pointer
+  // nullability.
+  if (T->canHaveNullability() && S.ActiveTemplateInstantiations.empty()) {
+    SimplePointerKind pointerKind = SimplePointerKind::Pointer;
+    if (T->isBlockPointerType())
+      pointerKind = SimplePointerKind::BlockPointer;
+    else if (T->isMemberPointerType())
+      pointerKind = SimplePointerKind::MemberPointer;
+
+    if (auto *attr = inferPointerNullability(
+                       pointerKind, D.getDeclSpec().getTypeSpecTypeLoc(),
+                       D.getMutableDeclSpec().getAttributes().getListRef())) {
+      T = Context.getAttributedType(
+            AttributedType::getNullabilityAttrKind(*inferNullability), T, T);
+      attr->setUsedAsTypeAttr();
+    }
+  }
+
   // Walk the DeclTypeInfo, building the recursive type as we go.
   // DeclTypeInfos are ordered from the identifier out, which is
   // opposite of what we want :).
@@ -2637,6 +3020,10 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
       if (!LangOpts.Blocks)
         S.Diag(DeclType.Loc, diag::err_blocks_disable);
 
+      // Handle pointer nullability.
+      inferPointerNullability(SimplePointerKind::BlockPointer,
+                              DeclType.Loc, DeclType.getAttrListRef());
+
       T = S.BuildBlockPointerType(T, D.getIdentifierLoc(), Name);
       if (DeclType.Cls.TypeQuals)
         T = S.BuildQualifiedType(T, DeclType.Loc, DeclType.Cls.TypeQuals);
@@ -2649,6 +3036,11 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
         D.setInvalidType(true);
         // Build the type anyway.
       }
+
+      // Handle pointer nullability
+      inferPointerNullability(SimplePointerKind::Pointer, DeclType.Loc,
+                              DeclType.getAttrListRef());
+
       if (LangOpts.ObjC1 && T->getAs<ObjCObjectType>()) {
         T = Context.getObjCObjectPointerType(T);
         if (DeclType.Ptr.TypeQuals)
@@ -3090,6 +3482,11 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
       // The scope spec must refer to a class, or be dependent.
       CXXScopeSpec &SS = DeclType.Mem.Scope();
       QualType ClsType;
+
+      // Handle pointer nullability.
+      inferPointerNullability(SimplePointerKind::MemberPointer,
+                              DeclType.Loc, DeclType.getAttrListRef());
+
       if (SS.isInvalid()) {
         // Avoid emitting extra errors if we already errored on the scope.
         D.setInvalidType(true);
@@ -4611,20 +5008,6 @@ bool Sema::checkNullabilityTypeSpecifier(QualType &type,
   // Form the attributed type.
   type = Context.getAttributedType(
            AttributedType::getNullabilityAttrKind(nullability), type, type);
-  return false;
-}
-
-/// Check whether there is a nullability attribute of any kind in the given
-/// attribute list.
-static bool hasNullabilityAttr(const AttributeList *attrs) {
-  for (const AttributeList *attr = attrs; attr;
-       attr = attr->getNext()) {
-    if (attr->getKind() == AttributeList::AT_TypeNonNull ||
-        attr->getKind() == AttributeList::AT_TypeNullable ||
-        attr->getKind() == AttributeList::AT_TypeNullUnspecified)
-      return true;
-  }
-
   return false;
 }
 

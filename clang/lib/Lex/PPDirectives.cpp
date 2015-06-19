@@ -1575,6 +1575,15 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
     PragmaARCCFCodeAuditedLoc = SourceLocation();
   }
 
+  // Complain about attempts to #include files in an assume-nonnull pragma.
+  if (PragmaAssumeNonNullLoc.isValid()) {
+    Diag(HashLoc, diag::err_pp_include_in_assume_nonnull);
+    Diag(PragmaAssumeNonNullLoc, diag::note_pragma_entered_here);
+
+    // Immediately leave the pragma.
+    PragmaAssumeNonNullLoc = SourceLocation();
+  }
+
   if (HeaderInfo.HasIncludeAliasMap()) {
     // Map the filename with the brackets still attached.  If the name doesn't 
     // map to anything, fall back on the filename we've already gotten the 

@@ -1650,7 +1650,13 @@ private:
   bool InlineParamsUsed;
 
   /// \brief true if the declaration is preceded by \c __extension__.
-  bool Extension : 1;
+  unsigned Extension : 1;
+
+  /// Indicates whether this is an Objective-C instance variable.
+  unsigned ObjCIvar : 1;
+    
+  /// Indicates whether this is an Objective-C 'weak' property.
+  unsigned ObjCWeakProperty : 1;
 
   /// \brief If this is the second or subsequent declarator in this declaration,
   /// the location of the comma before this declarator.
@@ -1669,7 +1675,8 @@ public:
       GroupingParens(false), FunctionDefinition(FDK_Declaration), 
       Redeclaration(false),
       Attrs(ds.getAttributePool().getFactory()), AsmLabel(nullptr),
-      InlineParamsUsed(false), Extension(false) {
+      InlineParamsUsed(false), Extension(false), ObjCIvar(false),
+      ObjCWeakProperty(false) {
   }
 
   ~Declarator() {
@@ -1747,6 +1754,8 @@ public:
     Attrs.clear();
     AsmLabel = nullptr;
     InlineParamsUsed = false;
+    ObjCIvar = false;
+    ObjCWeakProperty = false;
     CommaLoc = SourceLocation();
     EllipsisLoc = SourceLocation();
   }
@@ -2154,6 +2163,12 @@ public:
 
   void setExtension(bool Val = true) { Extension = Val; }
   bool getExtension() const { return Extension; }
+
+  void setObjCIvar(bool Val = true) { ObjCIvar = Val; }
+  bool isObjCIvar() const { return ObjCIvar; }
+    
+  void setObjCWeakProperty(bool Val = true) { ObjCWeakProperty = Val; }
+  bool isObjCWeakProperty() const { return ObjCWeakProperty; }
 
   void setInvalidType(bool Val = true) { InvalidType = Val; }
   bool isInvalidType() const {

@@ -1157,6 +1157,16 @@ public:
 
   bool CheckFunctionReturnType(QualType T, SourceLocation Loc);
 
+  unsigned deduceWeakPropertyFromType(QualType T) {
+    if ((getLangOpts().getGC() != LangOptions::NonGC &&
+         T.isObjCGCWeak()) ||
+        (getLangOpts().ObjCAutoRefCount &&
+         T.getObjCLifetime() == Qualifiers::OCL_Weak))
+        return ObjCDeclSpec::DQ_PR_weak;
+    return 0;
+  }
+
+
   /// \brief Build a function type.
   ///
   /// This routine checks the function type according to C++ rules and
@@ -8782,6 +8792,13 @@ private:
   mutable IdentifierInfo *Ident_super;
   mutable IdentifierInfo *Ident___float128;
 
+  /// Nullability type specifiers.
+  IdentifierInfo *Ident___nonnull = nullptr;
+  IdentifierInfo *Ident___nullable = nullptr;
+  IdentifierInfo *Ident___null_unspecified = nullptr;
+
+  IdentifierInfo *Ident_NSError = nullptr;
+
 protected:
   friend class Parser;
   friend class InitializationSequence;
@@ -8790,6 +8807,15 @@ protected:
   friend class ASTWriter;
 
 public:
+  /// Retrieve the keyword associated
+  IdentifierInfo *getNullabilityKeyword(NullabilityKind nullability);
+
+  /// The struct behind the CFErrorRef pointer.
+  RecordDecl *CFError = nullptr;
+
+  /// Retrieve the identifier "NSError".
+  IdentifierInfo *getNSErrorIdent();
+
   /// \brief Retrieve the parser's current scope.
   ///
   /// This routine must only be used when it is certain that semantic analysis

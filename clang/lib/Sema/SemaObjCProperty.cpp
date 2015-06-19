@@ -103,15 +103,6 @@ static void checkARCPropertyDecl(Sema &S, ObjCPropertyDecl *property) {
     << propertyLifetime;
 }
 
-static unsigned deduceWeakPropertyFromType(Sema &S, QualType T) {
-  if ((S.getLangOpts().getGC() != LangOptions::NonGC && 
-       T.isObjCGCWeak()) ||
-      (S.getLangOpts().ObjCAutoRefCount &&
-       T.getObjCLifetime() == Qualifiers::OCL_Weak))
-    return ObjCDeclSpec::DQ_PR_weak;
-  return 0;
-}
-
 /// \brief Check this Objective-C property against a property declared in the
 /// given protocol.
 static void
@@ -146,9 +137,10 @@ Decl *Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
                           tok::ObjCKeywordKind MethodImplKind,
                           DeclContext *lexicalDC) {
   unsigned Attributes = ODS.getPropertyAttributes();
+  FD.D.setObjCWeakProperty((Attributes & ObjCDeclSpec::DQ_PR_weak) != 0);
   TypeSourceInfo *TSI = GetTypeForDeclarator(FD.D, S);
   QualType T = TSI->getType();
-  Attributes |= deduceWeakPropertyFromType(*this, T);
+  Attributes |= deduceWeakPropertyFromType(T);
   bool isReadWrite = ((Attributes & ObjCDeclSpec::DQ_PR_readwrite) ||
                       // default is readwrite!
                       !(Attributes & ObjCDeclSpec::DQ_PR_readonly));
@@ -433,7 +425,7 @@ Sema::HandlePropertyInClassExtension(Scope *S,
   if (isReadWrite && (PIkind & ObjCPropertyDecl::OBJC_PR_readonly)) {
     PIkind &= ~ObjCPropertyDecl::OBJC_PR_readonly;
     PIkind |= ObjCPropertyDecl::OBJC_PR_readwrite;
-    PIkind |= deduceWeakPropertyFromType(*this, PIDecl->getType());
+    PIkind |= deduceWeakPropertyFromType(PIDecl->getType());
     unsigned ClassExtensionMemoryModel = getOwnershipRule(Attributes);
     unsigned PrimaryClassMemoryModel = getOwnershipRule(PIkind);
     if (PrimaryClassMemoryModel && ClassExtensionMemoryModel &&
@@ -2293,8 +2285,7 @@ void Sema::CheckObjCPropertyAttributes(Decl *PDecl,
       Attributes &= ~ObjCDeclSpec::DQ_PR_weak;
   }
 
-  if ((Attributes & ObjCDeclSpec::DQ_PR_weak) &&
-      !(Attributes & ObjCDeclSpec::DQ_PR_readonly)) {
+  if (Attributes & ObjCDeclSpec::DQ_PR_weak) {
     // 'weak' and 'nonnull' are mutually exclusive.
     if (auto nullability = PropertyTy->getNullability(Context)) {
       if (*nullability == NullabilityKind::NonNull)

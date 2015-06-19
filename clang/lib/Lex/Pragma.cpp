@@ -1342,6 +1342,60 @@ struct PragmaARCCFCodeAuditedHandler : public PragmaHandler {
   }
 };
 
+/// PragmaAssumeNonNullHandler -
+///   \#pragma clang assume_nonnull begin/end
+struct PragmaAssumeNonNullHandler : public PragmaHandler {
+  PragmaAssumeNonNullHandler() : PragmaHandler("assume_nonnull") {}
+  void HandlePragma(Preprocessor &PP, PragmaIntroducerKind Introducer,
+                    Token &NameTok) override {
+    SourceLocation Loc = NameTok.getLocation();
+    bool IsBegin;
+
+    Token Tok;
+
+    // Lex the 'begin' or 'end'.
+    PP.LexUnexpandedToken(Tok);
+    const IdentifierInfo *BeginEnd = Tok.getIdentifierInfo();
+    if (BeginEnd && BeginEnd->isStr("begin")) {
+      IsBegin = true;
+    } else if (BeginEnd && BeginEnd->isStr("end")) {
+      IsBegin = false;
+    } else {
+      PP.Diag(Tok.getLocation(), diag::err_pp_assume_nonnull_syntax);
+      return;
+    }
+
+    // Verify that this is followed by EOD.
+    PP.LexUnexpandedToken(Tok);
+    if (Tok.isNot(tok::eod))
+      PP.Diag(Tok, diag::ext_pp_extra_tokens_at_eol) << "pragma";
+
+    // The start location of the active audit.
+    SourceLocation BeginLoc = PP.getPragmaAssumeNonNullLoc();
+
+    // The start location we want after processing this.
+    SourceLocation NewLoc;
+
+    if (IsBegin) {
+      // Complain about attempts to re-enter an audit.
+      if (BeginLoc.isValid()) {
+        PP.Diag(Loc, diag::err_pp_double_begin_of_assume_nonnull);
+        PP.Diag(BeginLoc, diag::note_pragma_entered_here);
+      }
+      NewLoc = Loc;
+    } else {
+      // Complain about attempts to leave an audit that doesn't exist.
+      if (!BeginLoc.isValid()) {
+        PP.Diag(Loc, diag::err_pp_unmatched_end_of_assume_nonnull);
+        return;
+      }
+      NewLoc = SourceLocation();
+    }
+
+    PP.setPragmaAssumeNonNullLoc(NewLoc);
+  }
+};
+
 /// \brief Handle "\#pragma region [...]"
 ///
 /// The syntax is
@@ -1393,6 +1447,7 @@ void Preprocessor::RegisterBuiltinPragmas() {
   AddPragmaHandler("clang", new PragmaDependencyHandler());
   AddPragmaHandler("clang", new PragmaDiagnosticHandler("clang"));
   AddPragmaHandler("clang", new PragmaARCCFCodeAuditedHandler());
+  AddPragmaHandler("clang", new PragmaAssumeNonNullHandler());
 
   AddPragmaHandler("STDC", new PragmaSTDC_FENV_ACCESSHandler());
   AddPragmaHandler("STDC", new PragmaSTDC_CX_LIMITED_RANGEHandler());

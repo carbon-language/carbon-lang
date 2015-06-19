@@ -1052,6 +1052,7 @@ static bool HasFeature(const Preprocessor &PP, const IdentifierInfo *II) {
       .Case("address_sanitizer",
             LangOpts.Sanitize.hasOneOf(SanitizerKind::Address |
                                        SanitizerKind::KernelAddress))
+      .Case("assume_nonnull", LangOpts.ObjC1 || LangOpts.GNUMode)
       .Case("attribute_analyzer_noreturn", true)
       .Case("attribute_availability", true)
       .Case("attribute_availability_with_message", true)

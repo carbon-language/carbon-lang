@@ -1231,6 +1231,10 @@ QualType Sema::getMessageSendResultType(QualType ReceiverType,
                                                      isClassMessage,
                                                      isSuperMessage);
 
+  // If this is a class message, ignore the nullability of the receiver.
+  if (isClassMessage)
+    return resultType;
+
   // Map the nullability of the result into a table index.
   unsigned receiverNullabilityIdx = 0;
   if (auto nullability = ReceiverType->getNullability(Context))

@@ -80,10 +80,28 @@
 @end
 
 // rdar://20152386
+// rdar://20383235
+
 @interface NSObject @end
 
-@interface rdar20152386_2: NSObject
+#pragma clang assume_nonnull begin
+@interface I: NSObject
+@property(nonatomic, weak) id delegate; // Do not warn, nullable is inferred. 
+@property(nonatomic, weak, readonly) id ROdelegate; // Do not warn, nullable is inferred.
+@property(nonatomic, weak, nonnull) id NonNulldelete; // expected-error {{property attributes 'nonnull' and 'weak' are mutually exclusive}}
+@property(nonatomic, weak, nullable) id Nullabledelete; // do not warn
+
+// strong cases.
+@property(nonatomic, strong) id stdelegate; // Do not warn
+@property(nonatomic, readonly) id stROdelegate; // Do not warn
+@property(nonatomic, strong, nonnull) id stNonNulldelete; // Do not warn
+@property(nonatomic, nullable) id stNullabledelete; // do not warn
+@end
+#pragma clang assume_nonnull end
+
+@interface J: NSObject
+@property(nonatomic, weak) id ddd;   // Do not warn, nullable is inferred.
 @property(nonatomic, weak, nonnull) id delegate; // expected-error {{property attributes 'nonnull' and 'weak' are mutually exclusive}}
-@property(nonatomic, weak, nonnull, readonly) id ReadDelegate; // no warning
+@property(nonatomic, weak, nonnull, readonly) id ROdelegate; // expected-error {{property attributes 'nonnull' and 'weak' are mutually exclusive}}
 @end
 
