@@ -5068,7 +5068,7 @@ bool Sema::checkNullabilityTypeSpecifier(QualType &type,
       // annotation, complain about it.
       if (fileNullability.PointerLoc.isValid()) {
         Diag(fileNullability.PointerLoc, diag::warn_nullability_missing)
-          << fileNullability.PointerKind;
+          << static_cast<unsigned>(fileNullability.PointerKind);
       }
 
       fileNullability.SawTypeNullability = true;
