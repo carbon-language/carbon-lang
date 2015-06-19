@@ -35,7 +35,7 @@ void A::f() {
 void D::f() {
 }
 
-// DIAG: @[[SRC:.*]] = private unnamed_addr constant [{{.*}} x i8] c"{{.*}}test/CodeGenCXX/cfi-vcall.cpp\00", align 1
+// DIAG: @[[SRC:.*]] = private unnamed_addr constant [{{.*}} x i8] c"{{.*}}cfi-vcall.cpp\00", align 1
 // DIAG: @[[TYPE:.*]] = private unnamed_addr constant { i16, i16, [4 x i8] } { i16 -1, i16 0, [4 x i8] c"'A'\00" }
 // DIAG: @[[BADTYPESTATIC:.*]] = private unnamed_addr global { { [{{.*}} x i8]*, i32, i32 }, { i16, i16, [4 x i8] }*, i8 } { { [{{.*}} x i8]*, i32, i32 } { [{{.*}} x i8]* @[[SRC]], i32 58, i32 3 }, { i16, i16, [4 x i8] }* @[[TYPE]], i8 0 }
 
