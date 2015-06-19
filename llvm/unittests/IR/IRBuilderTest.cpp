@@ -320,5 +320,17 @@ TEST_F(IRBuilderTest, InsertExtractElement) {
   EXPECT_EQ(Elt2, X2);
 }
 
+TEST_F(IRBuilderTest, CreateGlobalStringPtr) {
+  IRBuilder<> Builder(BB);
 
+  auto String1a = Builder.CreateGlobalStringPtr("TestString", "String1a");
+  auto String1b = Builder.CreateGlobalStringPtr("TestString", "String1b", 0);
+  auto String2 = Builder.CreateGlobalStringPtr("TestString", "String2", 1);
+  auto String3 = Builder.CreateGlobalString("TestString", "String3", 2);
+
+  EXPECT_TRUE(String1a->getType()->getPointerAddressSpace() == 0);
+  EXPECT_TRUE(String1b->getType()->getPointerAddressSpace() == 0);
+  EXPECT_TRUE(String2->getType()->getPointerAddressSpace() == 1);
+  EXPECT_TRUE(String3->getType()->getPointerAddressSpace() == 2);
+}
 }
