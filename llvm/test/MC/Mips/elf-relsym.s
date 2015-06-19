@@ -4,16 +4,16 @@
 
 // CHECK: Symbols [
 // CHECK:   Symbol {
-// CHECK:     Name: $.str
+// CHECK:     Name: (0)
 // CHECK:   }
 // CHECK:   Symbol {
-// CHECK:     Name: $.str1
+// CHECK:     Name: (0)
 // CHECK:   }
 // CHECK:   Symbol {
-// CHECK:     Name: $CPI0_0
+// CHECK:     Name: (0)
 // CHECK:   }
 // CHECK:   Symbol {
-// CHECK:     Name: $CPI0_1
+// CHECK:     Name: (0)
 // CHECK:   }
 // CHECK: ]
 

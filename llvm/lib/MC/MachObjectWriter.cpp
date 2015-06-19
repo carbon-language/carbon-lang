@@ -565,7 +565,8 @@ void MachObjectWriter::computeSymbolTable(
 
     MachSymbolData MSD;
     MSD.Symbol = &Symbol;
-    MSD.StringIndex = StringTable.getOffset(Symbol.getName());
+    StringRef Name = Symbol.getName();
+    MSD.StringIndex = Name.empty() ? 0 : StringTable.getOffset(Name);
 
     if (Symbol.isAbsolute()) {
       MSD.SectionIndex = 0;

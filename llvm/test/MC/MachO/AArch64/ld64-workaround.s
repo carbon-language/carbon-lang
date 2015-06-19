@@ -11,28 +11,28 @@
 // CHECK-NEXT:       PCRel: 0
 // CHECK-NEXT:       Length: 3
 // CHECK-NEXT:       Type: ARM64_RELOC_UNSIGNED (0)
-// CHECK-NEXT:       Symbol: Llit16
+// CHECK-NEXT:       Symbol: -
 // CHECK-NEXT:     }
 // CHECK-NEXT:     Relocation {
 // CHECK-NEXT:       Offset: 0x10
 // CHECK-NEXT:       PCRel: 0
 // CHECK-NEXT:       Length: 3
 // CHECK-NEXT:       Type: ARM64_RELOC_UNSIGNED (0)
-// CHECK-NEXT:       Symbol: Llit8
+// CHECK-NEXT:       Symbol: -
 // CHECK-NEXT:     }
 // CHECK-NEXT:     Relocation {
 // CHECK-NEXT:       Offset: 0x8
 // CHECK-NEXT:       PCRel: 0
 // CHECK-NEXT:       Length: 3
 // CHECK-NEXT:       Type: ARM64_RELOC_UNSIGNED (0)
-// CHECK-NEXT:       Symbol: Llit4
+// CHECK-NEXT:       Symbol: -
 // CHECK-NEXT:     }
 // CHECK-NEXT:     Relocation {
 // CHECK-NEXT:       Offset: 0x0
 // CHECK-NEXT:       PCRel: 0
 // CHECK-NEXT:       Length: 3
 // CHECK-NEXT:       Type: ARM64_RELOC_UNSIGNED (0)
-// CHECK-NEXT:       Symbol: Lcfstring
+// CHECK-NEXT:       Symbol: -
 // CHECK-NEXT:     }
 // CHECK-NEXT:   }
 // CHECK-NEXT: ]

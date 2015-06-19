@@ -786,10 +786,15 @@ void ELFObjectWriter::computeSymbolTable(
                     Renames.count(&Symbol)))
       continue;
 
+    if (Symbol.isTemporary() && Symbol.isUndefined())
+      Ctx.reportFatalError(SMLoc(), "Undefined temporary");
+
     ELFSymbolData MSD;
     MSD.Symbol = cast<MCSymbolELF>(&Symbol);
 
     bool Local = Symbol.getBinding() == ELF::STB_LOCAL;
+    assert(Local || !Symbol.isTemporary());
+
     if (Symbol.isAbsolute()) {
       MSD.SectionIndex = ELF::SHN_ABS;
     } else if (Symbol.isCommon()) {
@@ -888,9 +893,11 @@ void ELFObjectWriter::computeSymbolTable(
   unsigned Index = FileNames.size() + 1;
 
   for (ELFSymbolData &MSD : LocalSymbolData) {
-    unsigned StringIndex = MSD.Symbol->getType() == ELF::STT_SECTION
-                               ? 0
-                               : StrTabBuilder.getOffset(MSD.Name);
+    unsigned StringIndex;
+    if (MSD.Symbol->getType() == ELF::STT_SECTION || MSD.Name.empty())
+      StringIndex = 0;
+    else
+      StringIndex = StrTabBuilder.getOffset(MSD.Name);
     MSD.Symbol->setIndex(Index++);
     writeSymbol(Writer, StringIndex, MSD, Layout);
   }
