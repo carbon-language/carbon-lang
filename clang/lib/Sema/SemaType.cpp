@@ -2921,7 +2921,7 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
       if (!fileNullability.SawTypeNullability) {
         if (fileNullability.PointerLoc.isValid()) {
           S.Diag(fileNullability.PointerLoc, diag::warn_nullability_missing)
-              << fileNullability.PointerKind;
+            << static_cast<unsigned>(fileNullability.PointerKind);
         }
 
         fileNullability.SawTypeNullability = true;
