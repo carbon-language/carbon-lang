@@ -28,24 +28,9 @@
 
 // In x86 32 bit named symbols are used for temporary symbols in merge
 // sections, so make sure we handle symbols inside compressed sections
-// 386-SYMBOLS:        Symbol {
-// 386-SYMBOLS-NEXT:    Name:  (0)
-// 386-SYMBOLS-NEXT:    Value: 0x0
-// 386-SYMBOLS-NEXT:    Size: 0
-// 386-SYMBOLS-NEXT:    Binding: Local (0x0)
-// 386-SYMBOLS-NEXT:    Type: None (0x0)
-// 386-SYMBOLS-NEXT:    Other: 0
-// 386-SYMBOLS-NEXT:    Section: Undefined (0x0)
-// 386-SYMBOLS-NEXT:  }
-// 386-SYMBOLS-NEXT:  Symbol {
-// 386-SYMBOLS-NEXT:    Name:  (0)
-// 386-SYMBOLS-NEXT:    Value: 0x0
-// 386-SYMBOLS-NEXT:    Size: 0
-// 386-SYMBOLS-NEXT:    Binding: Local (0x0)
-// 386-SYMBOLS-NEXT:    Type: None (0x0)
-// 386-SYMBOLS-NEXT:    Other: 0
-// 386-SYMBOLS-NEXT:    Section: .zdebug_str (0xA)
-// 386-SYMBOLS-NEXT:  }
+// 386-SYMBOLS: Name: .Linfo_string0
+// 386-SYMBOLS-NOT: }
+// 386-SYMBOLS: Section: .zdebug_str
 
 	.section	.debug_line,"",@progbits
 

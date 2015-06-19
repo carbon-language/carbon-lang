@@ -130,7 +130,7 @@ D38:
 
 // CHECK: Symbols [
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: D0 ({{.*}})
+// CHECK-NEXT:     Name: D0 (139)
 // CHECK-NEXT:     Type: Section (0xE)
 // CHECK-NEXT:     Section: __text (0x1)
 // CHECK-NEXT:     RefType: UndefinedNonLazy (0x0)
@@ -139,7 +139,7 @@ D38:
 // CHECK-NEXT:     Value: 0x0
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: D1 ({{.*}})
+// CHECK-NEXT:     Name: D1 (128)
 // CHECK-NEXT:     Type: Section (0xE)
 // CHECK-NEXT:     Section: __text (0x1)
 // CHECK-NEXT:     RefType: UndefinedNonLazy (0x0)
@@ -148,7 +148,7 @@ D38:
 // CHECK-NEXT:     Value: 0x0
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: D2 ({{.*}})
+// CHECK-NEXT:     Name: D2 (113)
 // CHECK-NEXT:     Type: Section (0xE)
 // CHECK-NEXT:     Section: __const (0x2)
 // CHECK-NEXT:     RefType: UndefinedNonLazy (0x0)
@@ -157,7 +157,7 @@ D38:
 // CHECK-NEXT:     Value: 0x0
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: D3 ({{.*}})
+// CHECK-NEXT:     Name: D3 (98)
 // CHECK-NEXT:     Type: Section (0xE)
 // CHECK-NEXT:     Section: __static_const (0x3)
 // CHECK-NEXT:     RefType: UndefinedNonLazy (0x0)
@@ -166,7 +166,7 @@ D38:
 // CHECK-NEXT:     Value: 0x0
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: (0)
+// CHECK-NEXT:     Name: L4 (84)
 // CHECK-NEXT:     Type: Section (0xE)
 // CHECK-NEXT:     Section: __cstring (0x4)
 // CHECK-NEXT:     RefType: UndefinedNonLazy (0x0)
@@ -175,7 +175,7 @@ D38:
 // CHECK-NEXT:     Value: 0x0
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: D4 ({{.*}})
+// CHECK-NEXT:     Name: D4 (87)
 // CHECK-NEXT:     Type: Section (0xE)
 // CHECK-NEXT:     Section: __cstring (0x4)
 // CHECK-NEXT:     RefType: UndefinedNonLazy (0x0)
@@ -184,7 +184,7 @@ D38:
 // CHECK-NEXT:     Value: 0x0
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: D5 ({{.*}})
+// CHECK-NEXT:     Name: D5 (69)
 // CHECK-NEXT:     Type: Section (0xE)
 // CHECK-NEXT:     Section: __literal4 (0x5)
 // CHECK-NEXT:     RefType: UndefinedNonLazy (0x0)
@@ -193,7 +193,7 @@ D38:
 // CHECK-NEXT:     Value: 0x0
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: D6 ({{.*}})
+// CHECK-NEXT:     Name: D6 (50)
 // CHECK-NEXT:     Type: Section (0xE)
 // CHECK-NEXT:     Section: __literal8 (0x6)
 // CHECK-NEXT:     RefType: UndefinedNonLazy (0x0)
@@ -202,7 +202,7 @@ D38:
 // CHECK-NEXT:     Value: 0x0
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: D7 ({{.*}})
+// CHECK-NEXT:     Name: D7 (31)
 // CHECK-NEXT:     Type: Section (0xE)
 // CHECK-NEXT:     Section: __literal16 (0x7)
 // CHECK-NEXT:     RefType: UndefinedNonLazy (0x0)
@@ -211,7 +211,7 @@ D38:
 // CHECK-NEXT:     Value: 0x0
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: D8 ({{.*}})
+// CHECK-NEXT:     Name: D8 (12)
 // CHECK-NEXT:     Type: Section (0xE)
 // CHECK-NEXT:     Section: __constructor (0x8)
 // CHECK-NEXT:     RefType: UndefinedNonLazy (0x0)
@@ -220,7 +220,7 @@ D38:
 // CHECK-NEXT:     Value: 0x0
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: D9 ({{.*}})
+// CHECK-NEXT:     Name: D9 (1)
 // CHECK-NEXT:     Type: Section (0xE)
 // CHECK-NEXT:     Section: __destructor (0x9)
 // CHECK-NEXT:     RefType: UndefinedNonLazy (0x0)
@@ -229,7 +229,7 @@ D38:
 // CHECK-NEXT:     Value: 0x0
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: D12 ({{.*}})
+// CHECK-NEXT:     Name: D12 (124)
 // CHECK-NEXT:     Type: Section (0xE)
 // CHECK-NEXT:     Section: __data (0xA)
 // CHECK-NEXT:     RefType: UndefinedNonLazy (0x0)
@@ -238,7 +238,7 @@ D38:
 // CHECK-NEXT:     Value: 0x0
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: D13 ({{.*}})
+// CHECK-NEXT:     Name: D13 (109)
 // CHECK-NEXT:     Type: Section (0xE)
 // CHECK-NEXT:     Section: __static_data (0xB)
 // CHECK-NEXT:     RefType: UndefinedNonLazy (0x0)
@@ -247,7 +247,7 @@ D38:
 // CHECK-NEXT:     Value: 0x0
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: D16 ({{.*}})
+// CHECK-NEXT:     Name: D16 (65)
 // CHECK-NEXT:     Type: Section (0xE)
 // CHECK-NEXT:     Section: __dyld (0xC)
 // CHECK-NEXT:     RefType: UndefinedNonLazy (0x0)
@@ -256,7 +256,7 @@ D38:
 // CHECK-NEXT:     Value: 0x0
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: D17 ({{.*}})
+// CHECK-NEXT:     Name: D17 (46)
 // CHECK-NEXT:     Type: Section (0xE)
 // CHECK-NEXT:     Section: __mod_init_func (0xD)
 // CHECK-NEXT:     RefType: UndefinedNonLazy (0x0)
@@ -265,7 +265,7 @@ D38:
 // CHECK-NEXT:     Value: 0x0
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: D18 ({{.*}})
+// CHECK-NEXT:     Name: D18 (27)
 // CHECK-NEXT:     Type: Section (0xE)
 // CHECK-NEXT:     Section: __mod_term_func (0xE)
 // CHECK-NEXT:     RefType: UndefinedNonLazy (0x0)
@@ -283,7 +283,7 @@ D38:
 // CHECK-NEXT:     Value: 0x0
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: D20 ({{.*}})
+// CHECK-NEXT:     Name: D20 (146)
 // CHECK-NEXT:     Type: Section (0xE)
 // CHECK-NEXT:     Section: __class (0x10)
 // CHECK-NEXT:     RefType: UndefinedNonLazy (0x0)
@@ -292,7 +292,7 @@ D38:
 // CHECK-NEXT:     Value: 0x0
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: D21 ({{.*}})
+// CHECK-NEXT:     Name: D21 (135)
 // CHECK-NEXT:     Type: Section (0xE)
 // CHECK-NEXT:     Section: __meta_class (0x11)
 // CHECK-NEXT:     RefType: UndefinedNonLazy (0x0)
@@ -301,7 +301,7 @@ D38:
 // CHECK-NEXT:     Value: 0x0
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: D22 ({{.*}})
+// CHECK-NEXT:     Name: D22 (120)
 // CHECK-NEXT:     Type: Section (0xE)
 // CHECK-NEXT:     Section: __cat_cls_meth (0x12)
 // CHECK-NEXT:     RefType: UndefinedNonLazy (0x0)
@@ -310,7 +310,7 @@ D38:
 // CHECK-NEXT:     Value: 0x0
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: D23 ({{.*}})
+// CHECK-NEXT:     Name: D23 (105)
 // CHECK-NEXT:     Type: Section (0xE)
 // CHECK-NEXT:     Section: __cat_inst_meth (0x13)
 // CHECK-NEXT:     RefType: UndefinedNonLazy (0x0)
@@ -319,7 +319,7 @@ D38:
 // CHECK-NEXT:     Value: 0x0
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: D24 ({{.*}})
+// CHECK-NEXT:     Name: D24 (94)
 // CHECK-NEXT:     Type: Section (0xE)
 // CHECK-NEXT:     Section: __protocol (0x14)
 // CHECK-NEXT:     RefType: UndefinedNonLazy (0x0)
@@ -328,7 +328,7 @@ D38:
 // CHECK-NEXT:     Value: 0x0
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: D25 ({{.*}})
+// CHECK-NEXT:     Name: D25 (80)
 // CHECK-NEXT:     Type: Section (0xE)
 // CHECK-NEXT:     Section: __string_object (0x15)
 // CHECK-NEXT:     RefType: UndefinedNonLazy (0x0)
@@ -337,7 +337,7 @@ D38:
 // CHECK-NEXT:     Value: 0x0
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: D26 ({{.*}})
+// CHECK-NEXT:     Name: D26 (61)
 // CHECK-NEXT:     Type: Section (0xE)
 // CHECK-NEXT:     Section: __cls_meth (0x16)
 // CHECK-NEXT:     RefType: UndefinedNonLazy (0x0)
@@ -346,7 +346,7 @@ D38:
 // CHECK-NEXT:     Value: 0x0
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: D27 ({{.*}})
+// CHECK-NEXT:     Name: D27 (42)
 // CHECK-NEXT:     Type: Section (0xE)
 // CHECK-NEXT:     Section: __inst_meth (0x17)
 // CHECK-NEXT:     RefType: UndefinedNonLazy (0x0)
@@ -355,7 +355,7 @@ D38:
 // CHECK-NEXT:     Value: 0x0
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: D28 ({{.*}})
+// CHECK-NEXT:     Name: D28 (23)
 // CHECK-NEXT:     Type: Section (0xE)
 // CHECK-NEXT:     Section: __cls_refs (0x18)
 // CHECK-NEXT:     RefType: UndefinedNonLazy (0x0)
@@ -364,7 +364,7 @@ D38:
 // CHECK-NEXT:     Value: 0x0
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: D29 ({{.*}})
+// CHECK-NEXT:     Name: D29 (4)
 // CHECK-NEXT:     Type: Section (0xE)
 // CHECK-NEXT:     Section: __message_refs (0x19)
 // CHECK-NEXT:     RefType: UndefinedNonLazy (0x0)
@@ -373,7 +373,7 @@ D38:
 // CHECK-NEXT:     Value: 0x0
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: D30 ({{.*}})
+// CHECK-NEXT:     Name: D30 (142)
 // CHECK-NEXT:     Type: Section (0xE)
 // CHECK-NEXT:     Section: __symbols (0x1A)
 // CHECK-NEXT:     RefType: UndefinedNonLazy (0x0)
@@ -382,7 +382,7 @@ D38:
 // CHECK-NEXT:     Value: 0x0
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: D31 ({{.*}})
+// CHECK-NEXT:     Name: D31 (131)
 // CHECK-NEXT:     Type: Section (0xE)
 // CHECK-NEXT:     Section: __category (0x1B)
 // CHECK-NEXT:     RefType: UndefinedNonLazy (0x0)
@@ -391,7 +391,7 @@ D38:
 // CHECK-NEXT:     Value: 0x0
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: D32 ({{.*}})
+// CHECK-NEXT:     Name: D32 (116)
 // CHECK-NEXT:     Type: Section (0xE)
 // CHECK-NEXT:     Section: __class_vars (0x1C)
 // CHECK-NEXT:     RefType: UndefinedNonLazy (0x0)
@@ -400,7 +400,7 @@ D38:
 // CHECK-NEXT:     Value: 0x0
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: D33 ({{.*}})
+// CHECK-NEXT:     Name: D33 (101)
 // CHECK-NEXT:     Type: Section (0xE)
 // CHECK-NEXT:     Section: __instance_vars (0x1D)
 // CHECK-NEXT:     RefType: UndefinedNonLazy (0x0)
@@ -409,7 +409,7 @@ D38:
 // CHECK-NEXT:     Value: 0x0
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: D34 ({{.*}})
+// CHECK-NEXT:     Name: D34 (90)
 // CHECK-NEXT:     Type: Section (0xE)
 // CHECK-NEXT:     Section: __module_info (0x1E)
 // CHECK-NEXT:     RefType: UndefinedNonLazy (0x0)
@@ -418,7 +418,7 @@ D38:
 // CHECK-NEXT:     Value: 0x0
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: (0)
+// CHECK-NEXT:     Name: L35 (72)
 // CHECK-NEXT:     Type: Section (0xE)
 // CHECK-NEXT:     Section: __cstring (0x4)
 // CHECK-NEXT:     RefType: UndefinedNonLazy (0x0)
@@ -427,7 +427,7 @@ D38:
 // CHECK-NEXT:     Value: 0x0
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: D35 ({{.*}})
+// CHECK-NEXT:     Name: D35 (76)
 // CHECK-NEXT:     Type: Section (0xE)
 // CHECK-NEXT:     Section: __cstring (0x4)
 // CHECK-NEXT:     RefType: UndefinedNonLazy (0x0)
@@ -436,7 +436,7 @@ D38:
 // CHECK-NEXT:     Value: 0x0
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: (0)
+// CHECK-NEXT:     Name: L36 (53)
 // CHECK-NEXT:     Type: Section (0xE)
 // CHECK-NEXT:     Section: __cstring (0x4)
 // CHECK-NEXT:     RefType: UndefinedNonLazy (0x0)
@@ -445,7 +445,7 @@ D38:
 // CHECK-NEXT:     Value: 0x0
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: D36 ({{.*}})
+// CHECK-NEXT:     Name: D36 (57)
 // CHECK-NEXT:     Type: Section (0xE)
 // CHECK-NEXT:     Section: __cstring (0x4)
 // CHECK-NEXT:     RefType: UndefinedNonLazy (0x0)
@@ -454,7 +454,7 @@ D38:
 // CHECK-NEXT:     Value: 0x0
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: (0)
+// CHECK-NEXT:     Name: L37 (34)
 // CHECK-NEXT:     Type: Section (0xE)
 // CHECK-NEXT:     Section: __cstring (0x4)
 // CHECK-NEXT:     RefType: UndefinedNonLazy (0x0)
@@ -463,7 +463,7 @@ D38:
 // CHECK-NEXT:     Value: 0x0
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: D37 ({{.*}})
+// CHECK-NEXT:     Name: D37 (38)
 // CHECK-NEXT:     Type: Section (0xE)
 // CHECK-NEXT:     Section: __cstring (0x4)
 // CHECK-NEXT:     RefType: UndefinedNonLazy (0x0)
@@ -472,7 +472,7 @@ D38:
 // CHECK-NEXT:     Value: 0x0
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: (0)
+// CHECK-NEXT:     Name: L38 (15)
 // CHECK-NEXT:     Type: Section (0xE)
 // CHECK-NEXT:     Section: __selector_strs (0x1F)
 // CHECK-NEXT:     RefType: UndefinedNonLazy (0x0)
@@ -481,7 +481,7 @@ D38:
 // CHECK-NEXT:     Value: 0x0
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: D38 ({{.*}})
+// CHECK-NEXT:     Name: D38 (19)
 // CHECK-NEXT:     Type: Section (0xE)
 // CHECK-NEXT:     Section: __selector_strs (0x1F)
 // CHECK-NEXT:     RefType: UndefinedNonLazy (0x0)

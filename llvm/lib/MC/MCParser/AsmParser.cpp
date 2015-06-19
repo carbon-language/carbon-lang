@@ -1306,8 +1306,10 @@ bool AsmParser::parseStatement(ParseStatementInfo &Info,
     MCSymbol *Sym;
     if (LocalLabelVal == -1) {
       if (ParsingInlineAsm && SI) {
-        StringRef RewrittenLabel = SI->LookupInlineAsmLabel(IDVal, getSourceManager(), IDLoc, true);
-        assert(RewrittenLabel.size() && "We should have an internal name here.");
+        StringRef RewrittenLabel =
+            SI->LookupInlineAsmLabel(IDVal, getSourceManager(), IDLoc, true);
+        assert(RewrittenLabel.size() &&
+               "We should have an internal name here.");
         Info.AsmRewrites->push_back(AsmRewrite(AOK_Label, IDLoc,
                                                IDVal.size(), RewrittenLabel));
         IDVal = RewrittenLabel;

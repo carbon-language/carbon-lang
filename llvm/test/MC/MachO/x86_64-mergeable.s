@@ -24,7 +24,7 @@ L1:
 // CHECK-NEXT:       PCRel: 0
 // CHECK-NEXT:       Length: 3
 // CHECK-NEXT:       Type: X86_64_RELOC_UNSIGNED (0)
-// CHECK-NEXT:       Symbol: -
+// CHECK-NEXT:       Symbol: L1
 // CHECK-NEXT:     }
 // CHECK-NEXT:     Relocation {
 // CHECK-NEXT:       Offset: 0x10
@@ -38,7 +38,7 @@ L1:
 // CHECK-NEXT:       PCRel: 0
 // CHECK-NEXT:       Length: 3
 // CHECK-NEXT:       Type: X86_64_RELOC_UNSIGNED (0)
-// CHECK-NEXT:       Symbol: -
+// CHECK-NEXT:       Symbol: L0
 // CHECK-NEXT:     }
 // CHECK-NEXT:     Relocation {
 // CHECK-NEXT:       Offset: 0x0

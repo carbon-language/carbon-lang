@@ -22,9 +22,9 @@ foo:
 
 // CHECK:      Relocations [
 // CHECK-NEXT:   Section {{.*}} .rela.text {
-// CHECK-NEXT:     0x{{[^ ]+}} R_X86_64_PC32     -    0x{{[^ ]+}}
+// CHECK-NEXT:     0x{{[^ ]+}} R_X86_64_PC32    .Lfoo 0x{{[^ ]+}}
 // CHECK-NEXT:     0x{{[^ ]+}} R_X86_64_32      .sec1 0x{{[^ ]+}}
-// CHECK-NEXT:     0x{{[^ ]+}} R_X86_64_32       -    0x{{[^ ]+}}
+// CHECK-NEXT:     0x{{[^ ]+}} R_X86_64_32      .Lfoo 0x{{[^ ]+}}
 // CHECK-NEXT:     0x{{[^ ]+}} R_X86_64_PLT32    foo  0x{{[^ ]+}}
 // CHECK-NEXT:     0x{{[^ ]+}} R_X86_64_GOTPCREL foo  0x{{[^ ]+}}
 // CHECK-NEXT:     0x{{[^ ]+}} R_X86_64_32S      zed  0x{{[^ ]+}}
