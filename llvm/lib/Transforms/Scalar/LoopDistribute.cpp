@@ -630,11 +630,11 @@ private:
 };
 
 /// \brief Handles the loop versioning based on memchecks.
-class RuntimeCheckEmitter {
+class LoopVersioning {
 public:
-  RuntimeCheckEmitter(const LoopAccessInfo &LAI, Loop *L, LoopInfo *LI,
-                      DominatorTree *DT,
-                      const SmallVector<int, 8> *PtrToPartition = nullptr)
+  LoopVersioning(const LoopAccessInfo &LAI, Loop *L, LoopInfo *LI,
+                 DominatorTree *DT,
+                 const SmallVector<int, 8> *PtrToPartition = nullptr)
       : OrigLoop(L), NonDistributedLoop(nullptr),
         PtrToPartition(PtrToPartition), LAI(LAI), LI(LI), DT(DT) {}
 
@@ -922,12 +922,12 @@ private:
     // If we need run-time checks to disambiguate pointers are run-time, version
     // the loop now.
     auto PtrToPartition = Partitions.computePartitionSetForPointers(LAI);
-    RuntimeCheckEmitter RtCheckEmitter(LAI, L, LI, DT, &PtrToPartition);
-    if (RtCheckEmitter.needsRuntimeChecks()) {
+    LoopVersioning LVer(LAI, L, LI, DT, &PtrToPartition);
+    if (LVer.needsRuntimeChecks()) {
       DEBUG(dbgs() << "\nPointers:\n");
       DEBUG(LAI.getRuntimePointerCheck()->print(dbgs(), 0, &PtrToPartition));
-      RtCheckEmitter.versionLoop(this);
-      RtCheckEmitter.addPHINodes(DefsUsedOutside);
+      LVer.versionLoop(this);
+      LVer.addPHINodes(DefsUsedOutside);
     }
 
     // Create identical copies of the original loop for each partition and hook
