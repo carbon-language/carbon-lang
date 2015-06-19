@@ -4066,8 +4066,7 @@ void ItaniumMangleContextImpl::mangleTypeName(QualType Ty, raw_ostream &Out) {
 
 void ItaniumMangleContextImpl::mangleCXXVTableBitSet(const CXXRecordDecl *RD,
                                                      raw_ostream &Out) {
-  Linkage L = RD->getLinkageInternal();
-  if (L == InternalLinkage || L == UniqueExternalLinkage) {
+  if (!RD->isExternallyVisible()) {
     // This part of the identifier needs to be unique across all translation
     // units in the linked program. The scheme fails if multiple translation
     // units are compiled using the same relative source file path, or if

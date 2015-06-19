@@ -2761,7 +2761,17 @@ void MicrosoftMangleContextImpl::mangleStringLiteral(const StringLiteral *SL,
 
 void MicrosoftMangleContextImpl::mangleCXXVTableBitSet(const CXXRecordDecl *RD,
                                                        raw_ostream &Out) {
-  llvm::report_fatal_error("Cannot mangle bitsets yet");
+  if (!RD->isExternallyVisible()) {
+    // This part of the identifier needs to be unique across all translation
+    // units in the linked program. The scheme fails if multiple translation
+    // units are compiled using the same relative source file path, or if
+    // multiple translation units are built from the same source file.
+    SourceManager &SM = getASTContext().getSourceManager();
+    Out << "[" << SM.getFileEntryForID(SM.getMainFileID())->getName() << "]";
+  }
+
+  MicrosoftCXXNameMangler mangler(*this, Out);
+  mangler.mangleName(RD);
 }
 
 MicrosoftMangleContext *

@@ -205,6 +205,9 @@ public:
                           CXXDtorType Type, bool ForVirtualBase,
                           bool Delegating, llvm::Value *This) override;
 
+  void emitVTableBitSetEntries(VPtrInfo *Info, const CXXRecordDecl *RD,
+                               llvm::GlobalVariable *VTable);
+
   void emitVTableDefinitions(CodeGenVTables &CGVT,
                              const CXXRecordDecl *RD) override;
 
@@ -1401,6 +1404,58 @@ void MicrosoftCXXABI::EmitDestructorCall(CodeGenFunction &CGF,
                           getFromDtorType(Type));
 }
 
+void MicrosoftCXXABI::emitVTableBitSetEntries(VPtrInfo *Info,
+                                              const CXXRecordDecl *RD,
+                                              llvm::GlobalVariable *VTable) {
+  if (!getContext().getLangOpts().Sanitize.has(SanitizerKind::CFIVCall) &&
+      !getContext().getLangOpts().Sanitize.has(SanitizerKind::CFINVCall) &&
+      !getContext().getLangOpts().Sanitize.has(SanitizerKind::CFIDerivedCast) &&
+      !getContext().getLangOpts().Sanitize.has(SanitizerKind::CFIUnrelatedCast))
+    return;
+
+  llvm::NamedMDNode *BitsetsMD =
+      CGM.getModule().getOrInsertNamedMetadata("llvm.bitsets");
+  CharUnits PointerWidth = getContext().toCharUnitsFromBits(
+      getContext().getTargetInfo().getPointerWidth(0));
+
+  // FIXME: Add blacklisting scheme.
+
+  if (Info->PathToBaseWithVPtr.empty()) {
+    BitsetsMD->addOperand(
+        CGM.CreateVTableBitSetEntry(VTable, PointerWidth, RD));
+    return;
+  }
+
+  // Add a bitset entry for the least derived base belonging to this vftable.
+  BitsetsMD->addOperand(CGM.CreateVTableBitSetEntry(
+      VTable, PointerWidth, Info->PathToBaseWithVPtr.back()));
+
+  // Add a bitset entry for each derived class that is laid out at the same
+  // offset as the least derived base.
+  for (unsigned I = Info->PathToBaseWithVPtr.size() - 1; I != 0; --I) {
+    const CXXRecordDecl *DerivedRD = Info->PathToBaseWithVPtr[I - 1];
+    const CXXRecordDecl *BaseRD = Info->PathToBaseWithVPtr[I];
+
+    const ASTRecordLayout &Layout =
+        getContext().getASTRecordLayout(DerivedRD);
+    CharUnits Offset;
+    auto VBI = Layout.getVBaseOffsetsMap().find(BaseRD);
+    if (VBI == Layout.getVBaseOffsetsMap().end())
+      Offset = Layout.getBaseClassOffset(BaseRD);
+    else
+      Offset = VBI->second.VBaseOffset;
+    if (!Offset.isZero())
+      return;
+    BitsetsMD->addOperand(
+        CGM.CreateVTableBitSetEntry(VTable, PointerWidth, DerivedRD));
+  }
+
+  // Finally do the same for the most derived class.
+  if (Info->FullOffsetInMDC.isZero())
+    BitsetsMD->addOperand(
+        CGM.CreateVTableBitSetEntry(VTable, PointerWidth, RD));
+}
+
 void MicrosoftCXXABI::emitVTableDefinitions(CodeGenVTables &CGVT,
                                             const CXXRecordDecl *RD) {
   MicrosoftVTableContext &VFTContext = CGM.getMicrosoftVTableContext();
@@ -1423,6 +1478,8 @@ void MicrosoftCXXABI::emitVTableDefinitions(CodeGenVTables &CGVT,
         VTLayout.getNumVTableThunks(), RTTI);
 
     VTable->setInitializer(Init);
+
+    emitVTableBitSetEntries(Info, RD, VTable);
   }
 }
 
@@ -1585,6 +1642,49 @@ llvm::GlobalVariable *MicrosoftCXXABI::getAddrOfVTable(const CXXRecordDecl *RD,
   return VTable;
 }
 
+// Compute the identity of the most derived class whose virtual table is located
+// at the given offset into RD.
+static const CXXRecordDecl *getClassAtVTableLocation(ASTContext &Ctx,
+                                                     const CXXRecordDecl *RD,
+                                                     CharUnits Offset) {
+  if (Offset.isZero())
+    return RD;
+
+  const ASTRecordLayout &Layout = Ctx.getASTRecordLayout(RD);
+  const CXXRecordDecl *MaxBase = nullptr;
+  CharUnits MaxBaseOffset;
+  for (auto &&B : RD->bases()) {
+    const CXXRecordDecl *Base = B.getType()->getAsCXXRecordDecl();
+    CharUnits BaseOffset = Layout.getBaseClassOffset(Base);
+    if (BaseOffset <= Offset && BaseOffset > MaxBaseOffset) {
+      MaxBase = Base;
+      MaxBaseOffset = BaseOffset;
+    }
+  }
+  for (auto &&B : RD->vbases()) {
+    const CXXRecordDecl *Base = B.getType()->getAsCXXRecordDecl();
+    CharUnits BaseOffset = Layout.getVBaseClassOffset(Base);
+    if (BaseOffset <= Offset && BaseOffset > MaxBaseOffset) {
+      MaxBase = Base;
+      MaxBaseOffset = BaseOffset;
+    }
+  }
+  assert(MaxBase);
+  return getClassAtVTableLocation(Ctx, MaxBase, Offset - MaxBaseOffset);
+}
+
+// Compute the identity of the most derived class whose virtual table is located
+// at the MethodVFTableLocation ML.
+static const CXXRecordDecl *
+getClassAtVTableLocation(ASTContext &Ctx, GlobalDecl GD,
+                         MicrosoftVTableContext::MethodVFTableLocation &ML) {
+  const CXXRecordDecl *RD = ML.VBase;
+  if (!RD)
+    RD = cast<CXXMethodDecl>(GD.getDecl())->getParent();
+
+  return getClassAtVTableLocation(Ctx, RD, ML.VFPtrOffset);
+}
+
 llvm::Value *MicrosoftCXXABI::getVirtualFunctionPointer(CodeGenFunction &CGF,
                                                         GlobalDecl GD,
                                                         llvm::Value *This,
@@ -1600,6 +1700,10 @@ llvm::Value *MicrosoftCXXABI::getVirtualFunctionPointer(CodeGenFunction &CGF,
 
   MicrosoftVTableContext::MethodVFTableLocation ML =
       CGM.getMicrosoftVTableContext().getMethodVFTableLocation(GD);
+  if (CGF.SanOpts.has(SanitizerKind::CFIVCall))
+    CGF.EmitVTablePtrCheck(getClassAtVTableLocation(getContext(), GD, ML),
+                           VTable, CodeGenFunction::CFITCK_VCall, Loc);
+
   llvm::Value *VFuncPtr =
       Builder.CreateConstInBoundsGEP1_64(VTable, ML.Index, "vfn");
   return Builder.CreateLoad(VFuncPtr);
