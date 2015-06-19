@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify -triple x86_64-unknown-linux-gnu %s
 
 // Correct cases.
 typedef int __attribute__((mode(byte))) __attribute__((vector_size(256))) vec_t1;
