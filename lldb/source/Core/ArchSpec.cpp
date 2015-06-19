@@ -283,7 +283,7 @@ static const ArchDefinitionEntry g_elf_arch_entries[] =
 {
     { ArchSpec::eCore_sparc_generic   , llvm::ELF::EM_SPARC  , LLDB_INVALID_CPUTYPE, 0xFFFFFFFFu, 0xFFFFFFFFu }, // Sparc
     { ArchSpec::eCore_x86_32_i386     , llvm::ELF::EM_386    , LLDB_INVALID_CPUTYPE, 0xFFFFFFFFu, 0xFFFFFFFFu }, // Intel 80386
-    { ArchSpec::eCore_x86_32_i486     , llvm::ELF::EM_486    , LLDB_INVALID_CPUTYPE, 0xFFFFFFFFu, 0xFFFFFFFFu }, // Intel 486 (deprecated)
+    { ArchSpec::eCore_x86_32_i486     , llvm::ELF::EM_IAMCU  , LLDB_INVALID_CPUTYPE, 0xFFFFFFFFu, 0xFFFFFFFFu }, // Intel MCU // FIXME: is this correct?
     { ArchSpec::eCore_ppc_generic     , llvm::ELF::EM_PPC    , LLDB_INVALID_CPUTYPE, 0xFFFFFFFFu, 0xFFFFFFFFu }, // PowerPC
     { ArchSpec::eCore_ppc64_generic   , llvm::ELF::EM_PPC64  , LLDB_INVALID_CPUTYPE, 0xFFFFFFFFu, 0xFFFFFFFFu }, // PowerPC64
     { ArchSpec::eCore_arm_generic     , llvm::ELF::EM_ARM    , LLDB_INVALID_CPUTYPE, 0xFFFFFFFFu, 0xFFFFFFFFu }, // ARM

@@ -180,7 +180,7 @@ ELFHeader::GetRelocationJumpSlotType() const
         slot = R_PPC64_JMP_SLOT;
         break;
     case EM_386:
-    case EM_486:
+    case EM_IAMCU: // FIXME: is this correct?
         slot = R_386_JUMP_SLOT;
         break;
     case EM_X86_64:
