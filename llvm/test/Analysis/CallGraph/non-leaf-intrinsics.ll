@@ -25,8 +25,8 @@ entry:
 ; CHECK: Call graph node <<null function>>
 ; CHECK:  CS<0x0> calls function 'f'
 
-; CHECK: Call graph node for function: 'calls_statepoint'
-; CHECK-NEXT:  CS<[[addr_0:[^>]+]]> calls external node
-
 ; CHECK: Call graph node for function: 'calls_patchpoint'
 ; CHECK-NEXT:  CS<[[addr_1:[^>]+]]> calls external node
+
+; CHECK: Call graph node for function: 'calls_statepoint'
+; CHECK-NEXT:  CS<[[addr_0:[^>]+]]> calls external node
