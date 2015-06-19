@@ -64,7 +64,7 @@ private:
 
 class LinkerDriver {
 public:
-  LinkerDriver() : Alloc(AllocAux), SearchPaths(getSearchPaths()) {}
+  LinkerDriver() : Alloc(AllocAux) {}
   bool link(int Argc, const char *Argv[]);
 
   // Used by the resolver to parse .drectve section contents.
@@ -86,10 +86,11 @@ private:
   StringRef doFindLib(StringRef Filename);
 
   // Parses LIB environment which contains a list of search paths.
-  // The returned list always contains "." as the first element.
-  std::vector<StringRef> getSearchPaths();
+  void addLibSearchPaths();
 
+  // Library search path. The first element is always "" (current directory).
   std::vector<StringRef> SearchPaths;
+
   std::set<std::string> VisitedFiles;
 
   // Driver is the owner of all opened files.

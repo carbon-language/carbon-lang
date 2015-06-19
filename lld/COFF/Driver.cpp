@@ -191,20 +191,16 @@ Optional<StringRef> LinkerDriver::findLib(StringRef Filename) {
 }
 
 // Parses LIB environment which contains a list of search paths.
-std::vector<StringRef> LinkerDriver::getSearchPaths() {
-  std::vector<StringRef> Ret;
-  // Add current directory as first item of the search paths.
-  Ret.push_back("");
+void LinkerDriver::addLibSearchPaths() {
   Optional<std::string> EnvOpt = Process::GetEnv("LIB");
   if (!EnvOpt.hasValue())
-    return Ret;
+    return;
   StringRef Env = Alloc.save(*EnvOpt);
   while (!Env.empty()) {
     StringRef Path;
     std::tie(Path, Env) = Env.split(';');
-    Ret.push_back(Path);
+    SearchPaths.push_back(Path);
   }
-  return Ret;
 }
 
 static WindowsSubsystem inferSubsystem() {
@@ -251,6 +247,12 @@ bool LinkerDriver::link(int Argc, const char *Argv[]) {
     return false;
   }
 
+  // Construct search path list.
+  SearchPaths.push_back("");
+  for (auto *Arg : Args->filtered(OPT_libpath))
+    SearchPaths.push_back(Arg->getValue());
+  addLibSearchPaths();
+
   // Handle /out
   if (auto *Arg = Args->getLastArg(OPT_out))
     Config->OutputFile = Arg->getValue();
@@ -286,10 +288,6 @@ bool LinkerDriver::link(int Argc, const char *Argv[]) {
     return false;
   }
   Config->MachineType = MTOrErr.get();
-
-  // Handle /libpath
-  for (auto *Arg : Args->filtered(OPT_libpath))
-    SearchPaths.push_back(Arg->getValue());
 
   // Handle /nodefaultlib:<filename>
   for (auto *Arg : Args->filtered(OPT_nodefaultlib))
