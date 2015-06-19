@@ -20,40 +20,9 @@ define <8 x i8> @vuzpi8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 define <16 x i8> @vuzpi8_Qres(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 ; CHECK-LABEL: vuzpi8_Qres:
 ; CHECK:       @ BB#0:
-; CHECK-NEXT:    vldr d19, [r0]
-; CHECK-NEXT:    vldr d18, [r1]
-; CHECK-NEXT:    vmov.u8 r0, d19[0]
-; CHECK-NEXT:    vmov.8 d16[0], r0
-; CHECK-NEXT:    vmov.u8 r0, d19[2]
-; CHECK-NEXT:    vmov.8 d16[1], r0
-; CHECK-NEXT:    vmov.u8 r0, d19[4]
-; CHECK-NEXT:    vmov.8 d16[2], r0
-; CHECK-NEXT:    vmov.u8 r0, d19[6]
-; CHECK-NEXT:    vmov.8 d16[3], r0
-; CHECK-NEXT:    vmov.u8 r0, d18[0]
-; CHECK-NEXT:    vmov.8 d16[4], r0
-; CHECK-NEXT:    vmov.u8 r0, d18[2]
-; CHECK-NEXT:    vmov.8 d16[5], r0
-; CHECK-NEXT:    vmov.u8 r0, d18[4]
-; CHECK-NEXT:    vmov.8 d16[6], r0
-; CHECK-NEXT:    vmov.u8 r0, d18[6]
-; CHECK-NEXT:    vmov.8 d16[7], r0
-; CHECK-NEXT:    vmov.u8 r0, d19[1]
-; CHECK-NEXT:    vmov.8 d17[0], r0
-; CHECK-NEXT:    vmov.u8 r0, d19[3]
-; CHECK-NEXT:    vmov.8 d17[1], r0
-; CHECK-NEXT:    vmov.u8 r0, d19[5]
-; CHECK-NEXT:    vmov.8 d17[2], r0
-; CHECK-NEXT:    vmov.u8 r0, d19[7]
-; CHECK-NEXT:    vmov.8 d17[3], r0
-; CHECK-NEXT:    vmov.u8 r0, d18[1]
-; CHECK-NEXT:    vmov.8 d17[4], r0
-; CHECK-NEXT:    vmov.u8 r0, d18[3]
-; CHECK-NEXT:    vmov.8 d17[5], r0
-; CHECK-NEXT:    vmov.u8 r0, d18[5]
-; CHECK-NEXT:    vmov.8 d17[6], r0
-; CHECK-NEXT:    vmov.u8 r0, d18[7]
-; CHECK-NEXT:    vmov.8 d17[7], r0
+; CHECK-NEXT:    vldr d17, [r1]
+; CHECK-NEXT:    vldr d16, [r0]
+; CHECK-NEXT:    vuzp.8 d16, d17
 ; CHECK-NEXT:    vmov r0, r1, d16
 ; CHECK-NEXT:    vmov r2, r3, d17
 ; CHECK-NEXT:    mov pc, lr
@@ -83,26 +52,11 @@ define <4 x i16> @vuzpi16(<4 x i16>* %A, <4 x i16>* %B) nounwind {
 define <8 x i16> @vuzpi16_Qres(<4 x i16>* %A, <4 x i16>* %B) nounwind {
 ; CHECK-LABEL: vuzpi16_Qres:
 ; CHECK:       @ BB#0:
-; CHECK-NEXT:    vldr d16, [r0]
 ; CHECK-NEXT:    vldr d17, [r1]
-; CHECK-NEXT:    vmov.u16 r0, d16[0]
-; CHECK-NEXT:    vmov.16 d18[0], r0
-; CHECK-NEXT:    vmov.u16 r0, d16[2]
-; CHECK-NEXT:    vmov.16 d18[1], r0
-; CHECK-NEXT:    vmov.u16 r0, d17[0]
-; CHECK-NEXT:    vmov.16 d18[2], r0
-; CHECK-NEXT:    vmov.u16 r0, d17[2]
-; CHECK-NEXT:    vmov.16 d18[3], r0
-; CHECK-NEXT:    vmov.u16 r0, d16[1]
-; CHECK-NEXT:    vmov.16 d19[0], r0
-; CHECK-NEXT:    vmov.u16 r0, d16[3]
-; CHECK-NEXT:    vmov.16 d19[1], r0
-; CHECK-NEXT:    vmov.u16 r0, d17[1]
-; CHECK-NEXT:    vmov.16 d19[2], r0
-; CHECK-NEXT:    vmov.u16 r0, d17[3]
-; CHECK-NEXT:    vmov.16 d19[3], r0
-; CHECK-NEXT:    vmov r0, r1, d18
-; CHECK-NEXT:    vmov r2, r3, d19
+; CHECK-NEXT:    vldr d16, [r0]
+; CHECK-NEXT:    vuzp.16 d16, d17
+; CHECK-NEXT:    vmov r0, r1, d16
+; CHECK-NEXT:    vmov r2, r3, d17
 ; CHECK-NEXT:    mov pc, lr
 	%tmp1 = load <4 x i16>, <4 x i16>* %A
 	%tmp2 = load <4 x i16>, <4 x i16>* %B
@@ -266,32 +220,9 @@ define <8 x i8> @vuzpi8_undef(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 define <16 x i8> @vuzpi8_undef_Qres(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 ; CHECK-LABEL: vuzpi8_undef_Qres:
 ; CHECK:       @ BB#0:
-; CHECK-NEXT:    vldr d18, [r0]
-; CHECK-NEXT:    vldr d19, [r1]
-; CHECK-NEXT:    vmov.u8 r0, d18[0]
-; CHECK-NEXT:    vmov.8 d16[0], r0
-; CHECK-NEXT:    vmov.u8 r0, d18[2]
-; CHECK-NEXT:    vmov.8 d16[1], r0
-; CHECK-NEXT:    vmov.u8 r0, d19[0]
-; CHECK-NEXT:    vmov.8 d16[4], r0
-; CHECK-NEXT:    vmov.u8 r0, d19[2]
-; CHECK-NEXT:    vmov.8 d16[5], r0
-; CHECK-NEXT:    vmov.u8 r0, d19[4]
-; CHECK-NEXT:    vmov.8 d16[6], r0
-; CHECK-NEXT:    vmov.u8 r0, d19[6]
-; CHECK-NEXT:    vmov.8 d16[7], r0
-; CHECK-NEXT:    vmov.u8 r0, d18[1]
-; CHECK-NEXT:    vmov.8 d17[0], r0
-; CHECK-NEXT:    vmov.u8 r0, d18[3]
-; CHECK-NEXT:    vmov.8 d17[1], r0
-; CHECK-NEXT:    vmov.u8 r0, d18[5]
-; CHECK-NEXT:    vmov.8 d17[2], r0
-; CHECK-NEXT:    vmov.u8 r0, d18[7]
-; CHECK-NEXT:    vmov.8 d17[3], r0
-; CHECK-NEXT:    vmov.u8 r0, d19[5]
-; CHECK-NEXT:    vmov.8 d17[6], r0
-; CHECK-NEXT:    vmov.u8 r0, d19[7]
-; CHECK-NEXT:    vmov.8 d17[7], r0
+; CHECK-NEXT:    vldr d17, [r1]
+; CHECK-NEXT:    vldr d16, [r0]
+; CHECK-NEXT:    vuzp.8 d16, d17
 ; CHECK-NEXT:    vmov r0, r1, d16
 ; CHECK-NEXT:    vmov r2, r3, d17
 ; CHECK-NEXT:    mov pc, lr
