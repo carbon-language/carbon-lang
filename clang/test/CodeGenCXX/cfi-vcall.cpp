@@ -1,4 +1,6 @@
-// RUN: %clang_cc1 -triple x86_64-unknown-linux -fsanitize=cfi-vcall -emit-llvm -o - %s | FileCheck %s
+// RUN: %clang_cc1 -triple x86_64-unknown-linux -fsanitize=cfi-vcall -fsanitize-trap=cfi-vcall -emit-llvm -o - %s | FileCheck --check-prefix=CHECK --check-prefix=NDIAG %s
+// RUN: %clang_cc1 -triple x86_64-unknown-linux -fsanitize=cfi-vcall -emit-llvm -o - %s | FileCheck --check-prefix=CHECK --check-prefix=DIAG --check-prefix=DIAG-ABORT %s
+// RUN: %clang_cc1 -triple x86_64-unknown-linux -fsanitize=cfi-vcall -fsanitize-recover=cfi-vcall -emit-llvm -o - %s | FileCheck --check-prefix=CHECK --check-prefix=DIAG --check-prefix=DIAG-RECOVER %s
 
 struct A {
   A();
@@ -33,14 +35,23 @@ void A::f() {
 void D::f() {
 }
 
+// DIAG: @[[SRC:.*]] = private unnamed_addr constant [{{.*}} x i8] c"{{.*}}test/CodeGenCXX/cfi-vcall.cpp\00", align 1
+// DIAG: @[[TYPE:.*]] = private unnamed_addr constant { i16, i16, [4 x i8] } { i16 -1, i16 0, [4 x i8] c"'A'\00" }
+// DIAG: @[[BADTYPESTATIC:.*]] = private unnamed_addr global { { [{{.*}} x i8]*, i32, i32 }, { i16, i16, [4 x i8] }*, i8 } { { [{{.*}} x i8]*, i32, i32 } { [{{.*}} x i8]* @[[SRC]], i32 58, i32 3 }, { i16, i16, [4 x i8] }* @[[TYPE]], i8 0 }
+
 // CHECK: define void @_Z2afP1A
 void af(A *a) {
-  // CHECK: [[P:%[^ ]*]] = call i1 @llvm.bitset.test(i8* {{%[^ ]*}}, metadata !"1A")
-  // CHECK-NEXT: br i1 [[P]], label %[[CONTBB:[^ ]*]], label %[[TRAPBB:[^ ]*]]
+  // CHECK: [[P:%[^ ]*]] = call i1 @llvm.bitset.test(i8* [[VT:%[^ ]*]], metadata !"1A")
+  // CHECK-NEXT: br i1 [[P]], label %[[CONTBB:[^ ,]*]], label %[[TRAPBB:[^ ,]*]]
 
   // CHECK: [[TRAPBB]]
-  // CHECK-NEXT: call void @llvm.trap()
-  // CHECK-NEXT: unreachable
+  // NDIAG-NEXT: call void @llvm.trap()
+  // NDIAG-NEXT: unreachable
+  // DIAG-NEXT: [[VTINT:%[^ ]*]] = ptrtoint i8* [[VT]] to i64
+  // DIAG-ABORT-NEXT: call void @__ubsan_handle_cfi_bad_type_abort(i8* bitcast ({{.*}} @[[BADTYPESTATIC]] to i8*), i64 [[VTINT]])
+  // DIAG-ABORT-NEXT: unreachable
+  // DIAG-RECOVER-NEXT: call void @__ubsan_handle_cfi_bad_type(i8* bitcast ({{.*}} @[[BADTYPESTATIC]] to i8*), i64 [[VTINT]])
+  // DIAG-RECOVER-NEXT: br label %[[CONTBB]]
 
   // CHECK: [[CONTBB]]
   // CHECK: call void %

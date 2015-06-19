@@ -1108,10 +1108,12 @@ are listed below.
    the binary size increase caused by the sanitizer runtime is a concern.
 
    This flag is only compatible with ``local-bounds``,
-   ``unsigned-integer-overflow`` and sanitizers in the ``undefined``
-   group other than ``vptr``. If this flag is supplied together with
-   ``-fsanitize=undefined``, the ``vptr`` sanitizer will be implicitly
-   disabled.
+   ``unsigned-integer-overflow``, sanitizers in the ``cfi`` group and
+   sanitizers in the ``undefined`` group other than ``vptr``. If this flag
+   is supplied together with ``-fsanitize=undefined``, the ``vptr`` sanitizer
+   will be implicitly disabled.
+
+   This flag is enabled by default for sanitizers in the ``cfi`` group.
 
 **-f[no-]sanitize-coverage=[type,features,...]**
 

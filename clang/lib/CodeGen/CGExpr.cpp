@@ -3035,7 +3035,8 @@ LValue CodeGenFunction::EmitCastLValue(const CastExpr *E) {
                     Derived, E->getType());
 
     if (SanOpts.has(SanitizerKind::CFIDerivedCast))
-      EmitVTablePtrCheckForCast(E->getType(), Derived, /*MayBeNull=*/false);
+      EmitVTablePtrCheckForCast(E->getType(), Derived, /*MayBeNull=*/false,
+                                CFITCK_DerivedCast, E->getLocStart());
 
     return MakeAddrLValue(Derived, E->getType());
   }
@@ -3048,7 +3049,8 @@ LValue CodeGenFunction::EmitCastLValue(const CastExpr *E) {
                                            ConvertType(CE->getTypeAsWritten()));
 
     if (SanOpts.has(SanitizerKind::CFIUnrelatedCast))
-      EmitVTablePtrCheckForCast(E->getType(), V, /*MayBeNull=*/false);
+      EmitVTablePtrCheckForCast(E->getType(), V, /*MayBeNull=*/false,
+                                CFITCK_UnrelatedCast, E->getLocStart());
 
     return MakeAddrLValue(V, E->getType());
   }

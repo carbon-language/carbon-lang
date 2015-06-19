@@ -204,7 +204,8 @@ public:
 
   llvm::Value *getVirtualFunctionPointer(CodeGenFunction &CGF, GlobalDecl GD,
                                          llvm::Value *This,
-                                         llvm::Type *Ty) override;
+                                         llvm::Type *Ty,
+                                         SourceLocation Loc) override;
 
   llvm::Value *EmitVirtualDestructorCall(CodeGenFunction &CGF,
                                          const CXXDestructorDecl *Dtor,
@@ -1439,13 +1440,15 @@ llvm::GlobalVariable *ItaniumCXXABI::getAddrOfVTable(const CXXRecordDecl *RD,
 llvm::Value *ItaniumCXXABI::getVirtualFunctionPointer(CodeGenFunction &CGF,
                                                       GlobalDecl GD,
                                                       llvm::Value *This,
-                                                      llvm::Type *Ty) {
+                                                      llvm::Type *Ty,
+                                                      SourceLocation Loc) {
   GD = GD.getCanonicalDecl();
   Ty = Ty->getPointerTo()->getPointerTo();
   llvm::Value *VTable = CGF.GetVTablePtr(This, Ty);
 
   if (CGF.SanOpts.has(SanitizerKind::CFIVCall))
-    CGF.EmitVTablePtrCheckForCall(cast<CXXMethodDecl>(GD.getDecl()), VTable);
+    CGF.EmitVTablePtrCheckForCall(cast<CXXMethodDecl>(GD.getDecl()), VTable,
+                                  CodeGenFunction::CFITCK_VCall, Loc);
 
   uint64_t VTableIndex = CGM.getItaniumVTableContext().getMethodVTableIndex(GD);
   llvm::Value *VFuncPtr =
@@ -1463,7 +1466,8 @@ llvm::Value *ItaniumCXXABI::EmitVirtualDestructorCall(
       Dtor, getFromDtorType(DtorType));
   llvm::Type *Ty = CGF.CGM.getTypes().GetFunctionType(*FInfo);
   llvm::Value *Callee =
-      getVirtualFunctionPointer(CGF, GlobalDecl(Dtor, DtorType), This, Ty);
+      getVirtualFunctionPointer(CGF, GlobalDecl(Dtor, DtorType), This, Ty,
+                                CE ? CE->getLocStart() : SourceLocation());
 
   CGF.EmitCXXMemberOrOperatorCall(Dtor, Callee, ReturnValueSlot(), This,
                                   /*ImplicitParam=*/nullptr, QualType(), CE);

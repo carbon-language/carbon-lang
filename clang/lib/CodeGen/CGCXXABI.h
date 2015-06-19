@@ -366,7 +366,8 @@ public:
   virtual llvm::Value *getVirtualFunctionPointer(CodeGenFunction &CGF,
                                                  GlobalDecl GD,
                                                  llvm::Value *This,
-                                                 llvm::Type *Ty) = 0;
+                                                 llvm::Type *Ty,
+                                                 SourceLocation Loc) = 0;
 
   /// Emit the ABI-specific virtual destructor call.
   virtual llvm::Value *

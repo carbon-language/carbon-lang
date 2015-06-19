@@ -2134,17 +2134,21 @@ LeastDerivedClassWithSameLayout(const CXXRecordDecl *RD) {
 }
 
 void CodeGenFunction::EmitVTablePtrCheckForCall(const CXXMethodDecl *MD,
-                                                llvm::Value *VTable) {
+                                                llvm::Value *VTable,
+                                                CFITypeCheckKind TCK,
+                                                SourceLocation Loc) {
   const CXXRecordDecl *ClassDecl = MD->getParent();
   if (!SanOpts.has(SanitizerKind::CFICastStrict))
     ClassDecl = LeastDerivedClassWithSameLayout(ClassDecl);
 
-  EmitVTablePtrCheck(ClassDecl, VTable);
+  EmitVTablePtrCheck(ClassDecl, VTable, TCK, Loc);
 }
 
 void CodeGenFunction::EmitVTablePtrCheckForCast(QualType T,
                                                 llvm::Value *Derived,
-                                                bool MayBeNull) {
+                                                bool MayBeNull,
+                                                CFITypeCheckKind TCK,
+                                                SourceLocation Loc) {
   if (!getLangOpts().CPlusPlus)
     return;
 
@@ -2184,7 +2188,7 @@ void CodeGenFunction::EmitVTablePtrCheckForCast(QualType T,
   }
 
   llvm::Value *VTable = GetVTablePtr(Derived, Int8PtrTy);
-  EmitVTablePtrCheck(ClassDecl, VTable);
+  EmitVTablePtrCheck(ClassDecl, VTable, TCK, Loc);
 
   if (MayBeNull) {
     Builder.CreateBr(ContBlock);
@@ -2193,10 +2197,14 @@ void CodeGenFunction::EmitVTablePtrCheckForCast(QualType T,
 }
 
 void CodeGenFunction::EmitVTablePtrCheck(const CXXRecordDecl *RD,
-                                         llvm::Value *VTable) {
+                                         llvm::Value *VTable,
+                                         CFITypeCheckKind TCK,
+                                         SourceLocation Loc) {
   // FIXME: Add blacklisting scheme.
   if (RD->isInStdNamespace())
     return;
+
+  SanitizerScope SanScope(this);
 
   std::string OutName;
   llvm::raw_string_ostream Out(OutName);
@@ -2205,20 +2213,34 @@ void CodeGenFunction::EmitVTablePtrCheck(const CXXRecordDecl *RD,
   llvm::Value *BitSetName = llvm::MetadataAsValue::get(
       getLLVMContext(), llvm::MDString::get(getLLVMContext(), Out.str()));
 
-  llvm::Value *BitSetTest = Builder.CreateCall(
-      CGM.getIntrinsic(llvm::Intrinsic::bitset_test),
-      {Builder.CreateBitCast(VTable, CGM.Int8PtrTy), BitSetName});
+  llvm::Value *CastedVTable = Builder.CreateBitCast(VTable, Int8PtrTy);
+  llvm::Value *BitSetTest =
+      Builder.CreateCall(CGM.getIntrinsic(llvm::Intrinsic::bitset_test),
+                         {CastedVTable, BitSetName});
 
-  llvm::BasicBlock *ContBlock = createBasicBlock("vtable.check.cont");
-  llvm::BasicBlock *TrapBlock = createBasicBlock("vtable.check.trap");
+  SanitizerMask M;
+  switch (TCK) {
+  case CFITCK_VCall:
+    M = SanitizerKind::CFIVCall;
+    break;
+  case CFITCK_NVCall:
+    M = SanitizerKind::CFINVCall;
+    break;
+  case CFITCK_DerivedCast:
+    M = SanitizerKind::CFIDerivedCast;
+    break;
+  case CFITCK_UnrelatedCast:
+    M = SanitizerKind::CFIUnrelatedCast;
+    break;
+  }
 
-  Builder.CreateCondBr(BitSetTest, ContBlock, TrapBlock);
-
-  EmitBlock(TrapBlock);
-  Builder.CreateCall(CGM.getIntrinsic(llvm::Intrinsic::trap), {});
-  Builder.CreateUnreachable();
-
-  EmitBlock(ContBlock);
+  llvm::Constant *StaticData[] = {
+    EmitCheckSourceLocation(Loc),
+    EmitCheckTypeDescriptor(QualType(RD->getTypeForDecl(), 0)),
+    llvm::ConstantInt::get(Int8Ty, TCK),
+  };
+  EmitCheck(std::make_pair(BitSetTest, M), "cfi_bad_type", StaticData,
+            CastedVTable);
 }
 
 // FIXME: Ideally Expr::IgnoreParenNoopCasts should do this, but it doesn't do

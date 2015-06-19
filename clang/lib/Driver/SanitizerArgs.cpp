@@ -25,7 +25,7 @@ using namespace clang::driver;
 using namespace llvm::opt;
 
 enum : SanitizerMask {
-  NeedsUbsanRt = Undefined | Integer,
+  NeedsUbsanRt = Undefined | Integer | CFI,
   NotAllowedWithTrap = Vptr,
   RequiresPIE = Memory | DataFlow,
   NeedsUnwindTables = Address | Thread | Memory | DataFlow,
@@ -35,7 +35,8 @@ enum : SanitizerMask {
   LegacyFsanitizeRecoverMask = Undefined | Integer,
   NeedsLTO = CFI,
   TrappingSupported =
-      (Undefined & ~Vptr) | UnsignedIntegerOverflow | LocalBounds,
+      (Undefined & ~Vptr) | UnsignedIntegerOverflow | LocalBounds | CFI,
+  TrappingDefault = CFI,
 };
 
 enum CoverageFeature {
@@ -165,6 +166,9 @@ static SanitizerMask parseSanitizeTrapArgs(const Driver &D,
       TrapRemove |= expandSanitizerGroups(UndefinedGroup);
     }
   }
+
+  // Apply default trapping behavior.
+  TrappingKinds |= TrappingDefault & ~TrapRemove;
 
   return TrappingKinds;
 }
