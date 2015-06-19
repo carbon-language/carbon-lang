@@ -778,6 +778,20 @@ struct __sanitizer_obstack {
   char *next_free;
   uptr more_fields[7];
 };
+
+typedef uptr (*__sanitizer_cookie_io_read)(void *cookie, char *buf, uptr size);
+typedef uptr (*__sanitizer_cookie_io_write)(void *cookie, const char *buf,
+                                            uptr size);
+typedef int (*__sanitizer_cookie_io_seek)(void *cookie, u64 *offset,
+                                          int whence);
+typedef int (*__sanitizer_cookie_io_close)(void *cookie);
+
+struct __sanitizer_cookie_io_functions_t {
+  __sanitizer_cookie_io_read read;
+  __sanitizer_cookie_io_write write;
+  __sanitizer_cookie_io_seek seek;
+  __sanitizer_cookie_io_close close;
+};
 #endif
 
 #define IOC_NRBITS 8

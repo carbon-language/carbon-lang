@@ -1204,6 +1204,12 @@ CHECK_SIZE_AND_OFFSET(obstack, chunk_size);
 CHECK_SIZE_AND_OFFSET(obstack, chunk);
 CHECK_SIZE_AND_OFFSET(obstack, object_base);
 CHECK_SIZE_AND_OFFSET(obstack, next_free);
+
+CHECK_TYPE_SIZE(cookie_io_functions_t);
+CHECK_SIZE_AND_OFFSET(cookie_io_functions_t, read);
+CHECK_SIZE_AND_OFFSET(cookie_io_functions_t, write);
+CHECK_SIZE_AND_OFFSET(cookie_io_functions_t, seek);
+CHECK_SIZE_AND_OFFSET(cookie_io_functions_t, close);
 #endif
 
 #endif  // SANITIZER_LINUX || SANITIZER_FREEBSD || SANITIZER_MAC

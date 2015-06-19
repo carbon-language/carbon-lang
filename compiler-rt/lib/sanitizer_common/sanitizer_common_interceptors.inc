@@ -4956,6 +4956,61 @@ INTERCEPTOR(int, munlockall, void) {
 #define INIT_MLOCKX
 #endif  // SANITIZER_INTERCEPT_MLOCKX
 
+#if SANITIZER_INTERCEPT_FOPENCOOKIE
+struct WrappedCookie {
+  void *real_cookie;
+  __sanitizer_cookie_io_functions_t real_io_funcs;
+};
+
+static uptr wrapped_read(void *cookie, char *buf, uptr size) {
+  COMMON_INTERCEPTOR_UNPOISON_PARAM(3);
+  WrappedCookie *wrapped_cookie = (WrappedCookie *)cookie;
+  return wrapped_cookie->real_io_funcs.read(wrapped_cookie->real_cookie, buf,
+                                            size);
+}
+
+static uptr wrapped_write(void *cookie, const char *buf, uptr size) {
+  COMMON_INTERCEPTOR_UNPOISON_PARAM(3);
+  WrappedCookie *wrapped_cookie = (WrappedCookie *)cookie;
+  return wrapped_cookie->real_io_funcs.write(wrapped_cookie->real_cookie, buf,
+                                             size);
+}
+
+static int wrapped_seek(void *cookie, u64 *offset, int whence) {
+  COMMON_INTERCEPTOR_UNPOISON_PARAM(3);
+  COMMON_INTERCEPTOR_INITIALIZE_RANGE(offset, sizeof(*offset));
+  WrappedCookie *wrapped_cookie = (WrappedCookie *)cookie;
+  return wrapped_cookie->real_io_funcs.seek(wrapped_cookie->real_cookie, offset,
+                                            whence);
+}
+
+static int wrapped_close(void *cookie) {
+  COMMON_INTERCEPTOR_UNPOISON_PARAM(1);
+  WrappedCookie *wrapped_cookie = (WrappedCookie *)cookie;
+  int res = wrapped_cookie->real_io_funcs.close(wrapped_cookie->real_cookie);
+  InternalFree(wrapped_cookie);
+  return res;
+}
+
+INTERCEPTOR(__sanitizer_FILE *, fopencookie, void *cookie, const char *mode,
+            __sanitizer_cookie_io_functions_t io_funcs) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, fopencookie, cookie, mode, io_funcs);
+  WrappedCookie *wrapped_cookie =
+      (WrappedCookie *)InternalAlloc(sizeof(WrappedCookie));
+  wrapped_cookie->real_cookie = cookie;
+  wrapped_cookie->real_io_funcs = io_funcs;
+  __sanitizer_FILE *res =
+      REAL(fopencookie)(wrapped_cookie, mode, {wrapped_read, wrapped_write,
+                                               wrapped_seek, wrapped_close});
+  return res;
+}
+
+#define INIT_FOPENCOOKIE COMMON_INTERCEPT_FUNCTION(fopencookie);
+#else
+#define INIT_FOPENCOOKIE
+#endif  // SANITIZER_INTERCEPT_FOPENCOOKIE
+
 static void InitializeCommonInterceptors() {
   static u64 metadata_mem[sizeof(MetadataHashMap) / sizeof(u64) + 1];
   interceptor_metadata_map = new((void *)&metadata_mem) MetadataHashMap();
@@ -5123,4 +5178,5 @@ static void InitializeCommonInterceptors() {
   INIT_GETPASS;
   INIT_TIMERFD;
   INIT_MLOCKX;
+  INIT_FOPENCOOKIE;
 }
