@@ -1005,11 +1005,14 @@ ParsedType Parser::ParseObjCTypeName(ObjCDeclSpec &DS,
   ParseObjCTypeQualifierList(DS, context);
 
   ParsedType Ty;
-  if (isTypeSpecifierQualifier()) {
+  if (isTypeSpecifierQualifier() || isObjCInstancetype()) {
     // Parse an abstract declarator.
     DeclSpec declSpec(AttrFactory);
     declSpec.setObjCQualifiers(&DS);
-    ParseSpecifierQualifierList(declSpec);
+    DeclSpecContext dsContext = DSC_normal;
+    if (context == Declarator::ObjCResultContext)
+      dsContext = DSC_objc_method_result;
+    ParseSpecifierQualifierList(declSpec, AS_none, dsContext);
     declSpec.SetRangeEnd(Tok.getLocation());
     Declarator declarator(declSpec, context);
     ParseDeclarator(declarator);
@@ -1032,38 +1035,6 @@ ParsedType Parser::ParseObjCTypeName(ObjCDeclSpec &DS,
       // and add them to the decl spec.
       if (context == Declarator::ObjCParameterContext)
         takeDeclAttributes(*paramAttrs, declarator);
-    }
-  } else if (context == Declarator::ObjCResultContext &&
-             Tok.is(tok::identifier)) {
-    if (!Ident_instancetype)
-      Ident_instancetype = PP.getIdentifierInfo("instancetype");
-    
-    if (Tok.getIdentifierInfo() == Ident_instancetype) {
-      SourceLocation loc = ConsumeToken();
-      Ty = Actions.ActOnObjCInstanceType(loc);
-
-      // Synthesize an abstract declarator so we can use Sema::ActOnTypeName.
-      bool addedToDeclSpec = false;
-      const char *prevSpec;
-      unsigned diagID;
-      DeclSpec declSpec(AttrFactory);
-      declSpec.setObjCQualifiers(&DS);
-      declSpec.SetTypeSpecType(DeclSpec::TST_typename, loc, prevSpec, diagID,
-                               Ty,
-                               Actions.getASTContext().getPrintingPolicy());
-      declSpec.SetRangeEnd(loc);
-      Declarator declarator(declSpec, context);
-
-      // Map a nullability specifier to a context-sensitive keyword attribute.
-      if (DS.getObjCDeclQualifier() & ObjCDeclSpec::DQ_CSNullability)
-        addContextSensitiveTypeNullability(*this, declarator,
-                                           DS.getNullability(),
-                                           DS.getNullabilityLoc(),
-                                           addedToDeclSpec);
-
-      TypeResult type = Actions.ActOnTypeName(getCurScope(), declarator);
-      if (!type.isInvalid())
-        Ty = type.get();
     }
   }
 

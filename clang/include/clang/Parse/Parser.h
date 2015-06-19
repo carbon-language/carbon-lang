@@ -626,6 +626,16 @@ private:
                                 const char *&PrevSpec, unsigned &DiagID,
                                 bool &isInvalid);
 
+  /// Returns true if the current token is the identifier 'instancetype'.
+  ///
+  /// Should only be used in Objective-C language modes.
+  bool isObjCInstancetype() {
+    assert(getLangOpts().ObjC1);
+    if (!Ident_instancetype)
+      Ident_instancetype = PP.getIdentifierInfo("instancetype");
+    return Tok.getIdentifierInfo() == Ident_instancetype;
+  }
+
   /// TryKeywordIdentFallback - For compatibility with system headers using
   /// keywords as identifiers, attempt to convert the current token to an
   /// identifier and optionally disable the keyword for the remainder of the
@@ -1692,7 +1702,8 @@ private:
     DSC_trailing, // C++11 trailing-type-specifier in a trailing return type
     DSC_alias_declaration, // C++11 type-specifier-seq in an alias-declaration
     DSC_top_level, // top-level/namespace declaration context
-    DSC_template_type_arg // template type argument context
+    DSC_template_type_arg, // template type argument context
+    DSC_objc_method_result, // ObjC method result context, enables 'instancetype'
   };
 
   /// Is this a context in which we are parsing just a type-specifier (or
@@ -1702,6 +1713,7 @@ private:
     case DSC_normal:
     case DSC_class:
     case DSC_top_level:
+    case DSC_objc_method_result:
       return false;
 
     case DSC_template_type_arg:
