@@ -222,3 +222,11 @@ void testMultiProp(MultiProp *foo) {
   ip = foo.d; // expected-warning{{from 'MultiProp * __nullable'}}
   ip = foo.e; // expected-error{{incompatible type 'MultiProp *(^ __nullable)(int)'}}
 }
+
+void testBlockLiterals() {
+  (void)(^id(void) { return 0; });
+  (void)(^id __nullable (void) { return 0; });
+  (void)(^ __nullable id(void) { return 0; });
+
+  int *x = (^ __nullable id(void) { return 0; })(); // expected-warning{{incompatible pointer types initializing 'int *' with an expression of type 'id __nullable'}}
+}
