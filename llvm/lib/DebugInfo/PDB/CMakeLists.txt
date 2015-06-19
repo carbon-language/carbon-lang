@@ -9,7 +9,7 @@ if(HAVE_DIA_SDK)
   if (CMAKE_SIZEOF_VOID_P EQUAL 8)
     set(LIBPDB_LINK_FOLDERS "${LIBPDB_LINK_FOLDERS}\\amd64")
   endif()
-  set(LIBPDB_ADDITIONAL_LIBRARIES "${LIBPDB_LINK_FOLDERS}\\diaguids.lib")
+  file(TO_CMAKE_PATH "${LIBPDB_LINK_FOLDERS}\\diaguids.lib" LIBPDB_ADDITIONAL_LIBRARIES)
 
   add_pdb_impl_folder(DIA
     DIA/DIADataStream.cpp
