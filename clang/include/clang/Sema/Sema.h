@@ -2918,6 +2918,9 @@ public:
                                        ObjCContainerDecl *CDecl,
                                        bool SynthesizeProperties);
 
+  /// Diagnose any null-resettable synthesized setters.
+  void diagnoseNullResettableSynthesizedSetters(ObjCImplDecl *impDecl);
+
   /// DefaultSynthesizeProperties - This routine default synthesizes all
   /// properties which must be synthesized in the class's \@implementation.
   void DefaultSynthesizeProperties (Scope *S, ObjCImplDecl* IMPDecl,

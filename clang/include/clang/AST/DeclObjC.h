@@ -2206,13 +2206,14 @@ public:
     OBJC_PR_unsafe_unretained = 0x800,
     /// Indicates that the nullability of the type was spelled with a
     /// property attribute rather than a type qualifier.
-    OBJC_PR_nullability = 0x1000
+    OBJC_PR_nullability = 0x1000,
+    OBJC_PR_null_resettable = 0x2000
     // Adding a property should change NumPropertyAttrsBits
   };
 
   enum {
     /// \brief Number of bits fitting all the property attributes.
-    NumPropertyAttrsBits = 13
+    NumPropertyAttrsBits = 14
   };
 
   enum SetterKind { Assign, Retain, Copy, Weak };

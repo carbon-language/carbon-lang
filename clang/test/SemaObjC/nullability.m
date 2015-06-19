@@ -164,6 +164,45 @@ void test_instancetype(InitializableClass * __nonnull ic, id __nonnull object) {
   ip = [InitializableClass returnInstanceOfMe]; // expected-warning{{incompatible pointer types assigning to 'int *' from 'InitializableClass * __nullable'}}
   ip = [object returnMe]; // expected-warning{{incompatible pointer types assigning to 'int *' from 'id __nullable'}}
 }
+
+// Check null_resettable getters/setters.
+__attribute__((objc_root_class))
+@interface NSResettable
+@property(null_resettable,retain) NSResettable *resettable1; // expected-note{{passing argument to parameter 'resettable1' here}}
+@property(null_resettable,retain,nonatomic) NSResettable *resettable2;
+@property(null_resettable,retain,nonatomic) NSResettable *resettable3;
+@property(null_resettable,retain,nonatomic) NSResettable *resettable4;
+@property(null_resettable,retain,nonatomic) NSResettable *resettable5;
+@property(null_resettable,retain,nonatomic) NSResettable *resettable6;
+@end
+
+void test_null_resettable(NSResettable *r, int *ip) {
+  [r setResettable1:ip]; // expected-warning{{incompatible pointer types sending 'int *' to parameter of type 'NSResettable * __nullable'}}
+  r.resettable1 = ip; // expected-warning{{incompatible pointer types assigning to 'NSResettable * __nullable' from 'int *'}}
+}
+
+@implementation NSResettable // expected-warning{{synthesized setter 'setResettable4:' for null_resettable property 'resettable4' does not handle nil}}
+- (NSResettable *)resettable1 {
+  int *ip = 0;
+  return ip; // expected-warning{{result type 'NSResettable * __nonnull'}}
+}
+
+- (void)setResettable1:(NSResettable *)param {
+}
+
+@synthesize resettable2; // no warning; not synthesized
+@synthesize resettable3; // expected-warning{{synthesized setter 'setResettable3:' for null_resettable property 'resettable3' does not handle nil}}
+
+- (void)setResettable2:(NSResettable *)param {
+}
+
+@dynamic resettable5;
+
+- (NSResettable *)resettable6 {
+  return 0; // no warning
+}
+@end
+
 // rdar://problem/19814852
 @interface MultiProp
 @property (nullable, copy) id a, b, c;

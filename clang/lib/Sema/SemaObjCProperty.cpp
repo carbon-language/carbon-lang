@@ -361,6 +361,9 @@ Sema::HandlePropertyInClassExtension(Scope *S,
     PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_atomic);
   if (Attributes & ObjCDeclSpec::DQ_PR_nullability)
     PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_nullability);
+  if (Attributes & ObjCDeclSpec::DQ_PR_null_resettable)
+    PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_null_resettable);
+
   // Set setter/getter selector name. Needed later.
   PDecl->setGetterName(GetterSel);
   PDecl->setSetterName(SetterSel);
@@ -645,6 +648,9 @@ ObjCPropertyDecl *Sema::CreatePropertyDecl(Scope *S,
 
   if (Attributes & ObjCDeclSpec::DQ_PR_nullability)
     PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_nullability);
+
+  if (Attributes & ObjCDeclSpec::DQ_PR_null_resettable)
+    PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_null_resettable);
 
   return PDecl;
 }
@@ -1760,6 +1766,33 @@ void Sema::DiagnoseUnimplementedProperties(Scope *S, ObjCImplDecl* IMPDecl,
   }
 }
 
+void Sema::diagnoseNullResettableSynthesizedSetters(ObjCImplDecl *impDecl) {
+  for (const auto *propertyImpl : impDecl->property_impls()) {
+    const auto *property = propertyImpl->getPropertyDecl();
+
+    // Warn about null_resettable properties with synthesized setters,
+    // because the setter won't properly handle nil.
+    if (propertyImpl->getPropertyImplementation()
+          == ObjCPropertyImplDecl::Synthesize &&
+        (property->getPropertyAttributes() &
+         ObjCPropertyDecl::OBJC_PR_null_resettable) &&
+        property->getGetterMethodDecl() &&
+        property->getSetterMethodDecl()) {
+      auto *getterMethod = property->getGetterMethodDecl();
+      auto *setterMethod = property->getSetterMethodDecl();
+      if (!impDecl->getInstanceMethod(setterMethod->getSelector()) &&
+          !impDecl->getInstanceMethod(getterMethod->getSelector())) {
+        SourceLocation loc = propertyImpl->getLocation();
+        if (loc.isInvalid())
+          loc = impDecl->getLocStart();
+
+        Diag(loc, diag::warn_null_resettable_setter)
+          << setterMethod->getSelector() << property->getDeclName();
+      }
+    }
+  }
+}
+
 void
 Sema::AtomicPropertySetterGetterRules (ObjCImplDecl* IMPDecl,
                                        ObjCContainerDecl* IDecl) {
@@ -1995,9 +2028,21 @@ void Sema::ProcessPropertyDecl(ObjCPropertyDecl *property,
       redeclaredProperty->getLocation() :
       property->getLocation();
 
+    // If the property is null_resettable, the getter returns nonnull.
+    QualType resultTy = property->getType();
+    if (property->getPropertyAttributes() &
+        ObjCPropertyDecl::OBJC_PR_null_resettable) {
+      QualType modifiedTy = resultTy;
+      if (auto nullability = AttributedType::stripOuterNullability(modifiedTy)){
+        if (*nullability == NullabilityKind::Unspecified)
+          resultTy = Context.getAttributedType(AttributedType::attr_nonnull,
+                                               modifiedTy, modifiedTy);
+      }
+    }
+
     GetterMethod = ObjCMethodDecl::Create(Context, Loc, Loc,
                              property->getGetterName(),
-                             property->getType(), nullptr, CD,
+                             resultTy, nullptr, CD,
                              /*isInstance=*/true, /*isVariadic=*/false,
                              /*isPropertyAccessor=*/true,
                              /*isImplicitlyDeclared=*/true, /*isDefined=*/false,
@@ -2058,12 +2103,25 @@ void Sema::ProcessPropertyDecl(ObjCPropertyDecl *property,
                                 ObjCMethodDecl::Optional :
                                 ObjCMethodDecl::Required);
 
+      // If the property is null_resettable, the setter accepts a
+      // nullable value.
+      QualType paramTy = property->getType().getUnqualifiedType();
+      if (property->getPropertyAttributes() &
+          ObjCPropertyDecl::OBJC_PR_null_resettable) {
+        QualType modifiedTy = paramTy;
+        if (auto nullability = AttributedType::stripOuterNullability(modifiedTy)){
+          if (*nullability == NullabilityKind::Unspecified)
+            paramTy = Context.getAttributedType(AttributedType::attr_nullable,
+                                                modifiedTy, modifiedTy);
+        }
+      }
+
       // Invent the arguments for the setter. We don't bother making a
       // nice name for the argument.
       ParmVarDecl *Argument = ParmVarDecl::Create(Context, SetterMethod,
                                                   Loc, Loc,
                                                   property->getIdentifier(),
-                                    property->getType().getUnqualifiedType(),
+                                                  paramTy,
                                                   /*TInfo=*/nullptr,
                                                   SC_None,
                                                   nullptr);

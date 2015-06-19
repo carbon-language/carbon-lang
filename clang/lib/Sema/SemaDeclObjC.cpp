@@ -2024,6 +2024,9 @@ void Sema::ImplMethodsVsClassMethods(Scope *S, ObjCImplDecl* IMPDecl,
     DiagnoseUnimplementedProperties(S, IMPDecl, CDecl, SynthesizeProperties);
   }
 
+  // Diagnose null-resettable synthesized setters.
+  diagnoseNullResettableSynthesizedSetters(IMPDecl);
+
   SelectorSet ClsMap;
   for (const auto *I : IMPDecl->class_methods())
     ClsMap.insert(I->getSelector());

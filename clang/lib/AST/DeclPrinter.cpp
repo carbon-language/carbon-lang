@@ -1213,8 +1213,14 @@ void DeclPrinter::VisitObjCPropertyDecl(ObjCPropertyDecl *PDecl) {
     if (PDecl->getPropertyAttributes() &
         ObjCPropertyDecl::OBJC_PR_nullability) {
       if (auto nullability = stripOuterNullability(T)) {
-        Out << (first ? ' ' : ',') 
-            << getNullabilitySpelling(*nullability).substr(2);
+        if (*nullability == NullabilityKind::Unspecified &&
+            (PDecl->getPropertyAttributes() &
+               ObjCPropertyDecl::OBJC_PR_null_resettable)) {
+          Out << (first ? ' ' : ',') << "null_resettable";
+        } else {
+          Out << (first ? ' ' : ',')
+              << getNullabilitySpelling(*nullability).substr(2);
+        }
         first = false;
       }
     }

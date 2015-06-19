@@ -7714,6 +7714,10 @@ def note_nullability_type_specifier : Note<
   "'%select{__nonnull|__nullable|__null_unspecified}0' to affect the innermost "
   "pointer type of %1">;
 
+def warn_null_resettable_setter : Warning<
+  "synthesized setter %0 for null_resettable property %1 does not handle nil">,
+  InGroup<Nullability>;
+
 }
 
 } // end of sema component.
