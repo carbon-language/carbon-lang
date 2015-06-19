@@ -1,4 +1,3 @@
-include(LLVMParseArguments)
 include(LLVMProcessSources)
 include(LLVM-Config)
 
@@ -847,7 +846,7 @@ endfunction()
 # A raw function to create a lit target. This is used to implement the testuite
 # management functions.
 function(add_lit_target target comment)
-  parse_arguments(ARG "PARAMS;DEPENDS;ARGS" "" ${ARGN})
+  cmake_parse_arguments(ARG "" "" "PARAMS;DEPENDS;ARGS" ${ARGN})
   set(LIT_ARGS "${ARG_ARGS} ${LLVM_LIT_ARGS}")
   separate_arguments(LIT_ARGS)
   if (NOT CMAKE_CFG_INTDIR STREQUAL ".")
@@ -862,9 +861,9 @@ function(add_lit_target target comment)
   foreach(param ${ARG_PARAMS})
     list(APPEND LIT_COMMAND --param ${param})
   endforeach()
-  if (ARG_DEFAULT_ARGS)
+  if (ARG_UNPARSED_ARGUMENTS)
     add_custom_target(${target}
-      COMMAND ${LIT_COMMAND} ${ARG_DEFAULT_ARGS}
+      COMMAND ${LIT_COMMAND} ${ARG_UNPARSED_ARGUMENTS}
       COMMENT "${comment}"
       ${cmake_3_2_USES_TERMINAL}
       )
@@ -883,12 +882,12 @@ endfunction()
 
 # A function to add a set of lit test suites to be driven through 'check-*' targets.
 function(add_lit_testsuite target comment)
-  parse_arguments(ARG "PARAMS;DEPENDS;ARGS" "" ${ARGN})
+  cmake_parse_arguments(ARG "" "" "PARAMS;DEPENDS;ARGS" ${ARGN})
 
   # EXCLUDE_FROM_ALL excludes the test ${target} out of check-all.
   if(NOT EXCLUDE_FROM_ALL)
     # Register the testsuites, params and depends for the global check rule.
-    set_property(GLOBAL APPEND PROPERTY LLVM_LIT_TESTSUITES ${ARG_DEFAULT_ARGS})
+    set_property(GLOBAL APPEND PROPERTY LLVM_LIT_TESTSUITES ${ARG_UNPARSED_ARGUMENTS})
     set_property(GLOBAL APPEND PROPERTY LLVM_LIT_PARAMS ${ARG_PARAMS})
     set_property(GLOBAL APPEND PROPERTY LLVM_LIT_DEPENDS ${ARG_DEPENDS})
     set_property(GLOBAL APPEND PROPERTY LLVM_LIT_EXTRA_ARGS ${ARG_ARGS})
@@ -896,7 +895,7 @@ function(add_lit_testsuite target comment)
 
   # Produce a specific suffixed check rule.
   add_lit_target(${target} ${comment}
-    ${ARG_DEFAULT_ARGS}
+    ${ARG_UNPARSED_ARGUMENTS}
     PARAMS ${ARG_PARAMS}
     DEPENDS ${ARG_DEPENDS}
     ARGS ${ARG_ARGS}
@@ -905,7 +904,7 @@ endfunction()
 
 function(add_lit_testsuites project directory)
   if (NOT CMAKE_CONFIGURATION_TYPES)
-    parse_arguments(ARG "PARAMS;DEPENDS;ARGS" "" ${ARGN})
+    cmake_parse_arguments(ARG "" "" "PARAMS;DEPENDS;ARGS" ${ARGN})
     file(GLOB_RECURSE litCfg ${directory}/lit*.cfg)
     set(lit_suites)
     foreach(f ${litCfg})
