@@ -34,6 +34,10 @@ struct Z : Y {};
 
 int main()
 {
+    {  // https://llvm.org/bugs/show_bug.cgi?id=18843
+    std::shared_ptr<T const> t1(new T);
+    std::shared_ptr<T const> t2(std::make_shared<T>());
+    }
     {
     std::shared_ptr<Y> p(new Z);
     std::shared_ptr<T> q = p->shared_from_this();

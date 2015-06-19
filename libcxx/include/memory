@@ -4073,7 +4073,10 @@ private:
         __enable_weak_this(const enable_shared_from_this<_Yp>* __e) _NOEXCEPT
         {
             if (__e)
-                __e->__weak_this_ = *this;
+            {
+                __e->__weak_this_.__ptr_ = const_cast<_Yp*>(static_cast<const _Yp*>(__e));
+                __e->__weak_this_.__cntrl_ = __cntrl_;
+            }
         }
 
     _LIBCPP_INLINE_VISIBILITY
