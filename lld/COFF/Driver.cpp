@@ -525,12 +525,6 @@ bool LinkerDriver::link(int Argc, const char *Argv[]) {
   for (auto &P : Config->AlternateNames) {
     StringRef From = P.first;
     StringRef To = P.second;
-    // If From is already resolved to a Defined type, do nothing.
-    // Otherwise, rename it to see if To can be resolved instead.
-    if (Symtab.find(From))
-      continue;
-    if (Config->Verbose)
-      llvm::outs() << "/alternatename:" << From << "=" << To << "\n";
     if (auto EC = Symtab.rename(From, To)) {
       llvm::errs() << EC.message() << "\n";
       return false;

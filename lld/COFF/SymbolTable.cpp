@@ -232,10 +232,19 @@ std::error_code SymbolTable::addUndefined(StringRef Name) {
 
 // Resolve To, and make From an alias to To.
 std::error_code SymbolTable::rename(StringRef From, StringRef To) {
+  // If From is not undefined, do nothing.
+  // Otherwise, rename it to see if To can be resolved instead.
+  auto It = Symtab.find(From);
+  if (It == Symtab.end())
+    return std::error_code();
+  Symbol *Sym = It->second;
+  if (!isa<Undefined>(Sym->Body))
+    return std::error_code();
   SymbolBody *Body = new (Alloc) Undefined(To);
   if (auto EC = resolve(Body))
     return EC;
-  Symtab[From]->Body = Body->getReplacement();
+  Sym->Body = Body->getReplacement();
+  Body->setBackref(Sym);
   return std::error_code();
 }
 
