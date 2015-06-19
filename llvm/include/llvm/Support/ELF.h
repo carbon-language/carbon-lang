@@ -133,7 +133,7 @@ enum {
   EM_386           = 3, // Intel 386
   EM_68K           = 4, // Motorola 68000
   EM_88K           = 5, // Motorola 88000
-  EM_486           = 6, // Intel 486 (deprecated)
+  EM_IAMCU         = 6, // Intel MCU
   EM_860           = 7, // Intel 80860
   EM_MIPS          = 8, // MIPS R3000
   EM_S370          = 9, // IBM System/370
