@@ -128,6 +128,7 @@ std::error_code SymbolTable::resolve(SymbolBody *New) {
   if (!Sym) {
     Sym = new (Alloc) Symbol(New);
     New->setBackref(Sym);
+    ++Version;
     return std::error_code();
   }
   New->setBackref(Sym);
@@ -136,8 +137,10 @@ std::error_code SymbolTable::resolve(SymbolBody *New) {
   // equivalent (conflicting), or more preferable, respectively.
   SymbolBody *Existing = Sym->Body;
   int comp = Existing->compare(New);
-  if (comp < 0)
+  if (comp < 0) {
     Sym->Body = New;
+    ++Version;
+  }
   if (comp == 0) {
     llvm::errs() << "duplicate symbol: " << Name << "\n";
     return make_error_code(LLDError::DuplicateSymbols);
@@ -245,6 +248,7 @@ std::error_code SymbolTable::rename(StringRef From, StringRef To) {
     return EC;
   Sym->Body = Body->getReplacement();
   Body->setBackref(Sym);
+  ++Version;
   return std::error_code();
 }
 

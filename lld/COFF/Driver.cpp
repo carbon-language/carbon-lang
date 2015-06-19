@@ -454,11 +454,6 @@ bool LinkerDriver::link(int Argc, const char *Argv[]) {
   // Create a symbol table.
   SymbolTable Symtab;
 
-  // Add undefined symbols given via the command line.
-  // (/include is equivalent to Unix linker's -u option.)
-  for (StringRef Sym : Config->Includes)
-    Symtab.addUndefined(Sym);
-
   // Windows specific -- Create a resource file containing a manifest file.
   if (Config->Manifest == Configuration::Embed) {
     auto MBOrErr = createManifestRes();
@@ -499,36 +494,46 @@ bool LinkerDriver::link(int Argc, const char *Argv[]) {
     }
   }
 
-  // Windows specific -- Make sure we resolve all dllexported symbols.
-  // (We don't cache the size here because Symtab.resolve() may add
-  // new entries to Config->Exports.)
-  for (size_t I = 0; I < Config->Exports.size(); ++I) {
-    StringRef Sym = Config->Exports[I].Name;
-    Symtab.addUndefined(Sym);
-  }
+  // Resolve auxiliary symbols until converge.
+  // (Trying to resolve a symbol may trigger a Lazy symbol to load a new file.
+  // A new file may contain a directive section to add new command line options.
+  // That's why we have to repeat until converge.)
+  for (;;) {
+    size_t Ver = Symtab.getVersion();
 
-  // Windows specific -- If entry point name is not given, we need to
-  // infer that from user-defined entry name. The symbol table takes
-  // care of details.
-  if (Config->EntryName.empty()) {
-    auto EntryOrErr = Symtab.findDefaultEntry();
-    if (auto EC = EntryOrErr.getError()) {
-      llvm::errs() << EC.message() << "\n";
-      return false;
-    }
-    Config->EntryName = EntryOrErr.get();
-  }
+    // Add undefined symbols specified by /include.
+    for (StringRef Sym : Config->Includes)
+      Symtab.addUndefined(Sym);
 
-  // Add weak aliases. Weak aliases is a mechanism to give remaining
-  // undefined symbols final chance to be resolved successfully.
-  // This is symbol renaming.
-  for (auto &P : Config->AlternateNames) {
-    StringRef From = P.first;
-    StringRef To = P.second;
-    if (auto EC = Symtab.rename(From, To)) {
-      llvm::errs() << EC.message() << "\n";
-      return false;
+    // Windows specific -- Make sure we resolve all dllexported symbols.
+    for (Export &E : Config->Exports)
+      Symtab.addUndefined(E.Name);
+
+    // Add weak aliases. Weak aliases is a mechanism to give remaining
+    // undefined symbols final chance to be resolved successfully.
+    // This is symbol renaming.
+    for (auto &P : Config->AlternateNames) {
+      StringRef From = P.first;
+      StringRef To = P.second;
+      if (auto EC = Symtab.rename(From, To)) {
+        llvm::errs() << EC.message() << "\n";
+        return false;
+      }
     }
+
+    // Windows specific -- If entry point name is not given, we need to
+    // infer that from user-defined entry name. The symbol table takes
+    // care of details.
+    if (Config->EntryName.empty()) {
+      auto EntryOrErr = Symtab.findDefaultEntry();
+      if (auto EC = EntryOrErr.getError()) {
+        llvm::errs() << EC.message() << "\n";
+        return false;
+      }
+      Config->EntryName = EntryOrErr.get();
+    }
+    if (Ver == Symtab.getVersion())
+      break;
   }
 
   // Make sure we have resolved all symbols.
