@@ -4076,7 +4076,7 @@ private:
             {
                 __e->__weak_this_.__ptr_ = const_cast<_Yp*>(static_cast<const _Yp*>(__e));
                 __e->__weak_this_.__cntrl_ = __cntrl_;
-                __cntrl_->__add_weak();
+                __cntrl_->__add_weak();
             }
         }
 
