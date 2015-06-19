@@ -44,7 +44,7 @@ class FixupLEAPass : public MachineFunctionPass {
   /// \brief Given a machine register, look for the instruction
   /// which writes it in the current basic block. If found,
   /// try to replace it with an equivalent LEA instruction.
-  /// If replacement succeeds, then also process the the newly created
+  /// If replacement succeeds, then also process the newly created
   /// instruction.
   void seekLEAFixup(MachineOperand &p, MachineBasicBlock::iterator &I,
                     MachineFunction::iterator MFI);

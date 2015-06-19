@@ -2296,7 +2296,7 @@ void WinEHPrepare::findCleanupHandlers(LandingPadActions &Actions,
         // value for this block but the value is a nullptr.  This means that
         // we have previously analyzed the block and determined that it did
         // not contain any cleanup code.  Based on the earlier analysis, we
-        // know the the block must end in either an unconditional branch, a
+        // know the block must end in either an unconditional branch, a
         // resume or a conditional branch that is predicated on a comparison
         // with a selector.  Either the resume or the selector dispatch
         // would terminate the search for cleanup code, so the unconditional

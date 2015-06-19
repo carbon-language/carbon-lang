@@ -759,7 +759,7 @@ bool JumpThreading::ProcessBlock(BasicBlock *BB) {
 
   if (CmpInst *CondCmp = dyn_cast<CmpInst>(CondInst)) {
     // If we're branching on a conditional, LVI might be able to determine
-    // it's value at the the branch instruction.  We only handle comparisons
+    // it's value at the branch instruction.  We only handle comparisons
     // against a constant at this time.
     // TODO: This should be extended to handle switches as well.  
     BranchInst *CondBr = dyn_cast<BranchInst>(BB->getTerminator());

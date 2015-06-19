@@ -2150,7 +2150,7 @@ void GenericSchedulerBase::setPolicy(CandPolicy &Policy,
                                      bool IsPostRA,
                                      SchedBoundary &CurrZone,
                                      SchedBoundary *OtherZone) {
-  // Apply preemptive heuristics based on the the total latency and resources
+  // Apply preemptive heuristics based on the total latency and resources
   // inside and outside this zone. Potential stalls should be considered before
   // following this policy.
 

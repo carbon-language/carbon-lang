@@ -1424,7 +1424,7 @@ static SDValue LowerXOR(SDValue Op, SelectionDAG &DAG) {
   ConstantSDNode *CFVal = dyn_cast<ConstantSDNode>(FVal);
   ConstantSDNode *CTVal = dyn_cast<ConstantSDNode>(TVal);
 
-  // The the values aren't constants, this isn't the pattern we're looking for.
+  // The values aren't constants, this isn't the pattern we're looking for.
   if (!CFVal || !CTVal)
     return Op;
 
@@ -3420,7 +3420,7 @@ SDValue AArch64TargetLowering::LowerFCOPYSIGN(SDValue Op,
     EltVT = MVT::i64;
     VecVT = MVT::v2i64;
 
-    // We want to materialize a mask with the the high bit set, but the AdvSIMD
+    // We want to materialize a mask with the high bit set, but the AdvSIMD
     // immediate moves cannot materialize that in a single instruction for
     // 64-bit elements. Instead, materialize zero and then negate it.
     EltMask = 0;

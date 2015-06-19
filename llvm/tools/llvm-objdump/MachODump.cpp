@@ -788,7 +788,7 @@ static void DumpLiteralPointerSection(MachOObjectFile *O,
   // Set the size of the literal pointer.
   uint32_t lp_size = O->is64Bit() ? 8 : 4;
 
-  // Collect the external relocation symbols for the the literal pointers.
+  // Collect the external relocation symbols for the literal pointers.
   std::vector<std::pair<uint64_t, SymbolRef>> Relocs;
   for (const RelocationRef &Reloc : Section.relocations()) {
     DataRefImpl Rel;

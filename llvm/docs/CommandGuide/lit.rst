@@ -161,7 +161,7 @@ ADDITIONAL OPTIONS
 
 .. option:: --show-tests
 
- List all of the the discovered tests and exit.
+ List all of the discovered tests and exit.
 
 EXIT STATUS
 -----------

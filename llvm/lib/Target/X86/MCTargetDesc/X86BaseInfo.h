@@ -271,7 +271,7 @@ namespace X86II {
     /// register DI/EDI/ESI.
     RawFrmDst      = 9,
 
-    /// RawFrmSrc - This form is for instructions that use the the source index
+    /// RawFrmSrc - This form is for instructions that use the source index
     /// register SI/ESI/ERI with a possible segment override, and also the
     /// destination index register DI/ESI/RDI.
     RawFrmDstSrc   = 10,

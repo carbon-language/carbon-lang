@@ -52,7 +52,7 @@ getVariant(uint64_t LLVMDisassembler_VariantKind) {
 /// returns zero and isBranch is Success then a symbol look up for
 /// Address + Value is done and if a symbol is found an MCExpr is created with
 /// that, else an MCExpr with Address + Value is created.  If GetOpInfo()
-/// returns zero and isBranch is Fail then the the Opcode of the MCInst is
+/// returns zero and isBranch is Fail then the Opcode of the MCInst is
 /// tested and for ADRP an other instructions that help to load of pointers
 /// a symbol look up is done to see it is returns a specific reference type
 /// to add to the comment stream.  This function returns Success if it adds

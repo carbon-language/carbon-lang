@@ -132,7 +132,7 @@ enum amd_code_property_mask_t {
   /// private memory do not exceed this size. For example, if the
   /// element size is 4 (32-bits or dword) and a 64-bit value must be
   /// loaded, the finalizer will generate two 32-bit loads. This
-  /// ensures that the interleaving will get the the work-item
+  /// ensures that the interleaving will get the work-item
   /// specific dword for both halves of the 64-bit value. If it just
   /// did a 64-bit load then it would get one dword which belonged to
   /// its own work-item, but the second dword would belong to the

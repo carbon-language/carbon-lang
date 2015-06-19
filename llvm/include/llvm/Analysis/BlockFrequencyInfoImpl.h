@@ -873,7 +873,7 @@ template <class BT> class BlockFrequencyInfoImpl : BlockFrequencyInfoImplBase {
   ///
   /// \pre \a computeMassInLoop() has been called for each subloop of \c
   /// OuterLoop.
-  /// \pre \c Insert points at the the last loop successfully processed by \a
+  /// \pre \c Insert points at the last loop successfully processed by \a
   /// computeMassInLoop().
   /// \pre \c OuterLoop has irreducible SCCs.
   void computeIrreducibleMass(LoopData *OuterLoop,

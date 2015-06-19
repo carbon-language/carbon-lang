@@ -464,7 +464,7 @@ bool AtomicExpand::expandAtomicCmpXchg(AtomicCmpXchgInst *CI) {
   Value *ShouldStore =
       Builder.CreateICmpEQ(Loaded, CI->getCompareOperand(), "should_store");
 
-  // If the the cmpxchg doesn't actually need any ordering when it fails, we can
+  // If the cmpxchg doesn't actually need any ordering when it fails, we can
   // jump straight past that fence instruction (if it exists).
   Builder.CreateCondBr(ShouldStore, TryStoreBB, FailureBB);
 

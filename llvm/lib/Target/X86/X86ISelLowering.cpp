@@ -5446,7 +5446,7 @@ static bool isHorizontalBinOp(const BuildVectorSDNode *N, unsigned Opcode,
 ///
 /// Otherwise, the first horizontal binop dag node takes as input the lower
 /// 128-bit of V0 and the lower 128-bit of V1, and the second horizontal binop
-/// dag node takes the the upper 128-bit of V0 and the upper 128-bit of V1.
+/// dag node takes the upper 128-bit of V0 and the upper 128-bit of V1.
 ///   Example:
 ///     HADD V0_LO, V1_LO
 ///     HADD V0_HI, V1_HI

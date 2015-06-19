@@ -124,7 +124,7 @@ public:
   static ErrorOr<std::unique_ptr<MemoryBuffer>>
   getFileOrSTDIN(const Twine &Filename, int64_t FileSize = -1);
 
-  /// Map a subrange of the the specified file as a MemoryBuffer.
+  /// Map a subrange of the specified file as a MemoryBuffer.
   static ErrorOr<std::unique_ptr<MemoryBuffer>>
   getFileSlice(const Twine &Filename, uint64_t MapSize, uint64_t Offset);
 

@@ -212,7 +212,7 @@ static StoreInst *findSafeStoreForStoreStrongContraction(LoadInst *Load,
       break;
 
     // Now we know that we have not seen either the store or the release. If I
-    // is the the release, mark that we saw the release and continue.
+    // is the release, mark that we saw the release and continue.
     Instruction *Inst = &*I;
     if (Inst == Release) {
       SawRelease = true;

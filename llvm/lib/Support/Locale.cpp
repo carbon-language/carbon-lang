@@ -15,7 +15,7 @@ int columnWidth(StringRef Text) {
 
 bool isPrint(int UCS) {
 #if LLVM_ON_WIN32
-  // Restrict characters that we'll try to print to the the lower part of ASCII
+  // Restrict characters that we'll try to print to the lower part of ASCII
   // except for the control characters (0x20 - 0x7E). In general one can not
   // reliably output code points U+0080 and higher using narrow character C/C++
   // output functions in Windows, because the meaning of the upper 128 codes is

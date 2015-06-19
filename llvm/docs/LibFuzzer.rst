@@ -112,7 +112,7 @@ Here we show how to use lib/Fuzzer on something real, yet simple: pcre2_::
   (cd pcre; ./autogen.sh; CC="clang -fsanitize=address $COV_FLAGS" ./configure --prefix=`pwd`/../inst && make -j && make install)
   # Build lib/Fuzzer files.
   clang -c -g -O2 -std=c++11 Fuzzer/*.cpp -IFuzzer
-  # Build the the actual function that does something interesting with PCRE2.
+  # Build the actual function that does something interesting with PCRE2.
   cat << EOF > pcre_fuzzer.cc
   #include <string.h>
   #include "pcre2posix.h"

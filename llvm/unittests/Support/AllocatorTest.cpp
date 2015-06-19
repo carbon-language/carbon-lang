@@ -129,7 +129,7 @@ TEST(AllocatorTest, TestAlignmentPastSlab) {
 
   // Aligning the current slab pointer is likely to move it past the end of the
   // slab, which would confuse any unsigned comparisons with the difference of
-  // the the end pointer and the aligned pointer.
+  // the end pointer and the aligned pointer.
   Alloc.Allocate(1024, 8192);
 
   EXPECT_EQ(2U, Alloc.GetNumSlabs());

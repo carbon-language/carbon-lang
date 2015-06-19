@@ -97,7 +97,7 @@ static size_t getNumLengthAsString(uint64_t num) {
   return result.size();
 }
 
-/// @brief Return the the printing format for the Radix.
+/// @brief Return the printing format for the Radix.
 static const char *getRadixFmt(void) {
   switch (Radix) {
   case octal:

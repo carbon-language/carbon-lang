@@ -14,7 +14,7 @@
 
 ; EG: {{^}}local_memory_two_objects:
 
-; We would like to check the the lds writes are using different
+; We would like to check the lds writes are using different
 ; addresses, but due to variations in the scheduler, we can't do
 ; this consistently on evergreen GPUs.
 ; EG: LDS_WRITE

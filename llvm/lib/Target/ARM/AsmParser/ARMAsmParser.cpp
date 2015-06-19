@@ -5841,7 +5841,7 @@ bool ARMAsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
   // do and don't have a cc_out optional-def operand. With some spot-checks
   // of the operand list, we can figure out which variant we're trying to
   // parse and adjust accordingly before actually matching. We shouldn't ever
-  // try to remove a cc_out operand that was explicitly set on the the
+  // try to remove a cc_out operand that was explicitly set on the
   // mnemonic, of course (CarrySetting == true). Reason number #317 the
   // table driven matcher doesn't fit well with the ARM instruction set.
   if (!CarrySetting && shouldOmitCCOutOperand(Mnemonic, Operands))

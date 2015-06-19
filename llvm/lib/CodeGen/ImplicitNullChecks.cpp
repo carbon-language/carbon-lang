@@ -61,10 +61,10 @@ class ImplicitNullChecks : public MachineFunctionPass {
     // The block the check resides in.
     MachineBasicBlock *CheckBlock;
 
-    // The block branched to if the the pointer is non-null.
+    // The block branched to if the pointer is non-null.
     MachineBasicBlock *NotNullSucc;
 
-    // The block branched to if the the pointer is null.
+    // The block branched to if the pointer is null.
     MachineBasicBlock *NullSucc;
 
     NullCheck()

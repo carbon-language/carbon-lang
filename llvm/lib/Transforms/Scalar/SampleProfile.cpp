@@ -282,7 +282,7 @@ bool SampleProfileLoader::computeBlockWeights(Function &F) {
 /// \brief Find equivalence classes for the given block.
 ///
 /// This finds all the blocks that are guaranteed to execute the same
-/// number of times as \p BB1. To do this, it traverses all the the
+/// number of times as \p BB1. To do this, it traverses all the
 /// descendants of \p BB1 in the dominator or post-dominator tree.
 ///
 /// A block BB2 will be in the same equivalence class as \p BB1 if

@@ -1806,7 +1806,7 @@ void SIInstrInfo::legalizeOperands(MachineInstr *MI) const {
     }
 
     MachineBasicBlock &MBB = *MI->getParent();
-    // Extract the the ptr from the resource descriptor.
+    // Extract the ptr from the resource descriptor.
 
     // SRsrcPtrLo = srsrc:sub0
     unsigned SRsrcPtrLo = buildExtractSubReg(MI, MRI, *SRsrc,

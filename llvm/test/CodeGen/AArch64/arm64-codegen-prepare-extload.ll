@@ -24,7 +24,7 @@ false:
 }
 
 ; Check that we manage to form a zextload is an operation with only one
-; argument to explicitly extend is in the the way.
+; argument to explicitly extend is in the way.
 ; OPTALL-LABEL: @promoteOneArg
 ; OPTALL: [[LD:%[a-zA-Z_0-9-]+]] = load i8, i8* %p
 ; OPT-NEXT: [[ZEXT:%[a-zA-Z_0-9-]+]] = zext i8 [[LD]] to i32
@@ -49,7 +49,7 @@ false:
 }
 
 ; Check that we manage to form a sextload is an operation with only one
-; argument to explicitly extend is in the the way.
+; argument to explicitly extend is in the way.
 ; Version with sext.
 ; OPTALL-LABEL: @promoteOneArgSExt
 ; OPTALL: [[LD:%[a-zA-Z_0-9-]+]] = load i8, i8* %p
@@ -74,7 +74,7 @@ false:
 }
 
 ; Check that we manage to form a zextload is an operation with two
-; arguments to explicitly extend is in the the way.
+; arguments to explicitly extend is in the way.
 ; Extending %add will create two extensions:
 ; 1. One for %b.
 ; 2. One for %t.
@@ -113,7 +113,7 @@ false:
 }
 
 ; Check that we manage to form a sextload is an operation with two
-; arguments to explicitly extend is in the the way.
+; arguments to explicitly extend is in the way.
 ; Version with sext.
 ; OPTALL-LABEL: @promoteTwoArgSExt
 ; OPTALL: [[LD:%[a-zA-Z_0-9-]+]] = load i8, i8* %p

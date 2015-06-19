@@ -18,7 +18,7 @@
 ; RUN: llc -march=mips64 -target-abi n64 < %s | FileCheck --check-prefix=ALL --check-prefix=N64-INV %s
 ; RUN: llc -march=mips64el -target-abi n64 < %s | FileCheck --check-prefix=ALL --check-prefix=N64-INV %s
 
-; Test the the callee-saved registers are callee-saved as specified by section
+; Test the callee-saved registers are callee-saved as specified by section
 ; 2 of the MIPSpro N32 Handbook and section 3 of the SYSV ABI spec.
 
 define void @gpr_clobber() nounwind {
