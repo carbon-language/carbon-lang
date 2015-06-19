@@ -557,7 +557,7 @@ ArgParser::parse(std::vector<const char *> Argv) {
   unsigned MissingIndex;
   unsigned MissingCount;
   std::unique_ptr<llvm::opt::InputArgList> Args(Table.ParseArgs(
-      &Argv[0], &Argv[0] + Argv.size(), MissingIndex, MissingCount));
+      Argv.data(), Argv.data() + Argv.size(), MissingIndex, MissingCount));
   if (MissingCount) {
     llvm::errs() << "missing arg value for \""
                  << Args->getArgString(MissingIndex)
@@ -587,7 +587,7 @@ std::vector<const char *> ArgParser::tokenize(StringRef S) {
 // character. '@<filename>' is replaced by the file's contents.
 ErrorOr<std::vector<const char *>>
 ArgParser::replaceResponseFiles(std::vector<const char *> Argv) {
-  SmallVector<const char *, 256> Tokens(&Argv[0], &Argv[0] + Argv.size());
+  SmallVector<const char *, 256> Tokens(Argv.data(), Argv.data() + Argv.size());
   BumpPtrStringSaver Saver(AllocAux);
   ExpandResponseFiles(Saver, TokenizeWindowsCommandLine, Tokens);
   return std::vector<const char *>(Tokens.begin(), Tokens.end());
