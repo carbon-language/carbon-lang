@@ -2029,6 +2029,10 @@ TEST_F(FormatTest, FormatsEnum) {
                "  a();\n"
                "  return 42;\n"
                "}");
+  verifyFormat("enum X Type::f() {\n"
+               "  a();\n"
+               "  return 42;\n"
+               "}");
   verifyFormat("enum ::X f() {\n"
                "  a();\n"
                "  return 42;\n"

@@ -1488,17 +1488,22 @@ void UnwrappedLineParser::parseEnum() {
   // Eat up enum class ...
   if (FormatTok->Tok.is(tok::kw_class) || FormatTok->Tok.is(tok::kw_struct))
     nextToken();
+
   while (FormatTok->Tok.getIdentifierInfo() ||
          FormatTok->isOneOf(tok::colon, tok::coloncolon, tok::less,
                             tok::greater, tok::comma, tok::question)) {
-    if (FormatTok->is(tok::coloncolon))
-      nextToken();
     nextToken();
     // We can have macros or attributes in between 'enum' and the enum name.
     if (FormatTok->is(tok::l_paren))
       parseParens();
-    if (FormatTok->is(tok::identifier))
+    if (FormatTok->is(tok::identifier)) {
       nextToken();
+      // If there are two identifiers in a row, this is likely an elaborate
+      // return type. In Java, this can be "implements", etc.
+      if (Style.Language == FormatStyle::LK_Cpp &&
+          FormatTok->is(tok::identifier))
+        return;
+    }
   }
 
   // Just a declaration or something is wrong.
