@@ -633,23 +633,14 @@ private:
 class RuntimeCheckEmitter {
 public:
   RuntimeCheckEmitter(const LoopAccessInfo &LAI, Loop *L, LoopInfo *LI,
-                      DominatorTree *DT)
-      : OrigLoop(L), NonDistributedLoop(nullptr), LAI(LAI), LI(LI), DT(DT) {}
-
-  /// \brief Given the \p Partitions formed by Loop Distribution, it determines
-  /// in which partition each pointer is used.
-  void partitionPointers(InstPartitionContainer &Partitions) {
-    // Set up partition id in PtrRtChecks.  Ptr -> Access -> Intruction ->
-    // Partition.
-    PtrToPartition = Partitions.computePartitionSetForPointers(LAI);
-
-    DEBUG(dbgs() << "\nPointers:\n");
-    DEBUG(LAI.getRuntimePointerCheck()->print(dbgs(), 0, &PtrToPartition));
-  }
+                      DominatorTree *DT,
+                      const SmallVector<int, 8> *PtrToPartition = nullptr)
+      : OrigLoop(L), NonDistributedLoop(nullptr),
+        PtrToPartition(PtrToPartition), LAI(LAI), LI(LI), DT(DT) {}
 
   /// \brief Returns true if we need memchecks to distribute the loop.
   bool needsRuntimeChecks() const {
-    return LAI.getRuntimePointerCheck()->needsAnyChecking(&PtrToPartition);
+    return LAI.getRuntimePointerCheck()->needsAnyChecking(PtrToPartition);
   }
 
   /// \brief Performs the CFG manipulation part of versioning the loop including
@@ -660,7 +651,7 @@ public:
     // Add the memcheck in the original preheader (this is empty initially).
     BasicBlock *MemCheckBB = OrigLoop->getLoopPreheader();
     std::tie(FirstCheckInst, MemRuntimeCheck) =
-        LAI.addRuntimeCheck(MemCheckBB->getTerminator(), &PtrToPartition);
+        LAI.addRuntimeCheck(MemCheckBB->getTerminator(), PtrToPartition);
     assert(MemRuntimeCheck && "called even though needsAnyChecking = false");
 
     // Rename the block to make the IR more readable.
@@ -733,10 +724,11 @@ private:
   Loop *NonDistributedLoop;
 
   /// \brief For each memory pointer it contains the partitionId it is used in.
+  /// If nullptr, no partitioning is used.
   ///
   /// The I-th entry corresponds to I-th entry in LAI.getRuntimePointerCheck().
   /// If the pointer is used in multiple partitions the entry is set to -1.
-  SmallVector<int, 8> PtrToPartition;
+  const SmallVector<int, 8> *PtrToPartition;
 
   /// \brief This maps the instructions from OrigLoop to their counterpart in
   /// NonDistributedLoop.
@@ -929,9 +921,11 @@ private:
 
     // If we need run-time checks to disambiguate pointers are run-time, version
     // the loop now.
-    RuntimeCheckEmitter RtCheckEmitter(LAI, L, LI, DT);
-    RtCheckEmitter.partitionPointers(Partitions);
+    auto PtrToPartition = Partitions.computePartitionSetForPointers(LAI);
+    RuntimeCheckEmitter RtCheckEmitter(LAI, L, LI, DT, &PtrToPartition);
     if (RtCheckEmitter.needsRuntimeChecks()) {
+      DEBUG(dbgs() << "\nPointers:\n");
+      DEBUG(LAI.getRuntimePointerCheck()->print(dbgs(), 0, &PtrToPartition));
       RtCheckEmitter.versionLoop(this);
       RtCheckEmitter.addPHINodes(DefsUsedOutside);
     }
