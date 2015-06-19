@@ -14,6 +14,7 @@
 #include "lld/Core/Simple.h"
 #include "lld/ReaderWriter/CoreLinkingContext.h"
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/STLExtras.h"
 
 using namespace lld;
 
@@ -40,8 +41,9 @@ bool CoreLinkingContext::validateImpl(raw_ostream &) {
 
 void CoreLinkingContext::addPasses(PassManager &pm) {
   for (StringRef name : _passNames) {
+    (void)name;
     assert(name == "order" && "bad pass name");
-    pm.add(std::unique_ptr<Pass>(new OrderPass()));
+    pm.add(llvm::make_unique<OrderPass>());
   }
 }
 
