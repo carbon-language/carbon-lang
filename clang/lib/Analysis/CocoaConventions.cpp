@@ -25,7 +25,7 @@ using namespace ento;
 bool cocoa::isRefType(QualType RetTy, StringRef Prefix,
                       StringRef Name) {
   // Recursively walk the typedef stack, allowing typedefs of reference types.
-  while (const TypedefType *TD = dyn_cast<TypedefType>(RetTy.getTypePtr())) {
+  while (const TypedefType *TD = RetTy->getAs<TypedefType>()) {
     StringRef TDName = TD->getDecl()->getIdentifier()->getName();
     if (TDName.startswith(Prefix) && TDName.endswith("Ref"))
       return true;

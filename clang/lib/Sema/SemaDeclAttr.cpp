@@ -3730,10 +3730,31 @@ static void handleNSReturnsRetainedAttr(Sema &S, Decl *D,
     returnType = PD->getType();
   else if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
     returnType = FD->getReturnType();
-  else {
+  else if (auto *Param = dyn_cast<ParmVarDecl>(D)) {
+    returnType = Param->getType()->getPointeeType();
+    if (returnType.isNull()) {
+      S.Diag(D->getLocStart(), diag::warn_ns_attribute_wrong_parameter_type)
+          << Attr.getName() << /*pointer-to-CF*/2
+          << Attr.getRange();
+      return;
+    }
+  } else {
+    AttributeDeclKind ExpectedDeclKind;
+    switch (Attr.getKind()) {
+    default: llvm_unreachable("invalid ownership attribute");
+    case AttributeList::AT_NSReturnsRetained:
+    case AttributeList::AT_NSReturnsAutoreleased:
+    case AttributeList::AT_NSReturnsNotRetained:
+      ExpectedDeclKind = ExpectedFunctionOrMethod;
+      break;
+
+    case AttributeList::AT_CFReturnsRetained:
+    case AttributeList::AT_CFReturnsNotRetained:
+      ExpectedDeclKind = ExpectedFunctionMethodOrParameter;
+      break;
+    }
     S.Diag(D->getLocStart(), diag::warn_attribute_wrong_decl_type)
-        << Attr.getRange() << Attr.getName()
-        << ExpectedFunctionOrMethod;
+        << Attr.getRange() << Attr.getName() << ExpectedDeclKind;
     return;
   }
 
@@ -3760,8 +3781,25 @@ static void handleNSReturnsRetainedAttr(Sema &S, Decl *D,
   }
 
   if (!typeOK) {
-    S.Diag(D->getLocStart(), diag::warn_ns_attribute_wrong_return_type)
-      << Attr.getRange() << Attr.getName() << isa<ObjCMethodDecl>(D) << cf;
+    if (isa<ParmVarDecl>(D)) {
+      S.Diag(D->getLocStart(), diag::warn_ns_attribute_wrong_parameter_type)
+          << Attr.getName() << /*pointer-to-CF*/2
+          << Attr.getRange();
+    } else {
+      // Needs to be kept in sync with warn_ns_attribute_wrong_return_type.
+      enum : unsigned {
+        Function,
+        Method,
+        Property
+      } SubjectKind = Function;
+      if (isa<ObjCMethodDecl>(D))
+        SubjectKind = Method;
+      else if (isa<ObjCPropertyDecl>(D))
+        SubjectKind = Property;
+      S.Diag(D->getLocStart(), diag::warn_ns_attribute_wrong_return_type)
+          << Attr.getName() << SubjectKind << cf
+          << Attr.getRange();
+    }
     return;
   }
 

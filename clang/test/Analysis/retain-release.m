@@ -2153,6 +2153,33 @@ id returnNSNull() {
   return [NSNull null]; // no-warning
 }
 
+//===----------------------------------------------------------------------===//
+// cf_returns_[not_]retained on parameters
+//===----------------------------------------------------------------------===//
+
+void testCFReturnsNotRetained() {
+  extern void getViaParam(CFTypeRef * CF_RETURNS_NOT_RETAINED outObj);
+  CFTypeRef obj;
+  getViaParam(&obj);
+  CFRelease(obj); // // expected-warning {{Incorrect decrement of the reference count of an object that is not owned at this point by the caller}}
+}
+
+void testCFReturnsRetained() {
+  extern int copyViaParam(CFTypeRef * CF_RETURNS_RETAINED outObj);
+  CFTypeRef obj;
+  copyViaParam(&obj);
+  CFRelease(obj);
+  CFRelease(obj); // // FIXME-warning {{Incorrect decrement of the reference count of an object that is not owned at this point by the caller}}
+}
+
+void testCFReturnsRetainedError() {
+  extern int copyViaParam(CFTypeRef * CF_RETURNS_RETAINED outObj);
+  CFTypeRef obj;
+  if (copyViaParam(&obj) == -42)
+    return; // no-warning
+  CFRelease(obj);
+}
+
 // CHECK:  <key>diagnostics</key>
 // CHECK-NEXT:  <array>
 // CHECK-NEXT:   <dict>

@@ -69,6 +69,14 @@ enum ArgEffect {
   /// transfers the object to the Garbage Collector under GC.
   MakeCollectable,
 
+  /// The argument is a pointer to a retain-counted object; on exit, the new
+  /// value of the pointer is a +0 value or NULL.
+  UnretainedOutParameter,
+
+  /// The argument is a pointer to a retain-counted object; on exit, the new
+  /// value of the pointer is a +1 value or NULL.
+  RetainedOutParameter,
+
   /// The argument is treated as potentially escaping, meaning that
   /// even when its reference count hits 0 it should be treated as still
   /// possibly being alive as someone else *may* be holding onto the object.
