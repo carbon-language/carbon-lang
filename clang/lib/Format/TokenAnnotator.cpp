@@ -255,7 +255,7 @@ private:
 
     // A '[' could be an index subscript (after an identifier or after
     // ')' or ']'), it could be the start of an Objective-C method
-    // expression, or it could the the start of an Objective-C array literal.
+    // expression, or it could the start of an Objective-C array literal.
     FormatToken *Left = CurrentToken->Previous;
     Left->ParentBracket = Contexts.back().ContextKind;
     FormatToken *Parent = Left->getPreviousNonComment();

@@ -3432,7 +3432,7 @@ class CatchHandlerType {
 
 public:
   /// Used when creating a CatchHandlerType from a handler type; will determine
-  /// whether the type is a pointer or reference and will strip off the the top
+  /// whether the type is a pointer or reference and will strip off the top
   /// level pointer and cv-qualifiers.
   CatchHandlerType(QualType Q) : QT(Q), IsPointer(false) {
     if (QT->isPointerType())

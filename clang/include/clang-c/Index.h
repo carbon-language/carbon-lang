@@ -5633,7 +5633,7 @@ typedef enum {
  * reused after indexing is finished. Set to \c NULL if you do not require it.
  *
  * \returns 0 on success or if there were errors from which the compiler could
- * recover.  If there is a failure from which the there is no recovery, returns
+ * recover.  If there is a failure from which there is no recovery, returns
  * a non-zero \c CXErrorCode.
  *
  * The rest of the parameters are the same as #clang_parseTranslationUnit.
@@ -5664,7 +5664,7 @@ CINDEX_LINKAGE int clang_indexSourceFile(CXIndexAction,
  *
  * The parameters are the same as #clang_indexSourceFile.
  * 
- * \returns If there is a failure from which the there is no recovery, returns
+ * \returns If there is a failure from which there is no recovery, returns
  * non-zero, otherwise returns 0.
  */
 CINDEX_LINKAGE int clang_indexTranslationUnit(CXIndexAction,

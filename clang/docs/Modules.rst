@@ -679,7 +679,7 @@ A *link-declaration* with the ``framework`` specifies that the linker should lin
 
 Configuration macros declaration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-The *config-macros-declaration* specifies the set of configuration macros that have an effect on the the API of the enclosing module.
+The *config-macros-declaration* specifies the set of configuration macros that have an effect on the API of the enclosing module.
 
 .. parsed-literal::
 

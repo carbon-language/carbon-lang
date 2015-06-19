@@ -1467,7 +1467,7 @@ void RecordLayoutBuilder::LayoutBitField(const FieldDecl *D) {
   // ms_struct basically requests a complete replacement of the
   // platform ABI's struct-layout algorithm, with the high-level goal
   // of duplicating MSVC's layout.  For non-bitfields, this follows
-  // the the standard algorithm.  The basic bitfield layout rule is to
+  // the standard algorithm.  The basic bitfield layout rule is to
   // allocate an entire unit of the bitfield's declared type
   // (e.g. 'unsigned long'), then parcel it up among successive
   // bitfields whose declared types have the same size, making a new

@@ -454,7 +454,7 @@ private:
           TerminatorExpr(nullptr) {}
 
     /// Returns whether we need to start a new branch for a temporary destructor
-    /// call. This is the case when the the temporary destructor is
+    /// call. This is the case when the temporary destructor is
     /// conditionally executed, and it is the first one we encounter while
     /// visiting a subexpression - other temporary destructors at the same level
     /// will be added to the same block and are executed under the same

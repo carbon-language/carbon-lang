@@ -2610,7 +2610,7 @@ static void emitWritebackArg(CodeGenFunction &CGF, CallArgList &args,
   LValue srcLV;
 
   // Make an optimistic effort to emit the address as an l-value.
-  // This can fail if the the argument expression is more complicated.
+  // This can fail if the argument expression is more complicated.
   if (const Expr *lvExpr = maybeGetUnaryAddrOfOperand(CRE->getSubExpr())) {
     srcLV = CGF.EmitLValue(lvExpr);
 
