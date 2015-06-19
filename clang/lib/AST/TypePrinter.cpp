@@ -1141,6 +1141,21 @@ void TypePrinter::printAttributedBefore(const AttributedType *T,
     }
     spaceBeforePlaceHolder(OS);
   }
+
+  // Print nullability type specifiers.
+  if (T->getAttrKind() == AttributedType::attr_nonnull ||
+      T->getAttrKind() == AttributedType::attr_nullable ||
+      T->getAttrKind() == AttributedType::attr_null_unspecified) {
+    if (T->getAttrKind() == AttributedType::attr_nonnull)
+      OS << " __nonnull";
+    else if (T->getAttrKind() == AttributedType::attr_nullable)
+      OS << " __nullable";
+    else if (T->getAttrKind() == AttributedType::attr_null_unspecified)
+      OS << " __null_unspecified";
+    else
+      llvm_unreachable("unhandled nullability");
+    spaceBeforePlaceHolder(OS);
+  }
 }
 
 void TypePrinter::printAttributedAfter(const AttributedType *T,
@@ -1154,11 +1169,33 @@ void TypePrinter::printAttributedAfter(const AttributedType *T,
   if (T->isMSTypeSpec())
     return;
 
+  // Nothing to print after.
+  if (T->getAttrKind() == AttributedType::attr_nonnull ||
+      T->getAttrKind() == AttributedType::attr_nullable ||
+      T->getAttrKind() == AttributedType::attr_null_unspecified)
+    return printAfter(T->getModifiedType(), OS);
+
   // If this is a calling convention attribute, don't print the implicit CC from
   // the modified type.
   SaveAndRestore<bool> MaybeSuppressCC(InsideCCAttribute, T->isCallingConv());
 
   printAfter(T->getModifiedType(), OS);
+
+  // Print nullability type specifiers that occur after
+  if (T->getAttrKind() == AttributedType::attr_nonnull ||
+      T->getAttrKind() == AttributedType::attr_nullable ||
+      T->getAttrKind() == AttributedType::attr_null_unspecified) {
+    if (T->getAttrKind() == AttributedType::attr_nonnull)
+      OS << " __nonnull";
+    else if (T->getAttrKind() == AttributedType::attr_nullable)
+      OS << " __nullable";
+    else if (T->getAttrKind() == AttributedType::attr_null_unspecified)
+      OS << " __null_unspecified";
+    else
+      llvm_unreachable("unhandled nullability");
+
+    return;
+  }
 
   OS << " __attribute__((";
   switch (T->getAttrKind()) {

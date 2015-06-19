@@ -5386,6 +5386,17 @@ QualType TreeTransform<Derived>::TransformAttributedType(
       = getDerived().TransformType(oldType->getEquivalentType());
     if (equivalentType.isNull())
       return QualType();
+
+    // Check whether we can add nullability; it is only represented as
+    // type sugar, and therefore cannot be diagnosed in any other way.
+    if (auto nullability = oldType->getImmediateNullability()) {
+      if (!modifiedType->canHaveNullability()) {
+        SemaRef.Diag(TL.getAttrNameLoc(), diag::err_nullability_nonpointer)
+          << static_cast<unsigned>(*nullability) << modifiedType;
+        return QualType();
+      }
+    }
+
     result = SemaRef.Context.getAttributedType(oldType->getAttrKind(),
                                                modifiedType,
                                                equivalentType);

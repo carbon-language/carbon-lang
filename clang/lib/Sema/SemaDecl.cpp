@@ -2465,6 +2465,28 @@ static void mergeParamDeclAttributes(ParmVarDecl *newDecl,
   if (!foundAny) newDecl->dropAttrs();
 }
 
+static void mergeParamDeclTypes(ParmVarDecl *NewParam,
+                                const ParmVarDecl *OldParam,
+                                Sema &S) {
+  if (auto Oldnullability = OldParam->getType()->getNullability(S.Context)) {
+    if (auto Newnullability = NewParam->getType()->getNullability(S.Context)) {
+      if (*Oldnullability != *Newnullability) {
+        S.Diag(NewParam->getLocation(), diag::warn_mismatched_nullability_attr)
+          << static_cast<unsigned>(*Newnullability)
+          << static_cast<unsigned>(*Oldnullability);
+        S.Diag(OldParam->getLocation(), diag::note_previous_declaration);
+      }
+    }
+    else {
+      QualType NewT = NewParam->getType();
+      NewT = S.Context.getAttributedType(
+                         AttributedType::getNullabilityAttrKind(*Oldnullability),
+                         NewT, NewT);
+      NewParam->setType(NewT);
+    }
+  }
+}
+
 namespace {
 
 /// Used in MergeFunctionDecl to keep track of function parameters in
@@ -3101,9 +3123,12 @@ bool Sema::MergeCompatibleFunctionDecls(FunctionDecl *New, FunctionDecl *Old,
   // Merge attributes from the parameters.  These can mismatch with K&R
   // declarations.
   if (New->getNumParams() == Old->getNumParams())
-    for (unsigned i = 0, e = New->getNumParams(); i != e; ++i)
-      mergeParamDeclAttributes(New->getParamDecl(i), Old->getParamDecl(i),
-                               *this);
+      for (unsigned i = 0, e = New->getNumParams(); i != e; ++i) {
+        ParmVarDecl *NewParam = New->getParamDecl(i);
+        ParmVarDecl *OldParam = Old->getParamDecl(i);
+        mergeParamDeclAttributes(NewParam, OldParam, *this);
+        mergeParamDeclTypes(NewParam, OldParam, *this);
+      }
 
   if (getLangOpts().CPlusPlus)
     return MergeCXXFunctionDecl(New, Old, S);

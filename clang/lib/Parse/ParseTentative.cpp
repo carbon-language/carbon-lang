@@ -631,7 +631,9 @@ Parser::TPResult Parser::TryParsePtrOperatorSeq() {
         (Tok.is(tok::annot_cxxscope) && NextToken().is(tok::star))) {
       // ptr-operator
       ConsumeToken();
-      while (Tok.isOneOf(tok::kw_const, tok::kw_volatile, tok::kw_restrict))
+      while (Tok.isOneOf(tok::kw_const, tok::kw_volatile, tok::kw_restrict,
+                         tok::kw___nonnull, tok::kw___nullable,
+                         tok::kw___null_unspecified))
         ConsumeToken();
     } else {
       return TPResult::True;
@@ -1274,6 +1276,9 @@ Parser::isCXXDeclarationSpecifier(Parser::TPResult BracedCastResult,
   case tok::kw___ptr32:
   case tok::kw___forceinline:
   case tok::kw___unaligned:
+  case tok::kw___nonnull:
+  case tok::kw___nullable:
+  case tok::kw___null_unspecified:
     return TPResult::True;
 
     // Borland

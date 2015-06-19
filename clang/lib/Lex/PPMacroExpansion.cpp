@@ -1075,6 +1075,7 @@ static bool HasFeature(const Preprocessor &PP, const IdentifierInfo *II) {
       .Case("cxx_exceptions", LangOpts.CXXExceptions)
       .Case("cxx_rtti", LangOpts.RTTI)
       .Case("enumerator_attributes", true)
+      .Case("nullability", LangOpts.ObjC1 || LangOpts.GNUMode)
       .Case("memory_sanitizer", LangOpts.Sanitize.has(SanitizerKind::Memory))
       .Case("thread_sanitizer", LangOpts.Sanitize.has(SanitizerKind::Thread))
       .Case("dataflow_sanitizer", LangOpts.Sanitize.has(SanitizerKind::DataFlow))
@@ -1222,6 +1223,7 @@ static bool HasExtension(const Preprocessor &PP, const IdentifierInfo *II) {
   // Because we inherit the feature list from HasFeature, this string switch
   // must be less restrictive than HasFeature's.
   return llvm::StringSwitch<bool>(Extension)
+           .Case("nullability", true)
            // C11 features supported by other languages as extensions.
            .Case("c_alignas", true)
            .Case("c_alignof", true)

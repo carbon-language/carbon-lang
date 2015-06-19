@@ -960,6 +960,22 @@ def ReturnsNonNull : InheritableAttr {
   let Documentation = [Undocumented];
 }
 
+// Nullability type attributes.
+def TypeNonNull : TypeAttr {
+  let Spellings = [Keyword<"__nonnull">];
+  let Documentation = [Undocumented];
+}
+
+def TypeNullable : TypeAttr {
+  let Spellings = [Keyword<"__nullable">];
+  let Documentation = [Undocumented];
+}
+
+def TypeNullUnspecified : TypeAttr {
+  let Spellings = [Keyword<"__null_unspecified">];
+  let Documentation = [Undocumented];
+}
+
 def AssumeAligned : InheritableAttr {
   let Spellings = [GCC<"assume_aligned">];
   let Subjects = SubjectList<[ObjCMethod, Function]>;
