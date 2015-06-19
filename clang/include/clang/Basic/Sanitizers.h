@@ -52,6 +52,9 @@ struct SanitizerSet {
   /// \brief Check if a certain (single) sanitizer is enabled.
   bool has(SanitizerMask K) const;
 
+  /// \brief Check if one or more sanitizers are enabled.
+  bool hasOneOf(SanitizerMask K) const;
+
   /// \brief Enable or disable a certain (single) sanitizer.
   void set(SanitizerMask K, bool Value);
 

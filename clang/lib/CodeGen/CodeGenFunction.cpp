@@ -615,7 +615,7 @@ void CodeGenFunction::StartFunction(GlobalDecl GD,
   }
 
   // Apply sanitizer attributes to the function.
-  if (SanOpts.has(SanitizerKind::Address))
+  if (SanOpts.hasOneOf(SanitizerKind::Address | SanitizerKind::KernelAddress))
     Fn->addFnAttr(llvm::Attribute::SanitizeAddress);
   if (SanOpts.has(SanitizerKind::Thread))
     Fn->addFnAttr(llvm::Attribute::SanitizeThread);

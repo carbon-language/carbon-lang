@@ -25,6 +25,10 @@ bool SanitizerSet::has(SanitizerMask K) const {
   return Mask & K;
 }
 
+bool SanitizerSet::hasOneOf(SanitizerMask K) const {
+  return Mask & K;
+}
+
 void SanitizerSet::set(SanitizerMask K, bool Value) {
   assert(llvm::countPopulation(K) == 1);
   Mask = Value ? (Mask | K) : (Mask & ~K);

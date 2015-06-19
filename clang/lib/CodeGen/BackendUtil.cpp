@@ -201,8 +201,14 @@ static void addSanitizerCoveragePass(const PassManagerBuilder &Builder,
 
 static void addAddressSanitizerPasses(const PassManagerBuilder &Builder,
                                       legacy::PassManagerBase &PM) {
-  PM.add(createAddressSanitizerFunctionPass());
-  PM.add(createAddressSanitizerModulePass());
+  PM.add(createAddressSanitizerFunctionPass(/*CompileKernel*/false));
+  PM.add(createAddressSanitizerModulePass(/*CompileKernel*/false));
+}
+
+static void addKernelAddressSanitizerPasses(const PassManagerBuilder &Builder,
+                                            legacy::PassManagerBase &PM) {
+  PM.add(createAddressSanitizerFunctionPass(/*CompileKernel*/true));
+  PM.add(createAddressSanitizerModulePass(/*CompileKernel*/true));
 }
 
 static void addMemorySanitizerPass(const PassManagerBuilder &Builder,
@@ -326,6 +332,13 @@ void EmitAssemblyHelper::CreatePasses() {
                            addAddressSanitizerPasses);
     PMBuilder.addExtension(PassManagerBuilder::EP_EnabledOnOptLevel0,
                            addAddressSanitizerPasses);
+  }
+
+  if (LangOpts.Sanitize.has(SanitizerKind::KernelAddress)) {
+    PMBuilder.addExtension(PassManagerBuilder::EP_OptimizerLast,
+                           addKernelAddressSanitizerPasses);
+    PMBuilder.addExtension(PassManagerBuilder::EP_EnabledOnOptLevel0,
+                           addKernelAddressSanitizerPasses);
   }
 
   if (LangOpts.Sanitize.has(SanitizerKind::Memory)) {

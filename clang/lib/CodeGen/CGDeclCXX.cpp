@@ -267,7 +267,8 @@ llvm::Function *CodeGenModule::CreateGlobalInitOrDestructFunction(
     Fn->setDoesNotThrow();
 
   if (!isInSanitizerBlacklist(Fn, Loc)) {
-    if (getLangOpts().Sanitize.has(SanitizerKind::Address))
+    if (getLangOpts().Sanitize.hasOneOf(SanitizerKind::Address |
+                                        SanitizerKind::KernelAddress))
       Fn->addFnAttr(llvm::Attribute::SanitizeAddress);
     if (getLangOpts().Sanitize.has(SanitizerKind::Thread))
       Fn->addFnAttr(llvm::Attribute::SanitizeThread);

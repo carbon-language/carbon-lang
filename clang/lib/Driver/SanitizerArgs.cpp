@@ -305,7 +305,10 @@ SanitizerArgs::SanitizerArgs(const ToolChain &TC,
   std::pair<SanitizerMask, SanitizerMask> IncompatibleGroups[] = {
       std::make_pair(Address, Thread), std::make_pair(Address, Memory),
       std::make_pair(Thread, Memory), std::make_pair(Leak, Thread),
-      std::make_pair(Leak, Memory)};
+      std::make_pair(Leak, Memory), std::make_pair(KernelAddress, Address),
+      std::make_pair(KernelAddress, Leak),
+      std::make_pair(KernelAddress, Thread),
+      std::make_pair(KernelAddress, Memory)};
   for (auto G : IncompatibleGroups) {
     SanitizerMask Group = G.first;
     if (Kinds & Group) {

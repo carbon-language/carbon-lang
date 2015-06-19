@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -E -fsanitize=address %s -o - | FileCheck --check-prefix=CHECK-ASAN %s
+// RUN: %clang_cc1 -E -fsanitize=kernel-address %s -o - | FileCheck --check-prefix=CHECK-ASAN %s
 // RUN: %clang_cc1 -E  %s -o - | FileCheck --check-prefix=CHECK-NO-ASAN %s
 
 #if __has_feature(address_sanitizer)
