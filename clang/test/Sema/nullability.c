@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -fblocks -Wno-nullability-declspec %s -verify
+// RUN: %clang_cc1 -fsyntax-only -fblocks -Wnullable-to-nonnull-conversion -Wno-nullability-declspec %s -verify
 
 #if __has_feature(nullability)
 #else
@@ -84,4 +84,30 @@ void printing_nullability(void) {
 
   int * __nullable * __nonnull iptrptr2;
   float * *fptrptr2 = iptrptr2; // expected-warning{{incompatible pointer types initializing 'float **' with an expression of type 'int * __nullable * __nonnull'}}
+}
+
+// Check passing null to a __nonnull argument.
+void accepts_nonnull_1(__nonnull int *ptr);
+void (*accepts_nonnull_2)(__nonnull int *ptr);
+void (^accepts_nonnull_3)(__nonnull int *ptr);
+
+void test_accepts_nonnull_null_pointer_literal() {
+  accepts_nonnull_1(0); // expected-warning{{null passed to a callee that requires a non-null argument}}
+  accepts_nonnull_2(0); // expected-warning{{null passed to a callee that requires a non-null argument}}
+  accepts_nonnull_3(0); // expected-warning{{null passed to a callee that requires a non-null argument}}
+}
+
+// Check returning nil from a __nonnull-returning function.
+__nonnull int *returns_int_ptr(int x) {
+  if (x) {
+    return 0; // expected-warning{{null returned from function that requires a non-null return value}}
+  }
+
+  return (__nonnull int *)0;
+}
+
+// Check nullable-to-nonnull conversions.
+void nullable_to_nonnull(__nullable int *ptr) {
+  int *a = ptr; // okay
+  __nonnull int *b = ptr; // expected-warning{{implicit conversion from nullable pointer 'int * __nullable' to non-nullable pointer type 'int * __nonnull'}}
 }

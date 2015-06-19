@@ -7700,6 +7700,11 @@ def err_nullability_conflicting : Error<
   "'%select{__nonnull|__nullable|__null_unspecified}0' conflicts with existing "
   "specifier '%select{__nonnull|__nullable|__null_unspecified}1'">;
 
+def warn_nullability_lost : Warning<
+  "implicit conversion from nullable pointer %0 to non-nullable pointer "
+  "type %1">,
+  InGroup<NullableToNonNullConversion>, DefaultIgnore;
+
 }
 
 } // end of sema component.

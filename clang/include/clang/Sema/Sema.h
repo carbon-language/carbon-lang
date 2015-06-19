@@ -8580,9 +8580,10 @@ private:
                             const FunctionProtoType *Proto,
                             SourceLocation Loc);
 
-  void checkCall(NamedDecl *FDecl, ArrayRef<const Expr *> Args,
-                 unsigned NumParams, bool IsMemberFunction, SourceLocation Loc,
-                 SourceRange Range, VariadicCallType CallType);
+  void checkCall(NamedDecl *FDecl, const FunctionProtoType *Proto,
+                 ArrayRef<const Expr *> Args, bool IsMemberFunction, 
+                 SourceLocation Loc, SourceRange Range, 
+                 VariadicCallType CallType);
 
   bool CheckObjCString(Expr *Arg);
 

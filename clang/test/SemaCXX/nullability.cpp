@@ -40,3 +40,25 @@ struct AddNonNull2 {
   // cannot apply to that specific dependent type.
   typedef __nonnull AddNonNull<T> (*invalid4); // expected-error{{nullability specifier '__nonnull' cannot be applied to non-pointer type 'AddNonNull<T>'}}
 };
+
+// Check passing null to a __nonnull argument.
+void (*accepts_nonnull_1)(__nonnull int *ptr);
+void (*& accepts_nonnull_2)(__nonnull int *ptr) = accepts_nonnull_1;
+void (X::* accepts_nonnull_3)(__nonnull int *ptr);
+void accepts_nonnull_4(__nonnull int *ptr);
+void (&accepts_nonnull_5)(__nonnull int *ptr) = accepts_nonnull_4;
+
+void test_accepts_nonnull_null_pointer_literal(X *x) {
+  accepts_nonnull_1(0); // expected-warning{{null passed to a callee that requires a non-null argument}}
+  accepts_nonnull_2(0); // expected-warning{{null passed to a callee that requires a non-null argument}}
+  (x->*accepts_nonnull_3)(0); // expected-warning{{null passed to a callee that requires a non-null argument}}
+  accepts_nonnull_4(0); // expected-warning{{null passed to a callee that requires a non-null argument}}
+  accepts_nonnull_5(0); // expected-warning{{null passed to a callee that requires a non-null argument}}
+}
+
+template<void FP(__nonnull int*)> 
+void test_accepts_nonnull_null_pointer_literal_template() {
+  FP(0); // expected-warning{{null passed to a callee that requires a non-null argument}}
+}
+
+template void test_accepts_nonnull_null_pointer_literal_template<&accepts_nonnull_4>(); // expected-note{{instantiation of function template specialization}}

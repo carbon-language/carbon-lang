@@ -356,6 +356,19 @@ ExprResult Sema::ImpCastExprToType(Expr *E, QualType Ty,
   assert((VK == VK_RValue || !E->isRValue()) && "can't cast rvalue to lvalue");
 #endif
 
+  // Check whether we're implicitly casting from a nullable type to a nonnull
+  // type.
+  if (auto exprNullability = E->getType()->getNullability(Context)) {
+    if (*exprNullability == NullabilityKind::Nullable) {
+      if (auto typeNullability = Ty->getNullability(Context)) {
+        if (*typeNullability == NullabilityKind::NonNull) {
+          Diag(E->getLocStart(), diag::warn_nullability_lost)
+            << E->getType() << Ty;
+        }
+      }
+    }
+  }
+
   QualType ExprTy = Context.getCanonicalType(E->getType());
   QualType TypeTy = Context.getCanonicalType(Ty);
 

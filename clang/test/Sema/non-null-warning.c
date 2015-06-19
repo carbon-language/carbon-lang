@@ -33,3 +33,10 @@ int *foo3(int * __nonnull x) { // expected-warning {{nullability specifier '__no
   return 0;
 }
 
+int * ret_nonnull() {
+  return 0; // expected-warning {{null returned from function that requires a non-null return value}}
+}
+
+int main () {
+  foo(0); // expected-warning {{null passed to a callee that requires a non-null argument}}
+}
