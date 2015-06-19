@@ -302,7 +302,7 @@ template <typename ELFT> class RelocationPass : public Pass {
 public:
   RelocationPass(MipsLinkingContext &ctx);
 
-  void perform(std::unique_ptr<SimpleFile> &mf) override;
+  std::error_code perform(std::unique_ptr<SimpleFile> &mf) override;
 
 private:
   /// \brief Reference to the linking context.
@@ -428,7 +428,7 @@ RelocationPass<ELFT>::RelocationPass(MipsLinkingContext &ctx)
 }
 
 template <typename ELFT>
-void RelocationPass<ELFT>::perform(std::unique_ptr<SimpleFile> &mf) {
+std::error_code RelocationPass<ELFT>::perform(std::unique_ptr<SimpleFile> &mf) {
   for (const auto &atom : mf->defined())
     for (const auto &ref : *atom)
       collectReferenceInfo(*cast<MipsELFDefinedAtom<ELFT>>(atom),
@@ -518,6 +518,8 @@ void RelocationPass<ELFT>::perform(std::unique_ptr<SimpleFile> &mf) {
     la25->setOrdinal(ordinal++);
     mf->addAtom(*la25);
   }
+
+  return std::error_code();
 }
 
 template <typename ELFT>

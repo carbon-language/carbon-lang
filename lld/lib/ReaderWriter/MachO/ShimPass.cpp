@@ -44,7 +44,7 @@ public:
       : _ctx(context), _archHandler(_ctx.archHandler()),
         _stubInfo(_archHandler.stubInfo()), _file("<mach-o shim pass>") {}
 
-  void perform(std::unique_ptr<SimpleFile> &mergedFile) override {
+  std::error_code perform(std::unique_ptr<SimpleFile> &mergedFile) override {
     // Scan all references in all atoms.
     for (const DefinedAtom *atom : mergedFile->defined()) {
       for (const Reference *ref : *atom) {
@@ -63,7 +63,7 @@ public:
     }
     // Exit early if no shims needed.
     if (_targetToShim.empty())
-      return;
+      return std::error_code();
 
     // Sort shim atoms so the layout order is stable.
     std::vector<const DefinedAtom *> shims;
@@ -80,6 +80,8 @@ public:
     for (const DefinedAtom *shim : shims) {
       mergedFile->addAtom(*shim);
     }
+
+    return std::error_code();
   }
 
 private:

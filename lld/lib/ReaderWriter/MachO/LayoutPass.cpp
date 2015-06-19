@@ -437,7 +437,7 @@ void LayoutPass::undecorate(SimpleFile::DefinedAtomRange &atomRange,
 }
 
 /// Perform the actual pass
-void LayoutPass::perform(std::unique_ptr<SimpleFile> &mergedFile) {
+std::error_code LayoutPass::perform(std::unique_ptr<SimpleFile> &mergedFile) {
   // sort the atoms
   ScopedTask task(getDefaultDomain(), "LayoutPass");
   SimpleFile::DefinedAtomRange atomRange = mergedFile->definedAtoms();
@@ -468,6 +468,8 @@ void LayoutPass::perform(std::unique_ptr<SimpleFile> &mergedFile) {
     llvm::dbgs() << "sorted atoms:\n";
     printDefinedAtoms(atomRange);
   });
+
+  return std::error_code();
 }
 
 void addLayoutPass(PassManager &pm, const MachOLinkingContext &ctx) {

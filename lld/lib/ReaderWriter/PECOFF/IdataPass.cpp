@@ -287,9 +287,9 @@ DelayLoaderAtom::createContent(MachineTypes machine) const {
 
 } // namespace idata
 
-void IdataPass::perform(std::unique_ptr<SimpleFile> &file) {
+std::error_code IdataPass::perform(std::unique_ptr<SimpleFile> &file) {
   if (file->sharedLibrary().empty())
-    return;
+    return std::error_code();
 
   idata::IdataContext context(*file, _dummyFile, _ctx);
   std::map<StringRef, std::vector<COFFSharedLibraryAtom *>> sharedAtoms =
@@ -322,6 +322,8 @@ void IdataPass::perform(std::unique_ptr<SimpleFile> &file) {
     new (_alloc) idata::DelayNullImportDirectoryAtom(context);
 
   replaceSharedLibraryAtoms(*file);
+
+  return std::error_code();
 }
 
 std::map<StringRef, std::vector<COFFSharedLibraryAtom *>>

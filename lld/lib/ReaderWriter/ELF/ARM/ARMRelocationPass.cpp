@@ -673,7 +673,7 @@ public:
   ///
   /// After all references are handled, the atoms created during that are all
   /// added to mf.
-  void perform(std::unique_ptr<SimpleFile> &mf) override {
+  std::error_code perform(std::unique_ptr<SimpleFile> &mf) override {
     ScopedTask task(getDefaultDomain(), "ARM GOT/PLT Pass");
     DEBUG_WITH_TYPE(
         "ARM", llvm::dbgs() << "Undefined Atoms" << "\n";
@@ -759,6 +759,8 @@ public:
       v->setOrdinal(ordinal++);
       mf->addAtom(*v);
     }
+
+    return std::error_code();
   }
 
 protected:

@@ -256,7 +256,7 @@ public:
   ///
   /// After all references are handled, the atoms created during that are all
   /// added to mf.
-  void perform(std::unique_ptr<SimpleFile> &mf) override {
+  std::error_code perform(std::unique_ptr<SimpleFile> &mf) override {
     ScopedTask task(getDefaultDomain(), "AArch64 GOT/PLT Pass");
     DEBUG_WITH_TYPE(
         "AArch64", llvm::dbgs() << "Undefined Atoms"
@@ -315,6 +315,8 @@ public:
       obj->setOrdinal(ordinal++);
       mf->addAtom(*obj);
     }
+
+    return std::error_code();
   }
 
 protected:

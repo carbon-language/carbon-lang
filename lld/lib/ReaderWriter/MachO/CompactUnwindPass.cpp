@@ -277,7 +277,7 @@ public:
         _isBig(MachOLinkingContext::isBigEndian(_ctx.arch())) {}
 
 private:
-  void perform(std::unique_ptr<SimpleFile> &mergedFile) override {
+  std::error_code perform(std::unique_ptr<SimpleFile> &mergedFile) override {
     DEBUG(llvm::dbgs() << "MachO Compact Unwind pass\n");
 
     std::map<const Atom *, CompactUnwindEntry> unwindLocs;
@@ -294,7 +294,7 @@ private:
 
     // Skip rest of pass if no unwind info.
     if (unwindLocs.empty() && dwarfFrames.empty())
-      return;
+      return std::error_code();
 
     // FIXME: if there are more than 4 personality functions then we need to
     // defer to DWARF info for the ones we don't put in the list. They should
@@ -348,6 +348,8 @@ private:
     mergedFile->removeDefinedAtomsIf([](const DefinedAtom *atom) {
       return atom->contentType() == DefinedAtom::typeCompactUnwindInfo;
     });
+
+    return std::error_code();
   }
 
   void collectCompactUnwindEntries(

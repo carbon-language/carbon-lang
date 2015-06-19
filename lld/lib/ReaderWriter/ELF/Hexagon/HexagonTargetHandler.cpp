@@ -169,7 +169,7 @@ public:
   ///
   /// After all references are handled, the atoms created during that are all
   /// added to mf.
-  void perform(std::unique_ptr<SimpleFile> &mf) override {
+  std::error_code perform(std::unique_ptr<SimpleFile> &mf) override {
     // Process all references.
     for (const auto &atom : mf->defined())
       for (const auto &ref : *atom)
@@ -197,6 +197,8 @@ public:
       got->setOrdinal(ordinal++);
       mf->addAtom(*got);
     }
+
+    return std::error_code();
   }
 
 protected:

@@ -175,15 +175,15 @@ EdataPass::createOrdinalTable(const std::vector<TableEntry> &entries,
   return ret;
 }
 
-void EdataPass::perform(std::unique_ptr<SimpleFile> &file) {
+std::error_code EdataPass::perform(std::unique_ptr<SimpleFile> &file) {
   dedupExports(_ctx);
   assignOrdinals(_ctx);
 
   std::vector<TableEntry> entries;
   if (!getExportedAtoms(_ctx, file.get(), entries))
-    return;
+    return std::error_code();
   if (entries.empty())
-    return;
+    return std::error_code();
 
   int ordinalBase, maxOrdinal;
   std::tie(ordinalBase, maxOrdinal) = getOrdinalBase(entries);
@@ -221,6 +221,8 @@ void EdataPass::perform(std::unique_ptr<SimpleFile> &file) {
   file->addAtom(*ordinalTable);
   addDir32NBReloc(table, ordinalTable, _ctx.getMachineType(),
                   offsetof(export_directory_table_entry, OrdinalTableRVA));
+
+  return std::error_code();
 }
 
 } // namespace pecoff

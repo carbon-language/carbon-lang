@@ -195,7 +195,7 @@ class IdataPass : public lld::Pass {
 public:
   IdataPass(const PECOFFLinkingContext &ctx) : _dummyFile(ctx), _ctx(ctx) {}
 
-  void perform(std::unique_ptr<SimpleFile> &file) override;
+  std::error_code perform(std::unique_ptr<SimpleFile> &file) override;
 
 private:
   std::map<StringRef, std::vector<COFFSharedLibraryAtom *>>

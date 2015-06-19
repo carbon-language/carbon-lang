@@ -96,7 +96,7 @@ public:
         _file("<mach-o GOT Pass>") {}
 
 private:
-  void perform(std::unique_ptr<SimpleFile> &mergedFile) override {
+  std::error_code perform(std::unique_ptr<SimpleFile> &mergedFile) override {
     // Scan all references in all atoms.
     for (const DefinedAtom *atom : mergedFile->defined()) {
       for (const Reference *ref : *atom) {
@@ -131,6 +131,8 @@ private:
     });
     for (const GOTEntryAtom *slot : entries)
       mergedFile->addAtom(*slot);
+
+    return std::error_code();
   }
 
   bool shouldReplaceTargetWithGOTAtom(const Atom *target, bool canBypassGOT) {

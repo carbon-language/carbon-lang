@@ -22,9 +22,10 @@ namespace {
 class OrderPass : public Pass {
 public:
   /// Sorts atoms by position
-  void perform(std::unique_ptr<SimpleFile> &file) override {
+  std::error_code perform(std::unique_ptr<SimpleFile> &file) override {
     SimpleFile::DefinedAtomRange defined = file->definedAtoms();
     std::sort(defined.begin(), defined.end(), DefinedAtom::compareByPosition);
+    return std::error_code();
   }
 };
 

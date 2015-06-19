@@ -66,7 +66,7 @@ public:
   EdataPass(PECOFFLinkingContext &ctx)
       : _ctx(ctx), _file(ctx), _is64(ctx.is64Bit()), _stringOrdinal(1024) {}
 
-  void perform(std::unique_ptr<SimpleFile> &file) override;
+  std::error_code perform(std::unique_ptr<SimpleFile> &file) override;
 
 private:
   edata::EdataAtom *

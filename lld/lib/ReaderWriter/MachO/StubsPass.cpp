@@ -209,10 +209,10 @@ public:
       : _ctx(context), _archHandler(_ctx.archHandler()),
         _stubInfo(_archHandler.stubInfo()), _file("<mach-o Stubs pass>") {}
 
-  void perform(std::unique_ptr<SimpleFile> &mergedFile) override {
+  std::error_code perform(std::unique_ptr<SimpleFile> &mergedFile) override {
     // Skip this pass if output format uses text relocations instead of stubs.
     if (!this->noTextRelocs())
-      return;
+      return std::error_code();
 
     // Scan all references in all atoms.
     for (const DefinedAtom *atom : mergedFile->defined()) {
@@ -239,7 +239,7 @@ public:
 
     // Exit early if no stubs needed.
     if (_targetToUses.empty())
-      return;
+      return std::error_code();
 
     // First add help-common and GOT slots used by lazy binding.
     SimpleDefinedAtom *helperCommonAtom =
@@ -314,6 +314,8 @@ public:
       // Calculate new offset
       lazyOffset += target->name().size() + 12;
     }
+
+    return std::error_code();
   }
 
 private:
