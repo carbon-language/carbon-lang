@@ -77,27 +77,6 @@ static std::string describeSanitizeArg(const llvm::opt::Arg *A,
 /// Sanitizers set.
 static std::string toString(const clang::SanitizerSet &Sanitizers);
 
-static SanitizerMask getToolchainUnsupportedKinds(const ToolChain &TC) {
-  bool IsFreeBSD = TC.getTriple().getOS() == llvm::Triple::FreeBSD;
-  bool IsLinux = TC.getTriple().getOS() == llvm::Triple::Linux;
-  bool IsX86 = TC.getTriple().getArch() == llvm::Triple::x86;
-  bool IsX86_64 = TC.getTriple().getArch() == llvm::Triple::x86_64;
-  bool IsMIPS64 = TC.getTriple().getArch() == llvm::Triple::mips64 ||
-                  TC.getTriple().getArch() == llvm::Triple::mips64el;
-
-  SanitizerMask Unsupported = 0;
-  if (!(IsLinux && (IsX86_64 || IsMIPS64))) {
-    Unsupported |= Memory | DataFlow;
-  }
-  if (!((IsLinux || IsFreeBSD) && (IsX86_64 || IsMIPS64))) {
-    Unsupported |= Thread;
-  }
-  if (!(IsLinux && (IsX86 || IsX86_64))) {
-    Unsupported |= Function;
-  }
-  return Unsupported;
-}
-
 static bool getDefaultBlacklist(const Driver &D, SanitizerMask Kinds,
                                 std::string &BLPath) {
   const char *BlacklistFile = nullptr;
@@ -215,12 +194,12 @@ SanitizerArgs::SanitizerArgs(const ToolChain &TC,
   SanitizerMask DiagnosedKinds = 0;  // All Kinds we have diagnosed up to now.
                                      // Used to deduplicate diagnostics.
   SanitizerMask Kinds = 0;
-  SanitizerMask NotSupported = getToolchainUnsupportedKinds(TC);
+  SanitizerMask Supported = setGroupBits(TC.getSupportedSanitizers());
   ToolChain::RTTIMode RTTIMode = TC.getRTTIMode();
 
   const Driver &D = TC.getDriver();
   SanitizerMask TrappingKinds = parseSanitizeTrapArgs(D, Args);
-  NotSupported |= TrappingKinds & NotAllowedWithTrap;
+  SanitizerMask InvalidTrappingKinds = TrappingKinds & NotAllowedWithTrap;
 
   for (ArgList::const_reverse_iterator I = Args.rbegin(), E = Args.rend();
        I != E; ++I) {
@@ -236,21 +215,20 @@ SanitizerArgs::SanitizerArgs(const ToolChain &TC,
       // sanitizers in Add are those which have been explicitly enabled.
       // Diagnose them.
       if (SanitizerMask KindsToDiagnose =
-              Add & TrappingKinds & NotAllowedWithTrap & ~DiagnosedKinds) {
+              Add & InvalidTrappingKinds & ~DiagnosedKinds) {
         std::string Desc = describeSanitizeArg(*I, KindsToDiagnose);
         D.Diag(diag::err_drv_argument_not_allowed_with)
             << Desc << "-fsanitize-trap=undefined";
         DiagnosedKinds |= KindsToDiagnose;
-        Add &= ~KindsToDiagnose;
       }
-      if (SanitizerMask KindsToDiagnose = Add & NotSupported & ~DiagnosedKinds) {
-        // Only diagnose the new kinds.
+      Add &= ~InvalidTrappingKinds;
+      if (SanitizerMask KindsToDiagnose = Add & ~Supported & ~DiagnosedKinds) {
         std::string Desc = describeSanitizeArg(*I, KindsToDiagnose);
         D.Diag(diag::err_drv_unsupported_opt_for_target)
             << Desc << TC.getTriple().str();
         DiagnosedKinds |= KindsToDiagnose;
       }
-      Add &= ~NotSupported;
+      Add &= Supported;
 
       // Test for -fno-rtti + explicit -fsanitizer=vptr before expanding groups
       // so we don't error out if -fno-rtti and -fsanitize=undefined were
@@ -279,7 +257,8 @@ SanitizerArgs::SanitizerArgs(const ToolChain &TC,
       Add &= ~AllRemove;
       // Silently discard any unsupported sanitizers implicitly enabled through
       // group expansion.
-      Add &= ~NotSupported;
+      Add &= ~InvalidTrappingKinds;
+      Add &= Supported;
 
       Kinds |= Add;
     } else if (Arg->getOption().matches(options::OPT_fno_sanitize_EQ)) {
