@@ -41,8 +41,8 @@ RTDyldMemoryManager::~RTDyldMemoryManager() {}
 #endif
 
 #if HAVE_EHTABLE_SUPPORT
-extern "C" void __register_frame(void*);
-extern "C" void __deregister_frame(void*);
+extern "C" void __register_frame(void *);
+extern "C" void __deregister_frame(void *);
 #else
 // The building compiler does not have __(de)register_frame but
 // it may be found at runtime in a dynamically-loaded library.
@@ -50,28 +50,28 @@ extern "C" void __deregister_frame(void*);
 // but using the MingW runtime.
 void __register_frame(void *p) {
   static bool Searched = false;
-  static void *rf = 0;
+  static void((*rf)(void *)) = 0;
 
   if (!Searched) {
     Searched = true;
-    rf = llvm::sys::DynamicLibrary::SearchForAddressOfSymbol(
-                                                      "__register_frame");
+    *(void **)&rf =
+        llvm::sys::DynamicLibrary::SearchForAddressOfSymbol("__register_frame");
   }
   if (rf)
-    ((void (*)(void *))rf)(p);
+    rf(p);
 }
 
 void __deregister_frame(void *p) {
   static bool Searched = false;
-  static void *df = 0;
+  static void((*df)(void *)) = 0;
 
   if (!Searched) {
     Searched = true;
-    df = llvm::sys::DynamicLibrary::SearchForAddressOfSymbol(
-                                                      "__deregister_frame");
+    *(void **)&df = llvm::sys::DynamicLibrary::SearchForAddressOfSymbol(
+        "__deregister_frame");
   }
   if (df)
-    ((void (*)(void *))df)(p);
+    df(p);
 }
 #endif
 
