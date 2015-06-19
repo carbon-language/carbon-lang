@@ -2791,9 +2791,12 @@ static FileID getNullabilityCompletenessCheckFileID(Sema &S,
   // We don't want to perform completeness checks on the main file or in
   // system headers.
   const SrcMgr::FileInfo &fileInfo = sloc.getFile();
-  if (fileInfo.getIncludeLoc().isInvalid() ||
-      fileInfo.getFileCharacteristic() != SrcMgr::C_User)
+  if (fileInfo.getIncludeLoc().isInvalid())
     return FileID();
+  if (fileInfo.getFileCharacteristic() != SrcMgr::C_User &&
+      S.Diags.getSuppressSystemWarnings()) {
+    return FileID();
+  }
 
   return file;
 }
