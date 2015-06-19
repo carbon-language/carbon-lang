@@ -87,10 +87,10 @@ class RuntimeDyldELF : public RuntimeDyldImpl {
 
   void setMipsABI(const ObjectFile &Obj) override;
 
-  void findPPC64TOCSection(const ObjectFile &Obj,
+  void findPPC64TOCSection(const ELFObjectFileBase &Obj,
                            ObjSectionToIDMap &LocalSections,
                            RelocationValueRef &Rel);
-  void findOPDEntrySection(const ObjectFile &Obj,
+  void findOPDEntrySection(const ELFObjectFileBase &Obj,
                            ObjSectionToIDMap &LocalSections,
                            RelocationValueRef &Rel);
 
