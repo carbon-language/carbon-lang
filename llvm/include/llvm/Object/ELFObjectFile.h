@@ -45,9 +45,6 @@ public:
   virtual std::pair<symbol_iterator, symbol_iterator>
   getELFDynamicSymbolIterators() const = 0;
 
-  virtual std::error_code getSymbolVersion(SymbolRef Symb, StringRef &Version,
-                                           bool &IsDefault) const = 0;
-
   virtual uint64_t getSectionFlags(SectionRef Sec) const = 0;
   virtual uint32_t getSectionType(SectionRef Sec) const = 0;
 
@@ -209,8 +206,6 @@ public:
 
   std::error_code getRelocationAddend(DataRefImpl Rel,
                                       int64_t &Res) const override;
-  std::error_code getSymbolVersion(SymbolRef Symb, StringRef &Version,
-                                   bool &IsDefault) const override;
 
   uint64_t getSectionFlags(SectionRef Sec) const override;
   uint32_t getSectionType(SectionRef Sec) const override;
@@ -256,20 +251,6 @@ std::error_code ELFObjectFile<ELFT>::getSymbolName(DataRefImpl Symb,
   if (!Name)
     return Name.getError();
   Result = *Name;
-  return std::error_code();
-}
-
-template <class ELFT>
-std::error_code ELFObjectFile<ELFT>::getSymbolVersion(SymbolRef SymRef,
-                                                      StringRef &Version,
-                                                      bool &IsDefault) const {
-  DataRefImpl Symb = SymRef.getRawDataRefImpl();
-  const Elf_Sym *symb = getSymbol(Symb);
-  ErrorOr<StringRef> Ver =
-      EF.getSymbolVersion(EF.getSection(Symb.d.b), symb, IsDefault);
-  if (!Ver)
-    return Ver.getError();
-  Version = *Ver;
   return std::error_code();
 }
 
@@ -876,13 +857,6 @@ getELFDynamicSymbolIterators(const SymbolicFile *Obj) {
   return cast<ELFObjectFileBase>(Obj)->getELFDynamicSymbolIterators();
 }
 
-inline std::error_code GetELFSymbolVersion(const ObjectFile *Obj,
-                                           const SymbolRef &Sym,
-                                           StringRef &Version,
-                                           bool &IsDefault) {
-  return cast<ELFObjectFileBase>(Obj)
-      ->getSymbolVersion(Sym, Version, IsDefault);
-}
 } // namespace object
 } // namespace llvm
 
