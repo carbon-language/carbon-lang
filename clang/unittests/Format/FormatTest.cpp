@@ -4662,6 +4662,10 @@ TEST_F(FormatTest, AlwaysBreakBeforeMultilineStrings) {
   verifyFormat("aaaaa(aaaaaa, aaaaaaa(\"aaaa\"\n"
                "                      \"bbbb\"));",
                Break);
+  verifyFormat("string s = someFunction(\n"
+               "    \"abc\"\n"
+               "    \"abc\");",
+               Break);
 
   // As we break before unary operators, breaking right after them is bad.
   verifyFormat("string foo = abc ? \"x\"\n"
