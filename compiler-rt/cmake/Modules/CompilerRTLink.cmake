@@ -1,12 +1,10 @@
-include(LLVMParseArguments)
-
 # Link a shared library with COMPILER_RT_TEST_COMPILER.
 # clang_link_shared(<output.so>
 #                   OBJECTS <list of input objects>
 #                   LINKFLAGS <list of link flags>
 #                   DEPS <list of dependencies>)
 macro(clang_link_shared so_file)
-  parse_arguments(SOURCE "OBJECTS;LINKFLAGS;DEPS" "" ${ARGN})
+  cmake_parse_arguments(SOURCE "" "" "OBJECTS;LINKFLAGS;DEPS" ${ARGN})
   if(NOT COMPILER_RT_STANDALONE_BUILD)
     list(APPEND SOURCE_DEPS clang)
   endif()

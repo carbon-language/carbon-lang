@@ -1,5 +1,3 @@
-include(LLVMParseArguments)
-
 # On Windows, CMAKE_*_FLAGS are built for MSVC but we use the GCC clang.exe,
 # which uses completely different flags. Translate some common flag types, and
 # drop the rest.
@@ -32,7 +30,7 @@ endfunction()
 #               CFLAGS <list of compile flags>
 #               DEPS <list of dependencies>)
 macro(clang_compile object_file source)
-  parse_arguments(SOURCE "CFLAGS;DEPS" "" ${ARGN})
+  cmake_parse_arguments(SOURCE "" "" "CFLAGS;DEPS" ${ARGN})
   get_filename_component(source_rpath ${source} REALPATH)
   if(NOT COMPILER_RT_STANDALONE_BUILD)
     list(APPEND SOURCE_DEPS clang compiler-rt-headers)

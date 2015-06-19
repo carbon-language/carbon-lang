@@ -36,7 +36,7 @@ macro(add_tsan_unittest testname)
   # Build unit tests only for 64-bit Linux.
   if(UNIX AND NOT APPLE)
     foreach(arch ${TSAN_SUPPORTED_ARCH})
-      parse_arguments(TEST "SOURCES;HEADERS" "" ${ARGN})
+      cmake_parse_arguments(TEST "" "" "SOURCES;HEADERS" ${ARGN})
       set(TEST_OBJECTS)
       foreach(SOURCE ${TEST_SOURCES} ${COMPILER_RT_GTEST_SOURCE})
         tsan_compile(TEST_OBJECTS ${SOURCE} ${arch} ${TEST_HEADERS})

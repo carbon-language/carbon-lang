@@ -77,32 +77,32 @@ append_list_if(ANDROID log ASAN_DYNAMIC_LIBS)
 if(APPLE)
   add_compiler_rt_object_libraries(RTAsan
     OS ${SANITIZER_COMMON_SUPPORTED_OS}
-    ARCH ${ASAN_SUPPORTED_ARCH}
+    ARCHS ${ASAN_SUPPORTED_ARCH}
     SOURCES ${ASAN_SOURCES} ${ASAN_CXX_SOURCES}
     CFLAGS ${ASAN_DYNAMIC_CFLAGS}
     DEFS ${ASAN_DYNAMIC_DEFINITIONS})
 else()
   add_compiler_rt_object_libraries(RTAsan 
-    ARCH ${ASAN_SUPPORTED_ARCH}
+    ARCHS ${ASAN_SUPPORTED_ARCH}
     SOURCES ${ASAN_SOURCES} CFLAGS ${ASAN_CFLAGS}
     DEFS ${ASAN_COMMON_DEFINITIONS})
   add_compiler_rt_object_libraries(RTAsan_cxx 
-    ARCH ${ASAN_SUPPORTED_ARCH}
+    ARCHS ${ASAN_SUPPORTED_ARCH}
     SOURCES ${ASAN_CXX_SOURCES} CFLAGS ${ASAN_CFLAGS}
     DEFS ${ASAN_COMMON_DEFINITIONS})
   add_compiler_rt_object_libraries(RTAsan_preinit 
-    ARCH ${ASAN_SUPPORTED_ARCH}
+    ARCHS ${ASAN_SUPPORTED_ARCH}
     SOURCES ${ASAN_PREINIT_SOURCES} CFLAGS ${ASAN_CFLAGS}
     DEFS ${ASAN_COMMON_DEFINITIONS})
   add_compiler_rt_object_libraries(RTAsan_dynamic 
-    ARCH ${ASAN_SUPPORTED_ARCH}
+    ARCHS ${ASAN_SUPPORTED_ARCH}
     SOURCES ${ASAN_SOURCES} ${ASAN_CXX_SOURCES}
     CFLAGS ${ASAN_DYNAMIC_CFLAGS}
     DEFS ${ASAN_DYNAMIC_DEFINITIONS})
 
   file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/dummy.cc "")
   add_compiler_rt_object_libraries(RTAsan_dynamic_version_script_dummy
-    ARCH ${ASAN_SUPPORTED_ARCH}
+    ARCHS ${ASAN_SUPPORTED_ARCH}
     SOURCES ${CMAKE_CURRENT_BINARY_DIR}/dummy.cc
     CFLAGS ${ASAN_DYNAMIC_CFLAGS}
     DEFS ${ASAN_DYNAMIC_DEFINITIONS})
@@ -113,7 +113,7 @@ add_custom_target(asan)
 if(APPLE)
   foreach (os ${SANITIZER_COMMON_SUPPORTED_OS})
     add_compiler_rt_darwin_dynamic_runtime(clang_rt.asan_${os}_dynamic ${os}
-      ARCH ${ASAN_SUPPORTED_ARCH}
+      ARCHS ${ASAN_SUPPORTED_ARCH}
       SOURCES $<TARGET_OBJECTS:RTAsan.${os}>
               $<TARGET_OBJECTS:RTInterception.${os}>
               $<TARGET_OBJECTS:RTSanitizerCommon.${os}>
@@ -156,7 +156,7 @@ else()
 
     if (UNIX AND NOT ${arch} MATCHES "i386|i686")
       add_sanitizer_rt_version_list(clang_rt.asan-dynamic-${arch}
-                                    LIB clang_rt.asan-${arch} clang_rt.asan_cxx-${arch}
+                                    LIBS clang_rt.asan-${arch} clang_rt.asan_cxx-${arch}
                                     EXTRA asan.syms.extra)
       set(VERSION_SCRIPT_FLAG
            -Wl,--version-script,${CMAKE_CURRENT_BINARY_DIR}/clang_rt.asan-dynamic-${arch}.vers)

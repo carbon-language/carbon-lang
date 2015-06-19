@@ -71,7 +71,7 @@ macro(msan_compile obj_list source arch kind)
 endmacro()
 
 macro(msan_link_shared so_list so_name arch kind)
-  parse_arguments(SOURCE "OBJECTS;LINKFLAGS;DEPS" "" ${ARGN})
+  cmake_parse_arguments(SOURCE "" "" "OBJECTS;LINKFLAGS;DEPS" ${ARGN})
   set(output_so "${CMAKE_CURRENT_BINARY_DIR}/${so_name}.${arch}${kind}.so")
   get_target_flags_for_arch(${arch} TARGET_LINKFLAGS)
   if(NOT COMPILER_RT_STANDALONE_BUILD)

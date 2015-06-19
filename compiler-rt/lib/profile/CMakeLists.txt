@@ -11,7 +11,7 @@ set(PROFILE_SOURCES
 
 if(APPLE)
   add_compiler_rt_osx_static_runtime(clang_rt.profile_osx
-    ARCH ${PROFILE_SUPPORTED_ARCH}
+    ARCHS ${PROFILE_SUPPORTED_ARCH}
     SOURCES ${PROFILE_SOURCES})
   add_dependencies(profile clang_rt.profile_osx)
 else()
