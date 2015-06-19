@@ -59,6 +59,9 @@ BUILTIN(__builtin_ia32_pswapdsi, "V2iV2i", "nc")
 // All MMX instructions will be generated via builtins. Any MMX vector
 // types (<1 x i64>, <2 x i32>, etc.) that aren't used by these builtins will be
 // expanded by the back-end.
+// FIXME: _mm_prefetch must be a built-in because it takes a compile-time constant
+// argument and our prior approach of using a #define to the current built-in
+// doesn't work in the presence of re-declaration of _mm_prefetch for windows.
 BUILTIN(_mm_prefetch, "vcC*i", "nc")
 BUILTIN(__builtin_ia32_emms, "v", "")
 BUILTIN(__builtin_ia32_paddb, "V8cV8cV8c", "")
