@@ -9,6 +9,7 @@
 
 // Windows includes
 #include "lldb/Host/windows/windows.h"
+#include <psapi.h>
 
 // C++ Includes
 #include <list>
@@ -53,6 +54,40 @@ using namespace lldb;
 using namespace lldb_private;
 
 #define BOOL_STR(b) ((b) ? "true" : "false")
+
+namespace
+{
+
+std::string
+GetProcessExecutableName(HANDLE process_handle)
+{
+    std::vector<char> file_name;
+    DWORD file_name_size = MAX_PATH;  // first guess, not an absolute limit
+    DWORD copied = 0;
+    do
+    {
+        file_name_size *= 2;
+        file_name.resize(file_name_size);
+        copied = ::GetModuleFileNameEx(process_handle, NULL, file_name.data(), file_name_size);
+    } while (copied >= file_name_size);
+    file_name.resize(copied);
+    return std::string(file_name.begin(), file_name.end());
+}
+
+std::string
+GetProcessExecutableName(DWORD pid)
+{
+    std::string file_name;
+    HANDLE process_handle = ::OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pid);
+    if (process_handle != NULL)
+    {
+        file_name = GetProcessExecutableName(process_handle);
+        ::CloseHandle(process_handle);
+    }
+    return file_name;
+}
+
+}  // anonymous namespace
 
 namespace lldb_private
 {
@@ -417,7 +452,49 @@ ProcessWindows::GetPluginVersion()
 Error
 ProcessWindows::DoDetach(bool keep_stopped)
 {
+    DebuggerThreadSP debugger_thread;
+    StateType private_state;
+    {
+        // Acquire the lock only long enough to get the DebuggerThread.
+        // StopDebugging() will trigger a call back into ProcessWindows which
+        // will also acquire the lock.  Thus we have to release the lock before
+        // calling StopDebugging().
+        llvm::sys::ScopedLock lock(m_mutex);
+
+        private_state = GetPrivateState();
+
+        if (!m_session_data)
+        {
+            WINWARN_IFALL(WINDOWS_LOG_PROCESS, "DoDetach called while state = %u, but there is no active session.",
+                          private_state);
+            return Error();
+        }
+
+        debugger_thread = m_session_data->m_debugger;
+    }
+
     Error error;
+    if (private_state != eStateExited && private_state != eStateDetached)
+    {
+        WINLOG_IFALL(WINDOWS_LOG_PROCESS, "DoDetach called for process %I64u while state = %u.  Detaching...",
+                     debugger_thread->GetProcess().GetNativeProcess().GetSystemHandle(), private_state);
+        error = debugger_thread->StopDebugging(false);
+        if (error.Success())
+        {
+            SetPrivateState(eStateDetached);
+        }
+
+        // By the time StopDebugging returns, there is no more debugger thread, so
+        // we can be assured that no other thread will race for the session data.
+        m_session_data.reset();
+    }
+    else
+    {
+        WINERR_IFALL(WINDOWS_LOG_PROCESS,
+                     "DoDetach called for process %I64u while state = %u, but cannot destroy in this state.",
+                     debugger_thread->GetProcess().GetNativeProcess().GetSystemHandle(), private_state);
+    }
+
     return error;
 }
 
@@ -451,9 +528,8 @@ ProcessWindows::DoDestroy()
                      debugger_thread->GetProcess().GetNativeProcess().GetSystemHandle(), private_state);
         error = debugger_thread->StopDebugging(true);
 
-        // By the time StopDebugging returns, there is no more debugger thread, so we can be assured that no other
-        // thread
-        // will race for the session data.  So it's safe to reset it without holding a lock.
+        // By the time StopDebugging returns, there is no more debugger thread, so
+        // we can be assured that no other thread will race for the session data.
         m_session_data.reset();
     }
     else
@@ -718,7 +794,8 @@ ProcessWindows::CanDebug(Target &target, bool plugin_specified_by_name)
     ModuleSP exe_module_sp(target.GetExecutableModule());
     if (exe_module_sp.get())
         return exe_module_sp->GetFileSpec().Exists();
-    return false;
+    // However, if there is no executable module, we return true since we might be preparing to attach.
+    return true;
 }
 
 void
@@ -741,10 +818,32 @@ ProcessWindows::OnDebuggerConnected(lldb::addr_t image_base)
 {
     DebuggerThreadSP debugger = m_session_data->m_debugger;
 
-    WINLOG_IFALL(WINDOWS_LOG_PROCESS, "Debugger established connected to process %I64u.  Image base = 0x%I64x",
+    WINLOG_IFALL(WINDOWS_LOG_PROCESS, "Debugger connected to process %I64u.  Image base = 0x%I64x",
                  debugger->GetProcess().GetProcessId(), image_base);
 
     ModuleSP module = GetTarget().GetExecutableModule();
+    if (!module)
+    {
+        // During attach, we won't have the executable module, so find it now.
+        const DWORD pid = debugger->GetProcess().GetProcessId();
+        const std::string file_name = GetProcessExecutableName(pid);
+        if (file_name.empty())
+        {
+            return;
+        }
+
+        FileSpec executable_file(file_name, true);
+        ModuleSpec module_spec(executable_file);
+        Error error;
+        module = GetTarget().GetSharedModule(module_spec, &error);
+        if (!module)
+        {
+            return;
+        }
+
+        GetTarget().SetExecutableModule(module, false);
+    }
+
     bool load_addr_changed;
     module->SetLoadAddress(GetTarget(), image_base, false, load_addr_changed);
 

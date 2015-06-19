@@ -63,6 +63,8 @@ DebuggerThread::DebuggerThread(DebugDelegateSP debug_delegate)
     : m_debug_delegate(debug_delegate)
     , m_image_file(nullptr)
     , m_debugging_ended_event(nullptr)
+    , m_pid_to_detach(0)
+    , m_detached(false)
 {
     m_debugging_ended_event = ::CreateEvent(nullptr, TRUE, FALSE, nullptr);
 }
@@ -153,7 +155,6 @@ DebuggerThread::DebuggerThreadLaunchRoutine(const ProcessLaunchInfo &launch_info
     else
         m_debug_delegate->OnDebuggerError(error, 0);
 
-    SetEvent(m_debugging_ended_event);
     return 0;
 }
 
@@ -193,55 +194,62 @@ DebuggerThread::StopDebugging(bool terminate)
         "StopDebugging('%s') called (inferior=%I64u).",
         (terminate ? "true" : "false"), pid);
 
+    // Make a copy of the process, since the termination sequence will reset
+    // DebuggerThread's internal copy and it needs to remain open for the Wait operation.
+    HostProcess process_copy = m_process;
+    lldb::process_t handle = m_process.GetNativeProcess().GetSystemHandle();
+
     if (terminate)
     {
-        // Make a copy of the process, since the termination sequence will reset
-        // DebuggerThread's internal copy and it needs to remain open for the Wait operation.
-        HostProcess process_copy = m_process;
-        lldb::process_t handle = m_process.GetNativeProcess().GetSystemHandle();
-
         // Initiate the termination before continuing the exception, so that the next debug
         // event we get is the exit process event, and not some other event.
         BOOL terminate_suceeded = TerminateProcess(handle, 0);
         WINLOG_IFALL(WINDOWS_LOG_PROCESS,
             "StopDebugging called TerminateProcess(0x%p, 0) (inferior=%I64u), success='%s'",
             handle, pid, (terminate_suceeded ? "true" : "false"));
+    }
 
-        // If we're stuck waiting for an exception to continue (e.g. the user is at a breakpoint
-        // messing around in the debugger), continue it now.  But only AFTER calling TerminateProcess
-        // to make sure that the very next call to WaitForDebugEvent is an exit process event.
-        if (m_active_exception.get())
+    // If we're stuck waiting for an exception to continue (e.g. the user is at a breakpoint
+    // messing around in the debugger), continue it now.  But only AFTER calling TerminateProcess
+    // to make sure that the very next call to WaitForDebugEvent is an exit process event.
+    if (m_active_exception.get())
+    {
+        WINLOG_IFANY(WINDOWS_LOG_PROCESS|WINDOWS_LOG_EXCEPTION,
+            "StopDebugging masking active exception");
+
+        ContinueAsyncException(ExceptionResult::MaskException);
+    }
+
+    if (!terminate)
+    {
+        // Indicate that we want to detach.
+        m_pid_to_detach = GetProcess().GetProcessId();
+
+        // Force a fresh break so that the detach can happen from the debugger thread.
+        if (!::DebugBreakProcess(GetProcess().GetNativeProcess().GetSystemHandle()))
         {
-            WINLOG_IFANY(WINDOWS_LOG_PROCESS|WINDOWS_LOG_EXCEPTION,
-                "StopDebugging masking active exception");
-
-            ContinueAsyncException(ExceptionResult::MaskException);
+            error.SetError(::GetLastError(), eErrorTypeWin32);
         }
+    }
 
-        WINLOG_IFALL(WINDOWS_LOG_PROCESS, "StopDebugging waiting for detach from process %u to complete.", pid);
+    WINLOG_IFALL(WINDOWS_LOG_PROCESS, "StopDebugging waiting for detach from process %u to complete.", pid);
 
-        DWORD wait_result = WaitForSingleObject(m_debugging_ended_event, 5000);
-        if (wait_result != WAIT_OBJECT_0)
-        {
-            error.SetError(GetLastError(), eErrorTypeWin32);
-            WINERR_IFALL(WINDOWS_LOG_PROCESS, "StopDebugging WaitForSingleObject(0x%p, 5000) returned %u",
-                         m_debugging_ended_event, wait_result);
-        }
-        else
-        {
-            WINLOG_IFALL(WINDOWS_LOG_PROCESS, "StopDebugging detach from process %u completed successfully.", pid);
-        }
+    DWORD wait_result = WaitForSingleObject(m_debugging_ended_event, 5000);
+    if (wait_result != WAIT_OBJECT_0)
+    {
+        error.SetError(GetLastError(), eErrorTypeWin32);
+        WINERR_IFALL(WINDOWS_LOG_PROCESS, "StopDebugging WaitForSingleObject(0x%p, 5000) returned %u",
+                        m_debugging_ended_event, wait_result);
     }
     else
     {
-        error.SetErrorString("Detach not yet supported on Windows.");
-        // TODO: Implement detach.
+        WINLOG_IFALL(WINDOWS_LOG_PROCESS, "StopDebugging detach from process %u completed successfully.", pid);
     }
 
     if (!error.Success())
     {
         WINERR_IFALL(WINDOWS_LOG_PROCESS,
-            "StopDebugging encountered an error while trying to  stop process %u.  %s",
+            "StopDebugging encountered an error while trying to stop process %u.  %s",
             pid, error.AsCString());
     }
     return error;
@@ -331,6 +339,11 @@ DebuggerThread::DebugLoop()
                           dbe.dwProcessId, dbe.dwThreadId, continue_status, ::GetCurrentThreadId());
 
             ::ContinueDebugEvent(dbe.dwProcessId, dbe.dwThreadId, continue_status);
+
+            if (m_detached)
+            {
+                should_debug = false;
+            }
         }
         else
         {
@@ -344,6 +357,7 @@ DebuggerThread::DebugLoop()
     FreeProcessHandles();
 
     WINLOG_IFALL(WINDOWS_LOG_EVENT, "WaitForDebugEvent loop completed, exiting.");
+    SetEvent(m_debugging_ended_event);
 }
 
 ExceptionResult
@@ -355,6 +369,18 @@ DebuggerThread::HandleExceptionEvent(const EXCEPTION_DEBUG_INFO &info, DWORD thr
     WINLOG_IFANY(WINDOWS_LOG_EVENT | WINDOWS_LOG_EXCEPTION,
                  "HandleExceptionEvent encountered %s chance exception 0x%x on thread 0x%x",
                  first_chance ? "first" : "second", info.ExceptionRecord.ExceptionCode, thread_id);
+
+    if (m_pid_to_detach != 0 && m_active_exception->GetExceptionCode() == EXCEPTION_BREAKPOINT) {
+        WINLOG_IFANY(WINDOWS_LOG_EVENT | WINDOWS_LOG_EXCEPTION | WINDOWS_LOG_PROCESS,
+                     "Breakpoint exception is cue to detach from process 0x%x",
+                     m_pid_to_detach);
+        if (::DebugActiveProcessStop(m_pid_to_detach)) {
+            m_detached = true;
+            return ExceptionResult::MaskException;
+        } else {
+            WINLOG_IFANY(WINDOWS_LOG_PROCESS, "Failed to detach, treating as a regular breakpoint");
+        }
+    }
 
     ExceptionResult result = m_debug_delegate->OnDebugException(first_chance,
                                                                 *m_active_exception);

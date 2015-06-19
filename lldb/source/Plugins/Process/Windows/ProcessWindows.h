@@ -92,11 +92,6 @@ public:
 
     bool CanDebug(lldb_private::Target &target, bool plugin_specified_by_name) override;
     bool
-    DetachRequiresHalt() override
-    {
-        return true;
-    }
-    bool
     DestroyRequiresHalt() override
     {
         return false;
