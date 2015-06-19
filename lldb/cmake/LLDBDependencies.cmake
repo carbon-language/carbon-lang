@@ -53,6 +53,7 @@ set( LLDB_USED_LIBS
   lldbPluginABISysV_ppc
   lldbPluginABISysV_ppc64
   lldbPluginABISysV_mips
+  lldbPluginABISysV_mips64
   lldbPluginInstructionARM
   lldbPluginInstructionARM64
   lldbPluginInstructionMIPS
