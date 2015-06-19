@@ -16,6 +16,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MIRYamlMapping.h"
+#include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
@@ -34,6 +35,8 @@ public:
   MIRPrinter(raw_ostream &OS) : OS(OS) {}
 
   void print(const MachineFunction &MF);
+
+  void convert(yaml::MachineBasicBlock &YamlMBB, const MachineBasicBlock &MBB);
 };
 
 } // end anonymous namespace
@@ -61,8 +64,25 @@ void MIRPrinter::print(const MachineFunction &MF) {
   YamlMF.Alignment = MF.getAlignment();
   YamlMF.ExposesReturnsTwice = MF.exposesReturnsTwice();
   YamlMF.HasInlineAsm = MF.hasInlineAsm();
+  for (const auto &MBB : MF) {
+    yaml::MachineBasicBlock YamlMBB;
+    convert(YamlMBB, MBB);
+    YamlMF.BasicBlocks.push_back(YamlMBB);
+  }
   yaml::Output Out(OS);
   Out << YamlMF;
+}
+
+void MIRPrinter::convert(yaml::MachineBasicBlock &YamlMBB,
+                         const MachineBasicBlock &MBB) {
+  // TODO: Serialize unnamed BB references.
+  if (const auto *BB = MBB.getBasicBlock())
+    YamlMBB.Name = BB->hasName() ? BB->getName() : "<unnamed bb>";
+  else
+    YamlMBB.Name = "";
+  YamlMBB.Alignment = MBB.getAlignment();
+  YamlMBB.AddressTaken = MBB.hasAddressTaken();
+  YamlMBB.IsLandingPad = MBB.isLandingPad();
 }
 
 void llvm::printMIR(raw_ostream &OS, const Module &M) {

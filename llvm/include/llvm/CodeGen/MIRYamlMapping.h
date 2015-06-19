@@ -20,6 +20,34 @@
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/YAMLTraits.h"
+#include <vector>
+
+namespace llvm {
+namespace yaml {
+
+struct MachineBasicBlock {
+  std::string Name;
+  unsigned Alignment = 0;
+  bool IsLandingPad = false;
+  bool AddressTaken = false;
+  // TODO: Serialize the successors and liveins.
+  // TODO: Serialize machine instructions.
+};
+
+template <> struct MappingTraits<MachineBasicBlock> {
+  static void mapping(IO &YamlIO, MachineBasicBlock &MBB) {
+    YamlIO.mapOptional("name", MBB.Name,
+                       std::string()); // Don't print out an empty name.
+    YamlIO.mapOptional("alignment", MBB.Alignment);
+    YamlIO.mapOptional("isLandingPad", MBB.IsLandingPad);
+    YamlIO.mapOptional("addressTaken", MBB.AddressTaken);
+  }
+};
+
+} // end namespace yaml
+} // end namespace llvm
+
+LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::yaml::MachineBasicBlock)
 
 namespace llvm {
 namespace yaml {
@@ -29,6 +57,8 @@ struct MachineFunction {
   unsigned Alignment = 0;
   bool ExposesReturnsTwice = false;
   bool HasInlineAsm = false;
+
+  std::vector<MachineBasicBlock> BasicBlocks;
 };
 
 template <> struct MappingTraits<MachineFunction> {
@@ -37,6 +67,7 @@ template <> struct MappingTraits<MachineFunction> {
     YamlIO.mapOptional("alignment", MF.Alignment);
     YamlIO.mapOptional("exposesReturnsTwice", MF.ExposesReturnsTwice);
     YamlIO.mapOptional("hasInlineAsm", MF.HasInlineAsm);
+    YamlIO.mapOptional("body", MF.BasicBlocks);
   }
 };
 
