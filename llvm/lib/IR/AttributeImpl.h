@@ -278,6 +278,6 @@ static_assert(
         AlignOf<AttributeSetImpl::IndexAttrPair>::Alignment,
     "Alignment is insufficient for objects appended to AttributeSetImpl");
 
-} // end llvm namespace
+} // namespace llvm
 
 #endif

@@ -108,6 +108,6 @@ public:
   SMLoc getLoc() const { return Loc; }
 };
 
-} // End llvm namespace
+} // namespace llvm
 
 #endif

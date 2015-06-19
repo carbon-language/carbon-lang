@@ -635,6 +635,6 @@ public:
 #endif
 };
 
-} // end llvm namespace
+} // namespace llvm
 
 #endif

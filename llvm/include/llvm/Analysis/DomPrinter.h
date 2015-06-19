@@ -25,6 +25,6 @@ namespace llvm {
   FunctionPass *createPostDomOnlyPrinterPass();
   FunctionPass *createPostDomViewerPass();
   FunctionPass *createPostDomOnlyViewerPass();
-} // End llvm namespace
+} // namespace llvm
 
 #endif

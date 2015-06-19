@@ -36,7 +36,7 @@ public:
     return OwningBinary<ObjectFile>();
   }
 };
-}
+} // namespace
 
 namespace llvm {
 

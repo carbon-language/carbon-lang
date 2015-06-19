@@ -188,6 +188,6 @@ public:
   /// @}
 };
 
-} // End llvm namespace
+} // namespace llvm
 
 #endif

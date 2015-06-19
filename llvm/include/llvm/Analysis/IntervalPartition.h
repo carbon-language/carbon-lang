@@ -106,6 +106,6 @@ private:
   void updatePredecessors(Interval *Int);
 };
 
-} // End llvm namespace
+} // namespace llvm
 
 #endif

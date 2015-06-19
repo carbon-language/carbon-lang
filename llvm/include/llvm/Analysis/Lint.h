@@ -44,6 +44,6 @@ void lintFunction(
   const Function &F  ///< The function to be checked
 );
 
-} // End llvm namespace
+} // namespace llvm
 
 #endif

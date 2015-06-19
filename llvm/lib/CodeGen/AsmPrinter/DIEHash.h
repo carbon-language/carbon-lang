@@ -157,6 +157,6 @@ private:
   AsmPrinter *AP;
   DenseMap<const DIE *, unsigned> Numbering;
 };
-}
+} // namespace llvm
 
 #endif

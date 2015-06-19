@@ -95,7 +95,7 @@ namespace {
       AU.setPreservesAll();
     }
   };
-}
+} // namespace
 
 char StripSymbols::ID = 0;
 INITIALIZE_PASS(StripSymbols, "strip",

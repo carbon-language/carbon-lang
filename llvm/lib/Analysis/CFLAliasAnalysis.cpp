@@ -726,7 +726,7 @@ public:
 
 typedef WeightedBidirectionalGraph<std::pair<EdgeType, StratifiedAttrs>> GraphT;
 typedef DenseMap<Value *, GraphT::Node> NodeMapT;
-}
+} // namespace
 
 // -- Setting up/registering CFLAA pass -- //
 char CFLAliasAnalysis::ID = 0;

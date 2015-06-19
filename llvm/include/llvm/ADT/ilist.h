@@ -655,7 +655,7 @@ struct ilist : public iplist<NodeTy> {
   void resize(size_type newsize) { resize(newsize, NodeTy()); }
 };
 
-} // End llvm namespace
+} // namespace llvm
 
 namespace std {
   // Ensure that swap uses the fast list swap...

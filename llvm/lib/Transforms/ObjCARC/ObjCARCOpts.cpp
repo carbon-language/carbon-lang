@@ -313,7 +313,7 @@ namespace {
   };
 
   const unsigned BBState::OverflowOccurredValue = 0xffffffff;
-}
+} // namespace
 
 namespace llvm {
 raw_ostream &operator<<(raw_ostream &OS,
@@ -551,7 +551,7 @@ namespace {
       initializeObjCARCOptPass(*PassRegistry::getPassRegistry());
     }
   };
-}
+} // namespace
 
 char ObjCARCOpt::ID = 0;
 INITIALIZE_PASS_BEGIN(ObjCARCOpt,

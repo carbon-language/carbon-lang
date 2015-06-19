@@ -396,6 +396,6 @@ template <> struct GraphTraits<Inverse<const Function*> > :
   }
 };
 
-} // End llvm namespace
+} // namespace llvm
 
 #endif

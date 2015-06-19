@@ -154,7 +154,7 @@ private:
   unsigned parseSunStyleSectionFlags();
 };
 
-}
+} // namespace
 
 /// ParseDirectiveSymbolAttribute
 ///  ::= { ".local", ".weak", ... } [ identifier ( , identifier )* ]

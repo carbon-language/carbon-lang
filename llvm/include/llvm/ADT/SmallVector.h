@@ -924,7 +924,7 @@ static inline size_t capacity_in_bytes(const SmallVector<T, N> &X) {
   return X.capacity_in_bytes();
 }
 
-} // End llvm namespace
+} // namespace llvm
 
 namespace std {
   /// Implement std::swap in terms of SmallVector swap.
@@ -940,6 +940,6 @@ namespace std {
   swap(llvm::SmallVector<T, N> &LHS, llvm::SmallVector<T, N> &RHS) {
     LHS.swap(RHS);
   }
-}
+} // namespace std
 
 #endif

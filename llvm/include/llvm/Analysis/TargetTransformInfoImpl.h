@@ -446,6 +446,6 @@ public:
         U->getNumOperands() == 1 ? U->getOperand(0)->getType() : nullptr);
   }
 };
-}
+} // namespace llvm
 
 #endif

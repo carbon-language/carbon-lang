@@ -1262,7 +1262,7 @@ public:
 protected:
   void clusterNeighboringLoads(ArrayRef<SUnit*> Loads, ScheduleDAGMI *DAG);
 };
-} // anonymous
+} // namespace
 
 void LoadClusterMutation::clusterNeighboringLoads(ArrayRef<SUnit*> Loads,
                                                   ScheduleDAGMI *DAG) {
@@ -1355,7 +1355,7 @@ public:
 
   void apply(ScheduleDAGMI *DAG) override;
 };
-} // anonymous
+} // namespace
 
 /// \brief Callback from DAG postProcessing to create cluster edges to encourage
 /// fused operations.
@@ -1407,7 +1407,7 @@ public:
 protected:
   void constrainLocalCopy(SUnit *CopySU, ScheduleDAGMILive *DAG);
 };
-} // anonymous
+} // namespace
 
 /// constrainLocalCopy handles two possibilities:
 /// 1) Local src:

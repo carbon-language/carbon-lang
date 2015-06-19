@@ -716,6 +716,6 @@ inline LLVMValueRef *wrap(const Value **Vals) {
   return reinterpret_cast<LLVMValueRef*>(const_cast<Value**>(Vals));
 }
 
-} // End llvm namespace
+} // namespace llvm
 
 #endif

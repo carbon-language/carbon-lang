@@ -203,6 +203,6 @@ private:
   void EnumerateNamedMetadata(const Module &M);
 };
 
-} // End llvm namespace
+} // namespace llvm
 
 #endif

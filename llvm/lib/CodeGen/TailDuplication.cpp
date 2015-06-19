@@ -125,7 +125,7 @@ namespace {
   };
 
   char TailDuplicatePass::ID = 0;
-}
+} // namespace
 
 char &llvm::TailDuplicateID = TailDuplicatePass::ID;
 

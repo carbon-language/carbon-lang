@@ -2347,4 +2347,4 @@ namespace llvm {
       return new PPCFastISel(FuncInfo, LibInfo);
     return nullptr;
   }
-}
+} // namespace llvm

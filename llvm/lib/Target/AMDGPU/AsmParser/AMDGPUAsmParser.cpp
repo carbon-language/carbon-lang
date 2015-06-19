@@ -403,7 +403,7 @@ struct OptionalOperand {
   bool (*ConvertResult)(int64_t&);
 };
 
-}
+} // namespace
 
 static unsigned getRegClass(bool IsVgpr, unsigned RegWidth) {
   if (IsVgpr) {

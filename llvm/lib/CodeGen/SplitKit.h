@@ -466,6 +466,6 @@ public:
                         unsigned IntvOut, SlotIndex EnterAfter);
 };
 
-}
+} // namespace llvm
 
 #endif

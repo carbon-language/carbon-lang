@@ -644,6 +644,6 @@ class MVT {
     /// @}
   };
 
-} // End llvm namespace
+} // namespace llvm
 
 #endif

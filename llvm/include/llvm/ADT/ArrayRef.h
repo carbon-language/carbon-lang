@@ -361,6 +361,6 @@ namespace llvm {
   template <typename T> struct isPodLike<ArrayRef<T> > {
     static const bool value = true;
   };
-}
+} // namespace llvm
 
 #endif

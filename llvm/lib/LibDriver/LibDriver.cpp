@@ -53,7 +53,7 @@ public:
   LibOptTable() : OptTable(infoTable, llvm::array_lengthof(infoTable), true) {}
 };
 
-}
+} // namespace
 
 static std::string getOutputPath(llvm::opt::InputArgList *Args) {
   if (auto *Arg = Args->getLastArg(OPT_out))

@@ -284,6 +284,6 @@ private:
 
 #undef DELEGATE
 
-} // End llvm namespace
+} // namespace llvm
 
 #endif

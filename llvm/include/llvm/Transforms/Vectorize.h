@@ -139,6 +139,6 @@ Pass *createSLPVectorizerPass();
 bool vectorizeBasicBlock(Pass *P, BasicBlock &BB,
                          const VectorizeConfig &C = VectorizeConfig());
 
-} // End llvm namespace
+} // namespace llvm
 
 #endif

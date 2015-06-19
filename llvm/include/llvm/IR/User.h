@@ -259,6 +259,6 @@ template<> struct simplify_type<User::const_op_iterator> {
   }
 };
 
-} // End llvm namespace
+} // namespace llvm
 
 #endif

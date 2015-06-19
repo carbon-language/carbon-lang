@@ -99,7 +99,7 @@ private:
 };
 
 char X86CallFrameOptimization::ID = 0;
-}
+} // namespace
 
 FunctionPass *llvm::createX86CallFrameOptimization() {
   return new X86CallFrameOptimization();

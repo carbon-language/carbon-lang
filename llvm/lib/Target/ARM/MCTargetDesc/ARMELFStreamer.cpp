@@ -1345,6 +1345,6 @@ MCELFStreamer *createARMELFStreamer(MCContext &Context, MCAsmBackend &TAB,
     return S;
   }
 
-}
+} // namespace llvm
 
 

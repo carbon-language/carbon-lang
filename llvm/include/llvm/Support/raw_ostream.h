@@ -545,6 +545,6 @@ public:
   ~buffer_ostream() { OS << str(); }
 };
 
-} // end llvm namespace
+} // namespace llvm
 
 #endif

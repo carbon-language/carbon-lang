@@ -142,7 +142,7 @@ namespace {
     bool MergeReturnIntoLDM(MachineBasicBlock &MBB);
   };
   char ARMLoadStoreOpt::ID = 0;
-}
+} // namespace
 
 static bool definesCPSR(const MachineInstr *MI) {
   for (const auto &MO : MI->operands()) {
@@ -1859,7 +1859,7 @@ namespace {
     bool RescheduleLoadStoreInstrs(MachineBasicBlock *MBB);
   };
   char ARMPreAllocLoadStoreOpt::ID = 0;
-}
+} // namespace
 
 bool ARMPreAllocLoadStoreOpt::runOnMachineFunction(MachineFunction &Fn) {
   TD = Fn.getTarget().getDataLayout();

@@ -41,7 +41,7 @@ namespace X86 {
     /// AddrNumOperands - Total number of operands in a memory reference.
     AddrNumOperands = 5
   };
-} // end namespace X86;
+} // namespace X86
 
 /// X86II - This namespace holds all of the target specific flags that
 /// instruction info tracks.
@@ -762,8 +762,8 @@ namespace X86II {
     return (reg == X86::SPL || reg == X86::BPL ||
             reg == X86::SIL || reg == X86::DIL);
   }
-}
+} // namespace X86II
 
-} // end namespace llvm;
+} // namespace llvm
 
 #endif

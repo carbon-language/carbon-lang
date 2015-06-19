@@ -90,6 +90,6 @@ public:
                       CodeGenOpt::Level OL);
 };
 
-} // End llvm namespace
+} // namespace llvm
 
 #endif

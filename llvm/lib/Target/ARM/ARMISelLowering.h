@@ -215,7 +215,7 @@ namespace llvm {
       VST3LN_UPD,
       VST4LN_UPD
     };
-  }
+  } // namespace ARMISD
 
   /// Define some predicates that are used for node matching.
   namespace ARM {
@@ -638,6 +638,6 @@ namespace llvm {
     FastISel *createFastISel(FunctionLoweringInfo &funcInfo,
                              const TargetLibraryInfo *libInfo);
   }
-}
+} // namespace llvm
 
 #endif  // ARMISELLOWERING_H

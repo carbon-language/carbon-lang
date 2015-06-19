@@ -455,6 +455,6 @@ public:
 
 #undef DEBUG_TYPE // "ssaupdater"
 
-} // End llvm namespace
+} // namespace llvm
 
 #endif

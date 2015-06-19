@@ -105,7 +105,7 @@ private:
   /// The linked list node subobject inside of RegNode.
   Value *Link = nullptr;
 };
-}
+} // namespace
 
 FunctionPass *llvm::createX86WinEHStatePass() { return new WinEHStatePass(); }
 

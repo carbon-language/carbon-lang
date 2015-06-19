@@ -894,6 +894,6 @@ struct OperandTraits<CmpInst> : public FixedNumOperandTraits<CmpInst, 2> {
 
 DEFINE_TRANSPARENT_OPERAND_ACCESSORS(CmpInst, Value)
 
-} // End llvm namespace
+} // namespace llvm
 
 #endif

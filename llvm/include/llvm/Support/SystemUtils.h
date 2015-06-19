@@ -27,6 +27,6 @@ bool CheckBitcodeOutputToConsole(
   bool print_warning = true     ///< Control whether warnings are printed
 );
 
-} // End llvm namespace
+} // namespace llvm
 
 #endif

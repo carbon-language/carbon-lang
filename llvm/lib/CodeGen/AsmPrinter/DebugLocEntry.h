@@ -175,6 +175,6 @@ inline bool operator<(const DebugLocEntry::Value &A,
          B.getExpression()->getBitPieceOffset();
 }
 
-}
+} // namespace llvm
 
 #endif

@@ -1010,7 +1010,7 @@ SDValue VectorLegalizer::UnrollVSETCC(SDValue Op) {
   return DAG.getNode(ISD::BUILD_VECTOR, dl, VT, Ops);
 }
 
-}
+} // namespace
 
 bool SelectionDAG::LegalizeVectors() {
   return VectorLegalizer(*this).Run();

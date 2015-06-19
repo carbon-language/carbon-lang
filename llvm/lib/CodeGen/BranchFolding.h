@@ -142,6 +142,6 @@ namespace llvm {
     bool HoistCommonCode(MachineFunction &MF);
     bool HoistCommonCodeInSuccs(MachineBasicBlock *MBB);
   };
-}
+} // namespace llvm
 
 #endif /* LLVM_CODEGEN_BRANCHFOLDING_HPP */

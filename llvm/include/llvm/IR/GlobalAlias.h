@@ -118,6 +118,6 @@ struct OperandTraits<GlobalAlias> :
 
 DEFINE_TRANSPARENT_OPERAND_ACCESSORS(GlobalAlias, Constant)
 
-} // End llvm namespace
+} // namespace llvm
 
 #endif

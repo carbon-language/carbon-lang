@@ -155,6 +155,6 @@ template <int Idx_nocapture> const Use &CLASS::Op() const { \
 }
 
 
-} // End llvm namespace
+} // namespace llvm
 
 #endif

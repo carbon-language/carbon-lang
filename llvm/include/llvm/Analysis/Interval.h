@@ -145,6 +145,6 @@ template <> struct GraphTraits<Inverse<Interval*> > {
   }
 };
 
-} // End llvm namespace
+} // namespace llvm
 
 #endif

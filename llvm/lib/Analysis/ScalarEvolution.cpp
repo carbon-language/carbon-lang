@@ -627,7 +627,7 @@ namespace {
       llvm_unreachable("Unknown SCEV kind!");
     }
   };
-}
+} // namespace
 
 /// GroupByComplexity - Given a list of SCEV objects, order them by their
 /// complexity, and group objects of the same complexity together by value.
@@ -689,7 +689,7 @@ struct FindSCEVSize {
     return false;
   }
 };
-}
+} // namespace
 
 // Returns the size of the SCEV S.
 static inline int sizeOfSCEV(const SCEV *S) {
@@ -937,7 +937,7 @@ private:
   const SCEV *Denominator, *Quotient, *Remainder, *Zero, *One;
 };
 
-}
+} // namespace
 
 //===----------------------------------------------------------------------===//
 //                      Simple SCEV method implementations
@@ -1248,7 +1248,7 @@ struct ExtendOpTraits<SCEVZeroExtendExpr> : public ExtendOpTraitsBase {
 
 const ExtendOpTraitsBase::GetExtendExprTy ExtendOpTraits<
     SCEVZeroExtendExpr>::GetExtendExpr = &ScalarEvolution::getZeroExtendExpr;
-}
+} // namespace
 
 // The recurrence AR has been shown to have no signed/unsigned wrap or something
 // close to it. Typically, if we can prove NSW/NUW for AR, then we can just as
@@ -3300,7 +3300,7 @@ namespace {
     }
     bool isDone() const { return FindOne; }
   };
-}
+} // namespace
 
 bool ScalarEvolution::checkValidity(const SCEV *S) const {
   FindInvalidSCEVUnknown F;
@@ -7594,7 +7594,7 @@ struct FindUndefs {
     return Found;
   }
 };
-}
+} // namespace
 
 // Return true when S contains at least an undef value.
 static inline bool
@@ -7644,7 +7644,7 @@ struct SCEVCollectTerms {
   }
   bool isDone() const { return false; }
 };
-}
+} // namespace
 
 /// Find parametric terms in this SCEVAddRecExpr.
 void SCEVAddRecExpr::collectParametricTerms(
@@ -7737,7 +7737,7 @@ struct FindParameter {
     return FoundParameter;
   }
 };
-}
+} // namespace
 
 // Returns true when S contains at least a SCEVUnknown parameter.
 static inline bool
@@ -8418,7 +8418,7 @@ struct SCEVSearch {
   }
   bool isDone() const { return IsFound; }
 };
-}
+} // namespace
 
 bool ScalarEvolution::hasOperand(const SCEV *S, const SCEV *Op) const {
   SCEVSearch Search(Op);

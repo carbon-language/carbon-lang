@@ -100,6 +100,6 @@ void DecodeZeroMoveLowMask(MVT VT, SmallVectorImpl<int> &ShuffleMask);
 /// \brief Decode a scalar float move instruction as a shuffle mask.
 void DecodeScalarMoveMask(MVT VT, bool IsLoad,
                           SmallVectorImpl<int> &ShuffleMask);
-} // llvm namespace
+} // namespace llvm
 
 #endif

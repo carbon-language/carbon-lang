@@ -349,6 +349,6 @@ public:
   DebugLoc prevDebugLoc;
   void emitLineNumberAsDotLoc(const MachineInstr &);
 };
-} // end of namespace
+} // namespace llvm
 
 #endif

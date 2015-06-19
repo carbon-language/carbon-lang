@@ -221,6 +221,6 @@ public:
 
 raw_ostream &operator<<(raw_ostream &OS, const MachineMemOperand &MRO);
 
-} // End llvm namespace
+} // namespace llvm
 
 #endif

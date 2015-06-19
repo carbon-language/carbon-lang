@@ -252,6 +252,6 @@ inline bool operator!=(const TargetOptions &LHS,
   return !(LHS == RHS);
 }
 
-} // End llvm namespace
+} // namespace llvm
 
 #endif

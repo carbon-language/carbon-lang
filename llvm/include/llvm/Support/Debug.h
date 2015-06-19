@@ -91,6 +91,6 @@ raw_ostream &dbgs();
 //
 #define DEBUG(X) DEBUG_WITH_TYPE(DEBUG_TYPE, X)
 
-} // End llvm namespace
+} // namespace llvm
 
 #endif

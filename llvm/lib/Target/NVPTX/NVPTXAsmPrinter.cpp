@@ -109,7 +109,7 @@ void VisitGlobalVariableForEmission(
   Visited.insert(GV);
   Visiting.erase(GV);
 }
-}
+} // namespace
 
 void NVPTXAsmPrinter::emitLineNumberAsDotLoc(const MachineInstr &MI) {
   if (!EmitLineNumbers)

@@ -62,7 +62,7 @@ namespace MIPS_MC {
 StringRef selectMipsCPU(const Triple &TT, StringRef CPU);
 }
 
-} // End llvm namespace
+} // namespace llvm
 
 // Defines symbolic names for Mips registers.  This defines a mapping from
 // register name to register number.

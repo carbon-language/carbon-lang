@@ -47,6 +47,6 @@ public:
 
 Pass *createUnifyFunctionExitNodesPass();
 
-} // End llvm namespace
+} // namespace llvm
 
 #endif

@@ -1589,6 +1589,6 @@ Init *QualifyName(Record &CurRec, MultiClass *CurMultiClass,
 Init *QualifyName(Record &CurRec, MultiClass *CurMultiClass,
                   const std::string &Name, const std::string &Scoper);
 
-} // End llvm namespace
+} // namespace llvm
 
 #endif

@@ -93,6 +93,6 @@ public:
   const SpillSlot *
   getCalleeSavedSpillSlots(unsigned &NumEntries) const override;
 };
-} // End llvm namespace
+} // namespace llvm
 
 #endif

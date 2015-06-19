@@ -637,7 +637,7 @@ namespace llvm {
   /// createForwardControlFlowIntegrityPass - This pass adds control-flow
   /// integrity.
   ModulePass *createForwardControlFlowIntegrityPass();
-} // End llvm namespace
+} // namespace llvm
 
 /// Target machine pass initializer for passes with dependencies. Use with
 /// INITIALIZE_TM_PASS_END.

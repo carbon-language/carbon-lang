@@ -102,6 +102,6 @@ public:
   iterator end() const { return Nodes.end(); }
 };
 
-} // End llvm namespace
+} // namespace llvm
 
 #endif

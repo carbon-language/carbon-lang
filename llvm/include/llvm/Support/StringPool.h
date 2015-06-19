@@ -133,6 +133,6 @@ namespace llvm {
     inline bool operator!=(const PooledStringPtr &That) const { return S != That.S; }
   };
 
-} // End llvm namespace
+} // namespace llvm
 
 #endif

@@ -536,6 +536,6 @@ public:
   enum { NumLowBitsAvailable = 2 };
 };
 
-} // End llvm namespace
+} // namespace llvm
 
 #endif

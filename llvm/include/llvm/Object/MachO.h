@@ -503,8 +503,8 @@ inline const ObjectFile *DiceRef::getObjectFile() const {
   return OwningObject;
 }
 
-}
-}
+} // namespace object
+} // namespace llvm
 
 #endif
 

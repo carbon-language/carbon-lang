@@ -99,7 +99,7 @@ namespace sys {
     static void AddSymbol(StringRef symbolName, void *symbolValue);
   };
 
-} // End sys namespace
-} // End llvm namespace
+} // namespace sys
+} // namespace llvm
 
 #endif

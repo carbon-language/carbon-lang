@@ -62,6 +62,6 @@ private:
   }
 };
 
-} // end llvm namespace
+} // namespace llvm
 
 #endif

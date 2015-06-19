@@ -112,6 +112,6 @@ template <> struct GraphTraits<PostDominatorTree*>
   }
 };
 
-} // End llvm namespace
+} // namespace llvm
 
 #endif

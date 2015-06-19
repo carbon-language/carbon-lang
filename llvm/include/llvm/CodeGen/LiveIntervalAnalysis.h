@@ -444,6 +444,6 @@ extern cl::opt<bool> UseSegmentSetForPhysRegs;
 
     class HMEditor;
   };
-} // End llvm namespace
+} // namespace llvm
 
 #endif

@@ -195,7 +195,7 @@ inline const SymbolicFile *BasicSymbolRef::getObject() const {
   return OwningObject;
 }
 
-}
-}
+} // namespace object
+} // namespace llvm
 
 #endif

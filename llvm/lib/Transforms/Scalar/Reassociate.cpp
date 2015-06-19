@@ -154,7 +154,7 @@ namespace {
     unsigned SymbolicRank;
     bool isOr;
   };
-}
+} // namespace
 
 namespace {
   class Reassociate : public FunctionPass {
@@ -197,7 +197,7 @@ namespace {
     void OptimizeInst(Instruction *I);
     Instruction *canonicalizeNegConstExpr(Instruction *I);
   };
-}
+} // namespace
 
 XorOpnd::XorOpnd(Value *V) {
   assert(!isa<ConstantInt>(V) && "No ConstantInt");

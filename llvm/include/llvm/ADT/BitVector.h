@@ -568,7 +568,7 @@ private:
   }
 };
 
-} // End llvm namespace
+} // namespace llvm
 
 namespace std {
   /// Implement std::swap in terms of BitVector swap.

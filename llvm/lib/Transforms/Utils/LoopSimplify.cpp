@@ -776,7 +776,7 @@ namespace {
     /// verifyAnalysis() - Verify LoopSimplifyForm's guarantees.
     void verifyAnalysis() const override;
   };
-}
+} // namespace
 
 char LoopSimplify::ID = 0;
 INITIALIZE_PASS_BEGIN(LoopSimplify, "loop-simplify",

@@ -178,6 +178,6 @@ public:
   virtual bool enableSubRegLiveness() const { return false; }
 };
 
-} // End llvm namespace
+} // namespace llvm
 
 #endif

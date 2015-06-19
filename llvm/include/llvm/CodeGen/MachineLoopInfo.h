@@ -186,6 +186,6 @@ template <> struct GraphTraits<MachineLoop*> {
   }
 };
 
-} // End llvm namespace
+} // namespace llvm
 
 #endif

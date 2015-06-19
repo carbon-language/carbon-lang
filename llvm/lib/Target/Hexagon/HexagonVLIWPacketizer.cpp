@@ -170,7 +170,7 @@ namespace {
     void reserveResourcesForConstExt(MachineInstr* MI);
     bool isNewValueInst(MachineInstr* MI);
   };
-}
+} // namespace
 
 INITIALIZE_PASS_BEGIN(HexagonPacketizer, "packets", "Hexagon Packetizer",
                       false, false)

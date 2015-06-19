@@ -166,7 +166,7 @@ namespace llvm {
     }
   };
 
-} // End llvm namespace
+} // namespace llvm
 
 namespace std {
 template <> struct is_error_code_enum<llvm::BitcodeError> : std::true_type {};

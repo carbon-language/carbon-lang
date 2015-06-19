@@ -281,6 +281,6 @@ static bool CC_ARM_AAPCS_Custom_Aggregate(unsigned &ValNo, MVT &ValVT,
   return true;
 }
 
-} // End llvm namespace
+} // namespace llvm
 
 #endif

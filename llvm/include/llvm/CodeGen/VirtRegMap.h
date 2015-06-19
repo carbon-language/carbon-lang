@@ -185,6 +185,6 @@ namespace llvm {
     VRM.print(OS);
     return OS;
   }
-} // End llvm namespace
+} // namespace llvm
 
 #endif

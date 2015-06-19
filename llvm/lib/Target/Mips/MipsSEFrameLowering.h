@@ -39,6 +39,6 @@ public:
   unsigned ehDataReg(unsigned I) const;
 };
 
-} // End llvm namespace
+} // namespace llvm
 
 #endif

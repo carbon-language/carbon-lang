@@ -153,6 +153,6 @@ private:
                                            bool InEpilogue) const;
 };
 
-} // End llvm namespace
+} // namespace llvm
 
 #endif

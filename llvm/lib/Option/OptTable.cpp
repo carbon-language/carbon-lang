@@ -79,8 +79,8 @@ static inline bool operator<(const OptTable::Info &A, const OptTable::Info &B) {
 static inline bool operator<(const OptTable::Info &I, const char *Name) {
   return StrCmpOptionNameIgnoreCase(I.Name, Name) < 0;
 }
-}
-}
+} // namespace opt
+} // namespace llvm
 
 OptSpecifier::OptSpecifier(const Option *Opt) : ID(Opt->getID()) {}
 

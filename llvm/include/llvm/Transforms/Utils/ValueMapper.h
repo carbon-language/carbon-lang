@@ -96,6 +96,6 @@ namespace llvm {
                                    Materializer));
   }
 
-} // End llvm namespace
+} // namespace llvm
 
 #endif

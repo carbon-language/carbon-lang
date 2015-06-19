@@ -829,6 +829,6 @@ static inline const SCEV *apply(const SCEV *Scev, LoopToScevMapT &Map,
   return SCEVApplyRewriter::rewrite(Scev, Map, SE);
 }
 
-}
+} // namespace llvm
 
 #endif

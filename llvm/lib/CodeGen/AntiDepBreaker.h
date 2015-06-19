@@ -62,6 +62,6 @@ public:
   }
 };
 
-}
+} // namespace llvm
 
 #endif

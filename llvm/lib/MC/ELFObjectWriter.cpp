@@ -231,7 +231,7 @@ class ELFObjectWriter : public MCObjectWriter {
                       uint32_t GroupSymbolIndex, uint64_t Offset, uint64_t Size,
                       const MCSectionELF &Section);
   };
-}
+} // namespace
 
 void ELFObjectWriter::align(unsigned Alignment) {
   uint64_t Padding = OffsetToAlignment(OS.tell(), Alignment);

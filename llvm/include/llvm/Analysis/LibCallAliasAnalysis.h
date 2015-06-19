@@ -66,6 +66,6 @@ namespace llvm {
                                        ImmutableCallSite CS,
                                        const MemoryLocation &Loc);
   };
-}  // End of llvm namespace
+} // namespace llvm
 
 #endif

@@ -103,6 +103,6 @@ class TargetRegisterInfo;
                                       const TargetRegisterClass *RC,
                                       SmallVectorImpl<unsigned> &Forbid);
   };
-}
+} // namespace llvm
 
 #endif

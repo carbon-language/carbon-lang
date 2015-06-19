@@ -263,6 +263,6 @@ inline interval_part_interval_iterator intervals_end(IntervalPartition &IP) {
   return interval_part_interval_iterator();
 }
 
-} // End llvm namespace
+} // namespace llvm
 
 #endif

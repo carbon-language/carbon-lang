@@ -140,6 +140,6 @@ private:
                        DenseMap<SDValue, unsigned> &VRBaseMap);
 };
 
-}
+} // namespace llvm
 
 #endif

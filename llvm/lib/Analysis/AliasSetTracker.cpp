@@ -666,7 +666,7 @@ namespace {
       return false;
     }
   };
-}
+} // namespace
 
 char AliasSetPrinter::ID = 0;
 INITIALIZE_PASS_BEGIN(AliasSetPrinter, "print-alias-sets",

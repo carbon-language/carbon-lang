@@ -200,6 +200,6 @@ getIntrinsicIDForCall(CallInst *CI, const TargetLibraryInfo *TLI) {
   return Intrinsic::not_intrinsic;
 }
 
-} // llvm namespace
+} // namespace llvm
 
 #endif

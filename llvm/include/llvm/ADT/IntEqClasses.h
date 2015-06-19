@@ -83,6 +83,6 @@ public:
   void uncompress();
 };
 
-} // End llvm namespace
+} // namespace llvm
 
 #endif

@@ -486,6 +486,6 @@ FunctionPass *createNaryReassociatePass();
 //
 FunctionPass *createLoopDistributePass();
 
-} // End llvm namespace
+} // namespace llvm
 
 #endif

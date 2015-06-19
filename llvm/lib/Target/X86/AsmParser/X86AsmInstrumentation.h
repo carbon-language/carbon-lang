@@ -61,6 +61,6 @@ protected:
   unsigned InitialFrameReg;
 };
 
-} // End llvm namespace
+} // namespace llvm
 
 #endif

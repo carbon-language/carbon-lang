@@ -174,6 +174,6 @@ public:
   void dump() const;
 };
 
-} // End llvm namespace
+} // namespace llvm
 
 #endif

@@ -239,6 +239,6 @@ struct pointee_iterator
   T &operator*() const { return **this->I; }
 };
 
-}
+} // namespace llvm
 
 #endif

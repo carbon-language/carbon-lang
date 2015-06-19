@@ -49,6 +49,6 @@ private:
                                 unsigned CharNo, unsigned IndentCount) const;
 };
 
-} // end llvm namespace.
+} // namespace llvm
 
 #endif

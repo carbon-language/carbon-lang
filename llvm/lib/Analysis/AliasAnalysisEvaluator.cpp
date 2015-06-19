@@ -76,7 +76,7 @@ namespace {
     bool runOnFunction(Function &F) override;
     bool doFinalization(Module &M) override;
   };
-}
+} // namespace
 
 char AAEval::ID = 0;
 INITIALIZE_PASS_BEGIN(AAEval, "aa-eval",

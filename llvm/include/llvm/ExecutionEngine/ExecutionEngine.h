@@ -629,6 +629,6 @@ public:
 // Create wrappers for C Binding types (see CBindingWrapping.h).
 DEFINE_SIMPLE_CONVERSION_FUNCTIONS(ExecutionEngine, LLVMExecutionEngineRef)
 
-} // End llvm namespace
+} // namespace llvm
 
 #endif

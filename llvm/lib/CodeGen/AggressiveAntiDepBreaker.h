@@ -174,6 +174,6 @@ class RegisterClassInfo;
                                    RenameOrderType& RenameOrder,
                                    std::map<unsigned, unsigned> &RenameMap);
   };
-}
+} // namespace llvm
 
 #endif

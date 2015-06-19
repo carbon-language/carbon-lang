@@ -694,6 +694,6 @@ inline Module *unwrap(LLVMModuleProviderRef MP) {
   return reinterpret_cast<Module*>(MP);
 }
   
-} // End llvm namespace
+} // namespace llvm
 
 #endif

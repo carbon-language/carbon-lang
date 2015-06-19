@@ -108,6 +108,6 @@ protected:
   size_t DisasmLineMaxLen;
 };
 
-} // End anonymous llvm
+} // namespace llvm
 
 #endif

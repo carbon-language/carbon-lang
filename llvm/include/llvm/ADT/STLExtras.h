@@ -417,6 +417,6 @@ template <typename T> struct deref {
   }
 };
 
-} // End llvm namespace
+} // namespace llvm
 
 #endif

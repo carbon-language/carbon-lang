@@ -126,8 +126,8 @@ namespace Intrinsic {
   /// of IITDescriptors.
   void getIntrinsicInfoTableEntries(ID id, SmallVectorImpl<IITDescriptor> &T);
 
-} // End Intrinsic namespace
+} // namespace Intrinsic
 
-} // End llvm namespace
+} // namespace llvm
 
 #endif

@@ -273,6 +273,6 @@ public:
                          bool DisableVerify = true) override;
 };
 
-} // End llvm namespace
+} // namespace llvm
 
 #endif

@@ -49,7 +49,7 @@ MCAsmBackend *createHexagonAsmBackend(Target const &T,
 MCObjectWriter *createHexagonELFObjectWriter(raw_pwrite_stream &OS,
                                              uint8_t OSABI, StringRef CPU);
 
-} // End llvm namespace
+} // namespace llvm
 
 // Define symbolic names for Hexagon registers.  This defines a mapping from
 // register name to register number.

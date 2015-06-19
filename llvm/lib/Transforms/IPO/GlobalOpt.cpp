@@ -89,7 +89,7 @@ namespace {
     TargetLibraryInfo *TLI;
     SmallSet<const Comdat *, 8> NotDiscardableComdats;
   };
-}
+} // namespace
 
 char GlobalOpt::ID = 0;
 INITIALIZE_PASS_BEGIN(GlobalOpt, "globalopt",
@@ -2786,7 +2786,7 @@ public:
       setUsedInitializer(*CompilerUsedV, CompilerUsed);
   }
 };
-}
+} // namespace
 
 static bool hasUseOtherThanLLVMUsed(GlobalAlias &GA, const LLVMUsed &U) {
   if (GA.use_empty()) // No use at all.

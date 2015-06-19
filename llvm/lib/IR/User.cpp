@@ -144,4 +144,4 @@ Operator::~Operator() {
   llvm_unreachable("should never destroy an Operator");
 }
 
-} // End llvm namespace
+} // namespace llvm

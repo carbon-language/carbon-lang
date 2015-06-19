@@ -136,7 +136,7 @@ namespace {
 
     void SinkUnusedInvariants(Loop *L);
   };
-}
+} // namespace
 
 char IndVarSimplify::ID = 0;
 INITIALIZE_PASS_BEGIN(IndVarSimplify, "indvars",
@@ -494,7 +494,7 @@ struct RewritePhi {
   RewritePhi(PHINode *P, unsigned I, Value *V, bool H, bool S)
       : PN(P), Ith(I), Val(V), HighCost(H), SafePhi(S) {}
 };
-}
+} // namespace
 
 //===----------------------------------------------------------------------===//
 // RewriteLoopExitValues - Optimize IV users outside the loop.
@@ -758,7 +758,7 @@ namespace {
     WideIVInfo() : NarrowIV(nullptr), WidestNativeType(nullptr),
                    IsSigned(false) {}
   };
-}
+} // namespace
 
 /// visitCast - Update information about the induction variable that is
 /// extended by this sign or zero extend operation. This is used to determine
@@ -1321,7 +1321,7 @@ namespace {
     // Implement the interface used by simplifyUsersOfIV.
     void visitCast(CastInst *Cast) override { visitIVCast(Cast, WI, SE, TTI); }
   };
-}
+} // namespace
 
 /// SimplifyAndExtend - Iteratively perform simplification on a worklist of IV
 /// users. Each successive simplification may push more users which may

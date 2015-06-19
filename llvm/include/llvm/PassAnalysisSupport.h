@@ -248,6 +248,6 @@ AnalysisType &Pass::getAnalysisID(AnalysisID PI, Function &F) {
   return *(AnalysisType*)ResultPass->getAdjustedAnalysisPointer(PI);
 }
 
-} // End llvm namespace
+} // namespace llvm
 
 #endif

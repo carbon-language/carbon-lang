@@ -87,6 +87,6 @@ public:
 
 }; // class MipsAsmBackend
 
-} // namespace
+} // namespace llvm
 
 #endif

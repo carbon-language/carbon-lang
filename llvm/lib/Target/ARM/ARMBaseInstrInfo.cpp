@@ -594,7 +594,7 @@ template <> bool IsCPSRDead<MachineInstr>(MachineInstr *MI) {
   // all definitions of CPSR are dead
   return true;
 }
-}
+} // namespace llvm
 
 /// GetInstSize - Return the size of the specified MachineInstr.
 ///

@@ -264,7 +264,7 @@ namespace {
   };
 
   char IfConverter::ID = 0;
-}
+} // namespace
 
 char &llvm::IfConverterID = IfConverter::ID;
 

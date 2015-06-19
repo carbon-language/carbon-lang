@@ -3765,7 +3765,7 @@ struct TailCallArgumentInfo {
   TailCallArgumentInfo() : FrameIdx(0) {}
 };
 
-}
+} // namespace
 
 /// StoreTailCallArgumentsToStackSlot - Stores arguments to their stack slot.
 static void

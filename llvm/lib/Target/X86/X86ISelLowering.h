@@ -516,7 +516,7 @@ namespace llvm {
       // have memop! In fact, starting from ATOMADD64_DAG all opcodes will be
       // thought as target memory ops!
     };
-  }
+  } // namespace X86ISD
 
   /// Define some predicates that are used for node matching.
   namespace X86 {
@@ -583,7 +583,7 @@ namespace llvm {
       TO_ZERO = 3,
       CUR_DIRECTION = 4
     };
-  }
+  } // namespace X86
 
   //===--------------------------------------------------------------------===//
   //  X86 Implementation of the TargetLowering interface
@@ -1120,6 +1120,6 @@ namespace llvm {
     FastISel *createFastISel(FunctionLoweringInfo &funcInfo,
                              const TargetLibraryInfo *libInfo);
   }
-}
+} // namespace llvm
 
 #endif    // X86ISELLOWERING_H

@@ -119,6 +119,6 @@ public:
   bool isInvalidated() const { return Invalid; }
 };
 
-} // end llvm namespace
+} // namespace llvm
 
 #endif

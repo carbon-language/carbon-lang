@@ -3292,7 +3292,7 @@ struct Permute {
   unsigned Operand;
   unsigned char Bytes[SystemZ::VectorBytes];
 };
-}
+} // namespace
 
 static const Permute PermuteForms[] = {
   // VMRHG
@@ -3574,7 +3574,7 @@ struct GeneralShuffle {
   // The type of the shuffle result.
   EVT VT;
 };
-}
+} // namespace
 
 // Add an extra undefined element to the shuffle.
 void GeneralShuffle::addUndef() {

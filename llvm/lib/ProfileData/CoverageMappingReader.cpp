@@ -315,7 +315,7 @@ struct SectionData {
     return std::error_code();
   }
 };
-}
+} // namespace
 
 template <typename T, support::endianness Endian>
 std::error_code readCoverageMappingData(

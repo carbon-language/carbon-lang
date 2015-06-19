@@ -437,6 +437,6 @@ inline raw_ostream& operator<<(raw_ostream &OS, const AliasSetTracker &AST) {
   return OS;
 }
 
-} // End llvm namespace
+} // namespace llvm
 
 #endif

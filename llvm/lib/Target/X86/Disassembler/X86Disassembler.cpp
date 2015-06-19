@@ -69,7 +69,7 @@ namespace X86 {
 
 extern Target TheX86_32Target, TheX86_64Target;
 
-}
+} // namespace llvm
 
 static bool translateInstruction(MCInst &target,
                                 InternalInstruction &source,

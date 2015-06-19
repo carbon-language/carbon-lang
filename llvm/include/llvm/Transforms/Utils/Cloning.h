@@ -233,6 +233,6 @@ bool InlineFunction(InvokeInst *II, InlineFunctionInfo &IFI,
 bool InlineFunction(CallSite CS, InlineFunctionInfo &IFI,
                     bool InsertLifetime = true);
 
-} // End llvm namespace
+} // namespace llvm
 
 #endif

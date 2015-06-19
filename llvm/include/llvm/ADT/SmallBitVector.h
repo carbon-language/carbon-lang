@@ -588,7 +588,7 @@ operator^(const SmallBitVector &LHS, const SmallBitVector &RHS) {
   return Result;
 }
 
-} // End llvm namespace
+} // namespace llvm
 
 namespace std {
   /// Implement std::swap in terms of BitVector swap.

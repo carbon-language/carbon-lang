@@ -198,7 +198,7 @@ public:
     ReplacedNode(Old);
   }
 };
-}
+} // namespace
 
 /// Return a vector shuffle operation which
 /// performs the same shuffe in terms of order or result bytes, but on a type

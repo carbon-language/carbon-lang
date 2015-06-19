@@ -981,6 +981,6 @@ namespace llvm {
     /// to locate them all and call their destructors.
     SCEVUnknown *FirstUnknown;
   };
-}
+} // namespace llvm
 
 #endif

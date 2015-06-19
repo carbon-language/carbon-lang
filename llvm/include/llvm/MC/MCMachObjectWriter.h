@@ -264,6 +264,6 @@ MCObjectWriter *createMachObjectWriter(MCMachObjectTargetWriter *MOTW,
                                        raw_pwrite_stream &OS,
                                        bool IsLittleEndian);
 
-} // End llvm namespace
+} // namespace llvm
 
 #endif

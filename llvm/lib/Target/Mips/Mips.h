@@ -31,6 +31,6 @@ namespace llvm {
   FunctionPass *createMipsDelaySlotFillerPass(MipsTargetMachine &TM);
   FunctionPass *createMipsLongBranchPass(MipsTargetMachine &TM);
   FunctionPass *createMipsConstantIslandPass(MipsTargetMachine &tm);
-} // end namespace llvm;
+} // namespace llvm
 
 #endif

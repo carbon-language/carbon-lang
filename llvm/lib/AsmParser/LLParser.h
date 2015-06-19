@@ -469,6 +469,6 @@ namespace llvm {
     bool ParseUseListOrderIndexes(SmallVectorImpl<unsigned> &Indexes);
     bool sortUseListOrder(Value *V, ArrayRef<unsigned> Indexes, SMLoc Loc);
   };
-} // End llvm namespace
+} // namespace llvm
 
 #endif

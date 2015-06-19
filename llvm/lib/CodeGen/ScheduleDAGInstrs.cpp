@@ -1508,7 +1508,7 @@ public:
     return getCurr()->Preds.end();
   }
 };
-} // anonymous
+} // namespace
 
 static bool hasDataSucc(const SUnit *SU) {
   for (SUnit::const_succ_iterator

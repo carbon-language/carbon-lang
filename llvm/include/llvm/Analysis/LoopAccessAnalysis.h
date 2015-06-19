@@ -555,6 +555,6 @@ private:
   DominatorTree *DT;
   LoopInfo *LI;
 };
-} // End llvm namespace
+} // namespace llvm
 
 #endif

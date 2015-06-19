@@ -998,6 +998,6 @@ static inline raw_ostream &operator<<(raw_ostream &OS,
   return OS;
 }
 
-} // End llvm namespace
+} // namespace llvm
 
 #endif

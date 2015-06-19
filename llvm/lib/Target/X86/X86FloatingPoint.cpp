@@ -279,7 +279,7 @@ namespace {
     void setKillFlags(MachineBasicBlock &MBB) const;
   };
   char FPS::ID = 0;
-}
+} // namespace
 
 FunctionPass *llvm::createX86FloatingPointStackifierPass() { return new FPS(); }
 
@@ -544,7 +544,7 @@ namespace {
       return V < TE.from;
     }
   };
-}
+} // namespace
 
 #ifndef NDEBUG
 static bool TableIsSorted(const TableEntry *Table, unsigned NumEntries) {

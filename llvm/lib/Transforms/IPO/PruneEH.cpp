@@ -49,7 +49,7 @@ namespace {
     bool SimplifyFunction(Function *F);
     void DeleteBasicBlock(BasicBlock *BB);
   };
-}
+} // namespace
 
 char PruneEH::ID = 0;
 INITIALIZE_PASS_BEGIN(PruneEH, "prune-eh",

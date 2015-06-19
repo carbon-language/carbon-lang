@@ -66,6 +66,6 @@ public:
                  uint64_t &Target) const;
 };
 
-} // End llvm namespace
+} // namespace llvm
 
 #endif

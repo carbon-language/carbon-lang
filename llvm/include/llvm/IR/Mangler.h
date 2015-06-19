@@ -64,6 +64,6 @@ public:
                          ManglerPrefixTy PrefixTy = Mangler::Default) const;
 };
 
-} // End llvm namespace
+} // namespace llvm
 
 #endif

@@ -213,7 +213,7 @@ namespace {
                                     BasicBlock **LoopExit = nullptr);
 
   };
-}
+} // namespace
 
 // Analyze loop. Check its size, calculate is it possible to unswitch
 // it. Returns true if we can unswitch this loop.

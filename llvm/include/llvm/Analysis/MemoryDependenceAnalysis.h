@@ -445,6 +445,6 @@ namespace llvm {
 
   };
 
-} // End llvm namespace
+} // namespace llvm
 
 #endif

@@ -908,6 +908,6 @@ public:
 /// clients.
 ImmutablePass *createTargetTransformInfoWrapperPass(TargetIRAnalysis TIRA);
 
-} // End llvm namespace
+} // namespace llvm
 
 #endif

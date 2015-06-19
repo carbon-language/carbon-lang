@@ -40,7 +40,7 @@ namespace RegState {
     ImplicitDefine = Implicit | Define,
     ImplicitKill   = Implicit | Kill
   };
-}
+} // namespace RegState
 
 class MachineInstrBuilder {
   MachineFunction *MF;
@@ -502,6 +502,6 @@ public:
   }
 };
 
-} // End llvm namespace
+} // namespace llvm
 
 #endif

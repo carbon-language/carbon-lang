@@ -62,7 +62,7 @@ namespace sys {
   /// different thread on some platforms.
   /// @brief Register a function to be called when ctrl-c is pressed.
   void SetInterruptFunction(void (*IF)());
-} // End sys namespace
-} // End llvm namespace
+} // namespace sys
+} // namespace llvm
 
 #endif

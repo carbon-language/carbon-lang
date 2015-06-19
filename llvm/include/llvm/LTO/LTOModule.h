@@ -224,5 +224,5 @@ private:
   static LTOModule *makeLTOModule(MemoryBufferRef Buffer, TargetOptions options,
                                   std::string &errMsg, LLVMContext *Context);
 };
-}
+} // namespace llvm
 #endif

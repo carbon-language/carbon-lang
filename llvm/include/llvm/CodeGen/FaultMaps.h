@@ -68,6 +68,6 @@ private:
 
   void emitFunctionInfo(const MCSymbol *FnLabel, const FunctionFaultInfos &FFI);
 };
-}
+} // namespace llvm
 
 #endif

@@ -298,6 +298,6 @@ int getLDSNoRetOp(uint16_t Opcode);
 
 } //End namespace AMDGPU
 
-} // End llvm namespace
+} // namespace llvm
 
 #endif

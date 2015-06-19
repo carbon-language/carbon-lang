@@ -129,5 +129,5 @@ private:
     return Entries[EI + 1].CommentOffset - Entries[EI].CommentOffset;
   }
 };
-}
+} // namespace llvm
 #endif

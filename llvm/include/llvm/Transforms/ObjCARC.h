@@ -43,6 +43,6 @@ Pass *createObjCARCContractPass();
 //
 Pass *createObjCARCOptPass();
 
-} // End llvm namespace
+} // namespace llvm
 
 #endif

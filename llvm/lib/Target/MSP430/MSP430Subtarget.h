@@ -64,6 +64,6 @@ public:
     return &TSInfo;
   }
 };
-} // End llvm namespace
+} // namespace llvm
 
 #endif  // LLVM_TARGET_MSP430_SUBTARGET_H

@@ -898,7 +898,7 @@ inline std::error_code GetELFSymbolVersion(const ObjectFile *Obj,
   return cast<ELFObjectFileBase>(Obj)
       ->getSymbolVersion(Sym, Version, IsDefault);
 }
-}
-}
+} // namespace object
+} // namespace llvm
 
 #endif

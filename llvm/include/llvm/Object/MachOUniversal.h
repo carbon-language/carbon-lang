@@ -112,7 +112,7 @@ public:
   getObjectForArch(Triple::ArchType Arch) const;
 };
 
-}
-}
+} // namespace object
+} // namespace llvm
 
 #endif

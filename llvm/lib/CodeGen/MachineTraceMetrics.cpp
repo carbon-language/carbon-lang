@@ -306,7 +306,7 @@ public:
   MinInstrCountEnsemble(MachineTraceMetrics *mtm)
     : MachineTraceMetrics::Ensemble(mtm) {}
 };
-}
+} // namespace
 
 // Select the preferred predecessor for MBB.
 const MachineBasicBlock*
@@ -414,7 +414,7 @@ struct LoopBounds {
              const MachineLoopInfo *loops)
     : Blocks(blocks), Loops(loops), Downward(false) {}
 };
-}
+} // namespace
 
 // Specialize po_iterator_storage in order to prune the post-order traversal so
 // it is limited to the current loop and doesn't traverse the loop back edges.
@@ -447,7 +447,7 @@ public:
     return LB.Visited.insert(To).second;
   }
 };
-}
+} // namespace llvm
 
 /// Compute the trace through MBB.
 void MachineTraceMetrics::Ensemble::computeTrace(const MachineBasicBlock *MBB) {
@@ -619,7 +619,7 @@ struct DataDep {
     assert((++DefI).atEnd() && "Register has multiple defs");
   }
 };
-}
+} // namespace
 
 // Get the input data dependencies that must be ready before UseMI can issue.
 // Return true if UseMI has any physreg operands.
@@ -681,7 +681,7 @@ struct LiveRegUnit {
 
   LiveRegUnit(unsigned RU) : RegUnit(RU), Cycle(0), MI(nullptr), Op(0) {}
 };
-}
+} // namespace
 
 // Identify physreg dependencies for UseMI, and update the live regunit
 // tracking set when scanning instructions downwards.

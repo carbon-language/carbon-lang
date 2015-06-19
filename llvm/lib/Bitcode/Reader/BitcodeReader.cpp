@@ -731,7 +731,7 @@ public:
   /// Provide fast operand accessors
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Value);
 };
-}
+} // namespace
 
 // FIXME: can we inherit this from ConstantExpr?
 template <>
@@ -739,7 +739,7 @@ struct OperandTraits<ConstantPlaceHolder> :
   public FixedNumOperandTraits<ConstantPlaceHolder, 1> {
 };
 DEFINE_TRANSPARENT_OPERAND_ACCESSORS(ConstantPlaceHolder, Value)
-}
+} // namespace llvm
 
 void BitcodeReaderValueList::assignValue(Value *V, unsigned Idx) {
   if (Idx == size()) {
@@ -4618,7 +4618,7 @@ class BitcodeErrorCategoryType : public std::error_category {
     llvm_unreachable("Unknown error type!");
   }
 };
-}
+} // namespace
 
 static ManagedStatic<BitcodeErrorCategoryType> ErrorCategory;
 

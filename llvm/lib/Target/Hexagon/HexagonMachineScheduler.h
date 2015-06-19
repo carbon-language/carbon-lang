@@ -238,7 +238,7 @@ protected:
 #endif
 };
 
-} // namespace
+} // namespace llvm
 
 
 #endif

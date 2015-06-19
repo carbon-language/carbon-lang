@@ -37,7 +37,7 @@ public:
 
 extern Target TheCppBackendTarget;
 
-} // End llvm namespace
+} // namespace llvm
 
 
 #endif

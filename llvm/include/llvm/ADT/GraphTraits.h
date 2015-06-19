@@ -101,6 +101,6 @@ struct GraphTraits<Inverse<Inverse<T> > > {
   }
 };
 
-} // End llvm namespace
+} // namespace llvm
 
 #endif

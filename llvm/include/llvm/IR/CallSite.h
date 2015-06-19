@@ -397,6 +397,6 @@ public:
   ImmutableCallSite(CallSite CS) : CallSiteBase(CS.getInstruction()) {}
 };
 
-} // End llvm namespace
+} // namespace llvm
 
 #endif

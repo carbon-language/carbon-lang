@@ -240,6 +240,6 @@ template <class T> scc_iterator<Inverse<T> > scc_end(const Inverse<T> &G) {
   return scc_iterator<Inverse<T> >::end(G);
 }
 
-} // End llvm namespace
+} // namespace llvm
 
 #endif

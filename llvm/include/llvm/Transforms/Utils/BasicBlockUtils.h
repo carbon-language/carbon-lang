@@ -308,6 +308,6 @@ void SplitBlockAndInsertIfThenElse(Value *Cond, Instruction *SplitBefore,
 /// entered if the condition is false.
 Value *GetIfCondition(BasicBlock *BB, BasicBlock *&IfTrue,
                       BasicBlock *&IfFalse);
-} // End llvm namespace
+} // namespace llvm
 
 #endif

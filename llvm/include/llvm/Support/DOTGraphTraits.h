@@ -161,6 +161,6 @@ struct DOTGraphTraits : public DefaultDOTGraphTraits {
   DOTGraphTraits (bool simple=false) : DefaultDOTGraphTraits (simple) {}
 };
 
-} // End llvm namespace
+} // namespace llvm
 
 #endif

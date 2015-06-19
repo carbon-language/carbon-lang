@@ -132,7 +132,7 @@ public:
   void beginInstruction(const MachineInstr *MI) override {}
   void endInstruction() override {}
 };
-}
+} // namespace llvm
 
 #endif
 

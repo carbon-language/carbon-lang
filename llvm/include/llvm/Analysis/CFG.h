@@ -78,6 +78,6 @@ bool isPotentiallyReachable(const BasicBlock *From, const BasicBlock *To,
                             const DominatorTree *DT = nullptr,
                             const LoopInfo *LI = nullptr);
 
-} // End llvm namespace
+} // namespace llvm
 
 #endif

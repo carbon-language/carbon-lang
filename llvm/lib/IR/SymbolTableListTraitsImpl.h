@@ -113,6 +113,6 @@ void SymbolTableListTraits<ValueSubClass,ItemParentClass>
   }
 }
 
-} // End llvm namespace
+} // namespace llvm
 
 #endif

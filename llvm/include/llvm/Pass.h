@@ -369,7 +369,7 @@ protected:
 /// @brief This is the storage for the -time-passes option.
 extern bool TimePassesIsEnabled;
 
-} // End llvm namespace
+} // namespace llvm
 
 // Include support files that contain important APIs commonly used by Passes,
 // but that we want to separate out to make it easier to read the header files.

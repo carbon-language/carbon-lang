@@ -203,6 +203,6 @@ ModulePass *createBarrierNoopPass();
 /// to bitsets.
 ModulePass *createLowerBitSetsPass();
 
-} // End llvm namespace
+} // namespace llvm
 
 #endif

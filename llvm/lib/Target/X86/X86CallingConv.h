@@ -42,7 +42,7 @@ inline bool CC_X86_AnyReg_Error(unsigned &, MVT &, MVT &,
   return false;
 }
 
-} // End llvm namespace
+} // namespace llvm
 
 #endif
 

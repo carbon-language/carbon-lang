@@ -204,6 +204,6 @@ void operator>=(const Optional<T> &X, const Optional<U> &Y);
 template<typename T, typename U>
 void operator>(const Optional<T> &X, const Optional<U> &Y);
 
-} // end llvm namespace
+} // namespace llvm
 
 #endif

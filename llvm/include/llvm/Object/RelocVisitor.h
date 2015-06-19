@@ -446,6 +446,6 @@ private:
   }
 };
 
-}
-}
+} // namespace object
+} // namespace llvm
 #endif

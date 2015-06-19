@@ -2801,6 +2801,6 @@ void GetReturnInfo(Type* ReturnType, AttributeSet attr,
                    SmallVectorImpl<ISD::OutputArg> &Outs,
                    const TargetLowering &TLI);
 
-} // end llvm namespace
+} // namespace llvm
 
 #endif

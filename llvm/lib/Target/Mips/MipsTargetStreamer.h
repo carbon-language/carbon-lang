@@ -248,5 +248,5 @@ public:
   void emitDirectiveModuleOddSPReg(bool Enabled, bool IsO32ABI) override;
   void emitMipsAbiFlags();
 };
-}
+} // namespace llvm
 #endif

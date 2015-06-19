@@ -170,4 +170,4 @@ bool DwarfFile::addScopeVariable(LexicalScope *LS, DbgVariable *Var) {
   Vars.push_back(Var);
   return true;
 }
-}
+} // namespace llvm

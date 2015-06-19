@@ -441,6 +441,6 @@ public:
 
 }; // End class MachineModuleInfo
 
-} // End llvm namespace
+} // namespace llvm
 
 #endif

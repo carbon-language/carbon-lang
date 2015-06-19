@@ -83,7 +83,7 @@ namespace {
       CallOrPrologue = PC;
     }
   };
-}
+} // namespace
 
 // The APCS parameter registers.
 static const MCPhysReg GPRArgRegs[] = {

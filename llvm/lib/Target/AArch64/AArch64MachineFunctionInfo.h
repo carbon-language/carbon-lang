@@ -158,6 +158,6 @@ private:
   MILOHContainer LOHContainerSet;
   SetOfInstructions LOHRelated;
 };
-} // End llvm namespace
+} // namespace llvm
 
 #endif

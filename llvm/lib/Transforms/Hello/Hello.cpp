@@ -35,7 +35,7 @@ namespace {
       return false;
     }
   };
-}
+} // namespace
 
 char Hello::ID = 0;
 static RegisterPass<Hello> X("hello", "Hello World Pass");
@@ -58,7 +58,7 @@ namespace {
       AU.setPreservesAll();
     }
   };
-}
+} // namespace
 
 char Hello2::ID = 0;
 static RegisterPass<Hello2>

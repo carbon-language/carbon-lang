@@ -661,7 +661,7 @@ public:
   }
 };
 
-}
+} // namespace
 
 Value *SCEVExpander::visitAddExpr(const SCEVAddExpr *S) {
   Type *Ty = SE.getEffectiveSCEVType(S->getType());
@@ -1933,7 +1933,7 @@ struct SCEVFindUnsafe {
   }
   bool isDone() const { return IsUnsafe; }
 };
-}
+} // namespace
 
 namespace llvm {
 bool isSafeToExpand(const SCEV *S, ScalarEvolution &SE) {

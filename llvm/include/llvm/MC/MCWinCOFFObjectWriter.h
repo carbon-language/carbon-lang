@@ -42,6 +42,6 @@ class raw_pwrite_stream;
   /// \returns The constructed object writer.
   MCObjectWriter *createWinCOFFObjectWriter(MCWinCOFFObjectTargetWriter *MOTW,
                                             raw_pwrite_stream &OS);
-} // End llvm namespace
+} // namespace llvm
 
 #endif

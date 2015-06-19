@@ -67,6 +67,6 @@ std::unique_ptr<Module> parseAssembly(MemoryBufferRef F, SMDiagnostic &Err,
 /// @return true on error.
 bool parseAssemblyInto(MemoryBufferRef F, Module &M, SMDiagnostic &Err);
 
-} // End llvm namespace
+} // namespace llvm
 
 #endif

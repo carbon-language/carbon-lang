@@ -41,7 +41,7 @@ struct AnalysisCallGraphWrapperPassTraits {
   }
 };
 
-} // end llvm namespace
+} // namespace llvm
 
 namespace {
 

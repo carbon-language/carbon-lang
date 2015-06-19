@@ -110,7 +110,7 @@ namespace {
 
     bool Captured;
   };
-}
+} // namespace
 
 /// PointerMayBeCaptured - Return true if this pointer value may be captured
 /// by the enclosing function (which is required to exist).  This routine can

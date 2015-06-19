@@ -58,6 +58,6 @@ public:
   void keep() { Installer.Keep = true; }
 };
 
-} // end llvm namespace
+} // namespace llvm
 
 #endif

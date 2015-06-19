@@ -190,6 +190,6 @@ public:
   void setAllowAtInIdentifier(bool v) { AllowAtInIdentifier = v; }
 };
 
-} // End llvm namespace
+} // namespace llvm
 
 #endif

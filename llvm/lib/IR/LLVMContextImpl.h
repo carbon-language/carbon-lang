@@ -1025,6 +1025,6 @@ public:
   void dropTriviallyDeadConstantArrays();
 };
 
-}
+} // namespace llvm
 
 #endif

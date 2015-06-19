@@ -575,6 +575,6 @@ AttrBuilder typeIncompatible(const Type *Ty);
 
 } // end AttributeFuncs namespace
 
-} // end llvm namespace
+} // namespace llvm
 
 #endif

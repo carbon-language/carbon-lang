@@ -70,7 +70,7 @@ public:
   /// Gather and emit post-function exception information.
   void endFunction(const MachineFunction *) override;
 };
-}
+} // namespace llvm
 
 #endif
 

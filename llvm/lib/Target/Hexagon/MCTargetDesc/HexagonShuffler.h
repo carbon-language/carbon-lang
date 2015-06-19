@@ -134,6 +134,6 @@ public:
   void setError(unsigned Err) { Error = Err; };
   unsigned getError() const { return (Error); };
 };
-}
+} // namespace llvm
 
 #endif // HEXAGONSHUFFLER_H
