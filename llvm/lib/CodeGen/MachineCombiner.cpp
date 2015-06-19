@@ -322,7 +322,7 @@ bool MachineCombiner::combineInstructions(MachineBasicBlock *MBB) {
     auto &MI = *BlockIter++;
 
     DEBUG(dbgs() << "INSTR "; MI.dump(); dbgs() << "\n";);
-    SmallVector<MachineCombinerPattern::MC_PATTERN, 16> Pattern;
+    SmallVector<MachineCombinerPattern::MC_PATTERN, 16> Patterns;
     // The motivating example is:
     //
     //     MUL  Other        MUL_op1 MUL_op2  Other
@@ -345,11 +345,11 @@ bool MachineCombiner::combineInstructions(MachineBasicBlock *MBB) {
     //
     // The algorithm does not try to evaluate all patterns and pick the best.
     // This is only an artificial restriction though. In practice there is
-    // mostly one pattern and hasPattern() can order patterns based on an
-    // internal cost heuristic.
+    // mostly one pattern, and getMachineCombinerPatterns() can order patterns
+    // based on an internal cost heuristic.
 
-    if (TII->hasPattern(MI, Pattern)) {
-      for (auto P : Pattern) {
+    if (TII->getMachineCombinerPatterns(MI, Patterns)) {
+      for (auto P : Patterns) {
         SmallVector<MachineInstr *, 16> InsInstrs;
         SmallVector<MachineInstr *, 16> DelInstrs;
         DenseMap<unsigned, unsigned> InstrIdxForVirtReg;

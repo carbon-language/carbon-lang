@@ -461,12 +461,12 @@ public:
   /// Return true when there is potentially a faster code sequence
   /// for an instruction chain ending in <Root>. All potential patterns are
   /// output in the <Pattern> array.
-  bool hasPattern(
+  bool getMachineCombinerPatterns(
       MachineInstr &Root,
       SmallVectorImpl<MachineCombinerPattern::MC_PATTERN> &P) const override;
   
-  /// When hasPattern() finds a pattern, this function generates the
-  /// instructions that could replace the original code sequence.
+  /// When getMachineCombinerPatterns() finds a pattern, this function generates
+  /// the instructions that could replace the original code sequence.
   void genAlternativeCodeSequence(
           MachineInstr &Root, MachineCombinerPattern::MC_PATTERN P,
           SmallVectorImpl<MachineInstr *> &InsInstrs,

@@ -724,16 +724,16 @@ public:
   /// order since the pattern evaluator stops checking as soon as it finds a
   /// faster sequence.
   /// \param Root - Instruction that could be combined with one of its operands
-  /// \param Pattern - Vector of possible combination pattern
-  virtual bool hasPattern(
+  /// \param Patterns - Vector of possible combination patterns
+  virtual bool getMachineCombinerPatterns(
       MachineInstr &Root,
       SmallVectorImpl<MachineCombinerPattern::MC_PATTERN> &Pattern) const {
     return false;
   }
 
-  /// When hasPattern() finds a pattern this function generates the instructions
-  /// that could replace the original code sequence. The client has to decide
-  /// whether the actual replacement is beneficial or not.
+  /// When getMachineCombinerPatterns() finds patterns, this function generates
+  /// the instructions that could replace the original code sequence. The client
+  /// has to decide whether the actual replacement is beneficial or not.
   /// \param Root - Instruction that could be combined with one of its operands
   /// \param P - Combination pattern for Root
   /// \param InsInstrs - Vector of new instructions that implement P
@@ -742,7 +742,7 @@ public:
   /// \param InstrIdxForVirtReg - map of virtual register to instruction in
   /// InsInstr that defines it
   virtual void genAlternativeCodeSequence(
-      MachineInstr &Root, MachineCombinerPattern::MC_PATTERN P,
+      MachineInstr &Root, MachineCombinerPattern::MC_PATTERN Pattern,
       SmallVectorImpl<MachineInstr *> &InsInstrs,
       SmallVectorImpl<MachineInstr *> &DelInstrs,
       DenseMap<unsigned, unsigned> &InstrIdxForVirtReg) const {

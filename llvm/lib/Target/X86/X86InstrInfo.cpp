@@ -6408,8 +6408,8 @@ static MachineCombinerPattern::MC_PATTERN getPattern(bool CommutePrev,
   }
 }
 
-bool X86InstrInfo::hasPattern(MachineInstr &Root,
-        SmallVectorImpl<MachineCombinerPattern::MC_PATTERN> &Pattern) const {
+bool X86InstrInfo::getMachineCombinerPatterns(MachineInstr &Root,
+        SmallVectorImpl<MachineCombinerPattern::MC_PATTERN> &Patterns) const {
   if (!Root.getParent()->getParent()->getTarget().Options.UnsafeFPMath)
     return false;
 
@@ -6428,7 +6428,7 @@ bool X86InstrInfo::hasPattern(MachineInstr &Root,
     if (isReassocCandidate(*Prev, AssocOpcode, false, CommutePrev)) {
       // We found a sequence of instructions that may be suitable for a
       // reassociation of operands to increase ILP.
-      Pattern.push_back(getPattern(CommutePrev, CommuteRoot));
+      Patterns.push_back(getPattern(CommutePrev, CommuteRoot));
       return true;
     }
   }
