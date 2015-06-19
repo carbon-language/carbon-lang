@@ -6038,7 +6038,7 @@ void cloudabi::Link::ConstructJob(Compilation &C, const JobAction &JA,
   Args.AddAllArgs(CmdArgs, options::OPT_Z_Flag);
   Args.AddAllArgs(CmdArgs, options::OPT_r);
 
-  if (D.IsUsingLTO(ToolChain, Args))
+  if (D.IsUsingLTO(Args))
     AddGoldPlugin(ToolChain, Args, CmdArgs);
 
   AddLinkerInputs(ToolChain, Inputs, Args, CmdArgs);
@@ -6189,8 +6189,7 @@ void darwin::Link::AddLinkArgs(Compilation &C,
   // If we are using LTO, then automatically create a temporary file path for
   // the linker to use, so that it's lifetime will extend past a possible
   // dsymutil step.
-  if (Version[0] >= 116 && D.IsUsingLTO(getToolChain(), Args) &&
-      NeedsTempPath(Inputs)) {
+  if (Version[0] >= 116 && D.IsUsingLTO(Args) && NeedsTempPath(Inputs)) {
     const char *TmpPath = C.getArgs().MakeArgString(
       D.GetTemporaryPath("cc", types::getTypeTempSuffix(types::TY_Object)));
     C.addTempFile(TmpPath);
@@ -7226,7 +7225,7 @@ void freebsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
   Args.AddAllArgs(CmdArgs, options::OPT_Z_Flag);
   Args.AddAllArgs(CmdArgs, options::OPT_r);
 
-  if (D.IsUsingLTO(getToolChain(), Args))
+  if (D.IsUsingLTO(Args))
     AddGoldPlugin(ToolChain, Args, CmdArgs);
 
   bool NeedsSanitizerDeps = addSanitizerRuntimes(ToolChain, Args, CmdArgs);
@@ -8086,7 +8085,7 @@ void gnutools::Link::ConstructJob(Compilation &C, const JobAction &JA,
   for (const auto &Path : Paths)
     CmdArgs.push_back(Args.MakeArgString(StringRef("-L") + Path));
 
-  if (D.IsUsingLTO(getToolChain(), Args))
+  if (D.IsUsingLTO(Args))
     AddGoldPlugin(ToolChain, Args, CmdArgs);
 
   if (Args.hasArg(options::OPT_Z_Xlinker__no_demangle))

@@ -20,8 +20,8 @@ program's control flow. These schemes have been optimized for performance,
 allowing developers to enable them in release builds.
 
 To enable Clang's available CFI schemes, use the flag ``-fsanitize=cfi``.
-As currently implemented, CFI relies on link-time optimization (LTO); the CFI
-schemes imply ``-flto``, and the linker used must support LTO, for example
+As currently implemented, CFI relies on link-time optimization (LTO); so it is
+required to specify ``-flto``, and the linker used must support LTO, for example
 via the `gold plugin`_. To allow the checks to be implemented efficiently,
 the program must be structured such that certain object files are compiled
 with CFI enabled, and are statically linked into the program. This may

@@ -976,7 +976,7 @@ are listed below.
    -  ``-fsanitize=dataflow``: :doc:`DataFlowSanitizer`, a general data
       flow analysis.
    -  ``-fsanitize=cfi``: :doc:`control flow integrity <ControlFlowIntegrity>`
-      checks. Implies ``-flto``.
+      checks. Requires ``-flto``.
    -  ``-fsanitize=safe-stack``: :doc:`safe stack <SafeStack>`
       protection against stack-based memory corruption errors.
 
@@ -991,13 +991,13 @@ are listed below.
    -  ``-fsanitize=cfi-cast-strict``: Enables :ref:`strict cast checks
       <cfi-strictness>`.
    -  ``-fsanitize=cfi-derived-cast``: Base-to-derived cast to the wrong
-      dynamic type. Implies ``-flto``.
+      dynamic type. Requires ``-flto``.
    -  ``-fsanitize=cfi-unrelated-cast``: Cast from ``void*`` or another
-      unrelated type to the wrong dynamic type. Implies ``-flto``.
+      unrelated type to the wrong dynamic type. Requires ``-flto``.
    -  ``-fsanitize=cfi-nvcall``: Non-virtual call via an object whose vptr is of
-      the wrong dynamic type. Implies ``-flto``.
+      the wrong dynamic type. Requires ``-flto``.
    -  ``-fsanitize=cfi-vcall``: Virtual call via an object whose vptr is of the
-      wrong dynamic type. Implies ``-flto``.
+      wrong dynamic type. Requires ``-flto``.
    -  ``-fsanitize=enum``: Load of a value of an enumerated type which
       is not in the range of representable values for that enumerated
       type.

@@ -53,7 +53,6 @@ class SanitizerArgs {
 
   bool requiresPIE() const;
   bool needsUnwindTables() const;
-  bool needsLTO() const;
   bool linkCXXRuntimes() const { return LinkCXXRuntimes; }
   void addArgs(const llvm::opt::ArgList &Args,
                llvm::opt::ArgStringList &CmdArgs) const;
