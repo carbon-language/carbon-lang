@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm -o - %s -fsanitize=signed-integer-overflow,integer-divide-by-zero -fsanitize-trap=integer-divide-by-zero | FileCheck %s
+// RUN: %clang_cc1 -triple x86_64-pc-linux-gnu -emit-llvm -o - %s -fsanitize=signed-integer-overflow,integer-divide-by-zero -fsanitize-trap=integer-divide-by-zero | FileCheck %s
 
 int f(int x, int y) {
   // CHECK: %[[B1:.*]] = icmp ne i32 %[[D:.*]], 0
