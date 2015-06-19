@@ -212,7 +212,9 @@ bool MIRParserImpl::initializeMachineFunction(MachineFunction &MF) {
     if (!YamlMBB.Name.empty()) {
       BB = dyn_cast_or_null<BasicBlock>(
           F.getValueSymbolTable().lookup(YamlMBB.Name));
-      // TODO: Report an error if a basic block isn't found.
+      if (!BB)
+        return error(Twine("basic block '") + YamlMBB.Name +
+                     "' is not defined in the function '" + MF.getName() + "'");
     }
     auto *MBB = MF.CreateMachineBasicBlock(BB);
     MF.insert(MF.end(), MBB);
