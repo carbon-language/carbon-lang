@@ -61,10 +61,10 @@ std::error_code ArchiveFile::parse() {
   // Read the symbol table to construct Lazy objects.
   uint32_t I = 0;
   for (const Archive::Symbol &Sym : File->symbols()) {
+    auto *B = new (&Buf[I++]) Lazy(this, Sym);
     // Skip special symbol exists in import library files.
-    if (Sym.getName() == "__NULL_IMPORT_DESCRIPTOR")
-      continue;
-    SymbolBodies.push_back(new (&Buf[I++]) Lazy(this, Sym));
+    if (B->getName() != "__NULL_IMPORT_DESCRIPTOR")
+      SymbolBodies.push_back(B);
   }
   return std::error_code();
 }
