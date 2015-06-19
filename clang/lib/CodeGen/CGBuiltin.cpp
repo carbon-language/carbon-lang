@@ -1877,7 +1877,7 @@ Value *CodeGenFunction::EmitTargetBuiltinExpr(unsigned BuiltinID,
     return EmitPPCBuiltinExpr(BuiltinID, E);
   case llvm::Triple::r600:
   case llvm::Triple::amdgcn:
-    return EmitR600BuiltinExpr(BuiltinID, E);
+    return EmitAMDGPUBuiltinExpr(BuiltinID, E);
   case llvm::Triple::systemz:
     return EmitSystemZBuiltinExpr(BuiltinID, E);
   default:
@@ -6548,11 +6548,11 @@ static Value *emitFPIntBuiltin(CodeGenFunction &CGF,
   return CGF.Builder.CreateCall(F, {Src0, Src1});
 }
 
-Value *CodeGenFunction::EmitR600BuiltinExpr(unsigned BuiltinID,
-                                            const CallExpr *E) {
+Value *CodeGenFunction::EmitAMDGPUBuiltinExpr(unsigned BuiltinID,
+                                              const CallExpr *E) {
   switch (BuiltinID) {
-  case R600::BI__builtin_amdgpu_div_scale:
-  case R600::BI__builtin_amdgpu_div_scalef: {
+  case AMDGPU::BI__builtin_amdgpu_div_scale:
+  case AMDGPU::BI__builtin_amdgpu_div_scalef: {
     // Translate from the intrinsics's struct return to the builtin's out
     // argument.
 
@@ -6579,8 +6579,8 @@ Value *CodeGenFunction::EmitR600BuiltinExpr(unsigned BuiltinID,
     FlagStore->setAlignment(FlagOutPtr.second);
     return Result;
   }
-  case R600::BI__builtin_amdgpu_div_fmas:
-  case R600::BI__builtin_amdgpu_div_fmasf: {
+  case AMDGPU::BI__builtin_amdgpu_div_fmas:
+  case AMDGPU::BI__builtin_amdgpu_div_fmasf: {
     llvm::Value *Src0 = EmitScalarExpr(E->getArg(0));
     llvm::Value *Src1 = EmitScalarExpr(E->getArg(1));
     llvm::Value *Src2 = EmitScalarExpr(E->getArg(2));
@@ -6591,26 +6591,26 @@ Value *CodeGenFunction::EmitR600BuiltinExpr(unsigned BuiltinID,
     llvm::Value *Src3ToBool = Builder.CreateIsNotNull(Src3);
     return Builder.CreateCall(F, {Src0, Src1, Src2, Src3ToBool});
   }
-  case R600::BI__builtin_amdgpu_div_fixup:
-  case R600::BI__builtin_amdgpu_div_fixupf:
+  case AMDGPU::BI__builtin_amdgpu_div_fixup:
+  case AMDGPU::BI__builtin_amdgpu_div_fixupf:
     return emitTernaryFPBuiltin(*this, E, Intrinsic::AMDGPU_div_fixup);
-  case R600::BI__builtin_amdgpu_trig_preop:
-  case R600::BI__builtin_amdgpu_trig_preopf:
+  case AMDGPU::BI__builtin_amdgpu_trig_preop:
+  case AMDGPU::BI__builtin_amdgpu_trig_preopf:
     return emitFPIntBuiltin(*this, E, Intrinsic::AMDGPU_trig_preop);
-  case R600::BI__builtin_amdgpu_rcp:
-  case R600::BI__builtin_amdgpu_rcpf:
+  case AMDGPU::BI__builtin_amdgpu_rcp:
+  case AMDGPU::BI__builtin_amdgpu_rcpf:
     return emitUnaryFPBuiltin(*this, E, Intrinsic::AMDGPU_rcp);
-  case R600::BI__builtin_amdgpu_rsq:
-  case R600::BI__builtin_amdgpu_rsqf:
+  case AMDGPU::BI__builtin_amdgpu_rsq:
+  case AMDGPU::BI__builtin_amdgpu_rsqf:
     return emitUnaryFPBuiltin(*this, E, Intrinsic::AMDGPU_rsq);
-  case R600::BI__builtin_amdgpu_rsq_clamped:
-  case R600::BI__builtin_amdgpu_rsq_clampedf:
+  case AMDGPU::BI__builtin_amdgpu_rsq_clamped:
+  case AMDGPU::BI__builtin_amdgpu_rsq_clampedf:
     return emitUnaryFPBuiltin(*this, E, Intrinsic::AMDGPU_rsq_clamped);
-  case R600::BI__builtin_amdgpu_ldexp:
-  case R600::BI__builtin_amdgpu_ldexpf:
+  case AMDGPU::BI__builtin_amdgpu_ldexp:
+  case AMDGPU::BI__builtin_amdgpu_ldexpf:
     return emitFPIntBuiltin(*this, E, Intrinsic::AMDGPU_ldexp);
-  case R600::BI__builtin_amdgpu_class:
-  case R600::BI__builtin_amdgpu_classf:
+  case AMDGPU::BI__builtin_amdgpu_class:
+  case AMDGPU::BI__builtin_amdgpu_classf:
     return emitFPIntBuiltin(*this, E, Intrinsic::AMDGPU_class);
    default:
     return nullptr;

@@ -1667,7 +1667,7 @@ public:
     }
   };
 
-static const unsigned R600AddrSpaceMap[] = {
+static const unsigned AMDGPUAddrSpaceMap[] = {
   1,    // opencl_global
   3,    // opencl_local
   2,    // opencl_constant
@@ -1693,11 +1693,11 @@ static const char *DescriptionStringSI =
   "-i64:64-v16:16-v24:32-v32:32-v48:64-v96:128"
   "-v192:256-v256:256-v512:512-v1024:1024-v2048:2048-n32:64";
 
-class R600TargetInfo : public TargetInfo {
+class AMDGPUTargetInfo : public TargetInfo {
   static const Builtin::Info BuiltinInfo[];
   static const char * const GCCRegNames[];
 
-  /// \brief The GPU profiles supported by the R600 target.
+  /// \brief The GPU profiles supported by the AMDGPU target.
   enum GPUKind {
     GK_NONE,
     GK_R600,
@@ -1718,8 +1718,8 @@ class R600TargetInfo : public TargetInfo {
   bool hasLDEXPF:1;
 
 public:
-  R600TargetInfo(const llvm::Triple &Triple)
-      : TargetInfo(Triple) {
+  AMDGPUTargetInfo(const llvm::Triple &Triple)
+    : TargetInfo(Triple) {
 
     if (Triple.getArch() == llvm::Triple::amdgcn) {
       DescriptionString = DescriptionStringSI;
@@ -1734,7 +1734,7 @@ public:
       hasFMAF = false;
       hasLDEXPF = false;
     }
-    AddrSpaceMap = &R600AddrSpaceMap;
+    AddrSpaceMap = &AMDGPUAddrSpaceMap;
     UseAddrSpaceMapMangling = true;
   }
 
@@ -1773,7 +1773,7 @@ public:
   void getTargetBuiltins(const Builtin::Info *&Records,
                          unsigned &NumRecords) const override {
     Records = BuiltinInfo;
-    NumRecords = clang::R600::LastTSBuiltin - Builtin::FirstTSBuiltin;
+    NumRecords = clang::AMDGPU::LastTSBuiltin - Builtin::FirstTSBuiltin;
   }
 
   void getTargetDefines(const LangOptions &Opts,
@@ -1873,12 +1873,12 @@ public:
   }
 };
 
-const Builtin::Info R600TargetInfo::BuiltinInfo[] = {
+const Builtin::Info AMDGPUTargetInfo::BuiltinInfo[] = {
 #define BUILTIN(ID, TYPE, ATTRS)                \
   { #ID, TYPE, ATTRS, 0, ALL_LANGUAGES },
-#include "clang/Basic/BuiltinsR600.def"
+#include "clang/Basic/BuiltinsAMDGPU.def"
 };
-const char * const R600TargetInfo::GCCRegNames[] = {
+const char * const AMDGPUTargetInfo::GCCRegNames[] = {
   "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7",
   "v8", "v9", "v10", "v11", "v12", "v13", "v14", "v15",
   "v16", "v17", "v18", "v19", "v20", "v21", "v22", "v23",
@@ -1931,8 +1931,8 @@ const char * const R600TargetInfo::GCCRegNames[] = {
   "vcc_lo", "vcc_hi", "flat_scr_lo", "flat_scr_hi"
 };
 
-void R600TargetInfo::getGCCRegNames(const char * const *&Names,
-                                    unsigned &NumNames) const {
+void AMDGPUTargetInfo::getGCCRegNames(const char * const *&Names,
+                                      unsigned &NumNames) const {
   Names = GCCRegNames;
   NumNames = llvm::array_lengthof(GCCRegNames);
 }
@@ -7088,7 +7088,7 @@ static TargetInfo *AllocateTarget(const llvm::Triple &Triple) {
 
   case llvm::Triple::amdgcn:
   case llvm::Triple::r600:
-    return new R600TargetInfo(Triple);
+    return new AMDGPUTargetInfo(Triple);
 
   case llvm::Triple::sparc:
     switch (os) {

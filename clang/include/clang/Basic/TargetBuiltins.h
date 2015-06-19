@@ -73,12 +73,12 @@ namespace clang {
     };
   }
 
-  /// \brief R600 builtins
-  namespace R600 {
+  /// \brief AMDGPU builtins
+  namespace AMDGPU {
   enum {
     LastTIBuiltin = clang::Builtin::FirstTSBuiltin - 1,
   #define BUILTIN(ID, TYPE, ATTRS) BI##ID,
-  #include "clang/Basic/BuiltinsR600.def"
+  #include "clang/Basic/BuiltinsAMDGPU.def"
     LastTSBuiltin
   };
   }
