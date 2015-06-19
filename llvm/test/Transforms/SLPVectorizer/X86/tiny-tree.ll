@@ -153,3 +153,19 @@ define void @store_splat(float*, float) {
   store float %1, float* %6, align 4
   ret void
 }
+
+
+; CHECK-LABEL: store_const
+; CHECK: store <4 x i32>
+define void @store_const(i32* %a) {
+entry:
+  %ptr0 = getelementptr inbounds i32, i32* %a, i64 0
+  store i32 10, i32* %ptr0, align 4
+  %ptr1 = getelementptr inbounds i32, i32* %a, i64 1
+  store i32 30, i32* %ptr1, align 4
+  %ptr2 = getelementptr inbounds i32, i32* %a, i64 2
+  store i32 20, i32* %ptr2, align 4
+  %ptr3 = getelementptr inbounds i32, i32* %a, i64 3
+  store i32 40, i32* %ptr3, align 4
+  ret void
+}
