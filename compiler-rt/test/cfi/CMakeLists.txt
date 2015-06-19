@@ -9,6 +9,7 @@ if(NOT COMPILER_RT_STANDALONE_BUILD)
     FileCheck
     clang
     not
+    ubsan
   )
   if(LLVM_ENABLE_PIC AND LLVM_BINUTILS_INCDIR)
     list(APPEND CFI_TEST_DEPS

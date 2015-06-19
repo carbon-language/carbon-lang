@@ -58,6 +58,12 @@
 // RUN: %t g 2>&1 | FileCheck --check-prefix=PASS %s
 // RUN: %t h 2>&1 | FileCheck --check-prefix=PASS %s
 
+// RUN: %clangxx_cfi_diag -o %t %s
+// RUN: %t a 2>&1 | FileCheck --check-prefix=CFI-DIAG-D %s
+// RUN: %t b 2>&1 | FileCheck --check-prefix=CFI-DIAG-D %s
+// RUN: %t c 2>&1 | FileCheck --check-prefix=CFI-DIAG-D %s
+// RUN: %t g 2>&1 | FileCheck --check-prefix=CFI-DIAG-U %s
+
 // Tests that the CFI enforcement detects bad casts.
 
 #include <stdio.h>
@@ -102,6 +108,13 @@ int main(int argc, char **argv) {
   fprintf(stderr, "1\n");
 
   A a;
+
+  // CFI-DIAG-D: runtime error: control flow integrity check for type 'B' failed during base-to-derived cast
+  // CFI-DIAG-D-NEXT: note: vtable is of type 'A'
+
+  // CFI-DIAG-U: runtime error: control flow integrity check for type 'B' failed during cast to unrelated type
+  // CFI-DIAG-U-NEXT: note: vtable is of type 'A'
+
   switch (argv[1][0]) {
     case 'a':
       static_cast<B *>(&a); // UB

@@ -46,6 +46,9 @@
 // RUN: %clangxx_cfi -O3 -DBM -o %t %s
 // RUN: not --crash %t 2>&1 | FileCheck --check-prefix=CFI %s
 
+// RUN: %clangxx_cfi_diag -o %t %s
+// RUN: %t 2>&1 | FileCheck --check-prefix=CFI-DIAG %s
+
 // RUN: %clangxx -o %t %s
 // RUN: %t 2>&1 | FileCheck --check-prefix=NCFI %s
 
@@ -91,6 +94,10 @@ int main() {
   // NCFI: 1
   fprintf(stderr, "1\n");
 
+  // CFI-DIAG: runtime error: control flow integrity check for type 'B' failed during cast to unrelated type
+  // CFI-DIAG-NEXT: note: vtable is of type 'A'
+  // CFI-DIAG: runtime error: control flow integrity check for type 'B' failed during virtual call
+  // CFI-DIAG-NEXT: note: vtable is of type 'A'
   ((B *)a)->f(); // UB here
 
   // CFI-NOT: 2

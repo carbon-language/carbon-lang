@@ -13,6 +13,9 @@
 // RUN: %clangxx -o %t %s
 // RUN: %t 2>&1 | FileCheck --check-prefix=NCFI %s
 
+// RUN: %clangxx_cfi_diag -o %t %s
+// RUN: %t 2>&1 | FileCheck --check-prefix=CFI-DIAG %s
+
 // Tests that the CFI enforcement also applies to virtual destructor calls made
 // via 'delete'.
 
@@ -54,6 +57,8 @@ int main() {
   // NCFI: 1
   fprintf(stderr, "1\n");
 
+  // CFI-DIAG: runtime error: control flow integrity check for type 'B' failed during virtual call
+  // CFI-DIAG-NEXT: note: vtable is of type 'A'
   delete (B *)a; // UB here
 
   // CFI-NOT: 2

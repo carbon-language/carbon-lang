@@ -23,6 +23,11 @@
 // RUN: %clangxx -o %t %t1.o %t2.o
 // RUN: %t 2>&1 | FileCheck --check-prefix=NCFI %s
 
+// RUN: %clangxx_cfi_diag -c -DTU1 -o %t1.o %s
+// RUN: %clangxx_cfi_diag -c -DTU2 -o %t2.o %S/../cfi/anon-namespace.cpp
+// RUN: %clangxx_cfi_diag -o %t %t1.o %t2.o
+// RUN: %t 2>&1 | FileCheck --check-prefix=CFI-DIAG %s
+
 // Tests that the CFI mechanism treats classes in the anonymous namespace in
 // different translation units as having distinct identities. This is done by
 // compiling two translation units TU1 and TU2 containing a class named B in an
@@ -83,6 +88,10 @@ int main() {
   // NCFI: 1
   fprintf(stderr, "1\n");
 
+  // CFI-DIAG: runtime error: control flow integrity check for type '(anonymous namespace)::B' failed during base-to-derived cast
+  // CFI-DIAG-NEXT: note: vtable is of type '(anonymous namespace)::B'
+  // CFI-DIAG: runtime error: control flow integrity check for type '(anonymous namespace)::B' failed during virtual call
+  // CFI-DIAG-NEXT: note: vtable is of type '(anonymous namespace)::B'
   ((B *)a)->f(); // UB here
 
   // CFI-NOT: 2

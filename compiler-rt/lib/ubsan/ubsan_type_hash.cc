@@ -196,11 +196,11 @@ struct VtablePrefix {
   /// The type_info object describing the most-derived class type.
   std::type_info *TypeInfo;
 };
-VtablePrefix *getVtablePrefix(void *Object) {
-  VtablePrefix **VptrPtr = reinterpret_cast<VtablePrefix**>(Object);
-  if (!*VptrPtr)
+VtablePrefix *getVtablePrefix(void *Vtable) {
+  VtablePrefix *Vptr = reinterpret_cast<VtablePrefix*>(Vtable);
+  if (!Vptr)
     return 0;
-  VtablePrefix *Prefix = *VptrPtr - 1;
+  VtablePrefix *Prefix = Vptr - 1;
   if (Prefix->Offset > 0 || !Prefix->TypeInfo)
     // This can't possibly be a valid vtable.
     return 0;
@@ -220,7 +220,8 @@ bool __ubsan::checkDynamicType(void *Object, void *Type, HashValue Hash) {
     return true;
   }
 
-  VtablePrefix *Vtable = getVtablePrefix(Object);
+  void *VtablePtr = *reinterpret_cast<void **>(Object);
+  VtablePrefix *Vtable = getVtablePrefix(VtablePtr);
   if (!Vtable)
     return false;
 
@@ -240,8 +241,14 @@ bool __ubsan::checkDynamicType(void *Object, void *Type, HashValue Hash) {
   return true;
 }
 
-__ubsan::DynamicTypeInfo __ubsan::getDynamicTypeInfo(void *Object) {
-  VtablePrefix *Vtable = getVtablePrefix(Object);
+__ubsan::DynamicTypeInfo __ubsan::getDynamicTypeInfoFromObject(void *Object) {
+  void *VtablePtr = *reinterpret_cast<void **>(Object);
+  return getDynamicTypeInfoFromVtable(VtablePtr);
+}
+
+__ubsan::DynamicTypeInfo
+__ubsan::getDynamicTypeInfoFromVtable(void *VtablePtr) {
+  VtablePrefix *Vtable = getVtablePrefix(VtablePtr);
   if (!Vtable)
     return DynamicTypeInfo(0, 0, 0);
   const abi::__class_type_info *ObjectType = findBaseAtOffset(

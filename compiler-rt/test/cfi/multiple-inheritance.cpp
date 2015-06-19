@@ -18,6 +18,10 @@
 // RUN: %t 2>&1 | FileCheck --check-prefix=NCFI %s
 // RUN: %t x 2>&1 | FileCheck --check-prefix=NCFI %s
 
+// RUN: %clangxx_cfi_diag -o %t %s
+// RUN: %t 2>&1 | FileCheck --check-prefix=CFI-DIAG2 %s
+// RUN: %t x 2>&1 | FileCheck --check-prefix=CFI-DIAG1 %s
+
 // Tests that the CFI mechanism is sensitive to multiple inheritance and only
 // permits calls via virtual tables for the correct base class.
 
@@ -70,8 +74,12 @@ int main(int argc, char **argv) {
 
   if (argc > 1) {
     A *a = c;
+    // CFI-DIAG1: runtime error: control flow integrity check for type 'B' failed during cast to unrelated type
+    // CFI-DIAG1-NEXT: note: vtable is of type 'C'
     ((B *)a)->g(); // UB here
   } else {
+    // CFI-DIAG2: runtime error: control flow integrity check for type 'A' failed during cast to unrelated type
+    // CFI-DIAG2-NEXT: note: vtable is of type 'C'
     B *b = c;
     ((A *)b)->f(); // UB here
   }

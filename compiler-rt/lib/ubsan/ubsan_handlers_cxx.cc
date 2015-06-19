@@ -37,7 +37,7 @@ static void HandleDynamicTypeCacheMiss(
     return;
 
   // Check if error report should be suppressed.
-  DynamicTypeInfo DTI = getDynamicTypeInfo((void*)Pointer);
+  DynamicTypeInfo DTI = getDynamicTypeInfoFromObject((void*)Pointer);
   if (DTI.isValid() && IsVptrCheckSuppressed(DTI.getMostDerivedTypeName()))
     return;
 
@@ -80,6 +80,43 @@ void __ubsan::__ubsan_handle_dynamic_type_cache_miss_abort(
     DynamicTypeCacheMissData *Data, ValueHandle Pointer, ValueHandle Hash) {
   GET_REPORT_OPTIONS(true);
   HandleDynamicTypeCacheMiss(Data, Pointer, Hash, Opts);
+}
+
+static void HandleCFIBadType(CFIBadTypeData *Data, ValueHandle Vtable,
+                             ReportOptions Opts) {
+  SourceLocation Loc = Data->Loc.acquire();
+  ScopedReport R(Opts, Loc);
+  DynamicTypeInfo DTI = getDynamicTypeInfoFromVtable((void*)Vtable);
+
+  static const char *TypeCheckKinds[] = {
+    "virtual call",
+    "non-virtual call",
+    "base-to-derived cast",
+    "cast to unrelated type",
+  };
+
+  Diag(Loc, DL_Error, "control flow integrity check for type %0 failed during "
+                      "%1 (vtable address %2)")
+      << Data->Type << TypeCheckKinds[Data->TypeCheckKind] << (void *)Vtable;
+
+  // If possible, say what type it actually points to.
+  if (!DTI.isValid())
+    Diag(Vtable, DL_Note, "invalid vtable");
+  else
+    Diag(Vtable, DL_Note, "vtable is of type %0")
+        << MangledName(DTI.getMostDerivedTypeName());
+}
+
+void __ubsan::__ubsan_handle_cfi_bad_type(CFIBadTypeData *Data,
+                                          ValueHandle Vtable) {
+  GET_REPORT_OPTIONS(false);
+  HandleCFIBadType(Data, Vtable, Opts);
+}
+
+void __ubsan::__ubsan_handle_cfi_bad_type_abort(CFIBadTypeData *Data,
+                                                ValueHandle Vtable) {
+  GET_REPORT_OPTIONS(true);
+  HandleCFIBadType(Data, Vtable, Opts);
 }
 
 #endif  // CAN_SANITIZE_UB
