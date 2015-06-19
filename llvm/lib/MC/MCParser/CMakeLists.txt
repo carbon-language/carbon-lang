@@ -10,5 +10,5 @@ add_llvm_library(LLVMMCParser
   MCTargetAsmParser.cpp
 
   ADDITIONAL_HEADER_DIRS
-  ${LLVM_MAIN_INCLUDE_DIR}/llvm/MCParser
+  ${LLVM_MAIN_INCLUDE_DIR}/llvm/MC/MCParser
   )
