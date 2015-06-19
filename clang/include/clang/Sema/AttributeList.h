@@ -120,6 +120,9 @@ private:
   /// True if this has a ParsedType
   unsigned HasParsedType : 1;
 
+  /// True when this keyword attribute is a context-sensitive keyword.
+  unsigned IsContextSensitiveKeyword : 1;
+
   unsigned AttrKind : 8;
 
   /// \brief The location of the 'unavailable' keyword in an
@@ -220,7 +223,8 @@ private:
       ScopeLoc(scopeLoc), EllipsisLoc(ellipsisLoc), NumArgs(numArgs),
       SyntaxUsed(syntaxUsed), Invalid(false), UsedAsTypeAttr(false),
       IsAvailability(false), IsTypeTagForDatatype(false), IsProperty(false),
-      HasParsedType(false), NextInPosition(nullptr), NextInPool(nullptr) {
+      HasParsedType(false), IsContextSensitiveKeyword(false),
+      NextInPosition(nullptr), NextInPool(nullptr) {
     if (numArgs) memcpy(getArgsBuffer(), args, numArgs * sizeof(ArgsUnion));
     AttrKind = getKind(getName(), getScopeName(), syntaxUsed);
   }
@@ -238,8 +242,8 @@ private:
       ScopeLoc(scopeLoc), EllipsisLoc(), NumArgs(1), SyntaxUsed(syntaxUsed),
       Invalid(false), UsedAsTypeAttr(false), IsAvailability(true),
       IsTypeTagForDatatype(false), IsProperty(false), HasParsedType(false),
-      UnavailableLoc(unavailable), MessageExpr(messageExpr),
-      NextInPosition(nullptr), NextInPool(nullptr) {
+      IsContextSensitiveKeyword(false), UnavailableLoc(unavailable),
+      MessageExpr(messageExpr), NextInPosition(nullptr), NextInPool(nullptr) {
     ArgsUnion PVal(Parm);
     memcpy(getArgsBuffer(), &PVal, sizeof(ArgsUnion));
     new (&getAvailabilitySlot(IntroducedSlot)) AvailabilityChange(introduced);
@@ -259,7 +263,8 @@ private:
     ScopeLoc(scopeLoc), EllipsisLoc(), NumArgs(3), SyntaxUsed(syntaxUsed),
     Invalid(false), UsedAsTypeAttr(false), IsAvailability(false),
     IsTypeTagForDatatype(false), IsProperty(false), HasParsedType(false),
-    NextInPosition(nullptr), NextInPool(nullptr) {
+    IsContextSensitiveKeyword(false), NextInPosition(nullptr),
+    NextInPool(nullptr) {
     ArgsVector Args;
     Args.push_back(Parm1);
     Args.push_back(Parm2);
@@ -277,7 +282,8 @@ private:
       ScopeLoc(scopeLoc), EllipsisLoc(), NumArgs(1), SyntaxUsed(syntaxUsed),
       Invalid(false), UsedAsTypeAttr(false), IsAvailability(false),
       IsTypeTagForDatatype(true), IsProperty(false), HasParsedType(false),
-      NextInPosition(nullptr), NextInPool(nullptr) {
+      IsContextSensitiveKeyword(false), NextInPosition(nullptr),
+      NextInPool(nullptr) {
     ArgsUnion PVal(ArgKind);
     memcpy(getArgsBuffer(), &PVal, sizeof(ArgsUnion));
     TypeTagForDatatypeData &ExtraData = getTypeTagForDatatypeDataSlot();
@@ -295,7 +301,8 @@ private:
         ScopeLoc(scopeLoc), EllipsisLoc(), NumArgs(0), SyntaxUsed(syntaxUsed),
         Invalid(false), UsedAsTypeAttr(false), IsAvailability(false),
         IsTypeTagForDatatype(false), IsProperty(false), HasParsedType(true),
-        NextInPosition(nullptr), NextInPool(nullptr) {
+        IsContextSensitiveKeyword(false), NextInPosition(nullptr),
+        NextInPool(nullptr) {
     new (&getTypeBuffer()) ParsedType(typeArg);
     AttrKind = getKind(getName(), getScopeName(), syntaxUsed);
   }
@@ -309,7 +316,8 @@ private:
       ScopeLoc(scopeLoc), EllipsisLoc(), NumArgs(0), SyntaxUsed(syntaxUsed),
       Invalid(false), UsedAsTypeAttr(false), IsAvailability(false),
       IsTypeTagForDatatype(false), IsProperty(true), HasParsedType(false),
-      NextInPosition(nullptr), NextInPool(nullptr) {
+      IsContextSensitiveKeyword(false), NextInPosition(nullptr),
+      NextInPool(nullptr) {
     new (&getPropertyDataBuffer()) PropertyData(getterId, setterId);
     AttrKind = getKind(getName(), getScopeName(), syntaxUsed);
   }
@@ -351,6 +359,15 @@ public:
     return SyntaxUsed == AS_CXX11 || isAlignasAttribute();
   }
   bool isKeywordAttribute() const { return SyntaxUsed == AS_Keyword; }
+
+  bool isContextSensitiveKeywordAttribute() const {
+    return IsContextSensitiveKeyword;
+  }
+
+  void setContextSensitiveKeywordAttribute() {
+    assert(SyntaxUsed == AS_Keyword);
+    IsContextSensitiveKeyword = true;
+  }
 
   bool isInvalid() const { return Invalid; }
   void setInvalid(bool b = true) const { Invalid = b; }

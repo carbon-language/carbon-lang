@@ -79,3 +79,11 @@
 @property (readwrite) id frr;
 @end
 
+// rdar://20152386
+@interface NSObject @end
+
+@interface rdar20152386_2: NSObject
+@property(nonatomic, weak, nonnull) id delegate; // expected-error {{property attributes 'nonnull' and 'weak' are mutually exclusive}}
+@property(nonatomic, weak, nonnull, readonly) id ReadDelegate; // no warning
+@end
+

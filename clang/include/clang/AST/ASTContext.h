@@ -1854,6 +1854,36 @@ public:
            getCanonicalType(T2).getTypePtr();
   }
 
+  bool hasSameNullabilityTypeQualifier(QualType SubT, QualType SuperT,
+                                       bool IsParam) const {
+    auto SubTnullability = SubT->getNullability(*this);
+    auto SuperTnullability = SuperT->getNullability(*this);
+    if (SubTnullability.hasValue() == SuperTnullability.hasValue()) {
+      // Neither has nullability; return true
+      if (!SubTnullability)
+        return true;
+      // Both have nullability qualifier.
+      if (*SubTnullability == *SuperTnullability ||
+          *SubTnullability == NullabilityKind::Unspecified ||
+          *SuperTnullability == NullabilityKind::Unspecified)
+        return true;
+      
+      if (IsParam) {
+        // Ok for the superclass method parameter to be “nonnull” and the subclass
+        // method parameter to be “nullable”
+        return (*SuperTnullability == NullabilityKind::NonNull &&
+                *SubTnullability == NullabilityKind::Nullable);
+      }
+      else {
+        // For the return type, it’s okay for the superclass method to specify
+        // “nullable” and the subclass method specify “nonnull”
+        return (*SuperTnullability == NullabilityKind::Nullable &&
+                *SubTnullability == NullabilityKind::NonNull);
+      }
+    }
+    return true;
+  }
+
   bool ObjCMethodsAreEqual(const ObjCMethodDecl *MethodDecl,
                            const ObjCMethodDecl *MethodImp);
   

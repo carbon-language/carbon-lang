@@ -4522,34 +4522,10 @@ static bool handleMSPointerTypeQualifierAttr(TypeProcessingState &State,
   return false;
 }
 
-/// Map a nullability attribute kind to a nullability kind.
-static NullabilityKind mapNullabilityAttrKind(AttributeList::Kind kind) {
-  switch (kind) {
-  case AttributeList::AT_TypeNonNull:
-    return NullabilityKind::NonNull;
-
-  case AttributeList::AT_TypeNullable:
-    return NullabilityKind::Nullable;
-
-  case AttributeList::AT_TypeNullUnspecified:
-    return NullabilityKind::Unspecified;
-
-  default:
-    llvm_unreachable("not a nullability attribute kind");
-  }
-}
-
-/// Handle a nullability type attribute.
-static bool handleNullabilityTypeAttr(TypeProcessingState &state,
-                                      AttributeList &attr,
-                                      QualType &type) {
-  Sema &S = state.getSema();
-  ASTContext &Context = S.Context;
-
-  // Determine the nullability.
-  AttributeList::Kind kind = attr.getKind();
-  NullabilityKind nullability = mapNullabilityAttrKind(kind);
-
+bool Sema::checkNullabilityTypeSpecifier(QualType &type, 
+                                         NullabilityKind nullability,
+                                         SourceLocation nullabilityLoc,
+                                         bool isContextSensitive) {
   // Check for existing nullability attributes on the type.
   QualType desugared = type;
   while (auto attributed = dyn_cast<AttributedType>(desugared.getTypePtr())) {
@@ -4557,19 +4533,24 @@ static bool handleNullabilityTypeAttr(TypeProcessingState &state,
     if (auto existingNullability = attributed->getImmediateNullability()) {
       // Duplicated nullability.
       if (nullability == *existingNullability) {
-        S.Diag(attr.getLoc(), diag::warn_duplicate_nullability)
-          << static_cast<unsigned>(nullability);
-        return true;
-      }
+        Diag(nullabilityLoc, diag::warn_nullability_duplicate)
+          << static_cast<unsigned>(nullability)
+          << isContextSensitive
+          << FixItHint::CreateRemoval(nullabilityLoc);
+
+        break;
+      } 
 
       // Conflicting nullability.
-      S.Diag(attr.getLoc(), diag::err_nullability_conflicting)
-        <<  static_cast<unsigned>(nullability) 
-        << static_cast<unsigned>(*existingNullability);
+      Diag(nullabilityLoc, diag::err_nullability_conflicting)
+        << static_cast<unsigned>(nullability) 
+        << isContextSensitive
+        << static_cast<unsigned>(*existingNullability)
+        << false;
       return true;
     }
 
-    desugared = attributed->getEquivalentType();
+    desugared = attributed->getModifiedType();
   }
 
   // If there is already a different nullability specifier, complain.
@@ -4578,8 +4559,9 @@ static bool handleNullabilityTypeAttr(TypeProcessingState &state,
   // provide a useful Fix-It.
   if (auto existingNullability = desugared->getNullability(Context)) {
     if (nullability != *existingNullability) {
-      S.Diag(attr.getLoc(), diag::err_nullability_conflicting)
+      Diag(nullabilityLoc, diag::err_nullability_conflicting)
         << static_cast<unsigned>(nullability)
+        << isContextSensitive
         << static_cast<unsigned>(*existingNullability);
 
       // Try to find the typedef with the existing nullability specifier.
@@ -4589,7 +4571,7 @@ static bool handleNullabilityTypeAttr(TypeProcessingState &state,
         if (auto typedefNullability
               = AttributedType::stripOuterNullability(underlyingType)) {
           if (*typedefNullability == *existingNullability) {
-            S.Diag(typedefDecl->getLocation(), diag::note_nullability_here)
+            Diag(typedefDecl->getLocation(), diag::note_nullability_here)
               << static_cast<unsigned>(*existingNullability);
           }
         }
@@ -4600,31 +4582,35 @@ static bool handleNullabilityTypeAttr(TypeProcessingState &state,
   }
 
   // If this definitely isn't a pointer type, reject the specifier.
-  if (!type->canHaveNullability()) {
-    S.Diag(attr.getLoc(), diag::err_nullability_nonpointer)
-      << static_cast<unsigned>(nullability) << type;
+  if (!desugared->canHaveNullability()) {
+    Diag(nullabilityLoc, diag::err_nullability_nonpointer)
+      << static_cast<unsigned>(nullability) << isContextSensitive << type;
     return true;
+  }
+  
+  // For the context-sensitive keywords/Objective-C property
+  // attributes, require that the type be a single-level pointer.
+  if (isContextSensitive) {
+    // Make sure that the pointee isn't itself a pointer type.
+    QualType pointeeType = desugared->getPointeeType();
+    if (pointeeType->isAnyPointerType() ||
+        pointeeType->isObjCObjectPointerType() ||
+        pointeeType->isMemberPointerType()) {
+      Diag(nullabilityLoc, diag::err_nullability_cs_multilevel)
+        << static_cast<unsigned>(nullability)
+        << type;
+      Diag(nullabilityLoc, diag::note_nullability_type_specifier)
+        << static_cast<unsigned>(nullability)
+        << type
+        << FixItHint::CreateReplacement(nullabilityLoc,
+                                        getNullabilitySpelling(nullability));
+      return true;
+    }
   }
 
   // Form the attributed type.
-  AttributedType::Kind typeAttrKind;
-  switch (kind) {
-  case AttributeList::AT_TypeNonNull: 
-    typeAttrKind = AttributedType::attr_nonnull; 
-    break;
-
-  case AttributeList::AT_TypeNullable: 
-    typeAttrKind = AttributedType::attr_nullable; 
-    break;
-
-  case AttributeList::AT_TypeNullUnspecified: 
-    typeAttrKind = AttributedType::attr_null_unspecified; 
-    break;
-
-  default:
-    llvm_unreachable("Not a nullability specifier");
-  }
-  type = S.Context.getAttributedType(typeAttrKind, type, type);
+  type = Context.getAttributedType(
+           AttributedType::getNullabilityAttrKind(nullability), type, type);
   return false;
 }
 
@@ -4640,6 +4626,23 @@ static bool hasNullabilityAttr(const AttributeList *attrs) {
   }
 
   return false;
+}
+
+/// Map a nullability attribute kind to a nullability kind.
+static NullabilityKind mapNullabilityAttrKind(AttributeList::Kind kind) {
+  switch (kind) {
+  case AttributeList::AT_TypeNonNull:
+    return NullabilityKind::NonNull;
+
+  case AttributeList::AT_TypeNullable:
+    return NullabilityKind::Nullable;
+
+  case AttributeList::AT_TypeNullUnspecified:
+    return NullabilityKind::Unspecified;
+
+  default:
+    llvm_unreachable("not a nullability attribute kind");
+  }
 }
 
 /// Distribute a nullability type attribute that cannot be applied to
@@ -5233,7 +5236,11 @@ static void processTypeAttrs(TypeProcessingState &state, QualType &type,
       // dependent type, because that complicates the user model.
       if (type->canHaveNullability() || type->isDependentType() ||
           !distributeNullabilityTypeAttr(state, type, attr)) {
-        if (handleNullabilityTypeAttr(state, attr, type)) {
+        if (state.getSema().checkNullabilityTypeSpecifier(
+              type,
+              mapNullabilityAttrKind(attr.getKind()),
+              attr.getLoc(),
+              attr.isContextSensitiveKeywordAttribute())) {
           attr.setInvalid();
         }
 

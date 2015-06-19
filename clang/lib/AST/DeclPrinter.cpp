@@ -37,6 +37,13 @@ namespace {
 
     void Print(AccessSpecifier AS);
 
+    /// Print an Objective-C method type in parentheses.
+    ///
+    /// \param Quals The Objective-C declaration qualifiers.
+    /// \param T The type to print.
+    void PrintObjCMethodType(ASTContext &Ctx, Decl::ObjCDeclQualifier Quals, 
+                             QualType T);
+
   public:
     DeclPrinter(raw_ostream &Out, const PrintingPolicy &Policy,
                 unsigned Indentation = 0, bool PrintInstantiation = false)
@@ -930,24 +937,64 @@ void DeclPrinter::VisitClassTemplateDecl(ClassTemplateDecl *D) {
 // Objective-C declarations
 //----------------------------------------------------------------------------
 
+/// Strip off the top-level nullability annotation, if it's there.
+static Optional<NullabilityKind> stripOuterNullability(QualType &T) {
+  if (auto attributed = dyn_cast<AttributedType>(T.getTypePtr())) {
+    if (auto nullability = attributed->getImmediateNullability()) {
+      T = attributed->getModifiedType();
+      return nullability;
+    }
+  }
+
+  return None;
+ }
+
+void DeclPrinter::PrintObjCMethodType(ASTContext &Ctx, 
+                                      Decl::ObjCDeclQualifier Quals, 
+                                      QualType T) {
+  Out << '(';
+  if (Quals & Decl::ObjCDeclQualifier::OBJC_TQ_In)
+    Out << "in ";
+  if (Quals & Decl::ObjCDeclQualifier::OBJC_TQ_Inout)
+    Out << "inout ";
+  if (Quals & Decl::ObjCDeclQualifier::OBJC_TQ_Out)
+    Out << "out ";
+  if (Quals & Decl::ObjCDeclQualifier::OBJC_TQ_Bycopy)
+    Out << "bycopy ";
+  if (Quals & Decl::ObjCDeclQualifier::OBJC_TQ_Byref)
+    Out << "byref ";
+  if (Quals & Decl::ObjCDeclQualifier::OBJC_TQ_Oneway)
+    Out << "oneway ";
+  if (Quals & Decl::ObjCDeclQualifier::OBJC_TQ_CSNullability) {
+    if (auto nullability = stripOuterNullability(T)) {
+      Out << getNullabilitySpelling(*nullability).substr(2) << ' ';
+    }
+  }
+  
+  Out << Ctx.getUnqualifiedObjCPointerType(T).getAsString(Policy);
+  Out << ')';
+}
+
 void DeclPrinter::VisitObjCMethodDecl(ObjCMethodDecl *OMD) {
   if (OMD->isInstanceMethod())
     Out << "- ";
   else
     Out << "+ ";
-  if (!OMD->getReturnType().isNull())
-    Out << '(' << OMD->getASTContext()
-                      .getUnqualifiedObjCPointerType(OMD->getReturnType())
-                      .getAsString(Policy) << ")";
+  if (!OMD->getReturnType().isNull()) {
+    PrintObjCMethodType(OMD->getASTContext(), OMD->getObjCDeclQualifier(),
+                        OMD->getReturnType());
+  }
 
   std::string name = OMD->getSelector().getAsString();
   std::string::size_type pos, lastPos = 0;
   for (const auto *PI : OMD->params()) {
     // FIXME: selector is missing here!
     pos = name.find_first_of(':', lastPos);
-    Out << " " << name.substr(lastPos, pos - lastPos);
-    Out << ":(" << PI->getASTContext().getUnqualifiedObjCPointerType(PI->getType()).
-                      getAsString(Policy) << ')' << *PI;
+    Out << " " << name.substr(lastPos, pos - lastPos) << ':';
+    PrintObjCMethodType(OMD->getASTContext(), 
+                        PI->getObjCDeclQualifier(),
+                        PI->getType());
+    Out << *PI;
     lastPos = pos + 1;
   }
 
@@ -1103,6 +1150,8 @@ void DeclPrinter::VisitObjCPropertyDecl(ObjCPropertyDecl *PDecl) {
   else if (PDecl->getPropertyImplementation() == ObjCPropertyDecl::Optional)
     Out << "@optional\n";
 
+  QualType T = PDecl->getType();
+
   Out << "@property";
   if (PDecl->getPropertyAttributes() != ObjCPropertyDecl::OBJC_PR_noattr) {
     bool first = true;
@@ -1161,10 +1210,19 @@ void DeclPrinter::VisitObjCPropertyDecl(ObjCPropertyDecl *PDecl) {
       first = false;
     }
     
+    if (PDecl->getPropertyAttributes() &
+        ObjCPropertyDecl::OBJC_PR_nullability) {
+      if (auto nullability = stripOuterNullability(T)) {
+        Out << (first ? ' ' : ',') 
+            << getNullabilitySpelling(*nullability).substr(2);
+        first = false;
+      }
+    }
+
     (void) first; // Silence dead store warning due to idiomatic code.
     Out << " )";
   }
-  Out << ' ' << PDecl->getASTContext().getUnqualifiedObjCPointerType(PDecl->getType()).
+  Out << ' ' << PDecl->getASTContext().getUnqualifiedObjCPointerType(T).
                   getAsString(Policy) << ' ' << *PDecl;
   if (Policy.PolishForDeclaration)
     Out << ';';

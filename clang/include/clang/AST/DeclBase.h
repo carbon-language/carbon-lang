@@ -178,7 +178,12 @@ public:
     OBJC_TQ_Out = 0x4,
     OBJC_TQ_Bycopy = 0x8,
     OBJC_TQ_Byref = 0x10,
-    OBJC_TQ_Oneway = 0x20
+    OBJC_TQ_Oneway = 0x20,
+
+    /// The nullability qualifier is set when the nullability of the
+    /// result or parameter was expressed via a context-sensitive
+    /// keyword.
+    OBJC_TQ_CSNullability = 0x40
   };
 
 protected:

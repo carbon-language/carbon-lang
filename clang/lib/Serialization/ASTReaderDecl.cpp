@@ -1042,7 +1042,9 @@ void ASTDeclReader::VisitObjCPropertyDecl(ObjCPropertyDecl *D) {
   VisitNamedDecl(D);
   D->setAtLoc(ReadSourceLocation(Record, Idx));
   D->setLParenLoc(ReadSourceLocation(Record, Idx));
-  D->setType(GetTypeSourceInfo(Record, Idx));
+  QualType T = Reader.readType(F, Record, Idx);
+  TypeSourceInfo *TSI = GetTypeSourceInfo(Record, Idx);
+  D->setType(T, TSI);
   // FIXME: stable encoding
   D->setPropertyAttributes(
                       (ObjCPropertyDecl::PropertyAttributeKind)Record[Idx++]);

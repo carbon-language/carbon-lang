@@ -1135,49 +1135,150 @@ ObjCMethodDecl *Sema::tryCaptureObjCSelf(SourceLocation Loc) {
 }
 
 static QualType stripObjCInstanceType(ASTContext &Context, QualType T) {
+  QualType origType = T;
+  if (auto nullability = AttributedType::stripOuterNullability(T)) {
+    if (T == Context.getObjCInstanceType()) {
+      return Context.getAttributedType(
+               AttributedType::getNullabilityAttrKind(*nullability),
+               Context.getObjCIdType(),
+               Context.getObjCIdType());
+    }
+
+    return origType;
+  }
+
   if (T == Context.getObjCInstanceType())
     return Context.getObjCIdType();
   
-  return T;
+  return origType;
 }
 
-QualType Sema::getMessageSendResultType(QualType ReceiverType,
-                                        ObjCMethodDecl *Method,
-                                    bool isClassMessage, bool isSuperMessage) {
+/// Determine the result type of a message send based on the receiver type,
+/// method, and the kind of message send.
+///
+/// This is the "base" result type, which will still need to be adjusted
+/// to account for nullability.
+static QualType getBaseMessageSendResultType(Sema &S,
+                                             QualType ReceiverType,
+                                             ObjCMethodDecl *Method,
+                                             bool isClassMessage,
+                                             bool isSuperMessage) {
   assert(Method && "Must have a method");
   if (!Method->hasRelatedResultType())
     return Method->getSendResultType();
-  
+
+  ASTContext &Context = S.Context;
+
+  // Local function that transfers the nullability of the method's
+  // result type to the returned result.
+  auto transferNullability = [&](QualType type) -> QualType {
+    // If the method's result type has nullability, extract it.
+    if (auto nullability = Method->getSendResultType()->getNullability(Context)){
+      // Strip off any outer nullability sugar from the provided type.
+      (void)AttributedType::stripOuterNullability(type);
+
+      // Form a new attributed type using the method result type's nullability.
+      return Context.getAttributedType(
+               AttributedType::getNullabilityAttrKind(*nullability),
+               type,
+               type);
+    }
+
+    return type;
+  };
+
   // If a method has a related return type:
   //   - if the method found is an instance method, but the message send
   //     was a class message send, T is the declared return type of the method
   //     found
   if (Method->isInstanceMethod() && isClassMessage)
     return stripObjCInstanceType(Context, Method->getSendResultType());
-  
-  //   - if the receiver is super, T is a pointer to the class of the 
+
+  //   - if the receiver is super, T is a pointer to the class of the
   //     enclosing method definition
   if (isSuperMessage) {
-    if (ObjCMethodDecl *CurMethod = getCurMethodDecl())
-      if (ObjCInterfaceDecl *Class = CurMethod->getClassInterface())
-        return Context.getObjCObjectPointerType(
-                                        Context.getObjCInterfaceType(Class));
+    if (ObjCMethodDecl *CurMethod = S.getCurMethodDecl())
+      if (ObjCInterfaceDecl *Class = CurMethod->getClassInterface()) {
+        return transferNullability(
+                 Context.getObjCObjectPointerType(
+                   Context.getObjCInterfaceType(Class)));
+      }
   }
-    
+
   //   - if the receiver is the name of a class U, T is a pointer to U
   if (ReceiverType->getAs<ObjCInterfaceType>() ||
       ReceiverType->isObjCQualifiedInterfaceType())
-    return Context.getObjCObjectPointerType(ReceiverType);
-  //   - if the receiver is of type Class or qualified Class type, 
+    return transferNullability(Context.getObjCObjectPointerType(ReceiverType));
+  //   - if the receiver is of type Class or qualified Class type,
   //     T is the declared return type of the method.
   if (ReceiverType->isObjCClassType() ||
       ReceiverType->isObjCQualifiedClassType())
     return stripObjCInstanceType(Context, Method->getSendResultType());
-  
+
   //   - if the receiver is id, qualified id, Class, or qualified Class, T
   //     is the receiver type, otherwise
   //   - T is the type of the receiver expression.
-  return ReceiverType;
+  return transferNullability(ReceiverType);
+}
+
+QualType Sema::getMessageSendResultType(QualType ReceiverType,
+                                        ObjCMethodDecl *Method,
+                                        bool isClassMessage,
+                                        bool isSuperMessage) {
+  // Produce the result type.
+  QualType resultType = getBaseMessageSendResultType(*this, ReceiverType,
+                                                     Method,
+                                                     isClassMessage,
+                                                     isSuperMessage);
+
+  // Map the nullability of the result into a table index.
+  unsigned receiverNullabilityIdx = 0;
+  if (auto nullability = ReceiverType->getNullability(Context))
+    receiverNullabilityIdx = 1 + static_cast<unsigned>(*nullability);
+
+  unsigned resultNullabilityIdx = 0;
+  if (auto nullability = resultType->getNullability(Context))
+    resultNullabilityIdx = 1 + static_cast<unsigned>(*nullability);
+
+  // The table of nullability mappings, indexed by the receiver's nullability
+  // and then the result type's nullability.
+  static const uint8_t None = 0;
+  static const uint8_t NonNull = 1;
+  static const uint8_t Nullable = 2;
+  static const uint8_t Unspecified = 3;
+  static const uint8_t nullabilityMap[4][4] = {
+    //                  None        NonNull       Nullable    Unspecified
+    /* None */        { None,       None,         Nullable,   None },
+    /* NonNull */     { None,       NonNull,      Nullable,   Unspecified },
+    /* Nullable */    { Nullable,   Nullable,     Nullable,   Nullable },
+    /* Unspecified */ { None,       Unspecified,  Nullable,   Unspecified }
+  };
+
+  unsigned newResultNullabilityIdx
+    = nullabilityMap[receiverNullabilityIdx][resultNullabilityIdx];
+  if (newResultNullabilityIdx == resultNullabilityIdx)
+    return resultType;
+
+  // Strip off the existing nullability. This removes as little type sugar as
+  // possible.
+  do {
+    if (auto attributed = dyn_cast<AttributedType>(resultType.getTypePtr())) {
+      resultType = attributed->getModifiedType();
+    } else {
+      resultType = resultType.getDesugaredType(Context);
+    }
+  } while (resultType->getNullability(Context));
+
+  // Add nullability back if needed.
+  if (newResultNullabilityIdx > 0) {
+    auto newNullability
+      = static_cast<NullabilityKind>(newResultNullabilityIdx-1);
+    return Context.getAttributedType(
+             AttributedType::getNullabilityAttrKind(newNullability),
+             resultType, resultType);
+  }
+
+  return resultType;
 }
 
 /// Look for an ObjC method whose result type exactly matches the given type.

@@ -20,19 +20,19 @@
  * \param[in] range output value is unsigned int
  * \result return index
  */
-- (unsigned int)MethodMyProto:(id)anObject inRange:(unsigned int)range;
+- (unsigned int)MethodMyProto:(nullable id)anObject inRange:(unsigned int)range;
 /**
  * \brief PropertyMyProto - This is protocol's property.
 */
-@property (copy) id PropertyMyProto;
+@property (copy, nonnull) id PropertyMyProto;
 /**
  * \brief ClassMethodMyProto
 */
 + ClassMethodMyProto;
 @end
 // CHECK: <Declaration>@protocol MyProto\n@end</Declaration>
-// CHECK: <Declaration>- (unsigned int)MethodMyProto:(id)anObject inRange:(unsigned int)range;</Declaration>
-// CHECK: <Declaration>@optional\n@property(readwrite, copy, atomic) id PropertyMyProto;</Declaration>
+// CHECK: <Declaration>- (unsigned int)MethodMyProto:(nullable id)anObject inRange:(unsigned int)range;</Declaration>
+// CHECK: <Declaration>@optional\n@property(readwrite, copy, atomic, nonnull) id PropertyMyProto;</Declaration>
 // CHECK: <Declaration>+ (id)ClassMethodMyProto;</Declaration>
 
 /**

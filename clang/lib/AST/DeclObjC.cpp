@@ -1862,16 +1862,18 @@ ObjCPropertyDecl *ObjCPropertyDecl::Create(ASTContext &C, DeclContext *DC,
                                            IdentifierInfo *Id,
                                            SourceLocation AtLoc,
                                            SourceLocation LParenLoc,
-                                           TypeSourceInfo *T,
+                                           QualType T,
+                                           TypeSourceInfo *TSI,
                                            PropertyControl propControl) {
-  return new (C, DC) ObjCPropertyDecl(DC, L, Id, AtLoc, LParenLoc, T);
+  return new (C, DC) ObjCPropertyDecl(DC, L, Id, AtLoc, LParenLoc, T, TSI,
+                                      propControl);
 }
 
 ObjCPropertyDecl *ObjCPropertyDecl::CreateDeserialized(ASTContext &C,
                                                        unsigned ID) {
   return new (C, ID) ObjCPropertyDecl(nullptr, SourceLocation(), nullptr,
                                       SourceLocation(), SourceLocation(),
-                                      nullptr);
+                                      QualType(), nullptr, None);
 }
 
 //===----------------------------------------------------------------------===//

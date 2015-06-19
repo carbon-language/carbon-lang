@@ -2859,6 +2859,26 @@ public:
   /// Valid types should not have multiple attributes with different CCs.
   const AttributedType *getCallingConvAttributedType(QualType T) const;
 
+  /// Check whether a nullability type specifier can be added to the given
+  /// type.
+  ///
+  /// \param type The type to which the nullability specifier will be
+  /// added. On success, this type will be updated appropriately.
+  ///
+  /// \param nullability The nullability specifier to add.
+  ///
+  /// \param nullabilityLoc The location of the nullability specifier.
+  ///
+  /// \param isContextSensitive Whether this nullability specifier was
+  /// written as a context-sensitive keyword (in an Objective-C
+  /// method) or an Objective-C property attribute, rather than as an
+  /// underscored type specifier.
+  ///
+  /// \returns true if nullability cannot be applied, false otherwise.
+  bool checkNullabilityTypeSpecifier(QualType &type, NullabilityKind nullability,
+                                     SourceLocation nullabilityLoc,
+                                     bool isContextSensitive);
+
   /// \brief Stmt attributes - this routine is the top level dispatcher.
   StmtResult ProcessStmtAttributes(Stmt *Stmt, AttributeList *Attrs,
                                    SourceRange Range);
@@ -2934,7 +2954,8 @@ public:
                       const unsigned Attributes,
                       const unsigned AttributesAsWritten,
                       bool *isOverridingProperty,
-                      TypeSourceInfo *T,
+                      QualType T,
+                      TypeSourceInfo *TSI,
                       tok::ObjCKeywordKind MethodImplKind);
 
   /// Called by ActOnProperty and HandlePropertyInClassExtension to
@@ -2950,7 +2971,8 @@ public:
                                        const bool isReadWrite,
                                        const unsigned Attributes,
                                        const unsigned AttributesAsWritten,
-                                       TypeSourceInfo *T,
+                                       QualType T,
+                                       TypeSourceInfo *TSI,
                                        tok::ObjCKeywordKind MethodImplKind,
                                        DeclContext *lexicalDC = nullptr);
 

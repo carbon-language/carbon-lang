@@ -542,7 +542,7 @@ void ASTDeclWriter::VisitObjCMethodDecl(ObjCMethodDecl *D) {
 
   // FIXME: stable encoding for @required/@optional
   Record.push_back(D->getImplementationControl());
-  // FIXME: stable encoding for in/out/inout/bycopy/byref/oneway
+  // FIXME: stable encoding for in/out/inout/bycopy/byref/oneway/nullability
   Record.push_back(D->getObjCDeclQualifier());
   Record.push_back(D->hasRelatedResultType());
   Writer.AddTypeRef(D->getReturnType(), Record);
@@ -678,6 +678,7 @@ void ASTDeclWriter::VisitObjCPropertyDecl(ObjCPropertyDecl *D) {
   VisitNamedDecl(D);
   Writer.AddSourceLocation(D->getAtLoc(), Record);
   Writer.AddSourceLocation(D->getLParenLoc(), Record);
+  Writer.AddTypeRef(D->getType(), Record);
   Writer.AddTypeSourceInfo(D->getTypeSourceInfo(), Record);
   // FIXME: stable encoding
   Record.push_back((unsigned)D->getPropertyAttributes());
