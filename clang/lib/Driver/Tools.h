@@ -733,6 +733,33 @@ public:
 };
 }
 
+/// SHAVE tools -- Directly call moviCompile and moviAsm
+namespace SHAVE {
+class LLVM_LIBRARY_VISIBILITY Compile : public Tool {
+public:
+  Compile(const ToolChain &TC) : Tool("moviCompile", "movicompile", TC) {}
+
+  bool hasIntegratedCPP() const override { return true; }
+
+  void ConstructJob(Compilation &C, const JobAction &JA,
+                    const InputInfo &Output, const InputInfoList &Inputs,
+                    const llvm::opt::ArgList &TCArgs,
+                    const char *LinkingOutput) const override;
+};
+
+class LLVM_LIBRARY_VISIBILITY Assemble : public Tool {
+public:
+  Assemble(const ToolChain &TC) : Tool("moviAsm", "moviAsm", TC) {}
+
+  bool hasIntegratedCPP() const override { return false; } // not sure.
+
+  void ConstructJob(Compilation &C, const JobAction &JA,
+                    const InputInfo &Output, const InputInfoList &Inputs,
+                    const llvm::opt::ArgList &TCArgs,
+                    const char *LinkingOutput) const override;
+};
+} // end namespace SHAVE
+
 } // end namespace tools
 } // end namespace driver
 } // end namespace clang

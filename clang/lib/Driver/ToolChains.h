@@ -861,6 +861,27 @@ public:
                            llvm::opt::ArgStringList &CmdArgs) const override;
 };
 
+/// SHAVEToolChain - A tool chain using the compiler installed by the the
+// Movidius SDK into MV_TOOLS_DIR (which we assume will be copied to llvm's
+// installation dir) to perform all subcommands.
+class LLVM_LIBRARY_VISIBILITY SHAVEToolChain : public Generic_GCC {
+public:
+  SHAVEToolChain(const Driver &D, const llvm::Triple &Triple,
+            const llvm::opt::ArgList &Args);
+  ~SHAVEToolChain() override;
+
+  virtual Tool *SelectTool(const JobAction &JA) const override;
+
+protected:
+  Tool *getTool(Action::ActionClass AC) const override;
+  Tool *buildAssembler() const override;
+  Tool *buildLinker() const override;
+
+private:
+  mutable std::unique_ptr<Tool> Compiler;
+  mutable std::unique_ptr<Tool> Assembler;
+};
+
 } // end namespace toolchains
 } // end namespace driver
 } // end namespace clang

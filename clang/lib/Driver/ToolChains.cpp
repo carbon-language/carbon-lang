@@ -3727,3 +3727,46 @@ void XCore::AddCXXStdlibLibArgs(const ArgList &Args,
                                 ArgStringList &CmdArgs) const {
   // We don't output any lib args. This is handled by xcc.
 }
+
+// SHAVEToolChain does not call Clang's C compiler.
+// We override SelectTool to avoid testing ShouldUseClangCompiler().
+Tool *SHAVEToolChain::SelectTool(const JobAction &JA) const {
+  switch (JA.getKind()) {
+  case Action::CompileJobClass:
+    if (!Compiler)
+      Compiler.reset(new tools::SHAVE::Compile(*this));
+    return Compiler.get();
+  case Action::AssembleJobClass:
+    if (!Assembler)
+      Assembler.reset(new tools::SHAVE::Assemble(*this));
+    return Assembler.get();
+  default:
+    return ToolChain::getTool(JA.getKind());
+  }
+}
+
+SHAVEToolChain::SHAVEToolChain(const Driver &D, const llvm::Triple &Triple,
+                     const ArgList &Args)
+    : Generic_GCC(D, Triple, Args) {}
+
+SHAVEToolChain::~SHAVEToolChain() {}
+
+/// Following are methods necessary to avoid having moviClang be an abstract
+/// class.
+
+Tool *SHAVEToolChain::getTool(Action::ActionClass AC) const {
+  // SelectTool() must find a tool using the method in the superclass.
+  // There's nothing we can do if that fails.
+  llvm_unreachable("SHAVEToolChain can't getTool");
+}
+
+Tool *SHAVEToolChain::buildLinker() const {
+  // SHAVEToolChain executables can not be linked except by the vendor tools.
+  llvm_unreachable("SHAVEToolChain can't buildLinker");
+}
+
+Tool *SHAVEToolChain::buildAssembler() const {
+  // This one you'd think should be reachable since we expose an
+  // assembler to the driver, except not the way it expects.
+  llvm_unreachable("SHAVEToolChain can't buildAssembler");
+}
