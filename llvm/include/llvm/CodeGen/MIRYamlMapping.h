@@ -26,15 +26,9 @@ namespace yaml {
 
 struct MachineFunction {
   StringRef Name;
-  unsigned Alignment;
-  bool ExposesReturnsTwice;
-  bool HasInlineAsm;
-
-  MachineFunction() {
-    Alignment = 0;
-    ExposesReturnsTwice = false;
-    HasInlineAsm = false;
-  }
+  unsigned Alignment = 0;
+  bool ExposesReturnsTwice = false;
+  bool HasInlineAsm = false;
 };
 
 template <> struct MappingTraits<MachineFunction> {
