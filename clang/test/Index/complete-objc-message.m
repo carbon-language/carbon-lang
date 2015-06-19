@@ -189,6 +189,14 @@ void test_DO(DO *d, A* a) {
   [d method:a aout:&a];
 }
 
+@interface Nullability
+- (nonnull A *)method:(nullable A *)param;
+@end
+
+void test_Nullability(Nullability *n, A* a) {
+  [n method: a];
+}
+
 // RUN: c-index-test -code-completion-at=%s:23:19 %s | FileCheck -check-prefix=CHECK-CC1 %s
 // CHECK-CC1: {TypedText categoryClassMethod} (35)
 // CHECK-CC1: {TypedText classMethod1:}{Placeholder (id)}{HorizontalSpace  }{TypedText withKeyword:}{Placeholder (int)} (35)
@@ -335,3 +343,6 @@ void test_DO(DO *d, A* a) {
 
 // RUN: c-index-test -code-completion-at=%s:189:6 %s | FileCheck -check-prefix=CHECK-DISTRIB-OBJECTS %s
 // CHECK-DISTRIB-OBJECTS: ObjCInstanceMethodDecl:{ResultType void}{TypedText method:}{Placeholder (in bycopy A *)}{HorizontalSpace  }{TypedText result:}{Placeholder (out byref A **)} (35)
+
+// RUN: c-index-test -code-completion-at=%s:197:6 %s | FileCheck -check-prefix=CHECK-NULLABLE %s
+// CHECK-NULLABLE: ObjCInstanceMethodDecl:{ResultType A * __nonnull}{TypedText method:}{Placeholder (nullable A *)}

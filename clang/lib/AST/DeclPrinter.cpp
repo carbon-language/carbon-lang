@@ -937,18 +937,6 @@ void DeclPrinter::VisitClassTemplateDecl(ClassTemplateDecl *D) {
 // Objective-C declarations
 //----------------------------------------------------------------------------
 
-/// Strip off the top-level nullability annotation, if it's there.
-static Optional<NullabilityKind> stripOuterNullability(QualType &T) {
-  if (auto attributed = dyn_cast<AttributedType>(T.getTypePtr())) {
-    if (auto nullability = attributed->getImmediateNullability()) {
-      T = attributed->getModifiedType();
-      return nullability;
-    }
-  }
-
-  return None;
- }
-
 void DeclPrinter::PrintObjCMethodType(ASTContext &Ctx, 
                                       Decl::ObjCDeclQualifier Quals, 
                                       QualType T) {
@@ -966,7 +954,7 @@ void DeclPrinter::PrintObjCMethodType(ASTContext &Ctx,
   if (Quals & Decl::ObjCDeclQualifier::OBJC_TQ_Oneway)
     Out << "oneway ";
   if (Quals & Decl::ObjCDeclQualifier::OBJC_TQ_CSNullability) {
-    if (auto nullability = stripOuterNullability(T)) {
+    if (auto nullability = AttributedType::stripOuterNullability(T)) {
       Out << getNullabilitySpelling(*nullability).substr(2) << ' ';
     }
   }
@@ -1212,7 +1200,7 @@ void DeclPrinter::VisitObjCPropertyDecl(ObjCPropertyDecl *PDecl) {
     
     if (PDecl->getPropertyAttributes() &
         ObjCPropertyDecl::OBJC_PR_nullability) {
-      if (auto nullability = stripOuterNullability(T)) {
+      if (auto nullability = AttributedType::stripOuterNullability(T)) {
         if (*nullability == NullabilityKind::Unspecified &&
             (PDecl->getPropertyAttributes() &
                ObjCPropertyDecl::OBJC_PR_null_resettable)) {
