@@ -287,13 +287,13 @@ DelayLoaderAtom::createContent(MachineTypes machine) const {
 
 } // namespace idata
 
-std::error_code IdataPass::perform(std::unique_ptr<SimpleFile> &file) {
-  if (file->sharedLibrary().empty())
+std::error_code IdataPass::perform(SimpleFile &file) {
+  if (file.sharedLibrary().empty())
     return std::error_code();
 
-  idata::IdataContext context(*file, _dummyFile, _ctx);
+  idata::IdataContext context(file, _dummyFile, _ctx);
   std::map<StringRef, std::vector<COFFSharedLibraryAtom *>> sharedAtoms =
-      groupByLoadName(*file);
+      groupByLoadName(file);
   bool hasImports = false;
   bool hasDelayImports = false;
 
@@ -321,7 +321,7 @@ std::error_code IdataPass::perform(std::unique_ptr<SimpleFile> &file) {
   if (hasDelayImports)
     new (_alloc) idata::DelayNullImportDirectoryAtom(context);
 
-  replaceSharedLibraryAtoms(*file);
+  replaceSharedLibraryAtoms(&file);
 
   return std::error_code();
 }
@@ -342,8 +342,8 @@ IdataPass::groupByLoadName(SimpleFile &file) {
 }
 
 /// Transforms a reference to a COFFSharedLibraryAtom to a real reference.
-void IdataPass::replaceSharedLibraryAtoms(SimpleFile &file) {
-  for (const DefinedAtom *atom : file.defined()) {
+void IdataPass::replaceSharedLibraryAtoms(SimpleFile *file) {
+  for (const DefinedAtom *atom : file->defined()) {
     for (const Reference *ref : *atom) {
       const Atom *target = ref->target();
       auto *sharedAtom = dyn_cast<SharedLibraryAtom>(target);

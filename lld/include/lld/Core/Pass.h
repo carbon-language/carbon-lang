@@ -34,7 +34,7 @@ public:
   virtual ~Pass() { }
 
   /// Do the actual work of the Pass.
-  virtual std::error_code perform(std::unique_ptr<SimpleFile> &mergedFile) = 0;
+  virtual std::error_code perform(SimpleFile &mergedFile) = 0;
 
 protected:
   // Only subclassess can be instantiated.

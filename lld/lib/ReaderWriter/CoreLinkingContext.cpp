@@ -22,8 +22,8 @@ namespace {
 class OrderPass : public Pass {
 public:
   /// Sorts atoms by position
-  std::error_code perform(std::unique_ptr<SimpleFile> &file) override {
-    SimpleFile::DefinedAtomRange defined = file->definedAtoms();
+  std::error_code perform(SimpleFile &file) override {
+    SimpleFile::DefinedAtomRange defined = file.definedAtoms();
     std::sort(defined.begin(), defined.end(), DefinedAtom::compareByPosition);
     return std::error_code();
   }
@@ -40,10 +40,8 @@ bool CoreLinkingContext::validateImpl(raw_ostream &) {
 
 void CoreLinkingContext::addPasses(PassManager &pm) {
   for (StringRef name : _passNames) {
-    if (name.equals("order"))
-      pm.add(std::unique_ptr<Pass>(new OrderPass()));
-    else
-      llvm_unreachable("bad pass name");
+    assert(name == "order" && "bad pass name");
+    pm.add(std::unique_ptr<Pass>(new OrderPass()));
   }
 }
 

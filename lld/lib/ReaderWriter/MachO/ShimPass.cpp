@@ -44,9 +44,9 @@ public:
       : _ctx(context), _archHandler(_ctx.archHandler()),
         _stubInfo(_archHandler.stubInfo()), _file("<mach-o shim pass>") {}
 
-  std::error_code perform(std::unique_ptr<SimpleFile> &mergedFile) override {
+  std::error_code perform(SimpleFile &mergedFile) override {
     // Scan all references in all atoms.
-    for (const DefinedAtom *atom : mergedFile->defined()) {
+    for (const DefinedAtom *atom : mergedFile.defined()) {
       for (const Reference *ref : *atom) {
         // Look at non-call branches.
         if (!_archHandler.isNonCallBranch(*ref))
@@ -77,9 +77,8 @@ public:
               });
 
     // Add all shims to master file.
-    for (const DefinedAtom *shim : shims) {
-      mergedFile->addAtom(*shim);
-    }
+    for (const DefinedAtom *shim : shims)
+      mergedFile.addAtom(*shim);
 
     return std::error_code();
   }

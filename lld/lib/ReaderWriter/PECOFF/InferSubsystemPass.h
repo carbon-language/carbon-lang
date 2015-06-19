@@ -22,7 +22,7 @@ class InferSubsystemPass : public lld::Pass {
 public:
   InferSubsystemPass(PECOFFLinkingContext &ctx) : _ctx(ctx) {}
 
-  std::error_code perform(std::unique_ptr<SimpleFile> &file) override {
+  std::error_code perform(SimpleFile &file) override {
     if (_ctx.getSubsystem() != WindowsSubsystem::IMAGE_SUBSYSTEM_UNKNOWN)
       return std::error_code();
 
@@ -41,7 +41,7 @@ public:
     const std::string main = _ctx.decorateSymbol("mainCRTStartup");
     const std::string mainAt = _ctx.decorateSymbol("mainCRTStartup@");
 
-    for (const DefinedAtom *atom : file->definedAtoms()) {
+    for (const DefinedAtom *atom : file.definedAtoms()) {
       if (atom->name() == wWinMain || atom->name().startswith(wWinMainAt) ||
           atom->name() == winMain || atom->name().startswith(winMainAt)) {
         _ctx.setSubsystem(WindowsSubsystem::IMAGE_SUBSYSTEM_WINDOWS_GUI);

@@ -302,7 +302,7 @@ template <typename ELFT> class RelocationPass : public Pass {
 public:
   RelocationPass(MipsLinkingContext &ctx);
 
-  std::error_code perform(std::unique_ptr<SimpleFile> &mf) override;
+  std::error_code perform(SimpleFile &mf) override;
 
 private:
   /// \brief Reference to the linking context.
@@ -428,14 +428,14 @@ RelocationPass<ELFT>::RelocationPass(MipsLinkingContext &ctx)
 }
 
 template <typename ELFT>
-std::error_code RelocationPass<ELFT>::perform(std::unique_ptr<SimpleFile> &mf) {
-  for (const auto &atom : mf->defined())
+std::error_code RelocationPass<ELFT>::perform(SimpleFile &mf) {
+  for (const auto &atom : mf.defined())
     for (const auto &ref : *atom)
       collectReferenceInfo(*cast<MipsELFDefinedAtom<ELFT>>(atom),
                            const_cast<Reference &>(*ref));
 
   // Process all references.
-  for (const auto &atom : mf->defined())
+  for (const auto &atom : mf.defined())
     for (const auto &ref : *atom)
       handleReference(*cast<MipsELFDefinedAtom<ELFT>>(atom),
                       const_cast<Reference &>(*ref));
@@ -457,22 +457,22 @@ std::error_code RelocationPass<ELFT>::perform(std::unique_ptr<SimpleFile> &mf) {
       !_tlsGotVector.empty()) {
     SimpleDefinedAtom *ga = new (_file._alloc) MipsGlobalOffsetTableAtom(_file);
     ga->setOrdinal(ordinal++);
-    mf->addAtom(*ga);
+    mf.addAtom(*ga);
   }
 
   for (auto &got : _localGotVector) {
     got->setOrdinal(ordinal++);
-    mf->addAtom(*got);
+    mf.addAtom(*got);
   }
 
   for (auto &got : _globalGotVector) {
     got->setOrdinal(ordinal++);
-    mf->addAtom(*got);
+    mf.addAtom(*got);
   }
 
   for (auto &got : _tlsGotVector) {
     got->setOrdinal(ordinal++);
-    mf->addAtom(*got);
+    mf.addAtom(*got);
   }
 
   // Create and emit PLT0 entry.
@@ -484,19 +484,19 @@ std::error_code RelocationPass<ELFT>::perform(std::unique_ptr<SimpleFile> &mf) {
 
   if (plt0Atom) {
     plt0Atom->setOrdinal(ordinal++);
-    mf->addAtom(*plt0Atom);
+    mf.addAtom(*plt0Atom);
   }
 
   // Emit regular PLT entries firts.
   for (auto &plt : _pltRegVector) {
     plt->setOrdinal(ordinal++);
-    mf->addAtom(*plt);
+    mf.addAtom(*plt);
   }
 
   // microMIPS PLT entries come after regular ones.
   for (auto &plt : _pltMicroVector) {
     plt->setOrdinal(ordinal++);
-    mf->addAtom(*plt);
+    mf.addAtom(*plt);
   }
 
   // Assign PLT0 to GOTPLT entries.
@@ -506,17 +506,17 @@ std::error_code RelocationPass<ELFT>::perform(std::unique_ptr<SimpleFile> &mf) {
 
   for (auto &gotplt : _gotpltVector) {
     gotplt->setOrdinal(ordinal++);
-    mf->addAtom(*gotplt);
+    mf.addAtom(*gotplt);
   }
 
   for (auto obj : _objectVector) {
     obj->setOrdinal(ordinal++);
-    mf->addAtom(*obj);
+    mf.addAtom(*obj);
   }
 
   for (auto la25 : _la25Vector) {
     la25->setOrdinal(ordinal++);
-    mf->addAtom(*la25);
+    mf.addAtom(*la25);
   }
 
   return std::error_code();

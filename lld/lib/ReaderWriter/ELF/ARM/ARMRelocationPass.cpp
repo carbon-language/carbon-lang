@@ -673,35 +673,35 @@ public:
   ///
   /// After all references are handled, the atoms created during that are all
   /// added to mf.
-  std::error_code perform(std::unique_ptr<SimpleFile> &mf) override {
+  std::error_code perform(SimpleFile &mf) override {
     ScopedTask task(getDefaultDomain(), "ARM GOT/PLT Pass");
     DEBUG_WITH_TYPE(
         "ARM", llvm::dbgs() << "Undefined Atoms" << "\n";
         for (const auto &atom
-             : mf->undefined()) {
+             : mf.undefined()) {
           llvm::dbgs() << " Name of Atom: " << atom->name().str() << "\n";
         }
 
         llvm::dbgs() << "Shared Library Atoms" << "\n";
         for (const auto &atom
-             : mf->sharedLibrary()) {
+             : mf.sharedLibrary()) {
           llvm::dbgs() << " Name of Atom: " << atom->name().str() << "\n";
         }
 
         llvm::dbgs() << "Absolute Atoms" << "\n";
         for (const auto &atom
-             : mf->absolute()) {
+             : mf.absolute()) {
           llvm::dbgs() << " Name of Atom: " << atom->name().str() << "\n";
         }
 
         llvm::dbgs() << "Defined Atoms" << "\n";
         for (const auto &atom
-             : mf->defined()) {
+             : mf.defined()) {
           llvm::dbgs() << " Name of Atom: " << atom->name().str() << "\n";
         });
 
     // Process all references.
-    for (const auto &atom : mf->defined()) {
+    for (const auto &atom : mf.defined()) {
       for (const auto &ref : *atom) {
         handleReference(*atom, *ref);
       }
@@ -711,53 +711,53 @@ public:
     uint64_t ordinal = 0;
     if (_plt0) {
       _plt0->setOrdinal(ordinal++);
-      mf->addAtom(*_plt0);
+      mf.addAtom(*_plt0);
       _plt0_d->setOrdinal(ordinal++);
-      mf->addAtom(*_plt0_d);
+      mf.addAtom(*_plt0_d);
     }
     for (auto &pltKV : _pltAtoms) {
       auto &plt = pltKV.second;
       if (auto *v = plt._veneer) {
         v->setOrdinal(ordinal++);
-        mf->addAtom(*v);
+        mf.addAtom(*v);
       }
       auto *p = plt._plt;
       p->setOrdinal(ordinal++);
-      mf->addAtom(*p);
+      mf.addAtom(*p);
     }
     if (_null) {
       _null->setOrdinal(ordinal++);
-      mf->addAtom(*_null);
+      mf.addAtom(*_null);
     }
     if (_plt0) {
       _got0->setOrdinal(ordinal++);
-      mf->addAtom(*_got0);
+      mf.addAtom(*_got0);
       _got1->setOrdinal(ordinal++);
-      mf->addAtom(*_got1);
+      mf.addAtom(*_got1);
     }
     for (auto &gotKV : _gotAtoms) {
       auto &got = gotKV.second;
       got->setOrdinal(ordinal++);
-      mf->addAtom(*got);
+      mf.addAtom(*got);
     }
     for (auto &gotKV : _gotpltAtoms) {
       auto &got = gotKV.second;
       got->setOrdinal(ordinal++);
-      mf->addAtom(*got);
+      mf.addAtom(*got);
     }
     for (auto &objectKV : _objectAtoms) {
       auto &obj = objectKV.second;
       obj->setOrdinal(ordinal++);
-      mf->addAtom(*obj);
+      mf.addAtom(*obj);
     }
     for (auto &veneerKV : _veneerAtoms) {
       auto &veneer = veneerKV.second;
       auto *m = veneer._mapping;
       m->setOrdinal(ordinal++);
-      mf->addAtom(*m);
+      mf.addAtom(*m);
       auto *v = veneer._veneer;
       v->setOrdinal(ordinal++);
-      mf->addAtom(*v);
+      mf.addAtom(*v);
     }
 
     return std::error_code();

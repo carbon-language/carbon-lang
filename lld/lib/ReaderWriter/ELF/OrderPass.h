@@ -19,8 +19,8 @@ namespace elf {
 /// \brief This pass sorts atoms by file and atom ordinals.
 class OrderPass : public Pass {
 public:
-  std::error_code perform(std::unique_ptr<SimpleFile> &file) override {
-    parallel_sort(file->definedAtoms().begin(), file->definedAtoms().end(),
+  std::error_code perform(SimpleFile &file) override {
+    parallel_sort(file.definedAtoms().begin(), file.definedAtoms().end(),
                   DefinedAtom::compareByPosition);
     return std::error_code();
   }

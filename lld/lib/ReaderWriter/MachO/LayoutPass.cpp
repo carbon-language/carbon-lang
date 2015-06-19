@@ -437,10 +437,10 @@ void LayoutPass::undecorate(SimpleFile::DefinedAtomRange &atomRange,
 }
 
 /// Perform the actual pass
-std::error_code LayoutPass::perform(std::unique_ptr<SimpleFile> &mergedFile) {
+std::error_code LayoutPass::perform(SimpleFile &mergedFile) {
   // sort the atoms
   ScopedTask task(getDefaultDomain(), "LayoutPass");
-  SimpleFile::DefinedAtomRange atomRange = mergedFile->definedAtoms();
+  SimpleFile::DefinedAtomRange atomRange = mergedFile.definedAtoms();
 
   // Build follow on tables
   buildFollowOnTable(atomRange);

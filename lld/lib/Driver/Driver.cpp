@@ -117,7 +117,7 @@ bool Driver::link(LinkingContext &ctx, raw_ostream &diagnostics) {
   ScopedTask passTask(getDefaultDomain(), "Passes");
   PassManager pm;
   ctx.addPasses(pm);
-  if (std::error_code ec = pm.runOnFile(merged)) {
+  if (std::error_code ec = pm.runOnFile(*merged)) {
     diagnostics << "Failed to write file '" << ctx.outputPath()
                 << "': " << ec.message() << "\n";
     return false;

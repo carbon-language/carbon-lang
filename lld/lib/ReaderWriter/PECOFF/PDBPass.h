@@ -21,7 +21,7 @@ class PDBPass : public lld::Pass {
 public:
   PDBPass(PECOFFLinkingContext &ctx) : _ctx(ctx) {}
 
-  std::error_code perform(std::unique_ptr<SimpleFile> &file) override {
+  std::error_code perform(SimpleFile &) override {
     if (_ctx.getDebug())
       touch(_ctx.getPDBFilePath());
     return std::error_code();

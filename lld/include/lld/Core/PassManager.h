@@ -31,7 +31,7 @@ public:
     _passes.push_back(std::move(pass));
   }
 
-  std::error_code runOnFile(std::unique_ptr<SimpleFile> &file) {
+  std::error_code runOnFile(SimpleFile &file) {
     for (std::unique_ptr<Pass> &pass : _passes)
       if (std::error_code EC = pass->perform(file))
         return EC;

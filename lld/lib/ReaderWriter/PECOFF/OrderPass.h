@@ -55,8 +55,8 @@ static bool compare(const DefinedAtom *lhs, const DefinedAtom *rhs) {
 
 class OrderPass : public lld::Pass {
 public:
-  std::error_code perform(std::unique_ptr<SimpleFile> &file) override {
-    SimpleFile::DefinedAtomRange defined = file->definedAtoms();
+  std::error_code perform(SimpleFile &file) override {
+    SimpleFile::DefinedAtomRange defined = file.definedAtoms();
     parallel_sort(defined.begin(), defined.end(), compare);
     return std::error_code();
   }

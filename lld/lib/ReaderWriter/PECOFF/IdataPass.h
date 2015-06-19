@@ -195,13 +195,13 @@ class IdataPass : public lld::Pass {
 public:
   IdataPass(const PECOFFLinkingContext &ctx) : _dummyFile(ctx), _ctx(ctx) {}
 
-  std::error_code perform(std::unique_ptr<SimpleFile> &file) override;
+  std::error_code perform(SimpleFile &file) override;
 
 private:
   std::map<StringRef, std::vector<COFFSharedLibraryAtom *>>
   groupByLoadName(SimpleFile &file);
 
-  void replaceSharedLibraryAtoms(SimpleFile &file);
+  void replaceSharedLibraryAtoms(SimpleFile *file);
 
   // A dummy file with which all the atoms created in the pass will be
   // associated. Atoms need to be associated to an input file even if it's not
