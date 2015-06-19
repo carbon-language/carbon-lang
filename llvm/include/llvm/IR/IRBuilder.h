@@ -245,7 +245,8 @@ public:
   /// filled in with the null terminated string value specified.  The new global
   /// variable will be marked mergable with any others of the same contents.  If
   /// Name is specified, it is the name of the global variable created.
-  GlobalVariable *CreateGlobalString(StringRef Str, const Twine &Name = "");
+  GlobalVariable *CreateGlobalString(StringRef Str, const Twine &Name = "",
+                                     unsigned AddressSpace = 0);
 
   /// \brief Get a constant value representing either true or false.
   ConstantInt *getInt1(bool V) {
@@ -1191,8 +1192,9 @@ public:
 
   /// \brief Same as CreateGlobalString, but return a pointer with "i8*" type
   /// instead of a pointer to array of i8.
-  Value *CreateGlobalStringPtr(StringRef Str, const Twine &Name = "") {
-    GlobalVariable *gv = CreateGlobalString(Str, Name);
+  Value *CreateGlobalStringPtr(StringRef Str, const Twine &Name = "",
+                               unsigned AddressSpace = 0) {
+    GlobalVariable *gv = CreateGlobalString(Str, Name, AddressSpace);
     Value *zero = ConstantInt::get(Type::getInt32Ty(Context), 0);
     Value *Args[] = { zero, zero };
     return CreateInBoundsGEP(gv->getValueType(), gv, Args, Name);

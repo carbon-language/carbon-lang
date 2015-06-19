@@ -25,13 +25,15 @@ using namespace llvm;
 /// specified.  If Name is specified, it is the name of the global variable
 /// created.
 GlobalVariable *IRBuilderBase::CreateGlobalString(StringRef Str,
-                                                  const Twine &Name) {
+                                                  const Twine &Name,
+                                                  unsigned AddressSpace) {
   Constant *StrConstant = ConstantDataArray::getString(Context, Str);
   Module &M = *BB->getParent()->getParent();
   GlobalVariable *GV = new GlobalVariable(M, StrConstant->getType(),
                                           true, GlobalValue::PrivateLinkage,
-                                          StrConstant);
-  GV->setName(Name);
+                                          StrConstant, Name, nullptr,
+                                          GlobalVariable::NotThreadLocal,
+                                          AddressSpace);
   GV->setUnnamedAddr(true);
   return GV;
 }
