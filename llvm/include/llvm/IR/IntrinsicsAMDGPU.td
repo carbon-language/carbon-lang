@@ -1,4 +1,4 @@
-//===- IntrinsicsR600.td - Defines R600 intrinsics ---------*- tablegen -*-===//
+//===- IntrinsicsAMDGPU.td - Defines AMDGPU intrinsics -----*- tablegen -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
