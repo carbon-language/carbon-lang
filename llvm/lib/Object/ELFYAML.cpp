@@ -44,7 +44,7 @@ ScalarEnumerationTraits<ELFYAML::ELF_EM>::enumeration(IO &IO,
   ECase(EM_386)
   ECase(EM_68K)
   ECase(EM_88K)
-  ECase(EM_486)
+  ECase(EM_IAMCU)
   ECase(EM_860)
   ECase(EM_MIPS)
   ECase(EM_S370)
