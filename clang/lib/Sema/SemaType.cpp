@@ -5072,7 +5072,8 @@ bool Sema::checkNullabilityTypeSpecifier(QualType &type,
       Diag(nullabilityLoc, diag::err_nullability_conflicting)
         << static_cast<unsigned>(nullability)
         << isContextSensitive
-        << static_cast<unsigned>(*existingNullability);
+        << static_cast<unsigned>(*existingNullability)
+        << false;
 
       // Try to find the typedef with the existing nullability specifier.
       if (auto typedefType = desugared->getAs<TypedefType>()) {
