@@ -674,7 +674,7 @@ DWARFContextInMemory::DWARFContextInMemory(const object::ObjectFile &Obj,
         uint64_t SymAddr = 0;
         uint64_t SectionLoadAddress = 0;
         object::symbol_iterator Sym = Reloc.getSymbol();
-        object::section_iterator RSec = Reloc.getSection();
+        object::section_iterator RSec = Obj.section_end();
 
         // First calculate the address of the symbol or section as it appears
         // in the objct file
@@ -682,8 +682,13 @@ DWARFContextInMemory::DWARFContextInMemory(const object::ObjectFile &Obj,
           Sym->getAddress(SymAddr);
           // Also remember what section this symbol is in for later
           Sym->getSection(RSec);
-        } else if (RSec != Obj.section_end())
+        } else if (auto *MObj = dyn_cast<MachOObjectFile>(&Obj)) {
+          // MachO also has relocations that point to sections and
+          // scattered relocations.
+          // FIXME: We are not handling scattered relocations, do we have to?
+          RSec = MObj->getRelocationSection(Reloc.getRawDataRefImpl());
           SymAddr = RSec->getAddress();
+        }
 
         // If we are given load addresses for the sections, we need to adjust:
         // SymAddr = (Address of Symbol Or Section in File) -

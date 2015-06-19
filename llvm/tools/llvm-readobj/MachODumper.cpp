@@ -479,7 +479,7 @@ void MachODumper::printRelocation(const MachOObjectFile *Obj,
         return;
     }
   } else if (!IsScattered) {
-    section_iterator SecI = Reloc.getSection();
+    section_iterator SecI = Obj->getRelocationSection(DR);
     if (SecI != Obj->section_end()) {
       if (error(SecI->getName(TargetName)))
         return;
