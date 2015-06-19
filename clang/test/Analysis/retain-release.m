@@ -2164,6 +2164,13 @@ void testCFReturnsNotRetained() {
   CFRelease(obj); // // expected-warning {{Incorrect decrement of the reference count of an object that is not owned at this point by the caller}}
 }
 
+void testCFReturnsNotRetainedAnnotated() {
+  extern void getViaParam2(CFTypeRef * __nonnull CF_RETURNS_NOT_RETAINED outObj);
+  CFTypeRef obj;
+  getViaParam2(&obj);
+  CFRelease(obj); // // expected-warning {{Incorrect decrement of the reference count of an object that is not owned at this point by the caller}}
+}
+
 void testCFReturnsRetained() {
   extern int copyViaParam(CFTypeRef * CF_RETURNS_RETAINED outObj);
   CFTypeRef obj;
