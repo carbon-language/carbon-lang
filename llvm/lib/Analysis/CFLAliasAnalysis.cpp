@@ -14,8 +14,7 @@
 // Alias Analysis" by Zhang Q, Lyu M R, Yuan H, and Su Z. -- to summarize the
 // papers, we build a graph of the uses of a variable, where each node is a
 // memory location, and each edge is an action that happened on that memory
-// location.  The "actions" can be one of Dereference, Reference, Assign, or
-// Assign.
+// location.  The "actions" can be one of Dereference, Reference, or Assign.
 //
 // Two variables are considered as aliasing iff you can reach one value's node
 // from the other value's node and the language formed by concatenating all of
