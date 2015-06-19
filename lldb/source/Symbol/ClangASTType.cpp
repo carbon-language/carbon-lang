@@ -5380,6 +5380,7 @@ ClangASTType::AddObjCClassProperty (const char *property_name,
                                                                                       &m_ast->Idents.get(property_name),
                                                                                       clang::SourceLocation(), //Source Location for AT
                                                                                       clang::SourceLocation(), //Source location for (
+                                                                                      ivar_decl->getType(),
                                                                                       prop_type_source);
             
             if (property_decl)
