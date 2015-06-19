@@ -81,6 +81,8 @@ public:
     AS_Declspec,
     /// __ptr16, alignas(...), etc.
     AS_Keyword,
+    /// Context-sensitive version of a keyword attribute.
+    AS_ContextSensitiveKeyword,
     /// #pragma ...
     AS_Pragma
   };
@@ -119,9 +121,6 @@ private:
 
   /// True if this has a ParsedType
   unsigned HasParsedType : 1;
-
-  /// True when this keyword attribute is a context-sensitive keyword.
-  unsigned IsContextSensitiveKeyword : 1;
 
   unsigned AttrKind : 8;
 
@@ -223,8 +222,7 @@ private:
       ScopeLoc(scopeLoc), EllipsisLoc(ellipsisLoc), NumArgs(numArgs),
       SyntaxUsed(syntaxUsed), Invalid(false), UsedAsTypeAttr(false),
       IsAvailability(false), IsTypeTagForDatatype(false), IsProperty(false),
-      HasParsedType(false), IsContextSensitiveKeyword(false),
-      NextInPosition(nullptr), NextInPool(nullptr) {
+      HasParsedType(false), NextInPosition(nullptr), NextInPool(nullptr) {
     if (numArgs) memcpy(getArgsBuffer(), args, numArgs * sizeof(ArgsUnion));
     AttrKind = getKind(getName(), getScopeName(), syntaxUsed);
   }
@@ -242,8 +240,8 @@ private:
       ScopeLoc(scopeLoc), EllipsisLoc(), NumArgs(1), SyntaxUsed(syntaxUsed),
       Invalid(false), UsedAsTypeAttr(false), IsAvailability(true),
       IsTypeTagForDatatype(false), IsProperty(false), HasParsedType(false),
-      IsContextSensitiveKeyword(false), UnavailableLoc(unavailable),
-      MessageExpr(messageExpr), NextInPosition(nullptr), NextInPool(nullptr) {
+      UnavailableLoc(unavailable), MessageExpr(messageExpr),
+      NextInPosition(nullptr), NextInPool(nullptr) {
     ArgsUnion PVal(Parm);
     memcpy(getArgsBuffer(), &PVal, sizeof(ArgsUnion));
     new (&getAvailabilitySlot(IntroducedSlot)) AvailabilityChange(introduced);
@@ -263,8 +261,7 @@ private:
     ScopeLoc(scopeLoc), EllipsisLoc(), NumArgs(3), SyntaxUsed(syntaxUsed),
     Invalid(false), UsedAsTypeAttr(false), IsAvailability(false),
     IsTypeTagForDatatype(false), IsProperty(false), HasParsedType(false),
-    IsContextSensitiveKeyword(false), NextInPosition(nullptr),
-    NextInPool(nullptr) {
+    NextInPosition(nullptr), NextInPool(nullptr) {
     ArgsVector Args;
     Args.push_back(Parm1);
     Args.push_back(Parm2);
@@ -282,8 +279,7 @@ private:
       ScopeLoc(scopeLoc), EllipsisLoc(), NumArgs(1), SyntaxUsed(syntaxUsed),
       Invalid(false), UsedAsTypeAttr(false), IsAvailability(false),
       IsTypeTagForDatatype(true), IsProperty(false), HasParsedType(false),
-      IsContextSensitiveKeyword(false), NextInPosition(nullptr),
-      NextInPool(nullptr) {
+      NextInPosition(nullptr), NextInPool(nullptr) {
     ArgsUnion PVal(ArgKind);
     memcpy(getArgsBuffer(), &PVal, sizeof(ArgsUnion));
     TypeTagForDatatypeData &ExtraData = getTypeTagForDatatypeDataSlot();
@@ -301,8 +297,7 @@ private:
         ScopeLoc(scopeLoc), EllipsisLoc(), NumArgs(0), SyntaxUsed(syntaxUsed),
         Invalid(false), UsedAsTypeAttr(false), IsAvailability(false),
         IsTypeTagForDatatype(false), IsProperty(false), HasParsedType(true),
-        IsContextSensitiveKeyword(false), NextInPosition(nullptr),
-        NextInPool(nullptr) {
+        NextInPosition(nullptr), NextInPool(nullptr) {
     new (&getTypeBuffer()) ParsedType(typeArg);
     AttrKind = getKind(getName(), getScopeName(), syntaxUsed);
   }
@@ -316,8 +311,7 @@ private:
       ScopeLoc(scopeLoc), EllipsisLoc(), NumArgs(0), SyntaxUsed(syntaxUsed),
       Invalid(false), UsedAsTypeAttr(false), IsAvailability(false),
       IsTypeTagForDatatype(false), IsProperty(true), HasParsedType(false),
-      IsContextSensitiveKeyword(false), NextInPosition(nullptr),
-      NextInPool(nullptr) {
+      NextInPosition(nullptr), NextInPool(nullptr) {
     new (&getPropertyDataBuffer()) PropertyData(getterId, setterId);
     AttrKind = getKind(getName(), getScopeName(), syntaxUsed);
   }
@@ -351,22 +345,19 @@ public:
 
   bool isAlignasAttribute() const {
     // FIXME: Use a better mechanism to determine this.
-    return getKind() == AT_Aligned && SyntaxUsed == AS_Keyword;
+    return getKind() == AT_Aligned && isKeywordAttribute();
   }
 
   bool isDeclspecAttribute() const { return SyntaxUsed == AS_Declspec; }
   bool isCXX11Attribute() const {
     return SyntaxUsed == AS_CXX11 || isAlignasAttribute();
   }
-  bool isKeywordAttribute() const { return SyntaxUsed == AS_Keyword; }
-
-  bool isContextSensitiveKeywordAttribute() const {
-    return IsContextSensitiveKeyword;
+  bool isKeywordAttribute() const {
+    return SyntaxUsed == AS_Keyword || SyntaxUsed == AS_ContextSensitiveKeyword;
   }
 
-  void setContextSensitiveKeywordAttribute() {
-    assert(SyntaxUsed == AS_Keyword);
-    IsContextSensitiveKeyword = true;
+  bool isContextSensitiveKeywordAttribute() const {
+    return SyntaxUsed == AS_ContextSensitiveKeyword;
   }
 
   bool isInvalid() const { return Invalid; }

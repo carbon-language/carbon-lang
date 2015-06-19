@@ -7718,6 +7718,11 @@ def warn_null_resettable_setter : Warning<
   "synthesized setter %0 for null_resettable property %1 does not handle nil">,
   InGroup<Nullability>;
 
+def warn_nullability_missing : Warning<
+  "%select{pointer|block pointer|member pointer}0 is missing a nullability "
+  "type specifier (__nonnull, __nullable, or __null_unspecified)">,
+  InGroup<NullabilityCompleteness>;
+
 }
 
 } // end of sema component.
