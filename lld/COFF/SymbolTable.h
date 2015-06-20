@@ -82,11 +82,6 @@ public:
 private:
   std::error_code addDirectives(InputFile *File);
 
-  std::error_code addObject(ObjectFile *File);
-  std::error_code addArchive(ArchiveFile *File);
-  std::error_code addImport(ImportFile *File);
-  std::error_code addBitcode(BitcodeFile *File);
-
   std::error_code resolve(SymbolBody *Body);
   std::error_code resolveLazy(StringRef Name);
   std::error_code addMemberFile(Lazy *Body);

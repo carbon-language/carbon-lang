@@ -30,14 +30,25 @@ SymbolTable::SymbolTable() {
 std::error_code SymbolTable::addFile(std::unique_ptr<InputFile> File) {
   if (auto EC = File->parse())
     return EC;
-  InputFile *FileP = File.release();
-  if (auto *P = dyn_cast<ObjectFile>(FileP))
-    return addObject(P);
-  if (auto *P = dyn_cast<ArchiveFile>(FileP))
-    return addArchive(P);
-  if (auto *P = dyn_cast<BitcodeFile>(FileP))
-    return addBitcode(P);
-  return addImport(cast<ImportFile>(FileP));
+  InputFile *F = File.release();
+  if (auto *P = dyn_cast<ObjectFile>(F)) {
+    ObjectFiles.emplace_back(P);
+  } else if (auto *P = dyn_cast<ArchiveFile>(F)) {
+    ArchiveFiles.emplace_back(P);
+  } else if (auto *P = dyn_cast<BitcodeFile>(F)) {
+    BitcodeFiles.emplace_back(P);
+  } else {
+    ImportFiles.emplace_back(cast<ImportFile>(F));
+  }
+
+  for (SymbolBody *B : F->getSymbols())
+    if (B->isExternal())
+      if (auto EC = resolve(B))
+        return EC;
+
+  // If a object file contains .drectve section,
+  // read that and add files listed there.
+  return addDirectives(F);
 }
 
 std::error_code SymbolTable::addDirectives(InputFile *File) {
@@ -54,45 +65,6 @@ std::error_code SymbolTable::addDirectives(InputFile *File) {
     }
     addFile(std::move(Lib));
   }
-  return std::error_code();
-}
-
-std::error_code SymbolTable::addObject(ObjectFile *File) {
-  ObjectFiles.emplace_back(File);
-  for (SymbolBody *Body : File->getSymbols())
-    if (Body->isExternal())
-      if (auto EC = resolve(Body))
-        return EC;
-
-  // If an object file contains .drectve section, read it and add
-  // files listed in the section.
-  return addDirectives(File);
-}
-
-std::error_code SymbolTable::addArchive(ArchiveFile *File) {
-  ArchiveFiles.emplace_back(File);
-  for (SymbolBody *Body : File->getSymbols())
-    if (auto EC = resolve(Body))
-      return EC;
-  return std::error_code();
-}
-
-std::error_code SymbolTable::addBitcode(BitcodeFile *File) {
-  BitcodeFiles.emplace_back(File);
-  for (SymbolBody *Body : File->getSymbols())
-    if (Body->isExternal())
-      if (auto EC = resolve(Body))
-        return EC;
-
-  // Add any linker directives from the module flags metadata.
-  return addDirectives(File);
-}
-
-std::error_code SymbolTable::addImport(ImportFile *File) {
-  ImportFiles.emplace_back(File);
-  for (SymbolBody *Body : File->getSymbols())
-    if (auto EC = resolve(Body))
-      return EC;
   return std::error_code();
 }
 
