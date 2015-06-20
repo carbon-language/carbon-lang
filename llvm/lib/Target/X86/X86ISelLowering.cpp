@@ -24239,7 +24239,7 @@ static SDValue PerformSExtCombine(SDNode *N, SelectionDAG &DAG,
   SDValue N0 = N->getOperand(0);
   EVT VT = N->getValueType(0);
   EVT SVT = VT.getScalarType();
-  EVT InVT = N0->getValueType(0);
+  EVT InVT = N0.getValueType();
   EVT InSVT = InVT.getScalarType();
   SDLoc DL(N);
 
@@ -24257,7 +24257,7 @@ static SDValue PerformSExtCombine(SDNode *N, SelectionDAG &DAG,
   }
 
   if (!DCI.isBeforeLegalizeOps()) {
-    if (N0.getValueType() == MVT::i1) {
+    if (InVT == MVT::i1) {
       SDValue Zero = DAG.getConstant(0, DL, VT);
       SDValue AllOnes =
         DAG.getConstant(APInt::getAllOnesValue(VT.getSizeInBits()), DL, VT);
@@ -24268,7 +24268,7 @@ static SDValue PerformSExtCombine(SDNode *N, SelectionDAG &DAG,
 
   if (VT.isVector()) {
     auto ExtendToVec128 = [&DAG](SDLoc DL, SDValue N) {
-      EVT InVT = N->getValueType(0);
+      EVT InVT = N.getValueType();
       EVT OutVT = EVT::getVectorVT(*DAG.getContext(), InVT.getScalarType(),
                                    128 / InVT.getScalarSizeInBits());
       SmallVector<SDValue, 8> Opnds(128 / InVT.getSizeInBits(),

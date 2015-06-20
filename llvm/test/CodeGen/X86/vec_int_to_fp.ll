@@ -1328,3 +1328,53 @@ define <8 x float> @uitofp_8vf32_i8(<16 x i8> %a) {
   %cvt = uitofp <8 x i8> %shuf to <8 x float>
   ret <8 x float> %cvt
 }
+
+;
+; Aggregates
+;
+
+%Arguments = type <{ <8 x i8>, <8 x i16>, <8 x float>* }>
+define void @aggregate_sitofp_8f32_i16(%Arguments* nocapture readonly %a0) {
+; SSE2-LABEL: aggregate_sitofp_8f32_i16:
+; SSE2:       # BB#0:
+; SSE2-NEXT:    movq 24(%rdi), %rax
+; SSE2-NEXT:    movdqu 8(%rdi), %xmm0
+; SSE2-NEXT:    pshufd {{.*#+}} xmm1 = xmm0[2,3,0,1]
+; SSE2-NEXT:    punpcklwd {{.*#+}} xmm1 = xmm1[0,0,1,1,2,2,3,3]
+; SSE2-NEXT:    psrad $16, %xmm1
+; SSE2-NEXT:    cvtdq2ps %xmm1, %xmm1
+; SSE2-NEXT:    punpcklwd {{.*#+}} xmm0 = xmm0[0,0,1,1,2,2,3,3]
+; SSE2-NEXT:    psrad $16, %xmm0
+; SSE2-NEXT:    cvtdq2ps %xmm0, %xmm0
+; SSE2-NEXT:    movaps %xmm0, (%rax)
+; SSE2-NEXT:    movaps %xmm1, 16(%rax)
+; SSE2-NEXT:    retq
+;
+; AVX1-LABEL: aggregate_sitofp_8f32_i16:
+; AVX1:       # BB#0:
+; AVX1-NEXT:    movq 24(%rdi), %rax
+; AVX1-NEXT:    vmovdqu 8(%rdi), %xmm0
+; AVX1-NEXT:    vpmovsxwd %xmm0, %xmm1
+; AVX1-NEXT:    vpshufd {{.*#+}} xmm0 = xmm0[2,3,0,1]
+; AVX1-NEXT:    vpmovsxwd %xmm0, %xmm0
+; AVX1-NEXT:    vinsertf128 $1, %xmm0, %ymm1, %ymm0
+; AVX1-NEXT:    vcvtdq2ps %ymm0, %ymm0
+; AVX1-NEXT:    vmovaps %ymm0, (%rax)
+; AVX1-NEXT:    vzeroupper
+; AVX1-NEXT:    retq
+;
+; AVX2-LABEL: aggregate_sitofp_8f32_i16:
+; AVX2:       # BB#0:
+; AVX2-NEXT:    movq 24(%rdi), %rax
+; AVX2-NEXT:    vpmovsxwd 8(%rdi), %ymm0
+; AVX2-NEXT:    vcvtdq2ps %ymm0, %ymm0
+; AVX2-NEXT:    vmovaps %ymm0, (%rax)
+; AVX2-NEXT:    vzeroupper
+; AVX2-NEXT:    retq
+ %1 = load %Arguments, %Arguments* %a0, align 1
+ %2 = extractvalue %Arguments %1, 1
+ %3 = extractvalue %Arguments %1, 2
+ %4 = sitofp <8 x i16> %2 to <8 x float>
+ store <8 x float> %4, <8 x float>* %3, align 32
+ ret void
+}
