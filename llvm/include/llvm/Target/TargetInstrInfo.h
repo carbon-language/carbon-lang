@@ -724,7 +724,7 @@ public:
   /// order since the pattern evaluator stops checking as soon as it finds a
   /// faster sequence.
   /// \param Root - Instruction that could be combined with one of its operands
-  /// \param Patterns - Vector of possible combination patterns
+  /// \param Pattern - Vector of possible combination patterns
   virtual bool getMachineCombinerPatterns(
       MachineInstr &Root,
       SmallVectorImpl<MachineCombinerPattern::MC_PATTERN> &Pattern) const {
@@ -735,7 +735,7 @@ public:
   /// the instructions that could replace the original code sequence. The client
   /// has to decide whether the actual replacement is beneficial or not.
   /// \param Root - Instruction that could be combined with one of its operands
-  /// \param P - Combination pattern for Root
+  /// \param Pattern - Combination pattern for Root
   /// \param InsInstrs - Vector of new instructions that implement P
   /// \param DelInstrs - Old instructions, including Root, that could be
   /// replaced by InsInstr
