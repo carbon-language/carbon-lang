@@ -1301,12 +1301,9 @@ class BitPermutationSelector {
 
       // Now, remove all groups with this underlying value and rotation
       // factor.
-      for (auto I = BitGroups.begin(); I != BitGroups.end();) {
-        if (I->V == VRI.V && I->RLAmt == VRI.RLAmt)
-          I = BitGroups.erase(I);
-        else
-          ++I;
-      }
+      eraseMatchingBitGroups([VRI](const BitGroup &BG) {
+        return BG.V == VRI.V && BG.RLAmt == VRI.RLAmt;
+      });
     }
   }
 
@@ -1337,12 +1334,9 @@ class BitPermutationSelector {
       }
 
       // Now, remove all groups with this underlying value and rotation factor.
-      for (auto I = BitGroups.begin(); I != BitGroups.end();) {
-        if (I->V == VRI.V && I->RLAmt == VRI.RLAmt)
-          I = BitGroups.erase(I);
-        else
-          ++I;
-      }
+      eraseMatchingBitGroups([VRI](const BitGroup &BG) {
+        return BG.V == VRI.V && BG.RLAmt == VRI.RLAmt;
+      });
     }
 
     if (InstCnt) *InstCnt += BitGroups.size();
@@ -1544,7 +1538,7 @@ class BitPermutationSelector {
       // Repl32 true, but are trivially convertable to Repl32 false. Such a
       // group is trivially convertable if it overlaps only with the lower 32
       // bits, and the group has not been coalesced.
-      auto MatchingBG = [VRI](BitGroup &BG) {
+      auto MatchingBG = [VRI](const BitGroup &BG) {
         if (VRI.V != BG.V)
           return false;
 
@@ -1675,12 +1669,7 @@ class BitPermutationSelector {
 
       // Now, remove all groups with this underlying value and rotation
       // factor.
-      for (auto I = BitGroups.begin(); I != BitGroups.end();) {
-        if (MatchingBG(*I))
-          I = BitGroups.erase(I);
-        else
-          ++I;
-      }
+      eraseMatchingBitGroups(MatchingBG);
     }
   }
 
@@ -1740,12 +1729,10 @@ class BitPermutationSelector {
 
       // Now, remove all groups with this underlying value and rotation factor.
       if (Res)
-        for (auto I = BitGroups.begin(); I != BitGroups.end();) {
-          if (I->V == VRI.V && I->RLAmt == VRI.RLAmt && I->Repl32 == VRI.Repl32)
-            I = BitGroups.erase(I);
-          else
-            ++I;
-        }
+        eraseMatchingBitGroups([VRI](const BitGroup &BG) {
+          return BG.V == VRI.V && BG.RLAmt == VRI.RLAmt &&
+                 BG.Repl32 == VRI.Repl32;
+        });
     }
 
     // Because 64-bit rotates are more flexible than inserts, we might have a
@@ -1844,6 +1831,11 @@ class BitPermutationSelector {
     }
 
     return nullptr;
+  }
+
+  void eraseMatchingBitGroups(function_ref<bool(const BitGroup &)> F) {
+    BitGroups.erase(std::remove_if(BitGroups.begin(), BitGroups.end(), F),
+                    BitGroups.end());
   }
 
   SmallVector<ValueBit, 64> Bits;
