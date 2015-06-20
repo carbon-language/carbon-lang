@@ -13,8 +13,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef __LLVM_IR_STATEPOINT_H
-#define __LLVM_IR_STATEPOINT_H
+#ifndef LLVM_IR_STATEPOINT_H
+#define LLVM_IR_STATEPOINT_H
 
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/IR/BasicBlock.h"
