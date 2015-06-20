@@ -374,7 +374,8 @@ unsigned LowerSwitch::Clusterify(CaseVector& Cases, SwitchInst *SI) {
 
       // If the two neighboring cases go to the same destination, merge them
       // into a single case.
-      if ((nextValue-currentValue==1) && (currentBB == nextBB)) {
+      assert(nextValue > currentValue && "Cases should be strictly ascending");
+      if ((nextValue == currentValue + 1) && (currentBB == nextBB)) {
         I->High = J->High;
         J = Cases.erase(J);
       } else {
