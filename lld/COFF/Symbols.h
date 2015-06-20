@@ -49,6 +49,7 @@ public:
     DefinedAbsoluteKind,
     DefinedImportDataKind,
     DefinedImportThunkKind,
+    DefinedCommonKind,
     DefinedRegularKind,
     DefinedLast,
     LazyKind,
@@ -130,11 +131,32 @@ public:
   bool isCOMDAT() const { return Data->isCOMDAT(); }
   int compare(SymbolBody *Other) override;
 
-  // Returns true if this is a common symbol.
-  bool isCommon() const { return Sym.isCommon(); }
-  uint32_t getCommonSize() const { return Sym.getValue(); }
+private:
+  StringRef Name;
+  COFFObjectFile *COFFFile;
+  COFFSymbolRef Sym;
+  Chunk *Data;
+};
+
+class DefinedCommon : public Defined {
+public:
+  DefinedCommon(COFFObjectFile *F, COFFSymbolRef S, Chunk *C)
+      : Defined(DefinedCommonKind), COFFFile(F), Sym(S), Data(C) {}
+
+  static bool classof(const SymbolBody *S) {
+    return S->kind() == DefinedCommonKind;
+  }
+
+  StringRef getName() override;
+  uint64_t getRVA() override { return Data->getRVA(); }
+  bool isExternal() override { return Sym.isExternal(); }
+  void markLive() override { Data->markLive(); }
+  uint64_t getFileOff() override { return Data->getFileOff(); }
+  int compare(SymbolBody *Other) override;
 
 private:
+  uint64_t getSize() { return Sym.getValue(); }
+
   StringRef Name;
   COFFObjectFile *COFFFile;
   COFFSymbolRef Sym;

@@ -29,19 +29,19 @@ int DefinedRegular::compare(SymbolBody *Other) {
   auto *R = dyn_cast<DefinedRegular>(Other);
   if (!R)
     return 1;
-
-  // Common symbols are weaker than other types of defined symbols.
-  if (isCommon() && R->isCommon())
-    return (getCommonSize() < R->getCommonSize()) ? -1 : 1;
-  // TODO: we are not sure if regular defined symbol and common
-  // symbols are allowed to have the same name.
-  if (isCommon())
-    return -1;
-  if (R->isCommon())
-    return 1;
   if (isCOMDAT() && R->isCOMDAT())
     return 1;
   return 0;
+}
+
+int DefinedCommon::compare(SymbolBody *Other) {
+  if (Other->kind() < kind())
+    return -Other->compare(this);
+  if (auto *D = dyn_cast<DefinedCommon>(Other))
+    return getSize() > D->getSize() ? 1 : -1;
+  if (isa<DefinedRegular>(Other))
+    return -1;
+  return 1;
 }
 
 int DefinedBitcode::compare(SymbolBody *Other) {
@@ -63,10 +63,12 @@ int DefinedBitcode::compare(SymbolBody *Other) {
   // resolution will be done accurately after lowering bitcode symbols
   // to regular symbols in addCombinedLTOObject().
   if (auto *R = dyn_cast<DefinedRegular>(Other)) {
-    if (!R->isCommon() && !R->isCOMDAT() && !Replaceable)
+    if (!R->isCOMDAT() && !Replaceable)
       return 0;
     return -1;
   }
+  if (isa<DefinedCommon>(Other))
+    return -1;
   return 0;
 }
 
@@ -108,6 +110,12 @@ StringRef DefinedRegular::getName() {
   // Object files contain lots of non-external symbols, and creating
   // StringRefs for them (which involves lots of strlen() on the string table)
   // is a waste of time.
+  if (Name.empty())
+    COFFFile->getSymbolName(Sym, Name);
+  return Name;
+}
+
+StringRef DefinedCommon::getName() {
   if (Name.empty())
     COFFFile->getSymbolName(Sym, Name);
   return Name;

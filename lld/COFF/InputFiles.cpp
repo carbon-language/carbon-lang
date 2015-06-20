@@ -184,7 +184,7 @@ SymbolBody *ObjectFile::createSymbolBody(COFFSymbolRef Sym, const void *AuxP,
   if (Sym.isCommon()) {
     Chunk *C = new (Alloc) CommonChunk(Sym);
     Chunks.push_back(C);
-    return new (Alloc) DefinedRegular(COFFObj.get(), Sym, C);
+    return new (Alloc) DefinedCommon(COFFObj.get(), Sym, C);
   }
   if (Sym.isAbsolute()) {
     COFFObj->getSymbolName(Sym, Name);
