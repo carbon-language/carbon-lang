@@ -16,6 +16,7 @@ target_link_libraries(ClangQueryTests
   clangASTMatchers
   clangBasic
   clangDynamicASTMatchers
+  clangFrontend
   clangQuery
   clangTooling
   )
