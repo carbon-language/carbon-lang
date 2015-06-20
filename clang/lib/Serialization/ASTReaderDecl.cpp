@@ -1468,15 +1468,21 @@ void ASTDeclReader::MergeDefinitionData(
          "merging class definition into non-definition");
   auto &DD = *D->DefinitionData.getNotUpdated();
 
-  // If the new definition has new special members, let the name lookup
-  // code know that it needs to look in the new definition too.
-  //
-  // FIXME: We only need to do this if the merged definition declares members
-  // that this definition did not declare, or if it defines members that this
-  // definition did not define.
   if (DD.Definition != MergeDD.Definition) {
+    // If the new definition has new special members, let the name lookup
+    // code know that it needs to look in the new definition too.
+    //
+    // FIXME: We only need to do this if the merged definition declares members
+    // that this definition did not declare, or if it defines members that this
+    // definition did not define.
     Reader.MergedLookups[DD.Definition].push_back(MergeDD.Definition);
     DD.Definition->setHasExternalVisibleStorage();
+
+    // Track that we merged the definitions.
+    Reader.MergedDeclContexts.insert(std::make_pair(MergeDD.Definition,
+                                                    DD.Definition));
+    Reader.PendingDefinitions.erase(MergeDD.Definition);
+    MergeDD.Definition->IsCompleteDefinition = false;
     mergeDefinitionVisibility(DD.Definition, MergeDD.Definition);
   }
 
@@ -1586,42 +1592,21 @@ void ASTDeclReader::ReadCXXRecordDefinition(CXXRecordDecl *D, bool Update) {
   // because we're reading an update record, or because we've already done some
   // merging. Either way, just merge into it.
   CXXRecordDecl *Canon = D->getCanonicalDecl();
-  if (auto *CanonDD = Canon->DefinitionData.getNotUpdated()) {
-    if (CanonDD->Definition != DD->Definition)
-      Reader.MergedDeclContexts.insert(
-          std::make_pair(DD->Definition, CanonDD->Definition));
+  if (Canon->DefinitionData.getNotUpdated()) {
     MergeDefinitionData(Canon, std::move(*DD));
     D->DefinitionData = Canon->DefinitionData;
     return;
   }
 
-  // Propagate the DefinitionData pointer to the canonical declaration, so
-  // that all other deserialized declarations will see it.
-  if (Canon == D) {
-    D->DefinitionData = DD;
-    D->IsCompleteDefinition = true;
+  // Mark this declaration as being a definition.
+  D->IsCompleteDefinition = true;
+  D->DefinitionData = DD;
 
-    // If this is an update record, we can have redeclarations already. Make a
-    // note that we need to propagate the DefinitionData pointer onto them.
-    if (Update)
-      Reader.PendingDefinitions.insert(D);
-  } else if (auto *CanonDD = Canon->DefinitionData.getNotUpdated()) {
-    // We have already deserialized a definition of this record. This
-    // definition is no longer really a definition. Note that the pre-existing
-    // definition is the *real* definition.
-    Reader.MergedDeclContexts.insert(
-        std::make_pair(D, CanonDD->Definition));
-    D->DefinitionData = Canon->DefinitionData;
-    D->IsCompleteDefinition = false;
-    MergeDefinitionData(D, std::move(*DD));
-  } else {
-    Canon->DefinitionData = DD;
-    D->DefinitionData = Canon->DefinitionData;
-    D->IsCompleteDefinition = true;
-
-    // Note that we have deserialized a definition. Any declarations
-    // deserialized before this one will be be given the DefinitionData
-    // pointer at the end.
+  // If this is not the first declaration or is an update record, we can have
+  // other redeclarations already. Make a note that we need to propagate the
+  // DefinitionData pointer onto them.
+  if (Update || Canon != D) {
+    Canon->DefinitionData = D->DefinitionData;
     Reader.PendingDefinitions.insert(D);
   }
 }
@@ -1941,15 +1926,10 @@ ASTDeclReader::VisitClassTemplateSpecializationDeclImpl(
         // This declaration might be a definition. Merge with any existing
         // definition.
         if (auto *DDD = D->DefinitionData.getNotUpdated()) {
-          if (auto *CanonDD = CanonSpec->DefinitionData.getNotUpdated()) {
+          if (CanonSpec->DefinitionData.getNotUpdated())
             MergeDefinitionData(CanonSpec, std::move(*DDD));
-            Reader.PendingDefinitions.erase(D);
-            Reader.MergedDeclContexts.insert(
-                std::make_pair(D, CanonDD->Definition));
-            D->IsCompleteDefinition = false;
-          } else {
+          else
             CanonSpec->DefinitionData = D->DefinitionData;
-          }
         }
         D->DefinitionData = CanonSpec->DefinitionData;
       }
@@ -2246,14 +2226,12 @@ void ASTDeclReader::mergeTemplatePattern(RedeclarableTemplateDecl *D,
     auto *ExistingClass =
         cast<CXXRecordDecl>(ExistingPattern)->getCanonicalDecl();
     if (auto *DDD = DClass->DefinitionData.getNotUpdated()) {
-      if (auto *ExistingDD = ExistingClass->DefinitionData.getNotUpdated()) {
+      if (ExistingClass->DefinitionData.getNotUpdated()) {
         MergeDefinitionData(ExistingClass, std::move(*DDD));
-        Reader.PendingDefinitions.erase(DClass);
-        Reader.MergedDeclContexts.insert(
-            std::make_pair(DClass, ExistingDD->Definition));
-        DClass->IsCompleteDefinition = false;
       } else {
         ExistingClass->DefinitionData = DClass->DefinitionData;
+        // We may have skipped this before because we thought that DClass
+        // was the canonical declaration.
         Reader.PendingDefinitions.insert(DClass);
       }
     }
