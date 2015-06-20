@@ -15,6 +15,7 @@
 #include "llvm/ProfileData/InstrProfReader.h"
 #include "InstrProfIndexed.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ProfileData/InstrProf.h"
 #include <cassert>
 
 using namespace llvm;
@@ -125,16 +126,18 @@ std::error_code TextInstrProfReader::readNextRecord(InstrProfRecord &Record) {
     return error(instrprof_error::malformed);
 
   // Read each counter and fill our internal storage with the values.
-  Record.Counts.clear();
-  Record.Counts.reserve(NumCounters);
+  Counts.clear();
+  Counts.reserve(NumCounters);
   for (uint64_t I = 0; I < NumCounters; ++I) {
     if (Line.is_at_end())
       return error(instrprof_error::truncated);
     uint64_t Count;
     if ((Line++)->getAsInteger(10, Count))
       return error(instrprof_error::malformed);
-    Record.Counts.push_back(Count);
+    Counts.push_back(Count);
   }
+  // Give the record a reference to our internal counter storage.
+  Record.Counts = Counts;
 
   return success();
 }
@@ -277,10 +280,11 @@ RawInstrProfReader<IntPtrT>::readNextRecord(InstrProfRecord &Record) {
   Record.Hash = swap(Data->FuncHash);
   Record.Name = RawName;
   if (ShouldSwapBytes) {
-    Record.Counts.clear();
-    Record.Counts.reserve(RawCounts.size());
+    Counts.clear();
+    Counts.reserve(RawCounts.size());
     for (uint64_t Count : RawCounts)
-      Record.Counts.push_back(swap(Count));
+      Counts.push_back(swap(Count));
+    Record.Counts = Counts;
   } else
     Record.Counts = RawCounts;
 
@@ -297,49 +301,6 @@ template class RawInstrProfReader<uint64_t>;
 InstrProfLookupTrait::hash_value_type
 InstrProfLookupTrait::ComputeHash(StringRef K) {
   return IndexedInstrProf::ComputeHash(HashType, K);
-}
-
-typedef InstrProfLookupTrait::data_type data_type;
-typedef InstrProfLookupTrait::offset_type offset_type;
-
-data_type InstrProfLookupTrait::ReadData(StringRef K, const unsigned char *D,
-                                         offset_type N) {
-
-  // Check if the data is corrupt. If so, don't try to read it.
-  if (N % sizeof(uint64_t))
-    return data_type();
-
-  DataBuffer.clear();
-  uint64_t NumCounts;
-  uint64_t NumEntries = N / sizeof(uint64_t);
-  std::vector<uint64_t> CounterBuffer;
-  for (uint64_t I = 0; I < NumEntries; I += NumCounts) {
-    using namespace support;
-    // The function hash comes first.
-    uint64_t Hash = endian::readNext<uint64_t, little, unaligned>(D);
-
-    if (++I >= NumEntries)
-      return data_type();
-
-    // In v1, we have at least one count.
-    // Later, we have the number of counts.
-    NumCounts = (1 == FormatVersion)
-                    ? NumEntries - I
-                    : endian::readNext<uint64_t, little, unaligned>(D);
-    if (1 != FormatVersion)
-      ++I;
-
-    // If we have more counts than data, this is bogus.
-    if (I + NumCounts > NumEntries)
-      return data_type();
-
-    CounterBuffer.clear();
-    for (unsigned J = 0; J < NumCounts; ++J)
-      CounterBuffer.push_back(endian::readNext<uint64_t, little, unaligned>(D));
-
-    DataBuffer.push_back(InstrProfRecord(K, Hash, CounterBuffer));
-  }
-  return DataBuffer;
 }
 
 bool IndexedInstrProfReader::hasFormat(const MemoryBuffer &DataBuffer) {
@@ -381,9 +342,8 @@ std::error_code IndexedInstrProfReader::readHeader() {
   uint64_t HashOffset = endian::readNext<uint64_t, little, unaligned>(Cur);
 
   // The rest of the file is an on disk hash table.
-  Index.reset(InstrProfReaderIndex::Create(
-      Start + HashOffset, Cur, Start,
-      InstrProfLookupTrait(HashType, FormatVersion)));
+  Index.reset(InstrProfReaderIndex::Create(Start + HashOffset, Cur, Start,
+                                           InstrProfLookupTrait(HashType)));
   // Set up our iterator for readNextRecord.
   RecordIterator = Index->data_begin();
 
@@ -397,14 +357,21 @@ std::error_code IndexedInstrProfReader::getFunctionCounts(
     return error(instrprof_error::unknown_function);
 
   // Found it. Look for counters with the right hash.
-  ArrayRef<InstrProfRecord> Data = (*Iter);
-  if (Data.empty())
-    return error(instrprof_error::malformed);
-
-  for (unsigned I = 0, E = Data.size(); I < E; ++I) {
+  ArrayRef<uint64_t> Data = (*Iter).Data;
+  uint64_t NumCounts;
+  for (uint64_t I = 0, E = Data.size(); I != E; I += NumCounts) {
+    // The function hash comes first.
+    uint64_t FoundHash = Data[I++];
+    // In v1, we have at least one count. Later, we have the number of counts.
+    if (I == E)
+      return error(instrprof_error::malformed);
+    NumCounts = FormatVersion == 1 ? E - I : Data[I++];
+    // If we have more counts than data, this is bogus.
+    if (I + NumCounts > E)
+      return error(instrprof_error::malformed);
     // Check for a match and fill the vector if there is one.
-    if (Data[I].Hash == FuncHash) {
-      Counts = Data[I].Counts;
+    if (FoundHash == FuncHash) {
+      Counts = Data.slice(I, NumCounts);
       return success();
     }
   }
@@ -417,15 +384,30 @@ IndexedInstrProfReader::readNextRecord(InstrProfRecord &Record) {
   if (RecordIterator == Index->data_end())
     return error(instrprof_error::eof);
 
-  if ((*RecordIterator).empty())
-    return error(instrprof_error::malformed);
+  // Record the current function name.
+  Record.Name = (*RecordIterator).Name;
 
-  static unsigned RecordIndex = 0;
-  ArrayRef<InstrProfRecord> Data = (*RecordIterator);
-  Record = Data[RecordIndex++];
-  if (RecordIndex >= Data.size()) {
+  ArrayRef<uint64_t> Data = (*RecordIterator).Data;
+  // Valid data starts with a hash and either a count or the number of counts.
+  if (CurrentOffset + 1 > Data.size())
+    return error(instrprof_error::malformed);
+  // First we have a function hash.
+  Record.Hash = Data[CurrentOffset++];
+  // In version 1 we knew the number of counters implicitly, but in newer
+  // versions we store the number of counters next.
+  uint64_t NumCounts =
+      FormatVersion == 1 ? Data.size() - CurrentOffset : Data[CurrentOffset++];
+  if (CurrentOffset + NumCounts > Data.size())
+    return error(instrprof_error::malformed);
+  // And finally the counts themselves.
+  Record.Counts = Data.slice(CurrentOffset, NumCounts);
+
+  // If we've exhausted this function's data, increment the record.
+  CurrentOffset += NumCounts;
+  if (CurrentOffset == Data.size()) {
     ++RecordIterator;
-    RecordIndex = 0;
+    CurrentOffset = 0;
   }
+
   return success();
 }
