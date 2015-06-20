@@ -9,9 +9,15 @@ class F<string name> : Flag<["/", "-", "-?"], name>;
 class P<string name, string help> :
       Joined<["/", "-", "-?"], name#":">, HelpText<help>;
 
+def libpath: P<"libpath", "Object file search path">;
 def out    : P<"out", "Path to file to write output">;
 
 //==============================================================================
 // The flags below do nothing. They are defined only for lib.exe compatibility.
 //==============================================================================
+
+class QF<string name> : Joined<["/", "-", "-?"], name#":">;
+
+def ignore : QF<"ignore">;
+def machine: QF<"machine">;
 def nologo : F<"nologo">;
