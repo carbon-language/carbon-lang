@@ -3544,6 +3544,7 @@ public:
     case NullabilityKind::Unspecified:
       return attr_null_unspecified;
     }
+    llvm_unreachable("Unknown nullability kind.");
   }
 
   /// Strip off the top-level nullability annotation on the given
