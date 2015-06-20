@@ -16,6 +16,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/raw_ostream.h"
+#include <algorithm>
 
 using namespace llvm;
 using namespace llvm::object;
@@ -169,10 +170,9 @@ SectionRef SectionChunk::getSectionRef() {
 }
 
 CommonChunk::CommonChunk(const COFFSymbolRef S) : Sym(S) {
-  // Alignment is a section attribute, but common symbols don't
-  // belong to any section. How do we know common data alignments?
-  // Needs investigating. For now, we set a large number as an alignment.
-  Align = 16;
+  // Common symbols are aligned on natural boundaries up to 32 bytes.
+  // This is what MSVC link.exe does.
+  Align = std::min(uint64_t(32), NextPowerOf2(Sym.getValue()));
 }
 
 uint32_t CommonChunk::getPermissions() const {
