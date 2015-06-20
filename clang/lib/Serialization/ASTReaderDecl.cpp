@@ -3890,6 +3890,9 @@ void ASTDeclReader::UpdateDecl(Decl *D, ModuleFile &ModuleFile,
 
     case UPD_DECL_EXPORTED:
       unsigned SubmoduleID = readSubmoduleID(Record, Idx);
+      auto *Exported = cast<NamedDecl>(D);
+      if (auto *TD = dyn_cast<TagDecl>(Exported))
+        Exported = TD->getDefinition();
       Module *Owner = SubmoduleID ? Reader.getSubmodule(SubmoduleID) : nullptr;
       if (Reader.getContext().getLangOpts().ModulesLocalVisibility) {
         // FIXME: This doesn't send the right notifications if there are

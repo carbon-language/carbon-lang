@@ -5973,10 +5973,18 @@ bool Sema::hasVisibleDefinition(NamedDecl *D, NamedDecl **Suggested) {
   }
   assert(D && "missing definition for pattern of instantiated definition");
 
-  // FIXME: If we merged any other decl into D, and that declaration is visible,
-  // then we should consider a definition to be visible.
   *Suggested = D;
-  return LookupResult::isVisible(*this, D);
+  if (LookupResult::isVisible(*this, D))
+    return true;
+
+  // The external source may have additional definitions of this type that are
+  // visible, so complete the redeclaration chain now and ask again.
+  if (auto *Source = Context.getExternalSource()) {
+    Source->CompleteRedeclChain(D);
+    return LookupResult::isVisible(*this, D);
+  }
+
+  return false;
 }
 
 /// Locks in the inheritance model for the given class and all of its bases.
