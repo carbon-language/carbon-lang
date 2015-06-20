@@ -105,9 +105,10 @@ clang::CompilerInvocation *newInvocation(
 }
 
 bool runToolOnCode(clang::FrontendAction *ToolAction, const Twine &Code,
-                   const Twine &FileName) {
-  return runToolOnCodeWithArgs(
-      ToolAction, Code, std::vector<std::string>(), FileName);
+                   const Twine &FileName,
+                   std::shared_ptr<PCHContainerOperations> PCHContainerOps) {
+  return runToolOnCodeWithArgs(ToolAction, Code, std::vector<std::string>(),
+                               FileName, PCHContainerOps);
 }
 
 static std::vector<std::string>
@@ -121,17 +122,18 @@ getSyntaxOnlyToolArgs(const std::vector<std::string> &ExtraArgs,
   return Args;
 }
 
-bool runToolOnCodeWithArgs(clang::FrontendAction *ToolAction, const Twine &Code,
-                           const std::vector<std::string> &Args,
-                           const Twine &FileName,
-                           const FileContentMappings &VirtualMappedFiles) {
+bool runToolOnCodeWithArgs(
+    clang::FrontendAction *ToolAction, const Twine &Code,
+    const std::vector<std::string> &Args, const Twine &FileName,
+    std::shared_ptr<PCHContainerOperations> PCHContainerOps,
+    const FileContentMappings &VirtualMappedFiles) {
 
   SmallString<16> FileNameStorage;
   StringRef FileNameRef = FileName.toNullTerminatedStringRef(FileNameStorage);
   llvm::IntrusiveRefCntPtr<FileManager> Files(
       new FileManager(FileSystemOptions()));
   ToolInvocation Invocation(getSyntaxOnlyToolArgs(Args, FileNameRef),
-                            ToolAction, Files.get());
+                            ToolAction, Files.get(), PCHContainerOps);
 
   SmallString<1024> CodeStorage;
   Invocation.mapVirtualFile(FileNameRef,
@@ -173,21 +175,18 @@ public:
 
 }
 
-ToolInvocation::ToolInvocation(std::vector<std::string> CommandLine,
-                               ToolAction *Action, FileManager *Files)
-    : CommandLine(std::move(CommandLine)),
-      Action(Action),
-      OwnsAction(false),
-      Files(Files),
-      DiagConsumer(nullptr) {}
+ToolInvocation::ToolInvocation(
+    std::vector<std::string> CommandLine, ToolAction *Action,
+    FileManager *Files, std::shared_ptr<PCHContainerOperations> PCHContainerOps)
+    : CommandLine(std::move(CommandLine)), Action(Action), OwnsAction(false),
+      Files(Files), PCHContainerOps(PCHContainerOps), DiagConsumer(nullptr) {}
 
-ToolInvocation::ToolInvocation(std::vector<std::string> CommandLine,
-                               FrontendAction *FAction, FileManager *Files)
+ToolInvocation::ToolInvocation(
+    std::vector<std::string> CommandLine, FrontendAction *FAction,
+    FileManager *Files, std::shared_ptr<PCHContainerOperations> PCHContainerOps)
     : CommandLine(std::move(CommandLine)),
-      Action(new SingleFrontendActionFactory(FAction)),
-      OwnsAction(true),
-      Files(Files),
-      DiagConsumer(nullptr) {}
+      Action(new SingleFrontendActionFactory(FAction)), OwnsAction(true),
+      Files(Files), PCHContainerOps(PCHContainerOps), DiagConsumer(nullptr) {}
 
 ToolInvocation::~ToolInvocation() {
   if (OwnsAction)
@@ -232,13 +231,14 @@ bool ToolInvocation::run() {
     Invocation->getPreprocessorOpts().addRemappedFile(It.getKey(),
                                                       Input.release());
   }
-  return runInvocation(BinaryName, Compilation.get(), Invocation.release());
+  return runInvocation(BinaryName, Compilation.get(), Invocation.release(),
+                       PCHContainerOps);
 }
 
 bool ToolInvocation::runInvocation(
-    const char *BinaryName,
-    clang::driver::Compilation *Compilation,
-    clang::CompilerInvocation *Invocation) {
+    const char *BinaryName, clang::driver::Compilation *Compilation,
+    clang::CompilerInvocation *Invocation,
+    std::shared_ptr<PCHContainerOperations> PCHContainerOps) {
   // Show the invocation, with -v.
   if (Invocation->getHeaderSearchOpts().Verbose) {
     llvm::errs() << "clang Invocation:\n";
@@ -246,14 +246,16 @@ bool ToolInvocation::runInvocation(
     llvm::errs() << "\n";
   }
 
-  return Action->runInvocation(Invocation, Files, DiagConsumer);
+  return Action->runInvocation(Invocation, Files, PCHContainerOps,
+                               DiagConsumer);
 }
 
-bool FrontendActionFactory::runInvocation(CompilerInvocation *Invocation,
-                                          FileManager *Files,
-                                          DiagnosticConsumer *DiagConsumer) {
+bool FrontendActionFactory::runInvocation(
+    CompilerInvocation *Invocation, FileManager *Files,
+    std::shared_ptr<PCHContainerOperations> PCHContainerOps,
+    DiagnosticConsumer *DiagConsumer) {
   // Create a compiler instance to handle the actual work.
-  clang::CompilerInstance Compiler;
+  clang::CompilerInstance Compiler(PCHContainerOps);
   Compiler.setInvocation(Invocation);
   Compiler.setFileManager(Files);
 
@@ -276,8 +278,10 @@ bool FrontendActionFactory::runInvocation(CompilerInvocation *Invocation,
 }
 
 ClangTool::ClangTool(const CompilationDatabase &Compilations,
-                     ArrayRef<std::string> SourcePaths)
+                     ArrayRef<std::string> SourcePaths,
+                     std::shared_ptr<PCHContainerOperations> PCHContainerOps)
     : Compilations(Compilations), SourcePaths(SourcePaths),
+      PCHContainerOps(PCHContainerOps),
       Files(new FileManager(FileSystemOptions())), DiagConsumer(nullptr) {
   appendArgumentsAdjuster(getClangStripOutputAdjuster());
   appendArgumentsAdjuster(getClangSyntaxOnlyAdjuster());
@@ -357,7 +361,8 @@ int ClangTool::run(ToolAction *Action) {
       // FIXME: We need a callback mechanism for the tool writer to output a
       // customized message for each file.
       DEBUG({ llvm::dbgs() << "Processing: " << File << ".\n"; });
-      ToolInvocation Invocation(std::move(CommandLine), Action, Files.get());
+      ToolInvocation Invocation(std::move(CommandLine), Action, Files.get(),
+                                PCHContainerOps);
       Invocation.setDiagnosticConsumer(DiagConsumer);
       for (const auto &MappedFile : MappedFileContents)
         Invocation.mapVirtualFile(MappedFile.first, MappedFile.second);
@@ -385,12 +390,14 @@ public:
   ASTBuilderAction(std::vector<std::unique_ptr<ASTUnit>> &ASTs) : ASTs(ASTs) {}
 
   bool runInvocation(CompilerInvocation *Invocation, FileManager *Files,
+                     std::shared_ptr<PCHContainerOperations> PCHContainerOps,
                      DiagnosticConsumer *DiagConsumer) override {
     // FIXME: This should use the provided FileManager.
     std::unique_ptr<ASTUnit> AST = ASTUnit::LoadFromCompilerInvocation(
-        Invocation, CompilerInstance::createDiagnostics(
-                        &Invocation->getDiagnosticOpts(), DiagConsumer,
-                        /*ShouldOwnClient=*/false));
+        Invocation, PCHContainerOps,
+        CompilerInstance::createDiagnostics(&Invocation->getDiagnosticOpts(),
+                                            DiagConsumer,
+                                            /*ShouldOwnClient=*/false));
     if (!AST)
       return false;
 
@@ -406,22 +413,24 @@ int ClangTool::buildASTs(std::vector<std::unique_ptr<ASTUnit>> &ASTs) {
   return run(&Action);
 }
 
-std::unique_ptr<ASTUnit> buildASTFromCode(const Twine &Code,
-                                          const Twine &FileName) {
-  return buildASTFromCodeWithArgs(Code, std::vector<std::string>(), FileName);
+std::unique_ptr<ASTUnit>
+buildASTFromCode(const Twine &Code, const Twine &FileName,
+                 std::shared_ptr<PCHContainerOperations> PCHContainerOps) {
+  return buildASTFromCodeWithArgs(Code, std::vector<std::string>(), FileName,
+                                  PCHContainerOps);
 }
 
-std::unique_ptr<ASTUnit>
-buildASTFromCodeWithArgs(const Twine &Code,
-                         const std::vector<std::string> &Args,
-                         const Twine &FileName) {
+std::unique_ptr<ASTUnit> buildASTFromCodeWithArgs(
+    const Twine &Code, const std::vector<std::string> &Args,
+    const Twine &FileName,
+    std::shared_ptr<PCHContainerOperations> PCHContainerOps) {
   SmallString<16> FileNameStorage;
   StringRef FileNameRef = FileName.toNullTerminatedStringRef(FileNameStorage);
 
   std::vector<std::unique_ptr<ASTUnit>> ASTs;
   ASTBuilderAction Action(ASTs);
   ToolInvocation Invocation(getSyntaxOnlyToolArgs(Args, FileNameRef), &Action,
-                            nullptr);
+                            nullptr, PCHContainerOps);
 
   SmallString<1024> CodeStorage;
   Invocation.mapVirtualFile(FileNameRef,

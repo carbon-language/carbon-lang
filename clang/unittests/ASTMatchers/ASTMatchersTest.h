@@ -80,6 +80,7 @@ testing::AssertionResult matchesConditionally(
   Args.push_back("-frtti");
   Args.push_back("-fexceptions");
   if (!runToolOnCodeWithArgs(Factory->create(), Code, Args, Filename,
+                             std::make_shared<RawPCHContainerOperations>(),
                              VirtualMappedFiles)) {
     return testing::AssertionFailure() << "Parsing error in \"" << Code << "\"";
   }

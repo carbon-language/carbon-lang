@@ -76,7 +76,7 @@ void ModelInjector::onBodySynthesis(const NamedDecl *D) {
 
   // Modules are parsed by a separate CompilerInstance, so this code mimics that
   // behavior for models
-  CompilerInstance Instance;
+  CompilerInstance Instance(CI.getPCHContainerOperations());
   Instance.setInvocation(&*Invocation);
   Instance.createDiagnostics(
       new ForwardingDiagnosticConsumer(CI.getDiagnosticClient()),

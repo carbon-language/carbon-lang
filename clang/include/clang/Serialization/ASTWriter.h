@@ -17,6 +17,7 @@
 #include "clang/AST/ASTMutationListener.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclarationName.h"
+#include "clang/Frontend/PCHContainerOperations.h"
 #include "clang/AST/TemplateBase.h"
 #include "clang/Sema/SemaConsumer.h"
 #include "clang/Serialization/ASTBitCodes.h"
@@ -868,30 +869,28 @@ class PCHGenerator : public SemaConsumer {
   std::string OutputFile;
   clang::Module *Module;
   std::string isysroot;
-  raw_ostream *Out;
   Sema *SemaPtr;
-  SmallVector<char, 128> Buffer;
+  std::shared_ptr<PCHBuffer> Buffer;
   llvm::BitstreamWriter Stream;
   ASTWriter Writer;
   bool AllowASTWithErrors;
-  bool HasEmittedPCH;
 
 protected:
   ASTWriter &getWriter() { return Writer; }
   const ASTWriter &getWriter() const { return Writer; }
+  SmallVectorImpl<char> &getPCH() const { return Buffer->Data; }
 
 public:
   PCHGenerator(const Preprocessor &PP, StringRef OutputFile,
-               clang::Module *Module,
-               StringRef isysroot, raw_ostream *Out,
+               clang::Module *Module, StringRef isysroot,
+               std::shared_ptr<PCHBuffer> Buffer,
                bool AllowASTWithErrors = false);
   ~PCHGenerator() override;
   void InitializeSema(Sema &S) override { SemaPtr = &S; }
   void HandleTranslationUnit(ASTContext &Ctx) override;
   ASTMutationListener *GetASTMutationListener() override;
   ASTDeserializationListener *GetASTDeserializationListener() override;
-
-  bool hasEmittedPCH() const { return HasEmittedPCH; }
+  bool hasEmittedPCH() const { return Buffer->IsComplete; }
 };
 
 } // end namespace clang

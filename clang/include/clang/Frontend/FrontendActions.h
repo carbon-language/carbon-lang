@@ -85,10 +85,9 @@ public:
   /// create the PCHGenerator instance returned by CreateASTConsumer.
   ///
   /// \returns true if an error occurred, false otherwise.
-  static raw_ostream *ComputeASTConsumerArguments(CompilerInstance &CI,
-                                                  StringRef InFile,
-                                                  std::string &Sysroot,
-                                                  std::string &OutputFile);
+  static raw_pwrite_stream *
+  ComputeASTConsumerArguments(CompilerInstance &CI, StringRef InFile,
+                              std::string &Sysroot, std::string &OutputFile);
 };
 
 class GenerateModuleAction : public ASTFrontendAction {
@@ -118,10 +117,10 @@ public:
   /// create the PCHGenerator instance returned by CreateASTConsumer.
   ///
   /// \returns true if an error occurred, false otherwise.
-  raw_ostream *ComputeASTConsumerArguments(CompilerInstance &CI,
-                                           StringRef InFile,
-                                           std::string &Sysroot,
-                                           std::string &OutputFile);
+  raw_pwrite_stream *ComputeASTConsumerArguments(CompilerInstance &CI,
+                                                 StringRef InFile,
+                                                 std::string &Sysroot,
+                                                 std::string &OutputFile);
 };
 
 class SyntaxOnlyAction : public ASTFrontendAction {

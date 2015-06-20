@@ -7,6 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "clang/Frontend/PCHContainerOperations.h"
 #include "clang/ARCMigrate/ARCMT.h"
 #include "clang/Frontend/ASTUnit.h"
 #include "clang/Frontend/TextDiagnosticPrinter.h"
@@ -130,7 +131,8 @@ static bool checkForMigration(StringRef resourcesPath,
   if (!CI.getLangOpts()->ObjC1)
     return false;
 
-  arcmt::checkForManualIssues(CI, CI.getFrontendOpts().Inputs[0], 
+  arcmt::checkForManualIssues(CI, CI.getFrontendOpts().Inputs[0],
+                              std::make_shared<RawPCHContainerOperations>(),
                               Diags->getClient());
   return Diags->getClient()->getNumErrors() > 0;
 }
@@ -169,7 +171,8 @@ static bool performTransformations(StringRef resourcesPath,
   if (!origCI.getLangOpts()->ObjC1)
     return false;
 
-  MigrationProcess migration(origCI, DiagClient);
+  MigrationProcess migration(
+      origCI, std::make_shared<RawPCHContainerOperations>(), DiagClient);
 
   std::vector<TransformFn>
     transforms = arcmt::getAllTransformations(origCI.getLangOpts()->getGC(),

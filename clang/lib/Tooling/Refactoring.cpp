@@ -25,9 +25,10 @@
 namespace clang {
 namespace tooling {
 
-RefactoringTool::RefactoringTool(const CompilationDatabase &Compilations,
-                                 ArrayRef<std::string> SourcePaths)
-  : ClangTool(Compilations, SourcePaths) {}
+RefactoringTool::RefactoringTool(
+    const CompilationDatabase &Compilations, ArrayRef<std::string> SourcePaths,
+    std::shared_ptr<PCHContainerOperations> PCHContainerOps)
+    : ClangTool(Compilations, SourcePaths, PCHContainerOps) {}
 
 Replacements &RefactoringTool::getReplacements() { return Replace; }
 

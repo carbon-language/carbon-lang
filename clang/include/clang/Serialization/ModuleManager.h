@@ -24,6 +24,7 @@ namespace clang {
 
 class GlobalModuleIndex;
 class ModuleMap;
+class PCHContainerOperations;
 
 namespace serialization {
 
@@ -49,7 +50,10 @@ class ModuleManager {
   /// \brief FileManager that handles translating between filenames and
   /// FileEntry *.
   FileManager &FileMgr;
-  
+
+  /// \brief Knows how to unwrap module containers.
+  const PCHContainerOperations &PCHContainerOps;
+
   /// \brief A lookup of in-memory (virtual file) buffers
   llvm::DenseMap<const FileEntry *, std::unique_ptr<llvm::MemoryBuffer>>
       InMemoryBuffers;
@@ -112,8 +116,9 @@ public:
   typedef SmallVectorImpl<ModuleFile*>::const_iterator ModuleConstIterator;
   typedef SmallVectorImpl<ModuleFile*>::reverse_iterator ModuleReverseIterator;
   typedef std::pair<uint32_t, StringRef> ModuleOffset;
-  
-  explicit ModuleManager(FileManager &FileMgr);
+
+  explicit ModuleManager(FileManager &FileMgr,
+                         const PCHContainerOperations &PCHContainerOps);
   ~ModuleManager();
   
   /// \brief Forward iterator to traverse all loaded modules.  This is reverse

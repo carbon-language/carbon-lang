@@ -35,6 +35,7 @@ class DirectoryEntry;
 class FileEntry;
 class FileManager;
 class IdentifierIterator;
+class PCHContainerOperations;
 
 namespace serialization {
   class ModuleFile;
@@ -192,10 +193,13 @@ public:
   /// \brief Write a global index into the given
   ///
   /// \param FileMgr The file manager to use to load module files.
-  ///
+  /// \param PCHContainerOps - The PCHContainerOperations to use for loading and
+  /// creating modules.
   /// \param Path The path to the directory containing module files, into
   /// which the global index will be written.
-  static ErrorCode writeIndex(FileManager &FileMgr, StringRef Path);
+  static ErrorCode writeIndex(FileManager &FileMgr,
+                              const PCHContainerOperations &PCHContainerOps,
+                              StringRef Path);
 };
 
 }

@@ -56,6 +56,7 @@ class FileEntry;
 class FileManager;
 class HeaderSearch;
 class Preprocessor;
+class PCHContainerOperations;
 class SourceManager;
 class TargetInfo;
 class ASTFrontendAction;
@@ -422,7 +423,8 @@ private:
   explicit ASTUnit(bool MainFileIsAST);
 
   void CleanTemporaryFiles();
-  bool Parse(std::unique_ptr<llvm::MemoryBuffer> OverrideMainBuffer);
+  bool Parse(std::shared_ptr<PCHContainerOperations> PCHContainerOps,
+             std::unique_ptr<llvm::MemoryBuffer> OverrideMainBuffer);
 
   struct ComputedPreamble {
     llvm::MemoryBuffer *Buffer;
@@ -442,6 +444,7 @@ private:
                                    unsigned MaxLines);
 
   std::unique_ptr<llvm::MemoryBuffer> getMainBufferWithPrecompiledPreamble(
+      std::shared_ptr<PCHContainerOperations> PCHContainerOps,
       const CompilerInvocation &PreambleInvocationIn, bool AllowRebuild = true,
       unsigned MaxLines = 0);
   void RealizeTopLevelDeclsFromPreamble();
@@ -715,12 +718,16 @@ public:
   ///
   /// \param Filename - The AST file to load.
   ///
+  /// \param PCHContainerOps - The PCHContainerOperations to use for loading and
+  /// creating modules.
   /// \param Diags - The diagnostics engine to use for reporting errors; its
   /// lifetime is expected to extend past that of the returned ASTUnit.
   ///
   /// \returns - The initialized ASTUnit or null if the AST failed to load.
   static std::unique_ptr<ASTUnit> LoadFromASTFile(
-      const std::string &Filename, IntrusiveRefCntPtr<DiagnosticsEngine> Diags,
+      const std::string &Filename,
+      std::shared_ptr<PCHContainerOperations> PCHContainerOps,
+      IntrusiveRefCntPtr<DiagnosticsEngine> Diags,
       const FileSystemOptions &FileSystemOpts, bool OnlyLocalDecls = false,
       ArrayRef<RemappedFile> RemappedFiles = None,
       bool CaptureDiagnostics = false, bool AllowPCHWithCompilerErrors = false,
@@ -735,8 +742,10 @@ private:
   ///
   /// \returns \c true if a catastrophic failure occurred (which means that the
   /// \c ASTUnit itself is invalid), or \c false otherwise.
-  bool LoadFromCompilerInvocation(bool PrecompilePreamble);
-  
+  bool LoadFromCompilerInvocation(
+      std::shared_ptr<PCHContainerOperations> PCHContainerOps,
+      bool PrecompilePreamble);
+
 public:
   
   /// \brief Create an ASTUnit from a source file, via a CompilerInvocation
@@ -744,6 +753,9 @@ public:
   ///
   /// \param CI - The compiler invocation to use; it must have exactly one input
   /// source file. The ASTUnit takes ownership of the CompilerInvocation object.
+  ///
+  /// \param PCHContainerOps - The PCHContainerOperations to use for loading and
+  /// creating modules.
   ///
   /// \param Diags - The diagnostics engine to use for reporting errors; its
   /// lifetime is expected to extend past that of the returned ASTUnit.
@@ -765,7 +777,9 @@ public:
   /// created ASTUnit was passed in \p Unit then the caller can check that.
   ///
   static ASTUnit *LoadFromCompilerInvocationAction(
-      CompilerInvocation *CI, IntrusiveRefCntPtr<DiagnosticsEngine> Diags,
+      CompilerInvocation *CI,
+      std::shared_ptr<PCHContainerOperations> PCHContainerOps,
+      IntrusiveRefCntPtr<DiagnosticsEngine> Diags,
       ASTFrontendAction *Action = nullptr, ASTUnit *Unit = nullptr,
       bool Persistent = true, StringRef ResourceFilesPath = StringRef(),
       bool OnlyLocalDecls = false, bool CaptureDiagnostics = false,
@@ -780,15 +794,20 @@ public:
   /// \param CI - The compiler invocation to use; it must have exactly one input
   /// source file. The ASTUnit takes ownership of the CompilerInvocation object.
   ///
+  /// \param PCHContainerOps - The PCHContainerOperations to use for loading and
+  /// creating modules.
+  ///
   /// \param Diags - The diagnostics engine to use for reporting errors; its
   /// lifetime is expected to extend past that of the returned ASTUnit.
   //
   // FIXME: Move OnlyLocalDecls, UseBumpAllocator to setters on the ASTUnit, we
   // shouldn't need to specify them at construction time.
   static std::unique_ptr<ASTUnit> LoadFromCompilerInvocation(
-      CompilerInvocation *CI, IntrusiveRefCntPtr<DiagnosticsEngine> Diags,
-      bool OnlyLocalDecls = false, bool CaptureDiagnostics = false,
-      bool PrecompilePreamble = false, TranslationUnitKind TUKind = TU_Complete,
+      CompilerInvocation *CI,
+      std::shared_ptr<PCHContainerOperations> PCHContainerOps,
+      IntrusiveRefCntPtr<DiagnosticsEngine> Diags, bool OnlyLocalDecls = false,
+      bool CaptureDiagnostics = false, bool PrecompilePreamble = false,
+      TranslationUnitKind TUKind = TU_Complete,
       bool CacheCodeCompletionResults = false,
       bool IncludeBriefCommentsInCodeCompletion = false,
       bool UserFilesAreVolatile = false);
@@ -799,6 +818,9 @@ public:
   /// \param ArgBegin - The beginning of the argument vector.
   ///
   /// \param ArgEnd - The end of the argument vector.
+  ///
+  /// \param PCHContainerOps - The PCHContainerOperations to use for loading and
+  /// creating modules.
   ///
   /// \param Diags - The diagnostics engine to use for reporting errors; its
   /// lifetime is expected to extend past that of the returned ASTUnit.
@@ -813,6 +835,7 @@ public:
   // shouldn't need to specify them at construction time.
   static ASTUnit *LoadFromCommandLine(
       const char **ArgBegin, const char **ArgEnd,
+      std::shared_ptr<PCHContainerOperations> PCHContainerOps,
       IntrusiveRefCntPtr<DiagnosticsEngine> Diags, StringRef ResourceFilesPath,
       bool OnlyLocalDecls = false, bool CaptureDiagnostics = false,
       ArrayRef<RemappedFile> RemappedFiles = None,
@@ -828,8 +851,9 @@ public:
   /// were originally used to produce this translation unit.
   ///
   /// \returns True if a failure occurred that causes the ASTUnit not to
-  /// contain any translation-unit information, false otherwise.  
-  bool Reparse(ArrayRef<RemappedFile> RemappedFiles = None);
+  /// contain any translation-unit information, false otherwise.
+  bool Reparse(std::shared_ptr<PCHContainerOperations> PCHContainerOps,
+               ArrayRef<RemappedFile> RemappedFiles = None);
 
   /// \brief Perform code completion at the given file, line, and
   /// column within this translation unit.
@@ -852,14 +876,14 @@ public:
   /// FIXME: The Diag, LangOpts, SourceMgr, FileMgr, StoredDiagnostics, and
   /// OwnedBuffers parameters are all disgusting hacks. They will go away.
   void CodeComplete(StringRef File, unsigned Line, unsigned Column,
-                    ArrayRef<RemappedFile> RemappedFiles,
-                    bool IncludeMacros, bool IncludeCodePatterns,
-                    bool IncludeBriefComments,
+                    ArrayRef<RemappedFile> RemappedFiles, bool IncludeMacros,
+                    bool IncludeCodePatterns, bool IncludeBriefComments,
                     CodeCompleteConsumer &Consumer,
+                    std::shared_ptr<PCHContainerOperations> PCHContainerOps,
                     DiagnosticsEngine &Diag, LangOptions &LangOpts,
                     SourceManager &SourceMgr, FileManager &FileMgr,
                     SmallVectorImpl<StoredDiagnostic> &StoredDiagnostics,
-              SmallVectorImpl<const llvm::MemoryBuffer *> &OwnedBuffers);
+                    SmallVectorImpl<const llvm::MemoryBuffer *> &OwnedBuffers);
 
   /// \brief Save this translation unit to a file with the given name.
   ///

@@ -191,7 +191,8 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
     IntrusiveRefCntPtr<DiagnosticsEngine> Diags(&CI.getDiagnostics());
 
     std::unique_ptr<ASTUnit> AST =
-        ASTUnit::LoadFromASTFile(InputFile, Diags, CI.getFileSystemOpts());
+        ASTUnit::LoadFromASTFile(InputFile, CI.getPCHContainerOperations(),
+                                 Diags, CI.getFileSystemOpts());
 
     if (!AST)
       goto failure;
@@ -271,11 +272,10 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
       for (llvm::sys::fs::directory_iterator Dir(DirNative, EC), DirEnd;
            Dir != DirEnd && !EC; Dir.increment(EC)) {
         // Check whether this is an acceptable AST file.
-        if (ASTReader::isAcceptableASTFile(Dir->path(), FileMgr,
-                                           CI.getLangOpts(),
-                                           CI.getTargetOpts(),
-                                           CI.getPreprocessorOpts(),
-                                           SpecificModuleCachePath)) {
+        if (ASTReader::isAcceptableASTFile(
+                Dir->path(), FileMgr, *CI.getPCHContainerOperations(),
+                CI.getLangOpts(), CI.getTargetOpts(), CI.getPreprocessorOpts(),
+                SpecificModuleCachePath)) {
           PPOpts.ImplicitPCHInclude = Dir->path();
           Found = true;
           break;
@@ -443,8 +443,8 @@ bool FrontendAction::Execute() {
   if (CI.shouldBuildGlobalModuleIndex() && CI.hasFileManager() &&
       CI.hasPreprocessor()) {
     GlobalModuleIndex::writeIndex(
-      CI.getFileManager(),
-      CI.getPreprocessor().getHeaderSearchInfo().getModuleCachePath());
+        CI.getFileManager(), *CI.getPCHContainerOperations(),
+        CI.getPreprocessor().getHeaderSearchInfo().getModuleCachePath());
   }
 
   return true;
