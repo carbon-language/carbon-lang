@@ -144,6 +144,7 @@ class ELFObjectWriter : public MCObjectWriter {
       Renames.clear();
       Relocations.clear();
       StrTabBuilder.clear();
+      SymtabShndxSectionIndex = 0;
       SectionTable.clear();
       MCObjectWriter::reset();
     }
