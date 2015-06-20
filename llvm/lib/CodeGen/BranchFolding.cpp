@@ -273,8 +273,12 @@ static unsigned HashMachineInstr(const MachineInstr *MI) {
     // Merge in bits from the operand if easy.
     unsigned OperandHash = 0;
     switch (Op.getType()) {
-    case MachineOperand::MO_Register:          OperandHash = Op.getReg(); break;
-    case MachineOperand::MO_Immediate:         OperandHash = Op.getImm(); break;
+    case MachineOperand::MO_Register:
+      OperandHash = Op.getReg();
+      break;
+    case MachineOperand::MO_Immediate:
+      OperandHash = Op.getImm();
+      break;
     case MachineOperand::MO_MachineBasicBlock:
       OperandHash = Op.getMBB()->getNumber();
       break;
@@ -289,10 +293,11 @@ static unsigned HashMachineInstr(const MachineInstr *MI) {
       // pull in the offset.
       OperandHash = Op.getOffset();
       break;
-    default: break;
+    default:
+      break;
     }
 
-    Hash += ((OperandHash << 3) | Op.getType()) << (i&31);
+    Hash += ((OperandHash << 3) | Op.getType()) << (i & 31);
   }
   return Hash;
 }
@@ -301,13 +306,13 @@ static unsigned HashMachineInstr(const MachineInstr *MI) {
 static unsigned HashEndOfMBB(const MachineBasicBlock *MBB) {
   MachineBasicBlock::const_iterator I = MBB->end();
   if (I == MBB->begin())
-    return 0;   // Empty MBB.
+    return 0; // Empty MBB.
 
   --I;
   // Skip debug info so it will not affect codegen.
   while (I->isDebugValue()) {
-    if (I==MBB->begin())
-      return 0;      // MBB empty except for debug info.
+    if (I == MBB->begin())
+      return 0; // MBB empty except for debug info.
     --I;
   }
 
