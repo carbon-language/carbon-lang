@@ -372,8 +372,7 @@ static void getIncomingStatepointGCValues(
     SmallVectorImpl<const Value *> &Bases, SmallVectorImpl<const Value *> &Ptrs,
     SmallVectorImpl<const Value *> &Relocs, ImmutableStatepoint StatepointSite,
     SelectionDAGBuilder &Builder) {
-  for (GCRelocateOperands relocateOpers :
-       StatepointSite.getRelocates(StatepointSite)) {
+  for (GCRelocateOperands relocateOpers : StatepointSite.getRelocates()) {
     Relocs.push_back(relocateOpers.getUnderlyingCallSite().getInstruction());
     Bases.push_back(relocateOpers.getBasePtr());
     Ptrs.push_back(relocateOpers.getDerivedPtr());
@@ -573,8 +572,7 @@ static void lowerStatepointMetaArgs(SmallVectorImpl<SDValue> &Ops,
   FunctionLoweringInfo::StatepointSpilledValueMapTy &SpillMap =
     Builder.FuncInfo.StatepointRelocatedValues[StatepointInstr];
 
-  for (GCRelocateOperands RelocateOpers :
-       StatepointSite.getRelocates(StatepointSite)) {
+  for (GCRelocateOperands RelocateOpers : StatepointSite.getRelocates()) {
     const Value *V = RelocateOpers.getDerivedPtr();
     SDValue SDV = Builder.getValue(V);
     SDValue Loc = Builder.StatepointLowering.getLocation(SDV);
