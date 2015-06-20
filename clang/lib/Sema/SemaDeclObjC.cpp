@@ -3199,7 +3199,7 @@ static QualType mergeTypeNullabilityForRedecl(Sema &S, SourceLocation loc,
            type, type);
 }
 
-/// Merge information from the declaration of a method in the @interface
+/// Merge information from the declaration of a method in the \@interface
 /// (or a category/extension) into the corresponding method in the
 /// @implementation (for a class or category).
 static void mergeInterfaceMethodToImpl(Sema &S,
