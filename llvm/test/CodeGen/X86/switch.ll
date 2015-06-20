@@ -499,6 +499,8 @@ entry:
     i32 30, label %bb3
     i32 40, label %bb4
     i32 50, label %bb5
+    i32 60, label %bb6
+    i32 70, label %bb6
   ], !prof !4
 bb0: tail call void @g(i32 0) br label %return
 bb1: tail call void @g(i32 1) br label %return
@@ -506,16 +508,87 @@ bb2: tail call void @g(i32 2) br label %return
 bb3: tail call void @g(i32 3) br label %return
 bb4: tail call void @g(i32 4) br label %return
 bb5: tail call void @g(i32 5) br label %return
+bb6: tail call void @g(i32 6) br label %return
+bb7: tail call void @g(i32 7) br label %return
 return: ret void
 
-; To balance the tree by weight, the pivot is shifted to the right, moving hot
-; cases closer to the root.
+; Without branch probabilities, the pivot would be 40, since that would yield
+; equal-sized sub-trees. When taking weights into account, case 70 becomes the
+; pivot. Since there is room for 3 cases in a leaf, cases 50 and 60 are also
+; included in the right-hand side because that doesn't reduce their rank.
+
 ; CHECK-LABEL: left_leaning_weight_balanced_tree
 ; CHECK-NOT: cmpl
-; CHECK: cmpl $39
+; CHECK: cmpl $49
 }
 
-!4 = !{!"branch_weights", i32 1, i32 10, i32 1, i32 1, i32 1, i32 10, i32 10}
+!4 = !{!"branch_weights", i32 1, i32 10, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1000}
+
+
+define void @left_leaning_weight_balanced_tree2(i32 %x) {
+entry:
+  switch i32 %x, label %return [
+    i32 0,  label %bb0
+    i32 10, label %bb1
+    i32 20, label %bb2
+    i32 30, label %bb3
+    i32 40, label %bb4
+    i32 50, label %bb5
+    i32 60, label %bb6
+    i32 70, label %bb6
+  ], !prof !5
+bb0: tail call void @g(i32 0) br label %return
+bb1: tail call void @g(i32 1) br label %return
+bb2: tail call void @g(i32 2) br label %return
+bb3: tail call void @g(i32 3) br label %return
+bb4: tail call void @g(i32 4) br label %return
+bb5: tail call void @g(i32 5) br label %return
+bb6: tail call void @g(i32 6) br label %return
+bb7: tail call void @g(i32 7) br label %return
+return: ret void
+
+; Same as the previous test, except case 50 has higher rank to the left than it
+; would have on the right. Case 60 would have the same rank on both sides, so is
+; moved into the leaf.
+
+; CHECK-LABEL: left_leaning_weight_balanced_tree2
+; CHECK-NOT: cmpl
+; CHECK: cmpl $59
+}
+
+!5 = !{!"branch_weights", i32 1, i32 10, i32 1, i32 1, i32 1, i32 1, i32 90, i32 70, i32 1000}
+
+
+define void @right_leaning_weight_balanced_tree(i32 %x) {
+entry:
+  switch i32 %x, label %return [
+    i32 0,  label %bb0
+    i32 10, label %bb1
+    i32 20, label %bb2
+    i32 30, label %bb3
+    i32 40, label %bb4
+    i32 50, label %bb5
+    i32 60, label %bb6
+    i32 70, label %bb6
+  ], !prof !6
+bb0: tail call void @g(i32 0) br label %return
+bb1: tail call void @g(i32 1) br label %return
+bb2: tail call void @g(i32 2) br label %return
+bb3: tail call void @g(i32 3) br label %return
+bb4: tail call void @g(i32 4) br label %return
+bb5: tail call void @g(i32 5) br label %return
+bb6: tail call void @g(i32 6) br label %return
+bb7: tail call void @g(i32 7) br label %return
+return: ret void
+
+; Analogous to left_leaning_weight_balanced_tree.
+
+; CHECK-LABEL: right_leaning_weight_balanced_tree
+; CHECK-NOT: cmpl
+; CHECK: cmpl $19
+}
+
+!6 = !{!"branch_weights", i32 1, i32 1000, i32 1, i32 1, i32 1, i32 1, i32 1, i32 1, i32 10}
 
 
 define void @jump_table_affects_balance(i32 %x) {

@@ -7996,6 +7996,18 @@ void SelectionDAGBuilder::lowerWorkItem(SwitchWorkListItem W, Value *Cond,
   }
 }
 
+unsigned SelectionDAGBuilder::caseClusterRank(const CaseCluster &CC,
+                                              CaseClusterIt First,
+                                              CaseClusterIt Last) {
+  return std::count_if(First, Last + 1, [&](const CaseCluster &X) {
+    if (X.Weight != CC.Weight)
+      return X.Weight > CC.Weight;
+
+    // Ties are broken by comparing the case value.
+    return X.Low->getValue().slt(CC.Low->getValue());
+  });
+}
+
 void SelectionDAGBuilder::splitWorkItem(SwitchWorkList &WorkList,
                                         const SwitchWorkListItem &W,
                                         Value *Cond,
@@ -8025,6 +8037,48 @@ void SelectionDAGBuilder::splitWorkItem(SwitchWorkList &WorkList,
       RightWeight += (--FirstRight)->Weight;
     I++;
   }
+
+  for (;;) {
+    // Our binary search tree differs from a typical BST in that ours can have up
+    // to three values in each leaf. The pivot selection above doesn't take that
+    // into account, which means the tree might require more nodes and be less
+    // efficient. We compensate for this here.
+
+    unsigned NumLeft = LastLeft - W.FirstCluster + 1;
+    unsigned NumRight = W.LastCluster - FirstRight + 1;
+
+    if (std::min(NumLeft, NumRight) < 3 && std::max(NumLeft, NumRight) > 3) {
+      // If one side has less than 3 clusters, and the other has more than 3,
+      // consider taking a cluster from the other side.
+
+      if (NumLeft < NumRight) {
+        // Consider moving the first cluster on the right to the left side.
+        CaseCluster &CC = *FirstRight;
+        unsigned RightSideRank = caseClusterRank(CC, FirstRight, W.LastCluster);
+        unsigned LeftSideRank = caseClusterRank(CC, W.FirstCluster, LastLeft);
+        if (LeftSideRank <= RightSideRank) {
+          // Moving the cluster to the left does not demote it.
+          ++LastLeft;
+          ++FirstRight;
+          continue;
+        }
+      } else {
+        assert(NumRight < NumLeft);
+        // Consider moving the last element on the left to the right side.
+        CaseCluster &CC = *LastLeft;
+        unsigned LeftSideRank = caseClusterRank(CC, W.FirstCluster, LastLeft);
+        unsigned RightSideRank = caseClusterRank(CC, FirstRight, W.LastCluster);
+        if (RightSideRank <= LeftSideRank) {
+          // Moving the cluster to the right does not demot it.
+          --LastLeft;
+          --FirstRight;
+          continue;
+        }
+      }
+    }
+    break;
+  }
+
   assert(LastLeft + 1 == FirstRight);
   assert(LastLeft >= W.FirstCluster);
   assert(FirstRight <= W.LastCluster);

@@ -342,6 +342,11 @@ private:
   };
   typedef SmallVector<SwitchWorkListItem, 4> SwitchWorkList;
 
+  /// Determine the rank by weight of CC in [First,Last]. If CC has more weight
+  /// than each cluster in the range, its rank is 0.
+  static unsigned caseClusterRank(const CaseCluster &CC, CaseClusterIt First,
+                                  CaseClusterIt Last);
+
   /// Emit comparison and split W into two subtrees.
   void splitWorkItem(SwitchWorkList &WorkList, const SwitchWorkListItem &W,
                      Value *Cond, MachineBasicBlock *SwitchMBB);
