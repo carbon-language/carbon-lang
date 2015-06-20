@@ -200,6 +200,11 @@ class MCJIT : public ExecutionEngine {
                                             ModulePtrSet::iterator I,
                                             ModulePtrSet::iterator E);
 
+  GlobalVariable *FindGlobalVariableNamedInModulePtrSet(const char *Name,
+                                                        bool AllowInternal,
+                                                        ModulePtrSet::iterator I,
+                                                        ModulePtrSet::iterator E);
+
   void runStaticConstructorsDestructorsInModulePtrSet(bool isDtors,
                                                       ModulePtrSet::iterator I,
                                                       ModulePtrSet::iterator E);
@@ -215,10 +220,15 @@ public:
   void addArchive(object::OwningBinary<object::Archive> O) override;
   bool removeModule(Module *M) override;
 
-  /// FindFunctionNamed - Search all of the active modules to find the one that
+  /// FindFunctionNamed - Search all of the active modules to find the function that
   /// defines FnName.  This is very slow operation and shouldn't be used for
   /// general code.
-  Function *FindFunctionNamed(const char *FnName) override;
+  virtual Function *FindFunctionNamed(const char *FnName) override;
+
+  /// FindGlobalVariableNamed - Search all of the active modules to find the global variable
+  /// that defines Name.  This is very slow operation and shouldn't be used for
+  /// general code.
+  virtual GlobalVariable *FindGlobalVariableNamed(const char *Name, bool AllowInternal = false) override;
 
   /// Sets the object manager that MCJIT should use to avoid compilation.
   void setObjectCache(ObjectCache *manager) override;

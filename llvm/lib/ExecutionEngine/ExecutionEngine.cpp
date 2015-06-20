@@ -153,6 +153,14 @@ Function *ExecutionEngine::FindFunctionNamed(const char *FnName) {
   return nullptr;
 }
 
+GlobalVariable *ExecutionEngine::FindGlobalVariableNamed(const char *Name, bool AllowInternal) {
+  for (unsigned i = 0, e = Modules.size(); i != e; ++i) {
+    GlobalVariable *GV = Modules[i]->getGlobalVariable(Name,AllowInternal);
+    if (GV && !GV->isDeclaration())
+      return GV;
+  }
+  return nullptr;
+}
 
 uint64_t ExecutionEngineState::RemoveMapping(StringRef Name) {
   GlobalAddressMapTy::iterator I = GlobalAddressMap.find(Name);

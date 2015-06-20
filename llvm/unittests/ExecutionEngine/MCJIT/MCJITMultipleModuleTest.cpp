@@ -194,14 +194,15 @@ TEST_F(MCJITMultipleModuleTest, two_module_consecutive_call_case) {
 
 
 // Module A { Global Variable GVA, Function FA loads GVA },
-// Module B { Global Variable GVB, Function FB loads GVB },
-// execute FB then FA
+// Module B { Global Variable GVB, Internal Global GVC, Function FB loads GVB },
+// execute FB then FA, also check that the global variables are properly accesible
+// through the ExecutionEngine APIs
 TEST_F(MCJITMultipleModuleTest, two_module_global_variables_case) {
   SKIP_UNSUPPORTED_PLATFORM;
 
   std::unique_ptr<Module> A, B;
   Function *FA, *FB;
-  GlobalVariable *GVA, *GVB;
+  GlobalVariable *GVA, *GVB, *GVC;
   A.reset(createEmptyModule("A"));
   B.reset(createEmptyModule("B"));
 
@@ -213,8 +214,16 @@ TEST_F(MCJITMultipleModuleTest, two_module_global_variables_case) {
   FB = startFunction<int32_t(void)>(B.get(), "FB");
   endFunctionWithRet(FB, Builder.CreateLoad(GVB));
 
+  GVC = insertGlobalInt32(B.get(), "GVC", initialNum);
+  GVC->setLinkage(GlobalValue::InternalLinkage);
+
   createJIT(std::move(A));
   TheJIT->addModule(std::move(B));
+
+  EXPECT_EQ(GVA, TheJIT->FindGlobalVariableNamed("GVA"));
+  EXPECT_EQ(GVB, TheJIT->FindGlobalVariableNamed("GVB"));
+  EXPECT_EQ(GVC, TheJIT->FindGlobalVariableNamed("GVC",true));
+  EXPECT_EQ(NULL, TheJIT->FindGlobalVariableNamed("GVC"));
 
   uint64_t FBPtr = TheJIT->getFunctionAddress(FB->getName().str());
   TheJIT->finalizeObject();
