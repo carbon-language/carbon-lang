@@ -10759,11 +10759,9 @@ X86TargetLowering::LowerEXTRACT_VECTOR_ELT(SDValue Op,
 
   assert(VecVT.is128BitVector() && "Unexpected vector length");
 
-  if (Subtarget->hasSSE41()) {
-    SDValue Res = LowerEXTRACT_VECTOR_ELT_SSE4(Op, DAG);
-    if (Res.getNode())
+  if (Subtarget->hasSSE41())
+    if (SDValue Res = LowerEXTRACT_VECTOR_ELT_SSE4(Op, DAG))
       return Res;
-  }
 
   MVT VT = Op.getSimpleValueType();
   // TODO: handle v16i8.
@@ -12253,11 +12251,9 @@ static  SDValue LowerZERO_EXTEND_AVX512(SDValue Op,
 
 static SDValue LowerANY_EXTEND(SDValue Op, const X86Subtarget *Subtarget,
                                SelectionDAG &DAG) {
-  if (Subtarget->hasFp256()) {
-    SDValue Res = LowerAVXExtend(Op, DAG, Subtarget);
-    if (Res.getNode())
+  if (Subtarget->hasFp256())
+    if (SDValue Res = LowerAVXExtend(Op, DAG, Subtarget))
       return Res;
-  }
 
   return SDValue();
 }
@@ -12272,11 +12268,9 @@ static SDValue LowerZERO_EXTEND(SDValue Op, const X86Subtarget *Subtarget,
   if (VT.is512BitVector() || SVT.getVectorElementType() == MVT::i1)
     return LowerZERO_EXTEND_AVX512(Op, Subtarget, DAG);
 
-  if (Subtarget->hasFp256()) {
-    SDValue Res = LowerAVXExtend(Op, DAG, Subtarget);
-    if (Res.getNode())
+  if (Subtarget->hasFp256())
+    if (SDValue Res = LowerAVXExtend(Op, DAG, Subtarget))
       return Res;
-  }
 
   assert(!VT.is256BitVector() || !SVT.is128BitVector() ||
          VT.getVectorNumElements() != SVT.getVectorNumElements());
@@ -21302,8 +21296,7 @@ static SDValue PerformShuffleCombine(SDNode *N, SelectionDAG &DAG,
   for (unsigned i = 0, e = VT.getVectorNumElements(); i != e; ++i)
     Elts.push_back(getShuffleScalarElt(N, i, DAG, 0));
 
-  SDValue LD = EltsFromConsecutiveLoads(VT, Elts, dl, DAG, true);
-  if (LD.getNode())
+  if (SDValue LD = EltsFromConsecutiveLoads(VT, Elts, dl, DAG, true))
     return LD;
 
   if (isTargetShuffle(N->getOpcode())) {
@@ -21451,8 +21444,7 @@ static SDValue PerformBITCASTCombine(SDNode *N, SelectionDAG &DAG) {
 /// use 64-bit extracts and shifts.
 static SDValue PerformEXTRACT_VECTOR_ELTCombine(SDNode *N, SelectionDAG &DAG,
                                          TargetLowering::DAGCombinerInfo &DCI) {
-  SDValue NewOp = XFormVExtractWithShuffleIntoLoad(N, DAG, DCI);
-  if (NewOp.getNode())
+  if (SDValue NewOp = XFormVExtractWithShuffleIntoLoad(N, DAG, DCI))
     return NewOp;
 
   SDValue InputVector = N->getOperand(0);
@@ -22895,16 +22887,14 @@ static SDValue performShiftToAllZeros(SDNode *N, SelectionDAG &DAG,
 static SDValue PerformShiftCombine(SDNode* N, SelectionDAG &DAG,
                                    TargetLowering::DAGCombinerInfo &DCI,
                                    const X86Subtarget *Subtarget) {
-  if (N->getOpcode() == ISD::SHL) {
-    SDValue V = PerformSHLCombine(N, DAG);
-    if (V.getNode()) return V;
-  }
+  if (N->getOpcode() == ISD::SHL)
+    if (SDValue V = PerformSHLCombine(N, DAG))
+      return V;
 
-  if (N->getOpcode() != ISD::SRA) {
-    // Try to fold this logical shift into a zero vector.
-    SDValue V = performShiftToAllZeros(N, DAG, Subtarget);
-    if (V.getNode()) return V;
-  }
+  // Try to fold this logical shift into a zero vector.
+  if (N->getOpcode() != ISD::SRA)
+    if (SDValue V = performShiftToAllZeros(N, DAG, Subtarget))
+      return V;
 
   return SDValue();
 }
@@ -23284,8 +23274,7 @@ static SDValue PerformOrCombine(SDNode *N, SelectionDAG &DAG,
   if (DCI.isBeforeLegalizeOps())
     return SDValue();
 
-  SDValue R = CMPEQCombine(N, DAG, DCI, Subtarget);
-  if (R.getNode())
+  if (SDValue R = CMPEQCombine(N, DAG, DCI, Subtarget))
     return R;
 
   SDValue N0 = N->getOperand(0);
@@ -23480,11 +23469,9 @@ static SDValue PerformXorCombine(SDNode *N, SelectionDAG &DAG,
   if (DCI.isBeforeLegalizeOps())
     return SDValue();
 
-  if (Subtarget->hasCMov()) {
-    SDValue RV = performIntegerAbsCombine(N, DAG);
-    if (RV.getNode())
+  if (Subtarget->hasCMov())
+    if (SDValue RV = performIntegerAbsCombine(N, DAG))
       return RV;
-  }
 
   return SDValue();
 }
@@ -24312,11 +24299,9 @@ static SDValue PerformSExtCombine(SDNode *N, SelectionDAG &DAG,
   if (!Subtarget->hasFp256())
     return SDValue();
 
-  if (VT.isVector() && VT.getSizeInBits() == 256) {
-    SDValue R = WidenMaskArithmetic(N, DAG, DCI, Subtarget);
-    if (R.getNode())
+  if (VT.isVector() && VT.getSizeInBits() == 256)
+    if (SDValue R = WidenMaskArithmetic(N, DAG, DCI, Subtarget))
       return R;
-  }
 
   return SDValue();
 }
@@ -24398,11 +24383,10 @@ static SDValue PerformZExtCombine(SDNode *N, SelectionDAG &DAG,
                          DAG.getConstant(1, dl, VT));
     }
   }
-  if (VT.is256BitVector()) {
-    SDValue R = WidenMaskArithmetic(N, DAG, DCI, Subtarget);
-    if (R.getNode())
+
+  if (VT.is256BitVector())
+    if (SDValue R = WidenMaskArithmetic(N, DAG, DCI, Subtarget))
       return R;
-  }
 
   // (i8,i32 zext (udivrem (i8 x, i8 y)) ->
   // (i8,i32 (udivrem_zext_hreg (i8 x, i8 y)
@@ -24606,10 +24590,7 @@ static SDValue PerformSETCCCombine(SDNode *N, SelectionDAG &DAG,
   if (CC == X86::COND_B)
     return MaterializeSETB(DL, EFLAGS, DAG, N->getSimpleValueType(0));
 
-  SDValue Flags;
-
-  Flags = checkBoolTestSetCCCombine(EFLAGS, CC);
-  if (Flags.getNode()) {
+  if (SDValue Flags = checkBoolTestSetCCCombine(EFLAGS, CC)) {
     SDValue Cond = DAG.getConstant(CC, DL, MVT::i8);
     return DAG.getNode(X86ISD::SETCC, DL, N->getVTList(), Cond, Flags);
   }
@@ -24628,10 +24609,7 @@ static SDValue PerformBrCondCombine(SDNode *N, SelectionDAG &DAG,
   SDValue EFLAGS = N->getOperand(3);
   X86::CondCode CC = X86::CondCode(N->getConstantOperandVal(2));
 
-  SDValue Flags;
-
-  Flags = checkBoolTestSetCCCombine(EFLAGS, CC);
-  if (Flags.getNode()) {
+  if (SDValue Flags = checkBoolTestSetCCCombine(EFLAGS, CC)) {
     SDValue Cond = DAG.getConstant(CC, DL, MVT::i8);
     return DAG.getNode(X86ISD::BRCOND, DL, N->getVTList(), Chain, Dest, Cond,
                        Flags);
