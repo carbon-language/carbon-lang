@@ -15,9 +15,11 @@
 #ifndef LLVM_LIBDRIVER_LIBDRIVER_H
 #define LLVM_LIBDRIVER_LIBDRIVER_H
 
+#include "llvm/ADT/ArrayRef.h"
+
 namespace llvm {
 
-int libDriverMain(int argc, const char **argv);
+int libDriverMain(llvm::ArrayRef<const char*> ARgs);
 
 }
 

@@ -724,7 +724,7 @@ int main(int argc, char **argv) {
   StringRef Stem = sys::path::stem(ToolName);
   if (Stem.find("ranlib") == StringRef::npos &&
       Stem.find("lib") != StringRef::npos)
-    return libDriverMain(argc, const_cast<const char **>(argv));
+    return libDriverMain(makeArrayRef(argv, argc));
 
   // Have the command line options parsed and handle things
   // like --help and --version.

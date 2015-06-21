@@ -103,19 +103,18 @@ static Optional<std::string> findInputFile(StringRef File,
   return Optional<std::string>();
 }
 
-int llvm::libDriverMain(int Argc, const char **Argv) {
-  SmallVector<const char *, 20> NewArgv(Argv, Argv + Argc);
+int llvm::libDriverMain(llvm::ArrayRef<const char*> ArgsArr) {
+  SmallVector<const char *, 20> NewArgs(ArgsArr.begin(), ArgsArr.end());
   BumpPtrAllocator Alloc;
   BumpPtrStringSaver Saver(Alloc);
-  cl::ExpandResponseFiles(Saver, cl::TokenizeWindowsCommandLine, NewArgv);
-  Argv = &NewArgv[0];
-  Argc = static_cast<int>(NewArgv.size());
+  cl::ExpandResponseFiles(Saver, cl::TokenizeWindowsCommandLine, NewArgs);
+  ArgsArr = NewArgs;
 
   LibOptTable Table;
   unsigned MissingIndex;
   unsigned MissingCount;
-  std::unique_ptr<llvm::opt::InputArgList> Args(Table.ParseArgs(
-      makeArrayRef(Argv, Argc).slice(1), MissingIndex, MissingCount));
+  std::unique_ptr<llvm::opt::InputArgList> Args(
+      Table.ParseArgs(ArgsArr.slice(1), MissingIndex, MissingCount));
   if (MissingCount) {
     llvm::errs() << "missing arg value for \""
                  << Args->getArgString(MissingIndex)
@@ -148,7 +147,7 @@ int llvm::libDriverMain(int Argc, const char **Argv) {
       getOutputPath(Args.get()), Members, /*WriteSymtab=*/true);
   if (Result.second) {
     if (Result.first.empty())
-      Result.first = Argv[0];
+      Result.first = ArgsArr[0];
     llvm::errs() << Result.first << ": " << Result.second.message() << "\n";
     return 1;
   }
