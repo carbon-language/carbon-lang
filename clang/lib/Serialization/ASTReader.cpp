@@ -2304,20 +2304,12 @@ ASTReader::ReadControlBlock(ModuleFile &F,
         return Result;
       break;
 
-    case INPUT_FILE_OFFSETS: {
+    case INPUT_FILE_OFFSETS:
       NumInputs = Record[0];
       NumUserInputs = Record[1];
-      F.InputFileOffsets.clear();
-      F.InputFileOffsets.reserve(NumInputs);
-      using namespace llvm::support;
-      const char *Buf = Blob.data();
-      for (unsigned int I = 0; I < NumInputs; ++I)
-        F.InputFileOffsets.push_back(
-            endian::readNext<uint64_t, native, unaligned>(Buf));
-
+      F.InputFileOffsets = (const uint64_t *)Blob.data();
       F.InputFilesLoaded.resize(NumInputs);
       break;
-    }
     }
   }
 }
