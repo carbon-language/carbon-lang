@@ -51,6 +51,7 @@ std::error_code Writer::write(StringRef OutputPath) {
     return EC;
   writeHeader();
   writeSections();
+  sortExceptionTable();
   return Buffer->commit();
 }
 
@@ -322,6 +323,10 @@ void Writer::writeHeader() {
     DataDirectory[BASE_RELOCATION_TABLE].RelativeVirtualAddress = Sec->getRVA();
     DataDirectory[BASE_RELOCATION_TABLE].Size = Sec->getVirtualSize();
   }
+  if (OutputSection *Sec = findSection(".pdata")) {
+    DataDirectory[EXCEPTION_TABLE].RelativeVirtualAddress = Sec->getRVA();
+    DataDirectory[EXCEPTION_TABLE].Size = Sec->getVirtualSize();
+  }
 
   // Section table
   // Name field in the section table is 8 byte long. Longer names need
@@ -380,6 +385,18 @@ void Writer::writeSections() {
       memset(Buf + Sec->getFileOff(), 0xCC, Sec->getRawSize());
     for (Chunk *C : Sec->getChunks())
       C->writeTo(Buf);
+  }
+}
+
+// Sort .pdata section contents according to PE/COFF spec 5.5.
+void Writer::sortExceptionTable() {
+  if (auto *Sec = findSection(".pdata")) {
+    // We assume .pdata contains function table entries only.
+    struct Entry { ulittle32_t Begin, End, Unwind; };
+    uint8_t *Buf = Buffer->getBufferStart() + Sec->getFileOff();
+    std::sort(reinterpret_cast<Entry *>(Buf),
+              reinterpret_cast<Entry *>(Buf + Sec->getVirtualSize()),
+              [](const Entry &A, const Entry &B) { return A.Begin < B.Begin; });
   }
 }
 

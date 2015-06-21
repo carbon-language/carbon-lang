@@ -84,6 +84,7 @@ private:
   std::error_code openFile(StringRef OutputPath);
   void writeHeader();
   void writeSections();
+  void sortExceptionTable();
   void applyRelocations();
 
   OutputSection *findSection(StringRef Name);
