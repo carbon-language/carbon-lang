@@ -2307,7 +2307,8 @@ ASTReader::ReadControlBlock(ModuleFile &F,
     case INPUT_FILE_OFFSETS:
       NumInputs = Record[0];
       NumUserInputs = Record[1];
-      F.InputFileOffsets = (const uint64_t *)Blob.data();
+      F.InputFileOffsets =
+          (const llvm::support::unaligned_uint64_t *)Blob.data();
       F.InputFilesLoaded.resize(NumInputs);
       break;
     }

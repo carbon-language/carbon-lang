@@ -20,6 +20,7 @@
 #include "clang/Serialization/ContinuousRangeMap.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/Bitcode/BitstreamReader.h"
+#include "llvm/Support/Endian.h"
 #include <memory>
 #include <string>
 
@@ -206,7 +207,7 @@ public:
   llvm::BitstreamCursor InputFilesCursor;
 
   /// \brief Offsets for all of the input file entries in the AST file.
-  const uint64_t *InputFileOffsets;
+  const llvm::support::unaligned_uint64_t *InputFileOffsets;
 
   /// \brief The input files that have been loaded from this AST file.
   std::vector<InputFile> InputFilesLoaded;
