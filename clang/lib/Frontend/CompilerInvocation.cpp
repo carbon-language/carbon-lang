@@ -1848,8 +1848,8 @@ bool CompilerInvocation::CreateFromArgs(CompilerInvocation &Res,
   const unsigned IncludedFlagsBitmask = options::CC1Option;
   unsigned MissingArgIndex, MissingArgCount;
   std::unique_ptr<InputArgList> Args(
-      Opts->ParseArgs(ArgBegin, ArgEnd, MissingArgIndex, MissingArgCount,
-                      IncludedFlagsBitmask));
+      Opts->ParseArgs(llvm::makeArrayRef(ArgBegin, ArgEnd), MissingArgIndex,
+                      MissingArgCount, IncludedFlagsBitmask));
 
   // Check for missing argument error.
   if (MissingArgCount) {

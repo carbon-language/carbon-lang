@@ -115,10 +115,9 @@ InputArgList *Driver::ParseArgStrings(ArrayRef<const char *> ArgStrings) {
     getIncludeExcludeOptionFlagMasks();
 
   unsigned MissingArgIndex, MissingArgCount;
-  InputArgList *Args = getOpts().ParseArgs(ArgStrings.begin(), ArgStrings.end(),
-                                           MissingArgIndex, MissingArgCount,
-                                           IncludedFlagsBitmask,
-                                           ExcludedFlagsBitmask);
+  InputArgList *Args =
+      getOpts().ParseArgs(ArgStrings, MissingArgIndex, MissingArgCount,
+                          IncludedFlagsBitmask, ExcludedFlagsBitmask);
 
   // Check for missing argument error.
   if (MissingArgCount)

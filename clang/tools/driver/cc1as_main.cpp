@@ -161,9 +161,8 @@ bool AssemblerInvocation::CreateFromArgs(AssemblerInvocation &Opts,
 
   const unsigned IncludedFlagsBitmask = options::CC1AsOption;
   unsigned MissingArgIndex, MissingArgCount;
-  std::unique_ptr<InputArgList> Args(
-      OptTbl->ParseArgs(Argv.begin(), Argv.end(), MissingArgIndex, MissingArgCount,
-                        IncludedFlagsBitmask));
+  std::unique_ptr<InputArgList> Args(OptTbl->ParseArgs(
+      Argv, MissingArgIndex, MissingArgCount, IncludedFlagsBitmask));
 
   // Check for missing argument error.
   if (MissingArgCount) {
