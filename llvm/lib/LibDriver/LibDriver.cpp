@@ -114,8 +114,8 @@ int llvm::libDriverMain(int Argc, const char **Argv) {
   LibOptTable Table;
   unsigned MissingIndex;
   unsigned MissingCount;
-  std::unique_ptr<llvm::opt::InputArgList> Args(
-      Table.ParseArgs(&Argv[1], &Argv[Argc], MissingIndex, MissingCount));
+  std::unique_ptr<llvm::opt::InputArgList> Args(Table.ParseArgs(
+      makeArrayRef(Argv, Argc).slice(1), MissingIndex, MissingCount));
   if (MissingCount) {
     llvm::errs() << "missing arg value for \""
                  << Args->getArgString(MissingIndex)

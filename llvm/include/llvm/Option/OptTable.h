@@ -10,6 +10,7 @@
 #ifndef LLVM_OPTION_OPTTABLE_H
 #define LLVM_OPTION_OPTTABLE_H
 
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringSet.h"
 #include "llvm/Option/OptSpecifier.h"
 
@@ -152,10 +153,8 @@ public:
   /// is the default and means exclude nothing.
   /// \return An InputArgList; on error this will contain all the options
   /// which could be parsed.
-  InputArgList *ParseArgs(const char* const *ArgBegin,
-                          const char* const *ArgEnd,
-                          unsigned &MissingArgIndex,
-                          unsigned &MissingArgCount,
+  InputArgList *ParseArgs(ArrayRef<const char *> Args,
+                          unsigned &MissingArgIndex, unsigned &MissingArgCount,
                           unsigned FlagsToInclude = 0,
                           unsigned FlagsToExclude = 0) const;
 
