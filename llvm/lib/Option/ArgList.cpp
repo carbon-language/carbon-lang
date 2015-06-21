@@ -33,9 +33,6 @@ void arg_iterator::SkipToNextArg() {
   }
 }
 
-ArgList::~ArgList() {
-}
-
 void ArgList::append(Arg *A) {
   Args.push_back(A);
 }
@@ -357,8 +354,6 @@ const char *InputArgList::MakeArgStringRef(StringRef Str) const {
 
 DerivedArgList::DerivedArgList(const InputArgList &BaseArgs)
     : BaseArgs(BaseArgs) {}
-
-DerivedArgList::~DerivedArgList() {}
 
 const char *DerivedArgList::MakeArgStringRef(StringRef Str) const {
   return BaseArgs.MakeArgString(Str);
