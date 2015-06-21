@@ -67,42 +67,61 @@ public:
 };
 
 //===----------------------------------------------------------------------===//
-/// \brief This class is used to track local variable information.
+/// This class is used to track local variable information.
 ///
-/// - Variables whose location changes over time have a DebugLocListIndex and
-///   the other fields are not used.
+/// Variables can be created from allocas, in which case they're generated from
+/// the MMI table.  Such variables can have multiple expressions and frame
+/// indices.  The \a Expr and \a FrameIndices array must match.
 ///
-/// - Variables that are described by multiple MMI table entries have multiple
-///   expressions and frame indices.
+/// Variables can be created from \c DBG_VALUE instructions.  Those whose
+/// location changes over time use \a DebugLocListIndex, while those with a
+/// single instruction use \a MInsn and (optionally) a single entry of \a Expr.
+///
+/// Variables that have been optimized out use none of these fields.
 class DbgVariable {
-  const DILocalVariable *Var; /// Variable Descriptor.
-  const DILocation *IA;       /// Inlined at location.
-  SmallVector<const DIExpression *, 1>
-      Expr;                          /// Complex address location expression.
-  DIE *TheDIE;                /// Variable DIE.
-  unsigned DebugLocListIndex;        /// Offset in DebugLocs.
-  const MachineInstr *MInsn;  /// DBG_VALUE instruction of the variable.
-  SmallVector<int, 1> FrameIndex; /// Frame index of the variable.
+  const DILocalVariable *Var;                /// Variable Descriptor.
+  const DILocation *IA;                      /// Inlined at location.
+  SmallVector<const DIExpression *, 1> Expr; /// Complex address.
+  DIE *TheDIE = nullptr;                     /// Variable DIE.
+  unsigned DebugLocListIndex = ~0u;          /// Offset in DebugLocs.
+  const MachineInstr *MInsn = nullptr;       /// DBG_VALUE instruction.
+  SmallVector<int, 1> FrameIndex;            /// Frame index.
   DwarfDebug *DD;
 
 public:
-  /// Construct a DbgVariable from a variable.
-  DbgVariable(const DILocalVariable *V, const DILocation *IA,
-              const DIExpression *E, DwarfDebug *DD, int FI = ~0)
-      : Var(V), IA(IA), Expr(1, E), TheDIE(nullptr), DebugLocListIndex(~0U),
-        MInsn(nullptr), DD(DD) {
+  /// Construct a DbgVariable.
+  ///
+  /// Creates a variable without any DW_AT_location.  Call \a initializeMMI()
+  /// for MMI entries, or \a initializeDbgValue() for DBG_VALUE instructions.
+  DbgVariable(const DILocalVariable *V, const DILocation *IA, DwarfDebug *DD)
+      : Var(V), IA(IA), DD(DD) {}
+
+  /// Initialize from the MMI table.
+  void initializeMMI(const DIExpression *E, int FI) {
+    assert(Expr.empty() && "Already initialized?");
+    assert(FrameIndex.empty() && "Already initialized?");
+    assert(!MInsn && "Already initialized?");
+
+    assert((!E || E->isValid()) && "Expected valid expression");
+    assert(~FI && "Expected valid index");
+
+    Expr.push_back(E);
     FrameIndex.push_back(FI);
-    assert(!E || E->isValid());
   }
 
-  /// Construct a DbgVariable from a DEBUG_VALUE.
-  /// AbstractVar may be NULL.
-  DbgVariable(const MachineInstr *DbgValue, DwarfDebug *DD)
-      : Var(DbgValue->getDebugVariable()),
-        IA(DbgValue->getDebugLoc()->getInlinedAt()),
-        Expr(1, DbgValue->getDebugExpression()), TheDIE(nullptr),
-        DebugLocListIndex(~0U), MInsn(DbgValue), DD(DD) {
-    FrameIndex.push_back(~0);
+  /// Initialize from a DBG_VALUE instruction.
+  void initializeDbgValue(const MachineInstr *DbgValue) {
+    assert(Expr.empty() && "Already initialized?");
+    assert(FrameIndex.empty() && "Already initialized?");
+    assert(!MInsn && "Already initialized?");
+
+    assert(Var == DbgValue->getDebugVariable() && "Wrong variable");
+    assert(IA == DbgValue->getDebugLoc()->getInlinedAt() && "Wrong inlined-at");
+
+    MInsn = DbgValue;
+    if (auto *E = DbgValue->getDebugExpression())
+      if (E->getNumElements())
+        Expr.push_back(E);
   }
 
   // Accessors.
@@ -123,17 +142,16 @@ public:
     assert(V.Var == Var && "conflicting variable");
     assert(V.IA == IA && "conflicting inlined-at location");
 
-    if (V.getFrameIndex().back() != ~0) {
-      auto E = V.getExpression();
-      auto FI = V.getFrameIndex();
-      Expr.append(E.begin(), E.end());
-      FrameIndex.append(FI.begin(), FI.end());
-    }
-    assert(Expr.size() > 1 ? std::all_of(Expr.begin(), Expr.end(),
-                                         [](const DIExpression *E) {
-                                           return E->isBitPiece();
-                                         })
-                           : (true && "conflicting locations for variable"));
+    assert(!FrameIndex.empty() && "Expected an MMI entry");
+    assert(!V.FrameIndex.empty() && "Expected an MMI entry");
+    assert(Expr.size() == FrameIndex.size() && "Mismatched expressions");
+    assert(V.Expr.size() == V.FrameIndex.size() && "Mismatched expressions");
+
+    Expr.append(V.Expr.begin(), V.Expr.end());
+    FrameIndex.append(V.FrameIndex.begin(), V.FrameIndex.end());
+    assert(std::all_of(Expr.begin(), Expr.end(), [](const DIExpression *E) {
+             return E && E->isBitPiece();
+           }) && "conflicting locations for variable");
   }
 
   // Translate tag to proper Dwarf tag.
@@ -160,11 +178,13 @@ public:
     return false;
   }
 
-  bool variableHasComplexAddress() const {
-    assert(Var && "Invalid complex DbgVariable!");
-    assert(Expr.size() == 1 &&
-           "variableHasComplexAddress() invoked on multi-FI variable");
-    return Expr.back()->getNumElements() > 0;
+  bool hasComplexAddress() const {
+    assert(MInsn && "Expected DBG_VALUE, not MMI variable");
+    assert(FrameIndex.empty() && "Expected DBG_VALUE, not MMI variable");
+    assert(
+        (Expr.empty() || (Expr.size() == 1 && Expr.back()->getNumElements())) &&
+        "Invalid Expr for DBG_VALUE");
+    return !Expr.empty();
   }
   bool isBlockByrefVariable() const;
   const DIType *getType() const;
@@ -343,6 +363,8 @@ class DwarfDebug : public AsmPrinterHandler {
                                        const MDNode *Scope);
   void ensureAbstractVariableIsCreatedIfScoped(InlinedVariable Var,
                                                const MDNode *Scope);
+
+  DbgVariable *createConcreteVariable(LexicalScope &Scope, InlinedVariable IV);
 
   /// \brief Construct a DIE for this abstract scope.
   void constructAbstractSubprogramScopeDIE(LexicalScope *Scope);

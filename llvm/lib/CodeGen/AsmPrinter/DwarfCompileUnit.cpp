@@ -508,7 +508,7 @@ DwarfCompileUnit::constructVariableDIEImpl(const DbgVariable &DV,
   }
 
   // .. else use frame index.
-  if (DV.getFrameIndex().back() == ~0)
+  if (DV.getFrameIndex().empty())
     return VariableDie;
 
   auto Expr = DV.getExpression().begin();
@@ -686,7 +686,7 @@ void DwarfCompileUnit::collectDeadVariables(const DISubprogram *SP) {
     SPDIE = getDIE(SP);
   assert(SPDIE);
   for (const DILocalVariable *DV : Variables) {
-    DbgVariable NewVar(DV, /* IA */ nullptr, /* Expr */ nullptr, DD);
+    DbgVariable NewVar(DV, /* IA */ nullptr, DD);
     auto VariableDie = constructVariableDIE(NewVar);
     applyVariableAttributes(NewVar, *VariableDie);
     SPDIE->addChild(std::move(VariableDie));
@@ -725,7 +725,7 @@ void DwarfCompileUnit::addGlobalType(const DIType *Ty, const DIE &Die,
 /// DbgVariable based on provided MachineLocation.
 void DwarfCompileUnit::addVariableAddress(const DbgVariable &DV, DIE &Die,
                                           MachineLocation Location) {
-  if (DV.variableHasComplexAddress())
+  if (DV.hasComplexAddress())
     addComplexAddress(DV, Die, dwarf::DW_AT_location, Location);
   else if (DV.isBlockByrefVariable())
     addBlockByrefAddress(DV, Die, dwarf::DW_AT_location, Location);
