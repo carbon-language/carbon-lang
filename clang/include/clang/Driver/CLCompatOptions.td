@@ -52,16 +52,18 @@ class CLRemainingArgs<string name> : Option<["/", "-"], name,
 // (We don't put any of these in cl_compile_Group as the options they alias are
 // already in the right group.)
 
-def _SLASH_C : CLFlag<"C">, HelpText<"Don't discard comments when preprocessing">,
-  Alias<C>;
+def _SLASH_C : CLFlag<"C">,
+  HelpText<"Don't discard comments when preprocessing">, Alias<C>;
 def _SLASH_c : CLFlag<"c">, HelpText<"Compile only">, Alias<c>;
 def _SLASH_D : CLJoinedOrSeparate<"D">, HelpText<"Define macro">,
   MetaVarName<"<macro[=value]>">, Alias<D>;
 def _SLASH_E : CLFlag<"E">, HelpText<"Preprocess to stdout">, Alias<E>;
 def _SLASH_fp_except : CLFlag<"fp:except">, HelpText<"">, Alias<ftrapping_math>;
-def _SLASH_fp_except_ : CLFlag<"fp:except-">, HelpText<"">, Alias<fno_trapping_math>;
+def _SLASH_fp_except_ : CLFlag<"fp:except-">,
+  HelpText<"">, Alias<fno_trapping_math>;
 def _SLASH_fp_fast : CLFlag<"fp:fast">, HelpText<"">, Alias<ffast_math>;
-def _SLASH_fp_precise : CLFlag<"fp:precise">, HelpText<"">, Alias<fno_fast_math>;
+def _SLASH_fp_precise : CLFlag<"fp:precise">,
+  HelpText<"">, Alias<fno_fast_math>;
 def _SLASH_fp_strict : CLFlag<"fp:strict">, HelpText<"">, Alias<fno_fast_math>;
 def _SLASH_GA : CLFlag<"GA">, Alias<ftlsmodel_EQ>, AliasArgs<["local-exec"]>,
   HelpText<"Assume thread-local variables are defined in the executable">;
@@ -73,11 +75,13 @@ def _SLASH_Gs : CLJoined<"Gs">, HelpText<"Set stack probe size">,
   Alias<mstack_probe_size>;
 def _SLASH_Gy : CLFlag<"Gy">, HelpText<"Put each function in its own section">,
   Alias<ffunction_sections>;
-def _SLASH_Gy_ : CLFlag<"Gy-">, HelpText<"Don't put each function in its own section">,
+def _SLASH_Gy_ : CLFlag<"Gy-">,
+  HelpText<"Don't put each function in its own section">,
   Alias<fno_function_sections>;
 def _SLASH_Gw : CLFlag<"Gw">, HelpText<"Put each data item in its own section">,
   Alias<fdata_sections>;
-def _SLASH_Gw_ : CLFlag<"Gw-">, HelpText<"Don't put each data item in its own section">,
+def _SLASH_Gw_ : CLFlag<"Gw-">,
+  HelpText<"Don't put each data item in its own section">,
   Alias<fno_data_sections>;
 def _SLASH_help : CLFlag<"help">, Alias<help>,
   HelpText<"Display available options">;
@@ -109,21 +113,15 @@ def _SLASH_Oy_ : CLFlag<"Oy-">, HelpText<"Disable frame pointer omission">,
   Alias<fno_omit_frame_pointer>;
 def _SLASH_QUESTION : CLFlag<"?">, Alias<help>,
   HelpText<"Display available options">;
+def _SLASH_Qvec : CLFlag<"Qvec">,
+  HelpText<"Enable the loop vectorization passes">, Alias<fvectorize>;
+def _SLASH_Qvec_ : CLFlag<"Qvec-">,
+  HelpText<"Disable the loop vectorization passes">, Alias<fno_vectorize>;
 def _SLASH_showIncludes : CLFlag<"showIncludes">,
   HelpText<"Print info about included files to stderr">,
   Alias<show_includes>;
 def _SLASH_U : CLJoinedOrSeparate<"U">, HelpText<"Undefine macro">,
   MetaVarName<"<macro>">, Alias<U>;
-def _SLASH_vmb : CLFlag<"vmb">,
-  HelpText<"Use a best-case representation method for member pointers">;
-def _SLASH_vmg : CLFlag<"vmg">,
-  HelpText<"Use a most-general representation for member pointers">;
-def _SLASH_vms : CLFlag<"vms">,
-  HelpText<"Set the default most-general representation to single inheritance">;
-def _SLASH_vmm : CLFlag<"vmm">,
-  HelpText<"Set the default most-general representation to multiple inheritance">;
-def _SLASH_vmv : CLFlag<"vmv">,
-  HelpText<"Set the default most-general representation to virtual inheritance">;
 def _SLASH_W0 : CLFlag<"W0">, HelpText<"Disable all warnings">, Alias<w>;
 def _SLASH_W1 : CLFlag<"W1">, HelpText<"Enable -Wall">, Alias<Wall>;
 def _SLASH_W2 : CLFlag<"W2">, HelpText<"Enable -Wall">, Alias<Wall>;
@@ -181,7 +179,8 @@ def _SLASH_arch : CLCompileJoined<"arch:">,
   HelpText<"Set architecture for code generation">;
 
 def _SLASH_M_Group : OptionGroup<"</M group>">, Group<cl_compile_Group>;
-def _SLASH_volatile_Group : OptionGroup<"</volatile group>">, Group<cl_compile_Group>;
+def _SLASH_volatile_Group : OptionGroup<"</volatile group>">,
+  Group<cl_compile_Group>;
 
 def _SLASH_EH : CLJoined<"EH">, HelpText<"Exception handling model">;
 def _SLASH_EP : CLFlag<"EP">,
@@ -220,22 +219,30 @@ def _SLASH_o : CLJoinedOrSeparate<"o">,
   HelpText<"Set output file or directory (ends in / or \\)">,
   MetaVarName<"<file or directory>">;
 def _SLASH_P : CLFlag<"P">, HelpText<"Preprocess to file">;
-def _SLASH_Qvec : CLFlag<"Qvec">,
-                  HelpText<"Enable the loop vectorization passes">,
-                  Alias<fvectorize>;
-def _SLASH_Qvec_ : CLFlag<"Qvec-">,
-                   HelpText<"Disable the loop vectorization passes">,
-                   Alias<fno_vectorize>;
 def _SLASH_Tc : CLCompileJoinedOrSeparate<"Tc">,
   HelpText<"Specify a C source file">, MetaVarName<"<filename>">;
 def _SLASH_TC : CLCompileFlag<"TC">, HelpText<"Treat all source files as C">;
 def _SLASH_Tp : CLCompileJoinedOrSeparate<"Tp">,
   HelpText<"Specify a C++ source file">, MetaVarName<"<filename>">;
 def _SLASH_TP : CLCompileFlag<"TP">, HelpText<"Treat all source files as C++">;
-def _SLASH_volatile_iso : Option<["/", "-"], "volatile:iso", KIND_FLAG>, Group<_SLASH_volatile_Group>,
-  Flags<[CLOption, DriverOption]>, HelpText<"Volatile loads and stores have standard semantics">;
-def _SLASH_volatile_ms  : Option<["/", "-"], "volatile:ms", KIND_FLAG>, Group<_SLASH_volatile_Group>,
-  Flags<[CLOption, DriverOption]>, HelpText<"Volatile loads and stores have acquire and release semantics">;
+def _SLASH_volatile_iso : Option<["/", "-"], "volatile:iso", KIND_FLAG>,
+  Group<_SLASH_volatile_Group>, Flags<[CLOption, DriverOption]>,
+  HelpText<"Volatile loads and stores have standard semantics">;
+def _SLASH_vmb : CLFlag<"vmb">,
+  HelpText<"Use a best-case representation method for member pointers">;
+def _SLASH_vmg : CLFlag<"vmg">,
+  HelpText<"Use a most-general representation for member pointers">;
+def _SLASH_vms : CLFlag<"vms">,
+  HelpText<"Set the default most-general representation to single inheritance">;
+def _SLASH_vmm : CLFlag<"vmm">,
+  HelpText<"Set the default most-general representation to "
+           "multiple inheritance">;
+def _SLASH_vmv : CLFlag<"vmv">,
+  HelpText<"Set the default most-general representation to "
+           "virtual inheritance">;
+def _SLASH_volatile_ms  : Option<["/", "-"], "volatile:ms", KIND_FLAG>,
+  Group<_SLASH_volatile_Group>, Flags<[CLOption, DriverOption]>,
+  HelpText<"Volatile loads and stores have acquire and release semantics">;
 
 // Ignored:
 
