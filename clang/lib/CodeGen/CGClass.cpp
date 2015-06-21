@@ -1297,6 +1297,10 @@ HasTrivialDestructorBody(ASTContext &Context,
   if (BaseClassDecl->hasTrivialDestructor())
     return true;
 
+  // Give up if the destructor is not accessible.
+  if (!BaseClassDecl->getDestructor())
+    return false;
+
   if (!BaseClassDecl->getDestructor()->hasTrivialBody())
     return false;
 
