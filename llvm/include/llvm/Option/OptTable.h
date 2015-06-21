@@ -142,8 +142,6 @@ public:
   /// The only error that can occur in this routine is if an argument is
   /// missing values; in this case \p MissingArgCount will be non-zero.
   ///
-  /// \param ArgBegin - The beginning of the argument vector.
-  /// \param ArgEnd - The end of the argument vector.
   /// \param MissingArgIndex - On error, the index of the option which could
   /// not be parsed.
   /// \param MissingArgCount - On error, the number of missing options.
