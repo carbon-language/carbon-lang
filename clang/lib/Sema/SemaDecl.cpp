@@ -3808,15 +3808,14 @@ Decl *Sema::ParsedFreeStandingDeclSpec(Scope *S, AccessSpecifier AS,
         TypeSpecType == DeclSpec::TST_interface ||
         TypeSpecType == DeclSpec::TST_union ||
         TypeSpecType == DeclSpec::TST_enum) {
-      AttributeList* attrs = DS.getAttributes().getList();
-      while (attrs) {
+      for (AttributeList* attrs = DS.getAttributes().getList(); attrs;
+           attrs = attrs->getNext()) {
         Diag(attrs->getLoc(), diag::warn_declspec_attribute_ignored)
         << attrs->getName()
         << (TypeSpecType == DeclSpec::TST_class ? 0 :
             TypeSpecType == DeclSpec::TST_struct ? 1 :
             TypeSpecType == DeclSpec::TST_union ? 2 :
             TypeSpecType == DeclSpec::TST_interface ? 3 : 4);
-        attrs = attrs->getNext();
       }
     }
   }
