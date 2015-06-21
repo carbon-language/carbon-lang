@@ -303,29 +303,29 @@ void Writer::writeHeader() {
   PE->SizeOfInitializedData = getSizeOfInitializedData();
 
   // Write data directory
-  auto *DataDirectory = reinterpret_cast<data_directory *>(Buf);
-  Buf += sizeof(*DataDirectory) * NumberfOfDataDirectory;
+  auto *Dir = reinterpret_cast<data_directory *>(Buf);
+  Buf += sizeof(*Dir) * NumberfOfDataDirectory;
   if (OutputSection *Sec = findSection(".edata")) {
-    DataDirectory[EXPORT_TABLE].RelativeVirtualAddress = Sec->getRVA();
-    DataDirectory[EXPORT_TABLE].Size = Sec->getVirtualSize();
+    Dir[EXPORT_TABLE].RelativeVirtualAddress = Sec->getRVA();
+    Dir[EXPORT_TABLE].Size = Sec->getVirtualSize();
   }
   if (Idata) {
-    DataDirectory[IMPORT_TABLE].RelativeVirtualAddress = Idata->getDirRVA();
-    DataDirectory[IMPORT_TABLE].Size = Idata->getDirSize();
-    DataDirectory[IAT].RelativeVirtualAddress = Idata->getIATRVA();
-    DataDirectory[IAT].Size = Idata->getIATSize();
+    Dir[IMPORT_TABLE].RelativeVirtualAddress = Idata->getDirRVA();
+    Dir[IMPORT_TABLE].Size = Idata->getDirSize();
+    Dir[IAT].RelativeVirtualAddress = Idata->getIATRVA();
+    Dir[IAT].Size = Idata->getIATSize();
   }
   if (OutputSection *Sec = findSection(".rsrc")) {
-    DataDirectory[RESOURCE_TABLE].RelativeVirtualAddress = Sec->getRVA();
-    DataDirectory[RESOURCE_TABLE].Size = Sec->getVirtualSize();
+    Dir[RESOURCE_TABLE].RelativeVirtualAddress = Sec->getRVA();
+    Dir[RESOURCE_TABLE].Size = Sec->getVirtualSize();
   }
   if (OutputSection *Sec = findSection(".reloc")) {
-    DataDirectory[BASE_RELOCATION_TABLE].RelativeVirtualAddress = Sec->getRVA();
-    DataDirectory[BASE_RELOCATION_TABLE].Size = Sec->getVirtualSize();
+    Dir[BASE_RELOCATION_TABLE].RelativeVirtualAddress = Sec->getRVA();
+    Dir[BASE_RELOCATION_TABLE].Size = Sec->getVirtualSize();
   }
   if (OutputSection *Sec = findSection(".pdata")) {
-    DataDirectory[EXCEPTION_TABLE].RelativeVirtualAddress = Sec->getRVA();
-    DataDirectory[EXCEPTION_TABLE].Size = Sec->getVirtualSize();
+    Dir[EXCEPTION_TABLE].RelativeVirtualAddress = Sec->getRVA();
+    Dir[EXCEPTION_TABLE].Size = Sec->getVirtualSize();
   }
 
   // Section table
