@@ -15,7 +15,11 @@
 #include "ByteStreamer.h"
 
 namespace llvm {
+
+class AsmPrinter;
+class DbgVariable;
 class DwarfCompileUnit;
+class MachineInstr;
 class MCSymbol;
 
 /// \brief Byte stream of .debug_loc entries.
@@ -29,10 +33,10 @@ class DebugLocStream {
 public:
   struct List {
     DwarfCompileUnit *CU;
-    MCSymbol *Label;
+    MCSymbol *Label = nullptr;
     size_t EntryOffset;
-    List(DwarfCompileUnit *CU, MCSymbol *Label, size_t EntryOffset)
-        : CU(CU), Label(Label), EntryOffset(EntryOffset) {}
+    List(DwarfCompileUnit *CU, size_t EntryOffset)
+        : CU(CU), EntryOffset(EntryOffset) {}
   };
   struct Entry {
     const MCSymbol *BeginSym;
@@ -61,17 +65,29 @@ public:
   const List &getList(size_t LI) const { return Lists[LI]; }
   ArrayRef<List> getLists() const { return Lists; }
 
+  class ListBuilder;
+  class EntryBuilder;
+
+private:
   /// \brief Start a new .debug_loc entry list.
   ///
   /// Start a new .debug_loc entry list.  Return the new list's index so it can
   /// be retrieved later via \a getList().
   ///
   /// Until the next call, \a startEntry() will add entries to this list.
-  size_t startList(DwarfCompileUnit *CU, MCSymbol *Label) {
+  size_t startList(DwarfCompileUnit *CU) {
     size_t LI = Lists.size();
-    Lists.emplace_back(CU, Label, Entries.size());
+    Lists.emplace_back(CU, Entries.size());
     return LI;
   }
+
+  /// Finalize a .debug_loc entry list.
+  ///
+  /// If there are no entries in this list, delete it outright.  Otherwise,
+  /// create a label with \a Asm.
+  ///
+  /// \return false iff the list is deleted.
+  bool finalizeList(AsmPrinter &Asm);
 
   /// \brief Start a new .debug_loc entry.
   ///
@@ -81,6 +97,10 @@ public:
     Entries.emplace_back(BeginSym, EndSym, DWARFBytes.size(), Comments.size());
   }
 
+  /// Finalize a .debug_loc entry, deleting if it's empty.
+  void finalizeEntry();
+
+public:
   BufferByteStreamer getStreamer() {
     return BufferByteStreamer(DWARFBytes, Comments, GenerateComments);
   }
@@ -129,5 +149,45 @@ private:
     return Entries[EI + 1].CommentOffset - Entries[EI].CommentOffset;
   }
 };
+
+/// Builder for DebugLocStream lists.
+class DebugLocStream::ListBuilder {
+  DebugLocStream &Locs;
+  AsmPrinter &Asm;
+  DbgVariable &V;
+  const MachineInstr &MI;
+  size_t ListIndex;
+
+public:
+  ListBuilder(DebugLocStream &Locs, DwarfCompileUnit &CU, AsmPrinter &Asm,
+              DbgVariable &V, const MachineInstr &MI)
+      : Locs(Locs), Asm(Asm), V(V), MI(MI), ListIndex(Locs.startList(&CU)) {}
+
+  /// Finalize the list.
+  ///
+  /// If the list is empty, delete it.  Otherwise, finalize it by creating a
+  /// temp symbol in \a Asm and setting up the \a DbgVariable.
+  ~ListBuilder();
+
+  DebugLocStream &getLocs() { return Locs; }
+};
+
+/// Builder for DebugLocStream entries.
+class DebugLocStream::EntryBuilder {
+  DebugLocStream &Locs;
+
+public:
+  EntryBuilder(ListBuilder &List, const MCSymbol *Begin, const MCSymbol *End)
+      : Locs(List.getLocs()) {
+    Locs.startEntry(Begin, End);
+  }
+
+  /// Finalize the entry, deleting it if it's empty.
+  ~EntryBuilder() { Locs.finalizeEntry(); }
+
+  BufferByteStreamer getStreamer() { return Locs.getStreamer(); }
+};
+
 } // namespace llvm
+
 #endif

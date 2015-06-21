@@ -908,15 +908,15 @@ void DwarfDebug::collectVariableInfo(DwarfCompileUnit &TheCU,
 
     const MachineInstr *MInsn = Ranges.front().first;
     assert(MInsn->isDebugValue() && "History must begin with debug value");
-    RegVar->initializeDbgValue(MInsn);
 
     // Check if the first DBG_VALUE is valid for the rest of the function.
-    if (Ranges.size() == 1 && Ranges.front().second == nullptr)
+    if (Ranges.size() == 1 && Ranges.front().second == nullptr) {
+      RegVar->initializeDbgValue(MInsn);
       continue;
+    }
 
     // Handle multiple DBG_VALUE instructions describing one variable.
-    RegVar->setDebugLocListIndex(
-        DebugLocs.startList(&TheCU, Asm->createTempSymbol("debug_loc")));
+    DebugLocStream::ListBuilder List(DebugLocs, TheCU, *Asm, *RegVar, *MInsn);
 
     // Build the location list for this variable.
     SmallVector<DebugLocEntry, 8> Entries;
@@ -930,7 +930,7 @@ void DwarfDebug::collectVariableInfo(DwarfCompileUnit &TheCU,
 
     // Finalize the entry by lowering it into a DWARF bytestream.
     for (auto &Entry : Entries)
-      Entry.finalize(*Asm, DebugLocs, BT);
+      Entry.finalize(*Asm, List, BT);
   }
 
   // Collect info for variables that were optimized out.
@@ -1504,10 +1504,11 @@ static void emitDebugLocValue(const AsmPrinter &AP, const DIBasicType *BT,
   // FIXME: ^
 }
 
-void DebugLocEntry::finalize(const AsmPrinter &AP, DebugLocStream &Locs,
+void DebugLocEntry::finalize(const AsmPrinter &AP,
+                             DebugLocStream::ListBuilder &List,
                              const DIBasicType *BT) {
-  Locs.startEntry(Begin, End);
-  BufferByteStreamer Streamer = Locs.getStreamer();
+  DebugLocStream::EntryBuilder Entry(List, Begin, End);
+  BufferByteStreamer Streamer = Entry.getStreamer();
   const DebugLocEntry::Value &Value = Values[0];
   if (Value.isBitPiece()) {
     // Emit all pieces that belong to the same variable and range.
