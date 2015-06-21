@@ -100,8 +100,9 @@ private:
   llvm::SpecificBumpPtrAllocator<OutputSection> CAlloc;
   llvm::SpecificBumpPtrAllocator<BaserelChunk> BAlloc;
   std::vector<OutputSection *> OutputSections;
-  std::unique_ptr<IdataContents> Idata;
-  std::unique_ptr<EdataContents> Edata;
+  IdataContents Idata;
+  DelayLoadContents DelayIdata;
+  EdataContents Edata;
 
   uint64_t FileSize;
   uint64_t SizeOfImage;

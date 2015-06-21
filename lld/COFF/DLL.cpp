@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file defines various types of chunks for the DLL import
-// descriptor table. They are inherently Windows-specific.
+// This file defines various types of chunks for the DLL import or export
+// descriptor tables. They are inherently Windows-specific.
 // You need to read Microsoft PE/COFF spec to understand details
 // about the data structures.
 //
@@ -114,6 +114,7 @@ public:
   explicit NullChunk(size_t N) : Size(N) {}
   bool hasData() const override { return false; }
   size_t getSize() const override { return Size; }
+  void setAlign(size_t N) { Align = N; }
 
 private:
   size_t Size;
@@ -149,23 +150,33 @@ std::vector<Chunk *> IdataContents::getChunks() {
   return V;
 }
 
-void IdataContents::create() {
+static std::map<StringRef, std::vector<DefinedImportData *>>
+binImports(const std::vector<DefinedImportData *> &Imports) {
   // Group DLL-imported symbols by DLL name because that's how
   // symbols are layed out in the import descriptor table.
-  std::map<StringRef, std::vector<DefinedImportData *>> Map;
+  std::map<StringRef, std::vector<DefinedImportData *>> M;
   for (DefinedImportData *Sym : Imports)
-    Map[Sym->getDLLName()].push_back(Sym);
+    M[Sym->getDLLName()].push_back(Sym);
+
+  for (auto &P : M) {
+    // Sort symbols by name for each group.
+    std::vector<DefinedImportData *> &Syms = P.second;
+    std::sort(Syms.begin(), Syms.end(),
+              [](DefinedImportData *A, DefinedImportData *B) {
+                return A->getName() < B->getName();
+              });
+  }
+  return M;
+}
+
+void IdataContents::create() {
+  std::map<StringRef, std::vector<DefinedImportData *>> Map =
+      binImports(Imports);
 
   // Create .idata contents for each DLL.
   for (auto &P : Map) {
     StringRef Name = P.first;
     std::vector<DefinedImportData *> &Syms = P.second;
-
-    // Sort symbols by name for each group.
-    std::sort(Syms.begin(), Syms.end(),
-              [](DefinedImportData *A, DefinedImportData *B) {
-                return A->getName() < B->getName();
-              });
 
     // Create lookup and address tables. If they have external names,
     // we need to create HintName chunks to store the names.
@@ -201,6 +212,148 @@ void IdataContents::create() {
   }
   // Add null terminator.
   Dirs.push_back(make_unique<NullChunk>(sizeof(ImportDirectoryTableEntry)));
+}
+
+// Export table
+// See Microsoft PE/COFF spec 4.3 for details.
+
+// A chunk for the delay import descriptor table etnry.
+class DelayDirectoryChunk : public Chunk {
+public:
+  explicit DelayDirectoryChunk(Chunk *N) : DLLName(N) {}
+
+  size_t getSize() const override {
+    return sizeof(delay_import_directory_table_entry);
+  }
+
+  void writeTo(uint8_t *Buf) override {
+    auto *E = (delay_import_directory_table_entry *)(Buf + FileOff);
+    E->Name = DLLName->getRVA();
+    E->ModuleHandle = ModuleHandle->getRVA();
+    E->DelayImportAddressTable = AddressTab->getRVA();
+    E->DelayImportNameTable = NameTab->getRVA();
+  }
+
+  Chunk *DLLName;
+  Chunk *ModuleHandle;
+  Chunk *AddressTab;
+  Chunk *NameTab;
+};
+
+// Initial contents for delay-loaded functions.
+// This code calls __delayLoadHerper2 function to resolve a symbol
+// and then overwrites its jump table slot with the result
+// for subsequent function calls.
+static const uint8_t Thunk[] = {
+    0x51,                               // push    rcx
+    0x52,                               // push    rdx
+    0x41, 0x50,                         // push    r8
+    0x41, 0x51,                         // push    r9
+    0x48, 0x83, 0xEC, 0x48,             // sub     rsp, 48h
+    0x66, 0x0F, 0x7F, 0x04, 0x24,       // movdqa  xmmword ptr [rsp], xmm0
+    0x66, 0x0F, 0x7F, 0x4C, 0x24, 0x10, // movdqa  xmmword ptr [rsp+10h], xmm1
+    0x66, 0x0F, 0x7F, 0x54, 0x24, 0x20, // movdqa  xmmword ptr [rsp+20h], xmm2
+    0x66, 0x0F, 0x7F, 0x5C, 0x24, 0x30, // movdqa  xmmword ptr [rsp+30h], xmm3
+    0x48, 0x8D, 0x15, 0, 0, 0, 0,       // lea     rdx, [__imp_<FUNCNAME>]
+    0x48, 0x8D, 0x0D, 0, 0, 0, 0,       // lea     rcx, [___DELAY_IMPORT_...]
+    0xE8, 0, 0, 0, 0,                   // call    __delayLoadHelper2
+    0x66, 0x0F, 0x6F, 0x04, 0x24,       // movdqa  xmm0, xmmword ptr [rsp]
+    0x66, 0x0F, 0x6F, 0x4C, 0x24, 0x10, // movdqa  xmm1, xmmword ptr [rsp+10h]
+    0x66, 0x0F, 0x6F, 0x54, 0x24, 0x20, // movdqa  xmm2, xmmword ptr [rsp+20h]
+    0x66, 0x0F, 0x6F, 0x5C, 0x24, 0x30, // movdqa  xmm3, xmmword ptr [rsp+30h]
+    0x48, 0x83, 0xC4, 0x48,             // add     rsp, 48h
+    0x41, 0x59,                         // pop     r9
+    0x41, 0x58,                         // pop     r8
+    0x5A,                               // pop     rdx
+    0x59,                               // pop     rcx
+    0xFF, 0xE0,                         // jmp     rax
+};
+
+// A chunk for the delay import thunk.
+class ThunkChunk : public Chunk {
+public:
+  ThunkChunk(Defined *I, Defined *H) : Imp(I), Helper(H) {}
+
+  size_t getSize() const override { return sizeof(Thunk); }
+
+  void writeTo(uint8_t *Buf) override {
+    memcpy(Buf + FileOff, Thunk, sizeof(Thunk));
+    write32le(Buf + FileOff + 36, Imp->getRVA());
+    write32le(Buf + FileOff + 43, Desc->getRVA());
+    write32le(Buf + FileOff + 48, Helper->getRVA());
+  }
+
+  Defined *Imp = nullptr;
+  Chunk *Desc = nullptr;
+  Defined *Helper = nullptr;
+};
+
+std::vector<Chunk *> DelayLoadContents::getChunks(Defined *H) {
+  Helper = H;
+  create();
+  std::vector<Chunk *> V;
+  for (std::unique_ptr<Chunk> &C : Dirs)
+    V.push_back(C.get());
+  for (std::unique_ptr<Chunk> &C : Addresses)
+    V.push_back(C.get());
+  for (std::unique_ptr<Chunk> &C : Names)
+    V.push_back(C.get());
+  for (std::unique_ptr<Chunk> &C : HintNames)
+    V.push_back(C.get());
+  for (auto &P : DLLNames) {
+    std::unique_ptr<Chunk> &C = P.second;
+    V.push_back(C.get());
+  }
+  return V;
+}
+
+uint64_t DelayLoadContents::getDirSize() {
+  return Dirs.size() * sizeof(delay_import_directory_table_entry);
+}
+
+void DelayLoadContents::create() {
+  std::map<StringRef, std::vector<DefinedImportData *>> Map =
+      binImports(Imports);
+
+  // Create .didat contents for each DLL.
+  for (auto &P : Map) {
+    StringRef Name = P.first;
+    std::vector<DefinedImportData *> &Syms = P.second;
+
+    size_t Base = Addresses.size();
+    for (DefinedImportData *S : Syms) {
+      auto T = make_unique<ThunkChunk>(S, Helper);
+      auto A = make_unique<LookupChunk>(T.get());
+      T->Desc = A.get();
+      Addresses.push_back(std::move(A));
+      Thunks.push_back(std::move(T));
+      auto C =
+          make_unique<HintNameChunk>(S->getExternalName(), S->getOrdinal());
+      Names.push_back(make_unique<LookupChunk>(C.get()));
+      HintNames.push_back(std::move(C));
+    }
+    // Terminate with null values.
+    Addresses.push_back(make_unique<NullChunk>(LookupChunkSize));
+    Names.push_back(make_unique<NullChunk>(LookupChunkSize));
+
+    for (int I = 0, E = Syms.size(); I < E; ++I)
+      Syms[I]->setLocation(Addresses[Base + I].get());
+    auto *MH = new NullChunk(8);
+    MH->setAlign(8);
+    ModuleHandles.push_back(std::unique_ptr<Chunk>(MH));
+
+    // Create the delay import table header.
+    if (!DLLNames.count(Name))
+      DLLNames[Name] = make_unique<StringChunk>(Name);
+    auto Dir = make_unique<DelayDirectoryChunk>(DLLNames[Name].get());
+    Dir->ModuleHandle = MH;
+    Dir->AddressTab = Addresses[Base].get();
+    Dir->NameTab = Names[Base].get();
+    Dirs.push_back(std::move(Dir));
+  }
+  // Add null terminator.
+  Dirs.push_back(
+      make_unique<NullChunk>(sizeof(delay_import_directory_table_entry)));
 }
 
 // Export table

@@ -60,6 +60,7 @@ struct Configuration {
   bool DLL = false;
   StringRef Implib;
   std::vector<Export> Exports;
+  std::set<StringRef> DelayLoads;
 
   // Options for manifest files.
   ManifestKind Manifest = SideBySide;

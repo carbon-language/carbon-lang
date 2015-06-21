@@ -1,0 +1,26 @@
+# RUN: lld -flavor link2 /out:%t.exe /entry:main /subsystem:console \
+# RUN:   %p/Inputs/hello64.obj %p/Inputs/std64.lib /delayload:std64.dll \
+# RUN:   /alternatename:__delayLoadHelper2=main
+# RUN: llvm-readobj -coff-imports %t.exe | FileCheck %s
+
+CHECK:      DelayImport {
+CHECK-NEXT:   Name: std64.dll
+CHECK-NEXT:   Attributes: 0x0
+CHECK-NEXT:   ModuleHandle: 0x1018
+CHECK-NEXT:   ImportAddressTable: 0x3040
+CHECK-NEXT:   ImportNameTable: 0x3060
+CHECK-NEXT:   BoundDelayImportTable: 0x0
+CHECK-NEXT:   UnloadDelayImportTable: 0x0
+CHECK-NEXT:   Import {
+CHECK-NEXT:     Symbol: ExitProcess (0)
+CHECK-NEXT:     Address: 0x2045
+CHECK-NEXT:   }
+CHECK-NEXT:   Import {
+CHECK-NEXT:     Symbol:  (50)
+CHECK-NEXT:     Address: 0x209C
+CHECK-NEXT:   }
+CHECK-NEXT:   Import {
+CHECK-NEXT:     Symbol: MessageBoxA (1)
+CHECK-NEXT:     Address: 0x20F3
+CHECK-NEXT:   }
+CHECK-NEXT: }

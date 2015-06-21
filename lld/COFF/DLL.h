@@ -23,6 +23,7 @@ namespace coff {
 class IdataContents {
 public:
   void add(DefinedImportData *Sym) { Imports.push_back(Sym); }
+  bool empty() { return Imports.empty(); }
   std::vector<Chunk *> getChunks();
 
   uint64_t getDirRVA() { return Dirs[0]->getRVA(); }
@@ -38,6 +39,32 @@ private:
   std::vector<std::unique_ptr<Chunk>> Lookups;
   std::vector<std::unique_ptr<Chunk>> Addresses;
   std::vector<std::unique_ptr<Chunk>> Hints;
+  std::map<StringRef, std::unique_ptr<Chunk>> DLLNames;
+};
+
+// Windows-specific.
+// DelayLoadContents creates all chunks for the delay-load DLL import table.
+class DelayLoadContents {
+public:
+  void add(DefinedImportData *Sym) { Imports.push_back(Sym); }
+  bool empty() { return Imports.empty(); }
+  std::vector<Chunk *> getChunks(Defined *Helper);
+  std::vector<std::unique_ptr<Chunk>> &getDataChunks() { return ModuleHandles; }
+  std::vector<std::unique_ptr<Chunk>> &getCodeChunks() { return Thunks; }
+
+  uint64_t getDirRVA() { return Dirs[0]->getRVA(); }
+  uint64_t getDirSize();
+
+private:
+  void create();
+  Defined *Helper;
+  std::vector<DefinedImportData *> Imports;
+  std::vector<std::unique_ptr<Chunk>> Dirs;
+  std::vector<std::unique_ptr<Chunk>> ModuleHandles;
+  std::vector<std::unique_ptr<Chunk>> Addresses;
+  std::vector<std::unique_ptr<Chunk>> Names;
+  std::vector<std::unique_ptr<Chunk>> HintNames;
+  std::vector<std::unique_ptr<Chunk>> Thunks;
   std::map<StringRef, std::unique_ptr<Chunk>> DLLNames;
 };
 

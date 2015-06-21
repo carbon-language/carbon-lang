@@ -159,29 +159,45 @@ void Writer::createImportTables() {
   if (Symtab->ImportFiles.empty())
     return;
   OutputSection *Text = createSection(".text");
-  Idata.reset(new IdataContents());
   for (std::unique_ptr<ImportFile> &File : Symtab->ImportFiles) {
-    for (SymbolBody *Body : File->getSymbols()) {
-      if (auto *Import = dyn_cast<DefinedImportData>(Body)) {
-        Idata->add(Import);
+    for (SymbolBody *B : File->getSymbols()) {
+      auto *Import = dyn_cast<DefinedImportData>(B);
+      if (!Import) {
+        // Linker-created function thunks for DLL symbols are added to
+        // .text section.
+        Text->addChunk(cast<DefinedImportThunk>(B)->getChunk());
         continue;
       }
-      // Linker-created function thunks for DLL symbols are added to
-      // .text section.
-      Text->addChunk(cast<DefinedImportThunk>(Body)->getChunk());
+      if (Config->DelayLoads.count(Import->getDLLName())) {
+        DelayIdata.add(Import);
+      } else {
+        Idata.add(Import);
+      }
     }
   }
-  OutputSection *Sec = createSection(".idata");
-  for (Chunk *C : Idata->getChunks())
-    Sec->addChunk(C);
+  if (!Idata.empty()) {
+    OutputSection *Sec = createSection(".idata");
+    for (Chunk *C : Idata.getChunks())
+      Sec->addChunk(C);
+  }
+  if (!DelayIdata.empty()) {
+    OutputSection *Sec = createSection(".didat");
+    for (Chunk *C : DelayIdata.getChunks(Symtab->find("__delayLoadHelper2")))
+      Sec->addChunk(C);
+    Sec = createSection(".text");
+    for (std::unique_ptr<Chunk> &C : DelayIdata.getCodeChunks())
+      Sec->addChunk(C.get());
+    Sec = createSection(".data");
+    for (std::unique_ptr<Chunk> &C : DelayIdata.getDataChunks())
+      Sec->addChunk(C.get());
+  }
 }
 
 void Writer::createExportTable() {
   if (Config->Exports.empty())
     return;
-  Edata.reset(new EdataContents());
   OutputSection *Sec = createSection(".edata");
-  for (std::unique_ptr<Chunk> &C : Edata->Chunks)
+  for (std::unique_ptr<Chunk> &C : Edata.Chunks)
     Sec->addChunk(C.get());
 }
 
@@ -309,11 +325,16 @@ void Writer::writeHeader() {
     Dir[EXPORT_TABLE].RelativeVirtualAddress = Sec->getRVA();
     Dir[EXPORT_TABLE].Size = Sec->getVirtualSize();
   }
-  if (Idata) {
-    Dir[IMPORT_TABLE].RelativeVirtualAddress = Idata->getDirRVA();
-    Dir[IMPORT_TABLE].Size = Idata->getDirSize();
-    Dir[IAT].RelativeVirtualAddress = Idata->getIATRVA();
-    Dir[IAT].Size = Idata->getIATSize();
+  if (!Idata.empty()) {
+    Dir[IMPORT_TABLE].RelativeVirtualAddress = Idata.getDirRVA();
+    Dir[IMPORT_TABLE].Size = Idata.getDirSize();
+    Dir[IAT].RelativeVirtualAddress = Idata.getIATRVA();
+    Dir[IAT].Size = Idata.getIATSize();
+  }
+  if (!DelayIdata.empty()) {
+    Dir[DELAY_IMPORT_DESCRIPTOR].RelativeVirtualAddress =
+        DelayIdata.getDirRVA();
+    Dir[DELAY_IMPORT_DESCRIPTOR].Size = DelayIdata.getDirSize();
   }
   if (OutputSection *Sec = findSection(".rsrc")) {
     Dir[RESOURCE_TABLE].RelativeVirtualAddress = Sec->getRVA();

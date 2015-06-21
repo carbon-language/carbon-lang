@@ -378,6 +378,12 @@ bool LinkerDriver::link(llvm::ArrayRef<const char*> ArgsArr) {
     Config->Exports.push_back(E.get());
   }
 
+  // Handle /delayload
+  for (auto *Arg : Args->filtered(OPT_delayload)) {
+    Config->DelayLoads.insert(Arg->getValue());
+    Config->Includes.insert("__delayLoadHelper2");
+  }
+
   // Handle /failifmismatch
   for (auto *Arg : Args->filtered(OPT_failifmismatch))
     if (checkFailIfMismatch(Arg->getValue()))
