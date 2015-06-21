@@ -174,8 +174,8 @@ bool UniversalDriver::link(int argc, const char *argv[],
   // Program name
   StringRef programName = llvm::sys::path::stem(argv[0]);
 
-  parsedArgs.reset(
-      table.ParseArgs(&argv[1], &argv[argc], missingIndex, missingCount));
+  parsedArgs.reset(table.ParseArgs(llvm::makeArrayRef(argv, argc).slice(1),
+                                   missingIndex, missingCount));
 
   if (missingCount) {
     diagnostics << "error: missing arg value for '"

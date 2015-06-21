@@ -93,8 +93,8 @@ bool CoreDriver::parse(int argc, const char *argv[], CoreLinkingContext &ctx,
   CoreOptTable table;
   unsigned missingIndex;
   unsigned missingCount;
-  parsedArgs.reset(
-      table.ParseArgs(&argv[1], &argv[argc], missingIndex, missingCount));
+  parsedArgs.reset(table.ParseArgs(llvm::makeArrayRef(argv, argc).slice(1),
+                                   missingIndex, missingCount));
   if (missingCount) {
     diagnostics << "error: missing arg value for '"
                 << parsedArgs->getArgString(missingIndex) << "' expected "

@@ -285,8 +285,8 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
   unsigned missingIndex;
   unsigned missingCount;
   bool globalWholeArchive = false;
-  parsedArgs.reset(
-      table.ParseArgs(&argv[1], &argv[argc], missingIndex, missingCount));
+  parsedArgs.reset(table.ParseArgs(llvm::makeArrayRef(argv, argc).slice(1),
+                                   missingIndex, missingCount));
   if (missingCount) {
     diagnostics << "error: missing arg value for '"
                 << parsedArgs->getArgString(missingIndex) << "' expected "

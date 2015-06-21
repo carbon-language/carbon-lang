@@ -752,7 +752,7 @@ parseArgs(int argc, const char **argv, PECOFFLinkingContext &ctx,
   WinLinkOptTable table;
   unsigned missingIndex;
   unsigned missingCount;
-  parsedArgs.reset(table.ParseArgs(&argv[1], &argv[argc],
+  parsedArgs.reset(table.ParseArgs(llvm::makeArrayRef(argv, argc).slice(1),
                                    missingIndex, missingCount));
   if (missingCount) {
     diag << "error: missing arg value for '"

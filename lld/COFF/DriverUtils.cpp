@@ -556,8 +556,8 @@ ArgParser::parse(std::vector<const char *> Argv) {
   COFFOptTable Table;
   unsigned MissingIndex;
   unsigned MissingCount;
-  std::unique_ptr<llvm::opt::InputArgList> Args(Table.ParseArgs(
-      Argv.data(), Argv.data() + Argv.size(), MissingIndex, MissingCount));
+  std::unique_ptr<llvm::opt::InputArgList> Args(
+      Table.ParseArgs(Argv, MissingIndex, MissingCount));
   if (MissingCount) {
     llvm::errs() << "missing arg value for \""
                  << Args->getArgString(MissingIndex)
