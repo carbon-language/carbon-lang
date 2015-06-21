@@ -55,7 +55,7 @@ private:
 class UniversalDriver : public Driver {
 public:
   /// Determine flavor and pass control to Driver for that flavor.
-  static bool link(int argc, const char *argv[],
+  static bool link(llvm::MutableArrayRef<const char*> args,
                    raw_ostream &diag = llvm::errs());
 
 private:
@@ -67,12 +67,12 @@ class GnuLdDriver : public Driver {
 public:
   /// Parses command line arguments same as gnu/binutils ld and performs link.
   /// Returns true iff an error occurred.
-  static bool linkELF(int argc, const char *argv[],
+  static bool linkELF(llvm::ArrayRef<const char*> args,
                       raw_ostream &diag = llvm::errs());
 
   /// Uses gnu/binutils style ld command line options to fill in options struct.
   /// Returns true iff there was an error.
-  static bool parse(int argc, const char *argv[],
+  static bool parse(llvm::ArrayRef<const char*> args,
                     std::unique_ptr<ELFLinkingContext> &context,
                     raw_ostream &diag = llvm::errs());
 
@@ -103,12 +103,12 @@ class DarwinLdDriver : public Driver {
 public:
   /// Parses command line arguments same as darwin's ld and performs link.
   /// Returns true iff there was an error.
-  static bool linkMachO(int argc, const char *argv[],
+  static bool linkMachO(llvm::ArrayRef<const char*> args,
                         raw_ostream &diag = llvm::errs());
 
   /// Uses darwin style ld command line options to update LinkingContext object.
   /// Returns true iff there was an error.
-  static bool parse(int argc, const char *argv[], MachOLinkingContext &info,
+  static bool parse(llvm::ArrayRef<const char*> args, MachOLinkingContext &info,
                     raw_ostream &diag = llvm::errs());
 
 private:
@@ -120,20 +120,20 @@ class WinLinkDriver : public Driver {
 public:
   /// Parses command line arguments same as Windows link.exe and performs link.
   /// Returns true iff there was an error.
-  static bool linkPECOFF(int argc, const char *argv[],
+  static bool linkPECOFF(llvm::ArrayRef<const char*> args,
                          raw_ostream &diag = llvm::errs());
 
   /// Uses Windows style link command line options to fill in options struct.
   /// Returns true iff there was an error.
-  static bool parse(int argc, const char *argv[], PECOFFLinkingContext &info,
+  static bool parse(llvm::ArrayRef<const char*> args, PECOFFLinkingContext &info,
                     raw_ostream &diag = llvm::errs(),
                     bool isDirective = false);
 
   // Same as parse(), but restricted to the context of directives.
-  static bool parseDirectives(int argc, const char *argv[],
+  static bool parseDirectives(int argc, const char** argv,
                     PECOFFLinkingContext &info,
                     raw_ostream &diag = llvm::errs()) {
-    return parse(argc, argv, info, diag, true);
+    return parse(llvm::makeArrayRef(argv, argc), info, diag, true);
   }
 
 private:
@@ -142,7 +142,7 @@ private:
 
 /// Driver for Windows 'link.exe' command line options
 namespace coff {
-bool link(int argc, const char *argv[]);
+bool link(llvm::ArrayRef<const char*> args);
 }
 
 /// Driver for lld unit tests
@@ -150,12 +150,12 @@ class CoreDriver : public Driver {
 public:
   /// Parses command line arguments same as lld-core and performs link.
   /// Returns true iff there was an error.
-  static bool link(int argc, const char *argv[],
+  static bool link(llvm::ArrayRef<const char*> args,
                    raw_ostream &diag = llvm::errs());
 
   /// Uses lld-core command line options to fill in options struct.
   /// Returns true iff there was an error.
-  static bool parse(int argc, const char *argv[], CoreLinkingContext &info,
+  static bool parse(llvm::ArrayRef<const char*> args, CoreLinkingContext &info,
                     raw_ostream &diag = llvm::errs());
 
 private:

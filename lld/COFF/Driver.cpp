@@ -43,12 +43,12 @@ namespace coff {
 Configuration *Config;
 LinkerDriver *Driver;
 
-bool link(int Argc, const char *Argv[]) {
+bool link(llvm::ArrayRef<const char*> Args) {
   auto C = make_unique<Configuration>();
   Config = C.get();
   auto D = make_unique<LinkerDriver>();
   Driver = D.get();
-  return Driver->link(Argc, Argv);
+  return Driver->link(Args);
 }
 
 // Drop directory components and replace extension with ".exe".
@@ -214,7 +214,7 @@ static WindowsSubsystem inferSubsystem() {
       .Default(IMAGE_SUBSYSTEM_UNKNOWN);
 }
 
-bool LinkerDriver::link(int Argc, const char *Argv[]) {
+bool LinkerDriver::link(llvm::ArrayRef<const char*> ArgsArr) {
   // Needed for LTO.
   llvm::InitializeAllTargetInfos();
   llvm::InitializeAllTargets();
@@ -225,11 +225,11 @@ bool LinkerDriver::link(int Argc, const char *Argv[]) {
 
   // If the first command line argument is "/lib", link.exe acts like lib.exe.
   // We call our own implementation of lib.exe that understands bitcode files.
-  if (Argc > 1 && StringRef(Argv[1]).equals_lower("/lib"))
-    return llvm::libDriverMain(Argc - 1, Argv + 1) == 0;
+  if (ArgsArr.size() > 1 && StringRef(ArgsArr[1]).equals_lower("/lib"))
+    return llvm::libDriverMain(ArgsArr.slice(1)) == 0;
 
   // Parse command line options.
-  auto ArgsOrErr = Parser.parse(Argc, Argv);
+  auto ArgsOrErr = Parser.parse(ArgsArr);
   if (auto EC = ArgsOrErr.getError()) {
     llvm::errs() << EC.message() << "\n";
     return false;
@@ -238,7 +238,7 @@ bool LinkerDriver::link(int Argc, const char *Argv[]) {
 
   // Handle /help
   if (Args->hasArg(OPT_help)) {
-    printHelp(Argv[0]);
+    printHelp(ArgsArr[0]);
     return true;
   }
 

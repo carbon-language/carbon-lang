@@ -267,17 +267,17 @@ static bool parseNumberBase16(StringRef numStr, uint64_t &baseAddress) {
 
 namespace lld {
 
-bool DarwinLdDriver::linkMachO(int argc, const char *argv[],
+bool DarwinLdDriver::linkMachO(llvm::ArrayRef<const char*> args,
                                raw_ostream &diagnostics) {
   MachOLinkingContext ctx;
-  if (!parse(argc, argv, ctx, diagnostics))
+  if (!parse(args, ctx, diagnostics))
     return false;
   if (ctx.doNothing())
     return true;
   return link(ctx, diagnostics);
 }
 
-bool DarwinLdDriver::parse(int argc, const char *argv[],
+bool DarwinLdDriver::parse(llvm::ArrayRef<const char *> args,
                            MachOLinkingContext &ctx, raw_ostream &diagnostics) {
   // Parse command line options using DarwinLdOptions.td
   std::unique_ptr<llvm::opt::InputArgList> parsedArgs;
@@ -285,8 +285,7 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
   unsigned missingIndex;
   unsigned missingCount;
   bool globalWholeArchive = false;
-  parsedArgs.reset(table.ParseArgs(llvm::makeArrayRef(argv, argc).slice(1),
-                                   missingIndex, missingCount));
+  parsedArgs.reset(table.ParseArgs(args.slice(1), missingIndex, missingCount));
   if (missingCount) {
     diagnostics << "error: missing arg value for '"
                 << parsedArgs->getArgString(missingIndex) << "' expected "
@@ -344,7 +343,7 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
         && !parsedArgs->getLastArg(OPT_test_file_usage)) {
       // If no -arch and no options at all, print usage message.
       if (parsedArgs->size() == 0)
-        table.PrintHelp(llvm::outs(), argv[0], "LLVM Linker", false);
+        table.PrintHelp(llvm::outs(), args[0], "LLVM Linker", false);
       else
         diagnostics << "error: -arch not specified and could not be inferred\n";
       return false;

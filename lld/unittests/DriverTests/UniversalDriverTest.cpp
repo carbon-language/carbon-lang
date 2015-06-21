@@ -25,7 +25,7 @@ TEST(UniversalDriver, flavor) {
 
   std::string diags;
   raw_string_ostream os(diags);
-  UniversalDriver::link(array_lengthof(args), args, os);
+  UniversalDriver::link(args, os);
   EXPECT_EQ(os.str().find("failed to determine driver flavor"),
             std::string::npos);
   EXPECT_NE(os.str().find("No input files"),

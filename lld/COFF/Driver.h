@@ -35,14 +35,14 @@ using llvm::Optional;
 class InputFile;
 
 // Entry point of the COFF linker.
-bool link(int Argc, const char *Argv[]);
+bool link(llvm::ArrayRef<const char*> Args);
 
 class ArgParser {
 public:
   ArgParser() : Alloc(AllocAux) {}
   // Parses command line options.
-  ErrorOr<std::unique_ptr<llvm::opt::InputArgList>> parse(int Argc,
-                                                          const char *Argv[]);
+  ErrorOr<std::unique_ptr<llvm::opt::InputArgList>>
+  parse(llvm::ArrayRef<const char *> Args);
 
   // Tokenizes a given string and then parses as command line options.
   ErrorOr<std::unique_ptr<llvm::opt::InputArgList>> parse(StringRef S) {
@@ -65,7 +65,7 @@ private:
 class LinkerDriver {
 public:
   LinkerDriver() : Alloc(AllocAux) {}
-  bool link(int Argc, const char *Argv[]);
+  bool link(llvm::ArrayRef<const char*> Args);
 
   // Used by the resolver to parse .drectve section contents.
   std::error_code

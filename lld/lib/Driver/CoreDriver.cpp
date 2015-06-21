@@ -73,7 +73,7 @@ static const Registry::KindStrings coreKindStrings[] = {
   LLD_KIND_STRING_END
 };
 
-bool CoreDriver::link(int argc, const char *argv[], raw_ostream &diagnostics) {
+bool CoreDriver::link(llvm::ArrayRef<const char*> args, raw_ostream &diagnostics) {
   CoreLinkingContext ctx;
 
   // Register possible input file parsers.
@@ -81,20 +81,19 @@ bool CoreDriver::link(int argc, const char *argv[], raw_ostream &diagnostics) {
   ctx.registry().addKindTable(Reference::KindNamespace::testing,
                               Reference::KindArch::all, coreKindStrings);
 
-  if (!parse(argc, argv, ctx))
+  if (!parse(args, ctx))
     return false;
   return Driver::link(ctx);
 }
 
-bool CoreDriver::parse(int argc, const char *argv[], CoreLinkingContext &ctx,
+bool CoreDriver::parse(llvm::ArrayRef<const char*> args, CoreLinkingContext &ctx,
                        raw_ostream &diagnostics) {
   // Parse command line options using CoreOptions.td
   std::unique_ptr<llvm::opt::InputArgList> parsedArgs;
   CoreOptTable table;
   unsigned missingIndex;
   unsigned missingCount;
-  parsedArgs.reset(table.ParseArgs(llvm::makeArrayRef(argv, argc).slice(1),
-                                   missingIndex, missingCount));
+  parsedArgs.reset(table.ParseArgs(args.slice(1), missingIndex, missingCount));
   if (missingCount) {
     diagnostics << "error: missing arg value for '"
                 << parsedArgs->getArgString(missingIndex) << "' expected "

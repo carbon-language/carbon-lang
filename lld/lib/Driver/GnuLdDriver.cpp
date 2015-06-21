@@ -82,21 +82,20 @@ public:
 // at the original @file position. If file cannot be read, @file is not expanded
 // and left unmodified. @file can appear in a response file, so it's a recursive
 // process.
-static std::tuple<int, const char **>
-maybeExpandResponseFiles(int argc, const char **argv, BumpPtrAllocator &alloc) {
+static llvm::ArrayRef<const char*>
+maybeExpandResponseFiles(llvm::ArrayRef<const char*> args, BumpPtrAllocator &alloc) {
   // Expand response files.
   SmallVector<const char *, 256> smallvec;
-  for (int i = 0; i < argc; ++i)
-    smallvec.push_back(argv[i]);
+  for (const char *arg : args)
+    smallvec.push_back(arg);
   llvm::BumpPtrStringSaver saver(alloc);
   llvm::cl::ExpandResponseFiles(saver, llvm::cl::TokenizeGNUCommandLine, smallvec);
 
   // Pack the results to a C-array and return it.
-  argc = smallvec.size();
-  const char **copy = alloc.Allocate<const char *>(argc + 1);
+  const char **copy = alloc.Allocate<const char *>(smallvec.size() + 1);
   std::copy(smallvec.begin(), smallvec.end(), copy);
-  copy[argc] = nullptr;
-  return std::make_tuple(argc, copy);
+  copy[smallvec.size()] = nullptr;
+  return llvm::makeArrayRef(copy, smallvec.size() + 1);
 }
 
 // Parses an argument of --defsym=<sym>=<number>
@@ -134,11 +133,11 @@ static bool parseMaxPageSize(StringRef opt, uint64_t &val) {
   return true;
 }
 
-bool GnuLdDriver::linkELF(int argc, const char *argv[], raw_ostream &diag) {
+bool GnuLdDriver::linkELF(llvm::ArrayRef<const char*> args, raw_ostream &diag) {
   BumpPtrAllocator alloc;
-  std::tie(argc, argv) = maybeExpandResponseFiles(argc, argv, alloc);
+  args = maybeExpandResponseFiles(args, alloc);
   std::unique_ptr<ELFLinkingContext> options;
-  if (!parse(argc, argv, options, diag))
+  if (!parse(args, options, diag))
     return false;
   if (!options)
     return true;
@@ -338,7 +337,7 @@ getBool(const llvm::opt::InputArgList &parsedArgs,
   return llvm::None;
 }
 
-bool GnuLdDriver::parse(int argc, const char *argv[],
+bool GnuLdDriver::parse(llvm::ArrayRef<const char*> args,
                         std::unique_ptr<ELFLinkingContext> &context,
                         raw_ostream &diag) {
   // Parse command line options using GnuLdOptions.td
@@ -347,7 +346,7 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
   unsigned missingIndex;
   unsigned missingCount;
 
-  parsedArgs.reset(table.ParseArgs(llvm::makeArrayRef(argv, argc).slice(1),
+  parsedArgs.reset(table.ParseArgs(args.slice(1),
                                    missingIndex, missingCount));
   if (missingCount) {
     diag << "error: missing arg value for '"
@@ -358,7 +357,7 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
 
   // Handle --help
   if (parsedArgs->hasArg(OPT_help)) {
-    table.PrintHelp(llvm::outs(), argv[0], "LLVM Linker", false);
+    table.PrintHelp(llvm::outs(), args[0], "LLVM Linker", false);
     return true;
   }
 
@@ -367,7 +366,7 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
   if (auto *arg = parsedArgs->getLastArg(OPT_target)) {
     baseTriple = llvm::Triple(arg->getValue());
   } else {
-    baseTriple = getDefaultTarget(argv[0]);
+    baseTriple = getDefaultTarget(args[0]);
   }
   llvm::Triple triple(baseTriple);
 
