@@ -5202,16 +5202,23 @@ static bool distributeNullabilityTypeAttr(TypeProcessingState &state,
 
     // Complain about the nullability qualifier being in the wrong
     // place.
-    unsigned pointerKind
-      = chunk.Kind == DeclaratorChunk::Pointer ? (inFunction ? 3 : 0)
-        : chunk.Kind == DeclaratorChunk::BlockPointer ? 1
-        : inFunction? 4 : 2;
+    enum {
+      PK_Pointer,
+      PK_BlockPointer,
+      PK_MemberPointer,
+      PK_FunctionPointer,
+      PK_MemberFunctionPointer,
+    } pointerKind
+      = chunk.Kind == DeclaratorChunk::Pointer ? (inFunction ? PK_FunctionPointer
+                                                             : PK_Pointer)
+        : chunk.Kind == DeclaratorChunk::BlockPointer ? PK_BlockPointer
+        : inFunction? PK_MemberFunctionPointer : PK_MemberPointer;
 
     auto diag = state.getSema().Diag(attr.getLoc(),
                                      diag::warn_nullability_declspec)
       << static_cast<unsigned>(mapNullabilityAttrKind(attr.getKind()))
       << type
-      << pointerKind;
+      << static_cast<unsigned>(pointerKind);
 
     // FIXME: MemberPointer chunks don't carry the location of the *.
     if (chunk.Kind != DeclaratorChunk::MemberPointer) {
