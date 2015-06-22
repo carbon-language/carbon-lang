@@ -90,9 +90,9 @@ LinkerDriver::parseDirectives(StringRef S,
   auto ArgsOrErr = Parser.parse(S);
   if (auto EC = ArgsOrErr.getError())
     return EC;
-  std::unique_ptr<llvm::opt::InputArgList> Args = std::move(ArgsOrErr.get());
+  llvm::opt::InputArgList Args = std::move(ArgsOrErr.get());
 
-  for (auto *Arg : *Args) {
+  for (auto *Arg : Args) {
     switch (Arg->getOption().getID()) {
     case OPT_alternatename:
       if (auto EC = parseAlternateName(Arg->getValue()))
@@ -234,46 +234,46 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
     llvm::errs() << EC.message() << "\n";
     return false;
   }
-  std::unique_ptr<llvm::opt::InputArgList> Args = std::move(ArgsOrErr.get());
+  llvm::opt::InputArgList Args = std::move(ArgsOrErr.get());
 
   // Handle /help
-  if (Args->hasArg(OPT_help)) {
+  if (Args.hasArg(OPT_help)) {
     printHelp(ArgsArr[0]);
     return true;
   }
 
-  if (Args->filtered_begin(OPT_INPUT) == Args->filtered_end()) {
+  if (Args.filtered_begin(OPT_INPUT) == Args.filtered_end()) {
     llvm::errs() << "no input files.\n";
     return false;
   }
 
   // Construct search path list.
   SearchPaths.push_back("");
-  for (auto *Arg : Args->filtered(OPT_libpath))
+  for (auto *Arg : Args.filtered(OPT_libpath))
     SearchPaths.push_back(Arg->getValue());
   addLibSearchPaths();
 
   // Handle /out
-  if (auto *Arg = Args->getLastArg(OPT_out))
+  if (auto *Arg = Args.getLastArg(OPT_out))
     Config->OutputFile = Arg->getValue();
 
   // Handle /verbose
-  if (Args->hasArg(OPT_verbose))
+  if (Args.hasArg(OPT_verbose))
     Config->Verbose = true;
 
   // Handle /dll
-  if (Args->hasArg(OPT_dll)) {
+  if (Args.hasArg(OPT_dll)) {
     Config->DLL = true;
     Config->ManifestID = 2;
   }
 
   // Handle /entry
-  if (auto *Arg = Args->getLastArg(OPT_entry))
+  if (auto *Arg = Args.getLastArg(OPT_entry))
     Config->EntryName = Arg->getValue();
 
   // Handle /fixed
-  if (Args->hasArg(OPT_fixed)) {
-    if (Args->hasArg(OPT_dynamicbase)) {
+  if (Args.hasArg(OPT_fixed)) {
+    if (Args.hasArg(OPT_dynamicbase)) {
       llvm::errs() << "/fixed must not be specified with /dynamicbase\n";
       return false;
     }
@@ -282,7 +282,7 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
   }
 
   // Handle /machine
-  auto MTOrErr = getMachineType(Args.get());
+  auto MTOrErr = getMachineType(&Args);
   if (auto EC = MTOrErr.getError()) {
     llvm::errs() << EC.message() << "\n";
     return false;
@@ -290,15 +290,15 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
   Config->MachineType = MTOrErr.get();
 
   // Handle /nodefaultlib:<filename>
-  for (auto *Arg : Args->filtered(OPT_nodefaultlib))
+  for (auto *Arg : Args.filtered(OPT_nodefaultlib))
     Config->NoDefaultLibs.insert(doFindLib(Arg->getValue()));
 
   // Handle /nodefaultlib
-  if (Args->hasArg(OPT_nodefaultlib_all))
+  if (Args.hasArg(OPT_nodefaultlib_all))
     Config->NoDefaultLibAll = true;
 
   // Handle /base
-  if (auto *Arg = Args->getLastArg(OPT_base)) {
+  if (auto *Arg = Args.getLastArg(OPT_base)) {
     if (auto EC = parseNumbers(Arg->getValue(), &Config->ImageBase)) {
       llvm::errs() << "/base: " << EC.message() << "\n";
       return false;
@@ -306,7 +306,7 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
   }
 
   // Handle /stack
-  if (auto *Arg = Args->getLastArg(OPT_stack)) {
+  if (auto *Arg = Args.getLastArg(OPT_stack)) {
     if (auto EC = parseNumbers(Arg->getValue(), &Config->StackReserve,
                                &Config->StackCommit)) {
       llvm::errs() << "/stack: " << EC.message() << "\n";
@@ -315,7 +315,7 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
   }
 
   // Handle /heap
-  if (auto *Arg = Args->getLastArg(OPT_heap)) {
+  if (auto *Arg = Args.getLastArg(OPT_heap)) {
     if (auto EC = parseNumbers(Arg->getValue(), &Config->HeapReserve,
                                &Config->HeapCommit)) {
       llvm::errs() << "/heap: " << EC.message() << "\n";
@@ -324,7 +324,7 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
   }
 
   // Handle /version
-  if (auto *Arg = Args->getLastArg(OPT_version)) {
+  if (auto *Arg = Args.getLastArg(OPT_version)) {
     if (auto EC = parseVersion(Arg->getValue(), &Config->MajorImageVersion,
                                &Config->MinorImageVersion)) {
       llvm::errs() << "/version: " << EC.message() << "\n";
@@ -333,7 +333,7 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
   }
 
   // Handle /subsystem
-  if (auto *Arg = Args->getLastArg(OPT_subsystem)) {
+  if (auto *Arg = Args.getLastArg(OPT_subsystem)) {
     if (auto EC = parseSubsystem(Arg->getValue(), &Config->Subsystem,
                                  &Config->MajorOSVersion,
                                  &Config->MinorOSVersion)) {
@@ -343,20 +343,20 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
   }
 
   // Handle /alternatename
-  for (auto *Arg : Args->filtered(OPT_alternatename))
+  for (auto *Arg : Args.filtered(OPT_alternatename))
     if (parseAlternateName(Arg->getValue()))
       return false;
 
   // Handle /include
-  for (auto *Arg : Args->filtered(OPT_incl))
+  for (auto *Arg : Args.filtered(OPT_incl))
     Config->Includes.insert(Arg->getValue());
 
   // Handle /implib
-  if (auto *Arg = Args->getLastArg(OPT_implib))
+  if (auto *Arg = Args.getLastArg(OPT_implib))
     Config->Implib = Arg->getValue();
 
   // Handle /opt
-  for (auto *Arg : Args->filtered(OPT_opt)) {
+  for (auto *Arg : Args.filtered(OPT_opt)) {
     std::string S = StringRef(Arg->getValue()).lower();
     if (S == "noref") {
       Config->DoGC = false;
@@ -371,7 +371,7 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
   }
 
   // Handle /export
-  for (auto *Arg : Args->filtered(OPT_export)) {
+  for (auto *Arg : Args.filtered(OPT_export)) {
     ErrorOr<Export> E = parseExport(Arg->getValue());
     if (E.getError())
       return false;
@@ -379,18 +379,18 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
   }
 
   // Handle /delayload
-  for (auto *Arg : Args->filtered(OPT_delayload)) {
+  for (auto *Arg : Args.filtered(OPT_delayload)) {
     Config->DelayLoads.insert(Arg->getValue());
     Config->Includes.insert("__delayLoadHelper2");
   }
 
   // Handle /failifmismatch
-  for (auto *Arg : Args->filtered(OPT_failifmismatch))
+  for (auto *Arg : Args.filtered(OPT_failifmismatch))
     if (checkFailIfMismatch(Arg->getValue()))
       return false;
 
   // Handle /def
-  if (auto *Arg = Args->getLastArg(OPT_deffile)) {
+  if (auto *Arg = Args.getLastArg(OPT_deffile)) {
     ErrorOr<MemoryBufferRef> MBOrErr = openFile(Arg->getValue());
     if (auto EC = MBOrErr.getError()) {
       llvm::errs() << "/def: " << EC.message() << "\n";
@@ -402,7 +402,7 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
   }
 
   // Handle /manifest
-  if (auto *Arg = Args->getLastArg(OPT_manifest_colon)) {
+  if (auto *Arg = Args.getLastArg(OPT_manifest_colon)) {
     if (auto EC = parseManifest(Arg->getValue())) {
       llvm::errs() << "/manifest: " << EC.message() << "\n";
       return false;
@@ -410,7 +410,7 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
   }
 
   // Handle /manifestuac
-  if (auto *Arg = Args->getLastArg(OPT_manifestuac)) {
+  if (auto *Arg = Args.getLastArg(OPT_manifestuac)) {
     if (auto EC = parseManifestUAC(Arg->getValue())) {
       llvm::errs() << "/manifestuac: " << EC.message() << "\n";
       return false;
@@ -418,29 +418,35 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
   }
 
   // Handle /manifestdependency
-  if (auto *Arg = Args->getLastArg(OPT_manifestdependency))
+  if (auto *Arg = Args.getLastArg(OPT_manifestdependency))
     Config->ManifestDependency = Arg->getValue();
 
   // Handle /manifestfile
-  if (auto *Arg = Args->getLastArg(OPT_manifestfile))
+  if (auto *Arg = Args.getLastArg(OPT_manifestfile))
     Config->ManifestFile = Arg->getValue();
 
   // Handle miscellaneous boolean flags.
-  if (Args->hasArg(OPT_allowbind_no))      Config->AllowBind = false;
-  if (Args->hasArg(OPT_allowisolation_no)) Config->AllowIsolation = false;
-  if (Args->hasArg(OPT_dynamicbase_no))    Config->DynamicBase = false;
-  if (Args->hasArg(OPT_highentropyva_no))  Config->HighEntropyVA = false;
-  if (Args->hasArg(OPT_nxcompat_no))       Config->NxCompat = false;
-  if (Args->hasArg(OPT_tsaware_no))        Config->TerminalServerAware = false;
+  if (Args.hasArg(OPT_allowbind_no))
+    Config->AllowBind = false;
+  if (Args.hasArg(OPT_allowisolation_no))
+    Config->AllowIsolation = false;
+  if (Args.hasArg(OPT_dynamicbase_no))
+    Config->DynamicBase = false;
+  if (Args.hasArg(OPT_highentropyva_no))
+    Config->HighEntropyVA = false;
+  if (Args.hasArg(OPT_nxcompat_no))
+    Config->NxCompat = false;
+  if (Args.hasArg(OPT_tsaware_no))
+    Config->TerminalServerAware = false;
 
   // Create a list of input files. Files can be given as arguments
   // for /defaultlib option.
   std::vector<StringRef> InputPaths;
   std::vector<MemoryBufferRef> Inputs;
-  for (auto *Arg : Args->filtered(OPT_INPUT))
+  for (auto *Arg : Args.filtered(OPT_INPUT))
     if (Optional<StringRef> Path = findFile(Arg->getValue()))
       InputPaths.push_back(*Path);
-  for (auto *Arg : Args->filtered(OPT_defaultlib))
+  for (auto *Arg : Args.filtered(OPT_defaultlib))
     if (Optional<StringRef> Path = findLib(Arg->getValue()))
       InputPaths.push_back(*Path);
   for (StringRef Path : InputPaths) {

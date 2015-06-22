@@ -738,31 +738,31 @@ static bool expandResponseFiles(llvm::ArrayRef<const char *> &args,
 
 // Parses the given command line options and returns the result. Returns NULL if
 // there's an error in the options.
-static std::unique_ptr<llvm::opt::InputArgList>
+static llvm::Optional<llvm::opt::InputArgList>
 parseArgs(llvm::ArrayRef<const char *> args, PECOFFLinkingContext &ctx,
           raw_ostream &diag, bool isReadingDirectiveSection) {
   // Expand arguments starting with "@".
   bool expanded = false;
   if (!expandResponseFiles(args, ctx, diag, expanded))
-    return nullptr;
+    return llvm::None;
 
   // Parse command line options using WinLinkOptions.td
-  std::unique_ptr<llvm::opt::InputArgList> parsedArgs;
   WinLinkOptTable table;
   unsigned missingIndex;
   unsigned missingCount;
-  parsedArgs.reset(table.ParseArgs(args.slice(1), missingIndex, missingCount));
+  llvm::opt::InputArgList parsedArgs =
+      table.ParseArgs(args.slice(1), missingIndex, missingCount);
   if (missingCount) {
     diag << "error: missing arg value for '"
-         << parsedArgs->getArgString(missingIndex) << "' expected "
+         << parsedArgs.getArgString(missingIndex) << "' expected "
          << missingCount << " argument(s).\n";
-    return nullptr;
+    return llvm::None;
   }
 
   // Show warning for unknown arguments. In .drectve section, unknown options
   // starting with "-?" are silently ignored. This is a COFF's feature to embed a
   // new linker option to an object file while keeping backward compatibility.
-  for (auto unknownArg : parsedArgs->filtered(OPT_UNKNOWN)) {
+  for (auto unknownArg : parsedArgs.filtered(OPT_UNKNOWN)) {
     StringRef arg = unknownArg->getSpelling();
     if (isReadingDirectiveSection && arg.startswith("-?"))
       continue;
@@ -770,20 +770,20 @@ parseArgs(llvm::ArrayRef<const char *> args, PECOFFLinkingContext &ctx,
   }
 
   // Copy mllvm
-  for (auto arg : parsedArgs->filtered(OPT_mllvm))
+  for (auto arg : parsedArgs.filtered(OPT_mllvm))
     ctx.appendLLVMOption(arg->getValue());
 
   // If we have expaneded response files and /verbose is given, print out the
   // final command line.
   if (!isReadingDirectiveSection && expanded &&
-      parsedArgs->getLastArg(OPT_verbose)) {
+      parsedArgs.getLastArg(OPT_verbose)) {
     diag << "Command line:";
     for (const char *arg : args)
       diag << " " << arg;
     diag << "\n\n";
   }
 
-  return parsedArgs;
+  return std::move(parsedArgs);
 }
 
 // Returns true if the given file node has already been added to the input
@@ -874,7 +874,7 @@ bool WinLinkDriver::parse(llvm::ArrayRef<const char *> args,
 
   std::map<StringRef, StringRef> failIfMismatchMap;
   // Parse the options.
-  std::unique_ptr<llvm::opt::InputArgList> parsedArgs =
+  llvm::Optional<llvm::opt::InputArgList> parsedArgs =
       parseArgs(args, ctx, diag, isReadingDirectiveSection);
   if (!parsedArgs)
     return false;

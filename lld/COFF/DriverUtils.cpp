@@ -541,7 +541,7 @@ public:
 };
 
 // Parses a given list of options.
-ErrorOr<std::unique_ptr<llvm::opt::InputArgList>>
+ErrorOr<llvm::opt::InputArgList>
 ArgParser::parse(std::vector<const char *> Argv) {
   // First, replace respnose files (@<file>-style options).
   auto ArgvOrErr = replaceResponseFiles(Argv);
@@ -556,21 +556,21 @@ ArgParser::parse(std::vector<const char *> Argv) {
   COFFOptTable Table;
   unsigned MissingIndex;
   unsigned MissingCount;
-  std::unique_ptr<llvm::opt::InputArgList> Args(
-      Table.ParseArgs(Argv, MissingIndex, MissingCount));
+  llvm::opt::InputArgList Args =
+      Table.ParseArgs(Argv, MissingIndex, MissingCount);
   if (MissingCount) {
     llvm::errs() << "missing arg value for \""
-                 << Args->getArgString(MissingIndex)
-                 << "\", expected " << MissingCount
+                 << Args.getArgString(MissingIndex) << "\", expected "
+                 << MissingCount
                  << (MissingCount == 1 ? " argument.\n" : " arguments.\n");
     return make_error_code(LLDError::InvalidOption);
   }
-  for (auto *Arg : Args->filtered(OPT_UNKNOWN))
+  for (auto *Arg : Args.filtered(OPT_UNKNOWN))
     llvm::errs() << "ignoring unknown argument: " << Arg->getSpelling() << "\n";
   return std::move(Args);
 }
 
-ErrorOr<std::unique_ptr<llvm::opt::InputArgList>>
+ErrorOr<llvm::opt::InputArgList>
 ArgParser::parse(llvm::ArrayRef<const char *> Args) {
   Args = Args.slice(1);
   std::vector<const char *> V(Args.begin(), Args.end());

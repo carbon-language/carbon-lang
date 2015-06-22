@@ -343,35 +343,35 @@ bool GnuLdDriver::parse(llvm::ArrayRef<const char *> args,
                         std::unique_ptr<ELFLinkingContext> &context,
                         raw_ostream &diag) {
   // Parse command line options using GnuLdOptions.td
-  std::unique_ptr<llvm::opt::InputArgList> parsedArgs;
   GnuLdOptTable table;
   unsigned missingIndex;
   unsigned missingCount;
 
-  parsedArgs.reset(table.ParseArgs(args.slice(1), missingIndex, missingCount));
+  llvm::opt::InputArgList parsedArgs =
+      table.ParseArgs(args.slice(1), missingIndex, missingCount);
   if (missingCount) {
     diag << "error: missing arg value for '"
-         << parsedArgs->getArgString(missingIndex) << "' expected "
+         << parsedArgs.getArgString(missingIndex) << "' expected "
          << missingCount << " argument(s).\n";
     return false;
   }
 
   // Handle --help
-  if (parsedArgs->hasArg(OPT_help)) {
+  if (parsedArgs.hasArg(OPT_help)) {
     table.PrintHelp(llvm::outs(), args[0], "LLVM Linker", false);
     return true;
   }
 
   // Use -target or use default target triple to instantiate LinkingContext
   llvm::Triple baseTriple;
-  if (auto *arg = parsedArgs->getLastArg(OPT_target)) {
+  if (auto *arg = parsedArgs.getLastArg(OPT_target)) {
     baseTriple = llvm::Triple(arg->getValue());
   } else {
     baseTriple = getDefaultTarget(args[0]);
   }
   llvm::Triple triple(baseTriple);
 
-  if (!applyEmulation(triple, *parsedArgs, diag))
+  if (!applyEmulation(triple, parsedArgs, diag))
     return false;
 
   std::unique_ptr<ELFLinkingContext> ctx(createELFLinkingContext(triple));
@@ -382,39 +382,39 @@ bool GnuLdDriver::parse(llvm::ArrayRef<const char *> args,
   }
 
   // Copy mllvm
-  for (auto *arg : parsedArgs->filtered(OPT_mllvm))
+  for (auto *arg : parsedArgs.filtered(OPT_mllvm))
     ctx->appendLLVMOption(arg->getValue());
 
   // Ignore unknown arguments.
-  for (auto unknownArg : parsedArgs->filtered(OPT_UNKNOWN))
+  for (auto unknownArg : parsedArgs.filtered(OPT_UNKNOWN))
     diag << "warning: ignoring unknown argument: "
          << unknownArg->getValue() << "\n";
 
   // Set sys root path.
-  if (auto *arg = parsedArgs->getLastArg(OPT_sysroot))
+  if (auto *arg = parsedArgs.getLastArg(OPT_sysroot))
     ctx->setSysroot(arg->getValue());
 
   // Handle --demangle option(For compatibility)
-  if (parsedArgs->hasArg(OPT_demangle))
+  if (parsedArgs.hasArg(OPT_demangle))
     ctx->setDemangleSymbols(true);
 
   // Handle --no-demangle option.
-  if (parsedArgs->hasArg(OPT_no_demangle))
+  if (parsedArgs.hasArg(OPT_no_demangle))
     ctx->setDemangleSymbols(false);
 
   // Figure out output kind (-r, -static, -shared)
-  if (parsedArgs->hasArg(OPT_relocatable)) {
+  if (parsedArgs.hasArg(OPT_relocatable)) {
     ctx->setOutputELFType(llvm::ELF::ET_REL);
     ctx->setPrintRemainingUndefines(false);
     ctx->setAllowRemainingUndefines(true);
   }
 
-  if (parsedArgs->hasArg(OPT_static)) {
+  if (parsedArgs.hasArg(OPT_static)) {
     ctx->setOutputELFType(llvm::ELF::ET_EXEC);
     ctx->setIsStaticExecutable(true);
   }
 
-  if (parsedArgs->hasArg(OPT_shared)) {
+  if (parsedArgs.hasArg(OPT_shared)) {
     ctx->setOutputELFType(llvm::ELF::ET_DYN);
     ctx->setAllowShlibUndefines(true);
     ctx->setUseShlibUndefines(false);
@@ -423,13 +423,13 @@ bool GnuLdDriver::parse(llvm::ArrayRef<const char *> args,
   }
 
   // Handle --stats.
-  if (parsedArgs->hasArg(OPT_stats)) {
+  if (parsedArgs.hasArg(OPT_stats)) {
     ctx->setCollectStats(true);
   }
 
   // Figure out if the output type is nmagic/omagic
-  if (auto *arg = parsedArgs->getLastArg(
-        OPT_nmagic, OPT_omagic, OPT_no_omagic)) {
+  if (auto *arg =
+          parsedArgs.getLastArg(OPT_nmagic, OPT_omagic, OPT_no_omagic)) {
     switch (arg->getOption().getID()) {
     case OPT_nmagic:
       ctx->setOutputMagic(ELFLinkingContext::OutputMagic::NMAGIC);
@@ -446,25 +446,25 @@ bool GnuLdDriver::parse(llvm::ArrayRef<const char *> args,
     }
   }
 
-  if (parsedArgs->hasArg(OPT_discard_loc))
+  if (parsedArgs.hasArg(OPT_discard_loc))
     ctx->setDiscardLocals(true);
 
-  if (parsedArgs->hasArg(OPT_discard_temp_loc))
+  if (parsedArgs.hasArg(OPT_discard_temp_loc))
     ctx->setDiscardTempLocals(true);
 
-  if (parsedArgs->hasArg(OPT_strip_all))
+  if (parsedArgs.hasArg(OPT_strip_all))
     ctx->setStripSymbols(true);
 
-  if (auto *arg = parsedArgs->getLastArg(OPT_soname))
+  if (auto *arg = parsedArgs.getLastArg(OPT_soname))
     ctx->setSharedObjectName(arg->getValue());
 
-  if (parsedArgs->hasArg(OPT_rosegment))
+  if (parsedArgs.hasArg(OPT_rosegment))
     ctx->setCreateSeparateROSegment();
 
-  if (parsedArgs->hasArg(OPT_no_align_segments))
+  if (parsedArgs.hasArg(OPT_no_align_segments))
     ctx->setAlignSegments(false);
 
-  if (auto *arg = parsedArgs->getLastArg(OPT_image_base)) {
+  if (auto *arg = parsedArgs.getLastArg(OPT_image_base)) {
     uint64_t baseAddress = 0;
     StringRef inputValue = arg->getValue();
     if (inputValue.getAsInteger(0, baseAddress) || !baseAddress) {
@@ -474,50 +474,49 @@ bool GnuLdDriver::parse(llvm::ArrayRef<const char *> args,
     ctx->setBaseAddress(baseAddress);
   }
 
-  if (parsedArgs->hasArg(OPT_merge_strings))
+  if (parsedArgs.hasArg(OPT_merge_strings))
     ctx->setMergeCommonStrings(true);
 
-  if (parsedArgs->hasArg(OPT_t))
+  if (parsedArgs.hasArg(OPT_t))
     ctx->setLogInputFiles(true);
 
-  if (parsedArgs->hasArg(OPT_use_shlib_undefs))
+  if (parsedArgs.hasArg(OPT_use_shlib_undefs))
     ctx->setUseShlibUndefines(true);
 
-  if (auto val = getBool(*parsedArgs, OPT_allow_shlib_undefs,
+  if (auto val = getBool(parsedArgs, OPT_allow_shlib_undefs,
                          OPT_no_allow_shlib_undefs))
     ctx->setAllowShlibUndefines(*val);
 
-  if (auto *arg = parsedArgs->getLastArg(OPT_e))
+  if (auto *arg = parsedArgs.getLastArg(OPT_e))
     ctx->setEntrySymbolName(arg->getValue());
 
-  if (auto *arg = parsedArgs->getLastArg(OPT_output))
+  if (auto *arg = parsedArgs.getLastArg(OPT_output))
     ctx->setOutputPath(arg->getValue());
 
-  if (parsedArgs->hasArg(OPT_noinhibit_exec))
+  if (parsedArgs.hasArg(OPT_noinhibit_exec))
     ctx->setAllowRemainingUndefines(true);
 
-  if (auto val = getBool(*parsedArgs, OPT_export_dynamic,
-                         OPT_no_export_dynamic))
+  if (auto val = getBool(parsedArgs, OPT_export_dynamic, OPT_no_export_dynamic))
     ctx->setExportDynamic(*val);
 
-  if (parsedArgs->hasArg(OPT_allow_multiple_definition))
+  if (parsedArgs.hasArg(OPT_allow_multiple_definition))
     ctx->setAllowDuplicates(true);
 
-  if (auto *arg = parsedArgs->getLastArg(OPT_dynamic_linker))
+  if (auto *arg = parsedArgs.getLastArg(OPT_dynamic_linker))
     ctx->setInterpreter(arg->getValue());
 
-  if (auto *arg = parsedArgs->getLastArg(OPT_init))
+  if (auto *arg = parsedArgs.getLastArg(OPT_init))
     ctx->setInitFunction(arg->getValue());
 
-  if (auto *arg = parsedArgs->getLastArg(OPT_fini))
+  if (auto *arg = parsedArgs.getLastArg(OPT_fini))
     ctx->setFiniFunction(arg->getValue());
 
-  if (auto *arg = parsedArgs->getLastArg(OPT_output_filetype))
+  if (auto *arg = parsedArgs.getLastArg(OPT_output_filetype))
     ctx->setOutputFileType(arg->getValue());
 
   // Process ELF/ARM specific options
-  bool hasArmTarget1Rel = parsedArgs->hasArg(OPT_target1_rel);
-  bool hasArmTarget1Abs = parsedArgs->hasArg(OPT_target1_abs);
+  bool hasArmTarget1Rel = parsedArgs.hasArg(OPT_target1_rel);
+  bool hasArmTarget1Abs = parsedArgs.hasArg(OPT_target1_abs);
   if (triple.getArch() == llvm::Triple::arm) {
     if (hasArmTarget1Rel && hasArmTarget1Abs) {
       diag << "error: options --target1-rel and --target1-abs"
@@ -527,7 +526,7 @@ bool GnuLdDriver::parse(llvm::ArrayRef<const char *> args,
       ctx->setArmTarget1Rel(hasArmTarget1Rel && !hasArmTarget1Abs);
     }
   } else {
-    for (const auto *arg : parsedArgs->filtered(OPT_grp_arm_targetopts)) {
+    for (const auto *arg : parsedArgs.filtered(OPT_grp_arm_targetopts)) {
       diag << "warning: ignoring unsupported ARM/ELF specific argument: "
            << arg->getSpelling() << "\n";
     }
@@ -538,25 +537,25 @@ bool GnuLdDriver::parse(llvm::ArrayRef<const char *> args,
       triple.getArch() == llvm::Triple::mipsel ||
       triple.getArch() == llvm::Triple::mips64 ||
       triple.getArch() == llvm::Triple::mips64el)
-    ctx->setMipsPcRelEhRel(parsedArgs->hasArg(OPT_pcrel_eh_reloc));
+    ctx->setMipsPcRelEhRel(parsedArgs.hasArg(OPT_pcrel_eh_reloc));
   else {
-    for (const auto *arg : parsedArgs->filtered(OPT_grp_mips_targetopts)) {
+    for (const auto *arg : parsedArgs.filtered(OPT_grp_mips_targetopts)) {
       diag << "warning: ignoring unsupported MIPS specific argument: "
            << arg->getSpelling() << "\n";
     }
   }
 
-  for (auto *arg : parsedArgs->filtered(OPT_L))
+  for (auto *arg : parsedArgs.filtered(OPT_L))
     ctx->addSearchPath(arg->getValue());
 
   // Add the default search directory specific to the target.
-  if (!parsedArgs->hasArg(OPT_nostdlib))
+  if (!parsedArgs.hasArg(OPT_nostdlib))
     addPlatformSearchDirs(*ctx, triple, baseTriple);
 
-  for (auto *arg : parsedArgs->filtered(OPT_u))
+  for (auto *arg : parsedArgs.filtered(OPT_u))
     ctx->addInitialUndefinedSymbol(arg->getValue());
 
-  for (auto *arg : parsedArgs->filtered(OPT_defsym)) {
+  for (auto *arg : parsedArgs.filtered(OPT_defsym)) {
     StringRef sym, target;
     uint64_t addr;
     if (parseDefsymAsAbsolute(arg->getValue(), sym, addr)) {
@@ -569,7 +568,7 @@ bool GnuLdDriver::parse(llvm::ArrayRef<const char *> args,
     }
   }
 
-  for (auto *arg : parsedArgs->filtered(OPT_z)) {
+  for (auto *arg : parsedArgs.filtered(OPT_z)) {
     StringRef opt = arg->getValue();
     if (opt == "muldefs")
       ctx->setAllowDuplicates(true);
@@ -599,14 +598,14 @@ bool GnuLdDriver::parse(llvm::ArrayRef<const char *> args,
     }
   }
 
-  for (auto *arg : parsedArgs->filtered(OPT_rpath)) {
+  for (auto *arg : parsedArgs.filtered(OPT_rpath)) {
     SmallVector<StringRef, 2> rpaths;
     StringRef(arg->getValue()).split(rpaths, ":");
     for (auto path : rpaths)
       ctx->addRpath(path);
   }
 
-  for (auto *arg : parsedArgs->filtered(OPT_rpath_link)) {
+  for (auto *arg : parsedArgs.filtered(OPT_rpath_link)) {
     SmallVector<StringRef, 2> rpaths;
     StringRef(arg->getValue()).split(rpaths, ":");
     for (auto path : rpaths)
@@ -614,11 +613,11 @@ bool GnuLdDriver::parse(llvm::ArrayRef<const char *> args,
   }
 
   // Enable new dynamic tags.
-  if (parsedArgs->hasArg(OPT_enable_newdtags))
+  if (parsedArgs.hasArg(OPT_enable_newdtags))
     ctx->setEnableNewDtags(true);
 
   // Support --wrap option.
-  for (auto *arg : parsedArgs->filtered(OPT_wrap))
+  for (auto *arg : parsedArgs.filtered(OPT_wrap))
     ctx->addWrapForSymbol(arg->getValue());
 
   // Register possible input file parsers.
@@ -634,7 +633,7 @@ bool GnuLdDriver::parse(llvm::ArrayRef<const char *> args,
   bool wholeArchive = false;
 
   // Process files
-  for (auto arg : *parsedArgs) {
+  for (auto arg : parsedArgs) {
     switch (arg->getOption().getID()) {
     case OPT_no_whole_archive:
       wholeArchive = false;
@@ -695,7 +694,7 @@ bool GnuLdDriver::parse(llvm::ArrayRef<const char *> args,
           diag << "Cannot open " << path << ": " << ec.message() << "\n";
           return false;
         }
-        bool nostdlib = parsedArgs->hasArg(OPT_nostdlib);
+        bool nostdlib = parsedArgs.hasArg(OPT_nostdlib);
         std::error_code ec =
             evalLinkerScript(*ctx, std::move(mb.get()), diag, nostdlib);
         if (ec) {

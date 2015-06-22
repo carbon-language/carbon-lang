@@ -136,12 +136,12 @@ static void removeArg(llvm::opt::Arg *arg,
 }
 
 static Flavor getFlavor(llvm::MutableArrayRef<const char *> &args,
-                        std::unique_ptr<llvm::opt::InputArgList> &parsedArgs) {
-  if (llvm::opt::Arg *argCore = parsedArgs->getLastArg(OPT_core)) {
+                        const llvm::opt::InputArgList &parsedArgs) {
+  if (llvm::opt::Arg *argCore = parsedArgs.getLastArg(OPT_core)) {
     removeArg(argCore, args);
     return Flavor::core;
   }
-  if (llvm::opt::Arg *argFlavor = parsedArgs->getLastArg(OPT_flavor)) {
+  if (llvm::opt::Arg *argFlavor = parsedArgs.getLastArg(OPT_flavor)) {
     removeArg(argFlavor, args);
     return strToFlavor(argFlavor->getValue());
   }
@@ -166,7 +166,6 @@ namespace lld {
 bool UniversalDriver::link(llvm::MutableArrayRef<const char *> args,
                            raw_ostream &diagnostics) {
   // Parse command line options using GnuLdOptions.td
-  std::unique_ptr<llvm::opt::InputArgList> parsedArgs;
   UniversalDriverOptTable table;
   unsigned missingIndex;
   unsigned missingCount;
@@ -174,23 +173,24 @@ bool UniversalDriver::link(llvm::MutableArrayRef<const char *> args,
   // Program name
   StringRef programName = llvm::sys::path::stem(args[0]);
 
-  parsedArgs.reset(table.ParseArgs(args.slice(1), missingIndex, missingCount));
+  llvm::opt::InputArgList parsedArgs =
+      table.ParseArgs(args.slice(1), missingIndex, missingCount);
 
   if (missingCount) {
     diagnostics << "error: missing arg value for '"
-                << parsedArgs->getArgString(missingIndex) << "' expected "
+                << parsedArgs.getArgString(missingIndex) << "' expected "
                 << missingCount << " argument(s).\n";
     return false;
   }
 
   // Handle -help
-  if (parsedArgs->getLastArg(OPT_help)) {
+  if (parsedArgs.getLastArg(OPT_help)) {
     table.PrintHelp(llvm::outs(), programName.data(), "LLVM Linker", false);
     return true;
   }
 
   // Handle -version
-  if (parsedArgs->getLastArg(OPT_version)) {
+  if (parsedArgs.getLastArg(OPT_version)) {
     diagnostics << "LLVM Linker Version: " << getLLDVersion()
                 << getLLDRepositoryVersion() << "\n";
     return true;

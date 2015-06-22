@@ -41,17 +41,15 @@ class ArgParser {
 public:
   ArgParser() : Alloc(AllocAux) {}
   // Parses command line options.
-  ErrorOr<std::unique_ptr<llvm::opt::InputArgList>>
-  parse(llvm::ArrayRef<const char *> Args);
+  ErrorOr<llvm::opt::InputArgList> parse(llvm::ArrayRef<const char *> Args);
 
   // Tokenizes a given string and then parses as command line options.
-  ErrorOr<std::unique_ptr<llvm::opt::InputArgList>> parse(StringRef S) {
+  ErrorOr<llvm::opt::InputArgList> parse(StringRef S) {
     return parse(tokenize(S));
   }
 
 private:
-  ErrorOr<std::unique_ptr<llvm::opt::InputArgList>>
-  parse(std::vector<const char *> Argv);
+  ErrorOr<llvm::opt::InputArgList> parse(std::vector<const char *> Argv);
 
   std::vector<const char *> tokenize(StringRef S);
 

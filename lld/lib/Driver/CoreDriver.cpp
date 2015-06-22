@@ -90,14 +90,14 @@ bool CoreDriver::link(llvm::ArrayRef<const char *> args,
 bool CoreDriver::parse(llvm::ArrayRef<const char *> args,
                        CoreLinkingContext &ctx, raw_ostream &diagnostics) {
   // Parse command line options using CoreOptions.td
-  std::unique_ptr<llvm::opt::InputArgList> parsedArgs;
   CoreOptTable table;
   unsigned missingIndex;
   unsigned missingCount;
-  parsedArgs.reset(table.ParseArgs(args.slice(1), missingIndex, missingCount));
+  llvm::opt::InputArgList parsedArgs =
+      table.ParseArgs(args.slice(1), missingIndex, missingCount);
   if (missingCount) {
     diagnostics << "error: missing arg value for '"
-                << parsedArgs->getArgString(missingIndex) << "' expected "
+                << parsedArgs.getArgString(missingIndex) << "' expected "
                 << missingCount << " argument(s).\n";
     return false;
   }
@@ -111,7 +111,7 @@ bool CoreDriver::parse(llvm::ArrayRef<const char *> args,
   ctx.setSearchArchivesToOverrideTentativeDefinitions(false);
 
   // Process all the arguments and create input files.
-  for (auto inputArg : *parsedArgs) {
+  for (auto inputArg : parsedArgs) {
     switch (inputArg->getOption().getID()) {
     case OPT_mllvm:
       ctx.appendLLVMOption(inputArg->getValue());
