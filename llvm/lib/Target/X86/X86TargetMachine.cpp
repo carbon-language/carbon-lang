@@ -110,12 +110,15 @@ X86TargetMachine::X86TargetMachine(const Target &T, const Triple &TT,
   if (Subtarget.isTargetWin64())
     this->Options.TrapUnreachable = true;
 
-  // TODO: By default, all reciprocal estimate operations are off because
-  // that matches the behavior before TargetRecip was added (except for btver2
-  // which used subtarget features to enable this type of codegen).
-  // We should change this to match GCC behavior where everything but
-  // scalar division estimates are turned on by default with -ffast-math.
-  this->Options.Reciprocals.setDefaults("all", false, 1);
+  // By default (and when -ffast-math is on), enable estimate codegen for
+  // everything except scalar division. By default, use 1 refinement step for
+  // all operations. Defaults may be overridden by using command-line options.
+  // Scalar division estimates are disabled because they break too much
+  // real-world code. These defaults match GCC behavior.
+  this->Options.Reciprocals.setDefaults("sqrtf", true, 1);
+  this->Options.Reciprocals.setDefaults("divf", false, 1);
+  this->Options.Reciprocals.setDefaults("vec-sqrtf", true, 1);
+  this->Options.Reciprocals.setDefaults("vec-divf", true, 1);
 
   initAsmInfo();
 }

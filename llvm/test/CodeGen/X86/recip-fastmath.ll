@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=sse2 | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=sse2 -recip=!divf,!vec-divf | FileCheck %s --check-prefix=NORECIP
 ; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=avx -recip=divf,vec-divf | FileCheck %s --check-prefix=RECIP
 ; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=avx -recip=divf:2,vec-divf:2 | FileCheck %s --check-prefix=REFINE
 
@@ -14,11 +14,11 @@ define float @reciprocal_estimate(float %x) #0 {
   %div = fdiv fast float 1.0, %x
   ret float %div
 
-; CHECK-LABEL: reciprocal_estimate:
-; CHECK: movss
-; CHECK-NEXT: divss
-; CHECK-NEXT: movaps
-; CHECK-NEXT: retq
+; NORECIP-LABEL: reciprocal_estimate:
+; NORECIP: movss
+; NORECIP-NEXT: divss
+; NORECIP-NEXT: movaps
+; NORECIP-NEXT: retq
 
 ; RECIP-LABEL: reciprocal_estimate:
 ; RECIP: vrcpss
@@ -45,11 +45,11 @@ define <4 x float> @reciprocal_estimate_v4f32(<4 x float> %x) #0 {
   %div = fdiv fast <4 x float> <float 1.0, float 1.0, float 1.0, float 1.0>, %x
   ret <4 x float> %div
 
-; CHECK-LABEL: reciprocal_estimate_v4f32:
-; CHECK: movaps
-; CHECK-NEXT: divps
-; CHECK-NEXT: movaps
-; CHECK-NEXT: retq
+; NORECIP-LABEL: reciprocal_estimate_v4f32:
+; NORECIP: movaps
+; NORECIP-NEXT: divps
+; NORECIP-NEXT: movaps
+; NORECIP-NEXT: retq
 
 ; RECIP-LABEL: reciprocal_estimate_v4f32:
 ; RECIP: vrcpps
@@ -76,14 +76,14 @@ define <8 x float> @reciprocal_estimate_v8f32(<8 x float> %x) #0 {
   %div = fdiv fast <8 x float> <float 1.0, float 1.0, float 1.0, float 1.0, float 1.0, float 1.0, float 1.0, float 1.0>, %x
   ret <8 x float> %div
 
-; CHECK-LABEL: reciprocal_estimate_v8f32:
-; CHECK: movaps
-; CHECK: movaps
-; CHECK-NEXT: divps
-; CHECK-NEXT: divps
-; CHECK-NEXT: movaps
-; CHECK-NEXT: movaps
-; CHECK-NEXT: retq
+; NORECIP-LABEL: reciprocal_estimate_v8f32:
+; NORECIP: movaps
+; NORECIP: movaps
+; NORECIP-NEXT: divps
+; NORECIP-NEXT: divps
+; NORECIP-NEXT: movaps
+; NORECIP-NEXT: movaps
+; NORECIP-NEXT: retq
 
 ; RECIP-LABEL: reciprocal_estimate_v8f32:
 ; RECIP: vrcpps

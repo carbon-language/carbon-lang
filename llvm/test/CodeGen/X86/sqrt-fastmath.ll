@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=sse2 | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=sse2 -recip=!sqrtf,!vec-sqrtf,!divf,!vec-divf | FileCheck %s --check-prefix=NORECIP
 ; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=avx -recip=sqrtf,vec-sqrtf | FileCheck %s --check-prefix=ESTIMATE
 
 declare double @__sqrt_finite(double) #0
@@ -10,10 +10,10 @@ declare <8 x float> @llvm.sqrt.v8f32(<8 x float>) #0
 
 
 define double @fd(double %d) #0 {
-; CHECK-LABEL: fd:
-; CHECK:       # BB#0:
-; CHECK-NEXT:    sqrtsd %xmm0, %xmm0
-; CHECK-NEXT:    retq
+; NORECIP-LABEL: fd:
+; NORECIP:       # BB#0:
+; NORECIP-NEXT:    sqrtsd %xmm0, %xmm0
+; NORECIP-NEXT:    retq
 ;
 ; ESTIMATE-LABEL: fd:
 ; ESTIMATE:       # BB#0:
@@ -25,10 +25,10 @@ define double @fd(double %d) #0 {
 
 
 define float @ff(float %f) #0 {
-; CHECK-LABEL: ff:
-; CHECK:       # BB#0:
-; CHECK-NEXT:    sqrtss %xmm0, %xmm0
-; CHECK-NEXT:    retq
+; NORECIP-LABEL: ff:
+; NORECIP:       # BB#0:
+; NORECIP-NEXT:    sqrtss %xmm0, %xmm0
+; NORECIP-NEXT:    retq
 ;
 ; ESTIMATE-LABEL: ff:
 ; ESTIMATE:       # BB#0:
@@ -49,11 +49,11 @@ define float @ff(float %f) #0 {
 
 
 define x86_fp80 @fld(x86_fp80 %ld) #0 {
-; CHECK-LABEL: fld:
-; CHECK:       # BB#0:
-; CHECK-NEXT:    fldt {{[0-9]+}}(%rsp)
-; CHECK-NEXT:    fsqrt
-; CHECK-NEXT:    retq
+; NORECIP-LABEL: fld:
+; NORECIP:       # BB#0:
+; NORECIP-NEXT:    fldt {{[0-9]+}}(%rsp)
+; NORECIP-NEXT:    fsqrt
+; NORECIP-NEXT:    retq
 ;
 ; ESTIMATE-LABEL: fld:
 ; ESTIMATE:       # BB#0:
@@ -67,12 +67,12 @@ define x86_fp80 @fld(x86_fp80 %ld) #0 {
 
 
 define float @reciprocal_square_root(float %x) #0 {
-; CHECK-LABEL: reciprocal_square_root:
-; CHECK:       # BB#0:
-; CHECK-NEXT:    sqrtss %xmm0, %xmm1
-; CHECK-NEXT:    movss {{.*#+}} xmm0 = mem[0],zero,zero,zero
-; CHECK-NEXT:    divss %xmm1, %xmm0
-; CHECK-NEXT:    retq
+; NORECIP-LABEL: reciprocal_square_root:
+; NORECIP:       # BB#0:
+; NORECIP-NEXT:    sqrtss %xmm0, %xmm1
+; NORECIP-NEXT:    movss {{.*#+}} xmm0 = mem[0],zero,zero,zero
+; NORECIP-NEXT:    divss %xmm1, %xmm0
+; NORECIP-NEXT:    retq
 ;
 ; ESTIMATE-LABEL: reciprocal_square_root:
 ; ESTIMATE:       # BB#0:
@@ -89,12 +89,12 @@ define float @reciprocal_square_root(float %x) #0 {
 }
 
 define <4 x float> @reciprocal_square_root_v4f32(<4 x float> %x) #0 {
-; CHECK-LABEL: reciprocal_square_root_v4f32:
-; CHECK:       # BB#0:
-; CHECK-NEXT:    sqrtps %xmm0, %xmm1
-; CHECK-NEXT:    movaps {{.*#+}} xmm0 = [1.000000e+00,1.000000e+00,1.000000e+00,1.000000e+00]
-; CHECK-NEXT:    divps %xmm1, %xmm0
-; CHECK-NEXT:    retq
+; NORECIP-LABEL: reciprocal_square_root_v4f32:
+; NORECIP:       # BB#0:
+; NORECIP-NEXT:    sqrtps %xmm0, %xmm1
+; NORECIP-NEXT:    movaps {{.*#+}} xmm0 = [1.000000e+00,1.000000e+00,1.000000e+00,1.000000e+00]
+; NORECIP-NEXT:    divps %xmm1, %xmm0
+; NORECIP-NEXT:    retq
 ;
 ; ESTIMATE-LABEL: reciprocal_square_root_v4f32:
 ; ESTIMATE:       # BB#0:
@@ -111,15 +111,15 @@ define <4 x float> @reciprocal_square_root_v4f32(<4 x float> %x) #0 {
 }
 
 define <8 x float> @reciprocal_square_root_v8f32(<8 x float> %x) #0 {
-; CHECK-LABEL: reciprocal_square_root_v8f32:
-; CHECK:       # BB#0:
-; CHECK-NEXT:    sqrtps %xmm1, %xmm2
-; CHECK-NEXT:    sqrtps %xmm0, %xmm3
-; CHECK-NEXT:    movaps {{.*#+}} xmm1 = [1.000000e+00,1.000000e+00,1.000000e+00,1.000000e+00]
-; CHECK-NEXT:    movaps %xmm1, %xmm0
-; CHECK-NEXT:    divps %xmm3, %xmm0
-; CHECK-NEXT:    divps %xmm2, %xmm1
-; CHECK-NEXT:    retq
+; NORECIP-LABEL: reciprocal_square_root_v8f32:
+; NORECIP:       # BB#0:
+; NORECIP-NEXT:    sqrtps %xmm1, %xmm2
+; NORECIP-NEXT:    sqrtps %xmm0, %xmm3
+; NORECIP-NEXT:    movaps {{.*#+}} xmm1 = [1.000000e+00,1.000000e+00,1.000000e+00,1.000000e+00]
+; NORECIP-NEXT:    movaps %xmm1, %xmm0
+; NORECIP-NEXT:    divps %xmm3, %xmm0
+; NORECIP-NEXT:    divps %xmm2, %xmm1
+; NORECIP-NEXT:    retq
 ;
 ; ESTIMATE-LABEL: reciprocal_square_root_v8f32:
 ; ESTIMATE:       # BB#0:
