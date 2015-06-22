@@ -5295,21 +5295,57 @@ MachineInstr *X86InstrInfo::foldMemoryOperandImpl(
                                Size, Alignment, /*AllowCommute=*/true);
 }
 
-static bool isPartialRegisterLoad(const MachineInstr &LoadMI,
-                                  const MachineFunction &MF) {
+/// Check if \p LoadMI is a partial register load that we can't fold into \p MI
+/// because the latter uses contents that wouldn't be defined in the folded
+/// version.  For instance, this transformation isn't legal:
+///   movss (%rdi), %xmm0
+///   addps %xmm0, %xmm0
+/// ->
+///   addps (%rdi), %xmm0
+///
+/// But this one is:
+///   movss (%rdi), %xmm0
+///   addss %xmm0, %xmm0
+/// ->
+///   addss (%rdi), %xmm0
+///
+static bool isNonFoldablePartialRegisterLoad(const MachineInstr &LoadMI,
+                                             const MachineInstr &UserMI,
+                                             const MachineFunction &MF) {
   unsigned Opc = LoadMI.getOpcode();
+  unsigned UserOpc = UserMI.getOpcode();
   unsigned RegSize =
       MF.getRegInfo().getRegClass(LoadMI.getOperand(0).getReg())->getSize();
 
-  if ((Opc == X86::MOVSSrm || Opc == X86::VMOVSSrm) && RegSize > 4)
+  if ((Opc == X86::MOVSSrm || Opc == X86::VMOVSSrm) && RegSize > 4) {
     // These instructions only load 32 bits, we can't fold them if the
-    // destination register is wider than 32 bits (4 bytes).
-    return true;
+    // destination register is wider than 32 bits (4 bytes), and its user
+    // instruction isn't scalar (SS).
+    switch (UserOpc) {
+    case X86::ADDSSrr_Int: case X86::VADDSSrr_Int:
+    case X86::DIVSSrr_Int: case X86::VDIVSSrr_Int:
+    case X86::MULSSrr_Int: case X86::VMULSSrr_Int:
+    case X86::SUBSSrr_Int: case X86::VSUBSSrr_Int:
+      return false;
+    default:
+      return true;
+    }
+  }
 
-  if ((Opc == X86::MOVSDrm || Opc == X86::VMOVSDrm) && RegSize > 8)
+  if ((Opc == X86::MOVSDrm || Opc == X86::VMOVSDrm) && RegSize > 8) {
     // These instructions only load 64 bits, we can't fold them if the
-    // destination register is wider than 64 bits (8 bytes).
-    return true;
+    // destination register is wider than 64 bits (8 bytes), and its user
+    // instruction isn't scalar (SD).
+    switch (UserOpc) {
+    case X86::ADDSDrr_Int: case X86::VADDSDrr_Int:
+    case X86::DIVSDrr_Int: case X86::VDIVSDrr_Int:
+    case X86::MULSDrr_Int: case X86::VMULSDrr_Int:
+    case X86::SUBSDrr_Int: case X86::VSUBSDrr_Int:
+      return false;
+    default:
+      return true;
+    }
+  }
 
   return false;
 }
@@ -5321,7 +5357,7 @@ MachineInstr *X86InstrInfo::foldMemoryOperandImpl(
   unsigned NumOps = LoadMI->getDesc().getNumOperands();
   int FrameIndex;
   if (isLoadFromStackSlot(LoadMI, FrameIndex)) {
-    if (isPartialRegisterLoad(*LoadMI, MF))
+    if (isNonFoldablePartialRegisterLoad(*LoadMI, *MI, MF))
       return nullptr;
     return foldMemoryOperandImpl(MF, MI, Ops, InsertPt, FrameIndex);
   }
@@ -5434,7 +5470,7 @@ MachineInstr *X86InstrInfo::foldMemoryOperandImpl(
     break;
   }
   default: {
-    if (isPartialRegisterLoad(*LoadMI, MF))
+    if (isNonFoldablePartialRegisterLoad(*LoadMI, *MI, MF))
       return nullptr;
 
     // Folding a normal load. Just copy the load's address operands.
