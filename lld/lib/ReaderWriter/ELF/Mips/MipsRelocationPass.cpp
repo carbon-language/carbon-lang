@@ -379,8 +379,12 @@ private:
 
   /// \brief Collect information about the reference to use it
   /// later in the handleReference() routine.
-  void collectReferenceInfo(const MipsELFDefinedAtom<ELFT> &atom,
-                            Reference &ref);
+  std::error_code collectReferenceInfo(const MipsELFDefinedAtom<ELFT> &atom,
+                                       Reference &ref);
+
+  /// \brief Check that the relocation is valid for the current linking mode.
+  std::error_code validateRelocation(const DefinedAtom &atom,
+                                     const Reference &ref) const;
 
   void handlePlain(const MipsELFDefinedAtom<ELFT> &atom, Reference &ref);
   void handle26(const MipsELFDefinedAtom<ELFT> &atom, Reference &ref);
@@ -430,9 +434,11 @@ RelocationPass<ELFT>::RelocationPass(MipsLinkingContext &ctx)
 template <typename ELFT>
 std::error_code RelocationPass<ELFT>::perform(SimpleFile &mf) {
   for (const auto &atom : mf.defined())
-    for (const auto &ref : *atom)
-      collectReferenceInfo(*cast<MipsELFDefinedAtom<ELFT>>(atom),
-                           const_cast<Reference &>(*ref));
+    for (const auto &ref : *atom) {
+      const auto &da = *cast<MipsELFDefinedAtom<ELFT>>(atom);
+      if (auto ec = collectReferenceInfo(da, const_cast<Reference &>(*ref)))
+        return ec;
+    }
 
   // Process all references.
   for (const auto &atom : mf.defined())
@@ -625,19 +631,23 @@ static bool isConstrainSym(const MipsELFDefinedAtom<ELFT> &atom,
 }
 
 template <typename ELFT>
-void RelocationPass<ELFT>::collectReferenceInfo(
-    const MipsELFDefinedAtom<ELFT> &atom, Reference &ref) {
+std::error_code
+RelocationPass<ELFT>::collectReferenceInfo(const MipsELFDefinedAtom<ELFT> &atom,
+                                           Reference &ref) {
   if (!ref.target())
-    return;
+    return std::error_code();
   if (ref.kindNamespace() != Reference::KindNamespace::ELF)
-    return;
+    return std::error_code();
 
   auto refKind = ref.kindValue();
   if (refKind == R_MIPS_EH && this->_ctx.mipsPcRelEhRel())
     ref.setKindValue(R_MIPS_PC32);
 
+  if (auto ec = validateRelocation(atom, ref))
+    return ec;
+
   if (!isConstrainSym(atom, refKind))
-    return;
+    return std::error_code();
 
   if (mightBeDynamic(atom, refKind))
     _rel32Candidates.push_back(&ref);
@@ -652,6 +662,56 @@ void RelocationPass<ELFT>::collectReferenceInfo(
       refKind != R_MICROMIPS_CALL_HI16 && refKind != R_MICROMIPS_CALL_LO16 &&
       refKind != R_MIPS_EH)
     _requiresPtrEquality.insert(ref.target());
+  return std::error_code();
+}
+
+static std::error_code
+make_reject_for_shared_lib_reloc_error(const ELFLinkingContext &ctx,
+                                       const DefinedAtom &atom,
+                                       const Reference &ref) {
+  StringRef kindValStr = "unknown";
+  ctx.registry().referenceKindToString(ref.kindNamespace(), ref.kindArch(),
+                                       ref.kindValue(), kindValStr);
+
+  return make_dynamic_error_code(Twine(kindValStr) + " (" +
+                                 Twine(ref.kindValue()) +
+                                 ") relocation cannot be used "
+                                 "when making a shared object, recompile " +
+                                 atom.file().path() + " with -fPIC");
+}
+
+template <typename ELFT>
+std::error_code
+RelocationPass<ELFT>::validateRelocation(const DefinedAtom &atom,
+                                         const Reference &ref) const {
+  if (this->_ctx.getOutputELFType() != ET_DYN)
+    return std::error_code();
+  if (!ref.target())
+    return std::error_code();
+
+  switch (ref.kindValue()) {
+  case R_MIPS16_HI16:
+  case R_MIPS_HI16:
+  case R_MIPS_HIGHER:
+  case R_MIPS_HIGHEST:
+  case R_MICROMIPS_HI16:
+  case R_MICROMIPS_HIGHER:
+  case R_MICROMIPS_HIGHEST:
+    // For shared object we accepts "high" relocations
+    // against the "_gp_disp" symbol only.
+    if (ref.target()->name() != "_gp_disp")
+      return make_reject_for_shared_lib_reloc_error(this->_ctx, atom, ref);
+    break;
+  case R_MIPS16_26:
+  case R_MIPS_26:
+  case R_MICROMIPS_26_S1:
+    // These relocations are position dependent
+    // and not acceptable in a shared object.
+    return make_reject_for_shared_lib_reloc_error(this->_ctx, atom, ref);
+  default:
+    break;
+  }
+  return std::error_code();
 }
 
 template <typename ELFT>
