@@ -165,7 +165,7 @@ class SafeStack : public FunctionPass {
   Type *Int32Ty;
   Type *Int8Ty;
 
-  Constant *UnsafeStackPtr;
+  Constant *UnsafeStackPtr = nullptr;
 
   /// Unsafe stack alignment. Each stack frame must ensure that the stack is
   /// aligned to this value. We need to re-align the unsafe stack if the
@@ -231,8 +231,6 @@ public:
     IntPtrTy = DL->getIntPtrType(M.getContext());
     Int32Ty = Type::getInt32Ty(M.getContext());
     Int8Ty = Type::getInt8Ty(M.getContext());
-
-    UnsafeStackPtr = getOrCreateUnsafeStackPtr(M);
 
     return false;
   }
@@ -575,6 +573,9 @@ bool SafeStack::runOnFunction(Function &F) {
 
   if (!StackRestorePoints.empty())
     ++NumUnsafeStackRestorePointsFunctions;
+
+  if (!UnsafeStackPtr)
+    UnsafeStackPtr = getOrCreateUnsafeStackPtr(*F.getParent());
 
   // The top of the unsafe stack after all unsafe static allocas are allocated.
   Value *StaticTop = moveStaticAllocasToUnsafeStack(F, StaticAllocas, Returns);

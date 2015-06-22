@@ -6,6 +6,8 @@
 ; no safestack attribute
 ; Requires no protector.
 
+; CHECK-NOT: __safestack_unsafe_stack_ptr
+
 ; CHECK: @foo
 define void @foo(i8* %a) nounwind uwtable {
 entry:
