@@ -323,9 +323,9 @@ static std::string findInputFile(const CommandLineArguments &CLArgs) {
                                             E = CLArgs.end();
        I != E; ++I)
     Argv.push_back(I->c_str());
-  std::unique_ptr<InputArgList> Args(Opts->ParseArgs(
-      Argv, MissingArgIndex, MissingArgCount, IncludedFlagsBitmask));
-  std::vector<std::string> Inputs = Args->getAllArgValues(OPT_INPUT);
+  InputArgList Args = Opts->ParseArgs(Argv, MissingArgIndex, MissingArgCount,
+                                      IncludedFlagsBitmask);
+  std::vector<std::string> Inputs = Args.getAllArgValues(OPT_INPUT);
   return ModularizeUtilities::getCanonicalPath(Inputs.back());
 }
 
