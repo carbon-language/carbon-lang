@@ -292,14 +292,21 @@ if(APPLE)
   find_darwin_sdk_dir(OSX_SDK_DIR macosx)
   find_darwin_sdk_dir(IOSSIM_SDK_DIR iphonesimulator)
 
-  string(REGEX MATCH "-mmacosx-version-min="
-         MACOSX_VERSION_MIN_FLAG "${CMAKE_CXX_FLAGS}")
   set(SANITIZER_COMMON_SUPPORTED_OS osx)
-  if (IOSSIM_SDK_DIR AND NOT MACOSX_VERSION_MIN_FLAG)
-    list(APPEND SANITIZER_COMMON_SUPPORTED_OS iossim)
+  string(REGEX MATCH "-mmacosx-version-min=([.0-9]+)"
+         MACOSX_VERSION_MIN_FLAG "${CMAKE_CXX_FLAGS}")
+  if(MACOSX_VERSION_MIN_FLAG)
+    set(SANITIZER_MIN_OSX_VERSION "${CMAKE_MATCH_1}")
+    if(SANITIZER_MIN_OSX_VERSION VERSION_LESS "10.7")
+      message(FATAL_ERROR "Too old OS X version: ${SANITIZER_MIN_OSX_VERSION}")
+    endif()
+  else()
+    set(SANITIZER_MIN_OSX_VERSION 10.7)
+    if(IOSSIM_SDK_DIR)
+      list(APPEND SANITIZER_COMMON_SUPPORTED_OS iossim)
+    endif()
   endif()
 
-  set(SANITIZER_MIN_OSX_VERSION 10.7)
   set(CMAKE_OSX_DEPLOYMENT_TARGET "") # We're setting the flag manually below.
   set(DARWIN_osx_CFLAGS -mmacosx-version-min=${SANITIZER_MIN_OSX_VERSION}
     -stdlib=libc++)
