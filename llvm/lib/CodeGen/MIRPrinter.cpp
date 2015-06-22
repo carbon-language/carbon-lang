@@ -21,6 +21,8 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/YAMLTraits.h"
+#include "llvm/Target/TargetInstrInfo.h"
+#include "llvm/Target/TargetSubtargetInfo.h"
 
 using namespace llvm;
 
@@ -37,6 +39,17 @@ public:
   void print(const MachineFunction &MF);
 
   void convert(yaml::MachineBasicBlock &YamlMBB, const MachineBasicBlock &MBB);
+};
+
+/// This class prints out the machine instructions using the MIR serialization
+/// format.
+class MIPrinter {
+  raw_ostream &OS;
+
+public:
+  MIPrinter(raw_ostream &OS) : OS(OS) {}
+
+  void print(const MachineInstr &MI);
 };
 
 } // end anonymous namespace
@@ -83,6 +96,25 @@ void MIRPrinter::convert(yaml::MachineBasicBlock &YamlMBB,
   YamlMBB.Alignment = MBB.getAlignment();
   YamlMBB.AddressTaken = MBB.hasAddressTaken();
   YamlMBB.IsLandingPad = MBB.isLandingPad();
+
+  // Print the machine instructions.
+  YamlMBB.Instructions.reserve(MBB.size());
+  std::string Str;
+  for (const auto &MI : MBB) {
+    raw_string_ostream StrOS(Str);
+    MIPrinter(StrOS).print(MI);
+    YamlMBB.Instructions.push_back(StrOS.str());
+    Str.clear();
+  }
+}
+
+void MIPrinter::print(const MachineInstr &MI) {
+  const auto &SubTarget = MI.getParent()->getParent()->getSubtarget();
+  const auto *TII = SubTarget.getInstrInfo();
+  assert(TII && "Expected target instruction info");
+
+  OS << TII->getName(MI.getOpcode());
+  // TODO: Print the instruction flags, machine operands, machine mem operands.
 }
 
 void llvm::printMIR(raw_ostream &OS, const Module &M) {

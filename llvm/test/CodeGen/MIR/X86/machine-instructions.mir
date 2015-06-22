@@ -1,0 +1,24 @@
+# RUN: llc -march=x86-64 -start-after branch-folder -stop-after branch-folder -o /dev/null %s | FileCheck %s
+# This test ensures that the MIR parser parses X86 machine instructions
+# correctly.
+
+--- |
+
+  define i32 @inc(i32 %a) {
+  entry:
+    %b = mul i32 %a, 11
+    ret i32 %b
+  }
+
+...
+---
+# CHECK: name: inc
+name:            inc
+body:
+ - name:         entry
+   instructions:
+     # CHECK:      - IMUL32rri8
+     # CHECK-NEXT: - RETQ
+     - IMUL32rri8
+     - RETQ
+...

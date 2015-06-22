@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/MIRParser/MIRParser.h"
+#include "MIParser.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/STLExtras.h"
@@ -79,7 +80,7 @@ public:
   /// Initialize the machine basic block using it's YAML representation.
   ///
   /// Return true if an error occurred.
-  bool initializeMachineBasicBlock(MachineBasicBlock &MBB,
+  bool initializeMachineBasicBlock(MachineFunction &MF, MachineBasicBlock &MBB,
                                    const yaml::MachineBasicBlock &YamlMBB);
 
 private:
@@ -218,18 +219,29 @@ bool MIRParserImpl::initializeMachineFunction(MachineFunction &MF) {
     }
     auto *MBB = MF.CreateMachineBasicBlock(BB);
     MF.insert(MF.end(), MBB);
-    if (initializeMachineBasicBlock(*MBB, YamlMBB))
+    if (initializeMachineBasicBlock(MF, *MBB, YamlMBB))
       return true;
   }
   return false;
 }
 
 bool MIRParserImpl::initializeMachineBasicBlock(
-    MachineBasicBlock &MBB, const yaml::MachineBasicBlock &YamlMBB) {
+    MachineFunction &MF, MachineBasicBlock &MBB,
+    const yaml::MachineBasicBlock &YamlMBB) {
   MBB.setAlignment(YamlMBB.Alignment);
   if (YamlMBB.AddressTaken)
     MBB.setHasAddressTaken();
   MBB.setIsLandingPad(YamlMBB.IsLandingPad);
+  // Parse the instructions.
+  for (const auto &MISource : YamlMBB.Instructions) {
+    SMDiagnostic Error;
+    if (auto *MI = parseMachineInstr(SM, MF, MISource, Error)) {
+      MBB.insert(MBB.end(), MI);
+      continue;
+    }
+    reportDiagnostic(Error);
+    return true;
+  }
   return false;
 }
 

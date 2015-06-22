@@ -22,6 +22,8 @@
 #include "llvm/Support/YAMLTraits.h"
 #include <vector>
 
+LLVM_YAML_IS_SEQUENCE_VECTOR(std::string)
+
 namespace llvm {
 namespace yaml {
 
@@ -31,7 +33,8 @@ struct MachineBasicBlock {
   bool IsLandingPad = false;
   bool AddressTaken = false;
   // TODO: Serialize the successors and liveins.
-  // TODO: Serialize machine instructions.
+
+  std::vector<std::string> Instructions;
 };
 
 template <> struct MappingTraits<MachineBasicBlock> {
@@ -41,6 +44,7 @@ template <> struct MappingTraits<MachineBasicBlock> {
     YamlIO.mapOptional("alignment", MBB.Alignment);
     YamlIO.mapOptional("isLandingPad", MBB.IsLandingPad);
     YamlIO.mapOptional("addressTaken", MBB.AddressTaken);
+    YamlIO.mapOptional("instructions", MBB.Instructions);
   }
 };
 
