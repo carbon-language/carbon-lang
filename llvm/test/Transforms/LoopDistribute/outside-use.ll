@@ -37,7 +37,7 @@ entry:
 ; CHECK: for.body:
 ; CHECK:   %sum_add = add nuw nsw i32 %sum, %loadC
 ; CHECK: for.end:
-; CHECK:   %sum_add.ldist = phi i32 [ %sum_add, %for.body ], [ %sum_add.ldist.nondist, %for.body.ldist.nondist ]
+; CHECK:   %sum_add.lver = phi i32 [ %sum_add, %for.body ], [ %sum_add.lver.orig, %for.body.lver.orig ]
 
 for.body:                                         ; preds = %for.body, %entry
   %ind = phi i64 [ 0, %entry ], [ %add, %for.body ]

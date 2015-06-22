@@ -35,7 +35,7 @@ entry:
 ; We have two compares for each array overlap check which is a total of 10
 ; compares.
 ;
-; CHECK: for.body.ldist.memcheck:
+; CHECK: for.body.lver.memcheck:
 ; CHECK:     = icmp
 ; CHECK:     = icmp
 
@@ -52,14 +52,14 @@ entry:
 ; CHECK:     = icmp
 
 ; CHECK-NOT: = icmp
-; CHECK:     br i1 %memcheck.conflict, label %for.body.ph.ldist.nondist, label %for.body.ph.ldist1
+; CHECK:     br i1 %memcheck.conflict, label %for.body.ph.lver.orig, label %for.body.ph.ldist1
 
 ; The non-distributed loop that the memchecks fall back on.
 
-; CHECK: for.body.ph.ldist.nondist:
-; CHECK:     br label %for.body.ldist.nondist
-; CHECK: for.body.ldist.nondist:
-; CHECK:    br i1 %exitcond.ldist.nondist, label %for.end, label %for.body.ldist.nondist
+; CHECK: for.body.ph.lver.orig:
+; CHECK:     br label %for.body.lver.orig
+; CHECK: for.body.lver.orig:
+; CHECK:    br i1 %exitcond.lver.orig, label %for.end, label %for.body.lver.orig
 
 ; Verify the two distributed loops.
 
