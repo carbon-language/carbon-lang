@@ -91,7 +91,7 @@ public:
 // API call is made to prune the dependence.
 class VLIWPacketizerList {
 protected:
-  const MachineFunction &MF;
+  MachineFunction &MF;
   const TargetInstrInfo *TII;
 
   // The VLIW Scheduler.
