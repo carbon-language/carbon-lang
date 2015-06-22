@@ -1,15 +1,5 @@
 ; RUN: llc < %s -march=x86-64 -mtriple=x86_64-apple-darwin -mcpu=knl | FileCheck %s
 
-define <16 x i32> @test1(i32* %x) {
-; CHECK-LABEL: test1:
-; CHECK:    vmovd (%rdi), %xmm
-; CHECK:    vmovdqa32
-; CHECK:    vpermt2d %zmm
-   %y = load i32, i32* %x, align 4
-   %res = insertelement <16 x i32>zeroinitializer, i32 %y, i32 4
-   ret <16 x i32>%res
-}
-
 define <16 x i32> @test2(<16 x i32> %x) {
 ; CHECK-LABEL: test2:
 ; CHECK:       ## BB#0:
