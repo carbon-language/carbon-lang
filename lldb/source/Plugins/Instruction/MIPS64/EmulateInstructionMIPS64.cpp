@@ -736,6 +736,8 @@ EmulateInstructionMIPS64::Emulate_BEQ (llvm::MCInst& insn)
      *      condition <- (GPR[rs] = GPR[rt])
      *      if condition then
      *          PC = PC + sign_ext (offset << 2)
+     *      else
+     *          PC = PC + 4
     */
     rs = m_reg_info->getEncodingValue (insn.getOperand(0).getReg());
     rt = m_reg_info->getEncodingValue (insn.getOperand(1).getReg());
