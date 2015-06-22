@@ -127,11 +127,14 @@ bool AMDGPUAsmBackend::writeNopData(uint64_t Count, MCObjectWriter *OW) const {
 namespace {
 
 class ELFAMDGPUAsmBackend : public AMDGPUAsmBackend {
+  bool Is64Bit;
+
 public:
-  ELFAMDGPUAsmBackend(const Target &T) : AMDGPUAsmBackend(T) { }
+  ELFAMDGPUAsmBackend(const Target &T, bool Is64Bit) :
+      AMDGPUAsmBackend(T), Is64Bit(Is64Bit) { }
 
   MCObjectWriter *createObjectWriter(raw_pwrite_stream &OS) const override {
-    return createAMDGPUELFObjectWriter(OS);
+    return createAMDGPUELFObjectWriter(Is64Bit, OS);
   }
 };
 
@@ -140,5 +143,8 @@ public:
 MCAsmBackend *llvm::createAMDGPUAsmBackend(const Target &T,
                                            const MCRegisterInfo &MRI,
                                            const Triple &TT, StringRef CPU) {
-  return new ELFAMDGPUAsmBackend(T);
+  Triple TargetTriple(TT);
+
+  // Use 64-bit ELF for amdgcn
+  return new ELFAMDGPUAsmBackend(T, TargetTriple.getArch() == Triple::amdgcn);
 }

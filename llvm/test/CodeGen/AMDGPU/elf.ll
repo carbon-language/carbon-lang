@@ -8,7 +8,7 @@
 ; Test that we don't try to produce a COFF file on windows
 ; RUN: llc < %s -mtriple=amdgcn-pc-mingw -mcpu=SI -verify-machineinstrs -filetype=obj | llvm-readobj -s -symbols -file-headers - | FileCheck --check-prefix=ELF %s
 
-; ELF: Format: ELF32
+; ELF: Format: ELF64
 ; ELF: Machine: EM_AMDGPU (0xE0)
 ; ELF: Name: .AMDGPU.config
 ; ELF: Type: SHT_PROGBITS
