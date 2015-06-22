@@ -578,6 +578,7 @@ void RelocationPass<ELFT>::handleReference(const MipsELFDefinedAtom<ELFT> &atom,
   case R_MIPS_GPREL16:
   case R_MICROMIPS_GPREL16:
   case R_MICROMIPS_GPREL7_S2:
+  case R_MIPS_LITERAL:
     if (isLocal(ref.target()))
       ref.setAddend(ref.addend() + atom.file().getGP0());
     break;
@@ -624,6 +625,7 @@ static bool isConstrainSym(const MipsELFDefinedAtom<ELFT> &atom,
   case R_MIPS_GPREL32:
   case R_MICROMIPS_GPREL16:
   case R_MICROMIPS_GPREL7_S2:
+  case R_MIPS_LITERAL:
     return false;
   default:
     return true;

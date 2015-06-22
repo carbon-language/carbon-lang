@@ -117,6 +117,7 @@ static MipsRelocationParams getRelocationParams(uint32_t rType) {
   case R_MIPS_TLS_GD:
   case R_MIPS_TLS_LDM:
   case R_MIPS_TLS_GOTTPREL:
+  case R_MIPS_LITERAL:
     return {4, 0xffff, 0, false, signedCheck<16>};
   case R_MIPS_GOT_HI16:
   case R_MIPS_GOT_LO16:
@@ -455,7 +456,7 @@ static ErrorOr<int64_t> calculateRelocation(Reference::KindValue kind,
     return relocLo16(0, tgtAddr, addend, false, true);
   case R_MIPS_GPREL16:
   case R_MIPS_GPREL32:
-    return tgtAddr + addend - gpAddr;
+  case R_MIPS_LITERAL:
   case R_MICROMIPS_GPREL16:
   case R_MICROMIPS_GPREL7_S2:
     return tgtAddr + addend - gpAddr;
@@ -634,6 +635,7 @@ Reference::Addend readMipsRelocAddend(Reference::KindValue kind,
   case R_MIPS_GPREL16:
   case R_MICROMIPS_GPREL16:
   case R_MIPS_PCLO16:
+  case R_MIPS_LITERAL:
     return llvm::SignExtend32<16>(res);
   case R_MICROMIPS_GPREL7_S2:
     return llvm::SignExtend32<9>(res);
