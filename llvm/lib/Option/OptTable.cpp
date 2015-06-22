@@ -287,7 +287,7 @@ InputArgList OptTable::ParseArgs(ArrayRef<const char *> ArgArr,
     Args.append(A);
   }
 
-  return std::move(Args);
+  return Args;
 }
 
 static std::string getOptionHelpName(const OptTable &Opts, OptSpecifier Id) {
