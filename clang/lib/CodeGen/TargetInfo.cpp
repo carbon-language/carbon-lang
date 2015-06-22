@@ -1391,6 +1391,22 @@ bool X86_32TargetCodeGenInfo::initDwarfEHRegSizeTable(
 
 
 namespace {
+/// The AVX ABI level for X86 targets.
+enum class X86AVXABILevel {
+  None,
+  AVX
+};
+
+/// \p returns the size in bits of the largest (native) vector for \p AVXLevel.
+static unsigned getNativeVectorSizeForAVXABI(X86AVXABILevel AVXLevel) {
+  switch (AVXLevel) {
+  case X86AVXABILevel::AVX:
+    return 256;
+  case X86AVXABILevel::None:
+    return 128;
+  }
+}
+
 /// X86_64ABIInfo - The X86_64 ABI information.
 class X86_64ABIInfo : public ABIInfo {
   enum Class {
@@ -1496,13 +1512,14 @@ class X86_64ABIInfo : public ABIInfo {
     return !getTarget().getTriple().isOSDarwin();
   }
 
+  X86AVXABILevel AVXLevel;
   // Some ABIs (e.g. X32 ABI and Native Client OS) use 32 bit pointers on
   // 64-bit hardware.
   bool Has64BitPointers;
 
 public:
-  X86_64ABIInfo(CodeGen::CodeGenTypes &CGT) :
-      ABIInfo(CGT),
+  X86_64ABIInfo(CodeGen::CodeGenTypes &CGT, X86AVXABILevel AVXLevel) :
+      ABIInfo(CGT), AVXLevel(AVXLevel),
       Has64BitPointers(CGT.getDataLayout().getPointerSize(0) == 8) {
   }
 
@@ -1526,10 +1543,6 @@ public:
 
   bool has64BitPointers() const {
     return Has64BitPointers;
-  }
-
-  bool hasAVX() const {
-    return getTarget().getABI() == "avx";
   }
 };
 
@@ -1560,9 +1573,11 @@ public:
 };
 
 class X86_64TargetCodeGenInfo : public TargetCodeGenInfo {
+  X86AVXABILevel AVXLevel;
 public:
-  X86_64TargetCodeGenInfo(CodeGen::CodeGenTypes &CGT)
-      : TargetCodeGenInfo(new X86_64ABIInfo(CGT)) {}
+  X86_64TargetCodeGenInfo(CodeGen::CodeGenTypes &CGT, X86AVXABILevel AVXLevel)
+      : TargetCodeGenInfo(new X86_64ABIInfo(CGT, AVXLevel)),
+        AVXLevel(AVXLevel) {}
 
   const X86_64ABIInfo &getABIInfo() const {
     return static_cast<const X86_64ABIInfo&>(TargetCodeGenInfo::getABIInfo());
@@ -1630,14 +1645,14 @@ public:
   }
 
   unsigned getOpenMPSimdDefaultAlignment(QualType) const override {
-    return getABIInfo().hasAVX() ? 32 : 16;
+    return getNativeVectorSizeForAVXABI(AVXLevel) / 8;
   }
 };
 
 class PS4TargetCodeGenInfo : public X86_64TargetCodeGenInfo {
 public:
-  PS4TargetCodeGenInfo(CodeGen::CodeGenTypes &CGT)
-    : X86_64TargetCodeGenInfo(CGT) {}
+  PS4TargetCodeGenInfo(CodeGen::CodeGenTypes &CGT, X86AVXABILevel AVXLevel)
+    : X86_64TargetCodeGenInfo(CGT, AVXLevel) {}
 
   void getDependentLibraryOption(llvm::StringRef Lib,
                                  llvm::SmallString<24> &Opt) const override {
@@ -1703,11 +1718,11 @@ void WinX86_32TargetCodeGenInfo::setTargetAttributes(const Decl *D,
 }
 
 class WinX86_64TargetCodeGenInfo : public TargetCodeGenInfo {
-  bool hasAVX() const { return getABIInfo().getTarget().getABI() == "avx"; }
-
+  X86AVXABILevel AVXLevel;
 public:
-  WinX86_64TargetCodeGenInfo(CodeGen::CodeGenTypes &CGT)
-    : TargetCodeGenInfo(new WinX86_64ABIInfo(CGT)) {}
+  WinX86_64TargetCodeGenInfo(CodeGen::CodeGenTypes &CGT,
+                             X86AVXABILevel AVXLevel)
+      : TargetCodeGenInfo(new WinX86_64ABIInfo(CGT)), AVXLevel(AVXLevel) {}
 
   void setTargetAttributes(const Decl *D, llvm::GlobalValue *GV,
                            CodeGen::CodeGenModule &CGM) const override;
@@ -1739,7 +1754,7 @@ public:
   }
 
   unsigned getOpenMPSimdDefaultAlignment(QualType) const override {
-    return hasAVX() ? 32 : 16;
+    return getNativeVectorSizeForAVXABI(AVXLevel) / 8;
   }
 };
 
@@ -1928,7 +1943,8 @@ void X86_64ABIInfo::classify(QualType Ty, uint64_t OffsetBase,
       // split.
       if (OffsetBase && OffsetBase != 64)
         Hi = Lo;
-    } else if (Size == 128 || (hasAVX() && isNamedArg && Size == 256)) {
+    } else if (Size == 128 ||
+               (isNamedArg && Size <= getNativeVectorSizeForAVXABI(AVXLevel))) {
       // Arguments of 256-bits are split into four eightbyte chunks. The
       // least significant one belongs to class SSE and all the others to class
       // SSEUP. The original Lo and Hi design considers that types can't be
@@ -2150,7 +2166,7 @@ ABIArgInfo X86_64ABIInfo::getIndirectReturnResult(QualType Ty) const {
 bool X86_64ABIInfo::IsIllegalVectorType(QualType Ty) const {
   if (const VectorType *VecTy = Ty->getAs<VectorType>()) {
     uint64_t Size = getContext().getTypeSize(VecTy);
-    unsigned LargestVector = hasAVX() ? 256 : 128;
+    unsigned LargestVector = getNativeVectorSizeForAVXABI(AVXLevel);
     if (Size <= 64 || Size > LargestVector)
       return true;
   }
@@ -7194,13 +7210,20 @@ const TargetCodeGenInfo &CodeGenModule::getTargetCodeGenInfo() {
   }
 
   case llvm::Triple::x86_64: {
+    StringRef ABI = getTarget().getABI();
+    X86AVXABILevel AVXLevel = (ABI == "avx" ? X86AVXABILevel::AVX :
+                               X86AVXABILevel::None);
+
     switch (Triple.getOS()) {
     case llvm::Triple::Win32:
-      return *(TheTargetCodeGenInfo = new WinX86_64TargetCodeGenInfo(Types));
+      return *(TheTargetCodeGenInfo =
+                   new WinX86_64TargetCodeGenInfo(Types, AVXLevel));
     case llvm::Triple::PS4:
-      return *(TheTargetCodeGenInfo = new PS4TargetCodeGenInfo(Types));
+      return *(TheTargetCodeGenInfo =
+                   new PS4TargetCodeGenInfo(Types, AVXLevel));
     default:
-      return *(TheTargetCodeGenInfo = new X86_64TargetCodeGenInfo(Types));
+      return *(TheTargetCodeGenInfo =
+                   new X86_64TargetCodeGenInfo(Types, AVXLevel));
     }
   }
   case llvm::Triple::hexagon:
