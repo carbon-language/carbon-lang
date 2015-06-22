@@ -41,7 +41,7 @@ L_.str:
 ; CHECK-NEXT:       PCRel: 1
 ; CHECK-NEXT:       Length: 2
 ; CHECK-NEXT:       Type: ARM64_RELOC_PAGE21 (3)
-; CHECK-NEXT:       Symbol: L_.str
+; CHECK-NEXT:       Symbol: -
 ; CHECK-NEXT:     }
 ; CHECK-NEXT:    Relocation {
 ; CHECK-NEXT:       Offset: 0x20

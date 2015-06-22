@@ -19,12 +19,12 @@ foo:
         .long   .L.debug_abbrev_begin   # Offset Into Abbrev. Section
         .byte   8                       # Address Size (in bytes)
         .byte   1                       # Abbrev [1] 0xb:0x1b DW_TAG_compile_unit
-        .long   .Linfo_string0          # DW_AT_producer
+        .long   info_string0            # DW_AT_producer
         .short  12                      # DW_AT_language
-        .long   .Linfo_string1          # DW_AT_name
+        .long   info_string1            # DW_AT_name
         .quad   0                       # DW_AT_low_pc
         .long   0                       # DW_AT_stmt_list
-        .long   .Linfo_string2          # DW_AT_comp_dir
+        .long   info_string2            # DW_AT_comp_dir
                                         # DW_AT_APPLE_optimized
         .section        .debug_abbrev,"",@progbits
 .L.debug_abbrev_begin:

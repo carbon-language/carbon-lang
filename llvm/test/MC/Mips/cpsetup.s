@@ -79,9 +79,9 @@ t2:
 
 # NXX: move     $2, $gp
 # NXX: lui      $gp, 0
-# NXX: R_MIPS_GPREL16/R_MIPS_SUB/R_MIPS_HI16  $tmp0
+# NXX: R_MIPS_GPREL16/R_MIPS_SUB/R_MIPS_HI16
 # NXX: addiu    $gp, $gp, 0
-# NXX: R_MIPS_GPREL16/R_MIPS_SUB/R_MIPS_LO16  $tmp0
+# NXX: R_MIPS_GPREL16/R_MIPS_SUB/R_MIPS_LO16
 # N32: addu     $gp, $gp, $25
 # N64: daddu    $gp, $gp, $25
 # NXX: nop
@@ -108,4 +108,4 @@ t3:
 
 # For .cpsetup with local labels, we need to check if $tmp0 is in the symbol
 # table:
-# NXX: .text  00000000 $tmp0
+# NXX: .text  00000000 {{$}}
