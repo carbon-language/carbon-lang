@@ -333,32 +333,12 @@ public:
   /// Value classes SubclassID field. They are used for concrete type
   /// identification.
   enum ValueTy {
-    ArgumentVal,              // This is an instance of Argument
-    BasicBlockVal,            // This is an instance of BasicBlock
-    FunctionVal,              // This is an instance of Function
-    GlobalAliasVal,           // This is an instance of GlobalAlias
-    GlobalVariableVal,        // This is an instance of GlobalVariable
-    UndefValueVal,            // This is an instance of UndefValue
-    BlockAddressVal,          // This is an instance of BlockAddress
-    ConstantExprVal,          // This is an instance of ConstantExpr
-    ConstantAggregateZeroVal, // This is an instance of ConstantAggregateZero
-    ConstantDataArrayVal,     // This is an instance of ConstantDataArray
-    ConstantDataVectorVal,    // This is an instance of ConstantDataVector
-    ConstantIntVal,           // This is an instance of ConstantInt
-    ConstantFPVal,            // This is an instance of ConstantFP
-    ConstantArrayVal,         // This is an instance of ConstantArray
-    ConstantStructVal,        // This is an instance of ConstantStruct
-    ConstantVectorVal,        // This is an instance of ConstantVector
-    ConstantPointerNullVal,   // This is an instance of ConstantPointerNull
-    MetadataAsValueVal,       // This is an instance of MetadataAsValue
-    InlineAsmVal,             // This is an instance of InlineAsm
-    InstructionVal,           // This is an instance of Instruction
-    // Enum values starting at InstructionVal are used for Instructions;
-    // don't add new values here!
+#define HANDLE_VALUE(Name) Name##Val,
+#include "llvm/IR/Value.def"
 
     // Markers:
-    ConstantFirstVal = FunctionVal,
-    ConstantLastVal  = ConstantPointerNullVal
+#define HANDLE_CONSTANT_MARKER(Marker, Constant) Marker = Constant##Val,
+#include "llvm/IR/Value.def"
   };
 
   /// \brief Return an ID for the concrete type of this object.
