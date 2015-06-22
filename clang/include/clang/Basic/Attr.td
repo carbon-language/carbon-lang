@@ -950,30 +950,30 @@ def NonNull : InheritableAttr {
   } }];
   // FIXME: We should merge duplicates into a single nonnull attribute.
   let DuplicatesAllowedWhileMerging = 1;
-  let Documentation = [Undocumented];
+  let Documentation = [NonNullDocs];
 }
 
 def ReturnsNonNull : InheritableAttr {
   let Spellings = [GCC<"returns_nonnull">];
   let Subjects = SubjectList<[ObjCMethod, Function], WarnDiag,
                              "ExpectedFunctionOrMethod">;
-  let Documentation = [Undocumented];
+  let Documentation = [ReturnsNonNullDocs];
 }
 
 // Nullability type attributes.
 def TypeNonNull : TypeAttr {
   let Spellings = [Keyword<"__nonnull">];
-  let Documentation = [Undocumented];
+  let Documentation = [TypeNonNullDocs];
 }
 
 def TypeNullable : TypeAttr {
   let Spellings = [Keyword<"__nullable">];
-  let Documentation = [Undocumented];
+  let Documentation = [TypeNullableDocs];
 }
 
 def TypeNullUnspecified : TypeAttr {
   let Spellings = [Keyword<"__null_unspecified">];
-  let Documentation = [Undocumented];
+  let Documentation = [TypeNullUnspecifiedDocs];
 }
 
 def AssumeAligned : InheritableAttr {
