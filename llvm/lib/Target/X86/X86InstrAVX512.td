@@ -5868,26 +5868,24 @@ defm VPMOVQ2M : avx512_convert_vector_to_mask<0x39, "vpmovq2m",
 //===----------------------------------------------------------------------===//
 // AVX-512 - COMPRESS and EXPAND
 //
+
 multiclass compress_by_vec_width<bits<8> opc, X86VectorVTInfo _,
                                  string OpcodeStr> {
-  def rrkz : AVX5128I<opc, MRMDestReg, (outs _.RC:$dst),
-              (ins _.KRCWM:$mask, _.RC:$src),
-              OpcodeStr # "\t{$src, $dst {${mask}} {z}|$dst {${mask}} {z}, $src}",
-              [(set _.RC:$dst, (_.VT (X86compress _.KRCWM:$mask, _.RC:$src,
-                                      _.ImmAllZerosV)))]>, EVEX_KZ;
-
-  let Constraints = "$src0 = $dst" in
-  def rrk : AVX5128I<opc, MRMDestReg, (outs _.RC:$dst),
-                    (ins _.RC:$src0, _.KRCWM:$mask, _.RC:$src),
-                    OpcodeStr # "\t{$src, $dst {${mask}} |$dst {${mask}}, $src}",
-                    [(set _.RC:$dst, (_.VT (X86compress _.KRCWM:$mask, _.RC:$src,
-                                            _.RC:$src0)))]>, EVEX_K;
+  defm rr : AVX512_maskable<opc, MRMDestReg, _, (outs _.RC:$dst),
+              (ins _.RC:$src1), OpcodeStr, "$src1", "$src1", 
+              (_.VT (X86compress _.RC:$src1))>, AVX5128IBase;
 
   let mayStore = 1 in {
+  def mr : AVX5128I<opc, MRMDestMem, (outs),
+              (ins _.MemOp:$dst, _.RC:$src),
+              OpcodeStr # "\t{$src, $dst |$dst, $src}",
+              []>, EVEX_CD8<_.EltSize, CD8VT1>;
+
   def mrk : AVX5128I<opc, MRMDestMem, (outs),
               (ins _.MemOp:$dst, _.KRCWM:$mask, _.RC:$src),
               OpcodeStr # "\t{$src, $dst {${mask}} |$dst {${mask}}, $src}",
-              [(store (_.VT (X86compress _.KRCWM:$mask, _.RC:$src, undef)),
+              [(store (_.VT (vselect _.KRCWM:$mask, 
+                             (_.VT (X86compress  _.RC:$src)), _.ImmAllZerosV)),
                 addr:$dst)]>,
               EVEX_K, EVEX_CD8<_.EltSize, CD8VT1>;
   }
@@ -5915,37 +5913,16 @@ defm VCOMPRESSPD : compress_by_elt_width <0x8A, "vcompresspd", avx512vl_f64_info
 // expand
 multiclass expand_by_vec_width<bits<8> opc, X86VectorVTInfo _,
                                  string OpcodeStr> {
-  def rrkz : AVX5128I<opc, MRMSrcReg, (outs _.RC:$dst),
-              (ins _.KRCWM:$mask, _.RC:$src),
-              OpcodeStr # "\t{$src, $dst {${mask}} {z}|$dst {${mask}} {z}, $src}",
-              [(set _.RC:$dst, (_.VT (X86expand _.KRCWM:$mask, (_.VT _.RC:$src),
-                                      _.ImmAllZerosV)))]>, EVEX_KZ;
-
-  let Constraints = "$src0 = $dst" in
-  def rrk : AVX5128I<opc, MRMSrcReg, (outs _.RC:$dst),
-                    (ins _.RC:$src0, _.KRCWM:$mask, _.RC:$src),
-                    OpcodeStr # "\t{$src, $dst {${mask}} |$dst {${mask}}, $src}",
-                    [(set _.RC:$dst, (_.VT (X86expand _.KRCWM:$mask,
-                                      (_.VT _.RC:$src), _.RC:$src0)))]>, EVEX_K;
-
-  let mayLoad = 1, Constraints = "$src0 = $dst" in
-  def rmk : AVX5128I<opc, MRMSrcMem, (outs _.RC:$dst),
-              (ins _.RC:$src0, _.KRCWM:$mask, _.MemOp:$src),
-              OpcodeStr # "\t{$src, $dst {${mask}} |$dst {${mask}}, $src}",
-              [(set _.RC:$dst, (_.VT (X86expand _.KRCWM:$mask,
-                                      (_.VT (bitconvert
-                                              (_.LdFrag addr:$src))),
-                                      _.RC:$src0)))]>,
-              EVEX_K, EVEX_CD8<_.EltSize, CD8VT1>;
+  defm rr : AVX512_maskable<opc, MRMSrcReg, _, (outs _.RC:$dst),
+              (ins _.RC:$src1), OpcodeStr, "$src1", "$src1", 
+              (_.VT (X86expand _.RC:$src1))>, AVX5128IBase;
 
   let mayLoad = 1 in
-  def rmkz : AVX5128I<opc, MRMSrcMem, (outs _.RC:$dst),
-              (ins _.KRCWM:$mask, _.MemOp:$src),
-              OpcodeStr # "\t{$src, $dst {${mask}} {z}|$dst {${mask}} {z}, $src}",
-              [(set _.RC:$dst, (_.VT (X86expand _.KRCWM:$mask,
-                                      (_.VT (bitconvert (_.LdFrag addr:$src))),
-                                     _.ImmAllZerosV)))]>,
-              EVEX_KZ, EVEX_CD8<_.EltSize, CD8VT1>;
+  defm rm : AVX512_maskable<opc, MRMSrcMem, _, (outs _.RC:$dst),
+              (ins _.MemOp:$src1), OpcodeStr, "$src1", "$src1",
+              (_.VT (X86expand (_.VT (bitconvert
+                                      (_.LdFrag addr:$src1)))))>,
+            AVX5128IBase, EVEX_CD8<_.EltSize, CD8VT1>;
 }
 
 multiclass expand_by_elt_width<bits<8> opc, string OpcodeStr,

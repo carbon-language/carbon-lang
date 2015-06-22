@@ -347,12 +347,10 @@ def SDT_PCMPESTRI : SDTypeProfile<2, 5, [SDTCisVT<0, i32>, SDTCisVT<1, i32>,
 def X86pcmpistri : SDNode<"X86ISD::PCMPISTRI", SDT_PCMPISTRI>;
 def X86pcmpestri : SDNode<"X86ISD::PCMPESTRI", SDT_PCMPESTRI>;
 
-def X86compress: SDNode<"X86ISD::COMPRESS", SDTypeProfile<1, 3,
-                              [SDTCisSameAs<0, 2>, SDTCisSameAs<0, 3>,
-                               SDTCisVec<3>, SDTCisVec<1>, SDTCisInt<1>]>, []>;
-def X86expand  : SDNode<"X86ISD::EXPAND", SDTypeProfile<1, 3,
-                              [SDTCisSameAs<0, 3>,
-                               SDTCisVec<3>, SDTCisVec<1>, SDTCisInt<1>]>, []>;
+def X86compress: SDNode<"X86ISD::COMPRESS", SDTypeProfile<1, 1,
+                              [SDTCisSameAs<0, 1>, SDTCisVec<1>]>, []>;
+def X86expand  : SDNode<"X86ISD::EXPAND", SDTypeProfile<1, 1,
+                              [SDTCisSameAs<0, 1>, SDTCisVec<1>]>, []>;
 
 def SDTintToFPRound: SDTypeProfile<1, 3, [SDTCisVec<0>, SDTCisFP<0>,
                                SDTCisSameAs<0,1>, SDTCisInt<2>, SDTCisInt<3>]>;

@@ -15215,18 +15215,10 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, const X86Subtarget *Subtarget
       SDValue PassThru = Op.getOperand(2);
       if (isAllOnes(Mask)) // return data as is
         return Op.getOperand(1);
-      EVT VT = Op.getValueType();
-      EVT MaskVT = EVT::getVectorVT(*DAG.getContext(), MVT::i1,
-                                    VT.getVectorNumElements());
-      EVT BitcastVT = EVT::getVectorVT(*DAG.getContext(), MVT::i1,
-                                       Mask.getValueType().getSizeInBits());
-      SDLoc dl(Op);
-      SDValue VMask = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, MaskVT,
-                                  DAG.getBitcast(BitcastVT, Mask),
-                                  DAG.getIntPtrConstant(0, dl));
 
-      return DAG.getNode(IntrData->Opc0, dl, VT, VMask, DataToCompress,
-                         PassThru);
+      return getVectorMaskingNode(DAG.getNode(IntrData->Opc0, dl, VT,
+                                              DataToCompress),
+                                  Mask, PassThru, Subtarget, DAG);
     }
     case BLEND: {
       SDValue Mask = Op.getOperand(3);
@@ -15769,16 +15761,9 @@ static SDValue LowerINTRINSIC_W_CHAIN(SDValue Op, const X86Subtarget *Subtarget,
                           MachinePointerInfo(), false, false,
                           VT.getScalarSizeInBits()/8);
 
-    EVT MaskVT = EVT::getVectorVT(*DAG.getContext(), MVT::i1,
-                                  VT.getVectorNumElements());
-    EVT BitcastVT = EVT::getVectorVT(*DAG.getContext(), MVT::i1,
-                                     Mask.getValueType().getSizeInBits());
-    SDValue VMask = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, MaskVT,
-                                DAG.getBitcast(BitcastVT, Mask),
-                                DAG.getIntPtrConstant(0, dl));
-
-    SDValue Compressed =  DAG.getNode(IntrData->Opc0, dl, VT, VMask,
-                                      DataToCompress, DAG.getUNDEF(VT));
+    SDValue Compressed =
+      getVectorMaskingNode(DAG.getNode(IntrData->Opc0, dl, VT, DataToCompress),
+                           Mask, DAG.getUNDEF(VT), Subtarget, DAG);
     return DAG.getStore(Chain, dl, Compressed, Addr,
                         MachinePointerInfo(), false, false,
                         VT.getScalarSizeInBits()/8);
@@ -15786,7 +15771,7 @@ static SDValue LowerINTRINSIC_W_CHAIN(SDValue Op, const X86Subtarget *Subtarget,
   case EXPAND_FROM_MEM: {
     SDLoc dl(Op);
     SDValue Mask = Op.getOperand(4);
-    SDValue PathThru = Op.getOperand(3);
+    SDValue PassThru = Op.getOperand(3);
     SDValue Addr = Op.getOperand(2);
     SDValue Chain = Op.getOperand(0);
     EVT VT = Op.getValueType();
@@ -15794,21 +15779,14 @@ static SDValue LowerINTRINSIC_W_CHAIN(SDValue Op, const X86Subtarget *Subtarget,
     if (isAllOnes(Mask)) // return just a load
       return DAG.getLoad(VT, dl, Chain, Addr, MachinePointerInfo(), false, false,
                          false, VT.getScalarSizeInBits()/8);
-    EVT MaskVT = EVT::getVectorVT(*DAG.getContext(), MVT::i1,
-                                  VT.getVectorNumElements());
-    EVT BitcastVT = EVT::getVectorVT(*DAG.getContext(), MVT::i1,
-                                     Mask.getValueType().getSizeInBits());
-    SDValue VMask = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, MaskVT,
-                                DAG.getBitcast(BitcastVT, Mask),
-                                DAG.getIntPtrConstant(0, dl));
 
     SDValue DataToExpand = DAG.getLoad(VT, dl, Chain, Addr, MachinePointerInfo(),
                                        false, false, false,
                                        VT.getScalarSizeInBits()/8);
 
     SDValue Results[] = {
-        DAG.getNode(IntrData->Opc0, dl, VT, VMask, DataToExpand, PathThru),
-        Chain};
+      getVectorMaskingNode(DAG.getNode(IntrData->Opc0, dl, VT, DataToExpand),
+                           Mask, PassThru, Subtarget, DAG), Chain};
     return DAG.getMergeValues(Results, dl);
   }
   }
