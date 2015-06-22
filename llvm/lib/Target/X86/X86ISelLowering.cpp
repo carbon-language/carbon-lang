@@ -15224,11 +15224,18 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, const X86Subtarget *Subtarget
                                               Src1, Src2, Src3),
                                   Mask, PassThru, Subtarget, DAG);
     }
+    case VPERM_3OP_MASKZ: 
+    case VPERM_3OP_MASK: 
+    case FMA_OP_MASKZ:
     case FMA_OP_MASK: {
       SDValue Src1 = Op.getOperand(1);
       SDValue Src2 = Op.getOperand(2);
       SDValue Src3 = Op.getOperand(3);
       SDValue Mask = Op.getOperand(4);
+      EVT VT = Op.getValueType();
+      SDValue PassThru =
+        (IntrData->Type == VPERM_3OP_MASKZ || IntrData->Type == FMA_OP_MASKZ) ?
+        getZeroVector(VT, Subtarget, DAG, dl) : Src1;
       // We specify 2 possible opcodes for intrinsics with rounding modes.
       // First, we check if the intrinsic may have non-default rounding mode,
       // (IntrData->Opc1 != 0), then we check the rounding mode operand.
@@ -15240,12 +15247,12 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, const X86Subtarget *Subtarget
           return getVectorMaskingNode(DAG.getNode(IntrWithRoundingModeOpcode,
                                                   dl, Op.getValueType(),
                                                   Src1, Src2, Src3, Rnd),
-                                      Mask, Src1, Subtarget, DAG);
+                                      Mask, PassThru, Subtarget, DAG);
       }
       return getVectorMaskingNode(DAG.getNode(IntrData->Opc0,
                                               dl, Op.getValueType(),
                                               Src1, Src2, Src3),
-                                  Mask, Src1, Subtarget, DAG);
+                                  Mask, PassThru, Subtarget, DAG);
     }
     case CMP_MASK:
     case CMP_MASK_CC: {
