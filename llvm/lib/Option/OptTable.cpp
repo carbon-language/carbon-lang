@@ -247,12 +247,12 @@ Arg *OptTable::ParseOneArg(const ArgList &Args, unsigned &Index,
   return new Arg(getOption(TheUnknownOptionID), Str, Index++, Str);
 }
 
-InputArgList *OptTable::ParseArgs(ArrayRef<const char *> ArgArr,
-                                  unsigned &MissingArgIndex,
-                                  unsigned &MissingArgCount,
-                                  unsigned FlagsToInclude,
-                                  unsigned FlagsToExclude) const {
-  InputArgList *Args = new InputArgList(ArgArr.begin(), ArgArr.end());
+InputArgList OptTable::ParseArgs(ArrayRef<const char *> ArgArr,
+                                 unsigned &MissingArgIndex,
+                                 unsigned &MissingArgCount,
+                                 unsigned FlagsToInclude,
+                                 unsigned FlagsToExclude) const {
+  InputArgList Args(ArgArr.begin(), ArgArr.end());
 
   // FIXME: Handle '@' args (or at least error on them).
 
@@ -260,19 +260,19 @@ InputArgList *OptTable::ParseArgs(ArrayRef<const char *> ArgArr,
   unsigned Index = 0, End = ArgArr.size();
   while (Index < End) {
     // Ingore nullptrs, they are response file's EOL markers
-    if (Args->getArgString(Index) == nullptr) {
+    if (Args.getArgString(Index) == nullptr) {
       ++Index;
       continue;
     }
     // Ignore empty arguments (other things may still take them as arguments).
-    StringRef Str = Args->getArgString(Index);
+    StringRef Str = Args.getArgString(Index);
     if (Str == "") {
       ++Index;
       continue;
     }
 
     unsigned Prev = Index;
-    Arg *A = ParseOneArg(*Args, Index, FlagsToInclude, FlagsToExclude);
+    Arg *A = ParseOneArg(Args, Index, FlagsToInclude, FlagsToExclude);
     assert(Index > Prev && "Parser failed to consume argument.");
 
     // Check for missing argument error.
@@ -284,10 +284,10 @@ InputArgList *OptTable::ParseArgs(ArrayRef<const char *> ArgArr,
       break;
     }
 
-    Args->append(A);
+    Args.append(A);
   }
 
-  return Args;
+  return std::move(Args);
 }
 
 static std::string getOptionHelpName(const OptTable &Opts, OptSpecifier Id) {

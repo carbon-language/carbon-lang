@@ -151,10 +151,9 @@ public:
   /// is the default and means exclude nothing.
   /// \return An InputArgList; on error this will contain all the options
   /// which could be parsed.
-  InputArgList *ParseArgs(ArrayRef<const char *> Args,
-                          unsigned &MissingArgIndex, unsigned &MissingArgCount,
-                          unsigned FlagsToInclude = 0,
-                          unsigned FlagsToExclude = 0) const;
+  InputArgList ParseArgs(ArrayRef<const char *> Args, unsigned &MissingArgIndex,
+                         unsigned &MissingArgCount, unsigned FlagsToInclude = 0,
+                         unsigned FlagsToExclude = 0) const;
 
   /// \brief Render the help text for an option table.
   ///

@@ -67,26 +67,26 @@ const char *Args[] = {
 TEST(Option, OptionParsing) {
   TestOptTable T;
   unsigned MAI, MAC;
-  std::unique_ptr<InputArgList> AL(T.ParseArgs(Args, MAI, MAC));
+  InputArgList AL = T.ParseArgs(Args, MAI, MAC);
 
   // Check they all exist.
-  EXPECT_TRUE(AL->hasArg(OPT_A));
-  EXPECT_TRUE(AL->hasArg(OPT_B));
-  EXPECT_TRUE(AL->hasArg(OPT_C));
-  EXPECT_TRUE(AL->hasArg(OPT_D));
-  EXPECT_TRUE(AL->hasArg(OPT_E));
-  EXPECT_TRUE(AL->hasArg(OPT_F));
-  EXPECT_TRUE(AL->hasArg(OPT_G));
+  EXPECT_TRUE(AL.hasArg(OPT_A));
+  EXPECT_TRUE(AL.hasArg(OPT_B));
+  EXPECT_TRUE(AL.hasArg(OPT_C));
+  EXPECT_TRUE(AL.hasArg(OPT_D));
+  EXPECT_TRUE(AL.hasArg(OPT_E));
+  EXPECT_TRUE(AL.hasArg(OPT_F));
+  EXPECT_TRUE(AL.hasArg(OPT_G));
 
   // Check the values.
-  EXPECT_EQ(AL->getLastArgValue(OPT_B), "hi");
-  EXPECT_EQ(AL->getLastArgValue(OPT_C), "bye");
-  EXPECT_EQ(AL->getLastArgValue(OPT_D), "adena");
-  std::vector<std::string> Es = AL->getAllArgValues(OPT_E);
+  EXPECT_EQ(AL.getLastArgValue(OPT_B), "hi");
+  EXPECT_EQ(AL.getLastArgValue(OPT_C), "bye");
+  EXPECT_EQ(AL.getLastArgValue(OPT_D), "adena");
+  std::vector<std::string> Es = AL.getAllArgValues(OPT_E);
   EXPECT_EQ(Es[0], "apple");
   EXPECT_EQ(Es[1], "bloom");
-  EXPECT_EQ(AL->getLastArgValue(OPT_F), "42");
-  std::vector<std::string> Gs = AL->getAllArgValues(OPT_G);
+  EXPECT_EQ(AL.getLastArgValue(OPT_F), "42");
+  std::vector<std::string> Gs = AL.getAllArgValues(OPT_G);
   EXPECT_EQ(Gs[0], "chuu");
   EXPECT_EQ(Gs[1], "2");
 
@@ -97,11 +97,11 @@ TEST(Option, OptionParsing) {
   EXPECT_NE(Help.find("-A"), std::string::npos);
 
   // Test aliases.
-  arg_iterator Cs = AL->filtered_begin(OPT_C);
-  ASSERT_NE(Cs, AL->filtered_end());
+  arg_iterator Cs = AL.filtered_begin(OPT_C);
+  ASSERT_NE(Cs, AL.filtered_end());
   EXPECT_EQ(StringRef((*Cs)->getValue()), "desu");
   ArgStringList ASL;
-  (*Cs)->render(*AL, ASL);
+  (*Cs)->render(AL, ASL);
   ASSERT_EQ(ASL.size(), 2u);
   EXPECT_EQ(StringRef(ASL[0]), "-C");
   EXPECT_EQ(StringRef(ASL[1]), "desu");
@@ -110,30 +110,29 @@ TEST(Option, OptionParsing) {
 TEST(Option, ParseWithFlagExclusions) {
   TestOptTable T;
   unsigned MAI, MAC;
-  std::unique_ptr<InputArgList> AL;
 
   // Exclude flag3 to avoid parsing as OPT_SLASH_C.
-  AL.reset(T.ParseArgs(Args, MAI, MAC,
-                       /*FlagsToInclude=*/0,
-                       /*FlagsToExclude=*/OptFlag3));
-  EXPECT_TRUE(AL->hasArg(OPT_A));
-  EXPECT_TRUE(AL->hasArg(OPT_C));
-  EXPECT_FALSE(AL->hasArg(OPT_SLASH_C));
+  InputArgList AL = T.ParseArgs(Args, MAI, MAC,
+                                /*FlagsToInclude=*/0,
+                                /*FlagsToExclude=*/OptFlag3);
+  EXPECT_TRUE(AL.hasArg(OPT_A));
+  EXPECT_TRUE(AL.hasArg(OPT_C));
+  EXPECT_FALSE(AL.hasArg(OPT_SLASH_C));
 
   // Exclude flag1 to avoid parsing as OPT_C.
-  AL.reset(T.ParseArgs(Args, MAI, MAC,
-                       /*FlagsToInclude=*/0,
-                       /*FlagsToExclude=*/OptFlag1));
-  EXPECT_TRUE(AL->hasArg(OPT_B));
-  EXPECT_FALSE(AL->hasArg(OPT_C));
-  EXPECT_TRUE(AL->hasArg(OPT_SLASH_C));
+  AL = T.ParseArgs(Args, MAI, MAC,
+                   /*FlagsToInclude=*/0,
+                   /*FlagsToExclude=*/OptFlag1);
+  EXPECT_TRUE(AL.hasArg(OPT_B));
+  EXPECT_FALSE(AL.hasArg(OPT_C));
+  EXPECT_TRUE(AL.hasArg(OPT_SLASH_C));
 
   const char *NewArgs[] = { "/C", "foo", "--C=bar" };
-  AL.reset(T.ParseArgs(NewArgs, MAI, MAC));
-  EXPECT_TRUE(AL->hasArg(OPT_SLASH_C));
-  EXPECT_TRUE(AL->hasArg(OPT_C));
-  EXPECT_EQ(AL->getLastArgValue(OPT_SLASH_C), "foo");
-  EXPECT_EQ(AL->getLastArgValue(OPT_C), "bar");
+  AL = T.ParseArgs(NewArgs, MAI, MAC);
+  EXPECT_TRUE(AL.hasArg(OPT_SLASH_C));
+  EXPECT_TRUE(AL.hasArg(OPT_C));
+  EXPECT_EQ(AL.getLastArgValue(OPT_SLASH_C), "foo");
+  EXPECT_EQ(AL.getLastArgValue(OPT_C), "bar");
 }
 
 TEST(Option, ParseAliasInGroup) {
@@ -141,8 +140,8 @@ TEST(Option, ParseAliasInGroup) {
   unsigned MAI, MAC;
 
   const char *MyArgs[] = { "-I" };
-  std::unique_ptr<InputArgList> AL(T.ParseArgs(MyArgs, MAI, MAC));
-  EXPECT_TRUE(AL->hasArg(OPT_H));
+  InputArgList AL = T.ParseArgs(MyArgs, MAI, MAC);
+  EXPECT_TRUE(AL.hasArg(OPT_H));
 }
 
 TEST(Option, AliasArgs) {
@@ -150,10 +149,10 @@ TEST(Option, AliasArgs) {
   unsigned MAI, MAC;
 
   const char *MyArgs[] = { "-J", "-Joo" };
-  std::unique_ptr<InputArgList> AL(T.ParseArgs(MyArgs, MAI, MAC));
-  EXPECT_TRUE(AL->hasArg(OPT_B));
-  EXPECT_EQ(AL->getAllArgValues(OPT_B)[0], "foo");
-  EXPECT_EQ(AL->getAllArgValues(OPT_B)[1], "bar");
+  InputArgList AL = T.ParseArgs(MyArgs, MAI, MAC);
+  EXPECT_TRUE(AL.hasArg(OPT_B));
+  EXPECT_EQ(AL.getAllArgValues(OPT_B)[0], "foo");
+  EXPECT_EQ(AL.getAllArgValues(OPT_B)[1], "bar");
 }
 
 TEST(Option, IgnoreCase) {
@@ -161,9 +160,9 @@ TEST(Option, IgnoreCase) {
   unsigned MAI, MAC;
 
   const char *MyArgs[] = { "-a", "-joo" };
-  std::unique_ptr<InputArgList> AL(T.ParseArgs(MyArgs, MAI, MAC));
-  EXPECT_TRUE(AL->hasArg(OPT_A));
-  EXPECT_TRUE(AL->hasArg(OPT_B));
+  InputArgList AL = T.ParseArgs(MyArgs, MAI, MAC);
+  EXPECT_TRUE(AL.hasArg(OPT_A));
+  EXPECT_TRUE(AL.hasArg(OPT_B));
 }
 
 TEST(Option, DoNotIgnoreCase) {
@@ -171,9 +170,9 @@ TEST(Option, DoNotIgnoreCase) {
   unsigned MAI, MAC;
 
   const char *MyArgs[] = { "-a", "-joo" };
-  std::unique_ptr<InputArgList> AL(T.ParseArgs(MyArgs, MAI, MAC));
-  EXPECT_FALSE(AL->hasArg(OPT_A));
-  EXPECT_FALSE(AL->hasArg(OPT_B));
+  InputArgList AL = T.ParseArgs(MyArgs, MAI, MAC);
+  EXPECT_FALSE(AL.hasArg(OPT_A));
+  EXPECT_FALSE(AL.hasArg(OPT_B));
 }
 
 TEST(Option, SlurpEmpty) {
@@ -181,10 +180,10 @@ TEST(Option, SlurpEmpty) {
   unsigned MAI, MAC;
 
   const char *MyArgs[] = { "-A", "-slurp" };
-  std::unique_ptr<InputArgList> AL(T.ParseArgs(MyArgs, MAI, MAC));
-  EXPECT_TRUE(AL->hasArg(OPT_A));
-  EXPECT_TRUE(AL->hasArg(OPT_Slurp));
-  EXPECT_EQ(AL->getAllArgValues(OPT_Slurp).size(), 0U);
+  InputArgList AL = T.ParseArgs(MyArgs, MAI, MAC);
+  EXPECT_TRUE(AL.hasArg(OPT_A));
+  EXPECT_TRUE(AL.hasArg(OPT_Slurp));
+  EXPECT_EQ(AL.getAllArgValues(OPT_Slurp).size(), 0U);
 }
 
 TEST(Option, Slurp) {
@@ -192,15 +191,15 @@ TEST(Option, Slurp) {
   unsigned MAI, MAC;
 
   const char *MyArgs[] = { "-A", "-slurp", "-B", "--", "foo" };
-  std::unique_ptr<InputArgList> AL(T.ParseArgs(MyArgs, MAI, MAC));
-  EXPECT_EQ(AL->size(), 2U);
-  EXPECT_TRUE(AL->hasArg(OPT_A));
-  EXPECT_FALSE(AL->hasArg(OPT_B));
-  EXPECT_TRUE(AL->hasArg(OPT_Slurp));
-  EXPECT_EQ(AL->getAllArgValues(OPT_Slurp).size(), 3U);
-  EXPECT_EQ(AL->getAllArgValues(OPT_Slurp)[0], "-B");
-  EXPECT_EQ(AL->getAllArgValues(OPT_Slurp)[1], "--");
-  EXPECT_EQ(AL->getAllArgValues(OPT_Slurp)[2], "foo");
+  InputArgList AL = T.ParseArgs(MyArgs, MAI, MAC);
+  EXPECT_EQ(AL.size(), 2U);
+  EXPECT_TRUE(AL.hasArg(OPT_A));
+  EXPECT_FALSE(AL.hasArg(OPT_B));
+  EXPECT_TRUE(AL.hasArg(OPT_Slurp));
+  EXPECT_EQ(AL.getAllArgValues(OPT_Slurp).size(), 3U);
+  EXPECT_EQ(AL.getAllArgValues(OPT_Slurp)[0], "-B");
+  EXPECT_EQ(AL.getAllArgValues(OPT_Slurp)[1], "--");
+  EXPECT_EQ(AL.getAllArgValues(OPT_Slurp)[2], "foo");
 }
 
 TEST(Option, FlagAliasToJoined) {
@@ -209,9 +208,9 @@ TEST(Option, FlagAliasToJoined) {
 
   // Check that a flag alias provides an empty argument to a joined option.
   const char *MyArgs[] = { "-K" };
-  std::unique_ptr<InputArgList> AL(T.ParseArgs(MyArgs, MAI, MAC));
-  EXPECT_EQ(AL->size(), 1U);
-  EXPECT_TRUE(AL->hasArg(OPT_B));
-  EXPECT_EQ(AL->getAllArgValues(OPT_B).size(), 1U);
-  EXPECT_EQ(AL->getAllArgValues(OPT_B)[0], "");
+  InputArgList AL = T.ParseArgs(MyArgs, MAI, MAC);
+  EXPECT_EQ(AL.size(), 1U);
+  EXPECT_TRUE(AL.hasArg(OPT_B));
+  EXPECT_EQ(AL.getAllArgValues(OPT_B).size(), 1U);
+  EXPECT_EQ(AL.getAllArgValues(OPT_B)[0], "");
 }

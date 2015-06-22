@@ -113,27 +113,27 @@ int llvm::libDriverMain(llvm::ArrayRef<const char*> ArgsArr) {
   LibOptTable Table;
   unsigned MissingIndex;
   unsigned MissingCount;
-  std::unique_ptr<llvm::opt::InputArgList> Args(
-      Table.ParseArgs(ArgsArr.slice(1), MissingIndex, MissingCount));
+  llvm::opt::InputArgList Args =
+      Table.ParseArgs(ArgsArr.slice(1), MissingIndex, MissingCount);
   if (MissingCount) {
     llvm::errs() << "missing arg value for \""
-                 << Args->getArgString(MissingIndex)
-                 << "\", expected " << MissingCount
+                 << Args.getArgString(MissingIndex) << "\", expected "
+                 << MissingCount
                  << (MissingCount == 1 ? " argument.\n" : " arguments.\n");
     return 1;
   }
-  for (auto *Arg : Args->filtered(OPT_UNKNOWN))
+  for (auto *Arg : Args.filtered(OPT_UNKNOWN))
     llvm::errs() << "ignoring unknown argument: " << Arg->getSpelling() << "\n";
 
-  if (Args->filtered_begin(OPT_INPUT) == Args->filtered_end()) {
+  if (Args.filtered_begin(OPT_INPUT) == Args.filtered_end()) {
     llvm::errs() << "no input files.\n";
     return 1;
   }
 
-  std::vector<StringRef> SearchPaths = getSearchPaths(Args.get(), Saver);
+  std::vector<StringRef> SearchPaths = getSearchPaths(&Args, Saver);
 
   std::vector<llvm::NewArchiveIterator> Members;
-  for (auto *Arg : Args->filtered(OPT_INPUT)) {
+  for (auto *Arg : Args.filtered(OPT_INPUT)) {
     Optional<std::string> Path = findInputFile(Arg->getValue(), SearchPaths);
     if (!Path.hasValue()) {
       llvm::errs() << Arg->getValue() << ": no such file or directory\n";
@@ -143,8 +143,8 @@ int llvm::libDriverMain(llvm::ArrayRef<const char*> ArgsArr) {
                          llvm::sys::path::filename(Arg->getValue()));
   }
 
-  std::pair<StringRef, std::error_code> Result = llvm::writeArchive(
-      getOutputPath(Args.get()), Members, /*WriteSymtab=*/true);
+  std::pair<StringRef, std::error_code> Result =
+      llvm::writeArchive(getOutputPath(&Args), Members, /*WriteSymtab=*/true);
   if (Result.second) {
     if (Result.first.empty())
       Result.first = ArgsArr[0];

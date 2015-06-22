@@ -92,10 +92,6 @@ public:
 /// check for the presence of Arg instances for a particular Option
 /// and to iterate over groups of arguments.
 class ArgList {
-private:
-  ArgList(const ArgList &) = delete;
-  void operator=(const ArgList &) = delete;
-
 public:
   typedef SmallVector<Arg*, 16> arglist_type;
   typedef arglist_type::iterator iterator;
@@ -108,9 +104,21 @@ private:
   arglist_type Args;
 
 protected:
-  // Default ctor provided explicitly as it is not provided implicitly due to
-  // the presence of the (deleted) copy ctor above.
+  // Make the default special members protected so they won't be used to slice
+  // derived objects, but can still be used by derived objects to implement
+  // their own special members.
   ArgList() = default;
+  // Explicit move operations to ensure the container is cleared post-move
+  // otherwise it could lead to a double-delete in the case of moving of an
+  // InputArgList which deletes the contents of the container. If we could fix
+  // up the ownership here (delegate storage/ownership to the derived class so
+  // it can be a container of unique_ptr) this would be simpler.
+  ArgList(ArgList &&RHS) : Args(std::move(RHS.Args)) { RHS.Args.clear(); }
+  ArgList &operator=(ArgList &&RHS) {
+    Args = std::move(RHS.Args);
+    RHS.Args.clear();
+    return *this;
+  }
   // Protect the dtor to ensure this type is never destroyed polymorphically.
   ~ArgList() = default;
 
@@ -319,6 +327,19 @@ private:
 
 public:
   InputArgList(const char* const *ArgBegin, const char* const *ArgEnd);
+  // Default move operations implemented for the convenience of MSVC. Nothing
+  // special here.
+  InputArgList(InputArgList &&RHS)
+      : ArgList(std::move(RHS)), ArgStrings(std::move(RHS.ArgStrings)),
+        SynthesizedStrings(std::move(RHS.SynthesizedStrings)),
+        NumInputArgStrings(RHS.NumInputArgStrings) {}
+  InputArgList &operator=(InputArgList &&RHS) {
+    ArgList::operator=(std::move(RHS));
+    ArgStrings = std::move(RHS.ArgStrings);
+    SynthesizedStrings = std::move(RHS.SynthesizedStrings);
+    NumInputArgStrings = RHS.NumInputArgStrings;
+    return *this;
+  }
   ~InputArgList();
 
   const char *getArgString(unsigned Index) const override {
