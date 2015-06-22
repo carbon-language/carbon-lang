@@ -224,6 +224,6 @@ template <typename T> struct isPodLike;
 template <typename T>
 struct isPodLike<ImmutableList<T> > { static const bool value = true; };
 
-} // end llvm namespace
+} // namespace llvm
 
 #endif

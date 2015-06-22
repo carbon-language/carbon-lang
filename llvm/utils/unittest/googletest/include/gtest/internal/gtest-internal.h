@@ -113,7 +113,7 @@ public:
     : std::ostream(os.rdbuf()), ros_(*this) {}
   operator raw_ostream&() { return ros_; }
 };
-}
+} // namespace llvm
 template <typename T>
 inline void GTestStreamToHelper(std::ostream* os, const T& val) {
   llvm::convertible_fwd_ostream cos(*os);

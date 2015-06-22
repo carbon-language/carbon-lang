@@ -154,6 +154,6 @@ public:
 template <typename T>
 class PackedVector<T, 0>;
 
-} // end llvm namespace
+} // namespace llvm
 
 #endif
