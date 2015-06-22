@@ -74,6 +74,8 @@ static MipsRelocationParams getRelocationParams(uint32_t rType) {
   case R_MIPS_64:
   case R_MIPS_SUB:
     return {8, 0xffffffffffffffffull, 0, false, dummyCheck};
+  case R_MICROMIPS_SUB:
+    return {8, 0xffffffffffffffffull, 0, true, dummyCheck};
   case R_MIPS_32:
   case R_MIPS_GPREL32:
   case R_MIPS_REL32:
@@ -350,8 +352,9 @@ static CrossJumpMode getCrossJumpMode(const Reference &ref) {
   }
 }
 
-static uint32_t microShuffle(uint32_t ins) {
-  return ((ins & 0xffff) << 16) | ((ins & 0xffff0000) >> 16);
+static uint64_t microShuffle(uint64_t ins) {
+  return (ins & 0xffffffff00000000ull) | ((ins & 0xffff) << 16) |
+         ((ins & 0xffff0000) >> 16);
 }
 
 static ErrorOr<int64_t> calculateRelocation(Reference::KindValue kind,
@@ -368,6 +371,7 @@ static ErrorOr<int64_t> calculateRelocation(Reference::KindValue kind,
   case R_MIPS_64:
     return tgtAddr + addend;
   case R_MIPS_SUB:
+  case R_MICROMIPS_SUB:
     return tgtAddr - addend;
   case R_MIPS_26:
     return reloc26loc(relAddr, tgtAddr, addend, 2);
