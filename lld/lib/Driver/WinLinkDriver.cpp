@@ -665,8 +665,8 @@ handleFailIfMismatchOption(StringRef option,
 
 // Process "LINK" environment variable. If defined, the value of the variable
 // should be processed as command line arguments.
-static std::vector<const char *> processLinkEnv(PECOFFLinkingContext &ctx,
-                                                llvm::ArrayRef<const char*> args) {
+static std::vector<const char *>
+processLinkEnv(PECOFFLinkingContext &ctx, llvm::ArrayRef<const char *> args) {
   std::vector<const char *> ret;
   // The first argument is the name of the command. This should stay at the head
   // of the argument list.
@@ -680,7 +680,7 @@ static std::vector<const char *> processLinkEnv(PECOFFLinkingContext &ctx,
       ret.push_back(ctx.allocate(arg).data());
 
   // Add the rest of arguments passed via the command line.
-  for (const char* arg : args.slice(1))
+  for (const char *arg : args.slice(1))
     ret.push_back(arg);
   ret.push_back(nullptr);
   return ret;
@@ -713,7 +713,7 @@ static bool readResponseFile(StringRef path, PECOFFLinkingContext &ctx,
 
 // Expand arguments starting with "@". It's an error if a specified file does
 // not exist. Returns true on success.
-static bool expandResponseFiles(llvm::ArrayRef<const char*> &args,
+static bool expandResponseFiles(llvm::ArrayRef<const char *> &args,
                                 PECOFFLinkingContext &ctx, raw_ostream &diag,
                                 bool &expanded) {
   std::vector<const char *> newArgv;
@@ -739,7 +739,7 @@ static bool expandResponseFiles(llvm::ArrayRef<const char*> &args,
 // Parses the given command line options and returns the result. Returns NULL if
 // there's an error in the options.
 static std::unique_ptr<llvm::opt::InputArgList>
-parseArgs(llvm::ArrayRef<const char*> args, PECOFFLinkingContext &ctx,
+parseArgs(llvm::ArrayRef<const char *> args, PECOFFLinkingContext &ctx,
           raw_ostream &diag, bool isReadingDirectiveSection) {
   // Expand arguments starting with "@".
   bool expanded = false;
@@ -751,8 +751,7 @@ parseArgs(llvm::ArrayRef<const char*> args, PECOFFLinkingContext &ctx,
   WinLinkOptTable table;
   unsigned missingIndex;
   unsigned missingCount;
-  parsedArgs.reset(table.ParseArgs(args.slice(1),
-                                   missingIndex, missingCount));
+  parsedArgs.reset(table.ParseArgs(args.slice(1), missingIndex, missingCount));
   if (missingCount) {
     diag << "error: missing arg value for '"
          << parsedArgs->getArgString(missingIndex) << "' expected "
@@ -801,7 +800,8 @@ static bool hasLibrary(PECOFFLinkingContext &ctx, File *file) {
 // If the first command line argument is "/lib", link.exe acts as if it's
 // "lib.exe" command. This is for backward compatibility.
 // http://msdn.microsoft.com/en-us/library/h34w59b3.aspx
-static bool maybeRunLibCommand(llvm::ArrayRef<const char*> args, raw_ostream &diag) {
+static bool maybeRunLibCommand(llvm::ArrayRef<const char *> args,
+                               raw_ostream &diag) {
   if (args.size() <= 1)
     return false;
   if (!StringRef(args[1]).equals_lower("/lib"))
@@ -839,7 +839,8 @@ void addFiles(PECOFFLinkingContext &ctx, StringRef path, raw_ostream &diag,
 // Main driver
 //
 
-bool WinLinkDriver::linkPECOFF(llvm::ArrayRef<const char*> args, raw_ostream &diag) {
+bool WinLinkDriver::linkPECOFF(llvm::ArrayRef<const char *> args,
+                               raw_ostream &diag) {
   if (maybeRunLibCommand(args, diag))
     return true;
 
@@ -863,7 +864,7 @@ bool WinLinkDriver::linkPECOFF(llvm::ArrayRef<const char*> args, raw_ostream &di
   return link(ctx, diag);
 }
 
-bool WinLinkDriver::parse(llvm::ArrayRef<const char*> args,
+bool WinLinkDriver::parse(llvm::ArrayRef<const char *> args,
                           PECOFFLinkingContext &ctx, raw_ostream &diag,
                           bool isReadingDirectiveSection) {
   // Parse may be called from multiple threads simultaneously to parse .drectve

@@ -73,7 +73,8 @@ static const Registry::KindStrings coreKindStrings[] = {
   LLD_KIND_STRING_END
 };
 
-bool CoreDriver::link(llvm::ArrayRef<const char*> args, raw_ostream &diagnostics) {
+bool CoreDriver::link(llvm::ArrayRef<const char *> args,
+                      raw_ostream &diagnostics) {
   CoreLinkingContext ctx;
 
   // Register possible input file parsers.
@@ -86,8 +87,8 @@ bool CoreDriver::link(llvm::ArrayRef<const char*> args, raw_ostream &diagnostics
   return Driver::link(ctx);
 }
 
-bool CoreDriver::parse(llvm::ArrayRef<const char*> args, CoreLinkingContext &ctx,
-                       raw_ostream &diagnostics) {
+bool CoreDriver::parse(llvm::ArrayRef<const char *> args,
+                       CoreLinkingContext &ctx, raw_ostream &diagnostics) {
   // Parse command line options using CoreOptions.td
   std::unique_ptr<llvm::opt::InputArgList> parsedArgs;
   CoreOptTable table;

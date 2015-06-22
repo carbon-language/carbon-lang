@@ -82,8 +82,9 @@ public:
 // at the original @file position. If file cannot be read, @file is not expanded
 // and left unmodified. @file can appear in a response file, so it's a recursive
 // process.
-static llvm::ArrayRef<const char*>
-maybeExpandResponseFiles(llvm::ArrayRef<const char*> args, BumpPtrAllocator &alloc) {
+static llvm::ArrayRef<const char *>
+maybeExpandResponseFiles(llvm::ArrayRef<const char *> args,
+                         BumpPtrAllocator &alloc) {
   // Expand response files.
   SmallVector<const char *, 256> smallvec;
   for (const char *arg : args)
@@ -133,7 +134,8 @@ static bool parseMaxPageSize(StringRef opt, uint64_t &val) {
   return true;
 }
 
-bool GnuLdDriver::linkELF(llvm::ArrayRef<const char*> args, raw_ostream &diag) {
+bool GnuLdDriver::linkELF(llvm::ArrayRef<const char *> args,
+                          raw_ostream &diag) {
   BumpPtrAllocator alloc;
   args = maybeExpandResponseFiles(args, alloc);
   std::unique_ptr<ELFLinkingContext> options;
@@ -337,7 +339,7 @@ getBool(const llvm::opt::InputArgList &parsedArgs,
   return llvm::None;
 }
 
-bool GnuLdDriver::parse(llvm::ArrayRef<const char*> args,
+bool GnuLdDriver::parse(llvm::ArrayRef<const char *> args,
                         std::unique_ptr<ELFLinkingContext> &context,
                         raw_ostream &diag) {
   // Parse command line options using GnuLdOptions.td
@@ -346,8 +348,7 @@ bool GnuLdDriver::parse(llvm::ArrayRef<const char*> args,
   unsigned missingIndex;
   unsigned missingCount;
 
-  parsedArgs.reset(table.ParseArgs(args.slice(1),
-                                   missingIndex, missingCount));
+  parsedArgs.reset(table.ParseArgs(args.slice(1), missingIndex, missingCount));
   if (missingCount) {
     diag << "error: missing arg value for '"
          << parsedArgs->getArgString(missingIndex) << "' expected "

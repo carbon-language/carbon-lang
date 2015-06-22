@@ -35,7 +35,7 @@ using llvm::Optional;
 class InputFile;
 
 // Entry point of the COFF linker.
-bool link(llvm::ArrayRef<const char*> Args);
+bool link(llvm::ArrayRef<const char *> Args);
 
 class ArgParser {
 public:
@@ -65,7 +65,7 @@ private:
 class LinkerDriver {
 public:
   LinkerDriver() : Alloc(AllocAux) {}
-  bool link(llvm::ArrayRef<const char*> Args);
+  bool link(llvm::ArrayRef<const char *> Args);
 
   // Used by the resolver to parse .drectve section contents.
   std::error_code

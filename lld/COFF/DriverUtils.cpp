@@ -571,7 +571,7 @@ ArgParser::parse(std::vector<const char *> Argv) {
 }
 
 ErrorOr<std::unique_ptr<llvm::opt::InputArgList>>
-ArgParser::parse(llvm::ArrayRef<const char*> Args) {
+ArgParser::parse(llvm::ArrayRef<const char *> Args) {
   Args = Args.slice(1);
   std::vector<const char *> V(Args.begin(), Args.end());
   return parse(V);

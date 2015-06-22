@@ -43,7 +43,7 @@ namespace coff {
 Configuration *Config;
 LinkerDriver *Driver;
 
-bool link(llvm::ArrayRef<const char*> Args) {
+bool link(llvm::ArrayRef<const char *> Args) {
   auto C = make_unique<Configuration>();
   Config = C.get();
   auto D = make_unique<LinkerDriver>();
@@ -214,7 +214,7 @@ static WindowsSubsystem inferSubsystem() {
       .Default(IMAGE_SUBSYSTEM_UNKNOWN);
 }
 
-bool LinkerDriver::link(llvm::ArrayRef<const char*> ArgsArr) {
+bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
   // Needed for LTO.
   llvm::InitializeAllTargetInfos();
   llvm::InitializeAllTargets();

@@ -127,14 +127,15 @@ static ProgramNameParts parseProgramName(StringRef programName) {
 
 // Removes the argument from argv along with its value, if exists, and updates
 // argc.
-static void removeArg(llvm::opt::Arg *arg, llvm::MutableArrayRef<const char*> &args) {
+static void removeArg(llvm::opt::Arg *arg,
+                      llvm::MutableArrayRef<const char *> &args) {
   unsigned int numToRemove = arg->getNumValues() + 1;
   auto sub = args.slice(arg->getIndex() + 1);
   std::rotate(sub.begin(), sub.begin() + numToRemove, sub.end());
   args = args.drop_back(numToRemove);
 }
 
-static Flavor getFlavor(llvm::MutableArrayRef<const char*> &args,
+static Flavor getFlavor(llvm::MutableArrayRef<const char *> &args,
                         std::unique_ptr<llvm::opt::InputArgList> &parsedArgs) {
   if (llvm::opt::Arg *argCore = parsedArgs->getLastArg(OPT_core)) {
     removeArg(argCore, args);
@@ -162,7 +163,7 @@ static Flavor getFlavor(llvm::MutableArrayRef<const char*> &args,
 
 namespace lld {
 
-bool UniversalDriver::link(llvm::MutableArrayRef<const char*> args,
+bool UniversalDriver::link(llvm::MutableArrayRef<const char *> args,
                            raw_ostream &diagnostics) {
   // Parse command line options using GnuLdOptions.td
   std::unique_ptr<llvm::opt::InputArgList> parsedArgs;
@@ -173,8 +174,7 @@ bool UniversalDriver::link(llvm::MutableArrayRef<const char*> args,
   // Program name
   StringRef programName = llvm::sys::path::stem(args[0]);
 
-  parsedArgs.reset(table.ParseArgs(args.slice(1),
-                                   missingIndex, missingCount));
+  parsedArgs.reset(table.ParseArgs(args.slice(1), missingIndex, missingCount));
 
   if (missingCount) {
     diagnostics << "error: missing arg value for '"

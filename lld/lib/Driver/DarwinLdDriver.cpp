@@ -267,7 +267,7 @@ static bool parseNumberBase16(StringRef numStr, uint64_t &baseAddress) {
 
 namespace lld {
 
-bool DarwinLdDriver::linkMachO(llvm::ArrayRef<const char*> args,
+bool DarwinLdDriver::linkMachO(llvm::ArrayRef<const char *> args,
                                raw_ostream &diagnostics) {
   MachOLinkingContext ctx;
   if (!parse(args, ctx, diagnostics))
