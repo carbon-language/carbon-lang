@@ -3320,22 +3320,22 @@ void RetainCountChecker::processNonLeakError(ProgramStateRef St,
     case RefVal::ErrorUseAfterRelease:
       if (!useAfterRelease)
         useAfterRelease.reset(new UseAfterRelease(this));
-      BT = &*useAfterRelease;
+      BT = useAfterRelease.get();
       break;
     case RefVal::ErrorReleaseNotOwned:
       if (!releaseNotOwned)
         releaseNotOwned.reset(new BadRelease(this));
-      BT = &*releaseNotOwned;
+      BT = releaseNotOwned.get();
       break;
     case RefVal::ErrorDeallocGC:
       if (!deallocGC)
         deallocGC.reset(new DeallocGC(this));
-      BT = &*deallocGC;
+      BT = deallocGC.get();
       break;
     case RefVal::ErrorDeallocNotOwned:
       if (!deallocNotOwned)
         deallocNotOwned.reset(new DeallocNotOwned(this));
-      BT = &*deallocNotOwned;
+      BT = deallocNotOwned.get();
       break;
   }
 
