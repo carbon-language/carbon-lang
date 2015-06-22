@@ -61,6 +61,7 @@ class MiSyntaxTestCase(lldbmi_testcase.MiTestCaseBase):
     @lldbmi_test
     @expectedFailureWindows("llvm.org/pr22274: need a pexpect replacement for windows")
     @skipIfFreeBSD # llvm.org/pr22411: Failure presumably due to known thread races
+    @expectedFailureLinux  # Failing in ~6/600 dosep runs (build 3120-3122)
     def test_lldbmi_process_output(self):
         """Test that 'lldb-mi --interpreter' wraps process output correctly."""
 
