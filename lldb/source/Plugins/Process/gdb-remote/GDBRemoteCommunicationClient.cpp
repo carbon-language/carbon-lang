@@ -98,6 +98,7 @@ GDBRemoteCommunicationClient::GDBRemoteCommunicationClient() :
     m_supports_z4 (true),
     m_supports_QEnvironment (true),
     m_supports_QEnvironmentHexEncoded (true),
+    m_supports_jThreadsInfo (true),
     m_curr_pid (LLDB_INVALID_PROCESS_ID),
     m_curr_tid (LLDB_INVALID_THREAD_ID),
     m_curr_tid_run (LLDB_INVALID_THREAD_ID),
@@ -600,6 +601,32 @@ GDBRemoteCommunicationClient::GetpPacketSupported (lldb::tid_t tid)
     }
     return m_supports_p;
 }
+
+StructuredData::ObjectSP
+GDBRemoteCommunicationClient::GetThreadsInfo()
+{
+    // Get information on all threads at one using the "jThreadsInfo" packet
+    StructuredData::ObjectSP object_sp;
+
+    if (m_supports_jThreadsInfo)
+    {
+        StringExtractorGDBRemote response;
+        m_supports_jThreadExtendedInfo = eLazyBoolNo;
+        if (SendPacketAndWaitForResponse("jThreadsInfo", response, false) == PacketResult::Success)
+        {
+            if (response.IsUnsupportedResponse())
+            {
+                m_supports_jThreadsInfo = false;
+            }
+            else if (!response.Empty())
+            {
+                object_sp = StructuredData::ParseJSON (response.GetStringRef());
+            }
+        }
+    }
+    return object_sp;
+}
+
 
 bool
 GDBRemoteCommunicationClient::GetThreadExtendedInfoSupported ()

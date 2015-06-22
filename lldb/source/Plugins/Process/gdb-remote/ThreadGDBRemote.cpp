@@ -284,12 +284,7 @@ ThreadGDBRemote::CalculateStopInfo ()
 {
     ProcessSP process_sp (GetProcess());
     if (process_sp)
-    {
-        StringExtractorGDBRemote stop_packet;
-        ProcessGDBRemote *gdb_process = static_cast<ProcessGDBRemote *>(process_sp.get());
-        if (gdb_process->GetGDBRemote().GetThreadStopInfo(GetProtocolID(), stop_packet))
-            return gdb_process->SetThreadStopInfo (stop_packet) == eStateStopped;
-    }
+        return static_cast<ProcessGDBRemote *>(process_sp.get())->CalculateThreadStopInfo(this);
     return false;
 }
 
