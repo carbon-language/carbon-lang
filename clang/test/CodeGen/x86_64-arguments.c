@@ -1,7 +1,9 @@
 // RUN: %clang_cc1 -triple x86_64-unknown-unknown -emit-llvm -o - %s | \
-// RUN:   FileCheck %s -check-prefix=CHECK -check-prefix=SSE
+// RUN:   FileCheck %s -check-prefix=CHECK -check-prefix=SSE -check-prefix=NO-AVX512
 // RUN: %clang_cc1 -triple x86_64-unknown-unknown -emit-llvm -o - %s -target-feature +avx | \
-// RUN:   FileCheck %s -check-prefix=CHECK -check-prefix=AVX
+// RUN:   FileCheck %s -check-prefix=CHECK -check-prefix=AVX -check-prefix=NO-AVX512
+// RUN: %clang_cc1 -triple x86_64-unknown-unknown -emit-llvm -o - %s -target-feature +avx512f | \
+// RUN:   FileCheck %s -check-prefix=CHECK -check-prefix=AVX -check-prefix=AVX512
 #include <stdarg.h>
 
 // CHECK-LABEL: define signext i8 @f0()
@@ -458,3 +460,77 @@ void test54() {
 }
 // AVX: @test54_helper(<8 x float> {{%[a-zA-Z0-9]+}}, <8 x float> {{%[a-zA-Z0-9]+}}, double 1.000000e+00, double 1.000000e+00, double 1.000000e+00, double 1.000000e+00, double 1.000000e+00, double {{%[a-zA-Z0-9]+}}, double {{%[a-zA-Z0-9]+}})
 // AVX: @test54_helper(<8 x float> {{%[a-zA-Z0-9]+}}, <8 x float> {{%[a-zA-Z0-9]+}}, double 1.000000e+00, double 1.000000e+00, double 1.000000e+00, double 1.000000e+00, double 1.000000e+00, double 1.000000e+00, { double, double }* byval align 8 {{%[a-zA-Z0-9]+}})
+
+typedef float __m512 __attribute__ ((__vector_size__ (64)));
+typedef struct {
+  __m512 m;
+} s512;
+
+s512 x55;
+__m512 x56;
+
+// Even on AVX512, aggregates of size larger than four eightbytes have class
+// MEMORY (AVX512 draft 0.3 3.2.3p2 Rule 1).
+//
+// CHECK: declare void @f55(%struct.s512* byval align 64)
+void f55(s512 x);
+
+// However, __m512 has type SSE/SSEUP on AVX512.
+//
+// AVX512: declare void @f56(<16 x float>)
+// NO-AVX512: declare void @f56(<16 x float>* byval align 64)
+void f56(__m512 x);
+void f57() { f55(x55); f56(x56); }
+
+// Like for __m128 on AVX, check that the struct below is passed
+// in the same way regardless of AVX512 being used.
+//
+// CHECK: declare void @f58(%struct.t256* byval align 32)
+typedef struct t256 {
+  __m256 m;
+  __m256 n;
+} two256;
+
+extern void f58(two256 s);
+void f59(two256 s) {
+  f58(s);
+}
+
+// CHECK: declare void @f60(%struct.sat256* byval align 32)
+typedef struct at256 {
+  __m256 array[2];
+} Atwo256;
+typedef struct sat256 {
+  Atwo256 x;
+} SAtwo256;
+
+extern void f60(SAtwo256 s);
+void f61(SAtwo256 s) {
+  f60(s);
+}
+
+// AVX512: @f62_helper(i32 0, <16 x float> {{%[a-zA-Z0-9]+}}, double 1.000000e+00, double 1.000000e+00, double 1.000000e+00, double 1.000000e+00, double 1.000000e+00, double 1.000000e+00, double {{%[a-zA-Z0-9]+}}, double {{%[a-zA-Z0-9]+}})
+void f62_helper(int, ...);
+__m512 x62;
+void f62() {
+  f62_helper(0, x62, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0i);
+}
+
+// Like for __m256 on AVX, we always pass __m512 in memory, and don't
+// need to use the register save area.
+//
+// AVX512-LABEL: define void @f63
+// AVX512-NOT: br i1
+// AVX512: ret void
+void f63(__m512 *m, __builtin_va_list argList) {
+  *m = __builtin_va_arg(argList, __m512);
+}
+
+// AVX512: @f64_helper(<16 x float> {{%[a-zA-Z0-9]+}}, <16 x float> {{%[a-zA-Z0-9]+}}, double 1.000000e+00, double 1.000000e+00, double 1.000000e+00, double 1.000000e+00, double 1.000000e+00, double {{%[a-zA-Z0-9]+}}, double {{%[a-zA-Z0-9]+}})
+// AVX512: @f64_helper(<16 x float> {{%[a-zA-Z0-9]+}}, <16 x float> {{%[a-zA-Z0-9]+}}, double 1.000000e+00, double 1.000000e+00, double 1.000000e+00, double 1.000000e+00, double 1.000000e+00, double 1.000000e+00, { double, double }* byval align 8 {{%[a-zA-Z0-9]+}})
+void f64_helper(__m512, ...);
+__m512 x64;
+void f64() {
+  f64_helper(x64, x64, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0i);
+  f64_helper(x64, x64, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0i);
+}

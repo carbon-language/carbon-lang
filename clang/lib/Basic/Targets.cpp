@@ -2249,7 +2249,9 @@ public:
   bool handleTargetFeatures(std::vector<std::string> &Features,
                             DiagnosticsEngine &Diags) override;
   StringRef getABI() const override {
-    if (getTriple().getArch() == llvm::Triple::x86_64 && SSELevel >= AVX)
+    if (getTriple().getArch() == llvm::Triple::x86_64 && SSELevel >= AVX512F)
+      return "avx512";
+    else if (getTriple().getArch() == llvm::Triple::x86_64 && SSELevel >= AVX)
       return "avx";
     else if (getTriple().getArch() == llvm::Triple::x86 &&
              MMX3DNowLevel == NoMMX3DNow)

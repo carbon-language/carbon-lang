@@ -1394,12 +1394,15 @@ namespace {
 /// The AVX ABI level for X86 targets.
 enum class X86AVXABILevel {
   None,
-  AVX
+  AVX,
+  AVX512
 };
 
 /// \p returns the size in bits of the largest (native) vector for \p AVXLevel.
 static unsigned getNativeVectorSizeForAVXABI(X86AVXABILevel AVXLevel) {
   switch (AVXLevel) {
+  case X86AVXABILevel::AVX512:
+    return 512;
   case X86AVXABILevel::AVX:
     return 256;
   case X86AVXABILevel::None:
@@ -1956,6 +1959,9 @@ void X86_64ABIInfo::classify(QualType Ty, uint64_t OffsetBase,
       // Note that per 3.5.7 of AMD64-ABI, 256-bit args are only passed in
       // registers if they are "named", i.e. not part of the "..." of a
       // variadic function.
+      //
+      // Similarly, per 3.2.3. of the AVX512 draft, 512-bits ("named") args are
+      // split into eight eightbyte chunks, one SSE and seven SSEUP.
       Lo = SSE;
       Hi = SSEUp;
     }
@@ -7211,7 +7217,8 @@ const TargetCodeGenInfo &CodeGenModule::getTargetCodeGenInfo() {
 
   case llvm::Triple::x86_64: {
     StringRef ABI = getTarget().getABI();
-    X86AVXABILevel AVXLevel = (ABI == "avx" ? X86AVXABILevel::AVX :
+    X86AVXABILevel AVXLevel = (ABI == "avx512" ? X86AVXABILevel::AVX512 :
+                               ABI == "avx" ? X86AVXABILevel::AVX :
                                X86AVXABILevel::None);
 
     switch (Triple.getOS()) {
