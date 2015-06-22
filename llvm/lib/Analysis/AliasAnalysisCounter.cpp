@@ -125,9 +125,8 @@ ModulePass *llvm::createAliasAnalysisCounterPass() {
   return new AliasAnalysisCounter();
 }
 
-AliasAnalysis::AliasResult
-AliasAnalysisCounter::alias(const MemoryLocation &LocA,
-                            const MemoryLocation &LocB) {
+AliasResult AliasAnalysisCounter::alias(const MemoryLocation &LocA,
+                                        const MemoryLocation &LocB) {
   AliasResult R = getAnalysis<AliasAnalysis>().alias(LocA, LocB);
 
   const char *AliasString = nullptr;

@@ -47,7 +47,7 @@ void AliasSet::mergeSetIn(AliasSet &AS, AliasSetTracker &AST) {
     // If the pointers are not a must-alias pair, this set becomes a may alias.
     if (AA.alias(MemoryLocation(L->getValue(), L->getSize(), L->getAAInfo()),
                  MemoryLocation(R->getValue(), R->getSize(), R->getAAInfo())) !=
-        AliasAnalysis::MustAlias)
+        MustAlias)
       Alias = SetMayAlias;
   }
 
@@ -101,14 +101,14 @@ void AliasSet::addPointer(AliasSetTracker &AST, PointerRec &Entry,
   if (isMustAlias() && !KnownMustAlias)
     if (PointerRec *P = getSomePointer()) {
       AliasAnalysis &AA = AST.getAliasAnalysis();
-      AliasAnalysis::AliasResult Result =
+      AliasResult Result =
           AA.alias(MemoryLocation(P->getValue(), P->getSize(), P->getAAInfo()),
                    MemoryLocation(Entry.getValue(), Size, AAInfo));
-      if (Result != AliasAnalysis::MustAlias)
+      if (Result != MustAlias)
         Alias = SetMayAlias;
       else                  // First entry of must alias must have maximum size!
         P->updateSizeAndAAInfo(Size, AAInfo);
-      assert(Result != AliasAnalysis::NoAlias && "Cannot be part of must set!");
+      assert(Result != NoAlias && "Cannot be part of must set!");
     }
 
   Entry.setAliasSet(this);

@@ -486,10 +486,10 @@ MemDepResult MemoryDependenceAnalysis::getPointerDependencyFrom(
       MemoryLocation LoadLoc = MemoryLocation::get(LI);
 
       // If we found a pointer, check if it could be the same as our pointer.
-      AliasAnalysis::AliasResult R = AA->alias(LoadLoc, MemLoc);
+      AliasResult R = AA->alias(LoadLoc, MemLoc);
 
       if (isLoad) {
-        if (R == AliasAnalysis::NoAlias) {
+        if (R == NoAlias) {
           // If this is an over-aligned integer load (for example,
           // "load i8* %P, align 4") see if it would obviously overlap with the
           // queried location if widened to a larger load (e.g. if the queried
@@ -506,7 +506,7 @@ MemDepResult MemoryDependenceAnalysis::getPointerDependencyFrom(
         }
 
         // Must aliased loads are defs of each other.
-        if (R == AliasAnalysis::MustAlias)
+        if (R == MustAlias)
           return MemDepResult::getDef(Inst);
 
 #if 0 // FIXME: Temporarily disabled. GVN is cleverly rewriting loads
@@ -516,7 +516,7 @@ MemDepResult MemoryDependenceAnalysis::getPointerDependencyFrom(
 
         // If we have a partial alias, then return this as a clobber for the
         // client to handle.
-        if (R == AliasAnalysis::PartialAlias)
+        if (R == PartialAlias)
           return MemDepResult::getClobber(Inst);
 #endif
 
@@ -526,7 +526,7 @@ MemDepResult MemoryDependenceAnalysis::getPointerDependencyFrom(
       }
 
       // Stores don't depend on other no-aliased accesses.
-      if (R == AliasAnalysis::NoAlias)
+      if (R == NoAlias)
         continue;
 
       // Stores don't alias loads from read-only memory.
@@ -575,11 +575,11 @@ MemDepResult MemoryDependenceAnalysis::getPointerDependencyFrom(
       MemoryLocation StoreLoc = MemoryLocation::get(SI);
 
       // If we found a pointer, check if it could be the same as our pointer.
-      AliasAnalysis::AliasResult R = AA->alias(StoreLoc, MemLoc);
+      AliasResult R = AA->alias(StoreLoc, MemLoc);
 
-      if (R == AliasAnalysis::NoAlias)
+      if (R == NoAlias)
         continue;
-      if (R == AliasAnalysis::MustAlias)
+      if (R == MustAlias)
         return MemDepResult::getDef(Inst);
       if (isInvariantLoad)
        continue;
@@ -603,7 +603,7 @@ MemDepResult MemoryDependenceAnalysis::getPointerDependencyFrom(
       if (isInvariantLoad)
         continue;
       // Be conservative if the accessed pointer may alias the allocation.
-      if (AA->alias(Inst, AccessPtr) != AliasAnalysis::NoAlias)
+      if (AA->alias(Inst, AccessPtr) != NoAlias)
         return MemDepResult::getClobber(Inst);
       // If the allocation is not aliased and does not read memory (like
       // strdup), it is safe to ignore.

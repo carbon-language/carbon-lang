@@ -838,10 +838,11 @@ BasicAliasAnalysis::getModRefInfo(ImmutableCallSite CS1,
 
 /// \brief Provide ad-hoc rules to disambiguate accesses through two GEP
 /// operators, both having the exact same pointer operand.
-static AliasAnalysis::AliasResult
-aliasSameBasePointerGEPs(const GEPOperator *GEP1, uint64_t V1Size,
-                         const GEPOperator *GEP2, uint64_t V2Size,
-                         const DataLayout &DL) {
+static AliasResult aliasSameBasePointerGEPs(const GEPOperator *GEP1,
+                                            uint64_t V1Size,
+                                            const GEPOperator *GEP2,
+                                            uint64_t V2Size,
+                                            const DataLayout &DL) {
 
   assert(GEP1->getPointerOperand() == GEP2->getPointerOperand() &&
          "Expected GEPs with the same pointer operand");
@@ -851,13 +852,13 @@ aliasSameBasePointerGEPs(const GEPOperator *GEP1, uint64_t V1Size,
   // We also need at least two indices (the pointer, and the struct field).
   if (GEP1->getNumIndices() != GEP2->getNumIndices() ||
       GEP1->getNumIndices() < 2)
-    return AliasAnalysis::MayAlias;
+    return MayAlias;
 
   // If we don't know the size of the accesses through both GEPs, we can't
   // determine whether the struct fields accessed can't alias.
   if (V1Size == MemoryLocation::UnknownSize ||
       V2Size == MemoryLocation::UnknownSize)
-    return AliasAnalysis::MayAlias;
+    return MayAlias;
 
   ConstantInt *C1 =
       dyn_cast<ConstantInt>(GEP1->getOperand(GEP1->getNumOperands() - 1));
@@ -868,7 +869,7 @@ aliasSameBasePointerGEPs(const GEPOperator *GEP1, uint64_t V1Size,
   // If they're identical, the other indices might be also be dynamically
   // equal, so the GEPs can alias.
   if (!C1 || !C2 || C1 == C2)
-    return AliasAnalysis::MayAlias;
+    return MayAlias;
 
   // Find the last-indexed type of the GEP, i.e., the type you'd get if
   // you stripped the last index.
@@ -886,7 +887,7 @@ aliasSameBasePointerGEPs(const GEPOperator *GEP1, uint64_t V1Size,
   for (unsigned i = 1, e = GEP1->getNumIndices() - 1; i != e; ++i) {
     if (!isa<ArrayType>(GetElementPtrInst::getIndexedType(
             GEP1->getSourceElementType(), IntermediateIndices)))
-      return AliasAnalysis::MayAlias;
+      return MayAlias;
     IntermediateIndices.push_back(GEP1->getOperand(i + 1));
   }
 
@@ -895,7 +896,7 @@ aliasSameBasePointerGEPs(const GEPOperator *GEP1, uint64_t V1Size,
           GEP1->getSourceElementType(), IntermediateIndices));
 
   if (!LastIndexedStruct)
-    return AliasAnalysis::MayAlias;
+    return MayAlias;
 
   // We know that:
   // - both GEPs begin indexing from the exact same pointer;
@@ -924,9 +925,9 @@ aliasSameBasePointerGEPs(const GEPOperator *GEP1, uint64_t V1Size,
 
   if (EltsDontOverlap(V1Off, V1Size, V2Off, V2Size) ||
       EltsDontOverlap(V2Off, V2Size, V1Off, V1Size))
-    return AliasAnalysis::NoAlias;
+    return NoAlias;
 
-  return AliasAnalysis::MayAlias;
+  return MayAlias;
 }
 
 /// aliasGEP - Provide a bunch of ad-hoc rules to disambiguate a GEP instruction
@@ -934,13 +935,10 @@ aliasSameBasePointerGEPs(const GEPOperator *GEP1, uint64_t V1Size,
 /// anything about V2.  UnderlyingV1 is GetUnderlyingObject(GEP1, DL),
 /// UnderlyingV2 is the same for V2.
 ///
-AliasAnalysis::AliasResult
-BasicAliasAnalysis::aliasGEP(const GEPOperator *GEP1, uint64_t V1Size,
-                             const AAMDNodes &V1AAInfo,
-                             const Value *V2, uint64_t V2Size,
-                             const AAMDNodes &V2AAInfo,
-                             const Value *UnderlyingV1,
-                             const Value *UnderlyingV2) {
+AliasResult BasicAliasAnalysis::aliasGEP(
+    const GEPOperator *GEP1, uint64_t V1Size, const AAMDNodes &V1AAInfo,
+    const Value *V2, uint64_t V2Size, const AAMDNodes &V2AAInfo,
+    const Value *UnderlyingV1, const Value *UnderlyingV2) {
   int64_t GEP1BaseOffset;
   bool GEP1MaxLookupReached;
   SmallVector<VariableGEPIndex, 4> GEP1VariableIndices;
@@ -1196,26 +1194,25 @@ BasicAliasAnalysis::aliasGEP(const GEPOperator *GEP1, uint64_t V1Size,
   return PartialAlias;
 }
 
-static AliasAnalysis::AliasResult
-MergeAliasResults(AliasAnalysis::AliasResult A, AliasAnalysis::AliasResult B) {
+static AliasResult MergeAliasResults(AliasResult A, AliasResult B) {
   // If the results agree, take it.
   if (A == B)
     return A;
   // A mix of PartialAlias and MustAlias is PartialAlias.
-  if ((A == AliasAnalysis::PartialAlias && B == AliasAnalysis::MustAlias) ||
-      (B == AliasAnalysis::PartialAlias && A == AliasAnalysis::MustAlias))
-    return AliasAnalysis::PartialAlias;
+  if ((A == PartialAlias && B == MustAlias) ||
+      (B == PartialAlias && A == MustAlias))
+    return PartialAlias;
   // Otherwise, we don't know anything.
-  return AliasAnalysis::MayAlias;
+  return MayAlias;
 }
 
 /// aliasSelect - Provide a bunch of ad-hoc rules to disambiguate a Select
 /// instruction against another.
-AliasAnalysis::AliasResult
-BasicAliasAnalysis::aliasSelect(const SelectInst *SI, uint64_t SISize,
-                                const AAMDNodes &SIAAInfo,
-                                const Value *V2, uint64_t V2Size,
-                                const AAMDNodes &V2AAInfo) {
+AliasResult BasicAliasAnalysis::aliasSelect(const SelectInst *SI,
+                                            uint64_t SISize,
+                                            const AAMDNodes &SIAAInfo,
+                                            const Value *V2, uint64_t V2Size,
+                                            const AAMDNodes &V2AAInfo) {
   // If the values are Selects with the same condition, we can do a more precise
   // check: just check for aliases between the values on corresponding arms.
   if (const SelectInst *SI2 = dyn_cast<SelectInst>(V2))
@@ -1245,11 +1242,10 @@ BasicAliasAnalysis::aliasSelect(const SelectInst *SI, uint64_t SISize,
 
 // aliasPHI - Provide a bunch of ad-hoc rules to disambiguate a PHI instruction
 // against another.
-AliasAnalysis::AliasResult
-BasicAliasAnalysis::aliasPHI(const PHINode *PN, uint64_t PNSize,
-                             const AAMDNodes &PNAAInfo,
-                             const Value *V2, uint64_t V2Size,
-                             const AAMDNodes &V2AAInfo) {
+AliasResult BasicAliasAnalysis::aliasPHI(const PHINode *PN, uint64_t PNSize,
+                                         const AAMDNodes &PNAAInfo,
+                                         const Value *V2, uint64_t V2Size,
+                                         const AAMDNodes &V2AAInfo) {
   // Track phi nodes we have visited. We use this information when we determine
   // value equivalence.
   VisitedPhiBBs.insert(PN->getParent());
@@ -1331,11 +1327,10 @@ BasicAliasAnalysis::aliasPHI(const PHINode *PN, uint64_t PNSize,
 // aliasCheck - Provide a bunch of ad-hoc rules to disambiguate in common cases,
 // such as array references.
 //
-AliasAnalysis::AliasResult
-BasicAliasAnalysis::aliasCheck(const Value *V1, uint64_t V1Size,
-                               AAMDNodes V1AAInfo,
-                               const Value *V2, uint64_t V2Size,
-                               AAMDNodes V2AAInfo) {
+AliasResult BasicAliasAnalysis::aliasCheck(const Value *V1, uint64_t V1Size,
+                                           AAMDNodes V1AAInfo, const Value *V2,
+                                           uint64_t V2Size,
+                                           AAMDNodes V2AAInfo) {
   // If either of the memory references is empty, it doesn't matter what the
   // pointer values are.
   if (V1Size == 0 || V2Size == 0)

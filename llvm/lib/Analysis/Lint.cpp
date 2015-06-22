@@ -244,9 +244,8 @@ void Lint::visitCallSite(CallSite CS) {
         if (Formal->hasNoAliasAttr() && Actual->getType()->isPointerTy())
           for (CallSite::arg_iterator BI = CS.arg_begin(); BI != AE; ++BI)
             if (AI != BI && (*BI)->getType()->isPointerTy()) {
-              AliasAnalysis::AliasResult Result = AA->alias(*AI, *BI);
-              Assert(Result != AliasAnalysis::MustAlias &&
-                         Result != AliasAnalysis::PartialAlias,
+              AliasResult Result = AA->alias(*AI, *BI);
+              Assert(Result != MustAlias && Result != PartialAlias,
                      "Unusual: noalias argument aliases another argument", &I);
             }
 
@@ -297,7 +296,7 @@ void Lint::visitCallSite(CallSite CS) {
         if (Len->getValue().isIntN(32))
           Size = Len->getValue().getZExtValue();
       Assert(AA->alias(MCI->getSource(), Size, MCI->getDest(), Size) !=
-                 AliasAnalysis::MustAlias,
+                 MustAlias,
              "Undefined behavior: memcpy source and destination overlap", &I);
       break;
     }

@@ -57,9 +57,8 @@ ObjCARCAliasAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
   AliasAnalysis::getAnalysisUsage(AU);
 }
 
-AliasAnalysis::AliasResult
-ObjCARCAliasAnalysis::alias(const MemoryLocation &LocA,
-                            const MemoryLocation &LocB) {
+AliasResult ObjCARCAliasAnalysis::alias(const MemoryLocation &LocA,
+                                        const MemoryLocation &LocB) {
   if (!EnableARCOpts)
     return AliasAnalysis::alias(LocA, LocB);
 

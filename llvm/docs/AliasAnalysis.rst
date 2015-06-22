@@ -286,8 +286,8 @@ Mod/Ref result, simply return whatever the superclass computes.  For example:
 
 .. code-block:: c++
 
-  AliasAnalysis::AliasResult alias(const Value *V1, unsigned V1Size,
-                                   const Value *V2, unsigned V2Size) {
+  AliasResult alias(const Value *V1, unsigned V1Size,
+                    const Value *V2, unsigned V2Size) {
     if (...)
       return NoAlias;
     ...

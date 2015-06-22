@@ -625,10 +625,9 @@ void Dependence::dump(raw_ostream &OS) const {
   OS << "!\n";
 }
 
-static AliasAnalysis::AliasResult underlyingObjectsAlias(AliasAnalysis *AA,
-                                                         const DataLayout &DL,
-                                                         const Value *A,
-                                                         const Value *B) {
+static AliasResult underlyingObjectsAlias(AliasAnalysis *AA,
+                                          const DataLayout &DL, const Value *A,
+                                          const Value *B) {
   const Value *AObj = GetUnderlyingObject(A, DL);
   const Value *BObj = GetUnderlyingObject(B, DL);
   return AA->alias(AObj, AA->getTypeStoreSize(AObj->getType()),
@@ -3365,16 +3364,16 @@ DependenceAnalysis::depends(Instruction *Src, Instruction *Dst,
 
   switch (underlyingObjectsAlias(AA, F->getParent()->getDataLayout(), DstPtr,
                                  SrcPtr)) {
-  case AliasAnalysis::MayAlias:
-  case AliasAnalysis::PartialAlias:
+  case MayAlias:
+  case PartialAlias:
     // cannot analyse objects if we don't understand their aliasing.
     DEBUG(dbgs() << "can't analyze may or partial alias\n");
     return make_unique<Dependence>(Src, Dst);
-  case AliasAnalysis::NoAlias:
+  case NoAlias:
     // If the objects noalias, they are distinct, accesses are independent.
     DEBUG(dbgs() << "no alias\n");
     return nullptr;
-  case AliasAnalysis::MustAlias:
+  case MustAlias:
     break; // The underlying objects alias; test accesses for dependence.
   }
 
@@ -3814,7 +3813,7 @@ const  SCEV *DependenceAnalysis::getSplitIteration(const Dependence &Dep,
   Value *SrcPtr = getPointerOperand(Src);
   Value *DstPtr = getPointerOperand(Dst);
   assert(underlyingObjectsAlias(AA, F->getParent()->getDataLayout(), DstPtr,
-                                SrcPtr) == AliasAnalysis::MustAlias);
+                                SrcPtr) == MustAlias);
 
   // establish loop nesting levels
   establishNestingLevels(Src, Dst);

@@ -116,12 +116,12 @@ bool ProvenanceAnalysis::relatedCheck(const Value *A, const Value *B,
 
   // Ask regular AliasAnalysis, for a first approximation.
   switch (AA->alias(A, B)) {
-  case AliasAnalysis::NoAlias:
+  case NoAlias:
     return false;
-  case AliasAnalysis::MustAlias:
-  case AliasAnalysis::PartialAlias:
+  case MustAlias:
+  case PartialAlias:
     return true;
-  case AliasAnalysis::MayAlias:
+  case MayAlias:
     break;
   }
 

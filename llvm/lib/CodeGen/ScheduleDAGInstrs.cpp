@@ -574,13 +574,13 @@ static bool MIsNeedChainEdge(AliasAnalysis *AA, const MachineFrameInfo *MFI,
   int64_t Overlapa = MMOa->getSize() + MMOa->getOffset() - MinOffset;
   int64_t Overlapb = MMOb->getSize() + MMOb->getOffset() - MinOffset;
 
-  AliasAnalysis::AliasResult AAResult =
+  AliasResult AAResult =
       AA->alias(MemoryLocation(MMOa->getValue(), Overlapa,
                                UseTBAA ? MMOa->getAAInfo() : AAMDNodes()),
                 MemoryLocation(MMOb->getValue(), Overlapb,
                                UseTBAA ? MMOb->getAAInfo() : AAMDNodes()));
 
-  return (AAResult != AliasAnalysis::NoAlias);
+  return (AAResult != NoAlias);
 }
 
 /// This recursive function iterates over chain deps of SUb looking for

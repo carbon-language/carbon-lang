@@ -1109,8 +1109,8 @@ void CFLAliasAnalysis::scan(Function *Fn) {
   Handles.push_front(FunctionHandle(Fn, this));
 }
 
-AliasAnalysis::AliasResult CFLAliasAnalysis::query(const MemoryLocation &LocA,
-                                                   const MemoryLocation &LocB) {
+AliasResult CFLAliasAnalysis::query(const MemoryLocation &LocA,
+                                    const MemoryLocation &LocB) {
   auto *ValA = const_cast<Value *>(LocA.Ptr);
   auto *ValB = const_cast<Value *>(LocB.Ptr);
 
@@ -1121,7 +1121,7 @@ AliasAnalysis::AliasResult CFLAliasAnalysis::query(const MemoryLocation &LocA,
     // The only times this is known to happen are when globals + InlineAsm
     // are involved
     DEBUG(dbgs() << "CFLAA: could not extract parent function information.\n");
-    return AliasAnalysis::MayAlias;
+    return MayAlias;
   }
 
   if (MaybeFnA.hasValue()) {
@@ -1139,11 +1139,11 @@ AliasAnalysis::AliasResult CFLAliasAnalysis::query(const MemoryLocation &LocA,
   auto &Sets = MaybeInfo->Sets;
   auto MaybeA = Sets.find(ValA);
   if (!MaybeA.hasValue())
-    return AliasAnalysis::MayAlias;
+    return MayAlias;
 
   auto MaybeB = Sets.find(ValB);
   if (!MaybeB.hasValue())
-    return AliasAnalysis::MayAlias;
+    return MayAlias;
 
   auto SetA = *MaybeA;
   auto SetB = *MaybeB;
@@ -1160,7 +1160,7 @@ AliasAnalysis::AliasResult CFLAliasAnalysis::query(const MemoryLocation &LocA,
   // the sets has no values that could legally be altered by changing the value
   // of an argument or global, then we don't have to be as conservative.
   if (AttrsA.any() && AttrsB.any())
-    return AliasAnalysis::MayAlias;
+    return MayAlias;
 
   // We currently unify things even if the accesses to them may not be in
   // bounds, so we can't return partial alias here because we don't
@@ -1171,9 +1171,9 @@ AliasAnalysis::AliasResult CFLAliasAnalysis::query(const MemoryLocation &LocA,
   // differentiate
 
   if (SetA.Index == SetB.Index)
-    return AliasAnalysis::MayAlias;
+    return MayAlias;
 
-  return AliasAnalysis::NoAlias;
+  return NoAlias;
 }
 
 bool CFLAliasAnalysis::doInitialization(Module &M) {

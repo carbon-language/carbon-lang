@@ -177,8 +177,8 @@ ScopedNoAliasAA::mayAliasInScopes(const MDNode *Scopes,
   return true;
 }
 
-AliasAnalysis::AliasResult ScopedNoAliasAA::alias(const MemoryLocation &LocA,
-                                                  const MemoryLocation &LocB) {
+AliasResult ScopedNoAliasAA::alias(const MemoryLocation &LocA,
+                                   const MemoryLocation &LocB) {
   if (!EnableScopedNoAlias)
     return AliasAnalysis::alias(LocA, LocB);
 

@@ -479,8 +479,8 @@ void GlobalsModRef::AnalyzeCallGraph(CallGraph &CG, Module &M) {
 /// alias - If one of the pointers is to a global that we are tracking, and the
 /// other is some random pointer, we know there cannot be an alias, because the
 /// address of the global isn't taken.
-AliasAnalysis::AliasResult GlobalsModRef::alias(const MemoryLocation &LocA,
-                                                const MemoryLocation &LocB) {
+AliasResult GlobalsModRef::alias(const MemoryLocation &LocA,
+                                 const MemoryLocation &LocB) {
   // Get the base object these pointers point to.
   const Value *UV1 = GetUnderlyingObject(LocA.Ptr, *DL);
   const Value *UV2 = GetUnderlyingObject(LocB.Ptr, *DL);

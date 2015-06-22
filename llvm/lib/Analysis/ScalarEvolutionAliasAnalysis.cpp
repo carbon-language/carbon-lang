@@ -107,9 +107,8 @@ ScalarEvolutionAliasAnalysis::GetBaseValue(const SCEV *S) {
   return nullptr;
 }
 
-AliasAnalysis::AliasResult
-ScalarEvolutionAliasAnalysis::alias(const MemoryLocation &LocA,
-                                    const MemoryLocation &LocB) {
+AliasResult ScalarEvolutionAliasAnalysis::alias(const MemoryLocation &LocA,
+                                                const MemoryLocation &LocB) {
   // If either of the memory references is empty, it doesn't matter what the
   // pointer values are. This allows the code below to ignore this special
   // case.

@@ -48,8 +48,8 @@ char AliasAnalysis::ID = 0;
 // Default chaining methods
 //===----------------------------------------------------------------------===//
 
-AliasAnalysis::AliasResult AliasAnalysis::alias(const MemoryLocation &LocA,
-                                                const MemoryLocation &LocB) {
+AliasResult AliasAnalysis::alias(const MemoryLocation &LocA,
+                                 const MemoryLocation &LocB) {
   assert(AA && "AA didn't call InitializeAliasAnalysis in its run method!");
   return AA->alias(LocA, LocB);
 }

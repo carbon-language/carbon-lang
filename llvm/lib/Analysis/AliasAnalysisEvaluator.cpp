@@ -196,20 +196,20 @@ bool AAEval::runOnFunction(Function &F) {
       if (I2ElTy->isSized()) I2Size = AA.getTypeStoreSize(I2ElTy);
 
       switch (AA.alias(*I1, I1Size, *I2, I2Size)) {
-      case AliasAnalysis::NoAlias:
+      case NoAlias:
         PrintResults("NoAlias", PrintNoAlias, *I1, *I2, F.getParent());
         ++NoAliasCount;
         break;
-      case AliasAnalysis::MayAlias:
+      case MayAlias:
         PrintResults("MayAlias", PrintMayAlias, *I1, *I2, F.getParent());
         ++MayAliasCount;
         break;
-      case AliasAnalysis::PartialAlias:
+      case PartialAlias:
         PrintResults("PartialAlias", PrintPartialAlias, *I1, *I2,
                      F.getParent());
         ++PartialAliasCount;
         break;
-      case AliasAnalysis::MustAlias:
+      case MustAlias:
         PrintResults("MustAlias", PrintMustAlias, *I1, *I2, F.getParent());
         ++MustAliasCount;
         break;
@@ -225,22 +225,22 @@ bool AAEval::runOnFunction(Function &F) {
            I2 != E2; ++I2) {
         switch (AA.alias(MemoryLocation::get(cast<LoadInst>(*I1)),
                          MemoryLocation::get(cast<StoreInst>(*I2)))) {
-        case AliasAnalysis::NoAlias:
+        case NoAlias:
           PrintLoadStoreResults("NoAlias", PrintNoAlias, *I1, *I2,
                                 F.getParent());
           ++NoAliasCount;
           break;
-        case AliasAnalysis::MayAlias:
+        case MayAlias:
           PrintLoadStoreResults("MayAlias", PrintMayAlias, *I1, *I2,
                                 F.getParent());
           ++MayAliasCount;
           break;
-        case AliasAnalysis::PartialAlias:
+        case PartialAlias:
           PrintLoadStoreResults("PartialAlias", PrintPartialAlias, *I1, *I2,
                                 F.getParent());
           ++PartialAliasCount;
           break;
-        case AliasAnalysis::MustAlias:
+        case MustAlias:
           PrintLoadStoreResults("MustAlias", PrintMustAlias, *I1, *I2,
                                 F.getParent());
           ++MustAliasCount;
@@ -255,22 +255,22 @@ bool AAEval::runOnFunction(Function &F) {
       for (SetVector<Value *>::iterator I2 = Stores.begin(); I2 != I1; ++I2) {
         switch (AA.alias(MemoryLocation::get(cast<StoreInst>(*I1)),
                          MemoryLocation::get(cast<StoreInst>(*I2)))) {
-        case AliasAnalysis::NoAlias:
+        case NoAlias:
           PrintLoadStoreResults("NoAlias", PrintNoAlias, *I1, *I2,
                                 F.getParent());
           ++NoAliasCount;
           break;
-        case AliasAnalysis::MayAlias:
+        case MayAlias:
           PrintLoadStoreResults("MayAlias", PrintMayAlias, *I1, *I2,
                                 F.getParent());
           ++MayAliasCount;
           break;
-        case AliasAnalysis::PartialAlias:
+        case PartialAlias:
           PrintLoadStoreResults("PartialAlias", PrintPartialAlias, *I1, *I2,
                                 F.getParent());
           ++PartialAliasCount;
           break;
-        case AliasAnalysis::MustAlias:
+        case MustAlias:
           PrintLoadStoreResults("MustAlias", PrintMustAlias, *I1, *I2,
                                 F.getParent());
           ++MustAliasCount;

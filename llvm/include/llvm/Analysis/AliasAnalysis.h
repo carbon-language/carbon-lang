@@ -56,6 +56,34 @@ class MemTransferInst;
 class MemIntrinsic;
 class DominatorTree;
 
+/// The possible results of an alias query.
+///
+/// These results are always computed between two MemoryLocation objects as
+/// a query to some alias analysis.
+///
+/// Note that these are unscoped enumerations because we would like to support
+/// implicitly testing a result for the existence of any possible aliasing with
+/// a conversion to bool, but an "enum class" doesn't support this. The
+/// canonical names from the literature are suffixed and unique anyways, and so
+/// they serve as global constants in LLVM for these results.
+///
+/// See docs/AliasAnalysis.html for more information on the specific meanings
+/// of these values.
+enum AliasResult {
+  /// The two locations do not alias at all.
+  ///
+  /// This value is arranged to convert to false, while all other values
+  /// convert to true. This allows a boolean context to convert the result to
+  /// a binary flag indicating whether there is the possibility of aliasing.
+  NoAlias = 0,
+  /// The two locations may or may not alias. This is the least precise result.
+  MayAlias,
+  /// The two locations alias, but only due to a partial overlap.
+  PartialAlias,
+  /// The two locations precisely alias each other.
+  MustAlias,
+};
+
 class AliasAnalysis {
 protected:
   const DataLayout *DL;
@@ -94,22 +122,6 @@ public:
   //===--------------------------------------------------------------------===//
   /// Alias Queries...
   ///
-
-  /// Alias analysis result - Either we know for sure that it does not alias, we
-  /// know for sure it must alias, or we don't know anything: The two pointers
-  /// _might_ alias.  This enum is designed so you can do things like:
-  ///     if (AA.alias(P1, P2)) { ... }
-  /// to check to see if two pointers might alias.
-  ///
-  /// See docs/AliasAnalysis.html for more information on the specific meanings
-  /// of these values.
-  ///
-  enum AliasResult {
-    NoAlias = 0,        ///< No dependencies.
-    MayAlias,           ///< Anything goes.
-    PartialAlias,       ///< Pointers differ, but pointees overlap.
-    MustAlias           ///< Pointers are equal.
-  };
 
   /// alias - The main low level interface to the alias analysis implementation.
   /// Returns an AliasResult indicating whether the two pointers are aliased to
