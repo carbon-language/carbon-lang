@@ -208,11 +208,10 @@ public:
 };
 
 raw_ostream &
-operator<<(raw_ostream &OS,
-           const typename FaultMapParser::FunctionFaultInfoAccessor &);
+operator<<(raw_ostream &OS, const FaultMapParser::FunctionFaultInfoAccessor &);
 
 raw_ostream &operator<<(raw_ostream &OS,
-                        const typename FaultMapParser::FunctionInfoAccessor &);
+                        const FaultMapParser::FunctionInfoAccessor &);
 
 raw_ostream &operator<<(raw_ostream &OS, const FaultMapParser &);
 
