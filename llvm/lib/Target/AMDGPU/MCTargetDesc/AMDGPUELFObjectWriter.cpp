@@ -31,7 +31,7 @@ protected:
 } // End anonymous namespace
 
 AMDGPUELFObjectWriter::AMDGPUELFObjectWriter()
-  : MCELFObjectTargetWriter(false, 0, 0, false) { }
+  : MCELFObjectTargetWriter(false, 0, ELF::EM_AMDGPU, false) { }
 
 MCObjectWriter *llvm::createAMDGPUELFObjectWriter(raw_pwrite_stream &OS) {
   MCELFObjectTargetWriter *MOTW = new AMDGPUELFObjectWriter();
