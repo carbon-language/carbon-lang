@@ -49,6 +49,6 @@ The format of this section is
     FunctionFaultInfo[NumFaultingPCs] {
       uint32  : FaultKind = FaultMaps::FaultingLoad (only legal value currently)
       uint32  : FaultingPCOffset
-      uint32  : handlerPCOffset
+      uint32  : HandlerPCOffset
     }
   }
