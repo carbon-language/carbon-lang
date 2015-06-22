@@ -150,10 +150,20 @@ public:
             return ValueObjectSP();
         }
 
-        if (value_sp->GetDynamicValue(m_use_dynamic))
-            value_sp = value_sp->GetDynamicValue(m_use_dynamic);
-        if (value_sp->GetSyntheticValue(m_use_synthetic))
-            value_sp = value_sp->GetSyntheticValue(m_use_synthetic);
+        if (m_use_dynamic != eNoDynamicValues)
+        {
+            ValueObjectSP dynamic_sp = value_sp->GetDynamicValue(m_use_dynamic);
+            if (dynamic_sp)
+                value_sp = dynamic_sp;
+        }
+
+        if (m_use_synthetic)
+        {
+            ValueObjectSP synthetic_sp = value_sp->GetSyntheticValue(m_use_synthetic);
+            if (synthetic_sp)
+                value_sp = synthetic_sp;
+        }
+
         if (!value_sp)
             error.SetErrorString("invalid value object");
         if (!m_name.IsEmpty())
