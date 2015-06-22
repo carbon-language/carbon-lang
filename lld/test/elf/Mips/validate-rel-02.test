@@ -1,0 +1,41 @@
+# Check that the linker does not accept R_MIPS_GPREL32 relocation
+# against external symbol.
+
+# RUN: yaml2obj -format=elf -docnum 1 %s > %t.o
+# RUN: not lld -flavor gnu -target mipsel -e T0 -o %t.exe %t.o 2>&1 \
+# RUN:       | FileCheck %s
+
+# CHECK: R_MIPS_GPREL32 (12) relocation cannot be used against external symbol T0 in file {{.*}}validate-rel-02.test.tmp.o
+
+---
+FileHeader:      
+  Class:    ELFCLASS32
+  Data:     ELFDATA2LSB
+  Type:     ET_REL
+  Machine:  EM_MIPS
+  Flags:    [EF_MIPS_CPIC, EF_MIPS_ABI_O32, EF_MIPS_ARCH_32]
+
+Sections:        
+  - Name:          .text
+    Type:          SHT_PROGBITS
+    Flags:         [ SHF_ALLOC, SHF_EXECINSTR ]
+    AddressAlign:  16
+    Size:          4
+
+  - Name:          .rel.text
+    Type:          SHT_REL
+    Link:          .symtab
+    AddressAlign:  4
+    Info:          .text
+    Relocations:   
+      - Offset:  0
+        Symbol:  T0
+        Type:    R_MIPS_GPREL32
+
+Symbols:         
+  Global:          
+    - Name:     T0
+      Type:     STT_FUNC
+      Section:  .text
+      Size:     4
+...
