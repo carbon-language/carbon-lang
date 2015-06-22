@@ -46,6 +46,15 @@ protected:
     SymbolKindMachO,
   };
 
+  /// A symbol can contain an Offset, or Value, or be Common, but never more
+  /// than one of these.
+  enum Contents : uint8_t {
+    SymContentsUnset,
+    SymContentsOffset,
+    SymContentsVariable,
+    SymContentsCommon,
+  };
+
   // Special sentinal value for the absolute pseudo section.
   //
   // FIXME: Use a PointerInt wrapper for this?
@@ -63,9 +72,6 @@ protected:
   /// If this is a fragment, then it gives the fragment this symbol's value is
   /// relative to, if any.
   mutable PointerUnion<MCSection *, MCFragment *> SectionOrFragment;
-
-  /// Value - If non-null, the value for a variable symbol.
-  const MCExpr *Value;
 
   /// IsTemporary - True if this is an assembler temporary label, which
   /// typically does not survive in the .o file's symbol table.  Usually
@@ -98,6 +104,10 @@ protected:
   /// True if we have created a relocation that uses this symbol.
   mutable unsigned IsUsedInReloc : 1;
 
+  /// This is actually a Contents enumerator, but is unsigned to avoid sign
+  /// extension and achieve better bitpacking with MSVC.
+  unsigned SymbolContents : 2;
+
   /// Index field, for use by the object file implementation.
   mutable uint32_t Index = 0;
 
@@ -107,6 +117,9 @@ protected:
 
     /// The size of the symbol, if it is 'common'.
     uint64_t CommonSize;
+
+    /// If non-null, the value for a variable symbol.
+    const MCExpr *Value;
   };
 
   /// The alignment of the symbol, if it is 'common', or -1.
@@ -132,10 +145,10 @@ protected: // MCContext creates and uniques these.
   } NameEntryStorageTy;
 
   MCSymbol(SymbolKind Kind, const StringMapEntry<bool> *Name, bool isTemporary)
-      : Value(nullptr), IsTemporary(isTemporary), IsRedefinable(false),
+      : IsTemporary(isTemporary), IsRedefinable(false),
         IsUsed(false), IsRegistered(false), IsExternal(false),
         IsPrivateExtern(false), HasName(!!Name), Kind(Kind),
-        IsUsedInReloc(false) {
+        IsUsedInReloc(false), SymbolContents(SymContentsUnset) {
     Offset = 0;
     if (Name)
       getNameEntryPtr() = Name;
@@ -165,9 +178,9 @@ private:
       return F->getParent();
     assert(!SectionOrFragment.is<MCFragment *>() && "Section or null expected");
     MCSection *Section = SectionOrFragment.dyn_cast<MCSection *>();
-    if (Section || !Value)
+    if (Section || !isVariable())
       return Section;
-    return Section = Value->findAssociatedSection();
+    return Section = getVariableValue()->findAssociatedSection();
   }
 
   /// \brief Get a reference to the name field.  Requires that we have a name
@@ -212,7 +225,10 @@ public:
   /// \brief Prepare this symbol to be redefined.
   void redefineIfPossible() {
     if (IsRedefinable) {
-      Value = nullptr;
+      if (SymbolContents == SymContentsVariable) {
+        Value = nullptr;
+        SymbolContents = SymContentsUnset;
+      }
       SectionOrFragment = nullptr;
       IsRedefinable = false;
     }
@@ -266,7 +282,9 @@ public:
   /// @{
 
   /// isVariable - Check if this is a variable symbol.
-  bool isVariable() const { return Value != nullptr; }
+  bool isVariable() const {
+    return SymbolContents == SymContentsVariable;
+  }
 
   /// getVariableValue() - Get the value for variable symbols.
   const MCExpr *getVariableValue() const {
@@ -290,12 +308,17 @@ public:
   }
 
   uint64_t getOffset() const {
-    assert(!isCommon());
+    assert((SymbolContents == SymContentsUnset ||
+            SymbolContents == SymContentsOffset) &&
+           "Cannot get offset for a common/variable symbol");
     return Offset;
   }
   void setOffset(uint64_t Value) {
-    assert(!isCommon());
+    assert((SymbolContents == SymContentsUnset ||
+            SymbolContents == SymContentsOffset) &&
+           "Cannot set offset for a common/variable symbol");
     Offset = Value;
+    SymbolContents = SymContentsOffset;
   }
 
   /// Return the size of a 'common' symbol.
@@ -312,6 +335,7 @@ public:
     assert(getOffset() == 0);
     CommonSize = Size;
     CommonAlign = Align;
+    SymbolContents = SymContentsCommon;
   }
 
   ///  Return the alignment of a 'common' symbol.
@@ -336,7 +360,9 @@ public:
   }
 
   /// Is this a 'common' symbol.
-  bool isCommon() const { return CommonAlign != -1U; }
+  bool isCommon() const {
+    return SymbolContents == SymContentsCommon;
+  }
 
   MCFragment *getFragment() const {
     return SectionOrFragment.dyn_cast<MCFragment *>();
