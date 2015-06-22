@@ -68,6 +68,7 @@ TEST_F(InstrProfTest, write_and_read_one_function) {
 
 TEST_F(InstrProfTest, get_function_counts) {
   Writer.addFunctionCounts("foo", 0x1234, {1, 2});
+  Writer.addFunctionCounts("foo", 0x1235, {3, 4});
   auto Profile = Writer.writeBuffer();
   readProfile(std::move(Profile));
 
@@ -76,6 +77,11 @@ TEST_F(InstrProfTest, get_function_counts) {
   ASSERT_EQ(2U, Counts.size());
   ASSERT_EQ(1U, Counts[0]);
   ASSERT_EQ(2U, Counts[1]);
+
+  ASSERT_TRUE(NoError(Reader->getFunctionCounts("foo", 0x1235, Counts)));
+  ASSERT_EQ(2U, Counts.size());
+  ASSERT_EQ(3U, Counts[0]);
+  ASSERT_EQ(4U, Counts[1]);
 
   std::error_code EC;
   EC = Reader->getFunctionCounts("foo", 0x5678, Counts);
