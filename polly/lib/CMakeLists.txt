@@ -77,6 +77,7 @@ check_c_source_compiles("
 # Write configure result
 configure_file("External/gitversion.h.cmake" "${ISL_BINARY_DIR}/gitversion.h")
 configure_file("External/isl_config.h.cmake" "${ISL_BINARY_DIR}/isl_config.h")
+file(WRITE "${ISL_BINARY_DIR}/isl/stdint.h" "#include <stdint.h>")
 
 # ISL files to compile
 set (ISL_FILES
