@@ -427,12 +427,12 @@ static void AddNodeIDNode(FoldingSetNodeID &ID, unsigned short OpC,
   AddNodeIDOperands(ID, OpList);
 }
 
-/// AddNodeIDCustom - If this is an SDNode with special info, add this info to
-/// the NodeID data.
+/// If this is an SDNode with special info, add this info to the NodeID data.
 static void AddNodeIDCustom(FoldingSetNodeID &ID, const SDNode *N) {
   switch (N->getOpcode()) {
   case ISD::TargetExternalSymbol:
   case ISD::ExternalSymbol:
+  case ISD::MCSymbol:
     llvm_unreachable("Should only be used on nodes with operands");
   default: break;  // Normal nodes don't need extra info.
   case ISD::TargetConstant:
@@ -797,6 +797,11 @@ bool SelectionDAG::RemoveNodeFromCSEMaps(SDNode *N) {
                                                     ESN->getTargetFlags()));
     break;
   }
+  case ISD::MCSymbol: {
+    auto *MCSN = cast<MCSymbolSDNode>(N);
+    Erased = MCSymbols.erase(MCSN->getMCSymbol());
+    break;
+  }
   case ISD::VALUETYPE: {
     EVT VT = cast<VTSDNode>(N)->getVT();
     if (VT.isExtended()) {
@@ -1014,6 +1019,7 @@ void SelectionDAG::clear() {
   ExtendedValueTypeNodes.clear();
   ExternalSymbols.clear();
   TargetExternalSymbols.clear();
+  MCSymbols.clear();
   std::fill(CondCodeNodes.begin(), CondCodeNodes.end(),
             static_cast<CondCodeSDNode*>(nullptr));
   std::fill(ValueTypeNodes.begin(), ValueTypeNodes.end(),
@@ -1465,6 +1471,15 @@ SDValue SelectionDAG::getExternalSymbol(const char *Sym, EVT VT) {
   SDNode *&N = ExternalSymbols[Sym];
   if (N) return SDValue(N, 0);
   N = new (NodeAllocator) ExternalSymbolSDNode(false, Sym, 0, VT);
+  InsertNode(N);
+  return SDValue(N, 0);
+}
+
+SDValue SelectionDAG::getMCSymbol(MCSymbol *Sym, EVT VT) {
+  SDNode *&N = MCSymbols[Sym];
+  if (N)
+    return SDValue(N, 0);
+  N = new (NodeAllocator) MCSymbolSDNode(Sym, VT);
   InsertNode(N);
   return SDValue(N, 0);
 }

@@ -422,6 +422,8 @@ void InstrEmitter::AddOperand(MachineInstrBuilder &MIB,
     MIB.addConstantPoolIndex(Idx, Offset, CP->getTargetFlags());
   } else if (ExternalSymbolSDNode *ES = dyn_cast<ExternalSymbolSDNode>(Op)) {
     MIB.addExternalSymbol(ES->getSymbol(), ES->getTargetFlags());
+  } else if (auto *SymNode = dyn_cast<MCSymbolSDNode>(Op)) {
+    MIB.addSym(SymNode->getMCSymbol());
   } else if (BlockAddressSDNode *BA = dyn_cast<BlockAddressSDNode>(Op)) {
     MIB.addBlockAddress(BA->getBlockAddress(),
                         BA->getOffset(),

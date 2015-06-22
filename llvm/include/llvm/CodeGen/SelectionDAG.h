@@ -495,6 +495,8 @@ public:
   SDValue getExternalSymbol(const char *Sym, SDLoc dl, EVT VT);
   SDValue getTargetExternalSymbol(const char *Sym, EVT VT,
                                   unsigned char TargetFlags = 0);
+  SDValue getMCSymbol(MCSymbol *Sym, EVT VT);
+
   SDValue getValueType(EVT);
   SDValue getRegister(unsigned Reg, EVT VT);
   SDValue getRegisterMask(const uint32_t *RegMask);
@@ -1278,6 +1280,7 @@ private:
   StringMap<SDNode*> ExternalSymbols;
 
   std::map<std::pair<std::string, unsigned char>,SDNode*> TargetExternalSymbols;
+  DenseMap<MCSymbol *, SDNode *> MCSymbols;
 };
 
 template <> struct GraphTraits<SelectionDAG*> : public GraphTraits<SDNode*> {

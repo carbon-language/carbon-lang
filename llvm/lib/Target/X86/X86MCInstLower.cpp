@@ -159,10 +159,7 @@ GetSymbolFromOperand(const MachineOperand &MO) const {
     const GlobalValue *GV = MO.getGlobal();
     AsmPrinter.getNameWithPrefix(Name, GV);
   } else if (MO.isSymbol()) {
-    if (MO.getTargetFlags() == X86II::MO_NOPREFIX)
-      Name += MO.getSymbolName();
-    else
-      getMang()->getNameWithPrefix(Name, MO.getSymbolName());
+    getMang()->getNameWithPrefix(Name, MO.getSymbolName());
   } else if (MO.isMBB()) {
     assert(Suffix.empty());
     Sym = MO.getMBB()->getSymbol();
@@ -241,7 +238,6 @@ MCOperand X86MCInstLower::LowerSymbolOperand(const MachineOperand &MO,
   case X86II::MO_DARWIN_NONLAZY:
   case X86II::MO_DLLIMPORT:
   case X86II::MO_DARWIN_STUB:
-  case X86II::MO_NOPREFIX:
     break;
 
   case X86II::MO_TLVP:      RefKind = MCSymbolRefExpr::VK_TLVP; break;
@@ -423,6 +419,8 @@ X86MCInstLower::LowerMachineOperand(const MachineInstr *MI,
   case MachineOperand::MO_GlobalAddress:
   case MachineOperand::MO_ExternalSymbol:
     return LowerSymbolOperand(MO, GetSymbolFromOperand(MO));
+  case MachineOperand::MO_MCSymbol:
+    return LowerSymbolOperand(MO, MO.getMCSymbol());
   case MachineOperand::MO_JumpTableIndex:
     return LowerSymbolOperand(MO, AsmPrinter.GetJTISymbol(MO.getIndex()));
   case MachineOperand::MO_ConstantPoolIndex:

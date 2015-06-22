@@ -341,6 +341,7 @@ def externalsym : SDNode<"ISD::ExternalSymbol",       SDTPtrLeaf, [],
                          "ExternalSymbolSDNode">;
 def texternalsym: SDNode<"ISD::TargetExternalSymbol", SDTPtrLeaf, [],
                          "ExternalSymbolSDNode">;
+def mcsym: SDNode<"ISD::MCSymbol", SDTPtrLeaf, [], "MCSymbolSDNode">;
 def blockaddress : SDNode<"ISD::BlockAddress",        SDTPtrLeaf, [],
                          "BlockAddressSDNode">;
 def tblockaddress: SDNode<"ISD::TargetBlockAddress",  SDTPtrLeaf, [],

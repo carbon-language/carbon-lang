@@ -4976,11 +4976,9 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
         MF.getMMI().getContext().getOrCreateFrameAllocSymbol(
             GlobalValue::getRealLinkageName(Fn->getName()), IdxVal);
 
-    // Create a TargetExternalSymbol for the label to avoid any target lowering
+    // Create a MCSymbol for the label to avoid any target lowering
     // that would make this PC relative.
-    StringRef Name = FrameAllocSym->getName();
-    assert(Name.data()[Name.size()] == '\0' && "not null terminated");
-    SDValue OffsetSym = DAG.getTargetExternalSymbol(Name.data(), PtrVT);
+    SDValue OffsetSym = DAG.getMCSymbol(FrameAllocSym, PtrVT);
     SDValue OffsetVal =
         DAG.getNode(ISD::FRAME_ALLOC_RECOVER, sdl, PtrVT, OffsetSym);
 

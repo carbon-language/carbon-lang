@@ -15409,13 +15409,10 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, const X86Subtarget *Subtarget
     auto *Fn = cast<Function>(cast<GlobalAddressSDNode>(Op1)->getGlobal());
     MCSymbol *LSDASym = MF.getMMI().getContext().getOrCreateLSDASymbol(
         GlobalValue::getRealLinkageName(Fn->getName()));
-    StringRef Name = LSDASym->getName();
-    assert(Name.data()[Name.size()] == '\0' && "not null terminated");
 
     // Generate a simple absolute symbol reference. This intrinsic is only
     // supported on 32-bit Windows, which isn't PIC.
-    SDValue Result =
-        DAG.getTargetExternalSymbol(Name.data(), VT, X86II::MO_NOPREFIX);
+    SDValue Result = DAG.getMCSymbol(LSDASym, VT);
     return DAG.getNode(X86ISD::Wrapper, dl, VT, Result);
   }
   }
@@ -15615,13 +15612,11 @@ static SDValue LowerEXCEPTIONINFO(SDValue Op, const X86Subtarget *Subtarget,
   MCSymbol *ParentFrameSym =
       MF.getMMI().getContext().getOrCreateParentFrameOffsetSymbol(
           GlobalValue::getRealLinkageName(Fn->getName()));
-  StringRef Name = ParentFrameSym->getName();
-  assert(Name.data()[Name.size()] == '\0' && "not null terminated");
 
   // Create a TargetExternalSymbol for the label to avoid any target lowering
   // that would make this PC relative.
   MVT PtrVT = Op.getSimpleValueType();
-  SDValue OffsetSym = DAG.getTargetExternalSymbol(Name.data(), PtrVT);
+  SDValue OffsetSym = DAG.getMCSymbol(ParentFrameSym, PtrVT);
   SDValue OffsetVal =
       DAG.getNode(ISD::FRAME_ALLOC_RECOVER, dl, PtrVT, OffsetSym);
 

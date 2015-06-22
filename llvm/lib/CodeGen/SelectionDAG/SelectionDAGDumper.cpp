@@ -130,6 +130,7 @@ std::string SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::TargetJumpTable:            return "TargetJumpTable";
   case ISD::TargetConstantPool:         return "TargetConstantPool";
   case ISD::TargetExternalSymbol:       return "TargetExternalSymbol";
+  case ISD::MCSymbol:                   return "MCSymbol";
   case ISD::TargetBlockAddress:         return "TargetBlockAddress";
 
   case ISD::CopyToReg:                  return "CopyToReg";

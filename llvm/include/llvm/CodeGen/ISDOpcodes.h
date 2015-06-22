@@ -124,6 +124,8 @@ namespace ISD {
     TargetExternalSymbol,
     TargetBlockAddress,
 
+    MCSymbol,
+
     /// TargetIndex - Like a constant pool entry, but with completely
     /// target-dependent semantics. Holds target flags, a 32-bit index, and a
     /// 64-bit index. Targets can use this however they like.

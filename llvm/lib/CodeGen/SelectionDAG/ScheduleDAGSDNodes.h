@@ -64,6 +64,7 @@ namespace llvm {
       if (isa<TargetIndexSDNode>(Node))    return true;
       if (isa<JumpTableSDNode>(Node))      return true;
       if (isa<ExternalSymbolSDNode>(Node)) return true;
+      if (isa<MCSymbolSDNode>(Node))       return true;
       if (isa<BlockAddressSDNode>(Node))   return true;
       if (Node->getOpcode() == ISD::EntryToken ||
           isa<MDNodeSDNode>(Node)) return true;

@@ -2143,7 +2143,8 @@ TreePatternNode *TreePattern::ParseTreePattern(Init *TheInit, StringRef OpName){
         Operator->getName() != "tblockaddress" &&
         Operator->getName() != "tglobaladdr" &&
         Operator->getName() != "bb" &&
-        Operator->getName() != "vt")
+        Operator->getName() != "vt" &&
+        Operator->getName() != "mcsym")
       error("Cannot use '" + Operator->getName() + "' in an output pattern!");
   }
 

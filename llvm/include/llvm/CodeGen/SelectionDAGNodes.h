@@ -1810,6 +1810,21 @@ public:
   }
 };
 
+class MCSymbolSDNode : public SDNode {
+  MCSymbol *Symbol;
+
+  friend class SelectionDAG;
+  MCSymbolSDNode(MCSymbol *Symbol, EVT VT)
+      : SDNode(ISD::MCSymbol, 0, DebugLoc(), getSDVTList(VT)), Symbol(Symbol) {}
+
+public:
+  MCSymbol *getMCSymbol() const { return Symbol; }
+
+  static bool classof(const SDNode *N) {
+    return N->getOpcode() == ISD::MCSymbol;
+  }
+};
+
 class CondCodeSDNode : public SDNode {
   ISD::CondCode Condition;
   friend class SelectionDAG;

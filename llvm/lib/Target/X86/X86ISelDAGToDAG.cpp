@@ -67,19 +67,19 @@ namespace {
     const Constant *CP;
     const BlockAddress *BlockAddr;
     const char *ES;
+    MCSymbol *MCSym;
     int JT;
     unsigned Align;    // CP alignment.
     unsigned char SymbolFlags;  // X86II::MO_*
 
     X86ISelAddressMode()
-      : BaseType(RegBase), Base_FrameIndex(0), Scale(1), IndexReg(), Disp(0),
-        Segment(), GV(nullptr), CP(nullptr), BlockAddr(nullptr), ES(nullptr),
-        JT(-1), Align(0), SymbolFlags(X86II::MO_NO_FLAG) {
-    }
+        : BaseType(RegBase), Base_FrameIndex(0), Scale(1), IndexReg(), Disp(0),
+          Segment(), GV(nullptr), CP(nullptr), BlockAddr(nullptr), ES(nullptr),
+          MCSym(nullptr), JT(-1), Align(0), SymbolFlags(X86II::MO_NO_FLAG) {}
 
     bool hasSymbolicDisplacement() const {
       return GV != nullptr || CP != nullptr || ES != nullptr ||
-             JT != -1 || BlockAddr != nullptr;
+             MCSym != nullptr || JT != -1 || BlockAddr != nullptr;
     }
 
     bool hasBaseOrIndexReg() const {
@@ -132,6 +132,11 @@ namespace {
              << "ES ";
       if (ES)
         dbgs() << ES;
+      else
+        dbgs() << "nul";
+      dbgs() << " MCSym ";
+      if (MCSym)
+        dbgs() << MCSym;
       else
         dbgs() << "nul";
       dbgs() << " JT" << JT << " Align" << Align << '\n';
@@ -258,6 +263,10 @@ namespace {
       else if (AM.ES) {
         assert(!AM.Disp && "Non-zero displacement is ignored with ES.");
         Disp = CurDAG->getTargetExternalSymbol(AM.ES, MVT::i32, AM.SymbolFlags);
+      } else if (AM.MCSym) {
+        assert(!AM.Disp && "Non-zero displacement is ignored with MCSym.");
+        assert(AM.SymbolFlags == 0 && "oo");
+        Disp = CurDAG->getMCSymbol(AM.MCSym, MVT::i32);
       } else if (AM.JT != -1) {
         assert(!AM.Disp && "Non-zero displacement is ignored with JT.");
         Disp = CurDAG->getTargetJumpTable(AM.JT, MVT::i32, AM.SymbolFlags);
@@ -604,7 +613,7 @@ static bool isDispSafeForFrameIndex(int64_t Val) {
 bool X86DAGToDAGISel::FoldOffsetIntoAddress(uint64_t Offset,
                                             X86ISelAddressMode &AM) {
   // Cannot combine ExternalSymbol displacements with integer offsets.
-  if (Offset != 0 && AM.ES)
+  if (Offset != 0 && (AM.ES || AM.MCSym))
     return true;
   int64_t Val = AM.Disp + Offset;
   CodeModel::Model M = TM.getCodeModel();
@@ -690,6 +699,8 @@ bool X86DAGToDAGISel::MatchWrapper(SDValue N, X86ISelAddressMode &AM) {
     } else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(N0)) {
       AM.ES = S->getSymbol();
       AM.SymbolFlags = S->getTargetFlags();
+    } else if (auto *S = dyn_cast<MCSymbolSDNode>(N0)) {
+      AM.MCSym = S->getMCSymbol();
     } else if (JumpTableSDNode *J = dyn_cast<JumpTableSDNode>(N0)) {
       AM.JT = J->getIndex();
       AM.SymbolFlags = J->getTargetFlags();
@@ -728,6 +739,8 @@ bool X86DAGToDAGISel::MatchWrapper(SDValue N, X86ISelAddressMode &AM) {
     } else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(N0)) {
       AM.ES = S->getSymbol();
       AM.SymbolFlags = S->getTargetFlags();
+    } else if (auto *S = dyn_cast<MCSymbolSDNode>(N0)) {
+      AM.MCSym = S->getMCSymbol();
     } else if (JumpTableSDNode *J = dyn_cast<JumpTableSDNode>(N0)) {
       AM.JT = J->getIndex();
       AM.SymbolFlags = J->getTargetFlags();
@@ -1001,7 +1014,8 @@ bool X86DAGToDAGISel::MatchAddressRecursively(SDValue N, X86ISelAddressMode &AM,
     // FIXME: JumpTable and ExternalSymbol address currently don't like
     // displacements.  It isn't very important, but this should be fixed for
     // consistency.
-    if (!AM.ES && AM.JT != -1) return true;
+    if (!(AM.ES || AM.MCSym) && AM.JT != -1)
+      return true;
 
     if (ConstantSDNode *Cst = dyn_cast<ConstantSDNode>(N))
       if (!FoldOffsetIntoAddress(Cst->getSExtValue(), AM))
@@ -1013,13 +1027,11 @@ bool X86DAGToDAGISel::MatchAddressRecursively(SDValue N, X86ISelAddressMode &AM,
   default: break;
   case ISD::FRAME_ALLOC_RECOVER: {
     if (!AM.hasSymbolicDisplacement() && AM.Disp == 0)
-      if (const auto *ESNode = dyn_cast<ExternalSymbolSDNode>(N.getOperand(0)))
-        if (ESNode->getOpcode() == ISD::TargetExternalSymbol) {
-          // Use the symbol and don't prefix it.
-          AM.ES = ESNode->getSymbol();
-          AM.SymbolFlags = X86II::MO_NOPREFIX;
-          return false;
-        }
+      if (const auto *ESNode = dyn_cast<MCSymbolSDNode>(N.getOperand(0))) {
+        // Use the symbol and don't prefix it.
+        AM.MCSym = ESNode->getMCSymbol();
+        return false;
+      }
     break;
   }
   case ISD::Constant: {
@@ -1473,6 +1485,7 @@ bool X86DAGToDAGISel::SelectMOV64Imm32(SDValue N, SDValue &Imm) {
       N->getOpcode() != ISD::TargetJumpTable &&
       N->getOpcode() != ISD::TargetGlobalAddress &&
       N->getOpcode() != ISD::TargetExternalSymbol &&
+      N->getOpcode() != ISD::MCSymbol &&
       N->getOpcode() != ISD::TargetBlockAddress)
     return false;
 
