@@ -1991,6 +1991,18 @@ bool MipsAsmParser::loadAndAddSymbolAddress(
   const MCSymbolRefExpr *LoExpr = MCSymbolRefExpr::create(
       &Symbol->getSymbol(), MCSymbolRefExpr::VK_Mips_ABS_LO, getContext());
 
+  bool UseSrcReg = SrcReg != Mips::NoRegister;
+
+  unsigned TmpReg = DstReg;
+  if (UseSrcReg && (DstReg == SrcReg)) {
+    // At this point we need AT to perform the expansions and we exit if it is
+    // not available.
+    unsigned ATReg = getATReg(IDLoc);
+    if (!ATReg)
+      return true;
+    TmpReg = ATReg;
+  }
+
   if (!Is32BitSym) {
     // If it's a 64-bit architecture, expand to:
     // la d,sym => lui  d,highest(sym)
@@ -2005,31 +2017,31 @@ bool MipsAsmParser::loadAndAddSymbolAddress(
         &Symbol->getSymbol(), MCSymbolRefExpr::VK_Mips_HIGHER, getContext());
 
     tmpInst.setOpcode(Mips::LUi);
-    tmpInst.addOperand(MCOperand::createReg(DstReg));
+    tmpInst.addOperand(MCOperand::createReg(TmpReg));
     tmpInst.addOperand(MCOperand::createExpr(HighestExpr));
     Instructions.push_back(tmpInst);
 
-    createLShiftOri<0>(MCOperand::createExpr(HigherExpr), DstReg, SMLoc(),
+    createLShiftOri<0>(MCOperand::createExpr(HigherExpr), TmpReg, SMLoc(),
                        Instructions);
-    createLShiftOri<16>(MCOperand::createExpr(HiExpr), DstReg, SMLoc(),
+    createLShiftOri<16>(MCOperand::createExpr(HiExpr), TmpReg, SMLoc(),
                         Instructions);
-    createLShiftOri<16>(MCOperand::createExpr(LoExpr), DstReg, SMLoc(),
+    createLShiftOri<16>(MCOperand::createExpr(LoExpr), TmpReg, SMLoc(),
                         Instructions);
   } else {
     // Otherwise, expand to:
     // la d,sym => lui  d,hi16(sym)
     //             ori  d,d,lo16(sym)
     tmpInst.setOpcode(Mips::LUi);
-    tmpInst.addOperand(MCOperand::createReg(DstReg));
+    tmpInst.addOperand(MCOperand::createReg(TmpReg));
     tmpInst.addOperand(MCOperand::createExpr(HiExpr));
     Instructions.push_back(tmpInst);
 
-    createLShiftOri<0>(MCOperand::createExpr(LoExpr), DstReg, SMLoc(),
+    createLShiftOri<0>(MCOperand::createExpr(LoExpr), TmpReg, SMLoc(),
                        Instructions);
   }
 
-  if (SrcReg != Mips::NoRegister)
-    createAddu(DstReg, DstReg, SrcReg, Instructions);
+  if (UseSrcReg)
+    createAddu(DstReg, TmpReg, SrcReg, Instructions);
 
   return false;
 }
