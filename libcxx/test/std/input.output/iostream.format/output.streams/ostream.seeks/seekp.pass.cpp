@@ -40,11 +40,13 @@ protected:
 int main()
 {
     {
+        seekpos_called = 0;
         std::ostream os((std::streambuf*)0);
         assert(&os.seekp(5) == &os);
         assert(seekpos_called == 0);
     }
     {
+        seekpos_called = 0;
         testbuf<char> sb;
         std::ostream os(&sb);
         assert(&os.seekp(10) == &os);
@@ -53,5 +55,14 @@ int main()
         assert(&os.seekp(-1) == &os);
         assert(seekpos_called == 2);
         assert(os.fail());
+    }
+    { // See https://llvm.org/bugs/show_bug.cgi?id=21361
+        seekpos_called = 0;
+        testbuf<char> sb;
+        std::ostream os(&sb);
+        os.setstate(std::ios_base::eofbit);
+        assert(&os.seekp(10) == &os);
+        assert(seekpos_called == 1);
+        assert(os.rdstate() == std::ios_base::eofbit);
     }
 }
