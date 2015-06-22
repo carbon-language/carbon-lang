@@ -195,7 +195,7 @@ namespace {
       return true;
     }
   };
-}
+} // namespace
 
 /// \brief Determine whether it's possible for an unexpanded parameter pack to
 /// be valid in this location. This only happens when we're in a declaration
@@ -806,7 +806,7 @@ class ParameterPackValidatorCCC : public CorrectionCandidateCallback {
   }
 };
 
-}
+} // namespace
 
 /// \brief Called when an expression computing the size of a parameter pack
 /// is parsed.

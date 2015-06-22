@@ -1895,7 +1895,7 @@ class ObjCInterfaceOrSuperCCC : public CorrectionCandidateCallback {
   }
 };
 
-}
+} // namespace
 
 Sema::ObjCMessageKind Sema::getObjCMessageKind(Scope *S,
                                                IdentifierInfo *Name,
@@ -3184,7 +3184,7 @@ namespace {
       }
     }
   };
-}
+} // namespace
 
 bool Sema::isKnownName(StringRef name) {
   if (name.empty())

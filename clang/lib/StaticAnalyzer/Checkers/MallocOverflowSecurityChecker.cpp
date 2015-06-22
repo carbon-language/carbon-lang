@@ -187,7 +187,7 @@ private:
       toScanFor(v), Context(ctx)
     { }
   };
-}
+} // namespace
 
 // OutputPossibleOverflows - We've found a possible overflow earlier,
 // now check whether Body might contain a comparison which might be

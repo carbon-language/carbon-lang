@@ -791,7 +791,7 @@ namespace {
   };
   typedef ScopeRAII<false> BlockScopeRAII;
   typedef ScopeRAII<true> FullExpressionRAII;
-}
+} // namespace
 
 bool SubobjectDesignator::checkSubobject(EvalInfo &Info, const Expr *E,
                                          CheckSubobjectKind CSK) {
@@ -1091,7 +1091,7 @@ namespace {
       return false;
     return LHS.Path == RHS.Path;
   }
-}
+} // namespace
 
 static bool Evaluate(APValue &Result, EvalInfo &Info, const Expr *E);
 static bool EvaluateInPlace(APValue &Result, EvalInfo &Info,
@@ -3210,7 +3210,7 @@ enum EvalStmtResult {
   /// Still scanning for 'case' or 'default' statement.
   ESR_CaseNotFound
 };
-}
+} // namespace
 
 static bool EvaluateDecl(EvalInfo &Info, const Decl *D) {
   if (const VarDecl *VD = dyn_cast<VarDecl>(D)) {
@@ -4314,7 +4314,7 @@ public:
   }
 };
 
-}
+} // namespace
 
 //===----------------------------------------------------------------------===//
 // Common base class for lvalue and temporary evaluation.
@@ -4411,7 +4411,7 @@ public:
     }
   }
 };
-}
+} // namespace
 
 //===----------------------------------------------------------------------===//
 // LValue Evaluation
@@ -5153,7 +5153,7 @@ namespace {
     bool VisitCXXConstructExpr(const CXXConstructExpr *E);
     bool VisitCXXStdInitializerListExpr(const CXXStdInitializerListExpr *E);
   };
-}
+} // namespace
 
 /// Perform zero-initialization on an object of non-union class type.
 /// C++11 [dcl.init]p5:
@@ -6645,7 +6645,7 @@ private:
   }
 };
 
-}
+} // namespace
 
 bool DataRecursiveIntBinOpEvaluator::
        VisitBinOpLHSOnly(EvalResult &LHSResult, const BinaryOperator *E,
@@ -8640,7 +8640,7 @@ struct ICEDiag {
   ICEDiag(ICEKind IK, SourceLocation l) : Kind(IK), Loc(l) {}
 };
 
-}
+} // namespace
 
 static ICEDiag NoDiag() { return ICEDiag(IK_ICE, SourceLocation()); }
 

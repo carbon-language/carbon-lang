@@ -28,7 +28,7 @@ public:
   virtual void remove(CharSourceRange range);
 };
 
-}
+} // namespace edit
 
 } // end namespace clang
 

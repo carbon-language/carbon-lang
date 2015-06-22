@@ -209,6 +209,6 @@ namespace clang {
   /// Retrieves the range of the given template parameter lists.
   SourceRange getTemplateParamsRange(TemplateParameterList const *const *Params,
                                      unsigned NumParams);  
-}
+} // namespace clang
 
 #endif

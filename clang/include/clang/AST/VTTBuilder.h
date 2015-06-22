@@ -157,6 +157,6 @@ public:
 
 };
 
-}
+} // namespace clang
 
 #endif

@@ -42,10 +42,10 @@ enum ID {
     LastOption
 #undef OPTION
   };
-}
+} // namespace options
 
 llvm::opt::OptTable *createDriverOptTable();
-}
-}
+} // namespace driver
+} // namespace clang
 
 #endif

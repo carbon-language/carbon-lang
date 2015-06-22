@@ -65,7 +65,7 @@ namespace {
     /// \brief Visit a single template argument.
     void VisitTemplateArgument(const TemplateArgument &Arg);
   };
-}
+} // namespace
 
 void StmtProfiler::VisitStmt(const Stmt *S) {
   ID.AddInteger(S->getStmtClass());
@@ -425,7 +425,7 @@ OMPClauseProfiler::VisitOMPCopyprivateClause(const OMPCopyprivateClause *C) {
 void OMPClauseProfiler::VisitOMPFlushClause(const OMPFlushClause *C) {
   VisitOMPClauseList(C);
 }
-}
+} // namespace
 
 void
 StmtProfiler::VisitOMPExecutableDirective(const OMPExecutableDirective *S) {

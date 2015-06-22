@@ -56,7 +56,7 @@ public:
   void checkBranchCondition(const Stmt *Condition, CheckerContext &Ctx) const;
 };
 
-}
+} // namespace
 
 void UndefBranchChecker::checkBranchCondition(const Stmt *Condition,
                                               CheckerContext &Ctx) const {

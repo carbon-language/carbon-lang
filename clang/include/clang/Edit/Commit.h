@@ -142,7 +142,7 @@ private:
   }
 };
 
-}
+} // namespace edit
 
 } // end namespace clang
 

@@ -519,6 +519,7 @@ inline T *ScratchAlloc::allocate() {
   return IdxCtx.StrScratch.Allocate<T>();
 }
 
-}} // end clang::cxindex
+} // namespace cxindex
+} // namespace clang
 
 #endif

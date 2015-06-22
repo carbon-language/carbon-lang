@@ -338,7 +338,7 @@ namespace {
    ExprResult buildGet() override;
    ExprResult buildSet(Expr *op, SourceLocation, bool) override;
  };
-}
+} // namespace
 
 /// Capture the given expression in an OpaqueValueExpr.
 OpaqueValueExpr *PseudoOpBuilder::capture(Expr *e) {

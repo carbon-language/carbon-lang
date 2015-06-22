@@ -152,5 +152,5 @@ TEST_F(FormatTestProto, FormatsService) {
                "};");
 }
 
-} // end namespace tooling
+} // namespace format
 } // end namespace clang

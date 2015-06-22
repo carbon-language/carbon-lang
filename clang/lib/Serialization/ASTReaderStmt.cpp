@@ -103,7 +103,7 @@ namespace clang {
     void Visit##Type(Type *);
 #include "clang/AST/StmtNodes.inc"
   };
-}
+} // namespace clang
 
 void ASTStmtReader::
 ReadTemplateKWAndArgsInfo(ASTTemplateKWAndArgsInfo &Args,
@@ -1699,7 +1699,7 @@ public:
 #include "clang/Basic/OpenMPKinds.def"
   OMPClause *readClause();
 };
-}
+} // namespace clang
 
 OMPClause *OMPClauseReader::readClause() {
   OMPClause *C;

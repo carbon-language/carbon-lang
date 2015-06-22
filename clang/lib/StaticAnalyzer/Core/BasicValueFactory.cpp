@@ -50,7 +50,7 @@ template<> struct FoldingSetTrait<SValPair> {
     X.second.Profile(ID);
   }
 };
-}
+} // namespace llvm
 
 typedef llvm::FoldingSet<llvm::FoldingSetNodeWrapper<SValData> >
   PersistentSValsTy;

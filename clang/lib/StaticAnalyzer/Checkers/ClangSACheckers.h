@@ -30,8 +30,8 @@ class CheckerRegistry;
 #undef CHECKER
 #undef GET_CHECKERS
 
-} // end ento namespace
+} // namespace ento
 
-} // end clang namespace
+} // namespace clang
 
 #endif

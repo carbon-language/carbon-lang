@@ -44,7 +44,7 @@ public:
   void sortWorklist();
 };
 
-}
+} // namespace
 
 void DataflowWorklist::enqueueBlock(const clang::CFGBlock *block) {
   if (block && !enqueuedBlocks[block->getBlockID()]) {
@@ -106,7 +106,7 @@ public:
       DSetFact(false), // This is a *major* performance win.
       killAtAssign(KillAtAssign) {}
 };
-}
+} // namespace
 
 static LiveVariablesImpl &getImpl(void *x) {
   return *((LiveVariablesImpl *) x);
@@ -135,7 +135,7 @@ namespace {
     }
     return A;
   }
-}
+} // namespace
 
 void LiveVariables::Observer::anchor() { }
 
@@ -212,7 +212,7 @@ public:
   void VisitUnaryOperator(UnaryOperator *UO);
   void Visit(Stmt *S);
 };
-}
+} // namespace
 
 static const VariableArrayType *FindVA(QualType Ty) {
   const Type *ty = Ty.getTypePtr();

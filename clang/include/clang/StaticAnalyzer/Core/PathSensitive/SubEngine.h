@@ -155,8 +155,8 @@ public:
   virtual void processEndWorklist(bool hasWorkRemaining) = 0;
 };
 
-} // end GR namespace
+} // namespace ento
 
-} // end clang namespace
+} // namespace clang
 
 #endif

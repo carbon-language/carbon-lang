@@ -38,6 +38,6 @@ public:
   virtual Module *getModule(unsigned ModuleID) = 0;
 };
   
-}
+} // namespace clang
 
 #endif

@@ -63,7 +63,7 @@ public:
   void dump() const;
   void dumpToStream(raw_ostream &os) const;
 };
-}
+} // namespace
 
 static SVal computeExtentBegin(SValBuilder &svalBuilder, 
                                const MemRegion *region) {

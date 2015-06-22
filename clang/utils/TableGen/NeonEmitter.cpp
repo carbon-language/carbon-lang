@@ -89,7 +89,7 @@ enum EltType {
   Float32,
   Float64
 };
-}
+} // namespace NeonTypeFlags
 
 class Intrinsic;
 class NeonEmitter;

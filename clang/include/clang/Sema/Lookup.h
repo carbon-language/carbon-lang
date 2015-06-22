@@ -750,6 +750,6 @@ public:
   iterator end() { return iterator(Decls.end()); }
 };
 
-}
+} // namespace clang
 
 #endif

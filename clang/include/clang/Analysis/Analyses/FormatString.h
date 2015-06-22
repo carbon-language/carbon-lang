@@ -393,7 +393,7 @@ public:
   static bool namedTypeToLengthModifier(QualType QT, LengthModifier &LM);
 };
 
-} // end analyze_format_string namespace
+} // namespace analyze_format_string
 
 //===----------------------------------------------------------------------===//
 /// Pieces specific to fprintf format strings.
@@ -529,7 +529,7 @@ public:
   bool hasValidPrecision() const;
   bool hasValidFieldWidth() const;
 };
-}  // end analyze_printf namespace
+} // namespace analyze_printf
 
 //===----------------------------------------------------------------------===//
 /// Pieces specific to fscanf format strings.
@@ -595,7 +595,7 @@ public:
   static ScanfSpecifier Parse(const char *beg, const char *end);
 };
 
-} // end analyze_scanf namespace
+} // namespace analyze_scanf
 
 //===----------------------------------------------------------------------===//
 // Parsing and processing of format strings (both fprintf and fscanf).
@@ -665,6 +665,6 @@ bool ParseScanfString(FormatStringHandler &H,
                       const char *beg, const char *end, const LangOptions &LO,
                       const TargetInfo &Target);
 
-} // end analyze_format_string namespace
-} // end clang namespace
+} // namespace analyze_format_string
+} // namespace clang
 #endif

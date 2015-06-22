@@ -109,4 +109,4 @@ bool implies(const LExpr *LHS, const LExpr *RHS) {
 }
 }
 }
-}
+} // namespace clang

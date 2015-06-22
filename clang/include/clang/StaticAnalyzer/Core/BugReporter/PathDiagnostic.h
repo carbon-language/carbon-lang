@@ -842,8 +842,8 @@ public:
   void FullProfile(llvm::FoldingSetNodeID &ID) const;
 };  
 
-} // end GR namespace
+} // namespace ento
 
-} //end clang namespace
+} // namespace clang
 
 #endif

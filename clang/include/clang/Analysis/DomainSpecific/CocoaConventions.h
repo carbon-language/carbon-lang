@@ -37,6 +37,7 @@ namespace coreFoundation {
   bool followsCreateRule(const FunctionDecl *FD);
 }
 
-}} // end: "clang:ento"
+} // namespace ento
+} // namespace clang
 
 #endif

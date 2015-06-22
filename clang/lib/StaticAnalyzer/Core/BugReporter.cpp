@@ -2847,7 +2847,7 @@ public:
 
   bool popNextReportGraph(ReportGraph &GraphWrapper);
 };
-}
+} // namespace
 
 TrimmedGraph::TrimmedGraph(const ExplodedGraph *OriginalGraph,
                            ArrayRef<const ExplodedNode *> Nodes) {

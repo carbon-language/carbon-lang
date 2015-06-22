@@ -38,7 +38,7 @@ namespace frontend {
     ObjCXXSystem,   ///< Like System, but only used for ObjC++.
     After           ///< Like System, but searched after the system directories.
   };
-}
+} // namespace frontend
 
 /// HeaderSearchOptions - Helper class for storing options related to the
 /// initialization of the HeaderSearch object.

@@ -188,7 +188,7 @@ namespace {
                                 SourceLocation (Expr::*v)() const) {
     return static_cast<const E*>(expr)->getLocStart();
   }
-}
+} // namespace
 
 SourceLocation Expr::getExprLoc() const {
   switch (getStmtClass()) {
@@ -2907,7 +2907,7 @@ namespace {
         HasSideEffects = true;
     }
   };
-}
+} // namespace
 
 bool Expr::HasSideEffects(const ASTContext &Ctx,
                           bool IncludePossibleEffects) const {
@@ -3208,7 +3208,7 @@ namespace {
       NonTrivial = true;
     }
   };
-}
+} // namespace
 
 bool Expr::hasNonTrivialCall(const ASTContext &Ctx) const {
   NonTrivialCallFinder Finder(Ctx);

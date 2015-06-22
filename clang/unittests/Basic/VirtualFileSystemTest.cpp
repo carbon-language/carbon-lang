@@ -279,7 +279,7 @@ struct ScopedDir {
   }
   operator StringRef() { return Path.str(); }
 };
-}
+} // namespace
 
 TEST(VirtualFileSystemTest, BasicRealFSIteration) {
   ScopedDir TestDirectory("virtual-file-system-test", /*Unique*/true);

@@ -82,6 +82,6 @@ template <> struct isPodLike<clang::BaseSubobject> {
   static const bool value = true;
 };
 
-}
+} // namespace llvm
 
 #endif

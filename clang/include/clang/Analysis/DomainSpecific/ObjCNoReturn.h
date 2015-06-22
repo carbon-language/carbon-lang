@@ -41,6 +41,6 @@ public:
   /// return.
   bool isImplicitNoReturn(const ObjCMessageExpr *ME);
 };
-}
+} // namespace clang
 
 #endif

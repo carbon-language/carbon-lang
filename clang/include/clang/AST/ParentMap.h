@@ -63,5 +63,5 @@ public:
   }
 };
 
-} // end clang namespace
+} // namespace clang
 #endif

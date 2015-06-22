@@ -36,8 +36,8 @@ template <class T> bool containsStmt(const Stmt *S) {
   return false;
 }
 
-} // end GR namespace
+} // namespace ento
 
-} // end clang namespace
+} // namespace clang
 
 #endif

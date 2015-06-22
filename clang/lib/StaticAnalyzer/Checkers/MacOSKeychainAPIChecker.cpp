@@ -151,7 +151,7 @@ private:
                                    BugReport &BR) override;
   };
 };
-}
+} // namespace
 
 /// ProgramState traits to store the currently allocated (and not yet freed)
 /// symbols. This is a map from the allocated content symbol to the

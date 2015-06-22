@@ -131,7 +131,7 @@ namespace llvm {
   template <> struct isPodLike<BindingKey> {
     static const bool value = true;
   };
-} // end llvm namespace
+} // namespace llvm
 
 LLVM_DUMP_METHOD void BindingKey::dump() const { llvm::errs() << *this; }
 
@@ -309,7 +309,7 @@ public:
 
   bool supportsFields() const { return SupportsFields; }
 };
-}
+} // namespace
 
 //===----------------------------------------------------------------------===//
 // Main RegionStore logic.
@@ -737,7 +737,7 @@ public:
     static_cast<DERIVED*>(this)->VisitCluster(BaseR, C);
   }
 };
-}
+} // namespace
 
 //===----------------------------------------------------------------------===//
 // Binding invalidation.
@@ -963,7 +963,7 @@ public:
   void VisitCluster(const MemRegion *baseR, const ClusterBindings *C);
   void VisitBinding(SVal V);
 };
-}
+} // namespace
 
 void invalidateRegionsWorker::VisitBinding(SVal V) {
   // A symbol?  Mark it touched by the invalidation.
@@ -2196,7 +2196,7 @@ public:
   bool UpdatePostponed();
   void VisitBinding(SVal V);
 };
-}
+} // namespace
 
 void removeDeadBindingsWorker::VisitAddedToCluster(const MemRegion *baseR,
                                                    const ClusterBindings &C) {

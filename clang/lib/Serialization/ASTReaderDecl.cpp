@@ -387,7 +387,7 @@ namespace clang {
       }
     }
   };
-}
+} // namespace clang
 
 namespace {
 /// Iterator over the redeclarations of a declaration that have already
@@ -423,7 +423,7 @@ public:
     return A.Current != B.Current;
   }
 };
-}
+} // namespace
 template<typename DeclT>
 llvm::iterator_range<MergedRedeclIterator<DeclT>> merged_redecls(DeclT *D) {
   return llvm::iterator_range<MergedRedeclIterator<DeclT>>(
@@ -2934,7 +2934,7 @@ void ASTDeclReader::attachPreviousDeclImpl(ASTReader &Reader,
           std::make_pair(Canon, IsUnresolved ? PrevFD : FD));
   }
 }
-}
+} // namespace clang
 void ASTDeclReader::attachPreviousDeclImpl(ASTReader &Reader, ...) {
   llvm_unreachable("attachPreviousDecl on non-redeclarable declaration");
 }
@@ -3490,7 +3490,7 @@ namespace {
       return Chain;
     }
   };
-}
+} // namespace
 
 void ASTReader::loadPendingDeclChain(Decl *CanonDecl) {
   // The decl might have been merged into something else after being added to
@@ -3647,7 +3647,7 @@ namespace {
       return true;
     }
   };
-}
+} // namespace
 
 void ASTReader::loadObjCCategories(serialization::GlobalDeclID ID,
                                    ObjCInterfaceDecl *D,

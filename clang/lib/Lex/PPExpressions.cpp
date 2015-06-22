@@ -52,7 +52,7 @@ public:
   void setEnd(SourceLocation L) { Range.setEnd(L); }
 };
 
-}
+} // namespace
 
 static bool EvaluateDirectiveSubExpr(PPValue &LHS, unsigned MinPrec,
                                      Token &PeekTok, bool ValueLive,

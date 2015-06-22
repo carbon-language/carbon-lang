@@ -246,7 +246,7 @@ public:
   }
 };
 
-}
+} // namespace
 
 void ento::registerMallocSizeofChecker(CheckerManager &mgr) {
   mgr.registerChecker<MallocSizeofChecker>();

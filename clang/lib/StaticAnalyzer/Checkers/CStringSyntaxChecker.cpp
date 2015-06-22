@@ -184,7 +184,7 @@ public:
     walker.Visit(D->getBody());
   }
 };
-}
+} // namespace
 
 void ento::registerCStringSyntaxChecker(CheckerManager &mgr) {
   mgr.registerChecker<CStringSyntaxChecker>();

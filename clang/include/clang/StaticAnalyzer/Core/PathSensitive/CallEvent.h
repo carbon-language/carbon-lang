@@ -1027,6 +1027,6 @@ namespace llvm {
       return Val.get();
     }
   };
-}
+} // namespace llvm
 
 #endif

@@ -31,7 +31,7 @@ class ExprInspectionChecker : public Checker< eval::Call > {
 public:
   bool evalCall(const CallExpr *CE, CheckerContext &C) const;
 };
-}
+} // namespace
 
 bool ExprInspectionChecker::evalCall(const CallExpr *CE,
                                      CheckerContext &C) const {

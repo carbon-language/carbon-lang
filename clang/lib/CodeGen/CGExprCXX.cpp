@@ -1213,7 +1213,7 @@ namespace {
       EmitNewDeleteCall(CGF, OperatorDelete, FPT, DeleteArgs);
     }
   };
-}
+} // namespace
 
 /// Enter a cleanup to call 'operator delete' if the initializer in a
 /// new-expression throws.
@@ -1437,7 +1437,7 @@ namespace {
       CGF.EmitDeleteCall(OperatorDelete, Ptr, ElementType);
     }
   };
-}
+} // namespace
 
 void
 CodeGenFunction::pushCallObjectDeleteCleanup(const FunctionDecl *OperatorDelete,
@@ -1564,7 +1564,7 @@ namespace {
       EmitNewDeleteCall(CGF, OperatorDelete, DeleteFTy, Args);
     }
   };
-}
+} // namespace
 
 /// Emit the code for deleting an array of objects.
 static void EmitArrayDelete(CodeGenFunction &CGF,

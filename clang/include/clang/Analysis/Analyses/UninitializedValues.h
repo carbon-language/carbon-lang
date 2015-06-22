@@ -122,5 +122,5 @@ void runUninitializedVariablesAnalysis(const DeclContext &dc, const CFG &cfg,
                                        UninitVariablesHandler &handler,
                                        UninitVariablesAnalysisStats &stats);
 
-}
+} // namespace clang
 #endif

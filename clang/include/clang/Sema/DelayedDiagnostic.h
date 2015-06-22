@@ -291,7 +291,7 @@ public:
   bool pool_empty() const { return Diagnostics.empty(); }
 };
 
-}
+} // namespace sema
 
 /// Add a diagnostic to the current delay pool.
 inline void Sema::DelayedDiagnostics::add(const sema::DelayedDiagnostic &diag) {
@@ -300,6 +300,6 @@ inline void Sema::DelayedDiagnostics::add(const sema::DelayedDiagnostic &diag) {
 }
 
 
-}
+} // namespace clang
 
 #endif

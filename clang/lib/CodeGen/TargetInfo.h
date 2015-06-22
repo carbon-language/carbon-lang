@@ -226,6 +226,6 @@ public:
     return 0;
   }
 };
-}
+} // namespace clang
 
 #endif

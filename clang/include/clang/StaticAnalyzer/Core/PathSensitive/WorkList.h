@@ -93,8 +93,8 @@ public:
   static WorkList *makeBFSBlockDFSContents();
 };
 
-} // end GR namespace
+} // namespace ento
 
-} // end clang namespace
+} // namespace clang
 
 #endif

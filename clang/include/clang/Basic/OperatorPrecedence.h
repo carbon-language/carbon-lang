@@ -41,7 +41,7 @@ namespace prec {
     Multiplicative  = 13,   // *, /, %
     PointerToMember = 14    // .*, ->*
   };
-}
+} // namespace prec
 
 /// \brief Return the precedence of the specified binary operator token.
 prec::Level getBinOpPrecedence(tok::TokenKind Kind, bool GreaterThanIsOperator,

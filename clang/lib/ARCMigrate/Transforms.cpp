@@ -355,7 +355,7 @@ public:
   }
 };
 
-}
+} // namespace
 
 MigrationContext::~MigrationContext() {
   for (traverser_iterator

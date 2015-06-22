@@ -260,6 +260,7 @@ namespace consumed {
     /// exactly once.
     void run(AnalysisDeclContext &AC);
   };
-}} // end namespace clang::consumed
+} // namespace consumed
+} // namespace clang
 
 #endif

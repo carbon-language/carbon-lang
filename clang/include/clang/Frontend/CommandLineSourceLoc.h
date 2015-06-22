@@ -51,7 +51,7 @@ public:
   }
 };
 
-}
+} // namespace clang
 
 namespace llvm {
   namespace cl {
@@ -81,7 +81,7 @@ namespace llvm {
 
       return false;
     }
-  }
-}
+  } // namespace cl
+} // namespace llvm
 
 #endif

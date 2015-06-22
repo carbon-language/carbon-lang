@@ -241,7 +241,7 @@ public:
                      BR);
   }
 };
-}
+} // namespace
 
 void ento::registerObjCDeallocChecker(CheckerManager &mgr) {
   mgr.registerChecker<ObjCDeallocChecker>();

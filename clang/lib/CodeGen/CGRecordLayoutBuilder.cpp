@@ -212,7 +212,7 @@ private:
   CGRecordLowering(const CGRecordLowering &) = delete;
   void operator =(const CGRecordLowering &) = delete;
 };
-} // namespace {
+} // namespace
 
 CGRecordLowering::CGRecordLowering(CodeGenTypes &Types, const RecordDecl *D,                                 bool Packed)
   : Types(Types), Context(Types.getContext()), D(D),

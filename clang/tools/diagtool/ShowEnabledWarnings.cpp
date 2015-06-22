@@ -34,7 +34,7 @@ namespace {
 
     bool operator<(const PrettyDiag &x) const { return Name < x.Name; }
   };
-}
+} // namespace
 
 static void printUsage() {
   llvm::errs() << "Usage: diagtool show-enabled [<flags>] <single-input.c>\n";

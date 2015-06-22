@@ -44,8 +44,8 @@ enum ID {
 /// to target-specific ones.
 typedef unsigned Map[Count];
 
-}
+} // namespace LangAS
 
-}
+} // namespace clang
 
 #endif

@@ -40,7 +40,7 @@ public:
     }
   }
 };
-}
+} // namespace
 
 void ento::registerDominatorsTreeDumper(CheckerManager &mgr) {
   mgr.registerChecker<DominatorsTreeDumper>();
@@ -60,7 +60,7 @@ public:
     }
   }
 };
-}
+} // namespace
 
 void ento::registerLiveVariablesDumper(CheckerManager &mgr) {
   mgr.registerChecker<LiveVariablesDumper>();
@@ -80,7 +80,7 @@ public:
     }
   }
 };
-}
+} // namespace
 
 void ento::registerCFGViewer(CheckerManager &mgr) {
   mgr.registerChecker<CFGViewer>();
@@ -106,7 +106,7 @@ public:
     }
   }
 };
-}
+} // namespace
 
 void ento::registerCFGDumper(CheckerManager &mgr) {
   mgr.registerChecker<CFGDumper>();
@@ -126,7 +126,7 @@ public:
     CG.viewGraph();
   }
 };
-}
+} // namespace
 
 void ento::registerCallGraphViewer(CheckerManager &mgr) {
   mgr.registerChecker<CallGraphViewer>();
@@ -146,7 +146,7 @@ public:
     CG.dump();
   }
 };
-}
+} // namespace
 
 void ento::registerCallGraphDumper(CheckerManager &mgr) {
   mgr.registerChecker<CallGraphDumper>();
@@ -185,7 +185,7 @@ public:
     llvm::errs() << "[stats]\n" << "num-entries = " << Keys.size() << '\n';
   }
 };
-}
+} // namespace
 
 void ento::registerConfigDumper(CheckerManager &mgr) {
   mgr.registerChecker<ConfigDumper>();

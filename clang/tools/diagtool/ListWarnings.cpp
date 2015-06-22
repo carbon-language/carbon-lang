@@ -37,7 +37,7 @@ struct Entry {
   
   bool operator<(const Entry &x) const { return DiagName < x.DiagName; }
 };
-}
+} // namespace
 
 static void printEntries(std::vector<Entry> &entries, llvm::raw_ostream &out) {
   for (std::vector<Entry>::iterator it = entries.begin(), ei = entries.end();

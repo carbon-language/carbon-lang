@@ -198,7 +198,7 @@ public:
   bool visitInputFile(StringRef Filename, bool isSystem,
                       bool isOverridden) override;
 };
-}
+} // namespace
 
 DependencyFileGenerator::DependencyFileGenerator(void *Impl)
 : Impl(Impl) { }

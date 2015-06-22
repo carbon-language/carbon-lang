@@ -213,7 +213,7 @@ public:
     return EC;
   }
 };
-}
+} // namespace
 
 directory_iterator RealFileSystem::dir_begin(const Twine &Dir,
                                              std::error_code &EC) {
@@ -1024,7 +1024,7 @@ public:
   JSONWriter(llvm::raw_ostream &OS) : OS(OS) {}
   void write(ArrayRef<YAMLVFSEntry> Entries, Optional<bool> IsCaseSensitive);
 };
-}
+} // namespace
 
 bool JSONWriter::containedIn(StringRef Parent, StringRef Path) {
   using namespace llvm::sys;

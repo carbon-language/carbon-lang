@@ -644,7 +644,7 @@ namespace {
       StoredResults.clear();
     }
   };
-}
+} // namespace
 
 extern "C" {
 struct CodeCompleteAtInfo {
@@ -996,7 +996,7 @@ namespace {
       return result < 0;
     }
   };
-}
+} // namespace
 
 extern "C" {
   void clang_sortCodeCompletionResults(CXCompletionResult *Results,

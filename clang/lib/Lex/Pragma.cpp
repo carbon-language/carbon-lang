@@ -157,7 +157,7 @@ public:
     Failed = true;
   }
 };
-}
+} // namespace
 
 /// Handle_Pragma - Read a _Pragma directive, slice it up, process it, then
 /// return the first token after the directive.  The _Pragma token has just

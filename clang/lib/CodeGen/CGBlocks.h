@@ -37,7 +37,7 @@ class FunctionType;
 class PointerType;
 class Value;
 class LLVMContext;
-}
+} // namespace llvm
 
 namespace clang {
 

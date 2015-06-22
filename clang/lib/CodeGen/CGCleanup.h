@@ -551,7 +551,7 @@ EHScopeStack::stabilize(iterator ir) const {
   return stable_iterator(EndOfBuffer - ir.Ptr);
 }
 
-}
-}
+} // namespace CodeGen
+} // namespace clang
 
 #endif

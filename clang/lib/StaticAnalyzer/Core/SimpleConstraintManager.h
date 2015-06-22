@@ -93,8 +93,8 @@ protected:
                                          bool Assumption);
 };
 
-} // end GR namespace
+} // namespace ento
 
-} // end clang namespace
+} // namespace clang
 
 #endif

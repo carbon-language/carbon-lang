@@ -89,6 +89,6 @@ public:
   unsigned severity;
   unsigned category;
 };
-}
+} // namespace clang
 
 #endif

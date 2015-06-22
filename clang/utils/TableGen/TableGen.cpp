@@ -237,7 +237,7 @@ bool ClangTableGenMain(raw_ostream &OS, RecordKeeper &Records) {
 
   return false;
 }
-}
+} // namespace
 
 int main(int argc, char **argv) {
   sys::PrintStackTraceOnErrorSignal();

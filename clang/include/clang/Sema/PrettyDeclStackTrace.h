@@ -42,6 +42,6 @@ public:
   void print(raw_ostream &OS) const override;
 };
 
-}
+} // namespace clang
 
 #endif

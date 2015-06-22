@@ -485,7 +485,7 @@ class CastExpressionIdValidator : public CorrectionCandidateCallback {
   Token NextToken;
   bool AllowNonTypes;
 };
-}
+} // namespace
 
 /// \brief Parse a cast-expression, or, if \pisUnaryExpression is true, parse
 /// a unary-expression.

@@ -501,5 +501,5 @@ TEST_F(FormatTestJava, AlignsBlockComments) {
                    "  void f() {}"));
 }
 
-} // end namespace tooling
+} // namespace format
 } // end namespace clang

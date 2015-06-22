@@ -142,7 +142,7 @@ public:
 private:
   Token NextToken;
 };
-}
+} // namespace
 
 StmtResult
 Parser::ParseStatementOrDeclarationAfterAttributes(StmtVector &Stmts,

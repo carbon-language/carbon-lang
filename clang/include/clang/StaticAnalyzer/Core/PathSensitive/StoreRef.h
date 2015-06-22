@@ -47,5 +47,6 @@ public:
   const StoreManager &getStoreManager() const { return mgr; }
 };
 
-}}
+} // namespace ento
+} // namespace clang
 #endif

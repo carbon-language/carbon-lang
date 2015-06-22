@@ -53,6 +53,6 @@ public:
   /// \brief A module definition was read from the AST file.
   virtual void ModuleRead(serialization::SubmoduleID ID, Module *Mod) {}
 };
-}
+} // namespace clang
 
 #endif

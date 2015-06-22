@@ -538,6 +538,6 @@ public:
   
 typedef IntrusiveRefCntPtr<AnalyzerOptions> AnalyzerOptionsRef;
   
-}
+} // namespace clang
 
 #endif

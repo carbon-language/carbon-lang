@@ -34,7 +34,7 @@ class ReturnUndefChecker : public Checker< check::PreStmt<ReturnStmt> > {
 public:
   void checkPreStmt(const ReturnStmt *RS, CheckerContext &C) const;
 };
-}
+} // namespace
 
 void ReturnUndefChecker::checkPreStmt(const ReturnStmt *RS,
                                       CheckerContext &C) const {

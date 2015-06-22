@@ -27,5 +27,5 @@ public:
   }
 };
 
-}
+} // namespace clang
 #endif

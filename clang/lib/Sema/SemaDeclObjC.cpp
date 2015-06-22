@@ -446,7 +446,7 @@ class ObjCInterfaceValidatorCCC : public CorrectionCandidateCallback {
   ObjCInterfaceDecl *CurrentIDecl;
 };
 
-}
+} // namespace
 
 static void diagnoseUseOfProtocols(Sema &TheSema,
                                    ObjCContainerDecl *CD,
@@ -3059,7 +3059,7 @@ private:
     searchFromContainer(container);
   }
 };
-}
+} // namespace
 
 void Sema::CheckObjCMethodOverrides(ObjCMethodDecl *ObjCMethod,
                                     ObjCInterfaceDecl *CurrentClass,
@@ -3717,7 +3717,7 @@ namespace {
       return true;
     }
   };
-}
+} // namespace
 
 void Sema::DiagnoseUnusedBackingIvarInAccessor(Scope *S,
                                           const ObjCImplementationDecl *ImplD) {

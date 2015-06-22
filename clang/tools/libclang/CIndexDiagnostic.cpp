@@ -155,7 +155,7 @@ public:
   CXDiagnosticSetImpl *CurrentSet;
   CXDiagnosticSetImpl *MainSet;
 };  
-}
+} // namespace
 
 CXDiagnosticSetImpl *cxdiag::lazyCreateDiags(CXTranslationUnit TU,
                                              bool checkIfChanged) {

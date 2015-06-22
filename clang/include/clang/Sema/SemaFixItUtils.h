@@ -87,5 +87,5 @@ struct ConversionFixItGenerator {
   }
 };
 
-} // endof namespace clang
+} // namespace clang
 #endif

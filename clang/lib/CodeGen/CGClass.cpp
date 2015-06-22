@@ -384,7 +384,7 @@ namespace {
     // external code might potentially access the vtable.
     void VisitCXXThisExpr(const CXXThisExpr *E) { UsesThis = true; }
   };
-}
+} // namespace
 
 static bool BaseInitializerUsesThis(ASTContext &C, const Expr *Init) {
   DynamicThisUseChecker Checker(C);
@@ -860,7 +860,7 @@ namespace {
     CodeGenFunction &CGF;
     SanitizerSet OldSanOpts;
   };
-}
+} // namespace
 
 namespace {
   class FieldMemcpyizer {
@@ -1228,7 +1228,7 @@ namespace {
     }
   };
 
-}
+} // namespace
 
 /// EmitCtorPrologue - This routine generates necessary code to initialize
 /// base classes and non-static data members belonging to this constructor.
@@ -1531,7 +1531,7 @@ namespace {
                       flags.isForNormalCleanup() && useEHCleanupForArray);
     }
   };
-}
+} // namespace
 
 /// \brief Emit all code that comes at the end of class's
 /// destructor. This is to call destructors on members and base classes
@@ -1892,7 +1892,7 @@ namespace {
                                 /*Delegating=*/true, Addr);
     }
   };
-}
+} // namespace
 
 void
 CodeGenFunction::EmitDelegatingCXXConstructorCall(const CXXConstructorDecl *Ctor,
@@ -1945,7 +1945,7 @@ namespace {
                                 /*Delegating=*/false, Addr);
     }
   };
-}
+} // namespace
 
 void CodeGenFunction::PushDestructorCleanup(const CXXDestructorDecl *D,
                                             llvm::Value *Addr) {

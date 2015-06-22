@@ -242,7 +242,7 @@ namespace {
     
       return LeftValue > RightValue;
   }
-}
+} // namespace
 
 /// Determines if the given type is safe for constant capture in C++.
 static bool isSafeForCXXConstantCapture(QualType type) {
@@ -2249,7 +2249,7 @@ namespace {
       CGF.BuildBlockRelease(Addr, BLOCK_FIELD_IS_BYREF);
     }
   };
-}
+} // namespace
 
 /// Enter a cleanup to destroy a __block variable.  Note that this
 /// cleanup should be a no-op if the variable hasn't left the stack

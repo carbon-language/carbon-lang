@@ -721,7 +721,7 @@ public:
     return CacheExists;
   }
 };
-}
+} // namespace clang
 
 std::unique_ptr<FileSystemStatCache> PTHManager::createStatCache() {
   return llvm::make_unique<PTHStatCache>(*FileLookup);

@@ -2237,7 +2237,7 @@ void ItaniumVTableBuilder::dumpLayout(raw_ostream &Out) {
 
   Out << '\n';
 }
-}
+} // namespace
 
 VTableLayout::VTableLayout(uint64_t NumVTableComponents,
                            const VTableComponent *VTableComponents,

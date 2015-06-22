@@ -202,6 +202,6 @@ public:
                               StringRef Path);
 };
 
-}
+} // namespace clang
 
 #endif

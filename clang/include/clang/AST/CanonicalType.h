@@ -659,7 +659,7 @@ CanProxy<Type> CanTypeIterator<InputIterator>::operator->() const {
   return CanProxy<Type>(*this);
 }
 
-}
+} // namespace clang
 
 
 #endif

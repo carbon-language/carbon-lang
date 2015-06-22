@@ -330,6 +330,7 @@ public:
   void viewGraph();
 };
 
-} } // end namespace clang::serialization
+} // namespace serialization
+ } // namespace clang
 
 #endif

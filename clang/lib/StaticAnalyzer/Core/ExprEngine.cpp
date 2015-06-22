@@ -2648,7 +2648,7 @@ struct DOTGraphTraits<ExplodedNode*> :
     return Out.str();
   }
 };
-} // end llvm namespace
+} // namespace llvm
 #endif
 
 void ExprEngine::ViewGraph(bool trim) {

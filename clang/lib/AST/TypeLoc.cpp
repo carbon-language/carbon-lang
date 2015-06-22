@@ -33,7 +33,7 @@ namespace {
     }
 #include "clang/AST/TypeLocNodes.def"
   };
-}
+} // namespace
 
 SourceRange TypeLoc::getLocalSourceRangeImpl(TypeLoc TL) {
   if (TL.isNull()) return SourceRange();
@@ -50,7 +50,7 @@ namespace {
     }
 #include "clang/AST/TypeLocNodes.def"
   };
-}
+} // namespace
 
 /// \brief Returns the alignment of the type source info data block.
 unsigned TypeLoc::getLocalAlignmentForType(QualType Ty) {
@@ -68,7 +68,7 @@ namespace {
     }
 #include "clang/AST/TypeLocNodes.def"
   };
-}
+} // namespace
 
 /// \brief Returns the size of the type source info data block.
 unsigned TypeLoc::getFullDataSizeForType(QualType Ty) {
@@ -96,7 +96,7 @@ namespace {
     }
 #include "clang/AST/TypeLocNodes.def"
   };
-}
+} // namespace
 
 /// \brief Get the next TypeLoc pointed by this TypeLoc, e.g for "int*" the
 /// TypeLoc is a PointerLoc and next TypeLoc is for "int".
@@ -216,7 +216,7 @@ namespace {
     }
 #include "clang/AST/TypeLocNodes.def"
   };
-}
+} // namespace
 
 
 /// \brief Determines if the given type loc corresponds to a

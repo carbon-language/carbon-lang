@@ -53,8 +53,8 @@ public:
   friend class Factory;
 };
 
-} // end GR namespace
+} // namespace ento
 
-} // end clang namespace
+} // namespace clang
 
 #endif

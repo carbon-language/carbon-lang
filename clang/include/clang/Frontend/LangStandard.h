@@ -32,7 +32,7 @@ enum LangFeatures {
   ImplicitInt = (1 << 11)
 };
 
-}
+} // namespace frontend
 
 /// LangStandard - Information about the properties of a particular language
 /// standard.

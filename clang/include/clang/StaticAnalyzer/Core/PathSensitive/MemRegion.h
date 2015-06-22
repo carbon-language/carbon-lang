@@ -1345,9 +1345,9 @@ public:
   bool hasTrait(const MemRegion *MR, InvalidationKinds IK);
 };
   
-} // end GR namespace
+} // namespace ento
 
-} // end clang namespace
+} // namespace clang
 
 //===----------------------------------------------------------------------===//
 // Pretty-printing regions.

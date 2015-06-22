@@ -707,7 +707,7 @@ private:
   llvm::StructType *CatchHandlerTypeType;
 };
 
-}
+} // namespace
 
 CGCXXABI::RecordArgABI
 MicrosoftCXXABI::getRecordArgABI(const CXXRecordDecl *RD) const {
@@ -2195,7 +2195,7 @@ struct CallInitThreadAbort : EHScopeStack::Cleanup {
     CGF.EmitNounwindRuntimeCall(getInitThreadAbortFn(CGF.CGM), Guard);
   }
 };
-}
+} // namespace
 
 void MicrosoftCXXABI::EmitGuardedInit(CodeGenFunction &CGF, const VarDecl &D,
                                       llvm::GlobalVariable *GV,

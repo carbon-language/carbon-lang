@@ -62,6 +62,6 @@ public:
 /// Creates an instance of a C++ ABI class.
 CXXABI *CreateItaniumCXXABI(ASTContext &Ctx);
 CXXABI *CreateMicrosoftCXXABI(ASTContext &Ctx);
-}
+} // namespace clang
 
 #endif

@@ -109,7 +109,7 @@ public:
   static PostOrderCFGView *create(AnalysisDeclContext &analysisContext);
 };
 
-} // end clang namespace
+} // namespace clang
 
 #endif
 

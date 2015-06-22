@@ -69,7 +69,7 @@ public:
   }
 };
 
-}
+} // namespace
 
 bool FixItRewriter::WriteFixedFiles(
             std::vector<std::pair<std::string, std::string> > *RewrittenFiles) {

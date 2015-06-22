@@ -530,7 +530,7 @@ namespace {
       return LHS < RHS.first;
     }
   };
-}
+} // namespace
 
 /// CmpCaseVals - Comparison predicate for sorting case values.
 ///
@@ -1904,7 +1904,7 @@ VarDecl *BuildForRangeVarDecl(Sema &SemaRef, SourceLocation Loc,
   return Decl;
 }
 
-}
+} // namespace
 
 static bool ObjCEnumerationCollection(Expr *Collection) {
   return !Collection->isTypeDependent()
@@ -2116,7 +2116,7 @@ struct InvalidateOnErrorScope {
   Decl *D;
   bool Enabled;
 };
-}
+} // namespace
 
 /// BuildCXXForRangeStmt - Build or instantiate a C++11 for-range statement.
 StmtResult
@@ -2952,7 +2952,7 @@ bool LocalTypedefNameReferencer::VisitRecordType(const RecordType *RT) {
         S.MarkAnyDeclReferenced(T->getLocation(), T, /*OdrUse=*/false);
   return true;
 }
-}
+} // namespace
 
 TypeLoc Sema::getReturnTypeLoc(FunctionDecl *FD) const {
   TypeLoc TL = FD->getTypeSourceInfo()->getTypeLoc().IgnoreParens();
@@ -3489,7 +3489,7 @@ template <> struct DenseMapInfo<CatchHandlerType> {
 template <> struct isPodLike<CatchHandlerType> {
   static const bool value = true;
 };
-}
+} // namespace llvm
 
 namespace {
 class CatchTypePublicBases {
@@ -3526,7 +3526,7 @@ public:
     return false;
   }
 };
-}
+} // namespace
 
 /// ActOnCXXTryBlock - Takes a try compound-statement and a number of
 /// handlers and creates a try statement from them.

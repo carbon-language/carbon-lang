@@ -96,5 +96,5 @@ TEST(RefactoringCallbacksTest, RemovesEntireIfOnEmptyElse) {
       Callback);
 }
 
-} // end namespace ast_matchers
+} // namespace tooling
 } // end namespace clang

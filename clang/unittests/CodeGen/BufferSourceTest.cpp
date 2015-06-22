@@ -74,4 +74,4 @@ TEST(BufferSourceTest, EmitCXXGlobalInitFunc) {
     clang::ParseAST(compiler.getSema(), false, false);
 }
 
-}
+} // namespace

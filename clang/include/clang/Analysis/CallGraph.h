@@ -166,7 +166,7 @@ public:
   void dump() const;
 };
 
-} // end clang namespace
+} // namespace clang
 
 // Graph traits for iteration, viewing.
 namespace llvm {
@@ -248,6 +248,6 @@ template <> struct GraphTraits<const clang::CallGraph*> :
   }
 };
 
-} // end llvm namespace
+} // namespace llvm
 
 #endif

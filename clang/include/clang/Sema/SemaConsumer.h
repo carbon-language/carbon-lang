@@ -43,6 +43,6 @@ namespace clang {
       return Consumer->SemaConsumer;
     }
   };
-}
+} // namespace clang
 
 #endif

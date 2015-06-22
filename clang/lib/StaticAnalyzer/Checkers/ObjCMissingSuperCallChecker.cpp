@@ -81,7 +81,7 @@ private:
   mutable bool IsInitialized;
 };
 
-}
+} // namespace
 
 /// \brief Determine whether the given class has a superclass that we want
 /// to check. The name of the found superclass is stored in SuperclassName.

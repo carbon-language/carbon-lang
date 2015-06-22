@@ -813,8 +813,8 @@ public:
   bool scan(const SymExpr *sym);
 };
 
-} // end ento namespace
+} // namespace ento
 
-} // end clang namespace
+} // namespace clang
 
 #endif

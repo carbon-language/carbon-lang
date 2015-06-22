@@ -59,7 +59,7 @@ public:
   operator NamedDecl*() const { return getDecl(); }
   NamedDecl *operator->() const { return getDecl(); }
 };
-}
+} // namespace clang
 
 // Take a moment to tell SmallVector that DeclAccessPair is POD.
 namespace llvm {

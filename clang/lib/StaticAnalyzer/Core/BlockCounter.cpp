@@ -43,7 +43,7 @@ public:
   }
 };
 
-}
+} // namespace
 
 typedef llvm::ImmutableMap<CountKey, unsigned> CountMap;
 

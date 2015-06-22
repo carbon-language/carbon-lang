@@ -74,7 +74,7 @@ public:
   llvm::Function *makeModuleDtorFunction() override;
 };
 
-}
+} // namespace
 
 CGNVCUDARuntime::CGNVCUDARuntime(CodeGenModule &CGM)
     : CGCUDARuntime(CGM), Context(CGM.getLLVMContext()),

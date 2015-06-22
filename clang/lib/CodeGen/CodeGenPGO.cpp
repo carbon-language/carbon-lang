@@ -605,7 +605,7 @@ struct ComputeRegionCounts : public ConstStmtVisitor<ComputeRegionCounts> {
     RecordNextStmtCount = true;
   }
 };
-}
+} // namespace
 
 void PGOHash::combine(HashType Type) {
   // Check that we never combine 0 and only have six bits.

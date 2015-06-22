@@ -82,7 +82,7 @@ private:
   FileEditsTy::iterator getActionForOffset(FileOffset Offs);
 };
 
-}
+} // namespace edit
 
 } // end namespace clang
 

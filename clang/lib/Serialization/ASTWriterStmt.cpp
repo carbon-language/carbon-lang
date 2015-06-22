@@ -47,7 +47,7 @@ namespace clang {
     void Visit##Type(Type *);
 #include "clang/AST/StmtNodes.inc"
   };
-}
+} // namespace clang
 
 void ASTStmtWriter::
 AddTemplateKWAndArgsInfo(const ASTTemplateKWAndArgsInfo &Args) {
@@ -1708,7 +1708,7 @@ public:
 #include "clang/Basic/OpenMPKinds.def"
   void writeClause(OMPClause *C);
 };
-}
+} // namespace clang
 
 void OMPClauseWriter::writeClause(OMPClause *C) {
   Record.push_back(C->getClauseKind());

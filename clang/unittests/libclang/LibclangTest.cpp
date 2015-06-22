@@ -68,7 +68,7 @@ struct TestVFO {
     clang_VirtualFileOverlay_dispose(VFO);
   }
 };
-}
+} // namespace
 
 TEST(libclang, VirtualFileOverlay_Basic) {
   const char *contents =

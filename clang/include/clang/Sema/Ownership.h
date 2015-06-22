@@ -103,7 +103,7 @@ namespace clang {
       return *this;
     }
   };
-}
+} // namespace clang
 
 namespace llvm {
   template <class T>
@@ -121,7 +121,7 @@ namespace llvm {
 
   template <class T>
   struct isPodLike<clang::OpaquePtr<T> > { static const bool value = true; };
-}
+} // namespace llvm
 
 namespace clang {
   // Basic
@@ -282,6 +282,6 @@ namespace clang {
     assert(!R.isInvalid() && "operation was asserted to never fail!");
     return R.get();
   }
-}
+} // namespace clang
 
 #endif

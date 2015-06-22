@@ -42,8 +42,8 @@ public:
 std::unique_ptr<AnalysisASTConsumer>
 CreateAnalysisConsumer(CompilerInstance &CI);
 
-} // end GR namespace
+} // namespace ento
 
-} // end clang namespace
+} // namespace clang
 
 #endif

@@ -271,7 +271,7 @@ public:
   }
 };
 
-}
+} // namespace
 
 TEST_F(SourceManagerTest, isBeforeInTranslationUnitWithMacroInInclude) {
   const char *header =

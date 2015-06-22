@@ -40,7 +40,7 @@ class TaintManager {
   TaintManager() {}
 };
 
-}
-}
+} // namespace ento
+} // namespace clang
 
 #endif

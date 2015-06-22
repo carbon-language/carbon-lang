@@ -134,7 +134,7 @@ public:
   }
 };
 
-} // end clang namespace
+} // namespace clang
 
 namespace llvm {
   // DeclGroupRef is "like a pointer", implement PointerLikeTypeTraits.
@@ -151,5 +151,5 @@ namespace llvm {
     }
     enum { NumLowBitsAvailable = 0 };
   };
-}
+} // namespace llvm
 #endif

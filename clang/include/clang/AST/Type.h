@@ -67,7 +67,7 @@ namespace llvm {
 
   template <>
   struct isPodLike<clang::QualType> { static const bool value = true; };
-}
+} // namespace llvm
 
 namespace clang {
   class ASTContext;
@@ -1008,7 +1008,7 @@ private:
   static DestructionKind isDestructedTypeImpl(QualType type);
 };
 
-} // end clang.
+} // namespace clang
 
 namespace llvm {
 /// Implement simplify_type for QualType, so that we can dyn_cast from QualType

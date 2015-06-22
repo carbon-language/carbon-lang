@@ -174,7 +174,7 @@ private:
     TheParser.Diag(Loc, diag::err_inline_ms_asm_parsing) << D.getMessage();
   }
 };
-}
+} // namespace
 
 /// Parse an identifier in an MS-style inline assembly block.
 ///

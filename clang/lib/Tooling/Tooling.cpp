@@ -173,7 +173,7 @@ public:
   FrontendAction *create() override { return Action; }
 };
 
-}
+} // namespace
 
 ToolInvocation::ToolInvocation(
     std::vector<std::string> CommandLine, ToolAction *Action,
@@ -406,7 +406,7 @@ public:
   }
 };
 
-}
+} // namespace
 
 int ClangTool::buildASTs(std::vector<std::unique_ptr<ASTUnit>> &ASTs) {
   ASTBuilderAction Action(ASTs);

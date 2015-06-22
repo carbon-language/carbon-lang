@@ -38,7 +38,7 @@ enum TemplateNameKind {
   TNK_Dependent_template_name
 };
 
-}
+} // namespace clang
 #endif
 
 

@@ -263,8 +263,8 @@ public:
   LLVM_ATTRIBUTE_NOINLINE bool Visit(const Stmt *S);
 };
 
-}
-}
+} // namespace cxcursor
+} // namespace clang
 
 #endif
 

@@ -189,6 +189,6 @@ private:
               const char *Fmt) const;
 };
 
-}
+} // namespace Builtin
 } // end namespace clang
 #endif

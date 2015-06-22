@@ -40,6 +40,6 @@ private:
   bool Analyzed;
 };
 
-}
+} // namespace clang
 
 #endif

@@ -184,6 +184,6 @@ inline DeclContext::ddiag_range DeclContext::ddiags() const {
   return ddiag_range(ddiag_iterator(Map->FirstDiagnostic), ddiag_iterator());
 }
 
-}
+} // namespace clang
 
 #endif

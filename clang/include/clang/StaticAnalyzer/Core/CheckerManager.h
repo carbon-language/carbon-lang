@@ -602,8 +602,8 @@ private:
   EventsTy Events;
 };
 
-} // end ento namespace
+} // namespace ento
 
-} // end clang namespace
+} // namespace clang
 
 #endif

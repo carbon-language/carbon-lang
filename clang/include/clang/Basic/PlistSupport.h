@@ -113,7 +113,7 @@ inline void EmitRange(raw_ostream &o, const SourceManager &SM,
   EmitLocation(o, SM, R.getEnd(), FM, indent + 1);
   Indent(o, indent) << "</array>\n";
 }
-}
-}
+} // namespace markup
+} // namespace clang
 
 #endif

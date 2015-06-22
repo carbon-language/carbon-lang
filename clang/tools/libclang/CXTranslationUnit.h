@@ -78,6 +78,7 @@ public:
 };
 
 
-}} // end namespace clang::cxtu
+} // namespace cxtu
+} // namespace clang
 
 #endif

@@ -100,9 +100,9 @@ bool LExpr::implies(const LExpr *RHS) const {
   return lexpr::implies(this, RHS);
 }
 
-}
-}
-}
+} // namespace lexpr
+} // namespace threadSafety
+} // namespace clang
 
 #endif
 

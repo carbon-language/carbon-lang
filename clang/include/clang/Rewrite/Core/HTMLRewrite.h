@@ -75,7 +75,7 @@ namespace html {
   /// reasonably close.
   void HighlightMacros(Rewriter &R, FileID FID, const Preprocessor &PP);
 
-} // end html namespace
-} // end clang namespace
+} // namespace html
+} // namespace clang
 
 #endif

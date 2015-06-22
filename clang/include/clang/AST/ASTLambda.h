@@ -75,6 +75,6 @@ inline DeclContext *getLambdaAwareParentOfDeclContext(DeclContext *DC) {
     return DC->getParent();
 }
 
-} // clang
+} // namespace clang
 
 #endif

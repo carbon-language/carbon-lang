@@ -554,7 +554,7 @@ namespace {
     }
 #undef DUMP_BOOLEAN
   };
-}
+} // namespace
 
 void DumpModuleInfoAction::ExecuteAction() {
   // Set up the output file.

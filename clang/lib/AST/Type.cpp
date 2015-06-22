@@ -597,7 +597,7 @@ namespace {
       return Visit(T->getOriginalType());
     }
   };
-}
+} // namespace
 
 AutoType *Type::getContainedAutoType() const {
   return GetContainedAutoVisitor().Visit(this);
@@ -2101,7 +2101,7 @@ public:
                          L.hasLocalOrUnnamedType() | R.hasLocalOrUnnamedType());
   }
 };
-}
+} // namespace
 
 static CachedProperties computeCachedProperties(const Type *T);
 
@@ -2143,7 +2143,7 @@ public:
     T->TypeBits.CachedLocalOrUnnamed = Result.hasLocalOrUnnamedType();
   }
 };
-}
+} // namespace clang
 
 // Instantiate the friend template at a private class.  In a
 // reasonable implementation, these symbols will be internal.

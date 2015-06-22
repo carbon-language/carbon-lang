@@ -149,7 +149,7 @@ public:
                              DiagnosticsEngine &Diags);
 };
 
-}
+} // namespace
 
 bool AssemblerInvocation::CreateFromArgs(AssemblerInvocation &Opts,
                                          ArrayRef<const char *> Argv,

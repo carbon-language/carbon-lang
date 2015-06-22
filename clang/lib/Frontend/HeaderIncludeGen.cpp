@@ -44,7 +44,7 @@ public:
                    SrcMgr::CharacteristicKind FileType,
                    FileID PrevFID) override;
 };
-}
+} // namespace
 
 void clang::AttachHeaderIncludeGen(Preprocessor &PP, bool ShowAllHeaders,
                                    StringRef OutputPath, bool ShowDepth,

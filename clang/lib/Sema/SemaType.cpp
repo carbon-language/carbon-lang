@@ -242,7 +242,7 @@ namespace {
       savedAttrs.back()->setNext(nullptr);
     }
   };
-}
+} // namespace
 
 static void spliceAttrIntoList(AttributeList &attr, AttributeList *&head) {
   attr.setNext(head);
@@ -1409,7 +1409,7 @@ namespace {
 ///
 /// The values of this enum are used in diagnostics.
 enum QualifiedFunctionKind { QFK_BlockPointer, QFK_Pointer, QFK_Reference };
-}
+} // namespace
 
 /// Check whether the type T is a qualified function type, and if it is,
 /// diagnose that it cannot be contained within the given kind of declarator.
@@ -4399,7 +4399,7 @@ namespace {
       llvm_unreachable("unsupported TypeLoc kind in declarator!");
     }
   };
-}
+} // namespace
 
 static void fillAtomicQualLoc(AtomicTypeLoc ATL, const DeclaratorChunk &Chunk) {
   SourceLocation Loc;
@@ -4990,7 +4990,7 @@ namespace {
       llvm_unreachable("unknown wrapping kind");
     }
   };
-}
+} // namespace
 
 static bool handleMSPointerTypeQualifierAttr(TypeProcessingState &State,
                                              AttributeList &Attr,
@@ -5897,7 +5897,7 @@ namespace {
       S.Diag(Loc, DiagID) << T;
     }
   };
-}
+} // namespace
 
 bool Sema::RequireCompleteExprType(Expr *E, unsigned DiagID) {
   TypeDiagnoserDiag Diagnoser(DiagID);

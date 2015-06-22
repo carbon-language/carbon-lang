@@ -272,6 +272,6 @@ public:
   bool isFirstDecl() const { return getFirstDecl() == this; }
 };
 
-}
+} // namespace clang
 
 #endif

@@ -124,6 +124,6 @@ public:
     EvaluatedExprVisitorBase<make_const_ptr, ImplClass>(Context) { }
 };
 
-}
+} // namespace clang
 
 #endif // LLVM_CLANG_AST_EVALUATEDEXPRVISITOR_H

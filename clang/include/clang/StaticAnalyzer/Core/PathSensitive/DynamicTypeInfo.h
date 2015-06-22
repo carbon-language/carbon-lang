@@ -46,7 +46,7 @@ public:
   }
 };
 
-} // end ento
-} // end clang
+} // namespace ento
+} // namespace clang
 
 #endif

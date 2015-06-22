@@ -68,7 +68,7 @@ public:
   const T &getValue() { return FS; }
 };
   
-} // end analyze_format_string namespace
-} // end clang namespace
+} // namespace analyze_format_string
+} // namespace clang
 
 #endif

@@ -136,6 +136,6 @@ public:
     if (withVis) mergeVisibility(other);
   }
 };
-}
+} // namespace clang
 
 #endif // LLVM_CLANG_BASIC_VISIBILITY_H

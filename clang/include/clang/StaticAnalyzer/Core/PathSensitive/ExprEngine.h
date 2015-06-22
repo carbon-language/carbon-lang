@@ -613,8 +613,8 @@ struct ProgramStateTrait<ReplayWithoutInlining> :
   static void *GDMIndex() { static int index = 0; return &index; }
 };
 
-} // end ento namespace
+} // namespace ento
 
-} // end clang namespace
+} // namespace clang
 
 #endif

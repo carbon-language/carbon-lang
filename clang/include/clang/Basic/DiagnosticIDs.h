@@ -76,7 +76,7 @@ namespace clang {
       Remark          ///< A diagnostic that indicates normal progress through
                       ///< compilation.
     };
-  }
+  } // namespace diag
 
 class DiagnosticMapping {
   unsigned Severity : 3;

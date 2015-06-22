@@ -350,6 +350,6 @@ enum ObjCBridgeCastKind {
   OBC_BridgeRetained
 };
 
-}
+} // namespace clang
 
 #endif

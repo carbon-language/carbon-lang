@@ -844,7 +844,7 @@ namespace {
                                                SourceLocation loc,
                                                TemplateArgument arg);
   };
-}
+} // namespace
 
 bool TemplateInstantiator::AlreadyTransformed(QualType T) {
   if (T.isNull())

@@ -67,6 +67,6 @@ public:
   }
 };
 
-} // end namspace clang
+} // namespace clang
 
 #endif

@@ -56,7 +56,7 @@ public:
     return mem;
   }
 };
-}
+} // namespace
 
 //===----------------------------------------------------------------------===//
 // Cleanup.
@@ -246,7 +246,7 @@ public:
 
   CXDiagnosticSet load(const char *file);
 };
-}
+} // namespace
 
 CXDiagnosticSet DiagLoader::load(const char *file) {
   TopDiags = llvm::make_unique<CXLoadedDiagnosticSetImpl>();

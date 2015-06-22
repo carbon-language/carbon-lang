@@ -248,7 +248,7 @@ private:
   const CXXRecordDecl *DeclaringClass;
 };
 
-}
+} // namespace
 
 /// Checks whether one class might instantiate to the other.
 static bool MightInstantiateTo(const CXXRecordDecl *From,
@@ -679,7 +679,7 @@ struct ProtectedFriendContext {
     return findFriendship(Cur, 0);
   }
 };
-}
+} // namespace
 
 /// Search for a class P that EC is a friend of, under the constraint
 ///   InstanceContext <= P

@@ -52,7 +52,7 @@ namespace {
     /// \brief The index for identifiers.
     IDENTIFIER_INDEX
   };
-}
+} // namespace
 
 /// \brief The name of the global index file.
 static const char * const IndexFileName = "modules.idx";
@@ -121,7 +121,7 @@ public:
 typedef llvm::OnDiskIterableChainedHashTable<IdentifierIndexReaderTrait>
     IdentifierIndexTable;
 
-}
+} // namespace
 
 GlobalModuleIndex::GlobalModuleIndex(std::unique_ptr<llvm::MemoryBuffer> Buffer,
                                      llvm::BitstreamCursor Cursor)
@@ -430,7 +430,7 @@ namespace {
     /// \brief Write the index to the given bitstream.
     void writeIndex(llvm::BitstreamWriter &Stream);
   };
-}
+} // namespace
 
 static void emitBlockID(unsigned ID, const char *Name,
                         llvm::BitstreamWriter &Stream,
@@ -493,7 +493,7 @@ namespace {
       return std::make_pair(k, IsInteresting);
     }
   };
-}
+} // namespace
 
 bool GlobalModuleIndexBuilder::loadModuleFile(const FileEntry *File) {
   // Open the module file.
@@ -684,7 +684,7 @@ public:
   }
 };
 
-}
+} // namespace
 
 void GlobalModuleIndexBuilder::writeIndex(llvm::BitstreamWriter &Stream) {
   using namespace llvm;
@@ -882,7 +882,7 @@ namespace {
       return Result;
     }
   };
-}
+} // namespace
 
 IdentifierIterator *GlobalModuleIndex::createIdentifierIterator() const {
   IdentifierIndexTable &Table =

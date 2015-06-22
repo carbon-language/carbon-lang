@@ -660,9 +660,9 @@ public:
   virtual ~SymbolVisitor();
 };
 
-} // end GR namespace
+} // namespace ento
 
-} // end clang namespace
+} // namespace clang
 
 namespace llvm {
 static inline raw_ostream &operator<<(raw_ostream &os,

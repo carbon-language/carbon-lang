@@ -54,7 +54,7 @@ public:
   }
 };
 
-}
+} // namespace edit
 
 } // end namespace clang
 

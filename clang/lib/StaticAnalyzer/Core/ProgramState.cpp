@@ -40,7 +40,8 @@ void ProgramStateRelease(const ProgramState *state) {
     Mgr.freeStates.push_back(s);
   }
 }
-}}
+} // namespace ento
+} // namespace clang
 
 ProgramState::ProgramState(ProgramStateManager *mgr, const Environment& env,
                  StoreRef st, GenericDataMap gdm)

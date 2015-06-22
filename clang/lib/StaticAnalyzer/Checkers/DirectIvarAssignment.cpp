@@ -205,7 +205,7 @@ void DirectIvarAssignment::MethodCrawler::VisitBinaryOperator(
     }
   }
 }
-}
+} // namespace
 
 // Register the checker that checks for direct accesses in all functions,
 // except for the initialization and copy routines.

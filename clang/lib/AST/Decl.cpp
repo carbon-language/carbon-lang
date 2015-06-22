@@ -1350,7 +1350,7 @@ public:
     return LV;
   }
 };
-}
+} // namespace clang
 
 static LinkageInfo getLVForDecl(const NamedDecl *D,
                                 LVComputationKind computation) {

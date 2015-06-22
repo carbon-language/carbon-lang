@@ -238,8 +238,8 @@ namespace ento {
     }
   };
 
-} // end ento namespace
+} // namespace ento
 
-} // end clang namespace
+} // namespace clang
 
 #endif

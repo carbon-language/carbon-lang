@@ -66,6 +66,6 @@ public:
   virtual void CodeCompleteNaturalLanguage() { }
 };
   
-}
+} // namespace clang
 
 #endif // LLVM_CLANG_LEX_CODECOMPLETIONHANDLER_H

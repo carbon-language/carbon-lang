@@ -342,7 +342,7 @@ namespace {
     bool IsImpossibleToSatisfy(const NamedDecl *ND) const;
     //@}    
   };  
-}
+} // namespace
 
 class ResultBuilder::ShadowMapEntry::iterator {
   llvm::PointerUnion<const NamedDecl *, const DeclIndexPair *> DeclOrIterator;
@@ -1264,7 +1264,7 @@ namespace {
       Results.AddResult(Result, CurContext, Hiding, InBaseClass);
     }
   };
-}
+} // namespace
 
 /// \brief Add type specifiers for the current language as keyword results.
 static void AddTypeSpecifierResults(const LangOptions &LangOpts,

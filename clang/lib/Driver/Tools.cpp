@@ -2322,7 +2322,7 @@ enum OpenMPRuntimeKind {
   /// on this runtime library name.
   OMPRT_IOMP5
 };
-}
+} // namespace
 
 /// Compute the desired OpenMP runtime from the flag provided.
 static OpenMPRuntimeKind getOpenMPRuntime(const ToolChain &TC,
