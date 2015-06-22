@@ -241,7 +241,7 @@ public:
 };
 
 // Initial contents for delay-loaded functions.
-// This code calls __delayLoadHerper2 function to resolve a symbol
+// This code calls __delayLoadHelper2 function to resolve a symbol
 // and then overwrites its jump table slot with the result
 // for subsequent function calls.
 static const uint8_t Thunk[] = {
