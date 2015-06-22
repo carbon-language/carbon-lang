@@ -1,0 +1,55 @@
+# Check handling R_MICROMIPS_HIGHER / R_MICROMIPS_HIGHEST relocations.
+
+# RUN: yaml2obj -format=elf %s > %t.o
+# RUN: lld -flavor gnu -target mips64el -e T0 -o %t.exe %t.o
+# RUN: llvm-nm %t.exe | FileCheck -check-prefix=SYM %s
+# RUN: llvm-objdump -s %t.exe | FileCheck -check-prefix=RAW %s
+
+# SYM: 00000001200001a0 T T0
+# SYM: 00000001200001a8 T T1
+
+# RAW:      Contents of section .text:
+# RAW-NEXT:  1200001a0 00000280 00000000 00000140 00000000
+
+FileHeader:
+  Class:    ELFCLASS64
+  Data:     ELFDATA2LSB
+  Type:     ET_REL
+  Machine:  EM_MIPS
+  Flags:    [EF_MIPS_PIC, EF_MIPS_CPIC, EF_MIPS_ARCH_64]
+
+Sections:
+  - Name:          .text
+    Type:          SHT_PROGBITS
+    Flags:         [ SHF_ALLOC, SHF_EXECINSTR ]
+    AddressAlign:  16
+    Size:          16
+
+  - Name:          .rela.text
+    Type:          SHT_RELA
+    Flags:         [ SHF_INFO_LINK ]
+    Link:          .symtab
+    AddressAlign:  8
+    Info:          .text
+    Relocations:
+      - Offset:  0
+        Symbol:  T1
+        Type:    R_MICROMIPS_HIGHER
+        Addend:  0x0000800100000000
+      - Offset:  8
+        Symbol:  T1
+        Type:    R_MICROMIPS_HIGHEST
+        Addend:  0x4001000000000000
+
+Symbols:
+  Global:
+    - Name:     T0
+      Type:     STT_FUNC
+      Section:  .text
+      Value:    0
+      Size:     8
+    - Name:     T1
+      Type:     STT_FUNC
+      Section:  .text
+      Value:    8
+      Size:     8

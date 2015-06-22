@@ -144,6 +144,8 @@ static MipsRelocationParams getRelocationParams(uint32_t rType) {
   case R_MICROMIPS_HI16:
     return {4, 0xffff, 0, true, gpDispCheck<16>};
   case R_MICROMIPS_LO16:
+  case R_MICROMIPS_HIGHER:
+  case R_MICROMIPS_HIGHEST:
     return {4, 0xffff, 0, true, dummyCheck};
   case R_MICROMIPS_PC16_S1:
     return {4, 0xffff, 1, true, signedCheck<17>};
@@ -393,8 +395,10 @@ static ErrorOr<int64_t> calculateRelocation(Reference::KindValue kind,
   case R_MICROMIPS_CALL_HI16:
     return getHi16(tgtAddr - gpAddr);
   case R_MIPS_HIGHER:
+  case R_MICROMIPS_HIGHER:
     return getHigher16(tgtAddr + addend);
   case R_MIPS_HIGHEST:
+  case R_MICROMIPS_HIGHEST:
     return getHighest16(tgtAddr + addend);
   case R_MIPS_EH:
   case R_MIPS_GOT16:
