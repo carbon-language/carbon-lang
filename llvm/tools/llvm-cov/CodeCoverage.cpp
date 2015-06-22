@@ -89,7 +89,7 @@ public:
       LoadedSourceFiles;
   bool CompareFilenamesOnly;
   StringMap<std::string> RemappedFilenames;
-  llvm::Triple::ArchType CoverageArch;
+  std::string CoverageArch;
 };
 }
 
@@ -349,15 +349,12 @@ int CodeCoverageTool::run(Command Cmd, int argc, const char **argv) {
       Filters.push_back(std::unique_ptr<CoverageFilter>(StatFilterer));
     }
 
-    if (Arch.empty())
-      CoverageArch = llvm::Triple::ArchType::UnknownArch;
-    else {
-      CoverageArch = Triple(Arch).getArch();
-      if (CoverageArch == llvm::Triple::ArchType::UnknownArch) {
-        errs() << "error: Unknown architecture: " << Arch << "\n";
-        return 1;
-      }
+    if (!Arch.empty() &&
+        Triple(Arch).getArch() == llvm::Triple::ArchType::UnknownArch) {
+      errs() << "error: Unknown architecture: " << Arch << "\n";
+      return 1;
     }
+    CoverageArch = Arch;
 
     for (const auto &File : InputSourceFiles) {
       SmallString<128> Path(File);

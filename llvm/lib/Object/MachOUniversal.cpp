@@ -123,25 +123,13 @@ MachOUniversalBinary::MachOUniversalBinary(MemoryBufferRef Source,
   ec = std::error_code();
 }
 
-static bool getCTMForArch(Triple::ArchType Arch, MachO::CPUType &CTM) {
-  switch (Arch) {
-    case Triple::x86:    CTM = MachO::CPU_TYPE_I386; return true;
-    case Triple::x86_64: CTM = MachO::CPU_TYPE_X86_64; return true;
-    case Triple::arm:    CTM = MachO::CPU_TYPE_ARM; return true;
-    case Triple::sparc:  CTM = MachO::CPU_TYPE_SPARC; return true;
-    case Triple::ppc:    CTM = MachO::CPU_TYPE_POWERPC; return true;
-    case Triple::ppc64:  CTM = MachO::CPU_TYPE_POWERPC64; return true;
-    default: return false;
-  }
-}
-
 ErrorOr<std::unique_ptr<MachOObjectFile>>
-MachOUniversalBinary::getObjectForArch(Triple::ArchType Arch) const {
-  MachO::CPUType CTM;
-  if (!getCTMForArch(Arch, CTM))
+MachOUniversalBinary::getObjectForArch(StringRef ArchName) const {
+  if (Triple(ArchName).getArch() == Triple::ArchType::UnknownArch)
     return object_error::arch_not_found;
+
   for (object_iterator I = begin_objects(), E = end_objects(); I != E; ++I) {
-    if (I->getCPUType() == static_cast<uint32_t>(CTM))
+    if (I->getArchTypeName() == ArchName)
       return I->getAsObjectFile();
   }
   return object_error::arch_not_found;

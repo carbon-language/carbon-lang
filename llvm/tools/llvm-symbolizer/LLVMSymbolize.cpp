@@ -436,7 +436,7 @@ LLVMSymbolizer::getObjectFileFromBinary(Binary *Bin,
     if (I != ObjectFileForArch.end())
       return I->second;
     ErrorOr<std::unique_ptr<ObjectFile>> ParsedObj =
-        UB->getObjectForArch(Triple(ArchName).getArch());
+        UB->getObjectForArch(ArchName);
     if (ParsedObj) {
       Res = ParsedObj.get().get();
       ParsedBinariesAndObjects.push_back(std::move(ParsedObj.get()));

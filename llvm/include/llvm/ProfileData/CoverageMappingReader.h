@@ -171,7 +171,7 @@ private:
 public:
   static ErrorOr<std::unique_ptr<BinaryCoverageReader>>
   create(std::unique_ptr<MemoryBuffer> &ObjectBuffer,
-         Triple::ArchType Arch = Triple::ArchType::UnknownArch);
+         StringRef Arch);
 
   std::error_code readNextRecord(CoverageMappingRecord &Record) override;
 };

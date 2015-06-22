@@ -410,7 +410,7 @@ public:
   /// \brief Load the coverage mapping from the given files.
   static ErrorOr<std::unique_ptr<CoverageMapping>>
   load(StringRef ObjectFilename, StringRef ProfileFilename,
-       Triple::ArchType Arch = Triple::ArchType::UnknownArch);
+       StringRef Arch = StringRef());
 
   /// \brief The number of functions that couldn't have their profiles mapped.
   ///

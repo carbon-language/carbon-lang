@@ -448,7 +448,7 @@ static std::error_code loadBinaryFormat(MemoryBufferRef ObjectBuffer,
                                         StringRef &CoverageMapping,
                                         uint8_t &BytesInAddress,
                                         support::endianness &Endian,
-                                        Triple::ArchType Arch) {
+                                        StringRef Arch) {
   auto BinOrErr = object::createBinary(ObjectBuffer);
   if (std::error_code EC = BinOrErr.getError())
     return EC;
@@ -465,7 +465,7 @@ static std::error_code loadBinaryFormat(MemoryBufferRef ObjectBuffer,
     // For any other object file, upcast and take ownership.
     OF.reset(cast<object::ObjectFile>(Bin.release()));
     // If we've asked for a particular arch, make sure they match.
-    if (Arch != Triple::ArchType::UnknownArch && OF->getArch() != Arch)
+    if (!Arch.empty() && OF->getArch() != Triple(Arch).getArch())
       return object_error::arch_not_found;
   } else
     // We can only handle object files.
@@ -495,7 +495,7 @@ static std::error_code loadBinaryFormat(MemoryBufferRef ObjectBuffer,
 
 ErrorOr<std::unique_ptr<BinaryCoverageReader>>
 BinaryCoverageReader::create(std::unique_ptr<MemoryBuffer> &ObjectBuffer,
-                             Triple::ArchType Arch) {
+                             StringRef Arch) {
   std::unique_ptr<BinaryCoverageReader> Reader(new BinaryCoverageReader());
 
   SectionData Profile;

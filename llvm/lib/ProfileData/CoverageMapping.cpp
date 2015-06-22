@@ -236,7 +236,7 @@ CoverageMapping::load(CoverageMappingReader &CoverageReader,
 
 ErrorOr<std::unique_ptr<CoverageMapping>>
 CoverageMapping::load(StringRef ObjectFilename, StringRef ProfileFilename,
-                      Triple::ArchType Arch) {
+                      StringRef Arch) {
   auto CounterMappingBuff = MemoryBuffer::getFileOrSTDIN(ObjectFilename);
   if (std::error_code EC = CounterMappingBuff.getError())
     return EC;
