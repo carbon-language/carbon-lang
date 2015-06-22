@@ -13,7 +13,7 @@
 # CHECK-NEXT:  1200001a0 c871ffff ffffffff c871ffff c871ffff
 # CHECK-NEXT:  1200001b0 c871ffff ffffffff 00000000 00000000
 
-# SYM: 00000001200001b8 T LT1
+# SYM: 00000001200001b8 t LT1
 # SYM: 0000000120001000 ? _GLOBAL_OFFSET_TABLE_
 
 # RUN: lld -flavor gnu -target mips64el -shared -o %t.so %t.o
@@ -69,13 +69,13 @@ Symbols:
     - Name:            .text
       Type:            STT_SECTION
       Section:         .text
-
-  Global:
     - Name:            LT1
       Type:            STT_FUNC
       Section:         .text
       Value:           0x18
       Size:            0x8
+
+  Global:
     - Name:            T0
       Type:            STT_FUNC
       Section:         .text
