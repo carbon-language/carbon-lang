@@ -105,8 +105,10 @@ private:
       createGPUVAPrinter(
           Builder, Values, Array[0], " ",
           llvm::ArrayRef<llvm::Value *>(&Array[1], Array.size() - 1), args...);
-    else
+    else if (Array.size() == 1)
       createGPUVAPrinter(Builder, Values, Array[0], args...);
+    else
+      createGPUVAPrinter(Builder, Values, args...);
   }
 
   /// @brief Get (and possibly insert) a vprintf declaration into the module.
