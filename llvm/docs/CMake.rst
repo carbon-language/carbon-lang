@@ -327,8 +327,8 @@ LLVM-specific variables
 
 **LLVM_USE_SANITIZER**:STRING
   Define the sanitizer used to build LLVM binaries and tests. Possible values
-  are ``Address``, ``Memory``, ``MemoryWithOrigins`` and ``Undefined``.
-  Defaults to empty string.
+  are ``Address``, ``Memory``, ``MemoryWithOrigins``, ``Undefined``, ``Thread``,
+  and ``Address;Undefined``. Defaults to empty string.
 
 **LLVM_PARALLEL_COMPILE_JOBS**:STRING
   Define the maximum number of concurrent compilation jobs.
