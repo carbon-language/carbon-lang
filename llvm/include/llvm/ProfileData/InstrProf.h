@@ -16,7 +16,10 @@
 #ifndef LLVM_PROFILEDATA_INSTRPROF_H_
 #define LLVM_PROFILEDATA_INSTRPROF_H_
 
+#include "llvm/ADT/StringRef.h"
+#include <cstdint>
 #include <system_error>
+#include <vector>
 
 namespace llvm {
 const std::error_category &instrprof_category();
@@ -40,6 +43,16 @@ enum class instrprof_error {
 inline std::error_code make_error_code(instrprof_error E) {
   return std::error_code(static_cast<int>(E), instrprof_category());
 }
+
+/// Profiling information for a single function.
+struct InstrProfRecord {
+  InstrProfRecord() {}
+  InstrProfRecord(StringRef Name, uint64_t Hash, std::vector<uint64_t> Counts)
+      : Name(Name), Hash(Hash), Counts(std::move(Counts)) {}
+  StringRef Name;
+  uint64_t Hash;
+  std::vector<uint64_t> Counts;
+};
 
 } // end namespace llvm
 

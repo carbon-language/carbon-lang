@@ -29,16 +29,6 @@ namespace llvm {
 
 class InstrProfReader;
 
-/// Profiling information for a single function.
-struct InstrProfRecord {
-  InstrProfRecord() {}
-  InstrProfRecord(StringRef Name, uint64_t Hash, ArrayRef<uint64_t> Counts)
-      : Name(Name), Hash(Hash), Counts(Counts) {}
-  StringRef Name;
-  uint64_t Hash;
-  ArrayRef<uint64_t> Counts;
-};
-
 /// A file format agnostic iterator over profiling data.
 class InstrProfIterator : public std::iterator<std::input_iterator_tag,
                                                InstrProfRecord> {
@@ -114,8 +104,6 @@ private:
   std::unique_ptr<MemoryBuffer> DataBuffer;
   /// Iterator over the profile data.
   line_iterator Line;
-  /// The current set of counter values.
-  std::vector<uint64_t> Counts;
 
   TextInstrProfReader(const TextInstrProfReader &) = delete;
   TextInstrProfReader &operator=(const TextInstrProfReader &) = delete;
@@ -141,8 +129,6 @@ class RawInstrProfReader : public InstrProfReader {
 private:
   /// The profile data file contents.
   std::unique_ptr<MemoryBuffer> DataBuffer;
-  /// The current set of counter values.
-  std::vector<uint64_t> Counts;
   struct ProfileData {
     const uint32_t NameSize;
     const uint32_t NumCounters;
@@ -206,17 +192,16 @@ enum class HashT : uint32_t;
 /// Trait for lookups into the on-disk hash table for the binary instrprof
 /// format.
 class InstrProfLookupTrait {
-  std::vector<uint64_t> DataBuffer;
+  std::vector<InstrProfRecord> DataBuffer;
   IndexedInstrProf::HashT HashType;
-public:
-  InstrProfLookupTrait(IndexedInstrProf::HashT HashType) : HashType(HashType) {}
+  unsigned FormatVersion;
 
-  struct data_type {
-    data_type(StringRef Name, ArrayRef<uint64_t> Data)
-        : Name(Name), Data(Data) {}
-    StringRef Name;
-    ArrayRef<uint64_t> Data;
-  };
+public:
+  InstrProfLookupTrait(IndexedInstrProf::HashT HashType, unsigned FormatVersion)
+      : HashType(HashType), FormatVersion(FormatVersion) {}
+
+  typedef ArrayRef<InstrProfRecord> data_type;
+
   typedef StringRef internal_key_type;
   typedef StringRef external_key_type;
   typedef uint64_t hash_value_type;
@@ -239,22 +224,9 @@ public:
     return StringRef((const char *)D, N);
   }
 
-  data_type ReadData(StringRef K, const unsigned char *D, offset_type N) {
-    DataBuffer.clear();
-    if (N % sizeof(uint64_t))
-      // The data is corrupt, don't try to read it.
-      return data_type("", DataBuffer);
-
-    using namespace support;
-    // We just treat the data as opaque here. It's simpler to handle in
-    // IndexedInstrProfReader.
-    unsigned NumEntries = N / sizeof(uint64_t);
-    DataBuffer.reserve(NumEntries);
-    for (unsigned I = 0; I < NumEntries; ++I)
-      DataBuffer.push_back(endian::readNext<uint64_t, little, unaligned>(D));
-    return data_type(K, DataBuffer);
-  }
+  data_type ReadData(StringRef K, const unsigned char *D, offset_type N);
 };
+
 typedef OnDiskIterableChainedHashTable<InstrProfLookupTrait>
     InstrProfReaderIndex;
 
@@ -267,8 +239,6 @@ private:
   std::unique_ptr<InstrProfReaderIndex> Index;
   /// Iterator over the profile data.
   InstrProfReaderIndex::data_iterator RecordIterator;
-  /// Offset into our current data set.
-  size_t CurrentOffset;
   /// The file format version of the profile data.
   uint64_t FormatVersion;
   /// The maximal execution count among all functions.
@@ -278,7 +248,7 @@ private:
   IndexedInstrProfReader &operator=(const IndexedInstrProfReader &) = delete;
 public:
   IndexedInstrProfReader(std::unique_ptr<MemoryBuffer> DataBuffer)
-      : DataBuffer(std::move(DataBuffer)), Index(nullptr), CurrentOffset(0) {}
+      : DataBuffer(std::move(DataBuffer)), Index(nullptr) {}
 
   /// Return true if the given buffer is in an indexed instrprof format.
   static bool hasFormat(const MemoryBuffer &DataBuffer);
