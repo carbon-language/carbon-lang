@@ -1804,7 +1804,8 @@ static void filterNonConflictingPreviousDecls(Sema &S,
                                               NamedDecl *decl,
                                               LookupResult &previous){
   // This is only interesting when modules are enabled.
-  if (!S.getLangOpts().Modules && !S.getLangOpts().ModulesLocalVisibility)
+  if ((!S.getLangOpts().Modules && !S.getLangOpts().ModulesLocalVisibility) ||
+      !S.getLangOpts().ModulesHideInternalLinkage)
     return;
 
   // Empty sets are uninteresting.
@@ -3453,8 +3454,9 @@ void Sema::MergeVarDecl(VarDecl *New, LookupResult &Previous) {
       New->isThisDeclarationADefinition() == VarDecl::Definition &&
       (Def = Old->getDefinition())) {
     NamedDecl *Hidden = nullptr;
-    if (!hasVisibleDefinition(Def, &Hidden) && 
-        (New->getDescribedVarTemplate() ||
+    if (!hasVisibleDefinition(Def, &Hidden) &&
+        (New->getFormalLinkage() == InternalLinkage ||
+         New->getDescribedVarTemplate() ||
          New->getNumTemplateParameterLists() ||
          New->getDeclContext()->isDependentContext())) {
       // The previous definition is hidden, and multiple definitions are
@@ -8946,7 +8948,8 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init,
   if ((Def = VDecl->getDefinition()) && Def != VDecl) {
     NamedDecl *Hidden = nullptr;
     if (!hasVisibleDefinition(Def, &Hidden) && 
-        (VDecl->getDescribedVarTemplate() ||
+        (VDecl->getFormalLinkage() == InternalLinkage ||
+         VDecl->getDescribedVarTemplate() ||
          VDecl->getNumTemplateParameterLists() ||
          VDecl->getDeclContext()->isDependentContext())) {
       // The previous definition is hidden, and multiple definitions are
@@ -10367,7 +10370,8 @@ Sema::CheckForFunctionRedefinition(FunctionDecl *FD,
   // in this case? That may be necessary for functions that return local types
   // through a deduced return type, or instantiate templates with local types.
   if (!hasVisibleDefinition(Definition) &&
-      (Definition->isInlineSpecified() ||
+      (Definition->getFormalLinkage() == InternalLinkage ||
+       Definition->isInlineSpecified() ||
        Definition->getDescribedFunctionTemplate() ||
        Definition->getNumTemplateParameterLists()))
     return;

@@ -369,6 +369,10 @@ def fmodules_local_submodule_visibility :
   Flag<["-"], "fmodules-local-submodule-visibility">,
   HelpText<"Enforce name visibility rules across submodules of the same "
            "top-level module.">;
+def fno_modules_hide_internal_linkage :
+  Flag<["-"], "fno-modules-hide-internal-linkage">,
+  HelpText<"Make all declarations visible to redeclaration lookup, "
+           "even if they have internal linkage.">;
 def fconcepts_ts : Flag<["-"], "fconcepts-ts">,
   HelpText<"Enable C++ Extensions for Concepts.">;
 
