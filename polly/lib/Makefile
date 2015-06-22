@@ -104,11 +104,7 @@ ISL_FILES= External/isl/basis_reduction_tab.c \
            External/isl/print.c \
            External/isl/imath/gmp_compat.c \
            External/isl/imath/imath.c \
-           External/isl/imath/imdrover.c \
-           External/isl/imath/imrat.c \
-           External/isl/imath/iprime.c \
-           External/isl/imath/pi.c \
-           External/isl/imath/rsamath.c
+           External/isl/imath/imrat.c
 
 SOURCES= Polly.cpp \
 	 Support/GICHelper.cpp \

@@ -95,6 +95,9 @@ dnl **************************************************************************
 dnl * Create the output files
 dnl **************************************************************************
 
+dnl Let ISL's configure generate isl_config.h and gitversion.h
+AC_CONFIG_SUBDIRS(lib/External/isl)
+
 dnl This must be last
 AC_CONFIG_HEADERS(include/polly/Config/config.h)
 AC_OUTPUT
