@@ -78,7 +78,7 @@ private:
   typedef DenseMap<MachineInstr *, CallContext> ContextMap;
 
   bool isLegal(MachineFunction &MF);
-  
+
   bool isProfitable(MachineFunction &MF, ContextMap &CallSeqMap);
 
   void collectCallInfo(MachineFunction &MF, MachineBasicBlock &MBB,
@@ -89,6 +89,13 @@ private:
 
   MachineInstr *canFoldIntoRegPush(MachineBasicBlock::iterator FrameSetup,
                                    unsigned Reg);
+
+  enum InstClassification { Convert, Skip, Exit };
+
+  InstClassification classifyInstruction(MachineBasicBlock &MBB,
+                                         MachineBasicBlock::iterator MI,
+                                         const X86RegisterInfo &RegInfo,
+                                         DenseSet<unsigned int> &UsedRegs);
 
   const char *getPassName() const override { return "X86 Optimize Call Frame"; }
 
@@ -105,7 +112,7 @@ FunctionPass *llvm::createX86CallFrameOptimization() {
   return new X86CallFrameOptimization();
 }
 
-// This checks whether the transformation is legal. 
+// This checks whether the transformation is legal.
 // Also returns false in cases where it's potentially legal, but
 // we don't even want to try.
 bool X86CallFrameOptimization::isLegal(MachineFunction &MF) {
@@ -170,9 +177,8 @@ bool X86CallFrameOptimization::isProfitable(MachineFunction &MF,
   if (!OptForSize)
     return false;
 
-
   unsigned StackAlign = TFL->getStackAlignment();
-  
+
   int64_t Advantage = 0;
   for (auto CC : CallSeqMap) {
     // Call sites where no parameters are passed on the stack
@@ -205,7 +211,6 @@ bool X86CallFrameOptimization::isProfitable(MachineFunction &MF,
   return (Advantage >= 0);
 }
 
-
 bool X86CallFrameOptimization::runOnMachineFunction(MachineFunction &MF) {
   TII = MF.getSubtarget().getInstrInfo();
   TFL = MF.getSubtarget().getFrameLowering();
@@ -237,6 +242,64 @@ bool X86CallFrameOptimization::runOnMachineFunction(MachineFunction &MF) {
   return Changed;
 }
 
+X86CallFrameOptimization::InstClassification
+X86CallFrameOptimization::classifyInstruction(
+    MachineBasicBlock &MBB, MachineBasicBlock::iterator MI,
+    const X86RegisterInfo &RegInfo, DenseSet<unsigned int> &UsedRegs) {
+  if (MI == MBB.end())
+    return Exit;
+
+  // The instructions we actually care about are movs onto the stack
+  int Opcode = MI->getOpcode();
+  if (Opcode == X86::MOV32mi || Opcode == X86::MOV32mr)
+    return Convert;
+
+  // Not all calling conventions have only stack MOVs between the stack
+  // adjust and the call.
+
+  // We want to tolerate other instructions, to cover more cases.
+  // In particular:
+  // a) PCrel calls, where we expect an additional COPY of the basereg.
+  // b) Passing frame-index addresses.
+  // c) Calling conventions that have inreg parameters. These generate
+  //    both copies and movs into registers.
+  // To avoid creating lots of special cases, allow any instruction
+  // that does not write into memory, does not def or use the stack
+  // pointer, and does not def any register that was used by a preceding
+  // push.
+  // (Reading from memory is allowed, even if referenced through a
+  // frame index, since these will get adjusted properly in PEI)
+
+  // The reason for the last condition is that the pushes can't replace
+  // the movs in place, because the order must be reversed.
+  // So if we have a MOV32mr that uses EDX, then an instruction that defs
+  // EDX, and then the call, after the transformation the push will use
+  // the modified version of EDX, and not the original one.
+  // Since we are still in SSA form at this point, we only need to
+  // make sure we don't clobber any *physical* registers that were
+  // used by an earlier mov that will become a push.
+
+  if (MI->isCall() || MI->mayStore())
+    return Exit;
+
+  for (const MachineOperand &MO : MI->operands()) {
+    if (!MO.isReg())
+      continue;
+    unsigned int Reg = MO.getReg();
+    if (!RegInfo.isPhysicalRegister(Reg))
+      continue;
+    if (RegInfo.regsOverlap(Reg, RegInfo.getStackRegister()))
+      return Exit;
+    if (MO.isDef()) {
+      for (unsigned int U : UsedRegs)
+        if (RegInfo.regsOverlap(Reg, U))
+          return Exit;
+    }
+  }
+
+  return Skip;
+}
+
 void X86CallFrameOptimization::collectCallInfo(MachineFunction &MF,
                                                MachineBasicBlock &MBB,
                                                MachineBasicBlock::iterator I,
@@ -254,8 +317,8 @@ void X86CallFrameOptimization::collectCallInfo(MachineFunction &MF,
 
   // How much do we adjust the stack? This puts an upper bound on
   // the number of parameters actually passed on it.
-  unsigned int MaxAdjust = FrameSetup->getOperand(0).getImm() / 4;  
-  
+  unsigned int MaxAdjust = FrameSetup->getOperand(0).getImm() / 4;
+
   // A zero adjustment means no stack parameters
   if (!MaxAdjust) {
     Context.NoStackParams = true;
@@ -284,11 +347,17 @@ void X86CallFrameOptimization::collectCallInfo(MachineFunction &MF,
   if (MaxAdjust > 4)
     Context.MovVector.resize(MaxAdjust, nullptr);
 
-  do {
-    int Opcode = I->getOpcode();
-    if (Opcode != X86::MOV32mi && Opcode != X86::MOV32mr)
-      break;
+  InstClassification Classification;
+  DenseSet<unsigned int> UsedRegs;
 
+  while ((Classification = classifyInstruction(MBB, I, RegInfo, UsedRegs)) !=
+         Exit) {
+    if (Classification == Skip) {
+      ++I;
+      continue;
+    }
+
+    // We know the instruction is a MOV32mi/MOV32mr.
     // We only want movs of the form:
     // movl imm/r32, k(%esp)
     // If we run into something else, bail.
@@ -323,24 +392,20 @@ void X86CallFrameOptimization::collectCallInfo(MachineFunction &MF,
       return;
     Context.MovVector[StackDisp] = I;
 
+    for (const MachineOperand &MO : I->uses()) {
+      if (!MO.isReg())
+        continue;
+      unsigned int Reg = MO.getReg();
+      if (RegInfo.isPhysicalRegister(Reg))
+        UsedRegs.insert(Reg);
+    }
+
     ++I;
-  } while (I != MBB.end());
-
-  // We now expect the end of the sequence - a call and a stack adjust.
-  if (I == MBB.end())
-    return;
-
-  // For PCrel calls, we expect an additional COPY of the basereg.
-  // If we find one, skip it.
-  if (I->isCopy()) {
-    if (I->getOperand(1).getReg() ==
-        MF.getInfo<X86MachineFunctionInfo>()->getGlobalBaseReg())
-      ++I;
-    else
-      return;
   }
 
-  if (!I->isCall())
+  // We now expect the end of the sequence. If we stopped early,
+  // or reached the end of the block without finding a call, bail.
+  if (I == MBB.end() || !I->isCall())
     return;
 
   Context.Call = I;
