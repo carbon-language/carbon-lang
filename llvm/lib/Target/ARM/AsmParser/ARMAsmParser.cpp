@@ -28,6 +28,7 @@
 #include "llvm/MC/MCObjectFileInfo.h"
 #include "llvm/MC/MCParser/MCAsmLexer.h"
 #include "llvm/MC/MCParser/MCAsmParser.h"
+#include "llvm/MC/MCParser/MCAsmParserUtils.h"
 #include "llvm/MC/MCParser/MCParsedAsmOperand.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSection.h"
@@ -9887,22 +9888,13 @@ bool ARMAsmParser::parseDirectiveThumbSet(SMLoc L) {
   }
   Lex();
 
+  MCSymbol *Sym;
   const MCExpr *Value;
-  if (Parser.parseExpression(Value)) {
-    TokError("missing expression");
-    Parser.eatToEndOfStatement();
-    return false;
-  }
+  if (MCParserUtils::parseAssignmentExpression(Name, /* allow_redef */ true,
+                                               Parser, Sym, Value))
+    return true;
 
-  if (getLexer().isNot(AsmToken::EndOfStatement)) {
-    TokError("unexpected token");
-    Parser.eatToEndOfStatement();
-    return false;
-  }
-  Lex();
-
-  MCSymbol *Alias = getContext().getOrCreateSymbol(Name);
-  getTargetStreamer().emitThumbSet(Alias, Value);
+  getTargetStreamer().emitThumbSet(Sym, Value);
   return false;
 }
 

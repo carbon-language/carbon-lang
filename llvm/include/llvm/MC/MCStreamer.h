@@ -78,7 +78,7 @@ public:
   MCTargetStreamer(MCStreamer &S);
   virtual ~MCTargetStreamer();
 
-  const MCStreamer &getStreamer() { return Streamer; }
+  MCStreamer &getStreamer() { return Streamer; }
 
   // Allow a target to add behavior to the EmitLabel of MCStreamer.
   virtual void emitLabel(MCSymbol *Symbol);

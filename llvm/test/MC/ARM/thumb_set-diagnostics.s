@@ -41,3 +41,31 @@
 @ CHECK: 	.thumb_set trailer_trash, 0x11fe1e55,
 @ CHECK:                                            ^
 
+	.type alpha,%function
+alpha:
+	nop
+
+        .type beta,%function
+beta:
+	bkpt
+
+	.thumb_set beta, alpha
+
+@ CHECK: error: redefinition of 'beta'
+@ CHECK: 	.thumb_set beta, alpha
+@ CHECK:                                            ^
+
+	.type recursive_use,%function
+	.thumb_set recursive_use, recursive_use + 1
+
+@ CHECK: error: Recursive use of 'recursive_use'
+@ CHECK: 	.thumb_set recursive_use, recursive_use + 1
+@ CHECK:                                            ^
+
+  variable_result = alpha + 1
+  .long variable_result
+	.thumb_set variable_result, 1
+
+@ CHECK: error: invalid reassignment of non-absolute variable 'variable_result'
+@ CHECK: 	.thumb_set variable_result, 1
+@ CHECK:                                            ^
