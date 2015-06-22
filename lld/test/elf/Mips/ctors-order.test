@@ -34,7 +34,7 @@
 # CHECK-NEXT:     alignment:       4
 # CHECK-NEXT:     section-choice:  custom-required
 # CHECK-NEXT:     section-name:    .ctors.2
-# CHECK-NEXT:   - ref-name:        L003
+# CHECK-NEXT:   - ref-name:        L004
 # CHECK-NEXT:     type:            data
 # CHECK-NEXT:     alignment:       4
 # CHECK-NEXT:     section-choice:  custom-required
@@ -52,6 +52,7 @@
 
 # RAW:      Contents of section .ctors:
 # RAW-NEXT: 1000 ffffffff 11111111 22222222 00000000
+
 # crtbeginS.o
 ---
 FileHeader:
@@ -100,13 +101,13 @@ Sections:
     Relocations:
       - Offset:          0x00
         Symbol:          .ctors
-        Type:            R_MIPS_HI16
+        Type:            R_MIPS_GOT16
       - Offset:          0x04
         Symbol:          .ctors
         Type:            R_MIPS_LO16
       - Offset:          0x08
         Symbol:          .ctors
-        Type:            R_MIPS_HI16
+        Type:            R_MIPS_GOT16
       - Offset:          0x0C
         Symbol:          .ctors
         Type:            R_MIPS_LO16
