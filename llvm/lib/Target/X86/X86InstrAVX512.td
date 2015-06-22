@@ -3870,6 +3870,19 @@ defm VPSHUFH : avx512_shift_rmi_w<0x70, MRMSrcReg, MRMSrcMem, "vpshufhw",
                                   X86PShufhw>, EVEX, AVX512XSIi8Base, VEX_W;
 defm VPSHUFL : avx512_shift_rmi_w<0x70, MRMSrcReg, MRMSrcMem, "vpshuflw",
                                   X86PShuflw>, EVEX, AVX512XDIi8Base, VEX_W;
+                                  
+multiclass avx512_pshufb_sizes<bits<8> opc, string OpcodeStr, SDNode OpNode> {
+  let Predicates = [HasBWI] in
+  defm Z:    avx512_var_shift<opc, OpcodeStr, OpNode, v64i8_info>, EVEX_V512;
+
+  let Predicates = [HasVLX, HasBWI] in {
+  defm Z256: avx512_var_shift<opc, OpcodeStr, OpNode, v32i8x_info>, EVEX_V256;
+  defm Z128: avx512_var_shift<opc, OpcodeStr, OpNode, v16i8x_info>, EVEX_V128;
+  }
+}
+
+defm VPSHUFB: avx512_pshufb_sizes<0x00, "vpshufb", X86pshufb>;
+
 //===----------------------------------------------------------------------===//
 // AVX-512 - MOVDDUP
 //===----------------------------------------------------------------------===//

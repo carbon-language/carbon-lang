@@ -3007,3 +3007,29 @@ define <16 x i16>@test_int_x86_avx512_mask_pavg_w_256(<16 x i16> %x0, <16 x i16>
   %res2 = add <16 x i16> %res, %res1
   ret <16 x i16> %res2
 }
+
+declare <16 x i8> @llvm.x86.avx512.mask.pshuf.b.128(<16 x i8>, <16 x i8>, <16 x i8>, i16)
+
+; CHECK-LABEL: @test_int_x86_avx512_mask_pshuf_b_128
+; CHECK-NOT: call 
+; CHECK: kmov 
+; CHECK: vpshufb %xmm{{.*}}{%k1} 
+define <16 x i8>@test_int_x86_avx512_mask_pshuf_b_128(<16 x i8> %x0, <16 x i8> %x1, <16 x i8> %x2, i16 %x3) {
+  %res = call <16 x i8> @llvm.x86.avx512.mask.pshuf.b.128(<16 x i8> %x0, <16 x i8> %x1, <16 x i8> %x2, i16 %x3)
+  %res1 = call <16 x i8> @llvm.x86.avx512.mask.pshuf.b.128(<16 x i8> %x0, <16 x i8> %x1, <16 x i8> %x2, i16 -1)
+  %res2 = add <16 x i8> %res, %res1
+  ret <16 x i8> %res2
+}
+
+declare <32 x i8> @llvm.x86.avx512.mask.pshuf.b.256(<32 x i8>, <32 x i8>, <32 x i8>, i32)
+
+; CHECK-LABEL: @test_int_x86_avx512_mask_pshuf_b_256
+; CHECK-NOT: call 
+; CHECK: kmov 
+; CHECK: vpshufb %ymm{{.*}}{%k1} 
+define <32 x i8>@test_int_x86_avx512_mask_pshuf_b_256(<32 x i8> %x0, <32 x i8> %x1, <32 x i8> %x2, i32 %x3) {
+  %res = call <32 x i8> @llvm.x86.avx512.mask.pshuf.b.256(<32 x i8> %x0, <32 x i8> %x1, <32 x i8> %x2, i32 %x3)
+  %res1 = call <32 x i8> @llvm.x86.avx512.mask.pshuf.b.256(<32 x i8> %x0, <32 x i8> %x1, <32 x i8> %x2, i32 -1)
+  %res2 = add <32 x i8> %res, %res1
+  ret <32 x i8> %res2
+}

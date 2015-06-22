@@ -957,3 +957,16 @@ define <32 x i16>@test_int_x86_avx512_mask_pavg_w_512(<32 x i16> %x0, <32 x i16>
   %res2 = add <32 x i16> %res, %res1
   ret <32 x i16> %res2
 }
+
+declare <64 x i8> @llvm.x86.avx512.mask.pshuf.b.512(<64 x i8>, <64 x i8>, <64 x i8>, i64)
+
+; CHECK-LABEL: @test_int_x86_avx512_mask_pshuf_b_512
+; CHECK-NOT: call 
+; CHECK: kmov 
+; CHECK: vpshufb %zmm{{.*}}{%k1} 
+define <64 x i8>@test_int_x86_avx512_mask_pshuf_b_512(<64 x i8> %x0, <64 x i8> %x1, <64 x i8> %x2, i64 %x3) {
+  %res = call <64 x i8> @llvm.x86.avx512.mask.pshuf.b.512(<64 x i8> %x0, <64 x i8> %x1, <64 x i8> %x2, i64 %x3)
+  %res1 = call <64 x i8> @llvm.x86.avx512.mask.pshuf.b.512(<64 x i8> %x0, <64 x i8> %x1, <64 x i8> %x2, i64 -1)
+  %res2 = add <64 x i8> %res, %res1
+  ret <64 x i8> %res2
+}
