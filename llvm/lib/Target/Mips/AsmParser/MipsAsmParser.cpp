@@ -1774,6 +1774,16 @@ bool MipsAsmParser::loadImmediate(int64_t ImmValue, unsigned DstReg,
 
   MCInst tmpInst;
 
+  unsigned TmpReg = DstReg;
+  if (UseSrcReg && (DstReg == SrcReg)) {
+    // At this point we need AT to perform the expansions and we exit if it is
+    // not available.
+    unsigned ATReg = getATReg(IDLoc);
+    if (!ATReg)
+      return true;
+    TmpReg = ATReg;
+  }
+
   tmpInst.setLoc(IDLoc);
   // FIXME: gas has a special case for values that are 000...1111, which
   // becomes a li -1 and then a dsrl
@@ -1810,23 +1820,23 @@ bool MipsAsmParser::loadImmediate(int64_t ImmValue, unsigned DstReg,
       // For DLI, expand to an ORi instead of a LUi to avoid sign-extending the
       // upper 32 bits.
       tmpInst.setOpcode(Mips::ORi);
-      tmpInst.addOperand(MCOperand::createReg(DstReg));
+      tmpInst.addOperand(MCOperand::createReg(TmpReg));
       tmpInst.addOperand(MCOperand::createReg(Mips::ZERO));
       tmpInst.addOperand(MCOperand::createImm(Bits31To16));
       tmpInst.setLoc(IDLoc);
       Instructions.push_back(tmpInst);
       // Move the value to the upper 16 bits by doing a 16-bit left shift.
-      createLShiftOri<16>(0, DstReg, IDLoc, Instructions);
+      createLShiftOri<16>(0, TmpReg, IDLoc, Instructions);
     } else {
       tmpInst.setOpcode(Mips::LUi);
-      tmpInst.addOperand(MCOperand::createReg(DstReg));
+      tmpInst.addOperand(MCOperand::createReg(TmpReg));
       tmpInst.addOperand(MCOperand::createImm(Bits31To16));
       Instructions.push_back(tmpInst);
     }
-    createLShiftOri<0>(Bits15To0, DstReg, IDLoc, Instructions);
+    createLShiftOri<0>(Bits15To0, TmpReg, IDLoc, Instructions);
 
     if (UseSrcReg)
-      createAddu(DstReg, DstReg, SrcReg, Instructions);
+      createAddu(DstReg, TmpReg, SrcReg, Instructions);
 
   } else if ((ImmValue & (0xffffLL << 48)) == 0) {
     if (Is32BitImm) {
@@ -1853,14 +1863,14 @@ bool MipsAsmParser::loadImmediate(int64_t ImmValue, unsigned DstReg,
     uint16_t Bits15To0 = ImmValue & 0xffff;
 
     tmpInst.setOpcode(Mips::LUi);
-    tmpInst.addOperand(MCOperand::createReg(DstReg));
+    tmpInst.addOperand(MCOperand::createReg(TmpReg));
     tmpInst.addOperand(MCOperand::createImm(Bits47To32));
     Instructions.push_back(tmpInst);
-    createLShiftOri<0>(Bits31To16, DstReg, IDLoc, Instructions);
-    createLShiftOri<16>(Bits15To0, DstReg, IDLoc, Instructions);
+    createLShiftOri<0>(Bits31To16, TmpReg, IDLoc, Instructions);
+    createLShiftOri<16>(Bits15To0, TmpReg, IDLoc, Instructions);
 
     if (UseSrcReg)
-      createAddu(DstReg, DstReg, SrcReg, Instructions);
+      createAddu(DstReg, TmpReg, SrcReg, Instructions);
 
   } else {
     if (Is32BitImm) {
@@ -1889,22 +1899,22 @@ bool MipsAsmParser::loadImmediate(int64_t ImmValue, unsigned DstReg,
     uint16_t Bits15To0 = ImmValue & 0xffff;
 
     tmpInst.setOpcode(Mips::LUi);
-    tmpInst.addOperand(MCOperand::createReg(DstReg));
+    tmpInst.addOperand(MCOperand::createReg(TmpReg));
     tmpInst.addOperand(MCOperand::createImm(Bits63To48));
     Instructions.push_back(tmpInst);
-    createLShiftOri<0>(Bits47To32, DstReg, IDLoc, Instructions);
+    createLShiftOri<0>(Bits47To32, TmpReg, IDLoc, Instructions);
 
     // When Bits31To16 is 0, do a left shift of 32 bits instead of doing
     // two left shifts of 16 bits.
     if (Bits31To16 == 0) {
-      createLShiftOri<32>(Bits15To0, DstReg, IDLoc, Instructions);
+      createLShiftOri<32>(Bits15To0, TmpReg, IDLoc, Instructions);
     } else {
-      createLShiftOri<16>(Bits31To16, DstReg, IDLoc, Instructions);
-      createLShiftOri<16>(Bits15To0, DstReg, IDLoc, Instructions);
+      createLShiftOri<16>(Bits31To16, TmpReg, IDLoc, Instructions);
+      createLShiftOri<16>(Bits15To0, TmpReg, IDLoc, Instructions);
     }
 
     if (UseSrcReg)
-      createAddu(DstReg, DstReg, SrcReg, Instructions);
+      createAddu(DstReg, TmpReg, SrcReg, Instructions);
   }
   return false;
 }

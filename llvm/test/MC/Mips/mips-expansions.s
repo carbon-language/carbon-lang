@@ -55,6 +55,12 @@
 # CHECK: ori  $1, $1, %lo(symbol)    # encoding: [A,A,0x21,0x34]
 # CHECK:                             #   fixup A - offset: 0, value: symbol@ABS_LO, kind: fixup_Mips_LO16
 # CHECK: addu $8, $1, $8             # encoding: [0x21,0x40,0x28,0x00]
+  la $8, 20($8)
+# CHECK: ori  $8, $8, 20             # encoding: [0x14,0x00,0x08,0x35]
+  la $8, 65538($8)
+# CHECK: lui  $1, 1                  # encoding: [0x01,0x00,0x01,0x3c]
+# CHECK: ori  $1, $1, 2              # encoding: [0x02,0x00,0x21,0x34]
+# CHECK: addu $8, $1, $8             # encoding: [0x21,0x40,0x28,0x00]
 
 # LW/SW and LDC1/SDC1 of symbol address, done by MipsAsmParser::expandMemInst():
   .set noat
