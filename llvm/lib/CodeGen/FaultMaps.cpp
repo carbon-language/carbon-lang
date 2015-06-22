@@ -115,7 +115,7 @@ const char *FaultMaps::faultTypeToString(FaultMaps::FaultKind FT) {
 
 raw_ostream &llvm::
 operator<<(raw_ostream &OS,
-           const typename FaultMapParser::FunctionFaultInfoAccessor &FFI) {
+           const FaultMapParser::FunctionFaultInfoAccessor &FFI) {
   OS << "Fault kind: "
      << FaultMaps::faultTypeToString((FaultMaps::FaultKind)FFI.getFaultKind())
      << ", faulting PC offset: " << FFI.getFaultingPCOffset()
@@ -124,8 +124,7 @@ operator<<(raw_ostream &OS,
 }
 
 raw_ostream &llvm::
-operator<<(raw_ostream &OS,
-           const typename FaultMapParser::FunctionInfoAccessor &FI) {
+operator<<(raw_ostream &OS, const FaultMapParser::FunctionInfoAccessor &FI) {
   OS << "FunctionAddress: " << format_hex(FI.getFunctionAddr(), 8)
      << ", NumFaultingPCs: " << FI.getNumFaultingPCs() << "\n";
   for (unsigned i = 0, e = FI.getNumFaultingPCs(); i != e; ++i)
@@ -140,7 +139,7 @@ raw_ostream &llvm::operator<<(raw_ostream &OS, const FaultMapParser &FMP) {
   if (FMP.getNumFunctions() == 0)
     return OS;
 
-  typename FaultMapParser::FunctionInfoAccessor FI;
+  FaultMapParser::FunctionInfoAccessor FI;
 
   for (unsigned i = 0, e = FMP.getNumFunctions(); i != e; ++i) {
     FI = (i == 0) ? FMP.getFirstFunctionInfo() : FI.getNextFunctionInfo();
