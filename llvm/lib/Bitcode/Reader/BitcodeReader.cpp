@@ -136,7 +136,6 @@ class BitcodeReader : public GVMaterializer {
   std::unique_ptr<MemoryBuffer> Buffer;
   std::unique_ptr<BitstreamReader> StreamFile;
   BitstreamCursor Stream;
-  bool IsStreamed;
   uint64_t NextUnreadBit = 0;
   bool SeenValueSymbolTable = false;
 
@@ -428,15 +427,13 @@ BitcodeReader::BitcodeReader(MemoryBuffer *Buffer, LLVMContext &Context,
                              DiagnosticHandlerFunction DiagnosticHandler)
     : Context(Context),
       DiagnosticHandler(getDiagHandler(DiagnosticHandler, Context)),
-      Buffer(Buffer), IsStreamed(false), ValueList(Context),
-      MDValueList(Context) {}
+      Buffer(Buffer), ValueList(Context), MDValueList(Context) {}
 
 BitcodeReader::BitcodeReader(LLVMContext &Context,
                              DiagnosticHandlerFunction DiagnosticHandler)
     : Context(Context),
       DiagnosticHandler(getDiagHandler(DiagnosticHandler, Context)),
-      Buffer(nullptr), IsStreamed(true), ValueList(Context),
-      MDValueList(Context) {}
+      Buffer(nullptr), ValueList(Context), MDValueList(Context) {}
 
 std::error_code BitcodeReader::materializeForwardReferencedFunctions() {
   if (WillMaterializeAllForwardRefs)
@@ -2789,13 +2786,11 @@ std::error_code BitcodeReader::parseModule(bool Resume,
 
         if (std::error_code EC = rememberAndSkipFunctionBody())
           return EC;
-        // For streaming bitcode, suspend parsing when we reach the function
-        // bodies. Subsequent materialization calls will resume it when
-        // necessary. For streaming, the function bodies must be at the end of
-        // the bitcode. If the bitcode file is old, the symbol table will be
-        // at the end instead and will not have been seen yet. In this case,
-        // just finish the parse now.
-        if (IsStreamed && SeenValueSymbolTable) {
+        // Suspend parsing when we reach the function bodies. Subsequent
+        // materialization calls will resume it when necessary. If the bitcode
+        // file is old, the symbol table will be at the end instead and will not
+        // have been seen yet. In this case, just finish the parse now.
+        if (SeenValueSymbolTable) {
           NextUnreadBit = Stream.GetCurrentBitNo();
           return std::error_code();
         }
@@ -3049,8 +3044,7 @@ std::error_code BitcodeReader::parseModule(bool Resume,
       if (!isProto) {
         Func->setIsMaterializable(true);
         FunctionsWithBodies.push_back(Func);
-        if (IsStreamed)
-          DeferredFunctionInfo[Func] = 0;
+        DeferredFunctionInfo[Func] = 0;
       }
       break;
     }
@@ -4434,7 +4428,7 @@ std::error_code BitcodeReader::materialize(GlobalValue *GV) {
   assert(DFII != DeferredFunctionInfo.end() && "Deferred function not found!");
   // If its position is recorded as 0, its body is somewhere in the stream
   // but we haven't seen it yet.
-  if (DFII->second == 0 && IsStreamed)
+  if (DFII->second == 0)
     if (std::error_code EC = findFunctionInStream(F, DFII))
       return EC;
 
