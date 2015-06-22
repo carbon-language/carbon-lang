@@ -73,7 +73,6 @@ static inline SourceRange translateCXSourceRange(CXSourceRange R) {
 }
 
 
-} // namespace cxloc
-} // namespace clang
+}} // end namespace: clang::cxloc
 
 #endif

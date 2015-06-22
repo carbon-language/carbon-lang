@@ -79,7 +79,7 @@ class EvaluateConstantInitializersAction : public clang::ASTFrontendAction {
     }
   };
 };
-} // namespace
+}
 
 TEST(EvaluateAsRValue, FailsGracefullyForUnknownTypes) {
   // This is a regression test; the AST library used to trigger assertion

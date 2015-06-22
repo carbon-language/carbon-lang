@@ -75,7 +75,7 @@ public:
   StringRef getDescription() const { return desc; }
 };
 
-} // namespace ento
+} // end GR namespace
 
-} // namespace clang
+} // end clang namespace
 #endif

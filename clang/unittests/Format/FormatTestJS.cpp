@@ -893,5 +893,5 @@ TEST_F(FormatTestJS, IndexSignature) {
   verifyFormat("var x: {[k: string]: v};");
 }
 
-} // namespace format
+} // end namespace tooling
 } // end namespace clang

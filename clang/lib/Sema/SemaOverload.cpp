@@ -536,7 +536,7 @@ namespace {
   struct DFIParamWithArguments : DFIArguments {
     TemplateParameter Param;
   };
-} // namespace
+}
 
 /// \brief Convert from Sema's representation of template deduction information
 /// to the form used in overload-candidate information.
@@ -794,7 +794,7 @@ namespace {
         *i->Addr = i->Saved;
     }
   };
-} // namespace
+}
 
 /// checkPlaceholderForOverload - Do any interesting placeholder-like
 /// preprocessing on the given expression.
@@ -9555,7 +9555,7 @@ struct CompareOverloadCandidatesForDisplay {
     return S.SourceMgr.isBeforeInTranslationUnit(LLoc, RLoc);
   }
 };
-} // namespace
+}
 
 /// CompleteNonViableCandidate - Normally, overload resolution only
 /// computes up to the first. Produces the FixIt set if possible.
@@ -9747,7 +9747,7 @@ struct CompareTemplateSpecCandidatesForDisplay {
     return S.SourceMgr.isBeforeInTranslationUnit(LLoc, RLoc);
   }
 };
-} // namespace
+}
 
 /// Diagnose a template argument deduction failure.
 /// We are treating these failures as overload failures due to bad
@@ -10165,7 +10165,7 @@ public:
     return &Matches[0].first;
   }
 };
-} // namespace
+}
 
 /// ResolveAddressOfOverloadedFunction - Try to resolve the address of
 /// an overloaded function (C++ [over.over]), where @p From is an
@@ -10632,7 +10632,7 @@ public:
   }
 };
 
-} // namespace
+}
 
 static std::unique_ptr<CorrectionCandidateCallback>
 MakeValidator(Sema &SemaRef, MemberExpr *ME, size_t NumArgs,

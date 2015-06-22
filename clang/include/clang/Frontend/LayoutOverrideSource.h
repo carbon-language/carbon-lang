@@ -58,6 +58,6 @@ namespace clang {
     /// \brief Dump the overridden layouts.
     void dump();
   };
-} // namespace clang
+}
 
 #endif

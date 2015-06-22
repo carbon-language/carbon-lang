@@ -222,6 +222,5 @@ void threadSafetyCleanup(BeforeSet *Cache);
 /// of access.
 LockKind getLockKindFromAccessKind(AccessKind AK);
 
-} // namespace threadSafety
-} // namespace clang
+}} // end namespace clang::threadSafety
 #endif

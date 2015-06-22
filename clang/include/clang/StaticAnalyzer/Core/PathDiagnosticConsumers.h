@@ -34,7 +34,7 @@ void CREATEFN(AnalyzerOptions &AnalyzerOpts,\
               const Preprocessor &PP);
 #include "clang/StaticAnalyzer/Core/Analyses.def"
 
-} // namespace ento
-} // namespace clang
+} // end 'ento' namespace
+} // end 'clang' namespace
 
 #endif

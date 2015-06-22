@@ -37,7 +37,7 @@ std::unique_ptr<DiagnosticConsumer> create(StringRef OutputFile,
                                            DiagnosticOptions *Diags,
                                            bool MergeChildRecords = false);
 
-} // namespace serialized_diags
-} // namespace clang
+} // end serialized_diags namespace
+} // end clang namespace
 
 #endif

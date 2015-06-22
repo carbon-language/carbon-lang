@@ -54,7 +54,7 @@ public:
   RegisterDiagTool() { diagTools->registerTool(new DIAGTOOL()); }
 };
 
-} // namespace diagtool
+} // end diagtool namespace
 
 #define DEF_DIAGTOOL(NAME, DESC, CLSNAME)\
 namespace {\

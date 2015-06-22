@@ -1686,7 +1686,7 @@ namespace {
     // files.
     IdentifierInfo *getIdentifierInfo() const { return Found; }
   };
-} // namespace
+}
 
 void ASTReader::updateOutOfDateIdentifier(IdentifierInfo &II) {
   // Note that we are loading an identifier.
@@ -3954,7 +3954,7 @@ namespace {
                                       SuggestedPredefines, ExistingLangOpts);
     }
   };
-} // namespace
+}
 
 bool ASTReader::readASTFileControlBlock(
     StringRef Filename, FileManager &FileMgr,
@@ -4739,7 +4739,7 @@ struct PPEntityComp {
   }
 };
 
-} // namespace
+}
 
 PreprocessedEntityID ASTReader::findPreprocessedEntity(SourceLocation Loc,
                                                        bool EndsAfter) const {
@@ -4859,7 +4859,7 @@ namespace {
     
     Optional<HeaderFileInfo> getHeaderFileInfo() const { return HFI; }
   };
-} // namespace
+}
 
 HeaderFileInfo ASTReader::GetHeaderFileInfo(const FileEntry *FE) {
   HeaderFileInfoVisitor Visitor(FE);
@@ -6192,7 +6192,7 @@ namespace {
       return false;
     }
   };
-} // namespace
+}
 
 ExternalLoadResult ASTReader::FindExternalLexicalDecls(const DeclContext *DC,
                                          bool (*isKindWeWant)(Decl::Kind),
@@ -6237,7 +6237,7 @@ public:
   }
 };
 
-} // namespace
+}
 
 void ASTReader::FindFileRegionDecls(FileID File,
                                     unsigned Offset, unsigned Length,
@@ -6355,7 +6355,7 @@ namespace {
       return FoundAnything;
     }
   };
-} // namespace
+}
 
 /// \brief Retrieve the "definitive" module file for the definition of the
 /// given declaration context, if there is one.
@@ -6504,7 +6504,7 @@ namespace {
       return FoundAnything && !This->VisitAll;
     }
   };
-} // namespace
+}
 
 void ASTReader::completeVisibleDeclsMap(const DeclContext *DC) {
   if (!DC->hasExternalVisibleStorage())
@@ -6848,7 +6848,7 @@ namespace clang {
 
     StringRef Next() override;
   };
-} // namespace clang
+}
 
 ASTIdentifierIterator::ASTIdentifierIterator(const ASTReader &Reader)
   : Reader(Reader), Index(Reader.ModuleMgr.size() - 1) {
@@ -6960,8 +6960,7 @@ namespace clang { namespace serialization {
     }
     bool factoryHasMoreThanOneDecl() const { return FactoryHasMoreThanOneDecl; }
   };
-} // namespace serialization
- } // namespace clang
+} } // end namespace clang::serialization
 
 /// \brief Add the given set of methods to the method list.
 static void addMethodsToPool(Sema &S, ArrayRef<ObjCMethodDecl *> Methods,

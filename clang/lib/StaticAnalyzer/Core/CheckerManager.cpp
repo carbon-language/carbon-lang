@@ -160,7 +160,7 @@ namespace {
       checkFn(S, C);
     }
   };
-} // namespace
+}
 
 /// \brief Run checkers for visiting Stmts.
 void CheckerManager::runCheckersForStmt(bool isPreVisit,
@@ -199,7 +199,7 @@ namespace {
       checkFn(*Msg.cloneWithState<ObjCMethodCall>(Pred->getState()), C);
     }
   };
-} // namespace
+}
 
 /// \brief Run checkers for visiting obj-c messages.
 void CheckerManager::runCheckersForObjCMessage(bool isPreVisit,
@@ -242,7 +242,7 @@ namespace {
       checkFn(*Call.cloneWithState(Pred->getState()), C);
     }
   };
-} // namespace
+}
 
 /// \brief Run checkers for visiting an abstract call event.
 void CheckerManager::runCheckersForCallEvent(bool isPreVisit,
@@ -290,7 +290,7 @@ namespace {
       checkFn(Loc, IsLoad, BoundEx, C);
     }
   };
-} // namespace
+}
 
 /// \brief Run checkers for load/store of a location.
 
@@ -331,7 +331,7 @@ namespace {
       checkFn(Loc, Val, S, C);
     }
   };
-} // namespace
+}
 
 /// \brief Run checkers for binding of a value to a location.
 void CheckerManager::runCheckersForBind(ExplodedNodeSet &Dst,
@@ -395,7 +395,7 @@ namespace {
       checkFn(Condition, C);
     }
   };
-} // namespace
+}
 
 /// \brief Run checkers for branch condition.
 void CheckerManager::runCheckersForBranchCondition(const Stmt *Condition,
@@ -444,7 +444,7 @@ namespace {
       checkFn(SR, C);
     }
   };
-} // namespace
+}
 
 /// \brief Run checkers for dead symbols.
 void CheckerManager::runCheckersForDeadSymbols(ExplodedNodeSet &Dst,

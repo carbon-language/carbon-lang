@@ -242,6 +242,6 @@ inline void CXXRecordDecl::pushFriendDecl(FriendDecl *FD) {
   data().FirstFriend = FD;
 }
   
-} // namespace clang
+}
 
 #endif

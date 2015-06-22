@@ -167,7 +167,7 @@ namespace {
       CGF.EmitRuntimeCallOrInvoke(Fn);
     }
   };
-} // namespace
+}
 
 
 void CGObjCRuntime::EmitTryCatchStmt(CodeGenFunction &CGF,
@@ -307,7 +307,7 @@ namespace {
       CGF.Builder.CreateCall(SyncExitFn, SyncArg)->setDoesNotThrow();
     }
   };
-} // namespace
+}
 
 void CGObjCRuntime::EmitAtSynchronizedStmt(CodeGenFunction &CGF,
                                            const ObjCAtSynchronizedStmt &S,

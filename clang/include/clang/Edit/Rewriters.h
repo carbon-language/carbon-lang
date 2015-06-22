@@ -34,7 +34,7 @@ bool rewriteToObjCLiteralSyntax(const ObjCMessageExpr *Msg,
 bool rewriteToObjCSubscriptSyntax(const ObjCMessageExpr *Msg,
                                   const NSAPI &NS, Commit &commit);
 
-} // namespace edit
+}
 
 }  // end namespace clang
 

@@ -122,7 +122,7 @@ namespace {
     KS_Enabled,     // Enabled
     KS_Future       // Is a keyword in future standard
   };
-} // namespace
+}
 
 /// \brief Translates flags as specified in TokenKinds.def into keyword status
 /// in the given language standard.

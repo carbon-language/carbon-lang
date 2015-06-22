@@ -141,7 +141,7 @@ namespace llvm {
       return LHS == RHS;
     }
   };
-} // namespace llvm
+}
 
 namespace {
 

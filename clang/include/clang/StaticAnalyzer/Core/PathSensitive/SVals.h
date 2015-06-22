@@ -457,7 +457,7 @@ private:
   }
 };
 
-} // namespace nonloc
+} // end namespace ento::nonloc
 
 //==------------------------------------------------------------------------==//
 //  Subclasses of Loc.
@@ -551,11 +551,11 @@ private:
   }
 };
 
-} // namespace loc
+} // end ento::loc namespace
 
-} // namespace ento
+} // end ento namespace
 
-} // namespace clang
+} // end clang namespace
 
 namespace llvm {
 static inline raw_ostream &operator<<(raw_ostream &os,
@@ -569,6 +569,6 @@ template <> struct isPodLike<clang::ento::SVal> {
   static const bool value = true;
 };
 
-} // namespace llvm
+} // end llvm namespace
 
 #endif

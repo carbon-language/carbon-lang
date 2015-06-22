@@ -68,7 +68,7 @@ private:
   // BodyFarm.
   llvm::StringMap<Stmt *> Bodies;
 };
-} // namespace ento
-} // namespace clang
+}
+}
 
 #endif

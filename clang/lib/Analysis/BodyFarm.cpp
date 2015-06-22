@@ -84,7 +84,7 @@ public:
 private:
   ASTContext &C;
 };
-} // namespace
+}
 
 BinaryOperator *ASTMaker::makeAssignment(const Expr *LHS, const Expr *RHS,
                                          QualType Ty) {

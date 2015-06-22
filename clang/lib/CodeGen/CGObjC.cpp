@@ -448,7 +448,7 @@ struct FinishARCDealloc : EHScopeStack::Cleanup {
                                                       method);
   }
 };
-} // namespace
+}
 
 /// StartObjCMethod - Begin emission of an ObjCMethod. This generates
 /// the LLVM function and sets the other context used by
@@ -599,7 +599,7 @@ namespace {
     CharUnits IvarSize;
     CharUnits IvarAlignment;
   };
-} // namespace
+}
 
 /// Pick an implementation strategy for the given property synthesis.
 PropertyImplStrategy::PropertyImplStrategy(CodeGenModule &CGM,
@@ -1296,7 +1296,7 @@ namespace {
                       flags.isForNormalCleanup() && useEHCleanupForArray);
     }
   };
-} // namespace
+}
 
 /// Like CodeGenFunction::destroyARCStrong, but do it with a call.
 static void destroyARCStrongWithStore(CodeGenFunction &CGF,
@@ -1724,7 +1724,7 @@ namespace {
       CGF.EmitARCRelease(object, ARCImpreciseLifetime);
     }
   };
-} // namespace
+}
 
 /// Produce the code for a CK_ARCConsumeObject.  Does a primitive
 /// release at the end of the full-expression.
@@ -2340,7 +2340,7 @@ namespace {
       CGF.EmitObjCMRRAutoreleasePoolPop(Token);
     }
   };
-} // namespace
+}
 
 void CodeGenFunction::EmitObjCAutoreleasePoolCleanup(llvm::Value *Ptr) {
   if (CGM.getLangOpts().ObjCAutoRefCount)

@@ -287,7 +287,7 @@ class SDErrorCategoryType final : public std::error_category {
     llvm_unreachable("Unknown error type!");
   }
 };
-} // namespace
+}
 
 static llvm::ManagedStatic<SDErrorCategoryType> ErrorCategory;
 const std::error_category &clang::serialized_diags::SDErrorCategory() {

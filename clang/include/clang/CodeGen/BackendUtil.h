@@ -35,6 +35,6 @@ namespace clang {
                          const TargetOptions &TOpts, const LangOptions &LOpts,
                          StringRef TDesc, llvm::Module *M, BackendAction Action,
                          raw_pwrite_stream *OS);
-} // namespace clang
+}
 
 #endif

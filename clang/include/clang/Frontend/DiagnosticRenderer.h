@@ -172,5 +172,5 @@ public:
   virtual void emitNote(SourceLocation Loc, StringRef Message,
                         const SourceManager *SM) = 0;
 };
-} // namespace clang
+} // end clang namespace
 #endif

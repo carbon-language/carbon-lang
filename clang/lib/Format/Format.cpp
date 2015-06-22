@@ -293,8 +293,8 @@ template <> struct DocumentListTraits<std::vector<FormatStyle>> {
     return Seq[Index];
   }
 };
-} // namespace yaml
-} // namespace llvm
+}
+}
 
 namespace clang {
 namespace format {

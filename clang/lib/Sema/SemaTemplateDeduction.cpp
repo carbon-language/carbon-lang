@@ -58,7 +58,7 @@ namespace clang {
     /// terms of noreturn and default calling convention adjustments.
     TDF_InOverloadResolution = 0x20
   };
-} // namespace clang
+}
 
 using namespace clang;
 
@@ -3913,7 +3913,7 @@ namespace {
       return TransformType(TLB, TL);
     }
   };
-} // namespace
+}
 
 Sema::DeduceAutoResult
 Sema::DeduceAutoType(TypeSourceInfo *Type, Expr *&Init, QualType &Result) {

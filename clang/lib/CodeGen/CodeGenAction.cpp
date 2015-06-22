@@ -258,7 +258,7 @@ namespace clang {
   };
   
   void BackendConsumer::anchor() {}
-} // namespace clang
+}
 
 /// ConvertBackendLocation - Convert a location in a temporary llvm::SourceMgr
 /// buffer to be a valid FullSourceLoc.

@@ -223,7 +223,7 @@ namespace clang {
     Expr *VisitMemberExpr(MemberExpr *E);
     Expr *VisitCallExpr(CallExpr *E);
   };
-} // namespace clang
+}
 using namespace clang;
 
 //----------------------------------------------------------------------------
@@ -296,7 +296,7 @@ namespace {
       return C2.getDiagnostics().Report(Loc, DiagID);
     }
   };
-} // namespace
+}
 
 static bool IsStructurallyEquivalent(StructuralEquivalenceContext &Context,
                                      QualType T1, QualType T2);

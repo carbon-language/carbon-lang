@@ -68,7 +68,7 @@ struct StaticDiagInfoRec {
   }
 };
 
-} // namespace
+} // namespace anonymous
 
 static const StaticDiagInfoRec StaticDiagInfo[] = {
 #define DIAG(ENUM, CLASS, DEFAULT_SEVERITY, DESC, GROUP, SFINAE, NOWERROR,     \
@@ -193,7 +193,7 @@ namespace {
       return StringRef(NameStr, NameLen);
     }
   };
-} // namespace
+}
 
 // Unfortunately, the split between DiagnosticIDs and Diagnostic is not
 // particularly clean, but for now we just implement this method here so we can
@@ -292,8 +292,8 @@ namespace clang {
       }
     };
 
-  } // namespace diag
-} // namespace clang
+  } // end diag namespace
+} // end clang namespace
 
 
 //===----------------------------------------------------------------------===//
@@ -497,7 +497,7 @@ namespace {
                        DiagGroupNames[NameOffset]);
     }
   };
-} // namespace
+}
 
 // Second the table of options, sorted by name for fast binary lookup.
 static const WarningOption OptionTable[] = {

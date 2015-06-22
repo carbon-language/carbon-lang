@@ -311,8 +311,8 @@ public:
   virtual void Profile(llvm::FoldingSetNodeID& hash) const;
 };
 
-} // namespace ento
-} // namespace clang
+} // end ento namespace
+} // end clang namespace
 
 namespace llvm {
   template<> struct ilist_traits<clang::ento::BugReport>
@@ -331,7 +331,7 @@ namespace llvm {
   private:
     mutable ilist_half_node<clang::ento::BugReport> Sentinel;
   };
-} // namespace llvm
+}
 
 namespace clang {
 namespace ento {
@@ -554,8 +554,8 @@ public:
   virtual BugReport::NodeResolver& getNodeResolver() = 0;
 };
 
-} // namespace ento
+} // end GR namespace
 
-} // namespace clang
+} // end clang namespace
 
 #endif

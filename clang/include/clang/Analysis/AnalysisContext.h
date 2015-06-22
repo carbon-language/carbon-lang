@@ -476,5 +476,5 @@ private:
   }
 };
 
-} // namespace clang
+} // end clang namespace
 #endif

@@ -722,7 +722,7 @@ void IvarInvalidationCheckerImpl::MethodCrawler::VisitObjCMessageExpr(
 
   VisitStmt(ME);
 }
-} // namespace
+}
 
 // Register the checkers.
 namespace {
@@ -738,7 +738,7 @@ public:
     Walker.visit(D);
   }
 };
-} // namespace
+}
 
 #define REGISTER_CHECKER(name)                                                 \
   void ento::register##name(CheckerManager &mgr) {                             \

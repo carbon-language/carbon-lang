@@ -158,7 +158,7 @@ namespace {
 
     void HandleTopLevelSingleDecl(Decl *D);
   };
-} // namespace
+}
 
 void ASTViewer::HandleTopLevelSingleDecl(Decl *D) {
   if (isa<FunctionDecl>(D) || isa<ObjCMethodDecl>(D)) {

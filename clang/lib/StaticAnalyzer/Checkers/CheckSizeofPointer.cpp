@@ -34,7 +34,7 @@ public:
   void VisitStmt(Stmt *S) { VisitChildren(S); }
   void VisitChildren(Stmt *S);
 };
-} // namespace
+}
 
 void WalkAST::VisitChildren(Stmt *S) {
   for (Stmt::child_iterator I = S->child_begin(), E = S->child_end(); I!=E; ++I)

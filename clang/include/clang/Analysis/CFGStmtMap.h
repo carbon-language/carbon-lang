@@ -48,5 +48,5 @@ public:
   }
 };
 
-} // namespace clang
+} // end clang namespace
 #endif

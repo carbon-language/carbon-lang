@@ -177,7 +177,7 @@ protected:
   }
 };
 
-} // namespace
+}
 
 ObjCMigrateAction::ObjCMigrateAction(FrontendAction *WrappedAction,
                                      StringRef migrateDir,
@@ -379,7 +379,7 @@ public:
     return true;
   }
 };
-} // namespace
+}
 
 void ObjCMigrateASTConsumer::migrateDecl(Decl *D) {
   if (!D)
@@ -1853,7 +1853,7 @@ private:
   }
 };
 
-} // namespace
+}
 
 void ObjCMigrateASTConsumer::HandleTranslationUnit(ASTContext &Ctx) {
   
@@ -2084,7 +2084,7 @@ template<> struct DenseMapInfo<EditEntry> {
         LHS.Text == RHS.Text;
   }
 };
-} // namespace llvm
+}
 
 namespace {
 class RemapFileParser {
@@ -2166,7 +2166,7 @@ private:
       Entries.push_back(Entry);
   }
 };
-} // namespace
+}
 
 static bool reportDiag(const Twine &Err, DiagnosticsEngine &Diag) {
   Diag.Report(Diag.getCustomDiagID(DiagnosticsEngine::Error, "%0"))

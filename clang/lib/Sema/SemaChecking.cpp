@@ -3198,7 +3198,7 @@ protected:
                             bool IsStringLocation, Range StringRange,
                             ArrayRef<FixItHint> Fixit = None);
 };
-} // namespace
+}
 
 SourceRange CheckFormatHandler::getFormatStringRange() {
   return OrigFormatExpr->getSourceRange();
@@ -3552,7 +3552,7 @@ public:
                            const Expr *E);
 
 };  
-} // namespace
+}
 
 bool CheckPrintfHandler::HandleInvalidPrintfConversionSpecifier(
                                       const analyze_printf::PrintfSpecifier &FS,
@@ -4275,7 +4275,7 @@ public:
 
   void HandleIncompleteScanList(const char *start, const char *end) override;
 };
-} // namespace
+}
 
 void CheckScanfHandler::HandleIncompleteScanList(const char *start,
                                                  const char *end) {
@@ -7944,7 +7944,7 @@ public:
       Tree.merge(Elts[I]);
   }
 };
-} // namespace
+}
 
 void Sema::CheckUnsequencedOperations(Expr *E) {
   SmallVector<Expr *, 8> WorkList;
@@ -8338,7 +8338,7 @@ namespace {
       Range = e->getSourceRange();
     }
   };
-} // namespace
+}
 
 /// Consider whether capturing the given variable can possibly lead to
 /// a retain cycle.
@@ -8484,7 +8484,7 @@ namespace {
       }
     }
   };
-} // namespace
+}
 
 /// Check whether the given argument is a block which captures a
 /// variable.
@@ -9322,7 +9322,7 @@ bool isLayoutCompatible(ASTContext &C, QualType T1, QualType T2) {
 
   return false;
 }
-} // namespace
+}
 
 //===--- CHECK: pointer_with_type_tag attribute: datatypes should match ----//
 

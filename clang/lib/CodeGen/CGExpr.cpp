@@ -2242,7 +2242,7 @@ enum class CheckRecoverableKind {
   /// Runtime conditionally aborts, always need to support recovery.
   AlwaysRecoverable
 };
-} // namespace
+}
 
 static CheckRecoverableKind getRecoverableKind(SanitizerMask Kind) {
   assert(llvm::countPopulation(Kind) == 1);

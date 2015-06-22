@@ -50,6 +50,6 @@ public:
   void FlushDiagnostics(DiagnosticsEngine &Diags) const;
 };
 
-} // namespace clang
+} // end namspace clang
 
 #endif

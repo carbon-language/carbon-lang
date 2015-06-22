@@ -94,6 +94,6 @@ namespace clang {
     UETT_AlignOf,
     UETT_VecStep
   };
-} // namespace clang
+}
 
 #endif

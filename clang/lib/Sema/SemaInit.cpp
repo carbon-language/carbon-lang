@@ -1915,7 +1915,7 @@ class FieldInitializerValidatorCCC : public CorrectionCandidateCallback {
   RecordDecl *Record;
 };
 
-} // namespace
+}
 
 /// @brief Check the well-formedness of a C99 designated initializer.
 ///

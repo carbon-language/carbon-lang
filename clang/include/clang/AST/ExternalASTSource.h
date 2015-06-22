@@ -467,7 +467,7 @@ struct PointerLikeTypeTraits<
     NumLowBitsAvailable = PointerLikeTypeTraits<T>::NumLowBitsAvailable - 1
   };
 };
-} // namespace llvm
+}
 
 namespace clang {
 /// \brief Represents a lazily-loaded vector of data.

@@ -44,7 +44,7 @@ enum SanitizerOrdinal : uint64_t {
   const SanitizerMask ID##Group = 1ULL << SO_##ID##Group;
 #include "clang/Basic/Sanitizers.def"
 
-} // namespace SanitizerKind
+}
 
 struct SanitizerSet {
   SanitizerSet();

@@ -98,6 +98,6 @@ public:
   EmitObjAction(llvm::LLVMContext *_VMContext = nullptr);
 };
 
-} // namespace clang
+}
 
 #endif

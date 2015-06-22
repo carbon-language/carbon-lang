@@ -272,7 +272,7 @@ namespace {
     void EmitAtomicUpdateOp(llvm::AtomicOrdering AO, RValue UpdateRal,
                             bool IsVolatile);
   };
-} // namespace
+}
 
 AtomicExpr::AtomicOrderingKind
 AtomicInfo::translateAtomicOrdering(const llvm::AtomicOrdering AO) {

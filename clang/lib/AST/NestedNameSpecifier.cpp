@@ -377,7 +377,7 @@ namespace {
     memcpy(&Result, static_cast<char *>(Data) + Offset, sizeof(void*));
     return Result;
   }
-} // namespace
+}
 
 SourceRange NestedNameSpecifierLoc::getSourceRange() const {
   if (!Qualifier)
@@ -470,7 +470,7 @@ namespace {
            reinterpret_cast<char *>(&Ptr) + sizeof(void *),
            Buffer, BufferSize, BufferCapacity);
   }
-} // namespace
+}
 
 NestedNameSpecifierLocBuilder::
 NestedNameSpecifierLocBuilder(const NestedNameSpecifierLocBuilder &Other) 

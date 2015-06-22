@@ -1259,7 +1259,7 @@ namespace {
                  const SynthesizeIvarChunk &RHS) {
       return LHS.Size < RHS.Size;
   }
-} // namespace
+}
 
 /// all_declared_ivar_begin - return first ivar declared in this class,
 /// its extensions and its implementation. Lazily build the list on first

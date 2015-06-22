@@ -140,7 +140,7 @@ namespace {
       PlaceholderKind = (BuiltinType::Kind) 0;
     }
   };
-} // namespace
+}
 
 // The Try functions attempt a specific way of casting. If they succeed, they
 // return TC_Success. If their way of casting is not appropriate for the given

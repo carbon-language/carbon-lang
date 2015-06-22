@@ -579,7 +579,7 @@ private:
   const RecordDecl *const Record;
 };
 
-} // namespace
+}
 
 static bool LookupMemberExprInRecord(Sema &SemaRef, LookupResult &R,
                                      Expr *BaseExpr,

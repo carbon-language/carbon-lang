@@ -70,7 +70,7 @@ protected:
   bool BeginInvocation(CompilerInstance &CI) override;
 };
 
-} // namespace arcmt
-} // namespace clang
+}
+}
 
 #endif

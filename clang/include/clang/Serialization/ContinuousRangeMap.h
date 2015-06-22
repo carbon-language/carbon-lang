@@ -134,6 +134,6 @@ public:
   friend class Builder;
 };
 
-} // namespace clang
+}
 
 #endif

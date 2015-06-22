@@ -33,6 +33,6 @@ namespace clang {
       : SM(sm), Loc(L), Message(Msg) {}
     void print(raw_ostream &OS) const override;
   };
-} // namespace clang
+}
 
 #endif

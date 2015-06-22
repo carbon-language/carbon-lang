@@ -124,7 +124,7 @@ public:
     return new MicrosoftNumberingContext();
   }
 };
-} // namespace
+}
 
 // getNumBases() seems to only give us the number of direct bases, and not the
 // total.  This function tells us if we inherit from anybody that uses MI, or if

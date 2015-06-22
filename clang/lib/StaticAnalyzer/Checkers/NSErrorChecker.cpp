@@ -47,7 +47,7 @@ public:
   void checkASTDecl(const ObjCMethodDecl *D,
                     AnalysisManager &mgr, BugReporter &BR) const;
 };
-} // namespace
+}
 
 void NSErrorMethodChecker::checkASTDecl(const ObjCMethodDecl *D,
                                         AnalysisManager &mgr,
@@ -94,7 +94,7 @@ public:
   void checkASTDecl(const FunctionDecl *D,
                     AnalysisManager &mgr, BugReporter &BR) const;
 };
-} // namespace
+}
 
 void CFErrorFunctionChecker::checkASTDecl(const FunctionDecl *D,
                                         AnalysisManager &mgr,
@@ -146,7 +146,7 @@ public:
                 "Coding conventions (Apple)") {}
 };
 
-} // namespace
+}
 
 namespace {
 class NSOrCFErrorDerefChecker
@@ -164,7 +164,7 @@ public:
                      CheckerContext &C) const;
   void checkEvent(ImplicitNullDerefEvent event) const;
 };
-} // namespace
+}
 
 typedef llvm::ImmutableMap<SymbolRef, unsigned> ErrorOutFlag;
 REGISTER_TRAIT_WITH_PROGRAMSTATE(NSErrorOut, ErrorOutFlag)

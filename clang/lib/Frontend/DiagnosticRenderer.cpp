@@ -87,7 +87,7 @@ public:
   }
 };
 
-} // namespace
+}
 
 static void mergeFixits(ArrayRef<FixItHint> FixItHints,
                         const SourceManager &SM, const LangOptions &LangOpts,

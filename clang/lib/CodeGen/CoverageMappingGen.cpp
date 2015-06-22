@@ -884,7 +884,7 @@ struct CounterCoverageMappingBuilder
     // propagate counts into them.
   }
 };
-} // namespace
+}
 
 static bool isMachO(const CodeGenModule &CGM) {
   return CGM.getTarget().getTriple().isOSBinFormatMachO();

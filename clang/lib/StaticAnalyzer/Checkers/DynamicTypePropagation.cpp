@@ -41,7 +41,7 @@ public:
   void checkPostStmt(const ImplicitCastExpr *CastE, CheckerContext &C) const;
   void checkPostStmt(const CXXNewExpr *NewE, CheckerContext &C) const;
 };
-} // namespace
+}
 
 static void recordFixedType(const MemRegion *Region, const CXXMethodDecl *MD,
                             CheckerContext &C) {

@@ -423,7 +423,7 @@ namespace SrcMgr {
       return E;
     }
   };
-} // namespace SrcMgr
+}  // end SrcMgr namespace.
 
 /// \brief External source of source location entries.
 class ExternalSLocEntrySource {

@@ -400,5 +400,5 @@ void ASTVector<T>::grow(const ASTContext &C, size_t MinSize) {
   Capacity.setPointer(Begin+NewCapacity);
 }
 
-} // namespace clang
+} // end: clang namespace
 #endif

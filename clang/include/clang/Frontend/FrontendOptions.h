@@ -56,7 +56,7 @@ namespace frontend {
     MigrateSource,          ///< Run migrator.
     RunPreprocessorOnly     ///< Just lex, no output.
   };
-} // namespace frontend
+}
 
 enum InputKind {
   IK_None,

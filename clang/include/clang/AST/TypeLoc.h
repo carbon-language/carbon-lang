@@ -1952,6 +1952,6 @@ public:
 };
 
 
-} // namespace clang
+}
 
 #endif

@@ -34,7 +34,7 @@ class TaintTesterChecker : public Checker< check::PostStmt<Expr> > {
 public:
   void checkPostStmt(const Expr *E, CheckerContext &C) const;
 };
-} // namespace
+}
 
 inline void TaintTesterChecker::initBugType() const {
   if (!BT)

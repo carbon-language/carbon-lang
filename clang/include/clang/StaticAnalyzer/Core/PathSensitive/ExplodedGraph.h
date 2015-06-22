@@ -433,9 +433,9 @@ public:
   inline const_iterator end()   const { return Impl.end();   }
 };
 
-} // namespace ento
+} // end GR namespace
 
-} // namespace clang
+} // end clang namespace
 
 // GraphTraits
 
@@ -492,6 +492,6 @@ namespace llvm {
     }
   };
 
-} // namespace llvm
+} // end llvm namespace
 
 #endif

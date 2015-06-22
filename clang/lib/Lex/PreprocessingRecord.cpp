@@ -195,7 +195,7 @@ struct PPEntityComp {
   }
 };
 
-} // namespace
+}
 
 unsigned PreprocessingRecord::findBeginLocalPreprocessedEntity(
                                                      SourceLocation Loc) const {

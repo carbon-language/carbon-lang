@@ -44,7 +44,7 @@ class DataLayout;
 class FunctionType;
 class LLVMContext;
 class IndexedInstrProfReader;
-} // namespace llvm
+}
 
 namespace clang {
 class TargetCodeGenInfo;

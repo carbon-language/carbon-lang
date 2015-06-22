@@ -53,6 +53,6 @@ std::unique_ptr<ASTConsumer> CreateASTViewer();
 // to stderr; this is intended for debugging.
 std::unique_ptr<ASTConsumer> CreateDeclContextPrinter();
 
-} // namespace clang
+} // end clang namespace
 
 #endif

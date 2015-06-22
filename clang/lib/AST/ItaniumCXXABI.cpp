@@ -153,7 +153,7 @@ public:
     return new ItaniumNumberingContext();
   }
 };
-} // namespace
+}
 
 CXXABI *clang::CreateItaniumCXXABI(ASTContext &Ctx) {
   return new ItaniumCXXABI(Ctx);

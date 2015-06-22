@@ -3500,7 +3500,7 @@ namespace {
     void emitWriteHazard();
     void emitHazardsInNewBlocks();
   };
-} // namespace
+}
 
 /// Create the fragile-ABI read and write hazards based on the current
 /// state of the function, which is presumed to be immediately prior

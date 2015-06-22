@@ -77,7 +77,7 @@ public:
     return reachable[block->getBlockID()];
   }
 };
-} // namespace
+}
 
 void ReachableCode::computeReachableBlocks() {
   if (!cfg.getNumBlockIDs())
@@ -445,7 +445,7 @@ public:
     }
   }
 };
-} // namespace
+}
 
 void ento::registerDeadStoresChecker(CheckerManager &mgr) {
   mgr.registerChecker<DeadStoresChecker>();

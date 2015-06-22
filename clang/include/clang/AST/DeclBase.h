@@ -54,7 +54,7 @@ class Stmt;
 class StoredDeclsMap;
 class TranslationUnitDecl;
 class UsingDirectiveDecl;
-} // namespace clang
+}
 
 namespace clang {
 
@@ -1799,7 +1799,7 @@ struct cast_convert_decl_context<ToTy, true> {
 };
 
 
-} // namespace clang
+} // end clang.
 
 namespace llvm {
 

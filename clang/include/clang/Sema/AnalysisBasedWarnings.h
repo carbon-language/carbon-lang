@@ -98,7 +98,6 @@ public:
   void PrintStats() const;
 };
 
-} // namespace sema
-} // namespace clang
+}} // end namespace clang::sema
 
 #endif

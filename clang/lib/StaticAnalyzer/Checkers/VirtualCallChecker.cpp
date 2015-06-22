@@ -239,7 +239,7 @@ public:
       }
   }
 };
-} // namespace
+}
 
 void ento::registerVirtualCallChecker(CheckerManager &mgr) {
   mgr.registerChecker<VirtualCallChecker>();

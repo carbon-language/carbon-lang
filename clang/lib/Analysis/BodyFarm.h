@@ -46,6 +46,6 @@ private:
   BodyMap Bodies;
   CodeInjector *Injector;
 };
-} // namespace clang
+}
 
 #endif

@@ -1435,7 +1435,7 @@ namespace {
       return true;
     }
   };
-} // namespace
+}
 
 // isTriviallyRecursive - Check if this function calls another
 // decl that, because of the asm attribute or the other decl being a builtin,

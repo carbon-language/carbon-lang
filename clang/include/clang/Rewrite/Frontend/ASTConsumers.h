@@ -43,6 +43,6 @@ std::unique_ptr<ASTConsumer> CreateHTMLPrinter(raw_ostream *OS,
                                                bool SyntaxHighlight = true,
                                                bool HighlightMacros = true);
 
-} // namespace clang
+} // end clang namespace
 
 #endif

@@ -609,7 +609,7 @@ namespace {
     }
   };
   
-} // namespace
+}
 
 void RewriteModernObjC::RewriteBlocksInFunctionProtoType(QualType funcType,
                                                    NamedDecl *D) {

@@ -53,7 +53,7 @@ enum Level {
 /// \brief The serialized diagnostics version number.
 enum { VersionNumber = 2 };
 
-} // namespace serialized_diags
-} // namespace clang
+} // end serialized_diags namespace
+} // end clang namespace
 
 #endif

@@ -128,8 +128,8 @@ public:
   }
 };
 
-} // namespace ento
+} // enAnaCtxMgrspace
 
-} // namespace clang
+} // end clang namespace
 
 #endif

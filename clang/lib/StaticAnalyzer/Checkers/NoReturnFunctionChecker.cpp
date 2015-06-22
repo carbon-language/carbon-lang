@@ -36,7 +36,7 @@ public:
   void checkPostObjCMessage(const ObjCMethodCall &msg, CheckerContext &C) const;
 };
 
-} // namespace
+}
 
 void NoReturnFunctionChecker::checkPostCall(const CallEvent &CE,
                                             CheckerContext &C) const {

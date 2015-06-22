@@ -193,7 +193,7 @@ namespace clang {
       Record.append(LazySpecializations.begin(), LazySpecializations.end());
     }
   };
-} // namespace clang
+}
 
 void ASTDeclWriter::Visit(Decl *D) {
   DeclVisitor<ASTDeclWriter>::Visit(D);

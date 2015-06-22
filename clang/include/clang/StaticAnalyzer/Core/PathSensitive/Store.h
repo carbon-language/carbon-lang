@@ -281,8 +281,8 @@ CreateRegionStoreManager(ProgramStateManager &StMgr);
 std::unique_ptr<StoreManager>
 CreateFieldsOnlyRegionStoreManager(ProgramStateManager &StMgr);
 
-} // namespace ento
+} // end GR namespace
 
-} // namespace clang
+} // end clang namespace
 
 #endif

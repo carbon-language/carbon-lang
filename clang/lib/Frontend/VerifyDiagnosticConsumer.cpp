@@ -301,7 +301,7 @@ private:
   const char *PEnd; // previous next/search subject end (1-past)
 };
 
-} // namespace
+} // namespace anonymous
 
 /// ParseDirective - Go through the comment and see if it indicates expected
 /// diagnostics. If so, then put them in the appropriate directive list.

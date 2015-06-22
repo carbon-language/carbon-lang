@@ -117,7 +117,7 @@ bool isOpenMPPrivate(OpenMPClauseKind Kind);
 /// \return true - the clause is a threadprivate clause, otherwise - false.
 bool isOpenMPThreadPrivate(OpenMPClauseKind Kind);
 
-} // namespace clang
+}
 
 #endif
 

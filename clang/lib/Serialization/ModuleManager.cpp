@@ -534,7 +534,7 @@ namespace llvm {
       return M->ModuleName;
     }
   };
-} // namespace llvm
+}
 
 void ModuleManager::viewGraph() {
   llvm::ViewGraph(*this, "Modules");

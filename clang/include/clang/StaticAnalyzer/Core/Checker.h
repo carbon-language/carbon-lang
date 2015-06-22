@@ -411,7 +411,7 @@ public:
   }
 };
 
-} // namespace check
+} // end check namespace
 
 namespace eval {
 
@@ -446,7 +446,7 @@ public:
   }
 };
 
-} // namespace eval
+} // end eval namespace
 
 class CheckerBase : public ProgramPointTag {
   CheckName Name;
@@ -528,8 +528,8 @@ struct DefaultBool {
   DefaultBool &operator=(bool b) { val = b; return *this; }
 };
 
-} // namespace ento
+} // end ento namespace
 
-} // namespace clang
+} // end clang namespace
 
 #endif

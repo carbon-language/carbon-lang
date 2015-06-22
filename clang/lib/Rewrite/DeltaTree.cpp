@@ -149,7 +149,7 @@ namespace {
 
     static inline bool classof(const DeltaTreeNode *N) { return !N->isLeaf(); }
   };
-} // namespace
+}
 
 
 /// Destroy - A 'virtual' destructor.

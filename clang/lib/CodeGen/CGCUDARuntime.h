@@ -59,7 +59,7 @@ public:
 /// Creates an instance of a CUDA runtime class.
 CGCUDARuntime *CreateNVCUDARuntime(CodeGenModule &CGM);
 
-} // namespace CodeGen
-} // namespace clang
+}
+}
 
 #endif

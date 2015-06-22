@@ -168,7 +168,7 @@ public:
     walker.Visit(D->getBody());
   }
 };
-} // namespace
+}
 
 void ento::registerObjCContainersASTChecker(CheckerManager &mgr) {
   mgr.registerChecker<ObjCContainersASTChecker>();

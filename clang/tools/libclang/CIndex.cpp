@@ -1897,7 +1897,7 @@ private:
   void EnqueueChildren(const Stmt *S);
   void EnqueueChildren(const OMPClause *S);
 };
-} // namespace
+} // end anonyous namespace
 
 void EnqueueVisitor::AddDeclarationNameInfo(const Stmt *S) {
   // 'S' should always be non-null, since it comes from the
@@ -2098,7 +2098,7 @@ OMPClauseEnqueue::VisitOMPCopyprivateClause(const OMPCopyprivateClause *C) {
 void OMPClauseEnqueue::VisitOMPFlushClause(const OMPFlushClause *C) {
   VisitOMPClauseList(C);
 }
-} // namespace
+}
 
 void EnqueueVisitor::EnqueueChildren(const OMPClause *S) {
   unsigned size = WL.size();
@@ -2783,7 +2783,7 @@ buildPieces(unsigned NameFlags, bool IsMemberRefExpr,
 
   return Pieces;  
 }
-} // namespace
+}
 
 //===----------------------------------------------------------------------===//
 // Misc. API hooks.
@@ -5616,7 +5616,7 @@ public:
     assert(PostChildrenInfos.empty());
   }
 };
-} // namespace
+}
 
 void AnnotateTokensWorker::AnnotateTokens() {
   // Walk the AST within the region of interest, annotating tokens
@@ -7116,7 +7116,7 @@ void SetSafetyThreadStackSize(unsigned Value) {
   SafetyStackThreadSize = Value;
 }
 
-} // namespace clang
+}
 
 void clang::setThreadBackgroundPriority() {
   if (getenv("LIBCLANG_BGPRIO_DISABLE"))

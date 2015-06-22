@@ -168,8 +168,8 @@ private:
 };
 
 raw_ostream &operator<<(raw_ostream &OS, const MultilibSet &MS);
-} // namespace driver
-} // namespace clang
+}
+}
 
 #endif
 

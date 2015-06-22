@@ -294,7 +294,6 @@ inline bool operator!=(CXCursor X, CXCursor Y) {
 /// first in a declaration group.
 bool isFirstInDeclGroup(CXCursor C);
 
-} // namespace cxcursor
-} // namespace clang
+}} // end namespace: clang::cxcursor
 
 #endif

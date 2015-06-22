@@ -2843,7 +2843,7 @@ struct DestroyUnpassedArg : EHScopeStack::Cleanup {
   }
 };
 
-} // namespace
+}
 
 struct DisableDebugLocationUpdates {
   CodeGenFunction &CGF;

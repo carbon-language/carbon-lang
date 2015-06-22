@@ -99,7 +99,7 @@ namespace {
       }
     }
   };
-} // namespace
+}
 
 /// CheckUnreachable - Check for unreachable code.
 static void CheckUnreachable(Sema &S, AnalysisDeclContext &AC) {
@@ -493,7 +493,7 @@ struct CheckFallThroughDiagnostics {
   }
 };
 
-} // namespace
+}
 
 /// CheckFallThroughForFunctionDef - Check that we don't fall off the end of a
 /// function that should return a value.  Check that we don't fall off the end
@@ -601,7 +601,7 @@ public:
 
   bool doesContainReference() const { return FoundReference; }
 };
-} // namespace
+}
 
 static bool SuggestInitializationFixit(Sema &S, const VarDecl *VD) {
   QualType VariableTy = VD->getType().getCanonicalType();
@@ -1059,7 +1059,7 @@ namespace {
     Sema &S;
     llvm::SmallPtrSet<const CFGBlock *, 16> ReachableBlocks;
   };
-} // namespace
+}
 
 static void DiagnoseSwitchLabelsFallthrough(Sema &S, AnalysisDeclContext &AC,
                                             bool PerFunction) {
@@ -1414,7 +1414,7 @@ private:
     });
   }
 };
-} // namespace
+}
 
 namespace clang {
 namespace {
@@ -1432,8 +1432,7 @@ struct SortDiagBySourceLocation {
     return SM.isBeforeInTranslationUnit(left.first.first, right.first.first);
   }
 };
-} // namespace
-} // namespace clang
+}}
 
 //===----------------------------------------------------------------------===//
 // -Wthread-safety
@@ -1794,9 +1793,7 @@ public:
     Warnings.emplace_back(std::move(Warning), OptionalNotes());
   }
 };
-} // namespace
-} // namespace consumed
-} // namespace clang
+}}}
 
 //===----------------------------------------------------------------------===//
 // AnalysisBasedWarnings - Worker object used by Sema to execute analysis-based

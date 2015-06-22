@@ -336,7 +336,7 @@ public:
   // ARM64 libraries are prepared for non-unique RTTI.
   bool shouldRTTIBeUnique() const override { return false; }
 };
-} // namespace
+}
 
 CodeGen::CGCXXABI *CodeGen::CreateItaniumCXXABI(CodeGenModule &CGM) {
   switch (CGM.getTarget().getCXXABI().getKind()) {
@@ -1743,7 +1743,7 @@ namespace {
                                   Guard);
     }
   };
-} // namespace
+}
 
 /// The ARM code here follows the Itanium code closely enough that we
 /// just special-case it at particular places.
@@ -2250,7 +2250,7 @@ public:
   /// \param Force - true to force the creation of this RTTI value
   llvm::Constant *BuildTypeInfo(QualType Ty, bool Force = false);
 };
-} // namespace
+}
 
 llvm::GlobalVariable *ItaniumRTTIBuilder::GetAddrOfTypeName(
     QualType Ty, llvm::GlobalVariable::LinkageTypes Linkage) {
@@ -3347,7 +3347,7 @@ namespace {
       CGF.EmitRuntimeCallOrInvoke(getEndCatchFn(CGF.CGM));
     }
   };
-} // namespace
+}
 
 /// Emits a call to __cxa_begin_catch and enters a cleanup to call
 /// __cxa_end_catch.

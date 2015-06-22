@@ -941,8 +941,7 @@ void ConsumedStmtVisitor::VisitVarDecl(const VarDecl *Var) {
     StateMap->setState(Var, consumed::CS_Unknown);
   }
 }
-} // namespace consumed
-} // namespace clang
+}} // end clang::consumed::ConsumedStmtVisitor
 
 namespace clang {
 namespace consumed {
@@ -1468,5 +1467,4 @@ void ConsumedAnalyzer::run(AnalysisDeclContext &AC) {
   
   WarningsHandler.emitDiagnostics();
 }
-} // namespace consumed
-} // namespace clang
+}} // end namespace clang::consumed

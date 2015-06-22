@@ -62,7 +62,7 @@ public:
   /// Returns the bit vector index for a given declaration.
   Optional<unsigned> getValueIndex(const VarDecl *d) const;
 };
-} // namespace
+}
 
 void DeclToIndex::computeMap(const DeclContext &dc) {
   unsigned count = 0;
@@ -223,7 +223,7 @@ public:
   void enqueueSuccessors(const CFGBlock *block);
   const CFGBlock *dequeue();
 };
-} // namespace
+}
 
 void DataflowWorklist::enqueueSuccessors(const clang::CFGBlock *block) {
   for (CFGBlock::const_succ_iterator I = block->succ_begin(),
@@ -345,7 +345,7 @@ public:
     return Init;
   }
 };
-} // namespace
+}
 
 static const DeclRefExpr *getSelfInitExpr(VarDecl *VD) {
   if (VD->getType()->isRecordType()) return nullptr;
@@ -672,7 +672,7 @@ public:
     return Use;
   }
 };
-} // namespace
+}
 
 void TransferFunctions::reportUse(const Expr *ex, const VarDecl *vd) {
   Value v = vals[vd];
@@ -862,7 +862,7 @@ struct PruneBlocksHandler : public UninitVariablesHandler {
     hadAnyUse = true;
   }
 };
-} // namespace
+}
 
 void clang::runUninitializedVariablesAnalysis(
     const DeclContext &dc,

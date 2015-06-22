@@ -1016,7 +1016,7 @@ namespace {
           getType(), "SA->get" + std::string(getUpperName()) + "Loc()");
     }
   };
-} // namespace
+}
 
 static std::unique_ptr<Argument>
 createArgument(const Record &Arg, StringRef Attr,

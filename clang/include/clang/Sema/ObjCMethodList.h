@@ -53,6 +53,6 @@ struct ObjCMethodList {
   }
 };
 
-} // namespace clang
+}
 
 #endif

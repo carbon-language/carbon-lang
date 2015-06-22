@@ -419,7 +419,7 @@ class NestedNameSpecifierValidatorCCC : public CorrectionCandidateCallback {
   Sema &SRef;
 };
 
-} // namespace
+}
 
 /// \brief Build a new nested-name-specifier for "identifier::", as described
 /// by ActOnCXXNestedNameSpecifier.

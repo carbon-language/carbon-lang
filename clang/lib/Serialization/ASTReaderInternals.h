@@ -241,8 +241,8 @@ public:
 typedef llvm::OnDiskChainedHashTable<HeaderFileInfoTrait>
   HeaderFileInfoLookupTable;
   
-} // namespace reader
-} // namespace serialization
+} // end namespace clang::serialization::reader
+} // end namespace clang::serialization
 } // end namespace clang
 
 

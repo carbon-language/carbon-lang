@@ -98,7 +98,7 @@ namespace {
 #define ABSTRACT_TYPE(Class, Base)
 #include "clang/AST/TypeNodes.def"
   };
-} // namespace
+}
 
 void ASTTypeWriter::VisitBuiltinType(const BuiltinType *T) {
   llvm_unreachable("Built-in types are never serialized");
@@ -458,7 +458,7 @@ public:
   void VisitFunctionTypeLoc(FunctionTypeLoc TyLoc);
 };
 
-} // namespace
+}
 
 void TypeLocWriter::VisitQualifiedTypeLoc(QualifiedTypeLoc TL) {
   // nothing to do

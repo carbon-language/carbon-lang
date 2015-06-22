@@ -108,7 +108,7 @@ namespace {
     void print##CLASS##After(const CLASS##Type *T, raw_ostream &OS);
 #include "clang/AST/TypeNodes.def"
   };
-} // namespace
+}
 
 static void AppendTypeQualList(raw_ostream &OS, unsigned TypeQuals, bool C99) {
   bool appendSpace = false;

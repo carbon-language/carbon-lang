@@ -38,7 +38,7 @@ public:
 private:
   llvm::StringMap<Stmt *> &Bodies;
 };
-} // namespace ento
-} // namespace clang
+}
+}
 
 #endif

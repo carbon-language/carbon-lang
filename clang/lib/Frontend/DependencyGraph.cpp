@@ -57,7 +57,7 @@ public:
   }
   
 };
-} // namespace
+}
 
 void clang::AttachDependencyGraphGen(Preprocessor &PP, StringRef OutputFile,
                                      StringRef SysRoot) {

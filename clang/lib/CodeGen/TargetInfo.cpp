@@ -685,7 +685,7 @@ public:
   }
 };
 
-} // namespace
+}
 
 /// Rewrite input constraint references after adding some output constraints.
 /// In the case where there is one output and one input and we add one output,
@@ -1768,7 +1768,7 @@ void WinX86_64TargetCodeGenInfo::setTargetAttributes(const Decl *D,
 
   addStackProbeSizeTargetAttribute(D, GV, CGM);
 }
-} // namespace
+}
 
 void X86_64ABIInfo::postMerge(unsigned AggregateSize, Class &Lo,
                               Class &Hi) const {
@@ -3173,7 +3173,7 @@ public:
   }
 };
 
-} // namespace
+}
 
 llvm::Value *PPC32_SVR4_ABIInfo::EmitVAArg(llvm::Value *VAListAddr,
                                            QualType Ty,
@@ -3453,7 +3453,7 @@ public:
   }
 };
 
-} // namespace
+}
 
 // Return true if the ABI requires Ty to be passed sign- or zero-
 // extended to 64 bits.
@@ -3999,7 +3999,7 @@ public:
 
   bool doesReturnSlotInterfereWithArgs() const override { return false; }
 };
-} // namespace
+}
 
 ABIArgInfo AArch64ABIInfo::classifyArgumentType(QualType Ty) const {
   Ty = useFirstFieldIfTransparentUnion(Ty);
@@ -4627,7 +4627,7 @@ void WindowsARMTargetCodeGenInfo::setTargetAttributes(
   ARMTargetCodeGenInfo::setTargetAttributes(D, GV, CGM);
   addStackProbeSizeTargetAttribute(D, GV, CGM);
 }
-} // namespace
+}
 
 void ARMABIInfo::computeInfo(CGFunctionInfo &FI) const {
   if (!getCXXABI().classifyReturnType(FI))
@@ -5201,7 +5201,7 @@ void NVPTXTargetCodeGenInfo::addNVVMMetadata(llvm::Function *F, StringRef Name,
   // Append metadata to nvvm.annotations
   MD->addOperand(llvm::MDNode::get(Ctx, MDVals));
 }
-} // namespace
+}
 
 //===----------------------------------------------------------------------===//
 // SystemZ ABI Implementation
@@ -5242,7 +5242,7 @@ public:
     : TargetCodeGenInfo(new SystemZABIInfo(CGT, HasVector)) {}
 };
 
-} // namespace
+}
 
 bool SystemZABIInfo::isPromotableIntegerType(QualType Ty) const {
   // Treat an enum type as its underlying type.
@@ -5552,7 +5552,7 @@ public:
                            CodeGen::CodeGenModule &M) const override;
 };
 
-} // namespace
+}
 
 void MSP430TargetCodeGenInfo::setTargetAttributes(const Decl *D,
                                                   llvm::GlobalValue *GV,
@@ -5634,7 +5634,7 @@ public:
     return SizeOfUnwindException;
   }
 };
-} // namespace
+}
 
 void MipsABIInfo::CoerceToIntArgs(
     uint64_t TySize, SmallVectorImpl<llvm::Type *> &ArgList) const {
@@ -6001,7 +6001,7 @@ void TCETargetCodeGenInfo::setTargetAttributes(
   }
 }
 
-} // namespace
+}
 
 //===----------------------------------------------------------------------===//
 // Hexagon ABI Implementation
@@ -6036,7 +6036,7 @@ public:
   }
 };
 
-} // namespace
+}
 
 void HexagonABIInfo::computeInfo(CGFunctionInfo &FI) const {
   if (!getCXXABI().classifyReturnType(FI))
@@ -6150,7 +6150,7 @@ public:
                            CodeGen::CodeGenModule &M) const override;
 };
 
-} // namespace
+}
 
 void AMDGPUTargetCodeGenInfo::setTargetAttributes(
   const Decl *D,

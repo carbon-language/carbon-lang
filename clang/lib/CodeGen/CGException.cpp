@@ -110,7 +110,7 @@ namespace {
     static const EHPersonality MSVC_C_specific_handler;
     static const EHPersonality MSVC_CxxFrameHandler3;
   };
-} // namespace
+}
 
 const EHPersonality EHPersonality::GNU_C = { "__gcc_personality_v0", nullptr };
 const EHPersonality
@@ -361,7 +361,7 @@ namespace {
       CGF.EmitNounwindRuntimeCall(getFreeExceptionFn(CGF.CGM), exn);
     }
   };
-} // namespace
+}
 
 // Emits an exception expression into the given location.  This
 // differs from EmitAnyExprToMem only in that, if a final copy-ctor
@@ -1081,7 +1081,7 @@ namespace {
       CGF.EnsureInsertPoint();
     }
   };
-} // namespace
+}
 
 /// Enters a finally block for an implementation using zero-cost
 /// exceptions.  This is mostly general, but hard-codes some
@@ -1332,7 +1332,7 @@ struct PerformSEHFinally : EHScopeStack::Cleanup {
     CGF.EmitCall(FnInfo, OutlinedFinally, ReturnValueSlot(), Args);
   }
 };
-} // namespace
+}
 
 namespace {
 /// Find all local variable captures in the statement.
@@ -1367,7 +1367,7 @@ struct CaptureFinder : ConstStmtVisitor<CaptureFinder> {
     Captures.push_back(ParentThis);
   }
 };
-} // namespace
+}
 
 void CodeGenFunction::EmitCapturedLocals(CodeGenFunction &ParentCGF,
                                          const Stmt *OutlinedStmt,

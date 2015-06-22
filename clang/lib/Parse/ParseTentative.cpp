@@ -1023,7 +1023,7 @@ public:
     return CorrectionCandidateCallback::ValidateCandidate(Candidate);
   }
 };
-} // namespace
+}
 /// isCXXDeclarationSpecifier - Returns TPResult::True if it is a declaration
 /// specifier, TPResult::False if it is not, TPResult::Ambiguous if it could
 /// be either a decl-specifier or a function-style cast, and TPResult::Error

@@ -71,7 +71,7 @@ protected:
   void ReadMethodPool(Selector Sel) override;
   bool LookupUnqualified(LookupResult &R, Scope *S) override;
 };
-} // namespace
+}
 
 static ASTReader *
 createASTReader(CompilerInstance &CI, StringRef pchFile,

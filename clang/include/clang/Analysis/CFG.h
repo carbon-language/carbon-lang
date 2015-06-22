@@ -1109,5 +1109,5 @@ template <> struct GraphTraits<Inverse<const ::clang::CFG*> >
     return F->nodes_end();
   }
 };
-} // namespace llvm
+} // end llvm namespace
 #endif

@@ -46,7 +46,7 @@ public:
   virtual llvm::Type *convertOpenCLSpecificType(const Type *T);
 };
 
-} // namespace CodeGen
-} // namespace clang
+}
+}
 
 #endif

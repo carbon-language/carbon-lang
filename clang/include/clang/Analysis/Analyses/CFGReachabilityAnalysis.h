@@ -44,6 +44,6 @@ private:
   void mapReachability(const CFGBlock *Dst);
 };
   
-} // namespace clang
+}
 
 #endif

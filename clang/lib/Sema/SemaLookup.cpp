@@ -204,7 +204,7 @@ namespace {
                                                UnqualUsingEntry::Comparator()));
     }
   };
-} // namespace
+}
 
 // Retrieve the set of identifier namespaces that correspond to a
 // specific kind of name lookup.
@@ -875,7 +875,7 @@ struct FindLocalExternScope {
   LookupResult &R;
   bool OldFindLocalExtern;
 };
-} // namespace
+}
 
 bool Sema::CppLookupName(LookupResult &R, Scope *S) {
   assert(getLangOpts().CPlusPlus && "Can perform only C++ lookup");
@@ -2121,7 +2121,7 @@ namespace {
     Sema::AssociatedClassSet &Classes;
     SourceLocation InstantiationLoc;
   };
-} // namespace
+}
 
 static void
 addAssociatedClassesAndNamespaces(AssociatedLookup &Result, QualType T);

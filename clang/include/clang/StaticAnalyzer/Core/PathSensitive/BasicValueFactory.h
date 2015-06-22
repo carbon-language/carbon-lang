@@ -193,8 +193,8 @@ public:
   const SVal* getPersistentSVal(SVal X);
 };
 
-} // namespace ento
+} // end GR namespace
 
-} // namespace clang
+} // end clang namespace
 
 #endif

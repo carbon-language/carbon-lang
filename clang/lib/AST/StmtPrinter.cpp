@@ -104,7 +104,7 @@ namespace  {
     void Visit##CLASS(CLASS *Node);
 #include "clang/AST/StmtNodes.inc"
   };
-} // namespace
+}
 
 //===----------------------------------------------------------------------===//
 //  Stmt printing methods.
@@ -799,7 +799,7 @@ void OMPClausePrinter::VisitOMPFlushClause(OMPFlushClause *Node) {
     OS << ")";
   }
 }
-} // namespace
+}
 
 //===----------------------------------------------------------------------===//
 //  OpenMP directives printing methods

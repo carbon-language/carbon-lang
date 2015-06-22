@@ -312,7 +312,7 @@ public:
     CheckStringRefAssignedTemporary(D, BR, this);
   }
 };
-} // namespace
+}
 
 void ento::registerLLVMConventionsChecker(CheckerManager &mgr) {
   mgr.registerChecker<LLVMConventionsChecker>();

@@ -357,9 +357,9 @@ const Stmt *GetRetValExpr(const ExplodedNode *N);
 bool isDeclRefExprToReference(const Expr *E);
 
 
-} // namespace bugreporter
+} // end namespace clang
 } // end namespace ento
-} // namespace clang
+} // end namespace bugreporter
 
 
 #endif

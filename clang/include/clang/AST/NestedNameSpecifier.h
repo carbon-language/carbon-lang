@@ -510,6 +510,6 @@ inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
   return DB;
 }
 
-} // namespace clang
+}
 
 #endif

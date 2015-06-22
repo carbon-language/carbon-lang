@@ -132,7 +132,7 @@ namespace {
     void checkPostStmt(const ObjCArrayLiteral *AL,
                        CheckerContext &C) const;
   };
-} // namespace
+}
 
 void NilArgChecker::warnIfNilExpr(const Expr *E,
                                   const char *Msg,
@@ -631,7 +631,7 @@ class ClassReleaseChecker : public Checker<check::PreObjCMessage> {
 public:
   void checkPreObjCMessage(const ObjCMethodCall &msg, CheckerContext &C) const;
 };
-} // namespace
+}
 
 void ClassReleaseChecker::checkPreObjCMessage(const ObjCMethodCall &msg,
                                               CheckerContext &C) const {
@@ -692,7 +692,7 @@ class VariadicMethodTypeChecker : public Checker<check::PreObjCMessage> {
 public:
   void checkPreObjCMessage(const ObjCMethodCall &msg, CheckerContext &C) const;
 };
-} // namespace
+}
 
 /// isVariadicMessage - Returns whether the given message is a variadic message,
 /// where all arguments must be Objective-C types.
@@ -855,7 +855,7 @@ public:
                                      const CallEvent *Call,
                                      PointerEscapeKind Kind) const;
 };
-} // namespace
+}
 
 static bool isKnownNonNilCollectionType(QualType T) {
   const ObjCObjectPointerType *PT = T->getAs<ObjCObjectPointerType>();
@@ -1208,7 +1208,7 @@ public:
 
   void checkPostObjCMessage(const ObjCMethodCall &M, CheckerContext &C) const;
 };
-} // namespace
+}
 
 ProgramStateRef
 ObjCNonNilReturnValueChecker::assumeExprIsNonNull(const Expr *NonNullExpr,

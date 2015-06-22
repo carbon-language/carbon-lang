@@ -240,6 +240,6 @@ public:
   static MicrosoftMangleContext *create(ASTContext &Context,
                                         DiagnosticsEngine &Diags);
 };
-} // namespace clang
+}
 
 #endif

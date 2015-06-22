@@ -756,7 +756,7 @@ public:
     walker.Visit(D->getBody());
   }
 };
-} // namespace
+}
 
 #define REGISTER_CHECKER(name)                                                 \
   void ento::register##name(CheckerManager &mgr) {                             \

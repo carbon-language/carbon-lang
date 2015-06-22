@@ -87,8 +87,8 @@ public:
   Logger &operator<<(const llvm::format_object_base &Fmt);
 };
 
-} // namespace cxindex
-} // namespace clang
+}
+}
 
 /// \brief Macros to automate common uses of Logger. Like this:
 /// \code

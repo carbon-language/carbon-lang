@@ -290,6 +290,6 @@ namespace clang {
     bool IsStructurallyEquivalent(QualType From, QualType To,
                                   bool Complain = true);
   };
-} // namespace clang
+}
 
 #endif // LLVM_CLANG_AST_ASTIMPORTER_H

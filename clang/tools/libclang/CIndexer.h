@@ -120,7 +120,7 @@ public:
     MacroDefinitionRecord *checkForMacroInMacroDefinition(const MacroInfo *MI,
                                                           const Token &Tok,
                                                           CXTranslationUnit TU);
-    } // namespace cxindex
-    } // namespace clang
+    }
+    }
 
 #endif

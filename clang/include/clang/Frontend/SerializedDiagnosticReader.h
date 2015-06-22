@@ -120,8 +120,8 @@ protected:
   };
 };
 
-} // namespace serialized_diags
-} // namespace clang
+} // end serialized_diags namespace
+} // end clang namespace
 
 namespace std {
 template <>

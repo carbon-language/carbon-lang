@@ -273,6 +273,6 @@ public:
                         const Diagnostic &Info) override;
 };
 
-} // namespace clang
+} // end namspace clang
 
 #endif

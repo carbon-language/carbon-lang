@@ -45,7 +45,7 @@ namespace {
     void Initialize(ASTContext &context) override;
     void HandleTranslationUnit(ASTContext &Ctx) override;
   };
-} // namespace
+}
 
 std::unique_ptr<ASTConsumer> clang::CreateHTMLPrinter(raw_ostream *OS,
                                                       Preprocessor &PP,

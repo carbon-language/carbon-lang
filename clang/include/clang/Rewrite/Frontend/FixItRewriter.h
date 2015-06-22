@@ -127,6 +127,6 @@ public:
   void Diag(SourceLocation Loc, unsigned DiagID);
 };
 
-} // namespace clang
+}
 
 #endif

@@ -4924,7 +4924,7 @@ public:
       Diags.popMappings(SavedLoc);
   }
 };
-} // namespace
+}
 
 OMPClause *Sema::ActOnOpenMPFirstprivateClause(ArrayRef<Expr *> VarList,
                                                SourceLocation StartLoc,

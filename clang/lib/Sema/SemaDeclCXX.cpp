@@ -145,7 +145,7 @@ namespace {
     return S->Diag(Lambda->getLocStart(), 
                    diag::err_lambda_capture_default_arg);
   }
-} // namespace
+}
 
 void
 Sema::ImplicitExceptionSpecification::CalledDecl(SourceLocation CallLoc,
@@ -2834,7 +2834,7 @@ private:
   CXXRecordDecl *ClassDecl;
 };
 
-} // namespace
+}
 
 /// \brief Handle a C++ member initializer.
 MemInitResult
@@ -3756,7 +3756,7 @@ struct BaseAndFieldInfo {
     return false;
   }
 };
-} // namespace
+}
 
 /// \brief Determine whether the given type is an incomplete or zero-lenfgth
 /// array type.
@@ -4215,7 +4215,7 @@ bool CheckRedundantUnionInit(Sema &S,
 
   return false;
 }
-} // namespace
+}
 
 /// ActOnMemInitializers - Handle the member initializers for a constructor.
 void Sema::ActOnMemInitializers(Decl *ConstructorDecl,
@@ -4637,7 +4637,7 @@ void AbstractUsageInfo::CheckType(const NamedDecl *D, TypeLoc TL,
   CheckAbstractUsage(*this, D).Visit(TL, Sel);
 }
 
-} // namespace
+}
 
 /// Check for invalid uses of an abstract type in a method declaration.
 static void CheckAbstractClassUsage(AbstractUsageInfo &Info,
@@ -5508,7 +5508,7 @@ struct SpecialMemberDeletionInfo {
 
   bool isAccessible(Subobject Subobj, CXXMethodDecl *D);
 };
-} // namespace
+}
 
 /// Is the given special member inaccessible when used on the given
 /// sub-object.
@@ -7517,7 +7517,7 @@ public:
   }
 };
 
-} // namespace
+}
 
 static bool TryNamespaceTypoCorrection(Sema &S, LookupResult &R, Scope *Sc,
                                        CXXScopeSpec &SS,
@@ -8883,7 +8883,7 @@ struct DeclaringSpecialMember {
     return WasAlreadyBeingDeclared;
   }
 };
-} // namespace
+}
 
 CXXConstructorDecl *Sema::DeclareImplicitDefaultConstructor(
                                                      CXXRecordDecl *ClassDecl) {
@@ -9267,7 +9267,7 @@ private:
   typedef llvm::DenseMap<const Type *, InheritingConstructorsForType> MapType;
   MapType Map;
 };
-} // namespace
+}
 
 void Sema::DeclareInheritingConstructors(CXXRecordDecl *ClassDecl) {
   // Defer declaring the inheriting constructors until the class is
@@ -13484,7 +13484,7 @@ namespace {
       return false;
     }
   };
-} // namespace
+}
 
 bool Sema::checkThisInStaticMemberFunctionType(CXXMethodDecl *Method) {
   TypeSourceInfo *TSInfo = Method->getTypeSourceInfo();

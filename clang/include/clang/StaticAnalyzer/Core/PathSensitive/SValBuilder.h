@@ -326,8 +326,8 @@ SValBuilder* createSimpleSValBuilder(llvm::BumpPtrAllocator &alloc,
                                      ASTContext &context,
                                      ProgramStateManager &stateMgr);
 
-} // namespace ento
+} // end GR namespace
 
-} // namespace clang
+} // end clang namespace
 
 #endif

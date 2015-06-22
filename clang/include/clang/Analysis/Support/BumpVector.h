@@ -240,5 +240,5 @@ void BumpVector<T>::grow(BumpVectorContext &C, size_t MinSize) {
   Capacity = Begin+NewCapacity;
 }
 
-} // namespace clang
+} // end: clang namespace
 #endif

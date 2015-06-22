@@ -228,9 +228,7 @@ public:
   static CallEffects getEffect(const FunctionDecl *FD);
 };
 
-} // namespace objc_retain
-} // namespace ento
-} // namespace clang
+}}}
 
 #endif
 

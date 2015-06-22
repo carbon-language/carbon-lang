@@ -47,7 +47,7 @@ namespace llvm {
   class raw_ostream;
   class raw_pwrite_stream;
   // TODO: DenseMap, ...
-} // namespace llvm
+}
 
 
 namespace clang {

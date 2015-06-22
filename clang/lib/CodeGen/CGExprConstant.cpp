@@ -421,7 +421,7 @@ struct BaseInfo {
 
   bool operator<(const BaseInfo &O) const { return Offset < O.Offset; }
 };
-} // namespace
+}
 
 void ConstStructBuilder::Build(const APValue &Val, const RecordDecl *RD,
                                bool IsPrimaryBase,

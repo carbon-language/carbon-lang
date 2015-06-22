@@ -541,7 +541,7 @@ public:
   }
 };
 
-} // namespace ento
-} // namespace clang
+} // end ento namespace
+} // end clang namespace
 
 #endif

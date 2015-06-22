@@ -53,7 +53,7 @@ private:
 
 void printCheckerHelp(raw_ostream &OS, ArrayRef<std::string> plugins);
 
-} // namespace ento
+} // end GR namespace
 
 } // end namespace clang
 

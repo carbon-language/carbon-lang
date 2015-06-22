@@ -48,7 +48,7 @@ private:
   static bool isInvalidPath(const CFGBlock *CB, const ParentMap &PM);
   static inline bool isEmptyCFGBlock(const CFGBlock *CB);
 };
-} // namespace
+}
 
 void UnreachableCodeChecker::checkEndAnalysis(ExplodedGraph &G,
                                               BugReporter &B,

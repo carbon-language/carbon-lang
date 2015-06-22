@@ -35,7 +35,7 @@ public:
   bool visitInputFile(StringRef Filename, bool IsSystem,
                       bool IsOverridden) override;
 };
-} // namespace
+}
 
 void ModuleDependencyCollector::attachToASTReader(ASTReader &R) {
   R.addListener(llvm::make_unique<ModuleDependencyListener>(*this));

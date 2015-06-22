@@ -67,6 +67,6 @@ namespace clang {
     /// is literally 'L', 'u', 'U', or 'u8'.
     bool IsIdentifierStringPrefix(const Token &Tok) const;
   };
-  } // namespace clang
+  } // end clang namespace
 
 #endif

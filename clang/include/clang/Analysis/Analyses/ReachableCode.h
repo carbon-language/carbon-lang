@@ -64,7 +64,6 @@ unsigned ScanReachableFromBlock(const CFGBlock *Start,
 void FindUnreachableCode(AnalysisDeclContext &AC, Preprocessor &PP,
                          Callback &CB);
 
-} // namespace reachable_code
-} // namespace clang
+}} // end namespace clang::reachable_code
 
 #endif

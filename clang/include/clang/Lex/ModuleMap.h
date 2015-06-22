@@ -466,5 +466,5 @@ public:
   module_iterator module_end()   const { return Modules.end(); }
 };
   
-} // namespace clang
+}
 #endif

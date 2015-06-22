@@ -225,4 +225,4 @@ struct DOTGraphTraits<const CallGraph*> : public DefaultDOTGraphTraits {
   }
 
 };
-} // namespace llvm
+}

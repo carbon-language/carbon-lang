@@ -46,4 +46,4 @@ TEST(DiagnosticTest, suppressAndTrap) {
   EXPECT_FALSE(Diags.hasUnrecoverableErrorOccurred());
 }
 
-} // namespace
+}

@@ -370,7 +370,7 @@ namespace {
                         const Stmt *S,
                         clang::reachable_code::Callback &CB);
   };
-} // namespace
+}
 
 void DeadCodeScan::enqueue(const CFGBlock *block) {
   unsigned blockID = block->getBlockID();
@@ -676,5 +676,4 @@ void FindUnreachableCode(AnalysisDeclContext &AC, Preprocessor &PP,
   }
 }
 
-} // namespace reachable_code
-} // namespace clang
+}} // end namespace clang::reachable_code

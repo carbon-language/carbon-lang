@@ -31,6 +31,6 @@ Optional<unsigned> getStackIndexOfNearestEnclosingCaptureCapableLambda(
     ArrayRef<const sema::FunctionScopeInfo *> FunctionScopes,
     VarDecl *VarToCapture, Sema &S);
 
-} // namespace clang
+} // clang
 
 #endif

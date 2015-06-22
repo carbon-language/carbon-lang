@@ -40,7 +40,7 @@ private:
   static SourceRange genName(raw_ostream &os, const MemRegion *R,
                              ASTContext &Ctx);
 };
-} // namespace
+}
 
 SourceRange StackAddrEscapeChecker::genName(raw_ostream &os, const MemRegion *R,
                                             ASTContext &Ctx) {

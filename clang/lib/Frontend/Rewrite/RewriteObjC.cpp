@@ -540,7 +540,7 @@ namespace {
                                       std::string &Result) override;
     Stmt *RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV) override;
   };
-} // namespace
+}
 
 void RewriteObjC::RewriteBlocksInFunctionProtoType(QualType funcType,
                                                    NamedDecl *D) {

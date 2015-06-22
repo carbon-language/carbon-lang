@@ -135,7 +135,6 @@ public:
 
 };
 
-} // namespace ento
-} // namespace clang
+}} // end clang ento namespaces
 
 #endif
