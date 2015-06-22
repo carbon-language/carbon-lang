@@ -312,12 +312,18 @@ __kmp_affinity_cmp_Address_child_num(const void *a, const void *b)
     return 0;
 }
 
-/** A structure for holding machine-specific hierarchy info to be computed once at init. */
+/** A structure for holding machine-specific hierarchy info to be computed once at init.
+    This structure represents a mapping of threads to the actual machine hierarchy, or to
+    our best guess at what the hierarchy might be, for the purpose of performing an
+    efficient barrier.  In the worst case, when there is no machine hierarchy information,
+    it produces a tree suitable for a barrier, similar to the tree used in the hyper barrier. */
 class hierarchy_info {
 public:
-    /** Typical levels are threads/core, cores/package or socket, packages/node, nodes/machine,
-        etc.  We don't want to get specific with nomenclature */
-    static const kmp_uint32 maxLevels=7;
+    /** Number of levels in the hierarchy. Typical levels are threads/core, cores/package
+    or socket, packages/node, nodes/machine, etc.  We don't want to get specific with
+    nomenclature.  When the machine is oversubscribed we add levels to duplicate the
+    hierarchy, doubling the thread capacity of the hierarchy each time we add a level. */
+    kmp_uint32 maxLevels;
 
     /** This is specifically the depth of the machine configuration hierarchy, in terms of the
         number of levels along the longest path from root to any leaf. It corresponds to the
@@ -325,12 +331,13 @@ public:
     kmp_uint32 depth;
     kmp_uint32 base_num_threads;
     volatile kmp_int8 uninitialized; // 0=initialized, 1=uninitialized, 2=initialization in progress
+    volatile kmp_int8 resizing; // 0=not resizing, 1=resizing
 
     /** Level 0 corresponds to leaves. numPerLevel[i] is the number of children the parent of a
         node at level i has. For example, if we have a machine with 4 packages, 4 cores/package
         and 2 HT per core, then numPerLevel = {2, 4, 4, 1, 1}. All empty levels are set to 1. */
-    kmp_uint32 numPerLevel[maxLevels];
-    kmp_uint32 skipPerLevel[maxLevels];
+    kmp_uint32 *numPerLevel;
+    kmp_uint32 *skipPerLevel;
 
     void deriveLevels(AddrUnsPair *adr2os, int num_addrs) {
         int hier_depth = adr2os[0].first.depth;
@@ -346,7 +353,11 @@ public:
         }
     }
 
-    hierarchy_info() : depth(1), uninitialized(1) {}
+    hierarchy_info() : maxLevels(7), depth(1), uninitialized(1), resizing(0) {}
+
+    // TO FIX: This destructor causes a segfault in the library at shutdown.
+    //~hierarchy_info() { if (!uninitialized && numPerLevel) __kmp_free(numPerLevel); }
+
     void init(AddrUnsPair *adr2os, int num_addrs)
     {
         kmp_int8 bool_result = KMP_COMPARE_AND_STORE_ACQ8(&uninitialized, 1, 2);
@@ -356,10 +367,14 @@ public:
         }
         KMP_DEBUG_ASSERT(bool_result==1);
 
-        /* Added explicit initialization of the depth here to prevent usage of dirty value
+        /* Added explicit initialization of the data fields here to prevent usage of dirty value
            observed when static library is re-initialized multiple times (e.g. when
            non-OpenMP thread repeatedly launches/joins thread that uses OpenMP). */
         depth = 1;
+        resizing = 0;
+        maxLevels = 7;
+        numPerLevel = (kmp_uint32 *)__kmp_allocate(maxLevels*2*sizeof(kmp_uint32));
+        skipPerLevel = &(numPerLevel[maxLevels]);
         for (kmp_uint32 i=0; i<maxLevels; ++i) { // init numPerLevel[*] to 1 item per level
             numPerLevel[i] = 1;
             skipPerLevel[i] = 1;
@@ -406,6 +421,56 @@ public:
         uninitialized = 0; // One writer
 
     }
+
+    void resize(kmp_uint32 nproc)
+    {
+        kmp_int8 bool_result = KMP_COMPARE_AND_STORE_ACQ8(&resizing, 0, 1);
+        if (bool_result == 0) { // Someone else is resizing
+            while (TCR_1(resizing) != 0) KMP_CPU_PAUSE();
+            return;
+        }
+        KMP_DEBUG_ASSERT(bool_result!=0);
+        KMP_DEBUG_ASSERT(nproc > base_num_threads);
+
+        // Calculate new max_levels
+        kmp_uint32 old_sz = skipPerLevel[depth-1];
+        kmp_uint32 incs = 0, old_maxLevels= maxLevels;
+        while (nproc > old_sz) {
+            old_sz *=2;
+            incs++;
+        }
+        maxLevels += incs;
+
+        // Resize arrays
+        kmp_uint32 *old_numPerLevel = numPerLevel;
+        kmp_uint32 *old_skipPerLevel = skipPerLevel;
+        numPerLevel = skipPerLevel = NULL;
+        numPerLevel = (kmp_uint32 *)__kmp_allocate(maxLevels*2*sizeof(kmp_uint32));
+        skipPerLevel = &(numPerLevel[maxLevels]);
+
+        // Copy old elements from old arrays
+        for (kmp_uint32 i=0; i<old_maxLevels; ++i) { // init numPerLevel[*] to 1 item per level
+            numPerLevel[i] = old_numPerLevel[i];
+            skipPerLevel[i] = old_skipPerLevel[i];
+        }
+
+        // Init new elements in arrays to 1
+        for (kmp_uint32 i=old_maxLevels; i<maxLevels; ++i) { // init numPerLevel[*] to 1 item per level
+            numPerLevel[i] = 1;
+            skipPerLevel[i] = 1;
+        }
+
+        // Free old arrays
+        __kmp_free(old_numPerLevel);
+
+        // Fill in oversubscription levels of hierarchy
+        for (kmp_uint32 i=old_maxLevels; i<maxLevels; ++i)
+            skipPerLevel[i] = 2*skipPerLevel[i-1];
+
+        base_num_threads = nproc;
+        resizing = 0; // One writer
+
+    }
 };
 
 static hierarchy_info machine_hierarchy;
@@ -415,11 +480,14 @@ void __kmp_get_hierarchy(kmp_uint32 nproc, kmp_bstate_t *thr_bar) {
     // The test below is true if affinity is available, but set to "none". Need to init on first use of hierarchical barrier.
     if (TCR_1(machine_hierarchy.uninitialized))
         machine_hierarchy.init(NULL, nproc);
+    // Adjust the hierarchy in case num threads exceeds original 
+    if (nproc > machine_hierarchy.base_num_threads)
+        machine_hierarchy.resize(nproc);
 
     depth = machine_hierarchy.depth;
     KMP_DEBUG_ASSERT(depth > 0);
-    // The loop below adjusts the depth in the case of oversubscription
-    while (nproc > machine_hierarchy.skipPerLevel[depth-1] && depth<machine_hierarchy.maxLevels-1)
+    // The loop below adjusts the depth in the case of a resize
+    while (nproc > machine_hierarchy.skipPerLevel[depth-1])
         depth++;
 
     thr_bar->depth = depth;
