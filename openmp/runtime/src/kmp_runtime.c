@@ -6287,10 +6287,7 @@ static void __kmp_check_mic_type()
 {
     kmp_cpuid_t cpuid_state = {0};
     kmp_cpuid_t * cs_p = &cpuid_state;
-    cs_p->eax=1;
-    cs_p->ecx=0;
-    __asm__ __volatile__("cpuid"
-			 : "+a" (cs_p->eax), "=b" (cs_p->ebx), "+c" (cs_p->ecx), "=d" (cs_p->edx));
+    __kmp_x86_cpuid(1, 0, cs_p);
     // We don't support mic1 at the moment
     if( (cs_p->eax & 0xff0) == 0xB10 ) {
         __kmp_mic_type = mic2;

@@ -4504,11 +4504,11 @@ void __kmp_balanced_affinity( int tid, int nthreads )
         } else { // nthreads > __kmp_ncores
 
             // Array to save the number of processors at each core
-            int nproc_at_core[ ncores ];
+            int* nproc_at_core = (int*)KMP_ALLOCA(sizeof(int)*ncores);
             // Array to save the number of cores with "x" available processors;
-            int ncores_with_x_procs[ nth_per_core + 1 ];
+            int* ncores_with_x_procs = (int*)KMP_ALLOCA(sizeof(int)*(nth_per_core+1));
             // Array to save the number of cores with # procs from x to nth_per_core
-            int ncores_with_x_to_max_procs[ nth_per_core + 1 ];
+            int* ncores_with_x_to_max_procs = (int*)KMP_ALLOCA(sizeof(int)*(nth_per_core+1));
 
             for( int i = 0; i <= nth_per_core; i++ ) {
                 ncores_with_x_procs[ i ] = 0;
