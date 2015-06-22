@@ -842,12 +842,12 @@ void ELFObjectWriter::computeSymbolTable(
     // seems that this information is not easily accessible from the
     // ELFObjectWriter.
     StringRef Name = Symbol.getName();
+    SmallString<32> Buf;
     if (!Name.startswith("?") && !Name.startswith("@?") &&
         !Name.startswith("__imp_?") && !Name.startswith("__imp_@?")) {
       // This symbol isn't following the MSVC C++ name mangling convention. We
       // can thus safely interpret the @@@ in symbol names as specifying symbol
       // versioning.
-      SmallString<32> Buf;
       size_t Pos = Name.find("@@@");
       if (Pos != StringRef::npos) {
         Buf += Name.substr(0, Pos);
