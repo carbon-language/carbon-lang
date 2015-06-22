@@ -71,3 +71,13 @@ macro(add_polly_loadable_module name)
       LINK_FLAGS "-Wl,-flat_namespace -Wl,-undefined -Wl,suppress")
   endif()
 endmacro(add_polly_loadable_module)
+
+# # Use C99-compatible compile mode for all C source files of a target.
+function(target_enable_c99 _target)
+  if(CMAKE_VERSION VERSION_GREATER "3.1")
+    set_target_properties("${_target}" PROPERTIES C_STANDARD 99)
+  elseif(CMAKE_COMPILER_IS_GNUCC)
+    get_target_property(_sources "${_target}" SOURCES)
+    set_source_files_properties(${_sources} COMPILE_FLAGS "-std=gnu99")
+  endif()
+endfunction()

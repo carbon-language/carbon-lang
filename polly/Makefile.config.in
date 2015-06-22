@@ -39,8 +39,13 @@ POLLY_CXXFLAGS += "-fno-rtti -fno-exceptions"
 #
 # We also disable all warnings, as these should be fixed upstream. There is
 # no value in reporting them here.
+#
+# ISL with activated small integer optimization use C99 extern inline
+# semantics. In order to work, we need to enable C99 mode (instead the default
+# -std=gnu89 in case of gcc)
 POLLY_CFLAGS := -fvisibility=hidden
 POLLY_CFLAGS += -w
+POLLY_CFLAGS += -std=gnu99
 
 CUDALIB_FOUND := @cuda_found@
 

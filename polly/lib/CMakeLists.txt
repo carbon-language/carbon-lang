@@ -189,6 +189,9 @@ add_polly_library(Polly
   ${ISL_FILES}
   )
 
+# ISL requires at least C99 to compile. gcc < 5.0 use -std=gnu89 as default.
+target_enable_c99(Polly)
+
 if (BUILD_SHARED_LIBS)
   target_link_libraries(Polly
     LLVMSupport
