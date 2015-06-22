@@ -50,6 +50,7 @@ public:
     DefinedImportDataKind,
     DefinedImportThunkKind,
     DefinedCommonKind,
+    DefinedCOMDATKind,
     DefinedRegularKind,
     DefinedLast,
     LazyKind,
@@ -128,7 +129,29 @@ public:
   bool isExternal() override { return Sym.isExternal(); }
   void markLive() override { Data->markLive(); }
   uint64_t getFileOff() override { return Data->getFileOff() + Sym.getValue(); }
-  bool isCOMDAT() const { return Data->isCOMDAT(); }
+  int compare(SymbolBody *Other) override;
+
+private:
+  StringRef Name;
+  COFFObjectFile *COFFFile;
+  COFFSymbolRef Sym;
+  Chunk *Data;
+};
+
+class DefinedCOMDAT : public Defined {
+public:
+  DefinedCOMDAT(COFFObjectFile *F, COFFSymbolRef S, Chunk *C)
+      : Defined(DefinedCOMDATKind), COFFFile(F), Sym(S), Data(C) {}
+
+  static bool classof(const SymbolBody *S) {
+    return S->kind() == DefinedCOMDATKind;
+  }
+
+  StringRef getName() override;
+  uint64_t getRVA() override { return Data->getRVA() + Sym.getValue(); }
+  bool isExternal() override { return Sym.isExternal(); }
+  void markLive() override { Data->markLive(); }
+  uint64_t getFileOff() override { return Data->getFileOff() + Sym.getValue(); }
   int compare(SymbolBody *Other) override;
 
 private:

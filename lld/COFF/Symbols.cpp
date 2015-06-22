@@ -26,12 +26,17 @@ namespace coff {
 int DefinedRegular::compare(SymbolBody *Other) {
   if (Other->kind() < kind())
     return -Other->compare(this);
-  auto *R = dyn_cast<DefinedRegular>(Other);
-  if (!R)
-    return 1;
-  if (isCOMDAT() && R->isCOMDAT())
-    return 1;
-  return 0;
+  if (isa<DefinedRegular>(Other))
+    return 0;
+  return 1;
+}
+
+int DefinedCOMDAT::compare(SymbolBody *Other) {
+  if (Other->kind() < kind())
+    return -Other->compare(this);
+  if (isa<DefinedRegular>(Other))
+    return 0;
+  return 1;
 }
 
 int DefinedCommon::compare(SymbolBody *Other) {
@@ -39,9 +44,9 @@ int DefinedCommon::compare(SymbolBody *Other) {
     return -Other->compare(this);
   if (auto *D = dyn_cast<DefinedCommon>(Other))
     return getSize() > D->getSize() ? 1 : -1;
-  if (isa<DefinedRegular>(Other))
-    return -1;
-  return 1;
+  if (isa<Lazy>(Other) || isa<Undefined>(Other))
+    return 1;
+  return -1;
 }
 
 int DefinedBitcode::compare(SymbolBody *Other) {
@@ -62,12 +67,9 @@ int DefinedBitcode::compare(SymbolBody *Other) {
   // replicate the rest of the symbol resolution logic here; symbol
   // resolution will be done accurately after lowering bitcode symbols
   // to regular symbols in addCombinedLTOObject().
-  if (auto *R = dyn_cast<DefinedRegular>(Other)) {
-    if (!R->isCOMDAT() && !Replaceable)
-      return 0;
+  if (isa<DefinedRegular>(Other) && Replaceable)
     return -1;
-  }
-  if (isa<DefinedCommon>(Other))
+  if (isa<DefinedCommon>(Other) || isa<DefinedCOMDAT>(Other))
     return -1;
   return 0;
 }
@@ -110,6 +112,12 @@ StringRef DefinedRegular::getName() {
   // Object files contain lots of non-external symbols, and creating
   // StringRefs for them (which involves lots of strlen() on the string table)
   // is a waste of time.
+  if (Name.empty())
+    COFFFile->getSymbolName(Sym, Name);
+  return Name;
+}
+
+StringRef DefinedCOMDAT::getName() {
   if (Name.empty())
     COFFFile->getSymbolName(Sym, Name);
   return Name;
