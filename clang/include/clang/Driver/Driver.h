@@ -262,7 +262,7 @@ public:
 
   /// ParseArgStrings - Parse the given list of strings into an
   /// ArgList.
-  llvm::opt::InputArgList *ParseArgStrings(ArrayRef<const char *> Args);
+  llvm::opt::InputArgList ParseArgStrings(ArrayRef<const char *> Args);
 
   /// BuildInputs - Construct the list of inputs and their types from 
   /// the given arguments.

@@ -1849,37 +1849,37 @@ bool CompilerInvocation::CreateFromArgs(CompilerInvocation &Res,
   std::unique_ptr<OptTable> Opts(createDriverOptTable());
   const unsigned IncludedFlagsBitmask = options::CC1Option;
   unsigned MissingArgIndex, MissingArgCount;
-  std::unique_ptr<InputArgList> Args(
+  InputArgList Args =
       Opts->ParseArgs(llvm::makeArrayRef(ArgBegin, ArgEnd), MissingArgIndex,
-                      MissingArgCount, IncludedFlagsBitmask));
+                      MissingArgCount, IncludedFlagsBitmask);
 
   // Check for missing argument error.
   if (MissingArgCount) {
     Diags.Report(diag::err_drv_missing_argument)
-      << Args->getArgString(MissingArgIndex) << MissingArgCount;
+        << Args.getArgString(MissingArgIndex) << MissingArgCount;
     Success = false;
   }
 
   // Issue errors on unknown arguments.
-  for (const Arg *A : Args->filtered(OPT_UNKNOWN)) {
-    Diags.Report(diag::err_drv_unknown_argument) << A->getAsString(*Args);
+  for (const Arg *A : Args.filtered(OPT_UNKNOWN)) {
+    Diags.Report(diag::err_drv_unknown_argument) << A->getAsString(Args);
     Success = false;
   }
 
-  Success &= ParseAnalyzerArgs(*Res.getAnalyzerOpts(), *Args, Diags);
-  Success &= ParseMigratorArgs(Res.getMigratorOpts(), *Args);
-  ParseDependencyOutputArgs(Res.getDependencyOutputOpts(), *Args);
-  Success &= ParseDiagnosticArgs(Res.getDiagnosticOpts(), *Args, &Diags);
-  ParseCommentArgs(Res.getLangOpts()->CommentOpts, *Args);
-  ParseFileSystemArgs(Res.getFileSystemOpts(), *Args);
+  Success &= ParseAnalyzerArgs(*Res.getAnalyzerOpts(), Args, Diags);
+  Success &= ParseMigratorArgs(Res.getMigratorOpts(), Args);
+  ParseDependencyOutputArgs(Res.getDependencyOutputOpts(), Args);
+  Success &= ParseDiagnosticArgs(Res.getDiagnosticOpts(), Args, &Diags);
+  ParseCommentArgs(Res.getLangOpts()->CommentOpts, Args);
+  ParseFileSystemArgs(Res.getFileSystemOpts(), Args);
   // FIXME: We shouldn't have to pass the DashX option around here
-  InputKind DashX = ParseFrontendArgs(Res.getFrontendOpts(), *Args, Diags);
-  ParseTargetArgs(Res.getTargetOpts(), *Args);
-  Success &= ParseCodeGenArgs(Res.getCodeGenOpts(), *Args, DashX, Diags,
+  InputKind DashX = ParseFrontendArgs(Res.getFrontendOpts(), Args, Diags);
+  ParseTargetArgs(Res.getTargetOpts(), Args);
+  Success &= ParseCodeGenArgs(Res.getCodeGenOpts(), Args, DashX, Diags,
                               Res.getTargetOpts());
-  ParseHeaderSearchArgs(Res.getHeaderSearchOpts(), *Args);
+  ParseHeaderSearchArgs(Res.getHeaderSearchOpts(), Args);
   if (DashX != IK_AST && DashX != IK_LLVM_IR) {
-    ParseLangArgs(*Res.getLangOpts(), *Args, DashX, Diags);
+    ParseLangArgs(*Res.getLangOpts(), Args, DashX, Diags);
     if (Res.getFrontendOpts().ProgramAction == frontend::RewriteObjC)
       Res.getLangOpts()->ObjCExceptions = 1;
   }
@@ -1888,8 +1888,8 @@ bool CompilerInvocation::CreateFromArgs(CompilerInvocation &Res,
   // ParsePreprocessorArgs and remove the FileManager 
   // parameters from the function and the "FileManager.h" #include.
   FileManager FileMgr(Res.getFileSystemOpts());
-  ParsePreprocessorArgs(Res.getPreprocessorOpts(), *Args, FileMgr, Diags);
-  ParsePreprocessorOutputArgs(Res.getPreprocessorOutputOpts(), *Args,
+  ParsePreprocessorArgs(Res.getPreprocessorOpts(), Args, FileMgr, Diags);
+  ParsePreprocessorOutputArgs(Res.getPreprocessorOutputOpts(), Args,
                               Res.getFrontendOpts().ProgramAction);
   return Success;
 }

@@ -161,67 +161,68 @@ bool AssemblerInvocation::CreateFromArgs(AssemblerInvocation &Opts,
 
   const unsigned IncludedFlagsBitmask = options::CC1AsOption;
   unsigned MissingArgIndex, MissingArgCount;
-  std::unique_ptr<InputArgList> Args(OptTbl->ParseArgs(
-      Argv, MissingArgIndex, MissingArgCount, IncludedFlagsBitmask));
+  InputArgList Args = OptTbl->ParseArgs(Argv, MissingArgIndex, MissingArgCount,
+                                        IncludedFlagsBitmask);
 
   // Check for missing argument error.
   if (MissingArgCount) {
     Diags.Report(diag::err_drv_missing_argument)
-        << Args->getArgString(MissingArgIndex) << MissingArgCount;
+        << Args.getArgString(MissingArgIndex) << MissingArgCount;
     Success = false;
   }
 
   // Issue errors on unknown arguments.
-  for (const Arg *A : Args->filtered(OPT_UNKNOWN)) {
-    Diags.Report(diag::err_drv_unknown_argument) << A->getAsString(*Args);
+  for (const Arg *A : Args.filtered(OPT_UNKNOWN)) {
+    Diags.Report(diag::err_drv_unknown_argument) << A->getAsString(Args);
     Success = false;
   }
 
   // Construct the invocation.
 
   // Target Options
-  Opts.Triple = llvm::Triple::normalize(Args->getLastArgValue(OPT_triple));
-  Opts.CPU = Args->getLastArgValue(OPT_target_cpu);
-  Opts.Features = Args->getAllArgValues(OPT_target_feature);
+  Opts.Triple = llvm::Triple::normalize(Args.getLastArgValue(OPT_triple));
+  Opts.CPU = Args.getLastArgValue(OPT_target_cpu);
+  Opts.Features = Args.getAllArgValues(OPT_target_feature);
 
   // Use the default target triple if unspecified.
   if (Opts.Triple.empty())
     Opts.Triple = llvm::sys::getDefaultTargetTriple();
 
   // Language Options
-  Opts.IncludePaths = Args->getAllArgValues(OPT_I);
-  Opts.NoInitialTextSection = Args->hasArg(OPT_n);
-  Opts.SaveTemporaryLabels = Args->hasArg(OPT_msave_temp_labels);
-  Opts.GenDwarfForAssembly = Args->hasArg(OPT_g_Flag);
-  Opts.CompressDebugSections = Args->hasArg(OPT_compress_debug_sections);
-  if (Args->hasArg(OPT_gdwarf_2))
+  Opts.IncludePaths = Args.getAllArgValues(OPT_I);
+  Opts.NoInitialTextSection = Args.hasArg(OPT_n);
+  Opts.SaveTemporaryLabels = Args.hasArg(OPT_msave_temp_labels);
+  Opts.GenDwarfForAssembly = Args.hasArg(OPT_g_Flag);
+  Opts.CompressDebugSections = Args.hasArg(OPT_compress_debug_sections);
+  if (Args.hasArg(OPT_gdwarf_2))
     Opts.DwarfVersion = 2;
-  if (Args->hasArg(OPT_gdwarf_3))
+  if (Args.hasArg(OPT_gdwarf_3))
     Opts.DwarfVersion = 3;
-  if (Args->hasArg(OPT_gdwarf_4))
+  if (Args.hasArg(OPT_gdwarf_4))
     Opts.DwarfVersion = 4;
-  Opts.DwarfDebugFlags = Args->getLastArgValue(OPT_dwarf_debug_flags);
-  Opts.DwarfDebugProducer = Args->getLastArgValue(OPT_dwarf_debug_producer);
-  Opts.DebugCompilationDir = Args->getLastArgValue(OPT_fdebug_compilation_dir);
-  Opts.MainFileName = Args->getLastArgValue(OPT_main_file_name);
+  Opts.DwarfDebugFlags = Args.getLastArgValue(OPT_dwarf_debug_flags);
+  Opts.DwarfDebugProducer = Args.getLastArgValue(OPT_dwarf_debug_producer);
+  Opts.DebugCompilationDir = Args.getLastArgValue(OPT_fdebug_compilation_dir);
+  Opts.MainFileName = Args.getLastArgValue(OPT_main_file_name);
 
   // Frontend Options
-  if (Args->hasArg(OPT_INPUT)) {
+  if (Args.hasArg(OPT_INPUT)) {
     bool First = true;
-    for (arg_iterator it = Args->filtered_begin(OPT_INPUT),
-           ie = Args->filtered_end(); it != ie; ++it, First=false) {
+    for (arg_iterator it = Args.filtered_begin(OPT_INPUT),
+                      ie = Args.filtered_end();
+         it != ie; ++it, First = false) {
       const Arg *A = it;
       if (First)
         Opts.InputFile = A->getValue();
       else {
-        Diags.Report(diag::err_drv_unknown_argument) << A->getAsString(*Args);
+        Diags.Report(diag::err_drv_unknown_argument) << A->getAsString(Args);
         Success = false;
       }
     }
   }
-  Opts.LLVMArgs = Args->getAllArgValues(OPT_mllvm);
-  Opts.OutputPath = Args->getLastArgValue(OPT_o);
-  if (Arg *A = Args->getLastArg(OPT_filetype)) {
+  Opts.LLVMArgs = Args.getAllArgValues(OPT_mllvm);
+  Opts.OutputPath = Args.getLastArgValue(OPT_o);
+  if (Arg *A = Args.getLastArg(OPT_filetype)) {
     StringRef Name = A->getValue();
     unsigned OutputType = StringSwitch<unsigned>(Name)
       .Case("asm", FT_Asm)
@@ -229,25 +230,24 @@ bool AssemblerInvocation::CreateFromArgs(AssemblerInvocation &Opts,
       .Case("obj", FT_Obj)
       .Default(~0U);
     if (OutputType == ~0U) {
-      Diags.Report(diag::err_drv_invalid_value)
-        << A->getAsString(*Args) << Name;
+      Diags.Report(diag::err_drv_invalid_value) << A->getAsString(Args) << Name;
       Success = false;
     } else
       Opts.OutputType = FileType(OutputType);
   }
-  Opts.ShowHelp = Args->hasArg(OPT_help);
-  Opts.ShowVersion = Args->hasArg(OPT_version);
+  Opts.ShowHelp = Args.hasArg(OPT_help);
+  Opts.ShowVersion = Args.hasArg(OPT_version);
 
   // Transliterate Options
   Opts.OutputAsmVariant =
-      getLastArgIntValue(*Args.get(), OPT_output_asm_variant, 0, Diags);
-  Opts.ShowEncoding = Args->hasArg(OPT_show_encoding);
-  Opts.ShowInst = Args->hasArg(OPT_show_inst);
+      getLastArgIntValue(Args, OPT_output_asm_variant, 0, Diags);
+  Opts.ShowEncoding = Args.hasArg(OPT_show_encoding);
+  Opts.ShowInst = Args.hasArg(OPT_show_inst);
 
   // Assemble Options
-  Opts.RelaxAll = Args->hasArg(OPT_mrelax_all);
-  Opts.NoExecStack = Args->hasArg(OPT_mno_exec_stack);
-  Opts.FatalWarnings =  Args->hasArg(OPT_massembler_fatal_warnings);
+  Opts.RelaxAll = Args.hasArg(OPT_mrelax_all);
+  Opts.NoExecStack = Args.hasArg(OPT_mno_exec_stack);
+  Opts.FatalWarnings = Args.hasArg(OPT_massembler_fatal_warnings);
 
   return Success;
 }
