@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "MIParser.h"
+#include "MILexer.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -29,7 +30,8 @@ class MIParser {
   SourceMgr &SM;
   MachineFunction &MF;
   SMDiagnostic &Error;
-  StringRef Source;
+  StringRef Source, CurrentSource;
+  MIToken Token;
   /// Maps from instruction names to op codes.
   StringMap<unsigned> Names2InstrOpCodes;
 
@@ -37,10 +39,17 @@ public:
   MIParser(SourceMgr &SM, MachineFunction &MF, SMDiagnostic &Error,
            StringRef Source);
 
+  void lex();
+
   /// Report an error at the current location with the given message.
   ///
   /// This function always return true.
   bool error(const Twine &Msg);
+
+  /// Report an error at the given location with the given message.
+  ///
+  /// This function always return true.
+  bool error(StringRef::iterator Loc, const Twine &Msg);
 
   MachineInstr *parse();
 
@@ -50,36 +59,56 @@ private:
   /// Try to convert an instruction name to an opcode. Return true if the
   /// instruction name is invalid.
   bool parseInstrName(StringRef InstrName, unsigned &OpCode);
+
+  bool parseInstruction(unsigned &OpCode);
 };
 
 } // end anonymous namespace
 
 MIParser::MIParser(SourceMgr &SM, MachineFunction &MF, SMDiagnostic &Error,
                    StringRef Source)
-    : SM(SM), MF(MF), Error(Error), Source(Source) {}
+    : SM(SM), MF(MF), Error(Error), Source(Source), CurrentSource(Source),
+      Token(MIToken::Error, StringRef()) {}
 
-bool MIParser::error(const Twine &Msg) {
+void MIParser::lex() {
+  CurrentSource = lexMIToken(
+      CurrentSource, Token,
+      [this](StringRef::iterator Loc, const Twine &Msg) { error(Loc, Msg); });
+}
+
+bool MIParser::error(const Twine &Msg) { return error(Token.location(), Msg); }
+
+bool MIParser::error(StringRef::iterator Loc, const Twine &Msg) {
   // TODO: Get the proper location in the MIR file, not just a location inside
   // the string.
-  Error =
-      SMDiagnostic(SM, SMLoc(), SM.getMemoryBuffer(SM.getMainFileID())
-                                    ->getBufferIdentifier(),
-                   1, 0, SourceMgr::DK_Error, Msg.str(), Source, None, None);
+  assert(Loc >= Source.data() && Loc <= (Source.data() + Source.size()));
+  Error = SMDiagnostic(
+      SM, SMLoc(),
+      SM.getMemoryBuffer(SM.getMainFileID())->getBufferIdentifier(), 1,
+      Loc - Source.data(), SourceMgr::DK_Error, Msg.str(), Source, None, None);
   return true;
 }
 
 MachineInstr *MIParser::parse() {
-  StringRef InstrName = Source;
+  lex();
+
   unsigned OpCode;
-  if (parseInstrName(InstrName, OpCode)) {
-    error(Twine("unknown machine instruction name '") + InstrName + "'");
+  if (Token.isError() || parseInstruction(OpCode))
     return nullptr;
-  }
 
   // TODO: Parse the rest of instruction - machine operands, etc.
   const auto &MCID = MF.getSubtarget().getInstrInfo()->get(OpCode);
   auto *MI = MF.CreateMachineInstr(MCID, DebugLoc());
   return MI;
+}
+
+bool MIParser::parseInstruction(unsigned &OpCode) {
+  if (Token.isNot(MIToken::Identifier))
+    return error("expected a machine instruction");
+  StringRef InstrName = Token.stringValue();
+  if (parseInstrName(InstrName, OpCode))
+    return error(Twine("unknown machine instruction name '") + InstrName + "'");
+  return false;
 }
 
 void MIParser::initNames2InstrOpCodes() {

@@ -20,5 +20,5 @@ body:
      # CHECK:      - IMUL32rri8
      # CHECK-NEXT: - RETQ
      - IMUL32rri8
-     - RETQ
+     - ' RETQ '
 ...
