@@ -740,25 +740,25 @@ bool Driver::HandleImmediateArgs(const Compilation &C) {
 
   if (C.getArgs().hasArg(options::OPT_print_search_dirs)) {
     llvm::outs() << "programs: =";
-    for (ToolChain::path_list::const_iterator it = TC.getProgramPaths().begin(),
-           ie = TC.getProgramPaths().end(); it != ie; ++it) {
-      if (it != TC.getProgramPaths().begin())
-        llvm::outs() << ':';
-      llvm::outs() << *it;
+    bool separator = false;
+    for (const std::string &Path : TC.getProgramPaths()) {
+      if (separator) llvm::outs() << ':';
+      llvm::outs() << Path;
+      separator = true;
     }
     llvm::outs() << "\n";
     llvm::outs() << "libraries: =" << ResourceDir;
 
     StringRef sysroot = C.getSysRoot();
 
-    for (ToolChain::path_list::const_iterator it = TC.getFilePaths().begin(),
-           ie = TC.getFilePaths().end(); it != ie; ++it) {
+    for (const std::string &Path : TC.getFilePaths()) {
+      // Always print a separator. ResourceDir was the first item shown.
       llvm::outs() << ':';
-      const char *path = it->c_str();
-      if (path[0] == '=')
-        llvm::outs() << sysroot << path + 1;
+      // Interpretation of leading '=' is needed only for NetBSD.
+      if (Path[0] == '=')
+        llvm::outs() << sysroot << (Path.c_str() + 1);
       else
-        llvm::outs() << path;
+        llvm::outs() << Path;
     }
     llvm::outs() << "\n";
     return false;
