@@ -40,3 +40,7 @@ int PR23101(__m128i __x) {
   return foo((__v2di)__x);  // expected-warning {{implicit declaration of function 'foo'}} \
                             // expected-error {{use of undeclared identifier '__v2di'}}
 }
+
+void f(long *a, long b) {
+      __atomic_or_fetch(a, b, c);  // expected-error {{use of undeclared identifier 'c'}}
+}
