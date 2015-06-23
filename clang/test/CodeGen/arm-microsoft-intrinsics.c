@@ -51,13 +51,13 @@ void check_MoveToCoprocessor(unsigned int value) {
   _MoveToCoprocessor(value, 10, 7, 1, 0, 0);
 }
 
-// CHECK-MSVC: @llvm.arm.mcr(i32 10, i32 7, i32 %0, i32 1, i32 0, i32 0)
+// CHECK-MSVC: @llvm.arm.mcr(i32 10, i32 7, i32 %{{[^,]*}}, i32 1, i32 0, i32 0)
 // CHECK-EABI: error: implicit declaration of function '_MoveToCoprocessor'
 
 void check_MoveToCoprocessor2(unsigned int value) {
   _MoveToCoprocessor2(value, 10, 7, 1, 0, 0);
 }
 
-// CHECK-MSVC: @llvm.arm.mcr2(i32 10, i32 7, i32 %0, i32 1, i32 0, i32 0)
+// CHECK-MSVC: @llvm.arm.mcr2(i32 10, i32 7, i32 %{{[^,]*}}, i32 1, i32 0, i32 0)
 // CHECK-EABI: error: implicit declaration of function '_MoveToCoprocessor2'
 
