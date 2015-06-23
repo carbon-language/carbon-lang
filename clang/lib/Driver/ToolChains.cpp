@@ -211,18 +211,15 @@ Tool *MachO::getTool(Action::ActionClass AC) const {
   }
 }
 
-Tool *MachO::buildLinker() const {
-  return new tools::darwin::Link(*this);
-}
+Tool *MachO::buildLinker() const { return new tools::darwin::Linker(*this); }
 
 Tool *MachO::buildAssembler() const {
-  return new tools::darwin::Assemble(*this);
+  return new tools::darwin::Assembler(*this);
 }
 
-DarwinClang::DarwinClang(const Driver &D, const llvm::Triple& Triple,
+DarwinClang::DarwinClang(const Driver &D, const llvm::Triple &Triple,
                          const ArgList &Args)
-  : Darwin(D, Triple, Args) {
-}
+    : Darwin(D, Triple, Args) {}
 
 void DarwinClang::addClangWarningOptions(ArgStringList &CC1Args) const {
   // For iOS, 64-bit, promote certain warnings to errors.
@@ -2015,11 +2012,11 @@ Tool *Generic_GCC::getTool(Action::ActionClass AC) const {
   switch (AC) {
   case Action::PreprocessJobClass:
     if (!Preprocess)
-      Preprocess.reset(new tools::gcc::Preprocess(*this));
+      Preprocess.reset(new tools::gcc::Preprocessor(*this));
     return Preprocess.get();
   case Action::CompileJobClass:
     if (!Compile)
-      Compile.reset(new tools::gcc::Compile(*this));
+      Compile.reset(new tools::gcc::Compiler(*this));
     return Compile.get();
   default:
     return ToolChain::getTool(AC);
@@ -2027,12 +2024,10 @@ Tool *Generic_GCC::getTool(Action::ActionClass AC) const {
 }
 
 Tool *Generic_GCC::buildAssembler() const {
-  return new tools::gnutools::Assemble(*this);
+  return new tools::gnutools::Assembler(*this);
 }
 
-Tool *Generic_GCC::buildLinker() const {
-  return new tools::gcc::Link(*this);
-}
+Tool *Generic_GCC::buildLinker() const { return new tools::gcc::Linker(*this); }
 
 void Generic_GCC::printVerboseInfo(raw_ostream &OS) const {
   // Print the information about how we detected the GCC installation.
@@ -2228,15 +2223,14 @@ Hexagon_TC::Hexagon_TC(const Driver &D, const llvm::Triple &Triple,
     LibPaths);
 }
 
-Hexagon_TC::~Hexagon_TC() {
-}
+Hexagon_TC::~Hexagon_TC() {}
 
 Tool *Hexagon_TC::buildAssembler() const {
-  return new tools::hexagon::Assemble(*this);
+  return new tools::hexagon::Assembler(*this);
 }
 
 Tool *Hexagon_TC::buildLinker() const {
-  return new tools::hexagon::Link(*this);
+  return new tools::hexagon::Linker(*this);
 }
 
 void Hexagon_TC::AddClangSystemIncludeArgs(const ArgList &DriverArgs,
@@ -2482,13 +2476,13 @@ std::string NaCl_TC::ComputeEffectiveClangTriple(
 }
 
 Tool *NaCl_TC::buildLinker() const {
-  return new tools::nacltools::Link(*this);
+  return new tools::nacltools::Linker(*this);
 }
 
 Tool *NaCl_TC::buildAssembler() const {
   if (getTriple().getArch() == llvm::Triple::arm)
-    return new tools::nacltools::AssembleARM(*this);
-  return new tools::gnutools::Assemble(*this);
+    return new tools::nacltools::AssemblerARM(*this);
+  return new tools::gnutools::Assembler(*this);
 }
 // End NaCl
 
@@ -2553,7 +2547,9 @@ void CloudABI::AddCXXStdlibLibArgs(const ArgList &Args,
   CmdArgs.push_back("-lunwind");
 }
 
-Tool *CloudABI::buildLinker() const { return new tools::cloudabi::Link(*this); }
+Tool *CloudABI::buildLinker() const {
+  return new tools::cloudabi::Linker(*this);
+}
 
 /// OpenBSD - OpenBSD tool chain which can call as(1) and ld(1) directly.
 
@@ -2564,12 +2560,10 @@ OpenBSD::OpenBSD(const Driver &D, const llvm::Triple& Triple, const ArgList &Arg
 }
 
 Tool *OpenBSD::buildAssembler() const {
-  return new tools::openbsd::Assemble(*this);
+  return new tools::openbsd::Assembler(*this);
 }
 
-Tool *OpenBSD::buildLinker() const {
-  return new tools::openbsd::Link(*this);
-}
+Tool *OpenBSD::buildLinker() const { return new tools::openbsd::Linker(*this); }
 
 /// Bitrig - Bitrig tool chain which can call as(1) and ld(1) directly.
 
@@ -2580,15 +2574,12 @@ Bitrig::Bitrig(const Driver &D, const llvm::Triple& Triple, const ArgList &Args)
 }
 
 Tool *Bitrig::buildAssembler() const {
-  return new tools::bitrig::Assemble(*this);
+  return new tools::bitrig::Assembler(*this);
 }
 
-Tool *Bitrig::buildLinker() const {
-  return new tools::bitrig::Link(*this);
-}
+Tool *Bitrig::buildLinker() const { return new tools::bitrig::Linker(*this); }
 
-ToolChain::CXXStdlibType
-Bitrig::GetCXXStdlibType(const ArgList &Args) const {
+ToolChain::CXXStdlibType Bitrig::GetCXXStdlibType(const ArgList &Args) const {
   if (Arg *A = Args.getLastArg(options::OPT_stdlib_EQ)) {
     StringRef Value = A->getValue();
     if (Value == "libstdc++")
@@ -2699,12 +2690,10 @@ void FreeBSD::AddClangCXXStdlibIncludeArgs(const ArgList &DriverArgs,
 }
 
 Tool *FreeBSD::buildAssembler() const {
-  return new tools::freebsd::Assemble(*this);
+  return new tools::freebsd::Assembler(*this);
 }
 
-Tool *FreeBSD::buildLinker() const {
-  return new tools::freebsd::Link(*this);
-}
+Tool *FreeBSD::buildLinker() const { return new tools::freebsd::Linker(*this); }
 
 bool FreeBSD::UseSjLjExceptions() const {
   // FreeBSD uses SjLj exceptions on ARM oabi.
@@ -2801,15 +2790,12 @@ NetBSD::NetBSD(const Driver &D, const llvm::Triple& Triple, const ArgList &Args)
 }
 
 Tool *NetBSD::buildAssembler() const {
-  return new tools::netbsd::Assemble(*this);
+  return new tools::netbsd::Assembler(*this);
 }
 
-Tool *NetBSD::buildLinker() const {
-  return new tools::netbsd::Link(*this);
-}
+Tool *NetBSD::buildLinker() const { return new tools::netbsd::Linker(*this); }
 
-ToolChain::CXXStdlibType
-NetBSD::GetCXXStdlibType(const ArgList &Args) const {
+ToolChain::CXXStdlibType NetBSD::GetCXXStdlibType(const ArgList &Args) const {
   if (Arg *A = Args.getLastArg(options::OPT_stdlib_EQ)) {
     StringRef Value = A->getValue();
     if (Value == "libstdc++")
@@ -2872,12 +2858,10 @@ Minix::Minix(const Driver &D, const llvm::Triple& Triple, const ArgList &Args)
 }
 
 Tool *Minix::buildAssembler() const {
-  return new tools::minix::Assemble(*this);
+  return new tools::minix::Assembler(*this);
 }
 
-Tool *Minix::buildLinker() const {
-  return new tools::minix::Link(*this);
-}
+Tool *Minix::buildLinker() const { return new tools::minix::Linker(*this); }
 
 /// Solaris - Solaris tool chain which can call as(1) and ld(1) directly.
 
@@ -2894,12 +2878,10 @@ Solaris::Solaris(const Driver &D, const llvm::Triple& Triple,
 }
 
 Tool *Solaris::buildAssembler() const {
-  return new tools::solaris::Assemble(*this);
+  return new tools::solaris::Assembler(*this);
 }
 
-Tool *Solaris::buildLinker() const {
-  return new tools::solaris::Link(*this);
-}
+Tool *Solaris::buildLinker() const { return new tools::solaris::Linker(*this); }
 
 /// Distribution (very bare-bones at the moment).
 
@@ -3345,12 +3327,10 @@ bool Linux::HasNativeLLVMSupport() const {
   return true;
 }
 
-Tool *Linux::buildLinker() const {
-  return new tools::gnutools::Link(*this);
-}
+Tool *Linux::buildLinker() const { return new tools::gnutools::Linker(*this); }
 
 Tool *Linux::buildAssembler() const {
-  return new tools::gnutools::Assemble(*this);
+  return new tools::gnutools::Assembler(*this);
 }
 
 std::string Linux::computeSysRoot() const {
@@ -3710,13 +3690,12 @@ DragonFly::DragonFly(const Driver &D, const llvm::Triple& Triple, const ArgList 
 }
 
 Tool *DragonFly::buildAssembler() const {
-  return new tools::dragonfly::Assemble(*this);
+  return new tools::dragonfly::Assembler(*this);
 }
 
 Tool *DragonFly::buildLinker() const {
-  return new tools::dragonfly::Link(*this);
+  return new tools::dragonfly::Linker(*this);
 }
-
 
 /// XCore tool chain
 XCore::XCore(const Driver &D, const llvm::Triple &Triple,
@@ -3725,16 +3704,12 @@ XCore::XCore(const Driver &D, const llvm::Triple &Triple,
 }
 
 Tool *XCore::buildAssembler() const {
-  return new tools::XCore::Assemble(*this);
+  return new tools::XCore::Assembler(*this);
 }
 
-Tool *XCore::buildLinker() const {
-  return new tools::XCore::Link(*this);
-}
+Tool *XCore::buildLinker() const { return new tools::XCore::Linker(*this); }
 
-bool XCore::isPICDefault() const {
-  return false;
-}
+bool XCore::isPICDefault() const { return false; }
 
 bool XCore::isPIEDefault() const {
   return false;
@@ -3797,11 +3772,11 @@ Tool *SHAVEToolChain::SelectTool(const JobAction &JA) const {
   switch (JA.getKind()) {
   case Action::CompileJobClass:
     if (!Compiler)
-      Compiler.reset(new tools::SHAVE::Compile(*this));
+      Compiler.reset(new tools::SHAVE::Compiler(*this));
     return Compiler.get();
   case Action::AssembleJobClass:
     if (!Assembler)
-      Assembler.reset(new tools::SHAVE::Assemble(*this));
+      Assembler.reset(new tools::SHAVE::Assembler(*this));
     return Assembler.get();
   default:
     return ToolChain::getTool(JA.getKind());

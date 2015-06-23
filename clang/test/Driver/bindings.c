@@ -1,8 +1,8 @@
 // Basic binding.
 // RUN: %clang -target i386-unknown-unknown -ccc-print-bindings -no-integrated-as %s 2>&1 | FileCheck %s --check-prefix=CHECK01
 // CHECK01: "clang", inputs: ["{{.*}}bindings.c"], output: "{{.*}}.s"
-// CHECK01: "GNU::Assemble", inputs: ["{{.*}}.s"], output: "{{.*}}.o"
-// CHECK01: "gcc::Link", inputs: ["{{.*}}.o"], output: "a.out"
+// CHECK01: "GNU::Assembler", inputs: ["{{.*}}.s"], output: "{{.*}}.o"
+// CHECK01: "gcc::Linker", inputs: ["{{.*}}.o"], output: "a.out"
 
 // Clang control options
 
@@ -21,5 +21,5 @@
 // Darwin bindings
 // RUN: %clang -target i386-apple-darwin9 -no-integrated-as -ccc-print-bindings %s 2>&1 | FileCheck %s --check-prefix=CHECK14
 // CHECK14: "clang", inputs: ["{{.*}}bindings.c"], output: "{{.*}}.s"
-// CHECK14: "darwin::Assemble", inputs: ["{{.*}}.s"], output: "{{.*}}.o"
-// CHECK14: "darwin::Link", inputs: ["{{.*}}.o"], output: "a.out"
+// CHECK14: "darwin::Assembler", inputs: ["{{.*}}.s"], output: "{{.*}}.o"
+// CHECK14: "darwin::Linker", inputs: ["{{.*}}.o"], output: "a.out"

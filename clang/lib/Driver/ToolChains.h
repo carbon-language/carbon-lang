@@ -179,8 +179,8 @@ protected:
   /// @}
 
 private:
-  mutable std::unique_ptr<tools::gcc::Preprocess> Preprocess;
-  mutable std::unique_ptr<tools::gcc::Compile> Compile;
+  mutable std::unique_ptr<tools::gcc::Preprocessor> Preprocess;
+  mutable std::unique_ptr<tools::gcc::Compiler> Compile;
 };
 
 class LLVM_LIBRARY_VISIBILITY MachO : public ToolChain {

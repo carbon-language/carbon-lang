@@ -108,10 +108,9 @@ AddCXXStdlibLibArgs(const llvm::opt::ArgList &DriverArgs,
 }
 
 Tool *CrossWindowsToolChain::buildLinker() const {
-  return new tools::CrossWindows::Link(*this);
+  return new tools::CrossWindows::Linker(*this);
 }
 
 Tool *CrossWindowsToolChain::buildAssembler() const {
-  return new tools::CrossWindows::Assemble(*this);
+  return new tools::CrossWindows::Assembler(*this);
 }
-

@@ -53,12 +53,12 @@ MSVCToolChain::MSVCToolChain(const Driver &D, const llvm::Triple& Triple,
 }
 
 Tool *MSVCToolChain::buildLinker() const {
-  return new tools::visualstudio::Link(*this);
+  return new tools::visualstudio::Linker(*this);
 }
 
 Tool *MSVCToolChain::buildAssembler() const {
   if (getTriple().isOSBinFormatMachO())
-    return new tools::darwin::Assemble(*this);
+    return new tools::darwin::Assembler(*this);
   getDriver().Diag(clang::diag::err_no_external_assembler);
   return nullptr;
 }
