@@ -1,4 +1,4 @@
-//===------------------- FaultMaps.h - StackMaps ----------------*- C++ -*-===//
+//===------------------- FaultMaps.h - The "FaultMaps" section --*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
