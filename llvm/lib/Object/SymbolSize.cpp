@@ -28,6 +28,8 @@ static int compareAddress(const SymEntry *A, const SymEntry *B) {
     return A->Address - B->Address;
   if (A->Section < B->Section)
     return -1;
+  if (A->Section == B->Section)
+    return 0;
   return 1;
 }
 
@@ -73,7 +75,13 @@ llvm::object::computeSymbolSizes(const ObjectFile &O) {
     auto &P = Addresses[I];
     if (P.I == O.symbol_end())
       continue;
-    uint64_t Size = Addresses[I + 1].Address - P.Address;
+
+    // If multiple symbol have the same address, give both the same size.
+    unsigned NextI = I + 1;
+    while (NextI < N && Addresses[NextI].Address == P.Address)
+      ++NextI;
+
+    uint64_t Size = Addresses[NextI].Address - P.Address;
     P.Address = Size;
   }
 
