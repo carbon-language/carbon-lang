@@ -2,7 +2,7 @@
 ;
 ;    void f(int *A) {
 ;      for (int i = 0; i < 1024; i++)
-; S1:    A[i % 2] = i;
+; S1:    A[bar(i)] = i;
 ;      for (int i = 0; i < 1024; i++)
 ; S2:    A[i2] = i;
 ;    }
@@ -18,6 +18,8 @@
 
 target datalayout = "e-m:e-p:32:32-i64:64-v128:64:128-n32-S64"
 
+declare i32 @bar(i32) #1
+
 define void @f(i32* %A) {
 entry:
   br label %for.cond
@@ -28,8 +30,8 @@ for.cond:
   br i1 %exitcond, label %S1, label %next
 
 S1:
-  %rem = srem i32 %i.0, 2
-  %arrayidx = getelementptr inbounds i32, i32* %A, i32 %rem
+  %nonaff = call i32 @bar(i32 %i.0)
+  %arrayidx = getelementptr inbounds i32, i32* %A, i32 %nonaff
   store i32 %i.0, i32* %arrayidx, align 4
   br label %for.inc
 
@@ -57,4 +59,6 @@ for.inc.2:
 for.end:
   ret void
 }
+
+attributes #1 = { nounwind readnone }
 
