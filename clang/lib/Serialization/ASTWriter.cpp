@@ -1266,6 +1266,10 @@ void ASTWriter::WriteControlBlock(Preprocessor &PP, ASTContext &Context,
   Record.push_back(LangOpts.Sanitize.has(SanitizerKind::ID));
 #include "clang/Basic/Sanitizers.def"
 
+  Record.push_back(LangOpts.ModuleFeatures.size());
+  for (StringRef Feature : LangOpts.ModuleFeatures)
+    AddString(Feature, Record);
+
   Record.push_back((unsigned) LangOpts.ObjCRuntime.getKind());
   AddVersionTuple(LangOpts.ObjCRuntime.getVersion(), Record);
   

@@ -470,6 +470,13 @@ namespace {
 #define BENIGN_LANGOPT(Name, Bits, Default, Description)
 #define BENIGN_ENUM_LANGOPT(Name, Type, Bits, Default, Description)
 #include "clang/Basic/LangOptions.def"
+
+      if (!LangOpts.ModuleFeatures.empty()) {
+        Out.indent(4) << "Module features:\n";
+        for (StringRef Feature : LangOpts.ModuleFeatures)
+          Out.indent(6) << Feature << "\n";
+      }
+
       return false;
     }
 

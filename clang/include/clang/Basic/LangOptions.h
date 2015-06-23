@@ -102,6 +102,8 @@ public:
 
   /// \brief The names of any features to enable in module 'requires' decls
   /// in addition to the hard-coded list in Module.cpp and the target features.
+  ///
+  /// This list is sorted.
   std::vector<std::string> ModuleFeatures;
 
   /// \brief Options for parsing comments.

@@ -1588,6 +1588,7 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
   Opts.ImplementationOfModule =
       Args.getLastArgValue(OPT_fmodule_implementation_of);
   Opts.ModuleFeatures = Args.getAllArgValues(OPT_fmodule_feature);
+  std::sort(Opts.ModuleFeatures.begin(), Opts.ModuleFeatures.end());
   Opts.NativeHalfType |= Args.hasArg(OPT_fnative_half_type);
   Opts.HalfArgsAndReturns = Args.hasArg(OPT_fallow_half_arguments_and_returns);
   Opts.GNUAsm = !Args.hasArg(OPT_fno_gnu_inline_asm);
@@ -1967,6 +1968,9 @@ std::string CompilerInvocation::getModuleHash() const {
 #define BENIGN_LANGOPT(Name, Bits, Default, Description)
 #define BENIGN_ENUM_LANGOPT(Name, Type, Bits, Default, Description)
 #include "clang/Basic/LangOptions.def"
+
+  for (StringRef Feature : LangOpts->ModuleFeatures)
+    code = hash_combine(code, Feature);
   
   // Extend the signature with the target options.
   code = hash_combine(code, TargetOpts->Triple, TargetOpts->CPU,

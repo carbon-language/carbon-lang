@@ -209,6 +209,12 @@ static bool checkLanguageOptions(const LangOptions &LangOpts,
 #define BENIGN_ENUM_LANGOPT(Name, Type, Bits, Default, Description)
 #include "clang/Basic/LangOptions.def"
 
+  if (ExistingLangOpts.ModuleFeatures != LangOpts.ModuleFeatures) {
+    if (Diags)
+      Diags->Report(diag::err_pch_langopt_value_mismatch) << "module features";
+    return true;
+  }
+
   if (ExistingLangOpts.ObjCRuntime != LangOpts.ObjCRuntime) {
     if (Diags)
       Diags->Report(diag::err_pch_langopt_value_mismatch)
@@ -4436,6 +4442,9 @@ bool ASTReader::ParseLanguageOptions(const RecordData &Record,
 #define SANITIZER(NAME, ID)                                                    \
   LangOpts.Sanitize.set(SanitizerKind::ID, Record[Idx++]);
 #include "clang/Basic/Sanitizers.def"
+
+  for (unsigned N = Record[Idx++]; N; --N)
+    LangOpts.ModuleFeatures.push_back(ReadString(Record, Idx));
 
   ObjCRuntime::Kind runtimeKind = (ObjCRuntime::Kind) Record[Idx++];
   VersionTuple runtimeVersion = ReadVersionTuple(Record, Idx);
