@@ -35,14 +35,11 @@ public:
 private:
   const DataLayout *DL;
 
-  /// AnonGlobalIDs - We need to give global values the same name every time
-  /// they are mangled.  This keeps track of the number we give to anonymous
-  /// ones.
-  ///
+  /// We need to give global values the same name every time they are mangled.
+  /// This keeps track of the number we give to anonymous ones.
   mutable DenseMap<const GlobalValue*, unsigned> AnonGlobalIDs;
 
-  /// NextAnonGlobalID - This simple counter is used to unique value names.
-  ///
+  /// This simple counter is used to unique value names.
   mutable unsigned NextAnonGlobalID;
 
 public:
