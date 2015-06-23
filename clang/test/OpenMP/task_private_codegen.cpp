@@ -26,11 +26,11 @@ volatile double g;
 
 // CHECK-DAG: [[KMP_TASK_T_TY:%.+]] = type { i8*, i32 (i32, i8*)*, i32, i32 (i32, i8*)* }
 // CHECK-DAG: [[S_DOUBLE_TY:%.+]] = type { double }
-// CHECK-DAG: [[CAP_MAIN_TY:%.+]] = type { [2 x i32]*, i32*, [2 x [[S_DOUBLE_TY]]]*, [[S_DOUBLE_TY]]* }
+// CHECK-DAG: [[CAP_MAIN_TY:%.+]] = type { i8 }
 // CHECK-DAG: [[PRIVATES_MAIN_TY:%.+]] = type {{.?}}{ [[S_DOUBLE_TY]], [2 x [[S_DOUBLE_TY]]], i32, [2 x i32]
 // CHECK-DAG: [[KMP_TASK_MAIN_TY:%.+]] = type { [[KMP_TASK_T_TY]], [[PRIVATES_MAIN_TY]] }
 // CHECK-DAG: [[S_INT_TY:%.+]] = type { i32 }
-// CHECK-DAG: [[CAP_TMAIN_TY:%.+]] = type { [2 x i32]*, i32*, [2 x [[S_INT_TY]]]*, [[S_INT_TY]]* }
+// CHECK-DAG: [[CAP_TMAIN_TY:%.+]] = type { i8 }
 // CHECK-DAG: [[PRIVATES_TMAIN_TY:%.+]] = type { i32, [2 x i32], [2 x [[S_INT_TY]]], [[S_INT_TY]] }
 // CHECK-DAG: [[KMP_TASK_TMAIN_TY:%.+]] = type { [[KMP_TASK_T_TY]], [[PRIVATES_TMAIN_TY]] }
 template <typename T>
@@ -55,7 +55,7 @@ int main() {
   // LAMBDA: call{{( x86_thiscallcc)?}} void [[OUTER_LAMBDA:@.+]](
   [&]() {
   // LAMBDA: define{{.*}} internal{{.*}} void [[OUTER_LAMBDA]](
-  // LAMBDA: [[RES:%.+]] = call i8* @__kmpc_omp_task_alloc(%{{[^ ]+}} @{{[^,]+}}, i32 %{{[^,]+}}, i32 1, i64 40, i64 8, i32 (i32, i8*)* bitcast (i32 (i32, %{{[^*]+}}*)* [[TASK_ENTRY:@[^ ]+]] to i32 (i32, i8*)*))
+  // LAMBDA: [[RES:%.+]] = call i8* @__kmpc_omp_task_alloc(%{{[^ ]+}} @{{[^,]+}}, i32 %{{[^,]+}}, i32 1, i64 40, i64 1, i32 (i32, i8*)* bitcast (i32 (i32, %{{[^*]+}}*)* [[TASK_ENTRY:@[^ ]+]] to i32 (i32, i8*)*))
 // LAMBDA: [[PRIVATES:%.+]] = getelementptr inbounds %{{.+}}, %{{.+}}* %{{.+}}, i{{.+}} 0, i{{.+}} 1
 // LAMBDA: [[G_PRIVATE_ADDR:%.+]] = getelementptr inbounds %{{.+}}, %{{.+}}* [[PRIVATES]], i{{.+}} 0, i{{.+}} 0
 // LAMBDA: call i32 @__kmpc_omp_task(%{{.+}}* @{{.+}}, i32 %{{.+}}, i8* [[RES]])
@@ -86,7 +86,7 @@ int main() {
   // BLOCKS: call void {{%.+}}(i8
   ^{
   // BLOCKS: define{{.*}} internal{{.*}} void {{.+}}(i8*
-  // BLOCKS: [[RES:%.+]] = call i8* @__kmpc_omp_task_alloc(%{{[^ ]+}} @{{[^,]+}}, i32 %{{[^,]+}}, i32 1, i64 40, i64 8, i32 (i32, i8*)* bitcast (i32 (i32, %{{[^*]+}}*)* [[TASK_ENTRY:@[^ ]+]] to i32 (i32, i8*)*))
+  // BLOCKS: [[RES:%.+]] = call i8* @__kmpc_omp_task_alloc(%{{[^ ]+}} @{{[^,]+}}, i32 %{{[^,]+}}, i32 1, i64 40, i64 1, i32 (i32, i8*)* bitcast (i32 (i32, %{{[^*]+}}*)* [[TASK_ENTRY:@[^ ]+]] to i32 (i32, i8*)*))
   // BLOCKS: [[PRIVATES:%.+]] = getelementptr inbounds %{{.+}}, %{{.+}}* %{{.+}}, i{{.+}} 0, i{{.+}} 1
   // BLOCKS: [[G_PRIVATE_ADDR:%.+]] = getelementptr inbounds %{{.+}}, %{{.+}}* [[PRIVATES]], i{{.+}} 0, i{{.+}} 0
   // BLOCKS: call i32 @__kmpc_omp_task(%{{.+}}* @{{.+}}, i32 %{{.+}}, i8* [[RES]])
@@ -135,31 +135,18 @@ int main() {
 
 // CHECK: call {{.*}} [[S_DOUBLE_TY_DEF_CONSTR:@.+]]([[S_DOUBLE_TY]]* [[TEST]])
 
-// Store original variables in capture struct.
-// CHECK: [[VEC_REF:%.+]] = getelementptr inbounds [[CAP_MAIN_TY]], [[CAP_MAIN_TY]]* %{{.+}}, i{{[0-9]+}} 0, i{{[0-9]+}} 0
-// CHECK: store [2 x i32]* [[VEC_ADDR]], [2 x i32]** [[VEC_REF]],
-// CHECK: [[T_VAR_REF:%.+]] = getelementptr inbounds [[CAP_MAIN_TY]], [[CAP_MAIN_TY]]* %{{.+}}, i{{[0-9]+}} 0, i{{[0-9]+}} 1
-// CHECK: store i32* [[T_VAR_ADDR]], i32** [[T_VAR_REF]],
-// CHECK: [[S_ARR_REF:%.+]] = getelementptr inbounds [[CAP_MAIN_TY]], [[CAP_MAIN_TY]]* %{{.+}}, i{{[0-9]+}} 0, i{{[0-9]+}} 2
-// CHECK: store [2 x [[S_DOUBLE_TY]]]* [[S_ARR_ADDR]], [2 x [[S_DOUBLE_TY]]]** [[S_ARR_REF]],
-// CHECK: [[VAR_REF:%.+]] = getelementptr inbounds [[CAP_MAIN_TY]], [[CAP_MAIN_TY]]* %{{.+}}, i{{[0-9]+}} 0, i{{[0-9]+}} 3
-// CHECK: store [[S_DOUBLE_TY]]* [[VAR_ADDR]], [[S_DOUBLE_TY]]** [[VAR_REF]],
+// Do not store original variables in capture struct.
+// CHECK-NOT: getelementptr inbounds [[CAP_MAIN_TY]],
 
 // Allocate task.
 // Returns struct kmp_task_t {
 //         [[KMP_TASK_T_TY]] task_data;
 //         [[KMP_TASK_MAIN_TY]] privates;
 //       };
-// CHECK: [[RES:%.+]] = call i8* @__kmpc_omp_task_alloc([[LOC]], i32 [[GTID]], i32 1, i64 72, i64 32, i32 (i32, i8*)* bitcast (i32 (i32, [[KMP_TASK_MAIN_TY]]*)* [[TASK_ENTRY:@[^ ]+]] to i32 (i32, i8*)*))
+// CHECK: [[RES:%.+]] = call i8* @__kmpc_omp_task_alloc([[LOC]], i32 [[GTID]], i32 1, i64 72, i64 1, i32 (i32, i8*)* bitcast (i32 (i32, [[KMP_TASK_MAIN_TY]]*)* [[TASK_ENTRY:@[^ ]+]] to i32 (i32, i8*)*))
 // CHECK: [[RES_KMP_TASK:%.+]] = bitcast i8* [[RES]] to [[KMP_TASK_MAIN_TY]]*
 
-// Fill kmp_task_t->shareds by copying from original capture argument.
 // CHECK: [[TASK:%.+]] = getelementptr inbounds [[KMP_TASK_MAIN_TY]], [[KMP_TASK_MAIN_TY]]* [[RES_KMP_TASK]], i{{[0-9]+}} 0, i{{[0-9]+}} 0
-// CHECK: [[SHAREDS_REF_ADDR:%.+]] = getelementptr inbounds [[KMP_TASK_T_TY]], [[KMP_TASK_T_TY]]* [[TASK]], i{{[0-9]+}} 0, i{{[0-9]+}} 0
-// CHECK: [[SHAREDS_REF:%.+]] = load i8*, i8** [[SHAREDS_REF_ADDR]],
-// CHECK: [[CAPTURES_ADDR:%.+]] = bitcast [[CAP_MAIN_TY]]* %{{.+}} to i8*
-// CHECK: call void @llvm.memcpy.p0i8.p0i8.i64(i8* [[SHAREDS_REF]], i8* [[CAPTURES_ADDR]], i64 32, i32 8, i1 false)
-
 // Initialize kmp_task_t->privates with default values (no init for simple types, default constructors for classes).
 // Also copy address of private copy to the corresponding shareds reference.
 // CHECK: [[PRIVATES:%.+]] = getelementptr inbounds [[KMP_TASK_MAIN_TY]], [[KMP_TASK_MAIN_TY]]* [[RES_KMP_TASK]], i{{[0-9]+}} 0, i{{[0-9]+}} 1
@@ -257,30 +244,18 @@ int main() {
 
 // CHECK: call {{.*}} [[S_INT_TY_DEF_CONSTR:@.+]]([[S_INT_TY]]* [[TEST]])
 
-// Store original variables in capture struct.
-// CHECK: [[VEC_REF:%.+]] = getelementptr inbounds [[CAP_TMAIN_TY]], [[CAP_TMAIN_TY]]* %{{.+}}, i{{[0-9]+}} 0, i{{[0-9]+}} 0
-// CHECK: store [2 x i32]* [[VEC_ADDR]], [2 x i32]** [[VEC_REF]],
-// CHECK: [[T_VAR_REF:%.+]] = getelementptr inbounds [[CAP_TMAIN_TY]], [[CAP_TMAIN_TY]]* %{{.+}}, i{{[0-9]+}} 0, i{{[0-9]+}} 1
-// CHECK: store i32* [[T_VAR_ADDR]], i32** [[T_VAR_REF]],
-// CHECK: [[S_ARR_REF:%.+]] = getelementptr inbounds [[CAP_TMAIN_TY]], [[CAP_TMAIN_TY]]* %{{.+}}, i{{[0-9]+}} 0, i{{[0-9]+}} 2
-// CHECK: store [2 x [[S_INT_TY]]]* [[S_ARR_ADDR]], [2 x [[S_INT_TY]]]** [[S_ARR_REF]],
-// CHECK: [[VAR_REF:%.+]] = getelementptr inbounds [[CAP_TMAIN_TY]], [[CAP_TMAIN_TY]]* %{{.+}}, i{{[0-9]+}} 0, i{{[0-9]+}} 3
-// CHECK: store [[S_INT_TY]]* [[VAR_ADDR]], [[S_INT_TY]]** [[VAR_REF]],
+// Do not store original variables in capture struct.
+// CHECK-NOT: getelementptr inbounds [[CAP_TMAIN_TY]],
 
 // Allocate task.
 // Returns struct kmp_task_t {
 //         [[KMP_TASK_T_TY]] task_data;
 //         [[KMP_TASK_TMAIN_TY]] privates;
 //       };
-// CHECK: [[RES:%.+]] = call i8* @__kmpc_omp_task_alloc([[LOC]], i32 [[GTID]], i32 1, i64 56, i64 32, i32 (i32, i8*)* bitcast (i32 (i32, [[KMP_TASK_TMAIN_TY]]*)* [[TASK_ENTRY:@[^ ]+]] to i32 (i32, i8*)*))
+// CHECK: [[RES:%.+]] = call i8* @__kmpc_omp_task_alloc([[LOC]], i32 [[GTID]], i32 1, i64 56, i64 1, i32 (i32, i8*)* bitcast (i32 (i32, [[KMP_TASK_TMAIN_TY]]*)* [[TASK_ENTRY:@[^ ]+]] to i32 (i32, i8*)*))
 // CHECK: [[RES_KMP_TASK:%.+]] = bitcast i8* [[RES]] to [[KMP_TASK_TMAIN_TY]]*
 
-// Fill kmp_task_t->shareds by copying from original capture argument.
 // CHECK: [[TASK:%.+]] = getelementptr inbounds [[KMP_TASK_TMAIN_TY]], [[KMP_TASK_TMAIN_TY]]* [[RES_KMP_TASK]], i{{[0-9]+}} 0, i{{[0-9]+}} 0
-// CHECK: [[SHAREDS_REF_ADDR:%.+]] = getelementptr inbounds [[KMP_TASK_T_TY]], [[KMP_TASK_T_TY]]* [[TASK]], i{{[0-9]+}} 0, i{{[0-9]+}} 0
-// CHECK: [[SHAREDS_REF:%.+]] = load i8*, i8** [[SHAREDS_REF_ADDR]],
-// CHECK: [[CAPTURES_ADDR:%.+]] = bitcast [[CAP_TMAIN_TY]]* %{{.+}} to i8*
-// CHECK: call void @llvm.memcpy.p0i8.p0i8.i64(i8* [[SHAREDS_REF]], i8* [[CAPTURES_ADDR]], i64 32, i32 8, i1 false)
 
 // Initialize kmp_task_t->privates with default values (no init for simple types, default constructors for classes).
 // CHECK: [[PRIVATES:%.+]] = getelementptr inbounds [[KMP_TASK_TMAIN_TY]], [[KMP_TASK_TMAIN_TY]]* [[RES_KMP_TASK]], i{{[0-9]+}} 0, i{{[0-9]+}} 1

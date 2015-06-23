@@ -226,13 +226,13 @@ Parser::ParseOpenMPDeclarativeOrExecutableDirective(bool StandAloneAllowed) {
     ParseScope OMPDirectiveScope(this, ScopeFlags);
     Actions.StartOpenMPDSABlock(DKind, DirName, Actions.getCurScope(), Loc);
 
-    Actions.StartOpenMPClauses();
     while (Tok.isNot(tok::annot_pragma_openmp_end)) {
       OpenMPClauseKind CKind =
           Tok.isAnnotation()
               ? OMPC_unknown
               : FlushHasClause ? OMPC_flush
                                : getOpenMPClauseKind(PP.getSpelling(Tok));
+      Actions.StartOpenMPClause(CKind);
       FlushHasClause = false;
       OMPClause *Clause =
           ParseOpenMPClause(DKind, CKind, !FirstClauses[CKind].getInt());
@@ -245,8 +245,8 @@ Parser::ParseOpenMPDeclarativeOrExecutableDirective(bool StandAloneAllowed) {
       // Skip ',' if any.
       if (Tok.is(tok::comma))
         ConsumeToken();
+      Actions.EndOpenMPClause();
     }
-    Actions.EndOpenMPClauses();
     // End location of the directive.
     EndLoc = Tok.getLocation();
     // Consume final annot_pragma_openmp_end.

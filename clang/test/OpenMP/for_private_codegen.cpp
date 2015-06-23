@@ -19,9 +19,10 @@ struct S {
 volatile double g;
 
 // CHECK: [[S_FLOAT_TY:%.+]] = type { float }
-// CHECK: [[CAP_MAIN_TY:%.+]] = type { i{{[0-9]+}}*, [2 x i{{[0-9]+}}]*, [2 x [[S_FLOAT_TY]]]*, [[S_FLOAT_TY]]* }
+// CHECK: [[CAP_MAIN_TY:%.+]] = type { i8 }
+// CHECK: type { i8 }
 // CHECK: [[S_INT_TY:%.+]] = type { i{{[0-9]+}} }
-// CHECK: [[CAP_TMAIN_TY:%.+]] = type { i{{[0-9]+}}*, [2 x i{{[0-9]+}}]*, [2 x [[S_INT_TY]]]*, [[S_INT_TY]]* }
+// CHECK: [[CAP_TMAIN_TY:%.+]] = type { i8 }
 template <typename T>
 T tmain() {
   S<T> test;

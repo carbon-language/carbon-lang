@@ -7605,6 +7605,12 @@ private:
   bool IsOpenMPCapturedVar(VarDecl *VD);
 
 public:
+  /// \brief Check if the specified variable is used in one of the private
+  /// clauses in OpenMP constructs.
+  /// \param Level Relative level of nested OpenMP construct for that the check
+  /// is performed.
+  bool isOpenMPPrivateVar(VarDecl *VD, unsigned Level);
+
   ExprResult PerformOpenMPImplicitIntegerConversion(SourceLocation OpLoc,
                                                     Expr *Op);
   /// \brief Called on start of new data sharing attribute block.
@@ -7612,9 +7618,9 @@ public:
                            const DeclarationNameInfo &DirName, Scope *CurScope,
                            SourceLocation Loc);
   /// \brief Start analysis of clauses.
-  void StartOpenMPClauses();
+  void StartOpenMPClause(OpenMPClauseKind K);
   /// \brief End analysis of clauses.
-  void EndOpenMPClauses();
+  void EndOpenMPClause();
   /// \brief Called on end of data sharing attribute block.
   void EndOpenMPDSABlock(Stmt *CurDirective);
 

@@ -12741,6 +12741,7 @@ bool Sema::tryCaptureVariable(
   bool Nested = false;
   bool Explicit = (Kind != TryCapture_Implicit);
   unsigned FunctionScopesIndex = MaxFunctionScopesIndex;
+  unsigned OpenMPLevel = 0;
   do {
     // Only block literals, captured statements, and lambda expressions can
     // capture; other scopes don't work.
@@ -12767,6 +12768,20 @@ bool Sema::tryCaptureVariable(
     if (isVariableAlreadyCapturedInScopeInfo(CSI, Var, Nested, CaptureType, 
                                              DeclRefType)) 
       break;
+    if (getLangOpts().OpenMP) {
+      if (auto *RSI = dyn_cast<CapturedRegionScopeInfo>(CSI)) {
+        // OpenMP private variables should not be captured in outer scope, so
+        // just break here.
+        if (RSI->CapRegionKind == CR_OpenMP) {
+          if (isOpenMPPrivateVar(Var, OpenMPLevel)) {
+            Nested = true;
+            CaptureType = Context.getLValueReferenceType(DeclRefType);
+            break;
+          }
+          ++OpenMPLevel;
+        }
+      }
+    }
     // If we are instantiating a generic lambda call operator body, 
     // we do not want to capture new variables.  What was captured
     // during either a lambdas transformation or initial parsing

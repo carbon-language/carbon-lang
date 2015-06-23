@@ -6664,7 +6664,9 @@ StmtResult TreeTransform<Derived>::TransformOMPExecutableDirective(
   for (ArrayRef<OMPClause *>::iterator I = Clauses.begin(), E = Clauses.end();
        I != E; ++I) {
     if (*I) {
+      getDerived().getSema().StartOpenMPClause((*I)->getClauseKind());
       OMPClause *Clause = getDerived().TransformOMPClause(*I);
+      getDerived().getSema().EndOpenMPClause();
       if (Clause)
         TClauses.push_back(Clause);
     } else {

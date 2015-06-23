@@ -19,9 +19,9 @@ struct S {
 volatile int g = 1212;
 
 // CHECK: [[S_FLOAT_TY:%.+]] = type { float }
-// CHECK: [[CAP_MAIN_TY:%.+]] = type { [2 x i{{[0-9]+}}]*, i{{[0-9]+}}*, [2 x [[S_FLOAT_TY]]]*, [[S_FLOAT_TY]]* }
+// CHECK: [[CAP_MAIN_TY:%.+]] = type { i8 }
 // CHECK: [[S_INT_TY:%.+]] = type { i{{[0-9]+}} }
-// CHECK: [[CAP_TMAIN_TY:%.+]] = type { [2 x i{{[0-9]+}}]*, i{{[0-9]+}}*, [2 x [[S_INT_TY]]]*, [[S_INT_TY]]* }
+// CHECK: [[CAP_TMAIN_TY:%.+]] = type { i8 }
 template <typename T>
 T tmain() {
   S<T> test;
@@ -44,9 +44,8 @@ int main() {
   // LAMBDA: call{{( x86_thiscallcc)?}} void [[OUTER_LAMBDA:@.+]](
   [&]() {
   // LAMBDA: define{{.*}} internal{{.*}} void [[OUTER_LAMBDA]](
-  // LAMBDA: [[G_LOCAL_REF:%.+]] = getelementptr inbounds %{{.+}}, %{{.+}}* [[AGG_CAPTURED:%.+]], i{{[0-9]+}} 0, i{{[0-9]+}} 0
-  // LAMBDA: store i{{[0-9]+}}* [[G]], i{{[0-9]+}}** [[G_LOCAL_REF]]
-  // LAMBDA: [[ARG:%.+]] = bitcast %{{.+}}* [[AGG_CAPTURED]] to i8*
+  // LAMBDA-NOT: = getelementptr inbounds %{{.+}},
+  // LAMBDA: [[ARG:%.+]] = bitcast %{{.+}}* %{{.+}} to i8*
   // LAMBDA: call void {{.+}} @__kmpc_fork_call({{.+}}, i32 1, {{.+}}* [[OMP_REGION:@.+]] to {{.+}}, i8* [[ARG]])
 #pragma omp parallel private(g)
   {
@@ -76,9 +75,8 @@ int main() {
   // BLOCKS: call void {{%.+}}(i8
   ^{
   // BLOCKS: define{{.*}} internal{{.*}} void {{.+}}(i8*
-  // BLOCKS: [[G_LOCAL_REF:%.+]] = getelementptr inbounds %{{.+}}, %{{.+}}* [[AGG_CAPTURED:%.+]], i{{[0-9]+}} 0, i{{[0-9]+}} 0
-  // BLOCKS: store i{{[0-9]+}}* [[G]], i{{[0-9]+}}** [[G_LOCAL_REF]]
-  // BLOCKS: [[ARG:%.+]] = bitcast %{{.+}}* [[AGG_CAPTURED]] to i8*
+  // BLOCKS-NOT: = getelementptr inbounds %{{.+}},
+  // BLOCKS: [[ARG:%.+]] = bitcast %{{.+}}* %{{.+}} to i8*
   // BLOCKS: call void {{.+}} @__kmpc_fork_call({{.+}}, i32 1, {{.+}}* [[OMP_REGION:@.+]] to {{.+}}, i8* [[ARG]])
 #pragma omp parallel private(g)
   {
