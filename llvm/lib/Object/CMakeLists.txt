@@ -8,6 +8,7 @@ add_llvm_library(LLVMObject
   ELFObjectFile.cpp
   ELFYAML.cpp
   Error.cpp
+  FaultMapParser.cpp
   IRObjectFile.cpp
   MachOObjectFile.cpp
   MachOUniversal.cpp
