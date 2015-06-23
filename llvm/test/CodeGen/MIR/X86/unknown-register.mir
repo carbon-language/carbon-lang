@@ -15,7 +15,7 @@ name:            foo
 body:
  - name:         entry
    instructions:
-     # CHECK: 1:1: unknown register name 'xax'
+     # CHECK: [[@LINE+1]]:9: unknown register name 'xax'
      - '%xax = MOV32r0'
      - 'RETQ %xax'
 ...

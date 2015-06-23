@@ -13,7 +13,7 @@ name:            foo
 body:
  - name:         entry
    instructions:
-     # CHECK: 1:16: expected a machine operand
+     # CHECK: [[@LINE+1]]:24: expected a machine operand
      - '%eax = XOR32rr ='
      - 'RETQ %eax'
 ...

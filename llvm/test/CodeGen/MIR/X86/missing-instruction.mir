@@ -13,6 +13,6 @@ name:            foo
 body:
  - name:         entry
    instructions:
-     # CHECK: 1:1: expected a machine instruction
+     # CHECK: [[@LINE+1]]:9: expected a machine instruction
      - ''
 ...

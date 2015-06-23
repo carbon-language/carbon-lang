@@ -13,6 +13,6 @@ name:            foo
 body:
  - name:         entry
    instructions:
-     # CHECK: 1:1: unexpected character '`'
+     # CHECK: [[@LINE+1]]:9: unexpected character '`'
      - '` RETQ'
 ...
