@@ -19,9 +19,8 @@ using namespace llvm;
 
 #define DEBUG_TYPE "instcombine"
 
-/// FoldPHIArgBinOpIntoPHI - If we have something like phi [add (a,b), add(a,c)]
-/// and if a/b/c and the add's all have a single use, turn this into a phi
-/// and a single binop.
+/// If we have something like phi [add (a,b), add(a,c)] and if a/b/c and the
+/// adds all have a single use, turn this into a phi and a single binop.
 Instruction *InstCombiner::FoldPHIArgBinOpIntoPHI(PHINode &PN) {
   Instruction *FirstInst = cast<Instruction>(PN.getIncomingValue(0));
   assert(isa<BinaryOperator>(FirstInst) || isa<CmpInst>(FirstInst));
@@ -238,10 +237,9 @@ Instruction *InstCombiner::FoldPHIArgGEPIntoPHI(PHINode &PN) {
 }
 
 
-/// isSafeAndProfitableToSinkLoad - Return true if we know that it is safe to
-/// sink the load out of the block that defines it.  This means that it must be
-/// obvious the value of the load is not changed from the point of the load to
-/// the end of the block it is in.
+/// Return true if we know that it is safe to sink the load out of the block
+/// that defines it. This means that it must be obvious the value of the load is
+/// not changed from the point of the load to the end of the block it is in.
 ///
 /// Finally, it is safe, but not profitable, to sink a load targeting a
 /// non-address-taken alloca.  Doing so will cause us to not promote the alloca
@@ -385,9 +383,9 @@ Instruction *InstCombiner::FoldPHIArgLoadIntoPHI(PHINode &PN) {
 
 
 
-/// FoldPHIArgOpIntoPHI - If all operands to a PHI node are the same "unary"
-/// operator and they all are only used by the PHI, PHI together their
-/// inputs, and do the operation once, to the result of the PHI.
+/// If all operands to a PHI node are the same "unary" operator and they all are
+/// only used by the PHI, PHI together their inputs, and do the operation once,
+/// to the result of the PHI.
 Instruction *InstCombiner::FoldPHIArgOpIntoPHI(PHINode &PN) {
   Instruction *FirstInst = cast<Instruction>(PN.getIncomingValue(0));
 
@@ -503,8 +501,7 @@ Instruction *InstCombiner::FoldPHIArgOpIntoPHI(PHINode &PN) {
   return NewCI;
 }
 
-/// DeadPHICycle - Return true if this PHI node is only used by a PHI node cycle
-/// that is dead.
+/// Return true if this PHI node is only used by a PHI node cycle that is dead.
 static bool DeadPHICycle(PHINode *PN,
                          SmallPtrSetImpl<PHINode*> &PotentiallyDeadPHIs) {
   if (PN->use_empty()) return true;
@@ -524,8 +521,8 @@ static bool DeadPHICycle(PHINode *PN,
   return false;
 }
 
-/// PHIsEqualValue - Return true if this phi node is always equal to
-/// NonPhiInVal.  This happens with mutually cyclic phi nodes like:
+/// Return true if this phi node is always equal to NonPhiInVal.
+/// This happens with mutually cyclic phi nodes like:
 ///   z = some value; x = phi (y, z); y = phi (x, z)
 static bool PHIsEqualValue(PHINode *PN, Value *NonPhiInVal,
                            SmallPtrSetImpl<PHINode*> &ValueEqualPHIs) {
@@ -606,10 +603,10 @@ namespace llvm {
 }
 
 
-/// SliceUpIllegalIntegerPHI - This is an integer PHI and we know that it has an
-/// illegal type: see if it is only used by trunc or trunc(lshr) operations.  If
-/// so, we split the PHI into the various pieces being extracted.  This sort of
-/// thing is introduced when SROA promotes an aggregate to large integer values.
+/// This is an integer PHI and we know that it has an illegal type: see if it is
+/// only used by trunc or trunc(lshr) operations. If so, we split the PHI into
+/// the various pieces being extracted. This sort of thing is introduced when
+/// SROA promotes an aggregate to large integer values.
 ///
 /// TODO: The user of the trunc may be an bitcast to float/double/vector or an
 /// inttoptr.  We should produce new PHIs in the right type.
