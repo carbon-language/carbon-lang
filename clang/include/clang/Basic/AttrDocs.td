@@ -181,6 +181,11 @@ to enforce the provided alignment assumption.
 def EnableIfDocs : Documentation {
   let Category = DocCatFunction;
   let Content = [{
+.. Note:: Some features of this attribute are experimental. The meaning of
+  multiple enable_if attributes on a single declaration is subject to change in
+  a future version of clang. Also, the ABI is not standardized and the name
+  mangling may change in future versions. To avoid that, use asm labels.
+
 The ``enable_if`` attribute can be placed on function declarations to control
 which overload is selected based on the values of the function's arguments.
 When combined with the ``overloadable`` attribute, this feature is also
