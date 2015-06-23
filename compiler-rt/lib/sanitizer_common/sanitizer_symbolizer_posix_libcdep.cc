@@ -137,7 +137,9 @@ class LLVMSymbolizerProcess : public SymbolizerProcess {
   }
 
   void ExecuteWithDefaultArgs(const char *path_to_binary) const override {
-#if defined(__x86_64__)
+#if defined(__x86_64h__)
+    const char* const kSymbolizerArch = "--default-arch=x86_64h";
+#elif defined(__x86_64__)
     const char* const kSymbolizerArch = "--default-arch=x86_64";
 #elif defined(__i386__)
     const char* const kSymbolizerArch = "--default-arch=i386";
