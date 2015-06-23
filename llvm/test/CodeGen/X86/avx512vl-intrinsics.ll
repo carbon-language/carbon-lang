@@ -2902,4 +2902,55 @@ define <8 x float>@test_int_x86_avx512_mask_vpermi2var_ps_256(<8 x float> %x0, <
   ret <8 x float> %res2
 }
 
+declare <2 x i64> @llvm.x86.avx512.mask.pabs.q.128(<2 x i64>, <2 x i64>, i8)
+
+; CHECK-LABEL: @test_int_x86_avx512_mask_pabs_q_128
+; CHECK-NOT: call 
+; CHECK: kmov 
+; CHECK: vpabsq{{.*}}{%k1} 
+define <2 x i64>@test_int_x86_avx512_mask_pabs_q_128(<2 x i64> %x0, <2 x i64> %x1, i8 %x2) {
+  %res = call <2 x i64> @llvm.x86.avx512.mask.pabs.q.128(<2 x i64> %x0, <2 x i64> %x1, i8 %x2)
+  %res1 = call <2 x i64> @llvm.x86.avx512.mask.pabs.q.128(<2 x i64> %x0, <2 x i64> %x1, i8 -1)
+  %res2 = add <2 x i64> %res, %res1
+  ret <2 x i64> %res2
+}
+
+declare <4 x i64> @llvm.x86.avx512.mask.pabs.q.256(<4 x i64>, <4 x i64>, i8)
+
+; CHECK-LABEL: @test_int_x86_avx512_mask_pabs_q_256
+; CHECK-NOT: call 
+; CHECK: kmov 
+; CHECK: vpabsq{{.*}}{%k1} 
+define <4 x i64>@test_int_x86_avx512_mask_pabs_q_256(<4 x i64> %x0, <4 x i64> %x1, i8 %x2) {
+  %res = call <4 x i64> @llvm.x86.avx512.mask.pabs.q.256(<4 x i64> %x0, <4 x i64> %x1, i8 %x2)
+  %res1 = call <4 x i64> @llvm.x86.avx512.mask.pabs.q.256(<4 x i64> %x0, <4 x i64> %x1, i8 -1)
+  %res2 = add <4 x i64> %res, %res1
+  ret <4 x i64> %res2
+}
+
+declare <4 x i32> @llvm.x86.avx512.mask.pabs.d.128(<4 x i32>, <4 x i32>, i8)
+
+; CHECK-LABEL: @test_int_x86_avx512_mask_pabs_d_128
+; CHECK-NOT: call 
+; CHECK: kmov 
+; CHECK: vpabsd{{.*}}{%k1} 
+define <4 x i32>@test_int_x86_avx512_mask_pabs_d_128(<4 x i32> %x0, <4 x i32> %x1, i8 %x2) {
+  %res = call <4 x i32> @llvm.x86.avx512.mask.pabs.d.128(<4 x i32> %x0, <4 x i32> %x1, i8 %x2)
+  %res1 = call <4 x i32> @llvm.x86.avx512.mask.pabs.d.128(<4 x i32> %x0, <4 x i32> %x1, i8 -1)
+  %res2 = add <4 x i32> %res, %res1
+  ret <4 x i32> %res2
+}
+
+declare <8 x i32> @llvm.x86.avx512.mask.pabs.d.256(<8 x i32>, <8 x i32>, i8)
+
+; CHECK-LABEL: @test_int_x86_avx512_mask_pabs_d_256
+; CHECK-NOT: call 
+; CHECK: kmov 
+; CHECK: vpabsd{{.*}}{%k1} 
+define <8 x i32>@test_int_x86_avx512_mask_pabs_d_256(<8 x i32> %x0, <8 x i32> %x1, i8 %x2) {
+  %res = call <8 x i32> @llvm.x86.avx512.mask.pabs.d.256(<8 x i32> %x0, <8 x i32> %x1, i8 %x2)
+  %res1 = call <8 x i32> @llvm.x86.avx512.mask.pabs.d.256(<8 x i32> %x0, <8 x i32> %x1, i8 -1)
+  %res2 = add <8 x i32> %res, %res1
+  ret <8 x i32> %res2
+}
 

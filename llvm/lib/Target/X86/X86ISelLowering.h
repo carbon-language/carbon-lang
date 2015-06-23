@@ -238,6 +238,9 @@ namespace llvm {
       /// Signed integer max and min.
       SMAX, SMIN,
 
+      // Integer absolute value
+      ABS,
+
       /// Floating point max and min.
       FMAX, FMIN,
 

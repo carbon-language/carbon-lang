@@ -18334,6 +18334,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::UMIN:               return "X86ISD::UMIN";
   case X86ISD::SMAX:               return "X86ISD::SMAX";
   case X86ISD::SMIN:               return "X86ISD::SMIN";
+  case X86ISD::ABS:                return "X86ISD::ABS";
   case X86ISD::FMAX:               return "X86ISD::FMAX";
   case X86ISD::FMAX_RND:           return "X86ISD::FMAX_RND";
   case X86ISD::FMIN:               return "X86ISD::FMIN";

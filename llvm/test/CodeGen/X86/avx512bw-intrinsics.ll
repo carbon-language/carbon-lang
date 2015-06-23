@@ -970,3 +970,30 @@ define <64 x i8>@test_int_x86_avx512_mask_pshuf_b_512(<64 x i8> %x0, <64 x i8> %
   %res2 = add <64 x i8> %res, %res1
   ret <64 x i8> %res2
 }
+
+declare <32 x i16> @llvm.x86.avx512.mask.pabs.w.512(<32 x i16>, <32 x i16>, i32)
+
+; CHECK-LABEL: @test_int_x86_avx512_mask_pabs_w_512
+; CHECK-NOT: call 
+; CHECK: kmov 
+; CHECK: vpabsw{{.*}}{%k1} 
+define <32 x i16>@test_int_x86_avx512_mask_pabs_w_512(<32 x i16> %x0, <32 x i16> %x1, i32 %x2) {
+  %res = call <32 x i16> @llvm.x86.avx512.mask.pabs.w.512(<32 x i16> %x0, <32 x i16> %x1, i32 %x2)
+  %res1 = call <32 x i16> @llvm.x86.avx512.mask.pabs.w.512(<32 x i16> %x0, <32 x i16> %x1, i32 -1)
+  %res2 = add <32 x i16> %res, %res1
+  ret <32 x i16> %res2
+}
+
+declare <64 x i8> @llvm.x86.avx512.mask.pabs.b.512(<64 x i8>, <64 x i8>, i64)
+
+; CHECK-LABEL: @test_int_x86_avx512_mask_pabs_b_512
+; CHECK-NOT: call 
+; CHECK: kmov 
+; CHECK: vpabsb{{.*}}{%k1} 
+define <64 x i8>@test_int_x86_avx512_mask_pabs_b_512(<64 x i8> %x0, <64 x i8> %x1, i64 %x2) {
+  %res = call <64 x i8> @llvm.x86.avx512.mask.pabs.b.512(<64 x i8> %x0, <64 x i8> %x1, i64 %x2)
+  %res1 = call <64 x i8> @llvm.x86.avx512.mask.pabs.b.512(<64 x i8> %x0, <64 x i8> %x1, i64 -1)
+  %res2 = add <64 x i8> %res, %res1
+  ret <64 x i8> %res2
+}
+
