@@ -2514,33 +2514,13 @@ MicrosoftCXXABI::EmitFullMemberPointer(llvm::Constant *FirstField,
   return llvm::ConstantStruct::getAnon(fields);
 }
 
-// Loading virtual member pointers using the virtual inheritance model
-// always results in an adjustment using the vbtable even if the index is
-// zero.
-//
-// This is usually OK because the first slot in the vbtable points
-// backwards to the top of the MDC.  However, the MDC might be reusing a
-// vbptr from an nv-base.  In this case, the first slot in the vbtable
-// points to the start of the nv-base which introduced the vbptr and *not*
-// the MDC.  Modify the NonVirtualBaseAdjustment to account for this.
-static CharUnits computeOffsetOfBaseWithVBPtr(const ASTContext &Ctx,
-                                              const CXXRecordDecl *RD) {
-  CharUnits Offset = CharUnits::Zero();
-  const ASTRecordLayout *Layout = &Ctx.getASTRecordLayout(RD);
-  while (const CXXRecordDecl *Base = Layout->getBaseSharingVBPtr()) {
-    Offset += Layout->getBaseClassOffset(Base);
-    Layout = &Ctx.getASTRecordLayout(Base);
-  }
-  return Offset;
-}
-
 llvm::Constant *
 MicrosoftCXXABI::EmitMemberDataPointer(const MemberPointerType *MPT,
                                        CharUnits offset) {
   const CXXRecordDecl *RD = MPT->getMostRecentCXXRecordDecl();
   if (RD->getMSInheritanceModel() ==
       MSInheritanceAttr::Keyword_virtual_inheritance)
-    offset -= computeOffsetOfBaseWithVBPtr(getContext(), RD);
+    offset -= getContext().getOffsetOfBaseWithVBPtr(RD);
   llvm::Constant *FirstField =
     llvm::ConstantInt::get(CGM.IntTy, offset.getQuantity());
   return EmitFullMemberPointer(FirstField, /*IsMemberFunction=*/false, RD,
@@ -2639,7 +2619,7 @@ MicrosoftCXXABI::EmitMemberFunctionPointer(const CXXMethodDecl *MD) {
   if (VBTableIndex == 0 &&
       RD->getMSInheritanceModel() ==
           MSInheritanceAttr::Keyword_virtual_inheritance)
-    NonVirtualBaseAdjustment -= computeOffsetOfBaseWithVBPtr(getContext(), RD);
+    NonVirtualBaseAdjustment -= getContext().getOffsetOfBaseWithVBPtr(RD);
 
   // The rest of the fields are common with data member pointers.
   FirstField = llvm::ConstantExpr::getBitCast(FirstField, CGM.VoidPtrTy);
@@ -2987,7 +2967,7 @@ MicrosoftCXXABI::EmitMemberPointerConversion(CodeGenFunction &CGF,
       Builder.CreateICmpEQ(VirtualBaseAdjustmentOffset, getZeroInt());
   if (SrcInheritance == MSInheritanceAttr::Keyword_virtual_inheritance) {
     if (int64_t SrcOffsetToFirstVBase =
-            computeOffsetOfBaseWithVBPtr(getContext(), SrcRD).getQuantity()) {
+            getContext().getOffsetOfBaseWithVBPtr(SrcRD).getQuantity()) {
       llvm::Value *UndoSrcAdjustment = Builder.CreateSelect(
           SrcVBIndexEqZero,
           llvm::ConstantInt::get(CGM.IntTy, SrcOffsetToFirstVBase),
@@ -3049,7 +3029,7 @@ MicrosoftCXXABI::EmitMemberPointerConversion(CodeGenFunction &CGF,
   // virtual base and the top of the MDC.
   if (DstInheritance == MSInheritanceAttr::Keyword_virtual_inheritance) {
     if (int64_t DstOffsetToFirstVBase =
-            computeOffsetOfBaseWithVBPtr(getContext(), DstRD).getQuantity()) {
+            getContext().getOffsetOfBaseWithVBPtr(DstRD).getQuantity()) {
       llvm::Value *DoDstAdjustment = Builder.CreateSelect(
           DstVBIndexEqZero,
           llvm::ConstantInt::get(CGM.IntTy, DstOffsetToFirstVBase),
@@ -3155,8 +3135,7 @@ llvm::Constant *MicrosoftCXXABI::EmitMemberPointerConversion(
       llvm::ICmpInst::ICMP_EQ, VirtualBaseAdjustmentOffset, getZeroInt());
   if (SrcInheritance == MSInheritanceAttr::Keyword_virtual_inheritance) {
     llvm::Constant *SrcOffsetToFirstVBase = llvm::ConstantInt::get(
-        CGM.IntTy,
-        computeOffsetOfBaseWithVBPtr(getContext(), SrcRD).getQuantity());
+        CGM.IntTy, getContext().getOffsetOfBaseWithVBPtr(SrcRD).getQuantity());
     llvm::Constant *UndoSrcAdjustment = llvm::ConstantExpr::getSelect(
         SrcVBIndexEqZero, SrcOffsetToFirstVBase, getZeroInt());
     NVAdjustField =
@@ -3219,8 +3198,7 @@ llvm::Constant *MicrosoftCXXABI::EmitMemberPointerConversion(
   // virtual base and the top of the MDC.
   if (DstInheritance == MSInheritanceAttr::Keyword_virtual_inheritance) {
     llvm::Constant *DstOffsetToFirstVBase = llvm::ConstantInt::get(
-        CGM.IntTy,
-        computeOffsetOfBaseWithVBPtr(getContext(), DstRD).getQuantity());
+        CGM.IntTy, getContext().getOffsetOfBaseWithVBPtr(DstRD).getQuantity());
     llvm::Constant *DoDstAdjustment = llvm::ConstantExpr::getSelect(
         DstVBIndexEqZero, DstOffsetToFirstVBase, getZeroInt());
     NVAdjustField =

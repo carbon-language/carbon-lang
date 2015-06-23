@@ -141,3 +141,15 @@ void CallMethods() {
 // CHECK: call {{.*}} @"\01??$CallMethod@UM@@$0A@@@YAXAAUM@@@Z"
 // CHECK: call {{.*}} @"\01??$CallMethod@UV@@$0A@@@YAXAAUV@@@Z"
 // CHECK: call {{.*}} @"\01??$CallMethod@UU@@$0A@@@YAXAAUU@@@Z"
+
+namespace NegativeNVOffset {
+struct A {};
+struct B : virtual A {};
+struct C : B {
+  virtual void f();
+};
+}
+
+template void CallMethod<NegativeNVOffset::C, &NegativeNVOffset::C::f>(NegativeNVOffset::C &);
+
+// CHECK-LABEL: define {{.*}} @"\01??$CallMethod@UC@NegativeNVOffset@@$I??_912@$BA@AEPPPPPPPM@A@@@YAXAAUC@NegativeNVOffset@@@Z"

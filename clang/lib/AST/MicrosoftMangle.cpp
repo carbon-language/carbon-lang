@@ -502,6 +502,9 @@ void MicrosoftCXXNameMangler::mangleMemberDataPointer(const CXXRecordDecl *RD,
     FieldOffset /= getASTContext().getCharWidth();
 
     VBTableOffset = 0;
+
+    if (IM == MSInheritanceAttr::Keyword_virtual_inheritance)
+      FieldOffset -= getASTContext().getOffsetOfBaseWithVBPtr(RD).getQuantity();
   } else {
     FieldOffset = RD->nullFieldOffsetIsZero() ? 0 : -1;
 
@@ -570,6 +573,10 @@ MicrosoftCXXNameMangler::mangleMemberFunctionPointer(const CXXRecordDecl *RD,
       mangleName(MD);
       mangleFunctionEncoding(MD, /*ShouldMangle=*/true);
     }
+
+    if (VBTableOffset == 0 &&
+        IM == MSInheritanceAttr::Keyword_virtual_inheritance)
+      NVOffset -= getASTContext().getOffsetOfBaseWithVBPtr(RD).getQuantity();
   } else {
     // Null single inheritance member functions are encoded as a simple nullptr.
     if (IM == MSInheritanceAttr::Keyword_single_inheritance) {
@@ -582,7 +589,7 @@ MicrosoftCXXNameMangler::mangleMemberFunctionPointer(const CXXRecordDecl *RD,
   }
 
   if (MSInheritanceAttr::hasNVOffsetField(/*IsMemberFunction=*/true, IM))
-    mangleNumber(NVOffset);
+    mangleNumber(static_cast<uint32_t>(NVOffset));
   if (MSInheritanceAttr::hasVBPtrOffsetField(IM))
     mangleNumber(VBPtrOffset);
   if (MSInheritanceAttr::hasVBTableOffsetField(IM))

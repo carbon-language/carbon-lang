@@ -1866,6 +1866,16 @@ CharUnits ASTContext::getAlignOfGlobalVarInChars(QualType T) const {
   return toCharUnitsFromBits(getAlignOfGlobalVar(T));
 }
 
+CharUnits ASTContext::getOffsetOfBaseWithVBPtr(const CXXRecordDecl *RD) const {
+  CharUnits Offset = CharUnits::Zero();
+  const ASTRecordLayout *Layout = &getASTRecordLayout(RD);
+  while (const CXXRecordDecl *Base = Layout->getBaseSharingVBPtr()) {
+    Offset += Layout->getBaseClassOffset(Base);
+    Layout = &getASTRecordLayout(Base);
+  }
+  return Offset;
+}
+
 /// DeepCollectObjCIvars -
 /// This routine first collects all declared, but not synthesized, ivars in
 /// super class and then collects all ivars, including those synthesized for
