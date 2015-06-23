@@ -91,6 +91,12 @@ public:
         m_thread_dispatch_qaddr = thread_dispatch_qaddr;
     }
 
+    void
+    ClearQueueInfo ();
+    
+    void
+    SetQueueInfo (std::string &&queue_name, lldb::QueueKind queue_kind, uint64_t queue_serial);
+
     StructuredData::ObjectSP
     FetchThreadExtendedInfo () override;
 
@@ -101,13 +107,20 @@ protected:
     bool
     PrivateSetRegisterValue (uint32_t reg, 
                              StringExtractor &response);
-                             
+
+    bool
+    CachedQueueInfoIsValid() const
+    {
+        return m_queue_kind != lldb::eQueueKindUnknown;
+    }
     //------------------------------------------------------------------
     // Member variables.
     //------------------------------------------------------------------
     std::string m_thread_name;
     std::string m_dispatch_queue_name;
     lldb::addr_t m_thread_dispatch_qaddr;
+    lldb::QueueKind m_queue_kind;     // Queue info from stop reply/stop info for thread
+    uint64_t m_queue_serial;    // Queue info from stop reply/stop info for thread
     //------------------------------------------------------------------
     // Member variables.
     //------------------------------------------------------------------

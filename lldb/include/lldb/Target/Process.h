@@ -1878,7 +1878,13 @@ public:
     void
     SendAsyncInterrupt ();
     
-    void
+    //------------------------------------------------------------------
+    // Notify this process class that modules got loaded.
+    //
+    // If subclasses override this method, they must call this version
+    // before doing anything in the subclass version of the function.
+    //------------------------------------------------------------------
+    virtual void
     ModulesDidLoad (ModuleList &module_list);
 
 protected:

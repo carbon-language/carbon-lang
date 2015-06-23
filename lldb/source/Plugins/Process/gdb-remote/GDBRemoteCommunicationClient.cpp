@@ -33,6 +33,7 @@
 #include "lldb/Host/HostInfo.h"
 #include "lldb/Host/StringConvert.h"
 #include "lldb/Host/TimeValue.h"
+#include "lldb/Symbol/Symbol.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/MemoryRegionInfo.h"
 #include "lldb/Target/UnixSignals.h"
@@ -98,6 +99,7 @@ GDBRemoteCommunicationClient::GDBRemoteCommunicationClient() :
     m_supports_z4 (true),
     m_supports_QEnvironment (true),
     m_supports_QEnvironmentHexEncoded (true),
+    m_supports_qSymbol (true),
     m_curr_pid (LLDB_INVALID_PROCESS_ID),
     m_curr_tid (LLDB_INVALID_THREAD_ID),
     m_curr_tid_run (LLDB_INVALID_THREAD_ID),
@@ -370,6 +372,7 @@ GDBRemoteCommunicationClient::ResetDiscoverableSettings()
     m_supports_z4 = true;
     m_supports_QEnvironment = true;
     m_supports_QEnvironmentHexEncoded = true;
+    m_supports_qSymbol = true;
     
     m_host_arch.Clear();
     m_process_arch.Clear();
@@ -4241,3 +4244,87 @@ GDBRemoteCommunicationClient::ReadExtFeature (const lldb_private::ConstString ob
     err.Success( );
     return true;
 }
+
+// Notify the target that gdb is prepared to serve symbol lookup requests.
+//  packet: "qSymbol::"
+//  reply:
+//  OK                  The target does not need to look up any (more) symbols.
+//  qSymbol:<sym_name>  The target requests the value of symbol sym_name (hex encoded).
+//                      LLDB may provide the value by sending another qSymbol packet
+//                      in the form of"qSymbol:<sym_value>:<sym_name>".
+
+void
+GDBRemoteCommunicationClient::ServeSymbolLookups(lldb_private::Process *process)
+{
+    if (m_supports_qSymbol)
+    {
+        Mutex::Locker locker;
+        if (GetSequenceMutex(locker, "GDBRemoteCommunicationClient::ServeSymbolLookups() failed due to not getting the sequence mutex"))
+        {
+            StreamString packet;
+            packet.PutCString ("qSymbol::");
+            while (1)
+            {
+                StringExtractorGDBRemote response;
+                if (SendPacketAndWaitForResponseNoLock(packet.GetData(), packet.GetSize(), response) == PacketResult::Success)
+                {
+                    if (response.IsOKResponse())
+                    {
+                        // We are done serving symbols requests
+                        return;
+                    }
+
+                    if (response.IsUnsupportedResponse())
+                    {
+                        // qSymbol is not supported by the current GDB server we are connected to
+                        m_supports_qSymbol = false;
+                        return;
+                    }
+                    else
+                    {
+                        llvm::StringRef response_str(response.GetStringRef());
+                        if (response_str.startswith("qSymbol:"))
+                        {
+                            response.SetFilePos(strlen("qSymbol:"));
+                            std::string symbol_name;
+                            if (response.GetHexByteString(symbol_name))
+                            {
+                                if (symbol_name.empty())
+                                    return;
+
+                                addr_t symbol_load_addr = LLDB_INVALID_ADDRESS;
+                                lldb_private::SymbolContextList sc_list;
+                                if (process->GetTarget().GetImages().FindSymbolsWithNameAndType(ConstString(symbol_name), eSymbolTypeAny, sc_list))
+                                {
+                                    SymbolContext sc;
+                                    if (sc_list.GetContextAtIndex(0, sc))
+                                    {
+                                        if (sc.symbol)
+                                            symbol_load_addr = sc.symbol->GetAddress().GetLoadAddress(&process->GetTarget());
+                                    }
+                                }
+                                // This is the normal path where our symbol lookup was successful and we want
+                                // to send a packet with the new symbol value and see if another lookup needs to be
+                                // done.
+
+                                // Change "packet" to contain the requested symbol value and name
+                                packet.Clear();
+                                packet.PutCString("qSymbol:");
+                                if (symbol_load_addr != LLDB_INVALID_ADDRESS)
+                                    packet.Printf("%" PRIx64, symbol_load_addr);
+                                packet.PutCString(":");
+                                packet.PutBytesAsRawHex8(symbol_name.data(), symbol_name.size());
+                                continue; // go back to the while loop and send "packet" and wait for another response
+                            }
+                        }
+                    }
+                }
+            }
+            // If we make it here, the symbol request packet response wasn't valid or
+            // our symbol lookup failed so we must abort
+            return;
+
+        }
+    }
+}
+

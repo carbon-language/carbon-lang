@@ -1834,6 +1834,10 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
             uint32_t exc_type = 0;
             std::vector<addr_t> exc_data;
             addr_t thread_dispatch_qaddr = LLDB_INVALID_ADDRESS;
+            bool queue_vars_valid = false; // says if locals below that start with "queue_" are valid
+            std::string queue_name;
+            QueueKind queue_kind = eQueueKindUnknown;
+            uint64_t queue_serial = 0;
             ThreadSP thread_sp;
             ThreadGDBRemote *gdb_thread = NULL;
 
@@ -1914,6 +1918,29 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
                 {
                     thread_dispatch_qaddr = StringConvert::ToUInt64 (value.c_str(), 0, 16);
                 }
+                else if (name.compare("qname") == 0)
+                {
+                    queue_vars_valid = true;
+                    StringExtractor name_extractor;
+                    // Swap "value" over into "name_extractor"
+                    name_extractor.GetStringRef().swap(value);
+                    // Now convert the HEX bytes into a string value
+                    name_extractor.GetHexByteString (value);
+                    queue_name.swap (value);
+                }
+                else if (name.compare("qkind") == 0)
+                {
+                    queue_vars_valid = true;
+                    if (value == "serial")
+                        queue_kind = eQueueKindSerial;
+                    else if (value == "concurrent")
+                        queue_kind = eQueueKindConcurrent;
+                }
+                else if (name.compare("qserial") == 0)
+                {
+                    queue_vars_valid = true;
+                    queue_serial = StringConvert::ToUInt64 (value.c_str(), 0, 0);
+                }
                 else if (name.compare("reason") == 0)
                 {
                     reason.swap(value);
@@ -1976,6 +2003,11 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
                 thread_sp->SetStopInfo (StopInfoSP());
 
                 gdb_thread->SetThreadDispatchQAddr (thread_dispatch_qaddr);
+                if (queue_vars_valid)
+                    gdb_thread->SetQueueInfo(std::move(queue_name), queue_kind, queue_serial);
+                else
+                    gdb_thread->ClearQueueInfo();
+
                 gdb_thread->SetName (thread_name.empty() ? NULL : thread_name.c_str());
                 if (exc_type != 0)
                 {
@@ -4235,6 +4267,19 @@ ProcessGDBRemote::GetFileLoadAddress(const FileSpec& file, bool& is_loaded, lldb
 
     return Error("Unknown error happened during sending the load address packet");
 }
+
+
+void
+ProcessGDBRemote::ModulesDidLoad (ModuleList &module_list)
+{
+    // We must call the lldb_private::Process::ModulesDidLoad () first before we do anything
+    Process::ModulesDidLoad (module_list);
+
+    // After loading shared libraries, we can ask our remote GDB server if
+    // it needs any symbols.
+    m_gdb_comm.ServeSymbolLookups(this);
+}
+
 
 class CommandObjectProcessGDBRemoteSpeedTest: public CommandObjectParsed
 {

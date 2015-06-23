@@ -40,9 +40,11 @@ ThreadGDBRemote::ThreadGDBRemote (Process &process, lldb::tid_t tid) :
     Thread(process, tid),
     m_thread_name (),
     m_dispatch_queue_name (),
-    m_thread_dispatch_qaddr (LLDB_INVALID_ADDRESS)
+    m_thread_dispatch_qaddr (LLDB_INVALID_ADDRESS),
+    m_queue_kind(eQueueKindUnknown),
+    m_queue_serial(0)
 {
-    ProcessGDBRemoteLog::LogIf(GDBR_LOG_THREAD, "%p: ThreadGDBRemote::ThreadGDBRemote (pid = %i, tid = 0x%4.4x)", 
+    ProcessGDBRemoteLog::LogIf(GDBR_LOG_THREAD, "%p: ThreadGDBRemote::ThreadGDBRemote (pid = %i, tid = 0x%4.4x)",
                                this, 
                                process.GetID(),
                                GetID());
@@ -66,10 +68,36 @@ ThreadGDBRemote::GetName ()
     return m_thread_name.c_str();
 }
 
+void
+ThreadGDBRemote::ClearQueueInfo ()
+{
+    m_dispatch_queue_name.clear();
+    m_queue_kind = eQueueKindUnknown;
+    m_queue_serial = 0;
+}
+
+void
+ThreadGDBRemote::SetQueueInfo (std::string &&queue_name, QueueKind queue_kind, uint64_t queue_serial)
+{
+    m_dispatch_queue_name = queue_name;
+    m_queue_kind = queue_kind;
+    m_queue_serial = queue_serial;
+}
+
 
 const char *
 ThreadGDBRemote::GetQueueName ()
 {
+    // If our cached queue info is valid, then someone called ThreadGDBRemote::SetQueueInfo(...)
+    // with valid information that was gleaned from the stop reply packet. In this case we trust
+    // that the info is valid in m_dispatch_queue_name without refetching it
+    if (CachedQueueInfoIsValid())
+    {
+        if (m_dispatch_queue_name.empty())
+            return nullptr;
+        else
+            return m_dispatch_queue_name.c_str();
+    }
     // Always re-fetch the dispatch queue name since it can change
 
     if (m_thread_dispatch_qaddr != 0 || m_thread_dispatch_qaddr != LLDB_INVALID_ADDRESS)
@@ -79,13 +107,12 @@ ThreadGDBRemote::GetQueueName ()
         {
             SystemRuntime *runtime = process_sp->GetSystemRuntime ();
             if (runtime)
-            {
                 m_dispatch_queue_name = runtime->GetQueueNameFromThreadQAddress (m_thread_dispatch_qaddr);
-            }
-            if (m_dispatch_queue_name.length() > 0)
-            {
+            else
+                m_dispatch_queue_name.clear();
+
+            if (!m_dispatch_queue_name.empty())
                 return m_dispatch_queue_name.c_str();
-            }
         }
     }
     return NULL;
@@ -94,6 +121,12 @@ ThreadGDBRemote::GetQueueName ()
 queue_id_t
 ThreadGDBRemote::GetQueueID ()
 {
+    // If our cached queue info is valid, then someone called ThreadGDBRemote::SetQueueInfo(...)
+    // with valid information that was gleaned from the stop reply packet. In this case we trust
+    // that the info is valid in m_dispatch_queue_name without refetching it
+    if (CachedQueueInfoIsValid())
+        return m_queue_serial;
+
     if (m_thread_dispatch_qaddr != 0 || m_thread_dispatch_qaddr != LLDB_INVALID_ADDRESS)
     {
         ProcessSP process_sp (GetProcess());

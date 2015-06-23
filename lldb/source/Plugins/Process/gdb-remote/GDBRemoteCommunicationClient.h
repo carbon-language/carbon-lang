@@ -556,6 +556,9 @@ public:
                     std::string & out,
                     lldb_private::Error & err);
 
+    void
+    ServeSymbolLookups(lldb_private::Process *process);
+
 protected:
 
     PacketResult
@@ -620,7 +623,8 @@ protected:
         m_supports_z3:1,
         m_supports_z4:1,
         m_supports_QEnvironment:1,
-        m_supports_QEnvironmentHexEncoded:1;
+        m_supports_QEnvironmentHexEncoded:1,
+        m_supports_qSymbol:1;
     
     lldb::pid_t m_curr_pid;
     lldb::tid_t m_curr_tid;         // Current gdb remote protocol thread index for all other operations

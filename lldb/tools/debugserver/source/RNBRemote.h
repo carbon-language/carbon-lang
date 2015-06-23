@@ -91,7 +91,7 @@ public:
         query_thread_extra_info,        // 'qThreadExtraInfo'
         query_thread_stop_info,         // 'qThreadStopInfo'
         query_image_offsets,            // 'qOffsets'
-        query_symbol_lookup,            // 'gSymbols'
+        query_symbol_lookup,            // 'qSymbol'
         query_launch_success,           // 'qLaunchSuccess'
         query_register_info,            // 'qRegisterInfo'
         query_shlib_notify_info_addr,   // 'qShlibInfoAddr'
@@ -195,6 +195,7 @@ public:
     rnb_err_t HandlePacket_qHostInfo (const char *p);
     rnb_err_t HandlePacket_qGDBServerVersion (const char *p);
     rnb_err_t HandlePacket_qProcessInfo (const char *p);
+    rnb_err_t HandlePacket_qSymbol (const char *p);
     rnb_err_t HandlePacket_QStartNoAckMode (const char *p);
     rnb_err_t HandlePacket_QThreadSuffixSupported (const char *p);
     rnb_err_t HandlePacket_QSetLogging (const char *p);
@@ -311,6 +312,68 @@ protected:
         }
     };
 
+
+    struct DispatchQueueOffsets
+    {
+        uint16_t dqo_version;
+        uint16_t dqo_label;
+        uint16_t dqo_label_size;
+        uint16_t dqo_flags;
+        uint16_t dqo_flags_size;
+        uint16_t dqo_serialnum;
+        uint16_t dqo_serialnum_size;
+        uint16_t dqo_width;
+        uint16_t dqo_width_size;
+        uint16_t dqo_running;
+        uint16_t dqo_running_size;
+        uint16_t dqo_suspend_cnt;         // version 5 and later, starting with Mac OS X 10.10/iOS 8
+        uint16_t dqo_suspend_cnt_size;    // version 5 and later, starting with Mac OS X 10.10/iOS 8
+        uint16_t dqo_target_queue;        // version 5 and later, starting with Mac OS X 10.10/iOS 8
+        uint16_t dqo_target_queue_size;   // version 5 and later, starting with Mac OS X 10.10/iOS 8
+        uint16_t dqo_priority;            // version 5 and later, starting with Mac OS X 10.10/iOS 8
+        uint16_t dqo_priority_size;       // version 5 and later, starting with Mac OS X 10.10/iOS 8
+
+        DispatchQueueOffsets ()
+        {
+            Clear();
+        }
+
+        void
+        Clear()
+        {
+            dqo_version = UINT16_MAX;
+            dqo_label = UINT16_MAX;
+            dqo_label_size = UINT16_MAX;
+            dqo_flags = UINT16_MAX;
+            dqo_flags_size = UINT16_MAX;
+            dqo_serialnum = UINT16_MAX;
+            dqo_serialnum_size = UINT16_MAX;
+            dqo_width = UINT16_MAX;
+            dqo_width_size = UINT16_MAX;
+            dqo_running = UINT16_MAX;
+            dqo_running_size = UINT16_MAX;
+            dqo_suspend_cnt = UINT16_MAX;
+            dqo_suspend_cnt_size = UINT16_MAX;
+            dqo_target_queue = UINT16_MAX;
+            dqo_target_queue_size = UINT16_MAX;
+            dqo_priority = UINT16_MAX;
+            dqo_priority_size = UINT16_MAX;
+        }
+
+        bool
+        IsValid () const
+        {
+            return dqo_version != UINT16_MAX;
+        }
+
+        void
+        GetThreadQueueInfo (nub_process_t pid,
+                            nub_addr_t dispatch_qaddr,
+                            std::string &queue_name,
+                            uint64_t &queue_width,
+                            uint64_t &queue_serialnum) const;
+    };
+
     rnb_err_t       GetPacket (std::string &packet_data, RNBRemote::Packet& packet_info, bool wait);
     rnb_err_t       SendPacket (const std::string &);
     std::string     CompressString (const std::string &);
@@ -327,12 +390,18 @@ protected:
     compression_types
     GetCompressionType ();
 
+    const DispatchQueueOffsets *
+    GetDispatchQueueOffsets();
+
     RNBContext      m_ctx;              // process context
     RNBSocket       m_comm;             // communication port
     std::string     m_arch;
     nub_thread_t    m_continue_thread;  // thread to continue; 0 for any, -1 for all
     nub_thread_t    m_thread;           // thread for other ops; 0 for any, -1 for all
     PThreadMutex    m_mutex;            // Mutex that protects
+    DispatchQueueOffsets m_dispatch_queue_offsets;
+    nub_addr_t      m_dispatch_queue_offsets_addr;
+    uint32_t        m_qSymbol_index;
     uint32_t        m_packets_recvd;
     Packet::collection m_packets;
     std::deque<std::string> m_rx_packets;

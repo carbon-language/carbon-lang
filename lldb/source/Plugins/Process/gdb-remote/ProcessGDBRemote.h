@@ -244,6 +244,9 @@ public:
     Error
     GetFileLoadAddress(const FileSpec& file, bool& is_loaded, lldb::addr_t& load_addr) override;
 
+    void
+    ModulesDidLoad (ModuleList &module_list) override;
+
 protected:
     friend class ThreadGDBRemote;
     friend class GDBRemoteCommunicationClient;

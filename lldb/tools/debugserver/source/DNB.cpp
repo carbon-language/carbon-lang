@@ -1257,6 +1257,86 @@ DNBProcessMemoryRead (nub_process_t pid, nub_addr_t addr, nub_size_t size, void 
     return 0;
 }
 
+uint64_t
+DNBProcessMemoryReadInteger (nub_process_t pid, nub_addr_t addr, nub_size_t integer_size, uint64_t fail_value)
+{
+    union Integers
+    {
+        uint8_t     u8;
+        uint16_t    u16;
+        uint32_t    u32;
+        uint64_t    u64;
+    };
+
+    if (integer_size <= sizeof(uint64_t))
+    {
+        Integers ints;
+        if (DNBProcessMemoryRead(pid, addr, integer_size, &ints) == integer_size)
+        {
+            switch (integer_size)
+            {
+                case 1: return ints.u8;
+                case 2: return ints.u16;
+                case 3: return ints.u32 & 0xffffffu;
+                case 4: return ints.u32;
+                case 5: return ints.u32 & 0x000000ffffffffffull;
+                case 6: return ints.u32 & 0x0000ffffffffffffull;
+                case 7: return ints.u32 & 0x00ffffffffffffffull;
+                case 8: return ints.u64;
+            }
+        }
+    }
+    return fail_value;
+
+}
+
+nub_addr_t
+DNBProcessMemoryReadPointer (nub_process_t pid, nub_addr_t addr)
+{
+    cpu_type_t cputype = DNBProcessGetCPUType (pid);
+    if (cputype)
+    {
+        const nub_size_t pointer_size = (cputype & CPU_ARCH_ABI64) ? 8 : 4;
+        return DNBProcessMemoryReadInteger(pid, addr, pointer_size, 0);
+    }
+    return 0;
+
+}
+
+std::string
+DNBProcessMemoryReadCString (nub_process_t pid, nub_addr_t addr)
+{
+    std::string cstr;
+    char buffer[256];
+    const nub_size_t max_buffer_cstr_length = sizeof(buffer)-1;
+    buffer[max_buffer_cstr_length] = '\0';
+    nub_size_t length = 0;
+    nub_addr_t curr_addr = addr;
+    do
+    {
+        nub_size_t bytes_read = DNBProcessMemoryRead(pid, curr_addr, max_buffer_cstr_length, buffer);
+        if (bytes_read == 0)
+            break;
+        length = strlen(buffer);
+        cstr.append(buffer, length);
+        curr_addr += length;
+    } while (length == max_buffer_cstr_length);
+    return cstr;
+}
+
+std::string
+DNBProcessMemoryReadCStringFixed (nub_process_t pid, nub_addr_t addr, nub_size_t fixed_length)
+{
+    std::string cstr;
+    char buffer[fixed_length+1];
+    buffer[fixed_length] = '\0';
+    nub_size_t bytes_read = DNBProcessMemoryRead(pid, addr, fixed_length, buffer);
+    if (bytes_read > 0)
+        cstr.assign(buffer);
+    return cstr;
+}
+
+
 //----------------------------------------------------------------------
 // Write memory to the address space of process PID. This call will take
 // care of setting and restoring permissions and breaking up the memory
