@@ -43,6 +43,7 @@
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Module.h"
+#include "llvm/IR/MDBuilder.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
@@ -195,10 +196,12 @@ namespace {
     /// Update the appropriate Phi nodes as we do so.
     void SplitExitEdges(Loop *L, const SmallVectorImpl<BasicBlock *> &ExitBlocks);
 
-    bool UnswitchIfProfitable(Value *LoopCond, Constant *Val);
+    bool UnswitchIfProfitable(Value *LoopCond, Constant *Val,
+                              TerminatorInst *TI = nullptr);
     void UnswitchTrivialCondition(Loop *L, Value *Cond, Constant *Val,
-                                  BasicBlock *ExitBlock);
-    void UnswitchNontrivialCondition(Value *LIC, Constant *OnVal, Loop *L);
+                                  BasicBlock *ExitBlock, TerminatorInst *TI);
+    void UnswitchNontrivialCondition(Value *LIC, Constant *OnVal, Loop *L,
+                                     TerminatorInst *TI);
 
     void RewriteLoopBodyWithConditionConstant(Loop *L, Value *LIC,
                                               Constant *Val, bool isEqual);
@@ -206,7 +209,8 @@ namespace {
     void EmitPreheaderBranchOnCondition(Value *LIC, Constant *Val,
                                         BasicBlock *TrueDest,
                                         BasicBlock *FalseDest,
-                                        Instruction *InsertPt);
+                                        Instruction *InsertPt,
+                                        TerminatorInst *TI);
 
     void SimplifyCode(std::vector<Instruction*> &Worklist, Loop *L);
     bool IsTrivialUnswitchCondition(Value *Cond, Constant **Val = nullptr,
@@ -453,8 +457,8 @@ bool LoopUnswitch::processCurrentLoop() {
         // unswitch on it if we desire.
         Value *LoopCond = FindLIVLoopCondition(BI->getCondition(),
                                                currentLoop, Changed);
-        if (LoopCond && UnswitchIfProfitable(LoopCond,
-                                             ConstantInt::getTrue(Context))) {
+        if (LoopCond &&
+            UnswitchIfProfitable(LoopCond, ConstantInt::getTrue(Context), TI)) {
           ++NumBranches;
           return true;
         }
@@ -643,7 +647,8 @@ bool LoopUnswitch::IsTrivialUnswitchCondition(Value *Cond, Constant **Val,
 /// UnswitchIfProfitable - We have found that we can unswitch currentLoop when
 /// LoopCond == Val to simplify the loop.  If we decide that this is profitable,
 /// unswitch the loop, reprocess the pieces, then return true.
-bool LoopUnswitch::UnswitchIfProfitable(Value *LoopCond, Constant *Val) {
+bool LoopUnswitch::UnswitchIfProfitable(Value *LoopCond, Constant *Val,
+                                        TerminatorInst *TI) {
   Function *F = loopHeader->getParent();
   Constant *CondVal = nullptr;
   BasicBlock *ExitBlock = nullptr;
@@ -651,7 +656,7 @@ bool LoopUnswitch::UnswitchIfProfitable(Value *LoopCond, Constant *Val) {
   if (IsTrivialUnswitchCondition(LoopCond, &CondVal, &ExitBlock)) {
     // If the condition is trivial, always unswitch. There is no code growth
     // for this case.
-    UnswitchTrivialCondition(currentLoop, LoopCond, CondVal, ExitBlock);
+    UnswitchTrivialCondition(currentLoop, LoopCond, CondVal, ExitBlock, TI);
     return true;
   }
 
@@ -661,7 +666,7 @@ bool LoopUnswitch::UnswitchIfProfitable(Value *LoopCond, Constant *Val) {
   if (OptimizeForSize || F->hasFnAttribute(Attribute::OptimizeForSize))
     return false;
 
-  UnswitchNontrivialCondition(LoopCond, Val, currentLoop);
+  UnswitchNontrivialCondition(LoopCond, Val, currentLoop, TI);
   return true;
 }
 
@@ -685,25 +690,65 @@ static Loop *CloneLoop(Loop *L, Loop *PL, ValueToValueMapTy &VM,
   return New;
 }
 
+static void copyMetadata(Instruction *DstInst, const Instruction *SrcInst,
+                         bool Swapped) {
+  if (!SrcInst || !SrcInst->hasMetadata())
+    return;
+
+  SmallVector<std::pair<unsigned, MDNode *>, 4> MDs;
+  SrcInst->getAllMetadata(MDs);
+  for (auto &MD : MDs) {
+    switch (MD.first) {
+    default:
+      break;
+    case LLVMContext::MD_prof:
+      if (Swapped && MD.second->getNumOperands() == 3 &&
+          isa<MDString>(MD.second->getOperand(0))) {
+        MDString *MDName = cast<MDString>(MD.second->getOperand(0));
+        if (MDName->getString() == "branch_weights") {
+          auto *ValT = cast_or_null<ConstantAsMetadata>(
+                           MD.second->getOperand(1))->getValue();
+          auto *ValF = cast_or_null<ConstantAsMetadata>(
+                           MD.second->getOperand(2))->getValue();
+          assert(ValT && ValF && "Invalid Operands of branch_weights");
+          auto NewMD =
+              MDBuilder(DstInst->getParent()->getContext())
+                  .createBranchWeights(cast<ConstantInt>(ValF)->getZExtValue(),
+                                       cast<ConstantInt>(ValT)->getZExtValue());
+          MD.second = NewMD;
+        }
+      }
+      // fallthrough.
+    case LLVMContext::MD_dbg:
+      DstInst->setMetadata(MD.first, MD.second);
+    }
+  }
+}
+
 /// EmitPreheaderBranchOnCondition - Emit a conditional branch on two values
 /// if LIC == Val, branch to TrueDst, otherwise branch to FalseDest.  Insert the
 /// code immediately before InsertPt.
 void LoopUnswitch::EmitPreheaderBranchOnCondition(Value *LIC, Constant *Val,
                                                   BasicBlock *TrueDest,
                                                   BasicBlock *FalseDest,
-                                                  Instruction *InsertPt) {
+                                                  Instruction *InsertPt,
+                                                  TerminatorInst *TI) {
   // Insert a conditional branch on LIC to the two preheaders.  The original
   // code is the true version and the new code is the false version.
   Value *BranchVal = LIC;
+  bool Swapped = false;
   if (!isa<ConstantInt>(Val) ||
       Val->getType() != Type::getInt1Ty(LIC->getContext()))
     BranchVal = new ICmpInst(InsertPt, ICmpInst::ICMP_EQ, LIC, Val);
-  else if (Val != ConstantInt::getTrue(Val->getContext()))
+  else if (Val != ConstantInt::getTrue(Val->getContext())) {
     // We want to enter the new loop when the condition is true.
     std::swap(TrueDest, FalseDest);
+    Swapped = true;
+  }
 
   // Insert the new branch.
   BranchInst *BI = BranchInst::Create(TrueDest, FalseDest, BranchVal, InsertPt);
+  copyMetadata(BI, TI, Swapped);
 
   // If either edge is critical, split it. This helps preserve LoopSimplify
   // form for enclosing loops.
@@ -717,13 +762,14 @@ void LoopUnswitch::EmitPreheaderBranchOnCondition(Value *LIC, Constant *Val,
 /// where the path through the loop that doesn't execute its body has no
 /// side-effects), unswitch it.  This doesn't involve any code duplication, just
 /// moving the conditional branch outside of the loop and updating loop info.
-void LoopUnswitch::UnswitchTrivialCondition(Loop *L, Value *Cond,
-                                            Constant *Val,
-                                            BasicBlock *ExitBlock) {
+void LoopUnswitch::UnswitchTrivialCondition(Loop *L, Value *Cond, Constant *Val,
+                                            BasicBlock *ExitBlock,
+                                            TerminatorInst *TI) {
   DEBUG(dbgs() << "loop-unswitch: Trivial-Unswitch loop %"
-        << loopHeader->getName() << " [" << L->getBlocks().size()
-        << " blocks] in Function " << L->getHeader()->getParent()->getName()
-        << " on cond: " << *Val << " == " << *Cond << "\n");
+               << loopHeader->getName() << " [" << L->getBlocks().size()
+               << " blocks] in Function "
+               << L->getHeader()->getParent()->getName() << " on cond: " << *Val
+               << " == " << *Cond << "\n");
 
   // First step, split the preheader, so that we know that there is a safe place
   // to insert the conditional branch.  We will change loopPreheader to have a
@@ -744,7 +790,7 @@ void LoopUnswitch::UnswitchTrivialCondition(Loop *L, Value *Cond,
   // Okay, now we have a position to branch from and a position to branch to,
   // insert the new conditional branch.
   EmitPreheaderBranchOnCondition(Cond, Val, NewExit, NewPH,
-                                 loopPreheader->getTerminator());
+                                 loopPreheader->getTerminator(), TI);
   LPM->deleteSimpleAnalysisValue(loopPreheader->getTerminator(), L);
   loopPreheader->getTerminator()->eraseFromParent();
 
@@ -780,7 +826,7 @@ void LoopUnswitch::SplitExitEdges(Loop *L,
 /// to unswitch when LIC equal Val.  Split it into loop versions and test the
 /// condition outside of either loop.  Return the loops created as Out1/Out2.
 void LoopUnswitch::UnswitchNontrivialCondition(Value *LIC, Constant *Val,
-                                               Loop *L) {
+                                               Loop *L, TerminatorInst *TI) {
   Function *F = loopHeader->getParent();
   DEBUG(dbgs() << "loop-unswitch: Unswitching loop %"
         << loopHeader->getName() << " [" << L->getBlocks().size()
@@ -897,7 +943,8 @@ void LoopUnswitch::UnswitchNontrivialCondition(Value *LIC, Constant *Val,
          "Preheader splitting did not work correctly!");
 
   // Emit the new branch that selects between the two versions of this loop.
-  EmitPreheaderBranchOnCondition(LIC, Val, NewBlocks[0], LoopBlocks[0], OldBR);
+  EmitPreheaderBranchOnCondition(LIC, Val, NewBlocks[0], LoopBlocks[0], OldBR,
+                                 TI);
   LPM->deleteSimpleAnalysisValue(OldBR, L);
   OldBR->eraseFromParent();
 
