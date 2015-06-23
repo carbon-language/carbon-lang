@@ -823,9 +823,9 @@ enum {
   STT_FILE    = 4,   // Local, absolute symbol that refers to a file
   STT_COMMON  = 5,   // An uninitialized common block
   STT_TLS     = 6,   // Thread local data object
-  STT_LOOS    = 7,   // Lowest operating system-specific symbol type
-  STT_HIOS    = 8,   // Highest operating system-specific symbol type
   STT_GNU_IFUNC = 10, // GNU indirect function
+  STT_LOOS    = 10,  // Lowest operating system-specific symbol type
+  STT_HIOS    = 12,  // Highest operating system-specific symbol type
   STT_LOPROC  = 13,  // Lowest processor-specific symbol type
   STT_HIPROC  = 15   // Highest processor-specific symbol type
 };
