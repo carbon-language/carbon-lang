@@ -208,7 +208,8 @@ namespace llvm {
 
     MCSymbol *createSymbolImpl(const StringMapEntry<bool> *Name,
                                bool CanBeUnnamed);
-    MCSymbol *createSymbol(StringRef Name, bool AlwaysAddSuffix);
+    MCSymbol *createSymbol(StringRef Name, bool AlwaysAddSuffix,
+                           bool IsTemporary);
 
     MCSymbol *getOrCreateDirectionalLocalSymbol(unsigned LocalLabelVal,
                                                 unsigned Instance);
@@ -248,9 +249,10 @@ namespace llvm {
 
     /// Create and return a new assembler temporary symbol with a unique but
     /// unspecified name.
-    MCSymbol *createTempSymbol();
+    MCSymbol *createTempSymbol(bool CanBeUnnamed = true);
 
-    MCSymbol *createTempSymbol(const Twine &Name, bool AlwaysAddSuffix);
+    MCSymbol *createTempSymbol(const Twine &Name, bool AlwaysAddSuffix,
+                               bool CanBeUnnamed = true);
 
     /// Create the definition of a directional local symbol for numbered label
     /// (used for "1:" definitions).

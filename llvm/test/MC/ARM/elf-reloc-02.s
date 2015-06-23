@@ -22,6 +22,6 @@
 
 // OBJ:      Relocations [
 // OBJ:        Section {{.*}} .rel.text {
-// OBJ-NEXT:     0x{{[0-9,A-F]+}} R_ARM_MOVW_ABS_NC -
+// OBJ-NEXT:     0x{{[0-9,A-F]+}} R_ARM_MOVW_ABS_NC .L.str
 // OBJ:        }
 // OBJ:      ]

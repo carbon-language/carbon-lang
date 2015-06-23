@@ -7,8 +7,8 @@
 ! CHECK-NEXT:   0x{{[0-9,A-F]+}} R_SPARC_PC10 _GLOBAL_OFFSET_TABLE_ 0x8
 ! CHECK-NEXT:   0x{{[0-9,A-F]+}} R_SPARC_GOT22 AGlobalVar 0x0
 ! CHECK-NEXT:   0x{{[0-9,A-F]+}} R_SPARC_GOT10 AGlobalVar 0x0
-! CHECK-NEXT:   0x{{[0-9,A-F]+}} R_SPARC_GOT22 - 0x0
-! CHECK-NEXT:   0x{{[0-9,A-F]+}} R_SPARC_GOT10 - 0x0
+! CHECK-NEXT:   0x{{[0-9,A-F]+}} R_SPARC_GOT22 .LC0 0x0
+! CHECK-NEXT:   0x{{[0-9,A-F]+}} R_SPARC_GOT10 .LC0 0x0
 ! CHECK-NEXT:   0x{{[0-9,A-F]+}} R_SPARC_WPLT30 bar 0x0
 ! CHECK:      ]
 
