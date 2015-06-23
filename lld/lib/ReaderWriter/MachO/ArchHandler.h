@@ -49,6 +49,12 @@ public:
     return false;
   }
 
+  /// Used by TLVPass to locate TLV References.
+  virtual bool isTLVAccess(const Reference &) const { return false; }
+
+  /// Used by the TLVPass to update TLV References.
+  virtual void updateReferenceToTLV(const Reference *) {}
+
   /// Used by ShimPass to insert shims in branches that switch mode.
   virtual bool isNonCallBranch(const Reference &) = 0;
 

@@ -94,7 +94,8 @@ SegmentInfo::SegmentInfo(StringRef n)
 class Util {
 public:
   Util(const MachOLinkingContext &ctxt)
-      : _ctx(ctxt), _archHandler(ctxt.archHandler()), _entryAtom(nullptr) {}
+      : _ctx(ctxt), _archHandler(ctxt.archHandler()), _entryAtom(nullptr),
+        _hasTLVDescriptors(false) {}
   ~Util();
 
   void      assignAtomsToSections(const lld::File &atomFile);
@@ -168,6 +169,7 @@ private:
   const DefinedAtom            *_entryAtom;
   AtomToIndex                   _atomToSymbolIndex;
   std::vector<const Atom *>     _machHeaderAliasAtoms;
+  bool                          _hasTLVDescriptors;
 };
 
 Util::~Util() {
@@ -246,6 +248,12 @@ const MachOFinalSectionFromAtomType sectsToAtomType[] = {
                                                           typeTerminatorPtr),
   ENTRY("__DATA", "__got",            S_NON_LAZY_SYMBOL_POINTERS,
                                                           typeGOT),
+  ENTRY("__DATA", "__thread_vars",    S_THREAD_LOCAL_VARIABLES,
+                                                          typeThunkTLV),
+  ENTRY("__DATA", "__thread_data",    S_THREAD_LOCAL_REGULAR,
+                                                          typeTLVInitialData),
+  ENTRY("__DATA", "__thread_ptrs",    S_THREAD_LOCAL_VARIABLE_POINTERS,
+                                                          typeTLVInitializerPtr),
   ENTRY("__DATA", "__bss",            S_ZEROFILL,         typeZeroFill),
   ENTRY("__DATA", "__interposing",    S_INTERPOSING,      typeInterposingTuples),
 };
@@ -262,6 +270,9 @@ SectionInfo *Util::getFinalSection(DefinedAtom::ContentType atomType) {
     case DefinedAtom::typeStub:
     case DefinedAtom::typeStubHelper:
       sectionAttrs = S_ATTR_PURE_INSTRUCTIONS;
+      break;
+    case DefinedAtom::typeThunkTLV:
+      _hasTLVDescriptors = true;
       break;
     default:
       break;
@@ -1169,10 +1180,12 @@ uint32_t Util::fileFlags() {
   if (_ctx.outputMachOType() == MH_OBJECT) {
     return MH_SUBSECTIONS_VIA_SYMBOLS;
   } else {
+    uint32_t flags = MH_DYLDLINK | MH_NOUNDEFS | MH_TWOLEVEL;
     if ((_ctx.outputMachOType() == MH_EXECUTE) && _ctx.PIE())
-      return MH_DYLDLINK | MH_NOUNDEFS | MH_TWOLEVEL | MH_PIE;
-    else
-      return MH_DYLDLINK | MH_NOUNDEFS | MH_TWOLEVEL;
+      flags |= MH_PIE;
+    if (_hasTLVDescriptors)
+      flags |= (MH_PIE | MH_HAS_TLV_DESCRIPTORS);
+    return flags;
   }
 }
 

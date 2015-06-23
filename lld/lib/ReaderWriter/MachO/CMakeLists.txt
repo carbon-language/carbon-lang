@@ -15,6 +15,7 @@ add_llvm_library(lldMachO
   MachONormalizedFileYAML.cpp
   ShimPass.cpp
   StubsPass.cpp
+  TLVPass.cpp
   WriterMachO.cpp
   LINK_LIBS
     lldCore

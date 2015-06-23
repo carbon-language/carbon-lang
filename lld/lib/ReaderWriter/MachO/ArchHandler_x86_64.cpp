@@ -59,6 +59,19 @@ public:
     }
   }
 
+  bool isTLVAccess(const Reference &ref) const override {
+    assert(ref.kindNamespace() == Reference::KindNamespace::mach_o);
+    assert(ref.kindArch() == Reference::KindArch::x86_64);
+    return ref.kindValue() == ripRel32Tlv;
+  }
+
+  void updateReferenceToTLV(const Reference *ref) override {
+    assert(ref->kindNamespace() == Reference::KindNamespace::mach_o);
+    assert(ref->kindArch() == Reference::KindArch::x86_64);
+    assert(ref->kindValue() == ripRel32Tlv);
+    const_cast<Reference*>(ref)->setKindValue(ripRel32);
+  }
+
   /// Used by GOTPass to update GOT References
   void updateReferenceToGOT(const Reference *ref, bool targetNowGOT) override {
     assert(ref->kindNamespace() == Reference::KindNamespace::mach_o);
@@ -173,6 +186,7 @@ private:
     ripRel32Minus4Anon,    /// ex: movw $0x12345678, L1(%rip)
     ripRel32GotLoad,       /// ex: movq  _foo@GOTPCREL(%rip), %rax
     ripRel32Got,           /// ex: pushq _foo@GOTPCREL(%rip)
+    ripRel32Tlv,           /// ex: movq  _foo@TLVP(%rip), %rdi
     pointer64,             /// ex: .quad _foo
     pointer64Anon,         /// ex: .quad L1
     delta64,               /// ex: .quad _foo - .
@@ -195,6 +209,8 @@ private:
                            /// relocatable object (yay for implicit contracts!).
     unwindInfoToEhFrame,   /// Fix low 24 bits of compact unwind encoding to
                            /// refer to __eh_frame entry.
+    tlvInitSectionOffset   /// Location contains offset tlv init-value atom
+                           /// within the __thread_data section.
   };
 
   Reference::KindValue kindFromReloc(const normalized::Relocation &reloc);
@@ -227,7 +243,8 @@ const Registry::KindStrings ArchHandler_x86_64::_sKindStrings[] = {
   LLD_KIND_STRING_ENTRY(ripRel32Minus4Anon),
   LLD_KIND_STRING_ENTRY(ripRel32GotLoad),
   LLD_KIND_STRING_ENTRY(ripRel32GotLoadNowLea),
-  LLD_KIND_STRING_ENTRY(ripRel32Got), LLD_KIND_STRING_ENTRY(lazyPointer),
+  LLD_KIND_STRING_ENTRY(ripRel32Got), LLD_KIND_STRING_ENTRY(ripRel32Tlv),
+  LLD_KIND_STRING_ENTRY(lazyPointer),
   LLD_KIND_STRING_ENTRY(lazyImmediateLocation),
   LLD_KIND_STRING_ENTRY(pointer64), LLD_KIND_STRING_ENTRY(pointer64Anon),
   LLD_KIND_STRING_ENTRY(delta32), LLD_KIND_STRING_ENTRY(delta64),
@@ -236,6 +253,7 @@ const Registry::KindStrings ArchHandler_x86_64::_sKindStrings[] = {
   LLD_KIND_STRING_ENTRY(imageOffset), LLD_KIND_STRING_ENTRY(imageOffsetGot),
   LLD_KIND_STRING_ENTRY(unwindFDEToFunction),
   LLD_KIND_STRING_ENTRY(unwindInfoToEhFrame),
+  LLD_KIND_STRING_ENTRY(tlvInitSectionOffset),
   LLD_KIND_STRING_END
 };
 
@@ -322,6 +340,8 @@ ArchHandler_x86_64::kindFromReloc(const Relocation &reloc) {
     return ripRel32GotLoad;
   case X86_64_RELOC_GOT      | rPcRel | rExtern | rLength4:
     return ripRel32Got;
+  case X86_64_RELOC_TLV      | rPcRel | rExtern | rLength4:
+    return ripRel32Tlv;
   case X86_64_RELOC_UNSIGNED          | rExtern | rLength8:
     return pointer64;
   case X86_64_RELOC_UNSIGNED                    | rLength8:
@@ -383,14 +403,23 @@ ArchHandler_x86_64::getReferenceInfo(const Relocation &reloc,
     return atomFromAddress(reloc.symbol, targetAddress, target, addend);
   case ripRel32GotLoad:
   case ripRel32Got:
+  case ripRel32Tlv:
     if (E ec = atomFromSymbolIndex(reloc.symbol, target))
       return ec;
     *addend = *(const little32_t *)fixupContent;
     return std::error_code();
+  case tlvInitSectionOffset:
   case pointer64:
     if (E ec = atomFromSymbolIndex(reloc.symbol, target))
       return ec;
-    *addend = *(const little64_t *)fixupContent;
+    // If this is the 3rd pointer of a tlv-thunk (i.e. the pointer to the TLV's
+    // initial value) we need to handle it specially.
+    if (inAtom->contentType() == DefinedAtom::typeThunkTLV &&
+        offsetInAtom == 16) {
+      *kind = tlvInitSectionOffset;
+      assert(*addend == 0 && "TLV-init has non-zero addend?");
+    } else
+      *addend = *(const little64_t *)fixupContent;
     return std::error_code();
   case pointer64Anon:
     targetAddress = *(const little64_t *)fixupContent;
@@ -508,11 +537,15 @@ void ArchHandler_x86_64::applyFixupFinal(
   case ripRel32Anon:
   case ripRel32Got:
   case ripRel32GotLoad:
+  case ripRel32Tlv:
     *loc32 = targetAddress - (fixupAddress + 4) + ref.addend();
     return;
   case pointer64:
   case pointer64Anon:
     *loc64 = targetAddress + ref.addend();
+    return;
+  case tlvInitSectionOffset:
+    *loc64 = targetAddress - findSectionAddress(*ref.target()) + ref.addend();
     return;
   case ripRel32Minus1:
   case ripRel32Minus1Anon:
@@ -583,11 +616,13 @@ void ArchHandler_x86_64::applyFixupRelocatable(const Reference &ref,
   case ripRel32:
   case ripRel32Got:
   case ripRel32GotLoad:
+  case ripRel32Tlv:
     *loc32 = ref.addend();
     return;
   case ripRel32Anon:
     *loc32 = (targetAddress - (fixupAddress + 4)) + ref.addend();
     return;
+  case tlvInitSectionOffset:
   case pointer64:
     *loc64 = ref.addend();
     return;
@@ -682,6 +717,11 @@ void ArchHandler_x86_64::appendSectionRelocations(
     appendReloc(relocs, sectionOffset, symbolIndexForAtom(*ref.target()), 0,
                 X86_64_RELOC_GOT_LOAD | rPcRel | rExtern | rLength4 );
     return;
+  case ripRel32Tlv:
+    appendReloc(relocs, sectionOffset, symbolIndexForAtom(*ref.target()), 0,
+                X86_64_RELOC_TLV | rPcRel | rExtern | rLength4 );
+    return;
+  case tlvInitSectionOffset:
   case pointer64:
     appendReloc(relocs, sectionOffset, symbolIndexForAtom(*ref.target()), 0,
                 X86_64_RELOC_UNSIGNED  | rExtern | rLength8);

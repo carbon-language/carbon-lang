@@ -336,6 +336,17 @@ bool MachOLinkingContext::needsShimPass() const {
   }
 }
 
+bool MachOLinkingContext::needsTLVPass() const {
+  switch (_outputMachOType) {
+  case MH_BUNDLE:
+  case MH_EXECUTE:
+  case MH_DYLIB:
+    return true;
+  default:
+    return false;
+  }
+}
+
 StringRef MachOLinkingContext::binderSymbolName() const {
   return archHandler().stubInfo().binderSymbolName;
 }
@@ -588,6 +599,8 @@ void MachOLinkingContext::addPasses(PassManager &pm) {
     mach_o::addCompactUnwindPass(pm, *this);
   if (needsGOTPass())
     mach_o::addGOTPass(pm, *this);
+  if (needsTLVPass())
+    mach_o::addTLVPass(pm, *this);
   if (needsShimPass())
     mach_o::addShimPass(pm, *this); // Shim pass must run after stubs pass.
 }
