@@ -38,9 +38,15 @@
 # else
 #  define SANITIZER_IOS    0
 # endif
+# if TARGET_IPHONE_SIMULATOR
+#  define SANITIZER_IOSSIM 1
+# else
+#  define SANITIZER_IOSSIM 0
+# endif
 #else
 # define SANITIZER_MAC     0
 # define SANITIZER_IOS     0
+# define SANITIZER_IOSSIM  0
 #endif
 
 #if defined(_WIN32)

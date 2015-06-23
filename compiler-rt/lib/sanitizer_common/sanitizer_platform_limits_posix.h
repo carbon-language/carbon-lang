@@ -828,12 +828,12 @@ struct __sanitizer_cookie_io_functions_t {
 #define IOC_NR(nr) (((nr) >> IOC_NRSHIFT) & IOC_NRMASK)
 #define IOC_SIZE(nr) (((nr) >> IOC_SIZESHIFT) & IOC_SIZEMASK)
 
-  extern unsigned struct_arpreq_sz;
   extern unsigned struct_ifreq_sz;
   extern unsigned struct_termios_sz;
   extern unsigned struct_winsize_sz;
 
 #if SANITIZER_LINUX
+  extern unsigned struct_arpreq_sz;
   extern unsigned struct_cdrom_msf_sz;
   extern unsigned struct_cdrom_multisession_sz;
   extern unsigned struct_cdrom_read_audio_sz;

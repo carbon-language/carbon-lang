@@ -34,8 +34,6 @@
 #include <grp.h>
 #include <limits.h>
 #include <net/if.h>
-#include <net/if_arp.h>
-#include <net/route.h>
 #include <netdb.h>
 #include <poll.h>
 #include <pthread.h>
@@ -53,6 +51,10 @@
 #include <termios.h>
 #include <time.h>
 #include <wchar.h>
+
+#if !SANITIZER_IOS
+#include <net/route.h>
+#endif
 
 #if !SANITIZER_ANDROID
 #include <sys/mount.h>
@@ -75,6 +77,7 @@
 #include <linux/sysctl.h>
 #include <linux/utsname.h>
 #include <linux/posix_types.h>
+#include <net/if_arp.h>
 #endif
 
 #if SANITIZER_FREEBSD
@@ -337,12 +340,12 @@ namespace __sanitizer {
   unsigned path_max = PATH_MAX;
 
   // ioctl arguments
-  unsigned struct_arpreq_sz = sizeof(struct arpreq);
   unsigned struct_ifreq_sz = sizeof(struct ifreq);
   unsigned struct_termios_sz = sizeof(struct termios);
   unsigned struct_winsize_sz = sizeof(struct winsize);
 
 #if SANITIZER_LINUX
+  unsigned struct_arpreq_sz = sizeof(struct arpreq);
   unsigned struct_cdrom_msf_sz = sizeof(struct cdrom_msf);
   unsigned struct_cdrom_multisession_sz = sizeof(struct cdrom_multisession);
   unsigned struct_cdrom_read_audio_sz = sizeof(struct cdrom_read_audio);
