@@ -36,10 +36,11 @@ public:
 
   void checkPreCall(const CallEvent &Call, CheckerContext &C) const;
 
-  BugReport *genReportNullAttrNonNull(const ExplodedNode *ErrorN,
-                                      const Expr *ArgE) const;
-  BugReport *genReportReferenceToNullPointer(const ExplodedNode *ErrorN,
-                                             const Expr *ArgE) const;
+  std::unique_ptr<BugReport>
+  genReportNullAttrNonNull(const ExplodedNode *ErrorN, const Expr *ArgE) const;
+  std::unique_ptr<BugReport>
+  genReportReferenceToNullPointer(const ExplodedNode *ErrorN,
+                                  const Expr *ArgE) const;
 };
 } // end anonymous namespace
 
@@ -143,7 +144,7 @@ void NonNullParamChecker::checkPreCall(const CallEvent &Call,
       // we cache out.
       if (ExplodedNode *errorNode = C.generateSink(stateNull)) {
 
-        BugReport *R = nullptr;
+        std::unique_ptr<BugReport> R;
         if (haveAttrNonNull)
           R = genReportNullAttrNonNull(errorNode, ArgE);
         else if (haveRefTypeParam)
@@ -153,7 +154,7 @@ void NonNullParamChecker::checkPreCall(const CallEvent &Call,
         R->addRange(Call.getArgSourceRange(idx));
 
         // Emit the bug report.
-        C.emitReport(R);
+        C.emitReport(std::move(R));
       }
 
       // Always return.  Either we cached out or we just emitted an error.
@@ -171,8 +172,9 @@ void NonNullParamChecker::checkPreCall(const CallEvent &Call,
   C.addTransition(state);
 }
 
-BugReport *NonNullParamChecker::genReportNullAttrNonNull(
-  const ExplodedNode *ErrorNode, const Expr *ArgE) const {
+std::unique_ptr<BugReport>
+NonNullParamChecker::genReportNullAttrNonNull(const ExplodedNode *ErrorNode,
+                                              const Expr *ArgE) const {
   // Lazily allocate the BugType object if it hasn't already been
   // created. Ownership is transferred to the BugReporter object once
   // the BugReport is passed to 'EmitWarning'.
@@ -180,23 +182,22 @@ BugReport *NonNullParamChecker::genReportNullAttrNonNull(
     BTAttrNonNull.reset(new BugType(
         this, "Argument with 'nonnull' attribute passed null", "API"));
 
-  BugReport *R = new BugReport(*BTAttrNonNull,
-                  "Null pointer passed as an argument to a 'nonnull' parameter",
-                  ErrorNode);
+  auto R = llvm::make_unique<BugReport>(
+      *BTAttrNonNull,
+      "Null pointer passed as an argument to a 'nonnull' parameter", ErrorNode);
   if (ArgE)
     bugreporter::trackNullOrUndefValue(ErrorNode, ArgE, *R);
 
   return R;
 }
 
-BugReport *NonNullParamChecker::genReportReferenceToNullPointer(
-  const ExplodedNode *ErrorNode, const Expr *ArgE) const {
+std::unique_ptr<BugReport> NonNullParamChecker::genReportReferenceToNullPointer(
+    const ExplodedNode *ErrorNode, const Expr *ArgE) const {
   if (!BTNullRefArg)
     BTNullRefArg.reset(new BuiltinBug(this, "Dereference of null pointer"));
 
-  BugReport *R = new BugReport(*BTNullRefArg,
-                               "Forming reference to null pointer",
-                               ErrorNode);
+  auto R = llvm::make_unique<BugReport>(
+      *BTNullRefArg, "Forming reference to null pointer", ErrorNode);
   if (ArgE) {
     const Expr *ArgEDeref = bugreporter::getDerefExpr(ArgE);
     if (!ArgEDeref)

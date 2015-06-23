@@ -3340,11 +3340,11 @@ void RetainCountChecker::processNonLeakError(ProgramStateRef St,
   }
 
   assert(BT);
-  CFRefReport *report = new CFRefReport(*BT, C.getASTContext().getLangOpts(),
-                                        C.isObjCGCEnabled(), SummaryLog,
-                                        N, Sym);
+  auto report = std::unique_ptr<BugReport>(
+      new CFRefReport(*BT, C.getASTContext().getLangOpts(), C.isObjCGCEnabled(),
+                      SummaryLog, N, Sym));
   report->addRange(ErrorRange);
-  C.emitReport(report);
+  C.emitReport(std::move(report));
 }
 
 //===----------------------------------------------------------------------===//
@@ -3573,12 +3573,9 @@ void RetainCountChecker::checkReturnWithRetEffect(const ReturnStmt *S,
         if (N) {
           const LangOptions &LOpts = C.getASTContext().getLangOpts();
           bool GCEnabled = C.isObjCGCEnabled();
-          CFRefReport *report =
-            new CFRefLeakReport(*getLeakAtReturnBug(LOpts, GCEnabled),
-                                LOpts, GCEnabled, SummaryLog,
-                                N, Sym, C, IncludeAllocationLine);
-
-          C.emitReport(report);
+          C.emitReport(std::unique_ptr<BugReport>(new CFRefLeakReport(
+              *getLeakAtReturnBug(LOpts, GCEnabled), LOpts, GCEnabled,
+              SummaryLog, N, Sym, C, IncludeAllocationLine)));
         }
       }
     }
@@ -3603,11 +3600,9 @@ void RetainCountChecker::checkReturnWithRetEffect(const ReturnStmt *S,
           if (!returnNotOwnedForOwned)
             returnNotOwnedForOwned.reset(new ReturnedNotOwnedForOwned(this));
 
-          CFRefReport *report =
-              new CFRefReport(*returnNotOwnedForOwned,
-                              C.getASTContext().getLangOpts(), 
-                              C.isObjCGCEnabled(), SummaryLog, N, Sym);
-          C.emitReport(report);
+          C.emitReport(std::unique_ptr<BugReport>(new CFRefReport(
+              *returnNotOwnedForOwned, C.getASTContext().getLangOpts(),
+              C.isObjCGCEnabled(), SummaryLog, N, Sym)));
         }
       }
     }
@@ -3810,10 +3805,9 @@ RetainCountChecker::handleAutoreleaseCounts(ProgramStateRef state,
       overAutorelease.reset(new OverAutorelease(this));
 
     const LangOptions &LOpts = Ctx.getASTContext().getLangOpts();
-    CFRefReport *report =
-      new CFRefReport(*overAutorelease, LOpts, /* GCEnabled = */ false,
-                      SummaryLog, N, Sym, os.str());
-    Ctx.emitReport(report);
+    Ctx.emitReport(std::unique_ptr<BugReport>(
+        new CFRefReport(*overAutorelease, LOpts, /* GCEnabled = */ false,
+                        SummaryLog, N, Sym, os.str())));
   }
 
   return nullptr;
@@ -3865,10 +3859,9 @@ RetainCountChecker::processLeaks(ProgramStateRef state,
                           : getLeakAtReturnBug(LOpts, GCEnabled);
       assert(BT && "BugType not initialized.");
 
-      CFRefLeakReport *report = new CFRefLeakReport(*BT, LOpts, GCEnabled, 
-                                                    SummaryLog, N, *I, Ctx,
-                                                    IncludeAllocationLine);
-      Ctx.emitReport(report);
+      Ctx.emitReport(std::unique_ptr<BugReport>(
+          new CFRefLeakReport(*BT, LOpts, GCEnabled, SummaryLog, N, *I, Ctx,
+                              IncludeAllocationLine)));
     }
   }
 

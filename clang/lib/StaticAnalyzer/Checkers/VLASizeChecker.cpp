@@ -72,10 +72,10 @@ void VLASizeChecker::reportBug(VLASize_Kind Kind,
     break;
   }
 
-  BugReport *report = new BugReport(*BT, os.str(), N);
+  auto report = llvm::make_unique<BugReport>(*BT, os.str(), N);
   report->addRange(SizeE->getSourceRange());
   bugreporter::trackNullOrUndefValue(N, SizeE, *report);
-  C.emitReport(report);
+  C.emitReport(std::move(report));
   return;
 }
 

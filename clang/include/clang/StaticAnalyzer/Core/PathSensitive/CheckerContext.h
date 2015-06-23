@@ -232,9 +232,9 @@ public:
   }
 
   /// \brief Emit the diagnostics report.
-  void emitReport(BugReport *R) {
+  void emitReport(std::unique_ptr<BugReport> R) {
     Changed = true;
-    Eng.getBugReporter().emitReport(R);
+    Eng.getBugReporter().emitReport(std::move(R));
   }
 
   /// \brief Get the declaration of the called function (path-sensitive).

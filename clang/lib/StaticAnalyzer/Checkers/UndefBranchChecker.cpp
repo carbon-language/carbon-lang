@@ -98,11 +98,11 @@ void UndefBranchChecker::checkBranchCondition(const Stmt *Condition,
       Ex = FindIt.FindExpr(Ex);
 
       // Emit the bug report.
-      BugReport *R = new BugReport(*BT, BT->getDescription(), N);
+      auto R = llvm::make_unique<BugReport>(*BT, BT->getDescription(), N);
       bugreporter::trackNullOrUndefValue(N, Ex, *R);
       R->addRange(Ex->getSourceRange());
 
-      Ctx.emitReport(R);
+      Ctx.emitReport(std::move(R));
     }
   }
 }

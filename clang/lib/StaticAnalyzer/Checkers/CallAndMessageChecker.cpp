@@ -94,14 +94,14 @@ void CallAndMessageChecker::emitBadCall(BugType *BT, CheckerContext &C,
   if (!N)
     return;
 
-  BugReport *R = new BugReport(*BT, BT->getName(), N);
+  auto R = llvm::make_unique<BugReport>(*BT, BT->getName(), N);
   if (BadE) {
     R->addRange(BadE->getSourceRange());
     if (BadE->isGLValue())
       BadE = bugreporter::getDerefExpr(BadE);
     bugreporter::trackNullOrUndefValue(N, BadE, *R);
   }
-  C.emitReport(R);
+  C.emitReport(std::move(R));
 }
 
 static StringRef describeUninitializedArgumentInCall(const CallEvent &Call,
@@ -164,12 +164,12 @@ bool CallAndMessageChecker::uninitRefOrPointer(CheckerContext &C,
     if (PSV.isUndef()) {
       if (ExplodedNode *N = C.generateSink()) {
         LazyInit_BT(BD, BT);
-        BugReport *R = new BugReport(*BT, Message, N);
+        auto R = llvm::make_unique<BugReport>(*BT, Message, N);
         R->addRange(ArgRange);
         if (ArgEx) {
           bugreporter::trackNullOrUndefValue(N, ArgEx, *R);
         }
-        C.emitReport(R);
+        C.emitReport(std::move(R));
       }
       return true;
     }
@@ -199,11 +199,11 @@ bool CallAndMessageChecker::PreVisitProcessArg(CheckerContext &C,
       // Generate a report for this bug.
       StringRef Desc =
           describeUninitializedArgumentInCall(Call, IsFirstArgument);
-      BugReport *R = new BugReport(*BT, Desc, N);
+      auto R = llvm::make_unique<BugReport>(*BT, Desc, N);
       R->addRange(ArgRange);
       if (ArgEx)
         bugreporter::trackNullOrUndefValue(N, ArgEx, *R);
-      C.emitReport(R);
+      C.emitReport(std::move(R));
     }
     return true;
   }
@@ -281,12 +281,12 @@ bool CallAndMessageChecker::PreVisitProcessArg(CheckerContext &C,
         }
 
         // Generate a report for this bug.
-        BugReport *R = new BugReport(*BT, os.str(), N);
+        auto R = llvm::make_unique<BugReport>(*BT, os.str(), N);
         R->addRange(ArgRange);
 
         // FIXME: enhance track back for uninitialized value for arbitrary
         // memregions
-        C.emitReport(R);
+        C.emitReport(std::move(R));
       }
       return true;
     }
@@ -342,9 +342,9 @@ void CallAndMessageChecker::checkPreStmt(const CXXDeleteExpr *DE,
     else
       Desc = "Argument to 'delete' is uninitialized";
     BugType *BT = BT_cxx_delete_undef.get();
-    BugReport *R = new BugReport(*BT, Desc, N);
+    auto R = llvm::make_unique<BugReport>(*BT, Desc, N);
     bugreporter::trackNullOrUndefValue(N, DE, *R);
-    C.emitReport(R);
+    C.emitReport(std::move(R));
     return;
   }
 }
@@ -400,8 +400,8 @@ void CallAndMessageChecker::checkPreCall(const CallEvent &Call,
          << (Params == 1 ? "" : "s") << " is called with less ("
          << Call.getNumArgs() << ")";
 
-      BugReport *R = new BugReport(*BT_call_few_args, os.str(), N);
-      C.emitReport(R);
+      C.emitReport(
+          llvm::make_unique<BugReport>(*BT_call_few_args, os.str(), N));
     }
   }
 
@@ -461,14 +461,14 @@ void CallAndMessageChecker::checkPreObjCMessage(const ObjCMethodCall &msg,
       }
       assert(BT && "Unknown message kind.");
 
-      BugReport *R = new BugReport(*BT, BT->getName(), N);
+      auto R = llvm::make_unique<BugReport>(*BT, BT->getName(), N);
       const ObjCMessageExpr *ME = msg.getOriginExpr();
       R->addRange(ME->getReceiverRange());
 
       // FIXME: getTrackNullOrUndefValueVisitor can't handle "super" yet.
       if (const Expr *ReceiverE = ME->getInstanceReceiver())
         bugreporter::trackNullOrUndefValue(N, ReceiverE, *R);
-      C.emitReport(R);
+      C.emitReport(std::move(R));
     }
     return;
   } else {
@@ -512,13 +512,13 @@ void CallAndMessageChecker::emitNilReceiverBug(CheckerContext &C,
     os << "' that will be garbage";
   }
 
-  BugReport *report = new BugReport(*BT_msg_ret, os.str(), N);
+  auto report = llvm::make_unique<BugReport>(*BT_msg_ret, os.str(), N);
   report->addRange(ME->getReceiverRange());
   // FIXME: This won't track "self" in messages to super.
   if (const Expr *receiver = ME->getInstanceReceiver()) {
     bugreporter::trackNullOrUndefValue(N, receiver, *report);
   }
-  C.emitReport(report);
+  C.emitReport(std::move(report));
 }
 
 static bool supportsNilWithFloatRet(const llvm::Triple &triple) {

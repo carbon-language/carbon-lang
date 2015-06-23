@@ -92,9 +92,9 @@ void MacOSXAPIChecker::CheckDispatchOnce(CheckerContext &C, const CallExpr *CE,
   if (isa<VarRegion>(R) && isa<StackLocalsSpaceRegion>(R->getMemorySpace()))
     os << "  Perhaps you intended to declare the variable as 'static'?";
 
-  BugReport *report = new BugReport(*BT_dispatchOnce, os.str(), N);
+  auto report = llvm::make_unique<BugReport>(*BT_dispatchOnce, os.str(), N);
   report->addRange(CE->getArg(0)->getSourceRange());
-  C.emitReport(report);
+  C.emitReport(std::move(report));
 }
 
 //===----------------------------------------------------------------------===//

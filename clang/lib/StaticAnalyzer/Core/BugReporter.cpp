@@ -3224,10 +3224,7 @@ void BugReporter::Register(BugType *BT) {
   BugTypes = F.add(BugTypes, BT);
 }
 
-void BugReporter::emitReport(BugReport* R) {
-  // To guarantee memory release.
-  std::unique_ptr<BugReport> UniqueR(R);
-
+void BugReporter::emitReport(std::unique_ptr<BugReport> R) {
   if (const ExplodedNode *E = R->getErrorNode()) {
     const AnalysisDeclContext *DeclCtx =
         E->getLocationContext()->getAnalysisDeclContext();
@@ -3258,11 +3255,11 @@ void BugReporter::emitReport(BugReport* R) {
   BugReportEquivClass* EQ = EQClasses.FindNodeOrInsertPos(ID, InsertPos);
 
   if (!EQ) {
-    EQ = new BugReportEquivClass(std::move(UniqueR));
+    EQ = new BugReportEquivClass(std::move(R));
     EQClasses.InsertNode(EQ, InsertPos);
     EQClassesVector.push_back(EQ);
   } else
-    EQ->AddReport(std::move(UniqueR));
+    EQ->AddReport(std::move(R));
 }
 
 
@@ -3462,12 +3459,12 @@ void BugReporter::EmitBasicReport(const Decl *DeclWithIssue,
 
   // 'BT' is owned by BugReporter.
   BugType *BT = getBugTypeForName(CheckName, name, category);
-  BugReport *R = new BugReport(*BT, str, Loc);
+  auto R = llvm::make_unique<BugReport>(*BT, str, Loc);
   R->setDeclWithIssue(DeclWithIssue);
   for (ArrayRef<SourceRange>::iterator I = Ranges.begin(), E = Ranges.end();
        I != E; ++I)
     R->addRange(*I);
-  emitReport(R);
+  emitReport(std::move(R));
 }
 
 BugType *BugReporter::getBugTypeForName(CheckName CheckName, StringRef name,

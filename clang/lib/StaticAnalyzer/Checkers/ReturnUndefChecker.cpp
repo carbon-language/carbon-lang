@@ -84,12 +84,12 @@ static void emitBug(CheckerContext &C, BuiltinBug &BT, const Expr *RetE,
   if (!N)
     return;
 
-  BugReport *Report = new BugReport(BT, BT.getDescription(), N);
+  auto Report = llvm::make_unique<BugReport>(BT, BT.getDescription(), N);
 
   Report->addRange(RetE->getSourceRange());
   bugreporter::trackNullOrUndefValue(N, TrackingE ? TrackingE : RetE, *Report);
 
-  C.emitReport(Report);
+  C.emitReport(std::move(Report));
 }
 
 void ReturnUndefChecker::emitUndef(CheckerContext &C, const Expr *RetE) const {

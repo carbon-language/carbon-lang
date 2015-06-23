@@ -76,11 +76,10 @@ void ArrayBoundChecker::checkLocation(SVal l, bool isLoad, const Stmt* LoadS,
     // reference is outside the range.
 
     // Generate a report for this bug.
-    BugReport *report = 
-      new BugReport(*BT, BT->getDescription(), N);
+    auto report = llvm::make_unique<BugReport>(*BT, BT->getDescription(), N);
 
     report->addRange(LoadS->getSourceRange());
-    C.emitReport(report);
+    C.emitReport(std::move(report));
     return;
   }
   

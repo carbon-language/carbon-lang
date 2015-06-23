@@ -57,9 +57,9 @@ void FixedAddressChecker::checkPreStmt(const BinaryOperator *B,
                          "Using a fixed address is not portable because that "
                          "address will probably not be valid in all "
                          "environments or platforms."));
-    BugReport *R = new BugReport(*BT, BT->getDescription(), N);
+    auto R = llvm::make_unique<BugReport>(*BT, BT->getDescription(), N);
     R->addRange(B->getRHS()->getSourceRange());
-    C.emitReport(R);
+    C.emitReport(std::move(R));
   }
 }
 

@@ -245,11 +245,11 @@ ProgramStateRef CStringChecker::checkNonNull(CheckerContext &C,
 
     // Generate a report for this bug.
     BuiltinBug *BT = static_cast<BuiltinBug*>(BT_Null.get());
-    BugReport *report = new BugReport(*BT, os.str(), N);
+    auto report = llvm::make_unique<BugReport>(*BT, os.str(), N);
 
     report->addRange(S->getSourceRange());
     bugreporter::trackNullOrUndefValue(N, S, *report);
-    C.emitReport(report);
+    C.emitReport(std::move(report));
     return nullptr;
   }
 
@@ -304,9 +304,9 @@ ProgramStateRef CStringChecker::CheckLocation(CheckerContext &C,
     BuiltinBug *BT = static_cast<BuiltinBug*>(BT_Bounds.get());
 
     // Generate a report for this bug.
-    BugReport *report;
+    std::unique_ptr<BugReport> report;
     if (warningMsg) {
-      report = new BugReport(*BT, warningMsg, N);
+      report = llvm::make_unique<BugReport>(*BT, warningMsg, N);
     } else {
       assert(CurrentFunctionDescription);
       assert(CurrentFunctionDescription[0] != '\0');
@@ -316,7 +316,7 @@ ProgramStateRef CStringChecker::CheckLocation(CheckerContext &C,
       os << toUppercase(CurrentFunctionDescription[0])
          << &CurrentFunctionDescription[1]
          << " accesses out-of-bound array element";
-      report = new BugReport(*BT, os.str(), N);      
+      report = llvm::make_unique<BugReport>(*BT, os.str(), N);
     }
 
     // FIXME: It would be nice to eventually make this diagnostic more clear,
@@ -324,7 +324,7 @@ ProgramStateRef CStringChecker::CheckLocation(CheckerContext &C,
     // reference is outside the range.
 
     report->addRange(S->getSourceRange());
-    C.emitReport(report);
+    C.emitReport(std::move(report));
     return nullptr;
   }
   
@@ -534,13 +534,12 @@ void CStringChecker::emitOverlapBug(CheckerContext &C, ProgramStateRef state,
                                  categories::UnixAPI, "Improper arguments"));
 
   // Generate a report for this bug.
-  BugReport *report = 
-    new BugReport(*BT_Overlap,
-      "Arguments must not be overlapping buffers", N);
+  auto report = llvm::make_unique<BugReport>(
+      *BT_Overlap, "Arguments must not be overlapping buffers", N);
   report->addRange(First->getSourceRange());
   report->addRange(Second->getSourceRange());
 
-  C.emitReport(report);
+  C.emitReport(std::move(report));
 }
 
 ProgramStateRef CStringChecker::checkAdditionOverflow(CheckerContext &C,
@@ -603,8 +602,8 @@ ProgramStateRef CStringChecker::checkAdditionOverflow(CheckerContext &C,
         "be represented as a size_t";
 
       // Generate a report for this bug.
-      BugReport *report = new BugReport(*BT_AdditionOverflow, warning, N);
-      C.emitReport(report);        
+      C.emitReport(
+          llvm::make_unique<BugReport>(*BT_AdditionOverflow, warning, N));
 
       return nullptr;
     }
@@ -721,10 +720,10 @@ SVal CStringChecker::getCStringLength(CheckerContext &C, ProgramStateRef &state,
            << "', which is not a null-terminated string";
 
         // Generate a report for this bug.
-        BugReport *report = new BugReport(*BT_NotCString, os.str(), N);
+        auto report = llvm::make_unique<BugReport>(*BT_NotCString, os.str(), N);
 
         report->addRange(Ex->getSourceRange());
-        C.emitReport(report);        
+        C.emitReport(std::move(report));        
       }
       return UndefinedVal();
 
@@ -785,11 +784,10 @@ SVal CStringChecker::getCStringLength(CheckerContext &C, ProgramStateRef &state,
         os << "not a null-terminated string";
 
       // Generate a report for this bug.
-      BugReport *report = new BugReport(*BT_NotCString,
-                                                        os.str(), N);
+      auto report = llvm::make_unique<BugReport>(*BT_NotCString, os.str(), N);
 
       report->addRange(Ex->getSourceRange());
-      C.emitReport(report);        
+      C.emitReport(std::move(report));        
     }
 
     return UndefinedVal();

@@ -103,9 +103,8 @@ private:
   const ExplodedNode *getAllocationNode(const ExplodedNode *N, SymbolRef Sym,
                                         CheckerContext &C) const;
 
-  BugReport *generateAllocatedDataNotReleasedReport(const AllocationPair &AP,
-                                                    ExplodedNode *N,
-                                                    CheckerContext &C) const;
+  std::unique_ptr<BugReport> generateAllocatedDataNotReleasedReport(
+      const AllocationPair &AP, ExplodedNode *N, CheckerContext &C) const;
 
   /// Check if RetSym evaluates to an error value in the current state.
   bool definitelyReturnedError(SymbolRef RetSym,
@@ -269,11 +268,11 @@ void MacOSKeychainAPIChecker::
 
   os << "Deallocator doesn't match the allocator: '"
      << FunctionsToTrack[PDeallocIdx].Name << "' should be used.";
-  BugReport *Report = new BugReport(*BT, os.str(), N);
+  auto Report = llvm::make_unique<BugReport>(*BT, os.str(), N);
   Report->addVisitor(llvm::make_unique<SecKeychainBugVisitor>(AP.first));
   Report->addRange(ArgExpr->getSourceRange());
-  markInteresting(Report, AP);
-  C.emitReport(Report);
+  markInteresting(Report.get(), AP);
+  C.emitReport(std::move(Report));
 }
 
 void MacOSKeychainAPIChecker::checkPreStmt(const CallExpr *CE,
@@ -314,11 +313,11 @@ void MacOSKeychainAPIChecker::checkPreStmt(const CallExpr *CE,
               << "the allocator: missing a call to '"
               << FunctionsToTrack[DIdx].Name
               << "'.";
-          BugReport *Report = new BugReport(*BT, os.str(), N);
+          auto Report = llvm::make_unique<BugReport>(*BT, os.str(), N);
           Report->addVisitor(llvm::make_unique<SecKeychainBugVisitor>(V));
           Report->addRange(ArgExpr->getSourceRange());
           Report->markInteresting(AS->Region);
-          C.emitReport(Report);
+          C.emitReport(std::move(Report));
         }
       }
     return;
@@ -370,12 +369,12 @@ void MacOSKeychainAPIChecker::checkPreStmt(const CallExpr *CE,
     if (!N)
       return;
     initBugType();
-    BugReport *Report = new BugReport(*BT,
-        "Trying to free data which has not been allocated.", N);
+    auto Report = llvm::make_unique<BugReport>(
+        *BT, "Trying to free data which has not been allocated.", N);
     Report->addRange(ArgExpr->getSourceRange());
     if (AS)
       Report->markInteresting(AS->Region);
-    C.emitReport(Report);
+    C.emitReport(std::move(Report));
     return;
   }
 
@@ -436,12 +435,12 @@ void MacOSKeychainAPIChecker::checkPreStmt(const CallExpr *CE,
     if (!N)
       return;
     initBugType();
-    BugReport *Report = new BugReport(*BT,
-        "Only call free if a valid (non-NULL) buffer was returned.", N);
+    auto Report = llvm::make_unique<BugReport>(
+        *BT, "Only call free if a valid (non-NULL) buffer was returned.", N);
     Report->addVisitor(llvm::make_unique<SecKeychainBugVisitor>(ArgSM));
     Report->addRange(ArgExpr->getSourceRange());
     Report->markInteresting(AS->Region);
-    C.emitReport(Report);
+    C.emitReport(std::move(Report));
     return;
   }
 
@@ -519,10 +518,9 @@ MacOSKeychainAPIChecker::getAllocationNode(const ExplodedNode *N,
   return AllocNode;
 }
 
-BugReport *MacOSKeychainAPIChecker::
-  generateAllocatedDataNotReleasedReport(const AllocationPair &AP,
-                                         ExplodedNode *N,
-                                         CheckerContext &C) const {
+std::unique_ptr<BugReport>
+MacOSKeychainAPIChecker::generateAllocatedDataNotReleasedReport(
+    const AllocationPair &AP, ExplodedNode *N, CheckerContext &C) const {
   const ADFunctionInfo &FI = FunctionsToTrack[AP.second->AllocatorIdx];
   initBugType();
   SmallString<70> sbuf;
@@ -547,11 +545,12 @@ BugReport *MacOSKeychainAPIChecker::
                                               C.getSourceManager(),
                                               AllocNode->getLocationContext());
 
-  BugReport *Report = new BugReport(*BT, os.str(), N, LocUsedForUniqueing,
-                                   AllocNode->getLocationContext()->getDecl());
+  auto Report =
+      llvm::make_unique<BugReport>(*BT, os.str(), N, LocUsedForUniqueing,
+                                  AllocNode->getLocationContext()->getDecl());
 
   Report->addVisitor(llvm::make_unique<SecKeychainBugVisitor>(AP.first));
-  markInteresting(Report, AP);
+  markInteresting(Report.get(), AP);
   return Report;
 }
 
@@ -589,10 +588,8 @@ void MacOSKeychainAPIChecker::checkDeadSymbols(SymbolReaper &SR,
   ExplodedNode *N = C.addTransition(C.getState(), C.getPredecessor(), &Tag);
 
   // Generate the error reports.
-  for (AllocationPairVec::iterator I = Errors.begin(), E = Errors.end();
-                                                       I != E; ++I) {
-    C.emitReport(generateAllocatedDataNotReleasedReport(*I, N, C));
-  }
+  for (const auto P : Errors)
+    C.emitReport(generateAllocatedDataNotReleasedReport(P, N, C));
 
   // Generate the new, cleaned up state.
   C.addTransition(State, N);

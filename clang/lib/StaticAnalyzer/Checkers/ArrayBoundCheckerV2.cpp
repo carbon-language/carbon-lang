@@ -207,7 +207,8 @@ void ArrayBoundCheckerV2::reportOOB(CheckerContext &checkerContext,
     break;
   }
 
-  checkerContext.emitReport(new BugReport(*BT, os.str(), errorNode));
+  checkerContext.emitReport(
+      llvm::make_unique<BugReport>(*BT, os.str(), errorNode));
 }
 
 void RegionRawOffsetV2::dump() const {
