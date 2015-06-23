@@ -1,0 +1,38 @@
+# RUN: llc -march=x86-64 -start-after branch-folder -stop-after branch-folder -o /dev/null %s | FileCheck %s
+# This test ensures that the MIR parser parses immediate machine operands.
+
+--- |
+
+  define i32 @foo() {
+  entry:
+    ret i32 42
+  }
+
+  define i32 @bar() {
+  entry:
+    ret i32 -11
+  }
+
+...
+---
+# CHECK: name: foo
+name:            foo
+body:
+ - name:         entry
+   instructions:
+     # CHECK:      - '%eax = MOV32ri 42'
+     # CHECK-NEXT: - 'RETQ %eax'
+     - '%eax = MOV32ri 42'
+     - 'RETQ %eax'
+...
+---
+# CHECK: name: bar
+name:            bar
+body:
+ - name:         entry
+   instructions:
+     # CHECK:      - '%eax = MOV32ri -11'
+     # CHECK-NEXT: - 'RETQ %eax'
+     - '%eax = MOV32ri -11'
+     - 'RETQ %eax'
+...

@@ -57,6 +57,7 @@ public:
 
   bool parseRegister(unsigned &Reg);
   bool parseRegisterOperand(MachineOperand &Dest, bool IsDef = false);
+  bool parseImmediateOperand(MachineOperand &Dest);
   bool parseMachineOperand(MachineOperand &Dest);
 
 private:
@@ -197,10 +198,23 @@ bool MIParser::parseRegisterOperand(MachineOperand &Dest, bool IsDef) {
   return false;
 }
 
+bool MIParser::parseImmediateOperand(MachineOperand &Dest) {
+  assert(Token.is(MIToken::IntegerLiteral));
+  const APSInt &Int = Token.integerValue();
+  if (Int.getMinSignedBits() > 64)
+    // TODO: Replace this with an error when we can parse CIMM Machine Operands.
+    llvm_unreachable("Can't parse large integer literals yet!");
+  Dest = MachineOperand::CreateImm(Int.getExtValue());
+  lex();
+  return false;
+}
+
 bool MIParser::parseMachineOperand(MachineOperand &Dest) {
   switch (Token.kind()) {
   case MIToken::NamedRegister:
     return parseRegisterOperand(Dest);
+  case MIToken::IntegerLiteral:
+    return parseImmediateOperand(Dest);
   case MIToken::Error:
     return true;
   default:

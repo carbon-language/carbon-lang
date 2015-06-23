@@ -159,6 +159,9 @@ void MIPrinter::print(const MachineOperand &Op, const TargetRegisterInfo *TRI) {
     printReg(Op.getReg(), OS, TRI);
     // TODO: Print sub register.
     break;
+  case MachineOperand::MO_Immediate:
+    OS << Op.getImm();
+    break;
   default:
     // TODO: Print the other machine operands.
     llvm_unreachable("Can't print this machine operand at the moment");
