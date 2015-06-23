@@ -90,6 +90,9 @@ private:
   // (19 + 3 + 2 + 1 + 2 + 5) == 32.
   unsigned SubClassData : GlobalValueSubClassDataBits;
 
+  friend class Constant;
+  void destroyConstantImpl();
+
 protected:
   /// \brief The intrinsic ID for this subclass (which must be a Function).
   ///
@@ -333,9 +336,6 @@ public:
   void dematerialize();
 
 /// @}
-
-  /// Override from Constant class.
-  void destroyConstant() override;
 
   /// Return true if the primary definition of this global value is outside of
   /// the current translation unit.

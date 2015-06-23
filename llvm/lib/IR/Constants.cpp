@@ -276,8 +276,19 @@ Constant *Constant::getAggregateElement(Constant *Elt) const {
   return nullptr;
 }
 
+void Constant::destroyConstant() {
+  /// First call destroyConstantImpl on the subclass.  This gives the subclass
+  /// a chance to remove the constant from any maps/pools it's contained in.
+  switch (getValueID()) {
+  default:
+    llvm_unreachable("Not a constant!");
+#define HANDLE_CONSTANT(Name)                                                  \
+  case Value::Name##Val:                                                       \
+    cast<Name>(this)->destroyConstantImpl();                                   \
+    break;
+#include "llvm/IR/Value.def"
+  }
 
-void Constant::destroyConstantImpl() {
   // When a Constant is destroyed, there may be lingering
   // references to the constant by other constants in the constant pool.  These
   // constants are implicitly dependent on the module that is being deleted,
@@ -287,11 +298,11 @@ void Constant::destroyConstantImpl() {
   //
   while (!use_empty()) {
     Value *V = user_back();
-#ifndef NDEBUG      // Only in -g mode...
+#ifndef NDEBUG // Only in -g mode...
     if (!isa<Constant>(V)) {
       dbgs() << "While deleting: " << *this
-             << "\n\nUse still stuck around after Def is destroyed: "
-             << *V << "\n\n";
+             << "\n\nUse still stuck around after Def is destroyed: " << *V
+             << "\n\n";
     }
 #endif
     assert(isa<Constant>(V) && "References remain to Constant being destroyed");
@@ -608,6 +619,11 @@ ConstantInt *ConstantInt::get(IntegerType* Ty, StringRef Str,
   return get(Ty->getContext(), APInt(Ty->getBitWidth(), Str, radix));
 }
 
+/// Remove the constant from the constant table.
+void ConstantInt::destroyConstantImpl() {
+  llvm_unreachable("You can't ConstantInt->destroyConstantImpl()!");
+}
+
 //===----------------------------------------------------------------------===//
 //                                ConstantFP
 //===----------------------------------------------------------------------===//
@@ -741,6 +757,11 @@ ConstantFP::ConstantFP(Type *Ty, const APFloat& V)
 
 bool ConstantFP::isExactlyValue(const APFloat &V) const {
   return Val.bitwiseIsEqual(V);
+}
+
+/// Remove the constant from the constant table.
+void ConstantFP::destroyConstantImpl() {
+  llvm_unreachable("You can't ConstantInt->destroyConstantImpl()!");
 }
 
 //===----------------------------------------------------------------------===//
@@ -1366,16 +1387,14 @@ ConstantAggregateZero *ConstantAggregateZero::get(Type *Ty) {
 
 /// destroyConstant - Remove the constant from the constant table.
 ///
-void ConstantAggregateZero::destroyConstant() {
+void ConstantAggregateZero::destroyConstantImpl() {
   getContext().pImpl->CAZConstants.erase(getType());
-  destroyConstantImpl();
 }
 
 /// destroyConstant - Remove the constant from the constant table...
 ///
-void ConstantArray::destroyConstant() {
+void ConstantArray::destroyConstantImpl() {
   getType()->getContext().pImpl->ArrayConstants.remove(this);
-  destroyConstantImpl();
 }
 
 
@@ -1384,16 +1403,14 @@ void ConstantArray::destroyConstant() {
 
 // destroyConstant - Remove the constant from the constant table...
 //
-void ConstantStruct::destroyConstant() {
+void ConstantStruct::destroyConstantImpl() {
   getType()->getContext().pImpl->StructConstants.remove(this);
-  destroyConstantImpl();
 }
 
 // destroyConstant - Remove the constant from the constant table...
 //
-void ConstantVector::destroyConstant() {
+void ConstantVector::destroyConstantImpl() {
   getType()->getContext().pImpl->VectorConstants.remove(this);
-  destroyConstantImpl();
 }
 
 /// getSplatValue - If this is a splat vector constant, meaning that all of
@@ -1432,7 +1449,6 @@ const APInt &Constant::getUniqueInteger() const {
   return cast<ConstantInt>(C)->getValue();
 }
 
-
 //---- ConstantPointerNull::get() implementation.
 //
 
@@ -1446,10 +1462,8 @@ ConstantPointerNull *ConstantPointerNull::get(PointerType *Ty) {
 
 // destroyConstant - Remove the constant from the constant table...
 //
-void ConstantPointerNull::destroyConstant() {
+void ConstantPointerNull::destroyConstantImpl() {
   getContext().pImpl->CPNConstants.erase(getType());
-  // Free the constant and any dangling references to it.
-  destroyConstantImpl();
 }
 
 
@@ -1466,10 +1480,9 @@ UndefValue *UndefValue::get(Type *Ty) {
 
 // destroyConstant - Remove the constant from the constant table.
 //
-void UndefValue::destroyConstant() {
+void UndefValue::destroyConstantImpl() {
   // Free the constant and any dangling references to it.
   getContext().pImpl->UVConstants.erase(getType());
-  destroyConstantImpl();
 }
 
 //---- BlockAddress::get() implementation.
@@ -1512,11 +1525,10 @@ BlockAddress *BlockAddress::lookup(const BasicBlock *BB) {
 
 // destroyConstant - Remove the constant from the constant table.
 //
-void BlockAddress::destroyConstant() {
+void BlockAddress::destroyConstantImpl() {
   getFunction()->getType()->getContext().pImpl
     ->BlockAddresses.erase(std::make_pair(getFunction(), getBasicBlock()));
   getBasicBlock()->AdjustBlockAddressRefCount(-1);
-  destroyConstantImpl();
 }
 
 void BlockAddress::replaceUsesOfWithOnConstant(Value *From, Value *To, Use *U) {
@@ -2372,9 +2384,8 @@ Constant *ConstantExpr::getBinOpAbsorber(unsigned Opcode, Type *Ty) {
 
 // destroyConstant - Remove the constant from the constant table...
 //
-void ConstantExpr::destroyConstant() {
+void ConstantExpr::destroyConstantImpl() {
   getType()->getContext().pImpl->ExprConstants.remove(this);
-  destroyConstantImpl();
 }
 
 const char *ConstantExpr::getOpcodeName() const {
@@ -2496,7 +2507,7 @@ Constant *ConstantDataSequential::getImpl(StringRef Elements, Type *Ty) {
   return *Entry = new ConstantDataVector(Ty, Slot.first().data());
 }
 
-void ConstantDataSequential::destroyConstant() {
+void ConstantDataSequential::destroyConstantImpl() {
   // Remove the constant from the StringMap.
   StringMap<ConstantDataSequential*> &CDSConstants = 
     getType()->getContext().pImpl->CDSConstants;
@@ -2531,9 +2542,6 @@ void ConstantDataSequential::destroyConstant() {
   // If we were part of a list, make sure that we don't delete the list that is
   // still owned by the uniquing map.
   Next = nullptr;
-
-  // Finally, actually delete it.
-  destroyConstantImpl();
 }
 
 /// get() constructors - Return a constant with array type with an element

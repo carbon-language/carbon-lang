@@ -50,6 +50,10 @@ class ConstantInt : public Constant {
   ConstantInt(const ConstantInt &) = delete;
   ConstantInt(IntegerType *Ty, const APInt& V);
   APInt Val;
+
+  friend class Constant;
+  void destroyConstantImpl();
+
 protected:
   // allocate space for exactly zero operands
   void *operator new(size_t s) {
@@ -231,6 +235,10 @@ class ConstantFP : public Constant {
   void *operator new(size_t, unsigned) = delete;
   ConstantFP(const ConstantFP &) = delete;
   friend class LLVMContextImpl;
+
+  friend class Constant;
+  void destroyConstantImpl();
+
 protected:
   ConstantFP(Type *Ty, const APFloat& V);
 protected:
@@ -297,6 +305,10 @@ public:
 class ConstantAggregateZero : public Constant {
   void *operator new(size_t, unsigned) = delete;
   ConstantAggregateZero(const ConstantAggregateZero &) = delete;
+
+  friend class Constant;
+  void destroyConstantImpl();
+
 protected:
   explicit ConstantAggregateZero(Type *ty)
     : Constant(ty, ConstantAggregateZeroVal, nullptr, 0) {}
@@ -307,8 +319,6 @@ protected:
   }
 public:
   static ConstantAggregateZero *get(Type *Ty);
-
-  void destroyConstant() override;
 
   /// getSequentialElement - If this CAZ has array or vector type, return a zero
   /// with the right element type.
@@ -343,6 +353,10 @@ public:
 class ConstantArray : public Constant {
   friend struct ConstantAggrKeyType<ConstantArray>;
   ConstantArray(const ConstantArray &) = delete;
+
+  friend class Constant;
+  void destroyConstantImpl();
+
 protected:
   ConstantArray(ArrayType *T, ArrayRef<Constant *> Val);
 public:
@@ -363,7 +377,6 @@ public:
     return cast<ArrayType>(Value::getType());
   }
 
-  void destroyConstant() override;
   void replaceUsesOfWithOnConstant(Value *From, Value *To, Use *U) override;
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
@@ -385,6 +398,10 @@ DEFINE_TRANSPARENT_OPERAND_ACCESSORS(ConstantArray, Constant)
 class ConstantStruct : public Constant {
   friend struct ConstantAggrKeyType<ConstantStruct>;
   ConstantStruct(const ConstantStruct &) = delete;
+
+  friend class Constant;
+  void destroyConstantImpl();
+
 protected:
   ConstantStruct(StructType *T, ArrayRef<Constant *> Val);
 public:
@@ -421,7 +438,6 @@ public:
     return cast<StructType>(Value::getType());
   }
 
-  void destroyConstant() override;
   void replaceUsesOfWithOnConstant(Value *From, Value *To, Use *U) override;
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
@@ -444,6 +460,10 @@ DEFINE_TRANSPARENT_OPERAND_ACCESSORS(ConstantStruct, Constant)
 class ConstantVector : public Constant {
   friend struct ConstantAggrKeyType<ConstantVector>;
   ConstantVector(const ConstantVector &) = delete;
+
+  friend class Constant;
+  void destroyConstantImpl();
+
 protected:
   ConstantVector(VectorType *T, ArrayRef<Constant *> Val);
 public:
@@ -472,7 +492,6 @@ public:
   /// elements have the same value, return that value. Otherwise return NULL.
   Constant *getSplatValue() const;
 
-  void destroyConstant() override;
   void replaceUsesOfWithOnConstant(Value *From, Value *To, Use *U) override;
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
@@ -494,6 +513,10 @@ DEFINE_TRANSPARENT_OPERAND_ACCESSORS(ConstantVector, Constant)
 class ConstantPointerNull : public Constant {
   void *operator new(size_t, unsigned) = delete;
   ConstantPointerNull(const ConstantPointerNull &) = delete;
+
+  friend class Constant;
+  void destroyConstantImpl();
+
 protected:
   explicit ConstantPointerNull(PointerType *T)
     : Constant(T,
@@ -507,8 +530,6 @@ protected:
 public:
   /// get() - Static factory methods - Return objects of the specified value
   static ConstantPointerNull *get(PointerType *T);
-
-  void destroyConstant() override;
 
   /// getType - Specialize the getType() method to always return an PointerType,
   /// which reduces the amount of casting needed in parts of the compiler.
@@ -545,6 +566,10 @@ class ConstantDataSequential : public Constant {
   ConstantDataSequential *Next;
   void *operator new(size_t, unsigned) = delete;
   ConstantDataSequential(const ConstantDataSequential &) = delete;
+
+  friend class Constant;
+  void destroyConstantImpl();
+
 protected:
   explicit ConstantDataSequential(Type *ty, ValueTy VT, const char *Data)
     : Constant(ty, VT, nullptr, 0), DataElements(Data), Next(nullptr) {}
@@ -634,8 +659,6 @@ public:
   /// that this is an extremely tricky thing to work with, as it exposes the
   /// host endianness of the data elements.
   StringRef getRawDataValues() const;
-
-  void destroyConstant() override;
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   ///
@@ -778,6 +801,10 @@ class BlockAddress : public Constant {
   void *operator new(size_t, unsigned) = delete;
   void *operator new(size_t s) { return User::operator new(s, 2); }
   BlockAddress(Function *F, BasicBlock *BB);
+
+  friend class Constant;
+  void destroyConstantImpl();
+
 public:
   /// get - Return a BlockAddress for the specified function and basic block.
   static BlockAddress *get(Function *F, BasicBlock *BB);
@@ -798,7 +825,6 @@ public:
   Function *getFunction() const { return (Function*)Op<0>().get(); }
   BasicBlock *getBasicBlock() const { return (BasicBlock*)Op<1>().get(); }
 
-  void destroyConstant() override;
   void replaceUsesOfWithOnConstant(Value *From, Value *To, Use *U) override;
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
@@ -824,6 +850,9 @@ DEFINE_TRANSPARENT_OPERAND_ACCESSORS(BlockAddress, Value)
 /// maintained in the Value::SubclassData field.
 class ConstantExpr : public Constant {
   friend struct ConstantExprKeyType;
+
+  friend class Constant;
+  void destroyConstantImpl();
 
 protected:
   ConstantExpr(Type *ty, unsigned Opcode, Use *Ops, unsigned NumOps)
@@ -1156,7 +1185,6 @@ public:
   /// would make it harder to remove ConstantExprs altogether.
   Instruction *getAsInstruction();
 
-  void destroyConstant() override;
   void replaceUsesOfWithOnConstant(Value *From, Value *To, Use *U) override;
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
@@ -1192,6 +1220,10 @@ DEFINE_TRANSPARENT_OPERAND_ACCESSORS(ConstantExpr, Constant)
 class UndefValue : public Constant {
   void *operator new(size_t, unsigned) = delete;
   UndefValue(const UndefValue &) = delete;
+
+  friend class Constant;
+  void destroyConstantImpl();
+
 protected:
   explicit UndefValue(Type *T) : Constant(T, UndefValueVal, nullptr, 0) {}
 protected:
@@ -1223,8 +1255,6 @@ public:
 
   /// \brief Return the number of elements in the array, vector, or struct.
   unsigned getNumElements() const;
-
-  void destroyConstant() override;
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static bool classof(const Value *V) {

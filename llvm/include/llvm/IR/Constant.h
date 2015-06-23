@@ -47,7 +47,6 @@ protected:
   Constant(Type *ty, ValueTy vty, Use *Ops, unsigned NumOps)
     : User(ty, vty, Ops, NumOps) {}
 
-  void destroyConstantImpl();
   void replaceUsesOfWithOnConstantImpl(Constant *Replacement);
 
 public:
@@ -126,14 +125,14 @@ public:
   /// vector of constant integers, all equal, and the common value is returned.
   const APInt &getUniqueInteger() const;
 
-  /// destroyConstant - Called if some element of this constant is no longer
-  /// valid.  At this point only other constants may be on the use_list for this
+  /// Called if some element of this constant is no longer valid.
+  /// At this point only other constants may be on the use_list for this
   /// constant.  Any constants on our Use list must also be destroy'd.  The
   /// implementation must be sure to remove the constant from the list of
-  /// available cached constants.  Implementations should call
-  /// destroyConstantImpl as the last thing they do, to destroy all users and
-  /// delete this.
-  virtual void destroyConstant() { llvm_unreachable("Not reached!"); }
+  /// available cached constants.  Implementations should implement
+  /// destroyConstantImpl to remove constants from any pools/maps they are
+  /// contained it.
+  void destroyConstant();
 
   //// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const Value *V) {
