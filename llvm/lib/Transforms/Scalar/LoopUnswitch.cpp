@@ -81,6 +81,7 @@ namespace {
 
     struct LoopProperties {
       unsigned CanBeUnswitchedCount;
+      unsigned WasUnswitchedCount;
       unsigned SizeEstimation;
       UnswitchedValsMap UnswitchedVals;
     };
@@ -94,37 +95,52 @@ namespace {
     UnswitchedValsMap *CurLoopInstructions;
     LoopProperties *CurrentLoopProperties;
 
-    // Max size of code we can produce on remained iterations.
+    // A loop unswitching with an estimated cost above this threshold
+    // is not performed. MaxSize is turned into unswitching quota for
+    // the current loop, and reduced correspondingly, though note that
+    // the quota is returned by releaseMemory() when the loop has been
+    // processed, so that MaxSize will return to its previous
+    // value. So in most cases MaxSize will equal the Threshold flag
+    // when a new loop is processed. An exception to that is that
+    // MaxSize will have a smaller value while processing nested loops
+    // that were introduced due to loop unswitching of an outer loop.
+    //
+    // FIXME: The way that MaxSize works is subtle and depends on the
+    // pass manager processing loops and calling releaseMemory() in a
+    // specific order. It would be good to find a more straightforward
+    // way of doing what MaxSize does.
     unsigned MaxSize;
 
-    public:
+  public:
+    LUAnalysisCache()
+        : CurLoopInstructions(nullptr), CurrentLoopProperties(nullptr),
+          MaxSize(Threshold) {}
 
-      LUAnalysisCache() :
-        CurLoopInstructions(nullptr), CurrentLoopProperties(nullptr),
-        MaxSize(Threshold)
-      {}
+    // Analyze loop. Check its size, calculate is it possible to unswitch
+    // it. Returns true if we can unswitch this loop.
+    bool countLoop(const Loop *L, const TargetTransformInfo &TTI,
+                   AssumptionCache *AC);
 
-      // Analyze loop. Check its size, calculate is it possible to unswitch
-      // it. Returns true if we can unswitch this loop.
-      bool countLoop(const Loop *L, const TargetTransformInfo &TTI,
-                     AssumptionCache *AC);
+    // Clean all data related to given loop.
+    void forgetLoop(const Loop *L);
 
-      // Clean all data related to given loop.
-      void forgetLoop(const Loop *L);
+    // Mark case value as unswitched.
+    // Since SI instruction can be partly unswitched, in order to avoid
+    // extra unswitching in cloned loops keep track all unswitched values.
+    void setUnswitched(const SwitchInst *SI, const Value *V);
 
-      // Mark case value as unswitched.
-      // Since SI instruction can be partly unswitched, in order to avoid
-      // extra unswitching in cloned loops keep track all unswitched values.
-      void setUnswitched(const SwitchInst *SI, const Value *V);
+    // Check was this case value unswitched before or not.
+    bool isUnswitched(const SwitchInst *SI, const Value *V);
 
-      // Check was this case value unswitched before or not.
-      bool isUnswitched(const SwitchInst *SI, const Value *V);
+    // Returns true if another unswitching could be done within the cost
+    // threshold.
+    bool CostAllowsUnswitching();
 
-      // Clone all loop-unswitch related loop properties.
-      // Redistribute unswitching quotas.
-      // Note, that new loop data is stored inside the VMap.
-      void cloneData(const Loop *NewLoop, const Loop *OldLoop,
-                     const ValueToValueMapTy &VMap);
+    // Clone all loop-unswitch related loop properties.
+    // Redistribute unswitching quotas.
+    // Note, that new loop data is stored inside the VMap.
+    void cloneData(const Loop *NewLoop, const Loop *OldLoop,
+                   const ValueToValueMapTy &VMap);
   };
 
   class LoopUnswitch : public LoopPass {
@@ -246,12 +262,13 @@ bool LUAnalysisCache::countLoop(const Loop *L, const TargetTransformInfo &TTI,
     // consideration code simplification opportunities and code that can
     // be shared by the resultant unswitched loops.
     CodeMetrics Metrics;
-    for (Loop::block_iterator I = L->block_begin(), E = L->block_end();
-         I != E; ++I)
+    for (Loop::block_iterator I = L->block_begin(), E = L->block_end(); I != E;
+         ++I)
       Metrics.analyzeBasicBlock(*I, TTI, EphValues);
 
-    Props.SizeEstimation = std::min(Metrics.NumInsts, Metrics.NumBlocks * 5);
+    Props.SizeEstimation = Metrics.NumInsts;
     Props.CanBeUnswitchedCount = MaxSize / (Props.SizeEstimation);
+    Props.WasUnswitchedCount = 0;
     MaxSize -= Props.SizeEstimation * Props.CanBeUnswitchedCount;
 
     if (Metrics.notDuplicatable) {
@@ -260,13 +277,6 @@ bool LUAnalysisCache::countLoop(const Loop *L, const TargetTransformInfo &TTI,
                    << "duplicated!\n");
       return false;
     }
-  }
-
-  if (!Props.CanBeUnswitchedCount) {
-    DEBUG(dbgs() << "NOT unswitching loop %"
-                 << L->getHeader()->getName() << ", cost too high: "
-                 << L->getBlocks().size() << "\n");
-    return false;
   }
 
   // Be careful. This links are good only before new loop addition.
@@ -283,7 +293,8 @@ void LUAnalysisCache::forgetLoop(const Loop *L) {
 
   if (LIt != LoopsProperties.end()) {
     LoopProperties &Props = LIt->second;
-    MaxSize += Props.CanBeUnswitchedCount * Props.SizeEstimation;
+    MaxSize += (Props.CanBeUnswitchedCount + Props.WasUnswitchedCount) *
+               Props.SizeEstimation;
     LoopsProperties.erase(LIt);
   }
 
@@ -303,6 +314,10 @@ bool LUAnalysisCache::isUnswitched(const SwitchInst *SI, const Value *V) {
   return (*CurLoopInstructions)[SI].count(V);
 }
 
+bool LUAnalysisCache::CostAllowsUnswitching() {
+  return CurrentLoopProperties->CanBeUnswitchedCount > 0;
+}
+
 // Clone all loop-unswitch related loop properties.
 // Redistribute unswitching quotas.
 // Note, that new loop data is stored inside the VMap.
@@ -316,6 +331,8 @@ void LUAnalysisCache::cloneData(const Loop *NewLoop, const Loop *OldLoop,
   // Reallocate "can-be-unswitched quota"
 
   --OldLoopProps.CanBeUnswitchedCount;
+  ++OldLoopProps.WasUnswitchedCount;
+  NewLoopProps.WasUnswitchedCount = 0;
   unsigned Quota = OldLoopProps.CanBeUnswitchedCount;
   NewLoopProps.CanBeUnswitchedCount = Quota / 2;
   OldLoopProps.CanBeUnswitchedCount = Quota - Quota / 2;
@@ -661,6 +678,14 @@ bool LoopUnswitch::UnswitchIfProfitable(Value *LoopCond, Constant *Val,
   }
 
   // Check to see if it would be profitable to unswitch current loop.
+  if (!BranchesInfo.CostAllowsUnswitching()) {
+    DEBUG(dbgs() << "NOT unswitching loop %"
+                 << currentLoop->getHeader()->getName()
+                 << " at non-trivial condition '" << *Val
+                 << "' == " << *LoopCond << "\n"
+                 << ". Cost too high.\n");
+    return false;
+  }
 
   // Do not do non-trivial unswitch while optimizing for size.
   if (OptimizeForSize || F->hasFnAttribute(Attribute::OptimizeForSize))
