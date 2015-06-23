@@ -21,8 +21,16 @@
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
+namespace {
+enum ManglerPrefixTy {
+  Default,      ///< Emit default string before each symbol.
+  Private,      ///< Emit "private" prefix before each symbol.
+  LinkerPrivate ///< Emit "linker private" prefix before each symbol.
+};
+}
+
 static void getNameWithPrefixImpl(raw_ostream &OS, const Twine &GVName,
-                                  Mangler::ManglerPrefixTy PrefixTy,
+                                  ManglerPrefixTy PrefixTy,
                                   const DataLayout &DL, char Prefix) {
   SmallString<256> TmpData;
   StringRef Name = GVName.toStringRef(TmpData);
@@ -35,9 +43,9 @@ static void getNameWithPrefixImpl(raw_ostream &OS, const Twine &GVName,
     return;
   }
 
-  if (PrefixTy == Mangler::Private)
+  if (PrefixTy == Private)
     OS << DL.getPrivateGlobalPrefix();
-  else if (PrefixTy == Mangler::LinkerPrivate)
+  else if (PrefixTy == LinkerPrivate)
     OS << DL.getLinkerPrivateGlobalPrefix();
 
   if (Prefix != '\0')
@@ -47,19 +55,23 @@ static void getNameWithPrefixImpl(raw_ostream &OS, const Twine &GVName,
   OS << Name;
 }
 
-void Mangler::getNameWithPrefix(raw_ostream &OS, const Twine &GVName,
-                                const DataLayout &DL,
-                                ManglerPrefixTy PrefixTy) {
+static void getNameWithPrefixImpl(raw_ostream &OS, const Twine &GVName,
+                                  const DataLayout &DL,
+                                  ManglerPrefixTy PrefixTy) {
   char Prefix = DL.getGlobalPrefix();
   return getNameWithPrefixImpl(OS, GVName, PrefixTy, DL, Prefix);
 }
 
+void Mangler::getNameWithPrefix(raw_ostream &OS, const Twine &GVName,
+                                const DataLayout &DL) {
+  return getNameWithPrefixImpl(OS, GVName, DL, Default);
+}
+
 void Mangler::getNameWithPrefix(SmallVectorImpl<char> &OutName,
-                                const Twine &GVName, const DataLayout &DL,
-                                ManglerPrefixTy PrefixTy) {
+                                const Twine &GVName, const DataLayout &DL) {
   raw_svector_ostream OS(OutName);
   char Prefix = DL.getGlobalPrefix();
-  return getNameWithPrefixImpl(OS, GVName, PrefixTy, DL, Prefix);
+  return getNameWithPrefixImpl(OS, GVName, Default, DL, Prefix);
 }
 
 static bool hasByteCountSuffix(CallingConv::ID CC) {
@@ -95,12 +107,12 @@ static void addByteCountSuffix(raw_ostream &OS, const Function *F,
 
 void Mangler::getNameWithPrefix(raw_ostream &OS, const GlobalValue *GV,
                                 bool CannotUsePrivateLabel) const {
-  ManglerPrefixTy PrefixTy = Mangler::Default;
+  ManglerPrefixTy PrefixTy = Default;
   if (GV->hasPrivateLinkage()) {
     if (CannotUsePrivateLabel)
-      PrefixTy = Mangler::LinkerPrivate;
+      PrefixTy = LinkerPrivate;
     else
-      PrefixTy = Mangler::Private;
+      PrefixTy = Private;
   }
 
   const DataLayout &DL = GV->getParent()->getDataLayout();
@@ -112,7 +124,7 @@ void Mangler::getNameWithPrefix(raw_ostream &OS, const GlobalValue *GV,
       ID = NextAnonGlobalID++;
 
     // Must mangle the global into a unique ID.
-    getNameWithPrefix(OS, "__unnamed_" + Twine(ID), DL, PrefixTy);
+    getNameWithPrefixImpl(OS, "__unnamed_" + Twine(ID), DL, PrefixTy);
     return;
   }
 

@@ -25,14 +25,6 @@ template <typename T> class SmallVectorImpl;
 class Twine;
 
 class Mangler {
-public:
-  enum ManglerPrefixTy {
-    Default,               ///< Emit default string before each symbol.
-    Private,               ///< Emit "private" prefix before each symbol.
-    LinkerPrivate          ///< Emit "linker private" prefix before each symbol.
-  };
-
-private:
   /// We need to give global values the same name every time they are mangled.
   /// This keeps track of the number we give to anonymous ones.
   mutable DenseMap<const GlobalValue*, unsigned> AnonGlobalIDs;
@@ -54,11 +46,9 @@ public:
   /// Print the appropriate prefix and the specified name as the global variable
   /// name. GVName must not be empty.
   static void getNameWithPrefix(raw_ostream &OS, const Twine &GVName,
-                                const DataLayout &DL,
-                                ManglerPrefixTy PrefixTy = Mangler::Default);
+                                const DataLayout &DL);
   static void getNameWithPrefix(SmallVectorImpl<char> &OutName,
-                                const Twine &GVName, const DataLayout &DL,
-                                ManglerPrefixTy PrefixTy = Mangler::Default);
+                                const Twine &GVName, const DataLayout &DL);
 };
 
 } // End llvm namespace
