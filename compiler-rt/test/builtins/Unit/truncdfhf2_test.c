@@ -107,5 +107,8 @@ int main()
     if (test__truncdfhf2(-65520.0,
                          UINT16_C(0xfc00)))
         return 1;
+    if (test__truncdfhf2(65536.0,
+                         UINT16_C(0x7c00)))
+        return 1;
     return 0;
 }

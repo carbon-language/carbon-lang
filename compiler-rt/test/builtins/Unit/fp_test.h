@@ -14,6 +14,7 @@
 #include <stdlib.h>
 #include <limits.h>
 #include <string.h>
+#include <stdint.h>
 
 enum EXPECTED_RESULT {
     LESS_0, LESS_EQUAL_0, EQUAL_0, GREATER_0, GREATER_EQUAL_0, NEQUAL_0

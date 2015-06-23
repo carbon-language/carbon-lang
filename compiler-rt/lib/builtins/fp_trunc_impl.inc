@@ -99,7 +99,7 @@ static inline dst_t __truncXfYf2__(src_t a) {
         absResult |= dstQNaN;
         absResult |= ((aAbs & srcNaNCode) >> (srcSigBits - dstSigBits)) & dstNaNCode;
     }
-    else if (aAbs > overflow) {
+    else if (aAbs >= overflow) {
         // a overflows to infinity.
         absResult = (dst_rep_t)dstInfExp << dstSigBits;
     }

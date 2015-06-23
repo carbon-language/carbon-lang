@@ -104,6 +104,9 @@ int main()
     if (test__truncsfhf2(65520.0f,
                          UINT16_C(0x7c00)))
         return 1;
+    if (test__truncsfhf2(65536.0f,
+                         UINT16_C(0x7c00)))
+        return 1;
     if (test__truncsfhf2(-65520.0f,
                          UINT16_C(0xfc00)))
         return 1;
