@@ -60,6 +60,8 @@
   bgtu $0, $8, local_label
   bgtu $0, $0, local_label
 
+  ulhu $5, 0
+
   add $4, $5, $6
 
   .set noreorder
@@ -167,6 +169,9 @@
 # CHECK-NOT: [[@LINE-1]]:3: warning: macro instruction expanded into multiple instructions
   bgtu $0, $0, local_label
 # CHECK-NOT: [[@LINE-1]]:3: warning: macro instruction expanded into multiple instructions
+
+  ulhu $5, 0
+# CHECK: [[@LINE-1]]:3: warning: macro instruction expanded into multiple instructions
 
   add $4, $5, $6
 # CHECK-NOT: [[@LINE-1]]:3: warning: macro instruction expanded into multiple instructions

@@ -113,6 +113,7 @@ class MipsAsmParser : public MCTargetAsmParser {
                        // nullptr, which indicates that no function is currently
                        // selected. This usually happens after an '.end func'
                        // directive.
+  bool IsLittleEndian;
 
   // Print a warning along with its fix-it message at the given range.
   void printWarningWithFixIt(const Twine &Msg, const Twine &FixMsg,
@@ -213,6 +214,9 @@ class MipsAsmParser : public MCTargetAsmParser {
 
   bool expandCondBranches(MCInst &Inst, SMLoc IDLoc,
                           SmallVectorImpl<MCInst> &Instructions);
+
+  bool expandUlhu(MCInst &Inst, SMLoc IDLoc,
+                  SmallVectorImpl<MCInst> &Instructions);
 
   void createNop(bool hasShortDelaySlot, SMLoc IDLoc,
                  SmallVectorImpl<MCInst> &Instructions);
@@ -387,6 +391,13 @@ public:
       report_fatal_error("-mno-odd-spreg requires the O32 ABI");
 
     CurrentFn = nullptr;
+
+    Triple TheTriple(sti.getTargetTriple());
+    if ((TheTriple.getArch() == Triple::mips) ||
+        (TheTriple.getArch() == Triple::mips64))
+      IsLittleEndian = false;
+    else
+      IsLittleEndian = true;
   }
 
   /// True if all of $fcc0 - $fcc7 exist for the current ISA.
@@ -462,6 +473,8 @@ public:
   void warnIfRegIndexIsAT(unsigned RegIndex, SMLoc Loc);
 
   void warnIfNoMacro(SMLoc Loc);
+
+  bool isLittle() const { return IsLittleEndian; }
 };
 }
 
@@ -1635,6 +1648,7 @@ bool MipsAsmParser::needsExpansion(MCInst &Inst) {
   case Mips::BLEU:
   case Mips::BGEU:
   case Mips::BGTU:
+  case Mips::Ulhu:
     return true;
   default:
     return false;
@@ -1673,6 +1687,8 @@ bool MipsAsmParser::expandInstruction(MCInst &Inst, SMLoc IDLoc,
   case Mips::BGEU:
   case Mips::BGTU:
     return expandCondBranches(Inst, IDLoc, Instructions);
+  case Mips::Ulhu:
+    return expandUlhu(Inst, IDLoc, Instructions);
   }
 }
 
@@ -2468,6 +2484,101 @@ bool MipsAsmParser::expandCondBranches(MCInst &Inst, SMLoc IDLoc,
   BranchInst.addOperand(MCOperand::createReg(Mips::ZERO));
   BranchInst.addOperand(MCOperand::createExpr(OffsetExpr));
   Instructions.push_back(BranchInst);
+  return false;
+}
+
+bool MipsAsmParser::expandUlhu(MCInst &Inst, SMLoc IDLoc,
+                               SmallVectorImpl<MCInst> &Instructions) {
+  if (hasMips32r6() || hasMips64r6()) {
+    Error(IDLoc, "instruction not supported on mips32r6 or mips64r6");
+    return false;
+  }
+
+  warnIfNoMacro(IDLoc);
+
+  const MCOperand &DstRegOp = Inst.getOperand(0);
+  assert(DstRegOp.isReg() && "expected register operand kind");
+
+  const MCOperand &SrcRegOp = Inst.getOperand(1);
+  assert(SrcRegOp.isReg() && "expected register operand kind");
+
+  const MCOperand &OffsetImmOp = Inst.getOperand(2);
+  assert(OffsetImmOp.isImm() && "expected immediate operand kind");
+
+  unsigned DstReg = DstRegOp.getReg();
+  unsigned SrcReg = SrcRegOp.getReg();
+  int64_t OffsetValue = OffsetImmOp.getImm();
+
+  // NOTE: We always need AT for ULHU, as it is always used as the source
+  // register for one of the LBu's.
+  unsigned ATReg = getATReg(IDLoc);
+  if (!ATReg)
+    return true;
+
+  // When the value of offset+1 does not fit in 16 bits, we have to load the
+  // offset in AT, (D)ADDu the original source register (if there was one), and
+  // then use AT as the source register for the 2 generated LBu's.
+  bool LoadedOffsetInAT = false;
+  if (!isInt<16>(OffsetValue + 1) || !isInt<16>(OffsetValue)) {
+    LoadedOffsetInAT = true;
+
+    if (loadImmediate(OffsetValue, ATReg, Mips::NoRegister, !ABI.ArePtrs64bit(),
+                      IDLoc, Instructions))
+      return true;
+
+    // NOTE: We do this (D)ADDu here instead of doing it in loadImmediate()
+    // because it will make our output more similar to GAS'. For example,
+    // generating an "ori $1, $zero, 32768" followed by an "addu $1, $1, $9",
+    // instead of just an "ori $1, $9, 32768".
+    // NOTE: If there is no source register specified in the ULHU, the parser
+    // will interpret it as $0.
+    if (SrcReg != Mips::ZERO && SrcReg != Mips::ZERO_64)
+      createAddu(ATReg, ATReg, SrcReg, ABI.ArePtrs64bit(), Instructions);
+  }
+
+  unsigned FirstLbuDstReg = LoadedOffsetInAT ? DstReg : ATReg;
+  unsigned SecondLbuDstReg = LoadedOffsetInAT ? ATReg : DstReg;
+  unsigned LbuSrcReg = LoadedOffsetInAT ? ATReg : SrcReg;
+
+  int64_t FirstLbuOffset = 0, SecondLbuOffset = 0;
+  if (isLittle()) {
+    FirstLbuOffset = LoadedOffsetInAT ? 1 : (OffsetValue + 1);
+    SecondLbuOffset = LoadedOffsetInAT ? 0 : OffsetValue;
+  } else {
+    FirstLbuOffset = LoadedOffsetInAT ? 0 : OffsetValue;
+    SecondLbuOffset = LoadedOffsetInAT ? 1 : (OffsetValue + 1);
+  }
+
+  unsigned SllReg = LoadedOffsetInAT ? DstReg : ATReg;
+
+  MCInst TmpInst;
+  TmpInst.setOpcode(Mips::LBu);
+  TmpInst.addOperand(MCOperand::createReg(FirstLbuDstReg));
+  TmpInst.addOperand(MCOperand::createReg(LbuSrcReg));
+  TmpInst.addOperand(MCOperand::createImm(FirstLbuOffset));
+  Instructions.push_back(TmpInst);
+
+  TmpInst.clear();
+  TmpInst.setOpcode(Mips::LBu);
+  TmpInst.addOperand(MCOperand::createReg(SecondLbuDstReg));
+  TmpInst.addOperand(MCOperand::createReg(LbuSrcReg));
+  TmpInst.addOperand(MCOperand::createImm(SecondLbuOffset));
+  Instructions.push_back(TmpInst);
+
+  TmpInst.clear();
+  TmpInst.setOpcode(Mips::SLL);
+  TmpInst.addOperand(MCOperand::createReg(SllReg));
+  TmpInst.addOperand(MCOperand::createReg(SllReg));
+  TmpInst.addOperand(MCOperand::createImm(8));
+  Instructions.push_back(TmpInst);
+
+  TmpInst.clear();
+  TmpInst.setOpcode(Mips::OR);
+  TmpInst.addOperand(MCOperand::createReg(DstReg));
+  TmpInst.addOperand(MCOperand::createReg(DstReg));
+  TmpInst.addOperand(MCOperand::createReg(ATReg));
+  Instructions.push_back(TmpInst);
+
   return false;
 }
 
