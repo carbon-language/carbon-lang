@@ -9,6 +9,7 @@
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/AsmParser/Parser.h"
+#include "llvm/AsmParser/SlotMapping.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Support/SourceMgr.h"
@@ -43,5 +44,24 @@ TEST(AsmParserTest, NonNullTerminatedInput) {
 
 #endif
 #endif
+
+TEST(AsmParserTest, SlotMappingTest) {
+  LLVMContext &Ctx = getGlobalContext();
+  StringRef Source = "@0 = global i32 0\n !0 = !{}\n !42 = !{i32 42}";
+  SMDiagnostic Error;
+  SlotMapping Mapping;
+  auto Mod = parseAssemblyString(Source, Error, Ctx, &Mapping);
+
+  EXPECT_TRUE(Mod != nullptr);
+  EXPECT_TRUE(Error.getMessage().empty());
+
+  ASSERT_EQ(Mapping.GlobalValues.size(), 1u);
+  EXPECT_TRUE(isa<GlobalVariable>(Mapping.GlobalValues[0]));
+
+  EXPECT_EQ(Mapping.MetadataNodes.size(), 2u);
+  EXPECT_EQ(Mapping.MetadataNodes.count(0), 1u);
+  EXPECT_EQ(Mapping.MetadataNodes.count(42), 1u);
+  EXPECT_EQ(Mapping.MetadataNodes.count(1), 0u);
+}
 
 } // end anonymous namespace

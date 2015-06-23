@@ -13,6 +13,7 @@
 
 #include "LLParser.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/AsmParser/SlotMapping.h"
 #include "llvm/IR/AutoUpgrade.h"
 #include "llvm/IR/CallingConv.h"
 #include "llvm/IR/Constants.h"
@@ -160,6 +161,14 @@ bool LLParser::ValidateEndOfModule() {
     UpgradeCallsToIntrinsic(FI++); // must be post-increment, as we remove
 
   UpgradeDebugInfo(*M);
+
+  if (!Slots)
+    return false;
+  // Initialize the slot mapping.
+  // Because by this point we've parsed and validated everything, we can "steal"
+  // the mapping from LLParser as it doesn't need it anymore.
+  Slots->GlobalValues = std::move(NumberedVals);
+  Slots->MetadataNodes = std::move(NumberedMetadata);
 
   return false;
 }
