@@ -270,7 +270,9 @@ static unsigned HashMachineInstr(const MachineInstr *MI) {
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     const MachineOperand &Op = MI->getOperand(i);
 
-    // Merge in bits from the operand if easy.
+    // Merge in bits from the operand if easy. We can't use MachineOperand's
+    // hash_code here because it's not deterministic and we sort by hash value
+    // later.
     unsigned OperandHash = 0;
     switch (Op.getType()) {
     case MachineOperand::MO_Register:
