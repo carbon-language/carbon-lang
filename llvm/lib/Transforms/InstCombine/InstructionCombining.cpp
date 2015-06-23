@@ -2125,7 +2125,7 @@ Instruction *InstCombiner::visitSwitchInst(SwitchInst &SI) {
 
   // Truncate the condition operand if the new type is equal to or larger than
   // the largest legal integer type. We need to be conservative here since
-  // x86 generates redundant zero-extenstion instructions if the operand is
+  // x86 generates redundant zero-extension instructions if the operand is
   // truncated to i8 or i16.
   bool TruncCond = false;
   if (NewWidth > 0 && BitWidth > NewWidth &&
