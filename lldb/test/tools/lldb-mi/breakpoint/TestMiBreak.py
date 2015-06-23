@@ -179,37 +179,34 @@ class MiBreakTestCase(lldbmi_testcase.MiTestCaseBase):
         self.expect("\^done,bkpt={number=\"1\"")
 
         # Test that non-pending BP will not be set on non-existing line if target.move-to-nearest-code=off
+        # Note: this increases the BP number by 1 even though BP #2 is invalid.
         self.runCmd("-break-insert main.cpp:%d" % line)
         self.expect("\^error,msg=\"Command 'break-insert'. Breakpoint location 'main.cpp:%d' not found\"" % line)
 
-        # Set target.move-to-nearest-code=on and target.skip-prologue=on and set BP #2
+        # Set target.move-to-nearest-code=on and target.skip-prologue=on and set BP #3
         self.runCmd("-interpreter-exec console \"settings set target.move-to-nearest-code on\"")
         self.runCmd("-interpreter-exec console \"settings set target.skip-prologue on\"")
         self.expect("\^done")
-        # FIXME BP was increased by 1 after setting non-pending BP on unknown location (number should be 2)
         self.runCmd("-break-insert main.cpp:%d" % line)
         self.expect("\^done,bkpt={number=\"3\"")
 
-        # Set target.skip-prologue=off and set BP #3
+        # Set target.skip-prologue=off and set BP #4
         self.runCmd("-interpreter-exec console \"settings set target.skip-prologue off\"")
         self.expect("\^done")
-        # FIXME BP was increased by 1 after setting non-pending BP on unknown location (number should be 3)
         self.runCmd("-break-insert main.cpp:%d" % line)
         self.expect("\^done,bkpt={number=\"4\"")
 
-        # Test that BP #3 is located before BP #2
+        # Test that BP #4 is located before BP #3
         self.runCmd("-exec-run")
         self.expect("\^running")
-        # FIXME BP was increased by 1 after setting non-pending BP on unknown location (bkptno should be 3)
         self.expect("\*stopped,reason=\"breakpoint-hit\",disp=\"del\",bkptno=\"4\"")
 
-        # Test that BP #2 is hit
+        # Test that BP #3 is hit
         self.runCmd("-exec-continue")
         self.expect("\^running")
-        # FIXME BP was increased by 1 after setting non-pending BP on unknown location (bkptno should be 2)
         self.expect("\*stopped,reason=\"breakpoint-hit\",disp=\"del\",bkptno=\"3\"")
 
-        # Test that BP #1 wasn't set
+        # Test that BP #1 and #2 weren't set by running to program exit
         self.runCmd("-exec-continue")
         self.expect("\^running")
         self.expect("\*stopped,reason=\"exited-normally\"")
