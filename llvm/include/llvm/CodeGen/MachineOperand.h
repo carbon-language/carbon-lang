@@ -705,10 +705,12 @@ public:
     return Op;
   }
 
-  static MachineOperand CreateMCSymbol(MCSymbol *Sym) {
+  static MachineOperand CreateMCSymbol(MCSymbol *Sym,
+                                       unsigned char TargetFlags = 0) {
     MachineOperand Op(MachineOperand::MO_MCSymbol);
     Op.Contents.Sym = Sym;
     Op.setOffset(0);
+    Op.setTargetFlags(TargetFlags);
     return Op;
   }
 

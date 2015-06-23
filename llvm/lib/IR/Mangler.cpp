@@ -20,9 +20,9 @@
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
-static void getNameWithPrefixx(raw_ostream &OS, const Twine &GVName,
-                              Mangler::ManglerPrefixTy PrefixTy,
-                              const DataLayout &DL, char Prefix) {
+static void getNameWithPrefixImpl(raw_ostream &OS, const Twine &GVName,
+                                  Mangler::ManglerPrefixTy PrefixTy,
+                                  const DataLayout &DL, char Prefix) {
   SmallString<256> TmpData;
   StringRef Name = GVName.toStringRef(TmpData);
   assert(!Name.empty() && "getNameWithPrefix requires non-empty name");
@@ -49,14 +49,22 @@ static void getNameWithPrefixx(raw_ostream &OS, const Twine &GVName,
 void Mangler::getNameWithPrefix(raw_ostream &OS, const Twine &GVName,
                                 ManglerPrefixTy PrefixTy) const {
   char Prefix = DL->getGlobalPrefix();
-  return getNameWithPrefixx(OS, GVName, PrefixTy, *DL, Prefix);
+  return getNameWithPrefixImpl(OS, GVName, PrefixTy, *DL, Prefix);
+}
+
+void Mangler::getNameWithPrefix(SmallVectorImpl<char> &OutName,
+                                const Twine &GVName, const DataLayout &DL) {
+  raw_svector_ostream OS(OutName);
+  char Prefix = DL.getGlobalPrefix();
+  return getNameWithPrefixImpl(OS, GVName, Mangler::Default, DL, Prefix);
 }
 
 void Mangler::getNameWithPrefix(SmallVectorImpl<char> &OutName,
                                 const Twine &GVName,
                                 ManglerPrefixTy PrefixTy) const {
   raw_svector_ostream OS(OutName);
-  return getNameWithPrefix(OS, GVName, PrefixTy);
+  char Prefix = DL->getGlobalPrefix();
+  return getNameWithPrefixImpl(OS, GVName, PrefixTy, *DL, Prefix);
 }
 
 static bool hasByteCountSuffix(CallingConv::ID CC) {
@@ -132,7 +140,7 @@ void Mangler::getNameWithPrefix(raw_ostream &OS, const GlobalValue *GV,
       Prefix = '\0'; // vectorcall functions have no prefix.
   }
 
-  getNameWithPrefixx(OS, Name, PrefixTy, *DL, Prefix);
+  getNameWithPrefixImpl(OS, Name, PrefixTy, *DL, Prefix);
 
   if (!MSFunc)
     return;

@@ -59,6 +59,7 @@
 #include "llvm/IR/GlobalVariable.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/IntrinsicInst.h"
+#include "llvm/IR/Mangler.h"
 #include "llvm/IR/Operator.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -701,6 +702,15 @@ bool FastISel::lowerCallOperands(const CallInst *CI, unsigned ArgIdx,
   return lowerCallTo(CLI);
 }
 
+FastISel::CallLoweringInfo &FastISel::CallLoweringInfo::setCallee(
+    const DataLayout &DL, MCContext &Ctx, CallingConv::ID CC, Type *ResultTy,
+    const char *Target, ArgListTy &&ArgsList, unsigned FixedArgs) {
+  SmallString<32> MangledName;
+  Mangler::getNameWithPrefix(MangledName, Target, DL);
+  MCSymbol *Sym = Ctx.getOrCreateSymbol(MangledName);
+  return setCallee(CC, ResultTy, Sym, std::move(ArgsList), FixedArgs);
+}
+
 bool FastISel::selectPatchpoint(const CallInst *I) {
   // void|i64 @llvm.experimental.patchpoint.void|i64(i64 <id>,
   //                                                 i32 <numBytes>,
@@ -856,6 +866,15 @@ static AttributeSet getReturnAttrs(FastISel::CallLoweringInfo &CLI) {
 
 bool FastISel::lowerCallTo(const CallInst *CI, const char *SymName,
                            unsigned NumArgs) {
+  MCContext &Ctx = MF->getContext();
+  SmallString<32> MangledName;
+  Mangler::getNameWithPrefix(MangledName, SymName, DL);
+  MCSymbol *Sym = Ctx.getOrCreateSymbol(MangledName);
+  return lowerCallTo(CI, Sym, NumArgs);
+}
+
+bool FastISel::lowerCallTo(const CallInst *CI, MCSymbol *Symbol,
+                           unsigned NumArgs) {
   ImmutableCallSite CS(CI);
 
   PointerType *PT = cast<PointerType>(CS.getCalledValue()->getType());
@@ -880,7 +899,7 @@ bool FastISel::lowerCallTo(const CallInst *CI, const char *SymName,
   }
 
   CallLoweringInfo CLI;
-  CLI.setCallee(RetTy, FTy, SymName, std::move(Args), CS, NumArgs);
+  CLI.setCallee(RetTy, FTy, Symbol, std::move(Args), CS, NumArgs);
 
   return lowerCallTo(CLI);
 }

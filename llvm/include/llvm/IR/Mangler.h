@@ -51,6 +51,10 @@ public:
   /// Print the appropriate prefix and the specified global variable's name.
   /// If the global variable doesn't have a name, this fills in a unique name
   /// for the global.
+
+  static void getNameWithPrefix(SmallVectorImpl<char> &OutName,
+                                const Twine &GVName, const DataLayout &DL);
+
   void getNameWithPrefix(raw_ostream &OS, const GlobalValue *GV,
                          bool CannotUsePrivateLabel) const;
   void getNameWithPrefix(SmallVectorImpl<char> &OutName, const GlobalValue *GV,

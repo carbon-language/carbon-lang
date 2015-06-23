@@ -36,6 +36,7 @@
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/Operator.h"
+#include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/CommandLine.h"
 using namespace llvm;
 
@@ -3070,9 +3071,9 @@ bool AArch64FastISel::fastLowerCall(CallLoweringInfo &CLI) {
   bool IsTailCall     = CLI.IsTailCall;
   bool IsVarArg       = CLI.IsVarArg;
   const Value *Callee = CLI.Callee;
-  const char *SymName = CLI.SymName;
+  MCSymbol *Symbol = CLI.Symbol;
 
-  if (!Callee && !SymName)
+  if (!Callee && !Symbol)
     return false;
 
   // Allow SelectionDAG isel to handle tail calls.
@@ -3134,8 +3135,8 @@ bool AArch64FastISel::fastLowerCall(CallLoweringInfo &CLI) {
   if (CM == CodeModel::Small) {
     const MCInstrDesc &II = TII.get(Addr.getReg() ? AArch64::BLR : AArch64::BL);
     MIB = BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, II);
-    if (SymName)
-      MIB.addExternalSymbol(SymName, 0);
+    if (Symbol)
+      MIB.addSym(Symbol, 0);
     else if (Addr.getGlobalValue())
       MIB.addGlobalAddress(Addr.getGlobalValue(), 0, 0);
     else if (Addr.getReg()) {
@@ -3145,18 +3146,18 @@ bool AArch64FastISel::fastLowerCall(CallLoweringInfo &CLI) {
       return false;
   } else {
     unsigned CallReg = 0;
-    if (SymName) {
+    if (Symbol) {
       unsigned ADRPReg = createResultReg(&AArch64::GPR64commonRegClass);
       BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(AArch64::ADRP),
               ADRPReg)
-        .addExternalSymbol(SymName, AArch64II::MO_GOT | AArch64II::MO_PAGE);
+          .addSym(Symbol, AArch64II::MO_GOT | AArch64II::MO_PAGE);
 
       CallReg = createResultReg(&AArch64::GPR64RegClass);
-      BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(AArch64::LDRXui),
-              CallReg)
-        .addReg(ADRPReg)
-        .addExternalSymbol(SymName, AArch64II::MO_GOT | AArch64II::MO_PAGEOFF |
-                           AArch64II::MO_NC);
+      BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
+              TII.get(AArch64::LDRXui), CallReg)
+          .addReg(ADRPReg)
+          .addSym(Symbol,
+                  AArch64II::MO_GOT | AArch64II::MO_PAGEOFF | AArch64II::MO_NC);
     } else if (Addr.getGlobalValue())
       CallReg = materializeGV(Addr.getGlobalValue());
     else if (Addr.getReg())
@@ -3460,7 +3461,8 @@ bool AArch64FastISel::fastLowerIntrinsicCall(const IntrinsicInst *II) {
     }
 
     CallLoweringInfo CLI;
-    CLI.setCallee(TLI.getLibcallCallingConv(LC), II->getType(),
+    MCContext &Ctx = MF->getContext();
+    CLI.setCallee(DL, Ctx, TLI.getLibcallCallingConv(LC), II->getType(),
                   TLI.getLibcallName(LC), std::move(Args));
     if (!lowerCallTo(CLI))
       return false;
@@ -4734,7 +4736,8 @@ bool AArch64FastISel::selectFRem(const Instruction *I) {
   }
 
   CallLoweringInfo CLI;
-  CLI.setCallee(TLI.getLibcallCallingConv(LC), I->getType(),
+  MCContext &Ctx = MF->getContext();
+  CLI.setCallee(DL, Ctx, TLI.getLibcallCallingConv(LC), I->getType(),
                 TLI.getLibcallName(LC), std::move(Args));
   if (!lowerCallTo(CLI))
     return false;

@@ -16,6 +16,7 @@
 #include "llvm/IR/GetElementPtrTypeIterator.h"
 #include "llvm/IR/GlobalAlias.h"
 #include "llvm/IR/GlobalVariable.h"
+#include "llvm/MC/MCSymbol.h"
 #include "llvm/Target/TargetInstrInfo.h"
 
 using namespace llvm;
@@ -143,7 +144,7 @@ private:
   unsigned materializeGV(const GlobalValue *GV, MVT VT);
   unsigned materializeInt(const Constant *C, MVT VT);
   unsigned materialize32BitInt(int64_t Imm, const TargetRegisterClass *RC);
-  unsigned materializeExternalCallSym(const char *SynName);
+  unsigned materializeExternalCallSym(MCSymbol *Syn);
 
   MachineInstrBuilder emitInst(unsigned Opc) {
     return BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(Opc));
@@ -369,12 +370,12 @@ unsigned MipsFastISel::materializeGV(const GlobalValue *GV, MVT VT) {
   return DestReg;
 }
 
-unsigned MipsFastISel::materializeExternalCallSym(const char *SymName) {
+unsigned MipsFastISel::materializeExternalCallSym(MCSymbol *Sym) {
   const TargetRegisterClass *RC = &Mips::GPR32RegClass;
   unsigned DestReg = createResultReg(RC);
   emitInst(Mips::LW, DestReg)
       .addReg(MFI->getGlobalBaseReg())
-      .addExternalSymbol(SymName, MipsII::MO_GOT);
+      .addSym(Sym, MipsII::MO_GOT);
   return DestReg;
 }
 
@@ -1234,7 +1235,7 @@ bool MipsFastISel::fastLowerCall(CallLoweringInfo &CLI) {
   bool IsTailCall = CLI.IsTailCall;
   bool IsVarArg = CLI.IsVarArg;
   const Value *Callee = CLI.Callee;
-  const char *SymName = CLI.SymName;
+  MCSymbol *Symbol = CLI.Symbol;
 
   // Allow SelectionDAG isel to handle tail calls.
   if (IsTailCall)
@@ -1286,8 +1287,8 @@ bool MipsFastISel::fastLowerCall(CallLoweringInfo &CLI) {
 
   // Issue the call.
   unsigned DestAddress;
-  if (SymName)
-    DestAddress = materializeExternalCallSym(SymName);
+  if (Symbol)
+    DestAddress = materializeExternalCallSym(Symbol);
   else
     DestAddress = materializeGV(Addr.getGlobalValue(), MVT::i32);
   emitInst(TargetOpcode::COPY, Mips::T9).addReg(DestAddress);

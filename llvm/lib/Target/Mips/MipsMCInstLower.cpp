@@ -88,6 +88,11 @@ MCOperand MipsMCInstLower::LowerSymbolOperand(const MachineOperand &MO,
     Offset += MO.getOffset();
     break;
 
+  case MachineOperand::MO_MCSymbol:
+    Symbol = MO.getMCSymbol();
+    Offset += MO.getOffset();
+    break;
+
   case MachineOperand::MO_JumpTableIndex:
     Symbol = AsmPrinter.GetJTISymbol(MO.getIndex());
     break;
@@ -141,6 +146,7 @@ MCOperand MipsMCInstLower::LowerOperand(const MachineOperand &MO,
   case MachineOperand::MO_MachineBasicBlock:
   case MachineOperand::MO_GlobalAddress:
   case MachineOperand::MO_ExternalSymbol:
+  case MachineOperand::MO_MCSymbol:
   case MachineOperand::MO_JumpTableIndex:
   case MachineOperand::MO_ConstantPoolIndex:
   case MachineOperand::MO_BlockAddress:
