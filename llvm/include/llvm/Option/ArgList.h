@@ -325,22 +325,24 @@ private:
   /// The number of original input argument strings.
   unsigned NumInputArgStrings;
 
+  /// Release allocated arguments.
+  void releaseMemory();
+
 public:
   InputArgList(const char* const *ArgBegin, const char* const *ArgEnd);
-  // Default move operations implemented for the convenience of MSVC. Nothing
-  // special here.
   InputArgList(InputArgList &&RHS)
       : ArgList(std::move(RHS)), ArgStrings(std::move(RHS.ArgStrings)),
         SynthesizedStrings(std::move(RHS.SynthesizedStrings)),
         NumInputArgStrings(RHS.NumInputArgStrings) {}
   InputArgList &operator=(InputArgList &&RHS) {
+    releaseMemory();
     ArgList::operator=(std::move(RHS));
     ArgStrings = std::move(RHS.ArgStrings);
     SynthesizedStrings = std::move(RHS.SynthesizedStrings);
     NumInputArgStrings = RHS.NumInputArgStrings;
     return *this;
   }
-  ~InputArgList();
+  ~InputArgList() { releaseMemory(); }
 
   const char *getArgString(unsigned Index) const override {
     return ArgStrings[Index];

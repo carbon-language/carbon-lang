@@ -315,16 +315,16 @@ const char *ArgList::GetOrMakeJoinedArgString(unsigned Index,
 
 //
 
+void InputArgList::releaseMemory() {
+  // An InputArgList always owns its arguments.
+  for (Arg *A : *this)
+    delete A;
+}
+
 InputArgList::InputArgList(const char* const *ArgBegin,
                            const char* const *ArgEnd)
   : NumInputArgStrings(ArgEnd - ArgBegin) {
   ArgStrings.append(ArgBegin, ArgEnd);
-}
-
-InputArgList::~InputArgList() {
-  // An InputArgList always owns its arguments.
-  for (iterator it = begin(), ie = end(); it != ie; ++it)
-    delete *it;
 }
 
 unsigned InputArgList::MakeIndex(StringRef String0) const {
