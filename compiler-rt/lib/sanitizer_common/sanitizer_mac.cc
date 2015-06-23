@@ -30,7 +30,12 @@
 #include "sanitizer_platform_limits_posix.h"
 #include "sanitizer_procmaps.h"
 
+#if !SANITIZER_IOS
 #include <crt_externs.h>  // for _NSGetEnviron
+#else
+extern char **environ;
+#endif
+
 #include <errno.h>
 #include <fcntl.h>
 #include <libkern/OSAtomic.h>
@@ -190,7 +195,8 @@ void GetThreadStackTopAndBottom(bool at_initialization, uptr *stack_top,
   *stack_bottom = *stack_top - stacksize;
 }
 
-const char *GetEnv(const char *name) {
+char **GetEnviron() {
+#if !SANITIZER_IOS
   char ***env_ptr = _NSGetEnviron();
   if (!env_ptr) {
     Report("_NSGetEnviron() returned NULL. Please make sure __asan_init() is "
@@ -198,18 +204,24 @@ const char *GetEnv(const char *name) {
     CHECK(env_ptr);
   }
   char **environ = *env_ptr;
+#endif
   CHECK(environ);
+  return environ;
+}
+
+const char *GetEnv(const char *name) {
+  char **env = GetEnviron();
   uptr name_len = internal_strlen(name);
-  while (*environ != 0) {
-    uptr len = internal_strlen(*environ);
+  while (*env != 0) {
+    uptr len = internal_strlen(*env);
     if (len > name_len) {
-      const char *p = *environ;
+      const char *p = *env;
       if (!internal_memcmp(p, name, name_len) &&
           p[name_len] == '=') {  // Match.
-        return *environ + name_len + 1;  // String starting after =.
+        return *env + name_len + 1;  // String starting after =.
       }
     }
-    environ++;
+    env++;
   }
   return 0;
 }
@@ -358,15 +370,29 @@ void internal_join_thread(void *th) { }
 
 void GetPcSpBp(void *context, uptr *pc, uptr *sp, uptr *bp) {
   ucontext_t *ucontext = (ucontext_t*)context;
-# if SANITIZER_WORDSIZE == 64
+# if defined(__aarch64__)
+  *pc = ucontext->uc_mcontext->__ss.__pc;
+#   if defined(__IPHONE_8_0) && __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_8_0
+  *bp = ucontext->uc_mcontext->__ss.__fp;
+#   else
+  *bp = ucontext->uc_mcontext->__ss.__lr;
+#   endif
+  *sp = ucontext->uc_mcontext->__ss.__sp;
+# elif defined(__x86_64__)
   *pc = ucontext->uc_mcontext->__ss.__rip;
   *bp = ucontext->uc_mcontext->__ss.__rbp;
   *sp = ucontext->uc_mcontext->__ss.__rsp;
-# else
+# elif defined(__arm__)
+  *pc = ucontext->uc_mcontext->__ss.__pc;
+  *bp = ucontext->uc_mcontext->__ss.__r[7];
+  *sp = ucontext->uc_mcontext->__ss.__sp;
+# elif defined(__i386__)
   *pc = ucontext->uc_mcontext->__ss.__eip;
   *bp = ucontext->uc_mcontext->__ss.__ebp;
   *sp = ucontext->uc_mcontext->__ss.__esp;
-# endif  // SANITIZER_WORDSIZE
+# else
+# error "Unknown architecture"
+# endif
 }
 
 }  // namespace __sanitizer

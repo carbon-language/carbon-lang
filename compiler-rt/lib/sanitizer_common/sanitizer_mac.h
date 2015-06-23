@@ -33,6 +33,8 @@ enum MacosVersion {
 
 MacosVersion GetMacosVersion();
 
+char **GetEnviron();
+
 }  // namespace __sanitizer
 
 #endif  // SANITIZER_MAC
