@@ -218,7 +218,7 @@ class MipsAsmParser : public MCTargetAsmParser {
                  SmallVectorImpl<MCInst> &Instructions);
 
   void createAddu(unsigned DstReg, unsigned SrcReg, unsigned TrgReg,
-                  SmallVectorImpl<MCInst> &Instructions);
+                  bool Is64Bit, SmallVectorImpl<MCInst> &Instructions);
 
   bool reportParseError(Twine ErrorMsg);
   bool reportParseError(SMLoc Loc, Twine ErrorMsg);
@@ -1836,7 +1836,7 @@ bool MipsAsmParser::loadImmediate(int64_t ImmValue, unsigned DstReg,
     createLShiftOri<0>(Bits15To0, TmpReg, IDLoc, Instructions);
 
     if (UseSrcReg)
-      createAddu(DstReg, TmpReg, SrcReg, Instructions);
+      createAddu(DstReg, TmpReg, SrcReg, !Is32BitImm, Instructions);
 
   } else if ((ImmValue & (0xffffLL << 48)) == 0) {
     if (Is32BitImm) {
@@ -1870,7 +1870,7 @@ bool MipsAsmParser::loadImmediate(int64_t ImmValue, unsigned DstReg,
     createLShiftOri<16>(Bits15To0, TmpReg, IDLoc, Instructions);
 
     if (UseSrcReg)
-      createAddu(DstReg, TmpReg, SrcReg, Instructions);
+      createAddu(DstReg, TmpReg, SrcReg, !Is32BitImm, Instructions);
 
   } else {
     if (Is32BitImm) {
@@ -1914,7 +1914,7 @@ bool MipsAsmParser::loadImmediate(int64_t ImmValue, unsigned DstReg,
     }
 
     if (UseSrcReg)
-      createAddu(DstReg, TmpReg, SrcReg, Instructions);
+      createAddu(DstReg, TmpReg, SrcReg, !Is32BitImm, Instructions);
   }
   return false;
 }
@@ -2051,7 +2051,7 @@ bool MipsAsmParser::loadAndAddSymbolAddress(
   }
 
   if (UseSrcReg)
-    createAddu(DstReg, TmpReg, SrcReg, Instructions);
+    createAddu(DstReg, TmpReg, SrcReg, !Is32BitSym, Instructions);
 
   return false;
 }
@@ -2488,10 +2488,10 @@ void MipsAsmParser::createNop(bool hasShortDelaySlot, SMLoc IDLoc,
 }
 
 void MipsAsmParser::createAddu(unsigned DstReg, unsigned SrcReg,
-                               unsigned TrgReg,
+                               unsigned TrgReg, bool Is64Bit,
                                SmallVectorImpl<MCInst> &Instructions) {
   MCInst AdduInst;
-  AdduInst.setOpcode(Mips::ADDu);
+  AdduInst.setOpcode(Is64Bit ? Mips::DADDu : Mips::ADDu);
   AdduInst.addOperand(MCOperand::createReg(DstReg));
   AdduInst.addOperand(MCOperand::createReg(SrcReg));
   AdduInst.addOperand(MCOperand::createReg(TrgReg));
