@@ -1148,10 +1148,10 @@ void llvm::PrintSymbolTable(const ObjectFile *o) {
     }
 
     outs() << '\t';
-    if (Common)
-      outs() << format("%08" PRIx64 " ", Symbol.getAlignment());
-    else if (isa<ELFObjectFileBase>(o))
-      outs() << format("%08" PRIx64 " ", Symbol.getSize());
+    if (Common || isa<ELFObjectFileBase>(o)) {
+      uint64_t Val = Common ? Symbol.getAlignment() :  Symbol.getSize();
+      outs() << format("\t %08" PRIx64 " ", Val);
+    }
 
     if (Hidden) {
       outs() << ".hidden ";
