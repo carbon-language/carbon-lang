@@ -24,7 +24,14 @@
 #include "sanitizer_common/sanitizer_libc.h"
 #include "sanitizer_common/sanitizer_mac.h"
 
-#include <crt_externs.h>  // for _NSGetArgv
+#if !SANITIZER_IOS
+#include <crt_externs.h>  // for _NSGetArgv and _NSGetEnviron
+#else
+extern "C" {
+  extern char ***_NSGetArgv(void);
+}
+#endif
+
 #include <dlfcn.h>  // for dladdr()
 #include <mach-o/dyld.h>
 #include <mach-o/loader.h>

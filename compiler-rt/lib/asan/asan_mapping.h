@@ -98,9 +98,12 @@
 
 static const u64 kDefaultShadowScale = 3;
 static const u64 kDefaultShadowOffset32 = 1ULL << 29;  // 0x20000000
-static const u64 kIosShadowOffset32 = 1ULL << 30;  // 0x40000000
 static const u64 kDefaultShadowOffset64 = 1ULL << 44;
 static const u64 kDefaultShort64bitShadowOffset = 0x7FFF8000;  // < 2G.
+static const u64 kIosShadowOffset32 = 1ULL << 30;  // 0x40000000
+static const u64 kIosShadowOffset64 = 0x130000000;
+static const u64 kIosSimShadowOffset32 = 1ULL << 30;
+static const u64 kIosSimShadowOffset64 = kDefaultShadowOffset64;
 static const u64 kAArch64_ShadowOffset64 = 1ULL << 36;
 static const u64 kMIPS32_ShadowOffset32 = 0x0aaa0000;
 static const u64 kMIPS64_ShadowOffset64 = 1ULL << 37;
@@ -118,10 +121,12 @@ static const u64 kWindowsShadowOffset32 = 3ULL << 28;  // 0x30000000
 #    define SHADOW_OFFSET kMIPS32_ShadowOffset32
 #  elif SANITIZER_FREEBSD
 #    define SHADOW_OFFSET kFreeBSD_ShadowOffset32
-#  elif SANITIZER_IOS
-#    define SHADOW_OFFSET kIosShadowOffset32
 #  elif SANITIZER_WINDOWS
 #    define SHADOW_OFFSET kWindowsShadowOffset32
+#  elif SANITIZER_IOSSIM
+#    define SHADOW_OFFSET kIosSimShadowOffset32
+#  elif SANITIZER_IOS
+#    define SHADOW_OFFSET kIosShadowOffset32
 #  else
 #    define SHADOW_OFFSET kDefaultShadowOffset32
 #  endif
@@ -136,6 +141,10 @@ static const u64 kWindowsShadowOffset32 = 3ULL << 28;  // 0x30000000
 #   define SHADOW_OFFSET kDefaultShadowOffset64
 #  elif defined(__mips64)
 #   define SHADOW_OFFSET kMIPS64_ShadowOffset64
+#  elif SANITIZER_IOSSIM
+#    define SHADOW_OFFSET kIosSimShadowOffset64
+#  elif SANITIZER_IOS
+#    define SHADOW_OFFSET kIosShadowOffset64
 #  else
 #   define SHADOW_OFFSET kDefaultShort64bitShadowOffset
 #  endif
