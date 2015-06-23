@@ -37,9 +37,10 @@ void MainCallChecker::checkPreStmt(const CallExpr *CE, CheckerContext &C) const 
     if (!BT)
       BT.reset(new BugType(this, "call to main", "example analyzer plugin"));
 
-    BugReport *report = new BugReport(*BT, BT->getName(), N);
+    std::unique_ptr<BugReport> report =
+        llvm::make_unique<BugReport>(*BT, BT->getName(), N);
     report->addRange(Callee->getSourceRange());
-    C.emitReport(report);
+    C.emitReport(std::move(report));
   }
 }
 
