@@ -16,6 +16,8 @@ define ptx_device double @test_fabs(double %d) {
 }
 
 define float @test_nvvm_sqrt(float %a) {
+; CHECK: sqrt.rn.f32 %f{{[0-9]+}}, %f{{[0-9]+}};
+; CHECK: ret;
   %val = call float @llvm.nvvm.sqrt.f(float %a)
   ret float %val
 }
