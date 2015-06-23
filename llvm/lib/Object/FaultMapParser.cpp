@@ -14,7 +14,7 @@
 
 using namespace llvm;
 
-const char *faultKindToString(FaultMapParser::FaultKind FT) {
+static const char *faultKindToString(FaultMapParser::FaultKind FT) {
   switch (FT) {
   default:
     llvm_unreachable("unhandled fault type!");
