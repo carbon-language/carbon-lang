@@ -550,3 +550,25 @@ define i32 @test46(i32 %x, i32 %y) {
 ; CHECK-NEXT: %sub = and i32 %y, %x.not
 ; CHECK: ret i32 %sub
 }
+
+define i32 @test47(i1 %A, i32 %B, i32 %C, i32 %D) {
+  %sel0 = select i1 %A, i32 %D, i32 %B
+  %sel1 = select i1 %A, i32 %C, i32 %B
+  %sub = sub i32 %sel0, %sel1
+  ret i32 %sub
+; CHECK-LABEL: @test47(
+; CHECK-NEXT: %[[sub:.*]] = sub i32 %D, %C
+; CHECK-NEXT: %[[sel:.*]] = select i1 %A, i32 %[[sub]], i32 0
+; CHECK-NEXT: ret i32 %[[sel]]
+}
+
+define i32 @test48(i1 %A, i32 %B, i32 %C, i32 %D) {
+  %sel0 = select i1 %A, i32 %B, i32 %D
+  %sel1 = select i1 %A, i32 %B, i32 %C
+  %sub = sub i32 %sel0, %sel1
+  ret i32 %sub
+; CHECK-LABEL: @test48(
+; CHECK-NEXT: %[[sub:.*]] = sub i32 %D, %C
+; CHECK-NEXT: %[[sel:.*]] = select i1 %A, i32 0, i32 %[[sub]]
+; CHECK-NEXT: ret i32 %[[sel]]
+}

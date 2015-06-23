@@ -1611,6 +1611,32 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
       return BinaryOperator::CreateAnd(A, B);
   }
 
+  // (sub (select (a, c, b)), (select (a, d, b))) -> (select (a, (sub c, d), 0))
+  // (sub (select (a, b, c)), (select (a, b, d))) -> (select (a, 0, (sub c, d)))
+  if (auto *SI0 = dyn_cast<SelectInst>(Op0)) {
+    if (auto *SI1 = dyn_cast<SelectInst>(Op1)) {
+      if (SI0->getCondition() == SI1->getCondition()) {
+        if (Value *V = SimplifySubInst(
+                SI0->getFalseValue(), SI1->getFalseValue(), I.hasNoSignedWrap(),
+                I.hasNoUnsignedWrap(), DL, TLI, DT, AC))
+          return SelectInst::Create(
+              SI0->getCondition(),
+              Builder->CreateSub(SI0->getTrueValue(), SI1->getTrueValue(), "",
+                                 /*HasNUW=*/I.hasNoUnsignedWrap(),
+                                 /*HasNSW=*/I.hasNoSignedWrap()),
+              V);
+        if (Value *V = SimplifySubInst(SI0->getTrueValue(), SI1->getTrueValue(),
+                                       I.hasNoSignedWrap(),
+                                       I.hasNoUnsignedWrap(), DL, TLI, DT, AC))
+          return SelectInst::Create(
+              SI0->getCondition(), V,
+              Builder->CreateSub(SI0->getFalseValue(), SI1->getFalseValue(), "",
+                                 /*HasNUW=*/I.hasNoUnsignedWrap(),
+                                 /*HasNSW=*/I.hasNoSignedWrap()));
+      }
+    }
+  }
+
   if (Op0->hasOneUse()) {
     Value *Y = nullptr;
     // ((X | Y) - X) --> (~X & Y)
