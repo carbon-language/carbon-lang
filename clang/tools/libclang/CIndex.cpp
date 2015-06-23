@@ -3827,12 +3827,11 @@ CXString clang_Cursor_getMangling(CXCursor C) {
   // Now apply backend mangling.
   std::unique_ptr<llvm::DataLayout> DL(
       new llvm::DataLayout(Ctx.getTargetInfo().getTargetDescription()));
-  llvm::Mangler BackendMangler(DL.get());
 
   std::string FinalBuf;
   llvm::raw_string_ostream FinalBufOS(FinalBuf);
-  BackendMangler.getNameWithPrefix(FinalBufOS,
-                                   llvm::Twine(FrontendBufOS.str()));
+  llvm::Mangler::getNameWithPrefix(FinalBufOS, llvm::Twine(FrontendBufOS.str()),
+                                   *DL);
 
   return cxstring::createDup(FinalBufOS.str());
 }
