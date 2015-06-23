@@ -13,6 +13,7 @@
 
 #include "lldb/Core/Address.h"
 #include "lldb/Core/Debugger.h"
+#include "lldb/Core/Language.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/StreamString.h"
@@ -210,6 +211,7 @@ static FormatEntity::Entry::Definition g_top_level_entries[] =
     ENTRY_CHILDREN          ("ansi"                , Invalid                , None      , g_ansi_entries),
     ENTRY                   ("current-pc-arrow"    , CurrentPCArrow         , CString   ),
     ENTRY_CHILDREN          ("file"                , File                   , CString   , g_file_child_entries),
+    ENTRY                   ("language"            , Lang                   , CString),
     ENTRY_CHILDREN          ("frame"               , Invalid                , None      , g_frame_child_entries),
     ENTRY_CHILDREN          ("function"            , Invalid                , None      , g_function_child_entries),
     ENTRY_CHILDREN          ("line"                , Invalid                , None      , g_line_child_entries),
@@ -321,6 +323,7 @@ FormatEntity::Entry::TypeToCString (Type t)
     ENUM_TO_CSTR(ScriptTarget);
     ENUM_TO_CSTR(ModuleFile);
     ENUM_TO_CSTR(File);
+    ENUM_TO_CSTR(Lang);
     ENUM_TO_CSTR(FrameIndex);
     ENUM_TO_CSTR(FrameRegisterPC);
     ENUM_TO_CSTR(FrameRegisterSP);
@@ -1511,6 +1514,23 @@ FormatEntity::Format (const Entry &entry,
                     // CompileUnit is a FileSpec
                     if (DumpFile(s, *cu, (FileKind)entry.number))
                         return true;
+                }
+            }
+            return false;
+
+        case Entry::Type::Lang:
+            if (sc)
+            {
+                CompileUnit *cu = sc->comp_unit;
+                if (cu)
+                {
+                    Language lang(cu->GetLanguage());
+                    const char *lang_name = lang.AsCString();
+                    if (lang_name)
+                    {
+                        s.PutCString(lang_name);
+                        return true;
+                    }
                 }
             }
             return false;

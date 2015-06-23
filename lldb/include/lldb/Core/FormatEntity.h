@@ -61,6 +61,7 @@ namespace lldb_private
                 ScriptTarget,
                 ModuleFile,
                 File,
+                Lang,
                 FrameIndex,
                 FrameRegisterPC,
                 FrameRegisterSP,
