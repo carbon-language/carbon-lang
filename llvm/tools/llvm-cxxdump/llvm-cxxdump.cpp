@@ -16,6 +16,7 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/Object/Archive.h"
 #include "llvm/Object/ObjectFile.h"
+#include "llvm/Object/SymbolSize.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/FileSystem.h"
@@ -187,7 +188,14 @@ static void dumpCXXData(const ObjectFile *Obj) {
 
   uint8_t BytesInAddress = Obj->getBytesInAddress();
 
-  for (const object::SymbolRef &Sym : Obj->symbols()) {
+  ErrorOr<std::vector<std::pair<SymbolRef, uint64_t>>> SymAddrOrErr =
+      object::computeSymbolSizes(*Obj);
+  if (error(SymAddrOrErr.getError()))
+    return;
+
+  for (auto &P : *SymAddrOrErr) {
+    object::SymbolRef Sym = P.first;
+    uint64_t SymSize = P.second;
     StringRef SymName;
     if (error(Sym.getName(SymName)))
       return;
@@ -207,7 +215,6 @@ static void dumpCXXData(const ObjectFile *Obj) {
     uint64_t SymAddress;
     if (error(Sym.getAddress(SymAddress)))
       return;
-    uint64_t SymSize = Sym.getSize();
     uint64_t SecAddress = Sec.getAddress();
     uint64_t SecSize = Sec.getSize();
     uint64_t SymOffset = SymAddress - SecAddress;
