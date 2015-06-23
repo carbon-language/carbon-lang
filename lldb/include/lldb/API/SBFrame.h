@@ -89,18 +89,18 @@ public:
     ///
     /// See also IsInlined().
     const char *
-    GetFunctionName();
+    GetFunctionName() const;
 
     /// Return true if this frame represents an inlined function.
     ///
     /// See also GetFunctionName().
     bool
-    IsInlined();
+    IsInlined() const;
     
     /// The version that doesn't supply a 'use_dynamic' value will use the
     /// target's default.
     lldb::SBValue
-    EvaluateExpression (const char *expr);    
+    EvaluateExpression (const char *expr);
 
     lldb::SBValue
     EvaluateExpression (const char *expr, lldb::DynamicValueType use_dynamic);

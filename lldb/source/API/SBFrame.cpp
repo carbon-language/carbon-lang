@@ -1499,7 +1499,7 @@ SBFrame::EvaluateExpression (const char *expr, const SBExpressionOptions &option
 }
 
 bool
-SBFrame::IsInlined()
+SBFrame::IsInlined() const
 {
     Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     ExecutionContext exe_ctx(m_opaque_sp.get());
@@ -1536,7 +1536,7 @@ SBFrame::IsInlined()
 }
 
 const char *
-SBFrame::GetFunctionName()
+SBFrame::GetFunctionName() const
 {
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     const char *name = NULL;
