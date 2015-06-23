@@ -29,13 +29,12 @@
 using namespace clang;
 using namespace CodeGen;
 
-static CharUnits
-ComputeNonVirtualBaseClassOffset(ASTContext &Context,
-                                 const CXXRecordDecl *DerivedClass,
-                                 CastExpr::path_const_iterator Start,
-                                 CastExpr::path_const_iterator End) {
+CharUnits CodeGenModule::computeNonVirtualBaseClassOffset(
+    const CXXRecordDecl *DerivedClass, CastExpr::path_const_iterator Start,
+    CastExpr::path_const_iterator End) {
   CharUnits Offset = CharUnits::Zero();
 
+  const ASTContext &Context = getContext();
   const CXXRecordDecl *RD = DerivedClass;
 
   for (CastExpr::path_const_iterator I = Start; I != End; ++I) {
@@ -64,8 +63,7 @@ CodeGenModule::GetNonVirtualBaseClassOffset(const CXXRecordDecl *ClassDecl,
   assert(PathBegin != PathEnd && "Base path should not be empty!");
 
   CharUnits Offset =
-    ComputeNonVirtualBaseClassOffset(getContext(), ClassDecl,
-                                     PathBegin, PathEnd);
+      computeNonVirtualBaseClassOffset(ClassDecl, PathBegin, PathEnd);
   if (Offset.isZero())
     return nullptr;
 
@@ -158,9 +156,8 @@ llvm::Value *CodeGenFunction::GetAddressOfBaseClass(
   // Compute the static offset of the ultimate destination within its
   // allocating subobject (the virtual base, if there is one, or else
   // the "complete" object that we see).
-  CharUnits NonVirtualOffset =
-    ComputeNonVirtualBaseClassOffset(getContext(), VBase ? VBase : Derived,
-                                     Start, PathEnd);
+  CharUnits NonVirtualOffset = CGM.computeNonVirtualBaseClassOffset(
+      VBase ? VBase : Derived, Start, PathEnd);
 
   // If there's a virtual step, we can sometimes "devirtualize" it.
   // For now, that's limited to when the derived type is final.

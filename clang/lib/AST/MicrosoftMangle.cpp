@@ -115,6 +115,9 @@ public:
   void mangleCXXVBTable(const CXXRecordDecl *Derived,
                         ArrayRef<const CXXRecordDecl *> BasePath,
                         raw_ostream &Out) override;
+  void mangleCXXVirtualDisplacementMap(const CXXRecordDecl *SrcRD,
+                                       const CXXRecordDecl *DstRD,
+                                       raw_ostream &Out) override;
   void mangleCXXThrowInfo(QualType T, bool IsConst, bool IsVolatile,
                           uint32_t NumEntries, raw_ostream &Out) override;
   void mangleCXXCatchableTypeArray(QualType T, uint32_t NumEntries,
@@ -2393,6 +2396,15 @@ void MicrosoftMangleContextImpl::mangleCXXCatchHandlerType(QualType T,
   Mangler.getStream() << "llvm.eh.handlertype.";
   Mangler.mangleType(T, SourceRange(), MicrosoftCXXNameMangler::QMM_Result);
   Mangler.getStream() << '.' << Flags;
+}
+
+void MicrosoftMangleContextImpl::mangleCXXVirtualDisplacementMap(
+    const CXXRecordDecl *SrcRD, const CXXRecordDecl *DstRD, raw_ostream &Out) {
+  MicrosoftCXXNameMangler Mangler(*this, Out);
+  Mangler.getStream() << "\01??_K";
+  Mangler.mangleName(SrcRD);
+  Mangler.getStream() << "$C";
+  Mangler.mangleName(DstRD);
 }
 
 void MicrosoftMangleContextImpl::mangleCXXThrowInfo(QualType T,

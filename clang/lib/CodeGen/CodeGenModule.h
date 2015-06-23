@@ -732,6 +732,11 @@ public:
   /// Get a reference to the target of VD.
   llvm::Constant *GetWeakRefReference(const ValueDecl *VD);
 
+  CharUnits
+  computeNonVirtualBaseClassOffset(const CXXRecordDecl *DerivedClass,
+                                   CastExpr::path_const_iterator Start,
+                                   CastExpr::path_const_iterator End);
+
   /// Returns the offset from a derived class to  a class. Returns null if the
   /// offset is 0.
   llvm::Constant *

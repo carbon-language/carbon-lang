@@ -204,6 +204,10 @@ public:
   virtual void mangleVirtualMemPtrThunk(const CXXMethodDecl *MD,
                                         raw_ostream &) = 0;
 
+  virtual void mangleCXXVirtualDisplacementMap(const CXXRecordDecl *SrcRD,
+                                               const CXXRecordDecl *DstRD,
+                                               raw_ostream &Out) = 0;
+
   virtual void mangleCXXThrowInfo(QualType T, bool IsConst, bool IsVolatile,
                                   uint32_t NumEntries, raw_ostream &Out) = 0;
 
