@@ -188,6 +188,6 @@ namespace {
       (void) llvm::sys::RunningOnValgrind();
     }
   } ForcePassLinking; // Force link by creating a global definition.
-} // namespace
+}
 
 #endif
