@@ -1452,7 +1452,7 @@ CodeGenModule::getMemberPointerConstant(const UnaryOperator *uo) {
 
   // A member function pointer.
   if (const CXXMethodDecl *method = dyn_cast<CXXMethodDecl>(decl))
-    return getCXXABI().EmitMemberPointer(method);
+    return getCXXABI().EmitMemberFunctionPointer(method);
 
   // Otherwise, a member data pointer.
   uint64_t fieldOffset = getContext().getFieldOffset(decl);

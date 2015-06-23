@@ -545,7 +545,7 @@ public:
 
   llvm::Constant *EmitMemberDataPointer(const MemberPointerType *MPT,
                                         CharUnits offset) override;
-  llvm::Constant *EmitMemberPointer(const CXXMethodDecl *MD) override;
+  llvm::Constant *EmitMemberFunctionPointer(const CXXMethodDecl *MD) override;
   llvm::Constant *EmitMemberPointer(const APValue &MP, QualType MPT) override;
 
   llvm::Value *EmitMemberPointerComparison(CodeGenFunction &CGF,
@@ -2479,7 +2479,8 @@ MicrosoftCXXABI::EmitMemberDataPointer(const MemberPointerType *MPT,
                                CharUnits::Zero(), /*VBTableIndex=*/0);
 }
 
-llvm::Constant *MicrosoftCXXABI::EmitMemberPointer(const CXXMethodDecl *MD) {
+llvm::Constant *
+MicrosoftCXXABI::EmitMemberFunctionPointer(const CXXMethodDecl *MD) {
   return BuildMemberPointer(MD->getParent(), MD, CharUnits::Zero());
 }
 
