@@ -461,7 +461,9 @@ public:
   /// instruction of this basic block. If a terminator does not exist,
   /// it returns end()
   iterator getFirstTerminator();
-  const_iterator getFirstTerminator() const;
+  const_iterator getFirstTerminator() const {
+    return const_cast<MachineBasicBlock *>(this)->getFirstTerminator();
+  }
 
   /// getFirstInstrTerminator - Same getFirstTerminator but it ignores bundles
   /// and return an instr_iterator instead.
@@ -470,7 +472,9 @@ public:
   /// getLastNonDebugInstr - returns an iterator to the last non-debug
   /// instruction in the basic block, or end()
   iterator getLastNonDebugInstr();
-  const_iterator getLastNonDebugInstr() const;
+  const_iterator getLastNonDebugInstr() const {
+    return const_cast<MachineBasicBlock *>(this)->getLastNonDebugInstr();
+  }
 
   /// SplitCriticalEdge - Split the critical edge from this block to the
   /// given successor block, and return the newly created block, or null

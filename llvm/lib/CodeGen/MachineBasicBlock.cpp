@@ -171,16 +171,6 @@ MachineBasicBlock::iterator MachineBasicBlock::getFirstTerminator() {
   return I;
 }
 
-MachineBasicBlock::const_iterator
-MachineBasicBlock::getFirstTerminator() const {
-  const_iterator B = begin(), E = end(), I = E;
-  while (I != B && ((--I)->isTerminator() || I->isDebugValue()))
-    ; /*noop */
-  while (I != E && !I->isTerminator())
-    ++I;
-  return I;
-}
-
 MachineBasicBlock::instr_iterator MachineBasicBlock::getFirstInstrTerminator() {
   instr_iterator B = instr_begin(), E = instr_end(), I = E;
   while (I != B && ((--I)->isTerminator() || I->isDebugValue()))
@@ -193,21 +183,6 @@ MachineBasicBlock::instr_iterator MachineBasicBlock::getFirstInstrTerminator() {
 MachineBasicBlock::iterator MachineBasicBlock::getLastNonDebugInstr() {
   // Skip over end-of-block dbg_value instructions.
   instr_iterator B = instr_begin(), I = instr_end();
-  while (I != B) {
-    --I;
-    // Return instruction that starts a bundle.
-    if (I->isDebugValue() || I->isInsideBundle())
-      continue;
-    return I;
-  }
-  // The block is all debug values.
-  return end();
-}
-
-MachineBasicBlock::const_iterator
-MachineBasicBlock::getLastNonDebugInstr() const {
-  // Skip over end-of-block dbg_value instructions.
-  const_instr_iterator B = instr_begin(), I = instr_end();
   while (I != B) {
     --I;
     // Return instruction that starts a bundle.
