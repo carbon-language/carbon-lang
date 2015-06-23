@@ -82,6 +82,12 @@ Dylibs("dylib",
 static cl::opt<std::string>
 TripleName("triple", cl::desc("Target triple for disassembler"));
 
+static cl::opt<std::string>
+MCPU("mcpu",
+     cl::desc("Target a specific cpu type (-mcpu=help for details)"),
+     cl::value_desc("cpu-name"),
+     cl::init(""));
+
 static cl::list<std::string>
 CheckFiles("check",
            cl::desc("File containing RuntimeDyld verifier checks."),
@@ -539,7 +545,7 @@ static int linkAndVerify() {
   TripleName = TheTriple.getTriple();
 
   std::unique_ptr<MCSubtargetInfo> STI(
-    TheTarget->createMCSubtargetInfo(TripleName, "", ""));
+    TheTarget->createMCSubtargetInfo(TripleName, MCPU, ""));
   assert(STI && "Unable to create subtarget info!");
 
   std::unique_ptr<MCRegisterInfo> MRI(TheTarget->createMCRegInfo(TripleName));
