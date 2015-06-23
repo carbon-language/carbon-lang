@@ -143,6 +143,12 @@ NativeRegisterContext::GetPC (lldb::addr_t fail_value)
     return retval;
 }
 
+lldb::addr_t
+NativeRegisterContext::GetPCfromBreakpointLocation (lldb::addr_t fail_value)
+{
+    return GetPC (fail_value);
+}
+
 Error
 NativeRegisterContext::SetPC (lldb::addr_t pc)
 {

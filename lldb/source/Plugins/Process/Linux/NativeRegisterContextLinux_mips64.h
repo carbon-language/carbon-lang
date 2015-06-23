@@ -33,6 +33,9 @@ namespace process_linux {
         uint32_t
         GetRegisterSetCount () const override;
 
+        lldb::addr_t
+        GetPCfromBreakpointLocation (lldb::addr_t fail_value = LLDB_INVALID_ADDRESS) override;
+
         const RegisterSet *
         GetRegisterSet (uint32_t set_index) const override;
 

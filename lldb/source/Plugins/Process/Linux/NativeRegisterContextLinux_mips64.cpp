@@ -485,6 +485,58 @@ NativeRegisterContextLinux_mips64::GetRegisterSetCount () const
     return k_num_register_sets;
 }
 
+lldb::addr_t
+NativeRegisterContextLinux_mips64::GetPCfromBreakpointLocation (lldb::addr_t fail_value)
+{
+    Error error;
+    RegisterValue pc_value;
+    lldb::addr_t pc = fail_value;
+    Log *log (GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS));
+    
+    if (log)
+        log->Printf ("NativeRegisterContextLinux_mips64::%s Reading PC from breakpoint location", __FUNCTION__);
+
+    // PC register is at index 34 of the register array
+    const RegisterInfo *const pc_info_p = GetRegisterInfoAtIndex (34);
+        
+    error = ReadRegister (pc_info_p, pc_value);
+    if (error.Success ())
+    {
+        pc = pc_value.GetAsUInt64 ();
+        
+        // CAUSE register is at index 37 of the register array
+        const RegisterInfo *const cause_info_p = GetRegisterInfoAtIndex (37);
+        RegisterValue cause_value;
+
+        ReadRegister (cause_info_p, cause_value);
+
+        uint64_t cause = cause_value.GetAsUInt64 ();
+        
+        if (log)
+            log->Printf ("NativeRegisterContextLinux_mips64::%s PC 0x%" PRIx64 " Cause 0x%" PRIx64, __FUNCTION__, pc, cause);
+
+        /*
+         * The breakpoint might be in a delay slot. In this case PC points
+         * to the delayed branch instruction rather then the instruction
+         * in the delay slot. If the CAUSE.BD flag is set then adjust the 
+         * PC based on the size of the branch instruction.
+        */
+        if ((cause & (1 << 31)) != 0)
+        {
+            lldb::addr_t branch_delay = 0;
+            branch_delay = 4;   // FIXME - Adjust according to size of branch instruction at PC
+            pc = pc + branch_delay;
+            pc_value.SetUInt64 (pc);
+            WriteRegister (pc_info_p, pc_value);
+            
+            if (log)
+                log->Printf ("NativeRegisterContextLinux_mips64::%s New PC 0x%" PRIx64, __FUNCTION__, pc);
+        }
+    }
+
+    return pc;
+}
+
 const RegisterSet *
 NativeRegisterContextLinux_mips64::GetRegisterSet (uint32_t set_index) const
 {

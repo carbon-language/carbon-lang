@@ -2018,7 +2018,7 @@ NativeProcessLinux::MonitorSIGTRAP(const siginfo_t *info, lldb::pid_t pid)
         {
             // If a watchpoint was hit, report it
             uint32_t wp_index;
-            Error error = thread_sp->GetRegisterContext()->GetWatchpointHitIndex(wp_index, NULL);
+            Error error = thread_sp->GetRegisterContext()->GetWatchpointHitIndex(wp_index, LLDB_INVALID_ADDRESS);
             if (error.Fail() && log)
                 log->Printf("NativeProcessLinux::%s() "
                             "received error while checking for watchpoint hits, "
@@ -2442,7 +2442,9 @@ NativeProcessLinux::SetupSoftwareSingleStepping(NativeThreadProtocolSP thread_sp
         }
     }
     else if (m_arch.GetMachine() == llvm::Triple::mips64
-            || m_arch.GetMachine() == llvm::Triple::mips64el)
+            || m_arch.GetMachine() == llvm::Triple::mips64el
+            || m_arch.GetMachine() == llvm::Triple::mips
+            || m_arch.GetMachine() == llvm::Triple::mipsel)
         error = SetSoftwareBreakpoint(next_pc, 4);
     else
     {
@@ -2462,7 +2464,8 @@ bool
 NativeProcessLinux::SupportHardwareSingleStepping() const
 {
     if (m_arch.GetMachine() == llvm::Triple::arm
-        || m_arch.GetMachine() == llvm::Triple::mips64 || m_arch.GetMachine() == llvm::Triple::mips64el)
+        || m_arch.GetMachine() == llvm::Triple::mips64 || m_arch.GetMachine() == llvm::Triple::mips64el
+        || m_arch.GetMachine() == llvm::Triple::mips || m_arch.GetMachine() == llvm::Triple::mipsel)
         return false;
     return true;
 }
@@ -3028,7 +3031,6 @@ NativeProcessLinux::GetSoftwareBreakpointPCOffset (NativeRegisterContextSP conte
     // set per architecture.  Need ARM, MIPS support here.
     static const uint8_t g_aarch64_opcode[] = { 0x00, 0x00, 0x20, 0xd4 };
     static const uint8_t g_i386_opcode [] = { 0xCC };
-    static const uint8_t g_mips64_opcode[] = { 0x00, 0x00, 0x00, 0x0d };
 
     switch (m_arch.GetMachine ())
     {
@@ -3049,7 +3051,7 @@ NativeProcessLinux::GetSoftwareBreakpointPCOffset (NativeRegisterContextSP conte
         case llvm::Triple::mips64el:
         case llvm::Triple::mips:
         case llvm::Triple::mipsel:
-            actual_opcode_size = static_cast<uint32_t> (sizeof(g_mips64_opcode));
+            actual_opcode_size = 0;
             return Error ();
         
         default:
@@ -3553,7 +3555,7 @@ NativeProcessLinux::FixupBreakpointPCAsNeeded (NativeThreadProtocolSP &thread_sp
     }
 
     // First try probing for a breakpoint at a software breakpoint location: PC - breakpoint size.
-    const lldb::addr_t initial_pc_addr = context_sp->GetPC ();
+    const lldb::addr_t initial_pc_addr = context_sp->GetPCfromBreakpointLocation ();
     lldb::addr_t breakpoint_addr = initial_pc_addr;
     if (breakpoint_size > 0)
     {

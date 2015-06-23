@@ -758,7 +758,7 @@ EmulateInstructionMIPS64::Emulate_BEQ (llvm::MCInst& insn)
     if (rs_val == rt_val)
         target = pc + offset;
     else
-        target = pc + 4;
+        target = pc + 8;
 
     Context context;
     context.type = eContextRelativeBranchImmediate;
@@ -801,7 +801,7 @@ EmulateInstructionMIPS64::Emulate_BNE (llvm::MCInst& insn)
     if (rs_val != rt_val)
         target = pc + offset;
     else
-        target = pc + 4;
+        target = pc + 8;
 
     Context context;
     context.type = eContextRelativeBranchImmediate;
@@ -913,7 +913,7 @@ EmulateInstructionMIPS64::Emulate_BGEZL (llvm::MCInst& insn)
      *          PC = PC + sign_ext (offset << 2)
     */
     rs = m_reg_info->getEncodingValue (insn.getOperand(0).getReg());
-    offset = insn.getOperand(2).getImm();
+    offset = insn.getOperand(1).getImm();
 
     pc = ReadRegisterUnsigned (eRegisterKindDWARF, gcc_dwarf_pc_mips64, 0, &success);
     if (!success)
@@ -952,7 +952,7 @@ EmulateInstructionMIPS64::Emulate_BLTZL (llvm::MCInst& insn)
      *          PC = PC + sign_ext (offset << 2)
     */
     rs = m_reg_info->getEncodingValue (insn.getOperand(0).getReg());
-    offset = insn.getOperand(2).getImm();
+    offset = insn.getOperand(1).getImm();
 
     pc = ReadRegisterUnsigned (eRegisterKindDWARF, gcc_dwarf_pc_mips64, 0, &success);
     if (!success)
@@ -991,7 +991,7 @@ EmulateInstructionMIPS64::Emulate_BGTZL (llvm::MCInst& insn)
      *          PC = PC + sign_ext (offset << 2)
     */
     rs = m_reg_info->getEncodingValue (insn.getOperand(0).getReg());
-    offset = insn.getOperand(2).getImm();
+    offset = insn.getOperand(1).getImm();
 
     pc = ReadRegisterUnsigned (eRegisterKindDWARF, gcc_dwarf_pc_mips64, 0, &success);
     if (!success)
@@ -1030,7 +1030,7 @@ EmulateInstructionMIPS64::Emulate_BLEZL (llvm::MCInst& insn)
      *          PC = PC + sign_ext (offset << 2)
     */
     rs = m_reg_info->getEncodingValue (insn.getOperand(0).getReg());
-    offset = insn.getOperand(2).getImm();
+    offset = insn.getOperand(1).getImm();
 
     pc = ReadRegisterUnsigned (eRegisterKindDWARF, gcc_dwarf_pc_mips64, 0, &success);
     if (!success)
@@ -1069,7 +1069,7 @@ EmulateInstructionMIPS64::Emulate_BGTZ (llvm::MCInst& insn)
      *          PC = PC + sign_ext (offset << 2)
     */
     rs = m_reg_info->getEncodingValue (insn.getOperand(0).getReg());
-    offset = insn.getOperand(2).getImm();
+    offset = insn.getOperand(1).getImm();
 
     pc = ReadRegisterUnsigned (eRegisterKindDWARF, gcc_dwarf_pc_mips64, 0, &success);
     if (!success)
@@ -1082,7 +1082,7 @@ EmulateInstructionMIPS64::Emulate_BGTZ (llvm::MCInst& insn)
     if (rs_val > 0)
         target = pc + offset;
     else
-        target = pc + 4;
+        target = pc + 8;
 
     Context context;
     context.type = eContextRelativeBranchImmediate;
@@ -1108,7 +1108,7 @@ EmulateInstructionMIPS64::Emulate_BLEZ (llvm::MCInst& insn)
      *          PC = PC + sign_ext (offset << 2)
     */
     rs = m_reg_info->getEncodingValue (insn.getOperand(0).getReg());
-    offset = insn.getOperand(2).getImm();
+    offset = insn.getOperand(1).getImm();
 
     pc = ReadRegisterUnsigned (eRegisterKindDWARF, gcc_dwarf_pc_mips64, 0, &success);
     if (!success)
@@ -1121,7 +1121,7 @@ EmulateInstructionMIPS64::Emulate_BLEZ (llvm::MCInst& insn)
     if (rs_val <= 0)
         target = pc + offset;
     else
-        target = pc + 4;
+        target = pc + 8;
 
     Context context;
     context.type = eContextRelativeBranchImmediate;
@@ -1147,7 +1147,7 @@ EmulateInstructionMIPS64::Emulate_BLTZ (llvm::MCInst& insn)
      *          PC = PC + sign_ext (offset << 2)
     */
     rs = m_reg_info->getEncodingValue (insn.getOperand(0).getReg());
-    offset = insn.getOperand(2).getImm();
+    offset = insn.getOperand(1).getImm();
 
     pc = ReadRegisterUnsigned (eRegisterKindDWARF, gcc_dwarf_pc_mips64, 0, &success);
     if (!success)
@@ -1160,7 +1160,7 @@ EmulateInstructionMIPS64::Emulate_BLTZ (llvm::MCInst& insn)
     if (rs_val < 0)
         target = pc + offset;
     else
-        target = pc + 4;
+        target = pc + 8;
 
     Context context;
     context.type = eContextRelativeBranchImmediate;
@@ -1307,7 +1307,7 @@ EmulateInstructionMIPS64::Emulate_BGEZAL (llvm::MCInst& insn)
     if ((int64_t) rs_val >= 0)
         target = pc + offset;
     else
-        target = pc + 4;
+        target = pc + 8;
 
     if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, gcc_dwarf_pc_mips64, target))
         return false;
@@ -1350,7 +1350,7 @@ EmulateInstructionMIPS64::Emulate_BLTZAL (llvm::MCInst& insn)
     if ((int64_t) rs_val < 0)
         target = pc + offset;
     else
-        target = pc + 4;
+        target = pc + 8;
 
     if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, gcc_dwarf_pc_mips64, target))
         return false;
@@ -1691,7 +1691,7 @@ EmulateInstructionMIPS64::Emulate_BGEZ (llvm::MCInst& insn)
     if (rs_val >= 0)
         target = pc + offset;
     else
-        target = pc + 4;
+        target = pc + 8;
 
     if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, gcc_dwarf_pc_mips64, target))
         return false;
@@ -2532,7 +2532,7 @@ EmulateInstructionMIPS64::Emulate_BC1F (llvm::MCInst& insn)
     if ((fcsr & (1 << cc)) == 0)
         target = pc + offset;
     else
-        target = pc + 4;
+        target = pc + 8;
     
     Context context;
 
@@ -2573,7 +2573,7 @@ EmulateInstructionMIPS64::Emulate_BC1T (llvm::MCInst& insn)
     if ((fcsr & (1 << cc)) != 0)
         target = pc + offset;
     else
-        target = pc + 4;
+        target = pc + 8;
     
     Context context;
 
@@ -2694,7 +2694,7 @@ EmulateInstructionMIPS64::Emulate_BC1EQZ (llvm::MCInst& insn)
     if ((ft_val & 1) == 0)
         target = pc + 4 + offset;
     else
-        target = pc + 4;
+        target = pc + 8;
     
     Context context;
 
@@ -2733,7 +2733,7 @@ EmulateInstructionMIPS64::Emulate_BC1NEZ (llvm::MCInst& insn)
     if ((ft_val & 1) != 0)
         target = pc + 4 + offset;
     else
-        target = pc + 4;
+        target = pc + 8;
     
     Context context;
 
@@ -2776,7 +2776,7 @@ EmulateInstructionMIPS64::Emulate_BC1ANY2F (llvm::MCInst& insn)
     if (((fcsr >> cc) & 3) != 3)
         target = pc + offset;
     else
-        target = pc + 4;
+        target = pc + 8;
     
     Context context;
 
@@ -2819,7 +2819,7 @@ EmulateInstructionMIPS64::Emulate_BC1ANY2T (llvm::MCInst& insn)
     if (((fcsr >> cc) & 3) != 0)
         target = pc + offset;
     else
-        target = pc + 4;
+        target = pc + 8;
     
     Context context;
 
@@ -2864,7 +2864,7 @@ EmulateInstructionMIPS64::Emulate_BC1ANY4F (llvm::MCInst& insn)
     if (((fcsr >> cc) & 0xf) != 0xf)
         target = pc + offset;
     else
-        target = pc + 4;
+        target = pc + 8;
     
     Context context;
 
@@ -2909,7 +2909,7 @@ EmulateInstructionMIPS64::Emulate_BC1ANY4T (llvm::MCInst& insn)
     if (((fcsr >> cc) & 0xf) != 0)
         target = pc + offset;
     else
-        target = pc + 4;
+        target = pc + 8;
     
     Context context;
 

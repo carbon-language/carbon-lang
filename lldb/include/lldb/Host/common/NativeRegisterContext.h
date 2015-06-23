@@ -141,6 +141,9 @@ public:
     lldb::addr_t
     GetPC (lldb::addr_t fail_value = LLDB_INVALID_ADDRESS);
 
+    virtual lldb::addr_t
+    GetPCfromBreakpointLocation (lldb::addr_t fail_value = LLDB_INVALID_ADDRESS);
+
     Error
     SetPC (lldb::addr_t pc);
 
