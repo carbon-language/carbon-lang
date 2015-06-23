@@ -496,7 +496,7 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
     if (Config->Verbose)
       llvm::outs() << "Reading " << File->getName() << "\n";
     if (auto EC = Symtab.addFile(std::move(File))) {
-      llvm::errs() << File->getName() << ": " << EC.message() << "\n";
+      llvm::errs() << MB.getBufferIdentifier() << ": " << EC.message() << "\n";
       return false;
     }
   }
