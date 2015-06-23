@@ -475,7 +475,8 @@ struct CounterCoverageMappingBuilder
   /// files, this adjusts our current region stack and creates the file regions
   /// for the exited file.
   void handleFileExit(SourceLocation NewLoc) {
-    if (SM.isWrittenInSameFile(MostRecentLocation, NewLoc))
+    if (NewLoc.isInvalid() ||
+        SM.isWrittenInSameFile(MostRecentLocation, NewLoc))
       return;
 
     // If NewLoc is not in a file that contains MostRecentLocation, walk up to
