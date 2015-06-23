@@ -606,7 +606,7 @@ bool DSAStackTy::hasExplicitDSA(
   D = D->getCanonicalDecl();
   auto StartI = Stack.rbegin();
   auto EndI = std::prev(Stack.rend());
-  if (std::distance(StartI, EndI) <= Level)
+  if (std::distance(StartI, EndI) <= (int)Level)
     return false;
   std::advance(StartI, Level);
   return (StartI->SharingMap.count(D) > 0) && StartI->SharingMap[D].RefExpr &&
