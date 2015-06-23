@@ -33,6 +33,15 @@ public:
   explicit APSInt(APInt I, bool isUnsigned = true)
    : APInt(std::move(I)), IsUnsigned(isUnsigned) {}
 
+  /// Construct an APSInt from a string representation.
+  ///
+  /// This constructor interprets the string \p Str using the radix of 10.
+  /// The interpretation stops at the end of the string. The bit width of the
+  /// constructed APSInt is determined automatically.
+  ///
+  /// \param Str the string to be interpreted.
+  explicit APSInt(StringRef Str);
+
   APSInt &operator=(APInt RHS) {
     // Retain our current sign.
     APInt::operator=(std::move(RHS));

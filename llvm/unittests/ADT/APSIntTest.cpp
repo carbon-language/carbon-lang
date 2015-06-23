@@ -143,4 +143,23 @@ TEST(APSIntTest, compareValues) {
   EXPECT_TRUE(APSInt::compareValues(U(8), S(-7).trunc(32)) > 0);
 }
 
+TEST(APSIntTest, FromString) {
+  EXPECT_EQ(APSInt("1").getExtValue(), 1);
+  EXPECT_EQ(APSInt("-1").getExtValue(), -1);
+  EXPECT_EQ(APSInt("0").getExtValue(), 0);
+  EXPECT_EQ(APSInt("56789").getExtValue(), 56789);
+  EXPECT_EQ(APSInt("-1234").getExtValue(), -1234);
 }
+
+#ifdef GTEST_HAS_DEATH_TEST
+#ifndef NDEBUG
+
+TEST(APSIntTest, StringDeath) {
+  EXPECT_DEATH(APSInt(""), "Invalid string length");
+  EXPECT_DEATH(APSInt("1a"), "Invalid character in digit string");
+}
+
+#endif
+#endif
+
+} // end anonymous namespace

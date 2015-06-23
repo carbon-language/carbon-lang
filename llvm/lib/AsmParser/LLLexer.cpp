@@ -903,20 +903,7 @@ lltok::Kind LLLexer::LexDigitOrNegative() {
   if (CurPtr[0] != '.') {
     if (TokStart[0] == '0' && TokStart[1] == 'x')
       return Lex0x();
-    unsigned Len = CurPtr-TokStart;
-    uint32_t numBits = ((Len * 64) / 19) + 2;
-    APInt Tmp(numBits, StringRef(TokStart, Len), 10);
-    if (TokStart[0] == '-') {
-      uint32_t minBits = Tmp.getMinSignedBits();
-      if (minBits > 0 && minBits < numBits)
-        Tmp = Tmp.trunc(minBits);
-      APSIntVal = APSInt(Tmp, false);
-    } else {
-      uint32_t activeBits = Tmp.getActiveBits();
-      if (activeBits > 0 && activeBits < numBits)
-        Tmp = Tmp.trunc(activeBits);
-      APSIntVal = APSInt(Tmp, true);
-    }
+    APSIntVal = APSInt(StringRef(TokStart, CurPtr - TokStart));
     return lltok::APSInt;
   }
 
