@@ -1831,6 +1831,14 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
       Args.push_back(ArgValue);
     }
 
+    // The ARM _MoveToCoprocessor builtins put the input register value as
+    // the first argument, but the LLVM intrinsic expects it as the third one.
+    if (BuiltinID == ARM::BI_MoveToCoprocessor ||
+        BuiltinID == ARM::BI_MoveToCoprocessor2) {
+      return RValue::get(Builder.CreateCall(F, {Args[1], Args[2], Args[0],
+                                                Args[3], Args[4], Args[5]}));
+    }
+
     Value *V = Builder.CreateCall(F, Args);
     QualType BuiltinRetType = E->getType();
 
