@@ -425,6 +425,9 @@ OMPClauseProfiler::VisitOMPCopyprivateClause(const OMPCopyprivateClause *C) {
 void OMPClauseProfiler::VisitOMPFlushClause(const OMPFlushClause *C) {
   VisitOMPClauseList(C);
 }
+void OMPClauseProfiler::VisitOMPDependClause(const OMPDependClause *C) {
+  VisitOMPClauseList(C);
+}
 }
 
 void

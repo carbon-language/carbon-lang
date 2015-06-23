@@ -62,6 +62,14 @@ enum OpenMPScheduleClauseKind {
   OMPC_SCHEDULE_unknown
 };
 
+/// \brief OpenMP attributes for 'depend' clause.
+enum OpenMPDependClauseKind {
+#define OPENMP_DEPEND_KIND(Name) \
+  OMPC_DEPEND_##Name,
+#include "clang/Basic/OpenMPKinds.def"
+  OMPC_DEPEND_unknown
+};
+
 OpenMPDirectiveKind getOpenMPDirectiveKind(llvm::StringRef Str);
 const char *getOpenMPDirectiveName(OpenMPDirectiveKind Kind);
 

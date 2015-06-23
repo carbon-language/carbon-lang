@@ -799,6 +799,17 @@ void OMPClausePrinter::VisitOMPFlushClause(OMPFlushClause *Node) {
     OS << ")";
   }
 }
+
+void OMPClausePrinter::VisitOMPDependClause(OMPDependClause *Node) {
+  if (!Node->varlist_empty()) {
+    OS << "depend(";
+    OS << getOpenMPSimpleClauseTypeName(Node->getClauseKind(),
+                                        Node->getDependencyKind())
+       << " :";
+    VisitOMPClauseList(Node, ' ');
+    OS << ")";
+  }
+}
 }
 
 //===----------------------------------------------------------------------===//

@@ -7859,13 +7859,13 @@ public:
   OMPClause *ActOnOpenMPSeqCstClause(SourceLocation StartLoc,
                                      SourceLocation EndLoc);
 
-  OMPClause *
-  ActOnOpenMPVarListClause(OpenMPClauseKind Kind, ArrayRef<Expr *> Vars,
-                           Expr *TailExpr, SourceLocation StartLoc,
-                           SourceLocation LParenLoc, SourceLocation ColonLoc,
-                           SourceLocation EndLoc,
-                           CXXScopeSpec &ReductionIdScopeSpec,
-                           const DeclarationNameInfo &ReductionId);
+  OMPClause *ActOnOpenMPVarListClause(
+      OpenMPClauseKind Kind, ArrayRef<Expr *> Vars, Expr *TailExpr,
+      SourceLocation StartLoc, SourceLocation LParenLoc,
+      SourceLocation ColonLoc, SourceLocation EndLoc,
+      CXXScopeSpec &ReductionIdScopeSpec,
+      const DeclarationNameInfo &ReductionId, OpenMPDependClauseKind DepKind,
+      SourceLocation DepLoc);
   /// \brief Called on well-formed 'private' clause.
   OMPClause *ActOnOpenMPPrivateClause(ArrayRef<Expr *> VarList,
                                       SourceLocation StartLoc,
@@ -7922,6 +7922,12 @@ public:
                                     SourceLocation StartLoc,
                                     SourceLocation LParenLoc,
                                     SourceLocation EndLoc);
+  /// \brief Called on well-formed 'depend' clause.
+  OMPClause *
+  ActOnOpenMPDependClause(OpenMPDependClauseKind DepKind, SourceLocation DepLoc,
+                          SourceLocation ColonLoc, ArrayRef<Expr *> VarList,
+                          SourceLocation StartLoc, SourceLocation LParenLoc,
+                          SourceLocation EndLoc);
 
   /// \brief The kind of conversion being performed.
   enum CheckedConversionKind {

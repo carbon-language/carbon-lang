@@ -91,6 +91,11 @@ unsigned clang::getOpenMPSimpleClauseType(OpenMPClauseKind Kind,
 #define OPENMP_SCHEDULE_KIND(Name) .Case(#Name, OMPC_SCHEDULE_##Name)
 #include "clang/Basic/OpenMPKinds.def"
         .Default(OMPC_SCHEDULE_unknown);
+  case OMPC_depend:
+    return llvm::StringSwitch<OpenMPDependClauseKind>(Str)
+#define OPENMP_DEPEND_KIND(Name) .Case(#Name, OMPC_DEPEND_##Name)
+#include "clang/Basic/OpenMPKinds.def"
+        .Default(OMPC_DEPEND_unknown);
   case OMPC_unknown:
   case OMPC_threadprivate:
   case OMPC_if:
@@ -151,6 +156,15 @@ const char *clang::getOpenMPSimpleClauseTypeName(OpenMPClauseKind Kind,
       return "unknown";
 #define OPENMP_SCHEDULE_KIND(Name)                                             \
   case OMPC_SCHEDULE_##Name:                                                   \
+    return #Name;
+#include "clang/Basic/OpenMPKinds.def"
+    }
+  case OMPC_depend:
+    switch (Type) {
+    case OMPC_DEPEND_unknown:
+      return "unknown";
+#define OPENMP_DEPEND_KIND(Name)                                             \
+  case OMPC_DEPEND_##Name:                                                   \
     return #Name;
 #include "clang/Basic/OpenMPKinds.def"
     }

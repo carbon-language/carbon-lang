@@ -1785,6 +1785,9 @@ OMPClause *OMPClauseReader::readClause() {
   case OMPC_flush:
     C = OMPFlushClause::CreateEmpty(Context, Record[Idx++]);
     break;
+  case OMPC_depend:
+    C = OMPDependClause::CreateEmpty(Context, Record[Idx++]);
+    break;
   }
   Visit(C);
   C->setLocStart(Reader->ReadSourceLocation(Record, Idx));
@@ -2041,6 +2044,19 @@ void OMPClauseReader::VisitOMPCopyprivateClause(OMPCopyprivateClause *C) {
 
 void OMPClauseReader::VisitOMPFlushClause(OMPFlushClause *C) {
   C->setLParenLoc(Reader->ReadSourceLocation(Record, Idx));
+  unsigned NumVars = C->varlist_size();
+  SmallVector<Expr *, 16> Vars;
+  Vars.reserve(NumVars);
+  for (unsigned i = 0; i != NumVars; ++i)
+    Vars.push_back(Reader->Reader.ReadSubExpr());
+  C->setVarRefs(Vars);
+}
+
+void OMPClauseReader::VisitOMPDependClause(OMPDependClause *C) {
+  C->setLParenLoc(Reader->ReadSourceLocation(Record, Idx));
+  C->setDependencyKind(static_cast<OpenMPDependClauseKind>(Record[Idx++]));
+  C->setDependencyLoc(Reader->ReadSourceLocation(Record, Idx));
+  C->setColonLoc(Reader->ReadSourceLocation(Record, Idx));
   unsigned NumVars = C->varlist_size();
   SmallVector<Expr *, 16> Vars;
   Vars.reserve(NumVars);

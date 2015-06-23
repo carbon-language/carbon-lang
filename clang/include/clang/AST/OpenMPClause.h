@@ -2212,6 +2212,94 @@ public:
   }
 };
 
+/// \brief This represents implicit clause 'depend' for the '#pragma omp task'
+/// directive.
+///
+/// \code
+/// #pragma omp task depend(in:a,b)
+/// \endcode
+/// In this example directive '#pragma omp task' with clause 'depend' with the
+/// variables 'a' and 'b' with dependency 'in'.
+///
+class OMPDependClause : public OMPVarListClause<OMPDependClause> {
+  friend class OMPClauseReader;
+  /// \brief Dependency type (one of in, out, inout).
+  OpenMPDependClauseKind DepKind;
+  /// \brief Dependency type location.
+  SourceLocation DepLoc;
+  /// \brief Colon location.
+  SourceLocation ColonLoc;
+  /// \brief Build clause with number of variables \a N.
+  ///
+  /// \param StartLoc Starting location of the clause.
+  /// \param LParenLoc Location of '('.
+  /// \param EndLoc Ending location of the clause.
+  /// \param N Number of the variables in the clause.
+  ///
+  OMPDependClause(SourceLocation StartLoc, SourceLocation LParenLoc,
+                  SourceLocation EndLoc, unsigned N)
+      : OMPVarListClause<OMPDependClause>(OMPC_depend, StartLoc, LParenLoc,
+                                          EndLoc, N),
+        DepKind(OMPC_DEPEND_unknown) {}
+
+  /// \brief Build an empty clause.
+  ///
+  /// \param N Number of variables.
+  ///
+  explicit OMPDependClause(unsigned N)
+      : OMPVarListClause<OMPDependClause>(OMPC_depend, SourceLocation(),
+                                          SourceLocation(), SourceLocation(),
+                                          N),
+        DepKind(OMPC_DEPEND_unknown) {}
+  /// \brief Set dependency kind.
+  void setDependencyKind(OpenMPDependClauseKind K) { DepKind = K; }
+
+  /// \brief Set dependency kind and its location.
+  void setDependencyLoc(SourceLocation Loc) { DepLoc = Loc; }
+
+  /// \brief Set colon location.
+  void setColonLoc(SourceLocation Loc) { ColonLoc = Loc; }
+
+public:
+  /// \brief Creates clause with a list of variables \a VL.
+  ///
+  /// \param C AST context.
+  /// \param StartLoc Starting location of the clause.
+  /// \param LParenLoc Location of '('.
+  /// \param EndLoc Ending location of the clause.
+  /// \param DepKind Dependency type.
+  /// \param DepLoc Location of the dependency type.
+  /// \param ColonLoc Colon location.
+  /// \param VL List of references to the variables.
+  ///
+  static OMPDependClause *
+  Create(const ASTContext &C, SourceLocation StartLoc, SourceLocation LParenLoc,
+         SourceLocation EndLoc, OpenMPDependClauseKind DepKind,
+         SourceLocation DepLoc, SourceLocation ColonLoc, ArrayRef<Expr *> VL);
+  /// \brief Creates an empty clause with \a N variables.
+  ///
+  /// \param C AST context.
+  /// \param N The number of variables.
+  ///
+  static OMPDependClause *CreateEmpty(const ASTContext &C, unsigned N);
+
+  /// \brief Get dependency type.
+  OpenMPDependClauseKind getDependencyKind() const { return DepKind; }
+  /// \brief Get dependency type location.
+  SourceLocation getDependencyLoc() const { return DepLoc; }
+  /// \brief Get colon location.
+  SourceLocation getColonLoc() const { return ColonLoc; }
+
+  StmtRange children() {
+    return StmtRange(reinterpret_cast<Stmt **>(varlist_begin()),
+                     reinterpret_cast<Stmt **>(varlist_end()));
+  }
+
+  static bool classof(const OMPClause *T) {
+    return T->getClauseKind() == OMPC_depend;
+  }
+};
+
 } // end namespace clang
 
 #endif

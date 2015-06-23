@@ -2098,6 +2098,9 @@ OMPClauseEnqueue::VisitOMPCopyprivateClause(const OMPCopyprivateClause *C) {
 void OMPClauseEnqueue::VisitOMPFlushClause(const OMPFlushClause *C) {
   VisitOMPClauseList(C);
 }
+void OMPClauseEnqueue::VisitOMPDependClause(const OMPDependClause *C) {
+  VisitOMPClauseList(C);
+}
 }
 
 void EnqueueVisitor::EnqueueChildren(const OMPClause *S) {
