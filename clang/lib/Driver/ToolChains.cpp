@@ -2401,13 +2401,17 @@ void NaCl_TC::AddClangSystemIncludeArgs(const ArgList &DriverArgs,
     return;
 
   SmallString<128> P(D.Dir + "/../");
-  if (getTriple().getArch() == llvm::Triple::arm) {
+  switch (getTriple().getArch()) {
+  case llvm::Triple::arm:
     llvm::sys::path::append(P, "arm-nacl/usr/include");
-  } else if (getTriple().getArch() == llvm::Triple::x86) {
+    break;
+  case llvm::Triple::x86:
     llvm::sys::path::append(P, "x86_64-nacl/usr/include");
-  } else if (getTriple().getArch() == llvm::Triple::x86_64) {
+    break;
+  case llvm::Triple::x86_64:
     llvm::sys::path::append(P, "x86_64-nacl/usr/include");
-  } else {
+    break;
+  default:
     return;
   }
 
@@ -2437,18 +2441,20 @@ void NaCl_TC::AddClangCXXStdlibIncludeArgs(const ArgList &DriverArgs,
   // if the value is libc++, and emits an error for other values.
   GetCXXStdlibType(DriverArgs);
 
-  if (getTriple().getArch() == llvm::Triple::arm) {
-    SmallString<128> P(D.Dir + "/../");
+  SmallString<128> P(D.Dir + "/../");
+  switch (getTriple().getArch()) {
+  case llvm::Triple::arm:
     llvm::sys::path::append(P, "arm-nacl/include/c++/v1");
     addSystemInclude(DriverArgs, CC1Args, P.str());
-  } else if (getTriple().getArch() == llvm::Triple::x86) {
-    SmallString<128> P(D.Dir + "/../");
+    break;
+  case llvm::Triple::x86:
     llvm::sys::path::append(P, "x86_64-nacl/include/c++/v1");
     addSystemInclude(DriverArgs, CC1Args, P.str());
-  } else if (getTriple().getArch() == llvm::Triple::x86_64) {
-    SmallString<128> P(D.Dir + "/../");
+    break;
+  case llvm::Triple::x86_64:
     llvm::sys::path::append(P, "x86_64-nacl/include/c++/v1");
     addSystemInclude(DriverArgs, CC1Args, P.str());
+    break;
   }
 }
 
@@ -3479,36 +3485,52 @@ void Linux::AddClangSystemIncludeArgs(const ArgList &DriverArgs,
     "/usr/include/sparc64-linux-gnu"
   };
   ArrayRef<StringRef> MultiarchIncludeDirs;
-  if (getTriple().getArch() == llvm::Triple::x86_64) {
+  switch (getTriple().getArch()) {
+  case llvm::Triple::x86_64:
     MultiarchIncludeDirs = X86_64MultiarchIncludeDirs;
-  } else if (getTriple().getArch() == llvm::Triple::x86) {
+    break;
+  case llvm::Triple::x86:
     MultiarchIncludeDirs = X86MultiarchIncludeDirs;
-  } else if (getTriple().getArch() == llvm::Triple::aarch64 ||
-             getTriple().getArch() == llvm::Triple::aarch64_be) {
+    break;
+  case llvm::Triple::aarch64:
+  case llvm::Triple::aarch64_be:
     MultiarchIncludeDirs = AArch64MultiarchIncludeDirs;
-  } else if (getTriple().getArch() == llvm::Triple::arm) {
+    break;
+  case llvm::Triple::arm:
     if (getTriple().getEnvironment() == llvm::Triple::GNUEABIHF)
       MultiarchIncludeDirs = ARMHFMultiarchIncludeDirs;
     else
       MultiarchIncludeDirs = ARMMultiarchIncludeDirs;
-  } else if (getTriple().getArch() == llvm::Triple::mips) {
+    break;
+  case llvm::Triple::mips:
     MultiarchIncludeDirs = MIPSMultiarchIncludeDirs;
-  } else if (getTriple().getArch() == llvm::Triple::mipsel) {
+    break;
+  case llvm::Triple::mipsel:
     MultiarchIncludeDirs = MIPSELMultiarchIncludeDirs;
-  } else if (getTriple().getArch() == llvm::Triple::mips64) {
+    break;
+  case llvm::Triple::mips64:
     MultiarchIncludeDirs = MIPS64MultiarchIncludeDirs;
-  } else if (getTriple().getArch() == llvm::Triple::mips64el) {
+    break;
+  case llvm::Triple::mips64el:
     MultiarchIncludeDirs = MIPS64ELMultiarchIncludeDirs;
-  } else if (getTriple().getArch() == llvm::Triple::ppc) {
+    break;
+  case llvm::Triple::ppc:
     MultiarchIncludeDirs = PPCMultiarchIncludeDirs;
-  } else if (getTriple().getArch() == llvm::Triple::ppc64) {
+    break;
+  case llvm::Triple::ppc64:
     MultiarchIncludeDirs = PPC64MultiarchIncludeDirs;
-  } else if (getTriple().getArch() == llvm::Triple::ppc64le) {
+    break;
+  case llvm::Triple::ppc64le:
     MultiarchIncludeDirs = PPC64LEMultiarchIncludeDirs;
-  } else if (getTriple().getArch() == llvm::Triple::sparc) {
+    break;
+  case llvm::Triple::sparc:
     MultiarchIncludeDirs = SparcMultiarchIncludeDirs;
-  } else if (getTriple().getArch() == llvm::Triple::sparcv9) {
+    break;
+  case llvm::Triple::sparcv9:
     MultiarchIncludeDirs = Sparc64MultiarchIncludeDirs;
+    break;
+  default:
+    break;
   }
   for (StringRef Dir : MultiarchIncludeDirs) {
     if (llvm::sys::fs::exists(SysRoot + Dir)) {
