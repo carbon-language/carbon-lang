@@ -127,7 +127,7 @@ using llvm::opt::ArgStringList;
 
   /// \brief Base class for all GNU tools that provide the same behavior when
   /// it comes to response files support
-  class GnuTool : public Tool {
+  class LLVM_LIBRARY_VISIBILITY GnuTool : public Tool {
     virtual void anchor();
 
   public:
