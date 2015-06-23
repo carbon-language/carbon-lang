@@ -23,33 +23,41 @@
 #include "interception/interception.h"
 #include "sanitizer_common/sanitizer_common.h"
 
-// TODO: The runtime library does not currently protect the safe stack. The
-// protection of the (safe) stack can be provided by two alternative features
-// that requires C library support:
+// TODO: The runtime library does not currently protect the safe stack beyond
+// relying on the system-enforced ASLR. The protection of the (safe) stack can
+// be provided by three alternative features:
 //
-// 1) Protection via hardware segmentation on x32 architectures: the (safe)
-// stack segment (implicitly accessed via the %ss segment register) can be
-// separated from the data segment (implicitly accessed via the %ds segment
-// register). Dereferencing a pointer to the safe segment would result in a
-// segmentation fault.
+// 1) Protection via hardware segmentation on x86-32 and some x86-64
+// architectures: the (safe) stack segment (implicitly accessed via the %ss
+// segment register) can be separated from the data segment (implicitly
+// accessed via the %ds segment register). Dereferencing a pointer to the safe
+// segment would result in a segmentation fault.
 //
-// 2) Protection via information hiding on 64 bit architectures: the location of
-// the safe stack can be randomized through secure mechanisms, and the leakage
-// of the stack pointer can be prevented. Currently, libc can leak the stack
-// pointer in several ways (e.g. in longjmp, signal handling, user-level context
-// switching related functions, etc.). These can be fixed in libc and in other
-// low-level libraries, by either eliminating the escaping/dumping of the stack
-// pointer (i.e., %rsp) when that's possible, or by using encryption/PTR_MANGLE
-// (XOR-ing the dumped stack pointer with another secret we control and protect
-// better). (This is already done for setjmp in glibc.) Furthermore, a static
-// machine code level verifier can be ran after code generation to make sure
-// that the stack pointer is never written to memory, or if it is, its written
-// on the safe stack.
+// 2) Protection via software fault isolation: memory writes that are not meant
+// to access the safe stack can be prevented from doing so through runtime
+// instrumentation. One way to do it is to allocate the safe stack(s) in the
+// upper half of the userspace and bitmask the corresponding upper bit of the
+// memory addresses of memory writes that are not meant to access the safe
+// stack.
 //
-// Finally, while the Unsafe Stack pointer is currently stored in a thread local
-// variable, with libc support it could be stored in the TCB (thread control
-// block) as well, eliminating another level of indirection. Alternatively,
-// dedicating a separate register for storing it would also be possible.
+// 3) Protection via information hiding on 64 bit architectures: the location
+// of the safe stack(s) can be randomized through secure mechanisms, and the
+// leakage of the stack pointer can be prevented. Currently, libc can leak the
+// stack pointer in several ways (e.g. in longjmp, signal handling, user-level
+// context switching related functions, etc.). These can be fixed in libc and
+// in other low-level libraries, by either eliminating the escaping/dumping of
+// the stack pointer (i.e., %rsp) when that's possible, or by using
+// encryption/PTR_MANGLE (XOR-ing the dumped stack pointer with another secret
+// we control and protect better, as is already done for setjmp in glibc.)
+// Furthermore, a static machine code level verifier can be ran after code
+// generation to make sure that the stack pointer is never written to memory,
+// or if it is, its written on the safe stack.
+//
+// Finally, while the Unsafe Stack pointer is currently stored in a thread
+// local variable, with libc support it could be stored in the TCB (thread
+// control block) as well, eliminating another level of indirection and making
+// such accesses faster. Alternatively, dedicating a separate register for
+// storing it would also be possible.
 
 /// Minimum stack alignment for the unsafe stack.
 const unsigned kStackAlign = 16;
