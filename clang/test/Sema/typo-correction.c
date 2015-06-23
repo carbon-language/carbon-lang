@@ -44,3 +44,8 @@ int PR23101(__m128i __x) {
 void f(long *a, long b) {
       __atomic_or_fetch(a, b, c);  // expected-error {{use of undeclared identifier 'c'}}
 }
+
+extern double cabs(_Complex double z);
+void fn1() {
+  cabs(errij);  // expected-error {{use of undeclared identifier 'errij'}}
+}
