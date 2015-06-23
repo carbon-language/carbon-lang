@@ -30,8 +30,13 @@ struct MIToken {
     Eof,
     Error,
 
+    // Tokens with no info.
+    comma,
+    equal,
+
     // Identifier tokens
-    Identifier
+    Identifier,
+    NamedRegister
   };
 
 private:
@@ -44,6 +49,8 @@ public:
   TokenKind kind() const { return Kind; }
 
   bool isError() const { return Kind == Error; }
+
+  bool isRegister() const { return Kind == NamedRegister; }
 
   bool is(TokenKind K) const { return Kind == K; }
 

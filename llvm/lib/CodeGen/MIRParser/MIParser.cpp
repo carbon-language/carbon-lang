@@ -34,6 +34,8 @@ class MIParser {
   MIToken Token;
   /// Maps from instruction names to op codes.
   StringMap<unsigned> Names2InstrOpCodes;
+  /// Maps from register names to registers.
+  StringMap<unsigned> Names2Regs;
 
 public:
   MIParser(SourceMgr &SM, MachineFunction &MF, SMDiagnostic &Error,
@@ -53,6 +55,10 @@ public:
 
   MachineInstr *parse();
 
+  bool parseRegister(unsigned &Reg);
+  bool parseRegisterOperand(MachineOperand &Dest, bool IsDef = false);
+  bool parseMachineOperand(MachineOperand &Dest);
+
 private:
   void initNames2InstrOpCodes();
 
@@ -61,6 +67,12 @@ private:
   bool parseInstrName(StringRef InstrName, unsigned &OpCode);
 
   bool parseInstruction(unsigned &OpCode);
+
+  void initNames2Regs();
+
+  /// Try to convert a register name to a register number. Return true if the
+  /// register name is invalid.
+  bool getRegisterByName(StringRef RegName, unsigned &Reg);
 };
 
 } // end anonymous namespace
@@ -92,13 +104,60 @@ bool MIParser::error(StringRef::iterator Loc, const Twine &Msg) {
 MachineInstr *MIParser::parse() {
   lex();
 
+  // Parse any register operands before '='
+  // TODO: Allow parsing of multiple operands before '='
+  MachineOperand MO = MachineOperand::CreateImm(0);
+  SmallVector<MachineOperand, 8> Operands;
+  if (Token.isRegister()) {
+    if (parseRegisterOperand(MO, /*IsDef=*/true))
+      return nullptr;
+    Operands.push_back(MO);
+    if (Token.isNot(MIToken::equal)) {
+      error("expected '='");
+      return nullptr;
+    }
+    lex();
+  }
+
   unsigned OpCode;
   if (Token.isError() || parseInstruction(OpCode))
     return nullptr;
 
-  // TODO: Parse the rest of instruction - machine operands, etc.
+  // TODO: Parse the instruction flags and memory operands.
+
+  // Parse the remaining machine operands.
+  while (Token.isNot(MIToken::Eof)) {
+    if (parseMachineOperand(MO))
+      return nullptr;
+    Operands.push_back(MO);
+    if (Token.is(MIToken::Eof))
+      break;
+    if (Token.isNot(MIToken::comma)) {
+      error("expected ',' before the next machine operand");
+      return nullptr;
+    }
+    lex();
+  }
+
   const auto &MCID = MF.getSubtarget().getInstrInfo()->get(OpCode);
-  auto *MI = MF.CreateMachineInstr(MCID, DebugLoc());
+
+  // Verify machine operands.
+  if (!MCID.isVariadic()) {
+    for (size_t I = 0, E = Operands.size(); I < E; ++I) {
+      if (I < MCID.getNumOperands())
+        continue;
+      // Mark this register as implicit to prevent an assertion when it's added
+      // to an instruction. This is a temporary workaround until the implicit
+      // register flag can be parsed.
+      Operands[I].setImplicit();
+    }
+  }
+
+  // TODO: Determine the implicit behaviour when implicit register flags are
+  // parsed.
+  auto *MI = MF.CreateMachineInstr(MCID, DebugLoc(), /*NoImplicit=*/true);
+  for (const auto &Operand : Operands)
+    MI->addOperand(MF, Operand);
   return MI;
 }
 
@@ -108,6 +167,46 @@ bool MIParser::parseInstruction(unsigned &OpCode) {
   StringRef InstrName = Token.stringValue();
   if (parseInstrName(InstrName, OpCode))
     return error(Twine("unknown machine instruction name '") + InstrName + "'");
+  lex();
+  return false;
+}
+
+bool MIParser::parseRegister(unsigned &Reg) {
+  switch (Token.kind()) {
+  case MIToken::NamedRegister: {
+    StringRef Name = Token.stringValue().drop_front(1); // Drop the '%'
+    if (getRegisterByName(Name, Reg))
+      return error(Twine("unknown register name '") + Name + "'");
+    break;
+  }
+  // TODO: Parse other register kinds.
+  default:
+    llvm_unreachable("The current token should be a register");
+  }
+  return false;
+}
+
+bool MIParser::parseRegisterOperand(MachineOperand &Dest, bool IsDef) {
+  unsigned Reg;
+  // TODO: Parse register flags.
+  if (parseRegister(Reg))
+    return true;
+  lex();
+  // TODO: Parse subregister.
+  Dest = MachineOperand::CreateReg(Reg, IsDef);
+  return false;
+}
+
+bool MIParser::parseMachineOperand(MachineOperand &Dest) {
+  switch (Token.kind()) {
+  case MIToken::NamedRegister:
+    return parseRegisterOperand(Dest);
+  case MIToken::Error:
+    return true;
+  default:
+    // TODO: parse the other machine operands.
+    return error("expected a machine operand");
+  }
   return false;
 }
 
@@ -126,6 +225,29 @@ bool MIParser::parseInstrName(StringRef InstrName, unsigned &OpCode) {
   if (InstrInfo == Names2InstrOpCodes.end())
     return true;
   OpCode = InstrInfo->getValue();
+  return false;
+}
+
+void MIParser::initNames2Regs() {
+  if (!Names2Regs.empty())
+    return;
+  const auto *TRI = MF.getSubtarget().getRegisterInfo();
+  assert(TRI && "Expected target register info");
+  for (unsigned I = 0, E = TRI->getNumRegs(); I < E; ++I) {
+    bool WasInserted =
+        Names2Regs.insert(std::make_pair(StringRef(TRI->getName(I)).lower(), I))
+            .second;
+    (void)WasInserted;
+    assert(WasInserted && "Expected registers to be unique case-insensitively");
+  }
+}
+
+bool MIParser::getRegisterByName(StringRef RegName, unsigned &Reg) {
+  initNames2Regs();
+  auto RegInfo = Names2Regs.find(RegName);
+  if (RegInfo == Names2Regs.end())
+    return true;
+  Reg = RegInfo->getValue();
   return false;
 }
 

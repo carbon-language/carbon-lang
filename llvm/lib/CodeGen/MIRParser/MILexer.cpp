@@ -68,6 +68,33 @@ static Cursor lexIdentifier(Cursor C, MIToken &Token) {
   return C;
 }
 
+static Cursor lexPercent(Cursor C, MIToken &Token) {
+  auto Range = C;
+  C.advance(); // Skip '%'
+  while (isIdentifierChar(C.peek()))
+    C.advance();
+  Token = MIToken(MIToken::NamedRegister, Range.upto(C));
+  return C;
+}
+
+static MIToken::TokenKind symbolToken(char C) {
+  switch (C) {
+  case ',':
+    return MIToken::comma;
+  case '=':
+    return MIToken::equal;
+  default:
+    return MIToken::Error;
+  }
+}
+
+static Cursor lexSymbol(Cursor C, MIToken::TokenKind Kind, MIToken &Token) {
+  auto Range = C;
+  C.advance();
+  Token = MIToken(Kind, Range.upto(C));
+  return C;
+}
+
 StringRef llvm::lexMIToken(
     StringRef Source, MIToken &Token,
     function_ref<void(StringRef::iterator Loc, const Twine &)> ErrorCallback) {
@@ -80,6 +107,11 @@ StringRef llvm::lexMIToken(
   auto Char = C.peek();
   if (isalpha(Char) || Char == '_')
     return lexIdentifier(C, Token).remaining();
+  if (Char == '%')
+    return lexPercent(C, Token).remaining();
+  MIToken::TokenKind Kind = symbolToken(Char);
+  if (Kind != MIToken::Error)
+    return lexSymbol(C, Kind, Token).remaining();
   Token = MIToken(MIToken::Error, C.remaining());
   ErrorCallback(C.location(),
                 Twine("unexpected character '") + Twine(Char) + "'");
