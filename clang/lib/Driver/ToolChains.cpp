@@ -2455,6 +2455,8 @@ void NaCl_TC::AddClangCXXStdlibIncludeArgs(const ArgList &DriverArgs,
     llvm::sys::path::append(P, "x86_64-nacl/include/c++/v1");
     addSystemInclude(DriverArgs, CC1Args, P.str());
     break;
+  default:
+    break;
   }
 }
 
