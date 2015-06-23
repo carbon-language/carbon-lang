@@ -502,10 +502,6 @@ private:
                                         CharUnits NonVirtualBaseAdjustment,
                                         unsigned VBTableIndex);
 
-  llvm::Constant *BuildMemberPointer(const CXXRecordDecl *RD,
-                                     const CXXMethodDecl *MD,
-                                     CharUnits NonVirtualBaseAdjustment);
-
   bool MemberPointerConstantIsNull(const MemberPointerType *MPT,
                                    llvm::Constant *MP);
 
@@ -569,6 +565,11 @@ public:
 
   llvm::Constant *EmitMemberPointerConversion(const CastExpr *E,
                                               llvm::Constant *Src) override;
+
+  llvm::Constant *EmitMemberPointerConversion(
+      const MemberPointerType *SrcTy, const MemberPointerType *DstTy,
+      CastKind CK, CastExpr::path_const_iterator PathBegin,
+      CastExpr::path_const_iterator PathEnd, llvm::Constant *Src);
 
   llvm::Value *
   EmitLoadOfMemberFunctionPointer(CodeGenFunction &CGF, const Expr *E,
@@ -2479,38 +2480,67 @@ MicrosoftCXXABI::EmitMemberDataPointer(const MemberPointerType *MPT,
                                CharUnits::Zero(), /*VBTableIndex=*/0);
 }
 
-llvm::Constant *
-MicrosoftCXXABI::EmitMemberFunctionPointer(const CXXMethodDecl *MD) {
-  return BuildMemberPointer(MD->getParent(), MD, CharUnits::Zero());
-}
-
 llvm::Constant *MicrosoftCXXABI::EmitMemberPointer(const APValue &MP,
                                                    QualType MPType) {
-  const MemberPointerType *MPT = MPType->castAs<MemberPointerType>();
+  const MemberPointerType *DstTy = MPType->castAs<MemberPointerType>();
   const ValueDecl *MPD = MP.getMemberPointerDecl();
   if (!MPD)
-    return EmitNullMemberPointer(MPT);
+    return EmitNullMemberPointer(DstTy);
 
-  CharUnits ThisAdjustment = getMemberPointerPathAdjustment(MP);
+  ASTContext &Ctx = getContext();
+  ArrayRef<const CXXRecordDecl *> MemberPointerPath = MP.getMemberPointerPath();
 
-  // FIXME PR15713: Support virtual inheritance paths.
+  llvm::Constant *C;
+  if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(MPD)) {
+    C = EmitMemberFunctionPointer(MD);
+  } else {
+    CharUnits FieldOffset = Ctx.toCharUnitsFromBits(Ctx.getFieldOffset(MPD));
+    C = EmitMemberDataPointer(DstTy, FieldOffset);
+  }
 
-  if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(MPD))
-    return BuildMemberPointer(MPT->getMostRecentCXXRecordDecl(), MD,
-                              ThisAdjustment);
+  if (!MemberPointerPath.empty()) {
+    const CXXRecordDecl *SrcRD = cast<CXXRecordDecl>(MPD->getDeclContext());
+    const Type *SrcRecTy = Ctx.getTypeDeclType(SrcRD).getTypePtr();
+    const MemberPointerType *SrcTy =
+        Ctx.getMemberPointerType(DstTy->getPointeeType(), SrcRecTy)
+            ->castAs<MemberPointerType>();
 
-  CharUnits FieldOffset =
-    getContext().toCharUnitsFromBits(getContext().getFieldOffset(MPD));
-  return EmitMemberDataPointer(MPT, ThisAdjustment + FieldOffset);
+    bool DerivedMember = MP.isMemberPointerToDerivedMember();
+    SmallVector<const CXXBaseSpecifier *, 4> DerivedToBasePath;
+    const CXXRecordDecl *PrevRD = SrcRD;
+    for (const CXXRecordDecl *PathElem : MemberPointerPath) {
+      const CXXRecordDecl *Base = nullptr;
+      const CXXRecordDecl *Derived = nullptr;
+      if (DerivedMember) {
+        Base = PathElem;
+        Derived = PrevRD;
+      } else {
+        Base = PrevRD;
+        Derived = PathElem;
+      }
+      for (const CXXBaseSpecifier &BS : Derived->bases())
+        if (BS.getType()->getAsCXXRecordDecl()->getCanonicalDecl() ==
+            Base->getCanonicalDecl())
+          DerivedToBasePath.push_back(&BS);
+      PrevRD = PathElem;
+    }
+    assert(DerivedToBasePath.size() == MemberPointerPath.size());
+
+    CastKind CK = DerivedMember ? CK_DerivedToBaseMemberPointer
+                                : CK_BaseToDerivedMemberPointer;
+    C = EmitMemberPointerConversion(SrcTy, DstTy, CK, DerivedToBasePath.begin(),
+                                    DerivedToBasePath.end(), C);
+  }
+  return C;
 }
 
 llvm::Constant *
-MicrosoftCXXABI::BuildMemberPointer(const CXXRecordDecl *RD,
-                                    const CXXMethodDecl *MD,
-                                    CharUnits NonVirtualBaseAdjustment) {
+MicrosoftCXXABI::EmitMemberFunctionPointer(const CXXMethodDecl *MD) {
   assert(MD->isInstance() && "Member function must not be static!");
+
   MD = MD->getCanonicalDecl();
-  RD = RD->getMostRecentDecl();
+  CharUnits NonVirtualBaseAdjustment = CharUnits::Zero();
+  const CXXRecordDecl *RD = MD->getParent()->getMostRecentDecl();
   CodeGenTypes &Types = CGM.getTypes();
 
   unsigned VBTableIndex = 0;
@@ -2923,9 +2953,22 @@ llvm::Constant *
 MicrosoftCXXABI::EmitMemberPointerConversion(const CastExpr *E,
                                              llvm::Constant *Src) {
   const MemberPointerType *SrcTy =
-    E->getSubExpr()->getType()->castAs<MemberPointerType>();
+      E->getSubExpr()->getType()->castAs<MemberPointerType>();
   const MemberPointerType *DstTy = E->getType()->castAs<MemberPointerType>();
 
+  CastKind CK = E->getCastKind();
+
+  return EmitMemberPointerConversion(SrcTy, DstTy, CK, E->path_begin(),
+                                     E->path_end(), Src);
+}
+
+llvm::Constant *MicrosoftCXXABI::EmitMemberPointerConversion(
+    const MemberPointerType *SrcTy, const MemberPointerType *DstTy, CastKind CK,
+    CastExpr::path_const_iterator PathBegin,
+    CastExpr::path_const_iterator PathEnd, llvm::Constant *Src) {
+  assert(CK == CK_DerivedToBaseMemberPointer ||
+         CK == CK_BaseToDerivedMemberPointer ||
+         CK == CK_ReinterpretMemberPointer);
   // If src is null, emit a new null for dst.  We can't return src because dst
   // might have a new representation.
   if (MemberPointerConstantIsNull(SrcTy, Src))
@@ -2934,7 +2977,7 @@ MicrosoftCXXABI::EmitMemberPointerConversion(const CastExpr *E,
   // We don't need to do anything for reinterpret_casts of non-null member
   // pointers.  We should only get here when the two type representations have
   // the same size.
-  if (E->getCastKind() == CK_ReinterpretMemberPointer)
+  if (CK == CK_ReinterpretMemberPointer)
     return Src;
 
   MSInheritanceAttr::Spelling SrcInheritance = getInheritanceFromMemptr(SrcTy);
@@ -2960,12 +3003,16 @@ MicrosoftCXXABI::EmitMemberPointerConversion(const CastExpr *E,
 
   // For data pointers, we adjust the field offset directly.  For functions, we
   // have a separate field.
-  llvm::Constant *Adj = getMemberPointerAdjustment(E);
+  const MemberPointerType *DerivedTy =
+      CK == CK_DerivedToBaseMemberPointer ? SrcTy : DstTy;
+  const CXXRecordDecl *DerivedClass = DerivedTy->getMostRecentCXXRecordDecl();
+  llvm::Constant *Adj =
+      CGM.GetNonVirtualBaseClassOffset(DerivedClass, PathBegin, PathEnd);
   if (Adj) {
     Adj = llvm::ConstantExpr::getTruncOrBitCast(Adj, CGM.IntTy);
     llvm::Constant *&NVAdjustField =
       IsFunc ? NonVirtualBaseAdjustment : FirstField;
-    bool IsDerivedToBase = (E->getCastKind() == CK_DerivedToBaseMemberPointer);
+    bool IsDerivedToBase = (CK == CK_DerivedToBaseMemberPointer);
     if (!NVAdjustField)  // If this field didn't exist in src, it's zero.
       NVAdjustField = getZeroInt();
     if (IsDerivedToBase)
