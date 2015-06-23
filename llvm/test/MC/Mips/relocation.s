@@ -171,12 +171,12 @@
         beqzc $2, foo                      // RELOC: R_MIPS_PC21_S2 foo
                                            // ENCBE: beqzc $2, foo # encoding: [0xd8,0b010AAAAA,A,A]
                                            // ENCLE: beqzc $2, foo # encoding: [A,A,0b010AAAAA,0xd8]
-                                           // FIXUP: # fixup A - offset: 0, value: foo, kind: fixup_MIPS_PC21_S2
+                                           // FIXUP: # fixup A - offset: 0, value: foo-4, kind: fixup_MIPS_PC21_S2
 
         bc foo                             // RELOC: R_MIPS_PC26_S2 foo
                                            // ENCBE: bc foo # encoding: [0b110010AA,A,A,A]
                                            // ENCLE: bc foo # encoding: [A,A,A,0b110010AA]
-                                           // FIXUP: # fixup A - offset: 0, value: foo, kind: fixup_MIPS_PC26_S2
+                                           // FIXUP: # fixup A - offset: 0, value: foo-4, kind: fixup_MIPS_PC26_S2
 
         .set mips64r6
         ldpc $2, foo                       // RELOC: R_MIPS_PC18_S3 foo

@@ -59,10 +59,6 @@ static unsigned adjustFixupValue(const MCFixup &Fixup, uint64_t Value,
   case Mips::fixup_MIPS_PCLO16:
     break;
   case Mips::fixup_Mips_PC16:
-    // So far we are only using this type for branches.
-    // For branches we start 1 instruction after the branch
-    // so the displacement will be one instruction size less.
-    Value -= 4;
     // The displacement is then divided by 4 to give us an 18 bit
     // address range. Forcing a signed division because Value can be negative.
     Value = (int64_t)Value / 4;
@@ -135,7 +131,6 @@ static unsigned adjustFixupValue(const MCFixup &Fixup, uint64_t Value,
       Ctx->reportFatalError(Fixup.getLoc(), "out of range PC18 fixup");
     break;
   case Mips::fixup_MIPS_PC21_S2:
-    Value -= 4;
     // Forcing a signed division because Value can be negative.
     Value = (int64_t) Value / 4;
     // We now check if Value can be encoded as a 21-bit signed immediate.
@@ -143,7 +138,6 @@ static unsigned adjustFixupValue(const MCFixup &Fixup, uint64_t Value,
       Ctx->reportFatalError(Fixup.getLoc(), "out of range PC21 fixup");
     break;
   case Mips::fixup_MIPS_PC26_S2:
-    Value -= 4;
     // Forcing a signed division because Value can be negative.
     Value = (int64_t) Value / 4;
     // We now check if Value can be encoded as a 26-bit signed immediate.
