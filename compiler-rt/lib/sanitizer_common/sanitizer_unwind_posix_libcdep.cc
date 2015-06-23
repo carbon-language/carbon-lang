@@ -82,7 +82,7 @@ void SanitizerInitializeUnwinder() {
 #endif
 
 uptr Unwind_GetIP(struct _Unwind_Context *ctx) {
-#ifdef __arm__
+#if defined(__arm__) && !SANITIZER_MAC
   uptr val;
   _Unwind_VRS_Result res = _Unwind_VRS_Get(ctx, _UVRSC_CORE,
       15 /* r15 = PC */, _UVRSD_UINT32, &val);
