@@ -4449,12 +4449,8 @@ bool ASTReader::ParseLanguageOptions(const RecordData &Record,
   ObjCRuntime::Kind runtimeKind = (ObjCRuntime::Kind) Record[Idx++];
   VersionTuple runtimeVersion = ReadVersionTuple(Record, Idx);
   LangOpts.ObjCRuntime = ObjCRuntime(runtimeKind, runtimeVersion);
-  
-  unsigned Length = Record[Idx++];
-  LangOpts.CurrentModule.assign(Record.begin() + Idx, 
-                                Record.begin() + Idx + Length);
 
-  Idx += Length;
+  LangOpts.CurrentModule = ReadString(Record, Idx);
 
   // Comment options.
   for (unsigned N = Record[Idx++]; N; --N) {
