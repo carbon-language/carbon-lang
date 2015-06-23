@@ -159,7 +159,7 @@ void Writer::createImportTables() {
   if (Symtab->ImportFiles.empty())
     return;
   OutputSection *Text = createSection(".text");
-  for (std::unique_ptr<ImportFile> &File : Symtab->ImportFiles) {
+  for (ImportFile *File : Symtab->ImportFiles) {
     for (SymbolBody *B : File->getSymbols()) {
       auto *Import = dyn_cast<DefinedImportData>(B);
       if (!Import) {
@@ -234,10 +234,10 @@ void Writer::assignAddresses() {
 }
 
 static MachineTypes
-inferMachineType(std::vector<std::unique_ptr<ObjectFile>> &ObjectFiles) {
-  for (std::unique_ptr<ObjectFile> &File : ObjectFiles) {
+inferMachineType(const std::vector<ObjectFile *> &Files) {
+  for (ObjectFile *F : Files) {
     // Try to infer machine type from the magic byte of the object file.
-    auto MT = static_cast<MachineTypes>(File->getCOFFObj()->getMachine());
+    auto MT = static_cast<MachineTypes>(F->getCOFFObj()->getMachine());
     if (MT != IMAGE_FILE_MACHINE_UNKNOWN)
       return MT;
   }

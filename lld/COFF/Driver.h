@@ -11,6 +11,7 @@
 #define LLD_COFF_DRIVER_H
 
 #include "Config.h"
+#include "SymbolTable.h"
 #include "lld/Core/LLVM.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/StringRef.h"
@@ -50,7 +51,6 @@ public:
 
 private:
   ErrorOr<llvm::opt::InputArgList> parse(std::vector<const char *> Argv);
-
   std::vector<const char *> tokenize(StringRef S);
 
   ErrorOr<std::vector<const char *>>
@@ -66,13 +66,13 @@ public:
   bool link(llvm::ArrayRef<const char *> Args);
 
   // Used by the resolver to parse .drectve section contents.
-  std::error_code
-  parseDirectives(StringRef S, std::vector<std::unique_ptr<InputFile>> *Res);
+  std::error_code parseDirectives(StringRef S);
 
 private:
   llvm::BumpPtrAllocator AllocAux;
   llvm::BumpPtrStringSaver Alloc;
   ArgParser Parser;
+  SymbolTable Symtab;
 
   // Opens a file. Path has to be resolved already.
   ErrorOr<MemoryBufferRef> openFile(StringRef Path);

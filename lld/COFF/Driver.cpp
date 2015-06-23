@@ -85,8 +85,7 @@ static std::unique_ptr<InputFile> createFile(MemoryBufferRef MB) {
 // Parses .drectve section contents and returns a list of files
 // specified by /defaultlib.
 std::error_code
-LinkerDriver::parseDirectives(StringRef S,
-                              std::vector<std::unique_ptr<InputFile>> *Res) {
+LinkerDriver::parseDirectives(StringRef S) {
   auto ArgsOrErr = Parser.parse(S);
   if (auto EC = ArgsOrErr.getError())
     return EC;
@@ -103,8 +102,7 @@ LinkerDriver::parseDirectives(StringRef S,
         ErrorOr<MemoryBufferRef> MBOrErr = openFile(*Path);
         if (auto EC = MBOrErr.getError())
           return EC;
-        std::unique_ptr<InputFile> File = createFile(MBOrErr.get());
-        Res->push_back(std::move(File));
+        Symtab.addFile(createFile(MBOrErr.get()));
       }
       break;
     case OPT_export: {
@@ -458,9 +456,6 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
     Inputs.push_back(MBOrErr.get());
   }
 
-  // Create a symbol table.
-  SymbolTable Symtab;
-
   // Windows specific -- Create a resource file containing a manifest file.
   if (Config->Manifest == Configuration::Embed) {
     auto MBOrErr = createManifestRes();
@@ -491,14 +486,11 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
 
   // Parse all input files and put all symbols to the symbol table.
   // The symbol table will take care of name resolution.
-  for (MemoryBufferRef MB : Inputs) {
-    std::unique_ptr<InputFile> File = createFile(MB);
-    if (Config->Verbose)
-      llvm::outs() << "Reading " << File->getName() << "\n";
-    if (auto EC = Symtab.addFile(std::move(File))) {
-      llvm::errs() << MB.getBufferIdentifier() << ": " << EC.message() << "\n";
-      return false;
-    }
+  for (MemoryBufferRef MB : Inputs)
+    Symtab.addFile(createFile(MB));
+  if (auto EC = Symtab.run()) {
+    llvm::errs() << EC.message() << "\n";
+    return false;
   }
 
   // Resolve auxiliary symbols until converge.
@@ -538,6 +530,12 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
         return false;
       }
       Config->EntryName = EntryOrErr.get();
+    }
+    Symtab.addUndefined(Config->EntryName);
+
+    if (auto EC = Symtab.run()) {
+      llvm::errs() << EC.message() << "\n";
+      return false;
     }
     if (Ver == Symtab.getVersion())
       break;
