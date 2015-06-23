@@ -210,15 +210,9 @@ LLVM_YAML_STRONG_TYPEDEF(uint32_t, FileFlags)
 
 ///
 struct NormalizedFile {
-  NormalizedFile() : arch(MachOLinkingContext::arch_unknown),
-                     fileType(llvm::MachO::MH_OBJECT),
-                     flags(0),
-                     hasUUID(false),
-                     os(MachOLinkingContext::OS::unknown) { }
-
-  MachOLinkingContext::Arch   arch;
-  HeaderFileType              fileType;
-  FileFlags                   flags;
+  MachOLinkingContext::Arch   arch = MachOLinkingContext::arch_unknown;
+  HeaderFileType              fileType = llvm::MachO::MH_OBJECT;
+  FileFlags                   flags = 0;
   std::vector<Segment>        segments; // Not used in object files.
   std::vector<Section>        sections;
 
@@ -229,20 +223,20 @@ struct NormalizedFile {
 
   // Maps to load commands with no LINKEDIT content (final linked images only).
   std::vector<DependentDylib> dependentDylibs;
-  StringRef                   installName;      // dylibs only
-  PackedVersion               compatVersion;    // dylibs only
-  PackedVersion               currentVersion;   // dylibs only
-  bool                        hasUUID;
+  StringRef                   installName;        // dylibs only
+  PackedVersion               compatVersion = 0;  // dylibs only
+  PackedVersion               currentVersion = 0; // dylibs only
+  bool                        hasUUID = false;
   std::vector<StringRef>      rpaths;
-  Hex64                       entryAddress;
-  Hex64                       stackSize;
-  MachOLinkingContext::OS     os;
-  Hex64                       sourceVersion;
-  PackedVersion               minOSverson;
-  PackedVersion               sdkVersion;
+  Hex64                       entryAddress = 0;
+  Hex64                       stackSize = 0;
+  MachOLinkingContext::OS     os = MachOLinkingContext::OS::unknown;
+  Hex64                       sourceVersion = 0;
+  PackedVersion               minOSverson = 0;
+  PackedVersion               sdkVersion = 0;
 
   // Maps to load commands with LINKEDIT content (final linked images only).
-  Hex32                       pageSize;
+  Hex32                       pageSize = 0;
   std::vector<RebaseLocation> rebasingInfo;
   std::vector<BindLocation>   bindingInfo;
   std::vector<BindLocation>   weakBindingInfo;
