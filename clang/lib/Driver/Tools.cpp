@@ -5246,6 +5246,9 @@ void ClangAs::ConstructJob(Compilation &C, const JobAction &JA,
   // Ignore explicit -force_cpusubtype_ALL option.
   (void) Args.hasArg(options::OPT_force__cpusubtype__ALL);
 
+  // Pass along any -I options so we get proper .include search paths.
+  Args.AddAllArgs(CmdArgs, options::OPT_I_Group);
+
   // Determine the original source input.
   const Action *SourceAction = &JA;
   while (SourceAction->getKind() != Action::InputClass) {

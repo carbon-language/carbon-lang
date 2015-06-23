@@ -43,3 +43,6 @@
 
 // RUN: %clang -### -c -integrated-as %s -Wa,-gdwarf-2 2>&1 | FileCheck --check-prefix=DWARF2WA %s
 // DWARF2WA: "-gdwarf-2"
+
+// RUN: %clang -### -x assembler -c -integrated-as %s -I myincludedir 2>&1 | FileCheck --check-prefix=INCLUDEPATH %s
+// INCLUDEPATH: "-I" "myincludedir"
