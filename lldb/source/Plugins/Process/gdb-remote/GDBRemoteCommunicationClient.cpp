@@ -929,6 +929,57 @@ GDBRemoteCommunicationClient::HarmonizeThreadIdsForProfileData
     return final_output.str();
 }
 
+bool
+GDBRemoteCommunicationClient::SendvContPacket
+(
+    ProcessGDBRemote *process,
+    const char *payload,
+    size_t packet_length,
+    StringExtractorGDBRemote &response
+)
+{
+
+    m_curr_tid = LLDB_INVALID_THREAD_ID;
+    Log *log(ProcessGDBRemoteLog::GetLogIfAllCategoriesSet(GDBR_LOG_PROCESS));
+    if (log)
+        log->Printf("GDBRemoteCommunicationClient::%s ()", __FUNCTION__);
+
+    // we want to lock down packet sending while we continue
+    Mutex::Locker locker(m_sequence_mutex);
+
+    // here we broadcast this before we even send the packet!!
+    // this signals doContinue() to exit
+    BroadcastEvent(eBroadcastBitRunPacketSent, NULL);
+
+    // set the public state to running
+    m_public_is_running.SetValue(true, eBroadcastNever);
+
+    // Set the starting continue packet into "continue_packet". This packet
+    // may change if we are interrupted and we continue after an async packet...
+    std::string continue_packet(payload, packet_length);
+
+    if (log)
+        log->Printf("GDBRemoteCommunicationClient::%s () sending vCont packet: %s", __FUNCTION__, continue_packet.c_str());
+
+    if (SendPacketNoLock(continue_packet.c_str(), continue_packet.size()) != PacketResult::Success)
+         return false;
+
+    // set the private state to running and broadcast this
+    m_private_is_running.SetValue(true, eBroadcastAlways);
+
+    if (log)
+        log->Printf("GDBRemoteCommunicationClient::%s () ReadPacket(%s)", __FUNCTION__, continue_packet.c_str());
+
+    // wait for the response to the vCont
+    if (ReadPacket(response, UINT32_MAX, false) == PacketResult::Success)
+    {
+        if (response.IsOKResponse())
+            return true;
+    }
+
+    return false;
+}
+
 StateType
 GDBRemoteCommunicationClient::SendContinuePacketAndWaitForResponse
 (

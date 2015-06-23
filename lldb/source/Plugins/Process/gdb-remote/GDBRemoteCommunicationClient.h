@@ -78,6 +78,11 @@ public:
                                           const char *packet_payload,
                                           size_t packet_length,
                                           StringExtractorGDBRemote &response);
+    bool
+    SendvContPacket (ProcessGDBRemote *process,
+                     const char *payload,
+                     size_t packet_length,
+                     StringExtractorGDBRemote &response);
 
     bool
     GetThreadSuffixSupported () override;

@@ -361,6 +361,9 @@ protected:
     lldb::tid_t m_initial_tid; // The inital thread ID, given by stub on attach
 
     bool
+    HandleNotifyPacket(StringExtractorGDBRemote &packet);
+
+    bool
     StartAsyncThread ();
 
     void

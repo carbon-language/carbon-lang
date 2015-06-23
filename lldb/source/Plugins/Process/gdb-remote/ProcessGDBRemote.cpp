@@ -1592,7 +1592,18 @@ ProcessGDBRemote::DoResume ()
                 {
                     // All threads are resuming...
                     m_gdb_comm.SetCurrentThreadForRun (-1);
-                    continue_packet.PutChar ('s');
+
+                    // If in Non-Stop-Mode use vCont when stepping
+                    if (GetTarget().GetNonStopModeEnabled())
+                    {
+                        if (m_gdb_comm.GetVContSupported('s'))
+                            continue_packet.PutCString("vCont;s");
+                        else
+                            continue_packet.PutChar('s');
+                    }
+                    else
+                        continue_packet.PutChar('s');
+
                     continue_packet_error = false;
                 }
                 else if (num_continue_c_tids == 0 &&
@@ -3228,6 +3239,34 @@ ProcessGDBRemote::StopAsyncThread ()
         log->Printf("ProcessGDBRemote::%s () - Called when Async thread was not running.", __FUNCTION__);
 }
 
+bool
+ProcessGDBRemote::HandleNotifyPacket (StringExtractorGDBRemote &packet)
+{
+    // get the packet at a string
+    const std::string &pkt = packet.GetStringRef();
+    // skip %stop:
+    StringExtractorGDBRemote stop_info(pkt.c_str() + 5);
+
+    // pass as a thread stop info packet
+    SetLastStopPacket(stop_info);
+
+    // check for more stop reasons
+    HandleStopReplySequence();
+
+    // if the process is stopped then we need to fake a resume
+    // so that we can stop properly with the new break. This
+    // is possible due to SetPrivateState() broadcasting the
+    // state change as a side effect.
+    if (GetPrivateState() == lldb::StateType::eStateStopped)
+    {
+        SetPrivateState(lldb::StateType::eStateRunning);
+    }
+
+    // since we have some stopped packets we can halt the process
+    SetPrivateState(lldb::StateType::eStateStopped);
+
+    return true;
+}
 
 thread_result_t
 ProcessGDBRemote::AsyncThread (void *arg)
@@ -3245,8 +3284,9 @@ ProcessGDBRemote::AsyncThread (void *arg)
 
     if (listener.StartListeningForEvents (&process->m_async_broadcaster, desired_event_mask) == desired_event_mask)
     {
-        listener.StartListeningForEvents (&process->m_gdb_comm, Communication::eBroadcastBitReadThreadDidExit);
-    
+        listener.StartListeningForEvents (&process->m_gdb_comm, Communication::eBroadcastBitReadThreadDidExit |
+                                                                GDBRemoteCommunication::eBroadcastBitGdbReadThreadGotNotify);
+
         bool done = false;
         while (!done)
         {
@@ -3276,61 +3316,77 @@ ProcessGDBRemote::AsyncThread (void *arg)
                                     if (::strstr (continue_cstr, "vAttach") == NULL)
                                         process->SetPrivateState(eStateRunning);
                                     StringExtractorGDBRemote response;
-                                    StateType stop_state = process->GetGDBRemote().SendContinuePacketAndWaitForResponse (process, continue_cstr, continue_cstr_len, response);
-
-                                    // We need to immediately clear the thread ID list so we are sure to get a valid list of threads.
-                                    // The thread ID list might be contained within the "response", or the stop reply packet that
-                                    // caused the stop. So clear it now before we give the stop reply packet to the process
-                                    // using the process->SetLastStopPacket()...
-                                    process->ClearThreadIDList ();
-
-                                    switch (stop_state)
+  
+                                    // If in Non-Stop-Mode
+                                    if (process->GetTarget().GetNonStopModeEnabled())
                                     {
-                                    case eStateStopped:
-                                    case eStateCrashed:
-                                    case eStateSuspended:
-                                        process->SetLastStopPacket (response);
-                                        process->SetPrivateState (stop_state);
-                                        break;
-
-                                    case eStateExited:
-                                    {
-                                        process->SetLastStopPacket (response);
-                                        process->ClearThreadIDList();
-                                        response.SetFilePos(1);
-                                        
-                                        int exit_status = response.GetHexU8();
-                                        const char *desc_cstr = NULL;
-                                        StringExtractor extractor;
-                                        std::string desc_string;
-                                        if (response.GetBytesLeft() > 0 && response.GetChar('-') == ';')
+                                        // send the vCont packet
+                                        if (!process->GetGDBRemote().SendvContPacket(process, continue_cstr, continue_cstr_len, response))
                                         {
-                                            std::string desc_token;
-                                            while (response.GetNameColonValue (desc_token, desc_string))
+                                            // Something went wrong
+                                            done = true;
+                                            break;
+                                        }
+                                    }
+                                    // If in All-Stop-Mode
+                                    else
+                                    {
+                                        StateType stop_state = process->GetGDBRemote().SendContinuePacketAndWaitForResponse (process, continue_cstr, continue_cstr_len, response);
+
+                                        // We need to immediately clear the thread ID list so we are sure to get a valid list of threads.
+                                        // The thread ID list might be contained within the "response", or the stop reply packet that
+                                        // caused the stop. So clear it now before we give the stop reply packet to the process
+                                        // using the process->SetLastStopPacket()...
+                                        process->ClearThreadIDList ();
+
+                                        switch (stop_state)
+                                        {
+                                        case eStateStopped:
+                                        case eStateCrashed:
+                                        case eStateSuspended:
+                                            process->SetLastStopPacket (response);
+                                            process->SetPrivateState (stop_state);
+                                            break;
+
+                                        case eStateExited:
+                                        {
+                                            process->SetLastStopPacket (response);
+                                            process->ClearThreadIDList();
+                                            response.SetFilePos(1);
+                                            
+                                            int exit_status = response.GetHexU8();
+                                            const char *desc_cstr = NULL;
+                                            StringExtractor extractor;
+                                            std::string desc_string;
+                                            if (response.GetBytesLeft() > 0 && response.GetChar('-') == ';')
                                             {
-                                                if (desc_token == "description")
+                                                std::string desc_token;
+                                                while (response.GetNameColonValue (desc_token, desc_string))
                                                 {
-                                                    extractor.GetStringRef().swap(desc_string);
-                                                    extractor.SetFilePos(0);
-                                                    extractor.GetHexByteString (desc_string);
-                                                    desc_cstr = desc_string.c_str();
+                                                    if (desc_token == "description")
+                                                    {
+                                                        extractor.GetStringRef().swap(desc_string);
+                                                        extractor.SetFilePos(0);
+                                                        extractor.GetHexByteString (desc_string);
+                                                        desc_cstr = desc_string.c_str();
+                                                    }
                                                 }
                                             }
+                                            process->SetExitStatus(exit_status, desc_cstr);
+                                            done = true;
+                                            break;
                                         }
-                                        process->SetExitStatus(exit_status, desc_cstr);
-                                        done = true;
-                                        break;
-                                    }
-                                    case eStateInvalid:
-                                        process->SetExitStatus(-1, "lost connection");
-                                        break;
+                                        case eStateInvalid:
+                                            process->SetExitStatus(-1, "lost connection");
+                                            break;
 
-                                    default:
-                                        process->SetPrivateState (stop_state);
-                                        break;
-                                    }
-                                }
-                            }
+                                        default:
+                                            process->SetPrivateState (stop_state);
+                                            break;
+                                        } // switch(stop_state)
+                                    } // else // if in All-stop-mode
+                                } // if (continue_packet)
+                            } // case eBroadcastBitAysncContinue
                             break;
 
                         case eBroadcastBitAsyncThreadShouldExit:
@@ -3348,10 +3404,28 @@ ProcessGDBRemote::AsyncThread (void *arg)
                 }
                 else if (event_sp->BroadcasterIs (&process->m_gdb_comm))
                 {
-                    if (event_type & Communication::eBroadcastBitReadThreadDidExit)
+                    switch (event_type)
                     {
-                        process->SetExitStatus (-1, "lost connection");
-                        done = true;
+                        case Communication::eBroadcastBitReadThreadDidExit:
+                            process->SetExitStatus (-1, "lost connection");
+                            done = true;
+                            break;
+
+                        case GDBRemoteCommunication::eBroadcastBitGdbReadThreadGotNotify:
+                        {
+                            lldb_private::Event *event = event_sp.get();
+                            const EventDataBytes *continue_packet = EventDataBytes::GetEventDataFromEvent(event);
+                            StringExtractorGDBRemote notify((const char*)continue_packet->GetBytes());
+                            // Hand this over to the process to handle
+                            process->HandleNotifyPacket(notify);
+                            break;
+                        }
+
+                        default:
+                            if (log)
+                                log->Printf ("ProcessGDBRemote::%s (arg = %p, pid = %" PRIu64 ") got unknown event 0x%8.8x", __FUNCTION__, arg, process->GetID(), event_type);
+                            done = true;
+                            break;
                     }
                 }
             }
