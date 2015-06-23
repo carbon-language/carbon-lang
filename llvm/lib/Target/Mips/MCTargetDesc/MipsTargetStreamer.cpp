@@ -92,6 +92,17 @@ void MipsTargetStreamer::emitDirectiveCpLoad(unsigned RegNo) {}
 void MipsTargetStreamer::emitDirectiveCpsetup(unsigned RegNo, int RegOrOffset,
                                               const MCSymbol &Sym, bool IsReg) {
 }
+
+void
+MipsTargetStreamer::emitDirectiveModuleFP(MipsABIFlagsSection::FpABIKind Value,
+                                          bool Is32BitABI) {
+  ABIFlagsSection.setFpABI(Value, Is32BitABI);
+}
+
+void MipsTargetStreamer::emitDirectiveModuleFP() {
+  emitDirectiveModuleFP(ABIFlagsSection.getFpABI(), ABIFlagsSection.Is32BitABI);
+}
+
 void MipsTargetStreamer::emitDirectiveModuleOddSPReg(bool Enabled,
                                                      bool IsO32ABI) {
   if (!Enabled && !IsO32ABI)
