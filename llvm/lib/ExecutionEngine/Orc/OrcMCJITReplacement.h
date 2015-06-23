@@ -142,7 +142,6 @@ public:
                     std::unique_ptr<TargetMachine> TM)
       : TM(std::move(TM)), MemMgr(*this, std::move(MemMgr)),
         Resolver(*this), ClientResolver(std::move(ClientResolver)),
-        Mang(this->TM->getDataLayout()),
         NotifyObjectLoaded(*this), NotifyFinalized(*this),
         ObjectLayer(NotifyObjectLoaded, NotifyFinalized),
         CompileLayer(ObjectLayer, SimpleCompiler(*this->TM)),
@@ -311,7 +310,7 @@ private:
     std::string MangledName;
     {
       raw_string_ostream MangledNameStream(MangledName);
-      Mang.getNameWithPrefix(MangledNameStream, Name);
+      Mang.getNameWithPrefix(MangledNameStream, Name, *TM->getDataLayout());
     }
     return MangledName;
   }

@@ -181,9 +181,9 @@ uint64_t ExecutionEngineState::RemoveMapping(StringRef Name) {
 
 std::string ExecutionEngine::getMangledName(const GlobalValue *GV) {
   MutexGuard locked(lock);
-  Mangler Mang(DL);
+  Mangler Mang;
   SmallString<128> FullName;
-  Mang.getNameWithPrefix(FullName, GV->getName());
+  Mang.getNameWithPrefix(FullName, GV, false);
   return FullName.str();
 }
 

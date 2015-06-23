@@ -50,7 +50,6 @@ public:
   OrcLazyJIT(std::unique_ptr<TargetMachine> TM, LLVMContext &Context,
              CallbackManagerBuilder &BuildCallbackMgr)
     : TM(std::move(TM)),
-      Mang(this->TM->getDataLayout()),
       ObjectLayer(),
       CompileLayer(ObjectLayer, orc::SimpleCompiler(*this->TM)),
       IRDumpLayer(CompileLayer, createDebugDumper()),
@@ -137,7 +136,7 @@ private:
     std::string MangledName;
     {
       raw_string_ostream MangledNameStream(MangledName);
-      Mang.getNameWithPrefix(MangledNameStream, Name);
+      Mangler::getNameWithPrefix(MangledNameStream, Name, *TM->getDataLayout());
     }
     return MangledName;
   }
@@ -145,7 +144,6 @@ private:
   static TransformFtor createDebugDumper();
 
   std::unique_ptr<TargetMachine> TM;
-  Mangler Mang;
   SectionMemoryManager CCMgrMemMgr;
 
   ObjLayerT ObjectLayer;

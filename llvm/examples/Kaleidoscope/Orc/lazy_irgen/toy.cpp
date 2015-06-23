@@ -1162,7 +1162,6 @@ public:
 
   KaleidoscopeJIT(SessionContext &Session)
     : Session(Session),
-      Mang(Session.getTarget().getDataLayout()),
       CompileLayer(ObjectLayer, SimpleCompiler(Session.getTarget())),
       LazyEmitLayer(CompileLayer) {}
 
@@ -1170,7 +1169,8 @@ public:
     std::string MangledName;
     {
       raw_string_ostream MangledNameStream(MangledName);
-      Mang.getNameWithPrefix(MangledNameStream, Name);
+      Mangler::getNameWithPrefix(MangledNameStream, Name,
+                                 *Session.getTarget().getDataLayout());
     }
     return MangledName;
   }
@@ -1236,7 +1236,6 @@ private:
   }
 
   SessionContext &Session;
-  Mangler Mang;
   ObjLayerT ObjectLayer;
   CompileLayerT CompileLayer;
   LazyEmitLayerT LazyEmitLayer;

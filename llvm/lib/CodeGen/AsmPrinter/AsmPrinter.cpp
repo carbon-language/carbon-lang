@@ -179,7 +179,7 @@ bool AsmPrinter::doInitialization(Module &M) {
 
   OutStreamer->InitSections(false);
 
-  Mang = new Mangler(TM.getDataLayout());
+  Mang = new Mangler();
 
   // Emit the version-min deplyment target directive if needed.
   //
@@ -2292,11 +2292,10 @@ MCSymbol *AsmPrinter::getSymbolWithGlobalValueBase(const GlobalValue *GV,
                                                            TM);
 }
 
-/// GetExternalSymbolSymbol - Return the MCSymbol for the specified
-/// ExternalSymbol.
+/// Return the MCSymbol for the specified ExternalSymbol.
 MCSymbol *AsmPrinter::GetExternalSymbolSymbol(StringRef Sym) const {
   SmallString<60> NameStr;
-  Mang->getNameWithPrefix(NameStr, Sym);
+  Mangler::getNameWithPrefix(NameStr, Sym, *TM.getDataLayout());
   return OutContext.getOrCreateSymbol(NameStr);
 }
 

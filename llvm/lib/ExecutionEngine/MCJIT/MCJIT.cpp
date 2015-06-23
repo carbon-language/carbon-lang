@@ -264,9 +264,8 @@ void MCJIT::finalizeModule(Module *M) {
 }
 
 RuntimeDyld::SymbolInfo MCJIT::findExistingSymbol(const std::string &Name) {
-  Mangler Mang(TM->getDataLayout());
   SmallString<128> FullName;
-  Mang.getNameWithPrefix(FullName, Name);
+  Mangler::getNameWithPrefix(FullName, Name, *TM->getDataLayout());
   return Dyld.getSymbol(FullName);
 }
 
@@ -369,7 +368,7 @@ uint64_t MCJIT::getFunctionAddress(const std::string &Name) {
 void *MCJIT::getPointerToFunction(Function *F) {
   MutexGuard locked(lock);
 
-  Mangler Mang(TM->getDataLayout());
+  Mangler Mang;
   SmallString<128> Name;
   TM->getNameWithPrefix(Name, F, Mang);
 

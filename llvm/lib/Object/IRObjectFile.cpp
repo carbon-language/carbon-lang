@@ -37,9 +37,7 @@ using namespace object;
 
 IRObjectFile::IRObjectFile(MemoryBufferRef Object, std::unique_ptr<Module> Mod)
     : SymbolicFile(Binary::ID_IR, Object), M(std::move(Mod)) {
-  // Setup a mangler with the DataLayout.
-  const DataLayout &DL = M->getDataLayout();
-  Mang.reset(new Mangler(&DL));
+  Mang.reset(new Mangler());
 
   const std::string &InlineAsm = M->getModuleInlineAsm();
   if (InlineAsm.empty())

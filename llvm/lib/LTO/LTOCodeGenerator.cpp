@@ -453,7 +453,7 @@ void LTOCodeGenerator::applyScopeRestrictions() {
   passes.add(createVerifierPass());
 
   // mark which symbols can not be internalized
-  Mangler Mangler(TargetMach->getDataLayout());
+  Mangler Mangler;
   std::vector<const char*> MustPreserveList;
   SmallPtrSet<GlobalValue*, 8> AsmUsed;
   std::vector<StringRef> Libcalls;

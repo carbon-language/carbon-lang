@@ -159,7 +159,7 @@ GetSymbolFromOperand(const MachineOperand &MO) const {
     const GlobalValue *GV = MO.getGlobal();
     AsmPrinter.getNameWithPrefix(Name, GV);
   } else if (MO.isSymbol()) {
-    getMang()->getNameWithPrefix(Name, MO.getSymbolName());
+    Mangler::getNameWithPrefix(Name, MO.getSymbolName(), *DL);
   } else if (MO.isMBB()) {
     assert(Suffix.empty());
     Sym = MO.getMBB()->getSymbol();

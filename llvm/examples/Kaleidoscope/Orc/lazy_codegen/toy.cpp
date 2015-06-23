@@ -1162,15 +1162,15 @@ public:
   typedef LazyEmitLayerT::ModuleSetHandleT ModuleHandleT;
 
   KaleidoscopeJIT(SessionContext &Session)
-    : Mang(Session.getTarget().getDataLayout()),
-      CompileLayer(ObjectLayer, SimpleCompiler(Session.getTarget())),
-      LazyEmitLayer(CompileLayer) {}
+      : DL(*Session.getTarget().getDataLayout()),
+        CompileLayer(ObjectLayer, SimpleCompiler(Session.getTarget())),
+        LazyEmitLayer(CompileLayer) {}
 
   std::string mangle(const std::string &Name) {
     std::string MangledName;
     {
       raw_string_ostream MangledNameStream(MangledName);
-      Mang.getNameWithPrefix(MangledNameStream, Name);
+      Mangler::getNameWithPrefix(MangledNameStream, Name, DL);
     }
     return MangledName;
   }
@@ -1204,8 +1204,7 @@ public:
   }
 
 private:
-
-  Mangler Mang;
+  const DataLayout &DL;
   ObjLayerT ObjectLayer;
   CompileLayerT CompileLayer;
   LazyEmitLayerT LazyEmitLayer;

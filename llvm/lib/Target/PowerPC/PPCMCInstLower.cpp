@@ -57,7 +57,7 @@ static MCSymbol *GetSymbolFromOperand(const MachineOperand &MO, AsmPrinter &AP){
 
   if (!MO.isGlobal()) {
     assert(MO.isSymbol() && "Isn't a symbol reference");
-    Mang->getNameWithPrefix(Name, MO.getSymbolName());
+    Mangler::getNameWithPrefix(Name, MO.getSymbolName(), *DL);
   } else {
     const GlobalValue *GV = MO.getGlobal();
     TM.getNameWithPrefix(Name, GV, *Mang);
