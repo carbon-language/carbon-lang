@@ -30,6 +30,8 @@
 #define GOOD18(x)         ;x;
 #define GOOD19            ;-2;
 #define GOOD20            void*
+#define GOOD21(a)         case Fred::a:
+#define GOOD22(a)         if (verbose) return a;
 
 // These are allowed for now..
 #define MAYBE1            *12.34

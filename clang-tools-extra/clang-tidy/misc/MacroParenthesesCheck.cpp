@@ -148,7 +148,7 @@ void MacroParenthesesPPCallbacks::argument(const Token &MacroNameTok,
       continue;
 
     // Argument is a struct member.
-    if (Prev.isOneOf(tok::period, tok::arrow))
+    if (Prev.isOneOf(tok::period, tok::arrow, tok::coloncolon))
       continue;
 
     // String concatenation.
@@ -169,8 +169,8 @@ void MacroParenthesesPPCallbacks::argument(const Token &MacroNameTok,
         TI + 2 != MI->tokens_end() && (TI + 2)->is(tok::r_paren))
       continue;
 
-    // Assignment.
-    if (Prev.is(tok::equal) && Next.is(tok::semi))
+    // Assignment/return, i.e. '=x;' or 'return x;'.
+    if (Prev.isOneOf(tok::equal, tok::kw_return) && Next.is(tok::semi))
       continue;
 
     Check->diag(Tok.getLocation(), "macro argument should be enclosed in "
