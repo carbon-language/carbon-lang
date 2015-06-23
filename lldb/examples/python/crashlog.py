@@ -630,13 +630,14 @@ def save_crashlog(debugger, command, result, dict):
     if not out_file:
         result.PutCString ("error: failed to open file '%s' for writing...", args[0]);
         return
-    if lldb.target:
-        identifier = lldb.target.executable.basename
+    target = debugger.GetSelectedTarget()
+    if target:
+        identifier = target.executable.basename
         if lldb.process:
             pid = lldb.process.id
             if pid != lldb.LLDB_INVALID_PROCESS_ID:
                 out_file.write('Process:         %s [%u]\n' % (identifier, pid))
-        out_file.write('Path:            %s\n' % (lldb.target.executable.fullpath))
+        out_file.write('Path:            %s\n' % (target.executable.fullpath))
         out_file.write('Identifier:      %s\n' % (identifier))
         out_file.write('\nDate/Time:       %s\n' % (datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
         out_file.write('OS Version:      Mac OS X %s (%s)\n' % (platform.mac_ver()[0], commands.getoutput('sysctl -n kern.osversion')));
@@ -673,10 +674,10 @@ def save_crashlog(debugger, command, result, dict):
                 out_file.write('\n')
                 
         out_file.write('\nBinary Images:\n')
-        for module in lldb.target.modules:
+        for module in target.modules:
             text_segment = module.section['__TEXT']
             if text_segment:
-                text_segment_load_addr = text_segment.GetLoadAddress(lldb.target)
+                text_segment_load_addr = text_segment.GetLoadAddress(target)
                 if text_segment_load_addr != lldb.LLDB_INVALID_ADDRESS:
                     text_segment_end_load_addr = text_segment_load_addr + text_segment.size
                     identifier = module.file.basename
