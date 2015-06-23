@@ -263,6 +263,6 @@ void computeLICMSafetyInfo(LICMSafetyInfo *, Loop *);
 /// variable. Returns true if this is an induction PHI along with the step
 /// value.
 bool isInductionPHI(PHINode *, ScalarEvolution *, ConstantInt *&);
-} // namespace llvm
+}
 
 #endif

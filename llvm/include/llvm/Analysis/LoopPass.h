@@ -169,6 +169,6 @@ private:
   Loop *CurrentLoop;
 };
 
-} // namespace llvm
+} // End llvm namespace
 
 #endif

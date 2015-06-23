@@ -56,7 +56,7 @@ namespace {
       AU.addRequired<LazyValueInfo>();
     }
   };
-} // namespace
+}
 
 char CorrelatedValuePropagation::ID = 0;
 INITIALIZE_PASS_BEGIN(CorrelatedValuePropagation, "correlated-propagation",

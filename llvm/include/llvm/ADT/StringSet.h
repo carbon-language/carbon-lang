@@ -29,6 +29,6 @@ namespace llvm {
       return base::insert(std::make_pair(Key, '\0'));
     }
   };
-} // namespace llvm
+}
 
 #endif // LLVM_ADT_STRINGSET_H

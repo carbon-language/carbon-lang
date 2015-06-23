@@ -748,6 +748,6 @@ namespace llvm {
     reverse_iterator rend() { return Index2Node.rend(); }
     const_reverse_iterator rend() const { return Index2Node.rend(); }
   };
-} // namespace llvm
+}
 
 #endif

@@ -57,7 +57,7 @@ public:
   }
 };
 
-} // namespace llvm
+}
 
 template<class AllocatorType, class T, size_t Size, size_t Align>
 inline void *operator new(size_t size,

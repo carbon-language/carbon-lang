@@ -119,7 +119,7 @@ struct DOTGraphTraits<const Function*> : public DefaultDOTGraphTraits {
     return "";
   }
 };
-} // namespace llvm
+} // End llvm namespace
 
 namespace llvm {
   class FunctionPass;

@@ -77,7 +77,7 @@ private:
   bool aggregateLoads(SmallVectorImpl<LoadPOPPair> &);
   bool combineLoads(SmallVectorImpl<LoadPOPPair> &);
 };
-} // namespace
+}
 
 bool LoadCombine::doInitialization(Function &F) {
   DEBUG(dbgs() << "LoadCombine function: " << F.getName() << "\n");

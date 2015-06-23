@@ -51,7 +51,7 @@ namespace {
       AU.addPreserved<DominatorTreeWrapperPass>();
     }
   };
-} // namespace
+}
 char UnreachableBlockElim::ID = 0;
 INITIALIZE_PASS(UnreachableBlockElim, "unreachableblockelim",
                 "Remove unreachable blocks from the CFG", false, false)

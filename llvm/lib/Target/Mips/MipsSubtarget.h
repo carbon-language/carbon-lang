@@ -292,6 +292,6 @@ public:
     return &InstrItins;
   }
 };
-} // namespace llvm
+} // End llvm namespace
 
 #endif

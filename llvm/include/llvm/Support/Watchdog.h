@@ -32,7 +32,7 @@ namespace llvm {
       Watchdog(const Watchdog &other) = delete;
       Watchdog &operator=(const Watchdog &other) = delete;
     };
-  } // namespace sys
-} // namespace llvm
+  }
+}
 
 #endif

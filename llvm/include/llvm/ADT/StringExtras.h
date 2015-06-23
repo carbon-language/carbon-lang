@@ -207,6 +207,6 @@ inline std::string join(IteratorT Begin, IteratorT End, StringRef Separator) {
   return join_impl(Begin, End, Separator, tag());
 }
 
-} // namespace llvm
+} // End llvm namespace
 
 #endif

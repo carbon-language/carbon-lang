@@ -221,6 +221,6 @@ ForwardDominanceFrontierBase<BlockT>::calculate(const DomTreeT &DT,
   return *Result;
 }
 
-} // namespace llvm
+} // End llvm namespace
 
 #endif

@@ -23,6 +23,6 @@ public:
     return createARMELFObjectWriter(OS, OSABI, isLittle());
   }
 };
-} // namespace
+}
 
 #endif

@@ -94,7 +94,7 @@ enum {
   IsSurfTexQueryFlag = 0x800,
   IsTexModeUnifiedFlag = 0x1000
 };
-} // namespace NVPTXII
-} // namespace llvm
+}
+}
 
 #endif

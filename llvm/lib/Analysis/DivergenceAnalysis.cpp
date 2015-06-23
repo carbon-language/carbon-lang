@@ -284,7 +284,7 @@ void DivergencePropagator::propagate() {
   }
 }
 
-} // namespace
+} /// end namespace anonymous
 
 FunctionPass *llvm::createDivergenceAnalysisPass() {
   return new DivergenceAnalysis();

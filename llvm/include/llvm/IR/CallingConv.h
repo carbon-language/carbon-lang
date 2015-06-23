@@ -146,8 +146,8 @@ namespace CallingConv {
     /// in SSE registers.
     X86_VectorCall = 80
   };
-} // namespace CallingConv
+} // End CallingConv namespace
 
-} // namespace llvm
+} // End llvm namespace
 
 #endif

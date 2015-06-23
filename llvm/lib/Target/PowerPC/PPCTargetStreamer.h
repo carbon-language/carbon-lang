@@ -22,6 +22,6 @@ public:
   virtual void emitAbiVersion(int AbiVersion) = 0;
   virtual void emitLocalEntry(MCSymbolELF *S, const MCExpr *LocalOffset) = 0;
 };
-} // namespace llvm
+}
 
 #endif

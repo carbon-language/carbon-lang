@@ -39,7 +39,7 @@ enum {
   WQM = 1 << 20,
   VGPRSpill = 1 << 21
 };
-} // namespace SIInstrFlags
+}
 
 namespace llvm {
 namespace AMDGPU {
@@ -74,7 +74,7 @@ namespace SIInstrFlags {
     P_NORMAL = 1 << 8,     // Positive normal
     P_INFINITY = 1 << 9    // Positive infinity
   };
-} // namespace SIInstrFlags
+}
 
 namespace SISrcMods {
   enum {

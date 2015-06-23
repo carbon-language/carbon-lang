@@ -37,4 +37,4 @@ void PrintRecyclerStats(size_t Size,
          << "Number of elements free for recycling: " << FreeListSize << '\n';
 }
 
-} // namespace llvm
+}

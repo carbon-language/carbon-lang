@@ -380,6 +380,6 @@ public:
   virtual void allUsesReplacedWith(Value *) {}
 };
 
-} // namespace llvm
+} // End llvm namespace
 
 #endif

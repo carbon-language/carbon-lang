@@ -205,6 +205,6 @@ public:
 EXTERN_TEMPLATE_INSTANTIATION(class DominanceFrontierBase<BasicBlock>);
 EXTERN_TEMPLATE_INSTANTIATION(class ForwardDominanceFrontierBase<BasicBlock>);
 
-} // namespace llvm
+} // End llvm namespace
 
 #endif

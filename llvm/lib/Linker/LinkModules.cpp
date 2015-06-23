@@ -99,7 +99,7 @@ private:
 
   bool areTypesIsomorphic(Type *DstTy, Type *SrcTy);
 };
-} // namespace
+}
 
 void TypeMapTy::addTypeMapping(Type *DstTy, Type *SrcTy) {
   assert(SpeculativeTypes.empty());
@@ -507,7 +507,7 @@ private:
   void linkNamedMDNodes();
   void stripReplacedSubprograms();
 };
-} // namespace
+}
 
 /// The LLVM SymbolTable class autorenames globals that conflict in the symbol
 /// table. This is good for all clients except for us. Go through the trouble

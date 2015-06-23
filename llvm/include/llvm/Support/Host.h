@@ -68,7 +68,7 @@ namespace sys {
   ///
   /// \return - True on success.
   bool getHostCPUFeatures(StringMap<bool> &Features);
-} // namespace sys
-} // namespace llvm
+}
+}
 
 #endif

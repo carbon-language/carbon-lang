@@ -86,7 +86,7 @@ bool isPositiveHalfWord(SDNode *N);
 
       OP_END
     };
-  } // namespace HexagonISD
+  }
 
   class HexagonSubtarget;
 

@@ -156,7 +156,7 @@ public:
       MachineFunctionPass::getAnalysisUsage(AU);
     }
   };
-} // namespace
+}
 
 INITIALIZE_PASS_BEGIN(PPCTLSDynamicCall, DEBUG_TYPE,
                       "PowerPC TLS Dynamic Call Fixup", false, false)

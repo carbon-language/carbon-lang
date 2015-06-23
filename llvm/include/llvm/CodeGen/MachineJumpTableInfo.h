@@ -125,6 +125,6 @@ public:
   void dump() const;
 };
 
-} // namespace llvm
+} // End llvm namespace
 
 #endif

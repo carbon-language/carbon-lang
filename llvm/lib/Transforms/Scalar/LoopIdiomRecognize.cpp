@@ -209,7 +209,7 @@ namespace {
     bool runOnNoncountableLoop();
     bool runOnCountableLoop();
   };
-} // namespace
+}
 
 char LoopIdiomRecognize::ID = 0;
 INITIALIZE_PASS_BEGIN(LoopIdiomRecognize, "loop-idiom", "Recognize loop idioms",

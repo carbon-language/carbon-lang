@@ -156,7 +156,7 @@ bool HexagonSplitConst32AndConst64::runOnMachineFunction(MachineFunction &Fn) {
   return true;
 }
 
-} // namespace
+}
 
 //===----------------------------------------------------------------------===//
 //                         Public Constructor Functions

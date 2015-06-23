@@ -41,7 +41,7 @@ MCAsmBackend *createSparcAsmBackend(const Target &T, const MCRegisterInfo &MRI,
                                     const Triple &TT, StringRef CPU);
 MCObjectWriter *createSparcELFObjectWriter(raw_pwrite_stream &OS, bool Is64Bit,
                                            bool IsLIttleEndian, uint8_t OSABI);
-} // namespace llvm
+} // End llvm namespace
 
 // Defines symbolic names for Sparc registers.  This defines a mapping from
 // register name to register number.

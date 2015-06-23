@@ -100,7 +100,7 @@ namespace {
       return Changed;
     }
   };
-} // namespace
+}
 
 char InstSimplifier::ID = 0;
 INITIALIZE_PASS_BEGIN(InstSimplifier, "instsimplify",

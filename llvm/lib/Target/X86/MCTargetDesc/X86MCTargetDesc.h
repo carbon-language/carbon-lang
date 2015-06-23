@@ -62,7 +62,7 @@ void InitLLVM2SEHRegisterMapping(MCRegisterInfo *MRI);
 /// do not need to go through TargetRegistry.
 MCSubtargetInfo *createX86MCSubtargetInfo(const Triple &TT, StringRef CPU,
                                           StringRef FS);
-} // namespace X86_MC
+}
 
 MCCodeEmitter *createX86MCCodeEmitter(const MCInstrInfo &MCII,
                                       const MCRegisterInfo &MRI,
@@ -98,7 +98,7 @@ MCRelocationInfo *createX86_64MachORelocationInfo(MCContext &Ctx);
 
 /// Construct X86-64 ELF relocation info.
 MCRelocationInfo *createX86_64ELFRelocationInfo(MCContext &Ctx);
-} // namespace llvm
+} // End llvm namespace
 
 
 // Defines symbolic names for X86 registers.  This defines a mapping from

@@ -48,5 +48,5 @@ public:
 
   void resetUsedFlag() { HasBeenUsed = false; }
 };
-} // namespace llvm
+}
 #endif

@@ -145,7 +145,7 @@ public:
       MachineFunctionPass::getAnalysisUsage(AU);
     }
   };
-} // namespace
+}
 
 INITIALIZE_PASS(PPCTOCRegDeps, DEBUG_TYPE,
                 "PowerPC TOC Register Dependencies", false, false)

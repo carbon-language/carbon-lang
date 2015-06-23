@@ -115,6 +115,6 @@ bool returnTypeIsEligibleForTailCall(const Function *F,
 // or we are in LTO.
 bool canBeOmittedFromSymbolTable(const GlobalValue *GV);
 
-} // namespace llvm
+} // End llvm namespace
 
 #endif

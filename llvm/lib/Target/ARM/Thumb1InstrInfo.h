@@ -58,6 +58,6 @@ private:
   void expandLoadStackGuard(MachineBasicBlock::iterator MI,
                             Reloc::Model RM) const override;
 };
-} // namespace llvm
+}
 
 #endif

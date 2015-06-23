@@ -370,7 +370,7 @@ public:
   }
 };
 
-} // namespace
+}
 
 static MCInstrAnalysis *createARMMCInstrAnalysis(const MCInstrInfo *Info) {
   return new ARMMCInstrAnalysis(Info);

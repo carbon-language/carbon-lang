@@ -181,7 +181,7 @@ public:
 
   bool runOnFunction(Function &F) override { return lowerExpectIntrinsic(F); }
 };
-} // namespace
+}
 
 char LowerExpectIntrinsic::ID = 0;
 INITIALIZE_PASS(LowerExpectIntrinsic, "lower-expect",

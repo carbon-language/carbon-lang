@@ -96,6 +96,6 @@ public:
   unsigned getGlobalBaseReg(MachineFunction *MF) const;
 };
 
-} // namespace llvm
+}
 
 #endif

@@ -136,6 +136,6 @@ static bool CC_AArch64_Custom_Block(unsigned &ValNo, MVT &ValVT, MVT &LocVT,
   return finishStackBlock(PendingMembers, LocVT, ArgFlags, State, SlotAlign);
 }
 
-} // namespace
+}
 
 #endif

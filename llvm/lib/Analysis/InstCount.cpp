@@ -64,7 +64,7 @@ namespace {
     void print(raw_ostream &O, const Module *M) const override {}
 
   };
-} // namespace
+}
 
 char InstCount::ID = 0;
 INITIALIZE_PASS(InstCount, "instcount",

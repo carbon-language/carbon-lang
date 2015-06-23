@@ -60,6 +60,6 @@ bool HexagonMCShuffle(MCInstrInfo const &MCII, MCSubtargetInfo const &STI,
 unsigned HexagonMCShuffle(MCInstrInfo const &MCII, MCSubtargetInfo const &STI,
                           MCContext &Context, MCInst &,
                           SmallVector<DuplexCandidate, 8>);
-} // namespace llvm
+}
 
 #endif // HEXAGONMCSHUFFLER_H

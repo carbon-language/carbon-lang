@@ -112,6 +112,6 @@ namespace llvm {
     MachineBasicBlock *emitFEXP2_D_1(MachineInstr *MI,
                                      MachineBasicBlock *BB) const;
   };
-} // namespace llvm
+}
 
 #endif

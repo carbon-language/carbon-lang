@@ -270,6 +270,6 @@ template <> struct GraphTraits<MachineDominatorTree*>
   }
 };
 
-} // namespace llvm
+}
 
 #endif

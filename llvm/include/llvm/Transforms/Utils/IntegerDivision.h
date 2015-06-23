@@ -68,6 +68,6 @@ namespace llvm {
   /// @brief Replace Rem with generated code.
   bool expandDivisionUpTo64Bits(BinaryOperator *Div);
 
-} // namespace llvm
+} // End llvm namespace
 
 #endif

@@ -86,7 +86,7 @@ public:
 };
 
 int DiagnosticInfoUnsupported::KindID = 0;
-} // namespace
+}
 
 BPFTargetLowering::BPFTargetLowering(const TargetMachine &TM,
                                      const BPFSubtarget &STI)

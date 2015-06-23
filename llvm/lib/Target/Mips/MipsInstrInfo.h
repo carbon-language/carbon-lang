@@ -146,6 +146,6 @@ private:
 const MipsInstrInfo *createMips16InstrInfo(const MipsSubtarget &STI);
 const MipsInstrInfo *createMipsSEInstrInfo(const MipsSubtarget &STI);
 
-} // namespace llvm
+}
 
 #endif

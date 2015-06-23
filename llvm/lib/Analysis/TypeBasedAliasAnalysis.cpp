@@ -270,7 +270,7 @@ namespace {
       return TBAAStructTypeNode(P);
     }
   };
-} // namespace
+}
 
 namespace {
   /// TypeBasedAliasAnalysis - This is a simple alias analysis

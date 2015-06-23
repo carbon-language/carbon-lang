@@ -32,6 +32,6 @@ namespace llvm {
     LoadOpt("load", cl::ZeroOrMore, cl::value_desc("pluginfilename"),
             cl::desc("Load the specified plugin"));
 #endif
-} // namespace llvm
+}
 
 #endif

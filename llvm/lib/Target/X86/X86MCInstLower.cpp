@@ -112,7 +112,7 @@ namespace llvm {
     OutStreamer->EmitInstruction(Inst, getSubtargetInfo());
     SMShadowTracker.count(Inst, getSubtargetInfo());
   }
-} // namespace llvm
+} // end llvm namespace
 
 X86MCInstLower::X86MCInstLower(const MachineFunction &mf,
                                X86AsmPrinter &asmprinter)

@@ -90,7 +90,7 @@ namespace X86 {
   /// GetOppositeBranchCondition - Return the inverse of the specified cond,
   /// e.g. turning COND_E to COND_NE.
   CondCode GetOppositeBranchCondition(CondCode CC);
-} // namespace X86
+}  // end namespace X86;
 
 
 /// isGlobalStubReference - Return true if the specified TargetFlag operand is
@@ -512,6 +512,6 @@ private:
                       int &FrameIndex) const;
 };
 
-} // namespace llvm
+} // End llvm namespace
 
 #endif

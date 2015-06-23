@@ -85,6 +85,6 @@ private:
     return true;
   }
 };
-} // namespace llvm
+}
 
 #endif

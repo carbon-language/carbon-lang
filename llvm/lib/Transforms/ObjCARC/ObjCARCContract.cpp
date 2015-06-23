@@ -101,7 +101,7 @@ namespace {
       initializeObjCARCContractPass(*PassRegistry::getPassRegistry());
     }
   };
-} // namespace
+}
 
 //===----------------------------------------------------------------------===//
 //                               Implementation

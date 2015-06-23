@@ -184,6 +184,6 @@ private:
   void PrintQueuedTimers(raw_ostream &OS);
 };
 
-} // namespace llvm
+} // End llvm namespace
 
 #endif

@@ -74,6 +74,6 @@ MCSection *UnwindEmitter::getXDataSection(const MCSymbol *Function,
   return getUnwindInfoSection(".xdata", XData, Function, Context);
 }
 
-} // namespace WinEH
-} // namespace llvm
+}
+}
 

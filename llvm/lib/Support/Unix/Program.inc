@@ -176,7 +176,7 @@ static void SetMemoryLimits (unsigned size)
 #endif
 }
 
-} // namespace llvm
+}
 
 static bool Execute(ProcessInfo &PI, StringRef Program, const char **args,
                     const char **envp, const StringRef **redirects,
@@ -473,4 +473,4 @@ bool llvm::sys::argumentsFitWithinSystemLimits(ArrayRef<const char*> Args) {
   }
   return true;
 }
-} // namespace llvm
+}

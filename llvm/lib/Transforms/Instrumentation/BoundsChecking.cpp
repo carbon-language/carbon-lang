@@ -63,7 +63,7 @@ namespace {
     void emitBranchToTrap(Value *Cmp = nullptr);
     bool instrument(Value *Ptr, Value *Val, const DataLayout &DL);
  };
-} // namespace
+}
 
 char BoundsChecking::ID = 0;
 INITIALIZE_PASS(BoundsChecking, "bounds-checking", "Run-time bounds checking",

@@ -251,6 +251,6 @@ private:  // Helper functions
 
 };
 
-} // namespace llvm
+} // End llvm namespace
 
 #endif

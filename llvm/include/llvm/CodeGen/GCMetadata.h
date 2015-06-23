@@ -201,6 +201,6 @@ public:
   /// will soon change.
   GCFunctionInfo &getFunctionInfo(const Function &F);
 };
-} // namespace llvm
+}
 
 #endif

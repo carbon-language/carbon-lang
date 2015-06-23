@@ -43,7 +43,7 @@ namespace {
   };
 
   char MipsOs16::ID = 0;
-} // namespace
+}
 
 // Figure out if we need float point based on the function signature.
 // We need to move variables in and/or out of floating point

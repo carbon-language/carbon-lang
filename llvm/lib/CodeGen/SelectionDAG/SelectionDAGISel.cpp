@@ -307,7 +307,7 @@ namespace llvm {
            "Unknown sched type!");
     return createILPListDAGScheduler(IS, OptLevel);
   }
-} // namespace llvm
+}
 
 // EmitInstrWithCustomInserter - This method should be implemented by targets
 // that mark instructions with the 'usesCustomInserter' flag.  These
@@ -2542,7 +2542,7 @@ public:
           J.setNode(E);
   }
 };
-} // namespace
+}
 
 SDNode *SelectionDAGISel::
 SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,

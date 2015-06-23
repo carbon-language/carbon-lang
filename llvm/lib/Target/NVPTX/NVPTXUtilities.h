@@ -91,6 +91,6 @@ void dumpInstRec(Value *v, std::set<Instruction *> *visited);
 void dumpInstRec(Value *v);
 void dumpParent(Value *v);
 
-} // namespace llvm
+}
 
 #endif

@@ -103,6 +103,6 @@ public:
   void ParseSubtargetFeatures(StringRef CPU, StringRef FS);
 };
 
-} // namespace llvm
+} // End llvm namespace
 
 #endif

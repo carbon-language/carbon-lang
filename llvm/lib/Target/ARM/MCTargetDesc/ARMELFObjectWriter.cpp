@@ -40,7 +40,7 @@ namespace {
     bool needsRelocateWithSymbol(const MCSymbol &Sym,
                                  unsigned Type) const override;
   };
-} // namespace
+}
 
 ARMELFObjectWriter::ARMELFObjectWriter(uint8_t OSABI)
   : MCELFObjectTargetWriter(/*Is64Bit*/ false, OSABI,

@@ -87,7 +87,7 @@ namespace {
     LoopInfo *LI;
     ScalarEvolution *SE;
   };
-} // namespace
+}
 
 char PPCLoopPreIncPrep::ID = 0;
 static const char *name = "Prepare loop for pre-inc. addressing modes";
@@ -113,7 +113,7 @@ namespace {
   protected:
     ScalarEvolution *SE;
   };
-} // namespace
+}
 
 static bool IsPtrInBounds(Value *BasePtr) {
   Value *StrippedBasePtr = BasePtr;

@@ -127,8 +127,8 @@ namespace EHABI {
 
     NUM_PERSONALITY_INDEX
   };
-} // namespace EHABI
-} // namespace ARM
-} // namespace llvm
+}
+}
+}
 
 #endif

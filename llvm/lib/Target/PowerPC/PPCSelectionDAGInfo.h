@@ -26,6 +26,6 @@ public:
   ~PPCSelectionDAGInfo();
 };
 
-} // namespace llvm
+}
 
 #endif

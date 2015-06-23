@@ -57,7 +57,7 @@ namespace {
 
     bool RemoveUnusedGlobalValue(GlobalValue &GV);
   };
-} // namespace
+}
 
 /// Returns true if F contains only a single "ret" instruction.
 static bool isEmptyFunction(Function *F) {

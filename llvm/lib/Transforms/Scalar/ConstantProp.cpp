@@ -47,7 +47,7 @@ namespace {
       AU.addRequired<TargetLibraryInfoWrapperPass>();
     }
   };
-} // namespace
+}
 
 char ConstantPropagation::ID = 0;
 INITIALIZE_PASS_BEGIN(ConstantPropagation, "constprop",

@@ -111,6 +111,6 @@ namespace llvm {
   /// a pointer, Size is an 'intptr_t', and File is a pointer to FILE.
   Value *EmitFWrite(Value *Ptr, Value *Size, Value *File, IRBuilder<> &B,
                     const DataLayout &DL, const TargetLibraryInfo *TLI);
-} // namespace llvm
+}
 
 #endif

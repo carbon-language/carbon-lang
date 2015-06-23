@@ -46,7 +46,7 @@ void X86WinCOFFStreamer::FinishImpl() {
 
   MCWinCOFFStreamer::FinishImpl();
 }
-} // namespace
+}
 
 MCStreamer *llvm::createX86WinCOFFStreamer(MCContext &C, MCAsmBackend &AB,
                                            raw_pwrite_stream &OS,

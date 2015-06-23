@@ -38,7 +38,7 @@ public:
 
   bool runOnModule(Module &M) override { return false; }
 };
-} // namespace
+}
 
 ModulePass *llvm::createBarrierNoopPass() { return new BarrierNoop(); }
 

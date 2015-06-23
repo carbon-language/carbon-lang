@@ -37,7 +37,7 @@ namespace {
   };
 
   char MipsModuleDAGToDAGISel::ID = 0;
-} // namespace
+}
 
 bool MipsModuleDAGToDAGISel::runOnMachineFunction(MachineFunction &MF) {
   DEBUG(errs() << "In MipsModuleDAGToDAGISel::runMachineFunction\n");

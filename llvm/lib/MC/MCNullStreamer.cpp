@@ -36,7 +36,7 @@ namespace {
     void EmitGPRel32Value(const MCExpr *Value) override {}
   };
 
-} // namespace
+}
 
 MCStreamer *llvm::createNullStreamer(MCContext &Context) {
   return new MCNullStreamer(Context);

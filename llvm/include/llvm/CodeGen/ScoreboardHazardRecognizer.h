@@ -121,6 +121,6 @@ public:
   void RecedeCycle() override;
 };
 
-} // namespace llvm
+}
 
 #endif //!LLVM_CODEGEN_SCOREBOARDHAZARDRECOGNIZER_H

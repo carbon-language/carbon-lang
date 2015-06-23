@@ -628,7 +628,7 @@ void IrreducibleGraph::addEdges(const BlockNode &Node,
   else
     addBlockEdges(*this, Irr, OuterLoop);
 }
-} // namespace bfi_detail
+}
 
 /// \brief Shared implementation for block frequency analysis.
 ///
@@ -1133,7 +1133,7 @@ template <class BT> struct BlockEdgesAdder {
       G.addEdge(Irr, BFI.getNode(*I), OuterLoop);
   }
 };
-} // namespace bfi_detail
+}
 template <class BT>
 void BlockFrequencyInfoImpl<BT>::computeIrreducibleMass(
     LoopData *OuterLoop, std::list<LoopData>::iterator Insert) {

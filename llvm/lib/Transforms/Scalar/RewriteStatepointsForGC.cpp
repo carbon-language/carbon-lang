@@ -183,7 +183,7 @@ struct PartiallyConstructedSafepointRecord {
   /// Maps rematerialized copy to it's original value.
   RematerializedValueMapTy RematerializedValues;
 };
-} // namespace
+}
 
 /// Compute the live-in set for every basic block in the function
 static void computeLiveInValues(DominatorTree &DT, Function &F,
@@ -646,7 +646,7 @@ private:
     llvm_unreachable("only three states!");
   }
 };
-} // namespace
+}
 /// For a given value or instruction, figure out what base ptr it's derived
 /// from.  For gc objects, this is simply itself.  On success, returns a value
 /// which is the base pointer.  (This is reliable and can be used for

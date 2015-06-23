@@ -95,7 +95,7 @@ public:
 
   unsigned getNumNamedVarArgParams() const { return NumNamedVarArgParams; }
 };
-} // namespace
+}
 
 // Implement calling convention for Hexagon.
 static bool

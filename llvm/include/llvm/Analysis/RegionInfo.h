@@ -906,5 +906,5 @@ EXTERN_TEMPLATE_INSTANTIATION(class RegionBase<RegionTraits<Function>>);
 EXTERN_TEMPLATE_INSTANTIATION(class RegionNodeBase<RegionTraits<Function>>);
 EXTERN_TEMPLATE_INSTANTIATION(class RegionInfoBase<RegionTraits<Function>>);
 
-} // namespace llvm
+} // End llvm namespace
 #endif

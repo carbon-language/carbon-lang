@@ -129,6 +129,6 @@ private:
                                     unsigned ConstraintID,
                                     std::vector<SDValue> &OutOps) override;
 };
-} // namespace llvm
+}
 
 #endif

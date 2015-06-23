@@ -95,6 +95,6 @@ namespace llvm {
     /// print - Implement the dump method.
     void print(raw_ostream &O, const Module* = nullptr) const override;
   };
-} // namespace llvm
+}
 
 #endif /* LLVM_CODEGEN_LIVESTACK_ANALYSIS_H */

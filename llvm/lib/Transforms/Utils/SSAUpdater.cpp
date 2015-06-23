@@ -303,7 +303,7 @@ public:
   }
 };
 
-} // namespace llvm
+} // End llvm namespace
 
 /// Check to see if AvailableVals has an entry for the specified BB and if so,
 /// return it.  If not, construct SSA form by first calculating the required

@@ -402,5 +402,5 @@ public:
   }
   DwarfCompileUnit &getCU() override { return CU; }
 };
-} // namespace llvm
+} // end llvm namespace
 #endif

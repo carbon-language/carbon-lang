@@ -123,6 +123,6 @@ public:
   }
 };
 
-} // namespace llvm
+}
 
 #endif

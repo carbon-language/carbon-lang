@@ -198,7 +198,7 @@ namespace AMDGPU {
   int16_t getNamedOperandIdx(uint16_t Opcode, uint16_t NamedIndex);
 }  // End namespace AMDGPU
 
-} // namespace llvm
+} // End llvm namespace
 
 #define AMDGPU_FLAG_REGISTER_LOAD  (UINT64_C(1) << 63)
 #define AMDGPU_FLAG_REGISTER_STORE (UINT64_C(1) << 62)

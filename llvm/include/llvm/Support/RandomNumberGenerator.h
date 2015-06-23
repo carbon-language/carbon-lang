@@ -53,6 +53,6 @@ private:
 
   friend class Module;
 };
-} // namespace llvm
+}
 
 #endif

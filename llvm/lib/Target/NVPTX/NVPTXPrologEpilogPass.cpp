@@ -39,7 +39,7 @@ public:
 private:
   void calculateFrameObjectOffsets(MachineFunction &Fn);
 };
-} // namespace
+}
 
 MachineFunctionPass *llvm::createNVPTXPrologEpilogPass() {
   return new NVPTXPrologEpilogPass();

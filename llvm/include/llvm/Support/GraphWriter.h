@@ -356,6 +356,6 @@ void ViewGraph(const GraphType &G, const Twine &Name,
   DisplayGraph(Filename, true, Program);
 }
 
-} // namespace llvm
+} // End llvm namespace
 
 #endif

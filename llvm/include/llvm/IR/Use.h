@@ -168,6 +168,6 @@ template <> struct simplify_type<const Use> {
 // Create wrappers for C Binding types (see CBindingWrapping.h).
 DEFINE_SIMPLE_CONVERSION_FUNCTIONS(Use, LLVMUseRef)
 
-} // namespace llvm
+}
 
 #endif

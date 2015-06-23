@@ -93,6 +93,6 @@ private:
     void AdjustPriorityOfUnscheduledPreds(SUnit *SU);
     SUnit *getSingleUnscheduledPred(SUnit *SU);
   };
-} // namespace llvm
+}
 
 #endif

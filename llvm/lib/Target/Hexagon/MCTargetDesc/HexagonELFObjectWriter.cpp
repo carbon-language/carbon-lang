@@ -31,7 +31,7 @@ public:
   unsigned GetRelocType(MCValue const &Target, MCFixup const &Fixup,
                         bool IsPCRel) const override;
 };
-} // namespace
+}
 
 HexagonELFObjectWriter::HexagonELFObjectWriter(uint8_t OSABI, StringRef C)
     : MCELFObjectTargetWriter(/*Is64bit*/ false, OSABI, ELF::EM_HEXAGON,

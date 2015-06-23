@@ -71,7 +71,7 @@ namespace {
     bool ExpandFPMLxInstructions(MachineBasicBlock &MBB);
   };
   char MLxExpansion::ID = 0;
-} // namespace
+}
 
 void MLxExpansion::clearStack() {
   std::fill(LastMIs, LastMIs + 4, nullptr);

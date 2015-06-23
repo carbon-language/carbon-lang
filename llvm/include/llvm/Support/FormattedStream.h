@@ -156,7 +156,7 @@ formatted_raw_ostream &ferrs();
 /// debug output.  Use it like: fdbgs() << "foo" << "bar";
 formatted_raw_ostream &fdbgs();
 
-} // namespace llvm
+} // end llvm namespace
 
 
 #endif

@@ -90,7 +90,7 @@ namespace llvm {
   const unsigned int maxPowerOfFiveExponent = maxExponent + maxPrecision - 1;
   const unsigned int maxPowerOfFiveParts = 2 + ((maxPowerOfFiveExponent * 815)
                                                 / (351 * integerPartWidth));
-} // namespace llvm
+}
 
 /* A bunch of private, handy routines.  */
 
@@ -3539,7 +3539,7 @@ namespace {
     exp += FirstSignificant;
     buffer.erase(&buffer[0], &buffer[FirstSignificant]);
   }
-} // namespace
+}
 
 void APFloat::toString(SmallVectorImpl<char> &Str,
                        unsigned FormatPrecision,

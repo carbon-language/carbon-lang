@@ -124,4 +124,4 @@ const Use *Use::getImpliedUser() const {
   }
 }
 
-} // namespace llvm
+} // End llvm namespace

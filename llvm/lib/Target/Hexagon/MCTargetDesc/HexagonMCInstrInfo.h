@@ -229,7 +229,7 @@ bool subInstWouldBeExtended(MCInst const &potentialDuplex);
 
 // Attempt to find and replace compound pairs
 void tryCompound(MCInstrInfo const &MCII, MCContext &Context, MCInst &MCI);
-} // namespace HexagonMCInstrInfo
-} // namespace llvm
+}
+}
 
 #endif // LLVM_LIB_TARGET_HEXAGON_MCTARGETDESC_HEXAGONMCINSTRINFO_H

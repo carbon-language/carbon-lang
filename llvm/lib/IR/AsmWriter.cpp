@@ -67,7 +67,7 @@ struct OrderMap {
     IDs[V].first = ID;
   }
 };
-} // namespace
+}
 
 static void orderValue(const Value *V, OrderMap &OM) {
   if (OM.lookup(V).first)

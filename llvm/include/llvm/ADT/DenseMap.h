@@ -42,7 +42,7 @@ struct DenseMapPair : public std::pair<KeyT, ValueT> {
   ValueT &getSecond() { return std::pair<KeyT, ValueT>::second; }
   const ValueT &getSecond() const { return std::pair<KeyT, ValueT>::second; }
 };
-} // namespace detail
+}
 
 template <
     typename KeyT, typename ValueT, typename KeyInfoT = DenseMapInfo<KeyT>,

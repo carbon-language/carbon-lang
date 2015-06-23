@@ -73,6 +73,6 @@ namespace llvm {
     /// will not be removed when the object is destroyed.
     void releaseFile() { DeleteIt = false; }
   };
-} // namespace llvm
+} // End llvm namespace
 
 #endif

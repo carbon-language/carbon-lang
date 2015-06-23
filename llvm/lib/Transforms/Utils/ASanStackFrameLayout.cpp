@@ -107,4 +107,4 @@ ComputeASanStackFrameLayout(SmallVectorImpl<ASanStackVariableDescription> &Vars,
   assert(Layout->FrameSize / Granularity == Layout->ShadowBytes.size());
 }
 
-} // namespace llvm
+} // llvm namespace

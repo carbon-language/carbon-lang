@@ -77,7 +77,7 @@ namespace {
     Instruction *splitOverflowIntrinsic(Instruction *IVUser,
                                         const DominatorTree *DT);
   };
-} // namespace
+}
 
 /// Fold an IV operand into its use.  This removes increments of an
 /// aligned IV when used by a instruction that ignores the low bits.

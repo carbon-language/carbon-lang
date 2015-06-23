@@ -3691,7 +3691,7 @@ struct VerifierLegacyPass : public FunctionPass {
     AU.setPreservesAll();
   }
 };
-} // namespace
+}
 
 char VerifierLegacyPass::ID = 0;
 INITIALIZE_PASS(VerifierLegacyPass, "verify", "Module Verifier", false, false)

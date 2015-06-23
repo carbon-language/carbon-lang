@@ -88,6 +88,6 @@ public:
                                             unsigned Reg, uint64_t Value) const;
 };
 
-} // namespace llvm
+}
 
 #endif

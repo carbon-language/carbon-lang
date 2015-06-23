@@ -31,7 +31,7 @@ namespace {
     bool needsRelocateWithSymbol(const MCSymbol &Sym,
                                  unsigned Type) const override;
   };
-} // namespace
+}
 
 PPCELFObjectWriter::PPCELFObjectWriter(bool Is64Bit, uint8_t OSABI)
   : MCELFObjectTargetWriter(Is64Bit, OSABI,

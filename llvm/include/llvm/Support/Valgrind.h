@@ -67,7 +67,7 @@ namespace sys {
   #define TsanIgnoreWritesBegin()
   #define TsanIgnoreWritesEnd()
 #endif
-} // namespace sys
-} // namespace llvm
+}
+}
 
 #endif

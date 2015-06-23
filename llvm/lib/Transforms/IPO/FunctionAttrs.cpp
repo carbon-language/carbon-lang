@@ -132,7 +132,7 @@ namespace {
     AliasAnalysis *AA;
     TargetLibraryInfo *TLI;
   };
-} // namespace
+}
 
 char FunctionAttrs::ID = 0;
 INITIALIZE_PASS_BEGIN(FunctionAttrs, "functionattrs",
@@ -379,7 +379,7 @@ namespace {
 
     const SmallPtrSet<Function*, 8> &SCCNodes;
   };
-} // namespace
+}
 
 namespace llvm {
   template<> struct GraphTraits<ArgumentGraphNode*> {
@@ -406,7 +406,7 @@ namespace llvm {
       return AG->end();
     }
   };
-} // namespace llvm
+}
 
 // Returns Attribute::None, Attribute::ReadOnly or Attribute::ReadNone.
 static Attribute::AttrKind

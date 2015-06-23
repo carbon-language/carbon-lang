@@ -493,6 +493,6 @@ bool rewriteT2FrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
                          unsigned FrameReg, int &Offset,
                          const ARMBaseInstrInfo &TII);
 
-} // namespace llvm
+} // End llvm namespace
 
 #endif

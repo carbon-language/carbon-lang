@@ -30,7 +30,7 @@ namespace llvm {
   protected:
     explicit MCAsmInfoGNUCOFF();
   };
-} // namespace llvm
+}
 
 
 #endif // LLVM_MC_MCASMINFOCOFF_H

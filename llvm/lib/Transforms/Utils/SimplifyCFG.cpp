@@ -136,7 +136,7 @@ public:
       : TTI(TTI), DL(DL), BonusInstThreshold(BonusInstThreshold), AC(AC) {}
   bool run(BasicBlock *BB);
 };
-} // namespace
+}
 
 /// SafeToMergeTerminators - Return true if it is safe to merge these two
 /// terminator instructions together.
@@ -502,7 +502,7 @@ private:
   }
 };
 
-} // namespace
+}
 
 static void EraseTerminatorInstAndDCECond(TerminatorInst *TI) {
   Instruction *Cond = nullptr;
@@ -3717,7 +3717,7 @@ namespace {
     // For ArrayKind, this is the array.
     GlobalVariable *Array;
   };
-} // namespace
+}
 
 SwitchLookupTable::SwitchLookupTable(
     Module &M, uint64_t TableSize, ConstantInt *Offset,

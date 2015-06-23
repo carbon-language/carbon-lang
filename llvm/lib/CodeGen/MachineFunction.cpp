@@ -404,7 +404,7 @@ namespace llvm {
       return OutStr;
     }
   };
-} // namespace llvm
+}
 
 void MachineFunction::viewCFG() const
 {

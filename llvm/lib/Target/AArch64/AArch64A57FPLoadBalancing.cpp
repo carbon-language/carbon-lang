@@ -148,7 +148,7 @@ private:
   Color getColor(unsigned Register);
   Chain *getAndEraseNext(Color PreferredColor, std::vector<Chain*> &L);
 };
-} // namespace
+}
 
 char AArch64A57FPLoadBalancing::ID = 0;
 

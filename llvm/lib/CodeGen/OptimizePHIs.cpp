@@ -55,7 +55,7 @@ namespace {
     bool IsDeadPHICycle(MachineInstr *MI, InstrSet &PHIsInCycle);
     bool OptimizeBB(MachineBasicBlock &MBB);
   };
-} // namespace
+}
 
 char OptimizePHIs::ID = 0;
 char &llvm::OptimizePHIsID = OptimizePHIs::ID;

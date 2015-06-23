@@ -111,6 +111,6 @@ private:
   MachineSSAUpdater(const MachineSSAUpdater&) = delete;
 };
 
-} // namespace llvm
+} // End llvm namespace
 
 #endif

@@ -189,7 +189,7 @@ namespace {
                               GlobalValue *OkayStoreDest = nullptr);
     bool AnalyzeIndirectGlobalMemory(GlobalValue *GV);
   };
-} // namespace
+}
 
 char GlobalsModRef::ID = 0;
 INITIALIZE_AG_PASS_BEGIN(GlobalsModRef, AliasAnalysis,

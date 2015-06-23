@@ -123,7 +123,7 @@ void XCoreTargetAsmStreamer::emitCCBottomData(StringRef Name) {
 void XCoreTargetAsmStreamer::emitCCBottomFunction(StringRef Name) {
   OS << "\t.cc_bottom " << Name << ".function\n";
 }
-} // namespace
+}
 
 static MCTargetStreamer *createTargetAsmStreamer(MCStreamer &S,
                                                  formatted_raw_ostream &OS,

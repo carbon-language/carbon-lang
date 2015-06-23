@@ -427,7 +427,7 @@ enum NodeType : unsigned {
   Suld3DV4I16Zero,
   Suld3DV4I32Zero
 };
-} // namespace NVPTXISD
+}
 
 class NVPTXSubtarget;
 

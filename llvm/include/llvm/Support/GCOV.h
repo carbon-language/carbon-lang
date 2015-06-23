@@ -435,6 +435,6 @@ private:
   FileCoverageList FileCoverages;
   FuncCoverageMap FuncCoverages;
 };
-} // namespace llvm
+}
 
 #endif

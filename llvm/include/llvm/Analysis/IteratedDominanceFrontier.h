@@ -92,5 +92,5 @@ private:
   const SmallPtrSetImpl<BasicBlock *> *DefBlocks;
   SmallVector<BasicBlock *, 32> PHIBlocks;
 };
-} // namespace llvm
+}
 #endif

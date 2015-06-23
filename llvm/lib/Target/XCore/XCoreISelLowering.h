@@ -85,7 +85,7 @@ namespace llvm {
       // Memory barrier.
       MEMBARRIER
     };
-  } // namespace XCoreISD
+  }
 
   //===--------------------------------------------------------------------===//
   // TargetLowering Implementation
@@ -215,6 +215,6 @@ namespace llvm {
                      const SmallVectorImpl<ISD::OutputArg> &ArgsFlags,
                      LLVMContext &Context) const override;
   };
-} // namespace llvm
+}
 
 #endif

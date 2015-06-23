@@ -41,5 +41,5 @@ public:
   bool IsKernel;
 };
 
-} // namespace llvm
+}
 #endif

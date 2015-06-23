@@ -37,6 +37,6 @@ namespace llvm {
                                MachineFunction &mf,
                                VirtRegMap &vrm);
 
-} // namespace llvm
+}
 
 #endif

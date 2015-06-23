@@ -73,6 +73,6 @@ public:
   static ValueSymbolTable *toPtr(ValueSymbolTable &R) { return &R; }
 };
 
-} // namespace llvm
+} // End llvm namespace
 
 #endif

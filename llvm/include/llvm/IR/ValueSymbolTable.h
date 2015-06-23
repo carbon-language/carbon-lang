@@ -128,6 +128,6 @@ private:
 /// @}
 };
 
-} // namespace llvm
+} // End llvm namespace
 
 #endif

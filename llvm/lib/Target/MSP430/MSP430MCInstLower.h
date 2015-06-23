@@ -42,6 +42,6 @@ public:
   MCSymbol *GetBlockAddressSymbol(const MachineOperand &MO) const;
 };
 
-} // namespace llvm
+}
 
 #endif

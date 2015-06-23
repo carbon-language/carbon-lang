@@ -45,7 +45,7 @@ public:
     return (1 == PT->getAddressSpace());
   }
 };
-} // namespace
+}
 
 static GCRegistry::Add<CoreCLRGC> X("coreclr", "CoreCLR-compatible GC");
 

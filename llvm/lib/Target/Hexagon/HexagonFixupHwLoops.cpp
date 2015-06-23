@@ -67,7 +67,7 @@ namespace {
   };
 
   char HexagonFixupHwLoops::ID = 0;
-} // namespace
+}
 
 INITIALIZE_PASS(HexagonFixupHwLoops, "hwloopsfixup",
                 "Hexagon Hardware Loops Fixup", false, false)

@@ -41,6 +41,6 @@ void linkErlangGCPrinter();
 void linkShadowStackGC();
 
 void linkStatepointExampleGC();
-} // namespace llvm
+}
 
 #endif

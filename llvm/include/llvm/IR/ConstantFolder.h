@@ -240,6 +240,6 @@ public:
   }
 };
 
-} // namespace llvm
+}
 
 #endif

@@ -62,7 +62,7 @@ public:
   }
 };
 
-} // namespace
+}
 
 char AlwaysInliner::ID = 0;
 INITIALIZE_PASS_BEGIN(AlwaysInliner, "always-inline",

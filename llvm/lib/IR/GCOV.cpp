@@ -496,7 +496,7 @@ public:
     OS << format("%5u:", LineNum) << Line << "\n";
   }
 };
-} // namespace
+}
 
 /// Convert a path to a gcov filename. If PreservePaths is true, this
 /// translates "/" to "#", ".." to "^", and drops ".", to match gcov.

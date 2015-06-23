@@ -346,6 +346,6 @@ inline BasicBlock *ilist_traits<BasicBlock>::createSentinel() const {
 // Create wrappers for C Binding types (see CBindingWrapping.h).
 DEFINE_SIMPLE_CONVERSION_FUNCTIONS(BasicBlock, LLVMBasicBlockRef)
 
-} // namespace llvm
+} // End llvm namespace
 
 #endif

@@ -80,6 +80,6 @@ public:
                                                uint64_t Address) = 0;
 };
 
-} // namespace llvm
+}
 
 #endif

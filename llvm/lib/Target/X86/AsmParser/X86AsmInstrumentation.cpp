@@ -1080,4 +1080,4 @@ CreateX86AsmInstrumentation(const MCTargetOptions &MCOptions,
   return new X86AsmInstrumentation(STI);
 }
 
-} // namespace llvm
+} // End llvm namespace

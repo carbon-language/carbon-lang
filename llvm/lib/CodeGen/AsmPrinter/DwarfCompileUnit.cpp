@@ -817,4 +817,4 @@ bool DwarfCompileUnit::includeMinimalInlineScopes() const {
   return getCUNode()->getEmissionKind() == DIBuilder::LineTablesOnly ||
          (DD->useSplitDwarf() && !Skeleton);
 }
-} // namespace llvm
+} // end llvm namespace

@@ -247,6 +247,6 @@ public:
   const MachineOperand *operator->() const { return &deref(); }
 };
 
-} // namespace llvm
+} // End llvm namespace
 
 #endif

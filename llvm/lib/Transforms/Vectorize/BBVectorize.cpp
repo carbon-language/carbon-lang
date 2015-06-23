@@ -3192,7 +3192,7 @@ namespace {
 
     DEBUG(dbgs() << "BBV: final: \n" << BB << "\n");
   }
-} // namespace
+}
 
 char BBVectorize::ID = 0;
 static const char bb_vectorize_name[] = "Basic-Block Vectorization";

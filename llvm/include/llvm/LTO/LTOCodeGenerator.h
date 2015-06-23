@@ -177,5 +177,5 @@ private:
   bool ShouldInternalize = true;
   bool ShouldEmbedUselists = false;
 };
-} // namespace llvm
+}
 #endif

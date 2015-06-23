@@ -26,6 +26,6 @@ public:
   ~DWARFCompileUnit() override;
 };
 
-} // namespace llvm
+}
 
 #endif

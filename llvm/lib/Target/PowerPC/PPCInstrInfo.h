@@ -237,6 +237,6 @@ public:
   void getNoopForMachoTarget(MCInst &NopInst) const override;
 };
 
-} // namespace llvm
+}
 
 #endif

@@ -1036,6 +1036,6 @@ getPressureSets(unsigned RegUnit) const {
   return PSetIterator(RegUnit, this);
 }
 
-} // namespace llvm
+} // End llvm namespace
 
 #endif

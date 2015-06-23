@@ -172,6 +172,6 @@ public:
 /// register your GCMetadataPrinter subclass with the
 /// GCMetadataPrinterRegistery as well.
 typedef Registry<GCStrategy> GCRegistry;
-} // namespace llvm
+}
 
 #endif

@@ -59,6 +59,6 @@ public:
   virtual std::vector<StructType *> getIdentifiedStructTypes() const = 0;
 };
 
-} // namespace llvm
+} // End llvm namespace
 
 #endif

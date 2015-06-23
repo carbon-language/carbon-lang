@@ -202,7 +202,7 @@ namespace {
     std::function<bool(const Function &)> PredicateFtor;
   };
   char Thumb2SizeReduce::ID = 0;
-} // namespace
+}
 
 Thumb2SizeReduce::Thumb2SizeReduce(std::function<bool(const Function &)> Ftor)
     : MachineFunctionPass(ID), PredicateFtor(Ftor) {

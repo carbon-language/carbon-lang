@@ -191,7 +191,7 @@ public:
 
   void writeObject(MCAssembler &Asm, const MCAsmLayout &Layout) override;
 };
-} // namespace
+}
 
 static inline void write_uint32_le(void *Data, uint32_t Value) {
   support::endian::write<uint32_t, support::little, support::unaligned>(Data,

@@ -44,7 +44,7 @@ struct FuncNameSignature {
 extern const FuncNameSignature PredefinedFuncs[];
 
 extern FuncSignature const *findFuncSignature(const char *name);
-} // namespace Mips16HardFloatInfo
-} // namespace llvm
+}
+}
 
 #endif

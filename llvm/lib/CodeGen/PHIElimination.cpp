@@ -104,7 +104,7 @@ namespace {
                      MachineInstrExpressionTrait> LoweredPHIMap;
     LoweredPHIMap LoweredPHIs;
   };
-} // namespace
+}
 
 STATISTIC(NumLowered, "Number of phis lowered");
 STATISTIC(NumCriticalEdgesSplit, "Number of critical edges split");

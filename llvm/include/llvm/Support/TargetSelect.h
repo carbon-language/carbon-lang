@@ -161,6 +161,6 @@ namespace llvm {
 #endif
   }  
 
-} // namespace llvm
+}
 
 #endif

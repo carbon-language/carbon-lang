@@ -77,7 +77,7 @@ namespace llvm {
   FunctionPass *createHexagonCopyToCombine();
   FunctionPass *createHexagonPacketizer();
   FunctionPass *createHexagonNewValueJump();
-} // namespace llvm
+} // end namespace llvm;
 
 /// HexagonTargetMachine ctor - Create an ILP32 architecture model.
 ///

@@ -29,6 +29,6 @@ public:
                                      Subtype);
   }
 };
-} // namespace
+}
 
 #endif

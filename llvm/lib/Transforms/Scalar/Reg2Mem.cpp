@@ -58,7 +58,7 @@ namespace {
 
     bool runOnFunction(Function &F) override;
   };
-} // namespace
+}
 
 char RegToMem::ID = 0;
 INITIALIZE_PASS_BEGIN(RegToMem, "reg2mem", "Demote all values to stack slots",

@@ -49,6 +49,6 @@ public:
                        raw_ostream &O, const char *Modifier = nullptr);
 };
 
-} // namespace llvm
+}
 
 #endif

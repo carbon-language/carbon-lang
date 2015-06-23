@@ -54,6 +54,6 @@ private:
 
   std::unique_ptr<IPDBEnumSymbols> Enumerator;
 };
-} // namespace llvm
+}
 
 #endif

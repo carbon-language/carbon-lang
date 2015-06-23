@@ -25,7 +25,7 @@ protected:
   unsigned GetRelocType(const MCValue &Target, const MCFixup &Fixup,
                         bool IsPCRel) const override;
 };
-} // namespace
+}
 
 BPFELFObjectWriter::BPFELFObjectWriter(uint8_t OSABI)
     : MCELFObjectTargetWriter(/*Is64Bit*/ true, OSABI, ELF::EM_NONE,

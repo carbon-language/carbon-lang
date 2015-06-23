@@ -84,7 +84,7 @@ namespace {
   };
 
   char PadShortFunc::ID = 0;
-} // namespace
+}
 
 FunctionPass *llvm::createX86PadShortFunctions() {
   return new PadShortFunc();

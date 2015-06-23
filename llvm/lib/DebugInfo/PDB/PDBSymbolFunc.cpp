@@ -80,7 +80,7 @@ private:
   ArgListType Args;
   ArgListType::const_iterator CurIter;
 };
-} // namespace
+}
 
 PDBSymbolFunc::PDBSymbolFunc(const IPDBSession &PDBSession,
                              std::unique_ptr<IPDBRawSymbol> Symbol)

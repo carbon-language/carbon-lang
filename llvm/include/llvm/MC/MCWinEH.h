@@ -78,7 +78,7 @@ public:
   virtual void Emit(MCStreamer &Streamer) const = 0;
   virtual void EmitUnwindInfo(MCStreamer &Streamer, FrameInfo *FI) const = 0;
 };
-} // namespace WinEH
-} // namespace llvm
+}
+}
 
 #endif

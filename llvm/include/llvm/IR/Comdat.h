@@ -61,6 +61,6 @@ inline raw_ostream &operator<<(raw_ostream &OS, const Comdat &C) {
   return OS;
 }
 
-} // namespace llvm
+} // end llvm namespace
 
 #endif

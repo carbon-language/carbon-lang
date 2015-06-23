@@ -115,7 +115,7 @@ namespace {
       return AliasAnalysis::getModRefInfo(CS1,CS2);
     }
   };
-} // namespace
+}
 
 char AliasAnalysisCounter::ID = 0;
 INITIALIZE_AG_PASS(AliasAnalysisCounter, AliasAnalysis, "count-aa",

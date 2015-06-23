@@ -673,7 +673,7 @@ private:
     return (S == MCDisassembler::Success);
   }
 };
-} // namespace llvm
+}
 
 RuntimeDyldCheckerImpl::RuntimeDyldCheckerImpl(RuntimeDyld &RTDyld,
                                                MCDisassembler *Disassembler,

@@ -59,6 +59,6 @@ void ComputeASanStackFrameLayout(
     // The result is put here.
     ASanStackFrameLayout *Layout);
 
-} // namespace llvm
+} // llvm namespace
 
 #endif  // LLVM_TRANSFORMS_UTILS_ASANSTACKFRAMELAYOUT_H

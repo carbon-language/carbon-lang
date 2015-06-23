@@ -179,6 +179,6 @@ addConstantPoolReference(const MachineInstrBuilder &MIB, unsigned CPI,
     .addConstantPoolIndex(CPI, 0, OpFlags).addReg(0);
 }
 
-} // namespace llvm
+} // End llvm namespace
 
 #endif

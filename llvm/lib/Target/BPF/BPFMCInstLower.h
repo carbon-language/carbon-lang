@@ -38,6 +38,6 @@ public:
 
   MCSymbol *GetGlobalAddressSymbol(const MachineOperand &MO) const;
 };
-} // namespace llvm
+}
 
 #endif

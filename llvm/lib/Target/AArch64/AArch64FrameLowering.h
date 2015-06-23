@@ -63,6 +63,6 @@ public:
                                             RegScavenger *RS) const override;
 };
 
-} // namespace llvm
+} // End llvm namespace
 
 #endif

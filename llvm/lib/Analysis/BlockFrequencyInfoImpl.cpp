@@ -598,7 +598,7 @@ template <> struct GraphTraits<IrreducibleGraph> {
   static ChildIteratorType child_begin(NodeType *N) { return N->succ_begin(); }
   static ChildIteratorType child_end(NodeType *N) { return N->succ_end(); }
 };
-} // namespace llvm
+}
 
 /// \brief Find extra irreducible headers.
 ///

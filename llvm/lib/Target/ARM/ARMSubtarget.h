@@ -453,6 +453,6 @@ public:
   /// True if fast-isel is used.
   bool useFastISel() const;
 };
-} // namespace llvm
+} // End llvm namespace
 
 #endif  // ARMSUBTARGET_H

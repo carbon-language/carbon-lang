@@ -33,7 +33,7 @@ namespace llvm {
   void LowerSparcMachineInstrToMCInst(const MachineInstr *MI,
                                       MCInst &OutMI,
                                       AsmPrinter &AP);
-} // namespace llvm
+} // end namespace llvm;
 
 namespace llvm {
   // Enums corresponding to Sparc condition codes, both icc's and fcc's.  These
@@ -74,7 +74,7 @@ namespace llvm {
       FCC_ULE = 14+16,  // Unordered or Less or Equal
       FCC_O   = 15+16   // Ordered
     };
-  } // namespace SPCC
+  }
 
   inline static const char *SPARCCondCodeToString(SPCC::CondCodes CC) {
     switch (CC) {

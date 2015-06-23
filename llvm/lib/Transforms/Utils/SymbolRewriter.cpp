@@ -538,7 +538,7 @@ void RewriteSymbols::loadAndParseMapFiles() {
   for (const auto &MapFile : MapFiles)
     parser.parse(MapFile, &Descriptors);
 }
-} // namespace
+}
 
 INITIALIZE_PASS(RewriteSymbols, "rewrite-symbols", "Rewrite Symbols", false,
                 false)

@@ -183,6 +183,6 @@ struct OperandTraits<GlobalVariable> :
 
 DEFINE_TRANSPARENT_OPERAND_ACCESSORS(GlobalVariable, Value)
 
-} // namespace llvm
+} // End llvm namespace
 
 #endif

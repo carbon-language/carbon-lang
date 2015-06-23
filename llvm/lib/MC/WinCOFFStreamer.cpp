@@ -291,5 +291,5 @@ LLVM_ATTRIBUTE_NORETURN
 void MCWinCOFFStreamer::FatalError(const Twine &Msg) const {
   getContext().reportFatalError(SMLoc(), Msg);
 }
-} // namespace llvm
+}
 

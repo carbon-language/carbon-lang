@@ -173,7 +173,7 @@ namespace {
     bool coalesceRegisters(RegisterRef R1, RegisterRef R2);
     bool coalesceSegments(MachineFunction &MF);
   };
-} // namespace
+}
 
 char HexagonExpandCondsets::ID = 0;
 

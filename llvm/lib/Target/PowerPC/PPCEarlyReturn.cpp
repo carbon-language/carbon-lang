@@ -191,7 +191,7 @@ public:
       MachineFunctionPass::getAnalysisUsage(AU);
     }
   };
-} // namespace
+}
 
 INITIALIZE_PASS(PPCEarlyReturn, DEBUG_TYPE,
                 "PowerPC Early-Return Creation", false, false)

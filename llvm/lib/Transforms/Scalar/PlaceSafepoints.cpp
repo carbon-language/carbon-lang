@@ -160,7 +160,7 @@ struct PlaceBackedgeSafepointsImpl : public FunctionPass {
     AU.setPreservesAll();
   }
 };
-} // namespace
+}
 
 static cl::opt<bool> NoEntry("spp-no-entry", cl::Hidden, cl::init(false));
 static cl::opt<bool> NoCall("spp-no-call", cl::Hidden, cl::init(false));
@@ -181,7 +181,7 @@ struct PlaceSafepoints : public FunctionPass {
     // if that was worth doing
   }
 };
-} // namespace
+}
 
 // Insert a safepoint poll immediately before the given instruction.  Does
 // not handle the parsability of state at the runtime call, that's the

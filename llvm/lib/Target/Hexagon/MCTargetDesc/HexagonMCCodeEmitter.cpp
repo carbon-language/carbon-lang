@@ -370,7 +370,7 @@ namespace {
       return false;
     }
   }
-} // namespace
+}
 
 unsigned HexagonMCCodeEmitter::getExprOpValue(const MCInst &MI,
                                               const MCOperand &MO,

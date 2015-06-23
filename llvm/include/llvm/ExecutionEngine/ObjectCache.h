@@ -35,6 +35,6 @@ public:
   virtual std::unique_ptr<MemoryBuffer> getObject(const Module* M) = 0;
 };
 
-} // namespace llvm
+}
 
 #endif

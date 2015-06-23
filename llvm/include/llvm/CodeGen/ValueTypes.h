@@ -361,6 +361,6 @@ namespace llvm {
     unsigned getExtendedSizeInBits() const;
   };
 
-} // namespace llvm
+} // End llvm namespace
 
 #endif

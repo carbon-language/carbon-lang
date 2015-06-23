@@ -400,7 +400,7 @@ private:
     addRelocationForSection(TargetRE, RE.SectionID);
   }
 };
-} // namespace llvm
+}
 
 #undef DEBUG_TYPE
 

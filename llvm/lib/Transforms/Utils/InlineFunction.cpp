@@ -121,7 +121,7 @@ namespace {
       }
     }
   };
-} // namespace
+}
 
 /// Get or create a target for the branch from ResumeInsts.
 BasicBlock *InvokeInliningInfo::getInnerResumeDest() {

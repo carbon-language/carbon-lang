@@ -69,7 +69,7 @@ std::string getNVPTXRegClassStr(TargetRegisterClass const *RC) {
   }
   return "";
 }
-} // namespace llvm
+}
 
 NVPTXRegisterInfo::NVPTXRegisterInfo() : NVPTXGenRegisterInfo(0) {}
 

@@ -131,7 +131,7 @@ private:
     resolveRelocation(TargetRE, (uint64_t)Addr);
   }
 };
-} // namespace llvm
+}
 
 #undef DEBUG_TYPE
 

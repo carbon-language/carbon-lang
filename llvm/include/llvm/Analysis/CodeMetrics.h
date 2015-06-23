@@ -102,6 +102,6 @@ struct CodeMetrics {
                                      SmallPtrSetImpl<const Value *> &EphValues);
 };
 
-} // namespace llvm
+}
 
 #endif

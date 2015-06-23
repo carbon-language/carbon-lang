@@ -43,6 +43,6 @@ private:
                             Reloc::Model RM) const override;
 };
 
-} // namespace llvm
+}
 
 #endif

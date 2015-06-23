@@ -890,6 +890,6 @@ struct InvalidateAllAnalysesPass {
   static StringRef name() { return "InvalidateAllAnalysesPass"; }
 };
 
-} // namespace llvm
+}
 
 #endif

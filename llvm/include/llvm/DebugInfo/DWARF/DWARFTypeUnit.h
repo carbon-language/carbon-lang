@@ -32,7 +32,7 @@ protected:
   bool extractImpl(DataExtractor debug_info, uint32_t *offset_ptr) override;
 };
 
-} // namespace llvm
+}
 
 #endif
 

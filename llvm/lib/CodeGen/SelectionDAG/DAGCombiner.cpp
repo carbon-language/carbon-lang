@@ -459,7 +459,7 @@ namespace {
       return TLI.getSetCCResultType(*DAG.getContext(), VT);
     }
   };
-} // namespace
+}
 
 
 namespace {
@@ -475,7 +475,7 @@ public:
     DC.removeFromWorklist(N);
   }
 };
-} // namespace
+}
 
 //===----------------------------------------------------------------------===//
 //  TargetLowering::DAGCombinerInfo implementation
@@ -9954,7 +9954,7 @@ struct LoadedSlice {
     return true;
   }
 };
-} // namespace
+}
 
 /// \brief Check that all bits set in \p UsedBits form a dense region, i.e.,
 /// \p UsedBits looks like 0..0 1..1 0..0.

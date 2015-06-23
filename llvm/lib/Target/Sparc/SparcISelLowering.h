@@ -49,7 +49,7 @@ namespace llvm {
       TLS_LD,
       TLS_CALL
     };
-  } // namespace SPISD
+  }
 
   class SparcTargetLowering : public TargetLowering {
     const SparcSubtarget *Subtarget;

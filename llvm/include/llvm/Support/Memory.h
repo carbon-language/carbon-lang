@@ -155,7 +155,7 @@ namespace sys {
     /// as writable.
     static bool setRangeWritable(const void *Addr, size_t Size);
   };
-} // namespace sys
-} // namespace llvm
+}
+}
 
 #endif

@@ -63,7 +63,7 @@ namespace {
       initializeObjCARCExpandPass(*PassRegistry::getPassRegistry());
     }
   };
-} // namespace
+}
 
 char ObjCARCExpand::ID = 0;
 INITIALIZE_PASS(ObjCARCExpand,

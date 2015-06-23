@@ -73,6 +73,6 @@ private:
 ARMCC::CondCodes getITInstrPredicate(const MachineInstr *MI, unsigned &PredReg);
 
 
-} // namespace llvm
+}
 
 #endif

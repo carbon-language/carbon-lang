@@ -62,7 +62,7 @@ namespace {
   };
 
   char Mips16HardFloat::ID = 0;
-} // namespace
+}
 
 //
 // Return types that matter for hard float are:

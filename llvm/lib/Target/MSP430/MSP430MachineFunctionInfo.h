@@ -49,6 +49,6 @@ public:
   void setVarArgsFrameIndex(int Index) { VarArgsFrameIndex = Index; }
 };
 
-} // namespace llvm
+} // End llvm namespace
 
 #endif

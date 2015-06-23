@@ -345,6 +345,6 @@ struct AnalysisPassModel<IRUnitT, PassT, false> : AnalysisPassConcept<IRUnitT> {
 };
 
 } // End namespace detail
-} // namespace llvm
+}
 
 #endif

@@ -32,6 +32,6 @@ public:
   virtual void reset() = 0;
   virtual IPDBDataStream *clone() const = 0;
 };
-} // namespace llvm
+}
 
 #endif

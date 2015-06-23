@@ -85,7 +85,7 @@ namespace {
         errs() << " JT" << JT << " Align" << Align << '\n';
     }
   };
-} // namespace
+}
 
 /// MSP430DAGToDAGISel - MSP430 specific code to select MSP430 machine
 /// instructions for SelectionDAG operations.

@@ -74,6 +74,6 @@ private:
   void incorporateMDNode(const MDNode *V);
 };
 
-} // namespace llvm
+} // end llvm namespace
 
 #endif

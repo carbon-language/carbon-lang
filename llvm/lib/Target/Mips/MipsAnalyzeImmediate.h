@@ -58,6 +58,6 @@ namespace llvm {
     unsigned ADDiu, ORi, SLL, LUi;
     InstSeq Insts;
   };
-} // namespace llvm
+}
 
 #endif

@@ -42,7 +42,7 @@ class SampleProfErrorCategoryType : public std::error_category {
     llvm_unreachable("A value of sampleprof_error has no message.");
   }
 };
-} // namespace
+}
 
 static ManagedStatic<SampleProfErrorCategoryType> ErrorCategory;
 

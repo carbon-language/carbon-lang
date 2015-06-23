@@ -447,6 +447,6 @@ public:
   }
 };
 
-} // namespace llvm
+}
 
 #endif

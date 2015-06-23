@@ -57,7 +57,7 @@ public:
   void Emit(MCStreamer &Streamer) const override;
   void EmitUnwindInfo(MCStreamer &Streamer, WinEH::FrameInfo *FI) const override;
 };
-} // namespace Win64EH
+}
 } // end namespace llvm
 
 #endif

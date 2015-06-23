@@ -56,6 +56,6 @@ public:
 
   virtual std::unique_ptr<IPDBEnumDataStreams> getDebugStreams() const = 0;
 };
-} // namespace llvm
+}
 
 #endif

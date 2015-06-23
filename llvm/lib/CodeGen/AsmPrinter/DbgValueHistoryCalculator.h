@@ -55,6 +55,6 @@ public:
 void calculateDbgValueHistory(const MachineFunction *MF,
                               const TargetRegisterInfo *TRI,
                               DbgValueHistoryMap &Result);
-} // namespace llvm
+}
 
 #endif

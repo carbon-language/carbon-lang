@@ -546,6 +546,6 @@ template <> struct GraphTraits<Inverse<const MachineFunction*> > :
   }
 };
 
-} // namespace llvm
+} // End llvm namespace
 
 #endif

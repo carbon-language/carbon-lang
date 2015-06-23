@@ -178,7 +178,7 @@ template <typename T> const T* OwningBinary<T>::getBinary() const {
 }
 
 ErrorOr<OwningBinary<Binary>> createBinary(StringRef Path);
-} // namespace object
-} // namespace llvm
+}
+}
 
 #endif

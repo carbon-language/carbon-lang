@@ -213,4 +213,4 @@ createAArch64ObjectTargetStreamer(MCStreamer &S, const MCSubtargetInfo &STI) {
     return new AArch64TargetELFStreamer(S);
   return nullptr;
 }
-} // namespace llvm
+}

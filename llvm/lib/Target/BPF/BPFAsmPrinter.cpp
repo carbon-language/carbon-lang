@@ -44,7 +44,7 @@ public:
                     const char *Modifier = nullptr);
   void EmitInstruction(const MachineInstr *MI) override;
 };
-} // namespace
+}
 
 void BPFAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
                                  raw_ostream &O, const char *Modifier) {

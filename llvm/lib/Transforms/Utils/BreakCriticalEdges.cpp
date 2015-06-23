@@ -60,7 +60,7 @@ namespace {
       AU.addPreservedID(LoopSimplifyID);
     }
   };
-} // namespace
+}
 
 char BreakCriticalEdges::ID = 0;
 INITIALIZE_PASS(BreakCriticalEdges, "break-crit-edges",

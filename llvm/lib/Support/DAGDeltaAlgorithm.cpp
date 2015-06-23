@@ -175,7 +175,7 @@ public:
       : DDAI(DDAI), Required(Required) {}
 };
 
-} // namespace
+}
 
 DAGDeltaAlgorithmImpl::DAGDeltaAlgorithmImpl(
     DAGDeltaAlgorithm &DDA, const changeset_ty &Changes,

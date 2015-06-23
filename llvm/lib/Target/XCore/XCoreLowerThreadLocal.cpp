@@ -50,7 +50,7 @@ namespace {
 
     bool runOnModule(Module &M) override;
   };
-} // namespace
+}
 
 char XCoreLowerThreadLocal::ID = 0;
 

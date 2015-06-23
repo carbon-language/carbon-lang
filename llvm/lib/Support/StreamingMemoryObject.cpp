@@ -129,4 +129,4 @@ StreamingMemoryObject::StreamingMemoryObject(
       BytesSkipped(0), ObjectSize(0), EOFReached(false) {
   BytesRead = this->Streamer->GetBytes(&Bytes[0], kChunkSize);
 }
-} // namespace llvm
+}

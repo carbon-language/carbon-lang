@@ -2906,7 +2906,7 @@ struct CSEDenseMapInfo {
     return LHS->isIdenticalTo(RHS);
   }
 };
-} // namespace
+}
 
 /// \brief Check whether this block is a predicated block.
 /// Due to if predication of stores we might create a sequence of "if(pred) a[i]

@@ -75,7 +75,7 @@ private:
   bool handleFunction(Function *ReflectFunction);
   void setVarMap();
 };
-} // namespace
+}
 
 ModulePass *llvm::createNVVMReflectPass() {
   return new NVVMReflect();

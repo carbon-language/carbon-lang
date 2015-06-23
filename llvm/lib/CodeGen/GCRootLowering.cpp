@@ -76,7 +76,7 @@ public:
 
   bool runOnMachineFunction(MachineFunction &MF) override;
 };
-} // namespace
+}
 
 // -----------------------------------------------------------------------------
 

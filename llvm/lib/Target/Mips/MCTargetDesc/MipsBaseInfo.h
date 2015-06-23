@@ -119,7 +119,7 @@ namespace MipsII {
 
     FormMask = 15
   };
-} // namespace MipsII
-} // namespace llvm
+}
+}
 
 #endif

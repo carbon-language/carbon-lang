@@ -97,6 +97,6 @@ unsigned ComputeEditDistance(ArrayRef<T> FromArray, ArrayRef<T> ToArray,
   return Result;
 }
 
-} // namespace llvm
+} // End llvm namespace
 
 #endif

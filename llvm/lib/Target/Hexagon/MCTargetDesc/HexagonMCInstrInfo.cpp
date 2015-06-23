@@ -461,4 +461,4 @@ void HexagonMCInstrInfo::setOuterLoop(MCInst &MCI) {
   MCOperand &Operand = MCI.getOperand(0);
   Operand.setImm(Operand.getImm() | outerLoopMask);
 }
-} // namespace llvm
+}

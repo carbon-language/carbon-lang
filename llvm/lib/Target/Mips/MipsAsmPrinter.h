@@ -145,7 +145,7 @@ public:
   void EmitEndOfAsmFile(Module &M) override;
   void PrintDebugValueComment(const MachineInstr *MI, raw_ostream &OS);
 };
-} // namespace llvm
+}
 
 #endif
 

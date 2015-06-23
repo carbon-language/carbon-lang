@@ -60,6 +60,6 @@ public:
                                    unsigned numTys = 0) const = 0;
 };
 
-} // namespace llvm
+} // End llvm namespace
 
 #endif

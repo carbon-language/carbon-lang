@@ -294,6 +294,6 @@ public:
   }
 };
 
-} // namespace llvm
+}
 
 #endif

@@ -72,7 +72,7 @@ struct SimpleValue {
            isa<ExtractValueInst>(Inst) || isa<InsertValueInst>(Inst);
   }
 };
-} // namespace
+}
 
 namespace llvm {
 template <> struct DenseMapInfo<SimpleValue> {
@@ -85,7 +85,7 @@ template <> struct DenseMapInfo<SimpleValue> {
   static unsigned getHashValue(SimpleValue Val);
   static bool isEqual(SimpleValue LHS, SimpleValue RHS);
 };
-} // namespace llvm
+}
 
 unsigned DenseMapInfo<SimpleValue>::getHashValue(SimpleValue Val) {
   Instruction *Inst = Val.Inst;
@@ -219,7 +219,7 @@ struct CallValue {
     return true;
   }
 };
-} // namespace
+}
 
 namespace llvm {
 template <> struct DenseMapInfo<CallValue> {
@@ -232,7 +232,7 @@ template <> struct DenseMapInfo<CallValue> {
   static unsigned getHashValue(CallValue Val);
   static bool isEqual(CallValue LHS, CallValue RHS);
 };
-} // namespace llvm
+}
 
 unsigned DenseMapInfo<CallValue>::getHashValue(CallValue Val) {
   Instruction *Inst = Val.Inst;
@@ -447,7 +447,7 @@ private:
                                                  ExpectedType);
   }
 };
-} // namespace
+}
 
 bool EarlyCSE::processNode(DomTreeNode *Node) {
   BasicBlock *BB = Node->getBlock();
@@ -764,7 +764,7 @@ public:
     AU.setPreservesCFG();
   }
 };
-} // namespace
+}
 
 char EarlyCSELegacyPass::ID = 0;
 

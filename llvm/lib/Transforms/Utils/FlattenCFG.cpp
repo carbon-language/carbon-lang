@@ -46,7 +46,7 @@ public:
   FlattenCFGOpt(AliasAnalysis *AA) : AA(AA) {}
   bool run(BasicBlock *BB);
 };
-} // namespace
+}
 
 /// If \param [in] BB has more than one predecessor that is a conditional
 /// branch, attempt to use parallel and/or for the branch condition. \returns

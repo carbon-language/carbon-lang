@@ -416,7 +416,7 @@ namespace bitc {
     COMDAT_SELECTION_KIND_SAME_SIZE = 5,
   };
 
-} // namespace bitc
-} // namespace llvm
+} // End bitc namespace
+} // End llvm namespace
 
 #endif

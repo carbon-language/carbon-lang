@@ -139,7 +139,7 @@ namespace {
     LLVMContext *Ctx;
     SmallVector<std::unique_ptr<GCOVFunction>, 16> Funcs;
   };
-} // namespace
+}
 
 char GCOVProfiler::ID = 0;
 INITIALIZE_PASS(GCOVProfiler, "insert-gcov-profiling",
@@ -419,7 +419,7 @@ namespace {
     DenseMap<BasicBlock *, GCOVBlock> Blocks;
     GCOVBlock ReturnBlock;
   };
-} // namespace
+}
 
 std::string GCOVProfiler::mangleName(const DICompileUnit *CU,
                                      const char *NewStem) {

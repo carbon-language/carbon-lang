@@ -99,7 +99,7 @@ public:
 
   bool runOnMachineFunction(MachineFunction &MF) override;
 };
-} // namespace
+}
 
 bool ImplicitNullChecks::runOnMachineFunction(MachineFunction &MF) {
   TII = MF.getSubtarget().getInstrInfo();

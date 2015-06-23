@@ -255,6 +255,6 @@ private:
   void debug() { print(dbgs()); }
 };
 
-} // namespace llvm
+}
 
 #endif

@@ -481,6 +481,6 @@ struct GraphTraits<const CallGraph *> : public GraphTraits<
   static const CallGraphNode &CGdereference(PairTy P) { return *P.second; }
 };
 
-} // namespace llvm
+} // End llvm namespace
 
 #endif

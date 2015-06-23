@@ -46,5 +46,5 @@ extern FuncSignature const *findFuncSignature(const char *name) {
   }
   return nullptr;
 }
-} // namespace Mips16HardFloatInfo
-} // namespace llvm
+}
+}

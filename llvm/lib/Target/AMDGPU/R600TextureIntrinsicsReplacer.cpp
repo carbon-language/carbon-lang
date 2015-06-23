@@ -296,7 +296,7 @@ public:
 
 char R600TextureIntrinsicsReplacer::ID = 0;
 
-} // namespace
+}
 
 FunctionPass *llvm::createR600TextureIntrinsicsReplacer() {
   return new R600TextureIntrinsicsReplacer();

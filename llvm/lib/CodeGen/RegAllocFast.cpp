@@ -194,7 +194,7 @@ namespace {
     bool setPhysReg(MachineInstr *MI, unsigned OpNum, unsigned PhysReg);
   };
   char RAFast::ID = 0;
-} // namespace
+}
 
 /// getStackSpaceFor - This allocates space for the specified virtual register
 /// to be held on the stack.

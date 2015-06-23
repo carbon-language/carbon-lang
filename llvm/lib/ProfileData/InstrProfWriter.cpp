@@ -69,7 +69,7 @@ public:
     }
   }
 };
-} // namespace
+}
 
 std::error_code
 InstrProfWriter::addFunctionCounts(StringRef FunctionName,

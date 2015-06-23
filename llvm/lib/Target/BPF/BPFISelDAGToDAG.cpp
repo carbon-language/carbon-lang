@@ -51,7 +51,7 @@ private:
   // Complex Pattern for address selection.
   bool SelectAddr(SDValue Addr, SDValue &Base, SDValue &Offset);
 };
-} // namespace
+}
 
 // ComplexPattern used on BPF Load/Store instructions
 bool BPFDAGToDAGISel::SelectAddr(SDValue Addr, SDValue &Base, SDValue &Offset) {

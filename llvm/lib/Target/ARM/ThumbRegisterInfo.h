@@ -60,6 +60,6 @@ public:
                            int SPAdj, unsigned FIOperandNum,
                            RegScavenger *RS = nullptr) const override;
 };
-} // namespace llvm
+}
 
 #endif

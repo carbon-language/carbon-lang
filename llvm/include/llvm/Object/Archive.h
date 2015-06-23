@@ -217,7 +217,7 @@ private:
   unsigned IsThin : 1;
 };
 
-} // namespace object
-} // namespace llvm
+}
+}
 
 #endif

@@ -137,6 +137,6 @@ template <> struct DenseMapInfo<MemoryLocation> {
     return LHS == RHS;
   }
 };
-} // namespace llvm
+}
 
 #endif

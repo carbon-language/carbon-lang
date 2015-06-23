@@ -142,6 +142,6 @@ private:
   PassInfo(const PassInfo &) = delete;
 };
 
-} // namespace llvm
+}
 
 #endif

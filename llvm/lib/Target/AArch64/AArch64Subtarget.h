@@ -151,6 +151,6 @@ public:
 
   std::unique_ptr<PBQPRAConstraint> getCustomPBQPConstraints() const override;
 };
-} // namespace llvm
+} // End llvm namespace
 
 #endif

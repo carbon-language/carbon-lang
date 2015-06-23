@@ -106,6 +106,6 @@ public:
   }
 };
 
-} // namespace llvm
+}
 
 #endif

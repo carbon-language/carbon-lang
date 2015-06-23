@@ -38,7 +38,7 @@ namespace MSP430II {
     Size4Bytes  = 3 << SizeShift,
     Size6Bytes  = 4 << SizeShift
   };
-} // namespace MSP430II
+}
 
 class MSP430InstrInfo : public MSP430GenInstrInfo {
   const MSP430RegisterInfo RI;
@@ -87,6 +87,6 @@ public:
 
 };
 
-} // namespace llvm
+}
 
 #endif

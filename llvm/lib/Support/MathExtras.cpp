@@ -29,4 +29,4 @@ namespace llvm {
   const float huge_valf = HUGE_VALF;
 #endif
 
-} // namespace llvm
+}

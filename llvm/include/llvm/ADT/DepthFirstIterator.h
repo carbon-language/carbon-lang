@@ -288,6 +288,6 @@ iterator_range<idf_ext_iterator<T, SetTy>> inverse_depth_first_ext(const T& G,
   return make_range(idf_ext_begin(G, S), idf_ext_end(G, S));
 }
 
-} // namespace llvm
+} // End llvm namespace
 
 #endif

@@ -153,6 +153,6 @@ inline iterator_range<const_inst_iterator> inst_range(const Function &F) {
   return iterator_range<const_inst_iterator>(inst_begin(F), inst_end(F));
 }
 
-} // namespace llvm
+} // End llvm namespace
 
 #endif

@@ -99,6 +99,6 @@ private:
   bool useRestoreFunction(MachineFunction &MF, const CSIVect &CSI) const;
 };
 
-} // namespace llvm
+} // End llvm namespace
 
 #endif

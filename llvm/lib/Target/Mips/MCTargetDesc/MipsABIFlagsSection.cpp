@@ -66,4 +66,4 @@ MCStreamer &operator<<(MCStreamer &OS, MipsABIFlagsSection &ABIFlagsSection) {
   OS.EmitIntValue(ABIFlagsSection.getFlags2Value(), 4);          // flags2
   return OS;
 }
-} // namespace llvm
+}

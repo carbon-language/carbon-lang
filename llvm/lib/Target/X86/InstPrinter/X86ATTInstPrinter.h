@@ -140,6 +140,6 @@ public:
 private:
   bool HasCustomInstComment;
 };
-} // namespace llvm
+}
 
 #endif

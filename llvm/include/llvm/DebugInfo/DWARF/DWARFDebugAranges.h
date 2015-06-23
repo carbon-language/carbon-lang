@@ -82,6 +82,6 @@ private:
   DenseSet<uint32_t> ParsedCUOffsets;
 };
 
-} // namespace llvm
+}
 
 #endif

@@ -51,6 +51,6 @@ namespace llvm {
     void setLeafProc(bool rhs) { IsLeafProc = rhs; }
     bool isLeafProc() const { return IsLeafProc; }
   };
-} // namespace llvm
+}
 
 #endif

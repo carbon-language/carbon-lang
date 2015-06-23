@@ -90,6 +90,6 @@ private:
   DiagnosticHandlerFunction DiagnosticHandler;
 };
 
-} // namespace llvm
+} // End llvm namespace
 
 #endif

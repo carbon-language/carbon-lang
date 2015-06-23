@@ -38,7 +38,7 @@ public:
   bool runOnFunction(Function &F) override;
   bool doFinalization(Module &M) override;
 };
-} // namespace
+}
 
 INITIALIZE_PASS(GCModuleInfo, "collector-metadata",
                 "Create Garbage Collector Module Metadata", false, false)

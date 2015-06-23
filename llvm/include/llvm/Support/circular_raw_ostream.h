@@ -152,7 +152,7 @@ namespace llvm
         delete TheStream;
     }
   };
-} // namespace llvm
+} // end llvm namespace
 
 
 #endif

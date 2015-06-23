@@ -55,7 +55,7 @@ namespace {
     bool isIdempotentRMW(AtomicRMWInst *AI);
     bool simplifyIdempotentRMW(AtomicRMWInst *AI);
   };
-} // namespace
+}
 
 char AtomicExpand::ID = 0;
 char &llvm::AtomicExpandID = AtomicExpand::ID;

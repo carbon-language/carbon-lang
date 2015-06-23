@@ -50,6 +50,6 @@ public:
                                                      unsigned VariantKind);
 };
 
-} // namespace llvm
+}
 
 #endif

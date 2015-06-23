@@ -165,7 +165,7 @@ public:
       MachineFunctionPass::getAnalysisUsage(AU);
     }
   };
-} // namespace
+}
 
 INITIALIZE_PASS(PPCVSXCopy, DEBUG_TYPE,
                 "PowerPC VSX Copy Legalization", false, false)

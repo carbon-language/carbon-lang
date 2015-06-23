@@ -34,7 +34,7 @@ namespace {
     }
   };
   char XCoreFTAOElim::ID = 0;
-} // namespace
+}
 
 /// createXCoreFrameToArgsOffsetEliminationPass - returns an instance of the
 /// Frame to args offset elimination pass

@@ -35,6 +35,6 @@ public:
   PreservedAnalyses run(Function &F);
 };
 
-} // namespace llvm
+}
 
 #endif

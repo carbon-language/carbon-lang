@@ -53,6 +53,6 @@ public:
                                        uint64_t Address) override;
 };
 
-} // namespace llvm
+}
 
 #endif

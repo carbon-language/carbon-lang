@@ -38,5 +38,5 @@ public:
   void EmitCommonSymbol(MCSymbol *Symbol, uint64_t Size,
                         unsigned ByteAlignment) override;
 };
-} // namespace llvm
+}
 #endif

@@ -286,7 +286,7 @@ raw_ostream &operator<<(raw_ostream &OS, const LVILatticeVal &Val) {
               << Val.getConstantRange().getUpper() << '>';
   return OS << "constant<" << *Val.getConstant() << '>';
 }
-} // namespace llvm
+}
 
 //===----------------------------------------------------------------------===//
 //                          LazyValueInfoCache Decl
@@ -306,7 +306,7 @@ namespace {
       deleted();
     }
   };
-} // namespace
+}
 
 namespace { 
   /// This is the cache kept by LazyValueInfo which

@@ -43,6 +43,6 @@ public:
   }
 };
 
-} // namespace llvm
+}
 
 #endif

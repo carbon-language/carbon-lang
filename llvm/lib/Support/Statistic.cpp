@@ -60,7 +60,7 @@ public:
     Stats.push_back(S);
   }
 };
-} // namespace
+}
 
 static ManagedStatic<StatisticInfo> StatInfo;
 static ManagedStatic<sys::SmartMutex<true> > StatLock;

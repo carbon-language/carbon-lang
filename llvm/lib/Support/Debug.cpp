@@ -99,7 +99,7 @@ struct DebugOnlyOpt {
   }
 };
 
-} // namespace
+}
 
 static DebugOnlyOpt DebugOnlyOptLoc;
 

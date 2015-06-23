@@ -162,4 +162,4 @@ bool optimizeGlobalCtorsList(Module &M,
   return true;
 }
 
-} // namespace llvm
+} // End llvm namespace

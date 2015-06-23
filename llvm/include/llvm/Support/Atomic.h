@@ -33,7 +33,7 @@ namespace llvm {
     cas_flag AtomicAdd(volatile cas_flag* ptr, cas_flag val);
     cas_flag AtomicMul(volatile cas_flag* ptr, cas_flag val);
     cas_flag AtomicDiv(volatile cas_flag* ptr, cas_flag val);
-  } // namespace sys
-} // namespace llvm
+  }
+}
 
 #endif

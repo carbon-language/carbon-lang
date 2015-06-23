@@ -52,7 +52,7 @@ namespace {
       AU.addRequired<TargetLibraryInfoWrapperPass>();
     }
   };
-} // namespace
+}
 
 char LoopInstSimplify::ID = 0;
 INITIALIZE_PASS_BEGIN(LoopInstSimplify, "loop-instsimplify",

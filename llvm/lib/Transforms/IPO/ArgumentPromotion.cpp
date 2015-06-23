@@ -92,7 +92,7 @@ namespace {
     unsigned maxElements;
     DenseMap<const Function *, DISubprogram *> FunctionDIs;
   };
-} // namespace
+}
 
 char ArgPromotion::ID = 0;
 INITIALIZE_PASS_BEGIN(ArgPromotion, "argpromotion",

@@ -245,6 +245,6 @@ struct MCSchedModel {
   }
 };
 
-} // namespace llvm
+} // End llvm namespace
 
 #endif

@@ -6149,7 +6149,7 @@ public:
     : SelectionDAG::DAGUpdateListener(d), UI(ui), UE(ue) {}
 };
 
-} // namespace
+}
 
 /// ReplaceAllUsesWith - Modify anything using 'From' to use 'To' instead.
 /// This can cause recursive merging of nodes in the DAG.
@@ -6359,7 +6359,7 @@ namespace {
   bool operator<(const UseMemo &L, const UseMemo &R) {
     return (intptr_t)L.User < (intptr_t)R.User;
   }
-} // namespace
+}
 
 /// ReplaceAllUsesOfValuesWith - Replace any uses of From with To, leaving
 /// uses of other values produced by From.getNode() alone.  The same value
@@ -6604,7 +6604,7 @@ namespace {
         VTs.push_back(MVT((MVT::SimpleValueType)i));
     }
   };
-} // namespace
+}
 
 static ManagedStatic<std::set<EVT, EVT::compareRawBits> > EVTs;
 static ManagedStatic<EVTArray> SimpleVTArray;

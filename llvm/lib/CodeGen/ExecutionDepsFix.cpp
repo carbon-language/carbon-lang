@@ -110,7 +110,7 @@ struct DomainValue {
     Instrs.clear();
   }
 };
-} // namespace
+}
 
 namespace {
 /// Information about a live register.
@@ -201,7 +201,7 @@ private:
   bool shouldBreakDependence(MachineInstr*, unsigned OpIdx, unsigned Pref);
   void processUndefReads(MachineBasicBlock*);
 };
-} // namespace
+}
 
 char ExeDepsFix::ID = 0;
 

@@ -222,7 +222,7 @@ public:
 };
 
 char InductiveRangeCheckElimination::ID = 0;
-} // namespace
+}
 
 INITIALIZE_PASS(InductiveRangeCheckElimination, "irce",
                 "Inductive range check elimination", false, false)
@@ -618,7 +618,7 @@ public:
   bool run();
 };
 
-} // namespace
+}
 
 void LoopConstrainer::replacePHIBlock(PHINode *PN, BasicBlock *Block,
                                       BasicBlock *ReplaceBy) {

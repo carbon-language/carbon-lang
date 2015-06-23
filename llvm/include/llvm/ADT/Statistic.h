@@ -176,6 +176,6 @@ void PrintStatistics();
 /// \brief Print statistics to the given output stream.
 void PrintStatistics(raw_ostream &OS);
 
-} // namespace llvm
+} // End llvm namespace
 
 #endif

@@ -96,7 +96,7 @@ enum Val_GNU_MIPS_ABI_MSA {
   Val_GNU_MIPS_ABI_MSA_ANY = 0, // not tagged
   Val_GNU_MIPS_ABI_MSA_128 = 1  // 128-bit MSA
 };
-} // namespace Mips
-} // namespace llvm
+}
+}
 
 #endif

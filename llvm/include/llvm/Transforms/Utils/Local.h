@@ -291,6 +291,6 @@ void combineMetadata(Instruction *K, const Instruction *J, ArrayRef<unsigned> Kn
 /// the given edge.  Returns the number of replacements made.
 unsigned replaceDominatedUsesWith(Value *From, Value *To, DominatorTree &DT,
                                   const BasicBlockEdge &Edge);
-} // namespace llvm
+} // End llvm namespace
 
 #endif

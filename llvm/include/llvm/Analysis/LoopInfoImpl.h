@@ -535,6 +535,6 @@ void LoopInfoBase<BlockT, LoopT>::verify() const {
 #endif
 }
 
-} // namespace llvm
+} // End llvm namespace
 
 #endif

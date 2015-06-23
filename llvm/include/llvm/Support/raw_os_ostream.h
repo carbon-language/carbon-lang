@@ -37,6 +37,6 @@ public:
   ~raw_os_ostream() override;
 };
 
-} // namespace llvm
+} // end llvm namespace
 
 #endif

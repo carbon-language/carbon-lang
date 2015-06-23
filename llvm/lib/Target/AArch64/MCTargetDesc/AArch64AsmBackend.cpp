@@ -293,7 +293,7 @@ enum CompactUnwindEncodings {
   UNWIND_AArch64_FRAME_D14_D15_PAIR = 0x00000800
 };
 
-} // namespace CU
+} // end CU namespace
 
 // FIXME: This should be in a separate file.
 class DarwinAArch64AsmBackend : public AArch64AsmBackend {
@@ -517,7 +517,7 @@ void ELFAArch64AsmBackend::applyFixup(const MCFixup &Fixup, char *Data,
   }
   AArch64AsmBackend::applyFixup (Fixup, Data, DataSize, Value, IsPCRel);
 }
-} // namespace
+}
 
 MCAsmBackend *llvm::createAArch64leAsmBackend(const Target &T,
                                               const MCRegisterInfo &MRI,

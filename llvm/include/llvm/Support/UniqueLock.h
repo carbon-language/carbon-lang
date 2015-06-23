@@ -62,6 +62,6 @@ namespace llvm {
 
     bool owns_lock() { return locked; }
   };
-} // namespace llvm
+}
 
 #endif // LLVM_SUPPORT_UNIQUE_LOCK_H

@@ -135,7 +135,7 @@ struct LDTLSCleanup : public MachineFunctionPass {
     MachineFunctionPass::getAnalysisUsage(AU);
   }
 };
-} // namespace
+}
 
 char LDTLSCleanup::ID = 0;
 FunctionPass *llvm::createAArch64CleanupLocalDynamicTLSPass() {

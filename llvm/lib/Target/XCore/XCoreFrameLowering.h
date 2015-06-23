@@ -58,6 +58,6 @@ namespace llvm {
       return 4;
     }
   };
-} // namespace llvm
+}
 
 #endif

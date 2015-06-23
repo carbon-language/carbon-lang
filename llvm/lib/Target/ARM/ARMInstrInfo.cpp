@@ -198,7 +198,7 @@ namespace {
       MachineFunctionPass::getAnalysisUsage(AU);
     }
   };
-} // namespace
+}
 
 char ARMCGBR::ID = 0;
 FunctionPass*

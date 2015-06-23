@@ -590,7 +590,7 @@ struct NormalizedOther {
   ELFYAML::ELF_STV Visibility;
   ELFYAML::ELF_STO Other;
 };
-} // namespace
+}
 
 void MappingTraits<ELFYAML::Symbol>::mapping(IO &IO, ELFYAML::Symbol &Symbol) {
   IO.mapOptional("Name", Symbol.Name, StringRef());
@@ -723,7 +723,7 @@ struct NormalizedMips64RelType {
   ELFYAML::ELF_REL Type3;
   ELFYAML::ELF_RSS SpecSym;
 };
-} // namespace
+}
 
 void MappingTraits<ELFYAML::Relocation>::mapping(IO &IO,
                                                  ELFYAML::Relocation &Rel) {

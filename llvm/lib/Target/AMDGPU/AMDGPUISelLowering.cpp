@@ -68,7 +68,7 @@ public:
 };
 
 int DiagnosticInfoUnsupported::KindID = 0;
-} // namespace
+}
 
 
 static bool allocateStack(unsigned ValNo, MVT ValVT, MVT LocVT,

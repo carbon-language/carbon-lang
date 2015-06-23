@@ -1461,7 +1461,7 @@ namespace {
     bool IsSignalFrame;
     bool IsSimple;
   };
-} // namespace
+}
 
 namespace llvm {
   template <>
@@ -1488,7 +1488,7 @@ namespace llvm {
         LHS.IsSimple == RHS.IsSimple;
     }
   };
-} // namespace llvm
+}
 
 void MCDwarfFrameEmitter::Emit(MCObjectStreamer &Streamer, MCAsmBackend *MAB,
                                bool IsEH) {

@@ -252,5 +252,5 @@ public:
   void dump() { print(dbgs()); }
 #endif
 };
-} // namespace llvm
+}
 #endif

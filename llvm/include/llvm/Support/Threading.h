@@ -34,6 +34,6 @@ namespace llvm {
   /// the thread stack.
   void llvm_execute_on_thread(void (*UserFn)(void*), void *UserData,
                               unsigned RequestedStackSize = 0);
-} // namespace llvm
+}
 
 #endif

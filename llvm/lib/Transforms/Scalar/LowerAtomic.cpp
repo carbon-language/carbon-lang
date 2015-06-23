@@ -138,7 +138,7 @@ namespace {
       return Changed;
     }
   };
-} // namespace
+}
 
 char LowerAtomic::ID = 0;
 INITIALIZE_PASS(LowerAtomic, "loweratomic",

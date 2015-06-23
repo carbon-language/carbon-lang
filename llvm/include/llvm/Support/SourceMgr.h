@@ -280,6 +280,6 @@ public:
              bool ShowKindLabel = true) const;
 };
 
-} // namespace llvm
+}  // end llvm namespace
 
 #endif

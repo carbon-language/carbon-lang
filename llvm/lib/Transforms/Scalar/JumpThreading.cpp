@@ -138,7 +138,7 @@ namespace {
     bool SimplifyPartiallyRedundantLoad(LoadInst *LI);
     bool TryToUnfoldSelect(CmpInst *CondCmp, BasicBlock *BB);
   };
-} // namespace
+}
 
 char JumpThreading::ID = 0;
 INITIALIZE_PASS_BEGIN(JumpThreading, "jump-threading",

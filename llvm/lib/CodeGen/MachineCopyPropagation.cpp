@@ -55,7 +55,7 @@ namespace {
                                  DenseMap<unsigned, MachineInstr*> &AvailCopyMap);
     bool CopyPropagateBlock(MachineBasicBlock &MBB);
   };
-} // namespace
+}
 char MachineCopyPropagation::ID = 0;
 char &llvm::MachineCopyPropagationID = MachineCopyPropagation::ID;
 

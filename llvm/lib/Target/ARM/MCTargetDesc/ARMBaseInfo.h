@@ -114,7 +114,7 @@ namespace ARM_PROC {
     case ID: return "id";
     }
   }
-} // namespace ARM_PROC
+}
 
 namespace ARM_MB {
   // The Memory Barrier Option constants map directly to the 4-bit encoding of
@@ -459,6 +459,6 @@ namespace ARMII {
 
 } // end namespace ARMII
 
-} // namespace llvm
+} // end namespace llvm;
 
 #endif

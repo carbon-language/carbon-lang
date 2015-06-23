@@ -100,7 +100,7 @@ private:
   MemoryGroup RODataMem;
 };
 
-} // namespace llvm
+}
 
 #endif // LLVM_EXECUTION_ENGINE_SECTION_MEMORY_MANAGER_H
 

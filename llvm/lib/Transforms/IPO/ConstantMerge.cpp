@@ -53,7 +53,7 @@ namespace {
     unsigned getAlignment(GlobalVariable *GV) const;
 
   };
-} // namespace
+}
 
 char ConstantMerge::ID = 0;
 INITIALIZE_PASS(ConstantMerge, "constmerge",

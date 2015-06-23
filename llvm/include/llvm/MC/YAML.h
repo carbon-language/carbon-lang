@@ -89,6 +89,6 @@ template <> struct ScalarTraits<BinaryRef> {
   static StringRef input(StringRef, void *, BinaryRef &);
   static bool mustQuote(StringRef S) { return needsQuotes(S); }
 };
-} // namespace yaml
-} // namespace llvm
+}
+}
 #endif

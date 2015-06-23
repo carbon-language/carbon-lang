@@ -45,5 +45,5 @@ public:
   /// Get a reference to an entry in the string pool.
   EntryRef getEntry(AsmPrinter &Asm, StringRef Str);
 };
-} // namespace llvm
+}
 #endif

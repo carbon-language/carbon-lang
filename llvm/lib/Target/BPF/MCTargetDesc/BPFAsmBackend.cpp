@@ -84,7 +84,7 @@ void BPFAsmBackend::applyFixup(const MCFixup &Fixup, char *Data,
 MCObjectWriter *BPFAsmBackend::createObjectWriter(raw_pwrite_stream &OS) const {
   return createBPFELFObjectWriter(OS, 0, IsLittleEndian);
 }
-} // namespace
+}
 
 MCAsmBackend *llvm::createBPFAsmBackend(const Target &T,
                                         const MCRegisterInfo &MRI,

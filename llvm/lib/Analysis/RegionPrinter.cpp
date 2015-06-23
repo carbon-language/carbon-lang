@@ -194,7 +194,7 @@ struct RegionOnlyPrinter
     }
 };
 
-} // namespace
+}
 
 char RegionOnlyPrinter::ID = 0;
 INITIALIZE_PASS(RegionOnlyPrinter, "dot-regions-only",

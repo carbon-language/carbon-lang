@@ -38,5 +38,5 @@ class BumpPtrStringSaver final : public StringSaver {
 public:
   BumpPtrStringSaver(BumpPtrAllocator &Alloc) : StringSaver(Alloc) {}
 };
-} // namespace llvm
+}
 #endif

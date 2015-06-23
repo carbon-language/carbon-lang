@@ -6650,7 +6650,7 @@ namespace {
       MachineFunctionPass::getAnalysisUsage(AU);
     }
   };
-} // namespace
+}
 
 char CGBR::ID = 0;
 FunctionPass*
@@ -6762,7 +6762,7 @@ namespace {
       MachineFunctionPass::getAnalysisUsage(AU);
     }
   };
-} // namespace
+}
 
 char LDTLSCleanup::ID = 0;
 FunctionPass*

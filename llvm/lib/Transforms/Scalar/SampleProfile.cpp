@@ -174,7 +174,7 @@ protected:
   /// \brief Flag indicating whether the profile input loaded successfully.
   bool ProfileIsValid;
 };
-} // namespace
+}
 
 /// \brief Print the weight of edge \p E on stream \p OS.
 ///

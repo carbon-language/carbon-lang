@@ -79,7 +79,7 @@ private:
   void instr2instrSC(SmallVectorImpl<MachineInstr *> &Instrs,
                      SmallVectorImpl<const MCSchedClassDesc *> &InstrsSC);
 };
-} // namespace
+}
 
 char MachineCombiner::ID = 0;
 char &llvm::MachineCombinerID = MachineCombiner::ID;

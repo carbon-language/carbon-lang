@@ -158,6 +158,6 @@ private:
   bool calcInvokeHeuristics(BasicBlock *BB);
 };
 
-} // namespace llvm
+}
 
 #endif

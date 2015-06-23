@@ -72,6 +72,6 @@ public:
   static StringRef name() { return "VerifierPass"; }
 };
 
-} // namespace llvm
+} // End llvm namespace
 
 #endif

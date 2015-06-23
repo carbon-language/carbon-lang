@@ -41,7 +41,7 @@ public:
                               raw_ostream &VStream,
                               raw_ostream &CStream) const override;
 };
-} // namespace
+}
 
 namespace llvm {
 extern Target TheSparcTarget, TheSparcV9Target, TheSparcelTarget;

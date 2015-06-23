@@ -948,7 +948,7 @@ struct UDivFoldAction {
   UDivFoldAction(FoldUDivOperandCb FA, Value *InputOperand, size_t SLHS)
       : FoldAction(FA), OperandToFold(InputOperand), SelectLHSIdx(SLHS) {}
 };
-} // namespace
+}
 
 // X udiv 2^C -> X >> C
 static Instruction *foldUDivPow2Cst(Value *Op0, Value *Op1,

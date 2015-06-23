@@ -72,6 +72,6 @@ private:
 
   StubMap Stubs;
 };
-} // namespace llvm
+}
 
 #endif

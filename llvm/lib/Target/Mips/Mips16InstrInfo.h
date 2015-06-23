@@ -123,6 +123,6 @@ private:
 
 };
 
-} // namespace llvm
+}
 
 #endif

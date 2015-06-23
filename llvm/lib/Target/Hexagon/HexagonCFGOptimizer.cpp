@@ -228,7 +228,7 @@ bool HexagonCFGOptimizer::runOnMachineFunction(MachineFunction &Fn) {
   }
   return true;
 }
-} // namespace
+}
 
 
 //===----------------------------------------------------------------------===//

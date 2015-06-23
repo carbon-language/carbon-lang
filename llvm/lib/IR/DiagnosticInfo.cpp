@@ -84,7 +84,7 @@ PassRemarksAnalysis(
         "the given regular expression"),
     cl::Hidden, cl::location(PassRemarksAnalysisOptLoc), cl::ValueRequired,
     cl::ZeroOrMore);
-} // namespace
+}
 
 int llvm::getNextAvailablePluginDiagnosticKind() {
   static std::atomic<int> PluginKindID(DK_FirstPluginKind);

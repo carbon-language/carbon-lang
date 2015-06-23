@@ -32,8 +32,8 @@ public:
   llvm::raw_ostream& get() { return OS; }
   operator llvm::raw_ostream& () { return OS; }
 };
-} // namespace syntax
-} // namespace dwarf
-} // namespace llvm
+}
+}
+}
 
 #endif

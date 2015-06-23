@@ -69,7 +69,7 @@ public:
                           FixedValue);
   }
 };
-} // namespace
+}
 
 static bool isFixupKindRIPRel(unsigned Kind) {
   return Kind == X86::reloc_riprel_4byte ||

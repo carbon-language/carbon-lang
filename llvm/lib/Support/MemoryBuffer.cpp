@@ -94,7 +94,7 @@ public:
     return MemoryBuffer_Malloc;
   }
 };
-} // namespace
+}
 
 static ErrorOr<std::unique_ptr<MemoryBuffer>>
 getFileAux(const Twine &Filename, int64_t FileSize, uint64_t MapSize, 
@@ -220,7 +220,7 @@ public:
     return MemoryBuffer_MMap;
   }
 };
-} // namespace
+}
 
 static ErrorOr<std::unique_ptr<MemoryBuffer>>
 getMemoryBufferForStream(int FD, const Twine &BufferName) {

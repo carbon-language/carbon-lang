@@ -132,6 +132,6 @@ public:
 MCObjectWriter *createELFObjectWriter(MCELFObjectTargetWriter *MOTW,
                                       raw_pwrite_stream &OS,
                                       bool IsLittleEndian);
-} // namespace llvm
+} // End llvm namespace
 
 #endif

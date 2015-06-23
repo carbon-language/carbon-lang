@@ -45,7 +45,7 @@ namespace {
   private:
     bool isDead(const MachineInstr *MI) const;
   };
-} // namespace
+}
 char DeadMachineInstructionElim::ID = 0;
 char &llvm::DeadMachineInstructionElimID = DeadMachineInstructionElim::ID;
 

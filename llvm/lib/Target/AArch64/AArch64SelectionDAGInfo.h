@@ -28,6 +28,6 @@ public:
                                   unsigned Align, bool isVolatile,
                                   MachinePointerInfo DstPtrInfo) const override;
 };
-} // namespace llvm
+}
 
 #endif

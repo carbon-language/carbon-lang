@@ -130,7 +130,7 @@ namespace {
     }
 
   };
-} // namespace
+}
 
 char AliasDebugger::ID = 0;
 INITIALIZE_AG_PASS(AliasDebugger, AliasAnalysis, "debug-aa",

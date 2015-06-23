@@ -258,7 +258,7 @@ namespace {
     }
   };
 
-} // namespace
+}
 
 char MachineVerifierPass::ID = 0;
 INITIALIZE_PASS(MachineVerifierPass, "machineverifier",
@@ -1710,7 +1710,7 @@ namespace {
     bool EntryIsSetup;
     bool ExitIsSetup;
   };
-} // namespace
+}
 
 /// Make sure on every path through the CFG, a FrameSetup <n> is always followed
 /// by a FrameDestroy <n>, stack adjustments are identical on all

@@ -60,7 +60,7 @@ namespace {
       AU.setPreservesCFG();
     }
   };
-} // namespace
+}
 
 char DeadInstElimination::ID = 0;
 INITIALIZE_PASS(DeadInstElimination, "die",
@@ -87,7 +87,7 @@ namespace {
       AU.setPreservesCFG();
     }
  };
-} // namespace
+}
 
 char DCE::ID = 0;
 INITIALIZE_PASS(DCE, "dce", "Dead Code Elimination", false, false)

@@ -41,7 +41,7 @@ namespace XCore {
     COND_INVALID
   };
 }
-} // namespace llvm
+}
 
 // Pin the vtable to this file.
 void XCoreInstrInfo::anchor() {}

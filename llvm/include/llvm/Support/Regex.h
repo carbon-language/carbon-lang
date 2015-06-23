@@ -100,6 +100,6 @@ namespace llvm {
     struct llvm_regex *preg;
     int error;
   };
-} // namespace llvm
+}
 
 #endif // LLVM_SUPPORT_REGEX_H

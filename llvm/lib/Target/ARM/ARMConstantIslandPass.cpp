@@ -335,7 +335,7 @@ namespace {
     }
   };
   char ARMConstantIslands::ID = 0;
-} // namespace
+}
 
 /// verify - check BBOffsets, BBSizes, alignment of islands
 void ARMConstantIslands::verify() {

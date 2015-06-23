@@ -78,7 +78,7 @@ struct DOTGraphTraits<PostDominatorTree*>
     return DOTGraphTraits<DomTreeNode*>::getNodeLabel(Node, G->getRootNode());
   }
 };
-} // namespace llvm
+}
 
 namespace {
 struct DominatorTreeWrapperPassAnalysisGraphTraits {

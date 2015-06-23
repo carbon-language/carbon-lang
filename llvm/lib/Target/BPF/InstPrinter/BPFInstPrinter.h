@@ -37,6 +37,6 @@ public:
   void printInstruction(const MCInst *MI, raw_ostream &O);
   static const char *getRegisterName(unsigned RegNo);
 };
-} // namespace llvm
+}
 
 #endif

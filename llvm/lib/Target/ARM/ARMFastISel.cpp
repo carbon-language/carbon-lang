@@ -2898,7 +2898,7 @@ const struct FoldableLoadExtendsStruct {
   { { ARM::SXTB,  ARM::t2SXTB  },   0, 0, MVT::i8  },
   { { ARM::UXTB,  ARM::t2UXTB  },   0, 1, MVT::i8  }
 };
-} // namespace
+}
 
 /// \brief The specified machine instr operand is a vreg, and that
 /// vreg is being provided by the specified load instruction.  If possible,

@@ -335,6 +335,6 @@ protected:
                               bool CheckFunctionsOnly);
 };
 
-} // namespace llvm
+} // End llvm namespace
 
 #endif

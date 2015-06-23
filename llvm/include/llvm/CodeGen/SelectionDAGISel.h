@@ -301,6 +301,6 @@ private:
 
 };
 
-} // namespace llvm
+}
 
 #endif /* LLVM_CODEGEN_SELECTIONDAGISEL_H */

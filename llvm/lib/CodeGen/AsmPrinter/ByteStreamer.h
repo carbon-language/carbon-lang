@@ -103,6 +103,6 @@ public:
   }
 };
 
-} // namespace llvm
+}
 
 #endif

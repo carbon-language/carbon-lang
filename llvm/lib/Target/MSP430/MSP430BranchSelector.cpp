@@ -44,7 +44,7 @@ namespace {
     }
   };
   char MSP430BSel::ID = 0;
-} // namespace
+}
 
 /// createMSP430BranchSelectionPass - returns an instance of the Branch
 /// Selection Pass

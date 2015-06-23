@@ -228,6 +228,6 @@ namespace llvm {
   template <typename T, typename U>
   typename Registry<T,U>::listener *Registry<T,U>::ListenerTail;
 
-} // namespace llvm
+}
 
 #endif

@@ -126,6 +126,6 @@ private:
 
 FunctionPass *createMipsSEISelDag(MipsTargetMachine &TM);
 
-} // namespace llvm
+}
 
 #endif

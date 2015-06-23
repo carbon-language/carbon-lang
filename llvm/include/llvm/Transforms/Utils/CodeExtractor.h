@@ -121,6 +121,6 @@ namespace llvm {
                                     ValueSet &inputs,
                                     ValueSet &outputs);
   };
-} // namespace llvm
+}
 
 #endif

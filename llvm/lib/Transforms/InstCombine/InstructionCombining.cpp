@@ -3046,7 +3046,7 @@ public:
   void getAnalysisUsage(AnalysisUsage &AU) const override;
   bool runOnFunction(Function &F) override;
 };
-} // namespace
+}
 
 void InstructionCombiningPass::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesCFG();

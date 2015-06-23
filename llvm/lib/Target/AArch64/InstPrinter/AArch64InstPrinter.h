@@ -181,6 +181,6 @@ public:
   static const char *getRegisterName(unsigned RegNo,
                                      unsigned AltIdx = AArch64::NoRegAltName);
 };
-} // namespace llvm
+}
 
 #endif

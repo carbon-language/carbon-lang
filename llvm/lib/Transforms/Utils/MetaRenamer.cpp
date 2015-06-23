@@ -131,7 +131,7 @@ namespace {
       return true;
     }
   };
-} // namespace
+}
 
 char MetaRenamer::ID = 0;
 INITIALIZE_PASS(MetaRenamer, "metarenamer", 

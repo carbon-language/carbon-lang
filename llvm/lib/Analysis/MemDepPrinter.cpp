@@ -74,7 +74,7 @@ namespace {
       return InstTypePair(inst, type);
     }
   };
-} // namespace
+}
 
 char MemDepPrinter::ID = 0;
 INITIALIZE_PASS_BEGIN(MemDepPrinter, "print-memdeps",

@@ -64,6 +64,6 @@ private:
   void anchor() override;
 };
 
-} // namespace llvm
+}
 
 #endif /* LLVM_CODEGEN_PBQPRACONSTRAINT_H */

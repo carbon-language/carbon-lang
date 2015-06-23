@@ -83,6 +83,6 @@ public:
   static StringRef name() { return "PrintFunctionPass"; }
 };
 
-} // namespace llvm
+} // End llvm namespace
 
 #endif

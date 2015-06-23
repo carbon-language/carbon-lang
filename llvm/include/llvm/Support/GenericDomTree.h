@@ -772,6 +772,6 @@ bool DominatorTreeBase<NodeT>::properlyDominates(const NodeT *A,
                    getNode(const_cast<NodeT *>(B)));
 }
 
-} // namespace llvm
+}
 
 #endif

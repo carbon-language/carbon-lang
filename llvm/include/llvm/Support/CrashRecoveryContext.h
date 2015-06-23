@@ -199,6 +199,6 @@ public:
     cleanup = 0;
   }
 };
-} // namespace llvm
+}
 
 #endif

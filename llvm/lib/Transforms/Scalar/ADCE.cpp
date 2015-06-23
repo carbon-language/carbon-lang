@@ -44,7 +44,7 @@ struct ADCE : public FunctionPass {
     AU.setPreservesCFG();
   }
 };
-} // namespace
+}
 
 char ADCE::ID = 0;
 INITIALIZE_PASS(ADCE, "adce", "Aggressive Dead Code Elimination", false, false)

@@ -705,6 +705,6 @@ namespace llvm {
   struct IntervalMapInfo<SlotIndex> : IntervalMapHalfOpenInfo<SlotIndex> {
   };
 
-} // namespace llvm
+}
 
 #endif // LLVM_CODEGEN_SLOTINDEXES_H

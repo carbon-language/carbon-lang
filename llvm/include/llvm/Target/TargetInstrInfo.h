@@ -1270,6 +1270,6 @@ private:
   unsigned CallFrameSetupOpcode, CallFrameDestroyOpcode;
 };
 
-} // namespace llvm
+} // End llvm namespace
 
 #endif

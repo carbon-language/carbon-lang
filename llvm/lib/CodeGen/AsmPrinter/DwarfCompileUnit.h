@@ -231,6 +231,6 @@ public:
   const MCSymbol *getBaseAddress() const { return BaseAddress; }
 };
 
-} // namespace llvm
+} // end llvm namespace
 
 #endif

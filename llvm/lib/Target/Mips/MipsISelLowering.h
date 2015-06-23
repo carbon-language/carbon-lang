@@ -204,7 +204,7 @@ namespace llvm {
       SDL,
       SDR
     };
-  } // namespace MipsISD
+  }
 
   //===--------------------------------------------------------------------===//
   // TargetLowering Implementation
@@ -566,6 +566,6 @@ namespace llvm {
     FastISel *createFastISel(FunctionLoweringInfo &funcInfo,
                              const TargetLibraryInfo *libInfo);
   }
-} // namespace llvm
+}
 
 #endif

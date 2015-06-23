@@ -25,6 +25,6 @@ bool baseRegNeedsLoadStoreMask(unsigned Reg);
 MCELFStreamer *createMipsNaClELFStreamer(MCContext &Context, MCAsmBackend &TAB,
                                          raw_pwrite_stream &OS,
                                          MCCodeEmitter *Emitter, bool RelaxAll);
-} // namespace llvm
+}
 
 #endif

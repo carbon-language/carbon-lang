@@ -92,6 +92,6 @@ inline bool isV8EligibleForIT(InstrType *Instr) {
   }
 }
 
-} // namespace llvm
+}
 
 #endif

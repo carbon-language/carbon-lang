@@ -61,7 +61,7 @@ ArrayRef<uint8_t> makeFixedFormSizesArrayRef() {
   };
   return makeArrayRef(sizes);
 }
-} // namespace
+}
 
 ArrayRef<uint8_t> DWARFFormValue::getFixedFormSizes(uint8_t AddrSize,
                                                     uint16_t Version) {

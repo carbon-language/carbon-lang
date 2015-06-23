@@ -91,7 +91,7 @@ struct add_const_past_pointer<
   typedef const typename std::remove_pointer<T>::type *type;
 };
 
-} // namespace llvm
+}
 
 #ifdef LLVM_DEFINED_HAS_FEATURE
 #undef __has_feature

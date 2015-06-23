@@ -60,7 +60,7 @@ namespace {
         EmitByte(ARM::EHABI::UNWIND_OPCODE_FINISH);
     }
   };
-} // namespace
+}
 
 void UnwindOpcodeAssembler::EmitRegSave(uint32_t RegSave) {
   if (RegSave == 0u)

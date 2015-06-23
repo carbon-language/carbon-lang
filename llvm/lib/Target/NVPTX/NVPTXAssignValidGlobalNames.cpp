@@ -38,7 +38,7 @@ public:
   /// \brief Clean up the name to remove symbols invalid in PTX.
   std::string cleanUpName(StringRef Name);
 };
-} // namespace
+}
 
 char NVPTXAssignValidGlobalNames::ID = 0;
 

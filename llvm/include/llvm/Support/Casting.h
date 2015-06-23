@@ -321,6 +321,6 @@ dyn_cast_or_null(Y *Val) {
   return (Val && isa<X>(Val)) ? cast<X>(Val) : nullptr;
 }
 
-} // namespace llvm
+} // End llvm namespace
 
 #endif

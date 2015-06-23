@@ -32,6 +32,6 @@ public:
   virtual PDB_Checksum getChecksumType() const = 0;
   virtual std::unique_ptr<IPDBEnumSymbols> getCompilands() const = 0;
 };
-} // namespace llvm
+}
 
 #endif

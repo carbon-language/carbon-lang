@@ -542,6 +542,6 @@ inline uint64_t DataLayout::getTypeSizeInBits(Type *Ty) const {
   }
 }
 
-} // namespace llvm
+} // End llvm namespace
 
 #endif

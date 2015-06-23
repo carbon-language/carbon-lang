@@ -61,8 +61,8 @@ TEMPLATE_INSTANTIATION(class opt<int>);
 TEMPLATE_INSTANTIATION(class opt<std::string>);
 TEMPLATE_INSTANTIATION(class opt<char>);
 TEMPLATE_INSTANTIATION(class opt<bool>);
-} // namespace cl
-} // namespace llvm
+}
+} // end namespace llvm::cl
 
 // Pin the vtables to this file.
 void GenericOptionValue::anchor() {}

@@ -79,7 +79,7 @@ namespace {
     AssumptionCache *AC;
     DominatorTree *DT;
   };
-} // namespace
+}
 
 char LoopRotate::ID = 0;
 INITIALIZE_PASS_BEGIN(LoopRotate, "loop-rotate", "Rotate Loops", false, false)

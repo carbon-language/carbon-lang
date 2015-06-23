@@ -249,7 +249,7 @@ namespace {
         CFGOnlyList.push_back(P->getTypeInfo());
     }
   };
-} // namespace
+}
 
 // setPreservesCFG - This function should be called to by the pass, iff they do
 // not:

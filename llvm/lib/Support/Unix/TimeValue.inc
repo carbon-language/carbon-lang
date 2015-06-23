@@ -51,4 +51,4 @@ TimeValue TimeValue::now() {
       NANOSECONDS_PER_MICROSECOND ) );
 }
 
-} // namespace llvm
+}

@@ -184,7 +184,7 @@ namespace {
     void dumpSchedule() const;
     void emitNoop(unsigned CurCycle);
   };
-} // namespace
+}
 
 char &llvm::PostRASchedulerID = PostRAScheduler::ID;
 

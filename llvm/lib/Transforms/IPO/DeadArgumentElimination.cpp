@@ -159,7 +159,7 @@ namespace {
     bool DeleteDeadVarargs(Function &Fn);
     bool RemoveDeadArgumentsFromCallers(Function &Fn);
   };
-} // namespace
+}
 
 
 char DAE::ID = 0;
@@ -175,7 +175,7 @@ namespace {
 
     bool ShouldHackArguments() const override { return true; }
   };
-} // namespace
+}
 
 char DAH::ID = 0;
 INITIALIZE_PASS(DAH, "deadarghaX0r", 

@@ -234,7 +234,7 @@ private:
 
     SDNode *transferMemOperands(SDNode *N, SDNode *Result);
   };
-} // namespace
+}
 
 /// InsertVRSaveCode - Once the entire function has been instruction selected,
 /// all virtual registers are created and all machine instructions are built,

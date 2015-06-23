@@ -535,6 +535,6 @@ private:
   void EmitXXStructorList(const Constant *List, bool isCtor);
   GCMetadataPrinter *GetOrCreateGCPrinter(GCStrategy &C);
 };
-} // namespace llvm
+}
 
 #endif

@@ -426,7 +426,7 @@ namespace CU {
     UNWIND_FRAMELESS_STACK_REG_PERMUTATION = 0x000003FF
   };
 
-} // namespace CU
+} // end CU namespace
 
 class DarwinX86AsmBackend : public X86AsmBackend {
   const MCRegisterInfo &MRI;

@@ -58,7 +58,7 @@ namespace PPC {
     DIR_PWR8,
     DIR_64
   };
-} // namespace PPC
+}
 
 class GlobalValue;
 class TargetMachine;
@@ -286,6 +286,6 @@ public:
 
   bool enableSubRegLiveness() const override;
 };
-} // namespace llvm
+} // End llvm namespace
 
 #endif

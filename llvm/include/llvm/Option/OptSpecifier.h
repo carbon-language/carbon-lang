@@ -35,7 +35,7 @@ namespace opt {
     bool operator==(OptSpecifier Opt) const { return ID == Opt.getID(); }
     bool operator!=(OptSpecifier Opt) const { return !(*this == Opt); }
   };
-} // namespace opt
-} // namespace llvm
+}
+}
 
 #endif

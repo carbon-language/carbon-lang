@@ -107,7 +107,7 @@ private:
   /// Helper function for bitcasts.
   Value *hoistAddrSpaceCastFromBitCast(BitCastOperator *BC, int Depth);
 };
-} // namespace
+}
 
 char NVPTXFavorNonGenericAddrSpaces::ID = 0;
 

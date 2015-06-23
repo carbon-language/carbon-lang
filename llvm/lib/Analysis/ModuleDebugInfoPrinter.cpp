@@ -40,7 +40,7 @@ namespace {
     }
     void print(raw_ostream &O, const Module *M) const override;
   };
-} // namespace
+}
 
 char ModuleDebugInfoPrinter::ID = 0;
 INITIALIZE_PASS(ModuleDebugInfoPrinter, "module-debuginfo",

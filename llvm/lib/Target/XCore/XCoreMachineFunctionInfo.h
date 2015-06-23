@@ -101,6 +101,6 @@ public:
     return SpillLabels;
   }
 };
-} // namespace llvm
+} // End llvm namespace
 
 #endif

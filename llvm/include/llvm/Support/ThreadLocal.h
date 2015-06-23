@@ -57,7 +57,7 @@ namespace llvm {
       // erase - Removes the pointer associated with the current thread.
       void erase() { removeInstance(); }
     };
-  } // namespace sys
-} // namespace llvm
+  }
+}
 
 #endif

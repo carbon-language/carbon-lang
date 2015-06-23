@@ -161,5 +161,5 @@ struct WinEHFuncInfo {
 void calculateWinCXXEHStateNumbers(const Function *ParentFn,
                                    WinEHFuncInfo &FuncInfo);
 
-} // namespace llvm
+}
 #endif // LLVM_CODEGEN_WINEHFUNCINFO_H

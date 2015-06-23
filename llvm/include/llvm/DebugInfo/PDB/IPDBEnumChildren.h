@@ -28,6 +28,6 @@ public:
   virtual void reset() = 0;
   virtual MyType *clone() const = 0;
 };
-} // namespace llvm
+}
 
 #endif

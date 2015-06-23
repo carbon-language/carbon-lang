@@ -171,7 +171,7 @@ private:
   void deleteDeadCastInst() const;
   bool optimizeConstants(Function &Fn);
 };
-} // namespace
+}
 
 char ConstantHoisting::ID = 0;
 INITIALIZE_PASS_BEGIN(ConstantHoisting, "consthoist", "Constant Hoisting",

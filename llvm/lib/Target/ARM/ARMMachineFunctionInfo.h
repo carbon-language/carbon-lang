@@ -229,6 +229,6 @@ public:
     return It;
   }
 };
-} // namespace llvm
+} // End llvm namespace
 
 #endif

@@ -409,7 +409,7 @@ public:
     return (FunctionComparator(F, RHS.getFunc()).compare()) == -1;
   }
 };
-} // namespace
+}
 
 int FunctionComparator::cmpNumbers(uint64_t L, uint64_t R) const {
   if (L < R) return -1;

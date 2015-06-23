@@ -110,7 +110,7 @@ MutexImpl::tryacquire()
   return errorcode == 0;
 }
 
-} // namespace llvm
+}
 
 #elif defined(LLVM_ON_UNIX)
 #include "Unix/Mutex.inc"

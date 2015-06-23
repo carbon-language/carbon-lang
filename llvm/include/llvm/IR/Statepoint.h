@@ -348,6 +348,6 @@ StatepointBase<InstructionTy, ValueTy, CallSiteTy>::getRelocates() {
   }
   return Result;
 }
-} // namespace llvm
+}
 
 #endif

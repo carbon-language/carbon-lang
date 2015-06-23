@@ -110,7 +110,7 @@ public:
   // Schedule - Actual scheduling work.
   void schedule() override;
 };
-} // namespace llvm
+}
 
 DefaultVLIWScheduler::DefaultVLIWScheduler(MachineFunction &MF,
                                            MachineLoopInfo &MLI, bool IsPostRA)

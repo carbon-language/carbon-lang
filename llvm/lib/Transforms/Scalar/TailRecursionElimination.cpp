@@ -120,7 +120,7 @@ namespace {
     bool CanMoveAboveCall(Instruction *I, CallInst *CI);
     Value *CanTransformAccumulatorRecursion(Instruction *I, CallInst *CI);
   };
-} // namespace
+}
 
 char TailCallElim::ID = 0;
 INITIALIZE_PASS_BEGIN(TailCallElim, "tailcallelim",
@@ -246,7 +246,7 @@ struct AllocaDerivedValueTracker {
   SmallPtrSet<Instruction *, 32> AllocaUsers;
   SmallPtrSet<Instruction *, 32> EscapePoints;
 };
-} // namespace
+}
 
 bool TailCallElim::markTails(Function &F, bool &AllCallsAreTailCalls) {
   if (F.callsFunctionThatReturnsTwice())

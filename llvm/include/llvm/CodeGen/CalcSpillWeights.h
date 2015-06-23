@@ -74,6 +74,6 @@ namespace llvm {
                                      const MachineBlockFrequencyInfo &MBFI,
                                      VirtRegAuxInfo::NormalizingFn norm =
                                          normalizeSpillWeight);
-} // namespace llvm
+}
 
 #endif // LLVM_CODEGEN_CALCSPILLWEIGHTS_H

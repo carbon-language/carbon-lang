@@ -58,6 +58,6 @@ private:
   void clear();
 };
 
-} // namespace llvm
+}
 
 #endif

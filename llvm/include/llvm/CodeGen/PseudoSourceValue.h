@@ -106,6 +106,6 @@ namespace llvm {
 
     int getFrameIndex() const { return FI; }
   };
-} // namespace llvm
+} // End llvm namespace
 
 #endif

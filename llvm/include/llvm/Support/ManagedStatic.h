@@ -106,6 +106,6 @@ struct llvm_shutdown_obj {
   ~llvm_shutdown_obj() { llvm_shutdown(); }
 };
 
-} // namespace llvm
+}
 
 #endif

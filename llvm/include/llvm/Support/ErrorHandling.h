@@ -84,7 +84,7 @@ namespace llvm {
   LLVM_ATTRIBUTE_NORETURN void
   llvm_unreachable_internal(const char *msg=nullptr, const char *file=nullptr,
                             unsigned line=0);
-} // namespace llvm
+}
 
 /// Marks that the current location is not supposed to be reachable.
 /// In !NDEBUG builds, prints the message and location info to stderr.

@@ -72,7 +72,7 @@ public:
   }
 };
 
-} // namespace
+}
 
 std::unique_ptr<DataStreamer>
 llvm::getDataFileStreamer(const std::string &Filename, std::string *StrError) {

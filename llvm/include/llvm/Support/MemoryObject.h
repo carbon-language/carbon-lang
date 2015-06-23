@@ -63,6 +63,6 @@ public:
   virtual bool isValidAddress(uint64_t address) const = 0;
 };
 
-} // namespace llvm
+}
 
 #endif

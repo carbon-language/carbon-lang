@@ -507,6 +507,6 @@ namespace llvm {
                                   RHS.template get<U>()));
     }
   };
-} // namespace llvm
+}
 
 #endif

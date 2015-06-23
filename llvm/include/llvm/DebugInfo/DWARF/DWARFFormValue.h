@@ -91,6 +91,6 @@ private:
   void dumpString(raw_ostream &OS, const DWARFUnit *U) const;
 };
 
-} // namespace llvm
+}
 
 #endif

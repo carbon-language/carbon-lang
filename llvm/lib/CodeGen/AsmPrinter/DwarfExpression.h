@@ -131,6 +131,6 @@ public:
   void EmitUnsigned(uint64_t Value) override;
   bool isFrameRegister(unsigned MachineReg) override;
 };
-} // namespace llvm
+}
 
 #endif

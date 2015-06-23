@@ -104,7 +104,7 @@ enum Fixups {
   LastTargetFixupKind,
   NumTargetFixupKinds = LastTargetFixupKind - FirstTargetFixupKind
 };
-} // namespace ARM
-} // namespace llvm
+}
+}
 
 #endif

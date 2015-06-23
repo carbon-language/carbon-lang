@@ -288,6 +288,6 @@ void Calculate(DominatorTreeBase<typename GraphTraits<NodeT>::NodeType>& DT,
   DT.updateDFSNumbers();
 }
 
-} // namespace llvm
+}
 
 #endif

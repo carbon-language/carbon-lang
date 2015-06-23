@@ -138,7 +138,7 @@ namespace {
     uint32_t getNextUnusedValueNumber() { return nextValueNumber; }
     void verifyRemoved(const Value *) const;
   };
-} // namespace
+}
 
 namespace llvm {
 template <> struct DenseMapInfo<Expression> {
@@ -159,7 +159,7 @@ template <> struct DenseMapInfo<Expression> {
   }
 };
 
-} // namespace llvm
+}
 
 //===----------------------------------------------------------------------===//
 //                     ValueTable Internal Functions
@@ -723,7 +723,7 @@ namespace {
   };
 
   char GVN::ID = 0;
-} // namespace
+}
 
 // The public interface to this file...
 FunctionPass *llvm::createGVNPass(bool NoLoads) {

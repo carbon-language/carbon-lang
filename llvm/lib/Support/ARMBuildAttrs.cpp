@@ -66,7 +66,7 @@ const struct {
   { ARMBuildAttrs::ABI_align_needed, "Tag_ABI_align8_needed" },
   { ARMBuildAttrs::ABI_align_preserved, "Tag_ABI_align8_preserved" },
 };
-} // namespace
+}
 
 namespace llvm {
 namespace ARMBuildAttrs {
@@ -90,6 +90,6 @@ int AttrTypeFromString(StringRef Tag) {
       return ARMAttributeTags[TI].Attr;
   return -1;
 }
-} // namespace ARMBuildAttrs
-} // namespace llvm
+}
+}
 

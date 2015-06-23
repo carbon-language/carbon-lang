@@ -116,7 +116,7 @@ public:
   void dump() const;
 };
 
-} // namespace
+}
 
 void RegSortData::print(raw_ostream &OS) const {
   OS << "[NumUses=" << UsedByIndices.count() << ']';
@@ -157,7 +157,7 @@ public:
   const_iterator end() const   { return RegSequence.end(); }
 };
 
-} // namespace
+}
 
 void
 RegUseTracker::CountRegister(const SCEV *Reg, size_t LUIdx) {
@@ -281,7 +281,7 @@ struct Formula {
   void dump() const;
 };
 
-} // namespace
+}
 
 /// DoInitialMatch - Recursion helper for InitialMatch.
 static void DoInitialMatch(const SCEV *S, Loop *L,
@@ -903,7 +903,7 @@ private:
                            SmallPtrSetImpl<const SCEV *> *LoserRegs);
 };
 
-} // namespace
+}
 
 /// RateRegister - Tally up interesting quantities from the given register.
 void Cost::RateRegister(const SCEV *Reg,
@@ -1102,7 +1102,7 @@ struct LSRFixup {
   void dump() const;
 };
 
-} // namespace
+}
 
 LSRFixup::LSRFixup()
   : UserInst(nullptr), OperandValToReplace(nullptr), LUIdx(~size_t(0)),
@@ -1252,7 +1252,7 @@ public:
   void dump() const;
 };
 
-} // namespace
+}
 
 /// HasFormula - Test whether this use as a formula which has the same
 /// registers as the given formula.
@@ -1791,7 +1791,7 @@ public:
   void dump() const;
 };
 
-} // namespace
+}
 
 /// OptimizeShadowIV - If IV is used in a int-to-float cast
 /// inside the loop then try to eliminate the cast operation.
@@ -3644,7 +3644,7 @@ struct WorkItem {
   void dump() const;
 };
 
-} // namespace
+}
 
 void WorkItem::print(raw_ostream &OS) const {
   OS << "in formulae referencing " << *OrigReg << " in use " << LUIdx
@@ -4949,7 +4949,7 @@ private:
   void getAnalysisUsage(AnalysisUsage &AU) const override;
 };
 
-} // namespace
+}
 
 char LoopStrengthReduce::ID = 0;
 INITIALIZE_PASS_BEGIN(LoopStrengthReduce, "loop-reduce",

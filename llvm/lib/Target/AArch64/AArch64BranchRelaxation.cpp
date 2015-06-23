@@ -102,7 +102,7 @@ public:
   }
 };
 char AArch64BranchRelaxation::ID = 0;
-} // namespace
+}
 
 /// verify - check BBOffsets, BBSizes, alignment of islands
 void AArch64BranchRelaxation::verify() {

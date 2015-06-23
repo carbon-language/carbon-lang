@@ -75,6 +75,6 @@ private:
   SDNode *PostISelFolding(MachineSDNode *N, SelectionDAG &DAG) const override;
 };
 
-} // namespace llvm
+} // End namespace llvm;
 
 #endif

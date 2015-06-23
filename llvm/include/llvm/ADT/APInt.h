@@ -1896,11 +1896,11 @@ inline APInt Xor(const APInt &LHS, const APInt &RHS) { return LHS ^ RHS; }
 /// Performs a bitwise complement operation on APInt.
 inline APInt Not(const APInt &APIVal) { return ~APIVal; }
 
-} // namespace APIntOps
+} // End of APIntOps namespace
 
 // See friend declaration above. This additional declaration is required in
 // order to compile LLVM with IBM xlC compiler.
 hash_code hash_value(const APInt &Arg);
-} // namespace llvm
+} // End of llvm namespace
 
 #endif

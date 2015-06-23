@@ -132,7 +132,7 @@ namespace llvm {
                     "color=blue,style=dashed");
     }
   };
-} // namespace llvm
+}
 
 std::string DOTGraphTraits<SelectionDAG*>::getNodeLabel(const SDNode *Node,
                                                         const SelectionDAG *G) {

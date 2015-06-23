@@ -33,6 +33,6 @@ public:
   FORWARD_SYMBOL_METHOD(getSourceFileName)
   FORWARD_SYMBOL_METHOD(getSymIndexId)
 };
-} // namespace llvm
+}
 
 #endif // LLVM_DEBUGINFO_PDB_PDBSYMBOLCOMPILAND_H

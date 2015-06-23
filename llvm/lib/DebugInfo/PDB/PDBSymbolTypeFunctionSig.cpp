@@ -63,7 +63,7 @@ private:
   const IPDBSession &Session;
   std::unique_ptr<ArgEnumeratorType> Enumerator;
 };
-} // namespace
+}
 
 PDBSymbolTypeFunctionSig::PDBSymbolTypeFunctionSig(
     const IPDBSession &PDBSession, std::unique_ptr<IPDBRawSymbol> Symbol)

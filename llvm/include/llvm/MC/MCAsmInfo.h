@@ -39,7 +39,7 @@ enum class EncodingType {
   X86,     /// Windows x86, uses no CFI, just EH tables
   MIPS = Alpha,
 };
-} // namespace WinEH
+}
 
 enum class ExceptionHandling {
   None,     /// No exception support
@@ -555,6 +555,6 @@ public:
 
   bool shouldUseLogicalShr() const { return UseLogicalShr; }
 };
-} // namespace llvm
+}
 
 #endif

@@ -187,7 +187,7 @@ struct ProcessInfo {
       ///< string is non-empty upon return an error occurred while invoking the
       ///< program.
       );
-  } // namespace sys
-} // namespace llvm
+  }
+}
 
 #endif

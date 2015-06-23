@@ -438,7 +438,7 @@ namespace {
     bool reroll(Instruction *IV, Loop *L, BasicBlock *Header, const SCEV *IterCount,
                 ReductionTracker &Reductions);
   };
-} // namespace
+}
 
 char LoopReroll::ID = 0;
 INITIALIZE_PASS_BEGIN(LoopReroll, "loop-reroll", "Reroll loops", false, false)

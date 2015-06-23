@@ -29,6 +29,6 @@ public:
   unsigned StackSize;
 };
 
-} // namespace llvm
+} // End llvm namespace
 
 #endif

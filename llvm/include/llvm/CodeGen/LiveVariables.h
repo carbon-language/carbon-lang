@@ -306,6 +306,6 @@ public:
   void setPHIJoin(unsigned Reg) { PHIJoins.set(Reg); }
 };
 
-} // namespace llvm
+} // End llvm namespace
 
 #endif

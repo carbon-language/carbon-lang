@@ -98,6 +98,6 @@ namespace llvm {
   };
   } // end namespace PPCII
   
-} // namespace llvm
+} // end namespace llvm;
 
 #endif

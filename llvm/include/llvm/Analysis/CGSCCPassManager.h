@@ -485,6 +485,6 @@ CGSCCToFunctionPassAdaptor<FunctionPassT>
 createCGSCCToFunctionPassAdaptor(FunctionPassT Pass) {
   return CGSCCToFunctionPassAdaptor<FunctionPassT>(std::move(Pass));
 }
-} // namespace llvm
+}
 
 #endif

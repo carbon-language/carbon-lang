@@ -73,6 +73,6 @@ const SCEV *TransformForPostIncUse(TransformKind Kind,
                                    ScalarEvolution &SE,
                                    DominatorTree &DT);
 
-} // namespace llvm
+}
 
 #endif

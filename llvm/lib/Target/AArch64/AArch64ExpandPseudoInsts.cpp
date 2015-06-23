@@ -43,7 +43,7 @@ private:
                     unsigned BitSize);
 };
 char AArch64ExpandPseudo::ID = 0;
-} // namespace
+}
 
 /// \brief Transfer implicit operands on the pseudo instruction to the
 /// instructions created from the expansion.

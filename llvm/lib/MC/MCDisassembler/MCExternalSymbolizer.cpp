@@ -193,4 +193,4 @@ MCSymbolizer *createMCSymbolizer(StringRef TT, LLVMOpInfoCallback GetOpInfo,
   return new MCExternalSymbolizer(*Ctx, std::move(RelInfo), GetOpInfo,
                                   SymbolLookUp, DisInfo);
 }
-} // namespace llvm
+}

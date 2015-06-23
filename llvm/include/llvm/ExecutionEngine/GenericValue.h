@@ -49,5 +49,5 @@ struct GenericValue {
 inline GenericValue PTOGV(void *P) { return GenericValue(P); }
 inline void* GVTOP(const GenericValue &GV) { return GV.PointerVal; }
 
-} // namespace llvm
+} // End llvm namespace.
 #endif

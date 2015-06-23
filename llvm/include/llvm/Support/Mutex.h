@@ -152,7 +152,7 @@ namespace llvm
     };
 
     typedef SmartScopedLock<false> ScopedLock;
-  } // namespace sys
-} // namespace llvm
+  }
+}
 
 #endif

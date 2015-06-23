@@ -50,7 +50,7 @@ namespace {
       initializeObjCARCAPElimPass(*PassRegistry::getPassRegistry());
     }
   };
-} // namespace
+}
 
 char ObjCARCAPElim::ID = 0;
 INITIALIZE_PASS(ObjCARCAPElim,

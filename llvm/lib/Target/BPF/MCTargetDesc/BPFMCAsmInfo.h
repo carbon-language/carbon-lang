@@ -36,6 +36,6 @@ public:
     HasDotTypeDotSizeDirective = false;
   }
 };
-} // namespace llvm
+}
 
 #endif

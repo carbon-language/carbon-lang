@@ -57,7 +57,7 @@ private:
   }
 };
 char AArch64StorePairSuppress::ID = 0;
-} // namespace
+} // anonymous
 
 FunctionPass *llvm::createAArch64StorePairSuppressPass() {
   return new AArch64StorePairSuppress();

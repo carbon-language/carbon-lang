@@ -103,7 +103,7 @@ public:
   }
 };
 
-} // namespace
+}
 
 char PrintModulePassWrapper::ID = 0;
 INITIALIZE_PASS(PrintModulePassWrapper, "print-module",

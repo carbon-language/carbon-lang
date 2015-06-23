@@ -86,6 +86,6 @@ private:
   bool shouldInline(CallSite CS);
 };
 
-} // namespace llvm
+} // End llvm namespace
 
 #endif

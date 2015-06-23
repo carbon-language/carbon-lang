@@ -72,7 +72,7 @@ namespace llvm {
       return G->addCustomGraphFeatures(GW);
     }
   };
-} // namespace llvm
+}
 
 std::string DOTGraphTraits<ScheduleDAG*>::getNodeLabel(const SUnit *SU,
                                                        const ScheduleDAG *G) {

@@ -46,6 +46,6 @@ FunctionPass *createThumb2SizeReductionPass(
 void LowerARMMachineInstrToMCInst(const MachineInstr *MI, MCInst &OutMI,
                                   ARMAsmPrinter &AP);
 
-} // namespace llvm
+} // end namespace llvm;
 
 #endif

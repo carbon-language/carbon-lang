@@ -103,7 +103,7 @@ MCObjectWriter *createARMWinCOFFObjectWriter(raw_pwrite_stream &OS,
 
 /// Construct ARM Mach-O relocation info.
 MCRelocationInfo *createARMMachORelocationInfo(MCContext &Ctx);
-} // namespace llvm
+} // End llvm namespace
 
 // Defines symbolic names for ARM registers.  This defines a mapping from
 // register name to register number.

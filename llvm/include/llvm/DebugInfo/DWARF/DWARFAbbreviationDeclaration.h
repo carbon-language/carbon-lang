@@ -57,6 +57,6 @@ private:
   AttributeSpecVector AttributeSpecs;
 };
 
-} // namespace llvm
+}
 
 #endif

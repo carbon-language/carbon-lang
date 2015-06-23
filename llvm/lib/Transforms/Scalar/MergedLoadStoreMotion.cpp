@@ -156,7 +156,7 @@ private:
 };
 
 char MergedLoadStoreMotion::ID = 0;
-} // namespace
+}
 
 ///
 /// \brief createMergedLoadStoreMotionPass - The public interface to this file.

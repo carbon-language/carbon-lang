@@ -54,6 +54,6 @@ private:
   bool runOnFunction(Function &F) override;
 };
 
-} // namespace llvm
+} // End llvm namespace
 
 #endif

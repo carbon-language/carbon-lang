@@ -84,6 +84,6 @@ inline raw_ostream &operator<<(raw_ostream &OS, const BranchProbability &Prob) {
   return Prob.print(OS);
 }
 
-} // namespace llvm
+}
 
 #endif

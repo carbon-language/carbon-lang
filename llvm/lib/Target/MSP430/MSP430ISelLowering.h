@@ -64,7 +64,7 @@ namespace llvm {
       /// SHL, SRA, SRL - Non-constant shifts.
       SHL, SRA, SRL
     };
-  } // namespace MSP430ISD
+  }
 
   class MSP430Subtarget;
   class MSP430TargetLowering : public TargetLowering {

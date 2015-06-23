@@ -350,7 +350,7 @@ public:
     return Segments;
   }
 };
-} // namespace
+}
 
 std::vector<StringRef> CoverageMapping::getUniqueSourceFiles() const {
   std::vector<StringRef> Filenames;
@@ -521,7 +521,7 @@ class CoverageMappingErrorCategoryType : public std::error_category {
     llvm_unreachable("A value of coveragemap_error has no message.");
   }
 };
-} // namespace
+}
 
 static ManagedStatic<CoverageMappingErrorCategoryType> ErrorCategory;
 

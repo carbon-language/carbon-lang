@@ -143,7 +143,7 @@ namespace {
     }
 #endif
   };
-} // namespace
+}
 
 namespace {
   //===--------------------------------------------------------------------===//
@@ -319,7 +319,7 @@ namespace {
       return true;
     }
   };
-} // namespace
+}
 
 
 bool

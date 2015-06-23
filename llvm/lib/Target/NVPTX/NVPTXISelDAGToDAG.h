@@ -95,6 +95,6 @@ private:
   bool ChkMemSDNodeAddressSpace(SDNode *N, unsigned int spN) const;
 
 };
-} // namespace
+}
 
 #endif

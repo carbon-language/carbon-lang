@@ -75,7 +75,7 @@ private:
   const MipsSEInstrInfo &TII;
   const MipsRegisterInfo &RegInfo;
 };
-} // namespace
+}
 
 ExpandPseudo::ExpandPseudo(MachineFunction &MF_)
     : MF(MF_), MRI(MF.getRegInfo()),

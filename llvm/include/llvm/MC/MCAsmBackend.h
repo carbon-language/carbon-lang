@@ -138,6 +138,6 @@ public:
   }
 };
 
-} // namespace llvm
+} // End llvm namespace
 
 #endif

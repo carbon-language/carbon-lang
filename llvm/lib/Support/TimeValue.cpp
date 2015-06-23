@@ -45,7 +45,7 @@ TimeValue::normalize( void ) {
   }
 }
 
-} // namespace llvm
+}
 
 /// Include the platform-specific portion of TimeValue class
 #ifdef LLVM_ON_UNIX

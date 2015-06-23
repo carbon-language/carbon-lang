@@ -181,7 +181,7 @@ private:
   void spillAroundUses(unsigned Reg);
   void spillAll();
 };
-} // namespace
+}
 
 namespace llvm {
 
@@ -194,7 +194,7 @@ Spiller *createInlineSpiller(MachineFunctionPass &pass,
   return new InlineSpiller(pass, mf, vrm);
 }
 
-} // namespace llvm
+}
 
 //===----------------------------------------------------------------------===//
 //                                Snippets

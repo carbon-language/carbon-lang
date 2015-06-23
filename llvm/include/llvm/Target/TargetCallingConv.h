@@ -190,8 +190,8 @@ namespace ISD {
       ArgVT = argvt;
     }
   };
-} // namespace ISD
+}
 
-} // namespace llvm
+} // end llvm namespace
 
 #endif

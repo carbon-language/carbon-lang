@@ -58,6 +58,6 @@ public:
   virtual void printInfoComment(const Value &, formatted_raw_ostream &) {}
 };
 
-} // namespace llvm
+} // End llvm namespace
 
 #endif

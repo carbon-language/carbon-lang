@@ -44,7 +44,7 @@ namespace ARMCP {
     GOTTPOFF,
     TPOFF
   };
-} // namespace ARMCP
+}
 
 /// ARMConstantPoolValue - ARM specific constantpool value. This is used to
 /// represent PC-relative displacement between the address of the load
@@ -254,6 +254,6 @@ public:
   }
 };
 
-} // namespace llvm
+} // End llvm namespace
 
 #endif

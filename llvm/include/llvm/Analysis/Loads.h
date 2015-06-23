@@ -52,6 +52,6 @@ Value *FindAvailableLoadedValue(Value *Ptr, BasicBlock *ScanBB,
                                 AliasAnalysis *AA = nullptr,
                                 AAMDNodes *AATags = nullptr);
 
-} // namespace llvm
+}
 
 #endif

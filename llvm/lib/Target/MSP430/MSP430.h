@@ -30,7 +30,7 @@ namespace MSP430CC {
 
     COND_INVALID = -1
   };
-} // namespace MSP430CC
+}
 
 namespace llvm {
   class MSP430TargetMachine;
@@ -42,6 +42,6 @@ namespace llvm {
 
   FunctionPass *createMSP430BranchSelectionPass();
 
-} // namespace llvm
+} // end namespace llvm;
 
 #endif

@@ -40,7 +40,7 @@ namespace {
   private:
     Function* unswitchFunction(Function* F);
   };
-} // namespace
+}
 
 char PartialInliner::ID = 0;
 INITIALIZE_PASS(PartialInliner, "partial-inliner",

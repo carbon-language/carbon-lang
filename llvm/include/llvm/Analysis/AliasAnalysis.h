@@ -570,6 +570,6 @@ bool isIdentifiedObject(const Value *V);
 /// IdentifiedObjects.
 bool isIdentifiedFunctionLocal(const Value *V);
 
-} // namespace llvm
+} // End llvm namespace
 
 #endif

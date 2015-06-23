@@ -219,7 +219,7 @@ public:
     llvm_unreachable("Unknown pseudo-op: .localentry");
   }
 };
-} // namespace
+}
 
 static MCTargetStreamer *createAsmTargetStreamer(MCStreamer &S,
                                                  formatted_raw_ostream &OS,

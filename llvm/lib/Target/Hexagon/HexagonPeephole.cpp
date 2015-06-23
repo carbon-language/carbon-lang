@@ -104,7 +104,7 @@ namespace {
   private:
     void ChangeOpInto(MachineOperand &Dst, MachineOperand &Src);
   };
-} // namespace
+}
 
 char HexagonPeephole::ID = 0;
 

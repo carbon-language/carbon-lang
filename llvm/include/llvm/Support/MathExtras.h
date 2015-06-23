@@ -642,6 +642,6 @@ inline int64_t SignExtend64(uint64_t X, unsigned B) {
 }
 
 extern const float huge_valf;
-} // namespace llvm
+} // End llvm namespace
 
 #endif

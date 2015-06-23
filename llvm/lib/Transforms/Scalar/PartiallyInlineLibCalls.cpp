@@ -46,7 +46,7 @@ namespace {
   };
 
   char PartiallyInlineLibCalls::ID = 0;
-} // namespace
+}
 
 INITIALIZE_PASS(PartiallyInlineLibCalls, "partially-inline-libcalls",
                 "Partially inline calls to library functions", false, false)

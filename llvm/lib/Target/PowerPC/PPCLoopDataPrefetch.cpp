@@ -88,7 +88,7 @@ namespace {
     const TargetTransformInfo *TTI;
     const DataLayout *DL;
   };
-} // namespace
+}
 
 char PPCLoopDataPrefetch::ID = 0;
 INITIALIZE_PASS_BEGIN(PPCLoopDataPrefetch, "ppc-loop-data-prefetch",

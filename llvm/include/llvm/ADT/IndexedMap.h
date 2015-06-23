@@ -80,6 +80,6 @@ template <typename T, typename ToIndexT = llvm::identity<unsigned> >
     }
   };
 
-} // namespace llvm
+} // End llvm namespace
 
 #endif

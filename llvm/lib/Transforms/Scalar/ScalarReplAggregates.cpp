@@ -221,7 +221,7 @@ namespace {
     }
   };
 
-} // namespace
+}
 
 char SROA_DT::ID = 0;
 char SROA_SSAUp::ID = 0;
@@ -1123,7 +1123,7 @@ public:
     }
   }
 };
-} // namespace
+} // end anon namespace
 
 /// isSafeSelectToSpeculate - Select instructions that use an alloca and are
 /// subsequently loaded can be rewritten to load both input pointers and then

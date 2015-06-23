@@ -114,5 +114,5 @@ public:
     return DITypeNodeToDieMap.lookup(TypeMD);
   }
 };
-} // namespace llvm
+}
 #endif

@@ -600,6 +600,6 @@ public:
   void dump(const MachineFunction &MF) const;
 };
 
-} // namespace llvm
+} // End llvm namespace
 
 #endif

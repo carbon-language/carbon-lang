@@ -131,6 +131,6 @@ private:
     unsigned numberRCValPredInSU (SUnit *SU, unsigned RCId);
     unsigned numberRCValSuccInSU (SUnit *SU, unsigned RCId);
   };
-} // namespace llvm
+}
 
 #endif

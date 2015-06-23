@@ -36,7 +36,7 @@ namespace InlineConstants {
   /// Do not inline functions which allocate this many bytes on the stack
   /// when the caller is recursive.
   const unsigned TotalAllocaSizeRecursiveCaller = 1024;
-} // namespace InlineConstants
+}
 
 /// \brief Represents the cost of inlining a function.
 ///
@@ -138,6 +138,6 @@ public:
   bool isInlineViable(Function &Callee);
 };
 
-} // namespace llvm
+}
 
 #endif

@@ -375,8 +375,8 @@ struct ExceptionDataRecord {
 inline size_t HeaderWords(const ExceptionDataRecord &XR) {
   return (XR.Data[0] & 0xff800000) ? 1 : 2;
 }
-} // namespace WinEH
-} // namespace ARM
-} // namespace llvm
+}
+}
+}
 
 #endif

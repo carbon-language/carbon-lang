@@ -156,7 +156,7 @@ namespace {
     /// Simple Analysis hook. Delete loop L from alias set map.
     void deleteAnalysisLoop(Loop *L) override;
   };
-} // namespace
+}
 
 char LICM::ID = 0;
 INITIALIZE_PASS_BEGIN(LICM, "licm", "Loop Invariant Code Motion", false, false)
@@ -777,7 +777,7 @@ namespace {
       AST.deleteValue(I);
     }
   };
-} // namespace
+} // end anon namespace
 
 /// Try to promote memory values to scalars by sinking stores out of the
 /// loop and moving loads to before the loop.  We do this by looping over

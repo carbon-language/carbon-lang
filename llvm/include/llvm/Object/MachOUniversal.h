@@ -112,7 +112,7 @@ public:
   getObjectForArch(StringRef ArchName) const;
 };
 
-} // namespace object
-} // namespace llvm
+}
+}
 
 #endif

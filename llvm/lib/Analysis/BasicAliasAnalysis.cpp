@@ -182,7 +182,7 @@ namespace {
       return !operator==(Other);
     }
   };
-} // namespace
+}
 
 
 /// GetLinearExpression - Analyze the specified value as a linear expression:

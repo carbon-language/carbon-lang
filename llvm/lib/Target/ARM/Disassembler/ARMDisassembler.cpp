@@ -81,7 +81,7 @@ namespace {
     private:
       std::vector<unsigned char> ITStates;
   };
-} // namespace
+}
 
 namespace {
 /// ARM disassembler for all ARM platforms.
@@ -118,7 +118,7 @@ private:
   DecodeStatus AddThumbPredicate(MCInst&) const;
   void UpdateThumbVFPPredicate(MCInst&) const;
 };
-} // namespace
+}
 
 static bool Check(DecodeStatus &Out, DecodeStatus In) {
   switch (In) {

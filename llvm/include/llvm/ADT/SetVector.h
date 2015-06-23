@@ -225,7 +225,7 @@ public:
   }
 };
 
-} // namespace llvm
+} // End llvm namespace
 
 // vim: sw=2 ai
 #endif

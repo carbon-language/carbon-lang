@@ -35,7 +35,7 @@ void ARMWinCOFFStreamer::EmitAssemblerFlag(MCAssemblerFlag Flag) {
 void ARMWinCOFFStreamer::EmitThumbFunc(MCSymbol *Symbol) {
   getAssembler().setIsThumbFunc(Symbol);
 }
-} // namespace
+}
 
 MCStreamer *llvm::createARMWinCOFFStreamer(MCContext &Context,
                                            MCAsmBackend &MAB,

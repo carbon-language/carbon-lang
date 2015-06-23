@@ -1235,6 +1235,6 @@ inline raw_ostream& operator<<(raw_ostream &OS, const MachineInstr &MI) {
   return OS;
 }
 
-} // namespace llvm
+} // End llvm namespace
 
 #endif

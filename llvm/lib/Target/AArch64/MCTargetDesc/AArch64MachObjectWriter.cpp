@@ -38,7 +38,7 @@ public:
                         const MCFixup &Fixup, MCValue Target,
                         uint64_t &FixedValue) override;
 };
-} // namespace
+}
 
 bool AArch64MachObjectWriter::getAArch64FixupKindMachOInfo(
     const MCFixup &Fixup, unsigned &RelocType, const MCSymbolRefExpr *Sym,

@@ -79,7 +79,7 @@ namespace {
       MachineFunctionPass::getAnalysisUsage(AU);
     }
   };
-} // namespace
+}
 
 char BranchFolderPass::ID = 0;
 char &llvm::BranchFolderPassID = BranchFolderPass::ID;

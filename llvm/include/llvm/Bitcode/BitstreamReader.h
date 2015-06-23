@@ -512,6 +512,6 @@ public:
   bool ReadBlockInfoBlock();
 };
 
-} // namespace llvm
+} // End llvm namespace
 
 #endif

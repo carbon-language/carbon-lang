@@ -148,6 +148,6 @@ private:
   std::unique_ptr<const CompleterConcept> Completer;
 };
 
-} // namespace llvm
+}
 
 #endif

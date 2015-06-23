@@ -53,6 +53,6 @@ namespace llvm {
     static const char *getRegisterName(unsigned RegNo);
   };
 
-} // namespace llvm
+} // end of llvm namespace
 
 #endif

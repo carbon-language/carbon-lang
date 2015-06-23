@@ -252,6 +252,6 @@ private:
   LexicalScope *CurrentFnLexicalScope;
 };
 
-} // namespace llvm
+} // end llvm namespace
 
 #endif

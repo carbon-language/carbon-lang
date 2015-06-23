@@ -280,6 +280,6 @@ protected:
   }
 };
 
-} // namespace llvm
+}
 
 #endif

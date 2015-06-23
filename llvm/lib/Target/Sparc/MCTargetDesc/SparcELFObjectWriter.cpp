@@ -36,7 +36,7 @@ namespace {
                                  unsigned Type) const override;
 
   };
-} // namespace
+}
 
 unsigned SparcELFObjectWriter::GetRelocType(const MCValue &Target,
                                             const MCFixup &Fixup,

@@ -32,7 +32,7 @@ public:
   }
 };
 char ARMOptimizeBarriersPass::ID = 0;
-} // namespace
+}
 
 // Returns whether the instruction can safely move past a DMB instruction
 // The current implementation allows this iif MI does not have any possible

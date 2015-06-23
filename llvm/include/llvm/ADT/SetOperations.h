@@ -66,6 +66,6 @@ void set_subtract(S1Ty &S1, const S2Ty &S2) {
     S1.erase(*SI);
 }
 
-} // namespace llvm
+} // End llvm namespace
 
 #endif

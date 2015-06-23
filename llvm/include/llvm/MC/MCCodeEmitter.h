@@ -41,6 +41,6 @@ public:
                                  const MCSubtargetInfo &STI) const = 0;
 };
 
-} // namespace llvm
+} // End llvm namespace
 
 #endif

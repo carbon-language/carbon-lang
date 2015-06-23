@@ -157,7 +157,7 @@ namespace {
       WriteValues({V1, Vs...});
     }
   };
-} // namespace
+}
 
 char Lint::ID = 0;
 INITIALIZE_PASS_BEGIN(Lint, "lint", "Statically lint-checks LLVM IR",

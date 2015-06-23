@@ -676,7 +676,7 @@ namespace {
       NodesToAnalyze.insert(N);
     }
   };
-} // namespace
+}
 
 
 /// ReplaceValueWith - The specified value was legalized to the specified other

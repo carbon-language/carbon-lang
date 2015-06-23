@@ -37,7 +37,7 @@ inline DLLCharacteristics operator|(DLLCharacteristics a,
   uint16_t Ret = static_cast<uint16_t>(a) | static_cast<uint16_t>(b);
   return static_cast<DLLCharacteristics>(Ret);
 }
-} // namespace COFF
+}
 
 // The structure of the yaml files is not an exact 1:1 match to COFF. In order
 // to use yaml::IO, we use these structures which are closer to the source.
@@ -87,8 +87,8 @@ namespace COFFYAML {
     std::vector<Symbol> Symbols;
     Object();
   };
-} // namespace COFFYAML
-} // namespace llvm
+}
+}
 
 LLVM_YAML_IS_SEQUENCE_VECTOR(COFFYAML::Section)
 LLVM_YAML_IS_SEQUENCE_VECTOR(COFFYAML::Symbol)

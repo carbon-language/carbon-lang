@@ -89,5 +89,5 @@ private:
 MemoryObject *getNonStreamedMemoryObject(
     const unsigned char *Start, const unsigned char *End);
 
-} // namespace llvm
+}
 #endif  // STREAMINGMEMORYOBJECT_H_

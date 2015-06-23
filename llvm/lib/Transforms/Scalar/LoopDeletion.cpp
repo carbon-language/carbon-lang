@@ -57,7 +57,7 @@ namespace {
                     bool &Changed, BasicBlock *Preheader);
 
   };
-} // namespace
+}
 
 char LoopDeletion::ID = 0;
 INITIALIZE_PASS_BEGIN(LoopDeletion, "loop-deletion",

@@ -77,6 +77,6 @@ struct GlobalStatus {
 
   GlobalStatus();
 };
-} // namespace llvm
+}
 
 #endif

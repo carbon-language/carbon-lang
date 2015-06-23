@@ -228,6 +228,6 @@ public:
                                 const MachineBlockFrequencyInfo&);
 };
 
-} // namespace llvm
+}
 
 #endif

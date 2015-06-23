@@ -56,6 +56,6 @@ public:
 private:
   bool RequireImpl;
 };
-} // namespace llvm
+}
 
 #endif

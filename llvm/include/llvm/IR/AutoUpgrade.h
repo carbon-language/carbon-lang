@@ -66,6 +66,6 @@ namespace llvm {
 
   /// Upgrade a metadata string constant in place.
   void UpgradeMDStringConstant(std::string &String);
-} // namespace llvm
+} // End llvm namespace
 
 #endif

@@ -54,6 +54,6 @@ public:
                         MachineBasicBlock *FBB, ArrayRef<MachineOperand> Cond,
                         DebugLoc DL) const override;
 };
-} // namespace llvm
+}
 
 #endif

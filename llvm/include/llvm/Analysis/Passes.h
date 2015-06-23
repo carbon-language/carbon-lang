@@ -173,6 +173,6 @@ namespace llvm {
   //
   FunctionPass *createMemDerefPrinter();
 
-} // namespace llvm
+}
 
 #endif

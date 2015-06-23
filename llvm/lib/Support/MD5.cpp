@@ -283,4 +283,4 @@ void MD5::stringifyResult(MD5Result &Result, SmallString<32> &Str) {
     Res << format("%.2x", Result[i]);
 }
 
-} // namespace llvm
+}

@@ -78,7 +78,7 @@ enum class errc {
 inline std::error_code make_error_code(errc E) {
   return std::error_code(static_cast<int>(E), std::generic_category());
 }
-} // namespace llvm
+}
 
 namespace std {
 template <> struct is_error_code_enum<llvm::errc> : std::true_type {};

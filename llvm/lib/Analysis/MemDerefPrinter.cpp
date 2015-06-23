@@ -37,7 +37,7 @@ namespace {
       Vec.clear();
     }
   };
-} // namespace
+}
 
 char MemDerefPrinter::ID = 0;
 INITIALIZE_PASS_BEGIN(MemDerefPrinter, "print-memderefs",

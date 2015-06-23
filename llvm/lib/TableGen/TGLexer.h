@@ -60,7 +60,7 @@ namespace tgtok {
     // String valued tokens.
     Id, StrVal, VarName, CodeFragment
   };
-} // namespace tgtok
+}
 
 /// TGLexer - TableGen Lexer class.
 class TGLexer {

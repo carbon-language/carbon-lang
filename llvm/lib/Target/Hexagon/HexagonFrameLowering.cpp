@@ -238,7 +238,7 @@ namespace {
         return true;
     return false;
   }
-} // namespace
+}
 
 
 /// Implements shrink-wrapping of the stack frame. By default, stack frame

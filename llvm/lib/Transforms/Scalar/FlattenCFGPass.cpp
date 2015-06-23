@@ -36,7 +36,7 @@ public:
 private:
   AliasAnalysis *AA;
 };
-} // namespace
+}
 
 char FlattenCFGPass::ID = 0;
 INITIALIZE_PASS_BEGIN(FlattenCFGPass, "flattencfg", "Flatten the CFG", false,

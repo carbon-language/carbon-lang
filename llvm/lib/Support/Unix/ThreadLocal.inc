@@ -56,7 +56,7 @@ void ThreadLocalImpl::removeInstance() {
   setInstance(nullptr);
 }
 
-} // namespace llvm
+}
 #else
 namespace llvm {
 using namespace sys;

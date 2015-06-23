@@ -179,7 +179,7 @@ public:
   /// in-loop predecessors of this chain.
   unsigned LoopPredecessors;
 };
-} // namespace
+}
 
 namespace {
 class MachineBlockPlacement : public MachineFunctionPass {
@@ -267,7 +267,7 @@ public:
     MachineFunctionPass::getAnalysisUsage(AU);
   }
 };
-} // namespace
+}
 
 char MachineBlockPlacement::ID = 0;
 char &llvm::MachineBlockPlacementID = MachineBlockPlacement::ID;
@@ -1185,7 +1185,7 @@ public:
     MachineFunctionPass::getAnalysisUsage(AU);
   }
 };
-} // namespace
+}
 
 char MachineBlockPlacementStats::ID = 0;
 char &llvm::MachineBlockPlacementStatsID = MachineBlockPlacementStats::ID;

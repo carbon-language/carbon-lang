@@ -54,7 +54,7 @@ class InstrProfErrorCategoryType : public std::error_category {
     llvm_unreachable("A value of instrprof_error has no message.");
   }
 };
-} // namespace
+}
 
 static ManagedStatic<InstrProfErrorCategoryType> ErrorCategory;
 

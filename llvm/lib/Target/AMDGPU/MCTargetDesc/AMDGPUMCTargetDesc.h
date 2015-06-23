@@ -48,7 +48,7 @@ MCAsmBackend *createAMDGPUAsmBackend(const Target &T, const MCRegisterInfo &MRI,
 
 MCObjectWriter *createAMDGPUELFObjectWriter(bool Is64Bit,
                                             raw_pwrite_stream &OS);
-} // namespace llvm
+} // End llvm namespace
 
 #define GET_REGINFO_ENUM
 #include "AMDGPUGenRegisterInfo.inc"

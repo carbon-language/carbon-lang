@@ -68,6 +68,6 @@ private:
   void parseIndividualParams(const std::vector<std::string> &Args);
 };
 
-} // namespace llvm
+} // End llvm namespace
 
 #endif

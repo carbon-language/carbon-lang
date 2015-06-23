@@ -378,4 +378,4 @@ void WinCodeViewLineTables::beginInstruction(const MachineInstr *MI) {
     return;
   maybeRecordLocation(DL, Asm->MF);
 }
-} // namespace llvm
+}

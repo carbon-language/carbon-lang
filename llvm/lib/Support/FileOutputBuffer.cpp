@@ -109,4 +109,4 @@ std::error_code FileOutputBuffer::commit() {
   // Rename file to final name.
   return sys::fs::rename(Twine(TempPath), Twine(FinalPath));
 }
-} // namespace llvm
+} // namespace

@@ -37,6 +37,6 @@ private:
   MCOperand LowerSymbolOperand(const MachineOperand &MO,
                                MachineOperandType MOTy, unsigned Offset) const;
 };
-} // namespace llvm
+}
 
 #endif

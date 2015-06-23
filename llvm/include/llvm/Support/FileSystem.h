@@ -724,7 +724,7 @@ namespace detail {
     intptr_t IterationHandle;
     directory_entry CurrentEntry;
   };
-} // namespace detail
+}
 
 /// directory_iterator - Iterates through the entries in path. There is no
 /// operator++ because we need an error_code. If it's really needed we can make
@@ -786,7 +786,7 @@ namespace detail {
     uint16_t Level;
     bool HasNoPushRequest;
   };
-} // namespace detail
+}
 
 /// recursive_directory_iterator - Same as directory_iterator except for it
 /// recurses down into child directories.

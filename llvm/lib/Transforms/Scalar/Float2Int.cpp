@@ -79,7 +79,7 @@ namespace {
     MapVector<Instruction*, Value*> ConvertedInsts;
     LLVMContext *Ctx;
   };
-} // namespace
+}
 
 char Float2Int::ID = 0;
 INITIALIZE_PASS(Float2Int, "float2int", "Float to int", false, false)

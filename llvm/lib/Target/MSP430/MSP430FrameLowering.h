@@ -49,6 +49,6 @@ public:
                                      RegScavenger *RS = nullptr) const override;
 };
 
-} // namespace llvm
+} // End llvm namespace
 
 #endif

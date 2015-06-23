@@ -60,7 +60,7 @@ public:
   }
 };
 
-} // namespace
+}
 
 static ManagedStatic<sys::Mutex> gCrashRecoveryContextMutex;
 static bool gCrashRecoveryEnabled = false;

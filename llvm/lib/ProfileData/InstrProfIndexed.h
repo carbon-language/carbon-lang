@@ -49,7 +49,7 @@ static inline uint64_t ComputeHash(HashT Type, StringRef K) {
 const uint64_t Magic = 0x8169666f72706cff; // "\xfflprofi\x81"
 const uint64_t Version = 2;
 const HashT HashType = HashT::MD5;
-} // namespace IndexedInstrProf
+}
 
 } // end namespace llvm
 

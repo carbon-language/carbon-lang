@@ -40,7 +40,7 @@ public:
                               raw_ostream &VStream,
                               raw_ostream &CStream) const override;
 };
-} // namespace
+}
 
 static bool readInstruction16(ArrayRef<uint8_t> Bytes, uint64_t Address,
                               uint64_t &Size, uint16_t &Insn) {

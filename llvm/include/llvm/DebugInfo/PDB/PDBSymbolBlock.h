@@ -36,6 +36,6 @@ public:
   FORWARD_SYMBOL_METHOD(getSymIndexId)
   FORWARD_SYMBOL_METHOD(getVirtualAddress)
 };
-} // namespace llvm
+}
 
 #endif // LLVM_DEBUGINFO_PDB_PDBSYMBOLBLOCK_H

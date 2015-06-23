@@ -59,6 +59,6 @@ public:
 
   virtual ~GCMetadataPrinter();
 };
-} // namespace llvm
+}
 
 #endif

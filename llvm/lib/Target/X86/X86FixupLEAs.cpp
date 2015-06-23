@@ -91,7 +91,7 @@ private:
   const X86InstrInfo *TII; // Machine instruction info.
 };
 char FixupLEAPass::ID = 0;
-} // namespace
+}
 
 MachineInstr *
 FixupLEAPass::postRAConvertToLEA(MachineFunction::iterator &MFI,

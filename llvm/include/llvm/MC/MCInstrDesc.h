@@ -49,7 +49,7 @@ enum OperandType {
   OPERAND_PCREL = 4,
   OPERAND_FIRST_TARGET = 5
 };
-} // namespace MCOI
+}
 
 /// \brief This holds information about one operand of a machine instruction,
 /// indicating the register class for register operands, etc.
@@ -128,7 +128,7 @@ enum Flag {
   InsertSubreg,
   Convergent
 };
-} // namespace MCID
+}
 
 /// \brief Describe properties that are true of each instruction in the target
 /// description file.  This captures information about side effects, register

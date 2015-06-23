@@ -95,6 +95,6 @@ public:
 // Create wrappers for C Binding types (see CBindingWrapping.h).
 DEFINE_STDCXX_CONVERSION_FUNCTIONS(PassRegistry, LLVMPassRegistryRef)
 
-} // namespace llvm
+}
 
 #endif

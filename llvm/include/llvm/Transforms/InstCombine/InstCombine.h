@@ -41,6 +41,6 @@ public:
   PreservedAnalyses run(Function &F, AnalysisManager<Function> *AM);
 };
 
-} // namespace llvm
+}
 
 #endif

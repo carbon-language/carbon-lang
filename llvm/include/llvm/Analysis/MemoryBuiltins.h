@@ -262,6 +262,6 @@ public:
   SizeOffsetEvalType visitInstruction(Instruction &I);
 };
 
-} // namespace llvm
+} // End llvm namespace
 
 #endif

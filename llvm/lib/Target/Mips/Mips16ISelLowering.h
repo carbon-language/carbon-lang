@@ -77,6 +77,6 @@ namespace llvm {
       unsigned SltiOpc, unsigned SltiXOpc,
       MachineInstr *MI,  MachineBasicBlock *BB )const;
   };
-} // namespace llvm
+}
 
 #endif

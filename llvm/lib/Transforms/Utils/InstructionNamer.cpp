@@ -50,7 +50,7 @@ namespace {
   };
   
   char InstNamer::ID = 0;
-} // namespace
+}
 
 INITIALIZE_PASS(InstNamer, "instnamer", 
                 "Assign names to anonymous instructions", false, false)

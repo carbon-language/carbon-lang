@@ -42,7 +42,7 @@ namespace {
     DivPhiNodes(PHINode *InQuotient, PHINode *InRemainder)
       : Quotient(InQuotient), Remainder(InRemainder) {}
   };
-} // namespace
+}
 
 namespace llvm {
   template<>
@@ -69,7 +69,7 @@ namespace llvm {
   };
 
   typedef DenseMap<DivOpInfo, DivPhiNodes> DivCacheTy;
-} // namespace llvm
+}
 
 // insertFastDiv - Substitutes the div/rem instruction with code that checks the
 // value of the operands and uses a shorter-faster div/rem instruction when

@@ -55,7 +55,7 @@ public:
     return HeaderBuilder().concat("0x" + Twine::utohexstr(Tag));
   }
 };
-} // namespace
+}
 
 DIBuilder::DIBuilder(Module &m, bool AllowUnresolvedNodes)
     : M(m), VMContext(M.getContext()), TempEnumTypes(nullptr),

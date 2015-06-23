@@ -108,7 +108,7 @@ private:
                                          yaml::MappingNode *V,
                                          RewriteDescriptorList *DL);
 };
-} // namespace SymbolRewriter
+}
 
 template <>
 struct ilist_traits<SymbolRewriter::RewriteDescriptor>
@@ -147,6 +147,6 @@ public:
 
 ModulePass *createRewriteSymbolsPass();
 ModulePass *createRewriteSymbolsPass(SymbolRewriter::RewriteDescriptorList &);
-} // namespace llvm
+}
 
 #endif

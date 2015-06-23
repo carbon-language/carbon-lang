@@ -59,6 +59,6 @@ public:
 
   static bool classof(const MCSymbol *S) { return S->isCOFF(); }
 };
-} // namespace llvm
+}
 
 #endif

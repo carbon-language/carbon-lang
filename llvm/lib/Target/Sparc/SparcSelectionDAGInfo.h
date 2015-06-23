@@ -26,6 +26,6 @@ public:
   ~SparcSelectionDAGInfo() override;
 };
 
-} // namespace llvm
+}
 
 #endif

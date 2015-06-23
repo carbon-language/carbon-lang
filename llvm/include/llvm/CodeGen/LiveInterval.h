@@ -866,5 +866,5 @@ namespace llvm {
 
   };
 
-} // namespace llvm
+}
 #endif

@@ -801,6 +801,6 @@ public:
   MachineBasicBlock::iterator getInitial() { return I; }
 };
 
-} // namespace llvm
+} // End llvm namespace
 
 #endif

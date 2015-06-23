@@ -89,7 +89,7 @@ namespace ISD {
   /// Return true if the node has at least one operand
   /// and all operands of the specified node are ISD::UNDEF.
   bool allOperandsUndef(const SDNode *N);
-} // namespace ISD
+}  // end llvm:ISD namespace
 
 //===----------------------------------------------------------------------===//
 /// Unlike LLVM values, Selection DAG nodes may return multiple
@@ -2283,8 +2283,8 @@ namespace ISD {
     return isa<StoreSDNode>(N) &&
       cast<StoreSDNode>(N)->getAddressingMode() == ISD::UNINDEXED;
   }
-} // namespace ISD
+}
 
-} // namespace llvm
+} // end llvm namespace
 
 #endif

@@ -92,7 +92,7 @@ namespace {
       AU.addPreserved<MemoryDependenceAnalysis>();
     }
   };
-} // namespace
+}
 
 char DSE::ID = 0;
 INITIALIZE_PASS_BEGIN(DSE, "dse", "Dead Store Elimination", false, false)

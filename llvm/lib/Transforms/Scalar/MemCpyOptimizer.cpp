@@ -153,7 +153,7 @@ struct MemsetRange {
 
   bool isProfitableToUseMemset(const DataLayout &DL) const;
 };
-} // namespace
+} // end anon namespace
 
 bool MemsetRange::isProfitableToUseMemset(const DataLayout &DL) const {
   // If we found more than 4 stores to merge or 16 bytes, use memset.
@@ -237,7 +237,7 @@ public:
 
 };
 
-} // namespace
+} // end anon namespace
 
 
 /// addRange - Add a new store to the MemsetRanges data structure.  This adds a
@@ -355,7 +355,7 @@ namespace {
   };
 
   char MemCpyOpt::ID = 0;
-} // namespace
+}
 
 // createMemCpyOptPass - The public interface to this file...
 FunctionPass *llvm::createMemCpyOptPass() { return new MemCpyOpt(); }

@@ -111,6 +111,6 @@ namespace llvm {
     /// Return the register class of the coalesced register.
     const TargetRegisterClass *getNewRC() const { return NewRC; }
   };
-} // namespace llvm
+} // End llvm namespace
 
 #endif

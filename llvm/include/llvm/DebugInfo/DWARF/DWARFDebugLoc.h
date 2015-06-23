@@ -76,6 +76,6 @@ public:
   void parse(DataExtractor data);
   void dump(raw_ostream &OS) const;
 };
-} // namespace llvm
+}
 
 #endif

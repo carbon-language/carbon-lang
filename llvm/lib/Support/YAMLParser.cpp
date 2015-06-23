@@ -144,8 +144,8 @@ struct Token : ilist_node<Token> {
 
   Token() : Kind(TK_Error) {}
 };
-} // namespace yaml
-} // namespace llvm
+}
+}
 
 namespace llvm {
 template<>
@@ -178,7 +178,7 @@ struct ilist_node_traits<Token> {
 
   BumpPtrAllocator Alloc;
 };
-} // namespace llvm
+}
 
 typedef ilist<Token> TokenQueueT;
 
@@ -203,7 +203,7 @@ struct SimpleKey {
     return Tok == Other.Tok;
   }
 };
-} // namespace
+}
 
 /// @brief The Unicode scalar value of a UTF-8 minimal well-formed code unit
 ///        subsequence and the subsequence's length in code units (uint8_t).

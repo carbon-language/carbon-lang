@@ -50,7 +50,7 @@ enum Fixups {
   LastTargetFixupKind,
   NumTargetFixupKinds = LastTargetFixupKind - FirstTargetFixupKind
 };
-} // namespace PPC
-} // namespace llvm
+}
+}
 
 #endif

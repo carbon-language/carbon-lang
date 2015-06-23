@@ -31,7 +31,7 @@ namespace {
                           bool IsCrossSection,
                           const MCAsmBackend &MAB) const override;
   };
-} // namespace
+}
 
 X86WinCOFFObjectWriter::X86WinCOFFObjectWriter(bool Is64Bit)
     : MCWinCOFFObjectTargetWriter(Is64Bit ? COFF::IMAGE_FILE_MACHINE_AMD64

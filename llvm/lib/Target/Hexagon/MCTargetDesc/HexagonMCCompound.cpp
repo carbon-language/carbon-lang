@@ -174,7 +174,7 @@ unsigned getCompoundCandidateGroup(MCInst const &MI, bool IsExtended) {
 
   return HexagonII::HCG_None;
 }
-} // namespace
+}
 
 /// getCompoundOp - Return the index from 0-7 into the above opcode lists.
 namespace {
@@ -199,7 +199,7 @@ unsigned getCompoundOp(MCInst const &HMCI) {
     return (PredReg == Hexagon::P0) ? tp0_jump_t : tp1_jump_t;
   }
 }
-} // namespace
+}
 
 namespace {
 MCInst *getCompoundInsn(MCContext &Context, MCInst const &L, MCInst const &R) {
@@ -331,7 +331,7 @@ MCInst *getCompoundInsn(MCContext &Context, MCInst const &L, MCInst const &R) {
 
   return CompoundInsn;
 }
-} // namespace
+}
 
 /// Non-Symmetrical. See if these two instructions are fit for compound pair.
 namespace {
@@ -348,7 +348,7 @@ bool isOrderedCompoundPair(MCInst const &MIa, bool IsExtendedA,
   return ((MIaG == HexagonII::HCG_A && MIbG == HexagonII::HCG_B) &&
           (MIa.getOperand(0).getReg() == MIb.getOperand(0).getReg()));
 }
-} // namespace
+}
 
 namespace {
 bool lookForCompound(MCInstrInfo const &MCII, MCContext &Context, MCInst &MCI) {
@@ -396,7 +396,7 @@ bool lookForCompound(MCInstrInfo const &MCII, MCContext &Context, MCInst &MCI) {
   }
   return false;
 }
-} // namespace
+}
 
 /// tryCompound - Given a bundle check for compound insns when one
 /// is found update the contents fo the bundle with the compound insn.

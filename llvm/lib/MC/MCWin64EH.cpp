@@ -247,6 +247,6 @@ void UnwindEmitter::EmitUnwindInfo(MCStreamer &Streamer,
 
   llvm::EmitUnwindInfo(Streamer, info);
 }
-} // namespace Win64EH
+}
 } // End of namespace llvm
 

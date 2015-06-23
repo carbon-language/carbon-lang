@@ -77,7 +77,7 @@ namespace bitc {
                                       //                             [id, name]
   };
 
-} // namespace bitc
+} // End bitc namespace
 
 /// BitCodeAbbrevOp - This describes one or more operands in an abbreviation.
 /// This is actually a union of two different things:
@@ -180,6 +180,6 @@ public:
     OperandList.push_back(OpInfo);
   }
 };
-} // namespace llvm
+} // End llvm namespace
 
 #endif

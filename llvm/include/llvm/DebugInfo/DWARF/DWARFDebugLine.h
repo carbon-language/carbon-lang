@@ -248,6 +248,6 @@ private:
   LineTableMapTy LineTableMap;
 };
 
-} // namespace llvm
+}
 
 #endif

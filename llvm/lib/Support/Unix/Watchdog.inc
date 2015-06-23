@@ -28,5 +28,5 @@ namespace llvm {
       alarm(0);
 #endif
     }
-  } // namespace sys
-} // namespace llvm
+  }
+}

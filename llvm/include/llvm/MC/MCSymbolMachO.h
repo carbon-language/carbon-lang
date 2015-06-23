@@ -118,6 +118,6 @@ public:
 
   static bool classof(const MCSymbol *S) { return S->isMachO(); }
 };
-} // namespace llvm
+}
 
 #endif

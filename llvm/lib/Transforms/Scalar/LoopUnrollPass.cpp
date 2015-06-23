@@ -229,7 +229,7 @@ namespace {
                              unsigned DynamicCostSavingsDiscount,
                              uint64_t UnrolledCost, uint64_t RolledDynamicCost);
   };
-} // namespace
+}
 
 char LoopUnroll::ID = 0;
 INITIALIZE_PASS_BEGIN(LoopUnroll, "loop-unroll", "Unroll loops", false, false)

@@ -569,6 +569,6 @@ public:
   static StringRef name() { return "LazyCallGraphPrinterPass"; }
 };
 
-} // namespace llvm
+}
 
 #endif

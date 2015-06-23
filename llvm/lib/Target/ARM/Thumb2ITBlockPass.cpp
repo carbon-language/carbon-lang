@@ -48,7 +48,7 @@ namespace {
     bool InsertITInstructions(MachineBasicBlock &MBB);
   };
   char Thumb2ITBlockPass::ID = 0;
-} // namespace
+}
 
 /// TrackDefUses - Tracking what registers are being defined and used by
 /// instructions in the IT block. This also tracks "dependencies", i.e. uses

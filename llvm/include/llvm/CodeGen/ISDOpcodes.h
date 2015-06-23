@@ -892,8 +892,8 @@ namespace ISD {
     CVT_INVALID /// Marker - Invalid opcode
   };
 
-} // namespace ISD
+} // end llvm::ISD namespace
 
-} // namespace llvm
+} // end llvm namespace
 
 #endif

@@ -26,6 +26,6 @@ public:
   ~MSP430SelectionDAGInfo();
 };
 
-} // namespace llvm
+}
 
 #endif

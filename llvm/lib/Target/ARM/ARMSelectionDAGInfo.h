@@ -70,6 +70,6 @@ public:
                                  RTLIB::Libcall LC) const;
 };
 
-} // namespace llvm
+}
 
 #endif

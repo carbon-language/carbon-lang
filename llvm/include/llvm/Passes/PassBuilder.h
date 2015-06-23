@@ -100,6 +100,6 @@ private:
                                bool VerifyEachPass, bool DebugLogging);
 };
 
-} // namespace llvm
+}
 
 #endif

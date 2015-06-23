@@ -22,6 +22,6 @@ public:
   virtual void emitCCBottomData(StringRef Name) = 0;
   virtual void emitCCBottomFunction(StringRef Name) = 0;
 };
-} // namespace llvm
+}
 
 #endif

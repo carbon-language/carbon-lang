@@ -58,7 +58,7 @@ public:
                          SmallVectorImpl<MCFixup> &Fixups,
                          const MCSubtargetInfo &STI) const override;
 };
-} // namespace
+}
 
 MCCodeEmitter *llvm::createBPFMCCodeEmitter(const MCInstrInfo &MCII,
                                             const MCRegisterInfo &MRI,

@@ -51,7 +51,7 @@ public:
                           FixedValue);
   }
 };
-} // namespace
+}
 
 /// computes the log2 of the size of the relocation,
 /// used for relocation_info::r_length.

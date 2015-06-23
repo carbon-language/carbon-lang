@@ -90,6 +90,6 @@ namespace llvm {
     }
     llvm_unreachable("Bad CodeModel!");
   }
-} // namespace llvm
+}  // end llvm namespace
 
 #endif

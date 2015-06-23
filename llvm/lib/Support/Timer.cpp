@@ -50,7 +50,7 @@ namespace {
   InfoOutputFilename("info-output-file", cl::value_desc("filename"),
                      cl::desc("File to append -stats and -timer output to"),
                    cl::Hidden, cl::location(getLibSupportInfoOutputFilename()));
-} // namespace
+}
 
 // CreateInfoOutputFile - Return a file stream to print our output on.
 raw_ostream *llvm::CreateInfoOutputFile() {
@@ -218,7 +218,7 @@ public:
   }
 };
 
-} // namespace
+}
 
 static ManagedStatic<Name2TimerMap> NamedTimers;
 static ManagedStatic<Name2PairMap> NamedGroupedTimers;

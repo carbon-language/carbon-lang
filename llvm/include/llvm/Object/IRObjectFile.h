@@ -68,7 +68,7 @@ public:
   static ErrorOr<std::unique_ptr<IRObjectFile>> create(MemoryBufferRef Object,
                                                        LLVMContext &Context);
 };
-} // namespace object
-} // namespace llvm
+}
+}
 
 #endif

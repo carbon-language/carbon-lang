@@ -89,7 +89,7 @@ raw_ostream &WriteGraph<>(raw_ostream &O, const EdgeBundles &G,
   O << "}\n";
   return O;
 }
-} // namespace llvm
+}
 
 /// view - Visualize the annotated bipartite CFG with Graphviz.
 void EdgeBundles::view() const {

@@ -279,6 +279,6 @@ private:
   const DWARFDebugInfoEntryMinimal *getSubprogramForAddress(uint64_t Address);
 };
 
-} // namespace llvm
+}
 
 #endif

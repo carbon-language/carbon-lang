@@ -317,7 +317,7 @@ public:
       MachineFunctionPass::getAnalysisUsage(AU);
     }
   };
-} // namespace
+}
 
 INITIALIZE_PASS_BEGIN(PPCVSXFMAMutate, DEBUG_TYPE,
                       "PowerPC VSX FMA Mutation", false, false)

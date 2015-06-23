@@ -38,6 +38,6 @@ public:
     return TLOF.get();
   }
 };
-} // namespace llvm
+}
 
 #endif

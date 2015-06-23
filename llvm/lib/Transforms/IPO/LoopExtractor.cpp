@@ -51,7 +51,7 @@ namespace {
       AU.addRequired<DominatorTreeWrapperPass>();
     }
   };
-} // namespace
+}
 
 char LoopExtractor::ID = 0;
 INITIALIZE_PASS_BEGIN(LoopExtractor, "loop-extract",
@@ -183,7 +183,7 @@ namespace {
 
     bool runOnModule(Module &M) override;
   };
-} // namespace
+}
 
 char BlockExtractorPass::ID = 0;
 INITIALIZE_PASS(BlockExtractorPass, "extract-blocks",

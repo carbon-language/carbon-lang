@@ -65,7 +65,7 @@ struct DropFirst {
     P.first->dropAllReferences();
   }
 };
-} // namespace
+}
 
 LLVMContextImpl::~LLVMContextImpl() {
   // NOTE: We need to delete the contents of OwnedModules, but Module's dtor
@@ -199,7 +199,7 @@ namespace llvm {
 /// does not cause MDOperand to be transparent.  In particular, a bare pointer
 /// doesn't get hashed before it's combined, whereas \a MDOperand would.
 static const Metadata *get_hashable_data(const MDOperand &X) { return X.get(); }
-} // namespace llvm
+}
 
 unsigned MDNodeOpsKey::calculateHash(MDNode *N, unsigned Offset) {
   unsigned Hash = hash_combine_range(N->op_begin() + Offset, N->op_end());

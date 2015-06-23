@@ -76,7 +76,7 @@ struct AlignmentFromAssumptions : public FunctionPass {
                             const SCEV *&OffSCEV);
   bool processAssumption(CallInst *I);
 };
-} // namespace
+}
 
 char AlignmentFromAssumptions::ID = 0;
 static const char aip_name[] = "Alignment from assumptions";

@@ -74,7 +74,7 @@ public:
     return C;
   }
 };
-} // namespace
+}
 
 /// \brief Encode the counter.
 ///

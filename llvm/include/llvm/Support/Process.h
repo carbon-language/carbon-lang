@@ -184,7 +184,7 @@ public:
   static unsigned GetRandomNumber();
 };
 
-} // namespace sys
-} // namespace llvm
+}
+}
 
 #endif

@@ -189,7 +189,7 @@ class TypePromotionTransaction;
     bool splitBranchCondition(Function &F);
     bool simplifyOffsetableRelocate(Instruction &I);
   };
-} // namespace
+}
 
 char CodeGenPrepare::ID = 0;
 INITIALIZE_TM_PASS(CodeGenPrepare, "codegenprepare",

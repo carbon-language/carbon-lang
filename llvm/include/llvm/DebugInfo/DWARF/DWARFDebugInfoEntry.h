@@ -155,6 +155,6 @@ struct DWARFDebugInfoEntryInlinedChain {
   const DWARFUnit *U;
 };
 
-} // namespace llvm
+}
 
 #endif

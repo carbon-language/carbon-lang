@@ -171,7 +171,7 @@ namespace llvm
       }
     };
     typedef SmartScopedWriter<false> ScopedWriter;
-  } // namespace sys
-} // namespace llvm
+  }
+}
 
 #endif

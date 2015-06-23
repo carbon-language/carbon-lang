@@ -32,7 +32,7 @@ public:
   DenseSetEmpty &getSecond() { return *this; }
   const DenseSetEmpty &getSecond() const { return *this; }
 };
-} // namespace detail
+}
 
 /// DenseSet - This implements a dense probed hash-table based set.
 template<typename ValueT, typename ValueInfoT = DenseMapInfo<ValueT> >

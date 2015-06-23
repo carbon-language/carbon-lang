@@ -46,6 +46,6 @@ std::pair<StringRef, std::error_code>
 writeArchive(StringRef ArcName, std::vector<NewArchiveIterator> &NewMembers,
              bool WriteSymtab);
 
-} // namespace llvm
+}
 
 #endif

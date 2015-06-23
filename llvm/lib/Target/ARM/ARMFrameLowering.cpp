@@ -221,7 +221,7 @@ struct StackAdjustingInsts {
     }
   }
 };
-} // namespace
+}
 
 /// Emit an instruction sequence that will align the address in
 /// register Reg by zero-ing out the lower bits.  For versions of the

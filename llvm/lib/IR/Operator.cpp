@@ -41,4 +41,4 @@ bool GEPOperator::accumulateConstantOffset(const DataLayout &DL,
   }
   return true;
 }
-} // namespace llvm
+}

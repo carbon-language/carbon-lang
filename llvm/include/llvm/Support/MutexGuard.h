@@ -36,6 +36,6 @@ namespace llvm {
     /// is held.
     bool holds(const sys::Mutex& lock) const { return &M == &lock; }
   };
-} // namespace llvm
+}
 
 #endif // LLVM_SUPPORT_MUTEXGUARD_H

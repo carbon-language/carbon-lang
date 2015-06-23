@@ -33,6 +33,6 @@ raw_ostream &operator<<(raw_ostream &OS, const PDB_UniqueId &Id);
 raw_ostream &operator<<(raw_ostream &OS, const Variant &Value);
 raw_ostream &operator<<(raw_ostream &OS, const VersionInfo &Version);
 raw_ostream &operator<<(raw_ostream &OS, const TagStats &Stats);
-} // namespace llvm
+}
 
 #endif

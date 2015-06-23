@@ -2331,7 +2331,7 @@ namespace {
   {
     return findFirstSet(value, ZB_Max);
   }
-} // namespace
+}
 
 /* Sets the least significant part of a bignum to the input value, and
    zeroes out higher parts.  */

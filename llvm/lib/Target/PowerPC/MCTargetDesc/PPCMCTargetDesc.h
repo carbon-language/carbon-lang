@@ -81,7 +81,7 @@ static inline bool isRunOfOnes(unsigned Val, unsigned &MB, unsigned &ME) {
   return false;
 }
 
-} // namespace llvm
+} // End llvm namespace
 
 // Generated files will use "namespace PPC". To avoid symbol clash,
 // undefine PPC here. PPC may be predefined on some hosts.

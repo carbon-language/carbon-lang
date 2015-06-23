@@ -279,7 +279,7 @@ private:
   SDValue GetVLDSTAlign(SDValue Align, SDLoc dl, unsigned NumVecs,
                         bool is64BitVector);
 };
-} // namespace
+}
 
 /// isInt32Immediate - This method tests to see if the node is a 32-bit constant
 /// operand. If so Imm will receive the 32-bit value.

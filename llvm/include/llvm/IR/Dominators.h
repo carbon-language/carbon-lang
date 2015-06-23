@@ -230,6 +230,6 @@ public:
   void print(raw_ostream &OS, const Module *M = nullptr) const override;
 };
 
-} // namespace llvm
+} // End llvm namespace
 
 #endif

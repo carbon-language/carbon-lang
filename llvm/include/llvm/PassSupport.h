@@ -245,6 +245,6 @@ struct PassRegistrationListener {
 };
 
 
-} // namespace llvm
+} // End llvm namespace
 
 #endif

@@ -104,6 +104,6 @@ public:
   void getAnalysisUsage(AnalysisUsage &AU) const override;
 };
 
-} // namespace llvm
+}
 
 #endif

@@ -54,7 +54,7 @@ struct Mips16IntrinsicHelperType{
     return std::strcmp(Name, RHS.Name) == 0;
   }
 };
-} // namespace
+}
 
 // Libcalls for which no helper is generated. Sorted by name for binary search.
 static const Mips16Libcall HardFloatLibCalls[] = {

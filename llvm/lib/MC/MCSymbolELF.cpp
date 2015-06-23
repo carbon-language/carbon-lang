@@ -38,7 +38,7 @@ enum {
   // One bit.
   ELF_BindingSet_Shift = 12
 };
-} // namespace
+}
 
 void MCSymbolELF::setBinding(unsigned Binding) const {
   setIsBindingSet();
@@ -198,4 +198,4 @@ void MCSymbolELF::setIsBindingSet() const {
 bool MCSymbolELF::isBindingSet() const {
   return getFlags() & (0x1 << ELF_BindingSet_Shift);
 }
-} // namespace llvm
+}

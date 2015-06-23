@@ -28,7 +28,7 @@ enum Fixups {
   LastTargetFixupKind,
   NumTargetFixupKinds = LastTargetFixupKind - FirstTargetFixupKind
 };
-} // namespace AMDGPU
-} // namespace llvm
+}
+}
 
 #endif

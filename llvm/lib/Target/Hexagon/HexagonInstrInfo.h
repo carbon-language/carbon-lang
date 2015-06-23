@@ -229,6 +229,6 @@ public:
 
 };
 
-} // namespace llvm
+}
 
 #endif

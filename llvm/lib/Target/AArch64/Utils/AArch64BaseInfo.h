@@ -346,7 +346,7 @@ namespace AArch64AT {
     ATMapper();
   };
 
-} // namespace AArch64AT
+}
 namespace AArch64DB {
   enum DBValues {
     Invalid = -1,
@@ -369,7 +369,7 @@ namespace AArch64DB {
 
     DBarrierMapper();
   };
-} // namespace AArch64DB
+}
 
 namespace  AArch64DC {
   enum DCValues {
@@ -390,7 +390,7 @@ namespace  AArch64DC {
     DCMapper();
   };
 
-} // namespace AArch64DC
+}
 
 namespace  AArch64IC {
   enum ICValues {
@@ -410,7 +410,7 @@ namespace  AArch64IC {
   static inline bool NeedsRegister(ICValues Val) {
     return Val == IVAU;
   }
-} // namespace AArch64IC
+}
 
 namespace  AArch64ISB {
   enum ISBValues {
@@ -422,7 +422,7 @@ namespace  AArch64ISB {
 
     ISBMapper();
   };
-} // namespace AArch64ISB
+}
 
 namespace AArch64PRFM {
   enum PRFMValues {
@@ -452,7 +452,7 @@ namespace AArch64PRFM {
 
     PRFMMapper();
   };
-} // namespace AArch64PRFM
+}
 
 namespace AArch64PState {
   enum PStateValues {
@@ -471,7 +471,7 @@ namespace AArch64PState {
     PStateMapper();
   };
 
-} // namespace AArch64PState
+}
 
 namespace AArch64SE {
     enum ShiftExtSpecifiers {
@@ -492,7 +492,7 @@ namespace AArch64SE {
         SXTW,
         SXTX
     };
-} // namespace AArch64SE
+}
 
 namespace AArch64Layout {
     enum VectorLayout {
@@ -514,7 +514,7 @@ namespace AArch64Layout {
         VL_S,
         VL_D
     };
-} // namespace AArch64Layout
+}
 
 inline static const char *
 AArch64VectorLayoutToString(AArch64Layout::VectorLayout Layout) {
@@ -1221,7 +1221,7 @@ namespace AArch64SysReg {
   };
 
   uint32_t ParseGenericRegister(StringRef Name, bool &Valid);
-} // namespace AArch64SysReg
+}
 
 namespace AArch64TLBI {
   enum TLBIValues {
@@ -1283,7 +1283,7 @@ namespace AArch64TLBI {
       return true;
     }
   }
-} // namespace AArch64TLBI 
+} 
 
 namespace AArch64II {
   /// Target Operand Flag enum.

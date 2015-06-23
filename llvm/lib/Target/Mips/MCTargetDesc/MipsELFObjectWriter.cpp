@@ -51,7 +51,7 @@ struct MipsRelocationEntry {
     virtual void sortRelocs(const MCAssembler &Asm,
                             std::vector<ELFRelocationEntry> &Relocs) override;
   };
-} // namespace
+}
 
 MipsELFObjectWriter::MipsELFObjectWriter(bool _is64Bit, uint8_t OSABI,
                                          bool _isN64, bool IsLittleEndian)

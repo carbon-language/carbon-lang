@@ -66,7 +66,7 @@ struct BDCE : public FunctionPass {
   AssumptionCache *AC;
   DominatorTree *DT;
 };
-} // namespace
+}
 
 char BDCE::ID = 0;
 INITIALIZE_PASS_BEGIN(BDCE, "bdce", "Bit-Tracking Dead Code Elimination",

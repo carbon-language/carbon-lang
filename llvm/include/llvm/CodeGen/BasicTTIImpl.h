@@ -830,6 +830,6 @@ public:
   }
 };
 
-} // namespace llvm
+}
 
 #endif

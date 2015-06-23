@@ -86,7 +86,7 @@ namespace {
   };
 
   char VZeroUpperInserter::ID = 0;
-} // namespace
+}
 
 FunctionPass *llvm::createX86IssueVZeroUpperPass() {
   return new VZeroUpperInserter();

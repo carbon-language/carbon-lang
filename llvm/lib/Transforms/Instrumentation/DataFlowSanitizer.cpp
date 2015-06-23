@@ -346,7 +346,7 @@ class DFSanVisitor : public InstVisitor<DFSanVisitor> {
   void visitMemTransferInst(MemTransferInst &I);
 };
 
-} // namespace
+}
 
 char DataFlowSanitizer::ID;
 INITIALIZE_PASS(DataFlowSanitizer, "dfsan",

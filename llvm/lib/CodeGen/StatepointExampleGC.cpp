@@ -45,7 +45,7 @@ public:
     return (1 == PT->getAddressSpace());
   }
 };
-} // namespace
+}
 
 static GCRegistry::Add<StatepointGC> X("statepoint-example",
                                        "an example strategy for statepoint");

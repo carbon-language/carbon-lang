@@ -335,7 +335,7 @@ struct NDLLCharacteristics {
   COFF::DLLCharacteristics Characteristics;
 };
 
-} // namespace
+}
 
 void MappingTraits<COFFYAML::Relocation>::mapping(IO &IO,
                                                   COFFYAML::Relocation &Rel) {
@@ -497,5 +497,5 @@ void MappingTraits<COFFYAML::Object>::mapping(IO &IO, COFFYAML::Object &Obj) {
   IO.mapRequired("symbols", Obj.Symbols);
 }
 
-} // namespace yaml
-} // namespace llvm
+}
+}

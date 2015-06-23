@@ -375,7 +375,7 @@ bool R600VectorRegMerger::runOnMachineFunction(MachineFunction &Fn) {
   return false;
 }
 
-} // namespace
+}
 
 llvm::FunctionPass *llvm::createR600VectorRegMerger(TargetMachine &tm) {
   return new R600VectorRegMerger(tm);

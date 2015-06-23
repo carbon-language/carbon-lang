@@ -60,7 +60,7 @@ public:
 
   bool addInstSelector() override;
 };
-} // namespace
+}
 
 TargetPassConfig *BPFTargetMachine::createPassConfig(PassManagerBase &PM) {
   return new BPFPassConfig(this, PM);

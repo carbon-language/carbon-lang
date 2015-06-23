@@ -56,6 +56,6 @@ public:
   static StringRef name() { return "BitcodeWriterPass"; }
 };
 
-} // namespace llvm
+}
 
 #endif

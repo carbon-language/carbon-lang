@@ -65,6 +65,6 @@ private:
   const uint8_t *body(ArrayRef<uint8_t> Data);
 };
 
-} // namespace llvm
+}
 
 #endif

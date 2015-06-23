@@ -372,6 +372,6 @@ namespace llvm {
       return cast<ConstantInt>(const_cast<Value *>(getArgOperand(3)));
     }
   };
-} // namespace llvm
+}
 
 #endif

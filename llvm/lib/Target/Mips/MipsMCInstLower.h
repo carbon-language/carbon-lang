@@ -45,6 +45,6 @@ private:
                             MCSymbolRefExpr::VariantKind Kind) const;
   bool lowerLongBranch(const MachineInstr *MI, MCInst &OutMI) const;
 };
-} // namespace llvm
+}
 
 #endif

@@ -300,7 +300,7 @@ struct LCSSA : public FunctionPass {
     AU.addPreserved<ScalarEvolution>();
   }
 };
-} // namespace
+}
 
 char LCSSA::ID = 0;
 INITIALIZE_PASS_BEGIN(LCSSA, "lcssa", "Loop-Closed SSA Form Pass", false, false)

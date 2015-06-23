@@ -295,6 +295,6 @@ public:
   rpo_iterator end() { return Blocks.rend(); }
 };
 
-} // namespace llvm
+} // End llvm namespace
 
 #endif

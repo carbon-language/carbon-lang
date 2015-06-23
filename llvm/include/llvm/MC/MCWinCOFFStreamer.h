@@ -75,7 +75,7 @@ protected:
 private:
   LLVM_ATTRIBUTE_NORETURN void FatalError(const Twine &Msg) const;
 };
-} // namespace llvm
+}
 
 #endif
 

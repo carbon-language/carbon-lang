@@ -45,7 +45,7 @@ private:
   bool findIndexForHandle(MachineOperand &Op, MachineFunction &MF,
                           unsigned &Idx);
 };
-} // namespace
+}
 
 char NVPTXReplaceImageHandles::ID = 0;
 

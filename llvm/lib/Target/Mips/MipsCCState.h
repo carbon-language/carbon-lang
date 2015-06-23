@@ -131,6 +131,6 @@ public:
   bool IsCallOperandFixed(unsigned ValNo) { return CallOperandIsFixed[ValNo]; }
   SpecialCallingConvType getSpecialCallingConv() { return SpecialCallingConv; }
 };
-} // namespace llvm
+}
 
 #endif

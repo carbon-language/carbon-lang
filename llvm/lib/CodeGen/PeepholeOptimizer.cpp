@@ -293,7 +293,7 @@ namespace {
     /// register of the last source.
     unsigned getReg() const { return Reg; }
   };
-} // namespace
+}
 
 char PeepholeOptimizer::ID = 0;
 char &llvm::PeepholeOptimizerID = PeepholeOptimizer::ID;

@@ -26,6 +26,6 @@ public:
   ~MipsSelectionDAGInfo();
 };
 
-} // namespace llvm
+}
 
 #endif

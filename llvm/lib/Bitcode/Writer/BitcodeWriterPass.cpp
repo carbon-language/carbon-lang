@@ -41,7 +41,7 @@ namespace {
       return false;
     }
   };
-} // namespace
+}
 
 char WriteBitcodePass::ID = 0;
 

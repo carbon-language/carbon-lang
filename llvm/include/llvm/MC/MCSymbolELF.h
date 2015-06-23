@@ -49,6 +49,6 @@ public:
 private:
   void setIsBindingSet() const;
 };
-} // namespace llvm
+}
 
 #endif

@@ -809,7 +809,7 @@ void PPCVSXSwapRemoval::dumpSwapVector() {
   DEBUG(dbgs() << "\n");
 }
 
-} // namespace
+} // end default namespace
 
 INITIALIZE_PASS_BEGIN(PPCVSXSwapRemoval, DEBUG_TYPE,
                       "PowerPC VSX Swap Removal", false, false)

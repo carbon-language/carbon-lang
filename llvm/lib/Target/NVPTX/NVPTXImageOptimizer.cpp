@@ -42,7 +42,7 @@ private:
   Value *cleanupValue(Value *V);
   void replaceWith(Instruction *From, ConstantInt *To);
 };
-} // namespace
+}
 
 char NVPTXImageOptimizer::ID = 0;
 

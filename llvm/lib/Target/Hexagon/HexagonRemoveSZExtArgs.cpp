@@ -48,7 +48,7 @@ namespace {
       FunctionPass::getAnalysisUsage(AU);
     }
   };
-} // namespace
+}
 
 char HexagonRemoveExtendArgs::ID = 0;
 

@@ -275,6 +275,6 @@ namespace llvm {
     Value *expandIVInc(PHINode *PN, Value *StepV, const Loop *L,
                        Type *ExpandTy, Type *IntTy, bool useSubtract);
   };
-} // namespace llvm
+}
 
 #endif

@@ -33,6 +33,6 @@ namespace {
       LLVMLinkInMCJIT();
     }
   } ForceMCJITLinking;
-} // namespace
+}
 
 #endif

@@ -54,8 +54,8 @@ STATISTIC(FragmentLayouts, "Number of fragment layouts");
 STATISTIC(ObjectBytes, "Number of emitted object file bytes");
 STATISTIC(RelaxationSteps, "Number of assembler layout and relaxation steps");
 STATISTIC(RelaxedInstructions, "Number of relaxed instructions");
-} // namespace stats
-} // namespace
+}
+}
 
 // FIXME FIXME FIXME: There are number of places in this file where we convert
 // what is a 64-bit assembler value used for computation into a value in the

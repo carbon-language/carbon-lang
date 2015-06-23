@@ -58,6 +58,6 @@ namespace llvm {
 
   /// \brief Creates a Hexagon-specific Target Transformation Info pass.
   ImmutablePass *createHexagonTargetTransformInfoPass(const HexagonTargetMachine *TM);
-} // namespace llvm
+} // end namespace llvm;
 
 #endif

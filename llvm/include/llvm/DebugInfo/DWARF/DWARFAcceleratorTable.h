@@ -49,6 +49,6 @@ public:
   void dump(raw_ostream &OS) const;
 };
 
-} // namespace llvm
+}
 
 #endif

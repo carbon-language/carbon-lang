@@ -59,7 +59,7 @@ private:
                                       Type *Ty, Value *BasePtr, int Idx1, int Idx2,
                                       const char *Name);
 };
-} // namespace
+}
 
 INITIALIZE_PASS_BEGIN(ShadowStackGCLowering, "shadow-stack-gc-lowering",
                       "Shadow Stack GC Lowering", false, false)
@@ -189,7 +189,7 @@ public:
     }
   }
 };
-} // namespace
+}
 
 
 Constant *ShadowStackGCLowering::GetFrameMap(Function &F) {

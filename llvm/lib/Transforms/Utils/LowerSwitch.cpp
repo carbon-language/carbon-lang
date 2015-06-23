@@ -101,7 +101,7 @@ namespace {
       return CI1->getValue().slt(CI2->getValue());
     }
   };
-} // namespace
+}
 
 char LowerSwitch::ID = 0;
 INITIALIZE_PASS(LowerSwitch, "lowerswitch",

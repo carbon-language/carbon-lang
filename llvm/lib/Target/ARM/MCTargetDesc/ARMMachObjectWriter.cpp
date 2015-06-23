@@ -56,7 +56,7 @@ public:
                         const MCFixup &Fixup, MCValue Target,
                         uint64_t &FixedValue) override;
 };
-} // namespace
+}
 
 static bool getARMFixupKindMachOInfo(unsigned Kind, unsigned &RelocType,
                               unsigned &Log2Size) {

@@ -145,7 +145,7 @@ public:
   COFFAsmParser() {}
 };
 
-} // namespace
+} // end annonomous namespace.
 
 static SectionKind computeSectionKind(unsigned Flags) {
   if (Flags & COFF::IMAGE_SCN_MEM_EXECUTE)

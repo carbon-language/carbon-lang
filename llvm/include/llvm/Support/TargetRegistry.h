@@ -1178,6 +1178,6 @@ private:
     return new MCCodeEmitterImpl();
   }
 };
-} // namespace llvm
+}
 
 #endif

@@ -380,7 +380,7 @@ inline TimeValue operator - (const TimeValue &tv1, const TimeValue &tv2) {
   return difference;
 }
 
-} // namespace sys
-} // namespace llvm
+}
+}
 
 #endif

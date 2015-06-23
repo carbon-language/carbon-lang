@@ -37,6 +37,6 @@ bool UnrollRuntimeLoopProlog(Loop *L, unsigned Count,
                              LPPassManager *LPM);
 
 MDNode *GetUnrollMetadata(MDNode *LoopID, StringRef Name);
-} // namespace llvm
+}
 
 #endif

@@ -34,7 +34,7 @@ protected:
 
 private:
 };
-} // namespace
+}
 
 AArch64ELFObjectWriter::AArch64ELFObjectWriter(uint8_t OSABI,
                                                bool IsLittleEndian)

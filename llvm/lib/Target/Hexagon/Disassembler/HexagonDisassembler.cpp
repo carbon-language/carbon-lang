@@ -53,7 +53,7 @@ public:
                               raw_ostream &VStream,
                               raw_ostream &CStream) const override;
 };
-} // namespace
+}
 
 static DecodeStatus DecodeModRegsRegisterClass(MCInst &Inst, unsigned RegNo,
                                                uint64_t Address,

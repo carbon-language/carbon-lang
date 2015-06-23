@@ -113,6 +113,6 @@ private:
                       MachineBasicBlock::iterator I) const;
 };
 
-} // namespace llvm
+}
 
 #endif

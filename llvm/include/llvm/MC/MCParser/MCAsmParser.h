@@ -203,6 +203,6 @@ public:
 MCAsmParser *createMCAsmParser(SourceMgr &, MCContext &, MCStreamer &,
                                const MCAsmInfo &);
 
-} // namespace llvm
+} // End llvm namespace
 
 #endif

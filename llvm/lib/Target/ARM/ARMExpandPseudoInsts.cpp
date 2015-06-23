@@ -69,7 +69,7 @@ namespace {
                            MachineBasicBlock::iterator &MBBI);
   };
   char ARMExpandPseudo::ID = 0;
-} // namespace
+}
 
 /// TransferImpOps - Transfer implicit operands on the pseudo instruction to
 /// the instructions created from the expansion.
@@ -129,7 +129,7 @@ namespace {
       return PseudoOpc < TE.PseudoOpc;
     }
   };
-} // namespace
+}
 
 static const NEONLdStTableEntry NEONLdStTable[] = {
 { ARM::VLD1LNq16Pseudo,     ARM::VLD1LNd16,     true, false, false, EvenDblSpc, 1, 4 ,true},

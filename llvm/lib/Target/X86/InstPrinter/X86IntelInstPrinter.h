@@ -159,6 +159,6 @@ public:
   }
 };
 
-} // namespace llvm
+}
 
 #endif

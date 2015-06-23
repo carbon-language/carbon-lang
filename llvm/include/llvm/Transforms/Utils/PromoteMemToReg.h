@@ -45,6 +45,6 @@ void PromoteMemToReg(ArrayRef<AllocaInst *> Allocas, DominatorTree &DT,
                      AliasSetTracker *AST = nullptr,
                      AssumptionCache *AC = nullptr);
 
-} // namespace llvm
+} // End llvm namespace
 
 #endif

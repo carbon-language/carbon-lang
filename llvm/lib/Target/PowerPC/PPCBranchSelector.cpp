@@ -51,7 +51,7 @@ namespace {
     }
   };
   char PPCBSel::ID = 0;
-} // namespace
+}
 
 INITIALIZE_PASS(PPCBSel, "ppc-branch-select", "PowerPC Branch Selector",
                 false, false)

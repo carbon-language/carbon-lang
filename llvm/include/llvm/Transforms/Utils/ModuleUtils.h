@@ -57,6 +57,6 @@ Function *checkSanitizerInterfaceFunction(Constant *FuncOrBitcast);
 std::pair<Function *, Function *> createSanitizerCtorAndInitFunctions(
     Module &M, StringRef CtorName, StringRef InitName,
     ArrayRef<Type *> InitArgTypes, ArrayRef<Value *> InitArgs);
-} // namespace llvm
+} // End llvm namespace
 
 #endif //  LLVM_TRANSFORMS_UTILS_MODULEUTILS_H

@@ -32,6 +32,6 @@ namespace llvm {
                                    CodeGenOpt::Level OptLevel);
   ModulePass *createXCoreLowerThreadLocalPass();
 
-} // namespace llvm
+} // end namespace llvm;
 
 #endif

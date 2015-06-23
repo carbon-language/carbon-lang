@@ -40,6 +40,6 @@ namespace llvm {
     void printCCOperand(const MCInst *MI, unsigned OpNo, raw_ostream &O);
 
   };
-} // namespace llvm
+}
 
 #endif

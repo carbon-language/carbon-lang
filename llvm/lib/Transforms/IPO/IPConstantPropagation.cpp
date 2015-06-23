@@ -45,7 +45,7 @@ namespace {
     bool PropagateConstantsIntoArguments(Function &F);
     bool PropagateConstantReturn(Function &F);
   };
-} // namespace
+}
 
 char IPCP::ID = 0;
 INITIALIZE_PASS(IPCP, "ipconstprop",

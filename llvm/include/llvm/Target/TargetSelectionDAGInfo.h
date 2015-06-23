@@ -163,6 +163,6 @@ public:
   }
 };
 
-} // namespace llvm
+} // end llvm namespace
 
 #endif

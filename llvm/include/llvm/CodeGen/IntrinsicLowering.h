@@ -54,6 +54,6 @@ namespace llvm {
     /// simple integer bswap.
     static bool LowerToByteSwap(CallInst *CI);
   };
-} // namespace llvm
+}
 
 #endif

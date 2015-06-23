@@ -48,7 +48,7 @@ namespace R600_InstFlag {
     IS_EXPORT = (1 << 17),
     LDS_1A2D = (1 << 18)
   };
-} // namespace R600_InstFlag
+}
 
 #define HAS_NATIVE_OPERANDS(Flags) ((Flags) & R600_InstFlag::NATIVE_OPERANDS)
 
@@ -138,7 +138,7 @@ namespace OpName {
     VEC_COUNT
  };
 
-} // namespace OpName
+}
 
 //===----------------------------------------------------------------------===//
 // Config register definitions

@@ -62,7 +62,7 @@ namespace PPC {
   /// Assume the condition register is set by MI(a,b), return the predicate if
   /// we modify the instructions such that condition register is set by MI(b,a).
   Predicate getSwappedPredicate(Predicate Opcode);
-} // namespace PPC
-} // namespace llvm
+}
+}
 
 #endif

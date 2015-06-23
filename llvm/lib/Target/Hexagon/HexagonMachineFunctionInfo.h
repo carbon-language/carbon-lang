@@ -80,6 +80,6 @@ public:
   void setStackAlignBaseVReg(unsigned R) { StackAlignBaseReg = R; }
   unsigned getStackAlignBaseVReg() const { return StackAlignBaseReg; }
 };
-} // namespace llvm
+} // End llvm namespace
 
 #endif

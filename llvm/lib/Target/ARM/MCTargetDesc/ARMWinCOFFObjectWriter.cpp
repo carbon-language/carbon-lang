@@ -79,7 +79,7 @@ unsigned ARMWinCOFFObjectWriter::getRelocType(const MCValue &Target,
 bool ARMWinCOFFObjectWriter::recordRelocation(const MCFixup &Fixup) const {
   return static_cast<unsigned>(Fixup.getKind()) != ARM::fixup_t2_movt_hi16;
 }
-} // namespace
+}
 
 namespace llvm {
 MCObjectWriter *createARMWinCOFFObjectWriter(raw_pwrite_stream &OS,

@@ -127,7 +127,7 @@ typedef llvm::IRBuilder<true, ConstantFolder, IRBuilderPrefixedInserter<true>>
 typedef llvm::IRBuilder<false, ConstantFolder, IRBuilderPrefixedInserter<false>>
     IRBuilderTy;
 #endif
-} // namespace
+}
 
 namespace {
 /// \brief A used slice of an alloca.
@@ -595,7 +595,7 @@ private:
   /// the alloca.
   SmallVector<Use *, 8> DeadOperands;
 };
-} // namespace
+}
 
 static Value *foldSelectInst(SelectInst &SI) {
   // If the condition being selected on is a constant or the same value is
@@ -1173,7 +1173,7 @@ public:
     }
   }
 };
-} // namespace
+} // end anon namespace
 
 namespace {
 /// \brief An optimization pass providing Scalar Replacement of Aggregates.
@@ -1268,7 +1268,7 @@ private:
   void deleteDeadInstructions(SmallPtrSetImpl<AllocaInst *> &DeletedAllocas);
   bool promoteAllocas(Function &F);
 };
-} // namespace
+}
 
 char SROA::ID = 0;
 
@@ -3119,7 +3119,7 @@ private:
     return true;
   }
 };
-} // namespace
+}
 
 namespace {
 /// \brief Visitor to rewrite aggregate loads and stores as scalar.
@@ -3327,7 +3327,7 @@ private:
     return false;
   }
 };
-} // namespace
+}
 
 /// \brief Strip aggregate type wrapping.
 ///

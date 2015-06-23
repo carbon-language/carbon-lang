@@ -78,6 +78,6 @@ public:
                                 MachineBasicBlock::iterator MI) const override;
 };
 
-} // namespace llvm
+} // End llvm namespace
 
 #endif

@@ -66,6 +66,6 @@ private:
 /// bound specifies the maximum number of bytes needed to represent an
 /// unconditional jump or a trap instruction in the back end currently in use.
 ModulePass *createJumpInstrTableInfoPass(unsigned Bound);
-} // namespace llvm
+}
 
 #endif /* LLVM_ANALYSIS_JUMPINSTRTABLEINFO_H */

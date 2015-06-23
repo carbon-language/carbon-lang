@@ -46,6 +46,6 @@ public:
     return ImageHandleList[Idx].c_str();
   }
 };
-} // namespace llvm
+}
 
 #endif

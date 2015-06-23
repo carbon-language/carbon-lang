@@ -205,7 +205,7 @@ private:
   int &FD;
   bool KeepOpen;
 };
-} // namespace
+}
 
 std::error_code Process::FixupStandardFileDescriptors() {
   int NullFD = -1;

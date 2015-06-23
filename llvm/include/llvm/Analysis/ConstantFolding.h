@@ -97,6 +97,6 @@ bool canConstantFoldCallTo(const Function *F);
 /// with the specified arguments, returning null if unsuccessful.
 Constant *ConstantFoldCall(Function *F, ArrayRef<Constant *> Operands,
                            const TargetLibraryInfo *TLI = nullptr);
-} // namespace llvm
+}
 
 #endif

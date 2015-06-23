@@ -178,6 +178,6 @@ protected:
 
 Pass *createIVUsersPass();
 
-} // namespace llvm
+}
 
 #endif

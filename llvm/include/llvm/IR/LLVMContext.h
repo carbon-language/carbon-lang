@@ -209,6 +209,6 @@ inline LLVMContextRef *wrap(const LLVMContext **Tys) {
   return reinterpret_cast<LLVMContextRef*>(const_cast<LLVMContext**>(Tys));
 }
 
-} // namespace llvm
+}
 
 #endif

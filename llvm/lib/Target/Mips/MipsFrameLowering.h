@@ -49,6 +49,6 @@ protected:
 const MipsFrameLowering *createMips16FrameLowering(const MipsSubtarget &ST);
 const MipsFrameLowering *createMipsSEFrameLowering(const MipsSubtarget &ST);
 
-} // namespace llvm
+} // End llvm namespace
 
 #endif

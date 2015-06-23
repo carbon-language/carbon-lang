@@ -172,6 +172,6 @@ public:
   virtual std::unique_ptr<LoadedObjectInfo> clone() const = 0;
 };
 
-} // namespace llvm
+}
 
 #endif

@@ -136,6 +136,6 @@ FunctionPass *createBoundsCheckingPass();
 /// protect against stack-based overflow vulnerabilities.
 FunctionPass *createSafeStackPass();
 
-} // namespace llvm
+} // End llvm namespace
 
 #endif

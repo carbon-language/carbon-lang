@@ -33,6 +33,6 @@ private:
   // Add constraints between existing chains
   void addInterChainConstraint(PBQPRAGraph &G, unsigned Rd, unsigned Ra);
 };
-} // namespace llvm
+}
 
 #endif // LLVM_LIB_TARGET_AARCH64_AARCH64PBQPREGALOC_H

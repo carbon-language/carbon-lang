@@ -186,6 +186,6 @@ public:
 };
 
 MCStreamer &operator<<(MCStreamer &OS, MipsABIFlagsSection &ABIFlagsSection);
-} // namespace llvm
+}
 
 #endif

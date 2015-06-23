@@ -154,7 +154,7 @@ bool haveSameParity(unsigned reg1, unsigned reg2) {
   return isOdd(reg1) == isOdd(reg2);
 }
 
-} // namespace
+}
 
 bool A57ChainingConstraint::addIntraChainConstraint(PBQPRAGraph &G, unsigned Rd,
                                                  unsigned Ra) {

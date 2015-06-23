@@ -28,7 +28,7 @@ namespace {
     unsigned GetRelocType(const MCValue &Target, const MCFixup &Fixup,
                           bool IsPCRel) const override;
   };
-} // namespace
+}
 
 X86ELFObjectWriter::X86ELFObjectWriter(bool IsELF64, uint8_t OSABI,
                                        uint16_t EMachine)
