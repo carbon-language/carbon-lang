@@ -444,7 +444,7 @@ ARMLoadStoreOpt::UpdateBaseRegUses(MachineBasicBlock &MBB,
       return;
     }
 
-    if (MBBI->killsRegister(Base))
+    if (MBBI->killsRegister(Base) || MBBI->definesRegister(Base))
       // Register got killed. Stop updating.
       return;
   }
