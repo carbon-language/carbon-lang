@@ -21,6 +21,7 @@ add_llvm_library(lldDriver
   LINK_LIBS
     lldConfig
     lldMachO
+    lldCOFF
     lldPECOFF
     lldELF
     lldAArch64ELFTarget
