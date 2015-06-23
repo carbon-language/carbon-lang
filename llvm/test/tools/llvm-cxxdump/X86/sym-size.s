@@ -13,6 +13,8 @@
 // CHECK-NEXT: ??_8D@@7BB@@@[4]: 5
 // CHECK-NEXT: ??_8D@@7BC@@@[0]: 6
 // CHECK-NEXT: ??_8D@@7BC@@@[4]: 7
+// CHECK-NEXT: ??_8XYZ[0]: 10
+// CHECK-NEXT: ??_8XYZ[4]: 11
 
 	.section	.rdata,"dr"
 	.globl	"??_8D@@7B0@@"
@@ -42,3 +44,4 @@
 	.long	10
 	.long	11
 
+"??_8XYZ" = "??_8C@@7B@"
