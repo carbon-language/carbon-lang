@@ -1085,7 +1085,6 @@ void llvm::PrintSymbolTable(const ObjectFile *o) {
       continue;
     if (error(Symbol.getType(Type)))
       continue;
-    uint64_t Size = Symbol.getSize();
     if (error(Symbol.getSection(Section)))
       continue;
     StringRef Name;
@@ -1101,15 +1100,11 @@ void llvm::PrintSymbolTable(const ObjectFile *o) {
     bool Common = Flags & SymbolRef::SF_Common;
     bool Hidden = Flags & SymbolRef::SF_Hidden;
 
-    if (Common) {
-      uint32_t Alignment = Symbol.getAlignment();
-      Address = Size;
-      Size = Alignment;
-    }
+    if (Common)
+      Address = Symbol.getSize();
+
     if (Address == UnknownAddressOrSize)
       Address = 0;
-    if (Size == UnknownAddressOrSize)
-      Size = 0;
     char GlobLoc = ' ';
     if (Type != SymbolRef::ST_Unknown)
       GlobLoc = Global ? 'g' : 'l';
@@ -1151,8 +1146,13 @@ void llvm::PrintSymbolTable(const ObjectFile *o) {
         SectionName = "";
       outs() << SectionName;
     }
-    outs() << '\t'
-           << format("%08" PRIx64 " ", Size);
+
+    outs() << '\t';
+    if (Common)
+      outs() << format("%08" PRIx64 " ", Symbol.getAlignment());
+    else if (isa<ELFObjectFileBase>(o))
+      outs() << format("%08" PRIx64 " ", Symbol.getSize());
+
     if (Hidden) {
       outs() << ".hidden ";
     }

@@ -30,9 +30,9 @@ ELF-i386: 00000000         *UND*  00000000 puts
 
 macho-i386: trivial-object-test.macho-i386:        file format Mach-O 32-bit i386
 macho-i386: SYMBOL TABLE:
-macho-i386: 00000000 g     F __TEXT,__text  00000000 _main
-macho-i386: 00000000         *UND*  00000000 _SomeOtherFunction
-macho-i386: 00000000         *UND*  00000000 _puts
+macho-i386: 00000000 g     F __TEXT,__text  _main
+macho-i386: 00000000         *UND*          _SomeOtherFunction
+macho-i386: 00000000         *UND*          _puts
 
 ELF-shared: shared-object-test.elf-i386:     file format
 ELF-shared: SYMBOL TABLE:
