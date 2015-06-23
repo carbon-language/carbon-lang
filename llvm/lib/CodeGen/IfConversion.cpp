@@ -1355,15 +1355,9 @@ bool IfConverter::IfConvertDiamond(BBInfo &BBI, IfcvtKind Kind,
   Redefs.addLiveIns(BBI1->BB);
 
   // Remove the duplicated instructions at the beginnings of both paths.
-  MachineBasicBlock::iterator DI1 = BBI1->BB->begin();
-  MachineBasicBlock::iterator DI2 = BBI2->BB->begin();
-  MachineBasicBlock::iterator DIE1 = BBI1->BB->end();
-  MachineBasicBlock::iterator DIE2 = BBI2->BB->end();
   // Skip dbg_value instructions
-  while (DI1 != DIE1 && DI1->isDebugValue())
-    ++DI1;
-  while (DI2 != DIE2 && DI2->isDebugValue())
-    ++DI2;
+  MachineBasicBlock::iterator DI1 = BBI1->BB->getFirstNonDebugInstr();
+  MachineBasicBlock::iterator DI2 = BBI2->BB->getFirstNonDebugInstr();
   BBI1->NonPredSize -= NumDups1;
   BBI2->NonPredSize -= NumDups1;
 

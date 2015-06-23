@@ -304,17 +304,9 @@ static unsigned HashMachineInstr(const MachineInstr *MI) {
 
 /// HashEndOfMBB - Hash the last instruction in the MBB.
 static unsigned HashEndOfMBB(const MachineBasicBlock *MBB) {
-  MachineBasicBlock::const_iterator I = MBB->end();
-  if (I == MBB->begin())
-    return 0; // Empty MBB.
-
-  --I;
-  // Skip debug info so it will not affect codegen.
-  while (I->isDebugValue()) {
-    if (I == MBB->begin())
-      return 0; // MBB empty except for debug info.
-    --I;
-  }
+  MachineBasicBlock::const_iterator I = MBB->getLastNonDebugInstr();
+  if (I == MBB->end())
+    return 0;
 
   return HashMachineInstr(I);
 }
@@ -1123,25 +1115,15 @@ bool BranchFolder::OptimizeBranches(MachineFunction &MF) {
 // Blocks should be considered empty if they contain only debug info;
 // else the debug info would affect codegen.
 static bool IsEmptyBlock(MachineBasicBlock *MBB) {
-  if (MBB->empty())
-    return true;
-  for (MachineBasicBlock::iterator MBBI = MBB->begin(), MBBE = MBB->end();
-       MBBI!=MBBE; ++MBBI) {
-    if (!MBBI->isDebugValue())
-      return false;
-  }
-  return true;
+  return MBB->getFirstNonDebugInstr() == MBB->end();
 }
 
 // Blocks with only debug info and branches should be considered the same
 // as blocks with only branches.
 static bool IsBranchOnlyBlock(MachineBasicBlock *MBB) {
-  MachineBasicBlock::iterator MBBI, MBBE;
-  for (MBBI = MBB->begin(), MBBE = MBB->end(); MBBI!=MBBE; ++MBBI) {
-    if (!MBBI->isDebugValue())
-      break;
-  }
-  return (MBBI->isBranch());
+  MachineBasicBlock::iterator I = MBB->getFirstNonDebugInstr();
+  assert(I != MBB->end() && "empty block!");
+  return I->isBranch();
 }
 
 /// IsBetterFallthrough - Return true if it would be clearly better to
@@ -1154,36 +1136,24 @@ static bool IsBetterFallthrough(MachineBasicBlock *MBB1,
   // MBB1 doesn't, we prefer to fall through into MBB1.  This allows us to
   // optimize branches that branch to either a return block or an assert block
   // into a fallthrough to the return.
-  if (IsEmptyBlock(MBB1) || IsEmptyBlock(MBB2)) return false;
+  MachineBasicBlock::iterator MBB1I = MBB1->getLastNonDebugInstr();
+  MachineBasicBlock::iterator MBB2I = MBB2->getLastNonDebugInstr();
+  if (MBB1I == MBB1->end() || MBB2I == MBB2->end())
+    return false;
 
   // If there is a clear successor ordering we make sure that one block
   // will fall through to the next
   if (MBB1->isSuccessor(MBB2)) return true;
   if (MBB2->isSuccessor(MBB1)) return false;
 
-  // Neither block consists entirely of debug info (per IsEmptyBlock check),
-  // so we needn't test for falling off the beginning here.
-  MachineBasicBlock::iterator MBB1I = --MBB1->end();
-  while (MBB1I->isDebugValue())
-    --MBB1I;
-  MachineBasicBlock::iterator MBB2I = --MBB2->end();
-  while (MBB2I->isDebugValue())
-    --MBB2I;
   return MBB2I->isCall() && !MBB1I->isCall();
 }
 
 /// getBranchDebugLoc - Find and return, if any, the DebugLoc of the branch
-/// instructions on the block. Always use the DebugLoc of the first
-/// branching instruction found unless its absent, in which case use the
-/// DebugLoc of the second if present.
+/// instructions on the block.
 static DebugLoc getBranchDebugLoc(MachineBasicBlock &MBB) {
-  MachineBasicBlock::iterator I = MBB.end();
-  if (I == MBB.begin())
-    return DebugLoc();
-  --I;
-  while (I->isDebugValue() && I != MBB.begin())
-    --I;
-  if (I->isBranch())
+  MachineBasicBlock::iterator I = MBB.getLastNonDebugInstr();
+  if (I != MBB.end() && I->isBranch())
     return I->getDebugLoc();
   return DebugLoc();
 }
@@ -1408,19 +1378,10 @@ ReoptimizeBlock:
       // If the only things remaining in the block are debug info, remove these
       // as well, so this will behave the same as an empty block in non-debug
       // mode.
-      if (!MBB->empty()) {
-        bool NonDebugInfoFound = false;
-        for (MachineBasicBlock::iterator I = MBB->begin(), E = MBB->end();
-             I != E; ++I) {
-          if (!I->isDebugValue()) {
-            NonDebugInfoFound = true;
-            break;
-          }
-        }
-        if (!NonDebugInfoFound)
-          // Make the block empty, losing the debug info (we could probably
-          // improve this in some cases.)
-          MBB->erase(MBB->begin(), MBB->end());
+      if (IsEmptyBlock(MBB)) {
+        // Make the block empty, losing the debug info (we could probably
+        // improve this in some cases.)
+        MBB->erase(MBB->begin(), MBB->end());
       }
       // If this block is just an unconditional branch to CurTBB, we can
       // usually completely eliminate the block.  The only case we cannot

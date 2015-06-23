@@ -469,6 +469,13 @@ public:
   /// and return an instr_iterator instead.
   instr_iterator getFirstInstrTerminator();
 
+  /// getFirstNonDebugInstr - returns an iterator to the first non-debug
+  /// instruction in the basic block, or end()
+  iterator getFirstNonDebugInstr();
+  const_iterator getFirstNonDebugInstr() const {
+    return const_cast<MachineBasicBlock *>(this)->getFirstNonDebugInstr();
+  }
+
   /// getLastNonDebugInstr - returns an iterator to the last non-debug
   /// instruction in the basic block, or end()
   iterator getLastNonDebugInstr();

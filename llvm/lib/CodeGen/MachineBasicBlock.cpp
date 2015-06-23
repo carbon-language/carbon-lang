@@ -180,6 +180,14 @@ MachineBasicBlock::instr_iterator MachineBasicBlock::getFirstInstrTerminator() {
   return I;
 }
 
+MachineBasicBlock::iterator MachineBasicBlock::getFirstNonDebugInstr() {
+  // Skip over begin-of-block dbg_value instructions.
+  iterator I = begin(), E = end();
+  while (I != E && I->isDebugValue())
+    ++I;
+  return I;
+}
+
 MachineBasicBlock::iterator MachineBasicBlock::getLastNonDebugInstr() {
   // Skip over end-of-block dbg_value instructions.
   instr_iterator B = instr_begin(), I = instr_end();

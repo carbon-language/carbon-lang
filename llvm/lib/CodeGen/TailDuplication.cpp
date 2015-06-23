@@ -627,11 +627,8 @@ TailDuplicatePass::isSimpleBB(MachineBasicBlock *TailBB) {
     return false;
   if (TailBB->pred_empty())
     return false;
-  MachineBasicBlock::iterator I = TailBB->begin();
-  MachineBasicBlock::iterator E = TailBB->end();
-  while (I != E && I->isDebugValue())
-    ++I;
-  if (I == E)
+  MachineBasicBlock::iterator I = TailBB->getFirstNonDebugInstr();
+  if (I == TailBB->end())
     return true;
   return I->isUnconditionalBranch();
 }
