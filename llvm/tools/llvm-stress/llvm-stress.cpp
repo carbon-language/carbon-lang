@@ -96,24 +96,21 @@ private:
 
 /// Generate an empty function with a default argument list.
 Function *GenEmptyFunction(Module *M) {
-  // Type Definitions
-  std::vector<Type*> ArgsTy;
   // Define a few arguments
   LLVMContext &Context = M->getContext();
-  ArgsTy.push_back(PointerType::get(IntegerType::getInt8Ty(Context), 0));
-  ArgsTy.push_back(PointerType::get(IntegerType::getInt32Ty(Context), 0));
-  ArgsTy.push_back(PointerType::get(IntegerType::getInt64Ty(Context), 0));
-  ArgsTy.push_back(IntegerType::getInt32Ty(Context));
-  ArgsTy.push_back(IntegerType::getInt64Ty(Context));
-  ArgsTy.push_back(IntegerType::getInt8Ty(Context));
+  Type* ArgsTy[] = {
+    Type::getInt8PtrTy(Context),
+    Type::getInt32PtrTy(Context),
+    Type::getInt64PtrTy(Context),
+    Type::getInt32Ty(Context),
+    Type::getInt64Ty(Context),
+    Type::getInt8Ty(Context)
+  };
 
-  FunctionType *FuncTy = FunctionType::get(Type::getVoidTy(Context), ArgsTy, 0);
+  auto *FuncTy = FunctionType::get(Type::getVoidTy(Context), ArgsTy, false);
   // Pick a unique name to describe the input parameters
-  std::stringstream ss;
-  ss<<"autogen_SD"<<SeedCL;
-  Function *Func = Function::Create(FuncTy, GlobalValue::ExternalLinkage,
-                                    ss.str(), M);
-
+  Twine Name = "autogen_SD" + Twine{SeedCL};
+  auto *Func = Function::Create(FuncTy, GlobalValue::ExternalLinkage, Name, M);
   Func->setCallingConv(CallingConv::C);
   return Func;
 }
@@ -620,59 +617,45 @@ static void FillFunction(Function *F, Random &R) {
   Modifier::PieceTable PT;
 
   // Consider arguments as legal values.
-  for (Function::arg_iterator it = F->arg_begin(), e = F->arg_end();
-       it != e; ++it)
-    PT.push_back(it);
+  for (auto &arg : F->args())
+    PT.push_back(&arg);
 
   // List of modifiers which add new random instructions.
-  std::vector<Modifier*> Modifiers;
-  std::unique_ptr<Modifier> LM(new LoadModifier(BB, &PT, &R));
-  std::unique_ptr<Modifier> SM(new StoreModifier(BB, &PT, &R));
-  std::unique_ptr<Modifier> EE(new ExtractElementModifier(BB, &PT, &R));
-  std::unique_ptr<Modifier> SHM(new ShuffModifier(BB, &PT, &R));
-  std::unique_ptr<Modifier> IE(new InsertElementModifier(BB, &PT, &R));
-  std::unique_ptr<Modifier> BM(new BinModifier(BB, &PT, &R));
-  std::unique_ptr<Modifier> CM(new CastModifier(BB, &PT, &R));
-  std::unique_ptr<Modifier> SLM(new SelectModifier(BB, &PT, &R));
-  std::unique_ptr<Modifier> PM(new CmpModifier(BB, &PT, &R));
-  Modifiers.push_back(LM.get());
-  Modifiers.push_back(SM.get());
-  Modifiers.push_back(EE.get());
-  Modifiers.push_back(SHM.get());
-  Modifiers.push_back(IE.get());
-  Modifiers.push_back(BM.get());
-  Modifiers.push_back(CM.get());
-  Modifiers.push_back(SLM.get());
-  Modifiers.push_back(PM.get());
+  std::vector<std::unique_ptr<Modifier>> Modifiers;
+  Modifiers.emplace_back(new LoadModifier(BB, &PT, &R));
+  Modifiers.emplace_back(new StoreModifier(BB, &PT, &R));
+  auto SM = Modifiers.back().get();
+  Modifiers.emplace_back(new ExtractElementModifier(BB, &PT, &R));
+  Modifiers.emplace_back(new ShuffModifier(BB, &PT, &R));
+  Modifiers.emplace_back(new InsertElementModifier(BB, &PT, &R));
+  Modifiers.emplace_back(new BinModifier(BB, &PT, &R));
+  Modifiers.emplace_back(new CastModifier(BB, &PT, &R));
+  Modifiers.emplace_back(new SelectModifier(BB, &PT, &R));
+  Modifiers.emplace_back(new CmpModifier(BB, &PT, &R));
 
   // Generate the random instructions
-  AllocaModifier AM(BB, &PT, &R); AM.ActN(5); // Throw in a few allocas
-  ConstModifier COM(BB, &PT, &R);  COM.ActN(40); // Throw in a few constants
+  AllocaModifier{BB, &PT, &R}.ActN(5); // Throw in a few allocas
+  ConstModifier{BB, &PT, &R}.ActN(40); // Throw in a few constants
 
-  for (unsigned i=0; i< SizeCL / Modifiers.size(); ++i)
-    for (std::vector<Modifier*>::iterator it = Modifiers.begin(),
-         e = Modifiers.end(); it != e; ++it) {
-      (*it)->Act();
-    }
+  for (unsigned i = 0; i < SizeCL / Modifiers.size(); ++i)
+    for (auto &Mod : Modifiers)
+      Mod->Act();
 
   SM->ActN(5); // Throw in a few stores.
 }
 
 static void IntroduceControlFlow(Function *F, Random &R) {
   std::vector<Instruction*> BoolInst;
-  for (BasicBlock::iterator it = F->begin()->begin(),
-       e = F->begin()->end(); it != e; ++it) {
-    if (it->getType() == IntegerType::getInt1Ty(F->getContext()))
-      BoolInst.push_back(it);
+  for (auto &Instr : F->front()) {
+    if (Instr.getType() == IntegerType::getInt1Ty(F->getContext()))
+      BoolInst.push_back(&Instr);
   }
 
   std::random_shuffle(BoolInst.begin(), BoolInst.end(), R);
 
-  for (std::vector<Instruction*>::iterator it = BoolInst.begin(),
-       e = BoolInst.end(); it != e; ++it) {
-    Instruction *Instr = *it;
+  for (auto *Instr : BoolInst) {
     BasicBlock *Curr = Instr->getParent();
-    BasicBlock::iterator Loc= Instr;
+    BasicBlock::iterator Loc = Instr;
     BasicBlock *Next = Curr->splitBasicBlock(Loc, "CF");
     Instr->moveBefore(Curr->getTerminator());
     if (Curr != &F->getEntryBlock()) {
@@ -688,7 +671,7 @@ int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv, "llvm codegen stress-tester\n");
   llvm_shutdown_obj Y;
 
-  std::unique_ptr<Module> M(new Module("/tmp/autogen.bc", getGlobalContext()));
+  auto M = make_unique<Module>("/tmp/autogen.bc", getGlobalContext());
   Function *F = GenEmptyFunction(M.get());
 
   // Pick an initial seed value
