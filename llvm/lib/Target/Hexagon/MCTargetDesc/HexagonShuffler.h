@@ -34,7 +34,7 @@ public:
   HexagonResource(unsigned s) { setUnits(s); };
 
   void setUnits(unsigned s) {
-    Slots = s & ~(-1 << HEXAGON_PACKET_SIZE);
+    Slots = s & ~(~0U << HEXAGON_PACKET_SIZE);
     setWeight(s);
   };
   unsigned setWeight(unsigned s);
