@@ -385,13 +385,11 @@ ProcessPOSIX::SendMessage(const ProcessMessage &message)
             }
             else
             {
-                StopAllThreads(message.GetTID());
                 SetPrivateState(eStateStopped);
             }
         }
         else
         {
-            StopAllThreads(message.GetTID());
             SetPrivateState(eStateStopped);
         }
         break;
@@ -427,7 +425,6 @@ ProcessPOSIX::SendMessage(const ProcessMessage &message)
     case ProcessMessage::eCrashMessage:
         assert(thread);
         thread->SetState(eStateStopped);
-        StopAllThreads(message.GetTID());
         SetPrivateState(eStateStopped);
         break;
 
@@ -440,7 +437,6 @@ ProcessPOSIX::SendMessage(const ProcessMessage &message)
         }
         assert(thread);
         thread->SetState(eStateStopped);
-        StopAllThreads(message.GetTID());
         SetPrivateState(eStateStopped);
         break;
     }
@@ -449,7 +445,6 @@ ProcessPOSIX::SendMessage(const ProcessMessage &message)
     {
         assert(thread);
         thread->SetState(eStateStopped);
-        StopAllThreads(message.GetTID());
         SetPrivateState(eStateStopped);
         break;
     }
@@ -457,12 +452,6 @@ ProcessPOSIX::SendMessage(const ProcessMessage &message)
 
 
     m_message_queue.push(message);
-}
-
-void 
-ProcessPOSIX::StopAllThreads(lldb::tid_t stop_tid)
-{
-    // FIXME: Will this work the same way on FreeBSD and Linux?
 }
 
 bool

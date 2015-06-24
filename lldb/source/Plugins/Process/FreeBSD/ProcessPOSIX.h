@@ -156,11 +156,6 @@ public:
                 const lldb_private::FileSpec &default_file_spec,
                 const lldb_private::FileSpec &dbg_pts_file_spec);
 
-    /// Stops all threads in the process.
-    /// The \p stop_tid parameter indicates the thread which initiated the stop.
-    virtual void
-    StopAllThreads(lldb::tid_t stop_tid);
-
     /// Adds the thread to the list of threads for which we have received the initial stopping signal.
     /// The \p stop_tid parameter indicates the thread which the stop happened for.
     bool
