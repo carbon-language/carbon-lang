@@ -103,7 +103,7 @@ unsigned DwarfFile::computeSizeAndOffset(DIE &Die, unsigned Offset) {
   // Size the DIE attribute values.
   for (const auto &V : Die.values())
     // Size attribute value.
-    Offset += V.SizeOf(Asm, V.getForm());
+    Offset += V.SizeOf(Asm);
 
   // Size the DIE children if any.
   if (Die.hasChildren()) {

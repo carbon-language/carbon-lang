@@ -193,7 +193,7 @@ void DIE::dump() {
 }
 #endif
 
-void DIEValue::EmitValue(const AsmPrinter *AP, dwarf::Form Form) const {
+void DIEValue::EmitValue(const AsmPrinter *AP) const {
   switch (Ty) {
   case isNone:
     llvm_unreachable("Expected valid DIEValue");
@@ -205,7 +205,7 @@ void DIEValue::EmitValue(const AsmPrinter *AP, dwarf::Form Form) const {
   }
 }
 
-unsigned DIEValue::SizeOf(const AsmPrinter *AP, dwarf::Form Form) const {
+unsigned DIEValue::SizeOf(const AsmPrinter *AP) const {
   switch (Ty) {
   case isNone:
     llvm_unreachable("Expected valid DIEValue");
@@ -507,8 +507,8 @@ void DIETypeSignature::print(raw_ostream &O) const {
 ///
 unsigned DIELoc::ComputeSize(const AsmPrinter *AP) const {
   if (!Size) {
-    for (unsigned i = 0, N = Values.size(); i < N; ++i)
-      Size += Values[i].SizeOf(AP, Values[i].getForm());
+    for (const auto &V : Values)
+      Size += V.SizeOf(AP);
   }
 
   return Size;
@@ -527,8 +527,8 @@ void DIELoc::EmitValue(const AsmPrinter *Asm, dwarf::Form Form) const {
     Asm->EmitULEB128(Size); break;
   }
 
-  for (unsigned i = 0, N = Values.size(); i < N; ++i)
-    Values[i].EmitValue(Asm, Values[i].getForm());
+  for (const auto &V : Values)
+    V.EmitValue(Asm);
 }
 
 /// SizeOf - Determine size of location data in bytes.
@@ -560,8 +560,8 @@ void DIELoc::print(raw_ostream &O) const {
 ///
 unsigned DIEBlock::ComputeSize(const AsmPrinter *AP) const {
   if (!Size) {
-    for (unsigned i = 0, N = Values.size(); i < N; ++i)
-      Size += Values[i].SizeOf(AP, Values[i].getForm());
+    for (const auto &V : Values)
+      Size += V.SizeOf(AP);
   }
 
   return Size;
@@ -578,8 +578,8 @@ void DIEBlock::EmitValue(const AsmPrinter *Asm, dwarf::Form Form) const {
   case dwarf::DW_FORM_block:  Asm->EmitULEB128(Size); break;
   }
 
-  for (unsigned i = 0, N = Values.size(); i < N; ++i)
-    Values[i].EmitValue(Asm, Values[i].getForm());
+  for (const auto &V : Values)
+    V.EmitValue(Asm);
 }
 
 /// SizeOf - Determine size of block data in bytes.

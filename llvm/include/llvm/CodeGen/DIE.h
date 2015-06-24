@@ -436,11 +436,11 @@ public:
 
   /// EmitValue - Emit value via the Dwarf writer.
   ///
-  void EmitValue(const AsmPrinter *AP, dwarf::Form Form) const;
+  void EmitValue(const AsmPrinter *AP) const;
 
   /// SizeOf - Return the size of a value in bytes.
   ///
-  unsigned SizeOf(const AsmPrinter *AP, dwarf::Form Form) const;
+  unsigned SizeOf(const AsmPrinter *AP) const;
 
 #ifndef NDEBUG
   void print(raw_ostream &O) const;
