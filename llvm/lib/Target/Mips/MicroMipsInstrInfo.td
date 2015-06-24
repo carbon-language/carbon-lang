@@ -934,3 +934,7 @@ class UncondBranchMMPseudo<string opstr> :
   def : MipsInstAlias<"nop", (SLL_MM ZERO, ZERO, 0), 1>;
   def : MipsInstAlias<"nop", (MOVE16_MM ZERO, ZERO), 1>;
 }
+
+let Predicates = [InMicroMips] in {
+def : MipsInstAlias<"ei", (EI_MM ZERO), 1>, ISA_MIPS32R2;
+}

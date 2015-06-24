@@ -1278,7 +1278,9 @@ def TTLTIU : MMRel, TEQI_FT<"tltiu", GPR32Opnd>, TEQI_FM<0xb>,
 def TNEI : MMRel, TEQI_FT<"tnei", GPR32Opnd>, TEQI_FM<0xe>,
            ISA_MIPS2_NOT_32R6_64R6;
 
-def BREAK : MMRel, BRK_FT<"break">, BRK_FM<0xd>;
+let AdditionalPredicates = [NotInMicroMips] in {
+def BREAK : MMRel, StdMMR6Rel, BRK_FT<"break">, BRK_FM<0xd>;
+}
 def SYSCALL : MMRel, SYS_FT<"syscall">, SYS_FM<0xc>;
 def TRAP : TrapBase<BREAK>;
 def SDBBP : MMRel, SYS_FT<"sdbbp">, SDBBP_FM, ISA_MIPS32_NOT_32R6_64R6;
@@ -1288,7 +1290,9 @@ def ERET : MMRel, ER_FT<"eret">, ER_FM<0x18>, INSN_MIPS3_32;
 }
 def DERET : MMRel, ER_FT<"deret">, ER_FM<0x1f>, ISA_MIPS32;
 
-def EI : MMRel, DEI_FT<"ei", GPR32Opnd>, EI_FM<1>, ISA_MIPS32R2;
+let AdditionalPredicates = [NotInMicroMips] in {
+def EI : MMRel, StdMMR6Rel, DEI_FT<"ei", GPR32Opnd>, EI_FM<1>, ISA_MIPS32R2;
+}
 def DI : MMRel, DEI_FT<"di", GPR32Opnd>, EI_FM<0>, ISA_MIPS32R2;
 
 let EncodingPredicates = []<Predicate>, // FIXME: Lack of HasStdEnc is probably a bug
@@ -1623,7 +1627,9 @@ def : MipsInstAlias<"syscall", (SYSCALL 0), 1>;
     
 def : MipsInstAlias<"break", (BREAK 0, 0), 1>;
 def : MipsInstAlias<"break $imm", (BREAK uimm10:$imm, 0), 1>;
+let AdditionalPredicates = [NotInMicroMips] in {
 def : MipsInstAlias<"ei", (EI ZERO), 1>, ISA_MIPS32R2;
+}
 def : MipsInstAlias<"di", (DI ZERO), 1>, ISA_MIPS32R2;
 
 def : MipsInstAlias<"teq $rs, $rt",
