@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -triple x86_64-unknown-nacl -emit-llvm -o - %s | FileCheck %s
-// RUN: %clang_cc1 -triple=x86_64-unknown-linux-gnux32 -emit-llvm -o - %s | FileCheck %s
+// RUN: %clang_cc1 -std=c++11 -triple x86_64-unknown-nacl -emit-llvm -o - %s | FileCheck %s
+// RUN: %clang_cc1 -std=c++11 -triple=x86_64-unknown-linux-gnux32 -emit-llvm -o - %s | FileCheck %s
 
 struct test_struct {};
 typedef int test_struct::* test_struct_mdp;
@@ -41,4 +41,17 @@ struct struct_with_mfp_too_much {
 };
 void f_struct_with_mfp_too_much(struct_with_mfp_too_much a, int x) {
   (void)a;
+}
+
+/* Struct containing an empty struct */
+typedef struct { int* a; test_struct x; double *b; } struct_with_empty;
+
+// CHECK-LABEL: define void @{{.*}}f_pass_struct_with_empty{{.*}}(i64 %x{{.*}}, double* %x
+void f_pass_struct_with_empty(struct_with_empty x) {
+  (void) x;
+}
+
+// CHECK-LABEL: define { i64, double* } @{{.*}}f_return_struct_with_empty
+struct_with_empty f_return_struct_with_empty() {
+  return {0, {}, 0};
 }
