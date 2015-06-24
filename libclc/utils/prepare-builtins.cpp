@@ -14,6 +14,10 @@
 
 #include <system_error>
 
+#define LLVM_360 \
+  (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR == 6)
+
+
 using namespace llvm;
 
 static cl::opt<std::string>
@@ -30,7 +34,7 @@ int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv, "libclc builtin preparation tool\n");
 
   std::string ErrorMessage;
-  std::auto_ptr<Module> M;
+  Module *M;
 
   {
     ErrorOr<std::unique_ptr<MemoryBuffer>> BufferOrErr =
@@ -39,15 +43,24 @@ int main(int argc, char **argv) {
     if (std::error_code  ec = BufferOrErr.getError())
       ErrorMessage = ec.message();
     else {
-      ErrorOr<Module *> ModuleOrErr =
-	parseBitcodeFile(BufferPtr.get()->getMemBufferRef(), Context);
+#if LLVM_360
+      ErrorOr<Module *>
+#else
+      ErrorOr<std::unique_ptr<Module>>
+#endif
+      ModuleOrErr =
+          parseBitcodeFile(BufferPtr.get()->getMemBufferRef(), Context);
       if (std::error_code ec = ModuleOrErr.getError())
         ErrorMessage = ec.message();
-      M.reset(ModuleOrErr.get());
+#if LLVM_360
+      M = ModuleOrErr.get().get();
+#else
+      M = ModuleOrErr.get().release();
+#endif
     }
   }
 
-  if (M.get() == 0) {
+  if (!M) {
     errs() << argv[0] << ": ";
     if (ErrorMessage.size())
       errs() << ErrorMessage << "\n";
@@ -81,7 +94,7 @@ int main(int argc, char **argv) {
     exit(1);
   }
 
-  WriteBitcodeToFile(M.get(), Out->os());
+  WriteBitcodeToFile(M, Out->os());
 
   // Declare success.
   Out->keep();
