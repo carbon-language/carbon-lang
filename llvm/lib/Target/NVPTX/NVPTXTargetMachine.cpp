@@ -205,6 +205,8 @@ bool NVPTXPassConfig::addInstSelector() {
   if (!ST.hasImageHandles())
     addPass(createNVPTXReplaceImageHandlesPass());
 
+  addPass(createNVPTXPeephole());
+
   return false;
 }
 

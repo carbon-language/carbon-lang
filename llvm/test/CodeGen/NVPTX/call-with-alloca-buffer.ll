@@ -20,8 +20,7 @@ entry:
   %buf = alloca [16 x i8], align 4
 
 ; CHECK: .local .align 4 .b8 	__local_depot0[16]
-; CHECK: mov.u64 %rd[[BUF_REG:[0-9]+]]
-; CHECK: cvta.local.u64 %SP, %rd[[BUF_REG]]
+; CHECK: mov.u64 %SPL
 
 ; CHECK: ld.param.u64 %rd[[A_REG:[0-9]+]], [kernel_func_param_0]
 ; CHECK: cvta.to.global.u64 %rd[[A1_REG:[0-9]+]], %rd[[A_REG]]
