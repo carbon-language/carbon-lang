@@ -136,7 +136,7 @@ std::error_code ObjectFile::initializeChunks() {
       continue;
     if (Sec->Characteristics & llvm::COFF::IMAGE_SCN_LNK_REMOVE)
       continue;
-    auto *C = new (Alloc) SectionChunk(this, Sec, I);
+    auto *C = new (Alloc) SectionChunk(this, Sec);
     Chunks.push_back(C);
     SparseChunks[I] = C;
   }

@@ -26,8 +26,8 @@ using namespace llvm::COFF;
 namespace lld {
 namespace coff {
 
-SectionChunk::SectionChunk(ObjectFile *F, const coff_section *H, uint32_t SI)
-    : File(F), Header(H), SectionIndex(SI) {
+SectionChunk::SectionChunk(ObjectFile *F, const coff_section *H)
+    : File(F), Header(H) {
   // Initialize SectionName.
   File->getCOFFObj()->getSectionName(Header, SectionName);
 

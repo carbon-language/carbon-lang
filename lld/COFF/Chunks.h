@@ -123,8 +123,7 @@ protected:
 // A chunk corresponding a section of an input file.
 class SectionChunk : public Chunk {
 public:
-  SectionChunk(ObjectFile *File, const coff_section *Header,
-               uint32_t SectionIndex);
+  SectionChunk(ObjectFile *File, const coff_section *Header);
   size_t getSize() const override { return Header->SizeOfRawData; }
   void writeTo(uint8_t *Buf) override;
   bool hasData() const override;
@@ -150,7 +149,6 @@ private:
   ObjectFile *File;
 
   const coff_section *Header;
-  uint32_t SectionIndex;
   StringRef SectionName;
   std::vector<Chunk *> AssocChildren;
 
