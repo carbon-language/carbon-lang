@@ -324,20 +324,6 @@ directory_iterator OverlayFileSystem::dir_begin(const Twine &Dir,
 // VFSFromYAML implementation
 //===-----------------------------------------------------------------------===/
 
-// Allow DenseMap<StringRef, ...>.  This is useful below because we know all the
-// strings are literals and will outlive the map, and there is no reason to
-// store them.
-namespace llvm {
-  template<>
-  struct DenseMapInfo<StringRef> {
-    // This assumes that "" will never be a valid key.
-    static inline StringRef getEmptyKey() { return StringRef(""); }
-    static inline StringRef getTombstoneKey() { return StringRef(); }
-    static unsigned getHashValue(StringRef Val) { return HashString(Val); }
-    static bool isEqual(StringRef LHS, StringRef RHS) { return LHS == RHS; }
-  };
-}
-
 namespace {
 
 enum EntryKind {
