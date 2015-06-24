@@ -36,6 +36,23 @@ struct MapUnmapCallback {
     // We are about to unmap a chunk of user memory.
     // Mark the corresponding shadow memory as not needed.
     DontNeedShadowFor(p, size);
+    // Mark the corresponding meta shadow memory as not needed.
+    // Note the block does not contain any meta info at this point
+    // (this happens after free).
+    const uptr kMetaRatio = kMetaShadowCell / kMetaShadowSize;
+    const uptr kPageSize = GetPageSizeCached() * kMetaRatio;
+    // Block came from LargeMmapAllocator, so must be large.
+    // We rely on this in the calculations below.
+    CHECK_GE(size, 2 * kPageSize);
+    uptr diff = RoundUp(p, kPageSize) - p;
+    if (diff != 0) {
+      p += diff;
+      size -= diff;
+    }
+    diff = p + size - RoundDown(p + size, kPageSize);
+    if (diff != 0)
+      size -= diff;
+    FlushUnneededShadowMemory((uptr)MemToMeta(p), size / kMetaRatio);
   }
 };
 
