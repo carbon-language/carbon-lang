@@ -1531,6 +1531,15 @@ void CodeGenFunction::EmitOMPTaskDirective(const OMPTaskDirective &S) {
       ++IRef, ++IElemInitRef;
     }
   }
+  // Build list of dependences.
+  llvm::SmallVector<std::pair<OpenMPDependClauseKind, const Expr *>, 8>
+      Dependences;
+  for (auto &&I = S.getClausesOfKind(OMPC_depend); I; ++I) {
+    auto *C = cast<OMPDependClause>(*I);
+    for (auto *IRef : C->varlists()) {
+      Dependences.push_back(std::make_pair(C->getDependencyKind(), IRef));
+    }
+  }
   auto &&CodeGen = [PartId, &S, &PrivateVars, &FirstprivateVars](
       CodeGenFunction &CGF) {
     // Set proper addresses for generated private copies.
@@ -1602,7 +1611,7 @@ void CodeGenFunction::EmitOMPTaskDirective(const OMPTaskDirective &S) {
   CGM.getOpenMPRuntime().emitTaskCall(
       *this, S.getLocStart(), S, Tied, Final, OutlinedFn, SharedsTy,
       CapturedStruct, IfCond, PrivateVars, PrivateCopies, FirstprivateVars,
-      FirstprivateCopies, FirstprivateInits);
+      FirstprivateCopies, FirstprivateInits, Dependences);
 }
 
 void CodeGenFunction::EmitOMPTaskyieldDirective(

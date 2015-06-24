@@ -138,6 +138,14 @@ private:
     // Call to void __kmpc_push_proc_bind(ident_t *loc, kmp_int32 global_tid,
     // int proc_bind);
     OMPRTL__kmpc_push_proc_bind,
+    // Call to kmp_int32 __kmpc_omp_task_with_deps(ident_t *loc_ref, kmp_int32
+    // gtid, kmp_task_t * new_task, kmp_int32 ndeps, kmp_depend_info_t
+    // *dep_list, kmp_int32 ndeps_noalias, kmp_depend_info_t *noalias_dep_list);
+    OMPRTL__kmpc_omp_task_with_deps,
+    // Call to void __kmpc_omp_wait_deps(ident_t *loc_ref, kmp_int32
+    // gtid, kmp_int32 ndeps, kmp_depend_info_t *dep_list, kmp_int32
+    // ndeps_noalias, kmp_depend_info_t *noalias_dep_list);
+    OMPRTL__kmpc_omp_wait_deps,
   };
 
   /// \brief Values for bit flags used in the ident_t to describe the fields.
@@ -249,6 +257,16 @@ private:
   ///    deconstructors of firstprivate C++ objects */
   /// } kmp_task_t;
   QualType KmpTaskTQTy;
+  /// \brief Type typedef struct kmp_depend_info {
+  ///    kmp_intptr_t               base_addr;
+  ///    size_t                     len;
+  ///    struct {
+  ///             bool                   in:1;
+  ///             bool                   out:1;
+  ///    } flags;
+  /// } kmp_depend_info_t;
+  QualType KmpDependInfoTy;
+
 
   /// \brief Build type kmp_routine_entry_t (if not built yet).
   void emitKmpRoutineEntryT(QualType KmpInt32Ty);
@@ -580,7 +598,7 @@ public:
   /// \param TaskFunction An LLVM function with type void (*)(i32 /*gtid*/, i32
   /// /*part_id*/, captured_struct */*__context*/);
   /// \param SharedsTy A type which contains references the shared variables.
-  /// \param Shareds Context with the list of shared variables from the \a
+  /// \param Shareds Context with the list of shared variables from the \p
   /// TaskFunction.
   /// \param IfCond Not a nullptr if 'if' clause was specified, nullptr
   /// otherwise.
@@ -595,16 +613,18 @@ public:
   /// \param FirstprivateInits List of references to auto generated variables
   /// used for initialization of a single array element. Used if firstprivate
   /// variable is of array type.
-  virtual void emitTaskCall(CodeGenFunction &CGF, SourceLocation Loc,
-                            const OMPExecutableDirective &D, bool Tied,
-                            llvm::PointerIntPair<llvm::Value *, 1, bool> Final,
-                            llvm::Value *TaskFunction, QualType SharedsTy,
-                            llvm::Value *Shareds, const Expr *IfCond,
-                            const ArrayRef<const Expr *> PrivateVars,
-                            const ArrayRef<const Expr *> PrivateCopies,
-                            const ArrayRef<const Expr *> FirstprivateVars,
-                            const ArrayRef<const Expr *> FirstprivateCopies,
-                            const ArrayRef<const Expr *> FirstprivateInits);
+  /// \param Dependences List of dependences for the 'task' construct, including
+  /// original expression and dependency type.
+  virtual void emitTaskCall(
+      CodeGenFunction &CGF, SourceLocation Loc, const OMPExecutableDirective &D,
+      bool Tied, llvm::PointerIntPair<llvm::Value *, 1, bool> Final,
+      llvm::Value *TaskFunction, QualType SharedsTy, llvm::Value *Shareds,
+      const Expr *IfCond, ArrayRef<const Expr *> PrivateVars,
+      ArrayRef<const Expr *> PrivateCopies,
+      ArrayRef<const Expr *> FirstprivateVars,
+      ArrayRef<const Expr *> FirstprivateCopies,
+      ArrayRef<const Expr *> FirstprivateInits,
+      ArrayRef<std::pair<OpenMPDependClauseKind, const Expr *>> Dependences);
 
   /// \brief Emit code for the directive that does not require outlining.
   ///
