@@ -52,7 +52,7 @@ for.end:                                          ; preds = %for.body, %entry
 ; CHECK:   %0 = add i32 %n, -1
 ; CHECK:   %1 = sub i32 %0, %m
 ; CHECK:   %2 = lshr i32 %1, 2
-; CHECK:   %3 = mul i32 %2, 4
+; CHECK:   %3 = shl i32 %2, 2
 ; CHECK:   %4 = add i32 %m, %3
 ; CHECK:   %5 = add i32 %4, 3
 ; CHECK:   br label %for.body
@@ -132,7 +132,7 @@ for.end:                                          ; preds = %for.body, %entry
 ; CHECK:   %0 = add i32 %n, -1
 ; CHECK:   %1 = sub i32 %0, %rem
 ; CHECK:   %2 = lshr i32 %1, 2
-; CHECK:   %3 = mul i32 %2, 4
+; CHECK:   %3 = shl i32 %2, 2
 ; CHECK:   %4 = add i32 %rem, %3
 ; CHECK:   %5 = add i32 %4, 3
 ; CHECK:   br label %for.body

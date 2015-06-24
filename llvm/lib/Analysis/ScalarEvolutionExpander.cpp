@@ -24,10 +24,12 @@
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
+#include "llvm/IR/PatternMatch.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
+using namespace PatternMatch;
 
 /// ReuseOrCreateCast - Arrange for there to be a cast of V to Ty at IP,
 /// reusing an existing cast if a suitable one exists, moving an existing
@@ -751,25 +753,30 @@ Value *SCEVExpander::visitMulExpr(const SCEVMulExpr *S) {
   // out of loops.
   Value *Prod = nullptr;
   for (SmallVectorImpl<std::pair<const Loop *, const SCEV *> >::iterator
-       I = OpsAndLoops.begin(), E = OpsAndLoops.end(); I != E; ) {
+       I = OpsAndLoops.begin(), E = OpsAndLoops.end(); I != E; ++I) {
     const SCEV *Op = I->second;
     if (!Prod) {
       // This is the first operand. Just expand it.
       Prod = expand(Op);
-      ++I;
     } else if (Op->isAllOnesValue()) {
       // Instead of doing a multiply by negative one, just do a negate.
       Prod = InsertNoopCastOfTo(Prod, Ty);
       Prod = InsertBinop(Instruction::Sub, Constant::getNullValue(Ty), Prod);
-      ++I;
     } else {
       // A simple mul.
       Value *W = expandCodeFor(Op, Ty);
       Prod = InsertNoopCastOfTo(Prod, Ty);
       // Canonicalize a constant to the RHS.
       if (isa<Constant>(Prod)) std::swap(Prod, W);
-      Prod = InsertBinop(Instruction::Mul, Prod, W);
-      ++I;
+      const APInt *RHS;
+      if (match(W, m_Power2(RHS))) {
+        // Canonicalize Prod*(1<<C) to Prod<<C.
+        assert(!Ty->isVectorTy() && "vector types are not SCEVable");
+        Prod = InsertBinop(Instruction::Shl, Prod,
+                           ConstantInt::get(Ty, RHS->logBase2()));
+      } else {
+        Prod = InsertBinop(Instruction::Mul, Prod, W);
+      }
     }
   }
 
