@@ -96,7 +96,9 @@ struct SystemZAddressingMode {
 
 // Return a mask with Count low bits set.
 static uint64_t allOnes(unsigned int Count) {
-  return Count == 0 ? 0 : (uint64_t(1) << (Count - 1) << 1) - 1;
+  if (Count > 63)
+    return UINT64_MAX;
+  return (uint64_t(1) << Count) - 1;
 }
 
 // Represents operands 2 to 5 of the ROTATE AND ... SELECTED BITS operation
