@@ -84,6 +84,7 @@ protected:
                                 StringRef &Res) const override;
   std::error_code getSymbolAddress(DataRefImpl Symb,
                                    uint64_t &Res) const override;
+  uint64_t getSymbolValue(DataRefImpl Symb) const override;
   uint32_t getSymbolAlignment(DataRefImpl Symb) const override;
   uint64_t getCommonSymbolSizeImpl(DataRefImpl Symb) const override;
   uint32_t getSymbolFlags(DataRefImpl Symb) const override;
@@ -275,28 +276,40 @@ uint32_t ELFObjectFile<ELFT>::getSectionType(SectionRef Sec) const {
 }
 
 template <class ELFT>
-std::error_code ELFObjectFile<ELFT>::getSymbolAddress(DataRefImpl Symb,
-                                                      uint64_t &Result) const {
+uint64_t ELFObjectFile<ELFT>::getSymbolValue(DataRefImpl Symb) const {
   const Elf_Sym *ESym = getSymbol(Symb);
   switch (ESym->st_shndx) {
   case ELF::SHN_COMMON:
   case ELF::SHN_UNDEF:
-    Result = UnknownAddress;
-    return std::error_code();
+    return UnknownAddress;
   case ELF::SHN_ABS:
-    Result = ESym->st_value;
-    return std::error_code();
-  default:
-    break;
+    return ESym->st_value;
   }
 
   const Elf_Ehdr *Header = EF.getHeader();
-  Result = ESym->st_value;
+  uint64_t Ret = ESym->st_value;
 
   // Clear the ARM/Thumb or microMIPS indicator flag.
   if ((Header->e_machine == ELF::EM_ARM || Header->e_machine == ELF::EM_MIPS) &&
       ESym->getType() == ELF::STT_FUNC)
-    Result &= ~1;
+    Ret &= ~1;
+
+  return Ret;
+}
+
+template <class ELFT>
+std::error_code ELFObjectFile<ELFT>::getSymbolAddress(DataRefImpl Symb,
+                                                      uint64_t &Result) const {
+  Result = getSymbolValue(Symb);
+  const Elf_Sym *ESym = getSymbol(Symb);
+  switch (ESym->st_shndx) {
+  case ELF::SHN_COMMON:
+  case ELF::SHN_UNDEF:
+  case ELF::SHN_ABS:
+    return std::error_code();
+  }
+
+  const Elf_Ehdr *Header = EF.getHeader();
 
   if (Header->e_type == ELF::ET_REL) {
     const typename ELFFile<ELFT>::Elf_Shdr * Section = EF.getSection(ESym);

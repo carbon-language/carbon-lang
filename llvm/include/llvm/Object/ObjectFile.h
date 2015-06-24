@@ -139,6 +139,11 @@ public:
   /// Returns the symbol virtual address (i.e. address at which it will be
   /// mapped).
   std::error_code getAddress(uint64_t &Result) const;
+
+  /// Return the value of the symbol depending on the object this can be an
+  /// offset or a virtual address.
+  uint64_t getValue() const;
+
   /// @brief Get the alignment of this symbol as the actual value (not log 2).
   uint32_t getAlignment() const;
   uint64_t getCommonSize() const;
@@ -200,6 +205,7 @@ protected:
                                   DataRefImpl Symb) const override;
   virtual std::error_code getSymbolAddress(DataRefImpl Symb,
                                            uint64_t &Res) const = 0;
+  virtual uint64_t getSymbolValue(DataRefImpl Symb) const = 0;
   virtual uint32_t getSymbolAlignment(DataRefImpl Symb) const;
   virtual uint64_t getCommonSymbolSizeImpl(DataRefImpl Symb) const = 0;
   virtual std::error_code getSymbolType(DataRefImpl Symb,
@@ -325,6 +331,10 @@ inline std::error_code SymbolRef::getName(StringRef &Result) const {
 
 inline std::error_code SymbolRef::getAddress(uint64_t &Result) const {
   return getObject()->getSymbolAddress(getRawDataRefImpl(), Result);
+}
+
+inline uint64_t SymbolRef::getValue() const {
+  return getObject()->getSymbolValue(getRawDataRefImpl());
 }
 
 inline uint32_t SymbolRef::getAlignment() const {

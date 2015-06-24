@@ -150,25 +150,29 @@ std::error_code COFFObjectFile::getSymbolName(DataRefImpl Ref,
   return getSymbolName(Symb, Result);
 }
 
+uint64_t COFFObjectFile::getSymbolValue(DataRefImpl Ref) const {
+  COFFSymbolRef Sym = getCOFFSymbol(Ref);
+
+  if (Sym.isAnyUndefined() || Sym.isCommon())
+    return UnknownAddress;
+
+  return Sym.getValue();
+}
+
 std::error_code COFFObjectFile::getSymbolAddress(DataRefImpl Ref,
                                                  uint64_t &Result) const {
+  Result = getSymbolValue(Ref);
   COFFSymbolRef Symb = getCOFFSymbol(Ref);
-
-  if (Symb.isAnyUndefined() || Symb.isCommon()) {
-    Result = UnknownAddress;
-    return std::error_code();
-  }
-
   int32_t SectionNumber = Symb.getSectionNumber();
-  if (COFF::isReservedSectionNumber(SectionNumber)) {
-    Result = Symb.getValue();
+
+  if (Symb.isAnyUndefined() || Symb.isCommon() ||
+      COFF::isReservedSectionNumber(SectionNumber))
     return std::error_code();
-  }
 
   const coff_section *Section = nullptr;
   if (std::error_code EC = getSection(SectionNumber, Section))
     return EC;
-  Result = Section->VirtualAddress + Symb.getValue();
+  Result += Section->VirtualAddress;
   return std::error_code();
 }
 
