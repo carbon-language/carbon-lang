@@ -99,7 +99,9 @@ void RenderFrame(InternalScopedString *buffer, const char *format, int frame_no,
       break;
     case 'M':
       // Module basename and offset, or PC.
-      if (info.module)
+      if (info.address & kExternalPCBit)
+        {} // There PCs are not meaningful.
+      else if (info.module)
         buffer->append("(%s+%p)", StripModuleName(info.module),
                        (void *)info.module_offset);
       else

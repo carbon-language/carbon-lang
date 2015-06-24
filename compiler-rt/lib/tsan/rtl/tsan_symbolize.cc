@@ -44,7 +44,7 @@ extern "C" bool __tsan_symbolize_external(uptr pc,
                                int *line, int *col)
                                SANITIZER_WEAK_ATTRIBUTE;
 
-bool __tsan_symbolize_external(uptr pc,
+bool WEAK __tsan_symbolize_external(uptr pc,
                                char *func_buf, uptr func_siz,
                                char *file_buf, uptr file_siz,
                                int *line, int *col) {
