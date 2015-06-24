@@ -2025,7 +2025,6 @@ ObjectFileELF::ParseSymbols (Symtab *symtab,
             flags);                 // Symbol flags.
         symtab->AddSymbol(dc_symbol);
     }
-    symtab->CalculateSymbolSizes();
     return i;
 }
 
@@ -2527,6 +2526,7 @@ ObjectFileELF::GetSymtab()
                 ParseTrampolineSymbols (m_symtab_ap.get(), symbol_id, reloc_header, reloc_id);
             }
         }
+        m_symtab_ap->CalculateSymbolSizes();
     }
 
     for (SectionHeaderCollIter I = m_section_headers.begin();
