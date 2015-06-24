@@ -33,7 +33,7 @@ public:
 
   bool isEOF() const { return Ptr == End; }
 
-  char peek(unsigned I = 0) const { return End - Ptr <= I ? 0 : Ptr[I]; }
+  char peek(int I = 0) const { return End - Ptr <= I ? 0 : Ptr[I]; }
 
   void advance() { ++Ptr; }
 
