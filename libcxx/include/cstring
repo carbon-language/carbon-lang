@@ -102,7 +102,9 @@ inline _LIBCPP_INLINE_VISIBILITY       void* memchr(      void* __s, int __c, si
 inline _LIBCPP_INLINE_VISIBILITY       char* strstr(      char* __s1, const char* __s2) {return ::strstr(__s1, __s2);}
 #endif
 
+#ifndef _LIBCPP_HAS_NO_THREAD_UNSAFE_C_FUNCTIONS
 using ::strtok;
+#endif
 using ::memset;
 using ::strerror;
 using ::strlen;

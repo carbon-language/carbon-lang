@@ -12,6 +12,7 @@ config.enable_global_filesystem_namespace = "@LIBCXX_ENABLE_GLOBAL_FILESYSTEM_NA
 config.enable_stdin             = "@LIBCXX_ENABLE_STDIN@"
 config.enable_stdout            = "@LIBCXX_ENABLE_STDOUT@"
 config.enable_threads           = "@LIBCXX_ENABLE_THREADS@"
+config.enable_thread_unsafe_c_functions = "@LIBCXX_ENABLE_THREAD_UNSAFE_C_FUNCTIONS@"
 config.enable_monotonic_clock   = "@LIBCXX_ENABLE_MONOTONIC_CLOCK@"
 config.cxx_abi                  = "@LIBCXX_CXX_ABI_LIBNAME@"
 config.use_sanitizer            = "@LLVM_USE_SANITIZER@"

@@ -30,10 +30,12 @@ int main()
     static_assert((std::is_same<decltype(std::difftime(t,t)), double>::value), "");
     static_assert((std::is_same<decltype(std::mktime(&tm)), std::time_t>::value), "");
     static_assert((std::is_same<decltype(std::time(&t)), std::time_t>::value), "");
+#ifndef _LIBCPP_HAS_NO_THREAD_UNSAFE_C_FUNCTIONS
     static_assert((std::is_same<decltype(std::asctime(&tm)), char*>::value), "");
     static_assert((std::is_same<decltype(std::ctime(&t)), char*>::value), "");
     static_assert((std::is_same<decltype(std::gmtime(&t)), std::tm*>::value), "");
     static_assert((std::is_same<decltype(std::localtime(&t)), std::tm*>::value), "");
+#endif
     char* c1 = 0;
     const char* c2 = 0;
     static_assert((std::is_same<decltype(std::strftime(c1,s,c2,&tm)), std::size_t>::value), "");

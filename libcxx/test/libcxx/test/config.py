@@ -372,6 +372,8 @@ class Configuration(object):
         elif not enable_monotonic_clock:
             self.lit_config.fatal('enable_monotonic_clock cannot be false when'
                                   ' enable_threads is true.')
+        self.configure_compile_flags_no_thread_unsafe_c_functions()
+
         # Use verbose output for better errors
         self.cxx.flags += ['-v']
         sysroot = self.get_lit_conf('sysroot')
@@ -430,6 +432,15 @@ class Configuration(object):
     def configure_compile_flags_no_threads(self):
         self.cxx.compile_flags += ['-D_LIBCPP_HAS_NO_THREADS']
         self.config.available_features.add('libcpp-has-no-threads')
+
+    def configure_compile_flags_no_thread_unsafe_c_functions(self):
+        enable_thread_unsafe_c_functions = self.get_lit_bool(
+            'enable_thread_unsafe_c_functions', True)
+        if not enable_thread_unsafe_c_functions:
+            self.cxx.compile_flags += [
+                '-D_LIBCPP_HAS_NO_THREAD_UNSAFE_C_FUNCTIONS']
+            self.config.available_features.add(
+                'libcpp-has-no-thread-unsafe-c-functions')
 
     def configure_compile_flags_no_monotonic_clock(self):
         self.cxx.compile_flags += ['-D_LIBCPP_HAS_NO_MONOTONIC_CLOCK']
@@ -522,7 +533,7 @@ class Configuration(object):
             else:
                 self.cxx.link_flags += ['-lgcc_s']
         elif target_platform.startswith('freebsd'):
-            self.cxx.link_flags += ['-lc', '-lm', '-lpthread', '-lgcc_s']
+            self.cxx.link_flags += ['-lc', '-lm', '-lpthread', '-lgcc_s', '-lcxxrt']
         else:
             self.lit_config.fatal("unrecognized system: %r" % target_platform)
 

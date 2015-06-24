@@ -61,10 +61,12 @@ using ::clock;
 using ::difftime;
 using ::mktime;
 using ::time;
+#ifndef _LIBCPP_HAS_NO_THREAD_UNSAFE_C_FUNCTIONS
 using ::asctime;
 using ::ctime;
 using ::gmtime;
 using ::localtime;
+#endif
 using ::strftime;
 
 _LIBCPP_END_NAMESPACE_STD

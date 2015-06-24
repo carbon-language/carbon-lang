@@ -75,12 +75,14 @@ int main()
     static_assert((std::is_same<decltype(std::div(0LL,0LL)), std::lldiv_t>::value), "");
     static_assert((std::is_same<decltype(std::ldiv(0L,0L)), std::ldiv_t>::value), "");
     static_assert((std::is_same<decltype(std::lldiv(0LL,0LL)), std::lldiv_t>::value), "");
-    static_assert((std::is_same<decltype(std::mblen("",0)), int>::value), "");
     wchar_t* pw = 0;
     const wchar_t* pwc = 0;
     char* pc = 0;
+#ifndef _LIBCPP_HAS_NO_THREAD_UNSAFE_C_FUNCTIONS
+    static_assert((std::is_same<decltype(std::mblen("",0)), int>::value), "");
     static_assert((std::is_same<decltype(std::mbtowc(pw,"",0)), int>::value), "");
     static_assert((std::is_same<decltype(std::wctomb(pc,L' ')), int>::value), "");
+#endif
     static_assert((std::is_same<decltype(std::mbstowcs(pw,"",0)), std::size_t>::value), "");
     static_assert((std::is_same<decltype(std::wcstombs(pc,pwc,0)), std::size_t>::value), "");
 }

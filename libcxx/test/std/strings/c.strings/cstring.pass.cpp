@@ -46,7 +46,9 @@ int main()
     static_assert((std::is_same<decltype(std::strspn(cpc, cpc)), std::size_t>::value), "");
 //    static_assert((std::is_same<decltype(std::strstr(cpc, cpc)), const char*>::value), "");
     static_assert((std::is_same<decltype(std::strstr(cp, cpc)), char*>::value), "");
+#ifndef _LIBCPP_HAS_NO_THREAD_UNSAFE_C_FUNCTIONS
     static_assert((std::is_same<decltype(std::strtok(cp, cpc)), char*>::value), "");
+#endif
     static_assert((std::is_same<decltype(std::memset(vp, 0, s)), void*>::value), "");
     static_assert((std::is_same<decltype(std::strerror(0)), char*>::value), "");
     static_assert((std::is_same<decltype(std::strlen(cpc)), std::size_t>::value), "");
