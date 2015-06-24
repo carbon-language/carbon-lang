@@ -44,7 +44,7 @@ set(SANITIZER_LIBCDEP_SOURCES
   sanitizer_symbolizer_libcdep.cc
   sanitizer_symbolizer_posix_libcdep.cc
   sanitizer_symbolizer_process_libcdep.cc
-  sanitizer_unwind_posix_libcdep.cc)
+  sanitizer_unwind_linux_libcdep.cc)
 
 # Explicitly list all sanitizer_common headers. Not all of these are
 # included in sanitizer_common source files, but we need to depend on

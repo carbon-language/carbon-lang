@@ -1,4 +1,4 @@
-//===-- sanitizer_unwind_posix.cc ----------------------------------------===//
+//===-- sanitizer_unwind_linux_libcdep.cc ---------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -8,11 +8,11 @@
 //===----------------------------------------------------------------------===//
 //
 // This file contains the unwind.h-based (aka "slow") stack unwinding routines
-// available to the tools on Linux, Android, FreeBSD and OS X.
+// available to the tools on Linux, Android, and FreeBSD.
 //===----------------------------------------------------------------------===//
 
 #include "sanitizer_platform.h"
-#if SANITIZER_POSIX
+#if SANITIZER_FREEBSD || SANITIZER_LINUX
 #include "sanitizer_common.h"
 #include "sanitizer_stacktrace.h"
 
@@ -155,4 +155,4 @@ void BufferedStackTrace::SlowUnwindStackWithContext(uptr pc, void *context,
 
 }  // namespace __sanitizer
 
-#endif  // SANITIZER_POSIX
+#endif  // SANITIZER_FREEBSD || SANITIZER_LINUX
