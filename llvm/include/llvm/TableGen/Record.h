@@ -1161,7 +1161,7 @@ class Record {
   // Tracks Record instances. Not owned by Record.
   RecordKeeper &TrackedRecords;
 
-  DefInit *TheInit;
+  std::unique_ptr<DefInit> TheInit;
   bool IsAnonymous;
 
   // Class-instance values can be used by other defs.  For example, Struct<i>
@@ -1184,8 +1184,7 @@ public:
   explicit Record(Init *N, ArrayRef<SMLoc> locs, RecordKeeper &records,
                   bool Anonymous = false) :
     ID(LastID++), Name(N), Locs(locs.begin(), locs.end()),
-    TrackedRecords(records), TheInit(nullptr), IsAnonymous(Anonymous),
-    ResolveFirst(false) {
+    TrackedRecords(records), IsAnonymous(Anonymous), ResolveFirst(false) {
     init();
   }
   explicit Record(const std::string &N, ArrayRef<SMLoc> locs,
@@ -1194,12 +1193,13 @@ public:
 
 
   // When copy-constructing a Record, we must still guarantee a globally unique
-  // ID number.  All other fields can be copied normally.
+  // ID number.  Don't copy TheInit either since it's owned by the original
+  // record. All other fields can be copied normally.
   Record(const Record &O) :
     ID(LastID++), Name(O.Name), Locs(O.Locs), TemplateArgs(O.TemplateArgs),
     Values(O.Values), SuperClasses(O.SuperClasses),
     SuperClassRanges(O.SuperClassRanges), TrackedRecords(O.TrackedRecords),
-    TheInit(O.TheInit), IsAnonymous(O.IsAnonymous),
+    IsAnonymous(O.IsAnonymous),
     ResolveFirst(O.ResolveFirst) { }
 
   static unsigned getNewUID() { return LastID++; }
