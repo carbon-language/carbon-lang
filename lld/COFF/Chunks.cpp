@@ -145,28 +145,18 @@ bool SectionChunk::isCOMDAT() const {
   return Header->Characteristics & IMAGE_SCN_LNK_COMDAT;
 }
 
-// Prints "Discarded <symbol>" for all external function symbols.
 void SectionChunk::printDiscardedMessage() {
-  uint32_t E = File->getCOFFObj()->getNumberOfSymbols();
-  for (uint32_t I = 0; I < E; ++I) {
-    auto SrefOrErr = File->getCOFFObj()->getSymbol(I);
-    COFFSymbolRef Sym = SrefOrErr.get();
-    if (uint32_t(Sym.getSectionNumber()) != SectionIndex)
-      continue;
-    if (!Sym.isFunctionDefinition())
-      continue;
-    StringRef SymbolName;
-    File->getCOFFObj()->getSymbolName(Sym, SymbolName);
-    llvm::outs() << "Discarded " << SymbolName << " from "
-                 << File->getShortName() << "\n";
-    I += Sym.getNumberOfAuxSymbols();
-  }
+  llvm::dbgs() << "Discarded " << Sym->getName() << "\n";
 }
 
 SectionRef SectionChunk::getSectionRef() {
   DataRefImpl Ref;
   Ref.p = uintptr_t(Header);
   return SectionRef(Ref, File->getCOFFObj());
+}
+
+StringRef SectionChunk::getDebugName() {
+  return Sym->getName();
 }
 
 CommonChunk::CommonChunk(const COFFSymbolRef S) : Sym(S) {

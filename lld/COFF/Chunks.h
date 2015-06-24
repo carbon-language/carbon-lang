@@ -27,6 +27,7 @@ using llvm::object::coff_section;
 using llvm::sys::fs::file_magic;
 
 class Defined;
+class DefinedCOMDAT;
 class DefinedImportData;
 class ObjectFile;
 class OutputSection;
@@ -96,6 +97,10 @@ public:
   // Collect all locations that contain absolute addresses for base relocations.
   virtual void getBaserels(std::vector<uint32_t> *Res, Defined *ImageBase) {}
 
+  // Returns a human-readable name of this chunk. Chunks are unnamed chunks of
+  // bytes, so this is used only for logging or debugging.
+  virtual StringRef getDebugName() { return ""; }
+
 protected:
   // The RVA of this chunk in the output. The writer sets a value.
   uint64_t RVA = 0;
@@ -133,6 +138,9 @@ public:
   // and its children are treated as a group by the garbage collector.
   void addAssociative(SectionChunk *Child);
 
+  StringRef getDebugName() override;
+  void setSymbol(DefinedCOMDAT *S) { if (!Sym) Sym = S; }
+
 private:
   void mark() override;
   SectionRef getSectionRef();
@@ -145,6 +153,10 @@ private:
   uint32_t SectionIndex;
   StringRef SectionName;
   std::vector<Chunk *> AssocChildren;
+
+  // Chunks are basically unnamed chunks of bytes.
+  // Symbols are associated for debugging and logging purposs only.
+  DefinedCOMDAT *Sym = nullptr;
 };
 
 // A chunk for common symbols. Common chunks don't have actual data.
