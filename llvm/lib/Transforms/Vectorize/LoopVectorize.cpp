@@ -4642,10 +4642,9 @@ LoopVectorizationCostModel::selectVectorizationFactor(bool OptForSize) {
 
     if (VF == 0)
       VF = MaxVectorSize;
-
-    // If the trip count that we found modulo the vectorization factor is not
-    // zero then we require a tail.
-    if (VF < 2) {
+    else {
+      // If the trip count that we found modulo the vectorization factor is not
+      // zero then we require a tail.
       emitAnalysis(VectorizationReport() <<
                    "cannot optimize for size and vectorize at the "
                    "same time. Enable vectorization of this loop "
