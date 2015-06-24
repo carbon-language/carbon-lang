@@ -105,12 +105,6 @@ StripDebug("strip-debug",
            cl::desc("Strip debugger symbol info from translation unit"));
 
 static cl::opt<bool>
-StripValueNames("strip-value-names", cl::desc("Remove llvm value names"));
-
-static cl::opt<bool>
-NameValues("name-values", cl::desc("Give anonymous llvm values a name"));
-
-static cl::opt<bool>
 DisableInline("disable-inlining", cl::desc("Do not run the inliner pass"));
 
 static cl::opt<bool>
@@ -287,37 +281,6 @@ static TargetMachine* GetTargetMachine(Triple TheTriple, StringRef CPUStr,
                                         GetCodeGenOptLevel());
 }
 
-static void removeValueNames(Module &Mod) {
-  for (Function &F : Mod) {
-    for (BasicBlock &BB : F) {
-      BB.setName("");
-      for (Instruction &I : BB)
-        I.setName("");
-    }
-  }
-}
-
-static void nameValuesInFunction(Function &F) {
-  bool FirstBB = true;
-  for (BasicBlock &BB : F) {
-    if (!BB.hasName())
-      BB.setName(FirstBB ? "entry" : "BB");
-    FirstBB = false;
-
-    for (Instruction &I : BB) {
-      if (I.getType()->isVoidTy())
-        continue;
-      if (!I.hasName())
-        I.setName("v");
-    }
-  }
-}
-
-static void nameValues(Module &Mod) {
-  for (Function &F : Mod)
-    nameValuesInFunction(F);
-}
-
 #ifdef LINK_POLLY_INTO_TOOLS
 namespace polly {
 void initializePollyPasses(llvm::PassRegistry &Registry);
@@ -387,12 +350,6 @@ int main(int argc, char **argv) {
   // Strip debug info before running the verifier.
   if (StripDebug)
     StripDebugInfo(*M);
-
-  if (StripValueNames)
-    removeValueNames(*M);
-
-  if (NameValues)
-    nameValues(*M);
 
   // Immediately run the verifier to catch any problems before starting up the
   // pass pipelines.  Otherwise we can crash on broken code during
