@@ -756,7 +756,7 @@ bool Driver::HandleImmediateArgs(const Compilation &C) {
       llvm::outs() << ':';
       // Interpretation of leading '=' is needed only for NetBSD.
       if (Path[0] == '=')
-        llvm::outs() << sysroot << (Path.c_str() + 1);
+        llvm::outs() << sysroot << Path.substr(1);
       else
         llvm::outs() << Path;
     }
@@ -1835,14 +1835,10 @@ const char *Driver::GetNamedOutputPath(Compilation &C,
 std::string Driver::GetFilePath(const char *Name, const ToolChain &TC) const {
   // Respect a limited subset of the '-Bprefix' functionality in GCC by
   // attempting to use this prefix when looking for file paths.
-  for (Driver::prefix_list::const_iterator it = PrefixDirs.begin(),
-       ie = PrefixDirs.end(); it != ie; ++it) {
-    std::string Dir(*it);
+  for (const std::string &Dir : PrefixDirs) {
     if (Dir.empty())
       continue;
-    if (Dir[0] == '=')
-      Dir = SysRoot + Dir.substr(1);
-    SmallString<128> P(Dir);
+    SmallString<128> P(Dir[0] == '=' ? SysRoot + Dir.substr(1) : Dir);
     llvm::sys::path::append(P, Name);
     if (llvm::sys::fs::exists(Twine(P)))
       return P.str();
@@ -1853,15 +1849,10 @@ std::string Driver::GetFilePath(const char *Name, const ToolChain &TC) const {
   if (llvm::sys::fs::exists(Twine(P)))
     return P.str();
 
-  const ToolChain::path_list &List = TC.getFilePaths();
-  for (ToolChain::path_list::const_iterator
-         it = List.begin(), ie = List.end(); it != ie; ++it) {
-    std::string Dir(*it);
+  for (const std::string &Dir : TC.getFilePaths()) {
     if (Dir.empty())
       continue;
-    if (Dir[0] == '=')
-      Dir = SysRoot + Dir.substr(1);
-    SmallString<128> P(Dir);
+    SmallString<128> P(Dir[0] == '=' ? SysRoot + Dir.substr(1) : Dir);
     llvm::sys::path::append(P, Name);
     if (llvm::sys::fs::exists(Twine(P)))
       return P.str();
