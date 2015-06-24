@@ -624,10 +624,16 @@ TEST_F(FormatTestJS, RegexLiteralSpecialCharacters) {
   verifyFormat("var regex = /\a\\//g;");
   verifyFormat("var regex = /a\\//;\n"
                "var x = 0;");
+  EXPECT_EQ("var regex = /'/g;", format("var regex = /'/g ;"));
+  EXPECT_EQ("var regex = /'/g;  //'", format("var regex = /'/g ; //'"));
   EXPECT_EQ("var regex = /\\/*/;\n"
             "var x = 0;",
             format("var regex = /\\/*/;\n"
                    "var x=0;"));
+  verifyFormat("var regex = /\"/;", getGoogleJSStyleWithColumns(16));
+  verifyFormat("var regex =\n"
+               "    /\"/;",
+               getGoogleJSStyleWithColumns(15));
 }
 
 TEST_F(FormatTestJS, RegexLiteralModifiers) {

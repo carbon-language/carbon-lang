@@ -738,19 +738,33 @@ private:
   bool tryMergeJSRegexLiteral() {
     if (Tokens.size() < 2)
       return false;
+
+    // If this is a string literal with a slash inside, compute the slash's
+    // offset and try to find the beginning of the regex literal.
+    // Also look at tok::unknown, as it can be an unterminated char literal.
+    size_t SlashInStringPos = StringRef::npos;
+    if (Tokens.back()->isOneOf(tok::string_literal, tok::char_constant,
+                               tok::unknown)) {
+      // Start search from position 1 as otherwise, this is an unknown token
+      // for an unterminated /*-comment which is handled elsewhere.
+      SlashInStringPos = Tokens.back()->TokenText.find('/', 1);
+      if (SlashInStringPos == StringRef::npos)
+        return false;
+    }
+
     // If a regex literal ends in "\//", this gets represented by an unknown
     // token "\" and a comment.
     bool MightEndWithEscapedSlash =
         Tokens.back()->is(tok::comment) &&
         Tokens.back()->TokenText.startswith("//") &&
         Tokens[Tokens.size() - 2]->TokenText == "\\";
-    if (!MightEndWithEscapedSlash &&
+    if (!MightEndWithEscapedSlash && SlashInStringPos == StringRef::npos &&
         (Tokens.back()->isNot(tok::slash) ||
          (Tokens[Tokens.size() - 2]->is(tok::unknown) &&
           Tokens[Tokens.size() - 2]->TokenText == "\\")))
       return false;
+
     unsigned TokenCount = 0;
-    unsigned LastColumn = Tokens.back()->OriginalColumn;
     for (auto I = Tokens.rbegin() + 1, E = Tokens.rend(); I != E; ++I) {
       ++TokenCount;
       if (I[0]->isOneOf(tok::slash, tok::slashequal) && I + 1 != E &&
@@ -758,11 +772,17 @@ private:
                          tok::exclaim, tok::l_square, tok::colon, tok::comma,
                          tok::question, tok::kw_return) ||
            I[1]->isBinaryOperator())) {
+        unsigned LastColumn = Tokens.back()->OriginalColumn;
+        SourceLocation Loc = Tokens.back()->Tok.getLocation();
         if (MightEndWithEscapedSlash) {
           // This regex literal ends in '\//'. Skip past the '//' of the last
           // token and re-start lexing from there.
-          SourceLocation Loc = Tokens.back()->Tok.getLocation();
           resetLexer(SourceMgr.getFileOffset(Loc) + 2);
+        } else if (SlashInStringPos != StringRef::npos) {
+          // This regex literal ends in a string_literal with a slash inside.
+          // Calculate end column and reset lexer appropriately.
+          resetLexer(SourceMgr.getFileOffset(Loc) + SlashInStringPos + 1);
+          LastColumn += SlashInStringPos;
         }
         Tokens.resize(Tokens.size() - TokenCount);
         Tokens.back()->Tok.setKind(tok::unknown);
