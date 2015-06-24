@@ -201,7 +201,11 @@ protected:
   /// symbol references.
   bool handleSectionWithNoSymbols(const Elf_Shdr *shdr,
                                   std::vector<Elf_Sym_Iter> &syms) const {
-    return shdr && (shdr->sh_type == llvm::ELF::SHT_PROGBITS) && syms.empty();
+    return shdr &&
+           (shdr->sh_type == llvm::ELF::SHT_PROGBITS ||
+            shdr->sh_type == llvm::ELF::SHT_INIT_ARRAY ||
+            shdr->sh_type == llvm::ELF::SHT_FINI_ARRAY) &&
+           syms.empty();
   }
 
   /// Handle creation of atoms for .gnu.linkonce sections.

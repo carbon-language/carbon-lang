@@ -10,6 +10,11 @@
 #
 # int
 # main() { return (0); }
+#
+# Note: both STT_OBJECT and STT_SECTION for .init_array are commented in yaml
+# declaration to check if lld correct adds the object's .init_array when the
+# section has no symbol (some compilers may create object with this behavior,
+# specially for C++ global constructors).
 
 #RUN: yaml2obj -format=elf %s -o=%t.o
 #RUN: lld -flavor gnu -target x86_64 %t.o -o %t -e=main
@@ -90,10 +95,10 @@ Symbols:
       Section:         .text
       Value:           0x0000000000000020
       Size:            0x0000000000000006
-    - Name:            init_array
-      Type:            STT_OBJECT
-      Section:         .init_array
-      Size:            0x0000000000000008
+#    - Name:            init_array
+#      Type:            STT_OBJECT
+#      Section:         .init_array
+#      Size:            0x0000000000000008
     - Name:            .text
       Type:            STT_SECTION
       Section:         .text
@@ -103,9 +108,9 @@ Symbols:
     - Name:            .bss
       Type:            STT_SECTION
       Section:         .bss
-    - Name:            .init_array
-      Type:            STT_SECTION
-      Section:         .init_array
+#    - Name:            .init_array
+#      Type:            STT_SECTION
+#      Section:         .init_array
     - Name:            .comment
       Type:            STT_SECTION
       Section:         .comment
