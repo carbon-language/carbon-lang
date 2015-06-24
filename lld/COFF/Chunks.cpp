@@ -10,6 +10,7 @@
 #include "Chunks.h"
 #include "InputFiles.h"
 #include "Writer.h"
+#include "llvm/ADT/Hashing.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Object/COFF.h"
 #include "llvm/Support/COFF.h"
@@ -27,7 +28,7 @@ namespace lld {
 namespace coff {
 
 SectionChunk::SectionChunk(ObjectFile *F, const coff_section *H)
-    : File(F), Header(H) {
+    : File(F), Ptr(this), Header(H) {
   // Initialize SectionName.
   File->getCOFFObj()->getSectionName(Header, SectionName);
 
@@ -146,10 +147,16 @@ bool SectionChunk::isCOMDAT() const {
 }
 
 void SectionChunk::printDiscardedMessage() {
-  llvm::dbgs() << "Discarded " << Sym->getName() << "\n";
+  if (this == Ptr) {
+    // Removed by dead-stripping.
+    llvm::dbgs() << "Discarded " << Sym->getName() << "\n";
+  } else {
+    // Removed by ICF.
+    llvm::dbgs() << "Replaced " << Sym->getName() << "\n";
+  }
 }
 
-SectionRef SectionChunk::getSectionRef() {
+SectionRef SectionChunk::getSectionRef() const {
   DataRefImpl Ref;
   Ref.p = uintptr_t(Header);
   return SectionRef(Ref, File->getCOFFObj());
@@ -157,6 +164,70 @@ SectionRef SectionChunk::getSectionRef() {
 
 StringRef SectionChunk::getDebugName() {
   return Sym->getName();
+}
+
+uint64_t SectionChunk::getHash() const {
+  ArrayRef<uint8_t> A;
+  File->getCOFFObj()->getSectionContents(Header, A);
+  return hash_combine(getPermissions(), llvm::hash_value(SectionName),
+                      uint32_t(Header->SizeOfRawData),
+                      uint32_t(Header->NumberOfRelocations),
+                      hash_combine_range(A.data(), A.data() + A.size()));
+}
+
+// Returns true if this and a given chunk are identical COMDAT sections.
+bool SectionChunk::equals(const SectionChunk *X) const {
+  // Compare headers
+  if (getPermissions() != X->getPermissions())
+    return false;
+  if (SectionName != X->SectionName)
+    return false;
+  if (Header->SizeOfRawData != X->Header->SizeOfRawData)
+    return false;
+  if (Header->NumberOfRelocations != X->Header->NumberOfRelocations)
+    return false;
+
+  // Compare data
+  ArrayRef<uint8_t> A, B;
+  File->getCOFFObj()->getSectionContents(Header, A);
+  X->File->getCOFFObj()->getSectionContents(X->Header, B);
+  assert(A.size() == B.size());
+  if (memcmp(A.data(), B.data(), A.size()))
+    return false;
+
+  // Compare relocations
+  auto Range1 = getSectionRef().relocations();
+  auto Range2 = X->getSectionRef().relocations();
+  auto End = Range1.end();
+  for (auto I = Range1.begin(), J = Range2.begin(); I != End; ++I, ++J) {
+    const coff_relocation *Rel1 = File->getCOFFObj()->getCOFFRelocation(*I);
+    const coff_relocation *Rel2 = X->File->getCOFFObj()->getCOFFRelocation(*J);
+    if (Rel1->Type != Rel2->Type)
+      return false;
+    if (Rel1->VirtualAddress != Rel2->VirtualAddress)
+      return false;
+    SymbolBody *B1 = File->getSymbolBody(Rel1->SymbolTableIndex);
+    SymbolBody *B2 = X->File->getSymbolBody(Rel2->SymbolTableIndex);
+    if (auto *C1 = dyn_cast<DefinedCOMDAT>(B1))
+      if (auto *C2 = dyn_cast<DefinedCOMDAT>(B2))
+        if (C1->getChunk() == C2->getChunk())
+          continue;
+    if (B1 != B2)
+      return false;
+  }
+  return true;
+}
+
+// Returns a pointer to this chunk or its replacement.
+SectionChunk *SectionChunk::repl() {
+  while (Ptr != Ptr->Ptr)
+    Ptr = Ptr->Ptr;
+  return Ptr;
+}
+
+void SectionChunk::replaceWith(SectionChunk *Other) {
+  Ptr = Other;
+  Live = false;
 }
 
 CommonChunk::CommonChunk(const COFFSymbolRef S) : Sym(S) {

@@ -20,6 +20,7 @@
 #include <cstdio>
 #include <functional>
 #include <map>
+#include <unordered_set>
 #include <utility>
 
 using namespace llvm;
@@ -115,8 +116,47 @@ void Writer::markLive() {
       C->markLive();
 }
 
+struct Hasher {
+  size_t operator()(const SectionChunk *C) const { return C->getHash(); }
+};
+
+struct Equals {
+  bool operator()(const SectionChunk *A, const SectionChunk *B) const {
+    return A->equals(B);
+  }
+};
+
+// Merge identical COMDAT sections.
+// Two sections are considered as identical when their section headers,
+// contents and relocations are all the same.
+void Writer::dedupCOMDATs() {
+  std::vector<SectionChunk *> V;
+  for (Chunk *C : Symtab->getChunks())
+    if (C->isCOMDAT() && C->isLive())
+      V.push_back(reinterpret_cast<SectionChunk *>(C));
+
+  std::unordered_set<SectionChunk *, Hasher, Equals> Set;
+  bool removed = false;
+  for (SectionChunk *C : V) {
+    auto P = Set.insert(C);
+    if (P.second)
+      continue;
+    SectionChunk *Existing = *P.first;
+    C->replaceWith(Existing);
+    removed = true;
+  }
+  // By merging sections, two relocations that originally pointed to
+  // different locations can now point to the same location.
+  // So, repeat the process until a convegence is obtained.
+  if (removed)
+    dedupCOMDATs();
+}
+
 // Create output section objects and add them to OutputSections.
 void Writer::createSections() {
+  if (Config->ICF)
+    dedupCOMDATs();
+
   // First, bin chunks by name.
   std::map<StringRef, std::vector<Chunk *>> Map;
   for (Chunk *C : Symtab->getChunks()) {

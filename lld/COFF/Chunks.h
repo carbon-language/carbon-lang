@@ -140,13 +140,26 @@ public:
   StringRef getDebugName() override;
   void setSymbol(DefinedCOMDAT *S) { if (!Sym) Sym = S; }
 
+  uint64_t getHash() const;
+  bool equals(const SectionChunk *Other) const;
+
+  // Used for ICF (Identical COMDAT Folding)
+  SectionChunk *repl();
+  void replaceWith(SectionChunk *Other);
+
 private:
   void mark() override;
-  SectionRef getSectionRef();
+  SectionRef getSectionRef() const;
   void applyReloc(uint8_t *Buf, const coff_relocation *Rel);
 
   // A file this chunk was created from.
   ObjectFile *File;
+
+  // A pointer pointing to a replacement for this chunk.
+  // Initially it points to "this" object. If this chunk is merged
+  // with other chunk by ICF, it points to another chunk,
+  // and this chunk is considrered as dead.
+  SectionChunk *Ptr;
 
   const coff_section *Header;
   StringRef SectionName;

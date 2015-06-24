@@ -216,11 +216,10 @@ SymbolBody *ObjectFile::createSymbolBody(COFFSymbolRef Sym, const void *AuxP,
   if (Chunk *C = SparseChunks[Sym.getSectionNumber()]) {
     if (!C->isCOMDAT())
       return new (Alloc) DefinedRegular(COFFObj.get(), Sym, C);
-    auto *B = new (Alloc) DefinedCOMDAT(COFFObj.get(), Sym, C);
-    if (Sym.getValue() == 0 && !AuxP) {
-      auto *SC = reinterpret_cast<SectionChunk *>(C);
+    auto *SC = reinterpret_cast<SectionChunk *>(C);
+    auto *B = new (Alloc) DefinedCOMDAT(COFFObj.get(), Sym, SC);
+    if (Sym.getValue() == 0 && !AuxP)
       SC->setSymbol(B);
-    }
     return B;
   }
   return nullptr;

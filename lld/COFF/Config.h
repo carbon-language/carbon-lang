@@ -62,6 +62,9 @@ struct Configuration {
   std::vector<Export> Exports;
   std::set<StringRef> DelayLoads;
 
+  // Used for /opt:icf
+  bool ICF = false;
+
   // Options for manifest files.
   ManifestKind Manifest = SideBySide;
   int ManifestID = 1;

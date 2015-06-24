@@ -1,0 +1,11 @@
+# RUN: yaml2obj < %p/Inputs/icf1.yaml > %t1.obj
+# RUN: yaml2obj < %p/Inputs/icf2.yaml > %t2.obj
+# RUN: yaml2obj < %p/Inputs/icf3.yaml > %t3.obj
+#
+# RUN: lld -flavor link2 /out:%t.exe %t1.obj %t2.obj %t3.obj \
+# RUN:   /opt:icf /include:icf2 /include:icf3 /verbose >& %t.log
+# RUN: FileCheck %s < %t.log
+
+CHECK-NOT: Replaced mainCRTStartup
+CHECK:     Replaced icf2
+CHECK-NOT: Replaced icf3

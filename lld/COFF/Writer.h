@@ -89,6 +89,7 @@ private:
 
   OutputSection *findSection(StringRef Name);
   OutputSection *createSection(StringRef Name);
+  void dedupCOMDATs();
   void addBaserels(OutputSection *Dest);
   void addBaserelBlocks(OutputSection *Dest, std::vector<uint32_t> &V);
 
