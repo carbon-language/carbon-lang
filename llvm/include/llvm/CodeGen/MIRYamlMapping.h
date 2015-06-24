@@ -97,6 +97,13 @@ struct MachineFunction {
   unsigned Alignment = 0;
   bool ExposesReturnsTwice = false;
   bool HasInlineAsm = false;
+  // Register information
+  bool IsSSA = false;
+  bool TracksRegLiveness = false;
+  bool TracksSubRegLiveness = false;
+  // TODO: Serialize virtual register definitions.
+  // TODO: Serialize the various register masks.
+  // TODO: Serialize live in registers.
 
   std::vector<MachineBasicBlock> BasicBlocks;
 };
@@ -107,6 +114,9 @@ template <> struct MappingTraits<MachineFunction> {
     YamlIO.mapOptional("alignment", MF.Alignment);
     YamlIO.mapOptional("exposesReturnsTwice", MF.ExposesReturnsTwice);
     YamlIO.mapOptional("hasInlineAsm", MF.HasInlineAsm);
+    YamlIO.mapOptional("isSSA", MF.IsSSA);
+    YamlIO.mapOptional("tracksRegLiveness", MF.TracksRegLiveness);
+    YamlIO.mapOptional("tracksSubRegLiveness", MF.TracksSubRegLiveness);
     YamlIO.mapOptional("body", MF.BasicBlocks);
   }
 };

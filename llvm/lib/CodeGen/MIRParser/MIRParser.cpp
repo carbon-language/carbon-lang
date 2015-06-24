@@ -19,6 +19,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/AsmParser/Parser.h"
 #include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/MIRYamlMapping.h"
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/DiagnosticInfo.h"
@@ -82,6 +83,9 @@ public:
   /// Return true if an error occurred.
   bool initializeMachineBasicBlock(MachineFunction &MF, MachineBasicBlock &MBB,
                                    const yaml::MachineBasicBlock &YamlMBB);
+
+  bool initializeRegisterInfo(MachineRegisterInfo &RegInfo,
+                              const yaml::MachineFunction &YamlMF);
 
 private:
   /// Return a MIR diagnostic converted from an MI string diagnostic.
@@ -212,6 +216,9 @@ bool MIRParserImpl::initializeMachineFunction(MachineFunction &MF) {
     MF.setAlignment(YamlMF.Alignment);
   MF.setExposesReturnsTwice(YamlMF.ExposesReturnsTwice);
   MF.setHasInlineAsm(YamlMF.HasInlineAsm);
+  if (initializeRegisterInfo(MF.getRegInfo(), YamlMF))
+    return true;
+
   const auto &F = *MF.getFunction();
   for (const auto &YamlMBB : YamlMF.BasicBlocks) {
     const BasicBlock *BB = nullptr;
@@ -247,6 +254,18 @@ bool MIRParserImpl::initializeMachineBasicBlock(
     reportDiagnostic(diagFromMIStringDiag(Error, MISource.SourceRange));
     return true;
   }
+  return false;
+}
+
+bool MIRParserImpl::initializeRegisterInfo(
+    MachineRegisterInfo &RegInfo, const yaml::MachineFunction &YamlMF) {
+  assert(RegInfo.isSSA());
+  if (!YamlMF.IsSSA)
+    RegInfo.leaveSSA();
+  assert(RegInfo.tracksLiveness());
+  if (!YamlMF.TracksRegLiveness)
+    RegInfo.invalidateLiveness();
+  RegInfo.enableSubRegLiveness(YamlMF.TracksSubRegLiveness);
   return false;
 }
 

@@ -15,6 +15,7 @@
 #include "MIRPrinter.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/MIRYamlMapping.h"
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/Module.h"
@@ -38,6 +39,7 @@ public:
 
   void print(const MachineFunction &MF);
 
+  void convert(yaml::MachineFunction &MF, const MachineRegisterInfo &RegInfo);
   void convert(yaml::MachineBasicBlock &YamlMBB, const MachineBasicBlock &MBB);
 };
 
@@ -78,6 +80,7 @@ void MIRPrinter::print(const MachineFunction &MF) {
   YamlMF.Alignment = MF.getAlignment();
   YamlMF.ExposesReturnsTwice = MF.exposesReturnsTwice();
   YamlMF.HasInlineAsm = MF.hasInlineAsm();
+  convert(YamlMF, MF.getRegInfo());
   for (const auto &MBB : MF) {
     yaml::MachineBasicBlock YamlMBB;
     convert(YamlMBB, MBB);
@@ -85,6 +88,13 @@ void MIRPrinter::print(const MachineFunction &MF) {
   }
   yaml::Output Out(OS);
   Out << YamlMF;
+}
+
+void MIRPrinter::convert(yaml::MachineFunction &MF,
+                         const MachineRegisterInfo &RegInfo) {
+  MF.IsSSA = RegInfo.isSSA();
+  MF.TracksRegLiveness = RegInfo.tracksLiveness();
+  MF.TracksSubRegLiveness = RegInfo.subRegLivenessEnabled();
 }
 
 void MIRPrinter::convert(yaml::MachineBasicBlock &YamlMBB,
