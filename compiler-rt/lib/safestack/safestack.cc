@@ -19,6 +19,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <sys/resource.h>
+#include <sys/types.h>
 #include <sys/user.h>
 
 #include "interception/interception.h"
