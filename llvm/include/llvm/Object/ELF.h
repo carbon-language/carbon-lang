@@ -401,7 +401,7 @@ public:
 
   uint64_t getNumSections() const;
   uintX_t getStringTableIndex() const;
-  ELF::Elf64_Word getSymbolTableIndex(const Elf_Sym *symb) const;
+  ELF::Elf64_Word getExtendedSymbolTableIndex(const Elf_Sym *symb) const;
   const Elf_Ehdr *getHeader() const { return Header; }
   const Elf_Shdr *getSection(const Elf_Sym *symb) const;
   const Elf_Shdr *getSection(uint32_t Index) const;
@@ -510,10 +510,10 @@ void ELFFile<ELFT>::LoadVersionMap() const {
 }
 
 template <class ELFT>
-ELF::Elf64_Word ELFFile<ELFT>::getSymbolTableIndex(const Elf_Sym *symb) const {
-  if (symb->st_shndx == ELF::SHN_XINDEX)
-    return ExtendedSymbolTable.lookup(symb);
-  return symb->st_shndx;
+ELF::Elf64_Word
+ELFFile<ELFT>::getExtendedSymbolTableIndex(const Elf_Sym *symb) const {
+  assert(symb->st_shndx == ELF::SHN_XINDEX);
+  return ExtendedSymbolTable.lookup(symb);
 }
 
 template <class ELFT>

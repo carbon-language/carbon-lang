@@ -278,7 +278,7 @@ template <class ELFT>
 std::error_code ELFObjectFile<ELFT>::getSymbolAddress(DataRefImpl Symb,
                                                       uint64_t &Result) const {
   const Elf_Sym *ESym = getSymbol(Symb);
-  switch (EF.getSymbolTableIndex(ESym)) {
+  switch (ESym->st_shndx) {
   case ELF::SHN_COMMON:
   case ELF::SHN_UNDEF:
     Result = UnknownAddress;
@@ -383,11 +383,10 @@ uint32_t ELFObjectFile<ELFT>::getSymbolFlags(DataRefImpl Symb) const {
       EIter == EF.begin_symbols() || EIter == EF.begin_dynamic_symbols())
     Result |= SymbolRef::SF_FormatSpecific;
 
-  if (EF.getSymbolTableIndex(ESym) == ELF::SHN_UNDEF)
+  if (ESym->st_shndx == ELF::SHN_UNDEF)
     Result |= SymbolRef::SF_Undefined;
 
-  if (ESym->getType() == ELF::STT_COMMON ||
-      EF.getSymbolTableIndex(ESym) == ELF::SHN_COMMON)
+  if (ESym->getType() == ELF::STT_COMMON || ESym->st_shndx == ELF::SHN_COMMON)
     Result |= SymbolRef::SF_Common;
 
   if (isExportedToOtherDSO(ESym))

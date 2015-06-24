@@ -156,9 +156,7 @@ getSectionNameIndex(const ELFO &Obj, typename ELFO::Elf_Sym_Iter Symbol,
     SectionName = "Reserved";
   else {
     if (SectionIndex == SHN_XINDEX)
-      SectionIndex = Obj.getSymbolTableIndex(&*Symbol);
-    assert(SectionIndex != SHN_XINDEX &&
-           "getSymbolTableIndex should handle this");
+      SectionIndex = Obj.getExtendedSymbolTableIndex(&*Symbol);
     const typename ELFO::Elf_Shdr *Sec = Obj.getSection(SectionIndex);
     SectionName = errorOrDefault(Obj.getSectionName(Sec));
   }
