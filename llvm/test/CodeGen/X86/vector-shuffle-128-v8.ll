@@ -1384,14 +1384,14 @@ define <8 x i16> @shuffle_v8i16_8zzzzzzz(i16 %i) {
 define <8 x i16> @shuffle_v8i16_z8zzzzzz(i16 %i) {
 ; SSE-LABEL: shuffle_v8i16_z8zzzzzz:
 ; SSE:       # BB#0:
-; SSE-NEXT:    pxor   %xmm0, %xmm0
+; SSE-NEXT:    pxor %xmm0, %xmm0
 ; SSE-NEXT:    pinsrw $1, %edi, %xmm0
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: shuffle_v8i16_z8zzzzzz:
 ; AVX:       # BB#0:
-; AVX-NEXT:    vpxor   %xmm0, %xmm0
-; AVX-NEXT:    vpinsrw $1, %edi, %xmm0
+; AVX-NEXT:    vpxor %xmm0, %xmm0, %xmm0
+; AVX-NEXT:    vpinsrw $1, %edi, %xmm0, %xmm0
 ; AVX-NEXT:    retq
   %a = insertelement <8 x i16> undef, i16 %i, i32 0
   %shuffle = shufflevector <8 x i16> zeroinitializer, <8 x i16> %a, <8 x i32> <i32 2, i32 8, i32 3, i32 7, i32 6, i32 5, i32 4, i32 3>
@@ -1401,14 +1401,14 @@ define <8 x i16> @shuffle_v8i16_z8zzzzzz(i16 %i) {
 define <8 x i16> @shuffle_v8i16_zzzzz8zz(i16 %i) {
 ; SSE-LABEL: shuffle_v8i16_zzzzz8zz:
 ; SSE:       # BB#0:
-; SSE-NEXT:    pxor   %xmm0, %xmm0
+; SSE-NEXT:    pxor %xmm0, %xmm0
 ; SSE-NEXT:    pinsrw $5, %edi, %xmm0
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: shuffle_v8i16_zzzzz8zz:
 ; AVX:       # BB#0:
-; AVX-NEXT:    vpxor   %xmm0, %xmm0
-; AVX-NEXT:    vpinsrw $5, %edi, %xmm0
+; AVX-NEXT:    vpxor %xmm0, %xmm0, %xmm0
+; AVX-NEXT:    vpinsrw $5, %edi, %xmm0, %xmm0
 ; AVX-NEXT:    retq
   %a = insertelement <8 x i16> undef, i16 %i, i32 0
   %shuffle = shufflevector <8 x i16> zeroinitializer, <8 x i16> %a, <8 x i32> <i32 0, i32 0, i32 0, i32 0, i32 0, i32 8, i32 0, i32 0>
@@ -1418,14 +1418,14 @@ define <8 x i16> @shuffle_v8i16_zzzzz8zz(i16 %i) {
 define <8 x i16> @shuffle_v8i16_zuuzuuz8(i16 %i) {
 ; SSE-LABEL: shuffle_v8i16_zuuzuuz8:
 ; SSE:       # BB#0:
-; SSE-NEXT:    pxor   %xmm0, %xmm0
+; SSE-NEXT:    pxor %xmm0, %xmm0
 ; SSE-NEXT:    pinsrw $7, %edi, %xmm0
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: shuffle_v8i16_zuuzuuz8:
 ; AVX:       # BB#0:
-; AVX-NEXT:    vpxor   %xmm0, %xmm0
-; AVX-NEXT:    vpinsrw $7, %edi, %xmm0
+; AVX-NEXT:    vpxor %xmm0, %xmm0, %xmm0
+; AVX-NEXT:    vpinsrw $7, %edi, %xmm0, %xmm0
 ; AVX-NEXT:    retq
   %a = insertelement <8 x i16> undef, i16 %i, i32 0
   %shuffle = shufflevector <8 x i16> zeroinitializer, <8 x i16> %a, <8 x i32> <i32 0, i32 undef, i32 undef, i32 3, i32 undef, i32 undef, i32 6, i32 8>
@@ -1435,14 +1435,14 @@ define <8 x i16> @shuffle_v8i16_zuuzuuz8(i16 %i) {
 define <8 x i16> @shuffle_v8i16_zzBzzzzz(i16 %i) {
 ; SSE-LABEL: shuffle_v8i16_zzBzzzzz:
 ; SSE:       # BB#0:
-; SSE-NEXT:    pxor   %xmm0, %xmm0
+; SSE-NEXT:    pxor %xmm0, %xmm0
 ; SSE-NEXT:    pinsrw $2, %edi, %xmm0
 ; SSE-NEXT:    retq
 ;
 ; AVX-LABEL: shuffle_v8i16_zzBzzzzz:
 ; AVX:       # BB#0:
-; AVX-NEXT:    vpxor   %xmm0, %xmm0
-; AVX-NEXT:    vpinsrw $2, %edi, %xmm0
+; AVX-NEXT:    vpxor %xmm0, %xmm0, %xmm0
+; AVX-NEXT:    vpinsrw $2, %edi, %xmm0, %xmm0
 ; AVX-NEXT:    retq
   %a = insertelement <8 x i16> undef, i16 %i, i32 3
   %shuffle = shufflevector <8 x i16> zeroinitializer, <8 x i16> %a, <8 x i32> <i32 0, i32 1, i32 11, i32 3, i32 4, i32 5, i32 6, i32 7>
