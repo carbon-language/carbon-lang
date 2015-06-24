@@ -3448,55 +3448,55 @@ void IndirectBrInst::setSuccessorV(unsigned idx, BasicBlock *B) {
 }
 
 //===----------------------------------------------------------------------===//
-//                           clone_impl() implementations
+//                           cloneImpl() implementations
 //===----------------------------------------------------------------------===//
 
 // Define these methods here so vtables don't get emitted into every translation
 // unit that uses these classes.
 
-GetElementPtrInst *GetElementPtrInst::clone_impl() const {
+GetElementPtrInst *GetElementPtrInst::cloneImpl() const {
   return new (getNumOperands()) GetElementPtrInst(*this);
 }
 
-BinaryOperator *BinaryOperator::clone_impl() const {
+BinaryOperator *BinaryOperator::cloneImpl() const {
   return Create(getOpcode(), Op<0>(), Op<1>());
 }
 
-FCmpInst* FCmpInst::clone_impl() const {
+FCmpInst *FCmpInst::cloneImpl() const {
   return new FCmpInst(getPredicate(), Op<0>(), Op<1>());
 }
 
-ICmpInst* ICmpInst::clone_impl() const {
+ICmpInst *ICmpInst::cloneImpl() const {
   return new ICmpInst(getPredicate(), Op<0>(), Op<1>());
 }
 
-ExtractValueInst *ExtractValueInst::clone_impl() const {
+ExtractValueInst *ExtractValueInst::cloneImpl() const {
   return new ExtractValueInst(*this);
 }
 
-InsertValueInst *InsertValueInst::clone_impl() const {
+InsertValueInst *InsertValueInst::cloneImpl() const {
   return new InsertValueInst(*this);
 }
 
-AllocaInst *AllocaInst::clone_impl() const {
+AllocaInst *AllocaInst::cloneImpl() const {
   AllocaInst *Result = new AllocaInst(getAllocatedType(),
                                       (Value *)getOperand(0), getAlignment());
   Result->setUsedWithInAlloca(isUsedWithInAlloca());
   return Result;
 }
 
-LoadInst *LoadInst::clone_impl() const {
+LoadInst *LoadInst::cloneImpl() const {
   return new LoadInst(getOperand(0), Twine(), isVolatile(),
                       getAlignment(), getOrdering(), getSynchScope());
 }
 
-StoreInst *StoreInst::clone_impl() const {
+StoreInst *StoreInst::cloneImpl() const {
   return new StoreInst(getOperand(0), getOperand(1), isVolatile(),
                        getAlignment(), getOrdering(), getSynchScope());
   
 }
 
-AtomicCmpXchgInst *AtomicCmpXchgInst::clone_impl() const {
+AtomicCmpXchgInst *AtomicCmpXchgInst::cloneImpl() const {
   AtomicCmpXchgInst *Result =
     new AtomicCmpXchgInst(getOperand(0), getOperand(1), getOperand(2),
                           getSuccessOrdering(), getFailureOrdering(),
@@ -3506,7 +3506,7 @@ AtomicCmpXchgInst *AtomicCmpXchgInst::clone_impl() const {
   return Result;
 }
 
-AtomicRMWInst *AtomicRMWInst::clone_impl() const {
+AtomicRMWInst *AtomicRMWInst::cloneImpl() const {
   AtomicRMWInst *Result =
     new AtomicRMWInst(getOperation(),getOperand(0), getOperand(1),
                       getOrdering(), getSynchScope());
@@ -3514,120 +3514,113 @@ AtomicRMWInst *AtomicRMWInst::clone_impl() const {
   return Result;
 }
 
-FenceInst *FenceInst::clone_impl() const {
+FenceInst *FenceInst::cloneImpl() const {
   return new FenceInst(getContext(), getOrdering(), getSynchScope());
 }
 
-TruncInst *TruncInst::clone_impl() const {
+TruncInst *TruncInst::cloneImpl() const {
   return new TruncInst(getOperand(0), getType());
 }
 
-ZExtInst *ZExtInst::clone_impl() const {
+ZExtInst *ZExtInst::cloneImpl() const {
   return new ZExtInst(getOperand(0), getType());
 }
 
-SExtInst *SExtInst::clone_impl() const {
+SExtInst *SExtInst::cloneImpl() const {
   return new SExtInst(getOperand(0), getType());
 }
 
-FPTruncInst *FPTruncInst::clone_impl() const {
+FPTruncInst *FPTruncInst::cloneImpl() const {
   return new FPTruncInst(getOperand(0), getType());
 }
 
-FPExtInst *FPExtInst::clone_impl() const {
+FPExtInst *FPExtInst::cloneImpl() const {
   return new FPExtInst(getOperand(0), getType());
 }
 
-UIToFPInst *UIToFPInst::clone_impl() const {
+UIToFPInst *UIToFPInst::cloneImpl() const {
   return new UIToFPInst(getOperand(0), getType());
 }
 
-SIToFPInst *SIToFPInst::clone_impl() const {
+SIToFPInst *SIToFPInst::cloneImpl() const {
   return new SIToFPInst(getOperand(0), getType());
 }
 
-FPToUIInst *FPToUIInst::clone_impl() const {
+FPToUIInst *FPToUIInst::cloneImpl() const {
   return new FPToUIInst(getOperand(0), getType());
 }
 
-FPToSIInst *FPToSIInst::clone_impl() const {
+FPToSIInst *FPToSIInst::cloneImpl() const {
   return new FPToSIInst(getOperand(0), getType());
 }
 
-PtrToIntInst *PtrToIntInst::clone_impl() const {
+PtrToIntInst *PtrToIntInst::cloneImpl() const {
   return new PtrToIntInst(getOperand(0), getType());
 }
 
-IntToPtrInst *IntToPtrInst::clone_impl() const {
+IntToPtrInst *IntToPtrInst::cloneImpl() const {
   return new IntToPtrInst(getOperand(0), getType());
 }
 
-BitCastInst *BitCastInst::clone_impl() const {
+BitCastInst *BitCastInst::cloneImpl() const {
   return new BitCastInst(getOperand(0), getType());
 }
 
-AddrSpaceCastInst *AddrSpaceCastInst::clone_impl() const {
+AddrSpaceCastInst *AddrSpaceCastInst::cloneImpl() const {
   return new AddrSpaceCastInst(getOperand(0), getType());
 }
 
-CallInst *CallInst::clone_impl() const {
+CallInst *CallInst::cloneImpl() const {
   return  new(getNumOperands()) CallInst(*this);
 }
 
-SelectInst *SelectInst::clone_impl() const {
+SelectInst *SelectInst::cloneImpl() const {
   return SelectInst::Create(getOperand(0), getOperand(1), getOperand(2));
 }
 
-VAArgInst *VAArgInst::clone_impl() const {
+VAArgInst *VAArgInst::cloneImpl() const {
   return new VAArgInst(getOperand(0), getType());
 }
 
-ExtractElementInst *ExtractElementInst::clone_impl() const {
+ExtractElementInst *ExtractElementInst::cloneImpl() const {
   return ExtractElementInst::Create(getOperand(0), getOperand(1));
 }
 
-InsertElementInst *InsertElementInst::clone_impl() const {
+InsertElementInst *InsertElementInst::cloneImpl() const {
   return InsertElementInst::Create(getOperand(0), getOperand(1), getOperand(2));
 }
 
-ShuffleVectorInst *ShuffleVectorInst::clone_impl() const {
+ShuffleVectorInst *ShuffleVectorInst::cloneImpl() const {
   return new ShuffleVectorInst(getOperand(0), getOperand(1), getOperand(2));
 }
 
-PHINode *PHINode::clone_impl() const {
-  return new PHINode(*this);
-}
+PHINode *PHINode::cloneImpl() const { return new PHINode(*this); }
 
-LandingPadInst *LandingPadInst::clone_impl() const {
+LandingPadInst *LandingPadInst::cloneImpl() const {
   return new LandingPadInst(*this);
 }
 
-ReturnInst *ReturnInst::clone_impl() const {
+ReturnInst *ReturnInst::cloneImpl() const {
   return new(getNumOperands()) ReturnInst(*this);
 }
 
-BranchInst *BranchInst::clone_impl() const {
+BranchInst *BranchInst::cloneImpl() const {
   return new(getNumOperands()) BranchInst(*this);
 }
 
-SwitchInst *SwitchInst::clone_impl() const {
-  return new SwitchInst(*this);
-}
+SwitchInst *SwitchInst::cloneImpl() const { return new SwitchInst(*this); }
 
-IndirectBrInst *IndirectBrInst::clone_impl() const {
+IndirectBrInst *IndirectBrInst::cloneImpl() const {
   return new IndirectBrInst(*this);
 }
 
-
-InvokeInst *InvokeInst::clone_impl() const {
+InvokeInst *InvokeInst::cloneImpl() const {
   return new(getNumOperands()) InvokeInst(*this);
 }
 
-ResumeInst *ResumeInst::clone_impl() const {
-  return new(1) ResumeInst(*this);
-}
+ResumeInst *ResumeInst::cloneImpl() const { return new (1) ResumeInst(*this); }
 
-UnreachableInst *UnreachableInst::clone_impl() const {
+UnreachableInst *UnreachableInst::cloneImpl() const {
   LLVMContext &Context = getContext();
   return new UnreachableInst(Context);
 }

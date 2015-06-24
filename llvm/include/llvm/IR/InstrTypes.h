@@ -139,7 +139,11 @@ protected:
                  const Twine &Name, Instruction *InsertBefore);
   BinaryOperator(BinaryOps iType, Value *S1, Value *S2, Type *Ty,
                  const Twine &Name, BasicBlock *InsertAtEnd);
-  BinaryOperator *clone_impl() const override;
+
+  // Note: Instruction needs to be a friend here to call cloneImpl.
+  friend class Instruction;
+  BinaryOperator *cloneImpl() const;
+
 public:
   // allocate space for exactly two operands
   void *operator new(size_t s) {

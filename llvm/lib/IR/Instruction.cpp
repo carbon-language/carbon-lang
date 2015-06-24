@@ -534,8 +534,23 @@ bool Instruction::isNilpotent(unsigned Opcode) {
   return Opcode == Xor;
 }
 
+Instruction *Instruction::cloneImpl() const {
+  llvm_unreachable("Subclass of Instruction failed to implement cloneImpl");
+}
+
 Instruction *Instruction::clone() const {
-  Instruction *New = clone_impl();
+  Instruction *New = nullptr;
+  switch (getOpcode()) {
+  default:
+    llvm_unreachable("Unhandled Opcode.");
+#define HANDLE_INST(num, opc, clas)                                            \
+  case Instruction::opc:                                                       \
+    New = cast<clas>(this)->cloneImpl();                                       \
+    break;
+#include "llvm/IR/Instruction.def"
+#undef HANDLE_INST
+  }
+
   New->SubclassOptionalData = SubclassOptionalData;
   if (!hasMetadata())
     return New;

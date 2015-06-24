@@ -76,7 +76,10 @@ class AllocaInst : public UnaryInstruction {
   Type *AllocatedType;
 
 protected:
-  AllocaInst *clone_impl() const override;
+  // Note: Instruction needs to be a friend here to call cloneImpl.
+  friend class Instruction;
+  AllocaInst *cloneImpl() const;
+
 public:
   explicit AllocaInst(Type *Ty, Value *ArraySize = nullptr,
                       const Twine &Name = "",
@@ -173,7 +176,10 @@ private:
 class LoadInst : public UnaryInstruction {
   void AssertOK();
 protected:
-  LoadInst *clone_impl() const override;
+  // Note: Instruction needs to be a friend here to call cloneImpl.
+  friend class Instruction;
+  LoadInst *cloneImpl() const;
+
 public:
   LoadInst(Value *Ptr, const Twine &NameStr, Instruction *InsertBefore);
   LoadInst(Value *Ptr, const Twine &NameStr, BasicBlock *InsertAtEnd);
@@ -310,7 +316,10 @@ class StoreInst : public Instruction {
   void *operator new(size_t, unsigned) = delete;
   void AssertOK();
 protected:
-  StoreInst *clone_impl() const override;
+  // Note: Instruction needs to be a friend here to call cloneImpl.
+  friend class Instruction;
+  StoreInst *cloneImpl() const;
+
 public:
   // allocate space for exactly two operands
   void *operator new(size_t s) {
@@ -436,7 +445,10 @@ class FenceInst : public Instruction {
   void *operator new(size_t, unsigned) = delete;
   void Init(AtomicOrdering Ordering, SynchronizationScope SynchScope);
 protected:
-  FenceInst *clone_impl() const override;
+  // Note: Instruction needs to be a friend here to call cloneImpl.
+  friend class Instruction;
+  FenceInst *cloneImpl() const;
+
 public:
   // allocate space for exactly zero operands
   void *operator new(size_t s) {
@@ -505,7 +517,10 @@ class AtomicCmpXchgInst : public Instruction {
             AtomicOrdering SuccessOrdering, AtomicOrdering FailureOrdering,
             SynchronizationScope SynchScope);
 protected:
-  AtomicCmpXchgInst *clone_impl() const override;
+  // Note: Instruction needs to be a friend here to call cloneImpl.
+  friend class Instruction;
+  AtomicCmpXchgInst *cloneImpl() const;
+
 public:
   // allocate space for exactly three operands
   void *operator new(size_t s) {
@@ -658,7 +673,10 @@ DEFINE_TRANSPARENT_OPERAND_ACCESSORS(AtomicCmpXchgInst, Value)
 class AtomicRMWInst : public Instruction {
   void *operator new(size_t, unsigned) = delete;
 protected:
-  AtomicRMWInst *clone_impl() const override;
+  // Note: Instruction needs to be a friend here to call cloneImpl.
+  friend class Instruction;
+  AtomicRMWInst *cloneImpl() const;
+
 public:
   /// This enumeration lists the possible modifications atomicrmw can make.  In
   /// the descriptions, 'p' is the pointer to the instruction's memory location,
@@ -827,7 +845,10 @@ class GetElementPtrInst : public Instruction {
                            const Twine &NameStr, BasicBlock *InsertAtEnd);
 
 protected:
-  GetElementPtrInst *clone_impl() const override;
+  // Note: Instruction needs to be a friend here to call cloneImpl.
+  friend class Instruction;
+  GetElementPtrInst *cloneImpl() const;
+
 public:
   static GetElementPtrInst *Create(Type *PointeeType, Value *Ptr,
                                    ArrayRef<Value *> IdxList,
@@ -1078,8 +1099,11 @@ class ICmpInst: public CmpInst {
   }
 
 protected:
+  // Note: Instruction needs to be a friend here to call cloneImpl.
+  friend class Instruction;
   /// \brief Clone an identical ICmpInst
-  ICmpInst *clone_impl() const override;
+  ICmpInst *cloneImpl() const;
+
 public:
   /// \brief Constructor with insert-before-instruction semantics.
   ICmpInst(
@@ -1210,8 +1234,11 @@ public:
 /// \brief Represents a floating point comparison operator.
 class FCmpInst: public CmpInst {
 protected:
+  // Note: Instruction needs to be a friend here to call cloneImpl.
+  friend class Instruction;
   /// \brief Clone an identical FCmpInst
-  FCmpInst *clone_impl() const override;
+  FCmpInst *cloneImpl() const;
+
 public:
   /// \brief Constructor with insert-before-instruction semantics.
   FCmpInst(
@@ -1350,7 +1377,10 @@ class CallInst : public Instruction {
                     Instruction *InsertBefore);
   CallInst(Value *F, const Twine &NameStr, BasicBlock *InsertAtEnd);
 protected:
-  CallInst *clone_impl() const override;
+  // Note: Instruction needs to be a friend here to call cloneImpl.
+  friend class Instruction;
+  CallInst *cloneImpl() const;
+
 public:
   static CallInst *Create(Value *Func,
                           ArrayRef<Value *> Args,
@@ -1687,7 +1717,10 @@ class SelectInst : public Instruction {
     setName(NameStr);
   }
 protected:
-  SelectInst *clone_impl() const override;
+  // Note: Instruction needs to be a friend here to call cloneImpl.
+  friend class Instruction;
+  SelectInst *cloneImpl() const;
+
 public:
   static SelectInst *Create(Value *C, Value *S1, Value *S2,
                             const Twine &NameStr = "",
@@ -1742,7 +1775,9 @@ DEFINE_TRANSPARENT_OPERAND_ACCESSORS(SelectInst, Value)
 ///
 class VAArgInst : public UnaryInstruction {
 protected:
-  VAArgInst *clone_impl() const override;
+  // Note: Instruction needs to be a friend here to call cloneImpl.
+  friend class Instruction;
+  VAArgInst *cloneImpl() const;
 
 public:
   VAArgInst(Value *List, Type *Ty, const Twine &NameStr = "",
@@ -1782,7 +1817,9 @@ class ExtractElementInst : public Instruction {
   ExtractElementInst(Value *Vec, Value *Idx, const Twine &NameStr,
                      BasicBlock *InsertAtEnd);
 protected:
-  ExtractElementInst *clone_impl() const override;
+  // Note: Instruction needs to be a friend here to call cloneImpl.
+  friend class Instruction;
+  ExtractElementInst *cloneImpl() const;
 
 public:
   static ExtractElementInst *Create(Value *Vec, Value *Idx,
@@ -1843,7 +1880,9 @@ class InsertElementInst : public Instruction {
   InsertElementInst(Value *Vec, Value *NewElt, Value *Idx,
                     const Twine &NameStr, BasicBlock *InsertAtEnd);
 protected:
-  InsertElementInst *clone_impl() const override;
+  // Note: Instruction needs to be a friend here to call cloneImpl.
+  friend class Instruction;
+  InsertElementInst *cloneImpl() const;
 
 public:
   static InsertElementInst *Create(Value *Vec, Value *NewElt, Value *Idx,
@@ -1896,7 +1935,9 @@ DEFINE_TRANSPARENT_OPERAND_ACCESSORS(InsertElementInst, Value)
 ///
 class ShuffleVectorInst : public Instruction {
 protected:
-  ShuffleVectorInst *clone_impl() const override;
+  // Note: Instruction needs to be a friend here to call cloneImpl.
+  friend class Instruction;
+  ShuffleVectorInst *cloneImpl() const;
 
 public:
   // allocate space for exactly three operands
@@ -1997,7 +2038,9 @@ class ExtractValueInst : public UnaryInstruction {
     return User::operator new(s, 1);
   }
 protected:
-  ExtractValueInst *clone_impl() const override;
+  // Note: Instruction needs to be a friend here to call cloneImpl.
+  friend class Instruction;
+  ExtractValueInst *cloneImpl() const;
 
 public:
   static ExtractValueInst *Create(Value *Agg,
@@ -2111,7 +2154,10 @@ class InsertValueInst : public Instruction {
   InsertValueInst(Value *Agg, Value *Val, unsigned Idx,
                   const Twine &NameStr, BasicBlock *InsertAtEnd);
 protected:
-  InsertValueInst *clone_impl() const override;
+  // Note: Instruction needs to be a friend here to call cloneImpl.
+  friend class Instruction;
+  InsertValueInst *cloneImpl() const;
+
 public:
   // allocate space for exactly two operands
   void *operator new(size_t s) {
@@ -2252,7 +2298,10 @@ protected:
     User::allocHungoffUses(N, /* IsPhi */ true);
   }
 
-  PHINode *clone_impl() const override;
+  // Note: Instruction needs to be a friend here to call cloneImpl.
+  friend class Instruction;
+  PHINode *cloneImpl() const;
+
 public:
   /// Constructors - NumReservedValues is a hint for the number of incoming
   /// edges that this phi node will have (use 0 if you really have no idea).
@@ -2445,7 +2494,10 @@ private:
                           const Twine &NameStr, BasicBlock *InsertAtEnd);
 
 protected:
-  LandingPadInst *clone_impl() const override;
+  // Note: Instruction needs to be a friend here to call cloneImpl.
+  friend class Instruction;
+  LandingPadInst *cloneImpl() const;
+
 public:
   /// Constructors - NumReservedClauses is a hint for the number of incoming
   /// clauses that this landingpad will have (use 0 if you really have no idea).
@@ -2538,7 +2590,10 @@ private:
   ReturnInst(LLVMContext &C, Value *retVal, BasicBlock *InsertAtEnd);
   explicit ReturnInst(LLVMContext &C, BasicBlock *InsertAtEnd);
 protected:
-  ReturnInst *clone_impl() const override;
+  // Note: Instruction needs to be a friend here to call cloneImpl.
+  friend class Instruction;
+  ReturnInst *cloneImpl() const;
+
 public:
   static ReturnInst* Create(LLVMContext &C, Value *retVal = nullptr,
                             Instruction *InsertBefore = nullptr) {
@@ -2610,7 +2665,10 @@ class BranchInst : public TerminatorInst {
   BranchInst(BasicBlock *IfTrue, BasicBlock *IfFalse, Value *Cond,
              BasicBlock *InsertAtEnd);
 protected:
-  BranchInst *clone_impl() const override;
+  // Note: Instruction needs to be a friend here to call cloneImpl.
+  friend class Instruction;
+  BranchInst *cloneImpl() const;
+
 public:
   static BranchInst *Create(BasicBlock *IfTrue,
                             Instruction *InsertBefore = nullptr) {
@@ -2717,7 +2775,10 @@ class SwitchInst : public TerminatorInst {
   SwitchInst(Value *Value, BasicBlock *Default, unsigned NumCases,
              BasicBlock *InsertAtEnd);
 protected:
-  SwitchInst *clone_impl() const override;
+  // Note: Instruction needs to be a friend here to call cloneImpl.
+  friend class Instruction;
+  SwitchInst *cloneImpl() const;
+
 public:
 
   // -2
@@ -3022,7 +3083,10 @@ class IndirectBrInst : public TerminatorInst {
   /// autoinserts at the end of the specified BasicBlock.
   IndirectBrInst(Value *Address, unsigned NumDests, BasicBlock *InsertAtEnd);
 protected:
-  IndirectBrInst *clone_impl() const override;
+  // Note: Instruction needs to be a friend here to call cloneImpl.
+  friend class Instruction;
+  IndirectBrInst *cloneImpl() const;
+
 public:
   static IndirectBrInst *Create(Value *Address, unsigned NumDests,
                                 Instruction *InsertBefore = nullptr) {
@@ -3129,7 +3193,10 @@ class InvokeInst : public TerminatorInst {
                     ArrayRef<Value *> Args, unsigned Values,
                     const Twine &NameStr, BasicBlock *InsertAtEnd);
 protected:
-  InvokeInst *clone_impl() const override;
+  // Note: Instruction needs to be a friend here to call cloneImpl.
+  friend class Instruction;
+  InvokeInst *cloneImpl() const;
+
 public:
   static InvokeInst *Create(Value *Func,
                             BasicBlock *IfNormal, BasicBlock *IfException,
@@ -3424,7 +3491,10 @@ class ResumeInst : public TerminatorInst {
   explicit ResumeInst(Value *Exn, Instruction *InsertBefore=nullptr);
   ResumeInst(Value *Exn, BasicBlock *InsertAtEnd);
 protected:
-  ResumeInst *clone_impl() const override;
+  // Note: Instruction needs to be a friend here to call cloneImpl.
+  friend class Instruction;
+  ResumeInst *cloneImpl() const;
+
 public:
   static ResumeInst *Create(Value *Exn, Instruction *InsertBefore = nullptr) {
     return new(1) ResumeInst(Exn, InsertBefore);
@@ -3473,7 +3543,9 @@ DEFINE_TRANSPARENT_OPERAND_ACCESSORS(ResumeInst, Value)
 class UnreachableInst : public TerminatorInst {
   void *operator new(size_t, unsigned) = delete;
 protected:
-  UnreachableInst *clone_impl() const override;
+  // Note: Instruction needs to be a friend here to call cloneImpl.
+  friend class Instruction;
+  UnreachableInst *cloneImpl() const;
 
 public:
   // allocate space for exactly zero operands
@@ -3505,8 +3577,10 @@ private:
 /// \brief This class represents a truncation of integer types.
 class TruncInst : public CastInst {
 protected:
+  // Note: Instruction needs to be a friend here to call cloneImpl.
+  friend class Instruction;
   /// \brief Clone an identical TruncInst
-  TruncInst *clone_impl() const override;
+  TruncInst *cloneImpl() const;
 
 public:
   /// \brief Constructor with insert-before-instruction semantics
@@ -3541,8 +3615,10 @@ public:
 /// \brief This class represents zero extension of integer types.
 class ZExtInst : public CastInst {
 protected:
+  // Note: Instruction needs to be a friend here to call cloneImpl.
+  friend class Instruction;
   /// \brief Clone an identical ZExtInst
-  ZExtInst *clone_impl() const override;
+  ZExtInst *cloneImpl() const;
 
 public:
   /// \brief Constructor with insert-before-instruction semantics
@@ -3577,8 +3653,10 @@ public:
 /// \brief This class represents a sign extension of integer types.
 class SExtInst : public CastInst {
 protected:
+  // Note: Instruction needs to be a friend here to call cloneImpl.
+  friend class Instruction;
   /// \brief Clone an identical SExtInst
-  SExtInst *clone_impl() const override;
+  SExtInst *cloneImpl() const;
 
 public:
   /// \brief Constructor with insert-before-instruction semantics
@@ -3613,8 +3691,10 @@ public:
 /// \brief This class represents a truncation of floating point types.
 class FPTruncInst : public CastInst {
 protected:
+  // Note: Instruction needs to be a friend here to call cloneImpl.
+  friend class Instruction;
   /// \brief Clone an identical FPTruncInst
-  FPTruncInst *clone_impl() const override;
+  FPTruncInst *cloneImpl() const;
 
 public:
   /// \brief Constructor with insert-before-instruction semantics
@@ -3649,8 +3729,10 @@ public:
 /// \brief This class represents an extension of floating point types.
 class FPExtInst : public CastInst {
 protected:
+  // Note: Instruction needs to be a friend here to call cloneImpl.
+  friend class Instruction;
   /// \brief Clone an identical FPExtInst
-  FPExtInst *clone_impl() const override;
+  FPExtInst *cloneImpl() const;
 
 public:
   /// \brief Constructor with insert-before-instruction semantics
@@ -3685,8 +3767,10 @@ public:
 /// \brief This class represents a cast unsigned integer to floating point.
 class UIToFPInst : public CastInst {
 protected:
+  // Note: Instruction needs to be a friend here to call cloneImpl.
+  friend class Instruction;
   /// \brief Clone an identical UIToFPInst
-  UIToFPInst *clone_impl() const override;
+  UIToFPInst *cloneImpl() const;
 
 public:
   /// \brief Constructor with insert-before-instruction semantics
@@ -3721,8 +3805,10 @@ public:
 /// \brief This class represents a cast from signed integer to floating point.
 class SIToFPInst : public CastInst {
 protected:
+  // Note: Instruction needs to be a friend here to call cloneImpl.
+  friend class Instruction;
   /// \brief Clone an identical SIToFPInst
-  SIToFPInst *clone_impl() const override;
+  SIToFPInst *cloneImpl() const;
 
 public:
   /// \brief Constructor with insert-before-instruction semantics
@@ -3757,8 +3843,10 @@ public:
 /// \brief This class represents a cast from floating point to unsigned integer
 class FPToUIInst  : public CastInst {
 protected:
+  // Note: Instruction needs to be a friend here to call cloneImpl.
+  friend class Instruction;
   /// \brief Clone an identical FPToUIInst
-  FPToUIInst *clone_impl() const override;
+  FPToUIInst *cloneImpl() const;
 
 public:
   /// \brief Constructor with insert-before-instruction semantics
@@ -3793,8 +3881,10 @@ public:
 /// \brief This class represents a cast from floating point to signed integer.
 class FPToSIInst  : public CastInst {
 protected:
+  // Note: Instruction needs to be a friend here to call cloneImpl.
+  friend class Instruction;
   /// \brief Clone an identical FPToSIInst
-  FPToSIInst *clone_impl() const override;
+  FPToSIInst *cloneImpl() const;
 
 public:
   /// \brief Constructor with insert-before-instruction semantics
@@ -3845,8 +3935,10 @@ public:
     BasicBlock *InsertAtEnd       ///< The block to insert the instruction into
   );
 
+  // Note: Instruction needs to be a friend here to call cloneImpl.
+  friend class Instruction;
   /// \brief Clone an identical IntToPtrInst
-  IntToPtrInst *clone_impl() const override;
+  IntToPtrInst *cloneImpl() const;
 
   /// \brief Returns the address space of this instruction's pointer type.
   unsigned getAddressSpace() const {
@@ -3869,8 +3961,10 @@ public:
 /// \brief This class represents a cast from a pointer to an integer
 class PtrToIntInst : public CastInst {
 protected:
+  // Note: Instruction needs to be a friend here to call cloneImpl.
+  friend class Instruction;
   /// \brief Clone an identical PtrToIntInst
-  PtrToIntInst *clone_impl() const override;
+  PtrToIntInst *cloneImpl() const;
 
 public:
   /// \brief Constructor with insert-before-instruction semantics
@@ -3917,8 +4011,10 @@ public:
 /// \brief This class represents a no-op cast from one type to another.
 class BitCastInst : public CastInst {
 protected:
+  // Note: Instruction needs to be a friend here to call cloneImpl.
+  friend class Instruction;
   /// \brief Clone an identical BitCastInst
-  BitCastInst *clone_impl() const override;
+  BitCastInst *cloneImpl() const;
 
 public:
   /// \brief Constructor with insert-before-instruction semantics
@@ -3954,8 +4050,10 @@ public:
 /// one address space to another.
 class AddrSpaceCastInst : public CastInst {
 protected:
+  // Note: Instruction needs to be a friend here to call cloneImpl.
+  friend class Instruction;
   /// \brief Clone an identical AddrSpaceCastInst
-  AddrSpaceCastInst *clone_impl() const override;
+  AddrSpaceCastInst *cloneImpl() const;
 
 public:
   /// \brief Constructor with insert-before-instruction semantics
