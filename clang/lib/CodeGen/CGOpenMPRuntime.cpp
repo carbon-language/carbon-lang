@@ -282,7 +282,7 @@ CGOpenMPRuntime::emitParallelOutlinedFunction(const OMPExecutableDirective &D,
   const CapturedStmt *CS = cast<CapturedStmt>(D.getAssociatedStmt());
   CodeGenFunction CGF(CGM, true);
   CGOpenMPOutlinedRegionInfo CGInfo(*CS, ThreadIDVar, CodeGen);
-  CGF.CapturedStmtInfo = &CGInfo;
+  CodeGenFunction::CGCapturedStmtRAII CapInfoRAII(CGF, &CGInfo);
   return CGF.GenerateCapturedStmtFunction(*CS);
 }
 
@@ -295,7 +295,7 @@ CGOpenMPRuntime::emitTaskOutlinedFunction(const OMPExecutableDirective &D,
   auto *CS = cast<CapturedStmt>(D.getAssociatedStmt());
   CodeGenFunction CGF(CGM, true);
   CGOpenMPTaskOutlinedRegionInfo CGInfo(*CS, ThreadIDVar, CodeGen);
-  CGF.CapturedStmtInfo = &CGInfo;
+  CodeGenFunction::CGCapturedStmtRAII CapInfoRAII(CGF, &CGInfo);
   return CGF.GenerateCapturedStmtFunction(*CS);
 }
 
@@ -2169,12 +2169,11 @@ void CGOpenMPRuntime::emitTaskCall(
                     });
                     (void)InitScope.Privatize();
                     // Emit initialization for single element.
-                    auto *OldCapturedStmtInfo = CGF.CapturedStmtInfo;
-                    CGF.CapturedStmtInfo = &CapturesInfo;
+                    CodeGenFunction::CGCapturedStmtRAII CapInfoRAII(
+                        CGF, &CapturesInfo);
                     CGF.EmitAnyExprToMem(Init, DestElement,
                                          Init->getType().getQualifiers(),
                                          /*IsInitializer=*/false);
-                    CGF.CapturedStmtInfo = OldCapturedStmtInfo;
                   });
             }
           } else {
@@ -2183,11 +2182,9 @@ void CGOpenMPRuntime::emitTaskCall(
               return SharedRefLValue.getAddress();
             });
             (void)InitScope.Privatize();
-            auto *OldCapturedStmtInfo = CGF.CapturedStmtInfo;
-            CGF.CapturedStmtInfo = &CapturesInfo;
+            CodeGenFunction::CGCapturedStmtRAII CapInfoRAII(CGF, &CapturesInfo);
             CGF.EmitExprAsInit(Init, VD, PrivateLValue,
                                /*capturedByInit=*/false);
-            CGF.CapturedStmtInfo = OldCapturedStmtInfo;
           }
         } else {
           CGF.EmitExprAsInit(Init, VD, PrivateLValue, /*capturedByInit=*/false);
