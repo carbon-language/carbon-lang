@@ -483,6 +483,12 @@ std::error_code MachOObjectFile::getSymbolSection(DataRefImpl Symb,
   return std::error_code();
 }
 
+unsigned MachOObjectFile::getSymbolSectionID(SymbolRef Sym) const {
+  MachO::nlist_base Entry =
+      getSymbolTableEntryBase(this, Sym.getRawDataRefImpl());
+  return Entry.n_sect - 1;
+}
+
 void MachOObjectFile::moveSectionNext(DataRefImpl &Sec) const {
   Sec.d.a++;
 }
@@ -557,6 +563,10 @@ bool MachOObjectFile::isSectionBSS(DataRefImpl Sec) const {
   return !(Flags & MachO::S_ATTR_PURE_INSTRUCTIONS) &&
          (SectionType == MachO::S_ZEROFILL ||
           SectionType == MachO::S_GB_ZEROFILL);
+}
+
+unsigned MachOObjectFile::getSectionID(SectionRef Sec) const {
+  return Sec.getRawDataRefImpl().d.a;
 }
 
 bool MachOObjectFile::isSectionVirtual(DataRefImpl Sec) const {

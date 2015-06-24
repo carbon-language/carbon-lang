@@ -188,12 +188,10 @@ static void dumpCXXData(const ObjectFile *Obj) {
 
   uint8_t BytesInAddress = Obj->getBytesInAddress();
 
-  ErrorOr<std::vector<std::pair<SymbolRef, uint64_t>>> SymAddrOrErr =
+  std::vector<std::pair<SymbolRef, uint64_t>> SymAddr =
       object::computeSymbolSizes(*Obj);
-  if (error(SymAddrOrErr.getError()))
-    return;
 
-  for (auto &P : *SymAddrOrErr) {
+  for (auto &P : SymAddr) {
     object::SymbolRef Sym = P.first;
     uint64_t SymSize = P.second;
     StringRef SymName;

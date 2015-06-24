@@ -258,6 +258,11 @@ COFFObjectFile::getSymbolSection(DataRefImpl Ref,
   return std::error_code();
 }
 
+unsigned COFFObjectFile::getSymbolSectionID(SymbolRef Sym) const {
+  COFFSymbolRef Symb = getCOFFSymbol(Sym.getRawDataRefImpl());
+  return Symb.getSectionNumber();
+}
+
 void COFFObjectFile::moveSectionNext(DataRefImpl &Ref) const {
   const coff_section *Sec = toSec(Ref);
   Sec += 1;
@@ -309,6 +314,13 @@ bool COFFObjectFile::isSectionBSS(DataRefImpl Ref) const {
                             COFF::IMAGE_SCN_MEM_READ |
                             COFF::IMAGE_SCN_MEM_WRITE;
   return (Sec->Characteristics & BssFlags) == BssFlags;
+}
+
+unsigned COFFObjectFile::getSectionID(SectionRef Sec) const {
+  uintptr_t Offset =
+      uintptr_t(Sec.getRawDataRefImpl().p) - uintptr_t(SectionTable);
+  assert((Offset % sizeof(coff_section)) == 0);
+  return (Offset / sizeof(coff_section)) + 1;
 }
 
 bool COFFObjectFile::isSectionVirtual(DataRefImpl Ref) const {

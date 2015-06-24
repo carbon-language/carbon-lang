@@ -216,6 +216,8 @@ public:
   uint32_t getSymbolFlags(DataRefImpl Symb) const override;
   std::error_code getSymbolSection(DataRefImpl Symb,
                                    section_iterator &Res) const override;
+  unsigned getSymbolSectionID(SymbolRef Symb) const;
+  unsigned getSectionID(SectionRef Sec) const;
 
   void moveSectionNext(DataRefImpl &Sec) const override;
   std::error_code getSectionName(DataRefImpl Sec,

@@ -9,7 +9,9 @@
 
 #include "llvm/Object/SymbolSize.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/Object/COFF.h"
 #include "llvm/Object/ELFObjectFile.h"
+#include "llvm/Object/MachO.h"
 
 using namespace llvm;
 using namespace object;
@@ -19,25 +21,33 @@ struct SymEntry {
   symbol_iterator I;
   uint64_t Address;
   unsigned Number;
-  SectionRef Section;
+  unsigned SectionID;
 };
 }
 
 static int compareAddress(const SymEntry *A, const SymEntry *B) {
-  if (A->Section == B->Section)
-    return A->Address - B->Address;
-  if (A->Section < B->Section)
-    return -1;
-  if (A->Section == B->Section)
-    return 0;
-  return 1;
+  if (A->SectionID != B->SectionID)
+    return A->SectionID - B->SectionID;
+  return A->Address - B->Address;
 }
 
 static int compareNumber(const SymEntry *A, const SymEntry *B) {
   return A->Number - B->Number;
 }
 
-ErrorOr<std::vector<std::pair<SymbolRef, uint64_t>>>
+static unsigned getSectionID(const ObjectFile &O, SectionRef Sec) {
+  if (auto *M = dyn_cast<MachOObjectFile>(&O))
+    return M->getSectionID(Sec);
+  return cast<COFFObjectFile>(O).getSectionID(Sec);
+}
+
+static unsigned getSymbolSectionID(const ObjectFile &O, SymbolRef Sym) {
+  if (auto *M = dyn_cast<MachOObjectFile>(&O))
+    return M->getSymbolSectionID(Sym);
+  return cast<COFFObjectFile>(O).getSymbolSectionID(Sym);
+}
+
+std::vector<std::pair<SymbolRef, uint64_t>>
 llvm::object::computeSymbolSizes(const ObjectFile &O) {
   std::vector<std::pair<SymbolRef, uint64_t>> Ret;
 
@@ -54,16 +64,14 @@ llvm::object::computeSymbolSizes(const ObjectFile &O) {
   for (symbol_iterator I = O.symbol_begin(), E = O.symbol_end(); I != E; ++I) {
     SymbolRef Sym = *I;
     uint64_t Value = Sym.getValue();
-    section_iterator SecI = O.section_end();
-    if (std::error_code EC = Sym.getSection(SecI))
-      return EC;
-    Addresses.push_back({I, Value, SymNum, *SecI});
+    Addresses.push_back({I, Value, SymNum, getSymbolSectionID(O, Sym)});
     ++SymNum;
   }
-  for (const SectionRef Sec : O.sections()) {
+  for (SectionRef Sec : O.sections()) {
     uint64_t Address = Sec.getAddress();
     uint64_t Size = Sec.getSize();
-    Addresses.push_back({O.symbol_end(), Address + Size, 0, Sec});
+    Addresses.push_back(
+        {O.symbol_end(), Address + Size, 0, getSectionID(O, Sec)});
   }
   array_pod_sort(Addresses.begin(), Addresses.end(), compareAddress);
 

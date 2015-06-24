@@ -259,13 +259,11 @@ static int printLineInfoForInput(bool LoadObjects, bool UseDebugObj) {
     std::unique_ptr<DIContext> Context(
       new DWARFContextInMemory(*SymbolObj,LoadedObjInfo.get()));
 
-    ErrorOr<std::vector<std::pair<SymbolRef, uint64_t>>> SymAddrOrErr =
+    std::vector<std::pair<SymbolRef, uint64_t>> SymAddr =
         object::computeSymbolSizes(*SymbolObj);
-    if (std::error_code EC = SymAddrOrErr.getError())
-      return Error(EC.message());
 
     // Use symbol info to iterate functions in the object.
-    for (const auto &P : *SymAddrOrErr) {
+    for (const auto &P : SymAddr) {
       object::SymbolRef Sym = P.first;
       object::SymbolRef::Type SymType;
       if (Sym.getType(SymType))

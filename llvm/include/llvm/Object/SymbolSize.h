@@ -15,7 +15,7 @@
 
 namespace llvm {
 namespace object {
-ErrorOr<std::vector<std::pair<SymbolRef, uint64_t>>>
+std::vector<std::pair<SymbolRef, uint64_t>>
 computeSymbolSizes(const ObjectFile &O);
 }
 } // namespace llvm
