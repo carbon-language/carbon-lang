@@ -42,7 +42,6 @@
 #endif
 
 #if defined(__linux__)
-#include "Plugins/Process/Linux/ProcessLinux.h"
 #include "Plugins/Process/POSIX/ProcessPOSIXLog.h"
 #endif
 

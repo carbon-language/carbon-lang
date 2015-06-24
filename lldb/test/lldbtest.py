@@ -712,15 +712,6 @@ def expectedFailureAndroid(bugnumber=None, api_levels=None):
 
     return expectedFailure(fn, bugnumber)
 
-def expectedFailureLLGS(bugnumber=None, compilers=None):
-    def fn(self):
-        # llgs local is only an option on Linux targets
-        if self.getPlatform() != 'linux':
-            return False
-        self.runCmd('settings show platform.plugin.linux.use-llgs-for-local')
-        return 'true' in self.res.GetOutput() and self.expectedCompiler(compilers)
-    return expectedFailure(fn, bugnumber)
-
 def skipIfRemote(func):
     """Decorate the item to skip tests if testing remotely."""
     if isinstance(func, type) and issubclass(func, unittest2.TestCase):

@@ -14,7 +14,6 @@
 #include "lldb/Interpreter/Args.h"
 #include "lldb/Core/StreamFile.h"
 
-#include "ProcessPOSIX.h"
 #include "ProcessPOSIXLog.h"
 
 using namespace lldb;

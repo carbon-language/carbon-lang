@@ -13,8 +13,8 @@
 
 #include "Plugins/Process/Utility/RegisterContextPOSIX_arm64.h"
 #include "ProcessPOSIX.h"
+#include "ProcessMonitor.h"
 #include "RegisterContextPOSIXProcessMonitor_arm64.h"
-#include "Plugins/Process/Linux/ProcessMonitor.h"
 
 #define REG_CONTEXT_SIZE (GetGPRSize())
 

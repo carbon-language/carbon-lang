@@ -128,7 +128,7 @@ class ProcessLaunchTestCase(TestBase):
 
     @skipIfFreeBSD # llvm.org/pr16684
     @expectedFailureDarwin("llvm.org/pr20265")
-    @expectedFailureLLGS("llvm.org/pr20265")
+    @expectedFailureLinux("llvm.org/pr20265")
     @dwarf_test
     def test_set_working_dir_with_dwarf (self):
         """Test that '-w dir' sets the working dir when running the inferior."""

@@ -29,16 +29,12 @@
 #include "POSIXThread.h"
 #include "ProcessPOSIX.h"
 #include "ProcessPOSIXLog.h"
-#include "Plugins/Process/Linux/ProcessMonitor.h"
+#include "ProcessMonitor.h"
 #include "RegisterContextPOSIXProcessMonitor_arm.h"
 #include "RegisterContextPOSIXProcessMonitor_arm64.h"
 #include "RegisterContextPOSIXProcessMonitor_mips64.h"
 #include "RegisterContextPOSIXProcessMonitor_powerpc.h"
 #include "RegisterContextPOSIXProcessMonitor_x86.h"
-#include "Plugins/Process/Utility/RegisterContextLinux_arm.h"
-#include "Plugins/Process/Utility/RegisterContextLinux_arm64.h"
-#include "Plugins/Process/Utility/RegisterContextLinux_i386.h"
-#include "Plugins/Process/Utility/RegisterContextLinux_x86_64.h"
 #include "Plugins/Process/Utility/RegisterContextFreeBSD_arm.h"
 #include "Plugins/Process/Utility/RegisterContextFreeBSD_i386.h"
 #include "Plugins/Process/Utility/RegisterContextFreeBSD_mips64.h"
@@ -195,36 +191,6 @@ POSIXThread::GetRegisterContext()
                 }
                 break;
 
-            case llvm::Triple::Linux:
-                switch (target_arch.GetMachine())
-                {
-                    case llvm::Triple::aarch64:
-                        assert((HostInfo::GetArchitecture().GetAddressByteSize() == 8) && "Register setting path assumes this is a 64-bit host");
-                        reg_interface = static_cast<RegisterInfoInterface*>(new RegisterContextLinux_arm64(target_arch));
-                        break;
-                    case llvm::Triple::arm:
-                        assert(HostInfo::GetArchitecture().GetAddressByteSize() == 4);
-                        reg_interface = static_cast<RegisterInfoInterface*>(new RegisterContextLinux_arm(target_arch));
-                        break;
-                    case llvm::Triple::x86:
-                    case llvm::Triple::x86_64:
-                        if (HostInfo::GetArchitecture().GetAddressByteSize() == 4)
-                        {
-                            // 32-bit hosts run with a RegisterContextLinux_i386 context.
-                            reg_interface = static_cast<RegisterInfoInterface*>(new RegisterContextLinux_i386(target_arch));
-                        }
-                        else
-                        {
-                            assert((HostInfo::GetArchitecture().GetAddressByteSize() == 8) &&
-                                   "Register setting path assumes this is a 64-bit host");
-                            // X86_64 hosts know how to work with 64-bit and 32-bit EXEs using the x86_64 register context.
-                            reg_interface = static_cast<RegisterInfoInterface*>(new RegisterContextLinux_x86_64(target_arch));
-                        }
-                        break;
-                    default:
-                        break;
-                }
-
             default:
                 break;
         }
@@ -326,18 +292,6 @@ POSIXThread::GetUnwinder()
         m_unwinder_ap.reset(new UnwindLLDB(*this));
 
     return m_unwinder_ap.get();
-}
-
-// Overridden by FreeBSDThread; this is used only on Linux.
-void
-POSIXThread::WillResume(lldb::StateType resume_state)
-{
-    Log *log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_THREAD));
-    if (log)
-        log->Printf ("POSIXThread::%s (tid = %" PRIi64 ") setting thread resume state to %s", __FUNCTION__, GetID(), StateAsCString(resume_state));
-    // TODO: the line below shouldn't really be done, but
-    // the POSIXThread might rely on this so I will leave this in for now
-    SetResumeState(resume_state);
 }
 
 void

@@ -122,9 +122,6 @@ namespace platform_linux {
         uint64_t
         ConvertMmapFlagsToPlatform(unsigned flags) override;
 
-        static bool
-        UseLlgsForLocalDebugging ();
-
     private:
         DISALLOW_COPY_AND_ASSIGN (PlatformLinux);
     };

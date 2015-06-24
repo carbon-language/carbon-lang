@@ -22,7 +22,7 @@ class ThreadStateTestCase(TestBase):
 
     @expectedFailureDarwin("rdar://15367566")
     @expectedFailureFreeBSD('llvm.org/pr15824')
-    @expectedFailureLLGS("llvm.org/pr15824") # thread states not properly maintained
+    @expectedFailureLinux("llvm.org/pr15824") # thread states not properly maintained
     @dwarf_test
     def test_state_after_breakpoint_with_dwarf(self):
         """Test thread state after breakpoint."""

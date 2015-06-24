@@ -11,13 +11,9 @@
 #include "lldb/Core/RegisterValue.h"
 #include "lldb/Target/Thread.h"
 
-#include "Plugins/Process/POSIX/ProcessPOSIX.h"
+#include "Plugins/Process/FreeBSD/ProcessPOSIX.h"
 #include "RegisterContextPOSIXProcessMonitor_x86.h"
-#if defined(__FreeBSD__)
 #include "Plugins/Process/FreeBSD/ProcessMonitor.h"
-#else
-#include "Plugins/Process/Linux/ProcessMonitor.h"
-#endif
 
 using namespace lldb_private;
 using namespace lldb;

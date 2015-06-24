@@ -28,8 +28,8 @@
 #include "ProcessPOSIX.h"
 #include "ProcessPOSIXLog.h"
 #include "Plugins/Process/Utility/InferiorCallPOSIX.h"
-#include "Plugins/Process/Linux/ProcessMonitor.h"
 #include "POSIXThread.h"
+#include "ProcessMonitor.h"
 
 #include "lldb/Host/posix/Fcntl.h"
 

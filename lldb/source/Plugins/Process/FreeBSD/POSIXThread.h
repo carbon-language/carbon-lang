@@ -37,9 +37,6 @@ public:
     void
     RefreshStateAfterStop() override;
 
-    void
-    WillResume(lldb::StateType resume_state) override;
-
     // This notifies the thread when a private stop occurs.
     void
     DidStop () override;
