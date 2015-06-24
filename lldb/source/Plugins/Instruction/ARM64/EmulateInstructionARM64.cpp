@@ -346,7 +346,6 @@ EmulateInstructionARM64::CreateFunctionEntryUnwind (UnwindPlan &unwind_plan)
     unwind_plan.SetRegisterKind (eRegisterKindDWARF);
 
     UnwindPlan::RowSP row(new UnwindPlan::Row);
-    const bool can_replace = false;
 
     // Our previous Call Frame Address is the stack pointer
     row->GetCFAValue().SetIsRegisterPlusOffset(arm64_dwarf::sp, 0);
