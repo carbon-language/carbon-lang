@@ -154,25 +154,21 @@ std::error_code COFFObjectFile::getSymbolAddress(DataRefImpl Ref,
                                                  uint64_t &Result) const {
   COFFSymbolRef Symb = getCOFFSymbol(Ref);
 
-  if (Symb.isAnyUndefined()) {
+  if (Symb.isAnyUndefined() || Symb.isCommon()) {
     Result = UnknownAddress;
     return std::error_code();
   }
-  if (Symb.isCommon()) {
-    Result = UnknownAddress;
-    return std::error_code();
-  }
+
   int32_t SectionNumber = Symb.getSectionNumber();
-  if (!COFF::isReservedSectionNumber(SectionNumber)) {
-    const coff_section *Section = nullptr;
-    if (std::error_code EC = getSection(SectionNumber, Section))
-      return EC;
-
-    Result = Section->VirtualAddress + Symb.getValue();
+  if (COFF::isReservedSectionNumber(SectionNumber)) {
+    Result = Symb.getValue();
     return std::error_code();
   }
 
-  Result = Symb.getValue();
+  const coff_section *Section = nullptr;
+  if (std::error_code EC = getSection(SectionNumber, Section))
+    return EC;
+  Result = Section->VirtualAddress + Symb.getValue();
   return std::error_code();
 }
 
