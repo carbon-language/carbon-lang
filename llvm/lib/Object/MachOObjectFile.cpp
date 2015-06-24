@@ -375,14 +375,14 @@ std::error_code MachOObjectFile::getSymbolAddress(DataRefImpl Symb,
     MachO::nlist_64 Entry = getSymbol64TableEntry(Symb);
     if ((Entry.n_type & MachO::N_TYPE) == MachO::N_UNDF &&
         Entry.n_value == 0)
-      Res = UnknownAddressOrSize;
+      Res = UnknownAddress;
     else
       Res = Entry.n_value;
   } else {
     MachO::nlist Entry = getSymbolTableEntry(Symb);
     if ((Entry.n_type & MachO::N_TYPE) == MachO::N_UNDF &&
         Entry.n_value == 0)
-      Res = UnknownAddressOrSize;
+      Res = UnknownAddress;
     else
       Res = Entry.n_value;
   }
@@ -398,13 +398,10 @@ uint32_t MachOObjectFile::getSymbolAlignment(DataRefImpl DRI) const {
   return 0;
 }
 
-uint64_t MachOObjectFile::getSymbolSize(DataRefImpl DRI) const {
+uint64_t MachOObjectFile::getCommonSymbolSizeImpl(DataRefImpl DRI) const {
   uint64_t Value;
   getSymbolAddress(DRI, Value);
-  uint32_t flags = getSymbolFlags(DRI);
-  if (flags & SymbolRef::SF_Common)
-    return Value;
-  return UnknownAddressOrSize;
+  return Value;
 }
 
 std::error_code MachOObjectFile::getSymbolType(DataRefImpl Symb,
@@ -453,7 +450,7 @@ uint32_t MachOObjectFile::getSymbolFlags(DataRefImpl DRI) const {
     if ((MachOType & MachO::N_TYPE) == MachO::N_UNDF) {
       uint64_t Value;
       getSymbolAddress(DRI, Value);
-      if (Value && Value != UnknownAddressOrSize)
+      if (Value && Value != UnknownAddress)
         Result |= SymbolRef::SF_Common;
     }
 

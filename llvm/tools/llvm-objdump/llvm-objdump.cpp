@@ -784,7 +784,7 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
         uint64_t Address;
         if (error(Symbol.getAddress(Address)))
           break;
-        if (Address == UnknownAddressOrSize)
+        if (Address == UnknownAddress)
           continue;
         Address -= SectionAddr;
         if (Address >= SectSize)
@@ -1101,9 +1101,9 @@ void llvm::PrintSymbolTable(const ObjectFile *o) {
     bool Hidden = Flags & SymbolRef::SF_Hidden;
 
     if (Common)
-      Address = Symbol.getSize();
+      Address = Symbol.getCommonSize();
 
-    if (Address == UnknownAddressOrSize)
+    if (Address == UnknownAddress)
       Address = 0;
     char GlobLoc = ' ';
     if (Type != SymbolRef::ST_Unknown)
@@ -1149,7 +1149,8 @@ void llvm::PrintSymbolTable(const ObjectFile *o) {
 
     outs() << '\t';
     if (Common || isa<ELFObjectFileBase>(o)) {
-      uint64_t Val = Common ? Symbol.getAlignment() :  Symbol.getSize();
+      uint64_t Val = Common ? Symbol.getAlignment()
+                            : cast<ELFObjectFileBase>(o)->getSymbolSize(Symbol);
       outs() << format("\t %08" PRIx64 " ", Val);
     }
 

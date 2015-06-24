@@ -569,7 +569,7 @@ static void sortAndPrintSymbolList(SymbolicFile &Obj, bool printName,
       continue;
     if ((I->TypeChar == 'U') && DefinedOnly)
       continue;
-    if (SizeSort && !PrintAddress && I->Size == UnknownAddressOrSize)
+    if (SizeSort && !PrintAddress)
       continue;
     if (PrintFileName) {
       if (!ArchitectureName.empty())
@@ -586,16 +586,15 @@ static void sortAndPrintSymbolList(SymbolicFile &Obj, bool printName,
     char SymbolAddrStr[18] = "";
     char SymbolSizeStr[18] = "";
 
-    if (OutputFormat == sysv || I->Address == UnknownAddressOrSize)
+    if (OutputFormat == sysv || I->Address == UnknownAddress)
       strcpy(SymbolAddrStr, printBlanks);
     if (OutputFormat == sysv)
       strcpy(SymbolSizeStr, printBlanks);
 
-    if (I->Address != UnknownAddressOrSize)
+    if (I->Address != UnknownAddress)
       format(printFormat, I->Address)
           .print(SymbolAddrStr, sizeof(SymbolAddrStr));
-    if (I->Size != UnknownAddressOrSize)
-      format(printFormat, I->Size).print(SymbolSizeStr, sizeof(SymbolSizeStr));
+    format(printFormat, I->Size).print(SymbolSizeStr, sizeof(SymbolSizeStr));
 
     // If OutputFormat is darwin or we are printing Mach-O symbols in hex and
     // we have a MachOObjectFile, call darwinPrintSymbol to print as darwin's
@@ -613,8 +612,7 @@ static void sortAndPrintSymbolList(SymbolicFile &Obj, bool printName,
         outs() << SymbolAddrStr << ' ';
       if (PrintSize) {
         outs() << SymbolSizeStr;
-        if (I->Size != UnknownAddressOrSize)
-          outs() << ' ';
+        outs() << ' ';
       }
       outs() << I->TypeChar;
       if (I->TypeChar == '-' && MachO)
@@ -930,11 +928,13 @@ static void dumpSymbolNamesFromObject(SymbolicFile &Obj, bool printName,
     if (Nsect && Nsect != getNsectInMachO(*MachO, I))
       continue;
     NMSymbol S;
-    S.Size = UnknownAddressOrSize;
-    S.Address = UnknownAddressOrSize;
-    if (PrintSize && isa<ELFObjectFileBase>(Obj)) {
-      symbol_iterator SymI = I;
-      S.Size = SymI->getSize();
+    S.Size = 0;
+    S.Address = UnknownAddress;
+    if (PrintSize) {
+      if (auto *E = dyn_cast<ELFObjectFileBase>(&Obj)) {
+        symbol_iterator SymI = I;
+        S.Size = E->getSymbolSize(*SymI);
+      }
     }
     if (PrintAddress && isa<ObjectFile>(Obj))
       if (error(symbol_iterator(I)->getAddress(S.Address)))

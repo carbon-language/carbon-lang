@@ -2417,10 +2417,9 @@ static const char *get_pointer_32(uint32_t Address, uint32_t &offset,
 // for the specified section offset in the specified section reference.
 // If no relocation information is found and a non-zero ReferenceValue for the
 // symbol is passed, look up that address in the info's AddrMap.
-static const char *
-get_symbol_64(uint32_t sect_offset, SectionRef S, DisassembleInfo *info,
-              uint64_t &n_value,
-              uint64_t ReferenceValue = UnknownAddressOrSize) {
+static const char *get_symbol_64(uint32_t sect_offset, SectionRef S,
+                                 DisassembleInfo *info, uint64_t &n_value,
+                                 uint64_t ReferenceValue = UnknownAddress) {
   n_value = 0;
   if (!info->verbose)
     return nullptr;
@@ -2454,7 +2453,7 @@ get_symbol_64(uint32_t sect_offset, SectionRef S, DisassembleInfo *info,
   const char *SymbolName = nullptr;
   if (reloc_found && isExtern) {
     Symbol.getAddress(n_value);
-    if (n_value == UnknownAddressOrSize)
+    if (n_value == UnknownAddress)
       n_value = 0;
     StringRef name;
     Symbol.getName(name);
@@ -2475,7 +2474,7 @@ get_symbol_64(uint32_t sect_offset, SectionRef S, DisassembleInfo *info,
 
   // We did not find an external relocation entry so look up the ReferenceValue
   // as an address of a symbol and if found return that symbol's name.
-  if (ReferenceValue != UnknownAddressOrSize)
+  if (ReferenceValue != UnknownAddress)
     SymbolName = GuessSymbolName(ReferenceValue, info->AddrMap);
 
   return SymbolName;

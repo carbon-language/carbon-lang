@@ -41,10 +41,9 @@ ErrorOr<std::vector<std::pair<SymbolRef, uint64_t>>>
 llvm::object::computeSymbolSizes(const ObjectFile &O) {
   std::vector<std::pair<SymbolRef, uint64_t>> Ret;
 
-  if (isa<ELFObjectFileBase>(&O)) {
-    for (SymbolRef Sym : O.symbols()) {
-      Ret.push_back({Sym, Sym.getSize()});
-    }
+  if (const auto *E = dyn_cast<ELFObjectFileBase>(&O)) {
+    for (SymbolRef Sym : E->symbols())
+      Ret.push_back({Sym, E->getSymbolSize(Sym)});
     return Ret;
   }
 

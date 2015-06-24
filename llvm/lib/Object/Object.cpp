@@ -187,7 +187,7 @@ uint64_t LLVMGetSymbolAddress(LLVMSymbolIteratorRef SI) {
 }
 
 uint64_t LLVMGetSymbolSize(LLVMSymbolIteratorRef SI) {
-  return (*unwrap(SI))->getSize();
+  return (*unwrap(SI))->getCommonSize();
 }
 
 // RelocationRef accessors

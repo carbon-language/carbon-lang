@@ -94,7 +94,7 @@ void ModuleInfo::addSymbol(const SymbolRef &Symbol, DataExtractor *OpdExtractor,
     return;
   uint64_t SymbolAddress;
   if (error(Symbol.getAddress(SymbolAddress)) ||
-      SymbolAddress == UnknownAddressOrSize)
+      SymbolAddress == UnknownAddress)
     return;
   if (OpdExtractor) {
     // For big-endian PowerPC64 ELF, symbols in the .opd section refer to
@@ -109,15 +109,12 @@ void ModuleInfo::addSymbol(const SymbolRef &Symbol, DataExtractor *OpdExtractor,
       SymbolAddress = OpdExtractor->getAddress(&OpdOffset32);
   }
   uint64_t SymbolSize;
-  // Getting symbol size is linear for Mach-O files, so assume that symbol
-  // occupies the memory range up to the following symbol.
-  if (isa<MachOObjectFile>(Module))
+  // Onyl ELF has a size for every symbol so assume that symbol occupies the
+  // memory range up to the following symbol.
+  if (auto *E = dyn_cast<ELFObjectFileBase>(Module))
+    SymbolSize = E->getSymbolSize(Symbol);
+  else
     SymbolSize = 0;
-  else {
-    SymbolSize = Symbol.getSize();
-    if (SymbolSize == UnknownAddressOrSize)
-      return;
-  }
   StringRef SymbolName;
   if (error(Symbol.getName(SymbolName)))
     return;

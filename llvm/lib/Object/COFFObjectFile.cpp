@@ -155,11 +155,11 @@ std::error_code COFFObjectFile::getSymbolAddress(DataRefImpl Ref,
   COFFSymbolRef Symb = getCOFFSymbol(Ref);
 
   if (Symb.isAnyUndefined()) {
-    Result = UnknownAddressOrSize;
+    Result = UnknownAddress;
     return std::error_code();
   }
   if (Symb.isCommon()) {
-    Result = UnknownAddressOrSize;
+    Result = UnknownAddress;
     return std::error_code();
   }
   int32_t SectionNumber = Symb.getSectionNumber();
@@ -236,12 +236,9 @@ uint32_t COFFObjectFile::getSymbolFlags(DataRefImpl Ref) const {
   return Result;
 }
 
-uint64_t COFFObjectFile::getSymbolSize(DataRefImpl Ref) const {
+uint64_t COFFObjectFile::getCommonSymbolSizeImpl(DataRefImpl Ref) const {
   COFFSymbolRef Symb = getCOFFSymbol(Ref);
-
-  if (Symb.isCommon())
-    return Symb.getValue();
-  return UnknownAddressOrSize;
+  return Symb.getValue();
 }
 
 std::error_code

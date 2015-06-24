@@ -52,6 +52,8 @@ public:
   virtual uint64_t getSectionFlags(SectionRef Sec) const = 0;
   virtual uint32_t getSectionType(SectionRef Sec) const = 0;
 
+  virtual uint64_t getSymbolSize(SymbolRef Symb) const = 0;
+
   static inline bool classof(const Binary *v) { return v->isELF(); }
 };
 
@@ -72,6 +74,8 @@ public:
   typedef typename ELFFile<ELFT>::Elf_Shdr_Iter Elf_Shdr_Iter;
   typedef typename ELFFile<ELFT>::Elf_Dyn_Iter Elf_Dyn_Iter;
 
+  uint64_t getSymbolSize(SymbolRef Symb) const override;
+
 protected:
   ELFFile<ELFT> EF;
 
@@ -81,7 +85,7 @@ protected:
   std::error_code getSymbolAddress(DataRefImpl Symb,
                                    uint64_t &Res) const override;
   uint32_t getSymbolAlignment(DataRefImpl Symb) const override;
-  uint64_t getSymbolSize(DataRefImpl Symb) const override;
+  uint64_t getCommonSymbolSizeImpl(DataRefImpl Symb) const override;
   uint32_t getSymbolFlags(DataRefImpl Symb) const override;
   std::error_code getSymbolOther(DataRefImpl Symb, uint8_t &Res) const override;
   std::error_code getSymbolType(DataRefImpl Symb,
@@ -277,7 +281,7 @@ std::error_code ELFObjectFile<ELFT>::getSymbolAddress(DataRefImpl Symb,
   switch (EF.getSymbolTableIndex(ESym)) {
   case ELF::SHN_COMMON:
   case ELF::SHN_UNDEF:
-    Result = UnknownAddressOrSize;
+    Result = UnknownAddress;
     return std::error_code();
   case ELF::SHN_ABS:
     Result = ESym->st_value;
@@ -312,7 +316,12 @@ uint32_t ELFObjectFile<ELFT>::getSymbolAlignment(DataRefImpl Symb) const {
 }
 
 template <class ELFT>
-uint64_t ELFObjectFile<ELFT>::getSymbolSize(DataRefImpl Symb) const {
+uint64_t ELFObjectFile<ELFT>::getSymbolSize(SymbolRef Symb) const {
+  return toELFSymIter(Symb.getRawDataRefImpl())->st_size;
+}
+
+template <class ELFT>
+uint64_t ELFObjectFile<ELFT>::getCommonSymbolSizeImpl(DataRefImpl Symb) const {
   return toELFSymIter(Symb)->st_size;
 }
 

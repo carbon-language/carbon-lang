@@ -118,8 +118,8 @@ static std::error_code getOffset(const SymbolRef &Sym, uint64_t &Result) {
   if (std::error_code EC = Sym.getAddress(Address))
     return EC;
 
-  if (Address == UnknownAddressOrSize) {
-    Result = UnknownAddressOrSize;
+  if (Address == UnknownAddress) {
+    Result = UnknownAddress;
     return std::error_code();
   }
 
@@ -129,7 +129,7 @@ static std::error_code getOffset(const SymbolRef &Sym, uint64_t &Result) {
     return EC;
 
   if (SecI == Obj->section_end()) {
-    Result = UnknownAddressOrSize;
+    Result = UnknownAddress;
     return std::error_code();
   }
 
@@ -387,7 +387,7 @@ void RuntimeDyldImpl::computeTotalAllocSize(const ObjectFile &Obj,
     uint32_t Flags = I->getFlags();
     if (Flags & SymbolRef::SF_Common) {
       // Add the common symbols to a list.  We'll allocate them all below.
-      uint64_t Size = I->getSize();
+      uint64_t Size = I->getCommonSize();
       CommonSize += Size;
     }
   }
@@ -494,7 +494,7 @@ void RuntimeDyldImpl::emitCommonSymbols(const ObjectFile &Obj,
     }
 
     uint32_t Align = Sym.getAlignment();
-    uint64_t Size = Sym.getSize();
+    uint64_t Size = Sym.getCommonSize();
 
     CommonSize += Align + Size;
     SymbolsToAllocate.push_back(Sym);
@@ -517,7 +517,7 @@ void RuntimeDyldImpl::emitCommonSymbols(const ObjectFile &Obj,
   for (auto &Sym : SymbolsToAllocate) {
     uint32_t Align = Sym.getAlignment();
     StringRef Name;
-    uint64_t Size = Sym.getSize();
+    uint64_t Size = Sym.getCommonSize();
     Check(Sym.getName(Name));
     if (Align) {
       // This symbol has an alignment requirement.

@@ -64,18 +64,18 @@ RuntimeDyldCOFF::loadObject(const object::ObjectFile &O) {
 uint64_t RuntimeDyldCOFF::getSymbolOffset(const SymbolRef &Sym) {
   uint64_t Address;
   if (Sym.getAddress(Address))
-    return UnknownAddressOrSize;
+    return UnknownAddress;
 
-  if (Address == UnknownAddressOrSize)
-    return UnknownAddressOrSize;
+  if (Address == UnknownAddress)
+    return UnknownAddress;
 
   const ObjectFile *Obj = Sym.getObject();
   section_iterator SecI(Obj->section_end());
   if (Sym.getSection(SecI))
-    return UnknownAddressOrSize;
+    return UnknownAddress;
 
   if (SecI == Obj->section_end())
-    return UnknownAddressOrSize;
+    return UnknownAddress;
 
   uint64_t SectionAddress = SecI->getAddress();
   return Address - SectionAddress;

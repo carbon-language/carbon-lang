@@ -31,8 +31,8 @@ public:
 
     StringRef SymName; SymI->getName(SymName);
     uint64_t  SymAddr; SymI->getAddress(SymAddr);
-    uint64_t SymSize = SymI->getSize();
     auto *Obj = cast<ELFObjectFileBase>(Rel.getObjectFile());
+    uint64_t SymSize = Obj->getSymbolSize(*SymI);
     int64_t Addend = *Obj->getRelocationAddend(Rel.getRawDataRefImpl());
 
     MCSymbol *Sym = Ctx.getOrCreateSymbol(SymName);
