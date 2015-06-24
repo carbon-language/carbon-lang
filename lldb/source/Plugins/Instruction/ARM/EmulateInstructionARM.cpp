@@ -290,6 +290,9 @@ EmulateInstructionARM::GetRegisterInfo (lldb::RegisterKind reg_kind, uint32_t re
 uint32_t
 EmulateInstructionARM::GetFramePointerRegisterNumber () const
 {
+    if (m_arch.GetTriple().getEnvironment() == llvm::Triple::Android)
+        return LLDB_INVALID_REGNUM; // Don't use frame pointer on android
+
     bool is_apple = false;
     if (m_arch.GetTriple().getVendor() == llvm::Triple::Apple)
         is_apple = true;
@@ -1339,29 +1342,61 @@ EmulateInstructionARM::EmulateADDSPImm (const uint32_t opcode, const ARMEncoding
             return false;
         uint32_t imm32; // the immediate operand
         uint32_t d;
-        //bool setflags = false; // Add this back if/when support eEncodingT3 eEncodingA1
-        switch (encoding) 
+        bool setflags;
+        switch (encoding)
         {
             case eEncodingT1:
                 // d = UInt(Rd); setflags = FALSE; imm32 = ZeroExtend(imm8:'00', 32);
                 d = Bits32 (opcode, 10, 8);
                 imm32 = (Bits32 (opcode, 7, 0) << 2);
-                  
+                setflags = false;
                 break;
-                  
+
             case eEncodingT2:
                 // d = 13; setflags = FALSE; imm32 = ZeroExtend(imm7:'00', 32);
                 d = 13;
-                imm32 = ThumbImm7Scaled(opcode); // imm32 = ZeroExtend(imm7:'00', 32)
-                  
+                imm32 = ThumbImm7Scaled (opcode); // imm32 = ZeroExtend(imm7:'00', 32)
+                setflags = false;
                 break;
-                  
+
+            case eEncodingT3:
+                // d = UInt(Rd); setflags = (S == "1"); imm32 = ThumbExpandImm(i:imm3:imm8);
+                d = Bits32 (opcode, 11, 8);
+                imm32 = ThumbExpandImm (opcode);
+                setflags = Bit32 (opcode, 20);
+
+                // if Rd == "1111" && S == "1" then SEE CMN (immediate);
+                if (d == 15 && setflags == 1)
+                    return false; // CMN (immediate) not yet supported
+
+                // if d == 15 && S == "0" then UNPREDICTABLE;
+                if (d == 15 && setflags == 0)
+                    return false;
+                break;
+
+            case eEncodingT4:
+                {
+                    // if Rn == '1111' then SEE ADR;
+                    // d = UInt(Rd); setflags = FALSE; imm32 = ZeroExtend(i:imm3:imm8, 32);
+                    d = Bits32 (opcode, 11, 8);
+                    setflags = false;
+                    uint32_t i = Bit32 (opcode, 26);
+                    uint32_t imm3 = Bits32 (opcode, 14, 12);
+                    uint32_t imm8 = Bits32 (opcode, 7, 0);
+                    imm32 = (i << 11) | (imm3 << 8) | imm8;
+        
+                    // if d == 15 then UNPREDICTABLE;
+                    if (d == 15)
+                        return false;
+                }
+                break;
+
             default:
                 return false;
         }
-        addr_t sp_offset = imm32;
-        addr_t addr = sp + sp_offset; // the adjusted stack pointer value
-        
+        // (result, carry, overflow) = AddWithCarry(R[n], imm32, '0'); 
+        AddWithCarryResult res = AddWithCarry (sp, imm32, 0);
+
         EmulateInstruction::Context context;
         if (d == 13)
             context.type = EmulateInstruction::eContextAdjustStackPointer;
@@ -1370,26 +1405,23 @@ EmulateInstructionARM::EmulateADDSPImm (const uint32_t opcode, const ARMEncoding
 
         RegisterInfo sp_reg;
         GetRegisterInfo (eRegisterKindDWARF, dwarf_sp, sp_reg);
-        context.SetRegisterPlusOffset (sp_reg, sp_offset);
-    
+        context.SetRegisterPlusOffset (sp_reg, res.result - sp);
+
         if (d == 15)
         {
-            if (!ALUWritePC (context, addr))
+            if (!ALUWritePC (context, res.result))
                 return false;
         }
         else
         {
-            if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, dwarf_r0 + d, addr))
+            // R[d] = result; 
+            // if setflags then
+            //     APSR.N = result<31>;  
+            //     APSR.Z = IsZeroBit(result); 
+            //     APSR.C = carry;  
+            //     APSR.V = overflow;
+            if (!WriteCoreRegOptionalFlags (context, res.result, d, setflags, res.carry_out, res.overflow))
                 return false;
-            
-            // Add this back if/when support eEncodingT3 eEncodingA1
-            //if (setflags)
-            //{
-            //    APSR.N = result<31>;
-            //    APSR.Z = IsZeroBit(result);
-            //    APSR.C = carry;
-            //    APSR.V = overflow;
-            //}
         }
     }
     return true;
@@ -2318,13 +2350,16 @@ EmulateInstructionARM::EmulateB (const uint32_t opcode, const ARMEncoding encodi
             context.SetISAAndImmediateSigned (eModeThumb, 4 + imm32);
             break;
         case eEncodingT2:
-            imm32 = llvm::SignExtend32<12>(Bits32(opcode, 10, 0));
+            imm32 = llvm::SignExtend32<12>(Bits32(opcode, 10, 0) << 1);
             target = pc + imm32;
             context.SetISAAndImmediateSigned (eModeThumb, 4 + imm32);
             break;
         case eEncodingT3:
             // The 'cond' field is handled in EmulateInstructionARM::CurrentCond().
             {
+            if (Bits32(opcode, 25, 23) == 7)
+                return false; // See Branches and miscellaneous control on page A6-235.
+
             uint32_t S = Bit32(opcode, 26);
             uint32_t imm6 = Bits32(opcode, 21, 16);
             uint32_t J1 = Bit32(opcode, 13);
@@ -2404,7 +2439,7 @@ EmulateInstructionARM::EmulateCB (const uint32_t opcode, const ARMEncoding encod
     default:
         return false;
     }
-    if (nonzero ^ (reg_val == 0))
+    if (m_ignore_conditions || (nonzero ^ (reg_val == 0)))
         if (!BranchWritePC(context, target))
             return false;
 
@@ -2434,55 +2469,58 @@ EmulateInstructionARM::EmulateTB (const uint32_t opcode, const ARMEncoding encod
 
     bool success = false;
 
-    uint32_t Rn;     // the base register which contains the address of the table of branch lengths
-    uint32_t Rm;     // the index register which contains an integer pointing to a byte/halfword in the table
-    bool is_tbh;     // true if table branch halfword
-    switch (encoding) {
-    case eEncodingT1:
-        Rn = Bits32(opcode, 19, 16);
-        Rm = Bits32(opcode, 3, 0);
-        is_tbh = BitIsSet(opcode, 4);
-        if (Rn == 13 || BadReg(Rm))
+    if (ConditionPassed(opcode))
+    {
+        uint32_t Rn;     // the base register which contains the address of the table of branch lengths
+        uint32_t Rm;     // the index register which contains an integer pointing to a byte/halfword in the table
+        bool is_tbh;     // true if table branch halfword
+        switch (encoding) {
+        case eEncodingT1:
+            Rn = Bits32(opcode, 19, 16);
+            Rm = Bits32(opcode, 3, 0);
+            is_tbh = BitIsSet(opcode, 4);
+            if (Rn == 13 || BadReg(Rm))
+                return false;
+            if (InITBlock() && !LastInITBlock())
+                return false;
+            break;
+        default:
             return false;
-        if (InITBlock() && !LastInITBlock())
+        }
+
+        // Read the address of the table from the operand register Rn.
+        // The PC can be used, in which case the table immediately follows this instruction.
+        uint32_t base = ReadCoreReg(Rn, &success);
+        if (!success)
             return false;
-        break;
-    default:
-        return false;
+
+        // the table index
+        uint32_t index = ReadCoreReg(Rm, &success);
+        if (!success)
+            return false;
+
+        // the offsetted table address
+        addr_t addr = base + (is_tbh ? index*2 : index);
+
+        // PC-relative offset to branch forward
+        EmulateInstruction::Context context;
+        context.type = EmulateInstruction::eContextTableBranchReadMemory;
+        uint32_t offset = MemURead(context, addr, is_tbh ? 2 : 1, 0, &success) * 2;
+        if (!success)
+            return false;
+
+        const uint32_t pc = ReadCoreReg(PC_REG, &success);
+        if (!success)
+            return false;
+
+        // target address
+        addr_t target = pc + offset;
+        context.type = EmulateInstruction::eContextRelativeBranchImmediate;
+        context.SetISAAndImmediateSigned (eModeThumb, 4 + offset);
+
+        if (!BranchWritePC(context, target))
+            return false;
     }
-
-    // Read the address of the table from the operand register Rn.
-    // The PC can be used, in which case the table immediately follows this instruction.
-    uint32_t base = ReadCoreReg(Rm, &success);
-    if (!success)
-        return false;
-
-    // the table index
-    uint32_t index = ReadCoreReg(Rm, &success);
-    if (!success)
-        return false;
-
-    // the offsetted table address
-    addr_t addr = base + (is_tbh ? index*2 : index);
-
-    // PC-relative offset to branch forward
-    EmulateInstruction::Context context;
-    context.type = EmulateInstruction::eContextTableBranchReadMemory;
-    uint32_t offset = MemURead(context, addr, is_tbh ? 2 : 1, 0, &success) * 2;
-    if (!success)
-        return false;
-
-    const uint32_t pc = ReadCoreReg(PC_REG, &success);
-    if (!success)
-        return false;
-
-    // target address
-    addr_t target = pc + offset;
-    context.type = EmulateInstruction::eContextRelativeBranchImmediate;
-    context.SetISAAndImmediateSigned (eModeThumb, 4 + offset);
-
-    if (!BranchWritePC(context, target))
-        return false;
 
     return true;
 }
@@ -2498,14 +2536,14 @@ EmulateInstructionARM::EmulateADDImmThumb (const uint32_t opcode, const ARMEncod
         (result, carry, overflow) = AddWithCarry(R[n], imm32, '0'); 
         R[d] = result; 
         if setflags then
-            APSR.N = result<31>;  
-            APSR.Z = IsZeroBit(result); 
-            APSR.C = carry;  
+            APSR.N = result<31>;
+            APSR.Z = IsZeroBit(result);
+            APSR.C = carry;
             APSR.V = overflow;
 #endif
-                  
+
     bool success = false;
-                  
+
     if (ConditionPassed(opcode))
     {
         uint32_t d;
@@ -2513,8 +2551,8 @@ EmulateInstructionARM::EmulateADDImmThumb (const uint32_t opcode, const ARMEncod
         bool setflags;
         uint32_t imm32;
         uint32_t carry_out;
-        
-        //EncodingSpecificOperations(); 
+
+        //EncodingSpecificOperations();
         switch (encoding)
         {
             case eEncodingT1:
@@ -2523,7 +2561,7 @@ EmulateInstructionARM::EmulateADDImmThumb (const uint32_t opcode, const ARMEncod
                 n = Bits32 (opcode, 5, 3);
                 setflags = !InITBlock();
                 imm32 = Bits32 (opcode, 8,6);
-                
+
                 break;
                 
             case eEncodingT2:
@@ -2532,28 +2570,30 @@ EmulateInstructionARM::EmulateADDImmThumb (const uint32_t opcode, const ARMEncod
                 n = Bits32 (opcode, 10, 8);
                 setflags = !InITBlock();
                 imm32 = Bits32 (opcode, 7, 0);
-                
+
                 break;
-                
+
             case eEncodingT3:
                 // if Rd == '1111' && S == '1' then SEE CMN (immediate); 
-                // if Rn == '1101' then SEE ADD (SP plus immediate); 
                 // d = UInt(Rd); n = UInt(Rn); setflags = (S == '1'); imm32 = ThumbExpandImm(i:imm3:imm8); 
                 d = Bits32 (opcode, 11, 8);
                 n = Bits32 (opcode, 19, 16);
                 setflags = BitIsSet (opcode, 20);
                 imm32 = ThumbExpandImm_C (opcode, APSR_C, carry_out);
-                
+
+                // if Rn == '1101' then SEE ADD (SP plus immediate); 
+                if (n == 13)
+                    return EmulateADDSPImm(opcode, eEncodingT3);
+
                 // if BadReg(d) || n == 15 then UNPREDICTABLE;
                 if (BadReg (d) || (n == 15))
                     return false;
-                
+
                 break;
-                
+
             case eEncodingT4:
             {
                 // if Rn == '1111' then SEE ADR; 
-                // if Rn == '1101' then SEE ADD (SP plus immediate); 
                 // d = UInt(Rd); n = UInt(Rn); setflags = FALSE; imm32 = ZeroExtend(i:imm3:imm8, 32); 
                 d = Bits32 (opcode, 11, 8);
                 n = Bits32 (opcode, 19, 16);
@@ -2562,31 +2602,36 @@ EmulateInstructionARM::EmulateADDImmThumb (const uint32_t opcode, const ARMEncod
                 uint32_t imm3 = Bits32 (opcode, 14, 12);
                 uint32_t imm8 = Bits32 (opcode, 7, 0);
                 imm32 = (i << 11) | (imm3 << 8) | imm8;
-                
+
+                // if Rn == '1101' then SEE ADD (SP plus immediate); 
+                if (n == 13)
+                    return EmulateADDSPImm(opcode, eEncodingT4);
+
                 // if BadReg(d) then UNPREDICTABLE;
                 if (BadReg (d))
                     return false;
-                    
+
                 break;
-            }   
+            }
+
             default:
                 return false;
         }
-        
+
         uint64_t Rn = ReadRegisterUnsigned (eRegisterKindDWARF, dwarf_r0 + n, 0, &success);
         if (!success)
             return false;
-        
+
         //(result, carry, overflow) = AddWithCarry(R[n], imm32, '0'); 
         AddWithCarryResult res = AddWithCarry (Rn, imm32, 0);
-        
+
         RegisterInfo reg_n;
         GetRegisterInfo (eRegisterKindDWARF, dwarf_r0 + n, reg_n);
-        
+
         EmulateInstruction::Context context;
         context.type = eContextArithmetic;
         context.SetRegisterPlusOffset (reg_n, imm32);
-        
+
         //R[d] = result; 
         //if setflags then
             //APSR.N = result<31>;  
@@ -2595,7 +2640,7 @@ EmulateInstructionARM::EmulateADDImmThumb (const uint32_t opcode, const ARMEncod
             //APSR.V = overflow;
         if (!WriteCoreRegOptionalFlags (context, res.result, d, setflags, res.carry_out, res.overflow))
             return false;
-        
+
     }
     return true;
 }
@@ -2650,6 +2695,8 @@ EmulateInstructionARM::EmulateADDImmARM (const uint32_t opcode, const ARMEncodin
         EmulateInstruction::Context context;
         if (Rd == 13)
             context.type = EmulateInstruction::eContextAdjustStackPointer;
+        else if (Rd == GetFramePointerRegisterNumber())
+            context.type = EmulateInstruction::eContextSetFramePointer;
         else
             context.type = EmulateInstruction::eContextRegisterPlusOffset;
 
@@ -2966,6 +3013,13 @@ EmulateInstructionARM::EmulateCMPReg (const uint32_t opcode, const ARMEncoding e
         if (Rn < 8 && Rm < 8)
             return false;
         if (Rn == 15 || Rm == 15)
+            return false;
+        break;
+    case eEncodingT3:
+        Rn = Bits32(opcode, 19, 16);
+        Rm = Bits32(opcode, 3, 0);
+        shift_n = DecodeImmShiftThumb(opcode, shift_t);
+        if (Rn == 15 || BadReg(Rm))
             return false;
         break;
     case eEncodingA1:
@@ -4016,8 +4070,22 @@ EmulateInstructionARM::EmulateLDRRtRnImm (const uint32_t opcode, const ARMEncodi
         if (wback)
         {
             EmulateInstruction::Context ctx;
-            ctx.type = EmulateInstruction::eContextAdjustBaseRegister;
-            ctx.SetRegisterPlusOffset (base_reg, (int32_t) (offset_addr - base));
+            if (Rn == 13)
+            {
+                ctx.type = eContextAdjustStackPointer;
+                ctx.SetImmediateSigned((int32_t) (offset_addr - base));
+            }
+            else if (Rn == GetFramePointerRegisterNumber())
+            {
+                ctx.type = eContextSetFramePointer;
+                ctx.SetRegisterPlusOffset (base_reg, (int32_t) (offset_addr - base));
+            }
+            else
+            {
+                ctx.type = EmulateInstruction::eContextAdjustBaseRegister;
+                ctx.SetRegisterPlusOffset (base_reg, (int32_t) (offset_addr - base));
+            }
+            
 
             if (!WriteRegisterUnsigned (ctx, eRegisterKindDWARF, dwarf_r0 + Rn, offset_addr))
                 return false;
@@ -6216,8 +6284,6 @@ EmulateInstructionARM::EmulateLDRBImmediate (const uint32_t opcode, const ARMEnc
                 break;
                   
             case eEncodingT2:
-                // if Rt == '1111' then SEE PLD; 
-                // if Rn == '1111' then SEE LDRB (literal); 
                 // t = UInt(Rt); n = UInt(Rn); imm32 = ZeroExtend(imm12, 32); 
                 t = Bits32 (opcode, 15, 12);
                 n = Bits32 (opcode, 19, 16);
@@ -6227,7 +6293,15 @@ EmulateInstructionARM::EmulateLDRBImmediate (const uint32_t opcode, const ARMEnc
                 index = true;
                 add = true;
                 wback = false;
-                  
+
+                // if Rt == '1111' then SEE PLD; 
+                if (t == 15)
+                    return false; // PLD is not implemented yet
+
+                // if Rn == '1111' then SEE LDRB (literal); 
+                if (n == 15)
+                    return EmulateLDRBLiteral(opcode, eEncodingT1);
+
                 // if t == 13 then UNPREDICTABLE;
                 if (t == 13)
                     return false;
@@ -6235,14 +6309,12 @@ EmulateInstructionARM::EmulateLDRBImmediate (const uint32_t opcode, const ARMEnc
                 break;
                   
             case eEncodingT3:
-                // if Rt == '1111' && P == '1' && U == '0' && W == '0' then SEE PLD; 
-                // if Rn == '1111' then SEE LDRB (literal); 
                 // if P == '1' && U == '1' && W == '0' then SEE LDRBT; 
                 // if P == '0' && W == '0' then UNDEFINED;
                 if (BitIsClear (opcode, 10) && BitIsClear (opcode, 8))
                     return false;
                   
-                  // t = UInt(Rt); n = UInt(Rn); imm32 = ZeroExtend(imm8, 32);
+                // t = UInt(Rt); n = UInt(Rn); imm32 = ZeroExtend(imm8, 32);
                 t = Bits32 (opcode, 15, 12);
                 n = Bits32 (opcode, 19, 16);
                 imm32 = Bits32 (opcode, 7, 0);
@@ -6251,7 +6323,15 @@ EmulateInstructionARM::EmulateLDRBImmediate (const uint32_t opcode, const ARMEnc
                 index = BitIsSet (opcode, 10);
                 add = BitIsSet (opcode, 9);
                 wback = BitIsSet (opcode, 8);
-                  
+
+                // if Rt == '1111' && P == '1' && U == '0' && W == '0' then SEE PLD; 
+                if (t == 15)
+                    return false; // PLD is not implemented yet
+
+                // if Rn == '1111' then SEE LDRB (literal); 
+                if (n == 15)
+                    return EmulateLDRBLiteral(opcode, eEncodingT1);
+
                 // if BadReg(t) || (wback && n == t) then UNPREDICTABLE;
                 if (BadReg (t) || (wback && (n == t)))
                     return false;
@@ -6333,11 +6413,14 @@ EmulateInstructionARM::EmulateLDRBLiteral (const uint32_t opcode, const ARMEncod
         switch (encoding)
         {
             case eEncodingT1:
-                // if Rt == '1111' then SEE PLD; 
                 // t = UInt(Rt); imm32 = ZeroExtend(imm12, 32); add = (U == '1'); 
                 t = Bits32 (opcode, 15, 12);
                 imm32 = Bits32 (opcode, 11, 0);
                 add = BitIsSet (opcode, 23);
+
+                // if Rt == '1111' then SEE PLD; 
+                if (t == 15)
+                    return false; // PLD is not implemented yet
                   
                 // if t == 13 then UNPREDICTABLE;
                 if (t == 13)
@@ -6438,8 +6521,6 @@ EmulateInstructionARM::EmulateLDRBRegister (const uint32_t opcode, const ARMEnco
                 break;
                   
             case eEncodingT2:
-                // if Rt == '1111' then SEE PLD; 
-                // if Rn == '1111' then SEE LDRB (literal); 
                 // t = UInt(Rt); n = UInt(Rn); m = UInt(Rm); 
                 t = Bits32 (opcode, 15, 12);
                 n = Bits32 (opcode, 19, 16);
@@ -6453,6 +6534,14 @@ EmulateInstructionARM::EmulateLDRBRegister (const uint32_t opcode, const ARMEnco
                 // (shift_t, shift_n) = (SRType_LSL, UInt(imm2)); 
                 shift_t = SRType_LSL;
                 shift_n = Bits32 (opcode, 5, 4);
+
+                // if Rt == '1111' then SEE PLD; 
+                if (t == 15)
+                    return false; // PLD is not implemented yet
+
+                // if Rn == '1111' then SEE LDRB (literal); 
+                if (n == 15)
+                    return EmulateLDRBLiteral(opcode, eEncodingT1);
                   
                 // if t == 13 || BadReg(m) then UNPREDICTABLE;
                 if ((t == 13) || BadReg (m))
@@ -9726,14 +9815,20 @@ EmulateInstructionARM::EmulateSUBReg (const uint32_t opcode, const ARMEncoding e
                 break;
                   
             case eEncodingT2:
-                // if Rd == Ô1111Õ && S == Ô1Õ then SEE CMP (register);
-                // if Rn == Ô1101Õ then SEE SUB (SP minus register);
-                // d = UInt(Rd); n = UInt(Rn); m = UInt(Rm); setflags = (S == Ô1Õ);
+                // d = UInt(Rd); n = UInt(Rn); m = UInt(Rm); setflags = (S =="1");
                 d = Bits32 (opcode, 11, 8);
                 n = Bits32 (opcode, 19, 16);
                 m = Bits32 (opcode, 3, 0);
                 setflags = BitIsSet (opcode, 20);
+
+                // if Rd == "1111" && S == "1" then SEE CMP (register);
+                if (d == 15 && setflags == 1)
+                    return EmulateCMPImm (opcode, eEncodingT3);
                   
+                // if Rn == "1101" then SEE SUB (SP minus register);
+                if (n == 13)
+                    return EmulateSUBSPReg (opcode, eEncodingT1);
+
                 // (shift_t, shift_n) = DecodeImmShift(type, imm3:imm2);
                 shift_n = DecodeImmShiftThumb (opcode, shift_t);
                   
@@ -12740,6 +12835,7 @@ EmulateInstructionARM::GetThumbOpcodeForInstruction (const uint32_t opcode, uint
         { 0xffffffc0, 0x00004280, ARMvAll,       eEncodingT1, No_VFP, eSize16, &EmulateInstructionARM::EmulateCMPReg, "cmp<c> <Rn>, <Rm>"},
         // cmp (register) (Rn and Rm not both from r0-r7)
         { 0xffffff00, 0x00004500, ARMvAll,       eEncodingT2, No_VFP, eSize16, &EmulateInstructionARM::EmulateCMPReg, "cmp<c> <Rn>, <Rm>"},
+        { 0xfff08f00, 0xebb00f00, ARMvAll,       eEncodingT3, No_VFP, eSize16, &EmulateInstructionARM::EmulateCMPReg, "cmp<c>.w <Rn>, <Rm> {, <shift>}"},
         // asr (immediate)
         { 0xfffff800, 0x00001000, ARMvAll,       eEncodingT1, No_VFP, eSize16, &EmulateInstructionARM::EmulateASRImm, "asrs|asr<c> <Rd>, <Rm>, #imm"},
         { 0xffef8030, 0xea4f0020, ARMV6T2_ABOVE, eEncodingT2, No_VFP, eSize32, &EmulateInstructionARM::EmulateASRImm, "asr{s}<c>.w <Rd>, <Rm>, #imm"},
@@ -13673,15 +13769,11 @@ EmulateInstructionARM::CreateFunctionEntryUnwind (UnwindPlan &unwind_plan)
 
     // Our previous Call Frame Address is the stack pointer
     row->GetCFAValue().SetIsRegisterPlusOffset (dwarf_sp, 0);
-    
-    // Our previous PC is in the LR
-    row->SetRegisterLocationToRegister(dwarf_pc, dwarf_lr, true);
-    unwind_plan.AppendRow (row);
 
-    // All other registers are the same.
-    
+    unwind_plan.AppendRow (row);
     unwind_plan.SetSourceName ("EmulateInstructionARM");
     unwind_plan.SetSourcedFromCompiler (eLazyBoolNo);
     unwind_plan.SetUnwindPlanValidAtAllInstructions (eLazyBoolYes);
+    unwind_plan.SetReturnAddressRegister (dwarf_lr);
     return true;
 }

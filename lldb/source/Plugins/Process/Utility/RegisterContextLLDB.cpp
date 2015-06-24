@@ -692,7 +692,7 @@ RegisterContextLLDB::GetFastUnwindPlanForFrame ()
     if (m_frame_type == eTrapHandlerFrame || m_frame_type == eDebuggerFrame)
         return unwind_plan_sp;
 
-    unwind_plan_sp = func_unwinders_sp->GetUnwindPlanFastUnwind (m_thread);
+    unwind_plan_sp = func_unwinders_sp->GetUnwindPlanFastUnwind (*m_thread.CalculateTarget(), m_thread);
     if (unwind_plan_sp)
     {
         if (unwind_plan_sp->PlanValidAtAddress (m_current_pc))
@@ -1403,16 +1403,13 @@ RegisterContextLLDB::SavedLocationForRegister (uint32_t lldb_regnum, lldb_privat
 
     if (unwindplan_regloc.IsSame())
     {
-        if (IsFrameZero ())
-        {
-            UnwindLogMsg ("could not supply caller's %s (%d) location, IsSame", 
-                          regnum.GetName(), regnum.GetAsKind (eRegisterKindLLDB));
-            return UnwindLLDB::RegisterSearchResult::eRegisterNotFound;
-        }
-        else
-        {
-            return UnwindLLDB::RegisterSearchResult::eRegisterNotFound;
-        }
+        regloc.type = UnwindLLDB::RegisterLocation::eRegisterInRegister;
+        regloc.location.register_number = regnum.GetAsKind (eRegisterKindLLDB);
+        m_registers[regnum.GetAsKind (eRegisterKindLLDB)] = regloc;
+        UnwindLogMsg ("supplying caller's register %s (%d), saved in register %s (%d)", 
+                      regnum.GetName(), regnum.GetAsKind (eRegisterKindLLDB), 
+                      regnum.GetName(), regnum.GetAsKind (eRegisterKindLLDB));
+        return UnwindLLDB::RegisterSearchResult::eRegisterFound;
     }
 
     if (unwindplan_regloc.IsCFAPlusOffset())

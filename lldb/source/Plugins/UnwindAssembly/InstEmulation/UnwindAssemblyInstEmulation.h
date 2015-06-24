@@ -141,8 +141,7 @@ private:
         m_register_values (),
         m_pushed_regs(),
         m_curr_row_modified (false),
-        m_curr_insn_is_branch_immediate (false),
-        m_curr_insn_restored_a_register (false)
+        m_forward_branch_offset (0)
     {
         if (m_inst_emulator_ap.get())
         {
@@ -178,13 +177,11 @@ private:
     // While processing the instruction stream, we need to communicate some state change
     // information up to the higher level loop that makes decisions about how to push
     // the unwind instructions for the UnwindPlan we're constructing.
-    
+
     // The instruction we're processing updated the UnwindPlan::Row contents
     bool m_curr_row_modified;
-    // The instruction we're examining is a branch immediate instruction
-    bool m_curr_insn_is_branch_immediate;
-    // The instruction we're processing restored a caller's reg value (e.g. in an epilogue)
-    bool m_curr_insn_restored_a_register;
+    // The instruction is branching forward with the given offset. 0 value means no branching.
+    uint32_t m_forward_branch_offset;
 };
 
 #endif // liblldb_UnwindAssemblyInstEmulation_h_

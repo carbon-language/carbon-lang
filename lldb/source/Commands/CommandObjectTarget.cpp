@@ -3775,7 +3775,7 @@ protected:
             {
                 result.GetOutputStream().Printf("Synchronous (restricted to call-sites) UnwindPlan is '%s'\n", callsite_unwind_plan->GetSourceName().AsCString());
             }
-            UnwindPlanSP fast_unwind_plan = func_unwinders_sp->GetUnwindPlanFastUnwind(*thread.get());
+            UnwindPlanSP fast_unwind_plan = func_unwinders_sp->GetUnwindPlanFastUnwind(*target, *thread.get());
             if (fast_unwind_plan.get())
             {
                 result.GetOutputStream().Printf("Fast UnwindPlan is '%s'\n", fast_unwind_plan->GetSourceName().AsCString());

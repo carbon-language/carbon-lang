@@ -50,7 +50,7 @@ public:
     GetUnwindPlanAtNonCallSite (Target& target, lldb_private::Thread& thread, int current_offset);
 
     lldb::UnwindPlanSP
-    GetUnwindPlanFastUnwind (lldb_private::Thread& Thread);
+    GetUnwindPlanFastUnwind (Target& target, lldb_private::Thread& thread);
 
     lldb::UnwindPlanSP
     GetUnwindPlanArchitectureDefault (lldb_private::Thread& thread);
@@ -111,7 +111,7 @@ public:
 private:
 
     lldb::UnwindAssemblySP
-    GetUnwindAssemblyProfiler ();
+    GetUnwindAssemblyProfiler (Target& target);
 
     UnwindTable& m_unwind_table;
     AddressRange m_range;

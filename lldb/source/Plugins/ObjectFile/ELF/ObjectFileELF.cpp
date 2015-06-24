@@ -2020,11 +2020,12 @@ ObjectFileELF::ParseSymbols (Symtab *symtab,
                 symbol_section_sp,  // Section in which this symbol is defined or null.
                 symbol_value,       // Offset in section or symbol value.
                 symbol.st_size),    // Size in bytes of this symbol.
-            true,               // Size is valid
-            has_suffix,         // Contains linker annotations?
-            flags);             // Symbol flags.
+            symbol.st_size != 0,    // Size is valid if it is not 0
+            has_suffix,             // Contains linker annotations?
+            flags);                 // Symbol flags.
         symtab->AddSymbol(dc_symbol);
     }
+    symtab->CalculateSymbolSizes();
     return i;
 }
 
