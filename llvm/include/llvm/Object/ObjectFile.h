@@ -35,8 +35,8 @@ class symbol_iterator;
 class SectionRef;
 typedef content_iterator<SectionRef> section_iterator;
 
-/// RelocationRef - This is a value type class that represents a single
-/// relocation in the list of relocations in the object file.
+/// This is a value type class that represents a single relocation in the list
+/// of relocations in the object file.
 class RelocationRef {
   DataRefImpl RelocationPimpl;
   const ObjectFile *OwningObject;
@@ -71,8 +71,8 @@ public:
 };
 typedef content_iterator<RelocationRef> relocation_iterator;
 
-/// SectionRef - This is a value type class that represents a single section in
-/// the list of sections in the object file.
+/// This is a value type class that represents a single section in the list of
+/// sections in the object file.
 class SectionRef {
   friend class SymbolRef;
   DataRefImpl SectionPimpl;
@@ -116,8 +116,8 @@ public:
   const ObjectFile *getObject() const;
 };
 
-/// SymbolRef - This is a value type class that represents a single symbol in
-/// the list of symbols in the object file.
+/// This is a value type class that represents a single symbol in the list of
+/// symbols in the object file.
 class SymbolRef : public BasicSymbolRef {
   friend class SectionRef;
 
@@ -170,9 +170,9 @@ public:
   }
 };
 
-/// ObjectFile - This class is the base class for all object file types.
-/// Concrete instances of this object are created by createObjectFile, which
-/// figures out which type to create.
+/// This class is the base class for all object file types. Concrete instances
+/// of this object are created by createObjectFile, which figures out which type
+/// to create.
 class ObjectFile : public SymbolicFile {
   virtual void anchor();
   ObjectFile() = delete;
