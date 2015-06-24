@@ -1783,13 +1783,9 @@ static void patchReplacementInstruction(Instruction *I, Value *Repl) {
   // being replaced.
   BinaryOperator *Op = dyn_cast<BinaryOperator>(I);
   BinaryOperator *ReplOp = dyn_cast<BinaryOperator>(Repl);
-  if (Op && ReplOp && isa<OverflowingBinaryOperator>(Op) &&
-      isa<OverflowingBinaryOperator>(ReplOp)) {
-    if (ReplOp->hasNoSignedWrap() && !Op->hasNoSignedWrap())
-      ReplOp->setHasNoSignedWrap(false);
-    if (ReplOp->hasNoUnsignedWrap() && !Op->hasNoUnsignedWrap())
-      ReplOp->setHasNoUnsignedWrap(false);
-  }
+  if (Op && ReplOp)
+    ReplOp->andIRFlags(Op);
+
   if (Instruction *ReplInst = dyn_cast<Instruction>(Repl)) {
     // FIXME: If both the original and replacement value are part of the
     // same control-flow region (meaning that the execution of one
