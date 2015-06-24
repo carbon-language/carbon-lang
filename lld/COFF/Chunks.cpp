@@ -58,10 +58,8 @@ void SectionChunk::writeTo(uint8_t *Buf) {
   memcpy(Buf + FileOff, Data.data(), Data.size());
 
   // Apply relocations.
-  for (const auto &I : getSectionRef().relocations()) {
-    const coff_relocation *Rel = File->getCOFFObj()->getCOFFRelocation(I);
+  for (const coff_relocation *Rel = relBegin(), *E = relEnd(); Rel != E; ++Rel)
     applyReloc(Buf, Rel);
-  }
 }
 
 void SectionChunk::mark() {
@@ -69,8 +67,8 @@ void SectionChunk::mark() {
   Live = true;
 
   // Mark all symbols listed in the relocation table for this section.
-  for (const auto &I : getSectionRef().relocations()) {
-    const coff_relocation *Rel = File->getCOFFObj()->getCOFFRelocation(I);
+  for (const coff_relocation *Rel = relBegin(), *E = relEnd(); Rel != E;
+       ++Rel) {
     SymbolBody *B = File->getSymbolBody(Rel->SymbolTableIndex);
     if (auto *Def = dyn_cast<Defined>(B))
       Def->markLive();
@@ -120,11 +118,11 @@ void SectionChunk::applyReloc(uint8_t *Buf, const coff_relocation *Rel) {
 // which need to be fixed by the loader if load-time relocation is needed.
 // Only called when base relocation is enabled.
 void SectionChunk::getBaserels(std::vector<uint32_t> *Res, Defined *ImageBase) {
-  for (const auto &I : getSectionRef().relocations()) {
+  for (const coff_relocation *Rel = relBegin(), *E = relEnd(); Rel != E;
+       ++Rel) {
     // ADDR64 relocations contain absolute addresses.
     // Symbol __ImageBase is special -- it's an absolute symbol, but its
     // address never changes even if image is relocated.
-    const coff_relocation *Rel = File->getCOFFObj()->getCOFFRelocation(I);
     if (Rel->Type != IMAGE_REL_AMD64_ADDR64)
       continue;
     SymbolBody *Body = File->getSymbolBody(Rel->SymbolTableIndex);
@@ -154,12 +152,6 @@ void SectionChunk::printDiscardedMessage() {
     // Removed by ICF.
     llvm::dbgs() << "Replaced " << Sym->getName() << "\n";
   }
-}
-
-SectionRef SectionChunk::getSectionRef() const {
-  DataRefImpl Ref;
-  Ref.p = uintptr_t(Header);
-  return SectionRef(Ref, File->getCOFFObj());
 }
 
 StringRef SectionChunk::getDebugName() {
@@ -196,12 +188,10 @@ bool SectionChunk::equals(const SectionChunk *X) const {
     return false;
 
   // Compare relocations
-  auto Range1 = getSectionRef().relocations();
-  auto Range2 = X->getSectionRef().relocations();
-  auto End = Range1.end();
-  for (auto I = Range1.begin(), J = Range2.begin(); I != End; ++I, ++J) {
-    const coff_relocation *Rel1 = File->getCOFFObj()->getCOFFRelocation(*I);
-    const coff_relocation *Rel2 = X->File->getCOFFObj()->getCOFFRelocation(*J);
+  const coff_relocation *Rel1 = relBegin();
+  const coff_relocation *End = relEnd();
+  const coff_relocation *Rel2 = X->relBegin();
+  for (; Rel1 != End; ++Rel1, ++Rel2) {
     if (Rel1->Type != Rel2->Type)
       return false;
     if (Rel1->VirtualAddress != Rel2->VirtualAddress)
@@ -228,6 +218,22 @@ SectionChunk *SectionChunk::repl() {
 void SectionChunk::replaceWith(SectionChunk *Other) {
   Ptr = Other;
   Live = false;
+}
+
+const coff_relocation *SectionChunk::relBegin() const {
+  if (!Reloc) {
+    DataRefImpl Ref;
+    Ref.p = uintptr_t(Header);
+    SectionRef Sref(Ref, File->getCOFFObj());
+    relocation_iterator It = Sref.relocation_begin();
+    Reloc = File->getCOFFObj()->getCOFFRelocation(*It);
+  }
+  return Reloc;
+}
+
+const coff_relocation *SectionChunk::relEnd() const {
+  const coff_relocation *I = relBegin();
+  return I + Header->NumberOfRelocations;
 }
 
 CommonChunk::CommonChunk(const COFFSymbolRef S) : Sym(S) {

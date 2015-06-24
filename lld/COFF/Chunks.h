@@ -149,11 +149,15 @@ public:
 
 private:
   void mark() override;
-  SectionRef getSectionRef() const;
   void applyReloc(uint8_t *Buf, const coff_relocation *Rel);
 
   // A file this chunk was created from.
   ObjectFile *File;
+
+  // A raw pointer to the relocation table.
+  mutable const coff_relocation *Reloc = nullptr;
+  const coff_relocation *relBegin() const;
+  const coff_relocation *relEnd() const;
 
   // A pointer pointing to a replacement for this chunk.
   // Initially it points to "this" object. If this chunk is merged
