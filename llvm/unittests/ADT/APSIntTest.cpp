@@ -151,15 +151,13 @@ TEST(APSIntTest, FromString) {
   EXPECT_EQ(APSInt("-1234").getExtValue(), -1234);
 }
 
-#ifdef GTEST_HAS_DEATH_TEST
-#ifndef NDEBUG
+#if defined(GTEST_HAS_DEATH_TEST) && !defined(NDEBUG)
 
 TEST(APSIntTest, StringDeath) {
   EXPECT_DEATH(APSInt(""), "Invalid string length");
   EXPECT_DEATH(APSInt("1a"), "Invalid character in digit string");
 }
 
-#endif
 #endif
 
 } // end anonymous namespace
