@@ -134,8 +134,7 @@ static bool iterativelySimplifyCFG(Function &F, const TargetTransformInfo &TTI,
   while (LocalChange) {
     LocalChange = false;
 
-    // Loop over all of the basic blocks and remove them if they are unneeded...
-    //
+    // Loop over all of the basic blocks and remove them if they are unneeded.
     for (Function::iterator BBIt = F.begin(); BBIt != F.end(); ) {
       if (SimplifyCFG(BBIt++, TTI, BonusInstThreshold, AC)) {
         LocalChange = true;
@@ -159,7 +158,7 @@ static bool simplifyFunctionCFG(Function &F, const TargetTransformInfo &TTI,
   // iterativelySimplifyCFG can (rarely) make some loops dead.  If this happens,
   // removeUnreachableBlocks is needed to nuke them, which means we should
   // iterate between the two optimizations.  We structure the code like this to
-  // avoid reruning iterativelySimplifyCFG if the second pass of
+  // avoid rerunning iterativelySimplifyCFG if the second pass of
   // removeUnreachableBlocks doesn't do anything.
   if (!removeUnreachableBlocks(F))
     return true;
