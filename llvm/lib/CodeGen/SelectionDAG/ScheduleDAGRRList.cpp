@@ -848,17 +848,26 @@ void ScheduleDAGRRList::UnscheduleNodeBottomUp(SUnit *SU) {
       }
     }
 
-  for (SUnit::succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
-       I != E; ++I) {
-    if (I->isAssignedRegDep()) {
-      if (!LiveRegDefs[I->getReg()])
+  for (auto &Succ : SU->Succs) {
+    if (Succ.isAssignedRegDep()) {
+      auto Reg = Succ.getReg();
+      if (!LiveRegDefs[Reg])
         ++NumLiveRegs;
       // This becomes the nearest def. Note that an earlier def may still be
       // pending if this is a two-address node.
-      LiveRegDefs[I->getReg()] = SU;
-      if (LiveRegGens[I->getReg()] == nullptr ||
-          I->getSUnit()->getHeight() < LiveRegGens[I->getReg()]->getHeight())
-        LiveRegGens[I->getReg()] = I->getSUnit();
+      LiveRegDefs[Reg] = SU;
+
+      // Update LiveRegGen only if was empty before this unscheduling.
+      // This is to avoid incorrect updating LiveRegGen set in previous run.
+      if (!LiveRegGens[Reg]) {
+        // Find the successor with the lowest height.
+        LiveRegGens[Reg] = Succ.getSUnit();
+        for (auto &Succ2 : SU->Succs) {
+          if (Succ2.isAssignedRegDep() && Succ2.getReg() == Reg &&
+              Succ2.getSUnit()->getHeight() < LiveRegGens[Reg]->getHeight())
+            LiveRegGens[Reg] = Succ2.getSUnit();
+        }
+      }
     }
   }
   if (SU->getHeight() < MinAvailableCycle)
