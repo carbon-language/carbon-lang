@@ -193,6 +193,8 @@ SymbolBody *ObjectFile::createSymbolBody(COFFSymbolRef Sym, const void *AuxP,
       return nullptr;
     return new (Alloc) DefinedAbsolute(Name, Sym.getValue());
   }
+  if (Sym.getSectionNumber() == llvm::COFF::IMAGE_SYM_DEBUG)
+    return nullptr;
   // TODO: Handle IMAGE_WEAK_EXTERN_SEARCH_ALIAS
   if (Sym.isWeakExternal()) {
     COFFObj->getSymbolName(Sym, Name);
