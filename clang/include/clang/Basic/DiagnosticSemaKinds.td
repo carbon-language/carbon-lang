@@ -7679,28 +7679,21 @@ def warn_profile_data_unprofiled : Warning<
 let CategoryName = "Nullability Issue" in {
 
 def warn_mismatched_nullability_attr : Warning<
-  "nullability specifier "
-  "'%select{__|}1%select{nonnull|nullable|null_unspecified}0' "
-  "conflicts with existing specifier "
-  "'%select{__|}3%select{nonnull|nullable|null_unspecified}2'">,
+  "nullability specifier %0 conflicts with existing specifier %1">,
   InGroup<Nullability>;
 
 def warn_nullability_declspec : Warning<
-  "nullability specifier "
-  "'%select{__nonnull|__nullable|__null_unspecified}0' cannot be applied "
+  "nullability specifier %0 cannot be applied "
   "to non-pointer type %1; did you mean to apply the specifier to the "
   "%select{pointer|block pointer|member pointer|function pointer|"
   "member function pointer}2?">,
   InGroup<NullabilityDeclSpec>,
   DefaultError;
 
-def note_nullability_here : Note<
-  "'%select{__nonnull|__nullable|__null_unspecified}0' specified here">;
+def note_nullability_here : Note<"%0 specified here">;
 
 def err_nullability_nonpointer : Error<
-  "nullability specifier "
-  "'%select{__|}1%select{nonnull|nullable|null_unspecified}0' cannot be applied "
-  "to non-pointer type %2">;
+  "nullability specifier %0 cannot be applied to non-pointer type %1">;
 
 def warn_nullability_lost : Warning<
   "implicit conversion from nullable pointer %0 to non-nullable pointer "
@@ -7708,12 +7701,9 @@ def warn_nullability_lost : Warning<
   InGroup<NullableToNonNullConversion>, DefaultIgnore;
 
 def err_nullability_cs_multilevel : Error<
-  "nullability keyword "
-  "'%select{nonnull|nullable|null_unspecified}0' cannot be applied to "
-  "multi-level pointer type %1">;
+  "nullability keyword %0 cannot be applied to multi-level pointer type %1">;
 def note_nullability_type_specifier : Note<
-  "use nullability type specifier "
-  "'%select{__nonnull|__nullable|__null_unspecified}0' to affect the innermost "
+  "use nullability type specifier %0 to affect the innermost "
   "pointer type of %1">;
 
 def warn_null_resettable_setter : Warning<
@@ -7722,7 +7712,7 @@ def warn_null_resettable_setter : Warning<
 
 def warn_nullability_missing : Warning<
   "%select{pointer|block pointer|member pointer}0 is missing a nullability "
-  "type specifier (__nonnull, __nullable, or __null_unspecified)">,
+  "type specifier (_Nonnull, _Nullable, or _Null_unspecified)">,
   InGroup<NullabilityCompleteness>;
 
 }

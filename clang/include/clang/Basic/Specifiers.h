@@ -257,7 +257,8 @@ namespace clang {
   };
 
   /// Retrieve the spelling of the given nullability kind.
-  llvm::StringRef getNullabilitySpelling(NullabilityKind kind);
+  llvm::StringRef getNullabilitySpelling(NullabilityKind kind,
+                                         bool isContextSensitive = false);
 } // end namespace clang
 
 #endif // LLVM_CLANG_BASIC_SPECIFIERS_H

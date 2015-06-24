@@ -691,9 +691,9 @@ void Parser::ParseNullabilityTypeSpecifiers(ParsedAttributes &attrs) {
   // Treat these like attributes, even though they're type specifiers.
   while (true) {
     switch (Tok.getKind()) {
-    case tok::kw___nonnull:
-    case tok::kw___nullable:
-    case tok::kw___null_unspecified: {
+    case tok::kw__Nonnull:
+    case tok::kw__Nullable:
+    case tok::kw__Null_unspecified: {
       IdentifierInfo *AttrName = Tok.getIdentifierInfo();
       SourceLocation AttrNameLoc = ConsumeToken();
       if (!getLangOpts().ObjC1)
@@ -3076,9 +3076,9 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       continue;
 
     // Nullability type specifiers.
-    case tok::kw___nonnull:
-    case tok::kw___nullable:
-    case tok::kw___null_unspecified:
+    case tok::kw__Nonnull:
+    case tok::kw__Nullable:
+    case tok::kw__Null_unspecified:
       ParseNullabilityTypeSpecifiers(DS.getAttributes());
       continue;
 
@@ -4326,9 +4326,9 @@ bool Parser::isTypeSpecifierQualifier() {
   case tok::kw___pascal:
   case tok::kw___unaligned:
 
-  case tok::kw___nonnull:
-  case tok::kw___nullable:
-  case tok::kw___null_unspecified:
+  case tok::kw__Nonnull:
+  case tok::kw__Nullable:
+  case tok::kw__Null_unspecified:
 
   case tok::kw___private:
   case tok::kw___local:
@@ -4503,9 +4503,9 @@ bool Parser::isDeclarationSpecifier(bool DisambiguatingWithExpression) {
   case tok::kw___pascal:
   case tok::kw___unaligned:
 
-  case tok::kw___nonnull:
-  case tok::kw___nullable:
-  case tok::kw___null_unspecified:
+  case tok::kw__Nonnull:
+  case tok::kw__Nullable:
+  case tok::kw__Null_unspecified:
 
   case tok::kw___private:
   case tok::kw___local:
@@ -4738,9 +4738,9 @@ void Parser::ParseTypeQualifierListOpt(DeclSpec &DS, unsigned AttrReqs,
       goto DoneWithTypeQuals;
 
     // Nullability type specifiers.
-    case tok::kw___nonnull:
-    case tok::kw___nullable:
-    case tok::kw___null_unspecified:
+    case tok::kw__Nonnull:
+    case tok::kw__Nullable:
+    case tok::kw__Null_unspecified:
       ParseNullabilityTypeSpecifiers(DS.getAttributes());
       continue;
 

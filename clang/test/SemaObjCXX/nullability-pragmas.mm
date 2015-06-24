@@ -7,7 +7,7 @@
 #  error assume_nonnull feature is not set
 #endif
 
-void test_pragmas_1(A * __nonnull a, AA * __nonnull aa) {
+void test_pragmas_1(A * _Nonnull a, AA * _Nonnull aa) {
   f1(0); // okay: no nullability annotations
   f2(0); // expected-warning{{null passed to a callee that requires a non-null argument}}
   f3(0); // expected-warning{{null passed to a callee that requires a non-null argument}}
@@ -23,19 +23,19 @@ void test_pragmas_1(A * __nonnull a, AA * __nonnull aa) {
   [a method1:0]; // expected-warning{{null passed to a callee that requires a non-null argument}}
 
   f17(a); // expected-error{{no matching function for call to 'f17'}}
-  [a method3: a]; // expected-error{{cannot initialize a parameter of type 'NSError * __nullable * __nullable' with an lvalue of type 'A * __nonnull'}}
-  [a method4: a]; // expected-error{{cannot initialize a parameter of type 'NSErrorPtr  __nullable * __nullable' (aka 'NSError **') with an lvalue of type 'A * __nonnull'}}
+  [a method3: a]; // expected-error{{cannot initialize a parameter of type 'NSError * _Nullable * _Nullable' with an lvalue of type 'A * _Nonnull'}}
+  [a method4: a]; // expected-error{{cannot initialize a parameter of type 'NSErrorPtr  _Nullable * _Nullable' (aka 'NSError **') with an lvalue of type 'A * _Nonnull'}}
 
   float *ptr;
-  ptr = f13(); // expected-error{{assigning to 'float *' from incompatible type 'int_ptr __nonnull' (aka 'int *')}}
-  ptr = f14(); // expected-error{{assigning to 'float *' from incompatible type 'A * __nonnull'}}
-  ptr = [a method1:a]; // expected-error{{assigning to 'float *' from incompatible type 'A * __nonnull'}}
-  ptr = a.aProp; // expected-error{{assigning to 'float *' from incompatible type 'A * __nonnull'}}
-  ptr = global_int_ptr; // expected-error{{assigning to 'float *' from incompatible type 'int * __nonnull'}}
-  ptr = f15(); // expected-error{{assigning to 'float *' from incompatible type 'int * __null_unspecified'}}
-  ptr = f16(); // expected-error{{assigning to 'float *' from incompatible type 'A * __null_unspecified'}}
-  ptr = [a method2]; // expected-error{{assigning to 'float *' from incompatible type 'A * __null_unspecified'}}
+  ptr = f13(); // expected-error{{assigning to 'float *' from incompatible type 'int_ptr _Nonnull' (aka 'int *')}}
+  ptr = f14(); // expected-error{{assigning to 'float *' from incompatible type 'A * _Nonnull'}}
+  ptr = [a method1:a]; // expected-error{{assigning to 'float *' from incompatible type 'A * _Nonnull'}}
+  ptr = a.aProp; // expected-error{{assigning to 'float *' from incompatible type 'A * _Nonnull'}}
+  ptr = global_int_ptr; // expected-error{{assigning to 'float *' from incompatible type 'int * _Nonnull'}}
+  ptr = f15(); // expected-error{{assigning to 'float *' from incompatible type 'int * _Null_unspecified'}}
+  ptr = f16(); // expected-error{{assigning to 'float *' from incompatible type 'A * _Null_unspecified'}}
+  ptr = [a method2]; // expected-error{{assigning to 'float *' from incompatible type 'A * _Null_unspecified'}}
 
   ptr = aa->ivar1; // expected-error{{from incompatible type 'id'}}
-  ptr = aa->ivar2; // expected-error{{from incompatible type 'id __nonnull'}}
+  ptr = aa->ivar2; // expected-error{{from incompatible type 'id _Nonnull'}}
 }

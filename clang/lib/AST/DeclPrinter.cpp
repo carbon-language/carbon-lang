@@ -954,9 +954,8 @@ void DeclPrinter::PrintObjCMethodType(ASTContext &Ctx,
   if (Quals & Decl::ObjCDeclQualifier::OBJC_TQ_Oneway)
     Out << "oneway ";
   if (Quals & Decl::ObjCDeclQualifier::OBJC_TQ_CSNullability) {
-    if (auto nullability = AttributedType::stripOuterNullability(T)) {
-      Out << getNullabilitySpelling(*nullability).substr(2) << ' ';
-    }
+    if (auto nullability = AttributedType::stripOuterNullability(T))
+      Out << getNullabilitySpelling(*nullability, true) << ' ';
   }
   
   Out << Ctx.getUnqualifiedObjCPointerType(T).getAsString(Policy);
@@ -1207,7 +1206,7 @@ void DeclPrinter::VisitObjCPropertyDecl(ObjCPropertyDecl *PDecl) {
           Out << (first ? ' ' : ',') << "null_resettable";
         } else {
           Out << (first ? ' ' : ',')
-              << getNullabilitySpelling(*nullability).substr(2);
+              << getNullabilitySpelling(*nullability, true);
         }
         first = false;
       }

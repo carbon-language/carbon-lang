@@ -345,4 +345,4 @@ void test_Nullability(Nullability *n, A* a) {
 // CHECK-DISTRIB-OBJECTS: ObjCInstanceMethodDecl:{ResultType void}{TypedText method:}{Placeholder (in bycopy A *)}{HorizontalSpace  }{TypedText result:}{Placeholder (out byref A **)} (35)
 
 // RUN: c-index-test -code-completion-at=%s:197:6 %s | FileCheck -check-prefix=CHECK-NULLABLE %s
-// CHECK-NULLABLE: ObjCInstanceMethodDecl:{ResultType A * __nonnull}{TypedText method:}{Placeholder (nullable A *)}
+// CHECK-NULLABLE: ObjCInstanceMethodDecl:{ResultType A * _Nonnull}{TypedText method:}{Placeholder (nullable A *)}

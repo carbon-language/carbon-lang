@@ -557,14 +557,14 @@ static void diagnoseRedundantPropertyNullability(Parser &P,
                                                  SourceLocation nullabilityLoc){
   if (DS.getNullability() == nullability) {
     P.Diag(nullabilityLoc, diag::warn_nullability_duplicate)
-      << static_cast<unsigned>(nullability) << true
+      << DiagNullabilityKind(nullability, true)
       << SourceRange(DS.getNullabilityLoc());
     return;
   }
 
   P.Diag(nullabilityLoc, diag::err_nullability_conflicting)
-    << static_cast<unsigned>(nullability) << true
-    << static_cast<unsigned>(DS.getNullability()) << true
+    << DiagNullabilityKind(nullability, true)
+    << DiagNullabilityKind(DS.getNullability(), true)
     << SourceRange(DS.getNullabilityLoc());
 }
 

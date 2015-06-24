@@ -1,1 +1,1 @@
-void double_declarator1(int *__nonnull *); // expected-warning{{pointer is missing a nullability type specifier (__nonnull, __nullable, or __null_unspecified)}}
+void double_declarator1(int *_Nonnull *); // expected-warning{{pointer is missing a nullability type specifier (_Nonnull, _Nullable, or _Null_unspecified)}}

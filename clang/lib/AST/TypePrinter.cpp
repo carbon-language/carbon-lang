@@ -1147,11 +1147,11 @@ void TypePrinter::printAttributedBefore(const AttributedType *T,
       T->getAttrKind() == AttributedType::attr_nullable ||
       T->getAttrKind() == AttributedType::attr_null_unspecified) {
     if (T->getAttrKind() == AttributedType::attr_nonnull)
-      OS << " __nonnull";
+      OS << " _Nonnull";
     else if (T->getAttrKind() == AttributedType::attr_nullable)
-      OS << " __nullable";
+      OS << " _Nullable";
     else if (T->getAttrKind() == AttributedType::attr_null_unspecified)
-      OS << " __null_unspecified";
+      OS << " _Null_unspecified";
     else
       llvm_unreachable("unhandled nullability");
     spaceBeforePlaceHolder(OS);
@@ -1186,11 +1186,11 @@ void TypePrinter::printAttributedAfter(const AttributedType *T,
       T->getAttrKind() == AttributedType::attr_nullable ||
       T->getAttrKind() == AttributedType::attr_null_unspecified) {
     if (T->getAttrKind() == AttributedType::attr_nonnull)
-      OS << " __nonnull";
+      OS << " _Nonnull";
     else if (T->getAttrKind() == AttributedType::attr_nullable)
-      OS << " __nullable";
+      OS << " _Nullable";
     else if (T->getAttrKind() == AttributedType::attr_null_unspecified)
-      OS << " __null_unspecified";
+      OS << " _Null_unspecified";
     else
       llvm_unreachable("unhandled nullability");
 

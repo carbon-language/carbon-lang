@@ -1400,16 +1400,20 @@ static bool CheckMethodOverrideReturn(Sema &S,
       !S.Context.hasSameNullabilityTypeQualifier(MethodImpl->getReturnType(),
                                                  MethodDecl->getReturnType(),
                                                  false)) {
-    unsigned unsNullabilityMethodImpl =
-      static_cast<unsigned>(*MethodImpl->getReturnType()->getNullability(S.Context));
-    unsigned unsNullabilityMethodDecl =
-      static_cast<unsigned>(*MethodDecl->getReturnType()->getNullability(S.Context));
+    auto nullabilityMethodImpl =
+      *MethodImpl->getReturnType()->getNullability(S.Context);
+    auto nullabilityMethodDecl =
+      *MethodDecl->getReturnType()->getNullability(S.Context);
       S.Diag(MethodImpl->getLocation(),
              diag::warn_conflicting_nullability_attr_overriding_ret_types)
-        << unsNullabilityMethodImpl
-        << ((MethodImpl->getObjCDeclQualifier() & Decl::OBJC_TQ_CSNullability) != 0)
-        << unsNullabilityMethodDecl
-        << ((MethodDecl->getObjCDeclQualifier() & Decl::OBJC_TQ_CSNullability) != 0);
+        << DiagNullabilityKind(
+             nullabilityMethodImpl,
+             ((MethodImpl->getObjCDeclQualifier() & Decl::OBJC_TQ_CSNullability)
+              != 0))
+        << DiagNullabilityKind(
+             nullabilityMethodDecl,
+             ((MethodDecl->getObjCDeclQualifier() & Decl::OBJC_TQ_CSNullability)
+                != 0));
       S.Diag(MethodDecl->getLocation(), diag::note_previous_declaration);
   }
     
@@ -1486,15 +1490,17 @@ static bool CheckMethodOverrideParam(Sema &S,
   if (Warn && IsOverridingMode &&
       !isa<ObjCImplementationDecl>(MethodImpl->getDeclContext()) &&
       !S.Context.hasSameNullabilityTypeQualifier(ImplTy, IfaceTy, true)) {
-    unsigned unsImplTy = static_cast<unsigned>(*ImplTy->getNullability(S.Context));
-    unsigned unsIfaceTy = static_cast<unsigned>(*IfaceTy->getNullability(S.Context));
     S.Diag(ImplVar->getLocation(),
            diag::warn_conflicting_nullability_attr_overriding_param_types)
-        << unsImplTy
-        << ((ImplVar->getObjCDeclQualifier() & Decl::OBJC_TQ_CSNullability) != 0)
-        << unsIfaceTy
-        << ((IfaceVar->getObjCDeclQualifier() & Decl::OBJC_TQ_CSNullability) != 0);
-        S.Diag(IfaceVar->getLocation(), diag::note_previous_declaration);
+      << DiagNullabilityKind(
+           *ImplTy->getNullability(S.Context),
+           ((ImplVar->getObjCDeclQualifier() & Decl::OBJC_TQ_CSNullability)
+            != 0))
+      << DiagNullabilityKind(
+           *IfaceTy->getNullability(S.Context),
+           ((IfaceVar->getObjCDeclQualifier() & Decl::OBJC_TQ_CSNullability)
+            != 0));
+    S.Diag(IfaceVar->getLocation(), diag::note_previous_declaration);
   }
   if (S.Context.hasSameUnqualifiedType(ImplTy, IfaceTy))
     return true;
@@ -3184,8 +3190,8 @@ static QualType mergeTypeNullabilityForRedecl(Sema &S, SourceLocation loc,
 
     // Complain about mismatched nullability.
     S.Diag(loc, diag::err_nullability_conflicting)
-      << static_cast<unsigned>(*nullability) << usesCSKeyword
-      << static_cast<unsigned>(*prevNullability) << prevUsesCSKeyword;
+      << DiagNullabilityKind(*nullability, usesCSKeyword)
+      << DiagNullabilityKind(*prevNullability, prevUsesCSKeyword);
     return type;
   }
 

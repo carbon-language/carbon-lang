@@ -1343,9 +1343,9 @@ static void AddTypeSpecifierResults(const LangOptions &LangOpts,
   }
 
   // Nullability
-  Results.AddResult(Result("__nonnull", CCP_Type));
-  Results.AddResult(Result("__null_unspecified", CCP_Type));
-  Results.AddResult(Result("__nullable", CCP_Type));
+  Results.AddResult(Result("_Nonnull", CCP_Type));
+  Results.AddResult(Result("_Null_unspecified", CCP_Type));
+  Results.AddResult(Result("_Nullable", CCP_Type));
 }
 
 static void AddStorageSpecifiers(Sema::ParserCompletionContext CCC,

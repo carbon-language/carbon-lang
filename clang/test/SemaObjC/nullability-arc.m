@@ -5,6 +5,6 @@ __attribute__((objc_root_class))
 @end
 
 // ARC qualifiers stacked with nullability.
-void accepts_arc_qualified(NSFoo * __unsafe_unretained __nonnull obj) {
+void accepts_arc_qualified(NSFoo * __unsafe_unretained _Nonnull obj) {
   accepts_arc_qualified(0); // expected-warning{{null passed to a callee that requires a non-null argument}}
 }

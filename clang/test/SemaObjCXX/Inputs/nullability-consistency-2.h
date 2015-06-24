@@ -1,4 +1,4 @@
-void g1(int * __nonnull);
+void g1(int * _Nonnull);
 
 void g2(int (^block)(int, int)); // expected-warning{{block pointer is missing a nullability type specifier}}
 

@@ -5,7 +5,7 @@
 @interface NSObject @end
 
 @class NSFoo;
-void foo (NSFoo * __nonnull);
+void foo (NSFoo * _Nonnull);
 
 @interface NSBar : NSObject
 @property(weak) NSFoo *property1;
@@ -13,6 +13,6 @@ void foo (NSFoo * __nonnull);
 
 @implementation NSBar 
 - (void) Meth {
-   foo (self.property1); // expected-warning {{implicit conversion from nullable pointer 'NSFoo * __nullable' to non-nullable pointer type 'NSFoo * __nonnull'}}
+   foo (self.property1); // expected-warning {{implicit conversion from nullable pointer 'NSFoo * _Nullable' to non-nullable pointer type 'NSFoo * _Nonnull'}}
 }
 @end

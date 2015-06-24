@@ -2978,7 +2978,7 @@ public:
                                        bool SynthesizeProperties);
 
   /// Diagnose any null-resettable synthesized setters.
-  void diagnoseNullResettableSynthesizedSetters(ObjCImplDecl *impDecl);
+  void diagnoseNullResettableSynthesizedSetters(const ObjCImplDecl *impDecl);
 
   /// DefaultSynthesizeProperties - This routine default synthesizes all
   /// properties which must be synthesized in the class's \@implementation.
@@ -8854,9 +8854,9 @@ private:
   mutable IdentifierInfo *Ident___float128;
 
   /// Nullability type specifiers.
-  IdentifierInfo *Ident___nonnull = nullptr;
-  IdentifierInfo *Ident___nullable = nullptr;
-  IdentifierInfo *Ident___null_unspecified = nullptr;
+  IdentifierInfo *Ident__Nonnull = nullptr;
+  IdentifierInfo *Ident__Nullable = nullptr;
+  IdentifierInfo *Ident__Null_unspecified = nullptr;
 
   IdentifierInfo *Ident_NSError = nullptr;
 

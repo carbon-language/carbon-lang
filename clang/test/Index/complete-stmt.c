@@ -16,8 +16,8 @@ void f(int x) {
 // CHECK-IF-ELSE-SIMPLE: NotImplemented:{TypedText else}{HorizontalSpace  }{Text if}{HorizontalSpace  }{LeftParen (}{Placeholder expression}{RightParen )} (40)
 
 // RUN: c-index-test -code-completion-at=%s:6:1 %s | FileCheck -check-prefix=CHECK-STMT %s
-// CHECK-STMT: NotImplemented:{TypedText __nonnull} (50)
-// CHECK-STMT: NotImplemented:{TypedText __nullable} (50)
+// CHECK-STMT: NotImplemented:{TypedText _Nonnull} (50)
+// CHECK-STMT: NotImplemented:{TypedText _Nullable} (50)
 // CHECK-STMT: NotImplemented:{TypedText char} (50)
 // CHECK-STMT: NotImplemented:{TypedText const} (50)
 // CHECK-STMT: NotImplemented:{TypedText double} (50)

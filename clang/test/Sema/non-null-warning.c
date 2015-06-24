@@ -7,29 +7,29 @@
 #endif
 
 
-int * __nullable foo(int * __nonnull x);
+int * _Nullable foo(int * _Nonnull x);
 
-int *__nonnull ret_nonnull();
+int *_Nonnull ret_nonnull();
 
 int *foo(int *x) {
   return 0;
 }
 
-int * __nullable foo1(int * __nonnull x); // expected-note {{previous declaration is here}}
+int * _Nullable foo1(int * _Nonnull x); // expected-note {{previous declaration is here}}
 
-int *foo1(int * __nullable x) { // expected-warning {{nullability specifier '__nullable' conflicts with existing specifier '__nonnull'}}
+int *foo1(int * _Nullable x) { // expected-warning {{nullability specifier '_Nullable' conflicts with existing specifier '_Nonnull'}}
   return 0;
 }
 
-int * __nullable foo2(int * __nonnull x);
+int * _Nullable foo2(int * _Nonnull x);
 
-int *foo2(int * __nonnull x) {
+int *foo2(int * _Nonnull x) {
   return 0;
 }
 
-int * __nullable foo3(int * __nullable x); // expected-note {{previous declaration is here}}
+int * _Nullable foo3(int * _Nullable x); // expected-note {{previous declaration is here}}
 
-int *foo3(int * __nonnull x) { // expected-warning {{nullability specifier '__nonnull' conflicts with existing specifier '__nullable'}}
+int *foo3(int * _Nonnull x) { // expected-warning {{nullability specifier '_Nonnull' conflicts with existing specifier '_Nullable'}}
   return 0;
 }
 

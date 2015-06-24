@@ -18,6 +18,7 @@
 #include "clang/Basic/DiagnosticIDs.h"
 #include "clang/Basic/DiagnosticOptions.h"
 #include "clang/Basic/SourceLocation.h"
+#include "clang/Basic/Specifiers.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
@@ -1106,6 +1107,13 @@ inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
     DB.AddFixItHint(Hint);
   return DB;
 }
+
+/// A nullability kind paired with a bit indicating whether it used a
+/// context-sensitive keyword.
+typedef std::pair<NullabilityKind, bool> DiagNullabilityKind;
+
+const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
+                                    DiagNullabilityKind nullability);
 
 inline DiagnosticBuilder DiagnosticsEngine::Report(SourceLocation Loc,
                                                    unsigned DiagID) {

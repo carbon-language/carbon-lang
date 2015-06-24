@@ -962,17 +962,17 @@ def ReturnsNonNull : InheritableAttr {
 
 // Nullability type attributes.
 def TypeNonNull : TypeAttr {
-  let Spellings = [Keyword<"__nonnull">];
+  let Spellings = [Keyword<"_Nonnull">];
   let Documentation = [TypeNonNullDocs];
 }
 
 def TypeNullable : TypeAttr {
-  let Spellings = [Keyword<"__nullable">];
+  let Spellings = [Keyword<"_Nullable">];
   let Documentation = [TypeNullableDocs];
 }
 
 def TypeNullUnspecified : TypeAttr {
-  let Spellings = [Keyword<"__null_unspecified">];
+  let Spellings = [Keyword<"_Null_unspecified">];
   let Documentation = [TypeNullUnspecifiedDocs];
 }
 

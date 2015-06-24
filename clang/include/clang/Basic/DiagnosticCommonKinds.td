@@ -102,31 +102,21 @@ def err_enum_template : Error<"enumeration cannot be a template">;
 let CategoryName = "Nullability Issue" in {
 
 def warn_nullability_duplicate : Warning<
-  "duplicate nullability specifier "
-  "'%select{__|}1%select{nonnull|nullable|null_unspecified}0'">,
+  "duplicate nullability specifier %0">,
   InGroup<Nullability>;
   
 def warn_conflicting_nullability_attr_overriding_ret_types : Warning<
-  "conflicting nullability specifier on return types, "
-  "'%select{%select{__|}1nonnull|"
-  "%select{__|}1nullable|%select{__|}1null_unspecified}0' "
-  "conflicts with existing specifier '%select{%select{__|}3nonnull|"
-  "%select{__|}3nullable|%select{__|}3null_unspecified}2'">,
+  "conflicting nullability specifier on return types, %0 "
+  "conflicts with existing specifier %1">,
   InGroup<Nullability>;
 
 def warn_conflicting_nullability_attr_overriding_param_types : Warning<
-  "conflicting nullability specifier on parameter types, "
-  "'%select{%select{__|}1nonnull|"
-  "%select{__|}1nullable|%select{__|}1null_unspecified}0' "
-  "conflicts with existing specifier '%select{%select{__|}3nonnull|"
-  "%select{__|}3nullable|%select{__|}3null_unspecified}2'">,
+  "conflicting nullability specifier on parameter types, %0 "
+  "conflicts with existing specifier %1">,
   InGroup<Nullability>;
 
 def err_nullability_conflicting : Error<
-  "nullability specifier "
-  "'%select{__|}1%select{nonnull|nullable|null_unspecified}0' conflicts with "
-  "existing specifier '%select{__|}3%select{nonnull|nullable|"
-  "null_unspecified}2'">;
+  "nullability specifier %0 conflicts with existing specifier %1">;
 
 }
 

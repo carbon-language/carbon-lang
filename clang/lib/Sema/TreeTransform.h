@@ -5405,7 +5405,7 @@ QualType TreeTransform<Derived>::TransformAttributedType(
     if (auto nullability = oldType->getImmediateNullability()) {
       if (!modifiedType->canHaveNullability()) {
         SemaRef.Diag(TL.getAttrNameLoc(), diag::err_nullability_nonpointer)
-          << static_cast<unsigned>(*nullability) << false << modifiedType;
+          << DiagNullabilityKind(*nullability, false) << modifiedType;
         return QualType();
       }
     }

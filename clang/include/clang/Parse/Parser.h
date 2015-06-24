@@ -303,7 +303,7 @@ public:
     return true;
   }
 
-  /// Retrieve the underscored keyword (__nonnull, __nullable) that corresponds
+  /// Retrieve the underscored keyword (_Nonnull, _Nullable) that corresponds
   /// to the given nullability kind.
   IdentifierInfo *getNullabilityKeyword(NullabilityKind nullability) {
     return Actions.getNullabilityKeyword(nullability);

@@ -5,4 +5,4 @@ void system1(int *ptr);
 // expected-warning@-2{{pointer is missing a nullability type specifier}}
 #endif
 
-void system2(int * __nonnull);
+void system2(int * _Nonnull);

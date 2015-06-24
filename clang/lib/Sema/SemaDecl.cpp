@@ -2472,13 +2472,15 @@ static void mergeParamDeclTypes(ParmVarDecl *NewParam,
   if (auto Oldnullability = OldParam->getType()->getNullability(S.Context)) {
     if (auto Newnullability = NewParam->getType()->getNullability(S.Context)) {
       if (*Oldnullability != *Newnullability) {
-        unsigned unsNewnullability = static_cast<unsigned>(*Newnullability);
-        unsigned unsOldnullability = static_cast<unsigned>(*Oldnullability);
         S.Diag(NewParam->getLocation(), diag::warn_mismatched_nullability_attr)
-          << unsNewnullability
-          << ((NewParam->getObjCDeclQualifier() & Decl::OBJC_TQ_CSNullability) != 0)
-          << unsOldnullability
-          << ((OldParam->getObjCDeclQualifier() & Decl::OBJC_TQ_CSNullability) != 0);
+          << DiagNullabilityKind(
+               *Newnullability,
+               ((NewParam->getObjCDeclQualifier() & Decl::OBJC_TQ_CSNullability)
+                != 0))
+          << DiagNullabilityKind(
+               *Oldnullability,
+               ((OldParam->getObjCDeclQualifier() & Decl::OBJC_TQ_CSNullability)
+                != 0));
         S.Diag(OldParam->getLocation(), diag::note_previous_declaration);
       }
     } else {
