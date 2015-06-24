@@ -2013,11 +2013,10 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
 
   // Now that we're done iterating through lists, clean up any instructions
   // which are now dead.
-  while (!DeadInsts.empty()) {
-    Value *V = static_cast<Value *>(DeadInsts.pop_back_val());
-    if (Instruction *Inst = dyn_cast_or_null<Instruction>(V))
+  while (!DeadInsts.empty())
+    if (Instruction *Inst =
+            dyn_cast_or_null<Instruction>(DeadInsts.pop_back_val()))
       RecursivelyDeleteTriviallyDeadInstructions(Inst, TLI);
-  }
 
   // The Rewriter may not be used from this point on.
 
