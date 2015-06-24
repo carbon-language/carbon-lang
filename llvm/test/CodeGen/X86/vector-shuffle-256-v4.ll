@@ -900,6 +900,60 @@ define <4 x double> @splat_v4f64(<2 x double> %r) {
   ret <4 x double> %1
 }
 
+define <4 x i64> @splat_mem_v4i64_from_v2i64(<2 x i64>* %ptr) {
+; AVX1-LABEL: splat_mem_v4i64_from_v2i64:
+; AVX1:       # BB#0:
+; AVX1-NEXT:    vmovddup {{.*#+}} xmm0 = mem[0,0]
+; AVX1-NEXT:    vinsertf128 $1, %xmm0, %ymm0, %ymm0
+; AVX1-NEXT:    retq
+;
+; AVX2-LABEL: splat_mem_v4i64_from_v2i64:
+; AVX2:       # BB#0:
+; AVX2-NEXT:    vbroadcastsd (%rdi), %ymm0
+; AVX2-NEXT:    retq
+  %v = load <2 x i64>, <2 x i64>* %ptr
+  %shuffle = shufflevector <2 x i64> %v, <2 x i64> undef, <4 x i32> <i32 0, i32 0, i32 0, i32 0>
+  ret <4 x i64> %shuffle
+}
+
+define <4 x double> @splat_mem_v4f64_from_v2f64(<2 x double>* %ptr) {
+; AVX1-LABEL: splat_mem_v4f64_from_v2f64:
+; AVX1:       # BB#0:
+; AVX1-NEXT:    vmovddup {{.*#+}} xmm0 = mem[0,0]
+; AVX1-NEXT:    vinsertf128 $1, %xmm0, %ymm0, %ymm0
+; AVX1-NEXT:    retq
+;
+; AVX2-LABEL: splat_mem_v4f64_from_v2f64:
+; AVX2:       # BB#0:
+; AVX2-NEXT:    vbroadcastsd (%rdi), %ymm0
+; AVX2-NEXT:    retq
+  %v = load <2 x double>, <2 x double>* %ptr
+  %shuffle = shufflevector <2 x double> %v, <2 x double> undef, <4 x i32> <i32 0, i32 0, i32 0, i32 0>
+  ret <4 x double> %shuffle
+}
+
+define <4 x i64> @splat128_mem_v4i64_from_v2i64(<2 x i64>* %ptr) {
+; ALL-LABEL: splat128_mem_v4i64_from_v2i64:
+; ALL:       # BB#0:
+; ALL-NEXT:    vmovaps (%rdi), %xmm0
+; ALL-NEXT:    vinsertf128 $1, %xmm0, %ymm0, %ymm0
+; ALL-NEXT:    retq
+  %v = load <2 x i64>, <2 x i64>* %ptr
+  %shuffle = shufflevector <2 x i64> %v, <2 x i64> undef, <4 x i32> <i32 0, i32 1, i32 0, i32 1>
+  ret <4 x i64> %shuffle
+}
+
+define <4 x double> @splat128_mem_v4f64_from_v2f64(<2 x double>* %ptr) {
+; ALL-LABEL: splat128_mem_v4f64_from_v2f64:
+; ALL:       # BB#0:
+; ALL-NEXT:    vmovaps (%rdi), %xmm0
+; ALL-NEXT:    vinsertf128 $1, %xmm0, %ymm0, %ymm0
+; ALL-NEXT:    retq
+  %v = load <2 x double>, <2 x double>* %ptr
+  %shuffle = shufflevector <2 x double> %v, <2 x double> undef, <4 x i32> <i32 0, i32 1, i32 0, i32 1>
+  ret <4 x double> %shuffle
+}
+
 define <4 x double> @bitcast_v4f64_0426(<4 x double> %a, <4 x double> %b) {
 ; AVX1-LABEL: bitcast_v4f64_0426:
 ; AVX1:       # BB#0:
