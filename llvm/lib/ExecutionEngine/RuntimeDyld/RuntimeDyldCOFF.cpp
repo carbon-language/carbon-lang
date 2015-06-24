@@ -62,23 +62,8 @@ RuntimeDyldCOFF::loadObject(const object::ObjectFile &O) {
 }
 
 uint64_t RuntimeDyldCOFF::getSymbolOffset(const SymbolRef &Sym) {
-  uint64_t Address;
-  if (Sym.getAddress(Address))
-    return UnknownAddress;
-
-  if (Address == UnknownAddress)
-    return UnknownAddress;
-
-  const ObjectFile *Obj = Sym.getObject();
-  section_iterator SecI(Obj->section_end());
-  if (Sym.getSection(SecI))
-    return UnknownAddress;
-
-  if (SecI == Obj->section_end())
-    return UnknownAddress;
-
-  uint64_t SectionAddress = SecI->getAddress();
-  return Address - SectionAddress;
+  // The value in a relocatable COFF object is the offset.
+  return Sym.getValue();
 }
 
 bool RuntimeDyldCOFF::isCompatibleFile(const object::ObjectFile &Obj) const {
