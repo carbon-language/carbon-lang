@@ -95,7 +95,6 @@ POSIXThread::GetMonitor()
     return process.GetMonitor();
 }
 
-// Overridden by FreeBSDThread; this is used only on Linux.
 void
 POSIXThread::RefreshStateAfterStop()
 {
@@ -112,11 +111,6 @@ POSIXThread::RefreshStateAfterStop()
         const bool force = false;
         GetRegisterContext()->InvalidateIfNeeded (force);
     }
-    // FIXME: This should probably happen somewhere else.
-    SetResumeState(eStateRunning, true);
-    Log *log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_THREAD));
-    if (log)
-        log->Printf ("POSIXThread::%s (tid = %" PRIi64 ") setting thread resume state to running", __FUNCTION__, GetID());
 }
 
 const char *
