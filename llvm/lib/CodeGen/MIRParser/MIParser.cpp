@@ -174,6 +174,9 @@ bool MIParser::parseInstruction(unsigned &OpCode) {
 
 bool MIParser::parseRegister(unsigned &Reg) {
   switch (Token.kind()) {
+  case MIToken::underscore:
+    Reg = 0;
+    break;
   case MIToken::NamedRegister: {
     StringRef Name = Token.stringValue().drop_front(1); // Drop the '%'
     if (getRegisterByName(Name, Reg))
@@ -211,6 +214,7 @@ bool MIParser::parseImmediateOperand(MachineOperand &Dest) {
 
 bool MIParser::parseMachineOperand(MachineOperand &Dest) {
   switch (Token.kind()) {
+  case MIToken::underscore:
   case MIToken::NamedRegister:
     return parseRegisterOperand(Dest);
   case MIToken::IntegerLiteral:
@@ -245,6 +249,8 @@ bool MIParser::parseInstrName(StringRef InstrName, unsigned &OpCode) {
 void MIParser::initNames2Regs() {
   if (!Names2Regs.empty())
     return;
+  // The '%noreg' register is the register 0.
+  Names2Regs.insert(std::make_pair("noreg", 0));
   const auto *TRI = MF.getSubtarget().getRegisterInfo();
   assert(TRI && "Expected target register info");
   for (unsigned I = 0, E = TRI->getNumRegs(); I < E; ++I) {

@@ -64,7 +64,9 @@ static Cursor lexIdentifier(Cursor C, MIToken &Token) {
   auto Range = C;
   while (isIdentifierChar(C.peek()))
     C.advance();
-  Token = MIToken(MIToken::Identifier, Range.upto(C));
+  auto Identifier = Range.upto(C);
+  Token = MIToken(Identifier == "_" ? MIToken::underscore : MIToken::Identifier,
+                  Identifier);
   return C;
 }
 

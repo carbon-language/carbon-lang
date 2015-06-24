@@ -1,0 +1,23 @@
+# RUN: llc -march=x86-64 -start-after branch-folder -stop-after branch-folder -o /dev/null %s | FileCheck %s
+# This test ensures that the MIR parser parses null register operands correctly.
+
+--- |
+
+  define i32 @deref(i32* %p) {
+  entry:
+    %a = load i32, i32* %p
+    ret i32 %a
+  }
+
+...
+---
+# CHECK: name: deref
+name:            deref
+body:
+ - name:         entry
+   instructions:
+     # CHECK:      - '%eax = MOV32rm %rdi, 1, _, 0, _'
+     # CHECK-NEXT: - 'RETQ %eax'
+     - '%eax = MOV32rm %rdi, 1, _, 0, %noreg'
+     - 'RETQ %eax'
+...

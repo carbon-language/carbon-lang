@@ -144,9 +144,10 @@ void MIPrinter::print(const MachineInstr &MI) {
 static void printReg(unsigned Reg, raw_ostream &OS,
                      const TargetRegisterInfo *TRI) {
   // TODO: Print Stack Slots.
-  // TODO: Print no register.
   // TODO: Print virtual registers.
-  if (Reg < TRI->getNumRegs())
+  if (!Reg)
+    OS << '_';
+  else if (Reg < TRI->getNumRegs())
     OS << '%' << StringRef(TRI->getName(Reg)).lower();
   else
     llvm_unreachable("Can't print this kind of register yet");

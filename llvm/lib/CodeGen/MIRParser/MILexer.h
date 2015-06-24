@@ -34,6 +34,7 @@ struct MIToken {
     // Tokens with no info.
     comma,
     equal,
+    underscore,
 
     // Identifier tokens
     Identifier,
@@ -58,7 +59,9 @@ public:
 
   bool isError() const { return Kind == Error; }
 
-  bool isRegister() const { return Kind == NamedRegister; }
+  bool isRegister() const {
+    return Kind == NamedRegister || Kind == underscore;
+  }
 
   bool is(TokenKind K) const { return Kind == K; }
 
