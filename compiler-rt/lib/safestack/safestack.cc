@@ -17,6 +17,7 @@
 #include <limits.h>
 #include <pthread.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <sys/resource.h>
 #include <sys/user.h>
 
