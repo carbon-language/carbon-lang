@@ -52,34 +52,136 @@ namespace {
     bool Captured;
   };
 
+  struct NumberedInstCache {
+    SmallDenseMap<const Instruction *, unsigned, 32> NumberedInsts;
+    BasicBlock::const_iterator LastInstFound;
+    unsigned LastInstPos;
+    const BasicBlock *BB;
+
+    NumberedInstCache(const BasicBlock *BasicB) : LastInstPos(0), BB(BasicB) {
+      LastInstFound = BB->end();
+    }
+
+    /// \brief Find the first instruction 'A' or 'B' in 'BB'. Number out
+    /// instruction while walking 'BB'.
+    const Instruction *find(const Instruction *A, const Instruction *B) {
+      const Instruction *Inst = nullptr;
+      assert(!(LastInstFound == BB->end() && LastInstPos != 0) &&
+             "Instruction supposed to be in NumberedInsts");
+
+      // Start the search with the instruction found in the last lookup round.
+      auto II = BB->begin();
+      auto IE = BB->end();
+      if (LastInstFound != IE)
+        II = std::next(LastInstFound);
+
+      // Number all instructions up to the point where we find 'A' or 'B'.
+      for (++LastInstPos; II != IE; ++II, ++LastInstPos) {
+        Inst = cast<Instruction>(II);
+        NumberedInsts[Inst] = LastInstPos;
+        if (Inst == A || Inst == B)
+          break;
+      }
+
+      assert(II != IE && "Instruction not found?");
+      LastInstFound = II;
+      return Inst;
+    }
+
+    /// \brief Find out whether 'A' dominates 'B', meaning whether 'A'
+    /// comes before 'B' in 'BB'. This is a simplification that considers
+    /// cached instruction positions and ignores other basic blocks, being
+    /// only relevant to compare relative instructions positions inside 'BB'.
+    bool dominates(const Instruction *A, const Instruction *B) {
+      assert(A->getParent() == B->getParent() &&
+             "Instructions must be in the same basic block!");
+
+      unsigned NA = NumberedInsts.lookup(A);
+      unsigned NB = NumberedInsts.lookup(B);
+      if (NA && NB)
+        return NA < NB;
+      if (NA)
+        return true;
+      if (NB)
+        return false;
+
+      return A == find(A, B);
+    }
+  };
+
   /// Only find pointer captures which happen before the given instruction. Uses
   /// the dominator tree to determine whether one instruction is before another.
   /// Only support the case where the Value is defined in the same basic block
   /// as the given instruction and the use.
   struct CapturesBefore : public CaptureTracker {
+
     CapturesBefore(bool ReturnCaptures, const Instruction *I, DominatorTree *DT,
                    bool IncludeI)
-      : BeforeHere(I), DT(DT), ReturnCaptures(ReturnCaptures),
-        IncludeI(IncludeI), Captured(false) {}
+      : LocalInstCache(I->getParent()), BeforeHere(I), DT(DT),
+        ReturnCaptures(ReturnCaptures), IncludeI(IncludeI), Captured(false) {}
 
     void tooManyUses() override { Captured = true; }
 
-    bool shouldExplore(const Use *U) override {
-      Instruction *I = cast<Instruction>(U->getUser());
-      if (BeforeHere == I && !IncludeI)
-        return false;
-
+    bool isSafeToPrune(Instruction *I) {
       BasicBlock *BB = I->getParent();
       // We explore this usage only if the usage can reach "BeforeHere".
       // If use is not reachable from entry, there is no need to explore.
       if (BeforeHere != I && !DT->isReachableFromEntry(BB))
+        return true;
+
+      // Compute the case where both instructions are inside the same basic
+      // block. Since instructions in the same BB as BeforeHere are numbered in
+      // 'LocalInstCache', avoid using 'dominates' and 'isPotentiallyReachable'
+      // which are very expensive for large basic blocks.
+      if (BB == BeforeHere->getParent()) {
+        // 'I' dominates 'BeforeHere' => not safe to prune.
+        //
+        // The value defined by an invoke dominates an instruction only if it
+        // dominates every instruction in UseBB. A PHI is dominated only if
+        // the instruction dominates every possible use in the UseBB. Since
+        // UseBB == BB, avoid pruning.
+        if (isa<InvokeInst>(BeforeHere) || isa<PHINode>(I) || I == BeforeHere)
+          return false;
+        if (!LocalInstCache.dominates(BeforeHere, I))
+          return false;
+
+        // 'BeforeHere' comes before 'I', it's safe to prune if we also
+        // guarantee that 'I' never reaches 'BeforeHere' through a back-edge or
+        // by its successors, i.e, prune if:
+        //
+        //  (1) BB is an entry block or have no sucessors.
+        //  (2) There's no path coming back through BB sucessors.
+        if (BB == &BB->getParent()->getEntryBlock() ||
+            !BB->getTerminator()->getNumSuccessors())
+          return true;
+
+        SmallVector<BasicBlock*, 32> Worklist;
+        Worklist.append(succ_begin(BB), succ_end(BB));
+        if (!isPotentiallyReachableFromMany(Worklist, BB, DT))
+          return true;
+
         return false;
+      }
+
       // If the value is defined in the same basic block as use and BeforeHere,
       // there is no need to explore the use if BeforeHere dominates use.
       // Check whether there is a path from I to BeforeHere.
       if (BeforeHere != I && DT->dominates(BeforeHere, I) &&
           !isPotentiallyReachable(I, BeforeHere, DT))
+        return true;
+
+      return false;
+    }
+
+    bool shouldExplore(const Use *U) override {
+      Instruction *I = cast<Instruction>(U->getUser());
+
+      if (BeforeHere == I && !IncludeI)
         return false;
+
+      if (isSafeToPrune(I))
+        return false;
+
       return true;
     }
 
@@ -87,21 +189,14 @@ namespace {
       if (isa<ReturnInst>(U->getUser()) && !ReturnCaptures)
         return false;
 
-      Instruction *I = cast<Instruction>(U->getUser());
-      if (BeforeHere == I && !IncludeI)
+      if (!shouldExplore(U))
         return false;
 
-      BasicBlock *BB = I->getParent();
-      // Same logic as in shouldExplore.
-      if (BeforeHere != I && !DT->isReachableFromEntry(BB))
-        return false;
-      if (BeforeHere != I && DT->dominates(BeforeHere, I) &&
-          !isPotentiallyReachable(I, BeforeHere, DT))
-        return false;
       Captured = true;
       return true;
     }
 
+    NumberedInstCache LocalInstCache;
     const Instruction *BeforeHere;
     DominatorTree *DT;
 
