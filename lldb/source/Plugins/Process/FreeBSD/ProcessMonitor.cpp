@@ -108,10 +108,8 @@ PtraceWrapper(int req, lldb::pid_t pid, void *addr, int data,
         if (req == PT_GETREGS) {
             struct reg *r = (struct reg *) addr;
 
-            log->Printf("PT_GETREGS: ip=0x%lx", r->r_rip);
-            log->Printf("PT_GETREGS: sp=0x%lx", r->r_rsp);
-            log->Printf("PT_GETREGS: bp=0x%lx", r->r_rbp);
-            log->Printf("PT_GETREGS: ax=0x%lx", r->r_rax);
+            log->Printf("PT_GETREGS: rip=0x%lx rsp=0x%lx rbp=0x%lx rax=0x%lx",
+                        r->r_rip, r->r_rsp, r->r_rbp, r->r_rax);
         }
         if (req == PT_GETDBREGS || req == PT_SETDBREGS) {
             struct dbreg *r = (struct dbreg *) addr;
