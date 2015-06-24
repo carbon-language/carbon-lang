@@ -349,6 +349,20 @@ public:
     return visit(DividendSCEV);
   }
 
+  ValidatorResult visitSRemInstruction(Instruction *SRem, const SCEV *S) {
+    assert(SRem->getOpcode() == Instruction::SRem &&
+           "Assumed SRem instruction!");
+
+    auto *Divisor = SRem->getOperand(1);
+    auto *CI = dyn_cast<ConstantInt>(Divisor);
+    if (!CI)
+      return visitGenericInst(SRem, S);
+
+    auto *Dividend = SRem->getOperand(0);
+    auto *DividendSCEV = SE.getSCEV(Dividend);
+    return visit(DividendSCEV);
+  }
+
   ValidatorResult visitUnknown(const SCEVUnknown *Expr) {
     Value *V = Expr->getValue();
 
@@ -371,6 +385,8 @@ public:
       switch (I->getOpcode()) {
       case Instruction::SDiv:
         return visitSDivInstruction(I, Expr);
+      case Instruction::SRem:
+        return visitSRemInstruction(I, Expr);
       default:
         return visitGenericInst(I, Expr);
       }

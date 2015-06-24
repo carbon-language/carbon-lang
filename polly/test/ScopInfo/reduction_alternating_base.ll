@@ -1,14 +1,15 @@
 ; RUN: opt %loadPolly -polly-detect-unprofitable -polly-scops -analyze < %s | FileCheck %s
 ;
-; FIXME: We cannot detect this SCoP yet but as soon as we can we should check
-;        that the reduction is detected!
-;
-; CHECK-NOT: Schedule
 ;
 ;    void f(int *A) {
 ;      for (int i = 0; i < 1024; i++)
 ;        A[i % 2] += i;
 ;    }
+;
+; Verify that we detect the reduction on A
+;
+; CHECK: ReadAccess := [Reduction Type: +] [Scalar: 0]
+; CHECK: MustWriteAccess :=  [Reduction Type: +] [Scalar: 0]
 ;
 target datalayout = "e-m:e-p:32:32-i64:64-v128:64:128-n32-S64"
 

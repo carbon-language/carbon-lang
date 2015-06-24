@@ -105,6 +105,7 @@ private:
   __isl_give isl_pw_aff *visitUMaxExpr(const SCEVUMaxExpr *Expr);
   __isl_give isl_pw_aff *visitUnknown(const SCEVUnknown *Expr);
   __isl_give isl_pw_aff *visitSDivInstruction(Instruction *SDiv);
+  __isl_give isl_pw_aff *visitSRemInstruction(Instruction *SDiv);
 
   friend struct SCEVVisitor<SCEVAffinator, isl_pw_aff *>;
 };
@@ -283,11 +284,29 @@ __isl_give isl_pw_aff *SCEVAffinator::visitSDivInstruction(Instruction *SDiv) {
   return isl_pw_aff_tdiv_q(DividendPWA, DivisorPWA);
 }
 
+__isl_give isl_pw_aff *SCEVAffinator::visitSRemInstruction(Instruction *SRem) {
+  assert(SRem->getOpcode() == Instruction::SRem && "Assumed SRem instruction!");
+  auto *SE = S->getSE();
+
+  auto *Divisor = dyn_cast<ConstantInt>(SRem->getOperand(1));
+  assert(Divisor && "SRem is no parameter but has a non-constant RHS.");
+  auto *DivisorVal = isl_valFromAPInt(Ctx, Divisor->getValue(),
+                                      /* isSigned */ true);
+
+  auto *Dividend = SRem->getOperand(0);
+  auto *DividendSCEV = SE->getSCEV(Dividend);
+  auto *DividendPWA = visit(DividendSCEV);
+
+  return isl_pw_aff_mod_val(DividendPWA, isl_val_abs(DivisorVal));
+}
+
 __isl_give isl_pw_aff *SCEVAffinator::visitUnknown(const SCEVUnknown *Expr) {
   if (Instruction *I = dyn_cast<Instruction>(Expr->getValue())) {
     switch (I->getOpcode()) {
     case Instruction::SDiv:
       return visitSDivInstruction(I);
+    case Instruction::SRem:
+      return visitSRemInstruction(I);
     default:
       break; // Fall through.
     }
