@@ -287,7 +287,8 @@ std::error_code SymbolTable::addCombinedLTOObject() {
     // We may see new references to runtime library symbols such as __chkstk
     // here. These symbols must be wholly defined in non-bitcode files.
     if (auto *B = dyn_cast<Lazy>(Sym->Body))
-      addMemberFile(B);
+      if (auto EC = addMemberFile(B))
+        return EC;
   }
 
   size_t NumBitcodeFiles = BitcodeFiles.size();
