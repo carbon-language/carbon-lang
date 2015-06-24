@@ -2190,11 +2190,11 @@ bool llvm::FoldBranchToCommonDest(BranchInst *BI, unsigned BonusInstThreshold) {
     }
 
     // If we have bonus instructions, clone them into the predecessor block.
-    // Note that there may be mutliple predecessor blocks, so we cannot move
+    // Note that there may be multiple predecessor blocks, so we cannot move
     // bonus instructions to a predecessor block.
     ValueToValueMapTy VMap; // maps original values to cloned values
     // We already make sure Cond is the last instruction before BI. Therefore,
-    // every instructions before Cond other than DbgInfoIntrinsic are bonus
+    // all instructions before Cond other than DbgInfoIntrinsic are bonus
     // instructions.
     for (auto BonusInst = BB->begin(); Cond != BonusInst; ++BonusInst) {
       if (isa<DbgInfoIntrinsic>(BonusInst))
