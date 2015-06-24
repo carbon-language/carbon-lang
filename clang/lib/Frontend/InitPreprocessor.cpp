@@ -868,6 +868,14 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
                         "__attribute__((objc_ownership(none)))");
   }
 
+  // On Darwin, there are __double_underscored variants of the type
+  // nullability qualifiers.
+  if (TI.getTriple().isOSDarwin()) {
+    Builder.defineMacro("__nonnull", "_Nonnull");
+    Builder.defineMacro("__null_unspecified", "_Null_unspecified");
+    Builder.defineMacro("__nullable", "_Nullable");
+  }
+
   // OpenMP definition
   if (LangOpts.OpenMP) {
     // OpenMP 2.2:
