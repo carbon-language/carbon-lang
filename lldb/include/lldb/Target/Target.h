@@ -198,7 +198,10 @@ public:
 
     bool
     GetNonStopModeEnabled () const;
-    
+
+    void
+    SetNonStopModeEnabled (bool b);
+
     bool
     GetDisplayRuntimeSupportValues () const;
     

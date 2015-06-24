@@ -3550,6 +3550,13 @@ TargetProperties::GetNonStopModeEnabled () const
     return m_collection_sp->GetPropertyAtIndexAsBoolean (NULL, idx, false);
 }
 
+void
+TargetProperties::SetNonStopModeEnabled (bool b)
+{
+    const uint32_t idx = ePropertyNonStopModeEnabled;
+    m_collection_sp->SetPropertyAtIndexAsBoolean (NULL, idx, b);
+}
+
 const ProcessLaunchInfo &
 TargetProperties::GetProcessLaunchInfo ()
 {

@@ -1172,7 +1172,7 @@ ProcessGDBRemote::ConnectToDebugserver (const char *connect_url)
 
     // Send $QNonStop:1 packet on startup if required
     if (GetTarget().GetNonStopModeEnabled())
-        m_gdb_comm.SetNonStopMode(true);
+        GetTarget().SetNonStopModeEnabled (m_gdb_comm.SetNonStopMode(true));
 
     m_gdb_comm.GetEchoSupported ();
     m_gdb_comm.GetThreadSuffixSupported ();
