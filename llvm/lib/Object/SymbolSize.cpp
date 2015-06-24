@@ -53,13 +53,11 @@ llvm::object::computeSymbolSizes(const ObjectFile &O) {
   unsigned SymNum = 0;
   for (symbol_iterator I = O.symbol_begin(), E = O.symbol_end(); I != E; ++I) {
     SymbolRef Sym = *I;
-    uint64_t Address;
-    if (std::error_code EC = Sym.getAddress(Address))
-      return EC;
+    uint64_t Value = Sym.getValue();
     section_iterator SecI = O.section_end();
     if (std::error_code EC = Sym.getSection(SecI))
       return EC;
-    Addresses.push_back({I, Address, SymNum, *SecI});
+    Addresses.push_back({I, Value, SymNum, *SecI});
     ++SymNum;
   }
   for (const SectionRef Sec : O.sections()) {
