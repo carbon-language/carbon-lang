@@ -286,6 +286,10 @@ Preprocessor::macro_begin(bool IncludeExternalMacros) const {
     ExternalSource->ReadDefinedMacros();
   }
 
+  // Make sure we cover all macros in visible modules.
+  for (const ModuleMacro &Macro : ModuleMacros)
+    CurSubmoduleState->Macros.insert(std::make_pair(Macro.II, MacroState()));
+
   return CurSubmoduleState->Macros.begin();
 }
 
