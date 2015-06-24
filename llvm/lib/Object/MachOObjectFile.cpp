@@ -345,23 +345,24 @@ unsigned MachOObjectFile::getSectionType(SectionRef Sec) const {
   return Flags & MachO::SECTION_TYPE;
 }
 
+uint64_t MachOObjectFile::getNValue(DataRefImpl Sym) const {
+  if (is64Bit()) {
+    MachO::nlist_64 Entry = getSymbol64TableEntry(Sym);
+    return Entry.n_value;
+  }
+  MachO::nlist Entry = getSymbolTableEntry(Sym);
+  return Entry.n_value;
+}
+
 // getIndirectName() returns the name of the alias'ed symbol who's string table
 // index is in the n_value field.
 std::error_code MachOObjectFile::getIndirectName(DataRefImpl Symb,
                                                  StringRef &Res) const {
   StringRef StringTable = getStringTableData();
-  uint64_t NValue;
-  if (is64Bit()) {
-    MachO::nlist_64 Entry = getSymbol64TableEntry(Symb);
-    NValue = Entry.n_value;
-    if ((Entry.n_type & MachO::N_TYPE) != MachO::N_INDR)
-      return object_error::parse_failed;
-  } else {
-    MachO::nlist Entry = getSymbolTableEntry(Symb);
-    NValue = Entry.n_value;
-    if ((Entry.n_type & MachO::N_TYPE) != MachO::N_INDR)
-      return object_error::parse_failed;
-  }
+  MachO::nlist_base Entry = getSymbolTableEntryBase(this, Symb);
+  if ((Entry.n_type & MachO::N_TYPE) != MachO::N_INDR)
+    return object_error::parse_failed;
+  uint64_t NValue = getNValue(Symb);
   if (NValue >= StringTable.size())
     return object_error::parse_failed;
   const char *Start = &StringTable.data()[NValue];
@@ -371,21 +372,12 @@ std::error_code MachOObjectFile::getIndirectName(DataRefImpl Symb,
 
 std::error_code MachOObjectFile::getSymbolAddress(DataRefImpl Symb,
                                                   uint64_t &Res) const {
-  if (is64Bit()) {
-    MachO::nlist_64 Entry = getSymbol64TableEntry(Symb);
-    if ((Entry.n_type & MachO::N_TYPE) == MachO::N_UNDF &&
-        Entry.n_value == 0)
-      Res = UnknownAddress;
-    else
-      Res = Entry.n_value;
-  } else {
-    MachO::nlist Entry = getSymbolTableEntry(Symb);
-    if ((Entry.n_type & MachO::N_TYPE) == MachO::N_UNDF &&
-        Entry.n_value == 0)
-      Res = UnknownAddress;
-    else
-      Res = Entry.n_value;
-  }
+  uint64_t NValue = getNValue(Symb);
+  MachO::nlist_base Entry = getSymbolTableEntryBase(this, Symb);
+  if ((Entry.n_type & MachO::N_TYPE) == MachO::N_UNDF && NValue == 0)
+    Res = UnknownAddress;
+  else
+    Res = NValue;
   return std::error_code();
 }
 

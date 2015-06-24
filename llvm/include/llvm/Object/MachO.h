@@ -197,6 +197,8 @@ public:
                   std::error_code &EC);
 
   void moveSymbolNext(DataRefImpl &Symb) const override;
+
+  uint64_t getNValue(DataRefImpl Sym) const;
   std::error_code getSymbolName(DataRefImpl Symb,
                                 StringRef &Res) const override;
 
