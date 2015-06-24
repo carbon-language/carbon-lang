@@ -308,9 +308,9 @@ if( MSVC )
     -wd4805 # Suppress 'unsafe mix of type <type> and type <type> in operation'
     -wd4204 # Suppress 'nonstandard extension used : non-constant aggregate initializer'
 
-	# Idelly, we'd like this warning to be enabled, but MSVC 2013 doesn't
+	# Ideally, we'd like this warning to be enabled, but MSVC 2013 doesn't
 	# support the 'aligned' attribute in the way that clang sources requires (for
-	# any code that uses the LLVM_ALIGNAS marco), so this is must be disabled to
+	# any code that uses the LLVM_ALIGNAS macro), so this is must be disabled to
 	# avoid unwanted alignment warnings.
 	# When we switch to requiring a version of MSVC that supports the 'alignas'
 	# specifier (MSVC 2015?) this warning can be re-enabled.
