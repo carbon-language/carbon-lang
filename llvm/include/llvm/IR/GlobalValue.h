@@ -92,6 +92,7 @@ private:
 
   friend class Constant;
   void destroyConstantImpl();
+  void replaceUsesOfWithOnConstant(Value *From, Value *To, Use *U) override;
 
 protected:
   /// \brief The intrinsic ID for this subclass (which must be a Function).

@@ -48,6 +48,10 @@ void GlobalValue::destroyConstantImpl() {
   llvm_unreachable("You can't GV->destroyConstantImpl()!");
 }
 
+void GlobalValue::replaceUsesOfWithOnConstant(Value *From, Value *To, Use *U) {
+  llvm_unreachable("You can't GV->replaceUsesOfWithOnConstant()!");
+}
+
 /// copyAttributesFrom - copy all additional attributes (those not needed to
 /// create a GlobalValue) from the GlobalValue Src to this one.
 void GlobalValue::copyAttributesFrom(const GlobalValue *Src) {
@@ -189,26 +193,6 @@ void GlobalVariable::removeFromParent() {
 
 void GlobalVariable::eraseFromParent() {
   getParent()->getGlobalList().erase(this);
-}
-
-void GlobalVariable::replaceUsesOfWithOnConstant(Value *From, Value *To,
-                                                 Use *U) {
-  // If you call this, then you better know this GVar has a constant
-  // initializer worth replacing. Enforce that here.
-  assert(getNumOperands() == 1 &&
-         "Attempt to replace uses of Constants on a GVar with no initializer");
-
-  // And, since you know it has an initializer, the From value better be
-  // the initializer :)
-  assert(getOperand(0) == From &&
-         "Attempt to replace wrong constant initializer in GVar");
-
-  // And, you better have a constant for the replacement value
-  assert(isa<Constant>(To) &&
-         "Attempt to replace GVar initializer with non-constant");
-
-  // Okay, preconditions out of the way, replace the constant initializer.
-  this->setOperand(0, cast<Constant>(To));
 }
 
 void GlobalVariable::setInitializer(Constant *InitVal) {
