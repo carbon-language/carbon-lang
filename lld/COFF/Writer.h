@@ -24,6 +24,9 @@ namespace coff {
 // and permissions (writable, readable or executable).
 const uint32_t PermMask = 0xFF0000F0;
 
+// Implemented in ICF.cpp.
+void doICF(const std::vector<Chunk *> &Chunks);
+
 // OutputSection represents a section in an output file. It's a
 // container of chunks. OutputSection and Chunk are 1:N relationship.
 // Chunks cannot belong to more than one OutputSections. The writer
@@ -76,6 +79,7 @@ public:
 
 private:
   void markLive();
+  void dedupCOMDATs();
   void createSections();
   void createImportTables();
   void createExportTable();
@@ -89,7 +93,6 @@ private:
 
   OutputSection *findSection(StringRef Name);
   OutputSection *createSection(StringRef Name);
-  void dedupCOMDATs();
   void addBaserels(OutputSection *Dest);
   void addBaserelBlocks(OutputSection *Dest, std::vector<uint32_t> &V);
 

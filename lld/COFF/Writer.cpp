@@ -41,6 +41,7 @@ namespace coff {
 // The main function of the writer.
 std::error_code Writer::write(StringRef OutputPath) {
   markLive();
+  dedupCOMDATs();
   createSections();
   createImportTables();
   createExportTable();
@@ -127,36 +128,13 @@ struct Equals {
 };
 
 // Merge identical COMDAT sections.
-// Two sections are considered as identical when their section headers,
-// contents and relocations are all the same.
 void Writer::dedupCOMDATs() {
-  std::vector<SectionChunk *> V;
-  for (Chunk *C : Symtab->getChunks())
-    if (C->isCOMDAT() && C->isLive())
-      V.push_back(reinterpret_cast<SectionChunk *>(C));
-
-  std::unordered_set<SectionChunk *, Hasher, Equals> Set;
-  bool removed = false;
-  for (SectionChunk *C : V) {
-    auto P = Set.insert(C);
-    if (P.second)
-      continue;
-    SectionChunk *Existing = *P.first;
-    C->replaceWith(Existing);
-    removed = true;
-  }
-  // By merging sections, two relocations that originally pointed to
-  // different locations can now point to the same location.
-  // So, repeat the process until a convegence is obtained.
-  if (removed)
-    dedupCOMDATs();
+  if (Config->ICF)
+    doICF(Symtab->getChunks());
 }
 
 // Create output section objects and add them to OutputSections.
 void Writer::createSections() {
-  if (Config->ICF)
-    dedupCOMDATs();
-
   // First, bin chunks by name.
   std::map<StringRef, std::vector<Chunk *>> Map;
   for (Chunk *C : Symtab->getChunks()) {

@@ -7,6 +7,7 @@ add_llvm_library(lldCOFF
   DLL.cpp
   Driver.cpp
   DriverUtils.cpp
+  ICF.cpp
   InputFiles.cpp
   ModuleDef.cpp
   SymbolTable.cpp
