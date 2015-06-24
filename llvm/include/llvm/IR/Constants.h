@@ -53,6 +53,7 @@ class ConstantInt : public Constant {
 
   friend class Constant;
   void destroyConstantImpl();
+  Value *handleOperandChangeImpl(Value *From, Value *To, Use *U);
 
 protected:
   // allocate space for exactly zero operands
@@ -238,6 +239,7 @@ class ConstantFP : public Constant {
 
   friend class Constant;
   void destroyConstantImpl();
+  Value *handleOperandChangeImpl(Value *From, Value *To, Use *U);
 
 protected:
   ConstantFP(Type *Ty, const APFloat& V);
@@ -308,6 +310,7 @@ class ConstantAggregateZero : public Constant {
 
   friend class Constant;
   void destroyConstantImpl();
+  Value *handleOperandChangeImpl(Value *From, Value *To, Use *U);
 
 protected:
   explicit ConstantAggregateZero(Type *ty)
@@ -356,6 +359,7 @@ class ConstantArray : public Constant {
 
   friend class Constant;
   void destroyConstantImpl();
+  Value *handleOperandChangeImpl(Value *From, Value *To, Use *U);
 
 protected:
   ConstantArray(ArrayType *T, ArrayRef<Constant *> Val);
@@ -376,8 +380,6 @@ public:
   inline ArrayType *getType() const {
     return cast<ArrayType>(Value::getType());
   }
-
-  void replaceUsesOfWithOnConstant(Value *From, Value *To, Use *U) override;
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static bool classof(const Value *V) {
@@ -401,6 +403,7 @@ class ConstantStruct : public Constant {
 
   friend class Constant;
   void destroyConstantImpl();
+  Value *handleOperandChangeImpl(Value *From, Value *To, Use *U);
 
 protected:
   ConstantStruct(StructType *T, ArrayRef<Constant *> Val);
@@ -438,8 +441,6 @@ public:
     return cast<StructType>(Value::getType());
   }
 
-  void replaceUsesOfWithOnConstant(Value *From, Value *To, Use *U) override;
-
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static bool classof(const Value *V) {
     return V->getValueID() == ConstantStructVal;
@@ -463,6 +464,7 @@ class ConstantVector : public Constant {
 
   friend class Constant;
   void destroyConstantImpl();
+  Value *handleOperandChangeImpl(Value *From, Value *To, Use *U);
 
 protected:
   ConstantVector(VectorType *T, ArrayRef<Constant *> Val);
@@ -492,8 +494,6 @@ public:
   /// elements have the same value, return that value. Otherwise return NULL.
   Constant *getSplatValue() const;
 
-  void replaceUsesOfWithOnConstant(Value *From, Value *To, Use *U) override;
-
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static bool classof(const Value *V) {
     return V->getValueID() == ConstantVectorVal;
@@ -516,6 +516,7 @@ class ConstantPointerNull : public Constant {
 
   friend class Constant;
   void destroyConstantImpl();
+  Value *handleOperandChangeImpl(Value *From, Value *To, Use *U);
 
 protected:
   explicit ConstantPointerNull(PointerType *T)
@@ -569,6 +570,7 @@ class ConstantDataSequential : public Constant {
 
   friend class Constant;
   void destroyConstantImpl();
+  Value *handleOperandChangeImpl(Value *From, Value *To, Use *U);
 
 protected:
   explicit ConstantDataSequential(Type *ty, ValueTy VT, const char *Data)
@@ -804,6 +806,7 @@ class BlockAddress : public Constant {
 
   friend class Constant;
   void destroyConstantImpl();
+  Value *handleOperandChangeImpl(Value *From, Value *To, Use *U);
 
 public:
   /// get - Return a BlockAddress for the specified function and basic block.
@@ -824,8 +827,6 @@ public:
 
   Function *getFunction() const { return (Function*)Op<0>().get(); }
   BasicBlock *getBasicBlock() const { return (BasicBlock*)Op<1>().get(); }
-
-  void replaceUsesOfWithOnConstant(Value *From, Value *To, Use *U) override;
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const Value *V) {
@@ -853,6 +854,7 @@ class ConstantExpr : public Constant {
 
   friend class Constant;
   void destroyConstantImpl();
+  Value *handleOperandChangeImpl(Value *From, Value *To, Use *U);
 
 protected:
   ConstantExpr(Type *ty, unsigned Opcode, Use *Ops, unsigned NumOps)
@@ -1185,8 +1187,6 @@ public:
   /// would make it harder to remove ConstantExprs altogether.
   Instruction *getAsInstruction();
 
-  void replaceUsesOfWithOnConstant(Value *From, Value *To, Use *U) override;
-
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const Value *V) {
     return V->getValueID() == ConstantExprVal;
@@ -1223,6 +1223,7 @@ class UndefValue : public Constant {
 
   friend class Constant;
   void destroyConstantImpl();
+  Value *handleOperandChangeImpl(Value *From, Value *To, Use *U);
 
 protected:
   explicit UndefValue(Type *T) : Constant(T, UndefValueVal, nullptr, 0) {}

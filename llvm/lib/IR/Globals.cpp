@@ -48,8 +48,8 @@ void GlobalValue::destroyConstantImpl() {
   llvm_unreachable("You can't GV->destroyConstantImpl()!");
 }
 
-void GlobalValue::replaceUsesOfWithOnConstant(Value *From, Value *To, Use *U) {
-  llvm_unreachable("You can't GV->replaceUsesOfWithOnConstant()!");
+Value *GlobalValue::handleOperandChangeImpl(Value *From, Value *To, Use *U) {
+  llvm_unreachable("Unsupported class for handleOperandChange()!");
 }
 
 /// copyAttributesFrom - copy all additional attributes (those not needed to

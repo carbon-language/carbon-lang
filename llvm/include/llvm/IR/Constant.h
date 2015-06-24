@@ -47,8 +47,6 @@ protected:
   Constant(Type *ty, ValueTy vty, Use *Ops, unsigned NumOps)
     : User(ty, vty, Ops, NumOps) {}
 
-  void replaceUsesOfWithOnConstantImpl(Constant *Replacement);
-
 public:
   /// isNullValue - Return true if this is the value that would be returned by
   /// getNullValue.
@@ -140,8 +138,8 @@ public:
            V->getValueID() <= ConstantLastVal;
   }
 
-  /// replaceUsesOfWithOnConstant - This method is a special form of
-  /// User::replaceUsesOfWith (which does not work on constants) that does work
+  /// This method is a special form of User::replaceUsesOfWith
+  /// (which does not work on constants) that does work
   /// on constants.  Basically this method goes through the trouble of building
   /// a new constant that is equivalent to the current one, with all uses of
   /// From replaced with uses of To.  After this construction is completed, all
@@ -150,15 +148,7 @@ public:
   /// use Value::replaceAllUsesWith, which automatically dispatches to this
   /// method as needed.
   ///
-  virtual void replaceUsesOfWithOnConstant(Value *, Value *, Use *) {
-    // Provide a default implementation for constants (like integers) that
-    // cannot use any other values.  This cannot be called at runtime, but needs
-    // to be here to avoid link errors.
-    assert(getNumOperands() == 0 && "replaceUsesOfWithOnConstant must be "
-           "implemented for all constants that have operands!");
-    llvm_unreachable("Constants that do not have operands cannot be using "
-                     "'From'!");
-  }
+  void handleOperandChange(Value *, Value *, Use *);
 
   static Constant *getNullValue(Type* Ty);
 

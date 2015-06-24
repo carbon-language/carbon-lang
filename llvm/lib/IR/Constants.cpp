@@ -1531,7 +1531,7 @@ void BlockAddress::destroyConstantImpl() {
   getBasicBlock()->AdjustBlockAddressRefCount(-1);
 }
 
-void BlockAddress::replaceUsesOfWithOnConstant(Value *From, Value *To, Use *U) {
+Value *BlockAddress::handleOperandChangeImpl(Value *From, Value *To, Use *U) {
   // This could be replacing either the Basic Block or the Function.  In either
   // case, we have to remove the map entry.
   Function *NewF = getFunction();
@@ -1546,10 +1546,8 @@ void BlockAddress::replaceUsesOfWithOnConstant(Value *From, Value *To, Use *U) {
   // and return early.
   BlockAddress *&NewBA =
     getContext().pImpl->BlockAddresses[std::make_pair(NewF, NewBB)];
-  if (NewBA) {
-    replaceUsesOfWithOnConstantImpl(NewBA);
-    return;
-  }
+  if (NewBA)
+    return NewBA;
 
   getBasicBlock()->AdjustBlockAddressRefCount(-1);
 
@@ -1561,6 +1559,10 @@ void BlockAddress::replaceUsesOfWithOnConstant(Value *From, Value *To, Use *U) {
   setOperand(0, NewF);
   setOperand(1, NewBB);
   getBasicBlock()->AdjustBlockAddressRefCount(1);
+
+  // If we just want to keep the existing value, then return null.
+  // Callers know that this means we shouldn't delete this value.
+  return nullptr;
 }
 
 //---- ConstantExpr::get() implementations.
@@ -2822,20 +2824,36 @@ Constant *ConstantDataVector::getSplatValue() const {
 }
 
 //===----------------------------------------------------------------------===//
-//                replaceUsesOfWithOnConstant implementations
+//                handleOperandChange implementations
 
-/// replaceUsesOfWithOnConstant - Update this constant array to change uses of
+/// Update this constant array to change uses of
 /// 'From' to be uses of 'To'.  This must update the uniquing data structures
 /// etc.
 ///
 /// Note that we intentionally replace all uses of From with To here.  Consider
 /// a large array that uses 'From' 1000 times.  By handling this case all here,
-/// ConstantArray::replaceUsesOfWithOnConstant is only invoked once, and that
+/// ConstantArray::handleOperandChange is only invoked once, and that
 /// single invocation handles all 1000 uses.  Handling them one at a time would
 /// work, but would be really slow because it would have to unique each updated
 /// array instance.
 ///
-void Constant::replaceUsesOfWithOnConstantImpl(Constant *Replacement) {
+void Constant::handleOperandChange(Value *From, Value *To, Use *U) {
+  Value *Replacement = nullptr;
+  switch (getValueID()) {
+  default:
+    llvm_unreachable("Not a constant!");
+#define HANDLE_CONSTANT(Name)                                                  \
+  case Value::Name##Val:                                                       \
+    Replacement = cast<Name>(this)->handleOperandChangeImpl(From, To, U);      \
+    break;
+#include "llvm/IR/Value.def"
+  }
+
+  // If handleOperandChangeImpl returned nullptr, then it handled
+  // replacing itself and we don't want to delete or replace anything else here.
+  if (!Replacement)
+    return;
+
   // I do need to replace this with an existing value.
   assert(Replacement != this && "I didn't contain From!");
 
@@ -2846,8 +2864,34 @@ void Constant::replaceUsesOfWithOnConstantImpl(Constant *Replacement) {
   destroyConstant();
 }
 
-void ConstantArray::replaceUsesOfWithOnConstant(Value *From, Value *To,
-                                                Use *U) {
+Value *ConstantInt::handleOperandChangeImpl(Value *From, Value *To, Use *U) {
+  llvm_unreachable("Unsupported class for handleOperandChange()!");
+}
+
+Value *ConstantFP::handleOperandChangeImpl(Value *From, Value *To, Use *U) {
+  llvm_unreachable("Unsupported class for handleOperandChange()!");
+}
+
+Value *UndefValue::handleOperandChangeImpl(Value *From, Value *To, Use *U) {
+  llvm_unreachable("Unsupported class for handleOperandChange()!");
+}
+
+Value *ConstantPointerNull::handleOperandChangeImpl(Value *From, Value *To,
+                                                    Use *U) {
+  llvm_unreachable("Unsupported class for handleOperandChange()!");
+}
+
+Value *ConstantAggregateZero::handleOperandChangeImpl(Value *From, Value *To,
+                                                      Use *U) {
+  llvm_unreachable("Unsupported class for handleOperandChange()!");
+}
+
+Value *ConstantDataSequential::handleOperandChangeImpl(Value *From, Value *To,
+                                                       Use *U) {
+  llvm_unreachable("Unsupported class for handleOperandChange()!");
+}
+
+Value *ConstantArray::handleOperandChangeImpl(Value *From, Value *To, Use *U) {
   assert(isa<Constant>(To) && "Cannot make Constant refer to non-constant!");
   Constant *ToC = cast<Constant>(To);
 
@@ -2871,29 +2915,22 @@ void ConstantArray::replaceUsesOfWithOnConstant(Value *From, Value *To,
     AllSame &= Val == ToC;
   }
 
-  if (AllSame && ToC->isNullValue()) {
-    replaceUsesOfWithOnConstantImpl(ConstantAggregateZero::get(getType()));
-    return;
-  }
-  if (AllSame && isa<UndefValue>(ToC)) {
-    replaceUsesOfWithOnConstantImpl(UndefValue::get(getType()));
-    return;
-  }
+  if (AllSame && ToC->isNullValue())
+    return ConstantAggregateZero::get(getType());
+
+  if (AllSame && isa<UndefValue>(ToC))
+    return UndefValue::get(getType());
 
   // Check for any other type of constant-folding.
-  if (Constant *C = getImpl(getType(), Values)) {
-    replaceUsesOfWithOnConstantImpl(C);
-    return;
-  }
+  if (Constant *C = getImpl(getType(), Values))
+    return C;
 
   // Update to the new value.
-  if (Constant *C = getContext().pImpl->ArrayConstants.replaceOperandsInPlace(
-          Values, this, From, ToC, NumUpdated, U - OperandList))
-    replaceUsesOfWithOnConstantImpl(C);
+  return getContext().pImpl->ArrayConstants.replaceOperandsInPlace(
+      Values, this, From, ToC, NumUpdated, U - OperandList);
 }
 
-void ConstantStruct::replaceUsesOfWithOnConstant(Value *From, Value *To,
-                                                 Use *U) {
+Value *ConstantStruct::handleOperandChangeImpl(Value *From, Value *To, Use *U) {
   assert(isa<Constant>(To) && "Cannot make Constant refer to non-constant!");
   Constant *ToC = cast<Constant>(To);
 
@@ -2928,23 +2965,18 @@ void ConstantStruct::replaceUsesOfWithOnConstant(Value *From, Value *To,
   }
   Values[OperandToUpdate] = ToC;
 
-  if (isAllZeros) {
-    replaceUsesOfWithOnConstantImpl(ConstantAggregateZero::get(getType()));
-    return;
-  }
-  if (isAllUndef) {
-    replaceUsesOfWithOnConstantImpl(UndefValue::get(getType()));
-    return;
-  }
+  if (isAllZeros)
+    return ConstantAggregateZero::get(getType());
+
+  if (isAllUndef)
+    return UndefValue::get(getType());
 
   // Update to the new value.
-  if (Constant *C = getContext().pImpl->StructConstants.replaceOperandsInPlace(
-          Values, this, From, ToC))
-    replaceUsesOfWithOnConstantImpl(C);
+  return getContext().pImpl->StructConstants.replaceOperandsInPlace(
+      Values, this, From, ToC);
 }
 
-void ConstantVector::replaceUsesOfWithOnConstant(Value *From, Value *To,
-                                                 Use *U) {
+Value *ConstantVector::handleOperandChangeImpl(Value *From, Value *To, Use *U) {
   assert(isa<Constant>(To) && "Cannot make Constant refer to non-constant!");
   Constant *ToC = cast<Constant>(To);
 
@@ -2960,20 +2992,16 @@ void ConstantVector::replaceUsesOfWithOnConstant(Value *From, Value *To,
     Values.push_back(Val);
   }
 
-  if (Constant *C = getImpl(Values)) {
-    replaceUsesOfWithOnConstantImpl(C);
-    return;
-  }
+  if (Constant *C = getImpl(Values))
+    return C;
 
   // Update to the new value.
   Use *OperandList = getOperandList();
-  if (Constant *C = getContext().pImpl->VectorConstants.replaceOperandsInPlace(
-          Values, this, From, ToC, NumUpdated, U - OperandList))
-    replaceUsesOfWithOnConstantImpl(C);
+  return getContext().pImpl->VectorConstants.replaceOperandsInPlace(
+      Values, this, From, ToC, NumUpdated, U - OperandList);
 }
 
-void ConstantExpr::replaceUsesOfWithOnConstant(Value *From, Value *ToV,
-                                               Use *U) {
+Value *ConstantExpr::handleOperandChangeImpl(Value *From, Value *ToV, Use *U) {
   assert(isa<Constant>(ToV) && "Cannot make Constant refer to non-constant!");
   Constant *To = cast<Constant>(ToV);
 
@@ -2989,16 +3017,13 @@ void ConstantExpr::replaceUsesOfWithOnConstant(Value *From, Value *ToV,
   }
   assert(NumUpdated && "I didn't contain From!");
 
-  if (Constant *C = getWithOperands(NewOps, getType(), true)) {
-    replaceUsesOfWithOnConstantImpl(C);
-    return;
-  }
+  if (Constant *C = getWithOperands(NewOps, getType(), true))
+    return C;
 
   // Update to the new value.
   Use *OperandList = getOperandList();
-  if (Constant *C = getContext().pImpl->ExprConstants.replaceOperandsInPlace(
-          NewOps, this, From, To, NumUpdated, U - OperandList))
-    replaceUsesOfWithOnConstantImpl(C);
+  return getContext().pImpl->ExprConstants.replaceOperandsInPlace(
+      NewOps, this, From, To, NumUpdated, U - OperandList);
 }
 
 Instruction *ConstantExpr::getAsInstruction() {
