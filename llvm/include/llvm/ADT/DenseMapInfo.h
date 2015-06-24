@@ -14,6 +14,8 @@
 #ifndef LLVM_ADT_DENSEMAPINFO_H
 #define LLVM_ADT_DENSEMAPINFO_H
 
+#include "llvm/ADT/Hashing.h"
+#include "llvm/ADT/StringRef.h"
 #include "llvm/Support/PointerLikeTypeTraits.h"
 #include "llvm/Support/type_traits.h"
 
@@ -160,6 +162,31 @@ struct DenseMapInfo<std::pair<T, U> > {
   static bool isEqual(const Pair &LHS, const Pair &RHS) {
     return FirstInfo::isEqual(LHS.first, RHS.first) &&
            SecondInfo::isEqual(LHS.second, RHS.second);
+  }
+};
+
+// Provide DenseMapInfo for StringRefs.
+template <> struct DenseMapInfo<StringRef> {
+  static inline StringRef getEmptyKey() {
+    return StringRef(reinterpret_cast<const char *>(~static_cast<uintptr_t>(0)),
+                     0);
+  }
+  static inline StringRef getTombstoneKey() {
+    return StringRef(reinterpret_cast<const char *>(~static_cast<uintptr_t>(1)),
+                     0);
+  }
+  static unsigned getHashValue(StringRef Val) {
+    assert(Val.data() != getEmptyKey().data() && "Cannot hash the empty key!");
+    assert(Val.data() != getTombstoneKey().data() &&
+           "Cannot hash the tombstone key!");
+    return (unsigned)(hash_value(Val));
+  }
+  static bool isEqual(StringRef LHS, StringRef RHS) {
+    if (RHS.data() == getEmptyKey().data())
+      return LHS.data() == getEmptyKey().data();
+    if (RHS.data() == getTombstoneKey().data())
+      return LHS.data() == getTombstoneKey().data();
+    return LHS == RHS;
   }
 };
 

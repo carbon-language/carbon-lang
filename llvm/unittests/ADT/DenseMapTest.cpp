@@ -323,6 +323,31 @@ TYPED_TEST(DenseMapTest, ConstIteratorTest) {
   EXPECT_TRUE(cit == cit2);
 }
 
+// Make sure DenseMap works with StringRef keys.
+TEST(DenseMapCustomTest, StringRefTest) {
+  DenseMap<StringRef, int> M;
+
+  M["a"] = 1;
+  M["b"] = 2;
+  M["c"] = 3;
+
+  EXPECT_EQ(3u, M.size());
+  EXPECT_EQ(1, M.lookup("a"));
+  EXPECT_EQ(2, M.lookup("b"));
+  EXPECT_EQ(3, M.lookup("c"));
+
+  EXPECT_EQ(0, M.lookup("q"));
+
+  // Test the empty string, spelled various ways.
+  EXPECT_EQ(0, M.lookup(""));
+  EXPECT_EQ(0, M.lookup(StringRef()));
+  EXPECT_EQ(0, M.lookup(StringRef("a", 0)));
+  M[""] = 42;
+  EXPECT_EQ(42, M.lookup(""));
+  EXPECT_EQ(42, M.lookup(StringRef()));
+  EXPECT_EQ(42, M.lookup(StringRef("a", 0)));
+}
+
 // Key traits that allows lookup with either an unsigned or char* key;
 // In the latter case, "a" == 0, "b" == 1 and so on.
 struct TestDenseMapInfo {
