@@ -1464,119 +1464,124 @@ bool ARMLoadStoreOpt::FixInvalidRegPairOp(MachineBasicBlock &MBB,
                                           MachineBasicBlock::iterator &MBBI) {
   MachineInstr *MI = &*MBBI;
   unsigned Opcode = MI->getOpcode();
-  if (Opcode == ARM::LDRD || Opcode == ARM::STRD) {
-    const MachineOperand &BaseOp = MI->getOperand(2);
-    unsigned BaseReg = BaseOp.getReg();
-    unsigned EvenReg = MI->getOperand(0).getReg();
-    unsigned OddReg  = MI->getOperand(1).getReg();
-    unsigned EvenRegNum = TRI->getDwarfRegNum(EvenReg, false);
-    unsigned OddRegNum  = TRI->getDwarfRegNum(OddReg, false);
-    // ARM errata 602117: LDRD with base in list may result in incorrect base
-    // register when interrupted or faulted.
-    bool Errata602117 = EvenReg == BaseReg && STI->isCortexM3();
-    if (!Errata602117 &&
-        ((EvenRegNum & 1) == 0 && (EvenRegNum + 1) == OddRegNum))
-      return false;
+  if (Opcode != ARM::LDRD && Opcode != ARM::STRD && Opcode != ARM::t2LDRDi8)
+    return false;
 
-    MachineBasicBlock::iterator NewBBI = MBBI;
-    bool isT2 = Opcode == ARM::t2LDRDi8 || Opcode == ARM::t2STRDi8;
-    bool isLd = Opcode == ARM::LDRD || Opcode == ARM::t2LDRDi8;
-    bool EvenDeadKill = isLd ?
-      MI->getOperand(0).isDead() : MI->getOperand(0).isKill();
-    bool EvenUndef = MI->getOperand(0).isUndef();
-    bool OddDeadKill  = isLd ?
-      MI->getOperand(1).isDead() : MI->getOperand(1).isKill();
-    bool OddUndef = MI->getOperand(1).isUndef();
-    bool BaseKill = BaseOp.isKill();
-    bool BaseUndef = BaseOp.isUndef();
-    bool OffKill = isT2 ? false : MI->getOperand(3).isKill();
-    bool OffUndef = isT2 ? false : MI->getOperand(3).isUndef();
-    int OffImm = getMemoryOpOffset(MI);
-    unsigned PredReg = 0;
-    ARMCC::CondCodes Pred = getInstrPredicate(MI, PredReg);
+  const MachineOperand &BaseOp = MI->getOperand(2);
+  unsigned BaseReg = BaseOp.getReg();
+  unsigned EvenReg = MI->getOperand(0).getReg();
+  unsigned OddReg  = MI->getOperand(1).getReg();
+  unsigned EvenRegNum = TRI->getDwarfRegNum(EvenReg, false);
+  unsigned OddRegNum  = TRI->getDwarfRegNum(OddReg, false);
 
-    if (OddRegNum > EvenRegNum && OffImm == 0) {
-      // Ascending register numbers and no offset. It's safe to change it to a
-      // ldm or stm.
-      unsigned NewOpc = (isLd)
-        ? (isT2 ? ARM::t2LDMIA : ARM::LDMIA)
-        : (isT2 ? ARM::t2STMIA : ARM::STMIA);
-      if (isLd) {
-        BuildMI(MBB, MBBI, MBBI->getDebugLoc(), TII->get(NewOpc))
-          .addReg(BaseReg, getKillRegState(BaseKill))
-          .addImm(Pred).addReg(PredReg)
-          .addReg(EvenReg, getDefRegState(isLd) | getDeadRegState(EvenDeadKill))
-          .addReg(OddReg,  getDefRegState(isLd) | getDeadRegState(OddDeadKill));
-        ++NumLDRD2LDM;
-      } else {
-        BuildMI(MBB, MBBI, MBBI->getDebugLoc(), TII->get(NewOpc))
-          .addReg(BaseReg, getKillRegState(BaseKill))
-          .addImm(Pred).addReg(PredReg)
-          .addReg(EvenReg,
-                  getKillRegState(EvenDeadKill) | getUndefRegState(EvenUndef))
-          .addReg(OddReg,
-                  getKillRegState(OddDeadKill)  | getUndefRegState(OddUndef));
-        ++NumSTRD2STM;
-      }
-      NewBBI = std::prev(MBBI);
+  // ARM errata 602117: LDRD with base in list may result in incorrect base
+  // register when interrupted or faulted.
+  bool Errata602117 = EvenReg == BaseReg &&
+    (Opcode == ARM::LDRD || Opcode == ARM::t2LDRDi8) && STI->isCortexM3();
+  // ARM LDRD/STRD needs consecutive registers.
+  bool NonConsecutiveRegs = (Opcode == ARM::LDRD || Opcode == ARM::STRD) &&
+    (EvenRegNum % 2 != 0 || EvenRegNum + 1 != OddRegNum);
+
+  if (!Errata602117 && !NonConsecutiveRegs)
+    return false;
+
+  MachineBasicBlock::iterator NewBBI = MBBI;
+  bool isT2 = Opcode == ARM::t2LDRDi8 || Opcode == ARM::t2STRDi8;
+  bool isLd = Opcode == ARM::LDRD || Opcode == ARM::t2LDRDi8;
+  bool EvenDeadKill = isLd ?
+    MI->getOperand(0).isDead() : MI->getOperand(0).isKill();
+  bool EvenUndef = MI->getOperand(0).isUndef();
+  bool OddDeadKill  = isLd ?
+    MI->getOperand(1).isDead() : MI->getOperand(1).isKill();
+  bool OddUndef = MI->getOperand(1).isUndef();
+  bool BaseKill = BaseOp.isKill();
+  bool BaseUndef = BaseOp.isUndef();
+  bool OffKill = isT2 ? false : MI->getOperand(3).isKill();
+  bool OffUndef = isT2 ? false : MI->getOperand(3).isUndef();
+  int OffImm = getMemoryOpOffset(MI);
+  unsigned PredReg = 0;
+  ARMCC::CondCodes Pred = getInstrPredicate(MI, PredReg);
+
+  if (OddRegNum > EvenRegNum && OffImm == 0) {
+    // Ascending register numbers and no offset. It's safe to change it to a
+    // ldm or stm.
+    unsigned NewOpc = (isLd)
+      ? (isT2 ? ARM::t2LDMIA : ARM::LDMIA)
+      : (isT2 ? ARM::t2STMIA : ARM::STMIA);
+    if (isLd) {
+      BuildMI(MBB, MBBI, MBBI->getDebugLoc(), TII->get(NewOpc))
+        .addReg(BaseReg, getKillRegState(BaseKill))
+        .addImm(Pred).addReg(PredReg)
+        .addReg(EvenReg, getDefRegState(isLd) | getDeadRegState(EvenDeadKill))
+        .addReg(OddReg,  getDefRegState(isLd) | getDeadRegState(OddDeadKill));
+      ++NumLDRD2LDM;
     } else {
-      // Split into two instructions.
-      unsigned NewOpc = (isLd)
-        ? (isT2 ? (OffImm < 0 ? ARM::t2LDRi8 : ARM::t2LDRi12) : ARM::LDRi12)
-        : (isT2 ? (OffImm < 0 ? ARM::t2STRi8 : ARM::t2STRi12) : ARM::STRi12);
-      // Be extra careful for thumb2. t2LDRi8 can't reference a zero offset,
-      // so adjust and use t2LDRi12 here for that.
-      unsigned NewOpc2 = (isLd)
-        ? (isT2 ? (OffImm+4 < 0 ? ARM::t2LDRi8 : ARM::t2LDRi12) : ARM::LDRi12)
-        : (isT2 ? (OffImm+4 < 0 ? ARM::t2STRi8 : ARM::t2STRi12) : ARM::STRi12);
-      DebugLoc dl = MBBI->getDebugLoc();
-      // If this is a load and base register is killed, it may have been
-      // re-defed by the load, make sure the first load does not clobber it.
-      if (isLd &&
-          (BaseKill || OffKill) &&
-          (TRI->regsOverlap(EvenReg, BaseReg))) {
-        assert(!TRI->regsOverlap(OddReg, BaseReg));
-        InsertLDR_STR(MBB, MBBI, OffImm+4, isLd, dl, NewOpc2,
-                      OddReg, OddDeadKill, false,
-                      BaseReg, false, BaseUndef, false, OffUndef,
-                      Pred, PredReg, TII, isT2);
-        NewBBI = std::prev(MBBI);
-        InsertLDR_STR(MBB, MBBI, OffImm, isLd, dl, NewOpc,
-                      EvenReg, EvenDeadKill, false,
-                      BaseReg, BaseKill, BaseUndef, OffKill, OffUndef,
-                      Pred, PredReg, TII, isT2);
-      } else {
-        if (OddReg == EvenReg && EvenDeadKill) {
-          // If the two source operands are the same, the kill marker is
-          // probably on the first one. e.g.
-          // t2STRDi8 %R5<kill>, %R5, %R9<kill>, 0, 14, %reg0
-          EvenDeadKill = false;
-          OddDeadKill = true;
-        }
-        // Never kill the base register in the first instruction.
-        if (EvenReg == BaseReg)
-          EvenDeadKill = false;
-        InsertLDR_STR(MBB, MBBI, OffImm, isLd, dl, NewOpc,
-                      EvenReg, EvenDeadKill, EvenUndef,
-                      BaseReg, false, BaseUndef, false, OffUndef,
-                      Pred, PredReg, TII, isT2);
-        NewBBI = std::prev(MBBI);
-        InsertLDR_STR(MBB, MBBI, OffImm+4, isLd, dl, NewOpc2,
-                      OddReg, OddDeadKill, OddUndef,
-                      BaseReg, BaseKill, BaseUndef, OffKill, OffUndef,
-                      Pred, PredReg, TII, isT2);
-      }
-      if (isLd)
-        ++NumLDRD2LDR;
-      else
-        ++NumSTRD2STR;
+      BuildMI(MBB, MBBI, MBBI->getDebugLoc(), TII->get(NewOpc))
+        .addReg(BaseReg, getKillRegState(BaseKill))
+        .addImm(Pred).addReg(PredReg)
+        .addReg(EvenReg,
+                getKillRegState(EvenDeadKill) | getUndefRegState(EvenUndef))
+        .addReg(OddReg,
+                getKillRegState(OddDeadKill)  | getUndefRegState(OddUndef));
+      ++NumSTRD2STM;
     }
-
-    MBB.erase(MI);
-    MBBI = NewBBI;
-    return true;
+    NewBBI = std::prev(MBBI);
+  } else {
+    // Split into two instructions.
+    unsigned NewOpc = (isLd)
+      ? (isT2 ? (OffImm < 0 ? ARM::t2LDRi8 : ARM::t2LDRi12) : ARM::LDRi12)
+      : (isT2 ? (OffImm < 0 ? ARM::t2STRi8 : ARM::t2STRi12) : ARM::STRi12);
+    // Be extra careful for thumb2. t2LDRi8 can't reference a zero offset,
+    // so adjust and use t2LDRi12 here for that.
+    unsigned NewOpc2 = (isLd)
+      ? (isT2 ? (OffImm+4 < 0 ? ARM::t2LDRi8 : ARM::t2LDRi12) : ARM::LDRi12)
+      : (isT2 ? (OffImm+4 < 0 ? ARM::t2STRi8 : ARM::t2STRi12) : ARM::STRi12);
+    DebugLoc dl = MBBI->getDebugLoc();
+    // If this is a load and base register is killed, it may have been
+    // re-defed by the load, make sure the first load does not clobber it.
+    if (isLd &&
+        (BaseKill || OffKill) &&
+        (TRI->regsOverlap(EvenReg, BaseReg))) {
+      assert(!TRI->regsOverlap(OddReg, BaseReg));
+      InsertLDR_STR(MBB, MBBI, OffImm+4, isLd, dl, NewOpc2,
+                    OddReg, OddDeadKill, false,
+                    BaseReg, false, BaseUndef, false, OffUndef,
+                    Pred, PredReg, TII, isT2);
+      NewBBI = std::prev(MBBI);
+      InsertLDR_STR(MBB, MBBI, OffImm, isLd, dl, NewOpc,
+                    EvenReg, EvenDeadKill, false,
+                    BaseReg, BaseKill, BaseUndef, OffKill, OffUndef,
+                    Pred, PredReg, TII, isT2);
+    } else {
+      if (OddReg == EvenReg && EvenDeadKill) {
+        // If the two source operands are the same, the kill marker is
+        // probably on the first one. e.g.
+        // t2STRDi8 %R5<kill>, %R5, %R9<kill>, 0, 14, %reg0
+        EvenDeadKill = false;
+        OddDeadKill = true;
+      }
+      // Never kill the base register in the first instruction.
+      if (EvenReg == BaseReg)
+        EvenDeadKill = false;
+      InsertLDR_STR(MBB, MBBI, OffImm, isLd, dl, NewOpc,
+                    EvenReg, EvenDeadKill, EvenUndef,
+                    BaseReg, false, BaseUndef, false, OffUndef,
+                    Pred, PredReg, TII, isT2);
+      NewBBI = std::prev(MBBI);
+      InsertLDR_STR(MBB, MBBI, OffImm+4, isLd, dl, NewOpc2,
+                    OddReg, OddDeadKill, OddUndef,
+                    BaseReg, BaseKill, BaseUndef, OffKill, OffUndef,
+                    Pred, PredReg, TII, isT2);
+    }
+    if (isLd)
+      ++NumLDRD2LDR;
+    else
+      ++NumSTRD2STR;
   }
-  return false;
+
+  MBB.erase(MI);
+  MBBI = NewBBI;
+  return true;
 }
 
 /// An optimization pass to turn multiple LDR / STR ops of the same base and

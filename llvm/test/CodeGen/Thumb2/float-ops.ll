@@ -109,7 +109,7 @@ entry:
 define double @load_d(double* %a) {
 entry:
 ; CHECK-LABEL: load_d:
-; NONE: ldrd r0, r1, [r0]
+; NONE: ldm r0, {r0, r1}
 ; HARD: vldr d0, [r0]
   %0 = load double, double* %a, align 8
   ret double %0
