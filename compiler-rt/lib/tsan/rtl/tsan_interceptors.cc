@@ -2144,6 +2144,46 @@ TSAN_INTERCEPTOR(int, vfork, int fake) {
   return WRAP(fork)(fake);
 }
 
+typedef int (*dl_iterate_phdr_cb_t)(__sanitizer_dl_phdr_info *info, SIZE_T size,
+                                    void *data);
+struct dl_iterate_phdr_data {
+  ThreadState *thr;
+  uptr pc;
+  dl_iterate_phdr_cb_t cb;
+  void *data;
+};
+
+static int dl_iterate_phdr_cb(__sanitizer_dl_phdr_info *info, SIZE_T size,
+                              void *data) {
+  dl_iterate_phdr_data *cbdata = (dl_iterate_phdr_data *)data;
+  // dlopen/dlclose allocate/free dynamic-linker-internal memory, which is later
+  // accessible in dl_iterate_phdr callback. But we don't see synchronization
+  // inside of dynamic linker, so we "unpoison" it here in order to not
+  // produce false reports. Ignoring malloc/free in dlopen/dlclose is not enough
+  // because some libc functions call __libc_dlopen.
+  bool reset = info && IsAppMem((uptr)info->dlpi_name) &&
+      *(u64*)MemToShadow((uptr)info->dlpi_name) != kShadowRodata;
+  if (reset)
+    MemoryResetRange(cbdata->thr, cbdata->pc, (uptr)info->dlpi_name,
+                     internal_strlen(info->dlpi_name));
+  int res = cbdata->cb(info, size, cbdata->data);
+  if (reset)
+    MemoryResetRange(cbdata->thr, cbdata->pc, (uptr)info->dlpi_name,
+                     internal_strlen(info->dlpi_name));
+  return res;
+}
+
+TSAN_INTERCEPTOR(int, dl_iterate_phdr, dl_iterate_phdr_cb_t cb, void *data) {
+  SCOPED_TSAN_INTERCEPTOR(dl_iterate_phdr, cb, data);
+  dl_iterate_phdr_data cbdata;
+  cbdata.thr = thr;
+  cbdata.pc = pc;
+  cbdata.cb = cb;
+  cbdata.data = data;
+  int res = REAL(dl_iterate_phdr)(dl_iterate_phdr_cb, &cbdata);
+  return res;
+}
+
 static int OnExit(ThreadState *thr) {
   int status = Finalize(thr);
   FlushStreams();
@@ -2577,6 +2617,7 @@ void InitializeInterceptors() {
 
   TSAN_INTERCEPT(fork);
   TSAN_INTERCEPT(vfork);
+  TSAN_INTERCEPT(dl_iterate_phdr);
   TSAN_INTERCEPT(on_exit);
   TSAN_INTERCEPT(__cxa_atexit);
   TSAN_INTERCEPT(_exit);
