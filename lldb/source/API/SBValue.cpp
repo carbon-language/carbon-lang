@@ -61,13 +61,19 @@ public:
                lldb::DynamicValueType use_dynamic,
                bool use_synthetic,
                const char *name = NULL) :
-    m_valobj_sp(in_valobj_sp),
+    m_valobj_sp(),
     m_use_dynamic(use_dynamic),
     m_use_synthetic(use_synthetic),
     m_name (name)
     {
-        if (!m_name.IsEmpty() && m_valobj_sp)
-            m_valobj_sp->SetName(m_name);
+        if (in_valobj_sp)
+        {
+            if ( (m_valobj_sp = in_valobj_sp->GetQualifiedRepresentationIfAvailable(lldb::eNoDynamicValues, false)) )
+            {
+                if (!m_name.IsEmpty())
+                    m_valobj_sp->SetName(m_name);
+            }
+        }
     }
 
     ValueImpl (const ValueImpl& rhs) :
