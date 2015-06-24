@@ -48,8 +48,8 @@ UserBonusInstThreshold("bonus-inst-threshold", cl::Hidden, cl::init(1),
 
 STATISTIC(NumSimpl, "Number of blocks simplified");
 
-/// mergeEmptyReturnBlocks - If we have more than one empty (other than phi
-/// node) return blocks, merge them together to promote recursive block merging.
+/// If we have more than one empty (other than phi node) return blocks,
+/// merge them together to promote recursive block merging.
 static bool mergeEmptyReturnBlocks(Function &F) {
   bool Changed = false;
 
@@ -124,7 +124,7 @@ static bool mergeEmptyReturnBlocks(Function &F) {
   return Changed;
 }
 
-/// iterativelySimplifyCFG - Call SimplifyCFG on all the blocks in the function,
+/// Call SimplifyCFG on all the blocks in the function,
 /// iterating until no more changes are made.
 static bool iterativelySimplifyCFG(Function &F, const TargetTransformInfo &TTI,
                                    AssumptionCache *AC,
