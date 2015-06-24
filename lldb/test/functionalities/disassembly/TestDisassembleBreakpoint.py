@@ -19,7 +19,6 @@ class DisassemblyTestCase(TestBase):
         self.disassemble_breakpoint ()
 
     @dwarf_test
-    @expectedFailureLinux # llgs Handle_m returns target memory with breakpoints
     def test_with_dwarf (self):
         self.buildDwarf ()
         self.disassemble_breakpoint ()
