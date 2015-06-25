@@ -14023,7 +14023,7 @@ void DAGCombiner::GatherAllAliases(SDNode *N, SDValue OriginalChain,
          UIE = M->use_end(); UI != UIE; ++UI)
       if (UI.getUse().getValueType() == MVT::Other &&
           Visited.insert(*UI).second) {
-        if (isa<MemIntrinsicSDNode>(*UI) || isa<MemSDNode>(*UI)) {
+        if (isa<MemSDNode>(*UI)) {
           // We've not visited this use, and we care about it (it could have an
           // ordering dependency with the original node).
           Aliases.clear();
