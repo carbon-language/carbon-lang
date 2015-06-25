@@ -122,7 +122,7 @@ void CopyMemory(void *dst, const void *src, uptr size, StackTrace *stack) {
 void SetShadow(const void *ptr, uptr size, u8 value) {
   uptr PageSize = GetPageSizeCached();
   uptr shadow_beg = MEM_TO_SHADOW(ptr);
-  uptr shadow_end = MEM_TO_SHADOW((uptr)ptr + size);
+  uptr shadow_end = shadow_beg + size;
   if (value ||
       shadow_end - shadow_beg < common_flags()->clear_shadow_mmap_threshold) {
     REAL(memset)((void *)shadow_beg, value, shadow_end - shadow_beg);
