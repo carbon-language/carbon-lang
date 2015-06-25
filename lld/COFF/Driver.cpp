@@ -360,7 +360,7 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
       Config->DoGC = false;
       continue;
     }
-    if (S == "icf") {
+    if (S == "lldicf") {
       Config->ICF = true;
       continue;
     }
