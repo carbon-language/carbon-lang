@@ -32,3 +32,29 @@ void f() {
   }
 }
 }
+
+namespace NewTypoExprFromResolvingTypoAmbiguity {
+struct A {
+  void Swap(A *other);
+};
+
+struct pair {
+  int first;
+  A *second;
+};
+
+struct map {
+public:
+  void swap(map &x);
+  pair find(int x);
+};
+
+void run(A *annotations) {
+  map new_annotations;
+
+  auto &annotation = *annotations;
+  auto new_it = new_annotations.find(5);
+  auto &new_anotation = new_it.second;  // expected-note {{'new_anotation' declared here}}
+  new_annotation->Swap(&annotation);  // expected-error {{use of undeclared identifier 'new_annotation'; did you mean 'new_anotation'?}}
+}
+}
