@@ -263,3 +263,7 @@
 // SP: "-fsanitize=safe-stack"
 // SP-ASAN-NOT: stack-protector
 // SP-ASAN: "-fsanitize=address,safe-stack"
+
+// RUN: %clang -target powerpc64-unknown-linux-gnu -fsanitize=memory %s -### 2>&1 | FileCheck %s -check-prefix=CHECK-SANM
+// RUN: %clang -target powerpc64le-unknown-linux-gnu -fsanitize=memory %s -### 2>&1 | FileCheck %s -check-prefix=CHECK-SANM
+// CHECK-SANM: "-fsanitize=memory"

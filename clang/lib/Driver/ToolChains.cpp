@@ -3669,6 +3669,8 @@ SanitizerMask Linux::getSupportedSanitizers() const {
   const bool IsX86_64 = getTriple().getArch() == llvm::Triple::x86_64;
   const bool IsMIPS64 = getTriple().getArch() == llvm::Triple::mips64 ||
                         getTriple().getArch() == llvm::Triple::mips64el;
+  const bool IsPowerPC64 = getTriple().getArch() == llvm::Triple::ppc64 ||
+                           getTriple().getArch() == llvm::Triple::ppc64le;
   SanitizerMask Res = ToolChain::getSupportedSanitizers();
   Res |= SanitizerKind::Address;
   Res |= SanitizerKind::KernelAddress;
@@ -3676,9 +3678,10 @@ SanitizerMask Linux::getSupportedSanitizers() const {
   if (IsX86_64 || IsMIPS64) {
     Res |= SanitizerKind::DataFlow;
     Res |= SanitizerKind::Leak;
-    Res |= SanitizerKind::Memory;
     Res |= SanitizerKind::Thread;
   }
+  if (IsX86_64 || IsMIPS64 || IsPowerPC64)
+    Res |= SanitizerKind::Memory;
   if (IsX86 || IsX86_64) {
     Res |= SanitizerKind::Function;
     Res |= SanitizerKind::SafeStack;
