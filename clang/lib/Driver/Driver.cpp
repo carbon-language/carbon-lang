@@ -309,7 +309,7 @@ Compilation *Driver::BuildCompilation(ArrayRef<const char *> ArgList) {
   // FIXME: What are we going to do with -V and -b?
 
   // FIXME: This stuff needs to go into the Compilation, not the driver.
-  bool CCCPrintActions;
+  bool CCCPrintPhases;
 
   InputArgList Args = ParseArgStrings(ArgList.slice(1));
 
@@ -325,7 +325,7 @@ Compilation *Driver::BuildCompilation(ArrayRef<const char *> ArgList) {
   // should be outside in the client; the parts that aren't should have proper
   // options, either by introducing new ones or by overloading gcc ones like -V
   // or -b.
-  CCCPrintActions = Args.hasArg(options::OPT_ccc_print_phases);
+  CCCPrintPhases = Args.hasArg(options::OPT_ccc_print_phases);
   CCCPrintBindings = Args.hasArg(options::OPT_ccc_print_bindings);
   if (const Arg *A = Args.getLastArg(options::OPT_ccc_gcc_name))
     CCCGenericGCCName = A->getValue();
@@ -393,7 +393,7 @@ Compilation *Driver::BuildCompilation(ArrayRef<const char *> ArgList) {
     BuildActions(C->getDefaultToolChain(), C->getArgs(), Inputs,
                  C->getActions());
 
-  if (CCCPrintActions) {
+  if (CCCPrintPhases) {
     PrintActions(*C);
     return C;
   }
@@ -828,15 +828,13 @@ static unsigned PrintActions1(const Compilation &C, Action *A,
   if (InputAction *IA = dyn_cast<InputAction>(A)) {
     os << "\"" << IA->getInputArg().getValue() << "\"";
   } else if (BindArchAction *BIA = dyn_cast<BindArchAction>(A)) {
-    os << '"' << BIA->getArchName() << '"'
-       << ", {" << PrintActions1(C, *BIA->begin(), Ids) << "}";
+    os << '"' << BIA->getArchName() << '"' << ", {"
+       << PrintActions1(C, *BIA->begin(), Ids) << "}";
   } else {
-    os << "{";
-    for (Action::iterator it = A->begin(), ie = A->end(); it != ie;) {
-      os << PrintActions1(C, *it, Ids);
-      ++it;
-      if (it != ie)
-        os << ", ";
+    const char *Prefix = "{";
+    for (Action *PreRequisite : *A) {
+      os << Prefix << PrintActions1(C, PreRequisite, Ids);
+      Prefix = ", ";
     }
     os << "}";
   }
@@ -852,10 +850,9 @@ static unsigned PrintActions1(const Compilation &C, Action *A,
 // Print the action graphs in a compilation C.
 // For example "clang -c file1.c file2.c" is composed of two subgraphs.
 void Driver::PrintActions(const Compilation &C) const {
-  std::map<Action*, unsigned> Ids;
-  for (ActionList::const_iterator it = C.getActions().begin(),
-         ie = C.getActions().end(); it != ie; ++it)
-    PrintActions1(C, *it, Ids);
+  std::map<Action *, unsigned> Ids;
+  for (Action *A : C.getActions())
+    PrintActions1(C, A, Ids);
 }
 
 /// \brief Check whether the given input tree contains any compilation or
