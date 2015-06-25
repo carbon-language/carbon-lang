@@ -52,7 +52,10 @@ llvm::object::computeSymbolSizes(const ObjectFile &O) {
   std::vector<std::pair<SymbolRef, uint64_t>> Ret;
 
   if (const auto *E = dyn_cast<ELFObjectFileBase>(&O)) {
-    for (SymbolRef Sym : E->symbols())
+    auto Syms = E->symbols();
+    if (Syms.begin() == Syms.end())
+      Syms = E->getDynamicSymbolIterators();
+    for (SymbolRef Sym : Syms)
       Ret.push_back({Sym, E->getSymbolSize(Sym)});
     return Ret;
   }

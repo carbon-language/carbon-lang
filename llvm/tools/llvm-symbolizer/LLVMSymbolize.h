@@ -119,7 +119,7 @@ private:
                               uint64_t &Size) const;
   // For big-endian PowerPC64 ELF, OpdAddress is the address of the .opd
   // (function descriptor) section and OpdExtractor refers to its contents.
-  void addSymbol(const SymbolRef &Symbol,
+  void addSymbol(const SymbolRef &Symbol, uint64_t SymbolSize,
                  DataExtractor *OpdExtractor = nullptr,
                  uint64_t OpdAddress = 0);
   ObjectFile *Module;

@@ -19,6 +19,7 @@
 #include "llvm/DebugInfo/PDB/PDBContext.h"
 #include "llvm/Object/ELFObjectFile.h"
 #include "llvm/Object/MachO.h"
+#include "llvm/Object/SymbolSize.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/Compression.h"
 #include "llvm/Support/DataExtractor.h"
@@ -71,21 +72,14 @@ ModuleInfo::ModuleInfo(ObjectFile *Obj, DIContext *DICtx)
       }
     }
   }
-  for (const SymbolRef &Symbol : Module->symbols()) {
-    addSymbol(Symbol, OpdExtractor.get(), OpdAddress);
-  }
-  bool NoSymbolTable = (Module->symbol_begin() == Module->symbol_end());
-  if (NoSymbolTable && Module->isELF()) {
-    // Fallback to dynamic symbol table, if regular symbol table is stripped.
-    auto IDyn = cast<ELFObjectFileBase>(Module)->getDynamicSymbolIterators();
-    for (SymbolRef Sym : IDyn) {
-      addSymbol(Sym, OpdExtractor.get(), OpdAddress);
-    }
-  }
+  std::vector<std::pair<SymbolRef, uint64_t>> Symbols =
+      computeSymbolSizes(*Module);
+  for (auto &P : Symbols)
+    addSymbol(P.first, P.second, OpdExtractor.get(), OpdAddress);
 }
 
-void ModuleInfo::addSymbol(const SymbolRef &Symbol, DataExtractor *OpdExtractor,
-                           uint64_t OpdAddress) {
+void ModuleInfo::addSymbol(const SymbolRef &Symbol, uint64_t SymbolSize,
+                           DataExtractor *OpdExtractor, uint64_t OpdAddress) {
   SymbolRef::Type SymbolType;
   if (error(Symbol.getType(SymbolType)))
     return;
@@ -107,13 +101,6 @@ void ModuleInfo::addSymbol(const SymbolRef &Symbol, DataExtractor *OpdExtractor,
         OpdExtractor->isValidOffsetForAddress(OpdOffset32))
       SymbolAddress = OpdExtractor->getAddress(&OpdOffset32);
   }
-  uint64_t SymbolSize;
-  // Onyl ELF has a size for every symbol so assume that symbol occupies the
-  // memory range up to the following symbol.
-  if (auto *E = dyn_cast<ELFObjectFileBase>(Module))
-    SymbolSize = E->getSymbolSize(Symbol);
-  else
-    SymbolSize = 0;
   StringRef SymbolName;
   if (error(Symbol.getName(SymbolName)))
     return;
