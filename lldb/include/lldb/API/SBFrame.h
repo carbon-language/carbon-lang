@@ -91,12 +91,18 @@ public:
     const char *
     GetFunctionName();
 
+    const char *
+    GetFunctionName() const;
+
     /// Return true if this frame represents an inlined function.
     ///
     /// See also GetFunctionName().
     bool
     IsInlined();
-    
+
+    bool
+    IsInlined() const;
+
     /// The version that doesn't supply a 'use_dynamic' value will use the
     /// target's default.
     lldb::SBValue

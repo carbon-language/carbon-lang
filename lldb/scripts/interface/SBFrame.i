@@ -128,6 +128,9 @@ public:
     const char *
     GetFunctionName();
 
+    const char *
+    GetFunctionName() const;
+
     %feature("docstring", "
     /// Return true if this frame represents an inlined function.
     ///
@@ -135,7 +138,10 @@ public:
     ") IsInlined;
     bool
     IsInlined();
-    
+
+    bool
+    IsInlined() const;
+
     %feature("docstring", "
     /// The version that doesn't supply a 'use_dynamic' value will use the
     /// target's default.
