@@ -4654,8 +4654,15 @@ bool MipsAsmParser::parseDirectiveModuleFP() {
     return false;
   }
 
-  // Emit appropriate flags.
-  getTargetStreamer().emitDirectiveModuleFP(FpABI, isABI_O32());
+  // Synchronize the abiflags information with the FeatureBits information we
+  // changed above.
+  getTargetStreamer().updateABIInfo(*this);
+
+  // If printing assembly, use the recently updated abiflags information.
+  // If generating ELF, don't do anything (the .MIPS.abiflags section gets
+  // emitted at the end).
+  getTargetStreamer().emitDirectiveModuleFP();
+
   Parser.Lex(); // Consume the EndOfStatement.
   return false;
 }
@@ -4680,6 +4687,8 @@ bool MipsAsmParser::parseFpABIValue(MipsABIFlagsSection::FpABIKind &FpABI,
     }
 
     FpABI = MipsABIFlagsSection::FpABIKind::XX;
+    setFeatureBits(Mips::FeatureFPXX, "fpxx");
+    clearFeatureBits(Mips::FeatureFP64Bit, "fp64");
     return true;
   }
 
@@ -4699,8 +4708,13 @@ bool MipsAsmParser::parseFpABIValue(MipsABIFlagsSection::FpABIKind &FpABI,
       }
 
       FpABI = MipsABIFlagsSection::FpABIKind::S32;
-    } else
+      clearFeatureBits(Mips::FeatureFPXX, "fpxx");
+      clearFeatureBits(Mips::FeatureFP64Bit, "fp64");
+    } else {
       FpABI = MipsABIFlagsSection::FpABIKind::S64;
+      clearFeatureBits(Mips::FeatureFPXX, "fpxx");
+      setFeatureBits(Mips::FeatureFP64Bit, "fp64");
+    }
 
     return true;
   }

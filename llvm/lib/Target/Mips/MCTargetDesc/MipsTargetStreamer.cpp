@@ -93,15 +93,7 @@ void MipsTargetStreamer::emitDirectiveCpsetup(unsigned RegNo, int RegOrOffset,
                                               const MCSymbol &Sym, bool IsReg) {
 }
 
-void
-MipsTargetStreamer::emitDirectiveModuleFP(MipsABIFlagsSection::FpABIKind Value,
-                                          bool Is32BitABI) {
-  ABIFlagsSection.setFpABI(Value, Is32BitABI);
-}
-
-void MipsTargetStreamer::emitDirectiveModuleFP() {
-  emitDirectiveModuleFP(ABIFlagsSection.getFpABI(), ABIFlagsSection.Is32BitABI);
-}
+void MipsTargetStreamer::emitDirectiveModuleFP() {}
 
 void MipsTargetStreamer::emitDirectiveModuleOddSPReg() {
   if (!ABIFlagsSection.OddSPReg && !ABIFlagsSection.Is32BitABI)
@@ -379,12 +371,9 @@ void MipsTargetAsmStreamer::emitDirectiveCpsetup(unsigned RegNo,
   forbidModuleDirective();
 }
 
-void MipsTargetAsmStreamer::emitDirectiveModuleFP(
-    MipsABIFlagsSection::FpABIKind Value, bool Is32BitABI) {
-  MipsTargetStreamer::emitDirectiveModuleFP(Value, Is32BitABI);
-
+void MipsTargetAsmStreamer::emitDirectiveModuleFP() {
   OS << "\t.module\tfp=";
-  OS << ABIFlagsSection.getFpABIString(Value) << "\n";
+  OS << ABIFlagsSection.getFpABIString(ABIFlagsSection.getFpABI()) << "\n";
 }
 
 void MipsTargetAsmStreamer::emitDirectiveSetFp(
