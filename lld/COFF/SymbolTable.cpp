@@ -70,17 +70,26 @@ bool SymbolTable::reportRemainingUndefines() {
     auto *Undef = dyn_cast<Undefined>(Sym->Body);
     if (!Undef)
       continue;
+    StringRef Name = Undef->getName();
     if (SymbolBody *Alias = Undef->getWeakAlias()) {
       Sym->Body = Alias->getReplacement();
       if (!isa<Defined>(Sym->Body)) {
         // Aliases are yet another symbols pointed by other symbols
         // that could also remain undefined.
-        llvm::errs() << "undefined symbol: " << Undef->getName() << "\n";
+        llvm::errs() << "undefined symbol: " << Name << "\n";
         Ret = true;
       }
       continue;
     }
-    llvm::errs() << "undefined symbol: " << Undef->getName() << "\n";
+    // If we can resolve a symbol by removing __imp_ prefix, do that.
+    // This odd rule is for compatibility with MSVC linker.
+    if (Name.startswith("__imp_")) {
+      if (Defined *Imp = find(Name.substr(strlen("__imp_")))) {
+        Sym->Body = Imp;
+        continue;
+      }
+    }
+    llvm::errs() << "undefined symbol: " << Name << "\n";
     Ret = true;
   }
   return Ret;
