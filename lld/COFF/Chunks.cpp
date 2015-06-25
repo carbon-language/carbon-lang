@@ -186,24 +186,20 @@ bool SectionChunk::equals(const SectionChunk *X) const {
     return false;
 
   // Compare relocations
-  const coff_relocation *Rel1 = Relocs.begin();
-  const coff_relocation *End = Relocs.end();
-  const coff_relocation *Rel2 = X->Relocs.begin();
-  for (; Rel1 != End; ++Rel1, ++Rel2) {
-    if (Rel1->Type != Rel2->Type)
+  auto Eq = [&](const coff_relocation &R1, const coff_relocation &R2) {
+    if (R1.Type != R2.Type)
       return false;
-    if (Rel1->VirtualAddress != Rel2->VirtualAddress)
+    if (R1.VirtualAddress != R2.VirtualAddress)
       return false;
-    SymbolBody *B1 = File->getSymbolBody(Rel1->SymbolTableIndex);
-    SymbolBody *B2 = X->File->getSymbolBody(Rel2->SymbolTableIndex);
+    SymbolBody *B1 = File->getSymbolBody(R1.SymbolTableIndex);
+    SymbolBody *B2 = X->File->getSymbolBody(R2.SymbolTableIndex);
     if (auto *C1 = dyn_cast<DefinedCOMDAT>(B1))
       if (auto *C2 = dyn_cast<DefinedCOMDAT>(B2))
         if (C1->getChunk() == C2->getChunk())
-          continue;
-    if (B1 != B2)
-      return false;
-  }
-  return true;
+          return true;
+    return B1 == B2;
+  };
+  return std::equal(Relocs.begin(), Relocs.end(), X->Relocs.begin(), Eq);
 }
 
 // Returns a pointer to this chunk or its replacement.
