@@ -3105,9 +3105,12 @@ bool MipsAsmParser::parseMemOffset(const MCExpr *&Res, bool isParenExpr) {
   MCAsmParser &Parser = getParser();
   SMLoc S;
   bool Result = true;
+  unsigned NumOfLParen = 0;
 
-  while (getLexer().getKind() == AsmToken::LParen)
+  while (getLexer().getKind() == AsmToken::LParen) {
     Parser.Lex();
+    ++NumOfLParen;
+  }
 
   switch (getLexer().getKind()) {
   default:
@@ -3118,7 +3121,7 @@ bool MipsAsmParser::parseMemOffset(const MCExpr *&Res, bool isParenExpr) {
   case AsmToken::Minus:
   case AsmToken::Plus:
     if (isParenExpr)
-      Result = getParser().parseParenExpression(Res, S);
+      Result = getParser().parseParenExprOfDepth(NumOfLParen, Res, S);
     else
       Result = (getParser().parseExpression(Res));
     while (getLexer().getKind() == AsmToken::RParen)

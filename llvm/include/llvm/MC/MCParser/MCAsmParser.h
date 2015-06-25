@@ -197,6 +197,17 @@ public:
   /// \brief Ensure that we have a valid section set in the streamer. Otherwise,
   /// report an error and switch to .text.
   virtual void checkForValidSection() = 0;
+
+  /// \brief Parse an arbitrary expression of a specified parenthesis depth,
+  /// assuming that the initial '(' characters have already been consumed.
+  ///
+  /// \param ParenDepth - Specifies how many trailing expressions outside the
+  /// current parentheses we have to parse.
+  /// \param Res - The value of the expression. The result is undefined
+  /// on error.
+  /// \return - False on success.
+  virtual bool parseParenExprOfDepth(unsigned ParenDepth, const MCExpr *&Res,
+                                     SMLoc &EndLoc) = 0;
 };
 
 /// \brief Create an MCAsmParser instance.

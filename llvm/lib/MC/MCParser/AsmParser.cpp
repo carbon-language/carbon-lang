@@ -234,6 +234,8 @@ public:
   bool parseExpression(const MCExpr *&Res, SMLoc &EndLoc) override;
   bool parsePrimaryExpr(const MCExpr *&Res, SMLoc &EndLoc) override;
   bool parseParenExpression(const MCExpr *&Res, SMLoc &EndLoc) override;
+  bool parseParenExprOfDepth(unsigned ParenDepth, const MCExpr *&Res,
+                             SMLoc &EndLoc) override;
   bool parseAbsoluteExpression(int64_t &Res) override;
 
   /// \brief Parse an identifier or string (as a quoted identifier)
@@ -1064,6 +1066,27 @@ bool AsmParser::parseExpression(const MCExpr *&Res, SMLoc &EndLoc) {
 bool AsmParser::parseParenExpression(const MCExpr *&Res, SMLoc &EndLoc) {
   Res = nullptr;
   return parseParenExpr(Res, EndLoc) || parseBinOpRHS(1, Res, EndLoc);
+}
+
+bool AsmParser::parseParenExprOfDepth(unsigned ParenDepth, const MCExpr *&Res,
+                                      SMLoc &EndLoc) {
+  if (parseParenExpr(Res, EndLoc))
+    return true;
+
+  for (; ParenDepth > 0; --ParenDepth) {
+    if (parseBinOpRHS(1, Res, EndLoc))
+      return true;
+
+    // We don't Lex() the last RParen.
+    // This is the same behavior as parseParenExpression().
+    if (ParenDepth - 1 > 0) {
+      if (Lexer.isNot(AsmToken::RParen))
+        return TokError("expected ')' in parentheses expression");
+      EndLoc = Lexer.getTok().getEndLoc();
+      Lex();
+    }
+  }
+  return false;
 }
 
 bool AsmParser::parseAbsoluteExpression(int64_t &Res) {
