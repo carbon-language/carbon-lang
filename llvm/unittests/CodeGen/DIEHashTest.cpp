@@ -22,6 +22,10 @@ namespace {
 
 // Test fixture
 class DIEHashTest : public testing::Test {
+public:
+  BumpPtrAllocator Alloc;
+
+private:
   StringMap<DwarfStringPoolEntry> Pool;
 
 public:
@@ -36,7 +40,7 @@ TEST_F(DIEHashTest, Data1) {
   DIEHash Hash;
   DIE Die(dwarf::DW_TAG_base_type);
   DIEInteger Size(4);
-  Die.addValue(dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, Size);
+  Die.addValue(Alloc, dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, Size);
   uint64_t MD5Res = Hash.computeTypeSignature(Die);
   ASSERT_EQ(0x1AFE116E83701108ULL, MD5Res);
 }
@@ -45,11 +49,11 @@ TEST_F(DIEHashTest, Data1) {
 TEST_F(DIEHashTest, TrivialType) {
   DIE Unnamed(dwarf::DW_TAG_structure_type);
   DIEInteger One(1);
-  Unnamed.addValue(dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, One);
+  Unnamed.addValue(Alloc, dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, One);
 
   // Line and file number are ignored.
-  Unnamed.addValue(dwarf::DW_AT_decl_file, dwarf::DW_FORM_data1, One);
-  Unnamed.addValue(dwarf::DW_AT_decl_line, dwarf::DW_FORM_data1, One);
+  Unnamed.addValue(Alloc, dwarf::DW_AT_decl_file, dwarf::DW_FORM_data1, One);
+  Unnamed.addValue(Alloc, dwarf::DW_AT_decl_line, dwarf::DW_FORM_data1, One);
   uint64_t MD5Res = DIEHash().computeTypeSignature(Unnamed);
 
   // The exact same hash GCC produces for this DIE.
@@ -61,8 +65,8 @@ TEST_F(DIEHashTest, NamedType) {
   DIE Foo(dwarf::DW_TAG_structure_type);
   DIEInteger One(1);
   DIEString FooStr = getString("foo");
-  Foo.addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, FooStr);
-  Foo.addValue(dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, One);
+  Foo.addValue(Alloc, dwarf::DW_AT_name, dwarf::DW_FORM_strp, FooStr);
+  Foo.addValue(Alloc, dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, One);
 
   uint64_t MD5Res = DIEHash().computeTypeSignature(Foo);
 
@@ -77,15 +81,16 @@ TEST_F(DIEHashTest, NamespacedType) {
   auto Space = make_unique<DIE>(dwarf::DW_TAG_namespace);
   DIEInteger One(1);
   DIEString SpaceStr = getString("space");
-  Space->addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, SpaceStr);
+  Space->addValue(Alloc, dwarf::DW_AT_name, dwarf::DW_FORM_strp, SpaceStr);
   // DW_AT_declaration is ignored.
-  Space->addValue(dwarf::DW_AT_declaration, dwarf::DW_FORM_flag_present, One);
+  Space->addValue(Alloc, dwarf::DW_AT_declaration, dwarf::DW_FORM_flag_present,
+                  One);
   // sibling?
 
   auto Foo = make_unique<DIE>(dwarf::DW_TAG_structure_type);
   DIEString FooStr = getString("foo");
-  Foo->addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, FooStr);
-  Foo->addValue(dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, One);
+  Foo->addValue(Alloc, dwarf::DW_AT_name, dwarf::DW_FORM_strp, FooStr);
+  Foo->addValue(Alloc, dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, One);
 
   DIE &N = *Foo;
   Space->addChild(std::move(Foo));
@@ -101,24 +106,24 @@ TEST_F(DIEHashTest, NamespacedType) {
 TEST_F(DIEHashTest, TypeWithMember) {
   DIE Unnamed(dwarf::DW_TAG_structure_type);
   DIEInteger Four(4);
-  Unnamed.addValue(dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, Four);
+  Unnamed.addValue(Alloc, dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, Four);
 
   DIE Int(dwarf::DW_TAG_base_type);
   DIEString IntStr = getString("int");
-  Int.addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, IntStr);
-  Int.addValue(dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, Four);
+  Int.addValue(Alloc, dwarf::DW_AT_name, dwarf::DW_FORM_strp, IntStr);
+  Int.addValue(Alloc, dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, Four);
   DIEInteger Five(5);
-  Int.addValue(dwarf::DW_AT_encoding, dwarf::DW_FORM_data1, Five);
+  Int.addValue(Alloc, dwarf::DW_AT_encoding, dwarf::DW_FORM_data1, Five);
 
   DIEEntry IntRef(Int);
 
   auto Member = make_unique<DIE>(dwarf::DW_TAG_member);
   DIEString MemberStr = getString("member");
-  Member->addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, MemberStr);
+  Member->addValue(Alloc, dwarf::DW_AT_name, dwarf::DW_FORM_strp, MemberStr);
   DIEInteger Zero(0);
-  Member->addValue(dwarf::DW_AT_data_member_location, dwarf::DW_FORM_data1,
-                   Zero);
-  Member->addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, IntRef);
+  Member->addValue(Alloc, dwarf::DW_AT_data_member_location,
+                   dwarf::DW_FORM_data1, Zero);
+  Member->addValue(Alloc, dwarf::DW_AT_type, dwarf::DW_FORM_ref4, IntRef);
 
   Unnamed.addChild(std::move(Member));
 
@@ -131,34 +136,34 @@ TEST_F(DIEHashTest, TypeWithMember) {
 TEST_F(DIEHashTest, ReusedType) {
   DIE Unnamed(dwarf::DW_TAG_structure_type);
   DIEInteger Eight(8);
-  Unnamed.addValue(dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, Eight);
+  Unnamed.addValue(Alloc, dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, Eight);
 
   DIEInteger Four(4);
   DIE Int(dwarf::DW_TAG_base_type);
   DIEString IntStr = getString("int");
-  Int.addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, IntStr);
-  Int.addValue(dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, Four);
+  Int.addValue(Alloc, dwarf::DW_AT_name, dwarf::DW_FORM_strp, IntStr);
+  Int.addValue(Alloc, dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, Four);
   DIEInteger Five(5);
-  Int.addValue(dwarf::DW_AT_encoding, dwarf::DW_FORM_data1, Five);
+  Int.addValue(Alloc, dwarf::DW_AT_encoding, dwarf::DW_FORM_data1, Five);
 
   DIEEntry IntRef(Int);
 
   auto Mem1 = make_unique<DIE>(dwarf::DW_TAG_member);
   DIEString Mem1Str = getString("mem1");
-  Mem1->addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, Mem1Str);
+  Mem1->addValue(Alloc, dwarf::DW_AT_name, dwarf::DW_FORM_strp, Mem1Str);
   DIEInteger Zero(0);
-  Mem1->addValue(dwarf::DW_AT_data_member_location, dwarf::DW_FORM_data1,
+  Mem1->addValue(Alloc, dwarf::DW_AT_data_member_location, dwarf::DW_FORM_data1,
                  Zero);
-  Mem1->addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, IntRef);
+  Mem1->addValue(Alloc, dwarf::DW_AT_type, dwarf::DW_FORM_ref4, IntRef);
 
   Unnamed.addChild(std::move(Mem1));
 
   auto Mem2 = make_unique<DIE>(dwarf::DW_TAG_member);
   DIEString Mem2Str = getString("mem2");
-  Mem2->addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, Mem2Str);
-  Mem2->addValue(dwarf::DW_AT_data_member_location, dwarf::DW_FORM_data1,
+  Mem2->addValue(Alloc, dwarf::DW_AT_name, dwarf::DW_FORM_strp, Mem2Str);
+  Mem2->addValue(Alloc, dwarf::DW_AT_data_member_location, dwarf::DW_FORM_data1,
                  Four);
-  Mem2->addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, IntRef);
+  Mem2->addValue(Alloc, dwarf::DW_AT_type, dwarf::DW_FORM_ref4, IntRef);
 
   Unnamed.addChild(std::move(Mem2));
 
@@ -171,15 +176,15 @@ TEST_F(DIEHashTest, ReusedType) {
 TEST_F(DIEHashTest, RecursiveType) {
   DIE Foo(dwarf::DW_TAG_structure_type);
   DIEInteger One(1);
-  Foo.addValue(dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, One);
+  Foo.addValue(Alloc, dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, One);
   DIEString FooStr = getString("foo");
-  Foo.addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, FooStr);
+  Foo.addValue(Alloc, dwarf::DW_AT_name, dwarf::DW_FORM_strp, FooStr);
 
   auto Mem = make_unique<DIE>(dwarf::DW_TAG_member);
   DIEString MemStr = getString("mem");
-  Mem->addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, MemStr);
+  Mem->addValue(Alloc, dwarf::DW_AT_name, dwarf::DW_FORM_strp, MemStr);
   DIEEntry FooRef(Foo);
-  Mem->addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, FooRef);
+  Mem->addValue(Alloc, dwarf::DW_AT_type, dwarf::DW_FORM_ref4, FooRef);
   // DW_AT_external and DW_AT_declaration are ignored anyway, so skip them.
 
   Foo.addChild(std::move(Mem));
@@ -193,23 +198,24 @@ TEST_F(DIEHashTest, RecursiveType) {
 TEST_F(DIEHashTest, Pointer) {
   DIE Foo(dwarf::DW_TAG_structure_type);
   DIEInteger Eight(8);
-  Foo.addValue(dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, Eight);
+  Foo.addValue(Alloc, dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, Eight);
   DIEString FooStr = getString("foo");
-  Foo.addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, FooStr);
+  Foo.addValue(Alloc, dwarf::DW_AT_name, dwarf::DW_FORM_strp, FooStr);
 
   auto Mem = make_unique<DIE>(dwarf::DW_TAG_member);
   DIEString MemStr = getString("mem");
-  Mem->addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, MemStr);
+  Mem->addValue(Alloc, dwarf::DW_AT_name, dwarf::DW_FORM_strp, MemStr);
   DIEInteger Zero(0);
-  Mem->addValue(dwarf::DW_AT_data_member_location, dwarf::DW_FORM_data1, Zero);
+  Mem->addValue(Alloc, dwarf::DW_AT_data_member_location, dwarf::DW_FORM_data1,
+                Zero);
 
   DIE FooPtr(dwarf::DW_TAG_pointer_type);
-  FooPtr.addValue(dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, Eight);
+  FooPtr.addValue(Alloc, dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, Eight);
   DIEEntry FooRef(Foo);
-  FooPtr.addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, FooRef);
+  FooPtr.addValue(Alloc, dwarf::DW_AT_type, dwarf::DW_FORM_ref4, FooRef);
 
   DIEEntry FooPtrRef(FooPtr);
-  Mem->addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, FooPtrRef);
+  Mem->addValue(Alloc, dwarf::DW_AT_type, dwarf::DW_FORM_ref4, FooPtrRef);
 
   Foo.addChild(std::move(Mem));
 
@@ -222,27 +228,29 @@ TEST_F(DIEHashTest, Pointer) {
 TEST_F(DIEHashTest, Reference) {
   DIE Foo(dwarf::DW_TAG_structure_type);
   DIEInteger Eight(8);
-  Foo.addValue(dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, Eight);
+  Foo.addValue(Alloc, dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, Eight);
   DIEString FooStr = getString("foo");
-  Foo.addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, FooStr);
+  Foo.addValue(Alloc, dwarf::DW_AT_name, dwarf::DW_FORM_strp, FooStr);
 
   auto Mem = make_unique<DIE>(dwarf::DW_TAG_member);
   DIEString MemStr = getString("mem");
-  Mem->addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, MemStr);
+  Mem->addValue(Alloc, dwarf::DW_AT_name, dwarf::DW_FORM_strp, MemStr);
   DIEInteger Zero(0);
-  Mem->addValue(dwarf::DW_AT_data_member_location, dwarf::DW_FORM_data1, Zero);
+  Mem->addValue(Alloc, dwarf::DW_AT_data_member_location, dwarf::DW_FORM_data1,
+                Zero);
 
   DIE FooRef(dwarf::DW_TAG_reference_type);
-  FooRef.addValue(dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, Eight);
+  FooRef.addValue(Alloc, dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, Eight);
   DIEEntry FooEntry(Foo);
-  FooRef.addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, FooEntry);
+  FooRef.addValue(Alloc, dwarf::DW_AT_type, dwarf::DW_FORM_ref4, FooEntry);
 
   DIE FooRefConst(dwarf::DW_TAG_const_type);
   DIEEntry FooRefRef(FooRef);
-  FooRefConst.addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, FooRefRef);
+  FooRefConst.addValue(Alloc, dwarf::DW_AT_type, dwarf::DW_FORM_ref4,
+                       FooRefRef);
 
   DIEEntry FooRefConstRef(FooRefConst);
-  Mem->addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, FooRefConstRef);
+  Mem->addValue(Alloc, dwarf::DW_AT_type, dwarf::DW_FORM_ref4, FooRefConstRef);
 
   Foo.addChild(std::move(Mem));
 
@@ -255,27 +263,29 @@ TEST_F(DIEHashTest, Reference) {
 TEST_F(DIEHashTest, RValueReference) {
   DIE Foo(dwarf::DW_TAG_structure_type);
   DIEInteger Eight(8);
-  Foo.addValue(dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, Eight);
+  Foo.addValue(Alloc, dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, Eight);
   DIEString FooStr = getString("foo");
-  Foo.addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, FooStr);
+  Foo.addValue(Alloc, dwarf::DW_AT_name, dwarf::DW_FORM_strp, FooStr);
 
   auto Mem = make_unique<DIE>(dwarf::DW_TAG_member);
   DIEString MemStr = getString("mem");
-  Mem->addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, MemStr);
+  Mem->addValue(Alloc, dwarf::DW_AT_name, dwarf::DW_FORM_strp, MemStr);
   DIEInteger Zero(0);
-  Mem->addValue(dwarf::DW_AT_data_member_location, dwarf::DW_FORM_data1, Zero);
+  Mem->addValue(Alloc, dwarf::DW_AT_data_member_location, dwarf::DW_FORM_data1,
+                Zero);
 
   DIE FooRef(dwarf::DW_TAG_rvalue_reference_type);
-  FooRef.addValue(dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, Eight);
+  FooRef.addValue(Alloc, dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, Eight);
   DIEEntry FooEntry(Foo);
-  FooRef.addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, FooEntry);
+  FooRef.addValue(Alloc, dwarf::DW_AT_type, dwarf::DW_FORM_ref4, FooEntry);
 
   DIE FooRefConst(dwarf::DW_TAG_const_type);
   DIEEntry FooRefRef(FooRef);
-  FooRefConst.addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, FooRefRef);
+  FooRefConst.addValue(Alloc, dwarf::DW_AT_type, dwarf::DW_FORM_ref4,
+                       FooRefRef);
 
   DIEEntry FooRefConstRef(FooRefConst);
-  Mem->addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, FooRefConstRef);
+  Mem->addValue(Alloc, dwarf::DW_AT_type, dwarf::DW_FORM_ref4, FooRefConstRef);
 
   Foo.addChild(std::move(Mem));
 
@@ -288,24 +298,25 @@ TEST_F(DIEHashTest, RValueReference) {
 TEST_F(DIEHashTest, PtrToMember) {
   DIE Foo(dwarf::DW_TAG_structure_type);
   DIEInteger Eight(8);
-  Foo.addValue(dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, Eight);
+  Foo.addValue(Alloc, dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, Eight);
   DIEString FooStr = getString("foo");
-  Foo.addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, FooStr);
+  Foo.addValue(Alloc, dwarf::DW_AT_name, dwarf::DW_FORM_strp, FooStr);
 
   auto Mem = make_unique<DIE>(dwarf::DW_TAG_member);
   DIEString MemStr = getString("mem");
-  Mem->addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, MemStr);
+  Mem->addValue(Alloc, dwarf::DW_AT_name, dwarf::DW_FORM_strp, MemStr);
   DIEInteger Zero(0);
-  Mem->addValue(dwarf::DW_AT_data_member_location, dwarf::DW_FORM_data1, Zero);
+  Mem->addValue(Alloc, dwarf::DW_AT_data_member_location, dwarf::DW_FORM_data1,
+                Zero);
 
   DIE PtrToFooMem(dwarf::DW_TAG_ptr_to_member_type);
   DIEEntry FooEntry(Foo);
-  PtrToFooMem.addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, FooEntry);
-  PtrToFooMem.addValue(dwarf::DW_AT_containing_type, dwarf::DW_FORM_ref4,
+  PtrToFooMem.addValue(Alloc, dwarf::DW_AT_type, dwarf::DW_FORM_ref4, FooEntry);
+  PtrToFooMem.addValue(Alloc, dwarf::DW_AT_containing_type, dwarf::DW_FORM_ref4,
                        FooEntry);
 
   DIEEntry PtrToFooMemRef(PtrToFooMem);
-  Mem->addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, PtrToFooMemRef);
+  Mem->addValue(Alloc, dwarf::DW_AT_type, dwarf::DW_FORM_ref4, PtrToFooMemRef);
 
   Foo.addChild(std::move(Mem));
 
@@ -329,27 +340,30 @@ TEST_F(DIEHashTest, PtrToMemberDeclDefMatch) {
   uint64_t MD5ResDecl;
   {
     DIE Bar(dwarf::DW_TAG_structure_type);
-    Bar.addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, BarStr);
-    Bar.addValue(dwarf::DW_AT_declaration, dwarf::DW_FORM_flag_present, One);
+    Bar.addValue(Alloc, dwarf::DW_AT_name, dwarf::DW_FORM_strp, BarStr);
+    Bar.addValue(Alloc, dwarf::DW_AT_declaration, dwarf::DW_FORM_flag_present,
+                 One);
 
     DIE Foo(dwarf::DW_TAG_structure_type);
-    Foo.addValue(dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, Eight);
-    Foo.addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, FooStr);
+    Foo.addValue(Alloc, dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, Eight);
+    Foo.addValue(Alloc, dwarf::DW_AT_name, dwarf::DW_FORM_strp, FooStr);
 
     auto Mem = make_unique<DIE>(dwarf::DW_TAG_member);
-    Mem->addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, MemStr);
-    Mem->addValue(dwarf::DW_AT_data_member_location, dwarf::DW_FORM_data1,
-                  Zero);
+    Mem->addValue(Alloc, dwarf::DW_AT_name, dwarf::DW_FORM_strp, MemStr);
+    Mem->addValue(Alloc, dwarf::DW_AT_data_member_location,
+                  dwarf::DW_FORM_data1, Zero);
 
     DIE PtrToFooMem(dwarf::DW_TAG_ptr_to_member_type);
     DIEEntry BarEntry(Bar);
-    PtrToFooMem.addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, BarEntry);
+    PtrToFooMem.addValue(Alloc, dwarf::DW_AT_type, dwarf::DW_FORM_ref4,
+                         BarEntry);
     DIEEntry FooEntry(Foo);
-    PtrToFooMem.addValue(dwarf::DW_AT_containing_type, dwarf::DW_FORM_ref4,
-                         FooEntry);
+    PtrToFooMem.addValue(Alloc, dwarf::DW_AT_containing_type,
+                         dwarf::DW_FORM_ref4, FooEntry);
 
     DIEEntry PtrToFooMemRef(PtrToFooMem);
-    Mem->addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, PtrToFooMemRef);
+    Mem->addValue(Alloc, dwarf::DW_AT_type, dwarf::DW_FORM_ref4,
+                  PtrToFooMemRef);
 
     Foo.addChild(std::move(Mem));
 
@@ -358,27 +372,29 @@ TEST_F(DIEHashTest, PtrToMemberDeclDefMatch) {
   uint64_t MD5ResDef;
   {
     DIE Bar(dwarf::DW_TAG_structure_type);
-    Bar.addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, BarStr);
-    Bar.addValue(dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, One);
+    Bar.addValue(Alloc, dwarf::DW_AT_name, dwarf::DW_FORM_strp, BarStr);
+    Bar.addValue(Alloc, dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, One);
 
     DIE Foo(dwarf::DW_TAG_structure_type);
-    Foo.addValue(dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, Eight);
-    Foo.addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, FooStr);
+    Foo.addValue(Alloc, dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, Eight);
+    Foo.addValue(Alloc, dwarf::DW_AT_name, dwarf::DW_FORM_strp, FooStr);
 
     auto Mem = make_unique<DIE>(dwarf::DW_TAG_member);
-    Mem->addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, MemStr);
-    Mem->addValue(dwarf::DW_AT_data_member_location, dwarf::DW_FORM_data1,
-                  Zero);
+    Mem->addValue(Alloc, dwarf::DW_AT_name, dwarf::DW_FORM_strp, MemStr);
+    Mem->addValue(Alloc, dwarf::DW_AT_data_member_location,
+                  dwarf::DW_FORM_data1, Zero);
 
     DIE PtrToFooMem(dwarf::DW_TAG_ptr_to_member_type);
     DIEEntry BarEntry(Bar);
-    PtrToFooMem.addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, BarEntry);
+    PtrToFooMem.addValue(Alloc, dwarf::DW_AT_type, dwarf::DW_FORM_ref4,
+                         BarEntry);
     DIEEntry FooEntry(Foo);
-    PtrToFooMem.addValue(dwarf::DW_AT_containing_type, dwarf::DW_FORM_ref4,
-                         FooEntry);
+    PtrToFooMem.addValue(Alloc, dwarf::DW_AT_containing_type,
+                         dwarf::DW_FORM_ref4, FooEntry);
 
     DIEEntry PtrToFooMemRef(PtrToFooMem);
-    Mem->addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, PtrToFooMemRef);
+    Mem->addValue(Alloc, dwarf::DW_AT_type, dwarf::DW_FORM_ref4,
+                  PtrToFooMemRef);
 
     Foo.addChild(std::move(Mem));
 
@@ -402,26 +418,29 @@ TEST_F(DIEHashTest, PtrToMemberDeclDefMisMatch) {
   uint64_t MD5ResDecl;
   {
     DIE Bar(dwarf::DW_TAG_structure_type);
-    Bar.addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, BarStr);
-    Bar.addValue(dwarf::DW_AT_declaration, dwarf::DW_FORM_flag_present, One);
+    Bar.addValue(Alloc, dwarf::DW_AT_name, dwarf::DW_FORM_strp, BarStr);
+    Bar.addValue(Alloc, dwarf::DW_AT_declaration, dwarf::DW_FORM_flag_present,
+                 One);
 
     DIE Foo(dwarf::DW_TAG_structure_type);
-    Foo.addValue(dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, Eight);
-    Foo.addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, FooStr);
+    Foo.addValue(Alloc, dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, Eight);
+    Foo.addValue(Alloc, dwarf::DW_AT_name, dwarf::DW_FORM_strp, FooStr);
 
     auto Mem = make_unique<DIE>(dwarf::DW_TAG_member);
-    Mem->addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, MemStr);
-    Mem->addValue(dwarf::DW_AT_data_member_location, dwarf::DW_FORM_data1,
-                  Zero);
+    Mem->addValue(Alloc, dwarf::DW_AT_name, dwarf::DW_FORM_strp, MemStr);
+    Mem->addValue(Alloc, dwarf::DW_AT_data_member_location,
+                  dwarf::DW_FORM_data1, Zero);
 
     DIE PtrToFooMem(dwarf::DW_TAG_ptr_to_member_type);
     DIEEntry BarEntry(Bar);
-    PtrToFooMem.addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, BarEntry);
-    PtrToFooMem.addValue(dwarf::DW_AT_containing_type, dwarf::DW_FORM_ref4,
+    PtrToFooMem.addValue(Alloc, dwarf::DW_AT_type, dwarf::DW_FORM_ref4,
                          BarEntry);
+    PtrToFooMem.addValue(Alloc, dwarf::DW_AT_containing_type,
+                         dwarf::DW_FORM_ref4, BarEntry);
 
     DIEEntry PtrToFooMemRef(PtrToFooMem);
-    Mem->addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, PtrToFooMemRef);
+    Mem->addValue(Alloc, dwarf::DW_AT_type, dwarf::DW_FORM_ref4,
+                  PtrToFooMemRef);
 
     Foo.addChild(std::move(Mem));
 
@@ -430,26 +449,28 @@ TEST_F(DIEHashTest, PtrToMemberDeclDefMisMatch) {
   uint64_t MD5ResDef;
   {
     DIE Bar(dwarf::DW_TAG_structure_type);
-    Bar.addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, BarStr);
-    Bar.addValue(dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, One);
+    Bar.addValue(Alloc, dwarf::DW_AT_name, dwarf::DW_FORM_strp, BarStr);
+    Bar.addValue(Alloc, dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, One);
 
     DIE Foo(dwarf::DW_TAG_structure_type);
-    Foo.addValue(dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, Eight);
-    Foo.addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, FooStr);
+    Foo.addValue(Alloc, dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, Eight);
+    Foo.addValue(Alloc, dwarf::DW_AT_name, dwarf::DW_FORM_strp, FooStr);
 
     auto Mem = make_unique<DIE>(dwarf::DW_TAG_member);
-    Mem->addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, MemStr);
-    Mem->addValue(dwarf::DW_AT_data_member_location, dwarf::DW_FORM_data1,
-                  Zero);
+    Mem->addValue(Alloc, dwarf::DW_AT_name, dwarf::DW_FORM_strp, MemStr);
+    Mem->addValue(Alloc, dwarf::DW_AT_data_member_location,
+                  dwarf::DW_FORM_data1, Zero);
 
     DIE PtrToFooMem(dwarf::DW_TAG_ptr_to_member_type);
     DIEEntry BarEntry(Bar);
-    PtrToFooMem.addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, BarEntry);
-    PtrToFooMem.addValue(dwarf::DW_AT_containing_type, dwarf::DW_FORM_ref4,
+    PtrToFooMem.addValue(Alloc, dwarf::DW_AT_type, dwarf::DW_FORM_ref4,
                          BarEntry);
+    PtrToFooMem.addValue(Alloc, dwarf::DW_AT_containing_type,
+                         dwarf::DW_FORM_ref4, BarEntry);
 
     DIEEntry PtrToFooMemRef(PtrToFooMem);
-    Mem->addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, PtrToFooMemRef);
+    Mem->addValue(Alloc, dwarf::DW_AT_type, dwarf::DW_FORM_ref4,
+                  PtrToFooMemRef);
 
     Foo.addChild(std::move(Mem));
 
@@ -473,23 +494,26 @@ TEST_F(DIEHashTest, RefUnnamedType) {
   DIEString MemStr = getString("mem");
 
   DIE Unnamed(dwarf::DW_TAG_structure_type);
-  Unnamed.addValue(dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, One);
+  Unnamed.addValue(Alloc, dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, One);
 
   DIE Foo(dwarf::DW_TAG_structure_type);
-  Foo.addValue(dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, Eight);
-  Foo.addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, FooStr);
+  Foo.addValue(Alloc, dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, Eight);
+  Foo.addValue(Alloc, dwarf::DW_AT_name, dwarf::DW_FORM_strp, FooStr);
 
   auto Mem = make_unique<DIE>(dwarf::DW_TAG_member);
-  Mem->addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, MemStr);
-  Mem->addValue(dwarf::DW_AT_data_member_location, dwarf::DW_FORM_data1, Zero);
+  Mem->addValue(Alloc, dwarf::DW_AT_name, dwarf::DW_FORM_strp, MemStr);
+  Mem->addValue(Alloc, dwarf::DW_AT_data_member_location, dwarf::DW_FORM_data1,
+                Zero);
 
   DIE UnnamedPtr(dwarf::DW_TAG_pointer_type);
-  UnnamedPtr.addValue(dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, Eight);
+  UnnamedPtr.addValue(Alloc, dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1,
+                      Eight);
   DIEEntry UnnamedRef(Unnamed);
-  UnnamedPtr.addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, UnnamedRef);
+  UnnamedPtr.addValue(Alloc, dwarf::DW_AT_type, dwarf::DW_FORM_ref4,
+                      UnnamedRef);
 
   DIEEntry UnnamedPtrRef(UnnamedPtr);
-  Mem->addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, UnnamedPtrRef);
+  Mem->addValue(Alloc, dwarf::DW_AT_type, dwarf::DW_FORM_ref4, UnnamedPtrRef);
 
   Foo.addChild(std::move(Mem));
 
@@ -502,12 +526,12 @@ TEST_F(DIEHashTest, RefUnnamedType) {
 TEST_F(DIEHashTest, NestedType) {
   DIE Unnamed(dwarf::DW_TAG_structure_type);
   DIEInteger One(1);
-  Unnamed.addValue(dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, One);
+  Unnamed.addValue(Alloc, dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, One);
 
   auto Foo = make_unique<DIE>(dwarf::DW_TAG_structure_type);
   DIEString FooStr = getString("foo");
-  Foo->addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, FooStr);
-  Foo->addValue(dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, One);
+  Foo->addValue(Alloc, dwarf::DW_AT_name, dwarf::DW_FORM_strp, FooStr);
+  Foo->addValue(Alloc, dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, One);
 
   Unnamed.addChild(std::move(Foo));
 
@@ -521,11 +545,11 @@ TEST_F(DIEHashTest, NestedType) {
 TEST_F(DIEHashTest, MemberFunc) {
   DIE Unnamed(dwarf::DW_TAG_structure_type);
   DIEInteger One(1);
-  Unnamed.addValue(dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, One);
+  Unnamed.addValue(Alloc, dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, One);
 
   auto Func = make_unique<DIE>(dwarf::DW_TAG_subprogram);
   DIEString FuncStr = getString("func");
-  Func->addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, FuncStr);
+  Func->addValue(Alloc, dwarf::DW_AT_name, dwarf::DW_FORM_strp, FuncStr);
 
   Unnamed.addChild(std::move(Func));
 
@@ -542,21 +566,24 @@ TEST_F(DIEHashTest, MemberFuncFlag) {
   DIE A(dwarf::DW_TAG_structure_type);
   DIEInteger One(1);
   DIEString AStr = getString("A");
-  A.addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, AStr);
-  A.addValue(dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, One);
-  A.addValue(dwarf::DW_AT_decl_file, dwarf::DW_FORM_data1, One);
-  A.addValue(dwarf::DW_AT_decl_line, dwarf::DW_FORM_data1, One);
+  A.addValue(Alloc, dwarf::DW_AT_name, dwarf::DW_FORM_strp, AStr);
+  A.addValue(Alloc, dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, One);
+  A.addValue(Alloc, dwarf::DW_AT_decl_file, dwarf::DW_FORM_data1, One);
+  A.addValue(Alloc, dwarf::DW_AT_decl_line, dwarf::DW_FORM_data1, One);
 
   auto Func = make_unique<DIE>(dwarf::DW_TAG_subprogram);
   DIEString FuncStr = getString("func");
   DIEString FuncLinkage = getString("_ZN1A4funcEv");
   DIEInteger Two(2);
-  Func->addValue(dwarf::DW_AT_external, dwarf::DW_FORM_flag_present, One);
-  Func->addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, FuncStr);
-  Func->addValue(dwarf::DW_AT_decl_file, dwarf::DW_FORM_data1, One);
-  Func->addValue(dwarf::DW_AT_decl_line, dwarf::DW_FORM_data1, Two);
-  Func->addValue(dwarf::DW_AT_linkage_name, dwarf::DW_FORM_strp, FuncLinkage);
-  Func->addValue(dwarf::DW_AT_declaration, dwarf::DW_FORM_flag_present, One);
+  Func->addValue(Alloc, dwarf::DW_AT_external, dwarf::DW_FORM_flag_present,
+                 One);
+  Func->addValue(Alloc, dwarf::DW_AT_name, dwarf::DW_FORM_strp, FuncStr);
+  Func->addValue(Alloc, dwarf::DW_AT_decl_file, dwarf::DW_FORM_data1, One);
+  Func->addValue(Alloc, dwarf::DW_AT_decl_line, dwarf::DW_FORM_data1, Two);
+  Func->addValue(Alloc, dwarf::DW_AT_linkage_name, dwarf::DW_FORM_strp,
+                 FuncLinkage);
+  Func->addValue(Alloc, dwarf::DW_AT_declaration, dwarf::DW_FORM_flag_present,
+                 One);
 
   A.addChild(std::move(Func));
 
@@ -575,35 +602,36 @@ TEST_F(DIEHashTest, MemberSdata) {
   DIE A(dwarf::DW_TAG_structure_type);
   DIEInteger One(1);
   DIEString AStr = getString("A");
-  A.addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, AStr);
-  A.addValue(dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, One);
-  A.addValue(dwarf::DW_AT_decl_file, dwarf::DW_FORM_data1, One);
-  A.addValue(dwarf::DW_AT_decl_line, dwarf::DW_FORM_data1, One);
+  A.addValue(Alloc, dwarf::DW_AT_name, dwarf::DW_FORM_strp, AStr);
+  A.addValue(Alloc, dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, One);
+  A.addValue(Alloc, dwarf::DW_AT_decl_file, dwarf::DW_FORM_data1, One);
+  A.addValue(Alloc, dwarf::DW_AT_decl_line, dwarf::DW_FORM_data1, One);
 
   DIEInteger Four(4);
   DIEInteger Five(5);
   DIEString FStr = getString("int");
   DIE IntTyDIE(dwarf::DW_TAG_base_type);
-  IntTyDIE.addValue(dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, Four);
-  IntTyDIE.addValue(dwarf::DW_AT_encoding, dwarf::DW_FORM_data1, Five);
-  IntTyDIE.addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, FStr);
+  IntTyDIE.addValue(Alloc, dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, Four);
+  IntTyDIE.addValue(Alloc, dwarf::DW_AT_encoding, dwarf::DW_FORM_data1, Five);
+  IntTyDIE.addValue(Alloc, dwarf::DW_AT_name, dwarf::DW_FORM_strp, FStr);
 
   DIEEntry IntTy(IntTyDIE);
   auto PITyDIE = make_unique<DIE>(dwarf::DW_TAG_const_type);
-  PITyDIE->addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, IntTy);
+  PITyDIE->addValue(Alloc, dwarf::DW_AT_type, dwarf::DW_FORM_ref4, IntTy);
 
   DIEEntry PITy(*PITyDIE);
   auto PI = make_unique<DIE>(dwarf::DW_TAG_member);
   DIEString PIStr = getString("PI");
   DIEInteger Two(2);
   DIEInteger NegThree(-3);
-  PI->addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, PIStr);
-  PI->addValue(dwarf::DW_AT_decl_file, dwarf::DW_FORM_data1, One);
-  PI->addValue(dwarf::DW_AT_decl_line, dwarf::DW_FORM_data1, Two);
-  PI->addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, PITy);
-  PI->addValue(dwarf::DW_AT_external, dwarf::DW_FORM_flag_present, One);
-  PI->addValue(dwarf::DW_AT_declaration, dwarf::DW_FORM_flag_present, One);
-  PI->addValue(dwarf::DW_AT_const_value, dwarf::DW_FORM_sdata, NegThree);
+  PI->addValue(Alloc, dwarf::DW_AT_name, dwarf::DW_FORM_strp, PIStr);
+  PI->addValue(Alloc, dwarf::DW_AT_decl_file, dwarf::DW_FORM_data1, One);
+  PI->addValue(Alloc, dwarf::DW_AT_decl_line, dwarf::DW_FORM_data1, Two);
+  PI->addValue(Alloc, dwarf::DW_AT_type, dwarf::DW_FORM_ref4, PITy);
+  PI->addValue(Alloc, dwarf::DW_AT_external, dwarf::DW_FORM_flag_present, One);
+  PI->addValue(Alloc, dwarf::DW_AT_declaration, dwarf::DW_FORM_flag_present,
+               One);
+  PI->addValue(Alloc, dwarf::DW_AT_const_value, dwarf::DW_FORM_sdata, NegThree);
 
   A.addChild(std::move(PI));
 
@@ -620,32 +648,35 @@ TEST_F(DIEHashTest, MemberBlock) {
   DIE A(dwarf::DW_TAG_structure_type);
   DIEInteger One(1);
   DIEString AStr = getString("A");
-  A.addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, AStr);
-  A.addValue(dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, One);
-  A.addValue(dwarf::DW_AT_decl_file, dwarf::DW_FORM_data1, One);
-  A.addValue(dwarf::DW_AT_decl_line, dwarf::DW_FORM_data1, One);
+  A.addValue(Alloc, dwarf::DW_AT_name, dwarf::DW_FORM_strp, AStr);
+  A.addValue(Alloc, dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, One);
+  A.addValue(Alloc, dwarf::DW_AT_decl_file, dwarf::DW_FORM_data1, One);
+  A.addValue(Alloc, dwarf::DW_AT_decl_line, dwarf::DW_FORM_data1, One);
 
   DIEInteger Four(4);
   DIEString FStr = getString("float");
   auto FloatTyDIE = make_unique<DIE>(dwarf::DW_TAG_base_type);
-  FloatTyDIE->addValue(dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1, Four);
-  FloatTyDIE->addValue(dwarf::DW_AT_encoding, dwarf::DW_FORM_data1, Four);
-  FloatTyDIE->addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, FStr);
+  FloatTyDIE->addValue(Alloc, dwarf::DW_AT_byte_size, dwarf::DW_FORM_data1,
+                       Four);
+  FloatTyDIE->addValue(Alloc, dwarf::DW_AT_encoding, dwarf::DW_FORM_data1,
+                       Four);
+  FloatTyDIE->addValue(Alloc, dwarf::DW_AT_name, dwarf::DW_FORM_strp, FStr);
 
   DIEEntry FloatTy(*FloatTyDIE);
   auto PITyDIE = make_unique<DIE>(dwarf::DW_TAG_const_type);
-  PITyDIE->addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, FloatTy);
+  PITyDIE->addValue(Alloc, dwarf::DW_AT_type, dwarf::DW_FORM_ref4, FloatTy);
 
   DIEEntry PITy(*PITyDIE);
   auto PI = make_unique<DIE>(dwarf::DW_TAG_member);
   DIEString PIStr = getString("PI");
   DIEInteger Two(2);
-  PI->addValue(dwarf::DW_AT_name, dwarf::DW_FORM_strp, PIStr);
-  PI->addValue(dwarf::DW_AT_decl_file, dwarf::DW_FORM_data1, One);
-  PI->addValue(dwarf::DW_AT_decl_line, dwarf::DW_FORM_data1, Two);
-  PI->addValue(dwarf::DW_AT_type, dwarf::DW_FORM_ref4, PITy);
-  PI->addValue(dwarf::DW_AT_external, dwarf::DW_FORM_flag_present, One);
-  PI->addValue(dwarf::DW_AT_declaration, dwarf::DW_FORM_flag_present, One);
+  PI->addValue(Alloc, dwarf::DW_AT_name, dwarf::DW_FORM_strp, PIStr);
+  PI->addValue(Alloc, dwarf::DW_AT_decl_file, dwarf::DW_FORM_data1, One);
+  PI->addValue(Alloc, dwarf::DW_AT_decl_line, dwarf::DW_FORM_data1, Two);
+  PI->addValue(Alloc, dwarf::DW_AT_type, dwarf::DW_FORM_ref4, PITy);
+  PI->addValue(Alloc, dwarf::DW_AT_external, dwarf::DW_FORM_flag_present, One);
+  PI->addValue(Alloc, dwarf::DW_AT_declaration, dwarf::DW_FORM_flag_present,
+               One);
 
   DIEBlock PIBlock;
   DIEInteger Blk1(0xc3);
@@ -653,12 +684,13 @@ TEST_F(DIEHashTest, MemberBlock) {
   DIEInteger Blk3(0x48);
   DIEInteger Blk4(0x40);
 
-  PIBlock.addValue((dwarf::Attribute)0, dwarf::DW_FORM_data1, Blk1);
-  PIBlock.addValue((dwarf::Attribute)0, dwarf::DW_FORM_data1, Blk2);
-  PIBlock.addValue((dwarf::Attribute)0, dwarf::DW_FORM_data1, Blk3);
-  PIBlock.addValue((dwarf::Attribute)0, dwarf::DW_FORM_data1, Blk4);
+  PIBlock.addValue(Alloc, (dwarf::Attribute)0, dwarf::DW_FORM_data1, Blk1);
+  PIBlock.addValue(Alloc, (dwarf::Attribute)0, dwarf::DW_FORM_data1, Blk2);
+  PIBlock.addValue(Alloc, (dwarf::Attribute)0, dwarf::DW_FORM_data1, Blk3);
+  PIBlock.addValue(Alloc, (dwarf::Attribute)0, dwarf::DW_FORM_data1, Blk4);
 
-  PI->addValue(dwarf::DW_AT_const_value, dwarf::DW_FORM_block1, &PIBlock);
+  PI->addValue(Alloc, dwarf::DW_AT_const_value, dwarf::DW_FORM_block1,
+               &PIBlock);
 
   A.addChild(std::move(PI));
 

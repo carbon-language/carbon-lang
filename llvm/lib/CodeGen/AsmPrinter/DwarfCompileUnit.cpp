@@ -42,7 +42,8 @@ void DwarfCompileUnit::addLabelAddress(DIE &Die, dwarf::Attribute Attribute,
     DD->addArangeLabel(SymbolCU(this, Label));
 
   unsigned idx = DD->getAddressPool().getIndex(Label);
-  Die.addValue(Attribute, dwarf::DW_FORM_GNU_addr_index, DIEInteger(idx));
+  Die.addValue(DIEValueAllocator, Attribute, dwarf::DW_FORM_GNU_addr_index,
+               DIEInteger(idx));
 }
 
 void DwarfCompileUnit::addLocalLabelAddress(DIE &Die,
@@ -52,9 +53,11 @@ void DwarfCompileUnit::addLocalLabelAddress(DIE &Die,
     DD->addArangeLabel(SymbolCU(this, Label));
 
   if (Label)
-    Die.addValue(Attribute, dwarf::DW_FORM_addr, DIELabel(Label));
+    Die.addValue(DIEValueAllocator, Attribute, dwarf::DW_FORM_addr,
+                 DIELabel(Label));
   else
-    Die.addValue(Attribute, dwarf::DW_FORM_addr, DIEInteger(0));
+    Die.addValue(DIEValueAllocator, Attribute, dwarf::DW_FORM_addr,
+                 DIEInteger(0));
 }
 
 unsigned DwarfCompileUnit::getOrCreateSourceID(StringRef FileName,
@@ -225,16 +228,15 @@ void DwarfCompileUnit::addRange(RangeSpan Range) {
   CURanges.back().setEnd(Range.getEnd());
 }
 
-void DwarfCompileUnit::addSectionLabel(DIE &Die, dwarf::Attribute Attribute,
-                                       const MCSymbol *Label,
-                                       const MCSymbol *Sec) {
+DIE::value_iterator
+DwarfCompileUnit::addSectionLabel(DIE &Die, dwarf::Attribute Attribute,
+                                  const MCSymbol *Label, const MCSymbol *Sec) {
   if (Asm->MAI->doesDwarfUseRelocationsAcrossSections())
-    addLabel(Die, Attribute,
-             DD->getDwarfVersion() >= 4 ? dwarf::DW_FORM_sec_offset
-                                        : dwarf::DW_FORM_data4,
-             Label);
-  else
-    addSectionDelta(Die, Attribute, Label, Sec);
+    return addLabel(Die, Attribute,
+                    DD->getDwarfVersion() >= 4 ? dwarf::DW_FORM_sec_offset
+                                               : dwarf::DW_FORM_data4,
+                    Label);
+  return addSectionDelta(Die, Attribute, Label, Sec);
 }
 
 void DwarfCompileUnit::initStmtList() {
@@ -242,20 +244,19 @@ void DwarfCompileUnit::initStmtList() {
   MCSymbol *LineTableStartSym =
       Asm->OutStreamer->getDwarfLineTableSymbol(getUniqueID());
 
-  stmtListIndex = std::distance(UnitDie.values_begin(), UnitDie.values_end());
-
   // DW_AT_stmt_list is a offset of line number information for this
   // compile unit in debug_line section. For split dwarf this is
   // left in the skeleton CU and so not included.
   // The line table entries are not always emitted in assembly, so it
   // is not okay to use line_table_start here.
   const TargetLoweringObjectFile &TLOF = Asm->getObjFileLowering();
-  addSectionLabel(UnitDie, dwarf::DW_AT_stmt_list, LineTableStartSym,
-                  TLOF.getDwarfLineSection()->getBeginSymbol());
+  StmtListValue =
+      addSectionLabel(UnitDie, dwarf::DW_AT_stmt_list, LineTableStartSym,
+                      TLOF.getDwarfLineSection()->getBeginSymbol());
 }
 
 void DwarfCompileUnit::applyStmtList(DIE &D) {
-  D.addValue(UnitDie.values_begin()[stmtListIndex]);
+  D.addValue(DIEValueAllocator, *StmtListValue);
 }
 
 void DwarfCompileUnit::attachLowHighPC(DIE &D, const MCSymbol *Begin,
@@ -361,11 +362,13 @@ void DwarfCompileUnit::constructScopeDIE(
   FinalChildren.push_back(std::move(ScopeDIE));
 }
 
-void DwarfCompileUnit::addSectionDelta(DIE &Die, dwarf::Attribute Attribute,
-                                       const MCSymbol *Hi, const MCSymbol *Lo) {
-  Die.addValue(Attribute, DD->getDwarfVersion() >= 4 ? dwarf::DW_FORM_sec_offset
-                                                     : dwarf::DW_FORM_data4,
-               new (DIEValueAllocator) DIEDelta(Hi, Lo));
+DIE::value_iterator
+DwarfCompileUnit::addSectionDelta(DIE &Die, dwarf::Attribute Attribute,
+                                  const MCSymbol *Hi, const MCSymbol *Lo) {
+  return Die.addValue(DIEValueAllocator, Attribute,
+                      DD->getDwarfVersion() >= 4 ? dwarf::DW_FORM_sec_offset
+                                                 : dwarf::DW_FORM_data4,
+                      new (DIEValueAllocator) DIEDelta(Hi, Lo));
 }
 
 void DwarfCompileUnit::addScopeRangeList(DIE &ScopeDIE,
@@ -781,7 +784,7 @@ void DwarfCompileUnit::addLocationList(DIE &Die, dwarf::Attribute Attribute,
                                        unsigned Index) {
   dwarf::Form Form = DD->getDwarfVersion() >= 4 ? dwarf::DW_FORM_sec_offset
                                                 : dwarf::DW_FORM_data4;
-  Die.addValue(Attribute, Form, DIELocList(Index));
+  Die.addValue(DIEValueAllocator, Attribute, Form, DIELocList(Index));
 }
 
 void DwarfCompileUnit::applyVariableAttributes(const DbgVariable &Var,
@@ -798,7 +801,7 @@ void DwarfCompileUnit::applyVariableAttributes(const DbgVariable &Var,
 /// Add a Dwarf expression attribute data and value.
 void DwarfCompileUnit::addExpr(DIELoc &Die, dwarf::Form Form,
                                const MCExpr *Expr) {
-  Die.addValue((dwarf::Attribute)0, Form, DIEExpr(Expr));
+  Die.addValue(DIEValueAllocator, (dwarf::Attribute)0, Form, DIEExpr(Expr));
 }
 
 void DwarfCompileUnit::applySubprogramAttributesToDefinition(

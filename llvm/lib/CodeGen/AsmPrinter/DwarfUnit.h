@@ -73,6 +73,9 @@ protected:
   /// MDNode for the compile unit.
   const DICompileUnit *CUNode;
 
+  // All DIEValues are allocated through this allocator.
+  BumpPtrAllocator DIEValueAllocator;
+
   /// Unit debug information entry.
   DIE UnitDie;
 
@@ -103,9 +106,6 @@ protected:
   /// DW_AT_containing_type attribute. This attribute points to a DIE that
   /// corresponds to the MDNode mapped with the subprogram DIE.
   DenseMap<DIE *, const DINode *> ContainingTypeMap;
-
-  // All DIEValues are allocated through this allocator.
-  BumpPtrAllocator DIEValueAllocator;
 
   /// The section this unit will be emitted in.
   MCSection *Section;
@@ -206,8 +206,8 @@ public:
   void addString(DIE &Die, dwarf::Attribute Attribute, StringRef Str);
 
   /// \brief Add a Dwarf label attribute data and value.
-  void addLabel(DIE &Die, dwarf::Attribute Attribute, dwarf::Form Form,
-                const MCSymbol *Label);
+  DIE::value_iterator addLabel(DIE &Die, dwarf::Attribute Attribute,
+                               dwarf::Form Form, const MCSymbol *Label);
 
   void addLabel(DIELoc &Die, dwarf::Form Form, const MCSymbol *Label);
 

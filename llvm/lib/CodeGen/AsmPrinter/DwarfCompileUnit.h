@@ -31,7 +31,7 @@ class LexicalScope;
 class DwarfCompileUnit : public DwarfUnit {
   /// The attribute index of DW_AT_stmt_list in the compile unit DIE, avoiding
   /// the need to search for it in applyStmtList.
-  unsigned stmtListIndex;
+  DIE::value_iterator StmtListValue;
 
   /// Skeleton unit associated with this unit.
   DwarfCompileUnit *Skeleton;
@@ -92,8 +92,8 @@ public:
                             const MCSymbol *Label);
 
   /// addSectionDelta - Add a label delta attribute data and value.
-  void addSectionDelta(DIE &Die, dwarf::Attribute Attribute, const MCSymbol *Hi,
-                       const MCSymbol *Lo);
+  DIE::value_iterator addSectionDelta(DIE &Die, dwarf::Attribute Attribute,
+                                      const MCSymbol *Hi, const MCSymbol *Lo);
 
   DwarfCompileUnit &getCU() override { return *this; }
 
@@ -106,8 +106,9 @@ public:
 
   /// addSectionLabel - Add a Dwarf section label attribute data and value.
   ///
-  void addSectionLabel(DIE &Die, dwarf::Attribute Attribute,
-                       const MCSymbol *Label, const MCSymbol *Sec);
+  DIE::value_iterator addSectionLabel(DIE &Die, dwarf::Attribute Attribute,
+                                      const MCSymbol *Label,
+                                      const MCSymbol *Sec);
 
   /// \brief Find DIE for the given subprogram and attach appropriate
   /// DW_AT_low_pc and DW_AT_high_pc attributes. If there are global

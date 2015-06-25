@@ -263,7 +263,7 @@ void DIEHash::hashDIEEntry(dwarf::Attribute Attribute, dwarf::Tag Tag,
 
 // Hash all of the values in a block like set of values. This assumes that
 // all of the data is going to be added as integers.
-void DIEHash::hashBlockData(const DIE::value_range &Values) {
+void DIEHash::hashBlockData(const DIE::const_value_range &Values) {
   for (const auto &V : Values)
     Hash.update((uint64_t)V.getDIEInteger().getValue());
 }

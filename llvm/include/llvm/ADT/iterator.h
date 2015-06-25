@@ -162,6 +162,8 @@ protected:
           int>::type = 0)
       : I(std::forward<U &&>(u)) {}
 
+  const WrappedIteratorT &wrapped() const { return I; }
+
 public:
   typedef DifferenceTypeT difference_type;
 

@@ -128,7 +128,7 @@ private:
 
   /// \brief Hashes the data in a block like DIEValue, e.g. DW_FORM_block or
   /// DW_FORM_exprloc.
-  void hashBlockData(const DIE::value_range &Values);
+  void hashBlockData(const DIE::const_value_range &Values);
 
   /// \brief Hashes the contents pointed to in the .debug_loc section.
   void hashLocList(const DIELocList &LocList);

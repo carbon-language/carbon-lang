@@ -184,16 +184,18 @@ void DwarfUnit::insertDIE(const DINode *Desc, DIE *D) {
 
 void DwarfUnit::addFlag(DIE &Die, dwarf::Attribute Attribute) {
   if (DD->getDwarfVersion() >= 4)
-    Die.addValue(Attribute, dwarf::DW_FORM_flag_present, DIEInteger(1));
+    Die.addValue(DIEValueAllocator, Attribute, dwarf::DW_FORM_flag_present,
+                 DIEInteger(1));
   else
-    Die.addValue(Attribute, dwarf::DW_FORM_flag, DIEInteger(1));
+    Die.addValue(DIEValueAllocator, Attribute, dwarf::DW_FORM_flag,
+                 DIEInteger(1));
 }
 
 void DwarfUnit::addUInt(DIE &Die, dwarf::Attribute Attribute,
                         Optional<dwarf::Form> Form, uint64_t Integer) {
   if (!Form)
     Form = DIEInteger::BestForm(false, Integer);
-  Die.addValue(Attribute, *Form, DIEInteger(Integer));
+  Die.addValue(DIEValueAllocator, Attribute, *Form, DIEInteger(Integer));
 }
 
 void DwarfUnit::addUInt(DIE &Block, dwarf::Form Form, uint64_t Integer) {
@@ -204,7 +206,7 @@ void DwarfUnit::addSInt(DIE &Die, dwarf::Attribute Attribute,
                         Optional<dwarf::Form> Form, int64_t Integer) {
   if (!Form)
     Form = DIEInteger::BestForm(true, Integer);
-  Die.addValue(Attribute, *Form, DIEInteger(Integer));
+  Die.addValue(DIEValueAllocator, Attribute, *Form, DIEInteger(Integer));
 }
 
 void DwarfUnit::addSInt(DIELoc &Die, Optional<dwarf::Form> Form,
@@ -214,14 +216,15 @@ void DwarfUnit::addSInt(DIELoc &Die, Optional<dwarf::Form> Form,
 
 void DwarfUnit::addString(DIE &Die, dwarf::Attribute Attribute,
                           StringRef String) {
-  Die.addValue(Attribute,
+  Die.addValue(DIEValueAllocator, Attribute,
                isDwoUnit() ? dwarf::DW_FORM_GNU_str_index : dwarf::DW_FORM_strp,
                DIEString(DU->getStringPool().getEntry(*Asm, String)));
 }
 
-void DwarfUnit::addLabel(DIE &Die, dwarf::Attribute Attribute, dwarf::Form Form,
-                         const MCSymbol *Label) {
-  Die.addValue(Attribute, Form, DIELabel(Label));
+DIE::value_iterator DwarfUnit::addLabel(DIE &Die, dwarf::Attribute Attribute,
+                                        dwarf::Form Form,
+                                        const MCSymbol *Label) {
+  return Die.addValue(DIEValueAllocator, Attribute, Form, DIELabel(Label));
 }
 
 void DwarfUnit::addLabel(DIELoc &Die, dwarf::Form Form, const MCSymbol *Label) {
@@ -254,7 +257,7 @@ void DwarfUnit::addOpAddress(DIELoc &Die, const MCSymbol *Sym) {
 
 void DwarfUnit::addLabelDelta(DIE &Die, dwarf::Attribute Attribute,
                               const MCSymbol *Hi, const MCSymbol *Lo) {
-  Die.addValue(Attribute, dwarf::DW_FORM_data4,
+  Die.addValue(DIEValueAllocator, Attribute, dwarf::DW_FORM_data4,
                new (DIEValueAllocator) DIEDelta(Hi, Lo));
 }
 
@@ -269,8 +272,8 @@ void DwarfUnit::addDIETypeSignature(DIE &Die, const DwarfTypeUnit &Type) {
   // and think this is a full definition.
   addFlag(Die, dwarf::DW_AT_declaration);
 
-  Die.addValue(dwarf::DW_AT_signature, dwarf::DW_FORM_ref_sig8,
-               DIETypeSignature(Type));
+  Die.addValue(DIEValueAllocator, dwarf::DW_AT_signature,
+               dwarf::DW_FORM_ref_sig8, DIETypeSignature(Type));
 }
 
 void DwarfUnit::addDIEEntry(DIE &Die, dwarf::Attribute Attribute,
@@ -282,7 +285,7 @@ void DwarfUnit::addDIEEntry(DIE &Die, dwarf::Attribute Attribute,
     DieCU = &getUnitDie();
   if (!EntryCU)
     EntryCU = &getUnitDie();
-  Die.addValue(Attribute,
+  Die.addValue(DIEValueAllocator, Attribute,
                EntryCU == DieCU ? dwarf::DW_FORM_ref4 : dwarf::DW_FORM_ref_addr,
                Entry);
 }
@@ -299,14 +302,15 @@ DIE &DwarfUnit::createAndAddDIE(unsigned Tag, DIE &Parent, const DINode *N) {
 void DwarfUnit::addBlock(DIE &Die, dwarf::Attribute Attribute, DIELoc *Loc) {
   Loc->ComputeSize(Asm);
   DIELocs.push_back(Loc); // Memoize so we can call the destructor later on.
-  Die.addValue(Attribute, Loc->BestForm(DD->getDwarfVersion()), Loc);
+  Die.addValue(DIEValueAllocator, Attribute,
+               Loc->BestForm(DD->getDwarfVersion()), Loc);
 }
 
 void DwarfUnit::addBlock(DIE &Die, dwarf::Attribute Attribute,
                          DIEBlock *Block) {
   Block->ComputeSize(Asm);
   DIEBlocks.push_back(Block); // Memoize so we can call the destructor later on.
-  Die.addValue(Attribute, Block->BestForm(), Block);
+  Die.addValue(DIEValueAllocator, Attribute, Block->BestForm(), Block);
 }
 
 void DwarfUnit::addSourceLine(DIE &Die, unsigned Line, StringRef File,
@@ -1386,8 +1390,8 @@ void DwarfUnit::constructMemberDIE(DIE &Buffer, const DIDerivedType *DT) {
   // Objective-C properties.
   if (DINode *PNode = DT->getObjCProperty())
     if (DIE *PDie = getDIE(PNode))
-      MemberDie.addValue(dwarf::DW_AT_APPLE_property, dwarf::DW_FORM_ref4,
-                         DIEEntry(*PDie));
+      MemberDie.addValue(DIEValueAllocator, dwarf::DW_AT_APPLE_property,
+                         dwarf::DW_FORM_ref4, DIEEntry(*PDie));
 
   if (DT->isArtificial())
     addFlag(MemberDie, dwarf::DW_AT_artificial);
