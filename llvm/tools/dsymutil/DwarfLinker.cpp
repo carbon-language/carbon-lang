@@ -2364,6 +2364,17 @@ static void insertLineSequence(std::vector<DWARFDebugLine::Row> &Seq,
   Seq.clear();
 }
 
+static void patchStmtList(DIE &Die, DIEInteger Offset) {
+  for (auto &V : Die.values())
+    if (V.getAttribute() == dwarf::DW_AT_stmt_list) {
+      Die.setValue(&V - Die.values_begin(),
+                   DIEValue(V.getAttribute(), V.getForm(), Offset));
+      return;
+    }
+
+  llvm_unreachable("Didn't find DW_AT_stmt_list in cloned DIE!");
+}
+
 /// \brief Extract the line table for \p Unit from \p OrigDwarf, and
 /// recreate a relocated version of these for the address ranges that
 /// are present in the binary.
@@ -2376,18 +2387,8 @@ void DwarfLinker::patchLineTableForUnit(CompileUnit &Unit,
     return;
 
   // Update the cloned DW_AT_stmt_list with the correct debug_line offset.
-  if (auto *OutputDIE = Unit.getOutputUnitDIE()) {
-    auto Stmt =
-        std::find_if(OutputDIE->values_begin(), OutputDIE->values_end(),
-                     [](const DIEValue &Value) {
-                       return Value.getAttribute() == dwarf::DW_AT_stmt_list;
-                     });
-    assert(Stmt != OutputDIE->values_end() &&
-           "Didn't find DW_AT_stmt_list in cloned DIE!");
-    OutputDIE->setValue(Stmt - OutputDIE->values_begin(),
-                        DIEValue(Stmt->getAttribute(), Stmt->getForm(),
-                                 DIEInteger(Streamer->getLineSectionSize())));
-  }
+  if (auto *OutputDIE = Unit.getOutputUnitDIE())
+    patchStmtList(*OutputDIE, DIEInteger(Streamer->getLineSectionSize()));
 
   // Parse the original line info for the unit.
   DWARFDebugLine::LineTable LineTable;
