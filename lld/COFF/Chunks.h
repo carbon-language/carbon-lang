@@ -150,6 +150,7 @@ public:
 
 private:
   void mark() override;
+  ArrayRef<uint8_t> getContents() const;
 
   // A file this chunk was created from.
   ObjectFile *File;

@@ -59,9 +59,8 @@ void SectionChunk::writeTo(uint8_t *Buf) {
   if (!hasData())
     return;
   // Copy section contents from source object file to output file.
-  ArrayRef<uint8_t> Data;
-  File->getCOFFObj()->getSectionContents(Header, Data);
-  memcpy(Buf + FileOff, Data.data(), Data.size());
+  ArrayRef<uint8_t> A = getContents();
+  memcpy(Buf + FileOff, A.data(), A.size());
 
   // Apply relocations.
   for (const coff_relocation &Rel : Relocs) {
@@ -155,8 +154,7 @@ StringRef SectionChunk::getDebugName() {
 }
 
 uint64_t SectionChunk::getHash() const {
-  ArrayRef<uint8_t> A;
-  File->getCOFFObj()->getSectionContents(Header, A);
+  ArrayRef<uint8_t> A = getContents();
   return hash_combine(getPermissions(),
                       llvm::hash_value(SectionName),
                       NumRelocs,
@@ -178,11 +176,7 @@ bool SectionChunk::equals(const SectionChunk *X) const {
     return false;
 
   // Compare data
-  ArrayRef<uint8_t> A, B;
-  File->getCOFFObj()->getSectionContents(Header, A);
-  X->File->getCOFFObj()->getSectionContents(X->Header, B);
-  assert(A.size() == B.size());
-  if (memcmp(A.data(), B.data(), A.size()))
+  if (getContents() != X->getContents())
     return false;
 
   // Compare relocations
@@ -200,6 +194,12 @@ bool SectionChunk::equals(const SectionChunk *X) const {
     return B1 == B2;
   };
   return std::equal(Relocs.begin(), Relocs.end(), X->Relocs.begin(), Eq);
+}
+
+ArrayRef<uint8_t> SectionChunk::getContents() const {
+  ArrayRef<uint8_t> A;
+  File->getCOFFObj()->getSectionContents(Header, A);
+  return A;
 }
 
 // Returns a pointer to this chunk or its replacement.
