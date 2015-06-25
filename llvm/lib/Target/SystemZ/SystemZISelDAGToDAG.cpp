@@ -96,6 +96,7 @@ struct SystemZAddressingMode {
 
 // Return a mask with Count low bits set.
 static uint64_t allOnes(unsigned int Count) {
+  assert(Count <= 64);
   if (Count > 63)
     return UINT64_MAX;
   return (uint64_t(1) << Count) - 1;
@@ -905,6 +906,8 @@ SDValue SystemZDAGToDAGISel::convertTo(SDLoc DL, EVT VT, SDValue N) const {
 SDNode *SystemZDAGToDAGISel::tryRISBGZero(SDNode *N) {
   SDLoc DL(N);
   EVT VT = N->getValueType(0);
+  if (!VT.isInteger() || VT.getSizeInBits() > 64)
+    return nullptr;
   RxSBGOperands RISBG(SystemZ::RISBG, SDValue(N, 0));
   unsigned Count = 0;
   while (expandRxSBG(RISBG))
@@ -960,6 +963,10 @@ SDNode *SystemZDAGToDAGISel::tryRISBGZero(SDNode *N) {
 }
 
 SDNode *SystemZDAGToDAGISel::tryRxSBG(SDNode *N, unsigned Opcode) {
+  SDLoc DL(N);
+  EVT VT = N->getValueType(0);
+  if (!VT.isInteger() || VT.getSizeInBits() > 64)
+    return nullptr;
   // Try treating each operand of N as the second operand of the RxSBG
   // and see which goes deepest.
   RxSBGOperands RxSBG[] = {
@@ -995,8 +1002,6 @@ SDNode *SystemZDAGToDAGISel::tryRxSBG(SDNode *N, unsigned Opcode) {
       Opcode = SystemZ::RISBGN;
   }
 
-  SDLoc DL(N);
-  EVT VT = N->getValueType(0);
   SDValue Ops[5] = {
     convertTo(DL, MVT::i64, Op0),
     convertTo(DL, MVT::i64, RxSBG[I].Input),
