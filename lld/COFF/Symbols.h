@@ -23,7 +23,6 @@ namespace lld {
 namespace coff {
 
 using llvm::object::Archive;
-using llvm::object::COFFObjectFile;
 using llvm::object::COFFSymbolRef;
 using llvm::object::coff_import_header;
 
@@ -80,6 +79,10 @@ public:
   // they are duplicate (conflicting) symbols.
   virtual int compare(SymbolBody *Other) = 0;
 
+  // Returns a name of this symbol including source file name.
+  // Used only for debugging and logging.
+  virtual std::string getDebugName() { return getName(); }
+
 protected:
   SymbolBody(Kind K) : SymbolKind(K) {}
 
@@ -113,8 +116,8 @@ public:
 // Regular defined symbols read from object file symbol tables.
 class DefinedRegular : public Defined {
 public:
-  DefinedRegular(COFFObjectFile *F, COFFSymbolRef S, SectionChunk *C)
-      : Defined(DefinedRegularKind), COFFFile(F), Sym(S), Data(&C->Ptr),
+  DefinedRegular(ObjectFile *F, COFFSymbolRef S, SectionChunk *C)
+      : Defined(DefinedRegularKind), File(F), Sym(S), Data(&C->Ptr),
         IsCOMDAT(C->isCOMDAT()) {}
 
   static bool classof(const SymbolBody *S) {
@@ -129,13 +132,14 @@ public:
   uint64_t getRVA() override { return (*Data)->getRVA() + Sym.getValue(); }
   bool isExternal() override { return Sym.isExternal(); }
   int compare(SymbolBody *Other) override;
+  std::string getDebugName() override;
   bool isCOMDAT() { return IsCOMDAT; }
   void markLive() { (*Data)->markLive(); }
   Chunk *getChunk() { return *Data; }
 
 private:
   StringRef Name;
-  COFFObjectFile *COFFFile;
+  ObjectFile *File;
   COFFSymbolRef Sym;
   SectionChunk **Data;
   bool IsCOMDAT;
@@ -143,8 +147,8 @@ private:
 
 class DefinedCommon : public Defined {
 public:
-  DefinedCommon(COFFObjectFile *F, COFFSymbolRef S, CommonChunk *C)
-      : Defined(DefinedCommonKind), COFFFile(F), Sym(S), Data(C) {}
+  DefinedCommon(ObjectFile *F, COFFSymbolRef S, CommonChunk *C)
+      : Defined(DefinedCommonKind), File(F), Sym(S), Data(C) {}
 
   static bool classof(const SymbolBody *S) {
     return S->kind() == DefinedCommonKind;
@@ -155,12 +159,13 @@ public:
   bool isExternal() override { return Sym.isExternal(); }
   uint64_t getFileOff() override { return Data->getFileOff(); }
   int compare(SymbolBody *Other) override;
+  std::string getDebugName() override;
 
 private:
   uint64_t getSize() { return Sym.getValue(); }
 
   StringRef Name;
-  COFFObjectFile *COFFFile;
+  ObjectFile *File;
   COFFSymbolRef Sym;
   CommonChunk *Data;
 };

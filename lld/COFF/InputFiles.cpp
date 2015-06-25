@@ -184,7 +184,7 @@ SymbolBody *ObjectFile::createSymbolBody(COFFSymbolRef Sym, const void *AuxP,
   if (Sym.isCommon()) {
     auto *C = new (Alloc) CommonChunk(Sym);
     Chunks.push_back(C);
-    return new (Alloc) DefinedCommon(COFFObj.get(), Sym, C);
+    return new (Alloc) DefinedCommon(this, Sym, C);
   }
   if (Sym.isAbsolute()) {
     COFFObj->getSymbolName(Sym, Name);
@@ -215,7 +215,7 @@ SymbolBody *ObjectFile::createSymbolBody(COFFSymbolRef Sym, const void *AuxP,
   }
   Chunk *C = SparseChunks[Sym.getSectionNumber()];
   if (auto *SC = cast_or_null<SectionChunk>(C)) {
-    auto *B = new (Alloc) DefinedRegular(COFFObj.get(), Sym, SC);
+    auto *B = new (Alloc) DefinedRegular(this, Sym, SC);
     if (SC->isCOMDAT() && Sym.getValue() == 0 && !AuxP)
       SC->setSymbol(B);
     return B;

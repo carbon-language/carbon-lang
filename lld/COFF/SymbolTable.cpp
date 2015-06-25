@@ -120,7 +120,8 @@ std::error_code SymbolTable::resolve(SymbolBody *New) {
     ++Version;
   }
   if (comp == 0) {
-    llvm::errs() << "duplicate symbol: " << Name << "\n";
+    llvm::errs() << "duplicate symbol: " << Existing->getDebugName()
+                 << " and " << New->getDebugName() << "\n";
     return make_error_code(LLDError::DuplicateSymbols);
   }
 

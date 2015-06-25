@@ -111,14 +111,22 @@ StringRef DefinedRegular::getName() {
   // StringRefs for them (which involves lots of strlen() on the string table)
   // is a waste of time.
   if (Name.empty())
-    COFFFile->getSymbolName(Sym, Name);
+    File->getCOFFObj()->getSymbolName(Sym, Name);
   return Name;
 }
 
 StringRef DefinedCommon::getName() {
   if (Name.empty())
-    COFFFile->getSymbolName(Sym, Name);
+    File->getCOFFObj()->getSymbolName(Sym, Name);
   return Name;
+}
+
+std::string DefinedRegular::getDebugName() {
+  return (getName() + " " + File->getShortName()).str();
+}
+
+std::string DefinedCommon::getDebugName() {
+  return (getName() + " " + File->getShortName()).str();
 }
 
 ErrorOr<std::unique_ptr<InputFile>> Lazy::getMember() {
