@@ -297,17 +297,19 @@ if(APPLE)
          MACOSX_VERSION_MIN_FLAG "${CMAKE_CXX_FLAGS}")
   if(MACOSX_VERSION_MIN_FLAG)
     set(SANITIZER_MIN_OSX_VERSION "${CMAKE_MATCH_1}")
-    if(SANITIZER_MIN_OSX_VERSION VERSION_LESS "10.7")
-      message(FATAL_ERROR "Too old OS X version: ${SANITIZER_MIN_OSX_VERSION}")
-    endif()
+  elseif(CMAKE_OSX_DEPLOYMENT_TARGET)
+    set(SANITIZER_MIN_OSX_VERSION ${CMAKE_OSX_DEPLOYMENT_TARGET})
   else()
-    set(SANITIZER_MIN_OSX_VERSION 10.7)
+    set(SANITIZER_MIN_OSX_VERSION 10.9)
     if(IOSSIM_SDK_DIR)
       list(APPEND SANITIZER_COMMON_SUPPORTED_OS iossim)
     endif()
   endif()
+  if(SANITIZER_MIN_OSX_VERSION VERSION_LESS "10.7")
+    message(FATAL_ERROR "Too old OS X version: ${SANITIZER_MIN_OSX_VERSION}")
+  endif()
 
-  set(CMAKE_OSX_DEPLOYMENT_TARGET "") # We're setting the flag manually below.
+  set(CMAKE_OSX_DEPLOYMENT_TARGET "") # We evaluate target OS X version above.
   set(DARWIN_osx_CFLAGS -mmacosx-version-min=${SANITIZER_MIN_OSX_VERSION}
     -stdlib=libc++)
   set(DARWIN_iossim_CFLAGS
