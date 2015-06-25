@@ -97,6 +97,11 @@ dnl **************************************************************************
 
 dnl Let ISL's configure generate isl_config.h and gitversion.h
 AC_CONFIG_SUBDIRS(lib/External/isl)
+AC_CONFIG_COMMANDS_POST([
+  dnl Configure ISL with small integer optimization, but do not add the
+  dnl option to config.status as it is mandatory for Polly.
+  ac_configure_args="$ac_configure_args --with-int=imath"
+])
 
 dnl This must be last
 AC_CONFIG_HEADERS(include/polly/Config/config.h)

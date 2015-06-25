@@ -2499,6 +2499,7 @@ fi
 subdirs="$subdirs lib/External/isl"
 
 
+
 ac_config_headers="$ac_config_headers include/polly/Config/config.h"
 
 cat >confcache <<\_ACEOF
@@ -3760,6 +3761,9 @@ ac_clean_files=$ac_clean_files_save
 
 test $ac_write_fail = 0 ||
   as_fn_error $? "write failure creating $CONFIG_STATUS" "$LINENO" 5
+
+
+      ac_configure_args="$ac_configure_args --with-int=imath"
 
 
 # configure is writing to config.log, and then calls config.status.
