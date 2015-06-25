@@ -2804,6 +2804,10 @@ bool GVN::processFoldableCondBr(BranchInst *BI) {
   if (!BI || BI->isUnconditional())
     return false;
 
+  // If a branch has two identical successors, we cannot declare either dead.
+  if (BI->getSuccessor(0) == BI->getSuccessor(1))
+    return false;
+
   ConstantInt *Cond = dyn_cast<ConstantInt>(BI->getCondition());
   if (!Cond)
     return false;
