@@ -14,7 +14,7 @@
 # CHECK-NEXT:  1200001b0 c871ffff ffffffff 00000000 00000000
 
 # SYM: 00000001200001b8 t LT1
-# SYM: 0000000120001000 ? _GLOBAL_OFFSET_TABLE_
+# SYM: 0000000120001000 N _GLOBAL_OFFSET_TABLE_
 
 # RUN: lld -flavor gnu -target mips64el -shared -o %t.so %t.o
 # RUN: llvm-readobj -r %t.so | FileCheck --check-prefix=REL-SO %s

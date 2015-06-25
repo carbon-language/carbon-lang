@@ -6,7 +6,7 @@
 # RUN: lld -flavor gnu -target mipsel -e T0 -static -o %t.exe %t1.o %t2.o
 # RUN: llvm-nm %t.exe | FileCheck %s
 
-# CHECK: 00401000 ? _GLOBAL_OFFSET_TABLE_
+# CHECK: 00401000 N _GLOBAL_OFFSET_TABLE_
 # CHECK: 00408ff0 A __gnu_local_gp
 # CHECK: 00408ff0 A _gp
 # CHECK: 00408ff0 A _gp_disp
