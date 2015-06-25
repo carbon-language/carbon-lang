@@ -2188,8 +2188,7 @@ static void CollectArgsForIntegratedAssembler(Compilation &C,
          Args.filtered(options::OPT_Wa_COMMA, options::OPT_Xassembler)) {
       A->claim();
 
-      for (unsigned i = 0, e = A->getNumValues(); i != e; ++i) {
-        StringRef Value = A->getValue(i);
+      for (const StringRef Value : A->getValues()) {
         if (TakeNextArg) {
           CmdArgs.push_back(Value.data());
           TakeNextArg = false;
@@ -4828,9 +4827,9 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
     SmallString<256> Flags;
     Flags += Exec;
-    for (unsigned i = 0, e = OriginalArgs.size(); i != e; ++i) {
+    for (const char *OriginalArg : OriginalArgs) {
       SmallString<128> EscapedArg;
-      EscapeSpacesAndBackslashes(OriginalArgs[i], EscapedArg);
+      EscapeSpacesAndBackslashes(OriginalArg, EscapedArg);
       Flags += " ";
       Flags += EscapedArg;
     }
@@ -5291,9 +5290,9 @@ void ClangAs::ConstructJob(Compilation &C, const JobAction &JA,
     SmallString<256> Flags;
     const char *Exec = getToolChain().getDriver().getClangProgramPath();
     Flags += Exec;
-    for (unsigned i = 0, e = OriginalArgs.size(); i != e; ++i) {
+    for (const char *OriginalArg : OriginalArgs) {
       SmallString<128> EscapedArg;
-      EscapeSpacesAndBackslashes(OriginalArgs[i], EscapedArg);
+      EscapeSpacesAndBackslashes(OriginalArg, EscapedArg);
       Flags += " ";
       Flags += EscapedArg;
     }

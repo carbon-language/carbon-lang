@@ -83,11 +83,11 @@ void Driver::ParseDriverMode(ArrayRef<const char *> Args) {
   const std::string OptName =
     getOpts().getOption(options::OPT_driver_mode).getPrefixedName();
 
-  for (size_t I = 0, E = Args.size(); I != E; ++I) {
+  for (const char *ArgPtr : Args) {
     // Ingore nullptrs, they are response file's EOL markers
-    if (Args[I] == nullptr)
+    if (ArgPtr == nullptr)
       continue;
-    const StringRef Arg = Args[I];
+    const StringRef Arg = ArgPtr;
     if (!Arg.startswith(OptName))
       continue;
 
@@ -613,10 +613,9 @@ int Driver::ExecuteCompilation(Compilation &C,
 
   // Otherwise, remove result files and print extra information about abnormal
   // failures.
-  for (SmallVectorImpl< std::pair<int, const Command *> >::iterator it =
-         FailingCommands.begin(), ie = FailingCommands.end(); it != ie; ++it) {
-    int Res = it->first;
-    const Command *FailingCommand = it->second;
+  for (const auto &CmdPair : FailingCommands) {
+    int Res = CmdPair.first;
+    const Command *FailingCommand = CmdPair.second;
 
     // Remove result files if we're not saving temps.
     if (!isSaveTempsEnabled()) {
@@ -792,13 +791,11 @@ bool Driver::HandleImmediateArgs(const Compilation &C) {
   }
 
   if (C.getArgs().hasArg(options::OPT_print_multi_directory)) {
-    const MultilibSet &Multilibs = TC.getMultilibs();
-    for (MultilibSet::const_iterator I = Multilibs.begin(), E = Multilibs.end();
-         I != E; ++I) {
-      if (I->gccSuffix().empty())
+    for (const auto &Multilib : TC.getMultilibs()) {
+      if (Multilib.gccSuffix().empty())
         llvm::outs() << ".\n";
       else {
-        StringRef Suffix(I->gccSuffix());
+        StringRef Suffix(Multilib.gccSuffix());
         assert(Suffix.front() == '/');
         llvm::outs() << Suffix.substr(1) << "\n";
       }
