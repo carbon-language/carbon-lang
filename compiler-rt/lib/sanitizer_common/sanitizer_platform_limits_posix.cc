@@ -296,19 +296,20 @@ namespace __sanitizer {
 #endif
 
 #if SANITIZER_LINUX && !SANITIZER_ANDROID && \
-    (defined(__i386) || defined(__x86_64) || defined(__mips64))
-#if defined(__mips64)
+    (defined(__i386) || defined(__x86_64) || defined(__mips64) || \
+      defined(__powerpc64__))
+#if defined(__mips64) || defined(__powerpc64__)
   unsigned struct_user_regs_struct_sz = sizeof(struct pt_regs);
   unsigned struct_user_fpregs_struct_sz = sizeof(elf_fpregset_t);
 #else
   unsigned struct_user_regs_struct_sz = sizeof(struct user_regs_struct);
   unsigned struct_user_fpregs_struct_sz = sizeof(struct user_fpregs_struct);
-#endif // __mips64
-#if (defined(__x86_64) || defined(__mips64))
+#endif // __mips64 || __powerpc64__
+#if defined(__x86_64) || defined(__mips64) || defined(__powerpc64__)
   unsigned struct_user_fpxregs_struct_sz = 0;
 #else
   unsigned struct_user_fpxregs_struct_sz = sizeof(struct user_fpxregs_struct);
-#endif // __x86_64 || __mips64
+#endif // __x86_64 || __mips64 || __powerpc64__
 
   int ptrace_peektext = PTRACE_PEEKTEXT;
   int ptrace_peekdata = PTRACE_PEEKDATA;
@@ -317,8 +318,13 @@ namespace __sanitizer {
   int ptrace_setregs = PTRACE_SETREGS;
   int ptrace_getfpregs = PTRACE_GETFPREGS;
   int ptrace_setfpregs = PTRACE_SETFPREGS;
+#if defined(PTRACE_GETFPXREGS) && defined(PTRACE_SETFPXREGS)
   int ptrace_getfpxregs = PTRACE_GETFPXREGS;
   int ptrace_setfpxregs = PTRACE_SETFPXREGS;
+#else
+  int ptrace_getfpxregs = -1;
+  int ptrace_setfpxregs = -1;
+#endif  // PTRACE_GETFPXREGS/PTRACE_SETFPXREGS
   int ptrace_geteventmsg = PTRACE_GETEVENTMSG;
 #if (defined(PTRACE_GETSIGINFO) && defined(PTRACE_SETSIGINFO)) ||              \
     (defined(PT_GETSIGINFO) && defined(PT_SETSIGINFO))
