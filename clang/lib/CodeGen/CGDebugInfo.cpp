@@ -1179,12 +1179,13 @@ void CGDebugInfo::CollectCXXMemberFunctions(
     // the member being added to type units by LLVM, while still allowing it
     // to be emitted into the type declaration/reference inside the compile
     // unit.
+    // Ditto 'nodebug' methods, for consistency with CodeGenFunction.cpp.
     // FIXME: Handle Using(Shadow?)Decls here to create
     // DW_TAG_imported_declarations inside the class for base decls brought into
     // derived classes. GDB doesn't seem to notice/leverage these when I tried
     // it, so I'm not rushing to fix this. (GCC seems to produce them, if
     // referenced)
-    if (!Method || Method->isImplicit())
+    if (!Method || Method->isImplicit() || Method->hasAttr<NoDebugAttr>())
       continue;
 
     if (Method->getType()->getAs<FunctionProtoType>()->getContainedAutoType())
