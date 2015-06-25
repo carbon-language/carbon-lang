@@ -87,7 +87,7 @@ that are stored on the heap or the unsafe stack, such as `CPI
 <http://dslab.epfl.ch/proj/cpi/>`_, or a forward-edge control flow integrity
 mechanism that enforces correct calling conventions at indirect call sites,
 such as `IFCC <http://research.google.com/pubs/archive/42808.pdf>`_ with arity
-checks. Clang has control-flow integrity protection scheme for `C++ virtual
+checks. Clang has control-flow integrity protection scheme for :doc:`C++ virtual
 calls <ControlFlowIntegrity>`, but not non-virtual indirect calls. With
 SafeStack alone, an attacker can overwrite a function pointer on the heap or
 the unsafe stack and cause a program to call arbitrary location, which in turn
