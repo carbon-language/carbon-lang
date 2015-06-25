@@ -382,6 +382,11 @@ namespace llvm {
     bool isVMRGHShuffleMask(ShuffleVectorSDNode *N, unsigned UnitSize,
                             unsigned ShuffleKind, SelectionDAG &DAG);
 
+    /// isVMRGEOShuffleMask - Return true if this is a shuffle mask suitable for
+    /// a VMRGEW or VMRGOW instruction
+    bool isVMRGEOShuffleMask(ShuffleVectorSDNode *N, bool CheckEven,
+                             unsigned ShuffleKind, SelectionDAG &DAG);
+  
     /// isVSLDOIShuffleMask - If this is a vsldoi shuffle mask, return the
     /// shift amount, otherwise return -1.
     int isVSLDOIShuffleMask(SDNode *N, unsigned ShuffleKind,

@@ -155,6 +155,33 @@ def vmrghw_swapped_shuffle : PatFrag<(ops node:$lhs, node:$rhs),
 }]>;
 
 
+def vmrgew_shuffle : PatFrag<(ops node:$lhs, node:$rhs),
+                             (vector_shuffle node:$lhs, node:$rhs), [{
+  return PPC::isVMRGEOShuffleMask(cast<ShuffleVectorSDNode>(N), true, 0, *CurDAG);
+}]>;
+def vmrgow_shuffle : PatFrag<(ops node:$lhs, node:$rhs),
+                             (vector_shuffle node:$lhs, node:$rhs), [{
+  return PPC::isVMRGEOShuffleMask(cast<ShuffleVectorSDNode>(N), false, 0, *CurDAG);
+}]>;
+def vmrgew_unary_shuffle : PatFrag<(ops node:$lhs, node:$rhs),
+                                   (vector_shuffle node:$lhs, node:$rhs), [{
+  return PPC::isVMRGEOShuffleMask(cast<ShuffleVectorSDNode>(N), true, 1, *CurDAG);
+}]>;
+def vmrgow_unary_shuffle : PatFrag<(ops node:$lhs, node:$rhs),
+                                   (vector_shuffle node:$lhs, node:$rhs), [{
+  return PPC::isVMRGEOShuffleMask(cast<ShuffleVectorSDNode>(N), false, 1, *CurDAG);
+}]>;
+def vmrgew_swapped_shuffle : PatFrag<(ops node:$lhs, node:$rhs),
+                                     (vector_shuffle node:$lhs, node:$rhs), [{
+  return PPC::isVMRGEOShuffleMask(cast<ShuffleVectorSDNode>(N), true, 2, *CurDAG);
+}]>;
+def vmrgow_swapped_shuffle : PatFrag<(ops node:$lhs, node:$rhs),
+                                     (vector_shuffle node:$lhs, node:$rhs), [{
+  return PPC::isVMRGEOShuffleMask(cast<ShuffleVectorSDNode>(N), false, 2, *CurDAG);
+}]>;
+
+
+
 def VSLDOI_get_imm : SDNodeXForm<vector_shuffle, [{
   return getI32Imm(PPC::isVSLDOIShuffleMask(N, 0, *CurDAG), SDLoc(N));
 }]>;
@@ -1007,6 +1034,29 @@ def VMAXUD : VX1_Int_Ty<194, "vmaxud", int_ppc_altivec_vmaxud, v2i64>;
 def VMINSD : VX1_Int_Ty<962, "vminsd", int_ppc_altivec_vminsd, v2i64>;
 def VMINUD : VX1_Int_Ty<706, "vminud", int_ppc_altivec_vminud, v2i64>;
 } // isCommutable
+
+// Vector merge 
+def VMRGEW : VXForm_1<1932, (outs vrrc:$vD), (ins vrrc:$vA, vrrc:$vB),
+                      "vmrgew $vD, $vA, $vB", IIC_VecFP,
+                      [(set v16i8:$vD, (vmrgew_shuffle v16i8:$vA, v16i8:$vB))]>;
+def VMRGOW : VXForm_1<1676, (outs vrrc:$vD), (ins vrrc:$vA, vrrc:$vB),
+                      "vmrgow $vD, $vA, $vB", IIC_VecFP,
+                      [(set v16i8:$vD, (vmrgow_shuffle v16i8:$vA, v16i8:$vB))]>;
+
+// Match vmrgew(x,x) and vmrgow(x,x)
+def:Pat<(vmrgew_unary_shuffle v16i8:$vA, undef),
+        (VMRGEW $vA, $vA)>;
+def:Pat<(vmrgow_unary_shuffle v16i8:$vA, undef),
+        (VMRGOW $vA, $vA)>;
+
+// Match vmrgew(y,x) and vmrgow(y,x), i.e., swapped operands.  These fragments
+// are matched for little-endian, where the inputs must be swapped for correct
+// semantics.w
+def:Pat<(vmrgew_swapped_shuffle v16i8:$vA, v16i8:$vB),
+        (VMRGEW $vB, $vA)>;
+def:Pat<(vmrgow_swapped_shuffle v16i8:$vA, v16i8:$vB),
+        (VMRGOW $vB, $vA)>;
+
 
 // Vector shifts
 def VRLD : VX1_Int_Ty<196, "vrld", int_ppc_altivec_vrld, v2i64>;

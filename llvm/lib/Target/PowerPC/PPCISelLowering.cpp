@@ -1279,6 +1279,99 @@ bool PPC::isVMRGHShuffleMask(ShuffleVectorSDNode *N, unsigned UnitSize,
   }
 }
 
+/**
+ * \brief Common function used to match vmrgew and vmrgow shuffles
+ *
+ * The indexOffset determines whether to look for even or odd words in
+ * the shuffle mask. This is based on the of the endianness of the target
+ * machine.
+ *   - Little Endian:
+ *     - Use offset of 0 to check for odd elements
+ *     - Use offset of 4 to check for even elements
+ *   - Big Endian:
+ *     - Use offset of 0 to check for even elements
+ *     - Use offset of 4 to check for odd elements
+ * A detailed description of the vector element ordering for little endian and
+ * big endian can be found at <a
+ * href="http://www.ibm.com/developerworks/library/l-ibm-xl-c-cpp-compiler/index.html">
+ * Targeting your applications - what little endian and big endian IBM XL C/C++
+ * compiler differences mean to you </a>
+ *
+ * The mask to the shuffle vector instruction specifies the indices of the
+ * elements from the two input vectors to place in the result. The elements are
+ * numbered in array-access order, starting with the first vector. These vectors
+ * are always of type v16i8, thus each vector will contain 16 elements of size
+ * 8. More info on the shuffle vector can be found in the <a
+ * href="http://llvm.org/docs/LangRef.html#shufflevector-instruction">Language
+ * Reference</a>.
+ *
+ * The RHSStartValue indicates whether the same input vectors are used (unary)
+ * or two different input vectors are used, based on the following:
+ *   - If the instruction uses the same vector for both inputs, the range of the
+ *     indices will be 0 to 15. In this case, the RHSStart value passed should
+ *     be 0.
+ *   - If the instruction has two different vectors then the range of the
+ *     indices will be 0 to 31. In this case, the RHSStart value passed should
+ *     be 16 (indices 0-15 specify elements in the first vector while indices 16
+ *     to 31 specify elements in the second vector).
+ *
+ * \param[in] N The shuffle vector SD Node to analyze
+ * \param[in] IndexOffset Specifies whether to look for even or odd elements
+ * \param[in] RHSStartValue Specifies the starting index for the righthand input
+ * vector to the shuffle_vector instruction
+ * \return true iff this shuffle vector represents an even or odd word merge
+ */
+static bool isVMerge(ShuffleVectorSDNode *N, unsigned IndexOffset,
+                     unsigned RHSStartValue) {
+  if (N->getValueType(0) != MVT::v16i8)
+    return false;
+
+  for (unsigned i = 0; i < 2; ++i)
+    for (unsigned j = 0; j < 4; ++j)
+      if (!isConstantOrUndef(N->getMaskElt(i*4+j),
+                             i*RHSStartValue+j+IndexOffset) ||
+          !isConstantOrUndef(N->getMaskElt(i*4+j+8),
+                             i*RHSStartValue+j+IndexOffset+8))
+        return false;
+  return true;
+}
+
+/**
+ * \brief Determine if the specified shuffle mask is suitable for the vmrgew or
+ * vmrgow instructions.
+ *
+ * \param[in] N The shuffle vector SD Node to analyze
+ * \param[in] CheckEven Check for an even merge (true) or an odd merge (false)
+ * \param[in] ShuffleKind Identify the type of merge:
+ *   - 0 = big-endian merge with two different inputs;
+ *   - 1 = either-endian merge with two identical inputs;
+ *   - 2 = little-endian merge with two different inputs (inputs are swapped for
+ *     little-endian merges).
+ * \param[in] DAG The current SelectionDAG
+ * \return true iff this shuffle mask 
+ */
+bool PPC::isVMRGEOShuffleMask(ShuffleVectorSDNode *N, bool CheckEven,
+                              unsigned ShuffleKind, SelectionDAG &DAG) {
+  if (DAG.getTarget().getDataLayout()->isLittleEndian()) {
+    unsigned indexOffset = CheckEven ? 4 : 0;
+    if (ShuffleKind == 1) // Unary
+      return isVMerge(N, indexOffset, 0);
+    else if (ShuffleKind == 2) // swapped
+      return isVMerge(N, indexOffset, 16);
+    else
+      return false;
+  }
+  else {
+    unsigned indexOffset = CheckEven ? 0 : 4;
+    if (ShuffleKind == 1) // Unary
+      return isVMerge(N, indexOffset, 0);
+    else if (ShuffleKind == 0) // Normal
+      return isVMerge(N, indexOffset, 16);
+    else
+      return false;
+  }
+  return false;
+}
 
 /// isVSLDOIShuffleMask - If this is a vsldoi shuffle mask, return the shift
 /// amount, otherwise return -1.
@@ -7046,7 +7139,9 @@ SDValue PPCTargetLowering::LowerVECTOR_SHUFFLE(SDValue Op,
         PPC::isVMRGLShuffleMask(SVOp, 4, 1, DAG) ||
         PPC::isVMRGHShuffleMask(SVOp, 1, 1, DAG) ||
         PPC::isVMRGHShuffleMask(SVOp, 2, 1, DAG) ||
-        PPC::isVMRGHShuffleMask(SVOp, 4, 1, DAG)) {
+        PPC::isVMRGHShuffleMask(SVOp, 4, 1, DAG) ||
+        PPC::isVMRGEOShuffleMask(SVOp, true, 1, DAG)   ||
+        PPC::isVMRGEOShuffleMask(SVOp, false, 1, DAG)) {
       return Op;
     }
   }
@@ -7064,7 +7159,9 @@ SDValue PPCTargetLowering::LowerVECTOR_SHUFFLE(SDValue Op,
       PPC::isVMRGLShuffleMask(SVOp, 4, ShuffleKind, DAG) ||
       PPC::isVMRGHShuffleMask(SVOp, 1, ShuffleKind, DAG) ||
       PPC::isVMRGHShuffleMask(SVOp, 2, ShuffleKind, DAG) ||
-      PPC::isVMRGHShuffleMask(SVOp, 4, ShuffleKind, DAG))
+      PPC::isVMRGHShuffleMask(SVOp, 4, ShuffleKind, DAG) ||
+      PPC::isVMRGEOShuffleMask(SVOp, true, ShuffleKind, DAG)             ||
+      PPC::isVMRGEOShuffleMask(SVOp, false, ShuffleKind, DAG))
     return Op;
 
   // Check to see if this is a shuffle of 4-byte values.  If so, we can use our
