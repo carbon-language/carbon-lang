@@ -55,6 +55,7 @@
 		26203D1D1641EFB200A662F7 /* com.apple.debugserver.internal.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = com.apple.debugserver.internal.plist; sourceTree = "<group>"; };
 		26242C390DDBD33C0054A4CC /* debugserver-entitlements.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "debugserver-entitlements.plist"; sourceTree = "<group>"; };
 		264D5D571293835600ED4C01 /* DNBArch.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DNBArch.cpp; sourceTree = "<group>"; };
+		264F679A1B2F9EB200140093 /* JSONGenerator.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = JSONGenerator.h; sourceTree = "<group>"; };
 		26593A060D4931CC001C9FE3 /* ChangeLog */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = ChangeLog; sourceTree = "<group>"; };
 		2660D9CC1192280900958FBD /* StringExtractor.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = StringExtractor.cpp; path = ../../source/Utility/StringExtractor.cpp; sourceTree = SOURCE_ROOT; };
 		2660D9CD1192280900958FBD /* StringExtractor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = StringExtractor.h; path = ../../source/Utility/StringExtractor.h; sourceTree = SOURCE_ROOT; };
@@ -232,6 +233,7 @@
 				26C637E20C71334A0024798E /* DNBRegisterInfo.cpp */,
 				260E7332114BFFE600D1DFB3 /* DNBThreadResumeActions.h */,
 				260E7331114BFFE600D1DFB3 /* DNBThreadResumeActions.cpp */,
+				264F679A1B2F9EB200140093 /* JSONGenerator.h */,
 				AF67AC000D34604D0022D128 /* PseudoTerminal.h */,
 				AF67ABFF0D34604D0022D128 /* PseudoTerminal.cpp */,
 				26C637FD0C71334A0024798E /* PThreadCondition.h */,

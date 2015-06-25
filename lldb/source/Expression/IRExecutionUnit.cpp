@@ -679,16 +679,16 @@ IRExecutionUnit::MemoryManager::getSymbolAddress(const std::string &Name)
         if (sym_ctx.symbol->GetType() == lldb::eSymbolTypeUndefined)
             continue;
         
-        const Address *sym_address = &sym_ctx.symbol->GetAddress();
+        const Address sym_address = sym_ctx.symbol->GetAddress();
         
-        if (!sym_address || !sym_address->IsValid())
+        if (!sym_address.IsValid())
             continue;
 
         symbol_load_addr = sym_ctx.symbol->ResolveCallableAddress(*target_sp);
         
         if (symbol_load_addr == LLDB_INVALID_ADDRESS)
         {
-            symbol_load_addr = sym_ctx.symbol->GetAddress().GetLoadAddress(target_sp.get());
+            symbol_load_addr = sym_address.GetLoadAddress(target_sp.get());
         }
     }
     

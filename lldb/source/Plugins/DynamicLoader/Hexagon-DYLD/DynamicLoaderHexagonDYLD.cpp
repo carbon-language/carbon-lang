@@ -64,7 +64,7 @@ static lldb::addr_t findSymbolAddress( Process *proc, ConstString findName )
 
         if ( ConstString::Compare( findName, symName ) == 0 )
         {
-            Address addr = sym->GetAddress( );
+            Address addr = sym->GetAddressObj( );
             return addr.GetLoadAddress( & proc->GetTarget() );
         }
     }

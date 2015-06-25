@@ -165,7 +165,7 @@ AddressResolverName::SearchCallback
                 {
                     if (symbol_sc.symbol && symbol_sc.symbol->ValueIsAddress())
                     {
-                        if (sc.function->GetAddressRange().GetBaseAddress() == symbol_sc.symbol->GetAddress())
+                        if (sc.function->GetAddressRange().GetBaseAddress() == symbol_sc.symbol->GetAddressRef())
                         {
                             sym_list.RemoveContextAtIndex(j);
                             continue;   // Don't increment j
@@ -211,7 +211,7 @@ AddressResolverName::SearchCallback
         {
             if (sc.symbol && sc.symbol->ValueIsAddress())
             {
-                func_addr = sc.symbol->GetAddress();
+                func_addr = sc.symbol->GetAddressRef();
                 addr_t byte_size = sc.symbol->GetByteSize();
 
                 if (skip_prologue)

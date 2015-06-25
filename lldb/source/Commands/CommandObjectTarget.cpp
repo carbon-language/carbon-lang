@@ -1734,17 +1734,16 @@ LookupSymbolInModule (CommandInterpreter &interpreter, Stream &strm, Module *mod
                     DumpFullpath (strm, &module->GetFileSpec(), 0);
                     strm.PutCString(":\n");
                     strm.IndentMore ();
-                    //Symtab::DumpSymbolHeader (&strm);
                     for (i=0; i < num_matches; ++i)
                     {
                         Symbol *symbol = symtab->SymbolAtIndex(match_indexes[i]);
-                        DumpAddress (interpreter.GetExecutionContext().GetBestExecutionContextScope(),
-                                     symbol->GetAddress(),
-                                     verbose,
-                                     strm);
-
-//                        strm.Indent ();
-//                        symbol->Dump (&strm, interpreter.GetExecutionContext().GetTargetPtr(), i);
+                        if (symbol && symbol->ValueIsAddress())
+                        {
+                            DumpAddress (interpreter.GetExecutionContext().GetBestExecutionContextScope(),
+                                         symbol->GetAddressRef(),
+                                         verbose,
+                                         strm);
+                        }
                     }
                     strm.IndentLess ();
                     return num_matches;

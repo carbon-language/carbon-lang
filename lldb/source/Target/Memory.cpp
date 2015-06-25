@@ -14,8 +14,9 @@
 // Other libraries and framework includes
 // Project includes
 #include "lldb/Core/DataBufferHeap.h"
-#include "lldb/Core/State.h"
 #include "lldb/Core/Log.h"
+#include "lldb/Core/RangeMap.h"
+#include "lldb/Core/State.h"
 #include "lldb/Target/Process.h"
 
 using namespace lldb;
@@ -25,11 +26,12 @@ using namespace lldb_private;
 // MemoryCache constructor
 //----------------------------------------------------------------------
 MemoryCache::MemoryCache(Process &process) :
-    m_process (process),
-    m_cache_line_byte_size (process.GetMemoryCacheLineSize()),
     m_mutex (Mutex::eMutexTypeRecursive),
-    m_cache (),
-    m_invalid_ranges ()
+    m_L1_cache (),
+    m_L2_cache (),
+    m_invalid_ranges (),
+    m_process (process),
+    m_L2_cache_line_byte_size (process.GetMemoryCacheLineSize())
 {
 }
 
@@ -44,10 +46,24 @@ void
 MemoryCache::Clear(bool clear_invalid_ranges)
 {
     Mutex::Locker locker (m_mutex);
-    m_cache.clear();
+    m_L1_cache.clear();
+    m_L2_cache.clear();
     if (clear_invalid_ranges)
         m_invalid_ranges.Clear();
-    m_cache_line_byte_size = m_process.GetMemoryCacheLineSize();
+    m_L2_cache_line_byte_size = m_process.GetMemoryCacheLineSize();
+}
+
+void
+MemoryCache::AddL1CacheData(lldb::addr_t addr, const void *src, size_t src_len)
+{
+    AddL1CacheData(addr,DataBufferSP (new DataBufferHeap(DataBufferHeap(src, src_len))));
+}
+
+void
+MemoryCache::AddL1CacheData(lldb::addr_t addr, const DataBufferSP &data_buffer_sp)
+{
+    Mutex::Locker locker (m_mutex);
+    m_L1_cache[addr] = data_buffer_sp;
 }
 
 void
@@ -57,29 +73,44 @@ MemoryCache::Flush (addr_t addr, size_t size)
         return;
 
     Mutex::Locker locker (m_mutex);
-    if (m_cache.empty())
-        return;
 
-    const uint32_t cache_line_byte_size = m_cache_line_byte_size;
-    const addr_t end_addr = (addr + size - 1);
-    const addr_t first_cache_line_addr = addr - (addr % cache_line_byte_size);
-    const addr_t last_cache_line_addr = end_addr - (end_addr % cache_line_byte_size);
-    // Watch for overflow where size will cause us to go off the end of the
-    // 64 bit address space
-    uint32_t num_cache_lines;
-    if (last_cache_line_addr >= first_cache_line_addr)
-        num_cache_lines = ((last_cache_line_addr - first_cache_line_addr)/cache_line_byte_size) + 1;
-    else
-        num_cache_lines = (UINT64_MAX - first_cache_line_addr + 1)/cache_line_byte_size;
-
-    uint32_t cache_idx = 0;
-    for (addr_t curr_addr = first_cache_line_addr;
-         cache_idx < num_cache_lines;
-         curr_addr += cache_line_byte_size, ++cache_idx)
+    // Erase any blocks from the L1 cache that intersect with the flush range
+    if (!m_L1_cache.empty())
     {
-        BlockMap::iterator pos = m_cache.find (curr_addr);
-        if (pos != m_cache.end())
-            m_cache.erase(pos);
+        AddrRange flush_range(addr, size);
+        BlockMap::iterator pos = m_L1_cache.lower_bound(addr);
+        while (pos != m_L1_cache.end())
+        {
+            AddrRange chunk_range(pos->first, pos->second->GetByteSize());
+            if (!chunk_range.DoesIntersect(flush_range))
+                break;
+            pos = m_L1_cache.erase(pos);
+        }
+    }
+
+    if (!m_L2_cache.empty())
+    {
+        const uint32_t cache_line_byte_size = m_L2_cache_line_byte_size;
+        const addr_t end_addr = (addr + size - 1);
+        const addr_t first_cache_line_addr = addr - (addr % cache_line_byte_size);
+        const addr_t last_cache_line_addr = end_addr - (end_addr % cache_line_byte_size);
+        // Watch for overflow where size will cause us to go off the end of the
+        // 64 bit address space
+        uint32_t num_cache_lines;
+        if (last_cache_line_addr >= first_cache_line_addr)
+            num_cache_lines = ((last_cache_line_addr - first_cache_line_addr)/cache_line_byte_size) + 1;
+        else
+            num_cache_lines = (UINT64_MAX - first_cache_line_addr + 1)/cache_line_byte_size;
+
+        uint32_t cache_idx = 0;
+        for (addr_t curr_addr = first_cache_line_addr;
+             cache_idx < num_cache_lines;
+             curr_addr += cache_line_byte_size, ++cache_idx)
+        {
+            BlockMap::iterator pos = m_L2_cache.find (curr_addr);
+            if (pos != m_L2_cache.end())
+                m_L2_cache.erase(pos);
+        }
     }
 }
 
@@ -122,6 +153,39 @@ MemoryCache::Read (addr_t addr,
 {
     size_t bytes_left = dst_len;
 
+    // Check the L1 cache for a range that contain the entire memory read.
+    // If we find a range in the L1 cache that does, we use it. Else we fall
+    // back to reading memory in m_L2_cache_line_byte_size byte sized chunks.
+    // The L1 cache contains chunks of memory that are not required to be
+    // m_L2_cache_line_byte_size bytes in size, so we don't try anything
+    // tricky when reading from them (no partial reads from the L1 cache).
+
+    Mutex::Locker locker(m_mutex);
+    if (!m_L1_cache.empty())
+    {
+        AddrRange read_range(addr, dst_len);
+        BlockMap::iterator pos = m_L1_cache.lower_bound(addr);
+        if (pos != m_L1_cache.end())
+        {
+            AddrRange chunk_range(pos->first, pos->second->GetByteSize());
+            bool match = chunk_range.Contains(read_range);
+            if (!match && pos != m_L1_cache.begin())
+            {
+                --pos;
+                chunk_range.SetRangeBase(pos->first);
+                chunk_range.SetByteSize(pos->second->GetByteSize());
+                match = chunk_range.Contains(read_range);
+            }
+
+            if (match)
+            {
+                memcpy(dst, pos->second->GetBytes() + addr - chunk_range.GetRangeBase(), dst_len);
+                return dst_len;
+            }
+        }
+    }
+
+
     // If this memory read request is larger than the cache line size, then 
     // we (1) try to read as much of it at once as possible, and (2) don't
     // add the data to the memory cache.  We don't want to split a big read
@@ -129,19 +193,22 @@ MemoryCache::Read (addr_t addr,
     // request, it is unlikely that the caller function will ask for the next
     // 4 bytes after the large memory read - so there's little benefit to saving
     // it in the cache.
-    if (dst && dst_len > m_cache_line_byte_size)
+    if (dst && dst_len > m_L2_cache_line_byte_size)
     {
-        return m_process.ReadMemoryFromInferior (addr, dst, dst_len, error);
+        size_t bytes_read = m_process.ReadMemoryFromInferior (addr, dst, dst_len, error);
+        // Add this non block sized range to the L1 cache if we actually read anything
+        if (bytes_read > 0)
+            AddL1CacheData(addr, dst, bytes_read);
+        return bytes_read;
     }
 
     if (dst && bytes_left > 0)
     {
-        const uint32_t cache_line_byte_size = m_cache_line_byte_size;
+        const uint32_t cache_line_byte_size = m_L2_cache_line_byte_size;
         uint8_t *dst_buf = (uint8_t *)dst;
         addr_t curr_addr = addr - (addr % cache_line_byte_size);
         addr_t cache_offset = addr - curr_addr;
-        Mutex::Locker locker (m_mutex);
-        
+
         while (bytes_left > 0)
         {
             if (m_invalid_ranges.FindEntryThatContains(curr_addr))
@@ -150,8 +217,8 @@ MemoryCache::Read (addr_t addr,
                 return dst_len - bytes_left;
             }
 
-            BlockMap::const_iterator pos = m_cache.find (curr_addr);
-            BlockMap::const_iterator end = m_cache.end ();
+            BlockMap::const_iterator pos = m_L2_cache.find (curr_addr);
+            BlockMap::const_iterator end = m_L2_cache.end ();
             
             if (pos != end)
             {
@@ -208,7 +275,7 @@ MemoryCache::Read (addr_t addr,
                 
                 if (process_bytes_read != cache_line_byte_size)
                     data_buffer_heap_ap->SetByteSize (process_bytes_read);
-                m_cache[curr_addr] = DataBufferSP (data_buffer_heap_ap.release());
+                m_L2_cache[curr_addr] = DataBufferSP (data_buffer_heap_ap.release());
                 // We have read data and put it into the cache, continue through the
                 // loop again to get the data out of the cache...
             }

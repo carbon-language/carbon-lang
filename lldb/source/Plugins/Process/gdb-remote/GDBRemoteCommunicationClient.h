@@ -17,6 +17,7 @@
 // Other libraries and framework includes
 // Project includes
 #include "lldb/Core/ArchSpec.h"
+#include "lldb/Core/StructuredData.h"
 #include "lldb/Target/Process.h"
 
 #include "GDBRemoteCommunication.h"
@@ -542,6 +543,9 @@ public:
     bool
     AvoidGPackets(ProcessGDBRemote *process);
 
+    StructuredData::ObjectSP
+    GetThreadsInfo();
+
     bool
     GetThreadExtendedInfoSupported();
 
@@ -624,7 +628,8 @@ protected:
         m_supports_z4:1,
         m_supports_QEnvironment:1,
         m_supports_QEnvironmentHexEncoded:1,
-        m_supports_qSymbol:1;
+        m_supports_qSymbol:1,
+        m_supports_jThreadsInfo:1;
     
     lldb::pid_t m_curr_pid;
     lldb::tid_t m_curr_tid;         // Current gdb remote protocol thread index for all other operations

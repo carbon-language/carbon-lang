@@ -665,74 +665,71 @@ ClangExpressionDeclMap::GetSymbolAddress (Target &target,
         SymbolContext sym_ctx;
         sc_list.GetContextAtIndex(i, sym_ctx);
 
-        const Address *sym_address = &sym_ctx.symbol->GetAddress();
+        const Address sym_address = sym_ctx.symbol->GetAddress();
 
-        if (!sym_address || !sym_address->IsValid())
+        if (!sym_address.IsValid())
             continue;
 
-        if (sym_address)
+        switch (sym_ctx.symbol->GetType())
         {
-            switch (sym_ctx.symbol->GetType())
-            {
-                case eSymbolTypeCode:
-                case eSymbolTypeTrampoline:
-                    symbol_load_addr = sym_address->GetCallableLoadAddress (&target);
-                    break;
+            case eSymbolTypeCode:
+            case eSymbolTypeTrampoline:
+                symbol_load_addr = sym_address.GetCallableLoadAddress (&target);
+                break;
 
-                case eSymbolTypeResolver:
-                    symbol_load_addr = sym_address->GetCallableLoadAddress (&target, true);
-                    break;
+            case eSymbolTypeResolver:
+                symbol_load_addr = sym_address.GetCallableLoadAddress (&target, true);
+                break;
 
-                case eSymbolTypeReExported:
+            case eSymbolTypeReExported:
+                {
+                    ConstString reexport_name = sym_ctx.symbol->GetReExportedSymbolName();
+                    if (reexport_name)
                     {
-                        ConstString reexport_name = sym_ctx.symbol->GetReExportedSymbolName();
-                        if (reexport_name)
+                        ModuleSP reexport_module_sp;
+                        ModuleSpec reexport_module_spec;
+                        reexport_module_spec.GetPlatformFileSpec() = sym_ctx.symbol->GetReExportedSymbolSharedLibrary();
+                        if (reexport_module_spec.GetPlatformFileSpec())
                         {
-                            ModuleSP reexport_module_sp;
-                            ModuleSpec reexport_module_spec;
-                            reexport_module_spec.GetPlatformFileSpec() = sym_ctx.symbol->GetReExportedSymbolSharedLibrary();
-                            if (reexport_module_spec.GetPlatformFileSpec())
+                            reexport_module_sp = target.GetImages().FindFirstModule(reexport_module_spec);
+                            if (!reexport_module_sp)
                             {
+                                reexport_module_spec.GetPlatformFileSpec().GetDirectory().Clear();
                                 reexport_module_sp = target.GetImages().FindFirstModule(reexport_module_spec);
-                                if (!reexport_module_sp)
-                                {
-                                    reexport_module_spec.GetPlatformFileSpec().GetDirectory().Clear();
-                                    reexport_module_sp = target.GetImages().FindFirstModule(reexport_module_spec);
-                                }
                             }
-                            symbol_load_addr = GetSymbolAddress(target, process, sym_ctx.symbol->GetReExportedSymbolName(), symbol_type, reexport_module_sp.get());
                         }
+                        symbol_load_addr = GetSymbolAddress(target, process, sym_ctx.symbol->GetReExportedSymbolName(), symbol_type, reexport_module_sp.get());
                     }
-                    break;
+                }
+                break;
 
-                case eSymbolTypeData:
-                case eSymbolTypeRuntime:
-                case eSymbolTypeVariable:
-                case eSymbolTypeLocal:
-                case eSymbolTypeParam:
-                case eSymbolTypeInvalid:
-                case eSymbolTypeAbsolute:
-                case eSymbolTypeException:
-                case eSymbolTypeSourceFile:
-                case eSymbolTypeHeaderFile:
-                case eSymbolTypeObjectFile:
-                case eSymbolTypeCommonBlock:
-                case eSymbolTypeBlock:
-                case eSymbolTypeVariableType:
-                case eSymbolTypeLineEntry:
-                case eSymbolTypeLineHeader:
-                case eSymbolTypeScopeBegin:
-                case eSymbolTypeScopeEnd:
-                case eSymbolTypeAdditional:
-                case eSymbolTypeCompiler:
-                case eSymbolTypeInstrumentation:
-                case eSymbolTypeUndefined:
-                case eSymbolTypeObjCClass:
-                case eSymbolTypeObjCMetaClass:
-                case eSymbolTypeObjCIVar:
-                    symbol_load_addr = sym_address->GetLoadAddress (&target);
-                    break;
-            }
+            case eSymbolTypeData:
+            case eSymbolTypeRuntime:
+            case eSymbolTypeVariable:
+            case eSymbolTypeLocal:
+            case eSymbolTypeParam:
+            case eSymbolTypeInvalid:
+            case eSymbolTypeAbsolute:
+            case eSymbolTypeException:
+            case eSymbolTypeSourceFile:
+            case eSymbolTypeHeaderFile:
+            case eSymbolTypeObjectFile:
+            case eSymbolTypeCommonBlock:
+            case eSymbolTypeBlock:
+            case eSymbolTypeVariableType:
+            case eSymbolTypeLineEntry:
+            case eSymbolTypeLineHeader:
+            case eSymbolTypeScopeBegin:
+            case eSymbolTypeScopeEnd:
+            case eSymbolTypeAdditional:
+            case eSymbolTypeCompiler:
+            case eSymbolTypeInstrumentation:
+            case eSymbolTypeUndefined:
+            case eSymbolTypeObjCClass:
+            case eSymbolTypeObjCMetaClass:
+            case eSymbolTypeObjCIVar:
+                symbol_load_addr = sym_address.GetLoadAddress (&target);
+                break;
         }
     }
 
@@ -780,9 +777,9 @@ ClangExpressionDeclMap::FindGlobalDataSymbol (Target &target,
         if (sym_ctx.symbol)
         {
             const Symbol *symbol = sym_ctx.symbol;
-            const Address *sym_address = &symbol->GetAddress();
+            const Address sym_address = symbol->GetAddress();
 
-            if (sym_address && sym_address->IsValid())
+            if (sym_address.IsValid())
             {
                 switch (symbol->GetType())
                 {
@@ -1818,7 +1815,7 @@ ClangExpressionDeclMap::AddOneGenericVariable(NameSearchContext &context,
     entity->EnableParserVars(GetParserID());
     ClangExpressionVariable::ParserVars *parser_vars = entity->GetParserVars(GetParserID());
 
-    const Address &symbol_address = symbol.GetAddress();
+    const Address symbol_address = symbol.GetAddress();
     lldb::addr_t symbol_load_addr = symbol_address.GetLoadAddress(target);
 
     //parser_vars->m_lldb_value.SetContext(Value::eContextTypeClangType, user_type.GetOpaqueQualType());
@@ -1957,7 +1954,7 @@ ClangExpressionDeclMap::AddOneFunction (NameSearchContext &context,
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
 
     NamedDecl *function_decl = NULL;
-    const Address *fun_address = NULL;
+    Address fun_address;
     ClangASTType function_clang_type;
 
     bool is_indirect_function = false;
@@ -1982,7 +1979,7 @@ ClangExpressionDeclMap::AddOneFunction (NameSearchContext &context,
             return;
         }
 
-        fun_address = &function->GetAddressRange().GetBaseAddress();
+        fun_address = function->GetAddressRange().GetBaseAddress();
 
         ClangASTType copied_function_type = GuardedCopyType(function_clang_type);
         if (copied_function_type)
@@ -2016,7 +2013,7 @@ ClangExpressionDeclMap::AddOneFunction (NameSearchContext &context,
     }
     else if (symbol)
     {
-        fun_address = &symbol->GetAddress();
+        fun_address = symbol->GetAddress();
         function_decl = context.AddGenericFunDecl();
         is_indirect_function = symbol->IsIndirect();
     }
@@ -2029,7 +2026,7 @@ ClangExpressionDeclMap::AddOneFunction (NameSearchContext &context,
 
     Target *target = m_parser_vars->m_exe_ctx.GetTargetPtr();
 
-    lldb::addr_t load_addr = fun_address->GetCallableLoadAddress(target, is_indirect_function);
+    lldb::addr_t load_addr = fun_address.GetCallableLoadAddress(target, is_indirect_function);
 
     ClangExpressionVariableSP entity(m_found_entities.CreateVariable (m_parser_vars->m_exe_ctx.GetBestExecutionContextScope (),
                                                                       m_parser_vars->m_target_info.byte_order,
@@ -2052,7 +2049,7 @@ ClangExpressionDeclMap::AddOneFunction (NameSearchContext &context,
     {
         // We have to try finding a file address.
 
-        lldb::addr_t file_addr = fun_address->GetFileAddress();
+        lldb::addr_t file_addr = fun_address.GetFileAddress();
 
         parser_vars->m_lldb_value.SetValueType(Value::eValueTypeFileAddress);
         parser_vars->m_lldb_value.GetScalar() = file_addr;
@@ -2068,7 +2065,7 @@ ClangExpressionDeclMap::AddOneFunction (NameSearchContext &context,
 
         StreamString ss;
 
-        fun_address->Dump(&ss, m_parser_vars->m_exe_ctx.GetBestExecutionContextScope(), Address::DumpStyleResolvedDescription);
+        fun_address.Dump(&ss, m_parser_vars->m_exe_ctx.GetBestExecutionContextScope(), Address::DumpStyleResolvedDescription);
 
         log->Printf("  CEDM::FEVD[%u] Found %s function %s (description %s), returned %s",
                     current_id,

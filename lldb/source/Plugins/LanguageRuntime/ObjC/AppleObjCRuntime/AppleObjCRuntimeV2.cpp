@@ -321,9 +321,9 @@ ExtractRuntimeGlobalSymbol (Process* process,
     if (!byte_size)
         byte_size = process->GetAddressByteSize();
     const Symbol *symbol = module_sp->FindFirstSymbolWithNameAndType(name, lldb::eSymbolTypeData);
-    if (symbol)
+    if (symbol && symbol->ValueIsAddress())
     {
-        lldb::addr_t symbol_load_addr = symbol->GetAddress().GetLoadAddress(&process->GetTarget());
+        lldb::addr_t symbol_load_addr = symbol->GetAddressRef().GetLoadAddress(&process->GetTarget());
         if (symbol_load_addr != LLDB_INVALID_ADDRESS)
         {
             if (read_value)
@@ -815,7 +815,7 @@ AppleObjCRuntimeV2::GetByteOffsetForIvar (ClangASTType &parent_ast_type, const c
         if (sc_list.GetSize() == 1 && sc_list.GetContextAtIndex(0, ivar_offset_symbol))
         {
             if (ivar_offset_symbol.symbol)
-                ivar_offset_address = ivar_offset_symbol.symbol->GetAddress().GetLoadAddress (&target);
+                ivar_offset_address = ivar_offset_symbol.symbol->GetLoadAddress (&target);
         }
 
         //----------------------------------------------------------------------
@@ -1191,7 +1191,7 @@ AppleObjCRuntimeV2::GetISAHashTablePointer ()
         const Symbol *symbol = objc_module_sp->FindFirstSymbolWithNameAndType(g_gdb_objc_realized_classes, lldb::eSymbolTypeAny);
         if (symbol)
         {
-            lldb::addr_t gdb_objc_realized_classes_ptr = symbol->GetAddress().GetLoadAddress(&process->GetTarget());
+            lldb::addr_t gdb_objc_realized_classes_ptr = symbol->GetLoadAddress(&process->GetTarget());
             
             if (gdb_objc_realized_classes_ptr != LLDB_INVALID_ADDRESS)
             {

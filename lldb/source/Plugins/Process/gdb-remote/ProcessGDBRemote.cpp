@@ -378,6 +378,7 @@ ProcessGDBRemote::ProcessGDBRemote(Target& target, Listener &listener) :
     m_async_broadcaster (NULL, "lldb.process.gdb-remote.async-broadcaster"),
     m_async_thread_state_mutex(Mutex::eMutexTypeRecursive),
     m_thread_ids (),
+    m_threads_info_sp (),
     m_continue_c_tids (),
     m_continue_C_tids (),
     m_continue_s_tids (),
@@ -1795,6 +1796,362 @@ ProcessGDBRemote::UpdateThreadList (ThreadList &old_thread_list, ThreadList &new
     return true;
 }
 
+bool
+ProcessGDBRemote::CalculateThreadStopInfo (ThreadGDBRemote *thread)
+{
+    // See if we got thread stop infos for all threads via the "jThreadsInfo" packet
+    if (m_threads_info_sp)
+    {
+        StructuredData::Array *thread_infos = m_threads_info_sp->GetAsArray();
+        if (thread_infos)
+        {
+            lldb::tid_t tid;
+            const size_t n = thread_infos->GetSize();
+            for (size_t i=0; i<n; ++i)
+            {
+                StructuredData::Dictionary *thread_dict = thread_infos->GetItemAtIndex(i)->GetAsDictionary();
+                if (thread_dict)
+                {
+                    if (thread_dict->GetValueForKeyAsInteger<lldb::tid_t>("tid", tid, LLDB_INVALID_THREAD_ID))
+                    {
+                        if (tid == thread->GetID())
+                            return SetThreadStopInfo(thread_dict);
+                    }
+                }
+            }
+        }
+    }
+
+    // Fall back to using the qThreadStopInfo packet
+    StringExtractorGDBRemote stop_packet;
+    if (GetGDBRemote().GetThreadStopInfo(thread->GetProtocolID(), stop_packet))
+        return SetThreadStopInfo (stop_packet) == eStateStopped;
+    return false;
+}
+
+
+ThreadSP
+ProcessGDBRemote::SetThreadStopInfo (lldb::tid_t tid,
+                                     ExpeditedRegisterMap &expedited_register_map,
+                                     uint8_t signo,
+                                     const std::string &thread_name,
+                                     const std::string &reason,
+                                     const std::string &description,
+                                     uint32_t exc_type,
+                                     const std::vector<addr_t> &exc_data,
+                                     addr_t thread_dispatch_qaddr)
+{
+    ThreadSP thread_sp;
+    if (tid != LLDB_INVALID_THREAD_ID)
+    {
+        // Scope for "locker" below
+        {
+            // m_thread_list_real does have its own mutex, but we need to
+            // hold onto the mutex between the call to m_thread_list_real.FindThreadByID(...)
+            // and the m_thread_list_real.AddThread(...) so it doesn't change on us
+            Mutex::Locker locker (m_thread_list_real.GetMutex ());
+            thread_sp = m_thread_list_real.FindThreadByProtocolID(tid, false);
+
+            if (!thread_sp)
+            {
+                // Create the thread if we need to
+                thread_sp.reset (new ThreadGDBRemote (*this, tid));
+                m_thread_list_real.AddThread(thread_sp);
+            }
+        }
+
+        if (thread_sp)
+        {
+            ThreadGDBRemote *gdb_thread = static_cast<ThreadGDBRemote *> (thread_sp.get());
+            gdb_thread->GetRegisterContext()->InvalidateIfNeeded(true);
+            
+            for (const auto &pair : expedited_register_map)
+            {
+                StringExtractor reg_value_extractor;
+                reg_value_extractor.GetStringRef() = pair.second;
+                gdb_thread->PrivateSetRegisterValue (pair.first, reg_value_extractor);
+            }
+
+            // Clear the stop info just in case we don't set it to anything
+            thread_sp->SetStopInfo (StopInfoSP());
+            thread_sp->SetName (thread_name.empty() ? NULL : thread_name.c_str());
+
+            gdb_thread->SetThreadDispatchQAddr (thread_dispatch_qaddr);
+            if (exc_type != 0)
+            {
+                const size_t exc_data_size = exc_data.size();
+
+                thread_sp->SetStopInfo (StopInfoMachException::CreateStopReasonWithMachException (*thread_sp,
+                                                                                                  exc_type,
+                                                                                                  exc_data_size,
+                                                                                                  exc_data_size >= 1 ? exc_data[0] : 0,
+                                                                                                  exc_data_size >= 2 ? exc_data[1] : 0,
+                                                                                                  exc_data_size >= 3 ? exc_data[2] : 0));
+            }
+            else
+            {
+                bool handled = false;
+                bool did_exec = false;
+                if (!reason.empty())
+                {
+                    if (reason.compare("trace") == 0)
+                    {
+                        thread_sp->SetStopInfo (StopInfo::CreateStopReasonToTrace (*thread_sp));
+                        handled = true;
+                    }
+                    else if (reason.compare("breakpoint") == 0)
+                    {
+                        addr_t pc = thread_sp->GetRegisterContext()->GetPC();
+                        lldb::BreakpointSiteSP bp_site_sp = thread_sp->GetProcess()->GetBreakpointSiteList().FindByAddress(pc);
+                        if (bp_site_sp)
+                        {
+                            // If the breakpoint is for this thread, then we'll report the hit, but if it is for another thread,
+                            // we can just report no reason.  We don't need to worry about stepping over the breakpoint here, that
+                            // will be taken care of when the thread resumes and notices that there's a breakpoint under the pc.
+                            handled = true;
+                            if (bp_site_sp->ValidForThisThread (thread_sp.get()))
+                            {
+                                thread_sp->SetStopInfo (StopInfo::CreateStopReasonWithBreakpointSiteID (*thread_sp, bp_site_sp->GetID()));
+                            }
+                            else
+                            {
+                                StopInfoSP invalid_stop_info_sp;
+                                thread_sp->SetStopInfo (invalid_stop_info_sp);
+                            }
+                        }
+                    }
+                    else if (reason.compare("trap") == 0)
+                    {
+                        // Let the trap just use the standard signal stop reason below...
+                    }
+                    else if (reason.compare("watchpoint") == 0)
+                    {
+                        StringExtractor desc_extractor(description.c_str());
+                        addr_t wp_addr = desc_extractor.GetU64(LLDB_INVALID_ADDRESS);
+                        uint32_t wp_index = desc_extractor.GetU32(LLDB_INVALID_INDEX32);
+                        watch_id_t watch_id = LLDB_INVALID_WATCH_ID;
+                        if (wp_addr != LLDB_INVALID_ADDRESS)
+                        {
+                            WatchpointSP wp_sp = GetTarget().GetWatchpointList().FindByAddress(wp_addr);
+                            if (wp_sp)
+                            {
+                                wp_sp->SetHardwareIndex(wp_index);
+                                watch_id = wp_sp->GetID();
+                            }
+                        }
+                        if (watch_id == LLDB_INVALID_WATCH_ID)
+                        {
+                            Log *log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_WATCHPOINTS));
+                            if (log) log->Printf ("failed to find watchpoint");
+                        }
+                        thread_sp->SetStopInfo (StopInfo::CreateStopReasonWithWatchpointID (*thread_sp, watch_id));
+                        handled = true;
+                    }
+                    else if (reason.compare("exception") == 0)
+                    {
+                        thread_sp->SetStopInfo (StopInfo::CreateStopReasonWithException(*thread_sp, description.c_str()));
+                        handled = true;
+                    }
+                    else if (reason.compare("exec") == 0)
+                    {
+                        did_exec = true;
+                        thread_sp->SetStopInfo (StopInfo::CreateStopReasonWithExec(*thread_sp));
+                        handled = true;
+                    }
+                }
+
+                if (!handled && signo && did_exec == false)
+                {
+                    if (signo == SIGTRAP)
+                    {
+                        // Currently we are going to assume SIGTRAP means we are either
+                        // hitting a breakpoint or hardware single stepping.
+                        handled = true;
+                        addr_t pc = thread_sp->GetRegisterContext()->GetPC() + m_breakpoint_pc_offset;
+                        lldb::BreakpointSiteSP bp_site_sp = thread_sp->GetProcess()->GetBreakpointSiteList().FindByAddress(pc);
+
+                        if (bp_site_sp)
+                        {
+                            // If the breakpoint is for this thread, then we'll report the hit, but if it is for another thread,
+                            // we can just report no reason.  We don't need to worry about stepping over the breakpoint here, that
+                            // will be taken care of when the thread resumes and notices that there's a breakpoint under the pc.
+                            if (bp_site_sp->ValidForThisThread (thread_sp.get()))
+                            {
+                                if(m_breakpoint_pc_offset != 0)
+                                    thread_sp->GetRegisterContext()->SetPC(pc);
+                                thread_sp->SetStopInfo (StopInfo::CreateStopReasonWithBreakpointSiteID (*thread_sp, bp_site_sp->GetID()));
+                            }
+                            else
+                            {
+                                StopInfoSP invalid_stop_info_sp;
+                                thread_sp->SetStopInfo (invalid_stop_info_sp);
+                            }
+                        }
+                        else
+                        {
+                            // If we were stepping then assume the stop was the result of the trace.  If we were
+                            // not stepping then report the SIGTRAP.
+                            // FIXME: We are still missing the case where we single step over a trap instruction.
+                            if (thread_sp->GetTemporaryResumeState() == eStateStepping)
+                                thread_sp->SetStopInfo (StopInfo::CreateStopReasonToTrace (*thread_sp));
+                            else
+                                thread_sp->SetStopInfo (StopInfo::CreateStopReasonWithSignal(*thread_sp, signo, description.c_str()));
+                        }
+                    }
+                    if (!handled)
+                        thread_sp->SetStopInfo (StopInfo::CreateStopReasonWithSignal (*thread_sp, signo, description.c_str()));
+                }
+
+                if (!description.empty())
+                {
+                    lldb::StopInfoSP stop_info_sp (thread_sp->GetStopInfo ());
+                    if (stop_info_sp)
+                    {
+                        const char *stop_info_desc = stop_info_sp->GetDescription();
+                        if (!stop_info_desc || !stop_info_desc[0])
+                            stop_info_sp->SetDescription (description.c_str());
+                    }
+                    else
+                    {
+                        thread_sp->SetStopInfo (StopInfo::CreateStopReasonWithException (*thread_sp, description.c_str()));
+                    }
+                }
+            }
+        }
+    }
+    return thread_sp;
+}
+
+StateType
+ProcessGDBRemote::SetThreadStopInfo (StructuredData::Dictionary *thread_dict)
+{
+    static ConstString g_key_tid("tid");
+    static ConstString g_key_name("name");
+    static ConstString g_key_reason("reason");
+    static ConstString g_key_metype("metype");
+    static ConstString g_key_medata("medata");
+    static ConstString g_key_qaddr("qaddr");
+    static ConstString g_key_registers("registers");
+    static ConstString g_key_memory("memory");
+    static ConstString g_key_address("address");
+    static ConstString g_key_bytes("bytes");
+    static ConstString g_key_description("description");
+
+    // Stop with signal and thread info
+    lldb::tid_t tid = LLDB_INVALID_THREAD_ID;
+    uint8_t signo = 0;
+    std::string value;
+    std::string thread_name;
+    std::string reason;
+    std::string description;
+    uint32_t exc_type = 0;
+    std::vector<addr_t> exc_data;
+    addr_t thread_dispatch_qaddr = LLDB_INVALID_ADDRESS;
+    ExpeditedRegisterMap expedited_register_map;
+    // Iterate through all of the thread dictionary key/value pairs from the structured data dictionary
+
+    thread_dict->ForEach([this, &tid, &expedited_register_map, &thread_name, &signo, &reason, &description, &exc_type, &exc_data, &thread_dispatch_qaddr](ConstString key, StructuredData::Object* object) -> bool
+    {
+        if (key == g_key_tid)
+        {
+            // thread in big endian hex
+            tid = object->GetIntegerValue(LLDB_INVALID_THREAD_ID);
+        }
+        else if (key == g_key_metype)
+        {
+            // exception type in big endian hex
+            exc_type = object->GetIntegerValue(0);
+        }
+        else if (key == g_key_medata)
+        {
+            // exception data in big endian hex
+            StructuredData::Array *array = object->GetAsArray();
+            if (array)
+            {
+                array->ForEach([&exc_data](StructuredData::Object* object) -> bool {
+                    exc_data.push_back(object->GetIntegerValue());
+                    return true; // Keep iterating through all array items
+                });
+            }
+        }
+        else if (key == g_key_name)
+        {
+            thread_name = std::move(object->GetStringValue());
+        }
+        else if (key == g_key_qaddr)
+        {
+            thread_dispatch_qaddr = object->GetIntegerValue(LLDB_INVALID_ADDRESS);
+        }
+        else if (key == g_key_reason)
+        {
+            reason = std::move(object->GetStringValue());
+        }
+        else if (key == g_key_description)
+        {
+            description = std::move(object->GetStringValue());
+        }
+        else if (key == g_key_registers)
+        {
+            StructuredData::Dictionary *registers_dict = object->GetAsDictionary();
+
+            if (registers_dict)
+            {
+                registers_dict->ForEach([&expedited_register_map](ConstString key, StructuredData::Object* object) -> bool {
+                    const uint32_t reg = StringConvert::ToUInt32 (key.GetCString(), UINT32_MAX, 10);
+                    if (reg != UINT32_MAX)
+                        expedited_register_map[reg] = std::move(object->GetStringValue());
+                    return true; // Keep iterating through all array items
+                });
+            }
+        }
+        else if (key == g_key_memory)
+        {
+            StructuredData::Array *array = object->GetAsArray();
+            if (array)
+            {
+                array->ForEach([this](StructuredData::Object* object) -> bool {
+                    StructuredData::Dictionary *mem_cache_dict = object->GetAsDictionary();
+                    if (mem_cache_dict)
+                    {
+                        lldb::addr_t mem_cache_addr = LLDB_INVALID_ADDRESS;
+                        if (mem_cache_dict->GetValueForKeyAsInteger<lldb::addr_t>("address", mem_cache_addr))
+                        {
+                            if (mem_cache_addr != LLDB_INVALID_ADDRESS)
+                            {
+                                StringExtractor bytes;
+                                if (mem_cache_dict->GetValueForKeyAsString("bytes", bytes.GetStringRef()))
+                                {
+                                    bytes.SetFilePos(0);
+
+                                    const size_t byte_size = bytes.GetStringRef().size()/2;
+                                    DataBufferSP data_buffer_sp(new DataBufferHeap(byte_size, 0));
+                                    const size_t bytes_copied = bytes.GetHexBytes (data_buffer_sp->GetBytes(), byte_size, 0);
+                                    if (bytes_copied == byte_size)
+                                        m_memory_cache.AddL1CacheData(mem_cache_addr, data_buffer_sp);
+                                }
+                            }
+                        }
+                    }
+                    return true; // Keep iterating through all array items
+                });
+            }
+
+        }
+        return true; // Keep iterating through all dictionary key/value pairs
+    });
+
+    SetThreadStopInfo (tid,
+                       expedited_register_map,
+                       signo,
+                       thread_name,
+                       reason,
+                       description,
+                       exc_type,
+                       exc_data,
+                       thread_dispatch_qaddr);
+
+    return eStateExited;
+}
 
 StateType
 ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
@@ -1825,8 +2182,9 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
                 BuildDynamicRegisterInfo (true);
             }
             // Stop with signal and thread info
+            lldb::tid_t tid = LLDB_INVALID_THREAD_ID;
             const uint8_t signo = stop_packet.GetHexU8();
-            std::string name;
+            std::string key;
             std::string value;
             std::string thread_name;
             std::string reason;
@@ -1838,48 +2196,25 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
             std::string queue_name;
             QueueKind queue_kind = eQueueKindUnknown;
             uint64_t queue_serial = 0;
-            ThreadSP thread_sp;
-            ThreadGDBRemote *gdb_thread = NULL;
-
-            while (stop_packet.GetNameColonValue(name, value))
+            ExpeditedRegisterMap expedited_register_map;
+            while (stop_packet.GetNameColonValue(key, value))
             {
-                if (name.compare("metype") == 0)
+                if (key.compare("metype") == 0)
                 {
                     // exception type in big endian hex
                     exc_type = StringConvert::ToUInt32 (value.c_str(), 0, 16);
                 }
-                else if (name.compare("medata") == 0)
+                else if (key.compare("medata") == 0)
                 {
                     // exception data in big endian hex
                     exc_data.push_back(StringConvert::ToUInt64 (value.c_str(), 0, 16));
                 }
-                else if (name.compare("thread") == 0)
+                else if (key.compare("thread") == 0)
                 {
                     // thread in big endian hex
-                    lldb::tid_t tid = StringConvert::ToUInt64 (value.c_str(), LLDB_INVALID_THREAD_ID, 16);
-                    // m_thread_list_real does have its own mutex, but we need to
-                    // hold onto the mutex between the call to m_thread_list_real.FindThreadByID(...)
-                    // and the m_thread_list_real.AddThread(...) so it doesn't change on us
-                    Mutex::Locker locker (m_thread_list_real.GetMutex ());
-                    thread_sp = m_thread_list_real.FindThreadByProtocolID(tid, false);
-
-                    if (!thread_sp)
-                    {
-                        // Create the thread if we need to
-                        thread_sp.reset (new ThreadGDBRemote (*this, tid));
-                        Log *log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_THREAD));
-                        if (log && log->GetMask().Test(GDBR_LOG_VERBOSE))
-                            log->Printf ("ProcessGDBRemote::%s Adding new thread: %p for thread ID: 0x%" PRIx64 ".\n",
-                                         __FUNCTION__,
-                                         static_cast<void*>(thread_sp.get()),
-                                         thread_sp->GetID());
-
-                        m_thread_list_real.AddThread(thread_sp);
-                    }
-                    gdb_thread = static_cast<ThreadGDBRemote *> (thread_sp.get());
-
+                    tid = StringConvert::ToUInt64 (value.c_str(), LLDB_INVALID_THREAD_ID, 16);
                 }
-                else if (name.compare("threads") == 0)
+                else if (key.compare("threads") == 0)
                 {
                     Mutex::Locker locker(m_thread_list_real.GetMutex());
                     m_thread_ids.clear();
@@ -1901,7 +2236,7 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
                     if (tid != LLDB_INVALID_THREAD_ID)
                         m_thread_ids.push_back (tid);
                 }
-                else if (name.compare("hexname") == 0)
+                else if (key.compare("hexname") == 0)
                 {
                     StringExtractor name_extractor;
                     // Swap "value" over into "name_extractor"
@@ -1910,15 +2245,15 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
                     name_extractor.GetHexByteString (value);
                     thread_name.swap (value);
                 }
-                else if (name.compare("name") == 0)
+                else if (key.compare("name") == 0)
                 {
                     thread_name.swap (value);
                 }
-                else if (name.compare("qaddr") == 0)
+                else if (key.compare("qaddr") == 0)
                 {
                     thread_dispatch_qaddr = StringConvert::ToUInt64 (value.c_str(), 0, 16);
                 }
-                else if (name.compare("qname") == 0)
+                else if (key.compare("qname") == 0)
                 {
                     queue_vars_valid = true;
                     StringExtractor name_extractor;
@@ -1928,7 +2263,7 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
                     name_extractor.GetHexByteString (value);
                     queue_name.swap (value);
                 }
-                else if (name.compare("qkind") == 0)
+                else if (key.compare("qkind") == 0)
                 {
                     queue_vars_valid = true;
                     if (value == "serial")
@@ -1936,16 +2271,16 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
                     else if (value == "concurrent")
                         queue_kind = eQueueKindConcurrent;
                 }
-                else if (name.compare("qserial") == 0)
+                else if (key.compare("qserial") == 0)
                 {
                     queue_vars_valid = true;
                     queue_serial = StringConvert::ToUInt64 (value.c_str(), 0, 0);
                 }
-                else if (name.compare("reason") == 0)
+                else if (key.compare("reason") == 0)
                 {
                     reason.swap(value);
                 }
-                else if (name.compare("description") == 0)
+                else if (key.compare("description") == 0)
                 {
                     StringExtractor desc_extractor;
                     // Swap "value" over into "name_extractor"
@@ -1954,33 +2289,56 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
                     desc_extractor.GetHexByteString (value);
                     description.swap(value);
                 }
-                else if (name.size() == 2 && ::isxdigit(name[0]) && ::isxdigit(name[1]))
+                else if (key.compare("memory") == 0)
                 {
-                    // We have a register number that contains an expedited
-                    // register value. Lets supply this register to our thread
-                    // so it won't have to go and read it.
-                    if (gdb_thread)
-                    {
-                        uint32_t reg = StringConvert::ToUInt32 (name.c_str(), UINT32_MAX, 16);
+                    // Expedited memory. GDB servers can choose to send back expedited memory
+                    // that can populate the L1 memory cache in the process so that things like
+                    // the frame pointer backchain can be expedited. This will help stack
+                    // backtracing be more efficient by not having to send as many memory read
+                    // requests down the remote GDB server.
 
-                        if (reg != UINT32_MAX)
+                    // Key/value pair format: memory:<addr>=<bytes>;
+                    // <addr> is a number whose base will be interpreted by the prefix:
+                    //      "0x[0-9a-fA-F]+" for hex
+                    //      "0[0-7]+" for octal
+                    //      "[1-9]+" for decimal
+                    // <bytes> is native endian ASCII hex bytes just like the register values
+                    llvm::StringRef value_ref(value);
+                    std::pair<llvm::StringRef, llvm::StringRef> pair;
+                    pair = value_ref.split('=');
+                    if (!pair.first.empty() && !pair.second.empty())
+                    {
+                        std::string addr_str(pair.first.str());
+                        const lldb::addr_t mem_cache_addr = StringConvert::ToUInt64(addr_str.c_str(), LLDB_INVALID_ADDRESS, 0);
+                        if (mem_cache_addr != LLDB_INVALID_ADDRESS)
                         {
-                            StringExtractor reg_value_extractor;
-                            // Swap "value" over into "reg_value_extractor"
-                            reg_value_extractor.GetStringRef().swap(value);
-                            if (!gdb_thread->PrivateSetRegisterValue (reg, reg_value_extractor))
-                            {
-                                Host::SetCrashDescriptionWithFormat("Setting thread register '%s' (decoded to %u (0x%x)) with value '%s' for stop packet: '%s'", 
-                                                                    name.c_str(), 
-                                                                    reg, 
-                                                                    reg, 
-                                                                    reg_value_extractor.GetStringRef().c_str(), 
-                                                                    stop_packet.GetStringRef().c_str());
-                            }
+                            StringExtractor bytes;
+                            bytes.GetStringRef() = std::move(pair.second.str());
+                            const size_t byte_size = bytes.GetStringRef().size()/2;
+                            DataBufferSP data_buffer_sp(new DataBufferHeap(byte_size, 0));
+                            const size_t bytes_copied = bytes.GetHexBytes (data_buffer_sp->GetBytes(), byte_size, 0);
+                            if (bytes_copied == byte_size)
+                                m_memory_cache.AddL1CacheData(mem_cache_addr, data_buffer_sp);
                         }
                     }
                 }
+                else if (key.size() == 2 && ::isxdigit(key[0]) && ::isxdigit(key[1]))
+                {
+                    uint32_t reg = StringConvert::ToUInt32 (key.c_str(), UINT32_MAX, 16);
+                    if (reg != UINT32_MAX)
+                        expedited_register_map[reg] = std::move(value);
+                }
             }
+
+            ThreadSP thread_sp = SetThreadStopInfo (tid,
+                                                    expedited_register_map,
+                                                    signo,
+                                                    thread_name,
+                                                    reason,
+                                                    description,
+                                                    exc_type,
+                                                    exc_data,
+                                                    thread_dispatch_qaddr);
 
             // If the response is old style 'S' packet which does not provide us with thread information
             // then update the thread list and choose the first one.
@@ -1992,164 +2350,9 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
                 {
                     Mutex::Locker locker (m_thread_list_real.GetMutex ());
                     thread_sp = m_thread_list_real.FindThreadByProtocolID (m_thread_ids.front (), false);
-                    if (thread_sp)
-                        gdb_thread = static_cast<ThreadGDBRemote *> (thread_sp.get ());
                 }
             }
 
-            if (thread_sp)
-            {
-                // Clear the stop info just in case we don't set it to anything
-                thread_sp->SetStopInfo (StopInfoSP());
-
-                gdb_thread->SetThreadDispatchQAddr (thread_dispatch_qaddr);
-                if (queue_vars_valid)
-                    gdb_thread->SetQueueInfo(std::move(queue_name), queue_kind, queue_serial);
-                else
-                    gdb_thread->ClearQueueInfo();
-
-                gdb_thread->SetName (thread_name.empty() ? NULL : thread_name.c_str());
-                if (exc_type != 0)
-                {
-                    const size_t exc_data_size = exc_data.size();
-
-                    thread_sp->SetStopInfo (StopInfoMachException::CreateStopReasonWithMachException (*thread_sp,
-                                                                                                      exc_type,
-                                                                                                      exc_data_size,
-                                                                                                      exc_data_size >= 1 ? exc_data[0] : 0,
-                                                                                                      exc_data_size >= 2 ? exc_data[1] : 0,
-                                                                                                      exc_data_size >= 3 ? exc_data[2] : 0));
-                }
-                else
-                {
-                    bool handled = false;
-                    bool did_exec = false;
-                    if (!reason.empty())
-                    {
-                        if (reason.compare("trace") == 0)
-                        {
-                            thread_sp->SetStopInfo (StopInfo::CreateStopReasonToTrace (*thread_sp));
-                            handled = true;
-                        }
-                        else if (reason.compare("breakpoint") == 0)
-                        {
-                            addr_t pc = thread_sp->GetRegisterContext()->GetPC();
-                            lldb::BreakpointSiteSP bp_site_sp = thread_sp->GetProcess()->GetBreakpointSiteList().FindByAddress(pc);
-                            if (bp_site_sp)
-                            {
-                                // If the breakpoint is for this thread, then we'll report the hit, but if it is for another thread,
-                                // we can just report no reason.  We don't need to worry about stepping over the breakpoint here, that
-                                // will be taken care of when the thread resumes and notices that there's a breakpoint under the pc.
-                                handled = true;
-                                if (bp_site_sp->ValidForThisThread (thread_sp.get()))
-                                {
-                                    thread_sp->SetStopInfo (StopInfo::CreateStopReasonWithBreakpointSiteID (*thread_sp, bp_site_sp->GetID()));
-                                }
-                                else
-                                {
-                                    StopInfoSP invalid_stop_info_sp;
-                                    thread_sp->SetStopInfo (invalid_stop_info_sp);
-                                }
-                            }
-                        }
-                        else if (reason.compare("trap") == 0)
-                        {
-                            // Let the trap just use the standard signal stop reason below...
-                        }
-                        else if (reason.compare("watchpoint") == 0)
-                        {
-                            StringExtractor desc_extractor(description.c_str());
-                            addr_t wp_addr = desc_extractor.GetU64(LLDB_INVALID_ADDRESS);
-                            uint32_t wp_index = desc_extractor.GetU32(LLDB_INVALID_INDEX32);
-                            watch_id_t watch_id = LLDB_INVALID_WATCH_ID;
-                            if (wp_addr != LLDB_INVALID_ADDRESS)
-                            {
-                                WatchpointSP wp_sp = GetTarget().GetWatchpointList().FindByAddress(wp_addr);
-                                if (wp_sp)
-                                {
-                                    wp_sp->SetHardwareIndex(wp_index);
-                                    watch_id = wp_sp->GetID();
-                                }
-                            }
-                            if (watch_id == LLDB_INVALID_WATCH_ID)
-                            {
-                                Log *log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_WATCHPOINTS));
-                                if (log) log->Printf ("failed to find watchpoint");
-                            }
-                            thread_sp->SetStopInfo (StopInfo::CreateStopReasonWithWatchpointID (*thread_sp, watch_id));
-                            handled = true;
-                        }
-                        else if (reason.compare("exception") == 0)
-                        {
-                            thread_sp->SetStopInfo (StopInfo::CreateStopReasonWithException(*thread_sp, description.c_str()));
-                            handled = true;
-                        }
-                        else if (reason.compare("exec") == 0)
-                        {
-                            did_exec = true;
-                            thread_sp->SetStopInfo (StopInfo::CreateStopReasonWithExec(*thread_sp));
-                            handled = true;
-                        }
-                    }
-
-                    if (!handled && signo && did_exec == false)
-                    {
-                        if (signo == SIGTRAP)
-                        {
-                            // Currently we are going to assume SIGTRAP means we are either
-                            // hitting a breakpoint or hardware single stepping. 
-                            handled = true;
-                            addr_t pc = thread_sp->GetRegisterContext()->GetPC() + m_breakpoint_pc_offset;
-                            lldb::BreakpointSiteSP bp_site_sp = thread_sp->GetProcess()->GetBreakpointSiteList().FindByAddress(pc);
-
-                            if (bp_site_sp)
-                            {
-                                // If the breakpoint is for this thread, then we'll report the hit, but if it is for another thread,
-                                // we can just report no reason.  We don't need to worry about stepping over the breakpoint here, that
-                                // will be taken care of when the thread resumes and notices that there's a breakpoint under the pc.
-                                if (bp_site_sp->ValidForThisThread (thread_sp.get()))
-                                {
-                                    if(m_breakpoint_pc_offset != 0)
-                                        thread_sp->GetRegisterContext()->SetPC(pc);
-                                    thread_sp->SetStopInfo (StopInfo::CreateStopReasonWithBreakpointSiteID (*thread_sp, bp_site_sp->GetID()));
-                                }
-                                else
-                                {
-                                    StopInfoSP invalid_stop_info_sp;
-                                    thread_sp->SetStopInfo (invalid_stop_info_sp);
-                                }
-                            }
-                            else
-                            {
-                                // If we were stepping then assume the stop was the result of the trace.  If we were
-                                // not stepping then report the SIGTRAP.
-                                // FIXME: We are still missing the case where we single step over a trap instruction.
-                                if (thread_sp->GetTemporaryResumeState() == eStateStepping)
-                                    thread_sp->SetStopInfo (StopInfo::CreateStopReasonToTrace (*thread_sp));
-                                else
-                                    thread_sp->SetStopInfo (StopInfo::CreateStopReasonWithSignal(*thread_sp, signo, description.c_str()));
-                            }
-                        }
-                        if (!handled)
-                            thread_sp->SetStopInfo (StopInfo::CreateStopReasonWithSignal (*thread_sp, signo, description.c_str()));
-                    }
-
-                    if (!description.empty())
-                    {
-                        lldb::StopInfoSP stop_info_sp (thread_sp->GetStopInfo ());
-                        if (stop_info_sp)
-                        {
-                            const char *stop_info_desc = stop_info_sp->GetDescription();
-                            if (!stop_info_desc || !stop_info_desc[0])
-                                stop_info_sp->SetDescription (description.c_str());
-                        }
-                        else
-                        {
-                            thread_sp->SetStopInfo (StopInfo::CreateStopReasonWithException (*thread_sp, description.c_str()));
-                        }
-                    }
-                }
-            }
             return eStateStopped;
         }
         break;
@@ -2205,6 +2408,11 @@ ProcessGDBRemote::RefreshStateAfterStop ()
         m_thread_list.SetSelectedThreadByID(m_initial_tid);
         m_initial_tid = LLDB_INVALID_THREAD_ID;
     }
+
+    // Fetch the threads via an efficient packet that gets stop infos for all threads
+    // only if we have more than one thread
+    if (m_thread_ids.size() > 1)
+        m_threads_info_sp = m_gdb_comm.GetThreadsInfo();
 
     // Let all threads recover from stopping and do any clean up based
     // on the previous thread state (if any).

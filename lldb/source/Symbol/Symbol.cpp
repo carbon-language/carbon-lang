@@ -491,7 +491,7 @@ Symbol::CalculateSymbolContext (SymbolContext *sc)
     // Symbols can reconstruct the symbol and the module in the symbol context
     sc->symbol = this;
     if (ValueIsAddress())
-        sc->module_sp = GetAddress().GetModule();
+        sc->module_sp = GetAddressRef().GetModule();
     else
         sc->module_sp.reset();
 }
@@ -500,7 +500,7 @@ ModuleSP
 Symbol::CalculateSymbolContextModule ()
 {
     if (ValueIsAddress())
-        return GetAddress().GetModule();
+        return GetAddressRef().GetModule();
     return ModuleSP();
 }
 
@@ -516,7 +516,7 @@ Symbol::DumpSymbolContext (Stream *s)
     bool dumped_module = false;
     if (ValueIsAddress())
     {
-        ModuleSP module_sp (GetAddress().GetModule());
+        ModuleSP module_sp (GetAddressRef().GetModule());
         if (module_sp)
         {
             dumped_module = true;
@@ -616,6 +616,25 @@ Symbol::ResolveReExportedSymbol (Target &target) const
     }
     return nullptr;
 }
+
+lldb::addr_t
+Symbol::GetFileAddress () const
+{
+    if (ValueIsAddress())
+        return GetAddressRef().GetFileAddress();
+    else
+        return LLDB_INVALID_ADDRESS;
+}
+
+lldb::addr_t
+Symbol::GetLoadAddress (Target *target) const
+{
+    if (ValueIsAddress())
+        return GetAddressRef().GetLoadAddress(target);
+    else
+        return LLDB_INVALID_ADDRESS;
+}
+
 
 lldb::addr_t
 Symbol::ResolveCallableAddress(Target &target) const

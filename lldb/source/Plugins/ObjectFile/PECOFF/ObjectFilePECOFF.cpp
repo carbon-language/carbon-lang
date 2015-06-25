@@ -574,7 +574,7 @@ ObjectFilePECOFF::GetSymtab()
                     if ((int16_t)symbol.sect >= 1)
                     {
                         Address symbol_addr(sect_list->GetSectionAtIndex(symbol.sect-1), symbol.value);
-                        symbols[i].GetAddress() = symbol_addr;
+                        symbols[i].GetAddressRef() = symbol_addr;
                     }
 
                     if (symbol.naux > 0)
@@ -633,7 +633,7 @@ ObjectFilePECOFF::GetSymtab()
 
                     Address symbol_addr(m_coff_header_opt.image_base + function_rva, sect_list);
                     symbols[i].GetMangled().SetValue(ConstString(symbol_name.c_str()));
-                    symbols[i].GetAddress() = symbol_addr;
+                    symbols[i].GetAddressRef() = symbol_addr;
                     symbols[i].SetType(lldb::eSymbolTypeCode);
                     symbols[i].SetDebug(true);
                 }

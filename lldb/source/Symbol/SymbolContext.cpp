@@ -245,7 +245,7 @@ SymbolContext::DumpStopContext (
 
         if (addr.IsValid() && symbol->ValueIsAddress())
         {
-            const addr_t symbol_offset = addr.GetOffset() - symbol->GetAddress().GetOffset();
+            const addr_t symbol_offset = addr.GetOffset() - symbol->GetAddressRef().GetOffset();
             if (show_function_name == false)
             {
                 // Print +offset even if offset is 0
@@ -515,7 +515,7 @@ SymbolContext::GetAddressRange (uint32_t scope,
         {
             if (symbol->ValueIsAddress())
             {
-                range.GetBaseAddress() = symbol->GetAddress();
+                range.GetBaseAddress() = symbol->GetAddressRef();
                 range.SetByteSize (symbol->GetByteSize());
                 return true;
             }
@@ -1106,7 +1106,7 @@ SymbolContextList::AppendIfUnique (const SymbolContext& sc, bool merge_symbol_in
 
                 if (pos->function)
                 {
-                    if (pos->function->GetAddressRange().GetBaseAddress() == sc.symbol->GetAddress())
+                    if (pos->function->GetAddressRange().GetBaseAddress() == sc.symbol->GetAddressRef())
                     {
                         // Do we already have a function with this symbol?
                         if (pos->symbol == sc.symbol)
@@ -1148,7 +1148,7 @@ SymbolContextList::MergeSymbolContextIntoFunctionContext (const SymbolContext& s
                 
                 if (function_sc.function)
                 {
-                    if (function_sc.function->GetAddressRange().GetBaseAddress() == symbol_sc.symbol->GetAddress())
+                    if (function_sc.function->GetAddressRange().GetBaseAddress() == symbol_sc.symbol->GetAddressRef())
                     {
                         // Do we already have a function with this symbol?
                         if (function_sc.symbol == symbol_sc.symbol)

@@ -328,7 +328,7 @@ ObjectFile::GetAddressClass (addr_t file_addr)
         {
             if (symbol->ValueIsAddress())
             {
-                const SectionSP section_sp (symbol->GetAddress().GetSection());
+                const SectionSP section_sp (symbol->GetAddressRef().GetSection());
                 if (section_sp)
                 {
                     const SectionType section_type = section_sp->GetType();

@@ -1052,7 +1052,7 @@ public:
                         m_symbol.GetName().AsCString());
         }
         
-        Address &sym_address = m_symbol.GetAddress();
+        const Address sym_address = m_symbol.GetAddress();
 
         ExecutionContextScope *exe_scope = map.GetBestExecutionContextScope();
         

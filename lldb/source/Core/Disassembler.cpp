@@ -548,7 +548,7 @@ Disassembler::Disassemble
         }
         else if (sc.symbol && sc.symbol->ValueIsAddress())
         {
-            range.GetBaseAddress() = sc.symbol->GetAddress();
+            range.GetBaseAddress() = sc.symbol->GetAddressRef();
             range.SetByteSize (sc.symbol->GetByteSize());
         }
         else

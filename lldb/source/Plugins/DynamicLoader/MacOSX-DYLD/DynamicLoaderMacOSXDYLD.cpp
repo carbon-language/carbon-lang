@@ -407,7 +407,7 @@ DynamicLoaderMacOSXDYLD::ReadDYLDInfoFromMemoryAndSetNotificationCallback(lldb::
                 static ConstString g_dyld_all_image_infos ("dyld_all_image_infos");
                 const Symbol *symbol = dyld_module_sp->FindFirstSymbolWithNameAndType (g_dyld_all_image_infos, eSymbolTypeData);
                 if (symbol)
-                    m_dyld_all_image_infos_addr = symbol->GetAddress().GetLoadAddress(&target);
+                    m_dyld_all_image_infos_addr = symbol->GetLoadAddress(&target);
             }
 
             // Update all image infos
@@ -1370,7 +1370,7 @@ DynamicLoaderMacOSXDYLD::AlwaysRelyOnEHUnwindInfo (SymbolContext &sym_ctx)
     ModuleSP module_sp;
     if (sym_ctx.symbol)
     {
-        module_sp = sym_ctx.symbol->GetAddress().GetModule();
+        module_sp = sym_ctx.symbol->GetAddressRef().GetModule();
     }
     if (module_sp.get() == NULL && sym_ctx.function)
     {
@@ -1649,12 +1649,13 @@ DynamicLoaderMacOSXDYLD::GetStepThroughTrampolinePlan (Thread &thread, bool stop
                                 Symbol *actual_symbol = context.symbol->ResolveReExportedSymbol(*target_sp.get());
                                 if (actual_symbol)
                                 {
-                                    if (actual_symbol->GetAddress().IsValid())
+                                    const Address actual_symbol_addr = actual_symbol->GetAddress();
+                                    if (actual_symbol_addr.IsValid())
                                     {
-                                        addresses.push_back(actual_symbol->GetAddress());
+                                        addresses.push_back(actual_symbol_addr);
                                         if (log)
                                         {
-                                            lldb::addr_t load_addr = actual_symbol->GetAddress().GetLoadAddress(target_sp.get());
+                                            lldb::addr_t load_addr = actual_symbol_addr.GetLoadAddress(target_sp.get());
                                             log->Printf ("Found a re-exported symbol: %s at 0x%" PRIx64 ".",
                                                          actual_symbol->GetName().GetCString(), load_addr);
                                         }
@@ -1720,7 +1721,8 @@ DynamicLoaderMacOSXDYLD::GetStepThroughTrampolinePlan (Thread &thread, bool stop
                 if (symbol && symbol->IsIndirect())
                 {
                     Error error;
-                    addr_t resolved_addr = thread.GetProcess()->ResolveIndirectFunction(&symbol->GetAddress(), error);
+                    Address symbol_address = symbol->GetAddress();
+                    addr_t resolved_addr = thread.GetProcess()->ResolveIndirectFunction(&symbol_address, error);
                     if (error.Success())
                     {
                         load_addrs.push_back(resolved_addr);

@@ -477,7 +477,7 @@ DumpAddressOffsetFromFunction (Stream &s,
                 }
             }
             else if (sc->symbol && sc->symbol->ValueIsAddress())
-                func_addr = sc->symbol->GetAddress();
+                func_addr = sc->symbol->GetAddressRef();
         }
 
         if (func_addr.IsValid())

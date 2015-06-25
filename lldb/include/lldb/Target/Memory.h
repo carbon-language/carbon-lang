@@ -52,7 +52,7 @@ namespace lldb_private {
         uint32_t
         GetMemoryCacheLineSize() const
         {
-            return m_cache_line_byte_size ;
+            return m_L2_cache_line_byte_size ;
         }
         
         void
@@ -61,17 +61,26 @@ namespace lldb_private {
         bool
         RemoveInvalidRange (lldb::addr_t base_addr, lldb::addr_t byte_size);
 
+        // Allow external sources to populate data into the L1 memory cache
+        void
+        AddL1CacheData(lldb::addr_t addr, const void *src, size_t src_len);
+
+        void
+        AddL1CacheData(lldb::addr_t addr, const lldb::DataBufferSP &data_buffer_sp);
+
     protected:
         typedef std::map<lldb::addr_t, lldb::DataBufferSP> BlockMap;
         typedef RangeArray<lldb::addr_t, lldb::addr_t, 4> InvalidRanges;
+        typedef Range<lldb::addr_t, lldb::addr_t> AddrRange;
         //------------------------------------------------------------------
         // Classes that inherit from MemoryCache can see and modify these
         //------------------------------------------------------------------
-        Process &m_process;
-        uint32_t m_cache_line_byte_size;
         Mutex m_mutex;
-        BlockMap m_cache;
+        BlockMap m_L1_cache; // A first level memory cache whose chunk sizes vary that will be used only if the memory read fits entirely in a chunk
+        BlockMap m_L2_cache; // A memory cache of fixed size chinks (m_L2_cache_line_byte_size bytes in size each)
         InvalidRanges m_invalid_ranges;
+        Process &m_process;
+        uint32_t m_L2_cache_line_byte_size;
     private:
         DISALLOW_COPY_AND_ASSIGN (MemoryCache);
     };

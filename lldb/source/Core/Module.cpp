@@ -902,10 +902,9 @@ Module::FindFunctions (const RegularExpression& regex,
                         {
                             sc.symbol = symtab->SymbolAtIndex(symbol_indexes[i]);
                             SymbolType sym_type = sc.symbol->GetType();
-                            if (sc.symbol && (sym_type == eSymbolTypeCode ||
-                                              sym_type == eSymbolTypeResolver))
+                            if (sc.symbol && sc.symbol->ValueIsAddress() && (sym_type == eSymbolTypeCode || sym_type == eSymbolTypeResolver))
                             {
-                                FileAddrToIndexMap::const_iterator pos = file_addr_to_index.find(sc.symbol->GetAddress().GetFileAddress());
+                                FileAddrToIndexMap::const_iterator pos = file_addr_to_index.find(sc.symbol->GetAddressRef().GetFileAddress());
                                 if (pos == end)
                                     sc_list.Append(sc);
                                 else

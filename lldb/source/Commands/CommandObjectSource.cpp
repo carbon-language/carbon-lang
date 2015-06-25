@@ -537,9 +537,9 @@ protected:
                 {
                     SymbolContext sc;
                     sc_list_symbols.GetContextAtIndex (i, sc);
-                    if (sc.symbol)
+                    if (sc.symbol && sc.symbol->ValueIsAddress())
                     {
-                        const Address &base_address = sc.symbol->GetAddress();
+                        const Address &base_address = sc.symbol->GetAddressRef();
                         Function *function = base_address.CalculateSymbolContextFunction();
                         if (function)
                         {

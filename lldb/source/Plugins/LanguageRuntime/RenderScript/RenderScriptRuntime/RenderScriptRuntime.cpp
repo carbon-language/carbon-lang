@@ -422,7 +422,7 @@ RenderScriptRuntime::LoadRuntimeHooks(lldb::ModuleSP module, ModuleKind kind)
 
         const Symbol *sym = module->FindFirstSymbolWithNameAndType(ConstString(hook_defn->symbol_name), eSymbolTypeCode);
 
-        addr_t addr = sym->GetAddress().GetLoadAddress(&target);
+        addr_t addr = sym->GetLoadAddress(&target);
         if (addr == LLDB_INVALID_ADDRESS)
         {
             if(log)
@@ -542,7 +542,7 @@ RenderScriptRuntime::LoadModule(const lldb::ModuleSP &module_sp)
                         Error error;
                         uint32_t flag = 0x00000001U;
                         Target &target = GetProcess()->GetTarget();
-                        addr_t addr = debug_present->GetAddress().GetLoadAddress(&target);
+                        addr_t addr = debug_present->GetLoadAddress(&target);
                         GetProcess()->WriteMemory(addr, &flag, sizeof(flag), error);
                         if(error.Success())
                         {
@@ -597,7 +597,7 @@ RSModuleDescriptor::ParseRSInfo()
     const Symbol *info_sym = m_module->FindFirstSymbolWithNameAndType(ConstString(".rs.info"), eSymbolTypeData);
     if (info_sym)
     {
-        const addr_t addr = info_sym->GetAddress().GetFileAddress();
+        const addr_t addr = info_sym->GetAddressRef().GetFileAddress();
         const addr_t size = info_sym->GetByteSize();
         const FileSpec fs = m_module->GetFileSpec();
 
@@ -809,7 +809,7 @@ RenderScriptRuntime::AttemptBreakpointAtKernelName(Stream &strm, const char* nam
                     }
                 }
 
-                addr_t bp_addr = kernel_sym->GetAddress().GetLoadAddress(&GetProcess()->GetTarget());
+                addr_t bp_addr = kernel_sym->GetLoadAddress(&GetProcess()->GetTarget());
                 if (bp_addr == LLDB_INVALID_ADDRESS)
                 {
                     error.SetErrorStringWithFormat("Could not locate load address for symbols of kernel '%s'.", name);

@@ -100,6 +100,7 @@ GDBRemoteCommunicationClient::GDBRemoteCommunicationClient() :
     m_supports_QEnvironment (true),
     m_supports_QEnvironmentHexEncoded (true),
     m_supports_qSymbol (true),
+    m_supports_jThreadsInfo (true),
     m_curr_pid (LLDB_INVALID_PROCESS_ID),
     m_curr_tid (LLDB_INVALID_THREAD_ID),
     m_curr_tid_run (LLDB_INVALID_THREAD_ID),
@@ -603,6 +604,32 @@ GDBRemoteCommunicationClient::GetpPacketSupported (lldb::tid_t tid)
     }
     return m_supports_p;
 }
+
+StructuredData::ObjectSP
+GDBRemoteCommunicationClient::GetThreadsInfo()
+{
+    // Get information on all threads at one using the "jThreadsInfo" packet
+    StructuredData::ObjectSP object_sp;
+
+    if (m_supports_jThreadsInfo)
+    {
+        StringExtractorGDBRemote response;
+        m_supports_jThreadExtendedInfo = eLazyBoolNo;
+        if (SendPacketAndWaitForResponse("jThreadsInfo", response, false) == PacketResult::Success)
+        {
+            if (response.IsUnsupportedResponse())
+            {
+                m_supports_jThreadsInfo = false;
+            }
+            else if (!response.Empty())
+            {
+                object_sp = StructuredData::ParseJSON (response.GetStringRef());
+            }
+        }
+    }
+    return object_sp;
+}
+
 
 bool
 GDBRemoteCommunicationClient::GetThreadExtendedInfoSupported ()
@@ -4296,11 +4323,52 @@ GDBRemoteCommunicationClient::ServeSymbolLookups(lldb_private::Process *process)
                                 lldb_private::SymbolContextList sc_list;
                                 if (process->GetTarget().GetImages().FindSymbolsWithNameAndType(ConstString(symbol_name), eSymbolTypeAny, sc_list))
                                 {
-                                    SymbolContext sc;
-                                    if (sc_list.GetContextAtIndex(0, sc))
+                                    const size_t num_scs = sc_list.GetSize();
+                                    for (size_t sc_idx=0; sc_idx<num_scs && symbol_load_addr == LLDB_INVALID_ADDRESS; ++sc_idx)
                                     {
-                                        if (sc.symbol)
-                                            symbol_load_addr = sc.symbol->GetAddress().GetLoadAddress(&process->GetTarget());
+                                        SymbolContext sc;
+                                        if (sc_list.GetContextAtIndex(sc_idx, sc))
+                                        {
+                                            if (sc.symbol)
+                                            {
+                                                switch (sc.symbol->GetType())
+                                                {
+                                                case eSymbolTypeInvalid:
+                                                case eSymbolTypeAbsolute:
+                                                case eSymbolTypeUndefined:
+                                                case eSymbolTypeSourceFile:
+                                                case eSymbolTypeHeaderFile:
+                                                case eSymbolTypeObjectFile:
+                                                case eSymbolTypeCommonBlock:
+                                                case eSymbolTypeBlock:
+                                                case eSymbolTypeLocal:
+                                                case eSymbolTypeParam:
+                                                case eSymbolTypeVariable:
+                                                case eSymbolTypeVariableType:
+                                                case eSymbolTypeLineEntry:
+                                                case eSymbolTypeLineHeader:
+                                                case eSymbolTypeScopeBegin:
+                                                case eSymbolTypeScopeEnd:
+                                                case eSymbolTypeAdditional:
+                                                case eSymbolTypeCompiler:
+                                                case eSymbolTypeInstrumentation:
+                                                case eSymbolTypeTrampoline:
+                                                    break;
+
+                                                case eSymbolTypeCode:
+                                                case eSymbolTypeResolver:
+                                                case eSymbolTypeData:
+                                                case eSymbolTypeRuntime:
+                                                case eSymbolTypeException:
+                                                case eSymbolTypeObjCClass:
+                                                case eSymbolTypeObjCMetaClass:
+                                                case eSymbolTypeObjCIVar:
+                                                case eSymbolTypeReExported:
+                                                    symbol_load_addr = sc.symbol->GetLoadAddress(&process->GetTarget());
+                                                    break;
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                                 // This is the normal path where our symbol lookup was successful and we want

@@ -299,13 +299,13 @@ AppleObjCRuntimeV1::GetISAHashTablePointer ()
         static ConstString g_objc_debug_class_hash("_objc_debug_class_hash");
         
         const Symbol *symbol = objc_module_sp->FindFirstSymbolWithNameAndType(g_objc_debug_class_hash, lldb::eSymbolTypeData);
-        if (symbol)
+        if (symbol && symbol->ValueIsAddress())
         {
             Process *process = GetProcess();
             if (process)
             {
 
-                lldb::addr_t objc_debug_class_hash_addr = symbol->GetAddress().GetLoadAddress(&process->GetTarget());
+                lldb::addr_t objc_debug_class_hash_addr = symbol->GetAddressRef().GetLoadAddress(&process->GetTarget());
             
                 if (objc_debug_class_hash_addr != LLDB_INVALID_ADDRESS)
                 {

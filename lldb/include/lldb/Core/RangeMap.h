@@ -128,9 +128,10 @@ namespace lldb_private {
         {
             return Contains(range.GetRangeBase()) && ContainsEndInclusive(range.GetRangeEnd());
         }
-        
+
+        // Returns true if the two ranges adjoing or intersect
         bool
-        Overlap (const Range &rhs) const
+        DoesAdjoinOrIntersect (const Range &rhs) const
         {
             const BaseType lhs_base = this->GetRangeBase();
             const BaseType rhs_base = rhs.GetRangeBase();
@@ -139,7 +140,19 @@ namespace lldb_private {
             bool result = (lhs_base <= rhs_end) && (lhs_end >= rhs_base);
             return result;
         }
-        
+
+        // Returns true if the two ranges intersect
+        bool
+        DoesIntersect (const Range &rhs) const
+        {
+            const BaseType lhs_base = this->GetRangeBase();
+            const BaseType rhs_base = rhs.GetRangeBase();
+            const BaseType lhs_end = this->GetRangeEnd();
+            const BaseType rhs_end = rhs.GetRangeEnd();
+            bool result = (lhs_base < rhs_end) && (lhs_end > rhs_base);
+            return result;
+        }
+
         bool
         operator < (const Range &rhs) const
         {
@@ -241,7 +254,7 @@ namespace lldb_private {
                 // don't end up allocating and making a new collection for no reason
                 for (pos = m_entries.begin(), end = m_entries.end(), prev = end; pos != end; prev = pos++)
                 {
-                    if (prev != end && prev->Overlap(*pos))
+                    if (prev != end && prev->DoesAdjoinOrIntersect(*pos))
                     {
                         can_combine = true;
                         break;
@@ -255,7 +268,7 @@ namespace lldb_private {
                     Collection minimal_ranges;
                     for (pos = m_entries.begin(), end = m_entries.end(), prev = end; pos != end; prev = pos++)
                     {
-                        if (prev != end && prev->Overlap(*pos))
+                        if (prev != end && prev->DoesAdjoinOrIntersect(*pos))
                             minimal_ranges.back().SetRangeEnd (std::max<BaseType>(prev->GetRangeEnd(), pos->GetRangeEnd()));
                         else
                             minimal_ranges.push_back (*pos);
@@ -521,7 +534,7 @@ namespace lldb_private {
                 // don't end up allocating and making a new collection for no reason
                 for (pos = m_entries.begin(), end = m_entries.end(), prev = end; pos != end; prev = pos++)
                 {
-                    if (prev != end && prev->Overlap(*pos))
+                    if (prev != end && prev->DoesAdjoinOrIntersect(*pos))
                     {
                         can_combine = true;
                         break;
@@ -535,7 +548,7 @@ namespace lldb_private {
                     Collection minimal_ranges;
                     for (pos = m_entries.begin(), end = m_entries.end(), prev = end; pos != end; prev = pos++)
                     {
-                        if (prev != end && prev->Overlap(*pos))
+                        if (prev != end && prev->DoesAdjoinOrIntersect(*pos))
                             minimal_ranges.back().SetRangeEnd (std::max<BaseType>(prev->GetRangeEnd(), pos->GetRangeEnd()));
                         else
                             minimal_ranges.push_back (*pos);

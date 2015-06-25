@@ -298,6 +298,10 @@ StructuredData::ParseJSON (std::string json_text)
             {
                 object_sp = read_json_object (&c);
             }
+            else if (*c == '[')
+            {
+                object_sp = read_json_array (&c);
+            }
             else
             {
                 // We have bad characters here, this is likely an illegal JSON string.

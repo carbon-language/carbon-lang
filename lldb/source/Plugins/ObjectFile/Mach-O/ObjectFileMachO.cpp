@@ -1271,7 +1271,7 @@ ObjectFileMachO::GetAddressClass (lldb::addr_t file_addr)
         {
             if (symbol->ValueIsAddress())
             {
-                SectionSP section_sp (symbol->GetAddress().GetSection());
+                SectionSP section_sp (symbol->GetAddressRef().GetSection());
                 if (section_sp)
                 {
                     const lldb::SectionType section_type = section_sp->GetType();
@@ -3521,8 +3521,8 @@ ObjectFileMachO::ParseSymtab ()
                                                                 m_nlist_idx_to_sym_idx[nlist_idx] = GSYM_sym_idx;
                                                                 // Copy the address, because often the N_GSYM address has an invalid address of zero
                                                                 // when the global is a common symbol
-                                                                sym[GSYM_sym_idx].GetAddress().SetSection (symbol_section);
-                                                                sym[GSYM_sym_idx].GetAddress().SetOffset (symbol_value);
+                                                                sym[GSYM_sym_idx].GetAddressRef().SetSection (symbol_section);
+                                                                sym[GSYM_sym_idx].GetAddressRef().SetOffset (symbol_value);
                                                                 // We just need the flags from the linker symbol, so put these flags
                                                                 // into the N_GSYM flags to avoid duplicate symbols in the symbol table
                                                                 sym[GSYM_sym_idx].SetFlags (nlist.n_type << 16 | nlist.n_desc);
@@ -3537,8 +3537,8 @@ ObjectFileMachO::ParseSymtab ()
                                                 sym[sym_idx].SetType (type);
                                                 if (set_value)
                                                 {
-                                                    sym[sym_idx].GetAddress().SetSection (symbol_section);
-                                                    sym[sym_idx].GetAddress().SetOffset (symbol_value);
+                                                    sym[sym_idx].GetAddressRef().SetSection (symbol_section);
+                                                    sym[sym_idx].GetAddressRef().SetOffset (symbol_value);
                                                 }
                                                 sym[sym_idx].SetFlags (nlist.n_type << 16 | nlist.n_desc);
 
@@ -4364,8 +4364,8 @@ ObjectFileMachO::ParseSymtab ()
                                     m_nlist_idx_to_sym_idx[nlist_idx] = GSYM_sym_idx;
                                     // Copy the address, because often the N_GSYM address has an invalid address of zero
                                     // when the global is a common symbol
-                                    sym[GSYM_sym_idx].GetAddress().SetSection (symbol_section);
-                                    sym[GSYM_sym_idx].GetAddress().SetOffset (symbol_value);
+                                    sym[GSYM_sym_idx].GetAddressRef().SetSection (symbol_section);
+                                    sym[GSYM_sym_idx].GetAddressRef().SetOffset (symbol_value);
                                     // We just need the flags from the linker symbol, so put these flags
                                     // into the N_GSYM flags to avoid duplicate symbols in the symbol table
                                     sym[GSYM_sym_idx].SetFlags (nlist.n_type << 16 | nlist.n_desc);
@@ -4380,8 +4380,8 @@ ObjectFileMachO::ParseSymtab ()
                     sym[sym_idx].SetType (type);
                     if (set_value)
                     {
-                        sym[sym_idx].GetAddress().SetSection (symbol_section);
-                        sym[sym_idx].GetAddress().SetOffset (symbol_value);
+                        sym[sym_idx].GetAddressRef().SetSection (symbol_section);
+                        sym[sym_idx].GetAddressRef().SetOffset (symbol_value);
                     }
                     sym[sym_idx].SetFlags (nlist.n_type << 16 | nlist.n_desc);
 
@@ -4475,7 +4475,7 @@ ObjectFileMachO::ParseSymtab ()
                                 sym[sym_idx].GetMangled().SetDemangledName(ConstString(synthetic_function_symbol));
                                 sym[sym_idx].SetType (eSymbolTypeCode);
                                 sym[sym_idx].SetIsSynthetic (true);
-                                sym[sym_idx].GetAddress() = symbol_addr;
+                                sym[sym_idx].GetAddressRef() = symbol_addr;
                                 if (symbol_flags)
                                     sym[sym_idx].SetFlags (symbol_flags);
                                 if (symbol_byte_size)
@@ -4559,7 +4559,7 @@ ObjectFileMachO::ParseSymtab ()
                                         else
                                             stub_symbol->SetType (eSymbolTypeResolver);
                                         stub_symbol->SetExternal (false);
-                                        stub_symbol->GetAddress() = so_addr;
+                                        stub_symbol->GetAddressRef() = so_addr;
                                         stub_symbol->SetByteSize (symbol_stub_byte_size);
                                     }
                                     else
@@ -4578,7 +4578,7 @@ ObjectFileMachO::ParseSymtab ()
                                         else
                                             sym[sym_idx].SetType (eSymbolTypeResolver);
                                         sym[sym_idx].SetIsSynthetic (true);
-                                        sym[sym_idx].GetAddress() = so_addr;
+                                        sym[sym_idx].GetAddressRef() = so_addr;
                                         sym[sym_idx].SetByteSize (symbol_stub_byte_size);
                                         ++sym_idx;
                                     }

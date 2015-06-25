@@ -7620,7 +7620,7 @@ SymbolFileDWARF::ParseVariableDIE
                                     {
                                         if (exe_symbol->ValueIsAddress())
                                         {
-                                            const addr_t exe_file_addr = exe_symbol->GetAddress().GetFileAddress();
+                                            const addr_t exe_file_addr = exe_symbol->GetAddressRef().GetFileAddress();
                                             if (exe_file_addr != LLDB_INVALID_ADDRESS)
                                             {
                                                 if (location.Update_DW_OP_addr (exe_file_addr))

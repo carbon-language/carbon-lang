@@ -287,11 +287,11 @@ AddressSanitizerRuntime::Activate()
     if (symbol == NULL)
         return;
     
-    if (!symbol->GetAddress().IsValid())
+    if (!symbol->ValueIsAddress() || !symbol->GetAddressRef().IsValid())
         return;
     
     Target &target = m_process->GetTarget();
-    addr_t symbol_address = symbol->GetAddress().GetOpcodeLoadAddress(&target);
+    addr_t symbol_address = symbol->GetAddressRef().GetOpcodeLoadAddress(&target);
     
     if (symbol_address == LLDB_INVALID_ADDRESS)
         return;

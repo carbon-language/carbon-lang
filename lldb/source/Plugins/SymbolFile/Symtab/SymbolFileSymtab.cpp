@@ -225,7 +225,7 @@ SymbolFileSymtab::ParseCompileUnitFunctions (const SymbolContext &sc)
                             next_symbol = symtab->SymbolAtIndex(m_code_indexes[idx + 1]);
                             if (next_symbol)
                             {
-                                func_range.SetByteSize(next_symbol->GetAddress().GetOffset() - curr_symbol->GetAddress().GetOffset());
+                                func_range.SetByteSize(next_symbol->GetAddressRef().GetOffset() - curr_symbol->GetAddressRef().GetOffset());
                             }
                         }
 
