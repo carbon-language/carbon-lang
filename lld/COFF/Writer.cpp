@@ -125,16 +125,6 @@ void Writer::markLive() {
         SC->markLive();
 }
 
-struct Hasher {
-  size_t operator()(const SectionChunk *C) const { return C->getHash(); }
-};
-
-struct Equals {
-  bool operator()(const SectionChunk *A, const SectionChunk *B) const {
-    return A->equals(B);
-  }
-};
-
 // Merge identical COMDAT sections.
 void Writer::dedupCOMDATs() {
   if (Config->ICF)
