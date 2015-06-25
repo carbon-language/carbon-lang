@@ -1678,9 +1678,8 @@ void CppWriter::printFunctionUses(const Function* F) {
                 consts.insert(GVar->getInitializer());
         } else if (Constant* C = dyn_cast<Constant>(operand)) {
           consts.insert(C);
-          for (unsigned j = 0; j < C->getNumOperands(); ++j) {
+          for (Value* operand : C->operands()) {
             // If the operand references a GVal or Constant, make a note of it
-            Value* operand = C->getOperand(j);
             printType(operand->getType());
             if (GlobalValue* GV = dyn_cast<GlobalValue>(operand)) {
               gvs.insert(GV);

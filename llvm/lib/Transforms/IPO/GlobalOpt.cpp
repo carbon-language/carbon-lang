@@ -1992,11 +1992,9 @@ isSimpleEnoughValueToCommitHelper(Constant *C,
   // Aggregate values are safe if all their elements are.
   if (isa<ConstantArray>(C) || isa<ConstantStruct>(C) ||
       isa<ConstantVector>(C)) {
-    for (unsigned i = 0, e = C->getNumOperands(); i != e; ++i) {
-      Constant *Op = cast<Constant>(C->getOperand(i));
-      if (!isSimpleEnoughValueToCommit(Op, SimpleConstants, DL))
+    for (Value *Op : C->operands())
+      if (!isSimpleEnoughValueToCommit(cast<Constant>(Op), SimpleConstants, DL))
         return false;
-    }
     return true;
   }
 

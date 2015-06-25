@@ -691,9 +691,7 @@ void ValueEnumerator::EnumerateOperandType(const Value *V) {
 
   // This constant may have operands, make sure to enumerate the types in
   // them.
-  for (unsigned i = 0, e = C->getNumOperands(); i != e; ++i) {
-    const Value *Op = C->getOperand(i);
-
+  for (const Value *Op : C->operands()) {
     // Don't enumerate basic blocks here, this happens as operands to
     // blockaddress.
     if (isa<BasicBlock>(Op))
