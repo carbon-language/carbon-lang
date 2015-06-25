@@ -2086,8 +2086,12 @@ static void handleIndirectSymViaGOTPCRel(AsmPrinter &AP, const MCExpr **ME,
   MCValue MV;
   if (!(*ME)->evaluateAsRelocatable(MV, nullptr, nullptr) || MV.isAbsolute())
     return;
+  const MCSymbolRefExpr *SymA = MV.getSymA();
+  if (!SymA)
+    return;
 
-  const MCSymbol *GOTEquivSym = &MV.getSymA()->getSymbol();
+  // Check that GOT equivalent symbol is cached.
+  const MCSymbol *GOTEquivSym = &SymA->getSymbol();
   if (!AP.GlobalGOTEquivs.count(GOTEquivSym))
     return;
 
@@ -2095,8 +2099,11 @@ static void handleIndirectSymViaGOTPCRel(AsmPrinter &AP, const MCExpr **ME,
   if (!BaseGV)
     return;
 
+  // Check for a valid base symbol
   const MCSymbol *BaseSym = AP.getSymbol(BaseGV);
-  if (BaseSym != &MV.getSymB()->getSymbol())
+  const MCSymbolRefExpr *SymB = MV.getSymB();
+
+  if (!SymB || BaseSym != &SymB->getSymbol())
     return;
 
   // Make sure to match:
