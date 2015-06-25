@@ -39,5 +39,8 @@ extern "C" void LLVMFuzzerTestOneInput(uint8_t *data, size_t size) {
   Invocation->getPreprocessorOpts().addRemappedFile("./test.cc", Input.release());
   std::unique_ptr<tooling::ToolAction> action(
       tooling::newFrontendActionFactory<clang::SyntaxOnlyAction>());
-  action->runInvocation(Invocation.release(), Files.get(), &Diags);
+  std::shared_ptr<PCHContainerOperations> PCHContainerOps =
+      std::make_shared<RawPCHContainerOperations>();
+  action->runInvocation(Invocation.release(), Files.get(), PCHContainerOps,
+                        &Diags);
 }
