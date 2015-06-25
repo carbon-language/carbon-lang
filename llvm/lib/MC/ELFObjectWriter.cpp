@@ -787,10 +787,15 @@ void ELFObjectWriter::computeSymbolTable(
                     Renames.count(&Symbol)))
       continue;
 
+    if (Symbol.isTemporary() && Symbol.isUndefined())
+      Ctx.reportFatalError(SMLoc(), "Undefined temporary");
+
     ELFSymbolData MSD;
     MSD.Symbol = cast<MCSymbolELF>(&Symbol);
 
     bool Local = Symbol.getBinding() == ELF::STB_LOCAL;
+    assert(Local || !Symbol.isTemporary());
+
     if (Symbol.isAbsolute()) {
       MSD.SectionIndex = ELF::SHN_ABS;
     } else if (Symbol.isCommon()) {
