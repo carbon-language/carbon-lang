@@ -382,7 +382,11 @@ MachTask::GetProfileData (DNBProfileDataScanType scanType)
         get_threads_profile_data(scanType, task, pid, threads_id, threads_name, threads_used_usec);
     }
     
-    struct vm_statistics vm_stats;
+#if defined (HOST_VM_INFO64_COUNT)
+    vm_statistics64_data_t vminfo;
+#elif
+    struct vm_statistics vminfo;
+#endif
     uint64_t physical_memory;
     mach_vm_size_t rprvt = 0;
     mach_vm_size_t rsize = 0;
@@ -391,7 +395,7 @@ MachTask::GetProfileData (DNBProfileDataScanType scanType)
     mach_vm_size_t dirty_size = 0;
     mach_vm_size_t purgeable = 0;
     mach_vm_size_t anonymous = 0;
-    if (m_vm_memory.GetMemoryProfile(scanType, task, task_info, m_process->GetCPUType(), pid, vm_stats, physical_memory, rprvt, rsize, vprvt, vsize, dirty_size, purgeable, anonymous))
+    if (m_vm_memory.GetMemoryProfile(scanType, task, task_info, m_process->GetCPUType(), pid, vminfo, physical_memory, rprvt, rsize, vprvt, vsize, dirty_size, purgeable, anonymous))
     {
         std::ostringstream profile_data_stream;
         
@@ -444,6 +448,9 @@ MachTask::GetProfileData (DNBProfileDataScanType scanType)
         
         if (scanType & eProfileMemory)
         {
+#if defined (HOST_VM_INFO64_COUNT)
+            static vm_size_t pagesize = vm_kernel_page_size;
+#elif
             static vm_size_t pagesize;
             static bool calculated = false;
             if (!calculated)
@@ -451,16 +458,22 @@ MachTask::GetProfileData (DNBProfileDataScanType scanType)
                 calculated = true;
                 pagesize = PageSize();
             }
+#endif
             
             /* Unused values. Optimized out for transfer performance.
-            profile_data_stream << "wired:" << vm_stats.wire_count * pagesize << ';';
-            profile_data_stream << "active:" << vm_stats.active_count * pagesize << ';';
-            profile_data_stream << "inactive:" << vm_stats.inactive_count * pagesize << ';';
+            profile_data_stream << "wired:" << vminfo.wire_count * pagesize << ';';
+            profile_data_stream << "active:" << vminfo.active_count * pagesize << ';';
+            profile_data_stream << "inactive:" << vminfo.inactive_count * pagesize << ';';
              */
-            uint64_t total_used_count = vm_stats.wire_count + vm_stats.inactive_count + vm_stats.active_count;
+#if defined (HOST_VM_INFO64_COUNT)
+            // This mimicks Activity Monitor.
+            uint64_t total_used_count = (physical_memory / vm_kernel_page_size) - (vminfo.free_count - vminfo.speculative_count) - vminfo.external_page_count - vminfo.purgeable_count;
+#elif
+            uint64_t total_used_count = vminfo.wire_count + vminfo.inactive_count + vminfo.active_count;
+#endif
             profile_data_stream << "used:" << total_used_count * pagesize << ';';
             /* Unused values. Optimized out for transfer performance.
-            profile_data_stream << "free:" << vm_stats.free_count * pagesize << ';';
+            profile_data_stream << "free:" << vminfo.free_count * pagesize << ';';
              */
             
             profile_data_stream << "rprvt:" << rprvt << ';';

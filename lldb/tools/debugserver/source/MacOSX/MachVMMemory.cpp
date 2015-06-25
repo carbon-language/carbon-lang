@@ -236,11 +236,10 @@ static uint64_t GetPhysicalMemory()
     static bool calculated = false;
     if (calculated) return physical_memory;
     
-    int mib[2];
-    mib[0] = CTL_HW;
-    mib[1] = HW_MEMSIZE;
     size_t len = sizeof(physical_memory);
-    sysctl(mib, 2, &physical_memory, &len, NULL, 0);
+    sysctlbyname("hw.memsize", &physical_memory, &len, NULL, 0);
+    
+    calculated = true;
     return physical_memory;
 }
 
@@ -418,8 +417,13 @@ GetPurgeableAndAnonymous(task_t task, uint64_t &purgeable, uint64_t &anonymous)
 #endif
 }
 
+#if defined (HOST_VM_INFO64_COUNT)
 nub_bool_t
-MachVMMemory::GetMemoryProfile(DNBProfileDataScanType scanType, task_t task, struct task_basic_info ti, cpu_type_t cputype, nub_process_t pid, vm_statistics_data_t &vm_stats, uint64_t &physical_memory, mach_vm_size_t &rprvt, mach_vm_size_t &rsize, mach_vm_size_t &vprvt, mach_vm_size_t &vsize, mach_vm_size_t &dirty_size, mach_vm_size_t &purgeable, mach_vm_size_t &anonymous)
+MachVMMemory::GetMemoryProfile(DNBProfileDataScanType scanType, task_t task, struct task_basic_info ti, cpu_type_t cputype, nub_process_t pid, vm_statistics64_data_t &vminfo, uint64_t &physical_memory, mach_vm_size_t &rprvt, mach_vm_size_t &rsize, mach_vm_size_t &vprvt, mach_vm_size_t &vsize, mach_vm_size_t &dirty_size, mach_vm_size_t &purgeable, mach_vm_size_t &anonymous)
+#elif
+nub_bool_t
+MachVMMemory::GetMemoryProfile(DNBProfileDataScanType scanType, task_t task, struct task_basic_info ti, cpu_type_t cputype, nub_process_t pid, vm_statistics_data_t &vminfo, uint64_t &physical_memory, mach_vm_size_t &rprvt, mach_vm_size_t &rsize, mach_vm_size_t &vprvt, mach_vm_size_t &vsize, mach_vm_size_t &dirty_size, mach_vm_size_t &purgeable, mach_vm_size_t &anonymous)
+#endif
 {
     if (scanType & eProfileHostMemory)
         physical_memory = GetPhysicalMemory();
@@ -427,12 +431,17 @@ MachVMMemory::GetMemoryProfile(DNBProfileDataScanType scanType, task_t task, str
     if (scanType & eProfileMemory)
     {
         static mach_port_t localHost = mach_host_self();
+#if defined (HOST_VM_INFO64_COUNT)
+        mach_msg_type_number_t count = HOST_VM_INFO64_COUNT;
+        host_statistics64(localHost, HOST_VM_INFO64, (host_info64_t)&vminfo, &count);
+#elif
         mach_msg_type_number_t count = HOST_VM_INFO_COUNT;
-        host_statistics(localHost, HOST_VM_INFO, (host_info_t)&vm_stats, &count);
-        vm_stats.wire_count += GetStolenPages(task);
-    
+        host_statistics(localHost, HOST_VM_INFO, (host_info_t)&vminfo, &count);
+        vminfo.wire_count += GetStolenPages(task);
+#endif
+        
+        /* We are no longer reporting these. Let's not waste time.
         GetMemorySizes(task, cputype, pid, rprvt, vprvt);
-    
         rsize = ti.resident_size;
         vsize = ti.virtual_size;
         
@@ -441,6 +450,7 @@ MachVMMemory::GetMemoryProfile(DNBProfileDataScanType scanType, task_t task, str
             // This uses vmmap strategy. We don't use the returned rsize for now. We prefer to match top's version since that's what we do for the rest of the metrics.
             GetRegionSizes(task, rsize, dirty_size);
         }
+        */
         
         if (scanType & eProfileMemoryAnonymous)
         {
