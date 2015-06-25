@@ -10,6 +10,7 @@
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/SmallString.h"
 #include "gtest/gtest.h"
+#include <array>
 #include <ostream>
 
 using namespace llvm;
