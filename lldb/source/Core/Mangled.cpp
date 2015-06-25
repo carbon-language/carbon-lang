@@ -423,7 +423,7 @@ Mangled::MemorySize () const
 }
 
 lldb::LanguageType
-Mangled::GuessLanguage ()
+Mangled::GuessLanguage () const
 {
     ConstString mangled = GetMangledName();
     if (mangled)

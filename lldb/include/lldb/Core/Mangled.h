@@ -314,7 +314,7 @@ public:
     ///     if there is no mangled or demangled counterpart.
     //----------------------------------------------------------------------
     lldb::LanguageType
-    GuessLanguage ();
+    GuessLanguage () const;
 
 private:
     //----------------------------------------------------------------------
