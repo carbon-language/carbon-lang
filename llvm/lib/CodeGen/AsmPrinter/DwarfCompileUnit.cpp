@@ -301,7 +301,7 @@ DIE &DwarfCompileUnit::updateSubprogramScopeDIE(const DISubprogram *SP) {
 
 // Construct a DIE for this scope.
 void DwarfCompileUnit::constructScopeDIE(
-    LexicalScope *Scope, SmallVectorImpl<std::unique_ptr<DIE>> &FinalChildren) {
+    LexicalScope *Scope, SmallVectorImpl<DIE *> &FinalChildren) {
   if (!Scope || !Scope->getScopeNode())
     return;
 
@@ -312,12 +312,12 @@ void DwarfCompileUnit::constructScopeDIE(
          "constructSubprogramScopeDIE for non-inlined "
          "subprograms");
 
-  SmallVector<std::unique_ptr<DIE>, 8> Children;
+  SmallVector<DIE *, 8> Children;
 
   // We try to create the scope DIE first, then the children DIEs. This will
   // avoid creating un-used children then removing them later when we find out
   // the scope DIE is null.
-  std::unique_ptr<DIE> ScopeDIE;
+  DIE *ScopeDIE;
   if (Scope->getParent() && isa<DISubprogram>(DS)) {
     ScopeDIE = constructInlinedScopeDIE(Scope);
     if (!ScopeDIE)
@@ -416,8 +416,7 @@ void DwarfCompileUnit::attachRangesOrLowHighPC(
 
 // This scope represents inlined body of a function. Construct DIE to
 // represent this concrete inlined copy of the function.
-std::unique_ptr<DIE>
-DwarfCompileUnit::constructInlinedScopeDIE(LexicalScope *Scope) {
+DIE *DwarfCompileUnit::constructInlinedScopeDIE(LexicalScope *Scope) {
   assert(Scope->getScopeNode());
   auto *DS = Scope->getScopeNode();
   auto *InlinedSP = getDISubprogram(DS);
@@ -426,7 +425,7 @@ DwarfCompileUnit::constructInlinedScopeDIE(LexicalScope *Scope) {
   DIE *OriginDIE = DU->getAbstractSPDies()[InlinedSP];
   assert(OriginDIE && "Unable to find original DIE for an inlined subprogram.");
 
-  auto ScopeDIE = make_unique<DIE>(dwarf::DW_TAG_inlined_subroutine);
+  auto ScopeDIE = DIE::get(DIEValueAllocator, dwarf::DW_TAG_inlined_subroutine);
   addDIEEntry(*ScopeDIE, dwarf::DW_AT_abstract_origin, *OriginDIE);
 
   attachRangesOrLowHighPC(*ScopeDIE, Scope->getRanges());
@@ -446,12 +445,11 @@ DwarfCompileUnit::constructInlinedScopeDIE(LexicalScope *Scope) {
 
 // Construct new DW_TAG_lexical_block for this scope and attach
 // DW_AT_low_pc/DW_AT_high_pc labels.
-std::unique_ptr<DIE>
-DwarfCompileUnit::constructLexicalScopeDIE(LexicalScope *Scope) {
+DIE *DwarfCompileUnit::constructLexicalScopeDIE(LexicalScope *Scope) {
   if (DD->isLexicalScopeDIENull(Scope))
     return nullptr;
 
-  auto ScopeDIE = make_unique<DIE>(dwarf::DW_TAG_lexical_block);
+  auto ScopeDIE = DIE::get(DIEValueAllocator, dwarf::DW_TAG_lexical_block);
   if (Scope->isAbstractScope())
     return ScopeDIE;
 
@@ -461,18 +459,16 @@ DwarfCompileUnit::constructLexicalScopeDIE(LexicalScope *Scope) {
 }
 
 /// constructVariableDIE - Construct a DIE for the given DbgVariable.
-std::unique_ptr<DIE> DwarfCompileUnit::constructVariableDIE(DbgVariable &DV,
-                                                            bool Abstract) {
+DIE *DwarfCompileUnit::constructVariableDIE(DbgVariable &DV, bool Abstract) {
   auto D = constructVariableDIEImpl(DV, Abstract);
   DV.setDIE(*D);
   return D;
 }
 
-std::unique_ptr<DIE>
-DwarfCompileUnit::constructVariableDIEImpl(const DbgVariable &DV,
-                                           bool Abstract) {
+DIE *DwarfCompileUnit::constructVariableDIEImpl(const DbgVariable &DV,
+                                                bool Abstract) {
   // Define variable debug information entry.
-  auto VariableDie = make_unique<DIE>(DV.getTag());
+  auto VariableDie = DIE::get(DIEValueAllocator, DV.getTag());
 
   if (Abstract) {
     applyVariableAttributes(DV, *VariableDie);
@@ -532,17 +528,18 @@ DwarfCompileUnit::constructVariableDIEImpl(const DbgVariable &DV,
   return VariableDie;
 }
 
-std::unique_ptr<DIE> DwarfCompileUnit::constructVariableDIE(
-    DbgVariable &DV, const LexicalScope &Scope, DIE *&ObjectPointer) {
+DIE *DwarfCompileUnit::constructVariableDIE(DbgVariable &DV,
+                                            const LexicalScope &Scope,
+                                            DIE *&ObjectPointer) {
   auto Var = constructVariableDIE(DV, Scope.isAbstractScope());
   if (DV.isObjectPointer())
-    ObjectPointer = Var.get();
+    ObjectPointer = Var;
   return Var;
 }
 
-DIE *DwarfCompileUnit::createScopeChildrenDIE(
-    LexicalScope *Scope, SmallVectorImpl<std::unique_ptr<DIE>> &Children,
-    unsigned *ChildScopeCount) {
+DIE *DwarfCompileUnit::createScopeChildrenDIE(LexicalScope *Scope,
+                                              SmallVectorImpl<DIE *> &Children,
+                                              unsigned *ChildScopeCount) {
   DIE *ObjectPointer = nullptr;
 
   for (DbgVariable *DV : DU->getScopeVariables().lookup(Scope))
@@ -583,13 +580,14 @@ void DwarfCompileUnit::constructSubprogramScopeDIE(LexicalScope *Scope) {
   // variadic function.
   if (FnArgs.size() > 1 && !FnArgs[FnArgs.size() - 1] &&
       !includeMinimalInlineScopes())
-    ScopeDIE.addChild(make_unique<DIE>(dwarf::DW_TAG_unspecified_parameters));
+    ScopeDIE.addChild(
+        DIE::get(DIEValueAllocator, dwarf::DW_TAG_unspecified_parameters));
 }
 
 DIE *DwarfCompileUnit::createAndAddScopeChildren(LexicalScope *Scope,
                                                  DIE &ScopeDIE) {
   // We create children when the scope DIE is not null.
-  SmallVector<std::unique_ptr<DIE>, 8> Children;
+  SmallVector<DIE *, 8> Children;
   DIE *ObjectPointer = createScopeChildrenDIE(Scope, Children);
 
   // Add children
@@ -632,10 +630,10 @@ DwarfCompileUnit::constructAbstractSubprogramScopeDIE(LexicalScope *Scope) {
     addDIEEntry(*AbsDef, dwarf::DW_AT_object_pointer, *ObjectPointer);
 }
 
-std::unique_ptr<DIE>
-DwarfCompileUnit::constructImportedEntityDIE(const DIImportedEntity *Module) {
-  std::unique_ptr<DIE> IMDie = make_unique<DIE>((dwarf::Tag)Module->getTag());
-  insertDIE(Module, IMDie.get());
+DIE *DwarfCompileUnit::constructImportedEntityDIE(
+    const DIImportedEntity *Module) {
+  DIE *IMDie = DIE::get(DIEValueAllocator, (dwarf::Tag)Module->getTag());
+  insertDIE(Module, IMDie);
   DIE *EntityDie;
   auto *Entity = resolve(Module->getEntity());
   if (auto *NS = dyn_cast<DINamespace>(Entity))

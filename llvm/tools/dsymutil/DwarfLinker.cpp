@@ -113,8 +113,8 @@ public:
 
   unsigned getUniqueID() const { return ID; }
 
-  DIE *getOutputUnitDIE() const { return CUDie.get(); }
-  void setOutputUnitDIE(DIE *Die) { CUDie.reset(Die); }
+  DIE *getOutputUnitDIE() const { return CUDie; }
+  void setOutputUnitDIE(DIE *Die) { CUDie = Die; }
 
   DIEInfo &getInfo(unsigned Idx) { return Info[Idx]; }
   const DIEInfo &getInfo(unsigned Idx) const { return Info[Idx]; }
@@ -194,7 +194,7 @@ private:
   DWARFUnit &OrigUnit;
   unsigned ID;
   std::vector<DIEInfo> Info;  ///< DIE info indexed by DIE index.
-  std::unique_ptr<DIE> CUDie; ///< Root of the linked DIE tree.
+  DIE *CUDie;                 ///< Root of the linked DIE tree.
 
   uint64_t StartOffset;
   uint64_t NextUnitOffset;
@@ -1861,7 +1861,7 @@ unsigned DwarfLinker::cloneDieReferenceAttribute(
     assert(Ref > InputDIE.getOffset());
     // We haven't cloned this DIE yet. Just create an empty one and
     // store it. It'll get really cloned when we process it.
-    RefInfo.Clone = new DIE(dwarf::Tag(RefDie->getTag()));
+    RefInfo.Clone = DIE::get(DIEAlloc, dwarf::Tag(RefDie->getTag()));
   }
   NewRefDie = RefInfo.Clone;
 
@@ -2163,7 +2163,7 @@ DIE *DwarfLinker::cloneDIE(const DWARFDebugInfoEntryMinimal &InputDIE,
   // (see cloneDieReferenceAttribute()).
   DIE *Die = Info.Clone;
   if (!Die)
-    Die = Info.Clone = new DIE(dwarf::Tag(InputDIE.getTag()));
+    Die = Info.Clone = DIE::get(DIEAlloc, dwarf::Tag(InputDIE.getTag()));
   assert(Die->getTag() == InputDIE.getTag());
   Die->setOffset(OutOffset);
 
@@ -2255,7 +2255,7 @@ DIE *DwarfLinker::cloneDIE(const DWARFDebugInfoEntryMinimal &InputDIE,
   for (auto *Child = InputDIE.getFirstChild(); Child && !Child->isNULL();
        Child = Child->getSibling()) {
     if (DIE *Clone = cloneDIE(*Child, Unit, PCOffset, OutOffset)) {
-      Die->addChild(std::unique_ptr<DIE>(Clone));
+      Die->addChild(Clone);
       OutOffset = Clone->getOffset() + Clone->getSize();
     }
   }

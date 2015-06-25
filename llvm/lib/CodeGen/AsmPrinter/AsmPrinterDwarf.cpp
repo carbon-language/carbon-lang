@@ -277,7 +277,7 @@ void AsmPrinter::emitDwarfDIE(const DIE &Die) const {
   // Emit the DIE children if any.
   if (Die.hasChildren()) {
     for (auto &Child : Die.children())
-      emitDwarfDIE(*Child);
+      emitDwarfDIE(Child);
 
     OutStreamer->AddComment("End Of Children Mark");
     EmitInt8(0);

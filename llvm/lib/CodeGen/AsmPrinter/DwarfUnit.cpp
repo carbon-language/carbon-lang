@@ -66,8 +66,9 @@ bool DIEDwarfExpression::isFrameRegister(unsigned MachineReg) {
 DwarfUnit::DwarfUnit(unsigned UID, dwarf::Tag UnitTag,
                      const DICompileUnit *Node, AsmPrinter *A, DwarfDebug *DW,
                      DwarfFile *DWU)
-    : UniqueID(UID), CUNode(Node), UnitDie(UnitTag), DebugInfoOffset(0), Asm(A),
-      DD(DW), DU(DWU), IndexTyDie(nullptr), Section(nullptr) {
+    : UniqueID(UID), CUNode(Node),
+      UnitDie(*DIE::get(DIEValueAllocator, UnitTag)), DebugInfoOffset(0),
+      Asm(A), DD(DW), DU(DWU), IndexTyDie(nullptr), Section(nullptr) {
   assert(UnitTag == dwarf::DW_TAG_compile_unit ||
          UnitTag == dwarf::DW_TAG_type_unit);
 }
@@ -293,7 +294,7 @@ void DwarfUnit::addDIEEntry(DIE &Die, dwarf::Attribute Attribute,
 DIE &DwarfUnit::createAndAddDIE(unsigned Tag, DIE &Parent, const DINode *N) {
   assert(Tag != dwarf::DW_TAG_auto_variable &&
          Tag != dwarf::DW_TAG_arg_variable);
-  DIE &Die = Parent.addChild(make_unique<DIE>((dwarf::Tag)Tag));
+  DIE &Die = Parent.addChild(DIE::get(DIEValueAllocator, (dwarf::Tag)Tag));
   if (N)
     insertDIE(N, &Die);
   return Die;

@@ -77,7 +77,7 @@ protected:
   BumpPtrAllocator DIEValueAllocator;
 
   /// Unit debug information entry.
-  DIE UnitDie;
+  DIE &UnitDie;
 
   /// Offset of the UnitDie from beginning of debug info section.
   unsigned DebugInfoOffset;

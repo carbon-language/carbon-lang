@@ -111,7 +111,7 @@ unsigned DwarfFile::computeSizeAndOffset(DIE &Die, unsigned Offset) {
     assert(Abbrev.hasChildren() && "Children flag not set");
 
     for (auto &Child : Die.children())
-      Offset = computeSizeAndOffset(*Child, Offset);
+      Offset = computeSizeAndOffset(Child, Offset);
 
     // End of children marker.
     Offset += sizeof(int8_t);

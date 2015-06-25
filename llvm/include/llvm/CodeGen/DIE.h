@@ -609,7 +609,9 @@ public:
 //===--------------------------------------------------------------------===//
 /// DIE - A structured debug information entry.  Has an abbreviation which
 /// describes its organization.
-class DIE {
+class DIE : IntrusiveBackListNode {
+  friend class IntrusiveBackList<DIE>;
+
 protected:
   /// Offset - Offset in debug info section.
   ///
@@ -626,27 +628,24 @@ protected:
   dwarf::Tag Tag = (dwarf::Tag)0;
 
   /// Children DIEs.
-  ///
-  // This can't be a vector<DIE> because pointer validity is requirent for the
-  // Parent pointer and DIEEntry.
-  // It can't be a list<DIE> because some clients need pointer validity before
-  // the object has been added to any child list
-  // (eg: DwarfUnit::constructVariableDIE). These aren't insurmountable, but may
-  // be more convoluted than beneficial.
-  std::vector<std::unique_ptr<DIE>> Children;
+  IntrusiveBackList<DIE> Children;
 
-  DIE *Parent;
+  DIE *Parent = nullptr;
 
   /// Attribute values.
   ///
   DIEValueList Values;
 
 protected:
-  DIE() : Offset(0), Size(0), Parent(nullptr) {}
+  DIE() : Offset(0), Size(0) {}
+
+private:
+  explicit DIE(dwarf::Tag Tag) : Offset(0), Size(0), Tag(Tag) {}
 
 public:
-  explicit DIE(dwarf::Tag Tag)
-      : Offset(0), Size(0), Tag(Tag), Parent(nullptr) {}
+  static DIE *get(BumpPtrAllocator &Alloc, dwarf::Tag Tag) {
+    return new (Alloc) DIE(Tag);
+  }
 
   // Accessors.
   unsigned getAbbrevNumber() const { return AbbrevNumber; }
@@ -655,10 +654,15 @@ public:
   unsigned getSize() const { return Size; }
   bool hasChildren() const { return !Children.empty(); }
 
-  typedef std::vector<std::unique_ptr<DIE>>::const_iterator child_iterator;
+  typedef IntrusiveBackList<DIE>::iterator child_iterator;
+  typedef IntrusiveBackList<DIE>::const_iterator const_child_iterator;
   typedef iterator_range<child_iterator> child_range;
+  typedef iterator_range<const_child_iterator> const_child_range;
 
-  child_range children() const {
+  child_range children() {
+    return llvm::make_range(Children.begin(), Children.end());
+  }
+  const_child_range children() const {
     return llvm::make_range(Children.begin(), Children.end());
   }
 
@@ -707,13 +711,12 @@ public:
     return Values.emplace(Alloc, Attribute, Form, std::forward<T>(Value));
   }
 
-  /// addChild - Add a child to the DIE.
-  ///
-  DIE &addChild(std::unique_ptr<DIE> Child) {
-    assert(!Child->getParent());
+  /// Add a child to the DIE.
+  DIE &addChild(DIE *Child) {
+    assert(!Child->getParent() && "Child should be orphaned");
     Child->Parent = this;
-    Children.push_back(std::move(Child));
-    return *Children.back();
+    Children.push_back(*Child);
+    return Children.back();
   }
 
   /// Find a value in the DIE with the attribute given.

@@ -180,9 +180,8 @@ void DIE::print(raw_ostream &O, unsigned IndentCount) const {
   }
   IndentCount -= 2;
 
-  for (unsigned j = 0, M = Children.size(); j < M; ++j) {
-    Children[j]->print(O, IndentCount+4);
-  }
+  for (const auto &Child : children())
+    Child.print(O, IndentCount + 4);
 
   if (!isBlock) O << "\n";
 }
