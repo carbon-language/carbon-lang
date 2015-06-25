@@ -25,6 +25,8 @@
 // Tests that the CFI mechanism is sensitive to multiple inheritance and only
 // permits calls via virtual tables for the correct base class.
 
+// REQUIRES: cxxabi
+
 #include <stdio.h>
 #include "utils.h"
 

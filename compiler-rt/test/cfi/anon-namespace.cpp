@@ -38,6 +38,8 @@
 // are different. It currently does so because bitset names have global scope
 // so we have to mangle the file path into the bitset name.
 
+// REQUIRES: cxxabi
+
 #include <stdio.h>
 #include "utils.h"
 

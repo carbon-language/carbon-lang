@@ -20,6 +20,8 @@
 // call to an object of the wrong class, by casting a pointer to such an object
 // and attempting to make a call through it.
 
+// REQUIRES: cxxabi
+
 #include <stdio.h>
 #include "utils.h"
 

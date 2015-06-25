@@ -21,6 +21,8 @@
 // any class, by manually overwriting the virtual table of an object and
 // attempting to make a call through it.
 
+// REQUIRES: cxxabi
+
 #include <stdio.h>
 #include "utils.h"
 

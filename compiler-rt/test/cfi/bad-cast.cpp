@@ -66,6 +66,8 @@
 
 // Tests that the CFI enforcement detects bad casts.
 
+// REQUIRES: cxxabi
+
 #include <stdio.h>
 #include "utils.h"
 

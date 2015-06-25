@@ -19,6 +19,8 @@
 // Tests that the CFI enforcement also applies to virtual destructor calls made
 // via 'delete'.
 
+// REQUIRES: cxxabi
+
 #include <stdio.h>
 #include "utils.h"
 
