@@ -38,16 +38,10 @@ void ExitSymbolizer() {
 
 // May be overriden by JIT/JAVA/etc,
 // whatever produces PCs marked with kExternalPCBit.
-extern "C" bool __tsan_symbolize_external(uptr pc,
-                               char *func_buf, uptr func_siz,
-                               char *file_buf, uptr file_siz,
-                               int *line, int *col)
-                               SANITIZER_WEAK_ATTRIBUTE;
-
-bool WEAK __tsan_symbolize_external(uptr pc,
-                               char *func_buf, uptr func_siz,
-                               char *file_buf, uptr file_siz,
-                               int *line, int *col) {
+extern "C" bool WEAK __tsan_symbolize_external(uptr pc,
+                                               char *func_buf, uptr func_siz,
+                                               char *file_buf, uptr file_siz,
+                                               int *line, int *col) {
   return false;
 }
 
