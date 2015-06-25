@@ -24,6 +24,11 @@ template <endianness target_endianness, bool is64Bits> struct ELFType {
   static const bool Is64Bits = is64Bits;
 };
 
+typedef ELFType<support::little, false> ELF32LE;
+typedef ELFType<support::big, false> ELF32BE;
+typedef ELFType<support::little, true> ELF64LE;
+typedef ELFType<support::big, true> ELF64BE;
+
 // Use an alignment of 2 for the typedefs since that is the worst case for
 // ELF files in archives.
 
