@@ -4582,8 +4582,16 @@ bool MipsAsmParser::parseDirectiveModule() {
   }
 
   if (Option == "oddspreg") {
-    getTargetStreamer().emitDirectiveModuleOddSPReg(true, isABI_O32());
     clearFeatureBits(Mips::FeatureNoOddSPReg, "nooddspreg");
+
+    // Synchronize the abiflags information with the FeatureBits information we
+    // changed above.
+    getTargetStreamer().updateABIInfo(*this);
+
+    // If printing assembly, use the recently updated abiflags information.
+    // If generating ELF, don't do anything (the .MIPS.abiflags section gets
+    // emitted at the end).
+    getTargetStreamer().emitDirectiveModuleOddSPReg();
 
     // If this is not the end of the statement, report an error.
     if (getLexer().isNot(AsmToken::EndOfStatement)) {
@@ -4598,8 +4606,16 @@ bool MipsAsmParser::parseDirectiveModule() {
       return false;
     }
 
-    getTargetStreamer().emitDirectiveModuleOddSPReg(false, isABI_O32());
     setFeatureBits(Mips::FeatureNoOddSPReg, "nooddspreg");
+
+    // Synchronize the abiflags information with the FeatureBits information we
+    // changed above.
+    getTargetStreamer().updateABIInfo(*this);
+
+    // If printing assembly, use the recently updated abiflags information.
+    // If generating ELF, don't do anything (the .MIPS.abiflags section gets
+    // emitted at the end).
+    getTargetStreamer().emitDirectiveModuleOddSPReg();
 
     // If this is not the end of the statement, report an error.
     if (getLexer().isNot(AsmToken::EndOfStatement)) {

@@ -747,8 +747,7 @@ void MipsAsmPrinter::EmitStartOfAsmFile(Module &M) {
   // accept it. We therefore emit it when it contradicts the default or an
   // option has changed the default (i.e. FPXX) and omit it otherwise.
   if (ABI.IsO32() && (!STI.useOddSPReg() || STI.isABI_FPXX()))
-    getTargetStreamer().emitDirectiveModuleOddSPReg(STI.useOddSPReg(),
-                                                    ABI.IsO32());
+    getTargetStreamer().emitDirectiveModuleOddSPReg();
 }
 
 void MipsAsmPrinter::emitInlineAsmStart() const {

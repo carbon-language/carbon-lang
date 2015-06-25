@@ -88,7 +88,7 @@ public:
   /// .MIPS.abiflags section.
   void emitDirectiveModuleFP();
 
-  virtual void emitDirectiveModuleOddSPReg(bool Enabled, bool IsO32ABI);
+  virtual void emitDirectiveModuleOddSPReg();
   virtual void emitDirectiveSetFp(MipsABIFlagsSection::FpABIKind Value);
   void forbidModuleDirective() { ModuleDirectiveAllowed = false; }
   void reallowModuleDirective() { ModuleDirectiveAllowed = true; }
@@ -195,7 +195,7 @@ public:
   // ABI Flags
   void emitDirectiveModuleFP(MipsABIFlagsSection::FpABIKind Value,
                              bool Is32BitABI) override;
-  void emitDirectiveModuleOddSPReg(bool Enabled, bool IsO32ABI) override;
+  void emitDirectiveModuleOddSPReg() override;
   void emitDirectiveSetFp(MipsABIFlagsSection::FpABIKind Value) override;
 };
 
@@ -238,8 +238,6 @@ public:
   void emitDirectiveCpsetup(unsigned RegNo, int RegOrOffset,
                             const MCSymbol &Sym, bool IsReg) override;
 
-  // ABI Flags
-  void emitDirectiveModuleOddSPReg(bool Enabled, bool IsO32ABI) override;
   void emitMipsAbiFlags();
 };
 }
