@@ -26,5 +26,5 @@ OPTIONS
 EXIT STATUS
 -----------
 
-:program:`llvm-dwarfdump` returns 0. Other exit codes imply internal
-program error.
+:program:`llvm-dwarfdump` returns 0 if the input files were parsed and dumped
+successfully. Otherwise, it returns 1.
