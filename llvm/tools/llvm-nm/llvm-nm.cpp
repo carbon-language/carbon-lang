@@ -890,14 +890,14 @@ static void dumpSymbolNamesFromObject(SymbolicFile &Obj, bool printName,
   basic_symbol_iterator IBegin = Obj.symbol_begin();
   basic_symbol_iterator IEnd = Obj.symbol_end();
   if (DynamicSyms) {
-    if (!Obj.isELF()) {
+    const auto *E = dyn_cast<ELFObjectFileBase>(&Obj);
+    if (!E) {
       error("File format has no dynamic symbol table", Obj.getFileName());
       return;
     }
-    std::pair<symbol_iterator, symbol_iterator> IDyn =
-        getELFDynamicSymbolIterators(&Obj);
-    IBegin = IDyn.first;
-    IEnd = IDyn.second;
+    auto IDyn = E->getDynamicSymbolIterators();
+    IBegin = IDyn.begin();
+    IEnd = IDyn.end();
   }
   std::string NameBuffer;
   raw_string_ostream OS(NameBuffer);

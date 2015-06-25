@@ -77,10 +77,9 @@ ModuleInfo::ModuleInfo(ObjectFile *Obj, DIContext *DICtx)
   bool NoSymbolTable = (Module->symbol_begin() == Module->symbol_end());
   if (NoSymbolTable && Module->isELF()) {
     // Fallback to dynamic symbol table, if regular symbol table is stripped.
-    std::pair<symbol_iterator, symbol_iterator> IDyn =
-        getELFDynamicSymbolIterators(Module);
-    for (symbol_iterator si = IDyn.first, se = IDyn.second; si != se; ++si) {
-      addSymbol(*si, OpdExtractor.get(), OpdAddress);
+    auto IDyn = cast<ELFObjectFileBase>(Module)->getDynamicSymbolIterators();
+    for (SymbolRef Sym : IDyn) {
+      addSymbol(Sym, OpdExtractor.get(), OpdAddress);
     }
   }
 }

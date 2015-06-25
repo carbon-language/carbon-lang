@@ -46,8 +46,7 @@ public:
   // and addend or not.
   virtual bool hasRelocationAddend(DataRefImpl Rel) const = 0;
 
-  virtual std::pair<symbol_iterator, symbol_iterator>
-  getELFDynamicSymbolIterators() const = 0;
+  virtual symbol_iterator_range getDynamicSymbolIterators() const = 0;
 
   virtual uint64_t getSectionFlags(SectionRef Sec) const = 0;
   virtual uint32_t getSectionType(SectionRef Sec) const = 0;
@@ -237,8 +236,7 @@ public:
                                       ELFT::Is64Bits);
   }
 
-  std::pair<symbol_iterator, symbol_iterator>
-  getELFDynamicSymbolIterators() const override;
+  symbol_iterator_range getDynamicSymbolIterators() const override;
 
   bool isRelocatableObject() const override;
 };
@@ -855,18 +853,13 @@ unsigned ELFObjectFile<ELFT>::getArch() const {
 }
 
 template <class ELFT>
-std::pair<symbol_iterator, symbol_iterator>
-ELFObjectFile<ELFT>::getELFDynamicSymbolIterators() const {
-  return std::make_pair(dynamic_symbol_begin(), dynamic_symbol_end());
+ObjectFile::symbol_iterator_range
+ELFObjectFile<ELFT>::getDynamicSymbolIterators() const {
+  return make_range(dynamic_symbol_begin(), dynamic_symbol_end());
 }
 
 template <class ELFT> bool ELFObjectFile<ELFT>::isRelocatableObject() const {
   return EF.getHeader()->e_type == ELF::ET_REL;
-}
-
-inline std::pair<symbol_iterator, symbol_iterator>
-getELFDynamicSymbolIterators(const SymbolicFile *Obj) {
-  return cast<ELFObjectFileBase>(Obj)->getELFDynamicSymbolIterators();
 }
 
 }
