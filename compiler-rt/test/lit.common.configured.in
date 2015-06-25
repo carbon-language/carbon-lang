@@ -27,6 +27,7 @@ set_default("python_executable", "@PYTHON_EXECUTABLE@")
 set_default("compiler_rt_debug", @COMPILER_RT_DEBUG_PYBOOL@)
 set_default("compiler_rt_libdir", "@COMPILER_RT_LIBRARY_OUTPUT_DIR@")
 set_default("emulator", "@COMPILER_RT_EMULATOR@")
+set_default("sanitizer_can_use_cxxabi", @SANITIZER_CAN_USE_CXXABI_PYBOOL@)
 
 # LLVM tools dir can be passed in lit parameters, so try to
 # apply substitution.

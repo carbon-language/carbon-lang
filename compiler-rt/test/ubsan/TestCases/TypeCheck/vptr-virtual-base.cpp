@@ -1,6 +1,8 @@
 // RUN: %clangxx -frtti -fsanitize=vptr -fno-sanitize-recover=vptr -g %s -O3 -o %t
 // RUN: not %run %t 2>&1 | FileCheck %s
 
+// REQUIRES: cxxabi
+
 struct S { virtual int f() { return 0; } };
 struct T : virtual S {};
 

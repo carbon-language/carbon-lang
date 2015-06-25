@@ -24,7 +24,7 @@
 // RUN: echo "vptr_check:S" > %t.loc-supp
 // RUN: UBSAN_OPTIONS="suppressions='%t.loc-supp'" not %run %t x- 2>&1 | FileCheck %s --check-prefix=CHECK-LOC-SUPPRESS
 
-// REQUIRES: stable-runtime
+// REQUIRES: stable-runtime, cxxabi
 #include <new>
 #include <assert.h>
 #include <stdio.h>
