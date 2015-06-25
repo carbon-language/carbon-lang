@@ -1445,8 +1445,8 @@ void SelectionDAGBuilder::FindMergedConditions(const Value *Cond,
     // We have flexibility in setting Prob for BB1 and Prob for TmpBB.
     // The requirement is that
     //   TrueProb for BB1 + (FalseProb for BB1 * TrueProb for TmpBB)
-    //     = TrueProb for orignal BB.
-    // Assuming the orignal weights are A and B, one choice is to set BB1's
+    //     = TrueProb for original BB.
+    // Assuming the original weights are A and B, one choice is to set BB1's
     // weights to A and A+2B, and set TmpBB's weights to A and 2B. This choice
     // assumes that
     //   TrueProb for BB1 == FalseProb for BB1 * TrueProb for TmpBB.
@@ -1481,8 +1481,8 @@ void SelectionDAGBuilder::FindMergedConditions(const Value *Cond,
     // We have flexibility in setting Prob for BB1 and Prob for TmpBB.
     // The requirement is that
     //   FalseProb for BB1 + (TrueProb for BB1 * FalseProb for TmpBB)
-    //     = FalseProb for orignal BB.
-    // Assuming the orignal weights are A and B, one choice is to set BB1's
+    //     = FalseProb for original BB.
+    // Assuming the original weights are A and B, one choice is to set BB1's
     // weights to 2A+B and B, and set TmpBB's weights to 2A and B. This choice
     // assumes that
     //   FalseProb for BB1 == TrueProb for BB1 * FalseProb for TmpBB.
