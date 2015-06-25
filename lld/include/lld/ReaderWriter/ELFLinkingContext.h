@@ -36,6 +36,11 @@ class File;
 class Reference;
 
 namespace elf {
+using llvm::object::ELF32LE;
+using llvm::object::ELF32BE;
+using llvm::object::ELF64LE;
+using llvm::object::ELF64BE;
+
 class ELFWriter;
 
 std::unique_ptr<ELFLinkingContext> createAArch64LinkingContext(llvm::Triple);
@@ -45,11 +50,6 @@ std::unique_ptr<ELFLinkingContext> createHexagonLinkingContext(llvm::Triple);
 std::unique_ptr<ELFLinkingContext> createMipsLinkingContext(llvm::Triple);
 std::unique_ptr<ELFLinkingContext> createX86LinkingContext(llvm::Triple);
 std::unique_ptr<ELFLinkingContext> createX86_64LinkingContext(llvm::Triple);
-
-typedef llvm::object::ELFType<llvm::support::little, false> ELF32LE;
-typedef llvm::object::ELFType<llvm::support::big, false> ELF32BE;
-typedef llvm::object::ELFType<llvm::support::little, true> ELF64LE;
-typedef llvm::object::ELFType<llvm::support::big, true> ELF64BE;
 
 class TargetRelocationHandler {
 public:
