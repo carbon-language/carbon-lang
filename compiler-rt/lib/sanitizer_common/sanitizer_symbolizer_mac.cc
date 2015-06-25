@@ -53,9 +53,6 @@ class AtosSymbolizerProcess : public SymbolizerProcess {
   }
 
   void ExecuteWithDefaultArgs(const char *path_to_binary) const override {
-    // The `atos` binary has some issues with DYLD_ROOT_PATH on i386.
-    unsetenv("DYLD_ROOT_PATH");
-
     char pid_str[16];
     internal_snprintf(pid_str, sizeof(pid_str), "%d", parent_pid_);
     if (GetMacosVersion() == MACOS_VERSION_MAVERICKS) {

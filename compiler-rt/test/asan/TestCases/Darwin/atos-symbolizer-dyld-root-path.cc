@@ -1,7 +1,9 @@
-// Check that the `atos` symbolizer works.
-
-// RUN: %clangxx_asan -O0 %s -o %t 
-// RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:verbosity=2 ASAN_SYMBOLIZER_PATH=$(which atos) not %run %t 2>&1 | FileCheck %s
+// Check that when having a DYLD_ROOT_PATH set, the symbolizer still works.
+// RUN: env DYLD_ROOT_PATH="/" ASAN_OPTIONS=$ASAN_OPTIONS:verbosity=2 ASAN_SYMBOLIZER_PATH=$(which atos) \
+// RUN:   not %run %t 2>&1 | FileCheck %s
+//
+// Due to a bug in atos, this only works on x86_64.
+// REQUIRES: x86_64
 
 #include <stdlib.h>
 #include <string.h>
