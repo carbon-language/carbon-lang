@@ -463,16 +463,31 @@ void Darwin::AddDeploymentTarget(DerivedArgList &Args) const {
     if (char *env = ::getenv("IPHONEOS_DEPLOYMENT_TARGET"))
       iOSTarget = env;
 
-    // If no '-miphoneos-version-min' specified on the command line and
-    // IPHONEOS_DEPLOYMENT_TARGET is not defined, see if we can set the default
-    // based on -isysroot.
-    if (iOSTarget.empty()) {
+    // If there is no command-line argument to specify the Target version and
+    // no environment variable defined, see if we can set the default based
+    // on -isysroot.
+    if (iOSTarget.empty() && OSXTarget.empty() &&
+        Args.hasArg(options::OPT_isysroot)) {
       if (const Arg *A = Args.getLastArg(options::OPT_isysroot)) {
-        StringRef first, second;
         StringRef isysroot = A->getValue();
-        std::tie(first, second) = isysroot.split(StringRef("SDKs/iPhoneOS"));
-        if (second != "")
-          iOSTarget = second.substr(0,3);
+        // Assume SDK has path: SOME_PATH/SDKs/PlatformXX.YY.sdk
+        size_t BeginSDK = isysroot.rfind("SDKs/");
+        size_t EndSDK = isysroot.rfind(".sdk");
+        if (BeginSDK != StringRef::npos && EndSDK != StringRef::npos) {
+          StringRef SDK = isysroot.slice(BeginSDK + 5, EndSDK);
+          // Slice the version number out.
+          // Version number is between the first and the last number.
+          size_t StartVer = SDK.find_first_of("0123456789");
+          size_t EndVer = SDK.find_last_of("0123456789");
+          if (StartVer != StringRef::npos && EndVer > StartVer) {
+            StringRef Version = SDK.slice(StartVer, EndVer + 1);
+            if (SDK.startswith("iPhoneOS") ||
+                SDK.startswith("iPhoneSimulator"))
+              iOSTarget = Version;
+            else if (SDK.startswith("MacOSX"))
+              OSXTarget = Version;
+          }
+        }
       }
     }
 
