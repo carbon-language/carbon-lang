@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ExecutionEngine/Orc/ObjectTransformLayer.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
 #include "gtest/gtest.h"
 
@@ -32,7 +33,7 @@ typedef int MockMemoryBufferSet;
 struct AllocatingTransform {
   std::unique_ptr<MockObjectFile>
   operator()(std::unique_ptr<MockObjectFile> Obj) const {
-    return std::make_unique<MockObjectFile>(*Obj + 1);
+    return llvm::make_unique<MockObjectFile>(*Obj + 1);
   }
 };
 
@@ -54,7 +55,7 @@ public:
                              SymbolResolverPtrT Resolver) {
     EXPECT_EQ(MockManager, *MemMgr) << "MM should pass through";
     EXPECT_EQ(MockResolver, *Resolver) << "Resolver should pass through";
-    int I = 0;
+    size_t I = 0;
     for (auto &ObjPtr : Objects) {
       EXPECT_EQ(MockObjects[I++] + 1, *ObjPtr) << "Transform should be applied";
     }
@@ -225,10 +226,10 @@ TEST(ObjectTransformLayerTest, Main) {
 
   // Test addObjectSet with T1 (allocating, unique pointers)
   std::vector<std::unique_ptr<MockObjectFile>> Objs1;
-  Objs1.push_back(std::make_unique<MockObjectFile>(MockObject1));
-  Objs1.push_back(std::make_unique<MockObjectFile>(MockObject2));
-  auto MM = std::make_unique<MockMemoryManager>(MockManager);
-  auto SR = std::make_unique<MockSymbolResolver>(MockResolver);
+  Objs1.push_back(llvm::make_unique<MockObjectFile>(MockObject1));
+  Objs1.push_back(llvm::make_unique<MockObjectFile>(MockObject2));
+  auto MM = llvm::make_unique<MockMemoryManager>(MockManager);
+  auto SR = llvm::make_unique<MockSymbolResolver>(MockResolver);
   M.expectAddObjectSet(Objs1, MM.get(), SR.get());
   auto H = T1.addObjectSet(Objs1, std::move(MM), std::move(SR));
   M.verifyAddObjectSet(H);
@@ -275,7 +276,7 @@ TEST(ObjectTransformLayerTest, Main) {
   M.verifyMapSectionAddress();
 
   // Test takeOwnershipOfBuffers, using unique pointer to buffer set
-  auto MockBufferSetPtr = std::make_unique<MockMemoryBufferSet>(366);
+  auto MockBufferSetPtr = llvm::make_unique<MockMemoryBufferSet>(366);
   M.expectTakeOwnershipOfBuffers(H, MockBufferSetPtr.get());
   T2.takeOwnershipOfBuffers(H, std::move(MockBufferSetPtr));
   M.verifyTakeOwnershipOfBuffers();
@@ -293,7 +294,7 @@ TEST(ObjectTransformLayerTest, Main) {
   EXPECT_EQ(278, Mutatee) << "Expected incrementing transform";
 
   // Verify transform getter (const)
-  auto OwnedObj = std::make_unique<MockObjectFile>(288);
+  auto OwnedObj = llvm::make_unique<MockObjectFile>(288);
   const auto &T1C = T1;
   OwnedObj = T1C.getTransform()(std::move(OwnedObj));
   EXPECT_EQ(289, *OwnedObj) << "Expected incrementing transform";
