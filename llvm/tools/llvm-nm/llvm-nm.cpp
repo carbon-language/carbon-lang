@@ -675,7 +675,7 @@ static char getSymbolNMTypeChar(ELFObjectFile<ELFT> &Obj,
         .Default('?');
   }
 
-  return '?';
+  return 'n';
 }
 
 static char getSymbolNMTypeChar(COFFObjectFile &Obj, symbol_iterator I) {
