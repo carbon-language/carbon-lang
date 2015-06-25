@@ -454,7 +454,9 @@ class Preprocessor : public RefCountedBase<Preprocessor> {
     MacroDirective::DefInfo findDirectiveAtLoc(SourceLocation Loc,
                                                SourceManager &SourceMgr) const {
       // FIXME: Incorporate module macros into the result of this.
-      return getLatest()->findDirectiveAtLoc(Loc, SourceMgr);
+      if (auto *Latest = getLatest())
+        return Latest->findDirectiveAtLoc(Loc, SourceMgr);
+      return MacroDirective::DefInfo();
     }
 
     void overrideActiveModuleMacros(Preprocessor &PP, IdentifierInfo *II) {
