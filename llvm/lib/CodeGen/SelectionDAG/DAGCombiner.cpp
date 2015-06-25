@@ -13915,8 +13915,7 @@ void DAGCombiner::GatherAllAliases(SDNode *N, SDValue OriginalChain,
   // aliases list.  If not, then continue up the chain looking for the next
   // candidate.
   while (!Chains.empty()) {
-    SDValue Chain = Chains.back();
-    Chains.pop_back();
+    SDValue Chain = Chains.pop_back_val();
 
     // For TokenFactor nodes, look at each operand and only continue up the
     // chain until we find two aliases.  If we've seen two aliases, assume we'll
