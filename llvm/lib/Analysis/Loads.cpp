@@ -65,6 +65,12 @@ static bool AreEquivalentAddressValues(const Value *A, const Value *B) {
 bool llvm::isSafeToLoadUnconditionally(Value *V, Instruction *ScanFrom,
                                        unsigned Align) {
   const DataLayout &DL = ScanFrom->getModule()->getDataLayout();
+
+  // Zero alignment means that the load has the ABI alignment for the target
+  if (Align == 0)
+    Align = DL.getABITypeAlignment(V->getType()->getPointerElementType());
+  assert(isPowerOf2_32(Align));
+
   int64_t ByteOffset = 0;
   Value *Base = V;
   Base = GetPointerBaseWithConstantOffset(V, ByteOffset, DL);
@@ -102,7 +108,7 @@ bool llvm::isSafeToLoadUnconditionally(Value *V, Instruction *ScanFrom,
     if (Align <= BaseAlign) {
       // Check if the load is within the bounds of the underlying object.
       if (ByteOffset + LoadSize <= DL.getTypeAllocSize(BaseType) &&
-          (Align == 0 || (ByteOffset % Align) == 0))
+          ((ByteOffset % Align) == 0))
         return true;
     }
   }
@@ -128,20 +134,28 @@ bool llvm::isSafeToLoadUnconditionally(Value *V, Instruction *ScanFrom,
       return false;
 
     Value *AccessedPtr;
-    if (LoadInst *LI = dyn_cast<LoadInst>(BBI))
+    unsigned AccessedAlign;
+    if (LoadInst *LI = dyn_cast<LoadInst>(BBI)) {
       AccessedPtr = LI->getPointerOperand();
-    else if (StoreInst *SI = dyn_cast<StoreInst>(BBI))
+      AccessedAlign = LI->getAlignment();
+    } else if (StoreInst *SI = dyn_cast<StoreInst>(BBI)) {
       AccessedPtr = SI->getPointerOperand();
-    else
+      AccessedAlign = SI->getAlignment();
+    } else
+      continue;
+
+    Type *AccessedTy = AccessedPtr->getType()->getPointerElementType();
+    if (AccessedAlign == 0)
+      AccessedAlign = DL.getABITypeAlignment(AccessedTy);
+    if (AccessedAlign < Align)
       continue;
 
     // Handle trivial cases.
     if (AccessedPtr == V)
       return true;
 
-    auto *AccessedTy = cast<PointerType>(AccessedPtr->getType());
     if (AreEquivalentAddressValues(AccessedPtr->stripPointerCasts(), V) &&
-        LoadSize <= DL.getTypeStoreSize(AccessedTy->getElementType()))
+        LoadSize <= DL.getTypeStoreSize(AccessedTy))
       return true;
   }
   return false;
