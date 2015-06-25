@@ -725,6 +725,8 @@ void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {
       for (auto & Symbol : DLLExportedFns)
         GenerateExportDirective(Symbol, /*IsData=*/false);
     }
+
+    SM.serializeToStackMapSection();
   }
 
   if (TT.isOSBinFormatELF()) {

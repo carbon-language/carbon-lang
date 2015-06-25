@@ -1,10 +1,11 @@
-; RUN: llc < %s | FileCheck %s
+; RUN: llc < %s -mtriple="x86_64-pc-linux-gnu" | FileCheck %s
+; RUN: llc < %s -mtriple="x86_64-pc-win64-coff" | FileCheck %s
+
 ; This test is a sanity check to ensure statepoints are generating StackMap
 ; sections correctly.  This is not intended to be a rigorous test of the 
 ; StackMap format (see the stackmap tests for that).
 
 target datalayout = "e-i64:64-f80:128-n8:16:32:64-S128"
-target triple = "x86_64-pc-linux-gnu"
 
 declare zeroext i1 @return_i1()
 
