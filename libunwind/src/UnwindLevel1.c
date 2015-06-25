@@ -31,8 +31,8 @@ unwind_phase1(unw_context_t *uc, _Unwind_Exception *exception_object) {
   unw_init_local(&cursor1, uc);
 
   // Walk each frame looking for a place to stop.
-  for (bool handlerNotFound = true; handlerNotFound;) {
-
+  bool handlerNotFound = true;
+  while (handlerNotFound) {
     // Ask libuwind to get next frame (skip over first which is
     // _Unwind_RaiseException).
     int stepResult = unw_step(&cursor1);
