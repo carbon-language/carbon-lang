@@ -913,6 +913,15 @@
 		AF2BCA6C18C7EFDE005B4526 /* JITLoaderGDB.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF2BCA6918C7EFDE005B4526 /* JITLoaderGDB.cpp */; };
 		AF2BCA6D18C7EFDE005B4526 /* JITLoaderGDB.h in Headers */ = {isa = PBXBuildFile; fileRef = AF2BCA6A18C7EFDE005B4526 /* JITLoaderGDB.h */; };
 		AF37E10A17C861F20061E18E /* ProcessRunLock.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF37E10917C861F20061E18E /* ProcessRunLock.cpp */; };
+		AF3F54B11B3BA59C00186E73 /* CrashReason.h in Headers */ = {isa = PBXBuildFile; fileRef = AF3F54AF1B3BA59C00186E73 /* CrashReason.h */; };
+		AF3F54C31B3BA5D500186E73 /* POSIXStopInfo.h in Headers */ = {isa = PBXBuildFile; fileRef = AF3F54B31B3BA5D500186E73 /* POSIXStopInfo.h */; };
+		AF3F54C51B3BA5D500186E73 /* POSIXThread.h in Headers */ = {isa = PBXBuildFile; fileRef = AF3F54B51B3BA5D500186E73 /* POSIXThread.h */; };
+		AF3F54C71B3BA5D500186E73 /* ProcessPOSIX.h in Headers */ = {isa = PBXBuildFile; fileRef = AF3F54B71B3BA5D500186E73 /* ProcessPOSIX.h */; };
+		AF3F54C91B3BA5D500186E73 /* RegisterContextPOSIXProcessMonitor_arm.h in Headers */ = {isa = PBXBuildFile; fileRef = AF3F54B91B3BA5D500186E73 /* RegisterContextPOSIXProcessMonitor_arm.h */; };
+		AF3F54CB1B3BA5D500186E73 /* RegisterContextPOSIXProcessMonitor_arm64.h in Headers */ = {isa = PBXBuildFile; fileRef = AF3F54BB1B3BA5D500186E73 /* RegisterContextPOSIXProcessMonitor_arm64.h */; };
+		AF3F54CD1B3BA5D500186E73 /* RegisterContextPOSIXProcessMonitor_mips64.h in Headers */ = {isa = PBXBuildFile; fileRef = AF3F54BD1B3BA5D500186E73 /* RegisterContextPOSIXProcessMonitor_mips64.h */; };
+		AF3F54CF1B3BA5D500186E73 /* RegisterContextPOSIXProcessMonitor_powerpc.h in Headers */ = {isa = PBXBuildFile; fileRef = AF3F54BF1B3BA5D500186E73 /* RegisterContextPOSIXProcessMonitor_powerpc.h */; };
+		AF3F54D11B3BA5D500186E73 /* RegisterContextPOSIXProcessMonitor_x86.h in Headers */ = {isa = PBXBuildFile; fileRef = AF3F54C11B3BA5D500186E73 /* RegisterContextPOSIXProcessMonitor_x86.h */; };
 		AF455D571A9C231700D6C4F7 /* com.apple.lldb.launcherXPCService.xpc in CopyFiles */ = {isa = PBXBuildFile; fileRef = EDC6D49914E5C19B001B75F8 /* com.apple.lldb.launcherXPCService.xpc */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		AF455D581A9C231700D6C4F7 /* com.apple.lldb.launcherRootXPCService.xpc in CopyFiles */ = {isa = PBXBuildFile; fileRef = EDE274EC14EDCE1F005B0F75 /* com.apple.lldb.launcherRootXPCService.xpc */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		AF45FDE518A1F3AC0007051C /* AppleGetThreadItemInfoHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF45FDE318A1F3AC0007051C /* AppleGetThreadItemInfoHandler.cpp */; };
@@ -921,8 +930,6 @@
 		AF77E0901A033C700096C0EA /* ABISysV_ppc.h in Headers */ = {isa = PBXBuildFile; fileRef = AF77E08E1A033C700096C0EA /* ABISysV_ppc.h */; };
 		AF77E0931A033C7F0096C0EA /* ABISysV_ppc64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF77E0911A033C7F0096C0EA /* ABISysV_ppc64.cpp */; };
 		AF77E0941A033C7F0096C0EA /* ABISysV_ppc64.h in Headers */ = {isa = PBXBuildFile; fileRef = AF77E0921A033C7F0096C0EA /* ABISysV_ppc64.h */; };
-		AF77E0971A033CC70096C0EA /* RegisterContextPOSIXProcessMonitor_powerpc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF77E0951A033CC70096C0EA /* RegisterContextPOSIXProcessMonitor_powerpc.cpp */; };
-		AF77E0981A033CC70096C0EA /* RegisterContextPOSIXProcessMonitor_powerpc.h in Headers */ = {isa = PBXBuildFile; fileRef = AF77E0961A033CC70096C0EA /* RegisterContextPOSIXProcessMonitor_powerpc.h */; };
 		AF77E0A01A033D360096C0EA /* RegisterContext_powerpc.h in Headers */ = {isa = PBXBuildFile; fileRef = AF77E0991A033D360096C0EA /* RegisterContext_powerpc.h */; };
 		AF77E0A11A033D360096C0EA /* RegisterContextFreeBSD_powerpc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF77E09A1A033D360096C0EA /* RegisterContextFreeBSD_powerpc.cpp */; };
 		AF77E0A21A033D360096C0EA /* RegisterContextFreeBSD_powerpc.h in Headers */ = {isa = PBXBuildFile; fileRef = AF77E09B1A033D360096C0EA /* RegisterContextFreeBSD_powerpc.h */; };
@@ -1213,12 +1220,6 @@
 		233B007A1960A0440090E598 /* ProcessInfo.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ProcessInfo.h; path = include/lldb/Target/ProcessInfo.h; sourceTree = "<group>"; };
 		233B007B1960C9E60090E598 /* ProcessInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ProcessInfo.cpp; path = source/Target/ProcessInfo.cpp; sourceTree = "<group>"; };
 		233B007E1960CB280090E598 /* ProcessLaunchInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ProcessLaunchInfo.cpp; path = source/Target/ProcessLaunchInfo.cpp; sourceTree = "<group>"; };
-		233B008E19610B1F0090E598 /* LinuxThread.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = LinuxThread.cpp; sourceTree = "<group>"; };
-		233B008F19610B1F0090E598 /* LinuxThread.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LinuxThread.h; sourceTree = "<group>"; };
-		233B009019610B1F0090E598 /* ProcessLinux.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ProcessLinux.cpp; sourceTree = "<group>"; };
-		233B009119610B1F0090E598 /* ProcessLinux.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProcessLinux.h; sourceTree = "<group>"; };
-		233B009219610B1F0090E598 /* ProcessMonitor.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ProcessMonitor.cpp; sourceTree = "<group>"; };
-		233B009319610B1F0090E598 /* ProcessMonitor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProcessMonitor.h; sourceTree = "<group>"; };
 		233B009D19610D6B0090E598 /* Host.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Host.cpp; sourceTree = "<group>"; };
 		233B00A1196113730090E598 /* ProcFileReader.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ProcFileReader.cpp; sourceTree = "<group>"; };
 		233B00A2196113730090E598 /* ProcFileReader.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ProcFileReader.h; sourceTree = "<group>"; };
@@ -1854,20 +1855,10 @@
 		26BC17A718C7F4CB00D2196D /* RegisterContextPOSIXCore_x86_64.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RegisterContextPOSIXCore_x86_64.h; sourceTree = "<group>"; };
 		26BC17A818C7F4CB00D2196D /* ThreadElfCore.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ThreadElfCore.cpp; sourceTree = "<group>"; };
 		26BC17A918C7F4CB00D2196D /* ThreadElfCore.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ThreadElfCore.h; sourceTree = "<group>"; };
-		26BC17B618C7F4FA00D2196D /* POSIXStopInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = POSIXStopInfo.cpp; sourceTree = "<group>"; };
-		26BC17B718C7F4FA00D2196D /* POSIXStopInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = POSIXStopInfo.h; sourceTree = "<group>"; };
-		26BC17B818C7F4FA00D2196D /* POSIXThread.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = POSIXThread.cpp; sourceTree = "<group>"; };
-		26BC17B918C7F4FA00D2196D /* POSIXThread.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = POSIXThread.h; sourceTree = "<group>"; };
 		26BC17BA18C7F4FA00D2196D /* ProcessMessage.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ProcessMessage.cpp; sourceTree = "<group>"; };
 		26BC17BB18C7F4FA00D2196D /* ProcessMessage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProcessMessage.h; sourceTree = "<group>"; };
-		26BC17BC18C7F4FA00D2196D /* ProcessPOSIX.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ProcessPOSIX.cpp; sourceTree = "<group>"; };
-		26BC17BD18C7F4FA00D2196D /* ProcessPOSIX.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProcessPOSIX.h; sourceTree = "<group>"; };
 		26BC17BE18C7F4FA00D2196D /* ProcessPOSIXLog.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ProcessPOSIXLog.cpp; sourceTree = "<group>"; };
 		26BC17BF18C7F4FA00D2196D /* ProcessPOSIXLog.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProcessPOSIXLog.h; sourceTree = "<group>"; };
-		26BC17D118C7F4FA00D2196D /* RegisterContextPOSIXProcessMonitor_mips64.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = RegisterContextPOSIXProcessMonitor_mips64.cpp; sourceTree = "<group>"; };
-		26BC17D218C7F4FA00D2196D /* RegisterContextPOSIXProcessMonitor_mips64.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RegisterContextPOSIXProcessMonitor_mips64.h; sourceTree = "<group>"; };
-		26BC17D318C7F4FA00D2196D /* RegisterContextPOSIXProcessMonitor_x86.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = RegisterContextPOSIXProcessMonitor_x86.cpp; sourceTree = "<group>"; };
-		26BC17D418C7F4FA00D2196D /* RegisterContextPOSIXProcessMonitor_x86.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RegisterContextPOSIXProcessMonitor_x86.h; sourceTree = "<group>"; };
 		26BC7C2510F1B3BC00F91463 /* lldb-defines.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "lldb-defines.h"; path = "include/lldb/lldb-defines.h"; sourceTree = "<group>"; };
 		26BC7C2610F1B3BC00F91463 /* lldb-enumerations.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "lldb-enumerations.h"; path = "include/lldb/lldb-enumerations.h"; sourceTree = "<group>"; };
 		26BC7C2810F1B3BC00F91463 /* lldb-private-interfaces.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "lldb-private-interfaces.h"; path = "include/lldb/lldb-private-interfaces.h"; sourceTree = "<group>"; };
@@ -2708,6 +2699,24 @@
 		AF2BCA6918C7EFDE005B4526 /* JITLoaderGDB.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = JITLoaderGDB.cpp; sourceTree = "<group>"; };
 		AF2BCA6A18C7EFDE005B4526 /* JITLoaderGDB.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = JITLoaderGDB.h; sourceTree = "<group>"; };
 		AF37E10917C861F20061E18E /* ProcessRunLock.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ProcessRunLock.cpp; sourceTree = "<group>"; };
+		AF3F54AE1B3BA59C00186E73 /* CrashReason.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CrashReason.cpp; sourceTree = "<group>"; };
+		AF3F54AF1B3BA59C00186E73 /* CrashReason.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CrashReason.h; sourceTree = "<group>"; };
+		AF3F54B21B3BA5D500186E73 /* POSIXStopInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = POSIXStopInfo.cpp; sourceTree = "<group>"; };
+		AF3F54B31B3BA5D500186E73 /* POSIXStopInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = POSIXStopInfo.h; sourceTree = "<group>"; };
+		AF3F54B41B3BA5D500186E73 /* POSIXThread.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = POSIXThread.cpp; sourceTree = "<group>"; };
+		AF3F54B51B3BA5D500186E73 /* POSIXThread.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = POSIXThread.h; sourceTree = "<group>"; };
+		AF3F54B61B3BA5D500186E73 /* ProcessPOSIX.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ProcessPOSIX.cpp; sourceTree = "<group>"; };
+		AF3F54B71B3BA5D500186E73 /* ProcessPOSIX.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProcessPOSIX.h; sourceTree = "<group>"; };
+		AF3F54B81B3BA5D500186E73 /* RegisterContextPOSIXProcessMonitor_arm.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = RegisterContextPOSIXProcessMonitor_arm.cpp; sourceTree = "<group>"; };
+		AF3F54B91B3BA5D500186E73 /* RegisterContextPOSIXProcessMonitor_arm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RegisterContextPOSIXProcessMonitor_arm.h; sourceTree = "<group>"; };
+		AF3F54BA1B3BA5D500186E73 /* RegisterContextPOSIXProcessMonitor_arm64.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = RegisterContextPOSIXProcessMonitor_arm64.cpp; sourceTree = "<group>"; };
+		AF3F54BB1B3BA5D500186E73 /* RegisterContextPOSIXProcessMonitor_arm64.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RegisterContextPOSIXProcessMonitor_arm64.h; sourceTree = "<group>"; };
+		AF3F54BC1B3BA5D500186E73 /* RegisterContextPOSIXProcessMonitor_mips64.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = RegisterContextPOSIXProcessMonitor_mips64.cpp; sourceTree = "<group>"; };
+		AF3F54BD1B3BA5D500186E73 /* RegisterContextPOSIXProcessMonitor_mips64.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RegisterContextPOSIXProcessMonitor_mips64.h; sourceTree = "<group>"; };
+		AF3F54BE1B3BA5D500186E73 /* RegisterContextPOSIXProcessMonitor_powerpc.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = RegisterContextPOSIXProcessMonitor_powerpc.cpp; sourceTree = "<group>"; };
+		AF3F54BF1B3BA5D500186E73 /* RegisterContextPOSIXProcessMonitor_powerpc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RegisterContextPOSIXProcessMonitor_powerpc.h; sourceTree = "<group>"; };
+		AF3F54C01B3BA5D500186E73 /* RegisterContextPOSIXProcessMonitor_x86.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = RegisterContextPOSIXProcessMonitor_x86.cpp; sourceTree = "<group>"; };
+		AF3F54C11B3BA5D500186E73 /* RegisterContextPOSIXProcessMonitor_x86.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RegisterContextPOSIXProcessMonitor_x86.h; sourceTree = "<group>"; };
 		AF45FDE318A1F3AC0007051C /* AppleGetThreadItemInfoHandler.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AppleGetThreadItemInfoHandler.cpp; sourceTree = "<group>"; };
 		AF45FDE418A1F3AC0007051C /* AppleGetThreadItemInfoHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AppleGetThreadItemInfoHandler.h; sourceTree = "<group>"; };
 		AF68D2541255416E002FF25B /* RegisterContextLLDB.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RegisterContextLLDB.cpp; path = Utility/RegisterContextLLDB.cpp; sourceTree = "<group>"; };
@@ -2718,8 +2727,6 @@
 		AF77E08E1A033C700096C0EA /* ABISysV_ppc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ABISysV_ppc.h; path = "SysV-ppc/ABISysV_ppc.h"; sourceTree = "<group>"; };
 		AF77E0911A033C7F0096C0EA /* ABISysV_ppc64.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ABISysV_ppc64.cpp; path = "SysV-ppc64/ABISysV_ppc64.cpp"; sourceTree = "<group>"; };
 		AF77E0921A033C7F0096C0EA /* ABISysV_ppc64.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ABISysV_ppc64.h; path = "SysV-ppc64/ABISysV_ppc64.h"; sourceTree = "<group>"; };
-		AF77E0951A033CC70096C0EA /* RegisterContextPOSIXProcessMonitor_powerpc.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = RegisterContextPOSIXProcessMonitor_powerpc.cpp; sourceTree = "<group>"; };
-		AF77E0961A033CC70096C0EA /* RegisterContextPOSIXProcessMonitor_powerpc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RegisterContextPOSIXProcessMonitor_powerpc.h; sourceTree = "<group>"; };
 		AF77E0991A033D360096C0EA /* RegisterContext_powerpc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RegisterContext_powerpc.h; path = Utility/RegisterContext_powerpc.h; sourceTree = "<group>"; };
 		AF77E09A1A033D360096C0EA /* RegisterContextFreeBSD_powerpc.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RegisterContextFreeBSD_powerpc.cpp; path = Utility/RegisterContextFreeBSD_powerpc.cpp; sourceTree = "<group>"; };
 		AF77E09B1A033D360096C0EA /* RegisterContextFreeBSD_powerpc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RegisterContextFreeBSD_powerpc.h; path = Utility/RegisterContextFreeBSD_powerpc.h; sourceTree = "<group>"; };
@@ -2959,18 +2966,12 @@
 				256CBDAE1ADD0DB600BC6CDC /* NativeRegisterContextLinux_arm64.h */,
 				256CBDAF1ADD0DB600BC6CDC /* NativeRegisterContextLinux_mips64.cpp */,
 				256CBDB01ADD0DB600BC6CDC /* NativeRegisterContextLinux_mips64.h */,
-				233B008E19610B1F0090E598 /* LinuxThread.cpp */,
-				233B008F19610B1F0090E598 /* LinuxThread.h */,
 				232CB62B19213AC200EF39FC /* NativeProcessLinux.cpp */,
 				232CB62C19213AC200EF39FC /* NativeProcessLinux.h */,
 				233B00AA19622F3F0090E598 /* NativeRegisterContextLinux_x86_64.h */,
 				233B00A919622F3F0090E598 /* NativeRegisterContextLinux_x86_64.cpp */,
 				232CB62D19213AC200EF39FC /* NativeThreadLinux.cpp */,
 				232CB62E19213AC200EF39FC /* NativeThreadLinux.h */,
-				233B009019610B1F0090E598 /* ProcessLinux.cpp */,
-				233B009119610B1F0090E598 /* ProcessLinux.h */,
-				233B009219610B1F0090E598 /* ProcessMonitor.cpp */,
-				233B009319610B1F0090E598 /* ProcessMonitor.h */,
 				233B00A2196113730090E598 /* ProcFileReader.h */,
 				233B00A1196113730090E598 /* ProcFileReader.cpp */,
 			);
@@ -2995,6 +2996,22 @@
 		23AB0526199FF5D3003B8084 /* FreeBSD */ = {
 			isa = PBXGroup;
 			children = (
+				AF3F54B21B3BA5D500186E73 /* POSIXStopInfo.cpp */,
+				AF3F54B31B3BA5D500186E73 /* POSIXStopInfo.h */,
+				AF3F54B41B3BA5D500186E73 /* POSIXThread.cpp */,
+				AF3F54B51B3BA5D500186E73 /* POSIXThread.h */,
+				AF3F54B61B3BA5D500186E73 /* ProcessPOSIX.cpp */,
+				AF3F54B71B3BA5D500186E73 /* ProcessPOSIX.h */,
+				AF3F54B81B3BA5D500186E73 /* RegisterContextPOSIXProcessMonitor_arm.cpp */,
+				AF3F54B91B3BA5D500186E73 /* RegisterContextPOSIXProcessMonitor_arm.h */,
+				AF3F54BA1B3BA5D500186E73 /* RegisterContextPOSIXProcessMonitor_arm64.cpp */,
+				AF3F54BB1B3BA5D500186E73 /* RegisterContextPOSIXProcessMonitor_arm64.h */,
+				AF3F54BC1B3BA5D500186E73 /* RegisterContextPOSIXProcessMonitor_mips64.cpp */,
+				AF3F54BD1B3BA5D500186E73 /* RegisterContextPOSIXProcessMonitor_mips64.h */,
+				AF3F54BE1B3BA5D500186E73 /* RegisterContextPOSIXProcessMonitor_powerpc.cpp */,
+				AF3F54BF1B3BA5D500186E73 /* RegisterContextPOSIXProcessMonitor_powerpc.h */,
+				AF3F54C01B3BA5D500186E73 /* RegisterContextPOSIXProcessMonitor_x86.cpp */,
+				AF3F54C11B3BA5D500186E73 /* RegisterContextPOSIXProcessMonitor_x86.h */,
 				23AB052E199FF639003B8084 /* FreeBSDThread.h */,
 				23AB052D199FF639003B8084 /* FreeBSDThread.cpp */,
 				23AB0530199FF639003B8084 /* ProcessFreeBSD.h */,
@@ -4008,22 +4025,12 @@
 		26BC17B318C7F4FA00D2196D /* POSIX */ = {
 			isa = PBXGroup;
 			children = (
-				26BC17B618C7F4FA00D2196D /* POSIXStopInfo.cpp */,
-				26BC17B718C7F4FA00D2196D /* POSIXStopInfo.h */,
-				26BC17B818C7F4FA00D2196D /* POSIXThread.cpp */,
-				26BC17B918C7F4FA00D2196D /* POSIXThread.h */,
+				AF3F54AE1B3BA59C00186E73 /* CrashReason.cpp */,
+				AF3F54AF1B3BA59C00186E73 /* CrashReason.h */,
 				26BC17BA18C7F4FA00D2196D /* ProcessMessage.cpp */,
 				26BC17BB18C7F4FA00D2196D /* ProcessMessage.h */,
-				26BC17BC18C7F4FA00D2196D /* ProcessPOSIX.cpp */,
-				26BC17BD18C7F4FA00D2196D /* ProcessPOSIX.h */,
 				26BC17BE18C7F4FA00D2196D /* ProcessPOSIXLog.cpp */,
 				26BC17BF18C7F4FA00D2196D /* ProcessPOSIXLog.h */,
-				26BC17D118C7F4FA00D2196D /* RegisterContextPOSIXProcessMonitor_mips64.cpp */,
-				26BC17D218C7F4FA00D2196D /* RegisterContextPOSIXProcessMonitor_mips64.h */,
-				AF77E0951A033CC70096C0EA /* RegisterContextPOSIXProcessMonitor_powerpc.cpp */,
-				AF77E0961A033CC70096C0EA /* RegisterContextPOSIXProcessMonitor_powerpc.h */,
-				26BC17D318C7F4FA00D2196D /* RegisterContextPOSIXProcessMonitor_x86.cpp */,
-				26BC17D418C7F4FA00D2196D /* RegisterContextPOSIXProcessMonitor_x86.h */,
 			);
 			path = POSIX;
 			sourceTree = "<group>";
@@ -5484,6 +5491,7 @@
 				26474CCA18D0CB5B0073DEBA /* RegisterContextMemory.h in Headers */,
 				26474CA018D0CAEC0073DEBA /* RegisterContext_mips64.h in Headers */,
 				26BC17AE18C7F4CB00D2196D /* RegisterContextPOSIXCore_mips64.h in Headers */,
+				AF3F54B11B3BA59C00186E73 /* CrashReason.h in Headers */,
 				26FFC19A14FC072100087D58 /* AuxVector.h in Headers */,
 				AF25AB27188F685C0030DEC3 /* AppleGetQueuesHandler.h in Headers */,
 				26CA97A2172B1FD5005DC71B /* RegisterContextThreadMemory.h in Headers */,
@@ -5518,12 +5526,15 @@
 				26474CD418D0CB710073DEBA /* RegisterInfos_mips64.h in Headers */,
 				260CC63015D04377002BF2E0 /* OptionValueBoolean.h in Headers */,
 				260CC63115D04377002BF2E0 /* OptionValueProperties.h in Headers */,
+				AF3F54C71B3BA5D500186E73 /* ProcessPOSIX.h in Headers */,
 				260CC63215D04377002BF2E0 /* OptionValueDictionary.h in Headers */,
 				262173A118395D3800C52091 /* SectionLoadHistory.h in Headers */,
 				260CC63315D04377002BF2E0 /* OptionValueEnumeration.h in Headers */,
+				AF3F54C31B3BA5D500186E73 /* POSIXStopInfo.h in Headers */,
 				AF45FDE618A1F3AC0007051C /* AppleGetThreadItemInfoHandler.h in Headers */,
 				260A63171861008E00FECF8E /* IOHandler.h in Headers */,
 				26474CD518D0CB710073DEBA /* RegisterInfos_x86_64.h in Headers */,
+				AF3F54D11B3BA5D500186E73 /* RegisterContextPOSIXProcessMonitor_x86.h in Headers */,
 				26474CCC18D0CB5B0073DEBA /* RegisterContextPOSIX_mips64.h in Headers */,
 				26474CBD18D0CB2D0073DEBA /* RegisterContextMach_arm.h in Headers */,
 				260CC63415D04377002BF2E0 /* OptionValueFileSpec.h in Headers */,
@@ -5557,14 +5568,17 @@
 				260CC63915D04377002BF2E0 /* OptionValueUInt64.h in Headers */,
 				256CBDC11ADD11C000BC6CDC /* RegisterContextPOSIX_arm.h in Headers */,
 				AF0F6E511739A76D009180FE /* RegisterContextKDP_arm64.h in Headers */,
+				AF3F54CB1B3BA5D500186E73 /* RegisterContextPOSIXProcessMonitor_arm64.h in Headers */,
 				AF77E0A01A033D360096C0EA /* RegisterContext_powerpc.h in Headers */,
 				260CC63A15D04377002BF2E0 /* OptionValueUUID.h in Headers */,
 				260A248E15D06C50009981B0 /* OptionValues.h in Headers */,
 				3FDFE53319A29304009756A7 /* HostInfoPosix.h in Headers */,
-				AF77E0981A033CC70096C0EA /* RegisterContextPOSIXProcessMonitor_powerpc.h in Headers */,
 				AF061F88182C97ED00B6A19C /* RegisterContextHistory.h in Headers */,
+				AF3F54C91B3BA5D500186E73 /* RegisterContextPOSIXProcessMonitor_arm.h in Headers */,
+				AF3F54CF1B3BA5D500186E73 /* RegisterContextPOSIXProcessMonitor_powerpc.h in Headers */,
 				26DAED6015D327A200E15819 /* OptionValuePathMappings.h in Headers */,
 				26ACEC2815E077AE00E94760 /* Property.h in Headers */,
+				AF3F54CD1B3BA5D500186E73 /* RegisterContextPOSIXProcessMonitor_mips64.h in Headers */,
 				26491E3B15E1DB8600CBFFC2 /* OptionValueRegex.h in Headers */,
 				4C56543319D1EFB6002E9C44 /* ThreadPlanPython.h in Headers */,
 				2697A39515E404BA003E682C /* OptionValueArch.h in Headers */,
@@ -5583,6 +5597,7 @@
 				26CEB5F318762056008F575A /* CommandObjectGUI.h in Headers */,
 				26474CB318D0CB180073DEBA /* RegisterContextLinux_i386.h in Headers */,
 				AF061F8B182C980000B6A19C /* HistoryThread.h in Headers */,
+				AF3F54C51B3BA5D500186E73 /* POSIXThread.h in Headers */,
 				26BC179E18C7F2CB00D2196D /* JITLoaderList.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -6470,7 +6485,6 @@
 				26BD407F135D2AE000237D80 /* FileLineResolver.cpp in Sources */,
 				26A7A035135E6E4200FB369E /* OptionValue.cpp in Sources */,
 				9A22A161135E30370024DDC3 /* EmulateInstructionARM.cpp in Sources */,
-				AF77E0971A033CC70096C0EA /* RegisterContextPOSIXProcessMonitor_powerpc.cpp in Sources */,
 				AFDFDFD119E34D3400EAE509 /* ConnectionFileDescriptorPosix.cpp in Sources */,
 				9A22A163135E30370024DDC3 /* EmulationStateARM.cpp in Sources */,
 				9A4F35101368A51A00823F52 /* StreamAsynchronousIO.cpp in Sources */,
