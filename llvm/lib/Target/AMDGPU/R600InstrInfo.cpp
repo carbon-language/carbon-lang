@@ -697,15 +697,10 @@ R600InstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
   // Most of the following comes from the ARM implementation of AnalyzeBranch
 
   // If the block has no terminators, it just falls into the block after it.
-  MachineBasicBlock::iterator I = MBB.end();
-  if (I == MBB.begin())
+  MachineBasicBlock::iterator I = MBB.getLastNonDebugInstr();
+  if (I == MBB.end())
     return false;
-  --I;
-  while (I->isDebugValue()) {
-    if (I == MBB.begin())
-      return false;
-    --I;
-  }
+
   // AMDGPU::BRANCH* instructions are only available after isel and are not
   // handled
   if (isBranch(I->getOpcode()))
