@@ -29,7 +29,8 @@ namespace coff {
 
 SectionChunk::SectionChunk(ObjectFile *F, const coff_section *H)
     : File(F), Ptr(this), Header(H),
-      Relocs(File->getCOFFObj()->getRelocations(Header)) {
+      Relocs(File->getCOFFObj()->getRelocations(Header)),
+      NumRelocs(std::distance(Relocs.begin(), Relocs.end())) {
   // Initialize SectionName.
   File->getCOFFObj()->getSectionName(Header, SectionName);
 
@@ -156,9 +157,11 @@ StringRef SectionChunk::getDebugName() {
 uint64_t SectionChunk::getHash() const {
   ArrayRef<uint8_t> A;
   File->getCOFFObj()->getSectionContents(Header, A);
-  return hash_combine(getPermissions(), llvm::hash_value(SectionName),
+  return hash_combine(getPermissions(),
+                      llvm::hash_value(SectionName),
+                      NumRelocs,
                       uint32_t(Header->SizeOfRawData),
-                      uint32_t(Header->NumberOfRelocations),
+                      std::distance(Relocs.end(), Relocs.begin()),
                       hash_combine_range(A.data(), A.data() + A.size()));
 }
 
@@ -171,7 +174,7 @@ bool SectionChunk::equals(const SectionChunk *X) const {
     return false;
   if (Header->SizeOfRawData != X->Header->SizeOfRawData)
     return false;
-  if (Header->NumberOfRelocations != X->Header->NumberOfRelocations)
+  if (NumRelocs != X->NumRelocs)
     return false;
 
   // Compare data

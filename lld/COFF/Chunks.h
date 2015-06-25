@@ -164,6 +164,7 @@ private:
   StringRef SectionName;
   std::vector<Chunk *> AssocChildren;
   llvm::iterator_range<const coff_relocation *> Relocs;
+  size_t NumRelocs;
 
   // Chunks are basically unnamed chunks of bytes.
   // Symbols are associated for debugging and logging purposs only.
