@@ -236,6 +236,14 @@ static const MemoryMapParams Linux_MIPS64_MemoryMapParams = {
   0x002000000000,  // OriginBase
 };
 
+// ppc64 Linux
+static const MemoryMapParams Linux_PowerPC64_MemoryMapParams = {
+  0x200000000000,  // AndMask
+  0x100000000000,  // XorMask
+  0x080000000000,  // ShadowBase
+  0x1C0000000000,  // OriginBase
+};
+
 // i386 FreeBSD
 static const MemoryMapParams FreeBSD_I386_MemoryMapParams = {
   0x000180000000,  // AndMask
@@ -260,6 +268,11 @@ static const PlatformMemoryMapParams Linux_X86_MemoryMapParams = {
 static const PlatformMemoryMapParams Linux_MIPS_MemoryMapParams = {
   NULL,
   &Linux_MIPS64_MemoryMapParams,
+};
+
+static const PlatformMemoryMapParams Linux_PowerPC_MemoryMapParams = {
+  NULL,
+  &Linux_PowerPC64_MemoryMapParams,
 };
 
 static const PlatformMemoryMapParams FreeBSD_X86_MemoryMapParams = {
@@ -478,6 +491,10 @@ bool MemorySanitizer::doInitialization(Module &M) {
         case Triple::mips64:
         case Triple::mips64el:
           MapParams = Linux_MIPS_MemoryMapParams.bits64;
+          break;
+        case Triple::ppc64:
+        case Triple::ppc64le:
+          MapParams = Linux_PowerPC_MemoryMapParams.bits64;
           break;
         default:
           report_fatal_error("unsupported architecture");
