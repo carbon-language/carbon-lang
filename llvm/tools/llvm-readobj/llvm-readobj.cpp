@@ -380,9 +380,6 @@ int main(int argc, const char *argv[]) {
   PrettyStackTraceProgram X(argc, argv);
   llvm_shutdown_obj Y;
 
-  // Initialize targets.
-  llvm::InitializeAllTargetInfos();
-
   // Register the target printer for --version.
   cl::AddExtraVersionPrinter(TargetRegistry::printRegisteredTargetsForVersion);
 
