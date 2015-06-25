@@ -5675,11 +5675,7 @@ ObjectFileMachO::SaveCore (const lldb::ProcessSP &process_sp,
             bool make_core = false;
             switch (target_arch.GetMachine())
             {
-                  // arm64 core file writing is having some problem with writing  down the 
-                  // dyld shared images info struct and/or the main executable binary. May
-                  // turn out to be a debugserver problem, not sure yet.
-//                case llvm::Triple::aarch64:
-
+                case llvm::Triple::aarch64:
                 case llvm::Triple::arm:
                 case llvm::Triple::x86:
                 case llvm::Triple::x86_64:
