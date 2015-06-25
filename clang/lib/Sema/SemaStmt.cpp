@@ -495,6 +495,7 @@ Sema::ActOnIfStmt(SourceLocation IfLoc, FullExprArg CondVal, Decl *CondVar,
   if (CondVar) {
     ConditionVar = cast<VarDecl>(CondVar);
     CondResult = CheckConditionVariable(ConditionVar, IfLoc, true);
+    CondResult = ActOnFinishFullExpr(CondResult.get(), IfLoc);
     if (CondResult.isInvalid())
       return StmtError();
   }
@@ -649,12 +650,10 @@ Sema::ActOnStartOfSwitchStmt(SourceLocation SwitchLoc, Expr *Cond,
   if (CondResult.isInvalid()) return StmtError();
   Cond = CondResult.get();
 
-  if (!CondVar) {
-    CondResult = ActOnFinishFullExpr(Cond, SwitchLoc);
-    if (CondResult.isInvalid())
-      return StmtError();
-    Cond = CondResult.get();
-  }
+  CondResult = ActOnFinishFullExpr(Cond, SwitchLoc);
+  if (CondResult.isInvalid())
+    return StmtError();
+  Cond = CondResult.get();
 
   getCurFunction()->setHasBranchIntoScope();
 
@@ -1229,6 +1228,7 @@ Sema::ActOnWhileStmt(SourceLocation WhileLoc, FullExprArg Cond,
   if (CondVar) {
     ConditionVar = cast<VarDecl>(CondVar);
     CondResult = CheckConditionVariable(ConditionVar, WhileLoc, true);
+    CondResult = ActOnFinishFullExpr(CondResult.get(), WhileLoc);
     if (CondResult.isInvalid())
       return StmtError();
   }
@@ -1634,6 +1634,7 @@ Sema::ActOnForStmt(SourceLocation ForLoc, SourceLocation LParenLoc,
   if (secondVar) {
     ConditionVar = cast<VarDecl>(secondVar);
     SecondResult = CheckConditionVariable(ConditionVar, ForLoc, true);
+    SecondResult = ActOnFinishFullExpr(SecondResult.get(), ForLoc);
     if (SecondResult.isInvalid())
       return StmtError();
   }
