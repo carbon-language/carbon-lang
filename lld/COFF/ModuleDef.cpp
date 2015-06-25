@@ -82,9 +82,7 @@ public:
       return Token(Identifier, S);
     }
     default: {
-      size_t End = Buf.find_first_not_of(
-          "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-          "0123456789_.*~+!@#$%^&*()/");
+      size_t End = Buf.find_first_of("=,\r\n \t\v");
       StringRef Word = Buf.substr(0, End);
       Kind K = llvm::StringSwitch<Kind>(Word)
                    .Case("BASE", KwBase)
