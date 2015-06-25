@@ -13,6 +13,8 @@
 // "benign" SEGVs that are handled by signal handler, and ensures that
 // the process survive.
 
+// REQUIRES: disabled
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <signal.h>
