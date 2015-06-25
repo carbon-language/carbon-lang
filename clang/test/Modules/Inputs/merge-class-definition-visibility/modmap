@@ -3,5 +3,6 @@ module Def1 {
   module C { header "c.h" }
 }
 module Def2 {
-  header "d.h"
+  module D { header "d.h" }
+  module E { header "e.h" }
 }

@@ -3897,16 +3897,18 @@ void ASTDeclReader::UpdateDecl(Decl *D, ModuleFile &ModuleFile,
       if (Reader.getContext().getLangOpts().ModulesLocalVisibility) {
         // FIXME: This doesn't send the right notifications if there are
         // ASTMutationListeners other than an ASTWriter.
-        Reader.getContext().mergeDefinitionIntoModule(cast<NamedDecl>(D), Owner,
-                                                      /*NotifyListeners*/false);
-        Reader.PendingMergedDefinitionsToDeduplicate.insert(cast<NamedDecl>(D));
+        Reader.getContext().mergeDefinitionIntoModule(
+            cast<NamedDecl>(Exported), Owner,
+            /*NotifyListeners*/ false);
+        Reader.PendingMergedDefinitionsToDeduplicate.insert(
+            cast<NamedDecl>(Exported));
       } else if (Owner && Owner->NameVisibility != Module::AllVisible) {
         // If Owner is made visible at some later point, make this declaration
         // visible too.
-        Reader.HiddenNamesMap[Owner].push_back(D);
+        Reader.HiddenNamesMap[Owner].push_back(Exported);
       } else {
         // The declaration is now visible.
-        D->Hidden = false;
+        Exported->Hidden = false;
       }
       break;
     }
