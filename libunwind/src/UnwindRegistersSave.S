@@ -277,7 +277,7 @@ DEFINE_LIBUNWIND_FUNCTION(unw_getcontext)
   stp    d28,d29, [x0, #0x1F0]
   str    d30,     [x0, #0x200]
   str    d31,     [x0, #0x208]
-  ldr    x0, #0                   // return UNW_ESUCCESS
+  mov    x0, #0                   // return UNW_ESUCCESS
   ret
 
 #elif defined(__arm__) && !defined(__APPLE__)
