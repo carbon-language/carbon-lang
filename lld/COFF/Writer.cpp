@@ -43,6 +43,7 @@ std::error_code Writer::write(StringRef OutputPath) {
   markLive();
   dedupCOMDATs();
   createSections();
+  createMiscChunks();
   createImportTables();
   createExportTable();
   if (Config->Relocatable)
@@ -167,6 +168,14 @@ void Writer::createSections() {
       Sec->addPermissions(C->getPermissions());
     }
   }
+}
+
+void Writer::createMiscChunks() {
+  if (Symtab->LocalImportChunks.empty())
+    return;
+  OutputSection *Sec = createSection(".rdata");
+  for (Chunk *C : Symtab->LocalImportChunks)
+    Sec->addChunk(C);
 }
 
 // Create .idata section for the DLL-imported symbol table.

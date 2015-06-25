@@ -253,6 +253,10 @@ BaserelChunk::BaserelChunk(uint32_t Page, uint32_t *Begin, uint32_t *End) {
   }
 }
 
+void LocalImportChunk::writeTo(uint8_t *Buf) {
+  write32le(Buf + FileOff, Sym->getRVA());
+}
+
 void BaserelChunk::writeTo(uint8_t *Buf) {
   memcpy(Buf + FileOff, Data.data(), Data.size());
 }

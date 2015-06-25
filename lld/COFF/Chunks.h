@@ -212,6 +212,18 @@ private:
 };
 
 // Windows-specific.
+// See comments for DefinedLocalImport class.
+class LocalImportChunk : public Chunk {
+public:
+  explicit LocalImportChunk(Defined *S) : Sym(S) {}
+  size_t getSize() const override { return 4; }
+  void writeTo(uint8_t *Buf) override;
+
+private:
+  Defined *Sym;
+};
+
+// Windows-specific.
 // This class represents a block in .reloc section.
 // See the PE/COFF spec 5.6 for details.
 class BaserelChunk : public Chunk {

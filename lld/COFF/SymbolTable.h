@@ -80,6 +80,9 @@ public:
   // Rename From -> To in the symbol table.
   std::error_code rename(StringRef From, StringRef To);
 
+  // A list of chunks which to be added to .rdata.
+  std::vector<Chunk *> LocalImportChunks;
+
 private:
   std::error_code resolve(SymbolBody *Body);
   std::error_code resolveLazy(StringRef Name);

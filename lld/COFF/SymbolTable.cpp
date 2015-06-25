@@ -85,7 +85,9 @@ bool SymbolTable::reportRemainingUndefines() {
     // This odd rule is for compatibility with MSVC linker.
     if (Name.startswith("__imp_")) {
       if (Defined *Imp = find(Name.substr(strlen("__imp_")))) {
-        Sym->Body = Imp;
+        auto *S = new (Alloc) DefinedLocalImport(Name, Imp);
+        LocalImportChunks.push_back(S->getChunk());
+        Sym->Body = S;
         continue;
       }
     }

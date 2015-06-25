@@ -49,6 +49,7 @@ public:
     DefinedAbsoluteKind,
     DefinedImportDataKind,
     DefinedImportThunkKind,
+    DefinedLocalImportKind,
     DefinedCommonKind,
     DefinedCOMDATKind,
     DefinedRegularKind,
@@ -313,6 +314,30 @@ public:
 private:
   StringRef Name;
   ImportThunkChunk Data;
+};
+
+// If you have a symbol "__imp_foo" in your object file, a symbol name
+// "foo" becomes automatically available as a pointer to "__imp_foo".
+// This class is for such automatically-created symbols.
+// Yes, this is an odd feature. We didn't intend to implement that.
+// This is here just for compatibility with MSVC.
+class DefinedLocalImport : public Defined {
+public:
+  DefinedLocalImport(StringRef N, Defined *S)
+      : Defined(DefinedLocalImportKind), Name(N), Data(S) {}
+
+  static bool classof(const SymbolBody *S) {
+    return S->kind() == DefinedLocalImportKind;
+  }
+
+  StringRef getName() override { return Name; }
+  uint64_t getRVA() override { return Data.getRVA(); }
+  uint64_t getFileOff() override { return Data.getFileOff(); }
+  Chunk *getChunk() { return &Data; }
+
+private:
+  StringRef Name;
+  LocalImportChunk Data;
 };
 
 class DefinedBitcode : public Defined {

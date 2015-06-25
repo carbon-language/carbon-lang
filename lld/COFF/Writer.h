@@ -81,6 +81,7 @@ private:
   void markLive();
   void dedupCOMDATs();
   void createSections();
+  void createMiscChunks();
   void createImportTables();
   void createExportTable();
   void assignAddresses();
