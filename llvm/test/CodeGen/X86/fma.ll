@@ -2,6 +2,7 @@
 ; RUN: llc < %s -mtriple=i386-apple-darwin10  -mattr=-fma,-fma4  | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-FMA-CALL
 ; RUN: llc < %s -mtriple=x86_64-apple-darwin10 -mattr=+fma,-fma4 | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-FMA-INST
 ; RUN: llc < %s -mtriple=x86_64-apple-darwin10  -mattr=-fma,-fma4 | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-FMA-CALL
+; RUN: llc < %s -mtriple=x86_64-apple-darwin10  -mattr=+avx512f,-fma,-fma4 | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-FMA-INST
 ; RUN: llc < %s -march=x86 -mcpu=bdver2 -mattr=-fma4  | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-FMA-INST
 ; RUN: llc < %s -march=x86 -mcpu=bdver2 -mattr=-fma,-fma4 | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-FMA-CALL
 

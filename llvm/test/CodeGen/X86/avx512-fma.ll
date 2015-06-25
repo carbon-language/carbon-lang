@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=knl -fp-contract=fast | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-apple-darwin -mattr=+avx512f -fp-contract=fast | FileCheck %s
 
 ; CHECK-LABEL: test_x86_fmadd_ps_z
 ; CHECK: vfmadd213ps     %zmm2, %zmm1, %zmm0

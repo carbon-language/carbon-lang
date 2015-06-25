@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=x86_64-apple-darwin -mcpu=knl --show-mc-encoding | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-apple-darwin -mattr=+avx512f --show-mc-encoding | FileCheck %s
 
 declare <16 x float> @llvm.x86.fma.mask.vfmadd.ps.512(<16 x float>, <16 x float>, <16 x float>, i16, i32)
 declare <8 x double> @llvm.x86.fma.mask.vfmadd.pd.512(<8 x double>, <8 x double>, <8 x double>, i8, i32)
