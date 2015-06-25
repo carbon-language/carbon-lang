@@ -12,6 +12,7 @@
 
 #include "lld/Core/LLVM.h"
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/iterator_range.h"
 #include "llvm/Object/COFF.h"
 #include <map>
 #include <vector>
@@ -149,15 +150,9 @@ public:
 
 private:
   void mark() override;
-  void applyReloc(uint8_t *Buf, const coff_relocation *Rel);
 
   // A file this chunk was created from.
   ObjectFile *File;
-
-  // A raw pointer to the relocation table.
-  mutable const coff_relocation *Reloc = nullptr;
-  const coff_relocation *relBegin() const;
-  const coff_relocation *relEnd() const;
 
   // A pointer pointing to a replacement for this chunk.
   // Initially it points to "this" object. If this chunk is merged
@@ -168,6 +163,7 @@ private:
   const coff_section *Header;
   StringRef SectionName;
   std::vector<Chunk *> AssocChildren;
+  llvm::iterator_range<const coff_relocation *> Relocs;
 
   // Chunks are basically unnamed chunks of bytes.
   // Symbols are associated for debugging and logging purposs only.

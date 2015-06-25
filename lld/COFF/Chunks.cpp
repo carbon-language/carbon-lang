@@ -28,7 +28,8 @@ namespace lld {
 namespace coff {
 
 SectionChunk::SectionChunk(ObjectFile *F, const coff_section *H)
-    : File(F), Ptr(this), Header(H) {
+    : File(F), Ptr(this), Header(H),
+      Relocs(File->getCOFFObj()->getRelocations(Header)) {
   // Initialize SectionName.
   File->getCOFFObj()->getSectionName(Header, SectionName);
 
@@ -49,6 +50,10 @@ SectionChunk::SectionChunk(ObjectFile *F, const coff_section *H)
     Root = true;
 }
 
+static void add16(uint8_t *P, int16_t V) { write16le(P, read16le(P) + V); }
+static void add32(uint8_t *P, int32_t V) { write32le(P, read32le(P) + V); }
+static void add64(uint8_t *P, int64_t V) { write64le(P, read64le(P) + V); }
+
 void SectionChunk::writeTo(uint8_t *Buf) {
   if (!hasData())
     return;
@@ -58,8 +63,27 @@ void SectionChunk::writeTo(uint8_t *Buf) {
   memcpy(Buf + FileOff, Data.data(), Data.size());
 
   // Apply relocations.
-  for (const coff_relocation *Rel = relBegin(), *E = relEnd(); Rel != E; ++Rel)
-    applyReloc(Buf, Rel);
+  for (const coff_relocation &Rel : Relocs) {
+    uint8_t *Off = Buf + FileOff + Rel.VirtualAddress;
+    SymbolBody *Body = File->getSymbolBody(Rel.SymbolTableIndex);
+    uint64_t S = cast<Defined>(Body)->getRVA();
+    uint64_t P = RVA + Rel.VirtualAddress;
+    switch (Rel.Type) {
+    case IMAGE_REL_AMD64_ADDR32:   add32(Off, S + Config->ImageBase); break;
+    case IMAGE_REL_AMD64_ADDR64:   add64(Off, S + Config->ImageBase); break;
+    case IMAGE_REL_AMD64_ADDR32NB: add32(Off, S); break;
+    case IMAGE_REL_AMD64_REL32:    add32(Off, S - P - 4); break;
+    case IMAGE_REL_AMD64_REL32_1:  add32(Off, S - P - 5); break;
+    case IMAGE_REL_AMD64_REL32_2:  add32(Off, S - P - 6); break;
+    case IMAGE_REL_AMD64_REL32_3:  add32(Off, S - P - 7); break;
+    case IMAGE_REL_AMD64_REL32_4:  add32(Off, S - P - 8); break;
+    case IMAGE_REL_AMD64_REL32_5:  add32(Off, S - P - 9); break;
+    case IMAGE_REL_AMD64_SECTION:  add16(Off, Out->getSectionIndex()); break;
+    case IMAGE_REL_AMD64_SECREL:   add32(Off, S - Out->getRVA()); break;
+    default:
+      llvm::report_fatal_error("Unsupported relocation type");
+    }
+  }
 }
 
 void SectionChunk::mark() {
@@ -67,9 +91,8 @@ void SectionChunk::mark() {
   Live = true;
 
   // Mark all symbols listed in the relocation table for this section.
-  for (const coff_relocation *Rel = relBegin(), *E = relEnd(); Rel != E;
-       ++Rel) {
-    SymbolBody *B = File->getSymbolBody(Rel->SymbolTableIndex);
+  for (const coff_relocation &Rel : Relocs) {
+    SymbolBody *B = File->getSymbolBody(Rel.SymbolTableIndex);
     if (auto *Def = dyn_cast<Defined>(B))
       Def->markLive();
   }
@@ -86,49 +109,21 @@ void SectionChunk::addAssociative(SectionChunk *Child) {
   Child->Root = false;
 }
 
-static void add16(uint8_t *P, int16_t V) { write16le(P, read16le(P) + V); }
-static void add32(uint8_t *P, int32_t V) { write32le(P, read32le(P) + V); }
-static void add64(uint8_t *P, int64_t V) { write64le(P, read64le(P) + V); }
-
-// Implements x64 PE/COFF relocations.
-void SectionChunk::applyReloc(uint8_t *Buf, const coff_relocation *Rel) {
-  uint8_t *Off = Buf + FileOff + Rel->VirtualAddress;
-  SymbolBody *Body = File->getSymbolBody(Rel->SymbolTableIndex);
-  uint64_t S = cast<Defined>(Body)->getRVA();
-  uint64_t P = RVA + Rel->VirtualAddress;
-  switch (Rel->Type) {
-  case IMAGE_REL_AMD64_ADDR32:   add32(Off, S + Config->ImageBase); break;
-  case IMAGE_REL_AMD64_ADDR64:   add64(Off, S + Config->ImageBase); break;
-  case IMAGE_REL_AMD64_ADDR32NB: add32(Off, S); break;
-  case IMAGE_REL_AMD64_REL32:    add32(Off, S - P - 4); break;
-  case IMAGE_REL_AMD64_REL32_1:  add32(Off, S - P - 5); break;
-  case IMAGE_REL_AMD64_REL32_2:  add32(Off, S - P - 6); break;
-  case IMAGE_REL_AMD64_REL32_3:  add32(Off, S - P - 7); break;
-  case IMAGE_REL_AMD64_REL32_4:  add32(Off, S - P - 8); break;
-  case IMAGE_REL_AMD64_REL32_5:  add32(Off, S - P - 9); break;
-  case IMAGE_REL_AMD64_SECTION:  add16(Off, Out->getSectionIndex()); break;
-  case IMAGE_REL_AMD64_SECREL:   add32(Off, S - Out->getRVA()); break;
-  default:
-    llvm::report_fatal_error("Unsupported relocation type");
-  }
-}
-
 // Windows-specific.
 // Collect all locations that contain absolute 64-bit addresses,
 // which need to be fixed by the loader if load-time relocation is needed.
 // Only called when base relocation is enabled.
 void SectionChunk::getBaserels(std::vector<uint32_t> *Res, Defined *ImageBase) {
-  for (const coff_relocation *Rel = relBegin(), *E = relEnd(); Rel != E;
-       ++Rel) {
+  for (const coff_relocation &Rel : Relocs) {
     // ADDR64 relocations contain absolute addresses.
     // Symbol __ImageBase is special -- it's an absolute symbol, but its
     // address never changes even if image is relocated.
-    if (Rel->Type != IMAGE_REL_AMD64_ADDR64)
+    if (Rel.Type != IMAGE_REL_AMD64_ADDR64)
       continue;
-    SymbolBody *Body = File->getSymbolBody(Rel->SymbolTableIndex);
+    SymbolBody *Body = File->getSymbolBody(Rel.SymbolTableIndex);
     if (Body == ImageBase)
       continue;
-    Res->push_back(RVA + Rel->VirtualAddress);
+    Res->push_back(RVA + Rel.VirtualAddress);
   }
 }
 
@@ -188,9 +183,9 @@ bool SectionChunk::equals(const SectionChunk *X) const {
     return false;
 
   // Compare relocations
-  const coff_relocation *Rel1 = relBegin();
-  const coff_relocation *End = relEnd();
-  const coff_relocation *Rel2 = X->relBegin();
+  const coff_relocation *Rel1 = Relocs.begin();
+  const coff_relocation *End = Relocs.end();
+  const coff_relocation *Rel2 = X->Relocs.begin();
   for (; Rel1 != End; ++Rel1, ++Rel2) {
     if (Rel1->Type != Rel2->Type)
       return false;
@@ -218,22 +213,6 @@ SectionChunk *SectionChunk::repl() {
 void SectionChunk::replaceWith(SectionChunk *Other) {
   Ptr = Other;
   Live = false;
-}
-
-const coff_relocation *SectionChunk::relBegin() const {
-  if (!Reloc) {
-    DataRefImpl Ref;
-    Ref.p = uintptr_t(Header);
-    SectionRef Sref(Ref, File->getCOFFObj());
-    relocation_iterator It = Sref.relocation_begin();
-    Reloc = File->getCOFFObj()->getCOFFRelocation(*It);
-  }
-  return Reloc;
-}
-
-const coff_relocation *SectionChunk::relEnd() const {
-  const coff_relocation *I = relBegin();
-  return I + Header->NumberOfRelocations;
 }
 
 CommonChunk::CommonChunk(const COFFSymbolRef S) : Sym(S) {
