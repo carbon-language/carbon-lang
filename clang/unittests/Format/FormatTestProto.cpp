@@ -63,6 +63,10 @@ TEST_F(FormatTestProto, FormatsMessages) {
                "}");
 }
 
+TEST_F(FormatTestProto, KeywordsInOtherLanguages) {
+  verifyFormat("optional string operator = 1;");
+}
+
 TEST_F(FormatTestProto, FormatsEnums) {
   verifyFormat("enum Type {\n"
                "  UNKNOWN = 0;\n"
