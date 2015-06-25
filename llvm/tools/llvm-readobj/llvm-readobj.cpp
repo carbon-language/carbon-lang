@@ -40,7 +40,6 @@
 #include <string>
 #include <system_error>
 
-
 using namespace llvm;
 using namespace llvm::object;
 
@@ -90,6 +89,10 @@ namespace opts {
   cl::alias RelocationsShort("r",
     cl::desc("Alias for --relocations"),
     cl::aliasopt(Relocations));
+
+  // -dyn-relocations
+  cl::opt<bool> DynRelocs("dyn-relocations",
+    cl::desc("Display the dynamic relocation entries in the file"));
 
   // -symbols, -t
   cl::opt<bool> Symbols("symbols",
@@ -280,6 +283,8 @@ static void dumpObject(const ObjectFile *Obj) {
     Dumper->printSections();
   if (opts::Relocations)
     Dumper->printRelocations();
+  if (opts::DynRelocs)
+    Dumper->printDynamicRelocations();
   if (opts::Symbols)
     Dumper->printSymbols();
   if (opts::DynamicSymbols)
@@ -312,7 +317,6 @@ static void dumpObject(const ObjectFile *Obj) {
   if (opts::COFFBaseRelocs)
     Dumper->printCOFFBaseReloc();
 }
-
 
 /// @brief Dumps each object file in \a Arc;
 static void dumpArchive(const Archive *Arc) {
@@ -373,7 +377,6 @@ static void dumpInput(StringRef File) {
   else
     reportError(File, readobj_error::unrecognized_file_format);
 }
-
 
 int main(int argc, const char *argv[]) {
   sys::PrintStackTraceOnErrorSignal();

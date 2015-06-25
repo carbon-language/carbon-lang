@@ -293,7 +293,7 @@ struct Elf_Dyn_Impl : Elf_Dyn_Base<ELFT> {
   using Elf_Dyn_Base<ELFT>::d_un;
   int64_t getTag() const { return d_tag; }
   uint64_t getVal() const { return d_un.d_val; }
-  uint64_t getPtr() const { return d_un.ptr; }
+  uint64_t getPtr() const { return d_un.d_ptr; }
 };
 
 // Elf_Rel: Elf Relocation

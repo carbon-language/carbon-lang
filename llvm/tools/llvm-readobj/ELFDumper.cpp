@@ -47,6 +47,7 @@ public:
   void printFileHeaders() override;
   void printSections() override;
   void printRelocations() override;
+  void printDynamicRelocations() override;
   void printSymbols() override;
   void printDynamicSymbols() override;
   void printUnwindInfo() override;
@@ -676,6 +677,39 @@ void ELFDumper<ELFT>::printRelocations() {
   }
 }
 
+template<class ELFT>
+void ELFDumper<ELFT>::printDynamicRelocations() {
+  W.startLine() << "Dynamic Relocations {\n";
+  W.indent();
+  for (typename ELFO::Elf_Rela_Iter RelI = Obj->begin_dyn_rela(),
+    RelE = Obj->end_dyn_rela();
+    RelI != RelE; ++RelI) {
+    SmallString<32> RelocName;
+    Obj->getRelocationTypeName(RelI->getType(Obj->isMips64EL()), RelocName);
+    StringRef SymbolName;
+    uint32_t SymIndex = RelI->getSymbol(Obj->isMips64EL());
+    typename ELFO::Elf_Sym_Iter Sym = Obj->begin_dynamic_symbols() + SymIndex;
+    SymbolName = errorOrDefault(Obj->getSymbolName(Sym));
+    if (opts::ExpandRelocs) {
+      DictScope Group(W, "Relocation");
+      W.printHex("Offset", RelI->r_offset);
+      W.printNumber("Type", RelocName, (int)RelI->getType(Obj->isMips64EL()));
+      W.printString("Symbol", SymbolName.size() > 0 ? SymbolName : "-");
+      W.printHex("Addend", RelI->r_addend);
+    }
+    else {
+      raw_ostream& OS = W.startLine();
+      OS << W.hex(RelI->r_offset)
+        << " " << RelocName
+        << " " << (SymbolName.size() > 0 ? SymbolName : "-")
+        << " " << W.hex(RelI->r_addend)
+        << "\n";
+    }
+  }
+  W.unindent();
+  W.startLine() << "}\n";
+}
+
 template <class ELFT>
 void ELFDumper<ELFT>::printRelocations(const Elf_Shdr *Sec) {
   switch (Sec->sh_type) {
@@ -985,6 +1019,9 @@ static void printValue(const ELFFile<ELFT> *O, uint64_t Type, uint64_t Value,
     break;
   case DT_FLAGS_1:
     printFlags(Value, makeArrayRef(ElfDynamicDTFlags1), OS);
+    break;
+  default:
+    OS << format("0x%" PRIX64, Value);
     break;
   }
 }
