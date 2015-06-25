@@ -39,11 +39,11 @@
 
 ; Darwin and PS4 shouldn't be generating the section by default
 ; NOPUB: debug_pubnames
-; NOPUB: {{^$}}
+; NOPUB-NEXT: {{^$}}
 
 ; Skip the output to the header of the pubnames section.
 ; LINUX: debug_pubnames
-; LINUX: unit_size = 0x00000128
+; LINUX-NEXT: unit_size = 0x00000128
 
 ; Check for each name in the output.
 ; LINUX-DAG: "ns"
