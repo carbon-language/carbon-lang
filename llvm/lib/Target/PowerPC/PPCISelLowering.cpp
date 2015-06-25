@@ -1292,18 +1292,18 @@ bool PPC::isVMRGHShuffleMask(ShuffleVectorSDNode *N, unsigned UnitSize,
  *     - Use offset of 0 to check for even elements
  *     - Use offset of 4 to check for odd elements
  * A detailed description of the vector element ordering for little endian and
- * big endian can be found at <a
- * href="http://www.ibm.com/developerworks/library/l-ibm-xl-c-cpp-compiler/index.html">
+ * big endian can be found at
+ * http://www.ibm.com/developerworks/library/l-ibm-xl-c-cpp-compiler/index.html
  * Targeting your applications - what little endian and big endian IBM XL C/C++
- * compiler differences mean to you </a>
+ * compiler differences mean to you
  *
  * The mask to the shuffle vector instruction specifies the indices of the
  * elements from the two input vectors to place in the result. The elements are
  * numbered in array-access order, starting with the first vector. These vectors
  * are always of type v16i8, thus each vector will contain 16 elements of size
- * 8. More info on the shuffle vector can be found in the <a
- * href="http://llvm.org/docs/LangRef.html#shufflevector-instruction">Language
- * Reference</a>.
+ * 8. More info on the shuffle vector can be found in the
+ * http://llvm.org/docs/LangRef.html#shufflevector-instruction
+ * Language Reference.
  *
  * The RHSStartValue indicates whether the same input vectors are used (unary)
  * or two different input vectors are used, based on the following:
