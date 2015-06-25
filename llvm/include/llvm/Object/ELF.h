@@ -227,6 +227,8 @@ public:
                    ArchivePointerTypeTraits<const char> > Current;
   };
 
+  typedef iterator_range<Elf_Sym_Iter> Elf_Sym_Range;
+
 private:
   typedef SmallVector<const Elf_Shdr *, 2> Sections_t;
   typedef DenseMap<unsigned, unsigned> IndexMap_t;
@@ -340,6 +342,9 @@ public:
 
   Elf_Sym_Iter begin_symbols() const;
   Elf_Sym_Iter end_symbols() const;
+  Elf_Sym_Range symbols() const {
+    return make_range(begin_symbols(), end_symbols());
+  }
 
   Elf_Dyn_Iter begin_dynamic_table() const;
   /// \param NULLEnd use one past the first DT_NULL entry as the end instead of
@@ -424,6 +429,7 @@ public:
   const Elf_Sym *getSymbol(uint32_t index) const;
 
   ErrorOr<StringRef> getSymbolName(Elf_Sym_Iter Sym) const;
+  ErrorOr<StringRef> getStaticSymbolName(const Elf_Sym *Symb) const;
 
   /// \brief Get the name of \p Symb.
   /// \param SymTab The symbol table section \p Symb is contained in.
@@ -959,6 +965,12 @@ ErrorOr<StringRef> ELFFile<ELFT>::getSymbolName(Elf_Sym_Iter Sym) const {
   if (!DynStrRegion.Addr || Sym->st_name >= DynStrRegion.Size)
     return object_error::parse_failed;
   return StringRef(getDynamicString(Sym->st_name));
+}
+
+template <class ELFT>
+ErrorOr<StringRef>
+ELFFile<ELFT>::getStaticSymbolName(const Elf_Sym *Symb) const {
+  return getSymbolName(dot_symtab_sec, Symb);
 }
 
 template <class ELFT>

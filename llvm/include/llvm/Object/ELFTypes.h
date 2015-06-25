@@ -197,6 +197,9 @@ struct Elf_Sym_Impl : Elf_Sym_Base<ELFT> {
     return st_shndx >= ELF::SHN_LORESERVE;
   }
   bool isUndefined() const { return st_shndx == ELF::SHN_UNDEF; }
+  bool isExternal() const {
+    return getBinding() != ELF::STB_LOCAL;
+  }
 };
 
 /// Elf_Versym: This is the structure of entries in the SHT_GNU_versym section
