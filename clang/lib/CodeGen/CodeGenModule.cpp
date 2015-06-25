@@ -145,8 +145,9 @@ CodeGenModule::CodeGenModule(ASTContext &C, const CodeGenOptions &CGO,
         llvm::IndexedInstrProfReader::create(CodeGenOpts.InstrProfileInput);
     if (std::error_code EC = ReaderOrErr.getError()) {
       unsigned DiagID = Diags.getCustomDiagID(DiagnosticsEngine::Error,
-                                              "Could not read profile: %0");
-      getDiags().Report(DiagID) << EC.message();
+                                              "Could not read profile %0: %1");
+      getDiags().Report(DiagID) << CodeGenOpts.InstrProfileInput
+                                << EC.message();
     } else
       PGOReader = std::move(ReaderOrErr.get());
   }
