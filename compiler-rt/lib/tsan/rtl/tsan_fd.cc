@@ -91,7 +91,8 @@ static FdDesc *fddesc(ThreadState *thr, uptr pc, int fd) {
 }
 
 // pd must be already ref'ed.
-static void init(ThreadState *thr, uptr pc, int fd, FdSync *s) {
+static void init(ThreadState *thr, uptr pc, int fd, FdSync *s,
+    bool write = true) {
   FdDesc *d = fddesc(thr, pc, fd);
   // As a matter of fact, we don't intercept all close calls.
   // See e.g. libc __res_iclose().
@@ -109,8 +110,13 @@ static void init(ThreadState *thr, uptr pc, int fd, FdSync *s) {
   }
   d->creation_tid = thr->tid;
   d->creation_stack = CurrentStackId(thr, pc);
-  // To catch races between fd usage and open.
-  MemoryRangeImitateWrite(thr, pc, (uptr)d, 8);
+  if (write) {
+    // To catch races between fd usage and open.
+    MemoryRangeImitateWrite(thr, pc, (uptr)d, 8);
+  } else {
+    // See the dup-related comment in FdClose.
+    MemoryRead(thr, pc, (uptr)d, kSizeLog8);
+  }
 }
 
 void FdInit() {
@@ -181,13 +187,25 @@ void FdAccess(ThreadState *thr, uptr pc, int fd) {
   MemoryRead(thr, pc, (uptr)d, kSizeLog8);
 }
 
-void FdClose(ThreadState *thr, uptr pc, int fd) {
+void FdClose(ThreadState *thr, uptr pc, int fd, bool write) {
   DPrintf("#%d: FdClose(%d)\n", thr->tid, fd);
   if (bogusfd(fd))
     return;
   FdDesc *d = fddesc(thr, pc, fd);
-  // To catch races between fd usage and close.
-  MemoryWrite(thr, pc, (uptr)d, kSizeLog8);
+  if (write) {
+    // To catch races between fd usage and close.
+    MemoryWrite(thr, pc, (uptr)d, kSizeLog8);
+  } else {
+    // This path is used only by dup2/dup3 calls.
+    // We do read instead of write because there is a number of legitimate
+    // cases where write would lead to false positives:
+    // 1. Some software dups a closed pipe in place of a socket before closing
+    //    the socket (to prevent races actually).
+    // 2. Some daemons dup /dev/null in place of stdin/stdout.
+    // On the other hand we have not seen cases when write here catches real
+    // bugs.
+    MemoryRead(thr, pc, (uptr)d, kSizeLog8);
+  }
   // We need to clear it, because if we do not intercept any call out there
   // that creates fd, we will hit false postives.
   MemoryResetRange(thr, pc, (uptr)d, 8);
@@ -204,15 +222,15 @@ void FdFileCreate(ThreadState *thr, uptr pc, int fd) {
   init(thr, pc, fd, &fdctx.filesync);
 }
 
-void FdDup(ThreadState *thr, uptr pc, int oldfd, int newfd) {
+void FdDup(ThreadState *thr, uptr pc, int oldfd, int newfd, bool write) {
   DPrintf("#%d: FdDup(%d, %d)\n", thr->tid, oldfd, newfd);
   if (bogusfd(oldfd) || bogusfd(newfd))
     return;
   // Ignore the case when user dups not yet connected socket.
   FdDesc *od = fddesc(thr, pc, oldfd);
   MemoryRead(thr, pc, (uptr)od, kSizeLog8);
-  FdClose(thr, pc, newfd);
-  init(thr, pc, newfd, ref(od->sync));
+  FdClose(thr, pc, newfd, write);
+  init(thr, pc, newfd, ref(od->sync), write);
 }
 
 void FdPipeCreate(ThreadState *thr, uptr pc, int rfd, int wfd) {
