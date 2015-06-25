@@ -275,3 +275,10 @@ namespace TemporaryInitListSourceRange_PR22367 {
       {0}
       );
 }
+
+namespace ParameterPackNestedInitializerLists_PR23904c3 {
+  template <typename ...T>
+  void f(std::initializer_list<std::initializer_list<T>> ...tt);
+
+  void foo() { f({{0}}, {{'\0'}}); }
+}
