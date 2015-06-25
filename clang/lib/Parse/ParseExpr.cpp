@@ -205,6 +205,24 @@ ExprResult Parser::ParseConstantExpression(TypeCastState isTypeCast) {
   return Actions.ActOnConstantExpression(Res);
 }
 
+/// \brief Parse a constraint-expression.
+///
+/// \verbatim
+///       constraint-expression: [Concepts TS temp.constr.decl p1]
+///         logical-or-expression
+/// \endverbatim
+ExprResult Parser::ParseConstraintExpression() {
+  // FIXME: this may erroneously consume a function-body as the braced
+  // initializer list of a compound literal
+  //
+  // FIXME: this may erroneously consume a parenthesized rvalue reference
+  // declarator as a parenthesized address-of-label expression
+  ExprResult LHS(ParseCastExpression(/*isUnaryExpression=*/false));
+  ExprResult Res(ParseRHSOfBinaryExpression(LHS, prec::LogicalOr));
+
+  return Res;
+}
+
 bool Parser::isNotExpressionStart() {
   tok::TokenKind K = Tok.getKind();
   if (K == tok::l_brace || K == tok::r_brace  ||

@@ -116,7 +116,7 @@ Parser::ParseTemplateDeclarationOrSpecialization(unsigned Context,
     SmallVector<Decl*, 4> TemplateParams;
     if (ParseTemplateParameters(CurTemplateDepthTracker.getDepth(),
                                 TemplateParams, LAngleLoc, RAngleLoc)) {
-      // Skip until the semi-colon or a }.
+      // Skip until the semi-colon or a '}'.
       SkipUntil(tok::r_brace, StopAtSemi | StopBeforeMatch);
       TryConsumeToken(tok::semi);
       return nullptr;
@@ -132,6 +132,17 @@ Parser::ParseTemplateDeclarationOrSpecialization(unsigned Context,
     if (!TemplateParams.empty()) {
       isSpecialization = false;
       ++CurTemplateDepthTracker;
+
+      if (TryConsumeToken(tok::kw_requires)) {
+        ExprResult ER =
+            Actions.CorrectDelayedTyposInExpr(ParseConstraintExpression());
+        if (!ER.isUsable()) {
+          // Skip until the semi-colon or a '}'.
+          SkipUntil(tok::r_brace, StopAtSemi | StopBeforeMatch);
+          TryConsumeToken(tok::semi);
+          return nullptr;
+        }
+      }
     } else {
       LastParamListWasEmpty = true;
     }
