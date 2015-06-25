@@ -930,8 +930,8 @@ static void dumpSymbolNamesFromObject(SymbolicFile &Obj, bool printName,
     S.Size = 0;
     S.Address = UnknownAddress;
     if (PrintSize) {
-      if (auto *E = dyn_cast<ELFObjectFileBase>(&Obj))
-        S.Size = E->getSymbolSize(Sym);
+      if (isa<ELFObjectFileBase>(&Obj))
+        S.Size = ELFSymbolRef(Sym).getSize();
     }
     if (PrintAddress && isa<ObjectFile>(Obj)) {
       if (error(SymbolRef(Sym).getAddress(S.Address)))

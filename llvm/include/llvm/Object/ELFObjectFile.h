@@ -35,9 +35,16 @@
 namespace llvm {
 namespace object {
 
+class elf_symbol_iterator;
+class ELFSymbolRef;
+
 class ELFObjectFileBase : public ObjectFile {
+  friend class ELFSymbolRef;
+
 protected:
   ELFObjectFileBase(unsigned int Type, MemoryBufferRef Source);
+
+  virtual uint64_t getSymbolSize(DataRefImpl Symb) const = 0;
 
 public:
   virtual ErrorOr<int64_t> getRelocationAddend(DataRefImpl Rel) const = 0;
@@ -46,17 +53,55 @@ public:
   // and addend or not.
   virtual bool hasRelocationAddend(DataRefImpl Rel) const = 0;
 
-  virtual symbol_iterator_range getDynamicSymbolIterators() const = 0;
+  typedef iterator_range<elf_symbol_iterator> elf_symbol_iterator_range;
+  virtual elf_symbol_iterator_range getDynamicSymbolIterators() const = 0;
 
   virtual uint64_t getSectionFlags(SectionRef Sec) const = 0;
   virtual uint32_t getSectionType(SectionRef Sec) const = 0;
 
-  virtual uint64_t getSymbolSize(SymbolRef Symb) const = 0;
+  elf_symbol_iterator_range symbols() const;
 
   static inline bool classof(const Binary *v) { return v->isELF(); }
 };
 
+class ELFSymbolRef : public SymbolRef {
+public:
+  ELFSymbolRef(const SymbolRef &B) : SymbolRef(B) {
+    assert(isa<ELFObjectFileBase>(SymbolRef::getObject()));
+  }
+
+  const ELFObjectFileBase *getObject() const {
+    return cast<ELFObjectFileBase>(BasicSymbolRef::getObject());
+  }
+
+  uint64_t getSize() const {
+    return getObject()->getSymbolSize(getRawDataRefImpl());
+  }
+};
+
+class elf_symbol_iterator : public symbol_iterator {
+public:
+  elf_symbol_iterator(const basic_symbol_iterator &B)
+      : symbol_iterator(SymbolRef(B->getRawDataRefImpl(),
+                                  cast<ELFObjectFileBase>(B->getObject()))) {}
+
+  const ELFSymbolRef *operator->() const {
+    return static_cast<const ELFSymbolRef *>(symbol_iterator::operator->());
+  }
+
+  const ELFSymbolRef &operator*() const {
+    return static_cast<const ELFSymbolRef &>(symbol_iterator::operator*());
+  }
+};
+
+inline ELFObjectFileBase::elf_symbol_iterator_range
+ELFObjectFileBase::symbols() const {
+  return elf_symbol_iterator_range(symbol_begin(), symbol_end());
+}
+
 template <class ELFT> class ELFObjectFile : public ELFObjectFileBase {
+  uint64_t getSymbolSize(DataRefImpl Sym) const override;
+
 public:
   LLVM_ELF_IMPORT_TYPES_ELFT(ELFT)
 
@@ -72,8 +117,6 @@ public:
   typedef typename ELFFile<ELFT>::Elf_Sym_Iter Elf_Sym_Iter;
   typedef typename ELFFile<ELFT>::Elf_Shdr_Iter Elf_Shdr_Iter;
   typedef typename ELFFile<ELFT>::Elf_Dyn_Iter Elf_Dyn_Iter;
-
-  uint64_t getSymbolSize(SymbolRef Symb) const override;
 
 protected:
   ELFFile<ELFT> EF;
@@ -206,8 +249,8 @@ public:
   basic_symbol_iterator symbol_begin_impl() const override;
   basic_symbol_iterator symbol_end_impl() const override;
 
-  symbol_iterator dynamic_symbol_begin() const;
-  symbol_iterator dynamic_symbol_end() const;
+  elf_symbol_iterator dynamic_symbol_begin() const;
+  elf_symbol_iterator dynamic_symbol_end() const;
 
   section_iterator section_begin() const override;
   section_iterator section_end() const override;
@@ -236,7 +279,7 @@ public:
                                       ELFT::Is64Bits);
   }
 
-  symbol_iterator_range getDynamicSymbolIterators() const override;
+  elf_symbol_iterator_range getDynamicSymbolIterators() const override;
 
   bool isRelocatableObject() const override;
 };
@@ -327,8 +370,8 @@ uint32_t ELFObjectFile<ELFT>::getSymbolAlignment(DataRefImpl Symb) const {
 }
 
 template <class ELFT>
-uint64_t ELFObjectFile<ELFT>::getSymbolSize(SymbolRef Symb) const {
-  return toELFSymIter(Symb.getRawDataRefImpl())->st_size;
+uint64_t ELFObjectFile<ELFT>::getSymbolSize(DataRefImpl Sym) const {
+  return toELFSymIter(Sym)->st_size;
 }
 
 template <class ELFT>
@@ -734,12 +777,12 @@ basic_symbol_iterator ELFObjectFile<ELFT>::symbol_end_impl() const {
 }
 
 template <class ELFT>
-symbol_iterator ELFObjectFile<ELFT>::dynamic_symbol_begin() const {
+elf_symbol_iterator ELFObjectFile<ELFT>::dynamic_symbol_begin() const {
   return symbol_iterator(SymbolRef(toDRI(EF.begin_dynamic_symbols()), this));
 }
 
 template <class ELFT>
-symbol_iterator ELFObjectFile<ELFT>::dynamic_symbol_end() const {
+elf_symbol_iterator ELFObjectFile<ELFT>::dynamic_symbol_end() const {
   return symbol_iterator(SymbolRef(toDRI(EF.end_dynamic_symbols()), this));
 }
 
@@ -862,7 +905,7 @@ unsigned ELFObjectFile<ELFT>::getArch() const {
 }
 
 template <class ELFT>
-ObjectFile::symbol_iterator_range
+ELFObjectFileBase::elf_symbol_iterator_range
 ELFObjectFile<ELFT>::getDynamicSymbolIterators() const {
   return make_range(dynamic_symbol_begin(), dynamic_symbol_end());
 }

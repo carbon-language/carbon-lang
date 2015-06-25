@@ -55,8 +55,8 @@ llvm::object::computeSymbolSizes(const ObjectFile &O) {
     auto Syms = E->symbols();
     if (Syms.begin() == Syms.end())
       Syms = E->getDynamicSymbolIterators();
-    for (SymbolRef Sym : Syms)
-      Ret.push_back({Sym, E->getSymbolSize(Sym)});
+    for (ELFSymbolRef Sym : Syms)
+      Ret.push_back({Sym, Sym.getSize()});
     return Ret;
   }
 

@@ -27,12 +27,12 @@ public:
 
   const MCExpr *createExprForRelocation(RelocationRef Rel) override {
     uint64_t RelType; Rel.getType(RelType);
-    symbol_iterator SymI = Rel.getSymbol();
+    elf_symbol_iterator SymI = Rel.getSymbol();
 
     StringRef SymName; SymI->getName(SymName);
     uint64_t  SymAddr; SymI->getAddress(SymAddr);
     auto *Obj = cast<ELFObjectFileBase>(Rel.getObjectFile());
-    uint64_t SymSize = Obj->getSymbolSize(*SymI);
+    uint64_t SymSize = SymI->getSize();
     int64_t Addend = *Obj->getRelocationAddend(Rel.getRawDataRefImpl());
 
     MCSymbol *Sym = Ctx.getOrCreateSymbol(SymName);
