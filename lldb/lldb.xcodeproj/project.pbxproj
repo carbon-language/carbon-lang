@@ -638,6 +638,10 @@
 		26BC17B218C7F4CB00D2196D /* ThreadElfCore.h in Headers */ = {isa = PBXBuildFile; fileRef = 26BC17A918C7F4CB00D2196D /* ThreadElfCore.h */; };
 		26BCFC521368AE38006DC050 /* OptionGroupFormat.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BCFC511368AE38006DC050 /* OptionGroupFormat.cpp */; };
 		26BD407F135D2AE000237D80 /* FileLineResolver.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BD407E135D2ADF00237D80 /* FileLineResolver.cpp */; };
+		26BF51F31B3C754400016294 /* ABISysV_hexagon.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BF51EA1B3C754400016294 /* ABISysV_hexagon.cpp */; };
+		26BF51F41B3C754400016294 /* ABISysV_hexagon.h in Headers */ = {isa = PBXBuildFile; fileRef = 26BF51EB1B3C754400016294 /* ABISysV_hexagon.h */; };
+		26BF51F61B3C754400016294 /* ABISysV_i386.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BF51EF1B3C754400016294 /* ABISysV_i386.cpp */; };
+		26BF51F71B3C754400016294 /* ABISysV_i386.h in Headers */ = {isa = PBXBuildFile; fileRef = 26BF51F01B3C754400016294 /* ABISysV_i386.h */; };
 		26C72C94124322890068DC16 /* SBStream.h in Headers */ = {isa = PBXBuildFile; fileRef = 26C72C93124322890068DC16 /* SBStream.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		26C72C961243229A0068DC16 /* SBStream.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26C72C951243229A0068DC16 /* SBStream.cpp */; };
 		26CA97A1172B1FD5005DC71B /* RegisterContextThreadMemory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26CA979F172B1FD5005DC71B /* RegisterContextThreadMemory.cpp */; };
@@ -2111,6 +2115,10 @@
 		26BCFC541368B4B8006DC050 /* OptionGroupOutputFile.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = OptionGroupOutputFile.h; path = include/lldb/Interpreter/OptionGroupOutputFile.h; sourceTree = "<group>"; };
 		26BD407D135D2AC400237D80 /* FileLineResolver.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = FileLineResolver.h; path = include/lldb/Core/FileLineResolver.h; sourceTree = "<group>"; };
 		26BD407E135D2ADF00237D80 /* FileLineResolver.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FileLineResolver.cpp; path = source/Core/FileLineResolver.cpp; sourceTree = "<group>"; };
+		26BF51EA1B3C754400016294 /* ABISysV_hexagon.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ABISysV_hexagon.cpp; sourceTree = "<group>"; };
+		26BF51EB1B3C754400016294 /* ABISysV_hexagon.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ABISysV_hexagon.h; sourceTree = "<group>"; };
+		26BF51EF1B3C754400016294 /* ABISysV_i386.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ABISysV_i386.cpp; sourceTree = "<group>"; };
+		26BF51F01B3C754400016294 /* ABISysV_i386.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ABISysV_i386.h; sourceTree = "<group>"; };
 		26C5577B132575AD008FD8FE /* PlatformMacOSX.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PlatformMacOSX.cpp; sourceTree = "<group>"; };
 		26C5577C132575AD008FD8FE /* PlatformMacOSX.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PlatformMacOSX.h; sourceTree = "<group>"; };
 		26C6886D137880B900407EDF /* RegisterValue.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = RegisterValue.h; path = include/lldb/Core/RegisterValue.h; sourceTree = "<group>"; };
@@ -4751,6 +4759,24 @@
 			name = MacOSX;
 			sourceTree = "<group>";
 		};
+		26BF51E91B3C754400016294 /* SysV-hexagon */ = {
+			isa = PBXGroup;
+			children = (
+				26BF51EA1B3C754400016294 /* ABISysV_hexagon.cpp */,
+				26BF51EB1B3C754400016294 /* ABISysV_hexagon.h */,
+			);
+			path = "SysV-hexagon";
+			sourceTree = "<group>";
+		};
+		26BF51EE1B3C754400016294 /* SysV-i386 */ = {
+			isa = PBXGroup;
+			children = (
+				26BF51EF1B3C754400016294 /* ABISysV_i386.cpp */,
+				26BF51F01B3C754400016294 /* ABISysV_i386.h */,
+			);
+			path = "SysV-i386";
+			sourceTree = "<group>";
+		};
 		26C5577E132575B6008FD8FE /* Platform */ = {
 			isa = PBXGroup;
 			children = (
@@ -4813,6 +4839,8 @@
 				26DB3E0E1379E7AD0080DC73 /* MacOSX-i386 */,
 				AF20F7621AF18F5E00751A6E /* SysV-arm */,
 				AF20F7631AF18F6800751A6E /* SysV-arm64 */,
+				26BF51E91B3C754400016294 /* SysV-hexagon */,
+				26BF51EE1B3C754400016294 /* SysV-i386 */,
 				9694FA6E1B32AA35005EBB16 /* SysV-mips */,
 				263641141B34AEE200145B2F /* SysV-mips64 */,
 				AF77E08B1A033C3E0096C0EA /* SysV-ppc */,
@@ -5538,6 +5566,7 @@
 				26474CCC18D0CB5B0073DEBA /* RegisterContextPOSIX_mips64.h in Headers */,
 				26474CBD18D0CB2D0073DEBA /* RegisterContextMach_arm.h in Headers */,
 				260CC63415D04377002BF2E0 /* OptionValueFileSpec.h in Headers */,
+				26BF51F41B3C754400016294 /* ABISysV_hexagon.h in Headers */,
 				26CFDCA11861638D000E63E5 /* Editline.h in Headers */,
 				26BC17B018C7F4CB00D2196D /* RegisterContextPOSIXCore_x86_64.h in Headers */,
 				6D55BAF01A8CD0BD00A70529 /* PlatformAndroidRemoteGDBServer.h in Headers */,
@@ -5564,6 +5593,7 @@
 				256CBDBD1ADD107200BC6CDC /* RegisterContextLinux_mips64.h in Headers */,
 				AF061F8C182C980000B6A19C /* HistoryUnwind.h in Headers */,
 				264A58EC1A7DBC8C00A6B1B0 /* OptionValueFormatEntity.h in Headers */,
+				26BF51F71B3C754400016294 /* ABISysV_i386.h in Headers */,
 				260CC63815D04377002BF2E0 /* OptionValueString.h in Headers */,
 				260CC63915D04377002BF2E0 /* OptionValueUInt64.h in Headers */,
 				256CBDC11ADD11C000BC6CDC /* RegisterContextPOSIX_arm.h in Headers */,
@@ -6300,6 +6330,7 @@
 				AF9B8F33182DB52900DA866F /* SystemRuntimeMacOSX.cpp in Sources */,
 				2689008113353E2200698AC0 /* CommandObject.cpp in Sources */,
 				3F8160A61AB9F7DD001DA9DF /* Logging.cpp in Sources */,
+				26BF51F61B3C754400016294 /* ABISysV_i386.cpp in Sources */,
 				2689008313353E2200698AC0 /* CommandObjectMultiword.cpp in Sources */,
 				2689008413353E2200698AC0 /* CommandObjectRegexCommand.cpp in Sources */,
 				2689008513353E2200698AC0 /* CommandReturnObject.cpp in Sources */,
@@ -6425,6 +6456,7 @@
 				268900FA13353E6F00698AC0 /* ThreadList.cpp in Sources */,
 				268900FB13353E6F00698AC0 /* ThreadPlan.cpp in Sources */,
 				256CBDBC1ADD107200BC6CDC /* RegisterContextLinux_mips64.cpp in Sources */,
+				26BF51F31B3C754400016294 /* ABISysV_hexagon.cpp in Sources */,
 				232CB619191E00CD00EF39FC /* NativeProcessProtocol.cpp in Sources */,
 				8CF02AEF19DD16B100B14BE0 /* InstrumentationRuntimeStopInfo.cpp in Sources */,
 				268900FC13353E6F00698AC0 /* ThreadPlanBase.cpp in Sources */,

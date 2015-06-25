@@ -41,6 +41,7 @@ USEDLIBS = lldbAPI.a \
 	lldbPluginABISysV_ppc64.a \
 	lldbPluginABISysV_mips.a \
 	lldbPluginABISysV_mips64.a \
+	lldbPluginABISysV_i386.a \
 	lldbPluginABISysV_x86_64.a \
 	lldbPluginABISysV_hexagon.a \
 	lldbPluginDisassemblerLLVM.a \
@@ -50,8 +51,8 @@ USEDLIBS = lldbAPI.a \
 	lldbPluginDynamicLoaderMacOSX.a \
 	lldbPluginEmulateInstructionARM.a \
 	lldbPluginEmulateInstructionARM64.a \
-        lldbPluginEmulateInstructionMIPS.a \
-        lldbPluginEmulateInstructionMIPS64.a \
+	lldbPluginEmulateInstructionMIPS.a \
+	lldbPluginEmulateInstructionMIPS64.a \
 	lldbPluginInstrumentationRuntimeAddressSanitizer.a \
 	lldbPluginLanguageRuntimeCPlusPlusItaniumABI.a \
 	lldbPluginLanguageRuntimeObjCAppleObjCRuntime.a \
