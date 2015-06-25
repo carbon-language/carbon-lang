@@ -111,7 +111,7 @@ class MiVarTestCase(lldbmi_testcase.MiTestCaseBase):
 
         # Print argument "argv[0]"
         self.runCmd("-data-evaluate-expression \"argv[0]\"")
-        self.expect("\^done,value=\"0x[0-9a-f]+\"")
+        self.expect("\^done,value=\"0x[0-9a-f]+ \\\\\\\".*?%s\\\\\\\"\"" % self.myexe)
         self.runCmd("-var-create var6 * \"argv[0]\"")
         self.expect("\^done,name=\"var6\",numchild=\"1\",value=\"0x[0-9a-f]+ \\\\\\\".*?%s\\\\\\\"\",type=\"const char \*\",thread-id=\"1\",has_more=\"0\"" % self.myexe)
         self.runCmd("-var-evaluate-expression var6")

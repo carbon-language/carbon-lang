@@ -122,7 +122,7 @@ class MiDataTestCase(lldbmi_testcase.MiTestCaseBase):
         self.expect(r'\*stopped,reason="breakpoint-hit"')
 
         # Get address of local char[]
-        self.runCmd('-data-evaluate-expression &array')
+        self.runCmd('-data-evaluate-expression "(void *)&array"')
         self.expect(r'\^done,value="0x[0-9a-f]+"')
         addr = int(self.child.after.split('"')[1], 16)
         size = 4
