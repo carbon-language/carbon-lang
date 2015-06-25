@@ -82,9 +82,9 @@ static Value *EmitFromInt(CodeGenFunction &CGF, llvm::Value *V,
 
 /// Utility to insert an atomic instruction based on Instrinsic::ID
 /// and the expression node.
-static RValue EmitBinaryAtomic(CodeGenFunction &CGF,
-                               llvm::AtomicRMWInst::BinOp Kind,
-                               const CallExpr *E) {
+static Value *MakeBinaryAtomicValue(CodeGenFunction &CGF,
+                                    llvm::AtomicRMWInst::BinOp Kind,
+                                    const CallExpr *E) {
   QualType T = E->getType();
   assert(E->getArg(0)->getType()->isPointerType());
   assert(CGF.getContext().hasSameUnqualifiedType(T,
@@ -108,8 +108,13 @@ static RValue EmitBinaryAtomic(CodeGenFunction &CGF,
   llvm::Value *Result =
       CGF.Builder.CreateAtomicRMW(Kind, Args[0], Args[1],
                                   llvm::SequentiallyConsistent);
-  Result = EmitFromInt(CGF, Result, T, ValueType);
-  return RValue::get(Result);
+  return EmitFromInt(CGF, Result, T, ValueType);
+}
+
+static RValue EmitBinaryAtomic(CodeGenFunction &CGF,
+                               llvm::AtomicRMWInst::BinOp Kind,
+                               const CallExpr *E) {
+  return RValue::get(MakeBinaryAtomicValue(CGF, Kind, E));
 }
 
 /// Utility to insert an atomic instruction based Instrinsic::ID and
@@ -149,6 +154,47 @@ static RValue EmitBinaryAtomicPost(CodeGenFunction &CGF,
                                      llvm::ConstantInt::get(IntType, -1));
   Result = EmitFromInt(CGF, Result, T, ValueType);
   return RValue::get(Result);
+}
+
+/// @brief Utility to insert an atomic cmpxchg instruction.
+///
+/// @param CGF The current codegen function.
+/// @param E   Builtin call expression to convert to cmpxchg.
+///            arg0 - address to operate on
+///            arg1 - value to compare with
+///            arg2 - new value
+/// @param ReturnBool Specifies whether to return success flag of
+///                   cmpxchg result or the old value.
+///
+/// @returns result of cmpxchg, according to ReturnBool
+static Value *MakeAtomicCmpXchgValue(CodeGenFunction &CGF, const CallExpr *E,
+                                     bool ReturnBool) {
+  QualType T = ReturnBool ? E->getArg(1)->getType() : E->getType();
+  llvm::Value *DestPtr = CGF.EmitScalarExpr(E->getArg(0));
+  unsigned AddrSpace = DestPtr->getType()->getPointerAddressSpace();
+
+  llvm::IntegerType *IntType = llvm::IntegerType::get(
+      CGF.getLLVMContext(), CGF.getContext().getTypeSize(T));
+  llvm::Type *IntPtrType = IntType->getPointerTo(AddrSpace);
+
+  Value *Args[3];
+  Args[0] = CGF.Builder.CreateBitCast(DestPtr, IntPtrType);
+  Args[1] = CGF.EmitScalarExpr(E->getArg(1));
+  llvm::Type *ValueType = Args[1]->getType();
+  Args[1] = EmitToInt(CGF, Args[1], T, IntType);
+  Args[2] = EmitToInt(CGF, CGF.EmitScalarExpr(E->getArg(2)), T, IntType);
+
+  Value *Pair = CGF.Builder.CreateAtomicCmpXchg(Args[0], Args[1], Args[2],
+                                                llvm::SequentiallyConsistent,
+                                                llvm::SequentiallyConsistent);
+  if (ReturnBool)
+    // Extract boolean success flag and zext it to int.
+    return CGF.Builder.CreateZExt(CGF.Builder.CreateExtractValue(Pair, 1),
+                                  CGF.ConvertType(E->getType()));
+  else
+    // Extract old value and emit it using the same type as compare value.
+    return EmitFromInt(CGF, CGF.Builder.CreateExtractValue(Pair, 0), T,
+                       ValueType);
 }
 
 /// EmitFAbs - Emit a call to @llvm.fabs().
@@ -1057,58 +1103,15 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
   case Builtin::BI__sync_val_compare_and_swap_2:
   case Builtin::BI__sync_val_compare_and_swap_4:
   case Builtin::BI__sync_val_compare_and_swap_8:
-  case Builtin::BI__sync_val_compare_and_swap_16: {
-    QualType T = E->getType();
-    llvm::Value *DestPtr = EmitScalarExpr(E->getArg(0));
-    unsigned AddrSpace = DestPtr->getType()->getPointerAddressSpace();
-
-    llvm::IntegerType *IntType =
-      llvm::IntegerType::get(getLLVMContext(),
-                             getContext().getTypeSize(T));
-    llvm::Type *IntPtrType = IntType->getPointerTo(AddrSpace);
-
-    Value *Args[3];
-    Args[0] = Builder.CreateBitCast(DestPtr, IntPtrType);
-    Args[1] = EmitScalarExpr(E->getArg(1));
-    llvm::Type *ValueType = Args[1]->getType();
-    Args[1] = EmitToInt(*this, Args[1], T, IntType);
-    Args[2] = EmitToInt(*this, EmitScalarExpr(E->getArg(2)), T, IntType);
-
-    Value *Result = Builder.CreateAtomicCmpXchg(Args[0], Args[1], Args[2],
-                                                llvm::SequentiallyConsistent,
-                                                llvm::SequentiallyConsistent);
-    Result = Builder.CreateExtractValue(Result, 0);
-    Result = EmitFromInt(*this, Result, T, ValueType);
-    return RValue::get(Result);
-  }
+  case Builtin::BI__sync_val_compare_and_swap_16:
+    return RValue::get(MakeAtomicCmpXchgValue(*this, E, false));
 
   case Builtin::BI__sync_bool_compare_and_swap_1:
   case Builtin::BI__sync_bool_compare_and_swap_2:
   case Builtin::BI__sync_bool_compare_and_swap_4:
   case Builtin::BI__sync_bool_compare_and_swap_8:
-  case Builtin::BI__sync_bool_compare_and_swap_16: {
-    QualType T = E->getArg(1)->getType();
-    llvm::Value *DestPtr = EmitScalarExpr(E->getArg(0));
-    unsigned AddrSpace = DestPtr->getType()->getPointerAddressSpace();
-
-    llvm::IntegerType *IntType =
-      llvm::IntegerType::get(getLLVMContext(),
-                             getContext().getTypeSize(T));
-    llvm::Type *IntPtrType = IntType->getPointerTo(AddrSpace);
-
-    Value *Args[3];
-    Args[0] = Builder.CreateBitCast(DestPtr, IntPtrType);
-    Args[1] = EmitToInt(*this, EmitScalarExpr(E->getArg(1)), T, IntType);
-    Args[2] = EmitToInt(*this, EmitScalarExpr(E->getArg(2)), T, IntType);
-
-    Value *Pair = Builder.CreateAtomicCmpXchg(Args[0], Args[1], Args[2],
-                                              llvm::SequentiallyConsistent,
-                                              llvm::SequentiallyConsistent);
-    Value *Result = Builder.CreateExtractValue(Pair, 1);
-    // zext bool to int.
-    Result = Builder.CreateZExt(Result, ConvertType(E->getType()));
-    return RValue::get(Result);
-  }
+  case Builtin::BI__sync_bool_compare_and_swap_16:
+    return RValue::get(MakeAtomicCmpXchgValue(*this, E, true));
 
   case Builtin::BI__sync_swap_1:
   case Builtin::BI__sync_swap_2:
@@ -1880,6 +1883,9 @@ Value *CodeGenFunction::EmitTargetBuiltinExpr(unsigned BuiltinID,
     return EmitAMDGPUBuiltinExpr(BuiltinID, E);
   case llvm::Triple::systemz:
     return EmitSystemZBuiltinExpr(BuiltinID, E);
+  case llvm::Triple::nvptx:
+  case llvm::Triple::nvptx64:
+    return EmitNVPTXBuiltinExpr(BuiltinID, E);
   default:
     return nullptr;
   }
@@ -6896,6 +6902,75 @@ Value *CodeGenFunction::EmitSystemZBuiltinExpr(unsigned BuiltinID,
   INTRINSIC_WITH_CC(s390_vftcidb);
 
 #undef INTRINSIC_WITH_CC
+
+  default:
+    return nullptr;
+  }
+}
+
+Value *CodeGenFunction::EmitNVPTXBuiltinExpr(unsigned BuiltinID,
+                                             const CallExpr *E) {
+  switch (BuiltinID) {
+  case NVPTX::BI__nvvm_atom_add_gen_i:
+  case NVPTX::BI__nvvm_atom_add_gen_l:
+  case NVPTX::BI__nvvm_atom_add_gen_ll:
+    return MakeBinaryAtomicValue(*this, llvm::AtomicRMWInst::Add, E);
+
+  case NVPTX::BI__nvvm_atom_sub_gen_i:
+  case NVPTX::BI__nvvm_atom_sub_gen_l:
+  case NVPTX::BI__nvvm_atom_sub_gen_ll:
+    return MakeBinaryAtomicValue(*this, llvm::AtomicRMWInst::Sub, E);
+
+  case NVPTX::BI__nvvm_atom_and_gen_i:
+  case NVPTX::BI__nvvm_atom_and_gen_l:
+  case NVPTX::BI__nvvm_atom_and_gen_ll:
+    return MakeBinaryAtomicValue(*this, llvm::AtomicRMWInst::And, E);
+
+  case NVPTX::BI__nvvm_atom_or_gen_i:
+  case NVPTX::BI__nvvm_atom_or_gen_l:
+  case NVPTX::BI__nvvm_atom_or_gen_ll:
+    return MakeBinaryAtomicValue(*this, llvm::AtomicRMWInst::Or, E);
+
+  case NVPTX::BI__nvvm_atom_xor_gen_i:
+  case NVPTX::BI__nvvm_atom_xor_gen_l:
+  case NVPTX::BI__nvvm_atom_xor_gen_ll:
+    return MakeBinaryAtomicValue(*this, llvm::AtomicRMWInst::Xor, E);
+
+  case NVPTX::BI__nvvm_atom_xchg_gen_i:
+  case NVPTX::BI__nvvm_atom_xchg_gen_l:
+  case NVPTX::BI__nvvm_atom_xchg_gen_ll:
+    return MakeBinaryAtomicValue(*this, llvm::AtomicRMWInst::Xchg, E);
+
+  case NVPTX::BI__nvvm_atom_max_gen_i:
+  case NVPTX::BI__nvvm_atom_max_gen_l:
+  case NVPTX::BI__nvvm_atom_max_gen_ll:
+  case NVPTX::BI__nvvm_atom_max_gen_ui:
+  case NVPTX::BI__nvvm_atom_max_gen_ul:
+  case NVPTX::BI__nvvm_atom_max_gen_ull:
+    return MakeBinaryAtomicValue(*this, llvm::AtomicRMWInst::Max, E);
+
+  case NVPTX::BI__nvvm_atom_min_gen_i:
+  case NVPTX::BI__nvvm_atom_min_gen_l:
+  case NVPTX::BI__nvvm_atom_min_gen_ll:
+  case NVPTX::BI__nvvm_atom_min_gen_ui:
+  case NVPTX::BI__nvvm_atom_min_gen_ul:
+  case NVPTX::BI__nvvm_atom_min_gen_ull:
+    return MakeBinaryAtomicValue(*this, llvm::AtomicRMWInst::Min, E);
+
+  case NVPTX::BI__nvvm_atom_cas_gen_i:
+  case NVPTX::BI__nvvm_atom_cas_gen_l:
+  case NVPTX::BI__nvvm_atom_cas_gen_ll:
+    return MakeAtomicCmpXchgValue(*this, E, true);
+
+  case NVPTX::BI__nvvm_atom_add_gen_f: {
+    Value *Ptr = EmitScalarExpr(E->getArg(0));
+    Value *Val = EmitScalarExpr(E->getArg(1));
+    // atomicrmw only deals with integer arguments so we need to use
+    // LLVM's nvvm_atomic_load_add_f32 intrinsic for that.
+    Value *FnALAF32 =
+        CGM.getIntrinsic(Intrinsic::nvvm_atomic_load_add_f32, Ptr->getType());
+    return Builder.CreateCall(FnALAF32, {Ptr, Val});
+  }
 
   default:
     return nullptr;
