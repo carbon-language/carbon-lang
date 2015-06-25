@@ -332,7 +332,7 @@ HexagonDYLDRendezvous::FindMetadata(const char *name, PThreadField field, uint32
     if (!target.GetImages().FindSymbolsWithNameAndType (ConstString(name), eSymbolTypeAny, list))
         return false;
 
-    Address address = list[0].symbol->GetAddressObj();
+    Address address = list[0].symbol->GetAddress();
     addr_t addr = address.GetLoadAddress (&target);
     if (addr == LLDB_INVALID_ADDRESS)
         return false;
