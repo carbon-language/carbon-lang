@@ -757,6 +757,9 @@ public:
     llvm_unreachable("null symbol table pointer!");
   }
 
+  iterator_range<const coff_relocation *>
+  getRelocations(const coff_section *Sec) const;
+
   std::error_code getSectionName(const coff_section *Sec, StringRef &Res) const;
   uint64_t getSectionSize(const coff_section *Sec) const;
   std::error_code getSectionContents(const coff_section *Sec,

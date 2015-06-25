@@ -16,6 +16,7 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/Triple.h"
+#include "llvm/ADT/iterator_range.h"
 #include "llvm/Support/COFF.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
@@ -1027,6 +1028,15 @@ COFFSymbolRef COFFObjectFile::getCOFFSymbol(const SymbolRef &Symbol) const {
 const coff_relocation *
 COFFObjectFile::getCOFFRelocation(const RelocationRef &Reloc) const {
   return toRel(Reloc.getRawDataRefImpl());
+}
+
+iterator_range<const coff_relocation *>
+COFFObjectFile::getRelocations(const coff_section *Sec) const {
+  const coff_relocation *I = getFirstReloc(Sec, Data, base());
+  const coff_relocation *E = I;
+  if (I)
+    E += getNumberOfRelocations(Sec, Data, base());
+  return make_range(I, E);
 }
 
 #define LLVM_COFF_SWITCH_RELOC_TYPE_NAME(reloc_type)                           \
