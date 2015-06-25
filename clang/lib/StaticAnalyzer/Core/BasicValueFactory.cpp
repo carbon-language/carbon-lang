@@ -154,9 +154,13 @@ BasicValueFactory::evalAPSInt(BinaryOperator::Opcode Op,
       return &getValue( V1 * V2 );
 
     case BO_Div:
+      if (V2 == 0) // Avoid division by zero
+        return nullptr;
       return &getValue( V1 / V2 );
 
     case BO_Rem:
+      if (V2 == 0) // Avoid division by zero
+        return nullptr;
       return &getValue( V1 % V2 );
 
     case BO_Add:
