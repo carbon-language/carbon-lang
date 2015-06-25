@@ -111,14 +111,9 @@ void OutputSection::writeHeaderTo(uint8_t *Buf) {
 void Writer::markLive() {
   if (!Config->DoGC)
     return;
-  for (StringRef Name : Config->GCRoots) {
-    SymbolBody *B = Symtab->find(Name);
-    if (auto *D = dyn_cast<DefinedRegular>(B)) {
+  for (StringRef Name : Config->GCRoots)
+    if (auto *D = dyn_cast<DefinedRegular>(Symtab->find(Name)))
       D->markLive();
-    } else if (auto *D = dyn_cast<DefinedCOMDAT>(B)) {
-      D->markLive();
-    }
-  }
   for (Chunk *C : Symtab->getChunks())
     if (auto *SC = dyn_cast<SectionChunk>(C))
       if (SC->isRoot())

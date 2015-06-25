@@ -51,7 +51,6 @@ public:
     DefinedImportThunkKind,
     DefinedLocalImportKind,
     DefinedCommonKind,
-    DefinedCOMDATKind,
     DefinedRegularKind,
     DefinedLast,
     LazyKind,
@@ -115,51 +114,31 @@ public:
 class DefinedRegular : public Defined {
 public:
   DefinedRegular(COFFObjectFile *F, COFFSymbolRef S, SectionChunk *C)
-      : Defined(DefinedRegularKind), COFFFile(F), Sym(S), Data(C) {}
+      : Defined(DefinedRegularKind), COFFFile(F), Sym(S), Data(&C->Ptr),
+        IsCOMDAT(C->isCOMDAT()) {}
 
   static bool classof(const SymbolBody *S) {
     return S->kind() == DefinedRegularKind;
   }
 
-  StringRef getName() override;
-  uint64_t getRVA() override { return Data->getRVA() + Sym.getValue(); }
-  bool isExternal() override { return Sym.isExternal(); }
-  uint64_t getFileOff() override { return Data->getFileOff() + Sym.getValue(); }
-  int compare(SymbolBody *Other) override;
-  void markLive() { Data->markLive(); }
-
-private:
-  StringRef Name;
-  COFFObjectFile *COFFFile;
-  COFFSymbolRef Sym;
-  SectionChunk *Data;
-};
-
-class DefinedCOMDAT : public Defined {
-public:
-  DefinedCOMDAT(COFFObjectFile *F, COFFSymbolRef S, SectionChunk *C)
-      : Defined(DefinedCOMDATKind), COFFFile(F), Sym(S), Data(C) {}
-
-  static bool classof(const SymbolBody *S) {
-    return S->kind() == DefinedCOMDATKind;
-  }
-
   uint64_t getFileOff() override {
-    return Data->repl()->getFileOff() + Sym.getValue();
+    return (*Data)->getFileOff() + Sym.getValue();
   }
 
   StringRef getName() override;
-  uint64_t getRVA() override { return Data->repl()->getRVA() + Sym.getValue(); }
+  uint64_t getRVA() override { return (*Data)->getRVA() + Sym.getValue(); }
   bool isExternal() override { return Sym.isExternal(); }
   int compare(SymbolBody *Other) override;
-  void markLive() { Data->repl()->markLive(); }
-  Chunk *getChunk() { return Data->repl(); }
+  bool isCOMDAT() { return IsCOMDAT; }
+  void markLive() { (*Data)->markLive(); }
+  Chunk *getChunk() { return *Data; }
 
 private:
   StringRef Name;
   COFFObjectFile *COFFFile;
   COFFSymbolRef Sym;
-  SectionChunk *Data;
+  SectionChunk **Data;
+  bool IsCOMDAT;
 };
 
 class DefinedCommon : public Defined {

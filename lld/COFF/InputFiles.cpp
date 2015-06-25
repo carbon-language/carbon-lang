@@ -215,10 +215,8 @@ SymbolBody *ObjectFile::createSymbolBody(COFFSymbolRef Sym, const void *AuxP,
   }
   Chunk *C = SparseChunks[Sym.getSectionNumber()];
   if (auto *SC = cast_or_null<SectionChunk>(C)) {
-    if (!SC->isCOMDAT())
-      return new (Alloc) DefinedRegular(COFFObj.get(), Sym, SC);
-    auto *B = new (Alloc) DefinedCOMDAT(COFFObj.get(), Sym, SC);
-    if (Sym.getValue() == 0 && !AuxP)
+    auto *B = new (Alloc) DefinedRegular(COFFObj.get(), Sym, SC);
+    if (SC->isCOMDAT() && Sym.getValue() == 0 && !AuxP)
       SC->setSymbol(B);
     return B;
   }

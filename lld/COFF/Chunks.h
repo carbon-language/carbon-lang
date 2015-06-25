@@ -28,7 +28,7 @@ using llvm::object::coff_section;
 using llvm::sys::fs::file_magic;
 
 class Defined;
-class DefinedCOMDAT;
+class DefinedRegular;
 class DefinedImportData;
 class ObjectFile;
 class OutputSection;
@@ -125,7 +125,7 @@ public:
   void addAssociative(SectionChunk *Child);
 
   StringRef getDebugName() override;
-  void setSymbol(DefinedCOMDAT *S) { if (!Sym) Sym = S; }
+  void setSymbol(DefinedRegular *S) { if (!Sym) Sym = S; }
 
   // Used by the garbage collector.
   bool isRoot() { return Root; }
@@ -133,22 +133,21 @@ public:
   void markLive() { if (!Live) mark(); }
 
   // Used for ICF (Identical COMDAT Folding)
-  SectionChunk *repl();
   void replaceWith(SectionChunk *Other);
   uint64_t getHash() const;
   bool equals(const SectionChunk *Other) const;
-
-private:
-  ArrayRef<uint8_t> getContents() const;
-
-  // A file this chunk was created from.
-  ObjectFile *File;
 
   // A pointer pointing to a replacement for this chunk.
   // Initially it points to "this" object. If this chunk is merged
   // with other chunk by ICF, it points to another chunk,
   // and this chunk is considrered as dead.
   SectionChunk *Ptr;
+
+private:
+  ArrayRef<uint8_t> getContents() const;
+
+  // A file this chunk was created from.
+  ObjectFile *File;
 
   const coff_section *Header;
   StringRef SectionName;
@@ -163,7 +162,7 @@ private:
 
   // Chunks are basically unnamed chunks of bytes.
   // Symbols are associated for debugging and logging purposs only.
-  DefinedCOMDAT *Sym = nullptr;
+  DefinedRegular *Sym = nullptr;
 };
 
 // A chunk for common symbols. Common chunks don't have actual data.

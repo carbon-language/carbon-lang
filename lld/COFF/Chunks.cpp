@@ -28,7 +28,7 @@ namespace lld {
 namespace coff {
 
 SectionChunk::SectionChunk(ObjectFile *F, const coff_section *H)
-    : Chunk(SectionKind), File(F), Ptr(this), Header(H),
+    : Chunk(SectionKind), Ptr(this), File(F), Header(H),
       Relocs(File->getCOFFObj()->getRelocations(Header)),
       NumRelocs(std::distance(Relocs.begin(), Relocs.end())) {
   // Initialize SectionName.
@@ -86,11 +86,8 @@ void SectionChunk::mark() {
   // Mark all symbols listed in the relocation table for this section.
   for (const coff_relocation &Rel : Relocs) {
     SymbolBody *B = File->getSymbolBody(Rel.SymbolTableIndex);
-    if (auto *D = dyn_cast<DefinedRegular>(B)) {
+    if (auto *D = dyn_cast<DefinedRegular>(B))
       D->markLive();
-    } else if (auto *D = dyn_cast<DefinedCOMDAT>(B)) {
-      D->markLive();
-    }
   }
 
   // Mark associative sections if any.
@@ -184,10 +181,10 @@ bool SectionChunk::equals(const SectionChunk *X) const {
       return false;
     SymbolBody *B1 = File->getSymbolBody(R1.SymbolTableIndex);
     SymbolBody *B2 = X->File->getSymbolBody(R2.SymbolTableIndex);
-    if (auto *C1 = dyn_cast<DefinedCOMDAT>(B1))
-      if (auto *C2 = dyn_cast<DefinedCOMDAT>(B2))
-        if (C1->getChunk() == C2->getChunk())
-          return true;
+    auto *D1 = dyn_cast<DefinedRegular>(B1);
+    auto *D2 = dyn_cast<DefinedRegular>(B2);
+    if (D1 && D2 && D1->getChunk() == D2->getChunk())
+      return true;
     return B1 == B2;
   };
   return std::equal(Relocs.begin(), Relocs.end(), X->Relocs.begin(), Eq);
@@ -199,15 +196,8 @@ ArrayRef<uint8_t> SectionChunk::getContents() const {
   return A;
 }
 
-// Returns a pointer to this chunk or its replacement.
-SectionChunk *SectionChunk::repl() {
-  while (Ptr != Ptr->Ptr)
-    Ptr = Ptr->Ptr;
-  return Ptr;
-}
-
 void SectionChunk::replaceWith(SectionChunk *Other) {
-  Ptr = Other;
+  Ptr = Other->Ptr;
   Live = false;
 }
 
