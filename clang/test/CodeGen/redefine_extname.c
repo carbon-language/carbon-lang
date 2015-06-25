@@ -13,3 +13,14 @@ int fish() { return fake() + __PRAGMA_REDEFINE_EXTNAME + name; }
 // CHECK:   call i32 @real()
 // Check that this also works with variables names
 // CHECK:   load i32, i32* @alias
+
+// This is a case when redefenition is deferred *and* we have a local of the
+// same name. PR23923.
+#pragma redefine_extname foo bar
+int f() {
+  int foo = 0;
+  return foo;
+}
+extern int foo() { return 1; }
+// CHECK: define i32 @bar()
+

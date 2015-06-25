@@ -5525,6 +5525,19 @@ bool Sema::adjustContextForLocalExternDecl(DeclContext *&DC) {
   return true;
 }
 
+/// \brief Returns true if given declaration is TU-scoped and externally
+/// visible.
+static bool isDeclTUScopedExternallyVisible(const Decl *D) {
+  if (auto *FD = dyn_cast<FunctionDecl>(D))
+    return (FD->getDeclContext()->isTranslationUnit() || FD->isExternC()) &&
+           FD->hasExternalFormalLinkage();
+  else if (auto *VD = dyn_cast<VarDecl>(D))
+    return (VD->getDeclContext()->isTranslationUnit() || VD->isExternC()) &&
+           VD->hasExternalFormalLinkage();
+
+  llvm_unreachable("Unknown type of decl!");
+}
+
 NamedDecl *
 Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
                               TypeSourceInfo *TInfo, LookupResult &Previous,
@@ -5949,7 +5962,8 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
 
     NewVD->addAttr(::new (Context) AsmLabelAttr(SE->getStrTokenLoc(0),
                                                 Context, Label, 0));
-  } else if (!ExtnameUndeclaredIdentifiers.empty()) {
+  } else if (!ExtnameUndeclaredIdentifiers.empty() &&
+             isDeclTUScopedExternallyVisible(NewVD)) {
     llvm::DenseMap<IdentifierInfo*,AsmLabelAttr*>::iterator I =
       ExtnameUndeclaredIdentifiers.find(NewVD->getIdentifier());
     if (I != ExtnameUndeclaredIdentifiers.end()) {
@@ -7471,7 +7485,8 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
     StringLiteral *SE = cast<StringLiteral>(E);
     NewFD->addAttr(::new (Context) AsmLabelAttr(SE->getStrTokenLoc(0), Context,
                                                 SE->getString(), 0));
-  } else if (!ExtnameUndeclaredIdentifiers.empty()) {
+  } else if (!ExtnameUndeclaredIdentifiers.empty() &&
+             isDeclTUScopedExternallyVisible(NewFD)) {
     llvm::DenseMap<IdentifierInfo*,AsmLabelAttr*>::iterator I =
       ExtnameUndeclaredIdentifiers.find(NewFD->getIdentifier());
     if (I != ExtnameUndeclaredIdentifiers.end()) {
