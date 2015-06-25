@@ -1067,13 +1067,13 @@ void Darwin::CheckObjCARC() const {
 
 SanitizerMask Darwin::getSupportedSanitizers() const {
   SanitizerMask Res = ToolChain::getSupportedSanitizers();
-  if (isTargetMacOS() || isTargetIOSSimulator()) {
-    // ASan and UBSan are available on Mac OS and on iOS simulator.
+  if (isTargetMacOS() || isTargetIOSSimulator())
     Res |= SanitizerKind::Address;
-    Res |= SanitizerKind::Vptr;
-  }
-  if (isTargetMacOS())
+  if (isTargetMacOS()) {
+    if (!isMacosxVersionLT(10, 9))
+      Res |= SanitizerKind::Vptr;
     Res |= SanitizerKind::SafeStack;
+  }
   return Res;
 }
 
