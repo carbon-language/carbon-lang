@@ -68,7 +68,6 @@ class CrashingRecursiveInferiorTestCase(TestBase):
         self.recursive_inferior_crashing_step_after_break()
 
     @skipIfFreeBSD # llvm.org/pr16684
-    @expectedFailureAndroid("llvm.org/pr23694")
     def test_recursive_inferior_crashing_step_after_break_dwarf(self):
         """Test that lldb functions correctly after stepping through a crash."""
         self.buildDwarf()
@@ -212,6 +211,9 @@ class CrashingRecursiveInferiorTestCase(TestBase):
         expected_state = 'exited' # Provide the exit code.
         if self.platformIsDarwin():
             expected_state = 'stopped' # TODO: Determine why 'next' and 'continue' have no effect after a crash.
+        elif re.match(".*-.*-.*-android", self.dbg.GetSelectedPlatform().GetTriple()):
+            expected_state = 'stopped' # android has a default SEGV handler, which will re-raise the signal, so we come up stopped again
+
 
         self.expect("next",
             substrs = ['Process', expected_state])
