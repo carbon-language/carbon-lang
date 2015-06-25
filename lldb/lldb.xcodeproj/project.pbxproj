@@ -96,37 +96,16 @@
 		255EFF761AFABA950069F277 /* LockFilePosix.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 255EFF751AFABA950069F277 /* LockFilePosix.cpp */; };
 		256CBDB11ADD0E1700BC6CDC /* NativeRegisterContextLinux_arm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 256CBDAB1ADD0DB600BC6CDC /* NativeRegisterContextLinux_arm.cpp */; };
 		256CBDB41ADD0EFD00BC6CDC /* RegisterContextPOSIXCore_arm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 256CBDB21ADD0EFD00BC6CDC /* RegisterContextPOSIXCore_arm.cpp */; };
-		256CBDB51ADD0EFD00BC6CDC /* RegisterContextPOSIXCore_arm.h in Headers */ = {isa = PBXBuildFile; fileRef = 256CBDB31ADD0EFD00BC6CDC /* RegisterContextPOSIXCore_arm.h */; };
 		256CBDBA1ADD107200BC6CDC /* RegisterContextLinux_arm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 256CBDB61ADD107200BC6CDC /* RegisterContextLinux_arm.cpp */; };
-		256CBDBB1ADD107200BC6CDC /* RegisterContextLinux_arm.h in Headers */ = {isa = PBXBuildFile; fileRef = 256CBDB71ADD107200BC6CDC /* RegisterContextLinux_arm.h */; };
 		256CBDBC1ADD107200BC6CDC /* RegisterContextLinux_mips64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 256CBDB81ADD107200BC6CDC /* RegisterContextLinux_mips64.cpp */; };
-		256CBDBD1ADD107200BC6CDC /* RegisterContextLinux_mips64.h in Headers */ = {isa = PBXBuildFile; fileRef = 256CBDB91ADD107200BC6CDC /* RegisterContextLinux_mips64.h */; };
 		256CBDC01ADD11C000BC6CDC /* RegisterContextPOSIX_arm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 256CBDBE1ADD11C000BC6CDC /* RegisterContextPOSIX_arm.cpp */; };
-		256CBDC11ADD11C000BC6CDC /* RegisterContextPOSIX_arm.h in Headers */ = {isa = PBXBuildFile; fileRef = 256CBDBF1ADD11C000BC6CDC /* RegisterContextPOSIX_arm.h */; };
 		257E47171AA56C2000A62F81 /* ModuleCache.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 257E47151AA56C2000A62F81 /* ModuleCache.cpp */; };
-		257E47181AA56C2000A62F81 /* ModuleCache.h in Headers */ = {isa = PBXBuildFile; fileRef = 257E47161AA56C2000A62F81 /* ModuleCache.h */; };
 		25EF23781AC09B3700908DF0 /* AdbClient.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 25EF23751AC09AD800908DF0 /* AdbClient.cpp */; };
-		25EF23791AC09B4200908DF0 /* AdbClient.h in Headers */ = {isa = PBXBuildFile; fileRef = 25EF23761AC09AD800908DF0 /* AdbClient.h */; };
 		260157C61885F51C00F875CF /* libpanel.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 260157C41885F4FF00F875CF /* libpanel.dylib */; };
 		260157C81885F53100F875CF /* libpanel.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 260157C41885F4FF00F875CF /* libpanel.dylib */; };
 		2606EDDF184E68A10034641B /* liblldb-core.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2689FFCA13353D7A00698AC0 /* liblldb-core.a */; };
-		260A248E15D06C50009981B0 /* OptionValues.h in Headers */ = {isa = PBXBuildFile; fileRef = 260A248D15D06C4F009981B0 /* OptionValues.h */; };
-		260A39A619647A3A004B4130 /* Pipe.h in Headers */ = {isa = PBXBuildFile; fileRef = 260A39A519647A3A004B4130 /* Pipe.h */; };
 		260A63171861008E00FECF8E /* IOHandler.h in Headers */ = {isa = PBXBuildFile; fileRef = 260A63161861008E00FECF8E /* IOHandler.h */; };
 		260A63191861009E00FECF8E /* IOHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260A63181861009E00FECF8E /* IOHandler.cpp */; };
-		260CC62E15D04377002BF2E0 /* OptionValueArgs.h in Headers */ = {isa = PBXBuildFile; fileRef = 260CC62115D04377002BF2E0 /* OptionValueArgs.h */; };
-		260CC62F15D04377002BF2E0 /* OptionValueArray.h in Headers */ = {isa = PBXBuildFile; fileRef = 260CC62215D04377002BF2E0 /* OptionValueArray.h */; };
-		260CC63015D04377002BF2E0 /* OptionValueBoolean.h in Headers */ = {isa = PBXBuildFile; fileRef = 260CC62315D04377002BF2E0 /* OptionValueBoolean.h */; };
-		260CC63115D04377002BF2E0 /* OptionValueProperties.h in Headers */ = {isa = PBXBuildFile; fileRef = 260CC62415D04377002BF2E0 /* OptionValueProperties.h */; };
-		260CC63215D04377002BF2E0 /* OptionValueDictionary.h in Headers */ = {isa = PBXBuildFile; fileRef = 260CC62515D04377002BF2E0 /* OptionValueDictionary.h */; };
-		260CC63315D04377002BF2E0 /* OptionValueEnumeration.h in Headers */ = {isa = PBXBuildFile; fileRef = 260CC62615D04377002BF2E0 /* OptionValueEnumeration.h */; };
-		260CC63415D04377002BF2E0 /* OptionValueFileSpec.h in Headers */ = {isa = PBXBuildFile; fileRef = 260CC62715D04377002BF2E0 /* OptionValueFileSpec.h */; };
-		260CC63515D04377002BF2E0 /* OptionValueFileSpecList.h in Headers */ = {isa = PBXBuildFile; fileRef = 260CC62815D04377002BF2E0 /* OptionValueFileSpecList.h */; };
-		260CC63615D04377002BF2E0 /* OptionValueFormat.h in Headers */ = {isa = PBXBuildFile; fileRef = 260CC62915D04377002BF2E0 /* OptionValueFormat.h */; };
-		260CC63715D04377002BF2E0 /* OptionValueSInt64.h in Headers */ = {isa = PBXBuildFile; fileRef = 260CC62A15D04377002BF2E0 /* OptionValueSInt64.h */; };
-		260CC63815D04377002BF2E0 /* OptionValueString.h in Headers */ = {isa = PBXBuildFile; fileRef = 260CC62B15D04377002BF2E0 /* OptionValueString.h */; };
-		260CC63915D04377002BF2E0 /* OptionValueUInt64.h in Headers */ = {isa = PBXBuildFile; fileRef = 260CC62C15D04377002BF2E0 /* OptionValueUInt64.h */; };
-		260CC63A15D04377002BF2E0 /* OptionValueUUID.h in Headers */ = {isa = PBXBuildFile; fileRef = 260CC62D15D04377002BF2E0 /* OptionValueUUID.h */; };
 		260CC64815D0440D002BF2E0 /* OptionValueArgs.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260CC63B15D0440D002BF2E0 /* OptionValueArgs.cpp */; };
 		260CC64915D0440D002BF2E0 /* OptionValueArray.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260CC63C15D0440D002BF2E0 /* OptionValueArray.cpp */; };
 		260CC64A15D0440D002BF2E0 /* OptionValueBoolean.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260CC63D15D0440D002BF2E0 /* OptionValueBoolean.cpp */; };
@@ -140,24 +119,20 @@
 		260CC65215D0440D002BF2E0 /* OptionValueString.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260CC64515D0440D002BF2E0 /* OptionValueString.cpp */; };
 		260CC65315D0440D002BF2E0 /* OptionValueUInt64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260CC64615D0440D002BF2E0 /* OptionValueUInt64.cpp */; };
 		260CC65415D0440D002BF2E0 /* OptionValueUUID.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260CC64715D0440D002BF2E0 /* OptionValueUUID.cpp */; };
-		260D9B2715EC369500960137 /* ModuleSpec.h in Headers */ = {isa = PBXBuildFile; fileRef = 260D9B2615EC369500960137 /* ModuleSpec.h */; };
 		260E07C6136FA69E00CF21D3 /* OptionGroupUUID.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260E07C5136FA69E00CF21D3 /* OptionGroupUUID.cpp */; };
 		260E07C8136FAB9200CF21D3 /* OptionGroupFile.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260E07C7136FAB9200CF21D3 /* OptionGroupFile.cpp */; };
 		2613F6C81B17B82F00D4DB85 /* CxaDemangle.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2613F6C71B17B82F00D4DB85 /* CxaDemangle.cpp */; };
 		261744781168585B005ADD65 /* SBType.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 261744771168585B005ADD65 /* SBType.cpp */; };
 		2617447A11685869005ADD65 /* SBType.h in Headers */ = {isa = PBXBuildFile; fileRef = 2617447911685869005ADD65 /* SBType.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		262173A118395D3800C52091 /* SectionLoadHistory.h in Headers */ = {isa = PBXBuildFile; fileRef = 262173A018395D3800C52091 /* SectionLoadHistory.h */; };
 		262173A318395D4600C52091 /* SectionLoadHistory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 262173A218395D4600C52091 /* SectionLoadHistory.cpp */; };
 		26274FA714030F79006BA130 /* DynamicLoaderDarwinKernel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26274FA514030F79006BA130 /* DynamicLoaderDarwinKernel.cpp */; };
 		2628A4D513D4977900F5487A /* ThreadKDP.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2628A4D313D4977900F5487A /* ThreadKDP.cpp */; };
 		262CFC7711A4510000946C6C /* debugserver in Resources */ = {isa = PBXBuildFile; fileRef = 26CE05A0115C31E50022F371 /* debugserver */; };
-		262ED0051631FA2800879631 /* OptionGroupString.h in Headers */ = {isa = PBXBuildFile; fileRef = 262ED0041631FA2800879631 /* OptionGroupString.h */; };
 		262ED0081631FA3A00879631 /* OptionGroupString.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 262ED0071631FA3A00879631 /* OptionGroupString.cpp */; };
 		262F12B51835468600AEB384 /* SBPlatform.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 262F12B41835468600AEB384 /* SBPlatform.cpp */; };
 		262F12B71835469C00AEB384 /* SBPlatform.h in Headers */ = {isa = PBXBuildFile; fileRef = 262F12B61835469C00AEB384 /* SBPlatform.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		2635879417822FC2004C30BA /* SymbolVendorELF.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2635879017822E56004C30BA /* SymbolVendorELF.cpp */; };
 		263641191B34AEE200145B2F /* ABISysV_mips64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 263641151B34AEE200145B2F /* ABISysV_mips64.cpp */; };
-		2636411A1B34AEE200145B2F /* ABISysV_mips64.h in Headers */ = {isa = PBXBuildFile; fileRef = 263641161B34AEE200145B2F /* ABISysV_mips64.h */; };
 		26368A3C126B697600E8659F /* darwin-debug.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26368A3B126B697600E8659F /* darwin-debug.cpp */; };
 		26368AF7126B960500E8659F /* darwin-debug in Resources */ = {isa = PBXBuildFile; fileRef = 26579F68126A25920007C5CB /* darwin-debug */; };
 		263C4938178B50C40070F12D /* SBModuleSpec.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 263C4937178B50C40070F12D /* SBModuleSpec.cpp */; };
@@ -168,39 +143,20 @@
 		2642FBAE13D003B400ED6808 /* CommunicationKDP.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2642FBA813D003B400ED6808 /* CommunicationKDP.cpp */; };
 		2642FBB013D003B400ED6808 /* ProcessKDP.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2642FBAA13D003B400ED6808 /* ProcessKDP.cpp */; };
 		2642FBB213D003B400ED6808 /* ProcessKDPLog.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2642FBAC13D003B400ED6808 /* ProcessKDPLog.cpp */; };
-		26474CA018D0CAEC0073DEBA /* RegisterContext_mips64.h in Headers */ = {isa = PBXBuildFile; fileRef = 26474C9E18D0CAEC0073DEBA /* RegisterContext_mips64.h */; };
-		26474CA118D0CAEC0073DEBA /* RegisterContext_x86.h in Headers */ = {isa = PBXBuildFile; fileRef = 26474C9F18D0CAEC0073DEBA /* RegisterContext_x86.h */; };
 		26474CA818D0CB070073DEBA /* RegisterContextFreeBSD_i386.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26474CA218D0CB070073DEBA /* RegisterContextFreeBSD_i386.cpp */; };
-		26474CA918D0CB070073DEBA /* RegisterContextFreeBSD_i386.h in Headers */ = {isa = PBXBuildFile; fileRef = 26474CA318D0CB070073DEBA /* RegisterContextFreeBSD_i386.h */; };
 		26474CAA18D0CB070073DEBA /* RegisterContextFreeBSD_mips64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26474CA418D0CB070073DEBA /* RegisterContextFreeBSD_mips64.cpp */; };
-		26474CAB18D0CB070073DEBA /* RegisterContextFreeBSD_mips64.h in Headers */ = {isa = PBXBuildFile; fileRef = 26474CA518D0CB070073DEBA /* RegisterContextFreeBSD_mips64.h */; };
 		26474CAC18D0CB070073DEBA /* RegisterContextFreeBSD_x86_64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26474CA618D0CB070073DEBA /* RegisterContextFreeBSD_x86_64.cpp */; };
-		26474CAD18D0CB070073DEBA /* RegisterContextFreeBSD_x86_64.h in Headers */ = {isa = PBXBuildFile; fileRef = 26474CA718D0CB070073DEBA /* RegisterContextFreeBSD_x86_64.h */; };
 		26474CB218D0CB180073DEBA /* RegisterContextLinux_i386.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26474CAE18D0CB180073DEBA /* RegisterContextLinux_i386.cpp */; };
-		26474CB318D0CB180073DEBA /* RegisterContextLinux_i386.h in Headers */ = {isa = PBXBuildFile; fileRef = 26474CAF18D0CB180073DEBA /* RegisterContextLinux_i386.h */; };
 		26474CB418D0CB180073DEBA /* RegisterContextLinux_x86_64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26474CB018D0CB180073DEBA /* RegisterContextLinux_x86_64.cpp */; };
-		26474CB518D0CB180073DEBA /* RegisterContextLinux_x86_64.h in Headers */ = {isa = PBXBuildFile; fileRef = 26474CB118D0CB180073DEBA /* RegisterContextLinux_x86_64.h */; };
 		26474CBC18D0CB2D0073DEBA /* RegisterContextMach_arm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26474CB618D0CB2D0073DEBA /* RegisterContextMach_arm.cpp */; };
-		26474CBD18D0CB2D0073DEBA /* RegisterContextMach_arm.h in Headers */ = {isa = PBXBuildFile; fileRef = 26474CB718D0CB2D0073DEBA /* RegisterContextMach_arm.h */; };
 		26474CBE18D0CB2D0073DEBA /* RegisterContextMach_i386.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26474CB818D0CB2D0073DEBA /* RegisterContextMach_i386.cpp */; };
-		26474CBF18D0CB2D0073DEBA /* RegisterContextMach_i386.h in Headers */ = {isa = PBXBuildFile; fileRef = 26474CB918D0CB2D0073DEBA /* RegisterContextMach_i386.h */; };
 		26474CC018D0CB2D0073DEBA /* RegisterContextMach_x86_64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26474CBA18D0CB2D0073DEBA /* RegisterContextMach_x86_64.cpp */; };
-		26474CC118D0CB2D0073DEBA /* RegisterContextMach_x86_64.h in Headers */ = {isa = PBXBuildFile; fileRef = 26474CBB18D0CB2D0073DEBA /* RegisterContextMach_x86_64.h */; };
 		26474CC918D0CB5B0073DEBA /* RegisterContextMemory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26474CC218D0CB5B0073DEBA /* RegisterContextMemory.cpp */; };
-		26474CCA18D0CB5B0073DEBA /* RegisterContextMemory.h in Headers */ = {isa = PBXBuildFile; fileRef = 26474CC318D0CB5B0073DEBA /* RegisterContextMemory.h */; };
 		26474CCB18D0CB5B0073DEBA /* RegisterContextPOSIX_mips64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26474CC418D0CB5B0073DEBA /* RegisterContextPOSIX_mips64.cpp */; };
-		26474CCC18D0CB5B0073DEBA /* RegisterContextPOSIX_mips64.h in Headers */ = {isa = PBXBuildFile; fileRef = 26474CC518D0CB5B0073DEBA /* RegisterContextPOSIX_mips64.h */; };
 		26474CCD18D0CB5B0073DEBA /* RegisterContextPOSIX_x86.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26474CC618D0CB5B0073DEBA /* RegisterContextPOSIX_x86.cpp */; };
-		26474CCE18D0CB5B0073DEBA /* RegisterContextPOSIX_x86.h in Headers */ = {isa = PBXBuildFile; fileRef = 26474CC718D0CB5B0073DEBA /* RegisterContextPOSIX_x86.h */; };
-		26474CCF18D0CB5B0073DEBA /* RegisterContextPOSIX.h in Headers */ = {isa = PBXBuildFile; fileRef = 26474CC818D0CB5B0073DEBA /* RegisterContextPOSIX.h */; };
-		26474CD318D0CB710073DEBA /* RegisterInfos_i386.h in Headers */ = {isa = PBXBuildFile; fileRef = 26474CD018D0CB700073DEBA /* RegisterInfos_i386.h */; };
-		26474CD418D0CB710073DEBA /* RegisterInfos_mips64.h in Headers */ = {isa = PBXBuildFile; fileRef = 26474CD118D0CB710073DEBA /* RegisterInfos_mips64.h */; };
-		26474CD518D0CB710073DEBA /* RegisterInfos_x86_64.h in Headers */ = {isa = PBXBuildFile; fileRef = 26474CD218D0CB710073DEBA /* RegisterInfos_x86_64.h */; };
-		26491E3B15E1DB8600CBFFC2 /* OptionValueRegex.h in Headers */ = {isa = PBXBuildFile; fileRef = 26491E3A15E1DB8600CBFFC2 /* OptionValueRegex.h */; };
 		26491E3E15E1DB9F00CBFFC2 /* OptionValueRegex.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26491E3D15E1DB9F00CBFFC2 /* OptionValueRegex.cpp */; };
 		264A12FC1372522000875C42 /* EmulateInstructionARM64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 264A12FA1372522000875C42 /* EmulateInstructionARM64.cpp */; };
 		264A1300137252C700875C42 /* ARM64_DWARF_Registers.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 264A12FE137252C700875C42 /* ARM64_DWARF_Registers.cpp */; };
-		264A58EC1A7DBC8C00A6B1B0 /* OptionValueFormatEntity.h in Headers */ = {isa = PBXBuildFile; fileRef = 264A58EB1A7DBC8C00A6B1B0 /* OptionValueFormatEntity.h */; };
 		264A58EE1A7DBCAD00A6B1B0 /* OptionValueFormatEntity.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 264A58ED1A7DBCAD00A6B1B0 /* OptionValueFormatEntity.cpp */; };
 		264A97BF133918BC0017F0BE /* PlatformRemoteGDBServer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 264A97BD133918BC0017F0BE /* PlatformRemoteGDBServer.cpp */; };
 		264D8D5013661BD7003A368F /* UnwindAssembly.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 264D8D4F13661BD7003A368F /* UnwindAssembly.cpp */; };
@@ -214,6 +170,8 @@
 		2660AAB914622483003A9694 /* LLDBWrapPython.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26A4EEB511682AAC007A372A /* LLDBWrapPython.cpp */; settings = {COMPILER_FLAGS = "-Dregister="; }; };
 		26651A18133BF9E0005B64B7 /* Opcode.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26651A17133BF9DF005B64B7 /* Opcode.cpp */; };
 		266603CA1345B5A8004DA8B6 /* ConnectionSharedMemory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266603C91345B5A8004DA8B6 /* ConnectionSharedMemory.cpp */; };
+		2666ADC61B3CB675001FAFD3 /* DynamicLoaderHexagonDYLD.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2666ADC11B3CB675001FAFD3 /* DynamicLoaderHexagonDYLD.cpp */; };
+		2666ADC81B3CB675001FAFD3 /* HexagonDYLDRendezvous.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2666ADC31B3CB675001FAFD3 /* HexagonDYLDRendezvous.cpp */; };
 		2668020E115FD12C008E1FE4 /* lldb-defines.h in Headers */ = {isa = PBXBuildFile; fileRef = 26BC7C2510F1B3BC00F91463 /* lldb-defines.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		2668020F115FD12C008E1FE4 /* lldb-enumerations.h in Headers */ = {isa = PBXBuildFile; fileRef = 26BC7C2610F1B3BC00F91463 /* lldb-enumerations.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		26680214115FD12C008E1FE4 /* lldb-types.h in Headers */ = {isa = PBXBuildFile; fileRef = 26BC7C2910F1B3BC00F91463 /* lldb-types.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -592,78 +550,51 @@
 		2690B3711381D5C300ECFBAE /* Memory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2690B3701381D5C300ECFBAE /* Memory.cpp */; };
 		2692BA15136610C100F9E14D /* UnwindAssemblyInstEmulation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2692BA13136610C100F9E14D /* UnwindAssemblyInstEmulation.cpp */; };
 		2694E99D14FC0BB30076DE67 /* PlatformFreeBSD.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2694E99A14FC0BB30076DE67 /* PlatformFreeBSD.cpp */; };
-		2694E99E14FC0BB30076DE67 /* PlatformFreeBSD.h in Headers */ = {isa = PBXBuildFile; fileRef = 2694E99B14FC0BB30076DE67 /* PlatformFreeBSD.h */; };
 		2694E9A414FC0BBD0076DE67 /* PlatformLinux.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2694E9A114FC0BBD0076DE67 /* PlatformLinux.cpp */; };
-		2694E9A514FC0BBD0076DE67 /* PlatformLinux.h in Headers */ = {isa = PBXBuildFile; fileRef = 2694E9A214FC0BBD0076DE67 /* PlatformLinux.h */; };
 		26954EBE1401EE8B00294D09 /* DynamicRegisterInfo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26954EBC1401EE8B00294D09 /* DynamicRegisterInfo.cpp */; };
 		26957D9813D381C900670048 /* RegisterContextDarwin_arm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26957D9213D381C900670048 /* RegisterContextDarwin_arm.cpp */; };
 		26957D9A13D381C900670048 /* RegisterContextDarwin_i386.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26957D9413D381C900670048 /* RegisterContextDarwin_i386.cpp */; };
 		26957D9C13D381C900670048 /* RegisterContextDarwin_x86_64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26957D9613D381C900670048 /* RegisterContextDarwin_x86_64.cpp */; };
 		2697A39315E404B1003E682C /* OptionValueArch.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2697A39215E404B1003E682C /* OptionValueArch.cpp */; };
-		2697A39515E404BA003E682C /* OptionValueArch.h in Headers */ = {isa = PBXBuildFile; fileRef = 2697A39415E404BA003E682C /* OptionValueArch.h */; };
 		2697A54D133A6305004E4240 /* PlatformDarwin.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2697A54B133A6305004E4240 /* PlatformDarwin.cpp */; };
 		2698699B15E6CBD0002415FF /* OperatingSystemPython.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2698699815E6CBD0002415FF /* OperatingSystemPython.cpp */; };
-		2698699D15E6CBD0002415FF /* OperatingSystemPython.h in Headers */ = {isa = PBXBuildFile; fileRef = 2698699915E6CBD0002415FF /* OperatingSystemPython.h */; };
 		26A527C114E24F5F00F3A14A /* ProcessMachCore.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26A527BD14E24F5F00F3A14A /* ProcessMachCore.cpp */; };
-		26A527C214E24F5F00F3A14A /* ProcessMachCore.h in Headers */ = {isa = PBXBuildFile; fileRef = 26A527BE14E24F5F00F3A14A /* ProcessMachCore.h */; };
 		26A527C314E24F5F00F3A14A /* ThreadMachCore.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26A527BF14E24F5F00F3A14A /* ThreadMachCore.cpp */; };
-		26A527C414E24F5F00F3A14A /* ThreadMachCore.h in Headers */ = {isa = PBXBuildFile; fileRef = 26A527C014E24F5F00F3A14A /* ThreadMachCore.h */; };
 		26A69C5F137A17A500262477 /* RegisterValue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26C6886E137880C400407EDF /* RegisterValue.cpp */; };
 		26A7A035135E6E4200FB369E /* OptionValue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26A7A034135E6E4200FB369E /* OptionValue.cpp */; };
-		26AB54121832DC3400EADFF3 /* RegisterCheckpoint.h in Headers */ = {isa = PBXBuildFile; fileRef = 26AB54111832DC3400EADFF3 /* RegisterCheckpoint.h */; };
 		26AB92121819D74600E63F3E /* DWARFDataExtractor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26AB92101819D74600E63F3E /* DWARFDataExtractor.cpp */; };
-		26AB92131819D74600E63F3E /* DWARFDataExtractor.h in Headers */ = {isa = PBXBuildFile; fileRef = 26AB92111819D74600E63F3E /* DWARFDataExtractor.h */; };
-		26ACEC2815E077AE00E94760 /* Property.h in Headers */ = {isa = PBXBuildFile; fileRef = 26ACEC2715E077AE00E94760 /* Property.h */; };
 		26B1EFAE154638AF00E2DAC7 /* DWARFDeclContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26B1EFAC154638AF00E2DAC7 /* DWARFDeclContext.cpp */; };
-		26B1EFAF154638AF00E2DAC7 /* DWARFDeclContext.h in Headers */ = {isa = PBXBuildFile; fileRef = 26B1EFAD154638AF00E2DAC7 /* DWARFDeclContext.h */; };
 		26B1FCC21338115F002886E2 /* Host.mm in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7EE810F1B88F00F91463 /* Host.mm */; };
 		26B42C4D1187ABA50079C8C8 /* LLDB.h in Headers */ = {isa = PBXBuildFile; fileRef = 26B42C4C1187ABA50079C8C8 /* LLDB.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		26B7564E14F89356008D9CB3 /* PlatformiOSSimulator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26B7564C14F89356008D9CB3 /* PlatformiOSSimulator.cpp */; };
-		26B7564F14F89356008D9CB3 /* PlatformiOSSimulator.h in Headers */ = {isa = PBXBuildFile; fileRef = 26B7564D14F89356008D9CB3 /* PlatformiOSSimulator.h */; };
 		26B75B441AD6E29A001F7A57 /* MipsLinuxSignals.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26B75B421AD6E29A001F7A57 /* MipsLinuxSignals.cpp */; };
-		26B75B451AD6E29A001F7A57 /* MipsLinuxSignals.h in Headers */ = {isa = PBXBuildFile; fileRef = 26B75B431AD6E29A001F7A57 /* MipsLinuxSignals.h */; };
 		26B8283D142D01E9002DBC64 /* SBSection.h in Headers */ = {isa = PBXBuildFile; fileRef = 26B8283C142D01E9002DBC64 /* SBSection.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		26B82840142D020F002DBC64 /* SBSection.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26B8283F142D020F002DBC64 /* SBSection.cpp */; };
 		26BC179918C7F2B300D2196D /* JITLoader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC179718C7F2B300D2196D /* JITLoader.cpp */; };
 		26BC179A18C7F2B300D2196D /* JITLoaderList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC179818C7F2B300D2196D /* JITLoaderList.cpp */; };
-		26BC179D18C7F2CB00D2196D /* JITLoader.h in Headers */ = {isa = PBXBuildFile; fileRef = 26BC179B18C7F2CB00D2196D /* JITLoader.h */; };
-		26BC179E18C7F2CB00D2196D /* JITLoaderList.h in Headers */ = {isa = PBXBuildFile; fileRef = 26BC179C18C7F2CB00D2196D /* JITLoaderList.h */; };
 		26BC17AB18C7F4CB00D2196D /* ProcessElfCore.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC17A218C7F4CB00D2196D /* ProcessElfCore.cpp */; };
-		26BC17AC18C7F4CB00D2196D /* ProcessElfCore.h in Headers */ = {isa = PBXBuildFile; fileRef = 26BC17A318C7F4CB00D2196D /* ProcessElfCore.h */; };
 		26BC17AD18C7F4CB00D2196D /* RegisterContextPOSIXCore_mips64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC17A418C7F4CB00D2196D /* RegisterContextPOSIXCore_mips64.cpp */; };
-		26BC17AE18C7F4CB00D2196D /* RegisterContextPOSIXCore_mips64.h in Headers */ = {isa = PBXBuildFile; fileRef = 26BC17A518C7F4CB00D2196D /* RegisterContextPOSIXCore_mips64.h */; };
 		26BC17AF18C7F4CB00D2196D /* RegisterContextPOSIXCore_x86_64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC17A618C7F4CB00D2196D /* RegisterContextPOSIXCore_x86_64.cpp */; };
-		26BC17B018C7F4CB00D2196D /* RegisterContextPOSIXCore_x86_64.h in Headers */ = {isa = PBXBuildFile; fileRef = 26BC17A718C7F4CB00D2196D /* RegisterContextPOSIXCore_x86_64.h */; };
 		26BC17B118C7F4CB00D2196D /* ThreadElfCore.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC17A818C7F4CB00D2196D /* ThreadElfCore.cpp */; };
-		26BC17B218C7F4CB00D2196D /* ThreadElfCore.h in Headers */ = {isa = PBXBuildFile; fileRef = 26BC17A918C7F4CB00D2196D /* ThreadElfCore.h */; };
 		26BCFC521368AE38006DC050 /* OptionGroupFormat.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BCFC511368AE38006DC050 /* OptionGroupFormat.cpp */; };
 		26BD407F135D2AE000237D80 /* FileLineResolver.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BD407E135D2ADF00237D80 /* FileLineResolver.cpp */; };
 		26BF51F31B3C754400016294 /* ABISysV_hexagon.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BF51EA1B3C754400016294 /* ABISysV_hexagon.cpp */; };
-		26BF51F41B3C754400016294 /* ABISysV_hexagon.h in Headers */ = {isa = PBXBuildFile; fileRef = 26BF51EB1B3C754400016294 /* ABISysV_hexagon.h */; };
 		26BF51F61B3C754400016294 /* ABISysV_i386.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BF51EF1B3C754400016294 /* ABISysV_i386.cpp */; };
-		26BF51F71B3C754400016294 /* ABISysV_i386.h in Headers */ = {isa = PBXBuildFile; fileRef = 26BF51F01B3C754400016294 /* ABISysV_i386.h */; };
 		26C72C94124322890068DC16 /* SBStream.h in Headers */ = {isa = PBXBuildFile; fileRef = 26C72C93124322890068DC16 /* SBStream.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		26C72C961243229A0068DC16 /* SBStream.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26C72C951243229A0068DC16 /* SBStream.cpp */; };
 		26CA97A1172B1FD5005DC71B /* RegisterContextThreadMemory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26CA979F172B1FD5005DC71B /* RegisterContextThreadMemory.cpp */; };
-		26CA97A2172B1FD5005DC71B /* RegisterContextThreadMemory.h in Headers */ = {isa = PBXBuildFile; fileRef = 26CA97A0172B1FD5005DC71B /* RegisterContextThreadMemory.h */; };
 		26CEB5EF18761CB2008F575A /* libedit.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 26F5C32A10F3DFDD009D5894 /* libedit.dylib */; };
 		26CEB5F218762056008F575A /* CommandObjectGUI.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26CEB5F018762056008F575A /* CommandObjectGUI.cpp */; };
-		26CEB5F318762056008F575A /* CommandObjectGUI.h in Headers */ = {isa = PBXBuildFile; fileRef = 26CEB5F118762056008F575A /* CommandObjectGUI.h */; };
-		26CFDCA11861638D000E63E5 /* Editline.h in Headers */ = {isa = PBXBuildFile; fileRef = 26CFDCA01861638D000E63E5 /* Editline.h */; };
 		26CFDCA3186163A4000E63E5 /* Editline.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26CFDCA2186163A4000E63E5 /* Editline.cpp */; };
 		26CFDCA818616473000E63E5 /* libedit.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 26F5C32A10F3DFDD009D5894 /* libedit.dylib */; };
 		26D1803E16CEBFD300EDFB5B /* KQueue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26D1803C16CEBFD300EDFB5B /* KQueue.cpp */; };
 		26D1804216CEDF0700EDFB5B /* TimeSpecTimeout.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26D1804016CEDF0700EDFB5B /* TimeSpecTimeout.cpp */; };
-		26D1804516CEE12500EDFB5B /* KQueue.h in Headers */ = {isa = PBXBuildFile; fileRef = 26D1804416CEE12500EDFB5B /* KQueue.h */; };
-		26D1804716CEE12C00EDFB5B /* TimeSpecTimeout.h in Headers */ = {isa = PBXBuildFile; fileRef = 26D1804616CEE12C00EDFB5B /* TimeSpecTimeout.h */; };
-		26D265A2136B40EE002EEE45 /* SharingPtr.h in Headers */ = {isa = PBXBuildFile; fileRef = 261B5A5311C3F2AD00AABD0A /* SharingPtr.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		26D265BC136B4269002EEE45 /* lldb-public.h in Headers */ = {isa = PBXBuildFile; fileRef = 26651A14133BEC76005B64B7 /* lldb-public.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		26D52C1F1A980FE300E5D2FB /* MICmdCmdSymbol.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26D52C1D1A980FE300E5D2FB /* MICmdCmdSymbol.cpp */; };
 		26D55235159A7DB100708D8D /* libxml2.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 26D55234159A7DB100708D8D /* libxml2.dylib */; };
 		26D5E15F135BAEA2006EA0A7 /* OptionGroupArchitecture.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26D5E15E135BAEA2006EA0A7 /* OptionGroupArchitecture.cpp */; };
 		26D5E163135BB054006EA0A7 /* OptionGroupPlatform.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26D5E162135BB054006EA0A7 /* OptionGroupPlatform.cpp */; };
 		26D7E45D13D5E30A007FD12B /* SocketAddress.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26D7E45C13D5E30A007FD12B /* SocketAddress.cpp */; };
-		26DAED6015D327A200E15819 /* OptionValuePathMappings.h in Headers */ = {isa = PBXBuildFile; fileRef = 26DAED5F15D327A200E15819 /* OptionValuePathMappings.h */; };
 		26DAED6315D327C200E15819 /* OptionValuePathMappings.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26DAED6215D327C200E15819 /* OptionValuePathMappings.cpp */; };
 		26DB3E161379E7AD0080DC73 /* ABIMacOSX_arm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26DB3E071379E7AD0080DC73 /* ABIMacOSX_arm.cpp */; };
 		26DB3E191379E7AD0080DC73 /* ABIMacOSX_arm64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26DB3E0B1379E7AD0080DC73 /* ABIMacOSX_arm64.cpp */; };
@@ -691,18 +622,13 @@
 		26ECA04313665FED008D1F18 /* ARM_DWARF_Registers.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26ECA04213665FED008D1F18 /* ARM_DWARF_Registers.cpp */; };
 		26ED3D6D13C563810017D45E /* OptionGroupVariable.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26ED3D6C13C563810017D45E /* OptionGroupVariable.cpp */; };
 		26EFC4CD18CFAF0D00865D87 /* ObjectFileJIT.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26EFC4CA18CFAF0D00865D87 /* ObjectFileJIT.cpp */; };
-		26EFC4CE18CFAF0D00865D87 /* ObjectFileJIT.h in Headers */ = {isa = PBXBuildFile; fileRef = 26EFC4CB18CFAF0D00865D87 /* ObjectFileJIT.h */; };
 		26F4A21C13FBA31A0064B613 /* ThreadMemory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26F4A21A13FBA31A0064B613 /* ThreadMemory.cpp */; };
 		26F5C27710F3D9E4009D5894 /* Driver.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26F5C27310F3D9E4009D5894 /* Driver.cpp */; };
 		26F5C32D10F3DFDD009D5894 /* libtermcap.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 26F5C32B10F3DFDD009D5894 /* libtermcap.dylib */; };
 		26F73062139D8FDB00FD51C7 /* History.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26F73061139D8FDB00FD51C7 /* History.cpp */; };
 		26FFC19914FC072100087D58 /* AuxVector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26FFC19314FC072100087D58 /* AuxVector.cpp */; };
-		26FFC19A14FC072100087D58 /* AuxVector.h in Headers */ = {isa = PBXBuildFile; fileRef = 26FFC19414FC072100087D58 /* AuxVector.h */; };
 		26FFC19B14FC072100087D58 /* DYLDRendezvous.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26FFC19514FC072100087D58 /* DYLDRendezvous.cpp */; };
-		26FFC19C14FC072100087D58 /* DYLDRendezvous.h in Headers */ = {isa = PBXBuildFile; fileRef = 26FFC19614FC072100087D58 /* DYLDRendezvous.h */; };
 		26FFC19D14FC072100087D58 /* DynamicLoaderPOSIXDYLD.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26FFC19714FC072100087D58 /* DynamicLoaderPOSIXDYLD.cpp */; };
-		26FFC19E14FC072100087D58 /* DynamicLoaderPOSIXDYLD.h in Headers */ = {isa = PBXBuildFile; fileRef = 26FFC19814FC072100087D58 /* DynamicLoaderPOSIXDYLD.h */; };
-		33064C9C1A5C7A490033D415 /* UriParser.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 33064C9B1A5C7A490033D415 /* UriParser.h */; };
 		332CCB181AFF41620034D4C4 /* SBLanguageRuntime.h in Headers */ = {isa = PBXBuildFile; fileRef = 3392EBB71AFF402200858B9F /* SBLanguageRuntime.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		33E5E8421A672A240024ED68 /* StringConvert.cpp in CopyFiles */ = {isa = PBXBuildFile; fileRef = 33E5E8411A672A240024ED68 /* StringConvert.cpp */; };
 		33E5E8461A6736D30024ED68 /* StringConvert.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 33E5E8451A6736D30024ED68 /* StringConvert.h */; };
@@ -719,7 +645,6 @@
 		3FDFDDC6199D37ED009756A7 /* FileSystem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3FDFDDC5199D37ED009756A7 /* FileSystem.cpp */; };
 		3FDFE52C19A2917A009756A7 /* HostInfoMacOSX.mm in Sources */ = {isa = PBXBuildFile; fileRef = 3FDFE52B19A2917A009756A7 /* HostInfoMacOSX.mm */; };
 		3FDFE53119A292F0009756A7 /* HostInfoPosix.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3FDFE53019A292F0009756A7 /* HostInfoPosix.cpp */; };
-		3FDFE53319A29304009756A7 /* HostInfoPosix.h in Headers */ = {isa = PBXBuildFile; fileRef = 3FDFE53219A29304009756A7 /* HostInfoPosix.h */; };
 		3FDFE53519A29327009756A7 /* HostInfoBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3FDFE53419A29327009756A7 /* HostInfoBase.cpp */; };
 		3FDFE56C19AF9C44009756A7 /* HostProcessPosix.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3FDFE56A19AF9C44009756A7 /* HostProcessPosix.cpp */; };
 		3FDFE56D19AF9C44009756A7 /* HostThreadPosix.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3FDFE56B19AF9C44009756A7 /* HostThreadPosix.cpp */; };
@@ -732,14 +657,11 @@
 		3FDFED2D19C257A0009756A7 /* HostProcess.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3FDFED2C19C257A0009756A7 /* HostProcess.cpp */; };
 		449ACC98197DEA0B008D175E /* FastDemangle.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 449ACC96197DE9EC008D175E /* FastDemangle.cpp */; };
 		490A36C0180F0E6F00BA31F8 /* PlatformWindows.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 490A36BD180F0E6F00BA31F8 /* PlatformWindows.cpp */; };
-		490A36C2180F0E9300BA31F8 /* PlatformWindows.h in Headers */ = {isa = PBXBuildFile; fileRef = 490A36BE180F0E6F00BA31F8 /* PlatformWindows.h */; };
 		490A966B1628C3BF00F0002E /* SBDeclaration.h in Headers */ = {isa = PBXBuildFile; fileRef = 9452573816262CEF00325455 /* SBDeclaration.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		494260DA14579144003C1C78 /* VerifyDecl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 494260D914579144003C1C78 /* VerifyDecl.cpp */; };
-		4959511D1A1BC49500F6F8FC /* ClangModulesDeclVendor.h in Headers */ = {isa = PBXBuildFile; fileRef = 4959511B1A1BC48100F6F8FC /* ClangModulesDeclVendor.h */; };
 		4959511F1A1BC4BC00F6F8FC /* ClangModulesDeclVendor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4959511E1A1BC4BC00F6F8FC /* ClangModulesDeclVendor.cpp */; };
 		4966DCC4148978A10028481B /* ClangExternalASTSourceCommon.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4966DCC3148978A10028481B /* ClangExternalASTSourceCommon.cpp */; };
 		49724D991AD6ED390033C538 /* RenderScriptRuntime.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49724D971AD6ED390033C538 /* RenderScriptRuntime.cpp */; };
-		49724D9A1AD6ED390033C538 /* RenderScriptRuntime.h in Headers */ = {isa = PBXBuildFile; fileRef = 49724D981AD6ED390033C538 /* RenderScriptRuntime.h */; };
 		49A1CAC51430E8DE00306AC9 /* ExpressionSourceCode.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49A1CAC31430E8BD00306AC9 /* ExpressionSourceCode.cpp */; };
 		49A71FE7141FFA5C00D59478 /* IRInterpreter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 496B01581406DE8900F830D5 /* IRInterpreter.cpp */; };
 		49A71FE8141FFACF00D59478 /* DataEncoder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 268ED0A4140FF54200DE830F /* DataEncoder.cpp */; };
@@ -749,12 +671,9 @@
 		49DCF702170E70120092F75E /* Materializer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49DCF700170E70120092F75E /* Materializer.cpp */; };
 		4C3ADCD61810D88B00357218 /* BreakpointResolverFileRegex.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4CAA56141422D986001FFA01 /* BreakpointResolverFileRegex.cpp */; };
 		4C56543119D1EFAA002E9C44 /* ThreadPlanPython.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C56543019D1EFAA002E9C44 /* ThreadPlanPython.cpp */; };
-		4C56543319D1EFB6002E9C44 /* ThreadPlanPython.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C56543219D1EFB5002E9C44 /* ThreadPlanPython.h */; };
 		4C56543519D2297A002E9C44 /* SBThreadPlan.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C56543419D2297A002E9C44 /* SBThreadPlan.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		4C56543719D22B32002E9C44 /* SBThreadPlan.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C56543619D22B32002E9C44 /* SBThreadPlan.cpp */; };
-		4C6649A014EEE7F100B0316F /* StreamCallback.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C66499F14EEE7F100B0316F /* StreamCallback.h */; };
 		4C6649A314EEE81000B0316F /* StreamCallback.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C6649A214EEE81000B0316F /* StreamCallback.cpp */; };
-		4C73152219B7D71700F865A4 /* Iterable.h in Headers */ = {isa = PBXBuildFile; fileRef = 4C73152119B7D71700F865A4 /* Iterable.h */; };
 		4CABA9E0134A8BCD00539BDD /* ValueObjectMemory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4CABA9DF134A8BCD00539BDD /* ValueObjectMemory.cpp */; };
 		4CCA644D13B40B82003BDF98 /* ItaniumABILanguageRuntime.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4CCA643D13B40B82003BDF98 /* ItaniumABILanguageRuntime.cpp */; };
 		4CCA645013B40B82003BDF98 /* AppleObjCRuntime.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4CCA644213B40B82003BDF98 /* AppleObjCRuntime.cpp */; };
@@ -773,8 +692,6 @@
 		6D55B2921A8A806200A70529 /* GDBRemoteCommunicationServerPlatform.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6D55B28F1A8A806200A70529 /* GDBRemoteCommunicationServerPlatform.cpp */; };
 		6D55BAED1A8CD0A800A70529 /* PlatformAndroid.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6D55BAE91A8CD08C00A70529 /* PlatformAndroid.cpp */; };
 		6D55BAEE1A8CD0B200A70529 /* PlatformAndroidRemoteGDBServer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6D55BAEB1A8CD08C00A70529 /* PlatformAndroidRemoteGDBServer.cpp */; };
-		6D55BAEF1A8CD0B700A70529 /* PlatformAndroid.h in Headers */ = {isa = PBXBuildFile; fileRef = 6D55BAEA1A8CD08C00A70529 /* PlatformAndroid.h */; };
-		6D55BAF01A8CD0BD00A70529 /* PlatformAndroidRemoteGDBServer.h in Headers */ = {isa = PBXBuildFile; fileRef = 6D55BAEC1A8CD08C00A70529 /* PlatformAndroidRemoteGDBServer.h */; };
 		6D762BEE1B1605D2006C929D /* LLDBServerUtilities.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6D762BEC1B1605CD006C929D /* LLDBServerUtilities.cpp */; };
 		8C2D6A53197A1EAF006989C9 /* MemoryHistory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8C2D6A52197A1EAF006989C9 /* MemoryHistory.cpp */; };
 		8C2D6A5E197A250F006989C9 /* MemoryHistoryASan.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8C2D6A5A197A1FDC006989C9 /* MemoryHistoryASan.cpp */; };
@@ -804,13 +721,11 @@
 		9439FB1A19EF140C006FD6A4 /* NSIndexPath.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9439FB1919EF140C006FD6A4 /* NSIndexPath.cpp */; };
 		943BDEFE1AA7B2F800789CE8 /* LLDBAssert.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 943BDEFD1AA7B2F800789CE8 /* LLDBAssert.cpp */; };
 		944372DC171F6B4300E57C32 /* RegisterContextDummy.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 944372DA171F6B4300E57C32 /* RegisterContextDummy.cpp */; };
-		944372DD171F6B4300E57C32 /* RegisterContextDummy.h in Headers */ = {isa = PBXBuildFile; fileRef = 944372DB171F6B4300E57C32 /* RegisterContextDummy.h */; };
 		9443B122140C18C40013457C /* SBData.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9443B121140C18C10013457C /* SBData.cpp */; };
 		9443B123140C26AB0013457C /* SBData.h in Headers */ = {isa = PBXBuildFile; fileRef = 9443B120140C18A90013457C /* SBData.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		945215DF17F639EE00521C0B /* ValueObjectPrinter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 945215DE17F639EE00521C0B /* ValueObjectPrinter.cpp */; };
 		9452573A16262D0200325455 /* SBDeclaration.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9452573916262D0200325455 /* SBDeclaration.cpp */; };
 		945759671534941F005A9070 /* PlatformPOSIX.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 945759651534941F005A9070 /* PlatformPOSIX.cpp */; };
-		945759681534941F005A9070 /* PlatformPOSIX.h in Headers */ = {isa = PBXBuildFile; fileRef = 945759661534941F005A9070 /* PlatformPOSIX.h */; };
 		945E8D80152F6AB40019BCCD /* StreamGDBRemote.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 945E8D7F152F6AB40019BCCD /* StreamGDBRemote.cpp */; };
 		9461569A14E358A6003A195C /* SBTypeFilter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9461568A14E35621003A195C /* SBTypeFilter.cpp */; };
 		9461569B14E358A6003A195C /* SBTypeFormat.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9461568B14E35621003A195C /* SBTypeFormat.cpp */; };
@@ -823,7 +738,6 @@
 		9475C18E14E5F834001BFC6D /* SBTypeNameSpecifier.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9475C18D14E5F834001BFC6D /* SBTypeNameSpecifier.cpp */; };
 		9475C18F14E5F858001BFC6D /* SBTypeNameSpecifier.h in Headers */ = {isa = PBXBuildFile; fileRef = 9475C18C14E5F826001BFC6D /* SBTypeNameSpecifier.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		947A1D641616476B0017C8D1 /* CommandObjectPlugin.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 947A1D621616476A0017C8D1 /* CommandObjectPlugin.cpp */; };
-		947A1D651616476B0017C8D1 /* CommandObjectPlugin.h in Headers */ = {isa = PBXBuildFile; fileRef = 947A1D631616476A0017C8D1 /* CommandObjectPlugin.h */; };
 		9492E2A51A8AC11000295BBD /* CoreMedia.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9492E2A41A8AC11000295BBD /* CoreMedia.cpp */; };
 		949ADF031406F648004833E1 /* ValueObjectConstResultImpl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 949ADF021406F648004833E1 /* ValueObjectConstResultImpl.cpp */; };
 		94A5B3971AB9FE8D00A5EE7F /* EmulateInstructionMIPS64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94A5B3951AB9FE8300A5EE7F /* EmulateInstructionMIPS64.cpp */; };
@@ -858,12 +772,10 @@
 		94F48F251A01C687005C0EC6 /* StringPrinter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94F48F241A01C687005C0EC6 /* StringPrinter.cpp */; };
 		94FA3DE01405D50400833217 /* ValueObjectConstResultChild.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94FA3DDF1405D50300833217 /* ValueObjectConstResultChild.cpp */; };
 		964463EC1A330C0500154ED8 /* CompactUnwindInfo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 964463EB1A330C0500154ED8 /* CompactUnwindInfo.cpp */; };
-		964463EE1A330C1B00154ED8 /* CompactUnwindInfo.h in Headers */ = {isa = PBXBuildFile; fileRef = 964463ED1A330C1B00154ED8 /* CompactUnwindInfo.h */; };
 		966C6B7918E6A56A0093F5EC /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 966C6B7818E6A56A0093F5EC /* libz.dylib */; };
 		966C6B7A18E6A56A0093F5EC /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 966C6B7818E6A56A0093F5EC /* libz.dylib */; };
 		966C6B7C18E6A56A0093F5EC /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 966C6B7818E6A56A0093F5EC /* libz.dylib */; };
 		9694FA711B32AA64005EBB16 /* ABISysV_mips.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9694FA6F1B32AA64005EBB16 /* ABISysV_mips.cpp */; };
-		9694FA721B32AA64005EBB16 /* ABISysV_mips.h in Headers */ = {isa = PBXBuildFile; fileRef = 9694FA701B32AA64005EBB16 /* ABISysV_mips.h */; };
 		9A19A6AF1163BBB200E0D453 /* SBValue.h in Headers */ = {isa = PBXBuildFile; fileRef = 9A19A6A51163BB7E00E0D453 /* SBValue.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		9A19A6B01163BBB300E0D453 /* SBValue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9A19A6AD1163BB9800E0D453 /* SBValue.cpp */; };
 		9A22A161135E30370024DDC3 /* EmulateInstructionARM.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9A22A15D135E30370024DDC3 /* EmulateInstructionARM.cpp */; };
@@ -882,78 +794,46 @@
 		9AC703B1117675490086C050 /* SBInstructionList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9AC703B0117675490086C050 /* SBInstructionList.cpp */; };
 		A36FF33C17D8E94600244D40 /* OptionParser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A36FF33B17D8E94600244D40 /* OptionParser.cpp */; };
 		AF061F87182C97ED00B6A19C /* RegisterContextHistory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF061F85182C97ED00B6A19C /* RegisterContextHistory.cpp */; };
-		AF061F88182C97ED00B6A19C /* RegisterContextHistory.h in Headers */ = {isa = PBXBuildFile; fileRef = AF061F86182C97ED00B6A19C /* RegisterContextHistory.h */; };
-		AF061F8B182C980000B6A19C /* HistoryThread.h in Headers */ = {isa = PBXBuildFile; fileRef = AF061F89182C980000B6A19C /* HistoryThread.h */; };
-		AF061F8C182C980000B6A19C /* HistoryUnwind.h in Headers */ = {isa = PBXBuildFile; fileRef = AF061F8A182C980000B6A19C /* HistoryUnwind.h */; };
 		AF0C112818580CD800C4C45B /* QueueItem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF0C112718580CD800C4C45B /* QueueItem.cpp */; };
 		AF0E22F018A09FB20009B7D1 /* AppleGetItemInfoHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF0E22EE18A09FB20009B7D1 /* AppleGetItemInfoHandler.cpp */; };
-		AF0E22F118A09FB20009B7D1 /* AppleGetItemInfoHandler.h in Headers */ = {isa = PBXBuildFile; fileRef = AF0E22EF18A09FB20009B7D1 /* AppleGetItemInfoHandler.h */; };
 		AF0EBBE8185940FB0059E52F /* SBQueue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF0EBBE6185940FB0059E52F /* SBQueue.cpp */; };
 		AF0EBBE9185940FB0059E52F /* SBQueueItem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF0EBBE7185940FB0059E52F /* SBQueueItem.cpp */; };
 		AF0EBBEC185941360059E52F /* SBQueue.h in Headers */ = {isa = PBXBuildFile; fileRef = AF0EBBEA185941360059E52F /* SBQueue.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		AF0EBBED185941360059E52F /* SBQueueItem.h in Headers */ = {isa = PBXBuildFile; fileRef = AF0EBBEB185941360059E52F /* SBQueueItem.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		AF0F6E501739A76D009180FE /* RegisterContextKDP_arm64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF0F6E4E1739A76D009180FE /* RegisterContextKDP_arm64.cpp */; };
-		AF0F6E511739A76D009180FE /* RegisterContextKDP_arm64.h in Headers */ = {isa = PBXBuildFile; fileRef = AF0F6E4F1739A76D009180FE /* RegisterContextKDP_arm64.h */; };
 		AF1729D6182C907200E0AB97 /* HistoryThread.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF1729D4182C907200E0AB97 /* HistoryThread.cpp */; };
 		AF1729D7182C907200E0AB97 /* HistoryUnwind.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF1729D5182C907200E0AB97 /* HistoryUnwind.cpp */; };
 		AF1F7B07189C904B0087DB9C /* AppleGetPendingItemsHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF1F7B05189C904B0087DB9C /* AppleGetPendingItemsHandler.cpp */; };
-		AF1F7B08189C904B0087DB9C /* AppleGetPendingItemsHandler.h in Headers */ = {isa = PBXBuildFile; fileRef = AF1F7B06189C904B0087DB9C /* AppleGetPendingItemsHandler.h */; };
 		AF1FA88A1A60A69500272AFC /* RegisterNumber.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF1FA8891A60A69500272AFC /* RegisterNumber.cpp */; };
 		AF20F7661AF18F8500751A6E /* ABISysV_arm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF20F7641AF18F8500751A6E /* ABISysV_arm.cpp */; };
-		AF20F7671AF18F8500751A6E /* ABISysV_arm.h in Headers */ = {isa = PBXBuildFile; fileRef = AF20F7651AF18F8500751A6E /* ABISysV_arm.h */; };
 		AF20F76A1AF18F9000751A6E /* ABISysV_arm64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF20F7681AF18F9000751A6E /* ABISysV_arm64.cpp */; };
-		AF20F76B1AF18F9000751A6E /* ABISysV_arm64.h in Headers */ = {isa = PBXBuildFile; fileRef = AF20F7691AF18F9000751A6E /* ABISysV_arm64.h */; };
 		AF20F76D1AF18FC700751A6E /* SBLanguageRuntime.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF20F76C1AF18FC700751A6E /* SBLanguageRuntime.cpp */; };
 		AF20F7701AF1902900751A6E /* RegisterContextLinux_arm64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF20F76E1AF1902900751A6E /* RegisterContextLinux_arm64.cpp */; };
-		AF20F7711AF1902900751A6E /* RegisterContextLinux_arm64.h in Headers */ = {isa = PBXBuildFile; fileRef = AF20F76F1AF1902900751A6E /* RegisterContextLinux_arm64.h */; };
 		AF23B4DB19009C66003E2A58 /* FreeBSDSignals.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF23B4D919009C66003E2A58 /* FreeBSDSignals.cpp */; };
 		AF254E31170CCC33007AE5C9 /* PlatformDarwinKernel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF254E2F170CCC33007AE5C9 /* PlatformDarwinKernel.cpp */; };
-		AF254E32170CCC33007AE5C9 /* PlatformDarwinKernel.h in Headers */ = {isa = PBXBuildFile; fileRef = AF254E30170CCC33007AE5C9 /* PlatformDarwinKernel.h */; };
 		AF25AB26188F685C0030DEC3 /* AppleGetQueuesHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF25AB24188F685C0030DEC3 /* AppleGetQueuesHandler.cpp */; };
-		AF25AB27188F685C0030DEC3 /* AppleGetQueuesHandler.h in Headers */ = {isa = PBXBuildFile; fileRef = AF25AB25188F685C0030DEC3 /* AppleGetQueuesHandler.h */; };
 		AF26703A1852D01E00B6CC36 /* Queue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF2670381852D01E00B6CC36 /* Queue.cpp */; };
 		AF26703B1852D01E00B6CC36 /* QueueList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF2670391852D01E00B6CC36 /* QueueList.cpp */; };
 		AF2BA6EC1A707E3400C5248A /* UriParser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 33064C991A5C7A330033D415 /* UriParser.cpp */; };
 		AF2BCA6C18C7EFDE005B4526 /* JITLoaderGDB.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF2BCA6918C7EFDE005B4526 /* JITLoaderGDB.cpp */; };
-		AF2BCA6D18C7EFDE005B4526 /* JITLoaderGDB.h in Headers */ = {isa = PBXBuildFile; fileRef = AF2BCA6A18C7EFDE005B4526 /* JITLoaderGDB.h */; };
 		AF37E10A17C861F20061E18E /* ProcessRunLock.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF37E10917C861F20061E18E /* ProcessRunLock.cpp */; };
-		AF3F54B11B3BA59C00186E73 /* CrashReason.h in Headers */ = {isa = PBXBuildFile; fileRef = AF3F54AF1B3BA59C00186E73 /* CrashReason.h */; };
-		AF3F54C31B3BA5D500186E73 /* POSIXStopInfo.h in Headers */ = {isa = PBXBuildFile; fileRef = AF3F54B31B3BA5D500186E73 /* POSIXStopInfo.h */; };
-		AF3F54C51B3BA5D500186E73 /* POSIXThread.h in Headers */ = {isa = PBXBuildFile; fileRef = AF3F54B51B3BA5D500186E73 /* POSIXThread.h */; };
-		AF3F54C71B3BA5D500186E73 /* ProcessPOSIX.h in Headers */ = {isa = PBXBuildFile; fileRef = AF3F54B71B3BA5D500186E73 /* ProcessPOSIX.h */; };
-		AF3F54C91B3BA5D500186E73 /* RegisterContextPOSIXProcessMonitor_arm.h in Headers */ = {isa = PBXBuildFile; fileRef = AF3F54B91B3BA5D500186E73 /* RegisterContextPOSIXProcessMonitor_arm.h */; };
-		AF3F54CB1B3BA5D500186E73 /* RegisterContextPOSIXProcessMonitor_arm64.h in Headers */ = {isa = PBXBuildFile; fileRef = AF3F54BB1B3BA5D500186E73 /* RegisterContextPOSIXProcessMonitor_arm64.h */; };
-		AF3F54CD1B3BA5D500186E73 /* RegisterContextPOSIXProcessMonitor_mips64.h in Headers */ = {isa = PBXBuildFile; fileRef = AF3F54BD1B3BA5D500186E73 /* RegisterContextPOSIXProcessMonitor_mips64.h */; };
-		AF3F54CF1B3BA5D500186E73 /* RegisterContextPOSIXProcessMonitor_powerpc.h in Headers */ = {isa = PBXBuildFile; fileRef = AF3F54BF1B3BA5D500186E73 /* RegisterContextPOSIXProcessMonitor_powerpc.h */; };
-		AF3F54D11B3BA5D500186E73 /* RegisterContextPOSIXProcessMonitor_x86.h in Headers */ = {isa = PBXBuildFile; fileRef = AF3F54C11B3BA5D500186E73 /* RegisterContextPOSIXProcessMonitor_x86.h */; };
 		AF455D571A9C231700D6C4F7 /* com.apple.lldb.launcherXPCService.xpc in CopyFiles */ = {isa = PBXBuildFile; fileRef = EDC6D49914E5C19B001B75F8 /* com.apple.lldb.launcherXPCService.xpc */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		AF455D581A9C231700D6C4F7 /* com.apple.lldb.launcherRootXPCService.xpc in CopyFiles */ = {isa = PBXBuildFile; fileRef = EDE274EC14EDCE1F005B0F75 /* com.apple.lldb.launcherRootXPCService.xpc */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		AF45FDE518A1F3AC0007051C /* AppleGetThreadItemInfoHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF45FDE318A1F3AC0007051C /* AppleGetThreadItemInfoHandler.cpp */; };
-		AF45FDE618A1F3AC0007051C /* AppleGetThreadItemInfoHandler.h in Headers */ = {isa = PBXBuildFile; fileRef = AF45FDE418A1F3AC0007051C /* AppleGetThreadItemInfoHandler.h */; };
 		AF77E08F1A033C700096C0EA /* ABISysV_ppc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF77E08D1A033C700096C0EA /* ABISysV_ppc.cpp */; };
-		AF77E0901A033C700096C0EA /* ABISysV_ppc.h in Headers */ = {isa = PBXBuildFile; fileRef = AF77E08E1A033C700096C0EA /* ABISysV_ppc.h */; };
 		AF77E0931A033C7F0096C0EA /* ABISysV_ppc64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF77E0911A033C7F0096C0EA /* ABISysV_ppc64.cpp */; };
-		AF77E0941A033C7F0096C0EA /* ABISysV_ppc64.h in Headers */ = {isa = PBXBuildFile; fileRef = AF77E0921A033C7F0096C0EA /* ABISysV_ppc64.h */; };
-		AF77E0A01A033D360096C0EA /* RegisterContext_powerpc.h in Headers */ = {isa = PBXBuildFile; fileRef = AF77E0991A033D360096C0EA /* RegisterContext_powerpc.h */; };
 		AF77E0A11A033D360096C0EA /* RegisterContextFreeBSD_powerpc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF77E09A1A033D360096C0EA /* RegisterContextFreeBSD_powerpc.cpp */; };
-		AF77E0A21A033D360096C0EA /* RegisterContextFreeBSD_powerpc.h in Headers */ = {isa = PBXBuildFile; fileRef = AF77E09B1A033D360096C0EA /* RegisterContextFreeBSD_powerpc.h */; };
 		AF77E0A31A033D360096C0EA /* RegisterContextMacOSXFrameBackchain.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF77E09C1A033D360096C0EA /* RegisterContextMacOSXFrameBackchain.cpp */; };
 		AF77E0A41A033D360096C0EA /* RegisterContextPOSIX_powerpc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF77E09D1A033D360096C0EA /* RegisterContextPOSIX_powerpc.cpp */; };
-		AF77E0A51A033D360096C0EA /* RegisterContextPOSIX_powerpc.h in Headers */ = {isa = PBXBuildFile; fileRef = AF77E09E1A033D360096C0EA /* RegisterContextPOSIX_powerpc.h */; };
-		AF77E0A61A033D360096C0EA /* RegisterInfos_powerpc.h in Headers */ = {isa = PBXBuildFile; fileRef = AF77E09F1A033D360096C0EA /* RegisterInfos_powerpc.h */; };
 		AF77E0A91A033D740096C0EA /* RegisterContextPOSIXCore_powerpc.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF77E0A71A033D740096C0EA /* RegisterContextPOSIXCore_powerpc.cpp */; };
-		AF77E0AA1A033D740096C0EA /* RegisterContextPOSIXCore_powerpc.h in Headers */ = {isa = PBXBuildFile; fileRef = AF77E0A81A033D740096C0EA /* RegisterContextPOSIXCore_powerpc.h */; };
 		AF81DEFA1828A23F0042CF19 /* SystemRuntime.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF81DEF91828A23F0042CF19 /* SystemRuntime.cpp */; };
 		AF90106515AB7D3600FF120D /* lldb.1 in CopyFiles */ = {isa = PBXBuildFile; fileRef = AF90106315AB7C5700FF120D /* lldb.1 */; };
 		AF9107EE168570D200DBCD3C /* RegisterContextDarwin_arm64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF9107EC168570D200DBCD3C /* RegisterContextDarwin_arm64.cpp */; };
 		AF9107EF168570D200DBCD3C /* RegisterContextDarwin_arm64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF9107EC168570D200DBCD3C /* RegisterContextDarwin_arm64.cpp */; };
 		AF9B8F33182DB52900DA866F /* SystemRuntimeMacOSX.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF9B8F31182DB52900DA866F /* SystemRuntimeMacOSX.cpp */; };
-		AF9B8F34182DB52900DA866F /* SystemRuntimeMacOSX.h in Headers */ = {isa = PBXBuildFile; fileRef = AF9B8F32182DB52900DA866F /* SystemRuntimeMacOSX.h */; };
 		AFB3D2801AC262AB003B4B30 /* MICmdCmdGdbShow.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AFB3D27E1AC262AB003B4B30 /* MICmdCmdGdbShow.cpp */; };
 		AFC234081AF85CE000CDE8B6 /* CommandObjectLanguage.cpp in CopyFiles */ = {isa = PBXBuildFile; fileRef = AFC234061AF85CE000CDE8B6 /* CommandObjectLanguage.cpp */; };
 		AFC234091AF85CE100CDE8B6 /* CommandObjectLanguage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AFC234061AF85CE000CDE8B6 /* CommandObjectLanguage.cpp */; };
-		AFC2340A1AF85CE100CDE8B6 /* CommandObjectLanguage.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = AFC234071AF85CE000CDE8B6 /* CommandObjectLanguage.h */; };
-		AFC2340B1AF85CE100CDE8B6 /* CommandObjectLanguage.h in Headers */ = {isa = PBXBuildFile; fileRef = AFC234071AF85CE000CDE8B6 /* CommandObjectLanguage.h */; };
 		AFDCDBCB19DD0F42005EA55E /* SBExecutionContext.h in Headers */ = {isa = PBXBuildFile; fileRef = 940B02F419DC96CB00AD0F52 /* SBExecutionContext.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		AFDFDFD119E34D3400EAE509 /* ConnectionFileDescriptorPosix.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AFDFDFD019E34D3400EAE509 /* ConnectionFileDescriptorPosix.cpp */; };
 		AFEC3362194A8ABA00FF05C6 /* StructuredData.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AFEC3361194A8ABA00FF05C6 /* StructuredData.cpp */; };
@@ -969,11 +849,9 @@
 		B2B7CCEB15D1BD6700EEFB57 /* CommandObjectWatchpointCommand.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B2B7CCEA15D1BD6600EEFB57 /* CommandObjectWatchpointCommand.cpp */; };
 		B2B7CCF015D1C20F00EEFB57 /* WatchpointOptions.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B2B7CCEF15D1C20F00EEFB57 /* WatchpointOptions.cpp */; };
 		B5EFAE861AE53B1D007059F3 /* RegisterContextFreeBSD_arm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B5EFAE841AE53B1D007059F3 /* RegisterContextFreeBSD_arm.cpp */; };
-		B5EFAE871AE53B1D007059F3 /* RegisterContextFreeBSD_arm.h in Headers */ = {isa = PBXBuildFile; fileRef = B5EFAE851AE53B1D007059F3 /* RegisterContextFreeBSD_arm.h */; };
 		E769331C1A94D15400C73337 /* lldb-gdbserver.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26D6F3F4183E7F9300194858 /* lldb-gdbserver.cpp */; };
 		E769331E1A94D18100C73337 /* lldb-server.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E769331D1A94D18100C73337 /* lldb-server.cpp */; };
 		E7723D441AC4A7FB002BA082 /* RegisterContextPOSIXCore_arm64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E7723D421AC4A7FB002BA082 /* RegisterContextPOSIXCore_arm64.cpp */; };
-		E7723D451AC4A7FB002BA082 /* RegisterContextPOSIXCore_arm64.h in Headers */ = {isa = PBXBuildFile; fileRef = E7723D431AC4A7FB002BA082 /* RegisterContextPOSIXCore_arm64.h */; };
 		E7723D481AC4A8C8002BA082 /* RegisterContextFreeBSD_arm64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E7723D461AC4A8C8002BA082 /* RegisterContextFreeBSD_arm64.cpp */; };
 		E7723D4C1AC4A944002BA082 /* RegisterContextPOSIX_arm64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E7723D4A1AC4A944002BA082 /* RegisterContextPOSIX_arm64.cpp */; };
 		E778E9A21B062D1700247609 /* EmulateInstructionMIPS.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E778E99F1B062D1700247609 /* EmulateInstructionMIPS.cpp */; };
@@ -1180,10 +1058,8 @@
 			files = (
 				AF90106515AB7D3600FF120D /* lldb.1 in CopyFiles */,
 				33E5E8461A6736D30024ED68 /* StringConvert.h in CopyFiles */,
-				33064C9C1A5C7A490033D415 /* UriParser.h in CopyFiles */,
 				AFC234081AF85CE000CDE8B6 /* CommandObjectLanguage.cpp in CopyFiles */,
 				33E5E8421A672A240024ED68 /* StringConvert.cpp in CopyFiles */,
-				AFC2340A1AF85CE100CDE8B6 /* CommandObjectLanguage.h in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 1;
 		};
@@ -1563,6 +1439,10 @@
 		2665CD0D15080846002C8FAE /* Makefile */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.make; path = Makefile; sourceTree = "<group>"; };
 		266603C91345B5A8004DA8B6 /* ConnectionSharedMemory.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ConnectionSharedMemory.cpp; path = source/Core/ConnectionSharedMemory.cpp; sourceTree = "<group>"; };
 		266603CC1345B5C0004DA8B6 /* ConnectionSharedMemory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ConnectionSharedMemory.h; path = include/lldb/Core/ConnectionSharedMemory.h; sourceTree = "<group>"; };
+		2666ADC11B3CB675001FAFD3 /* DynamicLoaderHexagonDYLD.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DynamicLoaderHexagonDYLD.cpp; sourceTree = "<group>"; };
+		2666ADC21B3CB675001FAFD3 /* DynamicLoaderHexagonDYLD.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DynamicLoaderHexagonDYLD.h; sourceTree = "<group>"; };
+		2666ADC31B3CB675001FAFD3 /* HexagonDYLDRendezvous.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = HexagonDYLDRendezvous.cpp; sourceTree = "<group>"; };
+		2666ADC41B3CB675001FAFD3 /* HexagonDYLDRendezvous.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HexagonDYLDRendezvous.h; sourceTree = "<group>"; };
 		26680207115FD0ED008E1FE4 /* LLDB.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = LLDB.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		2669415B1A6DC2AB0063BE93 /* CMakeLists.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = CMakeLists.txt; path = "tools/lldb-mi/CMakeLists.txt"; sourceTree = SOURCE_ROOT; };
 		2669415E1A6DC2AB0063BE93 /* lldb-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = "lldb-Info.plist"; path = "tools/lldb-mi/lldb-Info.plist"; sourceTree = SOURCE_ROOT; };
@@ -1733,7 +1613,7 @@
 		266DFE9613FD656E00D0C574 /* OperatingSystem.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OperatingSystem.cpp; path = source/Target/OperatingSystem.cpp; sourceTree = "<group>"; };
 		266DFE9813FD658300D0C574 /* OperatingSystem.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = OperatingSystem.h; path = include/lldb/Target/OperatingSystem.h; sourceTree = "<group>"; };
 		266F5CBB12FC846200DFCE33 /* Config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Config.h; path = include/lldb/Host/Config.h; sourceTree = "<group>"; };
-		26709E311964A34000B94724 /* LaunchServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = LaunchServices.framework; path = ../../../../../../../System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework; sourceTree = "<group>"; };
+		26709E311964A34000B94724 /* LaunchServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = LaunchServices.framework; path = /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework; sourceTree = "<absolute>"; };
 		2670F8111862B44A006B332C /* libncurses.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libncurses.dylib; path = /usr/lib/libncurses.dylib; sourceTree = "<absolute>"; };
 		2671A0CD134825F6003A87BB /* ConnectionMachPort.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ConnectionMachPort.h; path = include/lldb/Core/ConnectionMachPort.h; sourceTree = "<group>"; };
 		2671A0CF13482601003A87BB /* ConnectionMachPort.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ConnectionMachPort.cpp; path = source/Core/ConnectionMachPort.cpp; sourceTree = "<group>"; };
@@ -2902,7 +2782,6 @@
 		08FB7794FE84155DC02AAC07 /* lldb */ = {
 			isa = PBXGroup;
 			children = (
-				26709E311964A34000B94724 /* LaunchServices.framework */,
 				26F5C32810F3DF7D009D5894 /* Libraries */,
 				264E8576159BE51A00E9D7A2 /* Resources */,
 				08FB7795FE84155DC02AAC07 /* Source */,
@@ -3076,6 +2955,7 @@
 			isa = PBXGroup;
 			children = (
 				26274FA414030F79006BA130 /* Darwin-Kernel */,
+				2666ADBF1B3CB675001FAFD3 /* Hexagon-DYLD */,
 				260C897910F57C5600BB2B04 /* MacOSX-DYLD */,
 				26FFC19214FC072100087D58 /* POSIX-DYLD */,
 				268A683C1321B505000E3FB8 /* Static */,
@@ -3563,6 +3443,17 @@
 			);
 			name = "install-headers";
 			path = "tools/install-headers";
+			sourceTree = "<group>";
+		};
+		2666ADBF1B3CB675001FAFD3 /* Hexagon-DYLD */ = {
+			isa = PBXGroup;
+			children = (
+				2666ADC11B3CB675001FAFD3 /* DynamicLoaderHexagonDYLD.cpp */,
+				2666ADC21B3CB675001FAFD3 /* DynamicLoaderHexagonDYLD.h */,
+				2666ADC31B3CB675001FAFD3 /* HexagonDYLDRendezvous.cpp */,
+				2666ADC41B3CB675001FAFD3 /* HexagonDYLDRendezvous.h */,
+			);
+			path = "Hexagon-DYLD";
 			sourceTree = "<group>";
 		};
 		266960581199F4230075C61A /* Scripts */ = {
@@ -4934,6 +4825,7 @@
 				26F5C39010F3FA26009D5894 /* CoreFoundation.framework */,
 				265ABF6210F42EE900531910 /* DebugSymbols.framework */,
 				260C876910F538E700BB2B04 /* Foundation.framework */,
+				26709E311964A34000B94724 /* LaunchServices.framework */,
 				26F5C32A10F3DFDD009D5894 /* libedit.dylib */,
 				2689FFCA13353D7A00698AC0 /* liblldb-core.a */,
 				2670F8111862B44A006B332C /* libncurses.dylib */,
@@ -5495,7 +5387,6 @@
 				9A19A6AF1163BBB200E0D453 /* SBValue.h in Headers */,
 				9A357583116CFDEE00E8ED2F /* SBValueList.h in Headers */,
 				B2A58722143119810092BFBA /* SBWatchpoint.h in Headers */,
-				26D265A2136B40EE002EEE45 /* SharingPtr.h in Headers */,
 				26D265BC136B4269002EEE45 /* lldb-public.h in Headers */,
 				4CE4F673162C971A00F75CB3 /* SBExpressionOptions.h in Headers */,
 				94235B9F1A8D66D600EB2EED /* SBVariablesOptions.h in Headers */,
@@ -5507,128 +5398,7 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				26A527C214E24F5F00F3A14A /* ProcessMachCore.h in Headers */,
-				26B75B451AD6E29A001F7A57 /* MipsLinuxSignals.h in Headers */,
-				257E47181AA56C2000A62F81 /* ModuleCache.h in Headers */,
-				9694FA721B32AA64005EBB16 /* ABISysV_mips.h in Headers */,
-				26BC17AC18C7F4CB00D2196D /* ProcessElfCore.h in Headers */,
-				26A527C414E24F5F00F3A14A /* ThreadMachCore.h in Headers */,
-				26474CD318D0CB710073DEBA /* RegisterInfos_i386.h in Headers */,
-				4C6649A014EEE7F100B0316F /* StreamCallback.h in Headers */,
-				26B7564F14F89356008D9CB3 /* PlatformiOSSimulator.h in Headers */,
-				26474CCA18D0CB5B0073DEBA /* RegisterContextMemory.h in Headers */,
-				26474CA018D0CAEC0073DEBA /* RegisterContext_mips64.h in Headers */,
-				26BC17AE18C7F4CB00D2196D /* RegisterContextPOSIXCore_mips64.h in Headers */,
-				AF3F54B11B3BA59C00186E73 /* CrashReason.h in Headers */,
-				26FFC19A14FC072100087D58 /* AuxVector.h in Headers */,
-				AF25AB27188F685C0030DEC3 /* AppleGetQueuesHandler.h in Headers */,
-				26CA97A2172B1FD5005DC71B /* RegisterContextThreadMemory.h in Headers */,
-				26474CAB18D0CB070073DEBA /* RegisterContextFreeBSD_mips64.h in Headers */,
-				26474CA118D0CAEC0073DEBA /* RegisterContext_x86.h in Headers */,
-				26BC179D18C7F2CB00D2196D /* JITLoader.h in Headers */,
-				256CBDBB1ADD107200BC6CDC /* RegisterContextLinux_arm.h in Headers */,
-				26FFC19C14FC072100087D58 /* DYLDRendezvous.h in Headers */,
-				AF1F7B08189C904B0087DB9C /* AppleGetPendingItemsHandler.h in Headers */,
-				AF77E0AA1A033D740096C0EA /* RegisterContextPOSIXCore_powerpc.h in Headers */,
-				AF2BCA6D18C7EFDE005B4526 /* JITLoaderGDB.h in Headers */,
-				B5EFAE871AE53B1D007059F3 /* RegisterContextFreeBSD_arm.h in Headers */,
-				26BC17B218C7F4CB00D2196D /* ThreadElfCore.h in Headers */,
-				AF77E0A51A033D360096C0EA /* RegisterContextPOSIX_powerpc.h in Headers */,
-				AF77E0A61A033D360096C0EA /* RegisterInfos_powerpc.h in Headers */,
-				26FFC19E14FC072100087D58 /* DynamicLoaderPOSIXDYLD.h in Headers */,
-				AF254E32170CCC33007AE5C9 /* PlatformDarwinKernel.h in Headers */,
-				2694E99E14FC0BB30076DE67 /* PlatformFreeBSD.h in Headers */,
-				2694E9A514FC0BBD0076DE67 /* PlatformLinux.h in Headers */,
-				26AB54121832DC3400EADFF3 /* RegisterCheckpoint.h in Headers */,
-				26AB92131819D74600E63F3E /* DWARFDataExtractor.h in Headers */,
-				AF20F76B1AF18F9000751A6E /* ABISysV_arm64.h in Headers */,
-				AF77E0941A033C7F0096C0EA /* ABISysV_ppc64.h in Headers */,
-				945759681534941F005A9070 /* PlatformPOSIX.h in Headers */,
-				AF20F7671AF18F8500751A6E /* ABISysV_arm.h in Headers */,
-				26B1EFAF154638AF00E2DAC7 /* DWARFDeclContext.h in Headers */,
-				260CC62E15D04377002BF2E0 /* OptionValueArgs.h in Headers */,
-				E7723D451AC4A7FB002BA082 /* RegisterContextPOSIXCore_arm64.h in Headers */,
-				AF0E22F118A09FB20009B7D1 /* AppleGetItemInfoHandler.h in Headers */,
-				AF20F7711AF1902900751A6E /* RegisterContextLinux_arm64.h in Headers */,
-				260CC62F15D04377002BF2E0 /* OptionValueArray.h in Headers */,
-				26474CD418D0CB710073DEBA /* RegisterInfos_mips64.h in Headers */,
-				260CC63015D04377002BF2E0 /* OptionValueBoolean.h in Headers */,
-				260CC63115D04377002BF2E0 /* OptionValueProperties.h in Headers */,
-				AF3F54C71B3BA5D500186E73 /* ProcessPOSIX.h in Headers */,
-				260CC63215D04377002BF2E0 /* OptionValueDictionary.h in Headers */,
-				262173A118395D3800C52091 /* SectionLoadHistory.h in Headers */,
-				260CC63315D04377002BF2E0 /* OptionValueEnumeration.h in Headers */,
-				AF3F54C31B3BA5D500186E73 /* POSIXStopInfo.h in Headers */,
-				AF45FDE618A1F3AC0007051C /* AppleGetThreadItemInfoHandler.h in Headers */,
 				260A63171861008E00FECF8E /* IOHandler.h in Headers */,
-				26474CD518D0CB710073DEBA /* RegisterInfos_x86_64.h in Headers */,
-				AF3F54D11B3BA5D500186E73 /* RegisterContextPOSIXProcessMonitor_x86.h in Headers */,
-				26474CCC18D0CB5B0073DEBA /* RegisterContextPOSIX_mips64.h in Headers */,
-				26474CBD18D0CB2D0073DEBA /* RegisterContextMach_arm.h in Headers */,
-				260CC63415D04377002BF2E0 /* OptionValueFileSpec.h in Headers */,
-				26BF51F41B3C754400016294 /* ABISysV_hexagon.h in Headers */,
-				26CFDCA11861638D000E63E5 /* Editline.h in Headers */,
-				26BC17B018C7F4CB00D2196D /* RegisterContextPOSIXCore_x86_64.h in Headers */,
-				6D55BAF01A8CD0BD00A70529 /* PlatformAndroidRemoteGDBServer.h in Headers */,
-				25EF23791AC09B4200908DF0 /* AdbClient.h in Headers */,
-				AF9B8F34182DB52900DA866F /* SystemRuntimeMacOSX.h in Headers */,
-				256CBDB51ADD0EFD00BC6CDC /* RegisterContextPOSIXCore_arm.h in Headers */,
-				26474CB518D0CB180073DEBA /* RegisterContextLinux_x86_64.h in Headers */,
-				26D1804716CEE12C00EDFB5B /* TimeSpecTimeout.h in Headers */,
-				260CC63515D04377002BF2E0 /* OptionValueFileSpecList.h in Headers */,
-				26474CCE18D0CB5B0073DEBA /* RegisterContextPOSIX_x86.h in Headers */,
-				26474CAD18D0CB070073DEBA /* RegisterContextFreeBSD_x86_64.h in Headers */,
-				490A36C2180F0E9300BA31F8 /* PlatformWindows.h in Headers */,
-				26EFC4CE18CFAF0D00865D87 /* ObjectFileJIT.h in Headers */,
-				260CC63615D04377002BF2E0 /* OptionValueFormat.h in Headers */,
-				AFC2340B1AF85CE100CDE8B6 /* CommandObjectLanguage.h in Headers */,
-				964463EE1A330C1B00154ED8 /* CompactUnwindInfo.h in Headers */,
-				AF77E0901A033C700096C0EA /* ABISysV_ppc.h in Headers */,
-				260A39A619647A3A004B4130 /* Pipe.h in Headers */,
-				2636411A1B34AEE200145B2F /* ABISysV_mips64.h in Headers */,
-				26D1804516CEE12500EDFB5B /* KQueue.h in Headers */,
-				AF77E0A21A033D360096C0EA /* RegisterContextFreeBSD_powerpc.h in Headers */,
-				260CC63715D04377002BF2E0 /* OptionValueSInt64.h in Headers */,
-				6D55BAEF1A8CD0B700A70529 /* PlatformAndroid.h in Headers */,
-				256CBDBD1ADD107200BC6CDC /* RegisterContextLinux_mips64.h in Headers */,
-				AF061F8C182C980000B6A19C /* HistoryUnwind.h in Headers */,
-				264A58EC1A7DBC8C00A6B1B0 /* OptionValueFormatEntity.h in Headers */,
-				26BF51F71B3C754400016294 /* ABISysV_i386.h in Headers */,
-				260CC63815D04377002BF2E0 /* OptionValueString.h in Headers */,
-				260CC63915D04377002BF2E0 /* OptionValueUInt64.h in Headers */,
-				256CBDC11ADD11C000BC6CDC /* RegisterContextPOSIX_arm.h in Headers */,
-				AF0F6E511739A76D009180FE /* RegisterContextKDP_arm64.h in Headers */,
-				AF3F54CB1B3BA5D500186E73 /* RegisterContextPOSIXProcessMonitor_arm64.h in Headers */,
-				AF77E0A01A033D360096C0EA /* RegisterContext_powerpc.h in Headers */,
-				260CC63A15D04377002BF2E0 /* OptionValueUUID.h in Headers */,
-				260A248E15D06C50009981B0 /* OptionValues.h in Headers */,
-				3FDFE53319A29304009756A7 /* HostInfoPosix.h in Headers */,
-				AF061F88182C97ED00B6A19C /* RegisterContextHistory.h in Headers */,
-				AF3F54C91B3BA5D500186E73 /* RegisterContextPOSIXProcessMonitor_arm.h in Headers */,
-				AF3F54CF1B3BA5D500186E73 /* RegisterContextPOSIXProcessMonitor_powerpc.h in Headers */,
-				26DAED6015D327A200E15819 /* OptionValuePathMappings.h in Headers */,
-				26ACEC2815E077AE00E94760 /* Property.h in Headers */,
-				AF3F54CD1B3BA5D500186E73 /* RegisterContextPOSIXProcessMonitor_mips64.h in Headers */,
-				26491E3B15E1DB8600CBFFC2 /* OptionValueRegex.h in Headers */,
-				4C56543319D1EFB6002E9C44 /* ThreadPlanPython.h in Headers */,
-				2697A39515E404BA003E682C /* OptionValueArch.h in Headers */,
-				26474CBF18D0CB2D0073DEBA /* RegisterContextMach_i386.h in Headers */,
-				26474CC118D0CB2D0073DEBA /* RegisterContextMach_x86_64.h in Headers */,
-				4959511D1A1BC49500F6F8FC /* ClangModulesDeclVendor.h in Headers */,
-				49724D9A1AD6ED390033C538 /* RenderScriptRuntime.h in Headers */,
-				4C73152219B7D71700F865A4 /* Iterable.h in Headers */,
-				2698699D15E6CBD0002415FF /* OperatingSystemPython.h in Headers */,
-				260D9B2715EC369500960137 /* ModuleSpec.h in Headers */,
-				947A1D651616476B0017C8D1 /* CommandObjectPlugin.h in Headers */,
-				262ED0051631FA2800879631 /* OptionGroupString.h in Headers */,
-				26474CA918D0CB070073DEBA /* RegisterContextFreeBSD_i386.h in Headers */,
-				944372DD171F6B4300E57C32 /* RegisterContextDummy.h in Headers */,
-				26474CCF18D0CB5B0073DEBA /* RegisterContextPOSIX.h in Headers */,
-				26CEB5F318762056008F575A /* CommandObjectGUI.h in Headers */,
-				26474CB318D0CB180073DEBA /* RegisterContextLinux_i386.h in Headers */,
-				AF061F8B182C980000B6A19C /* HistoryThread.h in Headers */,
-				AF3F54C51B3BA5D500186E73 /* POSIXThread.h in Headers */,
-				26BC179E18C7F2CB00D2196D /* JITLoaderList.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -6193,6 +5963,7 @@
 				2689002513353DDE00698AC0 /* CommandObjectSource.cpp in Sources */,
 				2689002613353DDE00698AC0 /* CommandObjectSyntax.cpp in Sources */,
 				267A48011B1411E40021A5BC /* XML.cpp in Sources */,
+				2666ADC61B3CB675001FAFD3 /* DynamicLoaderHexagonDYLD.cpp in Sources */,
 				3F8169331ABB7A6D001DA9DF /* SystemLifetimeManager.cpp in Sources */,
 				4959511F1A1BC4BC00F6F8FC /* ClangModulesDeclVendor.cpp in Sources */,
 				26BC179918C7F2B300D2196D /* JITLoader.cpp in Sources */,
@@ -6647,6 +6418,7 @@
 				94CD704E16F8DDEA00CF1E42 /* Cocoa.cpp in Sources */,
 				2698699B15E6CBD0002415FF /* OperatingSystemPython.cpp in Sources */,
 				947A1D641616476B0017C8D1 /* CommandObjectPlugin.cpp in Sources */,
+				2666ADC81B3CB675001FAFD3 /* HexagonDYLDRendezvous.cpp in Sources */,
 				262ED0081631FA3A00879631 /* OptionGroupString.cpp in Sources */,
 				94F48F251A01C687005C0EC6 /* StringPrinter.cpp in Sources */,
 				94094C6B163B6F840083A547 /* ValueObjectCast.cpp in Sources */,
