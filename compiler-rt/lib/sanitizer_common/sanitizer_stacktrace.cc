@@ -20,6 +20,8 @@ namespace __sanitizer {
 uptr StackTrace::GetNextInstructionPc(uptr pc) {
 #if defined(__mips__)
   return pc + 8;
+#elif defined(__powerpc__)
+  return pc + 4;
 #else
   return pc + 1;
 #endif

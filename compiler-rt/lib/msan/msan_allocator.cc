@@ -58,6 +58,15 @@ struct MsanMapUnmapCallback {
   typedef SizeClassAllocator64<kAllocatorSpace, kAllocatorSize, kMetadataSize,
                              DefaultSizeClassMap,
                              MsanMapUnmapCallback> PrimaryAllocator;
+#elif defined(__powerpc64__)
+  static const uptr kAllocatorSpace = 0x300000000000;
+  static const uptr kAllocatorSize  = 0x020000000000;  // 2T
+  static const uptr kMetadataSize  = sizeof(Metadata);
+  static const uptr kMaxAllowedMallocSize = 2UL << 30;  // 2G
+
+  typedef SizeClassAllocator64<kAllocatorSpace, kAllocatorSize, kMetadataSize,
+                             DefaultSizeClassMap,
+                             MsanMapUnmapCallback> PrimaryAllocator;
 #endif
 typedef SizeClassAllocatorLocalCache<PrimaryAllocator> AllocatorCache;
 typedef LargeMmapAllocator<MsanMapUnmapCallback> SecondaryAllocator;
