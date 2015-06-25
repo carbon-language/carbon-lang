@@ -869,8 +869,8 @@ static unsigned getNsectForSegSect(MachOObjectFile *Obj) {
 // It is called once for each symbol in a Mach-O file from
 // dumpSymbolNamesFromObject() and returns the section number for that symbol
 // if it is in a section, else it returns 0.
-static unsigned getNsectInMachO(MachOObjectFile &Obj, basic_symbol_iterator I) {
-  DataRefImpl Symb = I->getRawDataRefImpl();
+static unsigned getNsectInMachO(MachOObjectFile &Obj, BasicSymbolRef Sym) {
+  DataRefImpl Symb = Sym.getRawDataRefImpl();
   if (Obj.is64Bit()) {
     MachO::nlist_64 STE = Obj.getSymbol64TableEntry(Symb);
     if ((STE.n_type & MachO::N_TYPE) == MachO::N_SECT)
@@ -887,17 +887,16 @@ static void dumpSymbolNamesFromObject(SymbolicFile &Obj, bool printName,
                                       std::string ArchiveName = std::string(),
                                       std::string ArchitectureName =
                                         std::string()) {
-  basic_symbol_iterator IBegin = Obj.symbol_begin();
-  basic_symbol_iterator IEnd = Obj.symbol_end();
+  auto Symbols = Obj.symbols();
   if (DynamicSyms) {
     const auto *E = dyn_cast<ELFObjectFileBase>(&Obj);
     if (!E) {
       error("File format has no dynamic symbol table", Obj.getFileName());
       return;
     }
-    auto IDyn = E->getDynamicSymbolIterators();
-    IBegin = IDyn.begin();
-    IEnd = IDyn.end();
+    auto DynSymbols = E->getDynamicSymbolIterators();
+    Symbols =
+        make_range<basic_symbol_iterator>(DynSymbols.begin(), DynSymbols.end());
   }
   std::string NameBuffer;
   raw_string_ostream OS(NameBuffer);
@@ -911,13 +910,13 @@ static void dumpSymbolNamesFromObject(SymbolicFile &Obj, bool printName,
     if (Nsect == 0)
       return;
   }
-  for (basic_symbol_iterator I = IBegin; I != IEnd; ++I) {
-    uint32_t SymFlags = I->getFlags();
+  for (BasicSymbolRef Sym : Symbols) {
+    uint32_t SymFlags = Sym.getFlags();
     if (!DebugSyms && (SymFlags & SymbolRef::SF_FormatSpecific))
       continue;
     if (WithoutAliases) {
       if (IRObjectFile *IR = dyn_cast<IRObjectFile>(&Obj)) {
-        const GlobalValue *GV = IR->getSymbolGV(I->getRawDataRefImpl());
+        const GlobalValue *GV = IR->getSymbolGV(Sym.getRawDataRefImpl());
         if (GV && isa<GlobalAlias>(GV))
           continue;
       }
@@ -925,25 +924,24 @@ static void dumpSymbolNamesFromObject(SymbolicFile &Obj, bool printName,
     // If a "-s segname sectname" option was specified and this is a Mach-O
     // file and this section appears in this file, Nsect will be non-zero then
     // see if this symbol is a symbol from that section and if not skip it.
-    if (Nsect && Nsect != getNsectInMachO(*MachO, I))
+    if (Nsect && Nsect != getNsectInMachO(*MachO, Sym))
       continue;
     NMSymbol S;
     S.Size = 0;
     S.Address = UnknownAddress;
     if (PrintSize) {
-      if (auto *E = dyn_cast<ELFObjectFileBase>(&Obj)) {
-        symbol_iterator SymI = I;
-        S.Size = E->getSymbolSize(*SymI);
-      }
+      if (auto *E = dyn_cast<ELFObjectFileBase>(&Obj))
+        S.Size = E->getSymbolSize(Sym);
     }
-    if (PrintAddress && isa<ObjectFile>(Obj))
-      if (error(symbol_iterator(I)->getAddress(S.Address)))
+    if (PrintAddress && isa<ObjectFile>(Obj)) {
+      if (error(SymbolRef(Sym).getAddress(S.Address)))
         break;
-    S.TypeChar = getNMTypeChar(Obj, I);
-    if (error(I->printName(OS)))
+    }
+    S.TypeChar = getNMTypeChar(Obj, Sym);
+    if (error(Sym.printName(OS)))
       break;
     OS << '\0';
-    S.Symb = I->getRawDataRefImpl();
+    S.Symb = Sym.getRawDataRefImpl();
     SymbolList.push_back(S);
   }
 

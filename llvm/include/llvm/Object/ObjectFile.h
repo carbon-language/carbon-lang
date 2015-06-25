@@ -134,6 +134,9 @@ public:
   };
 
   SymbolRef(DataRefImpl SymbolP, const ObjectFile *Owner);
+  SymbolRef(const BasicSymbolRef &B) : BasicSymbolRef(B) {
+    assert(isa<ObjectFile>(BasicSymbolRef::getObject()));
+  }
 
   std::error_code getName(StringRef &Result) const;
   /// Returns the symbol virtual address (i.e. address at which it will be
