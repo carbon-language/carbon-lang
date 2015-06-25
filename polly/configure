@@ -3763,7 +3763,7 @@ test $ac_write_fail = 0 ||
   as_fn_error $? "write failure creating $CONFIG_STATUS" "$LINENO" 5
 
 
-      ac_configure_args="$ac_configure_args --with-int=imath"
+      ac_configure_args="$ac_configure_args --with-int=imath-32"
 
 
 # configure is writing to config.log, and then calls config.status.

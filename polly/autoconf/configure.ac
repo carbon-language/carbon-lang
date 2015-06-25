@@ -100,7 +100,7 @@ AC_CONFIG_SUBDIRS(lib/External/isl)
 AC_CONFIG_COMMANDS_POST([
   dnl Configure ISL with small integer optimization, but do not add the
   dnl option to config.status as it is mandatory for Polly.
-  ac_configure_args="$ac_configure_args --with-int=imath"
+  ac_configure_args="$ac_configure_args --with-int=imath-32"
 ])
 
 dnl This must be last

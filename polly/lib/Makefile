@@ -61,6 +61,7 @@ ISL_FILES= External/isl/basis_reduction_tab.c \
            External/isl/isl_ilp.c \
            External/isl/isl_imath.c \
            External/isl/isl_input.c \
+           External/isl/isl_int_sioimath.c \
            External/isl/isl_local_space.c \
            External/isl/isl_lp.c \
            External/isl/isl_map.c \
@@ -97,7 +98,7 @@ ISL_FILES= External/isl/basis_reduction_tab.c \
            External/isl/isl_transitive_closure.c \
            External/isl/isl_union_map.c \
            External/isl/isl_val.c \
-           External/isl/isl_val_imath.c \
+           External/isl/isl_val_sioimath.c \
            External/isl/isl_vec.c \
            External/isl/isl_version.c \
            External/isl/isl_vertices.c \

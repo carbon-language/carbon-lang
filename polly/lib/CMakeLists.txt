@@ -40,7 +40,7 @@ message(STATUS "ISL version: ${GIT_HEAD_ID}")
 # Enable small integer optimization and imath
 set(USE_GMP_FOR_MP OFF)
 set(USE_IMATH_FOR_MP ON)
-set(USE_SMALL_INT_OPT OFF)
+set(USE_SMALL_INT_OPT ON)
 
 # Determine compiler characteristics
 include(CheckCSourceCompiles)
@@ -112,6 +112,7 @@ set (ISL_FILES
     External/isl/isl_ilp.c
     External/isl/isl_imath.c
     External/isl/isl_input.c
+    External/isl/isl_int_sioimath.c
     External/isl/isl_local_space.c
     External/isl/isl_lp.c
     External/isl/isl_map.c
@@ -148,7 +149,7 @@ set (ISL_FILES
     External/isl/isl_transitive_closure.c
     External/isl/isl_union_map.c
     External/isl/isl_val.c
-    External/isl/isl_val_imath.c
+    External/isl/isl_val_sioimath.c
     External/isl/isl_vec.c
     External/isl/isl_version.c
     External/isl/isl_vertices.c
