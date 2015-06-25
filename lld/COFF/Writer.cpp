@@ -111,11 +111,18 @@ void OutputSection::writeHeaderTo(uint8_t *Buf) {
 void Writer::markLive() {
   if (!Config->DoGC)
     return;
-  for (StringRef Name : Config->GCRoots)
-    cast<Defined>(Symtab->find(Name))->markLive();
+  for (StringRef Name : Config->GCRoots) {
+    SymbolBody *B = Symtab->find(Name);
+    if (auto *D = dyn_cast<DefinedRegular>(B)) {
+      D->markLive();
+    } else if (auto *D = dyn_cast<DefinedCOMDAT>(B)) {
+      D->markLive();
+    }
+  }
   for (Chunk *C : Symtab->getChunks())
-    if (C->isRoot())
-      C->markLive();
+    if (auto *SC = dyn_cast<SectionChunk>(C))
+      if (SC->isRoot())
+        SC->markLive();
 }
 
 struct Hasher {
@@ -139,10 +146,13 @@ void Writer::createSections() {
   // First, bin chunks by name.
   std::map<StringRef, std::vector<Chunk *>> Map;
   for (Chunk *C : Symtab->getChunks()) {
-    if (Config->DoGC && !C->isLive()) {
-      if (Config->Verbose)
-        C->printDiscardedMessage();
-      continue;
+    if (Config->DoGC) {
+      auto *SC = dyn_cast<SectionChunk>(C);
+      if (SC && !SC->isLive()) {
+        if (Config->Verbose)
+          SC->printDiscardedMessage();
+        continue;
+      }
     }
     Map[C->getSectionName()].push_back(C);
   }

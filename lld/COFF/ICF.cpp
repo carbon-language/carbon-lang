@@ -39,9 +39,9 @@ void doICF(const std::vector<Chunk *> &Chunks) {
   std::unordered_set<SectionChunk *, Hasher, Equals> Set;
   bool removed = false;
   for (Chunk *C : Chunks) {
-    if (!C->isCOMDAT() || !C->isLive())
+    auto *SC = dyn_cast<SectionChunk>(C);
+    if (!SC || !SC->isCOMDAT() || !SC->isLive())
       continue;
-    auto *SC = reinterpret_cast<SectionChunk *>(C);
     auto P = Set.insert(SC);
     bool Inserted = P.second;
     if (Inserted)

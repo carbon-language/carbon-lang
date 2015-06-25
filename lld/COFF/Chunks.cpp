@@ -28,7 +28,7 @@ namespace lld {
 namespace coff {
 
 SectionChunk::SectionChunk(ObjectFile *F, const coff_section *H)
-    : File(F), Ptr(this), Header(H),
+    : Chunk(SectionKind), File(F), Ptr(this), Header(H),
       Relocs(File->getCOFFObj()->getRelocations(Header)),
       NumRelocs(std::distance(Relocs.begin(), Relocs.end())) {
   // Initialize SectionName.
@@ -39,16 +39,9 @@ SectionChunk::SectionChunk(ObjectFile *F, const coff_section *H)
   if (Shift > 0)
     Align = uint32_t(1) << (Shift - 1);
 
-  // When a new chunk is created, we don't if if it's going to make it
-  // to the final output. Initially all sections are unmarked in terms
-  // of garbage collection. The writer will call markLive() to mark
-  // all reachable section chunks.
-  Live = false;
-
   // COMDAT sections are not GC root. Non-text sections are not
   // subject of garbage collection (thus they are root).
-  if (!isCOMDAT() && !(Header->Characteristics & IMAGE_SCN_CNT_CODE))
-    Root = true;
+  Root = !isCOMDAT() && !(Header->Characteristics & IMAGE_SCN_CNT_CODE);
 }
 
 static void add16(uint8_t *P, int16_t V) { write16le(P, read16le(P) + V); }
@@ -93,13 +86,17 @@ void SectionChunk::mark() {
   // Mark all symbols listed in the relocation table for this section.
   for (const coff_relocation &Rel : Relocs) {
     SymbolBody *B = File->getSymbolBody(Rel.SymbolTableIndex);
-    if (auto *Def = dyn_cast<Defined>(B))
-      Def->markLive();
+    if (auto *D = dyn_cast<DefinedRegular>(B)) {
+      D->markLive();
+    } else if (auto *D = dyn_cast<DefinedCOMDAT>(B)) {
+      D->markLive();
+    }
   }
 
   // Mark associative sections if any.
   for (Chunk *C : AssocChildren)
-    C->markLive();
+    if (auto *SC = dyn_cast<SectionChunk>(C))
+      SC->markLive();
 }
 
 void SectionChunk::addAssociative(SectionChunk *Child) {
@@ -139,7 +136,7 @@ bool SectionChunk::isCOMDAT() const {
   return Header->Characteristics & IMAGE_SCN_LNK_COMDAT;
 }
 
-void SectionChunk::printDiscardedMessage() {
+void SectionChunk::printDiscardedMessage() const {
   if (this == Ptr) {
     // Removed by dead-stripping.
     llvm::dbgs() << "Discarded " << Sym->getName() << "\n";

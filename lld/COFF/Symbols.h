@@ -108,17 +108,13 @@ public:
   // The writer uses this information to apply relocations.
   virtual uint64_t getFileOff() = 0;
 
-  // Called by the garbage collector. All Defined subclasses should
-  // know how to call depending symbols' markLive functions.
-  virtual void markLive() {}
-
   int compare(SymbolBody *Other) override;
 };
 
 // Regular defined symbols read from object file symbol tables.
 class DefinedRegular : public Defined {
 public:
-  DefinedRegular(COFFObjectFile *F, COFFSymbolRef S, Chunk *C)
+  DefinedRegular(COFFObjectFile *F, COFFSymbolRef S, SectionChunk *C)
       : Defined(DefinedRegularKind), COFFFile(F), Sym(S), Data(C) {}
 
   static bool classof(const SymbolBody *S) {
@@ -128,15 +124,15 @@ public:
   StringRef getName() override;
   uint64_t getRVA() override { return Data->getRVA() + Sym.getValue(); }
   bool isExternal() override { return Sym.isExternal(); }
-  void markLive() override { Data->markLive(); }
   uint64_t getFileOff() override { return Data->getFileOff() + Sym.getValue(); }
   int compare(SymbolBody *Other) override;
+  void markLive() { Data->markLive(); }
 
 private:
   StringRef Name;
   COFFObjectFile *COFFFile;
   COFFSymbolRef Sym;
-  Chunk *Data;
+  SectionChunk *Data;
 };
 
 class DefinedCOMDAT : public Defined {
@@ -155,8 +151,8 @@ public:
   StringRef getName() override;
   uint64_t getRVA() override { return Data->repl()->getRVA() + Sym.getValue(); }
   bool isExternal() override { return Sym.isExternal(); }
-  void markLive() override { Data->repl()->markLive(); }
   int compare(SymbolBody *Other) override;
+  void markLive() { Data->repl()->markLive(); }
   Chunk *getChunk() { return Data->repl(); }
 
 private:
@@ -168,7 +164,7 @@ private:
 
 class DefinedCommon : public Defined {
 public:
-  DefinedCommon(COFFObjectFile *F, COFFSymbolRef S, Chunk *C)
+  DefinedCommon(COFFObjectFile *F, COFFSymbolRef S, CommonChunk *C)
       : Defined(DefinedCommonKind), COFFFile(F), Sym(S), Data(C) {}
 
   static bool classof(const SymbolBody *S) {
@@ -178,7 +174,6 @@ public:
   StringRef getName() override;
   uint64_t getRVA() override { return Data->getRVA(); }
   bool isExternal() override { return Sym.isExternal(); }
-  void markLive() override { Data->markLive(); }
   uint64_t getFileOff() override { return Data->getFileOff(); }
   int compare(SymbolBody *Other) override;
 
@@ -188,7 +183,7 @@ private:
   StringRef Name;
   COFFObjectFile *COFFFile;
   COFFSymbolRef Sym;
-  Chunk *Data;
+  CommonChunk *Data;
 };
 
 // Absolute symbols.

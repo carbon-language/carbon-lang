@@ -182,7 +182,7 @@ SymbolBody *ObjectFile::createSymbolBody(COFFSymbolRef Sym, const void *AuxP,
     return new (Alloc) Undefined(Name);
   }
   if (Sym.isCommon()) {
-    Chunk *C = new (Alloc) CommonChunk(Sym);
+    auto *C = new (Alloc) CommonChunk(Sym);
     Chunks.push_back(C);
     return new (Alloc) DefinedCommon(COFFObj.get(), Sym, C);
   }
@@ -213,10 +213,10 @@ SymbolBody *ObjectFile::createSymbolBody(COFFSymbolRef Sym, const void *AuxP,
       }
     }
   }
-  if (Chunk *C = SparseChunks[Sym.getSectionNumber()]) {
-    if (!C->isCOMDAT())
-      return new (Alloc) DefinedRegular(COFFObj.get(), Sym, C);
-    auto *SC = reinterpret_cast<SectionChunk *>(C);
+  Chunk *C = SparseChunks[Sym.getSectionNumber()];
+  if (auto *SC = cast_or_null<SectionChunk>(C)) {
+    if (!SC->isCOMDAT())
+      return new (Alloc) DefinedRegular(COFFObj.get(), Sym, SC);
     auto *B = new (Alloc) DefinedCOMDAT(COFFObj.get(), Sym, SC);
     if (Sym.getValue() == 0 && !AuxP)
       SC->setSymbol(B);
