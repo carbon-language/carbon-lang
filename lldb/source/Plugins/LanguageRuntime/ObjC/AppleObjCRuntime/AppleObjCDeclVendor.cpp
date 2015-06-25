@@ -496,7 +496,7 @@ AppleObjCDeclVendor::FinishDecl(clang::ObjCInterfaceDecl *interface_decl)
         if (!name || !type)
             return false;
         
-        const bool for_expression = true;
+        const bool for_expression = false;
         
         if (log)
             log->Printf("[  AOTV::FD] Instance variable [%s] [%s], offset at %" PRIx64, name, type, offset_ptr);
