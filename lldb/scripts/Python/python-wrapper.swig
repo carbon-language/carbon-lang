@@ -394,8 +394,6 @@ LLDBSwigPythonCallTypeScript
         else
             pvalue = pfunc(sb_value,session_dict);
 
-        pvalue = pfunc(sb_value,session_dict);
-
         Py_INCREF (session_dict);
 
         PyObjectToString(pvalue,retval);
