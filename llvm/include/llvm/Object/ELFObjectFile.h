@@ -394,6 +394,15 @@ uint32_t ELFObjectFile<ELFT>::getSymbolFlags(DataRefImpl Symb) const {
       EIter == EF.begin_symbols() || EIter == EF.begin_dynamic_symbols())
     Result |= SymbolRef::SF_FormatSpecific;
 
+  if (EF.getHeader()->e_machine == ELF::EM_ARM) {
+    if (ErrorOr<StringRef> NameOrErr = EF.getSymbolName(EIter)) {
+      StringRef Name = *NameOrErr;
+      if (Name.startswith("$d") || Name.startswith("$t") ||
+          Name.startswith("$a"))
+        Result |= SymbolRef::SF_FormatSpecific;
+    }
+  }
+
   if (ESym->st_shndx == ELF::SHN_UNDEF)
     Result |= SymbolRef::SF_Undefined;
 
