@@ -1532,8 +1532,13 @@ void MachineInstr::dump() const {
 }
 
 void MachineInstr::print(raw_ostream &OS, bool SkipOpers) const {
-  ModuleSlotTracker DummyMST(nullptr);
-  print(OS, DummyMST, SkipOpers);
+  const Module *M = nullptr;
+  if (const MachineBasicBlock *MBB = getParent())
+    if (const MachineFunction *MF = MBB->getParent())
+      M = MF->getFunction()->getParent();
+
+  ModuleSlotTracker MST(M);
+  print(OS, MST, SkipOpers);
 }
 
 void MachineInstr::print(raw_ostream &OS, ModuleSlotTracker &MST,
