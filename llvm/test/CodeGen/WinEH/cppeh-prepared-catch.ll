@@ -61,7 +61,7 @@ entry:
   %.i8 = call i8* @llvm.framerecover(i8* bitcast (void ()* @"\01?f@@YAXXZ" to i8*), i8* %1, i32 1)
   %2 = bitcast i8* %.i8 to double*
   %3 = bitcast double* %2 to i8*
-  invoke void (...) @llvm.donothing()
+  invoke void () @llvm.donothing()
           to label %done unwind label %lpad
 
 done:
@@ -201,7 +201,7 @@ declare void @llvm.frameescape(...) #3
 ; Function Attrs: nounwind readnone
 declare i8* @llvm.framerecover(i8*, i8*, i32) #2
 
-declare void @llvm.donothing(...)
+declare void @llvm.donothing()
 
 attributes #0 = { "less-precise-fpmad"="false" "no-frame-pointer-elim"="false" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "no-realign-stack" "stack-protector-buffer-size"="8" "unsafe-fp-math"="false" "use-soft-float"="false" "wineh-parent"="?f@@YAXXZ" }
 attributes #1 = { "less-precise-fpmad"="false" "no-frame-pointer-elim"="false" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "no-realign-stack" "stack-protector-buffer-size"="8" "unsafe-fp-math"="false" "use-soft-float"="false" }

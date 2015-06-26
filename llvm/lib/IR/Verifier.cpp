@@ -102,6 +102,11 @@ private:
       OS << '\n';
     }
   }
+  void Write(const CallSite *CS) {
+    if (!CS) 
+      return;
+    Write(CS->getInstruction());
+  }
 
   void Write(const Metadata *MD) {
     if (!MD)
@@ -367,7 +372,7 @@ private:
   void visitSelectInst(SelectInst &SI);
   void visitUserOp1(Instruction &I);
   void visitUserOp2(Instruction &I) { visitUserOp1(I); }
-  void visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI);
+  void visitIntrinsicFunctionCall(Intrinsic::ID ID, CallSite CS);
   template <class DbgIntrinsicTy>
   void visitDbgIntrinsic(StringRef Kind, DbgIntrinsicTy &DII);
   void visitAtomicCmpXchgInst(AtomicCmpXchgInst &CXI);
@@ -2289,6 +2294,10 @@ void Verifier::VerifyCallSite(CallSite CS) {
              "Function has metadata parameter but isn't an intrinsic", I);
   }
 
+  if (Function *F = CS.getCalledFunction())
+    if (Intrinsic::ID ID = (Intrinsic::ID)F->getIntrinsicID())
+      visitIntrinsicFunctionCall(ID, CS);
+
   visitInstruction(*I);
 }
 
@@ -2384,10 +2393,6 @@ void Verifier::visitCallInst(CallInst &CI) {
 
   if (CI.isMustTailCall())
     verifyMustTailCall(CI);
-
-  if (Function *F = CI.getCalledFunction())
-    if (Intrinsic::ID ID = F->getIntrinsicID())
-      visitIntrinsicFunctionCall(ID, CI);
 }
 
 void Verifier::visitInvokeInst(InvokeInst &II) {
@@ -2397,13 +2402,6 @@ void Verifier::visitInvokeInst(InvokeInst &II) {
   // instruction of the 'unwind' destination.
   Assert(II.getUnwindDest()->isLandingPad(),
          "The unwind destination does not have a landingpad instruction!", &II);
-
-  if (Function *F = II.getCalledFunction())
-    // TODO: Ideally we should use visitIntrinsicFunction here. But it uses
-    //       CallInst as an input parameter. It not woth updating this whole
-    //       function only to support statepoint verification.
-    if (F->getIntrinsicID() == Intrinsic::experimental_gc_statepoint)
-      VerifyStatepoint(ImmutableCallSite(&II));
 
   visitTerminatorInst(II);
 }
@@ -3146,7 +3144,7 @@ Verifier::VerifyIntrinsicIsVarArg(bool isVarArg,
 
 /// visitIntrinsicFunction - Allow intrinsics to be verified in different ways.
 ///
-void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
+void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallSite CI) {
   Function *IF = CI.getCalledFunction();
   Assert(IF->isDeclaration(), "Intrinsic functions should never be defined!",
          IF);
@@ -3208,10 +3206,10 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
   case Intrinsic::dbg_declare: // llvm.dbg.declare
     Assert(isa<MetadataAsValue>(CI.getArgOperand(0)),
            "invalid llvm.dbg.declare intrinsic call 1", &CI);
-    visitDbgIntrinsic("declare", cast<DbgDeclareInst>(CI));
+    visitDbgIntrinsic("declare", cast<DbgDeclareInst>(*CI.getInstruction()));
     break;
   case Intrinsic::dbg_value: // llvm.dbg.value
-    visitDbgIntrinsic("value", cast<DbgValueInst>(CI));
+    visitDbgIntrinsic("value", cast<DbgValueInst>(*CI.getInstruction()));
     break;
   case Intrinsic::memcpy:
   case Intrinsic::memmove:
@@ -3282,7 +3280,7 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
            "llvm.frameescape used outside of entry block", &CI);
     Assert(!SawFrameEscape,
            "multiple calls to llvm.frameescape in one function", &CI);
-    for (Value *Arg : CI.arg_operands()) {
+    for (Value *Arg : CI.args()) {
       if (isa<ConstantPointerNull>(Arg))
         continue; // Null values are allowed as placeholders.
       auto *AI = dyn_cast<AllocaInst>(Arg->stripPointerCasts());
@@ -3315,7 +3313,7 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
     Assert(CI.getParent()->getParent()->hasGC(),
            "Enclosing function does not use GC.", &CI);
 
-    VerifyStatepoint(ImmutableCallSite(&CI));
+    VerifyStatepoint(ImmutableCallSite(CI));
     break;
   case Intrinsic::experimental_gc_result_int:
   case Intrinsic::experimental_gc_result_float:
@@ -3377,7 +3375,7 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
 
     // Verify rest of the relocate arguments
 
-    GCRelocateOperands Ops(&CI);
+    GCRelocateOperands Ops(CI);
     ImmutableCallSite StatepointCS(Ops.getStatepoint());
 
     // Both the base and derived must be piped through the safepoint
@@ -3433,7 +3431,7 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
     // Relocated value must be a pointer type, but gc_relocate does not need to return the
     // same pointer type as the relocated pointer. It can be casted to the correct type later
     // if it's desired. However, they must have the same address space.
-    GCRelocateOperands Operands(&CI);
+    GCRelocateOperands Operands(CI);
     Assert(Operands.getDerivedPtr()->getType()->isPointerTy(),
            "gc.relocate: relocated value must be a gc pointer", &CI);
 
