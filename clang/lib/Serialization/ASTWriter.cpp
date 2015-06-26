@@ -4621,6 +4621,10 @@ void ASTWriter::WriteDeclUpdatesBlocks(RecordDataImpl &OffsetsRecord) {
       case UPD_DECL_EXPORTED:
         Record.push_back(getSubmoduleID(Update.getModule()));
         break;
+
+      case UPD_ADDED_ATTR_TO_RECORD:
+        WriteAttributes(llvm::makeArrayRef(Update.getAttr()), Record);
+        break;
       }
     }
 
@@ -5768,4 +5772,12 @@ void ASTWriter::RedefinedHiddenDefinition(const NamedDecl *D, Module *M) {
   assert(!WritingAST && "Already writing the AST!");
   assert(D->isHidden() && "expected a hidden declaration");
   DeclUpdates[D].push_back(DeclUpdate(UPD_DECL_EXPORTED, M));
+}
+
+void ASTWriter::AddedAttributeToRecord(const Attr *Attr,
+                                       const RecordDecl *Record) {
+  assert(!WritingAST && "Already writing the AST!");
+  if (!Record->isFromASTFile())
+    return;
+  DeclUpdates[Record].push_back(DeclUpdate(UPD_ADDED_ATTR_TO_RECORD, Attr));
 }

@@ -86,7 +86,7 @@ public:
 };
 
 /// ObjCBoxedExpr - used for generalized expression boxing.
-/// as in: @(strdup("hello world")) or @(random())
+/// as in: @(strdup("hello world")), @(random()) or @(view.frame)
 /// Also used for boxing non-parenthesized numeric literals;
 /// as in: @42 or \@true (c++/objc++) or \@__yes (c/objc).
 class ObjCBoxedExpr : public Expr {

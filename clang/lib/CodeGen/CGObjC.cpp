@@ -55,13 +55,15 @@ llvm::Value *CodeGenFunction::EmitObjCStringLiteral(const ObjCStringLiteral *E)
 
 /// EmitObjCBoxedExpr - This routine generates code to call
 /// the appropriate expression boxing method. This will either be
-/// one of +[NSNumber numberWith<Type>:], or +[NSString stringWithUTF8String:].
+/// one of +[NSNumber numberWith<Type>:], or +[NSString stringWithUTF8String:],
+/// or [NSValue valueWithBytes:objCType:].
 ///
 llvm::Value *
 CodeGenFunction::EmitObjCBoxedExpr(const ObjCBoxedExpr *E) {
   // Generate the correct selector for this literal's concrete type.
   // Get the method.
   const ObjCMethodDecl *BoxingMethod = E->getBoxingMethod();
+  const Expr *SubExpr = E->getSubExpr();
   assert(BoxingMethod && "BoxingMethod is null");
   assert(BoxingMethod->isClassMethod() && "BoxingMethod must be a class method");
   Selector Sel = BoxingMethod->getSelector();
@@ -74,7 +76,35 @@ CodeGenFunction::EmitObjCBoxedExpr(const ObjCBoxedExpr *E) {
   llvm::Value *Receiver = Runtime.GetClass(*this, ClassDecl);
 
   CallArgList Args;
-  EmitCallArgs(Args, BoxingMethod, E->arg_begin(), E->arg_end());
+  const ParmVarDecl *ArgDecl = *BoxingMethod->param_begin();
+  QualType ArgQT = ArgDecl->getType().getUnqualifiedType();
+  
+  // ObjCBoxedExpr supports boxing of structs and unions 
+  // via [NSValue valueWithBytes:objCType:]
+  const QualType ValueType(SubExpr->getType().getCanonicalType());
+  if (ValueType->isObjCBoxableRecordType()) {
+    // Emit CodeGen for first parameter
+    // and cast value to correct type
+    llvm::Value *Temporary = CreateMemTemp(SubExpr->getType());
+    EmitAnyExprToMem(SubExpr, Temporary, Qualifiers(), /*isInit*/ true);
+    llvm::Value *BitCast = Builder.CreateBitCast(Temporary,
+                                                 ConvertType(ArgQT));
+    Args.add(RValue::get(BitCast), ArgQT);
+
+    // Create char array to store type encoding
+    std::string Str;
+    getContext().getObjCEncodingForType(ValueType, Str);
+    llvm::GlobalVariable *GV = CGM.GetAddrOfConstantCString(Str);
+    
+    // Cast type encoding to correct type
+    const ParmVarDecl *EncodingDecl = BoxingMethod->parameters()[1];
+    QualType EncodingQT = EncodingDecl->getType().getUnqualifiedType();
+    llvm::Value *Cast = Builder.CreateBitCast(GV, ConvertType(EncodingQT));
+
+    Args.add(RValue::get(Cast), EncodingQT);
+  } else {
+    Args.add(EmitAnyExpr(SubExpr), ArgQT);
+  }
 
   RValue result = Runtime.GenerateMessageSend(
       *this, ReturnValueSlot(), BoxingMethod->getReturnType(), Sel, Receiver,

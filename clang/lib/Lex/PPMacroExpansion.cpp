@@ -1102,6 +1102,7 @@ static bool HasFeature(const Preprocessor &PP, const IdentifierInfo *II) {
       .Case("objc_array_literals", LangOpts.ObjC2)
       .Case("objc_dictionary_literals", LangOpts.ObjC2)
       .Case("objc_boxed_expressions", LangOpts.ObjC2)
+      .Case("objc_boxed_nsvalue_expressions", LangOpts.ObjC2)
       .Case("arc_cf_code_audited", true)
       .Case("objc_bridge_id", true)
       .Case("objc_bridge_id_on_typedefs", true)

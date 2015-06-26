@@ -30,6 +30,14 @@
 
 @class NSString;
 
+@interface NSValue
++ (NSValue *)valueWithBytes:(const void *)bytes objCType:(const char *)type;
+@end
+
+typedef struct __attribute__((objc_boxable)) _some_struct {
+  int dummy;
+} some_struct;
+
 id testArray(int idx, id p) {
   NSMutableArray *array;
   array[idx] = p;
@@ -42,6 +50,11 @@ void testDict(NSString *key, id newObject, id oldObject) {
   oldObject = dictionary[key];
   dictionary[key] = newObject;
   NSDictionary *dict = @{ key: newObject, key: oldObject };
+}
+
+void testBoxableValue() {
+  some_struct ss;
+  id value = @(ss);
 }
 
 #endif

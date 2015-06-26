@@ -119,8 +119,8 @@ Objective-C provides a new syntax for boxing C expressions:
 
     @( <expression> )
 
-Expressions of scalar (numeric, enumerated, BOOL) and C string pointer
-types are supported:
+Expressions of scalar (numeric, enumerated, BOOL), C string pointer
+and some C structures (via NSValue) are supported:
 
 .. code-block:: objc
 
@@ -135,6 +135,12 @@ types are supported:
     // strings.
     NSString *path = @(getenv("PATH"));       // [NSString stringWithUTF8String:(getenv("PATH"))]
     NSArray *pathComponents = [path componentsSeparatedByString:@":"];
+
+    // NS structs
+    NSValue *center = @(view.center);         // Point p = view.point;
+                                              // [NSValue valueWithBytes:&p objCType:@encode(Point)];
+    NSValue *frame = @(view.frame);           // Rect r = view.frame;
+                                              // [NSValue valueWithBytes:&r objCType:@encode(Rect)];
 
 Boxed Enums
 -----------
@@ -217,6 +223,42 @@ arbitrary pointer arithmetic, therefore programmers must ensure that the
 character data is valid. Passing ``NULL`` as the character pointer will
 raise an exception at runtime. When possible, the compiler will reject
 ``NULL`` character pointers used in boxed expressions.
+
+Boxed C Structures
+------------------
+
+Boxed expressions support construction of NSValue objects.
+It said that C structures can be used, the only requirement is:
+structure should be marked with ``objc_boxable`` attribute.
+To support older version of frameworks and/or third-party libraries
+you may need to add the attribute via ``typedef``.
+
+.. code-block:: objc
+
+    struct __attribute__((objc_boxable)) Point {
+        // ...
+    };
+
+    typedef struct __attribute__((objc_boxable)) _Size {
+        // ...
+    } Size;
+
+    typedef struct _Rect {
+        // ...
+    } Rect;
+
+    struct Point p;
+    NSValue *point = @(p);          // ok
+    Size s;
+    NSValue *size = @(s);           // ok
+
+    Rect r;
+    NSValue *bad_rect = @(r);       // error
+
+    typedef struct __attribute__((objc_boxable)) _Rect Rect;
+
+    NSValue *good_rect = @(r);      // ok
+
 
 Container Literals
 ==================
@@ -537,6 +579,22 @@ checks. Here are examples of their use:
             NSNumber *mass = [masses objectForKey:element];
             NSLog(@"the mass of %@ is %@", element, mass);
         }
+    #endif
+
+    #if __has_attribute(objc_boxable)
+        typedef struct __attribute__((objc_boxable)) _Rect Rect;
+    #endif
+
+    #if __has_feature(objc_boxed_nsvalue_expressions)
+        CABasicAnimation animation = [CABasicAnimation animationWithKeyPath:@"position"];
+        animation.fromValue = @(layer.position);
+        animation.toValue = @(newPosition);
+        [layer addAnimation:animation forKey:@"move"];
+    #else
+        CABasicAnimation animation = [CABasicAnimation animationWithKeyPath:@"position"];
+        animation.fromValue = [NSValue valueWithCGPoint:layer.position];
+        animation.toValue = [NSValue valueWithCGPoint:newPosition];
+        [layer addAnimation:animation forKey:@"move"];
     #endif
 
 Code can use also ``__has_feature(objc_bool)`` to check for the

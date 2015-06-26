@@ -563,7 +563,6 @@ ExprResult Sema::BuildObjCBoxedExpr(SourceRange SR, Expr *ValueExpr) {
     // Look for the appropriate method within NSNumber.
     BoxingMethod = getNSNumberFactoryMethod(*this, SR.getBegin(), ValueType);
     BoxedType = NSNumberPointer;
-
   } else if (const EnumType *ET = ValueType->getAs<EnumType>()) {
     if (!ET->getDecl()->isComplete()) {
       Diag(SR.getBegin(), diag::err_objc_incomplete_boxed_expression_type)
@@ -574,6 +573,109 @@ ExprResult Sema::BuildObjCBoxedExpr(SourceRange SR, Expr *ValueExpr) {
     BoxingMethod = getNSNumberFactoryMethod(*this, SR.getBegin(),
                                             ET->getDecl()->getIntegerType());
     BoxedType = NSNumberPointer;
+  } else if (ValueType->isObjCBoxableRecordType()) {
+    // Support for structure types, that marked as objc_boxable
+    // struct __attribute__((objc_boxable)) s { ... };
+    
+    // Look up the NSValue class, if we haven't done so already. It's cached
+    // in the Sema instance.
+    if (!NSValueDecl) {
+      IdentifierInfo *NSValueId =
+        NSAPIObj->getNSClassId(NSAPI::ClassId_NSValue);
+      NamedDecl *IF = LookupSingleName(TUScope, NSValueId,
+                                       SR.getBegin(), Sema::LookupOrdinaryName);
+      NSValueDecl = dyn_cast_or_null<ObjCInterfaceDecl>(IF);
+      if (!NSValueDecl) {
+        if (getLangOpts().DebuggerObjCLiteral) {
+          // Create a stub definition of NSValue.
+          DeclContext *TU = Context.getTranslationUnitDecl();
+          NSValueDecl = ObjCInterfaceDecl::Create(Context, TU,
+                                                  SourceLocation(), NSValueId,
+                                                  nullptr, SourceLocation());
+        } else {
+          // Otherwise, require a declaration of NSValue.
+          Diag(SR.getBegin(), diag::err_undeclared_nsvalue);
+          return ExprError();
+        }
+      } else if (!NSValueDecl->hasDefinition()) {
+        Diag(SR.getBegin(), diag::err_undeclared_nsvalue);
+        return ExprError();
+      }
+      
+      // generate the pointer to NSValue type.
+      QualType NSValueObject = Context.getObjCInterfaceType(NSValueDecl);
+      NSValuePointer = Context.getObjCObjectPointerType(NSValueObject);
+    }
+    
+    if (!ValueWithBytesObjCTypeMethod) {
+      IdentifierInfo *II[] = {
+        &Context.Idents.get("valueWithBytes"),
+        &Context.Idents.get("objCType")
+      };
+      Selector ValueWithBytesObjCType = Context.Selectors.getSelector(2, II);
+      
+      // Look for the appropriate method within NSValue.
+      BoxingMethod = NSValueDecl->lookupClassMethod(ValueWithBytesObjCType);
+      if (!BoxingMethod && getLangOpts().DebuggerObjCLiteral) {
+        // Debugger needs to work even if NSValue hasn't been defined.
+        TypeSourceInfo *ReturnTInfo = nullptr;
+        ObjCMethodDecl *M = ObjCMethodDecl::Create(
+                                               Context,
+                                               SourceLocation(),
+                                               SourceLocation(),
+                                               ValueWithBytesObjCType,
+                                               NSValuePointer,
+                                               ReturnTInfo,
+                                               NSValueDecl,
+                                               /*isInstance=*/false,
+                                               /*isVariadic=*/false,
+                                               /*isPropertyAccessor=*/false,
+                                               /*isImplicitlyDeclared=*/true,
+                                               /*isDefined=*/false,
+                                               ObjCMethodDecl::Required,
+                                               /*HasRelatedResultType=*/false);
+        
+        SmallVector<ParmVarDecl *, 2> Params;
+        
+        ParmVarDecl *bytes =
+        ParmVarDecl::Create(Context, M,
+                            SourceLocation(), SourceLocation(),
+                            &Context.Idents.get("bytes"),
+                            Context.VoidPtrTy.withConst(),
+                            /*TInfo=*/nullptr,
+                            SC_None, nullptr);
+        Params.push_back(bytes);
+        
+        QualType ConstCharType = Context.CharTy.withConst();
+        ParmVarDecl *type =
+        ParmVarDecl::Create(Context, M,
+                            SourceLocation(), SourceLocation(),
+                            &Context.Idents.get("type"),
+                            Context.getPointerType(ConstCharType),
+                            /*TInfo=*/nullptr,
+                            SC_None, nullptr);
+        Params.push_back(type);
+        
+        M->setMethodParams(Context, Params, None);
+        BoxingMethod = M;
+      }
+      
+      if (!validateBoxingMethod(*this, SR.getBegin(), NSValueDecl,
+                                ValueWithBytesObjCType, BoxingMethod))
+        return ExprError();
+      
+      ValueWithBytesObjCTypeMethod = BoxingMethod;
+    }
+    
+    if (!ValueType.isTriviallyCopyableType(Context)) {
+      Diag(SR.getBegin(), 
+           diag::err_objc_non_trivially_copyable_boxed_expression_type)
+        << ValueType << ValueExpr->getSourceRange();
+      return ExprError();
+    }
+
+    BoxingMethod = ValueWithBytesObjCTypeMethod;
+    BoxedType = NSValuePointer;
   }
 
   if (!BoxingMethod) {
@@ -582,13 +684,22 @@ ExprResult Sema::BuildObjCBoxedExpr(SourceRange SR, Expr *ValueExpr) {
     return ExprError();
   }
   
-  // Convert the expression to the type that the parameter requires.
-  ParmVarDecl *ParamDecl = BoxingMethod->parameters()[0];
-  InitializedEntity Entity = InitializedEntity::InitializeParameter(Context,
-                                                                    ParamDecl);
-  ExprResult ConvertedValueExpr = PerformCopyInitialization(Entity,
-                                                            SourceLocation(),
-                                                            ValueExpr);
+  DiagnoseUseOfDecl(BoxingMethod, SR.getBegin());
+
+  ExprResult ConvertedValueExpr;
+  if (ValueType->isObjCBoxableRecordType()) {
+    InitializedEntity IE = InitializedEntity::InitializeTemporary(ValueType);
+    ConvertedValueExpr = PerformCopyInitialization(IE, ValueExpr->getExprLoc(), 
+                                                   ValueExpr);
+  } else {
+    // Convert the expression to the type that the parameter requires.
+    ParmVarDecl *ParamDecl = BoxingMethod->parameters()[0];
+    InitializedEntity IE = InitializedEntity::InitializeParameter(Context,
+                                                                  ParamDecl);
+    ConvertedValueExpr = PerformCopyInitialization(IE, SourceLocation(),
+                                                   ValueExpr);
+  }
+  
   if (ConvertedValueExpr.isInvalid())
     return ExprError();
   ValueExpr = ConvertedValueExpr.get();

@@ -20,6 +20,7 @@
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/Mangle.h"
+#include "clang/AST/ASTMutationListener.h"
 #include "clang/Basic/CharInfo.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/TargetInfo.h"
@@ -3990,6 +3991,34 @@ static void handleObjCRuntimeName(Sema &S, Decl *D,
                                  Attr.getAttributeSpellingListIndex()));
 }
 
+// when a user wants to use objc_boxable with a union or struct
+// but she doesn't have access to the declaration (legacy/third-party code)
+// then she can 'enable' this feature via trick with a typedef
+// e.g.:
+// typedef struct __attribute((objc_boxable)) legacy_struct legacy_struct;
+static void handleObjCBoxable(Sema &S, Decl *D, const AttributeList &Attr) {
+  bool notify = false;
+
+  RecordDecl *RD = dyn_cast<RecordDecl>(D);
+  if (RD && RD->getDefinition()) {
+    RD = RD->getDefinition();
+    notify = true;
+  }
+
+  if (RD) {
+    ObjCBoxableAttr *BoxableAttr = ::new (S.Context)
+                          ObjCBoxableAttr(Attr.getRange(), S.Context,
+                                          Attr.getAttributeSpellingListIndex());
+    RD->addAttr(BoxableAttr);
+    if (notify) {
+      // we need to notify ASTReader/ASTWriter about
+      // modification of existing declaration
+      if (ASTMutationListener *L = S.getASTMutationListener())
+        L->AddedAttributeToRecord(BoxableAttr, RD);
+    }
+  }
+}
+
 static void handleObjCOwnershipAttr(Sema &S, Decl *D,
                                     const AttributeList &Attr) {
   if (hasDeclarator(D)) return;
@@ -4757,6 +4786,10 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
 
   case AttributeList::AT_ObjCRuntimeName:
     handleObjCRuntimeName(S, D, Attr);
+    break;
+
+  case AttributeList::AT_ObjCBoxable:
+    handleObjCBoxable(S, D, Attr);
     break;
           
   case AttributeList::AT_CFAuditedTransfer:

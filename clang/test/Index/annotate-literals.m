@@ -29,44 +29,61 @@ typedef unsigned char BOOL;
 + (id)dictionaryWithObjects:(const id [])objects forKeys:(const id [])keys count:(unsigned long)cnt;
 @end
 
-void test_literals(id k1, id o1, id k2, id o2, id k3) {
+@interface NSValue
++ (NSValue *)valueWithBytes:(const void *)value objCType:(const char *)type;
+@end
+
+typedef struct __attribute__((objc_boxable)) _c_struct {
+  int dummy;
+} c_struct;
+
+void test_literals(id k1, id o1, id k2, id o2, id k3, c_struct s) {
   id objects = @[ o1, o2 ];
   id dict = @{ k1 : o1,
                k2 : o2,
                k3 : @17 };
+  id val = @(s);
 }
 
 
-// RUN: c-index-test -test-annotate-tokens=%s:33:1:37:1 %s | FileCheck -check-prefix=CHECK-LITERALS %s
+// RUN: c-index-test -test-annotate-tokens=%s:41:1:46:1 %s | FileCheck -check-prefix=CHECK-LITERALS %s
 
-// CHECK-LITERALS: Identifier: "id" [33:3 - 33:5] TypeRef=id:0:0
-// CHECK-LITERALS: Identifier: "objects" [33:6 - 33:13] VarDecl=objects:33:6 (Definition)
-// CHECK-LITERALS: Punctuation: "=" [33:14 - 33:15] VarDecl=objects:33:6 (Definition)
-// CHECK-LITERALS: Punctuation: "@" [33:16 - 33:17] UnexposedExpr=
-// CHECK-LITERALS: Punctuation: "[" [33:17 - 33:18] UnexposedExpr=
-// CHECK-LITERALS: Identifier: "o1" [33:19 - 33:21] DeclRefExpr=o1:32:30
-// CHECK-LITERALS: Punctuation: "," [33:21 - 33:22] UnexposedExpr=
-// CHECK-LITERALS: Identifier: "o2" [33:23 - 33:25] DeclRefExpr=o2:32:44
-// CHECK-LITERALS: Punctuation: "]" [33:26 - 33:27] UnexposedExpr=
-// CHECK-LITERALS: Punctuation: ";" [33:27 - 33:28] DeclStmt=
-// CHECK-LITERALS: Identifier: "id" [34:3 - 34:5] TypeRef=id:0:0
-// CHECK-LITERALS: Identifier: "dict" [34:6 - 34:10] VarDecl=dict:34:6 (Definition)
-// CHECK-LITERALS: Punctuation: "=" [34:11 - 34:12] VarDecl=dict:34:6 (Definition)
-// CHECK-LITERALS: Punctuation: "@" [34:13 - 34:14] UnexposedExpr=
-// CHECK-LITERALS: Punctuation: "{" [34:14 - 34:15] UnexposedExpr=
-// CHECK-LITERALS: Identifier: "k1" [34:16 - 34:18] DeclRefExpr=k1:32:23
-// CHECK-LITERALS: Punctuation: ":" [34:19 - 34:20] UnexposedExpr=
-// CHECK-LITERALS: Identifier: "o1" [34:21 - 34:23] DeclRefExpr=o1:32:30
-// CHECK-LITERALS: Punctuation: "," [34:23 - 34:24] UnexposedExpr=
-// CHECK-LITERALS: Identifier: "k2" [35:16 - 35:18] DeclRefExpr=k2:32:37
-// CHECK-LITERALS: Punctuation: ":" [35:19 - 35:20] UnexposedExpr=
-// CHECK-LITERALS: Identifier: "o2" [35:21 - 35:23] DeclRefExpr=o2:32:44
-// CHECK-LITERALS: Punctuation: "," [35:23 - 35:24] UnexposedExpr=
-// CHECK-LITERALS: Identifier: "k3" [36:16 - 36:18] DeclRefExpr=k3:32:51
-// CHECK-LITERALS: Punctuation: ":" [36:19 - 36:20] UnexposedExpr=
-// CHECK-LITERALS: Punctuation: "@" [36:21 - 36:22] UnexposedExpr=
-// CHECK-LITERALS: Literal: "17" [36:22 - 36:24] IntegerLiteral=
-// CHECK-LITERALS: Punctuation: "}" [36:25 - 36:26] UnexposedExpr=
-// CHECK-LITERALS: Punctuation: ";" [36:26 - 36:27] DeclStmt=
-// CHECK-LITERALS: Punctuation: "}" [37:1 - 37:2] CompoundStmt=
+// CHECK-LITERALS: Identifier: "id" [41:3 - 41:5] TypeRef=id:0:0
+// CHECK-LITERALS: Identifier: "objects" [41:6 - 41:13] VarDecl=objects:41:6 (Definition)
+// CHECK-LITERALS: Punctuation: "=" [41:14 - 41:15] VarDecl=objects:41:6 (Definition)
+// CHECK-LITERALS: Punctuation: "@" [41:16 - 41:17] UnexposedExpr=
+// CHECK-LITERALS: Punctuation: "[" [41:17 - 41:18] UnexposedExpr=
+// CHECK-LITERALS: Identifier: "o1" [41:19 - 41:21] DeclRefExpr=o1:40:30
+// CHECK-LITERALS: Punctuation: "," [41:21 - 41:22] UnexposedExpr=
+// CHECK-LITERALS: Identifier: "o2" [41:23 - 41:25] DeclRefExpr=o2:40:44
+// CHECK-LITERALS: Punctuation: "]" [41:26 - 41:27] UnexposedExpr=
+// CHECK-LITERALS: Punctuation: ";" [41:27 - 41:28] DeclStmt=
+// CHECK-LITERALS: Identifier: "id" [42:3 - 42:5] TypeRef=id:0:0
+// CHECK-LITERALS: Identifier: "dict" [42:6 - 42:10] VarDecl=dict:42:6 (Definition)
+// CHECK-LITERALS: Punctuation: "=" [42:11 - 42:12] VarDecl=dict:42:6 (Definition)
+// CHECK-LITERALS: Punctuation: "@" [42:13 - 42:14] UnexposedExpr=
+// CHECK-LITERALS: Punctuation: "{" [42:14 - 42:15] UnexposedExpr=
+// CHECK-LITERALS: Identifier: "k1" [42:16 - 42:18] DeclRefExpr=k1:40:23
+// CHECK-LITERALS: Punctuation: ":" [42:19 - 42:20] UnexposedExpr=
+// CHECK-LITERALS: Identifier: "o1" [42:21 - 42:23] DeclRefExpr=o1:40:30
+// CHECK-LITERALS: Punctuation: "," [42:23 - 42:24] UnexposedExpr=
+// CHECK-LITERALS: Identifier: "k2" [43:16 - 43:18] DeclRefExpr=k2:40:37
+// CHECK-LITERALS: Punctuation: ":" [43:19 - 43:20] UnexposedExpr=
+// CHECK-LITERALS: Identifier: "o2" [43:21 - 43:23] DeclRefExpr=o2:40:44
+// CHECK-LITERALS: Punctuation: "," [43:23 - 43:24] UnexposedExpr=
+// CHECK-LITERALS: Identifier: "k3" [44:16 - 44:18] DeclRefExpr=k3:40:51
+// CHECK-LITERALS: Punctuation: ":" [44:19 - 44:20] UnexposedExpr=
+// CHECK-LITERALS: Punctuation: "@" [44:21 - 44:22] UnexposedExpr=
+// CHECK-LITERALS: Literal: "17" [44:22 - 44:24] IntegerLiteral=
+// CHECK-LITERALS: Punctuation: "}" [44:25 - 44:26] UnexposedExpr=
+// CHECK-LITERALS: Punctuation: ";" [44:26 - 44:27] DeclStmt=
+// CHECK-LITERALS: Identifier: "id" [45:3 - 45:5] TypeRef=id:0:0
+// CHECK-LITERALS: Identifier: "val" [45:6 - 45:9] VarDecl=val:45:6 (Definition)
+// CHECK-LITERALS: Punctuation: "=" [45:10 - 45:11] VarDecl=val:45:6 (Definition)
+// CHECK-LITERALS: Punctuation: "@" [45:12 - 45:13] UnexposedExpr=
+// CHECK-LITERALS: Punctuation: "(" [45:13 - 45:14] ParenExpr=
+// CHECK-LITERALS: Identifier: "s" [45:14 - 45:15] DeclRefExpr=s:40:64
+// CHECK-LITERALS: Punctuation: ")" [45:15 - 45:16] ParenExpr=
+// CHECK-LITERALS: Punctuation: ";" [45:16 - 45:17] DeclStmt=
+// CHECK-LITERALS: Punctuation: "}" [46:1 - 46:2] CompoundStmt=
 
