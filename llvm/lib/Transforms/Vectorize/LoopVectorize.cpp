@@ -96,7 +96,7 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Local.h"
-#include "llvm/Transforms/Utils/VectorUtils.h"
+#include "llvm/Analysis/VectorUtils.h"
 #include "llvm/Transforms/Utils/LoopUtils.h"
 #include <algorithm>
 #include <map>

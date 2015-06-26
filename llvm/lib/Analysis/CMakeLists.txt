@@ -62,6 +62,7 @@ add_llvm_library(LLVMAnalysis
   TypeBasedAliasAnalysis.cpp
   ScopedNoAliasAA.cpp
   ValueTracking.cpp
+  VectorUtils.cpp
 
   ADDITIONAL_HEADER_DIRS
   ${LLVM_MAIN_INCLUDE_DIR}/llvm/Analysis
