@@ -1105,6 +1105,8 @@ public:
   // Debugging support
   //
   void print(raw_ostream &OS, bool SkipOpers = false) const;
+  void print(raw_ostream &OS, ModuleSlotTracker &MST,
+             bool SkipOpers = false) const;
   void dump() const;
 
   //===--------------------------------------------------------------------===//

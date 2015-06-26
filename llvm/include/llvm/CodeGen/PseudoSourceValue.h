@@ -29,8 +29,7 @@ namespace llvm {
   /// space), or constant pool.
   class PseudoSourceValue {
   private:
-    friend raw_ostream &llvm::operator<<(raw_ostream &OS,
-                                         const MachineMemOperand &MMO);
+    friend class MachineMemOperand; // For printCustom().
 
     /// printCustom - Implement printing for PseudoSourceValue. This is called
     /// from Value::print or Value's operator<<.

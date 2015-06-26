@@ -27,6 +27,7 @@ class MachineBasicBlock;
 class MachineInstr;
 class MachineRegisterInfo;
 class MDNode;
+class ModuleSlotTracker;
 class TargetMachine;
 class TargetRegisterInfo;
 class hash_code;
@@ -218,6 +219,8 @@ public:
   void clearParent() { ParentMI = nullptr; }
 
   void print(raw_ostream &os, const TargetRegisterInfo *TRI = nullptr) const;
+  void print(raw_ostream &os, ModuleSlotTracker &MST,
+             const TargetRegisterInfo *TRI = nullptr) const;
 
   //===--------------------------------------------------------------------===//
   // Accessors that tell you what kind of MachineOperand you're looking at.
