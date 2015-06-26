@@ -6,11 +6,6 @@
 // RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:new_delete_type_mismatch=0     %run %t scalar
 // RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:new_delete_type_mismatch=0     %run %t array
 
-// FIXME: the following two lines are not true after r232788.
-// Sized-delete is implemented with a weak delete() definition.
-// Weak symbols are kind of broken on Android.
-// XFAIL: android
-
 #include <new>
 #include <stdio.h>
 #include <string>
