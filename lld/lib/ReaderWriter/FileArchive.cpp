@@ -215,9 +215,7 @@ private:
         continue;
 
       // Returns true if it's a data symbol.
-      SymbolRef::Type type;
-      if (sym.getType(type))
-        return false;
+      SymbolRef::Type type = sym.getType();
       if (type == SymbolRef::ST_Data)
         return true;
     }
