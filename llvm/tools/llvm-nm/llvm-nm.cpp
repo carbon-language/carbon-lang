@@ -250,15 +250,7 @@ static char isSymbolList64Bit(SymbolicFile &Obj) {
     return false;
   if (MachOObjectFile *MachO = dyn_cast<MachOObjectFile>(&Obj))
     return MachO->is64Bit();
-  if (isa<ELF32LEObjectFile>(Obj))
-    return false;
-  if (isa<ELF64LEObjectFile>(Obj))
-    return true;
-  if (isa<ELF32BEObjectFile>(Obj))
-    return false;
-  if (isa<ELF64BEObjectFile>(Obj))
-    return true;
-  return false;
+  return cast<ELFObjectFileBase>(Obj).getBytesInAddress() == 8;
 }
 
 static StringRef CurrentFilename;
