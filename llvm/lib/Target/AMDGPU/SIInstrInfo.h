@@ -117,7 +117,7 @@ public:
   // register.  If there is no hardware instruction that can store to \p
   // DstRC, then AMDGPU::COPY is returned.
   unsigned getMovOpcode(const TargetRegisterClass *DstRC) const;
-  unsigned commuteOpcode(const MachineInstr &MI) const;
+  int commuteOpcode(const MachineInstr &MI) const;
 
   MachineInstr *commuteInstruction(MachineInstr *MI,
                                    bool NewMI = false) const override;

@@ -440,22 +440,22 @@ SIInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
   }
 }
 
-unsigned SIInstrInfo::commuteOpcode(const MachineInstr &MI) const {
+int SIInstrInfo::commuteOpcode(const MachineInstr &MI) const {
   const unsigned Opcode = MI.getOpcode();
 
   int NewOpc;
 
   // Try to map original to commuted opcode
   NewOpc = AMDGPU::getCommuteRev(Opcode);
-  // Check if the commuted (REV) opcode exists on the target.
-  if (NewOpc != -1 && pseudoToMCOpcode(NewOpc) != -1)
-    return NewOpc;
+  if (NewOpc != -1)
+    // Check if the commuted (REV) opcode exists on the target.
+    return pseudoToMCOpcode(NewOpc) != -1 ? NewOpc : -1;
 
   // Try to map commuted to original opcode
   NewOpc = AMDGPU::getCommuteOrig(Opcode);
-  // Check if the original (non-REV) opcode exists on the target.
-  if (NewOpc != -1 && pseudoToMCOpcode(NewOpc) != -1)
-    return NewOpc;
+  if (NewOpc != -1)
+    // Check if the original (non-REV) opcode exists on the target.
+    return pseudoToMCOpcode(NewOpc) != -1 ? NewOpc : -1;
 
   return Opcode;
 }
@@ -771,6 +771,10 @@ MachineInstr *SIInstrInfo::commuteInstruction(MachineInstr *MI,
   if (MI->getNumOperands() < 3)
     return nullptr;
 
+  int CommutedOpcode = commuteOpcode(*MI);
+  if (CommutedOpcode == -1)
+    return nullptr;
+
   int Src0Idx = AMDGPU::getNamedOperandIdx(MI->getOpcode(),
                                            AMDGPU::OpName::src0);
   assert(Src0Idx != -1 && "Should always have src0 operand");
@@ -833,7 +837,7 @@ MachineInstr *SIInstrInfo::commuteInstruction(MachineInstr *MI,
   }
 
   if (MI)
-    MI->setDesc(get(commuteOpcode(*MI)));
+    MI->setDesc(get(CommutedOpcode));
 
   return MI;
 }
