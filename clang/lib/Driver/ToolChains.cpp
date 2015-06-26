@@ -2966,11 +2966,13 @@ static Distro DetectDistro(llvm::Triple::ArchType Arch) {
 /// so we provide a rough mapping here.
 static std::string getMultiarchTriple(const llvm::Triple &TargetTriple,
                                       StringRef SysRoot) {
+  llvm::Triple::EnvironmentType TargetEnvironment = TargetTriple.getEnvironment();
+
   // For most architectures, just use whatever we have rather than trying to be
   // clever.
   switch (TargetTriple.getArch()) {
   default:
-    return TargetTriple.str();
+    break;
 
   // We use the existence of '/lib/<triple>' as a directory to detect some
   // common linux triples that don't quite match the Clang triple for both
@@ -2978,84 +2980,86 @@ static std::string getMultiarchTriple(const llvm::Triple &TargetTriple,
   // regardless of what the actual target triple is.
   case llvm::Triple::arm:
   case llvm::Triple::thumb:
-    if (TargetTriple.getEnvironment() == llvm::Triple::GNUEABIHF) {
+    if (TargetEnvironment == llvm::Triple::GNUEABIHF) {
       if (llvm::sys::fs::exists(SysRoot + "/lib/arm-linux-gnueabihf"))
         return "arm-linux-gnueabihf";
     } else {
       if (llvm::sys::fs::exists(SysRoot + "/lib/arm-linux-gnueabi"))
         return "arm-linux-gnueabi";
     }
-    return TargetTriple.str();
+    break;
   case llvm::Triple::armeb:
   case llvm::Triple::thumbeb:
-    if (TargetTriple.getEnvironment() == llvm::Triple::GNUEABIHF) {
+    if (TargetEnvironment == llvm::Triple::GNUEABIHF) {
       if (llvm::sys::fs::exists(SysRoot + "/lib/armeb-linux-gnueabihf"))
         return "armeb-linux-gnueabihf";
     } else {
       if (llvm::sys::fs::exists(SysRoot + "/lib/armeb-linux-gnueabi"))
         return "armeb-linux-gnueabi";
     }
-    return TargetTriple.str();
+    break;
   case llvm::Triple::x86:
     if (llvm::sys::fs::exists(SysRoot + "/lib/i386-linux-gnu"))
       return "i386-linux-gnu";
-    return TargetTriple.str();
+    break;
   case llvm::Triple::x86_64:
     // We don't want this for x32, otherwise it will match x86_64 libs
-    if (TargetTriple.getEnvironment() != llvm::Triple::GNUX32 &&
+    if (TargetEnvironment != llvm::Triple::GNUX32 &&
         llvm::sys::fs::exists(SysRoot + "/lib/x86_64-linux-gnu"))
       return "x86_64-linux-gnu";
-    return TargetTriple.str();
+    break;
   case llvm::Triple::aarch64:
     if (llvm::sys::fs::exists(SysRoot + "/lib/aarch64-linux-gnu"))
       return "aarch64-linux-gnu";
-    return TargetTriple.str();
+    break;
   case llvm::Triple::aarch64_be:
     if (llvm::sys::fs::exists(SysRoot + "/lib/aarch64_be-linux-gnu"))
       return "aarch64_be-linux-gnu";
-    return TargetTriple.str();
+    break;
   case llvm::Triple::mips:
     if (llvm::sys::fs::exists(SysRoot + "/lib/mips-linux-gnu"))
       return "mips-linux-gnu";
-    return TargetTriple.str();
+    break;
   case llvm::Triple::mipsel:
     if (llvm::sys::fs::exists(SysRoot + "/lib/mipsel-linux-gnu"))
       return "mipsel-linux-gnu";
-    return TargetTriple.str();
+    break;
   case llvm::Triple::mips64:
     if (llvm::sys::fs::exists(SysRoot + "/lib/mips64-linux-gnu"))
       return "mips64-linux-gnu";
     if (llvm::sys::fs::exists(SysRoot + "/lib/mips64-linux-gnuabi64"))
       return "mips64-linux-gnuabi64";
-    return TargetTriple.str();
+    break;
   case llvm::Triple::mips64el:
     if (llvm::sys::fs::exists(SysRoot + "/lib/mips64el-linux-gnu"))
       return "mips64el-linux-gnu";
     if (llvm::sys::fs::exists(SysRoot + "/lib/mips64el-linux-gnuabi64"))
       return "mips64el-linux-gnuabi64";
-    return TargetTriple.str();
+    break;
   case llvm::Triple::ppc:
     if (llvm::sys::fs::exists(SysRoot + "/lib/powerpc-linux-gnuspe"))
       return "powerpc-linux-gnuspe";
     if (llvm::sys::fs::exists(SysRoot + "/lib/powerpc-linux-gnu"))
       return "powerpc-linux-gnu";
-    return TargetTriple.str();
+    break;
   case llvm::Triple::ppc64:
     if (llvm::sys::fs::exists(SysRoot + "/lib/powerpc64-linux-gnu"))
       return "powerpc64-linux-gnu";
+    break;
   case llvm::Triple::ppc64le:
     if (llvm::sys::fs::exists(SysRoot + "/lib/powerpc64le-linux-gnu"))
       return "powerpc64le-linux-gnu";
-    return TargetTriple.str();
+    break;
   case llvm::Triple::sparc:
     if (llvm::sys::fs::exists(SysRoot + "/lib/sparc-linux-gnu"))
       return "sparc-linux-gnu";
-    return TargetTriple.str();
+    break;
   case llvm::Triple::sparcv9:
     if (llvm::sys::fs::exists(SysRoot + "/lib/sparc64-linux-gnu"))
       return "sparc64-linux-gnu";
-    return TargetTriple.str();
+    break;
   }
+  return TargetTriple.str();
 }
 
 static void addPathIfExists(Twine Path, ToolChain::path_list &Paths) {
