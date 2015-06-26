@@ -2720,8 +2720,13 @@ MachineOperand *SIInstrInfo::getNamedOperand(MachineInstr &MI,
 
 uint64_t SIInstrInfo::getDefaultRsrcDataFormat() const {
   uint64_t RsrcDataFormat = AMDGPU::RSRC_DATA_FORMAT;
-  if (ST.isAmdHsaOS())
+  if (ST.isAmdHsaOS()) {
     RsrcDataFormat |= (1ULL << 56);
+
+  if (ST.getGeneration() >= AMDGPUSubtarget::VOLCANIC_ISLANDS)
+    // Set MTYPE = 2
+    RsrcDataFormat |= (2ULL << 59);
+  }
 
   return RsrcDataFormat;
 }
