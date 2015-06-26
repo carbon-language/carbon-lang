@@ -48,15 +48,15 @@ class DelayLoadContents {
 public:
   void add(DefinedImportData *Sym) { Imports.push_back(Sym); }
   bool empty() { return Imports.empty(); }
-  std::vector<Chunk *> getChunks(Defined *Helper);
-  std::vector<std::unique_ptr<Chunk>> &getDataChunks() { return ModuleHandles; }
+  void create(Defined *Helper);
+  std::vector<Chunk *> getChunks();
+  std::vector<Chunk *> getDataChunks();
   std::vector<std::unique_ptr<Chunk>> &getCodeChunks() { return Thunks; }
 
   uint64_t getDirRVA() { return Dirs[0]->getRVA(); }
   uint64_t getDirSize();
 
 private:
-  void create();
   Defined *Helper;
   std::vector<DefinedImportData *> Imports;
   std::vector<std::unique_ptr<Chunk>> Dirs;

@@ -228,6 +228,7 @@ public:
 
   void writeTo(uint8_t *Buf) override {
     auto *E = (delay_import_directory_table_entry *)(Buf + FileOff);
+    E->Attributes = 1;
     E->Name = DLLName->getRVA();
     E->ModuleHandle = ModuleHandle->getRVA();
     E->DelayImportAddressTable = AddressTab->getRVA();
@@ -272,15 +273,14 @@ static const uint8_t Thunk[] = {
 // A chunk for the delay import thunk.
 class ThunkChunk : public Chunk {
 public:
-  ThunkChunk(Defined *I, Defined *H) : Imp(I), Helper(H) {}
-
+  ThunkChunk(Defined *I, Chunk *D, Defined *H) : Imp(I), Desc(D), Helper(H) {}
   size_t getSize() const override { return sizeof(Thunk); }
 
   void writeTo(uint8_t *Buf) override {
     memcpy(Buf + FileOff, Thunk, sizeof(Thunk));
-    write32le(Buf + FileOff + 36, Imp->getRVA());
-    write32le(Buf + FileOff + 43, Desc->getRVA());
-    write32le(Buf + FileOff + 48, Helper->getRVA());
+    write32le(Buf + FileOff + 36, Imp->getRVA() - RVA - 40);
+    write32le(Buf + FileOff + 43, Desc->getRVA() - RVA - 47);
+    write32le(Buf + FileOff + 48, Helper->getRVA() - RVA - 52);
   }
 
   Defined *Imp = nullptr;
@@ -288,13 +288,9 @@ public:
   Defined *Helper = nullptr;
 };
 
-std::vector<Chunk *> DelayLoadContents::getChunks(Defined *H) {
-  Helper = H;
-  create();
+std::vector<Chunk *> DelayLoadContents::getChunks() {
   std::vector<Chunk *> V;
   for (std::unique_ptr<Chunk> &C : Dirs)
-    V.push_back(C.get());
-  for (std::unique_ptr<Chunk> &C : Addresses)
     V.push_back(C.get());
   for (std::unique_ptr<Chunk> &C : Names)
     V.push_back(C.get());
@@ -307,11 +303,34 @@ std::vector<Chunk *> DelayLoadContents::getChunks(Defined *H) {
   return V;
 }
 
+std::vector<Chunk *> DelayLoadContents::getDataChunks() {
+  std::vector<Chunk *> V;
+  for (std::unique_ptr<Chunk> &C : ModuleHandles)
+    V.push_back(C.get());
+  for (std::unique_ptr<Chunk> &C : Addresses)
+    V.push_back(C.get());
+  return V;
+}
+
 uint64_t DelayLoadContents::getDirSize() {
   return Dirs.size() * sizeof(delay_import_directory_table_entry);
 }
 
-void DelayLoadContents::create() {
+// A chunk for the import descriptor table.
+class DelayAddressChunk : public Chunk {
+public:
+  explicit DelayAddressChunk(Chunk *C) : Thunk(C) {}
+  size_t getSize() const override { return 8; }
+
+  void writeTo(uint8_t *Buf) override {
+    write64le(Buf + FileOff, Thunk->getRVA() + Config->ImageBase);
+  }
+
+  Chunk *Thunk;
+};
+
+void DelayLoadContents::create(Defined *H) {
+  Helper = H;
   std::map<StringRef, std::vector<DefinedImportData *>> Map =
       binImports(Imports);
 
@@ -320,11 +339,15 @@ void DelayLoadContents::create() {
     StringRef Name = P.first;
     std::vector<DefinedImportData *> &Syms = P.second;
 
+    // Create the delay import table header.
+    if (!DLLNames.count(Name))
+      DLLNames[Name] = make_unique<StringChunk>(Name);
+    auto Dir = make_unique<DelayDirectoryChunk>(DLLNames[Name].get());
+
     size_t Base = Addresses.size();
     for (DefinedImportData *S : Syms) {
-      auto T = make_unique<ThunkChunk>(S, Helper);
-      auto A = make_unique<LookupChunk>(T.get());
-      T->Desc = A.get();
+      auto T = make_unique<ThunkChunk>(S, Dir.get(), Helper);
+      auto A = make_unique<DelayAddressChunk>(T.get());
       Addresses.push_back(std::move(A));
       Thunks.push_back(std::move(T));
       auto C =
@@ -333,8 +356,8 @@ void DelayLoadContents::create() {
       HintNames.push_back(std::move(C));
     }
     // Terminate with null values.
-    Addresses.push_back(make_unique<NullChunk>(LookupChunkSize));
-    Names.push_back(make_unique<NullChunk>(LookupChunkSize));
+    Addresses.push_back(make_unique<NullChunk>(8));
+    Names.push_back(make_unique<NullChunk>(8));
 
     for (int I = 0, E = Syms.size(); I < E; ++I)
       Syms[I]->setLocation(Addresses[Base + I].get());
@@ -342,10 +365,7 @@ void DelayLoadContents::create() {
     MH->setAlign(8);
     ModuleHandles.push_back(std::unique_ptr<Chunk>(MH));
 
-    // Create the delay import table header.
-    if (!DLLNames.count(Name))
-      DLLNames[Name] = make_unique<StringChunk>(Name);
-    auto Dir = make_unique<DelayDirectoryChunk>(DLLNames[Name].get());
+    // Fill the delay import table header fields.
     Dir->ModuleHandle = MH;
     Dir->AddressTab = Addresses[Base].get();
     Dir->NameTab = Names[Base].get();

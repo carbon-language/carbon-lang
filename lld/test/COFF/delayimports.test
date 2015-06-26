@@ -5,22 +5,22 @@
 
 CHECK:      DelayImport {
 CHECK-NEXT:   Name: std64.dll
-CHECK-NEXT:   Attributes: 0x0
+CHECK-NEXT:   Attributes: 0x1
 CHECK-NEXT:   ModuleHandle: 0x1018
-CHECK-NEXT:   ImportAddressTable: 0x3040
-CHECK-NEXT:   ImportNameTable: 0x3060
+CHECK-NEXT:   ImportAddressTable: 0x1020
+CHECK-NEXT:   ImportNameTable: 0x3040
 CHECK-NEXT:   BoundDelayImportTable: 0x0
 CHECK-NEXT:   UnloadDelayImportTable: 0x0
 CHECK-NEXT:   Import {
 CHECK-NEXT:     Symbol: ExitProcess (0)
-CHECK-NEXT:     Address: 0x2066
+CHECK-NEXT:     Address: 0x140002066
 CHECK-NEXT:   }
 CHECK-NEXT:   Import {
 CHECK-NEXT:     Symbol:  (50)
-CHECK-NEXT:     Address: 0x20BD
+CHECK-NEXT:     Address: 0x1400020BD
 CHECK-NEXT:   }
 CHECK-NEXT:   Import {
 CHECK-NEXT:     Symbol: MessageBoxA (1)
-CHECK-NEXT:     Address: 0x2114
+CHECK-NEXT:     Address: 0x140002114
 CHECK-NEXT:   }
 CHECK-NEXT: }
