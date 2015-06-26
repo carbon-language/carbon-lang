@@ -1777,8 +1777,7 @@ static bool isExtendedBUILD_VECTOR(SDNode *N, SelectionDAG &DAG,
   if (N->getOpcode() != ISD::BUILD_VECTOR)
     return false;
 
-  for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
-    SDNode *Elt = N->getOperand(i).getNode();
+  for (const SDValue &Elt : N->op_values()) {
     if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Elt)) {
       unsigned EltSize = VT.getVectorElementType().getSizeInBits();
       unsigned HalfSize = EltSize / 2;
