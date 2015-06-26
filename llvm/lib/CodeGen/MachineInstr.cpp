@@ -415,7 +415,7 @@ void MachineOperand::print(raw_ostream &OS, ModuleSlotTracker &MST,
     break;
   case MachineOperand::MO_Metadata:
     OS << '<';
-    getMetadata()->printAsOperand(OS);
+    getMetadata()->printAsOperand(OS, MST);
     OS << '>';
     break;
   case MachineOperand::MO_MCSymbol:
@@ -558,7 +558,7 @@ void MachineMemOperand::print(raw_ostream &OS, ModuleSlotTracker &MST) const {
   if (const MDNode *TBAAInfo = getAAInfo().TBAA) {
     OS << "(tbaa=";
     if (TBAAInfo->getNumOperands() > 0)
-      TBAAInfo->getOperand(0)->printAsOperand(OS);
+      TBAAInfo->getOperand(0)->printAsOperand(OS, MST);
     else
       OS << "<unknown>";
     OS << ")";
@@ -569,7 +569,7 @@ void MachineMemOperand::print(raw_ostream &OS, ModuleSlotTracker &MST) const {
     OS << "(alias.scope=";
     if (ScopeInfo->getNumOperands() > 0)
       for (unsigned i = 0, ie = ScopeInfo->getNumOperands(); i != ie; ++i) {
-        ScopeInfo->getOperand(i)->printAsOperand(OS);
+        ScopeInfo->getOperand(i)->printAsOperand(OS, MST);
         if (i != ie-1)
           OS << ",";
       }
@@ -583,7 +583,7 @@ void MachineMemOperand::print(raw_ostream &OS, ModuleSlotTracker &MST) const {
     OS << "(noalias=";
     if (NoAliasInfo->getNumOperands() > 0)
       for (unsigned i = 0, ie = NoAliasInfo->getNumOperands(); i != ie; ++i) {
-        NoAliasInfo->getOperand(i)->printAsOperand(OS);
+        NoAliasInfo->getOperand(i)->printAsOperand(OS, MST);
         if (i != ie-1)
           OS << ",";
       }

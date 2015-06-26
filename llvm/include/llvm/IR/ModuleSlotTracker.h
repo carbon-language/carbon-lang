@@ -41,8 +41,13 @@ public:
 
   /// Construct a slot tracker from a module.
   ///
-  /// If \a M is \c nullptr, uses a null slot tracker.
-  explicit ModuleSlotTracker(const Module *M);
+  /// If \a M is \c nullptr, uses a null slot tracker.  Otherwise, initializes
+  /// a slot tracker, and initializes all metadata slots.  \c
+  /// ShouldInitializeAllMetadata defaults to true because this is expected to
+  /// be shared between multiple callers, and otherwise MDNode references will
+  /// not match up.
+  explicit ModuleSlotTracker(const Module *M,
+                             bool ShouldInitializeAllMetadata = true);
 
   /// Destructor to clean up storage.
   ~ModuleSlotTracker();

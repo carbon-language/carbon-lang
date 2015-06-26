@@ -670,10 +670,10 @@ ModuleSlotTracker::ModuleSlotTracker(SlotTracker &Machine, const Module *M,
                                      const Function *F)
     : M(M), F(F), Machine(&Machine) {}
 
-ModuleSlotTracker::ModuleSlotTracker(const Module *M)
-    : MachineStorage(
-          M ? new SlotTracker(M, /* ShouldInitializeAllMetadata */ true)
-            : nullptr),
+ModuleSlotTracker::ModuleSlotTracker(const Module *M,
+                                     bool ShouldInitializeAllMetadata)
+    : MachineStorage(M ? new SlotTracker(M, ShouldInitializeAllMetadata)
+                       : nullptr),
       M(M), Machine(MachineStorage.get()) {}
 
 ModuleSlotTracker::~ModuleSlotTracker() {}
@@ -3278,30 +3278,38 @@ void Value::printAsOperand(raw_ostream &O, bool PrintType,
 }
 
 static void printMetadataImpl(raw_ostream &ROS, const Metadata &MD,
-                              const Module *M, bool OnlyAsOperand) {
+                              ModuleSlotTracker &MST, const Module *M,
+                              bool OnlyAsOperand) {
   formatted_raw_ostream OS(ROS);
 
-  auto *N = dyn_cast<MDNode>(&MD);
   TypePrinting TypePrinter;
-  SlotTracker Machine(M, /* ShouldInitializeAllMetadata */ N);
   if (M)
     TypePrinter.incorporateTypes(*M);
 
-  WriteAsOperandInternal(OS, &MD, &TypePrinter, &Machine, M,
+  WriteAsOperandInternal(OS, &MD, &TypePrinter, MST.getMachine(), M,
                          /* FromValue */ true);
+
+  auto *N = dyn_cast<MDNode>(&MD);
   if (OnlyAsOperand || !N)
     return;
 
   OS << " = ";
-  WriteMDNodeBodyInternal(OS, N, &TypePrinter, &Machine, M);
+  WriteMDNodeBodyInternal(OS, N, &TypePrinter, MST.getMachine(), M);
 }
 
 void Metadata::printAsOperand(raw_ostream &OS, const Module *M) const {
-  printMetadataImpl(OS, *this, M, /* OnlyAsOperand */ true);
+  ModuleSlotTracker MST(M, isa<MDNode>(this));
+  printMetadataImpl(OS, *this, MST, M, /* OnlyAsOperand */ true);
+}
+
+void Metadata::printAsOperand(raw_ostream &OS, ModuleSlotTracker &MST,
+                              const Module *M) const {
+  printMetadataImpl(OS, *this, MST, M, /* OnlyAsOperand */ true);
 }
 
 void Metadata::print(raw_ostream &OS, const Module *M) const {
-  printMetadataImpl(OS, *this, M, /* OnlyAsOperand */ false);
+  ModuleSlotTracker MST(M, isa<MDNode>(this));
+  printMetadataImpl(OS, *this, MST, M, /* OnlyAsOperand */ false);
 }
 
 // Value::dump - allow easy printing of Values from the debugger.
