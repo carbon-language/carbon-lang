@@ -1,7 +1,11 @@
 // REQUIRES: powerpc-registered-target
 // RUN: %clang_cc1 -faltivec -target-feature +power8-vector -triple powerpc64-unknown-unknown -emit-llvm %s -o - | FileCheck %s
 // RUN: %clang_cc1 -faltivec -target-feature +power8-vector -triple powerpc64le-unknown-unknown -emit-llvm %s -o - | FileCheck %s -check-prefix=CHECK-LE
-// RUN: not %clang_cc1 -faltivec -triple powerpc64-unknown-unknown -emit-llvm %s -o - 2>&1 | FileCheck %s -check-prefix=CHECK-PPC
+// RUN: not %clang_cc1 -faltivec -target-feature +vsx -triple powerpc64-unknown-unknown -emit-llvm %s -o - 2>&1 | FileCheck %s -check-prefix=CHECK-PPC
+// Added -target-feature +vsx above to avoid errors about "vector double" and to
+// generate the correct errors for functions that are only overloaded with VSX
+// (vec_cmpge, vec_cmple). Without this option, there is only one overload so
+// it is selected.
 
 vector signed char vsc = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5 };
 vector unsigned char vuc = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5 };
@@ -11,6 +15,7 @@ vector bool int vbi = {0, -1, -1, 0};
 vector bool long long vbll = { 1, 0 };
 vector signed long long vsll = { 1, 2 };
 vector unsigned long long vull = { 1, 2 };
+vector double vda = { 1.e-11, -132.23e10 };
 
 int res_i;
 vector signed char res_vsc;
@@ -21,9 +26,34 @@ vector bool int res_vbi;
 vector bool long long res_vbll;
 vector signed long long res_vsll;
 vector unsigned long long res_vull;
+vector double res_vd;
 
 // CHECK-LABEL: define void @test1
 void test1() {
+
+  /* vec_abs */
+  res_vsll = vec_abs(vsll);
+// CHECK: call <2 x i64> @llvm.ppc.altivec.vmaxsd(<2 x i64> %{{[0-9]]*}}, <2 x i64>
+// CHECK-LE: call <2 x i64> @llvm.ppc.altivec.vmaxsd(<2 x i64> %{{[0-9]]*}}, <2 x i64>
+// CHECK-PPC: error: call to 'vec_abs' is ambiguous
+
+  res_vd = vec_abs(vda);
+// CHECK: store <2 x i64> <i64 9223372036854775807, i64 9223372036854775807>, <2 x i64>*
+// CHECK: and <2 x i64>
+// CHECK-LE: store <2 x i64> <i64 9223372036854775807, i64 9223372036854775807>, <2 x i64>*
+// CHECK-LE: and <2 x i64>
+// CHECK-PPC: error: call to 'vec_abs' is ambiguous
+
+  /* vec_add */
+  res_vsll = vec_add(vsll, vsll);
+// CHECK: add <2 x i64>
+// CHECK-LE: add <2 x i64>
+// CHECK-PPC: error: call to 'vec_add' is ambiguous
+
+  res_vull = vec_add(vull, vull);
+// CHECK: add <2 x i64>
+// CHECK-LE: add <2 x i64>
+// CHECK-PPC: error: call to 'vec_add' is ambiguous
 
   /* vec_cmpeq */
   res_vbll = vec_cmpeq(vsll, vsll);
@@ -36,6 +66,28 @@ void test1() {
 // CHECK-LE: @llvm.ppc.altivec.vcmpequd
 // CHECK-PPC: error: call to 'vec_cmpeq' is ambiguous
 
+  /* vec_cmpge */
+  res_vbll = vec_cmpge(vsll, vsll);
+// CHECK: @llvm.ppc.altivec.vcmpgtsd
+// CHECK-LE: @llvm.ppc.altivec.vcmpgtsd
+// CHECK-PPC: error: call to 'vec_cmpge' is ambiguous
+
+  res_vbll = vec_cmpge(vull, vull);
+// CHECK: @llvm.ppc.altivec.vcmpgtud
+// CHECK-LE: @llvm.ppc.altivec.vcmpgtud
+// CHECK-PPC: error: call to 'vec_cmpge' is ambiguous
+
+  /* vec_cmple */
+  res_vbll = vec_cmple(vsll, vsll);
+// CHECK: @llvm.ppc.altivec.vcmpgtsd
+// CHECK-LE: @llvm.ppc.altivec.vcmpgtsd
+// CHECK-PPC: error: call to 'vec_cmple' is ambiguous
+
+  res_vbll = vec_cmple(vull, vull);
+// CHECK: @llvm.ppc.altivec.vcmpgtud
+// CHECK-LE: @llvm.ppc.altivec.vcmpgtud
+// CHECK-PPC: error: call to 'vec_cmple' is ambiguous
+
   /* vec_cmpgt */
   res_vbll = vec_cmpgt(vsll, vsll);
 // CHECK: @llvm.ppc.altivec.vcmpgtsd
@@ -46,6 +98,17 @@ void test1() {
 // CHECK: @llvm.ppc.altivec.vcmpgtud
 // CHECK-LE: @llvm.ppc.altivec.vcmpgtud
 // CHECK-PPC: error: call to 'vec_cmpgt' is ambiguous
+
+  /* vec_cmplt */
+  res_vbll = vec_cmplt(vsll, vsll);
+// CHECK: call <2 x i64> @llvm.ppc.altivec.vcmpgtsd(<2 x i64> %{{[0-9]*}}, <2 x i64> %{{[0-9]*}})
+// CHECK-LE: call <2 x i64> @llvm.ppc.altivec.vcmpgtsd(<2 x i64> %{{[0-9]*}}, <2 x i64> %{{[0-9]*}})
+// CHECK-PPC: error: call to 'vec_cmplt' is ambiguous
+
+  res_vbll = vec_cmplt(vull, vull);
+// CHECK: call <2 x i64> @llvm.ppc.altivec.vcmpgtud(<2 x i64> %{{[0-9]*}}, <2 x i64> %{{[0-9]*}})
+// CHECK-LE: call <2 x i64> @llvm.ppc.altivec.vcmpgtud(<2 x i64> %{{[0-9]*}}, <2 x i64> %{{[0-9]*}})
+// CHECK-PPC: error: call to 'vec_cmplt' is ambiguous
 
   /* ----------------------- predicates --------------------------- */
   /* vec_all_eq */

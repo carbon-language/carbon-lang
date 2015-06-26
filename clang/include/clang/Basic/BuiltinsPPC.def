@@ -267,6 +267,18 @@ BUILTIN(__builtin_vsx_xsmindp, "ddd", "")
 BUILTIN(__builtin_vsx_xvdivdp, "V2dV2dV2d", "")
 BUILTIN(__builtin_vsx_xvdivsp, "V4fV4fV4f", "")
 
+BUILTIN(__builtin_vsx_xvrdpip, "V2dV2d", "")
+BUILTIN(__builtin_vsx_xvrspip, "V4fV4f", "")
+
+BUILTIN(__builtin_vsx_xvcmpeqdp, "V2ULLiV2dV2d", "")
+BUILTIN(__builtin_vsx_xvcmpeqsp, "V4UiV4fV4f", "")
+
+BUILTIN(__builtin_vsx_xvcmpgedp, "V2ULLiV2dV2d", "")
+BUILTIN(__builtin_vsx_xvcmpgesp, "V4UiV4fV4f", "")
+
+BUILTIN(__builtin_vsx_xvcmpgtdp, "V2ULLiV2dV2d", "")
+BUILTIN(__builtin_vsx_xvcmpgtsp, "V4UiV4fV4f", "")
+
 // HTM builtins
 BUILTIN(__builtin_tbegin, "UiUIi", "")
 BUILTIN(__builtin_tend, "UiUIi", "")

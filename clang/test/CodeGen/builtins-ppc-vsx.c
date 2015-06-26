@@ -1,5 +1,6 @@
 // REQUIRES: powerpc-registered-target
 // RUN: %clang_cc1 -faltivec -target-feature +vsx -triple powerpc64-unknown-unknown -emit-llvm %s -o - | FileCheck %s
+// RUN: %clang_cc1 -faltivec -target-feature +vsx -triple powerpc64le-unknown-unknown -emit-llvm %s -o - | FileCheck %s
 
 vector unsigned char vuc = { 8,  9, 10, 11, 12, 13, 14, 15,
                              0,  1,  2,  3,  4,  5,  6,  7};
@@ -16,13 +17,97 @@ vector float res_vf;
 vector double res_vd;
 vector signed int res_vsi;
 vector unsigned int res_vui;
+vector bool int res_vbi;
 vector bool long long res_vbll;
 vector signed long long res_vsll;
 vector unsigned long long res_vull;
 double res_d;
 
+void dummy() { }
+
 void test1() {
 // CHECK-LABEL: define void @test1
+
+  res_vd = vec_add(vd, vd);
+// CHECK: fadd <2 x double>
+
+  res_vd = vec_and(vbll, vd);
+// CHECK: and <2 x i64>
+// CHECK: bitcast <2 x i64> %{{[0-9]*}} to <2 x double>
+
+  res_vd = vec_and(vd, vbll);
+// CHECK: and <2 x i64>
+// CHECK: bitcast <2 x i64> %{{[0-9]*}} to <2 x double>
+
+  res_vd = vec_and(vd, vd);
+// CHECK: and <2 x i64>
+// CHECK: bitcast <2 x i64> %{{[0-9]*}} to <2 x double>
+
+  dummy();
+// CHECK: call void @dummy()
+
+  res_vd = vec_andc(vbll, vd);
+// CHECK: bitcast <2 x double> %{{[0-9]*}} to <2 x i64>
+// CHECK: xor <2 x i64> %{{[0-9]*}}, <i64 -1, i64 -1>
+// CHECK: and <2 x i64>
+// CHECK: bitcast <2 x i64> %{{[0-9]*}} to <2 x double>
+
+  dummy();
+// CHECK: call void @dummy()
+
+  res_vd = vec_andc(vd, vbll);
+// CHECK: bitcast <2 x double> %{{[0-9]*}} to <2 x i64>
+// CHECK: xor <2 x i64> %{{[0-9]*}}, <i64 -1, i64 -1>
+// CHECK: and <2 x i64>
+// CHECK: bitcast <2 x i64> %{{[0-9]*}} to <2 x double>
+
+  dummy();
+// CHECK: call void @dummy()
+
+  res_vd = vec_andc(vd, vd);
+// CHECK: bitcast <2 x double> %{{[0-9]*}} to <2 x i64>
+// CHECK: xor <2 x i64> %{{[0-9]*}}, <i64 -1, i64 -1>
+// CHECK: and <2 x i64>
+// CHECK: bitcast <2 x i64> %{{[0-9]*}} to <2 x double>
+
+  dummy();
+// CHECK: call void @dummy()
+
+  res_vd = vec_ceil(vd);
+// CHECK: call <2 x double> @llvm.ceil.v2f64(<2 x double> %{{[0-9]*}})
+
+  res_vf = vec_ceil(vf);
+// CHECK: call <4 x float> @llvm.ceil.v4f32(<4 x float> %{{[0-9]*}})
+
+  res_vbll = vec_cmpeq(vd, vd);
+// CHECK: call <2 x i64> @llvm.ppc.vsx.xvcmpeqdp(<2 x double> %{{[0-9]*}}, <2 x double> %{{[0-9]*}})
+
+  res_vbi = vec_cmpeq(vf, vf);
+// CHECK: call <4 x i32> @llvm.ppc.vsx.xvcmpeqsp(<4 x float> %{{[0-9]*}}, <4 x float> %{{[0-9]*}})
+
+  res_vbll = vec_cmpge(vd, vd);
+// CHECK: call <2 x i64> @llvm.ppc.vsx.xvcmpgedp(<2 x double> %{{[0-9]*}}, <2 x double> %{{[0-9]*}})
+
+  res_vbi = vec_cmpge(vf, vf);
+// CHECK: call <4 x i32> @llvm.ppc.vsx.xvcmpgesp(<4 x float> %{{[0-9]*}}, <4 x float> %{{[0-9]*}})
+
+  res_vbll = vec_cmpgt(vd, vd);
+// CHECK: call <2 x i64> @llvm.ppc.vsx.xvcmpgtdp(<2 x double> %{{[0-9]*}}, <2 x double> %{{[0-9]*}})
+
+  res_vbi = vec_cmpgt(vf, vf);
+// CHECK: call <4 x i32> @llvm.ppc.vsx.xvcmpgtsp(<4 x float> %{{[0-9]*}}, <4 x float> %{{[0-9]*}})
+
+  res_vbll = vec_cmple(vd, vd);
+// CHECK: call <2 x i64> @llvm.ppc.vsx.xvcmpgedp(<2 x double> %{{[0-9]*}}, <2 x double> %{{[0-9]*}})
+
+  res_vbi = vec_cmple(vf, vf);
+// CHECK: call <4 x i32> @llvm.ppc.vsx.xvcmpgesp(<4 x float> %{{[0-9]*}}, <4 x float> %{{[0-9]*}})
+
+  res_vbll = vec_cmplt(vd, vd);
+// CHECK: call <2 x i64> @llvm.ppc.vsx.xvcmpgtdp(<2 x double> %{{[0-9]*}}, <2 x double> %{{[0-9]*}})
+
+  res_vbi = vec_cmplt(vf, vf);
+// CHECK: call <4 x i32> @llvm.ppc.vsx.xvcmpgtsp(<4 x float> %{{[0-9]*}}, <4 x float> %{{[0-9]*}})
 
   /* vec_div */
   res_vf = vec_div(vf, vf);
