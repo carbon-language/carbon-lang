@@ -387,7 +387,7 @@ private:
                                      const Reference &ref) const;
 
   void handlePlain(const MipsELFDefinedAtom<ELFT> &atom, Reference &ref);
-  void handle26(const MipsELFDefinedAtom<ELFT> &atom, Reference &ref);
+  void handleBranch(const MipsELFDefinedAtom<ELFT> &atom, Reference &ref);
   void handleGOT(Reference &ref);
 
   const GOTAtom *getLocalGOTEntry(const Reference &ref);
@@ -400,7 +400,6 @@ private:
   const PLTAtom *getPLTEntry(const Atom *a);
   const PLTAtom *getPLTRegEntry(const Atom *a);
   const PLTAtom *getPLTMicroEntry(const Atom *a);
-  const LA25Atom *getLA25Entry(const Atom *target, bool isMicroMips);
   const LA25Atom *getLA25RegEntry(const Atom *a);
   const LA25Atom *getLA25MicroEntry(const Atom *a);
   const ObjectAtom *getObjectEntry(const SharedLibraryAtom *a);
@@ -410,7 +409,8 @@ private:
   bool isLocal(const Atom *a) const;
   bool isLocalCall(const Atom *a) const;
   bool isDynamic(const Atom *atom) const;
-  bool requireLA25Stub(const Atom *a) const;
+  bool requireLA25Stub(const MipsELFDefinedAtom<ELFT> &atom,
+                       const Reference &ref) const;
   bool requirePLTEntry(const Atom *a) const;
   bool requireCopy(const Atom *a) const;
   bool mightBeDynamic(const MipsELFDefinedAtom<ELFT> &atom,
@@ -551,7 +551,14 @@ void RelocationPass<ELFT>::handleReference(const MipsELFDefinedAtom<ELFT> &atom,
     break;
   case R_MIPS_26:
   case R_MICROMIPS_26_S1:
-    handle26(atom, ref);
+  case R_MIPS_PC16:
+  case R_MIPS_PC21_S2:
+  case R_MIPS_PC26_S2:
+  case R_MICROMIPS_PC7_S1:
+  case R_MICROMIPS_PC10_S1:
+  case R_MICROMIPS_PC16_S1:
+  case R_MICROMIPS_PC23_S2:
+    handleBranch(atom, ref);
     break;
   case R_MIPS_EH:
   case R_MIPS_GOT16:
@@ -659,14 +666,28 @@ RelocationPass<ELFT>::collectReferenceInfo(const MipsELFDefinedAtom<ELFT> &atom,
   else
     _hasStaticRelocations.insert(ref.target());
 
-  if (refKind != R_MIPS_CALL16 && refKind != R_MICROMIPS_CALL16 &&
-      refKind != R_MIPS_26 && refKind != R_MICROMIPS_26_S1 &&
-      refKind != R_MIPS_GOT_HI16 && refKind != R_MIPS_GOT_LO16 &&
-      refKind != R_MIPS_CALL_HI16 && refKind != R_MIPS_CALL_LO16 &&
-      refKind != R_MICROMIPS_GOT_HI16 && refKind != R_MICROMIPS_GOT_LO16 &&
-      refKind != R_MICROMIPS_CALL_HI16 && refKind != R_MICROMIPS_CALL_LO16 &&
-      refKind != R_MIPS_EH)
+  switch (refKind) {
+  case R_MIPS_CALL16:
+  case R_MICROMIPS_CALL16:
+  case R_MIPS_26:
+  case R_MICROMIPS_26_S1:
+  case R_MIPS_PC16:
+  case R_MIPS_PC21_S2:
+  case R_MIPS_PC26_S2:
+  case R_MICROMIPS_PC7_S1:
+  case R_MICROMIPS_PC10_S1:
+  case R_MICROMIPS_PC16_S1:
+  case R_MICROMIPS_PC23_S2:
+  case R_MIPS_CALL_HI16:
+  case R_MIPS_CALL_LO16:
+  case R_MICROMIPS_CALL_HI16:
+  case R_MICROMIPS_CALL_LO16:
+  case R_MIPS_EH:
+    break;
+  default:
     _requiresPtrEquality.insert(ref.target());
+    break;
+  }
   return std::error_code();
 }
 
@@ -843,12 +864,6 @@ static bool isMicroMips(const MipsELFDefinedAtom<ELFT> &atom) {
 }
 
 template <typename ELFT>
-const LA25Atom *RelocationPass<ELFT>::getLA25Entry(const Atom *target,
-                                                   bool isMicroMips) {
-  return isMicroMips ? getLA25MicroEntry(target) : getLA25RegEntry(target);
-}
-
-template <typename ELFT>
 const PLTAtom *RelocationPass<ELFT>::getPLTEntry(const Atom *a) {
   // If file contains microMIPS code try to reuse compressed PLT entry...
   if (isMicroMips()) {
@@ -878,23 +893,28 @@ void RelocationPass<ELFT>::handlePlain(const MipsELFDefinedAtom<ELFT> &atom,
     ref.setTarget(getObjectEntry(cast<SharedLibraryAtom>(ref.target())));
 }
 
+static bool isMicroMipsRelocation(Reference::KindValue kind) {
+  return R_MICROMIPS_26_S1 <= kind && kind <= R_MICROMIPS_PC19_S2;
+}
+
 template <typename ELFT>
-void RelocationPass<ELFT>::handle26(const MipsELFDefinedAtom<ELFT> &atom,
-                                    Reference &ref) {
-  bool isMicro = ref.kindValue() == R_MICROMIPS_26_S1;
-  assert((isMicro || ref.kindValue() == R_MIPS_26) && "Unexpected relocation");
-
-  const auto *sla = dyn_cast<SharedLibraryAtom>(ref.target());
-  if (sla && sla->type() == SharedLibraryAtom::Type::Code)
-    ref.setTarget(isMicro ? getPLTMicroEntry(sla) : getPLTRegEntry(sla));
-
-  if (requireLA25Stub(ref.target()))
-    ref.setTarget(getLA25Entry(ref.target(), isMicro));
+void RelocationPass<ELFT>::handleBranch(const MipsELFDefinedAtom<ELFT> &atom,
+                                        Reference &ref) {
+  bool isMicro = isMicroMipsRelocation(ref.kindValue());
+  if (const auto *sla = dyn_cast<SharedLibraryAtom>(ref.target())) {
+    if (sla->type() == SharedLibraryAtom::Type::Code)
+      ref.setTarget(isMicro ? getPLTMicroEntry(sla) : getPLTRegEntry(sla));
+  } else if (requireLA25Stub(atom, ref)) {
+    if (isMicro)
+      ref.setTarget(getLA25MicroEntry(ref.target()));
+    else
+      ref.setTarget(getLA25RegEntry(ref.target()));
+  }
 
   if (!isLocal(ref.target())) {
-    if (isMicro)
+    if (ref.kindValue() == R_MICROMIPS_26_S1)
       ref.setKindValue(LLD_R_MICROMIPS_GLOBAL_26_S1);
-    else
+    else if (ref.kindValue() == R_MIPS_26)
       ref.setKindValue(LLD_R_MIPS_GLOBAL_26);
   }
 }
@@ -948,11 +968,14 @@ bool RelocationPass<ELFT>::isLocalCall(const Atom *a) const {
 }
 
 template <typename ELFT>
-bool RelocationPass<ELFT>::requireLA25Stub(const Atom *a) const {
-  if (isLocal(a))
+bool RelocationPass<ELFT>::requireLA25Stub(const MipsELFDefinedAtom<ELFT> &atom,
+                                           const Reference &ref) const {
+  if (atom.file().isPIC())
     return false;
-  if (auto *da = dyn_cast<DefinedAtom>(a))
-    return static_cast<const MipsELFDefinedAtom<ELFT> *>(da)->file().isPIC();
+  if (auto *da = dyn_cast<DefinedAtom>(ref.target()))
+    return static_cast<const MipsELFDefinedAtom<ELFT> *>(da)->file().isPIC() ||
+           da->codeModel() == DefinedAtom::codeMipsMicroPIC ||
+           da->codeModel() == DefinedAtom::codeMipsPIC;
   return false;
 }
 
