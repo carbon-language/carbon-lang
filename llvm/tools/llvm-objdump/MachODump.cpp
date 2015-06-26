@@ -6474,7 +6474,7 @@ static void printUnwindRelocDest(const MachOObjectFile *Obj,
   StringRef Name;
   uint64_t Addend;
 
-  if (!Reloc.getObjectFile())
+  if (!Reloc.getObject())
     return;
 
   findUnwindRelocNameAddend(Obj, Symbols, Reloc, Addr, Name, Addend);
@@ -6547,7 +6547,7 @@ printMachOCompactUnwindSection(const MachOObjectFile *Obj,
            << format("0x%08" PRIx32, Entry.CompactEncoding) << '\n';
 
     // 4. The personality function, if present.
-    if (Entry.PersonalityReloc.getObjectFile()) {
+    if (Entry.PersonalityReloc.getObject()) {
       outs() << "    personality function: "
              << format("0x%" PRIx64, Entry.PersonalityAddr) << ' ';
       printUnwindRelocDest(Obj, Symbols, Entry.PersonalityReloc,
@@ -6556,7 +6556,7 @@ printMachOCompactUnwindSection(const MachOObjectFile *Obj,
     }
 
     // 5. This entry's language-specific data area.
-    if (Entry.LSDAReloc.getObjectFile()) {
+    if (Entry.LSDAReloc.getObject()) {
       outs() << "    LSDA:                 " << format("0x%" PRIx64,
                                                        Entry.LSDAAddr) << ' ';
       printUnwindRelocDest(Obj, Symbols, Entry.LSDAReloc, Entry.LSDAAddr);

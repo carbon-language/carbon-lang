@@ -67,7 +67,7 @@ public:
 
 
   DataRefImpl getRawDataRefImpl() const;
-  const ObjectFile *getObjectFile() const;
+  const ObjectFile *getObject() const;
 };
 typedef content_iterator<RelocationRef> relocation_iterator;
 
@@ -482,7 +482,7 @@ inline DataRefImpl RelocationRef::getRawDataRefImpl() const {
   return RelocationPimpl;
 }
 
-inline const ObjectFile *RelocationRef::getObjectFile() const {
+inline const ObjectFile *RelocationRef::getObject() const {
   return OwningObject;
 }
 

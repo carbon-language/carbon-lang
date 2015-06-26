@@ -31,7 +31,7 @@ public:
 
     StringRef SymName; SymI->getName(SymName);
     uint64_t  SymAddr; SymI->getAddress(SymAddr);
-    auto *Obj = cast<ELFObjectFileBase>(Rel.getObjectFile());
+    auto *Obj = cast<ELFObjectFileBase>(Rel.getObject());
     uint64_t SymSize = SymI->getSize();
     int64_t Addend = *Obj->getRelocationAddend(Rel.getRawDataRefImpl());
 

@@ -240,7 +240,7 @@ private:
   }
 
   int64_t getELFAddend(RelocationRef R) {
-    const auto *Obj = cast<ELFObjectFileBase>(R.getObjectFile());
+    const auto *Obj = cast<ELFObjectFileBase>(R.getObject());
     DataRefImpl DRI = R.getRawDataRefImpl();
     ErrorOr<int64_t> AddendOrErr = Obj->getRelocationAddend(DRI);
     if (std::error_code EC = AddendOrErr.getError())
@@ -249,7 +249,7 @@ private:
   }
 
   uint8_t getLengthMachO64(RelocationRef R) {
-    const MachOObjectFile *Obj = cast<MachOObjectFile>(R.getObjectFile());
+    const MachOObjectFile *Obj = cast<MachOObjectFile>(R.getObject());
     return Obj->getRelocationLength(R.getRawDataRefImpl());
   }
 
