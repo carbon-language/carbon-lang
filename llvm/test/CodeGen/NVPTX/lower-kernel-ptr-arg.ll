@@ -16,5 +16,16 @@ define void @kernel(float* %input, float* %output) {
   ret void
 }
 
-!nvvm.annotations = !{!0}
+define void @kernel2(float addrspace(1)* %input, float addrspace(1)* %output) {
+; CHECK-LABEL: .visible .entry kernel2(
+; CHECK-NOT: cvta.to.global.u64
+  %1 = load float, float addrspace(1)* %input, align 4
+; CHECK: ld.global.f32
+  store float %1, float addrspace(1)* %output, align 4
+; CHECK: st.global.f32
+  ret void
+}
+
+!nvvm.annotations = !{!0, !1}
 !0 = !{void (float*, float*)* @kernel, !"kernel", i32 1}
+!1 = !{void (float addrspace(1)*, float addrspace(1)*)* @kernel2, !"kernel", i32 1}

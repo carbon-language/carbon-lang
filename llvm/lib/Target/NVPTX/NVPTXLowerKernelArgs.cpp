@@ -132,6 +132,10 @@ void NVPTXLowerKernelArgs::handlePointerParam(Argument *Arg) {
   assert(!Arg->hasByValAttr() &&
          "byval params should be handled by handleByValParam");
 
+  // Do nothing if the argument already points to the global address space.
+  if (Arg->getType()->getPointerAddressSpace() == ADDRESS_SPACE_GLOBAL)
+    return;
+
   Instruction *FirstInst = Arg->getParent()->getEntryBlock().begin();
   Instruction *ArgInGlobal = new AddrSpaceCastInst(
       Arg, PointerType::get(Arg->getType()->getPointerElementType(),
