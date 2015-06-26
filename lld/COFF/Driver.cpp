@@ -117,7 +117,7 @@ LinkerDriver::parseDirectives(StringRef S) {
         return EC;
       break;
     case OPT_incl:
-      Config->Includes.insert(Arg->getValue());
+      addUndefined(Arg->getValue());
       break;
     case OPT_merge:
       // Ignore /merge for now.
@@ -201,6 +201,11 @@ void LinkerDriver::addLibSearchPaths() {
   }
 }
 
+void LinkerDriver::addUndefined(StringRef Sym) {
+  Symtab.addUndefined(Sym);
+  Config->GCRoots.insert(Sym);
+}
+
 static WindowsSubsystem inferSubsystem() {
   if (Config->DLL)
     return IMAGE_SUBSYSTEM_WINDOWS_GUI;
@@ -259,15 +264,21 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
   if (Args.hasArg(OPT_verbose))
     Config->Verbose = true;
 
+  // Handle /entry
+  if (auto *Arg = Args.getLastArg(OPT_entry)) {
+    Config->EntryName = Arg->getValue();
+    addUndefined(Config->EntryName);
+  }
+
   // Handle /dll
   if (Args.hasArg(OPT_dll)) {
     Config->DLL = true;
     Config->ManifestID = 2;
+    if (Config->EntryName.empty()) {
+      Config->EntryName = "_DllMainCRTStartup";
+      addUndefined("_DllMainCRTStartup");
+    }
   }
-
-  // Handle /entry
-  if (auto *Arg = Args.getLastArg(OPT_entry))
-    Config->EntryName = Arg->getValue();
 
   // Handle /fixed
   if (Args.hasArg(OPT_fixed)) {
@@ -347,7 +358,7 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
 
   // Handle /include
   for (auto *Arg : Args.filtered(OPT_incl))
-    Config->Includes.insert(Arg->getValue());
+    addUndefined(Arg->getValue());
 
   // Handle /implib
   if (auto *Arg = Args.getLastArg(OPT_implib))
@@ -383,7 +394,7 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
   // Handle /delayload
   for (auto *Arg : Args.filtered(OPT_delayload)) {
     Config->DelayLoads.insert(Arg->getValue());
-    Config->Includes.insert("__delayLoadHelper2");
+    addUndefined("__delayLoadHelper2");
   }
 
   // Handle /failifmismatch
@@ -504,13 +515,9 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
   for (;;) {
     size_t Ver = Symtab.getVersion();
 
-    // Add undefined symbols specified by /include.
-    for (StringRef Sym : Config->Includes)
-      Symtab.addUndefined(Sym);
-
     // Windows specific -- Make sure we resolve all dllexported symbols.
     for (Export &E : Config->Exports)
-      Symtab.addUndefined(E.Name);
+      addUndefined(E.Name);
 
     // Add weak aliases. Weak aliases is a mechanism to give remaining
     // undefined symbols final chance to be resolved successfully.
@@ -535,7 +542,7 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
       }
       Config->EntryName = EntryOrErr.get();
     }
-    Symtab.addUndefined(Config->EntryName);
+    addUndefined(Config->EntryName);
 
     if (auto EC = Symtab.run()) {
       llvm::errs() << EC.message() << "\n";
@@ -548,13 +555,6 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
   // Make sure we have resolved all symbols.
   if (Symtab.reportRemainingUndefines())
     return false;
-
-  // Initialize a list of GC root.
-  for (StringRef Sym : Config->Includes)
-    Config->GCRoots.insert(Sym);
-  for (Export &E : Config->Exports)
-    Config->GCRoots.insert(E.Name);
-  Config->GCRoots.insert(Config->EntryName);
 
   // Do LTO by compiling bitcode input files to a native COFF file
   // then link that file.

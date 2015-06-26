@@ -88,8 +88,9 @@ private:
 
   // Library search path. The first element is always "" (current directory).
   std::vector<StringRef> SearchPaths;
-
   std::set<std::string> VisitedFiles;
+
+  void addUndefined(StringRef Sym);
 
   // Driver is the owner of all opened files.
   // InputFiles have MemoryBufferRefs to them.
