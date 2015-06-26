@@ -13,14 +13,14 @@ CHECK-NEXT:   BoundDelayImportTable: 0x0
 CHECK-NEXT:   UnloadDelayImportTable: 0x0
 CHECK-NEXT:   Import {
 CHECK-NEXT:     Symbol: ExitProcess (0)
-CHECK-NEXT:     Address: 0x2045
+CHECK-NEXT:     Address: 0x2066
 CHECK-NEXT:   }
 CHECK-NEXT:   Import {
 CHECK-NEXT:     Symbol:  (50)
-CHECK-NEXT:     Address: 0x209C
+CHECK-NEXT:     Address: 0x20BD
 CHECK-NEXT:   }
 CHECK-NEXT:   Import {
 CHECK-NEXT:     Symbol: MessageBoxA (1)
-CHECK-NEXT:     Address: 0x20F3
+CHECK-NEXT:     Address: 0x2114
 CHECK-NEXT:   }
 CHECK-NEXT: }

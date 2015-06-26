@@ -216,6 +216,12 @@ void StringChunk::writeTo(uint8_t *Buf) {
   memcpy(Buf + FileOff, Str.data(), Str.size());
 }
 
+ImportThunkChunk::ImportThunkChunk(Defined *S) : ImpSymbol(S) {
+  // Intel Optimization Manual says that all branch targets
+  // should be 16-byte aligned. MSVC linker does this too.
+  Align = 16;
+}
+
 void ImportThunkChunk::writeTo(uint8_t *Buf) {
   memcpy(Buf + FileOff, ImportThunkData, sizeof(ImportThunkData));
   // The first two bytes is a JMP instruction. Fill its operand.
