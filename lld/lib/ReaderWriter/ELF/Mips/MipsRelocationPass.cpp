@@ -547,15 +547,23 @@ static bool isBranchReloc(Reference::KindValue kind) {
 }
 
 static bool isGotReloc(Reference::KindValue kind) {
-  return kind == R_MIPS_GOT16 || kind == R_MIPS_GOT_HI16 ||
-         kind == R_MIPS_GOT_LO16 || kind == R_MICROMIPS_GOT16 ||
-         kind == R_MICROMIPS_GOT_HI16 || kind == R_MICROMIPS_GOT_LO16;
+  return kind == R_MIPS_GOT16 || kind == R_MICROMIPS_GOT16;
+}
+
+static bool isAllGotReloc(Reference::KindValue kind) {
+  return isGotReloc(kind) || kind == R_MIPS_GOT_HI16 ||
+         kind == R_MIPS_GOT_LO16 || kind == R_MICROMIPS_GOT_HI16 ||
+         kind == R_MICROMIPS_GOT_LO16;
 }
 
 static bool isCallReloc(Reference::KindValue kind) {
-  return kind == R_MIPS_CALL16 || kind == R_MIPS_CALL_HI16 ||
-         kind == R_MIPS_CALL_LO16 || kind == R_MICROMIPS_CALL16 ||
-         kind == R_MICROMIPS_CALL_HI16 || kind == R_MICROMIPS_CALL_LO16;
+  return kind == R_MIPS_CALL16 || kind == R_MICROMIPS_CALL16;
+}
+
+static bool isAllCallReloc(Reference::KindValue kind) {
+  return isCallReloc(kind) || kind == R_MIPS_CALL_HI16 ||
+         kind == R_MIPS_CALL_LO16 || kind == R_MICROMIPS_CALL_HI16 ||
+         kind == R_MICROMIPS_CALL_LO16;
 }
 
 static bool isGotDispReloc(Reference::KindValue kind) {
@@ -610,8 +618,8 @@ void RelocationPass<ELFT>::handleReference(const MipsELFDefinedAtom<ELFT> &atom,
     handlePlain(atom, ref);
   else if (isBranchReloc(kind))
     handleBranch(atom, ref);
-  else if (isGotReloc(kind) || isCallReloc(kind) || isGotDispReloc(kind) ||
-           isGotPageReloc(kind) || kind == R_MIPS_EH)
+  else if (isAllGotReloc(kind) || isAllCallReloc(kind) ||
+           isGotDispReloc(kind) || isGotPageReloc(kind) || kind == R_MIPS_EH)
     handleGOT(ref);
   else if (isTlsDtpReloc(kind))
     ref.setAddend(ref.addend() - atom.file().getDTPOffset());
@@ -672,7 +680,8 @@ RelocationPass<ELFT>::collectReferenceInfo(const MipsELFDefinedAtom<ELFT> &atom,
   else
     _hasStaticRelocations.insert(ref.target());
 
-  if (!isBranchReloc(refKind) && !isCallReloc(refKind) && refKind != R_MIPS_EH)
+  if (!isBranchReloc(refKind) && !isAllCallReloc(refKind) &&
+      refKind != R_MIPS_EH)
     _requiresPtrEquality.insert(ref.target());
 
   return std::error_code();
@@ -703,6 +712,15 @@ make_external_gprel32_reloc_error(const ELFLinkingContext &ctx,
       ref.target()->name() + " in file " + atom.file().path());
 }
 
+static std::error_code
+make_local_call16_reloc_error(const ELFLinkingContext &ctx,
+                              const DefinedAtom &atom, const Reference &ref) {
+  return make_dynamic_error_code("R_MIPS_CALL16 (11) relocation cannot be used "
+                                 "against local symbol " +
+                                 ref.target()->name() + " in file " +
+                                 atom.file().path());
+}
+
 template <typename ELFT>
 std::error_code
 RelocationPass<ELFT>::validateRelocation(const DefinedAtom &atom,
@@ -712,6 +730,9 @@ RelocationPass<ELFT>::validateRelocation(const DefinedAtom &atom,
 
   if (ref.kindValue() == R_MIPS_GPREL32 && !isLocal(ref.target()))
     return make_external_gprel32_reloc_error(this->_ctx, atom, ref);
+
+  if (isCallReloc(ref.kindValue()) && isLocal(ref.target()))
+    return make_local_call16_reloc_error(this->_ctx, atom, ref);
 
   if (this->_ctx.getOutputELFType() != ET_DYN)
     return std::error_code();
@@ -765,7 +786,7 @@ static bool isMipsReadonly(const MipsELFDefinedAtom<ELFT> &atom) {
 template <typename ELFT>
 bool RelocationPass<ELFT>::mightBeDynamic(const MipsELFDefinedAtom<ELFT> &atom,
                                           Reference::KindValue refKind) const {
-  if (isGotReloc(refKind) || isCallReloc(refKind))
+  if (isAllGotReloc(refKind) || isAllCallReloc(refKind))
     return true;
 
   if (refKind != R_MIPS_32 && refKind != R_MIPS_64)
@@ -902,10 +923,8 @@ template <typename ELFT> void RelocationPass<ELFT>::handleGOT(Reference &ref) {
     ref.setTarget(getGlobalGOTEntry(ref.target()));
   else if (isGotPageReloc(ref.kindValue()))
     ref.setTarget(getLocalGOTPageEntry(ref));
-  else if (isLocal(ref.target()) && (ref.kindValue() == R_MIPS_GOT16 ||
-                                     ref.kindValue() == R_MIPS_CALL16 ||
-                                     ref.kindValue() == R_MICROMIPS_GOT16 ||
-                                     ref.kindValue() == R_MICROMIPS_CALL16))
+  else if (isLocal(ref.target()) &&
+           (isCallReloc(ref.kindValue()) || isGotReloc(ref.kindValue())))
     ref.setTarget(getLocalGOTPageEntry(ref));
   else
     ref.setTarget(getLocalGOTEntry(ref));
