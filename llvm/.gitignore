@@ -45,6 +45,7 @@ autoconf/autom4te.cache
 # External projects that are tracked independently.
 projects/*
 !projects/CMakeLists.txt
+!projects/LLVMBuild.txt
 !projects/Makefile
 # Clang, which is tracked independently.
 tools/clang
