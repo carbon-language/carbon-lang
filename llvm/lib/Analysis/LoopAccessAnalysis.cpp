@@ -504,6 +504,54 @@ static bool isInBoundsGep(Value *Ptr) {
   return false;
 }
 
+/// \brief Return true if an AddRec pointer \p Ptr is unsigned non-wrapping,
+/// i.e. monotonically increasing/decreasing.
+static bool isNoWrapAddRec(Value *Ptr, const SCEVAddRecExpr *AR,
+                           ScalarEvolution *SE, const Loop *L) {
+  // FIXME: This should probably only return true for NUW.
+  if (AR->getNoWrapFlags(SCEV::NoWrapMask))
+    return true;
+
+  // Scalar evolution does not propagate the non-wrapping flags to values that
+  // are derived from a non-wrapping induction variable because non-wrapping
+  // could be flow-sensitive.
+  //
+  // Look through the potentially overflowing instruction to try to prove
+  // non-wrapping for the *specific* value of Ptr.
+
+  // The arithmetic implied by an inbounds GEP can't overflow.
+  auto *GEP = dyn_cast<GetElementPtrInst>(Ptr);
+  if (!GEP || !GEP->isInBounds())
+    return false;
+
+  // Make sure there is only one non-const index and analyze that.
+  Value *NonConstIndex = nullptr;
+  for (auto Index = GEP->idx_begin(); Index != GEP->idx_end(); ++Index)
+    if (!isa<ConstantInt>(*Index)) {
+      if (NonConstIndex)
+        return false;
+      NonConstIndex = *Index;
+    }
+  if (!NonConstIndex)
+    // The recurrence is on the pointer, ignore for now.
+    return false;
+
+  // The index in GEP is signed.  It is non-wrapping if it's derived from a NSW
+  // AddRec using a NSW operation.
+  if (auto *OBO = dyn_cast<OverflowingBinaryOperator>(NonConstIndex))
+    if (OBO->hasNoSignedWrap() &&
+        // Assume constant for other the operand so that the AddRec can be
+        // easily found.
+        isa<ConstantInt>(OBO->getOperand(1))) {
+      auto *OpScev = SE->getSCEV(OBO->getOperand(0));
+
+      if (auto *OpAR = dyn_cast<SCEVAddRecExpr>(OpScev))
+        return OpAR->getLoop() == L && OpAR->getNoWrapFlags(SCEV::FlagNSW);
+    }
+
+  return false;
+}
+
 /// \brief Check whether the access through \p Ptr has a constant stride.
 int llvm::isStridedPtr(ScalarEvolution *SE, Value *Ptr, const Loop *Lp,
                        const ValueToValueMap &StridesMap) {
@@ -541,7 +589,7 @@ int llvm::isStridedPtr(ScalarEvolution *SE, Value *Ptr, const Loop *Lp,
   // to access the pointer value "0" which is undefined behavior in address
   // space 0, therefore we can also vectorize this case.
   bool IsInBoundsGEP = isInBoundsGep(Ptr);
-  bool IsNoWrapAddRec = AR->getNoWrapFlags(SCEV::NoWrapMask);
+  bool IsNoWrapAddRec = isNoWrapAddRec(Ptr, AR, SE, Lp);
   bool IsInAddressSpaceZero = PtrTy->getAddressSpace() == 0;
   if (!IsNoWrapAddRec && !IsInBoundsGEP && !IsInAddressSpaceZero) {
     DEBUG(dbgs() << "LAA: Bad stride - Pointer may wrap in the address space "
