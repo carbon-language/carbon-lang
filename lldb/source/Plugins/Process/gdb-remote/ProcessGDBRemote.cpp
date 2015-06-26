@@ -3969,7 +3969,6 @@ ParseRegisters (XMLNode feature_node, GdbServerTargetInfo &target_info, GDBRemot
     uint32_t reg_offset = 0;
 
     feature_node.ForEachChildElementWithName("reg", [&target_info, &dyn_reg_info, &prev_reg_num, &reg_offset](const XMLNode &reg_node) -> bool {
-        std::string name;
         std::string gdb_group;
         std::string gdb_type;
         ConstString reg_name;
@@ -3996,7 +3995,7 @@ ParseRegisters (XMLNode feature_node, GdbServerTargetInfo &target_info, GDBRemot
             NULL
         };
         
-        reg_node.ForEachAttribute([&target_info, &name, &gdb_group, &gdb_type, &reg_name, &alt_name, &set_name, &value_regs, &invalidate_regs, &encoding_set, &format_set, &reg_info, &prev_reg_num, &reg_offset](const llvm::StringRef &name, const llvm::StringRef &value) -> bool {
+        reg_node.ForEachAttribute([&target_info, &gdb_group, &gdb_type, &reg_name, &alt_name, &set_name, &value_regs, &invalidate_regs, &encoding_set, &format_set, &reg_info, &prev_reg_num, &reg_offset](const llvm::StringRef &name, const llvm::StringRef &value) -> bool {
             if (name == "name")
             {
                 reg_name.SetString(value);
@@ -4131,6 +4130,7 @@ ParseRegisters (XMLNode feature_node, GdbServerTargetInfo &target_info, GDBRemot
             reg_info.invalidate_regs = invalidate_regs.data();
         }
         
+        ++prev_reg_num;
         dyn_reg_info.AddRegister(reg_info, reg_name, alt_name, set_name);
         
         return true; // Keep iterating through all "reg" elements
@@ -4192,7 +4192,7 @@ ProcessGDBRemote::GetGDBServerRegisterInfo ()
                 {
                     node.GetElementText(target_info.osabi);
                 }
-                else if (name == "xi:include")
+                else if (name == "xi:include" || name == "include")
                 {
                     llvm::StringRef href = node.GetAttributeValue("href");
                     if (!href.empty())

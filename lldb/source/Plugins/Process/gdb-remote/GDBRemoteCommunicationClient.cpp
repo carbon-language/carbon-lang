@@ -4224,8 +4224,8 @@ GDBRemoteCommunicationClient::ReadExtFeature (const lldb_private::ConstString ob
         // send query extended feature packet
         std::stringstream packet;
         packet << "qXfer:" 
-               << object.AsCString( ) << ":read:" 
-               << annex.AsCString( )  << ":" 
+               << object.AsCString("") << ":read:" 
+               << annex.AsCString("")  << ":" 
                << std::hex << offset  << "," 
                << std::hex << size;
 
