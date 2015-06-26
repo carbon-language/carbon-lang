@@ -19,7 +19,7 @@ class RegisterVariableTestCase(TestBase):
 
     @dwarf_test
     @expectedFailureClang(None, ['<', '3.5'])
-    @expectedFlakeyGcc # failed with gcc4.8.2
+    @expectedFailureGcc(None, ['is', '4.8.2'])
     def test_with_dwarf_and_run_command(self):
         """Test expressions on register values."""
         self.buildDwarf()
