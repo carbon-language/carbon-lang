@@ -687,6 +687,32 @@ def int_ppc_vsx_xsmindp : PowerPC_VSX_Sca_DDD_Intrinsic<"xsmindp">;
 // Vector divide.
 def int_ppc_vsx_xvdivdp : PowerPC_VSX_Vec_DDD_Intrinsic<"xvdivdp">;
 def int_ppc_vsx_xvdivsp : PowerPC_VSX_Vec_FFF_Intrinsic<"xvdivsp">;
+
+// Vector round-to-infinity (ceil)
+def int_ppc_vsx_xvrspip :
+      Intrinsic<[llvm_v4f32_ty], [llvm_v4f32_ty], [IntrNoMem]>;
+def int_ppc_vsx_xvrdpip :
+      Intrinsic<[llvm_v2f64_ty], [llvm_v2f64_ty], [IntrNoMem]>;
+
+// Vector compare
+def int_ppc_vsx_xvcmpeqdp :
+      PowerPC_VSX_Intrinsic<"xvcmpeqdp", [llvm_v2i64_ty],
+                            [llvm_v2f64_ty, llvm_v2f64_ty], [IntrNoMem]>;
+def int_ppc_vsx_xvcmpeqsp :
+      PowerPC_VSX_Intrinsic<"xvcmpeqsp", [llvm_v4i32_ty],
+                            [llvm_v4f32_ty, llvm_v4f32_ty], [IntrNoMem]>;
+def int_ppc_vsx_xvcmpgedp :
+      PowerPC_VSX_Intrinsic<"xvcmpgedp", [llvm_v2i64_ty],
+                            [llvm_v2f64_ty, llvm_v2f64_ty], [IntrNoMem]>;
+def int_ppc_vsx_xvcmpgesp :
+      PowerPC_VSX_Intrinsic<"xvcmpgesp", [llvm_v4i32_ty],
+                            [llvm_v4f32_ty, llvm_v4f32_ty], [IntrNoMem]>;
+def int_ppc_vsx_xvcmpgtdp :
+      PowerPC_VSX_Intrinsic<"xvcmpgtdp", [llvm_v2i64_ty],
+                            [llvm_v2f64_ty, llvm_v2f64_ty], [IntrNoMem]>;
+def int_ppc_vsx_xvcmpgtsp :
+      PowerPC_VSX_Intrinsic<"xvcmpgtsp", [llvm_v4i32_ty],
+                            [llvm_v4f32_ty, llvm_v4f32_ty], [IntrNoMem]>;
 }
 
 //===----------------------------------------------------------------------===//
