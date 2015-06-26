@@ -222,7 +222,9 @@ public:
   /// This representation is in the same format accepted by the string
   /// constructor above. This should not be used to compare two DataLayout as
   /// different string can represent the same layout.
-  std::string getStringRepresentation() const { return StringRepresentation; }
+  const std::string &getStringRepresentation() const {
+    return StringRepresentation;
+  }
 
   /// \brief Test if the DataLayout was constructed from an empty string.
   bool isDefault() const { return StringRepresentation.empty(); }
