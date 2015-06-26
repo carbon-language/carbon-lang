@@ -304,7 +304,7 @@ public:
   const T        *getEntry(uint32_t Section, uint32_t Entry) const;
   template <typename T>
   const T *getEntry(const Elf_Shdr *Section, uint32_t Entry) const;
-  const char     *getString(const Elf_Shdr *section, uint32_t offset) const;
+  ErrorOr<StringRef> getString(const Elf_Shdr *Section, uint32_t Offset) const;
   const char *getDynamicString(uintX_t Offset) const;
   ErrorOr<StringRef> getSymbolVersion(const Elf_Shdr *section,
                                       const Elf_Sym *Symb,
@@ -934,13 +934,12 @@ ELFFile<ELFT>::getSection(uint32_t index) const {
 }
 
 template <class ELFT>
-const char *ELFFile<ELFT>::getString(const Elf_Shdr *section,
-                                     ELF::Elf32_Word offset) const {
-  assert(section && section->sh_type == ELF::SHT_STRTAB && "Invalid section!");
-  if (offset >= section->sh_size)
-    // FIXME: Proper error handling.
-    report_fatal_error("Symbol name offset outside of string table!");
-  return (const char *)base() + section->sh_offset + offset;
+ErrorOr<StringRef> ELFFile<ELFT>::getString(const Elf_Shdr *Section,
+                                            ELF::Elf32_Word Offset) const {
+  assert(Section && Section->sh_type == ELF::SHT_STRTAB && "Invalid section!");
+  if (Offset >= Section->sh_size)
+    return object_error::parse_failed;
+  return StringRef((const char *)base() + Section->sh_offset + Offset);
 }
 
 template <class ELFT>
@@ -969,21 +968,14 @@ ELFFile<ELFT>::getStaticSymbolName(const Elf_Sym *Symb) const {
 template <class ELFT>
 ErrorOr<StringRef> ELFFile<ELFT>::getSymbolName(const Elf_Shdr *Section,
                                                 const Elf_Sym *Symb) const {
-  if (Symb->st_name == 0)
-    return StringRef("");
-
   const Elf_Shdr *StrTab = getSection(Section->sh_link);
-  if (Symb->st_name >= StrTab->sh_size)
-    return object_error::parse_failed;
-  return StringRef(getString(StrTab, Symb->st_name));
+  return getString(StrTab, Symb->st_name);
 }
 
 template <class ELFT>
 ErrorOr<StringRef>
 ELFFile<ELFT>::getSectionName(const Elf_Shdr *Section) const {
-  if (Section->sh_name >= dot_shstrtab_sec->sh_size)
-    return object_error::parse_failed;
-  return StringRef(getString(dot_shstrtab_sec, Section->sh_name));
+  return getString(dot_shstrtab_sec, Section->sh_name);
 }
 
 template <class ELFT>
