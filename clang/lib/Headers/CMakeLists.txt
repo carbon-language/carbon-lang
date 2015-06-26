@@ -26,6 +26,7 @@ set(files
   ia32intrin.h
   immintrin.h
   Intrin.h
+  inttypes.h
   iso646.h
   limits.h
   lzcntintrin.h
