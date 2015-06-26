@@ -1760,8 +1760,7 @@ SDValue DAGTypeLegalizer::SplitVecOp_CONCAT_VECTORS(SDNode *N) {
   // a new CONCAT_VECTORS node with elements that are half-wide.
   SmallVector<SDValue, 32> Elts;
   EVT EltVT = N->getValueType(0).getVectorElementType();
-  for (unsigned op = 0, e = N->getNumOperands(); op != e; ++op) {
-    SDValue Op = N->getOperand(op);
+  for (const SDValue &Op : N->op_values()) {
     for (unsigned i = 0, e = Op.getValueType().getVectorNumElements();
          i != e; ++i) {
       Elts.push_back(DAG.getNode(ISD::EXTRACT_VECTOR_ELT, DL, EltVT,

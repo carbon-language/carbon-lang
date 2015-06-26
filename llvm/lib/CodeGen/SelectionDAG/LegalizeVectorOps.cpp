@@ -191,8 +191,8 @@ SDValue VectorLegalizer::LegalizeOp(SDValue Op) {
 
   // Legalize the operands
   SmallVector<SDValue, 8> Ops;
-  for (unsigned i = 0, e = Node->getNumOperands(); i != e; ++i)
-    Ops.push_back(LegalizeOp(Node->getOperand(i)));
+  for (const SDValue &Op : Node->op_values())
+    Ops.push_back(LegalizeOp(Op));
 
   SDValue Result = SDValue(DAG.UpdateNodeOperands(Op.getNode(), Ops), 0);
 

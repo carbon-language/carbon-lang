@@ -1170,12 +1170,11 @@ void SelectionDAGLegalize::LegalizeOp(SDNode *Node) {
              TargetLowering::TypeLegal &&
            "Unexpected illegal type!");
 
-  for (unsigned i = 0, e = Node->getNumOperands(); i != e; ++i)
+  for (const SDValue &Op : Node->op_values())
     assert((TLI.getTypeAction(*DAG.getContext(),
-                              Node->getOperand(i).getValueType()) ==
-              TargetLowering::TypeLegal ||
-            Node->getOperand(i).getOpcode() == ISD::TargetConstant) &&
-           "Unexpected illegal type!");
+                              Op.getValueType()) == TargetLowering::TypeLegal ||
+                              Op.getOpcode() == ISD::TargetConstant) &&
+                              "Unexpected illegal type!");
 
   // Figure out the correct action; the way to query this varies by opcode
   TargetLowering::LegalizeAction Action = TargetLowering::Legal;
@@ -2047,10 +2046,11 @@ SDValue SelectionDAGLegalize::ExpandLibCall(RTLIB::Libcall LC, SDNode *Node,
                                             bool isSigned) {
   TargetLowering::ArgListTy Args;
   TargetLowering::ArgListEntry Entry;
-  for (unsigned i = 0, e = Node->getNumOperands(); i != e; ++i) {
-    EVT ArgVT = Node->getOperand(i).getValueType();
+  for (const SDValue &Op : Node->op_values()) {
+    EVT ArgVT = Op.getValueType();
     Type *ArgTy = ArgVT.getTypeForEVT(*DAG.getContext());
-    Entry.Node = Node->getOperand(i); Entry.Ty = ArgTy;
+    Entry.Node = Op;
+    Entry.Ty = ArgTy;
     Entry.isSExt = isSigned;
     Entry.isZExt = !isSigned;
     Args.push_back(Entry);
@@ -2256,10 +2256,11 @@ SelectionDAGLegalize::ExpandDivRemLibCall(SDNode *Node,
 
   TargetLowering::ArgListTy Args;
   TargetLowering::ArgListEntry Entry;
-  for (unsigned i = 0, e = Node->getNumOperands(); i != e; ++i) {
-    EVT ArgVT = Node->getOperand(i).getValueType();
+  for (const SDValue &Op : Node->op_values()) {
+    EVT ArgVT = Op.getValueType();
     Type *ArgTy = ArgVT.getTypeForEVT(*DAG.getContext());
-    Entry.Node = Node->getOperand(i); Entry.Ty = ArgTy;
+    Entry.Node = Op;
+    Entry.Ty = ArgTy;
     Entry.isSExt = isSigned;
     Entry.isZExt = !isSigned;
     Args.push_back(Entry);

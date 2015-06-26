@@ -2435,10 +2435,10 @@ void DAGTypeLegalizer::ExpandIntRes_XMULO(SDNode *N,
 
   TargetLowering::ArgListTy Args;
   TargetLowering::ArgListEntry Entry;
-  for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
-    EVT ArgVT = N->getOperand(i).getValueType();
+  for (const SDValue &Op : N->op_values()) {
+    EVT ArgVT = Op.getValueType();
     Type *ArgTy = ArgVT.getTypeForEVT(*DAG.getContext());
-    Entry.Node = N->getOperand(i);
+    Entry.Node = Op;
     Entry.Ty = ArgTy;
     Entry.isSExt = true;
     Entry.isZExt = false;
