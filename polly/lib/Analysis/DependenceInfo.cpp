@@ -45,7 +45,7 @@ static cl::opt<int> OptComputeOut(
     "polly-dependences-computeout",
     cl::desc("Bound the dependence analysis by a maximal amount of "
              "computational steps (0 means no bound)"),
-    cl::Hidden, cl::init(250000), cl::ZeroOrMore, cl::cat(PollyCategory));
+    cl::Hidden, cl::init(410000), cl::ZeroOrMore, cl::cat(PollyCategory));
 
 static cl::opt<bool> LegalityCheckDisabled(
     "disable-polly-legality", cl::desc("Disable polly legality check"),
