@@ -332,6 +332,10 @@ void ARMPassConfig::addIRPasses() {
     }));
 
   TargetPassConfig::addIRPasses();
+
+  // Match interleaved memory accesses to ldN/stN intrinsics.
+  if (TM->getOptLevel() != CodeGenOpt::None)
+    addPass(createInterleavedAccessPass(TM));
 }
 
 bool ARMPassConfig::addPreISel() {

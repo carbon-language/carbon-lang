@@ -433,6 +433,15 @@ namespace llvm {
     Instruction* emitTrailingFence(IRBuilder<> &Builder, AtomicOrdering Ord,
                            bool IsStore, bool IsLoad) const override;
 
+    unsigned getMaxSupportedInterleaveFactor() const override { return 4; }
+
+    bool lowerInterleavedLoad(LoadInst *LI,
+                              ArrayRef<ShuffleVectorInst *> Shuffles,
+                              ArrayRef<unsigned> Indices,
+                              unsigned Factor) const override;
+    bool lowerInterleavedStore(StoreInst *SI, ShuffleVectorInst *SVI,
+                               unsigned Factor) const override;
+
     bool shouldExpandAtomicLoadInIR(LoadInst *LI) const override;
     bool shouldExpandAtomicStoreInIR(StoreInst *SI) const override;
     TargetLoweringBase::AtomicRMWExpansionKind
