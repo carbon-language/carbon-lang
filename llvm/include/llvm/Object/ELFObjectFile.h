@@ -48,6 +48,7 @@ protected:
   virtual uint64_t getSymbolSize(DataRefImpl Symb) const = 0;
   virtual uint8_t getSymbolOther(DataRefImpl Symb) const = 0;
   virtual uint32_t getSectionType(DataRefImpl Sec) const = 0;
+  virtual uint64_t getSectionFlags(DataRefImpl Sec) const = 0;
 
 public:
   virtual ErrorOr<int64_t> getRelocationAddend(DataRefImpl Rel) const = 0;
@@ -58,8 +59,6 @@ public:
 
   typedef iterator_range<elf_symbol_iterator> elf_symbol_iterator_range;
   virtual elf_symbol_iterator_range getDynamicSymbolIterators() const = 0;
-
-  virtual uint64_t getSectionFlags(SectionRef Sec) const = 0;
 
   elf_symbol_iterator_range symbols() const;
 
@@ -78,6 +77,10 @@ public:
 
   uint32_t getType() const {
     return getObject()->getSectionType(getRawDataRefImpl());
+  }
+
+  uint64_t getFlags() const {
+    return getObject()->getSectionFlags(getRawDataRefImpl());
   }
 };
 
@@ -187,6 +190,7 @@ protected:
                         SmallVectorImpl<char> &Result) const override;
 
   uint32_t getSectionType(DataRefImpl Sec) const override;
+  uint64_t getSectionFlags(DataRefImpl Sec) const override;
   uint64_t getROffset(DataRefImpl Rel) const;
   StringRef getRelocationTypeName(uint32_t Type) const;
 
@@ -279,8 +283,6 @@ public:
   ErrorOr<int64_t> getRelocationAddend(DataRefImpl Rel) const override;
   bool hasRelocationAddend(DataRefImpl Rel) const override;
 
-  uint64_t getSectionFlags(SectionRef Sec) const override;
-
   uint8_t getBytesInAddress() const override;
   StringRef getFileFormatName() const override;
   unsigned getArch() const override;
@@ -325,9 +327,8 @@ std::error_code ELFObjectFile<ELFT>::getSymbolName(DataRefImpl Symb,
 }
 
 template <class ELFT>
-uint64_t ELFObjectFile<ELFT>::getSectionFlags(SectionRef Sec) const {
-  DataRefImpl DRI = Sec.getRawDataRefImpl();
-  return toELFShdrIter(DRI)->sh_flags;
+uint64_t ELFObjectFile<ELFT>::getSectionFlags(DataRefImpl Sec) const {
+  return toELFShdrIter(Sec)->sh_flags;
 }
 
 template <class ELFT>
