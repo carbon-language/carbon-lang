@@ -193,3 +193,22 @@ define i32 @test11(i32 %b) {
 ; X32: movl    $-2, %[[REG:.*]]
 ; X32: roll    %{{.*}}, %[[REG]]
 }
+
+%struct.ref_s = type { %union.v, i16, i16 }
+%union.v = type { i64 }
+
+define %struct.ref_s* @test12(%struct.ref_s* %op, i64 %osbot, i64 %intval) {
+  %neg = shl i64 %intval, 32
+  %sext = xor i64 %neg, -4294967296
+  %idx.ext = ashr exact i64 %sext, 32
+  %add.ptr = getelementptr inbounds %struct.ref_s, %struct.ref_s* %op, i64 %idx.ext
+  ret %struct.ref_s* %add.ptr
+; X64-LABEL: test12:
+; X64: shlq	$32, %[[REG:.*]]
+; X64-NOT: not
+; X64: sarq	$28, %[[REG]]
+; X32-LABEL: test12:
+; X32: leal
+; X32-NOT: not
+; X32: shll	$2, %eax
+}

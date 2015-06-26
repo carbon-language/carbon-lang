@@ -700,6 +700,13 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
       if (ShAmt >= BitWidth)
         break;
 
+      APInt InDemandedMask = (NewMask << ShAmt);
+
+      // If the shift is exact, then it does demand the low bits (and knows that
+      // they are zero).
+      if (cast<BinaryWithFlagsSDNode>(Op)->Flags.hasExact())
+        InDemandedMask |= APInt::getLowBitsSet(BitWidth, ShAmt);
+
       // If this is ((X << C1) >>u ShAmt), see if we can simplify this into a
       // single shift.  We can do this if the top bits (which are shifted out)
       // are never demanded.
@@ -722,7 +729,7 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
       }
 
       // Compute the new bits that are at the top now.
-      if (SimplifyDemandedBits(InOp, (NewMask << ShAmt),
+      if (SimplifyDemandedBits(InOp, InDemandedMask,
                                KnownZero, KnownOne, TLO, Depth+1))
         return true;
       assert((KnownZero & KnownOne) == 0 && "Bits known to be one AND zero?");
@@ -752,6 +759,11 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
         break;
 
       APInt InDemandedMask = (NewMask << ShAmt);
+
+      // If the shift is exact, then it does demand the low bits (and knows that
+      // they are zero).
+      if (cast<BinaryWithFlagsSDNode>(Op)->Flags.hasExact())
+        InDemandedMask |= APInt::getLowBitsSet(BitWidth, ShAmt);
 
       // If any of the demanded bits are produced by the sign extension, we also
       // demand the input sign bit.
