@@ -243,7 +243,6 @@ const char *StripModuleName(const char *module);
 
 // OS
 uptr ReadBinaryName(/*out*/char *buf, uptr buf_len);
-const char *GetBinaryName();
 const char *GetBinaryBasename();
 void CacheBinaryName();
 void DisableCoreDumperIfNecessary();

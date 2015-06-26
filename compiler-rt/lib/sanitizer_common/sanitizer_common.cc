@@ -347,10 +347,6 @@ bool TemplateMatch(const char *templ, const char *str) {
 static char binary_name_cache_str[kMaxPathLength];
 static const char *binary_basename_cache_str;
 
-const char *GetBinaryName() {
-  return binary_name_cache_str;
-}
-
 const char *GetBinaryBasename() {
   return binary_basename_cache_str;
 }
