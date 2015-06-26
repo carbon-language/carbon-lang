@@ -34,7 +34,7 @@ using llvm::COFF::IMAGE_SUBSYSTEM_UNKNOWN;
 using llvm::COFF::IMAGE_SUBSYSTEM_WINDOWS_CUI;
 using llvm::COFF::IMAGE_SUBSYSTEM_WINDOWS_GUI;
 using llvm::sys::Process;
-using llvm::sys::fs::OpenFlags::F_Text;
+using llvm::sys::fs::OpenFlags;
 using llvm::sys::fs::file_magic;
 using llvm::sys::fs::identify_magic;
 
@@ -601,7 +601,7 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
 
   if (auto *Arg = Args.getLastArg(OPT_lldmap)) {
     std::error_code EC;
-    llvm::raw_fd_ostream Out(Arg->getValue(), EC, F_Text);
+    llvm::raw_fd_ostream Out(Arg->getValue(), EC, OpenFlags::F_Text);
     if (EC) {
       llvm::errs() << EC.message() << "\n";
       return false;
