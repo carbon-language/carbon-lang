@@ -40,12 +40,14 @@ class ELFSymbolRef;
 
 class ELFObjectFileBase : public ObjectFile {
   friend class ELFSymbolRef;
+  friend class ELFSectionRef;
 
 protected:
   ELFObjectFileBase(unsigned int Type, MemoryBufferRef Source);
 
   virtual uint64_t getSymbolSize(DataRefImpl Symb) const = 0;
   virtual uint8_t getSymbolOther(DataRefImpl Symb) const = 0;
+  virtual uint32_t getSectionType(DataRefImpl Sec) const = 0;
 
 public:
   virtual ErrorOr<int64_t> getRelocationAddend(DataRefImpl Rel) const = 0;
@@ -58,11 +60,25 @@ public:
   virtual elf_symbol_iterator_range getDynamicSymbolIterators() const = 0;
 
   virtual uint64_t getSectionFlags(SectionRef Sec) const = 0;
-  virtual uint32_t getSectionType(SectionRef Sec) const = 0;
 
   elf_symbol_iterator_range symbols() const;
 
   static inline bool classof(const Binary *v) { return v->isELF(); }
+};
+
+class ELFSectionRef : public SectionRef {
+public:
+  ELFSectionRef(const SectionRef &B) : SectionRef(B) {
+    assert(isa<ELFObjectFileBase>(SectionRef::getObject()));
+  }
+
+  const ELFObjectFileBase *getObject() const {
+    return cast<ELFObjectFileBase>(SectionRef::getObject());
+  }
+
+  uint32_t getType() const {
+    return getObject()->getSectionType(getRawDataRefImpl());
+  }
 };
 
 class ELFSymbolRef : public SymbolRef {
@@ -170,6 +186,7 @@ protected:
   getRelocationTypeName(DataRefImpl Rel,
                         SmallVectorImpl<char> &Result) const override;
 
+  uint32_t getSectionType(DataRefImpl Sec) const override;
   uint64_t getROffset(DataRefImpl Rel) const;
   StringRef getRelocationTypeName(uint32_t Type) const;
 
@@ -263,7 +280,6 @@ public:
   bool hasRelocationAddend(DataRefImpl Rel) const override;
 
   uint64_t getSectionFlags(SectionRef Sec) const override;
-  uint32_t getSectionType(SectionRef Sec) const override;
 
   uint8_t getBytesInAddress() const override;
   StringRef getFileFormatName() const override;
@@ -315,9 +331,8 @@ uint64_t ELFObjectFile<ELFT>::getSectionFlags(SectionRef Sec) const {
 }
 
 template <class ELFT>
-uint32_t ELFObjectFile<ELFT>::getSectionType(SectionRef Sec) const {
-  DataRefImpl DRI = Sec.getRawDataRefImpl();
-  return toELFShdrIter(DRI)->sh_type;
+uint32_t ELFObjectFile<ELFT>::getSectionType(DataRefImpl Sec) const {
+  return toELFShdrIter(Sec)->sh_type;
 }
 
 template <class ELFT>
