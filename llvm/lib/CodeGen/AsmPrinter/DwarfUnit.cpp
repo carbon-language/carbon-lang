@@ -1346,6 +1346,13 @@ void DwarfUnit::constructMemberDIE(DIE &Buffer, const DIDerivedType *DT) {
       addUInt(MemberDie, dwarf::DW_AT_byte_size, None, FieldSize/8);
       addUInt(MemberDie, dwarf::DW_AT_bit_size, None, Size);
 
+      // The DWARF 2 DW_AT_bit_offset is counting the bits between
+      // the high end of the aligned storage unit containing the bit
+      // field to the high end of the bit field.
+      //
+      // FIXME: DWARF 4 states that DW_AT_data_bit_offset (which
+      // counts from the beginning, regardless of endianness) should
+      // be used instead.
       uint64_t Offset = DT->getOffsetInBits();
       uint64_t AlignMask = ~(DT->getAlignInBits() - 1);
       uint64_t HiMark = (Offset + FieldSize) & AlignMask;
@@ -1357,8 +1364,6 @@ void DwarfUnit::constructMemberDIE(DIE &Buffer, const DIDerivedType *DT) {
         Offset = FieldSize - (Offset + Size);
       addUInt(MemberDie, dwarf::DW_AT_bit_offset, None, Offset);
 
-      // Here DW_AT_data_member_location points to the anonymous
-      // field that includes this bit field.
       OffsetInBytes = FieldOffset >> 3;
     } else
       // This is not a bitfield.
