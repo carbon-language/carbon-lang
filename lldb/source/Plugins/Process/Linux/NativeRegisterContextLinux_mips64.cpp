@@ -290,125 +290,7 @@ namespace
         { "Floating Point Registers",   "fpu", k_num_fpr_registers_mips64, g_fp_regnums_mips64 }
     };
 
-    class ReadRegOperation : public NativeProcessLinux::Operation
-    {
-    public:
-        ReadRegOperation(lldb::tid_t tid, uint32_t offset, RegisterValue &value) :
-            m_tid(tid),
-            m_offset(static_cast<uintptr_t>(offset)),
-            m_value(value)
-        { }
-
-        void
-        Execute(NativeProcessLinux *monitor) override;
-
-    private:
-        lldb::tid_t m_tid;
-        uintptr_t m_offset;
-        RegisterValue &m_value;
-    };
-
-    class WriteRegOperation : public NativeProcessLinux::Operation
-    {
-    public:
-        WriteRegOperation(lldb::tid_t tid, unsigned offset, const char *reg_name, const RegisterValue &value) :
-            m_tid(tid),
-            m_offset(offset),
-            m_reg_name(reg_name),
-            m_value(value)
-        { }
-
-        void
-        Execute(NativeProcessLinux *monitor) override;
-
-    private:
-        lldb::tid_t m_tid;
-        uintptr_t m_offset;
-        const char *m_reg_name;
-        const RegisterValue &m_value;
-    };
-
-    //------------------------------------------------------------------------------
-    /// @class ReadWatchPointRegOperation
-    /// @brief Implements NativeRegisterContextLinux_mips64::ReadWatchPointRegisterValue.
-    class ReadWatchPointRegOperation : public NativeProcessLinux::Operation
-    {
-    public:
-        ReadWatchPointRegOperation (
-            lldb::tid_t tid,
-            void* watch_readback) :
-            m_tid(tid),
-            m_watch_readback(watch_readback)
-            {
-            }
-
-        void Execute(NativeProcessLinux *monitor) override;
-
-    private:
-        lldb::tid_t m_tid;
-        void* m_watch_readback;
-    };
-
-    //------------------------------------------------------------------------------
-    /// @class SetWatchPointRegOperation
-    /// @brief Implements NativeRegisterContextLinux_mips64::SetWatchPointRegisterValue.
-    class SetWatchPointRegOperation : public NativeProcessLinux::Operation
-    {
-    public:
-        SetWatchPointRegOperation (
-            lldb::tid_t tid,
-            void* watch_reg_value) :
-            m_tid(tid),
-            m_watch_reg_value(watch_reg_value)
-            {
-            }
-
-        void Execute(NativeProcessLinux *monitor) override;
-
-    private:
-        lldb::tid_t m_tid;
-        void* m_watch_reg_value;
-    };
 } // end of anonymous namespace
-
-void
-ReadRegOperation::Execute(NativeProcessLinux *monitor)
-{
-    elf_gregset_t regs;
-    NativeProcessLinux::PtraceWrapper(PTRACE_GETREGS, m_tid, NULL, &regs, sizeof regs, m_error);
-    if (m_error.Success())
-    {
-        lldb_private::ArchSpec arch;
-        if (monitor->GetArchitecture(arch))
-            m_value.SetBytes((void *)(((unsigned char *)(regs)) + m_offset), 8, arch.GetByteOrder());
-        else
-            m_error.SetErrorString("failed to get architecture");
-    }
-}
-
-void
-WriteRegOperation::Execute(NativeProcessLinux *monitor)
-{
-    elf_gregset_t regs;
-    NativeProcessLinux::PtraceWrapper(PTRACE_GETREGS, m_tid, NULL, &regs, sizeof regs, m_error);
-    if (m_error.Success())
-    {
-        ::memcpy((void *)(((unsigned char *)(&regs)) + m_offset), m_value.GetBytes(), 8);
-        NativeProcessLinux::PtraceWrapper(PTRACE_SETREGS, m_tid, NULL, &regs, sizeof regs, m_error);
-    }
-}
-
-void
-ReadWatchPointRegOperation::Execute(NativeProcessLinux *monitor)
-{
-    NativeProcessLinux::PtraceWrapper(PTRACE_GET_WATCH_REGS, m_tid, m_watch_readback, NULL, NULL, m_error);
-}
-
-void
-SetWatchPointRegOperation::Execute(NativeProcessLinux *monitor)
-{
-    NativeProcessLinux::PtraceWrapper(PTRACE_SET_WATCH_REGS, m_tid, m_watch_reg_value, NULL, NULL, m_error);
-}
 
 NativeRegisterContextLinux*
 NativeRegisterContextLinux::CreateHostNativeRegisterContextLinux(const ArchSpec& target_arch,
@@ -996,14 +878,18 @@ NativeRegisterContextLinux_mips64::IsWatchpointHit (uint32_t wp_index, bool &is_
     // reading the current state of watch regs
     struct pt_watch_regs watch_readback;
     NativeProcessProtocolSP process_sp (m_thread.GetProcess ());
-    NativeProcessLinux *const process_p = reinterpret_cast<NativeProcessLinux*> (process_sp.get ());
-    Error error = process_p->DoOperation(GetReadWatchPointRegisterValueOperation(m_thread.GetID(),(void*)&watch_readback));
+    NativeProcessLinux *const process_p = static_cast<NativeProcessLinux*> (process_sp.get ());
+    Error error = process_p->DoOperation([&] {
+        return DoReadWatchPointRegisterValue(m_thread.GetID(), static_cast<void *>(&watch_readback));
+    });
 
     if (GetWatchHi (&watch_readback, wp_index) & (IRW))
     {
         // clear hit flag in watchhi 
         SetWatchHi (&watch_readback, wp_index, (GetWatchHi (&watch_readback, wp_index) & ~(IRW)));
-        process_p->DoOperation(GetWriteWatchPointRegisterValueOperation(m_thread.GetID(), (void*)&watch_readback));
+        process_p->DoOperation([&] {
+            return DoWriteWatchPointRegisterValue(m_thread.GetID(), static_cast<void *>(&watch_readback));
+        });
      
         is_hit = true;
         return error;
@@ -1045,8 +931,10 @@ NativeRegisterContextLinux_mips64::ClearHardwareWatchpoint(uint32_t wp_index)
     struct pt_watch_regs regs;
     // First reading the current state of watch regs
     NativeProcessProtocolSP process_sp (m_thread.GetProcess ());
-    NativeProcessLinux *const process_p = reinterpret_cast<NativeProcessLinux*> (process_sp.get ());
-    process_p->DoOperation(GetReadWatchPointRegisterValueOperation(m_thread.GetID(),(void*)&regs));
+    NativeProcessLinux *const process_p = static_cast<NativeProcessLinux*> (process_sp.get ());
+    process_p->DoOperation([&] {
+        return DoReadWatchPointRegisterValue(m_thread.GetID(), static_cast<void*>(&regs));
+    });
 
     if (regs.style == pt_watch_style_mips32)
     {
@@ -1061,7 +949,9 @@ NativeRegisterContextLinux_mips64::ClearHardwareWatchpoint(uint32_t wp_index)
         regs.mips64.watch_masks[wp_index] = default_watch_regs.mips64.watch_masks[wp_index];
     }
 
-    Error error = process_p->DoOperation(GetWriteWatchPointRegisterValueOperation(m_thread.GetID(), (void*)&regs));
+    Error error = process_p->DoOperation([&] {
+        return DoWriteWatchPointRegisterValue(m_thread.GetID(), static_cast<void *>(&regs));
+    });
     if(!error.Fail())
     {
         hw_addr_map[wp_index] = LLDB_INVALID_ADDRESS;
@@ -1074,8 +964,10 @@ Error
 NativeRegisterContextLinux_mips64::ClearAllHardwareWatchpoints()
 {
     NativeProcessProtocolSP process_sp (m_thread.GetProcess ());
-    NativeProcessLinux *const process_p = reinterpret_cast<NativeProcessLinux*> (process_sp.get ());
-    return process_p->DoOperation(GetWriteWatchPointRegisterValueOperation(m_thread.GetID(), (void*)&default_watch_regs));
+    NativeProcessLinux *const process_p = static_cast<NativeProcessLinux *> (process_sp.get ());
+    return process_p->DoOperation([&] {
+        return DoWriteWatchPointRegisterValue(m_thread.GetID(), static_cast<void *>(&default_watch_regs));
+    });
 }
 
 Error
@@ -1095,8 +987,10 @@ NativeRegisterContextLinux_mips64::SetHardwareWatchpoint (
 
     // First reading the current state of watch regs
     NativeProcessProtocolSP process_sp (m_thread.GetProcess ());
-    NativeProcessLinux *const process_p = reinterpret_cast<NativeProcessLinux*> (process_sp.get ());
-    process_p->DoOperation(GetReadWatchPointRegisterValueOperation(m_thread.GetID(),(void*)&regs));
+    NativeProcessLinux *const process_p = static_cast<NativeProcessLinux*> (process_sp.get ());
+    process_p->DoOperation([&] {
+        return DoReadWatchPointRegisterValue(m_thread.GetID(), static_cast<void *>(&regs));
+    });
 
     // Try if a new watch point fits in this state
     int index = GetVacantWatchIndex (&regs, addr, size, watch_flags, NumSupportedHardwareWatchpoints());
@@ -1107,7 +1001,9 @@ NativeRegisterContextLinux_mips64::SetHardwareWatchpoint (
 
 
     // It fits, so we go ahead with updating the state of watch regs 
-    process_p->DoOperation(GetWriteWatchPointRegisterValueOperation(m_thread.GetID(), (void*)&regs));
+    process_p->DoOperation([&] {
+        return DoWriteWatchPointRegisterValue(m_thread.GetID(), static_cast<void *>(&regs));
+    });
 
     // Storing exact address  
     hw_addr_map[index] = addr; 
@@ -1138,8 +1034,10 @@ NativeRegisterContextLinux_mips64::NumSupportedHardwareWatchpoints ()
             return 0;
         }
 
-        NativeProcessLinux *const process_p = reinterpret_cast<NativeProcessLinux*> (process_sp.get ());
-        process_p->DoOperation(GetReadWatchPointRegisterValueOperation(m_thread.GetID(),(void*)&regs));
+        NativeProcessLinux *const process_p = static_cast<NativeProcessLinux*> (process_sp.get ());
+        process_p->DoOperation([&] {
+            return DoReadWatchPointRegisterValue(m_thread.GetID(), static_cast<void *>(&regs));
+        });
         default_watch_regs = regs; // Keeping default watch regs values for future use
         switch (regs.style)
         {
@@ -1156,34 +1054,58 @@ NativeRegisterContextLinux_mips64::NumSupportedHardwareWatchpoints ()
     }
     return num_valid;
 }
-
-NativeProcessLinux::OperationUP
-NativeRegisterContextLinux_mips64::GetReadRegisterValueOperation(uint32_t offset,
-                                                                 const char* reg_name,
-                                                                 uint32_t size,
-                                                                 RegisterValue &value)
+Error
+NativeRegisterContextLinux_mips64::DoReadRegisterValue(uint32_t offset,
+                                                       const char* reg_name,
+                                                       uint32_t size,
+                                                       RegisterValue &value)
 {
-    return NativeProcessLinux::OperationUP(new ReadRegOperation(m_thread.GetID(), offset, value));
+    Error error;
+    elf_gregset_t regs;
+    NativeProcessLinux::PtraceWrapper(PTRACE_GETREGS, m_thread.GetID(), NULL, &regs, sizeof regs, error);
+    if (error.Success())
+    {
+        lldb_private::ArchSpec arch;
+        if (m_thread.GetProcess()->GetArchitecture(arch))
+            value.SetBytes((void *)(((unsigned char *)(regs)) + offset), 8, arch.GetByteOrder());
+        else
+            error.SetErrorString("failed to get architecture");
+    }
+    return error;
 }
 
-NativeProcessLinux::OperationUP
-NativeRegisterContextLinux_mips64::GetWriteRegisterValueOperation(uint32_t offset,
-                                                                  const char* reg_name,
-                                                                  const RegisterValue &value)
+Error
+NativeRegisterContextLinux_mips64::DoWriteRegisterValue(uint32_t offset,
+                                                        const char* reg_name,
+                                                        const RegisterValue &value)
 {
-    return NativeProcessLinux::OperationUP(new WriteRegOperation(m_thread.GetID(), offset, reg_name, value));
+    Error error;
+    elf_gregset_t regs;
+    NativeProcessLinux::PtraceWrapper(PTRACE_GETREGS, m_thread.GetID(), NULL, &regs, sizeof regs, error);
+    if (error.Success())
+    {
+        ::memcpy((void *)(((unsigned char *)(&regs)) + offset), value.GetBytes(), 8);
+        NativeProcessLinux::PtraceWrapper(PTRACE_SETREGS, m_thread.GetID(), NULL, &regs, sizeof regs, error);
+    }
+    return error;
 }
 
-NativeProcessLinux::OperationUP
-NativeRegisterContextLinux_mips64::GetReadWatchPointRegisterValueOperation(lldb::tid_t tid, void* watch_readback)
+Error
+NativeRegisterContextLinux_mips64::DoReadWatchPointRegisterValue(lldb::tid_t tid, void* watch_readback)
 {
-    return NativeProcessLinux::OperationUP(new ReadWatchPointRegOperation(m_thread.GetID(), watch_readback));
+    Error error;
+    NativeProcessLinux::PtraceWrapper(
+            PTRACE_GET_WATCH_REGS, m_thread.GetID(), watch_readback, NULL, 0, error);
+    return error;
 }
 
-NativeProcessLinux::OperationUP
-NativeRegisterContextLinux_mips64::GetWriteWatchPointRegisterValueOperation(lldb::tid_t tid, void* watch_reg_value)
+Error
+NativeRegisterContextLinux_mips64::DoWriteWatchPointRegisterValue(lldb::tid_t tid, void* watch_reg_value)
 {
-    return NativeProcessLinux::OperationUP(new SetWatchPointRegOperation(m_thread.GetID(), watch_reg_value));
+    Error error;
+    NativeProcessLinux::PtraceWrapper(PTRACE_SET_WATCH_REGS,
+            m_thread.GetID(), watch_reg_value, NULL, 0, error);
+    return error;
 }
 
 #endif // defined (__mips__)

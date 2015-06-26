@@ -19,204 +19,6 @@
 using namespace lldb_private;
 using namespace lldb_private::process_linux;
 
-namespace
-{
-
-class ReadRegOperation : public NativeProcessLinux::Operation
-{
-public:
-    ReadRegOperation(lldb::tid_t tid, uint32_t offset, const char *reg_name, RegisterValue &value) :
-    	m_tid(tid),
-        m_offset(static_cast<uintptr_t>(offset)),
-        m_reg_name(reg_name),
-        m_value(value)
-    { }
-
-    void
-    Execute(NativeProcessLinux *monitor) override;
-
-private:
-    lldb::tid_t m_tid;
-    uintptr_t m_offset;
-    const char *m_reg_name;
-    RegisterValue &m_value;
-};
-
-class WriteRegOperation : public NativeProcessLinux::Operation
-{
-public:
-    WriteRegOperation(lldb::tid_t tid, unsigned offset, const char *reg_name, const RegisterValue &value) :
-    	m_tid(tid),
-        m_offset(offset),
-        m_reg_name(reg_name),
-        m_value(value)
-    { }
-
-    void
-    Execute(NativeProcessLinux *monitor) override;
-
-private:
-    lldb::tid_t m_tid;
-    uintptr_t m_offset;
-    const char *m_reg_name;
-    const RegisterValue &m_value;
-};
-
-class ReadGPROperation : public NativeProcessLinux::Operation
-{
-public:
-    ReadGPROperation(lldb::tid_t tid, void *buf, size_t buf_size) :
-    	m_tid(tid), m_buf(buf), m_buf_size(buf_size)
-    { }
-
-    void Execute(NativeProcessLinux *monitor) override;
-
-private:
-    lldb::tid_t m_tid;
-    void *m_buf;
-    size_t m_buf_size;
-};
-
-class WriteGPROperation : public NativeProcessLinux::Operation
-{
-public:
-    WriteGPROperation(lldb::tid_t tid, void *buf, size_t buf_size) :
-    	m_tid(tid), m_buf(buf), m_buf_size(buf_size)
-    { }
-
-    void Execute(NativeProcessLinux *monitor) override;
-
-private:
-    lldb::tid_t m_tid;
-    void *m_buf;
-    size_t m_buf_size;
-};
-
-class ReadFPROperation : public NativeProcessLinux::Operation
-{
-public:
-    ReadFPROperation(lldb::tid_t tid, void *buf, size_t buf_size) :
-        m_tid(tid), m_buf(buf), m_buf_size(buf_size)
-    { }
-
-    void Execute(NativeProcessLinux *monitor) override;
-
-private:
-    lldb::tid_t m_tid;
-    void *m_buf;
-    size_t m_buf_size;
-};
-
-class WriteFPROperation : public NativeProcessLinux::Operation
-{
-public:
-    WriteFPROperation(lldb::tid_t tid, void *buf, size_t buf_size) :
-        m_tid(tid), m_buf(buf), m_buf_size(buf_size)
-    { }
-
-    void Execute(NativeProcessLinux *monitor) override;
-
-private:
-    lldb::tid_t m_tid;
-    void *m_buf;
-    size_t m_buf_size;
-};
-
-class ReadRegisterSetOperation : public NativeProcessLinux::Operation
-{
-public:
-    ReadRegisterSetOperation(lldb::tid_t tid, void *buf, size_t buf_size, unsigned int regset) :
-        m_tid(tid), m_buf(buf), m_buf_size(buf_size), m_regset(regset)
-    { }
-
-    void Execute(NativeProcessLinux *monitor) override;
-
-private:
-    lldb::tid_t m_tid;
-    void *m_buf;
-    size_t m_buf_size;
-    const unsigned int m_regset;
-};
-
-class WriteRegisterSetOperation : public NativeProcessLinux::Operation
-{
-public:
-    WriteRegisterSetOperation(lldb::tid_t tid, void *buf, size_t buf_size, unsigned int regset) :
-        m_tid(tid), m_buf(buf), m_buf_size(buf_size), m_regset(regset)
-    { }
-
-    void Execute(NativeProcessLinux *monitor) override;
-
-private:
-    lldb::tid_t m_tid;
-    void *m_buf;
-    size_t m_buf_size;
-    const unsigned int m_regset;
-};
-
-} // end of anonymous namespace
-
-void
-ReadRegOperation::Execute(NativeProcessLinux *monitor)
-{
-	Log *log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_REGISTERS));
-
-    lldb::addr_t data = static_cast<unsigned long>(NativeProcessLinux::PtraceWrapper(PTRACE_PEEKUSER, m_tid, (void*)m_offset, nullptr, 0, m_error));
-    if (m_error.Success())
-        m_value = data;
-
-    if (log)
-        log->Printf ("NativeProcessLinux::%s() reg %s: 0x%" PRIx64, __FUNCTION__, m_reg_name, data);
-}
-
-void
-WriteRegOperation::Execute(NativeProcessLinux *monitor)
-{
-    Log *log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_REGISTERS));
-
-    void* buf = (void*)m_value.GetAsUInt64();
-
-    if (log)
-        log->Printf ("NativeProcessLinux::%s() reg %s: %p", __FUNCTION__, m_reg_name, buf);
-    NativeProcessLinux::PtraceWrapper(PTRACE_POKEUSER, m_tid, (void*)m_offset, buf, 0, m_error);
-}
-
-void
-ReadGPROperation::Execute(NativeProcessLinux *monitor)
-{
-    NativeProcessLinux::PtraceWrapper(PTRACE_GETREGS, m_tid, nullptr, m_buf, m_buf_size, m_error);
-}
-
-void
-WriteGPROperation::Execute(NativeProcessLinux *monitor)
-{
-    NativeProcessLinux::PtraceWrapper(PTRACE_SETREGS, m_tid, nullptr, m_buf, m_buf_size, m_error);
-}
-
-void
-ReadFPROperation::Execute(NativeProcessLinux *monitor)
-{
-    NativeProcessLinux::PtraceWrapper(PTRACE_GETFPREGS, m_tid, nullptr, m_buf, m_buf_size, m_error);
-}
-
-void
-WriteFPROperation::Execute(NativeProcessLinux *monitor)
-{
-    NativeProcessLinux::PtraceWrapper(PTRACE_SETFPREGS, m_tid, nullptr, m_buf, m_buf_size, m_error);
-}
-
-void
-ReadRegisterSetOperation::Execute(NativeProcessLinux *monitor)
-{
-    NativeProcessLinux::PtraceWrapper(PTRACE_GETREGSET, m_tid, (void *)&m_regset, m_buf, m_buf_size, m_error);
-}
-
-void
-WriteRegisterSetOperation::Execute(NativeProcessLinux *monitor)
-{
-    NativeProcessLinux::PtraceWrapper(PTRACE_SETREGSET, m_tid, (void *)&m_regset, m_buf, m_buf_size, m_error);
-}
-
 NativeRegisterContextLinux::NativeRegisterContextLinux(NativeThreadProtocol &native_thread,
                                                        uint32_t concrete_frame_idx,
                                                        RegisterInfoInterface *reg_info_interface_p) :
@@ -253,10 +55,9 @@ NativeRegisterContextLinux::ReadRegisterRaw(uint32_t reg_index, RegisterValue &r
         return Error("NativeProcessProtocol is NULL");
 
     NativeProcessLinux* process_p = static_cast<NativeProcessLinux*>(process_sp.get());
-    return process_p->DoOperation(GetReadRegisterValueOperation(reg_info->byte_offset,
-                                                                reg_info->name,
-                                                                reg_info->byte_size,
-                                                                reg_value));
+    return process_p->DoOperation([&] {
+        return DoReadRegisterValue(reg_info->byte_offset, reg_info->name, reg_info->byte_size, reg_value);
+    });
 }
 
 Error
@@ -317,9 +118,9 @@ NativeRegisterContextLinux::WriteRegisterRaw(uint32_t reg_index, const RegisterV
         return Error("NativeRegisterContextLinux::%s failed to get RegisterInfo for write register index %" PRIu32, __FUNCTION__, reg_to_write);
 
     NativeProcessLinux* process_p = static_cast<NativeProcessLinux*> (process_sp.get ());
-    return process_p->DoOperation(GetWriteRegisterValueOperation(reg_info->byte_offset,
-                                                                 reg_info->name,
-                                                                 reg_value));
+    return process_p->DoOperation([&] {
+        return DoWriteRegisterValue(reg_info->byte_offset, reg_info->name, reg_value);
+    });
 }
 
 Error
@@ -335,7 +136,7 @@ NativeRegisterContextLinux::ReadGPR()
     size_t buf_size = GetGPRSize();
 
     NativeProcessLinux* process_p = static_cast<NativeProcessLinux*>(process_sp.get());
-    return process_p->DoOperation(GetReadGPROperation(buf, buf_size));
+    return process_p->DoOperation([&] { return DoReadGPR(buf, buf_size); });
 }
 
 Error
@@ -351,7 +152,7 @@ NativeRegisterContextLinux::WriteGPR()
     size_t buf_size = GetGPRSize();
 
     NativeProcessLinux* process_p = static_cast<NativeProcessLinux*>(process_sp.get());
-    return process_p->DoOperation(GetWriteGPROperation(buf, buf_size));
+    return process_p->DoOperation([&] { return DoWriteGPR(buf, buf_size); });
 }
 
 Error
@@ -367,7 +168,7 @@ NativeRegisterContextLinux::ReadFPR()
     size_t buf_size = GetFPRSize();
 
     NativeProcessLinux* process_p = static_cast<NativeProcessLinux*>(process_sp.get());
-    return process_p->DoOperation(GetReadFPROperation(buf, buf_size));
+    return process_p->DoOperation([&] { return DoReadFPR(buf, buf_size); });
 }
 
 Error
@@ -383,7 +184,7 @@ NativeRegisterContextLinux::WriteFPR()
     size_t buf_size = GetFPRSize();
 
     NativeProcessLinux* process_p = static_cast<NativeProcessLinux*>(process_sp.get());
-    return process_p->DoOperation(GetWriteFPROperation(buf, buf_size));
+    return process_p->DoOperation([&] { return DoWriteFPR(buf, buf_size); });
 }
 
 Error
@@ -394,8 +195,12 @@ NativeRegisterContextLinux::ReadRegisterSet(void *buf, size_t buf_size, unsigned
         return Error("NativeProcessProtocol is NULL");
     NativeProcessLinux* process_p = static_cast<NativeProcessLinux*>(process_sp.get());
 
-    ReadRegisterSetOperation op(m_thread.GetID(), buf, buf_size, regset);
-    return process_p->DoOperation(&op);
+    return process_p->DoOperation([&] {
+        Error error;
+        NativeProcessLinux::PtraceWrapper(PTRACE_GETREGSET, m_thread.GetID(),
+                static_cast<void *>(&regset), buf, buf_size, error);
+        return error;
+    });
 }
 
 Error
@@ -406,47 +211,82 @@ NativeRegisterContextLinux::WriteRegisterSet(void *buf, size_t buf_size, unsigne
         return Error("NativeProcessProtocol is NULL");
     NativeProcessLinux* process_p = static_cast<NativeProcessLinux*>(process_sp.get());
 
-    WriteRegisterSetOperation op(m_thread.GetID(), buf, buf_size, regset);
-    return process_p->DoOperation(&op);
+    return process_p->DoOperation([&] {
+        Error error;
+        NativeProcessLinux::PtraceWrapper(PTRACE_SETREGSET, m_thread.GetID(),
+                static_cast<void *>(&regset), buf, buf_size, error);
+        return error;
+    });
 }
 
-NativeProcessLinux::OperationUP
-NativeRegisterContextLinux::GetReadRegisterValueOperation(uint32_t offset,
-                                                          const char* reg_name,
-	                                                      uint32_t size,
-	                                                      RegisterValue &value)
+Error
+NativeRegisterContextLinux::DoReadRegisterValue(uint32_t offset,
+                                                const char* reg_name,
+                                                uint32_t size,
+                                                RegisterValue &value)
 {
-	return NativeProcessLinux::OperationUP(new ReadRegOperation(m_thread.GetID(), offset, reg_name, value));
+    Log *log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_REGISTERS));
+    Error error;
+
+    lldb::addr_t data = NativeProcessLinux::PtraceWrapper(
+            PTRACE_PEEKUSER, m_thread.GetID(), reinterpret_cast<void *>(offset), nullptr, 0, error);
+
+    if (error.Success())
+        value = data;
+
+    if (log)
+        log->Printf ("NativeRegisterContextLinux::%s() reg %s: 0x%" PRIx64, __FUNCTION__, reg_name, data);
+
+    return error;
 }
 
-NativeProcessLinux::OperationUP
-NativeRegisterContextLinux::GetWriteRegisterValueOperation(uint32_t offset,
-                                                           const char* reg_name,
-	                                                       const RegisterValue &value)
+Error
+NativeRegisterContextLinux::DoWriteRegisterValue(uint32_t offset,
+                                                 const char* reg_name,
+                                                 const RegisterValue &value)
 {
-	return NativeProcessLinux::OperationUP(new WriteRegOperation(m_thread.GetID(), offset, reg_name, value));
+    Log *log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_REGISTERS));
+
+    void* buf = reinterpret_cast<void *>(value.GetAsUInt64());
+
+    if (log)
+        log->Printf ("NativeRegisterContextLinux::%s() reg %s: %p", __FUNCTION__, reg_name, buf);
+
+    Error error;
+    NativeProcessLinux::PtraceWrapper(
+            PTRACE_POKEUSER, m_thread.GetID(), reinterpret_cast<void *>(offset), buf, 0, error);
+
+    return error;
 }
 
-NativeProcessLinux::OperationUP
-NativeRegisterContextLinux::GetReadGPROperation(void *buf, size_t buf_size)
+Error
+NativeRegisterContextLinux::DoReadGPR(void *buf, size_t buf_size)
 {
-	return NativeProcessLinux::OperationUP(new ReadGPROperation(m_thread.GetID(), buf, buf_size));
+    Error error;
+    NativeProcessLinux::PtraceWrapper(PTRACE_GETREGS, m_thread.GetID(), nullptr, buf, buf_size, error);
+    return error;
 }
 
-NativeProcessLinux::OperationUP
-NativeRegisterContextLinux::GetWriteGPROperation(void *buf, size_t buf_size)
+Error
+NativeRegisterContextLinux::DoWriteGPR(void *buf, size_t buf_size)
 {
-	return NativeProcessLinux::OperationUP(new WriteGPROperation(m_thread.GetID(), buf, buf_size));
+    Error error;
+    NativeProcessLinux::PtraceWrapper(PTRACE_SETREGS, m_thread.GetID(), nullptr, buf, buf_size, error);
+    return error;
 }
 
-NativeProcessLinux::OperationUP
-NativeRegisterContextLinux::GetReadFPROperation(void *buf, size_t buf_size)
+Error
+NativeRegisterContextLinux::DoReadFPR(void *buf, size_t buf_size)
 {
-	return NativeProcessLinux::OperationUP(new ReadFPROperation(m_thread.GetID(), buf, buf_size));
+    Error error;
+    NativeProcessLinux::PtraceWrapper(PTRACE_GETFPREGS, m_thread.GetID(), nullptr, buf, buf_size, error);
+    return error;
 }
 
-NativeProcessLinux::OperationUP
-NativeRegisterContextLinux::GetWriteFPROperation(void *buf, size_t buf_size)
+Error
+NativeRegisterContextLinux::DoWriteFPR(void *buf, size_t buf_size)
 {
-	return NativeProcessLinux::OperationUP(new WriteFPROperation(m_thread.GetID(), buf, buf_size));
+    Error error;
+    NativeProcessLinux::PtraceWrapper(PTRACE_SETFPREGS, m_thread.GetID(), nullptr, buf, buf_size, error);
+    return error;
 }

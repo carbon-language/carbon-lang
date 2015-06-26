@@ -74,28 +74,31 @@ protected:
     virtual size_t
     GetFPRSize() { return 0; }
 
-    virtual NativeProcessLinux::OperationUP
-    GetReadRegisterValueOperation(uint32_t offset,
-                                  const char* reg_name,
-                                  uint32_t size,
-                                  RegisterValue &value);
 
-    virtual NativeProcessLinux::OperationUP
-    GetWriteRegisterValueOperation(uint32_t offset,
-                                   const char* reg_name,
-                                   const RegisterValue &value);
+    // The Do*** functions are executed on the privileged thread and can perform ptrace
+    // operations directly.
+    virtual Error
+    DoReadRegisterValue(uint32_t offset,
+                        const char* reg_name,
+                        uint32_t size,
+                        RegisterValue &value);
 
-    virtual NativeProcessLinux::OperationUP
-    GetReadGPROperation(void *buf, size_t buf_size);
+    virtual Error
+    DoWriteRegisterValue(uint32_t offset,
+                       const char* reg_name,
+                       const RegisterValue &value);
 
-    virtual NativeProcessLinux::OperationUP
-    GetWriteGPROperation(void *buf, size_t buf_size);
+    virtual Error
+    DoReadGPR(void *buf, size_t buf_size);
 
-    virtual NativeProcessLinux::OperationUP
-    GetReadFPROperation(void *buf, size_t buf_size);
+    virtual Error
+    DoWriteGPR(void *buf, size_t buf_size);
 
-    virtual NativeProcessLinux::OperationUP
-    GetWriteFPROperation(void *buf, size_t buf_size);
+    virtual Error
+    DoReadFPR(void *buf, size_t buf_size);
+
+    virtual Error
+    DoWriteFPR(void *buf, size_t buf_size);
 };
 
 } // namespace process_linux

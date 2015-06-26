@@ -87,24 +87,22 @@ namespace process_linux {
         NumSupportedHardwareWatchpoints () override;
 
     protected:
-        NativeProcessLinux::OperationUP
-        GetReadRegisterValueOperation(uint32_t offset,
-                                      const char* reg_name,
-                                      uint32_t size,
-                                      RegisterValue &value) override;
+        Error
+        DoReadRegisterValue(uint32_t offset,
+                            const char* reg_name,
+                            uint32_t size,
+                            RegisterValue &value) override;
 
-        NativeProcessLinux::OperationUP
-        GetWriteRegisterValueOperation(uint32_t offset,
-                                       const char* reg_name,
-                                       const RegisterValue &value) override;
+        Error
+        DoWriteRegisterValue(uint32_t offset,
+                             const char* reg_name,
+                             const RegisterValue &value) override;
 
-        NativeProcessLinux::OperationUP
-        GetReadWatchPointRegisterValueOperation(lldb::tid_t tid,
-                                                void* watch_readback);
+        Error
+        DoReadWatchPointRegisterValue(lldb::tid_t tid, void* watch_readback);
 
-        NativeProcessLinux::OperationUP
-        GetWriteWatchPointRegisterValueOperation(lldb::tid_t tid,
-                                                 void* watch_readback);
+        Error
+        DoWriteWatchPointRegisterValue(lldb::tid_t tid, void* watch_readback);
 
         bool
         IsFR0();

@@ -63,28 +63,8 @@ namespace process_linux {
         /// one that spawned or attached to the process from the start.  Therefore, when
         /// a NativeProcessLinux is asked to deliver or change the state of an inferior
         /// process the operation must be "funneled" to a specific thread to perform the
-        /// task.  The Operation class provides an abstract base for all services the
-        /// NativeProcessLinux must perform via the single virtual function Execute, thus
-        /// encapsulating the code that needs to run in the privileged context.
-        class Operation
-        {
-        public:
-            Operation () : m_error() { }
-
-            virtual
-            ~Operation() {}
-
-            virtual void
-            Execute (NativeProcessLinux *process) = 0;
-
-            const Error &
-            GetError () const { return m_error; }
-
-        protected:
-            Error m_error;
-        };
-
-        typedef std::unique_ptr<Operation> OperationUP;
+        /// task.
+        typedef std::function<Error()> Operation;
 
         // ---------------------------------------------------------------------
         // NativeProcessProtocol Interface
@@ -159,10 +139,7 @@ namespace process_linux {
         // Interface used by NativeRegisterContext-derived classes.
         // ---------------------------------------------------------------------
         Error
-        DoOperation(Operation* op);
-
-        Error
-        DoOperation(OperationUP op) { return DoOperation(op.get()); }
+        DoOperation(const Operation &op);
 
         static long
         PtraceWrapper(int req, lldb::pid_t pid, void *addr, void *data, size_t data_size, Error& error);
