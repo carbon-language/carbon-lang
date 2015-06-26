@@ -47,6 +47,8 @@ protected:
 
   virtual uint64_t getSymbolSize(DataRefImpl Symb) const = 0;
   virtual uint8_t getSymbolOther(DataRefImpl Symb) const = 0;
+  virtual uint8_t getSymbolELFType(DataRefImpl Symb) const = 0;
+
   virtual uint32_t getSectionType(DataRefImpl Sec) const = 0;
   virtual uint64_t getSectionFlags(DataRefImpl Sec) const = 0;
 
@@ -84,6 +86,21 @@ public:
   }
 };
 
+class elf_section_iterator : public section_iterator {
+public:
+  elf_section_iterator(const section_iterator &B) : section_iterator(B) {
+    assert(isa<ELFObjectFileBase>(B->getObject()));
+  }
+
+  const ELFSectionRef *operator->() const {
+    return static_cast<const ELFSectionRef *>(section_iterator::operator->());
+  }
+
+  const ELFSectionRef &operator*() const {
+    return static_cast<const ELFSectionRef &>(section_iterator::operator*());
+  }
+};
+
 class ELFSymbolRef : public SymbolRef {
 public:
   ELFSymbolRef(const SymbolRef &B) : SymbolRef(B) {
@@ -100,6 +117,10 @@ public:
 
   uint8_t getOther() const {
     return getObject()->getSymbolOther(getRawDataRefImpl());
+  }
+
+  uint8_t getELFType() const {
+    return getObject()->getSymbolELFType(getRawDataRefImpl());
   }
 };
 
@@ -155,6 +176,7 @@ protected:
   uint64_t getCommonSymbolSizeImpl(DataRefImpl Symb) const override;
   uint32_t getSymbolFlags(DataRefImpl Symb) const override;
   uint8_t getSymbolOther(DataRefImpl Symb) const override;
+  uint8_t getSymbolELFType(DataRefImpl Symb) const override;
   SymbolRef::Type getSymbolType(DataRefImpl Symb) const override;
   section_iterator getSymbolSection(const Elf_Sym *Symb) const;
   std::error_code getSymbolSection(DataRefImpl Symb,
@@ -402,6 +424,11 @@ uint64_t ELFObjectFile<ELFT>::getCommonSymbolSizeImpl(DataRefImpl Symb) const {
 template <class ELFT>
 uint8_t ELFObjectFile<ELFT>::getSymbolOther(DataRefImpl Symb) const {
   return toELFSymIter(Symb)->st_other;
+}
+
+template <class ELFT>
+uint8_t ELFObjectFile<ELFT>::getSymbolELFType(DataRefImpl Symb) const {
+  return toELFSymIter(Symb)->getType();
 }
 
 template <class ELFT>
