@@ -12,6 +12,7 @@
 
 #include "InputFiles.h"
 #include "llvm/Support/Allocator.h"
+#include "llvm/Support/raw_ostream.h"
 #include <unordered_map>
 
 namespace llvm {
@@ -61,6 +62,9 @@ public:
 
   // Dump contents of the symbol table to stderr.
   void dump();
+
+  // Print a layout map to OS.
+  void printMap(llvm::raw_ostream &OS);
 
   // Build a COFF object representing the combined contents of BitcodeFiles
   // and add it to the symbol table. Called after all files are added and

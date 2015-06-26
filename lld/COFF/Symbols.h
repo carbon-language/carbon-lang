@@ -134,6 +134,7 @@ public:
   int compare(SymbolBody *Other) override;
   std::string getDebugName() override;
   bool isCOMDAT() { return IsCOMDAT; }
+  bool isLive() const { return (*Data)->isLive(); }
   void markLive() { (*Data)->markLive(); }
   Chunk *getChunk() { return *Data; }
 

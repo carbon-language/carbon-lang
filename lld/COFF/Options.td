@@ -88,8 +88,8 @@ def help_q : Flag<["/?", "-?"], "">, Alias<help>;
 
 def DASH_DASH : Option<["--"], "", KIND_REMAINING_ARGS>;
 
-// Flag for debug
-def lldmoduledeffile : Joined<["/", "-"], "lldmoduledeffile:">;
+// Flags for debugging
+def lldmap : Joined<["/", "-"], "lldmap:">;
 
 //==============================================================================
 // The flags below do nothing. They are defined only for link.exe compatibility.

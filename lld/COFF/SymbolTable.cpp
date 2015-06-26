@@ -237,6 +237,17 @@ void SymbolTable::dump() {
   }
 }
 
+void SymbolTable::printMap(llvm::raw_ostream &OS) {
+  for (ObjectFile *File : ObjectFiles) {
+    OS << File->getShortName() << ":\n";
+    for (SymbolBody *Body : File->getSymbols())
+      if (auto *R = dyn_cast<DefinedRegular>(Body))
+        if (R->isLive())
+          OS << Twine::utohexstr(Config->ImageBase + R->getRVA())
+             << " " << R->getName() << "\n";
+  }
+}
+
 std::error_code SymbolTable::addCombinedLTOObject() {
   if (BitcodeFiles.empty())
     return std::error_code();
