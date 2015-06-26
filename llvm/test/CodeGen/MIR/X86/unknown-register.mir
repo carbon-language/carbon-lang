@@ -13,7 +13,8 @@
 ---
 name:            foo
 body:
- - name:         entry
+ - id:           0
+   name:         entry
    instructions:
      # CHECK: [[@LINE+1]]:9: unknown register name 'xax'
      - '%xax = MOV32r0'

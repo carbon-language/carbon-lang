@@ -64,6 +64,7 @@ namespace llvm {
 namespace yaml {
 
 struct MachineBasicBlock {
+  unsigned ID;
   std::string Name;
   unsigned Alignment = 0;
   bool IsLandingPad = false;
@@ -75,6 +76,7 @@ struct MachineBasicBlock {
 
 template <> struct MappingTraits<MachineBasicBlock> {
   static void mapping(IO &YamlIO, MachineBasicBlock &MBB) {
+    YamlIO.mapRequired("id", MBB.ID);
     YamlIO.mapOptional("name", MBB.Name,
                        std::string()); // Don't print out an empty name.
     YamlIO.mapOptional("alignment", MBB.Alignment);

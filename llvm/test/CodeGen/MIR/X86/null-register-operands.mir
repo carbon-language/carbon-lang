@@ -14,7 +14,8 @@
 # CHECK: name: deref
 name:            deref
 body:
- - name:         entry
+ - id:           0
+   name:         entry
    instructions:
      # CHECK:      - '%eax = MOV32rm %rdi, 1, _, 0, _'
      # CHECK-NEXT: - 'RETQ %eax'

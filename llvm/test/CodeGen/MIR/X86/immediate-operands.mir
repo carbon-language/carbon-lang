@@ -18,7 +18,8 @@
 # CHECK: name: foo
 name:            foo
 body:
- - name:         entry
+ - id:           0
+   name:         entry
    instructions:
      # CHECK:      - '%eax = MOV32ri 42'
      # CHECK-NEXT: - 'RETQ %eax'
@@ -29,7 +30,8 @@ body:
 # CHECK: name: bar
 name:            bar
 body:
- - name:         entry
+ - id:           0
+   name:         entry
    instructions:
      # CHECK:      - '%eax = MOV32ri -11'
      # CHECK-NEXT: - 'RETQ %eax'

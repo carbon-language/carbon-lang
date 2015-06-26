@@ -81,7 +81,15 @@ void MIRPrinter::print(const MachineFunction &MF) {
   YamlMF.ExposesReturnsTwice = MF.exposesReturnsTwice();
   YamlMF.HasInlineAsm = MF.hasInlineAsm();
   convert(YamlMF, MF.getRegInfo());
+
+  int I = 0;
   for (const auto &MBB : MF) {
+    // TODO: Allow printing of non sequentially numbered MBBs.
+    // This is currently needed as the basic block references get their index
+    // from MBB.getNumber(), thus it should be sequential so that the parser can
+    // map back to the correct MBBs when parsing the output.
+    assert(MBB.getNumber() == I++ &&
+           "Can't print MBBs that aren't sequentially numbered");
     yaml::MachineBasicBlock YamlMBB;
     convert(YamlMBB, MBB);
     YamlMF.BasicBlocks.push_back(YamlMBB);
@@ -99,6 +107,8 @@ void MIRPrinter::convert(yaml::MachineFunction &MF,
 
 void MIRPrinter::convert(yaml::MachineBasicBlock &YamlMBB,
                          const MachineBasicBlock &MBB) {
+  assert(MBB.getNumber() >= 0 && "Invalid MBB number");
+  YamlMBB.ID = (unsigned)MBB.getNumber();
   // TODO: Serialize unnamed BB references.
   if (const auto *BB = MBB.getBasicBlock())
     YamlMBB.Name = BB->hasName() ? BB->getName() : "<unnamed bb>";
@@ -172,6 +182,13 @@ void MIPrinter::print(const MachineOperand &Op, const TargetRegisterInfo *TRI) {
     break;
   case MachineOperand::MO_Immediate:
     OS << Op.getImm();
+    break;
+  case MachineOperand::MO_MachineBasicBlock:
+    OS << "%bb." << Op.getMBB()->getNumber();
+    if (const auto *BB = Op.getMBB()->getBasicBlock()) {
+      if (BB->hasName())
+        OS << '.' << BB->getName();
+    }
     break;
   default:
     // TODO: Print the other machine operands.

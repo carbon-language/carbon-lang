@@ -14,17 +14,21 @@
 #ifndef LLVM_LIB_CODEGEN_MIRPARSER_MIPARSER_H
 #define LLVM_LIB_CODEGEN_MIRPARSER_MIPARSER_H
 
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringRef.h"
 
 namespace llvm {
 
+class MachineBasicBlock;
 class MachineInstr;
 class MachineFunction;
 class SMDiagnostic;
 class SourceMgr;
 
-MachineInstr *parseMachineInstr(SourceMgr &SM, MachineFunction &MF,
-                                StringRef Src, SMDiagnostic &Error);
+MachineInstr *
+parseMachineInstr(SourceMgr &SM, MachineFunction &MF, StringRef Src,
+                  const DenseMap<unsigned, MachineBasicBlock *> &MBBSlots,
+                  SMDiagnostic &Error);
 
 } // end namespace llvm
 

@@ -15,7 +15,8 @@
 # CHECK: name: inc
 name:            inc
 body:
- - name:         entry
+ - id:           0
+   name:         entry
    instructions:
      # CHECK:      - IMUL32rri8
      # CHECK-NEXT: - RETQ

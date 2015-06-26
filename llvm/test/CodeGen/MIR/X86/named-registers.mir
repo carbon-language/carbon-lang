@@ -13,7 +13,8 @@
 # CHECK: name: foo
 name:            foo
 body:
- - name:         entry
+ - id:           0
+   name:         entry
    instructions:
      # CHECK:      - '%eax = MOV32r0
      # CHECK-NEXT: - 'RETQ %eax

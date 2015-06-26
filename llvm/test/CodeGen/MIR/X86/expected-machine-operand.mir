@@ -11,7 +11,8 @@
 ---
 name:            foo
 body:
- - name:         entry
+ - id:           0
+   name:         entry
    instructions:
      # CHECK: [[@LINE+1]]:24: expected a machine operand
      - '%eax = XOR32rr ='

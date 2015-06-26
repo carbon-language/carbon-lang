@@ -1,0 +1,75 @@
+# RUN: llc -march=x86-64 -start-after branch-folder -stop-after branch-folder -o /dev/null %s | FileCheck %s
+# This test ensures that the MIR parser parses machine basic block operands.
+
+--- |
+
+  define i32 @foo(i32* %p) {
+  entry:
+    %a = load i32, i32* %p
+    %0 = icmp sle i32 %a, 10
+    br i1 %0, label %less, label %exit
+
+  less:
+    ret i32 0
+
+  exit:
+    ret i32 %a
+  }
+
+  define i32 @bar(i32* %p) {
+  entry:
+    %a = load i32, i32* %p
+    %b = icmp sle i32 %a, 10
+    br i1 %b, label %0, label %1
+
+  ; <label>:0
+    ret i32 0
+
+  ; <label>:1
+    ret i32 %a
+  }
+
+...
+---
+# CHECK: name: foo
+name:            foo
+body:
+ # CHECK: name: entry
+ - id:              0
+   name:            entry
+   instructions:
+     - '%eax = MOV32rm %rdi, 1, _, 0, _'
+     # CHECK:      - 'CMP32ri8 %eax, 10
+     # CHECK-NEXT: - 'JG_1 %bb.2.exit
+     - 'CMP32ri8 %eax, 10'
+     - 'JG_1 %bb.2.exit'
+ # CHECK: name: less
+ - id:              1
+   name:            less
+   instructions:
+     - '%eax = MOV32r0'
+ - id:              2
+   name:            exit
+   instructions:
+     - 'RETQ %eax'
+...
+---
+# CHECK: name: bar
+name:            bar
+body:
+ # CHECK: name: entry
+ - id: 0
+   name: entry
+   instructions:
+     - '%eax = MOV32rm %rdi, 1, _, 0, _'
+     # CHECK:      - 'CMP32ri8 %eax, 10
+     # CHECK-NEXT: - 'JG_1 %bb.2
+     - 'CMP32ri8 %eax, 10'
+     - 'JG_1 %bb.3'
+ - id: 1
+   instructions:
+     - '%eax = MOV32r0'
+ - id: 3
+   instructions:
+     - 'RETQ %eax'
+...

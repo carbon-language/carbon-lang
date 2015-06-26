@@ -17,27 +17,33 @@
 ---
 # CHECK: name: foo
 # CHECK: body:
-# CHECK-NEXT: - name: entry
+# CHECK-NEXT: - id: 0
+# CHECK-NEXT:   name: entry
 # CHECK-NEXT:   alignment: 0
 # CHECK-NEXT:   isLandingPad: false
 # CHECK-NEXT:   addressTaken: false
 name:            foo
 body:
- - name:         entry
+ - id:           0
+   name:         entry
 ...
 ---
 # CHECK: name: bar
 # CHECK: body:
-# CHECK-NEXT: - name: start
+# CHECK-NEXT: - id: 0
+# CHECK-NEXT:   name: start
 # CHECK-NEXT:   alignment: 4
 # CHECK-NEXT:   isLandingPad: false
 # CHECK-NEXT:   addressTaken: false
-# CHECK-NEXT: - alignment: 0
+# CHECK-NEXT: - id: 1
+# CHECK-NEXT:   alignment: 0
 # CHECK-NEXT:   isLandingPad: false
 # CHECK-NEXT:   addressTaken: true
 name:            bar
 body:
- - name:         start
+ - id:           0
+   name:         start
    alignment:    4
- - addressTaken: true
+ - id:           1
+   addressTaken: true
 ...

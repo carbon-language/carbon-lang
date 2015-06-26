@@ -1,0 +1,17 @@
+# RUN: not llc -start-after branch-folder -stop-after branch-folder -o /dev/null %s 2>&1 | FileCheck %s
+
+--- |
+
+  define i32 @foo() {
+  entry:
+    ret i32 0
+  }
+
+...
+---
+name:            foo
+body:
+  # CHECK: redefinition of machine basic block with id #0
+  - id:       0
+  - id:       0
+...

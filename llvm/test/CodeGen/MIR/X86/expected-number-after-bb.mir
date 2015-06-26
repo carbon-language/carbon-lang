@@ -1,0 +1,37 @@
+# RUN: not llc -march=x86-64 -start-after branch-folder -stop-after branch-folder -o /dev/null %s 2>&1 | FileCheck %s
+
+--- |
+
+  define i32 @foo(i32* %p) {
+  entry:
+    %a = load i32, i32* %p
+    %b = icmp sle i32 %a, 10
+    br i1 %b, label %yes, label %nah
+
+  yes:
+    ret i32 0
+
+  nah:
+    ret i32 %a
+  }
+
+...
+---
+name:            foo
+body:
+ - id: 0
+   name:   entry
+   instructions:
+     - '%eax = MOV32rm %rdi, 1, _, 0, _'
+     - 'CMP32ri8 %eax, 10'
+     # CHECK: [[@LINE+1]]:18: expected a number after '%bb.'
+     - 'JG_1 %bb.nah'
+ - id: 1
+   name: yes
+   instructions:
+     - '%eax = MOV32r0'
+ - id: 2
+   name: nah
+   instructions:
+     - 'RETQ %eax'
+...

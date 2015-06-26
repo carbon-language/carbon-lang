@@ -1,0 +1,39 @@
+# RUN: not llc -march=x86-64 -start-after branch-folder -stop-after branch-folder -o /dev/null %s 2>&1 | FileCheck %s
+# This test ensures that an error is reported when an unknown named machine
+# basic block is encountered.
+
+--- |
+
+  define i32 @foo(i32* %p) {
+  entry:
+    %a = load i32, i32* %p
+    %0 = icmp sle i32 %a, 10
+    br i1 %0, label %less, label %exit
+
+  less:
+    ret i32 0
+
+  exit:
+    ret i32 %a
+  }
+
+...
+---
+name:            foo
+body:
+ - id:              0
+   name:            entry
+   instructions:
+     - '%eax = MOV32rm %rdi, 1, _, 0, _'
+     - 'CMP32ri8 %eax, 10'
+     # CHECK: [[@LINE+1]]:14: the name of machine basic block #2 isn't 'hit'
+     - 'JG_1 %bb.2.hit'
+ - id:              1
+   name:            less
+   instructions:
+     - '%eax = MOV32r0'
+ - id:              2
+   name:            exit
+   instructions:
+     - 'RETQ %eax'
+...

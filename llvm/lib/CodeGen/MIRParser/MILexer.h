@@ -39,6 +39,7 @@ struct MIToken {
     // Identifier tokens
     Identifier,
     NamedRegister,
+    MachineBasicBlock,
 
     // Other tokens
     IntegerLiteral
@@ -46,14 +47,17 @@ struct MIToken {
 
 private:
   TokenKind Kind;
+  unsigned StringOffset;
   StringRef Range;
   APSInt IntVal;
 
 public:
-  MIToken(TokenKind Kind, StringRef Range) : Kind(Kind), Range(Range) {}
+  MIToken(TokenKind Kind, StringRef Range, unsigned StringOffset = 0)
+      : Kind(Kind), StringOffset(StringOffset), Range(Range) {}
 
-  MIToken(TokenKind Kind, StringRef Range, const APSInt &IntVal)
-      : Kind(Kind), Range(Range), IntVal(IntVal) {}
+  MIToken(TokenKind Kind, StringRef Range, const APSInt &IntVal,
+          unsigned StringOffset = 0)
+      : Kind(Kind), StringOffset(StringOffset), Range(Range), IntVal(IntVal) {}
 
   TokenKind kind() const { return Kind; }
 
@@ -69,9 +73,13 @@ public:
 
   StringRef::iterator location() const { return Range.begin(); }
 
-  StringRef stringValue() const { return Range; }
+  StringRef stringValue() const { return Range.drop_front(StringOffset); }
 
   const APSInt &integerValue() const { return IntVal; }
+
+  bool hasIntegerValue() const {
+    return Kind == IntegerLiteral || Kind == MachineBasicBlock;
+  }
 };
 
 /// Consume a single machine instruction token in the given source and return

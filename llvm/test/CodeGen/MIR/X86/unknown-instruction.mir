@@ -13,7 +13,8 @@
 ---
 name:            foo
 body:
- - name:         entry
+ - id:           0
+   name:         entry
    instructions:
      # CHECK: [[@LINE+1]]:8: unknown machine instruction name 'retJust0'
      - retJust0

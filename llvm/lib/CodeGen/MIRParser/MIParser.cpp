@@ -32,6 +32,8 @@ class MIParser {
   SMDiagnostic &Error;
   StringRef Source, CurrentSource;
   MIToken Token;
+  /// Maps from basic block numbers to MBBs.
+  const DenseMap<unsigned, MachineBasicBlock *> &MBBSlots;
   /// Maps from instruction names to op codes.
   StringMap<unsigned> Names2InstrOpCodes;
   /// Maps from register names to registers.
@@ -39,7 +41,8 @@ class MIParser {
 
 public:
   MIParser(SourceMgr &SM, MachineFunction &MF, SMDiagnostic &Error,
-           StringRef Source);
+           StringRef Source,
+           const DenseMap<unsigned, MachineBasicBlock *> &MBBSlots);
 
   void lex();
 
@@ -58,9 +61,15 @@ public:
   bool parseRegister(unsigned &Reg);
   bool parseRegisterOperand(MachineOperand &Dest, bool IsDef = false);
   bool parseImmediateOperand(MachineOperand &Dest);
+  bool parseMBBOperand(MachineOperand &Dest);
   bool parseMachineOperand(MachineOperand &Dest);
 
 private:
+  /// Convert the integer literal in the current token into an unsigned integer.
+  ///
+  /// Return true if an error occurred.
+  bool getUnsigned(unsigned &Result);
+
   void initNames2InstrOpCodes();
 
   /// Try to convert an instruction name to an opcode. Return true if the
@@ -79,9 +88,10 @@ private:
 } // end anonymous namespace
 
 MIParser::MIParser(SourceMgr &SM, MachineFunction &MF, SMDiagnostic &Error,
-                   StringRef Source)
+                   StringRef Source,
+                   const DenseMap<unsigned, MachineBasicBlock *> &MBBSlots)
     : SM(SM), MF(MF), Error(Error), Source(Source), CurrentSource(Source),
-      Token(MIToken::Error, StringRef()) {}
+      Token(MIToken::Error, StringRef()), MBBSlots(MBBSlots) {}
 
 void MIParser::lex() {
   CurrentSource = lexMIToken(
@@ -178,7 +188,7 @@ bool MIParser::parseRegister(unsigned &Reg) {
     Reg = 0;
     break;
   case MIToken::NamedRegister: {
-    StringRef Name = Token.stringValue().drop_front(1); // Drop the '%'
+    StringRef Name = Token.stringValue();
     if (getRegisterByName(Name, Reg))
       return error(Twine("unknown register name '") + Name + "'");
     break;
@@ -212,6 +222,34 @@ bool MIParser::parseImmediateOperand(MachineOperand &Dest) {
   return false;
 }
 
+bool MIParser::getUnsigned(unsigned &Result) {
+  assert(Token.hasIntegerValue() && "Expected a token with an integer value");
+  const uint64_t Limit = uint64_t(std::numeric_limits<unsigned>::max()) + 1;
+  uint64_t Val64 = Token.integerValue().getLimitedValue(Limit);
+  if (Val64 == Limit)
+    return error("expected 32-bit integer (too large)");
+  Result = Val64;
+  return false;
+}
+
+bool MIParser::parseMBBOperand(MachineOperand &Dest) {
+  assert(Token.is(MIToken::MachineBasicBlock));
+  unsigned Number;
+  if (getUnsigned(Number))
+    return true;
+  auto MBBInfo = MBBSlots.find(Number);
+  if (MBBInfo == MBBSlots.end())
+    return error(Twine("use of undefined machine basic block #") +
+                 Twine(Number));
+  MachineBasicBlock *MBB = MBBInfo->second;
+  if (!Token.stringValue().empty() && Token.stringValue() != MBB->getName())
+    return error(Twine("the name of machine basic block #") + Twine(Number) +
+                 " isn't '" + Token.stringValue() + "'");
+  Dest = MachineOperand::CreateMBB(MBB);
+  lex();
+  return false;
+}
+
 bool MIParser::parseMachineOperand(MachineOperand &Dest) {
   switch (Token.kind()) {
   case MIToken::underscore:
@@ -219,6 +257,8 @@ bool MIParser::parseMachineOperand(MachineOperand &Dest) {
     return parseRegisterOperand(Dest);
   case MIToken::IntegerLiteral:
     return parseImmediateOperand(Dest);
+  case MIToken::MachineBasicBlock:
+    return parseMBBOperand(Dest);
   case MIToken::Error:
     return true;
   default:
@@ -271,7 +311,9 @@ bool MIParser::getRegisterByName(StringRef RegName, unsigned &Reg) {
   return false;
 }
 
-MachineInstr *llvm::parseMachineInstr(SourceMgr &SM, MachineFunction &MF,
-                                      StringRef Src, SMDiagnostic &Error) {
-  return MIParser(SM, MF, Error, Src).parse();
+MachineInstr *
+llvm::parseMachineInstr(SourceMgr &SM, MachineFunction &MF, StringRef Src,
+                        const DenseMap<unsigned, MachineBasicBlock *> &MBBSlots,
+                        SMDiagnostic &Error) {
+  return MIParser(SM, MF, Error, Src, MBBSlots).parse();
 }

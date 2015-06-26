@@ -35,7 +35,7 @@ public:
 
   char peek(int I = 0) const { return End - Ptr <= I ? 0 : Ptr[I]; }
 
-  void advance() { ++Ptr; }
+  void advance(unsigned I = 1) { Ptr += I; }
 
   StringRef remaining() const { return StringRef(Ptr, End - Ptr); }
 
@@ -70,12 +70,39 @@ static Cursor lexIdentifier(Cursor C, MIToken &Token) {
   return C;
 }
 
+static Cursor lexMachineBasicBlock(
+    Cursor C, MIToken &Token,
+    function_ref<void(StringRef::iterator Loc, const Twine &)> ErrorCallback) {
+  auto Range = C;
+  C.advance(4); // Skip '%bb.'
+  if (!isdigit(C.peek())) {
+    Token = MIToken(MIToken::Error, C.remaining());
+    ErrorCallback(C.location(), "expected a number after '%bb.'");
+    return C;
+  }
+  auto NumberRange = C;
+  while (isdigit(C.peek()))
+    C.advance();
+  StringRef Number = NumberRange.upto(C);
+  unsigned StringOffset = 4 + Number.size(); // Drop '%bb.<id>'
+  if (C.peek() == '.') {
+    C.advance(); // Skip '.'
+    ++StringOffset;
+    while (isIdentifierChar(C.peek()))
+      C.advance();
+  }
+  Token = MIToken(MIToken::MachineBasicBlock, Range.upto(C), APSInt(Number),
+                  StringOffset);
+  return C;
+}
+
 static Cursor lexPercent(Cursor C, MIToken &Token) {
   auto Range = C;
   C.advance(); // Skip '%'
   while (isIdentifierChar(C.peek()))
     C.advance();
-  Token = MIToken(MIToken::NamedRegister, Range.upto(C));
+  Token = MIToken(MIToken::NamedRegister, Range.upto(C),
+                  /*StringOffset=*/1); // Drop the '%'
   return C;
 }
 
@@ -119,8 +146,11 @@ StringRef llvm::lexMIToken(
   auto Char = C.peek();
   if (isalpha(Char) || Char == '_')
     return lexIdentifier(C, Token).remaining();
-  if (Char == '%')
+  if (Char == '%') {
+    if (C.remaining().startswith("%bb."))
+      return lexMachineBasicBlock(C, Token, ErrorCallback).remaining();
     return lexPercent(C, Token).remaining();
+  }
   if (isdigit(Char) || (Char == '-' && isdigit(C.peek(1))))
     return lexIntegerLiteral(C, Token).remaining();
   MIToken::TokenKind Kind = symbolToken(Char);

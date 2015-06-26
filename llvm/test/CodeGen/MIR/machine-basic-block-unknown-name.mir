@@ -14,5 +14,6 @@
 name:            foo
 body:
   # CHECK: basic block 'entrie' is not defined in the function 'foo'
-  - name:         entrie
+  - id:          0
+    name:        entrie
 ...
