@@ -25583,10 +25583,6 @@ X86TargetLowering::getRegForInlineAsmConstraint(const TargetRegisterInfo *TRI,
         Res.first = DestReg;
         Res.second = &X86::GR64RegClass;
       }
-    } else if (VT != MVT::Other) {
-      // Type mismatch and not a clobber: Return an error;
-      Res.first = 0;
-      Res.second = nullptr;
     }
   } else if (Res.second == &X86::FR32RegClass ||
              Res.second == &X86::FR64RegClass ||
@@ -25612,15 +25608,6 @@ X86TargetLowering::getRegForInlineAsmConstraint(const TargetRegisterInfo *TRI,
       Res.second = &X86::VR256RegClass;
     else if (X86::VR512RegClass.hasType(VT))
       Res.second = &X86::VR512RegClass;
-    else if (VT != MVT::Other) {
-      // Type mismatch and not a clobber: Return an error;
-      Res.first = 0;
-      Res.second = nullptr;
-    }
-  } else if (VT != MVT::Other) {
-    // Type mismatch and not a clobber: Return an error;
-    Res.first = 0;
-    Res.second = nullptr;
   }
 
   return Res;
