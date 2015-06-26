@@ -14,6 +14,7 @@
 
 #include "AMDGPUMCTargetDesc.h"
 #include "AMDGPUMCAsmInfo.h"
+#include "AMDGPUTargetStreamer.h"
 #include "InstPrinter/AMDGPUInstPrinter.h"
 #include "SIDefines.h"
 #include "llvm/MC/MCCodeGenInfo.h"
@@ -72,6 +73,19 @@ static MCInstPrinter *createAMDGPUMCInstPrinter(const Triple &T,
   return new AMDGPUInstPrinter(MAI, MII, MRI);
 }
 
+static MCTargetStreamer *createAMDGPUAsmTargetStreamer(MCStreamer &S,
+                                                      formatted_raw_ostream &OS,
+                                                      MCInstPrinter *InstPrint,
+                                                      bool isVerboseAsm) {
+  return new AMDGPUTargetAsmStreamer(S, OS);
+}
+
+static MCTargetStreamer * createAMDGPUObjectTargetStreamer(
+                                                   MCStreamer &S,
+                                                   const MCSubtargetInfo &STI) {
+  return new AMDGPUTargetELFStreamer(S);
+}
+
 extern "C" void LLVMInitializeAMDGPUTargetMC() {
   for (Target *T : {&TheAMDGPUTarget, &TheGCNTarget}) {
     RegisterMCAsmInfo<AMDGPUMCAsmInfo> X(*T);
@@ -84,7 +98,15 @@ extern "C" void LLVMInitializeAMDGPUTargetMC() {
     TargetRegistry::RegisterMCAsmBackend(*T, createAMDGPUAsmBackend);
   }
 
+  // R600 specific registration
   TargetRegistry::RegisterMCCodeEmitter(TheAMDGPUTarget,
                                         createR600MCCodeEmitter);
+
+  // GCN specific registration
   TargetRegistry::RegisterMCCodeEmitter(TheGCNTarget, createSIMCCodeEmitter);
+
+  TargetRegistry::RegisterAsmTargetStreamer(TheGCNTarget,
+                                            createAMDGPUAsmTargetStreamer);
+  TargetRegistry::RegisterObjectTargetStreamer(TheGCNTarget,
+                                              createAMDGPUObjectTargetStreamer);
 }

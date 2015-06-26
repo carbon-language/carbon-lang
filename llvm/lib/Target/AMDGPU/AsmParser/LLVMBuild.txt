@@ -19,5 +19,5 @@
 type = Library
 name = AMDGPUAsmParser
 parent = AMDGPU
-required_libraries = MC MCParser AMDGPUDesc AMDGPUInfo Support
+required_libraries = MC MCParser AMDGPUDesc AMDGPUInfo AMDGPUUtils Support
 add_to_library_groups = AMDGPU

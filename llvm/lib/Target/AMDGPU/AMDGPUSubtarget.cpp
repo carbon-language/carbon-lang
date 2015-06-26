@@ -72,6 +72,7 @@ AMDGPUSubtarget::AMDGPUSubtarget(const Triple &TT, StringRef GPU, StringRef FS,
       WavefrontSize(0), CFALUBug(false), LocalMemorySize(0),
       EnableVGPRSpilling(false), SGPRInitBug(false), IsGCN(false),
       GCN1Encoding(false), GCN3Encoding(false), CIInsts(false), LDSBankCount(0),
+      IsaVersion(ISAVersion0_0_0),
       FrameLowering(TargetFrameLowering::StackGrowsUp,
                     64 * 16, // Maximum stack alignment (long16)
                     0),
@@ -109,6 +110,10 @@ unsigned AMDGPUSubtarget::getAmdKernelCodeChipID() const {
   }
 }
 
+AMDGPU::IsaVersion AMDGPUSubtarget::getIsaVersion() const {
+  return AMDGPU::getIsaVersion(getFeatureBits());
+}
+
 bool AMDGPUSubtarget::isVGPRSpillingEnabled(
                                        const SIMachineFunctionInfo *MFI) const {
   return MFI->getShaderType() == ShaderType::COMPUTE || EnableVGPRSpilling;
@@ -131,3 +136,4 @@ void AMDGPUSubtarget::overrideSchedPolicy(MachineSchedPolicy &Policy,
     Policy.OnlyBottomUp = false;
   }
 }
+

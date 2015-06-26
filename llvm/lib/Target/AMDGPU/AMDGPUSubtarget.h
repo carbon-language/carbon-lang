@@ -20,6 +20,8 @@
 #include "AMDGPUIntrinsicInfo.h"
 #include "AMDGPUSubtarget.h"
 #include "R600ISelLowering.h"
+#include "AMDKernelCodeT.h"
+#include "Utils/AMDGPUBaseInfo.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Target/TargetSubtargetInfo.h"
@@ -46,6 +48,14 @@ public:
 
   enum {
     FIXED_SGPR_COUNT_FOR_INIT_BUG = 80
+  };
+
+  enum {
+    ISAVersion0_0_0,
+    ISAVersion7_0_0,
+    ISAVersion7_0_1,
+    ISAVersion8_0_0,
+    ISAVersion8_0_1
   };
 
 private:
@@ -77,6 +87,7 @@ private:
   bool CIInsts;
   bool FeatureDisable;
   int LDSBankCount;
+  unsigned IsaVersion; 
 
   AMDGPUFrameLowering FrameLowering;
   std::unique_ptr<AMDGPUTargetLowering> TLInfo;
@@ -235,6 +246,8 @@ public:
   }
 
   unsigned getAmdKernelCodeChipID() const;
+
+  AMDGPU::IsaVersion getIsaVersion() const;
 
   bool enableMachineScheduler() const override {
     return true;

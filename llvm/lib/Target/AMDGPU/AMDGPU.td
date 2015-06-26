@@ -141,6 +141,19 @@ class SubtargetFeatureLDSBankCount <int Value> : SubtargetFeature <
 def FeatureLDSBankCount16 : SubtargetFeatureLDSBankCount<16>;
 def FeatureLDSBankCount32 : SubtargetFeatureLDSBankCount<32>;
 
+class SubtargetFeatureISAVersion <int Major, int Minor, int Stepping>
+                                 : SubtargetFeature <
+      "isaver"#Major#"."#Minor#"."#Stepping,
+      "IsaVersion",
+      "ISAVersion"#Major#"_"#Minor#"_"#Stepping,
+      "Instruction set version number"
+>;
+
+def FeatureISAVersion7_0_0 : SubtargetFeatureISAVersion <7,0,0>;
+def FeatureISAVersion7_0_1 : SubtargetFeatureISAVersion <7,0,1>;
+def FeatureISAVersion8_0_0 : SubtargetFeatureISAVersion <8,0,0>;
+def FeatureISAVersion8_0_1 : SubtargetFeatureISAVersion <8,0,1>;
+
 class SubtargetFeatureLocalMemorySize <int Value> : SubtargetFeature<
         "localmemorysize"#Value,
         "LocalMemorySize",

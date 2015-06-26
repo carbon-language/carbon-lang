@@ -8,6 +8,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "MCTargetDesc/AMDGPUMCTargetDesc.h"
+#include "MCTargetDesc/AMDGPUTargetStreamer.h"
+#include "Utils/AMDGPUBaseInfo.h"
 #include "SIDefines.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/SmallString.h"
@@ -314,6 +316,11 @@ class AMDGPUAsmParser : public MCTargetAsmParser {
 
   /// }
 
+private:
+  bool ParseDirectiveMajorMinor(uint32_t &Major, uint32_t &Minor);
+  bool ParseDirectiveHSACodeObjectVersion();
+  bool ParseDirectiveHSACodeObjectISA();
+
 public:
   AMDGPUAsmParser(MCSubtargetInfo &STI, MCAsmParser &_Parser,
                const MCInstrInfo &MII,
@@ -327,6 +334,11 @@ public:
     }
 
     setAvailableFeatures(ComputeAvailableFeatures(STI.getFeatureBits()));
+  }
+
+  AMDGPUTargetStreamer &getTargetStreamer() {
+    MCTargetStreamer &TS = *getParser().getStreamer().getTargetStreamer();
+    return static_cast<AMDGPUTargetStreamer &>(TS);
   }
 
   unsigned getForcedEncodingSize() const {
@@ -581,7 +593,106 @@ bool AMDGPUAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   llvm_unreachable("Implement any new match types added!");
 }
 
+bool AMDGPUAsmParser::ParseDirectiveMajorMinor(uint32_t &Major,
+                                               uint32_t &Minor) {
+  if (getLexer().isNot(AsmToken::Integer))
+    return TokError("invalid major version");
+
+  Major = getLexer().getTok().getIntVal();
+  Lex();
+
+  if (getLexer().isNot(AsmToken::Comma))
+    return TokError("minor version number required, comma expected");
+  Lex();
+
+  if (getLexer().isNot(AsmToken::Integer))
+    return TokError("invalid minor version");
+
+  Minor = getLexer().getTok().getIntVal();
+  Lex();
+
+  return false;
+}
+
+bool AMDGPUAsmParser::ParseDirectiveHSACodeObjectVersion() {
+
+  uint32_t Major;
+  uint32_t Minor;
+
+  if (ParseDirectiveMajorMinor(Major, Minor))
+    return true;
+
+  getTargetStreamer().EmitDirectiveHSACodeObjectVersion(Major, Minor);
+  return false;
+}
+
+bool AMDGPUAsmParser::ParseDirectiveHSACodeObjectISA() {
+
+  uint32_t Major;
+  uint32_t Minor;
+  uint32_t Stepping;
+  StringRef VendorName;
+  StringRef ArchName;
+
+  // If this directive has no arguments, then use the ISA version for the
+  // targeted GPU.
+  if (getLexer().is(AsmToken::EndOfStatement)) {
+    AMDGPU::IsaVersion Isa = AMDGPU::getIsaVersion(STI.getFeatureBits());
+    getTargetStreamer().EmitDirectiveHSACodeObjectISA(Isa.Major, Isa.Minor,
+                                                      Isa.Stepping,
+                                                      "AMD", "AMDGPU");
+    return false;
+  }
+
+
+  if (ParseDirectiveMajorMinor(Major, Minor))
+    return true;
+
+  if (getLexer().isNot(AsmToken::Comma))
+    return TokError("stepping version number required, comma expected");
+  Lex();
+
+  if (getLexer().isNot(AsmToken::Integer))
+    return TokError("invalid stepping version");
+
+  Stepping = getLexer().getTok().getIntVal();
+  Lex();
+
+  if (getLexer().isNot(AsmToken::Comma))
+    return TokError("vendor name required, comma expected");
+  Lex();
+
+  if (getLexer().isNot(AsmToken::String))
+    return TokError("invalid vendor name");
+
+  VendorName = getLexer().getTok().getStringContents();
+  Lex();
+
+  if (getLexer().isNot(AsmToken::Comma))
+    return TokError("arch name required, comma expected");
+  Lex();
+
+  if (getLexer().isNot(AsmToken::String))
+    return TokError("invalid arch name");
+
+  ArchName = getLexer().getTok().getStringContents();
+  Lex();
+
+  getTargetStreamer().EmitDirectiveHSACodeObjectISA(Major, Minor, Stepping,
+                                                    VendorName, ArchName);
+  return false;
+}
+
 bool AMDGPUAsmParser::ParseDirective(AsmToken DirectiveID) {
+  MCAsmParser &Parser = getParser();
+  StringRef IDVal = DirectiveID.getString();
+
+  if (IDVal == ".hsa_code_object_version")
+    return ParseDirectiveHSACodeObjectVersion();
+
+  if (IDVal == ".hsa_code_object_isa")
+    return ParseDirectiveHSACodeObjectISA();
+
   return true;
 }
 

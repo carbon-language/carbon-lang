@@ -17,7 +17,9 @@
 //
 
 #include "AMDGPUAsmPrinter.h"
+#include "MCTargetDesc/AMDGPUTargetStreamer.h"
 #include "InstPrinter/AMDGPUInstPrinter.h"
+#include "Utils/AMDGPUBaseInfo.h"
 #include "AMDGPU.h"
 #include "AMDKernelCodeT.h"
 #include "AMDGPUSubtarget.h"
@@ -127,6 +129,13 @@ bool AMDGPUAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
       getSIProgramInfo(KernelInfo, MF);
       EmitProgramInfoSI(MF, KernelInfo);
     }
+    // Emit directives
+    AMDGPUTargetStreamer *TS =
+        static_cast<AMDGPUTargetStreamer *>(OutStreamer->getTargetStreamer());
+    TS->EmitDirectiveHSACodeObjectVersion(1, 0);
+    AMDGPU::IsaVersion ISA = STM.getIsaVersion();
+    TS->EmitDirectiveHSACodeObjectISA(ISA.Major, ISA.Minor, ISA.Stepping,
+                                      "AMD", "AMDGPU");
   } else {
     EmitProgramInfoR600(MF);
   }

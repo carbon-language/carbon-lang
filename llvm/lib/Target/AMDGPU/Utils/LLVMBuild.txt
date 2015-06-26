@@ -1,4 +1,4 @@
-;===- ./lib/Target/AMDIL/LLVMBuild.txt -------------------------*- Conf -*--===;
+;===- ./lib/Target/AMDGPU/Utils/LLVMBuild.txt ------------------*- Conf -*--===;
 ;
 ;                     The LLVM Compiler Infrastructure
 ;
@@ -15,19 +15,9 @@
 ;
 ;===------------------------------------------------------------------------===;
 
-[common]
-subdirectories = AsmParser InstPrinter MCTargetDesc TargetInfo Utils
-
 [component_0]
-type = TargetGroup
-name = AMDGPU
-parent = Target
-has_asmparser = 1
-has_asmprinter = 1
-
-[component_1]
 type = Library
-name = AMDGPUCodeGen
+name = AMDGPUUtils
 parent = AMDGPU
-required_libraries = Analysis AsmPrinter CodeGen Core IPO MC AMDGPUAsmParser AMDGPUAsmPrinter AMDGPUDesc AMDGPUInfo AMDGPUUtils Scalar SelectionDAG Support Target TransformUtils
+required_libraries = Support
 add_to_library_groups = AMDGPU
