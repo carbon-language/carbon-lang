@@ -90,6 +90,7 @@ void MIRPrinter::print(const MachineFunction &MF) {
     // map back to the correct MBBs when parsing the output.
     assert(MBB.getNumber() == I++ &&
            "Can't print MBBs that aren't sequentially numbered");
+    (void)I;
     yaml::MachineBasicBlock YamlMBB;
     convert(YamlMBB, MBB);
     YamlMF.BasicBlocks.push_back(YamlMBB);
