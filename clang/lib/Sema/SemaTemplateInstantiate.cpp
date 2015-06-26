@@ -2269,33 +2269,6 @@ bool Sema::InstantiateClassTemplateSpecialization(
   // Perform the actual instantiation on the canonical declaration.
   ClassTemplateSpec = cast<ClassTemplateSpecializationDecl>(
                                          ClassTemplateSpec->getCanonicalDecl());
-
-  // Check whether we have already instantiated or specialized this class
-  // template specialization.
-  if (ClassTemplateSpec->getSpecializationKind() != TSK_Undeclared) {
-    if (ClassTemplateSpec->getSpecializationKind() == 
-          TSK_ExplicitInstantiationDeclaration &&
-        TSK == TSK_ExplicitInstantiationDefinition) {
-      // An explicit instantiation definition follows an explicit instantiation
-      // declaration (C++0x [temp.explicit]p10); go ahead and perform the
-      // explicit instantiation.
-      ClassTemplateSpec->setSpecializationKind(TSK);
-      
-      // If this is an explicit instantiation definition, mark the
-      // vtable as used.
-      if (TSK == TSK_ExplicitInstantiationDefinition &&
-          !ClassTemplateSpec->isInvalidDecl())
-        MarkVTableUsed(PointOfInstantiation, ClassTemplateSpec, true);
-
-      return false;
-    }
-    
-    // We can only instantiate something that hasn't already been
-    // instantiated or specialized. Fail without any diagnostics: our
-    // caller will provide an error message.    
-    return true;
-  }
-
   if (ClassTemplateSpec->isInvalidDecl())
     return true;
   
