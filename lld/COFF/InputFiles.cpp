@@ -57,8 +57,10 @@ std::error_code ArchiveFile::parse() {
   File = std::move(ArchiveOrErr.get());
 
   // Allocate a buffer for Lazy objects.
-  size_t BufSize = File->getNumberOfSymbols() * sizeof(Lazy);
+  size_t NumSyms = File->getNumberOfSymbols();
+  size_t BufSize = NumSyms * sizeof(Lazy);
   Lazy *Buf = (Lazy *)Alloc.Allocate(BufSize, llvm::alignOf<Lazy>());
+  SymbolBodies.reserve(NumSyms);
 
   // Read the symbol table to construct Lazy objects.
   uint32_t I = 0;
