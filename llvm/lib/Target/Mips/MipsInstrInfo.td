@@ -1716,6 +1716,9 @@ def BGTU : CondBranchPseudo<"bgtu">;
 def Ulhu : MipsAsmPseudoInst<(outs GPR32Opnd:$rt), (ins mem:$addr),
                              "ulhu\t$rt, $addr">, ISA_MIPS1_NOT_32R6_64R6;
 
+def Ulw : MipsAsmPseudoInst<(outs GPR32Opnd:$rt), (ins mem:$addr),
+                            "ulw\t$rt, $addr">, ISA_MIPS1_NOT_32R6_64R6;
+
 //===----------------------------------------------------------------------===//
 //  Arbitrary patterns that map to one or more instructions
 //===----------------------------------------------------------------------===//

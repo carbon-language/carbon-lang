@@ -36,3 +36,16 @@
   ulhu $5, 2
   # 32-BIT: :[[@LINE-1]]:3: error: instruction not supported on mips32r6 or mips64r6
   # 64-BIT: :[[@LINE-2]]:3: error: instruction not supported on mips32r6 or mips64r6
+
+  .set mips32r6
+  ulw $5, 0
+  # 32-BIT: :[[@LINE-1]]:3: error: instruction not supported on mips32r6 or mips64r6
+  # 64-BIT: :[[@LINE-2]]:3: error: instruction not supported on mips32r6 or mips64r6
+  .set mips32
+  ulw $5, 1
+  # 32-BIT-NOT: :[[@LINE-1]]:3: error: instruction not supported on mips32r6 or mips64r6
+  # 64-BIT-NOT: :[[@LINE-2]]:3: error: instruction not supported on mips32r6 or mips64r6
+  .set mips64r6
+  ulw $5, 2
+  # 32-BIT: :[[@LINE-1]]:3: error: instruction not supported on mips32r6 or mips64r6
+  # 64-BIT: :[[@LINE-2]]:3: error: instruction not supported on mips32r6 or mips64r6

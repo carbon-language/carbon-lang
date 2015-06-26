@@ -62,6 +62,11 @@
 
   ulhu $5, 0
 
+  ulw $8, 2
+  ulw $8, 0x8000
+  ulw $8, 2($9)
+  ulw $8, 0x8000($9)
+
   add $4, $5, $6
 
   .set noreorder
@@ -171,6 +176,15 @@
 # CHECK-NOT: [[@LINE-1]]:3: warning: macro instruction expanded into multiple instructions
 
   ulhu $5, 0
+# CHECK: [[@LINE-1]]:3: warning: macro instruction expanded into multiple instructions
+
+  ulw $8, 2
+# CHECK-NOT: [[@LINE-1]]:3: warning: macro instruction expanded into multiple instructions
+  ulw $8, 0x8000
+# CHECK: [[@LINE-1]]:3: warning: macro instruction expanded into multiple instructions
+  ulw $8, 2($9)
+# CHECK-NOT: [[@LINE-1]]:3: warning: macro instruction expanded into multiple instructions
+  ulw $8, 0x8000($9)
 # CHECK: [[@LINE-1]]:3: warning: macro instruction expanded into multiple instructions
 
   add $4, $5, $6
