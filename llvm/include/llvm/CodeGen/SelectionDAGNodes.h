@@ -591,7 +591,7 @@ public:
     const SDValue &operator*() const { return I->get(); }
   };
 
-  iterator_range<value_op_iterator> op_values() {
+  iterator_range<value_op_iterator> op_values() const {
     return iterator_range<value_op_iterator>(value_op_iterator(op_begin()),
                                              value_op_iterator(op_end()));
   }

@@ -332,9 +332,9 @@ void ScheduleDAGSDNodes::BuildSchedUnits() {
     SDNode *NI = Worklist.pop_back_val();
 
     // Add all operands to the worklist unless they've already been added.
-    for (unsigned i = 0, e = NI->getNumOperands(); i != e; ++i)
-      if (Visited.insert(NI->getOperand(i).getNode()).second)
-        Worklist.push_back(NI->getOperand(i).getNode());
+    for (const SDValue &Op : NI->op_values())
+      if (Visited.insert(Op.getNode()).second)
+        Worklist.push_back(Op.getNode());
 
     if (isPassiveNode(NI))  // Leaf node, e.g. a TargetImmediate.
       continue;
