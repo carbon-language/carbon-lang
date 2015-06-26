@@ -399,28 +399,21 @@ uint64_t MachOObjectFile::getCommonSymbolSizeImpl(DataRefImpl DRI) const {
   return Value;
 }
 
-std::error_code MachOObjectFile::getSymbolType(DataRefImpl Symb,
-                                               SymbolRef::Type &Res) const {
+SymbolRef::Type MachOObjectFile::getSymbolType(DataRefImpl Symb) const {
   MachO::nlist_base Entry = getSymbolTableEntryBase(this, Symb);
   uint8_t n_type = Entry.n_type;
 
-  Res = SymbolRef::ST_Other;
-
   // If this is a STAB debugging symbol, we can do nothing more.
-  if (n_type & MachO::N_STAB) {
-    Res = SymbolRef::ST_Debug;
-    return std::error_code();
-  }
+  if (n_type & MachO::N_STAB)
+    return SymbolRef::ST_Debug;
 
   switch (n_type & MachO::N_TYPE) {
     case MachO::N_UNDF :
-      Res = SymbolRef::ST_Unknown;
-      break;
+      return SymbolRef::ST_Unknown;
     case MachO::N_SECT :
-      Res = SymbolRef::ST_Function;
-      break;
+      return SymbolRef::ST_Function;
   }
-  return std::error_code();
+  return SymbolRef::ST_Other;
 }
 
 uint32_t MachOObjectFile::getSymbolFlags(DataRefImpl DRI) const {
@@ -576,8 +569,7 @@ bool MachOObjectFile::isSectionVirtual(DataRefImpl Sec) const {
 
 bool MachOObjectFile::sectionContainsSymbol(DataRefImpl Sec,
                                             DataRefImpl Symb) const {
-  SymbolRef::Type ST;
-  this->getSymbolType(Symb, ST);
+  SymbolRef::Type ST = getSymbolType(Symb);
   if (ST == SymbolRef::ST_Unknown)
     return false;
 

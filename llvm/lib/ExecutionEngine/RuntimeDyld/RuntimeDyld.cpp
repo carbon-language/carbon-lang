@@ -175,8 +175,7 @@ RuntimeDyldImpl::loadObjectImpl(const object::ObjectFile &Obj) {
     if (IsCommon)
       CommonSymbols.push_back(*I);
     else {
-      object::SymbolRef::Type SymType;
-      Check(I->getType(SymType));
+      object::SymbolRef::Type SymType = I->getType();
 
       if (SymType == object::SymbolRef::ST_Function ||
           SymType == object::SymbolRef::ST_Data ||

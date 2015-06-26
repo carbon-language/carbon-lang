@@ -265,10 +265,7 @@ static int printLineInfoForInput(bool LoadObjects, bool UseDebugObj) {
     // Use symbol info to iterate functions in the object.
     for (const auto &P : SymAddr) {
       object::SymbolRef Sym = P.first;
-      object::SymbolRef::Type SymType;
-      if (Sym.getType(SymType))
-        continue;
-      if (SymType == object::SymbolRef::ST_Function) {
+      if (Sym.getType() == object::SymbolRef::ST_Function) {
         StringRef  Name;
         uint64_t   Addr;
         if (Sym.getName(Name))

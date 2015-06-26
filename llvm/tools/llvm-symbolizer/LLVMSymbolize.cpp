@@ -80,9 +80,7 @@ ModuleInfo::ModuleInfo(ObjectFile *Obj, DIContext *DICtx)
 
 void ModuleInfo::addSymbol(const SymbolRef &Symbol, uint64_t SymbolSize,
                            DataExtractor *OpdExtractor, uint64_t OpdAddress) {
-  SymbolRef::Type SymbolType;
-  if (error(Symbol.getType(SymbolType)))
-    return;
+  SymbolRef::Type SymbolType = Symbol.getType();
   if (SymbolType != SymbolRef::ST_Function && SymbolType != SymbolRef::ST_Data)
     return;
   uint64_t SymbolAddress;

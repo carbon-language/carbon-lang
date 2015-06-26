@@ -178,9 +178,8 @@ static const Target *GetTarget(const MachOObjectFile *MachOObj,
 
 struct SymbolSorter {
   bool operator()(const SymbolRef &A, const SymbolRef &B) {
-    SymbolRef::Type AType, BType;
-    A.getType(AType);
-    B.getType(BType);
+    SymbolRef::Type AType = A.getType();
+    SymbolRef::Type BType = B.getType();
 
     uint64_t AAddr, BAddr;
     if (AType != SymbolRef::ST_Function)
@@ -588,8 +587,7 @@ static void CreateSymbolAddressMap(MachOObjectFile *O,
                                    SymbolAddressMap *AddrMap) {
   // Create a map of symbol addresses to symbol names.
   for (const SymbolRef &Symbol : O->symbols()) {
-    SymbolRef::Type ST;
-    Symbol.getType(ST);
+    SymbolRef::Type ST = Symbol.getType();
     if (ST == SymbolRef::ST_Function || ST == SymbolRef::ST_Data ||
         ST == SymbolRef::ST_Other) {
       uint64_t Address;
@@ -6124,8 +6122,7 @@ static void DisassembleMachO(StringRef Filename, MachOObjectFile *MachOOF,
     SymbolAddressMap AddrMap;
     bool DisSymNameFound = false;
     for (const SymbolRef &Symbol : MachOOF->symbols()) {
-      SymbolRef::Type ST;
-      Symbol.getType(ST);
+      SymbolRef::Type ST = Symbol.getType();
       if (ST == SymbolRef::ST_Function || ST == SymbolRef::ST_Data ||
           ST == SymbolRef::ST_Other) {
         uint64_t Address;
@@ -6173,8 +6170,7 @@ static void DisassembleMachO(StringRef Filename, MachOObjectFile *MachOOF,
       StringRef SymName;
       Symbols[SymIdx].getName(SymName);
 
-      SymbolRef::Type ST;
-      Symbols[SymIdx].getType(ST);
+      SymbolRef::Type ST = Symbols[SymIdx].getType();
       if (ST != SymbolRef::ST_Function)
         continue;
 
@@ -6199,8 +6195,7 @@ static void DisassembleMachO(StringRef Filename, MachOObjectFile *MachOOF,
       uint64_t NextSym = 0;
       uint64_t NextSymIdx = SymIdx + 1;
       while (Symbols.size() > NextSymIdx) {
-        SymbolRef::Type NextSymType;
-        Symbols[NextSymIdx].getType(NextSymType);
+        SymbolRef::Type NextSymType = Symbols[NextSymIdx].getType();
         if (NextSymType == SymbolRef::ST_Function) {
           containsNextSym =
               Sections[SectIdx].containsSymbol(Symbols[NextSymIdx]);

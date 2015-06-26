@@ -221,10 +221,9 @@ void MachODebugMapParser::loadMainBinarySymbols() {
   const MachOObjectFile &MainBinary = MainBinaryHolder.GetAs<MachOObjectFile>();
   section_iterator Section = MainBinary.section_end();
   for (const auto &Sym : MainBinary.symbols()) {
-    SymbolRef::Type Type;
+    SymbolRef::Type Type = Sym.getType();
     // Skip undefined and STAB entries.
-    if (Sym.getType(Type) || (Type & SymbolRef::ST_Debug) ||
-        (Type & SymbolRef::ST_Unknown))
+    if ((Type & SymbolRef::ST_Debug) || (Type & SymbolRef::ST_Unknown))
       continue;
     StringRef Name;
     uint64_t Addr;

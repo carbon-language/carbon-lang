@@ -136,8 +136,7 @@ protected:
   uint64_t getCommonSymbolSizeImpl(DataRefImpl Symb) const override;
   uint32_t getSymbolFlags(DataRefImpl Symb) const override;
   uint8_t getSymbolOther(DataRefImpl Symb) const override;
-  std::error_code getSymbolType(DataRefImpl Symb,
-                                SymbolRef::Type &Res) const override;
+  SymbolRef::Type getSymbolType(DataRefImpl Symb) const override;
   section_iterator getSymbolSection(const Elf_Sym *Symb) const;
   std::error_code getSymbolSection(DataRefImpl Symb,
                                    section_iterator &Res) const override;
@@ -390,34 +389,25 @@ uint8_t ELFObjectFile<ELFT>::getSymbolOther(DataRefImpl Symb) const {
 }
 
 template <class ELFT>
-std::error_code
-ELFObjectFile<ELFT>::getSymbolType(DataRefImpl Symb,
-                                   SymbolRef::Type &Result) const {
+SymbolRef::Type ELFObjectFile<ELFT>::getSymbolType(DataRefImpl Symb) const {
   const Elf_Sym *ESym = getSymbol(Symb);
 
   switch (ESym->getType()) {
   case ELF::STT_NOTYPE:
-    Result = SymbolRef::ST_Unknown;
-    break;
+    return SymbolRef::ST_Unknown;
   case ELF::STT_SECTION:
-    Result = SymbolRef::ST_Debug;
-    break;
+    return SymbolRef::ST_Debug;
   case ELF::STT_FILE:
-    Result = SymbolRef::ST_File;
-    break;
+    return SymbolRef::ST_File;
   case ELF::STT_FUNC:
-    Result = SymbolRef::ST_Function;
-    break;
+    return SymbolRef::ST_Function;
   case ELF::STT_OBJECT:
   case ELF::STT_COMMON:
   case ELF::STT_TLS:
-    Result = SymbolRef::ST_Data;
-    break;
+    return SymbolRef::ST_Data;
   default:
-    Result = SymbolRef::ST_Other;
-    break;
+    return SymbolRef::ST_Other;
   }
-  return std::error_code();
 }
 
 template <class ELFT>

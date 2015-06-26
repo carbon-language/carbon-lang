@@ -177,36 +177,27 @@ std::error_code COFFObjectFile::getSymbolAddress(DataRefImpl Ref,
   return std::error_code();
 }
 
-std::error_code COFFObjectFile::getSymbolType(DataRefImpl Ref,
-                                              SymbolRef::Type &Result) const {
+SymbolRef::Type COFFObjectFile::getSymbolType(DataRefImpl Ref) const {
   COFFSymbolRef Symb = getCOFFSymbol(Ref);
   int32_t SectionNumber = Symb.getSectionNumber();
-  Result = SymbolRef::ST_Other;
 
-  if (Symb.isAnyUndefined()) {
-    Result = SymbolRef::ST_Unknown;
-  } else if (Symb.isFunctionDefinition()) {
-    Result = SymbolRef::ST_Function;
-  } else if (Symb.isCommon()) {
-    Result = SymbolRef::ST_Data;
-  } else if (Symb.isFileRecord()) {
-    Result = SymbolRef::ST_File;
-  } else if (SectionNumber == COFF::IMAGE_SYM_DEBUG ||
-             Symb.isSectionDefinition()) {
-    // TODO: perhaps we need a new symbol type ST_Section.
-    Result = SymbolRef::ST_Debug;
-  } else if (!COFF::isReservedSectionNumber(SectionNumber)) {
-    const coff_section *Section = nullptr;
-    if (std::error_code EC = getSection(SectionNumber, Section))
-      return EC;
-    uint32_t Characteristics = Section->Characteristics;
-    if (Characteristics & COFF::IMAGE_SCN_CNT_CODE)
-      Result = SymbolRef::ST_Function;
-    else if (Characteristics & (COFF::IMAGE_SCN_CNT_INITIALIZED_DATA |
-                                COFF::IMAGE_SCN_CNT_UNINITIALIZED_DATA))
-      Result = SymbolRef::ST_Data;
-  }
-  return std::error_code();
+  if (Symb.isAnyUndefined())
+    return SymbolRef::ST_Unknown;
+  if (Symb.isFunctionDefinition())
+    return SymbolRef::ST_Function;
+  if (Symb.isCommon())
+    return SymbolRef::ST_Data;
+  if (Symb.isFileRecord())
+    return SymbolRef::ST_File;
+
+  // TODO: perhaps we need a new symbol type ST_Section.
+  if (SectionNumber == COFF::IMAGE_SYM_DEBUG || Symb.isSectionDefinition())
+    return SymbolRef::ST_Debug;
+
+  if (!COFF::isReservedSectionNumber(SectionNumber))
+    return SymbolRef::ST_Data;
+
+  return SymbolRef::ST_Other;
 }
 
 uint32_t COFFObjectFile::getSymbolFlags(DataRefImpl Ref) const {
