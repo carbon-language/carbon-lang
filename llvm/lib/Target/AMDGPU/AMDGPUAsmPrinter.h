@@ -97,6 +97,8 @@ public:
   /// Implemented in AMDGPUMCInstLower.cpp
   void EmitInstruction(const MachineInstr *MI) override;
 
+  void EmitFunctionBodyStart() override;
+
   void EmitEndOfAsmFile(Module &M) override;
 
   bool PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,

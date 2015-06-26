@@ -89,6 +89,15 @@ AMDGPUAsmPrinter::AMDGPUAsmPrinter(TargetMachine &TM,
                                    std::unique_ptr<MCStreamer> Streamer)
     : AsmPrinter(TM, std::move(Streamer)) {}
 
+void AMDGPUAsmPrinter::EmitFunctionBodyStart() {
+  const AMDGPUSubtarget &STM = MF->getSubtarget<AMDGPUSubtarget>();
+  SIProgramInfo KernelInfo;
+  if (STM.isAmdHsaOS()) {
+    getSIProgramInfo(KernelInfo, *MF);
+    EmitAmdKernelCodeT(*MF, KernelInfo);
+  }
+}
+
 void AMDGPUAsmPrinter::EmitEndOfAsmFile(Module &M) {
 
   // This label is used to mark the end of the .text section.
@@ -113,13 +122,11 @@ bool AMDGPUAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   const AMDGPUSubtarget &STM = MF.getSubtarget<AMDGPUSubtarget>();
   SIProgramInfo KernelInfo;
-  if (STM.isAmdHsaOS()) {
-    getSIProgramInfo(KernelInfo, MF);
-    EmitAmdKernelCodeT(MF, KernelInfo);
-    OutStreamer->EmitCodeAlignment(2 << (MF.getAlignment() - 1));
-  } else if (STM.getGeneration() >= AMDGPUSubtarget::SOUTHERN_ISLANDS) {
-    getSIProgramInfo(KernelInfo, MF);
-    EmitProgramInfoSI(MF, KernelInfo);
+  if (STM.getGeneration() >= AMDGPUSubtarget::SOUTHERN_ISLANDS) {
+    if (!STM.isAmdHsaOS()) {
+      getSIProgramInfo(KernelInfo, MF);
+      EmitProgramInfoSI(MF, KernelInfo);
+    }
   } else {
     EmitProgramInfoR600(MF);
   }
