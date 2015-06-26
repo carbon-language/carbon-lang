@@ -11,6 +11,12 @@
 #define LLVM_MC_MCPARSER_MCASMPARSERUTILS_H
 
 namespace llvm {
+
+class MCAsmParser;
+class MCExpr;
+class MCSymbol;
+class StringRef;
+
 namespace MCParserUtils {
 
 /// Parse a value expression and return whether it can be assigned to a symbol
