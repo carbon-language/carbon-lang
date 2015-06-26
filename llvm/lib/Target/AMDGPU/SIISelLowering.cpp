@@ -583,7 +583,8 @@ SDValue SITargetLowering::LowerFormalArguments(
     if (VA.isMemLoc()) {
       VT = Ins[i].VT;
       EVT MemVT = Splits[i].VT;
-      const unsigned Offset = 36 + VA.getLocMemOffset();
+      const unsigned Offset = Subtarget->getExplicitKernelArgOffset() +
+                              VA.getLocMemOffset();
       // The first 36 bytes of the input buffer contains information about
       // thread group and global sizes.
       SDValue Arg = LowerParameter(DAG, VT, MemVT,  DL, DAG.getRoot(),

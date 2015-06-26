@@ -275,6 +275,13 @@ public:
   bool enableSubRegLiveness() const override {
     return true;
   }
+
+  /// \brief Returns the offset in bytes from the start of the input buffer
+  ///        of the first explicit kernel argument.
+  unsigned getExplicitKernelArgOffset() const {
+    return isAmdHsaOS() ? 0 : 36;
+  }
+
 };
 
 } // End namespace llvm
