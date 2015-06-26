@@ -64,3 +64,16 @@ define <4 x float> @undef1() {
 ; CHECK:               movaps  __xmm@00000000000000003f8000003f800000(%rip), %xmm0
 ; CHECK-NEXT:          ret
 }
+
+define float @pr23966(i32 %a) {
+  %tobool = icmp ne i32 %a, 0
+  %sel = select i1 %tobool, float -1.000000e+00, float 1.000000e+00
+  ret float %sel
+}
+
+; CHECK:              .globl  __real@bf8000003f800000
+; CHECK-NEXT:         .section        .rdata,"dr",discard,__real@bf8000003f800000
+; CHECK-NEXT:         .align  4
+; CHECK-NEXT: __real@bf8000003f800000:
+; CHECK-NEXT:         .long   1065353216
+; CHECK-NEXT:         .long   3212836864

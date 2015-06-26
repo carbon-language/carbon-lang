@@ -131,52 +131,44 @@ static std::string APIntToHexString(const APInt &AI) {
   return HexString;
 }
 
-
 static std::string scalarConstantToHexString(const Constant *C) {
   Type *Ty = C->getType();
-  APInt AI;
   if (isa<UndefValue>(C)) {
-    AI = APInt(Ty->getPrimitiveSizeInBits(), /*val=*/0);
-  } else if (Ty->isFloatTy() || Ty->isDoubleTy()) {
-    const auto *CFP = cast<ConstantFP>(C);
-    AI = CFP->getValueAPF().bitcastToAPInt();
-  } else if (Ty->isIntegerTy()) {
-    const auto *CI = cast<ConstantInt>(C);
-    AI = CI->getValue();
+    return APIntToHexString(APInt::getNullValue(Ty->getPrimitiveSizeInBits()));
+  } else if (const auto *CFP = dyn_cast<ConstantFP>(C)) {
+    return APIntToHexString(CFP->getValueAPF().bitcastToAPInt());
+  } else if (const auto *CI = dyn_cast<ConstantInt>(C)) {
+    return APIntToHexString(CI->getValue());
   } else {
-    llvm_unreachable("unexpected constant pool element type!");
+    unsigned NumElements;
+    if (isa<VectorType>(Ty))
+      NumElements = Ty->getVectorNumElements();
+    else
+      NumElements = Ty->getArrayNumElements();
+    std::string HexString;
+    for (int I = NumElements - 1, E = -1; I != E; --I)
+      HexString += scalarConstantToHexString(C->getAggregateElement(I));
+    return HexString;
   }
-  return APIntToHexString(AI);
 }
 
 MCSection *
 X86WindowsTargetObjectFile::getSectionForConstant(SectionKind Kind,
                                                   const Constant *C) const {
-  if (Kind.isReadOnly()) {
-    if (C) {
-      Type *Ty = C->getType();
-      SmallString<32> COMDATSymName;
-      if (Ty->isFloatTy() || Ty->isDoubleTy()) {
-        COMDATSymName = "__real@";
-        COMDATSymName += scalarConstantToHexString(C);
-      } else if (const auto *VTy = dyn_cast<VectorType>(Ty)) {
-        uint64_t NumBits = VTy->getBitWidth();
-        if (NumBits == 128 || NumBits == 256) {
-          COMDATSymName = NumBits == 128 ? "__xmm@" : "__ymm@";
-          for (int I = VTy->getNumElements() - 1, E = -1; I != E; --I)
-            COMDATSymName +=
-                scalarConstantToHexString(C->getAggregateElement(I));
-        }
-      }
-      if (!COMDATSymName.empty()) {
-        unsigned Characteristics = COFF::IMAGE_SCN_CNT_INITIALIZED_DATA |
-                                   COFF::IMAGE_SCN_MEM_READ |
-                                   COFF::IMAGE_SCN_LNK_COMDAT;
-        return getContext().getCOFFSection(".rdata", Characteristics, Kind,
-                                           COMDATSymName,
-                                           COFF::IMAGE_COMDAT_SELECT_ANY);
-      }
-    }
+  if (Kind.isMergeableConst() && C) {
+    const unsigned Characteristics = COFF::IMAGE_SCN_CNT_INITIALIZED_DATA |
+                                     COFF::IMAGE_SCN_MEM_READ |
+                                     COFF::IMAGE_SCN_LNK_COMDAT;
+    std::string COMDATSymName;
+    if (Kind.isMergeableConst4() || Kind.isMergeableConst8())
+      COMDATSymName = "__real@" + scalarConstantToHexString(C);
+    else if (Kind.isMergeableConst16())
+      COMDATSymName = "__xmm@" + scalarConstantToHexString(C);
+
+    if (!COMDATSymName.empty())
+      return getContext().getCOFFSection(".rdata", Characteristics, Kind,
+                                         COMDATSymName,
+                                         COFF::IMAGE_COMDAT_SELECT_ANY);
   }
 
   return TargetLoweringObjectFile::getSectionForConstant(Kind, C);
