@@ -187,8 +187,7 @@ bool ISD::isBuildVectorOfConstantSDNodes(const SDNode *N) {
   if (N->getOpcode() != ISD::BUILD_VECTOR)
     return false;
 
-  for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
-    SDValue Op = N->getOperand(i);
+  for (const SDValue &Op : N->op_values()) {
     if (Op.getOpcode() == ISD::UNDEF)
       continue;
     if (!isa<ConstantSDNode>(Op))
@@ -203,8 +202,7 @@ bool ISD::isBuildVectorOfConstantFPSDNodes(const SDNode *N) {
   if (N->getOpcode() != ISD::BUILD_VECTOR)
     return false;
 
-  for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
-    SDValue Op = N->getOperand(i);
+  for (const SDValue &Op : N->op_values()) {
     if (Op.getOpcode() == ISD::UNDEF)
       continue;
     if (!isa<ConstantFPSDNode>(Op))
@@ -244,8 +242,8 @@ bool ISD::allOperandsUndef(const SDNode *N) {
   if (N->getNumOperands() == 0)
     return false;
 
-  for (unsigned i = 0, e = N->getNumOperands(); i != e ; ++i)
-    if (N->getOperand(i).getOpcode() != ISD::UNDEF)
+  for (const SDValue &Op : N->op_values())
+    if (Op.getOpcode() != ISD::UNDEF)
       return false;
 
   return true;
@@ -6674,8 +6672,8 @@ bool SDNode::isOnlyUserOf(SDNode *N) const {
 /// isOperand - Return true if this node is an operand of N.
 ///
 bool SDValue::isOperandOf(SDNode *N) const {
-  for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
-    if (*this == N->getOperand(i))
+  for (const SDValue &Op : N->op_values())
+    if (*this == Op)
       return true;
   return false;
 }
@@ -6743,8 +6741,8 @@ SDNode::hasPredecessorHelper(const SDNode *N,
   // Haven't visited N yet. Continue the search.
   while (!Worklist.empty()) {
     const SDNode *M = Worklist.pop_back_val();
-    for (unsigned i = 0, e = M->getNumOperands(); i != e; ++i) {
-      SDNode *Op = M->getOperand(i).getNode();
+    for (const SDValue &OpV : M->op_values()) {
+      SDNode *Op = OpV.getNode();
       if (Visited.insert(Op).second)
         Worklist.push_back(Op);
       if (Op == N)
@@ -7093,8 +7091,8 @@ BuildVectorSDNode::getConstantFPSplatNode(BitVector *UndefElements) const {
 }
 
 bool BuildVectorSDNode::isConstant() const {
-  for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
-    unsigned Opc = getOperand(i).getOpcode();
+  for (const SDValue &Op : op_values()) {
+    unsigned Opc = Op.getOpcode();
     if (Opc != ISD::UNDEF && Opc != ISD::Constant && Opc != ISD::ConstantFP)
       return false;
   }
@@ -7135,8 +7133,8 @@ static void checkForCyclesHelper(const SDNode *N,
     abort();
   }
 
-  for(unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
-    checkForCyclesHelper(N->getOperand(i).getNode(), Visited, Checked, DAG);
+  for (const SDValue &Op : N->op_values())
+    checkForCyclesHelper(Op.getNode(), Visited, Checked, DAG);
 
   Checked.insert(N);
   Visited.erase(N);

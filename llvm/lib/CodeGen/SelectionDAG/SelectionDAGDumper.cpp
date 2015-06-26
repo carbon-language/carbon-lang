@@ -546,12 +546,12 @@ void SDNode::print_details(raw_ostream &OS, const SelectionDAG *G) const {
 }
 
 static void DumpNodes(const SDNode *N, unsigned indent, const SelectionDAG *G) {
-  for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
-    if (N->getOperand(i).getNode()->hasOneUse())
-      DumpNodes(N->getOperand(i).getNode(), indent+2, G);
+  for (const SDValue &Op : N->op_values())
+    if (Op.getNode()->hasOneUse())
+      DumpNodes(Op.getNode(), indent+2, G);
     else
       dbgs() << "\n" << std::string(indent+2, ' ')
-             << (void*)N->getOperand(i).getNode() << ": <multiple use>";
+             << (void*)Op.getNode() << ": <multiple use>";
 
   dbgs() << '\n';
   dbgs().indent(indent);
@@ -608,10 +608,8 @@ static void DumpNodesr(raw_ostream &OS, const SDNode *N, unsigned indent,
   OS << "\n";
 
   // Dump children that have grandchildren on their own line(s).
-  for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
-    const SDNode *child = N->getOperand(i).getNode();
-    DumpNodesr(OS, child, indent+2, G, once);
-  }
+  for (const SDValue &Op : N->op_values())
+    DumpNodesr(OS, Op.getNode(), indent+2, G, once);
 }
 
 void SDNode::dumpr() const {
@@ -637,12 +635,12 @@ static void printrWithDepthHelper(raw_ostream &OS, const SDNode *N,
   if (depth < 1)
     return;
 
-  for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
+  for (const SDValue &Op : N->op_values()) {
     // Don't follow chain operands.
-    if (N->getOperand(i).getValueType() == MVT::Other)
+    if (Op.getValueType() == MVT::Other)
       continue;
     OS << '\n';
-    printrWithDepthHelper(OS, N->getOperand(i).getNode(), G, depth-1, indent+2);
+    printrWithDepthHelper(OS, Op.getNode(), G, depth-1, indent+2);
   }
 }
 
