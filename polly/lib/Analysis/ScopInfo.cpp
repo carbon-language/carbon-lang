@@ -559,6 +559,12 @@ void MemoryAccess::assumeNoOutOfBound(const IRAccess &Access) {
   Outside = isl_set_apply(Outside, isl_map_reverse(getAccessRelation()));
   Outside = isl_set_intersect(Outside, Statement->getDomain());
   Outside = isl_set_params(Outside);
+
+  // Remove divs to avoid the construction of overly complicated assumptions.
+  // Doing so increases the set of parameter combinations that are assumed to
+  // not appear. This is always save, but may make the resulting run-time check
+  // bail out more often than strictly necessary.
+  Outside = isl_set_remove_divs(Outside);
   Outside = isl_set_complement(Outside);
   Statement->getParent()->addAssumption(Outside);
   isl_space_free(Space);
