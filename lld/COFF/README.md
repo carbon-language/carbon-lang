@@ -12,8 +12,8 @@ Our plan is to implement a linker for the PE/COFF format based on a
 different idea, and then apply the same idea to the ELF if proved to
 be effective.
 
-Currently it's able to link everything in LLVM/CLang/LLD on the
-Windows platform.
+Currently it's able to link everything in LLVM/Clang/LLD on 64-bit
+Windows.
 
 Overall Design
 --------------
