@@ -777,26 +777,12 @@ static char getSymbolNMTypeChar(IRObjectFile &Obj, basic_symbol_iterator I) {
   return getSymbolNMTypeChar(*GV);
 }
 
-template <class ELFT>
-static bool isELFObject(ELFObjectFile<ELFT> &Obj, symbol_iterator I) {
-  typedef typename ELFObjectFile<ELFT>::Elf_Sym Elf_Sym;
-
-  DataRefImpl Symb = I->getRawDataRefImpl();
-  const Elf_Sym *ESym = Obj.getSymbol(Symb);
-
-  return ESym->getType() == ELF::STT_OBJECT;
-}
-
 static bool isObject(SymbolicFile &Obj, basic_symbol_iterator I) {
-  if (ELF32LEObjectFile *ELF = dyn_cast<ELF32LEObjectFile>(&Obj))
-    return isELFObject(*ELF, I);
-  if (ELF64LEObjectFile *ELF = dyn_cast<ELF64LEObjectFile>(&Obj))
-    return isELFObject(*ELF, I);
-  if (ELF32BEObjectFile *ELF = dyn_cast<ELF32BEObjectFile>(&Obj))
-    return isELFObject(*ELF, I);
-  if (ELF64BEObjectFile *ELF = dyn_cast<ELF64BEObjectFile>(&Obj))
-    return isELFObject(*ELF, I);
-  return false;
+  auto *ELF = dyn_cast<ELFObjectFileBase>(&Obj);
+  if (!ELF)
+    return false;
+
+  return elf_symbol_iterator(I)->getELFType() == ELF::STT_OBJECT;
 }
 
 static char getNMTypeChar(SymbolicFile &Obj, basic_symbol_iterator I) {
