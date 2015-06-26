@@ -198,7 +198,7 @@ SymbolBody *ObjectFile::createSymbolBody(COFFSymbolRef Sym, const void *AuxP,
     // Skip special symbols.
     if (Name == "@comp.id" || Name == "@feat.00")
       return nullptr;
-    return new (Alloc) DefinedAbsolute(Name, Sym.getValue());
+    return new (Alloc) DefinedAbsolute(Name, Sym);
   }
   if (Sym.getSectionNumber() == llvm::COFF::IMAGE_SYM_DEBUG)
     return nullptr;

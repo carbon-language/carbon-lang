@@ -173,20 +173,26 @@ private:
 // Absolute symbols.
 class DefinedAbsolute : public Defined {
 public:
-  DefinedAbsolute(StringRef N, uint64_t VA)
-      : Defined(DefinedAbsoluteKind), Name(N), RVA(VA - Config->ImageBase) {}
+  DefinedAbsolute(StringRef N, COFFSymbolRef S)
+      : Defined(DefinedAbsoluteKind), Name(N), VA(S.getValue()),
+        External(S.isExternal()) {}
+
+  DefinedAbsolute(StringRef N, uint64_t V)
+      : Defined(DefinedAbsoluteKind), Name(N), VA(V) {}
 
   static bool classof(const SymbolBody *S) {
     return S->kind() == DefinedAbsoluteKind;
   }
 
   StringRef getName() override { return Name; }
-  uint64_t getRVA() override { return RVA; }
+  uint64_t getRVA() override { return VA - Config->ImageBase; }
   uint64_t getFileOff() override { llvm_unreachable("internal error"); }
+  bool isExternal() override { return External; }
 
 private:
   StringRef Name;
-  uint64_t RVA;
+  uint64_t VA;
+  bool External = true;
 };
 
 // This class represents a symbol defined in an archive file. It is
