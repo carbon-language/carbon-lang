@@ -5,6 +5,10 @@
 // RUN: %clangxx_asan -O0 %s %libdl -Wl,--export-dynamic -o %t
 // RUN: env ASAN_OPTIONS=$ASAN_OPTIONS:strict_init_order=true %run %t 2>&1
 
+// dlopen() can not be intercepted on Android, making strict_init_order nearly
+// useless there.
+// UNSUPPORTED: android
+
 #if defined(SHARED_LIB)
 #include <stdio.h>
 

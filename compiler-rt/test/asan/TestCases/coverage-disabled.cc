@@ -13,7 +13,7 @@
 // RUN: cd %T/coverage-disabled/direct
 // RUN: not %sancov rawunpack *.sancov
 //
-// XFAIL: android
+// UNSUPPORTED: android
 
 int main(int argc, char **argv) {
   return 0;
