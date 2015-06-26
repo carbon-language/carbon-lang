@@ -528,6 +528,74 @@ std::error_code RelocationPass<ELFT>::perform(SimpleFile &mf) {
   return std::error_code();
 }
 
+static bool isMicroMipsReloc(Reference::KindValue kind) {
+  return R_MICROMIPS_26_S1 <= kind && kind <= R_MICROMIPS_PC19_S2;
+}
+
+static bool isHiLo16Reloc(Reference::KindValue kind) {
+  return kind == R_MIPS_HI16 || kind == R_MIPS_LO16 || kind == R_MIPS_PCHI16 ||
+         kind == R_MIPS_PCLO16 || kind == R_MICROMIPS_HI16 ||
+         kind == R_MICROMIPS_LO16 || kind == R_MICROMIPS_HI0_LO16;
+}
+
+static bool isBranchReloc(Reference::KindValue kind) {
+  return kind == R_MIPS_26 || kind == R_MICROMIPS_26_S1 ||
+         kind == R_MIPS_PC16 || kind == R_MIPS_PC21_S2 ||
+         kind == R_MIPS_PC26_S2 || kind == R_MICROMIPS_PC7_S1 ||
+         kind == R_MICROMIPS_PC10_S1 || kind == R_MICROMIPS_PC16_S1 ||
+         kind == R_MICROMIPS_PC23_S2;
+}
+
+static bool isGotReloc(Reference::KindValue kind) {
+  return kind == R_MIPS_GOT16 || kind == R_MIPS_GOT_HI16 ||
+         kind == R_MIPS_GOT_LO16 || kind == R_MICROMIPS_GOT16 ||
+         kind == R_MICROMIPS_GOT_HI16 || kind == R_MICROMIPS_GOT_LO16;
+}
+
+static bool isCallReloc(Reference::KindValue kind) {
+  return kind == R_MIPS_CALL16 || kind == R_MIPS_CALL_HI16 ||
+         kind == R_MIPS_CALL_LO16 || kind == R_MICROMIPS_CALL16 ||
+         kind == R_MICROMIPS_CALL_HI16 || kind == R_MICROMIPS_CALL_LO16;
+}
+
+static bool isGotDispReloc(Reference::KindValue kind) {
+  return kind == R_MIPS_GOT_DISP || kind == R_MICROMIPS_GOT_DISP;
+}
+
+static bool isGotPageReloc(Reference::KindValue kind) {
+  return kind == R_MIPS_GOT_PAGE || kind == R_MICROMIPS_GOT_PAGE;
+}
+
+static bool isTlsDtpReloc(Reference::KindValue kind) {
+  return kind == R_MIPS_TLS_DTPREL_HI16 || kind == R_MIPS_TLS_DTPREL_LO16 ||
+         kind == R_MICROMIPS_TLS_DTPREL_HI16 ||
+         kind == R_MICROMIPS_TLS_DTPREL_LO16;
+}
+
+static bool isTlsTpReloc(Reference::KindValue kind) {
+  return kind == R_MIPS_TLS_TPREL_HI16 || kind == R_MIPS_TLS_TPREL_LO16 ||
+         kind == R_MICROMIPS_TLS_TPREL_HI16 ||
+         kind == R_MICROMIPS_TLS_TPREL_LO16;
+}
+
+static bool isTlsGdReloc(Reference::KindValue kind) {
+  return kind == R_MIPS_TLS_GD || kind == R_MICROMIPS_TLS_GD;
+}
+
+static bool isTlsLdmReloc(Reference::KindValue kind) {
+  return kind == R_MIPS_TLS_LDM || kind == R_MICROMIPS_TLS_LDM;
+}
+
+static bool isTlsGotTpReloc(Reference::KindValue kind) {
+  return kind == R_MIPS_TLS_GOTTPREL || kind == R_MICROMIPS_TLS_GOTTPREL;
+}
+
+static bool isGpRelReloc(Reference::KindValue kind) {
+  return kind == R_MIPS_GPREL32 || kind == R_MIPS_GPREL16 ||
+         kind == R_MICROMIPS_GPREL16 || kind == R_MICROMIPS_GPREL7_S2 ||
+         kind == R_MIPS_LITERAL || kind == R_MICROMIPS_LITERAL;
+}
+
 template <typename ELFT>
 void RelocationPass<ELFT>::handleReference(const MipsELFDefinedAtom<ELFT> &atom,
                                            Reference &ref) {
@@ -535,90 +603,28 @@ void RelocationPass<ELFT>::handleReference(const MipsELFDefinedAtom<ELFT> &atom,
     return;
   if (ref.kindNamespace() != Reference::KindNamespace::ELF)
     return;
+
   assert(ref.kindArch() == Reference::KindArch::Mips);
-  switch (ref.kindValue()) {
-  case R_MIPS_32:
-  case R_MIPS_PC32:
-  case R_MIPS_HI16:
-  case R_MIPS_LO16:
-  case R_MIPS_PCHI16:
-  case R_MIPS_PCLO16:
-  case R_MICROMIPS_HI16:
-  case R_MICROMIPS_LO16:
-  case R_MICROMIPS_HI0_LO16:
-    // FIXME (simon): Handle dynamic/static linking differently.
+  Reference::KindValue kind = ref.kindValue();
+  if (isHiLo16Reloc(kind) || kind == R_MIPS_32 || kind == R_MIPS_PC32)
     handlePlain(atom, ref);
-    break;
-  case R_MIPS_26:
-  case R_MICROMIPS_26_S1:
-  case R_MIPS_PC16:
-  case R_MIPS_PC21_S2:
-  case R_MIPS_PC26_S2:
-  case R_MICROMIPS_PC7_S1:
-  case R_MICROMIPS_PC10_S1:
-  case R_MICROMIPS_PC16_S1:
-  case R_MICROMIPS_PC23_S2:
+  else if (isBranchReloc(kind))
     handleBranch(atom, ref);
-    break;
-  case R_MIPS_EH:
-  case R_MIPS_GOT16:
-  case R_MIPS_CALL16:
-  case R_MIPS_GOT_HI16:
-  case R_MIPS_GOT_LO16:
-  case R_MIPS_CALL_HI16:
-  case R_MIPS_CALL_LO16:
-  case R_MICROMIPS_GOT16:
-  case R_MICROMIPS_CALL16:
-  case R_MICROMIPS_GOT_HI16:
-  case R_MICROMIPS_GOT_LO16:
-  case R_MICROMIPS_CALL_HI16:
-  case R_MICROMIPS_CALL_LO16:
-  case R_MIPS_GOT_DISP:
-  case R_MIPS_GOT_PAGE:
-  case R_MICROMIPS_GOT_DISP:
-  case R_MICROMIPS_GOT_PAGE:
+  else if (isGotReloc(kind) || isCallReloc(kind) || isGotDispReloc(kind) ||
+           isGotPageReloc(kind) || kind == R_MIPS_EH)
     handleGOT(ref);
-    break;
-  case R_MIPS_GOT_OFST:
-  case R_MICROMIPS_GOT_OFST:
-    // Nothing to do. We create GOT page entry in the R_MIPS_GOT_PAGE handler.
-    break;
-  case R_MIPS_GPREL16:
-  case R_MICROMIPS_GPREL16:
-  case R_MICROMIPS_GPREL7_S2:
-  case R_MIPS_LITERAL:
-  case R_MICROMIPS_LITERAL:
-    if (isLocal(ref.target()))
-      ref.setAddend(ref.addend() + atom.file().getGP0());
-    break;
-  case R_MIPS_GPREL32:
-    ref.setAddend(ref.addend() + atom.file().getGP0());
-    break;
-  case R_MIPS_TLS_DTPREL_HI16:
-  case R_MIPS_TLS_DTPREL_LO16:
-  case R_MICROMIPS_TLS_DTPREL_HI16:
-  case R_MICROMIPS_TLS_DTPREL_LO16:
+  else if (isTlsDtpReloc(kind))
     ref.setAddend(ref.addend() - atom.file().getDTPOffset());
-    break;
-  case R_MIPS_TLS_TPREL_HI16:
-  case R_MIPS_TLS_TPREL_LO16:
-  case R_MICROMIPS_TLS_TPREL_HI16:
-  case R_MICROMIPS_TLS_TPREL_LO16:
+  else if (isTlsTpReloc(kind))
     ref.setAddend(ref.addend() - atom.file().getTPOffset());
-    break;
-  case R_MIPS_TLS_GD:
-  case R_MICROMIPS_TLS_GD:
+  else if (isTlsGdReloc(kind))
     ref.setTarget(getTLSGdGOTEntry(ref.target(), ref.addend()));
-    break;
-  case R_MIPS_TLS_LDM:
-  case R_MICROMIPS_TLS_LDM:
+  else if (isTlsLdmReloc(kind))
     ref.setTarget(getTLSLdmGOTEntry(ref.target()));
-    break;
-  case R_MIPS_TLS_GOTTPREL:
-  case R_MICROMIPS_TLS_GOTTPREL:
+  else if (isTlsGotTpReloc(kind))
     ref.setTarget(getTLSGOTEntry(ref.target(), ref.addend()));
-    break;
-  }
+  else if (kind == R_MIPS_GPREL32 || (isLocal(ref.target()) && isGpRelReloc(kind)))
+    ref.setAddend(ref.addend() + atom.file().getGP0());
 }
 
 template <typename ELFT>
@@ -666,28 +672,9 @@ RelocationPass<ELFT>::collectReferenceInfo(const MipsELFDefinedAtom<ELFT> &atom,
   else
     _hasStaticRelocations.insert(ref.target());
 
-  switch (refKind) {
-  case R_MIPS_CALL16:
-  case R_MICROMIPS_CALL16:
-  case R_MIPS_26:
-  case R_MICROMIPS_26_S1:
-  case R_MIPS_PC16:
-  case R_MIPS_PC21_S2:
-  case R_MIPS_PC26_S2:
-  case R_MICROMIPS_PC7_S1:
-  case R_MICROMIPS_PC10_S1:
-  case R_MICROMIPS_PC16_S1:
-  case R_MICROMIPS_PC23_S2:
-  case R_MIPS_CALL_HI16:
-  case R_MIPS_CALL_LO16:
-  case R_MICROMIPS_CALL_HI16:
-  case R_MICROMIPS_CALL_LO16:
-  case R_MIPS_EH:
-    break;
-  default:
+  if (!isBranchReloc(refKind) && !isCallReloc(refKind) && refKind != R_MIPS_EH)
     _requiresPtrEquality.insert(ref.target());
-    break;
-  }
+
   return std::error_code();
 }
 
@@ -778,12 +765,7 @@ static bool isMipsReadonly(const MipsELFDefinedAtom<ELFT> &atom) {
 template <typename ELFT>
 bool RelocationPass<ELFT>::mightBeDynamic(const MipsELFDefinedAtom<ELFT> &atom,
                                           Reference::KindValue refKind) const {
-  if (refKind == R_MIPS_CALL16 || refKind == R_MIPS_GOT16 ||
-      refKind == R_MICROMIPS_CALL16 || refKind == R_MICROMIPS_GOT16 ||
-      refKind == R_MIPS_GOT_HI16 || refKind == R_MIPS_GOT_LO16 ||
-      refKind == R_MIPS_CALL_HI16 || refKind == R_MIPS_CALL_LO16 ||
-      refKind == R_MICROMIPS_GOT_HI16 || refKind == R_MICROMIPS_GOT_LO16 ||
-      refKind == R_MICROMIPS_CALL_HI16 || refKind == R_MICROMIPS_CALL_LO16)
+  if (isGotReloc(refKind) || isCallReloc(refKind))
     return true;
 
   if (refKind != R_MIPS_32 && refKind != R_MIPS_64)
@@ -893,14 +875,10 @@ void RelocationPass<ELFT>::handlePlain(const MipsELFDefinedAtom<ELFT> &atom,
     ref.setTarget(getObjectEntry(cast<SharedLibraryAtom>(ref.target())));
 }
 
-static bool isMicroMipsRelocation(Reference::KindValue kind) {
-  return R_MICROMIPS_26_S1 <= kind && kind <= R_MICROMIPS_PC19_S2;
-}
-
 template <typename ELFT>
 void RelocationPass<ELFT>::handleBranch(const MipsELFDefinedAtom<ELFT> &atom,
                                         Reference &ref) {
-  bool isMicro = isMicroMipsRelocation(ref.kindValue());
+  bool isMicro = isMicroMipsReloc(ref.kindValue());
   if (const auto *sla = dyn_cast<SharedLibraryAtom>(ref.target())) {
     if (sla->type() == SharedLibraryAtom::Type::Code)
       ref.setTarget(isMicro ? getPLTMicroEntry(sla) : getPLTRegEntry(sla));
@@ -920,27 +898,14 @@ void RelocationPass<ELFT>::handleBranch(const MipsELFDefinedAtom<ELFT> &atom,
 }
 
 template <typename ELFT> void RelocationPass<ELFT>::handleGOT(Reference &ref) {
-  if (!isLocalCall(ref.target())) {
+  if (!isLocalCall(ref.target()))
     ref.setTarget(getGlobalGOTEntry(ref.target()));
-    return;
-  }
-
-  if (ref.kindValue() == R_MIPS_GOT_PAGE ||
-      ref.kindValue() == R_MICROMIPS_GOT_PAGE)
+  else if (isGotPageReloc(ref.kindValue()))
     ref.setTarget(getLocalGOTPageEntry(ref));
-  else if (ref.kindValue() == R_MIPS_GOT_DISP ||
-           ref.kindValue() == R_MIPS_GOT_HI16 ||
-           ref.kindValue() == R_MIPS_GOT_LO16 ||
-           ref.kindValue() == R_MIPS_CALL_HI16 ||
-           ref.kindValue() == R_MIPS_CALL_LO16 ||
-           ref.kindValue() == R_MICROMIPS_GOT_DISP ||
-           ref.kindValue() == R_MICROMIPS_GOT_HI16 ||
-           ref.kindValue() == R_MICROMIPS_GOT_LO16 ||
-           ref.kindValue() == R_MICROMIPS_CALL_HI16 ||
-           ref.kindValue() == R_MICROMIPS_CALL_LO16 ||
-           ref.kindValue() == R_MIPS_EH)
-    ref.setTarget(getLocalGOTEntry(ref));
-  else if (isLocal(ref.target()))
+  else if (isLocal(ref.target()) && (ref.kindValue() == R_MIPS_GOT16 ||
+                                     ref.kindValue() == R_MIPS_CALL16 ||
+                                     ref.kindValue() == R_MICROMIPS_GOT16 ||
+                                     ref.kindValue() == R_MICROMIPS_CALL16))
     ref.setTarget(getLocalGOTPageEntry(ref));
   else
     ref.setTarget(getLocalGOTEntry(ref));
