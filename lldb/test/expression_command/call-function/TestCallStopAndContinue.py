@@ -22,14 +22,14 @@ class ExprCommandCallStopContinueTestCase(TestBase):
 
     @skipUnlessDarwin
     @dsym_test
-    @expectedFailureDarwin("llvm.org/pr20274") # intermittent failure on MacOSX
+    @expectedFlakeyDarwin("llvm.org/pr20274")
     def test_with_dsym(self):
         """Test gathering result from interrupted function call."""
         self.buildDsym()
         self.call_function()
 
     @dwarf_test
-    @expectedFailureDarwin("llvm.org/pr20274") # intermittent failure on MacOSX
+    @expectedFlakeyDarwin("llvm.org/pr20274")
     def test_with_dwarf(self):
         """Test gathering result from interrupted function call."""
         self.buildDwarf()

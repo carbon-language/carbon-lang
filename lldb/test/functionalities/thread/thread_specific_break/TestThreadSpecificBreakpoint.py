@@ -23,7 +23,7 @@ class ThreadSpecificBreakTestCase(TestBase):
     @expectedFailureFreeBSD('llvm.org/pr18522') # hits break in another thread in testrun
     @python_api_test
     @dwarf_test
-    @expectedFailureLinux # this test fails 6/100 dosep runs
+    @expectedFlakeyLinux # this test fails 6/100 dosep runs
     def test_with_dwarf_python(self):
         """Test that we obey thread conditioned breakpoints."""
         self.buildDwarf()

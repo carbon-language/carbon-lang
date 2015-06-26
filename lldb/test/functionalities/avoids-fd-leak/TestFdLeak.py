@@ -41,8 +41,8 @@ class AvoidsFdLeakTestCase(TestBase):
         self.assertTrue(process.GetExitStatus() == 0,
                 "Process returned non-zero status. Were incorrect file descriptors passed?")
 
-    @expectedFailure(lambda x: sys.version_info >= (2, 7, 8), "bugs.freebsd.org/197376") # python random leaks fd
-    @expectedFailureLinux # xfail flakey test to get buildbot green
+    @expectedFlakey(lambda x: sys.version_info >= (2, 7, 8), "bugs.freebsd.org/197376") # python random leaks fd
+    @expectedFlakeyLinux
     @skipIfWindows # The check for descriptor leakage needs to be implemented differently here.
     @skipIfTargetAndroid() # Android have some other file descriptors open by the shell
     def test_fd_leak_multitarget (self):

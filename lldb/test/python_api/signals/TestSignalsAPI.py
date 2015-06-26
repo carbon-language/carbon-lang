@@ -12,7 +12,7 @@ class SignalsAPITestCase(TestBase):
     mydir = TestBase.compute_mydir(__file__)
 
     @python_api_test
-    @expectedFailureLinux # this test fails 1/100 dosep runs
+    @expectedFlakeyLinux # this test fails 1/100 dosep runs
     def test_ignore_signal(self):
         """Test Python SBUnixSignals.Suppress/Stop/Notify() API."""
         self.buildDefault()

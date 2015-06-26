@@ -29,7 +29,7 @@ class ExprCommandThatRestartsTestCase(TestBase):
 
     @dwarf_test
     @skipIfFreeBSD # llvm.org/pr19246: intermittent failure
-    @expectedFailureLinux("llvm.org/pr19246") # intermittent failure
+    @expectedFailureLinux("llvm.org/pr19246")
     @skipIfDarwin # llvm.org/pr19246: intermittent failure
     @skipIfWindows # Test relies on signals, unsupported on Windows
     def test_with_dwarf(self):

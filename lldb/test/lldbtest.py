@@ -712,6 +712,68 @@ def expectedFailureAndroid(bugnumber=None, api_levels=None):
 
     return expectedFailure(fn, bugnumber)
 
+# if the test passes on the first try, we're done (success)
+# if the test fails once, then passes on the second try, raise an ExpectedFailure
+# if the test fails twice in a row, re-throw the exception from the second test run
+def expectedFlakey(expected_fn, bugnumber=None):
+    def expectedFailure_impl(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            from unittest2 import case
+            self = args[0]
+            try:
+                func(*args, **kwargs)
+            except Exception:
+                if expected_fn(self):
+                    # retry
+                    try:
+                        func(*args, **kwargs)
+                    except Exception:
+                        # oh snap! two failures in a row, record a failure/error
+                        raise
+                    # record the expected failure
+                    raise case._ExpectedFailure(sys.exc_info(), bugnumber)
+                else:
+                    raise
+        return wrapper
+    # if bugnumber is not-callable(incluing None), that means decorator function is called with optional arguments
+    # return decorator in this case, so it will be used to decorating original method
+    if callable(bugnumber):
+        return expectedFailure_impl(bugnumber)
+    else:
+        return expectedFailure_impl
+
+def expectedFlakeyOS(oslist, bugnumber=None, compilers=None):
+    def fn(self):
+        return (self.getPlatform() in oslist and
+                self.expectedCompiler(compilers))
+    return expectedFlakey(fn, bugnumber)
+
+def expectedFlakeyDarwin(bugnumber=None, compilers=None):
+    # For legacy reasons, we support both "darwin" and "macosx" as OS X triples.
+    return expectedFlakeyOS(getDarwinOSTriples(), bugnumber, compilers)
+
+def expectedFlakeyLinux(bugnumber=None, compilers=None):
+    return expectedFlakeyOS(['linux'], bugnumber, compilers)
+
+def expectedFlakeyFreeBSD(bugnumber=None, compilers=None):
+    return expectedFlakeyOS(['freebsd'], bugnumber, compilers)
+
+def expectedFlakeyCompiler(compiler, compiler_version=None, bugnumber=None):
+    if compiler_version is None:
+        compiler_version=['=', None]
+    def fn(self):
+        return compiler in self.getCompiler() and self.expectedCompilerVersion(compiler_version)
+    return expectedFlakey(fn, bugnumber)
+
+# @expectedFlakeyClang('bugnumber', ['<=', '3.4'])
+def expectedFlakeyClang(bugnumber=None, compiler_version=None):
+    return expectedFlakeyCompiler('clang', compiler_version, bugnumber)
+
+# @expectedFlakeyGcc('bugnumber', ['<=', '3.4'])
+def expectedFlakeyGcc(bugnumber=None, compiler_version=None):
+    return expectedFlakeyCompiler('gcc', compiler_version, bugnumber)
+
 def skipIfRemote(func):
     """Decorate the item to skip tests if testing remotely."""
     if isinstance(func, type) and issubclass(func, unittest2.TestCase):
