@@ -387,6 +387,12 @@ protected:
                     core_file.GetPath(core_path, sizeof(core_path));
                     if (core_file.Exists())
                     {
+                        if (!core_file.Readable())
+                        {
+                            result.AppendMessageWithFormat ("Core file '%s' is not readable.\n", core_path);
+                            result.SetStatus (eReturnStatusFailed);
+                            return false;
+                        }
                         FileSpec core_file_dir;
                         core_file_dir.GetDirectory() = core_file.GetDirectory();
                         target_sp->GetExecutableSearchPaths ().Append (core_file_dir);
