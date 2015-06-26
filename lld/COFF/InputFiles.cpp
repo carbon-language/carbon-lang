@@ -23,6 +23,8 @@ using namespace llvm::object;
 using namespace llvm::support::endian;
 using llvm::COFF::ImportHeader;
 using llvm::COFF::IMAGE_COMDAT_SELECT_ASSOCIATIVE;
+using llvm::COFF::IMAGE_FILE_MACHINE_AMD64;
+using llvm::COFF::IMAGE_FILE_MACHINE_UNKNOWN;
 using llvm::RoundUpToAlignment;
 using llvm::sys::fs::identify_magic;
 using llvm::sys::fs::file_magic;
@@ -96,6 +98,11 @@ std::error_code ObjectFile::parse() {
     COFFObj.reset(Obj);
   } else {
     llvm::errs() << getName() << " is not a COFF file.\n";
+    return make_error_code(LLDError::InvalidFile);
+  }
+  if (COFFObj->getMachine() != IMAGE_FILE_MACHINE_AMD64 &&
+      COFFObj->getMachine() != IMAGE_FILE_MACHINE_UNKNOWN) {
+    llvm::errs() << getName() << " is not an x64 object file.\n";
     return make_error_code(LLDError::InvalidFile);
   }
 

@@ -4,7 +4,7 @@
 
 ---
 header:
-  Machine:         IMAGE_FILE_MACHINE_I386
+  Machine:         IMAGE_FILE_MACHINE_AMD64
   Characteristics: [  ]
 sections:
   - Name:            .text_long_section_name
