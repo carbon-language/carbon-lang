@@ -12,6 +12,9 @@ Our plan is to implement a linker for the PE/COFF format based on a
 different idea, and then apply the same idea to the ELF if proved to
 be effective.
 
+Currently it's able to link everything in LLVM/CLang/LLD on the
+Windows platform.
+
 Overall Design
 --------------
 
@@ -112,15 +115,19 @@ There are mainly three actors in this linker.
 Performance
 -----------
 
-Currently it's able to self-host on the Windows platform. It takes 1.2
-seconds to self-host on my Xeon 2580 machine, while the existing
-Atom-based linker takes 5 seconds to self-host. We believe the
-performance difference comes from simplification and optimizations we
-made to the new port. Notable differences are listed below.
+It's generally 2x faster than MSVC link.exe. It takes 3.5 seconds to
+self-host on my Xeon 2580 machine. MSVC linker takes 7.0 seconds to
+link the same executable. The resulting output is 65MB.
+The old LLD is buggy that it produces 120MB executable for some reason,
+and it takes 30 seconds to do that.
+
+We believe the performance difference comes from simplification and
+optimizations we made to the new port. Notable differences are listed
+below.
 
 * Reduced number of relocation table reads
 
-  In the existing design, relocation tables are read from beginning to
+  In the old design, relocation tables are read from beginning to
   construct graphs because they consist of graph edges. In the new
   design, they are not read until we actually apply relocations.
 
@@ -129,7 +136,7 @@ made to the new port. Notable differences are listed below.
   tables directly. The other is that it reduces number of relocation
   entries we have to read, because we won't read relocations for
   dead-stripped COMDAT sections. Large C++ programs tend to consist of
-  lots of COMDAT sections. In the existing design, the time to process
+  lots of COMDAT sections. In the old design, the time to process
   relocation table is linear to size of input. In this new model, it's
   linear to size of output.
 
@@ -241,3 +248,20 @@ Glossary
   by shifting entire images in memory by some offsets. Although doing
   this breaks text sharing, I think this mechanism is not actually bad
   on today's computers.
+
+* ICF
+
+  Short for Identical COMDAT Folding.
+
+  ICF is an optimization to reduce output size by merging COMDAT sections
+  by not only their names but by their contents. If two COMDAT sections
+  happen to have the same metadata, actual contents and relocations,
+  they are merged by ICF. It is known as an effective technique,
+  and it usually reduces C++ program's size by a few percent or more.
+
+  Note that this is not entirely sound optimization. C/C++ require
+  different functions have different addresses. If a program depends on
+  that property, it would fail at runtime. However, that's not really an
+  issue on Windows because MSVC link.exe enabled the optimization by
+  default. As long as your program works with the linker's default
+  settings, your program should be safe with ICF.
