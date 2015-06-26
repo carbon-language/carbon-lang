@@ -37,6 +37,16 @@ define i32* @test_exact2(i32 %a, i32 %b, i32* %x)  {
   ret i32* %gep
 }
 
+define i32* @test_exact3(i32 %a, i32 %b, i32* %x)  {
+; CHECK-LABEL: test_exact3:
+; CHECK-NOT: sarl
+
+  %sub = sub i32 %b, %a
+  %shr = ashr exact i32 %sub, 2
+  %gep = getelementptr inbounds i32, i32* %x, i32 %shr
+  ret i32* %gep
+}
+
 define i32* @test_exact4(i32 %a, i32 %b, i32* %x)  {
 ; CHECK-LABEL: test_exact4:
 ; CHECK: shrl %

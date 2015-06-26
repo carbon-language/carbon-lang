@@ -771,10 +771,13 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
 
       // If the input sign bit is known to be zero, or if none of the top bits
       // are demanded, turn this into an unsigned shift right.
-      if (KnownZero.intersects(SignBit) || (HighBits & ~NewMask) == HighBits)
-        return TLO.CombineTo(Op, TLO.DAG.getNode(ISD::SRL, dl, VT,
-                                                 Op.getOperand(0),
-                                                 Op.getOperand(1)));
+      if (KnownZero.intersects(SignBit) || (HighBits & ~NewMask) == HighBits) {
+        SDNodeFlags Flags;
+        Flags.setExact(cast<BinaryWithFlagsSDNode>(Op)->Flags.hasExact());
+        return TLO.CombineTo(Op,
+                             TLO.DAG.getNode(ISD::SRL, dl, VT, Op.getOperand(0),
+                                             Op.getOperand(1), &Flags));
+      }
 
       int Log2 = NewMask.exactLogBase2();
       if (Log2 >= 0) {
