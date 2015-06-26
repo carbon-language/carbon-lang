@@ -1427,10 +1427,10 @@ void DwarfLinker::endDebugObject() {
   ValidRelocs.clear();
   Ranges.clear();
 
-  for (auto *Block : DIEBlocks)
-    Block->~DIEBlock();
-  for (auto *Loc : DIELocs)
-    Loc->~DIELoc();
+  for (auto I = DIEBlocks.begin(), E = DIEBlocks.end(); I != E; ++I)
+    (*I)->~DIEBlock();
+  for (auto I = DIELocs.begin(), E = DIELocs.end(); I != E; ++I)
+    (*I)->~DIELoc();
 
   DIEBlocks.clear();
   DIELocs.clear();
