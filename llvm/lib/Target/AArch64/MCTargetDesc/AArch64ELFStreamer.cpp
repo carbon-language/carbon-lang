@@ -156,22 +156,12 @@ private:
   }
 
   void EmitMappingSymbol(StringRef Name) {
-    MCSymbol *Start = getContext().createTempSymbol();
-    EmitLabel(Start);
-
     auto *Symbol = cast<MCSymbolELF>(getContext().getOrCreateSymbol(
         Name + "." + Twine(MappingSymbolCounter++)));
-
-    getAssembler().registerSymbol(*Symbol);
+    EmitLabel(Symbol);
     Symbol->setType(ELF::STT_NOTYPE);
     Symbol->setBinding(ELF::STB_LOCAL);
     Symbol->setExternal(false);
-    auto Sec = getCurrentSection().first;
-    assert(Sec && "need a section");
-    Symbol->setSection(*Sec);
-
-    const MCExpr *Value = MCSymbolRefExpr::create(Start, getContext());
-    Symbol->setVariableValue(Value);
   }
 
   int64_t MappingSymbolCounter;

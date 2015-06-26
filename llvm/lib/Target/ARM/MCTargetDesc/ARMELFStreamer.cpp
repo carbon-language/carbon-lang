@@ -563,20 +563,13 @@ private:
   }
 
   void EmitMappingSymbol(StringRef Name) {
-    MCSymbol *Start = getContext().createTempSymbol();
-    EmitLabel(Start);
-
     auto *Symbol = cast<MCSymbolELF>(getContext().getOrCreateSymbol(
         Name + "." + Twine(MappingSymbolCounter++)));
+    EmitLabel(Symbol);
 
-    getAssembler().registerSymbol(*Symbol);
     Symbol->setType(ELF::STT_NOTYPE);
     Symbol->setBinding(ELF::STB_LOCAL);
     Symbol->setExternal(false);
-    AssignSection(Symbol, getCurrentSection().first);
-
-    const MCExpr *Value = MCSymbolRefExpr::create(Start, getContext());
-    Symbol->setVariableValue(Value);
   }
 
   void EmitThumbFunc(MCSymbol *Func) override {
