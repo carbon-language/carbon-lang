@@ -67,6 +67,10 @@ if(NOT MSVC)
   list(APPEND SANITIZER_TEST_LINK_FLAGS_COMMON --driver-mode=g++)
 endif()
 
+if(ANDROID)
+  list(APPEND SANITIZER_TEST_LINK_FLAGS_COMMON -pie)
+endif()
+
 set(SANITIZER_TEST_LINK_LIBS)
 append_list_if(ANDROID log SANITIZER_TEST_LINK_LIBS)
 # NDK r10 requires -latomic almost always.
