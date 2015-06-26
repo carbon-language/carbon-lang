@@ -1066,7 +1066,7 @@ relocation_iterator RuntimeDyldELF::processRelocationRef(
   int64_t Addend = 0;
   if (Obj.hasRelocationAddend(RelI->getRawDataRefImpl()))
     Addend = *Obj.getRelocationAddend(RelI->getRawDataRefImpl());
-  symbol_iterator Symbol = RelI->getSymbol();
+  elf_symbol_iterator Symbol = RelI->getSymbol();
 
   // Obtain the symbol name which is referenced in the relocation
   StringRef TargetName;
@@ -1312,8 +1312,7 @@ relocation_iterator RuntimeDyldELF::processRelocationRef(
         } else {
           // In the ELFv2 ABI, a function symbol may provide a local entry
           // point, which must be used for direct calls.
-          uint8_t SymOther;
-          Symbol->getOther(SymOther);
+          uint8_t SymOther = Symbol->getOther();
           Value.Addend += ELF::decodePPC64LocalEntryOffset(SymOther);
         }
         uint8_t *RelocTarget = Sections[Value.SectionID].Address + Value.Addend;

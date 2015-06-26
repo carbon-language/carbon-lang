@@ -151,7 +151,6 @@ public:
   uint32_t getAlignment() const;
   uint64_t getCommonSize() const;
   std::error_code getType(SymbolRef::Type &Result) const;
-  std::error_code getOther(uint8_t &Result) const;
 
   /// @brief Get section this symbol is defined in reference to. Result is
   /// end_sections() if it is undefined or is an absolute symbol.
@@ -215,10 +214,6 @@ protected:
                                         SymbolRef::Type &Res) const = 0;
   virtual std::error_code getSymbolSection(DataRefImpl Symb,
                                            section_iterator &Res) const = 0;
-  virtual std::error_code getSymbolOther(DataRefImpl Symb,
-                                         uint8_t &Res) const {
-    return object_error::invalid_file_type;
-  }
 
   // Same as above for SectionRef.
   friend class SectionRef;
@@ -354,10 +349,6 @@ inline std::error_code SymbolRef::getSection(section_iterator &Result) const {
 
 inline std::error_code SymbolRef::getType(SymbolRef::Type &Result) const {
   return getObject()->getSymbolType(getRawDataRefImpl(), Result);
-}
-
-inline std::error_code SymbolRef::getOther(uint8_t &Result) const {
-  return getObject()->getSymbolOther(getRawDataRefImpl(), Result);
 }
 
 inline const ObjectFile *SymbolRef::getObject() const {

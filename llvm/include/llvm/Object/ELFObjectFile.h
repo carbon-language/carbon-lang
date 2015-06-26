@@ -45,6 +45,7 @@ protected:
   ELFObjectFileBase(unsigned int Type, MemoryBufferRef Source);
 
   virtual uint64_t getSymbolSize(DataRefImpl Symb) const = 0;
+  virtual uint8_t getSymbolOther(DataRefImpl Symb) const = 0;
 
 public:
   virtual ErrorOr<int64_t> getRelocationAddend(DataRefImpl Rel) const = 0;
@@ -76,6 +77,10 @@ public:
 
   uint64_t getSize() const {
     return getObject()->getSymbolSize(getRawDataRefImpl());
+  }
+
+  uint8_t getOther() const {
+    return getObject()->getSymbolOther(getRawDataRefImpl());
   }
 };
 
@@ -130,7 +135,7 @@ protected:
   uint32_t getSymbolAlignment(DataRefImpl Symb) const override;
   uint64_t getCommonSymbolSizeImpl(DataRefImpl Symb) const override;
   uint32_t getSymbolFlags(DataRefImpl Symb) const override;
-  std::error_code getSymbolOther(DataRefImpl Symb, uint8_t &Res) const override;
+  uint8_t getSymbolOther(DataRefImpl Symb) const override;
   std::error_code getSymbolType(DataRefImpl Symb,
                                 SymbolRef::Type &Res) const override;
   section_iterator getSymbolSection(const Elf_Sym *Symb) const;
@@ -380,10 +385,8 @@ uint64_t ELFObjectFile<ELFT>::getCommonSymbolSizeImpl(DataRefImpl Symb) const {
 }
 
 template <class ELFT>
-std::error_code ELFObjectFile<ELFT>::getSymbolOther(DataRefImpl Symb,
-                                                    uint8_t &Result) const {
-  Result = toELFSymIter(Symb)->st_other;
-  return std::error_code();
+uint8_t ELFObjectFile<ELFT>::getSymbolOther(DataRefImpl Symb) const {
+  return toELFSymIter(Symb)->st_other;
 }
 
 template <class ELFT>
