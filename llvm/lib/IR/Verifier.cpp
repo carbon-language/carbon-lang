@@ -370,7 +370,7 @@ private:
   void visitSelectInst(SelectInst &SI);
   void visitUserOp1(Instruction &I);
   void visitUserOp2(Instruction &I) { visitUserOp1(I); }
-  void visitIntrinsicFunctionCall(Intrinsic::ID ID, CallSite CS);
+  void visitIntrinsicCallSite(Intrinsic::ID ID, CallSite CS);
   template <class DbgIntrinsicTy>
   void visitDbgIntrinsic(StringRef Kind, DbgIntrinsicTy &DII);
   void visitAtomicCmpXchgInst(AtomicCmpXchgInst &CXI);
@@ -2294,7 +2294,7 @@ void Verifier::VerifyCallSite(CallSite CS) {
 
   if (Function *F = CS.getCalledFunction())
     if (Intrinsic::ID ID = (Intrinsic::ID)F->getIntrinsicID())
-      visitIntrinsicFunctionCall(ID, CS);
+      visitIntrinsicCallSite(ID, CS);
 
   visitInstruction(*I);
 }
@@ -3140,9 +3140,8 @@ Verifier::VerifyIntrinsicIsVarArg(bool isVarArg,
   return true;
 }
 
-/// visitIntrinsicFunction - Allow intrinsics to be verified in different ways.
-///
-void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallSite CS) {
+/// Allow intrinsics to be verified in different ways.
+void Verifier::visitIntrinsicCallSite(Intrinsic::ID ID, CallSite CS) {
   Function *IF = CS.getCalledFunction();
   Assert(IF->isDeclaration(), "Intrinsic functions should never be defined!",
          IF);
@@ -3187,9 +3186,9 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallSite CS) {
 
   // If the intrinsic takes MDNode arguments, verify that they are either global
   // or are local to *this* function.
-  for (unsigned i = 0, e = CS.getNumArgOperands(); i != e; ++i)
-    if (auto *MD = dyn_cast<MetadataAsValue>(CS.getArgOperand(i)))
-      visitMetadataAsValue(*MD, CS.getParent()->getParent());
+  for (Value *V : CS.args()) 
+    if (auto *MD = dyn_cast<MetadataAsValue>(V))
+      visitMetadataAsValue(*MD, CS.getCaller());
 
   switch (ID) {
   default:
