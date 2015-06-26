@@ -228,15 +228,6 @@ std::error_code SymbolTable::rename(StringRef From, StringRef To) {
   return std::error_code();
 }
 
-void SymbolTable::dump() {
-  for (auto &P : Symtab) {
-    Symbol *Ref = P.second;
-    if (auto *Body = dyn_cast<Defined>(Ref->Body))
-      llvm::dbgs() << Twine::utohexstr(Config->ImageBase + Body->getRVA())
-                   << " " << Body->getName() << "\n";
-  }
-}
-
 void SymbolTable::printMap(llvm::raw_ostream &OS) {
   for (ObjectFile *File : ObjectFiles) {
     OS << File->getShortName() << ":\n";

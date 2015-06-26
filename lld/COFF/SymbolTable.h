@@ -60,9 +60,6 @@ public:
   // entry point name.
   ErrorOr<StringRef> findDefaultEntry();
 
-  // Dump contents of the symbol table to stderr.
-  void dump();
-
   // Print a layout map to OS.
   void printMap(llvm::raw_ostream &OS);
 
