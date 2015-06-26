@@ -1294,10 +1294,6 @@ HasTrivialDestructorBody(ASTContext &Context,
   if (BaseClassDecl->hasTrivialDestructor())
     return true;
 
-  // Give up if the destructor is not accessible.
-  if (!BaseClassDecl->getDestructor())
-    return false;
-
   if (!BaseClassDecl->getDestructor()->hasTrivialBody())
     return false;
 
@@ -1343,6 +1339,11 @@ FieldHasTrivialDestructorBody(ASTContext &Context,
     return true;
 
   CXXRecordDecl *FieldClassDecl = cast<CXXRecordDecl>(RT->getDecl());
+
+  // The destructor for an implicit anonymous union member is never invoked.
+  if (FieldClassDecl->isUnion() && FieldClassDecl->isAnonymousStructOrUnion())
+    return false;
+
   return HasTrivialDestructorBody(Context, FieldClassDecl, FieldClassDecl);
 }
 
