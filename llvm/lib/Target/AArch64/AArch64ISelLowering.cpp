@@ -6689,6 +6689,160 @@ bool AArch64TargetLowering::hasPairedLoad(EVT LoadedType,
   return NumBits == 32 || NumBits == 64;
 }
 
+/// \brief Lower an interleaved load into a ldN intrinsic.
+///
+/// E.g. Lower an interleaved load (Factor = 2):
+///        %wide.vec = load <8 x i32>, <8 x i32>* %ptr
+///        %v0 = shuffle %wide.vec, undef, <0, 2, 4, 6>  ; Extract even elements
+///        %v1 = shuffle %wide.vec, undef, <1, 3, 5, 7>  ; Extract odd elements
+///
+///      Into:
+///        %ld2 = { <4 x i32>, <4 x i32> } call llvm.aarch64.neon.ld2(%ptr)
+///        %vec0 = extractelement { <4 x i32>, <4 x i32> } %ld2, i32 0
+///        %vec1 = extractelement { <4 x i32>, <4 x i32> } %ld2, i32 1
+bool AArch64TargetLowering::lowerInterleavedLoad(
+    LoadInst *LI, ArrayRef<ShuffleVectorInst *> Shuffles,
+    ArrayRef<unsigned> Indices, unsigned Factor) const {
+  assert(Factor >= 2 && Factor <= getMaxSupportedInterleaveFactor() &&
+         "Invalid interleave factor");
+  assert(!Shuffles.empty() && "Empty shufflevector input");
+  assert(Shuffles.size() == Indices.size() &&
+         "Unmatched number of shufflevectors and indices");
+
+  const DataLayout *DL = getDataLayout();
+
+  VectorType *VecTy = Shuffles[0]->getType();
+  unsigned VecSize = DL->getTypeAllocSizeInBits(VecTy);
+
+  // Skip illegal vector types.
+  if (VecSize != 64 && VecSize != 128)
+    return false;
+
+  // A pointer vector can not be the return type of the ldN intrinsics. Need to
+  // load integer vectors first and then convert to pointer vectors.
+  Type *EltTy = VecTy->getVectorElementType();
+  if (EltTy->isPointerTy())
+    VecTy = VectorType::get(DL->getIntPtrType(EltTy),
+                            VecTy->getVectorNumElements());
+
+  Type *PtrTy = VecTy->getPointerTo(LI->getPointerAddressSpace());
+  Type *Tys[2] = {VecTy, PtrTy};
+  static const Intrinsic::ID LoadInts[3] = {Intrinsic::aarch64_neon_ld2,
+                                            Intrinsic::aarch64_neon_ld3,
+                                            Intrinsic::aarch64_neon_ld4};
+  Function *LdNFunc =
+      Intrinsic::getDeclaration(LI->getModule(), LoadInts[Factor - 2], Tys);
+
+  IRBuilder<> Builder(LI);
+  Value *Ptr = Builder.CreateBitCast(LI->getPointerOperand(), PtrTy);
+
+  CallInst *LdN = Builder.CreateCall(LdNFunc, Ptr, "ldN");
+
+  // Replace uses of each shufflevector with the corresponding vector loaded
+  // by ldN.
+  for (unsigned i = 0; i < Shuffles.size(); i++) {
+    ShuffleVectorInst *SVI = Shuffles[i];
+    unsigned Index = Indices[i];
+
+    Value *SubVec = Builder.CreateExtractValue(LdN, Index);
+
+    // Convert the integer vector to pointer vector if the element is pointer.
+    if (EltTy->isPointerTy())
+      SubVec = Builder.CreateIntToPtr(SubVec, SVI->getType());
+
+    SVI->replaceAllUsesWith(SubVec);
+  }
+
+  return true;
+}
+
+/// \brief Get a mask consisting of sequential integers starting from \p Start.
+///
+/// I.e. <Start, Start + 1, ..., Start + NumElts - 1>
+static Constant *getSequentialMask(IRBuilder<> &Builder, unsigned Start,
+                                   unsigned NumElts) {
+  SmallVector<Constant *, 16> Mask;
+  for (unsigned i = 0; i < NumElts; i++)
+    Mask.push_back(Builder.getInt32(Start + i));
+
+  return ConstantVector::get(Mask);
+}
+
+/// \brief Lower an interleaved store into a stN intrinsic.
+///
+/// E.g. Lower an interleaved store (Factor = 3):
+///        %i.vec = shuffle <8 x i32> %v0, <8 x i32> %v1,
+///                                  <0, 4, 8, 1, 5, 9, 2, 6, 10, 3, 7, 11>
+///        store <12 x i32> %i.vec, <12 x i32>* %ptr
+///
+///      Into:
+///        %sub.v0 = shuffle <8 x i32> %v0, <8 x i32> v1, <0, 1, 2, 3>
+///        %sub.v1 = shuffle <8 x i32> %v0, <8 x i32> v1, <4, 5, 6, 7>
+///        %sub.v2 = shuffle <8 x i32> %v0, <8 x i32> v1, <8, 9, 10, 11>
+///        call void llvm.aarch64.neon.st3(%sub.v0, %sub.v1, %sub.v2, %ptr)
+///
+/// Note that the new shufflevectors will be removed and we'll only generate one
+/// st3 instruction in CodeGen.
+bool AArch64TargetLowering::lowerInterleavedStore(StoreInst *SI,
+                                                  ShuffleVectorInst *SVI,
+                                                  unsigned Factor) const {
+  assert(Factor >= 2 && Factor <= getMaxSupportedInterleaveFactor() &&
+         "Invalid interleave factor");
+
+  VectorType *VecTy = SVI->getType();
+  assert(VecTy->getVectorNumElements() % Factor == 0 &&
+         "Invalid interleaved store");
+
+  unsigned NumSubElts = VecTy->getVectorNumElements() / Factor;
+  Type *EltTy = VecTy->getVectorElementType();
+  VectorType *SubVecTy = VectorType::get(EltTy, NumSubElts);
+
+  const DataLayout *DL = getDataLayout();
+  unsigned SubVecSize = DL->getTypeAllocSizeInBits(SubVecTy);
+
+  // Skip illegal vector types.
+  if (SubVecSize != 64 && SubVecSize != 128)
+    return false;
+
+  Value *Op0 = SVI->getOperand(0);
+  Value *Op1 = SVI->getOperand(1);
+  IRBuilder<> Builder(SI);
+
+  // StN intrinsics don't support pointer vectors as arguments. Convert pointer
+  // vectors to integer vectors.
+  if (EltTy->isPointerTy()) {
+    Type *IntTy = DL->getIntPtrType(EltTy);
+    unsigned NumOpElts =
+        dyn_cast<VectorType>(Op0->getType())->getVectorNumElements();
+
+    // Convert to the corresponding integer vector.
+    Type *IntVecTy = VectorType::get(IntTy, NumOpElts);
+    Op0 = Builder.CreatePtrToInt(Op0, IntVecTy);
+    Op1 = Builder.CreatePtrToInt(Op1, IntVecTy);
+
+    SubVecTy = VectorType::get(IntTy, NumSubElts);
+  }
+
+  Type *PtrTy = SubVecTy->getPointerTo(SI->getPointerAddressSpace());
+  Type *Tys[2] = {SubVecTy, PtrTy};
+  static const Intrinsic::ID StoreInts[3] = {Intrinsic::aarch64_neon_st2,
+                                             Intrinsic::aarch64_neon_st3,
+                                             Intrinsic::aarch64_neon_st4};
+  Function *StNFunc =
+      Intrinsic::getDeclaration(SI->getModule(), StoreInts[Factor - 2], Tys);
+
+  SmallVector<Value *, 5> Ops;
+
+  // Split the shufflevector operands into sub vectors for the new stN call.
+  for (unsigned i = 0; i < Factor; i++)
+    Ops.push_back(Builder.CreateShuffleVector(
+        Op0, Op1, getSequentialMask(Builder, NumSubElts * i, NumSubElts)));
+
+  Ops.push_back(Builder.CreateBitCast(SI->getPointerOperand(), PtrTy));
+  Builder.CreateCall(StNFunc, Ops);
+  return true;
+}
+
 static bool memOpAlign(unsigned DstAlign, unsigned SrcAlign,
                        unsigned AlignCheck) {
   return ((SrcAlign == 0 || SrcAlign % AlignCheck == 0) &&

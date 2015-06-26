@@ -407,6 +407,26 @@ unsigned AArch64TTIImpl::getMemoryOpCost(unsigned Opcode, Type *Src,
   return LT.first;
 }
 
+unsigned AArch64TTIImpl::getInterleavedMemoryOpCost(
+    unsigned Opcode, Type *VecTy, unsigned Factor, ArrayRef<unsigned> Indices,
+    unsigned Alignment, unsigned AddressSpace) {
+  assert(Factor >= 2 && "Invalid interleave factor");
+  assert(isa<VectorType>(VecTy) && "Expect a vector type");
+
+  if (Factor <= TLI->getMaxSupportedInterleaveFactor()) {
+    unsigned NumElts = VecTy->getVectorNumElements();
+    Type *SubVecTy = VectorType::get(VecTy->getScalarType(), NumElts / Factor);
+    unsigned SubVecSize = TLI->getDataLayout()->getTypeAllocSize(SubVecTy);
+
+    // ldN/stN only support legal vector types of size 64 or 128 in bits.
+    if (NumElts % Factor == 0 && (SubVecSize == 64 || SubVecSize == 128))
+      return Factor;
+  }
+
+  return BaseT::getInterleavedMemoryOpCost(Opcode, VecTy, Factor, Indices,
+                                           Alignment, AddressSpace);
+}
+
 unsigned AArch64TTIImpl::getCostOfKeepingLiveOverCall(ArrayRef<Type *> Tys) {
   unsigned Cost = 0;
   for (auto *I : Tys) {

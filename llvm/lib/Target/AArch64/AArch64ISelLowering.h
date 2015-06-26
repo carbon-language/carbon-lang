@@ -305,6 +305,15 @@ public:
                      unsigned &RequiredAligment) const override;
   bool hasPairedLoad(EVT LoadedType, unsigned &RequiredAligment) const override;
 
+  unsigned getMaxSupportedInterleaveFactor() const override { return 4; }
+
+  bool lowerInterleavedLoad(LoadInst *LI,
+                            ArrayRef<ShuffleVectorInst *> Shuffles,
+                            ArrayRef<unsigned> Indices,
+                            unsigned Factor) const override;
+  bool lowerInterleavedStore(StoreInst *SI, ShuffleVectorInst *SVI,
+                             unsigned Factor) const override;
+
   bool isLegalAddImmediate(int64_t) const override;
   bool isLegalICmpImmediate(int64_t) const override;
 
