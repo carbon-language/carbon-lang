@@ -166,13 +166,6 @@ static cl::opt<bool>
                 cl::Hidden, cl::init(false), cl::ZeroOrMore,
                 cl::cat(PollyCategory));
 
-static cl::opt<bool, true> XPollyModelPHINodes(
-    "polly-model-phi-nodes",
-    cl::desc("Allow PHI nodes in the input [Unsafe with code-generation!]."),
-    cl::location(PollyModelPHINodes), cl::Hidden, cl::ZeroOrMore,
-    cl::init(true), cl::cat(PollyCategory));
-
-bool polly::PollyModelPHINodes = false;
 bool polly::PollyTrackFailures = false;
 bool polly::PollyDelinearize = false;
 StringRef polly::PollySkipFnAttr = "polly.skip.fn";
@@ -669,11 +662,6 @@ bool ScopDetection::isValidMemoryAccess(Instruction &Inst,
 
 bool ScopDetection::isValidInstruction(Instruction &Inst,
                                        DetectionContext &Context) const {
-  if (PHINode *PN = dyn_cast<PHINode>(&Inst))
-    if (!PollyModelPHINodes && !canSynthesize(PN, LI, SE, &Context.CurRegion)) {
-      return invalid<ReportPhiNodeRefInRegion>(Context, /*Assert=*/true, &Inst);
-    }
-
   // We only check the call instruction but not invoke instruction.
   if (CallInst *CI = dyn_cast<CallInst>(&Inst)) {
     if (isValidCallInst(*CI))

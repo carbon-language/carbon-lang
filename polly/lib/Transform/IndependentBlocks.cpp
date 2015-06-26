@@ -529,33 +529,14 @@ bool IndependentBlocks::runOnFunction(llvm::Function &F) {
   for (const Region *R : *SD) {
     Changed |= createIndependentBlocks(R);
     Changed |= eliminateDeadCode(R);
-    // This may change the RegionTree.
-    if (!DisableIntraScopScalarToArray || !PollyModelPHINodes)
-      Changed |= splitExitBlock(const_cast<Region *>(R));
   }
-
-  DEBUG(dbgs() << "Before Scalar to Array------->\n");
-  DEBUG(F.dump());
-
-  if (!DisableIntraScopScalarToArray || !PollyModelPHINodes)
-    for (const Region *R : *SD)
-      Changed |= translateScalarToArray(R);
-
-  DEBUG(dbgs() << "After Independent Blocks------------->\n");
-  DEBUG(F.dump());
 
   verifyAnalysis();
 
   return Changed;
 }
 
-void IndependentBlocks::verifyAnalysis() const {
-  if (DisableIntraScopScalarToArray && PollyModelPHINodes)
-    return;
-
-  for (const Region *R : *SD)
-    verifyScop(R);
-}
+void IndependentBlocks::verifyAnalysis() const {}
 
 void IndependentBlocks::verifyScop(const Region *R) const {
   assert(areAllBlocksIndependent(R) && "Cannot generate independent blocks");

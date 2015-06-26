@@ -1,5 +1,4 @@
-; RUN: opt %loadPolly -polly-detect-unprofitable -basicaa -polly-analyze-ir -analyze -disable-polly-intra-scop-scalar-to-array=false < %s | FileCheck %s
-; RUN: opt %loadPolly -polly-detect-unprofitable -basicaa -polly-analyze-ir -analyze -disable-polly-intra-scop-scalar-to-array=true < %s | FileCheck %s -check-prefix=SCALARACCESS
+; RUN: opt %loadPolly -polly-detect-unprofitable -basicaa -polly-analyze-ir -analyze < %s | FileCheck %s -check-prefix=SCALARACCESS
 
 ; void f(long A[], int N, int *init_ptr) {
 ;   long i, j;
@@ -24,21 +23,14 @@ for.i:
   br label %entry.next
 
 entry.next:
-; CHECK: BB: entry.next
 ; SCALARACCESS: BB: entry.next
   %init = load i64, i64* %init_ptr
-; CHECK:  Read init_ptr[0]
-; CHECK:  Write init.s2a[0]
 ; SCALARACCESS: Read init_ptr[0]
 ; SCALARACCESS:  Write init[0]
   br label %for.j
 
 for.j:
   %indvar.j = phi i64 [ 0, %entry.next ], [ %indvar.j.next, %for.j ]
-; CHECK: BB: for.j
-; CHECK: Read init.s2a[0]
-; CHECK: Write A[{0,+,8}<%for.j>]
-
 ; SCALARACCESS: BB: for.j
 ; SCALARACCESS: Read init
 ; SCALARACCESS: Write A[{0,+,8}<%for.j>]

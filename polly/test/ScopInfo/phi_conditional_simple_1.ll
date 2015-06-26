@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -polly-detect-unprofitable -analyze -polly-scops -polly-model-phi-nodes < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-detect-unprofitable -analyze -polly-scops < %s | FileCheck %s
 ;
 ;    void jd(int *A, int c) {
 ;      for (int i = 0; i < 1024; i++) {

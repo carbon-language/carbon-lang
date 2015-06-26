@@ -1,20 +1,7 @@
-; RUN: opt %loadPolly -polly-detect-unprofitable -polly-no-early-exit -polly-ast -analyze -polly-ignore-aliasing -disable-polly-intra-scop-scalar-to-array=false -polly-model-phi-nodes=false < %s | FileCheck %s 
-; RUN: opt %loadPolly -polly-detect-unprofitable -polly-no-early-exit -polly-codegen -polly-ignore-aliasing -disable-polly-intra-scop-scalar-to-array=false -polly-model-phi-nodes=false -disable-output < %s
 
-; RUN: opt %loadPolly -polly-detect-unprofitable -polly-no-early-exit -polly-ast -analyze -polly-ignore-aliasing -disable-polly-intra-scop-scalar-to-array=true -polly-model-phi-nodes=true < %s | FileCheck %s -check-prefix=SCALAR
-; RUN: opt %loadPolly -polly-detect-unprofitable -polly-no-early-exit -polly-codegen -polly-ignore-aliasing -disable-polly-intra-scop-scalar-to-array=true -polly-model-phi-nodes=true -disable-output < %s
+; RUN: opt %loadPolly -polly-detect-unprofitable -polly-no-early-exit -polly-ast -analyze -polly-ignore-aliasing < %s | FileCheck %s -check-prefix=SCALAR
+; RUN: opt %loadPolly -polly-detect-unprofitable -polly-no-early-exit -polly-codegen -polly-ignore-aliasing -disable-output < %s
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
-
-; CHECK: if (1)
-; CHECK:     {
-; CHECK:       for (int c0 = 0; c0 <= -Scalar0.val.loadoutside + 99; c0 += 1)
-; CHECK:         Stmt_for_1(c0);
-; CHECK:       if (Scalar0.val.loadoutside >= 100)
-; CHECK:         Stmt_for_1(0);
-; CHECK:     }
-
-; CHECK: if (1)
-; CHECK:     Stmt_for_0(0);
 
 ; SCALAR: if (1)
 ; SCALAR:     {

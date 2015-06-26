@@ -1,5 +1,5 @@
-; RUN: opt %loadPolly -polly-detect-unprofitable -basicaa -polly-analyze-ir -disable-polly-intra-scop-scalar-to-array -analyze < %s | FileCheck %s
-; RUN: opt %loadPolly -polly-detect-unprofitable -basicaa -polly-analyze-ir  -disable-polly-intra-scop-scalar-to-array -analyze < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-detect-unprofitable -basicaa -polly-analyze-ir -analyze < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-detect-unprofitable -basicaa -polly-analyze-ir  -analyze < %s | FileCheck %s
 
 ; void f(long A[], int N, int *init_ptr) {
 ;   long i, j;

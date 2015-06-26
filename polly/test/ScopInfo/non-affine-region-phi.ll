@@ -1,5 +1,5 @@
-; RUN: opt %loadPolly -polly-detect-unprofitable -polly-allow-nonaffine -polly-no-early-exit -disable-polly-intra-scop-scalar-to-array -polly-model-phi-nodes -S < %s | FileCheck %s --check-prefix=CODE
-; RUN: opt %loadPolly -polly-detect-unprofitable -polly-allow-nonaffine -polly-no-early-exit -polly-scops -disable-polly-intra-scop-scalar-to-array -polly-model-phi-nodes -analyze < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-detect-unprofitable -polly-allow-nonaffine -polly-no-early-exit -S < %s | FileCheck %s --check-prefix=CODE
+; RUN: opt %loadPolly -polly-detect-unprofitable -polly-allow-nonaffine -polly-no-early-exit -polly-scops -analyze < %s | FileCheck %s
 ;
 ; Verify there is a phi in the non-affine region but it is not represented in
 ; the SCoP as all operands as well as the uses are inside the region too.

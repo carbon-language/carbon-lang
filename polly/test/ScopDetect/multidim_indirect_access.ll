@@ -1,5 +1,5 @@
 ; RUN: opt %loadPolly -polly-detect-unprofitable -polly-detect -analyze < %s | FileCheck %s --check-prefix=INDEPENDENT
-; RUN: opt %loadPolly -polly-detect-unprofitable -polly-detect -analyze -polly-model-phi-nodes -disable-polly-intra-scop-scalar-to-array  < %s | FileCheck %s --check-prefix=NON_INDEPENDENT
+; RUN: opt %loadPolly -polly-detect-unprofitable -polly-detect -analyze  < %s | FileCheck %s --check-prefix=NON_INDEPENDENT
 ;
 ; With the IndependentBlocks and PollyPrepare passes this will __correctly__
 ; not be recognized as a SCoP and the debug states:

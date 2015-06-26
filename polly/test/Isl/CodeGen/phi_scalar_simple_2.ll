@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -S -polly-detect-unprofitable -polly-model-phi-nodes -disable-polly-intra-scop-scalar-to-array -polly-no-early-exit -polly-codegen < %s | FileCheck %s
+; RUN: opt %loadPolly -S -polly-detect-unprofitable -polly-no-early-exit -polly-codegen < %s | FileCheck %s
 ;
 ;    int jd(int *restrict A, int x, int N, int c) {
 ;      for (int i = 0; i < N; i++)

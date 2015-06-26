@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -polly-detect-unprofitable -disable-polly-intra-scop-scalar-to-array -polly-model-phi-nodes -polly-scops -analyze < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-detect-unprofitable -polly-scops -analyze < %s | FileCheck %s
 ;
 ; Verify the scalar x defined in a non-affine subregion is written as it
 ; escapes the region. In this test the two conditionals inside the region

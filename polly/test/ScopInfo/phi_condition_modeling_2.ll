@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -polly-detect-unprofitable -analyze -polly-scops -disable-polly-intra-scop-scalar-to-array -polly-model-phi-nodes < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-detect-unprofitable -analyze -polly-scops < %s | FileCheck %s
 ;
 ;    void f(int *A, int c, int N) {
 ;      int tmp;

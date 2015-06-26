@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -polly-detect-unprofitable -disable-polly-intra-scop-scalar-to-array -polly-model-phi-nodes -polly-scops  -analyze < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-detect-unprofitable -polly-scops  -analyze < %s | FileCheck %s
 ;
 ; Verify that both scalars (x and y) are properly written in the non-affine
 ; region and read afterwards.

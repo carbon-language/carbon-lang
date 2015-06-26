@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -polly-scops -polly-model-phi-nodes -disable-polly-intra-scop-scalar-to-array -polly-allow-nonaffine -polly-allow-nonaffine-branches -polly-allow-nonaffine-loops -analyze < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-scops -polly-allow-nonaffine -polly-allow-nonaffine-branches -polly-allow-nonaffine-loops -analyze < %s | FileCheck %s
 ;
 ; Verify that we over approximate the read acces of A[j] in the last statement as j is
 ; computed in a non-affine loop we do not model.

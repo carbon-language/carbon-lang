@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -polly-model-phi-nodes -disable-polly-intra-scop-scalar-to-array -polly-scops -analyze < %s | FileCheck %s
+; RUN: opt %loadPolly -polly-scops -analyze < %s | FileCheck %s
 ;
 ; Check that we do not generate any scalar dependences regarding x. It is
 ; defined and used on the non-affine subregion only, thus we do not need

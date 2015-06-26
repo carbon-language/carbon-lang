@@ -1,7 +1,5 @@
-; RUN: opt %loadPolly -polly-detect-unprofitable -basicaa -polly-independent -disable-polly-intra-scop-scalar-to-array=false -S < %s | FileCheck %s
-; RUN: opt %loadPolly -polly-detect-unprofitable -basicaa -polly-independent -disable-polly-intra-scop-scalar-to-array=false -S < %s | FileCheck %s
-; RUN: opt %loadPolly -polly-detect-unprofitable -basicaa -polly-independent -disable-polly-intra-scop-scalar-to-array=true -S < %s | FileCheck %s -check-prefix=SCALARACCESS
-; RUN: opt %loadPolly -polly-detect-unprofitable -basicaa -polly-independent -disable-polly-intra-scop-scalar-to-array=true -S < %s | FileCheck %s -check-prefix=SCALARACCESS
+; RUN: opt %loadPolly -polly-detect-unprofitable -basicaa -polly-independent -S < %s | FileCheck %s -check-prefix=SCALARACCESS
+; RUN: opt %loadPolly -polly-detect-unprofitable -basicaa -polly-independent -S < %s | FileCheck %s -check-prefix=SCALARACCESS
 
 ; void f(long A[], int N, int *init_ptr) {
 ;   long i, j;
@@ -19,10 +17,6 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 define void @f(i64* noalias %A, i64 %N, i64* noalias %init_ptr) nounwind {
 entry:
 
-; CHECK: entry
-; CHECK: %init.s2a = alloca i64
-; CHECK: br label %for.i
-
 ; SCALARACCESS-NOT: alloca
   br label %for.i
 
@@ -39,8 +33,6 @@ entry.next:
 for.j:
   %indvar.j = phi i64 [ 0, %entry.next ], [ %indvar.j.next, %for.j ]
   %init_plus_two = add i64 %init, 2
-; CHECK: %init.loadarray = load i64, i64* %init.s2a
-; CHECK: %init_plus_two = add i64 %init.loadarray, 2
 ; SCALARACCESS: %init_plus_two = add i64 %init, 2
   %scevgep = getelementptr i64, i64* %A, i64 %indvar.j
   store i64 %init_plus_two, i64* %scevgep

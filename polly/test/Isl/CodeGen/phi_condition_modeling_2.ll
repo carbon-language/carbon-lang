@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly -S -polly-no-early-exit -polly-detect-unprofitable -polly-model-phi-nodes -disable-polly-intra-scop-scalar-to-array  -polly-codegen < %s | FileCheck %s
+; RUN: opt %loadPolly -S -polly-no-early-exit -polly-detect-unprofitable  -polly-codegen < %s | FileCheck %s
 ;
 ;    void f(int *A, int c, int N) {
 ;      int tmp;

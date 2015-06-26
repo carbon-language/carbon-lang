@@ -1,5 +1,5 @@
-; RUN: opt %loadPolly -analyze -polly-ast -polly-no-early-exit -polly-detect-unprofitable -polly-model-phi-nodes < %s | FileCheck %s --check-prefix=AST
-; RUN: opt %loadPolly -S -polly-no-early-exit -polly-detect-unprofitable -polly-model-phi-nodes -polly-codegen < %s | FileCheck %s
+; RUN: opt %loadPolly -analyze -polly-ast -polly-no-early-exit -polly-detect-unprofitable < %s | FileCheck %s --check-prefix=AST
+; RUN: opt %loadPolly -S -polly-no-early-exit -polly-detect-unprofitable -polly-codegen < %s | FileCheck %s
 ;
 ;    void jd(int *A, int c) {
 ;      for (int i = 0; i < 1024; i++) {
