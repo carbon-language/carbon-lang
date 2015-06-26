@@ -176,6 +176,12 @@ namespace opts {
   cl::opt<bool>
   COFFBaseRelocs("coff-basereloc",
                  cl::desc("Display the PE/COFF .reloc section"));
+
+  // -stackmap
+  cl::opt<bool>
+  PrintStackMap("stackmap",
+                cl::desc("Display contents of stackmap section"));
+
 } // namespace opts
 
 static int ReturnValue = EXIT_SUCCESS;
@@ -316,6 +322,9 @@ static void dumpObject(const ObjectFile *Obj) {
     Dumper->printCOFFDirectives();
   if (opts::COFFBaseRelocs)
     Dumper->printCOFFBaseReloc();
+
+  if (opts::PrintStackMap)
+    Dumper->printStackMap();
 }
 
 /// @brief Dumps each object file in \a Arc;

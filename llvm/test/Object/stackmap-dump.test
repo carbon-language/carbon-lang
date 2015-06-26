@@ -1,0 +1,17 @@
+RUN: llvm-mc -triple x86_64-apple-darwin -filetype=obj -o %t %p/Inputs/stackmap.s && \
+RUN:   llvm-readobj -stackmap %t | FileCheck %s
+
+CHECK:      LLVM StackMap Version: 1
+CHECK-NEXT: Num Functions: 1
+CHECK-NEXT:   Function address: 0, stack size: 16
+CHECK-NEXT: Num Constants: 1
+CHECK-NEXT:   #1: 10000000000
+CHECK-NEXT: Num Records: 1
+CHECK-NEXT:   Record ID: 2, instruction offset: 1
+CHECK-NEXT:     5 locations:
+CHECK-NEXT:       #1: Register R#5
+CHECK-NEXT:       #2: Constant 10
+CHECK-NEXT:       #3: ConstantIndex #0 (10000000000)
+CHECK-NEXT:       #4: Direct R#4 + -8
+CHECK-NEXT:       #5: Indirect [R#6 + -16]
+CHECK-NEXT:     1 live-outs: [ R#7 (8-bytes) ]

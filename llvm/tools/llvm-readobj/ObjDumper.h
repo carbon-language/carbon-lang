@@ -52,6 +52,8 @@ public:
   virtual void printCOFFDirectives() { }
   virtual void printCOFFBaseReloc() { }
 
+  virtual void printStackMap() const = 0;
+
 protected:
   StreamWriter& W;
 };
