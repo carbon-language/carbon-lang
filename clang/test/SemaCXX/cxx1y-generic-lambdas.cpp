@@ -933,3 +933,18 @@ namespace PR22117 {
     };
   }(0)(0);
 }
+
+namespace PR23716 {
+template<typename T>
+auto f(T x) {
+  auto g = [](auto&&... args) {
+    auto h = [args...]() -> int {
+      return 0;
+    };
+    return h;
+  };
+  return g;
+}
+
+auto x = f(0)();
+}
