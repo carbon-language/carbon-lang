@@ -32,20 +32,14 @@ struct AsanStats {
   uptr freed;
   uptr real_frees;
   uptr really_freed;
-  uptr really_freed_redzones;
   uptr reallocs;
   uptr realloced;
   uptr mmaps;
   uptr mmaped;
   uptr munmaps;
   uptr munmaped;
-  uptr mmaped_by_size[kNumberOfSizeClasses];
-  uptr malloced_by_size[kNumberOfSizeClasses];
-  uptr freed_by_size[kNumberOfSizeClasses];
-  uptr really_freed_by_size[kNumberOfSizeClasses];
-
   uptr malloc_large;
-  uptr malloc_small_slow;
+  uptr malloced_by_size[kNumberOfSizeClasses];
 
   // Ctor for global AsanStats (accumulated stats for dead threads).
   explicit AsanStats(LinkerInitialized) { }

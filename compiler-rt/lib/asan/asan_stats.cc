@@ -51,12 +51,8 @@ void AsanStats::Print() {
              (mmaped-munmaped)>>20, mmaped>>20, munmaped>>20,
              mmaps, munmaps);
 
-  PrintMallocStatsArray("  mmaps   by size class: ", mmaped_by_size);
   PrintMallocStatsArray("  mallocs by size class: ", malloced_by_size);
-  PrintMallocStatsArray("  frees   by size class: ", freed_by_size);
-  PrintMallocStatsArray("  rfrees  by size class: ", really_freed_by_size);
-  Printf("Stats: malloc large: %zu small slow: %zu\n",
-             malloc_large, malloc_small_slow);
+  Printf("Stats: malloc large: %zu\n", malloc_large);
 }
 
 void AsanStats::MergeFrom(const AsanStats *stats) {
@@ -161,8 +157,7 @@ uptr __sanitizer_get_free_bytes() {
   GetAccumulatedStats(&stats);
   uptr total_free = stats.mmaped
                   - stats.munmaped
-                  + stats.really_freed
-                  + stats.really_freed_redzones;
+                  + stats.really_freed;
   uptr total_used = stats.malloced
                   + stats.malloced_redzones;
   // Return sane value if total_free < total_used due to racy

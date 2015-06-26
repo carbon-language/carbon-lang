@@ -29,7 +29,6 @@ enum AllocType {
   FROM_NEW_BR = 3   // Memory block came from operator new [ ]
 };
 
-static const uptr kNumberOfSizeClasses = 255;
 struct AsanChunk;
 
 struct AllocatorOptions {
@@ -137,6 +136,7 @@ typedef SizeClassAllocator32<0, SANITIZER_MMAP_RANGE_SIZE, 16,
   AsanMapUnmapCallback> PrimaryAllocator;
 #endif  // SANITIZER_CAN_USE_ALLOCATOR64
 
+static const uptr kNumberOfSizeClasses = SizeClassMap::kNumClasses;
 typedef SizeClassAllocatorLocalCache<PrimaryAllocator> AllocatorCache;
 typedef LargeMmapAllocator<AsanMapUnmapCallback> SecondaryAllocator;
 typedef CombinedAllocator<PrimaryAllocator, AllocatorCache,

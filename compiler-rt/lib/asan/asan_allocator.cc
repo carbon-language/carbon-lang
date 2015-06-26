@@ -437,11 +437,10 @@ struct Allocator {
     thread_stats.mallocs++;
     thread_stats.malloced += size;
     thread_stats.malloced_redzones += needed_size - size;
-    uptr class_id =
-        Min(kNumberOfSizeClasses, SizeClassMap::ClassID(needed_size));
-    thread_stats.malloced_by_size[class_id]++;
     if (needed_size > SizeClassMap::kMaxSize)
       thread_stats.malloc_large++;
+    else
+      thread_stats.malloced_by_size[SizeClassMap::ClassID(needed_size)]++;
 
     void *res = reinterpret_cast<void *>(user_beg);
     if (can_fill && fl.max_malloc_fill_size) {
