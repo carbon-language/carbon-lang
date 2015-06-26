@@ -24,6 +24,7 @@
 #include "llvm/CodeGen/SlotIndexes.h"
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/DataLayout.h"
+#include "llvm/IR/ModuleSlotTracker.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/Support/Debug.h"
@@ -244,6 +245,20 @@ void MachineBasicBlock::print(raw_ostream &OS, SlotIndexes *Indexes) const {
        << " is null\n";
     return;
   }
+  const Function *F = MF->getFunction();
+  const Module *M = F ? F->getParent() : nullptr;
+  ModuleSlotTracker MST(M);
+  print(OS, MST, Indexes);
+}
+
+void MachineBasicBlock::print(raw_ostream &OS, ModuleSlotTracker &MST,
+                              SlotIndexes *Indexes) const {
+  const MachineFunction *MF = getParent();
+  if (!MF) {
+    OS << "Can't print out MachineBasicBlock because parent MachineFunction"
+       << " is null\n";
+    return;
+  }
 
   if (Indexes)
     OS << Indexes->getMBBStartIdx(this) << '\t';
@@ -253,7 +268,7 @@ void MachineBasicBlock::print(raw_ostream &OS, SlotIndexes *Indexes) const {
   const char *Comma = "";
   if (const BasicBlock *LBB = getBasicBlock()) {
     OS << Comma << "derived from LLVM BB ";
-    LBB->printAsOperand(OS, /*PrintType=*/false);
+    LBB->printAsOperand(OS, /*PrintType=*/false, MST);
     Comma = ", ";
   }
   if (isLandingPad()) { OS << Comma << "EH LANDING PAD"; Comma = ", "; }

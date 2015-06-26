@@ -29,6 +29,7 @@
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/DebugInfo.h"
 #include "llvm/IR/Function.h"
+#include "llvm/IR/ModuleSlotTracker.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/Support/Debug.h"
@@ -361,9 +362,11 @@ void MachineFunction::print(raw_ostream &OS, SlotIndexes *Indexes) const {
     OS << '\n';
   }
 
+  ModuleSlotTracker MST(getFunction()->getParent());
+  MST.incorporateFunction(*getFunction());
   for (const auto &BB : *this) {
     OS << '\n';
-    BB.print(OS, Indexes);
+    BB.print(OS, MST, Indexes);
   }
 
   OS << "\n# End machine code for function " << getName() << ".\n\n";
