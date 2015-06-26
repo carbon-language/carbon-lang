@@ -30,7 +30,7 @@ public:
     nub_bool_t GetMemoryRegionInfo(task_t task, nub_addr_t address, DNBRegionInfo *region_info);
 #if defined (HOST_VM_INFO64_COUNT)
     nub_bool_t GetMemoryProfile(DNBProfileDataScanType scanType, task_t task, struct task_basic_info ti, cpu_type_t cputype, nub_process_t pid, vm_statistics64_data_t &vminfo, uint64_t &physical_memory, mach_vm_size_t &rprvt, mach_vm_size_t &rsize, mach_vm_size_t &vprvt, mach_vm_size_t &vsize, mach_vm_size_t &dirty_size, mach_vm_size_t &purgeable, mach_vm_size_t &anonymous);
-#elif
+#else
     nub_bool_t GetMemoryProfile(DNBProfileDataScanType scanType, task_t task, struct task_basic_info ti, cpu_type_t cputype, nub_process_t pid, vm_statistics_data_t &vminfo, uint64_t &physical_memory, mach_vm_size_t &rprvt, mach_vm_size_t &rsize, mach_vm_size_t &vprvt, mach_vm_size_t &vsize, mach_vm_size_t &dirty_size, mach_vm_size_t &purgeable, mach_vm_size_t &anonymous);
 #endif
 

@@ -384,7 +384,7 @@ MachTask::GetProfileData (DNBProfileDataScanType scanType)
     
 #if defined (HOST_VM_INFO64_COUNT)
     vm_statistics64_data_t vminfo;
-#elif
+#else
     struct vm_statistics vminfo;
 #endif
     uint64_t physical_memory;
@@ -450,7 +450,7 @@ MachTask::GetProfileData (DNBProfileDataScanType scanType)
         {
 #if defined (HOST_VM_INFO64_COUNT)
             static vm_size_t pagesize = vm_kernel_page_size;
-#elif
+#else
             static vm_size_t pagesize;
             static bool calculated = false;
             if (!calculated)
@@ -468,7 +468,7 @@ MachTask::GetProfileData (DNBProfileDataScanType scanType)
 #if defined (HOST_VM_INFO64_COUNT)
             // This mimicks Activity Monitor.
             uint64_t total_used_count = (physical_memory / vm_kernel_page_size) - (vminfo.free_count - vminfo.speculative_count) - vminfo.external_page_count - vminfo.purgeable_count;
-#elif
+#else
             uint64_t total_used_count = vminfo.wire_count + vminfo.inactive_count + vminfo.active_count;
 #endif
             profile_data_stream << "used:" << total_used_count * pagesize << ';';

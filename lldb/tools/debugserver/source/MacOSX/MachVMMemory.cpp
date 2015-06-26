@@ -420,7 +420,7 @@ GetPurgeableAndAnonymous(task_t task, uint64_t &purgeable, uint64_t &anonymous)
 #if defined (HOST_VM_INFO64_COUNT)
 nub_bool_t
 MachVMMemory::GetMemoryProfile(DNBProfileDataScanType scanType, task_t task, struct task_basic_info ti, cpu_type_t cputype, nub_process_t pid, vm_statistics64_data_t &vminfo, uint64_t &physical_memory, mach_vm_size_t &rprvt, mach_vm_size_t &rsize, mach_vm_size_t &vprvt, mach_vm_size_t &vsize, mach_vm_size_t &dirty_size, mach_vm_size_t &purgeable, mach_vm_size_t &anonymous)
-#elif
+#else
 nub_bool_t
 MachVMMemory::GetMemoryProfile(DNBProfileDataScanType scanType, task_t task, struct task_basic_info ti, cpu_type_t cputype, nub_process_t pid, vm_statistics_data_t &vminfo, uint64_t &physical_memory, mach_vm_size_t &rprvt, mach_vm_size_t &rsize, mach_vm_size_t &vprvt, mach_vm_size_t &vsize, mach_vm_size_t &dirty_size, mach_vm_size_t &purgeable, mach_vm_size_t &anonymous)
 #endif
@@ -434,7 +434,7 @@ MachVMMemory::GetMemoryProfile(DNBProfileDataScanType scanType, task_t task, str
 #if defined (HOST_VM_INFO64_COUNT)
         mach_msg_type_number_t count = HOST_VM_INFO64_COUNT;
         host_statistics64(localHost, HOST_VM_INFO64, (host_info64_t)&vminfo, &count);
-#elif
+#else
         mach_msg_type_number_t count = HOST_VM_INFO_COUNT;
         host_statistics(localHost, HOST_VM_INFO, (host_info_t)&vminfo, &count);
         vminfo.wire_count += GetStolenPages(task);
