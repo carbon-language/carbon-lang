@@ -588,6 +588,9 @@ raw_ostream &llvm::operator<<(raw_ostream &OS, const MachineMemOperand &MMO) {
   if (MMO.isNonTemporal())
     OS << "(nontemporal)";
 
+  if (MMO.isInvariant())
+    OS << "(invariant)";
+
   return OS;
 }
 
