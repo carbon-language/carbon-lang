@@ -588,7 +588,10 @@ AnalysisConsumer::getModeForDecl(Decl *D, AnalysisMode Mode) {
   // - Header files: run non-path-sensitive checks only.
   // - System headers: don't run any checks.
   SourceManager &SM = Ctx->getSourceManager();
-  SourceLocation SL = SM.getExpansionLoc(D->getLocation());
+  SourceLocation SL = D->hasBody() ? D->getBody()->getLocStart()
+                                     : D->getLocation();
+  SL = SM.getExpansionLoc(SL);
+
   if (!Opts->AnalyzeAll && !SM.isWrittenInMainFile(SL)) {
     if (SL.isInvalid() || SM.isInSystemHeader(SL))
       return AM_None;
