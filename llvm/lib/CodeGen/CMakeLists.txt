@@ -30,6 +30,7 @@ add_llvm_library(LLVMCodeGen
   ImplicitNullChecks.cpp
   InlineSpiller.cpp
   InterferenceCache.cpp
+  InterleavedAccessPass.cpp
   IntrinsicLowering.cpp
   LLVMTargetMachine.cpp
   LatencyPriorityQueue.cpp

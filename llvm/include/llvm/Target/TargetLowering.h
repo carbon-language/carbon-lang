@@ -1597,6 +1597,35 @@ public:
     return false;
   }
 
+  /// \brief Get the maximum supported factor for interleaved memory accesses.
+  /// Default to be the minimum interleave factor: 2.
+  virtual unsigned getMaxSupportedInterleaveFactor() const { return 2; }
+
+  /// \brief Lower an interleaved load to target specific intrinsics. Return
+  /// true on success.
+  ///
+  /// \p LI is the vector load instruction.
+  /// \p Shuffles is the shufflevector list to DE-interleave the loaded vector.
+  /// \p Indices is the corresponding indices for each shufflevector.
+  /// \p Factor is the interleave factor.
+  virtual bool lowerInterleavedLoad(LoadInst *LI,
+                                    ArrayRef<ShuffleVectorInst *> Shuffles,
+                                    ArrayRef<unsigned> Indices,
+                                    unsigned Factor) const {
+    return false;
+  }
+
+  /// \brief Lower an interleaved store to target specific intrinsics. Return
+  /// true on success.
+  ///
+  /// \p SI is the vector store instruction.
+  /// \p SVI is the shufflevector to RE-interleave the stored vector.
+  /// \p Factor is the interleave factor.
+  virtual bool lowerInterleavedStore(StoreInst *SI, ShuffleVectorInst *SVI,
+                                     unsigned Factor) const {
+    return false;
+  }
+
   /// Return true if zero-extending the specific node Val to type VT2 is free
   /// (either because it's implicitly zero-extended such as ARM ldrb / ldrh or
   /// because it's folded such as X86 zero-extending loads).

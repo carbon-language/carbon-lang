@@ -637,6 +637,11 @@ namespace llvm {
   /// createForwardControlFlowIntegrityPass - This pass adds control-flow
   /// integrity.
   ModulePass *createForwardControlFlowIntegrityPass();
+
+  /// InterleavedAccess Pass - This pass identifies and matches interleaved
+  /// memory accesses to target specific intrinsics.
+  ///
+  FunctionPass *createInterleavedAccessPass(const TargetMachine *TM);
 } // End llvm namespace
 
 /// Target machine pass initializer for passes with dependencies. Use with
