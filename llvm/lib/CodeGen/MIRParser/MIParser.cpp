@@ -14,9 +14,11 @@
 #include "MIParser.h"
 #include "MILexer.h"
 #include "llvm/ADT/StringMap.h"
+#include "llvm/AsmParser/SlotMapping.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/IR/Module.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Target/TargetSubtargetInfo.h"
@@ -34,6 +36,8 @@ class MIParser {
   MIToken Token;
   /// Maps from basic block numbers to MBBs.
   const DenseMap<unsigned, MachineBasicBlock *> &MBBSlots;
+  /// Maps from indices to unnamed global values and metadata nodes.
+  const SlotMapping &IRSlots;
   /// Maps from instruction names to op codes.
   StringMap<unsigned> Names2InstrOpCodes;
   /// Maps from register names to registers.
@@ -42,7 +46,8 @@ class MIParser {
 public:
   MIParser(SourceMgr &SM, MachineFunction &MF, SMDiagnostic &Error,
            StringRef Source,
-           const DenseMap<unsigned, MachineBasicBlock *> &MBBSlots);
+           const DenseMap<unsigned, MachineBasicBlock *> &MBBSlots,
+           const SlotMapping &IRSlots);
 
   void lex();
 
@@ -62,6 +67,7 @@ public:
   bool parseRegisterOperand(MachineOperand &Dest, bool IsDef = false);
   bool parseImmediateOperand(MachineOperand &Dest);
   bool parseMBBOperand(MachineOperand &Dest);
+  bool parseGlobalAddressOperand(MachineOperand &Dest);
   bool parseMachineOperand(MachineOperand &Dest);
 
 private:
@@ -89,9 +95,11 @@ private:
 
 MIParser::MIParser(SourceMgr &SM, MachineFunction &MF, SMDiagnostic &Error,
                    StringRef Source,
-                   const DenseMap<unsigned, MachineBasicBlock *> &MBBSlots)
+                   const DenseMap<unsigned, MachineBasicBlock *> &MBBSlots,
+                   const SlotMapping &IRSlots)
     : SM(SM), MF(MF), Error(Error), Source(Source), CurrentSource(Source),
-      Token(MIToken::Error, StringRef()), MBBSlots(MBBSlots) {}
+      Token(MIToken::Error, StringRef()), MBBSlots(MBBSlots), IRSlots(IRSlots) {
+}
 
 void MIParser::lex() {
   CurrentSource = lexMIToken(
@@ -250,6 +258,36 @@ bool MIParser::parseMBBOperand(MachineOperand &Dest) {
   return false;
 }
 
+bool MIParser::parseGlobalAddressOperand(MachineOperand &Dest) {
+  switch (Token.kind()) {
+  case MIToken::NamedGlobalValue: {
+    auto Name = Token.stringValue();
+    const Module *M = MF.getFunction()->getParent();
+    if (const auto *GV = M->getNamedValue(Name)) {
+      Dest = MachineOperand::CreateGA(GV, /*Offset=*/0);
+      break;
+    }
+    return error(Twine("use of undefined global value '@") + Name + "'");
+  }
+  case MIToken::GlobalValue: {
+    unsigned GVIdx;
+    if (getUnsigned(GVIdx))
+      return true;
+    if (GVIdx >= IRSlots.GlobalValues.size())
+      return error(Twine("use of undefined global value '@") + Twine(GVIdx) +
+                   "'");
+    Dest = MachineOperand::CreateGA(IRSlots.GlobalValues[GVIdx],
+                                    /*Offset=*/0);
+    break;
+  }
+  default:
+    llvm_unreachable("The current token should be a global value");
+  }
+  // TODO: Parse offset and target flags.
+  lex();
+  return false;
+}
+
 bool MIParser::parseMachineOperand(MachineOperand &Dest) {
   switch (Token.kind()) {
   case MIToken::underscore:
@@ -259,6 +297,9 @@ bool MIParser::parseMachineOperand(MachineOperand &Dest) {
     return parseImmediateOperand(Dest);
   case MIToken::MachineBasicBlock:
     return parseMBBOperand(Dest);
+  case MIToken::GlobalValue:
+  case MIToken::NamedGlobalValue:
+    return parseGlobalAddressOperand(Dest);
   case MIToken::Error:
     return true;
   default:
@@ -314,6 +355,6 @@ bool MIParser::getRegisterByName(StringRef RegName, unsigned &Reg) {
 MachineInstr *
 llvm::parseMachineInstr(SourceMgr &SM, MachineFunction &MF, StringRef Src,
                         const DenseMap<unsigned, MachineBasicBlock *> &MBBSlots,
-                        SMDiagnostic &Error) {
-  return MIParser(SM, MF, Error, Src, MBBSlots).parse();
+                        const SlotMapping &IRSlots, SMDiagnostic &Error) {
+  return MIParser(SM, MF, Error, Src, MBBSlots, IRSlots).parse();
 }

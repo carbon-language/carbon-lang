@@ -106,6 +106,25 @@ static Cursor lexPercent(Cursor C, MIToken &Token) {
   return C;
 }
 
+static Cursor lexGlobalValue(Cursor C, MIToken &Token) {
+  auto Range = C;
+  C.advance(); // Skip the '@'
+  // TODO: add support for quoted names.
+  if (!isdigit(C.peek())) {
+    while (isIdentifierChar(C.peek()))
+      C.advance();
+    Token = MIToken(MIToken::NamedGlobalValue, Range.upto(C),
+                    /*StringOffset=*/1); // Drop the '@'
+    return C;
+  }
+  auto NumberRange = C;
+  while (isdigit(C.peek()))
+    C.advance();
+  Token =
+      MIToken(MIToken::GlobalValue, Range.upto(C), APSInt(NumberRange.upto(C)));
+  return C;
+}
+
 static Cursor lexIntegerLiteral(Cursor C, MIToken &Token) {
   auto Range = C;
   C.advance();
@@ -151,6 +170,8 @@ StringRef llvm::lexMIToken(
       return lexMachineBasicBlock(C, Token, ErrorCallback).remaining();
     return lexPercent(C, Token).remaining();
   }
+  if (Char == '@')
+    return lexGlobalValue(C, Token).remaining();
   if (isdigit(Char) || (Char == '-' && isdigit(C.peek(1))))
     return lexIntegerLiteral(C, Token).remaining();
   MIToken::TokenKind Kind = symbolToken(Char);

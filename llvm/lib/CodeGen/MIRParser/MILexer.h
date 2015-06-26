@@ -40,6 +40,8 @@ struct MIToken {
     Identifier,
     NamedRegister,
     MachineBasicBlock,
+    NamedGlobalValue,
+    GlobalValue,
 
     // Other tokens
     IntegerLiteral
@@ -78,7 +80,8 @@ public:
   const APSInt &integerValue() const { return IntVal; }
 
   bool hasIntegerValue() const {
-    return Kind == IntegerLiteral || Kind == MachineBasicBlock;
+    return Kind == IntegerLiteral || Kind == MachineBasicBlock ||
+           Kind == GlobalValue;
   }
 };
 
