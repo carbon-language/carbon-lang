@@ -326,6 +326,10 @@ public:
     write64le(Buf + FileOff, Thunk->getRVA() + Config->ImageBase);
   }
 
+  void getBaserels(std::vector<uint32_t> *Res, Defined *ImageBase) override {
+    Res->push_back(RVA);
+  }
+
   Chunk *Thunk;
 };
 
