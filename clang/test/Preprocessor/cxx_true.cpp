@@ -1,15 +1,18 @@
-/* RUN: %clang_cc1 -E %s -x c++ | grep block_1
-   RUN: %clang_cc1 -E %s -x c++ | not grep block_2
-   RUN: %clang_cc1 -E %s -x c | not grep block
+/* RUN: %clang_cc1 -E %s -x c++ | FileCheck -check-prefix CPP %s
+   RUN: %clang_cc1 -E %s -x c | FileCheck -check-prefix C %s
    RUN: %clang_cc1 -E %s -x c++ -verify -Wundef
 */
 // expected-no-diagnostics
 
 #if true
-block_1
+// CPP: test block_1
+// C-NOT: test block_1
+test block_1
 #endif
 
 #if false
-block_2
+// CPP-NOT: test block_2
+// C-NOT: test block_2
+test block_2
 #endif
 
