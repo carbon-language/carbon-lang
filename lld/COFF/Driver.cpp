@@ -485,17 +485,17 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
   // Windows specific -- Input files can be Windows resource files (.res files).
   // We invoke cvtres.exe to convert resource files to a regular COFF file
   // then link the result file normally.
-  auto IsResource = [](MemoryBufferRef MB) {
-    return identify_magic(MB.getBuffer()) == file_magic::windows_resource;
+  auto NotResource = [](MemoryBufferRef MB) {
+    return identify_magic(MB.getBuffer()) != file_magic::windows_resource;
   };
-  auto It = std::stable_partition(Inputs.begin(), Inputs.end(), IsResource);
-  if (It != Inputs.begin()) {
-    std::vector<MemoryBufferRef> Files(Inputs.begin(), It);
+  auto It = std::stable_partition(Inputs.begin(), Inputs.end(), NotResource);
+  if (It != Inputs.end()) {
+    std::vector<MemoryBufferRef> Files(It, Inputs.end());
     auto MBOrErr = convertResToCOFF(Files);
     if (MBOrErr.getError())
       return false;
     std::unique_ptr<MemoryBuffer> MB = std::move(MBOrErr.get());
-    Inputs = std::vector<MemoryBufferRef>(It, Inputs.end());
+    Inputs.erase(It, Inputs.end());
     Inputs.push_back(MB->getMemBufferRef());
     OwningMBs.push_back(std::move(MB)); // take ownership
   }
