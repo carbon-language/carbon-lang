@@ -554,6 +554,16 @@ UnwindAssemblyInstEmulation::WriteRegister (EmulateInstruction *instruction,
                 {
                     m_forward_branch_offset = context.info.ISAAndImmediate.unsigned_data32;
                 }
+                else if (context.info_type == EmulateInstruction::eInfoTypeImmediate &&
+                         context.info.unsigned_immediate > 0)
+                {
+                    m_forward_branch_offset = context.info.unsigned_immediate;
+                }
+                else if (context.info_type == EmulateInstruction::eInfoTypeImmediateSigned &&
+                         context.info.signed_immediate > 0)
+                {
+                    m_forward_branch_offset = context.info.signed_immediate;
+                }
             }
             break;
 

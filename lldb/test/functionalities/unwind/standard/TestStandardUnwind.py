@@ -49,6 +49,18 @@ class StandardUnwindTest(TestBase):
                 "pthread_mutex_unlock",   # Uses ldrex and strex what interferes with the software single stepping
                 "pthread_once",           # Uses ldrex and strex what interferes with the software single stepping
             ]
+        elif re.match("aarch64-.*-.*-android", triple):
+            base_function_names = [
+                "do_arm64_start",         # Base function on the stack
+            ]
+            no_step_function_names = [
+                None,
+                "__cxa_guard_acquire",    # Uses ldxr and stxr what interferes with the software single stepping
+                "__cxa_guard_release",    # Uses ldxr and stxr what interferes with the software single stepping
+                "pthread_mutex_lock",     # Uses ldxr and stxr what interferes with the software single stepping
+                "pthread_mutex_unlock",   # Uses ldxr and stxr what interferes with the software single stepping
+                "pthread_once",           # Uses ldxr and stxr what interferes with the software single stepping
+            ]
         else:
             self.skipTest("No expectations for the current architecture")
 

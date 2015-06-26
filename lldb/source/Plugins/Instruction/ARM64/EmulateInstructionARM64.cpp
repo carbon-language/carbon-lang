@@ -183,10 +183,10 @@ EmulateInstructionARM64::SetTargetTriple (const ArchSpec &arch)
         return true;
     else if (arch.GetTriple().getArch () == llvm::Triple::thumb)
         return true;
-       
+
     return false;
 }
-    
+
 bool
 EmulateInstructionARM64::GetRegisterInfo (RegisterKind reg_kind, uint32_t reg_num, RegisterInfo &reg_info)
 {
@@ -236,23 +236,53 @@ EmulateInstructionARM64::GetOpcodeForInstruction (const uint32_t opcode)
         { 0xff000000, 0x91000000, No_VFP, &EmulateInstructionARM64::Emulate_addsub_imm, "ADD  <Xd|SP>, <Xn|SP>, #<imm> {, <shift>}" },
         { 0xff000000, 0xb1000000, No_VFP, &EmulateInstructionARM64::Emulate_addsub_imm, "ADDS  <Xd>, <Xn|SP>, #<imm> {, <shift>}" },
 
-
         { 0xff000000, 0x51000000, No_VFP, &EmulateInstructionARM64::Emulate_addsub_imm, "SUB  <Wd|WSP>, <Wn|WSP>, #<imm> {, <shift>}" },
         { 0xff000000, 0x71000000, No_VFP, &EmulateInstructionARM64::Emulate_addsub_imm, "SUBS  <Wd>, <Wn|WSP>, #<imm> {, <shift>}" },
         { 0xff000000, 0x11000000, No_VFP, &EmulateInstructionARM64::Emulate_addsub_imm, "ADD  <Wd|WSP>, <Wn|WSP>, #<imm> {, <shift>}" },
         { 0xff000000, 0x31000000, No_VFP, &EmulateInstructionARM64::Emulate_addsub_imm, "ADDS  <Wd>, <Wn|WSP>, #<imm> {, <shift>}" },
-        
-        { 0xffc00000, 0x29000000, No_VFP, &EmulateInstructionARM64::Emulate_ldstpair_off, "STP  <Wt>, <Wt2>, [<Xn|SP>{, #<imm>}]" },
-        { 0xffc00000, 0xa9000000, No_VFP, &EmulateInstructionARM64::Emulate_ldstpair_off, "STP  <Xt>, <Xt2>, [<Xn|SP>{, #<imm>}]" },
-        { 0xffc00000, 0x2d000000, No_VFP, &EmulateInstructionARM64::Emulate_ldstpair_off, "STP  <St>, <St2>, [<Xn|SP>{, #<imm>}]" },
-        { 0xffc00000, 0x6d000000, No_VFP, &EmulateInstructionARM64::Emulate_ldstpair_off, "STP  <Dt>, <Dt2>, [<Xn|SP>{, #<imm>}]" },
-        { 0xffc00000, 0xad000000, No_VFP, &EmulateInstructionARM64::Emulate_ldstpair_off, "STP  <Qt>, <Qt2>, [<Xn|SP>{, #<imm>}]" },
 
-        { 0xffc00000, 0xad800000, No_VFP, &EmulateInstructionARM64::Emulate_ldstpair_pre, "STP  <Qt>, <Qt2>, [<Xn|SP>, #<imm>]!" },
-        { 0xffc00000, 0x2d800000, No_VFP, &EmulateInstructionARM64::Emulate_ldstpair_pre, "STP  <St>, <St2>, [<Xn|SP>, #<imm>]!" },
-        { 0xffc00000, 0x29800000, No_VFP, &EmulateInstructionARM64::Emulate_ldstpair_pre, "STP  <Wt>, <Wt2>, [<Xn|SP>, #<imm>]!" },
-        { 0xffc00000, 0x6d800000, No_VFP, &EmulateInstructionARM64::Emulate_ldstpair_pre, "STP  <Dt>, <Dt2>, [<Xn|SP>, #<imm>]!" },
-        { 0xffc00000, 0xa9800000, No_VFP, &EmulateInstructionARM64::Emulate_ldstpair_pre, "STP  <Xt>, <Xt2>, [<Xn|SP>, #<imm>]!" },
+        { 0xffc00000, 0x29000000, No_VFP, &EmulateInstructionARM64::Emulate_ldstpair_off,  "STP  <Wt>, <Wt2>, [<Xn|SP>{, #<imm>}]" },
+        { 0xffc00000, 0xa9000000, No_VFP, &EmulateInstructionARM64::Emulate_ldstpair_off,  "STP  <Xt>, <Xt2>, [<Xn|SP>{, #<imm>}]" },
+        { 0xffc00000, 0x2d000000, No_VFP, &EmulateInstructionARM64::Emulate_ldstpair_off,  "STP  <St>, <St2>, [<Xn|SP>{, #<imm>}]" },
+        { 0xffc00000, 0x6d000000, No_VFP, &EmulateInstructionARM64::Emulate_ldstpair_off,  "STP  <Dt>, <Dt2>, [<Xn|SP>{, #<imm>}]" },
+        { 0xffc00000, 0xad000000, No_VFP, &EmulateInstructionARM64::Emulate_ldstpair_off,  "STP  <Qt>, <Qt2>, [<Xn|SP>{, #<imm>}]" },
+
+        { 0xffc00000, 0x29800000, No_VFP, &EmulateInstructionARM64::Emulate_ldstpair_pre,  "STP  <Wt>, <Wt2>, [<Xn|SP>, #<imm>]!" },
+        { 0xffc00000, 0xa9800000, No_VFP, &EmulateInstructionARM64::Emulate_ldstpair_pre,  "STP  <Xt>, <Xt2>, [<Xn|SP>, #<imm>]!" },
+        { 0xffc00000, 0x2d800000, No_VFP, &EmulateInstructionARM64::Emulate_ldstpair_pre,  "STP  <St>, <St2>, [<Xn|SP>, #<imm>]!" },
+        { 0xffc00000, 0x6d800000, No_VFP, &EmulateInstructionARM64::Emulate_ldstpair_pre,  "STP  <Dt>, <Dt2>, [<Xn|SP>, #<imm>]!" },
+        { 0xffc00000, 0xad800000, No_VFP, &EmulateInstructionARM64::Emulate_ldstpair_pre,  "STP  <Qt>, <Qt2>, [<Xn|SP>, #<imm>]!" },
+
+        { 0xffc00000, 0x28800000, No_VFP, &EmulateInstructionARM64::Emulate_ldstpair_post, "STP  <Wt>, <Wt2>, [<Xn|SP>, #<imm>]!" },
+        { 0xffc00000, 0xa8800000, No_VFP, &EmulateInstructionARM64::Emulate_ldstpair_post, "STP  <Xt>, <Xt2>, [<Xn|SP>, #<imm>]!" },
+        { 0xffc00000, 0x2c800000, No_VFP, &EmulateInstructionARM64::Emulate_ldstpair_post, "STP  <St>, <St2>, [<Xn|SP>, #<imm>]!" },
+        { 0xffc00000, 0x6c800000, No_VFP, &EmulateInstructionARM64::Emulate_ldstpair_post, "STP  <Dt>, <Dt2>, [<Xn|SP>, #<imm>]!" },
+        { 0xffc00000, 0xac800000, No_VFP, &EmulateInstructionARM64::Emulate_ldstpair_post, "STP  <Qt>, <Qt2>, [<Xn|SP>, #<imm>]!" },
+
+        { 0xffc00000, 0x29400000, No_VFP, &EmulateInstructionARM64::Emulate_ldstpair_off,  "LDP  <Wt>, <Wt2>, [<Xn|SP>{, #<imm>}]" },
+        { 0xffc00000, 0xa9400000, No_VFP, &EmulateInstructionARM64::Emulate_ldstpair_off,  "LDP  <Xt>, <Xt2>, [<Xn|SP>{, #<imm>}]" },
+        { 0xffc00000, 0x2d400000, No_VFP, &EmulateInstructionARM64::Emulate_ldstpair_off,  "LDP  <St>, <St2>, [<Xn|SP>{, #<imm>}]" },
+        { 0xffc00000, 0x6d400000, No_VFP, &EmulateInstructionARM64::Emulate_ldstpair_off,  "LDP  <Dt>, <Dt2>, [<Xn|SP>{, #<imm>}]" },
+        { 0xffc00000, 0xad400000, No_VFP, &EmulateInstructionARM64::Emulate_ldstpair_off,  "LDP  <Qt>, <Qt2>, [<Xn|SP>{, #<imm>}]" },
+
+        { 0xffc00000, 0x29c00000, No_VFP, &EmulateInstructionARM64::Emulate_ldstpair_pre,  "LDP  <Wt>, <Wt2>, [<Xn|SP>, #<imm>]!" },
+        { 0xffc00000, 0xa9c00000, No_VFP, &EmulateInstructionARM64::Emulate_ldstpair_pre,  "LDP  <Xt>, <Xt2>, [<Xn|SP>, #<imm>]!" },
+        { 0xffc00000, 0x2dc00000, No_VFP, &EmulateInstructionARM64::Emulate_ldstpair_pre,  "LDP  <St>, <St2>, [<Xn|SP>, #<imm>]!" },
+        { 0xffc00000, 0x6dc00000, No_VFP, &EmulateInstructionARM64::Emulate_ldstpair_pre,  "LDP  <Dt>, <Dt2>, [<Xn|SP>, #<imm>]!" },
+        { 0xffc00000, 0xadc00000, No_VFP, &EmulateInstructionARM64::Emulate_ldstpair_pre,  "LDP  <Qt>, <Qt2>, [<Xn|SP>, #<imm>]!" },
+
+        { 0xffc00000, 0x28c00000, No_VFP, &EmulateInstructionARM64::Emulate_ldstpair_post, "LDP  <Wt>, <Wt2>, [<Xn|SP>, #<imm>]!" },
+        { 0xffc00000, 0xa8c00000, No_VFP, &EmulateInstructionARM64::Emulate_ldstpair_post, "LDP  <Xt>, <Xt2>, [<Xn|SP>, #<imm>]!" },
+        { 0xffc00000, 0x2cc00000, No_VFP, &EmulateInstructionARM64::Emulate_ldstpair_post, "LDP  <St>, <St2>, [<Xn|SP>, #<imm>]!" },
+        { 0xffc00000, 0x6cc00000, No_VFP, &EmulateInstructionARM64::Emulate_ldstpair_post, "LDP  <Dt>, <Dt2>, [<Xn|SP>, #<imm>]!" },
+        { 0xffc00000, 0xacc00000, No_VFP, &EmulateInstructionARM64::Emulate_ldstpair_post, "LDP  <Qt>, <Qt2>, [<Xn|SP>, #<imm>]!" },
+
+        { 0xfc000000, 0x14000000, No_VFP, &EmulateInstructionARM64::EmulateB,              "B <label>"                            },
+        { 0xff000010, 0x54000000, No_VFP, &EmulateInstructionARM64::EmulateBcond,          "B.<cond> <label>"                     },
+        { 0x7f000000, 0x34000000, No_VFP, &EmulateInstructionARM64::EmulateCBZ,            "CBZ <Wt>, <label>"                    },
+        { 0x7f000000, 0x35000000, No_VFP, &EmulateInstructionARM64::EmulateCBZ,            "CBNZ <Wt>, <label>"                   },
+        { 0x7f000000, 0x36000000, No_VFP, &EmulateInstructionARM64::EmulateTBZ,            "TBZ <R><t>, #<imm>, <label>"          },
+        { 0x7f000000, 0x37000000, No_VFP, &EmulateInstructionARM64::EmulateTBZ,            "TBNZ <R><t>, #<imm>, <label>"         },
 
     };
     static const size_t k_num_arm_opcodes = llvm::array_lengthof(g_opcodes);
@@ -262,10 +292,10 @@ EmulateInstructionARM64::GetOpcodeForInstruction (const uint32_t opcode)
         if ((g_opcodes[i].mask & opcode) == g_opcodes[i].value)
             return &g_opcodes[i];
     }
-    return NULL;
+    return nullptr;
 }
 
-bool 
+bool
 EmulateInstructionARM64::ReadInstruction ()
 {
     bool success = false;
@@ -358,7 +388,127 @@ EmulateInstructionARM64::CreateFunctionEntryUnwind (UnwindPlan &unwind_plan)
     return true;
 }
 
+uint32_t
+EmulateInstructionARM64::GetFramePointerRegisterNumber () const
+{
+    if (m_arch.GetTriple().getEnvironment() == llvm::Triple::Android)
+        return LLDB_INVALID_REGNUM; // Don't use frame pointer on android
 
+    return arm64_dwarf::sp;
+}
+
+bool
+EmulateInstructionARM64::UsingAArch32()
+{
+    bool aarch32 = m_opcode_pstate.RW == 1;
+    // if !HaveAnyAArch32() then assert !aarch32;
+    // if HighestELUsingAArch32() then assert aarch32;
+    return aarch32;
+}
+
+bool
+EmulateInstructionARM64::BranchTo (const Context &context, uint32_t N, addr_t target)
+{
+#if 0
+    // Set program counter to a new address, with a branch reason hint
+    // for possible use by hardware fetching the next instruction.
+    BranchTo(bits(N) target, BranchType branch_type)
+        Hint_Branch(branch_type);
+        if N == 32 then
+            assert UsingAArch32();
+            _PC = ZeroExtend(target);
+        else
+            assert N == 64 && !UsingAArch32();
+            // Remove the tag bits from a tagged target
+            case PSTATE.EL of
+                when EL0, EL1
+                    if target<55> == '1' && TCR_EL1.TBI1 == '1' then
+                        target<63:56> = '11111111';
+                    if target<55> == '0' && TCR_EL1.TBI0 == '1' then
+                        target<63:56> = '00000000';
+                when EL2
+                    if TCR_EL2.TBI == '1' then
+                        target<63:56> = '00000000';
+                when EL3
+                    if TCR_EL3.TBI == '1' then
+                        target<63:56> = '00000000';
+        _PC = target<63:0>;
+        return;
+#endif
+
+    addr_t addr;
+
+    //Hint_Branch(branch_type);
+    if (N == 32)
+    {
+        if (!UsingAArch32())
+            return false;
+        addr = target;
+    }
+    else if (N == 64)
+    {
+        if (UsingAArch32())
+            return false;
+        // TODO: Remove the tag bits from a tagged target
+        addr = target;
+    }
+    else
+        return false;
+
+    if (!WriteRegisterUnsigned (context, eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, addr))
+        return false;
+
+    return true;
+}
+
+bool
+EmulateInstructionARM64::ConditionHolds (const uint32_t cond, bool *is_conditional)
+{
+   // If we are ignoring conditions, then always return true.
+   // this allows us to iterate over disassembly code and still
+   // emulate an instruction even if we don't have all the right
+   // bits set in the CPSR register...
+    if (m_ignore_conditions)
+        return true;
+    
+    if (is_conditional)
+        *is_conditional = true;
+  
+    bool result = false;
+    switch (UnsignedBits(cond, 3, 1))
+    {
+    case 0:
+        result = (m_opcode_pstate.Z == 1);
+        break;
+    case 1:
+        result = (m_opcode_pstate.C == 1);
+        break;
+    case 2:
+        result = (m_opcode_pstate.N == 1);
+        break;
+    case 3:
+        result = (m_opcode_pstate.V == 1);
+        break;
+    case 4:
+        result = (m_opcode_pstate.C == 1 && m_opcode_pstate.Z == 0);
+        break;
+    case 5:
+        result = (m_opcode_pstate.N == m_opcode_pstate.V);
+        break;
+    case 6:
+        result = (m_opcode_pstate.N == m_opcode_pstate.V && m_opcode_pstate.Z == 0);
+        break;
+    case 7:
+        result = true;
+        if (is_conditional)
+            *is_conditional = false;
+        break;
+    }
+
+    if (cond & 1 && cond != 15)
+        result = !result;
+    return result;
+}
 
 bool
 EmulateInstructionARM64::Emulate_addsub_imm (const uint32_t opcode)
@@ -454,13 +604,13 @@ EmulateInstructionARM64::Emulate_addsub_imm (const uint32_t opcode)
     if (arm64_dwarf::GetRegisterInfo (n, reg_info_Rn))
         context.SetRegisterPlusOffset (reg_info_Rn, imm);
 
-    if ((n == arm64_dwarf::sp || n == arm64_dwarf::fp) &&
+    if ((n == arm64_dwarf::sp || n == GetFramePointerRegisterNumber()) &&
         d == arm64_dwarf::sp &&
         !setflags)
     {
         context.type = EmulateInstruction::eContextAdjustStackPointer;
     }
-    else if (d == arm64_dwarf::fp &&
+    else if (d == GetFramePointerRegisterNumber() &&
              n == arm64_dwarf::sp &&
              !setflags)
     {
@@ -470,8 +620,11 @@ EmulateInstructionARM64::Emulate_addsub_imm (const uint32_t opcode)
     {
         context.type = EmulateInstruction::eContextImmediate;
     }
-    WriteRegisterUnsigned (context, eRegisterKindDWARF, arm64_dwarf::x0 + d, result);
-    
+
+    // If setflags && d == arm64_dwarf::sp then d = WZR/XZR. See CMN, CMP
+    if (!setflags || d != arm64_dwarf::sp)
+        WriteRegisterUnsigned (context, eRegisterKindDWARF, arm64_dwarf::x0 + d, result);
+
     return false;
 }
 
@@ -481,11 +634,16 @@ EmulateInstructionARM64::Emulate_ldstpair_off (const uint32_t opcode)
     return Emulate_ldstpair (opcode, AddrMode_OFF);
 }
 
-
 bool
 EmulateInstructionARM64::Emulate_ldstpair_pre (const uint32_t opcode)
 {
     return Emulate_ldstpair (opcode, AddrMode_PRE);
+}
+
+bool
+EmulateInstructionARM64::Emulate_ldstpair_post (const uint32_t opcode)
+{
+    return Emulate_ldstpair (opcode, AddrMode_POST);
 }
 
 bool
@@ -617,26 +775,24 @@ EmulateInstructionARM64::Emulate_ldstpair (const uint32_t opcode, AddrMode a_mod
     
     Context context_t;
     Context context_t2;
-    
-    if (n == 31 || n == 29) // if this store is based off of the sp or fp register
-    {
-        context_t.type = eContextPushRegisterOnStack;
-        context_t2.type = eContextPushRegisterOnStack;
-    }
-    else
-    {
-        context_t.type = eContextRegisterPlusOffset;
-        context_t2.type = eContextRegisterPlusOffset;
-    }
+
+    context_t.type = eContextRegisterPlusOffset;
+    context_t2.type = eContextRegisterPlusOffset;
     context_t.SetRegisterToRegisterPlusOffset (reg_info_Rt, reg_info_base, 0);
     context_t2.SetRegisterToRegisterPlusOffset (reg_info_Rt2, reg_info_base, size);
     uint8_t buffer [RegisterValue::kMaxRegisterByteSize];
     Error error;
-    
+
     switch (memop)
     {
         case MemOp_STORE:
         {
+            if (n == 31 || n == GetFramePointerRegisterNumber()) // if this store is based off of the sp or fp register
+            {
+                context_t.type = eContextPushRegisterOnStack;
+                context_t2.type = eContextPushRegisterOnStack;
+            }
+
             if (!ReadRegister (&reg_info_Rt, data_Rt))
                 return false;
             
@@ -659,6 +815,12 @@ EmulateInstructionARM64::Emulate_ldstpair (const uint32_t opcode, AddrMode a_mod
             
         case MemOp_LOAD:
         {
+            if (n == 31 || n == GetFramePointerRegisterNumber()) // if this load is based off of the sp or fp register
+            {
+                context_t.type = eContextPopRegisterOffStack;
+                context_t2.type = eContextPopRegisterOffStack;
+            }
+
             if (rt_unknown)
                 memset (buffer, 'U', reg_info_Rt.byte_size);
             else
@@ -709,5 +871,154 @@ EmulateInstructionARM64::Emulate_ldstpair (const uint32_t opcode, AddrMode a_mod
             context.type = eContextAdjustBaseRegister;
         WriteRegisterUnsigned (context, &reg_info_base, wb_address);
     }    
+    return true;
+}
+
+bool
+EmulateInstructionARM64::EmulateB (const uint32_t opcode)
+{
+#if 0
+    // ARM64 pseudo code...
+    if branch_type == BranchType_CALL then X[30] = PC[] + 4;
+    BranchTo(PC[] + offset, branch_type);
+#endif
+
+    bool success = false;
+
+    EmulateInstruction::Context context;
+    context.type = EmulateInstruction::eContextRelativeBranchImmediate;
+    const uint64_t pc = ReadRegisterUnsigned(eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, 0, &success);
+    if (!success)
+        return false;
+   
+    int64_t offset = llvm::SignExtend64<28>(Bits32(opcode, 25, 0) << 2);
+    BranchType branch_type = Bit32(opcode, 31) ? BranchType_CALL : BranchType_JMP;
+    addr_t target = pc + offset;
+    context.SetImmediateSigned(offset);
+
+    switch (branch_type)
+    {
+        case BranchType_CALL:
+            {
+                addr_t x30 = pc + 4;
+                if (!WriteRegisterUnsigned (context, eRegisterKindDWARF, arm64_dwarf::x30, x30))
+                    return false;
+            }
+            break;
+        case BranchType_JMP:
+            break;
+        default:
+            return false;
+    }
+
+    if (!BranchTo(context, 64, target))
+        return false;
+    return true;
+}
+
+bool
+EmulateInstructionARM64::EmulateBcond (const uint32_t opcode)
+{
+#if 0
+    // ARM64 pseudo code...
+    bits(64) offset = SignExtend(imm19:'00', 64);
+    bits(4) condition = cond;
+    if ConditionHolds(condition) then
+        BranchTo(PC[] + offset, BranchType_JMP);
+#endif
+
+    if (ConditionHolds(Bits32(opcode, 3, 0)))
+    {
+        bool success = false;
+
+        const uint64_t pc = ReadRegisterUnsigned(eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, 0, &success);
+        if (!success)
+            return false;
+       
+        int64_t offset = llvm::SignExtend64<21>(Bits32(opcode, 23, 5) << 2);
+        addr_t target = pc + offset;
+
+        EmulateInstruction::Context context;
+        context.type = EmulateInstruction::eContextRelativeBranchImmediate;
+        context.SetImmediateSigned(offset);
+        if (!BranchTo(context, 64, target))
+            return false;
+    }
+    return true;
+}
+
+bool
+EmulateInstructionARM64::EmulateCBZ (const uint32_t opcode)
+{
+#if 0
+    integer t = UInt(Rt);
+    integer datasize = if sf == '1' then 64 else 32;
+    boolean iszero = (op == '0');
+    bits(64) offset = SignExtend(imm19:'00', 64);
+
+    bits(datasize) operand1 = X[t];
+    if IsZero(operand1) == iszero then
+        BranchTo(PC[] + offset, BranchType_JMP);
+#endif
+
+    bool success = false;
+
+    uint32_t t = Bits32(opcode, 4, 0);
+    bool is_zero = Bit32(opcode, 24) == 0;
+    int32_t offset = llvm::SignExtend64<21>(Bits32(opcode, 23, 5) << 2);
+
+    const uint64_t operand = ReadRegisterUnsigned(eRegisterKindDWARF, arm64_dwarf::x0 + t, 0, &success);
+    if (!success)
+        return false;
+
+    if (m_ignore_conditions || ((operand == 0) == is_zero))
+    {
+        const uint64_t pc = ReadRegisterUnsigned(eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, 0, &success);
+        if (!success)
+            return false;
+
+        EmulateInstruction::Context context;
+        context.type = EmulateInstruction::eContextRelativeBranchImmediate;
+        context.SetImmediateSigned(offset);
+        if (!BranchTo(context, 64, pc + offset))
+            return false;
+    }
+    return true;
+}
+
+bool
+EmulateInstructionARM64::EmulateTBZ (const uint32_t opcode)
+{
+#if 0
+    integer t = UInt(Rt);
+    integer datasize = if b5 == '1' then 64 else 32;
+    integer bit_pos = UInt(b5:b40);
+    bit bit_val = op;
+    bits(64) offset = SignExtend(imm14:'00', 64);
+#endif
+
+    bool success = false;
+
+    uint32_t t = Bits32(opcode, 4, 0);
+    uint32_t bit_pos = (Bit32(opcode, 31) << 6) | (Bits32(opcode, 23, 19));
+    uint32_t bit_val = Bit32(opcode, 24);
+    int64_t offset = llvm::SignExtend64<16>(Bits32(opcode, 18, 5) << 2);
+
+    const uint64_t operand = ReadRegisterUnsigned(eRegisterKindDWARF, arm64_dwarf::x0 + t, 0, &success);
+    if (!success)
+        return false;
+
+    if (m_ignore_conditions || Bit32(operand, bit_pos) == bit_val)
+    {
+        const uint64_t pc = ReadRegisterUnsigned(eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC, 0, &success);
+        if (!success)
+            return false;
+
+        EmulateInstruction::Context context;
+        context.type = EmulateInstruction::eContextRelativeBranchImmediate;
+        context.SetImmediateSigned(offset);
+        if (!BranchTo(context, 64, pc + offset))
+            return false;
+    }
     return true;
 }
