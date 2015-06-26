@@ -31,7 +31,8 @@ protected:
 } // End anonymous namespace
 
 AMDGPUELFObjectWriter::AMDGPUELFObjectWriter(bool Is64Bit)
-  : MCELFObjectTargetWriter(Is64Bit, 0, ELF::EM_AMDGPU, false) { }
+  : MCELFObjectTargetWriter(Is64Bit, ELF::ELFOSABI_AMDGPU_HSA,
+                            ELF::EM_AMDGPU, false) { }
 
 MCObjectWriter *llvm::createAMDGPUELFObjectWriter(bool Is64Bit, raw_pwrite_stream &OS) {
   MCELFObjectTargetWriter *MOTW = new AMDGPUELFObjectWriter(Is64Bit);

@@ -9,6 +9,7 @@
 ; RUN: llc < %s -mtriple=amdgcn-pc-mingw -mcpu=SI -verify-machineinstrs -filetype=obj | llvm-readobj -s -symbols -file-headers - | FileCheck --check-prefix=ELF %s
 
 ; ELF: Format: ELF64
+; ELF: OS/ABI: AMDGPU_HSA (0x40)
 ; ELF: Machine: EM_AMDGPU (0xE0)
 ; ELF: Name: .AMDGPU.config
 ; ELF: Type: SHT_PROGBITS
