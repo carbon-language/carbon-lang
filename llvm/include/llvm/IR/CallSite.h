@@ -197,7 +197,7 @@ public:
     CALLSITE_DELEGATE_GETTER(getNumArgOperands());
   }
 
-  Value *getArgOperand(unsigned i) const { 
+  ValTy *getArgOperand(unsigned i) const { 
     CALLSITE_DELEGATE_GETTER(getArgOperand(i));
   }
 
