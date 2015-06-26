@@ -25,6 +25,8 @@ struct IsaVersion {
 };
 
 IsaVersion getIsaVersion(const FeatureBitset &Features);
+void initDefaultAMDKernelCodeT(amd_kernel_code_t &Header,
+                               const FeatureBitset &Features);
 
 } // end namespace AMDGPU
 } // end namespace llvm

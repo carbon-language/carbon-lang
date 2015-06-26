@@ -100,16 +100,41 @@ namespace SIOutMods {
 #define R_00B848_COMPUTE_PGM_RSRC1                                      0x00B848
 #define   S_00B028_VGPRS(x)                                           (((x) & 0x3F) << 0)
 #define   S_00B028_SGPRS(x)                                           (((x) & 0x0F) << 6)
+
 #define R_00B84C_COMPUTE_PGM_RSRC2                                      0x00B84C
 #define   S_00B84C_SCRATCH_EN(x)                                      (((x) & 0x1) << 0)
+#define   G_00B84C_SCRATCH_EN(x)                                      (((x) >> 0) & 0x1)
+#define   C_00B84C_SCRATCH_EN                                         0xFFFFFFFE
 #define   S_00B84C_USER_SGPR(x)                                       (((x) & 0x1F) << 1)
+#define   G_00B84C_USER_SGPR(x)                                       (((x) >> 1) & 0x1F)
+#define   C_00B84C_USER_SGPR                                          0xFFFFFFC1
 #define   S_00B84C_TGID_X_EN(x)                                       (((x) & 0x1) << 7)
+#define   G_00B84C_TGID_X_EN(x)                                       (((x) >> 7) & 0x1)
+#define   C_00B84C_TGID_X_EN                                          0xFFFFFF7F
 #define   S_00B84C_TGID_Y_EN(x)                                       (((x) & 0x1) << 8)
+#define   G_00B84C_TGID_Y_EN(x)                                       (((x) >> 8) & 0x1)
+#define   C_00B84C_TGID_Y_EN                                          0xFFFFFEFF
 #define   S_00B84C_TGID_Z_EN(x)                                       (((x) & 0x1) << 9)
+#define   G_00B84C_TGID_Z_EN(x)                                       (((x) >> 9) & 0x1)
+#define   C_00B84C_TGID_Z_EN                                          0xFFFFFDFF
 #define   S_00B84C_TG_SIZE_EN(x)                                      (((x) & 0x1) << 10)
+#define   G_00B84C_TG_SIZE_EN(x)                                      (((x) >> 10) & 0x1)
+#define   C_00B84C_TG_SIZE_EN                                         0xFFFFFBFF
 #define   S_00B84C_TIDIG_COMP_CNT(x)                                  (((x) & 0x03) << 11)
-
+#define   G_00B84C_TIDIG_COMP_CNT(x)                                  (((x) >> 11) & 0x03)
+#define   C_00B84C_TIDIG_COMP_CNT                                     0xFFFFE7FF
+/* CIK */
+#define   S_00B84C_EXCP_EN_MSB(x)                                     (((x) & 0x03) << 13)
+#define   G_00B84C_EXCP_EN_MSB(x)                                     (((x) >> 13) & 0x03)
+#define   C_00B84C_EXCP_EN_MSB                                        0xFFFF9FFF
+/*     */
 #define   S_00B84C_LDS_SIZE(x)                                        (((x) & 0x1FF) << 15)
+#define   G_00B84C_LDS_SIZE(x)                                        (((x) >> 15) & 0x1FF)
+#define   C_00B84C_LDS_SIZE                                           0xFF007FFF
+#define   S_00B84C_EXCP_EN(x)                                         (((x) & 0x7F) << 24)
+#define   G_00B84C_EXCP_EN(x)                                         (((x) >> 24) & 0x7F)
+#define   C_00B84C_EXCP_EN 
+
 #define R_0286CC_SPI_PS_INPUT_ENA                                       0x0286CC
 
 

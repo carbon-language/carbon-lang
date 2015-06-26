@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "AMDKernelCodeT.h"
 #include "llvm/MC/MCStreamer.h"
-
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/Debug.h"
 namespace llvm {
@@ -25,6 +25,8 @@ public:
                                              uint32_t Stepping,
                                              StringRef VendorName,
                                              StringRef ArchName) = 0;
+
+  virtual void EmitAMDKernelCodeT(const amd_kernel_code_t &Header) = 0;
 };
 
 class AMDGPUTargetAsmStreamer : public AMDGPUTargetStreamer {
@@ -37,6 +39,8 @@ public:
   void EmitDirectiveHSACodeObjectISA(uint32_t Major, uint32_t Minor,
                                      uint32_t Stepping, StringRef VendorName,
                                      StringRef ArchName) override;
+
+  void EmitAMDKernelCodeT(const amd_kernel_code_t &Header) override;
 };
 
 class AMDGPUTargetELFStreamer : public AMDGPUTargetStreamer {
@@ -65,6 +69,9 @@ public:
   void EmitDirectiveHSACodeObjectISA(uint32_t Major, uint32_t Minor,
                                      uint32_t Stepping, StringRef VendorName,
                                      StringRef ArchName) override;
+
+  void EmitAMDKernelCodeT(const amd_kernel_code_t &Header) override;
+
 };
 
 }

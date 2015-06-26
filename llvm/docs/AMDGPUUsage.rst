@@ -118,3 +118,60 @@ assembler.
 
 ISA version, *vendor*, and *arch* will all be stored in a single entry of the
 .note section.
+
+.amd_kernel_code_t
+^^^^^^^^^^^^^^^^^^
+
+This directive marks the beginning of a list of key / value pairs that are used
+to specify the amd_kernel_code_t object that will be emitted by the assembler.
+The list must be terminated by the *.end_amd_kernel_code_t* directive.  For
+any amd_kernel_code_t values that are unspecified a default value will be
+used.  The default value for all keys is 0, with the following exceptions:
+
+- *kernel_code_version_major* defaults to 1.
+- *machine_kind* defaults to 1.
+- *machine_version_major*, *machine_version_minor*, and
+  *machine_version_stepping* are derived from the value of the -mcpu option
+  that is passed to the assembler.
+- *kernel_code_entry_byte_offset* defaults to 256.
+- *wavefront_size* defaults to 6.
+- *kernarg_segment_alignment*, *group_segment_alignment*, and
+  *private_segment_alignment* default to 4.  Note that alignments are specified
+  as a power of two, so a value of **n** means an alignment of 2^ **n**.
+
+The *.amd_kernel_code_t* directive must be placed immediately after the
+function label and before any instructions.
+
+For a full list of amd_kernel_code_t keys, see the examples in
+test/CodeGen/AMDGPU/hsa.s.  For an explanation of the meanings of the different
+keys, see the comments in lib/Target/AMDGPU/AmdKernelCodeT.h
+
+Here is an example of a minimal amd_kernel_code_t specification:
+
+.. code-block:: nasm
+
+   .hsa_code_object_version 1,0
+   .hsa_code_object_isa
+
+   .text
+
+   hello_world:
+
+      .amd_kernel_code_t
+         enable_sgpr_kernarg_segment_ptr = 1
+         is_ptr64 = 1
+         compute_pgm_rsrc1_vgprs = 0
+         compute_pgm_rsrc1_sgprs = 0
+         compute_pgm_rsrc2_user_sgpr = 2
+         kernarg_segment_byte_size = 8
+         wavefront_sgpr_count = 2
+         workitem_vgpr_count = 3
+     .end_amd_kernel_code_t
+
+     s_load_dwordx2 s[0:1], s[0:1] 0x0
+     v_mov_b32 v0, 3.14159
+     s_waitcnt lgkmcnt(0)
+     v_mov_b32 v1, s0
+     v_mov_b32 v2, s1
+     flat_store_dword v0, v[1:2]
+     s_endpgm

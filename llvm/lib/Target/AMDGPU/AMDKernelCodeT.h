@@ -12,9 +12,12 @@
 #ifndef AMDKERNELCODET_H
 #define AMDKERNELCODET_H
 
+#include "llvm/MC/SubtargetFeature.h"
+
 #include <cstddef>
 #include <cstdint>
 
+#include "llvm/Support/Debug.h"
 //---------------------------------------------------------------------------//
 // AMD Kernel Code, and its dependencies                                     //
 //---------------------------------------------------------------------------//
@@ -142,7 +145,7 @@ enum amd_code_property_mask_t {
   /// the GPU flat scratch (SH_STATIC_MEM_CONFIG.ELEMENT_SIZE). This
   /// is generally DWORD.
   ///
-  /// Use values from the amd_element_byte_size_t enum.
+  /// uSE VALUES FROM THE AMD_ELEMENT_BYTE_SIZE_T ENUM.
   AMD_CODE_PROPERTY_PRIVATE_ELEMENT_SIZE_SHIFT = 11,
   AMD_CODE_PROPERTY_PRIVATE_ELEMENT_SIZE_WIDTH = 2,
   AMD_CODE_PROPERTY_PRIVATE_ELEMENT_SIZE = ((1 << AMD_CODE_PROPERTY_PRIVATE_ELEMENT_SIZE_WIDTH) - 1) << AMD_CODE_PROPERTY_PRIVATE_ELEMENT_SIZE_SHIFT,
@@ -171,7 +174,11 @@ enum amd_code_property_mask_t {
   /// Indicate if code generated has support for debugging.
   AMD_CODE_PROPERTY_IS_DEBUG_SUPPORTED_SHIFT = 15,
   AMD_CODE_PROPERTY_IS_DEBUG_SUPPORTED_WIDTH = 1,
-  AMD_CODE_PROPERTY_IS_DEBUG_SUPPORTED = ((1 << AMD_CODE_PROPERTY_IS_DEBUG_SUPPORTED_WIDTH) - 1) << AMD_CODE_PROPERTY_IS_DEBUG_SUPPORTED_SHIFT
+  AMD_CODE_PROPERTY_IS_DEBUG_SUPPORTED = ((1 << AMD_CODE_PROPERTY_IS_DEBUG_SUPPORTED_WIDTH) - 1) << AMD_CODE_PROPERTY_IS_DEBUG_SUPPORTED_SHIFT,
+
+  AMD_CODE_PROPERTY_IS_XNACK_SUPPORTED_SHIFT = 15,
+  AMD_CODE_PROPERTY_IS_XNACK_SUPPORTED_WIDTH = 1,
+  AMD_CODE_PROPERTY_IS_XNACK_SUPPORTED = ((1 << AMD_CODE_PROPERTY_IS_XNACK_SUPPORTED_WIDTH) - 1) << AMD_CODE_PROPERTY_IS_XNACK_SUPPORTED_SHIFT
 };
 
 /// @brief The hsa_ext_control_directives_t specifies the values for the HSAIL
@@ -369,7 +376,7 @@ typedef struct hsa_ext_control_directives_s {
 ///     Scratch Wave Offset must be added by the kernel code and moved to
 ///     SGPRn-4 for use as the FLAT SCRATCH BASE in flat memory instructions.
 ///
-///     The second SGPR is 32 bit byte size of a single work-item’s scratch
+///     The second SGPR is 32 bit byte size of a single work-item's scratch
 ///     memory usage. This is directly loaded from the dispatch packet Private
 ///     Segment Byte Size and rounded up to a multiple of DWORD.
 ///
@@ -385,7 +392,7 @@ typedef struct hsa_ext_control_directives_s {
 ///
 /// Private Segment Size (enable_sgpr_private_segment_size):
 ///   Number of User SGPR registers: 1. The 32 bit byte size of a single
-///   work-item’s scratch memory allocation. This is the value from the dispatch
+///   work-item's scratch memory allocation. This is the value from the dispatch
 ///   packet. Private Segment Byte Size rounded up by CP to a multiple of DWORD.
 ///
 ///   \todo [Does CP need to round this to >4 byte alignment?]
@@ -433,7 +440,7 @@ typedef struct hsa_ext_control_directives_s {
 ///   present
 ///
 /// Work-Group Info (enable_sgpr_workgroup_info):
-///   Number of System SGPR registers: 1. {first_wave, 14’b0000,
+///   Number of System SGPR registers: 1. {first_wave, 14'b0000,
 ///   ordered_append_term[10:0], threadgroup_size_in_waves[5:0]}
 ///
 /// Private Segment Wave Byte Offset
@@ -499,25 +506,14 @@ typedef struct hsa_ext_control_directives_s {
 /// Alternatively scalar loads can be used if the kernarg offset is uniform, as
 /// the kernarg segment is constant for the duration of the kernel execution.
 ///
+
 typedef struct amd_kernel_code_s {
-  /// The AMD major version of the Code Object. Must be the value
-  /// AMD_CODE_VERSION_MAJOR.
-  amd_code_version32_t amd_code_version_major;
-
-  /// The AMD minor version of the Code Object. Minor versions must be
-  /// backward compatible. Must be the value
-  /// AMD_CODE_VERSION_MINOR.
-  amd_code_version32_t amd_code_version_minor;
-
-  /// The byte size of this struct. Must be set to
-  /// sizeof(amd_kernel_code_t). Used for backward
-  /// compatibility.
-  uint32_t struct_byte_size;
-
-  /// The target chip instruction set for which code has been
-  /// generated. Values are from the E_SC_INSTRUCTION_SET enumeration
-  /// in sc/Interface/SCCommon.h.
-  uint32_t target_chip;
+  uint32_t amd_kernel_code_version_major;
+  uint32_t amd_kernel_code_version_minor;
+  uint16_t amd_machine_kind;
+  uint16_t amd_machine_version_major;
+  uint16_t amd_machine_version_minor;
+  uint16_t amd_machine_version_stepping;
 
   /// Byte offset (possibly negative) from start of amd_kernel_code_t
   /// object to kernel's entry point instruction. The actual code for
@@ -535,10 +531,6 @@ typedef struct amd_kernel_code_s {
   /// and size. The offset is from the start (possibly negative) of
   /// amd_kernel_code_t object. Set both to 0 if no prefetch
   /// information is available.
-  ///
-  /// \todo ttye 11/15/2013 Is the prefetch definition we want? Did
-  /// not make the size a uint64_t as prefetching more than 4GiB seems
-  /// excessive.
   int64_t kernel_code_prefetch_byte_offset;
   uint64_t kernel_code_prefetch_byte_size;
 
@@ -553,11 +545,11 @@ typedef struct amd_kernel_code_s {
 
   /// Shader program settings for CS. Contains COMPUTE_PGM_RSRC1 and
   /// COMPUTE_PGM_RSRC2 registers.
-  amd_compute_pgm_resource_register64_t compute_pgm_resource_registers;
+  uint64_t compute_pgm_resource_registers;
 
   /// Code properties. See amd_code_property_mask_t for a full list of
   /// properties.
-  amd_code_property32_t code_properties;
+  uint32_t code_properties;
 
   /// The amount of memory required for the combined private, spill
   /// and arg segments for a work-item in bytes. If
@@ -629,76 +621,21 @@ typedef struct amd_kernel_code_s {
   /// The maximum byte alignment of variables used by the kernel in
   /// the specified memory segment. Expressed as a power of two. Must
   /// be at least HSA_POWERTWO_16.
-  hsa_powertwo8_t kernarg_segment_alignment;
-  hsa_powertwo8_t group_segment_alignment;
-  hsa_powertwo8_t private_segment_alignment;
-
-  uint8_t reserved3;
-
-  /// Type of code object.
-  hsa_ext_code_kind32_t code_type;
-
-  /// Reserved for code properties if any are defined in the future.
-  /// There are currently no code properties so this field must be 0.
-  uint32_t reserved4;
+  uint8_t kernarg_segment_alignment;
+  uint8_t group_segment_alignment;
+  uint8_t private_segment_alignment;
 
   /// Wavefront size expressed as a power of two. Must be a power of 2
   /// in range 1..64 inclusive. Used to support runtime query that
   /// obtains wavefront size, which may be used by application to
   /// allocated dynamic group memory and set the dispatch work-group
   /// size.
-  hsa_powertwo8_t wavefront_size;
+  uint8_t wavefront_size;
 
-  /// The optimization level specified when the kernel was
-  /// finalized.
-  uint8_t optimization_level;
-
-  /// The HSAIL profile defines which features are used. This
-  /// information is from the HSAIL version directive. If this
-  /// amd_kernel_code_t is not generated from an HSAIL compilation
-  /// unit then must be 0.
-  hsa_ext_brig_profile8_t hsail_profile;
-
-  /// The HSAIL machine model gives the address sizes used by the
-  /// code. This information is from the HSAIL version directive. If
-  /// not generated from an HSAIL compilation unit then must still
-  /// indicate for what machine mode the code is generated.
-  hsa_ext_brig_machine_model8_t hsail_machine_model;
-
-  /// The HSAIL major version. This information is from the HSAIL
-  /// version directive. If this amd_kernel_code_t is not
-  /// generated from an HSAIL compilation unit then must be 0.
-  uint32_t hsail_version_major;
-
-  /// The HSAIL minor version. This information is from the HSAIL
-  /// version directive. If this amd_kernel_code_t is not
-  /// generated from an HSAIL compilation unit then must be 0.
-  uint32_t hsail_version_minor;
-
-  /// Reserved for HSAIL target options if any are defined in the
-  /// future. There are currently no target options so this field
-  /// must be 0.
-  uint16_t reserved5;
-
-  /// Reserved. Must be 0.
-  uint16_t reserved6;
-
-  /// The values should be the actually values used by the finalizer
-  /// in generating the code. This may be the union of values
-  /// specified as finalizer arguments and explicit HSAIL control
-  /// directives. If the finalizer chooses to ignore a control
-  /// directive, and not generate constrained code, then the control
-  /// directive should not be marked as enabled even though it was
-  /// present in the HSAIL or finalizer argument. The values are
-  /// intended to reflect the constraints that the code actually
-  /// requires to correctly execute, not the values that were
-  /// actually specified at finalize time.
-  hsa_ext_control_directives_t control_directive;
-
-  /// The code can immediately follow the amd_kernel_code_t, or can
-  /// come after subsequent amd_kernel_code_t structs when there are
-  /// multiple kernels in the compilation unit.
-
+  int32_t call_convention;
+  uint8_t reserved3[12];
+  uint64_t runtime_loader_kernel_symbol;
+  uint64_t control_directives[16];
 } amd_kernel_code_t;
 
 #endif // AMDKERNELCODET_H

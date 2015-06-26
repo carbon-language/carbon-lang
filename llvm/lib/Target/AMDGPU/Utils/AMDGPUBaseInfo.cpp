@@ -33,5 +33,28 @@ IsaVersion getIsaVersion(const FeatureBitset &Features) {
   return {0, 0, 0};
 }
 
+void initDefaultAMDKernelCodeT(amd_kernel_code_t &Header,
+                               const FeatureBitset &Features) {
+
+  IsaVersion ISA = getIsaVersion(Features);
+
+  memset(&Header, 0, sizeof(Header));
+
+  Header.amd_kernel_code_version_major = 1;
+  Header.amd_kernel_code_version_minor = 0;
+  Header.amd_machine_kind = 1; // AMD_MACHINE_KIND_AMDGPU
+  Header.amd_machine_version_major = ISA.Major;
+  Header.amd_machine_version_minor = ISA.Minor;
+  Header.amd_machine_version_stepping = ISA.Stepping;
+  Header.kernel_code_entry_byte_offset = sizeof(Header);
+  // wavefront_size is specified as a power of 2: 2^6 = 64 threads.
+  Header.wavefront_size = 6;
+  // These alignment values are specified in powers of two, so alignment =
+  // 2^n.  The minimum alignment is 2^4 = 16.
+  Header.kernarg_segment_alignment = 4;
+  Header.group_segment_alignment = 4;
+  Header.private_segment_alignment = 4;
+}
+
 } // End namespace AMDGPU
 } // End namespace llvm
