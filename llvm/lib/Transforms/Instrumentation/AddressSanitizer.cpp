@@ -1674,12 +1674,6 @@ void FunctionStackPoisoner::SetShadowToStackAfterReturnInlined(
   }
 }
 
-static DebugLoc getFunctionEntryDebugLocation(Function &F) {
-  for (const auto &Inst : F.getEntryBlock())
-    if (!isa<AllocaInst>(Inst)) return Inst.getDebugLoc();
-  return DebugLoc();
-}
-
 PHINode *FunctionStackPoisoner::createPHI(IRBuilder<> &IRB, Value *Cond,
                                           Value *ValueIfTrue,
                                           Instruction *ThenTerm,
@@ -1732,7 +1726,9 @@ void FunctionStackPoisoner::poisonStack() {
   if (AllocaVec.size() == 0) return;
 
   int StackMallocIdx = -1;
-  DebugLoc EntryDebugLocation = getFunctionEntryDebugLocation(F);
+  DebugLoc EntryDebugLocation;
+  if (auto SP = getDISubprogram(&F))
+    EntryDebugLocation = DebugLoc::get(SP->getScopeLine(), 0, SP);
 
   Instruction *InsBefore = AllocaVec[0];
   IRBuilder<> IRB(InsBefore);
