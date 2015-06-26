@@ -304,7 +304,6 @@ public:
   const T        *getEntry(uint32_t Section, uint32_t Entry) const;
   template <typename T>
   const T *getEntry(const Elf_Shdr *Section, uint32_t Entry) const;
-  const char     *getString(uint32_t section, uint32_t offset) const;
   const char     *getString(const Elf_Shdr *section, uint32_t offset) const;
   const char *getDynamicString(uintX_t Offset) const;
   ErrorOr<StringRef> getSymbolVersion(const Elf_Shdr *section,
@@ -932,12 +931,6 @@ ELFFile<ELFT>::getSection(uint32_t index) const {
   return reinterpret_cast<const Elf_Shdr *>(
          reinterpret_cast<const char *>(SectionHeaderTable)
          + (index * Header->e_shentsize));
-}
-
-template <class ELFT>
-const char *ELFFile<ELFT>::getString(uint32_t section,
-                                     ELF::Elf32_Word offset) const {
-  return getString(getSection(section), offset);
 }
 
 template <class ELFT>
