@@ -1,7 +1,8 @@
 // RUN: %clangxx_asan -O0 -x c %s -o %t && not %run %t 2>&1 | FileCheck %s
-// RUN: %clangxx_asan -O1 -x c %s -o %t && not %run %t 2>&1 | FileCheck %s
-// RUN: %clangxx_asan -O2 -x c %s -o %t && not %run %t 2>&1 | FileCheck %s
-// RUN: %clangxx_asan -O3 -x c %s -o %t && not %run %t 2>&1 | FileCheck %s
+
+// __attribute__((naked)) is broken at high optimization levels
+// Only testing -O0.
+// https://llvm.org/bugs/show_bug.cgi?id=23971
 
 // REQUIRES: arm-supported-target
 // XFAIL: armv7l-unknown-linux-gnueabihf
