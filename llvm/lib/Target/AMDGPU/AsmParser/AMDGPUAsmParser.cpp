@@ -684,7 +684,6 @@ bool AMDGPUAsmParser::ParseDirectiveHSACodeObjectISA() {
 }
 
 bool AMDGPUAsmParser::ParseDirective(AsmToken DirectiveID) {
-  MCAsmParser &Parser = getParser();
   StringRef IDVal = DirectiveID.getString();
 
   if (IDVal == ".hsa_code_object_version")
