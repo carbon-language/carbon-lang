@@ -1165,6 +1165,7 @@ void SelectionDAGLegalize::LegalizeOp(SDNode *Node) {
   if (Node->getOpcode() == ISD::TargetConstant) // Allow illegal target nodes.
     return;
 
+#ifndef NDEBUG
   for (unsigned i = 0, e = Node->getNumValues(); i != e; ++i)
     assert(TLI.getTypeAction(*DAG.getContext(), Node->getValueType(i)) ==
              TargetLowering::TypeLegal &&
@@ -1175,6 +1176,7 @@ void SelectionDAGLegalize::LegalizeOp(SDNode *Node) {
                               Op.getValueType()) == TargetLowering::TypeLegal ||
                               Op.getOpcode() == ISD::TargetConstant) &&
                               "Unexpected illegal type!");
+#endif
 
   // Figure out the correct action; the way to query this varies by opcode
   TargetLowering::LegalizeAction Action = TargetLowering::Legal;
