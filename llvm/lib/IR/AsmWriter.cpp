@@ -1941,8 +1941,11 @@ static void WriteAsOperandInternal(raw_ostream &Out, const Metadata *MD,
                                    SlotTracker *Machine, const Module *Context,
                                    bool FromValue) {
   if (const MDNode *N = dyn_cast<MDNode>(MD)) {
-    if (!Machine)
-      Machine = new SlotTracker(Context);
+    std::unique_ptr<SlotTracker> MachineStorage;
+    if (!Machine) {
+      MachineStorage = make_unique<SlotTracker>(Context);
+      Machine = MachineStorage.get();
+    }
     int Slot = Machine->getMetadataSlot(N);
     if (Slot == -1)
       // Give the pointer value instead of "badref", since this comes up all
