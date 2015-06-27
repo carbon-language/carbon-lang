@@ -10,6 +10,7 @@
 #include "lldb/Host/FileSystem.h"
 
 // C includes
+#include <dirent.h>
 #include <sys/mount.h>
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -81,11 +82,25 @@ FileSystem::DeleteDirectory(const FileSpec &file_spec, bool recurse)
     {
         if (recurse)
         {
-            StreamString command;
-            command.Printf("rm -rf \"%s\"", file_spec.GetCString());
-            int status = ::system(command.GetString().c_str());
-            if (status != 0)
-                error.SetError(status, eErrorTypeGeneric);
+            DIR *dirp = opendir(file_spec.GetCString());
+            if (!dirp)
+            {
+                error.SetErrorToErrno();
+                return error;
+            }
+            struct dirent *direntp;
+            while (error.Success() && (direntp = readdir(dirp)))
+            {
+                if (direntp->d_type == DT_DIR)
+                    error = DeleteDirectory(FileSpec{direntp->d_name, false}, true);
+                else if (::unlink(direntp->d_name) != 0)
+                    error.SetErrorToErrno();
+            }
+            if (closedir(dirp) != 0)
+                error.SetErrorToErrno();
+            if (error.Fail())
+                return error;
+            return DeleteDirectory(file_spec, false);
         }
         else
         {
