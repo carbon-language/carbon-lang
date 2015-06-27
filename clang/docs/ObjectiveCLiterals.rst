@@ -136,8 +136,8 @@ and some C structures (via NSValue) are supported:
     NSString *path = @(getenv("PATH"));       // [NSString stringWithUTF8String:(getenv("PATH"))]
     NSArray *pathComponents = [path componentsSeparatedByString:@":"];
 
-    // NS structs
-    NSValue *center = @(view.center);         // Point p = view.point;
+    // structs.
+    NSValue *center = @(view.center);         // Point p = view.center;
                                               // [NSValue valueWithBytes:&p objCType:@encode(Point)];
     NSValue *frame = @(view.frame);           // Rect r = view.frame;
                                               // [NSValue valueWithBytes:&r objCType:@encode(Rect)];
