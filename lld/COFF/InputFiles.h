@@ -101,7 +101,9 @@ public:
 
   // Returns a SymbolBody object for the SymbolIndex'th symbol in the
   // underlying object file.
-  SymbolBody *getSymbolBody(uint32_t SymbolIndex);
+  SymbolBody *getSymbolBody(uint32_t SymbolIndex) {
+    return SparseSymbolBodies[SymbolIndex]->getReplacement();
+  }
 
   // Returns the underying COFF file.
   COFFObjectFile *getCOFFObj() { return COFFObj.get(); }

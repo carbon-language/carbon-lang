@@ -114,10 +114,6 @@ std::error_code ObjectFile::parse() {
   return initializeSymbols();
 }
 
-SymbolBody *ObjectFile::getSymbolBody(uint32_t SymbolIndex) {
-  return SparseSymbolBodies[SymbolIndex]->getReplacement();
-}
-
 std::error_code ObjectFile::initializeChunks() {
   uint32_t NumSections = COFFObj->getNumberOfSections();
   Chunks.reserve(NumSections);
