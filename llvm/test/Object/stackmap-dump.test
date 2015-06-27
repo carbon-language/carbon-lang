@@ -1,5 +1,4 @@
-RUN: llvm-mc -triple x86_64-apple-darwin -filetype=obj -o %t %p/Inputs/stackmap.s && \
-RUN:   llvm-readobj -stackmap %t | FileCheck %s
+RUN: llvm-readobj -stackmap %p/Inputs/stackmap-test.macho-x86-64 | FileCheck %s
 
 CHECK:      LLVM StackMap Version: 1
 CHECK-NEXT: Num Functions: 1
