@@ -271,8 +271,10 @@ BitSetInfo LowerBitSets::buildBitSet(
     for (MDNode *Op : BitSetNM->operands()) {
       if (Op->getOperand(0) != BitSet || !Op->getOperand(1))
         continue;
-      auto OpGlobal = cast<GlobalVariable>(
+      auto OpGlobal = dyn_cast<GlobalVariable>(
           cast<ConstantAsMetadata>(Op->getOperand(1))->getValue());
+      if (!OpGlobal)
+        continue;
       uint64_t Offset =
           cast<ConstantInt>(cast<ConstantAsMetadata>(Op->getOperand(2))
                                 ->getValue())->getZExtValue();
@@ -621,7 +623,7 @@ bool LowerBitSets::buildBitSets() {
         report_fatal_error("Bit set element must be a constant");
       auto OpGlobal = dyn_cast<GlobalVariable>(OpConstMD->getValue());
       if (!OpGlobal)
-        report_fatal_error("Bit set element must refer to global");
+        continue;
 
       auto OffsetConstMD = dyn_cast<ConstantAsMetadata>(Op->getOperand(2));
       if (!OffsetConstMD)
@@ -675,8 +677,10 @@ bool LowerBitSets::buildBitSets() {
         if (I == BitSetIndices.end())
           continue;
 
-        auto OpGlobal = cast<GlobalVariable>(
+        auto OpGlobal = dyn_cast<GlobalVariable>(
             cast<ConstantAsMetadata>(Op->getOperand(1))->getValue());
+        if (!OpGlobal)
+          continue;
         BitSetMembers[I->second].insert(GlobalIndices[OpGlobal]);
       }
     }
