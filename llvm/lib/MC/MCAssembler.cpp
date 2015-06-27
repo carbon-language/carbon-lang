@@ -254,7 +254,7 @@ uint64_t llvm::computeBundlePadding(const MCAssembler &Assembler,
     else { // EndOfFragment > BundleSize
       return 2 * BundleSize - EndOfFragment;
     }
-  } else if (EndOfFragment > BundleSize)
+  } else if (OffsetInBundle > 0 && EndOfFragment > BundleSize)
     return BundleSize - OffsetInBundle;
   else
     return 0;
@@ -581,16 +581,22 @@ void MCAsmLayout::layoutFragment(MCFragment *F) {
   // size won't include the padding.
   //
   // When the -mc-relax-all flag is used, we optimize bundling by writting the
-  // bundle padding directly into fragments when the instructions are emitted
-  // inside the streamer.
+  // padding directly into fragments when the instructions are emitted inside
+  // the streamer. When the fragment is larger than the bundle size, we need to
+  // ensure that it's bundle aligned. This means that if we end up with
+  // multiple fragments, we must emit bundle padding between fragments.
   //
-  if (Assembler.isBundlingEnabled() && !Assembler.getRelaxAll() &&
-      F->hasInstructions()) {
+  // ".align N" is an example of a directive that introduces multiple
+  // fragments. We could add a special case to handle ".align N" by emitting
+  // within-fragment padding (which would produce less padding when N is less
+  // than the bundle size), but for now we don't.
+  //
+  if (Assembler.isBundlingEnabled() && F->hasInstructions()) {
     assert(isa<MCEncodedFragment>(F) &&
            "Only MCEncodedFragment implementations have instructions");
     uint64_t FSize = Assembler.computeFragmentSize(*this, *F);
 
-    if (FSize > Assembler.getBundleAlignSize())
+    if (!Assembler.getRelaxAll() && FSize > Assembler.getBundleAlignSize())
       report_fatal_error("Fragment can't be larger than a bundle size");
 
     uint64_t RequiredBundlePadding = computeBundlePadding(Assembler, F,
