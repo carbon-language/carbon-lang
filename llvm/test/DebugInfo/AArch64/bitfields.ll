@@ -1,6 +1,5 @@
-; RUN: %llc_dwarf -mtriple aarch64_be-gnu-linux -O0 -filetype=obj -o %t_be.o %s
+; RUN: llc -mtriple aarch64_be-gnu-linux -O0 -filetype=obj -o %t_be.o %s
 ; RUN: llvm-dwarfdump -debug-dump=info %t_be.o | FileCheck %s
-; REQUIRES: object-emission
 
 ; Produced at -O0 from:
 ; struct bitfield {
