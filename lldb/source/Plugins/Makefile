@@ -14,7 +14,7 @@ include $(LLDB_LEVEL)/../../Makefile.config
 
 PARALLEL_DIRS := ABI/MacOSX-arm ABI/MacOSX-arm64 ABI/MacOSX-i386 ABI/SysV-i386 ABI/SysV-x86_64 \
 	ABI/SysV-arm ABI/SysV-arm64 ABI/SysV-hexagon ABI/SysV-ppc ABI/SysV-ppc64 \
-	Disassembler/llvm \
+	ABI/SysV-mips ABI/SysV-mips64 Disassembler/llvm \
 	ObjectContainer/BSD-Archive ObjectFile/ELF ObjectFile/PECOFF \
 	ObjectContainer/Universal-Mach-O ObjectFile/Mach-O \
 	ObjectFile/JIT SymbolFile/DWARF SymbolFile/Symtab Process/Utility \
