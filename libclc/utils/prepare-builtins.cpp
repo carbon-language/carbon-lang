@@ -34,7 +34,7 @@ int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv, "libclc builtin preparation tool\n");
 
   std::string ErrorMessage;
-  Module *M;
+  Module *M = nullptr;
 
   {
     ErrorOr<std::unique_ptr<MemoryBuffer>> BufferOrErr =
