@@ -409,7 +409,7 @@ struct FormatStyle {
   /// which should not be split into lines or otherwise changed.
   std::string CommentPragmas;
 
-  /// \brief Disables formatting at all.
+  /// \brief Disables formatting completely.
   bool DisableFormat;
 
   /// \brief A vector of macros that should be interpreted as foreach loops

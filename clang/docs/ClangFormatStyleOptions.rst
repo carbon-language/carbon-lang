@@ -327,7 +327,7 @@ the configuration (without a prefix: ``Auto``).
   alignment of & and \*. ``PointerAlignment`` is then used only as fallback.
 
 **DisableFormat** (``bool``)
-  Disables formatting at all.
+  Disables formatting completely.
 
 **ExperimentalAutoDetectBinPacking** (``bool``)
   If ``true``, clang-format detects whether function calls and
