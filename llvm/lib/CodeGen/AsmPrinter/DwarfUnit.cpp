@@ -1361,29 +1361,24 @@ void DwarfUnit::constructMemberDIE(DIE &Buffer, const DIDerivedType *DT) {
       // | ...             |b1|b2|b3|b4|
       // +-----------+-----*-----+-----*-----+--
       // |           |     |<-- Size ->|     |
-      // |<---- Offset --->|     |     |<--->|
-      // |           |     |     |        \_ DW_AT_bit_offset (little endian)
-      // |           |<--->|     |
-      // |<--big-e.->|  \_ StartBitOffset = DW_AT_bit_offset (big endian)
-      // |      ^                |        = DW_AT_data_bit_offset (biendian)
-      // | OffsetInBytes         |
-      // |      v                |
-      // |<----little-endian---->|
+      // |<---- Offset --->|           |<--->|
+      // |           |     |              \_ DW_AT_bit_offset (little endian)
+      // |           |<--->|
+      // |<--------->|  \_ StartBitOffset = DW_AT_bit_offset (big endian)
+      //     \                            = DW_AT_data_bit_offset (biendian)
+      //      \_ OffsetInBytes
       uint64_t Offset = DT->getOffsetInBits();
       uint64_t Align = DT->getAlignInBits() ? DT->getAlignInBits() : FieldSize;
       uint64_t AlignMask = ~(Align - 1);
       // The bits from the start of the storage unit to the start of the field.
       uint64_t StartBitOffset = Offset - (Offset & AlignMask);
-      // OffsetInBytes is the byte offset of the field's aligned storage unit
-      // inside the struct.
-      uint64_t DwarfBitOffset;
-      if (Asm->getDataLayout().isLittleEndian()) {
-        DwarfBitOffset = OffsetToAlignment(Offset + Size, Align);
-        OffsetInBytes = ((Offset + Size) & AlignMask) / 8;
-      } else {
-        DwarfBitOffset = StartBitOffset;
-        OffsetInBytes = (Offset - StartBitOffset) / 8;
-      }
+      // The endian-dependent DWARF 2 offset.
+      uint64_t DwarfBitOffset = Asm->getDataLayout().isLittleEndian()
+        ? OffsetToAlignment(Offset + Size, Align)
+        : StartBitOffset;
+
+      // The byte offset of the field's aligned storage unit inside the struct.
+      OffsetInBytes = (Offset - StartBitOffset) / 8;
       addUInt(MemberDie, dwarf::DW_AT_bit_offset, None, DwarfBitOffset);
     } else
       // This is not a bitfield.
