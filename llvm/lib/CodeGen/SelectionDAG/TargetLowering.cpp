@@ -2674,10 +2674,9 @@ void TargetLowering::ComputeConstraintToUse(AsmOperandInfo &OpInfo,
 
 /// \brief Given an exact SDIV by a constant, create a multiplication
 /// with the multiplicative inverse of the constant.
-SDValue TargetLowering::BuildExactSDIV(SDValue Op1, SDValue Op2, SDLoc dl,
-                                       SelectionDAG &DAG) const {
-  ConstantSDNode *C = cast<ConstantSDNode>(Op2);
-  APInt d = C->getAPIntValue();
+static SDValue BuildExactSDIV(const TargetLowering &TLI, SDValue Op1, APInt d,
+                              SDLoc dl, SelectionDAG &DAG,
+                              std::vector<SDNode *> &Created) {
   assert(d != 0 && "Division by zero!");
 
   // Shift the value upfront if it is even, so the LSB is one.
@@ -2685,10 +2684,11 @@ SDValue TargetLowering::BuildExactSDIV(SDValue Op1, SDValue Op2, SDLoc dl,
   if (ShAmt) {
     // TODO: For UDIV use SRL instead of SRA.
     SDValue Amt =
-        DAG.getConstant(ShAmt, dl, getShiftAmountTy(Op1.getValueType()));
+        DAG.getConstant(ShAmt, dl, TLI.getShiftAmountTy(Op1.getValueType()));
     SDNodeFlags Flags;
     Flags.setExact(true);
     Op1 = DAG.getNode(ISD::SRA, dl, Op1.getValueType(), Op1, Amt, &Flags);
+    Created.push_back(Op1.getNode());
     d = d.ashr(ShAmt);
   }
 
@@ -2697,8 +2697,10 @@ SDValue TargetLowering::BuildExactSDIV(SDValue Op1, SDValue Op2, SDLoc dl,
   while ((t = d*xn) != 1)
     xn *= APInt(d.getBitWidth(), 2) - t;
 
-  Op2 = DAG.getConstant(xn, dl, Op1.getValueType());
-  return DAG.getNode(ISD::MUL, dl, Op1.getValueType(), Op1, Op2);
+  SDValue Op2 = DAG.getConstant(xn, dl, Op1.getValueType());
+  SDValue Mul = DAG.getNode(ISD::MUL, dl, Op1.getValueType(), Op1, Op2);
+  Created.push_back(Mul.getNode());
+  return Mul;
 }
 
 /// \brief Given an ISD::SDIV node expressing a divide by constant,
@@ -2717,6 +2719,10 @@ SDValue TargetLowering::BuildSDIV(SDNode *N, const APInt &Divisor,
   // FIXME: We should be more aggressive here.
   if (!isTypeLegal(VT))
     return SDValue();
+
+  // If the sdiv has an 'exact' bit we can use a simpler lowering.
+  if (cast<BinaryWithFlagsSDNode>(N)->Flags.hasExact())
+    return BuildExactSDIV(*this, N->getOperand(0), Divisor, dl, DAG, *Created);
 
   APInt::ms magics = Divisor.magic();
 
