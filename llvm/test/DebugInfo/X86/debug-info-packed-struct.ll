@@ -7,6 +7,19 @@ target triple = "x86_64-apple-darwin"
 ; RUN: llvm-dwarfdump -debug-dump=info %t.o | FileCheck %s
 ; REQUIRES: object-emission
 
+;  // ---------------------------------------------------------------------
+;  // Not packed.
+;  // ---------------------------------------------------------------------
+;  struct size8 {
+;    int i : 4;
+;    long long l : 60;
+;  };
+;  struct layout0 {
+;    char l0_ofs0;
+;    struct size8 l0_ofs8;
+;    int l0_ofs16 : 1;
+;  } l0;
+
 %struct.layout0 = type { i8, %struct.size8, i8 }
 %struct.size8 = type { i64 }
 ; CHECK:  DW_TAG_structure_type
@@ -23,6 +36,20 @@ target triple = "x86_64-apple-darwin"
 ; CHECK:          DW_AT_bit_size   {{.*}} (0x01)
 ; CHECK:          DW_AT_bit_offset {{.*}} (0x1f)
 ; CHECK:          DW_AT_data_member_location {{.*}}10
+
+
+; // ---------------------------------------------------------------------
+; // Implicitly packed.
+; // ---------------------------------------------------------------------
+; struct size8_anon {
+;   int : 4;
+;   long long : 60;
+; };
+; struct layout1 {
+;   char l1_ofs0;
+;   struct size8_anon l1_ofs1;
+;   int l1_ofs9 : 1;
+; } l1;
 
 %struct.layout1 = type <{ i8, %struct.size8_anon, i8, [2 x i8] }>
 %struct.size8_anon = type { i64 }
@@ -43,6 +70,21 @@ target triple = "x86_64-apple-darwin"
 ; CHECK:          DW_AT_bit_offset {{.*}} (0x17)
 ; CHECK:          DW_AT_data_member_location {{.*}}08
 
+; // ---------------------------------------------------------------------
+; // Explicitly packed.
+; // ---------------------------------------------------------------------
+; #pragma pack(1)
+; struct size8_pack1 {
+;   int i : 4;
+;   long long l : 60;
+; };
+; struct layout2 {
+;   char l2_ofs0;
+;   struct size8_pack1 l2_ofs1;
+;   int l2_ofs9 : 1;
+; } l2;
+; #pragma pack()
+
 %struct.layout2 = type <{ i8, %struct.size8_pack1, i8 }>
 %struct.size8_pack1 = type { i64 }
 
@@ -61,6 +103,22 @@ target triple = "x86_64-apple-darwin"
 ; CHECK:          DW_AT_bit_size   {{.*}} (0x01)
 ; CHECK:          DW_AT_bit_offset {{.*}} (0x17)
 ; CHECK:          DW_AT_data_member_location {{.*}}08
+
+; // ---------------------------------------------------------------------
+; // Explicitly packed with different alignment.
+; // ---------------------------------------------------------------------
+; #pragma pack(4)
+; struct size8_pack4 {
+;   int i : 4;
+;   long long l : 60;
+; };
+; struct layout3 {
+;   char l3_ofs0;
+;   struct size8_pack4 l3_ofs4;
+;   int l3_ofs12 : 1;
+; } l 3;
+; #pragma pack()
+
 
 %struct.layout3 = type <{ i8, [3 x i8], %struct.size8_pack4, i8, [3 x i8] }>
 %struct.size8_pack4 = type { i64 }
