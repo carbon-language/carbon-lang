@@ -103,7 +103,7 @@ a:
         madd.s    $f1,$f31,$f19,$f25
         maddu     $s3,$gp
         maddu     $24,$s2
-        mfc0      $a2,$14,1
+        mfc0      $8,$15,1             # CHECK: mfc0 $8, $15, 1      # encoding: [0x40,0x08,0x78,0x01]
         mfc1      $a3,$f27
         mfhc1     $s8,$f24
         mfhi      $s3
@@ -129,7 +129,7 @@ a:
         msub.d    $f10,$f1,$f31,$f18
         msub.s    $f12,$f19,$f10,$f16
         msubu     $15,$a1
-        mtc0      $9,$29,3
+        mtc0      $9,$15,1             # CHECK: mtc0 $9, $15, 1     # encoding: [0x40,0x89,0x78,0x01]
         mtc1      $s8,$f9
         mthc1     $zero,$f16
         mthi      $s1

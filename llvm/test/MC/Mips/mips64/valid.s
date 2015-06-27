@@ -82,7 +82,9 @@ a:
         div.d     $f29,$f20,$f27
         div.s     $f4,$f5,$f15
         divu      $zero,$25,$15
+        dmfc0     $10, $16, 2          # CHECK: dmfc0 $10, $16, 2           # encoding: [0x40,0x2a,0x80,0x02]
         dmfc1     $12,$f13
+        dmtc0     $4, $10, 0           # CHECK: dmtc0 $4, $10, 0            # encoding: [0x40,0xa4,0x50,0x00]
         dmtc1     $s0,$f14
         dmult     $s7,$9
         dmultu    $a1,$a2
@@ -154,7 +156,7 @@ a:
         maddu     $24,$s2
         madd.d    $f18, $f22, $f26, $f20  # encoding: [0x4e,0xd4,0xd4,0xa1]
         madd.s    $f2, $f30, $f18, $f24   # encoding: [0x4f,0xd8,0x90,0xa0]
-        mfc0      $a2,$14,1
+        mfc0      $8,$15,1             # CHECK: mfc0 $8, $15, 1        # encoding: [0x40,0x08,0x78,0x01]
         mfc1      $a3,$f27
         mfhi      $s3
         mfhi      $sp
@@ -181,7 +183,7 @@ a:
         msubu     $15,$a1
         msub.d    $f10, $f2, $f30, $f18   # encoding: [0x4c,0x52,0xf2,0xa9]
         msub.s    $f12, $f18, $f10, $f16  # encoding: [0x4e,0x50,0x53,0x28]
-        mtc0      $9,$29,3
+        mtc0      $9,$15,1                # CHECK: mtc0 $9, $15, 1     # encoding: [0x40,0x89,0x78,0x01]
         mtc1      $s8,$f9
         mthi      $s1
         mtlo      $sp

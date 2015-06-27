@@ -49,6 +49,7 @@ public:
     FGR64RegClass = &(TRI->getRegClass(Mips::FGR64RegClassID));
     AFGR64RegClass = &(TRI->getRegClass(Mips::AFGR64RegClassID));
     MSA128BRegClass = &(TRI->getRegClass(Mips::MSA128BRegClassID));
+    COP0RegClass = &(TRI->getRegClass(Mips::COP0RegClassID));
     COP2RegClass = &(TRI->getRegClass(Mips::COP2RegClassID));
     COP3RegClass = &(TRI->getRegClass(Mips::COP3RegClassID));
   }
@@ -66,6 +67,7 @@ private:
   const MCRegisterClass *FGR64RegClass;
   const MCRegisterClass *AFGR64RegClass;
   const MCRegisterClass *MSA128BRegClass;
+  const MCRegisterClass *COP0RegClass;
   const MCRegisterClass *COP2RegClass;
   const MCRegisterClass *COP3RegClass;
   uint32_t ri_gprmask;

@@ -79,6 +79,9 @@ void MipsRegInfoRecord::SetPhysRegUsed(unsigned Reg,
     if (GPR32RegClass->contains(CurrentSubReg) ||
         GPR64RegClass->contains(CurrentSubReg))
       ri_gprmask |= Value;
+    else if (COP0RegClass->contains(CurrentSubReg))
+      ri_cprmask[0] |= Value;
+    // MIPS COP1 is the FPU.
     else if (FGR32RegClass->contains(CurrentSubReg) ||
              FGR64RegClass->contains(CurrentSubReg) ||
              AFGR64RegClass->contains(CurrentSubReg) ||
