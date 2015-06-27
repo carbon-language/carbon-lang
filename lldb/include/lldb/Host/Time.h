@@ -18,7 +18,7 @@
 
 #if defined(__ANDROID_API__) && __ANDROID_API__ < 21
 #include <time64.h>
-static time_t timegm(struct tm* t);
+extern time_t timegm(struct tm* t);
 #else
 #include <time.h>
 #endif
