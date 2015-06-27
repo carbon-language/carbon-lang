@@ -11,9 +11,10 @@
 #define LLD_COFF_SYMBOL_TABLE_H
 
 #include "InputFiles.h"
+#include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/DenseMapInfo.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/raw_ostream.h"
-#include <unordered_map>
 
 namespace llvm {
 struct LTOCodeGenerator;
@@ -90,7 +91,7 @@ private:
   std::error_code addMemberFile(Lazy *Body);
   ErrorOr<ObjectFile *> createLTOObject(llvm::LTOCodeGenerator *CG);
 
-  std::unordered_map<StringRef, Symbol *> Symtab;
+  llvm::DenseMap<StringRef, Symbol *> Symtab;
   std::vector<std::unique_ptr<InputFile>> Files;
   size_t FileIdx = 0;
   std::vector<ArchiveFile *> ArchiveFiles;
