@@ -546,6 +546,16 @@ public:
 /// This is a singly-linked list, but instead of reversing the order of
 /// insertion, we keep a pointer to the back of the list so we can push in
 /// order.
+///
+/// There are two main reasons to choose a linked list over a customized
+/// vector-like data structure.
+///
+///  1. For teardown efficiency, we want DIEs to be BumpPtrAllocated.  Using a
+///     linked list here makes this way easier to accomplish.
+///  2. Carrying an extra pointer per \a DIEValue isn't expensive.  45% of DIEs
+///     have 2 or fewer values, and 90% have 5 or fewer.  A vector would be
+///     over-allocated by 50% on average anyway, the same cost as the
+///     linked-list node.
 class DIEValueList {
   struct Node : IntrusiveBackListNode {
     DIEValue V;
