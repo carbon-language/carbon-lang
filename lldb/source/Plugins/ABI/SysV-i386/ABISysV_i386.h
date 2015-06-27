@@ -122,11 +122,11 @@ public:
     static lldb_private::ConstString
     GetPluginNameStatic();
 
-    virtual lldb_private::ConstString
-    GetPluginName();
+    lldb_private::ConstString
+    GetPluginName() override;
 
-    virtual uint32_t
-    GetPluginVersion()
+    uint32_t
+    GetPluginVersion()  override
     {
         return 1;
     }
