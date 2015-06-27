@@ -3193,21 +3193,35 @@ static bool isReferencingMDNode(const Instruction &I) {
 }
 
 void Value::print(raw_ostream &ROS) const {
+  bool ShouldInitializeAllMetadata = false;
+  if (auto *I = dyn_cast<Instruction>(this))
+    ShouldInitializeAllMetadata = isReferencingMDNode(*I);
+  else if (isa<Function>(this) || isa<MetadataAsValue>(this))
+    ShouldInitializeAllMetadata = true;
+
+  ModuleSlotTracker MST(getModuleFromVal(this), ShouldInitializeAllMetadata);
+  print(ROS, MST);
+}
+
+void Value::print(raw_ostream &ROS, ModuleSlotTracker &MST) const {
   formatted_raw_ostream OS(ROS);
+  SlotTracker EmptySlotTable(static_cast<const Module *>(nullptr));
+  SlotTracker &SlotTable =
+      MST.getMachine() ? *MST.getMachine() : EmptySlotTable;
+  auto incorporateFunction = [&](const Function *F) {
+    if (F)
+      MST.incorporateFunction(*F);
+  };
+
   if (const Instruction *I = dyn_cast<Instruction>(this)) {
-    const Function *F = I->getParent() ? I->getParent()->getParent() : nullptr;
-    SlotTracker SlotTable(
-        F,
-        /* ShouldInitializeAllMetadata */ isReferencingMDNode(*I));
+    incorporateFunction(I->getParent() ? I->getParent()->getParent() : nullptr);
     AssemblyWriter W(OS, SlotTable, getModuleFromVal(I), nullptr);
     W.printInstruction(*I);
   } else if (const BasicBlock *BB = dyn_cast<BasicBlock>(this)) {
-    SlotTracker SlotTable(BB->getParent());
+    incorporateFunction(BB->getParent());
     AssemblyWriter W(OS, SlotTable, getModuleFromVal(BB), nullptr);
     W.printBasicBlock(BB);
   } else if (const GlobalValue *GV = dyn_cast<GlobalValue>(this)) {
-    SlotTracker SlotTable(GV->getParent(),
-                          /* ShouldInitializeAllMetadata */ isa<Function>(GV));
     AssemblyWriter W(OS, SlotTable, GV->getParent(), nullptr);
     if (const GlobalVariable *V = dyn_cast<GlobalVariable>(GV))
       W.printGlobal(V);
@@ -3216,14 +3230,14 @@ void Value::print(raw_ostream &ROS) const {
     else
       W.printAlias(cast<GlobalAlias>(GV));
   } else if (const MetadataAsValue *V = dyn_cast<MetadataAsValue>(this)) {
-    V->getMetadata()->print(ROS, getModuleFromVal(V));
+    V->getMetadata()->print(ROS, MST, getModuleFromVal(V));
   } else if (const Constant *C = dyn_cast<Constant>(this)) {
     TypePrinting TypePrinter;
     TypePrinter.print(C->getType(), OS);
     OS << ' ';
-    WriteConstantInternal(OS, C, TypePrinter, nullptr, nullptr);
+    WriteConstantInternal(OS, C, TypePrinter, MST.getMachine(), nullptr);
   } else if (isa<InlineAsm>(this) || isa<Argument>(this)) {
-    this->printAsOperand(OS);
+    this->printAsOperand(OS, /* PrintType */ true, MST);
   } else {
     llvm_unreachable("Unknown value to print out!");
   }
@@ -3312,6 +3326,11 @@ void Metadata::printAsOperand(raw_ostream &OS, ModuleSlotTracker &MST,
 
 void Metadata::print(raw_ostream &OS, const Module *M) const {
   ModuleSlotTracker MST(M, isa<MDNode>(this));
+  printMetadataImpl(OS, *this, MST, M, /* OnlyAsOperand */ false);
+}
+
+void Metadata::print(raw_ostream &OS, ModuleSlotTracker &MST,
+                     const Module *M) const {
   printMetadataImpl(OS, *this, MST, M, /* OnlyAsOperand */ false);
 }
 

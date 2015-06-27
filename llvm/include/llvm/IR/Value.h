@@ -200,7 +200,10 @@ public:
   void dump() const;
 
   /// \brief Implement operator<< on Value.
+  /// @{
   void print(raw_ostream &O) const;
+  void print(raw_ostream &O, ModuleSlotTracker &MST) const;
+  /// @}
 
   /// \brief Print the name of this Value out to the specified raw_ostream.
   ///
