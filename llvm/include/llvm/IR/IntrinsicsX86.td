@@ -4264,6 +4264,102 @@ let TargetPrefix = "x86" in {
                      llvm_v8i64_ty, llvm_i8_ty, llvm_i32_ty],
                     [IntrReadArgMem]>;
 
+  def int_x86_avx512_gather3div2_df : 
+        GCCBuiltin<"__builtin_ia32_gather3div2df">,
+          Intrinsic<[llvm_v2f64_ty],
+          [llvm_v2f64_ty, llvm_ptr_ty, llvm_v2i64_ty, llvm_i8_ty, llvm_i32_ty],
+          [IntrReadArgMem]>;
+
+  def int_x86_avx512_gather3div2_di : 
+        GCCBuiltin<"__builtin_ia32_gather3div2di">,
+          Intrinsic<[llvm_v4i32_ty],
+          [llvm_v2i64_ty, llvm_ptr_ty, llvm_v2i64_ty, llvm_i8_ty, llvm_i32_ty],
+          [IntrReadArgMem]>;
+
+  def int_x86_avx512_gather3div4_df : 
+        GCCBuiltin<"__builtin_ia32_gather3div4df">,
+          Intrinsic<[llvm_v4f64_ty],
+          [llvm_v4f64_ty, llvm_ptr_ty, llvm_v4i64_ty, llvm_i8_ty, llvm_i32_ty],
+          [IntrReadArgMem]>;
+
+  def int_x86_avx512_gather3div4_di : 
+        GCCBuiltin<"__builtin_ia32_gather3div4di">,
+          Intrinsic<[llvm_v8i32_ty],
+          [llvm_v4i64_ty, llvm_ptr_ty, llvm_v4i64_ty, llvm_i8_ty, llvm_i32_ty],
+          [IntrReadArgMem]>;
+
+  def int_x86_avx512_gather3div4_sf : 
+        GCCBuiltin<"__builtin_ia32_gather3div4sf">,
+          Intrinsic<[llvm_v4f32_ty],
+          [llvm_v4f32_ty, llvm_ptr_ty, llvm_v2i64_ty, llvm_i8_ty, llvm_i32_ty],
+          [IntrReadArgMem]>;
+
+  def int_x86_avx512_gather3div4_si : 
+        GCCBuiltin<"__builtin_ia32_gather3div4si">,
+          Intrinsic<[llvm_v4i32_ty],
+          [llvm_v4i32_ty, llvm_ptr_ty, llvm_v2i64_ty, llvm_i8_ty, llvm_i32_ty],
+          [IntrReadArgMem]>;
+
+  def int_x86_avx512_gather3div8_sf : 
+        GCCBuiltin<"__builtin_ia32_gather3div8sf">,
+          Intrinsic<[llvm_v4f32_ty],
+          [llvm_v4f32_ty, llvm_ptr_ty, llvm_v4i64_ty, llvm_i8_ty, llvm_i32_ty],
+          [IntrReadArgMem]>;
+
+  def int_x86_avx512_gather3div8_si : 
+        GCCBuiltin<"__builtin_ia32_gather3div8si">,
+          Intrinsic<[llvm_v4i32_ty],
+          [llvm_v4i32_ty, llvm_ptr_ty, llvm_v4i64_ty, llvm_i8_ty, llvm_i32_ty],
+          [IntrReadArgMem]>;
+
+  def int_x86_avx512_gather3siv2_df : 
+        GCCBuiltin<"__builtin_ia32_gather3siv2df">,
+          Intrinsic<[llvm_v2f64_ty],
+          [llvm_v2f64_ty, llvm_ptr_ty, llvm_v4i32_ty, llvm_i8_ty, llvm_i32_ty],
+          [IntrReadArgMem]>;
+
+  def int_x86_avx512_gather3siv2_di : 
+        GCCBuiltin<"__builtin_ia32_gather3siv2di">,
+          Intrinsic<[llvm_v4i32_ty],
+          [llvm_v2i64_ty, llvm_ptr_ty, llvm_v4i32_ty, llvm_i8_ty, llvm_i32_ty],
+          [IntrReadArgMem]>;
+
+  def int_x86_avx512_gather3siv4_df : 
+        GCCBuiltin<"__builtin_ia32_gather3siv4df">,
+          Intrinsic<[llvm_v4f64_ty],
+          [llvm_v4f64_ty, llvm_ptr_ty, llvm_v4i32_ty, llvm_i8_ty, llvm_i32_ty],
+          [IntrReadArgMem]>;
+
+  def int_x86_avx512_gather3siv4_di : 
+        GCCBuiltin<"__builtin_ia32_gather3siv4di">,
+          Intrinsic<[llvm_v8i32_ty],
+          [llvm_v4i64_ty, llvm_ptr_ty, llvm_v4i32_ty, llvm_i8_ty, llvm_i32_ty],
+          [IntrReadArgMem]>;
+
+  def int_x86_avx512_gather3siv4_sf : 
+        GCCBuiltin<"__builtin_ia32_gather3siv4sf">,
+          Intrinsic<[llvm_v4f32_ty],
+          [llvm_v4f32_ty, llvm_ptr_ty, llvm_v4i32_ty, llvm_i8_ty, llvm_i32_ty],
+          [IntrReadArgMem]>;
+
+  def int_x86_avx512_gather3siv4_si : 
+        GCCBuiltin<"__builtin_ia32_gather3siv4si">,
+          Intrinsic<[llvm_v4i32_ty],
+          [llvm_v4i32_ty, llvm_ptr_ty, llvm_v4i32_ty, llvm_i8_ty, llvm_i32_ty],
+          [IntrReadArgMem]>;
+
+  def int_x86_avx512_gather3siv8_sf : 
+        GCCBuiltin<"__builtin_ia32_gather3siv8sf">,
+          Intrinsic<[llvm_v8f32_ty],
+          [llvm_v8f32_ty, llvm_ptr_ty, llvm_v8i32_ty, llvm_i8_ty, llvm_i32_ty],
+          [IntrReadArgMem]>;
+
+  def int_x86_avx512_gather3siv8_si : 
+        GCCBuiltin<"__builtin_ia32_gather3siv8si">,
+          Intrinsic<[llvm_v8i32_ty],
+          [llvm_v8i32_ty, llvm_ptr_ty, llvm_v8i32_ty, llvm_i8_ty, llvm_i32_ty],
+          [IntrReadArgMem]>;
+
 // scatter
   def int_x86_avx512_scatter_dpd_512  : GCCBuiltin<"__builtin_ia32_scattersiv8df">,
           Intrinsic<[], [llvm_ptr_ty, llvm_i8_ty,
