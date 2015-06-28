@@ -71,15 +71,12 @@ bool SymbolTable::reportRemainingUndefines() {
     if (!Undef)
       continue;
     StringRef Name = Undef->getName();
+    // The weak alias may have been resovled, so check for that.
     if (SymbolBody *Alias = Undef->getWeakAlias()) {
-      Sym->Body = Alias->getReplacement();
-      if (!isa<Defined>(Sym->Body)) {
-        // Aliases are yet another symbols pointed by other symbols
-        // that could also remain undefined.
-        llvm::errs() << "undefined symbol: " << Name << "\n";
-        Ret = true;
+      if (auto *D = dyn_cast<Defined>(Alias->getReplacement())) {
+        Sym->Body = D;
+        continue;
       }
-      continue;
     }
     // If we can resolve a symbol by removing __imp_ prefix, do that.
     // This odd rule is for compatibility with MSVC linker.
