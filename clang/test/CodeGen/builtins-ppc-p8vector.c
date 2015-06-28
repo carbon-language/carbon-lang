@@ -33,8 +33,8 @@ void test1() {
 
   /* vec_abs */
   res_vsll = vec_abs(vsll);
-// CHECK: call <2 x i64> @llvm.ppc.altivec.vmaxsd(<2 x i64> %{{[0-9]]*}}, <2 x i64>
-// CHECK-LE: call <2 x i64> @llvm.ppc.altivec.vmaxsd(<2 x i64> %{{[0-9]]*}}, <2 x i64>
+// CHECK: call <2 x i64> @llvm.ppc.altivec.vmaxsd(<2 x i64> %{{[0-9]*}}, <2 x i64>
+// CHECK-LE: call <2 x i64> @llvm.ppc.altivec.vmaxsd(<2 x i64> %{{[0-9]*}}, <2 x i64>
 // CHECK-PPC: error: call to 'vec_abs' is ambiguous
 
   res_vd = vec_abs(vda);
