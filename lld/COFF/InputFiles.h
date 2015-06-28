@@ -58,7 +58,7 @@ public:
   StringRef getDirectives() { return StringRef(Directives).trim(); }
 
 protected:
-  explicit InputFile(Kind K, MemoryBufferRef M) : MB(M), FileKind(K) {}
+  InputFile(Kind K, MemoryBufferRef M) : MB(M), FileKind(K) {}
   MemoryBufferRef MB;
   std::string Directives;
 
