@@ -2021,11 +2021,15 @@ bool Generic_GCC::IsUnwindTablesDefault() const {
   return getArch() == llvm::Triple::x86_64;
 }
 
-bool Generic_GCC::isPICDefault() const { return false; }
+bool Generic_GCC::isPICDefault() const {
+  return getArch() == llvm::Triple::x86_64 && getTriple().isOSWindows();
+}
 
 bool Generic_GCC::isPIEDefault() const { return false; }
 
-bool Generic_GCC::isPICDefaultForced() const { return false; }
+bool Generic_GCC::isPICDefaultForced() const {
+  return getArch() == llvm::Triple::x86_64 && getTriple().isOSWindows();
+}
 
 bool Generic_GCC::IsIntegratedAssemblerDefault() const {
   switch (getTriple().getArch()) {
