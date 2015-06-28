@@ -1,5 +1,5 @@
 # RUN: yaml2obj < %s > %t.obj
-# RUN: not lld -flavor link2 /out:%t.exe %t.obj
+# RUN: not lld -flavor link2 /out:%t.exe %t.obj >& %t.log
 # RUN: FileCheck %s < %t.log
 # RUN: lld -flavor link2 /out:%t.exe %t.obj /force >& %t.log
 # RUN: FileCheck %s < %t.log
