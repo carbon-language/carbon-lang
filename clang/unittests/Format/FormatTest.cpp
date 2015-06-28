@@ -2391,6 +2391,27 @@ TEST_F(FormatTest, FormatObjCTryCatch) {
                "});\n");
 }
 
+TEST_F(FormatTest, FormatObjCAutoreleasepool) {
+  FormatStyle Style = getLLVMStyle();
+  verifyFormat("@autoreleasepool {\n"
+               "  f();\n"
+               "}\n"
+               "@autoreleasepool {\n"
+               "  f();\n"
+               "}\n",
+               Style);
+  Style.BreakBeforeBraces = FormatStyle::BS_Allman;
+  verifyFormat("@autoreleasepool\n"
+               "{\n"
+               "  f();\n"
+               "}\n"
+               "@autoreleasepool\n"
+               "{\n"
+               "  f();\n"
+               "}\n",
+               Style);
+}
+
 TEST_F(FormatTest, StaticInitializers) {
   verifyFormat("static SomeClass SC = {1, 'a'};");
 

@@ -656,6 +656,16 @@ void UnwrappedLineParser::parseStructuralElement() {
       nextToken();
       addUnwrappedLine();
       return;
+    case tok::objc_autoreleasepool:
+      nextToken();
+      if (FormatTok->Tok.is(tok::l_brace)) {
+        if (Style.BreakBeforeBraces == FormatStyle::BS_Allman ||
+            Style.BreakBeforeBraces == FormatStyle::BS_GNU)
+          addUnwrappedLine();
+        parseBlock(/*MustBeDeclaration=*/false);
+      }
+      addUnwrappedLine();
+      return;
     case tok::objc_try:
       // This branch isn't strictly necessary (the kw_try case below would
       // do this too after the tok::at is parsed above).  But be explicit.
