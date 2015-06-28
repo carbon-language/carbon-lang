@@ -211,7 +211,8 @@ namespace llvm {
 
       // FP vector get exponent 
       FGETEXP_RND,
-
+      // FP Scale
+      SCALEF,
       // Integer add/sub with unsigned saturation.
       ADDUS,
       SUBUS,

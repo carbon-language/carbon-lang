@@ -12028,3 +12028,227 @@ vaddpd  {rz-sae}, %zmm2, %zmm1, %zmm1
 // CHECK: vpermt2pd -1032(%rdx){1to4}, %ymm23, %ymm17
 // CHECK:  encoding: [0x62,0xe2,0xc5,0x30,0x7f,0x8a,0xf8,0xfb,0xff,0xff]
           vpermt2pd -1032(%rdx){1to4}, %ymm23, %ymm17
+
+// CHECK: vscalefpd %xmm17, %xmm17, %xmm24
+// CHECK:  encoding: [0x62,0x22,0xf5,0x00,0x2c,0xc1]
+          vscalefpd %xmm17, %xmm17, %xmm24
+
+// CHECK: vscalefpd %xmm17, %xmm17, %xmm24 {%k2}
+// CHECK:  encoding: [0x62,0x22,0xf5,0x02,0x2c,0xc1]
+          vscalefpd %xmm17, %xmm17, %xmm24 {%k2}
+
+// CHECK: vscalefpd %xmm17, %xmm17, %xmm24 {%k2} {z}
+// CHECK:  encoding: [0x62,0x22,0xf5,0x82,0x2c,0xc1]
+          vscalefpd %xmm17, %xmm17, %xmm24 {%k2} {z}
+
+// CHECK: vscalefpd (%rcx), %xmm17, %xmm24
+// CHECK:  encoding: [0x62,0x62,0xf5,0x00,0x2c,0x01]
+          vscalefpd (%rcx), %xmm17, %xmm24
+
+// CHECK: vscalefpd 291(%rax,%r14,8), %xmm17, %xmm24
+// CHECK:  encoding: [0x62,0x22,0xf5,0x00,0x2c,0x84,0xf0,0x23,0x01,0x00,0x00]
+          vscalefpd 291(%rax,%r14,8), %xmm17, %xmm24
+
+// CHECK: vscalefpd (%rcx){1to2}, %xmm17, %xmm24
+// CHECK:  encoding: [0x62,0x62,0xf5,0x10,0x2c,0x01]
+          vscalefpd (%rcx){1to2}, %xmm17, %xmm24
+
+// CHECK: vscalefpd 2032(%rdx), %xmm17, %xmm24
+// CHECK:  encoding: [0x62,0x62,0xf5,0x00,0x2c,0x42,0x7f]
+          vscalefpd 2032(%rdx), %xmm17, %xmm24
+
+// CHECK: vscalefpd 2048(%rdx), %xmm17, %xmm24
+// CHECK:  encoding: [0x62,0x62,0xf5,0x00,0x2c,0x82,0x00,0x08,0x00,0x00]
+          vscalefpd 2048(%rdx), %xmm17, %xmm24
+
+// CHECK: vscalefpd -2048(%rdx), %xmm17, %xmm24
+// CHECK:  encoding: [0x62,0x62,0xf5,0x00,0x2c,0x42,0x80]
+          vscalefpd -2048(%rdx), %xmm17, %xmm24
+
+// CHECK: vscalefpd -2064(%rdx), %xmm17, %xmm24
+// CHECK:  encoding: [0x62,0x62,0xf5,0x00,0x2c,0x82,0xf0,0xf7,0xff,0xff]
+          vscalefpd -2064(%rdx), %xmm17, %xmm24
+
+// CHECK: vscalefpd 1016(%rdx){1to2}, %xmm17, %xmm24
+// CHECK:  encoding: [0x62,0x62,0xf5,0x10,0x2c,0x42,0x7f]
+          vscalefpd 1016(%rdx){1to2}, %xmm17, %xmm24
+
+// CHECK: vscalefpd 1024(%rdx){1to2}, %xmm17, %xmm24
+// CHECK:  encoding: [0x62,0x62,0xf5,0x10,0x2c,0x82,0x00,0x04,0x00,0x00]
+          vscalefpd 1024(%rdx){1to2}, %xmm17, %xmm24
+
+// CHECK: vscalefpd -1024(%rdx){1to2}, %xmm17, %xmm24
+// CHECK:  encoding: [0x62,0x62,0xf5,0x10,0x2c,0x42,0x80]
+          vscalefpd -1024(%rdx){1to2}, %xmm17, %xmm24
+
+// CHECK: vscalefpd -1032(%rdx){1to2}, %xmm17, %xmm24
+// CHECK:  encoding: [0x62,0x62,0xf5,0x10,0x2c,0x82,0xf8,0xfb,0xff,0xff]
+          vscalefpd -1032(%rdx){1to2}, %xmm17, %xmm24
+
+// CHECK: vscalefpd %ymm26, %ymm20, %ymm29
+// CHECK:  encoding: [0x62,0x02,0xdd,0x20,0x2c,0xea]
+          vscalefpd %ymm26, %ymm20, %ymm29
+
+// CHECK: vscalefpd %ymm26, %ymm20, %ymm29 {%k2}
+// CHECK:  encoding: [0x62,0x02,0xdd,0x22,0x2c,0xea]
+          vscalefpd %ymm26, %ymm20, %ymm29 {%k2}
+
+// CHECK: vscalefpd %ymm26, %ymm20, %ymm29 {%k2} {z}
+// CHECK:  encoding: [0x62,0x02,0xdd,0xa2,0x2c,0xea]
+          vscalefpd %ymm26, %ymm20, %ymm29 {%k2} {z}
+
+// CHECK: vscalefpd (%rcx), %ymm20, %ymm29
+// CHECK:  encoding: [0x62,0x62,0xdd,0x20,0x2c,0x29]
+          vscalefpd (%rcx), %ymm20, %ymm29
+
+// CHECK: vscalefpd 291(%rax,%r14,8), %ymm20, %ymm29
+// CHECK:  encoding: [0x62,0x22,0xdd,0x20,0x2c,0xac,0xf0,0x23,0x01,0x00,0x00]
+          vscalefpd 291(%rax,%r14,8), %ymm20, %ymm29
+
+// CHECK: vscalefpd (%rcx){1to4}, %ymm20, %ymm29
+// CHECK:  encoding: [0x62,0x62,0xdd,0x30,0x2c,0x29]
+          vscalefpd (%rcx){1to4}, %ymm20, %ymm29
+
+// CHECK: vscalefpd 4064(%rdx), %ymm20, %ymm29
+// CHECK:  encoding: [0x62,0x62,0xdd,0x20,0x2c,0x6a,0x7f]
+          vscalefpd 4064(%rdx), %ymm20, %ymm29
+
+// CHECK: vscalefpd 4096(%rdx), %ymm20, %ymm29
+// CHECK:  encoding: [0x62,0x62,0xdd,0x20,0x2c,0xaa,0x00,0x10,0x00,0x00]
+          vscalefpd 4096(%rdx), %ymm20, %ymm29
+
+// CHECK: vscalefpd -4096(%rdx), %ymm20, %ymm29
+// CHECK:  encoding: [0x62,0x62,0xdd,0x20,0x2c,0x6a,0x80]
+          vscalefpd -4096(%rdx), %ymm20, %ymm29
+
+// CHECK: vscalefpd -4128(%rdx), %ymm20, %ymm29
+// CHECK:  encoding: [0x62,0x62,0xdd,0x20,0x2c,0xaa,0xe0,0xef,0xff,0xff]
+          vscalefpd -4128(%rdx), %ymm20, %ymm29
+
+// CHECK: vscalefpd 1016(%rdx){1to4}, %ymm20, %ymm29
+// CHECK:  encoding: [0x62,0x62,0xdd,0x30,0x2c,0x6a,0x7f]
+          vscalefpd 1016(%rdx){1to4}, %ymm20, %ymm29
+
+// CHECK: vscalefpd 1024(%rdx){1to4}, %ymm20, %ymm29
+// CHECK:  encoding: [0x62,0x62,0xdd,0x30,0x2c,0xaa,0x00,0x04,0x00,0x00]
+          vscalefpd 1024(%rdx){1to4}, %ymm20, %ymm29
+
+// CHECK: vscalefpd -1024(%rdx){1to4}, %ymm20, %ymm29
+// CHECK:  encoding: [0x62,0x62,0xdd,0x30,0x2c,0x6a,0x80]
+          vscalefpd -1024(%rdx){1to4}, %ymm20, %ymm29
+
+// CHECK: vscalefpd -1032(%rdx){1to4}, %ymm20, %ymm29
+// CHECK:  encoding: [0x62,0x62,0xdd,0x30,0x2c,0xaa,0xf8,0xfb,0xff,0xff]
+          vscalefpd -1032(%rdx){1to4}, %ymm20, %ymm29
+
+// CHECK: vscalefps %xmm22, %xmm27, %xmm19
+// CHECK:  encoding: [0x62,0xa2,0x25,0x00,0x2c,0xde]
+          vscalefps %xmm22, %xmm27, %xmm19
+
+// CHECK: vscalefps %xmm22, %xmm27, %xmm19 {%k4}
+// CHECK:  encoding: [0x62,0xa2,0x25,0x04,0x2c,0xde]
+          vscalefps %xmm22, %xmm27, %xmm19 {%k4}
+
+// CHECK: vscalefps %xmm22, %xmm27, %xmm19 {%k4} {z}
+// CHECK:  encoding: [0x62,0xa2,0x25,0x84,0x2c,0xde]
+          vscalefps %xmm22, %xmm27, %xmm19 {%k4} {z}
+
+// CHECK: vscalefps (%rcx), %xmm27, %xmm19
+// CHECK:  encoding: [0x62,0xe2,0x25,0x00,0x2c,0x19]
+          vscalefps (%rcx), %xmm27, %xmm19
+
+// CHECK: vscalefps 291(%rax,%r14,8), %xmm27, %xmm19
+// CHECK:  encoding: [0x62,0xa2,0x25,0x00,0x2c,0x9c,0xf0,0x23,0x01,0x00,0x00]
+          vscalefps 291(%rax,%r14,8), %xmm27, %xmm19
+
+// CHECK: vscalefps (%rcx){1to4}, %xmm27, %xmm19
+// CHECK:  encoding: [0x62,0xe2,0x25,0x10,0x2c,0x19]
+          vscalefps (%rcx){1to4}, %xmm27, %xmm19
+
+// CHECK: vscalefps 2032(%rdx), %xmm27, %xmm19
+// CHECK:  encoding: [0x62,0xe2,0x25,0x00,0x2c,0x5a,0x7f]
+          vscalefps 2032(%rdx), %xmm27, %xmm19
+
+// CHECK: vscalefps 2048(%rdx), %xmm27, %xmm19
+// CHECK:  encoding: [0x62,0xe2,0x25,0x00,0x2c,0x9a,0x00,0x08,0x00,0x00]
+          vscalefps 2048(%rdx), %xmm27, %xmm19
+
+// CHECK: vscalefps -2048(%rdx), %xmm27, %xmm19
+// CHECK:  encoding: [0x62,0xe2,0x25,0x00,0x2c,0x5a,0x80]
+          vscalefps -2048(%rdx), %xmm27, %xmm19
+
+// CHECK: vscalefps -2064(%rdx), %xmm27, %xmm19
+// CHECK:  encoding: [0x62,0xe2,0x25,0x00,0x2c,0x9a,0xf0,0xf7,0xff,0xff]
+          vscalefps -2064(%rdx), %xmm27, %xmm19
+
+// CHECK: vscalefps 508(%rdx){1to4}, %xmm27, %xmm19
+// CHECK:  encoding: [0x62,0xe2,0x25,0x10,0x2c,0x5a,0x7f]
+          vscalefps 508(%rdx){1to4}, %xmm27, %xmm19
+
+// CHECK: vscalefps 512(%rdx){1to4}, %xmm27, %xmm19
+// CHECK:  encoding: [0x62,0xe2,0x25,0x10,0x2c,0x9a,0x00,0x02,0x00,0x00]
+          vscalefps 512(%rdx){1to4}, %xmm27, %xmm19
+
+// CHECK: vscalefps -512(%rdx){1to4}, %xmm27, %xmm19
+// CHECK:  encoding: [0x62,0xe2,0x25,0x10,0x2c,0x5a,0x80]
+          vscalefps -512(%rdx){1to4}, %xmm27, %xmm19
+
+// CHECK: vscalefps -516(%rdx){1to4}, %xmm27, %xmm19
+// CHECK:  encoding: [0x62,0xe2,0x25,0x10,0x2c,0x9a,0xfc,0xfd,0xff,0xff]
+          vscalefps -516(%rdx){1to4}, %xmm27, %xmm19
+
+// CHECK: vscalefps %ymm23, %ymm22, %ymm25
+// CHECK:  encoding: [0x62,0x22,0x4d,0x20,0x2c,0xcf]
+          vscalefps %ymm23, %ymm22, %ymm25
+
+// CHECK: vscalefps %ymm23, %ymm22, %ymm25 {%k4}
+// CHECK:  encoding: [0x62,0x22,0x4d,0x24,0x2c,0xcf]
+          vscalefps %ymm23, %ymm22, %ymm25 {%k4}
+
+// CHECK: vscalefps %ymm23, %ymm22, %ymm25 {%k4} {z}
+// CHECK:  encoding: [0x62,0x22,0x4d,0xa4,0x2c,0xcf]
+          vscalefps %ymm23, %ymm22, %ymm25 {%k4} {z}
+
+// CHECK: vscalefps (%rcx), %ymm22, %ymm25
+// CHECK:  encoding: [0x62,0x62,0x4d,0x20,0x2c,0x09]
+          vscalefps (%rcx), %ymm22, %ymm25
+
+// CHECK: vscalefps 291(%rax,%r14,8), %ymm22, %ymm25
+// CHECK:  encoding: [0x62,0x22,0x4d,0x20,0x2c,0x8c,0xf0,0x23,0x01,0x00,0x00]
+          vscalefps 291(%rax,%r14,8), %ymm22, %ymm25
+
+// CHECK: vscalefps (%rcx){1to8}, %ymm22, %ymm25
+// CHECK:  encoding: [0x62,0x62,0x4d,0x30,0x2c,0x09]
+          vscalefps (%rcx){1to8}, %ymm22, %ymm25
+
+// CHECK: vscalefps 4064(%rdx), %ymm22, %ymm25
+// CHECK:  encoding: [0x62,0x62,0x4d,0x20,0x2c,0x4a,0x7f]
+          vscalefps 4064(%rdx), %ymm22, %ymm25
+
+// CHECK: vscalefps 4096(%rdx), %ymm22, %ymm25
+// CHECK:  encoding: [0x62,0x62,0x4d,0x20,0x2c,0x8a,0x00,0x10,0x00,0x00]
+          vscalefps 4096(%rdx), %ymm22, %ymm25
+
+// CHECK: vscalefps -4096(%rdx), %ymm22, %ymm25
+// CHECK:  encoding: [0x62,0x62,0x4d,0x20,0x2c,0x4a,0x80]
+          vscalefps -4096(%rdx), %ymm22, %ymm25
+
+// CHECK: vscalefps -4128(%rdx), %ymm22, %ymm25
+// CHECK:  encoding: [0x62,0x62,0x4d,0x20,0x2c,0x8a,0xe0,0xef,0xff,0xff]
+          vscalefps -4128(%rdx), %ymm22, %ymm25
+
+// CHECK: vscalefps 508(%rdx){1to8}, %ymm22, %ymm25
+// CHECK:  encoding: [0x62,0x62,0x4d,0x30,0x2c,0x4a,0x7f]
+          vscalefps 508(%rdx){1to8}, %ymm22, %ymm25
+
+// CHECK: vscalefps 512(%rdx){1to8}, %ymm22, %ymm25
+// CHECK:  encoding: [0x62,0x62,0x4d,0x30,0x2c,0x8a,0x00,0x02,0x00,0x00]
+          vscalefps 512(%rdx){1to8}, %ymm22, %ymm25
+
+// CHECK: vscalefps -512(%rdx){1to8}, %ymm22, %ymm25
+// CHECK:  encoding: [0x62,0x62,0x4d,0x30,0x2c,0x4a,0x80]
+          vscalefps -512(%rdx){1to8}, %ymm22, %ymm25
+
+// CHECK: vscalefps -516(%rdx){1to8}, %ymm22, %ymm25
+// CHECK:  encoding: [0x62,0x62,0x4d,0x30,0x2c,0x8a,0xfc,0xfd,0xff,0xff]
+          vscalefps -516(%rdx){1to8}, %ymm22, %ymm25

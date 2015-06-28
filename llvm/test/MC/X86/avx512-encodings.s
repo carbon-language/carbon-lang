@@ -9905,3 +9905,146 @@ vpermilpd $0x23, 0x400(%rbx), %zmm2
 // CHECK: vpscatterqq %zmm14, 1024(%rcx,%zmm20,4) {%k1}
 // CHECK:  encoding: [0x62,0x72,0xfd,0x41,0xa1,0xb4,0xa1,0x00,0x04,0x00,0x00]
           vpscatterqq %zmm14, 1024(%rcx,%zmm20,4) {%k1}
+// CHECK: vscalefpd %zmm28, %zmm26, %zmm26
+// CHECK:  encoding: [0x62,0x02,0xad,0x40,0x2c,0xd4]
+          vscalefpd %zmm28, %zmm26, %zmm26
+
+// CHECK: vscalefpd %zmm28, %zmm26, %zmm26 {%k5}
+// CHECK:  encoding: [0x62,0x02,0xad,0x45,0x2c,0xd4]
+          vscalefpd %zmm28, %zmm26, %zmm26 {%k5}
+
+// CHECK: vscalefpd %zmm28, %zmm26, %zmm26 {%k5} {z}
+// CHECK:  encoding: [0x62,0x02,0xad,0xc5,0x2c,0xd4]
+          vscalefpd %zmm28, %zmm26, %zmm26 {%k5} {z}
+
+// CHECK: vscalefpd {rn-sae}, %zmm28, %zmm26, %zmm26
+// CHECK:  encoding: [0x62,0x02,0xad,0x10,0x2c,0xd4]
+          vscalefpd {rn-sae}, %zmm28, %zmm26, %zmm26
+
+// CHECK: vscalefpd {ru-sae}, %zmm28, %zmm26, %zmm26
+// CHECK:  encoding: [0x62,0x02,0xad,0x50,0x2c,0xd4]
+          vscalefpd {ru-sae}, %zmm28, %zmm26, %zmm26
+
+// CHECK: vscalefpd {rd-sae}, %zmm28, %zmm26, %zmm26
+// CHECK:  encoding: [0x62,0x02,0xad,0x30,0x2c,0xd4]
+          vscalefpd {rd-sae}, %zmm28, %zmm26, %zmm26
+
+// CHECK: vscalefpd {rz-sae}, %zmm28, %zmm26, %zmm26
+// CHECK:  encoding: [0x62,0x02,0xad,0x70,0x2c,0xd4]
+          vscalefpd {rz-sae}, %zmm28, %zmm26, %zmm26
+
+// CHECK: vscalefpd (%rcx), %zmm26, %zmm26
+// CHECK:  encoding: [0x62,0x62,0xad,0x40,0x2c,0x11]
+          vscalefpd (%rcx), %zmm26, %zmm26
+
+// CHECK: vscalefpd 291(%rax,%r14,8), %zmm26, %zmm26
+// CHECK:  encoding: [0x62,0x22,0xad,0x40,0x2c,0x94,0xf0,0x23,0x01,0x00,0x00]
+          vscalefpd 291(%rax,%r14,8), %zmm26, %zmm26
+
+// CHECK: vscalefpd (%rcx){1to8}, %zmm26, %zmm26
+// CHECK:  encoding: [0x62,0x62,0xad,0x50,0x2c,0x11]
+          vscalefpd (%rcx){1to8}, %zmm26, %zmm26
+
+// CHECK: vscalefpd 8128(%rdx), %zmm26, %zmm26
+// CHECK:  encoding: [0x62,0x62,0xad,0x40,0x2c,0x52,0x7f]
+          vscalefpd 8128(%rdx), %zmm26, %zmm26
+
+// CHECK: vscalefpd 8192(%rdx), %zmm26, %zmm26
+// CHECK:  encoding: [0x62,0x62,0xad,0x40,0x2c,0x92,0x00,0x20,0x00,0x00]
+          vscalefpd 8192(%rdx), %zmm26, %zmm26
+
+// CHECK: vscalefpd -8192(%rdx), %zmm26, %zmm26
+// CHECK:  encoding: [0x62,0x62,0xad,0x40,0x2c,0x52,0x80]
+          vscalefpd -8192(%rdx), %zmm26, %zmm26
+
+// CHECK: vscalefpd -8256(%rdx), %zmm26, %zmm26
+// CHECK:  encoding: [0x62,0x62,0xad,0x40,0x2c,0x92,0xc0,0xdf,0xff,0xff]
+          vscalefpd -8256(%rdx), %zmm26, %zmm26
+
+// CHECK: vscalefpd 1016(%rdx){1to8}, %zmm26, %zmm26
+// CHECK:  encoding: [0x62,0x62,0xad,0x50,0x2c,0x52,0x7f]
+          vscalefpd 1016(%rdx){1to8}, %zmm26, %zmm26
+
+// CHECK: vscalefpd 1024(%rdx){1to8}, %zmm26, %zmm26
+// CHECK:  encoding: [0x62,0x62,0xad,0x50,0x2c,0x92,0x00,0x04,0x00,0x00]
+          vscalefpd 1024(%rdx){1to8}, %zmm26, %zmm26
+
+// CHECK: vscalefpd -1024(%rdx){1to8}, %zmm26, %zmm26
+// CHECK:  encoding: [0x62,0x62,0xad,0x50,0x2c,0x52,0x80]
+          vscalefpd -1024(%rdx){1to8}, %zmm26, %zmm26
+
+// CHECK: vscalefpd -1032(%rdx){1to8}, %zmm26, %zmm26
+// CHECK:  encoding: [0x62,0x62,0xad,0x50,0x2c,0x92,0xf8,0xfb,0xff,0xff]
+          vscalefpd -1032(%rdx){1to8}, %zmm26, %zmm26
+
+// CHECK: vscalefps %zmm18, %zmm6, %zmm19
+// CHECK:  encoding: [0x62,0xa2,0x4d,0x48,0x2c,0xda]
+          vscalefps %zmm18, %zmm6, %zmm19
+
+// CHECK: vscalefps %zmm18, %zmm6, %zmm19 {%k6}
+// CHECK:  encoding: [0x62,0xa2,0x4d,0x4e,0x2c,0xda]
+          vscalefps %zmm18, %zmm6, %zmm19 {%k6}
+
+// CHECK: vscalefps %zmm18, %zmm6, %zmm19 {%k6} {z}
+// CHECK:  encoding: [0x62,0xa2,0x4d,0xce,0x2c,0xda]
+          vscalefps %zmm18, %zmm6, %zmm19 {%k6} {z}
+
+// CHECK: vscalefps {rn-sae}, %zmm18, %zmm6, %zmm19
+// CHECK:  encoding: [0x62,0xa2,0x4d,0x18,0x2c,0xda]
+          vscalefps {rn-sae}, %zmm18, %zmm6, %zmm19
+
+// CHECK: vscalefps {ru-sae}, %zmm18, %zmm6, %zmm19
+// CHECK:  encoding: [0x62,0xa2,0x4d,0x58,0x2c,0xda]
+          vscalefps {ru-sae}, %zmm18, %zmm6, %zmm19
+
+// CHECK: vscalefps {rd-sae}, %zmm18, %zmm6, %zmm19
+// CHECK:  encoding: [0x62,0xa2,0x4d,0x38,0x2c,0xda]
+          vscalefps {rd-sae}, %zmm18, %zmm6, %zmm19
+
+// CHECK: vscalefps {rz-sae}, %zmm18, %zmm6, %zmm19
+// CHECK:  encoding: [0x62,0xa2,0x4d,0x78,0x2c,0xda]
+          vscalefps {rz-sae}, %zmm18, %zmm6, %zmm19
+
+// CHECK: vscalefps (%rcx), %zmm6, %zmm19
+// CHECK:  encoding: [0x62,0xe2,0x4d,0x48,0x2c,0x19]
+          vscalefps (%rcx), %zmm6, %zmm19
+
+// CHECK: vscalefps 291(%rax,%r14,8), %zmm6, %zmm19
+// CHECK:  encoding: [0x62,0xa2,0x4d,0x48,0x2c,0x9c,0xf0,0x23,0x01,0x00,0x00]
+          vscalefps 291(%rax,%r14,8), %zmm6, %zmm19
+
+// CHECK: vscalefps (%rcx){1to16}, %zmm6, %zmm19
+// CHECK:  encoding: [0x62,0xe2,0x4d,0x58,0x2c,0x19]
+          vscalefps (%rcx){1to16}, %zmm6, %zmm19
+
+// CHECK: vscalefps 8128(%rdx), %zmm6, %zmm19
+// CHECK:  encoding: [0x62,0xe2,0x4d,0x48,0x2c,0x5a,0x7f]
+          vscalefps 8128(%rdx), %zmm6, %zmm19
+
+// CHECK: vscalefps 8192(%rdx), %zmm6, %zmm19
+// CHECK:  encoding: [0x62,0xe2,0x4d,0x48,0x2c,0x9a,0x00,0x20,0x00,0x00]
+          vscalefps 8192(%rdx), %zmm6, %zmm19
+
+// CHECK: vscalefps -8192(%rdx), %zmm6, %zmm19
+// CHECK:  encoding: [0x62,0xe2,0x4d,0x48,0x2c,0x5a,0x80]
+          vscalefps -8192(%rdx), %zmm6, %zmm19
+
+// CHECK: vscalefps -8256(%rdx), %zmm6, %zmm19
+// CHECK:  encoding: [0x62,0xe2,0x4d,0x48,0x2c,0x9a,0xc0,0xdf,0xff,0xff]
+          vscalefps -8256(%rdx), %zmm6, %zmm19
+
+// CHECK: vscalefps 508(%rdx){1to16}, %zmm6, %zmm19
+// CHECK:  encoding: [0x62,0xe2,0x4d,0x58,0x2c,0x5a,0x7f]
+          vscalefps 508(%rdx){1to16}, %zmm6, %zmm19
+
+// CHECK: vscalefps 512(%rdx){1to16}, %zmm6, %zmm19
+// CHECK:  encoding: [0x62,0xe2,0x4d,0x58,0x2c,0x9a,0x00,0x02,0x00,0x00]
+          vscalefps 512(%rdx){1to16}, %zmm6, %zmm19
+
+// CHECK: vscalefps -512(%rdx){1to16}, %zmm6, %zmm19
+// CHECK:  encoding: [0x62,0xe2,0x4d,0x58,0x2c,0x5a,0x80]
+          vscalefps -512(%rdx){1to16}, %zmm6, %zmm19
+
+// CHECK: vscalefps -516(%rdx){1to16}, %zmm6, %zmm19
+// CHECK:  encoding: [0x62,0xe2,0x4d,0x58,0x2c,0x9a,0xfc,0xfd,0xff,0xff]
+          vscalefps -516(%rdx){1to16}, %zmm6, %zmm19
