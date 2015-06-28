@@ -37,24 +37,26 @@ struct Equals {
 // contents and relocations are all the same.
 void doICF(const std::vector<Chunk *> &Chunks) {
   std::unordered_set<SectionChunk *, Hasher, Equals> Set;
-  bool removed = false;
-  for (Chunk *C : Chunks) {
-    auto *SC = dyn_cast<SectionChunk>(C);
-    if (!SC || !SC->isCOMDAT() || !SC->isLive())
-      continue;
-    auto P = Set.insert(SC);
-    bool Inserted = P.second;
-    if (Inserted)
-      continue;
-    SectionChunk *Existing = *P.first;
-    SC->replaceWith(Existing);
-    removed = true;
-  }
-  // By merging sections, two relocations that originally pointed to
-  // different locations can now point to the same location.
-  // So, repeat the process until a convegence is obtained.
-  if (removed)
-    doICF(Chunks);
+  bool Redo;
+  do {
+    Set.clear();
+    Redo = false;
+    for (Chunk *C : Chunks) {
+      auto *SC = dyn_cast<SectionChunk>(C);
+      if (!SC || !SC->isCOMDAT() || !SC->isLive())
+        continue;
+      auto P = Set.insert(SC);
+      bool Inserted = P.second;
+      if (Inserted)
+        continue;
+      SectionChunk *Existing = *P.first;
+      SC->replaceWith(Existing);
+      // By merging sections, two relocations that originally pointed to
+      // different locations can now point to the same location.
+      // So, repeat the process until a convegence is obtained.
+      Redo = true;
+    }
+  } while (Redo);
 }
 
 } // namespace coff
