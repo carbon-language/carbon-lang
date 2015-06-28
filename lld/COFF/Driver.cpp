@@ -566,6 +566,20 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
       break;
   }
 
+  // Windows specific -- resolve dllexported symbols.
+  for (Export &E : Config->Exports) {
+    StringRef Name;
+    Symbol *Sym;
+    std::tie(Name, Sym) = Symtab.findMangled(E.Name);
+    if (!Sym) {
+      llvm::errs() << "exported symbol is not defined: " << E.Name << "\n";
+      return false;
+    }
+    if (E.Name != Name)
+      Symtab.rename(E.Name, Name);
+    E.Sym = Sym;
+  }
+
   // Make sure we have resolved all symbols.
   if (Symtab.reportRemainingUndefines())
     return false;
@@ -593,12 +607,9 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
     writeImportLibrary();
 
   // Windows specific -- fix up dllexported symbols.
-  if (!Config->Exports.empty()) {
-    for (Export &E : Config->Exports)
-      E.Sym = Symtab.find(E.Name);
+  if (!Config->Exports.empty())
     if (fixupExports())
       return false;
-  }
 
   // Windows specific -- Create a side-by-side manifest file.
   if (Config->Manifest == Configuration::SideBySide)

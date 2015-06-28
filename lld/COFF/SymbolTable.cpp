@@ -15,6 +15,7 @@
 #include "llvm/LTO/LTOCodeGenerator.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
+#include <utility>
 
 using namespace llvm;
 
@@ -171,6 +172,28 @@ Defined *SymbolTable::find(StringRef Name) {
   if (auto *Def = dyn_cast<Defined>(It->second->Body))
     return Def;
   return nullptr;
+}
+
+// Find a given symbol or its mangled symbol.
+std::pair<StringRef, Symbol *> SymbolTable::findMangled(StringRef S) {
+  auto It = Symtab.find(S);
+  if (It != Symtab.end()) {
+    Symbol *Sym = It->second;
+    if (isa<Defined>(Sym->Body))
+      return std::make_pair(S, Sym);
+  }
+
+  // In Microsoft ABI, a non-member function name is mangled this way.
+  std::string Prefix = ("?" + S + "@@Y").str();
+  for (auto I : Symtab) {
+    StringRef Name = I.first;
+    Symbol *Sym = I.second;
+    if (!Name.startswith(Prefix))
+      continue;
+    if (isa<Defined>(Sym->Body))
+      return std::make_pair(Name, Sym);
+  }
+  return std::make_pair(S, nullptr);
 }
 
 std::error_code SymbolTable::resolveLazy(StringRef Name) {

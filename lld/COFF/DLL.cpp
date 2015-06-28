@@ -419,8 +419,10 @@ public:
   size_t getSize() const override { return Size * 4; }
 
   void writeTo(uint8_t *Buf) override {
-    for (Export &E : Config->Exports)
-      write32le(Buf + FileOff + E.Ordinal * 4, E.Sym->getRVA());
+    for (Export &E : Config->Exports) {
+      auto *D = cast<Defined>(E.Sym->Body);
+      write32le(Buf + FileOff + E.Ordinal * 4, D->getRVA());
+    }
   }
 
 private:

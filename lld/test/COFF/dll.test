@@ -1,7 +1,8 @@
 # REQUIRES: winres
 
 # RUN: yaml2obj < %p/Inputs/export.yaml > %t.obj
-# RUN: lld -flavor link2 /out:%t.dll /dll %t.obj /export:exportfn1 /export:exportfn2
+# RUN: lld -flavor link2 /out:%t.dll /dll %t.obj /export:exportfn1 /export:exportfn2 \
+# RUN:   /export:mangled
 # RUN: llvm-objdump -p %t.dll | FileCheck -check-prefix=EXPORT %s
 
 EXPORT:      Export Table:
@@ -11,6 +12,7 @@ EXPORT-NEXT:       0        0
 EXPORT-NEXT:       1   0x1008  exportfn1
 EXPORT-NEXT:       2   0x1010  exportfn2
 EXPORT-NEXT:       3   0x1010  exportfn3
+EXPORT-NEXT:       4   0x1010  mangled
 
 # RUN: llvm-as -o %t.lto.obj %p/Inputs/export.ll
 # RUN: lld -flavor link2 /out:%t.lto.dll /dll %t.lto.obj /export:exportfn1 /export:exportfn2
@@ -28,7 +30,8 @@ EXPORT-LTO-NEXT:       3   0x1030  exportfn3
 # RUN: lld -flavor link2 /out:%t2.exe %t2.obj %t.lib
 # RUN: llvm-readobj -coff-imports %t2.exe | FileCheck -check-prefix=IMPORT %s
 
-# RUN: lld -flavor link2 /out:%t.dll /dll %t.obj /implib:%t2.lib /export:exportfn1 /export:exportfn2
+# RUN: lld -flavor link2 /out:%t.dll /dll %t.obj /implib:%t2.lib \
+# RUN:   /export:exportfn1 /export:exportfn2
 # RUN: lld -flavor link2 /out:%t2.exe %t2.obj %t2.lib
 # RUN: llvm-readobj -coff-imports %t2.exe | FileCheck -check-prefix=IMPORT %s
 

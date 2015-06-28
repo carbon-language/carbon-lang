@@ -52,6 +52,11 @@ public:
   // different symbol). Returns a nullptr if not found.
   Defined *find(StringRef Name);
 
+  // Find a symbol assuming that Name is a function name.
+  // Not only a given string but its mangled names (in MSVC C++ manner)
+  // will be searched.
+  std::pair<StringRef, Symbol *> findMangled(StringRef Name);
+
   // Windows specific -- `main` is not the only main function in Windows.
   // You can choose one from these four -- {w,}{WinMain,main}.
   // There are four different entry point functions for them,

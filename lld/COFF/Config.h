@@ -22,13 +22,13 @@ namespace coff {
 
 using llvm::COFF::WindowsSubsystem;
 using llvm::StringRef;
-class Defined;
+struct Symbol;
 
 // Represents an /export option.
 struct Export {
   StringRef Name;
   StringRef ExtName;
-  Defined *Sym = nullptr;
+  Symbol *Sym = nullptr;
   uint16_t Ordinal = 0;
   bool Noname = false;
   bool Data = false;
