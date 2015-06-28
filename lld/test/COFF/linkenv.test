@@ -1,5 +1,6 @@
-# RUN: env LINK="-help -foo" lld -flavor link2 >& %t.log
-# RUN: FileCheck %s < %t.log
+# RUN: env LINK="-help -foo" lld -flavor link2 > %t1.log 2> %t2.log
+# RUN: FileCheck -check-prefix=STDOUT %s < %t1.log
+# RUN: FileCheck -check-prefix=STDERR %s < %t2.log
 
-CHECK: unknown argument: -foo
-CHECK: OVERVIEW: LLVM Linker
+STDOUT: OVERVIEW: LLVM Linker
+STDERR: unknown argument: -foo
