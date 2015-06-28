@@ -53,7 +53,6 @@ public:
   }
 
 private:
-  ErrorOr<llvm::opt::InputArgList> parse(std::vector<const char *> Argv);
   std::vector<const char *> tokenize(StringRef S);
 
   ErrorOr<std::vector<const char *>>

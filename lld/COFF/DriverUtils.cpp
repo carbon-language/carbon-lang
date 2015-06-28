@@ -542,15 +542,15 @@ public:
 
 // Parses a given list of options.
 ErrorOr<llvm::opt::InputArgList>
-ArgParser::parse(std::vector<const char *> Argv) {
+ArgParser::parse(ArrayRef<const char *> ArgsArr) {
   // First, replace respnose files (@<file>-style options).
-  auto ArgvOrErr = replaceResponseFiles(Argv);
+  auto ArgvOrErr = replaceResponseFiles(ArgsArr);
   if (auto EC = ArgvOrErr.getError()) {
     llvm::errs() << "error while reading response file: " << EC.message()
                  << "\n";
     return EC;
   }
-  Argv = std::move(ArgvOrErr.get());
+  std::vector<const char *> Argv = std::move(ArgvOrErr.get());
 
   // Make InputArgList from string vectors.
   COFFOptTable Table;
@@ -571,20 +571,13 @@ ArgParser::parse(std::vector<const char *> Argv) {
 }
 
 ErrorOr<llvm::opt::InputArgList>
-ArgParser::parse(llvm::ArrayRef<const char *> Args) {
-  Args = Args.slice(1);
-  std::vector<const char *> V(Args.begin(), Args.end());
-  return parse(V);
-}
-
-ErrorOr<llvm::opt::InputArgList>
 ArgParser::parseLINK(ArrayRef<const char *> Args) {
   // Concatenate LINK env and given arguments and parse them.
   Optional<std::string> Env = Process::GetEnv("LINK");
   if (!Env)
     return parse(Args);
   std::vector<const char *> V = tokenize(*Env);
-  V.insert(V.end(), Args.begin() + 1, Args.end());
+  V.insert(V.end(), Args.begin(), Args.end());
   return parse(V);
 }
 
