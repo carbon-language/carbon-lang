@@ -265,6 +265,10 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
   if (Args.hasArg(OPT_verbose))
     Config->Verbose = true;
 
+  // Handle /force or /force:unresolved
+  if (Args.hasArg(OPT_force) || Args.hasArg(OPT_force_unresolved))
+    Config->Force = true;
+
   // Handle /entry
   if (auto *Arg = Args.getLastArg(OPT_entry)) {
     Config->EntryName = Arg->getValue();

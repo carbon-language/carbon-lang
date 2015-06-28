@@ -46,6 +46,7 @@ struct Configuration {
   std::string OutputFile;
   bool DoGC = true;
   bool Relocatable = true;
+  bool Force = false;
 
   // Symbols in this set are considered as live by the garbage collector.
   std::set<StringRef> GCRoots;

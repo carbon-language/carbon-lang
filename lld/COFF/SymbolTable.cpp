@@ -92,6 +92,12 @@ bool SymbolTable::reportRemainingUndefines() {
       }
     }
     llvm::errs() << "undefined symbol: " << Name << "\n";
+    // Remaining undefined symbols are not fatal if /force is specified.
+    // They are replaced with dummy defined symbols.
+    if (Config->Force) {
+      Sym->Body = new (Alloc) DefinedAbsolute(Name, 0);
+      continue;
+    }
     Ret = true;
   }
   return Ret;
