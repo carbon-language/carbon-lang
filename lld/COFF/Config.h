@@ -43,6 +43,7 @@ struct Configuration {
   bool Verbose = false;
   WindowsSubsystem Subsystem = llvm::COFF::IMAGE_SUBSYSTEM_UNKNOWN;
   StringRef EntryName;
+  bool NoEntry = false;
   std::string OutputFile;
   bool DoGC = true;
   bool Relocatable = true;

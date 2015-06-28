@@ -316,8 +316,10 @@ void Writer::writeHeader() {
   PE->Subsystem = Config->Subsystem;
   PE->SizeOfImage = SizeOfImage;
   PE->SizeOfHeaders = SizeOfHeaders;
-  Defined *Entry = cast<Defined>(Symtab->find(Config->EntryName));
-  PE->AddressOfEntryPoint = Entry->getRVA();
+  if (!Config->NoEntry) {
+    Defined *Entry = cast<Defined>(Symtab->find(Config->EntryName));
+    PE->AddressOfEntryPoint = Entry->getRVA();
+  }
   PE->SizeOfStackReserve = Config->StackReserve;
   PE->SizeOfStackCommit = Config->StackCommit;
   PE->SizeOfHeapReserve = Config->HeapReserve;

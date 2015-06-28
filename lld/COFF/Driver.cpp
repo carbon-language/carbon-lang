@@ -275,11 +275,20 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
     addUndefined(Config->EntryName);
   }
 
+  // Handle /noentry
+  if (Args.hasArg(OPT_noentry)) {
+    if (!Args.hasArg(OPT_dll)) {
+      llvm::errs() << "/noentry must be specified with /dll\n";
+      return false;
+    }
+    Config->NoEntry = true;
+  }
+
   // Handle /dll
   if (Args.hasArg(OPT_dll)) {
     Config->DLL = true;
     Config->ManifestID = 2;
-    if (Config->EntryName.empty()) {
+    if (Config->EntryName.empty() && !Config->NoEntry) {
       Config->EntryName = "_DllMainCRTStartup";
       addUndefined("_DllMainCRTStartup");
     }
@@ -539,15 +548,15 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
     // Windows specific -- If entry point name is not given, we need to
     // infer that from user-defined entry name. The symbol table takes
     // care of details.
-    if (Config->EntryName.empty()) {
+    if (Config->EntryName.empty() && !Config->NoEntry) {
       auto EntryOrErr = Symtab.findDefaultEntry();
       if (auto EC = EntryOrErr.getError()) {
         llvm::errs() << EC.message() << "\n";
         return false;
       }
       Config->EntryName = EntryOrErr.get();
+      addUndefined(Config->EntryName);
     }
-    addUndefined(Config->EntryName);
 
     if (auto EC = Symtab.run()) {
       llvm::errs() << EC.message() << "\n";
