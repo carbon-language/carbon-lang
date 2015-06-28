@@ -612,6 +612,8 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
     return false;
   }
 
+  // Create a symbol map file containing symbol VAs and their names
+  // to help debugging.
   if (auto *Arg = Args.getLastArg(OPT_lldmap)) {
     std::error_code EC;
     llvm::raw_fd_ostream Out(Arg->getValue(), EC, OpenFlags::F_Text);
@@ -621,7 +623,6 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
     }
     Symtab.printMap(Out);
   }
-
   return true;
 }
 
