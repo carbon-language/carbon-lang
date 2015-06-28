@@ -577,6 +577,17 @@ ArgParser::parse(llvm::ArrayRef<const char *> Args) {
   return parse(V);
 }
 
+ErrorOr<llvm::opt::InputArgList>
+ArgParser::parseLINK(ArrayRef<const char *> Args) {
+  // Concatenate LINK env and given arguments and parse them.
+  Optional<std::string> Env = Process::GetEnv("LINK");
+  if (!Env)
+    return parse(Args);
+  std::vector<const char *> V = tokenize(*Env);
+  V.insert(V.end(), Args.begin() + 1, Args.end());
+  return parse(V);
+}
+
 std::vector<const char *> ArgParser::tokenize(StringRef S) {
   SmallVector<const char *, 16> Tokens;
   BumpPtrStringSaver Saver(AllocAux);

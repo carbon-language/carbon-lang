@@ -233,7 +233,7 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
     return llvm::libDriverMain(ArgsArr.slice(1)) == 0;
 
   // Parse command line options.
-  auto ArgsOrErr = Parser.parse(ArgsArr);
+  auto ArgsOrErr = Parser.parseLINK(ArgsArr);
   if (auto EC = ArgsOrErr.getError()) {
     llvm::errs() << EC.message() << "\n";
     return false;

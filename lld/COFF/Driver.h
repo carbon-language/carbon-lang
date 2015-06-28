@@ -44,6 +44,9 @@ public:
   // Parses command line options.
   ErrorOr<llvm::opt::InputArgList> parse(llvm::ArrayRef<const char *> Args);
 
+  // Concatenate LINK environment varirable and given arguments and parse them.
+  ErrorOr<llvm::opt::InputArgList> parseLINK(llvm::ArrayRef<const char *> Args);
+
   // Tokenizes a given string and then parses as command line options.
   ErrorOr<llvm::opt::InputArgList> parse(StringRef S) {
     return parse(tokenize(S));
