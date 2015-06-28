@@ -427,12 +427,15 @@ struct FormatStyle {
   bool operator==(const FormatStyle &R) const {
     return AccessModifierOffset == R.AccessModifierOffset &&
            AlignAfterOpenBracket == R.AlignAfterOpenBracket &&
+           AlignConsecutiveAssignments == R.AlignConsecutiveAssignments &&
            AlignEscapedNewlinesLeft == R.AlignEscapedNewlinesLeft &&
            AlignOperands == R.AlignOperands &&
            AlignTrailingComments == R.AlignTrailingComments &&
            AllowAllParametersOfDeclarationOnNextLine ==
                R.AllowAllParametersOfDeclarationOnNextLine &&
            AllowShortBlocksOnASingleLine == R.AllowShortBlocksOnASingleLine &&
+           AllowShortCaseLabelsOnASingleLine ==
+               R.AllowShortCaseLabelsOnASingleLine &&
            AllowShortFunctionsOnASingleLine ==
                R.AllowShortFunctionsOnASingleLine &&
            AllowShortIfStatementsOnASingleLine ==
@@ -460,6 +463,7 @@ struct FormatStyle {
            ContinuationIndentWidth == R.ContinuationIndentWidth &&
            Cpp11BracedListStyle == R.Cpp11BracedListStyle &&
            DerivePointerAlignment == R.DerivePointerAlignment &&
+           DisableFormat == R.DisableFormat &&
            ExperimentalAutoDetectBinPacking ==
                R.ExperimentalAutoDetectBinPacking &&
            ForEachMacros == R.ForEachMacros &&
@@ -473,6 +477,8 @@ struct FormatStyle {
            ObjCBlockIndentWidth == R.ObjCBlockIndentWidth &&
            ObjCSpaceAfterProperty == R.ObjCSpaceAfterProperty &&
            ObjCSpaceBeforeProtocolList == R.ObjCSpaceBeforeProtocolList &&
+           PenaltyBreakBeforeFirstCallParameter ==
+               R.PenaltyBreakBeforeFirstCallParameter &&
            PenaltyBreakComment == R.PenaltyBreakComment &&
            PenaltyBreakFirstLessLess == R.PenaltyBreakFirstLessLess &&
            PenaltyBreakString == R.PenaltyBreakString &&
