@@ -173,6 +173,13 @@ bool SectionChunk::equals(const SectionChunk *X) const {
   if (getContents() != X->getContents())
     return false;
 
+  // Compare associative sections
+  if (AssocChildren.size() != X->AssocChildren.size())
+    return false;
+  for (size_t I = 0, E = AssocChildren.size(); I != E; ++I)
+    if (AssocChildren[I]->Ptr != X->AssocChildren[I]->Ptr)
+      return false;
+
   // Compare relocations
   auto Eq = [&](const coff_relocation &R1, const coff_relocation &R2) {
     if (R1.Type != R2.Type)
@@ -181,11 +188,13 @@ bool SectionChunk::equals(const SectionChunk *X) const {
       return false;
     SymbolBody *B1 = File->getSymbolBody(R1.SymbolTableIndex);
     SymbolBody *B2 = X->File->getSymbolBody(R2.SymbolTableIndex);
+    if (B1 == B2)
+      return true;
     auto *D1 = dyn_cast<DefinedRegular>(B1);
     auto *D2 = dyn_cast<DefinedRegular>(B2);
-    if (D1 && D2 && D1->getChunk() == D2->getChunk())
-      return true;
-    return B1 == B2;
+    return (D1 && D2 &&
+            D1->getValue() == D2->getValue() &&
+            D1->getChunk() == D2->getChunk());
   };
   return std::equal(Relocs.begin(), Relocs.end(), X->Relocs.begin(), Eq);
 }

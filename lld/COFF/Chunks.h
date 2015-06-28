@@ -151,7 +151,7 @@ private:
 
   const coff_section *Header;
   StringRef SectionName;
-  std::vector<Chunk *> AssocChildren;
+  std::vector<SectionChunk *> AssocChildren;
   llvm::iterator_range<const coff_relocation *> Relocs;
   size_t NumRelocs;
 
