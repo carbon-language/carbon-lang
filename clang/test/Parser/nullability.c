@@ -7,8 +7,8 @@ _Nonnull int *ptr; // expected-warning{{type nullability specifier '_Nonnull' is
 _Nonnull int *ptr2; // no-warning
 #pragma clang diagnostic pop
 
-#if __has_feature(nullability)
-#  error Nullability should not be supported in C under -pedantic -std=c99
+#if !__has_feature(nullability)
+#  error Nullability should always be supported
 #endif
 
 #if !__has_extension(nullability)
