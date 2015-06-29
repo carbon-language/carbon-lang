@@ -70,15 +70,17 @@ macro(add_lldb_library name)
     target_link_libraries(${name} ${cmake_2_8_12_PUBLIC} ${CLANG_USED_LIBS})
     llvm_config(${name} ${LLVM_LINK_COMPONENTS})
 
-    if (PARAM_SHARED)
-      install(TARGETS ${name}
-        RUNTIME DESTINATION bin
-        LIBRARY DESTINATION lib${LLVM_LIBDIR_SUFFIX}
-        ARCHIVE DESTINATION lib${LLVM_LIBDIR_SUFFIX})
-    else()
-      install(TARGETS ${name}
-        LIBRARY DESTINATION lib${LLVM_LIBDIR_SUFFIX}
-        ARCHIVE DESTINATION lib${LLVM_LIBDIR_SUFFIX})
+    if (NOT LLVM_INSTALL_TOOLCHAIN_ONLY OR ${name} STREQUAL "liblldb")
+      if (PARAM_SHARED)
+        install(TARGETS ${name}
+          RUNTIME DESTINATION bin
+          LIBRARY DESTINATION lib${LLVM_LIBDIR_SUFFIX}
+          ARCHIVE DESTINATION lib${LLVM_LIBDIR_SUFFIX})
+      else()
+        install(TARGETS ${name}
+          LIBRARY DESTINATION lib${LLVM_LIBDIR_SUFFIX}
+          ARCHIVE DESTINATION lib${LLVM_LIBDIR_SUFFIX})
+      endif()
     endif()
   endif()
 

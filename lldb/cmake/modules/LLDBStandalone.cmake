@@ -4,6 +4,8 @@ if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
   project(lldb)
   cmake_minimum_required(VERSION 2.8)
 
+  option(LLVM_INSTALL_TOOLCHAIN_ONLY "Only include toolchain files in the 'install' target." OFF)
+
   set(LLDB_PATH_TO_LLVM_SOURCE "" CACHE PATH
     "Path to LLVM source code. Not necessary if using an installed LLVM.")
   set(LLDB_PATH_TO_LLVM_BUILD "" CACHE PATH
