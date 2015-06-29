@@ -394,3 +394,57 @@ void f() {
 
 void g() { f<void>(); }
 }
+
+
+namespace PR21332 {
+  template<typename T> void f1() {
+    struct S {  // expected-note{{in instantiation of member class 'S' requested here}}
+      void g1(int n = T::error);  // expected-error{{type 'int' cannot be used prior to '::' because it has no members}}
+    };
+  }
+  template void f1<int>();  // expected-note{{in instantiation of function template specialization 'PR21332::f1<int>' requested here}}
+
+  template<typename T> void f2() {
+    struct S {  // expected-note{{in instantiation of member class 'S' requested here}}
+      void g2() noexcept(T::error);  // expected-error{{type 'int' cannot be used prior to '::' because it has no members}}
+    };
+  }
+  template void f2<int>();  // expected-note{{in instantiation of function template specialization 'PR21332::f2<int>' requested here}}
+
+  template<typename T> void f3() {
+    enum S {
+      val = T::error;  // expected-error{{expected '}' or ','}} expected-error{{type 'int' cannot be used prior to '::' because it has no members}}
+    };
+  }
+  template void f3<int>();  //expected-note{{in instantiation of function template specialization 'PR21332::f3<int>' requested here}}
+
+  template<typename T> void f4() {
+    enum class S {
+      val = T::error;  // expected-error{{expected '}' or ','}} expected-error{{type 'int' cannot be used prior to '::' because it has no members}}
+    };
+  }
+  template void f4<int>();  // expected-note{{in instantiation of function template specialization 'PR21332::f4<int>' requested here}}
+
+  template<typename T> void f5() {
+    class S {  // expected-note {{in instantiation of default member initializer 'PR21332::f5()::S::val' requested here}}
+      int val = T::error;  // expected-error {{type 'int' cannot be used prior to '::' because it has no members}}
+     };
+  }
+  template void f5<int>();  // expected-note {{in instantiation of function template specialization 'PR21332::f5<int>' requested here}}
+
+  template<typename T> void f6() {
+    class S {  // expected-note {{in instantiation of member function 'PR21332::f6()::S::get' requested here}}
+      void get() {
+        class S2 {  // expected-note {{in instantiation of member class 'S2' requested here}}
+          void g1(int n = T::error);  // expected-error {{type 'int' cannot be used prior to '::' because it has no members}}
+        };
+      }
+    };
+  }
+  template void f6<int>();  // expected-note{{in instantiation of function template specialization 'PR21332::f6<int>' requested here}}
+
+  template<typename T> void f7() {
+    struct S { void g() noexcept(undefined_val); };  // expected-error{{use of undeclared identifier 'undefined_val'}}
+  }
+  template void f7<int>();
+}

@@ -3317,13 +3317,16 @@ Parser::tryParseExceptionSpecification(bool Delayed,
     T.consumeOpen();
     NoexceptType = EST_ComputedNoexcept;
     NoexceptExpr = ParseConstantExpression();
+    T.consumeClose();
     // The argument must be contextually convertible to bool. We use
     // ActOnBooleanCondition for this purpose.
-    if (!NoexceptExpr.isInvalid())
+    if (!NoexceptExpr.isInvalid()) {
       NoexceptExpr = Actions.ActOnBooleanCondition(getCurScope(), KeywordLoc,
                                                    NoexceptExpr.get());
-    T.consumeClose();
-    NoexceptRange = SourceRange(KeywordLoc, T.getCloseLocation());
+      NoexceptRange = SourceRange(KeywordLoc, T.getCloseLocation());
+    } else {
+      NoexceptType = EST_None;
+    }
   } else {
     // There is no argument.
     NoexceptType = EST_BasicNoexcept;

@@ -1680,11 +1680,24 @@ ParmVarDecl *Sema::SubstParmVarDecl(ParmVarDecl *OldParm,
   } else if (OldParm->hasUnparsedDefaultArg()) {
     NewParm->setUnparsedDefaultArg();
     UnparsedDefaultArgInstantiations[OldParm].push_back(NewParm);
-  } else if (Expr *Arg = OldParm->getDefaultArg())
-    // FIXME: if we non-lazily instantiated non-dependent default args for
-    // non-dependent parameter types we could remove a bunch of duplicate
-    // conversion warnings for such arguments.
-    NewParm->setUninstantiatedDefaultArg(Arg);
+  } else if (Expr *Arg = OldParm->getDefaultArg()) {
+    FunctionDecl *OwningFunc = cast<FunctionDecl>(OldParm->getDeclContext());
+    CXXRecordDecl *ClassD = dyn_cast<CXXRecordDecl>(OwningFunc->getDeclContext());
+    if (ClassD && ClassD->isLocalClass() && !ClassD->isLambda()) {
+      // If this is a method of a local class, as per DR1484 its default
+      // arguments must be instantiated.
+      Sema::ContextRAII SavedContext(*this, ClassD);
+      LocalInstantiationScope Local(*this);
+      ExprResult NewArg = SubstExpr(Arg, TemplateArgs);
+      if (NewArg.isUsable())
+        NewParm->setDefaultArg(NewArg.get());
+    } else {
+      // FIXME: if we non-lazily instantiated non-dependent default args for
+      // non-dependent parameter types we could remove a bunch of duplicate
+      // conversion warnings for such arguments.
+      NewParm->setUninstantiatedDefaultArg(Arg);
+    }
+  }
 
   NewParm->setHasInheritedDefaultArg(OldParm->hasInheritedDefaultArg());
   
