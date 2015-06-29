@@ -94,6 +94,16 @@ private:
 
   void addUndefined(StringRef Sym);
 
+  // Windows specific -- "main" is not the only main function in Windows.
+  // You can choose one from these four -- {w,}{WinMain,main}.
+  // There are four different entry point functions for them,
+  // {w,}{WinMain,main}CRTStartup, respectively. The linker needs to
+  // choose the right one depending on which "main" function is defined.
+  // This function looks up the symbol table and resolve corresponding
+  // entry point name.
+  StringRef findDefaultEntry();
+  WindowsSubsystem inferSubsystem();
+
   // Driver is the owner of all opened files.
   // InputFiles have MemoryBufferRefs to them.
   std::vector<std::unique_ptr<MemoryBuffer>> OwningMBs;

@@ -1,7 +1,7 @@
 # RUN: yaml2obj < %s > %t.obj
-# RUN: not lld -flavor link2 /out:%t.exe %t.obj >& %t.log
+# RUN: not lld -flavor link2 /out:%t.exe /entry:main %t.obj >& %t.log
 # RUN: FileCheck %s < %t.log
-# RUN: lld -flavor link2 /out:%t.exe %t.obj /force >& %t.log
+# RUN: lld -flavor link2 /out:%t.exe /entry:main %t.obj /force >& %t.log
 # RUN: FileCheck %s < %t.log
 
 # CHECK: undefined symbol: foo
@@ -28,7 +28,7 @@ symbols:
       NumberOfLinenumbers: 0
       CheckSum:        0
       Number:          0
-  - Name:            mainCRTStartup
+  - Name:            main
     Value:           0
     SectionNumber:   1
     SimpleType:      IMAGE_SYM_TYPE_NULL

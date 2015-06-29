@@ -1,6 +1,6 @@
 # RUN: yaml2obj %p/Inputs/ret42.yaml > %t.obj
 
-# RUN: lld -flavor link2 /out:%t.exe %t.obj
+# RUN: lld -flavor link2 /out:%t.exe /entry:main %t.obj
 # RUN: FileCheck -check-prefix=MANIFEST %s < %t.exe.manifest
 
 MANIFEST: <?xml version="1.0" standalone="yes"?>
@@ -15,7 +15,8 @@ MANIFEST:     </security>
 MANIFEST:   </trustInfo>
 MANIFEST: </assembly>
 
-# RUN: lld -flavor link2 /out:%t.exe /manifestuac:"level='requireAdministrator' uiAccess='true'" %t.obj
+# RUN: lld -flavor link2 /out:%t.exe /entry:main \
+# RUN:   /manifestuac:"level='requireAdministrator' uiAccess='true'" %t.obj
 # RUN: FileCheck -check-prefix=UAC %s < %t.exe.manifest
 
 UAC: <?xml version="1.0" standalone="yes"?>
@@ -30,7 +31,8 @@ UAC:     </security>
 UAC:   </trustInfo>
 UAC: </assembly>
 
-# RUN: lld -flavor link2 /out:%t.exe /manifestdependency:"foo='bar'" %t.obj
+# RUN: lld -flavor link2 /out:%t.exe /entry:main \
+# RUN:   /manifestdependency:"foo='bar'" %t.obj
 # RUN: FileCheck -check-prefix=DEPENDENCY %s < %t.exe.manifest
 
 DEPENDENCY: <?xml version="1.0" standalone="yes"?>
@@ -50,7 +52,7 @@ DEPENDENCY:     </dependentAssembly>
 DEPENDENCY:   </dependency>
 DEPENDENCY: </assembly>
 
-# RUN: lld -flavor link2 /out:%t.exe /manifestuac:no %t.obj
+# RUN: lld -flavor link2 /out:%t.exe /entry:main /manifestuac:no %t.obj
 # RUN: FileCheck -check-prefix=NOUAC %s < %t.exe.manifest
 
 NOUAC: <?xml version="1.0" standalone="yes"?>

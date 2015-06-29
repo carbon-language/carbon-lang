@@ -174,6 +174,25 @@ Defined *SymbolTable::find(StringRef Name) {
   return nullptr;
 }
 
+// Find a given symbol. If a lazy symbol is found,
+// resolve that before returning.
+Defined *SymbolTable::findLazy(StringRef Name) {
+  auto It = Symtab.find(Name);
+  if (It == Symtab.end())
+    return nullptr;
+  Symbol *Sym = It->second;
+  if (auto *B = dyn_cast<Defined>(Sym->Body))
+    return B;
+  if (auto *B = dyn_cast<Lazy>(Sym->Body)) {
+    if (addMemberFile(B))
+      return nullptr;
+    if (run())
+      return nullptr;
+    return cast<Defined>(Sym->Body);
+  }
+  return nullptr;
+}
+
 // Find a given symbol or its mangled symbol.
 std::pair<StringRef, Symbol *> SymbolTable::findMangled(StringRef S) {
   auto It = Symtab.find(S);
@@ -196,41 +215,6 @@ std::pair<StringRef, Symbol *> SymbolTable::findMangled(StringRef S) {
   return std::make_pair(S, nullptr);
 }
 
-std::error_code SymbolTable::resolveLazy(StringRef Name) {
-  auto It = Symtab.find(Name);
-  if (It == Symtab.end())
-    return std::error_code();
-  if (auto *B = dyn_cast<Lazy>(It->second->Body)) {
-    if (auto EC = addMemberFile(B))
-      return EC;
-    return run();
-  }
-  return std::error_code();
-}
-
-// Windows specific -- Link default entry point name.
-ErrorOr<StringRef> SymbolTable::findDefaultEntry() {
-  // User-defined main functions and their corresponding entry points.
-  static const char *Entries[][2] = {
-      {"main", "mainCRTStartup"},
-      {"wmain", "wmainCRTStartup"},
-      {"WinMain", "WinMainCRTStartup"},
-      {"wWinMain", "wWinMainCRTStartup"},
-  };
-  for (auto E : Entries) {
-    resolveLazy(E[1]);
-    if (find(E[1]))
-      return StringRef(E[1]);
-    if (!find(E[0]))
-      continue;
-    if (auto EC = resolve(new (Alloc) Undefined(E[1])))
-      return EC;
-    return StringRef(E[1]);
-  }
-  llvm::errs() << "entry point must be defined\n";
-  return make_error_code(LLDError::InvalidOption);
-}
-
 std::error_code SymbolTable::addUndefined(StringRef Name) {
   return resolve(new (Alloc) Undefined(Name));
 }
@@ -248,7 +232,10 @@ std::error_code SymbolTable::rename(StringRef From, StringRef To) {
   SymbolBody *Body = new (Alloc) Undefined(To);
   if (auto EC = resolve(Body))
     return EC;
-  Sym->Body = Body->getReplacement();
+  SymbolBody *Repl = Body->getReplacement();
+  if (isa<Undefined>(Repl))
+    return std::error_code();
+  Sym->Body = Repl;
   Body->setBackref(Sym);
   ++Version;
   return std::error_code();

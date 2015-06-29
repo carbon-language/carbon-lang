@@ -1,7 +1,7 @@
 # REQUIRES: winres
 
 # RUN: yaml2obj < %p/Inputs/ret42.yaml > %t.obj
-# RUN: lld -flavor link2 /out:%t.exe %t.obj %p/Inputs/resource.res
+# RUN: lld -flavor link2 /out:%t.exe /entry:main %t.obj %p/Inputs/resource.res
 
 # Check if the binary contains UTF-16LE string "Hello" copied from resource.res.
 # RUN: FileCheck --check-prefix=EXE %s < %t.exe

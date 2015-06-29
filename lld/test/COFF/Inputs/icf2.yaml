@@ -25,7 +25,7 @@ symbols:
       CheckSum:        0
       Number:          0
       Selection:       IMAGE_COMDAT_SELECT_ANY
-  # icf2 is identical with mainCRTStartup
+  # icf2 is identical with main
   - Name:            icf2
     Value:           0
     SectionNumber:   1

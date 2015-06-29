@@ -1,5 +1,5 @@
 # RUN: yaml2obj < %s > %t.obj
-# RUN: lld -flavor link2 /out:%t.exe %t.obj
+# RUN: lld -flavor link2 /out:%t.exe /entry:main %t.obj
 # RUN: llvm-objdump -s %t.exe | FileCheck %s
 
 # CHECK:      Contents of section .text:
@@ -19,7 +19,7 @@ sections:
     SectionData:     00000000
     Relocations:
       - VirtualAddress:  0
-        SymbolName:      __imp_mainCRTStartup
+        SymbolName:      __imp_main
         Type:            IMAGE_REL_AMD64_ADDR32NB
 symbols:
   - Name:            .text
@@ -35,13 +35,13 @@ symbols:
       CheckSum:        0
       Number:          0
       Selection:       IMAGE_COMDAT_SELECT_ANY
-  - Name:            mainCRTStartup
+  - Name:            main
     Value:           4
     SectionNumber:   1
     SimpleType:      IMAGE_SYM_TYPE_NULL
     ComplexType:     IMAGE_SYM_DTYPE_FUNCTION
     StorageClass:    IMAGE_SYM_CLASS_EXTERNAL
-  - Name:            __imp_mainCRTStartup
+  - Name:            __imp_main
     Value:           0
     SectionNumber:   0
     SimpleType:      IMAGE_SYM_TYPE_NULL

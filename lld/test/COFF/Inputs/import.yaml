@@ -20,7 +20,7 @@ symbols:
       NumberOfLinenumbers: 0
       CheckSum:        0
       Number:          0
-  - Name:            mainCRTStartup
+  - Name:            main
     Value:           0
     SectionNumber:   1
     SimpleType:      IMAGE_SYM_TYPE_NULL

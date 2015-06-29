@@ -25,7 +25,7 @@ symbols:
       CheckSum:        0
       Number:          0
       Selection:       IMAGE_COMDAT_SELECT_ANY
-  # icf4 is *not* identical with mainCRTStartup because it has an associative section
+  # icf4 is *not* identical with main because it has an associative section
   - Name:            icf4
     Value:           0
     SectionNumber:   1

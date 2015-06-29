@@ -1,6 +1,6 @@
 # RUN: yaml2obj < %s > %t.obj
 #
-# RUN: lld -flavor link2 /out:%t.exe %t.obj
+# RUN: lld -flavor link2 /out:%t.exe /entry:main %t.obj
 # RUN: llvm-readobj -file-headers %t.exe | FileCheck -check-prefix=HEADER %s
 # RUN: llvm-objdump -unwind-info %t.exe | FileCheck -check-prefix=UNWIND %s
 #
@@ -183,7 +183,7 @@ symbols:
     SimpleType:      IMAGE_SYM_TYPE_NULL
     ComplexType:     IMAGE_SYM_DTYPE_FUNCTION
     StorageClass:    IMAGE_SYM_CLASS_EXTERNAL
-  - Name:            mainCRTStartup
+  - Name:            main
     Value:           0
     SectionNumber:   1
     SimpleType:      IMAGE_SYM_TYPE_NULL

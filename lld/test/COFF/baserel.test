@@ -1,9 +1,9 @@
 # RUN: yaml2obj < %s > %t.obj
 #
-# RUN: lld -flavor link2 /out:%t.exe %t.obj %p/Inputs/std64.lib
+# RUN: lld -flavor link2 /out:%t.exe /entry:main %t.obj %p/Inputs/std64.lib
 # RUN: llvm-readobj -coff-basereloc %t.exe | FileCheck %s -check-prefix=BASEREL
 #
-# RUN: lld -flavor link2 /out:%t.exe /fixed %t.obj %p/Inputs/std64.lib
+# RUN: lld -flavor link2 /out:%t.exe /entry:main /fixed %t.obj %p/Inputs/std64.lib
 # RUN: llvm-readobj -coff-basereloc %t.exe | FileCheck %s -check-prefix=NOBASEREL
 #
 # BASEREL:      BaseReloc [
@@ -43,11 +43,11 @@
 # NOBASEREL:      BaseReloc [
 # NOBASEREL-NEXT: ]
 #
-# RUN: lld -flavor link2 /out:%t.exe %t.obj %p/Inputs/std64.lib
+# RUN: lld -flavor link2 /out:%t.exe /entry:main %t.obj %p/Inputs/std64.lib
 # RUN: llvm-readobj -file-headers -sections %t.exe | FileCheck %s \
 # RUN:   --check-prefix=BASEREL-HEADER
 #
-# RN: lld -flavor link2 /out:%t.exe /fixed %t.obj %p/Inputs/std64.lib
+# RN: lld -flavor link2 /out:%t.exe /entry:main /fixed %t.obj %p/Inputs/std64.lib
 # RN: llvm-readobj -file-headers %t.exe | FileCheck %s \
 # RN:   --check-prefix=NOBASEREL-HEADER
 #
@@ -188,7 +188,7 @@ symbols:
     SimpleType:      IMAGE_SYM_TYPE_NULL
     ComplexType:     IMAGE_SYM_DTYPE_NULL
     StorageClass:    IMAGE_SYM_CLASS_STATIC
-  - Name:            mainCRTStartup
+  - Name:            main
     Value:           0
     SectionNumber:   1
     SimpleType:      IMAGE_SYM_TYPE_NULL

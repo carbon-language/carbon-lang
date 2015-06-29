@@ -1,9 +1,9 @@
 # RUN: yaml2obj < %p/Inputs/ret42.yaml > %t.obj
 # RUN: lld -flavor link2 /entry:foo /subsystem:console \
-# RUN:   /alternatename:foo=mainCRTStartup /out:%t.exe %t.obj
+# RUN:   /alternatename:foo=main /out:%t.exe %t.obj
 # RUN: lld -flavor link2 /entry:foo /subsystem:console \
-# RUN:   /alternatename:foo=mainCRTStartup \
-# RUN:   /alternatename:foo=mainCRTStartup \
+# RUN:   /alternatename:foo=main \
+# RUN:   /alternatename:foo=main \
 # RUN:   /alternatename:nosuchsym1=nosuchsym2 \
 # RUN:   /out:%t.exe %t.obj
 
@@ -26,7 +26,7 @@ sections:
   - Name:            .drectve
     Characteristics: [ IMAGE_SCN_LNK_INFO, IMAGE_SCN_LNK_REMOVE ]
     Alignment:       2147483648
-    SectionData:     2f616c7465726e6174656e616d653a666f6f3d6d61696e4352545374617274757000  # /alternatename:foo=mainCRTStartup
+    SectionData:     2f616c7465726e6174656e616d653a666f6f3d6d61696e00  # /alternatename:foo=main
 symbols:
   - Name:            '.text$mn'
     Value:           0
@@ -52,7 +52,7 @@ symbols:
       NumberOfLinenumbers: 0
       CheckSum:        0
       Number:          0
-  - Name:            mainCRTStartup
+  - Name:            main
     Value:           0
     SectionNumber:   1
     SimpleType:      IMAGE_SYM_TYPE_NULL

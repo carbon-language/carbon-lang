@@ -51,20 +51,12 @@ public:
   // mechanisms to allow aliases, a name can be resolved to a
   // different symbol). Returns a nullptr if not found.
   Defined *find(StringRef Name);
+  Defined *findLazy(StringRef Name);
 
   // Find a symbol assuming that Name is a function name.
   // Not only a given string but its mangled names (in MSVC C++ manner)
   // will be searched.
   std::pair<StringRef, Symbol *> findMangled(StringRef Name);
-
-  // Windows specific -- `main` is not the only main function in Windows.
-  // You can choose one from these four -- {w,}{WinMain,main}.
-  // There are four different entry point functions for them,
-  // {w,}{WinMain,main}CRTStartup, respectively. The linker needs to
-  // choose the right one depending on which `main` function is defined.
-  // This function looks up the symbol table and resolve corresponding
-  // entry point name.
-  ErrorOr<StringRef> findDefaultEntry();
 
   // Print a layout map to OS.
   void printMap(llvm::raw_ostream &OS);
@@ -92,7 +84,6 @@ public:
 
 private:
   std::error_code resolve(SymbolBody *Body);
-  std::error_code resolveLazy(StringRef Name);
   std::error_code addMemberFile(Lazy *Body);
   ErrorOr<ObjectFile *> createLTOObject(llvm::LTOCodeGenerator *CG);
 

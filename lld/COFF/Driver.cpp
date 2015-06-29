@@ -207,15 +207,30 @@ void LinkerDriver::addUndefined(StringRef Sym) {
   Config->GCRoots.insert(Sym);
 }
 
-static WindowsSubsystem inferSubsystem() {
+// Windows specific -- find default entry point name.
+StringRef LinkerDriver::findDefaultEntry() {
+  // User-defined main functions and their corresponding entry points.
+  static const char *Entries[][2] = {
+      {"main", "mainCRTStartup"},
+      {"wmain", "wmainCRTStartup"},
+      {"WinMain", "WinMainCRTStartup"},
+      {"wWinMain", "wWinMainCRTStartup"},
+  };
+  for (auto E : Entries) {
+    if (Symtab.findLazy(E[0]))
+      return E[1];
+  }
+  return "";
+}
+
+WindowsSubsystem LinkerDriver::inferSubsystem() {
   if (Config->DLL)
     return IMAGE_SUBSYSTEM_WINDOWS_GUI;
-  return StringSwitch<WindowsSubsystem>(Config->EntryName)
-      .Case("mainCRTStartup", IMAGE_SUBSYSTEM_WINDOWS_CUI)
-      .Case("wmainCRTStartup", IMAGE_SUBSYSTEM_WINDOWS_CUI)
-      .Case("WinMainCRTStartup", IMAGE_SUBSYSTEM_WINDOWS_GUI)
-      .Case("wWinMainCRTStartup", IMAGE_SUBSYSTEM_WINDOWS_GUI)
-      .Default(IMAGE_SUBSYSTEM_UNKNOWN);
+  if (Symtab.find("main") || Symtab.find("wmain"))
+    return IMAGE_SUBSYSTEM_WINDOWS_CUI;
+  if (Symtab.find("WinMain") || Symtab.find("wWinMain"))
+    return IMAGE_SUBSYSTEM_WINDOWS_GUI;
+  return IMAGE_SUBSYSTEM_UNKNOWN;
 }
 
 bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
@@ -522,6 +537,18 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
     return false;
   }
 
+  // Windows specific -- If entry point name is not given, we need to
+  // infer that from user-defined entry name.
+  if (Config->EntryName.empty() && !Config->NoEntry) {
+    StringRef S = findDefaultEntry();
+    if (S.empty()) {
+      llvm::errs() << "entry point must be defined\n";
+      return false;
+    }
+    Config->EntryName = S;
+    addUndefined(S);
+  }
+
   // Resolve auxiliary symbols until converge.
   // (Trying to resolve a symbol may trigger a Lazy symbol to load a new file.
   // A new file may contain a directive section to add new command line options.
@@ -543,19 +570,6 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
         llvm::errs() << EC.message() << "\n";
         return false;
       }
-    }
-
-    // Windows specific -- If entry point name is not given, we need to
-    // infer that from user-defined entry name. The symbol table takes
-    // care of details.
-    if (Config->EntryName.empty() && !Config->NoEntry) {
-      auto EntryOrErr = Symtab.findDefaultEntry();
-      if (auto EC = EntryOrErr.getError()) {
-        llvm::errs() << EC.message() << "\n";
-        return false;
-      }
-      Config->EntryName = EntryOrErr.get();
-      addUndefined(Config->EntryName);
     }
 
     if (auto EC = Symtab.run()) {

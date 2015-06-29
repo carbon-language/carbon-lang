@@ -1,24 +1,24 @@
 # RUN: yaml2obj < %p/Inputs/ret42.yaml > %t.obj
 
-# RUN: lld -flavor link2 /out:%t.exe %t.obj
+# RUN: lld -flavor link2 /out:%t.exe /entry:main %t.obj
 # RUN: llvm-readobj -file-headers %t.exe | FileCheck -check-prefix=DEFAULT %s
 
 DEFAULT: SizeOfHeapReserve: 1048576
 DEFAULT: SizeOfHeapCommit: 4096
 
-# RUN: lld -flavor link2 /out:%t.exe /heap:0x3000 %t.obj
+# RUN: lld -flavor link2 /out:%t.exe /entry:main /heap:0x3000 %t.obj
 # RUN: llvm-readobj -file-headers %t.exe | FileCheck -check-prefix=CHECK1 %s
 # RUN: echo "HEAPSIZE 12288" > %t.def
-# RUN: lld -flavor link2 /out:%t.exe /def:%t.def %t.obj
+# RUN: lld -flavor link2 /out:%t.exe /entry:main /def:%t.def %t.obj
 # RUN: llvm-readobj -file-headers %t.exe | FileCheck -check-prefix=CHECK1 %s
 
 CHECK1: SizeOfHeapReserve: 12288
 CHECK1: SizeOfHeapCommit: 4096
 
-# RUN: lld -flavor link2 /out:%t.exe /heap:0x5000,0x3000 %t.obj
+# RUN: lld -flavor link2 /out:%t.exe /entry:main /heap:0x5000,0x3000 %t.obj
 # RUN: llvm-readobj -file-headers %t.exe | FileCheck -check-prefix=CHECK2 %s
 # RUN: echo "HEAPSIZE 20480,12288" > %t.def
-# RUN: lld -flavor link2 /out:%t.exe /def:%t.def %t.obj
+# RUN: lld -flavor link2 /out:%t.exe /entry:main /def:%t.def %t.obj
 # RUN: llvm-readobj -file-headers %t.exe | FileCheck -check-prefix=CHECK2 %s
 
 CHECK2: SizeOfHeapReserve: 20480

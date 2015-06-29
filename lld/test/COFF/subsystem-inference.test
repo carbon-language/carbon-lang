@@ -1,16 +1,16 @@
-# RUN: sed -e s/ENTRYNAME/mainCRTStartup/ %s | yaml2obj > %t.obj
+# RUN: sed -e s/ENTRYNAME/main/ %s | yaml2obj > %t.obj
 # RUN: lld -flavor link2 /out:%t.exe %t.obj
 # RUN: llvm-readobj -file-headers %t.exe | FileCheck -check-prefix=MAIN %s
 
-# RUN: sed s/ENTRYNAME/wmainCRTStartup/ %s | yaml2obj > %t.obj
+# RUN: sed s/ENTRYNAME/wmain/ %s | yaml2obj > %t.obj
 # RUN: lld -flavor link2 /out:%t.exe %t.obj
 # RUN: llvm-readobj -file-headers %t.exe | FileCheck -check-prefix=WMAIN %s
 
-# RUN: sed s/ENTRYNAME/WinMainCRTStartup/ %s | yaml2obj > %t.obj
+# RUN: sed s/ENTRYNAME/WinMain/ %s | yaml2obj > %t.obj
 # RUN: lld -flavor link2 /out:%t.exe %t.obj
 # RUN: llvm-readobj -file-headers %t.exe | FileCheck -check-prefix=WINMAIN %s
 
-# RUN: sed s/ENTRYNAME/wWinMainCRTStartup/ %s | yaml2obj > %t.obj
+# RUN: sed s/ENTRYNAME/wWinMain/ %s | yaml2obj > %t.obj
 # RUN: lld -flavor link2 /out:%t.exe %t.obj
 # RUN: llvm-readobj -file-headers %t.exe | FileCheck -check-prefix=WWINMAIN %s
 
@@ -42,6 +42,30 @@ symbols:
       CheckSum:        0
       Number:          0
   - Name:            ENTRYNAME
+    Value:           0
+    SectionNumber:   1
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_NULL
+    StorageClass:    IMAGE_SYM_CLASS_EXTERNAL
+  - Name:            mainCRTStartup
+    Value:           0
+    SectionNumber:   1
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_NULL
+    StorageClass:    IMAGE_SYM_CLASS_EXTERNAL
+  - Name:            wmainCRTStartup
+    Value:           0
+    SectionNumber:   1
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_NULL
+    StorageClass:    IMAGE_SYM_CLASS_EXTERNAL
+  - Name:            WinMainCRTStartup
+    Value:           0
+    SectionNumber:   1
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_NULL
+    StorageClass:    IMAGE_SYM_CLASS_EXTERNAL
+  - Name:            wWinMainCRTStartup
     Value:           0
     SectionNumber:   1
     SimpleType:      IMAGE_SYM_TYPE_NULL

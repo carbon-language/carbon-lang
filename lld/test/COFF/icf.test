@@ -4,12 +4,13 @@
 # RUN: yaml2obj < %p/Inputs/icf4.yaml > %t4.obj
 # RUN: yaml2obj < %p/Inputs/icf5.yaml > %t5.obj
 #
-# RUN: lld -flavor link2 /out:%t.exe %t1.obj %t2.obj %t3.obj %t4.obj %t5.obj \
+# RUN: lld -flavor link2 /out:%t.exe /entry:main \
+# RUN:   %t1.obj %t2.obj %t3.obj %t4.obj %t5.obj \
 # RUN:   /opt:lldicf /include:icf2 /include:icf3 /include:icf4 /include:icf5 \
 # RUN:   /verbose >& %t.log
 # RUN: FileCheck %s < %t.log
 
-CHECK-NOT: Replaced mainCRTStartup
+CHECK-NOT: Replaced main
 CHECK:     Replaced icf2
 CHECK-NOT: Replaced icf3
 CHECK-NOT: Replaced icf4

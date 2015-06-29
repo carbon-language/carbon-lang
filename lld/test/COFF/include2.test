@@ -4,7 +4,7 @@
 # RUN: rm -f %t2.lib %t3.lib
 # RUN: llvm-ar cru %t2.lib %t2.obj
 # RUN: llvm-ar cru %t3.lib %t3.obj
-# RUN: lld -flavor link2 /out:%t.exe %t1.obj %t2.lib %t3.lib /verbose >& %t.log
+# RUN: lld -flavor link2 /out:%t.exe /entry:main %t1.obj %t2.lib %t3.lib /verbose >& %t.log
 # RUN: FileCheck %s < %t.log
 
 CHECK: include2.test.tmp1.obj
