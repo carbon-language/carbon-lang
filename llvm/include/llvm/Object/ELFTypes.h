@@ -10,9 +10,11 @@
 #ifndef LLVM_OBJECT_ELFTYPES_H
 #define LLVM_OBJECT_ELFTYPES_H
 
+#include "llvm/Object/Error.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/ELF.h"
 #include "llvm/Support/Endian.h"
+#include "llvm/Support/ErrorOr.h"
 
 namespace llvm {
 namespace object {
@@ -205,7 +207,17 @@ struct Elf_Sym_Impl : Elf_Sym_Base<ELFT> {
   bool isExternal() const {
     return getBinding() != ELF::STB_LOCAL;
   }
+
+  ErrorOr<StringRef> getName(StringRef StrTab) const;
 };
+
+template <class ELFT>
+ErrorOr<StringRef> Elf_Sym_Impl<ELFT>::getName(StringRef StrTab) const {
+  uint32_t Offset = this->st_name;
+  if (Offset >= StrTab.size())
+    return object_error::parse_failed;
+  return StringRef(StrTab.data() + Offset);
+}
 
 /// Elf_Versym: This is the structure of entries in the SHT_GNU_versym section
 /// (.gnu.version). This structure is identical for ELF32 and ELF64.

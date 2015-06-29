@@ -359,7 +359,7 @@ static std::error_code getRelocationValueString(const ELFObjectFile<ELFT> *Obj,
       return EC;
     Target = *SecName;
   } else {
-    ErrorOr<StringRef> SymName = EF.getSymbolName(StrTab, symb);
+    ErrorOr<StringRef> SymName = symb->getName(StrTab);
     if (!SymName)
       return SymName.getError();
     Target = *SymName;

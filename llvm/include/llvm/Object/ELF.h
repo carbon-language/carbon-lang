@@ -371,7 +371,6 @@ public:
   ///
   /// \p SymTab is used to lookup the string table to use to get the symbol's
   /// name.
-  ErrorOr<StringRef> getSymbolName(StringRef StrTab, const Elf_Sym *Symb) const;
   ErrorOr<StringRef> getSectionName(const Elf_Shdr *Section) const;
   uint64_t getSymbolIndex(const Elf_Sym *sym) const;
   ErrorOr<ArrayRef<uint8_t> > getSectionContents(const Elf_Shdr *Sec) const;
@@ -881,7 +880,7 @@ const char *ELFFile<ELFT>::getDynamicString(uintX_t Offset) const {
 template <class ELFT>
 ErrorOr<StringRef>
 ELFFile<ELFT>::getStaticSymbolName(const Elf_Sym *Symb) const {
-  return getSymbolName(DotStrtab, Symb);
+  return Symb->getName(DotStrtab);
 }
 
 template <class ELFT>
@@ -896,15 +895,6 @@ ErrorOr<StringRef> ELFFile<ELFT>::getSymbolName(const Elf_Sym *Symb,
   if (IsDynamic)
     return getDynamicSymbolName(Symb);
   return getStaticSymbolName(Symb);
-}
-
-template <class ELFT>
-ErrorOr<StringRef> ELFFile<ELFT>::getSymbolName(StringRef StrTab,
-                                                const Elf_Sym *Sym) const {
-  uint32_t Offset = Sym->st_name;
-  if (Offset >= StrTab.size())
-    return object_error::parse_failed;
-  return StringRef(StrTab.data() + Offset);
 }
 
 template <class ELFT>
@@ -932,7 +922,7 @@ ErrorOr<StringRef> ELFFile<ELFT>::getSymbolVersion(const Elf_Shdr *section,
     // Non-dynamic symbols can have versions in their names
     // A name of the form 'foo@V1' indicates version 'V1', non-default.
     // A name of the form 'foo@@V2' indicates version 'V2', default version.
-    ErrorOr<StringRef> SymName = getSymbolName(StrTab, symb);
+    ErrorOr<StringRef> SymName = symb->getName(StrTab);
     if (!SymName)
       return SymName;
     StringRef Name = *SymName;

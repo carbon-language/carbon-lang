@@ -189,7 +189,7 @@ std::error_code ELFDumper<ELFT>::dumpRelocation(const Elf_Shdr *Shdr,
     return EC;
   StringRef StrTab = *StrTabOrErr;
 
-  ErrorOr<StringRef> NameOrErr = Obj.getSymbolName(StrTab, NamePair.second);
+  ErrorOr<StringRef> NameOrErr = NamePair.second->getName(StrTab);
   if (std::error_code EC = NameOrErr.getError())
     return EC;
   R.Symbol = NameOrErr.get();
@@ -314,7 +314,7 @@ ErrorOr<ELFYAML::Group *> ELFDumper<ELFT>::dumpGroup(const Elf_Shdr *Shdr) {
   auto sectionContents = Obj.getSectionContents(Shdr);
   if (std::error_code ec = sectionContents.getError())
     return ec;
-  ErrorOr<StringRef> symbolName = Obj.getSymbolName(StrTab, symbol);
+  ErrorOr<StringRef> symbolName = symbol->getName(StrTab);
   if (std::error_code EC = symbolName.getError())
     return EC;
   S->Info = *symbolName;
