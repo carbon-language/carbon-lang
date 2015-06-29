@@ -24,6 +24,16 @@ public:
   ; // expected-warning{{extra ';' inside a class}}
 
   virtual int vf() const volatile = 0;
+
+  virtual int vf0() = 0l; // expected-error {{does not look like a pure-specifier}}
+  virtual int vf1() = 1; // expected-error {{does not look like a pure-specifier}}
+  virtual int vf2() = 00; // expected-error {{does not look like a pure-specifier}}
+  virtual int vf3() = 0x0; // expected-error {{does not look like a pure-specifier}}
+  virtual int vf4() = 0.0; // expected-error {{does not look like a pure-specifier}}
+  virtual int vf5(){0}; // expected-error +{{}} expected-warning {{unused}}
+  virtual int vf5a(){0;}; // function definition, expected-warning {{unused}}
+  virtual int vf6()(0); // expected-error +{{}} expected-note +{{}}
+  virtual int vf7() = { 0 }; // expected-error {{does not look like a pure-specifier}}
   
 private:
   int x,f(),y,g();
