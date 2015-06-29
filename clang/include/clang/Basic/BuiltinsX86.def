@@ -1142,5 +1142,9 @@ BUILTIN(__builtin_ia32_psubusw512_mask, "V32sV32sV32sV32sUi", "")
 BUILTIN(__builtin_ia32_vpermi2varhi512_mask, "V32sV32sV32sV32sUi", "")
 BUILTIN(__builtin_ia32_vpermt2varhi512_mask, "V32sV32sV32sV32sUi", "")
 BUILTIN(__builtin_ia32_vpermt2varhi512_maskz, "V32sV32sV32sV32sUi", "")
+BUILTIN(__builtin_ia32_vpconflictdi_512_mask, "V8LLiV8LLiV8LLiUc", "")
+BUILTIN(__builtin_ia32_vpconflictsi_512_mask, "V16iV16iV16iUs", "")
+BUILTIN(__builtin_ia32_vplzcntd_512_mask, "V16iV16iV16iUs", "")
+BUILTIN(__builtin_ia32_vplzcntq_512_mask, "V8LLiV8LLiV8LLiUc", "")
 
 #undef BUILTIN

@@ -5,6 +5,7 @@ set(files
   arm_acle.h
   avx2intrin.h
   avx512bwintrin.h
+  avx512cdintrin.h
   avx512erintrin.h
   avx512fintrin.h
   avx512vlbwintrin.h
