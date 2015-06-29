@@ -292,33 +292,10 @@ std::error_code BitcodeFile::parse() {
       bool Replaceable = (SymbolDef == LTO_SYMBOL_DEFINITION_TENTATIVE ||
                           (Attrs & LTO_SYMBOL_COMDAT));
       SymbolBodies.push_back(new (Alloc) DefinedBitcode(SymName, Replaceable));
-
-      const llvm::GlobalValue *GV = M->getSymbolGV(I);
-      if (GV && GV->hasDLLExportStorageClass()) {
-        Directives += " /export:";
-        Directives += SymName;
-        if (!GV->getValueType()->isFunctionTy())
-          Directives += ",data";
-      }
     }
   }
 
-  // Extract any linker directives from the bitcode file, which are represented
-  // as module flags with the key "Linker Options".
-  llvm::SmallVector<llvm::Module::ModuleFlagEntry, 8> Flags;
-  M->getModule().getModuleFlagsMetadata(Flags);
-  for (auto &&Flag : Flags) {
-    if (Flag.Key->getString() != "Linker Options")
-      continue;
-
-    for (llvm::Metadata *Op : cast<llvm::MDNode>(Flag.Val)->operands()) {
-      for (llvm::Metadata *InnerOp : cast<llvm::MDNode>(Op)->operands()) {
-        Directives += " ";
-        Directives += cast<llvm::MDString>(InnerOp)->getString();
-      }
-    }
-  }
-
+  Directives = M->getLinkerOpts();
   return std::error_code();
 }
 
