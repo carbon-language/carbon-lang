@@ -5521,6 +5521,10 @@ __kmp_launch_thread( kmp_info_t *this_thr )
 #if OMPT_SUPPORT
                 if (ompt_status & ompt_status_track) {
                     this_thr->th.ompt_thread_info.state = ompt_state_work_parallel;
+                    // Initialize OMPT task id for implicit task.
+                    int tid = __kmp_tid_from_gtid(gtid);
+                    (*pteam)->t.t_implicit_task_taskdata[tid].ompt_task_info.task_id = 
+                    __ompt_task_id_new(tid);
                 }
 #endif
 
