@@ -3123,9 +3123,6 @@ llvm::Constant *MicrosoftCXXABI::EmitMemberPointerConversion(
   if (CK == CK_ReinterpretMemberPointer)
     return Src;
 
-  const CXXRecordDecl *SrcRD = SrcTy->getMostRecentCXXRecordDecl();
-  const CXXRecordDecl *DstRD = DstTy->getMostRecentCXXRecordDecl();
-
   CGBuilderTy Builder(CGM.getLLVMContext());
   auto *Dst = cast<llvm::Constant>(EmitNonNullMemberPointerConversion(
       SrcTy, DstTy, CK, PathBegin, PathEnd, Src, Builder));
