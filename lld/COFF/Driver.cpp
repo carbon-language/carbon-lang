@@ -580,6 +580,16 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
       break;
   }
 
+  // Windows specific -- if entry point is not found,
+  // search for its mangled names.
+  if (!Config->EntryName.empty() && !Symtab.find(Config->EntryName)) {
+    StringRef Name;
+    Symbol *Sym;
+    std::tie(Name, Sym) = Symtab.findMangled(Config->EntryName);
+    if (Sym)
+      Symtab.rename(Config->EntryName, Name);
+  }
+
   // Windows specific -- resolve dllexported symbols.
   for (Export &E : Config->Exports) {
     StringRef Name;
