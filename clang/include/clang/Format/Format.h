@@ -112,12 +112,19 @@ struct FormatStyle {
   /// single line.
   bool AllowShortLoopsOnASingleLine;
 
-  /// \brief If \c true, always break after function definition return types.
-  ///
-  /// More truthfully called 'break before the identifier following the type
-  /// in a function definition'. PenaltyReturnTypeOnItsOwnLine becomes
-  /// irrelevant.
-  bool AlwaysBreakAfterDefinitionReturnType;
+  /// \brief Different ways to break after the function definition return type.
+  enum DefinitionReturnTypeBreakingStyle {
+    /// Break after return type automatically.
+    /// \c PenaltyReturnTypeOnItsOwnLine is taken into account.
+    DRTBS_None,
+    /// Always break after the return type.
+    DRTBS_All,
+    /// Always break after the return types of top level functions.
+    DRTBS_TopLevel,
+  };
+
+  /// \brief The function definition return type breaking style to use.
+  DefinitionReturnTypeBreakingStyle AlwaysBreakAfterDefinitionReturnType;
 
   /// \brief If \c true, always break before multiline string literals.
   ///

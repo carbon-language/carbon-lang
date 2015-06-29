@@ -218,12 +218,19 @@ the configuration (without a prefix: ``Auto``).
   If ``true``, ``while (true) continue;`` can be put on a
   single line.
 
-**AlwaysBreakAfterDefinitionReturnType** (``bool``)
-  If ``true``, always break after function definition return types.
+**AlwaysBreakAfterDefinitionReturnType** (``DefinitionReturnTypeBreakingStyle``)
+  The function definition return type breaking style to use.
 
-  More truthfully called 'break before the identifier following the type
-  in a function definition'. PenaltyReturnTypeOnItsOwnLine becomes
-  irrelevant.
+  Possible values:
+
+  * ``DRTBS_None`` (in configuration: ``None``)
+    Break after return type automatically.
+    ``PenaltyReturnTypeOnItsOwnLine`` is taken into account.
+  * ``DRTBS_All`` (in configuration: ``All``)
+    Always break after the return type.
+  * ``DRTBS_TopLevel`` (in configuration: ``TopLevel``)
+    Always break after the return types of top level functions.
+
 
 **AlwaysBreakBeforeMultilineStrings** (``bool``)
   If ``true``, always break before multiline string literals.

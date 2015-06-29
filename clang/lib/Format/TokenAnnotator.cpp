@@ -1539,8 +1539,11 @@ void TokenAnnotator::calculateFormattingInformation(AnnotatedLine &Line) {
     Current->MustBreakBefore =
         Current->MustBreakBefore || mustBreakBefore(Line, *Current);
 
-    if (Style.AlwaysBreakAfterDefinitionReturnType && InFunctionDecl &&
-        Current->is(TT_FunctionDeclarationName) &&
+    if ((Style.AlwaysBreakAfterDefinitionReturnType == FormatStyle::DRTBS_All ||
+         (Style.AlwaysBreakAfterDefinitionReturnType ==
+              FormatStyle::DRTBS_TopLevel &&
+          Line.Level == 0)) &&
+        InFunctionDecl && Current->is(TT_FunctionDeclarationName) &&
         !Line.Last->isOneOf(tok::semi, tok::comment)) // Only for definitions.
       // FIXME: Line.Last points to other characters than tok::semi
       // and tok::lbrace.

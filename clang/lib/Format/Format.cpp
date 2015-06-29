@@ -99,6 +99,18 @@ template <> struct ScalarEnumerationTraits<FormatStyle::BraceBreakingStyle> {
   }
 };
 
+template <> struct ScalarEnumerationTraits<FormatStyle::DefinitionReturnTypeBreakingStyle> {
+  static void enumeration(IO &IO, FormatStyle::DefinitionReturnTypeBreakingStyle &Value) {
+    IO.enumCase(Value, "None", FormatStyle::DRTBS_None);
+    IO.enumCase(Value, "All", FormatStyle::DRTBS_All);
+    IO.enumCase(Value, "TopLevel", FormatStyle::DRTBS_TopLevel);
+
+    // For backward compatibility.
+    IO.enumCase(Value, "false", FormatStyle::DRTBS_None);
+    IO.enumCase(Value, "true", FormatStyle::DRTBS_All);
+  }
+};
+
 template <>
 struct ScalarEnumerationTraits<FormatStyle::NamespaceIndentationKind> {
   static void enumeration(IO &IO,
@@ -338,7 +350,7 @@ FormatStyle getLLVMStyle() {
   LLVMStyle.AllowShortCaseLabelsOnASingleLine = false;
   LLVMStyle.AllowShortIfStatementsOnASingleLine = false;
   LLVMStyle.AllowShortLoopsOnASingleLine = false;
-  LLVMStyle.AlwaysBreakAfterDefinitionReturnType = false;
+  LLVMStyle.AlwaysBreakAfterDefinitionReturnType = FormatStyle::DRTBS_None;
   LLVMStyle.AlwaysBreakBeforeMultilineStrings = false;
   LLVMStyle.AlwaysBreakTemplateDeclarations = false;
   LLVMStyle.BinPackParameters = true;
@@ -463,6 +475,8 @@ FormatStyle getMozillaStyle() {
   FormatStyle MozillaStyle = getLLVMStyle();
   MozillaStyle.AllowAllParametersOfDeclarationOnNextLine = false;
   MozillaStyle.AllowShortFunctionsOnASingleLine = FormatStyle::SFS_Inline;
+  MozillaStyle.AlwaysBreakAfterDefinitionReturnType =
+      FormatStyle::DRTBS_TopLevel;
   MozillaStyle.AlwaysBreakTemplateDeclarations = true;
   MozillaStyle.BreakConstructorInitializersBeforeComma = true;
   MozillaStyle.ConstructorInitializerIndentWidth = 2;
@@ -498,7 +512,7 @@ FormatStyle getWebKitStyle() {
 
 FormatStyle getGNUStyle() {
   FormatStyle Style = getLLVMStyle();
-  Style.AlwaysBreakAfterDefinitionReturnType = true;
+  Style.AlwaysBreakAfterDefinitionReturnType = FormatStyle::DRTBS_All;
   Style.BreakBeforeBinaryOperators = FormatStyle::BOS_All;
   Style.BreakBeforeBraces = FormatStyle::BS_GNU;
   Style.BreakBeforeTernaryOperators = true;
