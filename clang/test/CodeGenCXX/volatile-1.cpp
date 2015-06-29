@@ -17,7 +17,7 @@ volatile struct S {
 int printf(const char *, ...);
 
 
-// CHECK: define void @{{.*}}test
+// CHECK: define {{.*}}void @{{.*}}test
 void test() {
 
   asm("nop"); // CHECK: call void asm

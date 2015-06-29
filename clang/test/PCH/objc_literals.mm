@@ -50,7 +50,7 @@ pair<T, U> make_pair(const T& first, const U& second) {
   return { first, second };
 }
 
-// CHECK-IR: define linkonce_odr void @_Z29variadic_dictionary_expansionIJP8NSStringS1_EJP8NSNumberS3_EEvDp4pairIT_T0_E
+// CHECK-IR: define linkonce_odr {{.*}}void @_Z29variadic_dictionary_expansionIJP8NSStringS1_EJP8NSNumberS3_EEvDp4pairIT_T0_E
 template<typename ...Ts, typename ... Us>
 void variadic_dictionary_expansion(pair<Ts, Us>... key_values) {
   // CHECK-PRINT: id dict = @{ key_values.first : key_values.second... };

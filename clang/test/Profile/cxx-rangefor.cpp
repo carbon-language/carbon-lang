@@ -9,7 +9,7 @@
 
 // PGOGEN: @[[RFC:__llvm_profile_counters__Z9range_forv]] = private global [5 x i64] zeroinitializer
 
-// CHECK-LABEL: define void @_Z9range_forv()
+// CHECK-LABEL: define {{.*}}void @_Z9range_forv()
 // PGOGEN: store {{.*}} @[[RFC]], i64 0, i64 0
 void range_for() {
   int arr[] = {1, 2, 3, 4, 5};

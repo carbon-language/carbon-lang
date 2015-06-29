@@ -44,11 +44,11 @@ void test1() {
   // CHECK-1:   ret
 }
 
-// CHECK-1: define internal void @[[HelperName]]
+// CHECK-1: define internal {{.*}}void @[[HelperName]]
 // CHECK-1:   getelementptr inbounds %[[Capture]], %[[Capture]]* {{[^,]*}}, i32 0, i32 0
-// CHECK-1:   call i32 @__cxa_guard_acquire(
+// CHECK-1:   call {{.*}}i32 @__cxa_guard_acquire(
 // CHECK-1:   store double %{{.+}}, double* [[INNER]],
-// CHECK-1:   call void @__cxa_guard_release(
+// CHECK-1:   call {{.*}}void @__cxa_guard_release(
 // CHECK-1:   getelementptr inbounds %struct.TestClass, %struct.TestClass* {{[^,]*}}, i32 0, i32 0
 // CHECK-1:   getelementptr inbounds %[[Capture]], %[[Capture]]* {{[^,]*}}, i32 0, i32 1
 
@@ -61,13 +61,13 @@ void test2(int x) {
     return x;
   }();
 
-  // CHECK-2-LABEL: define void @_Z5test2i
+  // CHECK-2-LABEL: define {{.*}}void @_Z5test2i
   // CHECK-2:   call {{.*}} @[[Lambda:["$\w]+]]
   //
   // CHECK-2: define internal {{.*}} @[[Lambda]]
   // CHECK-2:   call void @[[HelperName:["$_A-Za-z0-9]+]](%[[Capture:.*]]*
   //
-  // CHECK-2: define internal void @[[HelperName]]
+  // CHECK-2: define internal {{.*}}void @[[HelperName]]
   // CHECK-2:   getelementptr inbounds %[[Capture]], %[[Capture]]*
   // CHECK-2:   load i32*, i32**
   // CHECK-2:   load i32, i32*
@@ -81,7 +81,7 @@ void test3(int x) {
 
   // CHECK-3: %[[Capture:struct\.anon[\.0-9]*]] = type { i32* }
 
-  // CHECK-3-LABEL: define void @_Z5test3i
+  // CHECK-3-LABEL: define {{.*}}void @_Z5test3i
   // CHECK-3:   store i32*
   // CHECK-3:   call void @{{.*}}__captured_stmt
   // CHECK-3:   ret void
@@ -93,11 +93,11 @@ void test4() {
     Foo f;
     f.x = 5;
   }
-  // CHECK-4-LABEL: define void @_Z5test4v
+  // CHECK-4-LABEL: define {{.*}}void @_Z5test4v
   // CHECK-4:   call void @[[HelperName:[\."$_A-Za-z0-9]+]](%[[Capture:.*]]*
   // CHECK-4:   ret void
   //
-  // CHECK-4: define internal void @[[HelperName]]
+  // CHECK-4: define internal {{.*}}void @[[HelperName]]
   // CHECK-4:   store i32 5, i32*
   // CHECK-4:   call {{.*}}FooD1Ev
 }

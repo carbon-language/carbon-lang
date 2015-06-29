@@ -7,6 +7,6 @@ double pow(double, double);
 
 double foo(double a, double b) {
   return pow(a, b);
-// CHECK: call double @pow
+// CHECK: call {{.*}}double @pow
 }
 

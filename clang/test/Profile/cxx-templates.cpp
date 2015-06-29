@@ -13,10 +13,10 @@
 // T0GEN: @[[T0C:__llvm_profile_counters__Z4loopILj0EEvv]] = linkonce_odr hidden global [2 x i64] zeroinitializer
 // T100GEN: @[[T100C:__llvm_profile_counters__Z4loopILj100EEvv]] = linkonce_odr hidden global [2 x i64] zeroinitializer
 
-// T0GEN-LABEL: define linkonce_odr void @_Z4loopILj0EEvv()
-// T0USE-LABEL: define linkonce_odr void @_Z4loopILj0EEvv()
-// T100GEN-LABEL: define linkonce_odr void @_Z4loopILj100EEvv()
-// T100USE-LABEL: define linkonce_odr void @_Z4loopILj100EEvv()
+// T0GEN-LABEL: define linkonce_odr {{.*}}void @_Z4loopILj0EEvv()
+// T0USE-LABEL: define linkonce_odr {{.*}}void @_Z4loopILj0EEvv()
+// T100GEN-LABEL: define linkonce_odr {{.*}}void @_Z4loopILj100EEvv()
+// T100USE-LABEL: define linkonce_odr {{.*}}void @_Z4loopILj100EEvv()
 template <unsigned N> void loop() {
   // ALL-NOT: ret
   // T0GEN: store {{.*}} @[[T0C]], i64 0, i64 0

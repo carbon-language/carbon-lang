@@ -4,6 +4,6 @@ struct a {
 };
 
 void g(a *a) {
-  // CHECK: call void @_ZN1a1fEv()
+  // CHECK: call {{.*}}void @_ZN1a1fEv()
   a->f();
 }

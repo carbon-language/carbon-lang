@@ -5,7 +5,7 @@
 float f0, f1, f2;
 
 void foo(void) {
-  // CHECK-LABEL: define void @foo()
+  // CHECK-LABEL: define {{.*}}void @foo()
 
   // FINITE: fadd nnan ninf
   // NSZ: fadd nsz

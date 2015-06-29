@@ -6,4 +6,4 @@
 void f() { SPXTrace(); }
 void g() { double x = DBL_MAX; }
 
-// CHECK: define internal void @SPXTrace
+// CHECK: define internal {{.*}}void @SPXTrace

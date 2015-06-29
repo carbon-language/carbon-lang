@@ -19,10 +19,10 @@ __attribute((malloc)) int (*g)(); // expected-warning{{attribute only applies to
 
 __attribute((malloc))
 void * xalloc(unsigned n) { return malloc(n); } // no-warning
-// RUN: grep 'define noalias .* @xalloc(' %t
+// RUN: grep 'define .*noalias .* @xalloc(' %t %t
 
 #define malloc_like __attribute((__malloc__))
 void * xalloc2(unsigned) malloc_like;
 void * xalloc2(unsigned n) { return malloc(n); }
-// RUN: grep 'define noalias .* @xalloc2(' %t
+// RUN: grep 'define .*noalias .* @xalloc2(' %t %t
 

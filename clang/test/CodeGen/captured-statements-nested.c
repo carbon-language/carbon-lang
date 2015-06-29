@@ -30,7 +30,7 @@ void test_nest_captured_stmt(int param, int size, int param_arr[size]) {
         param_arr[size - 1] = 2;
         arr[10][z.a] = 12;
 
-        // CHECK1: define internal void @__captured_stmt{{.*}}([[T]]
+        // CHECK1: define internal {{.*}}void @__captured_stmt{{.*}}([[T]]
         // CHECK1: [[PARAM_ARR_SIZE_REF:%.+]] = getelementptr inbounds [[T]], [[T]]* {{.+}}, i{{[0-9]+}} 0, i{{[0-9]+}} 5
         // CHECK1: [[PARAM_ARR_SIZE:%.+]] = load [[SIZE_TYPE]], [[SIZE_TYPE]]* [[PARAM_ARR_SIZE_REF]]
         // CHECK1: [[ARR_SIZE1_REF:%.+]] = getelementptr inbounds [[T]], [[T]]* {{.+}}, i{{[0-9]+}} 0, i{{[0-9]+}} 8
@@ -106,7 +106,7 @@ void test_nest_block() {
     }
   }();
 
-  // CHECK2: define internal void @{{.*}}test_nest_block_block_invoke
+  // CHECK2: define internal {{.*}}void @{{.*}}test_nest_block_block_invoke
   //
   // CHECK2: [[Z:%[0-9a-z_]*]] = alloca i{{[0-9]+}},
   // CHECK2: alloca %struct.anon{{.*}}

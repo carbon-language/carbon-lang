@@ -8,7 +8,7 @@ struct X : A // default constructor is not trivial
 };
 
 X<int> x;
-// CHECK-LABEL: define internal void @__cxx_global_var_init()
+// CHECK-LABEL: define internal {{.*}}void @__cxx_global_var_init()
 // CHECK: call {{.*}} @_ZN1XIiEC1Ev
 // CHECK: define linkonce_odr {{.*}} @_ZN1XIiEC1Ev
 // CHECK: define linkonce_odr {{.*}} @_ZN1XIiEC2Ev

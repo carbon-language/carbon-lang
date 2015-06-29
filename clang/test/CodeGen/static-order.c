@@ -1,7 +1,7 @@
 // RUN: %clang_cc1 -emit-llvm -o - %s | FileCheck %s
 // CHECK: ModuleID
 // CHECK-NOT: zeroinitializer
-// CHECK-LABEL: define i8* @f
+// CHECK-LABEL: define {{.*}}i8* @f
 
 struct s {
     int a;

@@ -11,4 +11,4 @@ extern "C" {
 // PR18661: Clang would fail to emit function definition with mismatching
 // exception specification, even though it was just treated as a warning.
 
-// CHECK: define void @f()
+// CHECK: define {{.*}}void @f()

@@ -98,7 +98,7 @@ namespace test8 {
   template<typename T>
   void f(int_c<meta<T>::type::value>) { }
 
-  // CHECK-LABEL: define weak_odr void @_ZN5test81fIiEEvNS_5int_cIXsr4metaIT_E4typeE5valueEEE(
+  // CHECK-LABEL: define weak_odr {{.*}}void @_ZN5test81fIiEEvNS_5int_cIXsr4metaIT_E4typeE5valueEEE(
   template void f<int>(int_c<sizeof(int)>);
 }
 
@@ -157,13 +157,13 @@ namespace test12 {
   const int n = 10;
   template<typename T, T v> void test() {}
   void use() {
-    // CHECK-LABEL: define internal void @_ZN6test124testIFivEXadL_ZNS_L1fEvEEEEvv(
+    // CHECK-LABEL: define internal {{.*}}void @_ZN6test124testIFivEXadL_ZNS_L1fEvEEEEvv(
     test<int(), &f>();
-    // CHECK-LABEL: define internal void @_ZN6test124testIRFivEL_ZNS_L1fEvEEEvv(
+    // CHECK-LABEL: define internal {{.*}}void @_ZN6test124testIRFivEL_ZNS_L1fEvEEEvv(
     test<int(&)(), f>();
-    // CHECK-LABEL: define internal void @_ZN6test124testIPKiXadL_ZNS_L1nEEEEEvv(
+    // CHECK-LABEL: define internal {{.*}}void @_ZN6test124testIPKiXadL_ZNS_L1nEEEEEvv(
     test<const int*, &n>();
-    // CHECK-LABEL: define internal void @_ZN6test124testIRKiL_ZNS_L1nEEEEvv(
+    // CHECK-LABEL: define internal {{.*}}void @_ZN6test124testIRKiL_ZNS_L1nEEEEvv(
     test<const int&, n>();
   }
 }

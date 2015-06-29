@@ -21,7 +21,7 @@ void foo(signed char sc, unsigned char uc, signed long long sll,
   _Complex unsigned char cuc1;
   _Complex signed long long csll1;
   _Complex unsigned long long cull1;
-  // CHECK-LABEL: define void @foo(
+  // CHECK-LABEL: define {{.*}}void @foo(
   // Match the prototype to pick up the size of sc and sll.
   // CHECK: i[[CHSIZE:[0-9]+]]{{[^,]*}},
   // CHECK: i[[CHSIZE]]{{[^,]*}},

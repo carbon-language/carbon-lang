@@ -18,7 +18,7 @@ void IntToString(T a)
 }
 
 int main() {
-// CHECK-LABEL: define linkonce_odr void @_Z11IntToStringIcEvT_(
+// CHECK-LABEL: define linkonce_odr {{.*}}void @_Z11IntToStringIcEvT_(
   IntToString('a');
 }
 

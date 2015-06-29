@@ -1,7 +1,7 @@
 // RUN: %clang_cc1 -Wno-gcc-compat -emit-llvm -o - %s | FileCheck %s
 
 void pr8880_cg_1(int *iptr) {
-// CHECK-LABEL: define void @pr8880_cg_1(
+// CHECK-LABEL: define {{.*}}void @pr8880_cg_1(
   int i, j;
 // CHECK: br label %[[OUTER_COND:[0-9A-Za-z$._]+]]
   for (i = 2; i != 10 ; i++ )
@@ -31,7 +31,7 @@ void pr8880_cg_1(int *iptr) {
 }
 
 void pr8880_cg_2(int *iptr) {
-// CHECK-LABEL: define void @pr8880_cg_2(
+// CHECK-LABEL: define {{.*}}void @pr8880_cg_2(
   int i, j;
 // CHECK: br label %[[OUTER_COND:[0-9A-Za-z$._]+]]
   for (i = 2; i != 10 ; i++ )
@@ -61,7 +61,7 @@ void pr8880_cg_2(int *iptr) {
 }
 
 void pr8880_cg_3(int *iptr) {
-// CHECK-LABEL: define void @pr8880_cg_3(
+// CHECK-LABEL: define {{.*}}void @pr8880_cg_3(
   int i, j;
 // CHECK: br label %[[OUTER_COND:[0-9A-Za-z$._]+]]
   for (i = 2 ; i != 10 ; i++ )
@@ -92,7 +92,7 @@ void pr8880_cg_3(int *iptr) {
 }
 
 void pr8880_cg_4(int *iptr) {
-// CHECK-LABEL: define void @pr8880_cg_4(
+// CHECK-LABEL: define {{.*}}void @pr8880_cg_4(
   int i, j;
 // CHECK: br label %[[OUTER_COND:[0-9A-Za-z$._]+]]
   for (i = 2 ; i != 10 ; i++ )
@@ -123,7 +123,7 @@ void pr8880_cg_4(int *iptr) {
 }
 
 void pr8880_cg_5(int x, int *iptr) {
-// CHECK-LABEL: define void @pr8880_cg_5(
+// CHECK-LABEL: define {{.*}}void @pr8880_cg_5(
   int y = 5;
 // CHECK: br label %[[OUTER_COND:[0-9A-Za-z$._]+]]
 // CHECK: [[OUTER_COND]]
@@ -148,7 +148,7 @@ void pr8880_cg_5(int x, int *iptr) {
 }
 
 void pr8880_cg_6(int x, int *iptr) {
-// CHECK-LABEL: define void @pr8880_cg_6(
+// CHECK-LABEL: define {{.*}}void @pr8880_cg_6(
   int y = 5;
 // CHECK: br label %[[OUTER_COND:[0-9A-Za-z$._]+]]
 // CHECK: [[OUTER_COND]]

@@ -18,7 +18,7 @@ void JS_ReportErrorNumber(JSErrorCallback errorCallback, ...);
 void Interpret() {
   JS_ReportErrorNumber(js_GetErrorMessage, 0);
   
-  // CHECK: call void ({{.*}}, ...) @JS_ReportErrorNumber({{.*}}@js_GetErrorMessage
+  // CHECK: call {{.*}}void ({{.*}}, ...) @JS_ReportErrorNumber({{.*}}@js_GetErrorMessage
 }
 
 

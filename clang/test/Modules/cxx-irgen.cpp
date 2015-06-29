@@ -12,7 +12,7 @@ CtorInit<int> x;
 
 // Keep these two namespace definitions separate; merging them hides the bug.
 namespace EmitInlineMethods {
-  // CHECK-DAG: define linkonce_odr [[CC:(x86_thiscallcc[ ]+)?]]void @_ZN17EmitInlineMethods1C1fEPNS_1AE(
+  // CHECK-DAG: define linkonce_odr [[CC:([a-z\_\d]*[ ]+)?]]void @_ZN17EmitInlineMethods1C1fEPNS_1AE(
   // CHECK-DAG: declare [[CC]]void @_ZN17EmitInlineMethods1A1gEv(
   struct C {
     __attribute__((used)) void f(A *p) { p->g(); }
@@ -26,14 +26,14 @@ namespace EmitInlineMethods {
   };
 }
 
-// CHECK-DAG: define available_externally hidden {{signext i32|i32}} @_ZN1SIiE1gEv({{.*}} #[[ALWAYS_INLINE:.*]] align
+// CHECK-DAG: define available_externally hidden {{.*}}{{signext i32|i32}} @_ZN1SIiE1gEv({{.*}} #[[ALWAYS_INLINE:.*]] align
 int a = S<int>::g();
 
 int b = h();
 
-// CHECK-DAG: define linkonce_odr {{signext i32|i32}} @_Z3minIiET_S0_S0_(i32
+// CHECK-DAG: define linkonce_odr {{.*}}{{signext i32|i32}} @_Z3minIiET_S0_S0_(i32
 int c = min(1, 2);
-// CHECK: define available_externally {{signext i32|i32}} @_ZN1SIiE1fEv({{.*}} #[[ALWAYS_INLINE]] align
+// CHECK: define available_externally {{.*}}{{signext i32|i32}} @_ZN1SIiE1fEv({{.*}} #[[ALWAYS_INLINE]] align
 
 namespace ImplicitSpecialMembers {
   // CHECK-LABEL: define {{.*}} @_ZN22ImplicitSpecialMembers1BC2ERKS0_(
@@ -49,9 +49,9 @@ namespace ImplicitSpecialMembers {
   // CHECK-LABEL: define {{.*}} @_ZN22ImplicitSpecialMembers1DC2EOS0_(
   // CHECK: call {{.*}} @_ZN22ImplicitSpecialMembers1AC1ERKS0_(
   // CHECK-LABEL: define {{.*}} @_ZN20OperatorDeleteLookup1AD0Ev(
-  // CHECK: call void @_ZN20OperatorDeleteLookup1AdlEPv(
+  // CHECK: call {{.*}}void @_ZN20OperatorDeleteLookup1AdlEPv(
 
-  // CHECK-DAG: call {{[a-z]*[ ]?i32}} @_ZN8CtorInitIiE1fEv(
+  // CHECK-DAG: call {{[a-z\_\d]*[ ]?i32}} @_ZN8CtorInitIiE1fEv(
 
   extern B b1;
   B b2(b1);

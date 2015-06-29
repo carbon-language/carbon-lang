@@ -9,7 +9,7 @@
 
 // CHECK:       [[IDENT_T_TY:%.+]] = type { i32, i32, i32, i32, i8* }
 
-// CHECK:       define void [[FOO:@.+]]()
+// CHECK:       define {{.*}}void [[FOO:@.+]]()
 
 void foo() {}
 
@@ -19,19 +19,19 @@ int main() {
 // CHECK:       [[A_ADDR:%.+]] = alloca i8
   char a;
 
-// CHECK:       [[GTID:%.+]] = call i32 @__kmpc_global_thread_num([[IDENT_T_TY]]* [[DEFAULT_LOC:@.+]])
-// CHECK:       call void @__kmpc_taskgroup([[IDENT_T_TY]]* [[DEFAULT_LOC]], i32 [[GTID]])
+// CHECK:       [[GTID:%.+]] = call {{.*}}i32 @__kmpc_global_thread_num([[IDENT_T_TY]]* [[DEFAULT_LOC:@.+]])
+// CHECK:       call {{.*}}void @__kmpc_taskgroup([[IDENT_T_TY]]* [[DEFAULT_LOC]], i32 [[GTID]])
 // CHECK-NEXT:  store i8 2, i8* [[A_ADDR]]
-// CHECK-NEXT:  call void @__kmpc_end_taskgroup([[IDENT_T_TY]]* [[DEFAULT_LOC]], i32 [[GTID]])
+// CHECK-NEXT:  call {{.*}}void @__kmpc_end_taskgroup([[IDENT_T_TY]]* [[DEFAULT_LOC]], i32 [[GTID]])
 #pragma omp taskgroup
   a = 2;
-// CHECK:       call void @__kmpc_taskgroup([[IDENT_T_TY]]* [[DEFAULT_LOC]], i32 [[GTID]])
-// CHECK-NEXT:  invoke void [[FOO]]()
-// CHECK:       call void @__kmpc_end_taskgroup([[IDENT_T_TY]]* [[DEFAULT_LOC]], i32 [[GTID]])
+// CHECK:       call {{.*}}void @__kmpc_taskgroup([[IDENT_T_TY]]* [[DEFAULT_LOC]], i32 [[GTID]])
+// CHECK-NEXT:  invoke {{.*}}void [[FOO]]()
+// CHECK:       call {{.*}}void @__kmpc_end_taskgroup([[IDENT_T_TY]]* [[DEFAULT_LOC]], i32 [[GTID]])
 #pragma omp taskgroup
   foo();
-// CHECK-NOT:   call void @__kmpc_taskgroup
-// CHECK-NOT:   call void @__kmpc_end_taskgroup
+// CHECK-NOT:   call {{.*}}void @__kmpc_taskgroup
+// CHECK-NOT:   call {{.*}}void @__kmpc_end_taskgroup
   return a;
 }
 

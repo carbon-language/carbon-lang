@@ -14,7 +14,7 @@
 // CHECK-PRINT: oldObject = dictionary[key];
 // CHECK-PRINT: dictionary[key] = newObject;
 
-// CHECK-IR: define void @all() #0
+// CHECK-IR: define {{.*}}void @all() #0
 // CHECK-IR: {{call.*objc_msgSend}}
 // CHECK-IR: {{call.*objc_msgSend}}
 // CHECK-IR: {{call.*objc_msgSend}}

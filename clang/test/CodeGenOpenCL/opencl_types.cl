@@ -22,7 +22,7 @@ void fnc3(image3d_t img) {}
 // CHECK: @fnc3(%opencl.image3d_t*
 
 void fnc4smp(sampler_t s) {}
-// CHECK-LABEL: define void @fnc4smp(i32
+// CHECK-LABEL: define {{.*}}void @fnc4smp(i32
 
 kernel void foo(image1d_t img) {
 	sampler_t smp = 5;
@@ -31,9 +31,9 @@ kernel void foo(image1d_t img) {
 // CHECK: alloca %opencl.event_t*
 // CHECK: store i32 5,
   fnc4smp(smp);
-// CHECK: call void @fnc4smp(i32
+// CHECK: call {{.*}}void @fnc4smp(i32
   fnc4smp(glb_smp);
-// CHECK: call void @fnc4smp(i32
+// CHECK: call {{.*}}void @fnc4smp(i32
 }
 
 void __attribute__((overloadable)) bad1(image1d_t *b, image2d_t *c, image2d_t *d) {}

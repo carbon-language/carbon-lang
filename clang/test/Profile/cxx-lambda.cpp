@@ -13,14 +13,14 @@
 // PGOGEN: @[[MAC:__llvm_profile_counters_main]] = private global [1 x i64] zeroinitializer
 // LMBGEN: @[[LFC:"__llvm_profile_counters_cxx-lambda.cpp:_ZZ7lambdasvENK3\$_0clEi"]] = private global [3 x i64] zeroinitializer
 
-// PGOGEN-LABEL: define void @_Z7lambdasv()
-// PGOUSE-LABEL: define void @_Z7lambdasv()
+// PGOGEN-LABEL: define {{.*}}void @_Z7lambdasv()
+// PGOUSE-LABEL: define {{.*}}void @_Z7lambdasv()
 // PGOGEN: store {{.*}} @[[LWC]], i64 0, i64 0
 void lambdas() {
   int i = 1;
 
-  // LMBGEN-LABEL: define internal{{( x86_thiscallcc)?( zeroext)?}} i1 @"_ZZ7lambdasvENK3$_0clEi"(
-  // LMBUSE-LABEL: define internal{{( x86_thiscallcc)?( zeroext)?}} i1 @"_ZZ7lambdasvENK3$_0clEi"(
+  // LMBGEN-LABEL: define internal{{( [a-z\_\b]*)?( zeroext)?}} i1 @"_ZZ7lambdasvENK3$_0clEi"(
+  // LMBUSE-LABEL: define internal{{( [a-z\_\b]*)?( zeroext)?}} i1 @"_ZZ7lambdasvENK3$_0clEi"(
   // LMBGEN: store {{.*}} @[[LFC]], i64 0, i64 0
   auto f = [&i](int k) {
     // LMBGEN: store {{.*}} @[[LFC]], i64 0, i64 1

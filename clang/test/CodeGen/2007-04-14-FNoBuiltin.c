@@ -3,7 +3,7 @@
 
 extern int printf(const char*, ...);
 
-// CHECK: define void {{.*}}foo(
+// CHECK: define {{.*}}void {{.*}}foo(
 void foo(const char *msg) {
   // CHECK: call {{.*}}printf
   printf("%s\n",msg);

@@ -49,7 +49,7 @@ size_t strnlen(const char *s, size_t maxlen)  // expected-note{{candidate functi
   __attribute__((unavailable("'maxlen' is larger than the buffer size")));
 
 void test2(const char *s, int i) {
-// CHECK: define void @test2
+// CHECK: define {{.*}}void @test2
   const char c[123];
   strnlen(s, i);
 // CHECK: call {{.*}}strnlen_real1

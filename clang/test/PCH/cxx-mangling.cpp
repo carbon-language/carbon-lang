@@ -17,11 +17,11 @@ struct A {
 
 template<typename T> void f(T) {}
 
-// CHECK-LABEL: define void @_Z1g1A(
+// CHECK-LABEL: define {{.*}}void @_Z1g1A(
 void g(A a) {
-  // CHECK: call void @_Z1fIN1AUt0_EEvT_(
+  // CHECK: call {{.*}}void @_Z1fIN1AUt0_EEvT_(
   f(a.b);
-  // CHECK: call void @_Z1fIN1AUt_EEvT_(
+  // CHECK: call {{.*}}void @_Z1fIN1AUt_EEvT_(
   f(a.a);
 }
 

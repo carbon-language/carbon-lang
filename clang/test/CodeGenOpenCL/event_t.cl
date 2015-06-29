@@ -6,7 +6,7 @@ void kernel ker() {
   event_t e;
 // CHECK: alloca %opencl.event_t*,
   foo(e);
-// CHECK: call void @foo(%opencl.event_t* %
+// CHECK: call {{.*}}void @foo(%opencl.event_t* %
   foo(0);
-// CHECK: call void @foo(%opencl.event_t* null)
+// CHECK: call {{.*}}void @foo(%opencl.event_t* null)
 }

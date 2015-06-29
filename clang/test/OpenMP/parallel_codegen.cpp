@@ -34,14 +34,14 @@ int main (int argc, char **argv) {
   return tmain(argv);
 }
 
-// CHECK-LABEL: define {{[a-z]*[ ]?i32}} @main({{i32[ ]?[a-z]*}} %argc, i8** %argv)
+// CHECK-LABEL: define {{[a-z\_\b]*[ ]?i32}} @main({{i32[ ]?[a-z]*}} %argc, i8** %argv)
 // CHECK:       [[AGG_CAPTURED:%.+]] = alloca %struct.anon
 // CHECK:       [[ARGC_REF:%.+]] = getelementptr inbounds %struct.anon, %struct.anon* [[AGG_CAPTURED]], i32 0, i32 0
 // CHECK-NEXT:  store i32* {{%[a-z0-9.]+}}, i32** [[ARGC_REF]]
 // CHECK-NEXT:  [[BITCAST:%.+]] = bitcast %struct.anon* [[AGG_CAPTURED]] to i8*
-// CHECK-NEXT:  call void (%ident_t*, i32, void (i32*, i32*, ...)*, ...) @__kmpc_fork_call(%ident_t* [[DEF_LOC_2]], i32 1, void (i32*, i32*, ...)* bitcast (void (i32*, i32*, %struct.anon*)* [[OMP_OUTLINED:@.+]] to void (i32*, i32*, ...)*), i8* [[BITCAST]])
+// CHECK-NEXT:  call {{.*}}void (%ident_t*, i32, void (i32*, i32*, ...)*, ...) @__kmpc_fork_call(%ident_t* [[DEF_LOC_2]], i32 1, void (i32*, i32*, ...)* bitcast (void (i32*, i32*, %struct.anon*)* [[OMP_OUTLINED:@.+]] to void (i32*, i32*, ...)*), i8* [[BITCAST]])
 // CHECK-NEXT:  [[ARGV:%.+]] = load i8**, i8*** {{%[a-z0-9.]+}}
-// CHECK-NEXT:  [[RET:%.+]] = call {{[a-z]*[ ]?i32}} [[TMAIN:@.+tmain.+]](i8** [[ARGV]])
+// CHECK-NEXT:  [[RET:%.+]] = call {{[a-z\_\b]*[ ]?i32}} [[TMAIN:@.+tmain.+]](i8** [[ARGV]])
 // CHECK-NEXT:  ret i32 [[RET]]
 // CHECK-NEXT:  }
 // CHECK-DEBUG-LABEL: define i32 @main(i32 %argc, i8** %argv)
@@ -61,7 +61,7 @@ int main (int argc, char **argv) {
 // CHECK-DEBUG-NEXT:  ret i32 [[RET]]
 // CHECK-DEBUG-NEXT:  }
 
-// CHECK:       define internal void [[OMP_OUTLINED]](i32* %.global_tid., i32* %.bound_tid., %struct.anon* %__context)
+// CHECK:       define internal {{.*}}void [[OMP_OUTLINED]](i32* %.global_tid., i32* %.bound_tid., %struct.anon* %__context)
 // CHECK:       #[[FN_ATTRS:[0-9]+]]
 // CHECK:       [[CONTEXT_ADDR:%.+]] = alloca %struct.anon*
 // CHECK:       store %struct.anon* %__context, %struct.anon** [[CONTEXT_ADDR]]
@@ -69,10 +69,10 @@ int main (int argc, char **argv) {
 // CHECK-NEXT:  [[ARGC_PTR_REF:%.+]] = getelementptr inbounds %struct.anon, %struct.anon* [[CONTEXT_PTR]], i32 0, i32 0
 // CHECK-NEXT:  [[ARGC_REF:%.+]] = load i32*, i32** [[ARGC_PTR_REF]]
 // CHECK-NEXT:  [[ARGC:%.+]] = load i32, i32* [[ARGC_REF]]
-// CHECK-NEXT:  invoke void [[FOO:@.+foo.+]](i32{{[ ]?[a-z]*}} [[ARGC]])
+// CHECK-NEXT:  invoke {{.*}}void [[FOO:@.+foo.+]](i32{{[ ]?[a-z]*}} [[ARGC]])
 // CHECK:       call {{.+}} @__kmpc_cancel_barrier(
 // CHECK:       ret void
-// CHECK:       call void @{{.+terminate.*|abort}}(
+// CHECK:       call {{.*}}void @{{.+terminate.*|abort}}(
 // CHECK-NEXT:  unreachable
 // CHECK-NEXT:  }
 // CHECK-DEBUG:       define internal void [[OMP_OUTLINED]](i32* %.global_tid., i32* %.bound_tid., %struct.anon* %__context)
@@ -90,17 +90,17 @@ int main (int argc, char **argv) {
 // CHECK-DEBUG-NEXT:  unreachable
 // CHECK-DEBUG-NEXT:  }
 
-// CHECK-DAG: define linkonce_odr void [[FOO]]({{i32[ ]?[a-z]*}} %argc)
-// CHECK-DAG: declare void @__kmpc_fork_call(%ident_t*, i32, void (i32*, i32*, ...)*, ...)
+// CHECK-DAG: define linkonce_odr {{.*}}void [[FOO]]({{i32[ ]?[a-z]*}} %argc)
+// CHECK-DAG: declare {{.*}}void @__kmpc_fork_call(%ident_t*, i32, void (i32*, i32*, ...)*, ...)
 // CHECK-DEBUG-DAG: define linkonce_odr void [[FOO]](i32 %argc)
 // CHECK-DEBUG-DAG: declare void @__kmpc_fork_call(%ident_t*, i32, void (i32*, i32*, ...)*, ...)
 
-// CHECK:       define linkonce_odr {{[a-z]*[ ]?i32}} [[TMAIN]](i8** %argc)
+// CHECK:       define linkonce_odr {{[a-z\_\b]*[ ]?i32}} [[TMAIN]](i8** %argc)
 // CHECK:       [[AGG_CAPTURED:%.+]] = alloca %struct.anon.0
 // CHECK:       [[ARGC_REF:%.+]] = getelementptr inbounds %struct.anon.0, %struct.anon.0* [[AGG_CAPTURED]], i32 0, i32 0
 // CHECK-NEXT:  store i8*** {{%[a-z0-9.]+}}, i8**** [[ARGC_REF]]
 // CHECK-NEXT:  [[BITCAST:%.+]] = bitcast %struct.anon.0* [[AGG_CAPTURED]] to i8*
-// CHECK-NEXT:  call void (%ident_t*, i32, void (i32*, i32*, ...)*, ...) @__kmpc_fork_call(%ident_t* [[DEF_LOC_2]], i32 1, void (i32*, i32*, ...)* bitcast (void (i32*, i32*, %struct.anon.0*)* [[OMP_OUTLINED:@.+]] to void (i32*, i32*, ...)*), i8* [[BITCAST]])
+// CHECK-NEXT:  call {{.*}}void (%ident_t*, i32, void (i32*, i32*, ...)*, ...) @__kmpc_fork_call(%ident_t* [[DEF_LOC_2]], i32 1, void (i32*, i32*, ...)* bitcast (void (i32*, i32*, %struct.anon.0*)* [[OMP_OUTLINED:@.+]] to void (i32*, i32*, ...)*), i8* [[BITCAST]])
 // CHECK-NEXT:  ret i32 0
 // CHECK-NEXT:  }
 // CHECK-DEBUG:       define linkonce_odr i32 [[TMAIN]](i8** %argc)
@@ -118,17 +118,17 @@ int main (int argc, char **argv) {
 // CHECK-DEBUG-NEXT:  ret i32 0
 // CHECK-DEBUG-NEXT:  }
 
-// CHECK:       define internal void [[OMP_OUTLINED]](i32* %.global_tid., i32* %.bound_tid., %struct.anon.0* %__context)
+// CHECK:       define internal {{.*}}void [[OMP_OUTLINED]](i32* %.global_tid., i32* %.bound_tid., %struct.anon.0* %__context)
 // CHECK:       [[CONTEXT_ADDR:%.+]] = alloca %struct.anon.0*
 // CHECK:       store %struct.anon.0* %__context, %struct.anon.0** [[CONTEXT_ADDR]]
 // CHECK:       [[CONTEXT_PTR:%.+]] = load %struct.anon.0*, %struct.anon.0** [[CONTEXT_ADDR]]
 // CHECK-NEXT:  [[ARGC_PTR_REF:%.+]] = getelementptr inbounds %struct.anon.0, %struct.anon.0* [[CONTEXT_PTR]], i32 0, i32 0
 // CHECK-NEXT:  [[ARGC_REF:%.+]] = load i8***, i8**** [[ARGC_PTR_REF]]
 // CHECK-NEXT:  [[ARGC:%.+]] = load i8**, i8*** [[ARGC_REF]]
-// CHECK-NEXT:  invoke void [[FOO1:@.+foo.+]](i8** [[ARGC]])
+// CHECK-NEXT:  invoke {{.*}}void [[FOO1:@.+foo.+]](i8** [[ARGC]])
 // CHECK:       call {{.+}} @__kmpc_cancel_barrier(
 // CHECK:       ret void
-// CHECK:       call void @{{.+terminate.*|abort}}(
+// CHECK:       call {{.*}}void @{{.+terminate.*|abort}}(
 // CHECK-NEXT:  unreachable
 // CHECK-NEXT:  }
 // CHECK-DEBUG:       define internal void [[OMP_OUTLINED]](i32* %.global_tid., i32* %.bound_tid., %struct.anon.0* %__context)
@@ -145,7 +145,7 @@ int main (int argc, char **argv) {
 // CHECK-DEBUG-NEXT:  unreachable
 // CHECK-DEBUG-NEXT:  }
 
-// CHECK: define linkonce_odr void [[FOO1]](i8** %argc)
+// CHECK: define linkonce_odr {{.*}}void [[FOO1]](i8** %argc)
 // CHECK-DEBUG: define linkonce_odr void [[FOO1]](i8** %argc)
 
 // CHECK: attributes #[[FN_ATTRS]] = {{.+}} nounwind

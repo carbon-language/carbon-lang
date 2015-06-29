@@ -9,7 +9,7 @@ struct D final : virtual C {
   virtual void f();
 };
 
-// CHECK-LABEL: define dereferenceable({{[0-9]+}}) %struct.B* @_Z1fR1D
+// CHECK-LABEL: define {{.*}}dereferenceable({{[0-9]+}}) %struct.B* @_Z1fR1D
 B &f(D &d) {
   // CHECK-NOT: load i8*, i8**
   return d;

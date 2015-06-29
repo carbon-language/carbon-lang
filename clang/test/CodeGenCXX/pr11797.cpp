@@ -5,4 +5,4 @@ namespace std __attribute__ ((__visibility__ ("default"))) {}
 void foo() {
 }
 #pragma GCC visibility pop
-// CHECK-LABEL: define void @_Z3foov()
+// CHECK-LABEL: define {{.*}}void @_Z3foov()

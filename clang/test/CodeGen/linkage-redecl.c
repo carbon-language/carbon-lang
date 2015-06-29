@@ -16,4 +16,4 @@ void g0() {
 }
 
 extern void f(int x) { } // still has internal linkage
-// CHECK-LABEL: define internal void @f
+// CHECK-LABEL: define internal {{.*}}void @f

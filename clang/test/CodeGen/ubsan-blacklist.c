@@ -14,9 +14,9 @@ unsigned i;
 // FUNC: @hash
 // FILE: @hash
 unsigned hash() {
-// DEFAULT: call void @__ubsan
-// FUNC-NOT: call void @__ubsan
-// FILE-NOT: call void @__ubsan
+// DEFAULT: call {{.*}}void @__ubsan
+// FUNC-NOT: call {{.*}}void @__ubsan
+// FILE-NOT: call {{.*}}void @__ubsan
   return i * 37;
 }
 
@@ -24,8 +24,8 @@ unsigned hash() {
 // FUNC: @add
 // FILE: @add
 unsigned add() {
-// DEFAULT: call void @__ubsan
-// FUNC: call void @__ubsan
-// FILE-NOT: call void @__ubsan
+// DEFAULT: call {{.*}}void @__ubsan
+// FUNC: call {{.*}}void @__ubsan
+// FILE-NOT: call {{.*}}void @__ubsan
   return i + 1;
 }

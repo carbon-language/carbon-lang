@@ -28,7 +28,7 @@ void test1() {
   // CHECK-1: call void @[[HelperName:__captured_stmt[\.0-9]+]]
 }
 
-// CHECK-1: define internal void @[[HelperName]](%struct.anon
+// CHECK-1: define internal {{.*}}void @[[HelperName]](%struct.anon
 // CHECK-1:   getelementptr inbounds %struct.anon{{.*}}, i32 0, i32 0
 // CHECK-1:   load i32*, i32**
 // CHECK-1:   load i32, i32*
@@ -48,7 +48,7 @@ void test2(int x) {
   // CHECK-2: call void @[[HelperName:__captured_stmt[\.0-9]+]]
 }
 
-// CHECK-2: define internal void @[[HelperName]]
+// CHECK-2: define internal {{.*}}void @[[HelperName]]
 // CHECK-2-NOT: }
 // CHECK-2:   %i = alloca i32
 
@@ -93,7 +93,7 @@ void dont_capture_global() {
   // CHECK-GLOBALS: call void @__captured_stmt[[HelperName:[\.0-9]+]](%[[Capture]]
 }
 
-// CHECK-GLOBALS: define internal void @__captured_stmt[[HelperName]]
+// CHECK-GLOBALS: define internal {{.*}}void @__captured_stmt[[HelperName]]
 // CHECK-GLOBALS-NOT: ret
 // CHECK-GLOBALS:   load i32, i32* @global
 // CHECK-GLOBALS:   load i32, i32* @

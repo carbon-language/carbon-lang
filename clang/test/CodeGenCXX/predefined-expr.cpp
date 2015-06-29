@@ -559,11 +559,11 @@ XXX::XXX()
    _dispatch_once(^{ notify_register_dispatch( ^(int token) { XXLog(__FUNCTION__); }); 
    });
 }
-// CHECK: define internal void @___ZN3XXXC2Ev_block_invoke_
+// CHECK: define internal {{.*}}void @___ZN3XXXC2Ev_block_invoke_
 
 XXX::~XXX()
 {
    _dispatch_once(^{ notify_register_dispatch( ^(int token) { XXLog(__FUNCTION__); }); 
    });
 }
-// CHECK: define internal void @___ZN3XXXD2Ev_block_invoke_
+// CHECK: define internal {{.*}}void @___ZN3XXXD2Ev_block_invoke_

@@ -39,7 +39,7 @@ typedef unsigned char BOOL;
 + (id)dictionaryWithObjects:(const id [])objects forKeys:(const id [])keys count:(unsigned long)cnt;
 @end
 
-// CHECK-IR: define internal void @test_numeric_literals()
+// CHECK-IR: define internal {{.*}}void @test_numeric_literals()
 static inline void test_numeric_literals() {
   // CHECK-PRINT: id intlit = @17
   // CHECK-IR: {{call.*17}}

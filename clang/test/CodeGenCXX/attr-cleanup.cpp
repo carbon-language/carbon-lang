@@ -5,7 +5,7 @@ namespace N {
 }
 
 int main(void) {
-  // CHECK: call void @_ZN1N4freeEPv
+  // CHECK: call {{.*}}void @_ZN1N4freeEPv
   void *fp __attribute__((cleanup(N::free)));
   return 0;
 }
