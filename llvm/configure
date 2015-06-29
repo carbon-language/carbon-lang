@@ -1463,7 +1463,7 @@ Optional Features:
                           target1,target2,... Valid targets are: host, x86,
                           x86_64, sparc, powerpc, arm64, arm, aarch64, mips,
                           hexagon, xcore, msp430, nvptx, systemz, r600, bpf,
-                          and cpp (default=all)
+                          wasm, and cpp (default=all)
   --enable-experimental-targets
                           Build experimental host targets: disable or
                           target1,target2,... (default=disable)
@@ -4207,6 +4207,7 @@ else
   hexagon-*)              llvm_cv_target_arch="Hexagon" ;;
   nvptx-*)                llvm_cv_target_arch="NVPTX" ;;
   s390x-*)                llvm_cv_target_arch="SystemZ" ;;
+  wasm*-*)                llvm_cv_target_arch="WebAssembly" ;;
   *)                      llvm_cv_target_arch="Unknown" ;;
 esac
 fi
@@ -4243,6 +4244,7 @@ case $host in
   msp430-*)               host_arch="MSP430" ;;
   hexagon-*)              host_arch="Hexagon" ;;
   s390x-*)                host_arch="SystemZ" ;;
+  wasm*-*)                host_arch="WebAssembly" ;;
   *)                      host_arch="Unknown" ;;
 esac
 
@@ -5170,6 +5172,8 @@ else
  ;;
     SystemZ)     TARGET_HAS_JIT=1
  ;;
+    WebAssembly) TARGET_HAS_JIT=0
+ ;;
     *)           TARGET_HAS_JIT=0
  ;;
   esac
@@ -5667,6 +5671,7 @@ case "$enableval" in
         systemz)  TARGETS_TO_BUILD="SystemZ $TARGETS_TO_BUILD" ;;
         amdgpu)   TARGETS_TO_BUILD="AMDGPU $TARGETS_TO_BUILD" ;;
         r600)     TARGETS_TO_BUILD="AMDGPU $TARGETS_TO_BUILD" ;;
+        wasm)     TARGETS_TO_BUILD="WebAssembly $TARGETS_TO_BUILD" ;;
         host) case "$llvm_cv_target_arch" in
             x86)         TARGETS_TO_BUILD="X86 $TARGETS_TO_BUILD" ;;
             x86_64)      TARGETS_TO_BUILD="X86 $TARGETS_TO_BUILD" ;;
@@ -5680,6 +5685,7 @@ case "$enableval" in
             Hexagon)     TARGETS_TO_BUILD="Hexagon $TARGETS_TO_BUILD" ;;
             NVPTX)       TARGETS_TO_BUILD="NVPTX $TARGETS_TO_BUILD" ;;
             SystemZ)     TARGETS_TO_BUILD="SystemZ $TARGETS_TO_BUILD" ;;
+            WebAssembly) TARGETS_TO_BUILD="WebAssembly $TARGETS_TO_BUILD" ;;
             *)       { { echo "$as_me:$LINENO: error: Can not set target to build" >&5
 echo "$as_me: error: Can not set target to build" >&2;}
    { (exit 1); exit 1; }; } ;;

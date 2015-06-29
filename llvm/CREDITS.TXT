@@ -152,8 +152,9 @@ E: foldr@codedgers.com
 D: Author of llvmc2
 
 N: Dan Gohman
-E: dan433584@gmail.com
+E: sunfish@mozilla.com
 D: Miscellaneous bug fixes
+D: WebAssembly Backend
 
 N: David Goodwin
 E: david@goodwinz.net

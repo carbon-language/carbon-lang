@@ -85,6 +85,8 @@ public:
     spir64,     // SPIR: standard portable IR for OpenCL 64-bit version
     kalimba,    // Kalimba: generic kalimba
     shave,      // SHAVE: Movidius vector VLIW processors
+    wasm32,     // WebAssembly with 32-bit pointers
+    wasm64,     // WebAssembly with 64-bit pointers
     LastArchType = shave
   };
   enum SubArchType {
@@ -151,7 +153,8 @@ public:
     NVCL,       // NVIDIA OpenCL
     AMDHSA,     // AMD HSA Runtime
     PS4,
-    LastOSType = PS4
+    WebAssembly,
+    LastOSType = WebAssembly
   };
   enum EnvironmentType {
     UnknownEnvironment,
