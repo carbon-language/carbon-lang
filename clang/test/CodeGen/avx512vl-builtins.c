@@ -1553,7 +1553,7 @@ __m256 test_mm256_mask_fnmsub_ps(__m256 __A, __mmask8 __U, __m256 __B, __m256 __
 
 __m256 test_mm256_mask3_fnmsub_ps(__m256 __A, __m256 __B, __m256 __C, __mmask8 __U) {
   // CHECK-LABEL: @test_mm256_mask3_fnmsub_ps
-  // CHECK: @llvm.x86.avx512.mask3.vfnmsub.ps.256
+  // CHECK: @llvm.x86.avx512.mask3.vfnmsub.ps.256 
   return _mm256_mask3_fnmsub_ps(__A, __B, __C, __U);
 }
 
