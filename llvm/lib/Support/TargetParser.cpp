@@ -318,8 +318,6 @@ bool ARMTargetParser::getFPUFeatures(unsigned FPUKind,
     Features.push_back("-vfp4");
     Features.push_back("-fp-armv8");
     break;
-  default:
-    return false;
   }
 
   // crypto includes neon, so we handle this similarly to FPU version.
