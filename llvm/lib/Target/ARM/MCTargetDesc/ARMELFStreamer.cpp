@@ -797,9 +797,41 @@ void ARMTargetELFStreamer::emitFPUDefaultAttributes() {
                      /* OverwriteExisting= */ false);
     break;
 
+  case ARM::FK_VFPV3_FP16:
+    setAttributeItem(ARMBuildAttrs::FP_arch,
+                     ARMBuildAttrs::AllowFPv3A,
+                     /* OverwriteExisting= */ false);
+    setAttributeItem(ARMBuildAttrs::FP_HP_extension,
+                     ARMBuildAttrs::AllowHPFP,
+                     /* OverwriteExisting= */ false);
+    break;
+
   case ARM::FK_VFPV3_D16:
     setAttributeItem(ARMBuildAttrs::FP_arch,
                      ARMBuildAttrs::AllowFPv3B,
+                     /* OverwriteExisting= */ false);
+    break;
+
+  case ARM::FK_VFPV3_D16_FP16:
+    setAttributeItem(ARMBuildAttrs::FP_arch,
+                     ARMBuildAttrs::AllowFPv3B,
+                     /* OverwriteExisting= */ false);
+    setAttributeItem(ARMBuildAttrs::FP_HP_extension,
+                     ARMBuildAttrs::AllowHPFP,
+                     /* OverwriteExisting= */ false);
+    break;
+
+  case ARM::FK_VFPV3XD:
+    setAttributeItem(ARMBuildAttrs::FP_arch,
+                     ARMBuildAttrs::AllowFPv3B,
+                     /* OverwriteExisting= */ false);
+    break;
+  case ARM::FK_VFPV3XD_FP16:
+    setAttributeItem(ARMBuildAttrs::FP_arch,
+                     ARMBuildAttrs::AllowFPv3B,
+                     /* OverwriteExisting= */ false);
+    setAttributeItem(ARMBuildAttrs::FP_HP_extension,
+                     ARMBuildAttrs::AllowHPFP,
                      /* OverwriteExisting= */ false);
     break;
 
@@ -839,6 +871,18 @@ void ARMTargetELFStreamer::emitFPUDefaultAttributes() {
                      /* OverwriteExisting= */ false);
     setAttributeItem(ARMBuildAttrs::Advanced_SIMD_arch,
                      ARMBuildAttrs::AllowNeon,
+                     /* OverwriteExisting= */ false);
+    break;
+
+  case ARM::FK_NEON_FP16:
+    setAttributeItem(ARMBuildAttrs::FP_arch,
+                     ARMBuildAttrs::AllowFPv3A,
+                     /* OverwriteExisting= */ false);
+    setAttributeItem(ARMBuildAttrs::Advanced_SIMD_arch,
+                     ARMBuildAttrs::AllowNeon,
+                     /* OverwriteExisting= */ false);
+    setAttributeItem(ARMBuildAttrs::FP_HP_extension,
+                     ARMBuildAttrs::AllowHPFP,
                      /* OverwriteExisting= */ false);
     break;
 

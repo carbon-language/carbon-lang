@@ -25,31 +25,37 @@ namespace {
 // List of canonical FPU names (use getFPUSynonym) and which architectural
 // features they correspond to (use getFPUFeatures).
 // FIXME: TableGen this.
+// The entries must appear in the order listed in ARM::FPUKind for correct indexing
 struct {
   const char * Name;
   ARM::FPUKind ID;
-  unsigned FPUVersion; ///< Corresponds directly to the FP arch version number.
+  ARM::FPUVersion FPUVersion;
   ARM::NeonSupportLevel NeonSupport;
   ARM::FPURestriction Restriction;
 } FPUNames[] = {
-  { "invalid",       ARM::FK_INVALID,       0, ARM::NS_None,   ARM::FR_None},
-  { "none",          ARM::FK_NONE,          0, ARM::NS_None,   ARM::FR_None},
-  { "vfp",           ARM::FK_VFP,           2, ARM::NS_None,   ARM::FR_None},
-  { "vfpv2",         ARM::FK_VFPV2,         2, ARM::NS_None,   ARM::FR_None},
-  { "vfpv3",         ARM::FK_VFPV3,         3, ARM::NS_None,   ARM::FR_None},
-  { "vfpv3-d16",     ARM::FK_VFPV3_D16,     3, ARM::NS_None,   ARM::FR_D16},
-  { "vfpv4",         ARM::FK_VFPV4,         4, ARM::NS_None,   ARM::FR_None},
-  { "vfpv4-d16",     ARM::FK_VFPV4_D16,     4, ARM::NS_None,   ARM::FR_D16},
-  { "fpv4-sp-d16",   ARM::FK_FPV4_SP_D16,   4, ARM::NS_None,   ARM::FR_SP_D16},
-  { "fpv5-d16",      ARM::FK_FPV5_D16,      5, ARM::NS_None,   ARM::FR_D16},
-  { "fpv5-sp-d16",   ARM::FK_FPV5_SP_D16,   5, ARM::NS_None,   ARM::FR_SP_D16},
-  { "fp-armv8",      ARM::FK_FP_ARMV8,      5, ARM::NS_None,   ARM::FR_None},
-  { "neon",          ARM::FK_NEON,          3, ARM::NS_Neon,   ARM::FR_None},
-  { "neon-vfpv4",    ARM::FK_NEON_VFPV4,    4, ARM::NS_Neon,   ARM::FR_None},
-  { "neon-fp-armv8", ARM::FK_NEON_FP_ARMV8, 5, ARM::NS_Neon,   ARM::FR_None},
+  { "invalid",        ARM::FK_INVALID,        ARM::FV_NONE,       ARM::NS_None,   ARM::FR_None},
+  { "none",           ARM::FK_NONE,           ARM::FV_NONE,       ARM::NS_None,   ARM::FR_None},
+  { "vfp",            ARM::FK_VFP,            ARM::FV_VFPV2,      ARM::NS_None,   ARM::FR_None},
+  { "vfpv2",          ARM::FK_VFPV2,          ARM::FV_VFPV2,      ARM::NS_None,   ARM::FR_None},
+  { "vfpv3",          ARM::FK_VFPV3,          ARM::FV_VFPV3,      ARM::NS_None,   ARM::FR_None},
+  { "vfpv3-fp16",     ARM::FK_VFPV3_FP16,     ARM::FV_VFPV3_FP16, ARM::NS_None,   ARM::FR_None},
+  { "vfpv3-d16",      ARM::FK_VFPV3_D16,      ARM::FV_VFPV3,      ARM::NS_None,   ARM::FR_D16},
+  { "vfpv3-d16-fp16", ARM::FK_VFPV3_D16_FP16, ARM::FV_VFPV3_FP16, ARM::NS_None,   ARM::FR_D16},
+  { "vfpv3xd",        ARM::FK_VFPV3XD,        ARM::FV_VFPV3,      ARM::NS_None,   ARM::FR_SP_D16},
+  { "vfpv3xd-fp16",   ARM::FK_VFPV3XD_FP16,   ARM::FV_VFPV3_FP16, ARM::NS_None,   ARM::FR_SP_D16},
+  { "vfpv4",          ARM::FK_VFPV4,          ARM::FV_VFPV4,      ARM::NS_None,   ARM::FR_None},
+  { "vfpv4-d16",      ARM::FK_VFPV4_D16,      ARM::FV_VFPV4,      ARM::NS_None,   ARM::FR_D16},
+  { "fpv4-sp-d16",    ARM::FK_FPV4_SP_D16,    ARM::FV_VFPV4,      ARM::NS_None,   ARM::FR_SP_D16},
+  { "fpv5-d16",       ARM::FK_FPV5_D16,       ARM::FV_VFPV5,      ARM::NS_None,   ARM::FR_D16},
+  { "fpv5-sp-d16",    ARM::FK_FPV5_SP_D16,    ARM::FV_VFPV5,      ARM::NS_None,   ARM::FR_SP_D16},
+  { "fp-armv8",       ARM::FK_FP_ARMV8,       ARM::FV_VFPV5,      ARM::NS_None,   ARM::FR_None},
+  { "neon",           ARM::FK_NEON,           ARM::FV_VFPV3,      ARM::NS_Neon,   ARM::FR_None},
+  { "neon-fp16",      ARM::FK_NEON_FP16,      ARM::FV_VFPV3_FP16, ARM::NS_Neon,   ARM::FR_None},
+  { "neon-vfpv4",     ARM::FK_NEON_VFPV4,     ARM::FV_VFPV4,      ARM::NS_Neon,   ARM::FR_None},
+  { "neon-fp-armv8",  ARM::FK_NEON_FP_ARMV8,  ARM::FV_VFPV5,      ARM::NS_Neon,   ARM::FR_None},
   { "crypto-neon-fp-armv8",
-              ARM::FK_CRYPTO_NEON_FP_ARMV8, 5, ARM::NS_Crypto, ARM::FR_None},
-  { "softvfp",       ARM::FK_SOFTVFP,       0, ARM::NS_None,   ARM::FR_None},
+               ARM::FK_CRYPTO_NEON_FP_ARMV8,  ARM::FV_VFPV5,      ARM::NS_Crypto, ARM::FR_None},
+  { "softvfp",        ARM::FK_SOFTVFP,        ARM::FV_NONE,       ARM::NS_None,   ARM::FR_None},
 };
 
 // List of canonical arch names (use getArchSynonym).
@@ -279,33 +285,41 @@ bool ARMTargetParser::getFPUFeatures(unsigned FPUKind,
   // higher. We also have to make sure to disable fp16 when vfp4 is disabled,
   // as +vfp4 implies +fp16 but -vfp4 does not imply -fp16.
   switch (FPUNames[FPUKind].FPUVersion) {
-  case 5:
+  case ARM::FV_VFPV5:
     Features.push_back("+fp-armv8");
     break;
-  case 4:
+  case ARM::FV_VFPV4:
     Features.push_back("+vfp4");
     Features.push_back("-fp-armv8");
     break;
-  case 3:
+  case ARM::FV_VFPV3_FP16:
+    Features.push_back("+vfp3");
+    Features.push_back("+fp16");
+    Features.push_back("-vfp4");
+    Features.push_back("-fp-armv8");
+    break;
+  case ARM::FV_VFPV3:
     Features.push_back("+vfp3");
     Features.push_back("-fp16");
     Features.push_back("-vfp4");
     Features.push_back("-fp-armv8");
     break;
-  case 2:
+  case ARM::FV_VFPV2:
     Features.push_back("+vfp2");
     Features.push_back("-vfp3");
     Features.push_back("-fp16");
     Features.push_back("-vfp4");
     Features.push_back("-fp-armv8");
     break;
-  case 0:
+  case ARM::FV_NONE:
     Features.push_back("-vfp2");
     Features.push_back("-vfp3");
     Features.push_back("-fp16");
     Features.push_back("-vfp4");
     Features.push_back("-fp-armv8");
     break;
+  default:
+    return false;
   }
 
   // crypto includes neon, so we handle this similarly to FPU version.

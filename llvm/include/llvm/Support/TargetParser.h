@@ -36,7 +36,11 @@ namespace ARM {
     FK_VFP,
     FK_VFPV2,
     FK_VFPV3,
+    FK_VFPV3_FP16,
     FK_VFPV3_D16,
+    FK_VFPV3_D16_FP16,
+    FK_VFPV3XD,
+    FK_VFPV3XD_FP16,
     FK_VFPV4,
     FK_VFPV4_D16,
     FK_FPV4_SP_D16,
@@ -44,11 +48,22 @@ namespace ARM {
     FK_FPV5_SP_D16,
     FK_FP_ARMV8,
     FK_NEON,
+    FK_NEON_FP16,
     FK_NEON_VFPV4,
     FK_NEON_FP_ARMV8,
     FK_CRYPTO_NEON_FP_ARMV8,
     FK_SOFTVFP,
     FK_LAST
+  };
+
+  // FPU Version
+  enum FPUVersion {
+    FV_NONE = 0,
+    FV_VFPV2,
+    FV_VFPV3,
+    FV_VFPV3_FP16,
+    FV_VFPV4,
+    FV_VFPV5
   };
 
   // An FPU name implies one of three levels of Neon support:

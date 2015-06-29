@@ -10,7 +10,11 @@
 	.fpu vfp
 	.fpu vfpv2
 	.fpu vfpv3
+	.fpu vfpv3-fp16
 	.fpu vfpv3-d16
+	.fpu vfpv3-d16-fp16
+	.fpu vfpv3xd
+	.fpu vfpv3xd-fp16
 	.fpu vfpv4
 	.fpu vfpv4-d16
 	.fpu fpv4-sp-d16
@@ -18,6 +22,7 @@
 	.fpu fpv5-sp-d16
 	.fpu fp-armv8
 	.fpu neon
+	.fpu neon-fp16
 	.fpu neon-vfpv4
 	.fpu neon-fp-armv8
 	.fpu crypto-neon-fp-armv8

@@ -51,6 +51,13 @@
 ; RUN: llc < %s -mtriple=armv7-linux-gnueabi -mcpu=cortex-a17  -enable-unsafe-fp-math -disable-fp-elim -enable-no-infs-fp-math -enable-no-nans-fp-math -fp-contract=fast | FileCheck %s --check-prefix=CORTEX-A17-FAST
 ; RUN: llc < %s -mtriple=armv7-linux-gnueabi -mcpu=cortex-a17 -mattr=-vfp2 | FileCheck %s --check-prefix=CORTEX-A17-NOFPU
 ; RUN: llc < %s -mtriple=armv7-linux-gnueabi -mcpu=cortex-a17 -mattr=-vfp2  -enable-unsafe-fp-math -disable-fp-elim -enable-no-infs-fp-math -enable-no-nans-fp-math -fp-contract=fast | FileCheck %s --check-prefix=CORTEX-A17-NOFPU-FAST
+
+; RUN: llc < %s -mtriple=armv7-linux-gnueabi -mattr=-neon,+vfp3,+fp16 | FileCheck %s --check-prefix=GENERIC-FPU-VFPV3-FP16
+; RUN: llc < %s -mtriple=armv7-linux-gnueabi -mattr=-neon,+vfp3,+d16,+fp16 | FileCheck %s --check-prefix=GENERIC-FPU-VFPV3-D16-FP16
+; RUN: llc < %s -mtriple=armv7-linux-gnueabi -mattr=-neon,+vfp3,+fp-only-sp,+d16 | FileCheck %s --check-prefix=GENERIC-FPU-VFPV3XD
+; RUN: llc < %s -mtriple=armv7-linux-gnueabi -mattr=-neon,+vfp3,+fp-only-sp,+d16,+fp16 | FileCheck %s --check-prefix=GENERIC-FPU-VFPV3XD-FP16
+; RUN: llc < %s -mtriple=armv7-linux-gnueabi -mattr=+neon,+fp16 | FileCheck %s --check-prefix=GENERIC-FPU-NEON-FP16
+
 ; RUN: llc < %s -mtriple=armv7-linux-gnueabi -mcpu=cortex-a17 -enable-sign-dependent-rounding-fp-math | FileCheck %s --check-prefix=DYN-ROUNDING
 ; RUN: llc < %s -mtriple=thumbv6m-linux-gnueabi -mcpu=cortex-m0 | FileCheck %s --check-prefix=CORTEX-M0
 ; RUN: llc < %s -mtriple=thumbv6m-linux-gnueabi -mcpu=cortex-m0  -enable-unsafe-fp-math -disable-fp-elim -enable-no-infs-fp-math -enable-no-nans-fp-math -fp-contract=fast | FileCheck %s --check-prefix=CORTEX-M0-FAST
@@ -1091,7 +1098,7 @@
 ; CORTEX-R7:  .eabi_attribute 7, 82
 ; CORTEX-R7:  .eabi_attribute 8, 1
 ; CORTEX-R7:  .eabi_attribute 9, 2
-; CORTEX-R7:  .fpu vfpv3-d16
+; CORTEX-R7:  .fpu vfpv3xd
 ; CORTEX-R7-NOT:   .eabi_attribute 19
 ;; We default to IEEE 754 compliance
 ; CORTEX-R7:  .eabi_attribute 20, 1
@@ -1204,6 +1211,12 @@
 ; CORTEX-A72-FAST-NOT:  .eabi_attribute 21
 ; CORTEX-A72-FAST-NOT:  .eabi_attribute 22
 ; CORTEX-A72-FAST:  .eabi_attribute 23, 1
+
+; GENERIC-FPU-VFPV3-FP16: .fpu vfpv3-fp16
+; GENERIC-FPU-VFPV3-D16-FP16: .fpu vfpv3-d16-fp16
+; GENERIC-FPU-VFPV3XD: .fpu vfpv3xd
+; GENERIC-FPU-VFPV3XD-FP16: .fpu vfpv3xd-fp16
+; GENERIC-FPU-NEON-FP16: .fpu neon-fp16
 
 ; GENERIC-ARMV8_1-A:  .eabi_attribute 6, 14
 ; GENERIC-ARMV8_1-A:  .eabi_attribute 7, 65
