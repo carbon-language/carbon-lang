@@ -21,6 +21,16 @@
 #if LLVM_ON_UNIX
 #include <unistd.h>
 #endif
+
+#if defined(__APPLE__) && defined(__MAC_OS_X_VERSION_MIN_REQUIRED) && (__MAC_OS_X_VERSION_MIN_REQUIRED > 1050)
+#define USE_OSX_GETHOSTUUID 1
+#else
+#define USE_OSX_GETHOSTUUID 0
+#endif
+
+#if USE_OSX_GETHOSTUUID
+#include <uuid/uuid.h>
+#endif
 using namespace llvm;
 
 /// \brief Attempt to read the lock file with the given name, if it exists.
@@ -56,14 +66,43 @@ LockFileManager::readLockFile(StringRef LockFileName) {
   return None;
 }
 
-bool LockFileManager::processStillExecuting(StringRef Hostname, int PID) {
+static std::error_code getHostID(SmallVectorImpl<char> &HostID) {
+  HostID.clear();
+
+#if USE_OSX_GETHOSTUUID
+  // On OS X, use the more stable hardware UUID instead of hostname.
+  struct timespec wait = {1, 0}; // 1 second.
+  uuid_t uuid;
+  if (gethostuuid(uuid, &wait) != 0)
+    return std::error_code(errno, std::system_category());
+
+  uuid_string_t UUIDStr;
+  uuid_unparse(uuid, UUIDStr);
+  assert(strlen(UUIDStr) == 36);
+  HostID.append(&UUIDStr[0], &UUIDStr[36]);
+
+#elif LLVM_ON_UNIX
+  char hostname[256];
+  hostname[255] = 0;
+  hostname[0] = 0;
+  gethostname(hostname, 255);
+  HostID = hostname;
+
+#else
+  HostID = "localhost";
+#endif
+
+  return std::error_code();
+}
+
+bool LockFileManager::processStillExecuting(StringRef HostID, int PID) {
 #if LLVM_ON_UNIX && !defined(__ANDROID__)
-  char MyHostname[256];
-  MyHostname[255] = 0;
-  MyHostname[0] = 0;
-  gethostname(MyHostname, 255);
+  SmallString<256> StoredHostID;
+  if (getHostID(StoredHostID))
+    return true; // Conservatively assume it's executing on error.
+
   // Check whether the process is dead. If so, we're done.
-  if (MyHostname == Hostname && getsid(PID) == -1 && errno == ESRCH)
+  if (StoredHostID == HostID && getsid(PID) == -1 && errno == ESRCH)
     return false;
 #endif
 
@@ -126,17 +165,18 @@ LockFileManager::LockFileManager(StringRef FileName)
 
   // Write our process ID to our unique lock file.
   {
-    raw_fd_ostream Out(UniqueLockFileID, /*shouldClose=*/true);
+    SmallString<256> HostID;
+    if (auto EC = getHostID(HostID)) {
+      Error = EC;
+      return;
+    }
 
+    raw_fd_ostream Out(UniqueLockFileID, /*shouldClose=*/true);
+    Out << HostID << ' ';
 #if LLVM_ON_UNIX
-    // FIXME: move getpid() call into LLVM
-    char hostname[256];
-    hostname[255] = 0;
-    hostname[0] = 0;
-    gethostname(hostname, 255);
-    Out << hostname << ' ' << getpid();
+    Out << getpid();
 #else
-    Out << "localhost 1";
+    Out << "1";
 #endif
     Out.close();
 
