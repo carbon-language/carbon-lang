@@ -7,6 +7,10 @@
 #  error assume_nonnull feature is not set
 #endif
 
+#if !__has_extension(assume_nonnull)
+#  error assume_nonnull extension is not set
+#endif
+
 void test_pragmas_1(A * _Nonnull a, AA * _Nonnull aa) {
   f1(0); // okay: no nullability annotations
   f2(0); // expected-warning{{null passed to a callee that requires a non-null argument}}

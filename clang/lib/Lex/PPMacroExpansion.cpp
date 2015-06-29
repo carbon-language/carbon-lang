@@ -1226,6 +1226,7 @@ static bool HasExtension(const Preprocessor &PP, const IdentifierInfo *II) {
   // Because we inherit the feature list from HasFeature, this string switch
   // must be less restrictive than HasFeature's.
   return llvm::StringSwitch<bool>(Extension)
+           .Case("assume_nonnull", true)
            .Case("nullability", true)
            // C11 features supported by other languages as extensions.
            .Case("c_alignas", true)
