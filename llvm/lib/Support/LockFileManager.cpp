@@ -12,6 +12,7 @@
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/Signals.h"
 #include <sys/stat.h>
 #include <sys/types.h>
 #if LLVM_ON_WIN32
@@ -69,6 +70,35 @@ bool LockFileManager::processStillExecuting(StringRef Hostname, int PID) {
   return true;
 }
 
+namespace {
+/// An RAII helper object ensure that the unique lock file is removed.
+///
+/// Ensures that if there is an error or a signal before we finish acquiring the
+/// lock, the unique file will be removed. And if we successfully take the lock,
+/// the signal handler is left in place so that signals while the lock is held
+/// will remove the unique lock file. The caller should ensure there is a
+/// matching call to sys::DontRemoveFileOnSignal when the lock is released.
+class RemoveUniqueLockFileOnSignal {
+  StringRef Filename;
+  bool RemoveImmediately;
+public:
+  RemoveUniqueLockFileOnSignal(StringRef Name)
+  : Filename(Name), RemoveImmediately(true) {
+    sys::RemoveFileOnSignal(Filename, nullptr);
+  }
+  ~RemoveUniqueLockFileOnSignal() {
+    if (!RemoveImmediately) {
+      // Leave the signal handler enabled. It will be removed when the lock is
+      // released.
+      return;
+    }
+    sys::fs::remove(Filename);
+    sys::DontRemoveFileOnSignal(Filename);
+  }
+  void lockAcquired() { RemoveImmediately = false; }
+};
+} // end anonymous namespace
+
 LockFileManager::LockFileManager(StringRef FileName)
 {
   this->FileName = FileName;
@@ -119,12 +149,18 @@ LockFileManager::LockFileManager(StringRef FileName)
     }
   }
 
+  // Clean up the unique file on signal, which also releases the lock if it is
+  // held since the .lock symlink will point to a nonexistent file.
+  RemoveUniqueLockFileOnSignal RemoveUniqueFile(UniqueLockFileName);
+
   while (1) {
     // Create a link from the lock file name. If this succeeds, we're done.
     std::error_code EC =
         sys::fs::create_link(UniqueLockFileName, LockFileName);
-    if (!EC)
+    if (!EC) {
+      RemoveUniqueFile.lockAcquired();
       return;
+    }
 
     if (EC != errc::file_exists) {
       Error = EC;
@@ -171,6 +207,9 @@ LockFileManager::~LockFileManager() {
   // Since we own the lock, remove the lock file and our own unique lock file.
   sys::fs::remove(LockFileName);
   sys::fs::remove(UniqueLockFileName);
+  // The unique file is now gone, so remove it from the signal handler. This
+  // matches a sys::RemoveFileOnSignal() in LockFileManager().
+  sys::DontRemoveFileOnSignal(UniqueLockFileName);
 }
 
 LockFileManager::WaitForUnlockResult LockFileManager::waitForUnlock() {
