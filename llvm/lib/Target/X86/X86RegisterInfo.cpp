@@ -598,10 +598,10 @@ X86RegisterInfo::getPtrSizedFrameRegister(const MachineFunction &MF) const {
 }
 
 namespace llvm {
-unsigned getX86SubSuperRegister(unsigned Reg, MVT::SimpleValueType VT,
-                                bool High) {
+unsigned getX86SubSuperRegisterOrZero(unsigned Reg, MVT::SimpleValueType VT,
+                                      bool High) {
   switch (VT) {
-  default: llvm_unreachable("Unexpected VT");
+  default: return 0;
   case MVT::i8:
     if (High) {
       switch (Reg) {
@@ -625,7 +625,7 @@ unsigned getX86SubSuperRegister(unsigned Reg, MVT::SimpleValueType VT,
       }
     } else {
       switch (Reg) {
-      default: llvm_unreachable("Unexpected register");
+      default: return 0;
       case X86::AH: case X86::AL: case X86::AX: case X86::EAX: case X86::RAX:
         return X86::AL;
       case X86::DH: case X86::DL: case X86::DX: case X86::EDX: case X86::RDX:
@@ -662,7 +662,7 @@ unsigned getX86SubSuperRegister(unsigned Reg, MVT::SimpleValueType VT,
     }
   case MVT::i16:
     switch (Reg) {
-    default: llvm_unreachable("Unexpected register");
+    default: return 0;
     case X86::AH: case X86::AL: case X86::AX: case X86::EAX: case X86::RAX:
       return X86::AX;
     case X86::DH: case X86::DL: case X86::DX: case X86::EDX: case X86::RDX:
@@ -698,7 +698,7 @@ unsigned getX86SubSuperRegister(unsigned Reg, MVT::SimpleValueType VT,
     }
   case MVT::i32:
     switch (Reg) {
-    default: llvm_unreachable("Unexpected register");
+    default: return 0;
     case X86::AH: case X86::AL: case X86::AX: case X86::EAX: case X86::RAX:
       return X86::EAX;
     case X86::DH: case X86::DL: case X86::DX: case X86::EDX: case X86::RDX:
@@ -734,7 +734,7 @@ unsigned getX86SubSuperRegister(unsigned Reg, MVT::SimpleValueType VT,
     }
   case MVT::i64:
     switch (Reg) {
-    default: llvm_unreachable("Unexpected register");
+    default: return 0;
     case X86::AH: case X86::AL: case X86::AX: case X86::EAX: case X86::RAX:
       return X86::RAX;
     case X86::DH: case X86::DL: case X86::DX: case X86::EDX: case X86::RDX:
@@ -769,6 +769,14 @@ unsigned getX86SubSuperRegister(unsigned Reg, MVT::SimpleValueType VT,
       return X86::R15;
     }
   }
+}
+
+unsigned getX86SubSuperRegister(unsigned Reg, MVT::SimpleValueType VT,
+                                bool High) {
+  unsigned Res = getX86SubSuperRegisterOrZero(Reg, VT, High);
+  if (Res == 0)
+    llvm_unreachable("Unexpected register or VT");
+  return Res;
 }
 
 unsigned get512BitSuperRegister(unsigned Reg) {
