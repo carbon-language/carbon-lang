@@ -803,8 +803,7 @@ public:
 
     typedef EnumerateDirectoryResult (*EnumerateDirectoryCallbackType) (void *baton,
                                                                         FileType file_type,
-                                                                        const FileSpec &spec
-);
+                                                                        const FileSpec &spec);
 
     static EnumerateDirectoryResult
     EnumerateDirectory (const char *dir_path,

@@ -1272,207 +1272,26 @@ FileSpec::EnumerateDirectory
     void *callback_baton
 )
 {
-    if (dir_path && dir_path[0])
-    {
-#if _WIN32
-        std::string szDir(dir_path);
-        szDir += "\\*";
-
-        WIN32_FIND_DATA ffd;
-        HANDLE hFind = FindFirstFile(szDir.c_str(), &ffd);
-
-        if (hFind == INVALID_HANDLE_VALUE)
-        {
-            return eEnumerateDirectoryResultNext;
-        }
-
-        do
-        {
-            bool call_callback = false;
-            FileSpec::FileType file_type = eFileTypeUnknown;
-            if (ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-            {
-                size_t len = strlen(ffd.cFileName);
-
-                if (len == 1 && ffd.cFileName[0] == '.')
-                    continue;
-
-                if (len == 2 && ffd.cFileName[0] == '.' && ffd.cFileName[1] == '.')
-                    continue;
-
-                file_type = eFileTypeDirectory;
-                call_callback = find_directories;
-            }
-            else if (ffd.dwFileAttributes & FILE_ATTRIBUTE_DEVICE)
-            {
-                file_type = eFileTypeOther;
-                call_callback = find_other;
-            }
-            else
-            {
-                file_type = eFileTypeRegular;
-                call_callback = find_files;
-            }
-            if (call_callback)
-            {
-                char child_path[MAX_PATH];
-                const int child_path_len = ::snprintf (child_path, sizeof(child_path), "%s\\%s", dir_path, ffd.cFileName);
-                if (child_path_len < (int)(sizeof(child_path) - 1))
+    return ForEachItemInDirectory(dir_path,
+            [&find_directories, &find_files, &find_other, &callback, &callback_baton]
+            (FileType file_type, const FileSpec &file_spec) {
+                switch (file_type)
                 {
-                    // Don't resolve the file type or path
-                    FileSpec child_path_spec (child_path, false);
-
-                    EnumerateDirectoryResult result = callback (callback_baton, file_type, child_path_spec);
-
-                    switch (result)
-                    {
-                    case eEnumerateDirectoryResultNext:
-                        // Enumerate next entry in the current directory. We just
-                        // exit this switch and will continue enumerating the
-                        // current directory as we currently are...
+                    case FileType::eFileTypeDirectory:
+                        if (find_directories)
+                            return callback(callback_baton, file_type, file_spec);
                         break;
-
-                    case eEnumerateDirectoryResultEnter: // Recurse into the current entry if it is a directory or symlink, or next if not
-                        if (FileSpec::EnumerateDirectory(child_path,
-                            find_directories,
-                            find_files,
-                            find_other,
-                            callback,
-                            callback_baton) == eEnumerateDirectoryResultQuit)
-                        {
-                            // The subdirectory returned Quit, which means to 
-                            // stop all directory enumerations at all levels.
-                            return eEnumerateDirectoryResultQuit;
-                        }
+                    case FileType::eFileTypeRegular:
+                        if (find_files)
+                            return callback(callback_baton, file_type, file_spec);
                         break;
-
-                    case eEnumerateDirectoryResultExit:  // Exit from the current directory at the current level.
-                        // Exit from this directory level and tell parent to 
-                        // keep enumerating.
-                        return eEnumerateDirectoryResultNext;
-
-                    case eEnumerateDirectoryResultQuit:  // Stop directory enumerations at any level
-                        return eEnumerateDirectoryResultQuit;
-                    }
+                    default:
+                        if (find_other)
+                            return callback(callback_baton, file_type, file_spec);
+                        break;
                 }
-            }
-        } while (FindNextFile(hFind, &ffd) != 0);
-
-        FindClose(hFind);
-#else
-        lldb_utility::CleanUp <DIR *, int> dir_path_dir(opendir(dir_path), NULL, closedir);
-        if (dir_path_dir.is_valid())
-        {
-            char dir_path_last_char = dir_path[strlen(dir_path) - 1];
-
-            long path_max = fpathconf (dirfd (dir_path_dir.get()), _PC_NAME_MAX);
-#if defined (__APPLE_) && defined (__DARWIN_MAXPATHLEN)
-            if (path_max < __DARWIN_MAXPATHLEN)
-                path_max = __DARWIN_MAXPATHLEN;
-#endif
-            struct dirent *buf, *dp;
-            buf = (struct dirent *) malloc (offsetof (struct dirent, d_name) + path_max + 1);
-
-            while (buf && readdir_r(dir_path_dir.get(), buf, &dp) == 0 && dp)
-            {
-                // Only search directories
-                if (dp->d_type == DT_DIR || dp->d_type == DT_UNKNOWN)
-                {
-                    size_t len = strlen(dp->d_name);
-
-                    if (len == 1 && dp->d_name[0] == '.')
-                        continue;
-
-                    if (len == 2 && dp->d_name[0] == '.' && dp->d_name[1] == '.')
-                        continue;
-                }
-            
-                bool call_callback = false;
-                FileSpec::FileType file_type = eFileTypeUnknown;
-
-                switch (dp->d_type)
-                {
-                default:
-                case DT_UNKNOWN:    file_type = eFileTypeUnknown;       call_callback = true;               break;
-                case DT_FIFO:       file_type = eFileTypePipe;          call_callback = find_other;         break;
-                case DT_CHR:        file_type = eFileTypeOther;         call_callback = find_other;         break;
-                case DT_DIR:        file_type = eFileTypeDirectory;     call_callback = find_directories;   break;
-                case DT_BLK:        file_type = eFileTypeOther;         call_callback = find_other;         break;
-                case DT_REG:        file_type = eFileTypeRegular;       call_callback = find_files;         break;
-                case DT_LNK:        file_type = eFileTypeSymbolicLink;  call_callback = find_other;         break;
-                case DT_SOCK:       file_type = eFileTypeSocket;        call_callback = find_other;         break;
-#if !defined(__OpenBSD__)
-                case DT_WHT:        file_type = eFileTypeOther;         call_callback = find_other;         break;
-#endif
-                }
-
-                if (call_callback)
-                {
-                    char child_path[PATH_MAX];
-
-                    // Don't make paths with "/foo//bar", that just confuses everybody.
-                    int child_path_len;
-                    if (dir_path_last_char == '/')
-                        child_path_len = ::snprintf (child_path, sizeof(child_path), "%s%s", dir_path, dp->d_name);
-                    else
-                        child_path_len = ::snprintf (child_path, sizeof(child_path), "%s/%s", dir_path, dp->d_name);
-
-                    if (child_path_len < (int)(sizeof(child_path) - 1))
-                    {
-                        // Don't resolve the file type or path
-                        FileSpec child_path_spec (child_path, false);
-
-                        EnumerateDirectoryResult result = callback (callback_baton, file_type, child_path_spec);
-                        
-                        switch (result)
-                        {
-                        case eEnumerateDirectoryResultNext:  
-                            // Enumerate next entry in the current directory. We just
-                            // exit this switch and will continue enumerating the
-                            // current directory as we currently are...
-                            break;
-
-                        case eEnumerateDirectoryResultEnter: // Recurse into the current entry if it is a directory or symlink, or next if not
-                            if (FileSpec::EnumerateDirectory (child_path, 
-                                                              find_directories, 
-                                                              find_files, 
-                                                              find_other, 
-                                                              callback, 
-                                                              callback_baton) == eEnumerateDirectoryResultQuit)
-                            {
-                                // The subdirectory returned Quit, which means to 
-                                // stop all directory enumerations at all levels.
-                                if (buf)
-                                    free (buf);
-                                return eEnumerateDirectoryResultQuit;
-                            }
-                            break;
-                        
-                        case eEnumerateDirectoryResultExit:  // Exit from the current directory at the current level.
-                            // Exit from this directory level and tell parent to 
-                            // keep enumerating.
-                            if (buf)
-                                free (buf);
-                            return eEnumerateDirectoryResultNext;
-
-                        case eEnumerateDirectoryResultQuit:  // Stop directory enumerations at any level
-                            if (buf)
-                                free (buf);
-                            return eEnumerateDirectoryResultQuit;
-                        }
-                    }
-                }
-            }
-            if (buf)
-            {
-                free (buf);
-            }
-        }
-#endif
-    }
-    // By default when exiting a directory, we tell the parent enumeration
-    // to continue enumerating.
-    return eEnumerateDirectoryResultNext;    
+                return eEnumerateDirectoryResultNext;
+            });
 }
 
 FileSpec
