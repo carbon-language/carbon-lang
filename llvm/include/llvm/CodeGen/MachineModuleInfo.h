@@ -284,12 +284,14 @@ public:
   /// getAddrLabelSymbol - Return the symbol to be used for the specified basic
   /// block when its address is taken.  This cannot be its normal LBB label
   /// because the block may be accessed outside its containing function.
-  MCSymbol *getAddrLabelSymbol(const BasicBlock *BB);
+  MCSymbol *getAddrLabelSymbol(const BasicBlock *BB) {
+    return getAddrLabelSymbolToEmit(BB).front();
+  }
 
   /// getAddrLabelSymbolToEmit - Return the symbol to be used for the specified
   /// basic block when its address is taken.  If other blocks were RAUW'd to
   /// this one, we may have to emit them as well, return the whole set.
-  std::vector<MCSymbol*> getAddrLabelSymbolToEmit(const BasicBlock *BB);
+  ArrayRef<MCSymbol *> getAddrLabelSymbolToEmit(const BasicBlock *BB);
 
   /// takeDeletedSymbolsForFunction - If the specified function has had any
   /// references to address-taken blocks generated, but the block got deleted,

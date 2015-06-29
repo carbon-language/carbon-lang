@@ -2390,8 +2390,7 @@ void AsmPrinter::EmitBasicBlockStart(const MachineBasicBlock &MBB) const {
     if (isVerbose())
       OutStreamer->AddComment("Block address taken");
 
-    std::vector<MCSymbol*> Symbols = MMI->getAddrLabelSymbolToEmit(BB);
-    for (auto *Sym : Symbols)
+    for (MCSymbol *Sym : MMI->getAddrLabelSymbolToEmit(BB))
       OutStreamer->EmitLabel(Sym);
   }
 
