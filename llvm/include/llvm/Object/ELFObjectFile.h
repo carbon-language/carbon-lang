@@ -637,18 +637,10 @@ symbol_iterator
 ELFObjectFile<ELFT>::getRelocationSymbol(DataRefImpl Rel) const {
   uint32_t symbolIdx;
   const Elf_Shdr *sec = getRelSection(Rel);
-  switch (sec->sh_type) {
-  default:
-    report_fatal_error("Invalid section type in Rel!");
-  case ELF::SHT_REL: {
+  if (sec->sh_type == ELF::SHT_REL)
     symbolIdx = getRel(Rel)->getSymbol(EF.isMips64EL());
-    break;
-  }
-  case ELF::SHT_RELA: {
+  else
     symbolIdx = getRela(Rel)->getSymbol(EF.isMips64EL());
-    break;
-  }
-  }
   if (!symbolIdx)
     return symbol_end();
 
@@ -697,32 +689,20 @@ uint64_t ELFObjectFile<ELFT>::getRelocationOffset(DataRefImpl Rel) const {
 template <class ELFT>
 uint64_t ELFObjectFile<ELFT>::getROffset(DataRefImpl Rel) const {
   const Elf_Shdr *sec = getRelSection(Rel);
-  switch (sec->sh_type) {
-  default:
-    report_fatal_error("Invalid section type in Rel!");
-  case ELF::SHT_REL:
+  if (sec->sh_type == ELF::SHT_REL)
     return getRel(Rel)->r_offset;
-  case ELF::SHT_RELA:
-    return getRela(Rel)->r_offset;
-  }
+
+  return getRela(Rel)->r_offset;
 }
 
 template <class ELFT>
 std::error_code ELFObjectFile<ELFT>::getRelocationType(DataRefImpl Rel,
                                                        uint64_t &Result) const {
   const Elf_Shdr *sec = getRelSection(Rel);
-  switch (sec->sh_type) {
-  default:
-    report_fatal_error("Invalid section type in Rel!");
-  case ELF::SHT_REL: {
+  if (sec->sh_type == ELF::SHT_REL)
     Result = getRel(Rel)->getType(EF.isMips64EL());
-    break;
-  }
-  case ELF::SHT_RELA: {
+  else
     Result = getRela(Rel)->getType(EF.isMips64EL());
-    break;
-  }
-  }
   return std::error_code();
 }
 
@@ -736,18 +716,10 @@ std::error_code ELFObjectFile<ELFT>::getRelocationTypeName(
     DataRefImpl Rel, SmallVectorImpl<char> &Result) const {
   const Elf_Shdr *sec = getRelSection(Rel);
   uint32_t type;
-  switch (sec->sh_type) {
-  default:
-    return object_error::parse_failed;
-  case ELF::SHT_REL: {
+  if (sec->sh_type == ELF::SHT_REL)
     type = getRel(Rel)->getType(EF.isMips64EL());
-    break;
-  }
-  case ELF::SHT_RELA: {
+  else
     type = getRela(Rel)->getType(EF.isMips64EL());
-    break;
-  }
-  }
 
   EF.getRelocationTypeName(type, Result);
   return std::error_code();
@@ -775,12 +747,14 @@ ELFObjectFile<ELFT>::getSymbol(DataRefImpl Symb) const {
 template <class ELFT>
 const typename ELFObjectFile<ELFT>::Elf_Rel *
 ELFObjectFile<ELFT>::getRel(DataRefImpl Rel) const {
+  assert(getRelSection(Rel)->sh_type == ELF::SHT_REL);
   return EF.template getEntry<Elf_Rel>(Rel.d.a, Rel.d.b);
 }
 
 template <class ELFT>
 const typename ELFObjectFile<ELFT>::Elf_Rela *
 ELFObjectFile<ELFT>::getRela(DataRefImpl Rela) const {
+  assert(getRelSection(Rela)->sh_type == ELF::SHT_RELA);
   return EF.template getEntry<Elf_Rela>(Rela.d.a, Rela.d.b);
 }
 
