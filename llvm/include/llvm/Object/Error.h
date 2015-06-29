@@ -27,6 +27,7 @@ enum class object_error {
   invalid_file_type,
   parse_failed,
   unexpected_eof,
+  string_table_non_null_end,
   bitcode_section_not_found,
   macho_small_load_command,
   macho_load_segment_too_many_sections,

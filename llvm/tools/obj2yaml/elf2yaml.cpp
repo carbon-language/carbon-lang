@@ -183,7 +183,11 @@ std::error_code ELFDumper<ELFT>::dumpRelocation(const Elf_Shdr *Shdr,
     return obj2yaml_error::success;
 
   const Elf_Shdr *SymTab = NamePair.first;
-  const Elf_Shdr *StrTab = Obj.getSection(SymTab->sh_link);
+  const Elf_Shdr *StrTabSec = Obj.getSection(SymTab->sh_link);
+  ErrorOr<StringRef> StrTabOrErr = Obj.getStringTable(StrTabSec);
+  if (std::error_code EC = StrTabOrErr.getError())
+    return EC;
+  StringRef StrTab = *StrTabOrErr;
 
   ErrorOr<StringRef> NameOrErr = Obj.getSymbolName(StrTab, NamePair.second);
   if (std::error_code EC = NameOrErr.getError())
@@ -302,7 +306,11 @@ ErrorOr<ELFYAML::Group *> ELFDumper<ELFT>::dumpGroup(const Elf_Shdr *Shdr) {
   // Get sh_info which is the signature.
   const Elf_Sym *symbol = Obj.getSymbol(Shdr->sh_info);
   const Elf_Shdr *symtab = Obj.getSection(Shdr->sh_link);
-  const Elf_Shdr *StrTab = Obj.getSection(symtab->sh_link);
+  const Elf_Shdr *StrTabSec = Obj.getSection(symtab->sh_link);
+  ErrorOr<StringRef> StrTabOrErr = Obj.getStringTable(StrTabSec);
+  if (std::error_code EC = StrTabOrErr.getError())
+    return EC;
+  StringRef StrTab = *StrTabOrErr;
   auto sectionContents = Obj.getSectionContents(Shdr);
   if (std::error_code ec = sectionContents.getError())
     return ec;

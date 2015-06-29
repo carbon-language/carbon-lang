@@ -172,8 +172,8 @@ private:
 
   const Elf_Ehdr *Header;
   const Elf_Shdr *SectionHeaderTable;
-  const Elf_Shdr *dot_shstrtab_sec; // Section header string table.
-  const Elf_Shdr *dot_strtab_sec;   // Symbol header string table.
+  StringRef DotShstrtab;            // Section header string table.
+  StringRef DotStrtab;              // Symbol header string table.
   const Elf_Shdr *dot_symtab_sec;   // Symbol table section.
 
   const Elf_Shdr *SymbolTableSectionHeaderIndex;
@@ -235,7 +235,7 @@ public:
   const T        *getEntry(uint32_t Section, uint32_t Entry) const;
   template <typename T>
   const T *getEntry(const Elf_Shdr *Section, uint32_t Entry) const;
-  ErrorOr<StringRef> getString(const Elf_Shdr *Section, uint32_t Offset) const;
+  ErrorOr<StringRef> getStringTable(const Elf_Shdr *Section) const;
   const char *getDynamicString(uintX_t Offset) const;
   ErrorOr<StringRef> getSymbolVersion(const Elf_Shdr *section,
                                       const Elf_Sym *Symb,
@@ -371,8 +371,7 @@ public:
   ///
   /// \p SymTab is used to lookup the string table to use to get the symbol's
   /// name.
-  ErrorOr<StringRef> getSymbolName(const Elf_Shdr *StrTab,
-                                   const Elf_Sym *Symb) const;
+  ErrorOr<StringRef> getSymbolName(StringRef StrTab, const Elf_Sym *Symb) const;
   ErrorOr<StringRef> getSectionName(const Elf_Shdr *Section) const;
   uint64_t getSymbolIndex(const Elf_Sym *sym) const;
   ErrorOr<ArrayRef<uint8_t> > getSectionContents(const Elf_Shdr *Sec) const;
@@ -545,15 +544,6 @@ ELFFile<ELFT>::getRelocationSymbol(const Elf_Shdr *Sec, const RelT *Rel) const {
       SymTable, getEntry<Elf_Sym>(SymTable, Rel->getSymbol(isMips64EL())));
 }
 
-// Verify that the last byte in the string table in a null.
-template <class ELFT>
-void ELFFile<ELFT>::VerifyStrTab(const Elf_Shdr *sh) const {
-  const char *strtab = (const char *)base() + sh->sh_offset;
-  if (strtab[sh->sh_size - 1] != 0)
-    // FIXME: Proper error handling.
-    report_fatal_error("String table must end with a null terminator!");
-}
-
 template <class ELFT>
 uint64_t ELFFile<ELFT>::getNumSections() const {
   assert(Header && "Header not initialized!");
@@ -577,8 +567,7 @@ typename ELFFile<ELFT>::uintX_t ELFFile<ELFT>::getStringTableIndex() const {
 
 template <class ELFT>
 ELFFile<ELFT>::ELFFile(StringRef Object, std::error_code &EC)
-    : Buf(Object), SectionHeaderTable(nullptr), dot_shstrtab_sec(nullptr),
-      dot_strtab_sec(nullptr), dot_symtab_sec(nullptr),
+    : Buf(Object), SectionHeaderTable(nullptr), dot_symtab_sec(nullptr),
       SymbolTableSectionHeaderIndex(nullptr), dot_gnu_version_sec(nullptr),
       dot_gnu_version_r_sec(nullptr), dot_gnu_version_d_sec(nullptr),
       dt_soname(nullptr) {
@@ -626,15 +615,18 @@ ELFFile<ELFT>::ELFFile(StringRef Object, std::error_code &EC)
       }
       SymbolTableSectionHeaderIndex = &Sec;
       break;
-    case ELF::SHT_SYMTAB:
+    case ELF::SHT_SYMTAB: {
       if (dot_symtab_sec) {
         // More than one .symtab!
         EC = object_error::parse_failed;
         return;
       }
       dot_symtab_sec = &Sec;
-      dot_strtab_sec = getSection(Sec.sh_link);
-      break;
+      ErrorOr<StringRef> SymtabOrErr = getStringTable(getSection(Sec.sh_link));
+      if ((EC = SymtabOrErr.getError()))
+        return;
+      DotStrtab = *SymtabOrErr;
+    } break;
     case ELF::SHT_DYNSYM: {
       if (DynSymRegion.Addr) {
         // More than one .dynsym!
@@ -688,11 +680,11 @@ ELFFile<ELFT>::ELFFile(StringRef Object, std::error_code &EC)
   }
 
   // Get string table sections.
-  dot_shstrtab_sec = getSection(getStringTableIndex());
-  if (dot_shstrtab_sec) {
-    // Verify that the last byte in the string table in a null.
-    VerifyStrTab(dot_shstrtab_sec);
-  }
+  ErrorOr<StringRef> SymtabOrErr =
+      getStringTable(getSection(getStringTableIndex()));
+  if ((EC = SymtabOrErr.getError()))
+    return;
+  DotShstrtab = *SymtabOrErr;
 
   // Build symbol name side-mapping if there is one.
   if (SymbolTableSectionHeaderIndex) {
@@ -865,13 +857,18 @@ ELFFile<ELFT>::getSection(uint32_t index) const {
 }
 
 template <class ELFT>
-ErrorOr<StringRef> ELFFile<ELFT>::getString(const Elf_Shdr *Section,
-                                            ELF::Elf32_Word Offset) const {
+ErrorOr<StringRef>
+ELFFile<ELFT>::getStringTable(const Elf_Shdr *Section) const {
   if (Section->sh_type != ELF::SHT_STRTAB)
     return object_error::parse_failed;
-  if (Offset >= Section->sh_size)
+  uint64_t Offset = Section->sh_offset;
+  uint64_t Size = Section->sh_size;
+  if (Offset + Size > Buf.size())
     return object_error::parse_failed;
-  return StringRef((const char *)base() + Section->sh_offset + Offset);
+  StringRef Data((const char *)base() + Section->sh_offset, Size);
+  if (Data[Size - 1] != '\0')
+    return object_error::string_table_non_null_end;
+  return Data;
 }
 
 template <class ELFT>
@@ -884,7 +881,7 @@ const char *ELFFile<ELFT>::getDynamicString(uintX_t Offset) const {
 template <class ELFT>
 ErrorOr<StringRef>
 ELFFile<ELFT>::getStaticSymbolName(const Elf_Sym *Symb) const {
-  return getSymbolName(dot_strtab_sec, Symb);
+  return getSymbolName(DotStrtab, Symb);
 }
 
 template <class ELFT>
@@ -902,27 +899,40 @@ ErrorOr<StringRef> ELFFile<ELFT>::getSymbolName(const Elf_Sym *Symb,
 }
 
 template <class ELFT>
-ErrorOr<StringRef> ELFFile<ELFT>::getSymbolName(const Elf_Shdr *StrTab,
+ErrorOr<StringRef> ELFFile<ELFT>::getSymbolName(StringRef StrTab,
                                                 const Elf_Sym *Sym) const {
-  return getString(StrTab, Sym->st_name);
+  uint32_t Offset = Sym->st_name;
+  if (Offset >= StrTab.size())
+    return object_error::parse_failed;
+  return StringRef(StrTab.data() + Offset);
 }
 
 template <class ELFT>
 ErrorOr<StringRef>
 ELFFile<ELFT>::getSectionName(const Elf_Shdr *Section) const {
-  return getString(dot_shstrtab_sec, Section->sh_name);
+  uint32_t Offset = Section->sh_name;
+  if (Offset >= DotShstrtab.size())
+    return object_error::parse_failed;
+  return StringRef(DotShstrtab.data() + Offset);
 }
 
 template <class ELFT>
 ErrorOr<StringRef> ELFFile<ELFT>::getSymbolVersion(const Elf_Shdr *section,
                                                    const Elf_Sym *symb,
                                                    bool &IsDefault) const {
+  StringRef StrTab;
+  if (section) {
+    ErrorOr<StringRef> StrTabOrErr = getStringTable(section);
+    if (std::error_code EC = StrTabOrErr.getError())
+      return EC;
+    StrTab = *StrTabOrErr;
+  }
   // Handle non-dynamic symbols.
   if (section != DynSymRegion.Addr && section != nullptr) {
     // Non-dynamic symbols can have versions in their names
     // A name of the form 'foo@V1' indicates version 'V1', non-default.
     // A name of the form 'foo@@V2' indicates version 'V2', default version.
-    ErrorOr<StringRef> SymName = getSymbolName(section, symb);
+    ErrorOr<StringRef> SymName = getSymbolName(StrTab, symb);
     if (!SymName)
       return SymName;
     StringRef Name = *SymName;
