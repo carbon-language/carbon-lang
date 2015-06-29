@@ -491,7 +491,7 @@ std::error_code ELFFile<ELFT>::handleSectionGroup(
   if (std::error_code ec = strtab_or_err.getError())
     return ec;
   StringRef strtab = *strtab_or_err;
-  ErrorOr<StringRef> symbolName = _objFile->getSymbolName(strtab, symbol);
+  ErrorOr<StringRef> symbolName = symbol->getName(strtab);
   if (std::error_code ec = symbolName.getError())
     return ec;
 
