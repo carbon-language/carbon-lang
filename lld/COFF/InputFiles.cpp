@@ -206,26 +206,26 @@ SymbolBody *ObjectFile::createSymbolBody(COFFSymbolRef Sym, const void *AuxP,
     auto *Aux = (const coff_aux_weak_external *)AuxP;
     return new (Alloc) Undefined(Name, &SparseSymbolBodies[Aux->TagIndex]);
   }
+
+  // Nothing else to do without a section chunk.
+  auto *SC = cast_or_null<SectionChunk>(SparseChunks[Sym.getSectionNumber()]);
+  if (!SC)
+    return nullptr;
+
   // Handle associative sections
   if (IsFirst && AuxP) {
-    if (Chunk *C = SparseChunks[Sym.getSectionNumber()]) {
-      auto *Aux = reinterpret_cast<const coff_aux_section_definition *>(AuxP);
-      if (Aux->Selection == IMAGE_COMDAT_SELECT_ASSOCIATIVE) {
-        auto *Parent =
-          (SectionChunk *)(SparseChunks[Aux->getNumber(Sym.isBigObj())]);
-        if (Parent)
-          Parent->addAssociative((SectionChunk *)C);
-      }
-    }
+    auto *Aux = reinterpret_cast<const coff_aux_section_definition *>(AuxP);
+    if (Aux->Selection == IMAGE_COMDAT_SELECT_ASSOCIATIVE)
+      if (auto *ParentSC = cast_or_null<SectionChunk>(
+              SparseChunks[Aux->getNumber(Sym.isBigObj())]))
+        ParentSC->addAssociative(SC);
   }
-  Chunk *C = SparseChunks[Sym.getSectionNumber()];
-  if (auto *SC = cast_or_null<SectionChunk>(C)) {
-    auto *B = new (Alloc) DefinedRegular(this, Sym, SC);
-    if (SC->isCOMDAT() && Sym.getValue() == 0 && !AuxP)
-      SC->setSymbol(B);
-    return B;
-  }
-  return nullptr;
+
+  auto *B = new (Alloc) DefinedRegular(this, Sym, SC);
+  if (SC->isCOMDAT() && Sym.getValue() == 0 && !AuxP)
+    SC->setSymbol(B);
+
+  return B;
 }
 
 std::error_code ImportFile::parse() {
