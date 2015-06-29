@@ -1,5 +1,10 @@
 // RUN: %clang_cc1 -std=c++11 -fsyntax-only -Wno-nullability-declspec %s -verify
 
+#if __has_feature(nullability)
+#else
+#  error nullability feature should be defined
+#endif
+
 typedef decltype(nullptr) nullptr_t;
 
 class X {
