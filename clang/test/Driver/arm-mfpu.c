@@ -34,6 +34,17 @@
 // CHECK-VFP3: "-target-feature" "-fp-armv8"
 // CHECK-VFP3: "-target-feature" "-neon"
 
+// RUN: %clang -target arm-linux-eabi -mfpu=vfpv3-fp16 %s -### -o %t.o 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-VFP3-FP16 %s
+// CHECK-VFP3-FP16: "-target-feature" "-fp-only-sp"
+// CHECK-VFP3-FP16: "-target-feature" "-d16"
+// CHECK-VFP3-FP16: "-target-feature" "+vfp3"
+// CHECK-VFP3-FP16: "-target-feature" "+fp16"
+// CHECK-VFP3-FP16: "-target-feature" "-vfp4"
+// CHECK-VFP3-FP16: "-target-feature" "-fp-armv8"
+// CHECK-VFP3-FP16: "-target-feature" "-neon"
+// CHECK-VFP3-FP16: "-target-feature" "-crypto"
+
 // RUN: %clang -target arm-linux-eabi -mfpu=vfp3-d16 %s -### -o %t.o 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-VFP3-D16 %s
 // RUN: %clang -target arm-linux-eabi -mfpu=vfpv3-d16 %s -### -o %t.o 2>&1 \
@@ -44,6 +55,39 @@
 // CHECK-VFP3-D16: "-target-feature" "-vfp4"
 // CHECK-VFP3-D16: "-target-feature" "-fp-armv8"
 // CHECK-VFP3-D16: "-target-feature" "-neon"
+
+// RUN: %clang -target arm-linux-eabi -mfpu=vfpv3-d16-fp16 %s -### -o %t.o 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-VFP3-D16-FP16 %s
+// CHECK-VFP3-D16-FP16: "-target-feature" "-fp-only-sp"
+// CHECK-VFP3-D16-FP16: "-target-feature" "+d16"
+// CHECK-VFP3-D16-FP16: "-target-feature" "+vfp3"
+// CHECK-VFP3-D16-FP16: "-target-feature" "+fp16"
+// CHECK-VFP3-D16-FP16: "-target-feature" "-vfp4"
+// CHECK-VFP3-D16-FP16: "-target-feature" "-fp-armv8"
+// CHECK-VFP3-D16-FP16: "-target-feature" "-neon"
+// CHECK-VFP3-D16-FP16: "-target-feature" "-crypto"
+
+// RUN: %clang -target arm-linux-eabi -mfpu=vfpv3xd %s -### -o %t.o 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-VFP3XD %s
+// CHECK-VFP3XD: "-target-feature" "+fp-only-sp"
+// CHECK-VFP3XD: "-target-feature" "+d16"
+// CHECK-VFP3XD: "-target-feature" "+vfp3"
+// CHECK-VFP3XD: "-target-feature" "-fp16"
+// CHECK-VFP3XD: "-target-feature" "-vfp4"
+// CHECK-VFP3XD: "-target-feature" "-fp-armv8"
+// CHECK-VFP3XD: "-target-feature" "-neon"
+// CHECK-VFP3XD: "-target-feature" "-crypto"
+
+// RUN: %clang -target arm-linux-eabi -mfpu=vfpv3xd-fp16 %s -### -o %t.o 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-VFP3XD-FP16 %s
+// CHECK-VFP3XD-FP16: "-target-feature" "+fp-only-sp"
+// CHECK-VFP3XD-FP16: "-target-feature" "+d16"
+// CHECK-VFP3XD-FP16: "-target-feature" "+vfp3"
+// CHECK-VFP3XD-FP16: "-target-feature" "+fp16"
+// CHECK-VFP3XD-FP16: "-target-feature" "-vfp4"
+// CHECK-VFP3XD-FP16: "-target-feature" "-fp-armv8"
+// CHECK-VFP3XD-FP16: "-target-feature" "-neon"
+// CHECK-VFP3XD-FP16: "-target-feature" "-crypto"
 
 // RUN: %clang -target arm-linux-eabi -mfpu=vfp4 %s -### -o %t.o 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-VFP4 %s
@@ -96,6 +140,17 @@
 // RUN: %clang -target arm-linux-eabi -mfpu=neon %s -### -o %t.o 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-NEON %s
 // CHECK-NEON: "-target-feature" "+neon"
+
+// RUN: %clang -target arm-linux-eabi -mfpu=neon-fp16 %s -### -o %t.o 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-NEON-FP16 %s
+// CHECK-NEON-FP16: "-target-feature" "-fp-only-sp"
+// CHECK-NEON-FP16: "-target-feature" "-d16"
+// CHECK-NEON-FP16: "-target-feature" "+vfp3"
+// CHECK-NEON-FP16: "-target-feature" "+fp16"
+// CHECK-NEON-FP16: "-target-feature" "-vfp4"
+// CHECK-NEON-FP16: "-target-feature" "-fp-armv8"
+// CHECK-NEON-FP16: "-target-feature" "+neon"
+// CHECK-NEON-FP16: "-target-feature" "-crypto"
 
 // RUN: %clang -target arm-linux-eabi -mfpu=neon-vfpv3 %s -### -o %t.o 2>&1 \
 // RUN:   | FileCheck --check-prefix=CHECK-NEON-VFPV3 %s
