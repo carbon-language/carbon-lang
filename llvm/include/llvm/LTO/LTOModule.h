@@ -47,12 +47,11 @@ private:
 
   std::unique_ptr<LLVMContext> OwnedContext;
 
+  std::string LinkerOpts;
+
   std::unique_ptr<object::IRObjectFile> IRFile;
   std::unique_ptr<TargetMachine> _target;
-  StringSet<>                             _linkeropt_strings;
-  std::vector<const char *>               _deplibs;
-  std::vector<const char *>               _linkeropts;
-  std::vector<NameAndAttributes>          _symbols;
+  std::vector<NameAndAttributes> _symbols;
 
   // _defines and _undefines only needed to disambiguate tentative definitions
   StringSet<>                             _defines;
@@ -149,28 +148,8 @@ public:
     return nullptr;
   }
 
-  /// Get the number of dependent libraries
-  uint32_t getDependentLibraryCount() {
-    return _deplibs.size();
-  }
-
-  /// Get the dependent library at the specified index.
-  const char *getDependentLibrary(uint32_t index) {
-    if (index < _deplibs.size())
-      return _deplibs[index];
-    return nullptr;
-  }
-
-  /// Get the number of linker options
-  uint32_t getLinkerOptCount() {
-    return _linkeropts.size();
-  }
-
-  /// Get the linker option at the specified index.
-  const char *getLinkerOpt(uint32_t index) {
-    if (index < _linkeropts.size())
-      return _linkeropts[index];
-    return nullptr;
+  const char *getLinkerOpts() {
+    return LinkerOpts.c_str();
   }
 
   const std::vector<const char*> &getAsmUndefinedRefs() {

@@ -30,8 +30,6 @@ class LLVM_LIBRARY_VISIBILITY X86AsmPrinter : public AsmPrinter {
   StackMaps SM;
   FaultMaps FM;
 
-  void GenerateExportDirective(const MCSymbol *Sym, bool IsData);
-
   // This utility class tracks the length of a stackmap instruction's 'shadow'.
   // It is used by the X86AsmPrinter to ensure that the stackmap shadow
   // invariants (i.e. no other stackmaps, patchpoints, or control flow within

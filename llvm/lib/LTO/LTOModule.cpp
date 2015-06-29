@@ -19,6 +19,7 @@
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DiagnosticPrinter.h"
 #include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/Mangler.h"
 #include "llvm/IR/Metadata.h"
 #include "llvm/IR/Module.h"
 #include "llvm/MC/MCExpr.h"
@@ -642,6 +643,8 @@ bool LTOModule::parseSymbols(std::string &errMsg) {
 
 /// parseMetadata - Parse metadata from the module
 void LTOModule::parseMetadata() {
+  raw_string_ostream OS(LinkerOpts);
+
   // Linker Options
   if (Metadata *Val = getModule().getModuleFlag("Linker Options")) {
     MDNode *LinkerOptions = cast<MDNode>(Val);
@@ -649,19 +652,18 @@ void LTOModule::parseMetadata() {
       MDNode *MDOptions = cast<MDNode>(LinkerOptions->getOperand(i));
       for (unsigned ii = 0, ie = MDOptions->getNumOperands(); ii != ie; ++ii) {
         MDString *MDOption = cast<MDString>(MDOptions->getOperand(ii));
-        // FIXME: Make StringSet::insert match Self-Associative Container
-        // requirements, returning <iter,bool> rather than bool, and use that
-        // here.
-        StringRef Op =
-            _linkeropt_strings.insert(MDOption->getString()).first->first();
-        StringRef DepLibName =
-            _target->getObjFileLowering()->getDepLibFromLinkerOpt(Op);
-        if (!DepLibName.empty())
-          _deplibs.push_back(DepLibName.data());
-        else if (!Op.empty())
-          _linkeropts.push_back(Op.data());
+        OS << " " << MDOption->getString();
       }
     }
+  }
+
+  // Globals
+  Mangler Mang;
+  for (const NameAndAttributes &Sym : _symbols) {
+    if (!Sym.symbol)
+      continue;
+    _target->getObjFileLowering()->emitLinkerFlagsForGlobal(OS, Sym.symbol,
+                                                            Mang);
   }
 
   // Add other interesting metadata here.

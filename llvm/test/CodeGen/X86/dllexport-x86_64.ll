@@ -71,33 +71,33 @@ define weak_odr dllexport void @weak1() {
 @blob_alias = dllexport alias bitcast ([6 x i8]* @blob to i32 ()*)
 
 ; CHECK: .section .drectve
-; WIN32: " /EXPORT:Var1,DATA"
-; WIN32: " /EXPORT:Var2,DATA"
-; WIN32: " /EXPORT:Var3,DATA"
-; WIN32: " /EXPORT:WeakVar1,DATA"
-; WIN32: " /EXPORT:WeakVar2,DATA"
-; WIN32: " /EXPORT:f1"
-; WIN32: " /EXPORT:f2"
-; WIN32: " /EXPORT:lnk1"
-; WIN32: " /EXPORT:lnk2"
-; WIN32: " /EXPORT:weak1"
-; WIN32: " /EXPORT:alias"
-; WIN32: " /EXPORT:alias2"
-; WIN32: " /EXPORT:alias3"
-; WIN32: " /EXPORT:weak_alias"
-; WIN32: " /EXPORT:blob_alias"
-; MINGW: " -export:Var1,data"
-; MINGW: " -export:Var2,data"
-; MINGW: " -export:Var3,data"
-; MINGW: " -export:WeakVar1,data"
-; MINGW: " -export:WeakVar2,data"
-; MINGW: " -export:f1"
-; MINGW: " -export:f2"
-; MINGW: " -export:lnk1"
-; MINGW: " -export:lnk2"
-; MINGW: " -export:weak1"
-; MINGW: " -export:alias"
-; MINGW: " -export:alias2"
-; MINGW: " -export:alias3"
-; MINGW: " -export:weak_alias"
-; MINGW: " -export:blob_alias"
+; WIN32: /EXPORT:f1
+; WIN32-SAME: /EXPORT:f2
+; WIN32-SAME: /EXPORT:lnk1
+; WIN32-SAME: /EXPORT:lnk2
+; WIN32-SAME: /EXPORT:weak1
+; WIN32-SAME: /EXPORT:Var1,DATA
+; WIN32-SAME: /EXPORT:Var2,DATA
+; WIN32-SAME: /EXPORT:Var3,DATA
+; WIN32-SAME: /EXPORT:WeakVar1,DATA
+; WIN32-SAME: /EXPORT:WeakVar2,DATA
+; WIN32-SAME: /EXPORT:alias
+; WIN32-SAME: /EXPORT:alias2
+; WIN32-SAME: /EXPORT:alias3
+; WIN32-SAME: /EXPORT:weak_alias
+; WIN32-SAME: /EXPORT:blob_alias
+; MINGW: -export:f1
+; MINGW-SAME: -export:f2
+; MINGW-SAME: -export:lnk1
+; MINGW-SAME: -export:lnk2
+; MINGW-SAME: -export:weak1
+; MINGW-SAME: -export:Var1,data
+; MINGW-SAME: -export:Var2,data
+; MINGW-SAME: -export:Var3,data
+; MINGW-SAME: -export:WeakVar1,data
+; MINGW-SAME: -export:WeakVar2,data
+; MINGW-SAME: -export:alias
+; MINGW-SAME: -export:alias2
+; MINGW-SAME: -export:alias3
+; MINGW-SAME: -export:weak_alias
+; MINGW-SAME: -export:blob_alias"

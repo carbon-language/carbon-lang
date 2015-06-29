@@ -90,10 +90,6 @@ public:
   ~TargetLoweringObjectFileMachO() override {}
   TargetLoweringObjectFileMachO();
 
-  /// Extract the dependent library name from a linker option string. Returns
-  /// StringRef() if the option does not specify a library.
-  StringRef getDepLibFromLinkerOpt(StringRef LinkerOption) const override;
-
   /// Emit the module flags that specify the garbage collection information.
   void emitModuleFlags(MCStreamer &Streamer,
                        ArrayRef<Module::ModuleFlagEntry> ModuleFlags,
@@ -150,10 +146,6 @@ public:
   MCSection *getSectionForJumpTable(const Function &F, Mangler &Mang,
                                     const TargetMachine &TM) const override;
 
-  /// Extract the dependent library name from a linker option string. Returns
-  /// StringRef() if the option does not specify a library.
-  StringRef getDepLibFromLinkerOpt(StringRef LinkerOption) const override;
-
   /// Emit Obj-C garbage collection and linker options. Only linker option
   /// emission is implemented for COFF.
   void emitModuleFlags(MCStreamer &Streamer,
@@ -164,6 +156,9 @@ public:
                                   const MCSymbol *KeySym) const override;
   MCSection *getStaticDtorSection(unsigned Priority,
                                   const MCSymbol *KeySym) const override;
+
+  void emitLinkerFlagsForGlobal(raw_ostream &OS, const GlobalValue *GV,
+                                const Mangler &Mang) const override;
 };
 
 } // end namespace llvm

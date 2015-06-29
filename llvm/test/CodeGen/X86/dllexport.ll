@@ -89,40 +89,41 @@ define weak_odr dllexport void @weak1() {
 @weak_alias = weak_odr dllexport alias void()* @f1
 
 ; CHECK: .section .drectve
-; CHECK-CL: " /EXPORT:_Var1,DATA"
-; CHECK-CL: " /EXPORT:_Var2,DATA"
-; CHECK-CL: " /EXPORT:_Var3,DATA"
-; CHECK-CL: " /EXPORT:_WeakVar1,DATA"
-; CHECK-CL: " /EXPORT:_WeakVar2,DATA"
-; CHECK-CL: " /EXPORT:_f1"
-; CHECK-CL: " /EXPORT:_f2"
 ; CHECK-CL-NOT: not_exported
-; CHECK-CL: " /EXPORT:_stdfun@0"
-; CHECK-CL: " /EXPORT:@fastfun@0"
-; CHECK-CL: " /EXPORT:_thisfun"
-; CHECK-CL: " /EXPORT:_lnk1"
-; CHECK-CL: " /EXPORT:_lnk2"
-; CHECK-CL: " /EXPORT:_weak1"
-; CHECK-CL: " /EXPORT:_alias"
-; CHECK-CL: " /EXPORT:_alias2"
-; CHECK-CL: " /EXPORT:_alias3"
-; CHECK-CL: " /EXPORT:_weak_alias"
-; CHECK-GCC: " -export:Var1,data"
-; CHECK-GCC: " -export:Var2,data"
-; CHECK-GCC: " -export:Var3,data"
-; CHECK-GCC: " -export:WeakVar1,data"
-; CHECK-GCC: " -export:WeakVar2,data"
-; CHECK-GCC: " -export:f1"
-; CHECK-GCC: " -export:f2"
+; CHECK-CL: /EXPORT:_f1
+; CHECK-CL-SAME: /EXPORT:_f2
+; CHECK-CL-SAME: /EXPORT:_stdfun@0
+; CHECK-CL-SAME: /EXPORT:@fastfun@0
+; CHECK-CL-SAME: /EXPORT:_thisfun
+; CHECK-CL-SAME: /EXPORT:_lnk1
+; CHECK-CL-SAME: /EXPORT:_lnk2
+; CHECK-CL-SAME: /EXPORT:_weak1
+; CHECK-CL-SAME: /EXPORT:_Var1,DATA
+; CHECK-CL-SAME: /EXPORT:_Var2,DATA
+; CHECK-CL-SAME: /EXPORT:_Var3,DATA
+; CHECK-CL-SAME: /EXPORT:_WeakVar1,DATA
+; CHECK-CL-SAME: /EXPORT:_WeakVar2,DATA
+; CHECK-CL-SAME: /EXPORT:_alias
+; CHECK-CL-SAME: /EXPORT:_alias2
+; CHECK-CL-SAME: /EXPORT:_alias3
+; CHECK-CL-SAME: /EXPORT:_weak_alias"
 ; CHECK-CL-NOT: not_exported
-; CHECK-GCC: " -export:stdfun@0"
-; CHECK-GCC: " -export:@fastfun@0"
-; CHECK-GCC: " -export:thisfun"
-; CHECK-GCC: " -export:lnk1"
-; CHECK-GCC: " -export:lnk2"
-; CHECK-GCC: " -export:weak1"
-; CHECK-GCC: " -export:alias"
-; CHECK-GCC: " -export:alias2"
-; CHECK-GCC: " -export:alias3"
-; CHECK-GCC: " -export:weak_alias"
-
+; CHECK-GCC-NOT: not_exported
+; CHECK-GCC: -export:f1
+; CHECK-GCC-SAME: -export:f2
+; CHECK-GCC-SAME: -export:stdfun@0
+; CHECK-GCC-SAME: -export:@fastfun@0
+; CHECK-GCC-SAME: -export:thisfun
+; CHECK-GCC-SAME: -export:lnk1
+; CHECK-GCC-SAME: -export:lnk2
+; CHECK-GCC-SAME: -export:weak1
+; CHECK-GCC-SAME: -export:Var1,data
+; CHECK-GCC-SAME: -export:Var2,data
+; CHECK-GCC-SAME: -export:Var3,data
+; CHECK-GCC-SAME: -export:WeakVar1,data
+; CHECK-GCC-SAME: -export:WeakVar2,data
+; CHECK-GCC-SAME: -export:alias
+; CHECK-GCC-SAME: -export:alias2
+; CHECK-GCC-SAME: -export:alias3
+; CHECK-GCC-SAME: -export:weak_alias"
+; CHECK-GCC-NOT: not_exported
