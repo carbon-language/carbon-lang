@@ -14,6 +14,7 @@ class AttachResumeTestCase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
 
+    @expectedFlakeyLinux('llvm.org/pr19310')
     @expectedFailureFreeBSD('llvm.org/pr19310')
     @skipIfRemote
     @dwarf_test
