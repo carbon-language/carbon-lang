@@ -386,8 +386,9 @@ static BasicBlock *insertUniqueBackedgeBlock(Loop *L, BasicBlock *Preheader,
 
   // Create and insert the new backedge block...
   BasicBlock *BEBlock = BasicBlock::Create(Header->getContext(),
-                                           Header->getName()+".backedge", F);
+                                           Header->getName() + ".backedge", F);
   BranchInst *BETerminator = BranchInst::Create(Header, BEBlock);
+  BETerminator->setDebugLoc(Header->getFirstNonPHI()->getDebugLoc());
 
   DEBUG(dbgs() << "LoopSimplify: Inserting unique backedge block "
                << BEBlock->getName() << "\n");
