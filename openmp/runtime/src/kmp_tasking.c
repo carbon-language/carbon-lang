@@ -758,10 +758,8 @@ __kmp_task_init_ompt( kmp_taskdata_t * task, int tid )
 {
     task->ompt_task_info.task_id = __ompt_task_id_new(tid);
     task->ompt_task_info.function = NULL;
-    task->ompt_task_info.frame = (ompt_frame_t) {
-        .exit_runtime_frame = NULL,
-        .reenter_runtime_frame = NULL
-    };
+    task->ompt_task_info.frame.exit_runtime_frame = NULL;
+    task->ompt_task_info.frame.reenter_runtime_frame = NULL;
 }
 #endif
 
@@ -1035,8 +1033,8 @@ __kmp_task_alloc( ident_t *loc_ref, kmp_int32 gtid, kmp_tasking_flags_t *flags,
     if (ompt_status & ompt_status_track) {
         taskdata->ompt_task_info.task_id = __ompt_task_id_new(gtid);
         taskdata->ompt_task_info.function = (void*) task_entry;
-        taskdata->ompt_task_info.frame = (ompt_frame_t)
-            { .exit_runtime_frame = NULL, .reenter_runtime_frame = NULL };
+        taskdata->ompt_task_info.frame.exit_runtime_frame = NULL; 
+        taskdata->ompt_task_info.frame.reenter_runtime_frame = NULL;
     }
 #endif
 
