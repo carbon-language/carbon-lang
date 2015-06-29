@@ -158,6 +158,8 @@ std::error_code checkFailIfMismatch(StringRef Arg);
 ErrorOr<std::unique_ptr<MemoryBuffer>>
 convertResToCOFF(const std::vector<MemoryBufferRef> &MBs);
 
+void touchFile(StringRef Path);
+
 // Create enum with OPT_xxx values for each option in Options.td
 enum {
   OPT_INVALID = 0,

@@ -630,6 +630,10 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
     if (createSideBySideManifest())
       return false;
 
+  // Create a dummy PDB file to satisfy build sytem rules.
+  if (auto *Arg = Args.getLastArg(OPT_pdb))
+    touchFile(Arg->getValue());
+
   // Write the result.
   Writer Out(&Symtab);
   if (auto EC = Out.write(Config->OutputFile)) {

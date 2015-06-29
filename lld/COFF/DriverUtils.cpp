@@ -517,6 +517,13 @@ std::error_code writeImportLibrary() {
   return E.run();
 }
 
+void touchFile(StringRef Path) {
+  int FD;
+  if (sys::fs::openFileForWrite(Path, FD, sys::fs::F_Append))
+    report_fatal_error("failed to create a file");
+  sys::Process::SafelyCloseFileDescriptor(FD);
+}
+
 // Create OptTable
 
 // Create prefix string literals used in Options.td
