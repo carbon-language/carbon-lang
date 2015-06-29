@@ -324,3 +324,6 @@ module recursive1 {
 module recursive2 {
   header "recursive2.h"
 }
+module crash {
+  header "crash.h"
+}
