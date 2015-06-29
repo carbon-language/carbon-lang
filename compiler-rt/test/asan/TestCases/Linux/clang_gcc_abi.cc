@@ -1,17 +1,17 @@
 // RUN: %clangxx_asan -O0 -x c %s -o %t && not %run %t 2>&1 | FileCheck %s
-
-// __attribute__((naked)) is broken at high optimization levels
-// Only testing -O0.
-// https://llvm.org/bugs/show_bug.cgi?id=23971
+// RUN: %clangxx_asan -O1 -x c %s -o %t && not %run %t 2>&1 | FileCheck %s
+// RUN: %clangxx_asan -O2 -x c %s -o %t && not %run %t 2>&1 | FileCheck %s
+// RUN: %clangxx_asan -O3 -x c %s -o %t && not %run %t 2>&1 | FileCheck %s
 
 // REQUIRES: arm-supported-target
 // XFAIL: armv7l-unknown-linux-gnueabihf
 
 #include <stdlib.h>
 
+__attribute__((noinline))
 int boom() {
   volatile int three = 3;
-  char *s = (char *)malloc(three);
+  char * volatile s = (char *)malloc(three);
 // CHECK: #1 0x{{.*}} in boom {{.*}}clang_gcc_abi.cc:[[@LINE-1]]
   return s[three]; //BOOM
 }
