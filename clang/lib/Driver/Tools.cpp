@@ -1782,8 +1782,8 @@ static bool DecodeAArch64Features(const Driver &D, StringRef text,
   SmallVector<StringRef, 8> Split;
   text.split(Split, StringRef("+"), -1, false);
 
-  for (unsigned I = 0, E = Split.size(); I != E; ++I) {
-    const char *result = llvm::StringSwitch<const char *>(Split[I])
+  for (const StringRef Feature : Split) {
+    const char *result = llvm::StringSwitch<const char *>(Feature)
                              .Case("fp", "+fp-armv8")
                              .Case("simd", "+neon")
                              .Case("crc", "+crc")
@@ -1795,7 +1795,7 @@ static bool DecodeAArch64Features(const Driver &D, StringRef text,
                              .Default(nullptr);
     if (result)
       Features.push_back(result);
-    else if (Split[I] == "neon" || Split[I] == "noneon")
+    else if (Feature == "neon" || Feature == "noneon")
       D.Diag(diag::err_drv_no_neon_modifier);
     else
       return false;
@@ -5652,10 +5652,8 @@ static void constructHexagonLinkArgs(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("--start-group");
 
     if (!buildingLib) {
-      for (std::vector<std::string>::iterator i = oslibs.begin(),
-                                              e = oslibs.end();
-           i != e; ++i)
-        CmdArgs.push_back(Args.MakeArgString("-l" + *i));
+      for (const std::string &Lib : oslibs)
+        CmdArgs.push_back(Args.MakeArgString("-l" + Lib));
       CmdArgs.push_back("-lc");
     }
     CmdArgs.push_back("-lgcc");
