@@ -469,6 +469,10 @@ public:
     return nullptr;
   }
 
+  /// Return all the call-preserved register masks defined for this target.
+  virtual ArrayRef<const uint32_t *> getRegMasks() const = 0;
+  virtual ArrayRef<const char *> getRegMaskNames() const = 0;
+
   /// getReservedRegs - Returns a bitset indexed by physical register number
   /// indicating if a register is a special register that has particular uses
   /// and should be considered unavailable at all times, e.g. SP, RA. This is

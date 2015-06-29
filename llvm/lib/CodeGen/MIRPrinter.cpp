@@ -33,6 +33,7 @@ namespace {
 /// format.
 class MIRPrinter {
   raw_ostream &OS;
+  DenseMap<const uint32_t *, unsigned> RegisterMaskIds;
 
 public:
   MIRPrinter(raw_ostream &OS) : OS(OS) {}
@@ -42,6 +43,9 @@ public:
   void convert(yaml::MachineFunction &MF, const MachineRegisterInfo &RegInfo);
   void convert(const Module &M, yaml::MachineBasicBlock &YamlMBB,
                const MachineBasicBlock &MBB);
+
+private:
+  void initRegisterMaskIds(const MachineFunction &MF);
 };
 
 /// This class prints out the machine instructions using the MIR serialization
@@ -49,9 +53,12 @@ public:
 class MIPrinter {
   const Module &M;
   raw_ostream &OS;
+  const DenseMap<const uint32_t *, unsigned> &RegisterMaskIds;
 
 public:
-  MIPrinter(const Module &M, raw_ostream &OS) : M(M), OS(OS) {}
+  MIPrinter(const Module &M, raw_ostream &OS,
+            const DenseMap<const uint32_t *, unsigned> &RegisterMaskIds)
+      : M(M), OS(OS), RegisterMaskIds(RegisterMaskIds) {}
 
   void print(const MachineInstr &MI);
   void print(const MachineOperand &Op, const TargetRegisterInfo *TRI);
@@ -77,6 +84,8 @@ template <> struct BlockScalarTraits<Module> {
 } // end namespace llvm
 
 void MIRPrinter::print(const MachineFunction &MF) {
+  initRegisterMaskIds(MF);
+
   yaml::MachineFunction YamlMF;
   YamlMF.Name = MF.getName();
   YamlMF.Alignment = MF.getAlignment();
@@ -127,10 +136,17 @@ void MIRPrinter::convert(const Module &M, yaml::MachineBasicBlock &YamlMBB,
   std::string Str;
   for (const auto &MI : MBB) {
     raw_string_ostream StrOS(Str);
-    MIPrinter(M, StrOS).print(MI);
+    MIPrinter(M, StrOS, RegisterMaskIds).print(MI);
     YamlMBB.Instructions.push_back(StrOS.str());
     Str.clear();
   }
+}
+
+void MIRPrinter::initRegisterMaskIds(const MachineFunction &MF) {
+  const auto *TRI = MF.getSubtarget().getRegisterInfo();
+  unsigned I = 0;
+  for (const uint32_t *Mask : TRI->getRegMasks())
+    RegisterMaskIds.insert(std::make_pair(Mask, I++));
 }
 
 void MIPrinter::print(const MachineInstr &MI) {
@@ -201,6 +217,14 @@ void MIPrinter::print(const MachineOperand &Op, const TargetRegisterInfo *TRI) {
     Op.getGlobal()->printAsOperand(OS, /*PrintType=*/false, &M);
     // TODO: Print offset and target flags.
     break;
+  case MachineOperand::MO_RegisterMask: {
+    auto RegMaskInfo = RegisterMaskIds.find(Op.getRegMask());
+    if (RegMaskInfo != RegisterMaskIds.end())
+      OS << StringRef(TRI->getRegMaskNames()[RegMaskInfo->second]).lower();
+    else
+      llvm_unreachable("Can't print this machine register mask yet.");
+    break;
+  }
   default:
     // TODO: Print the other machine operands.
     llvm_unreachable("Can't print this machine operand at the moment");

@@ -42,6 +42,8 @@ class MIParser {
   StringMap<unsigned> Names2InstrOpCodes;
   /// Maps from register names to registers.
   StringMap<unsigned> Names2Regs;
+  /// Maps from register mask names to register masks.
+  StringMap<const uint32_t *> Names2RegMasks;
 
 public:
   MIParser(SourceMgr &SM, MachineFunction &MF, SMDiagnostic &Error,
@@ -89,6 +91,13 @@ private:
   /// Try to convert a register name to a register number. Return true if the
   /// register name is invalid.
   bool getRegisterByName(StringRef RegName, unsigned &Reg);
+
+  void initNames2RegMasks();
+
+  /// Check if the given identifier is a name of a register mask.
+  ///
+  /// Return null if the identifier isn't a register mask.
+  const uint32_t *getRegMask(StringRef Identifier);
 };
 
 } // end anonymous namespace
@@ -168,7 +177,8 @@ MachineInstr *MIParser::parse() {
       // Mark this register as implicit to prevent an assertion when it's added
       // to an instruction. This is a temporary workaround until the implicit
       // register flag can be parsed.
-      Operands[I].setImplicit();
+      if (Operands[I].isReg())
+        Operands[I].setImplicit();
     }
   }
 
@@ -302,6 +312,13 @@ bool MIParser::parseMachineOperand(MachineOperand &Dest) {
     return parseGlobalAddressOperand(Dest);
   case MIToken::Error:
     return true;
+  case MIToken::Identifier:
+    if (const auto *RegMask = getRegMask(Token.stringValue())) {
+      Dest = MachineOperand::CreateRegMask(RegMask);
+      lex();
+      break;
+    }
+  // fallthrough
   default:
     // TODO: parse the other machine operands.
     return error("expected a machine operand");
@@ -350,6 +367,27 @@ bool MIParser::getRegisterByName(StringRef RegName, unsigned &Reg) {
     return true;
   Reg = RegInfo->getValue();
   return false;
+}
+
+void MIParser::initNames2RegMasks() {
+  if (!Names2RegMasks.empty())
+    return;
+  const auto *TRI = MF.getSubtarget().getRegisterInfo();
+  assert(TRI && "Expected target register info");
+  ArrayRef<const uint32_t *> RegMasks = TRI->getRegMasks();
+  ArrayRef<const char *> RegMaskNames = TRI->getRegMaskNames();
+  assert(RegMasks.size() == RegMaskNames.size());
+  for (size_t I = 0, E = RegMasks.size(); I < E; ++I)
+    Names2RegMasks.insert(
+        std::make_pair(StringRef(RegMaskNames[I]).lower(), RegMasks[I]));
+}
+
+const uint32_t *MIParser::getRegMask(StringRef Identifier) {
+  initNames2RegMasks();
+  auto RegMaskInfo = Names2RegMasks.find(Identifier);
+  if (RegMaskInfo == Names2RegMasks.end())
+    return nullptr;
+  return RegMaskInfo->getValue();
 }
 
 MachineInstr *
