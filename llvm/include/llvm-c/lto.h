@@ -40,7 +40,7 @@ typedef bool lto_bool_t;
  * @{
  */
 
-#define LTO_API_VERSION 15
+#define LTO_API_VERSION 16
 
 /**
  * \since prior to LTO_API_VERSION=3
@@ -280,49 +280,15 @@ lto_module_get_symbol_attribute(lto_module_t mod, unsigned int index);
 
 
 /**
- * Returns the number of dependent libraries in the object module.
+ * Returns the module's linker options.
  *
- * Deprecated. Now returns an empty list.
- *
- * \since LTO_API_VERSION=8
- */
-extern unsigned int
-lto_module_get_num_deplibs(lto_module_t mod);
-
-
-/**
- * Returns the ith dependent library in the module.
- *
- * Deprecated. Now always returns null.
- *
- * \since LTO_API_VERSION=8
- */
-extern const char*
-lto_module_get_deplib(lto_module_t mod, unsigned int index);
-
-
-/**
- * Returns the number of linker options in the object module.
- *
- * Each linker option may consist of multiple flags. It is the linker's
+ * The linker options may consist of multiple flags. It is the linker's
  * responsibility to split the flags using a platform-specific mechanism.
  *
- * \since LTO_API_VERSION=8
- */
-extern unsigned int
-lto_module_get_num_linkeropts(lto_module_t mod);
-
-
-/**
- * Returns the ith linker option in the module.
- *
- * Each linker option may consist of multiple flags. It is the linker's
- * responsibility to split the flags using a platform-specific mechanism.
- *
- * \since LTO_API_VERSION=8
+ * \since LTO_API_VERSION=16
  */
 extern const char*
-lto_module_get_linkeropt(lto_module_t mod, unsigned int index);
+lto_module_get_linkeropts(lto_module_t mod);
 
 
 /**
