@@ -20,6 +20,7 @@ namespace __tsan {
 
 const char kSuppressionNone[] = "none";
 const char kSuppressionRace[] = "race";
+const char kSuppressionRaceTop[] = "race_top";
 const char kSuppressionMutex[] = "mutex";
 const char kSuppressionThread[] = "thread";
 const char kSuppressionSignal[] = "signal";
