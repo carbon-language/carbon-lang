@@ -1,4 +1,4 @@
-; RUN: llc -mtriple=x86_64-apple-macosx -O3 -debug-only=faultmaps -enable-implicit-null-checks < %s | FileCheck %s
+; RUN: llc -mtriple=x86_64-apple-macosx -O3 -debug-only=faultmaps -enable-implicit-null-checks < %s 2>&1 | FileCheck %s
 ; REQUIRES: asserts
 
 ; List cases where we should *not* be emitting implicit null checks.
@@ -34,20 +34,5 @@ define i32 @imp_null_check_gep_load(i32* %x) {
 ; load to %t cannot be assumed to be reliably faulting.
   %x.gep = getelementptr i32, i32* %x, i32 5000
   %t = load i32, i32* %x.gep
-  ret i32 %t
-}
-
-define i32 @imp_null_check_load_no_md(i32* %x) {
-; Everything is okay except that the !never.executed metadata is
-; missing.
- entry:
-  %c = icmp eq i32* %x, null
-  br i1 %c, label %is_null, label %not_null
-
- is_null:
-  ret i32 42
-
- not_null:
-  %t = load i32, i32* %x
   ret i32 %t
 }
