@@ -8129,10 +8129,10 @@ void nacltools::AssemblerARM::ConstructJob(Compilation &C, const JobAction &JA,
                                     LinkingOutput);
 }
 
-// This is quite similar to gnutools::link::ConstructJob with changes that
+// This is quite similar to gnutools::Linker::ConstructJob with changes that
 // we use static by default, do not yet support sanitizers or LTO, and a few
 // others. Eventually we can support more of that and hopefully migrate back
-// to gnutools::link.
+// to gnutools::Linker.
 void nacltools::Linker::ConstructJob(Compilation &C, const JobAction &JA,
                                      const InputInfo &Output,
                                      const InputInfoList &Inputs,
