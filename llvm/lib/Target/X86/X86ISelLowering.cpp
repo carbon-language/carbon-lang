@@ -15488,7 +15488,12 @@ static SDValue getScatterNode(unsigned Opc, SDValue Op, SelectionDAG &DAG,
                                SDValue Index, SDValue ScaleOp, SDValue Chain) {
   SDLoc dl(Op);
   ConstantSDNode *C = dyn_cast<ConstantSDNode>(ScaleOp);
-  assert(C && "Invalid scale type");
+  if (!C)
+    llvm_unreachable("Invalid scale type");
+  unsigned ScaleVal = C->getZExtValue();
+  if (ScaleVal > 2 && ScaleVal != 4 && ScaleVal != 8)
+    llvm_unreachable("Valid scale values are 1, 2, 4, 8");
+
   SDValue Scale = DAG.getTargetConstant(C->getZExtValue(), dl, MVT::i8);
   SDValue Disp = DAG.getTargetConstant(0, dl, MVT::i32);
   SDValue Segment = DAG.getRegister(0, MVT::i32);
@@ -15498,8 +15503,16 @@ static SDValue getScatterNode(unsigned Opc, SDValue Op, SelectionDAG &DAG,
   ConstantSDNode *MaskC = dyn_cast<ConstantSDNode>(Mask);
   if (MaskC)
     MaskInReg = DAG.getTargetConstant(MaskC->getSExtValue(), dl, MaskVT);
-  else
-    MaskInReg = DAG.getBitcast(MaskVT, Mask);
+  else {
+    EVT BitcastVT = EVT::getVectorVT(*DAG.getContext(), MVT::i1,
+                                     Mask.getValueType().getSizeInBits());
+
+    // In case when MaskVT equals v2i1 or v4i1, low 2 or 4 elements
+    // are extracted by EXTRACT_SUBVECTOR.
+    MaskInReg = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, MaskVT,
+                            DAG.getBitcast(BitcastVT, Mask),
+                            DAG.getIntPtrConstant(0, dl));
+  }
   SDVTList VTs = DAG.getVTList(MaskVT, MVT::Other);
   SDValue Ops[] = {Base, Scale, Index, Disp, Segment, MaskInReg, Src, Chain};
   SDNode *Res = DAG.getMachineNode(Opc, dl, VTs, Ops);

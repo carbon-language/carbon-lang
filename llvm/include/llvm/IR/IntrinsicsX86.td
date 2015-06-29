@@ -4634,6 +4634,102 @@ let TargetPrefix = "x86" in {
                          llvm_i32_ty],
                     [IntrReadWriteArgMem]>;
 
+  def int_x86_avx512_scatterdiv2_df : 
+       GCCBuiltin<"__builtin_ia32_scatterdiv2df">,
+        Intrinsic<[],
+        [llvm_ptr_ty, llvm_i8_ty, llvm_v2i64_ty, llvm_v2f64_ty, llvm_i32_ty],
+        [IntrReadWriteArgMem]>;
+
+  def int_x86_avx512_scatterdiv2_di : 
+        GCCBuiltin<"__builtin_ia32_scatterdiv2di">,
+          Intrinsic<[],
+          [llvm_ptr_ty, llvm_i8_ty, llvm_v2i64_ty, llvm_v2i64_ty, llvm_i32_ty],
+          [IntrReadWriteArgMem]>;
+
+  def int_x86_avx512_scatterdiv4_df : 
+        GCCBuiltin<"__builtin_ia32_scatterdiv4df">,
+          Intrinsic<[],
+          [llvm_ptr_ty, llvm_i8_ty, llvm_v4i64_ty, llvm_v4f64_ty, llvm_i32_ty],
+          [IntrReadWriteArgMem]>;
+
+  def int_x86_avx512_scatterdiv4_di : 
+        GCCBuiltin<"__builtin_ia32_scatterdiv4di">,
+          Intrinsic<[],
+          [llvm_ptr_ty, llvm_i8_ty, llvm_v4i64_ty, llvm_v4i64_ty, llvm_i32_ty],
+          [IntrReadWriteArgMem]>;
+
+  def int_x86_avx512_scatterdiv4_sf : 
+        GCCBuiltin<"__builtin_ia32_scatterdiv4sf">,
+          Intrinsic<[],
+          [llvm_ptr_ty, llvm_i8_ty, llvm_v2i64_ty, llvm_v4f32_ty, llvm_i32_ty],
+          [IntrReadWriteArgMem]>;
+
+  def int_x86_avx512_scatterdiv4_si : 
+        GCCBuiltin<"__builtin_ia32_scatterdiv4si">,
+          Intrinsic<[],
+          [llvm_ptr_ty, llvm_i8_ty, llvm_v2i64_ty, llvm_v4i32_ty, llvm_i32_ty],
+          [IntrReadWriteArgMem]>;
+
+  def int_x86_avx512_scatterdiv8_sf : 
+        GCCBuiltin<"__builtin_ia32_scatterdiv8sf">,
+          Intrinsic<[],
+          [llvm_ptr_ty, llvm_i8_ty, llvm_v4i64_ty, llvm_v4f32_ty, llvm_i32_ty],
+          [IntrReadWriteArgMem]>;
+
+  def int_x86_avx512_scatterdiv8_si : 
+        GCCBuiltin<"__builtin_ia32_scatterdiv8si">,
+          Intrinsic<[],
+          [llvm_ptr_ty, llvm_i8_ty, llvm_v4i64_ty, llvm_v4i32_ty, llvm_i32_ty],
+          [IntrReadWriteArgMem]>;
+
+  def int_x86_avx512_scattersiv2_df : 
+        GCCBuiltin<"__builtin_ia32_scattersiv2df">,
+          Intrinsic<[],
+          [llvm_ptr_ty, llvm_i8_ty, llvm_v4i32_ty, llvm_v2f64_ty, llvm_i32_ty],
+          [IntrReadWriteArgMem]>;
+
+  def int_x86_avx512_scattersiv2_di : 
+        GCCBuiltin<"__builtin_ia32_scattersiv2di">,
+          Intrinsic<[],
+          [llvm_ptr_ty, llvm_i8_ty, llvm_v4i32_ty, llvm_v2i64_ty, llvm_i32_ty],
+          [IntrReadWriteArgMem]>;
+
+  def int_x86_avx512_scattersiv4_df : 
+        GCCBuiltin<"__builtin_ia32_scattersiv4df">,
+          Intrinsic<[],
+          [llvm_ptr_ty, llvm_i8_ty, llvm_v4i32_ty, llvm_v4f64_ty, llvm_i32_ty],
+          [IntrReadWriteArgMem]>;
+
+  def int_x86_avx512_scattersiv4_di : 
+        GCCBuiltin<"__builtin_ia32_scattersiv4di">,
+          Intrinsic<[],
+          [llvm_ptr_ty, llvm_i8_ty, llvm_v4i32_ty, llvm_v4i64_ty, llvm_i32_ty],
+          [IntrReadWriteArgMem]>;
+
+  def int_x86_avx512_scattersiv4_sf : 
+        GCCBuiltin<"__builtin_ia32_scattersiv4sf">,
+          Intrinsic<[],
+          [llvm_ptr_ty, llvm_i8_ty, llvm_v4i32_ty, llvm_v4f32_ty, llvm_i32_ty],
+          [IntrReadWriteArgMem]>;
+
+  def int_x86_avx512_scattersiv4_si : 
+        GCCBuiltin<"__builtin_ia32_scattersiv4si">,
+          Intrinsic<[],
+          [llvm_ptr_ty, llvm_i8_ty, llvm_v4i32_ty, llvm_v4i32_ty, llvm_i32_ty],
+          [IntrReadWriteArgMem]>;
+
+  def int_x86_avx512_scattersiv8_sf : 
+        GCCBuiltin<"__builtin_ia32_scattersiv8sf">,
+          Intrinsic<[],
+          [llvm_ptr_ty, llvm_i8_ty, llvm_v8i32_ty, llvm_v8f32_ty, llvm_i32_ty],
+          [IntrReadWriteArgMem]>;
+
+  def int_x86_avx512_scattersiv8_si : 
+        GCCBuiltin<"__builtin_ia32_scattersiv8si">,
+          Intrinsic<[],
+          [llvm_ptr_ty, llvm_i8_ty, llvm_v8i32_ty, llvm_v8i32_ty, llvm_i32_ty],
+          [IntrReadWriteArgMem]>;
+
   // gather prefetch
   def int_x86_avx512_gatherpf_dpd_512  : GCCBuiltin<"__builtin_ia32_gatherpfdpd">,
           Intrinsic<[], [llvm_i8_ty, llvm_v8i32_ty, llvm_ptr_ty,

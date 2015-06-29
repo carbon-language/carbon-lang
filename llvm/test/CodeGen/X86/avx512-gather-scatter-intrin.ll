@@ -548,3 +548,244 @@ define <8 x i32>@test_int_x86_avx512_gather3siv8_si(<8 x i32> %x0, i8* %x1, <8 x
   %res2 = add <8 x i32> %res, %res1
   ret <8 x i32> %res2
 }
+
+declare void @llvm.x86.avx512.scatterdiv2.df(i8*, i8, <2 x i64>, <2 x double>, i32)
+
+define void@test_int_x86_avx512_scatterdiv2_df(i8* %x0, i8 %x1, <2 x i64> %x2, <2 x double> %x3) {
+; CHECK-LABEL: test_int_x86_avx512_scatterdiv2_df:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    kmovb %esi, %k1
+; CHECK-NEXT:    kxnorw %k2, %k2, %k2
+; CHECK-NEXT:    vscatterqpd %xmm1, (%rdi,%xmm0,0) {%k2}
+; CHECK-NEXT:    vscatterqpd %xmm1, (%rdi,%xmm0,4) {%k1}
+; CHECK-NEXT:    retq
+  call void @llvm.x86.avx512.scatterdiv2.df(i8* %x0, i8 -1, <2 x i64> %x2, <2 x double> %x3, i32 0)
+  call void @llvm.x86.avx512.scatterdiv2.df(i8* %x0, i8 %x1, <2 x i64> %x2, <2 x double> %x3, i32 4)
+  ret void
+}
+
+declare void @llvm.x86.avx512.scatterdiv2.di(i8*, i8, <2 x i64>, <2 x i64>, i32)
+
+define void@test_int_x86_avx512_scatterdiv2_di(i8* %x0, i8 %x1, <2 x i64> %x2, <2 x i64> %x3) {
+; CHECK-LABEL: test_int_x86_avx512_scatterdiv2_di:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    kmovb %esi, %k1
+; CHECK-NEXT:    vpscatterqq %xmm1, (%rdi,%xmm0,0) {%k1}
+; CHECK-NEXT:    kxnorw %k1, %k1, %k1
+; CHECK-NEXT:    vpscatterqq %xmm1, (%rdi,%xmm0,4) {%k1}
+; CHECK-NEXT:    retq
+  call void @llvm.x86.avx512.scatterdiv2.di(i8* %x0, i8 %x1, <2 x i64> %x2, <2 x i64> %x3, i32 0)
+  call void @llvm.x86.avx512.scatterdiv2.di(i8* %x0, i8 -1, <2 x i64> %x2, <2 x i64> %x3, i32 4)
+  ret void
+}
+
+declare void @llvm.x86.avx512.scatterdiv4.df(i8*, i8, <4 x i64>, <4 x double>, i32)
+
+define void@test_int_x86_avx512_scatterdiv4_df(i8* %x0, i8 %x1, <4 x i64> %x2, <4 x double> %x3) {
+; CHECK-LABEL: test_int_x86_avx512_scatterdiv4_df:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    kmovb %esi, %k1
+; CHECK-NEXT:    vscatterqpd %ymm1, (%rdi,%ymm0,0) {%k1}
+; CHECK-NEXT:    kxnorw %k1, %k1, %k1
+; CHECK-NEXT:    vscatterqpd %ymm1, (%rdi,%ymm0,4) {%k1}
+; CHECK-NEXT:    retq
+  call void @llvm.x86.avx512.scatterdiv4.df(i8* %x0, i8 %x1, <4 x i64> %x2, <4 x double> %x3, i32 0)
+  call void @llvm.x86.avx512.scatterdiv4.df(i8* %x0, i8 -1, <4 x i64> %x2, <4 x double> %x3, i32 4)
+  ret void
+}
+
+declare void @llvm.x86.avx512.scatterdiv4.di(i8*, i8, <4 x i64>, <4 x i64>, i32)
+
+define void@test_int_x86_avx512_scatterdiv4_di(i8* %x0, i8 %x1, <4 x i64> %x2, <4 x i64> %x3) {
+; CHECK-LABEL: test_int_x86_avx512_scatterdiv4_di:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    kmovb %esi, %k1
+; CHECK-NEXT:    vpscatterqq %ymm1, (%rdi,%ymm0,0) {%k1}
+; CHECK-NEXT:    kxnorw %k1, %k1, %k1
+; CHECK-NEXT:    vpscatterqq %ymm1, (%rdi,%ymm0,4) {%k1}
+; CHECK-NEXT:    retq
+  call void @llvm.x86.avx512.scatterdiv4.di(i8* %x0, i8 %x1, <4 x i64> %x2, <4 x i64> %x3, i32 0)
+  call void @llvm.x86.avx512.scatterdiv4.di(i8* %x0, i8 -1, <4 x i64> %x2, <4 x i64> %x3, i32 4)
+  ret void
+}
+
+declare void @llvm.x86.avx512.scatterdiv4.sf(i8*, i8, <2 x i64>, <4 x float>, i32)
+
+define void@test_int_x86_avx512_scatterdiv4_sf(i8* %x0, i8 %x1, <2 x i64> %x2, <4 x float> %x3) {
+; CHECK-LABEL: test_int_x86_avx512_scatterdiv4_sf:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    kmovb %esi, %k1
+; CHECK-NEXT:    vscatterqps %xmm1, (%rdi,%xmm0,0) {%k1}
+; CHECK-NEXT:    kxnorw %k1, %k1, %k1
+; CHECK-NEXT:    vscatterqps %xmm1, (%rdi,%xmm0,4) {%k1}
+; CHECK-NEXT:    retq
+  call void @llvm.x86.avx512.scatterdiv4.sf(i8* %x0, i8 %x1, <2 x i64> %x2, <4 x float> %x3, i32 0)
+  call void @llvm.x86.avx512.scatterdiv4.sf(i8* %x0, i8 -1, <2 x i64> %x2, <4 x float> %x3, i32 4)
+  ret void
+}
+
+declare void @llvm.x86.avx512.scatterdiv4.si(i8*, i8, <2 x i64>, <4 x i32>, i32)
+
+define void@test_int_x86_avx512_scatterdiv4_si(i8* %x0, i8 %x1, <2 x i64> %x2, <4 x i32> %x3) {
+; CHECK-LABEL: test_int_x86_avx512_scatterdiv4_si:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    kmovb %esi, %k1
+; CHECK-NEXT:    kxnorw %k2, %k2, %k2
+; CHECK-NEXT:    vpscatterqd %xmm1, (%rdi,%xmm0,0) {%k2}
+; CHECK-NEXT:    vpscatterqd %xmm1, (%rdi,%xmm0,4) {%k1}
+; CHECK-NEXT:    retq
+  call void @llvm.x86.avx512.scatterdiv4.si(i8* %x0, i8 -1, <2 x i64> %x2, <4 x i32> %x3, i32 0)
+  call void @llvm.x86.avx512.scatterdiv4.si(i8* %x0, i8 %x1, <2 x i64> %x2, <4 x i32> %x3, i32 4)
+  ret void
+}
+
+declare void @llvm.x86.avx512.scatterdiv8.sf(i8*, i8, <4 x i64>, <4 x float>, i32)
+
+define void@test_int_x86_avx512_scatterdiv8_sf(i8* %x0, i8 %x1, <4 x i64> %x2, <4 x float> %x3) {
+; CHECK-LABEL: test_int_x86_avx512_scatterdiv8_sf:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    kmovb %esi, %k1
+; CHECK-NEXT:    vscatterqps %xmm1, (%rdi,%ymm0,0) {%k1}
+; CHECK-NEXT:    kxnorw %k1, %k1, %k1
+; CHECK-NEXT:    vscatterqps %xmm1, (%rdi,%ymm0,4) {%k1}
+; CHECK-NEXT:    retq
+  call void @llvm.x86.avx512.scatterdiv8.sf(i8* %x0, i8 %x1, <4 x i64> %x2, <4 x float> %x3, i32 0)
+  call void @llvm.x86.avx512.scatterdiv8.sf(i8* %x0, i8 -1, <4 x i64> %x2, <4 x float> %x3, i32 4)
+  ret void
+}
+
+declare void @llvm.x86.avx512.scatterdiv8.si(i8*, i8, <4 x i64>, <4 x i32>, i32)
+
+define void@test_int_x86_avx512_scatterdiv8_si(i8* %x0, i8 %x1, <4 x i64> %x2, <4 x i32> %x3) {
+; CHECK-LABEL: test_int_x86_avx512_scatterdiv8_si:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    kmovb %esi, %k1
+; CHECK-NEXT:    vpscatterqd %xmm1, (%rdi,%ymm0,0) {%k1}
+; CHECK-NEXT:    kxnorw %k1, %k1, %k1
+; CHECK-NEXT:    vpscatterqd %xmm1, (%rdi,%ymm0,4) {%k1}
+; CHECK-NEXT:    retq
+  call void @llvm.x86.avx512.scatterdiv8.si(i8* %x0, i8 %x1, <4 x i64> %x2, <4 x i32> %x3, i32 0)
+  call void @llvm.x86.avx512.scatterdiv8.si(i8* %x0, i8 -1, <4 x i64> %x2, <4 x i32> %x3, i32 4)
+  ret void
+}
+
+declare void @llvm.x86.avx512.scattersiv2.df(i8*, i8, <4 x i32>, <2 x double>, i32)
+
+define void@test_int_x86_avx512_scattersiv2_df(i8* %x0, i8 %x1, <4 x i32> %x2, <2 x double> %x3) {
+; CHECK-LABEL: test_int_x86_avx512_scattersiv2_df:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    kmovb %esi, %k1
+; CHECK-NEXT:    kxnorw %k2, %k2, %k2
+; CHECK-NEXT:    vscatterdpd %xmm1, (%rdi,%xmm0,0) {%k2}
+; CHECK-NEXT:    vscatterdpd %xmm1, (%rdi,%xmm0,4) {%k1}
+; CHECK-NEXT:    retq
+  call void @llvm.x86.avx512.scattersiv2.df(i8* %x0, i8 -1, <4 x i32> %x2, <2 x double> %x3, i32 0)
+  call void @llvm.x86.avx512.scattersiv2.df(i8* %x0, i8 %x1, <4 x i32> %x2, <2 x double> %x3, i32 4)
+  ret void
+}
+
+declare void @llvm.x86.avx512.scattersiv2.di(i8*, i8, <4 x i32>, <2 x i64>, i32)
+
+define void@test_int_x86_avx512_scattersiv2_di(i8* %x0, i8 %x1, <4 x i32> %x2, <2 x i64> %x3) {
+; CHECK-LABEL: test_int_x86_avx512_scattersiv2_di:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    kmovb %esi, %k1
+; CHECK-NEXT:    kxnorw %k2, %k2, %k2
+; CHECK-NEXT:    vpscatterdq %xmm1, (%rdi,%xmm0,0) {%k2}
+; CHECK-NEXT:    vpscatterdq %xmm1, (%rdi,%xmm0,4) {%k1}
+; CHECK-NEXT:    retq
+  call void @llvm.x86.avx512.scattersiv2.di(i8* %x0, i8 -1, <4 x i32> %x2, <2 x i64> %x3, i32 0)
+  call void @llvm.x86.avx512.scattersiv2.di(i8* %x0, i8 %x1, <4 x i32> %x2, <2 x i64> %x3, i32 4)
+  ret void
+}
+
+declare void @llvm.x86.avx512.scattersiv4.df(i8*, i8, <4 x i32>, <4 x double>, i32)
+
+define void@test_int_x86_avx512_scattersiv4_df(i8* %x0, i8 %x1, <4 x i32> %x2, <4 x double> %x3) {
+; CHECK-LABEL: test_int_x86_avx512_scattersiv4_df:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    kmovb %esi, %k1
+; CHECK-NEXT:    vscatterdpd %ymm1, (%rdi,%xmm0,0) {%k1}
+; CHECK-NEXT:    kxnorw %k1, %k1, %k1
+; CHECK-NEXT:    vscatterdpd %ymm1, (%rdi,%xmm0,4) {%k1}
+; CHECK-NEXT:    retq
+  call void @llvm.x86.avx512.scattersiv4.df(i8* %x0, i8 %x1, <4 x i32> %x2, <4 x double> %x3, i32 0)
+  call void @llvm.x86.avx512.scattersiv4.df(i8* %x0, i8 -1, <4 x i32> %x2, <4 x double> %x3, i32 4)
+  ret void
+}
+
+declare void @llvm.x86.avx512.scattersiv4.di(i8*, i8, <4 x i32>, <4 x i64>, i32)
+
+define void@test_int_x86_avx512_scattersiv4_di(i8* %x0, i8 %x1, <4 x i32> %x2, <4 x i64> %x3) {
+; CHECK-LABEL: test_int_x86_avx512_scattersiv4_di:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    kmovb %esi, %k1
+; CHECK-NEXT:    kxnorw %k2, %k2, %k2
+; CHECK-NEXT:    vpscatterdq %ymm1, (%rdi,%xmm0,0) {%k2}
+; CHECK-NEXT:    vpscatterdq %ymm1, (%rdi,%xmm0,4) {%k1}
+; CHECK-NEXT:    retq
+  call void @llvm.x86.avx512.scattersiv4.di(i8* %x0, i8 -1, <4 x i32> %x2, <4 x i64> %x3, i32 0)
+  call void @llvm.x86.avx512.scattersiv4.di(i8* %x0, i8 %x1, <4 x i32> %x2, <4 x i64> %x3, i32 4)
+  ret void
+}
+
+declare void @llvm.x86.avx512.scattersiv4.sf(i8*, i8, <4 x i32>, <4 x float>, i32)
+
+define void@test_int_x86_avx512_scattersiv4_sf(i8* %x0, i8 %x1, <4 x i32> %x2, <4 x float> %x3) {
+; CHECK-LABEL: test_int_x86_avx512_scattersiv4_sf:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    kmovb %esi, %k1
+; CHECK-NEXT:    vscatterdps %xmm1, (%rdi,%xmm0,0) {%k1}
+; CHECK-NEXT:    kxnorw %k1, %k1, %k1
+; CHECK-NEXT:    vscatterdps %xmm1, (%rdi,%xmm0,4) {%k1}
+; CHECK-NEXT:    retq
+  call void @llvm.x86.avx512.scattersiv4.sf(i8* %x0, i8 %x1, <4 x i32> %x2, <4 x float> %x3, i32 0)
+  call void @llvm.x86.avx512.scattersiv4.sf(i8* %x0, i8 -1, <4 x i32> %x2, <4 x float> %x3, i32 4)
+  ret void
+}
+
+declare void @llvm.x86.avx512.scattersiv4.si(i8*, i8, <4 x i32>, <4 x i32>, i32)
+
+define void@test_int_x86_avx512_scattersiv4_si(i8* %x0, i8 %x1, <4 x i32> %x2, <4 x i32> %x3) {
+; CHECK-LABEL: test_int_x86_avx512_scattersiv4_si:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    kmovb %esi, %k1
+; CHECK-NEXT:    vpscatterdd %xmm1, (%rdi,%xmm0,0) {%k1}
+; CHECK-NEXT:    kxnorw %k1, %k1, %k1
+; CHECK-NEXT:    vpscatterdd %xmm1, (%rdi,%xmm0,4) {%k1}
+; CHECK-NEXT:    retq
+  call void @llvm.x86.avx512.scattersiv4.si(i8* %x0, i8 %x1, <4 x i32> %x2, <4 x i32> %x3, i32 0)
+  call void @llvm.x86.avx512.scattersiv4.si(i8* %x0, i8 -1, <4 x i32> %x2, <4 x i32> %x3, i32 4)
+  ret void
+}
+
+declare void @llvm.x86.avx512.scattersiv8.sf(i8*, i8, <8 x i32>, <8 x float>, i32)
+
+define void@test_int_x86_avx512_scattersiv8_sf(i8* %x0, i8 %x1, <8 x i32> %x2, <8 x float> %x3) {
+; CHECK-LABEL: test_int_x86_avx512_scattersiv8_sf:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    kmovb %esi, %k1
+; CHECK-NEXT:    vscatterdps %ymm1, (%rdi,%ymm0,0) {%k1}
+; CHECK-NEXT:    kxnorw %k1, %k1, %k1
+; CHECK-NEXT:    vscatterdps %ymm1, (%rdi,%ymm0,4) {%k1}
+; CHECK-NEXT:    retq
+  call void @llvm.x86.avx512.scattersiv8.sf(i8* %x0, i8 %x1, <8 x i32> %x2, <8 x float> %x3, i32 0)
+  call void @llvm.x86.avx512.scattersiv8.sf(i8* %x0, i8 -1, <8 x i32> %x2, <8 x float> %x3, i32 4)
+  ret void
+}
+
+declare void @llvm.x86.avx512.scattersiv8.si(i8*, i8, <8 x i32>, <8 x i32>, i32)
+
+define void@test_int_x86_avx512_scattersiv8_si(i8* %x0, i8 %x1, <8 x i32> %x2, <8 x i32> %x3) {
+; CHECK-LABEL: test_int_x86_avx512_scattersiv8_si:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    kmovb %esi, %k1
+; CHECK-NEXT:    vpscatterdd %ymm1, (%rdi,%ymm0,0) {%k1}
+; CHECK-NEXT:    kxnorw %k1, %k1, %k1
+; CHECK-NEXT:    vpscatterdd %ymm1, (%rdi,%ymm0,4) {%k1}
+; CHECK-NEXT:    retq
+  call void @llvm.x86.avx512.scattersiv8.si(i8* %x0, i8 %x1, <8 x i32> %x2, <8 x i32> %x3, i32 0)
+  call void @llvm.x86.avx512.scattersiv8.si(i8* %x0, i8 -1, <8 x i32> %x2, <8 x i32> %x3, i32 4)
+  ret void
+}
+

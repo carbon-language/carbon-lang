@@ -606,6 +606,30 @@ def mgatherv16i32 : PatFrag<(ops node:$src1, node:$src2, node:$src3),
   return false;
 }]>;
 
+def mscatterv2i64 : PatFrag<(ops node:$src1, node:$src2, node:$src3),
+  (masked_scatter node:$src1, node:$src2, node:$src3) , [{
+  if (MaskedScatterSDNode *Sc = dyn_cast<MaskedScatterSDNode>(N))
+    return (Sc->getIndex().getValueType() == MVT::v2i64 ||
+            Sc->getBasePtr().getValueType() == MVT::v2i64);
+  return false;
+}]>;
+
+def mscatterv4i32 : PatFrag<(ops node:$src1, node:$src2, node:$src3),
+  (masked_scatter node:$src1, node:$src2, node:$src3) , [{
+  if (MaskedScatterSDNode *Sc = dyn_cast<MaskedScatterSDNode>(N))
+    return (Sc->getIndex().getValueType() == MVT::v4i32 ||
+            Sc->getBasePtr().getValueType() == MVT::v4i32);
+  return false;
+}]>;
+
+def mscatterv4i64 : PatFrag<(ops node:$src1, node:$src2, node:$src3),
+  (masked_scatter node:$src1, node:$src2, node:$src3) , [{
+  if (MaskedScatterSDNode *Sc = dyn_cast<MaskedScatterSDNode>(N))
+    return (Sc->getIndex().getValueType() == MVT::v4i64 ||
+            Sc->getBasePtr().getValueType() == MVT::v4i64);
+  return false;
+}]>;
+
 def mscatterv8i32 : PatFrag<(ops node:$src1, node:$src2, node:$src3),
   (masked_scatter node:$src1, node:$src2, node:$src3) , [{
   if (MaskedScatterSDNode *Sc = dyn_cast<MaskedScatterSDNode>(N))
