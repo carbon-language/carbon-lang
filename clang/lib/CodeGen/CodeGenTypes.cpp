@@ -154,14 +154,16 @@ isSafeToConvert(const RecordDecl *RD, CodeGenTypes &CGT,
 static bool
 isSafeToConvert(QualType T, CodeGenTypes &CGT,
                 llvm::SmallPtrSet<const RecordDecl*, 16> &AlreadyChecked) {
-  T = T.getCanonicalType();
-  
+  // Strip off atomic type sugar.
+  if (const auto *AT = T->getAs<AtomicType>())
+    T = AT->getValueType();
+
   // If this is a record, check it.
-  if (const RecordType *RT = dyn_cast<RecordType>(T))
+  if (const auto *RT = T->getAs<RecordType>())
     return isSafeToConvert(RT->getDecl(), CGT, AlreadyChecked);
-  
+
   // If this is an array, check the elements, which are embedded inline.
-  if (const ArrayType *AT = dyn_cast<ArrayType>(T))
+  if (const auto *AT = CGT.getContext().getAsArrayType(T))
     return isSafeToConvert(AT->getElementType(), CGT, AlreadyChecked);
 
   // Otherwise, there is no concern about transforming this.  We only care about

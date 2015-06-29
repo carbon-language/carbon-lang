@@ -12,8 +12,24 @@
 // they're sufficiently rare that it's not worth making sure that the semantics
 // are correct.
 
-// CHECK: @testStructGlobal = global {{.*}} { i16 1, i16 2, i16 3, i16 4 }
-// CHECK: @testPromotedStructGlobal = global {{.*}} { %{{.*}} { i16 1, i16 2, i16 3 }, [2 x i8] zeroinitializer }
+struct elem;
+
+struct ptr {
+    struct elem *ptr;
+};
+// CHECK-DAG: %struct.ptr = type { %struct.elem* }
+
+struct elem {
+    _Atomic(struct ptr) link;
+};
+// CHECK-DAG: %struct.elem = type { %struct.ptr }
+
+struct ptr object;
+// CHECK-DAG: @object = common global %struct.ptr zeroinitializer
+
+// CHECK-DAG: @testStructGlobal = global {{.*}} { i16 1, i16 2, i16 3, i16 4 }
+// CHECK-DAG: @testPromotedStructGlobal = global {{.*}} { %{{.*}} { i16 1, i16 2, i16 3 }, [2 x i8] zeroinitializer }
+
 
 typedef int __attribute__((vector_size(16))) vector;
 
