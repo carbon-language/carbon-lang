@@ -470,10 +470,44 @@ bool ScopDetection::hasAffineMemoryAccesses(DetectionContext &Context) const {
     // First step: collect parametric terms in all array references.
     SmallVector<const SCEV *, 4> Terms;
     for (const auto &Pair : Context.Accesses[BasePointer]) {
-      const SCEVAddRecExpr *AF = dyn_cast<SCEVAddRecExpr>(Pair.second);
-
-      if (AF)
+      if (auto *AF = dyn_cast<SCEVAddRecExpr>(Pair.second))
         SE->collectParametricTerms(AF, Terms);
+
+      // In case the outermost expression is a plain add, we check if any of its
+      // terms has the form 4 * %inst * %param * %param ..., aka a term that
+      // contains a product between a parameter and an instruction that is
+      // inside the scop. Such instructions, if allowed at all, are instructions
+      // SCEV can not represent, but Polly is still looking through. As a
+      // result, these instructions can depend on induction variables and are
+      // most likely no array sizes. However, terms that are multiplied with
+      // them are likely candidates for array sizes.
+      if (auto *AF = dyn_cast<SCEVAddExpr>(Pair.second)) {
+        for (auto Op : AF->operands()) {
+          if (auto *AF2 = dyn_cast<SCEVAddRecExpr>(Op))
+            SE->collectParametricTerms(AF2, Terms);
+          if (auto *AF2 = dyn_cast<SCEVMulExpr>(Op)) {
+            SmallVector<const SCEV *, 0> Operands;
+            bool TermsHasInRegionInst = false;
+
+            for (auto *MulOp : AF2->operands()) {
+              if (auto *Const = dyn_cast<SCEVConstant>(MulOp))
+                Operands.push_back(Const);
+              if (auto *Unknown = dyn_cast<SCEVUnknown>(MulOp)) {
+                if (auto *Inst = dyn_cast<Instruction>(Unknown->getValue())) {
+                  if (!Context.CurRegion.contains(Inst))
+                    Operands.push_back(MulOp);
+                  else
+                    TermsHasInRegionInst = true;
+
+                } else {
+                  Operands.push_back(MulOp);
+                }
+              }
+            }
+            Terms.push_back(SE->getMulExpr(Operands));
+          }
+        }
+      }
     }
 
     // Second step: find array shape.
@@ -517,7 +551,7 @@ bool ScopDetection::hasAffineMemoryAccesses(DetectionContext &Context) const {
     MapInsnToMemAcc TempMemoryAccesses;
     for (const auto &Pair : Context.Accesses[BasePointer]) {
       const Instruction *Insn = Pair.first;
-      const SCEVAddRecExpr *AF = dyn_cast<SCEVAddRecExpr>(Pair.second);
+      auto *AF = Pair.second;
       bool IsNonAffine = false;
       TempMemoryAccesses.insert(std::make_pair(Insn, MemAcc(Insn, Shape)));
       MemAcc *Acc = &TempMemoryAccesses.find(Insn)->second;
