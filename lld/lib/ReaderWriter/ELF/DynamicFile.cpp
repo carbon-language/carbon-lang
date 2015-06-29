@@ -70,7 +70,7 @@ template <class ELFT> std::error_code DynamicFile<ELFT>::doParse() {
   // it exists.
   for (auto i = obj.begin_dynamic_symbols(), e = obj.end_dynamic_symbols();
        i != e; ++i) {
-    auto name = obj.getSymbolName(i);
+    auto name = obj.getSymbolName(i, true);
     if ((ec = name.getError()))
       return ec;
 

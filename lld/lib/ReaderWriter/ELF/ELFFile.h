@@ -26,7 +26,6 @@ template <class ELFT> class ELFFile : public SimpleFile {
   typedef llvm::object::Elf_Shdr_Impl<ELFT> Elf_Shdr;
   typedef llvm::object::Elf_Rel_Impl<ELFT, false> Elf_Rel;
   typedef llvm::object::Elf_Rel_Impl<ELFT, true> Elf_Rela;
-  typedef typename llvm::object::ELFFile<ELFT>::Elf_Sym_Iter Elf_Sym_Iter;
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Rela_Iter Elf_Rela_Iter;
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Rel_Iter Elf_Rel_Iter;
   typedef typename llvm::object::ELFFile<ELFT>::Elf_Word Elf_Word;
@@ -200,7 +199,7 @@ protected:
   /// Determines if the target wants to create an atom for a section that has no
   /// symbol references.
   bool handleSectionWithNoSymbols(const Elf_Shdr *shdr,
-                                  std::vector<Elf_Sym_Iter> &syms) const {
+                                  std::vector<const Elf_Sym *> &syms) const {
     return shdr &&
            (shdr->sh_type == llvm::ELF::SHT_PROGBITS ||
             shdr->sh_type == llvm::ELF::SHT_INIT_ARRAY ||
@@ -348,7 +347,8 @@ protected:
 
   /// \brief the section and the symbols that are contained within it to create
   /// used to create atoms
-  llvm::MapVector<const Elf_Shdr *, std::vector<Elf_Sym_Iter>> _sectionSymbols;
+  llvm::MapVector<const Elf_Shdr *, std::vector<const Elf_Sym *>>
+      _sectionSymbols;
 
   /// \brief Sections that have merge string property
   std::vector<const Elf_Shdr *> _mergeStringSections;

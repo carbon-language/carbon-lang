@@ -219,7 +219,7 @@ std::error_code ELFFile<ELFT>::createSymbolsFromAtomizableSections() {
   for (; SymI != SymE; ++SymI) {
     const Elf_Shdr *section = _objFile->getSection(&*SymI);
 
-    auto symbolName = _objFile->getSymbolName(SymI);
+    auto symbolName = _objFile->getSymbolName(SymI, false);
     if (std::error_code ec = symbolName.getError())
       return ec;
 
@@ -264,11 +264,11 @@ template <class ELFT> std::error_code ELFFile<ELFT>::createAtoms() {
   // Contains a list of comdat sections for a group.
   for (auto &i : _sectionSymbols) {
     const Elf_Shdr *section = i.first;
-    std::vector<Elf_Sym_Iter> &symbols = i.second;
+    std::vector<const Elf_Sym *> &symbols = i.second;
 
     // Sort symbols by position.
     std::stable_sort(symbols.begin(), symbols.end(),
-                     [this](Elf_Sym_Iter a, Elf_Sym_Iter b) {
+                     [this](const Elf_Sym *a, const Elf_Sym *b) {
                        return getSymbolValue(&*a) < getSymbolValue(&*b);
                      });
 
@@ -305,7 +305,7 @@ template <class ELFT> std::error_code ELFFile<ELFT>::createAtoms() {
       auto symbol = *si;
       StringRef symbolName = "";
       if (symbol->getType() != llvm::ELF::STT_SECTION) {
-        auto symName = _objFile->getSymbolName(symbol);
+        auto symName = _objFile->getSymbolName(symbol, false);
         if (std::error_code ec = symName.getError())
           return ec;
         symbolName = *symName;
@@ -486,7 +486,8 @@ std::error_code ELFFile<ELFT>::handleSectionGroup(
   }
   const Elf_Sym *symbol = _objFile->getSymbol(section->sh_info);
   const Elf_Shdr *symtab = _objFile->getSection(section->sh_link);
-  ErrorOr<StringRef> symbolName = _objFile->getSymbolName(symtab, symbol);
+  const Elf_Shdr *strtab = _objFile->getSection(symtab->sh_link);
+  ErrorOr<StringRef> symbolName = _objFile->getSymbolName(strtab, symbol);
   if (std::error_code ec = symbolName.getError())
     return ec;
 
