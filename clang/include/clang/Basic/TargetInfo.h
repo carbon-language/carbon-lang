@@ -611,6 +611,9 @@ public:
     }
   };
 
+  // Validate the contents of the __builtin_cpu_supports(const char*) argument.
+  virtual bool validateCpuSupports(StringRef Name) const { return false; }
+
   // validateOutputConstraint, validateInputConstraint - Checks that
   // a constraint is valid and provides information about it.
   // FIXME: These should return a real error instead of just true/false.

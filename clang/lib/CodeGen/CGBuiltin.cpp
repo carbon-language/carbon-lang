@@ -6101,6 +6101,83 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
 
   switch (BuiltinID) {
   default: return nullptr;
+  case X86::BI__builtin_cpu_supports: {
+    const Expr *FeatureExpr = E->getArg(0)->IgnoreParenCasts();
+    StringRef FeatureStr = cast<StringLiteral>(FeatureExpr)->getString();
+
+    // TODO: When/if this becomes more than x86 specific then use a TargetInfo
+    // based mapping.
+    // Processor features and mapping to processor feature value.
+    enum X86Features {
+      CMOV = 0,
+      MMX,
+      POPCNT,
+      SSE,
+      SSE2,
+      SSE3,
+      SSSE3,
+      SSE4_1,
+      SSE4_2,
+      AVX,
+      AVX2,
+      SSE4_A,
+      FMA4,
+      XOP,
+      FMA,
+      AVX512F,
+      BMI,
+      BMI2,
+      MAX
+    };
+
+    X86Features Feature = StringSwitch<X86Features>(FeatureStr)
+                              .Case("cmov", X86Features::CMOV)
+                              .Case("mmx", X86Features::MMX)
+                              .Case("popcnt", X86Features::POPCNT)
+                              .Case("sse", X86Features::SSE)
+                              .Case("sse2", X86Features::SSE2)
+                              .Case("sse3", X86Features::SSE3)
+                              .Case("sse4.1", X86Features::SSE4_1)
+                              .Case("sse4.2", X86Features::SSE4_2)
+                              .Case("avx", X86Features::AVX)
+                              .Case("avx2", X86Features::AVX2)
+                              .Case("sse4a", X86Features::SSE4_A)
+                              .Case("fma4", X86Features::FMA4)
+                              .Case("xop", X86Features::XOP)
+                              .Case("fma", X86Features::FMA)
+                              .Case("avx512f", X86Features::AVX512F)
+                              .Case("bmi", X86Features::BMI)
+                              .Case("bmi2", X86Features::BMI2)
+                              .Default(X86Features::MAX);
+    assert(Feature != X86Features::MAX && "Invalid feature!");
+
+    // Matching the struct layout from the compiler-rt/libgcc structure that is
+    // filled in:
+    // unsigned int __cpu_vendor;
+    // unsigned int __cpu_type;
+    // unsigned int __cpu_subtype;
+    // unsigned int __cpu_features[1];
+    llvm::Type *STy = llvm::StructType::get(
+        Int32Ty, Int32Ty, Int32Ty, llvm::ArrayType::get(Int32Ty, 1), nullptr);
+
+    // Grab the global __cpu_model.
+    llvm::Constant *CpuModel = CGM.CreateRuntimeVariable(STy, "__cpu_model");
+
+    // Grab the first (0th) element from the field __cpu_features off of the
+    // global in the struct STy.
+    Value *Idxs[] = {
+      ConstantInt::get(Int32Ty, 0),
+      ConstantInt::get(Int32Ty, 3),
+      ConstantInt::get(Int32Ty, 0)
+    };
+    Value *CpuFeatures = Builder.CreateGEP(STy, CpuModel, Idxs);
+    Value *Features = Builder.CreateLoad(CpuFeatures);
+
+    // Check the value of the bit corresponding to the feature requested.
+    Value *Bitset = Builder.CreateAnd(
+        Features, llvm::ConstantInt::get(Int32Ty, 1 << Feature));
+    return Builder.CreateICmpNE(Bitset, llvm::ConstantInt::get(Int32Ty, 0));
+  }
   case X86::BI_mm_prefetch: {
     Value *Address = EmitScalarExpr(E->getArg(0));
     Value *RW = ConstantInt::get(Int32Ty, 0);

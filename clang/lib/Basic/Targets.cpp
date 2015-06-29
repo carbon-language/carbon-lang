@@ -2215,6 +2215,7 @@ public:
     Names = AddlRegNames;
     NumNames = llvm::array_lengthof(AddlRegNames);
   }
+  bool validateCpuSupports(StringRef Name) const override;
   bool validateAsmConstraint(const char *&Name,
                              TargetInfo::ConstraintInfo &info) const override;
 
@@ -3335,6 +3336,33 @@ bool X86TargetInfo::hasFeature(StringRef Feature) const {
       .Case("x86_32", getTriple().getArch() == llvm::Triple::x86)
       .Case("x86_64", getTriple().getArch() == llvm::Triple::x86_64)
       .Case("xop", XOPLevel >= XOP)
+      .Default(false);
+}
+
+// We can't use a generic validation scheme for the features accepted here
+// versus subtarget features accepted in the target attribute because the
+// bitfield structure that's initialized in the runtime only supports the
+// below currently rather than the full range of subtarget features. (See
+// X86TargetInfo::hasFeature for a somewhat comprehensive list).
+bool X86TargetInfo::validateCpuSupports(StringRef FeatureStr) const {
+  return llvm::StringSwitch<bool>(FeatureStr)
+      .Case("cmov", true)
+      .Case("mmx", true)
+      .Case("popcnt", true)
+      .Case("sse", true)
+      .Case("sse2", true)
+      .Case("sse3", true)
+      .Case("sse4.1", true)
+      .Case("sse4.2", true)
+      .Case("avx", true)
+      .Case("avx2", true)
+      .Case("sse4a", true)
+      .Case("fma4", true)
+      .Case("xop", true)
+      .Case("fma", true)
+      .Case("avx512f", true)
+      .Case("bmi", true)
+      .Case("bmi2", true)
       .Default(false);
 }
 

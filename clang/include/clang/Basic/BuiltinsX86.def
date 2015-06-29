@@ -24,6 +24,11 @@
 
 // FIXME: Are these nothrow/const?
 
+// Miscellaneous builtin for checking x86 cpu features.
+// TODO: Make this somewhat generic so that other backends
+// can use it?
+BUILTIN(__builtin_cpu_supports, "bcC*", "nc")
+
 // 3DNow!
 //
 BUILTIN(__builtin_ia32_femms, "v", "")
