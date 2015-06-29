@@ -362,7 +362,7 @@ void InstrProfiling::emitInitialization() {
         Function::Create(SetNameTy, GlobalValue::ExternalLinkage,
                          "__llvm_profile_override_default_filename", M);
 
-    // Create variable for profile name
+    // Create variable for profile name.
     Constant *ProfileNameConst =
         ConstantDataArray::getString(M->getContext(), InstrProfileOutput, true);
     GlobalVariable *ProfileName =
