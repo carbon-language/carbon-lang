@@ -43,10 +43,7 @@ autoconf/autom4te.cache
 # Directories to ignore (do not add trailing '/'s, they skip symlinks).
 #==============================================================================#
 # External projects that are tracked independently.
-projects/*
-!projects/CMakeLists.txt
-!projects/LLVMBuild.txt
-!projects/Makefile
+projects/*/
 # Clang, which is tracked independently.
 tools/clang
 # LLDB, which is tracked independently.
