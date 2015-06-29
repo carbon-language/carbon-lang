@@ -812,6 +812,11 @@ public:
                         EnumerateDirectoryCallbackType callback,
                         void *callback_baton);
 
+    typedef std::function <EnumerateDirectoryResult(FileType file_type, const FileSpec &spec)> DirectoryCallback;
+
+    static EnumerateDirectoryResult
+    ForEachItemInDirectory (const char *dir_path, DirectoryCallback const &callback);
+
 protected:
     //------------------------------------------------------------------
     // Member variables
