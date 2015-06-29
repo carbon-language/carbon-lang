@@ -32,6 +32,9 @@
 #define GOOD20            void*
 #define GOOD21(a)         case Fred::a:
 #define GOOD22(a)         if (verbose) return a;
+#define GOOD23(type)      (type::Field)
+#define GOOD24(t)         std::set<t> s
+#define GOOD25(t)         std::set<t,t,t> s
 
 // These are allowed for now..
 #define MAYBE1            *12.34

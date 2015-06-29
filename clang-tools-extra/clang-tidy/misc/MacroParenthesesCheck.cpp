@@ -59,8 +59,8 @@ bool isKeyword(const Token &T) {
 
 /// Warning is written when one of these operators are not within parentheses.
 bool isWarnOp(const Token &T) {
-   /// \TODO This is an initial list of operators. It can be tweaked later to
-   /// get more positives or perhaps avoid some false positive.
+  /// \TODO This is an initial list of operators. It can be tweaked later to
+  /// get more positives or perhaps avoid some false positive.
   return T.isOneOf(tok::plus, tok::minus, tok::star, tok::slash, tok::percent,
                    tok::amp, tok::pipe, tok::caret);
 }
@@ -151,6 +151,10 @@ void MacroParenthesesPPCallbacks::argument(const Token &MacroNameTok,
     if (Prev.isOneOf(tok::period, tok::arrow, tok::coloncolon))
       continue;
 
+    // Argument is a namespace or class.
+    if (Next.is(tok::coloncolon))
+      continue;
+
     // String concatenation.
     if (isStringLiteral(Prev.getKind()) || isStringLiteral(Next.getKind()))
       continue;
@@ -171,6 +175,11 @@ void MacroParenthesesPPCallbacks::argument(const Token &MacroNameTok,
 
     // Assignment/return, i.e. '=x;' or 'return x;'.
     if (Prev.isOneOf(tok::equal, tok::kw_return) && Next.is(tok::semi))
+      continue;
+
+    // C++ template parameters.
+    if (PP->getLangOpts().CPlusPlus && Prev.isOneOf(tok::comma, tok::less) &&
+        Next.isOneOf(tok::comma, tok::greater))
       continue;
 
     Check->diag(Tok.getLocation(), "macro argument should be enclosed in "
