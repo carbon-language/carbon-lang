@@ -613,15 +613,15 @@ typedef bool (*string_predicate_t)(const char *);
 uptr GetListOfModules(LoadedModule *modules, uptr max_modules,
                       string_predicate_t filter);
 
-#if SANITIZER_POSIX
-const uptr kPthreadDestructorIterations = 4;
-#else
-// Unused on Windows.
-const uptr kPthreadDestructorIterations = 0;
-#endif
-
 // Callback type for iterating over a set of memory ranges.
 typedef void (*RangeIteratorCallback)(uptr begin, uptr end, void *arg);
+
+enum AndroidApiLevel {
+  ANDROID_NOT_ANDROID = 0,
+  ANDROID_KITKAT = 19,
+  ANDROID_LOLLIPOP_MR1 = 22,
+  ANDROID_POST_LOLLIPOP = 23
+};
 
 #if SANITIZER_ANDROID
 // Initialize Android logging. Any writes before this are silently lost.
@@ -629,14 +629,25 @@ void AndroidLogInit();
 void AndroidLogWrite(const char *buffer);
 void GetExtraActivationFlags(char *buf, uptr size);
 void SanitizerInitializeUnwinder();
-u32 AndroidGetApiLevel();
+AndroidApiLevel AndroidGetApiLevel();
 #else
 INLINE void AndroidLogInit() {}
 INLINE void AndroidLogWrite(const char *buffer_unused) {}
 INLINE void GetExtraActivationFlags(char *buf, uptr size) { *buf = '\0'; }
 INLINE void SanitizerInitializeUnwinder() {}
-INLINE u32 AndroidGetApiLevel() { return 0; }
+INLINE AndroidApiLevel AndroidGetApiLevel() { return ANDROID_NOT_ANDROID; }
 #endif
+
+INLINE uptr GetPthreadDestructorIterations() {
+#if SANITIZER_ANDROID
+  return (AndroidGetApiLevel() == ANDROID_LOLLIPOP_MR1) ? 8 : 4;
+#elif SANITIZER_POSIX
+  return 4;
+#else
+// Unused on Windows.
+  return 0;
+#endif
+}
 
 void *internal_start_thread(void(*func)(void*), void *arg);
 void internal_join_thread(void *th);

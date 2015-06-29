@@ -955,7 +955,7 @@ extern "C" __attribute__((weak)) int dl_iterate_phdr(
 
 static int dl_iterate_phdr_test_cb(struct dl_phdr_info *info, size_t size,
                                    void *data) {
-  // Any name starting with "lib" indicated a bug in L where library base names
+  // Any name starting with "lib" indicates a bug in L where library base names
   // are returned instead of paths.
   if (info->dlpi_name && info->dlpi_name[0] == 'l' &&
       info->dlpi_name[1] == 'i' && info->dlpi_name[2] == 'b') {
@@ -967,20 +967,21 @@ static int dl_iterate_phdr_test_cb(struct dl_phdr_info *info, size_t size,
 
 static atomic_uint32_t android_api_level;
 
-static u32 AndroidDetectApiLevel() {
+static AndroidApiLevel AndroidDetectApiLevel() {
   if (!&dl_iterate_phdr)
-    return 19; // K or lower
+    return ANDROID_KITKAT; // K or lower
   bool base_name_seen = false;
   dl_iterate_phdr(dl_iterate_phdr_test_cb, &base_name_seen);
   if (base_name_seen)
-    return 22; // L MR1
-  return 23;   // post-L
+    return ANDROID_LOLLIPOP_MR1; // L MR1
+  return ANDROID_POST_LOLLIPOP;   // post-L
   // Plain L (API level 21) is completely broken wrt ASan and not very
   // interesting to detect.
 }
 
-u32 AndroidGetApiLevel() {
-  u32 level = atomic_load(&android_api_level, memory_order_relaxed);
+AndroidApiLevel AndroidGetApiLevel() {
+  AndroidApiLevel level =
+      (AndroidApiLevel)atomic_load(&android_api_level, memory_order_relaxed);
   if (level) return level;
   level = AndroidDetectApiLevel();
   atomic_store(&android_api_level, level, memory_order_relaxed);

@@ -208,7 +208,7 @@ extern "C" void *__lsan_thread_start_func(void *arg) {
   // Wait until the last iteration to maximize the chance that we are the last
   // destructor to run.
   if (pthread_setspecific(g_thread_finalize_key,
-                          (void*)kPthreadDestructorIterations)) {
+                          (void*)GetPthreadDestructorIterations())) {
     Report("LeakSanitizer: failed to set thread key.\n");
     Die();
   }

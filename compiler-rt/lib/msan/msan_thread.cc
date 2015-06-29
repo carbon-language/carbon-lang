@@ -14,7 +14,7 @@ MsanThread *MsanThread::Create(thread_callback_t start_routine,
   MsanThread *thread = (MsanThread*)MmapOrDie(size, __func__);
   thread->start_routine_ = start_routine;
   thread->arg_ = arg;
-  thread->destructor_iterations_ = kPthreadDestructorIterations;
+  thread->destructor_iterations_ = GetPthreadDestructorIterations();
 
   return thread;
 }

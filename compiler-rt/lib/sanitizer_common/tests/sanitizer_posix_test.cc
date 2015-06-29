@@ -52,9 +52,9 @@ static void SpawnThread(uptr iteration) {
 
 TEST(SanitizerCommon, PthreadDestructorIterations) {
   ASSERT_EQ(0, pthread_key_create(&key, &destructor));
-  SpawnThread(kPthreadDestructorIterations);
+  SpawnThread(GetPthreadDestructorIterations());
   EXPECT_TRUE(destructor_executed);
-  SpawnThread(kPthreadDestructorIterations + 1);
+  SpawnThread(GetPthreadDestructorIterations() + 1);
   EXPECT_FALSE(destructor_executed);
 }
 

@@ -460,7 +460,7 @@ uptr GetListOfModules(LoadedModule *modules, uptr max_modules,
   // Fall back to /proc/maps if dl_iterate_phdr is unavailable or broken.
   // The runtime check allows the same library to work with
   // both K and L (and future) Android releases.
-  if (api_level <= 22) { // L or earlier
+  if (api_level <= ANDROID_LOLLIPOP_MR1) { // L or earlier
     MemoryMappingLayout memory_mapping(false);
     return memory_mapping.DumpListOfModules(modules, max_modules, filter);
   }

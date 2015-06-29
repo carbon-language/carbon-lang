@@ -34,12 +34,9 @@ class AsanThread;
 class AsanThreadContext : public ThreadContextBase {
  public:
   explicit AsanThreadContext(int tid)
-      : ThreadContextBase(tid),
-        announced(false),
-        destructor_iterations(kPthreadDestructorIterations),
-        stack_id(0),
-        thread(0) {
-  }
+      : ThreadContextBase(tid), announced(false),
+        destructor_iterations(GetPthreadDestructorIterations()), stack_id(0),
+        thread(0) {}
   bool announced;
   u8 destructor_iterations;
   u32 stack_id;
