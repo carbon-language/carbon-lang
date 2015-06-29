@@ -129,6 +129,8 @@ int SymbolBody::compare(SymbolBody *Other) {
   case DefinedAbsoluteKind:
     // These all simply tie.
     return 0;
+  default:
+    llvm_unreachable("unknown symbol kind");
   }
 }
 
@@ -161,6 +163,8 @@ uint64_t Defined::getRVA() {
   case LazyKind:
   case UndefinedKind:
     llvm_unreachable("Cannot get the address for an undefined symbol.");
+  default:
+    llvm_unreachable("unknown symbol kind");
   }
 }
 
@@ -184,6 +188,8 @@ uint64_t Defined::getFileOff() {
   case LazyKind:
   case UndefinedKind:
     llvm_unreachable("Cannot get a file offset for an undefined symbol.");
+  default:
+    llvm_unreachable("unknown symbol kind");
   }
 }
 
