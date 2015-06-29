@@ -470,11 +470,10 @@ bool ScopDetection::hasAffineMemoryAccesses(DetectionContext &Context) const {
     // First step: collect parametric terms in all array references.
     SmallVector<const SCEV *, 4> Terms;
     for (const auto &Pair : Context.Accesses[BasePointer]) {
-      const SCEVAddRecExpr *AccessFunction =
-          dyn_cast<SCEVAddRecExpr>(Pair.second);
+      const SCEVAddRecExpr *AF = dyn_cast<SCEVAddRecExpr>(Pair.second);
 
-      if (AccessFunction)
-        AccessFunction->collectParametricTerms(*SE, Terms);
+      if (AF)
+        SE->collectParametricTerms(AF, Terms);
     }
 
     // Second step: find array shape.
@@ -529,7 +528,7 @@ bool ScopDetection::hasAffineMemoryAccesses(DetectionContext &Context) const {
         else
           IsNonAffine = true;
       } else {
-        AF->computeAccessFunctions(*SE, Acc->DelinearizedSubscripts,
+        SE->computeAccessFunctions(AF, Acc->DelinearizedSubscripts,
                                    Shape->DelinearizedSizes);
         if (Acc->DelinearizedSubscripts.size() == 0)
           IsNonAffine = true;
