@@ -21,5 +21,5 @@ ifeq ($(HOST_OS),Darwin)
 endif
 
 ifeq ($(HOST_OS), $(filter $(HOST_OS), Linux FreeBSD GNU/kFreeBSD))
-	LLVMLibsOptions += -Wl,-rpath,$(LibDir)
+	LLVMLibsOptions += -Wl,-rpath,$(LibDir) -lpthread
 endif
