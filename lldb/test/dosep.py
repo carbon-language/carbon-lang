@@ -61,8 +61,6 @@ def get_timeout_command():
 
 timeout_command = get_timeout_command()
 
-default_timeout = os.getenv("LLDB_TEST_TIMEOUT") or "10m"
-
 # Status codes for running command with timeout.
 eTimedOut, ePassed, eFailed = 124, 0, 1
 
@@ -272,6 +270,19 @@ def getExpectedTimeouts(platform_name):
         }
     return expected_timeout
 
+def getDefaultTimeout(platform_name):
+    if os.getenv("LLDB_TEST_TIMEOUT"):
+        return os.getenv("LLDB_TEST_TIMEOUT")
+
+    if platform_name is None:
+        platform_name = sys.platform
+
+    if platform_name.startswith("remote-"):
+        return "10m"
+    else:
+        return "4m"
+
+
 def touch(fname, times=None):
     with open(fname, 'a'):
         os.utime(fname, times)
@@ -360,6 +371,9 @@ Run lldb test suite using a separate process for each test file.
             num_threads = multiprocessing.cpu_count()
     if num_threads < 1:
         num_threads = 1
+
+    global default_timeout
+    default_timeout = getDefaultTimeout(dotest_options.lldb_platform_name)
 
     system_info = " ".join(platform.uname())
     (timed_out, failed, passed, all_fails, all_passes) = walk_and_invoke(test_directory, test_subdir, dotest_argv, num_threads)
