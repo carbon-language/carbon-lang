@@ -24,6 +24,7 @@
 #include "llvm/IR/Metadata.h"
 #include "llvm/IR/ValueHandle.h"
 #include "llvm/Object/ObjectFile.h"
+#include "llvm/Object/SymbolSize.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Errno.h"
 #include "llvm/Support/raw_ostream.h"
@@ -107,21 +108,19 @@ void IntelJITEventListener::NotifyObjectEmitted(
   MethodAddressVector Functions;
 
   // Use symbol info to iterate functions in the object.
-  for (symbol_iterator I = DebugObj.symbol_begin(),
-                       E = DebugObj.symbol_end();
-                        I != E;
-                        ++I) {
+  for (const std::pair<SymbolRef, uint64_t> &P : computeSymbolSizes(DebugObj)) {
+    SymbolRef Sym = P.first;
     std::vector<LineNumberInfo> LineInfo;
     std::string SourceFileName;
 
-    SymbolRef::Type SymType;
-    if (I->getType(SymType)) continue;
-    if (SymType == SymbolRef::ST_Function) {
+    if (Sym.getType() == SymbolRef::ST_Function) {
       StringRef  Name;
       uint64_t   Addr;
-      if (I->getName(Name)) continue;
-      if (I->getAddress(Addr)) continue;
-      uint64_t Size = I->getSize();
+      if (Sym.getName(Name))
+        continue;
+      if (Sym.getAddress(Addr))
+        continue;
+      uint64_t Size = P.second;
 
       // Record this address in a local vector
       Functions.push_back((void*)Addr);

@@ -20,6 +20,7 @@
 #include "llvm/IR/DebugInfo.h"
 #include "llvm/IR/Function.h"
 #include "llvm/Object/ObjectFile.h"
+#include "llvm/Object/SymbolSize.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Errno.h"
 #include "llvm/Support/raw_ostream.h"
@@ -85,17 +86,16 @@ void OProfileJITEventListener::NotifyObjectEmitted(
   const ObjectFile &DebugObj = *DebugObjOwner.getBinary();
 
   // Use symbol info to iterate functions in the object.
-  for (symbol_iterator I = DebugObj.symbol_begin(), E = DebugObj.symbol_end();
-       I != E; ++I) {
-    SymbolRef::Type SymType;
-    if (I->getType(SymType)) continue;
-    if (SymType == SymbolRef::ST_Function) {
+  for (const std::pair<SymbolRef, uint64_t> &P : computeSymbolSizes(DebugObj)) {
+    SymbolRef Sym = P.first;
+    if (Sym.getType() == SymbolRef::ST_Function) {
       StringRef  Name;
       uint64_t   Addr;
-      uint64_t   Size;
-      if (I->getName(Name)) continue;
-      if (I->getAddress(Addr)) continue;
-      if (I->getSize(Size)) continue;
+      if (Sym.getName(Name))
+        continue;
+      if (Sym.getAddress(Addr))
+        continue;
+      uint64_t Size = P.second;
 
       if (Wrapper->op_write_native_code(Name.data(), Addr, (void*)Addr, Size)
                         == -1) {
@@ -125,9 +125,7 @@ void OProfileJITEventListener::NotifyFreeingObject(const ObjectFile &Obj) {
     for (symbol_iterator I = DebugObj.symbol_begin(),
                          E = DebugObj.symbol_end();
          I != E; ++I) {
-      SymbolRef::Type SymType;
-      if (I->getType(SymType)) continue;
-      if (SymType == SymbolRef::ST_Function) {
+      if (I->getType() == SymbolRef::ST_Function) {
         uint64_t   Addr;
         if (I->getAddress(Addr)) continue;
 
