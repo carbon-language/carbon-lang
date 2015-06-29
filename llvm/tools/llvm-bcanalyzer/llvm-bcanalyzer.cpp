@@ -146,26 +146,30 @@ static const char *GetCodeName(unsigned CodeID, unsigned BlockID,
 
   if (CurStreamType != LLVMIRBitstream) return nullptr;
 
+#define STRINGIFY_CODE(PREFIX, CODE)                                           \
+  case bitc::PREFIX##_##CODE:                                                  \
+    return #CODE;
   switch (BlockID) {
   default: return nullptr;
   case bitc::MODULE_BLOCK_ID:
     switch (CodeID) {
     default: return nullptr;
-    case bitc::MODULE_CODE_VERSION:     return "VERSION";
-    case bitc::MODULE_CODE_TRIPLE:      return "TRIPLE";
-    case bitc::MODULE_CODE_DATALAYOUT:  return "DATALAYOUT";
-    case bitc::MODULE_CODE_ASM:         return "ASM";
-    case bitc::MODULE_CODE_SECTIONNAME: return "SECTIONNAME";
-    case bitc::MODULE_CODE_DEPLIB:      return "DEPLIB"; // FIXME: Remove in 4.0
-    case bitc::MODULE_CODE_GLOBALVAR:   return "GLOBALVAR";
-    case bitc::MODULE_CODE_FUNCTION:    return "FUNCTION";
-    case bitc::MODULE_CODE_ALIAS:       return "ALIAS";
-    case bitc::MODULE_CODE_PURGEVALS:   return "PURGEVALS";
-    case bitc::MODULE_CODE_GCNAME:      return "GCNAME";
+      STRINGIFY_CODE(MODULE_CODE, VERSION)
+      STRINGIFY_CODE(MODULE_CODE, TRIPLE)
+      STRINGIFY_CODE(MODULE_CODE, DATALAYOUT)
+      STRINGIFY_CODE(MODULE_CODE, ASM)
+      STRINGIFY_CODE(MODULE_CODE, SECTIONNAME)
+      STRINGIFY_CODE(MODULE_CODE, DEPLIB) // FIXME: Remove in 4.0
+      STRINGIFY_CODE(MODULE_CODE, GLOBALVAR)
+      STRINGIFY_CODE(MODULE_CODE, FUNCTION)
+      STRINGIFY_CODE(MODULE_CODE, ALIAS)
+      STRINGIFY_CODE(MODULE_CODE, PURGEVALS)
+      STRINGIFY_CODE(MODULE_CODE, GCNAME)
     }
   case bitc::PARAMATTR_BLOCK_ID:
     switch (CodeID) {
     default: return nullptr;
+    // FIXME: Should these be different?
     case bitc::PARAMATTR_CODE_ENTRY_OLD: return "ENTRY";
     case bitc::PARAMATTR_CODE_ENTRY:     return "ENTRY";
     case bitc::PARAMATTR_GRP_CODE_ENTRY: return "ENTRY";
@@ -173,95 +177,89 @@ static const char *GetCodeName(unsigned CodeID, unsigned BlockID,
   case bitc::TYPE_BLOCK_ID_NEW:
     switch (CodeID) {
     default: return nullptr;
-    case bitc::TYPE_CODE_NUMENTRY:     return "NUMENTRY";
-    case bitc::TYPE_CODE_VOID:         return "VOID";
-    case bitc::TYPE_CODE_FLOAT:        return "FLOAT";
-    case bitc::TYPE_CODE_DOUBLE:       return "DOUBLE";
-    case bitc::TYPE_CODE_LABEL:        return "LABEL";
-    case bitc::TYPE_CODE_OPAQUE:       return "OPAQUE";
-    case bitc::TYPE_CODE_INTEGER:      return "INTEGER";
-    case bitc::TYPE_CODE_POINTER:      return "POINTER";
-    case bitc::TYPE_CODE_ARRAY:        return "ARRAY";
-    case bitc::TYPE_CODE_VECTOR:       return "VECTOR";
-    case bitc::TYPE_CODE_X86_FP80:     return "X86_FP80";
-    case bitc::TYPE_CODE_FP128:        return "FP128";
-    case bitc::TYPE_CODE_PPC_FP128:    return "PPC_FP128";
-    case bitc::TYPE_CODE_METADATA:     return "METADATA";
-    case bitc::TYPE_CODE_STRUCT_ANON:  return "STRUCT_ANON";
-    case bitc::TYPE_CODE_STRUCT_NAME:  return "STRUCT_NAME";
-    case bitc::TYPE_CODE_STRUCT_NAMED: return "STRUCT_NAMED";
-    case bitc::TYPE_CODE_FUNCTION:     return "FUNCTION";
+      STRINGIFY_CODE(TYPE_CODE, NUMENTRY)
+      STRINGIFY_CODE(TYPE_CODE, VOID)
+      STRINGIFY_CODE(TYPE_CODE, FLOAT)
+      STRINGIFY_CODE(TYPE_CODE, DOUBLE)
+      STRINGIFY_CODE(TYPE_CODE, LABEL)
+      STRINGIFY_CODE(TYPE_CODE, OPAQUE)
+      STRINGIFY_CODE(TYPE_CODE, INTEGER)
+      STRINGIFY_CODE(TYPE_CODE, POINTER)
+      STRINGIFY_CODE(TYPE_CODE, ARRAY)
+      STRINGIFY_CODE(TYPE_CODE, VECTOR)
+      STRINGIFY_CODE(TYPE_CODE, X86_FP80)
+      STRINGIFY_CODE(TYPE_CODE, FP128)
+      STRINGIFY_CODE(TYPE_CODE, PPC_FP128)
+      STRINGIFY_CODE(TYPE_CODE, METADATA)
+      STRINGIFY_CODE(TYPE_CODE, STRUCT_ANON)
+      STRINGIFY_CODE(TYPE_CODE, STRUCT_NAME)
+      STRINGIFY_CODE(TYPE_CODE, STRUCT_NAMED)
+      STRINGIFY_CODE(TYPE_CODE, FUNCTION)
     }
 
   case bitc::CONSTANTS_BLOCK_ID:
     switch (CodeID) {
     default: return nullptr;
-    case bitc::CST_CODE_SETTYPE:         return "SETTYPE";
-    case bitc::CST_CODE_NULL:            return "NULL";
-    case bitc::CST_CODE_UNDEF:           return "UNDEF";
-    case bitc::CST_CODE_INTEGER:         return "INTEGER";
-    case bitc::CST_CODE_WIDE_INTEGER:    return "WIDE_INTEGER";
-    case bitc::CST_CODE_FLOAT:           return "FLOAT";
-    case bitc::CST_CODE_AGGREGATE:       return "AGGREGATE";
-    case bitc::CST_CODE_STRING:          return "STRING";
-    case bitc::CST_CODE_CSTRING:         return "CSTRING";
-    case bitc::CST_CODE_CE_BINOP:        return "CE_BINOP";
-    case bitc::CST_CODE_CE_CAST:         return "CE_CAST";
-    case bitc::CST_CODE_CE_GEP:          return "CE_GEP";
-    case bitc::CST_CODE_CE_INBOUNDS_GEP: return "CE_INBOUNDS_GEP";
-    case bitc::CST_CODE_CE_SELECT:       return "CE_SELECT";
-    case bitc::CST_CODE_CE_EXTRACTELT:   return "CE_EXTRACTELT";
-    case bitc::CST_CODE_CE_INSERTELT:    return "CE_INSERTELT";
-    case bitc::CST_CODE_CE_SHUFFLEVEC:   return "CE_SHUFFLEVEC";
-    case bitc::CST_CODE_CE_CMP:          return "CE_CMP";
-    case bitc::CST_CODE_INLINEASM:       return "INLINEASM";
-    case bitc::CST_CODE_CE_SHUFVEC_EX:   return "CE_SHUFVEC_EX";
+      STRINGIFY_CODE(CST_CODE, SETTYPE)
+      STRINGIFY_CODE(CST_CODE, NULL)
+      STRINGIFY_CODE(CST_CODE, UNDEF)
+      STRINGIFY_CODE(CST_CODE, INTEGER)
+      STRINGIFY_CODE(CST_CODE, WIDE_INTEGER)
+      STRINGIFY_CODE(CST_CODE, FLOAT)
+      STRINGIFY_CODE(CST_CODE, AGGREGATE)
+      STRINGIFY_CODE(CST_CODE, STRING)
+      STRINGIFY_CODE(CST_CODE, CSTRING)
+      STRINGIFY_CODE(CST_CODE, CE_BINOP)
+      STRINGIFY_CODE(CST_CODE, CE_CAST)
+      STRINGIFY_CODE(CST_CODE, CE_GEP)
+      STRINGIFY_CODE(CST_CODE, CE_INBOUNDS_GEP)
+      STRINGIFY_CODE(CST_CODE, CE_SELECT)
+      STRINGIFY_CODE(CST_CODE, CE_EXTRACTELT)
+      STRINGIFY_CODE(CST_CODE, CE_INSERTELT)
+      STRINGIFY_CODE(CST_CODE, CE_SHUFFLEVEC)
+      STRINGIFY_CODE(CST_CODE, CE_CMP)
+      STRINGIFY_CODE(CST_CODE, INLINEASM)
+      STRINGIFY_CODE(CST_CODE, CE_SHUFVEC_EX)
     case bitc::CST_CODE_BLOCKADDRESS:    return "CST_CODE_BLOCKADDRESS";
-    case bitc::CST_CODE_DATA:            return "DATA";
+      STRINGIFY_CODE(CST_CODE, DATA)
     }
   case bitc::FUNCTION_BLOCK_ID:
     switch (CodeID) {
     default: return nullptr;
-    case bitc::FUNC_CODE_DECLAREBLOCKS: return "DECLAREBLOCKS";
-
-    case bitc::FUNC_CODE_INST_BINOP:        return "INST_BINOP";
-    case bitc::FUNC_CODE_INST_CAST:         return "INST_CAST";
-    case bitc::FUNC_CODE_INST_GEP_OLD:
-      return "INST_GEP_OLD";
-    case bitc::FUNC_CODE_INST_INBOUNDS_GEP_OLD:
-      return "INST_INBOUNDS_GEP_OLD";
-    case bitc::FUNC_CODE_INST_SELECT:       return "INST_SELECT";
-    case bitc::FUNC_CODE_INST_EXTRACTELT:   return "INST_EXTRACTELT";
-    case bitc::FUNC_CODE_INST_INSERTELT:    return "INST_INSERTELT";
-    case bitc::FUNC_CODE_INST_SHUFFLEVEC:   return "INST_SHUFFLEVEC";
-    case bitc::FUNC_CODE_INST_CMP:          return "INST_CMP";
-
-    case bitc::FUNC_CODE_INST_RET:          return "INST_RET";
-    case bitc::FUNC_CODE_INST_BR:           return "INST_BR";
-    case bitc::FUNC_CODE_INST_SWITCH:       return "INST_SWITCH";
-    case bitc::FUNC_CODE_INST_INVOKE:       return "INST_INVOKE";
-    case bitc::FUNC_CODE_INST_UNREACHABLE:  return "INST_UNREACHABLE";
-
-    case bitc::FUNC_CODE_INST_PHI:          return "INST_PHI";
-    case bitc::FUNC_CODE_INST_ALLOCA:       return "INST_ALLOCA";
-    case bitc::FUNC_CODE_INST_LOAD:         return "INST_LOAD";
-    case bitc::FUNC_CODE_INST_VAARG:        return "INST_VAARG";
-    case bitc::FUNC_CODE_INST_STORE:        return "INST_STORE";
-    case bitc::FUNC_CODE_INST_EXTRACTVAL:   return "INST_EXTRACTVAL";
-    case bitc::FUNC_CODE_INST_INSERTVAL:    return "INST_INSERTVAL";
-    case bitc::FUNC_CODE_INST_CMP2:         return "INST_CMP2";
-    case bitc::FUNC_CODE_INST_VSELECT:      return "INST_VSELECT";
-    case bitc::FUNC_CODE_DEBUG_LOC_AGAIN:   return "DEBUG_LOC_AGAIN";
-    case bitc::FUNC_CODE_INST_CALL:         return "INST_CALL";
-    case bitc::FUNC_CODE_DEBUG_LOC:         return "DEBUG_LOC";
-    case bitc::FUNC_CODE_INST_GEP:
-      return "INST_GEP";
+      STRINGIFY_CODE(FUNC_CODE, DECLAREBLOCKS)
+      STRINGIFY_CODE(FUNC_CODE, INST_BINOP)
+      STRINGIFY_CODE(FUNC_CODE, INST_CAST)
+      STRINGIFY_CODE(FUNC_CODE, INST_GEP_OLD)
+      STRINGIFY_CODE(FUNC_CODE, INST_INBOUNDS_GEP_OLD)
+      STRINGIFY_CODE(FUNC_CODE, INST_SELECT)
+      STRINGIFY_CODE(FUNC_CODE, INST_EXTRACTELT)
+      STRINGIFY_CODE(FUNC_CODE, INST_INSERTELT)
+      STRINGIFY_CODE(FUNC_CODE, INST_SHUFFLEVEC)
+      STRINGIFY_CODE(FUNC_CODE, INST_CMP)
+      STRINGIFY_CODE(FUNC_CODE, INST_RET)
+      STRINGIFY_CODE(FUNC_CODE, INST_BR)
+      STRINGIFY_CODE(FUNC_CODE, INST_SWITCH)
+      STRINGIFY_CODE(FUNC_CODE, INST_INVOKE)
+      STRINGIFY_CODE(FUNC_CODE, INST_UNREACHABLE)
+      STRINGIFY_CODE(FUNC_CODE, INST_PHI)
+      STRINGIFY_CODE(FUNC_CODE, INST_ALLOCA)
+      STRINGIFY_CODE(FUNC_CODE, INST_LOAD)
+      STRINGIFY_CODE(FUNC_CODE, INST_VAARG)
+      STRINGIFY_CODE(FUNC_CODE, INST_STORE)
+      STRINGIFY_CODE(FUNC_CODE, INST_EXTRACTVAL)
+      STRINGIFY_CODE(FUNC_CODE, INST_INSERTVAL)
+      STRINGIFY_CODE(FUNC_CODE, INST_CMP2)
+      STRINGIFY_CODE(FUNC_CODE, INST_VSELECT)
+      STRINGIFY_CODE(FUNC_CODE, DEBUG_LOC_AGAIN)
+      STRINGIFY_CODE(FUNC_CODE, INST_CALL)
+      STRINGIFY_CODE(FUNC_CODE, DEBUG_LOC)
+      STRINGIFY_CODE(FUNC_CODE, INST_GEP)
     }
   case bitc::VALUE_SYMTAB_BLOCK_ID:
     switch (CodeID) {
     default: return nullptr;
-    case bitc::VST_CODE_ENTRY: return "ENTRY";
-    case bitc::VST_CODE_BBENTRY: return "BBENTRY";
+    STRINGIFY_CODE(VST_CODE, ENTRY)
+    STRINGIFY_CODE(VST_CODE, BBENTRY)
     }
   case bitc::METADATA_ATTACHMENT_ID:
     switch(CodeID) {
@@ -287,6 +285,7 @@ static const char *GetCodeName(unsigned CodeID, unsigned BlockID,
     case bitc::USELIST_CODE_BB:      return "USELIST_CODE_BB";
     }
   }
+#undef STRINGIFY_CODE
 }
 
 struct PerRecordStats {
