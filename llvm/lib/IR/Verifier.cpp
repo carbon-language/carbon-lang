@@ -1017,6 +1017,11 @@ void Verifier::visitDINamespace(const DINamespace &N) {
     Assert(isa<DIScope>(S), "invalid scope ref", &N, S);
 }
 
+void Verifier::visitDIModule(const DIModule &N) {
+  Assert(N.getTag() == dwarf::DW_TAG_module, "invalid tag", &N);
+  Assert(!N.getName().empty(), "anonymous module", &N);
+}
+
 void Verifier::visitDITemplateParameter(const DITemplateParameter &N) {
   Assert(isTypeRef(N, N.getType()), "invalid type ref", &N, N.getType());
 }

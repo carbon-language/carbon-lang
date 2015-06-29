@@ -651,6 +651,35 @@ template <> struct MDNodeKeyImpl<DINamespace> {
   }
 };
 
+template <> struct MDNodeKeyImpl<DIModule> {
+  Metadata *Scope;
+  StringRef Name;
+  StringRef ConfigurationMacros;
+  StringRef IncludePath;
+  StringRef ISysRoot;
+  MDNodeKeyImpl(Metadata *Scope, StringRef Name,
+                StringRef ConfigurationMacros,
+                StringRef IncludePath,
+                StringRef ISysRoot)
+    : Scope(Scope), Name(Name), ConfigurationMacros(ConfigurationMacros),
+      IncludePath(IncludePath), ISysRoot(ISysRoot) {}
+  MDNodeKeyImpl(const DIModule *N)
+    : Scope(N->getRawScope()), Name(N->getName()),
+      ConfigurationMacros(N->getConfigurationMacros()),
+      IncludePath(N->getIncludePath()), ISysRoot(N->getISysRoot()) {}
+
+  bool isKeyOf(const DIModule *RHS) const {
+    return Scope == RHS->getRawScope() && Name == RHS->getName() &&
+           ConfigurationMacros == RHS->getConfigurationMacros() &&
+           IncludePath == RHS->getIncludePath() &&
+           ISysRoot == RHS->getISysRoot();
+  }
+  unsigned getHashValue() const {
+    return hash_combine(Scope, Name,
+                        ConfigurationMacros, IncludePath, ISysRoot);
+  }
+};
+
 template <> struct MDNodeKeyImpl<DITemplateTypeParameter> {
   StringRef Name;
   Metadata *Type;

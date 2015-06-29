@@ -145,6 +145,8 @@ void DebugInfoFinder::processModule(const Module &M) {
           processSubprogram(SP);
         else if (auto *NS = dyn_cast<DINamespace>(Entity))
           processScope(NS->getScope());
+        else if (auto *M = dyn_cast<DIModule>(Entity))
+          processScope(M->getScope());
       }
     }
   }
@@ -201,6 +203,8 @@ void DebugInfoFinder::processScope(DIScope *Scope) {
     processScope(LB->getScope());
   } else if (auto *NS = dyn_cast<DINamespace>(Scope)) {
     processScope(NS->getScope());
+  } else if (auto *M = dyn_cast<DIModule>(Scope)) {
+    processScope(M->getScope());
   }
 }
 

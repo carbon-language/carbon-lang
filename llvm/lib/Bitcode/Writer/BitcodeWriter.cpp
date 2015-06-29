@@ -1032,6 +1032,17 @@ static void WriteDINamespace(const DINamespace *N, const ValueEnumerator &VE,
   Record.clear();
 }
 
+static void WriteDIModule(const DIModule *N, const ValueEnumerator &VE,
+                          BitstreamWriter &Stream,
+                          SmallVectorImpl<uint64_t> &Record, unsigned Abbrev) {
+  Record.push_back(N->isDistinct());
+  for (auto &I : N->operands())
+    Record.push_back(VE.getMetadataOrNullID(I));
+
+  Stream.EmitRecord(bitc::METADATA_MODULE, Record, Abbrev);
+  Record.clear();
+}
+
 static void WriteDITemplateTypeParameter(const DITemplateTypeParameter *N,
                                          const ValueEnumerator &VE,
                                          BitstreamWriter &Stream,

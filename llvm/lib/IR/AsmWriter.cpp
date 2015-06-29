@@ -1723,6 +1723,20 @@ static void writeDINamespace(raw_ostream &Out, const DINamespace *N,
   Out << ")";
 }
 
+static void writeDIModule(raw_ostream &Out, const DIModule *N,
+                          TypePrinting *TypePrinter, SlotTracker *Machine,
+                          const Module *Context) {
+  Out << "!DIModule(";
+  MDFieldPrinter Printer(Out, TypePrinter, Machine, Context);
+  Printer.printMetadata("scope", N->getRawScope(), /* ShouldSkipNull */ false);
+  Printer.printString("name", N->getName());
+  Printer.printString("configMacros", N->getConfigurationMacros());
+  Printer.printString("includePath", N->getIncludePath());
+  Printer.printString("isysroot", N->getISysRoot());
+  Out << ")";
+}
+
+
 static void writeDITemplateTypeParameter(raw_ostream &Out,
                                          const DITemplateTypeParameter *N,
                                          TypePrinting *TypePrinter,

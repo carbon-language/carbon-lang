@@ -3676,6 +3676,24 @@ bool LLParser::ParseDINamespace(MDNode *&Result, bool IsDistinct) {
   return false;
 }
 
+/// ParseDIModule:
+///   ::= !DIModule(scope: !0, name: "SomeModule", configMacros: "-DNDEBUG",
+///                 includePath: "/usr/include", isysroot: "/")
+bool LLParser::ParseDIModule(MDNode *&Result, bool IsDistinct) {
+#define VISIT_MD_FIELDS(OPTIONAL, REQUIRED)                                    \
+  REQUIRED(scope, MDField, );                                                  \
+  REQUIRED(name, MDStringField, );                                             \
+  OPTIONAL(configMacros, MDStringField, );                                     \
+  OPTIONAL(includePath, MDStringField, );                                      \
+  OPTIONAL(isysroot, MDStringField, );
+  PARSE_MD_FIELDS();
+#undef VISIT_MD_FIELDS
+
+  Result = GET_OR_DISTINCT(DIModule, (Context, scope.Val, name.Val,
+                           configMacros.Val, includePath.Val, isysroot.Val));
+  return false;
+}
+
 /// ParseDITemplateTypeParameter:
 ///   ::= !DITemplateTypeParameter(name: "Ty", type: !1)
 bool LLParser::ParseDITemplateTypeParameter(MDNode *&Result, bool IsDistinct) {

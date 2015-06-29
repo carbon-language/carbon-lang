@@ -1704,6 +1704,40 @@ TEST_F(DINamespaceTest, get) {
   EXPECT_EQ(N, MDNode::replaceWithUniqued(std::move(Temp)));
 }
 
+typedef MetadataTest DIModuleTest;
+
+TEST_F(DIModuleTest, get) {
+  DIScope *Scope = getFile();
+  StringRef Name = "module";
+  StringRef ConfigMacro = "-DNDEBUG";
+  StringRef Includes = "-I.";
+  StringRef Sysroot = "/";
+
+  auto *N = DIModule::get(Context, Scope, Name, ConfigMacro, Includes, Sysroot);
+
+  EXPECT_EQ(dwarf::DW_TAG_module, N->getTag());
+  EXPECT_EQ(Scope, N->getScope());
+  EXPECT_EQ(Name, N->getName());
+  EXPECT_EQ(ConfigMacro, N->getConfigurationMacros());
+  EXPECT_EQ(Includes, N->getIncludePath());
+  EXPECT_EQ(Sysroot, N->getISysRoot());
+  EXPECT_EQ(N, DIModule::get(Context, Scope, Name,
+                             ConfigMacro, Includes, Sysroot));
+  EXPECT_NE(N, DIModule::get(Context, getFile(), Name,
+                             ConfigMacro, Includes, Sysroot));
+  EXPECT_NE(N, DIModule::get(Context, Scope, "other",
+                             ConfigMacro, Includes, Sysroot));
+  EXPECT_NE(N, DIModule::get(Context, Scope, Name,
+                             "other", Includes, Sysroot));
+  EXPECT_NE(N, DIModule::get(Context, Scope, Name,
+                             ConfigMacro, "other", Sysroot));
+  EXPECT_NE(N, DIModule::get(Context, Scope, Name,
+                             ConfigMacro, Includes, "other"));
+
+  TempDIModule Temp = N->clone();
+  EXPECT_EQ(N, MDNode::replaceWithUniqued(std::move(Temp)));
+}
+
 typedef MetadataTest DITemplateTypeParameterTest;
 
 TEST_F(DITemplateTypeParameterTest, get) {

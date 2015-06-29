@@ -566,6 +566,20 @@ namespace llvm {
     DINamespace *createNameSpace(DIScope *Scope, StringRef Name, DIFile *File,
                                  unsigned LineNo);
 
+    /// createModule - This creates new descriptor for a module
+    /// with the specified parent scope.
+    /// @param Scope       Parent scope
+    /// @param Name        Name of this module
+    /// @param ConfigurationMacros
+    ///                    A space-separated shell-quoted list of -D macro
+    ///                    definitions as they would appear on a command line.
+    /// @param IncludePath The path to the module map file.
+    /// @param ISysRoot    The clang system root (value of -isysroot).
+    DIModule *createModule(DIScope *Scope, StringRef Name,
+                           StringRef ConfigurationMacros,
+                           StringRef IncludePath,
+                           StringRef ISysRoot);
+
     /// createLexicalBlockFile - This creates a descriptor for a lexical
     /// block with a new file attached. This merely extends the existing
     /// lexical block as it crosses a file.
@@ -597,6 +611,13 @@ namespace llvm {
     /// @param Line Line number
     DIImportedEntity *createImportedModule(DIScope *Context,
                                            DIImportedEntity *NS, unsigned Line);
+
+    /// \brief Create a descriptor for an imported module.
+    /// @param Context The scope this module is imported into
+    /// @param M The module being imported here
+    /// @param Line Line number
+    DIImportedEntity *createImportedModule(DIScope *Context, DIModule *M,
+                                           unsigned Line);
 
     /// \brief Create a descriptor for an imported function.
     /// @param Context The scope this module is imported into

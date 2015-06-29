@@ -218,6 +218,7 @@ public:
     case DILocalVariableKind:
     case DIObjCPropertyKind:
     case DIImportedEntityKind:
+    case DIModuleKind:
       return true;
     }
   }
@@ -443,6 +444,7 @@ public:
     case DILexicalBlockKind:
     case DILexicalBlockFileKind:
     case DINamespaceKind:
+    case DIModuleKind:
       return true;
     }
   }
@@ -1620,6 +1622,66 @@ public:
 
   static bool classof(const Metadata *MD) {
     return MD->getMetadataID() == DINamespaceKind;
+  }
+};
+
+/// \brief A (clang) module that has been imported by the compile unit.
+///
+class DIModule : public DIScope {
+  friend class LLVMContextImpl;
+  friend class MDNode;
+
+  DIModule(LLVMContext &Context, StorageType Storage, ArrayRef<Metadata *> Ops)
+      : DIScope(Context, DIModuleKind, Storage, dwarf::DW_TAG_module, Ops) {}
+  ~DIModule() {}
+
+  static DIModule *getImpl(LLVMContext &Context, DIScope *Scope,
+                           StringRef Name, StringRef ConfigurationMacros,
+                           StringRef IncludePath, StringRef ISysRoot,
+                           StorageType Storage, bool ShouldCreate = true) {
+    return getImpl(Context, Scope, getCanonicalMDString(Context, Name),
+                   getCanonicalMDString(Context, ConfigurationMacros),
+		   getCanonicalMDString(Context, IncludePath),
+		   getCanonicalMDString(Context, ISysRoot),
+                   Storage, ShouldCreate);
+  }
+  static DIModule *getImpl(LLVMContext &Context, Metadata *Scope,
+                           MDString *Name, MDString *ConfigurationMacros,
+			   MDString *IncludePath, MDString *ISysRoot,
+			   StorageType Storage, bool ShouldCreate = true);
+
+  TempDIModule cloneImpl() const {
+    return getTemporary(getContext(), getScope(), getName(),
+                        getConfigurationMacros(), getIncludePath(),
+                        getISysRoot());
+  }
+
+public:
+  DEFINE_MDNODE_GET(DIModule, (DIScope *Scope, StringRef Name,
+			       StringRef ConfigurationMacros, StringRef IncludePath,
+			       StringRef ISysRoot),
+                    (Scope, Name, ConfigurationMacros, IncludePath, ISysRoot))
+  DEFINE_MDNODE_GET(DIModule,
+                    (Metadata *Scope, MDString *Name, MDString *ConfigurationMacros,
+		     MDString *IncludePath, MDString *ISysRoot),
+                    (Scope, Name, ConfigurationMacros, IncludePath, ISysRoot))
+
+  TempDIModule clone() const { return cloneImpl(); }
+
+  DIScope *getScope() const { return cast_or_null<DIScope>(getRawScope()); }
+  StringRef getName() const { return getStringOperand(1); }
+  StringRef getConfigurationMacros() const { return getStringOperand(2); }
+  StringRef getIncludePath() const { return getStringOperand(3); }
+  StringRef getISysRoot() const { return getStringOperand(4); }
+
+  Metadata *getRawScope() const { return getOperand(0); }
+  MDString *getRawName() const { return getOperandAs<MDString>(1); }
+  MDString *getRawConfigurationMacros() const { return getOperandAs<MDString>(2); }
+  MDString *getRawIncludePath() const { return getOperandAs<MDString>(3); }
+  MDString *getRawISysRoot() const { return getOperandAs<MDString>(4); }
+
+  static bool classof(const Metadata *MD) {
+    return MD->getMetadataID() == DIModuleKind;
   }
 };
 

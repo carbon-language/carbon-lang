@@ -167,6 +167,7 @@ namespace bitc {
     METADATA_EXPRESSION    = 29,  // [distinct, n x element]
     METADATA_OBJC_PROPERTY = 30,  // [distinct, name, file, line, ...]
     METADATA_IMPORTED_ENTITY=31,  // [distinct, tag, scope, entity, line, name]
+    METADATA_MODULE=32,           // [distinct, scope, name, ...]
   };
 
   // The constants block (CONSTANTS_BLOCK_ID) describes emission for each
