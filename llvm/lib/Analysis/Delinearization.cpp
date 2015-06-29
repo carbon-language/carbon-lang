@@ -115,7 +115,7 @@ void Delinearization::print(raw_ostream &O, const Module *) const {
       O << "AddRec: " << *AR << "\n";
 
       SmallVector<const SCEV *, 3> Subscripts, Sizes;
-      AR->delinearize(*SE, Subscripts, Sizes, SE->getElementSize(Inst));
+      SE->delinearize(AR, Subscripts, Sizes, SE->getElementSize(Inst));
       if (Subscripts.size() == 0 || Sizes.size() == 0 ||
           Subscripts.size() != Sizes.size()) {
         O << "failed to delinearize\n";
