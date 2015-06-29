@@ -110,6 +110,7 @@ else()
         linux/Host.cpp
         linux/HostInfoLinux.cpp
         linux/HostThreadLinux.cpp
+        linux/LibcGlue.cpp
         linux/ThisThread.cpp
         )
     else()
@@ -117,6 +118,7 @@ else()
         linux/Host.cpp
         linux/HostInfoLinux.cpp
         linux/HostThreadLinux.cpp
+        linux/LibcGlue.cpp
         linux/ThisThread.cpp
         )
     endif()

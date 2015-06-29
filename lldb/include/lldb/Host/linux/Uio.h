@@ -12,8 +12,8 @@
 
 #include <sys/uio.h>
 
-// Android does not define the process_vm_readv wrapper
-#ifdef __ANDROID_NDK__
+// We shall provide our own implementation of process_vm_readv if it is not present
+#ifndef HAVE_PROCESS_VM_READV
 ssize_t process_vm_readv(::pid_t pid,
 			 const struct iovec *local_iov, unsigned long liovcnt,
 			 const struct iovec *remote_iov, unsigned long riovcnt,

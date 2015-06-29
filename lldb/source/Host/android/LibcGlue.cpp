@@ -12,7 +12,6 @@
 #include <android/api-level.h>
 
 #include <sys/syscall.h>
-#include <lldb/Host/linux/Uio.h>
 
 #if __ANDROID_API__ < 21
 
@@ -39,11 +38,3 @@ int posix_openpt(int flags)
 }
 
 #endif
-
-ssize_t process_vm_readv(::pid_t pid,
-			 const struct iovec *local_iov, unsigned long liovcnt,
-			 const struct iovec *remote_iov, unsigned long riovcnt,
-			 unsigned long flags)
-{
-    return syscall(__NR_process_vm_readv, pid, local_iov, liovcnt, remote_iov, riovcnt, flags);
-}
