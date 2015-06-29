@@ -867,7 +867,8 @@ ELFFile<ELFT>::getSection(uint32_t index) const {
 template <class ELFT>
 ErrorOr<StringRef> ELFFile<ELFT>::getString(const Elf_Shdr *Section,
                                             ELF::Elf32_Word Offset) const {
-  assert(Section && Section->sh_type == ELF::SHT_STRTAB && "Invalid section!");
+  if (Section->sh_type != ELF::SHT_STRTAB)
+    return object_error::parse_failed;
   if (Offset >= Section->sh_size)
     return object_error::parse_failed;
   return StringRef((const char *)base() + Section->sh_offset + Offset);
