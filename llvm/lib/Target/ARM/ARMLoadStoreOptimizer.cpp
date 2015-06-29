@@ -743,6 +743,12 @@ void ARMLoadStoreOpt::MergeOpsUpdate(MachineBasicBlock &MBB,
     }
   }
 
+  for (unsigned i = memOpsBegin; i < memOpsEnd; ++i) {
+    MachineOperand &TransferOp = memOps[i].MBBI->getOperand(0);
+    if (TransferOp.isUse() && TransferOp.getReg() == Base)
+      BaseKill = false;
+  }
+
   SmallVector<std::pair<unsigned, bool>, 8> Regs;
   SmallVector<unsigned, 8> ImpDefs;
   SmallVector<MachineOperand *, 8> UsesOfImpDefs;
