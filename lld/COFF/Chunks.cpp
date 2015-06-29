@@ -80,23 +80,6 @@ void SectionChunk::writeTo(uint8_t *Buf) {
   }
 }
 
-void SectionChunk::mark() {
-  assert(!Live);
-  Live = true;
-
-  // Mark all symbols listed in the relocation table for this section.
-  for (const coff_relocation &Rel : Relocs) {
-    SymbolBody *B = File->getSymbolBody(Rel.SymbolTableIndex)->getReplacement();
-    if (auto *D = dyn_cast<DefinedRegular>(B))
-      D->markLive();
-  }
-
-  // Mark associative sections if any.
-  for (Chunk *C : AssocChildren)
-    if (auto *SC = dyn_cast<SectionChunk>(C))
-      SC->markLive();
-}
-
 void SectionChunk::addAssociative(SectionChunk *Child) {
   AssocChildren.push_back(Child);
   // Associative sections are live if their parent COMDATs are live,

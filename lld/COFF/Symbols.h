@@ -136,7 +136,7 @@ public:
   bool isCOMDAT() { return IsCOMDAT; }
   bool isLive() const { return (*Data)->isLive(); }
   void markLive() { (*Data)->markLive(); }
-  Chunk *getChunk() { return *Data; }
+  SectionChunk *getChunk() { return *Data; }
   uint64_t getValue() { return Sym.getValue(); }
 
 private:

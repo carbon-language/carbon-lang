@@ -10,8 +10,10 @@
 #ifndef LLD_COFF_CHUNKS_H
 #define LLD_COFF_CHUNKS_H
 
+#include "InputFiles.h"
 #include "lld/Core/LLVM.h"
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/iterator.h"
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/Object/COFF.h"
 #include <map>
@@ -32,6 +34,7 @@ class DefinedRegular;
 class DefinedImportData;
 class ObjectFile;
 class OutputSection;
+class SymbolBody;
 
 // A Chunk represents a chunk of data that will occupy space in the
 // output (if the resolver chose that). It may or may not be backed by
@@ -106,6 +109,24 @@ protected:
 // A chunk corresponding a section of an input file.
 class SectionChunk : public Chunk {
 public:
+  class symbol_iterator : public llvm::iterator_adaptor_base<
+                              symbol_iterator, const coff_relocation *,
+                              std::random_access_iterator_tag, SymbolBody *> {
+    friend SectionChunk;
+
+    ObjectFile *File;
+
+    symbol_iterator(ObjectFile *File, const coff_relocation *I)
+        : symbol_iterator::iterator_adaptor_base(I), File(File) {}
+
+  public:
+    symbol_iterator() = default;
+
+    SymbolBody *operator*() const {
+      return File->getSymbolBody(I->SymbolTableIndex);
+    }
+  };
+
   SectionChunk(ObjectFile *File, const coff_section *Header);
   static bool classof(const Chunk *C) { return C->kind() == SectionKind; }
   size_t getSize() const override { return Header->SizeOfRawData; }
@@ -130,7 +151,19 @@ public:
   // Used by the garbage collector.
   bool isRoot() { return Root; }
   bool isLive() { return Live; }
-  void markLive() { if (!Live) mark(); }
+  void markLive() {
+    assert(!Live && "Cannot mark an already live section!");
+    Live = true;
+  }
+
+  // Allow iteration over the bodies of this chunk's relocated symbols.
+  llvm::iterator_range<symbol_iterator> symbols() const {
+    return llvm::make_range(symbol_iterator(File, Relocs.begin()),
+                            symbol_iterator(File, Relocs.end()));
+  }
+
+  // Allow iteration over the associated child chunks for this section.
+  ArrayRef<SectionChunk *> children() const { return AssocChildren; }
 
   // Used for ICF (Identical COMDAT Folding)
   void replaceWith(SectionChunk *Other);
@@ -156,7 +189,6 @@ private:
   size_t NumRelocs;
 
   // Used by the garbage collector.
-  void mark();
   bool Live = false;
   bool Root;
 

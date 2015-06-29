@@ -111,13 +111,44 @@ void OutputSection::writeHeaderTo(uint8_t *Buf) {
 void Writer::markLive() {
   if (!Config->DoGC)
     return;
+
+  // We build up a worklist of sections which have been marked as live. We only
+  // push into the worklist when we discover an unmarked section, and we mark
+  // as we push, so sections never appear twice in the list.
+  SmallVector<SectionChunk *, 256> Worklist;
+
   for (StringRef Name : Config->GCRoots)
     if (auto *D = dyn_cast<DefinedRegular>(Symtab->find(Name)))
-      D->markLive();
+      if (!D->isLive()) {
+        D->markLive();
+        Worklist.push_back(D->getChunk());
+      }
   for (Chunk *C : Symtab->getChunks())
     if (auto *SC = dyn_cast<SectionChunk>(C))
-      if (SC->isRoot())
+      if (SC->isRoot() && !SC->isLive()) {
         SC->markLive();
+        Worklist.push_back(SC);
+      }
+
+  while (!Worklist.empty()) {
+    SectionChunk *SC = Worklist.pop_back_val();
+    assert(SC->isLive() && "We mark as live when pushing onto the worklist!");
+
+    // Mark all symbols listed in the relocation table for this section.
+    for (SymbolBody *S : SC->symbols())
+      if (auto *D = dyn_cast<DefinedRegular>(S->getReplacement()))
+        if (!D->isLive()) {
+          D->markLive();
+          Worklist.push_back(D->getChunk());
+        }
+
+    // Mark associative sections if any.
+    for (SectionChunk *ChildSC : SC->children())
+      if (!ChildSC->isLive()) {
+        ChildSC->markLive();
+        Worklist.push_back(ChildSC);
+      }
+  }
 }
 
 // Merge identical COMDAT sections.
