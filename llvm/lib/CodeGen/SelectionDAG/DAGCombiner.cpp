@@ -5579,12 +5579,12 @@ SDValue DAGCombiner::visitSETCC(SDNode *N) {
                        SDLoc(N));
 }
 
-// tryToFoldExtendOfConstant - Try to fold a sext/zext/aext
-// dag node into a ConstantSDNode or a build_vector of constants.
-// This function is called by the DAGCombiner when visiting sext/zext/aext
-// dag nodes (see for example method DAGCombiner::visitSIGN_EXTEND).
-// Vector extends are not folded if operations are legal; this is to
-// avoid introducing illegal build_vector dag nodes.
+/// Try to fold a sext/zext/aext dag node into a ConstantSDNode or 
+/// a build_vector of constants.
+/// This function is called by the DAGCombiner when visiting sext/zext/aext
+/// dag nodes (see for example method DAGCombiner::visitSIGN_EXTEND).
+/// Vector extends are not folded if operations are legal; this is to
+/// avoid introducing illegal build_vector dag nodes.
 static SDNode *tryToFoldExtendOfConstant(SDNode *N, const TargetLowering &TLI,
                                          SelectionDAG &DAG, bool LegalTypes,
                                          bool LegalOperations) {
@@ -5614,7 +5614,6 @@ static SDNode *tryToFoldExtendOfConstant(SDNode *N, const TargetLowering &TLI,
   // We can fold this node into a build_vector.
   unsigned VTBits = SVT.getSizeInBits();
   unsigned EVTBits = N0->getValueType(0).getScalarType().getSizeInBits();
-  unsigned ShAmt = VTBits - EVTBits;
   SmallVector<SDValue, 8> Elts;
   unsigned NumElts = VT.getVectorNumElements();
   SDLoc DL(N);
@@ -5627,14 +5626,13 @@ static SDNode *tryToFoldExtendOfConstant(SDNode *N, const TargetLowering &TLI,
     }
 
     SDLoc DL(Op);
-    ConstantSDNode *CurrentND = cast<ConstantSDNode>(Op);
-    const APInt &C = APInt(VTBits, CurrentND->getAPIntValue().getZExtValue());
+    // Get the constant value and if needed trunc it to the size of the type.
+    // Nodes like build_vector might have constants wider than the scalar type.
+    APInt C = cast<ConstantSDNode>(Op)->getAPIntValue().zextOrTrunc(EVTBits);
     if (Opcode == ISD::SIGN_EXTEND || Opcode == ISD::SIGN_EXTEND_VECTOR_INREG)
-      Elts.push_back(DAG.getConstant(C.shl(ShAmt).ashr(ShAmt).getZExtValue(),
-                                     DL, SVT));
+      Elts.push_back(DAG.getConstant(C.sext(VTBits), DL, SVT));
     else
-      Elts.push_back(DAG.getConstant(C.shl(ShAmt).lshr(ShAmt).getZExtValue(),
-                                     DL, SVT));
+      Elts.push_back(DAG.getConstant(C.zext(VTBits), DL, SVT));
   }
 
   return DAG.getNode(ISD::BUILD_VECTOR, DL, VT, Elts).getNode();
