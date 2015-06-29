@@ -282,6 +282,9 @@ def run_swig_for_each_script_supported( vDictArgs ):
 
     # Skip the directory that contains the interface files.
     listDirs.remove('interface')
+    # and the svn directory.
+    if '.svn' in listDirs:
+        listDirs.remove('.svn')
 
     if gbDbgFlag:
         print strSwigScriptLangsFound,
