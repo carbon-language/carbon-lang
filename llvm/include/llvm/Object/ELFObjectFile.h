@@ -201,8 +201,7 @@ protected:
   void moveRelocationNext(DataRefImpl &Rel) const override;
   std::error_code getRelocationAddress(DataRefImpl Rel,
                                        uint64_t &Res) const override;
-  std::error_code getRelocationOffset(DataRefImpl Rel,
-                                      uint64_t &Res) const override;
+  uint64_t getRelocationOffset(DataRefImpl Rel) const override;
   symbol_iterator getRelocationSymbol(DataRefImpl Rel) const override;
   std::error_code getRelocationType(DataRefImpl Rel,
                                     uint64_t &Res) const override;
@@ -689,13 +688,10 @@ ELFObjectFile<ELFT>::getRelocationAddress(DataRefImpl Rel,
 }
 
 template <class ELFT>
-std::error_code
-ELFObjectFile<ELFT>::getRelocationOffset(DataRefImpl Rel,
-                                         uint64_t &Result) const {
+uint64_t ELFObjectFile<ELFT>::getRelocationOffset(DataRefImpl Rel) const {
   assert(EF.getHeader()->e_type == ELF::ET_REL &&
          "Only relocatable object files have relocation offsets");
-  Result = getROffset(Rel);
-  return std::error_code();
+  return getROffset(Rel);
 }
 
 template <class ELFT>

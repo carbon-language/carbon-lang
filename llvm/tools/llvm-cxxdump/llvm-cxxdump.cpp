@@ -100,9 +100,7 @@ static bool collectRelocatedSymbols(const ObjectFile *Obj,
       StringRef RelocSymName;
       if (error(RelocSymI->getName(RelocSymName)))
         return true;
-      uint64_t Offset;
-      if (error(Reloc.getOffset(Offset)))
-        return true;
+      uint64_t Offset = Reloc.getOffset();
       if (Offset >= SymOffset && Offset < SymEnd) {
         *I = RelocSymName;
         ++I;
@@ -126,9 +124,7 @@ static bool collectRelocationOffsets(
       StringRef RelocSymName;
       if (error(RelocSymI->getName(RelocSymName)))
         return true;
-      uint64_t Offset;
-      if (error(Reloc.getOffset(Offset)))
-        return true;
+      uint64_t Offset = Reloc.getOffset();
       if (Offset >= SymOffset && Offset < SymEnd)
         Collection[std::make_pair(SymName, Offset - SymOffset)] = RelocSymName;
     }

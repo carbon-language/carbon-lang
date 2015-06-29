@@ -967,15 +967,9 @@ std::error_code COFFObjectFile::getRelocationAddress(DataRefImpl Rel,
   report_fatal_error("getRelocationAddress not implemented in COFFObjectFile");
 }
 
-std::error_code COFFObjectFile::getRelocationOffset(DataRefImpl Rel,
-                                                    uint64_t &Res) const {
+uint64_t COFFObjectFile::getRelocationOffset(DataRefImpl Rel) const {
   const coff_relocation *R = toRel(Rel);
-  const support::ulittle32_t *VirtualAddressPtr;
-  if (std::error_code EC =
-          getObject(VirtualAddressPtr, Data, &R->VirtualAddress))
-    return EC;
-  Res = *VirtualAddressPtr;
-  return std::error_code();
+  return R->VirtualAddress;
 }
 
 symbol_iterator COFFObjectFile::getRelocationSymbol(DataRefImpl Rel) const {

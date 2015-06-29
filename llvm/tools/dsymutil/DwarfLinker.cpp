@@ -1451,8 +1451,8 @@ void DwarfLinker::findValidRelocsMachO(const object::SectionRef &Section,
     object::DataRefImpl RelocDataRef = Reloc.getRawDataRefImpl();
     MachO::any_relocation_info MachOReloc = Obj.getRelocation(RelocDataRef);
     unsigned RelocSize = 1 << Obj.getAnyRelocationLength(MachOReloc);
-    uint64_t Offset64;
-    if ((RelocSize != 4 && RelocSize != 8) || Reloc.getOffset(Offset64)) {
+    uint64_t Offset64 = Reloc.getOffset();
+    if ((RelocSize != 4 && RelocSize != 8)) {
       reportWarning(" unsupported relocation in debug_info section.");
       continue;
     }

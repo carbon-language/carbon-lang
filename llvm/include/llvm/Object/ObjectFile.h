@@ -51,7 +51,7 @@ public:
   void moveNext();
 
   std::error_code getAddress(uint64_t &Result) const;
-  std::error_code getOffset(uint64_t &Result) const;
+  uint64_t getOffset() const;
   symbol_iterator getSymbol() const;
   std::error_code getType(uint64_t &Result) const;
 
@@ -240,8 +240,7 @@ protected:
   virtual void moveRelocationNext(DataRefImpl &Rel) const = 0;
   virtual std::error_code getRelocationAddress(DataRefImpl Rel,
                                                uint64_t &Res) const = 0;
-  virtual std::error_code getRelocationOffset(DataRefImpl Rel,
-                                              uint64_t &Res) const = 0;
+  virtual uint64_t getRelocationOffset(DataRefImpl Rel) const = 0;
   virtual symbol_iterator getRelocationSymbol(DataRefImpl Rel) const = 0;
   virtual std::error_code getRelocationType(DataRefImpl Rel,
                                             uint64_t &Res) const = 0;
@@ -457,8 +456,8 @@ inline std::error_code RelocationRef::getAddress(uint64_t &Result) const {
   return OwningObject->getRelocationAddress(RelocationPimpl, Result);
 }
 
-inline std::error_code RelocationRef::getOffset(uint64_t &Result) const {
-  return OwningObject->getRelocationOffset(RelocationPimpl, Result);
+inline uint64_t RelocationRef::getOffset() const {
+  return OwningObject->getRelocationOffset(RelocationPimpl);
 }
 
 inline symbol_iterator RelocationRef::getSymbol() const {

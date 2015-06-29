@@ -612,8 +612,7 @@ void MachOObjectFile::moveRelocationNext(DataRefImpl &Rel) const {
 
 std::error_code MachOObjectFile::getRelocationAddress(DataRefImpl Rel,
                                                       uint64_t &Res) const {
-  uint64_t Offset;
-  getRelocationOffset(Rel, Offset);
+  uint64_t Offset = getRelocationOffset(Rel);
 
   DataRefImpl Sec;
   Sec.d.a = Rel.d.a;
@@ -622,13 +621,11 @@ std::error_code MachOObjectFile::getRelocationAddress(DataRefImpl Rel,
   return std::error_code();
 }
 
-std::error_code MachOObjectFile::getRelocationOffset(DataRefImpl Rel,
-                                                     uint64_t &Res) const {
+uint64_t MachOObjectFile::getRelocationOffset(DataRefImpl Rel) const {
   assert(getHeader().filetype == MachO::MH_OBJECT &&
          "Only implemented for MH_OBJECT");
   MachO::any_relocation_info RE = getRelocation(Rel);
-  Res = getAnyRelocationAddress(RE);
-  return std::error_code();
+  return getAnyRelocationAddress(RE);
 }
 
 symbol_iterator

@@ -796,8 +796,7 @@ static void DumpLiteralPointerSection(MachOObjectFile *O,
     RE = O->getRelocation(Rel);
     isExtern = O->getPlainRelocationExternal(RE);
     if (isExtern) {
-      uint64_t RelocOffset;
-      Reloc.getOffset(RelocOffset);
+      uint64_t RelocOffset = Reloc.getOffset();
       symbol_iterator RelocSym = Reloc.getSymbol();
       Relocs.push_back(std::make_pair(RelocOffset, *RelocSym));
     }
@@ -1763,8 +1762,7 @@ static int SymbolizerGetOpInfo(void *DisInfo, uint64_t Pc, uint64_t Offset,
     bool r_scattered = false;
     uint32_t r_value, pair_r_value, r_type;
     for (const RelocationRef &Reloc : info->S.relocations()) {
-      uint64_t RelocOffset;
-      Reloc.getOffset(RelocOffset);
+      uint64_t RelocOffset = Reloc.getOffset();
       if (RelocOffset == sect_offset) {
         Rel = Reloc.getRawDataRefImpl();
         RE = info->O->getRelocation(Rel);
@@ -1841,8 +1839,7 @@ static int SymbolizerGetOpInfo(void *DisInfo, uint64_t Pc, uint64_t Offset,
     bool isExtern = false;
     SymbolRef Symbol;
     for (const RelocationRef &Reloc : info->S.relocations()) {
-      uint64_t RelocOffset;
-      Reloc.getOffset(RelocOffset);
+      uint64_t RelocOffset = Reloc.getOffset();
       if (RelocOffset == sect_offset) {
         Rel = Reloc.getRawDataRefImpl();
         RE = info->O->getRelocation(Rel);
@@ -1911,8 +1908,7 @@ static int SymbolizerGetOpInfo(void *DisInfo, uint64_t Pc, uint64_t Offset,
     auto Reloc =
         std::find_if(info->S.relocations().begin(), info->S.relocations().end(),
                      [&](const RelocationRef &Reloc) {
-                       uint64_t RelocOffset;
-                       Reloc.getOffset(RelocOffset);
+                       uint64_t RelocOffset = Reloc.getOffset();
                        return RelocOffset == sect_offset;
                      });
 
@@ -2038,8 +2034,7 @@ static int SymbolizerGetOpInfo(void *DisInfo, uint64_t Pc, uint64_t Offset,
     auto Reloc =
         std::find_if(info->S.relocations().begin(), info->S.relocations().end(),
                      [&](const RelocationRef &Reloc) {
-                       uint64_t RelocOffset;
-                       Reloc.getOffset(RelocOffset);
+                       uint64_t RelocOffset = Reloc.getOffset();
                        return RelocOffset == sect_offset;
                      });
 
@@ -2429,8 +2424,7 @@ static const char *get_symbol_64(uint32_t sect_offset, SectionRef S,
   bool isExtern = false;
   SymbolRef Symbol;
   for (const RelocationRef &Reloc : S.relocations()) {
-    uint64_t RelocOffset;
-    Reloc.getOffset(RelocOffset);
+    uint64_t RelocOffset = Reloc.getOffset();
     if (RelocOffset == sect_offset) {
       Rel = Reloc.getRawDataRefImpl();
       RE = info->O->getRelocation(Rel);
@@ -5611,8 +5605,7 @@ static const char *GuessLiteralPointer(uint64_t ReferenceValue,
   bool isExtern = false;
   SymbolRef Symbol;
   for (const RelocationRef &Reloc : info->S.relocations()) {
-    uint64_t RelocOffset;
-    Reloc.getOffset(RelocOffset);
+    uint64_t RelocOffset = Reloc.getOffset();
     if (RelocOffset == sect_offset) {
       Rel = Reloc.getRawDataRefImpl();
       RE = info->O->getRelocation(Rel);
@@ -6106,8 +6099,7 @@ static void DisassembleMachO(StringRef Filename, MachOObjectFile *MachOOF,
     // Parse relocations.
     std::vector<std::pair<uint64_t, SymbolRef>> Relocs;
     for (const RelocationRef &Reloc : Sections[SectIdx].relocations()) {
-      uint64_t RelocOffset;
-      Reloc.getOffset(RelocOffset);
+      uint64_t RelocOffset = Reloc.getOffset();
       uint64_t SectionAddress = Sections[SectIdx].getAddress();
       RelocOffset -= SectionAddress;
 
@@ -6510,8 +6502,7 @@ printMachOCompactUnwindSection(const MachOObjectFile *Obj,
   // Next we need to look at the relocations to find out what objects are
   // actually being referred to.
   for (const RelocationRef &Reloc : CompactUnwind.relocations()) {
-    uint64_t RelocAddress;
-    Reloc.getOffset(RelocAddress);
+    uint64_t RelocAddress = Reloc.getOffset();
 
     uint32_t EntryIdx = RelocAddress / EntrySize;
     uint32_t OffsetInEntry = RelocAddress - EntryIdx * EntrySize;

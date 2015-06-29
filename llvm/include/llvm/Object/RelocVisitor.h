@@ -267,8 +267,7 @@ private:
   }
 
   RelocToApply visitELF_386_PC32(RelocationRef R, uint64_t Value) {
-    uint64_t Address;
-    R.getOffset(Address);
+    uint64_t Address = R.getOffset();
     return RelocToApply(Value - Address, 4);
   }
 
@@ -282,8 +281,7 @@ private:
   }
   RelocToApply visitELF_X86_64_PC32(RelocationRef R, uint64_t Value) {
     int64_t Addend = getELFAddend(R);
-    uint64_t Address;
-    R.getOffset(Address);
+    uint64_t Address = R.getOffset();
     return RelocToApply(Value + Addend - Address, 4);
   }
   RelocToApply visitELF_X86_64_32(RelocationRef R, uint64_t Value) {

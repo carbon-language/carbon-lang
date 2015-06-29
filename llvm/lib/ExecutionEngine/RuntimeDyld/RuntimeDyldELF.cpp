@@ -779,9 +779,8 @@ void RuntimeDyldELF::findOPDEntrySection(const ELFObjectFileBase &Obj,
         continue;
       }
 
-      uint64_t TargetSymbolOffset;
+      uint64_t TargetSymbolOffset = i->getOffset();
       symbol_iterator TargetSymbol = i->getSymbol();
-      check(i->getOffset(TargetSymbolOffset));
       ErrorOr<int64_t> AddendOrErr =
           Obj.getRelocationAddend(i->getRawDataRefImpl());
       Check(AddendOrErr.getError());
@@ -1124,8 +1123,7 @@ relocation_iterator RuntimeDyldELF::processRelocationRef(
     }
   }
 
-  uint64_t Offset;
-  Check(RelI->getOffset(Offset));
+  uint64_t Offset = RelI->getOffset();
 
   DEBUG(dbgs() << "\t\tSectionID: " << SectionID << " Offset: " << Offset
                << "\n");

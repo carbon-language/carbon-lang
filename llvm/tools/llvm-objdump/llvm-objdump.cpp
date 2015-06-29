@@ -212,9 +212,8 @@ static const Target *getTarget(const ObjectFile *Obj = nullptr) {
 }
 
 bool llvm::RelocAddressLess(RelocationRef a, RelocationRef b) {
-  uint64_t a_addr, b_addr;
-  if (error(a.getOffset(a_addr))) return false;
-  if (error(b.getOffset(b_addr))) return false;
+  uint64_t a_addr = a.getOffset();
+  uint64_t b_addr = b.getOffset();
   return a_addr < b_addr;
 }
 
@@ -890,7 +889,7 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
         // Print relocation for instruction.
         while (rel_cur != rel_end) {
           bool hidden = false;
-          uint64_t addr;
+          uint64_t addr = rel_cur->getOffset();
           SmallString<16> name;
           SmallString<32> val;
 
@@ -898,7 +897,6 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
           if (error(rel_cur->getHidden(hidden))) goto skip_print_rel;
           if (hidden) goto skip_print_rel;
 
-          if (error(rel_cur->getOffset(addr))) goto skip_print_rel;
           // Stop when rel_cur's address is past the current instruction.
           if (addr >= Index + Size) break;
           if (error(rel_cur->getTypeName(name))) goto skip_print_rel;
@@ -932,7 +930,7 @@ void llvm::PrintRelocations(const ObjectFile *Obj) {
     outs() << "RELOCATION RECORDS FOR [" << secname << "]:\n";
     for (const RelocationRef &Reloc : Section.relocations()) {
       bool hidden;
-      uint64_t address;
+      uint64_t address = Reloc.getOffset();
       SmallString<32> relocname;
       SmallString<32> valuestr;
       if (error(Reloc.getHidden(hidden)))
@@ -940,8 +938,6 @@ void llvm::PrintRelocations(const ObjectFile *Obj) {
       if (hidden)
         continue;
       if (error(Reloc.getTypeName(relocname)))
-        continue;
-      if (error(Reloc.getOffset(address)))
         continue;
       if (error(getRelocationValueString(Reloc, valuestr)))
         continue;

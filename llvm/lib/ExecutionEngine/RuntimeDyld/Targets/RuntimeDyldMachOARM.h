@@ -220,8 +220,7 @@ private:
     SectionEntry &Section = Sections[SectionID];
     uint32_t RelocType = MachO.getAnyRelocationType(RE);
     bool IsPCRel = MachO.getAnyRelocationPCRel(RE);
-    uint64_t Offset;
-    RelI->getOffset(Offset);
+    uint64_t Offset = RelI->getOffset();
     uint8_t *LocalAddress = Section.Address + Offset;
     int64_t Immediate = readBytesUnaligned(LocalAddress, 4); // Copy the whole instruction out.
     Immediate = ((Immediate >> 4) & 0xf000) | (Immediate & 0xfff);

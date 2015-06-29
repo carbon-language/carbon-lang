@@ -667,8 +667,7 @@ DWARFContextInMemory::DWARFContextInMemory(const object::ObjectFile &Obj,
     if (Section.relocation_begin() != Section.relocation_end()) {
       uint64_t SectionSize = RelocatedSection->getSize();
       for (const RelocationRef &Reloc : Section.relocations()) {
-        uint64_t Address;
-        Reloc.getOffset(Address);
+        uint64_t Address = Reloc.getOffset();
         uint64_t Type;
         Reloc.getType(Type);
         uint64_t SymAddr = 0;

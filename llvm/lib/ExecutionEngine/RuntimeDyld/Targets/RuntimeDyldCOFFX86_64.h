@@ -127,8 +127,7 @@ public:
     // Determine the Addend used to adjust the relocation value.
     uint64_t RelType;
     Check(RelI->getType(RelType));
-    uint64_t Offset;
-    Check(RelI->getOffset(Offset));
+    uint64_t Offset = RelI->getOffset();
     uint64_t Addend = 0;
     SectionEntry &Section = Sections[SectionID];
     uintptr_t ObjTarget = Section.ObjAddress + Offset;

@@ -177,9 +177,7 @@ static std::error_code resolveSymbol(const std::vector<RelocationRef> &Rels,
   for (std::vector<RelocationRef>::const_iterator I = Rels.begin(),
                                                   E = Rels.end();
                                                   I != E; ++I) {
-    uint64_t Ofs;
-    if (std::error_code EC = I->getOffset(Ofs))
-      return EC;
+    uint64_t Ofs = I->getOffset();
     if (Ofs == Offset) {
       Sym = *I->getSymbol();
       return std::error_code();

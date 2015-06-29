@@ -138,8 +138,7 @@ private:
     uint32_t RelocType = Obj.getAnyRelocationType(RE);
     bool IsPCRel = Obj.getAnyRelocationPCRel(RE);
     unsigned Size = Obj.getAnyRelocationLength(RE);
-    uint64_t Offset;
-    RelI->getOffset(Offset);
+    uint64_t Offset = RelI->getOffset();
     uint8_t *LocalAddress = Section.Address + Offset;
     unsigned NumBytes = 1 << Size;
     uint64_t Addend = readBytesUnaligned(LocalAddress, NumBytes);
@@ -197,8 +196,7 @@ private:
     uint32_t RelocType = Obj.getAnyRelocationType(RE);
     bool IsPCRel = Obj.getAnyRelocationPCRel(RE);
     unsigned Size = Obj.getAnyRelocationLength(RE);
-    uint64_t Offset;
-    RelI->getOffset(Offset);
+    uint64_t Offset = RelI->getOffset();
     uint8_t *LocalAddress = Section.Address + Offset;
     unsigned NumBytes = 1 << Size;
     int64_t Addend = readBytesUnaligned(LocalAddress, NumBytes);

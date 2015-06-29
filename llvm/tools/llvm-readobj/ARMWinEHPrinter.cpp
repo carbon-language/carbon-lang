@@ -214,9 +214,7 @@ ErrorOr<SymbolRef> Decoder::getRelocatedSymbol(const COFFObjectFile &,
                                                const SectionRef &Section,
                                                uint64_t Offset) {
   for (const auto &Relocation : Section.relocations()) {
-    uint64_t RelocationOffset;
-    if (auto Error = Relocation.getOffset(RelocationOffset))
-      return Error;
+    uint64_t RelocationOffset = Relocation.getOffset();
     if (RelocationOffset == Offset)
       return *Relocation.getSymbol();
   }

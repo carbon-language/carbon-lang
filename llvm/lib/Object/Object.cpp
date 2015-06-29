@@ -199,10 +199,7 @@ uint64_t LLVMGetRelocationAddress(LLVMRelocationIteratorRef RI) {
 }
 
 uint64_t LLVMGetRelocationOffset(LLVMRelocationIteratorRef RI) {
-  uint64_t ret;
-  if (std::error_code ec = (*unwrap(RI))->getOffset(ret))
-    report_fatal_error(ec.message());
-  return ret;
+  return (*unwrap(RI))->getOffset();
 }
 
 LLVMSymbolIteratorRef LLVMGetRelocationSymbol(LLVMRelocationIteratorRef RI) {
