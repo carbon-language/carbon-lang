@@ -19,7 +19,6 @@
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Sema/SemaConsumer.h"
 #include "llvm/Bitcode/BitstreamWriter.h"
-#include "llvm/Support/raw_ostream.h"
 #include <string>
 
 using namespace clang;
