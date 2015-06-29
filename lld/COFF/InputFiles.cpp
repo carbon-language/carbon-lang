@@ -168,7 +168,14 @@ std::error_code ObjectFile::initializeSymbols() {
       AuxP = COFFObj->getSymbol(I + 1)->getRawPtr();
     bool IsFirst = (LastSectionNumber != Sym.getSectionNumber());
 
-    SymbolBody *Body = createSymbolBody(Sym, AuxP, IsFirst);
+    SymbolBody *Body = nullptr;
+    if (Sym.isUndefined()) {
+      Body = createUndefined(Sym);
+    } else if (Sym.isWeakExternal()) {
+      Body = createWeakExternal(Sym, AuxP);
+    } else {
+      Body = createDefined(Sym, AuxP, IsFirst);
+    }
     if (Body) {
       SymbolBodies.push_back(Body);
       SparseSymbolBodies[I] = Body;
@@ -179,13 +186,22 @@ std::error_code ObjectFile::initializeSymbols() {
   return std::error_code();
 }
 
-SymbolBody *ObjectFile::createSymbolBody(COFFSymbolRef Sym, const void *AuxP,
-                                         bool IsFirst) {
+Undefined *ObjectFile::createUndefined(COFFSymbolRef Sym) {
   StringRef Name;
-  if (Sym.isUndefined()) {
-    COFFObj->getSymbolName(Sym, Name);
-    return new (Alloc) Undefined(Name);
-  }
+  COFFObj->getSymbolName(Sym, Name);
+  return new (Alloc) Undefined(Name);
+}
+
+Undefined *ObjectFile::createWeakExternal(COFFSymbolRef Sym, const void *AuxP) {
+  StringRef Name;
+  COFFObj->getSymbolName(Sym, Name);
+  auto *Aux = (const coff_aux_weak_external *)AuxP;
+  return new (Alloc) Undefined(Name, &SparseSymbolBodies[Aux->TagIndex]);
+}
+
+Defined *ObjectFile::createDefined(COFFSymbolRef Sym, const void *AuxP,
+                                   bool IsFirst) {
+  StringRef Name;
   if (Sym.isCommon()) {
     auto *C = new (Alloc) CommonChunk(Sym);
     Chunks.push_back(C);
@@ -200,12 +216,6 @@ SymbolBody *ObjectFile::createSymbolBody(COFFSymbolRef Sym, const void *AuxP,
   }
   if (Sym.getSectionNumber() == llvm::COFF::IMAGE_SYM_DEBUG)
     return nullptr;
-  // TODO: Handle IMAGE_WEAK_EXTERN_SEARCH_ALIAS
-  if (Sym.isWeakExternal()) {
-    COFFObj->getSymbolName(Sym, Name);
-    auto *Aux = (const coff_aux_weak_external *)AuxP;
-    return new (Alloc) Undefined(Name, &SparseSymbolBodies[Aux->TagIndex]);
-  }
 
   // Nothing else to do without a section chunk.
   auto *SC = cast_or_null<SectionChunk>(SparseChunks[Sym.getSectionNumber()]);

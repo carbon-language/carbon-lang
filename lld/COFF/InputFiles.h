@@ -29,7 +29,9 @@ using llvm::object::COFFObjectFile;
 using llvm::object::COFFSymbolRef;
 
 class Chunk;
+class Defined;
 class SymbolBody;
+class Undefined;
 
 // The root class of input files.
 class InputFile {
@@ -114,8 +116,9 @@ private:
   std::error_code initializeChunks();
   std::error_code initializeSymbols();
 
-  SymbolBody *createSymbolBody(COFFSymbolRef Sym, const void *Aux,
-                               bool IsFirst);
+  Defined *createDefined(COFFSymbolRef Sym, const void *Aux, bool IsFirst);
+  Undefined *createUndefined(COFFSymbolRef Sym);
+  Undefined *createWeakExternal(COFFSymbolRef Sym, const void *Aux);
 
   std::unique_ptr<COFFObjectFile> COFFObj;
   llvm::BumpPtrAllocator Alloc;
