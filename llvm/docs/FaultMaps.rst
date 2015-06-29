@@ -52,3 +52,45 @@ The format of this section is
       uint32  : HandlerPCOffset
     }
   }
+
+
+The ``ImplicitNullChecks`` pass
+===============================
+
+The ``ImplicitNullChecks`` pass transforms explicit control flow for
+checking if a pointer is ``null``, like:
+
+.. code-block:: llvm
+
+    %ptr = call i32* @get_ptr()
+    %ptr_is_null = icmp i32* %ptr, null
+    br i1 %ptr_is_null, label %is_null, label %not_null
+  
+  not_null:
+    %t = load i32, i32* %ptr
+    br label %do_something_with_t
+    
+  is_null:
+    call void @HFC()
+    unreachable
+
+to control flow implicit in the instruction loading or storing through
+the pointer being null checked:
+
+.. code-block:: llvm
+
+    %ptr = call i32* @get_ptr()
+    %t = load i32, i32* %ptr  ;; handler-pc = label %is_null
+    br label %do_something_with_t
+    
+  is_null:
+    call void @HFC()
+    unreachable
+
+This transform happens at the ``MachineInstr`` level, not the LLVM IR
+level (so the above example is only representative, not literal).  The
+``ImplicitNullChecks`` pass runs during codegen, if
+``-enable-implicit-null-checks`` is passed to ``llc``.
+
+The ``ImplicitNullChecks`` pass adds entries to the
+``__llvm_faultmaps`` section described above as needed.
