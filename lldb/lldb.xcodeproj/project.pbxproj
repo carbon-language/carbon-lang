@@ -122,6 +122,7 @@
 		260E07C6136FA69E00CF21D3 /* OptionGroupUUID.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260E07C5136FA69E00CF21D3 /* OptionGroupUUID.cpp */; };
 		260E07C8136FAB9200CF21D3 /* OptionGroupFile.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260E07C7136FAB9200CF21D3 /* OptionGroupFile.cpp */; };
 		2613F6C81B17B82F00D4DB85 /* CxaDemangle.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2613F6C71B17B82F00D4DB85 /* CxaDemangle.cpp */; };
+		26151DC31B41E4A200FF7F1C /* SharingPtr.h in Headers */ = {isa = PBXBuildFile; fileRef = 261B5A5311C3F2AD00AABD0A /* SharingPtr.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		261744781168585B005ADD65 /* SBType.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 261744771168585B005ADD65 /* SBType.cpp */; };
 		2617447A11685869005ADD65 /* SBType.h in Headers */ = {isa = PBXBuildFile; fileRef = 2617447911685869005ADD65 /* SBType.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		262173A318395D4600C52091 /* SectionLoadHistory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 262173A218395D4600C52091 /* SectionLoadHistory.cpp */; };
@@ -5332,6 +5333,7 @@
 				94145431175E63B500284436 /* lldb-versioning.h in Headers */,
 				26B42C4D1187ABA50079C8C8 /* LLDB.h in Headers */,
 				26DE204311618ACA00A093E2 /* SBAddress.h in Headers */,
+				26151DC31B41E4A200FF7F1C /* SharingPtr.h in Headers */,
 				26DE205711618FC500A093E2 /* SBBlock.h in Headers */,
 				332CCB181AFF41620034D4C4 /* SBLanguageRuntime.h in Headers */,
 				26680219115FD13D008E1FE4 /* SBBreakpoint.h in Headers */,
