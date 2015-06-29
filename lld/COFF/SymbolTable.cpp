@@ -209,6 +209,10 @@ std::pair<StringRef, Symbol *> SymbolTable::findMangled(StringRef S) {
     Symbol *Sym = I.second;
     if (!Name.startswith(Prefix))
       continue;
+    if (auto *B = dyn_cast<Lazy>(Sym->Body)) {
+      addMemberFile(B);
+      run();
+    }
     if (isa<Defined>(Sym->Body))
       return std::make_pair(Name, Sym);
   }

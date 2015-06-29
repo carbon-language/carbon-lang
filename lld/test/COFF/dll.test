@@ -14,6 +14,19 @@ EXPORT-NEXT:       2   0x1010  exportfn2
 EXPORT-NEXT:       3   0x1010  exportfn3
 EXPORT-NEXT:       4   0x1010  mangled
 
+# RUN: yaml2obj < %p/Inputs/export2.yaml > %t5.obj
+# RUN: rm -f %t5.lib
+# RUN: llvm-ar cru %t5.lib %t5.obj
+# RUN: lld -flavor link2 /out:%t5.dll /dll %t.obj %t5.lib /export:mangled2
+# RUN: llvm-objdump -p %t5.dll | FileCheck -check-prefix=EXPORT2 %s
+
+EXPORT2:      Export Table:
+EXPORT2:      DLL name: dll.test.tmp5.dll
+EXPORT2:      Ordinal      RVA  Name
+EXPORT2-NEXT:       0        0
+EXPORT2-NEXT:       1   0x1010  exportfn3
+EXPORT2-NEXT:       2   0x101c  mangled2
+
 # RUN: llvm-as -o %t.lto.obj %p/Inputs/export.ll
 # RUN: lld -flavor link2 /out:%t.lto.dll /dll %t.lto.obj /export:exportfn1 /export:exportfn2
 # RUN: llvm-objdump -p %t.lto.dll | FileCheck -check-prefix=EXPORT-LTO %s
