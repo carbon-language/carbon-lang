@@ -47,6 +47,12 @@ ifeq ($(LLVM_LIBS_TO_EXPORT),Error)
 $(error llvm-config --libs failed)
 endif
 
+# Strip out gtest and gtest_main from LLVM_LIBS_TO_EXPORT, these are not
+# installed and won't be available from the install tree.
+# FIXME: If we used llvm-config from the install tree this wouldn't be
+# necessary.
+LLVM_LIBS_TO_EXPORT := $(filter-out gtest gtest_main,$(LLVM_LIBS_TO_EXPORT))
+
 ifndef LLVM_LIBS_TO_EXPORT
 $(error LLVM_LIBS_TO_EXPORT cannot be empty)
 endif
@@ -88,7 +94,8 @@ $(PROJ_OBJ_DIR)/LLVMConfig.cmake: LLVMConfig.cmake.in Makefile $(LLVMBuildCMakeF
 	  -e 's/@LLVM_CONFIG_EXPORTS_FILE@/$${LLVM_CMAKE_DIR}\/LLVMExports.cmake/' \
 	  -e 's/@all_llvm_lib_deps@//' \
 	 && \
-	 grep '^set_property.*LLVMBUILD_LIB_DEPS_' "$(LLVMBuildCMakeFrag)" \
+	 ( grep '^set_property.*LLVMBUILD_LIB_DEPS_' "$(LLVMBuildCMakeFrag)" | \
+	   grep -v LLVMBUILD_LIB_DEPS_gtest ) \
 	) > $@
 
 $(PROJ_OBJ_DIR)/LLVMConfigVersion.cmake: LLVMConfigVersion.cmake.in
