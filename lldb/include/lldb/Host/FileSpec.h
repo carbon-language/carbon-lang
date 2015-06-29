@@ -11,6 +11,8 @@
 #define liblldb_FileSpec_h_
 #if defined(__cplusplus)
 
+#include <functional>
+
 #include "lldb/lldb-private.h"
 #include "lldb/Core/ConstString.h"
 #include "lldb/Core/STLUtils.h"
