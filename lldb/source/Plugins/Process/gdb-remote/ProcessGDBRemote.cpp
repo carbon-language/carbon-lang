@@ -1721,10 +1721,85 @@ ProcessGDBRemote::ClearThreadIDList ()
     m_thread_ids.clear();
 }
 
+size_t
+ProcessGDBRemote::UpdateThreadIDsFromStopReplyThreadsValue (std::string &value)
+{
+    m_thread_ids.clear();
+    size_t comma_pos;
+    lldb::tid_t tid;
+    while ((comma_pos = value.find(',')) != std::string::npos)
+    {
+        value[comma_pos] = '\0';
+        // thread in big endian hex
+        tid = StringConvert::ToUInt64 (value.c_str(), LLDB_INVALID_THREAD_ID, 16);
+        if (tid != LLDB_INVALID_THREAD_ID)
+            m_thread_ids.push_back (tid);
+        value.erase(0, comma_pos + 1);
+    }
+    tid = StringConvert::ToUInt64 (value.c_str(), LLDB_INVALID_THREAD_ID, 16);
+    if (tid != LLDB_INVALID_THREAD_ID)
+        m_thread_ids.push_back (tid);
+    return m_thread_ids.size();
+}
+
 bool
 ProcessGDBRemote::UpdateThreadIDList ()
 {
     Mutex::Locker locker(m_thread_list_real.GetMutex());
+
+    if (m_threads_info_sp)
+    {
+        // If we have the JSON threads info, we can get the thread list from that
+        StructuredData::Array *thread_infos = m_threads_info_sp->GetAsArray();
+        if (thread_infos && thread_infos->GetSize() > 0)
+        {
+            m_thread_ids.clear();
+            thread_infos->ForEach([this](StructuredData::Object* object) -> bool {
+                StructuredData::Dictionary *thread_dict = object->GetAsDictionary();
+                if (thread_dict)
+                {
+                    // Set the thread stop info from the JSON dictionary
+                    SetThreadStopInfo (thread_dict);
+                    lldb::tid_t tid = LLDB_INVALID_THREAD_ID;
+                    if (thread_dict->GetValueForKeyAsInteger<lldb::tid_t>("tid", tid))
+                        m_thread_ids.push_back(tid);
+                }
+                return true; // Keep iterating through all thread_info objects
+            });
+        }
+        if (!m_thread_ids.empty())
+            return true;
+    }
+    else
+    {
+        // See if we can get the thread IDs from the current stop reply packets
+        // that might contain a "threads" key/value pair
+
+        // Lock the thread stack while we access it
+        Mutex::Locker stop_stack_lock(m_last_stop_packet_mutex);
+        // Get the number of stop packets on the stack
+        int nItems = m_stop_packet_stack.size();
+        // Iterate over them
+        for (int i = 0; i < nItems; i++)
+        {
+            // Get the thread stop info
+            StringExtractorGDBRemote &stop_info = m_stop_packet_stack[i];
+            const std::string &stop_info_str = stop_info.GetStringRef();
+            const size_t threads_pos = stop_info_str.find(";threads:");
+            if (threads_pos != std::string::npos)
+            {
+                const size_t start = threads_pos + strlen(";threads:");
+                const size_t end = stop_info_str.find(';', start);
+                if (end != std::string::npos)
+                {
+                    std::string value = stop_info_str.substr(start, end - start);
+                    if (UpdateThreadIDsFromStopReplyThreadsValue(value))
+                        return true;
+                }
+            }
+        }
+    }
+
     bool sequence_mutex_unavailable = false;
     m_gdb_comm.GetCurrentThreadIDs (m_thread_ids, sequence_mutex_unavailable);
     if (sequence_mutex_unavailable)
@@ -1839,7 +1914,11 @@ ProcessGDBRemote::SetThreadStopInfo (lldb::tid_t tid,
                                      const std::string &description,
                                      uint32_t exc_type,
                                      const std::vector<addr_t> &exc_data,
-                                     addr_t thread_dispatch_qaddr)
+                                     addr_t thread_dispatch_qaddr,
+                                     bool queue_vars_valid, // Set to true if queue_name, queue_kind and queue_serial are valid
+                                     std::string &queue_name,
+                                     QueueKind queue_kind,
+                                     uint64_t queue_serial)
 {
     ThreadSP thread_sp;
     if (tid != LLDB_INVALID_THREAD_ID)
@@ -1864,7 +1943,7 @@ ProcessGDBRemote::SetThreadStopInfo (lldb::tid_t tid,
         {
             ThreadGDBRemote *gdb_thread = static_cast<ThreadGDBRemote *> (thread_sp.get());
             gdb_thread->GetRegisterContext()->InvalidateIfNeeded(true);
-            
+
             for (const auto &pair : expedited_register_map)
             {
                 StringExtractor reg_value_extractor;
@@ -1877,6 +1956,13 @@ ProcessGDBRemote::SetThreadStopInfo (lldb::tid_t tid,
             thread_sp->SetName (thread_name.empty() ? NULL : thread_name.c_str());
 
             gdb_thread->SetThreadDispatchQAddr (thread_dispatch_qaddr);
+            // Check if the GDB server was able to provide the queue name, kind and serial number
+            if (queue_vars_valid)
+                gdb_thread->SetQueueInfo(std::move(queue_name), queue_kind, queue_serial);
+            else
+                gdb_thread->ClearQueueInfo();
+
+
             if (exc_type != 0)
             {
                 const size_t exc_data_size = exc_data.size();
@@ -2031,6 +2117,9 @@ ProcessGDBRemote::SetThreadStopInfo (StructuredData::Dictionary *thread_dict)
     static ConstString g_key_metype("metype");
     static ConstString g_key_medata("medata");
     static ConstString g_key_qaddr("qaddr");
+    static ConstString g_key_queue_name("qname");
+    static ConstString g_key_queue_kind("qkind");
+    static ConstString g_key_queue_serial("qserial");
     static ConstString g_key_registers("registers");
     static ConstString g_key_memory("memory");
     static ConstString g_key_address("address");
@@ -2048,9 +2137,27 @@ ProcessGDBRemote::SetThreadStopInfo (StructuredData::Dictionary *thread_dict)
     std::vector<addr_t> exc_data;
     addr_t thread_dispatch_qaddr = LLDB_INVALID_ADDRESS;
     ExpeditedRegisterMap expedited_register_map;
+    bool queue_vars_valid = false;
+    std::string queue_name;
+    QueueKind queue_kind = eQueueKindUnknown;
+    uint64_t queue_serial = 0;
     // Iterate through all of the thread dictionary key/value pairs from the structured data dictionary
 
-    thread_dict->ForEach([this, &tid, &expedited_register_map, &thread_name, &signo, &reason, &description, &exc_type, &exc_data, &thread_dispatch_qaddr](ConstString key, StructuredData::Object* object) -> bool
+    thread_dict->ForEach([this,
+                          &tid,
+                          &expedited_register_map,
+                          &thread_name,
+                          &signo,
+                          &reason,
+                          &description,
+                          &exc_type,
+                          &exc_data,
+                          &thread_dispatch_qaddr,
+                          &queue_vars_valid,
+                          &queue_name,
+                          &queue_kind,
+                          &queue_serial]
+                          (ConstString key, StructuredData::Object* object) -> bool
     {
         if (key == g_key_tid)
         {
@@ -2081,6 +2188,31 @@ ProcessGDBRemote::SetThreadStopInfo (StructuredData::Dictionary *thread_dict)
         else if (key == g_key_qaddr)
         {
             thread_dispatch_qaddr = object->GetIntegerValue(LLDB_INVALID_ADDRESS);
+        }
+        else if (key == g_key_queue_name)
+        {
+            queue_vars_valid = true;
+            queue_name = std::move(object->GetStringValue());
+        }
+        else if (key == g_key_queue_kind)
+        {
+            std::string queue_kind_str = object->GetStringValue();
+            if (queue_kind_str == "serial")
+            {
+                queue_vars_valid = true;
+                queue_kind = eQueueKindSerial;
+            }
+            else if (queue_kind_str == "concurrent")
+            {
+                queue_vars_valid = true;
+                queue_kind = eQueueKindConcurrent;
+            }
+        }
+        else if (key == g_key_queue_serial)
+        {
+            queue_serial = object->GetIntegerValue(0);
+            if (queue_serial != 0)
+                queue_vars_valid = true;
         }
         else if (key == g_key_reason)
         {
@@ -2148,7 +2280,11 @@ ProcessGDBRemote::SetThreadStopInfo (StructuredData::Dictionary *thread_dict)
                        description,
                        exc_type,
                        exc_data,
-                       thread_dispatch_qaddr);
+                       thread_dispatch_qaddr,
+                       queue_vars_valid,
+                       queue_name,
+                       queue_kind,
+                       queue_serial);
 
     return eStateExited;
 }
@@ -2265,16 +2401,22 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
                 }
                 else if (key.compare("qkind") == 0)
                 {
-                    queue_vars_valid = true;
                     if (value == "serial")
+                    {
+                        queue_vars_valid = true;
                         queue_kind = eQueueKindSerial;
+                    }
                     else if (value == "concurrent")
+                    {
+                        queue_vars_valid = true;
                         queue_kind = eQueueKindConcurrent;
+                    }
                 }
                 else if (key.compare("qserial") == 0)
                 {
-                    queue_vars_valid = true;
                     queue_serial = StringConvert::ToUInt64 (value.c_str(), 0, 0);
+                    if (queue_serial != 0)
+                        queue_vars_valid = true;
                 }
                 else if (key.compare("reason") == 0)
                 {
@@ -2338,7 +2480,11 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
                                                     description,
                                                     exc_type,
                                                     exc_data,
-                                                    thread_dispatch_qaddr);
+                                                    thread_dispatch_qaddr,
+                                                    queue_vars_valid,
+                                                    queue_name,
+                                                    queue_kind,
+                                                    queue_serial);
 
             // If the response is old style 'S' packet which does not provide us with thread information
             // then update the thread list and choose the first one.
@@ -2681,7 +2827,7 @@ ProcessGDBRemote::SetLastStopPacket (const StringExtractorGDBRemote &response)
         m_thread_list_real.Clear();
         m_thread_list.Clear();
         BuildDynamicRegisterInfo (true);
-        m_gdb_comm.ResetDiscoverableSettings();
+        m_gdb_comm.ResetDiscoverableSettings (did_exec);
     }
 
     // Scope the lock

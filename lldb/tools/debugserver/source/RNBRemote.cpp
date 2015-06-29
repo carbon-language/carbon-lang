@@ -5029,7 +5029,26 @@ RNBRemote::HandlePacket_jThreadsInfo (const char *p)
             if (DNBThreadGetIdentifierInfo (pid, tid, &thread_ident_info))
             {
                 if (thread_ident_info.dispatch_qaddr != 0)
+                {
                     thread_dict_sp->AddIntegerItem("qaddr", thread_ident_info.dispatch_qaddr);
+
+                    const DispatchQueueOffsets *dispatch_queue_offsets = GetDispatchQueueOffsets();
+                    if (dispatch_queue_offsets)
+                    {
+                        std::string queue_name;
+                        uint64_t queue_width = 0;
+                        uint64_t queue_serialnum = 0;
+                        dispatch_queue_offsets->GetThreadQueueInfo(pid, thread_ident_info.dispatch_qaddr, queue_name, queue_width, queue_serialnum);
+                        if (!queue_name.empty())
+                            thread_dict_sp->AddStringItem("qname", queue_name);
+                        if (queue_width == 1)
+                            thread_dict_sp->AddStringItem("qkind", "serial");
+                        else if (queue_width > 1)
+                            thread_dict_sp->AddStringItem("qkind", "concurrent");
+                        if (queue_serialnum > 0)
+                            thread_dict_sp->AddIntegerItem("qserial", queue_serialnum);
+                    }
+                }
             }
             DNBRegisterValue reg_value;
 

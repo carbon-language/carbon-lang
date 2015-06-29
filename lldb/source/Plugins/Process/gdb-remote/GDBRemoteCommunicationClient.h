@@ -320,7 +320,7 @@ public:
     GetSyncThreadStateSupported();
     
     void
-    ResetDiscoverableSettings();
+    ResetDiscoverableSettings (bool did_exec);
 
     bool
     GetHostInfo (bool force = false);

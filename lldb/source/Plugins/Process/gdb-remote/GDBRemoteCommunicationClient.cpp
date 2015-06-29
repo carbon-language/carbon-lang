@@ -140,7 +140,7 @@ GDBRemoteCommunicationClient::~GDBRemoteCommunicationClient()
 bool
 GDBRemoteCommunicationClient::HandshakeWithServer (Error *error_ptr)
 {
-    ResetDiscoverableSettings();
+    ResetDiscoverableSettings(false);
 
     // Start the read thread after we send the handshake ack since if we
     // fail to send the handshake ack, there is no reason to continue...
@@ -334,60 +334,64 @@ GDBRemoteCommunicationClient::GetSyncThreadStateSupported ()
 
 
 void
-GDBRemoteCommunicationClient::ResetDiscoverableSettings()
+GDBRemoteCommunicationClient::ResetDiscoverableSettings (bool did_exec)
 {
-    m_supports_not_sending_acks = eLazyBoolCalculate;
-    m_supports_thread_suffix = eLazyBoolCalculate;
-    m_supports_threads_in_stop_reply = eLazyBoolCalculate;
-    m_supports_vCont_c = eLazyBoolCalculate;
-    m_supports_vCont_C = eLazyBoolCalculate;
-    m_supports_vCont_s = eLazyBoolCalculate;
-    m_supports_vCont_S = eLazyBoolCalculate;
-    m_supports_p = eLazyBoolCalculate;
-    m_supports_x = eLazyBoolCalculate;
-    m_supports_QSaveRegisterState = eLazyBoolCalculate;
-    m_qHostInfo_is_valid = eLazyBoolCalculate;
-    m_curr_pid_is_valid = eLazyBoolCalculate;
+    if (did_exec == false)
+    {
+        // Hard reset everything, this is when we first connect to a GDB server
+        m_supports_not_sending_acks = eLazyBoolCalculate;
+        m_supports_thread_suffix = eLazyBoolCalculate;
+        m_supports_threads_in_stop_reply = eLazyBoolCalculate;
+        m_supports_vCont_c = eLazyBoolCalculate;
+        m_supports_vCont_C = eLazyBoolCalculate;
+        m_supports_vCont_s = eLazyBoolCalculate;
+        m_supports_vCont_S = eLazyBoolCalculate;
+        m_supports_p = eLazyBoolCalculate;
+        m_supports_x = eLazyBoolCalculate;
+        m_supports_QSaveRegisterState = eLazyBoolCalculate;
+        m_qHostInfo_is_valid = eLazyBoolCalculate;
+        m_curr_pid_is_valid = eLazyBoolCalculate;
+        m_qGDBServerVersion_is_valid = eLazyBoolCalculate;
+        m_supports_alloc_dealloc_memory = eLazyBoolCalculate;
+        m_supports_memory_region_info = eLazyBoolCalculate;
+        m_prepare_for_reg_writing_reply = eLazyBoolCalculate;
+        m_attach_or_wait_reply = eLazyBoolCalculate;
+        m_avoid_g_packets = eLazyBoolCalculate;
+        m_supports_qXfer_auxv_read = eLazyBoolCalculate;
+        m_supports_qXfer_libraries_read = eLazyBoolCalculate;
+        m_supports_qXfer_libraries_svr4_read = eLazyBoolCalculate;
+        m_supports_qXfer_features_read = eLazyBoolCalculate;
+        m_supports_augmented_libraries_svr4_read = eLazyBoolCalculate;
+        m_supports_qProcessInfoPID = true;
+        m_supports_qfProcessInfo = true;
+        m_supports_qUserName = true;
+        m_supports_qGroupName = true;
+        m_supports_qThreadStopInfo = true;
+        m_supports_z0 = true;
+        m_supports_z1 = true;
+        m_supports_z2 = true;
+        m_supports_z3 = true;
+        m_supports_z4 = true;
+        m_supports_QEnvironment = true;
+        m_supports_QEnvironmentHexEncoded = true;
+        m_supports_qSymbol = true;
+        m_host_arch.Clear();
+        m_os_version_major = UINT32_MAX;
+        m_os_version_minor = UINT32_MAX;
+        m_os_version_update = UINT32_MAX;
+        m_os_build.clear();
+        m_os_kernel.clear();
+        m_hostname.clear();
+        m_gdb_server_name.clear();
+        m_gdb_server_version = UINT32_MAX;
+        m_default_packet_timeout = 0;
+        m_max_packet_size = 0;
+    }
+
+    // These flags should be reset when we first connect to a GDB server
+    // and when our inferior process execs
     m_qProcessInfo_is_valid = eLazyBoolCalculate;
-    m_qGDBServerVersion_is_valid = eLazyBoolCalculate;
-    m_supports_alloc_dealloc_memory = eLazyBoolCalculate;
-    m_supports_memory_region_info = eLazyBoolCalculate;
-    m_prepare_for_reg_writing_reply = eLazyBoolCalculate;
-    m_attach_or_wait_reply = eLazyBoolCalculate;
-    m_avoid_g_packets = eLazyBoolCalculate;
-    m_supports_qXfer_auxv_read = eLazyBoolCalculate;
-    m_supports_qXfer_libraries_read = eLazyBoolCalculate;
-    m_supports_qXfer_libraries_svr4_read = eLazyBoolCalculate;
-    m_supports_qXfer_features_read = eLazyBoolCalculate;
-    m_supports_augmented_libraries_svr4_read = eLazyBoolCalculate;
-
-    m_supports_qProcessInfoPID = true;
-    m_supports_qfProcessInfo = true;
-    m_supports_qUserName = true;
-    m_supports_qGroupName = true;
-    m_supports_qThreadStopInfo = true;
-    m_supports_z0 = true;
-    m_supports_z1 = true;
-    m_supports_z2 = true;
-    m_supports_z3 = true;
-    m_supports_z4 = true;
-    m_supports_QEnvironment = true;
-    m_supports_QEnvironmentHexEncoded = true;
-    m_supports_qSymbol = true;
-    
-    m_host_arch.Clear();
     m_process_arch.Clear();
-    m_os_version_major = UINT32_MAX;
-    m_os_version_minor = UINT32_MAX;
-    m_os_version_update = UINT32_MAX;
-    m_os_build.clear();
-    m_os_kernel.clear();
-    m_hostname.clear();
-    m_gdb_server_name.clear();
-    m_gdb_server_version = UINT32_MAX;
-    m_default_packet_timeout = 0;
-
-    m_max_packet_size = 0;
 }
 
 void
