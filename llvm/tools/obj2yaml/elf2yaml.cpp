@@ -23,12 +23,12 @@ template <class ELFT>
 class ELFDumper {
   typedef object::Elf_Sym_Impl<ELFT> Elf_Sym;
   typedef typename object::ELFFile<ELFT>::Elf_Shdr Elf_Shdr;
-  typedef typename object::ELFFile<ELFT>::Elf_Sym_Iter Elf_Sym_Iter;
   typedef typename object::ELFFile<ELFT>::Elf_Word Elf_Word;
 
   const object::ELFFile<ELFT> &Obj;
 
-  std::error_code dumpSymbol(Elf_Sym_Iter Sym, ELFYAML::Symbol &S);
+  std::error_code dumpSymbol(const Elf_Sym *Sym, bool IsDynamic,
+                             ELFYAML::Symbol &S);
   std::error_code dumpCommonSection(const Elf_Shdr *Shdr, ELFYAML::Section &S);
   std::error_code dumpCommonRelocationSection(const Elf_Shdr *Shdr,
                                               ELFYAML::RelocationSection &S);
@@ -122,7 +122,7 @@ ErrorOr<ELFYAML::Object *> ELFDumper<ELFT>::dump() {
     }
 
     ELFYAML::Symbol S;
-    if (std::error_code EC = ELFDumper<ELFT>::dumpSymbol(SI, S))
+    if (std::error_code EC = ELFDumper<ELFT>::dumpSymbol(SI, false, S))
       return EC;
 
     switch (SI->getBinding())
@@ -145,14 +145,14 @@ ErrorOr<ELFYAML::Object *> ELFDumper<ELFT>::dump() {
 }
 
 template <class ELFT>
-std::error_code ELFDumper<ELFT>::dumpSymbol(Elf_Sym_Iter Sym,
+std::error_code ELFDumper<ELFT>::dumpSymbol(const Elf_Sym *Sym, bool IsDynamic,
                                             ELFYAML::Symbol &S) {
   S.Type = Sym->getType();
   S.Value = Sym->st_value;
   S.Size = Sym->st_size;
   S.Other = Sym->st_other;
 
-  ErrorOr<StringRef> NameOrErr = Obj.getSymbolName(Sym);
+  ErrorOr<StringRef> NameOrErr = Obj.getSymbolName(Sym, IsDynamic);
   if (std::error_code EC = NameOrErr.getError())
     return EC;
   S.Name = NameOrErr.get();
@@ -182,8 +182,10 @@ std::error_code ELFDumper<ELFT>::dumpRelocation(const Elf_Shdr *Shdr,
   if (!NamePair.first)
     return obj2yaml_error::success;
 
-  ErrorOr<StringRef> NameOrErr =
-      Obj.getSymbolName(NamePair.first, NamePair.second);
+  const Elf_Shdr *SymTab = NamePair.first;
+  const Elf_Shdr *StrTab = Obj.getSection(SymTab->sh_link);
+
+  ErrorOr<StringRef> NameOrErr = Obj.getSymbolName(StrTab, NamePair.second);
   if (std::error_code EC = NameOrErr.getError())
     return EC;
   R.Symbol = NameOrErr.get();
@@ -300,10 +302,11 @@ ErrorOr<ELFYAML::Group *> ELFDumper<ELFT>::dumpGroup(const Elf_Shdr *Shdr) {
   // Get sh_info which is the signature.
   const Elf_Sym *symbol = Obj.getSymbol(Shdr->sh_info);
   const Elf_Shdr *symtab = Obj.getSection(Shdr->sh_link);
+  const Elf_Shdr *StrTab = Obj.getSection(symtab->sh_link);
   auto sectionContents = Obj.getSectionContents(Shdr);
   if (std::error_code ec = sectionContents.getError())
     return ec;
-  ErrorOr<StringRef> symbolName = Obj.getSymbolName(symtab, symbol);
+  ErrorOr<StringRef> symbolName = Obj.getSymbolName(StrTab, symbol);
   if (std::error_code EC = symbolName.getError())
     return EC;
   S->Info = *symbolName;

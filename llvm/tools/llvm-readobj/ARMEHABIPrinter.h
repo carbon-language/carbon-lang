@@ -312,7 +312,6 @@ class PrinterContext {
   typedef typename object::ELFFile<ET>::Elf_Shdr Elf_Shdr;
 
   typedef typename object::ELFFile<ET>::Elf_Rel_Iter Elf_Rel_iterator;
-  typedef typename object::ELFFile<ET>::Elf_Sym_Iter Elf_Sym_iterator;
   typedef typename object::ELFFile<ET>::Elf_Shdr_Iter Elf_Shdr_iterator;
 
   static const size_t IndexTableEntrySize;
@@ -344,13 +343,13 @@ template <typename ET>
 const size_t PrinterContext<ET>::IndexTableEntrySize = 8;
 
 template <typename ET>
-ErrorOr<StringRef> PrinterContext<ET>::FunctionAtAddress(unsigned Section,
-                                                         uint64_t Address) const {
-  for (Elf_Sym_iterator SI = ELF->begin_symbols(), SE = ELF->end_symbols();
-       SI != SE; ++SI)
-    if (SI->st_shndx == Section && SI->st_value == Address &&
-        SI->getType() == ELF::STT_FUNC)
-      return ELF->getSymbolName(SI);
+ErrorOr<StringRef>
+PrinterContext<ET>::FunctionAtAddress(unsigned Section,
+                                      uint64_t Address) const {
+  for (const Elf_Sym &Sym : ELF->symbols())
+    if (Sym.st_shndx == Section && Sym.st_value == Address &&
+        Sym.getType() == ELF::STT_FUNC)
+      return ELF->getSymbolName(&Sym, false);
   return readobj_error::unknown_symbol;
 }
 

@@ -69,7 +69,7 @@ private:
   typedef typename ELFO::Elf_Shdr Elf_Shdr;
   typedef typename ELFO::Elf_Sym Elf_Sym;
 
-  void printSymbol(typename ELFO::Elf_Sym_Iter Symbol);
+  void printSymbol(const Elf_Sym *Symbol, bool IsDynamic);
 
   void printRelocations(const Elf_Shdr *Sec);
   void printRelocation(const Elf_Shdr *Sec, typename ELFO::Elf_Rela Rel);
@@ -123,9 +123,10 @@ std::error_code createELFDumper(const object::ObjectFile *Obj,
 
 template <typename ELFO>
 static std::string getFullSymbolName(const ELFO &Obj,
-                                     typename ELFO::Elf_Sym_Iter Symbol) {
-  StringRef SymbolName = errorOrDefault(Obj.getSymbolName(Symbol));
-  if (!Symbol.isDynamic())
+                                     const typename ELFO::Elf_Sym *Symbol,
+                                     bool IsDynamic) {
+  StringRef SymbolName = errorOrDefault(Obj.getSymbolName(Symbol, IsDynamic));
+  if (!IsDynamic)
     return SymbolName;
 
   std::string FullSymbolName(SymbolName);
@@ -143,7 +144,7 @@ static std::string getFullSymbolName(const ELFO &Obj,
 
 template <typename ELFO>
 static void
-getSectionNameIndex(const ELFO &Obj, typename ELFO::Elf_Sym_Iter Symbol,
+getSectionNameIndex(const ELFO &Obj, const typename ELFO::Elf_Sym *Symbol,
                     StringRef &SectionName, unsigned &SectionIndex) {
   SectionIndex = Symbol->st_shndx;
   if (Symbol->isUndefined())
@@ -645,11 +646,9 @@ void ELFDumper<ELFT>::printSections() {
 
     if (opts::SectionSymbols) {
       ListScope D(W, "Symbols");
-      for (typename ELFO::Elf_Sym_Iter SymI = Obj->begin_symbols(),
-                                       SymE = Obj->end_symbols();
-           SymI != SymE; ++SymI) {
-        if (Obj->getSection(&*SymI) == Section)
-          printSymbol(SymI);
+      for (const typename ELFO::Elf_Sym &Sym : Obj->symbols()) {
+        if (Obj->getSection(&Sym) == Section)
+          printSymbol(&Sym, false);
       }
     }
 
@@ -697,8 +696,8 @@ void ELFDumper<ELFT>::printDynamicRelocations() {
     Obj->getRelocationTypeName(RelI->getType(Obj->isMips64EL()), RelocName);
     StringRef SymbolName;
     uint32_t SymIndex = RelI->getSymbol(Obj->isMips64EL());
-    typename ELFO::Elf_Sym_Iter Sym = Obj->begin_dynamic_symbols() + SymIndex;
-    SymbolName = errorOrDefault(Obj->getSymbolName(Sym));
+    const typename ELFO::Elf_Sym *Sym = Obj->begin_dynamic_symbols() + SymIndex;
+    SymbolName = errorOrDefault(Obj->getSymbolName(Sym, true));
     if (opts::ExpandRelocs) {
       DictScope Group(W, "Relocation");
       W.printHex("Offset", RelI->r_offset);
@@ -757,7 +756,9 @@ void ELFDumper<ELFT>::printRelocation(const Elf_Shdr *Sec,
     if (SecName)
       TargetName = SecName.get();
   } else if (Sym.first) {
-    TargetName = errorOrDefault(Obj->getSymbolName(Sym.first, Sym.second));
+    const Elf_Shdr *SymTable = Sym.first;
+    const Elf_Shdr *StrTable = Obj->getSection(SymTable->sh_link);
+    TargetName = errorOrDefault(Obj->getSymbolName(StrTable, Sym.second));
   }
 
   if (opts::ExpandRelocs) {
@@ -778,30 +779,25 @@ void ELFDumper<ELFT>::printRelocation(const Elf_Shdr *Sec,
 template<class ELFT>
 void ELFDumper<ELFT>::printSymbols() {
   ListScope Group(W, "Symbols");
-  for (typename ELFO::Elf_Sym_Iter SymI = Obj->begin_symbols(),
-                                   SymE = Obj->end_symbols();
-       SymI != SymE; ++SymI) {
-    printSymbol(SymI);
-  }
+  for (const typename ELFO::Elf_Sym &Sym : Obj->symbols())
+    printSymbol(&Sym, false);
 }
 
 template<class ELFT>
 void ELFDumper<ELFT>::printDynamicSymbols() {
   ListScope Group(W, "DynamicSymbols");
 
-  for (typename ELFO::Elf_Sym_Iter SymI = Obj->begin_dynamic_symbols(),
-                                   SymE = Obj->end_dynamic_symbols();
-       SymI != SymE; ++SymI) {
-    printSymbol(SymI);
-  }
+  for (const typename ELFO::Elf_Sym &Sym : Obj->dynamic_symbols())
+    printSymbol(&Sym, true);
 }
 
 template <class ELFT>
-void ELFDumper<ELFT>::printSymbol(typename ELFO::Elf_Sym_Iter Symbol) {
+void ELFDumper<ELFT>::printSymbol(const typename ELFO::Elf_Sym *Symbol,
+                                  bool IsDynamic) {
   unsigned SectionIndex = 0;
   StringRef SectionName;
   getSectionNameIndex(*Obj, Symbol, SectionName, SectionIndex);
-  std::string FullSymbolName = getFullSymbolName(*Obj, Symbol);
+  std::string FullSymbolName = getFullSymbolName(*Obj, Symbol, IsDynamic);
 
   DictScope D(W, "Symbol");
   W.printNumber("Name", FullSymbolName, Symbol->st_name);
@@ -1160,13 +1156,13 @@ template <class ELFT> class MipsGOTParser {
 public:
   typedef object::ELFFile<ELFT> ObjectFile;
   typedef typename ObjectFile::Elf_Shdr Elf_Shdr;
+  typedef typename ObjectFile::Elf_Sym Elf_Sym;
 
   MipsGOTParser(const ObjectFile *Obj, StreamWriter &W) : Obj(Obj), W(W) {}
 
   void parseGOT(const Elf_Shdr &GOTShdr);
 
 private:
-  typedef typename ObjectFile::Elf_Sym_Iter Elf_Sym_Iter;
   typedef typename ObjectFile::Elf_Addr GOTEntry;
   typedef typename ObjectFile::template ELFEntityIterator<const GOTEntry>
   GOTIter;
@@ -1180,7 +1176,7 @@ private:
   bool getGOTTags(uint64_t &LocalGotNum, uint64_t &GotSym);
   void printGotEntry(uint64_t GotAddr, GOTIter BeginIt, GOTIter It);
   void printGlobalGotEntry(uint64_t GotAddr, GOTIter BeginIt, GOTIter It,
-                           Elf_Sym_Iter Sym);
+                           const Elf_Sym *Sym, bool IsDynamic);
 };
 }
 
@@ -1206,8 +1202,8 @@ void MipsGOTParser<ELFT>::parseGOT(const Elf_Shdr &GOTShdr) {
     return;
   }
 
-  Elf_Sym_Iter DynSymBegin = Obj->begin_dynamic_symbols();
-  Elf_Sym_Iter DynSymEnd = Obj->end_dynamic_symbols();
+  const Elf_Sym *DynSymBegin = Obj->begin_dynamic_symbols();
+  const Elf_Sym *DynSymEnd = Obj->end_dynamic_symbols();
   std::size_t DynSymTotal = std::size_t(std::distance(DynSymBegin, DynSymEnd));
 
   if (DtGotSym > DynSymTotal) {
@@ -1255,10 +1251,10 @@ void MipsGOTParser<ELFT>::parseGOT(const Elf_Shdr &GOTShdr) {
     ListScope GS(W, "Global entries");
 
     GOTIter GotGlobalEnd = makeGOTIter(*GOT, DtLocalGotNum + GlobalGotNum);
-    Elf_Sym_Iter GotDynSym = DynSymBegin + DtGotSym;
+    const Elf_Sym *GotDynSym = DynSymBegin + DtGotSym;
     for (; It != GotGlobalEnd; ++It) {
       DictScope D(W, "Entry");
-      printGlobalGotEntry(GOTShdr.sh_addr, GotBegin, It, GotDynSym++);
+      printGlobalGotEntry(GOTShdr.sh_addr, GotBegin, It, GotDynSym++, true);
     }
   }
 
@@ -1319,7 +1315,8 @@ void MipsGOTParser<ELFT>::printGotEntry(uint64_t GotAddr, GOTIter BeginIt,
 
 template <class ELFT>
 void MipsGOTParser<ELFT>::printGlobalGotEntry(uint64_t GotAddr, GOTIter BeginIt,
-                                              GOTIter It, Elf_Sym_Iter Sym) {
+                                              GOTIter It, const Elf_Sym *Sym,
+                                              bool IsDynamic) {
   printGotEntry(GotAddr, BeginIt, It);
 
   W.printHex("Value", Sym->st_value);
@@ -1330,7 +1327,7 @@ void MipsGOTParser<ELFT>::printGlobalGotEntry(uint64_t GotAddr, GOTIter BeginIt,
   getSectionNameIndex(*Obj, Sym, SectionName, SectionIndex);
   W.printHex("Section", SectionName, SectionIndex);
 
-  std::string FullSymbolName = getFullSymbolName(*Obj, Sym);
+  std::string FullSymbolName = getFullSymbolName(*Obj, Sym, IsDynamic);
   W.printNumber("Name", FullSymbolName, Sym->st_name);
 }
 

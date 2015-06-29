@@ -158,76 +158,7 @@ public:
     enum { NumLowBitsAvailable = 1 };
   };
 
-  class Elf_Sym_Iter {
-  public:
-    typedef ptrdiff_t difference_type;
-    typedef const Elf_Sym value_type;
-    typedef std::random_access_iterator_tag iterator_category;
-    typedef value_type &reference;
-    typedef value_type *pointer;
-
-    /// \brief Default construct iterator.
-    Elf_Sym_Iter() : EntitySize(0), Current(0, false) {}
-    Elf_Sym_Iter(uintX_t EntSize, const char *Start, bool IsDynamic)
-        : EntitySize(EntSize), Current(Start, IsDynamic) {}
-
-    reference operator*() {
-      assert(Current.getPointer() &&
-             "Attempted to dereference an invalid iterator!");
-      return *reinterpret_cast<pointer>(Current.getPointer());
-    }
-
-    pointer operator->() {
-      assert(Current.getPointer() &&
-             "Attempted to dereference an invalid iterator!");
-      return reinterpret_cast<pointer>(Current.getPointer());
-    }
-
-    bool operator==(const Elf_Sym_Iter &Other) {
-      return Current == Other.Current;
-    }
-
-    bool operator!=(const Elf_Sym_Iter &Other) { return !(*this == Other); }
-
-    Elf_Sym_Iter &operator++() {
-      assert(Current.getPointer() &&
-             "Attempted to increment an invalid iterator!");
-      Current.setPointer(Current.getPointer() + EntitySize);
-      return *this;
-    }
-
-    Elf_Sym_Iter operator++(int) {
-      Elf_Sym_Iter Tmp = *this;
-      ++*this;
-      return Tmp;
-    }
-
-    Elf_Sym_Iter operator+(difference_type Dist) {
-      assert(Current.getPointer() &&
-             "Attempted to increment an invalid iterator!");
-      Current.setPointer(Current.getPointer() + EntitySize * Dist);
-      return *this;
-    }
-
-    difference_type operator-(const Elf_Sym_Iter &Other) const {
-      assert(EntitySize == Other.EntitySize &&
-             "Subtracting iterators of different EntitySize!");
-      return (Current.getPointer() - Other.Current.getPointer()) / EntitySize;
-    }
-
-    const char *get() const { return Current.getPointer(); }
-
-    bool isDynamic() const { return Current.getInt(); }
-
-    uintX_t getEntSize() const { return EntitySize; }
-
-  private:
-    uintX_t EntitySize;
-    PointerIntPair<const char *, 1, bool,
-                   ArchivePointerTypeTraits<const char> > Current;
-  };
-
-  typedef iterator_range<Elf_Sym_Iter> Elf_Sym_Range;
+  typedef iterator_range<const Elf_Sym *> Elf_Sym_Range;
 
 private:
   typedef SmallVector<const Elf_Shdr *, 2> Sections_t;
@@ -339,8 +270,8 @@ public:
     return make_range(begin_sections(), end_sections());
   }
 
-  Elf_Sym_Iter begin_symbols() const;
-  Elf_Sym_Iter end_symbols() const;
+  const Elf_Sym *begin_symbols() const;
+  const Elf_Sym *end_symbols() const;
   Elf_Sym_Range symbols() const {
     return make_range(begin_symbols(), end_symbols());
   }
@@ -353,19 +284,22 @@ public:
     return make_range(begin_dynamic_table(), end_dynamic_table(NULLEnd));
   }
 
-  Elf_Sym_Iter begin_dynamic_symbols() const {
+  const Elf_Sym *begin_dynamic_symbols() const {
     if (DynSymRegion.Addr)
-      return Elf_Sym_Iter(DynSymRegion.EntSize, (const char *)DynSymRegion.Addr,
-                          true);
-    return Elf_Sym_Iter(0, nullptr, true);
+      return reinterpret_cast<const Elf_Sym *>(DynSymRegion.Addr);
+    return nullptr;
   }
 
-  Elf_Sym_Iter end_dynamic_symbols() const {
+  const Elf_Sym *end_dynamic_symbols() const {
     if (DynSymRegion.Addr)
-      return Elf_Sym_Iter(DynSymRegion.EntSize,
-                          (const char *)DynSymRegion.Addr + DynSymRegion.Size,
-                          true);
-    return Elf_Sym_Iter(0, nullptr, true);
+      return reinterpret_cast<const Elf_Sym *>(
+          ((const char *)DynSymRegion.Addr + DynSymRegion.Size));
+
+    return nullptr;
+  }
+
+  Elf_Sym_Range dynamic_symbols() const {
+    return make_range(begin_dynamic_symbols(), end_dynamic_symbols());
   }
 
   Elf_Rela_Iter begin_dyn_rela() const {
@@ -427,8 +361,9 @@ public:
   const Elf_Shdr *getSection(uint32_t Index) const;
   const Elf_Sym *getSymbol(uint32_t index) const;
 
-  ErrorOr<StringRef> getSymbolName(Elf_Sym_Iter Sym) const;
   ErrorOr<StringRef> getStaticSymbolName(const Elf_Sym *Symb) const;
+  ErrorOr<StringRef> getDynamicSymbolName(const Elf_Sym *Symb) const;
+  ErrorOr<StringRef> getSymbolName(const Elf_Sym *Symb, bool IsDynamic) const;
 
   /// \brief Get the name of \p Symb.
   /// \param SymTab The symbol table section \p Symb is contained in.
@@ -436,7 +371,7 @@ public:
   ///
   /// \p SymTab is used to lookup the string table to use to get the symbol's
   /// name.
-  ErrorOr<StringRef> getSymbolName(const Elf_Shdr *SymTab,
+  ErrorOr<StringRef> getSymbolName(const Elf_Shdr *StrTab,
                                    const Elf_Sym *Symb) const;
   ErrorOr<StringRef> getSectionName(const Elf_Shdr *Section) const;
   uint64_t getSymbolIndex(const Elf_Sym *sym) const;
@@ -763,10 +698,9 @@ ELFFile<ELFT>::ELFFile(StringRef Object, std::error_code &EC)
   if (SymbolTableSectionHeaderIndex) {
     const Elf_Word *ShndxTable = reinterpret_cast<const Elf_Word*>(base() +
                                       SymbolTableSectionHeaderIndex->sh_offset);
-    for (Elf_Sym_Iter SI = begin_symbols(), SE = end_symbols(); SI != SE;
-         ++SI) {
+    for (const Elf_Sym &S : symbols()) {
       if (*ShndxTable != ELF::SHN_UNDEF)
-        ExtendedSymbolTable[&*SI] = *ShndxTable;
+        ExtendedSymbolTable[&S] = *ShndxTable;
       ++ShndxTable;
     }
   }
@@ -844,21 +778,18 @@ typename ELFFile<ELFT>::Elf_Shdr_Iter ELFFile<ELFT>::end_sections() const {
 }
 
 template <class ELFT>
-typename ELFFile<ELFT>::Elf_Sym_Iter ELFFile<ELFT>::begin_symbols() const {
+const typename ELFFile<ELFT>::Elf_Sym *ELFFile<ELFT>::begin_symbols() const {
   if (!dot_symtab_sec)
-    return Elf_Sym_Iter(0, nullptr, false);
-  return Elf_Sym_Iter(dot_symtab_sec->sh_entsize,
-                      (const char *)base() + dot_symtab_sec->sh_offset, false);
+    return nullptr;
+  return reinterpret_cast<const Elf_Sym *>(base() + dot_symtab_sec->sh_offset);
 }
 
 template <class ELFT>
-typename ELFFile<ELFT>::Elf_Sym_Iter ELFFile<ELFT>::end_symbols() const {
+const typename ELFFile<ELFT>::Elf_Sym *ELFFile<ELFT>::end_symbols() const {
   if (!dot_symtab_sec)
-    return Elf_Sym_Iter(0, nullptr, false);
-  return Elf_Sym_Iter(dot_symtab_sec->sh_entsize,
-                      (const char *)base() + dot_symtab_sec->sh_offset +
-                          dot_symtab_sec->sh_size,
-                      false);
+    return nullptr;
+  return reinterpret_cast<const Elf_Sym *>(base() + dot_symtab_sec->sh_offset +
+                                           dot_symtab_sec->sh_size);
 }
 
 template <class ELFT>
@@ -950,26 +881,29 @@ const char *ELFFile<ELFT>::getDynamicString(uintX_t Offset) const {
 }
 
 template <class ELFT>
-ErrorOr<StringRef> ELFFile<ELFT>::getSymbolName(Elf_Sym_Iter Sym) const {
-  if (!Sym.isDynamic())
-    return getSymbolName(dot_symtab_sec, &*Sym);
-
-  if (!DynStrRegion.Addr || Sym->st_name >= DynStrRegion.Size)
-    return object_error::parse_failed;
-  return StringRef(getDynamicString(Sym->st_name));
+ErrorOr<StringRef>
+ELFFile<ELFT>::getStaticSymbolName(const Elf_Sym *Symb) const {
+  return getSymbolName(dot_strtab_sec, Symb);
 }
 
 template <class ELFT>
 ErrorOr<StringRef>
-ELFFile<ELFT>::getStaticSymbolName(const Elf_Sym *Symb) const {
-  return getSymbolName(dot_symtab_sec, Symb);
+ELFFile<ELFT>::getDynamicSymbolName(const Elf_Sym *Symb) const {
+  return StringRef(getDynamicString(Symb->st_name));
 }
 
 template <class ELFT>
-ErrorOr<StringRef> ELFFile<ELFT>::getSymbolName(const Elf_Shdr *Section,
-                                                const Elf_Sym *Symb) const {
-  const Elf_Shdr *StrTab = getSection(Section->sh_link);
-  return getString(StrTab, Symb->st_name);
+ErrorOr<StringRef> ELFFile<ELFT>::getSymbolName(const Elf_Sym *Symb,
+                                                bool IsDynamic) const {
+  if (IsDynamic)
+    return getDynamicSymbolName(Symb);
+  return getStaticSymbolName(Symb);
+}
+
+template <class ELFT>
+ErrorOr<StringRef> ELFFile<ELFT>::getSymbolName(const Elf_Shdr *StrTab,
+                                                const Elf_Sym *Sym) const {
+  return getString(StrTab, Sym->st_name);
 }
 
 template <class ELFT>
