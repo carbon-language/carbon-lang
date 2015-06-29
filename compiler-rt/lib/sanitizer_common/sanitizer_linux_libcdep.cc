@@ -425,7 +425,7 @@ static int dl_iterate_phdr_cb(dl_phdr_info *info, size_t size, void *arg) {
   if (data->first) {
     data->first = false;
     // First module is the binary itself.
-    ReadBinaryName(module_name.data(), module_name.size());
+    ReadBinaryNameCached(module_name.data(), module_name.size());
   } else if (info->dlpi_name) {
     module_name.append("%s", info->dlpi_name);
   }

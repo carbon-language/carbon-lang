@@ -353,9 +353,21 @@ const char *GetBinaryBasename() {
 
 // Call once to make sure that binary_name_cache_str is initialized
 void CacheBinaryName() {
-  CHECK_EQ('\0', binary_name_cache_str[0]);
+  if (binary_name_cache_str[0] != '\0')
+    return;
   ReadBinaryName(binary_name_cache_str, sizeof(binary_name_cache_str));
   binary_basename_cache_str = StripModuleName(binary_name_cache_str);
+}
+
+uptr ReadBinaryNameCached(/*out*/char *buf, uptr buf_len) {
+  CacheBinaryName();
+  uptr name_len = internal_strlen(binary_name_cache_str);
+  name_len = (name_len < buf_len - 1) ? name_len : buf_len - 1;
+  if (buf_len == 0)
+    return 0;
+  internal_memcpy(buf, binary_name_cache_str, name_len);
+  buf[name_len] = '\0';
+  return name_len;
 }
 
 }  // namespace __sanitizer

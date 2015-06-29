@@ -34,7 +34,7 @@ static bool GetPathAssumingFileIsRelativeToExec(const char *file_path,
                                                 /*out*/char *new_file_path,
                                                 uptr new_file_path_size) {
   InternalScopedString exec(kMaxPathLength);
-  if (ReadBinaryName(exec.data(), exec.size())) {
+  if (ReadBinaryNameCached(exec.data(), exec.size())) {
     const char *file_name_pos = StripModuleName(exec.data());
     uptr path_to_exec_len = file_name_pos - exec.data();
     internal_strncat(new_file_path, exec.data(),
