@@ -603,6 +603,12 @@ public:
                                llvm::Value *Base, llvm::Value *MemPtr,
                                const MemberPointerType *MPT) override;
 
+  llvm::Value *EmitNonNullMemberPointerConversion(
+      const MemberPointerType *SrcTy, const MemberPointerType *DstTy,
+      CastKind CK, CastExpr::path_const_iterator PathBegin,
+      CastExpr::path_const_iterator PathEnd, llvm::Value *Src,
+      CGBuilderTy &Builder);
+
   llvm::Value *EmitMemberPointerConversion(CodeGenFunction &CGF,
                                            const CastExpr *E,
                                            llvm::Value *Src) override;
@@ -2931,13 +2937,37 @@ MicrosoftCXXABI::EmitMemberPointerConversion(CodeGenFunction &CGF,
   Builder.CreateCondBr(IsNotNull, ConvertBB, ContinueBB);
   CGF.EmitBlock(ConvertBB);
 
+  llvm::Value *Dst = EmitNonNullMemberPointerConversion(
+      SrcTy, DstTy, E->getCastKind(), E->path_begin(), E->path_end(), Src,
+      Builder);
+
+  Builder.CreateBr(ContinueBB);
+
+  // In the continuation, choose between DstNull and Dst.
+  CGF.EmitBlock(ContinueBB);
+  llvm::PHINode *Phi = Builder.CreatePHI(DstNull->getType(), 2, "memptr.converted");
+  Phi->addIncoming(DstNull, OriginalBB);
+  Phi->addIncoming(Dst, ConvertBB);
+  return Phi;
+}
+
+llvm::Value *MicrosoftCXXABI::EmitNonNullMemberPointerConversion(
+    const MemberPointerType *SrcTy, const MemberPointerType *DstTy, CastKind CK,
+    CastExpr::path_const_iterator PathBegin,
+    CastExpr::path_const_iterator PathEnd, llvm::Value *Src,
+    CGBuilderTy &Builder) {
+  const CXXRecordDecl *SrcRD = SrcTy->getMostRecentCXXRecordDecl();
+  const CXXRecordDecl *DstRD = DstTy->getMostRecentCXXRecordDecl();
+  MSInheritanceAttr::Spelling SrcInheritance = SrcRD->getMSInheritanceModel();
+  MSInheritanceAttr::Spelling DstInheritance = DstRD->getMSInheritanceModel();
+  bool IsFunc = SrcTy->isMemberFunctionPointer();
+  bool IsConstant = isa<llvm::Constant>(Src);
+
   // Decompose src.
   llvm::Value *FirstField = Src;
   llvm::Value *NonVirtualBaseAdjustment = getZeroInt();
   llvm::Value *VirtualBaseAdjustmentOffset = getZeroInt();
   llvm::Value *VBPtrOffset = getZeroInt();
-  MSInheritanceAttr::Spelling SrcInheritance = SrcRD->getMSInheritanceModel();
-  MSInheritanceAttr::Spelling DstInheritance = DstRD->getMSInheritanceModel();
   if (!MSInheritanceAttr::hasOnlyOneField(IsFunc, SrcInheritance)) {
     // We need to extract values.
     unsigned I = 0;
@@ -2950,7 +2980,7 @@ MicrosoftCXXABI::EmitMemberPointerConversion(CodeGenFunction &CGF,
       VirtualBaseAdjustmentOffset = Builder.CreateExtractValue(Src, I++);
   }
 
-  bool IsDerivedToBase = (E->getCastKind() == CK_DerivedToBaseMemberPointer);
+  bool IsDerivedToBase = (CK == CK_DerivedToBaseMemberPointer);
   const MemberPointerType *DerivedTy = IsDerivedToBase ? SrcTy : DstTy;
   const CXXRecordDecl *DerivedClass = DerivedTy->getMostRecentCXXRecordDecl();
 
@@ -2984,9 +3014,9 @@ MicrosoftCXXABI::EmitMemberPointerConversion(CodeGenFunction &CGF,
   // evaluated in so long as the vbindex is adjusted.  A member inside a fixed
   // base requires explicit nv adjustment.
   llvm::Constant *BaseClassOffset = llvm::ConstantInt::get(
-      CGM.IntTy, CGM.computeNonVirtualBaseClassOffset(
-                        DerivedClass, E->path_begin(), E->path_end())
-                     .getQuantity());
+      CGM.IntTy,
+      CGM.computeNonVirtualBaseClassOffset(DerivedClass, PathBegin, PathEnd)
+          .getQuantity());
 
   llvm::Value *NVDisp;
   if (IsDerivedToBase)
@@ -3005,9 +3035,15 @@ MicrosoftCXXABI::EmitMemberPointerConversion(CodeGenFunction &CGF,
             getAddrOfVirtualDisplacementMap(SrcRD, DstRD)) {
       llvm::Value *VBIndex = Builder.CreateExactUDiv(
           VirtualBaseAdjustmentOffset, llvm::ConstantInt::get(CGM.IntTy, 4));
-      llvm::Value *Idxs[] = {getZeroInt(), VBIndex};
-      VirtualBaseAdjustmentOffset =
-          Builder.CreateLoad(Builder.CreateInBoundsGEP(VDispMap, Idxs));
+      if (IsConstant) {
+        llvm::Constant *Mapping = VDispMap->getInitializer();
+        VirtualBaseAdjustmentOffset =
+            Mapping->getAggregateElement(cast<llvm::Constant>(VBIndex));
+      } else {
+        llvm::Value *Idxs[] = {getZeroInt(), VBIndex};
+        VirtualBaseAdjustmentOffset =
+            Builder.CreateLoad(Builder.CreateInBoundsGEP(VDispMap, Idxs));
+      }
 
       DstVBIndexEqZero =
           Builder.CreateICmpEQ(VirtualBaseAdjustmentOffset, getZeroInt());
@@ -3043,7 +3079,7 @@ MicrosoftCXXABI::EmitMemberPointerConversion(CodeGenFunction &CGF,
   if (MSInheritanceAttr::hasOnlyOneField(IsFunc, DstInheritance)) {
     Dst = FirstField;
   } else {
-    Dst = llvm::UndefValue::get(DstNull->getType());
+    Dst = llvm::UndefValue::get(ConvertMemberPointerType(DstTy));
     unsigned Idx = 0;
     Dst = Builder.CreateInsertValue(Dst, FirstField, Idx++);
     if (MSInheritanceAttr::hasNVOffsetField(IsFunc, DstInheritance))
@@ -3053,14 +3089,7 @@ MicrosoftCXXABI::EmitMemberPointerConversion(CodeGenFunction &CGF,
     if (MSInheritanceAttr::hasVBTableOffsetField(DstInheritance))
       Dst = Builder.CreateInsertValue(Dst, VirtualBaseAdjustmentOffset, Idx++);
   }
-  Builder.CreateBr(ContinueBB);
-
-  // In the continuation, choose between DstNull and Dst.
-  CGF.EmitBlock(ContinueBB);
-  llvm::PHINode *Phi = Builder.CreatePHI(DstNull->getType(), 2, "memptr.converted");
-  Phi->addIncoming(DstNull, OriginalBB);
-  Phi->addIncoming(Dst, ConvertBB);
-  return Phi;
+  return Dst;
 }
 
 llvm::Constant *
@@ -3096,128 +3125,12 @@ llvm::Constant *MicrosoftCXXABI::EmitMemberPointerConversion(
 
   const CXXRecordDecl *SrcRD = SrcTy->getMostRecentCXXRecordDecl();
   const CXXRecordDecl *DstRD = DstTy->getMostRecentCXXRecordDecl();
-  MSInheritanceAttr::Spelling SrcInheritance = SrcRD->getMSInheritanceModel();
-  MSInheritanceAttr::Spelling DstInheritance = DstRD->getMSInheritanceModel();
 
-  // Decompose src.
-  llvm::Constant *FirstField = Src;
-  llvm::Constant *NonVirtualBaseAdjustment = getZeroInt();
-  llvm::Constant *VirtualBaseAdjustmentOffset = getZeroInt();
-  llvm::Constant *VBPtrOffset = getZeroInt();
-  bool IsFunc = SrcTy->isMemberFunctionPointer();
-  if (!MSInheritanceAttr::hasOnlyOneField(IsFunc, SrcInheritance)) {
-    // We need to extract values.
-    unsigned I = 0;
-    FirstField = Src->getAggregateElement(I++);
-    if (MSInheritanceAttr::hasNVOffsetField(IsFunc, SrcInheritance))
-      NonVirtualBaseAdjustment = Src->getAggregateElement(I++);
-    if (MSInheritanceAttr::hasVBPtrOffsetField(SrcInheritance))
-      VBPtrOffset = Src->getAggregateElement(I++);
-    if (MSInheritanceAttr::hasVBTableOffsetField(SrcInheritance))
-      VirtualBaseAdjustmentOffset = Src->getAggregateElement(I++);
-  }
+  CGBuilderTy Builder(CGM.getLLVMContext());
+  auto *Dst = cast<llvm::Constant>(EmitNonNullMemberPointerConversion(
+      SrcTy, DstTy, CK, PathBegin, PathEnd, Src, Builder));
 
-  bool IsDerivedToBase = (CK == CK_DerivedToBaseMemberPointer);
-  const MemberPointerType *DerivedTy = IsDerivedToBase ? SrcTy : DstTy;
-  const CXXRecordDecl *DerivedClass = DerivedTy->getMostRecentCXXRecordDecl();
-
-  // For data pointers, we adjust the field offset directly.  For functions, we
-  // have a separate field.
-  llvm::Constant *&NVAdjustField =
-      IsFunc ? NonVirtualBaseAdjustment : FirstField;
-
-  // The virtual inheritance model has a quirk: the virtual base table is always
-  // referenced when dereferencing a member pointer even if the member pointer
-  // is non-virtual.  This is accounted for by adjusting the non-virtual offset
-  // to point backwards to the top of the MDC from the first VBase.  Undo this
-  // adjustment to normalize the member pointer.
-  llvm::Constant *SrcVBIndexEqZero = llvm::ConstantExpr::getICmp(
-      llvm::ICmpInst::ICMP_EQ, VirtualBaseAdjustmentOffset, getZeroInt());
-  if (SrcInheritance == MSInheritanceAttr::Keyword_virtual_inheritance) {
-    llvm::Constant *SrcOffsetToFirstVBase = llvm::ConstantInt::get(
-        CGM.IntTy, getContext().getOffsetOfBaseWithVBPtr(SrcRD).getQuantity());
-    llvm::Constant *UndoSrcAdjustment = llvm::ConstantExpr::getSelect(
-        SrcVBIndexEqZero, SrcOffsetToFirstVBase, getZeroInt());
-    NVAdjustField =
-        llvm::ConstantExpr::getNSWAdd(NVAdjustField, UndoSrcAdjustment);
-  }
-
-  // A non-zero vbindex implies that we are dealing with a source member in a
-  // floating virtual base in addition to some non-virtual offset.  If the
-  // vbindex is zero, we are dealing with a source that exists in a non-virtual,
-  // fixed, base.  The difference between these two cases is that the vbindex +
-  // nvoffset *always* point to the member regardless of what context they are
-  // evaluated in so long as the vbindex is adjusted.  A member inside a fixed
-  // base requires explicit nv adjustment.
-  llvm::Constant *BaseClassOffset = llvm::ConstantInt::get(
-      CGM.IntTy,
-      CGM.computeNonVirtualBaseClassOffset(DerivedClass, PathBegin, PathEnd)
-          .getQuantity());
-
-  llvm::Constant *NVDisp;
-  if (IsDerivedToBase)
-    NVDisp = llvm::ConstantExpr::getNSWSub(NVAdjustField, BaseClassOffset);
-  else
-    NVDisp = llvm::ConstantExpr::getNSWAdd(NVAdjustField, BaseClassOffset);
-
-  // An nv-base adjustment must only be made if the vbindex is zero (or does not
-  // exist).
-  NVAdjustField =
-      llvm::ConstantExpr::getSelect(SrcVBIndexEqZero, NVDisp, getZeroInt());
-
-  // Update the vbindex to an appropriate value in the destination because
-  // SrcRD's vbtable might not be a strict prefix of the one in DstRD.
-  llvm::Constant *DstVBIndexEqZero = SrcVBIndexEqZero;
-  if (MSInheritanceAttr::hasVBTableOffsetField(DstInheritance) &&
-      MSInheritanceAttr::hasVBTableOffsetField(SrcInheritance)) {
-    if (llvm::GlobalVariable *VDispMap =
-        getAddrOfVirtualDisplacementMap(SrcRD, DstRD)) {
-      llvm::Constant *Mapping = VDispMap->getInitializer();
-      llvm::Constant *VBIndex = llvm::ConstantExpr::getUDiv(
-          VirtualBaseAdjustmentOffset, llvm::ConstantInt::get(CGM.IntTy, 4),
-          /*IsExact=*/true);
-      VirtualBaseAdjustmentOffset = Mapping->getAggregateElement(VBIndex);
-
-      DstVBIndexEqZero = llvm::ConstantExpr::getICmp(
-          llvm::ICmpInst::ICMP_EQ, VirtualBaseAdjustmentOffset, getZeroInt());
-    }
-  }
-
-  // Set the VBPtrOffset to zero if the vbindex is zero.  Otherwise, initialize
-  // it to the offset of the vbptr.
-  if (MSInheritanceAttr::hasVBPtrOffsetField(DstInheritance)) {
-    llvm::Constant *DstVBPtrOffset = llvm::ConstantInt::get(
-        CGM.IntTy,
-        getContext().getASTRecordLayout(DstRD).getVBPtrOffset().getQuantity());
-    VBPtrOffset = llvm::ConstantExpr::getSelect(DstVBIndexEqZero, getZeroInt(),
-                                                DstVBPtrOffset);
-  }
-
-  // Likewise, apply a similar adjustment so that dereferencing the member
-  // pointer correctly accounts for the distance between the start of the first
-  // virtual base and the top of the MDC.
-  if (DstInheritance == MSInheritanceAttr::Keyword_virtual_inheritance) {
-    llvm::Constant *DstOffsetToFirstVBase = llvm::ConstantInt::get(
-        CGM.IntTy, getContext().getOffsetOfBaseWithVBPtr(DstRD).getQuantity());
-    llvm::Constant *DoDstAdjustment = llvm::ConstantExpr::getSelect(
-        DstVBIndexEqZero, DstOffsetToFirstVBase, getZeroInt());
-    NVAdjustField =
-        llvm::ConstantExpr::getNSWSub(NVAdjustField, DoDstAdjustment);
-  }
-
-  // Recompose dst from the null struct and the adjusted fields from src.
-  if (MSInheritanceAttr::hasOnlyOneField(IsFunc, DstInheritance))
-    return FirstField;
-
-  llvm::SmallVector<llvm::Constant *, 4> Fields;
-  Fields.push_back(FirstField);
-  if (MSInheritanceAttr::hasNVOffsetField(IsFunc, DstInheritance))
-    Fields.push_back(NonVirtualBaseAdjustment);
-  if (MSInheritanceAttr::hasVBPtrOffsetField(DstInheritance))
-    Fields.push_back(VBPtrOffset);
-  if (MSInheritanceAttr::hasVBTableOffsetField(DstInheritance))
-    Fields.push_back(VirtualBaseAdjustmentOffset);
-  return llvm::ConstantStruct::getAnon(Fields);
+  return Dst;
 }
 
 llvm::Value *MicrosoftCXXABI::EmitLoadOfMemberFunctionPointer(
