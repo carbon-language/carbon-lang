@@ -23,6 +23,12 @@ struct LTOCodeGenerator;
 namespace lld {
 namespace coff {
 
+class Chunk;
+class Defined;
+class Lazy;
+class SymbolBody;
+struct Symbol;
+
 // SymbolTable is a bucket of all known symbols, including defined,
 // undefined, or lazy symbols (the last one is symbols in archive
 // files whose archive members are not yet loaded).

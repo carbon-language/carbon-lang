@@ -11,6 +11,7 @@
 #include "Driver.h"
 #include "Error.h"
 #include "SymbolTable.h"
+#include "Symbols.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/LTO/LTOCodeGenerator.h"
 #include "llvm/Support/Debug.h"
