@@ -486,7 +486,11 @@ std::error_code ELFFile<ELFT>::handleSectionGroup(
   }
   const Elf_Sym *symbol = _objFile->getSymbol(section->sh_info);
   const Elf_Shdr *symtab = _objFile->getSection(section->sh_link);
-  const Elf_Shdr *strtab = _objFile->getSection(symtab->sh_link);
+  const Elf_Shdr *strtab_sec = _objFile->getSection(symtab->sh_link);
+  ErrorOr<StringRef> strtab_or_err = _objFile->getStringTable(strtab_sec);
+  if (std::error_code ec = strtab_or_err.getError())
+    return ec;
+  StringRef strtab = *strtab_or_err;
   ErrorOr<StringRef> symbolName = _objFile->getSymbolName(strtab, symbol);
   if (std::error_code ec = symbolName.getError())
     return ec;
