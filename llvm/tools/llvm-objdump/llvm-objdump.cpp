@@ -888,13 +888,12 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
 
         // Print relocation for instruction.
         while (rel_cur != rel_end) {
-          bool hidden = false;
+          bool hidden = rel_cur->getHidden();
           uint64_t addr = rel_cur->getOffset();
           SmallString<16> name;
           SmallString<32> val;
 
           // If this relocation is hidden, skip it.
-          if (error(rel_cur->getHidden(hidden))) goto skip_print_rel;
           if (hidden) goto skip_print_rel;
 
           // Stop when rel_cur's address is past the current instruction.
@@ -929,12 +928,10 @@ void llvm::PrintRelocations(const ObjectFile *Obj) {
       continue;
     outs() << "RELOCATION RECORDS FOR [" << secname << "]:\n";
     for (const RelocationRef &Reloc : Section.relocations()) {
-      bool hidden;
+      bool hidden = Reloc.getHidden();
       uint64_t address = Reloc.getOffset();
       SmallString<32> relocname;
       SmallString<32> valuestr;
-      if (error(Reloc.getHidden(hidden)))
-        continue;
       if (hidden)
         continue;
       if (error(Reloc.getTypeName(relocname)))

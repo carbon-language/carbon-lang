@@ -770,17 +770,15 @@ MachOObjectFile::getRelocationTypeName(DataRefImpl Rel,
   return std::error_code();
 }
 
-std::error_code MachOObjectFile::getRelocationHidden(DataRefImpl Rel,
-                                                     bool &Result) const {
+bool MachOObjectFile::getRelocationHidden(DataRefImpl Rel) const {
   unsigned Arch = getArch();
   uint64_t Type = getRelocationType(Rel);
-
-  Result = false;
 
   // On arches that use the generic relocations, GENERIC_RELOC_PAIR
   // is always hidden.
   if (Arch == Triple::x86 || Arch == Triple::arm || Arch == Triple::ppc) {
-    if (Type == MachO::GENERIC_RELOC_PAIR) Result = true;
+    if (Type == MachO::GENERIC_RELOC_PAIR)
+      return true;
   } else if (Arch == Triple::x86_64) {
     // On x86_64, X86_64_RELOC_UNSIGNED is hidden only when it follows
     // an X86_64_RELOC_SUBTRACTOR.
@@ -789,11 +787,11 @@ std::error_code MachOObjectFile::getRelocationHidden(DataRefImpl Rel,
       RelPrev.d.a--;
       uint64_t PrevType = getRelocationType(RelPrev);
       if (PrevType == MachO::X86_64_RELOC_SUBTRACTOR)
-        Result = true;
+        return true;
     }
   }
 
-  return std::error_code();
+  return false;
 }
 
 uint8_t MachOObjectFile::getRelocationLength(DataRefImpl Rel) const {
