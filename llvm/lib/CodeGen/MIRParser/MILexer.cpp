@@ -26,6 +26,8 @@ class Cursor {
   const char *End;
 
 public:
+  Cursor(NoneType) : Ptr(nullptr), End(nullptr) {}
+
   explicit Cursor(StringRef Str) {
     Ptr = Str.data();
     End = Ptr + Str.size();
@@ -45,6 +47,8 @@ public:
   }
 
   StringRef::iterator location() const { return Ptr; }
+
+  operator bool() const { return Ptr != nullptr; }
 };
 
 } // end anonymous namespace
@@ -60,7 +64,9 @@ static bool isIdentifierChar(char C) {
   return isalpha(C) || isdigit(C) || C == '_' || C == '-' || C == '.';
 }
 
-static Cursor lexIdentifier(Cursor C, MIToken &Token) {
+static Cursor maybeLexIdentifier(Cursor C, MIToken &Token) {
+  if (!isalpha(C.peek()) && C.peek() != '_')
+    return None;
   auto Range = C;
   while (isIdentifierChar(C.peek()))
     C.advance();
@@ -70,9 +76,11 @@ static Cursor lexIdentifier(Cursor C, MIToken &Token) {
   return C;
 }
 
-static Cursor lexMachineBasicBlock(
+static Cursor maybeLexMachineBasicBlock(
     Cursor C, MIToken &Token,
     function_ref<void(StringRef::iterator Loc, const Twine &)> ErrorCallback) {
+  if (!C.remaining().startswith("%bb."))
+    return None;
   auto Range = C;
   C.advance(4); // Skip '%bb.'
   if (!isdigit(C.peek())) {
@@ -96,7 +104,9 @@ static Cursor lexMachineBasicBlock(
   return C;
 }
 
-static Cursor lexPercent(Cursor C, MIToken &Token) {
+static Cursor maybeLexRegister(Cursor C, MIToken &Token) {
+  if (C.peek() != '%')
+    return None;
   auto Range = C;
   C.advance(); // Skip '%'
   while (isIdentifierChar(C.peek()))
@@ -106,7 +116,9 @@ static Cursor lexPercent(Cursor C, MIToken &Token) {
   return C;
 }
 
-static Cursor lexGlobalValue(Cursor C, MIToken &Token) {
+static Cursor maybeLexGlobalValue(Cursor C, MIToken &Token) {
+  if (C.peek() != '@')
+    return None;
   auto Range = C;
   C.advance(); // Skip the '@'
   // TODO: add support for quoted names.
@@ -125,7 +137,9 @@ static Cursor lexGlobalValue(Cursor C, MIToken &Token) {
   return C;
 }
 
-static Cursor lexIntegerLiteral(Cursor C, MIToken &Token) {
+static Cursor maybeLexIntegerLiteral(Cursor C, MIToken &Token) {
+  if (!isdigit(C.peek()) && (C.peek() != '-' || !isdigit(C.peek(1))))
+    return None;
   auto Range = C;
   C.advance();
   while (isdigit(C.peek()))
@@ -146,7 +160,10 @@ static MIToken::TokenKind symbolToken(char C) {
   }
 }
 
-static Cursor lexSymbol(Cursor C, MIToken::TokenKind Kind, MIToken &Token) {
+static Cursor maybeLexSymbol(Cursor C, MIToken &Token) {
+  auto Kind = symbolToken(C.peek());
+  if (Kind == MIToken::Error)
+    return None;
   auto Range = C;
   C.advance();
   Token = MIToken(Kind, Range.upto(C));
@@ -162,23 +179,21 @@ StringRef llvm::lexMIToken(
     return C.remaining();
   }
 
-  auto Char = C.peek();
-  if (isalpha(Char) || Char == '_')
-    return lexIdentifier(C, Token).remaining();
-  if (Char == '%') {
-    if (C.remaining().startswith("%bb."))
-      return lexMachineBasicBlock(C, Token, ErrorCallback).remaining();
-    return lexPercent(C, Token).remaining();
-  }
-  if (Char == '@')
-    return lexGlobalValue(C, Token).remaining();
-  if (isdigit(Char) || (Char == '-' && isdigit(C.peek(1))))
-    return lexIntegerLiteral(C, Token).remaining();
-  MIToken::TokenKind Kind = symbolToken(Char);
-  if (Kind != MIToken::Error)
-    return lexSymbol(C, Kind, Token).remaining();
+  if (Cursor R = maybeLexIdentifier(C, Token))
+    return R.remaining();
+  if (Cursor R = maybeLexMachineBasicBlock(C, Token, ErrorCallback))
+    return R.remaining();
+  if (Cursor R = maybeLexRegister(C, Token))
+    return R.remaining();
+  if (Cursor R = maybeLexGlobalValue(C, Token))
+    return R.remaining();
+  if (Cursor R = maybeLexIntegerLiteral(C, Token))
+    return R.remaining();
+  if (Cursor R = maybeLexSymbol(C, Token))
+    return R.remaining();
+
   Token = MIToken(MIToken::Error, C.remaining());
   ErrorCallback(C.location(),
-                Twine("unexpected character '") + Twine(Char) + "'");
+                Twine("unexpected character '") + Twine(C.peek()) + "'");
   return C.remaining();
 }
