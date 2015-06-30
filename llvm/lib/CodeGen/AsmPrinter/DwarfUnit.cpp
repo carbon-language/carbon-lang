@@ -1069,6 +1069,30 @@ DIE *DwarfUnit::getOrCreateNameSpace(const DINamespace *NS) {
   return &NDie;
 }
 
+DIE *DwarfUnit::getOrCreateModule(const DIModule *M) {
+  // Construct the context before querying for the existence of the DIE in case
+  // such construction creates the DIE.
+  DIE *ContextDIE = getOrCreateContextDIE(M->getScope());
+
+  if (DIE *MDie = getDIE(M))
+    return MDie;
+  DIE &MDie = createAndAddDIE(dwarf::DW_TAG_module, *ContextDIE, M);
+
+  if (!M->getName().empty()) {
+    addString(MDie, dwarf::DW_AT_name, M->getName());
+    addGlobalName(M->getName(), MDie, M->getScope());
+  }
+  if (!M->getConfigurationMacros().empty())
+    addString(MDie, dwarf::DW_AT_LLVM_config_macros,
+              M->getConfigurationMacros());
+  if (!M->getIncludePath().empty())
+    addString(MDie, dwarf::DW_AT_LLVM_include_path, M->getIncludePath());
+  if (!M->getISysRoot().empty())
+    addString(MDie, dwarf::DW_AT_LLVM_isysroot, M->getISysRoot());
+  
+  return &MDie;
+}
+
 DIE *DwarfUnit::getOrCreateSubprogramDIE(const DISubprogram *SP, bool Minimal) {
   // Construct the context before querying for the existence of the DIE in case
   // such construction creates the DIE (as is the case for member function

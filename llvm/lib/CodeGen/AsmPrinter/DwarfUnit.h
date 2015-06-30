@@ -291,6 +291,7 @@ public:
                dwarf::Attribute Attribute = dwarf::DW_AT_type);
 
   DIE *getOrCreateNameSpace(const DINamespace *NS);
+  DIE *getOrCreateModule(const DIModule *M);
   DIE *getOrCreateSubprogramDIE(const DISubprogram *SP, bool Minimal = false);
 
   void applySubprogramAttributes(const DISubprogram *SP, DIE &SPDie,

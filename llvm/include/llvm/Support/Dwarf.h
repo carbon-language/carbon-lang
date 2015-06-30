@@ -239,6 +239,11 @@ enum Attribute : uint16_t {
   DW_AT_GNU_pubnames = 0x2134,
   DW_AT_GNU_pubtypes = 0x2135,
 
+  // LLVM project extensions.
+  DW_AT_LLVM_include_path = 0x3e00,
+  DW_AT_LLVM_config_macros = 0x3e01,
+  DW_AT_LLVM_isysroot = 0x3e02,
+
   // Apple extensions.
   DW_AT_APPLE_optimized = 0x3fe1,
   DW_AT_APPLE_flags = 0x3fe2,

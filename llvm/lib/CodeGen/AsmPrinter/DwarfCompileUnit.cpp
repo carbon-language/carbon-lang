@@ -638,6 +638,8 @@ DIE *DwarfCompileUnit::constructImportedEntityDIE(
   auto *Entity = resolve(Module->getEntity());
   if (auto *NS = dyn_cast<DINamespace>(Entity))
     EntityDie = getOrCreateNameSpace(NS);
+  else if (auto *M = dyn_cast<DIModule>(Entity))
+    EntityDie = getOrCreateModule(M);
   else if (auto *SP = dyn_cast<DISubprogram>(Entity))
     EntityDie = getOrCreateSubprogramDIE(SP);
   else if (auto *T = dyn_cast<DIType>(Entity))

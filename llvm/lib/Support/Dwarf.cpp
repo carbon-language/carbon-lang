@@ -190,6 +190,9 @@ const char *llvm::dwarf::AttributeString(unsigned Attribute) {
   case DW_AT_APPLE_property_attribute:   return "DW_AT_APPLE_property_attribute";
   case DW_AT_APPLE_property:             return "DW_AT_APPLE_property";
   case DW_AT_APPLE_objc_complete_type:   return "DW_AT_APPLE_objc_complete_type";
+  case DW_AT_LLVM_include_path:          return "DW_AT_LLVM_include_path";
+  case DW_AT_LLVM_config_macros:         return "DW_AT_LLVM_config_macros";
+  case DW_AT_LLVM_isysroot:              return "DW_AT_LLVM_isysroot";
 
     // DWARF5 Fission Extension Attribute
   case DW_AT_GNU_dwo_name:               return "DW_AT_GNU_dwo_name";
