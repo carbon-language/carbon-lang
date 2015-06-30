@@ -56,3 +56,21 @@ define void @foo3(i32 %a) {
   store i32 %a, i32* %2
   ret void
 }
+
+; PTX32:        cvta.local.u32   %SP, %SPL;
+; PTX32:        add.u32          {{%r[0-9]+}}, %SP, 0;
+; PTX32:        st.local.u32     [{{%r[0-9]+}}], {{%r[0-9]+}}
+; PTX32:        st.local.u32     [{{%r[0-9]+}}], {{%r[0-9]+}}
+; PTX64:        cvta.local.u64   %SP, %SPL;
+; PTX64:        add.u64          {{%rd[0-9]+}}, %SP, 0;
+; PTX64:        st.local.u32     [{{%rd[0-9]+}}], {{%r[0-9]+}}
+; PTX64:        st.local.u32     [{{%rd[0-9]+}}], {{%r[0-9]+}}
+define void @foo4() {
+  %A = alloca i32
+  %B = alloca i32
+  store i32 0, i32* %A
+  store i32 0, i32* %B
+  call void @bar(i32* %A)
+  call void @bar(i32* %B)
+  ret void
+}

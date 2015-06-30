@@ -47,20 +47,19 @@ void NVPTXFrameLowering::emitPrologue(MachineFunction &MF,
     // cvta.local %SP, %SPL;
     if (static_cast<const NVPTXTargetMachine &>(MF.getTarget()).is64Bit()) {
       // Check if %SP is actually used
-      if (MR.hasOneNonDBGUse(NVPTX::VRFrame)) {
+      if (!MR.use_empty(NVPTX::VRFrame)) {
         MI = BuildMI(MBB, MI, dl, MF.getSubtarget().getInstrInfo()->get(
                                       NVPTX::cvta_local_yes_64),
                      NVPTX::VRFrame)
                  .addReg(NVPTX::VRFrameLocal);
       }
-
       BuildMI(MBB, MI, dl,
               MF.getSubtarget().getInstrInfo()->get(NVPTX::MOV_DEPOT_ADDR_64),
               NVPTX::VRFrameLocal)
           .addImm(MF.getFunctionNumber());
     } else {
       // Check if %SP is actually used
-      if (MR.hasOneNonDBGUse(NVPTX::VRFrame)) {
+      if (!MR.use_empty(NVPTX::VRFrame)) {
         MI = BuildMI(MBB, MI, dl, MF.getSubtarget().getInstrInfo()->get(
                                       NVPTX::cvta_local_yes),
                      NVPTX::VRFrame)
