@@ -105,19 +105,6 @@ public:
       SetCurrentDebugLocation(IP->getDebugLoc());
   }
 
-  /// \brief Find the nearest point that dominates this use, and specify that
-  /// created instructions should be inserted at this point.
-  void SetInsertPoint(Use &U) {
-    Instruction *UseInst = cast<Instruction>(U.getUser());
-    if (PHINode *Phi = dyn_cast<PHINode>(UseInst)) {
-      BasicBlock *PredBB = Phi->getIncomingBlock(U);
-      assert(U != PredBB->getTerminator() && "critical edge not split");
-      SetInsertPoint(PredBB, PredBB->getTerminator());
-      return;
-    }
-    SetInsertPoint(UseInst);
-  }
-
   /// \brief Set location information used by debugging information.
   void SetCurrentDebugLocation(DebugLoc L) { CurDbgLocation = std::move(L); }
 
@@ -552,11 +539,6 @@ public:
   explicit IRBuilder(Instruction *IP, MDNode *FPMathTag = nullptr)
     : IRBuilderBase(IP->getContext(), FPMathTag), Folder() {
     SetInsertPoint(IP);
-  }
-
-  explicit IRBuilder(Use &U, MDNode *FPMathTag = nullptr)
-    : IRBuilderBase(U->getContext(), FPMathTag), Folder() {
-    SetInsertPoint(U);
   }
 
   IRBuilder(BasicBlock *TheBB, BasicBlock::iterator IP, const T& F,
