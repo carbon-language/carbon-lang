@@ -40,8 +40,6 @@ class StandardUnwindTest(TestBase):
                 "__memcpy_base",         # Function reached by a fall through from the previous function
                 "__memcpy_base_aligned", # Function reached by a fall through from the previous function
                 "__subdf3",              # __aeabi_ui2d jumps into the middle of the function. Possibly missing symbol?
-                "__aeabi_ldivmod",       # llvm.org/pr23879 ("push {sp}" not handled correctly)
-                "__aeabi_uldivmod",      # llvm.org/pr23879 ("push {sp}" not handled correctly)
             ]
             no_step_function_names = [
                 "__sync_fetch_and_add_4", # Calls into a special SO where we can't set a breakpoint

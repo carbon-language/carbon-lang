@@ -422,13 +422,17 @@ UnwindAssemblyInstEmulation::WriteMemory (EmulateInstruction *instruction,
         case EmulateInstruction::eContextPushRegisterOnStack:
             {
                 uint32_t reg_num = LLDB_INVALID_REGNUM;
-                const uint32_t unwind_reg_kind = m_unwind_plan_ptr->GetRegisterKind();
+                uint32_t generic_regnum = LLDB_INVALID_REGNUM;
                 if (context.info_type == EmulateInstruction::eInfoTypeRegisterToRegisterPlusOffset)
+                {
+                    const uint32_t unwind_reg_kind = m_unwind_plan_ptr->GetRegisterKind();
                     reg_num = context.info.RegisterToRegisterPlusOffset.data_reg.kinds[unwind_reg_kind];
+                    generic_regnum = context.info.RegisterToRegisterPlusOffset.data_reg.kinds[eRegisterKindGeneric];
+                }
                 else
                     assert (!"unhandled case, add code to handle this!");
 
-                if (reg_num != LLDB_INVALID_REGNUM)
+                if (reg_num != LLDB_INVALID_REGNUM && generic_regnum != LLDB_REGNUM_GENERIC_SP)
                 {
                     if (m_pushed_regs.find (reg_num) == m_pushed_regs.end())
                     {
@@ -570,7 +574,8 @@ UnwindAssemblyInstEmulation::WriteRegister (EmulateInstruction *instruction,
         case EmulateInstruction::eContextPopRegisterOffStack:
             {
                 const uint32_t reg_num = reg_info->kinds[m_unwind_plan_ptr->GetRegisterKind()];
-                if (reg_num != LLDB_INVALID_REGNUM)
+                const uint32_t generic_regnum = reg_info->kinds[eRegisterKindGeneric];
+                if (reg_num != LLDB_INVALID_REGNUM && generic_regnum != LLDB_REGNUM_GENERIC_SP)
                 {
                     m_curr_row->SetRegisterLocationToSame (reg_num, /*must_replace*/ false);
                     m_curr_row_modified = true;
