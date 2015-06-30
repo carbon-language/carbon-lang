@@ -244,7 +244,6 @@ public:
   std::error_code
   getRelocationTypeName(DataRefImpl Rel,
                         SmallVectorImpl<char> &Result) const override;
-  bool getRelocationHidden(DataRefImpl Rel) const override;
   uint8_t getRelocationLength(DataRefImpl Rel) const;
 
   // MachO specific.

@@ -55,11 +55,6 @@ public:
   symbol_iterator getSymbol() const;
   uint64_t getType() const;
 
-  /// @brief Indicates whether this relocation should hidden when listing
-  /// relocations, usually because it is the trailing part of a multipart
-  /// relocation that will be printed as part of the leading relocation.
-  bool getHidden() const;
-
   /// @brief Get a string that represents the type of this relocation.
   ///
   /// This is for display purposes only.
@@ -246,7 +241,6 @@ protected:
   virtual std::error_code
   getRelocationTypeName(DataRefImpl Rel,
                         SmallVectorImpl<char> &Result) const = 0;
-  virtual bool getRelocationHidden(DataRefImpl Rel) const { return false; }
 
 public:
   uint64_t getCommonSymbolSize(DataRefImpl Symb) const {
@@ -466,10 +460,6 @@ inline uint64_t RelocationRef::getType() const {
 inline std::error_code
 RelocationRef::getTypeName(SmallVectorImpl<char> &Result) const {
   return OwningObject->getRelocationTypeName(RelocationPimpl, Result);
-}
-
-inline bool RelocationRef::getHidden() const {
-  return OwningObject->getRelocationHidden(RelocationPimpl);
 }
 
 inline DataRefImpl RelocationRef::getRawDataRefImpl() const {

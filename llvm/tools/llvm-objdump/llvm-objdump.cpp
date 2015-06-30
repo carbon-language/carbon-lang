@@ -692,6 +692,39 @@ static std::error_code getRelocationValueString(const RelocationRef &Rel,
   return getRelocationValueString(MachO, Rel, Result);
 }
 
+/// @brief Indicates whether this relocation should hidden when listing
+/// relocations, usually because it is the trailing part of a multipart
+/// relocation that will be printed as part of the leading relocation.
+static bool getHidden(RelocationRef RelRef) {
+  const ObjectFile *Obj = RelRef.getObject();
+  auto *MachO = dyn_cast<MachOObjectFile>(Obj);
+  if (!MachO)
+    return false;
+
+  unsigned Arch = MachO->getArch();
+  DataRefImpl Rel = RelRef.getRawDataRefImpl();
+  uint64_t Type = MachO->getRelocationType(Rel);
+
+  // On arches that use the generic relocations, GENERIC_RELOC_PAIR
+  // is always hidden.
+  if (Arch == Triple::x86 || Arch == Triple::arm || Arch == Triple::ppc) {
+    if (Type == MachO::GENERIC_RELOC_PAIR)
+      return true;
+  } else if (Arch == Triple::x86_64) {
+    // On x86_64, X86_64_RELOC_UNSIGNED is hidden only when it follows
+    // an X86_64_RELOC_SUBTRACTOR.
+    if (Type == MachO::X86_64_RELOC_UNSIGNED && Rel.d.a > 0) {
+      DataRefImpl RelPrev = Rel;
+      RelPrev.d.a--;
+      uint64_t PrevType = MachO->getRelocationType(RelPrev);
+      if (PrevType == MachO::X86_64_RELOC_SUBTRACTOR)
+        return true;
+    }
+  }
+
+  return false;
+}
+
 static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
   const Target *TheTarget = getTarget(Obj);
   // getTarget() will have already issued a diagnostic if necessary, so
@@ -888,7 +921,7 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
 
         // Print relocation for instruction.
         while (rel_cur != rel_end) {
-          bool hidden = rel_cur->getHidden();
+          bool hidden = getHidden(*rel_cur);
           uint64_t addr = rel_cur->getOffset();
           SmallString<16> name;
           SmallString<32> val;
@@ -928,7 +961,7 @@ void llvm::PrintRelocations(const ObjectFile *Obj) {
       continue;
     outs() << "RELOCATION RECORDS FOR [" << secname << "]:\n";
     for (const RelocationRef &Reloc : Section.relocations()) {
-      bool hidden = Reloc.getHidden();
+      bool hidden = getHidden(Reloc);
       uint64_t address = Reloc.getOffset();
       SmallString<32> relocname;
       SmallString<32> valuestr;
