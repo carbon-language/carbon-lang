@@ -333,4 +333,35 @@ TEST_F(IRBuilderTest, CreateGlobalStringPtr) {
   EXPECT_TRUE(String2->getType()->getPointerAddressSpace() == 1);
   EXPECT_TRUE(String3->getType()->getPointerAddressSpace() == 2);
 }
+
+TEST_F(IRBuilderTest, DebugLoc) {
+  auto CalleeTy = FunctionType::get(Type::getVoidTy(Ctx),
+                                    /*isVarArg=*/false);
+  auto Callee =
+      Function::Create(CalleeTy, Function::ExternalLinkage, "", M.get());
+
+  DIBuilder DIB(*M);
+  auto File = DIB.createFile("tmp.cpp", "/");
+  auto SPType = DIB.createSubroutineType(File, DIB.getOrCreateTypeArray(None));
+  auto SP =
+      DIB.createFunction(File, "foo", "foo", File, 1, SPType, false, true, 1);
+  DebugLoc DL1 = DILocation::get(Ctx, 2, 0, SP);
+  DebugLoc DL2 = DILocation::get(Ctx, 3, 0, SP);
+
+  auto BB2 = BasicBlock::Create(Ctx, "bb2", F);
+  auto Br = BranchInst::Create(BB2, BB);
+  Br->setDebugLoc(DL1);
+
+  IRBuilder<> Builder(Ctx);
+  Builder.SetInsertPoint(Br);
+  EXPECT_EQ(DL1, Builder.getCurrentDebugLocation());
+  auto Call1 = Builder.CreateCall(Callee, None);
+  EXPECT_EQ(DL1, Call1->getDebugLoc());
+
+  Call1->setDebugLoc(DL2);
+  Builder.SetInsertPoint(Call1->getParent(), Call1);
+  EXPECT_EQ(DL2, Builder.getCurrentDebugLocation());
+  auto Call2 = Builder.CreateCall(Callee, None);
+  EXPECT_EQ(DL2, Call2->getDebugLoc());
+}
 }

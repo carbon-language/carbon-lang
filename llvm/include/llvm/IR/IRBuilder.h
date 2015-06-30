@@ -101,6 +101,8 @@ public:
   void SetInsertPoint(BasicBlock *TheBB, BasicBlock::iterator IP) {
     BB = TheBB;
     InsertPt = IP;
+    if (IP != TheBB->end())
+      SetCurrentDebugLocation(IP->getDebugLoc());
   }
 
   /// \brief Find the nearest point that dominates this use, and specify that
@@ -550,13 +552,11 @@ public:
   explicit IRBuilder(Instruction *IP, MDNode *FPMathTag = nullptr)
     : IRBuilderBase(IP->getContext(), FPMathTag), Folder() {
     SetInsertPoint(IP);
-    SetCurrentDebugLocation(IP->getDebugLoc());
   }
 
   explicit IRBuilder(Use &U, MDNode *FPMathTag = nullptr)
     : IRBuilderBase(U->getContext(), FPMathTag), Folder() {
     SetInsertPoint(U);
-    SetCurrentDebugLocation(cast<Instruction>(U.getUser())->getDebugLoc());
   }
 
   IRBuilder(BasicBlock *TheBB, BasicBlock::iterator IP, const T& F,
