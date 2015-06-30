@@ -13,6 +13,7 @@
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCParser/MCAsmParserExtension.h"
 #include "llvm/MC/MCTargetOptions.h"
+#include "llvm/MC/SubtargetFeature.h"
 #include <memory>
 
 namespace llvm {
@@ -95,7 +96,7 @@ protected: // Can only create subclasses.
   MCTargetAsmParser();
 
   /// AvailableFeatures - The current set of available features.
-  uint64_t AvailableFeatures;
+  FeatureBitset AvailableFeatures;
 
   /// ParsingInlineAsm - Are we parsing ms-style inline assembly?
   bool ParsingInlineAsm;
@@ -110,8 +111,8 @@ protected: // Can only create subclasses.
 public:
   ~MCTargetAsmParser() override;
 
-  uint64_t getAvailableFeatures() const { return AvailableFeatures; }
-  void setAvailableFeatures(uint64_t Value) { AvailableFeatures = Value; }
+  FeatureBitset getAvailableFeatures() const { return AvailableFeatures; }
+  void setAvailableFeatures(FeatureBitset Value) { AvailableFeatures = Value; }
 
   bool isParsingInlineAsm () { return ParsingInlineAsm; }
   void setParsingInlineAsm (bool Value) { ParsingInlineAsm = Value; }
@@ -169,6 +170,7 @@ public:
   virtual bool MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                                        OperandVector &Operands, MCStreamer &Out,
                                        uint64_t &ErrorInfo,
+                                       FeatureBitset &ErrorMissingFeature,
                                        bool MatchingInlineAsm) = 0;
 
   /// Allows targets to let registers opt out of clobber lists.

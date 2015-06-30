@@ -33,6 +33,7 @@
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/MC/SubtargetFeature.h"
 #include <cstdio>
 using namespace llvm;
 
@@ -86,6 +87,7 @@ private:
   bool MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                                OperandVector &Operands, MCStreamer &Out,
                                uint64_t &ErrorInfo,
+                               FeatureBitset &ErrorMissingFeature,
                                bool MatchingInlineAsm) override;
 /// @name Auto-generated Match Functions
 /// {
@@ -3613,12 +3615,13 @@ bool AArch64AsmParser::showMatchError(SMLoc Loc, unsigned ErrCode) {
   }
 }
 
-static const char *getSubtargetFeatureName(uint64_t Val);
+static const char *getSubtargetFeatureName(uint64_t Feature);
 
 bool AArch64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                                                OperandVector &Operands,
                                                MCStreamer &Out,
                                                uint64_t &ErrorInfo,
+                                               FeatureBitset &ErrorMissingFeature,
                                                bool MatchingInlineAsm) {
   assert(!Operands.empty() && "Unexpect empty operand list!");
   AArch64Operand &Op = static_cast<AArch64Operand &>(*Operands[0]);
@@ -3894,13 +3897,13 @@ bool AArch64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   // First try to match against the secondary set of tables containing the
   // short-form NEON instructions (e.g. "fadd.2s v0, v1, v2").
   unsigned MatchResult =
-      MatchInstructionImpl(Operands, Inst, ErrorInfo, MatchingInlineAsm, 1);
+      MatchInstructionImpl(Operands, Inst, ErrorInfo, ErrorMissingFeature, MatchingInlineAsm, 1);
 
   // If that fails, try against the alternate table containing long-form NEON:
   // "fadd v0.2s, v1.2s, v2.2s"
   if (MatchResult != Match_Success)
     MatchResult =
-        MatchInstructionImpl(Operands, Inst, ErrorInfo, MatchingInlineAsm, 0);
+        MatchInstructionImpl(Operands, Inst, ErrorInfo, ErrorMissingFeature, MatchingInlineAsm, 0);
 
   switch (MatchResult) {
   case Match_Success: {
@@ -3917,17 +3920,15 @@ bool AArch64AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
     return false;
   }
   case Match_MissingFeature: {
-    assert(ErrorInfo && "Unknown missing feature!");
+    assert(ErrorMissingFeature.any() && "Unknown missing feature!");
     // Special case the error message for the very common case where only
     // a single subtarget feature is missing (neon, e.g.).
     std::string Msg = "instruction requires:";
-    uint64_t Mask = 1;
-    for (unsigned i = 0; i < (sizeof(ErrorInfo)*8-1); ++i) {
-      if (ErrorInfo & Mask) {
+    for (unsigned i = 0; i < ErrorMissingFeature.size(); ++i) {
+      if (ErrorMissingFeature[i]) {
         Msg += " ";
-        Msg += getSubtargetFeatureName(ErrorInfo & Mask);
+        Msg += getSubtargetFeatureName(i);
       }
-      Mask <<= 1;
     }
     return Error(IDLoc, Msg);
   }

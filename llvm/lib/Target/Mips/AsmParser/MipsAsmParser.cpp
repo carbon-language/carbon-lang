@@ -127,6 +127,7 @@ class MipsAsmParser : public MCTargetAsmParser {
   bool MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                                OperandVector &Operands, MCStreamer &Out,
                                uint64_t &ErrorInfo,
+                               FeatureBitset &ErrorMissingFeature,
                                bool MatchingInlineAsm) override;
 
   /// Parse a register as used in CFI directives
@@ -2722,12 +2723,13 @@ bool MipsAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                                             OperandVector &Operands,
                                             MCStreamer &Out,
                                             uint64_t &ErrorInfo,
+                                            FeatureBitset &ErrorMissingFeature,
                                             bool MatchingInlineAsm) {
 
   MCInst Inst;
   SmallVector<MCInst, 8> Instructions;
   unsigned MatchResult =
-      MatchInstructionImpl(Operands, Inst, ErrorInfo, MatchingInlineAsm);
+      MatchInstructionImpl(Operands, Inst, ErrorInfo, ErrorMissingFeature, MatchingInlineAsm);
 
   switch (MatchResult) {
   case Match_Success: {

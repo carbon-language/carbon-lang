@@ -49,6 +49,7 @@ class SparcAsmParser : public MCTargetAsmParser {
   bool MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                                OperandVector &Operands, MCStreamer &Out,
                                uint64_t &ErrorInfo,
+                               FeatureBitset &ErrorMissingFeature,
                                bool MatchingInlineAsm) override;
   bool ParseRegister(unsigned &RegNo, SMLoc &StartLoc, SMLoc &EndLoc) override;
   bool ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
@@ -445,10 +446,12 @@ bool SparcAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                                              OperandVector &Operands,
                                              MCStreamer &Out,
                                              uint64_t &ErrorInfo,
+                                             FeatureBitset &ErrorMissingFeature,
                                              bool MatchingInlineAsm) {
   MCInst Inst;
   SmallVector<MCInst, 8> Instructions;
   unsigned MatchResult = MatchInstructionImpl(Operands, Inst, ErrorInfo,
+                                              ErrorMissingFeature,
                                               MatchingInlineAsm);
   switch (MatchResult) {
   case Match_Success: {
@@ -510,7 +513,7 @@ ParseRegister(unsigned &RegNo, SMLoc &StartLoc, SMLoc &EndLoc)
   return Error(StartLoc, "invalid register name");
 }
 
-static void applyMnemonicAliases(StringRef &Mnemonic, uint64_t Features,
+static void applyMnemonicAliases(StringRef &Mnemonic, FeatureBitset Features,
                                  unsigned VariantID);
 
 bool SparcAsmParser::ParseInstruction(ParseInstructionInfo &Info,

@@ -404,6 +404,7 @@ public:
   bool MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                                OperandVector &Operands, MCStreamer &Out,
                                uint64_t &ErrorInfo,
+                               FeatureBitset &ErrorMissingFeature,
                                bool MatchingInlineAsm) override;
 
   // Used by the TableGen code to parse particular operand types.
@@ -782,12 +783,13 @@ bool SystemZAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                                                OperandVector &Operands,
                                                MCStreamer &Out,
                                                uint64_t &ErrorInfo,
+                                               FeatureBitset &ErrorMissingFeature,
                                                bool MatchingInlineAsm) {
   MCInst Inst;
   unsigned MatchResult;
 
   MatchResult = MatchInstructionImpl(Operands, Inst, ErrorInfo,
-                                     MatchingInlineAsm);
+                                     ErrorMissingFeature, MatchingInlineAsm);
   switch (MatchResult) {
   case Match_Success:
     Inst.setLoc(IDLoc);
@@ -795,17 +797,15 @@ bool SystemZAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
     return false;
 
   case Match_MissingFeature: {
-    assert(ErrorInfo && "Unknown missing feature!");
+    assert(ErrorMissingFeature.any() && "Unknown missing feature!");
     // Special case the error message for the very common case where only
     // a single subtarget feature is missing
     std::string Msg = "instruction requires:";
-    uint64_t Mask = 1;
-    for (unsigned I = 0; I < sizeof(ErrorInfo) * 8 - 1; ++I) {
-      if (ErrorInfo & Mask) {
+    for (unsigned I = 0; I < ErrorMissingFeature.size(); ++I) {
+      if (ErrorMissingFeature[I]) {
         Msg += " ";
-        Msg += getSubtargetFeatureName(ErrorInfo & Mask);
+        Msg += getSubtargetFeatureName(I);
       }
-      Mask <<= 1;
     }
     return Error(IDLoc, Msg);
   }
