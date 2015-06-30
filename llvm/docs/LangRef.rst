@@ -3642,7 +3642,7 @@ will be partially unrolled.
 '``llvm.loop.unroll.disable``' Metadata
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-This metadata either disables loop unrolling. The metadata has a single operand
+This metadata disables loop unrolling. The metadata has a single operand
 which is the string ``llvm.loop.unroll.disable``.  For example:
 
 .. code-block:: llvm
@@ -3652,7 +3652,7 @@ which is the string ``llvm.loop.unroll.disable``.  For example:
 '``llvm.loop.unroll.runtime.disable``' Metadata
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-This metadata either disables runtime loop unrolling. The metadata has a single
+This metadata disables runtime loop unrolling. The metadata has a single
 operand which is the string ``llvm.loop.unroll.runtime.disable``.  For example:
 
 .. code-block:: llvm
@@ -3662,8 +3662,8 @@ operand which is the string ``llvm.loop.unroll.runtime.disable``.  For example:
 '``llvm.loop.unroll.full``' Metadata
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-This metadata either suggests that the loop should be unrolled fully. The
-metadata has a single operand which is the string ``llvm.loop.unroll.disable``.
+This metadata suggests that the loop should be unrolled fully. The
+metadata has a single operand which is the string ``llvm.loop.unroll.full``.
 For example:
 
 .. code-block:: llvm
