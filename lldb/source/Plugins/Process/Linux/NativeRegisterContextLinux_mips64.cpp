@@ -1060,9 +1060,8 @@ NativeRegisterContextLinux_mips64::DoReadRegisterValue(uint32_t offset,
                                                        uint32_t size,
                                                        RegisterValue &value)
 {
-    Error error;
     elf_gregset_t regs;
-    NativeProcessLinux::PtraceWrapper(PTRACE_GETREGS, m_thread.GetID(), NULL, &regs, sizeof regs, error);
+    Error error = NativeProcessLinux::PtraceWrapper(PTRACE_GETREGS, m_thread.GetID(), NULL, &regs, sizeof regs);
     if (error.Success())
     {
         lldb_private::ArchSpec arch;
@@ -1079,13 +1078,12 @@ NativeRegisterContextLinux_mips64::DoWriteRegisterValue(uint32_t offset,
                                                         const char* reg_name,
                                                         const RegisterValue &value)
 {
-    Error error;
     elf_gregset_t regs;
-    NativeProcessLinux::PtraceWrapper(PTRACE_GETREGS, m_thread.GetID(), NULL, &regs, sizeof regs, error);
+    Error error = NativeProcessLinux::PtraceWrapper(PTRACE_GETREGS, m_thread.GetID(), NULL, &regs, sizeof regs);
     if (error.Success())
     {
         ::memcpy((void *)(((unsigned char *)(&regs)) + offset), value.GetBytes(), 8);
-        NativeProcessLinux::PtraceWrapper(PTRACE_SETREGS, m_thread.GetID(), NULL, &regs, sizeof regs, error);
+        error = NativeProcessLinux::PtraceWrapper(PTRACE_SETREGS, m_thread.GetID(), NULL, &regs, sizeof regs);
     }
     return error;
 }
@@ -1093,19 +1091,13 @@ NativeRegisterContextLinux_mips64::DoWriteRegisterValue(uint32_t offset,
 Error
 NativeRegisterContextLinux_mips64::DoReadWatchPointRegisterValue(lldb::tid_t tid, void* watch_readback)
 {
-    Error error;
-    NativeProcessLinux::PtraceWrapper(
-            PTRACE_GET_WATCH_REGS, m_thread.GetID(), watch_readback, NULL, 0, error);
-    return error;
+    return NativeProcessLinux::PtraceWrapper( PTRACE_GET_WATCH_REGS, m_thread.GetID(), watch_readback);
 }
 
 Error
 NativeRegisterContextLinux_mips64::DoWriteWatchPointRegisterValue(lldb::tid_t tid, void* watch_reg_value)
 {
-    Error error;
-    NativeProcessLinux::PtraceWrapper(PTRACE_SET_WATCH_REGS,
-            m_thread.GetID(), watch_reg_value, NULL, 0, error);
-    return error;
+    return NativeProcessLinux::PtraceWrapper(PTRACE_SET_WATCH_REGS, m_thread.GetID(), watch_reg_value);
 }
 
 #endif // defined (__mips__)

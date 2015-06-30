@@ -141,8 +141,13 @@ namespace process_linux {
         Error
         DoOperation(const Operation &op);
 
-        static long
-        PtraceWrapper(int req, lldb::pid_t pid, void *addr, void *data, size_t data_size, Error& error);
+        static Error
+        PtraceWrapper(int req,
+                      lldb::pid_t pid,
+                      void *addr = nullptr,
+                      void *data = nullptr,
+                      size_t data_size = 0,
+                      long *result = nullptr);
 
     protected:
         // ---------------------------------------------------------------------
