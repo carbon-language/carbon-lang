@@ -520,6 +520,19 @@ ProcessGDBRemote::BuildDynamicRegisterInfo (bool force)
         GetGlobalPluginProperties()->SetPacketTimeout(host_packet_timeout);
     }
 
+    // Register info search order: 
+    //     1 - Use the target definition python file if one is specified.
+    //     2 - If the target definition doesn't have any of the info from the target.xml (registers) then proceed to read the target.xml.
+    //     3 - Fall back on the qRegisterInfo packets.
+
+    FileSpec target_definition_fspec = GetGlobalPluginProperties()->GetTargetDefinitionFile ();
+    if (target_definition_fspec)
+    {
+        // See if we can get register definitions from a python file
+        if (ParsePythonTargetDefinition (target_definition_fspec))
+            return;
+    }
+
     if (GetGDBServerRegisterInfo ())
         return;
     
@@ -677,15 +690,6 @@ ProcessGDBRemote::BuildDynamicRegisterInfo (bool force)
     {
         m_register_info.Finalize(GetTarget().GetArchitecture());
         return;
-    }
-
-    FileSpec target_definition_fspec = GetGlobalPluginProperties()->GetTargetDefinitionFile ();
-        
-    if (target_definition_fspec)
-    {
-        // See if we can get register definitions from a python file
-        if (ParsePythonTargetDefinition (target_definition_fspec))
-            return;
     }
 
     // We didn't get anything if the accumulated reg_num is zero.  See if we are
