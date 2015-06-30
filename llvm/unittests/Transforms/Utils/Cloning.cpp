@@ -415,4 +415,39 @@ TEST_F(CloneFunc, DebugIntrinsics) {
   }
 }
 
+class CloneModule : public ::testing::Test {
+protected:
+  void SetUp() override {
+    SetupModule();
+    CreateOldModule();
+    CreateNewModule();
+  }
+
+  void SetupModule() { OldM = new Module("", C); }
+
+  void CreateOldModule() {
+    IRBuilder<> IBuilder(C);
+
+    auto *FuncType = FunctionType::get(Type::getVoidTy(C), false);
+    auto *PersFn = Function::Create(FuncType, GlobalValue::ExternalLinkage,
+                                    "persfn", OldM);
+    auto *F =
+        Function::Create(FuncType, GlobalValue::PrivateLinkage, "f", OldM);
+    F->setPersonalityFn(PersFn);
+    auto *Entry = BasicBlock::Create(C, "", F);
+    IBuilder.SetInsertPoint(Entry);
+    IBuilder.CreateRetVoid();
+  }
+
+  void CreateNewModule() { NewM = llvm::CloneModule(OldM); }
+
+  LLVMContext C;
+  Module *OldM;
+  Module *NewM;
+};
+
+TEST_F(CloneModule, Verify) {
+  EXPECT_FALSE(verifyModule(*NewM));
+}
+
 }

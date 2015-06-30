@@ -99,7 +99,11 @@ Module *llvm::CloneModule(const Module *M, ValueToValueMapTy &VMap) {
 
       SmallVector<ReturnInst*, 8> Returns;  // Ignore returns cloned.
       CloneFunctionInto(F, I, VMap, /*ModuleLevelChanges=*/true, Returns);
+
     }
+
+    if (I->hasPersonalityFn())
+      F->setPersonalityFn(MapValue(I->getPersonalityFn(), VMap));
   }
 
   // And aliases
