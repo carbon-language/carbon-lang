@@ -137,16 +137,24 @@ error:
 	return -2;
 }
 
-static __isl_give isl_qpolynomial *bound2poly(__isl_take isl_constraint *bound,
-	__isl_take isl_space *dim, unsigned pos, int sign)
+/* Return a positive ("sign" > 0) or negative ("sign" < 0) infinite polynomial
+ * with domain space "space".
+ */
+static __isl_give isl_qpolynomial *signed_infty(__isl_take isl_space *space,
+	int sign)
 {
-	if (!bound) {
-		if (sign > 0)
-			return isl_qpolynomial_infty_on_domain(dim);
-		else
-			return isl_qpolynomial_neginfty_on_domain(dim);
-	}
-	isl_space_free(dim);
+	if (sign > 0)
+		return isl_qpolynomial_infty_on_domain(space);
+	else
+		return isl_qpolynomial_neginfty_on_domain(space);
+}
+
+static __isl_give isl_qpolynomial *bound2poly(__isl_take isl_constraint *bound,
+	__isl_take isl_space *space, unsigned pos, int sign)
+{
+	if (!bound)
+		return signed_infty(space, sign);
+	isl_space_free(space);
 	return isl_qpolynomial_from_constraint(bound, isl_dim_set, pos);
 }
 
@@ -270,6 +278,52 @@ static isl_stat add_guarded_poly(__isl_take isl_basic_set *bset,
 	return isl_stat_ok;
 }
 
+/* Plug in "sub" for the variable at position "pos" in "poly".
+ *
+ * If "sub" is an infinite polynomial and if the variable actually
+ * appears in "poly", then calling isl_qpolynomial_substitute
+ * to perform the substitution may result in a NaN result.
+ * In such cases, return positive or negative infinity instead,
+ * depending on whether an upper bound or a lower bound is being computed,
+ * and mark the result as not being tight.
+ */
+static __isl_give isl_qpolynomial *plug_in_at_pos(
+	__isl_take isl_qpolynomial *poly, int pos,
+	__isl_take isl_qpolynomial *sub, struct range_data *data)
+{
+	isl_bool involves, infty;
+
+	involves = isl_qpolynomial_involves_dims(poly, isl_dim_in, pos, 1);
+	if (involves < 0)
+		goto error;
+	if (!involves) {
+		isl_qpolynomial_free(sub);
+		return poly;
+	}
+
+	infty = isl_qpolynomial_is_infty(sub);
+	if (infty >= 0 && !infty)
+		infty = isl_qpolynomial_is_neginfty(sub);
+	if (infty < 0)
+		goto error;
+	if (infty) {
+		isl_space *space = isl_qpolynomial_get_domain_space(poly);
+		data->tight = 0;
+		isl_qpolynomial_free(poly);
+		isl_qpolynomial_free(sub);
+		return signed_infty(space, data->sign);
+	}
+
+	poly = isl_qpolynomial_substitute(poly, isl_dim_in, pos, 1, &sub);
+	isl_qpolynomial_free(sub);
+
+	return poly;
+error:
+	isl_qpolynomial_free(poly);
+	isl_qpolynomial_free(sub);
+	return NULL;
+}
+
 /* Given a lower and upper bound on the final variable and constraints
  * on the remaining variables where these bounds are active,
  * eliminate the variable from data->poly based on these bounds.
@@ -312,10 +366,8 @@ static isl_stat propagate_on_bound_pair(__isl_take isl_constraint *lower,
 			isl_constraint_free(upper);
 		}
 		poly = isl_qpolynomial_copy(data->poly);
-		poly = isl_qpolynomial_substitute(poly, isl_dim_in, nvar, 1, &sub);
+		poly = plug_in_at_pos(poly, nvar, sub, data);
 		poly = isl_qpolynomial_drop_dims(poly, isl_dim_in, nvar, 1);
-
-		isl_qpolynomial_free(sub);
 	} else {
 		isl_qpolynomial *l, *u;
 		isl_qpolynomial *pos, *neg;
@@ -331,14 +383,11 @@ static isl_stat propagate_on_bound_pair(__isl_take isl_constraint *lower,
 		pos = isl_qpolynomial_terms_of_sign(data->poly, data->signs, sign);
 		neg = isl_qpolynomial_terms_of_sign(data->poly, data->signs, -sign);
 
-		pos = isl_qpolynomial_substitute(pos, isl_dim_in, nvar, 1, &u);
-		neg = isl_qpolynomial_substitute(neg, isl_dim_in, nvar, 1, &l);
+		pos = plug_in_at_pos(pos, nvar, u, data);
+		neg = plug_in_at_pos(neg, nvar, l, data);
 
 		poly = isl_qpolynomial_add(pos, neg);
 		poly = isl_qpolynomial_drop_dims(poly, isl_dim_in, nvar, 1);
-
-		isl_qpolynomial_free(u);
-		isl_qpolynomial_free(l);
 	}
 
 	if (isl_basic_set_dim(bset, isl_dim_set) == 0)

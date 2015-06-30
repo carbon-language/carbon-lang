@@ -18,6 +18,7 @@
 #include <isl/union_map.h>
 #include <isl_ast_build_private.h>
 #include <isl_ast_private.h>
+#include <isl_config.h>
 
 /* Construct a map that isolates the current dimension.
  *

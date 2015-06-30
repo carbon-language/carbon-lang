@@ -1764,6 +1764,91 @@ error:
 	return NULL;
 }
 
+/* Reduce the partial schedule of the band node "node"
+ * modulo the factors in "mv".
+ */
+__isl_give isl_schedule_node *isl_schedule_node_band_mod(
+	__isl_take isl_schedule_node *node, __isl_take isl_multi_val *mv)
+{
+	isl_schedule_tree *tree;
+	isl_bool anchored;
+
+	if (!node || !mv)
+		goto error;
+	if (check_space_multi_val(node, mv) < 0)
+		goto error;
+	anchored = isl_schedule_node_is_subtree_anchored(node);
+	if (anchored < 0)
+		goto error;
+	if (anchored)
+		isl_die(isl_schedule_node_get_ctx(node), isl_error_invalid,
+			"cannot perform mod on band node with anchored subtree",
+			goto error);
+
+	tree = isl_schedule_node_get_tree(node);
+	tree = isl_schedule_tree_band_mod(tree, mv);
+	return isl_schedule_node_graft_tree(node, tree);
+error:
+	isl_multi_val_free(mv);
+	isl_schedule_node_free(node);
+	return NULL;
+}
+
+/* Make sure that that spaces of "node" and "mupa" are the same.
+ * Return isl_stat_error on error, reporting the error to the user.
+ */
+static isl_stat check_space_multi_union_pw_aff(
+	__isl_keep isl_schedule_node *node,
+	__isl_keep isl_multi_union_pw_aff *mupa)
+{
+	isl_space *node_space, *mupa_space;
+	isl_bool equal;
+
+	node_space = isl_schedule_node_band_get_space(node);
+	mupa_space = isl_multi_union_pw_aff_get_space(mupa);
+	equal = isl_space_tuple_is_equal(node_space, isl_dim_set,
+					mupa_space, isl_dim_set);
+	isl_space_free(mupa_space);
+	isl_space_free(node_space);
+	if (equal < 0)
+		return isl_stat_error;
+	if (!equal)
+		isl_die(isl_schedule_node_get_ctx(node), isl_error_invalid,
+			"spaces don't match", return isl_stat_error);
+
+	return isl_stat_ok;
+}
+
+/* Shift the partial schedule of the band node "node" by "shift".
+ */
+__isl_give isl_schedule_node *isl_schedule_node_band_shift(
+	__isl_take isl_schedule_node *node,
+	__isl_take isl_multi_union_pw_aff *shift)
+{
+	isl_schedule_tree *tree;
+	int anchored;
+
+	if (!node || !shift)
+		goto error;
+	if (check_space_multi_union_pw_aff(node, shift) < 0)
+		goto error;
+	anchored = isl_schedule_node_is_subtree_anchored(node);
+	if (anchored < 0)
+		goto error;
+	if (anchored)
+		isl_die(isl_schedule_node_get_ctx(node), isl_error_invalid,
+			"cannot shift band node with anchored subtree",
+			goto error);
+
+	tree = isl_schedule_node_get_tree(node);
+	tree = isl_schedule_tree_band_shift(tree, shift);
+	return isl_schedule_node_graft_tree(node, tree);
+error:
+	isl_multi_union_pw_aff_free(shift);
+	isl_schedule_node_free(node);
+	return NULL;
+}
+
 /* Tile "node" with tile sizes "sizes".
  *
  * The current node is replaced by two nested nodes corresponding

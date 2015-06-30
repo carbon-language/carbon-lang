@@ -17466,6 +17466,9 @@ fi
 
 	;;
 esac
+if test "x$with_int" = "ximath-32" -a "x$GCC" = "xyes"; then
+	MP_CPPFLAGS="-std=gnu99 $MP_CPPFLAGS"
+fi
 
  if test x$with_int = ximath -o x$with_int = ximath-32; then
   IMATH_FOR_MP_TRUE=
@@ -17523,6 +17526,104 @@ cat >>confdefs.h <<_ACEOF
 #define HAVE_DECL___BUILTIN_FFS $ac_have_decl
 _ACEOF
 
+ac_fn_c_check_decl "$LINENO" "_BitScanForward" "ac_cv_have_decl__BitScanForward" "#include <intrin.h>
+"
+if test "x$ac_cv_have_decl__BitScanForward" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL__BITSCANFORWARD $ac_have_decl
+_ACEOF
+
+if test "x$ac_cv_have_decl_ffs" = xno -a \
+		"x$ac_cv_have_decl___builtin_ffs" = xno -a \
+		"x$ac_cv_have_decl__BitScanForward" = xno; then
+	as_fn_error $? "No ffs implementation found" "$LINENO" 5
+fi
+ac_fn_c_check_decl "$LINENO" "strcasecmp" "ac_cv_have_decl_strcasecmp" "#include <strings.h>
+"
+if test "x$ac_cv_have_decl_strcasecmp" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_STRCASECMP $ac_have_decl
+_ACEOF
+ac_fn_c_check_decl "$LINENO" "strncasecmp" "ac_cv_have_decl_strncasecmp" "#include <strings.h>
+"
+if test "x$ac_cv_have_decl_strncasecmp" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_STRNCASECMP $ac_have_decl
+_ACEOF
+
+ac_fn_c_check_decl "$LINENO" "_stricmp" "ac_cv_have_decl__stricmp" "#include <string.h>
+"
+if test "x$ac_cv_have_decl__stricmp" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL__STRICMP $ac_have_decl
+_ACEOF
+ac_fn_c_check_decl "$LINENO" "_strnicmp" "ac_cv_have_decl__strnicmp" "#include <string.h>
+"
+if test "x$ac_cv_have_decl__strnicmp" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL__STRNICMP $ac_have_decl
+_ACEOF
+
+if test "x$ac_cv_have_decl_strcasecmp" = xno -a \
+		"x$ac_cv_have_decl__stricmp" = xno; then
+	as_fn_error $? "No strcasecmp implementation found" "$LINENO" 5
+fi
+if test "x$ac_cv_have_decl_strncasecmp" = xno -a \
+		"x$ac_cv_have_decl__strnicmp" = xno; then
+	as_fn_error $? "No strncasecmp implementation found" "$LINENO" 5
+fi
+ac_fn_c_check_decl "$LINENO" "snprintf" "ac_cv_have_decl_snprintf" "#include <stdio.h>
+"
+if test "x$ac_cv_have_decl_snprintf" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_SNPRINTF $ac_have_decl
+_ACEOF
+ac_fn_c_check_decl "$LINENO" "_snprintf" "ac_cv_have_decl__snprintf" "#include <stdio.h>
+"
+if test "x$ac_cv_have_decl__snprintf" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL__SNPRINTF $ac_have_decl
+_ACEOF
+
+if test "x$ac_cv_have_decl_snprintf" = xno -a \
+		"x$ac_cv_have_decl__snprintf" = xno; then
+	as_fn_error $? "No snprintf implementation found" "$LINENO" 5
+fi
 
 
 

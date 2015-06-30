@@ -59,6 +59,9 @@ imath|imath-32)
 	AX_DETECT_IMATH
 	;;
 esac
+if test "x$with_int" = "ximath-32" -a "x$GCC" = "xyes"; then
+	MP_CPPFLAGS="-std=gnu99 $MP_CPPFLAGS"
+fi
 
 AM_CONDITIONAL(IMATH_FOR_MP, test x$with_int = ximath -o x$with_int = ximath-32)
 AM_CONDITIONAL(GMP_FOR_MP, test x$with_int = xgmp)
@@ -70,6 +73,27 @@ AS_IF([test "x$with_int" == "ximath-32"], [
 
 AC_CHECK_DECLS(ffs,[],[],[#include <strings.h>])
 AC_CHECK_DECLS(__builtin_ffs,[],[],[])
+AC_CHECK_DECLS([_BitScanForward],[],[],[#include <intrin.h>])
+if test "x$ac_cv_have_decl_ffs" = xno -a \
+		"x$ac_cv_have_decl___builtin_ffs" = xno -a \
+		"x$ac_cv_have_decl__BitScanForward" = xno; then
+	AC_MSG_ERROR([No ffs implementation found])
+fi
+AC_CHECK_DECLS([strcasecmp,strncasecmp],[],[],[#include <strings.h>])
+AC_CHECK_DECLS([_stricmp,_strnicmp],[],[],[#include <string.h>])
+if test "x$ac_cv_have_decl_strcasecmp" = xno -a \
+		"x$ac_cv_have_decl__stricmp" = xno; then
+	AC_MSG_ERROR([No strcasecmp implementation found])
+fi
+if test "x$ac_cv_have_decl_strncasecmp" = xno -a \
+		"x$ac_cv_have_decl__strnicmp" = xno; then
+	AC_MSG_ERROR([No strncasecmp implementation found])
+fi
+AC_CHECK_DECLS([snprintf,_snprintf],[],[],[#include <stdio.h>])
+if test "x$ac_cv_have_decl_snprintf" = xno -a \
+		"x$ac_cv_have_decl__snprintf" = xno; then
+	AC_MSG_ERROR([No snprintf implementation found])
+fi
 
 AC_SUBST(CLANG_CXXFLAGS)
 AC_SUBST(CLANG_LDFLAGS)

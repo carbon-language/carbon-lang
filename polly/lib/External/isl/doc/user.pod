@@ -641,6 +641,8 @@ They can be inspected using the following functions.
 	#include <isl/val.h>
 	long isl_val_get_num_si(__isl_keep isl_val *v);
 	long isl_val_get_den_si(__isl_keep isl_val *v);
+	__isl_give isl_val *isl_val_get_den_val(
+		__isl_keep isl_val *v);
 	double isl_val_get_d(__isl_keep isl_val *v);
 	size_t isl_val_n_abs_num_chunks(__isl_keep isl_val *v,
 		size_t size);
@@ -2178,6 +2180,14 @@ from
 
 	#include <isl/map.h>
 	int isl_map_n_basic_map(__isl_keep isl_map *map);
+
+It is also possible to obtain a list of basic sets from a set
+
+	#include <isl/set.h>
+	__isl_give isl_basic_set_list *isl_set_get_basic_set_list(
+		__isl_keep isl_set *set);
+
+The returned list can be manipulated using the functions in L<"Lists">.
 
 To iterate over the constraints of a basic set or map, use
 
@@ -6261,7 +6271,7 @@ The functions C<isl_space_range_factor_domain> and
 C<isl_space_range_factor_range> extract the two arguments from
 the result of a call to C<isl_space_range_product>.
 
-The arguments of a call to C<isl_map_range_product> can be extracted
+The arguments of a call to a product can be extracted
 from the result using the following functions.
 
 	#include <isl/map.h>
@@ -6294,6 +6304,8 @@ from the result using the following functions.
 		__isl_take isl_union_map *umap);
 
 	#include <isl/val.h>
+	__isl_give isl_multi_val *isl_multi_val_factor_range(
+		__isl_take isl_multi_val *mv);
 	__isl_give isl_multi_val *
 	isl_multi_val_range_factor_domain(
 		__isl_take isl_multi_val *mv);
@@ -6302,6 +6314,8 @@ from the result using the following functions.
 		__isl_take isl_multi_val *mv);
 
 	#include <isl/aff.h>
+	__isl_give isl_multi_aff *isl_multi_aff_factor_range(
+		__isl_take isl_multi_aff *ma);
 	__isl_give isl_multi_aff *
 	isl_multi_aff_range_factor_domain(
 		__isl_take isl_multi_aff *ma);
@@ -6309,11 +6323,17 @@ from the result using the following functions.
 	isl_multi_aff_range_factor_range(
 		__isl_take isl_multi_aff *ma);
 	__isl_give isl_multi_pw_aff *
+	isl_multi_pw_aff_factor_range(
+		__isl_take isl_multi_pw_aff *mpa);
+	__isl_give isl_multi_pw_aff *
 	isl_multi_pw_aff_range_factor_domain(
 		__isl_take isl_multi_pw_aff *mpa);
 	__isl_give isl_multi_pw_aff *
 	isl_multi_pw_aff_range_factor_range(
 		__isl_take isl_multi_pw_aff *mpa);
+	__isl_give isl_multi_union_pw_aff *
+	isl_multi_union_pw_aff_factor_range(
+		__isl_take isl_multi_union_pw_aff *mupa);
 	__isl_give isl_multi_union_pw_aff *
 	isl_multi_union_pw_aff_range_factor_domain(
 		__isl_take isl_multi_union_pw_aff *mupa);
@@ -6324,6 +6344,11 @@ from the result using the following functions.
 The splice functions are a generalization of the flat product functions,
 where the second argument may be inserted at any position inside
 the first argument rather than being placed at the end.
+The functions C<isl_multi_val_factor_range>,
+C<isl_multi_aff_factor_range>,
+C<isl_multi_pw_aff_factor_range> and
+C<isl_multi_union_pw_aff_factor_range>
+take functions that live in a set space.
 
 	#include <isl/val.h>
 	__isl_give isl_multi_val *isl_multi_val_range_splice(
@@ -6520,6 +6545,9 @@ to simplify the expression associated to each cell.
 =item * Binary Arithmethic Operations
 
 	#include <isl/val.h>
+	__isl_give isl_multi_val *isl_multi_val_add(
+		__isl_take isl_multi_val *mv1,
+		__isl_take isl_multi_val *mv2);
 	__isl_give isl_multi_val *isl_multi_val_sub(
 		__isl_take isl_multi_val *mv1,
 		__isl_take isl_multi_val *mv2);
@@ -6534,6 +6562,9 @@ to simplify the expression associated to each cell.
 	__isl_give isl_pw_aff *isl_pw_aff_add(
 		__isl_take isl_pw_aff *pwaff1,
 		__isl_take isl_pw_aff *pwaff2);
+	__isl_give isl_multi_pw_aff *isl_multi_pw_aff_add(
+		__isl_take isl_multi_pw_aff *mpa1,
+		__isl_take isl_multi_pw_aff *mpa2);
 	__isl_give isl_pw_multi_aff *isl_pw_multi_aff_add(
 		__isl_take isl_pw_multi_aff *pma1,
 		__isl_take isl_pw_multi_aff *pma2);
@@ -6543,6 +6574,10 @@ to simplify the expression associated to each cell.
 	__isl_give isl_union_pw_multi_aff *isl_union_pw_multi_aff_add(
 		__isl_take isl_union_pw_multi_aff *upma1,
 		__isl_take isl_union_pw_multi_aff *upma2);
+	__isl_give isl_multi_union_pw_aff *
+	isl_multi_union_pw_aff_add(
+		__isl_take isl_multi_union_pw_aff *mupa1,
+		__isl_take isl_multi_union_pw_aff *mupa2);
 	__isl_give isl_pw_aff *isl_pw_aff_min(
 		__isl_take isl_pw_aff *pwaff1,
 		__isl_take isl_pw_aff *pwaff2);
@@ -8098,7 +8133,7 @@ introduced expansion node.  Grouping instances of different statements
 ensures that they will be treated as a single statement by the
 AST generator up to the point of the expansion node.
 
-The partial schedule of a band node can be scaled (down) using
+The partial schedule of a band node can be scaled (down) or reduced using
 the following functions.
 
 	#include <isl/schedule_node.h>
@@ -8110,10 +8145,25 @@ the following functions.
 	isl_schedule_node_band_scale_down(
 		__isl_take isl_schedule_node *node,
 		__isl_take isl_multi_val *mv);
+	__isl_give isl_schedule_node *
+	isl_schedule_node_band_mod(
+		__isl_take isl_schedule_node *node,
+		__isl_take isl_multi_val *mv);
 
 The spaces of the two arguments need to match.
 After scaling, the partial schedule is replaced by its greatest
 integer part to ensure that the schedule remains integral.
+
+The partial schedule of a band node can be shifted by an
+C<isl_multi_union_pw_aff> with a domain that is a superset
+of the domain of the partial schedule using
+the following function.
+
+	#include <isl/schedule_node.h>
+	__isl_give isl_schedule_node *
+	isl_schedule_node_band_shift(
+		__isl_take isl_schedule_node *node,
+		__isl_take isl_multi_union_pw_aff *shift);
 
 A band node can be tiled using the following function.
 

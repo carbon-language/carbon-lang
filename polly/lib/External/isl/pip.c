@@ -9,7 +9,6 @@
 
 #include <assert.h>
 #include <string.h>
-#include <strings.h>
 #include <isl_map_private.h>
 #include <isl/aff.h>
 #include <isl/set.h>
@@ -22,6 +21,7 @@
 #include <isl_point_private.h>
 #include <isl_vec_private.h>
 #include <isl/options.h>
+#include <isl_config.h>
 
 /* The input of this program is the same as that of the "example" program
  * from the PipLib distribution, except that the "big parameter column"

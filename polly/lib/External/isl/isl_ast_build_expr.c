@@ -661,6 +661,12 @@ static int mod_constraint_is_simpler(struct isl_extract_mod_data *data,
  * not to involve any coefficients that are multiples of d, "c" may
  * very well involve such coefficients.  This means that we may actually
  * miss some cases.
+ *
+ * If the constant term is "too large", then the constraint is rejected,
+ * where "too large" is fairly arbitrarily set to 1 << 15.
+ * We do this to avoid picking up constraints that bound a variable
+ * by a very large number, say the largest or smallest possible
+ * variable in the representation of some integer type.
  */
 static isl_stat check_parallel_or_opposite(__isl_take isl_constraint *c,
 	void *user)
@@ -682,6 +688,15 @@ static isl_stat check_parallel_or_opposite(__isl_take isl_constraint *c,
 			if (a != b)
 				parallel = opposite = 0;
 		}
+	}
+
+	if (parallel || opposite) {
+		isl_val *v;
+
+		v = isl_val_abs(isl_constraint_get_constant_val(c));
+		if (isl_val_cmp_si(v, 1 << 15) > 0)
+			parallel = opposite = 0;
+		isl_val_free(v);
 	}
 
 	for (t = 0; t < 2; ++t) {
@@ -1467,55 +1482,62 @@ __isl_give isl_ast_expr *isl_ast_build_expr_from_basic_set(
 	return res;
 }
 
-struct isl_expr_from_set_data {
-	isl_ast_build *build;
-	int first;
-	isl_ast_expr *res;
-};
-
-/* Construct an isl_ast_expr that evaluates the conditions defining "bset"
- * and add it to data->res.
- * The result is simplified in terms of data->build->domain.
- */
-static isl_stat expr_from_set(__isl_take isl_basic_set *bset, void *user)
-{
-	struct isl_expr_from_set_data *data = user;
-	isl_ast_expr *expr;
-
-	expr = isl_ast_build_expr_from_basic_set(data->build, bset);
-	if (data->first)
-		data->res = expr;
-	else
-		data->res = isl_ast_expr_or(data->res, expr);
-
-	data->first = 0;
-
-	if (!data->res)
-		return isl_stat_error;
-	return isl_stat_ok;
-}
-
 /* Construct an isl_ast_expr that evaluates the conditions defining "set".
  * The result is simplified in terms of build->domain.
  *
  * If "set" is an (obviously) empty set, then return the expression "0".
+ *
+ * If there are multiple disjuncts in the description of the set,
+ * then subsequent disjuncts are simplified in a context where
+ * the previous disjuncts have been removed from build->domain.
+ * In particular, constraints that ensure that there is no overlap
+ * with these previous disjuncts, can be removed.
  *
  * "set" lives in the internal schedule space.
  */
 __isl_give isl_ast_expr *isl_ast_build_expr_from_set_internal(
 	__isl_keep isl_ast_build *build, __isl_take isl_set *set)
 {
-	struct isl_expr_from_set_data data = { build, 1, NULL };
+	int i, n;
+	isl_basic_set *bset;
+	isl_basic_set_list *list;
+	isl_set *domain;
+	isl_ast_expr *res;
 
-	if (isl_set_foreach_basic_set(set, &expr_from_set, &data) < 0)
-		data.res = isl_ast_expr_free(data.res);
-	else if (data.first) {
+	list = isl_set_get_basic_set_list(set);
+	isl_set_free(set);
+
+	if (!list)
+		return NULL;
+	n = isl_basic_set_list_n_basic_set(list);
+	if (n == 0) {
 		isl_ctx *ctx = isl_ast_build_get_ctx(build);
-		data.res = isl_ast_expr_from_val(isl_val_zero(ctx));
+		isl_basic_set_list_free(list);
+		return isl_ast_expr_from_val(isl_val_zero(ctx));
 	}
 
+	domain = isl_ast_build_get_domain(build);
+
+	bset = isl_basic_set_list_get_basic_set(list, 0);
+	set = isl_set_from_basic_set(isl_basic_set_copy(bset));
+	res = isl_ast_build_expr_from_basic_set(build, bset);
+
+	for (i = 1; i < n; ++i) {
+		isl_ast_expr *expr;
+
+		domain = isl_set_subtract(domain, set);
+		bset = isl_basic_set_list_get_basic_set(list, i);
+		set = isl_set_from_basic_set(isl_basic_set_copy(bset));
+		bset = isl_basic_set_gist(bset,
+				isl_set_simple_hull(isl_set_copy(domain)));
+		expr = isl_ast_build_expr_from_basic_set(build, bset);
+		res = isl_ast_expr_or(res, expr);
+	}
+
+	isl_set_free(domain);
 	isl_set_free(set);
-	return data.res;
+	isl_basic_set_list_free(list);
+	return res;
 }
 
 /* Construct an isl_ast_expr that evaluates the conditions defining "set".

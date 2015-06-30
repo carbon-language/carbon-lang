@@ -323,6 +323,20 @@ long isl_val_get_den_si(__isl_keep isl_val *v)
 	return isl_int_get_si(v->d);
 }
 
+/* Extract the denominator of a rational value "v" as an isl_val.
+ *
+ * If "v" is not a rational value, then the result is undefined.
+ */
+__isl_give isl_val *isl_val_get_den_val(__isl_keep isl_val *v)
+{
+	if (!v)
+		return NULL;
+	if (!isl_val_is_rat(v))
+		isl_die(isl_val_get_ctx(v), isl_error_invalid,
+			"expecting rational value", return NULL);
+	return isl_val_int_from_isl_int(isl_val_get_ctx(v), v->d);
+}
+
 /* Return an approximation of "v" as a double.
  */
 double isl_val_get_d(__isl_keep isl_val *v)

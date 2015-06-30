@@ -9,7 +9,6 @@
 
 #include <ctype.h>
 #include <string.h>
-#include <strings.h>
 #include <isl/ctx.h>
 #include <isl_stream_private.h>
 #include <isl/map.h>

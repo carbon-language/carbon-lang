@@ -869,6 +869,30 @@ __isl_give MULTI(BASE) *FN(MULTI(BASE),range_factor_range)(
 	return multi;
 }
 
+/* Given a function [B -> C], extract the function C.
+ */
+__isl_give MULTI(BASE) *FN(MULTI(BASE),factor_range)(
+	__isl_take MULTI(BASE) *multi)
+{
+	isl_space *space;
+	int total, keep;
+
+	if (!multi)
+		return NULL;
+	if (!isl_space_is_wrapping(multi->space))
+		isl_die(FN(MULTI(BASE),get_ctx)(multi), isl_error_invalid,
+			"not a product", return FN(MULTI(BASE),free)(multi));
+
+	space = FN(MULTI(BASE),get_space)(multi);
+	total = isl_space_dim(space, isl_dim_out);
+	space = isl_space_factor_range(space);
+	keep = isl_space_dim(space, isl_dim_out);
+	multi = FN(MULTI(BASE),drop_dims)(multi, isl_dim_out, 0, total - keep);
+	multi = FN(MULTI(BASE),reset_space)(multi, space);
+
+	return multi;
+}
+
 #ifndef NO_PRODUCT
 /* Given two MULTI(BASE)s A -> B and C -> D,
  * construct a MULTI(BASE) [A -> C] -> [B -> D].
@@ -1090,6 +1114,25 @@ error:
 	FN(MULTI(BASE),free)(multi1);
 	FN(MULTI(BASE),free)(multi2);
 	return NULL;
+}
+
+/* Add "multi2" from "multi1" and return the result.
+ *
+ * The parameters of "multi1" and "multi2" are assumed to have been aligned.
+ */
+static __isl_give MULTI(BASE) *FN(MULTI(BASE),add_aligned)(
+	__isl_take MULTI(BASE) *multi1, __isl_take MULTI(BASE) *multi2)
+{
+	return FN(MULTI(BASE),bin_op)(multi1, multi2, &FN(EL,add));
+}
+
+/* Add "multi2" from "multi1" and return the result.
+ */
+__isl_give MULTI(BASE) *FN(MULTI(BASE),add)(__isl_take MULTI(BASE) *multi1,
+	__isl_take MULTI(BASE) *multi2)
+{
+	return FN(MULTI(BASE),align_params_multi_multi_and)(multi1, multi2,
+						&FN(MULTI(BASE),add_aligned));
 }
 
 /* Subtract "multi2" from "multi1" and return the result.

@@ -75,12 +75,13 @@ static void int_test_single_value()
 static void invoke_alternate_representations_2args(char *arg1, char *arg2,
 	void (*fn)(isl_int, isl_int))
 {
+	int j;
 	isl_int int1, int2;
 
 	isl_int_init(int1);
 	isl_int_init(int2);
 
-	for (int j = 0; j < 4; ++j) {
+	for (j = 0; j < 4; ++j) {
 		isl_int_read(int1, arg1);
 		isl_int_read(int2, arg2);
 
@@ -104,13 +105,14 @@ static void invoke_alternate_representations_2args(char *arg1, char *arg2,
 static void invoke_alternate_representations_3args(char *arg1, char *arg2,
 	char *arg3, void (*fn)(isl_int, isl_int, isl_int))
 {
+	int j;
 	isl_int int1, int2, int3;
 
 	isl_int_init(int1);
 	isl_int_init(int2);
 	isl_int_init(int3);
 
-	for (int j = 0; j < 8; ++j) {
+	for (j = 0; j < 8; ++j) {
 		isl_int_read(int1, arg1);
 		isl_int_read(int2, arg2);
 		isl_int_read(int3, arg3);

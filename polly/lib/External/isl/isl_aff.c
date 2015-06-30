@@ -3950,25 +3950,6 @@ __isl_give isl_pw_multi_aff *isl_pw_multi_aff_identity(
 	return isl_pw_multi_aff_from_multi_aff(isl_multi_aff_identity(space));
 }
 
-/* Add "ma2" to "ma1" and return the result.
- *
- * The parameters of "ma1" and "ma2" are assumed to have been aligned.
- */
-static __isl_give isl_multi_aff *isl_multi_aff_add_aligned(
-	__isl_take isl_multi_aff *maff1, __isl_take isl_multi_aff *maff2)
-{
-	return isl_multi_aff_bin_op(maff1, maff2, &isl_aff_add);
-}
-
-/* Add "ma2" to "ma1" and return the result.
- */
-__isl_give isl_multi_aff *isl_multi_aff_add(__isl_take isl_multi_aff *ma1,
-	__isl_take isl_multi_aff *ma2)
-{
-	return isl_multi_aff_align_params_multi_multi_and(ma1, ma2,
-						&isl_multi_aff_add_aligned);
-}
-
 /* Exploit the equalities in "eq" to simplify the affine expressions.
  */
 static __isl_give isl_multi_aff *isl_multi_aff_substitute_equalities(

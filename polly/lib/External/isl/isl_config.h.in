@@ -44,6 +44,34 @@
    to 0 if you don't. */
 #undef HAVE_DECL_MP_GET_MEMORY_FUNCTIONS
 
+/* Define to 1 if you have the declaration of `snprintf', and to 0 if you
+   don't. */
+#undef HAVE_DECL_SNPRINTF
+
+/* Define to 1 if you have the declaration of `strcasecmp', and to 0 if you
+   don't. */
+#undef HAVE_DECL_STRCASECMP
+
+/* Define to 1 if you have the declaration of `strncasecmp', and to 0 if you
+   don't. */
+#undef HAVE_DECL_STRNCASECMP
+
+/* Define to 1 if you have the declaration of `_BitScanForward', and to 0 if
+   you don't. */
+#undef HAVE_DECL__BITSCANFORWARD
+
+/* Define to 1 if you have the declaration of `_snprintf', and to 0 if you
+   don't. */
+#undef HAVE_DECL__SNPRINTF
+
+/* Define to 1 if you have the declaration of `_stricmp', and to 0 if you
+   don't. */
+#undef HAVE_DECL__STRICMP
+
+/* Define to 1 if you have the declaration of `_strnicmp', and to 0 if you
+   don't. */
+#undef HAVE_DECL__STRNICMP
+
 /* Define to 1 if you have the declaration of `__builtin_ffs', and to 0 if you
    don't. */
 #undef HAVE_DECL___BUILTIN_FFS

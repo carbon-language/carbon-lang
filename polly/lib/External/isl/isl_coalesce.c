@@ -1689,7 +1689,7 @@ static int shift_div(struct isl_coalesce_info *info, int div, isl_int shift)
 {
 	unsigned total;
 
-	info->bmap = isl_basic_map_shift_div(info->bmap, div, shift);
+	info->bmap = isl_basic_map_shift_div(info->bmap, div, 0, shift);
 	if (!info->bmap)
 		return -1;
 
@@ -2464,7 +2464,7 @@ static enum isl_change coalesce_pair(int i, int j,
 
 /* Return the maximum of "a" and "b".
  */
-static inline int max(int a, int b)
+static int isl_max(int a, int b)
 {
 	return a > b ? a : b;
 }
@@ -2491,7 +2491,7 @@ static int coalesce_range(isl_ctx *ctx, struct isl_coalesce_info *info,
 	for (i = end1 - 1; i >= start1; --i) {
 		if (info[i].removed)
 			continue;
-		for (j = max(i + 1, start2); j < end2; ++j) {
+		for (j = isl_max(i + 1, start2); j < end2; ++j) {
 			enum isl_change changed;
 
 			if (info[j].removed)

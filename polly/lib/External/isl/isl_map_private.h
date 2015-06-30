@@ -458,7 +458,7 @@ __isl_give isl_basic_map *isl_basic_map_reduce_coefficients(
 	__isl_take isl_basic_map *bmap);
 
 __isl_give isl_basic_map *isl_basic_map_shift_div(
-	__isl_take isl_basic_map *bmap, int div, isl_int shift);
+	__isl_take isl_basic_map *bmap, int div, int pos, isl_int shift);
 
 __isl_give isl_basic_map_list *isl_map_get_basic_map_list(
 	__isl_keep isl_map *map);

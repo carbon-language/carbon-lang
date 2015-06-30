@@ -9832,6 +9832,28 @@ isl_stat isl_set_foreach_basic_set(__isl_keep isl_set *set,
 	return isl_stat_ok;
 }
 
+/* Return a list of basic sets, the union of which is equal to "set".
+ */
+__isl_give isl_basic_set_list *isl_set_get_basic_set_list(
+	__isl_keep isl_set *set)
+{
+	int i;
+	isl_basic_set_list *list;
+
+	if (!set)
+		return NULL;
+
+	list = isl_basic_set_list_alloc(isl_set_get_ctx(set), set->n);
+	for (i = 0; i < set->n; ++i) {
+		isl_basic_set *bset;
+
+		bset = isl_basic_set_copy(set->p[i]);
+		list = isl_basic_set_list_add(list, bset);
+	}
+
+	return list;
+}
+
 __isl_give isl_basic_set *isl_basic_set_lift(__isl_take isl_basic_set *bset)
 {
 	isl_space *dim;

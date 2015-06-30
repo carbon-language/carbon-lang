@@ -6,6 +6,6 @@ for (int c0 = 1; c0 <= 15; c0 += 1) {
     s2(c0);
     s1(c0);
   }
-  if (((-exprVar1 + 15) % 8) + c0 <= 15 || (c0 >= exprVar1 + 1 && (exprVar1 - c0 + 1) % 8 == 0))
+  if (((-exprVar1 + 15) % 8) + c0 <= 15 || (c0 >= 9 && (exprVar1 - c0 + 1) % 8 == 0))
     s5(c0);
 }
