@@ -61,6 +61,7 @@ public:
       : M(M), OS(OS), RegisterMaskIds(RegisterMaskIds) {}
 
   void print(const MachineInstr &MI);
+  void printMBBReference(const MachineBasicBlock &MBB);
   void print(const MachineOperand &Op, const TargetRegisterInfo *TRI);
 };
 
@@ -193,6 +194,14 @@ static void printReg(unsigned Reg, raw_ostream &OS,
     llvm_unreachable("Can't print this kind of register yet");
 }
 
+void MIPrinter::printMBBReference(const MachineBasicBlock &MBB) {
+  OS << "%bb." << MBB.getNumber();
+  if (const auto *BB = MBB.getBasicBlock()) {
+    if (BB->hasName())
+      OS << '.' << BB->getName();
+  }
+}
+
 void MIPrinter::print(const MachineOperand &Op, const TargetRegisterInfo *TRI) {
   switch (Op.getType()) {
   case MachineOperand::MO_Register:
@@ -204,11 +213,7 @@ void MIPrinter::print(const MachineOperand &Op, const TargetRegisterInfo *TRI) {
     OS << Op.getImm();
     break;
   case MachineOperand::MO_MachineBasicBlock:
-    OS << "%bb." << Op.getMBB()->getNumber();
-    if (const auto *BB = Op.getMBB()->getBasicBlock()) {
-      if (BB->hasName())
-        OS << '.' << BB->getName();
-    }
+    printMBBReference(*Op.getMBB());
     break;
   case MachineOperand::MO_GlobalAddress:
     // FIXME: Make this faster - print as operand will create a slot tracker to
