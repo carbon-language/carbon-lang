@@ -896,12 +896,21 @@ PlatformLinux::AttachNativeProcess (lldb::pid_t pid,
 }
 
 uint64_t
-PlatformLinux::ConvertMmapFlagsToPlatform(unsigned flags)
+PlatformLinux::ConvertMmapFlagsToPlatform(const ArchSpec &arch, unsigned flags)
 {
     uint64_t flags_platform = 0;
+    uint64_t map_anon = MAP_ANON;
+
+    // To get correct flags for MIPS Architecture
+    if (arch.GetTriple ().getArch () == llvm::Triple::mips64
+       || arch.GetTriple ().getArch () == llvm::Triple::mips64el 
+       || arch.GetTriple ().getArch () == llvm::Triple::mips 
+       || arch.GetTriple ().getArch () == llvm::Triple::mipsel)
+           map_anon = 0x800;
+
     if (flags & eMmapFlagsPrivate)
         flags_platform |= MAP_PRIVATE;
     if (flags & eMmapFlagsAnon)
-        flags_platform |= MAP_ANON;
+        flags_platform |= map_anon;
     return flags_platform;
 }

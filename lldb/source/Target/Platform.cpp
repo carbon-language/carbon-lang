@@ -1500,7 +1500,7 @@ Platform::Unlink(const FileSpec &path)
 }
 
 uint64_t
-Platform::ConvertMmapFlagsToPlatform(unsigned flags)
+Platform::ConvertMmapFlagsToPlatform(const ArchSpec &arch, unsigned flags)
 {
     uint64_t flags_platform = 0;
     if (flags & eMmapFlagsPrivate)

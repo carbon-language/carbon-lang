@@ -752,7 +752,7 @@ class ModuleCache;
         Unlink(const FileSpec &file_spec);
 
         virtual uint64_t
-        ConvertMmapFlagsToPlatform(unsigned flags);
+        ConvertMmapFlagsToPlatform(const ArchSpec &arch, unsigned flags);
 
         virtual bool
         GetSupportsRSync ()

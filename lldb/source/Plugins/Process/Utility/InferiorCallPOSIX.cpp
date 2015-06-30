@@ -86,7 +86,8 @@ lldb_private::InferiorCallMmap (Process *process,
                 prot_arg |= PROT_WRITE;
             }
 
-            flags_arg = process->GetTarget().GetPlatform()->ConvertMmapFlagsToPlatform(flags);
+            const ArchSpec arch =  process->GetTarget().GetArchitecture();
+            flags_arg = process->GetTarget().GetPlatform()->ConvertMmapFlagsToPlatform(arch,flags);
 
             AddressRange mmap_range;
             if (sc.GetAddressRange(range_scope, 0, use_inline_block_range, mmap_range))
