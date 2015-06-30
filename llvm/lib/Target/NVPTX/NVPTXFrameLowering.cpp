@@ -35,7 +35,6 @@ void NVPTXFrameLowering::emitPrologue(MachineFunction &MF,
                                       MachineBasicBlock &MBB) const {
   if (MF.getFrameInfo()->hasStackObjects()) {
     assert(&MF.front() == &MBB && "Shrink-wrapping not yet supported");
-    // Insert "mov.u32 %SP, %Depot"
     MachineInstr *MI = MBB.begin();
     MachineRegisterInfo &MR = MF.getRegInfo();
 
@@ -43,33 +42,26 @@ void NVPTXFrameLowering::emitPrologue(MachineFunction &MF,
     // in the BB, so giving it no debug location.
     DebugLoc dl = DebugLoc();
 
-    // mov %SPL, %depot;
-    // cvta.local %SP, %SPL;
-    if (static_cast<const NVPTXTargetMachine &>(MF.getTarget()).is64Bit()) {
-      // Check if %SP is actually used
-      if (!MR.use_empty(NVPTX::VRFrame)) {
-        MI = BuildMI(MBB, MI, dl, MF.getSubtarget().getInstrInfo()->get(
-                                      NVPTX::cvta_local_yes_64),
-                     NVPTX::VRFrame)
-                 .addReg(NVPTX::VRFrameLocal);
-      }
-      BuildMI(MBB, MI, dl,
-              MF.getSubtarget().getInstrInfo()->get(NVPTX::MOV_DEPOT_ADDR_64),
-              NVPTX::VRFrameLocal)
-          .addImm(MF.getFunctionNumber());
-    } else {
-      // Check if %SP is actually used
-      if (!MR.use_empty(NVPTX::VRFrame)) {
-        MI = BuildMI(MBB, MI, dl, MF.getSubtarget().getInstrInfo()->get(
-                                      NVPTX::cvta_local_yes),
-                     NVPTX::VRFrame)
-                 .addReg(NVPTX::VRFrameLocal);
-      }
-      BuildMI(MBB, MI, dl,
-              MF.getSubtarget().getInstrInfo()->get(NVPTX::MOV_DEPOT_ADDR),
-              NVPTX::VRFrameLocal)
-          .addImm(MF.getFunctionNumber());
+    // Emits
+    //   mov %SPL, %depot;
+    //   cvta.local %SP, %SPL;
+    // for local address accesses in MF.
+    bool Is64Bit =
+        static_cast<const NVPTXTargetMachine &>(MF.getTarget()).is64Bit();
+    unsigned CvtaLocalOpcode =
+        (Is64Bit ? NVPTX::cvta_local_yes_64 : NVPTX::cvta_local_yes);
+    unsigned MovDepotOpcode =
+        (Is64Bit ? NVPTX::MOV_DEPOT_ADDR_64 : NVPTX::MOV_DEPOT_ADDR);
+    if (!MR.use_empty(NVPTX::VRFrame)) {
+      // If %SP is not used, do not bother emitting "cvta.local %SP, %SPL".
+      MI = BuildMI(MBB, MI, dl,
+                   MF.getSubtarget().getInstrInfo()->get(CvtaLocalOpcode),
+                   NVPTX::VRFrame)
+               .addReg(NVPTX::VRFrameLocal);
     }
+    BuildMI(MBB, MI, dl, MF.getSubtarget().getInstrInfo()->get(MovDepotOpcode),
+            NVPTX::VRFrameLocal)
+        .addImm(MF.getFunctionNumber());
   }
 }
 
