@@ -342,9 +342,11 @@ TEST_F(IRBuilderTest, DebugLoc) {
 
   DIBuilder DIB(*M);
   auto File = DIB.createFile("tmp.cpp", "/");
+  auto CU = DIB.createCompileUnit(dwarf::DW_LANG_C_plus_plus_11, "tmp.cpp", "/",
+                                  "", true, "", 0);
   auto SPType = DIB.createSubroutineType(File, DIB.getOrCreateTypeArray(None));
   auto SP =
-      DIB.createFunction(File, "foo", "foo", File, 1, SPType, false, true, 1);
+      DIB.createFunction(CU, "foo", "foo", File, 1, SPType, false, true, 1);
   DebugLoc DL1 = DILocation::get(Ctx, 2, 0, SP);
   DebugLoc DL2 = DILocation::get(Ctx, 3, 0, SP);
 
@@ -363,5 +365,7 @@ TEST_F(IRBuilderTest, DebugLoc) {
   EXPECT_EQ(DL2, Builder.getCurrentDebugLocation());
   auto Call2 = Builder.CreateCall(Callee, None);
   EXPECT_EQ(DL2, Call2->getDebugLoc());
+
+  DIB.finalize();
 }
 }
