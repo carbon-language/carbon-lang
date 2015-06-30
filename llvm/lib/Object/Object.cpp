@@ -208,10 +208,7 @@ LLVMSymbolIteratorRef LLVMGetRelocationSymbol(LLVMRelocationIteratorRef RI) {
 }
 
 uint64_t LLVMGetRelocationType(LLVMRelocationIteratorRef RI) {
-  uint64_t ret;
-  if (std::error_code ec = (*unwrap(RI))->getType(ret))
-    report_fatal_error(ec.message());
-  return ret;
+  return (*unwrap(RI))->getType();
 }
 
 // NOTE: Caller takes ownership of returned string.

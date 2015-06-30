@@ -27,7 +27,7 @@ public:
   const MCExpr *createExprForRelocation(RelocationRef Rel) override {
     const MachOObjectFile *Obj = cast<MachOObjectFile>(Rel.getObject());
 
-    uint64_t RelType; Rel.getType(RelType);
+    uint64_t RelType = Rel.getType();
     symbol_iterator SymI = Rel.getSymbol();
 
     StringRef SymName; SymI->getName(SymName);

@@ -804,11 +804,9 @@ void COFFDumper::printRelocations() {
 void COFFDumper::printRelocation(const SectionRef &Section,
                                  const RelocationRef &Reloc) {
   uint64_t Offset = Reloc.getOffset();
-  uint64_t RelocType;
+  uint64_t RelocType = Reloc.getType();
   SmallString<32> RelocName;
   StringRef SymbolName;
-  if (error(Reloc.getType(RelocType)))
-    return;
   if (error(Reloc.getTypeName(RelocName)))
     return;
   symbol_iterator Symbol = Reloc.getSymbol();

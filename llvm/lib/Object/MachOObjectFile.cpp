@@ -654,19 +654,16 @@ MachOObjectFile::getRelocationSection(DataRefImpl Rel) const {
   return section_iterator(getAnyRelocationSection(getRelocation(Rel)));
 }
 
-std::error_code MachOObjectFile::getRelocationType(DataRefImpl Rel,
-                                                   uint64_t &Res) const {
+uint64_t MachOObjectFile::getRelocationType(DataRefImpl Rel) const {
   MachO::any_relocation_info RE = getRelocation(Rel);
-  Res = getAnyRelocationType(RE);
-  return std::error_code();
+  return getAnyRelocationType(RE);
 }
 
 std::error_code
 MachOObjectFile::getRelocationTypeName(DataRefImpl Rel,
                                        SmallVectorImpl<char> &Result) const {
   StringRef res;
-  uint64_t RType;
-  getRelocationType(Rel, RType);
+  uint64_t RType = getRelocationType(Rel);
 
   unsigned Arch = this->getArch();
 
@@ -776,8 +773,7 @@ MachOObjectFile::getRelocationTypeName(DataRefImpl Rel,
 std::error_code MachOObjectFile::getRelocationHidden(DataRefImpl Rel,
                                                      bool &Result) const {
   unsigned Arch = getArch();
-  uint64_t Type;
-  getRelocationType(Rel, Type);
+  uint64_t Type = getRelocationType(Rel);
 
   Result = false;
 
@@ -791,8 +787,7 @@ std::error_code MachOObjectFile::getRelocationHidden(DataRefImpl Rel,
     if (Type == MachO::X86_64_RELOC_UNSIGNED && Rel.d.a > 0) {
       DataRefImpl RelPrev = Rel;
       RelPrev.d.a--;
-      uint64_t PrevType;
-      getRelocationType(RelPrev, PrevType);
+      uint64_t PrevType = getRelocationType(RelPrev);
       if (PrevType == MachO::X86_64_RELOC_SUBTRACTOR)
         Result = true;
     }

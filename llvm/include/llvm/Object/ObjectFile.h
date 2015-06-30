@@ -53,7 +53,7 @@ public:
   std::error_code getAddress(uint64_t &Result) const;
   uint64_t getOffset() const;
   symbol_iterator getSymbol() const;
-  std::error_code getType(uint64_t &Result) const;
+  uint64_t getType() const;
 
   /// @brief Indicates whether this relocation should hidden when listing
   /// relocations, usually because it is the trailing part of a multipart
@@ -242,8 +242,7 @@ protected:
                                                uint64_t &Res) const = 0;
   virtual uint64_t getRelocationOffset(DataRefImpl Rel) const = 0;
   virtual symbol_iterator getRelocationSymbol(DataRefImpl Rel) const = 0;
-  virtual std::error_code getRelocationType(DataRefImpl Rel,
-                                            uint64_t &Res) const = 0;
+  virtual uint64_t getRelocationType(DataRefImpl Rel) const = 0;
   virtual std::error_code
   getRelocationTypeName(DataRefImpl Rel,
                         SmallVectorImpl<char> &Result) const = 0;
@@ -464,8 +463,8 @@ inline symbol_iterator RelocationRef::getSymbol() const {
   return OwningObject->getRelocationSymbol(RelocationPimpl);
 }
 
-inline std::error_code RelocationRef::getType(uint64_t &Result) const {
-  return OwningObject->getRelocationType(RelocationPimpl, Result);
+inline uint64_t RelocationRef::getType() const {
+  return OwningObject->getRelocationType(RelocationPimpl);
 }
 
 inline std::error_code

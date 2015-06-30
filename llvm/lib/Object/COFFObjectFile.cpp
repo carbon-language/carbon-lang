@@ -990,11 +990,9 @@ symbol_iterator COFFObjectFile::getRelocationSymbol(DataRefImpl Rel) const {
   return symbol_iterator(SymbolRef(Ref, this));
 }
 
-std::error_code COFFObjectFile::getRelocationType(DataRefImpl Rel,
-                                                  uint64_t &Res) const {
+uint64_t COFFObjectFile::getRelocationType(DataRefImpl Rel) const {
   const coff_relocation* R = toRel(Rel);
-  Res = R->Type;
-  return std::error_code();
+  return R->Type;
 }
 
 const coff_section *

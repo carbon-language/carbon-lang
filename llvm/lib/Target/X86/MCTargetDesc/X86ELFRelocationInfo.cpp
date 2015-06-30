@@ -26,7 +26,7 @@ public:
   X86_64ELFRelocationInfo(MCContext &Ctx) : MCRelocationInfo(Ctx) {}
 
   const MCExpr *createExprForRelocation(RelocationRef Rel) override {
-    uint64_t RelType; Rel.getType(RelType);
+    uint64_t RelType = Rel.getType();
     elf_symbol_iterator SymI = Rel.getSymbol();
 
     StringRef SymName; SymI->getName(SymName);

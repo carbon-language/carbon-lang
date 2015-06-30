@@ -772,8 +772,7 @@ void RuntimeDyldELF::findOPDEntrySection(const ELFObjectFileBase &Obj,
          i != e;) {
       // The R_PPC64_ADDR64 relocation indicates the first field
       // of a .opd entry
-      uint64_t TypeFunc;
-      check(i->getType(TypeFunc));
+      uint64_t TypeFunc = i->getType();
       if (TypeFunc != ELF::R_PPC64_ADDR64) {
         ++i;
         continue;
@@ -790,8 +789,7 @@ void RuntimeDyldELF::findOPDEntrySection(const ELFObjectFileBase &Obj,
         break;
 
       // Just check if following relocation is a R_PPC64_TOC
-      uint64_t TypeTOC;
-      check(i->getType(TypeTOC));
+      uint64_t TypeTOC = i->getType();
       if (TypeTOC != ELF::R_PPC64_TOC)
         continue;
 
@@ -1059,8 +1057,7 @@ relocation_iterator RuntimeDyldELF::processRelocationRef(
     unsigned SectionID, relocation_iterator RelI, const ObjectFile &O,
     ObjSectionToIDMap &ObjSectionToID, StubMap &Stubs) {
   const auto &Obj = cast<ELFObjectFileBase>(O);
-  uint64_t RelType;
-  Check(RelI->getType(RelType));
+  uint64_t RelType = RelI->getType();
   ErrorOr<int64_t> AddendOrErr = ELFRelocationRef(*RelI).getAddend();
   int64_t Addend = AddendOrErr ? *AddendOrErr : 0;
   elf_symbol_iterator Symbol = RelI->getSymbol();
