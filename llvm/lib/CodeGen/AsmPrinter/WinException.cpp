@@ -319,6 +319,7 @@ void WinException::emitCXXFrameHandler3Table(const MachineFunction *MF) {
       return;
   } else {
     FuncInfoXData = Asm->OutContext.getOrCreateLSDASymbol(ParentLinkageName);
+    emitEHRegistrationOffsetLabel(FuncInfo, ParentLinkageName);
   }
 
   MCSymbol *UnwindMapXData = nullptr;
@@ -547,28 +548,33 @@ void WinException::extendIP2StateTable(const MachineFunction *MF,
   }
 }
 
+void WinException::emitEHRegistrationOffsetLabel(const WinEHFuncInfo &FuncInfo,
+                                                 StringRef FLinkageName) {
+  // Outlined helpers called by the EH runtime need to know the offset of the EH
+  // registration in order to recover the parent frame pointer. Now that we know
+  // we've code generated the parent, we can emit the label assignment that
+  // those helpers use to get the offset of the registration node.
+  assert(FuncInfo.EHRegNodeEscapeIndex != INT_MAX &&
+         "no EH reg node frameescape index");
+  MCSymbol *ParentFrameOffset =
+      Asm->OutContext.getOrCreateParentFrameOffsetSymbol(FLinkageName);
+  MCSymbol *RegistrationOffsetSym = Asm->OutContext.getOrCreateFrameAllocSymbol(
+      FLinkageName, FuncInfo.EHRegNodeEscapeIndex);
+  const MCExpr *RegistrationOffsetSymRef =
+      MCSymbolRefExpr::create(RegistrationOffsetSym, Asm->OutContext);
+  Asm->OutStreamer->EmitAssignment(ParentFrameOffset, RegistrationOffsetSymRef);
+}
+
 /// Emit the language-specific data that _except_handler3 and 4 expect. This is
 /// functionally equivalent to the __C_specific_handler table, except it is
 /// indexed by state number instead of IP.
 void WinException::emitExceptHandlerTable(const MachineFunction *MF) {
   MCStreamer &OS = *Asm->OutStreamer;
-
-  // Define the EH registration node offset label in terms of its frameescape
-  // label. The WinEHStatePass ensures that the registration node is passed to
-  // frameescape. This allows SEH filter functions to access the
-  // EXCEPTION_POINTERS field, which is filled in by the _except_handlerN.
   const Function *F = MF->getFunction();
-  WinEHFuncInfo &FuncInfo = MMI->getWinEHFuncInfo(F);
-  assert(FuncInfo.EHRegNodeEscapeIndex != INT_MAX &&
-         "no EH reg node frameescape index");
   StringRef FLinkageName = GlobalValue::getRealLinkageName(F->getName());
-  MCSymbol *ParentFrameOffset =
-      Asm->OutContext.getOrCreateParentFrameOffsetSymbol(FLinkageName);
-  MCSymbol *FrameAllocSym = Asm->OutContext.getOrCreateFrameAllocSymbol(
-      FLinkageName, FuncInfo.EHRegNodeEscapeIndex);
-  const MCSymbolRefExpr *FrameAllocSymRef =
-      MCSymbolRefExpr::create(FrameAllocSym, Asm->OutContext);
-  OS.EmitAssignment(ParentFrameOffset, FrameAllocSymRef);
+
+  WinEHFuncInfo &FuncInfo = MMI->getWinEHFuncInfo(F);
+  emitEHRegistrationOffsetLabel(FuncInfo, FLinkageName);
 
   // Emit the __ehtable label that we use for llvm.x86.seh.lsda.
   MCSymbol *LSDALabel = Asm->OutContext.getOrCreateLSDASymbol(FLinkageName);

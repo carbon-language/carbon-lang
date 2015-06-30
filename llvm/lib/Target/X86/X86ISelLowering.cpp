@@ -14995,6 +14995,48 @@ static SDValue getScalarMaskingNode(SDValue Op, SDValue Mask,
     return DAG.getNode(X86ISD::SELECT, dl, VT, IMask, Op, PreservedSrc);
 }
 
+/// When the 32-bit MSVC runtime transfers control to us, either to an outlined
+/// function or when returning to a parent frame after catching an exception, we
+/// recover the parent frame pointer by doing arithmetic on the incoming EBP.
+/// Here's the math:
+///   RegNodeBase = EntryEBP - RegNodeSize
+///   ParentFP = RegNodeBase - RegNodeFrameOffset
+/// Subtracting RegNodeSize takes us to the offset of the registration node, and
+/// subtracting the offset (negative on x86) takes us back to the parent FP.
+static SDValue recoverFramePointer(SelectionDAG &DAG, const Function *Fn,
+                                   SDValue EntryEBP) {
+  MachineFunction &MF = DAG.getMachineFunction();
+  SDLoc dl;
+
+  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
+  MVT PtrVT = TLI.getPointerTy();
+
+  // The RegNodeSize is 6 32-bit words for SEH and 4 for C++ EH. See
+  // WinEHStatePass for the full struct definition.
+  int RegNodeSize;
+  switch (classifyEHPersonality(Fn->getPersonalityFn())) {
+  default:
+    report_fatal_error("can only recover FP for MSVC EH personality functions");
+  case EHPersonality::MSVC_X86SEH: RegNodeSize = 24; break;
+  case EHPersonality::MSVC_CXX: RegNodeSize = 16; break;
+  }
+
+  // Get an MCSymbol that will ultimately resolve to the frame offset of the EH
+  // registration.
+  MCSymbol *OffsetSym =
+      MF.getMMI().getContext().getOrCreateParentFrameOffsetSymbol(
+          GlobalValue::getRealLinkageName(Fn->getName()));
+  SDValue OffsetSymVal = DAG.getMCSymbol(OffsetSym, PtrVT);
+  SDValue RegNodeFrameOffset =
+      DAG.getNode(ISD::FRAME_ALLOC_RECOVER, dl, PtrVT, OffsetSymVal);
+
+  // RegNodeBase = EntryEBP - RegNodeSize
+  // ParentFP = RegNodeBase - RegNodeFrameOffset
+  SDValue RegNodeBase = DAG.getNode(ISD::SUB, dl, PtrVT, EntryEBP,
+                                    DAG.getConstant(RegNodeSize, dl, PtrVT));
+  return DAG.getNode(ISD::SUB, dl, PtrVT, RegNodeBase, RegNodeFrameOffset);
+}
+
 static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, const X86Subtarget *Subtarget,
                                        SelectionDAG &DAG) {
   SDLoc dl(Op);
@@ -15440,6 +15482,17 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, const X86Subtarget *Subtarget
     SDValue Result = DAG.getMCSymbol(LSDASym, VT);
     return DAG.getNode(X86ISD::Wrapper, dl, VT, Result);
   }
+
+  case Intrinsic::x86_seh_recoverfp: {
+    SDValue FnOp = Op.getOperand(1);
+    SDValue IncomingFPOp = Op.getOperand(2);
+    GlobalAddressSDNode *GSD = dyn_cast<GlobalAddressSDNode>(FnOp);
+    auto *Fn = dyn_cast_or_null<Function>(GSD ? GSD->getGlobal() : nullptr);
+    if (!Fn)
+      report_fatal_error(
+          "llvm.x86.seh.recoverfp must take a function as the first argument");
+    return recoverFramePointer(DAG, Fn, IncomingFPOp);
+  }
   }
 }
 
@@ -15650,35 +15703,38 @@ static SDValue LowerREADCYCLECOUNTER(SDValue Op, const X86Subtarget *Subtarget,
   return DAG.getMergeValues(Results, DL);
 }
 
-static SDValue LowerEXCEPTIONINFO(SDValue Op, const X86Subtarget *Subtarget,
-                                  SelectionDAG &DAG) {
+static SDValue LowerSEHRESTOREFRAME(SDValue Op, const X86Subtarget *Subtarget,
+                                    SelectionDAG &DAG) {
   MachineFunction &MF = DAG.getMachineFunction();
   SDLoc dl(Op);
-  SDValue FnOp = Op.getOperand(2);
-  SDValue FPOp = Op.getOperand(3);
+  SDValue Chain = Op.getOperand(0);
 
-  // Compute the symbol for the parent EH registration. We know it'll get
-  // emitted later.
-  auto *Fn = cast<Function>(cast<GlobalAddressSDNode>(FnOp)->getGlobal());
-  MCSymbol *ParentFrameSym =
-      MF.getMMI().getContext().getOrCreateParentFrameOffsetSymbol(
-          GlobalValue::getRealLinkageName(Fn->getName()));
+  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
+  MVT VT = TLI.getPointerTy();
 
-  // Create a TargetExternalSymbol for the label to avoid any target lowering
-  // that would make this PC relative.
-  MVT PtrVT = Op.getSimpleValueType();
-  SDValue OffsetSym = DAG.getMCSymbol(ParentFrameSym, PtrVT);
-  SDValue OffsetVal =
-      DAG.getNode(ISD::FRAME_ALLOC_RECOVER, dl, PtrVT, OffsetSym);
+  const X86RegisterInfo *RegInfo = Subtarget->getRegisterInfo();
+  unsigned FrameReg =
+      RegInfo->getPtrSizedFrameRegister(DAG.getMachineFunction());
+  unsigned SPReg = RegInfo->getStackRegister();
 
-  // Add the offset to the FP.
-  SDValue Add = DAG.getNode(ISD::ADD, dl, PtrVT, FPOp, OffsetVal);
+  // Get incoming EBP.
+  SDValue IncomingEBP =
+      DAG.getCopyFromReg(Chain, dl, FrameReg, VT);
 
-  // Load the second field of the struct, which is 4 bytes in. See
-  // WinEHStatePass for more info.
-  Add = DAG.getNode(ISD::ADD, dl, PtrVT, Add, DAG.getConstant(4, dl, PtrVT));
-  return DAG.getLoad(PtrVT, dl, DAG.getEntryNode(), Add, MachinePointerInfo(),
-                     false, false, false, 0);
+  // Load [EBP-24] into SP.
+  SDValue SPAddr =
+      DAG.getNode(ISD::ADD, dl, VT, IncomingEBP, DAG.getConstant(-24, dl, VT));
+  SDValue NewSP =
+      DAG.getLoad(VT, dl, Chain, SPAddr, MachinePointerInfo(), false, false,
+                  false, VT.getScalarSizeInBits() / 8);
+  Chain = DAG.getCopyToReg(Chain, dl, SPReg, NewSP);
+
+  // FIXME: Restore the base pointer in case of stack realignment!
+
+  // Adjust EBP to point back to the original frame position.
+  SDValue NewFP = recoverFramePointer(DAG, MF.getFunction(), IncomingEBP);
+  Chain = DAG.getCopyToReg(Chain, dl, FrameReg, NewFP);
+  return Chain;
 }
 
 static SDValue LowerINTRINSIC_W_CHAIN(SDValue Op, const X86Subtarget *Subtarget,
@@ -15687,8 +15743,8 @@ static SDValue LowerINTRINSIC_W_CHAIN(SDValue Op, const X86Subtarget *Subtarget,
 
   const IntrinsicData* IntrData = getIntrinsicWithChain(IntNo);
   if (!IntrData) {
-    if (IntNo == Intrinsic::x86_seh_exceptioninfo)
-      return LowerEXCEPTIONINFO(Op, Subtarget, DAG);
+    if (IntNo == llvm::Intrinsic::x86_seh_restoreframe)
+      return LowerSEHRESTOREFRAME(Op, Subtarget, DAG);
     return SDValue();
   }
 

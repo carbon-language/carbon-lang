@@ -12,7 +12,7 @@ declare i32 @llvm.eh.typeid.for(i8*)
 declare i8* @llvm.frameaddress(i32)
 declare i8* @llvm.framerecover(i8*, i8*, i32)
 declare void @llvm.frameescape(...)
-declare i8* @llvm.x86.seh.exceptioninfo(i8*, i8*)
+declare i8* @llvm.x86.seh.recoverfp(i8*, i8*)
 
 define i32 @main() personality i8* bitcast (i32 (...)* @_except_handler3 to i8*) {
 entry:
@@ -43,14 +43,16 @@ eh.resume:                                        ; preds = %lpad
 
 define internal i32 @"filt$main"() {
 entry:
-  %0 = tail call i8* @llvm.frameaddress(i32 1)
-  %1 = tail call i8* @llvm.framerecover(i8* bitcast (i32 ()* @main to i8*), i8* %0, i32 0)
-  %__exceptioncode = bitcast i8* %1 to i32*
-  %2 = tail call i8* @llvm.x86.seh.exceptioninfo(i8* bitcast (i32 ()* @main to i8*), i8* %0)
-  %3 = bitcast i8* %2 to i32**
-  %4 = load i32*, i32** %3, align 4
-  %5 = load i32, i32* %4, align 4
-  store i32 %5, i32* %__exceptioncode, align 4
+  %ebp = tail call i8* @llvm.frameaddress(i32 1)
+  %parentfp = tail call i8* @llvm.x86.seh.recoverfp(i8* bitcast (i32 ()* @main to i8*), i8* %ebp)
+  %code.i8 = tail call i8* @llvm.framerecover(i8* bitcast (i32 ()* @main to i8*), i8* %parentfp, i32 0)
+  %__exceptioncode = bitcast i8* %code.i8 to i32*
+  %info.addr = getelementptr inbounds i8, i8* %ebp, i32 -20
+  %0 = bitcast i8* %info.addr to i32***
+  %1 = load i32**, i32*** %0, align 4
+  %2 = load i32*, i32** %1, align 4
+  %3 = load i32, i32* %2, align 4
+  store i32 %3, i32* %__exceptioncode, align 4
   ret i32 1
 }
 
@@ -76,10 +78,17 @@ entry:
 ; CHECK: calll _printf
 
 ; CHECK: .section .xdata,"dr"
+; CHECK: Lmain$parent_frame_offset = Lmain$frame_escape_1
 ; CHECK: L__ehtable$main
 ; CHECK-NEXT: .long -1
 ; CHECK-NEXT: .long _filt$main
 ; CHECK-NEXT: .long Ltmp{{[0-9]+}}
 
 ; CHECK-LABEL: _filt$main:
-; CHECK: movl
+; CHECK: pushl %ebp
+; CHECK: movl %esp, %ebp
+; CHECK: movl (%ebp), %[[oldebp:[a-z]+]]
+; CHECK: movl -20(%[[oldebp]]), %[[ehinfo:[a-z]+]]
+; CHECK: movl (%[[ehinfo]]), %[[ehrec:[a-z]+]]
+; CHECK: movl (%[[ehrec]]), %[[ehcode:[a-z]+]]
+; CHECK: movl %[[ehcode]], {{.*}}(%{{.*}})

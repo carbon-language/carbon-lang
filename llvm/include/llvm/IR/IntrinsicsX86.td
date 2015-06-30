@@ -21,9 +21,17 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
 // SEH intrinsics for Windows
 let TargetPrefix = "x86" in {
   def int_x86_seh_lsda : Intrinsic<[llvm_ptr_ty], [llvm_ptr_ty], [IntrNoMem]>;
-  def int_x86_seh_exceptioninfo : Intrinsic<[llvm_ptr_ty],
-                                            [llvm_ptr_ty, llvm_ptr_ty],
-					    [IntrReadMem]>;
+
+  // Restores the frame, base, and stack pointers as necessary after recovering
+  // from an exception. Any block resuming control flow in the parent function
+  // should call this before accessing any stack memory.
+  def int_x86_seh_restoreframe : Intrinsic<[], [], []>;
+
+  // Given a pointer to the end of an EH registration object, returns the true
+  // parent frame address that can be used with llvm.framerecover.
+  def int_x86_seh_recoverfp : Intrinsic<[llvm_ptr_ty],
+                                        [llvm_ptr_ty, llvm_ptr_ty],
+                                        [IntrNoMem]>;
 }
 
 //===----------------------------------------------------------------------===//

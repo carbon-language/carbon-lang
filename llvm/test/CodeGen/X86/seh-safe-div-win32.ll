@@ -122,27 +122,30 @@ entry:
 ;     ...
 ;   } EXCEPTION_RECORD;
 
-; FIXME: Use llvm.eh.exceptioninfo for this.
-declare i32 @safe_div_filt0()
-declare i32 @safe_div_filt1()
-; define i32 @safe_div_filt0() {
-;   %eh_ptrs_c = bitcast i8* %eh_ptrs to i32**
-;   %eh_rec = load i32*, i32** %eh_ptrs_c
-;   %eh_code = load i32, i32* %eh_rec
-;   ; EXCEPTION_ACCESS_VIOLATION = 0xC0000005
-;   %cmp = icmp eq i32 %eh_code, 3221225477
-;   %filt.res = zext i1 %cmp to i32
-;   ret i32 %filt.res
-; }
-; define i32 @safe_div_filt1() {
-;   %eh_ptrs_c = bitcast i8* %eh_ptrs to i32**
-;   %eh_rec = load i32*, i32** %eh_ptrs_c
-;   %eh_code = load i32, i32* %eh_rec
-;   ; EXCEPTION_INT_DIVIDE_BY_ZERO = 0xC0000094
-;   %cmp = icmp eq i32 %eh_code, 3221225620
-;   %filt.res = zext i1 %cmp to i32
-;   ret i32 %filt.res
-; }
+define i32 @safe_div_filt0() {
+  %ebp = call i8* @llvm.frameaddress(i32 1)
+  %eh_ptrs.addr.i8 = getelementptr inbounds i8, i8* %ebp, i32 -20
+  %eh_ptrs.addr = bitcast i8* %eh_ptrs.addr.i8 to i32***
+  %eh_ptrs = load i32**, i32*** %eh_ptrs.addr
+  %eh_rec = load i32*, i32** %eh_ptrs
+  %eh_code = load i32, i32* %eh_rec
+  ; EXCEPTION_ACCESS_VIOLATION = 0xC0000005
+  %cmp = icmp eq i32 %eh_code, 3221225477
+  %filt.res = zext i1 %cmp to i32
+  ret i32 %filt.res
+}
+define i32 @safe_div_filt1() {
+  %ebp = call i8* @llvm.frameaddress(i32 1)
+  %eh_ptrs.addr.i8 = getelementptr inbounds i8, i8* %ebp, i32 -20
+  %eh_ptrs.addr = bitcast i8* %eh_ptrs.addr.i8 to i32***
+  %eh_ptrs = load i32**, i32*** %eh_ptrs.addr
+  %eh_rec = load i32*, i32** %eh_ptrs
+  %eh_code = load i32, i32* %eh_rec
+  ; EXCEPTION_INT_DIVIDE_BY_ZERO = 0xC0000094
+  %cmp = icmp eq i32 %eh_code, 3221225620
+  %filt.res = zext i1 %cmp to i32
+  ret i32 %filt.res
+}
 
 @str_result = internal constant [21 x i8] c"safe_div result: %d\0A\00"
 
@@ -170,3 +173,4 @@ declare i32 @llvm.eh.typeid.for(i8*) readnone nounwind
 declare void @puts(i8*)
 declare void @printf(i8*, ...)
 declare void @abort()
+declare i8* @llvm.frameaddress(i32)
