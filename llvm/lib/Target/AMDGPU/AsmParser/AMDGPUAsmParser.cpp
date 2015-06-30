@@ -361,7 +361,6 @@ public:
   bool MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                                OperandVector &Operands, MCStreamer &Out,
                                uint64_t &ErrorInfo,
-                               FeatureBitset &ErrorMissingFeature,
                                bool MatchingInlineAsm) override;
   bool ParseDirective(AsmToken DirectiveID) override;
   OperandMatchResultTy parseOperand(OperandVector &Operands, StringRef Mnemonic);
@@ -543,11 +542,10 @@ bool AMDGPUAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                                               OperandVector &Operands,
                                               MCStreamer &Out,
                                               uint64_t &ErrorInfo,
-                                              FeatureBitset &ErrorMissingFeature,
                                               bool MatchingInlineAsm) {
   MCInst Inst;
 
-  switch (MatchInstructionImpl(Operands, Inst, ErrorInfo, ErrorMissingFeature, MatchingInlineAsm)) {
+  switch (MatchInstructionImpl(Operands, Inst, ErrorInfo, MatchingInlineAsm)) {
     default: break;
     case Match_Success:
       Inst.setLoc(IDLoc);
@@ -579,7 +577,6 @@ bool AMDGPUAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                                  AMDGPUOperand::ImmTyOMod));
               bool Res = MatchAndEmitInstruction(IDLoc, Opcode, Operands,
                                                  Out, ErrorInfo,
-                                                 ErrorMissingFeature,
                                                  MatchingInlineAsm);
               if (!Res)
                 return Res;

@@ -722,25 +722,22 @@ private:
   bool MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                                OperandVector &Operands, MCStreamer &Out,
                                uint64_t &ErrorInfo,
-                               FeatureBitset &ErrorMissingFeature,
                                bool MatchingInlineAsm) override;
 
   void MatchFPUWaitAlias(SMLoc IDLoc, X86Operand &Op, OperandVector &Operands,
                          MCStreamer &Out, bool MatchingInlineAsm);
 
-  bool ErrorMissingFeature(SMLoc IDLoc, FeatureBitset MissingFeature,
+  bool ErrorMissingFeature(SMLoc IDLoc, uint64_t ErrorInfo,
                            bool MatchingInlineAsm);
 
   bool MatchAndEmitATTInstruction(SMLoc IDLoc, unsigned &Opcode,
                                   OperandVector &Operands, MCStreamer &Out,
                                   uint64_t &ErrorInfo,
-                                  FeatureBitset &ErrorMissingFeature,
                                   bool MatchingInlineAsm);
 
   bool MatchAndEmitIntelInstruction(SMLoc IDLoc, unsigned &Opcode,
                                     OperandVector &Operands, MCStreamer &Out,
                                     uint64_t &ErrorInfo,
-                                    FeatureBitset &ErrorMissingFeature,
                                     bool MatchingInlineAsm);
 
   bool OmitRegisterFromClobberLists(unsigned RegNo) override;
@@ -771,7 +768,7 @@ private:
   void SwitchMode(unsigned mode) {
     FeatureBitset AllModes({X86::Mode64Bit, X86::Mode32Bit, X86::Mode16Bit});
     FeatureBitset OldMode = STI.getFeatureBits() & AllModes;
-    FeatureBitset FB = ComputeAvailableFeatures(
+    unsigned FB = ComputeAvailableFeatures(
       STI.ToggleFeature(OldMode.flip(mode)));
     setAvailableFeatures(FB);
     
@@ -2493,7 +2490,7 @@ bool X86AsmParser::processInstruction(MCInst &Inst, const OperandVector &Ops) {
   }
 }
 
-static const char *getSubtargetFeatureName(uint64_t Feature);
+static const char *getSubtargetFeatureName(uint64_t Val);
 
 void X86AsmParser::EmitInstruction(MCInst &Inst, OperandVector &Operands,
                                    MCStreamer &Out) {
@@ -2504,13 +2501,12 @@ void X86AsmParser::EmitInstruction(MCInst &Inst, OperandVector &Operands,
 bool X86AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                                            OperandVector &Operands,
                                            MCStreamer &Out, uint64_t &ErrorInfo,
-                                           FeatureBitset &ErrorMissingFeature,
                                            bool MatchingInlineAsm) {
   if (isParsingIntelSyntax())
     return MatchAndEmitIntelInstruction(IDLoc, Opcode, Operands, Out, ErrorInfo,
-                                        ErrorMissingFeature, MatchingInlineAsm);
+                                        MatchingInlineAsm);
   return MatchAndEmitATTInstruction(IDLoc, Opcode, Operands, Out, ErrorInfo,
-                                    ErrorMissingFeature, MatchingInlineAsm);
+                                    MatchingInlineAsm);
 }
 
 void X86AsmParser::MatchFPUWaitAlias(SMLoc IDLoc, X86Operand &Op,
@@ -2539,16 +2535,18 @@ void X86AsmParser::MatchFPUWaitAlias(SMLoc IDLoc, X86Operand &Op,
   }
 }
 
-bool X86AsmParser::ErrorMissingFeature(SMLoc IDLoc, FeatureBitset MissingFeature,
+bool X86AsmParser::ErrorMissingFeature(SMLoc IDLoc, uint64_t ErrorInfo,
                                        bool MatchingInlineAsm) {
-  assert(MissingFeature.any() && "Unknown missing feature!");
+  assert(ErrorInfo && "Unknown missing feature!");
   ArrayRef<SMRange> EmptyRanges = None;
   SmallString<126> Msg;
   raw_svector_ostream OS(Msg);
   OS << "instruction requires:";
-  for (unsigned i = 0; i < MissingFeature.size(); ++i) {
-    if (MissingFeature[i])
-      OS << ' ' << getSubtargetFeatureName(i);
+  uint64_t Mask = 1;
+  for (unsigned i = 0; i < (sizeof(ErrorInfo)*8-1); ++i) {
+    if (ErrorInfo & Mask)
+      OS << ' ' << getSubtargetFeatureName(ErrorInfo & Mask);
+    Mask <<= 1;
   }
   return Error(IDLoc, OS.str(), EmptyRanges, MatchingInlineAsm);
 }
@@ -2557,7 +2555,6 @@ bool X86AsmParser::MatchAndEmitATTInstruction(SMLoc IDLoc, unsigned &Opcode,
                                               OperandVector &Operands,
                                               MCStreamer &Out,
                                               uint64_t &ErrorInfo,
-                                              FeatureBitset &ErrMissingFeature,
                                               bool MatchingInlineAsm) {
   assert(!Operands.empty() && "Unexpect empty operand list!");
   X86Operand &Op = static_cast<X86Operand &>(*Operands[0]);
@@ -2572,8 +2569,7 @@ bool X86AsmParser::MatchAndEmitATTInstruction(SMLoc IDLoc, unsigned &Opcode,
 
   // First, try a direct match.
   switch (MatchInstructionImpl(Operands, Inst,
-                               ErrorInfo, ErrMissingFeature,
-                               MatchingInlineAsm,
+                               ErrorInfo, MatchingInlineAsm,
                                isParsingIntelSyntax())) {
   default: llvm_unreachable("Unexpected match result!");
   case Match_Success:
@@ -2593,7 +2589,7 @@ bool X86AsmParser::MatchAndEmitATTInstruction(SMLoc IDLoc, unsigned &Opcode,
     Opcode = Inst.getOpcode();
     return false;
   case Match_MissingFeature:
-    return ErrorMissingFeature(IDLoc, ErrMissingFeature, MatchingInlineAsm);
+    return ErrorMissingFeature(IDLoc, ErrorInfo, MatchingInlineAsm);
   case Match_InvalidOperand:
     WasOriginallyInvalidOperand = true;
     break;
@@ -2623,16 +2619,16 @@ bool X86AsmParser::MatchAndEmitATTInstruction(SMLoc IDLoc, unsigned &Opcode,
 
   // Check for the various suffix matches.
   uint64_t ErrorInfoIgnore;
-  FeatureBitset ErrorInfoMissingFeature;
+  uint64_t ErrorInfoMissingFeature = 0; // Init suppresses compiler warnings.
   unsigned Match[4];
 
   for (unsigned I = 0, E = array_lengthof(Match); I != E; ++I) {
     Tmp.back() = Suffixes[I];
-    Match[I] = MatchInstructionImpl(Operands, Inst, ErrorInfoIgnore, ErrMissingFeature,
-                                    MatchingInlineAsm, isParsingIntelSyntax());
+    Match[I] = MatchInstructionImpl(Operands, Inst, ErrorInfoIgnore,
+                                  MatchingInlineAsm, isParsingIntelSyntax());
     // If this returned as a missing feature failure, remember that.
     if (Match[I] == Match_MissingFeature)
-      ErrorInfoMissingFeature = ErrMissingFeature;
+      ErrorInfoMissingFeature = ErrorInfoIgnore;
   }
 
   // Restore the old token.
@@ -2711,8 +2707,8 @@ bool X86AsmParser::MatchAndEmitATTInstruction(SMLoc IDLoc, unsigned &Opcode,
   // missing feature.
   if (std::count(std::begin(Match), std::end(Match),
                  Match_MissingFeature) == 1) {
-    ErrMissingFeature = ErrorInfoMissingFeature;
-    return ErrorMissingFeature(IDLoc, ErrMissingFeature,
+    ErrorInfo = ErrorInfoMissingFeature;
+    return ErrorMissingFeature(IDLoc, ErrorInfoMissingFeature,
                                MatchingInlineAsm);
   }
 
@@ -2734,7 +2730,6 @@ bool X86AsmParser::MatchAndEmitIntelInstruction(SMLoc IDLoc, unsigned &Opcode,
                                                 OperandVector &Operands,
                                                 MCStreamer &Out,
                                                 uint64_t &ErrorInfo,
-                                                FeatureBitset& ErrMissingFeature,
                                                 bool MatchingInlineAsm) {
   assert(!Operands.empty() && "Unexpect empty operand list!");
   X86Operand &Op = static_cast<X86Operand &>(*Operands[0]);
@@ -2771,23 +2766,22 @@ bool X86AsmParser::MatchAndEmitIntelInstruction(SMLoc IDLoc, unsigned &Opcode,
   // operand size.  In Intel assembly, the size is not part of the instruction
   // mnemonic.
   SmallVector<unsigned, 8> Match;
-  FeatureBitset ErrorInfoMissingFeature;
+  uint64_t ErrorInfoMissingFeature = 0;
   if (UnsizedMemOp && UnsizedMemOp->isMemUnsized()) {
     static const unsigned MopSizes[] = {8, 16, 32, 64, 80, 128, 256, 512};
     for (unsigned Size : MopSizes) {
       UnsizedMemOp->Mem.Size = Size;
       uint64_t ErrorInfoIgnore;
-      FeatureBitset MissingFeature;
       unsigned LastOpcode = Inst.getOpcode();
       unsigned M =
-          MatchInstructionImpl(Operands, Inst, ErrorInfoIgnore, MissingFeature,
+          MatchInstructionImpl(Operands, Inst, ErrorInfoIgnore,
                                MatchingInlineAsm, isParsingIntelSyntax());
       if (Match.empty() || LastOpcode != Inst.getOpcode())
         Match.push_back(M);
 
       // If this returned as a missing feature failure, remember that.
       if (Match.back() == Match_MissingFeature)
-        ErrorInfoMissingFeature = MissingFeature;
+        ErrorInfoMissingFeature = ErrorInfoIgnore;
     }
 
     // Restore the size of the unsized memory operand if we modified it.
@@ -2800,12 +2794,11 @@ bool X86AsmParser::MatchAndEmitIntelInstruction(SMLoc IDLoc, unsigned &Opcode,
   // matching with the unsized operand.
   if (Match.empty()) {
     Match.push_back(MatchInstructionImpl(Operands, Inst, ErrorInfo,
-                                         ErrMissingFeature,
                                          MatchingInlineAsm,
                                          isParsingIntelSyntax()));
     // If this returned as a missing feature failure, remember that.
     if (Match.back() == Match_MissingFeature)
-      ErrorInfoMissingFeature = ErrMissingFeature;
+      ErrorInfoMissingFeature = ErrorInfo;
   }
 
   // Restore the size of the unsized memory operand if we modified it.
@@ -2854,7 +2847,7 @@ bool X86AsmParser::MatchAndEmitIntelInstruction(SMLoc IDLoc, unsigned &Opcode,
   // missing feature.
   if (std::count(std::begin(Match), std::end(Match),
                  Match_MissingFeature) == 1) {
-    ErrMissingFeature = ErrorInfoMissingFeature;
+    ErrorInfo = ErrorInfoMissingFeature;
     return ErrorMissingFeature(IDLoc, ErrorInfoMissingFeature,
                                MatchingInlineAsm);
   }

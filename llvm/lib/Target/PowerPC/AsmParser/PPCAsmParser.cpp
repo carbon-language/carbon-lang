@@ -277,7 +277,6 @@ class PPCAsmParser : public MCTargetAsmParser {
   bool MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                                OperandVector &Operands, MCStreamer &Out,
                                uint64_t &ErrorInfo,
-                               FeatureBitset &ErrorMissingFeature,
                                bool MatchingInlineAsm) override;
 
   void ProcessInstruction(MCInst &Inst, const OperandVector &Ops);
@@ -1198,11 +1197,10 @@ void PPCAsmParser::ProcessInstruction(MCInst &Inst,
 bool PPCAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                                            OperandVector &Operands,
                                            MCStreamer &Out, uint64_t &ErrorInfo,
-                                           FeatureBitset &ErrorMissingFeature,
                                            bool MatchingInlineAsm) {
   MCInst Inst;
 
-  switch (MatchInstructionImpl(Operands, Inst, ErrorInfo, ErrorMissingFeature, MatchingInlineAsm)) {
+  switch (MatchInstructionImpl(Operands, Inst, ErrorInfo, MatchingInlineAsm)) {
   case Match_Success:
     // Post-process instructions (typically extended mnemonics)
     ProcessInstruction(Inst, Operands);
