@@ -249,6 +249,15 @@ struct coff_symbol {
 typedef coff_symbol<support::ulittle16_t> coff_symbol16;
 typedef coff_symbol<support::ulittle32_t> coff_symbol32;
 
+// Contains only common parts of coff_symbol16 and coff_symbol32.
+struct coff_symbol_generic {
+  union {
+    char ShortName[COFF::NameSize];
+    StringTableOffset Offset;
+  } Name;
+  support::ulittle32_t Value;
+};
+
 class COFFSymbolRef {
 public:
   COFFSymbolRef(const coff_symbol16 *CS) : CS16(CS), CS32(nullptr) {}
@@ -257,6 +266,12 @@ public:
 
   const void *getRawPtr() const {
     return CS16 ? static_cast<const void *>(CS16) : CS32;
+  }
+
+  const coff_symbol_generic *getGeneric() const {
+    if (CS16)
+      return reinterpret_cast<const coff_symbol_generic *>(CS16);
+    return reinterpret_cast<const coff_symbol_generic *>(CS32);
   }
 
   friend bool operator<(COFFSymbolRef A, COFFSymbolRef B) {
@@ -744,6 +759,8 @@ public:
     return std::error_code();
   }
   std::error_code getSymbolName(COFFSymbolRef Symbol, StringRef &Res) const;
+  std::error_code getSymbolName(const coff_symbol_generic *Symbol,
+                                StringRef &Res) const;
 
   ArrayRef<uint8_t> getSymbolAuxData(COFFSymbolRef Symbol) const;
 

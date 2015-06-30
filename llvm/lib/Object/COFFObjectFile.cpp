@@ -847,20 +847,24 @@ std::error_code COFFObjectFile::getString(uint32_t Offset,
 
 std::error_code COFFObjectFile::getSymbolName(COFFSymbolRef Symbol,
                                               StringRef &Res) const {
+  return getSymbolName(Symbol.getGeneric(), Res);
+}
+
+std::error_code COFFObjectFile::getSymbolName(const coff_symbol_generic *Symbol,
+                                              StringRef &Res) const {
   // Check for string table entry. First 4 bytes are 0.
-  if (Symbol.getStringTableOffset().Zeroes == 0) {
-    uint32_t Offset = Symbol.getStringTableOffset().Offset;
-    if (std::error_code EC = getString(Offset, Res))
+  if (Symbol->Name.Offset.Zeroes == 0) {
+    if (std::error_code EC = getString(Symbol->Name.Offset.Offset, Res))
       return EC;
     return std::error_code();
   }
 
-  if (Symbol.getShortName()[COFF::NameSize - 1] == 0)
+  if (Symbol->Name.ShortName[COFF::NameSize - 1] == 0)
     // Null terminated, let ::strlen figure out the length.
-    Res = StringRef(Symbol.getShortName());
+    Res = StringRef(Symbol->Name.ShortName);
   else
     // Not null terminated, use all 8 bytes.
-    Res = StringRef(Symbol.getShortName(), COFF::NameSize);
+    Res = StringRef(Symbol->Name.ShortName, COFF::NameSize);
   return std::error_code();
 }
 
