@@ -823,9 +823,11 @@ with the same name.  This is necessary because both globals belong to different
 COMDAT groups and COMDATs, at the object file level, are represented by
 sections.
 
-Note that certain IR constructs like global variables and functions may create
-COMDATs in the object file in addition to any which are specified using COMDAT
-IR.  This arises, for example, when a global variable has linkonce_odr linkage.
+Note that certain IR constructs like global variables and functions may
+create COMDATs in the object file in addition to any which are specified using
+COMDAT IR.  This arises when the code generator is configured to emit globals
+in individual sections (e.g. when `-data-sections` or `-function-sections`
+is supplied to `llc`).
 
 .. _namedmetadatastructure:
 

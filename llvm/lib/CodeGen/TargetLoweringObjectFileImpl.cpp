@@ -840,8 +840,6 @@ static int getSelectionForCOFF(const GlobalValue *GV) {
     } else {
       return COFF::IMAGE_COMDAT_SELECT_ASSOCIATIVE;
     }
-  } else if (GV->isWeakForLinker()) {
-    return COFF::IMAGE_COMDAT_SELECT_ANY;
   }
   return 0;
 }
