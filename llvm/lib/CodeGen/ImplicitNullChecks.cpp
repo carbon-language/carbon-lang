@@ -124,6 +124,13 @@ bool ImplicitNullChecks::analyzeBlockForNullChecks(
     MachineBasicBlock &MBB, SmallVectorImpl<NullCheck> &NullCheckList) {
   typedef TargetInstrInfo::MachineBranchPredicate MachineBranchPredicate;
 
+  MDNode *BranchMD =
+      MBB.getBasicBlock()
+          ? MBB.getBasicBlock()->getTerminator()->getMetadata("make.implicit")
+          : nullptr;
+  if (!BranchMD)
+    return false;
+
   MachineBranchPredicate MBP;
 
   if (TII->AnalyzeBranchPredicate(MBB, MBP, true))

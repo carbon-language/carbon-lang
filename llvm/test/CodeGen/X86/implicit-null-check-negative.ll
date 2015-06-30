@@ -10,7 +10,7 @@ define i32 @imp_null_check_load(i32* %x, i32* %y) {
   %c = icmp eq i32* %x, null
 ; It isn't legal to move the load from %x from "not_null" to here --
 ; the store to %y could be aliasing it.
-  br i1 %c, label %is_null, label %not_null
+  br i1 %c, label %is_null, label %not_null, !make.implicit !0
 
  is_null:
   ret i32 42
@@ -24,7 +24,7 @@ define i32 @imp_null_check_load(i32* %x, i32* %y) {
 define i32 @imp_null_check_gep_load(i32* %x) {
  entry:
   %c = icmp eq i32* %x, null
-  br i1 %c, label %is_null, label %not_null
+  br i1 %c, label %is_null, label %not_null, !make.implicit !0
 
  is_null:
   ret i32 42
@@ -36,3 +36,19 @@ define i32 @imp_null_check_gep_load(i32* %x) {
   %t = load i32, i32* %x.gep
   ret i32 %t
 }
+
+define i32 @imp_null_check_load_no_md(i32* %x) {
+; This is fine, except it is missing the !make.implicit metadata.
+ entry:
+  %c = icmp eq i32* %x, null
+  br i1 %c, label %is_null, label %not_null
+
+ is_null:
+  ret i32 42
+
+ not_null:
+  %t = load i32, i32* %x
+  ret i32 %t
+}
+
+!0 = !{}

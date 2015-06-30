@@ -21,7 +21,7 @@ define i32 @imp_null_check_load(i32* %x) {
 
  entry:
   %c = icmp eq i32* %x, null
-  br i1 %c, label %is_null, label %not_null
+  br i1 %c, label %is_null, label %not_null, !make.implicit !0
 
  is_null:
   ret i32 42
@@ -42,7 +42,7 @@ define i32 @imp_null_check_gep_load(i32* %x) {
 
  entry:
   %c = icmp eq i32* %x, null
-  br i1 %c, label %is_null, label %not_null
+  br i1 %c, label %is_null, label %not_null, !make.implicit !0
 
  is_null:
   ret i32 42
@@ -65,7 +65,7 @@ define i32 @imp_null_check_add_result(i32* %x, i32 %p) {
 
  entry:
   %c = icmp eq i32* %x, null
-  br i1 %c, label %is_null, label %not_null
+  br i1 %c, label %is_null, label %not_null, !make.implicit !0
 
  is_null:
   ret i32 42
@@ -75,6 +75,8 @@ define i32 @imp_null_check_add_result(i32* %x, i32 %p) {
   %p1 = add i32 %t, %p
   ret i32 %p1
 }
+
+!0 = !{}
 
 ; CHECK-LABEL: __LLVM_FaultMaps:
 

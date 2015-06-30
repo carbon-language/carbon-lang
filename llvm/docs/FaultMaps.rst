@@ -64,7 +64,7 @@ checking if a pointer is ``null``, like:
 
     %ptr = call i32* @get_ptr()
     %ptr_is_null = icmp i32* %ptr, null
-    br i1 %ptr_is_null, label %is_null, label %not_null
+    br i1 %ptr_is_null, label %is_null, label %not_null, !make.implicit !0
   
   not_null:
     %t = load i32, i32* %ptr
@@ -73,6 +73,8 @@ checking if a pointer is ``null``, like:
   is_null:
     call void @HFC()
     unreachable
+  
+  !0 = !{}
 
 to control flow implicit in the instruction loading or storing through
 the pointer being null checked:
@@ -94,3 +96,32 @@ level (so the above example is only representative, not literal).  The
 
 The ``ImplicitNullChecks`` pass adds entries to the
 ``__llvm_faultmaps`` section described above as needed.
+
+``make.implicit`` metadata
+--------------------------
+
+Making null checks implicit is an aggressive optimization, and it can
+be a net performance pessimization if too many memory operations end
+up faulting because of it.  A language runtime typically needs to
+ensure that only a negligible number of implicit null checks actually
+fault once the application has reached a steady state.  A standard way
+of doing this is by healing failed implicit null checks into explicit
+null checks via code patching or recompilation.  It follows that there
+are two requirements an explicit null check needs to satisfy for it to
+be profitable to convert it to an implicit null check:
+
+  1. The case where the pointer is actually null (i.e. the "failing"
+     case) is extremely rare.
+
+  2. The failing path heals the implicit null check into an explicit
+     null check so that the application does not repeatedly page
+     fault.
+
+The frontend is expected to mark branches that satisfy (1) and (2)
+using a ``!make.implicit`` metadata node (the actual content of the
+metadata node is ignored).  Only branches that are marked with
+``!make.implicit`` metadata are considered as candidates for
+conversion into implicit null checks.
+
+(Note that while we could deal with (1) using profiling data, dealing
+with (2) requires some information not present in branch profiles.)
