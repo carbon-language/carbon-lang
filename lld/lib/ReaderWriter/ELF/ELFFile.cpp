@@ -140,8 +140,8 @@ std::error_code ELFFile<ELFT>::createAtomizableSections() {
       if (std::error_code ec = sectionName.getError())
         return ec;
 
-      auto rai(_objFile->begin_rela(&section));
-      auto rae(_objFile->end_rela(&section));
+      auto rai(_objFile->rela_begin(&section));
+      auto rae(_objFile->rela_end(&section));
 
       _relocationAddendReferences[sHdr] = make_range(rai, rae);
       totalRelocs += std::distance(rai, rae);
@@ -152,8 +152,8 @@ std::error_code ELFFile<ELFT>::createAtomizableSections() {
       if (std::error_code ec = sectionName.getError())
         return ec;
 
-      auto ri(_objFile->begin_rel(&section));
-      auto re(_objFile->end_rel(&section));
+      auto ri(_objFile->rel_begin(&section));
+      auto re(_objFile->rel_end(&section));
 
       _relocationReferences[sHdr] = make_range(ri, re);
       totalRelocs += std::distance(ri, re);
@@ -210,7 +210,7 @@ template <class ELFT>
 std::error_code ELFFile<ELFT>::createSymbolsFromAtomizableSections() {
   // Increment over all the symbols collecting atoms and symbol names for
   // later use.
-  auto SymI = _objFile->begin_symbols(), SymE = _objFile->end_symbols();
+  auto SymI = _objFile->symbol_begin(), SymE = _objFile->symbol_end();
 
   // Skip over dummy sym.
   if (SymI != SymE)

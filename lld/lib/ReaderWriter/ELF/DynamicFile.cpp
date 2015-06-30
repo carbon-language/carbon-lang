@@ -68,7 +68,7 @@ template <class ELFT> std::error_code DynamicFile<ELFT>::doParse() {
   // Create a map from names to dynamic symbol table entries.
   // TODO: This should use the object file's build in hash table instead if
   // it exists.
-  for (auto i = obj.begin_dynamic_symbols(), e = obj.end_dynamic_symbols();
+  for (auto i = obj.dynamic_symbol_begin(), e = obj.dynamic_symbol_end();
        i != e; ++i) {
     auto name = obj.getSymbolName(i, true);
     if ((ec = name.getError()))
