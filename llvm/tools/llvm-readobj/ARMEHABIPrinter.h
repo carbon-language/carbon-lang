@@ -526,20 +526,18 @@ void PrinterContext<ET>::PrintUnwindInformation() const {
   DictScope UI(SW, "UnwindInformation");
 
   int SectionIndex = 0;
-  for (Elf_Shdr_iterator SI = ELF->section_begin(), SE = ELF->section_end();
-       SI != SE; ++SI, ++SectionIndex) {
-    if (SI->sh_type == ELF::SHT_ARM_EXIDX) {
-      const Elf_Shdr *IT = &(*SI);
-
+  for (const Elf_Shdr &Sec : ELF->sections()) {
+    if (Sec.sh_type == ELF::SHT_ARM_EXIDX) {
       DictScope UIT(SW, "UnwindIndexTable");
 
       SW.printNumber("SectionIndex", SectionIndex);
-      if (ErrorOr<StringRef> SectionName = ELF->getSectionName(IT))
+      if (ErrorOr<StringRef> SectionName = ELF->getSectionName(&Sec))
         SW.printString("SectionName", *SectionName);
-      SW.printHex("SectionOffset", IT->sh_offset);
+      SW.printHex("SectionOffset", Sec.sh_offset);
 
-      PrintIndexTable(SectionIndex, IT);
+      PrintIndexTable(SectionIndex, &Sec);
     }
+    ++SectionIndex;
   }
 }
 }
