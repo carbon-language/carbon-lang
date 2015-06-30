@@ -3732,6 +3732,8 @@ MicrosoftCXXABI::getAddrOfCXXCtorClosure(const CXXConstructorDecl *CD,
       ThunkTy, getLinkageForRTTI(RecordTy), ThunkName.str(), &CGM.getModule());
   ThunkFn->setCallingConv(static_cast<llvm::CallingConv::ID>(
       FnInfo.getEffectiveCallingConvention()));
+  if (ThunkFn->isWeakForLinker())
+    ThunkFn->setComdat(CGM.getModule().getOrInsertComdat(ThunkFn->getName()));
   bool IsCopy = CT == Ctor_CopyingClosure;
 
   // Start codegen.
