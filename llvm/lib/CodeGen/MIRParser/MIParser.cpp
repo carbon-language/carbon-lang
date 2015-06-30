@@ -63,7 +63,7 @@ public:
   /// This function always return true.
   bool error(StringRef::iterator Loc, const Twine &Msg);
 
-  MachineInstr *parse();
+  bool parse(MachineInstr *&MI);
 
   bool parseRegister(unsigned &Reg);
   bool parseRegisterOperand(MachineOperand &Dest, bool IsDef = false);
@@ -129,7 +129,7 @@ bool MIParser::error(StringRef::iterator Loc, const Twine &Msg) {
   return true;
 }
 
-MachineInstr *MIParser::parse() {
+bool MIParser::parse(MachineInstr *&MI) {
   lex();
 
   // Parse any register operands before '='
@@ -138,32 +138,28 @@ MachineInstr *MIParser::parse() {
   SmallVector<MachineOperand, 8> Operands;
   if (Token.isRegister()) {
     if (parseRegisterOperand(MO, /*IsDef=*/true))
-      return nullptr;
+      return true;
     Operands.push_back(MO);
-    if (Token.isNot(MIToken::equal)) {
-      error("expected '='");
-      return nullptr;
-    }
+    if (Token.isNot(MIToken::equal))
+      return error("expected '='");
     lex();
   }
 
   unsigned OpCode;
   if (Token.isError() || parseInstruction(OpCode))
-    return nullptr;
+    return true;
 
   // TODO: Parse the instruction flags and memory operands.
 
   // Parse the remaining machine operands.
   while (Token.isNot(MIToken::Eof)) {
     if (parseMachineOperand(MO))
-      return nullptr;
+      return true;
     Operands.push_back(MO);
     if (Token.is(MIToken::Eof))
       break;
-    if (Token.isNot(MIToken::comma)) {
-      error("expected ',' before the next machine operand");
-      return nullptr;
-    }
+    if (Token.isNot(MIToken::comma))
+      return error("expected ',' before the next machine operand");
     lex();
   }
 
@@ -184,10 +180,10 @@ MachineInstr *MIParser::parse() {
 
   // TODO: Determine the implicit behaviour when implicit register flags are
   // parsed.
-  auto *MI = MF.CreateMachineInstr(MCID, DebugLoc(), /*NoImplicit=*/true);
+  MI = MF.CreateMachineInstr(MCID, DebugLoc(), /*NoImplicit=*/true);
   for (const auto &Operand : Operands)
     MI->addOperand(MF, Operand);
-  return MI;
+  return false;
 }
 
 bool MIParser::parseInstruction(unsigned &OpCode) {
@@ -390,9 +386,9 @@ const uint32_t *MIParser::getRegMask(StringRef Identifier) {
   return RegMaskInfo->getValue();
 }
 
-MachineInstr *
-llvm::parseMachineInstr(SourceMgr &SM, MachineFunction &MF, StringRef Src,
-                        const DenseMap<unsigned, MachineBasicBlock *> &MBBSlots,
-                        const SlotMapping &IRSlots, SMDiagnostic &Error) {
-  return MIParser(SM, MF, Error, Src, MBBSlots, IRSlots).parse();
+bool llvm::parseMachineInstr(
+    MachineInstr *&MI, SourceMgr &SM, MachineFunction &MF, StringRef Src,
+    const DenseMap<unsigned, MachineBasicBlock *> &MBBSlots,
+    const SlotMapping &IRSlots, SMDiagnostic &Error) {
+  return MIParser(SM, MF, Error, Src, MBBSlots, IRSlots).parse(MI);
 }

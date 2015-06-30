@@ -265,13 +265,13 @@ bool MIRParserImpl::initializeMachineBasicBlock(
   // Parse the instructions.
   for (const auto &MISource : YamlMBB.Instructions) {
     SMDiagnostic Error;
-    if (auto *MI = parseMachineInstr(SM, MF, MISource.Value, MBBSlots, IRSlots,
-                                     Error)) {
-      MBB.insert(MBB.end(), MI);
-      continue;
+    MachineInstr *MI = nullptr;
+    if (parseMachineInstr(MI, SM, MF, MISource.Value, MBBSlots, IRSlots,
+                          Error)) {
+      reportDiagnostic(diagFromMIStringDiag(Error, MISource.SourceRange));
+      return true;
     }
-    reportDiagnostic(diagFromMIStringDiag(Error, MISource.SourceRange));
-    return true;
+    MBB.insert(MBB.end(), MI);
   }
   return false;
 }
