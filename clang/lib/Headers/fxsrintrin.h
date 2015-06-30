@@ -50,4 +50,6 @@ _fxrstor64(void *__p) {
   return __builtin_ia32_fxrstor64(__p);
 }
 
+#undef DEFAULT_FN_ATTRS
+
 #endif
