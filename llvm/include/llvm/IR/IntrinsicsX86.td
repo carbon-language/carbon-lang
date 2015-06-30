@@ -3515,6 +3515,19 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
 }
 
 //===----------------------------------------------------------------------===//
+// FXSR
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_fxrstor : GCCBuiltin<"__builtin_ia32_fxrstor">,
+              Intrinsic<[], [llvm_ptr_ty], []>;
+  def int_x86_fxrstor64 : GCCBuiltin<"__builtin_ia32_fxrstor64">,
+              Intrinsic<[], [llvm_ptr_ty], []>;
+  def int_x86_fxsave : GCCBuiltin<"__builtin_ia32_fxsave">,
+              Intrinsic<[], [llvm_ptr_ty], []>;
+  def int_x86_fxsave64 : GCCBuiltin<"__builtin_ia32_fxsave64">,
+              Intrinsic<[], [llvm_ptr_ty], []>;
+}
+
+//===----------------------------------------------------------------------===//
 // Half float conversion
 
 let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".

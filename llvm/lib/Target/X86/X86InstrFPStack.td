@@ -633,16 +633,16 @@ def FRNDINT : I<0xD9, MRM_FC, (outs), (ins), "frndint", [], IIC_FRNDINT>;
 def FSCALE : I<0xD9, MRM_FD, (outs), (ins), "fscale", [], IIC_FSCALE>;
 def FCOMPP : I<0xDE, MRM_D9, (outs), (ins), "fcompp", [], IIC_FCOMPP>;
 
-def FXSAVE : I<0xAE, MRM0m, (outs opaque512mem:$dst), (ins),
-               "fxsave\t$dst", [], IIC_FXSAVE>, TB;
-def FXSAVE64 : RI<0xAE, MRM0m, (outs opaque512mem:$dst), (ins),
-                  "fxsave64\t$dst", [], IIC_FXSAVE>, TB,
-                  Requires<[In64BitMode]>;
+def FXSAVE : I<0xAE, MRM0m, (outs), (ins opaque512mem:$dst),
+               "fxsave\t$dst", [(int_x86_fxsave addr:$dst)], IIC_FXSAVE>, TB;
+def FXSAVE64 : RI<0xAE, MRM0m, (outs), (ins opaque512mem:$dst),
+                  "fxsave64\t$dst", [(int_x86_fxsave64 addr:$dst)], 
+                  IIC_FXSAVE>, TB, Requires<[In64BitMode]>;
 def FXRSTOR : I<0xAE, MRM1m, (outs), (ins opaque512mem:$src),
-                "fxrstor\t$src", [], IIC_FXRSTOR>, TB;
+              "fxrstor\t$src", [(int_x86_fxrstor addr:$src)], IIC_FXRSTOR>, TB;
 def FXRSTOR64 : RI<0xAE, MRM1m, (outs), (ins opaque512mem:$src),
-                  "fxrstor64\t$src", [], IIC_FXRSTOR>, TB,
-                  Requires<[In64BitMode]>;
+                   "fxrstor64\t$src", [(int_x86_fxrstor64 addr:$src)],
+                   IIC_FXRSTOR>, TB, Requires<[In64BitMode]>;
 } // SchedRW
 
 //===----------------------------------------------------------------------===//
