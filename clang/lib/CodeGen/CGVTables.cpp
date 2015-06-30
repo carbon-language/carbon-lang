@@ -123,8 +123,8 @@ static RValue PerformReturnAdjustment(CodeGenFunction &CGF,
 //           no-op thunk for the regular definition) call va_start/va_end.
 //           There's a bit of per-call overhead for this solution, but it's
 //           better for codesize if the definition is long.
-void CodeGenFunction::GenerateVarArgsThunk(
-                                      llvm::Function *Fn,
+llvm::Function *
+CodeGenFunction::GenerateVarArgsThunk(llvm::Function *Fn,
                                       const CGFunctionInfo &FnInfo,
                                       GlobalDecl GD, const ThunkInfo &Thunk) {
   const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
@@ -184,6 +184,8 @@ void CodeGenFunction::GenerateVarArgsThunk(
       }
     }
   }
+
+  return Fn;
 }
 
 void CodeGenFunction::StartThunk(llvm::Function *Fn, GlobalDecl GD,
@@ -449,7 +451,8 @@ void CodeGenVTables::emitThunk(GlobalDecl GD, const ThunkInfo &Thunk,
     // FIXME: Do something better here; GenerateVarArgsThunk is extremely ugly.
     if (UseAvailableExternallyLinkage)
       return;
-    CodeGenFunction(CGM).GenerateVarArgsThunk(ThunkFn, FnInfo, GD, Thunk);
+    ThunkFn =
+        CodeGenFunction(CGM).GenerateVarArgsThunk(ThunkFn, FnInfo, GD, Thunk);
   } else {
     // Normal thunk body generation.
     CodeGenFunction(CGM).GenerateThunk(ThunkFn, FnInfo, GD, Thunk);
