@@ -361,6 +361,16 @@ class MipsAsmParser : public MCTargetAsmParser {
     }
   }
 
+  void setModuleFeatureBits(uint64_t Feature, StringRef FeatureString) {
+    setFeatureBits(Feature, FeatureString);
+    AssemblerOptions.front()->setFeatures(STI.getFeatureBits());
+  }
+
+  void clearModuleFeatureBits(uint64_t Feature, StringRef FeatureString) {
+    clearFeatureBits(Feature, FeatureString);
+    AssemblerOptions.front()->setFeatures(STI.getFeatureBits());
+  }
+
 public:
   enum MipsMatchResultTy {
     Match_RequiresDifferentSrcAndDst = FIRST_TARGET_MATCH_RESULT_TY
@@ -4711,7 +4721,7 @@ bool MipsAsmParser::parseDirectiveModule() {
   }
 
   if (Option == "oddspreg") {
-    clearFeatureBits(Mips::FeatureNoOddSPReg, "nooddspreg");
+    clearModuleFeatureBits(Mips::FeatureNoOddSPReg, "nooddspreg");
 
     // Synchronize the abiflags information with the FeatureBits information we
     // changed above.
@@ -4735,7 +4745,7 @@ bool MipsAsmParser::parseDirectiveModule() {
       return false;
     }
 
-    setFeatureBits(Mips::FeatureNoOddSPReg, "nooddspreg");
+    setModuleFeatureBits(Mips::FeatureNoOddSPReg, "nooddspreg");
 
     // Synchronize the abiflags information with the FeatureBits information we
     // changed above.
@@ -4800,6 +4810,7 @@ bool MipsAsmParser::parseFpABIValue(MipsABIFlagsSection::FpABIKind &FpABI,
                                     StringRef Directive) {
   MCAsmParser &Parser = getParser();
   MCAsmLexer &Lexer = getLexer();
+  bool ModuleLevelOptions = Directive == ".module";
 
   if (Lexer.is(AsmToken::Identifier)) {
     StringRef Value = Parser.getTok().getString();
@@ -4816,8 +4827,13 @@ bool MipsAsmParser::parseFpABIValue(MipsABIFlagsSection::FpABIKind &FpABI,
     }
 
     FpABI = MipsABIFlagsSection::FpABIKind::XX;
-    setFeatureBits(Mips::FeatureFPXX, "fpxx");
-    clearFeatureBits(Mips::FeatureFP64Bit, "fp64");
+    if (ModuleLevelOptions) {
+      setModuleFeatureBits(Mips::FeatureFPXX, "fpxx");
+      clearModuleFeatureBits(Mips::FeatureFP64Bit, "fp64");
+    } else {
+      setFeatureBits(Mips::FeatureFPXX, "fpxx");
+      clearFeatureBits(Mips::FeatureFP64Bit, "fp64");
+    }
     return true;
   }
 
@@ -4837,12 +4853,22 @@ bool MipsAsmParser::parseFpABIValue(MipsABIFlagsSection::FpABIKind &FpABI,
       }
 
       FpABI = MipsABIFlagsSection::FpABIKind::S32;
-      clearFeatureBits(Mips::FeatureFPXX, "fpxx");
-      clearFeatureBits(Mips::FeatureFP64Bit, "fp64");
+      if (ModuleLevelOptions) {
+        clearModuleFeatureBits(Mips::FeatureFPXX, "fpxx");
+        clearModuleFeatureBits(Mips::FeatureFP64Bit, "fp64");
+      } else {
+        clearFeatureBits(Mips::FeatureFPXX, "fpxx");
+        clearFeatureBits(Mips::FeatureFP64Bit, "fp64");
+      }
     } else {
       FpABI = MipsABIFlagsSection::FpABIKind::S64;
-      clearFeatureBits(Mips::FeatureFPXX, "fpxx");
-      setFeatureBits(Mips::FeatureFP64Bit, "fp64");
+      if (ModuleLevelOptions) {
+        clearModuleFeatureBits(Mips::FeatureFPXX, "fpxx");
+        setModuleFeatureBits(Mips::FeatureFP64Bit, "fp64");
+      } else {
+        clearFeatureBits(Mips::FeatureFPXX, "fpxx");
+        setFeatureBits(Mips::FeatureFP64Bit, "fp64");
+      }
     }
 
     return true;
