@@ -14,6 +14,7 @@
 #ifndef LLVM_MC_MCSYMBOL_H
 #define LLVM_MC_MCSYMBOL_H
 
+#include "llvm/ADT/PointerIntPair.h"
 #include "llvm/ADT/PointerUnion.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/MC/MCAssembler.h"
@@ -71,7 +72,12 @@ protected:
   ///
   /// If this is a fragment, then it gives the fragment this symbol's value is
   /// relative to, if any.
-  mutable PointerUnion<MCSection *, MCFragment *> SectionOrFragment;
+  ///
+  /// For the 'HasName' integer, this is true if this symbol is named.
+  /// A named symbol will have a pointer to the name allocated in the bytes
+  /// immediately prior to the MCSymbol.
+  mutable PointerIntPair<PointerUnion<MCSection *, MCFragment *>, 1>
+      SectionOrFragmentAndHasName;
 
   /// IsTemporary - True if this is an assembler temporary label, which
   /// typically does not survive in the .o file's symbol table.  Usually
@@ -91,11 +97,6 @@ protected:
 
   /// This symbol is private extern.
   mutable unsigned IsPrivateExtern : 1;
-
-  /// True if this symbol is named.
-  /// A named symbol will have a pointer to the name allocated in the bytes
-  /// immediately prior to the MCSymbol.
-  unsigned HasName : 1;
 
   /// LLVM RTTI discriminator. This is actually a SymbolKind enumerator, but is
   /// unsigned to avoid sign extension and achieve better bitpacking with MSVC.
@@ -145,11 +146,11 @@ protected: // MCContext creates and uniques these.
   } NameEntryStorageTy;
 
   MCSymbol(SymbolKind Kind, const StringMapEntry<bool> *Name, bool isTemporary)
-      : IsTemporary(isTemporary), IsRedefinable(false),
-        IsUsed(false), IsRegistered(false), IsExternal(false),
-        IsPrivateExtern(false), HasName(!!Name), Kind(Kind),
-        IsUsedInReloc(false), SymbolContents(SymContentsUnset) {
+      : IsTemporary(isTemporary), IsRedefinable(false), IsUsed(false),
+        IsRegistered(false), IsExternal(false), IsPrivateExtern(false),
+        Kind(Kind), IsUsedInReloc(false), SymbolContents(SymContentsUnset) {
     Offset = 0;
+    SectionOrFragmentAndHasName.setInt(!!Name);
     if (Name)
       getNameEntryPtr() = Name;
   }
@@ -176,6 +177,7 @@ private:
   MCSection *getSectionPtr() const {
     if (MCFragment *F = getFragment())
       return F->getParent();
+    const auto &SectionOrFragment = SectionOrFragmentAndHasName.getPointer();
     assert(!SectionOrFragment.is<MCFragment *>() && "Section or null expected");
     MCSection *Section = SectionOrFragment.dyn_cast<MCSection *>();
     if (Section || !isVariable())
@@ -185,7 +187,7 @@ private:
 
   /// \brief Get a reference to the name field.  Requires that we have a name
   const StringMapEntry<bool> *&getNameEntryPtr() {
-    assert(HasName && "Name is required");
+    assert(SectionOrFragmentAndHasName.getInt() && "Name is required");
     NameEntryStorageTy *Name = reinterpret_cast<NameEntryStorageTy *>(this);
     return (*(Name - 1)).NameEntry;
   }
@@ -196,7 +198,7 @@ private:
 public:
   /// getName - Get the symbol name.
   StringRef getName() const {
-    if (!HasName)
+    if (!SectionOrFragmentAndHasName.getInt())
       return StringRef();
 
     return getNameEntryPtr()->first();
@@ -229,7 +231,7 @@ public:
         Value = nullptr;
         SymbolContents = SymContentsUnset;
       }
-      SectionOrFragment = nullptr;
+      setUndefined();
       IsRedefinable = false;
     }
   }
@@ -262,13 +264,15 @@ public:
   /// Mark the symbol as defined in the section \p S.
   void setSection(MCSection &S) {
     assert(!isVariable() && "Cannot set section of variable");
-    assert(!SectionOrFragment.is<MCFragment *>() && "Section or null expected");
-    SectionOrFragment = &S;
+    assert(!SectionOrFragmentAndHasName.getPointer().is<MCFragment *>() &&
+           "Section or null expected");
+    SectionOrFragmentAndHasName.setPointer(&S);
   }
 
   /// Mark the symbol as undefined.
   void setUndefined() {
-    SectionOrFragment = nullptr;
+    SectionOrFragmentAndHasName.setPointer(
+        PointerUnion<MCSection *, MCFragment *>());
   }
 
   bool isELF() const { return Kind == SymbolKindELF; }
@@ -365,10 +369,10 @@ public:
   }
 
   MCFragment *getFragment() const {
-    return SectionOrFragment.dyn_cast<MCFragment *>();
+    return SectionOrFragmentAndHasName.getPointer().dyn_cast<MCFragment *>();
   }
   void setFragment(MCFragment *Value) const {
-    SectionOrFragment = Value;
+    SectionOrFragmentAndHasName.setPointer(Value);
   }
 
   bool isExternal() const { return IsExternal; }

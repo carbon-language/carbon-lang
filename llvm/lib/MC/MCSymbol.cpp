@@ -45,7 +45,7 @@ void MCSymbol::setVariableValue(const MCExpr *Value) {
          "Cannot give common/offset symbol a variable value");
   this->Value = Value;
   SymbolContents = SymContentsVariable;
-  SectionOrFragment = nullptr;
+  setUndefined();
 }
 
 void MCSymbol::print(raw_ostream &OS, const MCAsmInfo *MAI) const {
