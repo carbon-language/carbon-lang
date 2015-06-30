@@ -99,6 +99,8 @@ void MipsTargetStreamer::emitDirectiveModuleOddSPReg() {
   if (!ABIFlagsSection.OddSPReg && !ABIFlagsSection.Is32BitABI)
     report_fatal_error("+nooddspreg is only valid for O32");
 }
+void MipsTargetStreamer::emitDirectiveModuleSoftFloat() {}
+void MipsTargetStreamer::emitDirectiveModuleHardFloat() {}
 void MipsTargetStreamer::emitDirectiveSetFp(
     MipsABIFlagsSection::FpABIKind Value) {
   forbidModuleDirective();
@@ -402,6 +404,14 @@ void MipsTargetAsmStreamer::emitDirectiveSetOddSPReg() {
 void MipsTargetAsmStreamer::emitDirectiveSetNoOddSPReg() {
   MipsTargetStreamer::emitDirectiveSetNoOddSPReg();
   OS << "\t.set\tnooddspreg\n";
+}
+
+void MipsTargetAsmStreamer::emitDirectiveModuleSoftFloat() {
+  OS << "\t.module\tsoftfloat\n";
+}
+
+void MipsTargetAsmStreamer::emitDirectiveModuleHardFloat() {
+  OS << "\t.module\thardfloat\n";
 }
 
 // This part is for ELF object output.
