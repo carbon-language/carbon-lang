@@ -217,7 +217,8 @@ StringRef LinkerDriver::findDefaultEntry() {
       {"wWinMain", "wWinMainCRTStartup"},
   };
   for (auto E : Entries) {
-    if (Symtab.findLazy(E[0]))
+    Symbol *Sym = Symtab.findSymbol(E[0]);
+    if (Sym && !isa<Undefined>(Sym->Body))
       return E[1];
   }
   return "";

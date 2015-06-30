@@ -59,7 +59,7 @@ public:
   // mechanisms to allow aliases, a name can be resolved to a
   // different symbol). Returns a nullptr if not found.
   Defined *find(StringRef Name);
-  Defined *findLazy(StringRef Name);
+  Symbol *findSymbol(StringRef Name);
 
   // Find a symbol assuming that Name is a function name.
   // Not only a given string but its mangled names (in MSVC C++ manner)

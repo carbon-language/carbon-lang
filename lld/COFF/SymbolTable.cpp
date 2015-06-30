@@ -237,23 +237,11 @@ Defined *SymbolTable::find(StringRef Name) {
   return nullptr;
 }
 
-// Find a given symbol. If a lazy symbol is found,
-// resolve that before returning.
-Defined *SymbolTable::findLazy(StringRef Name) {
+Symbol *SymbolTable::findSymbol(StringRef Name) {
   auto It = Symtab.find(Name);
   if (It == Symtab.end())
     return nullptr;
-  Symbol *Sym = It->second;
-  if (auto *B = dyn_cast<Defined>(Sym->Body))
-    return B;
-  if (auto *B = dyn_cast<Lazy>(Sym->Body)) {
-    if (addMemberFile(B))
-      return nullptr;
-    if (run())
-      return nullptr;
-    return cast<Defined>(Sym->Body);
-  }
-  return nullptr;
+  return It->second;
 }
 
 // Find a given symbol or its mangled symbol.
