@@ -258,6 +258,8 @@ class MipsAsmParser : public MCTargetAsmParser {
   bool parseSetMips16Directive();
   bool parseSetNoMips16Directive();
   bool parseSetFpDirective();
+  bool parseSetOddSPRegDirective();
+  bool parseSetNoOddSPRegDirective();
   bool parseSetPopDirective();
   bool parseSetPushDirective();
   bool parseSetSoftFloatDirective();
@@ -4098,6 +4100,34 @@ bool MipsAsmParser::parseSetFpDirective() {
   return false;
 }
 
+bool MipsAsmParser::parseSetOddSPRegDirective() {
+  MCAsmParser &Parser = getParser();
+
+  Parser.Lex(); // Eat "oddspreg".
+  if (getLexer().isNot(AsmToken::EndOfStatement)) {
+    reportParseError("unexpected token, expected end of statement");
+    return false;
+  }
+
+  clearFeatureBits(Mips::FeatureNoOddSPReg, "nooddspreg");
+  getTargetStreamer().emitDirectiveSetOddSPReg();
+  return false;
+}
+
+bool MipsAsmParser::parseSetNoOddSPRegDirective() {
+  MCAsmParser &Parser = getParser();
+
+  Parser.Lex(); // Eat "nooddspreg".
+  if (getLexer().isNot(AsmToken::EndOfStatement)) {
+    reportParseError("unexpected token, expected end of statement");
+    return false;
+  }
+
+  setFeatureBits(Mips::FeatureNoOddSPReg, "nooddspreg");
+  getTargetStreamer().emitDirectiveSetNoOddSPReg();
+  return false;
+}
+
 bool MipsAsmParser::parseSetPopDirective() {
   MCAsmParser &Parser = getParser();
   SMLoc Loc = getLexer().getLoc();
@@ -4460,6 +4490,10 @@ bool MipsAsmParser::parseDirectiveSet() {
     return parseSetArchDirective();
   } else if (Tok.getString() == "fp") {
     return parseSetFpDirective();
+  } else if (Tok.getString() == "oddspreg") {
+    return parseSetOddSPRegDirective();
+  } else if (Tok.getString() == "nooddspreg") {
+    return parseSetNoOddSPRegDirective();
   } else if (Tok.getString() == "pop") {
     return parseSetPopDirective();
   } else if (Tok.getString() == "push") {

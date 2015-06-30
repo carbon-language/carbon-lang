@@ -103,6 +103,10 @@ void MipsTargetStreamer::emitDirectiveSetFp(
     MipsABIFlagsSection::FpABIKind Value) {
   forbidModuleDirective();
 }
+void MipsTargetStreamer::emitDirectiveSetOddSPReg() { forbidModuleDirective(); }
+void MipsTargetStreamer::emitDirectiveSetNoOddSPReg() {
+  forbidModuleDirective();
+}
 
 MipsTargetAsmStreamer::MipsTargetAsmStreamer(MCStreamer &S,
                                              formatted_raw_ostream &OS)
@@ -388,6 +392,16 @@ void MipsTargetAsmStreamer::emitDirectiveModuleOddSPReg() {
   MipsTargetStreamer::emitDirectiveModuleOddSPReg();
 
   OS << "\t.module\t" << (ABIFlagsSection.OddSPReg ? "" : "no") << "oddspreg\n";
+}
+
+void MipsTargetAsmStreamer::emitDirectiveSetOddSPReg() {
+  MipsTargetStreamer::emitDirectiveSetOddSPReg();
+  OS << "\t.set\toddspreg\n";
+}
+
+void MipsTargetAsmStreamer::emitDirectiveSetNoOddSPReg() {
+  MipsTargetStreamer::emitDirectiveSetNoOddSPReg();
+  OS << "\t.set\tnooddspreg\n";
 }
 
 // This part is for ELF object output.
