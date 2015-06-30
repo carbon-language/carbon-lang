@@ -1088,7 +1088,6 @@ FileSpec::ForEachItemInDirectory (const char *dir_path, DirectoryCallback const 
 
         do
         {
-            bool call_callback = false;
             FileSpec::FileType file_type = eFileTypeUnknown;
             if (ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
             {
@@ -1101,54 +1100,49 @@ FileSpec::ForEachItemInDirectory (const char *dir_path, DirectoryCallback const 
                     continue;
 
                 file_type = eFileTypeDirectory;
-                call_callback = find_directories;
             }
             else if (ffd.dwFileAttributes & FILE_ATTRIBUTE_DEVICE)
             {
                 file_type = eFileTypeOther;
-                call_callback = find_other;
             }
             else
             {
                 file_type = eFileTypeRegular;
-                call_callback = find_files;
             }
-            if (call_callback)
+
+            char child_path[MAX_PATH];
+            const int child_path_len = ::snprintf (child_path, sizeof(child_path), "%s\\%s", dir_path, ffd.cFileName);
+            if (child_path_len < (int)(sizeof(child_path) - 1))
             {
-                char child_path[MAX_PATH];
-                const int child_path_len = ::snprintf (child_path, sizeof(child_path), "%s\\%s", dir_path, ffd.cFileName);
-                if (child_path_len < (int)(sizeof(child_path) - 1))
+                // Don't resolve the file type or path
+                FileSpec child_path_spec (child_path, false);
+
+                EnumerateDirectoryResult result = callback (file_type, child_path_spec);
+
+                switch (result)
                 {
-                    // Don't resolve the file type or path
-                    FileSpec child_path_spec (child_path, false);
+                    case eEnumerateDirectoryResultNext:
+                        // Enumerate next entry in the current directory. We just
+                        // exit this switch and will continue enumerating the
+                        // current directory as we currently are...
+                        break;
 
-                    EnumerateDirectoryResult result = callback (file_type, child_path_spec);
-
-                    switch (result)
-                    {
-                        case eEnumerateDirectoryResultNext:
-                            // Enumerate next entry in the current directory. We just
-                            // exit this switch and will continue enumerating the
-                            // current directory as we currently are...
-                            break;
-
-                        case eEnumerateDirectoryResultEnter: // Recurse into the current entry if it is a directory or symlink, or next if not
-                            if (FileSpec::ForEachItemInDirectory(child_path, callback) == eEnumerateDirectoryResultQuit)
-                            {
-                                // The subdirectory returned Quit, which means to
-                                // stop all directory enumerations at all levels.
-                                return eEnumerateDirectoryResultQuit;
-                            }
-                            break;
-
-                        case eEnumerateDirectoryResultExit:  // Exit from the current directory at the current level.
-                            // Exit from this directory level and tell parent to
-                            // keep enumerating.
-                            return eEnumerateDirectoryResultNext;
-
-                        case eEnumerateDirectoryResultQuit:  // Stop directory enumerations at any level
+                    case eEnumerateDirectoryResultEnter: // Recurse into the current entry if it is a directory or symlink, or next if not
+                        if (FileSpec::ForEachItemInDirectory(child_path, callback) == eEnumerateDirectoryResultQuit)
+                        {
+                            // The subdirectory returned Quit, which means to
+                            // stop all directory enumerations at all levels.
                             return eEnumerateDirectoryResultQuit;
-                    }
+                        }
+                        break;
+
+                    case eEnumerateDirectoryResultExit:  // Exit from the current directory at the current level.
+                        // Exit from this directory level and tell parent to
+                        // keep enumerating.
+                        return eEnumerateDirectoryResultNext;
+
+                    case eEnumerateDirectoryResultQuit:  // Stop directory enumerations at any level
+                        return eEnumerateDirectoryResultQuit;
                 }
             }
         } while (FindNextFile(hFind, &ffd) != 0);
