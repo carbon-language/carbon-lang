@@ -186,6 +186,24 @@ DynamicLoader::LoadModuleAtAddress(const FileSpec &file, addr_t link_map_addr, a
     {
         UpdateLoadedSections(module_sp, link_map_addr, base_addr);
     }
+    else
+    {
+        // Try to fetch the load address of the file from the process. It can be different from the
+        // address reported by the linker in case of a file with fixed load address because the
+        // linker reports the bias between the load address specified in the file and the actual
+        // load address it loaded the file.
+        bool is_loaded;
+        lldb::addr_t load_addr;
+        Error error = m_process->GetFileLoadAddress(file, is_loaded, load_addr);
+        if (error.Fail() || !is_loaded)
+            load_addr = base_addr;
+
+        if ((module_sp = m_process->ReadModuleFromMemory(file, load_addr)))
+        {
+            UpdateLoadedSections(module_sp, link_map_addr, base_addr);
+            target.GetImages().AppendIfNeeded(module_sp);
+        }
+    }
 
     return module_sp;
 }

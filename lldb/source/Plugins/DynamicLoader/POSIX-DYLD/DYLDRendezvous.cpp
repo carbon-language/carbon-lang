@@ -410,12 +410,14 @@ DYLDRendezvous::ReadSOEntryFromMemory(lldb::addr_t addr, SOEntry &entry)
     if (!(addr = ReadPointer(addr, &entry.prev)))
         return false;
 
-    entry.file_spec.SetFile(ReadStringFromMemory(entry.path_addr), false);
+    std::string file_path = ReadStringFromMemory(entry.path_addr);
+    entry.file_spec.SetFile(file_path, false);
 
-    // The base_addr is not filled in for some case.
-    // Try to figure it out based on the load address of the object file.
-    // The issue observed for '/system/bin/linker' on Android L (5.0, 5.1)
-    if (entry.base_addr == 0)
+    // On Android L (5.0, 5.1) the load address of the "/system/bin/linker" isn't filled in
+    // correctly. To get the correct load address we fetch the load address of the file from the
+    // proc file system.
+    if (arch.GetTriple().getEnvironment() == llvm::Triple::Android && entry.base_addr == 0 &&
+        (file_path == "/system/bin/linker" || file_path == "/system/bin/linker64"))
     {
         lldb::addr_t load_addr = LLDB_INVALID_ADDRESS;
         bool is_loaded = false;

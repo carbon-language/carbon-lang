@@ -199,7 +199,7 @@ private:
                   lldb::offset_t length);
 
     ObjectFileELF (const lldb::ModuleSP &module_sp,
-                   lldb::DataBufferSP& data_sp,
+                   lldb::DataBufferSP& header_data_sp,
                    const lldb::ProcessSP &process_sp,
                    lldb::addr_t header_addr);
 
