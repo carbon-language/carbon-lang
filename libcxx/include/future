@@ -2173,7 +2173,7 @@ public:
                   >::type
               >    
         _LIBCPP_INLINE_VISIBILITY
-        explicit packaged_task(allocator_arg_t, const _Allocator& __a, _Fp&& __f)
+        packaged_task(allocator_arg_t, const _Allocator& __a, _Fp&& __f)
              : __f_(allocator_arg, __a, _VSTD::forward<_Fp>(__f)),
                __p_(allocator_arg, __a) {}
     // ~packaged_task() = default;
