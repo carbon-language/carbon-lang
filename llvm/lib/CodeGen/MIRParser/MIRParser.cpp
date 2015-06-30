@@ -60,6 +60,12 @@ public:
   /// Always returns true.
   bool error(const Twine &Message);
 
+  /// Report a given error with the location translated from the location in an
+  /// embedded string literal to a location in the MIR file.
+  ///
+  /// Always returns true.
+  bool error(const SMDiagnostic &Error, SMRange SourceRange);
+
   /// Try to parse the optional LLVM module and the machine functions in the MIR
   /// file.
   ///
@@ -116,6 +122,12 @@ MIRParserImpl::MIRParserImpl(std::unique_ptr<MemoryBuffer> Contents,
 bool MIRParserImpl::error(const Twine &Message) {
   Context.diagnose(DiagnosticInfoMIRParser(
       DS_Error, SMDiagnostic(Filename, SourceMgr::DK_Error, Message.str())));
+  return true;
+}
+
+bool MIRParserImpl::error(const SMDiagnostic &Error, SMRange SourceRange) {
+  assert(Error.getKind() == SourceMgr::DK_Error && "Expected an error");
+  reportDiagnostic(diagFromMIStringDiag(Error, SourceRange));
   return true;
 }
 
@@ -266,11 +278,8 @@ bool MIRParserImpl::initializeMachineBasicBlock(
   for (const auto &MISource : YamlMBB.Instructions) {
     SMDiagnostic Error;
     MachineInstr *MI = nullptr;
-    if (parseMachineInstr(MI, SM, MF, MISource.Value, MBBSlots, IRSlots,
-                          Error)) {
-      reportDiagnostic(diagFromMIStringDiag(Error, MISource.SourceRange));
-      return true;
-    }
+    if (parseMachineInstr(MI, SM, MF, MISource.Value, MBBSlots, IRSlots, Error))
+      return error(Error, MISource.SourceRange);
     MBB.insert(MBB.end(), MI);
   }
   return false;
