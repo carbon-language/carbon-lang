@@ -28,6 +28,7 @@ using llvm::object::coff_import_header;
 using llvm::object::coff_symbol_generic;
 
 class ArchiveFile;
+class BitcodeFile;
 class InputFile;
 class ObjectFile;
 class SymbolBody;
@@ -334,15 +335,19 @@ private:
 };
 
 class DefinedBitcode : public Defined {
+  friend SymbolBody;
 public:
-  DefinedBitcode(StringRef N, bool IsReplaceable)
-      : Defined(DefinedBitcodeKind, N) {
+  DefinedBitcode(BitcodeFile *F, StringRef N, bool IsReplaceable)
+      : Defined(DefinedBitcodeKind, N), File(F) {
     this->IsReplaceable = IsReplaceable;
   }
 
   static bool classof(const SymbolBody *S) {
     return S->kind() == DefinedBitcodeKind;
   }
+
+private:
+  BitcodeFile *File;
 };
 
 } // namespace coff

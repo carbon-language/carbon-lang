@@ -3,7 +3,12 @@
 # RUN: not lld -flavor link2 /out:%t.exe %t1.obj %t2.obj >& %t.log
 # RUN: FileCheck %s < %t.log
 
-# CHECK: duplicate symbol: foo {{.+}} and foo {{.+}}
+# RUN: llvm-as -o %t.lto1.obj %S/Inputs/conflict.ll
+# RUN: llvm-as -o %t.lto2.obj %S/Inputs/conflict.ll
+# RUN: not lld -flavor link2 /out:%t.exe %t.lto1.obj %t.lto2.obj >& %t.log
+# RUN: FileCheck %s < %t.log
+
+# CHECK: duplicate symbol: foo {{.+}}1.obj and foo {{.+}}2.obj
 
 ---
 header:

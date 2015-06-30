@@ -291,7 +291,8 @@ std::error_code BitcodeFile::parse() {
     } else {
       bool Replaceable = (SymbolDef == LTO_SYMBOL_DEFINITION_TENTATIVE ||
                           (Attrs & LTO_SYMBOL_COMDAT));
-      SymbolBodies.push_back(new (Alloc) DefinedBitcode(SymName, Replaceable));
+      SymbolBodies.push_back(new (Alloc) DefinedBitcode(this, SymName,
+                                                        Replaceable));
     }
   }
 

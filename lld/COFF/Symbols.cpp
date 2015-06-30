@@ -138,6 +138,9 @@ std::string SymbolBody::getDebugName() {
   if (auto *D = dyn_cast<DefinedCOFF>(this)) {
     N += " ";
     N += D->File->getShortName();
+  } else if (auto *D = dyn_cast<DefinedBitcode>(this)) {
+    N += " ";
+    N += D->File->getShortName();
   }
   return N;
 }
