@@ -2372,8 +2372,28 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
   LateParsedAttrList LateParsedAttrs;
 
   SourceLocation EqualLoc;
-  bool HasInitializer = false;
-  ExprResult Init;
+  SourceLocation PureSpecLoc;
+
+  auto TryConsumePureSpecifier = [&] (bool AllowDefinition = false) {
+    if (Tok.isNot(tok::equal))
+      return false;
+
+    auto &Zero = NextToken();
+    SmallString<8> Buffer;
+    if (Zero.isNot(tok::numeric_constant) || Zero.getLength() != 1 ||
+        PP.getSpelling(Zero, Buffer) != "0")
+      return false;
+
+    auto &After = GetLookAheadToken(2);
+    if (!After.isOneOf(tok::semi, tok::comma) &&
+        !(AllowDefinition &&
+          After.isOneOf(tok::l_brace, tok::colon, tok::kw_try)))
+      return false;
+
+    EqualLoc = ConsumeToken();
+    PureSpecLoc = ConsumeToken();
+    return true;
+  };
 
   SmallVector<Decl *, 8> DeclsInGroup;
   ExprResult BitfieldSize;
@@ -2390,16 +2410,8 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
   if (BitfieldSize.isUnset()) {
     // MSVC permits pure specifier on inline functions defined at class scope.
     // Hence check for =0 before checking for function definition.
-    if (getLangOpts().MicrosoftExt && Tok.is(tok::equal) &&
-        DeclaratorInfo.isFunctionDeclarator() &&
-        NextToken().is(tok::numeric_constant)) {
-      EqualLoc = ConsumeToken();
-      Init = ParseInitializer();
-      if (Init.isInvalid())
-        SkipUntil(tok::comma, StopAtSemi | StopBeforeMatch);
-      else
-        HasInitializer = true;
-    }
+    if (getLangOpts().MicrosoftExt && DeclaratorInfo.isDeclarationOfFunction())
+      TryConsumePureSpecifier(/*AllowDefinition*/ true);
 
     FunctionDefinitionKind DefinitionKind = FDK_Declaration;
     // function-definition:
@@ -2453,7 +2465,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
 
       Decl *FunDecl =
         ParseCXXInlineMethodDef(AS, AccessAttrs, DeclaratorInfo, TemplateInfo,
-                                VS, Init);
+                                VS, PureSpecLoc);
 
       if (FunDecl) {
         for (unsigned i = 0, ni = CommonLateParsedAttrs.size(); i < ni; ++i) {
@@ -2479,16 +2491,25 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
 
   while (1) {
     InClassInitStyle HasInClassInit = ICIS_NoInit;
-    if (Tok.isOneOf(tok::equal, tok::l_brace) && !HasInitializer) {
+    bool HasStaticInitializer = false;
+    if (Tok.isOneOf(tok::equal, tok::l_brace) && PureSpecLoc.isInvalid()) {
       if (BitfieldSize.get()) {
         Diag(Tok, diag::err_bitfield_member_init);
         SkipUntil(tok::comma, StopAtSemi | StopBeforeMatch);
+      } else if (DeclaratorInfo.isDeclarationOfFunction()) {
+        // It's a pure-specifier.
+        if (!TryConsumePureSpecifier(/*AllowFunctionDefinition*/ false))
+          // Parse it as an expression so that Sema can diagnose it.
+          HasStaticInitializer = true;
+      } else if (DeclaratorInfo.getDeclSpec().getStorageClassSpec() !=
+                     DeclSpec::SCS_static &&
+                 DeclaratorInfo.getDeclSpec().getStorageClassSpec() !=
+                     DeclSpec::SCS_typedef &&
+                 !DS.isFriendSpecified()) {
+        // It's a default member initializer.
+        HasInClassInit = Tok.is(tok::equal) ? ICIS_CopyInit : ICIS_ListInit;
       } else {
-        HasInitializer = true;
-        if (!DeclaratorInfo.isDeclarationOfFunction() &&
-            DeclaratorInfo.getDeclSpec().getStorageClassSpec()
-              != DeclSpec::SCS_typedef)
-          HasInClassInit = Tok.is(tok::equal) ? ICIS_CopyInit : ICIS_ListInit;
+        HasStaticInitializer = true;
       }
     }
 
@@ -2528,10 +2549,20 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
         Actions.ProcessDeclAttributeList(getCurScope(), ThisDecl, AccessAttrs);
     }
 
-    // Handle the initializer.
+    // Error recovery might have converted a non-static member into a static
+    // member.
     if (HasInClassInit != ICIS_NoInit &&
-        DeclaratorInfo.getDeclSpec().getStorageClassSpec() !=
-        DeclSpec::SCS_static) {
+        DeclaratorInfo.getDeclSpec().getStorageClassSpec() ==
+            DeclSpec::SCS_static) {
+      HasInClassInit = ICIS_NoInit;
+      HasStaticInitializer = true;
+    }
+
+    if (ThisDecl && PureSpecLoc.isValid())
+      Actions.ActOnPureSpecifier(ThisDecl, PureSpecLoc);
+
+    // Handle the initializer.
+    if (HasInClassInit != ICIS_NoInit) {
       // The initializer was deferred; parse it and cache the tokens.
       Diag(Tok, getLangOpts().CPlusPlus11
                     ? diag::warn_cxx98_compat_nonstatic_member_init
@@ -2551,11 +2582,10 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
           ThisDecl->setInvalidDecl();
       } else
         ParseCXXNonStaticMemberInitializer(ThisDecl);
-    } else if (HasInitializer) {
+    } else if (HasStaticInitializer) {
       // Normal initializer.
-      if (!Init.isUsable())
-        Init = ParseCXXMemberInitializer(
-            ThisDecl, DeclaratorInfo.isDeclarationOfFunction(), EqualLoc);
+      ExprResult Init = ParseCXXMemberInitializer(
+          ThisDecl, DeclaratorInfo.isDeclarationOfFunction(), EqualLoc);
 
       if (Init.isInvalid())
         SkipUntil(tok::comma, StopAtSemi | StopBeforeMatch);
@@ -2608,8 +2638,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
     DeclaratorInfo.clear();
     VS.clear();
     BitfieldSize = ExprResult(/*Invalid=*/false);
-    Init = ExprResult(/*Invalid=*/false);
-    HasInitializer = false;
+    EqualLoc = PureSpecLoc = SourceLocation();
     DeclaratorInfo.setCommaLoc(CommaLoc);
 
     // GNU attributes are allowed before the second and subsequent declarator.
@@ -2632,13 +2661,11 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
   Actions.FinalizeDeclaratorGroup(getCurScope(), DS, DeclsInGroup);
 }
 
-/// ParseCXXMemberInitializer - Parse the brace-or-equal-initializer or
-/// pure-specifier. Also detect and reject any attempted defaulted/deleted
-/// function definition. The location of the '=', if any, will be placed in
-/// EqualLoc.
+/// ParseCXXMemberInitializer - Parse the brace-or-equal-initializer.
+/// Also detect and reject any attempted defaulted/deleted function definition.
+/// The location of the '=', if any, will be placed in EqualLoc.
 ///
-///   pure-specifier:
-///     '= 0'
+/// This does not check for a pure-specifier; that's handled elsewhere.
 ///
 ///   brace-or-equal-initializer:
 ///     '=' initializer-expression

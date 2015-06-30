@@ -8783,19 +8783,6 @@ namespace {
   }
 }
 
-/// Determine whether the given expression was formed from the token '0'. This
-/// test is necessary to determine whether an initializer is really a
-/// pure-specifier.
-static bool isZeroToken(Sema &S, Expr *E) {
-  auto *IL = dyn_cast<IntegerLiteral>(E);
-  if (!IL || !!IL->getValue() ||
-      !IL->getType()->isSpecificBuiltinType(BuiltinType::Int))
-    return false;
-
-  SmallString<8> Buffer;
-  return S.PP.getSpelling(E->getLocStart(), Buffer) == "0";
-}
-
 /// AddInitializerToDecl - Adds the initializer Init to the
 /// declaration dcl. If DirectInit is true, this is C++ direct
 /// initialization rather than copy initialization.
@@ -8809,20 +8796,10 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init,
   }
 
   if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(RealDecl)) {
-    // With declarators parsed the way they are, the parser cannot
-    // distinguish between a normal initializer and a pure-specifier.
-    // Thus this grotesque test.
-    //
-    // FIXME: The parser should instead treat anything that looks like a
-    // pure-specifier as a pure-specifier, and Sema should convert it to an
-    // initializer when necessary, rather than doing things this way around.
-    if (!DirectInit && isZeroToken(*this, Init))
-      CheckPureMethod(Method, Init->getSourceRange());
-    else {
-      Diag(Method->getLocation(), diag::err_member_function_initialization)
-        << Method->getDeclName() << Init->getSourceRange();
-      Method->setInvalidDecl();
-    }
+    // Pure-specifiers are handled in ActOnPureSpecifier.
+    Diag(Method->getLocation(), diag::err_member_function_initialization)
+      << Method->getDeclName() << Init->getSourceRange();
+    Method->setInvalidDecl();
     return;
   }
 

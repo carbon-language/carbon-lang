@@ -2186,9 +2186,6 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
       assert(Member && "HandleField never returns null");
     }
   } else {
-    assert(InitStyle == ICIS_NoInit ||
-           D.getDeclSpec().getStorageClassSpec() == DeclSpec::SCS_static);
-
     Member = HandleDeclarator(S, D, TemplateParameterLists);
     if (!Member)
       return nullptr;
@@ -13058,6 +13055,15 @@ bool Sema::CheckPureMethod(CXXMethodDecl *Method, SourceRange InitRange) {
     Diag(Method->getLocation(), diag::err_non_virtual_pure)
       << Method->getDeclName() << InitRange;
   return true;
+}
+
+void Sema::ActOnPureSpecifier(Decl *D, SourceLocation ZeroLoc) {
+  if (D->getFriendObjectKind())
+    Diag(D->getLocation(), diag::err_pure_friend);
+  else if (auto *M = dyn_cast<CXXMethodDecl>(D))
+    CheckPureMethod(M, ZeroLoc);
+  else
+    Diag(D->getLocation(), diag::err_illegal_initializer);
 }
 
 /// \brief Determine whether the given declaration is a static data member.

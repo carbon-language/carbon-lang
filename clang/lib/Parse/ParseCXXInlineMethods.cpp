@@ -27,7 +27,7 @@ NamedDecl *Parser::ParseCXXInlineMethodDef(AccessSpecifier AS,
                                       ParsingDeclarator &D,
                                       const ParsedTemplateInfo &TemplateInfo,
                                       const VirtSpecifiers& VS,
-                                      ExprResult& Init) {
+                                      SourceLocation PureSpecLoc) {
   assert(D.isFunctionDeclarator() && "This isn't a function declarator!");
   assert(Tok.isOneOf(tok::l_brace, tok::colon, tok::kw_try, tok::equal) &&
          "Current token not a '{', ':', '=', or 'try'!");
@@ -47,12 +47,8 @@ NamedDecl *Parser::ParseCXXInlineMethodDef(AccessSpecifier AS,
                                            VS, ICIS_NoInit);
     if (FnD) {
       Actions.ProcessDeclAttributeList(getCurScope(), FnD, AccessAttrs);
-      bool TypeSpecContainsAuto = D.getDeclSpec().containsPlaceholderType();
-      if (Init.isUsable())
-        Actions.AddInitializerToDecl(FnD, Init.get(), false,
-                                     TypeSpecContainsAuto);
-      else
-        Actions.ActOnUninitializedDecl(FnD, TypeSpecContainsAuto);
+      if (PureSpecLoc.isValid())
+        Actions.ActOnPureSpecifier(FnD, PureSpecLoc);
     }
   }
 

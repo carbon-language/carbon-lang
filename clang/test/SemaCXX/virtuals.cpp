@@ -51,3 +51,13 @@ namespace pr8264 {
     virtual virtual void func();  // expected-warning {{duplicate 'virtual' declaration specifier}}
   };
 }
+
+namespace VirtualFriend {
+  // DR (filed but no number yet): reject meaningless pure-specifier on a friend declaration.
+  struct A { virtual int f(); };
+  struct B { friend int A::f() = 0; }; // expected-error {{friend declaration cannot have a pure-specifier}}
+  struct C {
+    virtual int f();
+    friend int C::f() = 0; // expected-error {{friend declaration cannot have a pure-specifier}}
+  };
+}
