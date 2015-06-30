@@ -1665,44 +1665,42 @@ llvm::DIType *CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
 
 llvm::DIModule *
 CGDebugInfo::getOrCreateModuleRef(ExternalASTSource::ASTSourceDescriptor Mod) {
-  llvm::DIModule *ModuleRef = nullptr;
   auto it = ModuleRefCache.find(Mod.Signature);
   if (it != ModuleRefCache.end())
-    ModuleRef = it->second;
-  else {
-    // Macro definitions that were defined with "-D" on the command line.
-    SmallString<128> ConfigMacros;
-    {
-      llvm::raw_svector_ostream OS(ConfigMacros);
-      const auto &PPOpts = CGM.getPreprocessorOpts();
-      unsigned I = 0;
-      // Translate the macro definitions back into a commmand line.
-      for (auto &M : PPOpts.Macros) {
-        if (++I > 1)
-          OS << " ";
-        const std::string &Macro = M.first;
-        bool Undef = M.second;
-        OS << "\"-" << (Undef ? 'U' : 'D');
-        for (char c : Macro)
-          switch (c) {
-          case '\\' : OS << "\\\\"; break;
-          case '"'  : OS << "\\\""; break;
-          default: OS << c;
-          }
-        OS << '\"';
-      }
+    return it->second;
+
+  // Macro definitions that were defined with "-D" on the command line.
+  SmallString<128> ConfigMacros;
+  {
+    llvm::raw_svector_ostream OS(ConfigMacros);
+    const auto &PPOpts = CGM.getPreprocessorOpts();
+    unsigned I = 0;
+    // Translate the macro definitions back into a commmand line.
+    for (auto &M : PPOpts.Macros) {
+      if (++I > 1)
+        OS << " ";
+      const std::string &Macro = M.first;
+      bool Undef = M.second;
+      OS << "\"-" << (Undef ? 'U' : 'D');
+      for (char c : Macro)
+        switch (c) {
+        case '\\' : OS << "\\\\"; break;
+        case '"'  : OS << "\\\""; break;
+        default: OS << c;
+        }
+      OS << '\"';
     }
-    llvm::DIBuilder DIB(CGM.getModule());
-    auto *CU = DIB.createCompileUnit(
-        TheCU->getSourceLanguage(), internString(Mod.ModuleName),
-        internString(Mod.Path), TheCU->getProducer(), true, StringRef(), 0,
-        internString(Mod.ASTFile), llvm::DIBuilder::FullDebug, Mod.Signature);
-    ModuleRef = DIB.createModule(
-        CU, Mod.ModuleName, ConfigMacros, internString(Mod.Path),
-        internString(CGM.getHeaderSearchOpts().Sysroot));
-    DIB.finalize();
-    ModuleRefCache.insert(std::make_pair(Mod.Signature, ModuleRef));
   }
+  llvm::DIBuilder DIB(CGM.getModule());
+  auto *CU = DIB.createCompileUnit(
+      TheCU->getSourceLanguage(), internString(Mod.ModuleName),
+      internString(Mod.Path), TheCU->getProducer(), true, StringRef(), 0,
+      internString(Mod.ASTFile), llvm::DIBuilder::FullDebug, Mod.Signature);
+  llvm::DIModule *ModuleRef =
+      DIB.createModule(CU, Mod.ModuleName, ConfigMacros, internString(Mod.Path),
+                       internString(CGM.getHeaderSearchOpts().Sysroot));
+  DIB.finalize();
+  ModuleRefCache.insert(std::make_pair(Mod.Signature, ModuleRef));
   return ModuleRef;
 }
 
