@@ -8,10 +8,10 @@
 // RUN:     --target=i386-pc-win32 -### -- 2>&1 %s | FileCheck -check-prefix=MFLAGS %s
 // MFLAGS-NOT: argument unused during compilation
 
-// -arch:IA32 is no-op.
 // RUN: %clang_cl -m32 -arch:IA32 --target=i386 -### -- 2>&1 %s | FileCheck -check-prefix=IA32 %s
-// IA32-NOT: argument unused during compilation
+// IA32: "-target-cpu" "i386"
 // IA32-NOT: -target-feature
+// IA32-NOT: argument unused during compilation
 
 // RUN: %clang_cl -m32 -arch:ia32 --target=i386 -### -- 2>&1 %s | FileCheck -check-prefix=ia32 %s
 // ia32: argument unused during compilation
@@ -22,6 +22,7 @@
 // IA3264-NOT: -target-feature
 
 // RUN: %clang_cl -m32 -arch:SSE --target=i386 -### -- 2>&1 %s | FileCheck -check-prefix=SSE %s
+// SSE: "-target-cpu" "pentium3"
 // SSE: -target-feature
 // SSE: +sse
 // SSE-NOT: argument unused during compilation
@@ -31,6 +32,7 @@
 // sse-NOT: -target-feature
 
 // RUN: %clang_cl -m32 -arch:SSE2 --target=i386 -### -- 2>&1 %s | FileCheck -check-prefix=SSE2 %s
+// SSE2: "-target-cpu" "pentium4"
 // SSE2: -target-feature
 // SSE2: +sse2
 // SSE2-NOT: argument unused during compilation
@@ -42,12 +44,14 @@
 // RUN: %clang_cl -m64 -arch:SSE --target=x86_64 -### -- 2>&1 %s | FileCheck -check-prefix=SSE64 %s
 // SSE64: argument unused during compilation
 // SSE64-NOT: -target-feature
+// SSE64-NOT: pentium3
 
 // RUN: %clang_cl -m64 -arch:SSE2 --target=x86_64 -### -- 2>&1 %s | FileCheck -check-prefix=SSE264 %s
 // SSE264: argument unused during compilation
 // SSE264-NOT: -target-feature
 
 // RUN: %clang_cl -m32 -arch:AVX --target=i386 -### -- 2>&1 %s | FileCheck -check-prefix=AVX %s
+// AVX: "-target-cpu" "sandybridge"
 // AVX: -target-feature
 // AVX: +avx
 
@@ -56,6 +60,7 @@
 // avx-NOT: -target-feature
 
 // RUN: %clang_cl -m32 -arch:AVX2 --target=i386 -### -- 2>&1 %s | FileCheck -check-prefix=AVX2 %s
+// AVX2: "-target-cpu" "haswell"
 // AVX2: -target-feature
 // AVX2: +avx2
 
@@ -64,6 +69,7 @@
 // avx2-NOT: -target-feature
 
 // RUN: %clang_cl -m64 -arch:AVX --target=x86_64 -### -- 2>&1 %s | FileCheck -check-prefix=AVX64 %s
+// AVX64: "-target-cpu" "sandybridge"
 // AVX64: -target-feature
 // AVX64: +avx
 
@@ -72,6 +78,7 @@
 // avx64-NOT: -target-feature
 
 // RUN: %clang_cl -m64 -arch:AVX2 --target=x86_64 -### -- 2>&1 %s | FileCheck -check-prefix=AVX264 %s
+// AVX264: "-target-cpu" "haswell"
 // AVX264: -target-feature
 // AVX264: +avx2
 

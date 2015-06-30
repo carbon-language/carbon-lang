@@ -1386,6 +1386,28 @@ static const char *getX86TargetCPU(const ArgList &Args,
       return Args.MakeArgString(CPU);
   }
 
+  if (const Arg *A = Args.getLastArg(options::OPT__SLASH_arch)) {
+    // Mapping built by referring to X86TargetInfo::getDefaultFeatures().
+    StringRef Arch = A->getValue();
+    const char *CPU;
+    if (Triple.getArch() == llvm::Triple::x86) {
+      CPU = llvm::StringSwitch<const char *>(Arch)
+                .Case("IA32", "i386")
+                .Case("SSE", "pentium3")
+                .Case("SSE2", "pentium4")
+                .Case("AVX", "sandybridge")
+                .Case("AVX2", "haswell")
+                .Default(nullptr);
+    } else {
+      CPU = llvm::StringSwitch<const char *>(Arch)
+                .Case("AVX", "sandybridge")
+                .Case("AVX2", "haswell")
+                .Default(nullptr);
+    }
+    if (CPU)
+      return CPU;
+  }
+
   // Select the default CPU if none was given (or detection failed).
 
   if (Triple.getArch() != llvm::Triple::x86_64 &&
