@@ -329,7 +329,7 @@ public:
     template <class F>
         explicit packaged_task(F&& f);
     template <class F, class Allocator>
-        explicit packaged_task(allocator_arg_t, const Allocator& a, F&& f);
+        packaged_task(allocator_arg_t, const Allocator& a, F&& f);
     ~packaged_task();
 
     // no copy
@@ -2042,7 +2042,7 @@ public:
                   >::type
               >
         _LIBCPP_INLINE_VISIBILITY
-        explicit packaged_task(allocator_arg_t, const _Allocator& __a, _Fp&& __f)
+        packaged_task(allocator_arg_t, const _Allocator& __a, _Fp&& __f)
              : __f_(allocator_arg, __a, _VSTD::forward<_Fp>(__f)),
                __p_(allocator_arg, __a) {}
     // ~packaged_task() = default;
