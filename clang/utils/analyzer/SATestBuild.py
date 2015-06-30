@@ -46,6 +46,7 @@ import math
 import shutil
 import time
 import plistlib
+import argparse
 from subprocess import check_call, CalledProcessError
 
 #------------------------------------------------------------------------------
@@ -216,6 +217,8 @@ def runScanBuild(Dir, SBOutputDir, PBuildLogFile):
         SBPrefix = "scan-build " + SBOptions + " "
         for Command in SBCommandFile:
             Command = Command.strip()
+            if len(Command) == 0:
+                continue;
             # If using 'make', auto imply a -jX argument
             # to speed up analysis.  xcodebuild will
             # automatically use the maximum number of cores.
@@ -404,7 +407,11 @@ class Discarder(object):
         pass # do nothing
 
 # Compare the warnings produced by scan-build.
-def runCmpResults(Dir):   
+# Strictness defines the success criteria for the test:
+#   0 - success if there are no crashes or analyzer failure.
+#   1 - success if there are no difference in the number of reported bugs.
+#   2 - success if all the bug reports are identical.
+def runCmpResults(Dir, Strictness = 0):   
     TBegin = time.time() 
 
     RefDir = os.path.join(Dir, SBOutputDirReferencePrefix + SBOutputDirName)
@@ -448,11 +455,18 @@ def runCmpResults(Dir):
         OLD_STDOUT = sys.stdout
         sys.stdout = Discarder()
         # Scan the results, delete empty plist files.
-        NumDiffs = CmpRuns.dumpScanBuildResultsDiff(RefDir, NewDir, Opts, False)
+        NumDiffs, ReportsInRef, ReportsInNew = \
+            CmpRuns.dumpScanBuildResultsDiff(RefDir, NewDir, Opts, False)
         sys.stdout = OLD_STDOUT
         if (NumDiffs > 0) :
             print "Warning: %r differences in diagnostics. See %s" % \
                   (NumDiffs, DiffsPath,)
+        if Strictness >= 2 and NumDiffs > 0:
+            print "Error: Diffs found in strict mode (2)."
+            sys.exit(-1)       
+        elif Strictness >= 1 and ReportsInRef != ReportsInNew:
+            print "Error: The number of results are different in strict mode (1)."
+            sys.exit(-1)       
                     
     print "Diagnostic comparison complete (time: %.2f)." % (time.time()-TBegin) 
     return (NumDiffs > 0)
@@ -486,7 +500,7 @@ def updateSVN(Mode, ProjectsMap):
         print "Error: SVN update failed."
         sys.exit(-1)
         
-def testProject(ID, ProjectBuildMode, IsReferenceBuild=False, Dir=None):
+def testProject(ID, ProjectBuildMode, IsReferenceBuild=False, Dir=None, Strictness = 0):
     print " \n\n--- Building project %s" % (ID,)
 
     TBegin = time.time() 
@@ -505,12 +519,12 @@ def testProject(ID, ProjectBuildMode, IsReferenceBuild=False, Dir=None):
     checkBuild(SBOutputDir)
     
     if IsReferenceBuild == False:
-        runCmpResults(Dir)
+        runCmpResults(Dir, Strictness)
         
     print "Completed tests for project %s (time: %.2f)." % \
           (ID, (time.time()-TBegin))
     
-def testAll(IsReferenceBuild = False, UpdateSVN = False):
+def testAll(IsReferenceBuild = False, UpdateSVN = False, Strictness = 0):
     PMapFile = open(getProjectMapPath(), "rb")
     try:        
         # Validate the input.
@@ -532,7 +546,7 @@ def testAll(IsReferenceBuild = False, UpdateSVN = False):
         # Test the projects.
         PMapFile.seek(0)    
         for I in csv.reader(PMapFile):
-            testProject(I[0], int(I[1]), IsReferenceBuild)
+            testProject(I[0], int(I[1]), IsReferenceBuild, None, Strictness)
 
         # Add reference results to SVN.
         if UpdateSVN == True:
@@ -545,18 +559,25 @@ def testAll(IsReferenceBuild = False, UpdateSVN = False):
         PMapFile.close()    
             
 if __name__ == '__main__':
+    # Parse command line arguments.
+    Parser = argparse.ArgumentParser(description='Test the Clang Static Analyzer.')
+    Parser.add_argument('--strictness', dest='strictness', type=int, default=0,
+                       help='0 to fail on runtime errors, 1 to fail when the number\
+                             of found bugs are different from the reference, 2 to \
+                             fail on any difference from the reference. Default is 0.')
+    Parser.add_argument('-r', dest='regenerate', action='store_true', default=False,
+                        help='Regenerate reference output.')
+    Parser.add_argument('-rs', dest='update_reference', action='store_true',
+                        default=False, help='Regenerate reference output and update svn.')
+    Args = Parser.parse_args()
+
     IsReference = False
     UpdateSVN = False
-    if len(sys.argv) >= 2:
-        if sys.argv[1] == "-r":
-            IsReference = True
-        elif sys.argv[1] == "-rs":
-            IsReference = True
-            UpdateSVN = True
-        else:     
-          print >> sys.stderr, 'Usage: ', sys.argv[0],\
-                             '[-r|-rs]' \
-                             'Use -r to regenerate reference output' \
-                             'Use -rs to regenerate reference output and update svn'
+    Strictness = Args.strictness
+    if Args.regenerate:
+        IsReference = True
+    elif Args.update_reference:
+        IsReference = True
+        UpdateSVN = True
 
-    testAll(IsReference, UpdateSVN)
+    testAll(IsReference, UpdateSVN, Strictness)

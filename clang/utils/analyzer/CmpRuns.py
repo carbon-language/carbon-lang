@@ -300,7 +300,7 @@ def dumpScanBuildResultsDiff(dirA, dirB, opts, deleteEmpty=True):
         print >>auxLog, "('TOTAL NEW REPORTS', %r)" % TotalReports
         print >>auxLog, "('TOTAL DIFFERENCES', %r)" % foundDiffs
         
-    return foundDiffs    
+    return foundDiffs, len(resultsA.diagnostics), len(resultsB.diagnostics)
 
 def main():
     from optparse import OptionParser
