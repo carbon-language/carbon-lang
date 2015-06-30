@@ -260,6 +260,10 @@ void f0() {
 
   (void) __builtin_ia32_ldmxcsr(tmp_Ui);
   tmp_Ui = __builtin_ia32_stmxcsr();
+  (void)__builtin_ia32_fxsave(tmp_vp);
+  (void)__builtin_ia32_fxsave64(tmp_vp);
+  (void)__builtin_ia32_fxrstor(tmp_vp);
+  (void)__builtin_ia32_fxrstor64(tmp_vp);
   tmp_V4f = __builtin_ia32_cvtpi2ps(tmp_V4f, tmp_V2i);
   tmp_V2i = __builtin_ia32_cvtps2pi(tmp_V4f);
   tmp_i = __builtin_ia32_cvtss2si(tmp_V4f);

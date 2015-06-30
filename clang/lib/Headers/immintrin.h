@@ -142,6 +142,8 @@ _writegsbase_u64(unsigned long long __V)
 
 #include <shaintrin.h>
 
+#include <fxsrintrin.h>
+
 /* Some intrinsics inside adxintrin.h are available only on processors with ADX,
  * whereas others are also available at all times. */
 #include <adxintrin.h>

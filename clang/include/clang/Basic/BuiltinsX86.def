@@ -656,6 +656,12 @@ BUILTIN(__builtin_ia32_wrfsbase64, "vULLi", "")
 BUILTIN(__builtin_ia32_wrgsbase32, "vUi", "")
 BUILTIN(__builtin_ia32_wrgsbase64, "vULLi", "")
 
+// FXSR
+BUILTIN(__builtin_ia32_fxrstor, "vv*", "")
+BUILTIN(__builtin_ia32_fxrstor64, "vv*", "")
+BUILTIN(__builtin_ia32_fxsave, "vv*", "")
+BUILTIN(__builtin_ia32_fxsave64, "vv*", "")
+
 // ADX
 BUILTIN(__builtin_ia32_addcarryx_u32, "UcUcUiUiUi*", "")
 BUILTIN(__builtin_ia32_addcarryx_u64, "UcUcULLiULLiULLi*", "")

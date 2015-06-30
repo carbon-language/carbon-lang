@@ -22,6 +22,7 @@ set(files
   float.h
   fma4intrin.h
   fmaintrin.h
+  fxsrintrin.h
   htmintrin.h
   htmxlintrin.h
   ia32intrin.h

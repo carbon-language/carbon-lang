@@ -180,8 +180,6 @@ unsigned long __cdecl _byteswap_ulong(unsigned long);
 unsigned short __cdecl _byteswap_ushort(unsigned short);
 void __cdecl _disable(void);
 void __cdecl _enable(void);
-void __cdecl _fxrstor(void const *);
-void __cdecl _fxsave(void *);
 long _InterlockedAddLargeStatistic(__int64 volatile *_Addend, long _Value);
 static __inline__
 long _InterlockedAnd(long volatile *_Value, long _Mask);
@@ -358,8 +356,6 @@ unsigned char _bittestandreset64(__int64 *, __int64);
 static __inline__
 unsigned char _bittestandset64(__int64 *, __int64);
 unsigned __int64 __cdecl _byteswap_uint64(unsigned __int64);
-void __cdecl _fxrstor64(void const *);
-void __cdecl _fxsave64(void *);
 long _InterlockedAnd_np(long volatile *_Value, long _Mask);
 short _InterlockedAnd16_np(short volatile *_Value, short _Mask);
 __int64 _InterlockedAnd64_np(__int64 volatile *_Value, __int64 _Mask);
