@@ -115,7 +115,7 @@ ErrorOr<ELFYAML::Object *> ELFDumper<ELFT>::dump() {
 
   // Dump symbols
   bool IsFirstSym = true;
-  for (auto SI = Obj.begin_symbols(), SE = Obj.end_symbols(); SI != SE; ++SI) {
+  for (auto SI = Obj.symbol_begin(), SE = Obj.symbol_end(); SI != SE; ++SI) {
     if (IsFirstSym) {
       IsFirstSym = false;
       continue;
@@ -248,8 +248,7 @@ ELFDumper<ELFT>::dumpRelSection(const Elf_Shdr *Shdr) {
   if (std::error_code EC = dumpCommonRelocationSection(Shdr, *S))
     return EC;
 
-  for (auto RI = Obj.begin_rel(Shdr), RE = Obj.end_rel(Shdr); RI != RE;
-       ++RI) {
+  for (auto RI = Obj.rel_begin(Shdr), RE = Obj.rel_end(Shdr); RI != RE; ++RI) {
     ELFYAML::Relocation R;
     if (std::error_code EC = dumpRelocation(Shdr, &*RI, R))
       return EC;
@@ -268,7 +267,7 @@ ELFDumper<ELFT>::dumpRelaSection(const Elf_Shdr *Shdr) {
   if (std::error_code EC = dumpCommonRelocationSection(Shdr, *S))
     return EC;
 
-  for (auto RI = Obj.begin_rela(Shdr), RE = Obj.end_rela(Shdr); RI != RE;
+  for (auto RI = Obj.rela_begin(Shdr), RE = Obj.rela_end(Shdr); RI != RE;
        ++RI) {
     ELFYAML::Relocation R;
     if (std::error_code EC = dumpRelocation(Shdr, &*RI, R))

@@ -365,10 +365,10 @@ PrinterContext<ET>::FindExceptionTable(unsigned IndexSectionIndex,
   /// handling table.  Use this symbol to recover the actual exception handling
   /// table.
 
-  for (Elf_Shdr_iterator SI = ELF->begin_sections(), SE = ELF->end_sections();
+  for (Elf_Shdr_iterator SI = ELF->section_begin(), SE = ELF->section_end();
        SI != SE; ++SI) {
     if (SI->sh_type == ELF::SHT_REL && SI->sh_info == IndexSectionIndex) {
-      for (Elf_Rel_iterator RI = ELF->begin_rel(&*SI), RE = ELF->end_rel(&*SI);
+      for (Elf_Rel_iterator RI = ELF->rel_begin(&*SI), RE = ELF->rel_end(&*SI);
            RI != RE; ++RI) {
         if (RI->r_offset == static_cast<unsigned>(IndexTableOffset)) {
           typename object::ELFFile<ET>::Elf_Rela RelA;
@@ -527,7 +527,7 @@ void PrinterContext<ET>::PrintUnwindInformation() const {
   DictScope UI(SW, "UnwindInformation");
 
   int SectionIndex = 0;
-  for (Elf_Shdr_iterator SI = ELF->begin_sections(), SE = ELF->end_sections();
+  for (Elf_Shdr_iterator SI = ELF->section_begin(), SE = ELF->section_end();
        SI != SE; ++SI, ++SectionIndex) {
     if (SI->sh_type == ELF::SHT_ARM_EXIDX) {
       const Elf_Shdr *IT = &(*SI);

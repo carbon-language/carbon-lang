@@ -24,9 +24,9 @@ using namespace llvm::object;
 template <class ELFT> void printProgramHeaders(const ELFFile<ELFT> *o) {
   typedef ELFFile<ELFT> ELFO;
   outs() << "Program Header:\n";
-  for (typename ELFO::Elf_Phdr_Iter pi = o->begin_program_headers(),
-                                    pe = o->end_program_headers();
-                                    pi != pe; ++pi) {
+  for (typename ELFO::Elf_Phdr_Iter pi = o->program_header_begin(),
+                                    pe = o->program_header_end();
+       pi != pe; ++pi) {
     switch (pi->p_type) {
     case ELF::PT_LOAD:
       outs() << "    LOAD ";
