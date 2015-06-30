@@ -1111,16 +1111,15 @@ bool UnwrappedLineParser::parseBracedList(bool ContinueOnSemicolons) {
       FormatTok->BlockKind = BK_BracedInit;
       parseBracedList();
       break;
-    case tok::r_paren:
+    case tok::l_paren:
+      parseParens();
       // JavaScript can just have free standing methods and getters/setters in
       // object literals. Detect them by a "{" following ")".
       if (Style.Language == FormatStyle::LK_JavaScript) {
-        nextToken();
         if (FormatTok->is(tok::l_brace))
           parseChildBlock();
         break;
       }
-      nextToken();
       break;
     case tok::r_brace:
       nextToken();

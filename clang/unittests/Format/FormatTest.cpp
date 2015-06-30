@@ -3184,6 +3184,8 @@ TEST_F(FormatTest, LayoutNestedBlocks) {
                "}, a);",
                Style);
 
+  verifyFormat("SomeFunction({MACRO({ return output; }), b});");
+
   verifyNoCrash("^{v^{a}}");
 }
 
