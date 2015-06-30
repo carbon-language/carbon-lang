@@ -141,9 +141,7 @@ DICompileUnit *DIBuilder::createCompileUnit(
   TempGVs = MDTuple::getTemporary(VMContext, None);
   TempImportedModules = MDTuple::getTemporary(VMContext, None);
 
-  // TODO: Switch to getDistinct().  We never want to merge compile units based
-  // on contents.
-  DICompileUnit *CUNode = DICompileUnit::get(
+  DICompileUnit *CUNode = DICompileUnit::getDistinct(
       VMContext, Lang, DIFile::get(VMContext, Filename, Directory), Producer,
       isOptimized, Flags, RunTimeVer, SplitName, Kind, TempEnumTypes.get(),
       TempRetainTypes.get(), TempSubprograms.get(), TempGVs.get(),
