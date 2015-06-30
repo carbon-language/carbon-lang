@@ -365,12 +365,6 @@ public:
   ErrorOr<StringRef> getDynamicSymbolName(const Elf_Sym *Symb) const;
   ErrorOr<StringRef> getSymbolName(const Elf_Sym *Symb, bool IsDynamic) const;
 
-  /// \brief Get the name of \p Symb.
-  /// \param SymTab The symbol table section \p Symb is contained in.
-  /// \param Symb The symbol to get the name of.
-  ///
-  /// \p SymTab is used to lookup the string table to use to get the symbol's
-  /// name.
   ErrorOr<StringRef> getSectionName(const Elf_Shdr *Section) const;
   uint64_t getSymbolIndex(const Elf_Sym *sym) const;
   ErrorOr<ArrayRef<uint8_t> > getSectionContents(const Elf_Shdr *Sec) const;
