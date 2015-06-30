@@ -60,11 +60,27 @@ endif
 
 OBJMODS := LLVMConfig.cmake LLVMConfigVersion.cmake LLVMExports.cmake
 
+LLVM_CONFIG_CODE := \
+\# Compute the CMake directory from the LLVMConfig.cmake file location.\n\
+get_filename_component(_LLVM_CMAKE_DIR "$${CMAKE_CURRENT_LIST_FILE}" PATH)\n\
+\# Compute the installation prefix from the LLVMConfig.cmake file location.\n\
+get_filename_component(LLVM_INSTALL_PREFIX "$${CMAKE_CURRENT_LIST_FILE}" PATH)\n
+
+# Compute number of levels (typically 3 - ``share/llvm/cmake/``) to PROJ_prefix
+# from PROJ_cmake, then emit the appropriate number of calls to
+# get_filename_components(). Note this assumes there are no spaces in the
+# cmake_path_suffix variable.
+cmake_path_suffix := $(subst $(PROJ_prefix),,$(subst $(DESTDIR),,$(PROJ_cmake)))
+cmake_path_dirs := $(subst /, ,$(cmake_path_suffix))
+LLVM_CONFIG_CODE += $(foreach __not_used,$(cmake_path_dirs),get_filename_component(LLVM_INSTALL_PREFIX "$${LLVM_INSTALL_PREFIX}" PATH)\n)
+
+LLVM_CONFIG_CODE += set(_LLVM_LIBRARY_DIR "$${LLVM_INSTALL_PREFIX}\/lib")
+
 $(PROJ_OBJ_DIR)/LLVMConfig.cmake: LLVMConfig.cmake.in Makefile $(LLVMBuildCMakeFrag)
 	$(Echo) 'Generating LLVM CMake package config file'
 	$(Verb) ( \
 	 cat $< | sed \
-	  -e 's/@LLVM_CONFIG_CODE@/set(LLVM_INSTALL_PREFIX "'"$(subst /,\/,$(PROJ_prefix))"'")/' \
+	  -e 's/@LLVM_CONFIG_CODE@/$(LLVM_CONFIG_CODE)/' \
 	  -e 's/@LLVM_VERSION_MAJOR@/'"$(LLVM_VERSION_MAJOR)"'/' \
 	  -e 's/@LLVM_VERSION_MINOR@/'"$(LLVM_VERSION_MINOR)"'/' \
 	  -e 's/@LLVM_VERSION_PATCH@/'"$(LLVM_VERSION_PATCH)"'/' \
@@ -87,18 +103,20 @@ $(PROJ_OBJ_DIR)/LLVMConfig.cmake: LLVMConfig.cmake.in Makefile $(LLVMBuildCMakeF
 	  -e 's/@LLVM_ON_UNIX@/'"$(LLVM_ON_UNIX)"'/' \
 	  -e 's/@LLVM_ON_WIN32@/'"$(LLVM_ON_WIN32)"'/' \
 	  -e 's/@LLVM_LIBDIR_SUFFIX@//' \
-	  -e 's/@LLVM_CONFIG_INCLUDE_DIRS@/'"$(subst /,\/,$(PROJ_includedir))"'/' \
-	  -e 's/@LLVM_CONFIG_LIBRARY_DIRS@/'"$(subst /,\/,$(PROJ_libdir))"'/' \
-	  -e 's/@LLVM_CONFIG_CMAKE_DIR@/'"$(subst /,\/,$(PROJ_cmake))"'/' \
-	  -e 's/@LLVM_CONFIG_TOOLS_BINARY_DIR@/'"$(subst /,\/,$(PROJ_bindir))"'/' \
+	  -e 's#@LLVM_CONFIG_INCLUDE_DIRS@#$${LLVM_INSTALL_PREFIX}/include#' \
+	  -e 's#@LLVM_CONFIG_LIBRARY_DIRS@#$${_LLVM_LIBRARY_DIR}#' \
+	  -e 's#@LLVM_CONFIG_CMAKE_DIR@#$${_LLVM_CMAKE_DIR}#' \
+	  -e 's#@LLVM_CONFIG_TOOLS_BINARY_DIR@#$${LLVM_INSTALL_PREFIX}/bin#' \
 	  -e 's/@LLVM_CONFIG_EXPORTS_FILE@/$${LLVM_CMAKE_DIR}\/LLVMExports.cmake/' \
 	  -e 's/@all_llvm_lib_deps@//' \
 	 && \
 	 ( grep '^set_property.*LLVMBUILD_LIB_DEPS_' "$(LLVMBuildCMakeFrag)" | \
-	   grep -v LLVMBUILD_LIB_DEPS_gtest ) \
+	   grep -v LLVMBUILD_LIB_DEPS_gtest ) && \
+	 echo 'unset(_LLVM_CMAKE_DIR)' && \
+	 echo 'unset(_LLVM_LIBRARY_DIR)' \
 	) > $@
 
-$(PROJ_OBJ_DIR)/LLVMConfigVersion.cmake: LLVMConfigVersion.cmake.in
+$(PROJ_OBJ_DIR)/LLVMConfigVersion.cmake: LLVMConfigVersion.cmake.in Makefile
 	$(Echo) 'Generating LLVM CMake package version file'
 	$(Verb) cat $< | sed \
 	  -e 's/@PACKAGE_VERSION@/'"$(LLVMVersion)"'/' \
@@ -107,13 +125,13 @@ $(PROJ_OBJ_DIR)/LLVMConfigVersion.cmake: LLVMConfigVersion.cmake.in
 	  -e 's/@LLVM_VERSION_PATCH@/'"$(LLVM_VERSION_PATCH)"'/' \
 	  > $@
 
-$(PROJ_OBJ_DIR)/LLVMExports.cmake: $(LLVMBuildCMakeExportsFrag)
+$(PROJ_OBJ_DIR)/LLVMExports.cmake: $(LLVMBuildCMakeExportsFrag) Makefile
 	$(Echo) 'Generating LLVM CMake target exports file'
 	$(Verb) ( \
 	  echo '# LLVM CMake target exports.  Do not include directly.' && \
 	  for lib in $(LLVM_LIBS_TO_EXPORT); do \
 	    echo 'add_library('"$$lib"' STATIC IMPORTED)' && \
-	    echo 'set_property(TARGET '"$$lib"' PROPERTY IMPORTED_LOCATION "'"$(PROJ_libdir)/lib$$lib.a"'")' ; \
+	    echo 'set_property(TARGET '"$$lib"' PROPERTY IMPORTED_LOCATION "$${_LLVM_LIBRARY_DIR}/'lib$$lib.a'")' ; \
 	  done && \
 	  cat "$(LLVMBuildCMakeExportsFrag)" && \
 	  echo 'set_property(TARGET LLVMSupport APPEND PROPERTY IMPORTED_LINK_INTERFACE_LIBRARIES '"$(subst -l,,$(LIBS))"')' \
