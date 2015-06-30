@@ -299,6 +299,7 @@ static const char *GetCodeName(unsigned CodeID, unsigned BlockID,
       STRINGIFY_CODE(METADATA, EXPRESSION)
       STRINGIFY_CODE(METADATA, OBJC_PROPERTY)
       STRINGIFY_CODE(METADATA, IMPORTED_ENTITY)
+      STRINGIFY_CODE(METADATA, MODULE)
     }
   case bitc::USELIST_BLOCK_ID:
     switch(CodeID) {
