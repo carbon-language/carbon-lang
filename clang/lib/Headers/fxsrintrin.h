@@ -28,28 +28,28 @@
 #ifndef __FXSRINTRIN_H
 #define __FXSRINTRIN_H
 
-#define DEFAULT_FN_ATTRS __attribute__((__always_inline__, __nodebug__))
+#define __DEFAULT_FN_ATTRS __attribute__((__always_inline__, __nodebug__))
 
-static __inline__ void DEFAULT_FN_ATTRS
+static __inline__ void __DEFAULT_FN_ATTRS
 _fxsave(void *__p) {
   return __builtin_ia32_fxsave(__p);
 }
 
-static __inline__ void DEFAULT_FN_ATTRS
+static __inline__ void __DEFAULT_FN_ATTRS
 _fxsave64(void *__p) {
   return __builtin_ia32_fxsave64(__p);
 }
 
-static __inline__ void DEFAULT_FN_ATTRS
+static __inline__ void __DEFAULT_FN_ATTRS
 _fxrstor(void *__p) {
   return __builtin_ia32_fxrstor(__p);
 }
 
-static __inline__ void DEFAULT_FN_ATTRS
+static __inline__ void __DEFAULT_FN_ATTRS
 _fxrstor64(void *__p) {
   return __builtin_ia32_fxrstor64(__p);
 }
 
-#undef DEFAULT_FN_ATTRS
+#undef __DEFAULT_FN_ATTRS
 
 #endif

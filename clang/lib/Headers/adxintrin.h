@@ -29,7 +29,7 @@
 #define __ADXINTRIN_H
 
 /* Define the default attributes for the functions in this file. */
-#define DEFAULT_FN_ATTRS __attribute__((__always_inline__, __nodebug__))
+#define __DEFAULT_FN_ATTRS __attribute__((__always_inline__, __nodebug__))
 
 /* Intrinsics that are available only if __ADX__ defined */
 static __inline unsigned char __attribute__((__always_inline__, __nodebug__, __target__("adx")))
@@ -49,7 +49,7 @@ _addcarryx_u64(unsigned char __cf, unsigned long long __x,
 #endif
 
 /* Intrinsics that are also available if __ADX__ undefined */
-static __inline unsigned char DEFAULT_FN_ATTRS
+static __inline unsigned char __DEFAULT_FN_ATTRS
 _addcarry_u32(unsigned char __cf, unsigned int __x, unsigned int __y,
               unsigned int *__p)
 {
@@ -57,7 +57,7 @@ _addcarry_u32(unsigned char __cf, unsigned int __x, unsigned int __y,
 }
 
 #ifdef __x86_64__
-static __inline unsigned char DEFAULT_FN_ATTRS
+static __inline unsigned char __DEFAULT_FN_ATTRS
 _addcarry_u64(unsigned char __cf, unsigned long long __x,
               unsigned long long __y, unsigned long long  *__p)
 {
@@ -65,7 +65,7 @@ _addcarry_u64(unsigned char __cf, unsigned long long __x,
 }
 #endif
 
-static __inline unsigned char DEFAULT_FN_ATTRS
+static __inline unsigned char __DEFAULT_FN_ATTRS
 _subborrow_u32(unsigned char __cf, unsigned int __x, unsigned int __y,
               unsigned int *__p)
 {
@@ -73,7 +73,7 @@ _subborrow_u32(unsigned char __cf, unsigned int __x, unsigned int __y,
 }
 
 #ifdef __x86_64__
-static __inline unsigned char DEFAULT_FN_ATTRS
+static __inline unsigned char __DEFAULT_FN_ATTRS
 _subborrow_u64(unsigned char __cf, unsigned long long __x,
                unsigned long long __y, unsigned long long  *__p)
 {
@@ -81,6 +81,6 @@ _subborrow_u64(unsigned char __cf, unsigned long long __x,
 }
 #endif
 
-#undef DEFAULT_FN_ATTRS
+#undef __DEFAULT_FN_ATTRS
 
 #endif /* __ADXINTRIN_H */

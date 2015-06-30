@@ -29,40 +29,40 @@
 #define __LZCNTINTRIN_H
 
 /* Define the default attributes for the functions in this file. */
-#define DEFAULT_FN_ATTRS __attribute__((__always_inline__, __nodebug__, __target__("lzcnt")))
+#define __DEFAULT_FN_ATTRS __attribute__((__always_inline__, __nodebug__, __target__("lzcnt")))
 
-static __inline__ unsigned short DEFAULT_FN_ATTRS
+static __inline__ unsigned short __DEFAULT_FN_ATTRS
 __lzcnt16(unsigned short __X)
 {
   return __X ? __builtin_clzs(__X) : 16;
 }
 
-static __inline__ unsigned int DEFAULT_FN_ATTRS
+static __inline__ unsigned int __DEFAULT_FN_ATTRS
 __lzcnt32(unsigned int __X)
 {
   return __X ? __builtin_clz(__X) : 32;
 }
 
-static __inline__ unsigned int DEFAULT_FN_ATTRS
+static __inline__ unsigned int __DEFAULT_FN_ATTRS
 _lzcnt_u32(unsigned int __X)
 {
   return __X ? __builtin_clz(__X) : 32;
 }
 
 #ifdef __x86_64__
-static __inline__ unsigned long long DEFAULT_FN_ATTRS
+static __inline__ unsigned long long __DEFAULT_FN_ATTRS
 __lzcnt64(unsigned long long __X)
 {
   return __X ? __builtin_clzll(__X) : 64;
 }
 
-static __inline__ unsigned long long DEFAULT_FN_ATTRS
+static __inline__ unsigned long long __DEFAULT_FN_ATTRS
 _lzcnt_u64(unsigned long long __X)
 {
   return __X ? __builtin_clzll(__X) : 64;
 }
 #endif
 
-#undef DEFAULT_FN_ATTRS
+#undef __DEFAULT_FN_ATTRS
 
 #endif /* __LZCNTINTRIN_H */

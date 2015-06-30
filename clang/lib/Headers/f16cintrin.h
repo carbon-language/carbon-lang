@@ -32,7 +32,7 @@ typedef float __v8sf __attribute__ ((__vector_size__ (32)));
 typedef float __m256 __attribute__ ((__vector_size__ (32)));
 
 /* Define the default attributes for the functions in this file. */
-#define DEFAULT_FN_ATTRS __attribute__((__always_inline__, __nodebug__, __target__("f16c")))
+#define __DEFAULT_FN_ATTRS __attribute__((__always_inline__, __nodebug__, __target__("f16c")))
 
 #define _mm_cvtps_ph(a, imm) __extension__ ({ \
   __m128 __a = (a); \
@@ -42,18 +42,18 @@ typedef float __m256 __attribute__ ((__vector_size__ (32)));
   __m256 __a = (a); \
  (__m128i)__builtin_ia32_vcvtps2ph256((__v8sf)__a, (imm)); })
 
-static __inline __m128 DEFAULT_FN_ATTRS
+static __inline __m128 __DEFAULT_FN_ATTRS
 _mm_cvtph_ps(__m128i __a)
 {
   return (__m128)__builtin_ia32_vcvtph2ps((__v8hi)__a);
 }
 
-static __inline __m256 DEFAULT_FN_ATTRS
+static __inline __m256 __DEFAULT_FN_ATTRS
 _mm256_cvtph_ps(__m128i __a)
 {
   return (__m256)__builtin_ia32_vcvtph2ps256((__v8hi)__a);
 }
 
-#undef DEFAULT_FN_ATTRS
+#undef __DEFAULT_FN_ATTRS
 
 #endif /* __F16CINTRIN_H */
