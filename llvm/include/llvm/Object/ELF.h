@@ -285,17 +285,18 @@ public:
   }
 
   const Elf_Sym *begin_dynamic_symbols() const {
-    if (DynSymRegion.Addr)
-      return reinterpret_cast<const Elf_Sym *>(DynSymRegion.Addr);
-    return nullptr;
+    if (!DynSymRegion.Addr)
+      return nullptr;
+    if (DynSymRegion.EntSize != sizeof(Elf_Sym))
+      report_fatal_error("Invalid symbol size");
+    return reinterpret_cast<const Elf_Sym *>(DynSymRegion.Addr);
   }
 
   const Elf_Sym *end_dynamic_symbols() const {
-    if (DynSymRegion.Addr)
-      return reinterpret_cast<const Elf_Sym *>(
-          ((const char *)DynSymRegion.Addr + DynSymRegion.Size));
-
-    return nullptr;
+    if (!DynSymRegion.Addr)
+      return nullptr;
+    return reinterpret_cast<const Elf_Sym *>(
+        ((const char *)DynSymRegion.Addr + DynSymRegion.Size));
   }
 
   Elf_Sym_Range dynamic_symbols() const {
@@ -766,6 +767,8 @@ template <class ELFT>
 const typename ELFFile<ELFT>::Elf_Sym *ELFFile<ELFT>::begin_symbols() const {
   if (!dot_symtab_sec)
     return nullptr;
+  if (dot_symtab_sec->sh_entsize != sizeof(Elf_Sym))
+    report_fatal_error("Invalid symbol size");
   return reinterpret_cast<const Elf_Sym *>(base() + dot_symtab_sec->sh_offset);
 }
 
