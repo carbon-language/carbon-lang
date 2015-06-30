@@ -215,10 +215,9 @@ DerivedArgList *Driver::TranslateInputArgs(const InputArgList &Args) const {
       DAL->AddFlagArg(A, Opts->getOption(options::OPT_Z_Xlinker__no_demangle));
 
       // Add the remaining values as Xlinker arguments.
-      for (unsigned i = 0, e = A->getNumValues(); i != e; ++i)
-        if (StringRef(A->getValue(i)) != "--no-demangle")
-          DAL->AddSeparateArg(A, Opts->getOption(options::OPT_Xlinker),
-                              A->getValue(i));
+      for (const StringRef Val : A->getValues())
+        if (Val != "--no-demangle")
+          DAL->AddSeparateArg(A, Opts->getOption(options::OPT_Xlinker), Val);
 
       continue;
     }
@@ -260,8 +259,8 @@ DerivedArgList *Driver::TranslateInputArgs(const InputArgList &Args) const {
     // Pick up inputs via the -- option.
     if (A->getOption().matches(options::OPT__DASH_DASH)) {
       A->claim();
-      for (unsigned i = 0, e = A->getNumValues(); i != e; ++i)
-        DAL->append(MakeInputArg(*DAL, Opts, A->getValue(i)));
+      for (const StringRef Val : A->getValues())
+        DAL->append(MakeInputArg(*DAL, Opts, Val));
       continue;
     }
 
@@ -780,17 +779,13 @@ bool Driver::HandleImmediateArgs(const Compilation &C) {
   }
 
   if (C.getArgs().hasArg(options::OPT_print_multi_lib)) {
-    const MultilibSet &Multilibs = TC.getMultilibs();
-
-    for (MultilibSet::const_iterator I = Multilibs.begin(), E = Multilibs.end();
-         I != E; ++I) {
-      llvm::outs() << *I << "\n";
-    }
+    for (const Multilib &Multilib : TC.getMultilibs())
+      llvm::outs() << Multilib << "\n";
     return false;
   }
 
   if (C.getArgs().hasArg(options::OPT_print_multi_directory)) {
-    for (const auto &Multilib : TC.getMultilibs()) {
+    for (const Multilib &Multilib : TC.getMultilibs()) {
       if (Multilib.gccSuffix().empty())
         llvm::outs() << ".\n";
       else {
