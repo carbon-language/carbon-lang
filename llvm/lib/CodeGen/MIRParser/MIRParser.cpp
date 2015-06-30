@@ -274,9 +274,18 @@ bool MIRParserImpl::initializeMachineBasicBlock(
   if (YamlMBB.AddressTaken)
     MBB.setHasAddressTaken();
   MBB.setIsLandingPad(YamlMBB.IsLandingPad);
+  SMDiagnostic Error;
+  // Parse the successors.
+  for (const auto &MBBSource : YamlMBB.Successors) {
+    MachineBasicBlock *SuccMBB = nullptr;
+    if (parseMBBReference(SuccMBB, SM, MF, MBBSource.Value, MBBSlots, IRSlots,
+                          Error))
+      return error(Error, MBBSource.SourceRange);
+    // TODO: Report an error when adding the same successor more than once.
+    MBB.addSuccessor(SuccMBB);
+  }
   // Parse the instructions.
   for (const auto &MISource : YamlMBB.Instructions) {
-    SMDiagnostic Error;
     MachineInstr *MI = nullptr;
     if (parseMachineInstr(MI, SM, MF, MISource.Value, MBBSlots, IRSlots, Error))
       return error(Error, MISource.SourceRange);

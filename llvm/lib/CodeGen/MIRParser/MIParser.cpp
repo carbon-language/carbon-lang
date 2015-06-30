@@ -64,10 +64,12 @@ public:
   bool error(StringRef::iterator Loc, const Twine &Msg);
 
   bool parse(MachineInstr *&MI);
+  bool parseMBB(MachineBasicBlock *&MBB);
 
   bool parseRegister(unsigned &Reg);
   bool parseRegisterOperand(MachineOperand &Dest, bool IsDef = false);
   bool parseImmediateOperand(MachineOperand &Dest);
+  bool parseMBBReference(MachineBasicBlock *&MBB);
   bool parseMBBOperand(MachineOperand &Dest);
   bool parseGlobalAddressOperand(MachineOperand &Dest);
   bool parseMachineOperand(MachineOperand &Dest);
@@ -186,6 +188,19 @@ bool MIParser::parse(MachineInstr *&MI) {
   return false;
 }
 
+bool MIParser::parseMBB(MachineBasicBlock *&MBB) {
+  lex();
+  if (Token.isNot(MIToken::MachineBasicBlock))
+    return error("expected a machine basic block reference");
+  if (parseMBBReference(MBB))
+    return true;
+  lex();
+  if (Token.isNot(MIToken::Eof))
+    return error(
+        "expected end of string after the machine basic block reference");
+  return false;
+}
+
 bool MIParser::parseInstruction(unsigned &OpCode) {
   if (Token.isNot(MIToken::Identifier))
     return error("expected a machine instruction");
@@ -246,7 +261,7 @@ bool MIParser::getUnsigned(unsigned &Result) {
   return false;
 }
 
-bool MIParser::parseMBBOperand(MachineOperand &Dest) {
+bool MIParser::parseMBBReference(MachineBasicBlock *&MBB) {
   assert(Token.is(MIToken::MachineBasicBlock));
   unsigned Number;
   if (getUnsigned(Number))
@@ -255,10 +270,17 @@ bool MIParser::parseMBBOperand(MachineOperand &Dest) {
   if (MBBInfo == MBBSlots.end())
     return error(Twine("use of undefined machine basic block #") +
                  Twine(Number));
-  MachineBasicBlock *MBB = MBBInfo->second;
+  MBB = MBBInfo->second;
   if (!Token.stringValue().empty() && Token.stringValue() != MBB->getName())
     return error(Twine("the name of machine basic block #") + Twine(Number) +
                  " isn't '" + Token.stringValue() + "'");
+  return false;
+}
+
+bool MIParser::parseMBBOperand(MachineOperand &Dest) {
+  MachineBasicBlock *MBB;
+  if (parseMBBReference(MBB))
+    return true;
   Dest = MachineOperand::CreateMBB(MBB);
   lex();
   return false;
@@ -391,4 +413,11 @@ bool llvm::parseMachineInstr(
     const DenseMap<unsigned, MachineBasicBlock *> &MBBSlots,
     const SlotMapping &IRSlots, SMDiagnostic &Error) {
   return MIParser(SM, MF, Error, Src, MBBSlots, IRSlots).parse(MI);
+}
+
+bool llvm::parseMBBReference(
+    MachineBasicBlock *&MBB, SourceMgr &SM, MachineFunction &MF, StringRef Src,
+    const DenseMap<unsigned, MachineBasicBlock *> &MBBSlots,
+    const SlotMapping &IRSlots, SMDiagnostic &Error) {
+  return MIParser(SM, MF, Error, Src, MBBSlots, IRSlots).parseMBB(MBB);
 }

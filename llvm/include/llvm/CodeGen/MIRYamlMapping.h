@@ -55,10 +55,28 @@ template <> struct ScalarTraits<StringValue> {
   static bool mustQuote(StringRef Scalar) { return needsQuotes(Scalar); }
 };
 
+struct FlowStringValue : StringValue {
+  FlowStringValue() {}
+  FlowStringValue(std::string Value) : StringValue(Value) {}
+};
+
+template <> struct ScalarTraits<FlowStringValue> {
+  static void output(const FlowStringValue &S, void *, llvm::raw_ostream &OS) {
+    return ScalarTraits<StringValue>::output(S, nullptr, OS);
+  }
+
+  static StringRef input(StringRef Scalar, void *Ctx, FlowStringValue &S) {
+    return ScalarTraits<StringValue>::input(Scalar, Ctx, S);
+  }
+
+  static bool mustQuote(StringRef Scalar) { return needsQuotes(Scalar); }
+};
+
 } // end namespace yaml
 } // end namespace llvm
 
 LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::yaml::StringValue)
+LLVM_YAML_IS_FLOW_SEQUENCE_VECTOR(llvm::yaml::FlowStringValue)
 
 namespace llvm {
 namespace yaml {
@@ -69,7 +87,8 @@ struct MachineBasicBlock {
   unsigned Alignment = 0;
   bool IsLandingPad = false;
   bool AddressTaken = false;
-  // TODO: Serialize the successors and liveins.
+  // TODO: Serialize the successor weights and liveins.
+  std::vector<FlowStringValue> Successors;
 
   std::vector<StringValue> Instructions;
 };
@@ -82,6 +101,7 @@ template <> struct MappingTraits<MachineBasicBlock> {
     YamlIO.mapOptional("alignment", MBB.Alignment);
     YamlIO.mapOptional("isLandingPad", MBB.IsLandingPad);
     YamlIO.mapOptional("addressTaken", MBB.AddressTaken);
+    YamlIO.mapOptional("successors", MBB.Successors);
     YamlIO.mapOptional("instructions", MBB.Instructions);
   }
 };

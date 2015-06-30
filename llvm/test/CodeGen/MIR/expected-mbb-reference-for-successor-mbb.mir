@@ -1,0 +1,29 @@
+# RUN: not llc -start-after branch-folder -stop-after branch-folder -o /dev/null %s 2>&1 | FileCheck %s
+
+--- |
+
+  define i32 @foo(i32 %a) {
+  entry:
+    %0 = icmp sle i32 %a, 10
+    br i1 %0, label %less, label %exit
+
+  less:
+    ret i32 0
+
+  exit:
+    ret i32 %a
+  }
+
+...
+---
+name:            foo
+body:
+  - id:          0
+    name:        entry
+    # CHECK: [[@LINE+1]]:35: expected a machine basic block reference
+    successors:  [ '%bb.1.less', '2' ]
+  - id:          1
+    name:        less
+  - id:          2
+    name:        exit
+...
