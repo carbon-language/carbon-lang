@@ -463,8 +463,7 @@ void MachODumper::printRelocation(const MachOObjectFile *Obj,
                                   const RelocationRef &Reloc) {
   uint64_t Offset = Reloc.getOffset();
   SmallString<32> RelocName;
-  if (error(Reloc.getTypeName(RelocName)))
-    return;
+  Reloc.getTypeName(RelocName);
 
   DataRefImpl DR = Reloc.getRawDataRefImpl();
   MachO::any_relocation_info RE = Obj->getRelocation(DR);

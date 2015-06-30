@@ -1031,9 +1031,8 @@ COFFObjectFile::getRelocations(const coff_section *Sec) const {
     Res = #reloc_type;                                                         \
     break;
 
-std::error_code
-COFFObjectFile::getRelocationTypeName(DataRefImpl Rel,
-                                      SmallVectorImpl<char> &Result) const {
+void COFFObjectFile::getRelocationTypeName(
+    DataRefImpl Rel, SmallVectorImpl<char> &Result) const {
   const coff_relocation *Reloc = toRel(Rel);
   StringRef Res;
   switch (getMachine()) {
@@ -1102,7 +1101,6 @@ COFFObjectFile::getRelocationTypeName(DataRefImpl Rel,
     Res = "Unknown";
   }
   Result.append(Res.begin(), Res.end());
-  return std::error_code();
 }
 
 #undef LLVM_COFF_SWITCH_RELOC_TYPE_NAME

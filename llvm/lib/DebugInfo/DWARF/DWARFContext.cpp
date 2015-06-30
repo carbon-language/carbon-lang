@@ -707,10 +707,7 @@ DWARFContextInMemory::DWARFContextInMemory(const object::ObjectFile &Obj,
         object::RelocToApply R(V.visit(Type, Reloc, SymAddr));
         if (V.error()) {
           SmallString<32> Name;
-          std::error_code ec(Reloc.getTypeName(Name));
-          if (ec) {
-            errs() << "Aaaaaa! Nameless relocation! Aaaaaa!\n";
-          }
+          Reloc.getTypeName(Name);
           errs() << "error: failed to compute relocation: "
                  << Name << "\n";
           continue;

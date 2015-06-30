@@ -807,8 +807,7 @@ void COFFDumper::printRelocation(const SectionRef &Section,
   uint64_t RelocType = Reloc.getType();
   SmallString<32> RelocName;
   StringRef SymbolName;
-  if (error(Reloc.getTypeName(RelocName)))
-    return;
+  Reloc.getTypeName(RelocName);
   symbol_iterator Symbol = Reloc.getSymbol();
   if (Symbol != Obj->symbol_end() && error(Symbol->getName(SymbolName)))
     return;

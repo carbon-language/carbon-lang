@@ -931,7 +931,7 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
 
           // Stop when rel_cur's address is past the current instruction.
           if (addr >= Index + Size) break;
-          if (error(rel_cur->getTypeName(name))) goto skip_print_rel;
+          rel_cur->getTypeName(name);
           if (error(getRelocationValueString(*rel_cur, val)))
             goto skip_print_rel;
           outs() << format(Fmt.data(), SectionAddr + addr) << name
@@ -967,8 +967,7 @@ void llvm::PrintRelocations(const ObjectFile *Obj) {
       SmallString<32> valuestr;
       if (hidden)
         continue;
-      if (error(Reloc.getTypeName(relocname)))
-        continue;
+      Reloc.getTypeName(relocname);
       if (error(getRelocationValueString(Reloc, valuestr)))
         continue;
       outs() << format(Fmt.data(), address) << " " << relocname << " "

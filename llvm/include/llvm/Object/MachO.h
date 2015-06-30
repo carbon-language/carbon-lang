@@ -241,9 +241,8 @@ public:
   symbol_iterator getRelocationSymbol(DataRefImpl Rel) const override;
   section_iterator getRelocationSection(DataRefImpl Rel) const;
   uint64_t getRelocationType(DataRefImpl Rel) const override;
-  std::error_code
-  getRelocationTypeName(DataRefImpl Rel,
-                        SmallVectorImpl<char> &Result) const override;
+  void getRelocationTypeName(DataRefImpl Rel,
+                             SmallVectorImpl<char> &Result) const override;
   uint8_t getRelocationLength(DataRefImpl Rel) const;
 
   // MachO specific.

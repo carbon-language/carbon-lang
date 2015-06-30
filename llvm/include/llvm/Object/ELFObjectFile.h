@@ -234,9 +234,8 @@ protected:
   uint64_t getRelocationOffset(DataRefImpl Rel) const override;
   symbol_iterator getRelocationSymbol(DataRefImpl Rel) const override;
   uint64_t getRelocationType(DataRefImpl Rel) const override;
-  std::error_code
-  getRelocationTypeName(DataRefImpl Rel,
-                        SmallVectorImpl<char> &Result) const override;
+  void getRelocationTypeName(DataRefImpl Rel,
+                             SmallVectorImpl<char> &Result) const override;
 
   uint32_t getSectionType(DataRefImpl Sec) const override;
   uint64_t getSectionFlags(DataRefImpl Sec) const override;
@@ -738,17 +737,10 @@ StringRef ELFObjectFile<ELFT>::getRelocationTypeName(uint32_t Type) const {
 }
 
 template <class ELFT>
-std::error_code ELFObjectFile<ELFT>::getRelocationTypeName(
+void ELFObjectFile<ELFT>::getRelocationTypeName(
     DataRefImpl Rel, SmallVectorImpl<char> &Result) const {
-  const Elf_Shdr *sec = getRelSection(Rel);
-  uint32_t type;
-  if (sec->sh_type == ELF::SHT_REL)
-    type = getRel(Rel)->getType(EF.isMips64EL());
-  else
-    type = getRela(Rel)->getType(EF.isMips64EL());
-
+  uint32_t type = getRelocationType(Rel);
   EF.getRelocationTypeName(type, Result);
-  return std::error_code();
 }
 
 template <class ELFT>

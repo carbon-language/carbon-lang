@@ -214,9 +214,7 @@ uint64_t LLVMGetRelocationType(LLVMRelocationIteratorRef RI) {
 // NOTE: Caller takes ownership of returned string.
 const char *LLVMGetRelocationTypeName(LLVMRelocationIteratorRef RI) {
   SmallVector<char, 0> ret;
-  if (std::error_code ec = (*unwrap(RI))->getTypeName(ret))
-    report_fatal_error(ec.message());
-
+  (*unwrap(RI))->getTypeName(ret);
   char *str = static_cast<char*>(malloc(ret.size()));
   std::copy(ret.begin(), ret.end(), str);
   return str;
