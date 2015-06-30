@@ -20,3 +20,11 @@
 #endif
 
 int k = n + m; // OK, a and b are visible here.
+
+#ifndef A
+#error A is not defined
+#endif
+
+#ifndef B
+#error B is not defined
+#endif

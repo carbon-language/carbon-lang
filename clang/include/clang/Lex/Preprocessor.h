@@ -394,7 +394,9 @@ class Preprocessor : public RefCountedBase<Preprocessor> {
                                    const IdentifierInfo *II) const {
       // FIXME: Find a spare bit on IdentifierInfo and store a
       //        HasModuleMacros flag.
-      if (!II->hasMacroDefinition() || !PP.getLangOpts().Modules ||
+      if (!II->hasMacroDefinition() ||
+          (!PP.getLangOpts().Modules &&
+           !PP.getLangOpts().ModulesLocalVisibility) ||
           !PP.CurSubmoduleState->VisibleModules.getGeneration())
         return nullptr;
 
