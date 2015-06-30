@@ -829,8 +829,7 @@ computeInstrDepths(const MachineBasicBlock *MBB) {
 
       // Filter and process dependencies, computing the earliest issue cycle.
       unsigned Cycle = 0;
-      for (unsigned i = 0, e = Deps.size(); i != e; ++i) {
-        const DataDep &Dep = Deps[i];
+      for (const DataDep &Dep : Deps) {
         const TraceBlockInfo&DepTBI =
           BlockInfo[Dep.DefMI->getParent()->getNumber()];
         // Ignore dependencies from outside the current trace.
@@ -1088,9 +1087,9 @@ computeInstrHeights(const MachineBasicBlock *MBB) {
                                       MTM.SchedModel, MTM.TII, MTM.TRI);
 
       // Update the required height of any virtual registers read by MI.
-      for (unsigned i = 0, e = Deps.size(); i != e; ++i)
-        if (pushDepHeight(Deps[i], MI, Cycle, Heights, MTM.SchedModel, MTM.TII))
-          addLiveIns(Deps[i].DefMI, Deps[i].DefOp, Stack);
+      for (const DataDep &Dep : Deps)
+        if (pushDepHeight(Dep, MI, Cycle, Heights, MTM.SchedModel, MTM.TII))
+          addLiveIns(Dep.DefMI, Dep.DefOp, Stack);
 
       InstrCycles &MICycles = Cycles[MI];
       MICycles.Height = Cycle;
@@ -1106,8 +1105,7 @@ computeInstrHeights(const MachineBasicBlock *MBB) {
     // Update virtual live-in heights. They were added by addLiveIns() with a 0
     // height because the final height isn't known until now.
     DEBUG(dbgs() << "BB#" << MBB->getNumber() <<  " Live-ins:");
-    for (unsigned i = 0, e = TBI.LiveIns.size(); i != e; ++i) {
-      LiveInReg &LIR = TBI.LiveIns[i];
+    for (LiveInReg &LIR : TBI.LiveIns) {
       const MachineInstr *DefMI = MTM.MRI->getVRegDef(LIR.Reg);
       LIR.Height = Heights.lookup(DefMI);
       DEBUG(dbgs() << ' ' << PrintReg(LIR.Reg) << '@' << LIR.Height);
