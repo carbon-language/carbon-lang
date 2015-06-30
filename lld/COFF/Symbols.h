@@ -58,8 +58,8 @@ public:
     DefinedAbsoluteKind,
     DefinedBitcodeKind,
 
-    LazyKind,
     UndefinedKind,
+    LazyKind,
 
     LastDefinedCOFFKind = DefinedCommonKind,
     LastDefinedKind = DefinedBitcodeKind,

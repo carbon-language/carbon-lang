@@ -44,6 +44,8 @@ public:
   SymbolTable();
   void addFile(std::unique_ptr<InputFile> File);
   std::error_code run();
+  std::error_code readArchives();
+  std::error_code readObjects();
   size_t getVersion() { return Version; }
 
   // Print an error message on undefined symbols.
@@ -89,14 +91,18 @@ public:
   std::vector<Chunk *> LocalImportChunks;
 
 private:
-  std::error_code resolve(SymbolBody *Body);
+  std::error_code addSymbol(SymbolBody *New);
+  void addLazy(Lazy *New, std::vector<Symbol *> *Accum);
+
   std::error_code addMemberFile(Lazy *Body);
   ErrorOr<ObjectFile *> createLTOObject(llvm::LTOCodeGenerator *CG);
 
   llvm::DenseMap<StringRef, Symbol *> Symtab;
+
   std::vector<std::unique_ptr<InputFile>> Files;
-  size_t FileIdx = 0;
-  std::vector<ArchiveFile *> ArchiveFiles;
+  std::vector<ArchiveFile *> ArchiveQueue;
+  std::vector<InputFile *> ObjectQueue;
+
   std::vector<BitcodeFile *> BitcodeFiles;
   std::unique_ptr<MemoryBuffer> LTOMB;
   llvm::BumpPtrAllocator Alloc;

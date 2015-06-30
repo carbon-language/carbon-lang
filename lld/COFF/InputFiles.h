@@ -30,6 +30,7 @@ using llvm::object::COFFSymbolRef;
 
 class Chunk;
 class Defined;
+class Lazy;
 class SymbolBody;
 class Undefined;
 
@@ -83,13 +84,17 @@ public:
   // (So that we don't instantiate same members more than once.)
   ErrorOr<MemoryBufferRef> getMember(const Archive::Symbol *Sym);
 
-  // NB: All symbols returned by ArchiveFiles are of Lazy type.
-  std::vector<SymbolBody *> &getSymbols() override { return SymbolBodies; }
+  std::vector<Lazy *> &getLazySymbols() { return LazySymbols; }
+
+  // All symbols returned by ArchiveFiles are of Lazy type.
+  std::vector<SymbolBody *> &getSymbols() override {
+    llvm_unreachable("internal error");
+  }
 
 private:
   std::unique_ptr<Archive> File;
   std::string Filename;
-  std::vector<SymbolBody *> SymbolBodies;
+  std::vector<Lazy *> LazySymbols;
   std::set<const char *> Seen;
   llvm::MallocAllocator Alloc;
 };

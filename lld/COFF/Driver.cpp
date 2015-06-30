@@ -532,6 +532,10 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
   // The symbol table will take care of name resolution.
   for (MemoryBufferRef MB : Inputs)
     Symtab.addFile(createFile(MB));
+  if (auto EC = Symtab.readObjects()) {
+    llvm::errs() << EC.message() << "\n";
+    return false;
+  }
   if (auto EC = Symtab.run()) {
     llvm::errs() << EC.message() << "\n";
     return false;

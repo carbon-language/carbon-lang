@@ -60,7 +60,7 @@ std::error_code ArchiveFile::parse() {
   size_t NumSyms = File->getNumberOfSymbols();
   size_t BufSize = NumSyms * sizeof(Lazy);
   Lazy *Buf = (Lazy *)Alloc.Allocate(BufSize, llvm::alignOf<Lazy>());
-  SymbolBodies.reserve(NumSyms);
+  LazySymbols.reserve(NumSyms);
 
   // Read the symbol table to construct Lazy objects.
   uint32_t I = 0;
@@ -68,7 +68,7 @@ std::error_code ArchiveFile::parse() {
     auto *B = new (&Buf[I++]) Lazy(this, Sym);
     // Skip special symbol exists in import library files.
     if (B->getName() != "__NULL_IMPORT_DESCRIPTOR")
-      SymbolBodies.push_back(B);
+      LazySymbols.push_back(B);
   }
   return std::error_code();
 }
