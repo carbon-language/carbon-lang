@@ -12,6 +12,7 @@
 #include <unistd.h>
 #include <sys/syscall.h>
 #include <lldb/Host/linux/Uio.h>
+#include <cerrno>
 
 #ifndef HAVE_PROCESS_VM_READV // If the syscall wrapper is not available, provide one.
 ssize_t process_vm_readv(::pid_t pid,
