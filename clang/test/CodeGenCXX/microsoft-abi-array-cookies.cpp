@@ -58,4 +58,14 @@ void check_array_cookies_aligned() {
 // CHECK: getelementptr inbounds i8, i8* [[ARRAY_AS_CHAR]], i64 -8
 }
 
+namespace PR23990 {
+struct S {
+  char x[42];
+  void operator delete[](void *p, __SIZE_TYPE__);
+  // CHECK-LABEL: define void @"\01?delete_s@PR23990@@YAXPAUS@1@@Z"(
+  // CHECK: call void @"\01??_VS@PR23990@@SAXPAXI@Z"(i8* {{.*}}, i32 42)
+};
+void delete_s(S *s) { delete[] s; }
+}
+
 // CHECK: attributes [[NUW]] = { nounwind{{.*}} }

@@ -1548,7 +1548,8 @@ namespace {
         // The size of an element, multiplied by the number of elements.
         llvm::Value *Size
           = llvm::ConstantInt::get(SizeTy, ElementTypeSize.getQuantity());
-        Size = CGF.Builder.CreateMul(Size, NumElements);
+        if (NumElements)
+          Size = CGF.Builder.CreateMul(Size, NumElements);
 
         // Plus the size of the cookie if applicable.
         if (!CookieSize.isZero()) {
