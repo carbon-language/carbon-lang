@@ -97,9 +97,8 @@ void RuntimeDyldMachO::makeValueAddendPCRel(RelocationValueRef &Value,
 
   bool IsPCRel = Obj.getAnyRelocationPCRel(RelInfo);
   if (IsPCRel) {
-    uint64_t RelocAddr = 0;
-    RI->getAddress(RelocAddr);
-    Value.Offset += RelocAddr + OffsetToNextPC;
+    ErrorOr<uint64_t> RelocAddr = RI->getAddress();
+    Value.Offset += *RelocAddr + OffsetToNextPC;
   }
 }
 

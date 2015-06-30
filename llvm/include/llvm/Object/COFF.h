@@ -673,8 +673,7 @@ protected:
   relocation_iterator section_rel_end(DataRefImpl Sec) const override;
 
   void moveRelocationNext(DataRefImpl &Rel) const override;
-  std::error_code getRelocationAddress(DataRefImpl Rel,
-                                       uint64_t &Res) const override;
+  ErrorOr<uint64_t> getRelocationAddress(DataRefImpl Rel) const override;
   uint64_t getRelocationOffset(DataRefImpl Rel) const override;
   symbol_iterator getRelocationSymbol(DataRefImpl Rel) const override;
   uint64_t getRelocationType(DataRefImpl Rel) const override;

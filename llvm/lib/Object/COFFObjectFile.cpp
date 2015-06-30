@@ -958,8 +958,7 @@ void COFFObjectFile::moveRelocationNext(DataRefImpl &Rel) const {
             reinterpret_cast<const coff_relocation*>(Rel.p) + 1);
 }
 
-std::error_code COFFObjectFile::getRelocationAddress(DataRefImpl Rel,
-                                                     uint64_t &Res) const {
+ErrorOr<uint64_t> COFFObjectFile::getRelocationAddress(DataRefImpl Rel) const {
   report_fatal_error("getRelocationAddress not implemented in COFFObjectFile");
 }
 

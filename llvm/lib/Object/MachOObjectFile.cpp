@@ -595,15 +595,13 @@ void MachOObjectFile::moveRelocationNext(DataRefImpl &Rel) const {
   ++Rel.d.b;
 }
 
-std::error_code MachOObjectFile::getRelocationAddress(DataRefImpl Rel,
-                                                      uint64_t &Res) const {
+ErrorOr<uint64_t> MachOObjectFile::getRelocationAddress(DataRefImpl Rel) const {
   uint64_t Offset = getRelocationOffset(Rel);
 
   DataRefImpl Sec;
   Sec.d.a = Rel.d.a;
   uint64_t SecAddress = getSectionAddress(Sec);
-  Res = SecAddress + Offset;
-  return std::error_code();
+  return SecAddress + Offset;
 }
 
 uint64_t MachOObjectFile::getRelocationOffset(DataRefImpl Rel) const {
