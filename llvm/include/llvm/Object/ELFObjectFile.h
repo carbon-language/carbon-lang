@@ -222,7 +222,6 @@ protected:
   bool isSectionData(DataRefImpl Sec) const override;
   bool isSectionBSS(DataRefImpl Sec) const override;
   bool isSectionVirtual(DataRefImpl Sec) const override;
-  bool sectionContainsSymbol(DataRefImpl Sec, DataRefImpl Symb) const override;
   relocation_iterator section_rel_begin(DataRefImpl Sec) const override;
   relocation_iterator section_rel_end(DataRefImpl Sec) const override;
   section_iterator getRelocatedSection(DataRefImpl Sec) const override;
@@ -593,17 +592,6 @@ bool ELFObjectFile<ELFT>::isSectionBSS(DataRefImpl Sec) const {
 template <class ELFT>
 bool ELFObjectFile<ELFT>::isSectionVirtual(DataRefImpl Sec) const {
   return toELFShdrIter(Sec)->sh_type == ELF::SHT_NOBITS;
-}
-
-template <class ELFT>
-bool ELFObjectFile<ELFT>::sectionContainsSymbol(DataRefImpl Sec,
-                                                DataRefImpl Symb) const {
-  const Elf_Sym *ESym = toELFSymIter(Symb);
-
-  uintX_t Index = ESym->st_shndx;
-  bool Reserved = Index >= ELF::SHN_LORESERVE && Index <= ELF::SHN_HIRESERVE;
-
-  return !Reserved && (&*toELFShdrIter(Sec) == EF.getSection(ESym->st_shndx));
 }
 
 template <class ELFT>

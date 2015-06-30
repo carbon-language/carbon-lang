@@ -28,6 +28,13 @@ void ObjectFile::anchor() { }
 ObjectFile::ObjectFile(unsigned int Type, MemoryBufferRef Source)
     : SymbolicFile(Type, Source) {}
 
+bool SectionRef::containsSymbol(SymbolRef S) const {
+  section_iterator SymSec = getObject()->section_end();
+  if (S.getSection(SymSec))
+    return false;
+  return *this == *SymSec;
+}
+
 std::error_code ObjectFile::printSymbolName(raw_ostream &OS,
                                             DataRefImpl Symb) const {
   StringRef Name;

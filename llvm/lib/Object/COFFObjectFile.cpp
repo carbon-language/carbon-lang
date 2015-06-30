@@ -322,14 +322,6 @@ bool COFFObjectFile::isSectionVirtual(DataRefImpl Ref) const {
   return Sec->PointerToRawData == 0;
 }
 
-bool COFFObjectFile::sectionContainsSymbol(DataRefImpl SecRef,
-                                           DataRefImpl SymbRef) const {
-  const coff_section *Sec = toSec(SecRef);
-  COFFSymbolRef Symb = getCOFFSymbol(SymbRef);
-  int32_t SecNumber = (Sec - SectionTable) + 1;
-  return SecNumber == Symb.getSectionNumber();
-}
-
 static uint32_t getNumberOfRelocations(const coff_section *Sec,
                                        MemoryBufferRef M, const uint8_t *base) {
   // The field for the number of relocations in COFF section table is only
