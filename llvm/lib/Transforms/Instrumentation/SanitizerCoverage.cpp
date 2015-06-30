@@ -375,6 +375,13 @@ void SanitizerCoverageModule::SetNoSanitizeMetadata(Instruction *I) {
 
 void SanitizerCoverageModule::InjectCoverageAtBlock(Function &F, BasicBlock &BB,
                                                     bool UseCalls) {
+  // Don't insert coverage for unreachable blocks: we will never call
+  // __sanitizer_cov() for them, so counting them in
+  // NumberOfInstrumentedBlocks() might complicate calculation of code coverage
+  // percentage. Also, unreachable instructions frequently have no debug
+  // locations.
+  if (isa<UnreachableInst>(BB.getTerminator()))
+    return;
   BasicBlock::iterator IP = BB.getFirstInsertionPt(), BE = BB.end();
   // Skip static allocas at the top of the entry block so they don't become
   // dynamic when we split the block.  If we used our optimized stack layout,

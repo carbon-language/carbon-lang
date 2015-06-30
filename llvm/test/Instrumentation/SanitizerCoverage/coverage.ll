@@ -119,3 +119,12 @@ entry:
 ; CHECK4: call void @__sanitizer_cov_indir_call16({{.*}},[[CACHE:.*]])
 ; CHECK4-NOT: call void @__sanitizer_cov_indir_call16({{.*}},[[CACHE]])
 ; CHECK4: ret void
+
+define void @call_unreachable() uwtable sanitize_address {
+entry:
+  unreachable
+}
+
+; CHECK4-LABEL: define void @call_unreachable
+; CHECK4-NOT: __sanitizer_cov
+; CHECK4: unreachable
