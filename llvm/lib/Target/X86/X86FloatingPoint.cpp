@@ -1530,7 +1530,7 @@ void FPS::handleSpecialFP(MachineBasicBlock::iterator &Inst) {
     if (Op.isKill())
       moveToTop(FPReg, Inst);
     else
-      duplicateToTop(FPReg, FPReg, Inst);
+      duplicateToTop(FPReg, ScratchFPReg, Inst);
 
     // Emit the call. This will pop the operand.
     BuildMI(*MBB, Inst, MI->getDebugLoc(), TII->get(X86::CALLpcrel32))

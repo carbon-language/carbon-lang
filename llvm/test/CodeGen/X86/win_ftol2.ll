@@ -142,3 +142,25 @@ define i64 @double_ui64_5(double %X) {
   %tmp.1 = fptoui double %X to i64
   ret i64 %tmp.1
 }
+
+define double @pr23957_32(double %A) {
+; FTOL-LABEL: @pr23957_32
+; FTOL: fldl
+; FTOL-NEXT: fld %st(0)
+; FTOL-NEXT: calll __ftol2
+  %B = fptoui double %A to i32
+  %C = uitofp i32 %B to double
+  %D = fsub double %C, %A
+  ret double %D
+}
+
+define double @pr23957_64(double %A) {
+; FTOL-LABEL: @pr23957_64
+; FTOL: fldl
+; FTOL-NEXT: fld %st(0)
+; FTOL-NEXT: calll __ftol2
+  %B = fptoui double %A to i64
+  %C = uitofp i64 %B to double
+  %D = fsub double %C, %A
+  ret double %D
+}
