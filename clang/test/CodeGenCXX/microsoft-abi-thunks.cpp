@@ -91,7 +91,7 @@ struct E : D {
 
 E::E() {}  // Emits vftable and forces thunk generation.
 
-// CODEGEN-LABEL: define weak_odr x86_thiscallcc %struct.C* @"\01?goo@E@@QAEPAUB@@XZ"
+// CODEGEN-LABEL: define weak_odr x86_thiscallcc %struct.C* @"\01?goo@E@@QAEPAUB@@XZ"{{.*}} comdat
 // CODEGEN:   call x86_thiscallcc %struct.C* @"\01?goo@E@@UAEPAUC@@XZ"
 // CODEGEN:   getelementptr inbounds i8, i8* {{.*}}, i32 4
 // CODEGEN: ret
@@ -124,7 +124,7 @@ struct I : D {
 
 I::I() {}  // Emits vftable and forces thunk generation.
 
-// CODEGEN-LABEL: define weak_odr x86_thiscallcc %struct.{{[BF]}}* @"\01?goo@I@@QAEPAUB@@XZ"
+// CODEGEN-LABEL: define weak_odr x86_thiscallcc %struct.{{[BF]}}* @"\01?goo@I@@QAEPAUB@@XZ"{{.*}} comdat
 // CODEGEN: %[[ORIG_RET:.*]] = call x86_thiscallcc %struct.F* @"\01?goo@I@@UAEPAUF@@XZ"
 // CODEGEN: %[[ORIG_RET_i8:.*]] = bitcast %struct.F* %[[ORIG_RET]] to i8*
 // CODEGEN: %[[VBPTR_i8:.*]] = getelementptr inbounds i8, i8* %[[ORIG_RET_i8]], i32 4
