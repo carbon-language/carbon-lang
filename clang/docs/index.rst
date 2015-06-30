@@ -32,6 +32,7 @@ Using Clang as a Compiler
    SafeStack
    Modules
    MSVCCompatibility
+   CommandGuide/index
    FAQ
 
 Using Clang as a Library

@@ -41,7 +41,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'Clang'
-copyright = u'2007-2014, The Clang Team'
+copyright = u'2007-2015, The Clang Team'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -212,10 +212,40 @@ latex_documents = [
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [
-    ('index', 'clang', u'Clang Documentation',
-     [u'The Clang Team'], 1)
-]
+man_pages = []
+
+# Automatically derive the list of man pages from the contents of the command
+# guide subdirectory. This was copied from llvm/docs/conf.py.
+basedir = os.path.dirname(__file__)
+man_page_authors = u'Maintained by the Clang / LLVM Team (<http://clang.llvm.org>)'
+command_guide_subpath = 'CommandGuide'
+command_guide_path = os.path.join(basedir, command_guide_subpath)
+for name in os.listdir(command_guide_path):
+    # Ignore non-ReST files and the index page.
+    if not name.endswith('.rst') or name in ('index.rst',):
+        continue
+
+    # Otherwise, automatically extract the description.
+    file_subpath = os.path.join(command_guide_subpath, name)
+    with open(os.path.join(command_guide_path, name)) as f:
+        title = f.readline().rstrip('\n')
+        header = f.readline().rstrip('\n')
+
+        if len(header) != len(title):
+            print >>sys.stderr, (
+                "error: invalid header in %r (does not match title)" % (
+                    file_subpath,))
+        if ' - ' not in title:
+            print >>sys.stderr, (
+                ("error: invalid title in %r "
+                 "(expected '<name> - <description>')") % (
+                    file_subpath,))
+
+        # Split the name out of the title.
+        name,description = title.split(' - ', 1)
+        man_pages.append((file_subpath.replace('.rst',''), name,
+                          description, man_page_authors, 1))
+
 
 # If true, show URL addresses after external links.
 #man_show_urls = False

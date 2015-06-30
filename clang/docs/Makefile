@@ -8,7 +8,6 @@
 ##===----------------------------------------------------------------------===##
 
 CLANG_LEVEL := ..
-DIRS       := tools
 
 ifdef BUILD_FOR_WEBSITE
 PROJ_OBJ_DIR = .
