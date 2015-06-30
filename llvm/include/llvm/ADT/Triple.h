@@ -153,8 +153,7 @@ public:
     NVCL,       // NVIDIA OpenCL
     AMDHSA,     // AMD HSA Runtime
     PS4,
-    WebAssembly,
-    LastOSType = WebAssembly
+    LastOSType = PS4
   };
   enum EnvironmentType {
     UnknownEnvironment,
