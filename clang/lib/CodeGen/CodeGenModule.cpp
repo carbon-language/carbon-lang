@@ -3362,6 +3362,8 @@ void CodeGenModule::EmitTopLevelDecl(Decl *D) {
           Owner->getTopLevelModule()->Name == getLangOpts().CurrentModule)
         break;
     }
+    if (CGDebugInfo *DI = getModuleDebugInfo())
+      DI->EmitImportDecl(*Import);
 
     ImportedModules.insert(Import->getImportedModule());
     break;

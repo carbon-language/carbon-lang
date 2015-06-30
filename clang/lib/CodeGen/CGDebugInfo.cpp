@@ -27,6 +27,8 @@
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/Version.h"
 #include "clang/Frontend/CodeGenOptions.h"
+#include "clang/Lex/HeaderSearchOptions.h"
+#include "clang/Lex/PreprocessorOptions.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/IR/Constants.h"
@@ -1659,6 +1661,49 @@ llvm::DIType *CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
   }
 
   return CreateTypeDefinition(Ty, Unit);
+}
+
+llvm::DIModule *
+CGDebugInfo::getOrCreateModuleRef(ExternalASTSource::ASTSourceDescriptor Mod) {
+  llvm::DIModule *ModuleRef = nullptr;
+  auto it = ModuleRefCache.find(Mod.Signature);
+  if (it != ModuleRefCache.end())
+    ModuleRef = it->second;
+  else {
+    // Macro definitions that were defined with "-D" on the command line.
+    SmallString<128> ConfigMacros;
+    {
+      llvm::raw_svector_ostream OS(ConfigMacros);
+      const auto &PPOpts = CGM.getPreprocessorOpts();
+      unsigned I = 0;
+      // Translate the macro definitions back into a commmand line.
+      for (auto &M : PPOpts.Macros) {
+        if (++I > 1)
+          OS << " ";
+        const std::string &Macro = M.first;
+        bool Undef = M.second;
+        OS << "\"-" << (Undef ? 'U' : 'D');
+        for (char c : Macro)
+          switch (c) {
+          case '\\' : OS << "\\\\"; break;
+          case '"'  : OS << "\\\""; break;
+          default: OS << c;
+          }
+        OS << '\"';
+      }
+    }
+    llvm::DIBuilder DIB(CGM.getModule());
+    auto *CU = DIB.createCompileUnit(
+        TheCU->getSourceLanguage(), internString(Mod.ModuleName),
+        internString(Mod.Path), TheCU->getProducer(), true, StringRef(), 0,
+        internString(Mod.ASTFile), llvm::DIBuilder::FullDebug, Mod.Signature);
+    ModuleRef = DIB.createModule(
+        CU, Mod.ModuleName, ConfigMacros, internString(Mod.Path),
+        internString(CGM.getHeaderSearchOpts().Sysroot));
+    DIB.finalize();
+    ModuleRefCache.insert(std::make_pair(Mod.Signature, ModuleRef));
+  }
+  return ModuleRef;
 }
 
 llvm::DIType *CGDebugInfo::CreateTypeDefinition(const ObjCInterfaceType *Ty,
@@ -3302,6 +3347,15 @@ void CGDebugInfo::EmitUsingDecl(const UsingDecl &UD) {
     DBuilder.createImportedDeclaration(
         getCurrentContextDescriptor(cast<Decl>(USD.getDeclContext())), Target,
         getLineNumber(USD.getLocation()));
+}
+
+void CGDebugInfo::EmitImportDecl(const ImportDecl &ID) {
+  auto *Reader = CGM.getContext().getExternalSource();
+  auto Info = Reader->getSourceDescriptor(*ID.getImportedModule());
+  DBuilder.createImportedDeclaration(
+    getCurrentContextDescriptor(cast<Decl>(ID.getDeclContext())),
+                                getOrCreateModuleRef(Info),
+                                getLineNumber(ID.getLocation()));
 }
 
 llvm::DIImportedEntity *
