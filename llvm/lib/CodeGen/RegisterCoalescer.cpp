@@ -1449,6 +1449,7 @@ bool RegisterCoalescer::joinCopy(MachineInstr *CopyMI, bool &Again) {
                    << format("%04X", S.LaneMask) << ")\n");
       LIS->shrinkToUses(S, LI.reg);
     }
+    LI.removeEmptySubRanges();
   }
   if (ShrinkMainRange) {
     LiveInterval &LI = LIS->getInterval(CP.getDstReg());
