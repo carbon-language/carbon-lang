@@ -312,7 +312,6 @@ class PrinterContext {
   typedef typename object::ELFFile<ET>::Elf_Shdr Elf_Shdr;
 
   typedef typename object::ELFFile<ET>::Elf_Rel_Iter Elf_Rel_iterator;
-  typedef typename object::ELFFile<ET>::Elf_Shdr_Iter Elf_Shdr_iterator;
 
   static const size_t IndexTableEntrySize;
 

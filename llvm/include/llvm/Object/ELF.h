@@ -143,8 +143,7 @@ public:
   typedef iterator_range<Elf_Dyn_Iter> Elf_Dyn_Range;
   typedef ELFEntityIterator<const Elf_Rela> Elf_Rela_Iter;
   typedef ELFEntityIterator<const Elf_Rel> Elf_Rel_Iter;
-  typedef ELFEntityIterator<const Elf_Shdr> Elf_Shdr_Iter;
-  typedef iterator_range<Elf_Shdr_Iter> Elf_Shdr_Range;
+  typedef iterator_range<const Elf_Shdr *> Elf_Shdr_Range;
 
   /// \brief Archive files are 2 byte aligned, so we need this for
   ///     PointerIntPair to work.
@@ -264,8 +263,8 @@ public:
       Header->getDataEncoding() == ELF::ELFDATA2LSB;
   }
 
-  Elf_Shdr_Iter section_begin() const;
-  Elf_Shdr_Iter section_end() const;
+  const Elf_Shdr *section_begin() const;
+  const Elf_Shdr *section_end() const;
   Elf_Shdr_Range sections() const {
     return make_range(section_begin(), section_end());
   }
@@ -751,16 +750,15 @@ uint64_t ELFFile<ELFT>::getSymbolIndex(const Elf_Sym *Sym) const {
 }
 
 template <class ELFT>
-typename ELFFile<ELFT>::Elf_Shdr_Iter ELFFile<ELFT>::section_begin() const {
-  return Elf_Shdr_Iter(Header->e_shentsize,
-                       (const char *)base() + Header->e_shoff);
+const typename ELFFile<ELFT>::Elf_Shdr *ELFFile<ELFT>::section_begin() const {
+  if (Header->e_shentsize != sizeof(Elf_Shdr))
+    report_fatal_error("Invalid section header size");
+  return reinterpret_cast<const Elf_Shdr *>(base() + Header->e_shoff);
 }
 
 template <class ELFT>
-typename ELFFile<ELFT>::Elf_Shdr_Iter ELFFile<ELFT>::section_end() const {
-  return Elf_Shdr_Iter(Header->e_shentsize,
-                       (const char *)base() + Header->e_shoff +
-                           (getNumSections() * Header->e_shentsize));
+const typename ELFFile<ELFT>::Elf_Shdr *ELFFile<ELFT>::section_end() const {
+  return section_begin() + getNumSections();
 }
 
 template <class ELFT>

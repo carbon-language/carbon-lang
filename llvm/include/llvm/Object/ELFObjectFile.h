@@ -189,7 +189,6 @@ public:
   typedef typename ELFFile<ELFT>::Elf_Rela Elf_Rela;
   typedef typename ELFFile<ELFT>::Elf_Dyn Elf_Dyn;
 
-  typedef typename ELFFile<ELFT>::Elf_Shdr_Iter Elf_Shdr_Iter;
   typedef typename ELFFile<ELFT>::Elf_Dyn_Iter Elf_Dyn_Iter;
 
 protected:
@@ -261,15 +260,8 @@ protected:
     return DRI;
   }
 
-  Elf_Shdr_Iter toELFShdrIter(DataRefImpl Sec) const {
-    return Elf_Shdr_Iter(EF.getHeader()->e_shentsize,
-                         reinterpret_cast<const char *>(Sec.p));
-  }
-
-  DataRefImpl toDRI(Elf_Shdr_Iter Sec) const {
-    DataRefImpl DRI;
-    DRI.p = reinterpret_cast<uintptr_t>(Sec.get());
-    return DRI;
+  const Elf_Shdr *toELFShdrIter(DataRefImpl Sec) const {
+    return reinterpret_cast<const Elf_Shdr *>(Sec.p);
   }
 
   DataRefImpl toDRI(const Elf_Shdr *Sec) const {
@@ -541,7 +533,8 @@ ELFObjectFile<ELFT>::getSymbolSection(DataRefImpl Symb,
 
 template <class ELFT>
 void ELFObjectFile<ELFT>::moveSectionNext(DataRefImpl &Sec) const {
-  Sec = toDRI(++toELFShdrIter(Sec));
+  const Elf_Shdr *ESec = toELFShdrIter(Sec);
+  Sec = toDRI(++ESec);
 }
 
 template <class ELFT>
@@ -568,7 +561,7 @@ template <class ELFT>
 std::error_code
 ELFObjectFile<ELFT>::getSectionContents(DataRefImpl Sec,
                                         StringRef &Result) const {
-  Elf_Shdr_Iter EShdr = toELFShdrIter(Sec);
+  const Elf_Shdr *EShdr = toELFShdrIter(Sec);
   Result = StringRef((const char *)base() + EShdr->sh_offset, EShdr->sh_size);
   return std::error_code();
 }
@@ -585,14 +578,14 @@ bool ELFObjectFile<ELFT>::isSectionText(DataRefImpl Sec) const {
 
 template <class ELFT>
 bool ELFObjectFile<ELFT>::isSectionData(DataRefImpl Sec) const {
-  Elf_Shdr_Iter EShdr = toELFShdrIter(Sec);
+  const Elf_Shdr *EShdr = toELFShdrIter(Sec);
   return EShdr->sh_flags & (ELF::SHF_ALLOC | ELF::SHF_WRITE) &&
          EShdr->sh_type == ELF::SHT_PROGBITS;
 }
 
 template <class ELFT>
 bool ELFObjectFile<ELFT>::isSectionBSS(DataRefImpl Sec) const {
-  Elf_Shdr_Iter EShdr = toELFShdrIter(Sec);
+  const Elf_Shdr *EShdr = toELFShdrIter(Sec);
   return EShdr->sh_flags & (ELF::SHF_ALLOC | ELF::SHF_WRITE) &&
          EShdr->sh_type == ELF::SHT_NOBITS;
 }
@@ -617,7 +610,7 @@ template <class ELFT>
 relocation_iterator
 ELFObjectFile<ELFT>::section_rel_begin(DataRefImpl Sec) const {
   DataRefImpl RelData;
-  uintptr_t SHT = reinterpret_cast<uintptr_t>(EF.section_begin().get());
+  uintptr_t SHT = reinterpret_cast<uintptr_t>(EF.section_begin());
   RelData.d.a = (Sec.p - SHT) / EF.getHeader()->e_shentsize;
   RelData.d.b = 0;
   return relocation_iterator(RelocationRef(RelData, this));
@@ -627,7 +620,7 @@ template <class ELFT>
 relocation_iterator
 ELFObjectFile<ELFT>::section_rel_end(DataRefImpl Sec) const {
   DataRefImpl RelData;
-  uintptr_t SHT = reinterpret_cast<uintptr_t>(EF.section_begin().get());
+  uintptr_t SHT = reinterpret_cast<uintptr_t>(EF.section_begin());
   const Elf_Shdr *S = reinterpret_cast<const Elf_Shdr *>(Sec.p);
   RelData.d.a = (Sec.p - SHT) / EF.getHeader()->e_shentsize;
   if (S->sh_type != ELF::SHT_RELA && S->sh_type != ELF::SHT_REL)
@@ -644,7 +637,7 @@ ELFObjectFile<ELFT>::getRelocatedSection(DataRefImpl Sec) const {
   if (EF.getHeader()->e_type != ELF::ET_REL)
     return section_end();
 
-  Elf_Shdr_Iter EShdr = toELFShdrIter(Sec);
+  const Elf_Shdr *EShdr = toELFShdrIter(Sec);
   uintX_t Type = EShdr->sh_type;
   if (Type != ELF::SHT_REL && Type != ELF::SHT_RELA)
     return section_end();

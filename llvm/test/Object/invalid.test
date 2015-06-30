@@ -41,3 +41,6 @@ INVALID-SYM-SIZE: Invalid symbol size
 RUN: not llvm-readobj -t %p/Inputs/invalid-section-index.elf 2>&1 | FileCheck --check-prefix=INVALID-SECTION-INDEX %s
 
 INVALID-SECTION-INDEX: Invalid section index!
+
+RUN: not llvm-readobj -s %p/Inputs/invalid-section-size.elf 2>&1 | FileCheck --check-prefix=INVALID-SECTION-SIZE %s
+INVALID-SECTION-SIZE: Invalid section header size
