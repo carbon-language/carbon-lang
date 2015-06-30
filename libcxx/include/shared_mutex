@@ -19,6 +19,29 @@
 namespace std
 {
 
+class shared_mutex      // C++17
+{
+public:
+    shared_mutex();
+    ~shared_mutex();
+
+    shared_mutex(const shared_mutex&) = delete;
+    shared_mutex& operator=(const shared_mutex&) = delete;
+
+    // Exclusive ownership
+    void lock(); // blocking
+    bool try_lock();
+    void unlock();
+
+    // Shared ownership
+    void lock_shared(); // blocking
+    bool try_lock_shared();
+    void unlock_shared();
+
+    typedef implementation-defined native_handle_type; // See 30.2.3
+    native_handle_type native_handle(); // See 30.2.3
+};
+
 class shared_timed_mutex
 {
 public:
@@ -118,7 +141,7 @@ template <class Mutex>
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
-class _LIBCPP_TYPE_VIS shared_timed_mutex
+struct _LIBCPP_TYPE_VIS __shared_mutex_base
 {
     mutex               __mut_;
     condition_variable  __gate1_;
@@ -127,6 +150,58 @@ class _LIBCPP_TYPE_VIS shared_timed_mutex
 
     static const unsigned __write_entered_ = 1U << (sizeof(unsigned)*__CHAR_BIT__ - 1);
     static const unsigned __n_readers_ = ~__write_entered_;
+
+    __shared_mutex_base();
+    _LIBCPP_INLINE_VISIBILITY ~__shared_mutex_base() = default;
+
+    __shared_mutex_base(const __shared_mutex_base&) = delete;
+    __shared_mutex_base& operator=(const __shared_mutex_base&) = delete;
+
+    // Exclusive ownership
+    void lock(); // blocking
+    bool try_lock();
+    void unlock();
+
+    // Shared ownership
+    void lock_shared(); // blocking
+    bool try_lock_shared();
+    void unlock_shared();
+
+//     typedef implementation-defined native_handle_type; // See 30.2.3
+//     native_handle_type native_handle(); // See 30.2.3
+};
+
+
+#if _LIBCPP_STD_VER > 14
+class _LIBCPP_TYPE_VIS shared_mutex
+{
+	__shared_mutex_base __base;
+public:
+    shared_mutex() : __base() {}
+    _LIBCPP_INLINE_VISIBILITY ~shared_mutex() = default;
+
+    shared_mutex(const shared_mutex&) = delete;
+    shared_mutex& operator=(const shared_mutex&) = delete;
+
+    // Exclusive ownership
+    _LIBCPP_INLINE_VISIBILITY void lock()     { return __base.lock(); }
+    _LIBCPP_INLINE_VISIBILITY bool try_lock() { return __base.try_lock(); }
+    _LIBCPP_INLINE_VISIBILITY void unlock()   { return __base.unlock(); }
+
+    // Shared ownership
+    _LIBCPP_INLINE_VISIBILITY void lock_shared()     { return __base.lock_shared(); }
+    _LIBCPP_INLINE_VISIBILITY bool try_lock_shared() { return __base.try_lock_shared(); }
+    _LIBCPP_INLINE_VISIBILITY void unlock_shared()   { return __base.unlock_shared(); }
+
+//     typedef __shared_mutex_base::native_handle_type native_handle_type;
+//     _LIBCPP_INLINE_VISIBILITY native_handle_type native_handle() { return __base::unlock_shared(); }
+};
+#endif
+
+
+class _LIBCPP_TYPE_VIS shared_timed_mutex
+{
+	__shared_mutex_base __base;
 public:
     shared_timed_mutex();
     _LIBCPP_INLINE_VISIBILITY ~shared_timed_mutex() = default;
@@ -170,30 +245,30 @@ bool
 shared_timed_mutex::try_lock_until(
                         const chrono::time_point<_Clock, _Duration>& __abs_time)
 {
-    unique_lock<mutex> __lk(__mut_);
-    if (__state_ & __write_entered_)
+    unique_lock<mutex> __lk(__base.__mut_);
+    if (__base.__state_ & __base.__write_entered_)
     {
         while (true)
         {
-            cv_status __status = __gate1_.wait_until(__lk, __abs_time);
-            if ((__state_ & __write_entered_) == 0)
+            cv_status __status = __base.__gate1_.wait_until(__lk, __abs_time);
+            if ((__base.__state_ & __base.__write_entered_) == 0)
                 break;
             if (__status == cv_status::timeout)
                 return false;
         }
     }
-    __state_ |= __write_entered_;
-    if (__state_ & __n_readers_)
+    __base.__state_ |= __base.__write_entered_;
+    if (__base.__state_ & __base.__n_readers_)
     {
         while (true)
         {
-            cv_status __status = __gate2_.wait_until(__lk, __abs_time);
-            if ((__state_ & __n_readers_) == 0)
+            cv_status __status = __base.__gate2_.wait_until(__lk, __abs_time);
+            if ((__base.__state_ & __base.__n_readers_) == 0)
                 break;
             if (__status == cv_status::timeout)
             {
-                __state_ &= ~__write_entered_;
-                __gate1_.notify_all();
+                __base.__state_ &= ~__base.__write_entered_;
+                __base.__gate1_.notify_all();
                 return false;
             }
         }
@@ -206,22 +281,22 @@ bool
 shared_timed_mutex::try_lock_shared_until(
                         const chrono::time_point<_Clock, _Duration>& __abs_time)
 {
-    unique_lock<mutex> __lk(__mut_);
-    if ((__state_ & __write_entered_) || (__state_ & __n_readers_) == __n_readers_)
+    unique_lock<mutex> __lk(__base.__mut_);
+    if ((__base.__state_ & __base.__write_entered_) || (__base.__state_ & __base.__n_readers_) == __base.__n_readers_)
     {
         while (true)
         {
-            cv_status status = __gate1_.wait_until(__lk, __abs_time);
-            if ((__state_ & __write_entered_) == 0 &&
-                                       (__state_ & __n_readers_) < __n_readers_)
+            cv_status status = __base.__gate1_.wait_until(__lk, __abs_time);
+            if ((__base.__state_ & __base.__write_entered_) == 0 &&
+                                       (__base.__state_ & __base.__n_readers_) < __base.__n_readers_)
                 break;
             if (status == cv_status::timeout)
                 return false;
         }
     }
-    unsigned __num_readers = (__state_ & __n_readers_) + 1;
-    __state_ &= ~__n_readers_;
-    __state_ |= __num_readers;
+    unsigned __num_readers = (__base.__state_ & __base.__n_readers_) + 1;
+    __base.__state_ &= ~__base.__n_readers_;
+    __base.__state_ |= __num_readers;
     return true;
 }
 
