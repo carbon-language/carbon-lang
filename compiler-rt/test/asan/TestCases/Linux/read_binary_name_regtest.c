@@ -1,8 +1,10 @@
 // Regression test for https://crbug.com/502974, where ASan was unable to read
 // the binary name because of sandbox restrictions.
 // This test uses seccomp-BPF to restrict the readlink() system call and makes
-// sure ASan is still able to 
-// RUN: %clang_asan %s -o %t && not %run %t 2>&1 | FileCheck %s
+// sure ASan is still able to
+// RUN: not ls /usr/include/linux/seccomp.h || ( %clang_asan %s -o %t && not %run %t 2>&1 | FileCheck %s )
+// UNSUPPORTED: android
+
 #include <errno.h>
 #include <stddef.h>
 #include <stdlib.h>
