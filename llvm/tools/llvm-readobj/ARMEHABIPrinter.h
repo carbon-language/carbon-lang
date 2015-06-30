@@ -365,10 +365,9 @@ PrinterContext<ET>::FindExceptionTable(unsigned IndexSectionIndex,
   /// handling table.  Use this symbol to recover the actual exception handling
   /// table.
 
-  for (Elf_Shdr_iterator SI = ELF->section_begin(), SE = ELF->section_end();
-       SI != SE; ++SI) {
-    if (SI->sh_type == ELF::SHT_REL && SI->sh_info == IndexSectionIndex) {
-      for (Elf_Rel_iterator RI = ELF->rel_begin(&*SI), RE = ELF->rel_end(&*SI);
+  for (const Elf_Shdr &Sec : ELF->sections()) {
+    if (Sec.sh_type == ELF::SHT_REL && Sec.sh_info == IndexSectionIndex) {
+      for (Elf_Rel_iterator RI = ELF->rel_begin(&Sec), RE = ELF->rel_end(&Sec);
            RI != RE; ++RI) {
         if (RI->r_offset == static_cast<unsigned>(IndexTableOffset)) {
           typename object::ELFFile<ET>::Elf_Rela RelA;
@@ -377,7 +376,7 @@ PrinterContext<ET>::FindExceptionTable(unsigned IndexSectionIndex,
           RelA.r_addend = 0;
 
           std::pair<const Elf_Shdr *, const Elf_Sym *> Symbol =
-            ELF->getRelocationSymbol(&(*SI), &RelA);
+              ELF->getRelocationSymbol(&Sec, &RelA);
 
           return ELF->getSection(Symbol.second);
         }
