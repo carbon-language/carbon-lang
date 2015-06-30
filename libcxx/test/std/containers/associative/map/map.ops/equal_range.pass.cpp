@@ -19,6 +19,7 @@
 
 #include "min_allocator.h"
 #include "private_constructor.hpp"
+#include "is_transparent.h"
 
 int main()
 {
@@ -363,6 +364,58 @@ int main()
     assert(r.first == next(m.begin(), 7));
     assert(r.second == next(m.begin(), 7));
     r = m.equal_range(20);
+    assert(r.first == next(m.begin(), 8));
+    assert(r.second == next(m.begin(), 8));
+
+    r = m.equal_range(C2Int(5));
+    assert(r.first == next(m.begin(), 0));
+    assert(r.second == next(m.begin(), 1));
+    r = m.equal_range(C2Int(7));
+    assert(r.first == next(m.begin(), 1));
+    assert(r.second == next(m.begin(), 2));
+    r = m.equal_range(C2Int(9));
+    assert(r.first == next(m.begin(), 2));
+    assert(r.second == next(m.begin(), 3));
+    r = m.equal_range(C2Int(11));
+    assert(r.first == next(m.begin(), 3));
+    assert(r.second == next(m.begin(), 4));
+    r = m.equal_range(C2Int(13));
+    assert(r.first == next(m.begin(), 4));
+    assert(r.second == next(m.begin(), 5));
+    r = m.equal_range(C2Int(15));
+    assert(r.first == next(m.begin(), 5));
+    assert(r.second == next(m.begin(), 6));
+    r = m.equal_range(C2Int(17));
+    assert(r.first == next(m.begin(), 6));
+    assert(r.second == next(m.begin(), 7));
+    r = m.equal_range(C2Int(19));
+    assert(r.first == next(m.begin(), 7));
+    assert(r.second == next(m.begin(), 8));
+    r = m.equal_range(C2Int(4));
+    assert(r.first == next(m.begin(), 0));
+    assert(r.second == next(m.begin(), 0));
+    r = m.equal_range(C2Int(6));
+    assert(r.first == next(m.begin(), 1));
+    assert(r.second == next(m.begin(), 1));
+    r = m.equal_range(C2Int(8));
+    assert(r.first == next(m.begin(), 2));
+    assert(r.second == next(m.begin(), 2));
+    r = m.equal_range(C2Int(10));
+    assert(r.first == next(m.begin(), 3));
+    assert(r.second == next(m.begin(), 3));
+    r = m.equal_range(C2Int(12));
+    assert(r.first == next(m.begin(), 4));
+    assert(r.second == next(m.begin(), 4));
+    r = m.equal_range(C2Int(14));
+    assert(r.first == next(m.begin(), 5));
+    assert(r.second == next(m.begin(), 5));
+    r = m.equal_range(C2Int(16));
+    assert(r.first == next(m.begin(), 6));
+    assert(r.second == next(m.begin(), 6));
+    r = m.equal_range(C2Int(18));
+    assert(r.first == next(m.begin(), 7));
+    assert(r.second == next(m.begin(), 7));
+    r = m.equal_range(C2Int(20));
     assert(r.first == next(m.begin(), 8));
     assert(r.second == next(m.begin(), 8));
     }

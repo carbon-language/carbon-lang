@@ -19,6 +19,7 @@
 
 #include "min_allocator.h"
 #include "private_constructor.hpp"
+#include "is_transparent.h"
 
 int main()
 {
@@ -173,6 +174,19 @@ int main()
         r = m.find(9);
         assert(r == next(m.begin(), 6));
         r = m.find(10);
+        assert(r == m.end());
+
+        r = m.find(C2Int(5));
+        assert(r == m.begin());
+        r = m.find(C2Int(6));
+        assert(r == m.end());
+        r = m.find(C2Int(7));
+        assert(r == next(m.begin(), 3));
+        r = m.find(C2Int(8));
+        assert(r == m.end());
+        r = m.find(C2Int(9));
+        assert(r == next(m.begin(), 6));
+        r = m.find(C2Int(10));
         assert(r == m.end());
     }
 

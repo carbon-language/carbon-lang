@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-// <map>
+// <multimap>
 
 // class multimap
 
@@ -19,6 +19,7 @@
 
 #include "min_allocator.h"
 #include "private_constructor.hpp"
+#include "is_transparent.h"
 
 int main()
 {
@@ -217,6 +218,28 @@ int main()
     assert(r.first == next(m.begin(), 6));
     assert(r.second == next(m.begin(), 9));
     r = m.equal_range(10);
+    assert(r.first == m.end());
+    assert(r.second == m.end());
+
+    r = m.equal_range(C2Int(4));
+    assert(r.first == m.begin());
+    assert(r.second == m.begin());
+    r = m.equal_range(C2Int(5));
+    assert(r.first == m.begin());
+    assert(r.second == next(m.begin(), 3));
+    r = m.equal_range(C2Int(6));
+    assert(r.first == next(m.begin(), 3));
+    assert(r.second == next(m.begin(), 3));
+    r = m.equal_range(C2Int(7));
+    assert(r.first == next(m.begin(), 3));
+    assert(r.second == next(m.begin(), 6));
+    r = m.equal_range(C2Int(8));
+    assert(r.first == next(m.begin(), 6));
+    assert(r.second == next(m.begin(), 6));
+    r = m.equal_range(C2Int(9));
+    assert(r.first == next(m.begin(), 6));
+    assert(r.second == next(m.begin(), 9));
+    r = m.equal_range(C2Int(10));
     assert(r.first == m.end());
     assert(r.second == m.end());
     }
