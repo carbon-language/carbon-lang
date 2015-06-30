@@ -140,8 +140,8 @@ std::error_code ELFFile<ELFT>::createAtomizableSections() {
       if (std::error_code ec = sectionName.getError())
         return ec;
 
-      auto rai(_objFile->rela_begin(&section));
-      auto rae(_objFile->rela_end(&section));
+      auto rai = _objFile->rela_begin(&section);
+      auto rae = _objFile->rela_end(&section);
 
       _relocationAddendReferences[sHdr] = make_range(rai, rae);
       totalRelocs += std::distance(rai, rae);
@@ -152,8 +152,8 @@ std::error_code ELFFile<ELFT>::createAtomizableSections() {
       if (std::error_code ec = sectionName.getError())
         return ec;
 
-      auto ri(_objFile->rel_begin(&section));
-      auto re(_objFile->rel_end(&section));
+      auto ri = _objFile->rel_begin(&section);
+      auto re = _objFile->rel_end(&section);
 
       _relocationReferences[sHdr] = make_range(ri, re);
       totalRelocs += std::distance(ri, re);
