@@ -4269,6 +4269,7 @@ ASTReader::ReadSubmoduleBlock(ModuleFile &F, unsigned ClientLoadCapabilities) {
         CurrentModule->setASTFile(F.File);
       }
 
+      CurrentModule->Signature = F.Signature;
       CurrentModule->IsFromModuleFile = true;
       CurrentModule->IsSystem = IsSystem || CurrentModule->IsSystem;
       CurrentModule->IsExternC = IsExternC;
@@ -7364,6 +7365,37 @@ Module *ASTReader::getSubmodule(SubmoduleID GlobalID) {
 
 Module *ASTReader::getModule(unsigned ID) {
   return getSubmodule(ID);
+}
+
+ExternalASTSource::ASTSourceDescriptor
+ASTReader::getSourceDescriptor(const Module &M) {
+  StringRef Dir, Filename;
+  if (M.Directory)
+    Dir = M.Directory->getName();
+  if (auto *File = M.getASTFile())
+    Filename = File->getName();
+  return ASTReader::ASTSourceDescriptor{
+             M.getFullModuleName(), Dir, Filename,
+             M.Signature
+         };
+}
+
+llvm::Optional<ExternalASTSource::ASTSourceDescriptor>
+ASTReader::getSourceDescriptor(unsigned ID) {
+  if (const Module *M = getSubmodule(ID))
+    return getSourceDescriptor(*M);
+
+  // If there is only a single PCH, return it instead.
+  // Chained PCH are not suported.
+  if (ModuleMgr.size() == 1) {
+    ModuleFile &MF = ModuleMgr.getPrimaryModule();
+    return ASTReader::ASTSourceDescriptor{
+      MF.OriginalSourceFileName, MF.OriginalDir,
+      MF.FileName,
+      MF.Signature
+    };
+  }
+  return None;
 }
 
 Selector ASTReader::getLocalSelector(ModuleFile &M, unsigned LocalID) {

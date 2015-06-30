@@ -22,6 +22,16 @@ using namespace clang;
 
 ExternalASTSource::~ExternalASTSource() { }
 
+llvm::Optional<ExternalASTSource::ASTSourceDescriptor>
+ExternalASTSource::getSourceDescriptor(unsigned ID) {
+  return None;
+}
+
+ExternalASTSource::ASTSourceDescriptor
+ExternalASTSource::getSourceDescriptor(const Module &M) {
+  return ASTSourceDescriptor();
+}
+
 void ExternalASTSource::FindFileRegionDecls(FileID File, unsigned Offset,
                                             unsigned Length,
                                             SmallVectorImpl<Decl *> &Decls) {}

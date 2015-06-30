@@ -156,6 +156,20 @@ public:
   /// \brief Retrieve the module that corresponds to the given module ID.
   virtual Module *getModule(unsigned ID) { return nullptr; }
 
+  /// \brief Holds everything needed to generate debug info for an
+  /// imported module or precompiled header file.
+  struct ASTSourceDescriptor {
+    std::string ModuleName;
+    std::string Path;
+    std::string ASTFile;
+    uint64_t Signature;
+  };
+
+  /// \brief Return a descriptor for the corresponding module, if one exists.
+  virtual llvm::Optional<ASTSourceDescriptor> getSourceDescriptor(unsigned ID);
+  /// \brief Return a descriptor for the module.
+  virtual ASTSourceDescriptor getSourceDescriptor(const Module &M);
+
   /// \brief Finds all declarations lexically contained within the given
   /// DeclContext, after applying an optional filter predicate.
   ///
