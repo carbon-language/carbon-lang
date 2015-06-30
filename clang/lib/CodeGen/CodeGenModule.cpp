@@ -1457,12 +1457,7 @@ CodeGenModule::isTriviallyRecursive(const FunctionDecl *FD) {
     Name = FD->getName();
   }
 
-  auto &BI = Context.BuiltinInfo;
-  unsigned BuiltinID = Context.Idents.get(Name).getBuiltinID();
-  if (!BuiltinID || !BI.isPredefinedLibFunction(BuiltinID))
-    return false;
-
-  FunctionIsDirectlyRecursive Walker(Name, BI);
+  FunctionIsDirectlyRecursive Walker(Name, Context.BuiltinInfo);
   Walker.TraverseFunctionDecl(const_cast<FunctionDecl*>(FD));
   return Walker.Result;
 }

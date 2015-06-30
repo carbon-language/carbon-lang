@@ -18,11 +18,16 @@ prefetch(void) {
   __builtin_prefetch(0, 0, 1);
 }
 
+extern inline __attribute__((__always_inline__, __gnu_inline__)) void *memchr(void *__s, int __c, __SIZE_TYPE__ __n) {
+  return __builtin_memchr(__s, __c, __n);
+}
+
 void f(void) {
   foo();
   abs(0);
   strrchr_foo("", '.');
   prefetch();
+  memchr("", '.', 0);
 }
 
 // CHECK-LABEL: define void @f()
@@ -30,9 +35,11 @@ void f(void) {
 // CHECK: call i32 @abs(i32 0)
 // CHECK: call i8* @strrchr(
 // CHECK: call void @llvm.prefetch(
+// CHECK: call i8* @memchr(
 // CHECK: ret void
 
 // CHECK: declare void @foo()
 // CHECK: declare i32 @abs(i32
 // CHECK: declare i8* @strrchr(i8*, i32)
+// CHECK: declare i8* @memchr(
 // CHECK: declare void @llvm.prefetch(
