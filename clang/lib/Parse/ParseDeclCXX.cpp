@@ -2374,7 +2374,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
   SourceLocation EqualLoc;
   SourceLocation PureSpecLoc;
 
-  auto TryConsumePureSpecifier = [&] (bool AllowDefinition = false) {
+  auto TryConsumePureSpecifier = [&] (bool AllowDefinition) {
     if (Tok.isNot(tok::equal))
       return false;
 
