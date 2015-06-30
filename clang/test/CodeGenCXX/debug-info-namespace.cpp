@@ -55,7 +55,7 @@ void B::func_fwd() {}
 // This should work even if 'i' and 'func' were declarations & not definitions,
 // but it doesn't yet.
 
-// CHECK: [[CU:![0-9]+]] = !DICompileUnit(
+// CHECK: [[CU:![0-9]+]] = distinct !DICompileUnit(
 // CHECK-SAME:                            imports: [[MODULES:![0-9]*]]
 // CHECK: [[FOO:![0-9]+]] = !DICompositeType(tag: DW_TAG_structure_type, name: "foo",
 // CHECK-SAME:                               line: 5
@@ -102,7 +102,7 @@ void B::func_fwd() {}
 // CHECK: [[M16]] = !DIImportedEntity(tag: DW_TAG_imported_declaration, scope: [[FUNC]], entity: [[FUNC_FWD:![0-9]+]]
 // CHECK: [[M17]] = !DIImportedEntity(tag: DW_TAG_imported_declaration, scope: [[CTXT]], entity: [[I]]
 
-// CHECK-GMLT: [[CU:![0-9]+]] = !DICompileUnit(
+// CHECK-GMLT: [[CU:![0-9]+]] = distinct !DICompileUnit(
 // CHECK-GMLT-SAME:                            emissionKind: 2,
 // CHECK-GMLT-SAME:                            imports: [[MODULES:![0-9]+]]
 // CHECK-GMLT: [[MODULES]] = !{}
