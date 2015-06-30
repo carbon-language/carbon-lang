@@ -25,6 +25,7 @@ namespace coff {
 using llvm::object::Archive;
 using llvm::object::COFFSymbolRef;
 using llvm::object::coff_import_header;
+using llvm::object::coff_symbol_generic;
 
 class ArchiveFile;
 class InputFile;
@@ -131,7 +132,7 @@ class DefinedCOFF : public Defined {
   friend SymbolBody;
 public:
   DefinedCOFF(Kind K, ObjectFile *F, COFFSymbolRef S)
-      : Defined(K), File(F), Sym(S) {}
+      : Defined(K), File(F), Sym(S.getGeneric()) {}
 
   static bool classof(const SymbolBody *S) {
     return S->kind() <= LastDefinedCOFFKind;
@@ -139,7 +140,7 @@ public:
 
 protected:
   ObjectFile *File;
-  COFFSymbolRef Sym;
+  const coff_symbol_generic *Sym;
 };
 
 // Regular defined symbols read from object file symbol tables.
@@ -147,7 +148,7 @@ class DefinedRegular : public DefinedCOFF {
 public:
   DefinedRegular(ObjectFile *F, COFFSymbolRef S, SectionChunk *C)
       : DefinedCOFF(DefinedRegularKind, F, S), Data(&C->Ptr) {
-    IsExternal = Sym.isExternal();
+    IsExternal = S.isExternal();
     IsCOMDAT = C->isCOMDAT();
   }
 
@@ -156,15 +157,15 @@ public:
   }
 
   uint64_t getFileOff() {
-    return (*Data)->getFileOff() + Sym.getValue();
+    return (*Data)->getFileOff() + Sym->Value;
   }
 
-  uint64_t getRVA() { return (*Data)->getRVA() + Sym.getValue(); }
+  uint64_t getRVA() { return (*Data)->getRVA() + Sym->Value; }
   bool isCOMDAT() { return IsCOMDAT; }
   bool isLive() const { return (*Data)->isLive(); }
   void markLive() { (*Data)->markLive(); }
   SectionChunk *getChunk() { return *Data; }
-  uint64_t getValue() { return Sym.getValue(); }
+  uint32_t getValue() { return Sym->Value; }
 
 private:
   SectionChunk **Data;
@@ -174,7 +175,7 @@ class DefinedCommon : public DefinedCOFF {
 public:
   DefinedCommon(ObjectFile *F, COFFSymbolRef S, CommonChunk *C)
       : DefinedCOFF(DefinedCommonKind, F, S), Data(C) {
-    IsExternal = Sym.isExternal();
+    IsExternal = S.isExternal();
   }
 
   static bool classof(const SymbolBody *S) {
@@ -187,7 +188,7 @@ public:
 private:
   friend SymbolBody;
 
-  uint64_t getSize() { return Sym.getValue(); }
+  uint64_t getSize() { return Sym->Value; }
 
   CommonChunk *Data;
 };
