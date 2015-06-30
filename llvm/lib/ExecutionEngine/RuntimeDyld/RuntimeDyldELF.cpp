@@ -767,8 +767,8 @@ void RuntimeDyldELF::findOPDEntrySection(const ELFObjectFileBase &Obj,
     if (RelSectionName != ".opd")
       continue;
 
-    for (relocation_iterator i = si->relocation_begin(),
-                             e = si->relocation_end();
+    for (elf_relocation_iterator i = si->relocation_begin(),
+                                 e = si->relocation_end();
          i != e;) {
       // The R_PPC64_ADDR64 relocation indicates the first field
       // of a .opd entry
@@ -781,8 +781,7 @@ void RuntimeDyldELF::findOPDEntrySection(const ELFObjectFileBase &Obj,
 
       uint64_t TargetSymbolOffset = i->getOffset();
       symbol_iterator TargetSymbol = i->getSymbol();
-      ErrorOr<int64_t> AddendOrErr =
-          Obj.getRelocationAddend(i->getRawDataRefImpl());
+      ErrorOr<int64_t> AddendOrErr = i->getAddend();
       Check(AddendOrErr.getError());
       int64_t Addend = *AddendOrErr;
 
@@ -1062,9 +1061,8 @@ relocation_iterator RuntimeDyldELF::processRelocationRef(
   const auto &Obj = cast<ELFObjectFileBase>(O);
   uint64_t RelType;
   Check(RelI->getType(RelType));
-  int64_t Addend = 0;
-  if (Obj.hasRelocationAddend(RelI->getRawDataRefImpl()))
-    Addend = *Obj.getRelocationAddend(RelI->getRawDataRefImpl());
+  ErrorOr<int64_t> AddendOrErr = ELFRelocationRef(*RelI).getAddend();
+  int64_t Addend = AddendOrErr ? *AddendOrErr : 0;
   elf_symbol_iterator Symbol = RelI->getSymbol();
 
   // Obtain the symbol name which is referenced in the relocation

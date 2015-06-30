@@ -37,10 +37,12 @@ namespace object {
 
 class elf_symbol_iterator;
 class ELFSymbolRef;
+class ELFRelocationRef;
 
 class ELFObjectFileBase : public ObjectFile {
   friend class ELFSymbolRef;
   friend class ELFSectionRef;
+  friend class ELFRelocationRef;
 
 protected:
   ELFObjectFileBase(unsigned int Type, MemoryBufferRef Source);
@@ -52,12 +54,8 @@ protected:
   virtual uint32_t getSectionType(DataRefImpl Sec) const = 0;
   virtual uint64_t getSectionFlags(DataRefImpl Sec) const = 0;
 
-public:
   virtual ErrorOr<int64_t> getRelocationAddend(DataRefImpl Rel) const = 0;
-
-  // FIXME: This is a bit of a hack. Every caller should know if it expecting
-  // and addend or not.
-  virtual bool hasRelocationAddend(DataRefImpl Rel) const = 0;
+public:
 
   typedef iterator_range<elf_symbol_iterator> elf_symbol_iterator_range;
   virtual elf_symbol_iterator_range getDynamicSymbolIterators() const = 0;
@@ -136,6 +134,38 @@ public:
 
   const ELFSymbolRef &operator*() const {
     return static_cast<const ELFSymbolRef &>(symbol_iterator::operator*());
+  }
+};
+
+class ELFRelocationRef : public RelocationRef {
+public:
+  ELFRelocationRef(const RelocationRef &B) : RelocationRef(B) {
+    assert(isa<ELFObjectFileBase>(RelocationRef::getObject()));
+  }
+
+  const ELFObjectFileBase *getObject() const {
+    return cast<ELFObjectFileBase>(RelocationRef::getObject());
+  }
+
+  ErrorOr<int64_t> getAddend() const {
+    return getObject()->getRelocationAddend(getRawDataRefImpl());
+  }
+};
+
+class elf_relocation_iterator : public relocation_iterator {
+public:
+  elf_relocation_iterator(const relocation_iterator &B)
+      : relocation_iterator(RelocationRef(
+            B->getRawDataRefImpl(), cast<ELFObjectFileBase>(B->getObject()))) {}
+
+  const ELFRelocationRef *operator->() const {
+    return static_cast<const ELFRelocationRef *>(
+        relocation_iterator::operator->());
+  }
+
+  const ELFRelocationRef &operator*() const {
+    return static_cast<const ELFRelocationRef &>(
+        relocation_iterator::operator*());
   }
 };
 
@@ -295,7 +325,6 @@ public:
   section_iterator section_end() const override;
 
   ErrorOr<int64_t> getRelocationAddend(DataRefImpl Rel) const override;
-  bool hasRelocationAddend(DataRefImpl Rel) const override;
 
   uint8_t getBytesInAddress() const override;
   StringRef getFileFormatName() const override;
@@ -731,11 +760,6 @@ ELFObjectFile<ELFT>::getRelocationAddend(DataRefImpl Rel) const {
   if (getRelSection(Rel)->sh_type != ELF::SHT_RELA)
     return object_error::parse_failed;
   return (int64_t)getRela(Rel)->r_addend;
-}
-
-template <class ELFT>
-bool ELFObjectFile<ELFT>::hasRelocationAddend(DataRefImpl Rel) const {
-  return getRelSection(Rel)->sh_type == ELF::SHT_RELA;
 }
 
 template <class ELFT>

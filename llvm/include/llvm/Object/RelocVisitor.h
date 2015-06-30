@@ -240,9 +240,7 @@ private:
   }
 
   int64_t getELFAddend(RelocationRef R) {
-    const auto *Obj = cast<ELFObjectFileBase>(R.getObject());
-    DataRefImpl DRI = R.getRawDataRefImpl();
-    ErrorOr<int64_t> AddendOrErr = Obj->getRelocationAddend(DRI);
+    ErrorOr<int64_t> AddendOrErr = ELFRelocationRef(R).getAddend();
     if (std::error_code EC = AddendOrErr.getError())
       report_fatal_error(EC.message());
     return *AddendOrErr;
