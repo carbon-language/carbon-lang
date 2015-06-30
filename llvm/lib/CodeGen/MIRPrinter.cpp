@@ -131,10 +131,10 @@ void MIRPrinter::convert(const Module &M, yaml::MachineBasicBlock &YamlMBB,
   YamlMBB.Alignment = MBB.getAlignment();
   YamlMBB.AddressTaken = MBB.hasAddressTaken();
   YamlMBB.IsLandingPad = MBB.isLandingPad();
-  for (const auto *MBB : MBB.successors()) {
+  for (const auto *SuccMBB : MBB.successors()) {
     std::string Str;
     raw_string_ostream StrOS(Str);
-    MIPrinter(M, StrOS, RegisterMaskIds).printMBBReference(*MBB);
+    MIPrinter(M, StrOS, RegisterMaskIds).printMBBReference(*SuccMBB);
     YamlMBB.Successors.push_back(StrOS.str());
   }
 
