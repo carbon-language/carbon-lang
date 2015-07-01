@@ -567,8 +567,8 @@ def : InstAlias<"ngcs $dst, $src", (SBCSWr GPR32:$dst, WZR, GPR32:$src)>;
 def : InstAlias<"ngcs $dst, $src", (SBCSXr GPR64:$dst, XZR, GPR64:$src)>;
 
 // Add/subtract
-defm ADD : AddSub<0, "add", add>;
-defm SUB : AddSub<1, "sub">;
+defm ADD : AddSub<0, "add", "sub", add>;
+defm SUB : AddSub<1, "sub", "add">;
 
 def : InstAlias<"mov $dst, $src",
                 (ADDWri GPR32sponly:$dst, GPR32sp:$src, 0, 0)>;
@@ -579,8 +579,8 @@ def : InstAlias<"mov $dst, $src",
 def : InstAlias<"mov $dst, $src",
                 (ADDXri GPR64sp:$dst, GPR64sponly:$src, 0, 0)>;
 
-defm ADDS : AddSubS<0, "adds", AArch64add_flag, "cmn">;
-defm SUBS : AddSubS<1, "subs", AArch64sub_flag, "cmp">;
+defm ADDS : AddSubS<0, "adds", AArch64add_flag, "cmn", "subs", "cmp">;
+defm SUBS : AddSubS<1, "subs", AArch64sub_flag, "cmp", "adds", "cmn">;
 
 // Use SUBS instead of SUB to enable CSE between SUBS and SUB.
 def : Pat<(sub GPR32sp:$Rn, addsub_shifted_imm32:$imm),

@@ -614,10 +614,15 @@ def move_vec_shift : Operand<i32> {
   let ParserMatchClass = MoveVecShifterOperand;
 }
 
-def AddSubImmOperand : AsmOperandClass {
-  let Name = "AddSubImm";
-  let ParserMethod = "tryParseAddSubImm";
-  let DiagnosticType = "AddSubSecondSource";
+let DiagnosticType = "AddSubSecondSource" in {
+  def AddSubImmOperand : AsmOperandClass {
+    let Name = "AddSubImm";
+    let ParserMethod = "tryParseAddSubImm";
+  }
+  def AddSubImmNegOperand : AsmOperandClass {
+    let Name = "AddSubImmNeg";
+    let ParserMethod = "tryParseAddSubImm";
+  }
 }
 // An ADD/SUB immediate shifter operand:
 //  second operand:
@@ -631,8 +636,17 @@ class addsub_shifted_imm<ValueType Ty>
   let MIOperandInfo = (ops i32imm, i32imm);
 }
 
+class addsub_shifted_imm_neg<ValueType Ty>
+    : Operand<Ty> {
+  let EncoderMethod = "getAddSubImmOpValue";
+  let ParserMatchClass = AddSubImmNegOperand;
+  let MIOperandInfo = (ops i32imm, i32imm);
+}
+
 def addsub_shifted_imm32 : addsub_shifted_imm<i32>;
 def addsub_shifted_imm64 : addsub_shifted_imm<i64>;
+def addsub_shifted_imm32_neg : addsub_shifted_imm_neg<i32>;
+def addsub_shifted_imm64_neg : addsub_shifted_imm_neg<i64>;
 
 class neg_addsub_shifted_imm<ValueType Ty>
     : Operand<Ty>, ComplexPattern<Ty, 2, "SelectNegArithImmed", [imm]> {
@@ -1633,7 +1647,7 @@ class AddSubRegAlias<string asm, Instruction inst, RegisterClass dstRegtype,
                 (inst dstRegtype:$dst, src1Regtype:$src1, src2Regtype:$src2,
                       shiftExt)>;
 
-multiclass AddSub<bit isSub, string mnemonic,
+multiclass AddSub<bit isSub, string mnemonic, string alias,
                   SDPatternOperator OpNode = null_frag> {
   let hasSideEffects = 0, isReMaterializable = 1, isAsCheapAsAMove = 1 in {
   // Add/Subtract immediate
@@ -1686,6 +1700,14 @@ multiclass AddSub<bit isSub, string mnemonic,
     let Inst{31} = 1;
   }
 
+  // add Rd, Rb, -imm -> sub Rd, Rn, imm
+  def : InstAlias<alias#" $Rd, $Rn, $imm",
+                  (!cast<Instruction>(NAME # "Wri") GPR32sp:$Rd, GPR32sp:$Rn,
+                      addsub_shifted_imm32_neg:$imm), 0>;
+  def : InstAlias<alias#" $Rd, $Rn, $imm",
+                  (!cast<Instruction>(NAME # "Xri") GPR64sp:$Rd, GPR64sp:$Rn,
+                       addsub_shifted_imm64_neg:$imm), 0>;
+
   // Register/register aliases with no shift when SP is not used.
   def : AddSubRegAlias<mnemonic, !cast<Instruction>(NAME#"Wrs"),
                        GPR32, GPR32, GPR32, 0>;
@@ -1706,7 +1728,8 @@ multiclass AddSub<bit isSub, string mnemonic,
                        GPR64sp, GPR64sponly, GPR64, 24>; // UXTX #0
 }
 
-multiclass AddSubS<bit isSub, string mnemonic, SDNode OpNode, string cmp> {
+multiclass AddSubS<bit isSub, string mnemonic, SDNode OpNode, string cmp,
+                   string alias, string cmpAlias> {
   let isCompare = 1, Defs = [NZCV] in {
   // Add/Subtract immediate
   def Wri  : BaseAddSubImm<isSub, 1, GPR32, GPR32sp, addsub_shifted_imm32,
@@ -1752,6 +1775,14 @@ multiclass AddSubS<bit isSub, string mnemonic, SDNode OpNode, string cmp> {
   }
   } // Defs = [NZCV]
 
+  // Support negative immediates, e.g. adds Rd, Rn, -imm -> subs Rd, Rn, imm
+  def : InstAlias<alias#" $Rd, $Rn, $imm",
+                  (!cast<Instruction>(NAME # "Wri") GPR32:$Rd, GPR32sp:$Rn,
+                      addsub_shifted_imm32_neg:$imm), 0>;
+  def : InstAlias<alias#" $Rd, $Rn, $imm",
+                  (!cast<Instruction>(NAME # "Xri") GPR64:$Rd, GPR64sp:$Rn,
+                       addsub_shifted_imm64_neg:$imm), 0>;
+
   // Compare aliases
   def : InstAlias<cmp#" $src, $imm", (!cast<Instruction>(NAME#"Wri")
                   WZR, GPR32sp:$src, addsub_shifted_imm32:$imm), 5>;
@@ -1767,6 +1798,12 @@ multiclass AddSubS<bit isSub, string mnemonic, SDNode OpNode, string cmp> {
                   WZR, GPR32:$src1, GPR32:$src2, arith_shift32:$sh), 4>;
   def : InstAlias<cmp#" $src1, $src2$sh", (!cast<Instruction>(NAME#"Xrs")
                   XZR, GPR64:$src1, GPR64:$src2, arith_shift64:$sh), 4>;
+
+  // Support negative immediates, e.g. cmp Rn, -imm -> cmn Rn, imm
+  def : InstAlias<cmpAlias#" $src, $imm", (!cast<Instruction>(NAME#"Wri")
+                  WZR, GPR32sp:$src, addsub_shifted_imm32_neg:$imm), 0>;
+  def : InstAlias<cmpAlias#" $src, $imm", (!cast<Instruction>(NAME#"Xri")
+                  XZR, GPR64sp:$src, addsub_shifted_imm64_neg:$imm), 0>;
 
   // Compare shorthands
   def : InstAlias<cmp#" $src1, $src2", (!cast<Instruction>(NAME#"Wrs")
