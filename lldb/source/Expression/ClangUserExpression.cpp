@@ -237,7 +237,7 @@ ClangUserExpression::ScanContext(ExecutionContext &exe_ctx, Error &err)
     else if (clang::FunctionDecl *function_decl = llvm::dyn_cast<clang::FunctionDecl>(decl_context))
     {
         // We might also have a function that said in the debug information that it captured an
-        // object pointer.  The best way to deal with getting to the ivars at present it by pretending
+        // object pointer.  The best way to deal with getting to the ivars at present is by pretending
         // that this is a method of a class in whatever runtime the debug info says the object pointer
         // belongs to.  Do that here.
 
