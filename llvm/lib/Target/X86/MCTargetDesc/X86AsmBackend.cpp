@@ -29,13 +29,6 @@
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
-// Option to allow disabling arithmetic relaxation to workaround PR9807, which
-// is useful when running bitwise comparison experiments on Darwin. We should be
-// able to remove this once PR9807 is resolved.
-static cl::opt<bool>
-MCDisableArithRelaxation("mc-x86-disable-arith-relaxation",
-         cl::desc("Disable relaxation of arithmetic instruction for X86"));
-
 static unsigned getFixupKindLog2Size(unsigned Kind) {
   switch (Kind) {
   default:
@@ -243,29 +236,18 @@ bool X86AsmBackend::mayNeedRelaxation(const MCInst &Inst) const {
   if (getRelaxedOpcodeBranch(Inst.getOpcode()) != Inst.getOpcode())
     return true;
 
-  if (MCDisableArithRelaxation)
-    return false;
-
   // Check if this instruction is ever relaxable.
   if (getRelaxedOpcodeArith(Inst.getOpcode()) == Inst.getOpcode())
     return false;
 
 
-  // Check if it has an expression and is not RIP relative.
-  bool hasExp = false;
-  bool hasRIP = false;
-  for (unsigned i = 0; i < Inst.getNumOperands(); ++i) {
-    const MCOperand &Op = Inst.getOperand(i);
-    if (Op.isExpr())
-      hasExp = true;
+  // Check if the relaxable operand has an expression. For the current set of
+  // relaxable instructions, the relaxable operand is always the last operand.
+  unsigned RelaxableOp = Inst.getNumOperands() - 1;
+  if (Inst.getOperand(RelaxableOp).isExpr())
+    return true;
 
-    if (Op.isReg() && Op.getReg() == X86::RIP)
-      hasRIP = true;
-  }
-
-  // FIXME: Why exactly do we need the !hasRIP? Is it just a limitation on
-  // how we do relaxations?
-  return hasExp && !hasRIP;
+  return false;
 }
 
 bool X86AsmBackend::fixupNeedsRelaxation(const MCFixup &Fixup,
