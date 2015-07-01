@@ -100,6 +100,11 @@ class CGDebugInfo {
 
   // LexicalBlockStack - Keep track of our current nested lexical block.
   std::vector<llvm::TypedTrackingMDRef<llvm::DIScope>> LexicalBlockStack;
+
+  /// \brief Map of AST declaration to its lexical block scope.
+  llvm::DenseMap<const Decl *, llvm::TypedTrackingMDRef<llvm::DIScope>>
+      LexicalBlockMap;
+
   llvm::DenseMap<const Decl *, llvm::TrackingMDRef> RegionMap;
   // FnBeginRegionCount - Keep track of LexicalBlockStack counter at the
   // beginning of a function. This is used to pop unbalanced regions at
@@ -304,6 +309,12 @@ public:
   /// \brief Emit an objective c interface type standalone
   /// debug info.
   llvm::DIType *getOrCreateInterfaceType(QualType Ty, SourceLocation Loc);
+
+  /// \brief Map AST declaration to its lexical block scope if available.
+  void recordDeclarationLexicalScope(const Decl &D);
+
+  /// \brief Get lexical scope of AST declaration.
+  llvm::DIScope *getDeclarationLexicalScope(const Decl &D, QualType Ty);
 
   void completeType(const EnumDecl *ED);
   void completeType(const RecordDecl *RD);

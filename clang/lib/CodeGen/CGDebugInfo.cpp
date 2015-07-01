@@ -786,15 +786,18 @@ llvm::DIType *CGDebugInfo::CreateType(const TemplateSpecializationType *Ty,
 
 llvm::DIType *CGDebugInfo::CreateType(const TypedefType *Ty,
                                       llvm::DIFile *Unit) {
+  TypedefNameDecl *TD = Ty->getDecl();
   // We don't set size information, but do specify where the typedef was
   // declared.
-  SourceLocation Loc = Ty->getDecl()->getLocation();
+  SourceLocation Loc = TD->getLocation();
+
+  llvm::DIScope *TDContext = getDeclarationLexicalScope(*TD, QualType(Ty, 0));
 
   // Typedefs are derived from some other type.
   return DBuilder.createTypedef(
       getOrCreateType(Ty->getDecl()->getUnderlyingType(), Unit),
       Ty->getDecl()->getName(), getOrCreateFile(Loc), getLineNumber(Loc),
-      getContextDescriptor(cast<Decl>(Ty->getDecl()->getDeclContext())));
+      TDContext);
 }
 
 llvm::DIType *CGDebugInfo::CreateType(const FunctionType *Ty,
@@ -1440,6 +1443,23 @@ llvm::DIType *CGDebugInfo::getOrCreateInterfaceType(QualType D,
   llvm::DIType *T = getOrCreateType(D, getOrCreateFile(Loc));
   RetainedTypes.push_back(D.getAsOpaquePtr());
   return T;
+}
+
+void CGDebugInfo::recordDeclarationLexicalScope(const Decl &D) {
+  assert(LexicalBlockMap.find(&D) == LexicalBlockMap.end() &&
+         "D is already mapped to lexical block scope");
+  if (!LexicalBlockStack.empty())
+    LexicalBlockMap[&D] = LexicalBlockStack.back();
+}
+
+llvm::DIScope *CGDebugInfo::getDeclarationLexicalScope(const Decl &D,
+                                                       QualType Ty) {
+  auto I = LexicalBlockMap.find(&D);
+  if (I != LexicalBlockMap.end()) {
+    RetainedTypes.push_back(Ty.getAsOpaquePtr());
+    return I->second;
+  } else
+    return getContextDescriptor(cast<Decl>(D.getDeclContext()));
 }
 
 void CGDebugInfo::completeType(const EnumDecl *ED) {
@@ -2269,8 +2289,7 @@ llvm::DICompositeType *CGDebugInfo::CreateLimitedType(const RecordType *Ty) {
   unsigned Line = getLineNumber(RD->getLocation());
   StringRef RDName = getClassName(RD);
 
-  llvm::DIScope *RDContext =
-      getContextDescriptor(cast<Decl>(RD->getDeclContext()));
+  llvm::DIScope *RDContext = getDeclarationLexicalScope(*RD, QualType(Ty, 0));
 
   // If we ended up creating the type during the context chain construction,
   // just return that.
@@ -2416,7 +2435,14 @@ void CGDebugInfo::collectVarDeclProps(const VarDecl *VD, llvm::DIFile *&Unit,
   // outside the class by putting it in the global scope.
   if (DC->isRecord())
     DC = CGM.getContext().getTranslationUnitDecl();
-  VDContext = getContextDescriptor(dyn_cast<Decl>(DC));
+
+  if (VD->isStaticLocal()) {
+    // Get context for static locals (that are technically globals) the same way
+    // we do for "local" locals -- by using current lexical block.
+    assert(!LexicalBlockStack.empty() && "Region stack mismatch, stack empty!");
+    VDContext = LexicalBlockStack.back();
+  } else
+    VDContext = getContextDescriptor(dyn_cast<Decl>(DC));
 }
 
 llvm::DISubprogram *
