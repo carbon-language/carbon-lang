@@ -399,6 +399,60 @@ static void relocR_AARCH64_TLSLE_ADD_TPREL_LO12_NC(uint8_t *location,
   write32le(location, result | read32le(location));
 }
 
+/// \brief R_AARCH64_TLSDESC_ADR_PAGE21 - Page(G(GTLSDESC(S+A))) - Page(P)
+static std::error_code relocR_AARCH64_TLSDESC_ADR_PAGE21(uint8_t *location,
+                                                         uint64_t P, uint64_t S,
+                                                         int64_t A) {
+  int64_t result = page(S + A) - page(P);
+  if (!isInt<32>(result))
+    return make_out_of_range_reloc_error();
+  result = result >> 12;
+  uint32_t immlo = result & 0x3;
+  uint32_t immhi = result & 0x1FFFFC;
+  immlo = immlo << 29;
+  immhi = immhi << 3;
+  DEBUG(llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
+        llvm::dbgs() << " S: " << Twine::utohexstr(S);
+        llvm::dbgs() << " A: " << Twine::utohexstr(A);
+        llvm::dbgs() << " P: " << Twine::utohexstr(P);
+        llvm::dbgs() << " immhi: " << Twine::utohexstr(immhi);
+        llvm::dbgs() << " immlo: " << Twine::utohexstr(immlo);
+        llvm::dbgs() << " result: " << Twine::utohexstr(result) << "\n");
+  write32le(location, immlo | immhi | read32le(location));
+  return std::error_code();
+}
+
+/// \brief R_AARCH64_TLSDESC_LD64_LO12_NC - G(GTLSDESC(S+A)) -> S + A
+static std::error_code relocR_AARCH64_TLSDESC_LD64_LO12_NC(uint8_t *location,
+                                                           uint64_t P,
+                                                           uint64_t S,
+                                                           int64_t A) {
+  int32_t result = S + A;
+  DEBUG(llvm::dbgs() << " S: " << Twine::utohexstr(S);
+        llvm::dbgs() << " A: " << Twine::utohexstr(A);
+        llvm::dbgs() << " P: " << Twine::utohexstr(P);
+        llvm::dbgs() << " result: " << Twine::utohexstr(result) << "\n");
+  if ((result & 0x7) != 0)
+    return make_unaligned_range_reloc_error();
+  result &= 0xFF8;
+  result <<= 7;
+  write32le(location, result | read32le(location));
+  return std::error_code();
+}
+
+/// \brief R_AARCH64_TLSDESC_ADD_LO12_NC - G(GTLSDESC(S+A)) -> S + A
+static void relocR_AARCH64_TLSDESC_ADD_LO12_NC(uint8_t *location, uint64_t P,
+                                               uint64_t S, int64_t A) {
+  int32_t result = (int32_t)((S + A) & 0xFFF);
+  result <<= 10;
+  DEBUG(llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
+        llvm::dbgs() << " S: " << Twine::utohexstr(S);
+        llvm::dbgs() << " A: " << Twine::utohexstr(A);
+        llvm::dbgs() << " P: " << Twine::utohexstr(P);
+        llvm::dbgs() << " result: " << Twine::utohexstr(result) << "\n");
+  write32le(location, result | read32le(location));
+}
+
 std::error_code AArch64TargetRelocationHandler::applyRelocation(
     ELFWriter &writer, llvm::FileOutputBuffer &buf, const AtomLayout &atom,
     const Reference &ref) const {
@@ -428,13 +482,6 @@ std::error_code AArch64TargetRelocationHandler::applyRelocation(
     return relocR_AARCH64_PREL32(loc, reloc, target, addend);
   case R_AARCH64_PREL16:
     return relocR_AARCH64_PREL16(loc, reloc, target, addend);
-  // Runtime only relocations. Ignore here.
-  case R_AARCH64_RELATIVE:
-  case R_AARCH64_IRELATIVE:
-  case R_AARCH64_JUMP_SLOT:
-  case R_AARCH64_GLOB_DAT:
-  case R_AARCH64_TLS_TPREL64:
-    break;
   case R_AARCH64_ADR_PREL_PG_HI21:
     return relocR_AARCH64_ADR_PREL_PG_HI21(loc, reloc, target, addend);
   case R_AARCH64_ADR_PREL_LO21:
@@ -484,6 +531,24 @@ std::error_code AArch64TargetRelocationHandler::applyRelocation(
       relocR_AARCH64_TLSLE_ADD_TPREL_LO12_NC(loc, reloc, target + tpoffset,
                                              addend);
   }  break;
+  case R_AARCH64_TLSDESC_ADR_PAGE21:
+    return relocR_AARCH64_TLSDESC_ADR_PAGE21(loc, reloc, target, addend);
+  case R_AARCH64_TLSDESC_LD64_LO12_NC:
+    return relocR_AARCH64_TLSDESC_LD64_LO12_NC(loc, reloc, target, addend);
+  case R_AARCH64_TLSDESC_ADD_LO12_NC:
+    relocR_AARCH64_TLSDESC_ADD_LO12_NC(loc, reloc, target, addend);
+    break;
+  case R_AARCH64_TLSDESC_CALL:
+    // Relaxation only to optimize TLS access. Ignore for now.
+    break;
+  // Runtime only relocations. Ignore here.
+  case R_AARCH64_RELATIVE:
+  case R_AARCH64_IRELATIVE:
+  case R_AARCH64_JUMP_SLOT:
+  case R_AARCH64_GLOB_DAT:
+  case R_AARCH64_TLS_TPREL64:
+  case R_AARCH64_TLSDESC:
+    break;
   default:
     return make_unhandled_reloc_error();
   }

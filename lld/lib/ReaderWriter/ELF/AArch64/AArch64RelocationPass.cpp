@@ -31,6 +31,13 @@ using namespace llvm::ELF;
 // .got values
 static const uint8_t AArch64GotAtomContent[8] = {0};
 
+// tls descriptor .got values, the layout is:
+// struct tlsdesc {
+//   ptrdiff_t (*entry) (struct tlsdesc *);
+//   void *arg;
+// };
+static const uint8_t AArch64TlsdescGotAtomContent[16] = {0};
+
 // .plt value (entry 0)
 static const uint8_t AArch64Plt0AtomContent[32] = {
     0xf0, 0x7b, 0xbf, 0xa9, // stp	x16, x30, [sp,#-16]!
@@ -49,6 +56,18 @@ static const uint8_t AArch64PltAtomContent[16] = {
     0x11, 0x02, 0x40, 0xf9, // ldr  x17, [x16,#offset]
     0x10, 0x02, 0x00, 0x91, // add  x16, x16, #offset
     0x20, 0x02, 0x1f, 0xd6  // br   x17
+};
+
+// .plt tlsdesc values
+static const uint8_t AArch64PltTlsdescAtomContent[32] = {
+    0xe2, 0x0f, 0xbf, 0xa9, // stp  x2, x3, [sp, #-16]
+    0x02, 0x00, 0x00, 0x90, // adpr x2, 0
+    0x03, 0x00, 0x00, 0x90, // adpr x3, 0
+    0x42, 0x00, 0x40, 0xf9, // ldr  x2, [x2, #0]
+    0x63, 0x00, 0x00, 0x91, // add  x3, x3, 0
+    0x40, 0x00, 0x1f, 0xd6, // br   x2
+    0x1f, 0x20, 0x03, 0xd5, // nop
+    0x1f, 0x20, 0x03, 0xd5  // nop
 };
 
 namespace {
@@ -72,6 +91,16 @@ public:
   AArch64GOTPLTAtom(const File &f) : AArch64GOTAtom(f, ".got.plt") {}
 };
 
+class AArch64TLSDESCGOTAtom : public AArch64GOTPLTAtom {
+public:
+  AArch64TLSDESCGOTAtom(const File &f) : AArch64GOTPLTAtom(f) {}
+
+  ArrayRef<uint8_t> rawContent() const override {
+    return ArrayRef<uint8_t>(AArch64TlsdescGotAtomContent, 16);
+  }
+};
+
+
 class AArch64PLT0Atom : public PLT0Atom {
 public:
   AArch64PLT0Atom(const File &f) : PLT0Atom(f) {}
@@ -86,6 +115,15 @@ public:
 
   ArrayRef<uint8_t> rawContent() const override {
     return ArrayRef<uint8_t>(AArch64PltAtomContent, 16);
+  }
+};
+
+class AArch64PLTTLSDESCAtom : public PLTAtom {
+public:
+  AArch64PLTTLSDESCAtom(const File &f) : PLTAtom(f, ".plt") {}
+
+  ArrayRef<uint8_t> rawContent() const override {
+    return ArrayRef<uint8_t>(AArch64PltTlsdescAtomContent, 32);
   }
 };
 
@@ -153,6 +191,11 @@ template <class Derived> class AArch64RelocationPass : public Pass {
     case R_AARCH64_TLSIE_LD64_GOTTPREL_LO12_NC:
       static_cast<Derived *>(this)->handleGOTTPREL(ref);
       break;
+    case R_AARCH64_TLSDESC_ADR_PAGE21:
+    case R_AARCH64_TLSDESC_LD64_LO12_NC:
+    case R_AARCH64_TLSDESC_ADD_LO12_NC:
+      static_cast<Derived *>(this)->handleTLSDESC(ref);
+      break;
     }
   }
 
@@ -212,8 +255,41 @@ protected:
   /// \brief Create a GOT TPREL entry and change the relocation to a PC32 to
   /// the GOT.
   std::error_code handleGOTTPREL(const Reference &ref) {
-    if (isa<DefinedAtom>(ref.target())) {
+    if (isa<DefinedAtom>(ref.target()))
       const_cast<Reference &>(ref).setTarget(getGOTTPREL(ref.target()));
+    return std::error_code();
+  }
+
+  /// \brief Generates a double GOT entry with R_AARCH64_TLSDESC dynamic
+  /// relocation reference.  Since the dynamic relocation is resolved
+  /// lazily so the GOT associated should be in .got.plt.
+  const GOTAtom *getTLSDESCPLTEntry(const Atom *da) {
+    auto got = _gotMap.find(da);
+    if (got != _gotMap.end())
+      return got->second;
+    auto ga = new (_file._alloc) AArch64TLSDESCGOTAtom(_file);
+    ga->addReferenceELF_AArch64(R_AARCH64_TLSDESC, 0, da, 0);
+    auto pa = new (_file._alloc) AArch64PLTTLSDESCAtom(_file);
+    pa->addReferenceELF_AArch64(R_AARCH64_ADR_PREL_PG_HI21, 4, ga, 0);
+    pa->addReferenceELF_AArch64(R_AARCH64_ADR_PREL_PG_HI21, 8, ga, 0);
+    pa->addReferenceELF_AArch64(R_AARCH64_LDST64_ABS_LO12_NC, 12, ga, 0);
+    pa->addReferenceELF_AArch64(R_AARCH64_ADD_ABS_LO12_NC, 16, ga, 0);
+#ifndef NDEBUG
+    ga->_name = "__got_tlsdesc_";
+    ga->_name += da->name();
+    pa->_name = "__plt_tlsdesc_";
+    pa->_name += da->name();
+#endif
+    _gotMap[da] = ga;
+    _pltMap[da] = pa;
+    _tlsdescVector.push_back(ga);
+    _pltVector.push_back(pa);
+    return ga;
+  }
+
+  std::error_code handleTLSDESC(const Reference &ref) {
+    if (isa<DefinedAtom>(ref.target())) {
+      const_cast<Reference &>(ref).setTarget(getTLSDESCPLTEntry(ref.target()));
     }
     return std::error_code();
   }
@@ -311,6 +387,11 @@ public:
       got->setOrdinal(ordinal++);
       mf.addAtom(*got);
     }
+    // Add any tlsdesc GOT relocation after default PLT and iFUNC entries.
+    for (auto &tlsdesc : _tlsdescVector) {
+      tlsdesc->setOrdinal(ordinal++);
+      mf.addAtom(*tlsdesc);
+    }
     for (auto obj : _objectVector) {
       obj->setOrdinal(ordinal++);
       mf.addAtom(*obj);
@@ -335,6 +416,7 @@ protected:
 
   /// \brief the list of GOT/PLT atoms
   std::vector<GOTAtom *> _gotVector;
+  std::vector<GOTAtom *> _tlsdescVector;
   std::vector<PLTAtom *> _pltVector;
   std::vector<ObjectAtom *> _objectVector;
 

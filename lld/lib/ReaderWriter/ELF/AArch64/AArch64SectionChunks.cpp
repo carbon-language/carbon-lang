@@ -27,7 +27,8 @@ const AtomLayout *AArch64GOTSection::appendAtom(const Atom *atom) {
     if (r->kindNamespace() != Reference::KindNamespace::ELF)
       continue;
     assert(r->kindArch() == Reference::KindArch::AArch64);
-    if (r->kindValue() == R_AARCH64_TLS_TPREL64)
+    if ((r->kindValue() == R_AARCH64_TLS_TPREL64) ||
+        (r->kindValue() == R_AARCH64_TLSDESC))
       _tlsMap[r->target()] = _tlsMap.size();
   }
 
