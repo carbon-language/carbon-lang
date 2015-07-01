@@ -810,14 +810,14 @@ void ASTDeclReader::VisitFunctionDecl(FunctionDecl *FD) {
       FunctionTemplateSpecializationInfo::Profile(ID, TemplArgs, C);
       void *InsertPos = nullptr;
       FunctionTemplateDecl::Common *CommonPtr = CanonTemplate->getCommonPtr();
-      CommonPtr->Specializations.FindNodeOrInsertPos(ID, InsertPos);
+      FunctionTemplateSpecializationInfo *ExistingInfo =
+          CommonPtr->Specializations.FindNodeOrInsertPos(ID, InsertPos);
       if (InsertPos)
         CommonPtr->Specializations.InsertNode(FTInfo, InsertPos);
       else {
         assert(Reader.getContext().getLangOpts().Modules &&
                "already deserialized this template specialization");
-        // FIXME: This specialization is a redeclaration of one from another
-        // module. Merge it.
+        mergeRedeclarable(FD, ExistingInfo->Function, Redecl);
       }
     }
     break;
@@ -839,8 +839,8 @@ void ASTDeclReader::VisitFunctionDecl(FunctionDecl *FD) {
     
     FD->setDependentTemplateSpecialization(Reader.getContext(),
                                            TemplDecls, TemplArgs);
-
-    // FIXME: Merging.
+    // These are not merged; we don't need to merge redeclarations of dependent
+    // template friends.
     break;
   }
   }

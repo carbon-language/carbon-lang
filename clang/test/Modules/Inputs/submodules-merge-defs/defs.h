@@ -86,3 +86,11 @@ namespace SeparateInline {
 namespace TrailingAttributes {
   template<typename T> struct X {} __attribute__((aligned(8)));
 }
+
+namespace MergeFunctionTemplateSpecializations {
+  template<typename T> T f();
+  template<typename T> struct X {
+    template<typename U> using Q = decltype(f<T>() + U());
+  };
+  using xiq = X<int>::Q<int>;
+}

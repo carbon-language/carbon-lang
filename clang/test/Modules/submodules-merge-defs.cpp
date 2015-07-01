@@ -100,6 +100,8 @@ J<> post_j2;
 FriendDefArg::Y<int> friend_def_arg;
 FriendDefArg::D<> friend_def_arg_d;
 
+MergeFunctionTemplateSpecializations::X<int>::Q<char> xiqc;
+
 #ifdef TEXTUAL
 #include "use-defs.h"
 void use_static_inline() { StaticInline::g({}); }
