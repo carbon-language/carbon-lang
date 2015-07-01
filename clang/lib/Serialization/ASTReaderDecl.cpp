@@ -1045,12 +1045,10 @@ void ASTDeclReader::VisitObjCPropertyDecl(ObjCPropertyDecl *D) {
   QualType T = Reader.readType(F, Record, Idx);
   TypeSourceInfo *TSI = GetTypeSourceInfo(Record, Idx);
   D->setType(T, TSI);
-  // FIXME: stable encoding
   D->setPropertyAttributes(
                       (ObjCPropertyDecl::PropertyAttributeKind)Record[Idx++]);
   D->setPropertyAttributesAsWritten(
                       (ObjCPropertyDecl::PropertyAttributeKind)Record[Idx++]);
-  // FIXME: stable encoding
   D->setPropertyImplementation(
                             (ObjCPropertyDecl::PropertyControl)Record[Idx++]);
   D->setGetterName(Reader.ReadDeclarationName(F,Record, Idx).getObjCSelector());
@@ -1767,9 +1765,6 @@ DeclID ASTDeclReader::VisitTemplateDecl(TemplateDecl *D) {
   TemplateParameterList* TemplateParams
       = Reader.ReadTemplateParameterList(F, Record, Idx); 
   D->init(TemplatedDecl, TemplateParams);
-
-  // FIXME: If this is a redeclaration of a template from another module, handle
-  // inheritance of default template arguments.
 
   return PatternID;
 }
@@ -2622,7 +2617,6 @@ static bool isSameEntity(NamedDecl *X, NamedDecl *Y) {
     return NAX->getNamespace()->Equals(NAY->getNamespace());
   }
 
-  // FIXME: Many other cases to implement.
   return false;
 }
 
@@ -2771,9 +2765,6 @@ ASTDeclReader::FindExistingResult ASTDeclReader::findExisting(NamedDecl *D) {
     Result.suppress();
     return Result;
   }
-
-  // FIXME: Bail out for non-canonical declarations. We will have performed any
-  // necessary merging already.
 
   DeclContext *DC = D->getDeclContext()->getRedeclContext();
   if (TypedefNameForLinkage) {
