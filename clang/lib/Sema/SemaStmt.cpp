@@ -25,6 +25,7 @@
 #include "clang/AST/StmtObjC.h"
 #include "clang/AST/TypeLoc.h"
 #include "clang/AST/TypeOrdering.h"
+#include "clang/Basic/TargetInfo.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Sema/Initialization.h"
 #include "clang/Sema/Lookup.h"
@@ -3648,6 +3649,10 @@ StmtResult Sema::ActOnSEHTryBlock(bool IsCXXTry, SourceLocation TryLoc,
     FD->setUsesSEHTry(true);
   else
     Diag(TryLoc, diag::err_seh_try_outside_functions);
+
+  // Reject __try on unsupported targets.
+  if (!Context.getTargetInfo().isSEHTrySupported())
+    Diag(TryLoc, diag::err_seh_try_unsupported);
 
   return SEHTryStmt::Create(Context, IsCXXTry, TryLoc, TryBlock, Handler);
 }
