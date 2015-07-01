@@ -1,8 +1,25 @@
-; RUN: llc -march=amdgcn -mcpu=SI -o /dev/null %s
+; RUN: llc -march=amdgcn -mcpu=SI -o - %s | FileCheck %s
 ; Don't crash when the use of an undefined value is only detected by the
 ; register coalescer because it is hidden with subregister insert/extract.
 target triple="amdgcn--"
 
+; CHECK-LABEL: foobar:
+; CHECK: s_load_dword s2, s[0:1], 0x9
+; CHECK-NEXT: s_load_dwordx2 s[4:5], s[0:1], 0xb
+; CHECK-NEXT: s_waitcnt lgkmcnt(0)
+; CHECK-NEXT: v_mov_b32_e32 v0, s2
+; CHECK-NEXT: s_and_saveexec_b64 s[2:3], s[0:1]
+; CHECK-NEXT: s_xor_b64 s[2:3], exec, s[2:3]
+; BB0_1:
+; CHECK: s_load_dword s6, s[0:1], 0xa
+; CHECK-NEXT: s_waitcnt lgkmcnt(0)
+; CHECK-NEXT: v_mov_b32_e32 v0, s6
+; BB0_2:
+; CHECK: s_or_b64 exec, exec, s[2:3]
+; CHECK-NEXT: s_mov_b32 s7, 0xf000
+; CHECK-NEXT: s_mov_b32 s6, -1
+; CHECK-NEXT: buffer_store_dword v1, s[4:7], 0
+; CHECK-NEXT: s_endpgm
 define void @foobar(float %a0, float %a1, float addrspace(1)* %out) nounwind {
 entry:
   %v0 = insertelement <4 x float> undef, float %a0, i32 0
