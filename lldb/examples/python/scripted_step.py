@@ -108,7 +108,7 @@ class SimpleStep:
         return True
 
 class StepWithPlan:
-    def__init__ (self,thread_plan, dict):
+    def __init__ (self, thread_plan, dict):
         self.thread_plan = thread_plan
         self.start_address = thread_plan.GetThread().GetFrameAtIndex(0).GetPCAddress()
         self.step_thread_plan =thread_plan.QueueThreadPlanForStepOverRange(self.start_address, 20);
