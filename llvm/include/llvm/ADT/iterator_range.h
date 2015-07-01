@@ -53,4 +53,7 @@ template <typename T> iterator_range<T> make_range(std::pair<T, T> p) {
 }
 }
 
+template <typename R>
+bool empty(const R& r) { return begin(r) == end(r); }
+
 #endif

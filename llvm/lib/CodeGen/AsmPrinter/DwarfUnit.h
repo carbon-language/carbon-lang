@@ -298,7 +298,9 @@ public:
                                  bool Minimal = false);
 
   /// \brief Find existing DIE or create new DIE for the given type.
-  DIE *getOrCreateTypeDIE(const MDNode *N);
+  /// \param N Type Node
+  /// \param ContextDIE DIE scope for N Node, if available.
+  DIE *getOrCreateTypeDIE(const MDNode *N, DIE *ContextDIE = nullptr);
 
   /// \brief Get context owner's DIE.
   DIE *createTypeDIE(const DICompositeType *Ty);

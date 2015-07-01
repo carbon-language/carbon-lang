@@ -704,7 +704,7 @@ DIE *DwarfUnit::createTypeDIE(const DICompositeType *Ty) {
   return &TyDIE;
 }
 
-DIE *DwarfUnit::getOrCreateTypeDIE(const MDNode *TyNode) {
+DIE *DwarfUnit::getOrCreateTypeDIE(const MDNode *TyNode, DIE *ContextDIE) {
   if (!TyNode)
     return nullptr;
 
@@ -714,16 +714,19 @@ DIE *DwarfUnit::getOrCreateTypeDIE(const MDNode *TyNode) {
 
   // DW_TAG_restrict_type is not supported in DWARF2
   if (Ty->getTag() == dwarf::DW_TAG_restrict_type && DD->getDwarfVersion() <= 2)
-    return getOrCreateTypeDIE(resolve(cast<DIDerivedType>(Ty)->getBaseType()));
+    return getOrCreateTypeDIE(resolve(cast<DIDerivedType>(Ty)->getBaseType()),
+                              ContextDIE);
 
   // Construct the context before querying for the existence of the DIE in case
   // such construction creates the DIE.
   auto *Context = resolve(Ty->getScope());
-  DIE *ContextDIE = getOrCreateContextDIE(Context);
-  assert(ContextDIE);
+  if (ContextDIE == nullptr)
+    ContextDIE = getOrCreateContextDIE(Context);
 
   if (DIE *TyDIE = getDIE(Ty))
     return TyDIE;
+
+  assert(ContextDIE);
 
   // Create new type.
   DIE &TyDIE = createAndAddDIE(Ty->getTag(), *ContextDIE, Ty);
