@@ -365,6 +365,7 @@ namespace Test15 {
 
 // This is from Test5:
 // CHECK-LABEL: define internal void @_ZThn8_N6Test4B12_GLOBAL__N_11C1fEv(
+// CHECK-NOT: comdat
 // CHECK-LABEL: define linkonce_odr void @_ZTv0_n24_N5Test51B1fEv
 
 // This is from Test10:
