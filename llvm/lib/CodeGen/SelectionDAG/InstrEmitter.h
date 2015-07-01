@@ -26,7 +26,7 @@ class MachineInstrBuilder;
 class MCInstrDesc;
 class SDDbgValue;
 
-class InstrEmitter {
+class LLVM_LIBRARY_VISIBILITY InstrEmitter {
   MachineFunction *MF;
   MachineRegisterInfo *MRI;
   const TargetInstrInfo *TII;
