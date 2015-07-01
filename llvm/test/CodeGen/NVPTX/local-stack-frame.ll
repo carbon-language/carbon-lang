@@ -59,10 +59,16 @@ define void @foo3(i32 %a) {
 
 ; PTX32:        cvta.local.u32   %SP, %SPL;
 ; PTX32:        add.u32          {{%r[0-9]+}}, %SP, 0;
+; PTX32:        add.u32          {{%r[0-9]+}}, %SPL, 0;
+; PTX32:        add.u32          {{%r[0-9]+}}, %SP, 4;
+; PTX32:        add.u32          {{%r[0-9]+}}, %SPL, 4;
 ; PTX32:        st.local.u32     [{{%r[0-9]+}}], {{%r[0-9]+}}
 ; PTX32:        st.local.u32     [{{%r[0-9]+}}], {{%r[0-9]+}}
 ; PTX64:        cvta.local.u64   %SP, %SPL;
 ; PTX64:        add.u64          {{%rd[0-9]+}}, %SP, 0;
+; PTX64:        add.u64          {{%rd[0-9]+}}, %SPL, 0;
+; PTX64:        add.u64          {{%rd[0-9]+}}, %SP, 4;
+; PTX64:        add.u64          {{%rd[0-9]+}}, %SPL, 4;
 ; PTX64:        st.local.u32     [{{%rd[0-9]+}}], {{%r[0-9]+}}
 ; PTX64:        st.local.u32     [{{%rd[0-9]+}}], {{%r[0-9]+}}
 define void @foo4() {

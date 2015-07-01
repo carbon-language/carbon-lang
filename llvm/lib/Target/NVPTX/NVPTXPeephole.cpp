@@ -22,7 +22,7 @@
 // This peephole pass optimizes these cases, for example
 //
 // It will transform the following pattern
-//    %vreg0<def> = LEA_ADDRi64 <fi#0>, 4
+//    %vreg0<def> = LEA_ADDRi64 %VRFrame, 4
 //    %vreg1<def> = cvta_to_local_yes_64 %vreg0
 //
 // into
@@ -36,7 +36,6 @@
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
-#include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
 
@@ -96,7 +95,7 @@ static bool isCVTAToLocalCombinationCandidate(MachineInstr &Root) {
 
   // Check the LEA_ADDRi operand is Frame index
   auto &BaseAddrOp = GenericAddrDef->getOperand(1);
-  if (BaseAddrOp.getType() == MachineOperand::MO_FrameIndex) {
+  if (BaseAddrOp.isReg() && BaseAddrOp.getReg() == NVPTX::VRFrame) {
     return true;
   }
 
@@ -110,16 +109,11 @@ static void CombineCVTAToLocal(MachineInstr &Root) {
   const TargetInstrInfo *TII = MF.getSubtarget().getInstrInfo();
   auto &Prev = *MRI.getUniqueVRegDef(Root.getOperand(1).getReg());
 
-  // Get the correct offset
-  int FrameIndex = Prev.getOperand(1).getIndex();
-  int Offset = MF.getFrameInfo()->getObjectOffset(FrameIndex) +
-               Prev.getOperand(2).getImm();
-
   MachineInstrBuilder MIB =
       BuildMI(MF, Root.getDebugLoc(), TII->get(Prev.getOpcode()),
               Root.getOperand(0).getReg())
           .addReg(NVPTX::VRFrameLocal)
-          .addOperand(MachineOperand::CreateImm(Offset));
+          .addOperand(Prev.getOperand(2));
 
   MBB.insert((MachineBasicBlock::iterator)&Root, MIB);
 
@@ -145,6 +139,15 @@ bool NVPTXPeephole::runOnMachineFunction(MachineFunction &MF) {
       }
     }  // Instruction
   }    // Basic Block
+
+  // Remove unnecessary %VRFrame = cvta.local %VRFrameLocal
+  const auto &MRI = MF.getRegInfo();
+  if (MRI.use_empty(NVPTX::VRFrame)) {
+    if (auto MI = MRI.getUniqueVRegDef(NVPTX::VRFrame)) {
+      MI->eraseFromParentAndMarkDBGValuesForRemoval();
+    }
+  }
+
   return Changed;
 }
 
