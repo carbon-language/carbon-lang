@@ -19,7 +19,7 @@
 #include "llvm/Support/TargetRegistry.h"
 using namespace llvm;
 
-#define DEBUG_TYPE "subtarget"
+#define DEBUG_TYPE "wasm-subtarget"
 
 #define GET_SUBTARGETINFO_CTOR
 #define GET_SUBTARGETINFO_TARGET_DESC
@@ -40,8 +40,8 @@ WebAssemblySubtarget::WebAssemblySubtarget(const Triple &TT,
                                            const std::string &CPU,
                                            const std::string &FS,
                                            const TargetMachine &TM)
-    : WebAssemblyGenSubtargetInfo(TT, CPU, FS), HasSIMD(true), CPUString(CPU),
-      TargetTriple(TT), FrameLowering(),
+    : WebAssemblyGenSubtargetInfo(TT, CPU, FS), HasSIMD128(false),
+      CPUString(CPU), TargetTriple(TT), FrameLowering(),
       InstrInfo(initializeSubtargetDependencies(FS)),
       TSInfo(TM.getDataLayout()), TLInfo(TM, *this) {}
 

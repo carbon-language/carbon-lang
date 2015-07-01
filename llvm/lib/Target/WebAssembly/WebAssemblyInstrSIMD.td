@@ -12,4 +12,4 @@
 //===----------------------------------------------------------------------===//
 
 // TODO: Implement SIMD instructions.
-// Note: use Requires<[HasSIMD]>.
+// Note: use Requires<[HasSIMD128]>.

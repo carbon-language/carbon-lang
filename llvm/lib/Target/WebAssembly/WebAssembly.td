@@ -22,8 +22,8 @@ include "llvm/Target/Target.td"
 // WebAssembly Subtarget features.
 //===----------------------------------------------------------------------===//
 
-def FeatureSIMD : SubtargetFeature<"simd", "HasSIMD", "true",
-                                   "Enable SIMD">;
+def FeatureSIMD128 : SubtargetFeature<"simd128", "HasSIMD128", "false",
+                                      "Enable 128-bit SIMD">;
 
 //===----------------------------------------------------------------------===//
 // Architectures.
@@ -47,7 +47,11 @@ def WebAssemblyInstrInfo : InstrInfo;
 // WebAssembly Processors supported.
 //===----------------------------------------------------------------------===//
 
-def : ProcessorModel<"generic", NoSchedModel, [FeatureSIMD]>;
+// Minimal Viable Product.
+def : ProcessorModel<"mvp", NoSchedModel, []>;
+
+// Latest and greatest experimental version of WebAssembly. Bugs included!
+def : ProcessorModel<"bleeding-edge", NoSchedModel, [FeatureSIMD128]>;
 
 //===----------------------------------------------------------------------===//
 // Target Declaration

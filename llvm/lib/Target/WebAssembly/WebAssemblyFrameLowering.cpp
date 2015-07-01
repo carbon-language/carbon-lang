@@ -32,7 +32,7 @@
 #include "llvm/Support/Debug.h"
 using namespace llvm;
 
-#define DEBUG_TYPE "frame-info"
+#define DEBUG_TYPE "wasm-frame-info"
 
 // TODO: Implement a red zone?
 

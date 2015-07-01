@@ -24,6 +24,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Target/TargetOptions.h"
+#include "llvm/Transforms/Scalar.h"
 using namespace llvm;
 
 #define DEBUG_TYPE "wasm"
@@ -139,9 +140,14 @@ void WebAssemblyPassConfig::addOptimizedRegAlloc(FunctionPass *RegAllocPass) {
 //===----------------------------------------------------------------------===//
 
 void WebAssemblyPassConfig::addIRPasses() {
-  // Expand some atomic operations. WebAssemblyTargetLowering has hooks which
-  // control specifically what gets lowered.
-  addPass(createAtomicExpandPass(&getTM<WebAssemblyTargetMachine>()));
+  // FIXME: the default for this option is currently POSIX, whereas
+  // WebAssembly's MVP should default to Single.
+  if (TM->Options.ThreadModel == ThreadModel::Single)
+    addPass(createLowerAtomicPass());
+  else
+    // Expand some atomic operations. WebAssemblyTargetLowering has hooks which
+    // control specifically what gets lowered.
+    addPass(createAtomicExpandPass(TM));
 
   TargetPassConfig::addIRPasses();
 }
