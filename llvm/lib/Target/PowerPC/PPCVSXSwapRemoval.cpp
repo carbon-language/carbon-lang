@@ -349,7 +349,6 @@ bool PPCVSXSwapRemoval::gatherVectorInstructions() {
       case PPC::LVSL:
       case PPC::LVSR:
       case PPC::LVXL:
-      case PPC::LXVDSX:
       case PPC::STVEBX:
       case PPC::STVEHX:
       case PPC::STVEWX:
