@@ -723,10 +723,15 @@ def expectedFlakey(expected_fn, bugnumber=None):
             self = args[0]
             try:
                 func(*args, **kwargs)
+            # don't retry if the test case is already decorated with xfail or skip
+            except (case._ExpectedFailure, case.SkipTest, case._UnexpectedSuccess):
+                raise
             except Exception:
                 if expected_fn(self):
-                    # retry
+                    # before retry, run tearDown for previous run and setup for next
                     try:
+                        self.tearDown()
+                        self.setUp()
                         func(*args, **kwargs)
                     except Exception:
                         # oh snap! two failures in a row, record a failure/error
