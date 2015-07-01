@@ -49,7 +49,7 @@ int SymbolBody::compare(SymbolBody *Other) {
   if (LK != RK) {
 
     if (RK > LastDefinedKind) {
-      if (LK == LazyKind && cast<Undefined>(Other)->getWeakAlias())
+      if (LK == LazyKind && cast<Undefined>(Other)->WeakAlias)
         return -1;
 
       // The LHS is either defined or lazy and so it wins.
@@ -121,7 +121,7 @@ int SymbolBody::compare(SymbolBody *Other) {
 
   case UndefinedKind:
     // Don't tie, just pick the LHS unless the RHS has a weak alias.
-    return cast<Undefined>(Other)->getWeakAlias() ? -1 : 1;
+    return cast<Undefined>(Other)->WeakAlias ? -1 : 1;
 
   case DefinedLocalImportKind:
   case DefinedImportThunkKind:

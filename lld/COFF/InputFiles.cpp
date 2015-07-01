@@ -195,8 +195,10 @@ Undefined *ObjectFile::createUndefined(COFFSymbolRef Sym) {
 Undefined *ObjectFile::createWeakExternal(COFFSymbolRef Sym, const void *AuxP) {
   StringRef Name;
   COFFObj->getSymbolName(Sym, Name);
+  auto *U = new (Alloc) Undefined(Name);
   auto *Aux = (const coff_aux_weak_external *)AuxP;
-  return new (Alloc) Undefined(Name, &SparseSymbolBodies[Aux->TagIndex]);
+  U->WeakAlias = SparseSymbolBodies[Aux->TagIndex];
+  return U;
 }
 
 Defined *ObjectFile::createDefined(COFFSymbolRef Sym, const void *AuxP,

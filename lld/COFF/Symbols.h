@@ -239,8 +239,7 @@ private:
 // Undefined symbols.
 class Undefined : public SymbolBody {
 public:
-  explicit Undefined(StringRef N, SymbolBody **S = nullptr)
-      : SymbolBody(UndefinedKind, N), Alias(S) {}
+  explicit Undefined(StringRef N) : SymbolBody(UndefinedKind, N) {}
 
   static bool classof(const SymbolBody *S) {
     return S->kind() == UndefinedKind;
@@ -250,10 +249,7 @@ public:
   // undefined symbol a second chance if it would remain undefined.
   // If it remains undefined, it'll be replaced with whatever the
   // Alias pointer points to.
-  SymbolBody *getWeakAlias() { return Alias ? *Alias : nullptr; }
-
-private:
-  SymbolBody **Alias;
+  SymbolBody *WeakAlias = nullptr;
 };
 
 // Windows-specific classes.

@@ -123,11 +123,9 @@ bool SymbolTable::reportRemainingUndefines() {
       continue;
     StringRef Name = Undef->getName();
     // The weak alias may have been resovled, so check for that.
-    if (SymbolBody *Alias = Undef->getWeakAlias()) {
-      if (auto *D = dyn_cast<Defined>(Alias->getReplacement())) {
-        Sym->Body = D;
-        continue;
-      }
+    if (auto *D = dyn_cast_or_null<Defined>(Undef->WeakAlias)) {
+      Sym->Body = D;
+      continue;
     }
     // If we can resolve a symbol by removing __imp_ prefix, do that.
     // This odd rule is for compatibility with MSVC linker.
@@ -181,8 +179,11 @@ std::error_code SymbolTable::addSymbol(SymbolBody *New) {
   // let the lazy symbol to read a member file.
   SymbolBody *Existing = Sym->Body;
   if (auto *L = dyn_cast<Lazy>(Existing)) {
+    // Undefined symbols with weak aliases need not to be resolved,
+    // since they would be replaced with weak aliases if they remain
+    // undefined.
     if (auto *U = dyn_cast<Undefined>(New))
-      if (!U->getWeakAlias())
+      if (!U->WeakAlias)
         return addMemberFile(L);
     Sym->Body = New;
     return std::error_code();
