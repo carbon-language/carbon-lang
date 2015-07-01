@@ -377,7 +377,10 @@ PrinterContext<ET>::FindExceptionTable(unsigned IndexSectionIndex,
           std::pair<const Elf_Shdr *, const Elf_Sym *> Symbol =
               ELF->getRelocationSymbol(&Sec, &RelA);
 
-          return ELF->getSection(Symbol.second);
+          ErrorOr<const Elf_Shdr *> Ret = ELF->getSection(Symbol.second);
+          if (std::error_code EC = Ret.getError())
+            report_fatal_error(EC.message());
+          return *Ret;
         }
       }
     }

@@ -43,6 +43,8 @@ std::string _object_error_category::message(int EV) const {
     return "The end of the file was unexpectedly encountered";
   case object_error::string_table_non_null_end:
     return "String table must end with a null terminator";
+  case object_error::invalid_section_index:
+    return "Invalid section index";
   case object_error::bitcode_section_not_found:
     return "Bitcode section not found in object file";
   case object_error::macho_small_load_command:

@@ -319,12 +319,20 @@ static std::error_code getRelocationValueString(const ELFObjectFile<ELFT> *Obj,
   typedef typename ELFObjectFile<ELFT>::Elf_Shdr Elf_Shdr;
   const ELFFile<ELFT> &EF = *Obj->getELFFile();
 
-  const Elf_Shdr *sec = EF.getSection(Rel.d.a);
-  const Elf_Shdr *SymTab = EF.getSection(sec->sh_link);
+  ErrorOr<const Elf_Shdr *> SecOrErr = EF.getSection(Rel.d.a);
+  if (std::error_code EC = SecOrErr.getError())
+    return EC;
+  const Elf_Shdr *Sec = *SecOrErr;
+  ErrorOr<const Elf_Shdr *> SymTabOrErr = EF.getSection(Sec->sh_link);
+  if (std::error_code EC = SymTabOrErr.getError())
+    return EC;
+  const Elf_Shdr *SymTab = *SymTabOrErr;
   assert(SymTab->sh_type == ELF::SHT_SYMTAB ||
          SymTab->sh_type == ELF::SHT_DYNSYM);
-  const Elf_Shdr *StrTabSec = EF.getSection(SymTab->sh_link);
-  ErrorOr<StringRef> StrTabOrErr = EF.getStringTable(StrTabSec);
+  ErrorOr<const Elf_Shdr *> StrTabSec = EF.getSection(SymTab->sh_link);
+  if (std::error_code EC = StrTabSec.getError())
+    return EC;
+  ErrorOr<StringRef> StrTabOrErr = EF.getStringTable(*StrTabSec);
   if (std::error_code EC = StrTabOrErr.getError())
     return EC;
   StringRef StrTab = *StrTabOrErr;
@@ -332,7 +340,7 @@ static std::error_code getRelocationValueString(const ELFObjectFile<ELFT> *Obj,
   StringRef res;
   int64_t addend = 0;
   uint16_t symbol_index = 0;
-  switch (sec->sh_type) {
+  switch (Sec->sh_type) {
   default:
     return object_error::parse_failed;
   case ELF::SHT_REL: {
@@ -349,11 +357,13 @@ static std::error_code getRelocationValueString(const ELFObjectFile<ELFT> *Obj,
   }
   }
   const Elf_Sym *symb =
-      EF.template getEntry<Elf_Sym>(sec->sh_link, symbol_index);
+      EF.template getEntry<Elf_Sym>(Sec->sh_link, symbol_index);
   StringRef Target;
-  const Elf_Shdr *SymSec = EF.getSection(symb);
+  ErrorOr<const Elf_Shdr *> SymSec = EF.getSection(symb);
+  if (std::error_code EC = SymSec.getError())
+    return EC;
   if (symb->getType() == ELF::STT_SECTION) {
-    ErrorOr<StringRef> SecName = EF.getSectionName(SymSec);
+    ErrorOr<StringRef> SecName = EF.getSectionName(*SymSec);
     if (std::error_code EC = SecName.getError())
       return EC;
     Target = *SecName;

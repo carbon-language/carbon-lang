@@ -241,7 +241,10 @@ protected:
 
   /// \brief Get the relocation section that contains \a Rel.
   const Elf_Shdr *getRelSection(DataRefImpl Rel) const {
-    return EF.getSection(Rel.d.a);
+    ErrorOr<const Elf_Shdr *> Sec = EF.getSection(Rel.d.a);
+    if (std::error_code EC = Sec.getError())
+      report_fatal_error(EC.message());
+    return *Sec;
   }
 
   const Elf_Rel *getRel(DataRefImpl Rel) const;
@@ -406,8 +409,11 @@ std::error_code ELFObjectFile<ELFT>::getSymbolAddress(DataRefImpl Symb,
   const Elf_Ehdr *Header = EF.getHeader();
 
   if (Header->e_type == ELF::ET_REL) {
-    const typename ELFFile<ELFT>::Elf_Shdr * Section = EF.getSection(ESym);
-    if (Section != nullptr)
+    ErrorOr<const Elf_Shdr *> SectionOrErr = EF.getSection(ESym);
+    if (std::error_code EC = SectionOrErr.getError())
+      return EC;
+    const Elf_Shdr *Section = *SectionOrErr;
+    if (Section)
       Result += Section->sh_addr;
   }
 
@@ -511,14 +517,17 @@ uint32_t ELFObjectFile<ELFT>::getSymbolFlags(DataRefImpl Sym) const {
 template <class ELFT>
 section_iterator
 ELFObjectFile<ELFT>::getSymbolSection(const Elf_Sym *ESym) const {
-  const Elf_Shdr *ESec = EF.getSection(ESym);
+  ErrorOr<const Elf_Shdr *> ESecOrErr = EF.getSection(ESym);
+  if (std::error_code EC = ESecOrErr.getError())
+    report_fatal_error(EC.message());
+
+  const Elf_Shdr *ESec = *ESecOrErr;
   if (!ESec)
     return section_end();
-  else {
-    DataRefImpl Sec;
-    Sec.p = reinterpret_cast<intptr_t>(ESec);
-    return section_iterator(SectionRef(Sec, this));
-  }
+
+  DataRefImpl Sec;
+  Sec.p = reinterpret_cast<intptr_t>(ESec);
+  return section_iterator(SectionRef(Sec, this));
 }
 
 template <class ELFT>
@@ -629,8 +638,10 @@ ELFObjectFile<ELFT>::getRelocatedSection(DataRefImpl Sec) const {
   if (Type != ELF::SHT_REL && Type != ELF::SHT_RELA)
     return section_end();
 
-  const Elf_Shdr *R = EF.getSection(EShdr->sh_info);
-  return section_iterator(SectionRef(toDRI(R), this));
+  ErrorOr<const Elf_Shdr *> R = EF.getSection(EShdr->sh_info);
+  if (std::error_code EC = R.getError())
+    report_fatal_error(EC.message());
+  return section_iterator(SectionRef(toDRI(*R), this));
 }
 
 // Relocations
@@ -651,7 +662,10 @@ ELFObjectFile<ELFT>::getRelocationSymbol(DataRefImpl Rel) const {
   if (!symbolIdx)
     return symbol_end();
 
-  const Elf_Shdr *SymSec = EF.getSection(sec->sh_link);
+  ErrorOr<const Elf_Shdr *> SymSecOrErr = EF.getSection(sec->sh_link);
+  if (std::error_code EC = SymSecOrErr.getError())
+    report_fatal_error(EC.message());
+  const Elf_Shdr *SymSec = *SymSecOrErr;
 
   DataRefImpl SymbolData;
   switch (SymSec->sh_type) {
@@ -676,8 +690,11 @@ ELFObjectFile<ELFT>::getRelocationAddress(DataRefImpl Rel) const {
 
   if (Header->e_type == ELF::ET_REL) {
     const Elf_Shdr *RelocationSec = getRelSection(Rel);
-    const Elf_Shdr *RelocatedSec = EF.getSection(RelocationSec->sh_info);
-    return ROffset + RelocatedSec->sh_addr;
+    ErrorOr<const Elf_Shdr *> RelocatedSec =
+        EF.getSection(RelocationSec->sh_info);
+    if (std::error_code EC = RelocatedSec.getError())
+      return EC;
+    return ROffset + (*RelocatedSec)->sh_addr;
   }
   return ROffset;
 }

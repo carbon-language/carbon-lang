@@ -157,7 +157,10 @@ std::error_code ELFDumper<ELFT>::dumpSymbol(const Elf_Sym *Sym, bool IsDynamic,
     return EC;
   S.Name = NameOrErr.get();
 
-  const Elf_Shdr *Shdr = Obj.getSection(&*Sym);
+  ErrorOr<const Elf_Shdr *> ShdrOrErr = Obj.getSection(&*Sym);
+  if (std::error_code EC = ShdrOrErr.getError())
+    return EC;
+  const Elf_Shdr *Shdr = *ShdrOrErr;
   if (!Shdr)
     return obj2yaml_error::success;
 
@@ -183,8 +186,10 @@ std::error_code ELFDumper<ELFT>::dumpRelocation(const Elf_Shdr *Shdr,
     return obj2yaml_error::success;
 
   const Elf_Shdr *SymTab = NamePair.first;
-  const Elf_Shdr *StrTabSec = Obj.getSection(SymTab->sh_link);
-  ErrorOr<StringRef> StrTabOrErr = Obj.getStringTable(StrTabSec);
+  ErrorOr<const Elf_Shdr *> StrTabSec = Obj.getSection(SymTab->sh_link);
+  if (std::error_code EC = StrTabSec.getError())
+    return EC;
+  ErrorOr<StringRef> StrTabOrErr = Obj.getStringTable(*StrTabSec);
   if (std::error_code EC = StrTabOrErr.getError())
     return EC;
   StringRef StrTab = *StrTabOrErr;
@@ -211,12 +216,13 @@ std::error_code ELFDumper<ELFT>::dumpCommonSection(const Elf_Shdr *Shdr,
   S.Name = NameOrErr.get();
 
   if (Shdr->sh_link != ELF::SHN_UNDEF) {
-    if (const Elf_Shdr *LinkSection = Obj.getSection(Shdr->sh_link)) {
-      NameOrErr = Obj.getSectionName(LinkSection);
-      if (std::error_code EC = NameOrErr.getError())
-        return EC;
-      S.Link = NameOrErr.get();
-    }
+    ErrorOr<const Elf_Shdr *> LinkSection = Obj.getSection(Shdr->sh_link);
+    if (std::error_code EC = LinkSection.getError())
+      return EC;
+    NameOrErr = Obj.getSectionName(*LinkSection);
+    if (std::error_code EC = NameOrErr.getError())
+      return EC;
+    S.Link = NameOrErr.get();
   }
 
   return obj2yaml_error::success;
@@ -229,12 +235,14 @@ ELFDumper<ELFT>::dumpCommonRelocationSection(const Elf_Shdr *Shdr,
   if (std::error_code EC = dumpCommonSection(Shdr, S))
     return EC;
 
-  if (const Elf_Shdr *InfoSection = Obj.getSection(Shdr->sh_info)) {
-    ErrorOr<StringRef> NameOrErr = Obj.getSectionName(InfoSection);
-    if (std::error_code EC = NameOrErr.getError())
-      return EC;
-    S.Info = NameOrErr.get();
-  }
+  ErrorOr<const Elf_Shdr *> InfoSection = Obj.getSection(Shdr->sh_info);
+  if (std::error_code EC = InfoSection.getError())
+    return EC;
+
+  ErrorOr<StringRef> NameOrErr = Obj.getSectionName(*InfoSection);
+  if (std::error_code EC = NameOrErr.getError())
+    return EC;
+  S.Info = NameOrErr.get();
 
   return obj2yaml_error::success;
 }
@@ -304,9 +312,13 @@ ErrorOr<ELFYAML::Group *> ELFDumper<ELFT>::dumpGroup(const Elf_Shdr *Shdr) {
     return EC;
   // Get sh_info which is the signature.
   const Elf_Sym *symbol = Obj.getSymbol(Shdr->sh_info);
-  const Elf_Shdr *symtab = Obj.getSection(Shdr->sh_link);
-  const Elf_Shdr *StrTabSec = Obj.getSection(symtab->sh_link);
-  ErrorOr<StringRef> StrTabOrErr = Obj.getStringTable(StrTabSec);
+  ErrorOr<const Elf_Shdr *> Symtab = Obj.getSection(Shdr->sh_link);
+  if (std::error_code EC = Symtab.getError())
+    return EC;
+  ErrorOr<const Elf_Shdr *> StrTabSec = Obj.getSection((*Symtab)->sh_link);
+  if (std::error_code EC = StrTabSec.getError())
+    return EC;
+  ErrorOr<StringRef> StrTabOrErr = Obj.getStringTable(*StrTabSec);
   if (std::error_code EC = StrTabOrErr.getError())
     return EC;
   StringRef StrTab = *StrTabOrErr;
@@ -325,8 +337,10 @@ ErrorOr<ELFYAML::Group *> ELFDumper<ELFT>::dumpGroup(const Elf_Shdr *Shdr) {
     if (groupMembers[i] == llvm::ELF::GRP_COMDAT) {
       s.sectionNameOrType = "GRP_COMDAT";
     } else {
-      const Elf_Shdr *sHdr = Obj.getSection(groupMembers[i]);
-      ErrorOr<StringRef> sectionName = Obj.getSectionName(sHdr);
+      ErrorOr<const Elf_Shdr *> sHdr = Obj.getSection(groupMembers[i]);
+      if (std::error_code EC = sHdr.getError())
+        return EC;
+      ErrorOr<StringRef> sectionName = Obj.getSectionName(*sHdr);
       if (std::error_code ec = sectionName.getError())
         return ec;
       s.sectionNameOrType = *sectionName;

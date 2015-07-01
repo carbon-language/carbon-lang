@@ -162,8 +162,9 @@ getSectionNameIndex(const ELFO &Obj, const typename ELFO::Elf_Sym *Symbol,
   else {
     if (SectionIndex == SHN_XINDEX)
       SectionIndex = Obj.getExtendedSymbolTableIndex(&*Symbol);
-    const typename ELFO::Elf_Shdr *Sec = Obj.getSection(SectionIndex);
-    SectionName = errorOrDefault(Obj.getSectionName(Sec));
+    ErrorOr<const typename ELFO::Elf_Shdr *> Sec = Obj.getSection(SectionIndex);
+    if (!error(Sec.getError()))
+      SectionName = errorOrDefault(Obj.getSectionName(*Sec));
   }
 }
 
@@ -644,7 +645,10 @@ void ELFDumper<ELFT>::printSections() {
     if (opts::SectionSymbols) {
       ListScope D(W, "Symbols");
       for (const typename ELFO::Elf_Sym &Sym : Obj->symbols()) {
-        if (Obj->getSection(&Sym) == &Sec)
+        ErrorOr<const Elf_Shdr *> SymSec = Obj->getSection(&Sym);
+        if (!SymSec)
+          continue;
+        if (*SymSec == &Sec)
           printSymbol(&Sym, false);
       }
     }
@@ -746,16 +750,20 @@ void ELFDumper<ELFT>::printRelocation(const Elf_Shdr *Sec,
   std::pair<const Elf_Shdr *, const Elf_Sym *> Sym =
       Obj->getRelocationSymbol(Sec, &Rel);
   if (Sym.second && Sym.second->getType() == ELF::STT_SECTION) {
-    const Elf_Shdr *Sec = Obj->getSection(Sym.second);
-    ErrorOr<StringRef> SecName = Obj->getSectionName(Sec);
-    if (SecName)
-      TargetName = SecName.get();
+    ErrorOr<const Elf_Shdr *> Sec = Obj->getSection(Sym.second);
+    if (!error(Sec.getError())) {
+      ErrorOr<StringRef> SecName = Obj->getSectionName(*Sec);
+      if (SecName)
+        TargetName = SecName.get();
+    }
   } else if (Sym.first) {
     const Elf_Shdr *SymTable = Sym.first;
-    const Elf_Shdr *StrTableSec = Obj->getSection(SymTable->sh_link);
-    ErrorOr<StringRef> StrTableOrErr = Obj->getStringTable(StrTableSec);
-    if (!error(StrTableOrErr.getError()))
-      TargetName = errorOrDefault(Sym.second->getName(*StrTableOrErr));
+    ErrorOr<const Elf_Shdr *> StrTableSec = Obj->getSection(SymTable->sh_link);
+    if (!error(StrTableSec.getError())) {
+      ErrorOr<StringRef> StrTableOrErr = Obj->getStringTable(*StrTableSec);
+      if (!error(StrTableOrErr.getError()))
+        TargetName = errorOrDefault(Sym.second->getName(*StrTableOrErr));
+    }
   }
 
   if (opts::ExpandRelocs) {
