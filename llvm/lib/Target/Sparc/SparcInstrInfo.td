@@ -353,13 +353,6 @@ let hasSideEffects = 1, mayStore = 1 in {
                    [(flushw)]>;
 }
 
-let isBarrier = 1, isTerminator = 1, rd = 0b01000, rs1 = 0, simm13 = 5 in
-  def TA5 : F3_2<0b10, 0b111010, (outs), (ins), "ta 5", [(trap)]>;
-
-let rd = 0 in
-  def UNIMP : F2_1<0b000, (outs), (ins i32imm:$imm22),
-                  "unimp $imm22", []>;
-
 // SELECT_CC_* - Used to implement the SELECT_CC DAG operation.  Expanded after
 // instruction selection into a branch sequence.  This has to handle all
 // permutations of selection between i32/f32/f64 on ICC and FCC.
@@ -406,36 +399,6 @@ let usesCustomInserter = 1, Uses = [FCC0] in {
             [(set f128:$dst, (SPselectfcc f128:$T, f128:$F, imm:$Cond))]>;
 }
 
-// JMPL Instruction.
-let isTerminator = 1, hasDelaySlot = 1, isBarrier = 1,
-    DecoderMethod = "DecodeJMPL" in {
-  def JMPLrr: F3_1<2, 0b111000, (outs IntRegs:$dst), (ins MEMrr:$addr),
-                  "jmpl $addr, $dst", []>;
-  def JMPLri: F3_2<2, 0b111000, (outs IntRegs:$dst), (ins MEMri:$addr),
-                  "jmpl $addr, $dst", []>;
-}
-
-// Section A.3 - Synthetic Instructions, p. 85
-// special cases of JMPL:
-let isReturn = 1, isTerminator = 1, hasDelaySlot = 1, isBarrier = 1,
-    isCodeGenOnly = 1 in {
-  let rd = 0, rs1 = 15 in
-    def RETL: F3_2<2, 0b111000, (outs), (ins i32imm:$val),
-                   "jmp %o7+$val", [(retflag simm13:$val)]>;
-
-  let rd = 0, rs1 = 31 in
-    def RET: F3_2<2, 0b111000, (outs), (ins i32imm:$val),
-                  "jmp %i7+$val", []>;
-}
-
-let isReturn = 1, isTerminator = 1, hasDelaySlot = 1,
-     isBarrier = 1, rd = 0, DecoderMethod = "DecodeReturn" in {
-  def RETTrr : F3_1<2, 0b111001, (outs), (ins MEMrr:$addr),
-                       "rett $addr", []>;
-  def RETTri : F3_2<2, 0b111001, (outs), (ins MEMri:$addr),
-                       "rett $addr", []>;
-}
-
 // Section B.1 - Load Integer Instructions, p. 90
 let DecoderMethod = "DecodeLoadInt" in {
   defm LDSB : LoadA<"ldsb", 0b001001, 0b011001, sextloadi8,  IntRegs, i32>;
@@ -469,6 +432,24 @@ let DecoderMethod = "DecodeStoreDFP" in
 let DecoderMethod = "DecodeStoreQFP" in
   defm STQF  : Store<"stq", 0b100110, store,         QFPRegs, f128>,
                Requires<[HasV9, HasHardQuad]>;
+
+// Section B.8 - SWAP Register with Memory Instruction
+// (Atomic swap)
+let Constraints = "$val = $dst", DecoderMethod = "DecodeSWAP" in {
+  def SWAPrr : F3_1<3, 0b001111,
+                 (outs IntRegs:$dst), (ins MEMrr:$addr, IntRegs:$val),
+                 "swap [$addr], $dst",
+                 [(set i32:$dst, (atomic_swap_32 ADDRrr:$addr, i32:$val))]>;
+  def SWAPri : F3_2<3, 0b001111,
+                 (outs IntRegs:$dst), (ins MEMri:$addr, IntRegs:$val),
+                 "swap [$addr], $dst",
+                 [(set i32:$dst, (atomic_swap_32 ADDRri:$addr, i32:$val))]>;
+  def SWAPArr : F3_1_asi<3, 0b011111,
+                 (outs IntRegs:$dst), (ins MEMrr:$addr, i8imm:$asi, IntRegs:$val),
+                 "swapa [$addr] $asi, $dst",
+                 [/*FIXME: pattern?*/]>;
+}
+
 
 // Section B.9 - SETHI Instruction, p. 104
 def SETHIi: F2_1<0b100,
@@ -725,6 +706,56 @@ let Uses = [O6],
   }
 }
 
+// Section B.25 - Jump and Link Instruction
+
+// JMPL Instruction.
+let isTerminator = 1, hasDelaySlot = 1, isBarrier = 1,
+    DecoderMethod = "DecodeJMPL" in {
+  def JMPLrr: F3_1<2, 0b111000, (outs IntRegs:$dst), (ins MEMrr:$addr),
+                  "jmpl $addr, $dst", []>;
+  def JMPLri: F3_2<2, 0b111000, (outs IntRegs:$dst), (ins MEMri:$addr),
+                  "jmpl $addr, $dst", []>;
+}
+
+// Section A.3 - Synthetic Instructions, p. 85
+// special cases of JMPL:
+let isReturn = 1, isTerminator = 1, hasDelaySlot = 1, isBarrier = 1,
+    isCodeGenOnly = 1 in {
+  let rd = 0, rs1 = 15 in
+    def RETL: F3_2<2, 0b111000, (outs), (ins i32imm:$val),
+                   "jmp %o7+$val", [(retflag simm13:$val)]>;
+
+  let rd = 0, rs1 = 31 in
+    def RET: F3_2<2, 0b111000, (outs), (ins i32imm:$val),
+                  "jmp %i7+$val", []>;
+}
+
+// Section B.26 - Return from Trap Instruction
+let isReturn = 1, isTerminator = 1, hasDelaySlot = 1,
+     isBarrier = 1, rd = 0, DecoderMethod = "DecodeReturn" in {
+  def RETTrr : F3_1<2, 0b111001, (outs), (ins MEMrr:$addr),
+                       "rett $addr", []>;
+  def RETTri : F3_2<2, 0b111001, (outs), (ins MEMri:$addr),
+                       "rett $addr", []>;
+}
+
+
+// Section B.27 - Trap on Integer Condition Codes Instruction
+multiclass TRAP<string regStr> {
+  def rr : TRAPSPrr<0b111010, (outs), (ins IntRegs:$rs1, IntRegs:$rs2,
+                                       CCOp:$cond),
+              !strconcat(!strconcat("t$cond ", regStr), ", $rs1 + $rs2"), []>;
+  def ri : TRAPSPri<0b111010, (outs), (ins IntRegs:$rs1, i32imm:$imm,
+                                      CCOp:$cond),
+              !strconcat(!strconcat("t$cond ", regStr), ", $rs1 + $imm"), []>;
+}
+
+let hasSideEffects = 1, Uses = [ICC], cc = 0b00 in
+  defm TICC : TRAP<"%icc">;
+
+let isBarrier = 1, isTerminator = 1, rd = 0b01000, rs1 = 0, simm13 = 5 in
+  def TA5 : F3_2<0b10, 0b111010, (outs), (ins), "ta 5", [(trap)]>;
+
 // Section B.28 - Read State Register Instructions
 let rs2 = 0 in
   def RDASR : F3_1<2, 0b101000,
@@ -786,6 +817,18 @@ let Predicates = [HasNoV9] in {
 		     "wr $rs1, $simm13, %tbr", []>;
   }
 }
+
+// Section B.30 - STBAR Instruction
+let hasSideEffects = 1, rd = 0, rs1 = 0b01111, rs2 = 0 in
+  def STBAR : F3_1<2, 0b101000, (outs), (ins), "stbar", []>;
+
+
+// Section B.31 - Unimplmented Instruction
+let rd = 0 in
+  def UNIMP : F2_1<0b000, (outs), (ins i32imm:$imm22),
+                  "unimp $imm22", []>;
+
+// Section B.33 - Floating-point Operate (FPop) Instructions
 
 // Convert Integer to Floating-point Instructions, p. 141
 def FITOS : F3_3u<2, 0b110100, 0b011000100,
@@ -1168,28 +1211,9 @@ let rs1 = 0 in
 def : Pat<(ctpop i32:$src),
           (POPCrr (SRLri $src, 0))>;
 
-// Atomic swap.
-let hasSideEffects =1, rd = 0, rs1 = 0b01111, rs2 = 0 in
-  def STBAR : F3_1<2, 0b101000, (outs), (ins), "stbar", []>;
-
 let Predicates = [HasV9], hasSideEffects = 1, rd = 0, rs1 = 0b01111 in
  def MEMBARi : F3_2<2, 0b101000, (outs), (ins simm13Op:$simm13),
                     "membar $simm13", []>;
-
-let Constraints = "$val = $dst", DecoderMethod = "DecodeSWAP" in {
-  def SWAPrr : F3_1<3, 0b001111,
-                 (outs IntRegs:$dst), (ins MEMrr:$addr, IntRegs:$val),
-                 "swap [$addr], $dst",
-                 [(set i32:$dst, (atomic_swap_32 ADDRrr:$addr, i32:$val))]>;
-  def SWAPri : F3_2<3, 0b001111,
-                 (outs IntRegs:$dst), (ins MEMri:$addr, IntRegs:$val),
-                 "swap [$addr], $dst",
-                 [(set i32:$dst, (atomic_swap_32 ADDRri:$addr, i32:$val))]>;
-  def SWAPArr : F3_1_asi<3, 0b011111,
-                 (outs IntRegs:$dst), (ins MEMrr:$addr, i8imm:$asi, IntRegs:$val),
-                 "swapa [$addr] $asi, $dst",
-                 [/*FIXME: pattern?*/]>;
-}
 
 // TODO: Should add a CASArr variant. In fact, the CAS instruction,
 // unlike other instructions, only comes in a form which requires an
@@ -1214,18 +1238,6 @@ let hasSideEffects = 1 in {
   defm TSUBCCTV : F3_12np<"tsubcctv", 0b100011>;
 }
 }
-
-multiclass TRAP<string regStr> {
-  def rr : TRAPSPrr<0b111010, (outs), (ins IntRegs:$rs1, IntRegs:$rs2,
-                                       CCOp:$cond),
-              !strconcat(!strconcat("t$cond ", regStr), ", $rs1 + $rs2"), []>;
-  def ri : TRAPSPri<0b111010, (outs), (ins IntRegs:$rs1, i32imm:$imm,
-                                      CCOp:$cond),
-              !strconcat(!strconcat("t$cond ", regStr), ", $rs1 + $imm"), []>;
-}
-
-let hasSideEffects = 1, Uses = [ICC], cc = 0b00 in
-  defm TICC : TRAP<"%icc">;
 
 //===----------------------------------------------------------------------===//
 // Non-Instruction Patterns
