@@ -72,9 +72,9 @@ ClangUserExpression::ClangUserExpression (const char *expr,
     m_result_synthesizer(),
     m_jit_module_wp(),
     m_enforce_valid_object (true),
-    m_cplusplus (false),
-    m_objectivec (false),
-    m_static_method(false),
+    m_in_cplusplus_method (false),
+    m_in_objectivec_method (false),
+    m_in_static_method(false),
     m_needs_object_ptr (false),
     m_const_object (false),
     m_target (NULL),
@@ -196,7 +196,7 @@ ClangUserExpression::ScanContext(ExecutionContext &exe_ctx, Error &err)
                 }
             }
 
-            m_cplusplus = true;
+            m_in_cplusplus_method = true;
             m_needs_object_ptr = true;
         }
     }
@@ -227,11 +227,11 @@ ClangUserExpression::ScanContext(ExecutionContext &exe_ctx, Error &err)
                 }
             }
 
-            m_objectivec = true;
+            m_in_objectivec_method = true;
             m_needs_object_ptr = true;
 
             if (!method_decl->isInstanceMethod())
-                m_static_method = true;
+                m_in_static_method = true;
         }
     }
     else if (clang::FunctionDecl *function_decl = llvm::dyn_cast<clang::FunctionDecl>(decl_context))
@@ -270,7 +270,7 @@ ClangUserExpression::ScanContext(ExecutionContext &exe_ctx, Error &err)
                     }
                 }
 
-                m_cplusplus = true;
+                m_in_cplusplus_method = true;
                 m_needs_object_ptr = true;
             }
             else if (language == lldb::eLanguageTypeObjC)
@@ -319,7 +319,7 @@ ClangUserExpression::ScanContext(ExecutionContext &exe_ctx, Error &err)
                     }
                     else if (self_clang_type.IsObjCObjectPointerType())
                     {
-                        m_objectivec = true;
+                        m_in_objectivec_method = true;
                         m_needs_object_ptr = true;
                     }
                     else
@@ -330,7 +330,7 @@ ClangUserExpression::ScanContext(ExecutionContext &exe_ctx, Error &err)
                 }
                 else
                 {
-                    m_objectivec = true;
+                    m_in_objectivec_method = true;
                     m_needs_object_ptr = true;
                 }
             }
@@ -491,14 +491,14 @@ ClangUserExpression::Parse (Stream &error_stream,
     
     lldb::LanguageType lang_type;
 
-    if (m_cplusplus)
+    if (m_in_cplusplus_method)
         lang_type = lldb::eLanguageTypeC_plus_plus;
-    else if(m_objectivec)
+    else if (m_in_objectivec_method)
         lang_type = lldb::eLanguageTypeObjC;
     else
         lang_type = lldb::eLanguageTypeC;
 
-    if (!source_code->GetText(m_transformed_text, lang_type, m_const_object, m_static_method, exe_ctx))
+    if (!source_code->GetText(m_transformed_text, lang_type, m_const_object, m_in_static_method, exe_ctx))
     {
         error_stream.PutCString ("error: couldn't construct expression body");
         return false;
@@ -701,11 +701,11 @@ ClangUserExpression::PrepareToExecuteJITExpression (Stream &error_stream,
         {
             ConstString object_name;
 
-            if (m_cplusplus)
+            if (m_in_cplusplus_method)
             {
                 object_name.SetCString("this");
             }
-            else if (m_objectivec)
+            else if (m_in_objectivec_method)
             {
                 object_name.SetCString("self");
             }
@@ -725,7 +725,7 @@ ClangUserExpression::PrepareToExecuteJITExpression (Stream &error_stream,
                 object_ptr = 0;
             }
 
-            if (m_objectivec)
+            if (m_in_objectivec_method)
             {
                 ConstString cmd_name("_cmd");
 
@@ -876,7 +876,7 @@ ClangUserExpression::Execute (Stream &error_stream,
             {
                 args.push_back(object_ptr);
 
-                if (m_objectivec)
+                if (m_in_objectivec_method)
                     args.push_back(cmd_ptr);
             }
 
@@ -913,7 +913,7 @@ ClangUserExpression::Execute (Stream &error_stream,
 
             if (m_needs_object_ptr) {
                 args.push_back(object_ptr);
-                if (m_objectivec)
+                if (m_in_objectivec_method)
                     args.push_back(cmd_ptr);
             }
 
