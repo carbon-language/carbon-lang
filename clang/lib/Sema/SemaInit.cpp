@@ -5088,10 +5088,8 @@ void InitializationSequence::InitializeFrom(Sema &S,
 }
 
 InitializationSequence::~InitializationSequence() {
-  for (SmallVectorImpl<Step>::iterator Step = Steps.begin(),
-                                          StepEnd = Steps.end();
-       Step != StepEnd; ++Step)
-    Step->Destroy();
+  for (auto &S : Steps)
+    S.Destroy();
 }
 
 //===----------------------------------------------------------------------===//
