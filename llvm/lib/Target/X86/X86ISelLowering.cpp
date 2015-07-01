@@ -15011,6 +15011,12 @@ static SDValue recoverFramePointer(SelectionDAG &DAG, const Function *Fn,
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
   MVT PtrVT = TLI.getPointerTy();
 
+  // It's possible that the parent function no longer has a personality function
+  // if the exceptional code was optimized away, in which case we just return
+  // the incoming EBP.
+  if (!Fn->hasPersonalityFn())
+    return EntryEBP;
+
   // The RegNodeSize is 6 32-bit words for SEH and 4 for C++ EH. See
   // WinEHStatePass for the full struct definition.
   int RegNodeSize;
