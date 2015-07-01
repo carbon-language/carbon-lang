@@ -321,6 +321,13 @@ bool negated_conditional_return_statements(int i) {
 // CHECK-FIXES:      {{^}}  return i != 0;{{$}}
 // CHECK-FIXES-NEXT: {{^}$}}
 
+bool negative_condition_conditional_return_statement(int i) {
+  if (!(i == 0)) return false; else return true;
+}
+// CHECK-MESSAGES: :[[@LINE-2]]:25: warning: {{.*}} in conditional return statement
+// CHECK-FIXES:      {{^}}  return i == 0;{{$}}
+// CHECK-FIXES-NEXT: {{^}$}}
+
 bool conditional_compound_return_statements(int i) {
   if (i == 1) {
     return true;
@@ -447,26 +454,26 @@ void simple_conditional_assignment_statements(int i) {
   // CHECK-FIXES: {{^  }}c = i <= 20;{{$}}
   // CHECK-FIXES: bool c2 = false;
 
-  // unchanged; different variables
+  // Unchanged: different variables.
   bool b2;
   if (i > 12)
     b = true;
   else
     b2 = false;
 
-  // unchanged; no else statement
+  // Unchanged: no else statement.
   bool b3;
   if (i > 15)
     b3 = true;
 
-  // unchanged; not boolean assignment
+  // Unchanged: not boolean assignment.
   int j;
   if (i > 17)
     j = 10;
   else
     j = 20;
 
-  // unchanged; different variables assigned
+  // Unchanged: different variables assigned.
   int k = 0;
   bool b4 = false;
   if (i > 10)
@@ -500,13 +507,13 @@ void complex_conditional_assignment_statements(int i) {
   // CHECK-FIXES: {{^  }}e = i <= 40;{{$}}
   // CHECK-FIXES: e = false;
 
-  // unchanged; no else statement
+  // Unchanged: no else statement.
   bool b3;
   if (i > 15) {
     b3 = true;
   }
 
-  // unchanged; not a boolean assignment
+  // Unchanged: not a boolean assignment.
   int j;
   if (i > 17) {
     j = 10;
@@ -514,7 +521,7 @@ void complex_conditional_assignment_statements(int i) {
     j = 20;
   }
 
-  // unchanged; multiple statements
+  // Unchanged: multiple statements.
   bool f;
   if (j > 10) {
     j = 10;
@@ -524,7 +531,7 @@ void complex_conditional_assignment_statements(int i) {
     f = false;
   }
 
-  // unchanged; multiple statements
+  // Unchanged: multiple statements.
   bool g;
   if (j > 10)
     f = true;
@@ -533,7 +540,7 @@ void complex_conditional_assignment_statements(int i) {
     f = false;
   }
 
-  // unchanged; multiple statements
+  // Unchanged: multiple statements.
   bool h;
   if (j > 10) {
     j = 10;
@@ -542,7 +549,7 @@ void complex_conditional_assignment_statements(int i) {
     f = false;
 }
 
-// unchanged: chained return statements, but ChainedConditionalReturn not set
+// Unchanged: chained return statements, but ChainedConditionalReturn not set.
 bool chained_conditional_compound_return(int i) {
   if (i < 0) {
     return true;
@@ -555,7 +562,7 @@ bool chained_conditional_compound_return(int i) {
   }
 }
 
-// unchanged: chained return statements, but ChainedConditionalReturn not set
+// Unchanged: chained return statements, but ChainedConditionalReturn not set.
 bool chained_conditional_return(int i) {
   if (i < 0)
     return true;
@@ -567,7 +574,7 @@ bool chained_conditional_return(int i) {
     return false;
 }
 
-// unchanged: chained assignments, but ChainedConditionalAssignment not set
+// Unchanged: chained assignments, but ChainedConditionalAssignment not set.
 void chained_conditional_compound_assignment(int i) {
   bool b;
   if (i < 0) {
@@ -581,7 +588,7 @@ void chained_conditional_compound_assignment(int i) {
   }
 }
 
-// unchanged: chained return statements, but ChainedConditionalReturn not set
+// Unchanged: chained return statements, but ChainedConditionalReturn not set.
 void chained_conditional_assignment(int i) {
   bool b;
   if (i < 0)
@@ -593,3 +600,275 @@ void chained_conditional_assignment(int i) {
   else
     b = false;
 }
+
+// Unchanged: chained return statements, but ChainedConditionalReturn not set.
+bool chained_simple_if_return_negated(int i) {
+  if (i < 5)
+    return false;
+  if (i > 10)
+    return false;
+  return true;
+}
+
+// Unchanged: chained return statements, but ChainedConditionalReturn not set.
+bool complex_chained_if_return_return(int i) {
+  if (i < 5) {
+    return true;
+  }
+  if (i > 10) {
+    return true;
+  }
+  return false;
+}
+
+// Unchanged: chained return statements, but ChainedConditionalReturn not set.
+bool complex_chained_if_return_return_negated(int i) {
+  if (i < 5) {
+    return false;
+  }
+  if (i > 10) {
+    return false;
+  }
+  return true;
+}
+
+// Unchanged: chained return statements, but ChainedConditionalReturn not set.
+bool chained_simple_if_return(int i) {
+  if (i < 5)
+    return true;
+  if (i > 10)
+    return true;
+  return false;
+}
+
+bool simple_if_return_return(int i) {
+  if (i > 10)
+    return true;
+  return false;
+}
+// CHECK-MESSAGES: :[[@LINE-3]]:12: warning: {{.*}} in conditional return
+// CHECK-FIXES: {{^}}bool simple_if_return_return(int i) {{{$}}
+// CHECK-FIXES: {{^  return i > 10;$}}
+// CHECK-FIXES: {{^}$}}
+
+bool simple_if_return_return_negated(int i) {
+  if (i > 10)
+    return false;
+  return true;
+}
+// CHECK-MESSAGES: :[[@LINE-3]]:12: warning: {{.*}} in conditional return
+// CHECK-FIXES: {{^}}bool simple_if_return_return_negated(int i) {{{$}}
+// CHECK-FIXES: {{^  return i <= 10;$}}
+// CHECK-FIXES: {{^}$}}
+
+bool complex_if_return_return(int i) {
+  if (i > 10) {
+    return true;
+  }
+  return false;
+}
+// CHECK-MESSAGES: :[[@LINE-4]]:12: warning: {{.*}} in conditional return
+// CHECK-FIXES: {{^}}bool complex_if_return_return(int i) {{{$}}
+// CHECK-FIXES: {{^  return i > 10;$}}
+// CHECK-FIXES: {{^}$}}
+
+bool complex_if_return_return_negated(int i) {
+  if (i > 10) {
+    return false;
+  }
+  return true;
+}
+// CHECK-MESSAGES: :[[@LINE-4]]:12: warning: {{.*}} in conditional return
+// CHECK-FIXES: {{^}}bool complex_if_return_return_negated(int i) {{{$}}
+// CHECK-FIXES: {{^  return i <= 10;$}}
+// CHECK-FIXES: {{^}$}}
+
+bool if_implicit_bool_expr(int i) {
+  if (i & 1) {
+    return true;
+  } else {
+    return false;
+  }
+}
+// CHECK-MESSAGES: :[[@LINE-5]]:12: warning: {{.*}} in conditional return
+// CHECK-FIXES: {{^}}  return static_cast<bool>(i & 1);{{$}}
+
+bool negated_if_implicit_bool_expr(int i) {
+  if (i - 1) {
+    return false;
+  } else {
+    return true;
+  }
+}
+// CHECK-MESSAGES: :[[@LINE-5]]:12: warning: {{.*}} in conditional return
+// CHECK-FIXES: {{^}}  return !static_cast<bool>(i - 1);{{$}}
+
+bool implicit_int(int i) {
+  if (i) {
+    return true;
+  } else {
+    return false;
+  }
+}
+// CHECK-MESSAGES: :[[@LINE-5]]:12: warning: {{.*}} in conditional return
+// CHECK-FIXES: {{^}}  return static_cast<bool>(i);{{$}}
+
+bool explicit_bool(bool b) {
+  if (b) {
+    return true;
+  } else {
+    return false;
+  }
+}
+// CHECK-MESSAGES: :[[@LINE-5]]:12: warning: {{.*}} in conditional return
+// CHECK-FIXES: {{^}}  return b;{{$}}
+
+class Implicit {
+public:
+  operator bool() {
+    return true;
+  }
+};
+
+bool object_bool_implicit_conversion(Implicit O) {
+  if (O) {
+    return true;
+  } else {
+    return false;
+  }
+}
+// CHECK-MESSAGES: :[[@LINE-5]]:12: warning: {{.*}} in conditional return
+// CHECK-FIXES: {{^}}  return O;{{$}}
+
+bool negated_explicit_bool(bool b) {
+  if (!b) {
+    return true;
+  } else {
+    return false;
+  }
+}
+// CHECK-MESSAGES: :[[@LINE-5]]:12: warning: {{.*}} in conditional return
+// CHECK-FIXES: {{^}}  return !b;{{$}}
+
+bool bitwise_complement_conversion(int i) {
+  if (~i) {
+    return true;
+  } else {
+    return false;
+  }
+}
+// CHECK-MESSAGES: :[[@LINE-5]]:12: warning: {{.*}} in conditional return
+// CHECK-FIXES: {{^}}  return static_cast<bool>(~i);{{$}}
+
+bool logical_or(bool a, bool b) {
+  if (a || b) {
+    return true;
+  } else {
+    return false;
+  }
+}
+// CHECK-MESSAGES: :[[@LINE-5]]:12: warning: {{.*}} in conditional return
+// CHECK-FIXES: {{^}}  return a || b;{{$}}
+
+bool logical_and(bool a, bool b) {
+  if (a && b) {
+    return true;
+  } else {
+    return false;
+  }
+}
+// CHECK-MESSAGES: :[[@LINE-5]]:12: warning: {{.*}} in conditional return
+// CHECK-FIXES: {{^}}  return a && b;{{$}}
+
+class Comparable
+{
+public:
+  bool operator==(Comparable const &rhs) { return true; }
+  bool operator!=(Comparable const &rhs) { return false; }
+};
+
+bool comparable_objects() {
+  Comparable c;
+  Comparable d;
+  if (c == d) {
+    return true;
+  } else {
+    return false;
+  }
+}
+// CHECK-MESSAGES: :[[@LINE-5]]:12: warning: {{.*}} in conditional return
+// CHECK-FIXES: {{^}}  return c == d;{{$}}
+
+bool negated_comparable_objects() {
+  Comparable c;
+  Comparable d;
+  if (c == d) {
+    return false;
+  } else {
+    return true;
+  }
+}
+// CHECK-MESSAGES: :[[@LINE-5]]:12: warning: {{.*}} in conditional return
+// CHECK-FIXES: {{^}}  return c != d;{{$}}
+
+struct X {
+  explicit operator bool();
+};
+
+void explicit_conversion_assignment(X x) {
+  bool y;
+  if (x) {
+    y = true;
+  } else {
+    y = false;
+  }
+}
+// CHECK-MESSAGES: :[[@LINE-5]]:9: warning: {{.*}} in conditional assignment
+// CHECK-FIXES: {{^  bool y;$}}
+// CHECK-FIXES: {{^}}  y = static_cast<bool>(x);{{$}}
+
+void ternary_integer_condition(int i) {
+  bool b = i ? true : false;
+}
+// CHECK-MESSAGES: :[[@LINE-2]]:16: warning: {{.*}} in ternary expression result
+// CHECK-FIXES: bool b = static_cast<bool>(i);{{$}}
+
+bool non_null_pointer_condition(int *p1) {
+  if (p1) {
+    return true;
+  } else {
+    return false;
+  }
+}
+// CHECK-MESSAGES: :[[@LINE-5]]:12: warning: {{.*}} in conditional return
+// CHECK-FIXES: return p1 != nullptr;{{$}}
+
+bool null_pointer_condition(int *p2) {
+  if (!p2) {
+    return true;
+  } else {
+    return false;
+  }
+}
+// CHECK-MESSAGES: :[[@LINE-5]]:12: warning: {{.*}} in conditional return
+// CHECK-FIXES: return p2 == nullptr;{{$}}
+
+bool negated_non_null_pointer_condition(int *p3) {
+  if (p3) {
+    return false;
+  } else {
+    return true;
+  }
+}
+// CHECK-MESSAGES: :[[@LINE-5]]:12: warning: {{.*}} in conditional return
+// CHECK-FIXES: return p3 == nullptr;{{$}}
+
+bool negated_null_pointer_condition(int *p4) {
+  if (!p4) {
+    return false;
+  } else {
+    return true;
+  }
+}
+// CHECK-MESSAGES: :[[@LINE-5]]:12: warning: {{.*}} in conditional return
+// CHECK-FIXES: return p4 != nullptr;{{$}}
