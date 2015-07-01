@@ -25,8 +25,7 @@ define i32 @test2(i32 inreg %a, i32 inreg %b, i32 %c, i32 %d) nounwind {
 entry:
 ; CHECK-LABEL: test2:
 ; CHECK: leal
-; CHECK-NOT: leal
-; CHECK-NOT: mov
+; CHECK-NEXT: addl
 ; CHECK-NEXT: addl
 ; CHECK-NEXT: ret
  %add = add i32 %b, %a

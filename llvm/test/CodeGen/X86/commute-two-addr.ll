@@ -39,7 +39,7 @@ define %0 @t3(i32 %lb, i8 zeroext %has_lb, i8 zeroext %lb_inclusive, i32 %ub, i8
 entry:
 ; DARWIN-LABEL: t3:
 ; DARWIN: shlq $32, %rcx
-; DARWIN-NEXT: orq %rcx, %rax
+; DARWIN-NEXT: leaq (%rax,%rcx), %rax
 ; DARWIN-NEXT: shll $8
 ; DARWIN-NOT: leaq
   %tmp21 = zext i32 %lb to i64
