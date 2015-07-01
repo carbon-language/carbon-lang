@@ -115,6 +115,22 @@ namespace lldb_private {
                 return *this;
             }
             
+            bool
+            GetNonCacheable () const
+            {
+                return (m_flags & lldb::eTypeOptionNonCacheable) == lldb::eTypeOptionNonCacheable;
+            }
+            
+            Flags&
+            SetNonCacheable (bool value = true)
+            {
+                if (value)
+                    m_flags |= lldb::eTypeOptionNonCacheable;
+                else
+                    m_flags &= ~lldb::eTypeOptionNonCacheable;
+                return *this;
+            }
+            
             uint32_t
             GetValue ()
             {
@@ -153,6 +169,11 @@ namespace lldb_private {
         {
             return m_flags.GetSkipReferences();
         }
+        bool
+        NonCacheable () const
+        {
+            return m_flags.GetNonCacheable();
+        }
         
         void
         SetCascades (bool value)
@@ -170,6 +191,12 @@ namespace lldb_private {
         SetSkipsReferences (bool value)
         {
             m_flags.SetSkipReferences(value);
+        }
+        
+        void
+        SetNonCacheable (bool value)
+        {
+            m_flags.SetNonCacheable(value);
         }
 
         uint32_t

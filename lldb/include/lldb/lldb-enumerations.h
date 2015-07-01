@@ -736,7 +736,8 @@ namespace lldb {
         eTypeOptionHideChildren    = (1u << 3),
         eTypeOptionHideValue       = (1u << 4),
         eTypeOptionShowOneLiner    = (1u << 5),
-        eTypeOptionHideNames       = (1u << 6)
+        eTypeOptionHideNames       = (1u << 6),
+        eTypeOptionNonCacheable    = (1u << 7)
     };
 
    //----------------------------------------------------------------------
