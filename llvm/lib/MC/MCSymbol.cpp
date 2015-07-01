@@ -19,6 +19,8 @@ using namespace llvm;
 // Sentinel value for the absolute pseudo section.
 MCSection *MCSymbol::AbsolutePseudoSection = reinterpret_cast<MCSection *>(1);
 
+const unsigned MCSymbol::NumCommonAlignmentBits;
+
 void *MCSymbol::operator new(size_t s, const StringMapEntry<bool> *Name,
                              MCContext &Ctx) {
   // We may need more space for a Name to account for alignment.  So allocate

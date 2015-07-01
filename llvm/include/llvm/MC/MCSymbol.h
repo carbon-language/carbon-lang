@@ -109,6 +109,14 @@ protected:
   /// extension and achieve better bitpacking with MSVC.
   unsigned SymbolContents : 2;
 
+  /// The alignment of the symbol, if it is 'common', or -1.
+  ///
+  /// The alignment is stored as log2(align) + 1.  This allows all values from
+  /// 0 to 2^31 to be stored which is every power of 2 representable by an
+  /// unsigned.
+  static const unsigned NumCommonAlignmentBits = 5;
+  unsigned CommonAlignLog2 : NumCommonAlignmentBits;
+
   /// Index field, for use by the object file implementation.
   mutable uint32_t Index = 0;
 
@@ -122,11 +130,6 @@ protected:
     /// If non-null, the value for a variable symbol.
     const MCExpr *Value;
   };
-
-  /// The alignment of the symbol, if it is 'common', or -1.
-  //
-  // FIXME: Pack this in with other fields?
-  unsigned CommonAlign = -1U;
 
   /// The Flags field is used by object file implementations to store
   /// additional per symbol information which is not easily classified.
@@ -148,7 +151,8 @@ protected: // MCContext creates and uniques these.
   MCSymbol(SymbolKind Kind, const StringMapEntry<bool> *Name, bool isTemporary)
       : IsTemporary(isTemporary), IsRedefinable(false), IsUsed(false),
         IsRegistered(false), IsExternal(false), IsPrivateExtern(false),
-        Kind(Kind), IsUsedInReloc(false), SymbolContents(SymContentsUnset) {
+        Kind(Kind), IsUsedInReloc(false), SymbolContents(SymContentsUnset),
+        CommonAlignLog2(0) {
     Offset = 0;
     SectionOrFragmentAndHasName.setInt(!!Name);
     if (Name)
@@ -338,14 +342,20 @@ public:
   void setCommon(uint64_t Size, unsigned Align) {
     assert(getOffset() == 0);
     CommonSize = Size;
-    CommonAlign = Align;
     SymbolContents = SymContentsCommon;
+
+    assert((!Align || isPowerOf2_32(Align)) &&
+           "Alignment must be a power of 2");
+    unsigned Log2Align = Log2_32(Align) + 1;
+    assert(Log2Align < (1U << NumCommonAlignmentBits) &&
+           "Out of range alignment");
+    CommonAlignLog2 = Log2Align;
   }
 
   ///  Return the alignment of a 'common' symbol.
   unsigned getCommonAlignment() const {
     assert(isCommon() && "Not a 'common' symbol!");
-    return CommonAlign;
+    return CommonAlignLog2 ? (1U << (CommonAlignLog2 - 1)) : 0;
   }
 
   /// Declare this symbol as being 'common'.
@@ -356,7 +366,7 @@ public:
   bool declareCommon(uint64_t Size, unsigned Align) {
     assert(isCommon() || getOffset() == 0);
     if(isCommon()) {
-      if(CommonSize != Size || CommonAlign != Align)
+      if(CommonSize != Size || getCommonAlignment() != Align)
        return true;
     } else
       setCommon(Size, Align);
