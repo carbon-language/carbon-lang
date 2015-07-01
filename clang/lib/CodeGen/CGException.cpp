@@ -1306,37 +1306,27 @@ struct PerformSEHFinally : EHScopeStack::Cleanup {
     ASTContext &Context = CGF.getContext();
     CodeGenModule &CGM = CGF.CGM;
 
-    // In 64-bit, we call the child function with arguments. In 32-bit, we store
-    // zero in the parent frame and use framerecover to check the value.
-    const CGFunctionInfo *FnInfo;
     CallArgList Args;
-    if (CGF.getTarget().getTriple().getArch() != llvm::Triple::x86) {
-      // Compute the two argument values.
-      QualType ArgTys[2] = {Context.UnsignedCharTy, Context.VoidPtrTy};
-      llvm::Value *FrameAddr = CGM.getIntrinsic(llvm::Intrinsic::frameaddress);
-      llvm::Value *FP =
-          CGF.Builder.CreateCall(FrameAddr, {CGF.Builder.getInt32(0)});
-      llvm::Value *IsForEH =
-          llvm::ConstantInt::get(CGF.ConvertType(ArgTys[0]), F.isForEHCleanup());
-      Args.add(RValue::get(IsForEH), ArgTys[0]);
-      Args.add(RValue::get(FP), ArgTys[1]);
 
-      // Arrange a two-arg function info and type.
-      FunctionProtoType::ExtProtoInfo EPI;
-      const auto *FPT = cast<FunctionProtoType>(
-          Context.getFunctionType(Context.VoidTy, ArgTys, EPI));
-      FnInfo = &CGM.getTypes().arrangeFreeFunctionCall(Args, FPT,
-                                                       /*chainCall=*/false);
-    } else {
-      // Emit the zero store if this is normal control flow. There are no
-      // explicit arguments.
-      if (F.isForNormalCleanup() && CGF.ChildAbnormalTerminationSlot)
-        CGF.Builder.CreateStore(CGF.Builder.getInt32(0),
-                                CGF.ChildAbnormalTerminationSlot);
-      FnInfo = &CGM.getTypes().arrangeNullaryFunction();
-    }
+    // Compute the two argument values.
+    QualType ArgTys[2] = {Context.UnsignedCharTy, Context.VoidPtrTy};
+    llvm::Value *FrameAddr = CGM.getIntrinsic(llvm::Intrinsic::frameaddress);
+    llvm::Value *FP =
+        CGF.Builder.CreateCall(FrameAddr, {CGF.Builder.getInt32(0)});
+    llvm::Value *IsForEH =
+        llvm::ConstantInt::get(CGF.ConvertType(ArgTys[0]), F.isForEHCleanup());
+    Args.add(RValue::get(IsForEH), ArgTys[0]);
+    Args.add(RValue::get(FP), ArgTys[1]);
 
-    CGF.EmitCall(*FnInfo, OutlinedFinally, ReturnValueSlot(), Args);
+    // Arrange a two-arg function info and type.
+    FunctionProtoType::ExtProtoInfo EPI;
+    const auto *FPT = cast<FunctionProtoType>(
+        Context.getFunctionType(Context.VoidTy, ArgTys, EPI));
+    const CGFunctionInfo &FnInfo =
+        CGM.getTypes().arrangeFreeFunctionCall(Args, FPT,
+                                               /*chainCall=*/false);
+
+    CGF.EmitCall(FnInfo, OutlinedFinally, ReturnValueSlot(), Args);
   }
 };
 }
@@ -1347,14 +1337,13 @@ struct CaptureFinder : ConstStmtVisitor<CaptureFinder> {
   CodeGenFunction &ParentCGF;
   const VarDecl *ParentThis;
   SmallVector<const VarDecl *, 4> Captures;
-  llvm::Value *AbnormalTermination = nullptr;
   llvm::Value *SEHCodeSlot = nullptr;
   CaptureFinder(CodeGenFunction &ParentCGF, const VarDecl *ParentThis)
       : ParentCGF(ParentCGF), ParentThis(ParentThis) {}
 
   // Return true if we need to do any capturing work.
   bool foundCaptures() {
-    return !Captures.empty() || AbnormalTermination || SEHCodeSlot;
+    return !Captures.empty() || SEHCodeSlot;
   }
 
   void Visit(const Stmt *S) {
@@ -1388,15 +1377,6 @@ struct CaptureFinder : ConstStmtVisitor<CaptureFinder> {
 
     unsigned ID = E->getBuiltinCallee();
     switch (ID) {
-    case Builtin::BI__abnormal_termination:
-    case Builtin::BI_abnormal_termination:
-      // This is the simple case where we are the outermost finally. All we
-      // have to do here is make sure we escape this and recover it in the
-      // outlined handler.
-      if (!AbnormalTermination)
-        AbnormalTermination = ParentCGF.CreateMemTemp(
-            ParentCGF.getContext().IntTy, "abnormal_termination");
-      break;
     case Builtin::BI__exception_code:
     case Builtin::BI_exception_code:
       // This is the simple case where we are the outermost finally. All we
@@ -1516,15 +1496,6 @@ void CodeGenFunction::EmitCapturedLocals(CodeGenFunction &ParentCGF,
         recoverAddrOfEscapedLocal(ParentCGF, ParentVar, ParentFP);
   }
 
-  // The __abnormal_termination and __exception_code values are just more
-  // captures.
-  if (Finder.AbnormalTermination) {
-    AbnormalTerminationSlot = recoverAddrOfEscapedLocal(
-        ParentCGF, Finder.AbnormalTermination, ParentFP);
-    // Save the slot on the parent so it can store 1 and 0 to it.
-    ParentCGF.ChildAbnormalTerminationSlot = Finder.AbnormalTermination;
-  }
-
   if (Finder.SEHCodeSlot) {
     SEHCodeSlotStack.push_back(
         recoverAddrOfEscapedLocal(ParentCGF, Finder.SEHCodeSlot, ParentFP));
@@ -1557,7 +1528,9 @@ void CodeGenFunction::startOutlinedSEHHelper(CodeGenFunction &ParentCGF,
   }
 
   FunctionArgList Args;
-  if (CGM.getTarget().getTriple().getArch() != llvm::Triple::x86) {
+  if (CGM.getTarget().getTriple().getArch() != llvm::Triple::x86 || !IsFilter) {
+    // All SEH finally functions take two parameters. Win64 filters take two
+    // parameters. Win32 filters take no parameters.
     if (IsFilter) {
       Args.push_back(ImplicitParamDecl::Create(
           getContext(), nullptr, StartLoc,
@@ -1698,8 +1671,6 @@ llvm::Value *CodeGenFunction::EmitSEHExceptionCode() {
 }
 
 llvm::Value *CodeGenFunction::EmitSEHAbnormalTermination() {
-  if (CGM.getTarget().getTriple().getArch() == llvm::Triple::x86)
-    return Builder.CreateLoad(AbnormalTerminationSlot);
   // Abnormal termination is just the first parameter to the outlined finally
   // helper.
   auto AI = CurFn->arg_begin();
@@ -1712,10 +1683,6 @@ void CodeGenFunction::EnterSEHTryStmt(const SEHTryStmt &S) {
     // Outline the finally block.
     llvm::Function *FinallyFunc =
         HelperCGF.GenerateSEHFinallyFunction(*this, *Finally);
-
-    // Store 1 to indicate abnormal termination if an exception is thrown.
-    if (ChildAbnormalTerminationSlot)
-      Builder.CreateStore(Builder.getInt32(1), ChildAbnormalTerminationSlot);
 
     // Push a cleanup for __finally blocks.
     EHStack.pushCleanup<PerformSEHFinally>(NormalAndEHCleanup, FinallyFunc);
@@ -1753,7 +1720,6 @@ void CodeGenFunction::ExitSEHTryStmt(const SEHTryStmt &S) {
   // Just pop the cleanup if it's a __finally block.
   if (S.getFinallyHandler()) {
     PopCleanupBlock();
-    ChildAbnormalTerminationSlot = nullptr;
     return;
   }
 

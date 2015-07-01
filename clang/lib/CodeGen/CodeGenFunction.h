@@ -324,14 +324,6 @@ public:
   /// write the current selector value into this alloca.
   llvm::AllocaInst *EHSelectorSlot;
 
-  /// Entering and leaving an SEH __try / __finally scope causes stores to this
-  /// slot.
-  llvm::Value *ChildAbnormalTerminationSlot = nullptr;
-
-  /// The SEH __abnormal_termination() intrinsic lowers down to loads from this
-  /// slot from a parent function.
-  llvm::Value *AbnormalTerminationSlot = nullptr;
-
   /// A stack of exception code slots. Entering an __except block pushes a slot
   /// on the stack and leaving pops one. The __exception_code() intrinsic loads
   /// a value from the top of the stack.

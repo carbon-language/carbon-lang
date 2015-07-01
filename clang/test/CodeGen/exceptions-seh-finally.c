@@ -1,7 +1,5 @@
-// RUN: %clang_cc1 %s -triple x86_64-pc-win32 -fms-extensions -emit-llvm -o - \
-// RUN:         | FileCheck %s --check-prefix=CHECK --check-prefix=X64
-// RUN: %clang_cc1 %s -triple i686-pc-win32 -fms-extensions -emit-llvm -o - \
-// RUN:         | FileCheck %s --check-prefix=CHECK --check-prefix=X86
+// RUN: %clang_cc1 %s -triple x86_64-pc-win32 -fms-extensions -emit-llvm -o - | FileCheck %s
+// RUN: %clang_cc1 %s -triple i686-pc-win32 -fms-extensions -emit-llvm -o - | FileCheck %s
 
 void abort(void) __attribute__((noreturn));
 void might_crash(void);
@@ -20,17 +18,15 @@ void basic_finally(void) {
 // CHECK:     to label %[[invoke_cont:[^ ]*]] unwind label %[[lpad:[^ ]*]]
 //
 // CHECK: [[invoke_cont]]
-// X64: %[[fp:[^ ]*]] = call i8* @llvm.frameaddress(i32 0)
-// X64: call void @"\01?fin$0@0@basic_finally@@"(i8 0, i8* %[[fp]])
-// X86: call void @"\01?fin$0@0@basic_finally@@"()
+// CHECK: %[[fp:[^ ]*]] = call i8* @llvm.frameaddress(i32 0)
+// CHECK: call void @"\01?fin$0@0@basic_finally@@"({{i8( zeroext)?}} 0, i8* %[[fp]])
 // CHECK-NEXT: ret void
 //
 // CHECK: [[lpad]]
 // CHECK-NEXT: landingpad
 // CHECK-NEXT: cleanup
-// X64: %[[fp:[^ ]*]] = call i8* @llvm.frameaddress(i32 0)
-// X64: call void @"\01?fin$0@0@basic_finally@@"(i8 1, i8* %[[fp]])
-// X86: call void @"\01?fin$0@0@basic_finally@@"()
+// CHECK: %[[fp:[^ ]*]] = call i8* @llvm.frameaddress(i32 0)
+// CHECK: call void @"\01?fin$0@0@basic_finally@@"({{i8( zeroext)?}} 1, i8* %[[fp]])
 // CHECK: resume { i8*, i32 }
 
 // CHECK: define internal void @"\01?fin$0@0@basic_finally@@"({{.*}})
@@ -62,9 +58,8 @@ l:
 // CHECK:     to label %[[invoke_cont:[^ ]*]] unwind label %[[lpad:[^ ]*]]
 //
 // CHECK: [[invoke_cont]]
-// X64: %[[fp:[^ ]*]] = call i8* @llvm.frameaddress(i32 0)
-// X64: call void @"\01?fin$0@0@label_in_finally@@"(i8 0, i8* %[[fp]])
-// X86: call void @"\01?fin$0@0@label_in_finally@@"()
+// CHECK: %[[fp:[^ ]*]] = call i8* @llvm.frameaddress(i32 0)
+// CHECK: call void @"\01?fin$0@0@label_in_finally@@"({{i8( zeroext)?}} 0, i8* %[[fp]])
 // CHECK: ret void
 
 // CHECK: define internal void @"\01?fin$0@0@label_in_finally@@"({{.*}})
@@ -86,34 +81,23 @@ void use_abnormal_termination(void) {
 }
 
 // CHECK-LABEL: define void @use_abnormal_termination()
-// X86: call void (...) @llvm.frameescape(i32* %[[abnormal_termination:[^ ),]*]])
-// X86: store i32 1, i32* %[[abnormal_termination]]
 // CHECK: invoke void @might_crash()
 // CHECK:     to label %[[invoke_cont:[^ ]*]] unwind label %[[lpad:[^ ]*]]
 //
 // CHECK: [[invoke_cont]]
-// X64: %[[fp:[^ ]*]] = call i8* @llvm.frameaddress(i32 0)
-// X64: call void @"\01?fin$0@0@use_abnormal_termination@@"(i8 0, i8* %[[fp]])
-// X86: store i32 0, i32* %[[abnormal_termination]]
-// X86: call void @"\01?fin$0@0@use_abnormal_termination@@"()
+// CHECK: %[[fp:[^ ]*]] = call i8* @llvm.frameaddress(i32 0)
+// CHECK: call void @"\01?fin$0@0@use_abnormal_termination@@"({{i8( zeroext)?}} 0, i8* %[[fp]])
 // CHECK: ret void
 //
 // CHECK: [[lpad]]
 // CHECK-NEXT: landingpad
 // CHECK-NEXT: cleanup
-// X64: %[[fp:[^ ]*]] = call i8* @llvm.frameaddress(i32 0)
-// X64: call void @"\01?fin$0@0@use_abnormal_termination@@"(i8 1, i8* %[[fp]])
-// X86: call void @"\01?fin$0@0@use_abnormal_termination@@"()
+// CHECK: %[[fp:[^ ]*]] = call i8* @llvm.frameaddress(i32 0)
+// CHECK: call void @"\01?fin$0@0@use_abnormal_termination@@"({{i8( zeroext)?}} 1, i8* %[[fp]])
 // CHECK: resume { i8*, i32 }
 
-// X64: define internal void @"\01?fin$0@0@use_abnormal_termination@@"(i8 %[[abnormal:abnormal_termination]], i8* %frame_pointer)
-// X64: %[[abnormal_zext:[^ ]*]] = zext i8 %[[abnormal]] to i32
-// X86: define internal void @"\01?fin$0@0@use_abnormal_termination@@"()
-// X86: %[[ebp:[^ ]*]] = call i8* @llvm.frameaddress(i32 1)
-// X86: %[[fp:[^ ]*]] = call i8* @llvm.x86.seh.recoverfp(i8* bitcast (void ()* @use_abnormal_termination to i8*), i8* %[[ebp]])
-// X86: %[[abnormal_i8:[^ ]*]] = call i8* @llvm.framerecover(i8* bitcast (void ()* @use_abnormal_termination to i8*), i8* %[[fp]], i32 0)
-// X86: %[[abnormal:[^ ]*]] = bitcast i8* %[[abnormal_i8]] to i32*
-// X86: %[[abnormal_zext:[^ ]*]] = load i32, i32* %[[abnormal]]
+// CHECK: define internal void @"\01?fin$0@0@use_abnormal_termination@@"({{i8( zeroext)?}} %[[abnormal:abnormal_termination]], i8* %frame_pointer)
+// CHECK: %[[abnormal_zext:[^ ]*]] = zext i8 %[[abnormal]] to i32
 // CHECK: store i32 %[[abnormal_zext]], i32* @crashed
 // CHECK-NEXT: ret void
 

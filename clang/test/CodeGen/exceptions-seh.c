@@ -188,17 +188,15 @@ void basic_finally(void) {
 // CHECK:       to label %[[cont:[^ ]*]] unwind label %[[lpad:[^ ]*]]
 //
 // CHECK: [[cont]]
-// X64: %[[fp:[^ ]*]] = call i8* @llvm.frameaddress(i32 0)
-// X64: call void @"\01?fin$0@0@basic_finally@@"(i8 0, i8* %[[fp]])
-// X86: call void @"\01?fin$0@0@basic_finally@@"()
+// CHECK: %[[fp:[^ ]*]] = call i8* @llvm.frameaddress(i32 0)
+// CHECK: call void @"\01?fin$0@0@basic_finally@@"({{i8( zeroext)?}} 0, i8* %[[fp]])
 // CHECK: ret void
 //
 // CHECK: [[lpad]]
 // CHECK: landingpad { i8*, i32 }
 // CHECK-NEXT: cleanup
-// X64: %[[fp:[^ ]*]] = call i8* @llvm.frameaddress(i32 0)
-// X64: call void @"\01?fin$0@0@basic_finally@@"(i8 1, i8* %[[fp]])
-// X86: call void @"\01?fin$0@0@basic_finally@@"()
+// CHECK: %[[fp:[^ ]*]] = call i8* @llvm.frameaddress(i32 0)
+// CHECK: call void @"\01?fin$0@0@basic_finally@@"({{i8( zeroext)?}} 1, i8* %[[fp]])
 // CHECK: resume
 
 // CHECK: define internal void @"\01?fin$0@0@basic_finally@@"({{.*}})
