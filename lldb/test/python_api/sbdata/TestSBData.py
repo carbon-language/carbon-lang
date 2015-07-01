@@ -242,30 +242,56 @@ class SBDataAPICase(TestBase):
         self.assert_data(data2.GetUnsignedInt8, 3, 108) # l
         self.assertTrue(data2.uint8[4] == 111, 'o == 111')
         self.assert_data(data2.GetUnsignedInt8, 5, 33) # !
-        
-        data2 = lldb.SBData.CreateDataFromUInt64Array(process.GetByteOrder(),process.GetAddressByteSize(),[1,2,3,4,5])
-        self.assert_data(data2.GetUnsignedInt64, 0, 1)
-        self.assert_data(data2.GetUnsignedInt64, 8, 2)
-        self.assert_data(data2.GetUnsignedInt64, 16, 3)
-        self.assert_data(data2.GetUnsignedInt64, 24, 4)
-        self.assert_data(data2.GetUnsignedInt64, 32, 5)
-        
-        self.assertTrue(data2.uint64s == [1,2,3,4,5], 'read_data_helper failure: data2 == [1,2,3,4,5]')
 
-        data2 = lldb.SBData.CreateDataFromSInt32Array(process.GetByteOrder(),process.GetAddressByteSize(),[2, -2])
-        self.assertTrue(data2.sint32[0:2] == [2,-2], 'signed32 data2 = [2,-2]')
+        uint_lists = [ [1,2,3,4,5], [long(i) for i in [1, 2, 3, 4, 5]] ]
+        int_lists = [ [2, -2], [long(i) for i in [2, -2]] ]
+
+        for l in uint_lists:
+            data2 = lldb.SBData.CreateDataFromUInt64Array(process.GetByteOrder(), process.GetAddressByteSize(), l)
+            self.assert_data(data2.GetUnsignedInt64, 0, 1)
+            self.assert_data(data2.GetUnsignedInt64, 8, 2)
+            self.assert_data(data2.GetUnsignedInt64, 16, 3)
+            self.assert_data(data2.GetUnsignedInt64, 24, 4)
+            self.assert_data(data2.GetUnsignedInt64, 32, 5)
         
-        data2.Append(lldb.SBData.CreateDataFromSInt64Array(process.GetByteOrder(),process.GetAddressByteSize(),[2, -2]))
+            self.assertTrue(data2.uint64s == [1,2,3,4,5], 'read_data_helper failure: data2 == [1,2,3,4,5]')
+
+        for l in int_lists:
+            data2 = lldb.SBData.CreateDataFromSInt32Array(process.GetByteOrder(), process.GetAddressByteSize(), l)
+            self.assertTrue(data2.sint32[0:2] == [2,-2], 'signed32 data2 = [2,-2]')
+        
+        data2.Append(lldb.SBData.CreateDataFromSInt64Array(process.GetByteOrder(), process.GetAddressByteSize(), int_lists[0]))
         self.assert_data(data2.GetSignedInt32, 0, 2)
         self.assert_data(data2.GetSignedInt32, 4, -2)
         self.assertTrue(data2.sint64[1:3] == [2,-2], 'signed64 data2 = [2,-2]')
-        
-        data2 = lldb.SBData.CreateDataFromUInt32Array(process.GetByteOrder(),process.GetAddressByteSize(),[1,2,3,4,5])
-        self.assert_data(data2.GetUnsignedInt32,0, 1)
-        self.assert_data(data2.GetUnsignedInt32,4, 2)
-        self.assert_data(data2.GetUnsignedInt32,8, 3)
-        self.assert_data(data2.GetUnsignedInt32,12, 4)
-        self.assert_data(data2.GetUnsignedInt32,16, 5)
+
+        for l in int_lists:
+            data2 = lldb.SBData.CreateDataFromSInt64Array(process.GetByteOrder(), process.GetAddressByteSize(), l)
+            self.assert_data(data2.GetSignedInt64, 0, 2)
+            self.assert_data(data2.GetSignedInt64, 8, -2)
+            self.assertTrue(data2.sint64[0:2] == [2,-2], 'signed64 data2 = [2,-2]')
+
+        for l in uint_lists:
+            data2 = lldb.SBData.CreateDataFromUInt32Array(process.GetByteOrder(), process.GetAddressByteSize(), l)
+            self.assert_data(data2.GetUnsignedInt32,0, 1)
+            self.assert_data(data2.GetUnsignedInt32,4, 2)
+            self.assert_data(data2.GetUnsignedInt32,8, 3)
+            self.assert_data(data2.GetUnsignedInt32,12, 4)
+            self.assert_data(data2.GetUnsignedInt32,16, 5)
+
+        bool_list = [True, True, False, False, True, False]
+
+        data2 = lldb.SBData.CreateDataFromSInt32Array(process.GetByteOrder(), process.GetAddressByteSize(), bool_list)
+        self.assertTrue(data2.sint32[0:6] == [1, 1, 0, 0, 1, 0], 'signed32 data2 = [1, 1, 0, 0, 1, 0]')
+
+        data2 = lldb.SBData.CreateDataFromUInt32Array(process.GetByteOrder(), process.GetAddressByteSize(), bool_list)
+        self.assertTrue(data2.uint32[0:6] == [1, 1, 0, 0, 1, 0], 'unsigned32 data2 = [1, 1, 0, 0, 1, 0]')
+
+        data2 = lldb.SBData.CreateDataFromSInt64Array(process.GetByteOrder(), process.GetAddressByteSize(), bool_list)
+        self.assertTrue(data2.sint64[0:6] == [1, 1, 0, 0, 1, 0], 'signed64 data2 = [1, 1, 0, 0, 1, 0]')
+
+        data2 = lldb.SBData.CreateDataFromUInt64Array(process.GetByteOrder(), process.GetAddressByteSize(), bool_list)
+        self.assertTrue(data2.uint64[0:6] == [1, 1, 0, 0, 1, 0], 'signed64 data2 = [1, 1, 0, 0, 1, 0]')
         
         data2 = lldb.SBData.CreateDataFromDoubleArray(process.GetByteOrder(),process.GetAddressByteSize(),[3.14,6.28,2.71])
         self.assertTrue( fabs(data2.GetDouble(error,0) - 3.14) < 0.5, 'double data2[0] = 3.14')
