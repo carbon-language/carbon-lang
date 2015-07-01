@@ -2415,9 +2415,8 @@ void InnerLoopVectorizer::scalarizeInstruction(Instruction *Instr, bool IfPredic
          LoopVectorBody.push_back(NewIfBlock);
          VectorLp->addBasicBlockToLoop(NewIfBlock, *LI);
          Builder.SetInsertPoint(InsertPt);
-         Instruction *OldBr = IfBlock->getTerminator();
-         BranchInst::Create(CondBlock, NewIfBlock, Cmp, OldBr);
-         OldBr->eraseFromParent();
+         ReplaceInstWithInst(IfBlock->getTerminator(),
+                             BranchInst::Create(CondBlock, NewIfBlock, Cmp));
          IfBlock = NewIfBlock;
       }
     }
@@ -2660,9 +2659,9 @@ void InnerLoopVectorizer::createEmptyLoop() {
     if (ParentLoop)
       ParentLoop->addBasicBlockToLoop(CheckBlock, *LI);
     LoopBypassBlocks.push_back(CheckBlock);
-    Instruction *OldTerm = LastBypassBlock->getTerminator();
-    BranchInst::Create(ScalarPH, CheckBlock, CheckBCOverflow, OldTerm);
-    OldTerm->eraseFromParent();
+    ReplaceInstWithInst(
+        LastBypassBlock->getTerminator(),
+        BranchInst::Create(ScalarPH, CheckBlock, CheckBCOverflow));
     LastBypassBlock = CheckBlock;
   }
 
@@ -2684,9 +2683,8 @@ void InnerLoopVectorizer::createEmptyLoop() {
 
     // Replace the branch into the memory check block with a conditional branch
     // for the "few elements case".
-    Instruction *OldTerm = LastBypassBlock->getTerminator();
-    BranchInst::Create(MiddleBlock, CheckBlock, Cmp, OldTerm);
-    OldTerm->eraseFromParent();
+    ReplaceInstWithInst(LastBypassBlock->getTerminator(),
+                        BranchInst::Create(MiddleBlock, CheckBlock, Cmp));
 
     Cmp = StrideCheck;
     LastBypassBlock = CheckBlock;
@@ -2709,17 +2707,15 @@ void InnerLoopVectorizer::createEmptyLoop() {
 
     // Replace the branch into the memory check block with a conditional branch
     // for the "few elements case".
-    Instruction *OldTerm = LastBypassBlock->getTerminator();
-    BranchInst::Create(MiddleBlock, CheckBlock, Cmp, OldTerm);
-    OldTerm->eraseFromParent();
+    ReplaceInstWithInst(LastBypassBlock->getTerminator(),
+                        BranchInst::Create(MiddleBlock, CheckBlock, Cmp));
 
     Cmp = MemRuntimeCheck;
     LastBypassBlock = CheckBlock;
   }
 
-  LastBypassBlock->getTerminator()->eraseFromParent();
-  BranchInst::Create(MiddleBlock, VectorPH, Cmp,
-                     LastBypassBlock);
+  ReplaceInstWithInst(LastBypassBlock->getTerminator(),
+                      BranchInst::Create(MiddleBlock, VectorPH, Cmp));
 
   // We are going to resume the execution of the scalar loop.
   // Go over all of the induction variables that we found and fix the
@@ -2856,10 +2852,8 @@ void InnerLoopVectorizer::createEmptyLoop() {
   Value *CmpN = CmpInst::Create(Instruction::ICmp, CmpInst::ICMP_EQ, IdxEnd,
                                 ResumeIndex, "cmp.n",
                                 MiddleBlock->getTerminator());
-
-  BranchInst::Create(ExitBlock, ScalarPH, CmpN, MiddleBlock->getTerminator());
-  // Remove the old terminator.
-  MiddleBlock->getTerminator()->eraseFromParent();
+  ReplaceInstWithInst(MiddleBlock->getTerminator(),
+                      BranchInst::Create(ExitBlock, ScalarPH, CmpN));
 
   // Create i+1 and fill the PHINode.
   Value *NextIdx = Builder.CreateAdd(Induction, Step, "index.next");
@@ -5513,9 +5507,8 @@ void InnerLoopUnroller::scalarizeInstruction(Instruction *Instr,
         LoopVectorBody.push_back(NewIfBlock);
         VectorLp->addBasicBlockToLoop(NewIfBlock, *LI);
         Builder.SetInsertPoint(InsertPt);
-        Instruction *OldBr = IfBlock->getTerminator();
-        BranchInst::Create(CondBlock, NewIfBlock, Cmp, OldBr);
-        OldBr->eraseFromParent();
+        ReplaceInstWithInst(IfBlock->getTerminator(),
+                            BranchInst::Create(CondBlock, NewIfBlock, Cmp));
         IfBlock = NewIfBlock;
       }
   }

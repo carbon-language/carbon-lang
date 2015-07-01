@@ -9,30 +9,31 @@ target triple = "x86_64-apple-macosx10.9.0"
 ;     a[i] = b[i] * 3;
 ; }
 
+;CHECK-LABEL: define i32 @foo
 ;CHECK: for.body.preheader:
-;CHECK: br i1 %cmp.zero, label %middle.block, label %vector.memcheck
+;CHECK: br i1 %cmp.zero, label %middle.block, label %vector.memcheck, !dbg [[BODY_LOC:![0-9]+]]
 ;CHECK: vector.memcheck:
-;CHECK: br i1 %memcheck.conflict, label %middle.block, label %vector.ph
+;CHECK: br i1 %memcheck.conflict, label %middle.block, label %vector.ph, !dbg [[BODY_LOC]]
 ;CHECK: load <4 x float>
 define i32 @foo(float* nocapture %a, float* nocapture %b, i32 %n) nounwind uwtable ssp {
 entry:
-  %cmp6 = icmp sgt i32 %n, 0
-  br i1 %cmp6, label %for.body, label %for.end
+  %cmp6 = icmp sgt i32 %n, 0, !dbg !6
+  br i1 %cmp6, label %for.body, label %for.end, !dbg !6
 
 for.body:                                         ; preds = %entry, %for.body
-  %indvars.iv = phi i64 [ %indvars.iv.next, %for.body ], [ 0, %entry ]
-  %arrayidx = getelementptr inbounds float, float* %b, i64 %indvars.iv
-  %0 = load float, float* %arrayidx, align 4
-  %mul = fmul float %0, 3.000000e+00
-  %arrayidx2 = getelementptr inbounds float, float* %a, i64 %indvars.iv
-  store float %mul, float* %arrayidx2, align 4
-  %indvars.iv.next = add i64 %indvars.iv, 1
-  %lftr.wideiv = trunc i64 %indvars.iv.next to i32
-  %exitcond = icmp eq i32 %lftr.wideiv, %n
-  br i1 %exitcond, label %for.end, label %for.body
+  %indvars.iv = phi i64 [ %indvars.iv.next, %for.body ], [ 0, %entry ], !dbg !7
+  %arrayidx = getelementptr inbounds float, float* %b, i64 %indvars.iv, !dbg !7
+  %0 = load float, float* %arrayidx, align 4, !dbg !7
+  %mul = fmul float %0, 3.000000e+00, !dbg !7
+  %arrayidx2 = getelementptr inbounds float, float* %a, i64 %indvars.iv, !dbg !7
+  store float %mul, float* %arrayidx2, align 4, !dbg !7
+  %indvars.iv.next = add i64 %indvars.iv, 1, !dbg !7
+  %lftr.wideiv = trunc i64 %indvars.iv.next to i32, !dbg !7
+  %exitcond = icmp eq i32 %lftr.wideiv, %n, !dbg !7
+  br i1 %exitcond, label %for.end, label %for.body, !dbg !7
 
 for.end:                                          ; preds = %for.body, %entry
-  ret i32 undef
+  ret i32 undef, !dbg !8
 }
 
 ; Make sure that we try to vectorize loops with a runtime check if the
@@ -62,3 +63,17 @@ for.body:
 loopexit:
   ret void
 }
+
+; CHECK: [[BODY_LOC]] = !DILocation(line: 101, column: 1, scope: !{{.*}})
+
+!llvm.module.flags = !{!0, !1}
+!0 = !{i32 2, !"Dwarf Version", i32 4}
+!1 = !{i32 2, !"Debug Info Version", i32 3}
+
+!2 = !{}
+!3 = !DISubroutineType(types: !2)
+!4 = !DIFile(filename: "test.cpp", directory: "/tmp")
+!5 = !DISubprogram(name: "foo", scope: !4, file: !4, line: 99, type: !3, isLocal: false, isDefinition: true, scopeLine: 100, flags: DIFlagPrototyped, isOptimized: false, variables: !2)
+!6 = !DILocation(line: 100, column: 1, scope: !5)
+!7 = !DILocation(line: 101, column: 1, scope: !5)
+!8 = !DILocation(line: 102, column: 1, scope: !5)
