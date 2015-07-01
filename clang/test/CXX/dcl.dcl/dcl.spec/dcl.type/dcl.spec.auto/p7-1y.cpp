@@ -11,6 +11,9 @@ namespace std {
 int i;
 int &&f();
 
+template <typename T>
+void overloaded_fn(T); // expected-note {{possible target}}
+
 using Int = int;
 using IntLRef = int&;
 using IntRRef = int&&;
@@ -57,6 +60,7 @@ decltype(auto) ((((((v1)))))) = 0; // ok
 decltype(auto) v2[1] = { 0 }; // expected-error {{cannot form array of 'decltype(auto)'}}
 decltype(auto) &v3 = { 0 }; // expected-error {{cannot form reference to 'decltype(auto)'}}
 decltype(auto) *v4 = { 0 }; // expected-error {{cannot form pointer to 'decltype(auto)'}}
+decltype(auto) v5 = &overloaded_fn; // expected-error {{could not be resolved}}
 
 auto multi1a = 0, &multi1b = multi1a;
 auto multi1c = multi1a, multi1d = multi1b;
