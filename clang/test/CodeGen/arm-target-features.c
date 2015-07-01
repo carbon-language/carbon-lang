@@ -6,7 +6,7 @@
 
 
 // RUN: %clang_cc1 -triple thumbv7-linux-gnueabihf -target-cpu cortex-a5 -emit-llvm -o - %s | FileCheck %s --check-prefix=CHECK-VFP4
-// CHECK-VFP4: "target-features"="+vfp4,+neon"
+// CHECK-VFP4: "target-features"="+neon,+vfp4"
 
 
 // RUN: %clang_cc1 -triple thumbv7-linux-gnueabihf -target-cpu cortex-a7 -emit-llvm -o - %s | FileCheck %s --check-prefix=CHECK-VFP4-DIV
@@ -15,14 +15,14 @@
 // RUN: %clang_cc1 -triple armv7-linux-gnueabihf -target-cpu cortex-a17 -emit-llvm -o - %s | FileCheck %s --check-prefix=CHECK-VFP4-DIV
 // RUN: %clang_cc1 -triple thumbv7s-linux-gnueabi -target-cpu swift -emit-llvm -o - %s | FileCheck %s --check-prefix=CHECK-VFP4-DIV
 // RUN: %clang_cc1 -triple thumbv7-linux-gnueabihf -target-cpu krait -emit-llvm -o - %s | FileCheck %s --check-prefix=CHECK-VFP4-DIV
-// CHECK-VFP4-DIV: "target-features"="+vfp4,+neon,+hwdiv,+hwdiv-arm"
+// CHECK-VFP4-DIV: "target-features"="+hwdiv,+hwdiv-arm,+neon,+vfp4"
 
 
 // RUN: %clang_cc1 -triple thumbv7s-apple-ios7.0 -target-cpu cyclone -emit-llvm -o - %s | FileCheck %s --check-prefix=CHECK-BASIC-V8
 // RUN: %clang_cc1 -triple armv8-linux-gnueabi -target-cpu cortex-a53 -emit-llvm -o - %s | FileCheck %s --check-prefix=CHECK-BASIC-V8
 // RUN: %clang_cc1 -triple thumbv8-linux-gnueabihf -target-cpu cortex-a57 -emit-llvm -o - %s | FileCheck %s --check-prefix=CHECK-BASIC-V8
 // RUN: %clang_cc1 -triple thumbv8-linux-gnueabihf -target-cpu cortex-a72 -emit-llvm -o - %s | FileCheck %s --check-prefix=CHECK-BASIC-V8
-// CHECK-BASIC-V8: "target-features"="+neon,+fp-armv8,+hwdiv,+crypto,+crc,+hwdiv-arm"
+// CHECK-BASIC-V8: "target-features"="+crc,+crypto,+fp-armv8,+hwdiv,+hwdiv-arm,+neon"
 
 
 // RUN: %clang_cc1 -triple thumbv7-linux-gnueabi -target-cpu cortex-r5 -emit-llvm -o - %s | FileCheck %s --check-prefix=CHECK-DIV

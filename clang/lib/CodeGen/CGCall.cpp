@@ -1544,6 +1544,7 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
     if (TargetCPU != "")
       FuncAttrs.addAttribute("target-cpu", TargetCPU);
     if (!Features.empty()) {
+      std::stable_sort(Features.begin(), Features.end());
       std::stringstream TargetFeatures;
       std::copy(Features.begin(), Features.end(),
                 std::ostream_iterator<std::string>(TargetFeatures, ","));
