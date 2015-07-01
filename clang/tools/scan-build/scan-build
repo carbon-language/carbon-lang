@@ -1232,16 +1232,9 @@ ENDTEXT
   }
   my %EnabledCheckers;
   foreach my $lang ("c", "objective-c", "objective-c++", "c++") {
-    pipe(FROM_CHILD, TO_PARENT);
-    my $pid = fork();
-    if ($pid == 0) {
-      close FROM_CHILD;
-      open(STDOUT,">&", \*TO_PARENT);
-      open(STDERR,">&", \*TO_PARENT);
-      exec $Clang, ( @PluginLoadCommandline_xclang, '--analyze', '-x', $lang, '-', '-###');
-    }
-    close(TO_PARENT);
-    while(<FROM_CHILD>) {
+    my $ExecLine = join(' ', qq/"$Clang"/, @PluginLoadCommandline_xclang, "--analyze", "-x", $lang, "-", "-###", "2>&1", "|");
+    open(PS, $ExecLine);
+    while (<PS>) {
       foreach my $val (split /\s+/) {
         $val =~ s/\"//g;
         if ($val =~ /-analyzer-checker\=([^\s]+)/) {
@@ -1249,23 +1242,14 @@ ENDTEXT
         }
       }
     }
-    waitpid($pid,0);
-    close(FROM_CHILD);
   }
 
   # Query clang for complete list of checkers.
   if (defined $Clang && -x $Clang) {
-    pipe(FROM_CHILD, TO_PARENT);
-    my $pid = fork();
-    if ($pid == 0) {
-      close FROM_CHILD;
-      open(STDOUT,">&", \*TO_PARENT);
-      open(STDERR,">&", \*TO_PARENT);
-      exec $Clang, ('-cc1', @PluginsToLoad , '-analyzer-checker-help');
-    }
-    close(TO_PARENT);
+    my $ExecLine = join(' ', qq/"$Clang"/, "-cc1", @PluginsToLoad, "-analyzer-checker-help", "2>&1", "|");
+    open(PS, $ExecLine);
     my $foundCheckers = 0;
-    while(<FROM_CHILD>) {
+    while (<PS>) {
       if (/CHECKERS:/) {
         $foundCheckers = 1;
         last;
@@ -1277,7 +1261,7 @@ ENDTEXT
     else {
       print("\nAVAILABLE CHECKERS:\n\n");
       my $skip = 0;
-      while(<FROM_CHILD>) {
+       while(<PS>) {
         if (/experimental/) {
           $skip = 1;
           next;
@@ -1314,10 +1298,9 @@ ENDTEXT
         }
         print $_;
       }
-      print "\nNOTE: \"+\" indicates that an analysis is enabled by default.\n"
+      print "\nNOTE: \"+\" indicates that an analysis is enabled by default.\n";
     }
-    waitpid($pid,0);
-    close(FROM_CHILD);
+    close PS;
   }
 
 print <<ENDTEXT

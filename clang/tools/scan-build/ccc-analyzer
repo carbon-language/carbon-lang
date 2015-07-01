@@ -22,6 +22,33 @@ use File::Basename;
 use Text::ParseWords;
 
 ##===----------------------------------------------------------------------===##
+# List form 'system' with STDOUT and STDERR captured.
+##===----------------------------------------------------------------------===##
+
+sub silent_system {
+  my $HtmlDir = shift;
+  my $Command = shift;
+
+  # Save STDOUT and STDERR and redirect to a temporary file.
+  open OLDOUT, ">&", \*STDOUT;
+  open OLDERR, ">&", \*STDERR;
+  my ($TmpFH, $TmpFile) = tempfile("temp_buf_XXXXXX",
+                                   DIR => $HtmlDir,
+                                   UNLINK => 1);
+  open(STDOUT, ">$TmpFile");
+  open(STDERR, ">&", \*STDOUT);
+
+  # Invoke 'system', STDOUT and STDERR are output to a temporary file.
+  system $Command, @_;
+
+  # Restore STDOUT and STDERR.
+  open STDOUT, ">&", \*OLDOUT;
+  open STDERR, ">&", \*OLDERR;
+
+  return $TmpFH;
+}
+
+##===----------------------------------------------------------------------===##
 # Compiler command setup.
 ##===----------------------------------------------------------------------===##
 
@@ -145,7 +172,7 @@ sub ProcessClangFailure {
   print OUT "@$Args\n";
   close OUT;
   `uname -a >> $PPFile.info.txt 2>&1`;
-  `$Compiler -v >> $PPFile.info.txt 2>&1`;
+  `"$Compiler" -v >> $PPFile.info.txt 2>&1`;
   rename($ofile, "$PPFile.stderr.txt");
   return (basename $PPFile);
 }
@@ -155,27 +182,15 @@ sub ProcessClangFailure {
 ##----------------------------------------------------------------------------##
 
 sub GetCCArgs {
+  my $HtmlDir = shift;
   my $mode = shift;
   my $Args = shift;
-
-  pipe (FROM_CHILD, TO_PARENT);
-  my $pid = fork();
-  if ($pid == 0) {
-    close FROM_CHILD;
-    open(STDOUT,">&", \*TO_PARENT);
-    open(STDERR,">&", \*TO_PARENT);
-    exec $Clang, "-###", $mode, @$Args;
-  }
-  close(TO_PARENT);
   my $line;
-  while (<FROM_CHILD>) {
+  my $OutputStream = silent_system($HtmlDir, $Clang, "-###", $mode, @$Args);
+  while (<$OutputStream>) {
     next if (!/\s"?-cc1"?\s/);
     $line = $_;
   }
-
-  waitpid($pid,0);
-  close(FROM_CHILD);
-
   die "could not find clang line\n" if (!defined $line);
   # Strip leading and trailing whitespace characters.
   $line =~ s/^\s+|\s+$//g;
@@ -207,7 +222,7 @@ sub Analyze {
     $Cmd = $Clang;
 
     # Create arguments for doing regular parsing.
-    my $SyntaxArgs = GetCCArgs("-fsyntax-only", \@Args);
+    my $SyntaxArgs = GetCCArgs($HtmlDir, "-fsyntax-only", \@Args);
     @CmdArgsSansAnalyses = @$SyntaxArgs;
 
     # Create arguments for doing static analysis.
@@ -230,7 +245,7 @@ sub Analyze {
       push @Args, "-Xclang", "-analyzer-viz-egraph-ubigraph";
     }
 
-    my $AnalysisArgs = GetCCArgs("--analyze", \@Args);
+    my $AnalysisArgs = GetCCArgs($HtmlDir, "--analyze", \@Args);
     @CmdArgs = @$AnalysisArgs;
   }
 
@@ -255,31 +270,19 @@ sub Analyze {
     print STDERR "#SHELL (cd '$dir' && @PrintArgs)\n";
   }
 
-  # Capture the STDERR of clang and send it to a temporary file.
-  # Capture the STDOUT of clang and reroute it to ccc-analyzer's STDERR.
+  # Save STDOUT and STDERR of clang to a temporary file and reroute
+  # all clang output to ccc-analyzer's STDERR.
   # We save the output file in the 'crashes' directory if clang encounters
   # any problems with the file.
-  pipe (FROM_CHILD, TO_PARENT);
-  my $pid = fork();
-  if ($pid == 0) {
-    close FROM_CHILD;
-    open(STDOUT,">&", \*TO_PARENT);
-    open(STDERR,">&", \*TO_PARENT);
-    exec $Cmd, @CmdArgs;
-  }
-
-  close TO_PARENT;
   my ($ofh, $ofile) = tempfile("clang_output_XXXXXX", DIR => $HtmlDir);
-
-  while (<FROM_CHILD>) {
+  
+  my $OutputStream = silent_system($HtmlDir, $Cmd, @CmdArgs);
+  while ( <$OutputStream> ) {
     print $ofh $_;
     print STDERR $_;
   }
-  close $ofh;
-
-  waitpid($pid,0);
-  close(FROM_CHILD);
   my $Result = $?;
+  close $ofh;
 
   # Did the command die because of a signal?
   if ($ReportFailures) {
