@@ -58,20 +58,9 @@ LLVM_OBJ_ROOT   := $(call realpath, @abs_top_builddir@)
 PROJ_SRC_ROOT   := $(LLVM_SRC_ROOT)
 PROJ_SRC_DIR    := $(LLVM_SRC_ROOT)$(patsubst $(PROJ_OBJ_ROOT)%,%,$(PROJ_OBJ_DIR))
 
-# FIXME: This is temporary during the grace period where in-source builds are
-# deprecated. Convert to a hard error when that period is up.
-#
 # See: http://lists.cs.uiuc.edu/pipermail/llvm-commits/Week-of-Mon-20150323/268067.html
 ifeq ($(LLVM_SRC_ROOT), $(LLVM_OBJ_ROOT))
-  $(warning ######################################################################################)
-  $(warning #                                                                                    #)
-  $(warning #                                   WARNING                                          #)
-  $(warning #                                                                                    #)
-  $(warning #                        In-source builds are deprecated.                            #)
-  $(warning #                                                                                    #)
-  $(warning #               Please configure from a separate build directory!                    #)
-  $(warning #                                                                                    #)
-  $(warning ######################################################################################)
+  $(error In-source builds are not allowed. Please configure from a separate build directory!)
 endif
 
 ifneq ($(CLANG_SRC_ROOT),)
