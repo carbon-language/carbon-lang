@@ -106,8 +106,8 @@ private:
                                 LandingPadInst *OutlinedLPad,
                                 const LandingPadInst *OriginalLPad,
                                 FrameVarInfoMap &VarInfo);
-  Function *createHandlerFunc(Type *RetTy, const Twine &Name, Module *M,
-                              Value *&ParentFP);
+  Function *createHandlerFunc(Function *ParentFn, Type *RetTy,
+                              const Twine &Name, Module *M, Value *&ParentFP);
   bool outlineHandler(ActionHandler *Action, Function *SrcFn,
                       LandingPadInst *LPad, BasicBlock *StartBB,
                       FrameVarInfoMap &VarInfo);
@@ -1329,14 +1329,15 @@ void WinEHPrepare::addStubInvokeToHandlerIfNeeded(Function *Handler) {
 
 // FIXME: Consider sinking this into lib/Target/X86 somehow. TargetLowering
 // usually doesn't build LLVM IR, so that's probably the wrong place.
-Function *WinEHPrepare::createHandlerFunc(Type *RetTy, const Twine &Name,
-                                          Module *M, Value *&ParentFP) {
+Function *WinEHPrepare::createHandlerFunc(Function *ParentFn, Type *RetTy,
+                                          const Twine &Name, Module *M,
+                                          Value *&ParentFP) {
   // x64 uses a two-argument prototype where the parent FP is the second
   // argument. x86 uses no arguments, just the incoming EBP value.
   LLVMContext &Context = M->getContext();
+  Type *Int8PtrType = Type::getInt8PtrTy(Context);
   FunctionType *FnType;
   if (TheTriple.getArch() == Triple::x86_64) {
-    Type *Int8PtrType = Type::getInt8PtrTy(Context);
     Type *ArgTys[2] = {Int8PtrType, Int8PtrType};
     FnType = FunctionType::get(RetTy, ArgTys, false);
   } else {
@@ -1353,9 +1354,13 @@ Function *WinEHPrepare::createHandlerFunc(Type *RetTy, const Twine &Name,
     assert(M);
     Function *FrameAddressFn =
         Intrinsic::getDeclaration(M, Intrinsic::frameaddress);
-    Value *Args[1] = {ConstantInt::get(Type::getInt32Ty(Context), 1)};
-    ParentFP = CallInst::Create(FrameAddressFn, Args, "parent_fp",
-                                &Handler->getEntryBlock());
+    Function *RecoverFPFn =
+        Intrinsic::getDeclaration(M, Intrinsic::x86_seh_recoverfp);
+    IRBuilder<> Builder(&Handler->getEntryBlock());
+    Value *EBP =
+        Builder.CreateCall(FrameAddressFn, {Builder.getInt32(1)}, "ebp");
+    Value *ParentI8Fn = Builder.CreateBitCast(ParentFn, Int8PtrType);
+    ParentFP = Builder.CreateCall(RecoverFPFn, {ParentI8Fn, EBP});
   }
   return Handler;
 }
@@ -1371,10 +1376,10 @@ bool WinEHPrepare::outlineHandler(ActionHandler *Action, Function *SrcFn,
   Value *ParentFP;
   Function *Handler;
   if (Action->getType() == Catch) {
-    Handler = createHandlerFunc(Int8PtrType, SrcFn->getName() + ".catch", M,
+    Handler = createHandlerFunc(SrcFn, Int8PtrType, SrcFn->getName() + ".catch", M,
                                 ParentFP);
   } else {
-    Handler = createHandlerFunc(Type::getVoidTy(Context),
+    Handler = createHandlerFunc(SrcFn, Type::getVoidTy(Context),
                                 SrcFn->getName() + ".cleanup", M, ParentFP);
   }
   Handler->setPersonalityFn(SrcFn->getPersonalityFn());
@@ -2395,40 +2400,43 @@ void WinEHPrepare::findCleanupHandlers(LandingPadActions &Actions,
           MaybeCall = MaybeCall->getNextNode();
       }
 
-      // Look for outlined finally calls.
-      if (CallSite FinallyCall = matchOutlinedFinallyCall(BB, MaybeCall)) {
-        Function *Fin = FinallyCall.getCalledFunction();
-        assert(Fin && "outlined finally call should be direct");
-        auto *Action = new CleanupHandler(BB);
-        Action->setHandlerBlockOrFunc(Fin);
-        Actions.insertCleanupHandler(Action);
-        CleanupHandlerMap[BB] = Action;
-        DEBUG(dbgs() << "  Found frontend-outlined finally call to "
-                     << Fin->getName() << " in block "
-                     << Action->getStartBlock()->getName() << "\n");
+      // Look for outlined finally calls on x64, since those happen to match the
+      // prototype provided by the runtime.
+      if (TheTriple.getArch() == Triple::x86_64) {
+        if (CallSite FinallyCall = matchOutlinedFinallyCall(BB, MaybeCall)) {
+          Function *Fin = FinallyCall.getCalledFunction();
+          assert(Fin && "outlined finally call should be direct");
+          auto *Action = new CleanupHandler(BB);
+          Action->setHandlerBlockOrFunc(Fin);
+          Actions.insertCleanupHandler(Action);
+          CleanupHandlerMap[BB] = Action;
+          DEBUG(dbgs() << "  Found frontend-outlined finally call to "
+                       << Fin->getName() << " in block "
+                       << Action->getStartBlock()->getName() << "\n");
 
-        // Split the block if there were more interesting instructions and look
-        // for finally calls in the normal successor block.
-        BasicBlock *SuccBB = BB;
-        if (FinallyCall.getInstruction() != BB->getTerminator() &&
-            FinallyCall.getInstruction()->getNextNode() !=
-                BB->getTerminator()) {
-          SuccBB =
-              SplitBlock(BB, FinallyCall.getInstruction()->getNextNode(), DT);
-        } else {
-          if (FinallyCall.isInvoke()) {
+          // Split the block if there were more interesting instructions and
+          // look for finally calls in the normal successor block.
+          BasicBlock *SuccBB = BB;
+          if (FinallyCall.getInstruction() != BB->getTerminator() &&
+              FinallyCall.getInstruction()->getNextNode() !=
+                  BB->getTerminator()) {
             SuccBB =
-                cast<InvokeInst>(FinallyCall.getInstruction())->getNormalDest();
+                SplitBlock(BB, FinallyCall.getInstruction()->getNextNode(), DT);
           } else {
-            SuccBB = BB->getUniqueSuccessor();
-            assert(SuccBB &&
-                   "splitOutlinedFinallyCalls didn't insert a branch");
+            if (FinallyCall.isInvoke()) {
+              SuccBB = cast<InvokeInst>(FinallyCall.getInstruction())
+                           ->getNormalDest();
+            } else {
+              SuccBB = BB->getUniqueSuccessor();
+              assert(SuccBB &&
+                     "splitOutlinedFinallyCalls didn't insert a branch");
+            }
           }
+          BB = SuccBB;
+          if (BB == EndBB)
+            return;
+          continue;
         }
-        BB = SuccBB;
-        if (BB == EndBB)
-          return;
-        continue;
       }
     }
 
