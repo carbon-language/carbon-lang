@@ -1235,11 +1235,10 @@ protected:
     HasExtractBitsInsn = hasExtractInsn;
   }
 
-  /// Tells the code generator not to expand sequence of operations into a
-  /// separate sequences that increases the amount of flow control.
-  void setJumpIsExpensive(bool isExpensive = true) {
-    JumpIsExpensive = isExpensive;
-  }
+  /// Tells the code generator not to expand logic operations on comparison
+  /// predicates into separate sequences that increase the amount of flow
+  /// control.
+  void setJumpIsExpensive(bool isExpensive = true);
 
   /// Tells the code generator that integer divide is expensive, and if
   /// possible, should be replaced by an alternate sequence of instructions not

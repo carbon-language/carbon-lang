@@ -1,19 +1,28 @@
-; RUN: llc < %s -march=x86  | not grep set
+; RUN: llc < %s -mtriple=i386-unknown-unknown -jump-is-expensive=0 | FileCheck %s --check-prefix=JUMP2
+; RUN: llc < %s -mtriple=i386-unknown-unknown -jump-is-expensive=1 | FileCheck %s --check-prefix=JUMP1
 
 define void @foo(i32 %X, i32 %Y, i32 %Z) nounwind {
+; JUMP2-LABEL: foo:
+; JUMP2-DAG:     jl
+; JUMP2-DAG:     je
+;
+; JUMP1-LABEL: foo:
+; JUMP1-DAG:     sete
+; JUMP1-DAG:     setl
+; JUMP1:         orb
+; JUMP1:         jne
 entry:
-	%tmp = tail call i32 (...) @bar( )		; <i32> [#uses=0]
-	%tmp.upgrd.1 = icmp eq i32 %X, 0		; <i1> [#uses=1]
-	%tmp3 = icmp slt i32 %Y, 5		; <i1> [#uses=1]
-	%tmp4 = or i1 %tmp3, %tmp.upgrd.1		; <i1> [#uses=1]
-	br i1 %tmp4, label %cond_true, label %UnifiedReturnBlock
+  %tmp1 = icmp eq i32 %X, 0
+  %tmp3 = icmp slt i32 %Y, 5
+  %tmp4 = or i1 %tmp3, %tmp1
+  br i1 %tmp4, label %cond_true, label %UnifiedReturnBlock
 
-cond_true:		; preds = %entry
-	%tmp5 = tail call i32 (...) @bar( )		; <i32> [#uses=0]
-	ret void
+cond_true:
+  %tmp5 = tail call i32 (...) @bar( )
+  ret void
 
-UnifiedReturnBlock:		; preds = %entry
-	ret void
+UnifiedReturnBlock:
+  ret void
 }
 
 declare i32 @bar(...)
