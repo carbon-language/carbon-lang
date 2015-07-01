@@ -29,7 +29,7 @@
 
 namespace llvm {
 /// \brief Collects and handles line tables information in a CodeView format.
-class WinCodeViewLineTables : public AsmPrinterHandler {
+class LLVM_LIBRARY_VISIBILITY WinCodeViewLineTables : public AsmPrinterHandler {
   AsmPrinter *Asm;
   DebugLoc PrevInstLoc;
 

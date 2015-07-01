@@ -30,7 +30,7 @@ template <typename T>
 class SmallVectorImpl;
 
 /// Emits exception handling directives.
-class EHStreamer : public AsmPrinterHandler {
+class LLVM_LIBRARY_VISIBILITY EHStreamer : public AsmPrinterHandler {
 protected:
   /// Target of directive emission.
   AsmPrinter *Asm;

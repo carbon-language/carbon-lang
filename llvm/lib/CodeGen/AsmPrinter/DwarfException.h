@@ -21,7 +21,7 @@ namespace llvm {
 class MachineFunction;
 class ARMTargetStreamer;
 
-class DwarfCFIExceptionBase : public EHStreamer {
+class LLVM_LIBRARY_VISIBILITY DwarfCFIExceptionBase : public EHStreamer {
 protected:
   DwarfCFIExceptionBase(AsmPrinter *A);
 
@@ -31,7 +31,7 @@ protected:
   void markFunctionEnd() override;
 };
 
-class DwarfCFIException : public DwarfCFIExceptionBase {
+class LLVM_LIBRARY_VISIBILITY DwarfCFIException : public DwarfCFIExceptionBase {
   /// Per-function flag to indicate if .cfi_personality should be emitted.
   bool shouldEmitPersonality;
 
@@ -61,7 +61,7 @@ public:
   void endFunction(const MachineFunction *) override;
 };
 
-class ARMException : public DwarfCFIExceptionBase {
+class LLVM_LIBRARY_VISIBILITY ARMException : public DwarfCFIExceptionBase {
   void emitTypeInfos(unsigned TTypeEncoding) override;
   ARMTargetStreamer &getTargetStreamer();
 
