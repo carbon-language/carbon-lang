@@ -148,8 +148,8 @@ void InclusionRewriter::FileChanged(SourceLocation Loc,
     // we didn't reach this file (eg: the main file) via an inclusion directive
     return;
   FileID Id = FullSourceLoc(Loc, SM).getFileID();
-  auto P = FileIncludes.emplace(LastInclusionLocation.getRawEncoding(),
-                                IncludedFile(Id, NewFileType));
+  auto P = FileIncludes.insert(std::make_pair(
+      LastInclusionLocation.getRawEncoding(), IncludedFile(Id, NewFileType)));
   assert(P.second && "Unexpected revisitation of the same include directive");
   LastInclusionLocation = SourceLocation();
 }
@@ -182,7 +182,8 @@ void InclusionRewriter::InclusionDirective(SourceLocation HashLoc,
          "Another inclusion directive was found before the previous one "
          "was processed");
   if (Imported) {
-    auto P = ModuleIncludes.emplace(HashLoc.getRawEncoding(), Imported);
+    auto P = ModuleIncludes.insert(
+        std::make_pair(HashLoc.getRawEncoding(), Imported));
     assert(P.second && "Unexpected revisitation of the same include directive");
   } else
     LastInclusionLocation = HashLoc;
