@@ -45,4 +45,8 @@ int main()
     static_assert((std::is_same<std::allocator_traits<A<char> >::is_always_equal, std::true_type>::value), "");
     static_assert((std::is_same<std::allocator_traits<B<char> >::is_always_equal, std::true_type>::value), "");
     static_assert((std::is_same<std::allocator_traits<C<char> >::is_always_equal, std::false_type>::value), "");
+
+    static_assert((std::is_same<std::allocator_traits<A<const char> >::is_always_equal, std::true_type>::value), "");
+    static_assert((std::is_same<std::allocator_traits<B<const char> >::is_always_equal, std::true_type>::value), "");
+    static_assert((std::is_same<std::allocator_traits<C<const char> >::is_always_equal, std::false_type>::value), "");
 }

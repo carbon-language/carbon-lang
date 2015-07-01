@@ -1787,6 +1787,7 @@ public:
     typedef const _Tp         value_type;
 
     typedef true_type propagate_on_container_move_assignment;
+    typedef true_type is_always_equal;
 
     template <class _Up> struct rebind {typedef allocator<_Up> other;};
 

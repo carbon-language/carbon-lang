@@ -22,6 +22,7 @@
 //     typedef typename add_lvalue_reference<T>::type       reference;
 //     typedef typename add_lvalue_reference<const T>::type const_reference;
 //     typedef T                                     value_type;
+//     typedef true_type                             is_always_equal;
 //
 //     template <class U> struct rebind {typedef allocator<U> other;};
 // ...
@@ -42,6 +43,10 @@ int main()
     static_assert((std::is_same<std::allocator<char>::const_reference, const char&>::value), "");
     static_assert((std::is_same<std::allocator<char>::rebind<int>::other,
                                 std::allocator<int> >::value), "");
+
+    static_assert((std::is_same<std::allocator<      char>::is_always_equal, std::true_type>::value), "");
+    static_assert((std::is_same<std::allocator<const char>::is_always_equal, std::true_type>::value), "");
+
     std::allocator<char> a;
     std::allocator<char> a2 = a;
     a2 = a;
