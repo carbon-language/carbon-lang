@@ -260,7 +260,7 @@ public:
   int64_t entsize() const { return _entSize; }
   uint64_t fileOffset() const { return _fileOffset; }
   uint64_t flags() const { return _flags; }
-  uint64_t memSize() { return _memSize; }
+  uint64_t memSize() const { return _memSize; }
 
 private:
   StringRef _name;
