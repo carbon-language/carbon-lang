@@ -61,6 +61,40 @@ define void @reassociate_gep_nsw(float* %a, i32 %i, i32 %j) {
   ret void
 }
 
+; assume(j >= 0);
+; foo(&a[zext(j)]);
+; assume(i + j >= 0);
+; foo(&a[zext(i + j)]);
+;   =>
+; t1 = &a[zext(j)];
+; foo(t1);
+; t2 = t1 + sext(i);
+; foo(t2);
+define void @reassociate_gep_assume(float* %a, i32 %i, i32 %j) {
+; CHECK-LABEL: @reassociate_gep_assume(
+  ; assume(j >= 0)
+  %cmp = icmp sgt i32 %j, -1
+  call void @llvm.assume(i1 %cmp)
+  %1 = add i32 %i, %j
+  %cmp2 = icmp sgt i32 %1, -1
+  call void @llvm.assume(i1 %cmp2)
+
+  %idxprom.j = zext i32 %j to i64
+  %2 = getelementptr float, float* %a, i64 %idxprom.j
+; CHECK: [[t1:[^ ]+]] = getelementptr float, float* %a, i64 %idxprom.j
+  call void @foo(float* %2)
+; CHECK: call void @foo(float* [[t1]])
+
+  %idxprom.1 = zext i32 %1 to i64
+  %3 = getelementptr float, float* %a, i64 %idxprom.1
+; CHECK: [[sexti:[^ ]+]] = sext i32 %i to i64
+; CHECK: [[t2:[^ ]+]] = getelementptr float, float* [[t1]], i64 [[sexti]]
+  call void @foo(float* %3)
+; CHECK: call void @foo(float* [[t2]])
+
+  ret void
+}
+
 ; Do not split the second GEP because sext(i + j) != sext(i) + sext(j).
 define void @reassociate_gep_no_nsw(float* %a, i32 %i, i32 %j) {
 ; CHECK-LABEL: @reassociate_gep_no_nsw(
@@ -88,3 +122,5 @@ define void @reassociate_gep_128(float* %a, i128 %i, i128 %j) {
 ; CHECK: call void @foo(float* [[t2]])
   ret void
 }
+
+declare void @llvm.assume(i1)
