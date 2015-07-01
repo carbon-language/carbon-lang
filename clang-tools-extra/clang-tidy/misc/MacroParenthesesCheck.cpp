@@ -38,32 +38,32 @@ private:
   Preprocessor *PP;
   MacroParenthesesCheck *Check;
 };
+} // namespace
 
 /// Is argument surrounded properly with parentheses/braces/squares/commas?
-bool isSurroundedLeft(const Token &T) {
+static bool isSurroundedLeft(const Token &T) {
   return T.isOneOf(tok::l_paren, tok::l_brace, tok::l_square, tok::comma,
                    tok::semi);
 }
 
 /// Is argument surrounded properly with parentheses/braces/squares/commas?
-bool isSurroundedRight(const Token &T) {
+static bool isSurroundedRight(const Token &T) {
   return T.isOneOf(tok::r_paren, tok::r_brace, tok::r_square, tok::comma,
                    tok::semi);
 }
 
 /// Is given TokenKind a keyword?
-bool isKeyword(const Token &T) {
+static bool isKeyword(const Token &T) {
   /// \TODO better matching of keywords to avoid false positives
   return T.isOneOf(tok::kw_case, tok::kw_const, tok::kw_struct);
 }
 
 /// Warning is written when one of these operators are not within parentheses.
-bool isWarnOp(const Token &T) {
+static bool isWarnOp(const Token &T) {
   /// \TODO This is an initial list of operators. It can be tweaked later to
   /// get more positives or perhaps avoid some false positive.
   return T.isOneOf(tok::plus, tok::minus, tok::star, tok::slash, tok::percent,
                    tok::amp, tok::pipe, tok::caret);
-}
 }
 
 void MacroParenthesesPPCallbacks::replacementList(const Token &MacroNameTok,
