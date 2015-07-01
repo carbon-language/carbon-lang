@@ -77,11 +77,8 @@ public:
   /// Apply the DW_AT_stmt_list from this compile unit to the specified DIE.
   void applyStmtList(DIE &D);
 
-  /// Get or create global variable DIE.
-  /// \param GV Global Variable Node
-  /// \param ContextDIE DIE scope for GV Node, if available.
-  DIE *getOrCreateGlobalVariableDIE(const DIGlobalVariable *GV,
-                                    DIE *ContextDIE = nullptr);
+  /// getOrCreateGlobalVariableDIE - get or create global variable DIE.
+  DIE *getOrCreateGlobalVariableDIE(const DIGlobalVariable *GV);
 
   /// addLabelAddress - Add a dwarf label attribute data and value using
   /// either DW_FORM_addr or DW_FORM_GNU_addr_index.

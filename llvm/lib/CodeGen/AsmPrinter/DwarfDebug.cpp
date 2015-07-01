@@ -449,14 +449,14 @@ void DwarfDebug::beginModule() {
     auto *CUNode = cast<DICompileUnit>(N);
     DwarfCompileUnit &CU = constructDwarfCompileUnit(CUNode);
     for (auto *IE : CUNode->getImportedEntities())
-      ScopesWithLocalDeclNodes.push_back(std::make_pair(IE->getScope(), IE));
-    for (auto *GV : CUNode->getGlobalVariables()) {
-      auto *Context = GV->getScope();
-      if (Context && isa<DILexicalBlockBase>(Context))
-        ScopesWithLocalDeclNodes.push_back(std::make_pair(Context, GV));
-      else
-        CU.getOrCreateGlobalVariableDIE(GV);
-    }
+      ScopesWithImportedEntities.push_back(std::make_pair(IE->getScope(), IE));
+    // Stable sort to preserve the order of appearance of imported entities.
+    // This is to avoid out-of-order processing of interdependent declarations
+    // within the same scope, e.g. { namespace A = base; namespace B = A; }
+    std::stable_sort(ScopesWithImportedEntities.begin(),
+                     ScopesWithImportedEntities.end(), less_first());
+    for (auto *GV : CUNode->getGlobalVariables())
+      CU.getOrCreateGlobalVariableDIE(GV);
     for (auto *SP : CUNode->getSubprograms())
       SPMap.insert(std::make_pair(SP, &CU));
     for (auto *Ty : CUNode->getEnumTypes()) {
@@ -467,23 +467,12 @@ void DwarfDebug::beginModule() {
     for (auto *Ty : CUNode->getRetainedTypes()) {
       // The retained types array by design contains pointers to
       // MDNodes rather than DIRefs. Unique them here.
-      DIType *RT = cast<DIType>(resolve(Ty->getRef()));
-      auto *Context = resolve(Ty->getScope());
-      if (Context && isa<DILexicalBlockBase>(Context))
-        ScopesWithLocalDeclNodes.push_back(std::make_pair(Context, RT));
-      else
-        CU.getOrCreateTypeDIE(RT);
+      CU.getOrCreateTypeDIE(cast<DIType>(resolve(Ty->getRef())));
     }
     // Emit imported_modules last so that the relevant context is already
     // available.
     for (auto *IE : CUNode->getImportedEntities())
       constructAndAddImportedEntityDIE(CU, IE);
-
-    // Stable sort to preserve the order of appearance of imported entities.
-    // This is to avoid out-of-order processing of interdependent declarations
-    // within the same scope, e.g. { namespace A = base; namespace B = A; }
-    std::stable_sort(ScopesWithLocalDeclNodes.begin(),
-                     ScopesWithLocalDeclNodes.end(), less_first());
   }
 
   // Tell MMI that we have debug info.

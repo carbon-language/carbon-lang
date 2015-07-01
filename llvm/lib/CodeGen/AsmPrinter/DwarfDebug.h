@@ -278,10 +278,13 @@ class DwarfDebug : public AsmPrinterHandler {
   // Holder for the file specific debug information.
   DwarfFile InfoHolder;
 
-  // Holder for local declaration DI nodes per scope.
+  // Holders for the various debug information flags that we might need to
+  // have exposed. See accessor functions below for description.
+
+  // Holder for imported entities.
   typedef SmallVector<std::pair<const MDNode *, const MDNode *>, 32>
-  LocalDeclMap;
-  LocalDeclMap ScopesWithLocalDeclNodes;
+  ImportedEntityMap;
+  ImportedEntityMap ScopesWithImportedEntities;
 
   // Map from MDNodes for user-defined types to the type units that describe
   // them.
@@ -616,12 +619,10 @@ public:
 
   const MachineFunction *getCurrentFunction() const { return CurFn; }
 
-  typedef iterator_range<LocalDeclMap::const_iterator> LocalDeclMapRange;
-  
-  LocalDeclMapRange findLocalDeclNodesForScope(const MDNode *Scope) const {
-    assert(DILexicalBlockBase::classof(Scope) && "Expected LexicalBlock scope");
+  iterator_range<ImportedEntityMap::const_iterator>
+  findImportedEntitiesForScope(const MDNode *Scope) const {
     return make_range(std::equal_range(
-        ScopesWithLocalDeclNodes.begin(), ScopesWithLocalDeclNodes.end(),
+        ScopesWithImportedEntities.begin(), ScopesWithImportedEntities.end(),
         std::pair<const MDNode *, const MDNode *>(Scope, nullptr),
         less_first()));
   }

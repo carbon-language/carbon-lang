@@ -101,7 +101,7 @@ static const ConstantExpr *getMergedGlobalExpr(const Value *V) {
 
 /// getOrCreateGlobalVariableDIE - get or create global variable DIE.
 DIE *DwarfCompileUnit::getOrCreateGlobalVariableDIE(
-  const DIGlobalVariable *GV, DIE *ContextDIE) {
+    const DIGlobalVariable *GV) {
   // Check for pre-existence.
   if (DIE *Die = getDIE(GV))
     return Die;
@@ -113,8 +113,7 @@ DIE *DwarfCompileUnit::getOrCreateGlobalVariableDIE(
 
   // Construct the context before querying for the existence of the DIE in
   // case such construction creates the DIE.
-  if (ContextDIE == nullptr)
-    ContextDIE = getOrCreateContextDIE(GVContext);
+  DIE *ContextDIE = getOrCreateContextDIE(GVContext);
 
   // Add to map.
   DIE *VariableDIE = &createAndAddDIE(GV->getTag(), *ContextDIE, GV);
@@ -336,16 +335,17 @@ void DwarfCompileUnit::constructScopeDIE(
     // null and the children will be added to the scope DIE.
     createScopeChildrenDIE(Scope, Children, &ChildScopeCount);
 
-
-    DwarfDebug::LocalDeclMapRange LocalDeclNodeRangeForScope(nullptr, nullptr);
-    // Skip local decls in gmlt-like data.
-    if (!includeMinimalInlineScopes())
-      LocalDeclNodeRangeForScope = DD->findLocalDeclNodesForScope(DS);
+    // Skip imported directives in gmlt-like data.
+    if (!includeMinimalInlineScopes()) {
+      // There is no need to emit empty lexical block DIE.
+      for (const auto &E : DD->findImportedEntitiesForScope(DS))
+        Children.push_back(
+            constructImportedEntityDIE(cast<DIImportedEntity>(E.second)));
+    }
 
     // If there are only other scopes as children, put them directly in the
     // parent instead, as this scope would serve no purpose.
-    if (Children.size() == ChildScopeCount &&
-        empty(LocalDeclNodeRangeForScope)) {
+    if (Children.size() == ChildScopeCount) {
       FinalChildren.insert(FinalChildren.end(),
                            std::make_move_iterator(Children.begin()),
                            std::make_move_iterator(Children.end()));
@@ -353,15 +353,6 @@ void DwarfCompileUnit::constructScopeDIE(
     }
     ScopeDIE = constructLexicalScopeDIE(Scope);
     assert(ScopeDIE && "Scope DIE should not be null.");
-
-    for (const auto &DI : LocalDeclNodeRangeForScope) {
-      if (auto *IE = dyn_cast<DIImportedEntity>(DI.second))
-        Children.push_back(constructImportedEntityDIE(IE));
-      else if (auto *GV = dyn_cast<DIGlobalVariable>(DI.second))
-        getOrCreateGlobalVariableDIE(GV, ScopeDIE);
-      else if (auto *RT = dyn_cast<DIType>(DI.second))
-        getOrCreateTypeDIE(RT, ScopeDIE);
-    }
   }
 
   // Add children
