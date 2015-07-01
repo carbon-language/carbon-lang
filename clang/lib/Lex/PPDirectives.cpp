@@ -1749,7 +1749,8 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
   // Ask HeaderInfo if we should enter this #include file.  If not, #including
   // this file will have no effect.
   if (ShouldEnter &&
-      !HeaderInfo.ShouldEnterIncludeFile(*this, File, isImport)) {
+      !HeaderInfo.ShouldEnterIncludeFile(*this, File, isImport,
+                                         SuggestedModule.getModule())) {
     ShouldEnter = false;
     if (Callbacks)
       Callbacks->FileSkipped(*File, FilenameTok, FileCharacter);

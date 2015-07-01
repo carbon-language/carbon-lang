@@ -1025,7 +1025,7 @@ void HeaderSearch::MarkFileModuleHeader(const FileEntry *FE,
 
 bool HeaderSearch::ShouldEnterIncludeFile(Preprocessor &PP,
                                           const FileEntry *File,
-                                          bool isImport) {
+                                          bool isImport, Module *M) {
   ++NumIncluded; // Count # of attempted #includes.
 
   // Get information about this file.
@@ -1050,7 +1050,11 @@ bool HeaderSearch::ShouldEnterIncludeFile(Preprocessor &PP,
   // if the macro that guards it is defined, we know the #include has no effect.
   if (const IdentifierInfo *ControllingMacro
       = FileInfo.getControllingMacro(ExternalLookup))
-    if (PP.isMacroDefined(ControllingMacro)) {
+    // If the include file is part of a module, and we already know what its
+    // controlling macro is, then we've already parsed it and can safely just
+    // make it visible. This saves us needing to switch into the visibility
+    // state of the module just to check whether the macro is defined within it.
+    if (M || PP.isMacroDefined(ControllingMacro)) {
       ++NumMultiIncludeFileOptzn;
       return false;
     }
