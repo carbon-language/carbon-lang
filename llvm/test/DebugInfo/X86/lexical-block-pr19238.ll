@@ -1,4 +1,4 @@
-; RUN: %llc_dwarf -filetype=obj -O0 < %s  | llvm-dwarfdump -debug-dump=info - | FileCheck %s
+; RUN: llc -mtriple=x86_64-unknown-linux-gnu -filetype=obj -O0 < %s  | llvm-dwarfdump -debug-dump=info - | FileCheck %s
 
 ;; This test checks the following:
 ;; 1. Useless lexical block entry is not emitted
