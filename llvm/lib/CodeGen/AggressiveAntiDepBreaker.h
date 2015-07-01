@@ -33,7 +33,7 @@ namespace llvm {
 class RegisterClassInfo;
 
   /// Contains all the state necessary for anti-dep breaking.
-  class AggressiveAntiDepState {
+class LLVM_LIBRARY_VISIBILITY AggressiveAntiDepState {
   public:
     /// Information about a register reference within a liverange
     typedef struct {
@@ -108,8 +108,8 @@ class RegisterClassInfo;
     bool IsLive(unsigned Reg);
   };
 
-
-  class AggressiveAntiDepBreaker : public AntiDepBreaker {
+  class LLVM_LIBRARY_VISIBILITY AggressiveAntiDepBreaker
+      : public AntiDepBreaker {
     MachineFunction& MF;
     MachineRegisterInfo &MRI;
     const TargetInstrInfo *TII;

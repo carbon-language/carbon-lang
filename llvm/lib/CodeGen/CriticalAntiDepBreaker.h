@@ -31,7 +31,7 @@ class RegisterClassInfo;
 class TargetInstrInfo;
 class TargetRegisterInfo;
 
-  class CriticalAntiDepBreaker : public AntiDepBreaker {
+class LLVM_LIBRARY_VISIBILITY CriticalAntiDepBreaker : public AntiDepBreaker {
     MachineFunction& MF;
     MachineRegisterInfo &MRI;
     const TargetInstrInfo *TII;

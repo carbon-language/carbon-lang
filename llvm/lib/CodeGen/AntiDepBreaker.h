@@ -27,7 +27,7 @@ namespace llvm {
 
 /// This class works in conjunction with the post-RA scheduler to rename
 /// registers to break register anti-dependencies (WAR hazards).
-class AntiDepBreaker {
+class LLVM_LIBRARY_VISIBILITY AntiDepBreaker {
 public:
   typedef std::vector<std::pair<MachineInstr *, MachineInstr *> > 
     DbgValueVector;
