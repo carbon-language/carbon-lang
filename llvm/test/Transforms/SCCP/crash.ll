@@ -27,3 +27,8 @@ define i32 @test2([4 x i32] %A) {
   %B = extractvalue [4 x i32] %A, 1
   ret i32 %B
 }
+
+define x86_mmx @test3() {
+  %load = load x86_mmx, x86_mmx* null
+  ret x86_mmx %load
+}
