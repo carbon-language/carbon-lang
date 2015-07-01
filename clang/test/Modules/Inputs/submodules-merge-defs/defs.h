@@ -10,6 +10,7 @@ public:
 // Check that lookup and access checks are performed in the right context.
 struct B::Inner2 : Inner1 {};
 template<typename T> void B::f() {}
+template<> inline void B::f<int>() {}
 
 // Check that base-specifiers are correctly disambiguated.
 template<int N> struct C_Base { struct D { constexpr operator int() const { return 0; } }; };
@@ -31,7 +32,8 @@ template<typename T> struct F {
 template<typename T> int F<T>::f() { return 0; }
 template<typename T> template<typename U> int F<T>::g() { return 0; }
 template<typename T> int F<T>::n = 0;
-//template<> template<typename U> int F<char>::g() { return 0; } // FIXME: Re-enable this once we support merging member specializations.
+template<> inline int F<char>::f() { return 0; }
+template<> template<typename U> int F<char>::g() { return 0; }
 template<> struct F<void> { int h(); };
 inline int F<void>::h() { return 0; }
 template<typename T> struct F<T *> { int i(); };

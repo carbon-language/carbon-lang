@@ -236,6 +236,7 @@ void Decl::setLexicalDeclContext(DeclContext *DC) {
   } else {
     getMultipleDC()->LexicalDC = DC;
   }
+  Hidden = cast<Decl>(DC)->Hidden;
 }
 
 void Decl::setDeclContextsImpl(DeclContext *SemaDC, DeclContext *LexicalDC,
