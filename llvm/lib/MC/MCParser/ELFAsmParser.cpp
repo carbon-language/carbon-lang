@@ -593,10 +593,16 @@ bool ELFAsmParser::ParseDirectiveType(StringRef, SMLoc) {
     Lex();
 
   if (getLexer().isNot(AsmToken::Identifier) &&
-      getLexer().isNot(AsmToken::Hash) && getLexer().isNot(AsmToken::At) &&
-      getLexer().isNot(AsmToken::Percent) && getLexer().isNot(AsmToken::String))
-    return TokError("expected STT_<TYPE_IN_UPPER_CASE>, '#<type>', '@<type>', "
-                    "'%<type>' or \"<type>\"");
+      getLexer().isNot(AsmToken::Hash) &&
+      getLexer().isNot(AsmToken::Percent) &&
+      getLexer().isNot(AsmToken::String)) {
+    if (!getLexer().getAllowAtInIdentifier())
+      return TokError("expected STT_<TYPE_IN_UPPER_CASE>, '#<type>', "
+                      "'%<type>' or \"<type>\"");
+    else if (getLexer().isNot(AsmToken::At))
+      return TokError("expected STT_<TYPE_IN_UPPER_CASE>, '#<type>', '@<type>', "
+                      "'%<type>' or \"<type>\"");
+  }
 
   if (getLexer().isNot(AsmToken::String) &&
       getLexer().isNot(AsmToken::Identifier))
