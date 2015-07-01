@@ -14,6 +14,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/LivePhysRegs.h"
+#include "llvm/CodeGen/MachineFrameInfo.h"
+#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBundle.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
@@ -122,4 +124,43 @@ void LivePhysRegs::dump() const {
 #if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
   dbgs() << "  " << *this;
 #endif
+}
+
+/// Add live-in registers of basic block \p MBB to \p LiveRegs.
+static void addLiveIns(LivePhysRegs &LiveRegs, const MachineBasicBlock &MBB) {
+  for (unsigned Reg : make_range(MBB.livein_begin(), MBB.livein_end()))
+    LiveRegs.addReg(Reg);
+}
+
+/// Add pristine registers to the given \p LiveRegs. This function removes
+/// actually saved callee save registers when \p InPrologueEpilogue is false.
+static void addPristines(LivePhysRegs &LiveRegs, const MachineFunction &MF,
+                         const TargetRegisterInfo &TRI) {
+  const MachineFrameInfo &MFI = *MF.getFrameInfo();
+  if (!MFI.isCalleeSavedInfoValid())
+    return;
+
+  for (const MCPhysReg *CSR = TRI.getCalleeSavedRegs(&MF); CSR && *CSR; ++CSR)
+    LiveRegs.addReg(*CSR);
+  for (const CalleeSavedInfo &Info : MFI.getCalleeSavedInfo())
+    LiveRegs.removeReg(Info.getReg());
+}
+
+void LivePhysRegs::addLiveOuts(const MachineBasicBlock *MBB,
+                               bool AddPristines) {
+  if (AddPristines) {
+    const MachineFunction &MF = *MBB->getParent();
+    addPristines(*this, MF, *TRI);
+  }
+  for (const MachineBasicBlock *Succ : MBB->successors())
+    ::addLiveIns(*this, *Succ);
+}
+
+void LivePhysRegs::addLiveIns(const MachineBasicBlock *MBB,
+                              bool AddPristines) {
+  if (AddPristines) {
+    const MachineFunction &MF = *MBB->getParent();
+    addPristines(*this, MF, *TRI);
+  }
+  ::addLiveIns(*this, *MBB);
 }
