@@ -1502,7 +1502,7 @@ __kmp_join_barrier(int gtid)
     KA_TRACE(10, ("__kmp_join_barrier: T#%d(%d:%d) leaving\n", gtid, team_id, tid));
 
 #if OMPT_SUPPORT
-    if (ompt_status == ompt_status_track) {
+    if (ompt_status & ompt_status_track) {
 #if OMPT_TRACE
         if ((ompt_status == ompt_status_track_callback) &&
             ompt_callbacks.ompt_callback(ompt_event_barrier_end)) {
