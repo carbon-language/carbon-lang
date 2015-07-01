@@ -326,7 +326,11 @@ Easy steps for installing GCC 4.8.2:
 
 .. code-block:: console
 
-  % wget ftp://ftp.gnu.org/gnu/gcc/gcc-4.8.2/gcc-4.8.2.tar.bz2
+  % wget https://ftp.gnu.org/gnu/gcc/gcc-4.8.2/gcc-4.8.2.tar.bz2
+  % wget https://ftp.gnu.org/gnu/gcc/gcc-4.8.2/gcc-4.8.2.tar.bz2.sig
+  % wget https://ftp.gnu.org/gnu/gnu-keyring.gpg
+  % signature_invalid=`gpg --verify --no-default-keyring --keyring ./gnu-keyring.gpg gcc-4.8.2.tar.bz2.sig`
+  % if [ $signature_invalid ]; then echo "Invalid signature" ; exit 1 ; fi
   % tar -xvjf gcc-4.8.2.tar.bz2
   % cd gcc-4.8.2
   % ./contrib/download_prerequisites
