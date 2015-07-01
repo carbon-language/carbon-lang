@@ -1206,7 +1206,7 @@ Thread::GetReturnValueObject ()
             ValueObjectSP return_valobj_sp;
             return_valobj_sp = m_completed_plan_stack[i]->GetReturnValueObject();
             if (return_valobj_sp)
-            return return_valobj_sp;
+                return return_valobj_sp;
         }
     }
     return ValueObjectSP();
@@ -1222,7 +1222,7 @@ Thread::GetExpressionVariable ()
             ClangExpressionVariableSP expression_variable_sp;
             expression_variable_sp = m_completed_plan_stack[i]->GetExpressionVariable();
             if (expression_variable_sp)
-            return expression_variable_sp;
+                return expression_variable_sp;
         }
     }
     return ClangExpressionVariableSP();
