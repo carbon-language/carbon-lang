@@ -86,7 +86,7 @@ static void ConnectProlog(Loop *L, Value *BECount, unsigned Count,
       if (L->contains(PN)) {
         NewPN->addIncoming(PN->getIncomingValueForBlock(NewPH), OrigPH);
       } else {
-        NewPN->addIncoming(Constant::getNullValue(PN->getType()), OrigPH);
+        NewPN->addIncoming(UndefValue::get(PN->getType()), OrigPH);
       }
 
       Value *V = PN->getIncomingValueForBlock(Latch);
