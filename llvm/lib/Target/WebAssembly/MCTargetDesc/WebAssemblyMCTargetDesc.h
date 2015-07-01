@@ -35,7 +35,8 @@ class Target;
 class Triple;
 class raw_ostream;
 
-extern Target TheWebAssemblyTarget;
+extern Target TheWebAssemblyTarget32;
+extern Target TheWebAssemblyTarget64;
 
 MCAsmBackend *createWebAssemblyAsmBackend(const Target &T,
                                           const MCRegisterInfo &MRI,

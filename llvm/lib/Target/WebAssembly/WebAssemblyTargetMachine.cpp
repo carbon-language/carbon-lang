@@ -30,7 +30,8 @@ using namespace llvm;
 
 extern "C" void LLVMInitializeWebAssemblyTarget() {
   // Register the target.
-  RegisterTargetMachine<WebAssemblyTargetMachine> X(TheWebAssemblyTarget);
+  RegisterTargetMachine<WebAssemblyTargetMachine> X(TheWebAssemblyTarget32);
+  RegisterTargetMachine<WebAssemblyTargetMachine> Y(TheWebAssemblyTarget64);
 }
 
 //===----------------------------------------------------------------------===//

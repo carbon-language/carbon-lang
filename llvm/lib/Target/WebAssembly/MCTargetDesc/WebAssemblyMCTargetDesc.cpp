@@ -46,7 +46,7 @@ createWebAssemblyMCInstPrinter(const Triple &T, unsigned SyntaxVariant,
 
 // Force static initialization.
 extern "C" void LLVMInitializeWebAssemblyTargetMC() {
-  for (Target *T : {&TheWebAssemblyTarget}) {
+  for (Target *T : {&TheWebAssemblyTarget32, &TheWebAssemblyTarget64}) {
     // Register the MC asm info.
     RegisterMCAsmInfoFn X(*T, createWebAssemblyMCAsmInfo);
 

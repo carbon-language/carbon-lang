@@ -19,11 +19,12 @@ using namespace llvm;
 
 #define DEBUG_TYPE "wasm-target-info"
 
-Target llvm::TheWebAssemblyTarget;
+Target llvm::TheWebAssemblyTarget32;
+Target llvm::TheWebAssemblyTarget64;
 
 extern "C" void LLVMInitializeWebAssemblyTargetInfo() {
-  RegisterTarget<Triple::wasm32> X(TheWebAssemblyTarget, "wasm32",
+  RegisterTarget<Triple::wasm32> X(TheWebAssemblyTarget32, "wasm32",
                                    "WebAssembly 32-bit");
-  RegisterTarget<Triple::wasm64> Y(TheWebAssemblyTarget, "wasm64",
+  RegisterTarget<Triple::wasm64> Y(TheWebAssemblyTarget64, "wasm64",
                                    "WebAssembly 64-bit");
 }
