@@ -2097,3 +2097,10 @@ void CodeGenFunction::EmitOMPTargetDirective(const OMPTargetDirective &) {
 void CodeGenFunction::EmitOMPTeamsDirective(const OMPTeamsDirective &) {
   llvm_unreachable("CodeGen for 'omp teams' is not supported yet.");
 }
+
+void CodeGenFunction::EmitOMPCancellationPointDirective(
+    const OMPCancellationPointDirective &S) {
+  llvm_unreachable(
+      "CodeGen for 'omp cancellation point' is not supported yet.");
+}
+

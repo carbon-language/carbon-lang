@@ -1321,11 +1321,12 @@ public:
   /// Subclasses may override this routine to provide different behavior.
   StmtResult RebuildOMPExecutableDirective(OpenMPDirectiveKind Kind,
                                            DeclarationNameInfo DirName,
+                                           OpenMPDirectiveKind CancelRegion,
                                            ArrayRef<OMPClause *> Clauses,
                                            Stmt *AStmt, SourceLocation StartLoc,
                                            SourceLocation EndLoc) {
-    return getSema().ActOnOpenMPExecutableDirective(Kind, DirName, Clauses,
-                                                    AStmt, StartLoc, EndLoc);
+    return getSema().ActOnOpenMPExecutableDirective(
+        Kind, DirName, CancelRegion, Clauses, AStmt, StartLoc, EndLoc);
   }
 
   /// \brief Build a new OpenMP 'if' clause.
@@ -6715,10 +6716,14 @@ StmtResult TreeTransform<Derived>::TransformOMPExecutableDirective(
     DirName = cast<OMPCriticalDirective>(D)->getDirectiveName();
     DirName = getDerived().TransformDeclarationNameInfo(DirName);
   }
+  OpenMPDirectiveKind CancelRegion = OMPD_unknown;
+  if (D->getDirectiveKind() == OMPD_cancellation_point) {
+    CancelRegion = cast<OMPCancellationPointDirective>(D)->getCancelRegion();
+  }
 
   return getDerived().RebuildOMPExecutableDirective(
-      D->getDirectiveKind(), DirName, TClauses, AssociatedStmt.get(),
-      D->getLocStart(), D->getLocEnd());
+      D->getDirectiveKind(), DirName, CancelRegion, TClauses,
+      AssociatedStmt.get(), D->getLocStart(), D->getLocEnd());
 }
 
 template <typename Derived>
@@ -6957,6 +6962,17 @@ TreeTransform<Derived>::TransformOMPTeamsDirective(OMPTeamsDirective *D) {
   DeclarationNameInfo DirName;
   getDerived().getSema().StartOpenMPDSABlock(OMPD_teams, DirName, nullptr,
                                              D->getLocStart());
+  StmtResult Res = getDerived().TransformOMPExecutableDirective(D);
+  getDerived().getSema().EndOpenMPDSABlock(Res.get());
+  return Res;
+}
+
+template <typename Derived>
+StmtResult TreeTransform<Derived>::TransformOMPCancellationPointDirective(
+    OMPCancellationPointDirective *D) {
+  DeclarationNameInfo DirName;
+  getDerived().getSema().StartOpenMPDSABlock(OMPD_cancellation_point, DirName,
+                                             nullptr, D->getLocStart());
   StmtResult Res = getDerived().TransformOMPExecutableDirective(D);
   getDerived().getSema().EndOpenMPDSABlock(Res.get());
   return Res;

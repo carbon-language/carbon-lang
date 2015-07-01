@@ -537,6 +537,11 @@ void StmtProfiler::VisitOMPTeamsDirective(const OMPTeamsDirective *S) {
   VisitOMPExecutableDirective(S);
 }
 
+void StmtProfiler::VisitOMPCancellationPointDirective(
+    const OMPCancellationPointDirective *S) {
+  VisitOMPExecutableDirective(S);
+}
+
 void StmtProfiler::VisitExpr(const Expr *S) {
   VisitStmt(S);
 }

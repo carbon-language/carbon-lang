@@ -7611,6 +7611,12 @@ def err_omp_single_copyprivate_with_nowait : Error<
   "the 'copyprivate' clause must not be used with the 'nowait' clause">;
 def note_omp_nowait_clause_here : Note<
   "'nowait' clause is here">;
+def err_omp_wrong_cancel_region : Error<
+  "one of 'for', 'parallel', 'sections' or 'taskgroup' is expected">;
+def err_omp_parent_cancel_region_nowait : Error<
+  "parent region for 'omp %select{cancellation point/cancel}0' construct cannot be nowait">;
+def err_omp_parent_cancel_region_ordered : Error<
+  "parent region for 'omp %select{cancellation point/cancel}0' construct cannot be ordered">;
 } // end of OpenMP category
 
 let CategoryName = "Related Result Type Issue" in {

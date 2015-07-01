@@ -2225,12 +2225,15 @@ enum CXCursorKind {
    */
   CXCursor_OMPTeamsDirective             = 253,
 
-  /** \brief OpenMP taskwait directive.
+  /** \brief OpenMP taskgroup directive.
    */
   CXCursor_OMPTaskgroupDirective          = 254,
 
+  /** \brief OpenMP cancellation point directive.
+   */
+  CXCursor_OMPCancellationPointDirective  = 255,
 
-  CXCursor_LastStmt                      = CXCursor_OMPTaskgroupDirective,
+  CXCursor_LastStmt                    = CXCursor_OMPCancellationPointDirective,
 
   /**
    * \brief Cursor that represents the translation unit itself.

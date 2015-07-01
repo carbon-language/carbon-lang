@@ -97,6 +97,7 @@ OPENMP_DIRECTIVE_EXT(parallel_for, "parallel for")
 OPENMP_DIRECTIVE_EXT(parallel_for_simd, "parallel for simd")
 OPENMP_DIRECTIVE_EXT(parallel_sections, "parallel sections")
 OPENMP_DIRECTIVE_EXT(for_simd, "for simd")
+OPENMP_DIRECTIVE_EXT(cancellation_point, "cancellation point")
 
 // OpenMP clauses.
 OPENMP_CLAUSE(if, OMPIfClause)

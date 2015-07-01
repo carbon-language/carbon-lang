@@ -1856,6 +1856,64 @@ public:
   }
 };
 
+/// \brief This represents '#pragma omp cancellation point' directive.
+///
+/// \code
+/// #pragma omp cancellation point for
+/// \endcode
+///
+/// In this example a cancellation point is created for innermost 'for' region.
+class OMPCancellationPointDirective : public OMPExecutableDirective {
+  friend class ASTStmtReader;
+  OpenMPDirectiveKind CancelRegion;
+  /// \brief Build directive with the given start and end location.
+  ///
+  /// \param StartLoc Starting location of the directive kind.
+  /// \param EndLoc Ending location of the directive.
+  ///
+  OMPCancellationPointDirective(SourceLocation StartLoc, SourceLocation EndLoc)
+      : OMPExecutableDirective(this, OMPCancellationPointDirectiveClass,
+                               OMPD_cancellation_point, StartLoc, EndLoc, 0, 0),
+        CancelRegion(OMPD_unknown) {}
+
+  /// \brief Build an empty directive.
+  ///
+  explicit OMPCancellationPointDirective()
+      : OMPExecutableDirective(this, OMPCancellationPointDirectiveClass,
+                               OMPD_cancellation_point, SourceLocation(),
+                               SourceLocation(), 0, 0),
+        CancelRegion(OMPD_unknown) {}
+
+  /// \brief Set cancel region for current cancellation point.
+  /// \param CR Cancellation region.
+  void setCancelRegion(OpenMPDirectiveKind CR) { CancelRegion = CR; }
+
+public:
+  /// \brief Creates directive.
+  ///
+  /// \param C AST context.
+  /// \param StartLoc Starting location of the directive kind.
+  /// \param EndLoc Ending Location of the directive.
+  ///
+  static OMPCancellationPointDirective *
+  Create(const ASTContext &C, SourceLocation StartLoc, SourceLocation EndLoc,
+         OpenMPDirectiveKind CancelRegion);
+
+  /// \brief Creates an empty directive.
+  ///
+  /// \param C AST context.
+  ///
+  static OMPCancellationPointDirective *CreateEmpty(const ASTContext &C,
+                                                    EmptyShell);
+
+  /// \brief Get cancellation region for the current cancellation point.
+  OpenMPDirectiveKind getCancelRegion() const { return CancelRegion; }
+
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == OMPCancellationPointDirectiveClass;
+  }
+};
+
 } // end namespace clang
 
 #endif

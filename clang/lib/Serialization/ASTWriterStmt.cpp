@@ -2107,6 +2107,14 @@ void ASTStmtWriter::VisitOMPTeamsDirective(OMPTeamsDirective *D) {
   Code = serialization::STMT_OMP_TEAMS_DIRECTIVE;
 }
 
+void ASTStmtWriter::VisitOMPCancellationPointDirective(
+    OMPCancellationPointDirective *D) {
+  VisitStmt(D);
+  VisitOMPExecutableDirective(D);
+  Record.push_back(D->getCancelRegion());
+  Code = serialization::STMT_OMP_CANCELLATION_POINT_DIRECTIVE;
+}
+
 //===----------------------------------------------------------------------===//
 // ASTWriter Implementation
 //===----------------------------------------------------------------------===//
