@@ -74,3 +74,9 @@ namespace FriendDefArg {
     template<typename, int, template<typename> class> friend struct D;
   };
 }
+
+namespace SeparateInline {
+  inline void f();
+  void f() {}
+  constexpr int g() { return 0; }
+}
