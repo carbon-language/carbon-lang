@@ -272,3 +272,18 @@ class EIDI_MMR6_ENC<string instr_asm, bits<10> funct> : MMR6Arch<instr_asm> {
   let Inst{15-6}  = funct;
   let Inst{5-0}   = 0x3c;
 }
+
+class SHIFT_MMR6_ENC<string instr_asm, bits<10> funct, bit rotate> : MMR6Arch<instr_asm> {
+  bits<5> rd;
+  bits<5> rt;
+  bits<5> shamt;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = 0;
+  let Inst{25-21} = rd;
+  let Inst{20-16} = rt;
+  let Inst{15-11} = shamt;
+  let Inst{10}    = rotate;
+  let Inst{9-0}   = funct;
+}
