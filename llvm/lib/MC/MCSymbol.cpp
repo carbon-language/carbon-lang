@@ -20,6 +20,7 @@ using namespace llvm;
 MCSection *MCSymbol::AbsolutePseudoSection = reinterpret_cast<MCSection *>(1);
 
 const unsigned MCSymbol::NumCommonAlignmentBits;
+const unsigned MCSymbol::NumFlagsBits;
 
 void *MCSymbol::operator new(size_t s, const StringMapEntry<bool> *Name,
                              MCContext &Ctx) {

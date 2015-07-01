@@ -117,6 +117,11 @@ protected:
   static const unsigned NumCommonAlignmentBits = 5;
   unsigned CommonAlignLog2 : NumCommonAlignmentBits;
 
+  /// The Flags field is used by object file implementations to store
+  /// additional per symbol information which is not easily classified.
+  static const unsigned NumFlagsBits = 16;
+  mutable uint32_t Flags : NumFlagsBits;
+
   /// Index field, for use by the object file implementation.
   mutable uint32_t Index = 0;
 
@@ -130,10 +135,6 @@ protected:
     /// If non-null, the value for a variable symbol.
     const MCExpr *Value;
   };
-
-  /// The Flags field is used by object file implementations to store
-  /// additional per symbol information which is not easily classified.
-  mutable uint32_t Flags = 0;
 
 protected: // MCContext creates and uniques these.
   friend class MCExpr;
@@ -152,7 +153,7 @@ protected: // MCContext creates and uniques these.
       : IsTemporary(isTemporary), IsRedefinable(false), IsUsed(false),
         IsRegistered(false), IsExternal(false), IsPrivateExtern(false),
         Kind(Kind), IsUsedInReloc(false), SymbolContents(SymContentsUnset),
-        CommonAlignLog2(0) {
+        CommonAlignLog2(0), Flags(0) {
     Offset = 0;
     SectionOrFragmentAndHasName.setInt(!!Name);
     if (Name)
@@ -402,10 +403,14 @@ protected:
   uint32_t getFlags() const { return Flags; }
 
   /// Set the (implementation defined) symbol flags.
-  void setFlags(uint32_t Value) const { Flags = Value; }
+  void setFlags(uint32_t Value) const {
+    assert(Value < (1U << NumFlagsBits) && "Out of range flags");
+    Flags = Value;
+  }
 
   /// Modify the flags via a mask
   void modifyFlags(uint32_t Value, uint32_t Mask) const {
+    assert(Value < (1U << NumFlagsBits) && "Out of range flags");
     Flags = (Flags & ~Mask) | Value;
   }
 };
