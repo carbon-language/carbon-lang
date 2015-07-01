@@ -80,3 +80,7 @@ namespace SeparateInline {
   void f() {}
   constexpr int g() { return 0; }
 }
+
+namespace TrailingAttributes {
+  template<typename T> struct X {} __attribute__((aligned(8)));
+}
