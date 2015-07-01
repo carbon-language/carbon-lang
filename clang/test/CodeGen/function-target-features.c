@@ -17,7 +17,7 @@ void foo() {}
 
 // AVX-FEATURE: "target-features"{{.*}}+avx
 // AVX-NO-CPU-NOT: target-cpu
-// TWO-AVX: "target-features"={{.*}}+avx512er{{.*}}+avx512f
+// TWO-AVX: "target-features"={{.*}}+avx512f{{.*}}+avx512er
 // CORE-CPU: "target-cpu"="corei7"
 // CORE-CPU-AND-FEATURES: "target-cpu"="corei7" "target-features"={{.*}}+avx
 // X86-64-CPU: "target-cpu"="x86-64"

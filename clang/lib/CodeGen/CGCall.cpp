@@ -1493,12 +1493,16 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
     // avoid putting features in the target-features set if we know it'll be
     // one of the default features in the backend, e.g. corei7-avx and +avx or
     // figure out non-explicit dependencies.
-    std::vector<std::string> Features(getTarget().getTargetOpts().Features);
+    // Canonicalize the existing features in a new feature map.
+    // TODO: Migrate the existing backends to keep the map around rather than
+    // the vector.
+    llvm::StringMap<bool> FeatureMap;
+    for (auto F : getTarget().getTargetOpts().Features) {
+      const char *Name = F.c_str();
+      bool Enabled = Name[0] == '+';
+      getTarget().setFeatureEnabled(FeatureMap, Name + 1, Enabled);
+    }
 
-    // TODO: The target attribute complicates this further by allowing multiple
-    // additional features to be tacked on to the feature string for a
-    // particular function. For now we simply append to the set of features and
-    // let backend resolution fix them up.
     const FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(TargetDecl);
     if (FD) {
       if (const TargetAttr *TD = FD->getAttr<TargetAttr>()) {
@@ -1507,7 +1511,7 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
         FeaturesStr.split(AttrFeatures, ",");
 
         // Grab the various features and prepend a "+" to turn on the feature to
-        // the backend and add them to our existing set of Features.
+        // the backend and add them to our existing set of features.
         for (auto &Feature : AttrFeatures) {
           // While we're here iterating check for a different target cpu.
           if (Feature.startswith("arch="))
@@ -1521,12 +1525,20 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
 	    // attributes on the function.
 	    ;
 	  else if (Feature.startswith("mno-"))
-            Features.push_back("-" + Feature.split("-").second.str());
+            getTarget().setFeatureEnabled(FeatureMap, Feature.split("-").second,
+                                          false);
           else
-            Features.push_back("+" + Feature.str());
-	}
+            getTarget().setFeatureEnabled(FeatureMap, Feature, true);
+        }
       }
     }
+
+    // Produce the canonical string for this set of features.
+    std::vector<std::string> Features;
+    for (llvm::StringMap<bool>::const_iterator it = FeatureMap.begin(),
+                                               ie = FeatureMap.end();
+         it != ie; ++it)
+      Features.push_back((it->second ? "+" : "-") + it->first().str());
 
     // Now add the target-cpu and target-features to the function.
     if (TargetCPU != "")

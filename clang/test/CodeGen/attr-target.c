@@ -21,5 +21,5 @@ int bar(int a) { return baz(a) + foo(a); }
 // CHECK: echidna{{.*}} #2
 // CHECK: bar{{.*}} #0
 // CHECK: #0 = {{.*}}"target-cpu"="x86-64" "target-features"="+sse,+sse2"
-// CHECK: #1 = {{.*}}"target-cpu"="ivybridge" "target-features"="+sse,+sse2,+avx,+sse4.2"
-// CHECK: #2 = {{.*}}"target-cpu"="x86-64" "target-features"="+sse,+sse2,-sse2"
+// CHECK: #1 = {{.*}}"target-cpu"="ivybridge" "target-features"="+sse4.2,+ssse3,+sse3,+sse,+sse2,+sse4.1,+avx"
+// CHECK: #2 = {{.*}}"target-cpu"="x86-64" "target-features"="-sse4a,-sse3,-avx2,-avx512bw,-avx512er,-avx512dq,-avx512pf,-fma4,-avx512vl,+sse,-pclmul,-avx512cd,-avx,-f16c,-ssse3,-avx512f,-fma,-xop,-aes,-sha,-sse2,-sse4.1,-sse4.2"
