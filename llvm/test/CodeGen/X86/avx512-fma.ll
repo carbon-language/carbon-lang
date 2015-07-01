@@ -59,9 +59,38 @@ define <8 x double> @test_x86_fmsub_pd_z(<8 x double> %a0, <8 x double> %a1, <8 
   ret <8 x double> %res
 }
 
-define double @test_x86_fmsub_sd_z(double %a0, double %a1, double %a2) {
+define double @test_x86_fmsub_213(double %a0, double %a1, double %a2) {
+; CHECK-LABEL: test_x86_fmsub_213:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    vfmsub213sd %xmm2, %xmm0, %xmm1
+; CHECK-NEXT:    vmovaps %zmm1, %zmm0
+; CHECK-NEXT:    retq
   %x = fmul double %a0, %a1
   %res = fsub double %x, %a2
+  ret double %res
+}
+
+define double @test_x86_fmsub_213_m(double %a0, double %a1, double * %a2_ptr) {
+; CHECK-LABEL: test_x86_fmsub_213_m:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    vfmsub213sd (%rdi), %xmm0, %xmm1
+; CHECK-NEXT:    vmovaps %zmm1, %zmm0
+; CHECK-NEXT:    retq
+  %a2 = load double , double *%a2_ptr
+  %x = fmul double %a0, %a1
+  %res = fsub double %x, %a2
+  ret double %res
+}
+
+define double @test_x86_fmsub_231_m(double %a0, double %a1, double * %a2_ptr) {
+; CHECK-LABEL: test_x86_fmsub_231_m:
+; CHECK:       ## BB#0:
+; CHECK-NEXT:    vfmsub231sd (%rdi), %xmm0, %xmm1
+; CHECK-NEXT:    vmovaps %zmm1, %zmm0
+; CHECK-NEXT:    retq
+  %a2 = load double , double *%a2_ptr
+  %x = fmul double %a0, %a2
+  %res = fsub double %x, %a1
   ret double %res
 }
 
