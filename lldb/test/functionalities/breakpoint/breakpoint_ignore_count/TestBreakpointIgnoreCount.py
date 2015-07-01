@@ -59,7 +59,7 @@ class BreakpointIgnoreCountTestCase(TestBase):
         lldbutil.run_break_set_by_file_and_line (self, 'main.c', self.line1, extra_options='-i 1', num_expected_locations=1, loc_exact=True)
 
         # Now run the program.
-        self.runCmd("run", RUN_FAILED)
+        self.runCmd("run", RUN_SUCCEEDED)
 
         # The process should be stopped at this point.
         self.expect("process status", PROCESS_STOPPED,
@@ -79,7 +79,7 @@ class BreakpointIgnoreCountTestCase(TestBase):
 
         # continue -i 1 is the same as setting the ignore count to 1 again, try that:
         # Now run the program.
-        self.runCmd("process continue -i 1", RUN_FAILED)
+        self.runCmd("process continue -i 1", RUN_SUCCEEDED)
 
         # The process should be stopped at this point.
         self.expect("process status", PROCESS_STOPPED,

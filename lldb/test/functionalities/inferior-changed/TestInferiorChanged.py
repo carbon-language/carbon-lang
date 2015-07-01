@@ -48,7 +48,7 @@ class ChangedInferiorTestCase(TestBase):
         self.exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + self.exe, CURRENT_EXECUTABLE_SET)
 
-        self.runCmd("run", RUN_FAILED)
+        self.runCmd("run", RUN_SUCCEEDED)
 
         # We should have one crashing thread
         self.assertEquals(
@@ -65,7 +65,7 @@ class ChangedInferiorTestCase(TestBase):
         # Prod the lldb-platform that we have a newly built inferior ready.
         if lldb.lldbtest_remote_sandbox:
             self.runCmd("file " + self.exe, CURRENT_EXECUTABLE_SET)
-        self.runCmd("run", RUN_FAILED)
+        self.runCmd("run", RUN_SUCCEEDED)
         self.runCmd("process status")
 
         self.assertNotEquals(
@@ -76,7 +76,7 @@ class ChangedInferiorTestCase(TestBase):
         # Break inside the main.
         lldbutil.run_break_set_by_file_and_line (self, "main2.c", self.line2, num_expected_locations=1, loc_exact=True)
 
-        self.runCmd("run", RUN_FAILED)
+        self.runCmd("run", RUN_SUCCEEDED)
 
         # The stop reason of the thread should be breakpoint.
         self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,

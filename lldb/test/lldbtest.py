@@ -92,7 +92,7 @@ PROCESS_EXITED = "Process exited successfully"
 
 PROCESS_STOPPED = "Process status should be stopped"
 
-RUN_FAILED = "Process could not be launched successfully"
+RUN_SUCCEEDED = "Process is launched successfully"
 
 RUN_COMPLETED = "Process exited successfully"
 
@@ -165,18 +165,9 @@ VARIABLES_DISPLAYED_CORRECTLY = "Variable(s) displayed correctly"
 
 WATCHPOINT_CREATED = "Watchpoint created successfully"
 
-def cmd_failure_message(cmd, res, msg=None):
-    """ Return a command failure message.
-
-    Args:
-        cmd - The command which failed.
-        res - The command result of type SBCommandReturnObject.
-        msg - Additional failure message if any.
-    """
-    err_msg = res.GetError()
-    full_msg = (err_msg or "") + (msg or "")
-    full_msg = (">>> %s" % full_msg.replace("\n", "\n>>> ")) if full_msg else ""
-    return "Command '%s' failed.\n%s" % (cmd, full_msg)
+def CMD_MSG(str):
+    '''A generic "Command '%s' returns successfully" message generator.'''
+    return "Command '%s' returns successfully" % str
 
 def COMPLETION_MSG(str_before, str_after):
     '''A generic message generator for the completion mechanism.'''
@@ -2446,9 +2437,8 @@ class TestBase(Base):
                     print >> sbuf, "Command '" + cmd + "' failed!"
 
         if check:
-            self.assertTrue(
-                self.res.Succeeded(),
-                cmd_failure_message(cmd, self.res, msg))
+            self.assertTrue(self.res.Succeeded(),
+                            msg if msg else CMD_MSG(cmd))
 
     def match (self, str, patterns, msg=None, trace=False, error=False, matching=True, exe=True):
         """run command in str, and match the result against regexp in patterns returning the match object for the first matching pattern

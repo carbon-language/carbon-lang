@@ -39,7 +39,7 @@ class RvalueReferencesTestCase(TestBase):
         self.set_breakpoint(line_number('main.cpp', '// breakpoint 1'))
         self.set_breakpoint(line_number('main.cpp', '// breakpoint 2'))
 
-        self.runCmd("process launch", RUN_FAILED)
+        self.runCmd("process launch", RUN_SUCCEEDED)
 
         # Note that clang as of r187480 doesn't emit DW_TAG_const_type, unlike gcc 4.8.1
         # With gcc 4.8.1, lldb reports the type as (int &&const)

@@ -53,7 +53,7 @@ class WatchpointPythonCommandTestCase(TestBase):
 #                       (self.source, self.line))#
 
         # Run the program.
-        self.runCmd("run", RUN_FAILED)
+        self.runCmd("run", RUN_SUCCEEDED)
 
         # We should be stopped again due to the breakpoint.
         # The stop reason of the thread should be breakpoint.

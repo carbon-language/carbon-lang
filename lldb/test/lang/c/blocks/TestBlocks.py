@@ -43,9 +43,9 @@ class BlocksTestCase(TestBase):
     def wait_for_breakpoint(self):
         if self.is_started == False:
             self.is_started = True
-            self.runCmd("process launch", RUN_FAILED)
+            self.runCmd("process launch", RUN_SUCCEEDED)
         else:
-            self.runCmd("process continue", RUN_FAILED)
+            self.runCmd("process continue", RUN_SUCCEEDED)
 
         # The stop reason of the thread should be breakpoint.
         self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,
