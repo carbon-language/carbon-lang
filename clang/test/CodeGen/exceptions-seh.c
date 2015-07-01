@@ -168,21 +168,20 @@ int nested_try(void) {
 // CHECK: load i32, i32*
 // CHECK: icmp eq i32 %{{.*}}, 123
 
-static unsigned g = 0;
-void basic_finally(void) {
-  ++g;
+int basic_finally(int g) {
   __try {
     j();
   } __finally {
-    --g;
+    ++g;
   }
+  return g;
 }
-// CHECK-LABEL: define void @basic_finally()
+// CHECK-LABEL: define i32 @basic_finally(i32 %g)
 // X64-SAME: personality i8* bitcast (i32 (...)* @__C_specific_handler to i8*)
 // X86-SAME: personality i8* bitcast (i32 (...)* @_except_handler3 to i8*)
-// CHECK: load i32, i32* @g
-// CHECK: add i32 %{{.*}}, 1
-// CHECK: store i32 %{{.*}}, i32* @g
+// CHECK: %[[g_addr:[^ ]*]] = alloca i32, align 4
+// CHECK: call void (...) @llvm.frameescape(i32* %[[g_addr]])
+// CHECK: store i32 %g, i32* %[[g_addr]]
 //
 // CHECK: invoke void @j()
 // CHECK:       to label %[[cont:[^ ]*]] unwind label %[[lpad:[^ ]*]]
@@ -190,7 +189,8 @@ void basic_finally(void) {
 // CHECK: [[cont]]
 // CHECK: %[[fp:[^ ]*]] = call i8* @llvm.frameaddress(i32 0)
 // CHECK: call void @"\01?fin$0@0@basic_finally@@"({{i8( zeroext)?}} 0, i8* %[[fp]])
-// CHECK: ret void
+// CHECK: load i32, i32* %[[g_addr]], align 4
+// CHECK: ret i32
 //
 // CHECK: [[lpad]]
 // CHECK: landingpad { i8*, i32 }
@@ -199,10 +199,11 @@ void basic_finally(void) {
 // CHECK: call void @"\01?fin$0@0@basic_finally@@"({{i8( zeroext)?}} 1, i8* %[[fp]])
 // CHECK: resume
 
-// CHECK: define internal void @"\01?fin$0@0@basic_finally@@"({{.*}})
-// CHECK:   load i32, i32* @g, align 4
-// CHECK:   add i32 %{{.*}}, -1
-// CHECK:   store i32 %{{.*}}, i32* @g, align 4
+// CHECK: define internal void @"\01?fin$0@0@basic_finally@@"({{i8( zeroext)?}} %abnormal_termination, i8* %frame_pointer)
+// CHECK:   call i8* @llvm.framerecover(i8* bitcast (i32 (i32)* @basic_finally to i8*), i8* %frame_pointer, i32 0)
+// CHECK:   load i32, i32* %{{.*}}, align 4
+// CHECK:   add nsw i32 %{{.*}}, 1
+// CHECK:   store i32 %{{.*}}, i32* %{{.*}}, align 4
 // CHECK:   ret void
 
 int returns_int(void);

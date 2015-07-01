@@ -1447,15 +1447,11 @@ void CodeGenFunction::EmitCapturedLocals(CodeGenFunction &ParentCGF,
 
   llvm::Value *EntryEBP = nullptr;
   llvm::Value *ParentFP;
-  if (CGM.getTarget().getTriple().getArch() != llvm::Triple::x86) {
-    // On x64, the parent FP is passed as the second argument.
-    auto AI = CurFn->arg_begin();
-    ++AI;
-    ParentFP = AI;
-  } else {
-    // The end of the EH registration is passed in as the EBP physical register.
-    // We can recover that with llvm.frameaddress(1), and adjust that to
-    // recover the parent's true frame pointer.
+  if (IsFilter && CGM.getTarget().getTriple().getArch() == llvm::Triple::x86) {
+    // 32-bit SEH filters need to be careful about FP recovery.  The end of the
+    // EH registration is passed in as the EBP physical register.  We can
+    // recover that with llvm.frameaddress(1), and adjust that to recover the
+    // parent's true frame pointer.
     CGBuilderTy Builder(AllocaInsertPt);
     EntryEBP = Builder.CreateCall(
         CGM.getIntrinsic(llvm::Intrinsic::frameaddress), {Builder.getInt32(1)});
@@ -1464,11 +1460,12 @@ void CodeGenFunction::EmitCapturedLocals(CodeGenFunction &ParentCGF,
     llvm::Constant *ParentI8Fn =
         llvm::ConstantExpr::getBitCast(ParentCGF.CurFn, Int8PtrTy);
     ParentFP = Builder.CreateCall(RecoverFPIntrin, {ParentI8Fn, EntryEBP});
-
-    // Inlining will break llvm.frameaddress(1), so disable it.
-    // FIXME: We could teach the inliner about the special meaning of
-    // frameaddress, framerecover, and frameescape to remove this limitation.
-    CurFn->addFnAttr(llvm::Attribute::NoInline);
+  } else {
+    // Otherwise, for x64 and 32-bit finally functions, the parent FP is the
+    // second parameter.
+    auto AI = CurFn->arg_begin();
+    ++AI;
+    ParentFP = AI;
   }
 
   // Create llvm.framerecover calls for all captures.
