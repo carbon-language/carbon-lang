@@ -5,3 +5,5 @@ int n;
 #endif
 
 #define A
+
+#include "c.h"

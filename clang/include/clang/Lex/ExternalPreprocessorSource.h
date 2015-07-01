@@ -23,7 +23,7 @@ class Module;
 /// information.
 ///
 /// This abstract class allows an external sources (such as the \c ASTReader) 
-/// to provide additional macro definitions.
+/// to provide additional preprocessing information.
 class ExternalPreprocessorSource {
 public:
   virtual ~ExternalPreprocessorSource();
@@ -33,6 +33,11 @@ public:
   
   /// \brief Update an out-of-date identifier.
   virtual void updateOutOfDateIdentifier(IdentifierInfo &II) = 0;
+
+  /// \brief Return the identifier associated with the given ID number.
+  ///
+  /// The ID 0 is associated with the NULL identifier.
+  virtual IdentifierInfo *GetIdentifier(unsigned ID) = 0;
 
   /// \brief Map a module ID to a module.
   virtual Module *getModule(unsigned ModuleID) = 0;

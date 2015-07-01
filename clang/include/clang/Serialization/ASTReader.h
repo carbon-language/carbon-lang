@@ -304,7 +304,6 @@ class ASTReader
     public ExternalHeaderFileInfoSource,
     public ExternalSemaSource,
     public IdentifierInfoLookup,
-    public ExternalIdentifierLookup,
     public ExternalSLocEntrySource
 {
 public:

@@ -1,4 +1,5 @@
 module x { module a { header "a.h" } module b { header "b.h" } }
+module other { header "other.h" }
 
 module cycles {
   module cycle1 { header "cycle1.h" }

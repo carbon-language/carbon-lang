@@ -71,8 +71,6 @@ IdentifierIterator *IdentifierInfoLookup::getIdentifiers() {
   return new EmptyLookupIterator();
 }
 
-ExternalIdentifierLookup::~ExternalIdentifierLookup() {}
-
 IdentifierTable::IdentifierTable(const LangOptions &LangOpts,
                                  IdentifierInfoLookup* externalLookup)
   : HashTable(8192), // Start with space for 8K identifiers.
