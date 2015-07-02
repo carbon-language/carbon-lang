@@ -89,6 +89,7 @@ private:
 
   std::error_code addSymbol(SymbolBody *New);
   void addLazy(Lazy *New, std::vector<Symbol *> *Accum);
+  Symbol *insert(SymbolBody *New);
 
   std::error_code addMemberFile(Lazy *Body);
   ErrorOr<ObjectFile *> createLTOObject(llvm::LTOCodeGenerator *CG);

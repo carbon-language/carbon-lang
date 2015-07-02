@@ -164,12 +164,9 @@ bool SymbolTable::reportRemainingUndefines() {
 }
 
 void SymbolTable::addLazy(Lazy *New, std::vector<Symbol *> *Accum) {
-  Symbol *&Sym = Symtab[New->getName()];
-  if (!Sym) {
-    Sym = new (Alloc) Symbol(New);
-    New->setBackref(Sym);
+  Symbol *Sym = insert(New);
+  if (Sym->Body == New)
     return;
-  }
   SymbolBody *Existing = Sym->Body;
   if (!isa<Undefined>(Existing))
     return;
@@ -181,17 +178,13 @@ void SymbolTable::addLazy(Lazy *New, std::vector<Symbol *> *Accum) {
 std::error_code SymbolTable::addSymbol(SymbolBody *New) {
   // Find an existing symbol or create and insert a new one.
   assert(isa<Defined>(New) || isa<Undefined>(New));
-  Symbol *&Sym = Symtab[New->getName()];
-  if (!Sym) {
-    Sym = new (Alloc) Symbol(New);
-    New->setBackref(Sym);
+  Symbol *Sym = insert(New);
+  if (Sym->Body == New)
     return std::error_code();
-  }
-  New->setBackref(Sym);
+  SymbolBody *Existing = Sym->Body;
 
   // If we have an undefined symbol and a lazy symbol,
   // let the lazy symbol to read a member file.
-  SymbolBody *Existing = Sym->Body;
   if (auto *L = dyn_cast<Lazy>(Existing)) {
     // Undefined symbols with weak aliases need not to be resolved,
     // since they would be replaced with weak aliases if they remain
@@ -214,6 +207,17 @@ std::error_code SymbolTable::addSymbol(SymbolBody *New) {
   if (Comp < 0)
     Sym->Body = New;
   return std::error_code();
+}
+
+Symbol *SymbolTable::insert(SymbolBody *New) {
+  Symbol *&Sym = Symtab[New->getName()];
+  if (Sym) {
+    New->setBackref(Sym);
+    return Sym;
+  }
+  Sym = new (Alloc) Symbol(New);
+  New->setBackref(Sym);
+  return Sym;
 }
 
 // Reads an archive member file pointed by a given symbol.
@@ -304,17 +308,11 @@ std::error_code SymbolTable::addCombinedLTOObject() {
     // Find an existing Symbol. We should not see any new undefined symbols at
     // this point.
     StringRef Name = Body->getName();
-    Symbol *&Sym = Symtab[Name];
-    if (!Sym) {
-      if (!isa<Defined>(Body)) {
-        llvm::errs() << "LTO: undefined symbol: " << Name << '\n';
-        return make_error_code(LLDError::BrokenFile);
-      }
-      Sym = new (Alloc) Symbol(Body);
-      Body->setBackref(Sym);
-      continue;
+    Symbol *Sym = insert(Body);
+    if (Sym->Body == Body && !isa<Defined>(Body)) {
+      llvm::errs() << "LTO: undefined symbol: " << Name << '\n';
+      return make_error_code(LLDError::BrokenFile);
     }
-    Body->setBackref(Sym);
 
     if (isa<DefinedBitcode>(Sym->Body)) {
       // The symbol should now be defined.
