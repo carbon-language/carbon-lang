@@ -30,12 +30,12 @@ private:
   ClangTidyCheck &Check;
   Preprocessor &PP;
 
-  unsigned CountArgumentExpansions(const MacroInfo *MI,
+  unsigned countArgumentExpansions(const MacroInfo *MI,
                                    const IdentifierInfo *Arg) const;
 
-  bool HasSideEffects(const Token *ResultArgToks) const;
+  bool hasSideEffects(const Token *ResultArgToks) const;
 };
-} // namespace
+} // End of anonymous namespace.
 
 void MacroRepeatedPPCallbacks::MacroExpands(const Token &MacroNameTok,
                                             const MacroDefinition &MD,
@@ -51,10 +51,10 @@ void MacroRepeatedPPCallbacks::MacroExpands(const Token &MacroNameTok,
   // making the macro too complex.
   if (std::find_if(
           MI->tokens().begin(), MI->tokens().end(), [](const Token &T) {
-            return T.isOneOf(tok::question, tok::kw_if, tok::kw_else,
-                             tok::kw_switch, tok::kw_case, tok::kw_break,
-                             tok::kw_while, tok::kw_do, tok::kw_for,
-                             tok::kw_continue, tok::kw_goto, tok::kw_return);
+            return T.isOneOf(tok::kw_if, tok::kw_else, tok::kw_switch,
+                             tok::kw_case, tok::kw_break, tok::kw_while,
+                             tok::kw_do, tok::kw_for, tok::kw_continue,
+                             tok::kw_goto, tok::kw_return);
           }) != MI->tokens().end())
     return;
 
@@ -62,8 +62,8 @@ void MacroRepeatedPPCallbacks::MacroExpands(const Token &MacroNameTok,
     const IdentifierInfo *Arg = *(MI->arg_begin() + ArgNo);
     const Token *ResultArgToks = Args->getUnexpArgument(ArgNo);
 
-    if (HasSideEffects(ResultArgToks) &&
-        CountArgumentExpansions(MI, Arg) >= 2) {
+    if (hasSideEffects(ResultArgToks) &&
+        countArgumentExpansions(MI, Arg) >= 2) {
       Check.diag(ResultArgToks->getLocation(),
                  "side effects in the %ordinal0 macro argument '%1' are "
                  "repeated in macro expansion")
@@ -75,12 +75,39 @@ void MacroRepeatedPPCallbacks::MacroExpands(const Token &MacroNameTok,
   }
 }
 
-unsigned MacroRepeatedPPCallbacks::CountArgumentExpansions(
+unsigned MacroRepeatedPPCallbacks::countArgumentExpansions(
     const MacroInfo *MI, const IdentifierInfo *Arg) const {
-  unsigned CountInMacro = 0;
+  // Current argument count. When moving forward to a different control-flow
+  // path this can decrease.
+  unsigned Current = 0;
+  // Max argument count.
+  unsigned Max = 0;
   bool SkipParen = false;
   int SkipParenCount = 0;
+  // Has a __builtin_constant_p been found?
+  bool FoundBuiltin = false;
+  // Count when "?" is reached. The "Current" will get this value when the ":"
+  // is reached.
+  std::stack<unsigned, SmallVector<unsigned, 8>> CountAtQuestion;
   for (const auto &T : MI->tokens()) {
+    // The result of __builtin_constant_p(x) is 0 if x is a macro argument
+    // with side effects. If we see a __builtin_constant_p(x) followed by a
+    // "?" "&&" or "||", then we need to reason about control flow to report
+    // warnings correctly. Until such reasoning is added, bail out when this
+    // happens.
+    if (FoundBuiltin && T.isOneOf(tok::question, tok::ampamp, tok::pipepipe))
+      return Max;
+
+    // Handling of ? and :.
+    if (T.is(tok::question)) {
+      CountAtQuestion.push(Current);
+    } else if (T.is(tok::colon)) {
+      if (CountAtQuestion.empty())
+        return 0;
+      Current = CountAtQuestion.top();
+      CountAtQuestion.pop();
+    }
+
     // If current token is a parenthesis, skip it.
     if (SkipParen) {
       if (T.is(tok::l_paren))
@@ -97,9 +124,11 @@ unsigned MacroRepeatedPPCallbacks::CountArgumentExpansions(
     if (TII == nullptr)
       continue;
 
-    // If a builtin is found within the macro definition, skip next
-    // parenthesis.
-    if (TII->getBuiltinID() != 0) {
+    // If a __builtin_constant_p is found within the macro definition, don't
+    // count arguments inside the parentheses and remember that it has been
+    // seen in case there are "?", "&&" or "||" operators later.
+    if (TII->getBuiltinID() == Builtin::BI__builtin_constant_p) {
+      FoundBuiltin = true;
       SkipParen = true;
       continue;
     }
@@ -114,13 +143,16 @@ unsigned MacroRepeatedPPCallbacks::CountArgumentExpansions(
     }
 
     // Count argument.
-    if (TII == Arg)
-      CountInMacro++;
+    if (TII == Arg) {
+      Current++;
+      if (Current > Max)
+        Max = Current;
+    }
   }
-  return CountInMacro;
+  return Max;
 }
 
-bool MacroRepeatedPPCallbacks::HasSideEffects(
+bool MacroRepeatedPPCallbacks::hasSideEffects(
     const Token *ResultArgToks) const {
   for (; ResultArgToks->isNot(tok::eof); ++ResultArgToks) {
     if (ResultArgToks->isOneOf(tok::plusplus, tok::minusminus))

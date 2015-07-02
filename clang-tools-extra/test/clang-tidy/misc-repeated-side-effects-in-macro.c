@@ -22,6 +22,21 @@ void bad(int ret, int a, int b) {
 }
 
 
+#define MIN(A,B)     ((A) < (B) ? (A) : (B))                        // single ?:
+#define LIMIT(X,A,B) ((X) < (A) ? (A) : ((X) > (B) ? (B) : (X)))    // two ?:
+void question(int x) {
+  MIN(x++, 12);
+  // CHECK-MESSAGES: :[[@LINE-1]]:7: warning: side effects in the 1st macro argument 'A'
+  MIN(34, x++);
+  // CHECK-MESSAGES: :[[@LINE-1]]:11: warning: side effects in the 2nd macro argument 'B'
+  LIMIT(x++, 0, 100);
+  // CHECK-MESSAGES: :[[@LINE-1]]:9: warning: side effects in the 1st macro argument 'X'
+  LIMIT(20, x++, 100);
+  // CHECK-MESSAGES: :[[@LINE-1]]:13: warning: side effects in the 2nd macro argument 'A'
+  LIMIT(20, 0, x++);
+  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: side effects in the 3rd macro argument 'B'
+}
+
 // False positive: Repeated side effects is intentional.
 // It is hard to know when it's done by intention so right now we warn.
 #define UNROLL(A)    {A A}
@@ -59,26 +74,29 @@ void large(int a) {
   // CHECK-MESSAGES: :[[@LINE-1]]:70: warning: side effects in the 21st macro argument 'u'
 }
 
-// Builtins and macros should not be counted.
-#define builtinA(x)    (__builtin_constant_p(x) + (x))
-#define builtinB(x)    (__builtin_constant_p(x) + (x) + (x))
-#define macroA(x)       (builtinA(x) + (x))
-#define macroB(x)       (builtinA(x) + (x) + (x))
+// Passing macro argument as argument to __builtin_constant_p and macros.
+#define builtinbad(x)      (__builtin_constant_p(x) + (x) + (x))
+#define builtingood1(x)    (__builtin_constant_p(x) + (x))
+#define builtingood2(x)    ((__builtin_constant_p(x) && (x)) || (x))
+#define macrobad(x)        (builtingood1(x) + (x) + (x))
+#define macrogood(x)       (builtingood1(x) + (x))
 void builtins(int ret, int a) {
-  ret += builtinA(a++);
-  ret += builtinB(a++);
+  ret += builtinbad(a++);
+  // CHECK-MESSAGES: :[[@LINE-1]]:21: warning: side effects in the 1st macro argument 'x'
+
+  ret += builtingood1(a++);
+  ret += builtingood2(a++);
+
+  ret += macrobad(a++);
   // CHECK-MESSAGES: :[[@LINE-1]]:19: warning: side effects in the 1st macro argument 'x'
-  ret += macroA(a++);
-  ret += macroB(a++);
-  // CHECK-MESSAGES: :[[@LINE-1]]:17: warning: side effects in the 1st macro argument 'x'
+
+  ret += macrogood(a++);
 }
 
 // Bail out for conditionals.
-#define condA(x,y)  ((x)>(y)?(x):(y))
 #define condB(x,y)  if(x) {x=y;} else {x=y + 1;}
-void conditionals(int ret, int a, int b)
+void conditionals(int a, int b)
 {
-  ret += condA(a++, b++);
   condB(a, b++);
 }
 
