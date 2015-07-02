@@ -1,6 +1,6 @@
-// RUN: %clangxx -DADD_I32 -fsanitize=unsigned-integer-overflow %s -o %t && %run %t 2>&1 | FileCheck %s --check-prefix=CHECK-ADD_I32
-// RUN: %clangxx -DADD_I64 -fsanitize=unsigned-integer-overflow %s -o %t && %run %t 2>&1 | FileCheck %s --check-prefix=CHECK-ADD_I64
-// RUN: %clangxx -DADD_I128 -fsanitize=unsigned-integer-overflow %s -o %t && %run %t 2>&1 | FileCheck %s --check-prefix=CHECK-ADD_I128
+// RUN: %clangxx -DADD_I32 -fsanitize=unsigned-integer-overflow %s -o %t1 && %run %t1 2>&1 | FileCheck %s --check-prefix=CHECK-ADD_I32
+// RUN: %clangxx -DADD_I64 -fsanitize=unsigned-integer-overflow %s -o %t2 && %run %t2 2>&1 | FileCheck %s --check-prefix=CHECK-ADD_I64
+// RUN: %clangxx -DADD_I128 -fsanitize=unsigned-integer-overflow %s -o %t3 && %run %t3 2>&1 | FileCheck %s --check-prefix=CHECK-ADD_I128
 
 #include <stdint.h>
 #include <stdio.h>
@@ -22,7 +22,7 @@ int main() {
 #endif
 
 #ifdef ADD_I128
-# ifdef __SIZEOF_INT128__
+# if defined(__SIZEOF_INT128__) && !defined(_WIN32)
   (void)((__uint128_t(1) << 127) + (__uint128_t(1) << 127));
 # else
   puts("__int128 not supported");

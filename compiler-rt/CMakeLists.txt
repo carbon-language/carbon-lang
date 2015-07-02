@@ -333,6 +333,9 @@ if(APPLE AND SANITIZER_MIN_OSX_VERSION VERSION_LESS "10.9")
   # Mac OS X prior to 10.9 had problems with exporting symbols from
   # libc++/libc++abi.
   set(SANITIZER_CAN_USE_CXXABI FALSE)
+elseif(WIN32)
+  # We do not currently support the Microsoft C++ ABI.
+  set(SANITIZER_CAN_USE_CXXABI FALSE)
 else()
   set(SANITIZER_CAN_USE_CXXABI TRUE)
 endif()

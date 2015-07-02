@@ -1,6 +1,6 @@
-// RUN: %clangxx -DSUB_I32 -fsanitize=signed-integer-overflow %s -o %t && %run %t 2>&1 | FileCheck %s --check-prefix=CHECK-SUB_I32
-// RUN: %clangxx -DSUB_I64 -fsanitize=signed-integer-overflow %s -o %t && %run %t 2>&1 | FileCheck %s --check-prefix=CHECK-SUB_I64
-// RUN: %clangxx -DSUB_I128 -fsanitize=signed-integer-overflow %s -o %t && %run %t 2>&1 | FileCheck %s --check-prefix=CHECK-SUB_I128
+// RUN: %clangxx -DSUB_I32 -fsanitize=signed-integer-overflow %s -o %t1 && %run %t1 2>&1 | FileCheck %s --check-prefix=CHECK-SUB_I32
+// RUN: %clangxx -DSUB_I64 -fsanitize=signed-integer-overflow %s -o %t2 && %run %t2 2>&1 | FileCheck %s --check-prefix=CHECK-SUB_I64
+// RUN: %clangxx -DSUB_I128 -fsanitize=signed-integer-overflow %s -o %t3 && %run %t3 2>&1 | FileCheck %s --check-prefix=CHECK-SUB_I128
 
 #include <stdint.h>
 #include <stdio.h>
@@ -21,7 +21,7 @@ int main() {
 #endif
 
 #ifdef SUB_I128
-# ifdef __SIZEOF_INT128__
+# if defined(__SIZEOF_INT128__) && !defined(_WIN32)
   (void)(-(__int128_t(1) << 126) - (__int128_t(1) << 126) - 1);
 # else
   puts("__int128 not supported");

@@ -35,7 +35,9 @@ namespace __sanitizer {
 
 // --------------------- sanitizer_common.h
 uptr GetPageSize() {
-  return 1U << 14;  // FIXME: is this configurable?
+  // FIXME: there is an API for getting the system page size (GetSystemInfo or
+  // GetNativeSystemInfo), but if we use it here we get test failures elsewhere.
+  return 1U << 14;
 }
 
 uptr GetMmapGranularity() {
@@ -615,7 +617,27 @@ bool IsDeadlySignal(int signum) {
 }
 
 bool IsAccessibleMemoryRange(uptr beg, uptr size) {
-  // FIXME: Actually implement this function.
+  SYSTEM_INFO si;
+  GetNativeSystemInfo(&si);
+  uptr page_size = si.dwPageSize;
+  uptr page_mask = ~(page_size - 1);
+
+  for (uptr page = beg & page_mask, end = (beg + size - 1) & page_mask;
+       page <= end;) {
+    MEMORY_BASIC_INFORMATION info;
+    if (VirtualQuery((LPCVOID)page, &info, sizeof(info)) != sizeof(info))
+      return false;
+
+    if (info.Protect == 0 || info.Protect == PAGE_NOACCESS ||
+        info.Protect == PAGE_EXECUTE)
+      return false;
+
+    if (info.RegionSize == 0)
+      return false;
+
+    page += info.RegionSize;
+  }
+
   return true;
 }
 

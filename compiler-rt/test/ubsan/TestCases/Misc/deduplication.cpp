@@ -11,6 +11,7 @@ void overflow() {
 int main() {
   // CHECK: Start
   fprintf(stderr, "Start\n");
+  fflush(stderr);
 
   // CHECK: runtime error
   // CHECK-NOT: runtime error

@@ -23,6 +23,10 @@
 # define BYTE_ORDER _BYTE_ORDER
 # define BIG_ENDIAN _BIG_ENDIAN
 # define LITTLE_ENDIAN _LITTLE_ENDIAN
+#elif defined(_WIN32)
+# define BYTE_ORDER 0
+# define BIG_ENDIAN 1
+# define LITTLE_ENDIAN 0
 #else
 # include <endian.h>
 # define BYTE_ORDER __BYTE_ORDER
@@ -118,7 +122,7 @@ int main(int argc, char **argv) {
     // Integer -> floating point overflow.
   case '6': {
     // CHECK-6: {{runtime error: value 0xffffff00000000000000000000000001 is outside the range of representable values of type 'float'|__int128 not supported}}
-#ifdef __SIZEOF_INT128__
+#if defined(__SIZEOF_INT128__) && !defined(_WIN32)
     static int test_int = (float)(FloatMaxAsUInt128 + 1);
     return 0;
 #else

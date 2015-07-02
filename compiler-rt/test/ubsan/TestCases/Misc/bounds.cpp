@@ -1,7 +1,7 @@
 // RUN: %clangxx -fsanitize=bounds %s -O3 -o %t
 // RUN: %run %t 0 0 0
 // RUN: %run %t 1 2 3
-// RUN: not --crash %run %t 2 0 0 2>&1 | FileCheck %s --check-prefix=CHECK-A-2
+// RUN: %expect_crash %run %t 2 0 0 2>&1 | FileCheck %s --check-prefix=CHECK-A-2
 // RUN: %run %t 0 3 0 2>&1 | FileCheck %s --check-prefix=CHECK-B-3
 // RUN: %run %t 0 0 4 2>&1 | FileCheck %s --check-prefix=CHECK-C-4
 
