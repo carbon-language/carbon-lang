@@ -481,7 +481,7 @@ bool Inliner::runOnSCC(CallGraphSCC &SCC) {
   // If there are no calls in this function, exit early.
   if (CallSites.empty())
     return false;
-  
+
   // Now that we have all of the call sites, move the ones to functions in the
   // current SCC to the end of the list.
   unsigned FirstCallInSCC = CallSites.size();
@@ -591,7 +591,7 @@ bool Inliner::runOnSCC(CallGraphSCC &SCC) {
         DEBUG(dbgs() << "    -> Deleting dead function: "
               << Callee->getName() << "\n");
         CallGraphNode *CalleeNode = CG[Callee];
-        
+
         // Remove any call graph edges from the callee to its callees.
         CalleeNode->removeAllCalledFunctions();
         
