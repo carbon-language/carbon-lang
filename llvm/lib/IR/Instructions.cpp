@@ -292,6 +292,12 @@ void CallInst::addAttribute(unsigned i, Attribute::AttrKind attr) {
   setAttributes(PAL);
 }
 
+void CallInst::addAttribute(unsigned i, StringRef Kind, StringRef Value) {
+  AttributeSet PAL = getAttributes();
+  PAL = PAL.addAttribute(getContext(), i, Kind, Value);
+  setAttributes(PAL);
+}
+
 void CallInst::removeAttribute(unsigned i, Attribute attr) {
   AttributeSet PAL = getAttributes();
   AttrBuilder B(attr);
@@ -311,14 +317,6 @@ void CallInst::addDereferenceableOrNullAttr(unsigned i, uint64_t Bytes) {
   AttributeSet PAL = getAttributes();
   PAL = PAL.addDereferenceableOrNullAttr(getContext(), i, Bytes);
   setAttributes(PAL);
-}
-
-bool CallInst::hasFnAttrImpl(Attribute::AttrKind A) const {
-  if (AttributeList.hasAttribute(AttributeSet::FunctionIndex, A))
-    return true;
-  if (const Function *F = getCalledFunction())
-    return F->getAttributes().hasAttribute(AttributeSet::FunctionIndex, A);
-  return false;
 }
 
 bool CallInst::paramHasAttr(unsigned i, Attribute::AttrKind A) const {
