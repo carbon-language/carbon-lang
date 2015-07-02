@@ -101,13 +101,13 @@ public:
   }
 
   /// Return the ID associated with this statepoint.
-  uint64_t getID() {
+  uint64_t getID() const {
     const Value *IDVal = getCallSite().getArgument(IDPos);
     return cast<ConstantInt>(IDVal)->getZExtValue();
   }
 
   /// Return the number of patchable bytes associated with this statepoint.
-  uint32_t getNumPatchBytes() {
+  uint32_t getNumPatchBytes() const {
     const Value *NumPatchBytesVal = getCallSite().getArgument(NumPatchBytesPos);
     uint64_t NumPatchBytes =
       cast<ConstantInt>(NumPatchBytesVal)->getZExtValue();
@@ -116,91 +116,93 @@ public:
   }
 
   /// Return the value actually being called or invoked.
-  ValueTy *getActualCallee() {
+  ValueTy *getActualCallee() const {
     return getCallSite().getArgument(ActualCalleePos);
   }
 
   /// Return the type of the value returned by the call underlying the
   /// statepoint.
-  Type *getActualReturnType() {
+  Type *getActualReturnType() const {
     auto *FTy = cast<FunctionType>(
         cast<PointerType>(getActualCallee()->getType())->getElementType());
     return FTy->getReturnType();
   }
 
   /// Number of arguments to be passed to the actual callee.
-  int getNumCallArgs() {
+  int getNumCallArgs() const {
     const Value *NumCallArgsVal = getCallSite().getArgument(NumCallArgsPos);
     return cast<ConstantInt>(NumCallArgsVal)->getZExtValue();
   }
 
-  typename CallSiteTy::arg_iterator call_args_begin() {
+  typename CallSiteTy::arg_iterator call_args_begin() const {
     assert(CallArgsBeginPos <= (int)getCallSite().arg_size());
     return getCallSite().arg_begin() + CallArgsBeginPos;
   }
-  typename CallSiteTy::arg_iterator call_args_end() {
+  typename CallSiteTy::arg_iterator call_args_end() const {
     auto I = call_args_begin() + getNumCallArgs();
     assert((getCallSite().arg_end() - I) >= 0);
     return I;
   }
 
   /// range adapter for call arguments
-  iterator_range<arg_iterator> call_args() {
+  iterator_range<arg_iterator> call_args() const {
     return iterator_range<arg_iterator>(call_args_begin(), call_args_end());
   }
 
   /// Number of GC transition args.
-  int getNumTotalGCTransitionArgs() {
+  int getNumTotalGCTransitionArgs() const {
     const Value *NumGCTransitionArgs = *call_args_end();
     return cast<ConstantInt>(NumGCTransitionArgs)->getZExtValue();
   }
-  typename CallSiteTy::arg_iterator gc_transition_args_begin() {
+  typename CallSiteTy::arg_iterator gc_transition_args_begin() const {
     auto I = call_args_end() + 1;
     assert((getCallSite().arg_end() - I) >= 0);
     return I;
   }
-  typename CallSiteTy::arg_iterator gc_transition_args_end() {
+  typename CallSiteTy::arg_iterator gc_transition_args_end() const {
     auto I = gc_transition_args_begin() + getNumTotalGCTransitionArgs();
     assert((getCallSite().arg_end() - I) >= 0);
     return I;
   }
 
   /// range adapter for GC transition arguments
-  iterator_range<arg_iterator> gc_transition_args() {
+  iterator_range<arg_iterator> gc_transition_args() const {
     return iterator_range<arg_iterator>(gc_transition_args_begin(),
                                         gc_transition_args_end());
   }
 
   /// Number of additional arguments excluding those intended
   /// for garbage collection.
-  int getNumTotalVMSArgs() {
+  int getNumTotalVMSArgs() const {
     const Value *NumVMSArgs = *gc_transition_args_end();
     return cast<ConstantInt>(NumVMSArgs)->getZExtValue();
   }
 
-  typename CallSiteTy::arg_iterator vm_state_begin() {
+  typename CallSiteTy::arg_iterator vm_state_begin() const {
     auto I = gc_transition_args_end() + 1;
     assert((getCallSite().arg_end() - I) >= 0);
     return I;
   }
-  typename CallSiteTy::arg_iterator vm_state_end() {
+  typename CallSiteTy::arg_iterator vm_state_end() const {
     auto I = vm_state_begin() + getNumTotalVMSArgs();
     assert((getCallSite().arg_end() - I) >= 0);
     return I;
   }
 
   /// range adapter for vm state arguments
-  iterator_range<arg_iterator> vm_state_args() {
+  iterator_range<arg_iterator> vm_state_args() const {
     return iterator_range<arg_iterator>(vm_state_begin(), vm_state_end());
   }
 
-  typename CallSiteTy::arg_iterator gc_args_begin() { return vm_state_end(); }
-  typename CallSiteTy::arg_iterator gc_args_end() {
+  typename CallSiteTy::arg_iterator gc_args_begin() const {
+    return vm_state_end();
+  }
+  typename CallSiteTy::arg_iterator gc_args_end() const {
     return getCallSite().arg_end();
   }
 
   /// range adapter for gc arguments
-  iterator_range<arg_iterator> gc_args() {
+  iterator_range<arg_iterator> gc_args() const {
     return iterator_range<arg_iterator>(gc_args_begin(), gc_args_end());
   }
 
@@ -208,12 +210,12 @@ public:
   /// May contain several relocations for the same base/derived pair.
   /// For example this could happen due to relocations on unwinding
   /// path of invoke.
-  std::vector<GCRelocateOperands> getRelocates();
+  std::vector<GCRelocateOperands> getRelocates() const;
 
   /// Get the experimental_gc_result call tied to this statepoint.  Can be
   /// nullptr if there isn't a gc_result tied to this statepoint.  Guaranteed to
   /// be a CallInst if non-null.
-  InstructionTy *getGCResult() {
+  InstructionTy *getGCResult() const {
     for (auto *U : getCallSite().getInstruction()->users())
       if (isGCResult(U))
         return cast<CallInst>(U);
@@ -336,7 +338,7 @@ public:
 
 template <typename InstructionTy, typename ValueTy, typename CallSiteTy>
 std::vector<GCRelocateOperands>
-StatepointBase<InstructionTy, ValueTy, CallSiteTy>::getRelocates() {
+StatepointBase<InstructionTy, ValueTy, CallSiteTy>::getRelocates() const {
 
   std::vector<GCRelocateOperands> Result;
 
