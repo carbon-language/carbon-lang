@@ -128,3 +128,59 @@ class StepWithPlan:
     def should_step (self):
         return False
 
+# Here's another example which does "step over" through the current function,
+# and when it stops at each line, it checks some condition (in this example the
+# value of a variable) and stops if that condition is true.
+
+class StepCheckingCondition:
+    def __init__ (self, thread_plan, dict):
+        self.thread_plan = thread_plan
+        self.start_frame = thread_plan.GetThread().GetFrameAtIndex(0)
+        self.queue_next_plan()
+
+    def queue_next_plan (self):
+        cur_frame = self.thread_plan.GetThread().GetFrameAtIndex(0)
+        cur_line_entry = cur_frame.GetLineEntry()
+        start_address = cur_line_entry.GetStartAddress()
+        end_address = cur_line_entry.GetEndAddress()
+        line_range = end_address.GetFileAddress() - start_address.GetFileAddress()
+        self.step_thread_plan = self.thread_plan.QueueThreadPlanForStepOverRange(start_address, line_range)
+
+    def explains_stop (self, event):
+        # We are stepping, so if we stop for any other reason, it isn't
+        # because of us.
+        return False
+        
+    def should_stop (self, event):
+        if not self.step_thread_plan.IsPlanComplete():
+            return False
+
+        frame = self.thread_plan.GetThread().GetFrameAtIndex(0)
+        if not self.start_frame.IsEqual(frame):
+            self.thread_plan.SetPlanComplete(True)
+            return True
+
+        # This part checks the condition.  In this case we are expecting
+        # some integer variable called "a", and will stop when it is 20.
+        a_var = frame.FindVariable("a")
+
+        if not a_var.IsValid():
+            print "A was not valid."
+            return True
+
+        error = lldb.SBError()
+        a_value = a_var.GetValueAsSigned (error)
+        if not error.Success():
+            print "A value was not good."
+            return True
+
+        if a_value == 20:
+            self.thread_plan.SetPlanComplete(True)
+            return True
+        else:
+            self.queue_next_plan()
+            return False
+
+    def should_step (self):
+        return True
+
