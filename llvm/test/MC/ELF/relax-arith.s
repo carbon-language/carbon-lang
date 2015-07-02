@@ -1,17 +1,18 @@
-// RUN: llvm-mc -filetype=obj -triple x86_64-pc-linux-gnu %s -o - | llvm-readobj -s -sd | FileCheck  %s
+// RUN: llvm-mc -filetype=obj -triple x86_64-pc-linux-gnu %s -o - | llvm-objdump -d - | FileCheck  %s
 
 // Test that we correctly relax these instructions into versions that use
 // 16 or 32 bit immediate values.
 
 bar:
-// CHECK:      Name: imul
-// CHECK:      SectionData (
-// CHECK-NEXT:   0000: 6669DB00 0066691C 25000000 00000069
-// CHECK-NEXT:   0010: DB000000 00691C25 00000000 00000000
-// CHECK-NEXT:   0020: 4869DB00 00000048 691C2500 00000000
-// CHECK-NEXT:   0030: 000000
-// CHECK-NEXT: )
-        .section imul
+// CHECK:      Disassembly of section imul:
+// CHECK-NEXT: imul:
+// CHECK-NEXT:   0: 66 69 db 00 00                       imulw $0, %bx, %bx
+// CHECK-NEXT:   5: 66 69 1c 25 00 00 00 00 00 00        imulw $0, 0, %bx
+// CHECK-NEXT:   f: 69 db 00 00 00 00                    imull $0, %ebx, %ebx
+// CHECK-NEXT:  15: 69 1c 25 00 00 00 00 00 00 00 00     imull $0, 0, %ebx
+// CHECK-NEXT:  20: 48 69 db 00 00 00 00                 imulq $0, %rbx, %rbx
+// CHECK-NEXT:  27: 48 69 1c 25 00 00 00 00 00 00 00 00  imulq $0, 0, %rbx
+        .section imul,"x"
         imul $foo, %bx,  %bx
         imul $foo, bar,  %bx
         imul $foo, %ebx, %ebx
@@ -19,15 +20,15 @@ bar:
         imul $foo, %rbx, %rbx
         imul $foo, bar,  %rbx
 
-
-// CHECK:      Name: and
-// CHECK:      SectionData (
-// CHECK-NEXT:   0000: 6681E300 00668124 25000000 00000081
-// CHECK-NEXT:   0010: E3000000 00812425 00000000 00000000
-// CHECK-NEXT:   0020: 4881E300 00000048 81242500 00000000
-// CHECK-NEXT:   0030: 000000
-// CHECK-NEXT: )
-        .section and
+// CHECK:      Disassembly of section and:
+// CHECK-NEXT: and:
+// CHECK-NEXT:   0: 66 81 e3 00 00                       andw $0, %bx
+// CHECK-NEXT:   5: 66 81 24 25 00 00 00 00 00 00        andw $0, 0
+// CHECK-NEXT:   f: 81 e3 00 00 00 00                    andl $0, %ebx
+// CHECK-NEXT:  15: 81 24 25 00 00 00 00 00 00 00 00     andl $0, 0
+// CHECK-NEXT:  20: 48 81 e3 00 00 00 00                 andq $0, %rbx
+// CHECK-NEXT:  27: 48 81 24 25 00 00 00 00 00 00 00 00  andq $0, 0
+        .section and,"x"
         and  $foo, %bx
         andw $foo, bar
         and  $foo, %ebx
@@ -35,14 +36,15 @@ bar:
         and  $foo, %rbx
         andq $foo, bar
 
-// CHECK:      Name: or
-// CHECK:      SectionData (
-// CHECK-NEXT:   0000: 6681CB00 0066810C 25000000 00000081
-// CHECK-NEXT:   0010: CB000000 00810C25 00000000 00000000
-// CHECK-NEXT:   0020: 4881CB00 00000048 810C2500 00000000
-// CHECK-NEXT:   0030: 000000
-// CHECK-NEXT: )
-        .section or
+// CHECK:      Disassembly of section or:
+// CHECK-NEXT: or:
+// CHECK-NEXT:   0: 66 81 cb 00 00                       orw $0, %bx
+// CHECK-NEXT:   5: 66 81 0c 25 00 00 00 00 00 00        orw $0, 0
+// CHECK-NEXT:   f: 81 cb 00 00 00 00                    orl $0, %ebx
+// CHECK-NEXT:  15: 81 0c 25 00 00 00 00 00 00 00 00     orl $0, 0
+// CHECK-NEXT:  20: 48 81 cb 00 00 00 00                 orq $0, %rbx
+// CHECK-NEXT:  27: 48 81 0c 25 00 00 00 00 00 00 00 00  orq $0, 0
+        .section or,"x"
         or  $foo, %bx
         orw $foo, bar
         or  $foo, %ebx
@@ -50,14 +52,15 @@ bar:
         or  $foo, %rbx
         orq $foo, bar
 
-// CHECK:      Name: xor
-// CHECK:      SectionData (
-// CHECK-NEXT:   0000: 6681F300 00668134 25000000 00000081
-// CHECK-NEXT:   0010: F3000000 00813425 00000000 00000000
-// CHECK-NEXT:   0020: 4881F300 00000048 81342500 00000000
-// CHECK-NEXT:   0030: 000000
-// CHECK-NEXT: )
-        .section xor
+// CHECK:      Disassembly of section xor:
+// CHECK-NEXT: xor:
+// CHECK-NEXT:   0: 66 81 f3 00 00                       xorw $0, %bx
+// CHECK-NEXT:   5: 66 81 34 25 00 00 00 00 00 00        xorw $0, 0
+// CHECK-NEXT:   f: 81 f3 00 00 00 00                    xorl $0, %ebx
+// CHECK-NEXT:  15: 81 34 25 00 00 00 00 00 00 00 00     xorl $0, 0
+// CHECK-NEXT:  20: 48 81 f3 00 00 00 00                 xorq $0, %rbx
+// CHECK-NEXT:  27: 48 81 34 25 00 00 00 00 00 00 00 00  xorq $0, 0
+        .section xor,"x"
         xor  $foo, %bx
         xorw $foo, bar
         xor  $foo, %ebx
@@ -65,14 +68,15 @@ bar:
         xor  $foo, %rbx
         xorq $foo, bar
 
-// CHECK:      Name: add
-// CHECK:      SectionData (
-// CHECK-NEXT:   0000: 6681C300 00668104 25000000 00000081
-// CHECK-NEXT:   0010: C3000000 00810425 00000000 00000000
-// CHECK-NEXT:   0020: 4881C300 00000048 81042500 00000000
-// CHECK-NEXT:   0030: 000000
-// CHECK-NEXT: )
-        .section add
+// CHECK:      Disassembly of section add:
+// CHECK-NEXT: add:
+// CHECK-NEXT:   0: 66 81 c3 00 00                       addw $0, %bx
+// CHECK-NEXT:   5: 66 81 04 25 00 00 00 00 00 00        addw $0, 0
+// CHECK-NEXT:   f: 81 c3 00 00 00 00                    addl $0, %ebx
+// CHECK-NEXT:  15: 81 04 25 00 00 00 00 00 00 00 00     addl $0, 0
+// CHECK-NEXT:  20: 48 81 c3 00 00 00 00                 addq $0, %rbx
+// CHECK-NEXT:  27: 48 81 04 25 00 00 00 00 00 00 00 00  addq $0, 0
+        .section add,"x"
         add  $foo, %bx
         addw $foo, bar
         add  $foo, %ebx
@@ -80,14 +84,15 @@ bar:
         add  $foo, %rbx
         addq $foo, bar
 
-// CHECK:      Name: sub
-// CHECK:      SectionData (
-// CHECK-NEXT:   000: 6681EB00 0066812C 25000000 00000081
-// CHECK-NEXT:   010: EB000000 00812C25 00000000 00000000
-// CHECK-NEXT:   020: 4881EB00 00000048 812C2500 00000000
-// CHECK-NEXT:   030: 000000
-// CHECK-NEXT: )
-        .section sub
+// CHECK:      Disassembly of section sub:
+// CHECK-NEXT: sub:
+// CHECK-NEXT:   0: 66 81 eb 00 00                       subw $0, %bx
+// CHECK-NEXT:   5: 66 81 2c 25 00 00 00 00 00 00        subw $0, 0
+// CHECK-NEXT:   f: 81 eb 00 00 00 00                    subl $0, %ebx
+// CHECK-NEXT:  15: 81 2c 25 00 00 00 00 00 00 00 00     subl $0, 0
+// CHECK-NEXT:  20: 48 81 eb 00 00 00 00                 subq $0, %rbx
+// CHECK-NEXT:  27: 48 81 2c 25 00 00 00 00 00 00 00 00  subq $0, 0
+        .section sub,"x"
         sub  $foo, %bx
         subw $foo, bar
         sub  $foo, %ebx
@@ -95,14 +100,15 @@ bar:
         sub  $foo, %rbx
         subq $foo, bar
 
-// CHECK:      Name: cmp
-// CHECK:      SectionData (
-// CHECK-NEXT:   0000: 6681FB00 0066813C 25000000 00000081
-// CHECK-NEXT:   0010: FB000000 00813C25 00000000 00000000
-// CHECK-NEXT:   0020: 4881FB00 00000048 813C2500 00000000
-// CHECK-NEXT:   0030: 000000
-// CHECK-NEXT: )
-        .section cmp
+// CHECK:      Disassembly of section cmp:
+// CHECK-NEXT: cmp:
+// CHECK-NEXT:   0: 66 81 fb 00 00                       cmpw $0, %bx
+// CHECK-NEXT:   5: 66 81 3c 25 00 00 00 00 00 00        cmpw $0, 0
+// CHECK-NEXT:   f: 81 fb 00 00 00 00                    cmpl $0, %ebx
+// CHECK-NEXT:  15: 81 3c 25 00 00 00 00 00 00 00 00     cmpl $0, 0
+// CHECK-NEXT:  20: 48 81 fb 00 00 00 00                 cmpq $0, %rbx
+// CHECK-NEXT:  27: 48 81 3c 25 00 00 00 00 00 00 00 00  cmpq $0, 0
+        .section cmp,"x"
         cmp  $foo, %bx
         cmpw $foo, bar
         cmp  $foo, %ebx
