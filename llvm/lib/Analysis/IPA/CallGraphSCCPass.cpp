@@ -451,7 +451,7 @@ bool CGPassManager::runOnModule(Module &M) {
     const std::vector<CallGraphNode *> &NodeVec = *CGI;
     CurSCC.initialize(NodeVec.data(), NodeVec.data() + NodeVec.size());
     ++CGI;
-    
+
     // At the top level, we run all the passes in this pass manager on the
     // functions in this SCC.  However, we support iterative compilation in the
     // case where a function pass devirtualizes a call to a function.  For
