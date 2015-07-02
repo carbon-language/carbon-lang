@@ -2394,6 +2394,9 @@ DEF_TRAVERSE_STMT(OMPTaskgroupDirective,
 DEF_TRAVERSE_STMT(OMPCancellationPointDirective,
                   { TRY_TO(TraverseOMPExecutableDirective(S)); })
 
+DEF_TRAVERSE_STMT(OMPCancelDirective,
+                  { TRY_TO(TraverseOMPExecutableDirective(S)); })
+
 DEF_TRAVERSE_STMT(OMPFlushDirective,
                   { TRY_TO(TraverseOMPExecutableDirective(S)); })
 

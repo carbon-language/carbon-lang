@@ -126,6 +126,7 @@ Parser::DeclGroupPtrTy Parser::ParseOpenMPDeclarativeDirective() {
   case OMPD_target:
   case OMPD_teams:
   case OMPD_cancellation_point:
+  case OMPD_cancel:
     Diag(Tok, diag::err_omp_unexpected_directive)
         << getOpenMPDirectiveName(DKind);
     break;
@@ -196,6 +197,7 @@ Parser::ParseOpenMPDeclarativeOrExecutableDirective(bool StandAloneAllowed) {
   case OMPD_barrier:
   case OMPD_taskwait:
   case OMPD_cancellation_point:
+  case OMPD_cancel:
     if (!StandAloneAllowed) {
       Diag(Tok, diag::err_omp_immediate_directive)
           << getOpenMPDirectiveName(DKind);
@@ -235,7 +237,7 @@ Parser::ParseOpenMPDeclarativeOrExecutableDirective(bool StandAloneAllowed) {
         }
         T.consumeClose();
       }
-    } else if (DKind == OMPD_cancellation_point) {
+    } else if (DKind == OMPD_cancellation_point || DKind == OMPD_cancel) {
       CancelRegion = ParseOpenMPDirectiveKind(*this);
       if (Tok.isNot(tok::annot_pragma_openmp_end))
         ConsumeToken();

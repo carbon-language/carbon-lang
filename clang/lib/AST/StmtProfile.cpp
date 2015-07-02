@@ -542,6 +542,10 @@ void StmtProfiler::VisitOMPCancellationPointDirective(
   VisitOMPExecutableDirective(S);
 }
 
+void StmtProfiler::VisitOMPCancelDirective(const OMPCancelDirective *S) {
+  VisitOMPExecutableDirective(S);
+}
+
 void StmtProfiler::VisitExpr(const Expr *S) {
   VisitStmt(S);
 }

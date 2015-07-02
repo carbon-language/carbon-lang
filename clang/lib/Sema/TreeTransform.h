@@ -6719,6 +6719,8 @@ StmtResult TreeTransform<Derived>::TransformOMPExecutableDirective(
   OpenMPDirectiveKind CancelRegion = OMPD_unknown;
   if (D->getDirectiveKind() == OMPD_cancellation_point) {
     CancelRegion = cast<OMPCancellationPointDirective>(D)->getCancelRegion();
+  } else if (D->getDirectiveKind() == OMPD_cancel) {
+    CancelRegion = cast<OMPCancelDirective>(D)->getCancelRegion();
   }
 
   return getDerived().RebuildOMPExecutableDirective(
@@ -6973,6 +6975,17 @@ StmtResult TreeTransform<Derived>::TransformOMPCancellationPointDirective(
   DeclarationNameInfo DirName;
   getDerived().getSema().StartOpenMPDSABlock(OMPD_cancellation_point, DirName,
                                              nullptr, D->getLocStart());
+  StmtResult Res = getDerived().TransformOMPExecutableDirective(D);
+  getDerived().getSema().EndOpenMPDSABlock(Res.get());
+  return Res;
+}
+
+template <typename Derived>
+StmtResult
+TreeTransform<Derived>::TransformOMPCancelDirective(OMPCancelDirective *D) {
+  DeclarationNameInfo DirName;
+  getDerived().getSema().StartOpenMPDSABlock(OMPD_cancel, DirName, nullptr,
+                                             D->getLocStart());
   StmtResult Res = getDerived().TransformOMPExecutableDirective(D);
   getDerived().getSema().EndOpenMPDSABlock(Res.get());
   return Res;

@@ -2233,7 +2233,11 @@ enum CXCursorKind {
    */
   CXCursor_OMPCancellationPointDirective  = 255,
 
-  CXCursor_LastStmt                    = CXCursor_OMPCancellationPointDirective,
+  /** \brief OpenMP cancel directive.
+   */
+  CXCursor_OMPCancelDirective             = 256,
+
+  CXCursor_LastStmt                    = CXCursor_OMPCancelDirective,
 
   /**
    * \brief Cursor that represents the translation unit itself.

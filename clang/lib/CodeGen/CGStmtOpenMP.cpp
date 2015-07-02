@@ -2112,3 +2112,7 @@ void CodeGenFunction::EmitOMPCancellationPointDirective(
                                                    S.getCancelRegion());
 }
 
+void CodeGenFunction::EmitOMPCancelDirective(const OMPCancelDirective &S) {
+  llvm_unreachable("CodeGen for 'omp cancel' is not supported yet.");
+}
+

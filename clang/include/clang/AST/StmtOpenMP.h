@@ -1914,6 +1914,63 @@ public:
   }
 };
 
+/// \brief This represents '#pragma omp cancel' directive.
+///
+/// \code
+/// #pragma omp cancel for
+/// \endcode
+///
+/// In this example a cancel is created for innermost 'for' region.
+class OMPCancelDirective : public OMPExecutableDirective {
+  friend class ASTStmtReader;
+  OpenMPDirectiveKind CancelRegion;
+  /// \brief Build directive with the given start and end location.
+  ///
+  /// \param StartLoc Starting location of the directive kind.
+  /// \param EndLoc Ending location of the directive.
+  ///
+  OMPCancelDirective(SourceLocation StartLoc, SourceLocation EndLoc)
+      : OMPExecutableDirective(this, OMPCancelDirectiveClass, OMPD_cancel,
+                               StartLoc, EndLoc, 0, 0),
+        CancelRegion(OMPD_unknown) {}
+
+  /// \brief Build an empty directive.
+  ///
+  explicit OMPCancelDirective()
+      : OMPExecutableDirective(this, OMPCancelDirectiveClass, OMPD_cancel,
+                               SourceLocation(), SourceLocation(), 0, 0),
+        CancelRegion(OMPD_unknown) {}
+
+  /// \brief Set cancel region for current cancellation point.
+  /// \param CR Cancellation region.
+  void setCancelRegion(OpenMPDirectiveKind CR) { CancelRegion = CR; }
+
+public:
+  /// \brief Creates directive.
+  ///
+  /// \param C AST context.
+  /// \param StartLoc Starting location of the directive kind.
+  /// \param EndLoc Ending Location of the directive.
+  ///
+  static OMPCancelDirective *Create(const ASTContext &C,
+                                    SourceLocation StartLoc,
+                                    SourceLocation EndLoc,
+                                    OpenMPDirectiveKind CancelRegion);
+
+  /// \brief Creates an empty directive.
+  ///
+  /// \param C AST context.
+  ///
+  static OMPCancelDirective *CreateEmpty(const ASTContext &C, EmptyShell);
+
+  /// \brief Get cancellation region for the current cancellation point.
+  OpenMPDirectiveKind getCancelRegion() const { return CancelRegion; }
+
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == OMPCancelDirectiveClass;
+  }
+};
+
 } // end namespace clang
 
 #endif

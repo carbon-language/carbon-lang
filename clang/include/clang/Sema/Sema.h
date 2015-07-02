@@ -7778,6 +7778,10 @@ public:
   ActOnOpenMPCancellationPointDirective(SourceLocation StartLoc,
                                         SourceLocation EndLoc,
                                         OpenMPDirectiveKind CancelRegion);
+  /// \brief Called on well-formed '\#pragma omp cancel'.
+  StmtResult ActOnOpenMPCancelDirective(SourceLocation StartLoc,
+                                        SourceLocation EndLoc,
+                                        OpenMPDirectiveKind CancelRegion);
 
   OMPClause *ActOnOpenMPSingleExprClause(OpenMPClauseKind Kind,
                                          Expr *Expr,
