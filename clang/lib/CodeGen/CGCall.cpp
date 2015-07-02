@@ -1452,6 +1452,8 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
     // Attributes that should go on the call site only.
     if (!CodeGenOpts.SimplifyLibCalls)
       FuncAttrs.addAttribute(llvm::Attribute::NoBuiltin);
+    if (!CodeGenOpts.TrapFuncName.empty())
+      FuncAttrs.addAttribute("trap-func-name", CodeGenOpts.TrapFuncName);
   } else {
     // Attributes that should go on the function, but not the call site.
     if (!CodeGenOpts.DisableFPElim) {

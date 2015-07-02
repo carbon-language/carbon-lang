@@ -2875,6 +2875,10 @@ public:
   /// conditional branch to it, for the -ftrapv checks.
   void EmitTrapCheck(llvm::Value *Checked);
 
+  /// \brief Emit a call to trap or debugtrap and attach function attribute
+  /// "trap-func-name" if specified.
+  llvm::CallInst *EmitTrapCall(llvm::Intrinsic::ID IntrID);
+
   /// \brief Create a check for a function parameter that may potentially be
   /// declared as non-null.
   void EmitNonNullArgCheck(RValue RV, QualType ArgType, SourceLocation ArgLoc,

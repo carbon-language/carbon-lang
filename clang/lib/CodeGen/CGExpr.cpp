@@ -2403,8 +2403,7 @@ void CodeGenFunction::EmitTrapCheck(llvm::Value *Checked) {
     TrapBB = createBasicBlock("trap");
     Builder.CreateCondBr(Checked, Cont, TrapBB);
     EmitBlock(TrapBB);
-    llvm::Value *F = CGM.getIntrinsic(llvm::Intrinsic::trap);
-    llvm::CallInst *TrapCall = Builder.CreateCall(F, {});
+    llvm::CallInst *TrapCall = EmitTrapCall(llvm::Intrinsic::trap);
     TrapCall->setDoesNotReturn();
     TrapCall->setDoesNotThrow();
     Builder.CreateUnreachable();
@@ -2413,6 +2412,18 @@ void CodeGenFunction::EmitTrapCheck(llvm::Value *Checked) {
   }
 
   EmitBlock(Cont);
+}
+
+llvm::CallInst *CodeGenFunction::EmitTrapCall(llvm::Intrinsic::ID IntrID) {
+  llvm::CallInst *TrapCall =
+      Builder.CreateCall(CGM.getIntrinsic(IntrID), {});
+
+  if (!CGM.getCodeGenOpts().TrapFuncName.empty())
+    TrapCall->addAttribute(llvm::AttributeSet::FunctionIndex,
+                           "trap-func-name",
+                           CGM.getCodeGenOpts().TrapFuncName);
+
+  return TrapCall;
 }
 
 /// isSimpleArrayDecayOperand - If the specified expr is a simple decay from an

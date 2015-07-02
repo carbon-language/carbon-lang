@@ -543,14 +543,10 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     Value *F = CGM.getIntrinsic(Intrinsic::clear_cache);
     return RValue::get(Builder.CreateCall(F, {Begin, End}));
   }
-  case Builtin::BI__builtin_trap: {
-    Value *F = CGM.getIntrinsic(Intrinsic::trap);
-    return RValue::get(Builder.CreateCall(F, {}));
-  }
-  case Builtin::BI__debugbreak: {
-    Value *F = CGM.getIntrinsic(Intrinsic::debugtrap);
-    return RValue::get(Builder.CreateCall(F, {}));
-  }
+  case Builtin::BI__builtin_trap:
+    return RValue::get(EmitTrapCall(Intrinsic::trap));
+  case Builtin::BI__debugbreak:
+    return RValue::get(EmitTrapCall(Intrinsic::debugtrap));
   case Builtin::BI__builtin_unreachable: {
     if (SanOpts.has(SanitizerKind::Unreachable)) {
       SanitizerScope SanScope(this);

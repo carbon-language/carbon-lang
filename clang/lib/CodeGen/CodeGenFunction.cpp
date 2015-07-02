@@ -930,8 +930,9 @@ void CodeGenFunction::GenerateCode(GlobalDecl GD, llvm::Function *Fn,
       EmitCheck(std::make_pair(IsFalse, SanitizerKind::Return),
                 "missing_return", EmitCheckSourceLocation(FD->getLocation()),
                 None);
-    } else if (CGM.getCodeGenOpts().OptimizationLevel == 0)
-      Builder.CreateCall(CGM.getIntrinsic(llvm::Intrinsic::trap), {});
+    } else if (CGM.getCodeGenOpts().OptimizationLevel == 0) {
+      EmitTrapCall(llvm::Intrinsic::trap);
+    }
     Builder.CreateUnreachable();
     Builder.ClearInsertionPoint();
   }
