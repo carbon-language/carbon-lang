@@ -783,12 +783,16 @@ private:
     unsigned TokenCount = 0;
     for (auto I = Tokens.rbegin() + 1, E = Tokens.rend(); I != E; ++I) {
       ++TokenCount;
+      auto Prev = I + 1;
+      while (Prev != E && Prev[0]->is(tok::comment))
+        ++Prev;
       if (I[0]->isOneOf(tok::slash, tok::slashequal) &&
-          (I + 1 == E ||
-           ((I[1]->isOneOf(tok::l_paren, tok::semi, tok::l_brace, tok::r_brace,
-                           tok::exclaim, tok::l_square, tok::colon, tok::comma,
-                           tok::question, tok::kw_return) ||
-             I[1]->isBinaryOperator())))) {
+          (Prev == E ||
+           ((Prev[0]->isOneOf(tok::l_paren, tok::semi, tok::l_brace,
+                              tok::r_brace, tok::exclaim, tok::l_square,
+                              tok::colon, tok::comma, tok::question,
+                              tok::kw_return) ||
+             Prev[0]->isBinaryOperator())))) {
         unsigned LastColumn = Tokens.back()->OriginalColumn;
         SourceLocation Loc = Tokens.back()->Tok.getLocation();
         if (MightEndWithEscapedSlash) {

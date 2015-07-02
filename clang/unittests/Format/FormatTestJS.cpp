@@ -636,6 +636,8 @@ TEST_F(FormatTestJS, RegexLiteralSpecialCharacters) {
   verifyFormat("var regex =\n"
                "    /\"/;",
                getGoogleJSStyleWithColumns(15));
+  verifyFormat("var regex =  //\n"
+               "    /a/;");
 }
 
 TEST_F(FormatTestJS, RegexLiteralModifiers) {
