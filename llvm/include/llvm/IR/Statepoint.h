@@ -200,6 +200,17 @@ public:
   /// path of invoke.
   std::vector<GCRelocateOperands> getRelocates();
 
+  /// Get the experimental_gc_result call tied to this statepoint.  Can be
+  /// nullptr if there isn't a gc_result tied to this statepoint.  Guaranteed to
+  /// be a CallInst if non-null.
+  InstructionTy *getGCResult() {
+    for (auto *U : getCallSite().getInstruction()->users())
+      if (isGCResult(U))
+        return cast<CallInst>(U);
+
+    return nullptr;
+  }
+
 #ifndef NDEBUG
   /// Asserts if this statepoint is malformed.  Common cases for failure
   /// include incorrect length prefixes for variable length sections or
