@@ -260,7 +260,7 @@ bool PPCVSXSwapRemoval::gatherVectorInstructions() {
         // select, compare, etc.).
         SwapVector[VecIdx].IsSwappable = 1;
         break;
-      case PPC::XXPERMDI:
+      case PPC::XXPERMDI: {
         // This is a swap if it is of the form XXPERMDI t, s, s, 2.
         // Unfortunately, MachineCSE ignores COPY and SUBREG_TO_REG, so we
         // can also see XXPERMDI t, SUBREG_TO_REG(s), SUBREG_TO_REG(s), 2,
@@ -268,9 +268,8 @@ bool PPCVSXSwapRemoval::gatherVectorInstructions() {
         // SUBREG_TO_REG to find the real source value for comparison.
         // If the real source value is a physical register, then mark the
         // XXPERMDI as mentioning a physical register.
-        // Any other form of XXPERMDI is lane-sensitive and unsafe
-        // for the optimization.
-        if (MI.getOperand(3).getImm() == 2) {
+        int immed = MI.getOperand(3).getImm();
+        if (immed == 2) {
           unsigned trueReg1 = lookThruCopyLike(MI.getOperand(1).getReg(),
                                                VecIdx);
           unsigned trueReg2 = lookThruCopyLike(MI.getOperand(2).getReg(),
@@ -278,7 +277,26 @@ bool PPCVSXSwapRemoval::gatherVectorInstructions() {
           if (trueReg1 == trueReg2)
             SwapVector[VecIdx].IsSwap = 1;
         }
+        // This is a doubleword splat if it is of the form
+        // XXPERMDI t, s, s, 0 or XXPERMDI t, s, s, 3.  As above we
+        // must look through chains of copy-likes to find the source
+        // register.  We turn off the marking for mention of a physical
+        // register, because splatting it is safe; the optimization
+        // will not swap the value in the physical register.
+        else if (immed == 0 || immed == 3) {
+          unsigned trueReg1 = lookThruCopyLike(MI.getOperand(1).getReg(),
+                                               VecIdx);
+          unsigned trueReg2 = lookThruCopyLike(MI.getOperand(2).getReg(),
+                                               VecIdx);
+          if (trueReg1 == trueReg2) {
+            SwapVector[VecIdx].IsSwappable = 1;
+            SwapVector[VecIdx].MentionsPhysVR = 0;
+          }
+        }
+        // Any other form of XXPERMDI is lane-sensitive and unsafe
+        // for the optimization.
         break;
+      }
       case PPC::LVX:
         // Non-permuting loads are currently unsafe.  We can use special
         // handling for this in the future.  By not marking these as
@@ -306,14 +324,6 @@ bool PPCVSXSwapRemoval::gatherVectorInstructions() {
         // safe for optimization.
         SwapVector[VecIdx].IsStore = 1;
         SwapVector[VecIdx].IsSwap = 1;
-        break;
-      case PPC::SUBREG_TO_REG:
-        // These are fine provided they are moving between full vector
-        // register classes.  For example, the VRs are a subset of the
-        // VSRs, but each VR and each VSR is a full 128-bit register.
-        if (isVecReg(MI.getOperand(0).getReg()) &&
-            isVecReg(MI.getOperand(2).getReg()))
-          SwapVector[VecIdx].IsSwappable = 1;
         break;
       case PPC::COPY:
         // These are fine provided they are moving between full vector
