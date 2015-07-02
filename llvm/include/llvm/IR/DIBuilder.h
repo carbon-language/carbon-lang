@@ -36,14 +36,9 @@ namespace llvm {
     Module &M;
     LLVMContext &VMContext;
 
-    TempMDTuple TempEnumTypes;
-    TempMDTuple TempRetainTypes;
-    TempMDTuple TempSubprograms;
-    TempMDTuple TempGVs;
-    TempMDTuple TempImportedModules;
-
-    Function *DeclareFn;     // llvm.dbg.declare
-    Function *ValueFn;       // llvm.dbg.value
+    DICompileUnit *CUNode;   ///< The one compile unit created by this DIBuiler.
+    Function *DeclareFn;     ///< llvm.dbg.declare
+    Function *ValueFn;       ///< llvm.dbg.value
 
     SmallVector<Metadata *, 4> AllEnumTypes;
     /// Track the RetainTypes, since they can be updated later on.

@@ -1085,11 +1085,20 @@ public:
   /// deleted on a uniquing collision.  In practice, uniquing collisions on \a
   /// DICompileUnit should be fairly rare.
   /// @{
+  void replaceEnumTypes(DISubprogramArray N) {
+    replaceOperandWith(4, N.get());
+  }
+  void replaceRetainedTypes(DISubprogramArray N) {
+    replaceOperandWith(5, N.get());
+  }
   void replaceSubprograms(DISubprogramArray N) {
     replaceOperandWith(6, N.get());
   }
   void replaceGlobalVariables(DIGlobalVariableArray N) {
     replaceOperandWith(7, N.get());
+  }
+  void replaceImportedEntities(DIGlobalVariableArray N) {
+    replaceOperandWith(8, N.get());
   }
   /// @}
 
