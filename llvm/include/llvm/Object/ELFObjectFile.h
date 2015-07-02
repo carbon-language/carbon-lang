@@ -609,21 +609,34 @@ ELFObjectFile<ELFT>::section_rel_begin(DataRefImpl Sec) const {
   uintptr_t SHT = reinterpret_cast<uintptr_t>(EF.section_begin());
   RelData.d.a = (Sec.p - SHT) / EF.getHeader()->e_shentsize;
   RelData.d.b = 0;
+
+  const Elf_Shdr *S = reinterpret_cast<const Elf_Shdr *>(Sec.p);
+  if (S->sh_type != ELF::SHT_RELA && S->sh_type != ELF::SHT_REL)
+    return relocation_iterator(RelocationRef(RelData, this));
+
+  const Elf_Shdr *RelSec = getRelSection(RelData);
+  ErrorOr<const Elf_Shdr *> SymSecOrErr = EF.getSection(RelSec->sh_link);
+  if (std::error_code EC = SymSecOrErr.getError())
+    report_fatal_error(EC.message());
+  const Elf_Shdr *SymSec = *SymSecOrErr;
+  uint32_t SymSecType = SymSec->sh_type;
+  if (SymSecType != ELF::SHT_SYMTAB && SymSecType != ELF::SHT_DYNSYM)
+    report_fatal_error("Invalid symbol table section type!");
+  if (SymSecType == ELF::SHT_DYNSYM)
+    RelData.d.b = 1;
+
   return relocation_iterator(RelocationRef(RelData, this));
 }
 
 template <class ELFT>
 relocation_iterator
 ELFObjectFile<ELFT>::section_rel_end(DataRefImpl Sec) const {
-  DataRefImpl RelData;
-  uintptr_t SHT = reinterpret_cast<uintptr_t>(EF.section_begin());
   const Elf_Shdr *S = reinterpret_cast<const Elf_Shdr *>(Sec.p);
-  RelData.d.a = (Sec.p - SHT) / EF.getHeader()->e_shentsize;
+  relocation_iterator Begin = section_rel_begin(Sec);
   if (S->sh_type != ELF::SHT_RELA && S->sh_type != ELF::SHT_REL)
-    RelData.d.b = 0;
-  else
-    RelData.d.b = S->sh_size / S->sh_entsize;
-
+    return Begin;
+  DataRefImpl RelData = Begin->getRawDataRefImpl();
+  RelData.d.b += (S->sh_size / S->sh_entsize) << 1;
   return relocation_iterator(RelocationRef(RelData, this));
 }
 
@@ -647,7 +660,7 @@ ELFObjectFile<ELFT>::getRelocatedSection(DataRefImpl Sec) const {
 // Relocations
 template <class ELFT>
 void ELFObjectFile<ELFT>::moveRelocationNext(DataRefImpl &Rel) const {
-  ++Rel.d.b;
+  Rel.d.b += 2;
 }
 
 template <class ELFT>
@@ -662,23 +675,12 @@ ELFObjectFile<ELFT>::getRelocationSymbol(DataRefImpl Rel) const {
   if (!symbolIdx)
     return symbol_end();
 
-  ErrorOr<const Elf_Shdr *> SymSecOrErr = EF.getSection(sec->sh_link);
-  if (std::error_code EC = SymSecOrErr.getError())
-    report_fatal_error(EC.message());
-  const Elf_Shdr *SymSec = *SymSecOrErr;
-
+  bool IsDyn = Rel.d.b & 1;
   DataRefImpl SymbolData;
-  switch (SymSec->sh_type) {
-  default:
-    report_fatal_error("Invalid symbol table section type!");
-  case ELF::SHT_SYMTAB:
-    SymbolData = toDRI(EF.symbol_begin() + symbolIdx, false);
-    break;
-  case ELF::SHT_DYNSYM:
+  if (IsDyn)
     SymbolData = toDRI(EF.dynamic_symbol_begin() + symbolIdx, true);
-    break;
-  }
-
+  else
+    SymbolData = toDRI(EF.symbol_begin() + symbolIdx, false);
   return symbol_iterator(SymbolRef(SymbolData, this));
 }
 
@@ -754,14 +756,14 @@ template <class ELFT>
 const typename ELFObjectFile<ELFT>::Elf_Rel *
 ELFObjectFile<ELFT>::getRel(DataRefImpl Rel) const {
   assert(getRelSection(Rel)->sh_type == ELF::SHT_REL);
-  return EF.template getEntry<Elf_Rel>(Rel.d.a, Rel.d.b);
+  return EF.template getEntry<Elf_Rel>(Rel.d.a, Rel.d.b >> 1);
 }
 
 template <class ELFT>
 const typename ELFObjectFile<ELFT>::Elf_Rela *
 ELFObjectFile<ELFT>::getRela(DataRefImpl Rela) const {
   assert(getRelSection(Rela)->sh_type == ELF::SHT_RELA);
-  return EF.template getEntry<Elf_Rela>(Rela.d.a, Rela.d.b);
+  return EF.template getEntry<Elf_Rela>(Rela.d.a, Rela.d.b >> 1);
 }
 
 template <class ELFT>
