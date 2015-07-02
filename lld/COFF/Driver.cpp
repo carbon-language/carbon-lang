@@ -204,7 +204,7 @@ void LinkerDriver::addLibSearchPaths() {
 
 Undefined *LinkerDriver::addUndefined(StringRef Name) {
   Undefined *U = Symtab.addUndefined(Name);
-  Config->GCRoots.insert(Name);
+  Config->GCRoot.insert(U);
   return U;
 }
 

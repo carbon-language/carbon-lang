@@ -50,7 +50,7 @@ struct Configuration {
   bool Force = false;
 
   // Symbols in this set are considered as live by the garbage collector.
-  std::set<StringRef> GCRoots;
+  std::set<Undefined *> GCRoot;
 
   std::set<StringRef> NoDefaultLibs;
   bool NoDefaultLibAll = false;

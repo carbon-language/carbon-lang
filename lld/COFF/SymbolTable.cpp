@@ -391,9 +391,9 @@ ErrorOr<ObjectFile *> SymbolTable::createLTOObject(LTOCodeGenerator *CG) {
         CG->addMustPreserveSymbol(Body->getName());
 
   // Likewise for other symbols that must be preserved.
-  for (StringRef Name : Config->GCRoots)
-    if (isa<DefinedBitcode>(Symtab[Name]->Body))
-      CG->addMustPreserveSymbol(Name);
+  for (Undefined *U : Config->GCRoot)
+    if (isa<DefinedBitcode>(U->getReplacement()))
+      CG->addMustPreserveSymbol(U->getName());
 
   CG->setModule(BitcodeFiles[0]->releaseModule());
   for (unsigned I = 1, E = BitcodeFiles.size(); I != E; ++I)

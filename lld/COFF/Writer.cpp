@@ -117,19 +117,20 @@ void Writer::markLive() {
   // as we push, so sections never appear twice in the list.
   SmallVector<SectionChunk *, 256> Worklist;
 
-  for (StringRef Name : Config->GCRoots)
-    if (auto *D = dyn_cast<DefinedRegular>(Symtab->find(Name)))
-      if (!D->isLive()) {
-        D->markLive();
-        Worklist.push_back(D->getChunk());
-      }
-  for (Chunk *C : Symtab->getChunks())
-    if (auto *SC = dyn_cast<SectionChunk>(C))
-      if (SC->isRoot() && !SC->isLive()) {
-        SC->markLive();
-        Worklist.push_back(SC);
-      }
-
+  for (Undefined *U : Config->GCRoot) {
+    auto *D = cast<DefinedRegular>(U->getReplacement());
+    if (D->isLive())
+      continue;
+    D->markLive();
+    Worklist.push_back(D->getChunk());
+  }
+  for (Chunk *C : Symtab->getChunks()) {
+    auto *SC = dyn_cast<SectionChunk>(C);
+    if (!SC || !SC->isRoot() || SC->isLive())
+      continue;
+    SC->markLive();
+    Worklist.push_back(SC);
+  }
   while (!Worklist.empty()) {
     SectionChunk *SC = Worklist.pop_back_val();
     assert(SC->isLive() && "We mark as live when pushing onto the worklist!");
