@@ -55,6 +55,34 @@ void test1() {
 // CHECK-LE: add <2 x i64>
 // CHECK-PPC: error: call to 'vec_add' is ambiguous
 
+  /* vec_mergee */  
+  res_vbi = vec_mergee(vbi, vbi);
+// CHECK: @llvm.ppc.altivec.vperm
+// CHECK-LE: @llvm.ppc.altivec.vperm
+  
+  res_vi = vec_mergee(vi, vi);
+// CHECK: @llvm.ppc.altivec.vperm
+// CHECK-LE: @llvm.ppc.altivec.vperm
+
+  res_vui = vec_mergee(vui, vui);
+// CHECK: @llvm.ppc.altivec.vperm
+// CHECK-LE: @llvm.ppc.altivec.vperm
+// CHECK-PPC: warning: implicit declaration of function 'vec_mergee'
+
+  /* vec_mergeo */
+  res_vbi = vec_mergeo(vbi, vbi);
+// CHECK: @llvm.ppc.altivec.vperm
+// CHECK-LE: @llvm.ppc.altivec.vperm
+
+  res_vi = vec_mergeo(vi, vi);
+// CHECK: @llvm.ppc.altivec.vperm
+// CHECK-LE: @llvm.ppc.altivec.vperm
+
+  res_vui = vec_mergeo(vui, vui);
+// CHECK: @llvm.ppc.altivec.vperm
+// CHECK-LE: @llvm.ppc.altivec.vperm
+// CHECK-PPC: warning: implicit declaration of function 'vec_mergeo'
+  
   /* vec_cmpeq */
   res_vbll = vec_cmpeq(vsll, vsll);
 // CHECK: @llvm.ppc.altivec.vcmpequd

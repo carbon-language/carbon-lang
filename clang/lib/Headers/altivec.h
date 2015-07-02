@@ -3180,6 +3180,56 @@ static vector float __ATTRS_o_ai vec_vmrglw(vector float __a,
                                          0x1C, 0x1D, 0x1E, 0x1F));
 }
 
+
+#ifdef __POWER8_VECTOR__
+/* vec_mergee */
+
+static vector bool int __ATTRS_o_ai
+vec_mergee(vector bool int __a, vector bool int __b) {
+  return vec_perm(__a, __b, (vector unsigned char)
+                  (0x00, 0x01, 0x02, 0x03, 0x10, 0x11, 0x12, 0x13, 
+                   0x08, 0x09, 0x0A, 0x0B, 0x18, 0x19, 0x1A, 0x1B));
+}
+
+static vector signed int __ATTRS_o_ai
+vec_mergee(vector signed int __a, vector signed int __b) {
+  return vec_perm(__a, __b, (vector unsigned char)
+                  (0x00, 0x01, 0x02, 0x03, 0x10, 0x11, 0x12, 0x13, 
+                   0x08, 0x09, 0x0A, 0x0B, 0x18, 0x19, 0x1A, 0x1B));
+}
+
+static vector unsigned int __ATTRS_o_ai
+vec_mergee(vector unsigned int __a, vector unsigned int __b) {
+  return vec_perm(__a, __b, (vector unsigned char)
+                  (0x00, 0x01, 0x02, 0x03, 0x10, 0x11, 0x12, 0x13, 
+                   0x08, 0x09, 0x0A, 0x0B, 0x18, 0x19, 0x1A, 0x1B));
+}
+
+/* vec_mergeo */
+
+static vector bool int  __ATTRS_o_ai
+vec_mergeo(vector bool int __a, vector bool int __b) {
+  return vec_perm(__a, __b, (vector unsigned char)
+                  (0x04, 0x05, 0x06, 0x07, 0x14, 0x15, 0x16, 0x17,
+                   0x0C, 0x0D, 0x0E, 0x0F, 0x1C, 0x1D, 0x1E, 0x1F));
+}
+
+static vector signed int  __ATTRS_o_ai
+vec_mergeo(vector signed int __a, vector signed int __b) {
+  return vec_perm(__a, __b, (vector unsigned char)
+                  (0x04, 0x05, 0x06, 0x07, 0x14, 0x15, 0x16, 0x17,
+                   0x0C, 0x0D, 0x0E, 0x0F, 0x1C, 0x1D, 0x1E, 0x1F));
+}
+
+static vector unsigned int  __ATTRS_o_ai
+vec_mergeo(vector unsigned int __a, vector unsigned int __b) {
+  return vec_perm(__a, __b, (vector unsigned char)
+                  (0x04, 0x05, 0x06, 0x07, 0x14, 0x15, 0x16, 0x17,
+                   0x0C, 0x0D, 0x0E, 0x0F, 0x1C, 0x1D, 0x1E, 0x1F));
+}
+
+#endif
+
 /* vec_mfvscr */
 
 static vector unsigned short __attribute__((__always_inline__))
