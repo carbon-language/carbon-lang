@@ -170,7 +170,7 @@ class BitcodeReader : public GVMaterializer {
 
   // When intrinsic functions are encountered which require upgrading they are
   // stored here with their replacement function.
-  typedef std::vector<std::pair<Function*, Function*> > UpgradedIntrinsicMap;
+  typedef DenseMap<Function*, Function*> UpgradedIntrinsicMap;
   UpgradedIntrinsicMap UpgradedIntrinsics;
 
   // Map the bitcode's custom MDKind ID to the Module's MDKind ID.
@@ -2710,7 +2710,7 @@ std::error_code BitcodeReader::globalCleanup() {
   for (Function &F : *TheModule) {
     Function *NewFn;
     if (UpgradeIntrinsicFunction(&F, NewFn))
-      UpgradedIntrinsics.push_back(std::make_pair(&F, NewFn));
+      UpgradedIntrinsics[&F] = NewFn;
   }
 
   // Look for global variables which need to be renamed.
@@ -4540,7 +4540,7 @@ std::error_code BitcodeReader::materializeModule(Module *M) {
       I.first->eraseFromParent();
     }
   }
-  std::vector<std::pair<Function*, Function*> >().swap(UpgradedIntrinsics);
+  UpgradedIntrinsics.clear();
 
   for (unsigned I = 0, E = InstsWithTBAATag.size(); I < E; I++)
     UpgradeInstWithTBAATag(InstsWithTBAATag[I]);
