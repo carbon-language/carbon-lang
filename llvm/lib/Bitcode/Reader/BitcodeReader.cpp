@@ -4457,13 +4457,11 @@ std::error_code BitcodeReader::materialize(GlobalValue *GV) {
     stripDebugInfo(*F);
 
   // Upgrade any old intrinsic calls in the function.
-  for (UpgradedIntrinsicMap::iterator I = UpgradedIntrinsics.begin(),
-       E = UpgradedIntrinsics.end(); I != E; ++I) {
-    if (I->first != I->second) {
-      for (auto UI = I->first->user_begin(), UE = I->first->user_end();
-           UI != UE;) {
-        if (CallInst* CI = dyn_cast<CallInst>(*UI++))
-          UpgradeIntrinsicCall(CI, I->second);
+  for (auto &I : UpgradedIntrinsics) {
+    if (I.first != I.second) {
+      for (auto *U : I.first->users()) {
+        if (CallInst *CI = dyn_cast<CallInst>(U))
+          UpgradeIntrinsicCall(CI, I.second);
       }
     }
   }
@@ -4531,17 +4529,15 @@ std::error_code BitcodeReader::materializeModule(Module *M) {
   // delete the old functions to clean up. We can't do this unless the entire
   // module is materialized because there could always be another function body
   // with calls to the old function.
-  for (std::vector<std::pair<Function*, Function*> >::iterator I =
-       UpgradedIntrinsics.begin(), E = UpgradedIntrinsics.end(); I != E; ++I) {
-    if (I->first != I->second) {
-      for (auto UI = I->first->user_begin(), UE = I->first->user_end();
-           UI != UE;) {
-        if (CallInst* CI = dyn_cast<CallInst>(*UI++))
-          UpgradeIntrinsicCall(CI, I->second);
+  for (auto &I : UpgradedIntrinsics) {
+    if (I.first != I.second) {
+      for (auto *U : I.first->users()) {
+        if (CallInst *CI = dyn_cast<CallInst>(U))
+          UpgradeIntrinsicCall(CI, I.second);
       }
-      if (!I->first->use_empty())
-        I->first->replaceAllUsesWith(I->second);
-      I->first->eraseFromParent();
+      if (!I.first->use_empty())
+        I.first->replaceAllUsesWith(I.second);
+      I.first->eraseFromParent();
     }
   }
   std::vector<std::pair<Function*, Function*> >().swap(UpgradedIntrinsics);
