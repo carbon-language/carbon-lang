@@ -114,9 +114,9 @@ DynTypedMatcher DynTypedMatcher::constructVariadic(
   assert(InnerMatchers.size() > 0 && "Array must not be empty.");
   assert(std::all_of(InnerMatchers.begin(), InnerMatchers.end(),
                      [&InnerMatchers](const DynTypedMatcher &M) {
-           return InnerMatchers[0].SupportedKind.isSame(M.SupportedKind);
+           return InnerMatchers[0].canConvertTo(M.SupportedKind);
          }) &&
-         "SupportedKind must match!");
+         "SupportedKind must be convertible to a common type!");
 
   auto SupportedKind = InnerMatchers[0].SupportedKind;
   // We must relax the restrict kind here.

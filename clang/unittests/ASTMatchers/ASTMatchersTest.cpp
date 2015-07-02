@@ -482,6 +482,10 @@ TEST(DeclarationMatcher, MatchAnyOf) {
   EXPECT_TRUE(matches("int F() { return 1 + 2; }", MixedTypes));
   EXPECT_TRUE(matches("int F() { if (true) return 1; }", MixedTypes));
   EXPECT_TRUE(notMatches("int F() { return 1; }", MixedTypes));
+
+  EXPECT_TRUE(
+      matches("void f() try { } catch (int) { } catch (...) { }",
+              catchStmt(anyOf(hasDescendant(varDecl()), isCatchAll()))));
 }
 
 TEST(DeclarationMatcher, MatchHas) {
