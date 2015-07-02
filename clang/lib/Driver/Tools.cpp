@@ -2231,6 +2231,10 @@ static void CollectArgsForIntegratedAssembler(Compilation &C,
 
 // Until ARM libraries are build separately, we have them all in one library
 static StringRef getArchNameForCompilerRTLib(const ToolChain &TC) {
+  if (TC.getTriple().isOSWindows() &&
+      !TC.getTriple().isWindowsItaniumEnvironment() &&
+      TC.getArch() == llvm::Triple::x86)
+    return "i386";
   if (TC.getArch() == llvm::Triple::arm || TC.getArch() == llvm::Triple::armeb)
     return "arm";
   return TC.getArchName();
