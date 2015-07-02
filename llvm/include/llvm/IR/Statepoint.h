@@ -86,7 +86,7 @@ public:
     CallArgsBeginPos = 5,
   };
 
-  operator bool() const {
+  explicit operator bool() const {
     // We do not assign non-statepoint CallSites to StatepointCS.
     return (bool)StatepointCS;
   }
