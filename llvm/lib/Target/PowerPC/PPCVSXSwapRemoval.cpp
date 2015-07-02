@@ -79,7 +79,6 @@ struct PPCVSXSwapEntry {
   unsigned int IsStore : 1;
   unsigned int IsSwap : 1;
   unsigned int MentionsPhysVR : 1;
-  unsigned int HasImplicitSubreg : 1;
   unsigned int IsSwappable : 1;
   unsigned int SpecialHandling : 3;
   unsigned int WebRejected : 1;
@@ -224,7 +223,6 @@ bool PPCVSXSwapRemoval::gatherVectorInstructions() {
     for (MachineInstr &MI : MBB) {
 
       bool RelevantInstr = false;
-      bool ImplicitSubreg = false;
 
       for (const MachineOperand &MO : MI.operands()) {
         if (!MO.isReg())
@@ -232,8 +230,6 @@ bool PPCVSXSwapRemoval::gatherVectorInstructions() {
         unsigned Reg = MO.getReg();
         if (isVecReg(Reg)) {
           RelevantInstr = true;
-          if (MO.getSubReg() != 0)
-            ImplicitSubreg = true;
           break;
         }
       }
@@ -248,9 +244,6 @@ bool PPCVSXSwapRemoval::gatherVectorInstructions() {
       // of the swap vector.
       PPCVSXSwapEntry SwapEntry{};
       int VecIdx = addSwapEntry(&MI, SwapEntry);
-
-      if (ImplicitSubreg)
-        SwapVector[VecIdx].HasImplicitSubreg = 1;
 
       switch(MI.getOpcode()) {
       default:
@@ -466,32 +459,23 @@ int PPCVSXSwapRemoval::addSwapEntry(MachineInstr *MI,
 // such operations to the ultimate source register.  If a
 // physical register is encountered, we stop the search and
 // flag the swap entry indicated by VecIdx (the original
-// XXPERMDI) as mentioning a physical register.  Similarly
-// for implicit subregister mentions (which should never
-// happen).
+// XXPERMDI) as mentioning a physical register.
 unsigned PPCVSXSwapRemoval::lookThruCopyLike(unsigned SrcReg,
                                              unsigned VecIdx) {
   MachineInstr *MI = MRI->getVRegDef(SrcReg);
   if (!MI->isCopyLike())
     return SrcReg;
 
-  unsigned CopySrcReg, CopySrcSubreg;
-  if (MI->isCopy()) {
+  unsigned CopySrcReg;
+  if (MI->isCopy())
     CopySrcReg = MI->getOperand(1).getReg();
-    CopySrcSubreg = MI->getOperand(1).getSubReg();
-  } else {
+  else {
     assert(MI->isSubregToReg() && "bad opcode for lookThruCopyLike");
     CopySrcReg = MI->getOperand(2).getReg();
-    CopySrcSubreg = MI->getOperand(2).getSubReg();
   }
 
   if (!TargetRegisterInfo::isVirtualRegister(CopySrcReg)) {
     SwapVector[VecIdx].MentionsPhysVR = 1;
-    return CopySrcReg;
-  }
-
-  if (CopySrcSubreg != 0) {
-    SwapVector[VecIdx].HasImplicitSubreg = 1;
     return CopySrcReg;
   }
 
@@ -561,11 +545,9 @@ void PPCVSXSwapRemoval::recordUnoptimizableWebs() {
   for (unsigned EntryIdx = 0; EntryIdx < SwapVector.size(); ++EntryIdx) {
     int Repr = EC->getLeaderValue(SwapVector[EntryIdx].VSEId);
 
-    // Reject webs containing mentions of physical registers or implicit
-    // subregs, or containing operations that we don't know how to handle
-    // in a lane-permuted region.
+    // Reject webs containing mentions of physical registers, or containing
+    // operations that we don't know how to handle in a lane-permuted region.
     if (SwapVector[EntryIdx].MentionsPhysVR ||
-        SwapVector[EntryIdx].HasImplicitSubreg ||
         !(SwapVector[EntryIdx].IsSwappable || SwapVector[EntryIdx].IsSwap)) {
 
       SwapVector[Repr].WebRejected = 1;
@@ -774,8 +756,6 @@ void PPCVSXSwapRemoval::dumpSwapVector() {
       DEBUG(dbgs() << "swap ");
     if (SwapVector[EntryIdx].MentionsPhysVR)
       DEBUG(dbgs() << "physreg ");
-    if (SwapVector[EntryIdx].HasImplicitSubreg)
-      DEBUG(dbgs() << "implsubreg ");
 
     if (SwapVector[EntryIdx].IsSwappable) {
       DEBUG(dbgs() << "swappable ");
