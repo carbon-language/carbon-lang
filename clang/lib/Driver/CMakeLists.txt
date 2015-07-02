@@ -10,6 +10,7 @@ add_clang_library(clangDriver
   Driver.cpp
   DriverOptions.cpp
   Job.cpp
+  MinGWToolChain.cpp
   Multilib.cpp
   MSVCToolChain.cpp
   Phases.cpp

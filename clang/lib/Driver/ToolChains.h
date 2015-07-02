@@ -525,6 +525,38 @@ protected:
   Tool *buildLinker() const override;
 };
 
+class LLVM_LIBRARY_VISIBILITY MinGW : public ToolChain {
+public:
+  MinGW(const Driver &D, const llvm::Triple &Triple,
+        const llvm::opt::ArgList &Args);
+
+  bool IsIntegratedAssemblerDefault() const override;
+  bool IsUnwindTablesDefault() const override;
+  bool isPICDefault() const override;
+  bool isPIEDefault() const override;
+  bool isPICDefaultForced() const override;
+  bool UseSEHExceptions() const;
+
+  void
+  AddClangSystemIncludeArgs(const llvm::opt::ArgList &DriverArgs,
+                            llvm::opt::ArgStringList &CC1Args) const override;
+  void AddClangCXXStdlibIncludeArgs(
+      const llvm::opt::ArgList &DriverArgs,
+      llvm::opt::ArgStringList &CC1Args) const override;
+
+protected:
+  Tool *getTool(Action::ActionClass AC) const override;
+  Tool *buildLinker() const override;
+  Tool *buildAssembler() const override;
+
+private:
+  std::string Base;
+  std::string GccLibDir;
+  std::string Arch;
+  mutable std::unique_ptr<tools::gcc::Preprocessor> Preprocessor;
+  mutable std::unique_ptr<tools::gcc::Compiler> Compiler;
+};
+
 class LLVM_LIBRARY_VISIBILITY OpenBSD : public Generic_ELF {
 public:
   OpenBSD(const Driver &D, const llvm::Triple &Triple,

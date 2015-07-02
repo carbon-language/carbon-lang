@@ -2048,12 +2048,7 @@ const ToolChain &Driver::getToolChain(const ArgList &Args,
           TC = new toolchains::Generic_GCC(*this, Target, Args);
         break;
       case llvm::Triple::GNU:
-        // FIXME: We need a MinGW toolchain.  Use the default Generic_GCC
-        // toolchain for now as the default case would below otherwise.
-        if (Target.isOSBinFormatELF())
-          TC = new toolchains::Generic_ELF(*this, Target, Args);
-        else
-          TC = new toolchains::Generic_GCC(*this, Target, Args);
+        TC = new toolchains::MinGW(*this, Target, Args);
         break;
       case llvm::Triple::Itanium:
         TC = new toolchains::CrossWindowsToolChain(*this, Target, Args);
