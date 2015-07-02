@@ -58,8 +58,7 @@ void SectionChunk::writeTo(uint8_t *Buf) {
   // Apply relocations.
   for (const coff_relocation &Rel : Relocs) {
     uint8_t *Off = Buf + FileOff + Rel.VirtualAddress;
-    SymbolBody *Body =
-        File->getSymbolBody(Rel.SymbolTableIndex)->getReplacement();
+    SymbolBody *Body = File->getSymbolBody(Rel.SymbolTableIndex)->repl();
     uint64_t S = cast<Defined>(Body)->getRVA();
     uint64_t P = RVA + Rel.VirtualAddress;
     switch (Rel.Type) {
@@ -98,8 +97,7 @@ void SectionChunk::getBaserels(std::vector<uint32_t> *Res, Defined *ImageBase) {
     // address never changes even if image is relocated.
     if (Rel.Type != IMAGE_REL_AMD64_ADDR64)
       continue;
-    SymbolBody *Body =
-        File->getSymbolBody(Rel.SymbolTableIndex)->getReplacement();
+    SymbolBody *Body = File->getSymbolBody(Rel.SymbolTableIndex)->repl();
     if (Body == ImageBase)
       continue;
     Res->push_back(RVA + Rel.VirtualAddress);
@@ -171,9 +169,8 @@ bool SectionChunk::equals(const SectionChunk *X) const {
       return false;
     if (R1.VirtualAddress != R2.VirtualAddress)
       return false;
-    SymbolBody *B1 = File->getSymbolBody(R1.SymbolTableIndex)->getReplacement();
-    SymbolBody *B2 =
-        X->File->getSymbolBody(R2.SymbolTableIndex)->getReplacement();
+    SymbolBody *B1 = File->getSymbolBody(R1.SymbolTableIndex)->repl();
+    SymbolBody *B2 = X->File->getSymbolBody(R2.SymbolTableIndex)->repl();
     if (B1 == B2)
       return true;
     auto *D1 = dyn_cast<DefinedRegular>(B1);

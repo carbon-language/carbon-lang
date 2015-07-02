@@ -118,7 +118,7 @@ void Writer::markLive() {
   SmallVector<SectionChunk *, 256> Worklist;
 
   for (Undefined *U : Config->GCRoot) {
-    auto *D = cast<DefinedRegular>(U->getReplacement());
+    auto *D = cast<DefinedRegular>(U->repl());
     if (D->isLive())
       continue;
     D->markLive();
@@ -137,7 +137,7 @@ void Writer::markLive() {
 
     // Mark all symbols listed in the relocation table for this section.
     for (SymbolBody *S : SC->symbols())
-      if (auto *D = dyn_cast<DefinedRegular>(S->getReplacement()))
+      if (auto *D = dyn_cast<DefinedRegular>(S->repl()))
         if (!D->isLive()) {
           D->markLive();
           Worklist.push_back(D->getChunk());
@@ -349,7 +349,7 @@ void Writer::writeHeader() {
   PE->SizeOfImage = SizeOfImage;
   PE->SizeOfHeaders = SizeOfHeaders;
   if (!Config->NoEntry) {
-    Defined *Entry = cast<Defined>(Config->Entry->getReplacement());
+    Defined *Entry = cast<Defined>(Config->Entry->repl());
     PE->AddressOfEntryPoint = Entry->getRVA();
   }
   PE->SizeOfStackReserve = Config->StackReserve;

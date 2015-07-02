@@ -122,7 +122,7 @@ bool SymbolTable::reportRemainingUndefines() {
     StringRef Name = Undef->getName();
     // The weak alias may have been resovled, so check for that.
     if (SymbolBody *Alias = Undef->WeakAlias) {
-      if (auto *D = dyn_cast<Defined>(Alias->getReplacement())) {
+      if (auto *D = dyn_cast<Defined>(Alias->repl())) {
         Sym->Body = D;
         continue;
       }
@@ -248,7 +248,7 @@ Symbol *SymbolTable::findSymbol(StringRef Name) {
 void SymbolTable::mangleMaybe(Undefined *U) {
   if (U->WeakAlias)
     return;
-  if (!isa<Undefined>(U->getReplacement()))
+  if (!isa<Undefined>(U->repl()))
     return;
 
   // In Microsoft ABI, a non-member function name is mangled this way.
@@ -284,7 +284,7 @@ std::error_code SymbolTable::rename(StringRef From, StringRef To) {
   SymbolBody *Body = new (Alloc) Undefined(To);
   if (auto EC = addSymbol(Body))
     return EC;
-  SymbolBody *Repl = Body->getReplacement();
+  SymbolBody *Repl = Body->repl();
   if (isa<Undefined>(Repl))
     return std::error_code();
   Sym->Body = Repl;
@@ -380,19 +380,18 @@ ErrorOr<ObjectFile *> SymbolTable::createLTOObject(LTOCodeGenerator *CG) {
   // All symbols referenced by non-bitcode objects must be preserved.
   for (ObjectFile *File : ObjectFiles)
     for (SymbolBody *Body : File->getSymbols())
-      if (auto *S = dyn_cast<DefinedBitcode>(Body->getReplacement()))
+      if (auto *S = dyn_cast<DefinedBitcode>(Body->repl()))
         CG->addMustPreserveSymbol(S->getName());
 
   // Likewise for bitcode symbols which we initially resolved to non-bitcode.
   for (BitcodeFile *File : BitcodeFiles)
     for (SymbolBody *Body : File->getSymbols())
-      if (isa<DefinedBitcode>(Body) &&
-          !isa<DefinedBitcode>(Body->getReplacement()))
+      if (isa<DefinedBitcode>(Body) && !isa<DefinedBitcode>(Body->repl()))
         CG->addMustPreserveSymbol(Body->getName());
 
   // Likewise for other symbols that must be preserved.
   for (Undefined *U : Config->GCRoot)
-    if (isa<DefinedBitcode>(U->getReplacement()))
+    if (isa<DefinedBitcode>(U->repl()))
       CG->addMustPreserveSymbol(U->getName());
 
   CG->setModule(BitcodeFiles[0]->releaseModule());
