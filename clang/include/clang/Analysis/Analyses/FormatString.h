@@ -436,12 +436,14 @@ class PrintfSpecifier : public analyze_format_string::FormatSpecifier {
   OptionalFlag HasSpacePrefix; // ' '
   OptionalFlag HasAlternativeForm; // '#'
   OptionalFlag HasLeadingZeroes; // '0'
+  OptionalFlag HasObjCTechnicalTerm; // '[tt]'
   OptionalAmount Precision;
 public:
   PrintfSpecifier() :
     FormatSpecifier(/* isPrintf = */ true),
     HasThousandsGrouping("'"), IsLeftJustified("-"), HasPlusPrefix("+"),
-    HasSpacePrefix(" "), HasAlternativeForm("#"), HasLeadingZeroes("0") {}
+    HasSpacePrefix(" "), HasAlternativeForm("#"), HasLeadingZeroes("0"),
+    HasObjCTechnicalTerm("tt") {}
 
   static PrintfSpecifier Parse(const char *beg, const char *end);
 
@@ -466,6 +468,9 @@ public:
   }
   void setHasLeadingZeros(const char *position) {
     HasLeadingZeroes.setPosition(position);
+  }
+  void setHasObjCTechnicalTerm(const char *position) {
+    HasObjCTechnicalTerm.setPosition(position);
   }
   void setUsesPositionalArg() { UsesPositionalArg = true; }
 
@@ -503,6 +508,7 @@ public:
   const OptionalFlag &hasAlternativeForm() const { return HasAlternativeForm; }
   const OptionalFlag &hasLeadingZeros() const { return HasLeadingZeroes; }
   const OptionalFlag &hasSpacePrefix() const { return HasSpacePrefix; }
+  const OptionalFlag &hasObjCTechnicalTerm() const { return HasObjCTechnicalTerm; }
   bool usesPositionalArg() const { return UsesPositionalArg; }
 
   /// Changes the specifier and length according to a QualType, retaining any
@@ -615,6 +621,15 @@ public:
   virtual void HandleIncompleteSpecifier(const char *startSpecifier,
                                          unsigned specifierLen) {}
 
+  virtual void HandleEmptyObjCModifierFlag(const char *startFlags,
+                                           unsigned flagsLen) {}
+
+  virtual void HandleInvalidObjCModifierFlag(const char *startFlag,
+                                             unsigned flagLen) {}
+
+  virtual void HandleObjCFlagsWithNonObjCConversion(const char *flagsStart,
+                                            const char *flagsEnd,
+                                            const char *conversionPosition) {}
   // Printf-specific handlers.
 
   virtual bool HandleInvalidPrintfConversionSpecifier(

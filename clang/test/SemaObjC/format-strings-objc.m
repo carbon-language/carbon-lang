@@ -251,3 +251,16 @@ void testUnicode() {
   NSLog(@"%C", 0x202200); // expected-warning{{format specifies type 'unichar' (aka 'unsigned short') but the argument has type 'int'}}
 }
 
+// Test Objective-C modifier flags.
+void testObjCModifierFlags() {
+  NSLog(@"%[]@", @"Foo"); // expected-warning {{missing object format flag}}
+  NSLog(@"%[", @"Foo"); // expected-warning {{incomplete format specifier}}
+  NSLog(@"%[tt", @"Foo");  // expected-warning {{incomplete format specifier}}
+  NSLog(@"%[tt]@", @"Foo"); // no-warning
+  NSLog(@"%[tt]@ %s", @"Foo", "hello"); // no-warning
+  NSLog(@"%s %[tt]@", "hello", @"Foo"); // no-warning
+  NSLog(@"%[blark]@", @"Foo"); // expected-warning {{'blark' is not a valid object format flag}}
+  NSLog(@"%2$[tt]@ %1$[tt]@", @"Foo", @"Bar"); // no-warning
+  NSLog(@"%2$[tt]@ %1$[tt]s", @"Foo", @"Bar"); // expected-warning {{object format flags cannot be used with 's' conversion specifier}}
+}
+
