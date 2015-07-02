@@ -616,21 +616,21 @@ static int min_is_manifestly_unbounded(struct isl_tab *tab,
 	return 1;
 }
 
-static int row_cmp(struct isl_tab *tab, int r1, int r2, int c, isl_int t)
+static int row_cmp(struct isl_tab *tab, int r1, int r2, int c, isl_int *t)
 {
 	unsigned off = 2 + tab->M;
 
 	if (tab->M) {
 		int s;
-		isl_int_mul(t, tab->mat->row[r1][2], tab->mat->row[r2][off+c]);
-		isl_int_submul(t, tab->mat->row[r2][2], tab->mat->row[r1][off+c]);
-		s = isl_int_sgn(t);
+		isl_int_mul(*t, tab->mat->row[r1][2], tab->mat->row[r2][off+c]);
+		isl_int_submul(*t, tab->mat->row[r2][2], tab->mat->row[r1][off+c]);
+		s = isl_int_sgn(*t);
 		if (s)
 			return s;
 	}
-	isl_int_mul(t, tab->mat->row[r1][1], tab->mat->row[r2][off + c]);
-	isl_int_submul(t, tab->mat->row[r2][1], tab->mat->row[r1][off + c]);
-	return isl_int_sgn(t);
+	isl_int_mul(*t, tab->mat->row[r1][1], tab->mat->row[r2][off + c]);
+	isl_int_submul(*t, tab->mat->row[r2][1], tab->mat->row[r1][off + c]);
+	return isl_int_sgn(*t);
 }
 
 /* Given the index of a column "c", return the index of a row
@@ -673,7 +673,7 @@ static int pivot_row(struct isl_tab *tab,
 			r = j;
 			continue;
 		}
-		tsgn = sgn * row_cmp(tab, r, j, c, t);
+		tsgn = sgn * row_cmp(tab, r, j, c, &t);
 		if (tsgn < 0 || (tsgn == 0 &&
 					    tab->row_var[j] < tab->row_var[r]))
 			r = j;

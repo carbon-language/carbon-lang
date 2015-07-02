@@ -719,7 +719,7 @@ static __isl_give isl_ast_node_list *extract_node_list(
 /* Look for shared enforced constraints by all the elements in "list"
  * on outer loops (with respect to the current depth) and return the result.
  *
- * We assume that the number of children is at least one.
+ * If there are no elements in "list", then return the empty set.
  */
 __isl_give isl_basic_set *isl_ast_graft_list_extract_shared_enforced(
 	__isl_keep isl_ast_graft_list *list,
@@ -733,16 +733,11 @@ __isl_give isl_basic_set *isl_ast_graft_list_extract_shared_enforced(
 	if (!list)
 		return NULL;
 
-	n = isl_ast_graft_list_n_ast_graft(list);
-	if (n == 0)
-		isl_die(isl_ast_graft_list_get_ctx(list), isl_error_invalid,
-			"for node should have at least one child",
-			return NULL);
-
 	space = isl_ast_build_get_space(build, 1);
 	enforced = isl_basic_set_empty(space);
 
 	depth = isl_ast_build_get_depth(build);
+	n = isl_ast_graft_list_n_ast_graft(list);
 	for (i = 0; i < n; ++i) {
 		isl_ast_graft *graft;
 
