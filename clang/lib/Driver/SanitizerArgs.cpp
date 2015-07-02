@@ -7,6 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 #include "clang/Driver/SanitizerArgs.h"
+#include "Tools.h"
 #include "clang/Basic/Sanitizers.h"
 #include "clang/Driver/Driver.h"
 #include "clang/Driver/DriverDiagnostic.h"
@@ -533,8 +534,9 @@ static std::string toString(const clang::SanitizerSet &Sanitizers) {
   return Res;
 }
 
-void SanitizerArgs::addArgs(const llvm::opt::ArgList &Args,
-                            llvm::opt::ArgStringList &CmdArgs) const {
+void SanitizerArgs::addArgs(const ToolChain &TC, const llvm::opt::ArgList &Args,
+                            llvm::opt::ArgStringList &CmdArgs,
+                            types::ID InputType) const {
   if (Sanitizers.empty())
     return;
   CmdArgs.push_back(Args.MakeArgString("-fsanitize=" + toString(Sanitizers)));
@@ -581,6 +583,17 @@ void SanitizerArgs::addArgs(const llvm::opt::ArgList &Args,
   // affect compilation.
   if (Sanitizers.has(Memory) || Sanitizers.has(Address))
     CmdArgs.push_back(Args.MakeArgString("-fno-assume-sane-operator-new"));
+
+  if (TC.getTriple().isOSWindows() && needsUbsanRt()) {
+    // Instruct the code generator to embed linker directives in the object file
+    // that cause the required runtime libraries to be linked.
+    CmdArgs.push_back(Args.MakeArgString(
+        "--dependent-lib=" + tools::getCompilerRT(TC, "ubsan_standalone")));
+    if (types::isCXX(InputType))
+      CmdArgs.push_back(
+          Args.MakeArgString("--dependent-lib=" +
+                             tools::getCompilerRT(TC, "ubsan_standalone_cxx")));
+  }
 }
 
 SanitizerMask parseArgValues(const Driver &D, const llvm::opt::Arg *A,

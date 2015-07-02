@@ -37,6 +37,9 @@ class Compiler;
 
 using llvm::opt::ArgStringList;
 
+SmallString<128> getCompilerRT(const ToolChain &TC, StringRef Component,
+                               bool Shared = false);
+
   /// \brief Clang compiler tool.
   class LLVM_LIBRARY_VISIBILITY Clang : public Tool {
   public:
