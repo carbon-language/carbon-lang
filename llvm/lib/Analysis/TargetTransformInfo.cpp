@@ -284,6 +284,11 @@ Value *TargetTransformInfo::getOrCreateResultFromMemIntrinsic(
   return TTIImpl->getOrCreateResultFromMemIntrinsic(Inst, ExpectedType);
 }
 
+bool TargetTransformInfo::hasCompatibleFunctionAttributes(
+    const Function *Caller, const Function *Callee) const {
+  return TTIImpl->hasCompatibleFunctionAttributes(Caller, Callee);
+}
+
 TargetTransformInfo::Concept::~Concept() {}
 
 TargetIRAnalysis::TargetIRAnalysis() : TTICallback(&getDefaultTTI) {}

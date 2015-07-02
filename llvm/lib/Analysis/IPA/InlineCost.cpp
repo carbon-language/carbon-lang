@@ -1344,9 +1344,9 @@ static bool attributeMatches(Function *F1, Function *F2, AttrKind Attr) {
 /// \brief Test that there are no attribute conflicts between Caller and Callee
 ///        that prevent inlining.
 static bool functionsHaveCompatibleAttributes(Function *Caller,
-                                              Function *Callee) {
-  return attributeMatches(Caller, Callee, "target-cpu") &&
-         attributeMatches(Caller, Callee, "target-features") &&
+                                              Function *Callee,
+                                              TargetTransformInfo &TTI) {
+  return TTI.hasCompatibleFunctionAttributes(Caller, Callee) &&
          attributeMatches(Caller, Callee, Attribute::SanitizeAddress) &&
          attributeMatches(Caller, Callee, Attribute::SanitizeMemory) &&
          attributeMatches(Caller, Callee, Attribute::SanitizeThread);
@@ -1368,7 +1368,8 @@ InlineCost InlineCostAnalysis::getInlineCost(CallSite CS, Function *Callee,
 
   // Never inline functions with conflicting attributes (unless callee has
   // always-inline attribute).
-  if (!functionsHaveCompatibleAttributes(CS.getCaller(), Callee))
+  if (!functionsHaveCompatibleAttributes(CS.getCaller(), Callee,
+                                         TTIWP->getTTI(*Callee)))
     return llvm::InlineCost::getNever();
 
   // Don't inline this call if the caller has the optnone attribute.
