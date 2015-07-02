@@ -1130,3 +1130,18 @@ bool X86TTIImpl::isLegalMaskedStore(Type *DataType, int Consecutive) {
   return isLegalMaskedLoad(DataType, Consecutive);
 }
 
+bool X86TTIImpl::hasCompatibleFunctionAttributes(const Function *Caller,
+                                                 const Function *Callee) const {
+  const TargetMachine &TM = getTLI()->getTargetMachine();
+
+  // Work this as a subsetting of subtarget features.
+  const FeatureBitset &CallerBits =
+      TM.getSubtargetImpl(*Caller)->getFeatureBits();
+  const FeatureBitset &CalleeBits =
+      TM.getSubtargetImpl(*Callee)->getFeatureBits();
+
+  // FIXME: This is likely too limiting as it will include subtarget features
+  // that we might not care about for inlining, but it is conservatively
+  // correct.
+  return (CallerBits & CalleeBits) == CalleeBits;
+}
