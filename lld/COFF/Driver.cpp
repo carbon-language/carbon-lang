@@ -526,15 +526,11 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
     OwningMBs.push_back(std::move(MB)); // take ownership
   }
 
-  // Parse all input files and put all symbols to the symbol table.
-  // The symbol table will take care of name resolution.
+  // Read all input files given via the command line. Note that step()
+  // doesn't read files that are specified by directive sections.
   for (MemoryBufferRef MB : Inputs)
     Symtab.addFile(createFile(MB));
-  if (auto EC = Symtab.readObjects()) {
-    llvm::errs() << EC.message() << "\n";
-    return false;
-  }
-  if (auto EC = Symtab.run()) {
+  if (auto EC = Symtab.step()) {
     llvm::errs() << EC.message() << "\n";
     return false;
   }
@@ -548,9 +544,17 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
       return false;
     }
     Config->Entry = addUndefined(S);
+    if (Config->Verbose)
+      llvm::outs() << "Entry name inferred: " << S << "\n";
   }
 
-  // Resolve auxiliary symbols until converge.
+  // Read as much files as we can.
+  if (auto EC = Symtab.run()) {
+    llvm::errs() << EC.message() << "\n";
+    return false;
+  }
+
+  // Resolve auxiliary symbols until we get a convergence.
   // (Trying to resolve a symbol may trigger a Lazy symbol to load a new file.
   // A new file may contain a directive section to add new command line options.
   // That's why we have to repeat until converge.)

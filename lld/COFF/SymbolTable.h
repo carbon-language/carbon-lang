@@ -43,9 +43,8 @@ class SymbolTable {
 public:
   SymbolTable();
   void addFile(std::unique_ptr<InputFile> File);
+  std::error_code step();
   std::error_code run();
-  std::error_code readArchives();
-  std::error_code readObjects();
   bool queueEmpty();
 
   // Print an error message on undefined symbols.
@@ -89,6 +88,9 @@ public:
   std::vector<Chunk *> LocalImportChunks;
 
 private:
+  std::error_code readArchives();
+  std::error_code readObjects();
+
   std::error_code addSymbol(SymbolBody *New);
   void addLazy(Lazy *New, std::vector<Symbol *> *Accum);
 

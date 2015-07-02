@@ -44,13 +44,20 @@ void SymbolTable::addFile(std::unique_ptr<InputFile> FileP) {
   }
 }
 
+std::error_code SymbolTable::step() {
+  if (queueEmpty())
+    return std::error_code();
+  if (auto EC = readObjects())
+    return EC;
+  if (auto EC = readArchives())
+    return EC;
+  return std::error_code();
+}
+
 std::error_code SymbolTable::run() {
-  while (!queueEmpty()) {
-    if (auto EC = readArchives())
+  while (!queueEmpty())
+    if (auto EC = step())
       return EC;
-    if (auto EC = readObjects())
-      return EC;
-  }
   return std::error_code();
 }
 
