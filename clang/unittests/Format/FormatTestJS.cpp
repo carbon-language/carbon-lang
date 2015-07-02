@@ -579,6 +579,7 @@ TEST_F(FormatTestJS, RegexLiteralClassification) {
   verifyFormat("var x = a && /abc/.test(y);");
   verifyFormat("var x = a || /abc/.test(y);");
   verifyFormat("var x = a + /abc/.search(y);");
+  verifyFormat("/abc/.search(y);");
   verifyFormat("var regexs = {/abc/, /abc/};");
   verifyFormat("return /abc/;");
 
