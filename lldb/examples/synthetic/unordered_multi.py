@@ -15,7 +15,7 @@ class libcxx_hash_table_SynthProvider:
 		self.next_element = None
 		self.bucket_count = None
 		try:
-			# unordered_map is made up a a hash_map, which has 4 pieces in it:
+			# unordered_map is made up of a hash_map, which has 4 pieces in it:
 			#   bucket list :
 			#      array of buckets
 			#   p1 (pair):
@@ -27,7 +27,7 @@ class libcxx_hash_table_SynthProvider:
 			#      first - max_load_factor
 			#      second - equality operator function
 			#
-			# For display, we actually dont need to go inside the buckets, since 'p1' has a way to iterate over all
+			# For display, we actually don't need to go inside the buckets, since 'p1' has a way to iterate over all
 			# the elements directly.
 			#
 			# We will calculate other values about the map because they will be useful for the summary.
@@ -46,7 +46,7 @@ class libcxx_hash_table_SynthProvider:
 			logger >> "Num elements = %r" % self.num_elements
 
 			# save the pointers as we get them
-			#   -- dont access this first element if num_element==0!
+			#   -- don't access this first element if num_element==0!
 			self.elements_cache = []
 			if self.num_elements:
 				self.next_element = self.begin_ptr

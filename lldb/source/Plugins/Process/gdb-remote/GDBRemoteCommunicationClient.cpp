@@ -1113,7 +1113,7 @@ GDBRemoteCommunicationClient::SendContinuePacketAndWaitForResponse
                             {
                                 continue_after_async = false;
 
-                                // We didn't get a a SIGINT or SIGSTOP, so try for a
+                                // We didn't get a SIGINT or SIGSTOP, so try for a
                                 // very brief time (1 ms) to get another stop reply
                                 // packet to make sure it doesn't get in the way
                                 StringExtractorGDBRemote extra_stop_reply_packet;

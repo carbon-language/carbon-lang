@@ -582,7 +582,7 @@ ProcessKDP::UpdateThreadList (ThreadList &old_thread_list, ThreadList &new_threa
         log->Printf ("ProcessKDP::%s (pid = %" PRIu64 ")", __FUNCTION__, GetID());
     
     // Even though there is a CPU mask, it doesn't mean we can see each CPU
-    // indivudually, there is really only one. Lets call this thread 1.
+    // individually, there is really only one. Lets call this thread 1.
     ThreadSP thread_sp (old_thread_list.FindThreadByProtocolID(g_kernel_tid, false));
     if (!thread_sp)
         thread_sp = GetKernelThread ();

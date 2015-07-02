@@ -40,7 +40,7 @@
 #include "../../Process/Linux/NativeProcessLinux.h"
 #endif
 
-// Define these constants from Linux mman.h for use when targetting
+// Define these constants from Linux mman.h for use when targeting
 // remote linux systems even when host has different values.
 #define MAP_PRIVATE 2
 #define MAP_ANON 0x20

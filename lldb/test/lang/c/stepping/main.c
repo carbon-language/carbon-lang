@@ -42,7 +42,7 @@ int c(int val)
 
 int complex (int first, int second, int third)
 {
-    return first + second + third;  // Step in targetting complex should stop here
+    return first + second + third;  // Step in targeting complex should stop here
 }
 
 int main (int argc, char const *argv[])
@@ -56,11 +56,11 @@ int main (int argc, char const *argv[])
     int A3 = a(3); // frame select 1, thread step-out while stopped at "c(3)"
     printf("a(3) returns %d\n", A3);
     
-    int A4 = complex (a(1), b(2), c(3)); // Stop here to try step in targetting b.
+    int A4 = complex (a(1), b(2), c(3)); // Stop here to try step in targeting b.
 
-    int A5 = complex (a(2), b(3), c(4)); // Stop here to try step in targetting complex.
+    int A5 = complex (a(2), b(3), c(4)); // Stop here to try step in targeting complex.
 
-    int A6 = complex (a(4), b(5), c(6)); // Stop here to step targetting b and hitting breakpoint.
+    int A6 = complex (a(4), b(5), c(6)); // Stop here to step targeting b and hitting breakpoint.
 
     int A7 = complex (a(5), b(6), c(7)); // Stop here to make sure bogus target steps over.
 
