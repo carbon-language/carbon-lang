@@ -348,7 +348,7 @@ void Writer::writeHeader() {
   PE->SizeOfImage = SizeOfImage;
   PE->SizeOfHeaders = SizeOfHeaders;
   if (!Config->NoEntry) {
-    Defined *Entry = cast<Defined>(Symtab->find(Config->EntryName));
+    Defined *Entry = cast<Defined>(Config->Entry->getReplacement());
     PE->AddressOfEntryPoint = Entry->getRVA();
   }
   PE->SizeOfStackReserve = Config->StackReserve;

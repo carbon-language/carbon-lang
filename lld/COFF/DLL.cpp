@@ -420,7 +420,7 @@ public:
 
   void writeTo(uint8_t *Buf) override {
     for (Export &E : Config->Exports) {
-      auto *D = cast<Defined>(E.Sym->Body);
+      auto *D = cast<Defined>(E.Sym->getReplacement());
       write32le(Buf + FileOff + E.Ordinal * 4, D->getRVA());
     }
   }

@@ -22,13 +22,13 @@ namespace coff {
 
 using llvm::COFF::WindowsSubsystem;
 using llvm::StringRef;
-struct Symbol;
+class Undefined;
 
 // Represents an /export option.
 struct Export {
   StringRef Name;
   StringRef ExtName;
-  Symbol *Sym = nullptr;
+  Undefined *Sym = nullptr;
   uint16_t Ordinal = 0;
   bool Noname = false;
   bool Data = false;
@@ -42,7 +42,7 @@ struct Configuration {
   llvm::COFF::MachineTypes MachineType = llvm::COFF::IMAGE_FILE_MACHINE_AMD64;
   bool Verbose = false;
   WindowsSubsystem Subsystem = llvm::COFF::IMAGE_SUBSYSTEM_UNKNOWN;
-  StringRef EntryName;
+  Undefined *Entry = nullptr;
   bool NoEntry = false;
   std::string OutputFile;
   bool DoGC = true;

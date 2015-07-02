@@ -61,10 +61,11 @@ public:
   Defined *find(StringRef Name);
   Symbol *findSymbol(StringRef Name);
 
-  // Find a symbol assuming that Name is a function name.
-  // Not only a given string but its mangled names (in MSVC C++ manner)
-  // will be searched.
-  std::pair<StringRef, Symbol *> findMangled(StringRef Name);
+  // Occasionally we have to resolve an undefined symbol to its
+  // mangled symbol. This function tries to find a mangled name
+  // for U from the symbol table, and if found, set the symbol as
+  // a weak alias for U.
+  void mangleMaybe(Undefined *U);
 
   // Print a layout map to OS.
   void printMap(llvm::raw_ostream &OS);
@@ -82,7 +83,7 @@ public:
   std::vector<ObjectFile *> ObjectFiles;
 
   // Creates an Undefined symbol for a given name.
-  std::error_code addUndefined(StringRef Name);
+  Undefined *addUndefined(StringRef Name);
 
   // Rename From -> To in the symbol table.
   std::error_code rename(StringRef From, StringRef To);

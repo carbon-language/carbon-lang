@@ -202,9 +202,10 @@ void LinkerDriver::addLibSearchPaths() {
   }
 }
 
-void LinkerDriver::addUndefined(StringRef Sym) {
-  Symtab.addUndefined(Sym);
-  Config->GCRoots.insert(Sym);
+Undefined *LinkerDriver::addUndefined(StringRef Name) {
+  Undefined *U = Symtab.addUndefined(Name);
+  Config->GCRoots.insert(Name);
+  return U;
 }
 
 // Windows specific -- find default entry point name.
@@ -286,10 +287,8 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
     Config->Force = true;
 
   // Handle /entry
-  if (auto *Arg = Args.getLastArg(OPT_entry)) {
-    Config->EntryName = Arg->getValue();
-    addUndefined(Config->EntryName);
-  }
+  if (auto *Arg = Args.getLastArg(OPT_entry))
+    Config->Entry = addUndefined(Arg->getValue());
 
   // Handle /noentry
   if (Args.hasArg(OPT_noentry)) {
@@ -304,10 +303,8 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
   if (Args.hasArg(OPT_dll)) {
     Config->DLL = true;
     Config->ManifestID = 2;
-    if (Config->EntryName.empty() && !Config->NoEntry) {
-      Config->EntryName = "_DllMainCRTStartup";
-      addUndefined("_DllMainCRTStartup");
-    }
+    if (Config->Entry == nullptr && !Config->NoEntry)
+      Config->Entry = addUndefined("_DllMainCRTStartup");
   }
 
   // Handle /fixed
@@ -544,14 +541,13 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
 
   // Windows specific -- If entry point name is not given, we need to
   // infer that from user-defined entry name.
-  if (Config->EntryName.empty() && !Config->NoEntry) {
+  if (Config->Entry == nullptr && !Config->NoEntry) {
     StringRef S = findDefaultEntry();
     if (S.empty()) {
       llvm::errs() << "entry point must be defined\n";
       return false;
     }
-    Config->EntryName = S;
-    addUndefined(S);
+    Config->Entry = addUndefined(S);
   }
 
   // Resolve auxiliary symbols until converge.
@@ -561,9 +557,16 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
   for (;;) {
     size_t Ver = Symtab.getVersion();
 
+    // Windows specific -- if entry point is not found,
+    // search for its mangled names.
+    if (Config->Entry)
+      Symtab.mangleMaybe(Config->Entry);
+
     // Windows specific -- Make sure we resolve all dllexported symbols.
-    for (Export &E : Config->Exports)
-      addUndefined(E.Name);
+    for (Export &E : Config->Exports) {
+      E.Sym = addUndefined(E.Name);
+      Symtab.mangleMaybe(E.Sym);
+    }
 
     // Add weak aliases. Weak aliases is a mechanism to give remaining
     // undefined symbols final chance to be resolved successfully.
@@ -583,30 +586,6 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
     }
     if (Ver == Symtab.getVersion())
       break;
-  }
-
-  // Windows specific -- if entry point is not found,
-  // search for its mangled names.
-  if (!Config->EntryName.empty() && !Symtab.find(Config->EntryName)) {
-    StringRef Name;
-    Symbol *Sym;
-    std::tie(Name, Sym) = Symtab.findMangled(Config->EntryName);
-    if (Sym)
-      Symtab.rename(Config->EntryName, Name);
-  }
-
-  // Windows specific -- resolve dllexported symbols.
-  for (Export &E : Config->Exports) {
-    StringRef Name;
-    Symbol *Sym;
-    std::tie(Name, Sym) = Symtab.findMangled(E.Name);
-    if (!Sym) {
-      llvm::errs() << "exported symbol is not defined: " << E.Name << "\n";
-      return false;
-    }
-    if (E.Name != Name)
-      Symtab.rename(E.Name, Name);
-    E.Sym = Sym;
   }
 
   // Make sure we have resolved all symbols.

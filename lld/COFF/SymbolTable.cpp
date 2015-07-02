@@ -25,8 +25,6 @@ namespace coff {
 
 SymbolTable::SymbolTable() {
   addSymbol(new (Alloc) DefinedAbsolute("__ImageBase", Config->ImageBase));
-  if (!Config->EntryName.empty())
-    addSymbol(new (Alloc) Undefined(Config->EntryName));
 }
 
 void SymbolTable::addFile(std::unique_ptr<InputFile> FileP) {
@@ -123,9 +121,11 @@ bool SymbolTable::reportRemainingUndefines() {
       continue;
     StringRef Name = Undef->getName();
     // The weak alias may have been resovled, so check for that.
-    if (auto *D = dyn_cast_or_null<Defined>(Undef->WeakAlias)) {
-      Sym->Body = D;
-      continue;
+    if (SymbolBody *Alias = Undef->WeakAlias) {
+      if (auto *D = dyn_cast<Defined>(Alias->getReplacement())) {
+        Sym->Body = D;
+        continue;
+      }
     }
     // If we can resolve a symbol by removing __imp_ prefix, do that.
     // This odd rule is for compatibility with MSVC linker.
@@ -245,34 +245,30 @@ Symbol *SymbolTable::findSymbol(StringRef Name) {
   return It->second;
 }
 
-// Find a given symbol or its mangled symbol.
-std::pair<StringRef, Symbol *> SymbolTable::findMangled(StringRef S) {
-  auto It = Symtab.find(S);
-  if (It != Symtab.end()) {
-    Symbol *Sym = It->second;
-    if (isa<Defined>(Sym->Body))
-      return std::make_pair(S, Sym);
-  }
+void SymbolTable::mangleMaybe(Undefined *U) {
+  if (U->WeakAlias)
+    return;
+  if (!isa<Undefined>(U->getReplacement()))
+    return;
 
   // In Microsoft ABI, a non-member function name is mangled this way.
-  std::string Prefix = ("?" + S + "@@Y").str();
+  std::string Prefix = ("?" + U->getName() + "@@Y").str();
   for (auto I : Symtab) {
     StringRef Name = I.first;
-    Symbol *Sym = I.second;
+    Symbol *New = I.second;
     if (!Name.startswith(Prefix))
       continue;
-    if (auto *B = dyn_cast<Lazy>(Sym->Body)) {
-      addMemberFile(B);
-      run();
-    }
-    if (isa<Defined>(Sym->Body))
-      return std::make_pair(Name, Sym);
+    U->WeakAlias = New->Body;
+    if (auto *L = dyn_cast<Lazy>(New->Body))
+      addMemberFile(L);
+    return;
   }
-  return std::make_pair(S, nullptr);
 }
 
-std::error_code SymbolTable::addUndefined(StringRef Name) {
-  return addSymbol(new (Alloc) Undefined(Name));
+Undefined *SymbolTable::addUndefined(StringRef Name) {
+  auto *U = new (Alloc) Undefined(Name);
+  addSymbol(U);
+  return U;
 }
 
 // Resolve To, and make From an alias to To.
