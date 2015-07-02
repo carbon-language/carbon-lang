@@ -34,7 +34,11 @@ using namespace llvm;
 
 WebAssemblyTargetLowering::WebAssemblyTargetLowering(
     const TargetMachine &TM, const WebAssemblySubtarget &STI)
-    : TargetLowering(TM), Subtarget(&STI) {}
+    : TargetLowering(TM), Subtarget(&STI) {
+  // WebAssembly does not produce floating-point exceptions on normal floating
+  // point operations.
+  setHasFloatingPointExceptions(false);
+}
 
 //===----------------------------------------------------------------------===//
 // WebAssembly Lowering private implementation.
