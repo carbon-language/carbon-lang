@@ -116,8 +116,6 @@ class ELFObjectWriter : public MCObjectWriter {
     unsigned StringTableIndex;
     // This holds the .symtab section index.
     unsigned SymbolTableIndex;
-    // This holds the .symtab_shndx section index.
-    unsigned SymtabShndxSectionIndex = 0;
 
     // Sections in the order they are to be output in the section table.
     std::vector<const MCSectionELF *> SectionTable;
@@ -144,7 +142,6 @@ class ELFObjectWriter : public MCObjectWriter {
       Renames.clear();
       Relocations.clear();
       StrTabBuilder.clear();
-      SymtabShndxSectionIndex = 0;
       SectionTable.clear();
       MCObjectWriter::reset();
     }
@@ -866,6 +863,9 @@ void ELFObjectWriter::computeSymbolTable(
     else
       ExternalSymbolData.push_back(MSD);
   }
+
+  // This holds the .symtab_shndx section index.
+  unsigned SymtabShndxSectionIndex = 0;
 
   if (HasLargeSectionIndex) {
     MCSectionELF *SymtabShndxSection =
