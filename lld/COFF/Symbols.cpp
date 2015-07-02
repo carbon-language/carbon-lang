@@ -47,7 +47,6 @@ int SymbolBody::compare(SymbolBody *Other) {
 
   // First handle comparisons between two different kinds.
   if (LK != RK) {
-
     if (RK > LastDefinedKind) {
       if (LK == LazyKind && cast<Undefined>(Other)->WeakAlias)
         return -1;
@@ -94,12 +93,16 @@ int SymbolBody::compare(SymbolBody *Other) {
   case DefinedRegularKind: {
     auto *LHS = cast<DefinedRegular>(this);
     auto *RHS = cast<DefinedRegular>(Other);
-    return (LHS->isCOMDAT() && RHS->isCOMDAT()) ? 1 : 0;
+    if (LHS->isCOMDAT() && RHS->isCOMDAT())
+      return LHS->getFileIndex() < RHS->getFileIndex() ? 1 : -1;
+    return 0;
   }
 
   case DefinedCommonKind: {
     auto *LHS = cast<DefinedCommon>(this);
     auto *RHS = cast<DefinedCommon>(Other);
+    if (LHS->getSize() == RHS->getSize())
+      return LHS->getFileIndex() < RHS->getFileIndex() ? 1 : -1;
     return LHS->getSize() > RHS->getSize() ? 1 : -1;
   }
 
@@ -111,17 +114,30 @@ int SymbolBody::compare(SymbolBody *Other) {
       return 0;
 
     // Non-replaceable symbols win, but even two replaceable symboles don't
-    // tie.
+    // tie. If both symbols are replaceable, choice is arbitrary.
+    if (RHS->IsReplaceable && LHS->IsReplaceable)
+      return uintptr_t(LHS) < uintptr_t(RHS) ? 1 : -1;
     return LHS->IsReplaceable ? -1 : 1;
   }
 
-  case LazyKind:
-    // Don't tie, just pick the LHS.
-    return 1;
+  case LazyKind: {
+    // Don't tie, pick the earliest.
+    auto *LHS = cast<Lazy>(this);
+    auto *RHS = cast<Lazy>(Other);
+    return LHS->getFileIndex() < RHS->getFileIndex() ? 1 : -1;
+  }
 
-  case UndefinedKind:
-    // Don't tie, just pick the LHS unless the RHS has a weak alias.
-    return cast<Undefined>(Other)->WeakAlias ? -1 : 1;
+  case UndefinedKind: {
+    auto *LHS = cast<Undefined>(this);
+    auto *RHS = cast<Undefined>(Other);
+    // Tie if both undefined symbols have different weak aliases.
+    if (LHS->WeakAlias && RHS->WeakAlias) {
+      if (LHS->WeakAlias->repl() != RHS->WeakAlias->repl())
+        return 0;
+      return uintptr_t(LHS) < uintptr_t(RHS) ? 1 : -1;
+    }
+    return LHS->WeakAlias ? 1 : -1;
+  }
 
   case DefinedLocalImportKind:
   case DefinedImportThunkKind:

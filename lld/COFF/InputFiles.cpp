@@ -32,6 +32,8 @@ using llvm::sys::fs::file_magic;
 namespace lld {
 namespace coff {
 
+int InputFile::NextIndex = 0;
+
 // Returns the last element of a path, which is supposed to be a filename.
 static StringRef getBasename(StringRef Path) {
   size_t Pos = Path.find_last_of("\\/");

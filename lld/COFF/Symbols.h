@@ -139,6 +139,8 @@ public:
     return S->kind() <= LastDefinedCOFFKind;
   }
 
+  int getFileIndex() { return File->Index; }
+
 protected:
   ObjectFile *File;
   const coff_symbol_generic *Sym;
@@ -230,6 +232,8 @@ public:
   // Returns an object file for this symbol, or a nullptr if the file
   // was already returned.
   ErrorOr<std::unique_ptr<InputFile>> getMember();
+
+  int getFileIndex() { return File->Index; }
 
 private:
   ArchiveFile *File;
