@@ -18,6 +18,8 @@
     (defined(__x86_64__) || defined(__i386__) || defined(__arm__) || \
      defined(__aarch64__) || defined(__mips__) || defined(__powerpc64__))
 # define CAN_SANITIZE_UB 1
+#elif defined(_WIN32)
+# define CAN_SANITIZE_UB 1
 #else
 # define CAN_SANITIZE_UB 0
 #endif

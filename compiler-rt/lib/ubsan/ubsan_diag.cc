@@ -186,7 +186,11 @@ static void renderText(const char *Message, const Diag::Arg *Args) {
         // FIXME: Support floating-point formatting in sanitizer_common's
         //        printf, and stop using snprintf here.
         char Buffer[32];
+#if SANITIZER_WINDOWS
+        sprintf_s(Buffer, sizeof(Buffer), "%Lg", (long double)A.Float);
+#else
         snprintf(Buffer, sizeof(Buffer), "%Lg", (long double)A.Float);
+#endif
         Printf("%s", Buffer);
         break;
       }
