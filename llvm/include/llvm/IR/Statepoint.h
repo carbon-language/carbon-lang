@@ -20,6 +20,7 @@
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/CallSite.h"
 #include "llvm/IR/Constants.h"
+#include "llvm/IR/Function.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Intrinsics.h"
 #include "llvm/Support/Compiler.h"
@@ -54,7 +55,8 @@ bool isGCResult(const ImmutableCallSite &CS);
 /// concrete subtypes.  This is structured analogous to CallSite
 /// rather than the IntrinsicInst.h helpers since we want to support
 /// invokable statepoints in the near future.
-template <typename InstructionTy, typename ValueTy, typename CallSiteTy>
+template <typename FunTy, typename InstructionTy, typename ValueTy,
+          typename CallSiteTy>
 class StatepointBase {
   CallSiteTy StatepointCS;
   void *operator new(size_t, unsigned) = delete;
@@ -78,7 +80,7 @@ public:
   enum {
     IDPos = 0,
     NumPatchBytesPos = 1,
-    ActualCalleePos = 2,
+    CalledFunctionPos = 2,
     NumCallArgsPos = 3,
     FlagsPos = 4,
     CallArgsBeginPos = 5,
@@ -116,15 +118,34 @@ public:
   }
 
   /// Return the value actually being called or invoked.
-  ValueTy *getActualCallee() const {
-    return getCallSite().getArgument(ActualCalleePos);
+  ValueTy *getCalledValue() const {
+    return getCallSite().getArgument(CalledFunctionPos);
+  }
+
+  InstructionTy *getInstruction() const {
+    return getCallSite().getInstruction();
+  }
+
+  /// Return the function being called if this is a direct call, otherwise
+  /// return null (if it's an indirect call).
+  FunTy *getCalledFunction() const {
+    return dyn_cast<Function>(getCalledValue());
+  }
+
+  /// Return the caller function for this statepoint.
+  FunTy *getCaller() const { return getCallSite().getCaller(); }
+
+  /// Determine if the statepoint cannot unwind.
+  bool doesNotThrow() const {
+    Function *F = getCalledFunction();
+    return getCallSite().doesNotThrow() || (F ? F->doesNotThrow() : false);
   }
 
   /// Return the type of the value returned by the call underlying the
   /// statepoint.
   Type *getActualReturnType() const {
     auto *FTy = cast<FunctionType>(
-        cast<PointerType>(getActualCallee()->getType())->getElementType());
+        cast<PointerType>(getCalledValue()->getType())->getElementType());
     return FTy->getReturnType();
   }
 
@@ -134,28 +155,41 @@ public:
     return cast<ConstantInt>(NumCallArgsVal)->getZExtValue();
   }
 
-  typename CallSiteTy::arg_iterator call_args_begin() const {
+  size_t arg_size() const { return getNumCallArgs(); }
+  typename CallSiteTy::arg_iterator arg_begin() const {
     assert(CallArgsBeginPos <= (int)getCallSite().arg_size());
     return getCallSite().arg_begin() + CallArgsBeginPos;
   }
-  typename CallSiteTy::arg_iterator call_args_end() const {
-    auto I = call_args_begin() + getNumCallArgs();
+  typename CallSiteTy::arg_iterator arg_end() const {
+    auto I = arg_begin() + arg_size();
     assert((getCallSite().arg_end() - I) >= 0);
     return I;
   }
 
+  ValueTy *getArgument(unsigned Index) {
+    assert(Index < arg_size() && "out of bounds!");
+    return *(arg_begin() + Index);
+  }
+
   /// range adapter for call arguments
   iterator_range<arg_iterator> call_args() const {
-    return iterator_range<arg_iterator>(call_args_begin(), call_args_end());
+    return iterator_range<arg_iterator>(arg_begin(), arg_end());
+  }
+
+  /// \brief Return true if the call or the callee has the given attribute.
+  bool paramHasAttr(unsigned i, Attribute::AttrKind A) const {
+    Function *F = getCalledFunction();
+    return getCallSite().paramHasAttr(i + CallArgsBeginPos, A) ||
+          (F ? F->getAttributes().hasAttribute(i, A) : false);
   }
 
   /// Number of GC transition args.
   int getNumTotalGCTransitionArgs() const {
-    const Value *NumGCTransitionArgs = *call_args_end();
+    const Value *NumGCTransitionArgs = *arg_end();
     return cast<ConstantInt>(NumGCTransitionArgs)->getZExtValue();
   }
   typename CallSiteTy::arg_iterator gc_transition_args_begin() const {
-    auto I = call_args_end() + 1;
+    auto I = arg_end() + 1;
     assert((getCallSite().arg_end() - I) >= 0);
     return I;
   }
@@ -216,7 +250,7 @@ public:
   /// nullptr if there isn't a gc_result tied to this statepoint.  Guaranteed to
   /// be a CallInst if non-null.
   InstructionTy *getGCResult() const {
-    for (auto *U : getCallSite().getInstruction()->users())
+    for (auto *U : getInstruction()->users())
       if (isGCResult(U))
         return cast<CallInst>(U);
 
@@ -232,8 +266,8 @@ public:
            "number of arguments to actually callee can't be negative");
 
     // The internal asserts in the iterator accessors do the rest.
-    (void)call_args_begin();
-    (void)call_args_end();
+    (void)arg_begin();
+    (void)arg_end();
     (void)gc_transition_args_begin();
     (void)gc_transition_args_end();
     (void)vm_state_begin();
@@ -247,9 +281,10 @@ public:
 /// A specialization of it's base class for read only access
 /// to a gc.statepoint.
 class ImmutableStatepoint
-    : public StatepointBase<const Instruction, const Value, ImmutableCallSite> {
-  typedef StatepointBase<const Instruction, const Value, ImmutableCallSite>
-      Base;
+    : public StatepointBase<const Function, const Instruction, const Value,
+                            ImmutableCallSite> {
+  typedef StatepointBase<const Function, const Instruction, const Value,
+                         ImmutableCallSite> Base;
 
 public:
   explicit ImmutableStatepoint(const Instruction *I) : Base(I) {}
@@ -258,8 +293,9 @@ public:
 
 /// A specialization of it's base class for read-write access
 /// to a gc.statepoint.
-class Statepoint : public StatepointBase<Instruction, Value, CallSite> {
-  typedef StatepointBase<Instruction, Value, CallSite> Base;
+class Statepoint
+    : public StatepointBase<Function, Instruction, Value, CallSite> {
+  typedef StatepointBase<Function, Instruction, Value, CallSite> Base;
 
 public:
   explicit Statepoint(Instruction *I) : Base(I) {}
@@ -336,9 +372,11 @@ public:
   }
 };
 
-template <typename InstructionTy, typename ValueTy, typename CallSiteTy>
+template <typename FunTy, typename InstructionTy, typename ValueTy,
+          typename CallSiteTy>
 std::vector<GCRelocateOperands>
-StatepointBase<InstructionTy, ValueTy, CallSiteTy>::getRelocates() const {
+StatepointBase<FunTy, InstructionTy, ValueTy, CallSiteTy>::getRelocates()
+    const {
 
   std::vector<GCRelocateOperands> Result;
 
@@ -347,7 +385,7 @@ StatepointBase<InstructionTy, ValueTy, CallSiteTy>::getRelocates() const {
   // Search for relocated pointers.  Note that working backwards from the
   // gc_relocates ensures that we only get pairs which are actually relocated
   // and used after the statepoint.
-  for (const User *U : StatepointCS.getInstruction()->users())
+  for (const User *U : getInstruction()->users())
     if (isGCRelocate(U))
       Result.push_back(GCRelocateOperands(U));
 
@@ -356,7 +394,7 @@ StatepointBase<InstructionTy, ValueTy, CallSiteTy>::getRelocates() const {
 
   // We need to scan thorough exceptional relocations if it is invoke statepoint
   LandingPadInst *LandingPad =
-      cast<InvokeInst>(StatepointCS.getInstruction())->getLandingPadInst();
+      cast<InvokeInst>(getInstruction())->getLandingPadInst();
 
   // Search for extract value from landingpad instruction to which
   // gc relocates will be attached

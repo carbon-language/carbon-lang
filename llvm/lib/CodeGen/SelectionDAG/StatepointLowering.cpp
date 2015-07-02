@@ -289,7 +289,7 @@ lowerCallFromStatepoint(ImmutableStatepoint ISP, MachineBasicBlock *LandingPad,
 
   ImmutableCallSite CS(ISP.getCallSite());
 
-  SDValue ActualCallee = Builder.getValue(ISP.getActualCallee());
+  SDValue ActualCallee = Builder.getValue(ISP.getCalledValue());
 
   assert(CS.getCallingConv() != CallingConv::AnyReg &&
          "anyregcc is not supported on statepoints!");
@@ -815,8 +815,8 @@ void SelectionDAGBuilder::visitGCResult(const CallInst &CI) {
     // register because statepoint and actuall call return types can be
     // different, and getValue() will use CopyFromReg of the wrong type,
     // which is always i32 in our case.
-    PointerType *CalleeType =
-        cast<PointerType>(ImmutableStatepoint(I).getActualCallee()->getType());
+    PointerType *CalleeType = cast<PointerType>(
+        ImmutableStatepoint(I).getCalledValue()->getType());
     Type *RetTy =
         cast<FunctionType>(CalleeType->getElementType())->getReturnType();
     SDValue CopyFromReg = getCopyFromRegs(I, RetTy);
