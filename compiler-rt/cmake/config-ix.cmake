@@ -181,7 +181,11 @@ else()
       test_target_arch(i686 __i686__ "-m32")
       test_target_arch(i386 __i386__ "-m32")
     else()
-      test_target_arch(i386 "" "")
+      if (CMAKE_SIZEOF_VOID_P EQUAL 4)
+        test_target_arch(i386 "" "")
+      else()
+        test_target_arch(x86_64 "" "")
+      endif()
     endif()
   elseif("${LLVM_NATIVE_ARCH}" STREQUAL "PowerPC")
     TEST_BIG_ENDIAN(HOST_IS_BIG_ENDIAN)
@@ -267,13 +271,14 @@ endif()
 
 if (SANITIZER_COMMON_SUPPORTED_ARCH AND NOT LLVM_USE_SANITIZER AND
     (OS_NAME MATCHES "Android|Darwin|Linux|FreeBSD" OR
-    (OS_NAME MATCHES "Windows" AND MSVC AND CMAKE_SIZEOF_VOID_P EQUAL 4)))
+    (OS_NAME MATCHES "Windows" AND MSVC)))
   set(COMPILER_RT_HAS_SANITIZER_COMMON TRUE)
 else()
   set(COMPILER_RT_HAS_SANITIZER_COMMON FALSE)
 endif()
 
-if (COMPILER_RT_HAS_SANITIZER_COMMON AND ASAN_SUPPORTED_ARCH)
+if (COMPILER_RT_HAS_SANITIZER_COMMON AND ASAN_SUPPORTED_ARCH AND
+    (NOT OS_NAME MATCHES "Windows" OR CMAKE_SIZEOF_VOID_P EQUAL 4))
   set(COMPILER_RT_HAS_ASAN TRUE)
 else()
   set(COMPILER_RT_HAS_ASAN FALSE)
@@ -323,7 +328,7 @@ else()
 endif()
 
 if (COMPILER_RT_HAS_SANITIZER_COMMON AND UBSAN_SUPPORTED_ARCH AND
-    OS_NAME MATCHES "Darwin|Linux|FreeBSD")
+    OS_NAME MATCHES "Darwin|Linux|FreeBSD|Windows")
   set(COMPILER_RT_HAS_UBSAN TRUE)
 else()
   set(COMPILER_RT_HAS_UBSAN FALSE)
