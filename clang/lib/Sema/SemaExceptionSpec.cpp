@@ -837,11 +837,13 @@ bool Sema::CheckOverridingFunctionExceptionSpec(const CXXMethodDecl *New,
                                   New->getLocation());
 }
 
-static CanThrowResult canSubExprsThrow(Sema &S, const Expr *CE) {
-  Expr *E = const_cast<Expr*>(CE);
+static CanThrowResult canSubExprsThrow(Sema &S, const Expr *E) {
   CanThrowResult R = CT_Cannot;
-  for (Expr::child_range I = E->children(); I && R != CT_Can; ++I)
-    R = mergeCanThrow(R, S.canThrow(cast<Expr>(*I)));
+  for (const Stmt *SubStmt : E->children()) {
+    R = mergeCanThrow(R, S.canThrow(cast<Expr>(SubStmt)));
+    if (R == CT_Can)
+      break;
+  }
   return R;
 }
 

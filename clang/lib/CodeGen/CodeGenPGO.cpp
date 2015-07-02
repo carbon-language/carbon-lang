@@ -275,10 +275,9 @@ struct ComputeRegionCounts : public ConstStmtVisitor<ComputeRegionCounts> {
 
   void VisitStmt(const Stmt *S) {
     RecordStmtCount(S);
-    for (Stmt::const_child_range I = S->children(); I; ++I) {
-      if (*I)
-        this->Visit(*I);
-    }
+    for (const Stmt *Child : S->children())
+      if (Child)
+        this->Visit(Child);
   }
 
   void VisitFunctionDecl(const FunctionDecl *D) {

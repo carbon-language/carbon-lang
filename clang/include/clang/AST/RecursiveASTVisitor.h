@@ -1881,8 +1881,8 @@ DEF_TRAVERSE_DECL(ParmVarDecl, {
   bool RecursiveASTVisitor<Derived>::Traverse##STMT(STMT *S) {                 \
     TRY_TO(WalkUpFrom##STMT(S));                                               \
     { CODE; }                                                                  \
-    for (Stmt::child_range range = S->children(); range; ++range) {            \
-      TRY_TO(TraverseStmt(*range));                                            \
+    for (Stmt *SubStmt : S->children()) {                                      \
+      TRY_TO(TraverseStmt(SubStmt));                                           \
     }                                                                          \
     return true;                                                               \
   }
@@ -2038,15 +2038,15 @@ bool RecursiveASTVisitor<Derived>::TraverseInitListExpr(InitListExpr *S) {
   if (Syn) {
     TRY_TO(WalkUpFromInitListExpr(Syn));
     // All we need are the default actions.  FIXME: use a helper function.
-    for (Stmt::child_range range = Syn->children(); range; ++range) {
-      TRY_TO(TraverseStmt(*range));
+    for (Stmt *SubStmt : Syn->children()) {
+      TRY_TO(TraverseStmt(SubStmt));
     }
   }
   InitListExpr *Sem = S->isSemanticForm() ? S : S->getSemanticForm();
   if (Sem) {
     TRY_TO(WalkUpFromInitListExpr(Sem));
-    for (Stmt::child_range range = Sem->children(); range; ++range) {
-      TRY_TO(TraverseStmt(*range));
+    for (Stmt *SubStmt : Sem->children()) {
+      TRY_TO(TraverseStmt(SubStmt));
     }
   }
   return true;

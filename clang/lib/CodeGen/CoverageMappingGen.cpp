@@ -582,10 +582,9 @@ struct CounterCoverageMappingBuilder
   void VisitStmt(const Stmt *S) {
     if (!S->getLocStart().isInvalid())
       extendRegion(S);
-    for (Stmt::const_child_range I = S->children(); I; ++I) {
-      if (*I)
-        this->Visit(*I);
-    }
+    for (const Stmt *Child : S->children())
+      if (Child)
+        this->Visit(Child);
     handleFileExit(getEnd(S));
   }
 

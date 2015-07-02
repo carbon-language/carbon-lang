@@ -83,9 +83,9 @@ public:
   }
 
   void VisitChildren(Stmt *S) {
-    for (Stmt::child_range I = S->children(); I; ++I)
-      if (*I)
-        static_cast<CGBuilder*>(this)->Visit(*I);
+    for (Stmt *SubStmt : S->children())
+      if (SubStmt)
+        this->Visit(SubStmt);
   }
 };
 

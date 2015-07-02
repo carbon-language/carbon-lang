@@ -98,9 +98,9 @@ public:
   /// \brief The basis case walks all of the children of the statement or
   /// expression, assuming they are all potentially evaluated.
   void VisitStmt(PTR(Stmt) S) {
-    for (auto C = S->children(); C; ++C)
-      if (*C)
-        this->Visit(*C);
+    for (auto *SubStmt : S->children())
+      if (SubStmt)
+        this->Visit(SubStmt);
   }
 
 #undef PTR

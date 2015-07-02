@@ -78,9 +78,9 @@ class DirectIvarAssignment :
     void VisitBinaryOperator(const BinaryOperator *BO);
 
     void VisitChildren(const Stmt *S) {
-      for (Stmt::const_child_range I = S->children(); I; ++I)
-        if (*I)
-         this->Visit(*I);
+      for (const Stmt *Child : S->children())
+        if (Child)
+          this->Visit(Child);
     }
   };
 

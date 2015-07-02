@@ -69,9 +69,9 @@ namespace {
 
 void StmtProfiler::VisitStmt(const Stmt *S) {
   ID.AddInteger(S->getStmtClass());
-  for (Stmt::const_child_range C = S->children(); C; ++C) {
-    if (*C)
-      Visit(*C);
+  for (const Stmt *SubStmt : S->children()) {
+    if (SubStmt)
+      Visit(SubStmt);
     else
       ID.AddInteger(0);
   }

@@ -372,13 +372,12 @@ void JumpScopeChecker::BuildScopeInformation(Stmt *S, unsigned &origParentScope)
     break;
   }
 
-  for (Stmt::child_range CI = S->children(); CI; ++CI) {
+  for (Stmt *SubStmt : S->children()) {
     if (SkipFirstSubStmt) {
       SkipFirstSubStmt = false;
       continue;
     }
 
-    Stmt *SubStmt = *CI;
     if (!SubStmt) continue;
 
     // Cases, labels, and defaults aren't "scope parents".  It's also

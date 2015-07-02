@@ -1266,12 +1266,13 @@ CodeGenFunction::EmitSections(const OMPExecutableDirective &S) {
             CGF.EmitLoadOfLValue(IV, S.getLocStart()).getScalarVal(), ExitBB,
             CS->size());
         unsigned CaseNumber = 0;
-        for (auto C = CS->children(); C; ++C, ++CaseNumber) {
+        for (auto *SubStmt : CS->children()) {
           auto CaseBB = CGF.createBasicBlock(".omp.sections.case");
           CGF.EmitBlock(CaseBB);
           SwitchStmt->addCase(CGF.Builder.getInt32(CaseNumber), CaseBB);
-          CGF.EmitStmt(*C);
+          CGF.EmitStmt(SubStmt);
           CGF.EmitBranch(ExitBB);
+          ++CaseNumber;
         }
         CGF.EmitBlock(ExitBB, /*IsFinished=*/true);
       };
