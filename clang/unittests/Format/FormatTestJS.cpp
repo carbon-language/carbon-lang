@@ -795,15 +795,11 @@ TEST_F(FormatTestJS, TemplateStrings) {
                    "     ${  name    }\n"
                    "  !`;"));
 
-  // FIXME: +1 / -1 offsets are to work around clang-format miscalculating
-  // widths for unknown tokens that are not whitespace (e.g. '`'). Remove when
-  // the code is corrected.
-
   verifyFormat("var x =\n"
                "    `hello ${world}` >= some();",
                getGoogleJSStyleWithColumns(34)); // Barely doesn't fit.
   verifyFormat("var x = `hello ${world}` >= some();",
-               getGoogleJSStyleWithColumns(35 + 1)); // Barely fits.
+               getGoogleJSStyleWithColumns(35)); // Barely fits.
   EXPECT_EQ("var x = `hello\n"
             "  ${world}` >=\n"
             "        some();",
@@ -818,10 +814,14 @@ TEST_F(FormatTestJS, TemplateStrings) {
                    "  ${world}` >= some();",
                    getGoogleJSStyleWithColumns(22))); // Barely fits.
 
-  verifyFormat("var x =\n    `h`;", getGoogleJSStyleWithColumns(13 - 1));
+  verifyFormat("var x =\n"
+               "    `h`;",
+               getGoogleJSStyleWithColumns(11));
   EXPECT_EQ(
       "var x =\n    `multi\n  line`;",
-      format("var x = `multi\n  line`;", getGoogleJSStyleWithColumns(14 - 1)));
+      format("var x = `multi\n  line`;", getGoogleJSStyleWithColumns(13)));
+  verifyFormat("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(\n"
+               "    `aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa`);");
 
   // Make sure template strings get a proper ColumnWidth assigned, even if they
   // are first token in line.
