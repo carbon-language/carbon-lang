@@ -23,6 +23,11 @@
 #include "sanitizer_list.h"
 #include "sanitizer_mutex.h"
 
+#ifdef _MSC_VER
+extern "C" void _ReadWriteBarrier();
+#pragma intrinsic(_ReadWriteBarrier)
+#endif
+
 namespace __sanitizer {
 struct StackTrace;
 struct AddressInfo;
