@@ -16,6 +16,7 @@
 # available.
 #----------------------------------------------------------------------
 
+import binascii
 import commands
 import math
 import optparse
@@ -25,6 +26,7 @@ import shlex
 import string
 import sys
 import tempfile
+import xml.etree.ElementTree as ET
 
 #----------------------------------------------------------------------
 # Global variables
@@ -397,6 +399,13 @@ class Packet:
             uval |= self.get_hex_uint8() << 56
         return uval
     
+    def get_hex_ascii_str(self, n=0):
+        hex_chars = self.get_hex_chars(n)
+        if hex_chars:
+            return binascii.unhexlify(hex_chars)
+        else:
+            return None
+    
     def get_hex_chars(self, n = 0):
         str_len = len(self.str)
         if n == 0:
@@ -477,16 +486,17 @@ def rsp_stop_reply(options, cmd, cmd_args, rsp):
     stop_type = packet.get_char()
     if stop_type == 'T' or stop_type == 'S':
         signo  = packet.get_hex_uint8()
-        print '    signal = %i' % signo
         key_value_pairs = packet.get_key_value_pairs()
         for key_value_pair in key_value_pairs:
             key = key_value_pair[0]
-            value = key_value_pair[1]
             if is_hex_byte(key):
                 reg_num = Packet(key).get_hex_uint8()
-                print '    ' + get_register_name_equal_value (options, reg_num, value)
-            else:
-                print '    %s = %s' % (key, value)
+                if reg_num < len(g_register_infos):
+                    reg_info = g_register_infos[reg_num]
+                    key_value_pair[0] = reg_info.name()
+                    key_value_pair[1] = reg_info.get_value_from_hex_string (key_value_pair[1])
+        key_value_pairs.insert(0, ['signal', signo])
+        dump_key_value_pairs (key_value_pairs)
     elif stop_type == 'W':
         exit_status = packet.get_hex_uint8()
         print 'exit (status=%i)' % exit_status
@@ -500,6 +510,40 @@ def cmd_unknown_packet(options, cmd, args):
     else:
         print "cmd: %s", cmd
 
+def cmd_qXfer(options, cmd, args):
+    # $qXfer:features:read:target.xml:0,1ffff#14
+    print "read target special data %s" % (args)
+
+def rsp_qXfer(options, cmd, cmd_args, rsp):
+    data = string.split(cmd_args, ':')
+    if data[0] == 'features':
+        if data[1] == 'read':
+            filename, extension = os.path.splitext(data[2])
+            if extension == '.xml':
+                response = Packet(rsp)
+                xml_string = response.get_hex_ascii_str()
+                ch = xml_string[0]
+                if ch == 'l':
+                    xml_string = xml_string[1:]
+                    xml_root = ET.fromstring(xml_string)
+                    for reg_element in xml_root.findall("./feature/reg"):
+                        if not 'value_regnums' in reg_element.attrib:
+                            reg_info = RegisterInfo([])
+                            if 'name' in reg_element.attrib:
+                                reg_info.info['name'] = reg_element.attrib['name']
+                            else:
+                                reg_info.info['name'] = 'unspecified'
+                            if 'encoding' in reg_element.attrib:
+                                reg_info.info['encoding'] = reg_element.attrib['encoding']
+                            else:
+                                reg_info.info['encoding'] = 'uint'
+                            if 'offset' in reg_element.attrib:
+                                reg_info.info['offset'] = reg_element.attrib['offset']
+                            if 'bitsize' in reg_element.attrib:
+                                reg_info.info['bitsize'] = reg_element.attrib['bitsize']
+                            g_register_infos.append(reg_info)
+                        
+    
 def cmd_query_packet(options, cmd, args):
     if args:
         print "query: %s, args: %s" % (cmd, args)
@@ -525,15 +569,22 @@ def rsp_ok_means_success(options, cmd, cmd_args, rsp):
     else:
         print "%s%s -> %s" % (cmd, cmd_args, rsp)
 
+def dump_key_value_pairs(key_value_pairs):
+    max_key_len = 0
+    for key_value_pair in key_value_pairs:
+        key_len = len(key_value_pair[0])
+        if max_key_len < key_len:
+           max_key_len = key_len 
+    for key_value_pair in key_value_pairs:
+        key = key_value_pair[0]
+        value = key_value_pair[1]
+        print "%*s = %s" % (max_key_len, key, value)
+
 def rsp_dump_key_value_pairs(options, cmd, cmd_args, rsp):
     if rsp:
         packet = Packet(rsp)
         key_value_pairs = packet.get_key_value_pairs()
-        for key_value_pair in key_value_pairs:
-            print key_value_pair
-            key = key_value_pair[0]
-            value = key_value_pair[1]
-            print "    %s = %s" % (key, value)
+        dump_key_value_pairs(key_value_pairs)
     else:
         print "not supported"
 
@@ -850,6 +901,7 @@ gdb_remote_commands = {
     'qMemoryRegionInfo'       : { 'cmd' : cmd_mem_rgn_info  , 'rsp' : rsp_dump_key_value_pairs, 'name' : "get memory region information" },
     'qProcessInfo'            : { 'cmd' : cmd_query_packet  , 'rsp' : rsp_dump_key_value_pairs, 'name' : "get process info" },
     'qSupported'              : { 'cmd' : cmd_query_packet  , 'rsp' : rsp_ok_means_supported  , 'name' : "query supported" },
+    'qXfer:'                  : { 'cmd' : cmd_qXfer         , 'rsp' : rsp_qXfer               , 'name' : "qXfer" },
     'm'                       : { 'cmd' : cmd_read_memory   , 'rsp' : rsp_memory_bytes        , 'name' : "read memory" },
     'M'                       : { 'cmd' : cmd_write_memory  , 'rsp' : rsp_ok_means_success    , 'name' : "write memory" },
     '_M'                      : { 'cmd' : cmd_alloc_memory  , 'rsp' : rsp_alloc_memory        , 'name' : "allocate memory" },
