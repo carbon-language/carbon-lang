@@ -170,17 +170,17 @@ private:
   }
 
   const Elf_Ehdr *Header;
-  const Elf_Shdr *SectionHeaderTable;
-  StringRef DotShstrtab;            // Section header string table.
-  StringRef DotStrtab;              // Symbol header string table.
-  const Elf_Shdr *dot_symtab_sec;   // Symbol table section.
+  const Elf_Shdr *SectionHeaderTable = nullptr;
+  StringRef DotShstrtab;                    // Section header string table.
+  StringRef DotStrtab;                      // Symbol header string table.
+  const Elf_Shdr *dot_symtab_sec = nullptr; // Symbol table section.
 
-  const Elf_Shdr *SymbolTableSectionHeaderIndex;
+  const Elf_Shdr *SymbolTableSectionHeaderIndex = nullptr;
   DenseMap<const Elf_Sym *, ELF::Elf64_Word> ExtendedSymbolTable;
 
-  const Elf_Shdr *dot_gnu_version_sec;   // .gnu.version
-  const Elf_Shdr *dot_gnu_version_r_sec; // .gnu.version_r
-  const Elf_Shdr *dot_gnu_version_d_sec; // .gnu.version_d
+  const Elf_Shdr *dot_gnu_version_sec = nullptr;   // .gnu.version
+  const Elf_Shdr *dot_gnu_version_r_sec = nullptr; // .gnu.version_r
+  const Elf_Shdr *dot_gnu_version_d_sec = nullptr; // .gnu.version_d
 
   /// \brief Represents a region described by entries in the .dynamic table.
   struct DynRegionInfo {
@@ -201,7 +201,7 @@ private:
 
   // Pointer to SONAME entry in dynamic string table
   // This is set the first time getLoadName is called.
-  mutable const char *dt_soname;
+  mutable const char *dt_soname = nullptr;
 
   // Records for each version index the corresponding Verdef or Vernaux entry.
   // This is filled the first time LoadVersionMap() is called.
@@ -564,10 +564,7 @@ typename ELFFile<ELFT>::uintX_t ELFFile<ELFT>::getStringTableIndex() const {
 
 template <class ELFT>
 ELFFile<ELFT>::ELFFile(StringRef Object, std::error_code &EC)
-    : Buf(Object), SectionHeaderTable(nullptr), dot_symtab_sec(nullptr),
-      SymbolTableSectionHeaderIndex(nullptr), dot_gnu_version_sec(nullptr),
-      dot_gnu_version_r_sec(nullptr), dot_gnu_version_d_sec(nullptr),
-      dt_soname(nullptr) {
+    : Buf(Object) {
   const uint64_t FileSize = Buf.size();
 
   if (sizeof(Elf_Ehdr) > FileSize) {
