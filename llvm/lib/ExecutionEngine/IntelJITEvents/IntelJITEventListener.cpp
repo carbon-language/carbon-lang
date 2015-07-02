@@ -114,10 +114,11 @@ void IntelJITEventListener::NotifyObjectEmitted(
     std::string SourceFileName;
 
     if (Sym.getType() == SymbolRef::ST_Function) {
-      StringRef  Name;
-      uint64_t   Addr;
-      if (Sym.getName(Name))
+      ErrorOr<StringRef> Name = Sym.getName();
+      if (!Name)
         continue;
+
+      uint64_t Addr;
       if (Sym.getAddress(Addr))
         continue;
       uint64_t Size = P.second;
@@ -126,10 +127,8 @@ void IntelJITEventListener::NotifyObjectEmitted(
       Functions.push_back((void*)Addr);
 
       // Build the function loaded notification message
-      iJIT_Method_Load FunctionMessage = FunctionDescToIntelJITFormat(*Wrapper,
-                                           Name.data(),
-                                           Addr,
-                                           Size);
+      iJIT_Method_Load FunctionMessage =
+          FunctionDescToIntelJITFormat(*Wrapper, Name->data(), Addr, Size);
       if (Context) {
         DILineInfoTable  Lines = Context->getLineInfoForAddressRange(Addr, Size);
         DILineInfoTable::iterator  Begin = Lines.begin();
