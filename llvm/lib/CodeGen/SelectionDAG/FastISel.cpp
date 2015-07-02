@@ -1350,7 +1350,7 @@ bool FastISel::selectInstruction(const Instruction *I) {
 
     // Don't handle Intrinsic::trap if a trap funciton is specified.
     if (F && F->getIntrinsicID() == Intrinsic::trap &&
-        !TM.Options.getTrapFunctionName().empty())
+        Call->hasFnAttr("trap-func-name"))
       return false;
   }
 

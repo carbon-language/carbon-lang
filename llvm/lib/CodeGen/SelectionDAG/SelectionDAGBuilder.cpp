@@ -4780,7 +4780,10 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
 
   case Intrinsic::debugtrap:
   case Intrinsic::trap: {
-    StringRef TrapFuncName = TM.Options.getTrapFunctionName();
+    StringRef TrapFuncName =
+        I.getAttributes()
+            .getAttribute(AttributeSet::FunctionIndex, "trap-func-name")
+            .getValueAsString();
     if (TrapFuncName.empty()) {
       ISD::NodeType Op = (Intrinsic == Intrinsic::trap) ?
         ISD::TRAP : ISD::DEBUGTRAP;

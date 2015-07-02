@@ -47,10 +47,3 @@ bool TargetOptions::LessPreciseFPMAD() const {
 bool TargetOptions::HonorSignDependentRoundingFPMath() const {
   return !UnsafeFPMath && HonorSignDependentRoundingFPMathOption;
 }
-
-/// getTrapFunctionName - If this returns a non-empty string, this means isel
-/// should lower Intrinsic::trap to a call to the specified function name
-/// instead of an ISD::TRAP node.
-StringRef TargetOptions::getTrapFunctionName() const {
-  return TrapFuncName;
-}

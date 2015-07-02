@@ -17,6 +17,8 @@
 #define LLVM_CODEGEN_COMMANDFLAGS_H
 
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/IR/Instructions.h"
+#include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/Module.h"
 #include "llvm/MC/MCTargetOptionsCommandFlags.h"
 #include "llvm//MC/SubtargetFeature.h"
@@ -249,7 +251,6 @@ static inline TargetOptions InitTargetOptionsFromCodeGenFlags() {
   Options.NoZerosInBSS = DontPlaceZerosInBSS;
   Options.GuaranteedTailCallOpt = EnableGuaranteedTailCallOpt;
   Options.StackAlignmentOverride = OverrideStackAlignment;
-  Options.TrapFuncName = TrapFuncName;
   Options.PositionIndependentExecutable = EnablePIE;
   Options.UseInitArray = !UseCtors;
   Options.DataSections = DataSections;
@@ -319,6 +320,16 @@ static inline void setFunctionAttributes(StringRef CPU, StringRef Features,
       NewAttrs = NewAttrs.addAttribute(Ctx, AttributeSet::FunctionIndex,
                                        "disable-tail-calls",
                                        toStringRef(DisableTailCalls));
+
+    if (TrapFuncName.getNumOccurrences() > 0)
+      for (auto &B : F)
+        for (auto &I : B)
+          if (auto *Call = dyn_cast<CallInst>(&I))
+            if (const auto *F = Call->getCalledFunction())
+              if (F->getIntrinsicID() == Intrinsic::debugtrap ||
+                  F->getIntrinsicID() == Intrinsic::trap)
+                Call->addAttribute(llvm::AttributeSet::FunctionIndex,
+                                   "trap-func-name", TrapFuncName);
 
     // Let NewAttrs override Attrs.
     NewAttrs = Attrs.addAttributes(Ctx, AttributeSet::FunctionIndex, NewAttrs);

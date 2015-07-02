@@ -72,7 +72,7 @@ namespace llvm {
           UseInitArray(false), DisableIntegratedAS(false),
           CompressDebugSections(false), FunctionSections(false),
           DataSections(false), UniqueSectionNames(true), TrapUnreachable(false),
-          TrapFuncName(), FloatABIType(FloatABI::Default),
+          FloatABIType(FloatABI::Default),
           AllowFPOpFusion(FPOpFusion::Standard), Reciprocals(TargetRecip()),
           JTType(JumpTable::Single),
           ThreadModel(ThreadModel::POSIX) {}
@@ -172,12 +172,6 @@ namespace llvm {
     /// Emit target-specific trap instruction for 'unreachable' IR instructions.
     unsigned TrapUnreachable : 1;
 
-    /// getTrapFunctionName - If this returns a non-empty string, this means
-    /// isel should lower Intrinsic::trap to a call to the specified function
-    /// name instead of an ISD::TRAP node.
-    std::string TrapFuncName;
-    StringRef getTrapFunctionName() const;
-
     /// FloatABIType - This setting is set by -float-abi=xxx option is specfied
     /// on the command line. This setting may either be Default, Soft, or Hard.
     /// Default selects the target's default behavior. Soft selects the ABI for
@@ -237,7 +231,6 @@ inline bool operator==(const TargetOptions &LHS,
     ARE_EQUAL(PositionIndependentExecutable) &&
     ARE_EQUAL(UseInitArray) &&
     ARE_EQUAL(TrapUnreachable) &&
-    ARE_EQUAL(TrapFuncName) &&
     ARE_EQUAL(FloatABIType) &&
     ARE_EQUAL(AllowFPOpFusion) &&
     ARE_EQUAL(Reciprocals) &&
