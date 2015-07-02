@@ -39,13 +39,13 @@ class GCRelocateOperands;
 class ImmutableStatepoint;
 
 bool isStatepoint(const ImmutableCallSite &CS);
-bool isStatepoint(const Value *inst);
-bool isStatepoint(const Value &inst);
+bool isStatepoint(const Value *V);
+bool isStatepoint(const Value &V);
 
-bool isGCRelocate(const Value *inst);
+bool isGCRelocate(const Value *V);
 bool isGCRelocate(const ImmutableCallSite &CS);
 
-bool isGCResult(const Value *inst);
+bool isGCResult(const Value *V);
 bool isGCResult(const ImmutableCallSite &CS);
 
 /// Analogous to CallSiteBase, this provides most of the actual
