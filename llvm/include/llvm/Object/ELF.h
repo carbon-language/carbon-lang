@@ -174,6 +174,8 @@ private:
   StringRef DotShstrtab;                    // Section header string table.
   StringRef DotStrtab;                      // Symbol header string table.
   const Elf_Shdr *dot_symtab_sec = nullptr; // Symbol table section.
+  StringRef DynSymStrTab;                   // Dynnamic symbol string table.
+  const Elf_Shdr *DotDynSymSec = nullptr;   // Dynamic symbol table section.
 
   const Elf_Shdr *SymbolTableSectionHeaderIndex = nullptr;
   DenseMap<const Elf_Sym *, ELF::Elf64_Word> ExtendedSymbolTable;
@@ -195,8 +197,6 @@ private:
 
   DynRegionInfo DynamicRegion;
   DynRegionInfo DynHashRegion;
-  DynRegionInfo DynStrRegion;
-  DynRegionInfo DynSymRegion;
   DynRegionInfo DynRelaRegion;
 
   // Pointer to SONAME entry in dynamic string table
@@ -284,18 +284,18 @@ public:
   }
 
   const Elf_Sym *dynamic_symbol_begin() const {
-    if (!DynSymRegion.Addr)
+    if (!DotDynSymSec)
       return nullptr;
-    if (DynSymRegion.EntSize != sizeof(Elf_Sym))
+    if (DotDynSymSec->sh_entsize != sizeof(Elf_Sym))
       report_fatal_error("Invalid symbol size");
-    return reinterpret_cast<const Elf_Sym *>(DynSymRegion.Addr);
+    return reinterpret_cast<const Elf_Sym *>(base() + DotDynSymSec->sh_offset);
   }
 
   const Elf_Sym *dynamic_symbol_end() const {
-    if (!DynSymRegion.Addr)
+    if (!DotDynSymSec)
       return nullptr;
-    return reinterpret_cast<const Elf_Sym *>(
-        ((const char *)DynSymRegion.Addr + DynSymRegion.Size));
+    return reinterpret_cast<const Elf_Sym *>(base() + DotDynSymSec->sh_offset +
+                                             DotDynSymSec->sh_size);
   }
 
   Elf_Sym_Range dynamic_symbols() const {
@@ -438,7 +438,7 @@ void ELFFile<ELFT>::LoadVersionNeeds(const Elf_Shdr *sec) const {
 template <class ELFT>
 void ELFFile<ELFT>::LoadVersionMap() const {
   // If there is no dynamic symtab or version table, there is nothing to do.
-  if (!DynSymRegion.Addr || !dot_gnu_version_sec)
+  if (!DotDynSymSec || !dot_gnu_version_sec)
     return;
 
   // Has the VersionMap already been loaded?
@@ -625,21 +625,19 @@ ELFFile<ELFT>::ELFFile(StringRef Object, std::error_code &EC)
       DotStrtab = *SymtabOrErr;
     } break;
     case ELF::SHT_DYNSYM: {
-      if (DynSymRegion.Addr) {
+      if (DotDynSymSec) {
         // More than one .dynsym!
         EC = object_error::parse_failed;
         return;
       }
-      DynSymRegion.Addr = base() + Sec.sh_offset;
-      DynSymRegion.Size = Sec.sh_size;
-      DynSymRegion.EntSize = Sec.sh_entsize;
-      ErrorOr<const Elf_Shdr *> DynStrOrErr = getSection(Sec.sh_link);
-      if ((EC = DynStrOrErr.getError()))
+      DotDynSymSec = &Sec;
+      ErrorOr<const Elf_Shdr *> SectionOrErr = getSection(Sec.sh_link);
+      if ((EC = SectionOrErr.getError()))
         return;
-      const Elf_Shdr *DynStr = *DynStrOrErr;
-      DynStrRegion.Addr = base() + DynStr->sh_offset;
-      DynStrRegion.Size = DynStr->sh_size;
-      DynStrRegion.EntSize = DynStr->sh_entsize;
+      ErrorOr<StringRef> SymtabOrErr = getStringTable(*SectionOrErr);
+      if ((EC = SymtabOrErr.getError()))
+        return;
+      DynSymStrTab = *SymtabOrErr;
       break;
     }
     case ELF::SHT_DYNAMIC:
@@ -879,9 +877,9 @@ ELFFile<ELFT>::getStringTable(const Elf_Shdr *Section) const {
 
 template <class ELFT>
 const char *ELFFile<ELFT>::getDynamicString(uintX_t Offset) const {
-  if (!DynStrRegion.Addr || Offset >= DynStrRegion.Size)
+  if (!DotDynSymSec || Offset >= DynSymStrTab.size())
     return nullptr;
-  return (const char *)DynStrRegion.Addr + Offset;
+  return (const char *)DynSymStrTab.begin() + Offset;
 }
 
 template <class ELFT>
@@ -925,7 +923,7 @@ ErrorOr<StringRef> ELFFile<ELFT>::getSymbolVersion(const Elf_Shdr *section,
     StrTab = *StrTabOrErr;
   }
   // Handle non-dynamic symbols.
-  if (section != DynSymRegion.Addr && section != nullptr) {
+  if (section != DotDynSymSec && section != nullptr) {
     // Non-dynamic symbols can have versions in their names
     // A name of the form 'foo@V1' indicates version 'V1', non-default.
     // A name of the form 'foo@@V2' indicates version 'V2', default version.
@@ -956,8 +954,10 @@ ErrorOr<StringRef> ELFFile<ELFT>::getSymbolVersion(const Elf_Shdr *section,
   }
 
   // Determine the position in the symbol table of this entry.
-  size_t entry_index = ((const char *)symb - (const char *)DynSymRegion.Addr) /
-                       DynSymRegion.EntSize;
+  size_t entry_index =
+      (reinterpret_cast<uintptr_t>(symb) - DotDynSymSec->sh_offset -
+       reinterpret_cast<uintptr_t>(base())) /
+      sizeof(Elf_Sym);
 
   // Get the corresponding version index entry
   const Elf_Versym *vs = getEntry<Elf_Versym>(dot_gnu_version_sec, entry_index);
@@ -992,7 +992,7 @@ ErrorOr<StringRef> ELFFile<ELFT>::getSymbolVersion(const Elf_Shdr *section,
     IsDefault = false;
   }
 
-  if (name_offset >= DynStrRegion.Size)
+  if (name_offset >= DynSymStrTab.size())
     return object_error::parse_failed;
   return StringRef(getDynamicString(name_offset));
 }
