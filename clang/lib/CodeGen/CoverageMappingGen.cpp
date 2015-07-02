@@ -932,7 +932,7 @@ void CoverageMappingModuleGen::addFunctionMappingRecord(
   if (!FunctionRecordTy) {
     llvm::Type *FunctionRecordTypes[] = {Int8PtrTy, Int32Ty, Int32Ty, Int64Ty};
     FunctionRecordTy =
-        llvm::StructType::get(Ctx, makeArrayRef(FunctionRecordTypes));
+        llvm::StructType::get(Ctx, makeArrayRef(FunctionRecordTypes), true);
   }
 
   llvm::Constant *FunctionRecordVals[] = {
