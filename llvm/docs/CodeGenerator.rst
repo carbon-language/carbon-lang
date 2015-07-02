@@ -749,7 +749,7 @@ The SelectionDAG is a Directed-Acyclic-Graph whose nodes are instances of the
 ``SDNode`` class.  The primary payload of the ``SDNode`` is its operation code
 (Opcode) that indicates what operation the node performs and the operands to the
 operation.  The various operation node types are described at the top of the
-``include/llvm/CodeGen/SelectionDAGNodes.h`` file.
+``include/llvm/CodeGen/ISDOpcodes.h`` file.
 
 Although most operations define a single value, each node in the graph may
 define multiple values.  For example, a combined div/rem operation will define
@@ -829,7 +829,7 @@ One great way to visualize what is going on here is to take advantage of a few
 LLC command line options.  The following options pop up a window displaying the
 SelectionDAG at specific times (if you only get errors printed to the console
 while using this, you probably `need to configure your
-system <ProgrammersManual.html#ViewGraph>`_ to add support for it).
+system <ProgrammersManual.html#viewing-graphs-while-debugging-code>`_ to add support for it).
 
 * ``-view-dag-combine1-dags`` displays the DAG after being built, before the
   first optimization pass.
