@@ -106,7 +106,7 @@ SystemInitializerCommon::Initialize()
     ObjectFileELF::Initialize();
     ObjectFilePECOFF::Initialize();
     DynamicLoaderPOSIXDYLD::Initialize();
-    PlatformFreeBSD::Initialize();
+    platform_freebsd::PlatformFreeBSD::Initialize();
     platform_linux::PlatformLinux::Initialize();
     PlatformWindows::Initialize();
     PlatformKalimba::Initialize();
@@ -152,7 +152,7 @@ SystemInitializerCommon::Terminate()
     ObjectFileELF::Terminate();
     ObjectFilePECOFF::Terminate();
     DynamicLoaderPOSIXDYLD::Terminate();
-    PlatformFreeBSD::Terminate();
+    platform_freebsd::PlatformFreeBSD::Terminate();
     platform_linux::PlatformLinux::Terminate();
     PlatformWindows::Terminate();
     PlatformKalimba::Terminate();

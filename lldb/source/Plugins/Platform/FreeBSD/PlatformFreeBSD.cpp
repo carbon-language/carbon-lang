@@ -32,9 +32,10 @@
 
 using namespace lldb;
 using namespace lldb_private;
+using namespace lldb_private::platform_freebsd;
 
 PlatformSP
-PlatformFreeBSD::CreateInstance (bool force, const lldb_private::ArchSpec *arch)
+PlatformFreeBSD::CreateInstance(bool force, const ArchSpec *arch)
 {
     // The only time we create an instance is when we are creating a remote
     // freebsd platform
@@ -68,8 +69,8 @@ PlatformFreeBSD::CreateInstance (bool force, const lldb_private::ArchSpec *arch)
 
 }
 
-lldb_private::ConstString
-PlatformFreeBSD::GetPluginNameStatic (bool is_host)
+ConstString
+PlatformFreeBSD::GetPluginNameStatic(bool is_host)
 {
     if (is_host)
     {
@@ -133,7 +134,7 @@ PlatformFreeBSD::GetModuleSpec (const FileSpec& module_file_spec,
     return Platform::GetModuleSpec (module_file_spec, arch, module_spec);
 }
 
-lldb_private::Error
+Error
 PlatformFreeBSD::RunShellCommand(const char *command,
                                  const FileSpec &working_dir,
                                  int *status_ptr,
