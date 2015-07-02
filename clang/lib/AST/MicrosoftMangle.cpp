@@ -1215,11 +1215,23 @@ void MicrosoftCXXNameMangler::mangleTemplateArg(const TemplateDecl *TD,
         return;
       }
       if (MPT->isMemberDataPointer()) {
-        mangleMemberDataPointer(RD, nullptr);
-        return;
+        if (isa<ClassTemplateDecl>(TD)) {
+          mangleMemberDataPointer(RD, nullptr);
+          return;
+        }
+        // nullptr data pointers are always represented with a single field
+        // which is initialized with either 0 or -1.  Why -1?  Well, we need to
+        // distinguish the case where the data member is at offset zero in the
+        // record.
+        // However, we are free to use 0 *if* we would use multiple fields for
+        // non-nullptr member pointers.
+        if (!RD->nullFieldOffsetIsZero()) {
+          mangleIntegerLiteral(llvm::APSInt::get(-1), /*IsBoolean=*/false);
+          return;
+        }
       }
     }
-    Out << "$0A@";
+    mangleIntegerLiteral(llvm::APSInt::getUnsigned(0), /*IsBoolean=*/false);
     break;
   }
   case TemplateArgument::Expression:

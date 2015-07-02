@@ -3,21 +3,36 @@
 template <typename T, int (T::*)() = nullptr>
 struct J {};
 
+template <typename T, int T::* = nullptr>
+struct K {};
+
 struct __single_inheritance M;
 J<M> m;
 // CHECK-DAG: @"\01?m@@3U?$J@UM@@$0A@@@A"
+
+K<M> m2;
+// CHECK-DAG: @"\01?m2@@3U?$K@UM@@$0?0@@A"
 
 struct __multiple_inheritance N;
 J<N> n;
 // CHECK-DAG: @"\01?n@@3U?$J@UN@@$HA@@@A"
 
+K<N> n2;
+// CHECK-DAG: @"\01?n2@@3U?$K@UN@@$0?0@@A"
+
 struct __virtual_inheritance O;
 J<O> o;
 // CHECK-DAG: @"\01?o@@3U?$J@UO@@$IA@A@@@A"
 
+K<O> o2;
+// CHECK-DAG: @"\01?o2@@3U?$K@UO@@$FA@?0@@A"
+
 struct P;
 J<P> p;
 // CHECK-DAG: @"\01?p@@3U?$J@UP@@$JA@A@?0@@A"
+
+K<P> p2;
+// CHECK-DAG: @"\01?p2@@3U?$K@UP@@$GA@A@?0@@A"
 
 #pragma pointers_to_members(full_generality, virtual_inheritance)
 
