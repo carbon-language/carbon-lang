@@ -808,6 +808,8 @@ private:
         Tokens.resize(Tokens.size() - TokenCount);
         Tokens.back()->Tok.setKind(tok::unknown);
         Tokens.back()->Type = TT_RegexLiteral;
+        // Treat regex literals like other string_literals.
+        Tokens.back()->Tok.setKind(tok::string_literal);
         Tokens.back()->ColumnWidth += LastColumn - I[0]->OriginalColumn;
         return true;
       }
