@@ -703,7 +703,7 @@ CodeGenModule::getVTableLinkage(const CXXRecordDecl *RD) {
                    llvm::Function::InternalLinkage;
         
         return llvm::GlobalVariable::ExternalLinkage;
-        
+
       case TSK_ImplicitInstantiation:
         return !Context.getLangOpts().AppleKext ?
                  llvm::GlobalVariable::LinkOnceODRLinkage :
