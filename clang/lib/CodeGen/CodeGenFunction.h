@@ -324,13 +324,11 @@ public:
   /// write the current selector value into this alloca.
   llvm::AllocaInst *EHSelectorSlot;
 
-  /// A stack of exception code slots. Entering an __except block pushes a slot
-  /// on the stack and leaving pops one. The __exception_code() intrinsic loads
-  /// a value from the top of the stack.
-  SmallVector<llvm::Value *, 1> SEHCodeSlotStack;
+  llvm::AllocaInst *AbnormalTerminationSlot;
 
-  /// Value returned by __exception_info intrinsic.
-  llvm::Value *SEHInfo = nullptr;
+  /// The implicit parameter to SEH filter functions of type
+  /// 'EXCEPTION_POINTERS*'.
+  ImplicitParamDecl *SEHPointersDecl;
 
   /// Emits a landing pad for the current EH stack.
   llvm::BasicBlock *EmitLandingPad();
@@ -2050,7 +2048,8 @@ public:
   void EnterSEHTryStmt(const SEHTryStmt &S);
   void ExitSEHTryStmt(const SEHTryStmt &S);
 
-  void startOutlinedSEHHelper(CodeGenFunction &ParentCGF, bool IsFilter,
+  void startOutlinedSEHHelper(CodeGenFunction &ParentCGF, StringRef Name,
+                              QualType RetTy, FunctionArgList &Args,
                               const Stmt *OutlinedStmt);
 
   llvm::Function *GenerateSEHFilterFunction(CodeGenFunction &ParentCGF,
@@ -2059,9 +2058,7 @@ public:
   llvm::Function *GenerateSEHFinallyFunction(CodeGenFunction &ParentCGF,
                                              const SEHFinallyStmt &Finally);
 
-  void EmitSEHExceptionCodeSave(CodeGenFunction &ParentCGF,
-                                llvm::Value *ParentFP,
-                                llvm::Value *EntryEBP);
+  void EmitSEHExceptionCodeSave();
   llvm::Value *EmitSEHExceptionCode();
   llvm::Value *EmitSEHExceptionInfo();
   llvm::Value *EmitSEHAbnormalTermination();
@@ -2070,16 +2067,7 @@ public:
   /// each capture, mark the capture as escaped and emit a call to
   /// llvm.framerecover. Insert the framerecover result into the LocalDeclMap.
   void EmitCapturedLocals(CodeGenFunction &ParentCGF, const Stmt *OutlinedStmt,
-                          bool IsFilter);
-
-  /// Recovers the address of a local in a parent function. ParentVar is the
-  /// address of the variable used in the immediate parent function. It can
-  /// either be an alloca or a call to llvm.framerecover if there are nested
-  /// outlined functions. ParentFP is the frame pointer of the outermost parent
-  /// frame.
-  llvm::Value *recoverAddrOfEscapedLocal(CodeGenFunction &ParentCGF,
-                                         llvm::Value *ParentVar,
-                                         llvm::Value *ParentFP);
+                          llvm::Value *ParentFP);
 
   void EmitCXXForRangeStmt(const CXXForRangeStmt &S,
                            ArrayRef<const Attr *> Attrs = None);

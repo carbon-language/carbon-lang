@@ -809,11 +809,6 @@ public:
     return TLSSupported;
   }
 
-  /// \brief Whether the target supports SEH __try.
-  bool isSEHTrySupported() const {
-    return getTriple().isOSWindows();
-  }
-
   /// \brief Return true if {|} are normal characters in the asm string.
   ///
   /// If this returns false (the default), then {abc|xyz} is syntax
