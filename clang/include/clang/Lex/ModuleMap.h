@@ -231,8 +231,7 @@ private:
     return static_cast<bool>(findHeaderInUmbrellaDirs(File, IntermediateDirs));
   }
 
-  Module *inferFrameworkModule(StringRef ModuleName,
-                               const DirectoryEntry *FrameworkDir,
+  Module *inferFrameworkModule(const DirectoryEntry *FrameworkDir,
                                Attributes Attrs, Module *Parent);
 
 public:
@@ -344,10 +343,9 @@ public:
 
   /// \brief Infer the contents of a framework module map from the given
   /// framework directory.
-  Module *inferFrameworkModule(StringRef ModuleName, 
-                               const DirectoryEntry *FrameworkDir,
+  Module *inferFrameworkModule(const DirectoryEntry *FrameworkDir,
                                bool IsSystem, Module *Parent);
-  
+
   /// \brief Retrieve the module map file containing the definition of the given
   /// module.
   ///

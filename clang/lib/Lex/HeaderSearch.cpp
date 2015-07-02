@@ -532,9 +532,13 @@ const FileEntry *DirectoryLookup::DoFrameworkLookup(
       // Load this framework module. If that succeeds, find the suggested module
       // for this header, if any.
       bool IsSystem = getDirCharacteristic() != SrcMgr::C_User;
-      if (HS.loadFrameworkModule(ModuleName, TopFrameworkDir, IsSystem)) {
-        *SuggestedModule = HS.findModuleForHeader(FE);
-      }
+      HS.loadFrameworkModule(ModuleName, TopFrameworkDir, IsSystem);
+
+      // FIXME: This can find a module not part of ModuleName, which is
+      // important so that we're consistent about whether this header
+      // corresponds to a module. Possibly we should lock down framework modules
+      // so that this is not possible.
+      *SuggestedModule = HS.findModuleForHeader(FE);
     } else {
       *SuggestedModule = HS.findModuleForHeader(FE);
     }
@@ -1238,6 +1242,9 @@ Module *HeaderSearch::loadFrameworkModule(StringRef Name,
   // Try to load a module map file.
   switch (loadModuleMapFile(Dir, IsSystem, /*IsFramework*/true)) {
   case LMM_InvalidModuleMap:
+    // Try to infer a module map from the framework directory.
+    if (HSOpts->ImplicitModuleMaps)
+      ModMap.inferFrameworkModule(Dir, IsSystem, /*Parent=*/nullptr);
     break;
 
   case LMM_AlreadyLoaded:
@@ -1245,15 +1252,10 @@ Module *HeaderSearch::loadFrameworkModule(StringRef Name,
     return nullptr;
 
   case LMM_NewlyLoaded:
-    return ModMap.findModule(Name);
+    break;
   }
 
-
-  // Try to infer a module map from the framework directory.
-  if (HSOpts->ImplicitModuleMaps)
-    return ModMap.inferFrameworkModule(Name, Dir, IsSystem, /*Parent=*/nullptr);
-
-  return nullptr;
+  return ModMap.findModule(Name);
 }
 
 

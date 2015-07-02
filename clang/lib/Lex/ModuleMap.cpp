@@ -583,19 +583,28 @@ static void inferFrameworkLink(Module *Mod, const DirectoryEntry *FrameworkDir,
   }
 }
 
-Module *
-ModuleMap::inferFrameworkModule(StringRef ModuleName,
-                                const DirectoryEntry *FrameworkDir,
-                                bool IsSystem,
-                                Module *Parent) {
+Module *ModuleMap::inferFrameworkModule(const DirectoryEntry *FrameworkDir,
+                                        bool IsSystem, Module *Parent) {
   Attributes Attrs;
   Attrs.IsSystem = IsSystem;
-  return inferFrameworkModule(ModuleName, FrameworkDir, Attrs, Parent);
+  return inferFrameworkModule(FrameworkDir, Attrs, Parent);
 }
 
-Module *ModuleMap::inferFrameworkModule(StringRef ModuleName,
-                                        const DirectoryEntry *FrameworkDir,
+Module *ModuleMap::inferFrameworkModule(const DirectoryEntry *FrameworkDir,
                                         Attributes Attrs, Module *Parent) {
+  // Note: as an egregious but useful hack we use the real path here, because
+  // we might be looking at an embedded framework that symlinks out to a
+  // top-level framework, and we need to infer as if we were naming the
+  // top-level framework.
+  StringRef FrameworkDirName =
+      SourceMgr.getFileManager().getCanonicalName(FrameworkDir);
+
+  // In case this is a case-insensitive filesystem, use the canonical
+  // directory name as the ModuleName, since modules are case-sensitive.
+  // FIXME: we should be able to give a fix-it hint for the correct spelling.
+  SmallString<32> ModuleNameStorage;
+  StringRef ModuleName = sanitizeFilenameAsIdentifier(
+      llvm::sys::path::stem(FrameworkDirName), ModuleNameStorage);
 
   // Check whether we've already found this module.
   if (Module *Mod = lookupModuleQualified(ModuleName, Parent))
@@ -608,20 +617,6 @@ Module *ModuleMap::inferFrameworkModule(StringRef ModuleName,
   const FileEntry *ModuleMapFile = nullptr;
   if (!Parent) {
     // Determine whether we're allowed to infer a module map.
-
-    // Note: as an egregious but useful hack we use the real path here, because
-    // we might be looking at an embedded framework that symlinks out to a
-    // top-level framework, and we need to infer as if we were naming the
-    // top-level framework.
-    StringRef FrameworkDirName
-      = SourceMgr.getFileManager().getCanonicalName(FrameworkDir);
-
-    // In case this is a case-insensitive filesystem, make sure the canonical
-    // directory name matches ModuleName exactly. Modules are case-sensitive.
-    // FIXME: we should be able to give a fix-it hint for the correct spelling.
-    if (llvm::sys::path::stem(FrameworkDirName) != ModuleName)
-      return nullptr;
-
     bool canInfer = false;
     if (llvm::sys::path::has_parent_path(FrameworkDirName)) {
       // Figure out the parent path.
@@ -747,10 +742,7 @@ Module *ModuleMap::inferFrameworkModule(StringRef ModuleName,
         continue;
 
       // FIXME: Do we want to warn about subframeworks without umbrella headers?
-      SmallString<32> NameBuf;
-      inferFrameworkModule(sanitizeFilenameAsIdentifier(
-                               llvm::sys::path::stem(Dir->path()), NameBuf),
-                           SubframeworkDir, Attrs, Result);
+      inferFrameworkModule(SubframeworkDir, Attrs, Result);
     }
   }
 
