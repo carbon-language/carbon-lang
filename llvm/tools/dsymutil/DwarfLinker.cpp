@@ -1462,12 +1462,12 @@ void DwarfLinker::findValidRelocsMachO(const object::SectionRef &Section,
 
     auto Sym = Reloc.getSymbol();
     if (Sym != Obj.symbol_end()) {
-      StringRef SymbolName;
-      if (Sym->getName(SymbolName)) {
+      ErrorOr<StringRef> SymbolName = Sym->getName();
+      if (!SymbolName) {
         reportWarning("error getting relocation symbol name.");
         continue;
       }
-      if (const auto *Mapping = DMO.lookupSymbol(SymbolName))
+      if (const auto *Mapping = DMO.lookupSymbol(*SymbolName))
         ValidRelocs.emplace_back(Offset64, RelocSize, Addend, Mapping);
     } else if (const auto *Mapping = DMO.lookupObjectAddress(Addend)) {
       // Do not store the addend. The addend was the address of the

@@ -197,11 +197,14 @@ void MachODebugMapParser::loadCurrentObjectFileSymbols() {
   CurrentObjectAddresses.clear();
 
   for (auto Sym : CurrentObjectHolder.Get().symbols()) {
-    StringRef Name;
+
     uint64_t Addr;
-    if (Sym.getAddress(Addr) || Addr == UnknownAddress || Sym.getName(Name))
+    if (Sym.getAddress(Addr) || Addr == UnknownAddress)
       continue;
-    CurrentObjectAddresses[Name] = Addr;
+    ErrorOr<StringRef> Name = Sym.getName();
+    if (!Name)
+      continue;
+    CurrentObjectAddresses[*Name] = Addr;
   }
 }
 
@@ -225,7 +228,6 @@ void MachODebugMapParser::loadMainBinarySymbols() {
     // Skip undefined and STAB entries.
     if ((Type & SymbolRef::ST_Debug) || (Type & SymbolRef::ST_Unknown))
       continue;
-    StringRef Name;
     uint64_t Addr;
     // The only symbols of interest are the global variables. These
     // are the only ones that need to be queried because the address
@@ -233,8 +235,13 @@ void MachODebugMapParser::loadMainBinarySymbols() {
     // addresses should be fetched for the debug map.
     if (Sym.getAddress(Addr) || Addr == UnknownAddress ||
         !(Sym.getFlags() & SymbolRef::SF_Global) || Sym.getSection(Section) ||
-        Section->isText() || Sym.getName(Name) || Name.size() == 0 ||
-        Name[0] == '\0')
+        Section->isText())
+      continue;
+    ErrorOr<StringRef> NameOrErr = Sym.getName();
+    if (!NameOrErr)
+      continue;
+    StringRef Name = *NameOrErr;
+    if (Name.size() == 0 || Name[0] == '\0')
       continue;
     MainBinarySymbolAddresses[Name] = Addr;
   }

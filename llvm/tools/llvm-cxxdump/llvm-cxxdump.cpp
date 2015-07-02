@@ -97,12 +97,12 @@ static bool collectRelocatedSymbols(const ObjectFile *Obj,
       const object::symbol_iterator RelocSymI = Reloc.getSymbol();
       if (RelocSymI == Obj->symbol_end())
         continue;
-      StringRef RelocSymName;
-      if (error(RelocSymI->getName(RelocSymName)))
+      ErrorOr<StringRef> RelocSymName = RelocSymI->getName();
+      if (error(RelocSymName.getError()))
         return true;
       uint64_t Offset = Reloc.getOffset();
       if (Offset >= SymOffset && Offset < SymEnd) {
-        *I = RelocSymName;
+        *I = *RelocSymName;
         ++I;
       }
     }
@@ -121,12 +121,12 @@ static bool collectRelocationOffsets(
       const object::symbol_iterator RelocSymI = Reloc.getSymbol();
       if (RelocSymI == Obj->symbol_end())
         continue;
-      StringRef RelocSymName;
-      if (error(RelocSymI->getName(RelocSymName)))
+      ErrorOr<StringRef> RelocSymName = RelocSymI->getName();
+      if (error(RelocSymName.getError()))
         return true;
       uint64_t Offset = Reloc.getOffset();
       if (Offset >= SymOffset && Offset < SymEnd)
-        Collection[std::make_pair(SymName, Offset - SymOffset)] = RelocSymName;
+        Collection[std::make_pair(SymName, Offset - SymOffset)] = *RelocSymName;
     }
   }
   return false;
@@ -190,9 +190,10 @@ static void dumpCXXData(const ObjectFile *Obj) {
   for (auto &P : SymAddr) {
     object::SymbolRef Sym = P.first;
     uint64_t SymSize = P.second;
-    StringRef SymName;
-    if (error(Sym.getName(SymName)))
+    ErrorOr<StringRef> SymNameOrErr = Sym.getName();
+    if (error(SymNameOrErr.getError()))
       return;
+    StringRef SymName = *SymNameOrErr;
     object::section_iterator SecI(Obj->section_begin());
     if (error(Sym.getSection(SecI)))
       return;

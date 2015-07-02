@@ -63,8 +63,10 @@ RelocationValueRef RuntimeDyldMachO::getRelocationValueRef(
   bool IsExternal = Obj.getPlainRelocationExternal(RelInfo);
   if (IsExternal) {
     symbol_iterator Symbol = RI->getSymbol();
-    StringRef TargetName;
-    Symbol->getName(TargetName);
+    ErrorOr<StringRef> TargetNameOrErr = Symbol->getName();
+    if (std::error_code EC = TargetNameOrErr.getError())
+      report_fatal_error(EC.message());
+    StringRef TargetName = *TargetNameOrErr;
     RTDyldSymbolTable::const_iterator SI =
       GlobalSymbolTable.find(TargetName.data());
     if (SI != GlobalSymbolTable.end()) {
@@ -162,8 +164,10 @@ void RuntimeDyldMachO::populateIndirectSymbolPointersSection(
     unsigned SymbolIndex =
       Obj.getIndirectSymbolTableEntry(DySymTabCmd, FirstIndirectSymbol + i);
     symbol_iterator SI = Obj.getSymbolByIndex(SymbolIndex);
-    StringRef IndirectSymbolName;
-    SI->getName(IndirectSymbolName);
+    ErrorOr<StringRef> IndirectSymbolNameOrErr = SI->getName();
+    if (std::error_code EC = IndirectSymbolNameOrErr.getError())
+      report_fatal_error(EC.message());
+    StringRef IndirectSymbolName = *IndirectSymbolNameOrErr;
     DEBUG(dbgs() << "  " << IndirectSymbolName << ": index " << SymbolIndex
           << ", PT offset: " << PTEntryOffset << "\n");
     RelocationEntry RE(PTSectionID, PTEntryOffset,

@@ -1064,8 +1064,12 @@ relocation_iterator RuntimeDyldELF::processRelocationRef(
 
   // Obtain the symbol name which is referenced in the relocation
   StringRef TargetName;
-  if (Symbol != Obj.symbol_end())
-    Symbol->getName(TargetName);
+  if (Symbol != Obj.symbol_end()) {
+    ErrorOr<StringRef> TargetNameOrErr = Symbol->getName();
+    if (std::error_code EC = TargetNameOrErr.getError())
+      report_fatal_error(EC.message());
+    TargetName = *TargetNameOrErr;
+  }
   DEBUG(dbgs() << "\t\tRelType: " << RelType << " Addend: " << Addend
                << " TargetName: " << TargetName << "\n");
   RelocationValueRef Value;

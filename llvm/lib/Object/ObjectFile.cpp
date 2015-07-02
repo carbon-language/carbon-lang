@@ -37,10 +37,10 @@ bool SectionRef::containsSymbol(SymbolRef S) const {
 
 std::error_code ObjectFile::printSymbolName(raw_ostream &OS,
                                             DataRefImpl Symb) const {
-  StringRef Name;
-  if (std::error_code EC = getSymbolName(Symb, Name))
+  ErrorOr<StringRef> Name = getSymbolName(Symb);
+  if (std::error_code EC = Name.getError())
     return EC;
-  OS << Name;
+  OS << *Name;
   return std::error_code();
 }
 

@@ -29,7 +29,11 @@ public:
     uint64_t RelType = Rel.getType();
     elf_symbol_iterator SymI = Rel.getSymbol();
 
-    StringRef SymName; SymI->getName(SymName);
+    ErrorOr<StringRef> SymNameOrErr = SymI->getName();
+    if (std::error_code EC = SymNameOrErr.getError())
+      report_fatal_error(EC.message());
+    StringRef SymName = *SymNameOrErr;
+
     uint64_t  SymAddr; SymI->getAddress(SymAddr);
     uint64_t SymSize = SymI->getSize();
     int64_t Addend = *ELFRelocationRef(Rel).getAddend();

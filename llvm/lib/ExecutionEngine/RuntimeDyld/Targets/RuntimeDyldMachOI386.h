@@ -240,13 +240,14 @@ private:
       unsigned SymbolIndex =
           Obj.getIndirectSymbolTableEntry(DySymTabCmd, FirstIndirectSymbol + i);
       symbol_iterator SI = Obj.getSymbolByIndex(SymbolIndex);
-      StringRef IndirectSymbolName;
-      SI->getName(IndirectSymbolName);
+      ErrorOr<StringRef> IndirectSymbolName = SI->getName();
+      if (std::error_code EC = IndirectSymbolName.getError())
+        report_fatal_error(EC.message());
       uint8_t *JTEntryAddr = JTSectionAddr + JTEntryOffset;
       createStubFunction(JTEntryAddr);
       RelocationEntry RE(JTSectionID, JTEntryOffset + 1,
                          MachO::GENERIC_RELOC_VANILLA, 0, true, 2);
-      addRelocationForSymbol(RE, IndirectSymbolName);
+      addRelocationForSymbol(RE, *IndirectSymbolName);
       JTEntryOffset += JTEntrySize;
     }
   }

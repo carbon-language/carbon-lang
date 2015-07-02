@@ -100,9 +100,10 @@ void ModuleInfo::addSymbol(const SymbolRef &Symbol, uint64_t SymbolSize,
         OpdExtractor->isValidOffsetForAddress(OpdOffset32))
       SymbolAddress = OpdExtractor->getAddress(&OpdOffset32);
   }
-  StringRef SymbolName;
-  if (error(Symbol.getName(SymbolName)))
+  ErrorOr<StringRef> SymbolNameOrErr = Symbol.getName();
+  if (error(SymbolNameOrErr.getError()))
     return;
+  StringRef SymbolName = *SymbolNameOrErr;
   // Mach-O symbol table names have leading underscore, skip it.
   if (Module->isMachO() && SymbolName.size() > 0 && SymbolName[0] == '_')
     SymbolName = SymbolName.drop_front();

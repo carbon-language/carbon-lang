@@ -567,12 +567,12 @@ bool Decoder::dumpXDataRecord(const COFFObjectFile &COFF,
     if (!Symbol)
       Symbol = getSymbol(COFF, Address, /*FunctionOnly=*/true);
 
-    StringRef Name;
-    if (Symbol)
-      Symbol->getName(Name);
+    ErrorOr<StringRef> Name = Symbol->getName();
+    if (std::error_code EC = Name.getError())
+      report_fatal_error(EC.message());
 
     ListScope EHS(SW, "ExceptionHandler");
-    SW.printString("Routine", formatSymbol(Name, Address));
+    SW.printString("Routine", formatSymbol(*Name, Address));
     SW.printHex("Parameter", Parameter);
   }
 
@@ -601,7 +601,10 @@ bool Decoder::dumpUnpackedEntry(const COFFObjectFile &COFF,
   StringRef FunctionName;
   uint64_t FunctionAddress;
   if (Function) {
-    Function->getName(FunctionName);
+    ErrorOr<StringRef> FunctionNameOrErr = Function->getName();
+    if (std::error_code EC = FunctionNameOrErr.getError())
+      report_fatal_error(EC.message());
+    FunctionName = *FunctionNameOrErr;
     Function->getAddress(FunctionAddress);
   } else {
     const pe32_header *PEHeader;
@@ -613,13 +616,14 @@ bool Decoder::dumpUnpackedEntry(const COFFObjectFile &COFF,
   SW.printString("Function", formatSymbol(FunctionName, FunctionAddress));
 
   if (XDataRecord) {
-    StringRef Name;
-    uint64_t Address;
+    ErrorOr<StringRef> Name = XDataRecord->getName();
+    if (std::error_code EC = Name.getError())
+      report_fatal_error(EC.message());
 
-    XDataRecord->getName(Name);
+    uint64_t Address;
     XDataRecord->getAddress(Address);
 
-    SW.printString("ExceptionRecord", formatSymbol(Name, Address));
+    SW.printString("ExceptionRecord", formatSymbol(*Name, Address));
 
     section_iterator SI = COFF.section_end();
     if (XDataRecord->getSection(SI))
@@ -658,7 +662,10 @@ bool Decoder::dumpPackedEntry(const object::COFFObjectFile &COFF,
   StringRef FunctionName;
   uint64_t FunctionAddress;
   if (Function) {
-    Function->getName(FunctionName);
+    ErrorOr<StringRef> FunctionNameOrErr = Function->getName();
+    if (std::error_code EC = FunctionNameOrErr.getError())
+      report_fatal_error(EC.message());
+    FunctionName = *FunctionNameOrErr;
     Function->getAddress(FunctionAddress);
   } else {
     const pe32_header *PEHeader;

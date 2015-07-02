@@ -266,10 +266,10 @@ static int printLineInfoForInput(bool LoadObjects, bool UseDebugObj) {
     for (const auto &P : SymAddr) {
       object::SymbolRef Sym = P.first;
       if (Sym.getType() == object::SymbolRef::ST_Function) {
-        StringRef  Name;
-        uint64_t   Addr;
-        if (Sym.getName(Name))
+        ErrorOr<StringRef> Name = Sym.getName();
+        if (!Name)
           continue;
+        uint64_t Addr;
         if (Sym.getAddress(Addr))
           continue;
 
@@ -288,7 +288,8 @@ static int printLineInfoForInput(bool LoadObjects, bool UseDebugObj) {
             Addr += SectionLoadAddress - Sec->getAddress();
         }
 
-        outs() << "Function: " << Name << ", Size = " << Size << ", Addr = " << Addr << "\n";
+        outs() << "Function: " << *Name << ", Size = " << Size
+               << ", Addr = " << Addr << "\n";
 
         DILineInfoTable Lines = Context->getLineInfoForAddressRange(Addr, Size);
         DILineInfoTable::iterator  Begin = Lines.begin();

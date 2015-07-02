@@ -327,16 +327,14 @@ void MachOObjectFile::moveSymbolNext(DataRefImpl &Symb) const {
   Symb.p += SymbolTableEntrySize;
 }
 
-std::error_code MachOObjectFile::getSymbolName(DataRefImpl Symb,
-                                               StringRef &Res) const {
+ErrorOr<StringRef> MachOObjectFile::getSymbolName(DataRefImpl Symb) const {
   StringRef StringTable = getStringTableData();
   MachO::nlist_base Entry = getSymbolTableEntryBase(this, Symb);
   const char *Start = &StringTable.data()[Entry.n_strx];
   if (Start < getData().begin() || Start >= getData().end())
     report_fatal_error(
         "Symbol name entry points before beginning or past end of file.");
-  Res = StringRef(Start);
-  return std::error_code();
+  return StringRef(Start);
 }
 
 unsigned MachOObjectFile::getSectionType(SectionRef Sec) const {

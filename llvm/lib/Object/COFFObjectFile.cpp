@@ -145,10 +145,13 @@ void COFFObjectFile::moveSymbolNext(DataRefImpl &Ref) const {
   }
 }
 
-std::error_code COFFObjectFile::getSymbolName(DataRefImpl Ref,
-                                              StringRef &Result) const {
+ErrorOr<StringRef> COFFObjectFile::getSymbolName(DataRefImpl Ref) const {
   COFFSymbolRef Symb = getCOFFSymbol(Ref);
-  return getSymbolName(Symb, Result);
+  StringRef Result;
+  std::error_code EC = getSymbolName(Symb, Result);
+  if (EC)
+    return EC;
+  return Result;
 }
 
 uint64_t COFFObjectFile::getSymbolValue(DataRefImpl Ref) const {

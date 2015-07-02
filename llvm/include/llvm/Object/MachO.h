@@ -199,8 +199,7 @@ public:
   void moveSymbolNext(DataRefImpl &Symb) const override;
 
   uint64_t getNValue(DataRefImpl Sym) const;
-  std::error_code getSymbolName(DataRefImpl Symb,
-                                StringRef &Res) const override;
+  ErrorOr<StringRef> getSymbolName(DataRefImpl Symb) const override;
 
   // MachO specific.
   std::error_code getIndirectName(DataRefImpl Symb, StringRef &Res) const;

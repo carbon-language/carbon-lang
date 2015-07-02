@@ -155,8 +155,10 @@ public:
       break;
     }
 
-    StringRef TargetName;
-    Symbol->getName(TargetName);
+    ErrorOr<StringRef> TargetNameOrErr = Symbol->getName();
+    if (std::error_code EC = TargetNameOrErr.getError())
+      report_fatal_error(EC.message());
+    StringRef TargetName = *TargetNameOrErr;
 
     DEBUG(dbgs() << "\t\tIn Section " << SectionID << " Offset " << Offset
                  << " RelType: " << RelType << " TargetName: " << TargetName

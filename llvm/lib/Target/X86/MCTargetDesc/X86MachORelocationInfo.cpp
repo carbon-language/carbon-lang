@@ -30,7 +30,10 @@ public:
     uint64_t RelType = Rel.getType();
     symbol_iterator SymI = Rel.getSymbol();
 
-    StringRef SymName; SymI->getName(SymName);
+    ErrorOr<StringRef> SymNameOrErr = SymI->getName();
+    if (std::error_code EC = SymNameOrErr.getError())
+      report_fatal_error(EC.message());
+    StringRef SymName = *SymNameOrErr;
     uint64_t  SymAddr; SymI->getAddress(SymAddr);
 
     any_relocation_info RE = Obj->getRelocation(Rel.getRawDataRefImpl());
@@ -89,10 +92,11 @@ public:
         symbol_iterator RSymI = Rel.getSymbol();
         uint64_t RSymAddr;
         RSymI->getAddress(RSymAddr);
-        StringRef RSymName;
-        RSymI->getName(RSymName);
+        ErrorOr<StringRef> RSymName = RSymI->getName();
+        if (std::error_code EC = RSymName.getError())
+          report_fatal_error(EC.message());
 
-        MCSymbol *RSym = Ctx.getOrCreateSymbol(RSymName);
+        MCSymbol *RSym = Ctx.getOrCreateSymbol(*RSymName);
         if (!RSym->isVariable())
           RSym->setVariableValue(MCConstantExpr::create(RSymAddr, Ctx));
 

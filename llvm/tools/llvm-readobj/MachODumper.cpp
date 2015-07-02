@@ -474,8 +474,10 @@ void MachODumper::printRelocation(const MachOObjectFile *Obj,
   if (IsExtern) {
     symbol_iterator Symbol = Reloc.getSymbol();
     if (Symbol != Obj->symbol_end()) {
-      if (error(Symbol->getName(TargetName)))
+      ErrorOr<StringRef> TargetNameOrErr = Symbol->getName();
+      if (error(TargetNameOrErr.getError()))
         return;
+      TargetName = *TargetNameOrErr;
     }
   } else if (!IsScattered) {
     section_iterator SecI = Obj->getRelocationSection(DR);
@@ -538,8 +540,8 @@ void MachODumper::printDynamicSymbols() {
 
 void MachODumper::printSymbol(const SymbolRef &Symbol) {
   StringRef SymbolName;
-  if (Symbol.getName(SymbolName))
-    SymbolName = "";
+  if (ErrorOr<StringRef> SymbolNameOrErr = Symbol.getName())
+    SymbolName = *SymbolNameOrErr;
 
   MachOSymbol MOSymbol;
   getSymbol(Obj, Symbol.getRawDataRefImpl(), MOSymbol);

@@ -139,8 +139,10 @@ std::error_code COFFDumper::resolveSymbolName(const coff_section *Section,
   SymbolRef Symbol;
   if (std::error_code EC = resolveSymbol(Section, Offset, Symbol))
     return EC;
-  if (std::error_code EC = Symbol.getName(Name))
+  ErrorOr<StringRef> NameOrErr = Symbol.getName();
+  if (std::error_code EC = NameOrErr.getError())
     return EC;
+  Name = *NameOrErr;
   return std::error_code();
 }
 
@@ -809,8 +811,12 @@ void COFFDumper::printRelocation(const SectionRef &Section,
   StringRef SymbolName;
   Reloc.getTypeName(RelocName);
   symbol_iterator Symbol = Reloc.getSymbol();
-  if (Symbol != Obj->symbol_end() && error(Symbol->getName(SymbolName)))
-    return;
+  if (Symbol != Obj->symbol_end()) {
+    ErrorOr<StringRef> SymbolNameOrErr = Symbol->getName();
+    if (error(SymbolNameOrErr.getError()))
+      return;
+    SymbolName = *SymbolNameOrErr;
+  }
 
   if (opts::ExpandRelocs) {
     DictScope Group(W, "Relocation");

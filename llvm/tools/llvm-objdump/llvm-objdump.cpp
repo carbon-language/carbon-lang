@@ -433,9 +433,10 @@ static std::error_code getRelocationValueString(const COFFObjectFile *Obj,
                                                 const RelocationRef &Rel,
                                                 SmallVectorImpl<char> &Result) {
   symbol_iterator SymI = Rel.getSymbol();
-  StringRef SymName;
-  if (std::error_code EC = SymI->getName(SymName))
+  ErrorOr<StringRef> SymNameOrErr = SymI->getName();
+  if (std::error_code EC = SymNameOrErr.getError())
     return EC;
+  StringRef SymName = *SymNameOrErr;
   Result.append(SymName.begin(), SymName.end());
   return std::error_code();
 }
@@ -455,15 +456,15 @@ static void printRelocationTargetName(const MachOObjectFile *O,
     for (const SymbolRef &Symbol : O->symbols()) {
       std::error_code ec;
       uint64_t Addr;
-      StringRef Name;
+      ErrorOr<StringRef> Name = Symbol.getName();
 
       if ((ec = Symbol.getAddress(Addr)))
         report_fatal_error(ec.message());
       if (Addr != Val)
         continue;
-      if ((ec = Symbol.getName(Name)))
-        report_fatal_error(ec.message());
-      fmt << Name;
+      if (std::error_code EC = Name.getError())
+        report_fatal_error(EC.message());
+      fmt << *Name;
       return;
     }
 
@@ -493,7 +494,9 @@ static void printRelocationTargetName(const MachOObjectFile *O,
   if (isExtern) {
     symbol_iterator SI = O->symbol_begin();
     advance(SI, Val);
-    SI->getName(S);
+    ErrorOr<StringRef> SOrErr = SI->getName();
+    if (!error(SOrErr.getError()))
+      S = *SOrErr;
   } else {
     section_iterator SI = O->section_begin();
     // Adjust for the fact that sections are 1-indexed.
@@ -830,10 +833,10 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
         if (Address >= SectSize)
           continue;
 
-        StringRef Name;
-        if (error(Symbol.getName(Name)))
+        ErrorOr<StringRef> Name = Symbol.getName();
+        if (error(Name.getError()))
           break;
-        Symbols.push_back(std::make_pair(Address, Name));
+        Symbols.push_back(std::make_pair(Address, *Name));
       }
     }
 
@@ -1121,8 +1124,11 @@ void llvm::PrintSymbolTable(const ObjectFile *o) {
     StringRef Name;
     if (Type == SymbolRef::ST_Debug && Section != o->section_end()) {
       Section->getName(Name);
-    } else if (error(Symbol.getName(Name))) {
-      continue;
+    } else {
+      ErrorOr<StringRef> NameOrErr = Symbol.getName();
+      if (error(NameOrErr.getError()))
+        continue;
+      Name = *NameOrErr;
     }
 
     bool Global = Flags & SymbolRef::SF_Global;

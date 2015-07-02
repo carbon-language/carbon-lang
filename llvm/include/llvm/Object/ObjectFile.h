@@ -132,7 +132,7 @@ public:
     assert(isa<ObjectFile>(BasicSymbolRef::getObject()));
   }
 
-  std::error_code getName(StringRef &Result) const;
+  ErrorOr<StringRef> getName() const;
   /// Returns the symbol virtual address (i.e. address at which it will be
   /// mapped).
   std::error_code getAddress(uint64_t &Result) const;
@@ -195,8 +195,7 @@ protected:
   // Implementations assume that the DataRefImpl is valid and has not been
   // modified externally. It's UB otherwise.
   friend class SymbolRef;
-  virtual std::error_code getSymbolName(DataRefImpl Symb,
-                                        StringRef &Res) const = 0;
+  virtual ErrorOr<StringRef> getSymbolName(DataRefImpl Symb) const = 0;
   std::error_code printSymbolName(raw_ostream &OS,
                                   DataRefImpl Symb) const override;
   virtual std::error_code getSymbolAddress(DataRefImpl Symb,
@@ -305,8 +304,8 @@ public:
 inline SymbolRef::SymbolRef(DataRefImpl SymbolP, const ObjectFile *Owner)
     : BasicSymbolRef(SymbolP, Owner) {}
 
-inline std::error_code SymbolRef::getName(StringRef &Result) const {
-  return getObject()->getSymbolName(getRawDataRefImpl(), Result);
+inline ErrorOr<StringRef> SymbolRef::getName() const {
+  return getObject()->getSymbolName(getRawDataRefImpl());
 }
 
 inline std::error_code SymbolRef::getAddress(uint64_t &Result) const {

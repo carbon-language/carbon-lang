@@ -647,8 +647,7 @@ public:
   }
 protected:
   void moveSymbolNext(DataRefImpl &Symb) const override;
-  std::error_code getSymbolName(DataRefImpl Symb,
-                                StringRef &Res) const override;
+  ErrorOr<StringRef> getSymbolName(DataRefImpl Symb) const override;
   std::error_code getSymbolAddress(DataRefImpl Symb,
                                    uint64_t &Res) const override;
   uint64_t getSymbolValue(DataRefImpl Symb) const override;

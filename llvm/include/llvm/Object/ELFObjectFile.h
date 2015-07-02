@@ -195,8 +195,7 @@ protected:
   ELFFile<ELFT> EF;
 
   void moveSymbolNext(DataRefImpl &Symb) const override;
-  std::error_code getSymbolName(DataRefImpl Symb,
-                                StringRef &Res) const override;
+  ErrorOr<StringRef> getSymbolName(DataRefImpl Symb) const override;
   std::error_code getSymbolAddress(DataRefImpl Symb,
                                    uint64_t &Res) const override;
   uint64_t getSymbolValue(DataRefImpl Symb) const override;
@@ -349,14 +348,9 @@ void ELFObjectFile<ELFT>::moveSymbolNext(DataRefImpl &Sym) const {
 }
 
 template <class ELFT>
-std::error_code ELFObjectFile<ELFT>::getSymbolName(DataRefImpl Sym,
-                                                   StringRef &Result) const {
+ErrorOr<StringRef> ELFObjectFile<ELFT>::getSymbolName(DataRefImpl Sym) const {
   const Elf_Sym *ESym = toELFSymIter(Sym);
-  ErrorOr<StringRef> Name = EF.getSymbolName(ESym, Sym.p & 1);
-  if (!Name)
-    return Name.getError();
-  Result = *Name;
-  return std::error_code();
+  return EF.getSymbolName(ESym, Sym.p & 1);
 }
 
 template <class ELFT>
