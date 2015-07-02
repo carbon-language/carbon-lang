@@ -49,7 +49,7 @@ private:
   JobClass Kind;
 
 protected:
-  Job(JobClass _Kind) : Kind(_Kind) {}
+  Job(JobClass Kind) : Kind(Kind) {}
 public:
   virtual ~Job();
 
@@ -106,8 +106,8 @@ class Command : public Job {
   void writeResponseFile(raw_ostream &OS) const;
 
 public:
-  Command(const Action &_Source, const Tool &_Creator, const char *_Executable,
-          const llvm::opt::ArgStringList &_Arguments);
+  Command(const Action &Source, const Tool &Creator, const char *Executable,
+          const llvm::opt::ArgStringList &Arguments);
 
   void Print(llvm::raw_ostream &OS, const char *Terminator, bool Quote,
              CrashReportInfo *CrashInfo = nullptr) const override;
