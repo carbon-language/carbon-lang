@@ -40,6 +40,7 @@ public:
   void clear() { flag = false; }
   void setPosition(const char *position) {
     assert(position);
+    flag = true;
     this->position = position;
   }
   const char *getPosition() const {
@@ -449,27 +450,21 @@ public:
     CS = cs;
   }
   void setHasThousandsGrouping(const char *position) {
-    HasThousandsGrouping = true;
     HasThousandsGrouping.setPosition(position);
   }
   void setIsLeftJustified(const char *position) {
-    IsLeftJustified = true;
     IsLeftJustified.setPosition(position);
   }
   void setHasPlusPrefix(const char *position) {
-    HasPlusPrefix = true;
     HasPlusPrefix.setPosition(position);
   }
   void setHasSpacePrefix(const char *position) {
-    HasSpacePrefix = true;
     HasSpacePrefix.setPosition(position);
   }
   void setHasAlternativeForm(const char *position) {
-    HasAlternativeForm = true;
     HasAlternativeForm.setPosition(position);
   }
   void setHasLeadingZeros(const char *position) {
-    HasLeadingZeroes = true;
     HasLeadingZeroes.setPosition(position);
   }
   void setUsesPositionalArg() { UsesPositionalArg = true; }
@@ -565,7 +560,6 @@ public:
     SuppressAssignment("*") {}
 
   void setSuppressAssignment(const char *position) {
-    SuppressAssignment = true;
     SuppressAssignment.setPosition(position);
   }
 
