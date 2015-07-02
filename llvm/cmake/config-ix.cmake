@@ -397,12 +397,10 @@ else ()
 endif ()
 
 if( MINGW )
-  set(HAVE_LIBIMAGEHLP 1)
   set(HAVE_LIBPSAPI 1)
   set(HAVE_LIBSHELL32 1)
   # TODO: Check existence of libraries.
   #   include(CheckLibraryExists)
-  #   CHECK_LIBRARY_EXISTS(imagehlp ??? . HAVE_LIBIMAGEHLP)
 endif( MINGW )
 
 if (NOT HAVE_STRTOLL)

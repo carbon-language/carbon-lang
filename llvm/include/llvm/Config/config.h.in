@@ -137,9 +137,6 @@
 /* Define if libedit is available on this platform. */
 #undef HAVE_LIBEDIT
 
-/* Define to 1 if you have the `imagehlp' library (-limagehlp). */
-#undef HAVE_LIBIMAGEHLP
-
 /* Define to 1 if you have the `m' library (-lm). */
 #undef HAVE_LIBM
 

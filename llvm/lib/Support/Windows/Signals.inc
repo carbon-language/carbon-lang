@@ -31,10 +31,9 @@
 
 #ifdef _MSC_VER
  #pragma comment(lib, "psapi.lib")
- #pragma comment(lib, "dbghelp.lib")
 #elif __MINGW32__
- #if ((HAVE_LIBIMAGEHLP != 1) || (HAVE_LIBPSAPI != 1))
-  #error "libimagehlp.a & libpsapi.a should be present"
+ #if (HAVE_LIBPSAPI != 1)
+  #error "libpsapi.a should be present"
  #endif
  // The version of g++ that comes with MinGW does *not* properly understand
  // the ll format specifier for printf. However, MinGW passes the format
@@ -103,6 +102,8 @@
    DWORD64     Reserved[3];
    KDHELP64    KdHelp;
  } STACKFRAME64, *LPSTACKFRAME64;
+ #endif // !defined(__MINGW64_VERSION_MAJOR)
+#endif // __MINGW32__
 
 typedef BOOL (__stdcall *PREAD_PROCESS_MEMORY_ROUTINE64)(HANDLE hProcess,
                       DWORD64 qwBaseAddress, PVOID lpBuffer, DWORD nSize,
@@ -122,40 +123,46 @@ typedef BOOL (WINAPI *fpStackWalk64)(DWORD, HANDLE, HANDLE, LPSTACKFRAME64,
                       PFUNCTION_TABLE_ACCESS_ROUTINE64,
                       PGET_MODULE_BASE_ROUTINE64,
                       PTRANSLATE_ADDRESS_ROUTINE64);
-static fpStackWalk64 StackWalk64;
+static fpStackWalk64 fStackWalk64;
 
 typedef DWORD64 (WINAPI *fpSymGetModuleBase64)(HANDLE, DWORD64);
-static fpSymGetModuleBase64 SymGetModuleBase64;
+static fpSymGetModuleBase64 fSymGetModuleBase64;
 
 typedef BOOL (WINAPI *fpSymGetSymFromAddr64)(HANDLE, DWORD64,
                       PDWORD64, PIMAGEHLP_SYMBOL64);
-static fpSymGetSymFromAddr64 SymGetSymFromAddr64;
+static fpSymGetSymFromAddr64 fSymGetSymFromAddr64;
 
 typedef BOOL (WINAPI *fpSymGetLineFromAddr64)(HANDLE, DWORD64,
                       PDWORD, PIMAGEHLP_LINE64);
-static fpSymGetLineFromAddr64 SymGetLineFromAddr64;
+static fpSymGetLineFromAddr64 fSymGetLineFromAddr64;
 
 typedef PVOID (WINAPI *fpSymFunctionTableAccess64)(HANDLE, DWORD64);
-static fpSymFunctionTableAccess64 SymFunctionTableAccess64;
+static fpSymFunctionTableAccess64 fSymFunctionTableAccess64;
+
+typedef DWORD (WINAPI *fpSymSetOptions)(DWORD);
+static fpSymSetOptions fSymSetOptions;
+
+typedef BOOL (WINAPI *fpSymInitialize)(HANDLE, PCSTR, BOOL);
+static fpSymInitialize fSymInitialize;
 
 static bool load64BitDebugHelp(void) {
   HMODULE hLib = ::LoadLibraryW(L"Dbghelp.dll");
   if (hLib) {
-    StackWalk64 = (fpStackWalk64)
+    fStackWalk64 = (fpStackWalk64)
                       ::GetProcAddress(hLib, "StackWalk64");
-    SymGetModuleBase64 = (fpSymGetModuleBase64)
+    fSymGetModuleBase64 = (fpSymGetModuleBase64)
                       ::GetProcAddress(hLib, "SymGetModuleBase64");
-    SymGetSymFromAddr64 = (fpSymGetSymFromAddr64)
+    fSymGetSymFromAddr64 = (fpSymGetSymFromAddr64)
                       ::GetProcAddress(hLib, "SymGetSymFromAddr64");
-    SymGetLineFromAddr64 = (fpSymGetLineFromAddr64)
+    fSymGetLineFromAddr64 = (fpSymGetLineFromAddr64)
                       ::GetProcAddress(hLib, "SymGetLineFromAddr64");
-    SymFunctionTableAccess64 = (fpSymFunctionTableAccess64)
+    fSymFunctionTableAccess64 = (fpSymFunctionTableAccess64)
                      ::GetProcAddress(hLib, "SymFunctionTableAccess64");
+    fSymSetOptions = (fpSymSetOptions)::GetProcAddress(hLib, "SymSetOptions");
+    fSymInitialize = (fpSymInitialize)::GetProcAddress(hLib, "SymInitialize");
   }
-  return StackWalk64 != NULL;
+  return fStackWalk64 && fSymInitialize && fSymSetOptions;
 }
- #endif // !defined(__MINGW64_VERSION_MAJOR)
-#endif // __MINGW32__
 
 // Forward declare.
 static LONG WINAPI LLVMUnhandledExceptionFilter(LPEXCEPTION_POINTERS ep);
@@ -187,12 +194,12 @@ static void PrintStackTraceForThread(llvm::raw_ostream &OS, HANDLE hProcess,
 #endif
 
   // Initialize the symbol handler.
-  SymSetOptions(SYMOPT_DEFERRED_LOADS | SYMOPT_LOAD_LINES);
-  SymInitialize(hProcess, NULL, TRUE);
+  fSymSetOptions(SYMOPT_DEFERRED_LOADS | SYMOPT_LOAD_LINES);
+  fSymInitialize(hProcess, NULL, TRUE);
 
   while (true) {
-    if (!StackWalk64(machineType, hProcess, hThread, &StackFrame, Context, NULL,
-                     SymFunctionTableAccess64, SymGetModuleBase64, NULL)) {
+    if (!fStackWalk64(machineType, hProcess, hThread, &StackFrame, Context, 0,
+                      fSymFunctionTableAccess64, fSymGetModuleBase64, 0)) {
       break;
     }
 
@@ -221,7 +228,7 @@ static void PrintStackTraceForThread(llvm::raw_ostream &OS, HANDLE hProcess,
             static_cast<DWORD>(StackFrame.Params[3]));
 #endif
     // Verify the PC belongs to a module in this process.
-    if (!SymGetModuleBase64(hProcess, PC)) {
+    if (!fSymGetModuleBase64(hProcess, PC)) {
       OS << " <unknown module>\n";
       continue;
     }
@@ -234,7 +241,7 @@ static void PrintStackTraceForThread(llvm::raw_ostream &OS, HANDLE hProcess,
     symbol->MaxNameLength = 512 - sizeof(IMAGEHLP_SYMBOL64);
 
     DWORD64 dwDisp;
-    if (!SymGetSymFromAddr64(hProcess, PC, &dwDisp, symbol)) {
+    if (!fSymGetSymFromAddr64(hProcess, PC, &dwDisp, symbol)) {
       OS << '\n';
       continue;
     }
@@ -250,7 +257,7 @@ static void PrintStackTraceForThread(llvm::raw_ostream &OS, HANDLE hProcess,
     IMAGEHLP_LINE64 line = {};
     DWORD dwLineDisp;
     line.SizeOfStruct = sizeof(line);
-    if (SymGetLineFromAddr64(hProcess, PC, &dwLineDisp, &line)) {
+    if (fSymGetLineFromAddr64(hProcess, PC, &dwLineDisp, &line)) {
       OS << format(", %s, line %lu", line.FileName, line.LineNumber);
       if (dwLineDisp > 0)
         OS << format(" + 0x%lX byte(s)", dwLineDisp);
@@ -301,17 +308,13 @@ static void InitializeThreading() {
 }
 
 static void RegisterHandler() {
-#if __MINGW32__ && !defined(__MINGW64_VERSION_MAJOR)
-  // On MinGW.org, we need to load up the symbols explicitly, because the
-  // Win32 framework they include does not have support for the 64-bit
-  // versions of the APIs we need.  If we cannot load up the APIs (which
-  // would be unexpected as they should exist on every version of Windows
-  // we support), we will bail out since there would be nothing to report.
+  // If we cannot load up the APIs (which would be unexpected as they should
+  // exist on every version of Windows we support), we will bail out since
+  // there would be nothing to report.
   if (!load64BitDebugHelp()) {
     assert(false && "These APIs should always be available");
     return;
   }
-#endif
 
   if (RegisteredUnhandledExceptionFilter) {
     EnterCriticalSection(&CriticalSection);
