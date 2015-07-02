@@ -205,10 +205,10 @@ private:
 
     for (SymbolRef sym : obj->symbols()) {
       // Skip until we find the symbol.
-      StringRef name;
-      if (sym.getName(name))
+      ErrorOr<StringRef> name = sym.getName();
+      if (!name)
         return false;
-      if (name != symbol)
+      if (*name != symbol)
         continue;
       uint32_t flags = sym.getFlags();
       if (flags <= SymbolRef::SF_Undefined)
