@@ -8,10 +8,10 @@ We currently have the following external libraries.
 # isl
 License: MIT-STYLE
 Details: isl/LICENSE
-Version: isl-0.15-3-g532568a
 
 # imath
 License: MIT-STYLE
 Details: isl/imath/LICENSE
-Version: 23b2b1f51c3b0299a2d8f73b04c33c86c9746bb0
 
+To update these libraries run 'autoreconf -i && ./configure && make dist' in
+the isl git directory and move the resulting files into lib/External/isl.
