@@ -280,7 +280,7 @@ def runAnalyzePreprocessed(Dir, SBOutputDir, Mode):
         
         # Build and call the analyzer command.
         OutputOption = "-o " + os.path.join(PlistPath, FileName) + ".plist "
-        Command = CmdPrefix + OutputOption + os.path.join(Dir, FileName)
+        Command = CmdPrefix + OutputOption + FileName
         LogFile = open(os.path.join(FailPath, FileName + ".stderr.txt"), "w+b")
         try:
             if Verbose == 1:        
