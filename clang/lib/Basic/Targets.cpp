@@ -3996,14 +3996,8 @@ class ARMTargetInfo : public TargetInfo {
     FP_Neon
   } FPMath;
 
-  unsigned ArchISA;
-  unsigned ArchKind;
-  unsigned ArchProfile;
-  unsigned ArchVersion;
-
   unsigned FPU : 5;
 
-  unsigned ShouldUseInlineAtomic : 1;
   unsigned IsAAPCS : 1;
   unsigned IsThumb : 1;
   unsigned HWDiv : 2;
@@ -4024,6 +4018,37 @@ class ARMTargetInfo : public TargetInfo {
   uint32_t HW_FP;
 
   static const Builtin::Info BuiltinInfo[];
+
+  static bool shouldUseInlineAtomic(const llvm::Triple &T) {
+    StringRef ArchName = T.getArchName();
+    if (T.getArch() == llvm::Triple::arm ||
+        T.getArch() == llvm::Triple::armeb) {
+      StringRef VersionStr;
+      if (ArchName.startswith("armv"))
+        VersionStr = ArchName.substr(4, 1);
+      else if (ArchName.startswith("armebv"))
+        VersionStr = ArchName.substr(6, 1);
+      else
+        return false;
+      unsigned Version;
+      if (VersionStr.getAsInteger(10, Version))
+        return false;
+      return Version >= 6;
+    }
+    assert(T.getArch() == llvm::Triple::thumb ||
+           T.getArch() == llvm::Triple::thumbeb);
+    StringRef VersionStr;
+    if (ArchName.startswith("thumbv"))
+      VersionStr = ArchName.substr(6, 1);
+    else if (ArchName.startswith("thumbebv"))
+      VersionStr = ArchName.substr(8, 1);
+    else
+      return false;
+    unsigned Version;
+    if (VersionStr.getAsInteger(10, Version))
+      return false;
+    return Version >= 7;
+  }
 
   void setABIAAPCS() {
     IsAAPCS = true;
@@ -4123,28 +4148,6 @@ class ARMTargetInfo : public TargetInfo {
     // FIXME: Override "preferred align" for double and long long.
   }
 
-  void setArchInfo(StringRef ArchName) {
-    ArchISA     = llvm::ARMTargetParser::parseArchISA(ArchName);
-    ArchKind    = llvm::ARMTargetParser::parseArch(ArchName);
-    ArchProfile = llvm::ARMTargetParser::parseArchProfile(ArchName);
-    ArchVersion = llvm::ARMTargetParser::parseArchVersion(ArchName); 
-
-    ShouldUseInlineAtomic = (ArchISA == llvm::ARM::IK_ARM   && ArchVersion >= 6) ||
-                            (ArchISA == llvm::ARM::IK_THUMB && ArchVersion >= 7);
-
-    // Cortex M does not support 8 byte atomics, while general Thumb2 does. 
-    if (ArchProfile == llvm::ARM::PK_M) {
-      MaxAtomicPromoteWidth = 32;
-      if (ShouldUseInlineAtomic)
-        MaxAtomicInlineWidth = 32;
-    }
-    else {
-      MaxAtomicPromoteWidth = 64;
-      if (ShouldUseInlineAtomic)
-        MaxAtomicInlineWidth = 64;
-    }
-  }
-
 public:
   ARMTargetInfo(const llvm::Triple &Triple, bool IsBigEndian)
       : TargetInfo(Triple), CPU("arm1136j-s"), FPMath(FP_Default),
@@ -4160,21 +4163,12 @@ public:
       break;
     }
 
-    // if subArch is not specified Arc Info is based on the default CPU
-    if (Triple.getSubArch() == llvm::Triple::SubArchType::NoSubArch) {
-      unsigned ArchKind = llvm::ARMTargetParser::parseCPUArch(CPU);
-      setArchInfo(llvm::ARMTargetParser::getArchName(ArchKind));
-    }
-    else 
-      setArchInfo(Triple.getArchName()); 
-
     // {} in inline assembly are neon specifiers, not assembly variant
     // specifiers.
     NoAsmVariants = true;
 
-    // FIXME: this should be updated also when calling setCPU 
-    // currently causes regressions
-    IsThumb = (ArchISA == llvm::ARM::IK_THUMB);
+    // FIXME: Should we just treat this as a feature?
+    IsThumb = getTriple().getArchName().startswith("thumb");
 
     // FIXME: This duplicates code from the driver that sets the -target-abi
     // option - this code is used if -target-abi isn't passed and should
@@ -4219,6 +4213,11 @@ public:
     // ARM targets default to using the ARM C++ ABI.
     TheCXXABI.set(TargetCXXABI::GenericARM);
 
+    // ARM has atomics up to 8 bytes
+    MaxAtomicPromoteWidth = 64;
+    if (shouldUseInlineAtomic(getTriple()))
+      MaxAtomicInlineWidth = 64;
+
     // Do force alignment of members that follow zero length bitfields.  If
     // the alignment of the zero-length bitfield is greater than the member
     // that follows it, `bar', `bar' will be aligned as the  type of the
@@ -4248,6 +4247,11 @@ public:
 
   // FIXME: This should be based on Arch attributes, not CPU names.
   void getDefaultFeatures(llvm::StringMap<bool> &Features) const override {
+    StringRef ArchName = getTriple().getArchName();
+    unsigned ArchKind = llvm::ARMTargetParser::parseArch(ArchName);
+    bool IsV8 = (ArchKind == llvm::ARM::AK_ARMV8A ||
+                 ArchKind == llvm::ARM::AK_ARMV8_1A);
+
     if (CPU == "arm1136jf-s" || CPU == "arm1176jzf-s" || CPU == "mpcore")
       Features["vfp2"] = true;
     else if (CPU == "cortex-a8" || CPU == "cortex-a9") {
@@ -4272,7 +4276,7 @@ public:
       Features["hwdiv-arm"] = true;
       Features["crc"] = true;
       Features["crypto"] = true;
-    } else if (CPU == "cortex-r5" || CPU == "cortex-r7" || ArchVersion == 8) {
+    } else if (CPU == "cortex-r5" || CPU == "cortex-r7" || IsV8) {
       Features["hwdiv"] = true;
       Features["hwdiv-arm"] = true;
     } else if (CPU == "cortex-m3" || CPU == "cortex-m4" || CPU == "cortex-m7" ||
@@ -4355,14 +4359,26 @@ public:
         .Case("hwdiv-arm", HWDiv & HWDivARM)
         .Default(false);
   }
-  const char *getCPUAttr() const {
-    const char *CPUAttr;
+  const char *getCPUDefineSuffix(StringRef Name) const {
+    if(Name == "generic") {
+      auto subarch = getTriple().getSubArch();
+      switch (subarch) {
+        case llvm::Triple::SubArchType::ARMSubArch_v8_1a: 
+          return "8_1A";
+        default:
+          break;
+      }
+    }
+
+    unsigned ArchKind = llvm::ARMTargetParser::parseCPUArch(Name);
+    if (ArchKind == llvm::ARM::AK_INVALID)
+      return "";
+
     // For most sub-arches, the build attribute CPU name is enough.
     // For Cortex variants, it's slightly different.
     switch(ArchKind) {
     default:
-      CPUAttr = llvm::ARMTargetParser::getCPUAttr(ArchKind);
-      return CPUAttr ? CPUAttr : "" ;
+      return llvm::ARMTargetParser::getCPUAttr(ArchKind);
     case llvm::ARM::AK_ARMV6M:
     case llvm::ARM::AK_ARMV6SM:
       return "6M";
@@ -4382,8 +4398,23 @@ public:
       return "8_1A";
     }
   }
-  const char *getCPUProfile() const {
-    switch(ArchProfile) {
+  const char *getCPUProfile(StringRef Name) const {
+    if(Name == "generic") {
+      auto subarch = getTriple().getSubArch();
+      switch (subarch) {
+        case llvm::Triple::SubArchType::ARMSubArch_v8_1a: 
+          return "A";
+        default:
+          break;
+      }
+    }
+
+    unsigned CPUArch = llvm::ARMTargetParser::parseCPUArch(Name);
+    if (CPUArch == llvm::ARM::AK_INVALID)
+      return "";
+
+    StringRef ArchName = llvm::ARMTargetParser::getArchName(CPUArch);
+    switch(llvm::ARMTargetParser::parseArchProfile(ArchName)) {
       case llvm::ARM::PK_A:
         return "A";
       case llvm::ARM::PK_R:
@@ -4395,28 +4426,35 @@ public:
     }
   }
   bool setCPU(const std::string &Name) override {
-    unsigned ArchKind = llvm::ARMTargetParser::parseCPUArch(Name);
-
-    if (ArchKind == llvm::ARM::AK_INVALID)
+    if (!getCPUDefineSuffix(Name))
       return false;
 
-    setArchInfo(llvm::ARMTargetParser::getArchName(ArchKind));
+    // Cortex M does not support 8 byte atomics, while general Thumb2 does.
+    StringRef Profile = getCPUProfile(Name);
+    if (Profile == "M" && MaxAtomicInlineWidth) {
+      MaxAtomicPromoteWidth = 32;
+      MaxAtomicInlineWidth = 32;
+    }
 
     CPU = Name;
     return true;
   }
   bool setFPMath(StringRef Name) override;
-  bool supportsThumb(StringRef CPUAttr) const {
-    return CPUAttr.count('T') || ArchVersion >= 6;
+  bool supportsThumb(StringRef ArchName, StringRef CPUArch,
+                     unsigned CPUArchVer) const {
+    return CPUArchVer >= 7 || (CPUArch.find('T') != StringRef::npos) ||
+           (CPUArch.find('M') != StringRef::npos);
   }
-  bool supportsThumb2(StringRef CPUAttr) const {
-    return CPUAttr.equals("6T2") || ArchVersion >= 7;
+  bool supportsThumb2(StringRef ArchName, StringRef CPUArch,
+                      unsigned CPUArchVer) const {
+    // We check both CPUArchVer and ArchName because when only triple is
+    // specified, the default CPU is arm1136j-s.
+    return ArchName.endswith("v6t2") || ArchName.endswith("v7") ||
+           ArchName.endswith("v8.1a") ||
+           ArchName.endswith("v8") || CPUArch == "6T2" || CPUArchVer >= 7;
   }
   void getTargetDefines(const LangOptions &Opts,
                         MacroBuilder &Builder) const override {
-    StringRef CPUAttr    = getCPUAttr();
-    StringRef CPUProfile = getCPUProfile();
-
     // Target identification.
     Builder.defineMacro("__arm");
     Builder.defineMacro("__arm__");
@@ -4424,12 +4462,19 @@ public:
     // Target properties.
     Builder.defineMacro("__REGISTER_PREFIX__", "");
 
-    Builder.defineMacro("__ARM_ARCH_" + CPUAttr + "__");
+    StringRef CPUArch = getCPUDefineSuffix(CPU);
+    unsigned int CPUArchVer;
+    if (CPUArch.substr(0, 1).getAsInteger<unsigned int>(10, CPUArchVer))
+      llvm_unreachable("Invalid char for architecture version number");
+    Builder.defineMacro("__ARM_ARCH_" + CPUArch + "__");
 
     // ACLE 6.4.1 ARM/Thumb instruction set architecture
+    StringRef CPUProfile = getCPUProfile(CPU);
+    StringRef ArchName = getTriple().getArchName();
+
     // __ARM_ARCH is defined as an integer value indicating the current ARM ISA
-    Builder.defineMacro("__ARM_ARCH", std::to_string(ArchVersion));
-    if (ArchVersion >= 8) {
+    Builder.defineMacro("__ARM_ARCH", CPUArch.substr(0, 1));
+    if (CPUArch[0] >= '8') {
       Builder.defineMacro("__ARM_FEATURE_NUMERIC_MAXMIN");
       Builder.defineMacro("__ARM_FEATURE_DIRECTED_ROUNDING");
     }
@@ -4443,9 +4488,9 @@ public:
     // __ARM_ARCH_ISA_THUMB is defined to 1 if the core supporst the original
     // Thumb ISA (including v6-M).  It is set to 2 if the core supports the
     // Thumb-2 ISA as found in the v6T2 architecture and all v7 architecture.
-    if (supportsThumb2(CPUAttr))
+    if (supportsThumb2(ArchName, CPUArch, CPUArchVer))
       Builder.defineMacro("__ARM_ARCH_ISA_THUMB", "2");
-    else if (supportsThumb(CPUAttr))
+    else if (supportsThumb(ArchName, CPUArch, CPUArchVer))
       Builder.defineMacro("__ARM_ARCH_ISA_THUMB", "1");
 
     // __ARM_32BIT_STATE is defined to 1 if code is being generated for a 32-bit
@@ -4470,7 +4515,7 @@ public:
     // FIXME: It's more complicated than this and we don't really support
     // interworking.
     // Windows on ARM does not "support" interworking
-    if (5 <= ArchVersion && ArchVersion <= 8 && !getTriple().isOSWindows())
+    if (5 <= CPUArchVer && CPUArchVer <= 8 && !getTriple().isOSWindows())
       Builder.defineMacro("__THUMB_INTERWORK__");
 
     if (ABI == "aapcs" || ABI == "aapcs-linux" || ABI == "aapcs-vfp") {
@@ -4493,7 +4538,7 @@ public:
     if (IsThumb) {
       Builder.defineMacro("__THUMBEL__");
       Builder.defineMacro("__thumb__");
-      if (supportsThumb2(CPUAttr))
+      if (supportsThumb2(ArchName, CPUArch, CPUArchVer))
         Builder.defineMacro("__thumb2__");
     }
     if (((HWDiv & HWDivThumb) && IsThumb) || ((HWDiv & HWDivARM) && !IsThumb))
@@ -4516,7 +4561,7 @@ public:
     // the VFP define, hence the soft float and arch check. This is subtly
     // different from gcc, we follow the intent which was that it should be set
     // when Neon instructions are actually available.
-    if ((FPU & NeonFPU) && !SoftFloat && ArchVersion >= 7) {
+    if ((FPU & NeonFPU) && !SoftFloat && CPUArchVer >= 7) {
       Builder.defineMacro("__ARM_NEON");
       Builder.defineMacro("__ARM_NEON__");
     }
@@ -4533,18 +4578,18 @@ public:
     if (Crypto)
       Builder.defineMacro("__ARM_FEATURE_CRYPTO");
 
-    if (ArchVersion >= 6 && CPUAttr != "6M") {
+    if (CPUArchVer >= 6 && CPUArch != "6M") {
       Builder.defineMacro("__GCC_HAVE_SYNC_COMPARE_AND_SWAP_1");
       Builder.defineMacro("__GCC_HAVE_SYNC_COMPARE_AND_SWAP_2");
       Builder.defineMacro("__GCC_HAVE_SYNC_COMPARE_AND_SWAP_4");
       Builder.defineMacro("__GCC_HAVE_SYNC_COMPARE_AND_SWAP_8");
     }
 
-    bool is5EOrAbove = (ArchVersion >= 6 ||
-                       (ArchVersion == 5 && CPUAttr.count('E')));
-    // FIXME: We are not getting all 32-bit ARM architectures
-    bool is32Bit = (!IsThumb || supportsThumb2(CPUAttr));
-    if (is5EOrAbove && is32Bit && (CPUProfile != "M" || CPUAttr  == "7EM"))
+    bool is5EOrAbove = (CPUArchVer >= 6 ||
+                        (CPUArchVer == 5 &&
+                         CPUArch.find('E') != StringRef::npos));
+    bool is32Bit = (!IsThumb || supportsThumb2(ArchName, CPUArch, CPUArchVer));
+    if (is5EOrAbove && is32Bit && (CPUProfile != "M" || CPUArch  == "7EM"))
       Builder.defineMacro("__ARM_FEATURE_DSP");
   }
   void getTargetBuiltins(const Builtin::Info *&Records,
