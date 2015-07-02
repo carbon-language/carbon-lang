@@ -37,37 +37,9 @@ struct CrashReportInfo {
       : Filename(Filename), VFSPath(VFSPath) {}
 };
 
-class Job {
-public:
-  enum JobClass {
-    CommandClass,
-    FallbackCommandClass,
-    JobListClass
-  };
-
-private:
-  JobClass Kind;
-
-protected:
-  Job(JobClass Kind) : Kind(Kind) {}
-public:
-  virtual ~Job();
-
-  JobClass getKind() const { return Kind; }
-
-  /// Print - Print this Job in -### format.
-  ///
-  /// \param OS - The stream to print on.
-  /// \param Terminator - A string to print at the end of the line.
-  /// \param Quote - Should separate arguments be quoted.
-  /// \param CrashInfo - Details for inclusion in a crash report.
-  virtual void Print(llvm::raw_ostream &OS, const char *Terminator, bool Quote,
-                     CrashReportInfo *CrashInfo = nullptr) const = 0;
-};
-
 /// Command - An executable path/name and argument vector to
 /// execute.
-class Command : public Job {
+class Command {
   /// Source - The action which caused the creation of this job.
   const Action &Source;
 
@@ -108,9 +80,10 @@ class Command : public Job {
 public:
   Command(const Action &Source, const Tool &Creator, const char *Executable,
           const llvm::opt::ArgStringList &Arguments);
+  virtual ~Command() {}
 
-  void Print(llvm::raw_ostream &OS, const char *Terminator, bool Quote,
-             CrashReportInfo *CrashInfo = nullptr) const override;
+  virtual void Print(llvm::raw_ostream &OS, const char *Terminator, bool Quote,
+                     CrashReportInfo *CrashInfo = nullptr) const;
 
   virtual int Execute(const StringRef **Redirects, std::string *ErrMsg,
                       bool *ExecutionFailed) const;
@@ -133,11 +106,6 @@ public:
   const char *getExecutable() const { return Executable; }
 
   const llvm::opt::ArgStringList &getArguments() const { return Arguments; }
-
-  static bool classof(const Job *J) {
-    return J->getKind() == CommandClass ||
-           J->getKind() == FallbackCommandClass;
-  }
 };
 
 /// Like Command, but with a fallback which is executed in case
@@ -154,18 +122,14 @@ public:
   int Execute(const StringRef **Redirects, std::string *ErrMsg,
               bool *ExecutionFailed) const override;
 
-  static bool classof(const Job *J) {
-    return J->getKind() == FallbackCommandClass;
-  }
-
 private:
   std::unique_ptr<Command> Fallback;
 };
 
 /// JobList - A sequence of jobs to perform.
-class JobList : public Job {
+class JobList {
 public:
-  typedef SmallVector<std::unique_ptr<Job>, 4> list_type;
+  typedef SmallVector<std::unique_ptr<Command>, 4> list_type;
   typedef list_type::size_type size_type;
   typedef llvm::pointee_iterator<list_type::iterator> iterator;
   typedef llvm::pointee_iterator<list_type::const_iterator> const_iterator;
@@ -174,14 +138,11 @@ private:
   list_type Jobs;
 
 public:
-  JobList();
-  ~JobList() override {}
-
   void Print(llvm::raw_ostream &OS, const char *Terminator,
-             bool Quote, CrashReportInfo *CrashInfo = nullptr) const override;
+             bool Quote, CrashReportInfo *CrashInfo = nullptr) const;
 
   /// Add a job to the list (taking ownership).
-  void addJob(std::unique_ptr<Job> J) { Jobs.push_back(std::move(J)); }
+  void addJob(std::unique_ptr<Command> J) { Jobs.push_back(std::move(J)); }
 
   /// Clear the job list.
   void clear();
@@ -193,10 +154,6 @@ public:
   const_iterator begin() const { return Jobs.begin(); }
   iterator end() { return Jobs.end(); }
   const_iterator end() const { return Jobs.end(); }
-
-  static bool classof(const Job *J) {
-    return J->getKind() == JobListClass;
-  }
 };
 
 } // end namespace driver

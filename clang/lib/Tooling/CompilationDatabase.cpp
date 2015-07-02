@@ -250,14 +250,11 @@ static bool stripPositionalArgs(std::vector<const char *> Args,
 
   CompileJobAnalyzer CompileAnalyzer;
 
-  for (const auto &Job : Jobs) {
-    if (Job.getKind() == driver::Job::CommandClass) {
-      const driver::Command &Cmd = cast<driver::Command>(Job);
-      // Collect only for Assemble jobs. If we do all jobs we get duplicates
-      // since Link jobs point to Assemble jobs as inputs.
-      if (Cmd.getSource().getKind() == driver::Action::AssembleJobClass)
-        CompileAnalyzer.run(&Cmd.getSource());
-    }
+  for (const auto &Cmd : Jobs) {
+    // Collect only for Assemble jobs. If we do all jobs we get duplicates
+    // since Link jobs point to Assemble jobs as inputs.
+    if (Cmd.getSource().getKind() == driver::Action::AssembleJobClass)
+      CompileAnalyzer.run(&Cmd.getSource());
   }
 
   if (CompileAnalyzer.Inputs.empty()) {

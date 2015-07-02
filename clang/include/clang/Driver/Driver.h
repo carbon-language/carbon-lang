@@ -42,7 +42,7 @@ namespace driver {
   class Command;
   class Compilation;
   class InputInfo;
-  class Job;
+  class JobList;
   class JobAction;
   class SanitizerArgs;
   class ToolChain;
@@ -195,7 +195,7 @@ private:
                            llvm::opt::Arg **FinalPhaseArg = nullptr) const;
 
   // Before executing jobs, sets up response files for commands that need them.
-  void setUpResponseFiles(Compilation &C, Job &J);
+  void setUpResponseFiles(Compilation &C, Command &Cmd);
 
   void generatePrefixedToolNames(const char *Tool, const ToolChain &TC,
                                  SmallVectorImpl<std::string> &Names) const;

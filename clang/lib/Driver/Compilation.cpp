@@ -192,18 +192,14 @@ static bool InputsOk(const Command &C,
   return !ActionFailed(&C.getSource(), FailingCommands);
 }
 
-void Compilation::ExecuteJob(const Job &J,
-                             FailingCommandList &FailingCommands) const {
-  if (const Command *C = dyn_cast<Command>(&J)) {
-    if (!InputsOk(*C, FailingCommands))
-      return;
+void Compilation::ExecuteJobs(const JobList &Jobs,
+                              FailingCommandList &FailingCommands) const {
+  for (const auto &Job : Jobs) {
+    if (!InputsOk(Job, FailingCommands))
+      continue;
     const Command *FailingCommand = nullptr;
-    if (int Res = ExecuteCommand(*C, FailingCommand))
+    if (int Res = ExecuteCommand(Job, FailingCommand))
       FailingCommands.push_back(std::make_pair(Res, FailingCommand));
-  } else {
-    const JobList *Jobs = cast<JobList>(&J);
-    for (const auto &Job : *Jobs)
-      ExecuteJob(Job, FailingCommands);
   }
 }
 
