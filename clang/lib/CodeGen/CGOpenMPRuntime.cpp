@@ -806,6 +806,15 @@ CGOpenMPRuntime::createRuntimeFunction(OpenMPRTLFunction Function) {
     RTLFn = CGM.CreateRuntimeFunction(FnTy, /*Name=*/"__kmpc_omp_wait_deps");
     break;
   }
+  case OMPRTL__kmpc_cancellationpoint: {
+    // Build kmp_int32 __kmpc_cancellationpoint(ident_t *loc, kmp_int32
+    // global_tid, kmp_int32 cncl_kind)
+    llvm::Type *TypeParams[] = {getIdentTyPointerTy(), CGM.Int32Ty, CGM.IntTy};
+    llvm::FunctionType *FnTy =
+        llvm::FunctionType::get(CGM.Int32Ty, TypeParams, /*isVarArg*/ false);
+    RTLFn = CGM.CreateRuntimeFunction(FnTy, "__kmpc_cancellationpoint");
+    break;
+  }
   }
   return RTLFn;
 }
@@ -2675,5 +2684,49 @@ void CGOpenMPRuntime::emitInlinedDirective(CodeGenFunction &CGF,
                                            const RegionCodeGenTy &CodeGen) {
   InlinedOpenMPRegionRAII Region(CGF, CodeGen);
   CGF.CapturedStmtInfo->EmitBody(CGF, /*S=*/nullptr);
+}
+
+void CGOpenMPRuntime::emitCancellationPointCall(
+    CodeGenFunction &CGF, SourceLocation Loc,
+    OpenMPDirectiveKind CancelRegion) {
+  // Build call kmp_int32 OMPRTL__kmpc_cancellationpoint(ident_t *loc, kmp_int32
+  // global_tid, kmp_int32 cncl_kind);
+  enum {
+    CancelNoreq = 0,
+    CancelParallel = 1,
+    CancelLoop = 2,
+    CancelSections = 3,
+    CancelTaskgroup = 4
+  } CancelKind = CancelNoreq;
+  if (CancelRegion == OMPD_parallel)
+    CancelKind = CancelParallel;
+  else if (CancelRegion == OMPD_for)
+    CancelKind = CancelLoop;
+  else if (CancelRegion == OMPD_sections)
+    CancelKind = CancelSections;
+  else {
+    assert(CancelRegion == OMPD_taskgroup);
+    CancelKind = CancelTaskgroup;
+  }
+  llvm::Value *Args[] = {emitUpdateLocation(CGF, Loc), getThreadID(CGF, Loc),
+                         CGF.Builder.getInt32(CancelKind)};
+  // Ignore return result until untied tasks are supported.
+  auto *Result = CGF.EmitRuntimeCall(
+      createRuntimeFunction(OMPRTL__kmpc_cancellationpoint), Args);
+  // if (__kmpc_cancellationpoint())
+  //    exit from construct;
+  auto *ExitBB = CGF.createBasicBlock(".cancel.exit");
+  auto *ContBB = CGF.createBasicBlock(".cancel.continue");
+  auto *Cmp = CGF.Builder.CreateIsNotNull(Result);
+  CGF.Builder.CreateCondBr(Cmp, ExitBB, ContBB);
+  CGF.EmitBlock(ExitBB);
+  if (CancelRegion == OMPD_parallel || CancelRegion == OMPD_taskgroup) {
+    CGF.EmitBranchThroughCleanup(CGF.ReturnBlock);
+  } else {
+    assert(CancelRegion == OMPD_for || CancelRegion == OMPD_sections);
+    BreakStmt PseudoBrStmt(Loc);
+    CGF.EmitBreakStmt(PseudoBrStmt);
+  }
+  CGF.EmitBlock(ContBB, /*IsFinished=*/true);
 }
 

@@ -146,6 +146,9 @@ private:
     // gtid, kmp_int32 ndeps, kmp_depend_info_t *dep_list, kmp_int32
     // ndeps_noalias, kmp_depend_info_t *noalias_dep_list);
     OMPRTL__kmpc_omp_wait_deps,
+    // Call to kmp_int32 __kmpc_cancellationpoint(ident_t *loc, kmp_int32
+    // global_tid, kmp_int32 cncl_kind);
+    OMPRTL__kmpc_cancellationpoint,
   };
 
   /// \brief Values for bit flags used in the ident_t to describe the fields.
@@ -676,6 +679,14 @@ public:
 
   /// \brief Emit code for 'taskwait' directive.
   virtual void emitTaskwaitCall(CodeGenFunction &CGF, SourceLocation Loc);
+
+  /// \brief Emit code for 'cancellation point' construct.
+  /// \param CancelRegion Region kind for which the cancellation point must be
+  /// emitted.
+  ///
+  virtual void emitCancellationPointCall(CodeGenFunction &CGF,
+                                         SourceLocation Loc,
+                                         OpenMPDirectiveKind CancelRegion);
 };
 
 } // namespace CodeGen

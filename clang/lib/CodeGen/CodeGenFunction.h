@@ -2236,7 +2236,7 @@ public:
 private:
 
   /// Helpers for the OpenMP loop directives.
-  void EmitOMPLoopBody(const OMPLoopDirective &D);
+  void EmitOMPLoopBody(const OMPLoopDirective &D, JumpDest LoopExit);
   void EmitOMPSimdInit(const OMPLoopDirective &D);
   void EmitOMPSimdFinal(const OMPLoopDirective &D);
   /// \brief Emit code for the worksharing loop-based directive.
@@ -2248,6 +2248,8 @@ private:
                            OMPPrivateScope &LoopScope, bool Ordered,
                            llvm::Value *LB, llvm::Value *UB, llvm::Value *ST,
                            llvm::Value *IL, llvm::Value *Chunk);
+  /// \brief Emit code for sections directive.
+  OpenMPDirectiveKind EmitSections(const OMPExecutableDirective &S);
 
 public:
 
