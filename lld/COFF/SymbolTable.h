@@ -46,7 +46,7 @@ public:
   std::error_code run();
   std::error_code readArchives();
   std::error_code readObjects();
-  size_t getVersion() { return Version; }
+  bool queueEmpty();
 
   // Print an error message on undefined symbols.
   bool reportRemainingUndefines();
@@ -85,9 +85,6 @@ public:
   // Creates an Undefined symbol for a given name.
   Undefined *addUndefined(StringRef Name);
 
-  // Rename From -> To in the symbol table.
-  std::error_code rename(StringRef From, StringRef To);
-
   // A list of chunks which to be added to .rdata.
   std::vector<Chunk *> LocalImportChunks;
 
@@ -107,9 +104,6 @@ private:
   std::vector<BitcodeFile *> BitcodeFiles;
   std::unique_ptr<MemoryBuffer> LTOMB;
   llvm::BumpPtrAllocator Alloc;
-
-  // This variable is incremented every time Symtab is updated.
-  size_t Version = 0;
 };
 
 } // namespace coff

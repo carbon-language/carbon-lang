@@ -45,12 +45,11 @@ void SymbolTable::addFile(std::unique_ptr<InputFile> FileP) {
 }
 
 std::error_code SymbolTable::run() {
-  while (!ArchiveQueue.empty() || !ObjectQueue.empty()) {
+  while (!queueEmpty()) {
     if (auto EC = readArchives())
       return EC;
     if (auto EC = readObjects())
       return EC;
-    ++Version;
   }
   return std::error_code();
 }
@@ -112,6 +111,10 @@ std::error_code SymbolTable::readObjects() {
   return std::error_code();
 }
 
+bool SymbolTable::queueEmpty() {
+  return ArchiveQueue.empty() && ObjectQueue.empty();
+}
+
 bool SymbolTable::reportRemainingUndefines() {
   bool Ret = false;
   for (auto &I : Symtab) {
@@ -120,11 +123,12 @@ bool SymbolTable::reportRemainingUndefines() {
     if (!Undef)
       continue;
     StringRef Name = Undef->getName();
-    // The weak alias may have been resovled, so check for that.
-    if (SymbolBody *Alias = Undef->WeakAlias) {
-      if (auto *D = dyn_cast<Defined>(Alias->repl())) {
+    // A weak alias may have been resovled, so check for that. A weak alias
+    // may be an weak alias to other symbol, so check recursively.
+    for (Undefined *U = Undef->WeakAlias; U; U = U->WeakAlias) {
+      if (auto *D = dyn_cast<Defined>(U->repl())) {
         Sym->Body = D;
-        continue;
+        goto next;
       }
     }
     // If we can resolve a symbol by removing __imp_ prefix, do that.
@@ -145,6 +149,7 @@ bool SymbolTable::reportRemainingUndefines() {
       continue;
     }
     Ret = true;
+    next:;
   }
   return Ret;
 }
@@ -253,44 +258,21 @@ void SymbolTable::mangleMaybe(Undefined *U) {
 
   // In Microsoft ABI, a non-member function name is mangled this way.
   std::string Prefix = ("?" + U->getName() + "@@Y").str();
-  for (auto I : Symtab) {
-    StringRef Name = I.first;
-    Symbol *New = I.second;
+  for (auto Pair : Symtab) {
+    StringRef Name = Pair.first;
     if (!Name.startswith(Prefix))
       continue;
-    U->WeakAlias = New->Body;
-    if (auto *L = dyn_cast<Lazy>(New->Body))
-      addMemberFile(L);
+    U->WeakAlias = addUndefined(Name);
     return;
   }
 }
 
 Undefined *SymbolTable::addUndefined(StringRef Name) {
-  auto *U = new (Alloc) Undefined(Name);
-  addSymbol(U);
-  return U;
-}
-
-// Resolve To, and make From an alias to To.
-std::error_code SymbolTable::rename(StringRef From, StringRef To) {
-  // If From is not undefined, do nothing.
-  // Otherwise, rename it to see if To can be resolved instead.
-  auto It = Symtab.find(From);
-  if (It == Symtab.end())
-    return std::error_code();
-  Symbol *Sym = It->second;
-  if (!isa<Undefined>(Sym->Body))
-    return std::error_code();
-  SymbolBody *Body = new (Alloc) Undefined(To);
-  if (auto EC = addSymbol(Body))
-    return EC;
-  SymbolBody *Repl = Body->repl();
-  if (isa<Undefined>(Repl))
-    return std::error_code();
-  Sym->Body = Repl;
-  Body->setBackref(Sym);
-  ++Version;
-  return std::error_code();
+  auto *New = new (Alloc) Undefined(Name);
+  addSymbol(New);
+  if (auto *U = dyn_cast<Undefined>(New->repl()))
+    return U;
+  return New;
 }
 
 void SymbolTable::printMap(llvm::raw_ostream &OS) {

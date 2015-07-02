@@ -555,8 +555,6 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
   // A new file may contain a directive section to add new command line options.
   // That's why we have to repeat until converge.)
   for (;;) {
-    size_t Ver = Symtab.getVersion();
-
     // Windows specific -- if entry point is not found,
     // search for its mangled names.
     if (Config->Entry)
@@ -570,22 +568,23 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
 
     // Add weak aliases. Weak aliases is a mechanism to give remaining
     // undefined symbols final chance to be resolved successfully.
-    // This is symbol renaming.
-    for (auto &P : Config->AlternateNames) {
-      StringRef From = P.first;
-      StringRef To = P.second;
-      if (auto EC = Symtab.rename(From, To)) {
-        llvm::errs() << EC.message() << "\n";
-        return false;
-      }
+    for (auto Pair : Config->AlternateNames) {
+      StringRef From = Pair.first;
+      StringRef To = Pair.second;
+      Symbol* Sym = Symtab.findSymbol(From);
+      if (!Sym)
+        continue;
+      if (auto *U = dyn_cast<Undefined>(Sym->Body))
+        if (!U->WeakAlias)
+          U->WeakAlias = Symtab.addUndefined(To);
     }
 
+    if (Symtab.queueEmpty())
+      break;
     if (auto EC = Symtab.run()) {
       llvm::errs() << EC.message() << "\n";
       return false;
     }
-    if (Ver == Symtab.getVersion())
-      break;
   }
 
   // Make sure we have resolved all symbols.
