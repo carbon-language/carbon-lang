@@ -383,7 +383,7 @@ INLINE uptr RoundUpToPowerOfTwo(uptr size) {
   uptr up = MostSignificantSetBitIndex(size);
   CHECK(size < (1ULL << (up + 1)));
   CHECK(size > (1ULL << up));
-  return 1ULL << (up + 1);
+  return 1UL << (up + 1);
 }
 
 INLINE uptr RoundUpTo(uptr size, uptr boundary) {
@@ -659,7 +659,8 @@ void MaybeStartBackgroudThread();
 // memset/memcpy/etc.
 static inline void SanitizerBreakOptimization(void *arg) {
 #if _MSC_VER
-  _ReadWriteBarrier();
+  // FIXME: make sure this is actually enough.
+  __asm;
 #else
   __asm__ __volatile__("" : : "r" (arg) : "memory");
 #endif

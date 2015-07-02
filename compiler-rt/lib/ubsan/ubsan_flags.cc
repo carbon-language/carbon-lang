@@ -64,18 +64,11 @@ void InitializeFlags() {
 
 }  // namespace __ubsan
 
-extern "C" {
-
 #if !SANITIZER_SUPPORTS_WEAK_HOOKS
+extern "C" {
 SANITIZER_INTERFACE_ATTRIBUTE SANITIZER_WEAK_ATTRIBUTE
 const char *__ubsan_default_options() { return ""; }
-#endif
-
-#if SANITIZER_WINDOWS
-const char *__ubsan_default_default_options() { return ""; }
-#pragma comment(linker, "/alternatename:__ubsan_default_options=__ubsan_default_default_options")
-#endif
-
 }  // extern "C"
+#endif
 
 #endif  // CAN_SANITIZE_UB
