@@ -765,7 +765,8 @@ uint64_t ELFFile<ELFT>::getSymbolIndex(const Elf_Sym *Sym) const {
 template <class ELFT>
 const typename ELFFile<ELFT>::Elf_Shdr *ELFFile<ELFT>::section_begin() const {
   if (Header->e_shentsize != sizeof(Elf_Shdr))
-    report_fatal_error("Invalid section header size");
+    report_fatal_error(
+        "Invalid section header entry size (e_shentsize) in ELF header");
   return reinterpret_cast<const Elf_Shdr *>(base() + Header->e_shoff);
 }
 
