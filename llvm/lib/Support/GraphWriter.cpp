@@ -135,12 +135,12 @@ static const char *getProgramName(GraphProgram::Name program) {
 bool llvm::DisplayGraph(StringRef FilenameRef, bool wait,
                         GraphProgram::Name program) {
   std::string Filename = FilenameRef;
-  wait &= !ViewBackground;
   std::string ErrMsg;
   std::string ViewerPath;
   GraphSession S;
 
 #ifdef __APPLE__
+  wait &= !ViewBackground;
   if (S.TryFindProgram("open", ViewerPath)) {
     std::vector<const char *> args;
     args.push_back(ViewerPath.c_str());
