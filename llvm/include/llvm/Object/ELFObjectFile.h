@@ -241,10 +241,7 @@ protected:
 
   /// \brief Get the relocation section that contains \a Rel.
   const Elf_Shdr *getRelSection(DataRefImpl Rel) const {
-    ErrorOr<const Elf_Shdr *> Sec = EF.getSection(Rel.d.a);
-    if (std::error_code EC = Sec.getError())
-      report_fatal_error(EC.message());
-    return *Sec;
+    return *EF.getSection(Rel.d.a);
   }
 
   const Elf_Sym *toELFSymIter(DataRefImpl Sym) const {
