@@ -141,8 +141,10 @@ bool SymbolTable::reportRemainingUndefines() {
     // If we can resolve a symbol by removing __imp_ prefix, do that.
     // This odd rule is for compatibility with MSVC linker.
     if (Name.startswith("__imp_")) {
-      if (Defined *Imp = find(Name.substr(strlen("__imp_")))) {
-        auto *S = new (Alloc) DefinedLocalImport(Name, Imp);
+      Symbol *Imp = find(Name.substr(strlen("__imp_")));
+      if (Imp && isa<Defined>(Imp->Body)) {
+        auto *D = cast<Defined>(Imp->Body);
+        auto *S = new (Alloc) DefinedLocalImport(Name, D);
         LocalImportChunks.push_back(S->getChunk());
         Sym->Body = S;
         continue;
@@ -241,16 +243,7 @@ std::vector<Chunk *> SymbolTable::getChunks() {
   return Res;
 }
 
-Defined *SymbolTable::find(StringRef Name) {
-  auto It = Symtab.find(Name);
-  if (It == Symtab.end())
-    return nullptr;
-  if (auto *Def = dyn_cast<Defined>(It->second->Body))
-    return Def;
-  return nullptr;
-}
-
-Symbol *SymbolTable::findSymbol(StringRef Name) {
+Symbol *SymbolTable::find(StringRef Name) {
   auto It = Symtab.find(Name);
   if (It == Symtab.end())
     return nullptr;

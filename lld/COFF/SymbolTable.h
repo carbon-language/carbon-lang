@@ -53,12 +53,8 @@ public:
   // Returns a list of chunks of selected symbols.
   std::vector<Chunk *> getChunks();
 
-  // Returns a symbol for a given name. It's not guaranteed that the
-  // returned symbol actually has the same name (because of various
-  // mechanisms to allow aliases, a name can be resolved to a
-  // different symbol). Returns a nullptr if not found.
-  Defined *find(StringRef Name);
-  Symbol *findSymbol(StringRef Name);
+  // Returns a symbol for a given name. Returns a nullptr if not found.
+  Symbol *find(StringRef Name);
 
   // Occasionally we have to resolve an undefined symbol to its
   // mangled symbol. This function tries to find a mangled name

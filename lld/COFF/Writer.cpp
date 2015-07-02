@@ -235,7 +235,8 @@ void Writer::createImportTables() {
       Sec->addChunk(C);
   }
   if (!DelayIdata.empty()) {
-    DelayIdata.create(Symtab->find("__delayLoadHelper2"));
+    Defined *Helper = cast<Defined>(Symtab->find("__delayLoadHelper2")->Body);
+    DelayIdata.create(Helper);
     OutputSection *Sec = createSection(".didat");
     for (Chunk *C : DelayIdata.getChunks())
       Sec->addChunk(C);
@@ -526,7 +527,7 @@ OutputSection *Writer::createSection(StringRef Name) {
 // Dest is .reloc section. Add contents to that section.
 void Writer::addBaserels(OutputSection *Dest) {
   std::vector<uint32_t> V;
-  Defined *ImageBase = cast<Defined>(Symtab->find("__ImageBase"));
+  Defined *ImageBase = cast<Defined>(Symtab->find("__ImageBase")->Body);
   for (OutputSection *Sec : OutputSections) {
     if (Sec == Dest)
       continue;

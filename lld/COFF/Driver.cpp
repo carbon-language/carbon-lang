@@ -218,7 +218,7 @@ StringRef LinkerDriver::findDefaultEntry() {
       {"wWinMain", "wWinMainCRTStartup"},
   };
   for (auto E : Entries) {
-    Symbol *Sym = Symtab.findSymbol(E[0]);
+    Symbol *Sym = Symtab.find(E[0]);
     if (Sym && !isa<Undefined>(Sym->Body))
       return E[1];
   }
@@ -575,7 +575,7 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
     for (auto Pair : Config->AlternateNames) {
       StringRef From = Pair.first;
       StringRef To = Pair.second;
-      Symbol* Sym = Symtab.findSymbol(From);
+      Symbol *Sym = Symtab.find(From);
       if (!Sym)
         continue;
       if (auto *U = dyn_cast<Undefined>(Sym->Body))
