@@ -218,13 +218,6 @@ public:
   virtual void getDetectMismatchOption(llvm::StringRef Name,
                                        llvm::StringRef Value,
                                        llvm::SmallString<32> &Opt) const {}
-
-  /// Gets the target-specific default alignment used when an 'aligned' clause
-  /// is used with a 'simd' OpenMP directive without specifying a specific
-  /// alignment.
-  virtual unsigned getOpenMPSimdDefaultAlignment(QualType Type) const {
-    return 0;
-  }
 };
 }
 

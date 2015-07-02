@@ -70,6 +70,7 @@ protected:
   unsigned char MinGlobalAlign;
   unsigned char MaxAtomicPromoteWidth, MaxAtomicInlineWidth;
   unsigned short MaxVectorAlign;
+  unsigned short SimdDefaultAlign;
   const char *DescriptionString;
   const char *UserLabelPrefix;
   const char *MCountName;
@@ -393,6 +394,10 @@ public:
 
   /// \brief Return the maximum vector alignment supported for the given target.
   unsigned getMaxVectorAlign() const { return MaxVectorAlign; }
+  /// \brief Return default simd alignment for the given target. Generally, this
+  /// value is type-specific, but this alignment can be used for most of the
+  /// types for the given target.
+  unsigned getSimdDefaultAlign() const { return SimdDefaultAlign; }
 
   /// \brief Return the size of intmax_t and uintmax_t for this target, in bits.
   unsigned getIntMaxTWidth() const {

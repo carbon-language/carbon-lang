@@ -3018,10 +3018,18 @@ recurse:
     case UETT_AlignOf:
       Out << 'a';
       break;
-    case UETT_VecStep:
+    case UETT_VecStep: {
       DiagnosticsEngine &Diags = Context.getDiags();
       unsigned DiagID = Diags.getCustomDiagID(DiagnosticsEngine::Error,
                                      "cannot yet mangle vec_step expression");
+      Diags.Report(DiagID);
+      return;
+    }
+    case UETT_OpenMPRequiredSimdAlign:
+      DiagnosticsEngine &Diags = Context.getDiags();
+      unsigned DiagID = Diags.getCustomDiagID(
+          DiagnosticsEngine::Error,
+          "cannot yet mangle __builtin_omp_required_simd_align expression");
       Diags.Report(DiagID);
       return;
     }

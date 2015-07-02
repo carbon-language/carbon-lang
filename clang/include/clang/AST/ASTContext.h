@@ -1664,6 +1664,9 @@ public:
   TypeInfo getTypeInfo(const Type *T) const;
   TypeInfo getTypeInfo(QualType T) const { return getTypeInfo(T.getTypePtr()); }
 
+  /// \brief Get default simd alignment of the specified complete type in bits.
+  unsigned getOpenMPDefaultSimdAlign(QualType T) const;
+
   /// \brief Return the size of the specified (complete) type \p T, in bits.
   uint64_t getTypeSize(QualType T) const { return getTypeInfo(T).Width; }
   uint64_t getTypeSize(const Type *T) const { return getTypeInfo(T).Width; }

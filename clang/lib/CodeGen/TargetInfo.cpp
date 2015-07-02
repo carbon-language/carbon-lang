@@ -1577,11 +1577,9 @@ public:
 };
 
 class X86_64TargetCodeGenInfo : public TargetCodeGenInfo {
-  X86AVXABILevel AVXLevel;
 public:
   X86_64TargetCodeGenInfo(CodeGen::CodeGenTypes &CGT, X86AVXABILevel AVXLevel)
-      : TargetCodeGenInfo(new X86_64ABIInfo(CGT, AVXLevel)),
-        AVXLevel(AVXLevel) {}
+      : TargetCodeGenInfo(new X86_64ABIInfo(CGT, AVXLevel)) {}
 
   const X86_64ABIInfo &getABIInfo() const {
     return static_cast<const X86_64ABIInfo&>(TargetCodeGenInfo::getABIInfo());
@@ -1646,10 +1644,6 @@ public:
             ('F' << 16) |
             ('T' << 24);
     return llvm::ConstantInt::get(CGM.Int32Ty, Sig);
-  }
-
-  unsigned getOpenMPSimdDefaultAlignment(QualType) const override {
-    return getNativeVectorSizeForAVXABI(AVXLevel) / 8;
   }
 };
 
@@ -1722,11 +1716,10 @@ void WinX86_32TargetCodeGenInfo::setTargetAttributes(const Decl *D,
 }
 
 class WinX86_64TargetCodeGenInfo : public TargetCodeGenInfo {
-  X86AVXABILevel AVXLevel;
 public:
   WinX86_64TargetCodeGenInfo(CodeGen::CodeGenTypes &CGT,
                              X86AVXABILevel AVXLevel)
-      : TargetCodeGenInfo(new WinX86_64ABIInfo(CGT)), AVXLevel(AVXLevel) {}
+      : TargetCodeGenInfo(new WinX86_64ABIInfo(CGT)) {}
 
   void setTargetAttributes(const Decl *D, llvm::GlobalValue *GV,
                            CodeGen::CodeGenModule &CGM) const override;
@@ -1755,10 +1748,6 @@ public:
                                llvm::StringRef Value,
                                llvm::SmallString<32> &Opt) const override {
     Opt = "/FAILIFMISMATCH:\"" + Name.str() + "=" + Value.str() + "\"";
-  }
-
-  unsigned getOpenMPSimdDefaultAlignment(QualType) const override {
-    return getNativeVectorSizeForAVXABI(AVXLevel) / 8;
   }
 };
 
@@ -3171,10 +3160,6 @@ public:
 
   bool initDwarfEHRegSizeTable(CodeGen::CodeGenFunction &CGF,
                                llvm::Value *Address) const override;
-
-  unsigned getOpenMPSimdDefaultAlignment(QualType) const override {
-    return 16; // Natural alignment for Altivec vectors.
-  }
 };
 
 }
@@ -3414,13 +3399,11 @@ public:
 };
 
 class PPC64_SVR4_TargetCodeGenInfo : public TargetCodeGenInfo {
-  bool HasQPX;
 
 public:
   PPC64_SVR4_TargetCodeGenInfo(CodeGenTypes &CGT,
                                PPC64_SVR4_ABIInfo::ABIKind Kind, bool HasQPX)
-    : TargetCodeGenInfo(new PPC64_SVR4_ABIInfo(CGT, Kind, HasQPX)),
-      HasQPX(HasQPX) {}
+      : TargetCodeGenInfo(new PPC64_SVR4_ABIInfo(CGT, Kind, HasQPX)) {}
 
   int getDwarfEHStackPointer(CodeGen::CodeGenModule &M) const override {
     // This is recovered from gcc output.
@@ -3429,15 +3412,6 @@ public:
 
   bool initDwarfEHRegSizeTable(CodeGen::CodeGenFunction &CGF,
                                llvm::Value *Address) const override;
-
-  unsigned getOpenMPSimdDefaultAlignment(QualType QT) const override {
-    if (HasQPX)
-      if (const PointerType *PT = QT->getAs<PointerType>())
-        if (PT->getPointeeType()->isSpecificBuiltinType(BuiltinType::Double))
-          return 32; // Natural alignment for QPX doubles.
-
-    return 16; // Natural alignment for Altivec and VSX vectors.
-  }
 };
 
 class PPC64TargetCodeGenInfo : public DefaultTargetCodeGenInfo {
@@ -3451,10 +3425,6 @@ public:
 
   bool initDwarfEHRegSizeTable(CodeGen::CodeGenFunction &CGF,
                                llvm::Value *Address) const override;
-
-  unsigned getOpenMPSimdDefaultAlignment(QualType) const override {
-    return 16; // Natural alignment for Altivec vectors.
-  }
 };
 
 }

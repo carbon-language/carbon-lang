@@ -503,6 +503,9 @@ ALIAS("read_write", __read_write    , KEYOPENCL)
 KEYWORD(__builtin_astype            , KEYOPENCL)
 KEYWORD(vec_step                    , KEYOPENCL|KEYALTIVEC)
 
+// OpenMP Type Traits
+KEYWORD(__builtin_omp_required_simd_align, KEYALL)
+
 // Borland Extensions.
 KEYWORD(__pascal                    , KEYALL)
 
