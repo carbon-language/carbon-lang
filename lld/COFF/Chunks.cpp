@@ -221,6 +221,15 @@ void ImportThunkChunk::writeTo(uint8_t *Buf) {
   write32le(Buf + FileOff + 2, Operand);
 }
 
+void LocalImportChunk::getBaserels(std::vector<uint32_t> *Res,
+                                   Defined *ImageBase) {
+  Res->push_back(getRVA() + Config->ImageBase);
+}
+
+void LocalImportChunk::writeTo(uint8_t *Buf) {
+  write64le(Buf + FileOff, Sym->getRVA() + Config->ImageBase);
+}
+
 // Windows-specific.
 // This class represents a block in .reloc section.
 BaserelChunk::BaserelChunk(uint32_t Page, uint32_t *Begin, uint32_t *End) {
@@ -235,10 +244,6 @@ BaserelChunk::BaserelChunk(uint32_t Page, uint32_t *Begin, uint32_t *End) {
     write16le(P, (IMAGE_REL_BASED_DIR64 << 12) | (*I - Page));
     P += 2;
   }
-}
-
-void LocalImportChunk::writeTo(uint8_t *Buf) {
-  write32le(Buf + FileOff, Sym->getRVA());
 }
 
 void BaserelChunk::writeTo(uint8_t *Buf) {
