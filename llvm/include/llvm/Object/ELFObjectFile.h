@@ -247,9 +247,6 @@ protected:
     return *Sec;
   }
 
-  const Elf_Rel *getRel(DataRefImpl Rel) const;
-  const Elf_Rela *getRela(DataRefImpl Rela) const;
-
   const Elf_Sym *toELFSymIter(DataRefImpl Sym) const {
     return reinterpret_cast<const Elf_Sym *>(Sym.p & ~uintptr_t(1));
   }
@@ -303,6 +300,9 @@ protected:
 
 public:
   ELFObjectFile(MemoryBufferRef Object, std::error_code &EC);
+
+  const Elf_Rel *getRel(DataRefImpl Rel) const;
+  const Elf_Rela *getRela(DataRefImpl Rela) const;
 
   const Elf_Sym *getSymbol(DataRefImpl Symb) const;
 

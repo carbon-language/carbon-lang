@@ -298,25 +298,14 @@ PrettyPrinter &selectPrettyPrinter(Triple const &Triple) {
 }
 
 template <class ELFT>
-static const typename ELFObjectFile<ELFT>::Elf_Rel *
-getRel(const ELFFile<ELFT> &EF, DataRefImpl Rel) {
-  typedef typename ELFObjectFile<ELFT>::Elf_Rel Elf_Rel;
-  return EF.template getEntry<Elf_Rel>(Rel.d.a, Rel.d.b);
-}
-
-template <class ELFT>
-static const typename ELFObjectFile<ELFT>::Elf_Rela *
-getRela(const ELFFile<ELFT> &EF, DataRefImpl Rela) {
-  typedef typename ELFObjectFile<ELFT>::Elf_Rela Elf_Rela;
-  return EF.template getEntry<Elf_Rela>(Rela.d.a, Rela.d.b);
-}
-
-template <class ELFT>
 static std::error_code getRelocationValueString(const ELFObjectFile<ELFT> *Obj,
                                                 DataRefImpl Rel,
                                                 SmallVectorImpl<char> &Result) {
   typedef typename ELFObjectFile<ELFT>::Elf_Sym Elf_Sym;
   typedef typename ELFObjectFile<ELFT>::Elf_Shdr Elf_Shdr;
+  typedef typename ELFObjectFile<ELFT>::Elf_Rel Elf_Rel;
+  typedef typename ELFObjectFile<ELFT>::Elf_Rela Elf_Rela;
+
   const ELFFile<ELFT> &EF = *Obj->getELFFile();
 
   ErrorOr<const Elf_Shdr *> SecOrErr = EF.getSection(Rel.d.a);
@@ -344,15 +333,17 @@ static std::error_code getRelocationValueString(const ELFObjectFile<ELFT> *Obj,
   default:
     return object_error::parse_failed;
   case ELF::SHT_REL: {
-    type = getRel(EF, Rel)->getType(EF.isMips64EL());
-    symbol_index = getRel(EF, Rel)->getSymbol(EF.isMips64EL());
+    const Elf_Rel *ERel = Obj->getRel(Rel);
+    type = ERel->getType(EF.isMips64EL());
+    symbol_index = ERel->getSymbol(EF.isMips64EL());
     // TODO: Read implicit addend from section data.
     break;
   }
   case ELF::SHT_RELA: {
-    type = getRela(EF, Rel)->getType(EF.isMips64EL());
-    symbol_index = getRela(EF, Rel)->getSymbol(EF.isMips64EL());
-    addend = getRela(EF, Rel)->r_addend;
+    const Elf_Rela *ERela = Obj->getRela(Rel);
+    type = ERela->getType(EF.isMips64EL());
+    symbol_index = ERela->getSymbol(EF.isMips64EL());
+    addend = ERela->r_addend;
     break;
   }
   }
