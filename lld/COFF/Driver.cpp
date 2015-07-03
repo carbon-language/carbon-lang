@@ -652,7 +652,8 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
     }
     Symtab.printMap(Out);
   }
-  return true;
+  // Call exit to avoid calling destructors.
+  exit(0);
 }
 
 } // namespace coff
