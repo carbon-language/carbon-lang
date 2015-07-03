@@ -182,7 +182,7 @@ bool
 CMICmdArgValFile::IsValidChars(const CMIUtilString &vrText) const
 {
     static CMIUtilString s_strSpecialCharacters(".'\"`@#$%^&*()_+-={}[]| ");
-    const char *pPtr = const_cast<char *>(vrText.c_str());
+    const char *pPtr = vrText.c_str();
     for (MIuint i = 0; i < vrText.length(); i++, pPtr++)
     {
         const char c = *pPtr;
