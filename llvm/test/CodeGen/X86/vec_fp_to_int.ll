@@ -1,5 +1,10 @@
-; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=+sse2 | FileCheck %s --check-prefix=ALL --check-prefix=SSE2
-; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=+avx | FileCheck %s --check-prefix=ALL  --check-prefix=AVX
+; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=+sse2 | FileCheck %s --check-prefix=ALL --check-prefix=SSE --check-prefix=SSE2
+; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=+avx | FileCheck %s --check-prefix=ALL --check-prefix=AVX --check-prefix=AVX1
+;
+; 32-bit tests to make sure we're not doing anything stupid.
+; RUN: llc < %s -mtriple=i686-unknown-unknown
+; RUN: llc < %s -mtriple=i686-unknown-unknown -mattr=+sse
+; RUN: llc < %s -mtriple=i686-unknown-unknown -mattr=+sse2
 
 ;
 ; Double to Signed Integer
