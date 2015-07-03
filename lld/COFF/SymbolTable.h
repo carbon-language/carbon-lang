@@ -41,7 +41,6 @@ struct Symbol;
 // to replace the lazy symbol. The logic is implemented in resolve().
 class SymbolTable {
 public:
-  SymbolTable();
   void addFile(std::unique_ptr<InputFile> File);
   std::error_code step();
   std::error_code run();
@@ -79,6 +78,7 @@ public:
 
   // Creates an Undefined symbol for a given name.
   Undefined *addUndefined(StringRef Name);
+  void addAbsolute(StringRef Name, uint64_t VA);
 
   // A list of chunks which to be added to .rdata.
   std::vector<Chunk *> LocalImportChunks;

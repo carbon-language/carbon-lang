@@ -23,10 +23,6 @@ using namespace llvm;
 namespace lld {
 namespace coff {
 
-SymbolTable::SymbolTable() {
-  addSymbol(new (Alloc) DefinedAbsolute("__ImageBase", Config->ImageBase));
-}
-
 void SymbolTable::addFile(std::unique_ptr<InputFile> FileP) {
   InputFile *File = FileP.get();
   Files.push_back(std::move(FileP));
@@ -277,6 +273,10 @@ Undefined *SymbolTable::addUndefined(StringRef Name) {
   if (auto *U = dyn_cast<Undefined>(New->repl()))
     return U;
   return New;
+}
+
+void SymbolTable::addAbsolute(StringRef Name, uint64_t VA) {
+  addSymbol(new (Alloc) DefinedAbsolute(Name, VA));
 }
 
 void SymbolTable::printMap(llvm::raw_ostream &OS) {

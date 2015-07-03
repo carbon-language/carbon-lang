@@ -302,6 +302,7 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
   // Handle /dll
   if (Args.hasArg(OPT_dll)) {
     Config->DLL = true;
+    Config->ImageBase = 0x180000000U;
     Config->ManifestID = 2;
     if (Config->Entry == nullptr && !Config->NoEntry)
       Config->Entry = addUndefined("_DllMainCRTStartup");
@@ -525,6 +526,8 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
     Inputs.push_back(MB->getMemBufferRef());
     OwningMBs.push_back(std::move(MB)); // take ownership
   }
+
+  Symtab.addAbsolute("__ImageBase", Config->ImageBase);
 
   // Read all input files given via the command line. Note that step()
   // doesn't read files that are specified by directive sections.
