@@ -219,7 +219,7 @@ std::error_code ELFFile<ELFT>::createSymbolsFromAtomizableSections() {
     if (std::error_code ec = section.getError())
       return ec;
 
-    auto symbolName = _objFile->getSymbolName(SymI, false);
+    auto symbolName = _objFile->getStaticSymbolName(SymI);
     if (std::error_code ec = symbolName.getError())
       return ec;
 
@@ -305,7 +305,7 @@ template <class ELFT> std::error_code ELFFile<ELFT>::createAtoms() {
       auto symbol = *si;
       StringRef symbolName = "";
       if (symbol->getType() != llvm::ELF::STT_SECTION) {
-        auto symName = _objFile->getSymbolName(symbol, false);
+        auto symName = _objFile->getStaticSymbolName(symbol);
         if (std::error_code ec = symName.getError())
           return ec;
         symbolName = *symName;
