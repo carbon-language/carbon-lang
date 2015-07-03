@@ -1,5 +1,5 @@
-; RUN: llc < %s -march arm | FileCheck %s -check-prefix=NOOPTION
-; RUN: llc < %s -march arm -trap-func=trap_llc | FileCheck %s -check-prefix=TRAP
+; RUN: llc < %s -mtriple=arm-unknown-unknown | FileCheck %s -check-prefix=NOOPTION
+; RUN: llc < %s -mtriple=arm-unknown-unknown -trap-func=trap_llc | FileCheck %s -check-prefix=TRAP
 
 ; NOOPTION-LABEL: {{\_?}}foo0:
 ; NOOPTION: trap{{$}}
