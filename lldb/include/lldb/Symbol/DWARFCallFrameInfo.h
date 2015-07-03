@@ -131,6 +131,16 @@ private:
     void
     GetCFIData();
 
+    // Applies the specified DWARF opcode to the given row. This function handle the commands
+    // operates only on a single row (these are the ones what can appear both in CIE and in FDE).
+    // Returns true if the opcode is handled and false otherwise.
+    bool
+    HandleCommonDwarfOpcode(uint8_t primary_opcode,
+                            uint8_t extended_opcode,
+                            int32_t data_align,
+                            lldb::offset_t& offset,
+                            UnwindPlan::Row& row);
+
     ObjectFile&                 m_objfile;
     lldb::SectionSP             m_section_sp;
     lldb::RegisterKind          m_reg_kind;

@@ -276,50 +276,8 @@ DWARFCallFrameInfo::ParseCIE (const dw_offset_t cie_offset)
             uint8_t primary_opcode  = inst & 0xC0;
             uint8_t extended_opcode = inst & 0x3F;
 
-            if (extended_opcode == DW_CFA_def_cfa)
-            {
-                // Takes two unsigned LEB128 operands representing a register
-                // number and a (non-factored) offset. The required action
-                // is to define the current CFA rule to use the provided
-                // register and offset.
-                uint32_t reg_num = (uint32_t)m_cfi_data.GetULEB128(&offset);
-                int op_offset = (int32_t)m_cfi_data.GetULEB128(&offset);
-                cie_sp->initial_row.GetCFAValue().SetIsRegisterPlusOffset (reg_num, op_offset);
-                continue;
-            }
-            if (extended_opcode == DW_CFA_def_cfa_sf)
-            {
-                // The DW_CFA_def_cfa_sf instruction takes two operands: an unsigned LEB128 value
-                // representing a register number and a signed LEB128 factored offset. This
-                // instruction is identical to DW_CFA_def_cfa except that the second operand is
-                // signed and factored.
-                // The resulting offset is factored_offset * data_alignment_factor.
-                uint32_t reg_num = (uint32_t)m_cfi_data.GetULEB128(&offset);
-                int op_offset = (int32_t)m_cfi_data.GetSLEB128(&offset);
-                cie_sp->initial_row.GetCFAValue().SetIsRegisterPlusOffset (
-                        reg_num, op_offset * cie_sp->data_align);
-                continue;
-            }
-            if (primary_opcode == DW_CFA_offset)
-            {   
-                // 0x80 - high 2 bits are 0x2, lower 6 bits are register.
-                // Takes two arguments: an unsigned LEB128 constant representing a
-                // factored offset and a register number. The required action is to
-                // change the rule for the register indicated by the register number
-                // to be an offset(N) rule with a value of
-                // (N = factored offset * data_align).
-                uint32_t reg_num = extended_opcode;
-                int op_offset = (int32_t)m_cfi_data.GetULEB128(&offset) * cie_sp->data_align;
-                UnwindPlan::Row::RegisterLocation reg_location;
-                reg_location.SetAtCFAPlusOffset(op_offset);
-                cie_sp->initial_row.SetRegisterInfo (reg_num, reg_location);
-                continue;
-            }
-            if (extended_opcode == DW_CFA_nop)
-            {
-                continue;
-            }
-            break;  // Stop if we hit an unrecognized opcode
+            if (!HandleCommonDwarfOpcode(primary_opcode, extended_opcode, cie_sp->data_align, offset, cie_sp->initial_row))
+                break; // Stop if we hit an unrecognized opcode
         }
     }
 
@@ -527,8 +485,6 @@ DWARFCallFrameInfo::FDEToUnwindPlan (dw_offset_t dwarf_offset, Address startaddr
         unwind_plan.SetPersonalityFunctionPtr (personality_function_ptr);
     }
 
-    uint32_t reg_num = 0;
-    int32_t op_offset = 0;
     uint32_t code_align = cie->code_align;
     int32_t data_align = cie->data_align;
 
@@ -549,11 +505,13 @@ DWARFCallFrameInfo::FDEToUnwindPlan (dw_offset_t dwarf_offset, Address startaddr
         uint8_t primary_opcode  = inst & 0xC0;
         uint8_t extended_opcode = inst & 0x3F;
 
-        if (primary_opcode)
+        if (!HandleCommonDwarfOpcode(primary_opcode, extended_opcode, data_align, offset, *row))
         {
-            switch (primary_opcode)
+            if (primary_opcode)
             {
-                case DW_CFA_advance_loc :   // (Row Creation Instruction)
+                switch (primary_opcode)
+                {
+                    case DW_CFA_advance_loc :   // (Row Creation Instruction)
                     {   // 0x40 - high 2 bits are 0x1, lower 6 bits are delta
                         // takes a single argument that represents a constant delta. The
                         // required action is to create a new table row with a location
@@ -565,29 +523,15 @@ DWARFCallFrameInfo::FDEToUnwindPlan (dw_offset_t dwarf_offset, Address startaddr
                         *newrow = *row.get();
                         row.reset (newrow);
                         row->SlideOffset(extended_opcode * code_align);
+                        break;
                     }
-                    break;
 
-                case DW_CFA_offset      :
-                    {   // 0x80 - high 2 bits are 0x2, lower 6 bits are register
-                        // takes two arguments: an unsigned LEB128 constant representing a
-                        // factored offset and a register number. The required action is to
-                        // change the rule for the register indicated by the register number
-                        // to be an offset(N) rule with a value of
-                        // (N = factored offset * data_align).
-                        reg_num = extended_opcode;
-                        op_offset = (int32_t)m_cfi_data.GetULEB128(&offset) * data_align;
-                        reg_location.SetAtCFAPlusOffset(op_offset);
-                        row->SetRegisterInfo (reg_num, reg_location);
-                    }
-                    break;
-
-                case DW_CFA_restore     :
+                    case DW_CFA_restore     :
                     {   // 0xC0 - high 2 bits are 0x3, lower 6 bits are register
                         // takes a single argument that represents a register number. The
                         // required action is to change the rule for the indicated register
                         // to the rule assigned it by the initial_instructions in the CIE.
-                        reg_num = extended_opcode;
+                        uint32_t reg_num = extended_opcode;
                         // We only keep enough register locations around to
                         // unwind what is in our thread, and these are organized
                         // by the register index in that state, so we need to convert our
@@ -595,18 +539,15 @@ DWARFCallFrameInfo::FDEToUnwindPlan (dw_offset_t dwarf_offset, Address startaddr
 
                         if (unwind_plan.IsValidRowIndex(0) && unwind_plan.GetRowAtIndex(0)->GetRegisterInfo(reg_num, reg_location))
                             row->SetRegisterInfo (reg_num, reg_location);
+                        break;
                     }
-                    break;
+                }
             }
-        }
-        else
-        {
-            switch (extended_opcode)
+            else
             {
-                case DW_CFA_nop                 : // 0x0
-                    break;
-
-                case DW_CFA_set_loc             : // 0x1 (Row Creation Instruction)
+                switch (extended_opcode)
+                {
+                    case DW_CFA_set_loc             : // 0x1 (Row Creation Instruction)
                     {
                         // DW_CFA_set_loc takes a single argument that represents an address.
                         // The required action is to create a new table row using the
@@ -618,10 +559,10 @@ DWARFCallFrameInfo::FDEToUnwindPlan (dw_offset_t dwarf_offset, Address startaddr
                         *newrow = *row.get();
                         row.reset (newrow);
                         row->SetOffset(m_cfi_data.GetPointer(&offset) - startaddr.GetFileAddress());
+                        break;
                     }
-                    break;
 
-                case DW_CFA_advance_loc1        : // 0x2 (Row Creation Instruction)
+                    case DW_CFA_advance_loc1        : // 0x2 (Row Creation Instruction)
                     {
                         // takes a single uword argument that represents a constant delta.
                         // This instruction is identical to DW_CFA_advance_loc except for the
@@ -631,10 +572,10 @@ DWARFCallFrameInfo::FDEToUnwindPlan (dw_offset_t dwarf_offset, Address startaddr
                         *newrow = *row.get();
                         row.reset (newrow);
                         row->SlideOffset (m_cfi_data.GetU8(&offset) * code_align);
+                        break;
                     }
-                    break;
 
-                case DW_CFA_advance_loc2        : // 0x3 (Row Creation Instruction)
+                    case DW_CFA_advance_loc2        : // 0x3 (Row Creation Instruction)
                     {
                         // takes a single uword argument that represents a constant delta.
                         // This instruction is identical to DW_CFA_advance_loc except for the
@@ -644,10 +585,10 @@ DWARFCallFrameInfo::FDEToUnwindPlan (dw_offset_t dwarf_offset, Address startaddr
                         *newrow = *row.get();
                         row.reset (newrow);
                         row->SlideOffset (m_cfi_data.GetU16(&offset) * code_align);
+                        break;
                     }
-                    break;
 
-                case DW_CFA_advance_loc4        : // 0x4 (Row Creation Instruction)
+                    case DW_CFA_advance_loc4        : // 0x4 (Row Creation Instruction)
                     {
                         // takes a single uword argument that represents a constant delta.
                         // This instruction is identical to DW_CFA_advance_loc except for the
@@ -657,68 +598,21 @@ DWARFCallFrameInfo::FDEToUnwindPlan (dw_offset_t dwarf_offset, Address startaddr
                         *newrow = *row.get();
                         row.reset (newrow);
                         row->SlideOffset (m_cfi_data.GetU32(&offset) * code_align);
+                        break;
                     }
-                    break;
 
-                case DW_CFA_offset_extended     : // 0x5
-                    {
-                        // takes two unsigned LEB128 arguments representing a register number
-                        // and a factored offset. This instruction is identical to DW_CFA_offset
-                        // except for the encoding and size of the register argument.
-                        reg_num = (uint32_t)m_cfi_data.GetULEB128(&offset);
-                        op_offset = (int32_t)m_cfi_data.GetULEB128(&offset) * data_align;
-                        reg_location.SetAtCFAPlusOffset(op_offset);
-                        row->SetRegisterInfo (reg_num, reg_location);
-                    }
-                    break;
-
-                case DW_CFA_restore_extended    : // 0x6
+                    case DW_CFA_restore_extended    : // 0x6
                     {
                         // takes a single unsigned LEB128 argument that represents a register
                         // number. This instruction is identical to DW_CFA_restore except for
                         // the encoding and size of the register argument.
-                        reg_num = (uint32_t)m_cfi_data.GetULEB128(&offset);
+                        uint32_t reg_num = (uint32_t)m_cfi_data.GetULEB128(&offset);
                         if (unwind_plan.IsValidRowIndex(0) && unwind_plan.GetRowAtIndex(0)->GetRegisterInfo(reg_num, reg_location))
                             row->SetRegisterInfo (reg_num, reg_location);
+                        break;
                     }
-                    break;
 
-                case DW_CFA_undefined           : // 0x7
-                    {
-                        // takes a single unsigned LEB128 argument that represents a register
-                        // number. The required action is to set the rule for the specified
-                        // register to undefined.
-                        reg_num = (uint32_t)m_cfi_data.GetULEB128(&offset);
-                        reg_location.SetUndefined();
-                        row->SetRegisterInfo (reg_num, reg_location);
-                    }
-                    break;
-
-                case DW_CFA_same_value          : // 0x8
-                    {
-                        // takes a single unsigned LEB128 argument that represents a register
-                        // number. The required action is to set the rule for the specified
-                        // register to same value.
-                        reg_num = (uint32_t)m_cfi_data.GetULEB128(&offset);
-                        reg_location.SetSame();
-                        row->SetRegisterInfo (reg_num, reg_location);
-                    }
-                    break;
-
-                case DW_CFA_register            : // 0x9
-                    {
-                        // takes two unsigned LEB128 arguments representing register numbers.
-                        // The required action is to set the rule for the first register to be
-                        // the second register.
-
-                        reg_num = (uint32_t)m_cfi_data.GetULEB128(&offset);
-                        uint32_t other_reg_num = (uint32_t)m_cfi_data.GetULEB128(&offset);
-                        reg_location.SetInRegister(other_reg_num);
-                        row->SetRegisterInfo (reg_num, reg_location);
-                    }
-                    break;
-
-                case DW_CFA_remember_state      : // 0xA
+                    case DW_CFA_remember_state      : // 0xA
                     {
                         // These instructions define a stack of information. Encountering the
                         // DW_CFA_remember_state instruction means to save the rules for every
@@ -731,189 +625,277 @@ DWARFCallFrameInfo::FDEToUnwindPlan (dw_offset_t dwarf_offset, Address startaddr
                         UnwindPlan::Row *newrow = new UnwindPlan::Row;
                         *newrow = *row.get();
                         row.reset (newrow);
+                        break;
                     }
-                    break;
 
-                case DW_CFA_restore_state       : // 0xB
-                    // These instructions define a stack of information. Encountering the
-                    // DW_CFA_remember_state instruction means to save the rules for every
-                    // register on the current row on the stack. Encountering the
-                    // DW_CFA_restore_state instruction means to pop the set of rules off
-                    // the stack and place them in the current row. (This operation is
-                    // useful for compilers that move epilogue code into the body of a
-                    // function.)
+                    case DW_CFA_restore_state       : // 0xB
                     {
+                        // These instructions define a stack of information. Encountering the
+                        // DW_CFA_remember_state instruction means to save the rules for every
+                        // register on the current row on the stack. Encountering the
+                        // DW_CFA_restore_state instruction means to pop the set of rules off
+                        // the stack and place them in the current row. (This operation is
+                        // useful for compilers that move epilogue code into the body of a
+                        // function.)
                         lldb::addr_t offset = row->GetOffset ();
                         row = stack.back ();
                         stack.pop_back ();
                         row->SetOffset (offset);
+                        break;
                     }
-                    break;
 
-                case DW_CFA_def_cfa             : // 0xC    (CFA Definition Instruction)
-                    {
-                        // Takes two unsigned LEB128 operands representing a register
-                        // number and a (non-factored) offset. The required action
-                        // is to define the current CFA rule to use the provided
-                        // register and offset.
-                        reg_num = (uint32_t)m_cfi_data.GetULEB128(&offset);
-                        op_offset = (int32_t)m_cfi_data.GetULEB128(&offset);
-                        row->GetCFAValue().SetIsRegisterPlusOffset (reg_num, op_offset);
-                    }
-                    break;
-
-                case DW_CFA_def_cfa_register    : // 0xD    (CFA Definition Instruction)
-                    {
-                        // takes a single unsigned LEB128 argument representing a register
-                        // number. The required action is to define the current CFA rule to
-                        // use the provided register (but to keep the old offset).
-                        reg_num = (uint32_t)m_cfi_data.GetULEB128(&offset);
-                        row->GetCFAValue().SetIsRegisterPlusOffset (reg_num,
-                                row->GetCFAValue().GetOffset());
-                    }
-                    break;
-
-                case DW_CFA_def_cfa_offset      : // 0xE    (CFA Definition Instruction)
-                    {
-                        // Takes a single unsigned LEB128 operand representing a
-                        // (non-factored) offset. The required action is to define
-                        // the current CFA rule to use the provided offset (but
-                        // to keep the old register).
-                        op_offset = (int32_t)m_cfi_data.GetULEB128(&offset);
-                        row->GetCFAValue().SetIsRegisterPlusOffset (
-                                row->GetCFAValue().GetRegisterNumber(), op_offset);
-                    }
-                    break;
-
-                case DW_CFA_def_cfa_expression  : // 0xF    (CFA Definition Instruction)
-                    {
-                        size_t block_len = (size_t)m_cfi_data.GetULEB128(&offset);
-                        const uint8_t *block_data =
-                            static_cast<const uint8_t *>(m_cfi_data.GetData(&offset, block_len));
-                        row->GetCFAValue().SetIsDWARFExpression(block_data, block_len);
-                    }
-                    break;
-
-                case DW_CFA_expression          : // 0x10
-                    {
-                        // Takes two operands: an unsigned LEB128 value representing
-                        // a register number, and a DW_FORM_block value representing a DWARF
-                        // expression. The required action is to change the rule for the
-                        // register indicated by the register number to be an expression(E)
-                        // rule where E is the DWARF expression. That is, the DWARF
-                        // expression computes the address. The value of the CFA is
-                        // pushed on the DWARF evaluation stack prior to execution of
-                        // the DWARF expression.
-                        reg_num = (uint32_t)m_cfi_data.GetULEB128(&offset);
-                        uint32_t block_len = (uint32_t)m_cfi_data.GetULEB128(&offset);
-                        const uint8_t *block_data = (const uint8_t *)m_cfi_data.GetData(&offset, block_len);
-
-                        reg_location.SetAtDWARFExpression(block_data, block_len);
-                        row->SetRegisterInfo (reg_num, reg_location);
-                    }
-                    break;
-
-                case DW_CFA_offset_extended_sf  : // 0x11
-                    {
-                        // takes two operands: an unsigned LEB128 value representing a
-                        // register number and a signed LEB128 factored offset. This
-                        // instruction is identical to DW_CFA_offset_extended except
-                        //that the second operand is signed and factored.
-                        reg_num = (uint32_t)m_cfi_data.GetULEB128(&offset);
-                        op_offset = (int32_t)m_cfi_data.GetSLEB128(&offset) * data_align;
-                        reg_location.SetAtCFAPlusOffset(op_offset);
-                        row->SetRegisterInfo (reg_num, reg_location);
-                    }
-                    break;
-
-                case DW_CFA_def_cfa_sf          : // 0x12   (CFA Definition Instruction)
-                    {
-                        // Takes two operands: an unsigned LEB128 value representing
-                        // a register number and a signed LEB128 factored offset.
-                        // This instruction is identical to DW_CFA_def_cfa except
-                        // that the second operand is signed and factored.
-                        reg_num = (uint32_t)m_cfi_data.GetULEB128(&offset);
-                        op_offset = (int32_t)m_cfi_data.GetSLEB128(&offset) * data_align;
-                        row->GetCFAValue().SetIsRegisterPlusOffset (reg_num, op_offset);
-                    }
-                    break;
-
-                case DW_CFA_def_cfa_offset_sf   : // 0x13   (CFA Definition Instruction)
-                    {
-                        // takes a signed LEB128 operand representing a factored
-                        // offset. This instruction is identical to  DW_CFA_def_cfa_offset
-                        // except that the operand is signed and factored.
-                        op_offset = (int32_t)m_cfi_data.GetSLEB128(&offset) * data_align;
-                        row->GetCFAValue().SetIsRegisterPlusOffset (
-                                row->GetCFAValue().GetRegisterNumber(), op_offset);
-                    }
-                    break;
-
-                case DW_CFA_val_expression      :   // 0x16
-                    {
-                        // takes two operands: an unsigned LEB128 value representing a register
-                        // number, and a DW_FORM_block value representing a DWARF expression.
-                        // The required action is to change the rule for the register indicated
-                        // by the register number to be a val_expression(E) rule where E is the
-                        // DWARF expression. That is, the DWARF expression computes the value of
-                        // the given register. The value of the CFA is pushed on the DWARF
-                        // evaluation stack prior to execution of the DWARF expression.
-                        reg_num = (uint32_t)m_cfi_data.GetULEB128(&offset);
-                        uint32_t block_len = (uint32_t)m_cfi_data.GetULEB128(&offset);
-                        const uint8_t* block_data = (const uint8_t*)m_cfi_data.GetData(&offset, block_len);
-//#if defined(__i386__) || defined(__x86_64__)
-//                      // The EH frame info for EIP and RIP contains code that looks for traps to
-//                      // be a specific type and increments the PC.
-//                      // For i386:
-//                      // DW_CFA_val_expression where:
-//                      // eip = DW_OP_breg6(+28), DW_OP_deref, DW_OP_dup, DW_OP_plus_uconst(0x34),
-//                      //       DW_OP_deref, DW_OP_swap, DW_OP_plus_uconst(0), DW_OP_deref,
-//                      //       DW_OP_dup, DW_OP_lit3, DW_OP_ne, DW_OP_swap, DW_OP_lit4, DW_OP_ne,
-//                      //       DW_OP_and, DW_OP_plus
-//                      // This basically does a:
-//                      // eip = ucontenxt.mcontext32->gpr.eip;
-//                      // if (ucontenxt.mcontext32->exc.trapno != 3 && ucontenxt.mcontext32->exc.trapno != 4)
-//                      //   eip++;
-//                      //
-//                      // For x86_64:
-//                      // DW_CFA_val_expression where:
-//                      // rip =  DW_OP_breg3(+48), DW_OP_deref, DW_OP_dup, DW_OP_plus_uconst(0x90), DW_OP_deref,
-//                      //          DW_OP_swap, DW_OP_plus_uconst(0), DW_OP_deref_size(4), DW_OP_dup, DW_OP_lit3,
-//                      //          DW_OP_ne, DW_OP_swap, DW_OP_lit4, DW_OP_ne, DW_OP_and, DW_OP_plus
-//                      // This basically does a:
-//                      // rip = ucontenxt.mcontext64->gpr.rip;
-//                      // if (ucontenxt.mcontext64->exc.trapno != 3 && ucontenxt.mcontext64->exc.trapno != 4)
-//                      //   rip++;
-//                      // The trap comparisons and increments are not needed as it hoses up the unwound PC which
-//                      // is expected to point at least past the instruction that causes the fault/trap. So we
-//                      // take it out by trimming the expression right at the first "DW_OP_swap" opcodes
-//                      if (block_data != NULL && thread->GetPCRegNum(Thread::GCC) == reg_num)
-//                      {
-//                          if (thread->Is64Bit())
-//                          {
-//                              if (block_len > 9 && block_data[8] == DW_OP_swap && block_data[9] == DW_OP_plus_uconst)
-//                                  block_len = 8;
-//                          }
-//                          else
-//                          {
-//                              if (block_len > 8 && block_data[7] == DW_OP_swap && block_data[8] == DW_OP_plus_uconst)
-//                                  block_len = 7;
-//                          }
-//                      }
-//#endif
-                        reg_location.SetIsDWARFExpression(block_data, block_len);
-                        row->SetRegisterInfo (reg_num, reg_location);
-                    }
-                    break;
-
-                case DW_CFA_val_offset          :   // 0x14
-                case DW_CFA_val_offset_sf       :   // 0x15
-                default:
-                    break;
+                    case DW_CFA_val_offset          :   // 0x14
+                    case DW_CFA_val_offset_sf       :   // 0x15
+                    default:
+                        break;
+                }
             }
         }
     }
     unwind_plan.AppendRow(row);
 
     return true;
+}
+
+bool
+DWARFCallFrameInfo::HandleCommonDwarfOpcode(uint8_t primary_opcode,
+                                            uint8_t extended_opcode,
+                                            int32_t data_align,
+                                            lldb::offset_t& offset,
+                                            UnwindPlan::Row& row)
+{   
+    UnwindPlan::Row::RegisterLocation reg_location;
+
+    if (primary_opcode)
+    {
+        switch (primary_opcode)
+        {
+            case DW_CFA_offset:
+            {   // 0x80 - high 2 bits are 0x2, lower 6 bits are register
+                // takes two arguments: an unsigned LEB128 constant representing a
+                // factored offset and a register number. The required action is to
+                // change the rule for the register indicated by the register number
+                // to be an offset(N) rule with a value of
+                // (N = factored offset * data_align).
+                uint8_t reg_num = extended_opcode;
+                int32_t op_offset = (int32_t)m_cfi_data.GetULEB128(&offset) * data_align;
+                reg_location.SetAtCFAPlusOffset(op_offset);
+                row.SetRegisterInfo(reg_num, reg_location);
+                return true;
+            }
+        }
+    }
+    else
+    {
+        switch (extended_opcode)
+        {
+            case DW_CFA_nop                 : // 0x0
+                return true;
+
+            case DW_CFA_offset_extended     : // 0x5
+            {
+                // takes two unsigned LEB128 arguments representing a register number
+                // and a factored offset. This instruction is identical to DW_CFA_offset
+                // except for the encoding and size of the register argument.
+                uint32_t reg_num = (uint32_t)m_cfi_data.GetULEB128(&offset);
+                int32_t op_offset = (int32_t)m_cfi_data.GetULEB128(&offset) * data_align;
+                UnwindPlan::Row::RegisterLocation reg_location;
+                reg_location.SetAtCFAPlusOffset(op_offset);
+                row.SetRegisterInfo(reg_num, reg_location);
+                return true;
+            }
+
+            case DW_CFA_undefined           : // 0x7
+            {
+                // takes a single unsigned LEB128 argument that represents a register
+                // number. The required action is to set the rule for the specified
+                // register to undefined.
+                uint32_t reg_num = (uint32_t)m_cfi_data.GetULEB128(&offset);
+                UnwindPlan::Row::RegisterLocation reg_location;
+                reg_location.SetUndefined();
+                row.SetRegisterInfo(reg_num, reg_location);
+                return true;
+            }
+
+            case DW_CFA_same_value          : // 0x8
+            {
+                // takes a single unsigned LEB128 argument that represents a register
+                // number. The required action is to set the rule for the specified
+                // register to same value.
+                uint32_t reg_num = (uint32_t)m_cfi_data.GetULEB128(&offset);
+                UnwindPlan::Row::RegisterLocation reg_location;
+                reg_location.SetSame();
+                row.SetRegisterInfo (reg_num, reg_location);
+                return true;
+            }
+
+            case DW_CFA_register            : // 0x9
+            {
+                // takes two unsigned LEB128 arguments representing register numbers.
+                // The required action is to set the rule for the first register to be
+                // the second register.
+                uint32_t reg_num = (uint32_t)m_cfi_data.GetULEB128(&offset);
+                uint32_t other_reg_num = (uint32_t)m_cfi_data.GetULEB128(&offset);
+                UnwindPlan::Row::RegisterLocation reg_location;
+                reg_location.SetInRegister(other_reg_num);
+                row.SetRegisterInfo (reg_num, reg_location);
+                return true;
+            }
+
+            case DW_CFA_def_cfa             : // 0xC    (CFA Definition Instruction)
+            {
+                // Takes two unsigned LEB128 operands representing a register
+                // number and a (non-factored) offset. The required action
+                // is to define the current CFA rule to use the provided
+                // register and offset.
+                uint32_t reg_num = (uint32_t)m_cfi_data.GetULEB128(&offset);
+                int32_t op_offset = (int32_t)m_cfi_data.GetULEB128(&offset);
+                row.GetCFAValue().SetIsRegisterPlusOffset (reg_num, op_offset);
+                return true;
+            }
+
+            case DW_CFA_def_cfa_register    : // 0xD    (CFA Definition Instruction)
+            {
+                // takes a single unsigned LEB128 argument representing a register
+                // number. The required action is to define the current CFA rule to
+                // use the provided register (but to keep the old offset).
+                uint32_t reg_num = (uint32_t)m_cfi_data.GetULEB128(&offset);
+                row.GetCFAValue().SetIsRegisterPlusOffset (reg_num, row.GetCFAValue().GetOffset());
+                return true;
+            }
+
+            case DW_CFA_def_cfa_offset      : // 0xE    (CFA Definition Instruction)
+            {
+                // Takes a single unsigned LEB128 operand representing a
+                // (non-factored) offset. The required action is to define
+                // the current CFA rule to use the provided offset (but
+                // to keep the old register).
+                int32_t op_offset = (int32_t)m_cfi_data.GetULEB128(&offset);
+                row.GetCFAValue().SetIsRegisterPlusOffset(row.GetCFAValue().GetRegisterNumber(), op_offset);
+                return true;
+            }
+
+            case DW_CFA_def_cfa_expression  : // 0xF    (CFA Definition Instruction)
+            {
+                size_t block_len = (size_t)m_cfi_data.GetULEB128(&offset);
+                const uint8_t *block_data = static_cast<const uint8_t*>(m_cfi_data.GetData(&offset, block_len));
+                row.GetCFAValue().SetIsDWARFExpression(block_data, block_len);
+                return true;
+            }
+
+            case DW_CFA_expression          : // 0x10
+            {
+                // Takes two operands: an unsigned LEB128 value representing
+                // a register number, and a DW_FORM_block value representing a DWARF
+                // expression. The required action is to change the rule for the
+                // register indicated by the register number to be an expression(E)
+                // rule where E is the DWARF expression. That is, the DWARF
+                // expression computes the address. The value of the CFA is
+                // pushed on the DWARF evaluation stack prior to execution of
+                // the DWARF expression.
+                uint32_t reg_num = (uint32_t)m_cfi_data.GetULEB128(&offset);
+                uint32_t block_len = (uint32_t)m_cfi_data.GetULEB128(&offset);
+                const uint8_t *block_data = static_cast<const uint8_t*>(m_cfi_data.GetData(&offset, block_len));
+                UnwindPlan::Row::RegisterLocation reg_location;
+                reg_location.SetAtDWARFExpression(block_data, block_len);
+                row.SetRegisterInfo(reg_num, reg_location);
+                return true;
+            }
+
+            case DW_CFA_offset_extended_sf  : // 0x11
+            {
+                // takes two operands: an unsigned LEB128 value representing a
+                // register number and a signed LEB128 factored offset. This
+                // instruction is identical to DW_CFA_offset_extended except
+                //that the second operand is signed and factored.
+                uint32_t reg_num = (uint32_t)m_cfi_data.GetULEB128(&offset);
+                int32_t op_offset = (int32_t)m_cfi_data.GetSLEB128(&offset) * data_align;
+                UnwindPlan::Row::RegisterLocation reg_location;
+                reg_location.SetAtCFAPlusOffset(op_offset);
+                row.SetRegisterInfo(reg_num, reg_location);
+                return true;
+            }
+
+            case DW_CFA_def_cfa_sf          : // 0x12   (CFA Definition Instruction)
+            {
+                // Takes two operands: an unsigned LEB128 value representing
+                // a register number and a signed LEB128 factored offset.
+                // This instruction is identical to DW_CFA_def_cfa except
+                // that the second operand is signed and factored.
+                uint32_t reg_num = (uint32_t)m_cfi_data.GetULEB128(&offset);
+                int32_t op_offset = (int32_t)m_cfi_data.GetSLEB128(&offset) * data_align;
+                row.GetCFAValue().SetIsRegisterPlusOffset (reg_num, op_offset);
+                return true;
+            }
+
+            case DW_CFA_def_cfa_offset_sf   : // 0x13   (CFA Definition Instruction)
+            {
+                // takes a signed LEB128 operand representing a factored
+                // offset. This instruction is identical to  DW_CFA_def_cfa_offset
+                // except that the operand is signed and factored.
+                int32_t op_offset = (int32_t)m_cfi_data.GetSLEB128(&offset) * data_align;
+                uint32_t cfa_regnum = row.GetCFAValue().GetRegisterNumber();
+                row.GetCFAValue().SetIsRegisterPlusOffset(cfa_regnum, op_offset);
+                return true;
+            }
+
+            case DW_CFA_val_expression      :   // 0x16
+            {
+                // takes two operands: an unsigned LEB128 value representing a register
+                // number, and a DW_FORM_block value representing a DWARF expression.
+                // The required action is to change the rule for the register indicated
+                // by the register number to be a val_expression(E) rule where E is the
+                // DWARF expression. That is, the DWARF expression computes the value of
+                // the given register. The value of the CFA is pushed on the DWARF
+                // evaluation stack prior to execution of the DWARF expression.
+                uint32_t reg_num = (uint32_t)m_cfi_data.GetULEB128(&offset);
+                uint32_t block_len = (uint32_t)m_cfi_data.GetULEB128(&offset);
+                const uint8_t* block_data = (const uint8_t*)m_cfi_data.GetData(&offset, block_len);
+//#if defined(__i386__) || defined(__x86_64__)
+//              // The EH frame info for EIP and RIP contains code that looks for traps to
+//              // be a specific type and increments the PC.
+//              // For i386:
+//              // DW_CFA_val_expression where:
+//              // eip = DW_OP_breg6(+28), DW_OP_deref, DW_OP_dup, DW_OP_plus_uconst(0x34),
+//              //       DW_OP_deref, DW_OP_swap, DW_OP_plus_uconst(0), DW_OP_deref,
+//              //       DW_OP_dup, DW_OP_lit3, DW_OP_ne, DW_OP_swap, DW_OP_lit4, DW_OP_ne,
+//              //       DW_OP_and, DW_OP_plus
+//              // This basically does a:
+//              // eip = ucontenxt.mcontext32->gpr.eip;
+//              // if (ucontenxt.mcontext32->exc.trapno != 3 && ucontenxt.mcontext32->exc.trapno != 4)
+//              //   eip++;
+//              //
+//              // For x86_64:
+//              // DW_CFA_val_expression where:
+//              // rip =  DW_OP_breg3(+48), DW_OP_deref, DW_OP_dup, DW_OP_plus_uconst(0x90), DW_OP_deref,
+//              //          DW_OP_swap, DW_OP_plus_uconst(0), DW_OP_deref_size(4), DW_OP_dup, DW_OP_lit3,
+//              //          DW_OP_ne, DW_OP_swap, DW_OP_lit4, DW_OP_ne, DW_OP_and, DW_OP_plus
+//              // This basically does a:
+//              // rip = ucontenxt.mcontext64->gpr.rip;
+//              // if (ucontenxt.mcontext64->exc.trapno != 3 && ucontenxt.mcontext64->exc.trapno != 4)
+//              //   rip++;
+//              // The trap comparisons and increments are not needed as it hoses up the unwound PC which
+//              // is expected to point at least past the instruction that causes the fault/trap. So we
+//              // take it out by trimming the expression right at the first "DW_OP_swap" opcodes
+//              if (block_data != NULL && thread->GetPCRegNum(Thread::GCC) == reg_num)
+//              {
+//                  if (thread->Is64Bit())
+//                  {
+//                      if (block_len > 9 && block_data[8] == DW_OP_swap && block_data[9] == DW_OP_plus_uconst)
+//                          block_len = 8;
+//                  }
+//                  else
+//                  {
+//                      if (block_len > 8 && block_data[7] == DW_OP_swap && block_data[8] == DW_OP_plus_uconst)
+//                          block_len = 7;
+//                  }
+//              }
+//#endif
+                reg_location.SetIsDWARFExpression(block_data, block_len);
+                row.SetRegisterInfo (reg_num, reg_location);
+                return true;
+            }
+        }
+    }
+    return false;
 }
