@@ -275,11 +275,6 @@ protected:
     return DRI;
   }
 
-  Elf_Dyn_Iter toELFDynIter(DataRefImpl Dyn) const {
-    return Elf_Dyn_Iter(EF.begin_dynamic_table().getEntSize(),
-                        reinterpret_cast<const char *>(Dyn.p));
-  }
-
   DataRefImpl toDRI(Elf_Dyn_Iter Dyn) const {
     DataRefImpl DRI;
     DRI.p = reinterpret_cast<uintptr_t>(Dyn.get());
