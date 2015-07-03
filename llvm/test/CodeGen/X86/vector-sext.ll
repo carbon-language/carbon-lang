@@ -117,6 +117,46 @@ entry:
   ret <4 x i64>%B
 }
 
+define i32 @sext_2i8_to_i32(<16 x i8> %A) nounwind uwtable readnone ssp {
+; SSE2-LABEL: sext_2i8_to_i32:
+; SSE2:       # BB#0: # %entry
+; SSE2-NEXT:    punpcklbw {{.*#+}} xmm0 = xmm0[0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7]
+; SSE2-NEXT:    psraw $8, %xmm0
+; SSE2-NEXT:    movd %xmm0, %eax
+; SSE2-NEXT:    retq
+;
+; SSSE3-LABEL: sext_2i8_to_i32:
+; SSSE3:       # BB#0: # %entry
+; SSSE3-NEXT:    punpcklbw {{.*#+}} xmm0 = xmm0[0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7]
+; SSSE3-NEXT:    psraw $8, %xmm0
+; SSSE3-NEXT:    movd %xmm0, %eax
+; SSSE3-NEXT:    retq
+;
+; SSE41-LABEL: sext_2i8_to_i32:
+; SSE41:       # BB#0: # %entry
+; SSE41-NEXT:    pmovsxbw %xmm0, %xmm0
+; SSE41-NEXT:    movd %xmm0, %eax
+; SSE41-NEXT:    retq
+;
+; AVX-LABEL: sext_2i8_to_i32:
+; AVX:       # BB#0: # %entry
+; AVX-NEXT:    vpmovsxbw %xmm0, %xmm0
+; AVX-NEXT:    vmovd %xmm0, %eax
+; AVX-NEXT:    retq
+;
+; X32-SSE41-LABEL: sext_2i8_to_i32:
+; X32-SSE41:       # BB#0: # %entry
+; X32-SSE41:         pmovsxbw %xmm0, %xmm0
+; X32-SSE41-NEXT:    movd %xmm0, %eax
+; X32-SSE41-NEXT:    popl %edx
+; X32-SSE41-NEXT:    retl
+entry:
+  %Shuf = shufflevector <16 x i8> %A, <16 x i8> undef, <2 x i32> <i32 0, i32 1>
+  %Ex = sext <2 x i8> %Shuf to <2 x i16>
+  %Bc = bitcast <2 x i16> %Ex to i32
+  ret i32 %Bc
+}
+
 define <4 x i32> @load_sext_test1(<4 x i16> *%ptr) {
 ; SSE2-LABEL: load_sext_test1:
 ; SSE2:       # BB#0: # %entry
