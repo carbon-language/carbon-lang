@@ -229,6 +229,7 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
 bool llvm::UpgradeIntrinsicFunction(Function *F, Function *&NewFn) {
   NewFn = nullptr;
   bool Upgraded = UpgradeIntrinsicFunction1(F, NewFn);
+  assert(F != NewFn && "Intrinsic function upgraded to the same function");
 
   // Upgrade intrinsic attributes.  This does not change the function.
   if (NewFn)
@@ -710,16 +711,14 @@ void llvm::UpgradeCallsToIntrinsic(Function* F) {
   // Upgrade the function and check if it is a totaly new function.
   Function *NewFn;
   if (UpgradeIntrinsicFunction(F, NewFn)) {
-    if (NewFn != F) {
-      // Replace all uses to the old function with the new one if necessary.
-      for (Value::user_iterator UI = F->user_begin(), UE = F->user_end();
-           UI != UE; ) {
-        if (CallInst *CI = dyn_cast<CallInst>(*UI++))
-          UpgradeIntrinsicCall(CI, NewFn);
-      }
-      // Remove old function, no longer used, from the module.
-      F->eraseFromParent();
+    // Replace all uses to the old function with the new one if necessary.
+    for (Value::user_iterator UI = F->user_begin(), UE = F->user_end();
+         UI != UE;) {
+      if (CallInst *CI = dyn_cast<CallInst>(*UI++))
+        UpgradeIntrinsicCall(CI, NewFn);
     }
+    // Remove old function, no longer used, from the module.
+    F->eraseFromParent();
   }
 }
 
