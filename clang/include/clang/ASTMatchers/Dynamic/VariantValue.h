@@ -242,7 +242,7 @@ struct VariantMatcher::TypedMatcherOps final : VariantMatcher::MatcherOps {
 ///
 /// Supported types:
 ///  - \c unsigned
-///  - \c std::string
+///  - \c llvm::StringRef
 ///  - \c VariantMatcher (\c DynTypedMatcher / \c Matcher<T>)
 class VariantValue {
 public:
@@ -254,7 +254,7 @@ public:
 
   /// \brief Specific constructors for each supported type.
   VariantValue(unsigned Unsigned);
-  VariantValue(const std::string &String);
+  VariantValue(StringRef String);
   VariantValue(const VariantMatcher &Matchers);
 
   /// \brief Returns true iff this is not an empty value.
@@ -269,7 +269,7 @@ public:
   /// \brief String value functions.
   bool isString() const;
   const std::string &getString() const;
-  void setString(const std::string &String);
+  void setString(StringRef String);
 
   /// \brief Matcher value functions.
   bool isMatcher() const;

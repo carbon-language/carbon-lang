@@ -249,7 +249,7 @@ VariantValue::VariantValue(unsigned Unsigned) : Type(VT_Nothing) {
   setUnsigned(Unsigned);
 }
 
-VariantValue::VariantValue(const std::string &String) : Type(VT_Nothing) {
+VariantValue::VariantValue(StringRef String) : Type(VT_Nothing) {
   setString(String);
 }
 
@@ -319,7 +319,7 @@ const std::string &VariantValue::getString() const {
   return *Value.String;
 }
 
-void VariantValue::setString(const std::string &NewValue) {
+void VariantValue::setString(StringRef NewValue) {
   reset();
   Type = VT_String;
   Value.String = new std::string(NewValue);
