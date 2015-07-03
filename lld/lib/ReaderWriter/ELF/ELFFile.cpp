@@ -152,6 +152,10 @@ std::error_code ELFFile<ELFT>::createAtomizableSections() {
       _relocationReferences[sHdr] = make_range(ri, re);
       totalRelocs += std::distance(ri, re);
     } else {
+      auto sectionName = _objFile->getSectionName(&section);
+      if (std::error_code ec = sectionName.getError())
+        return ec;
+      _ctx.notifyInputSectionName(*sectionName);
       _sectionSymbols[&section];
     }
   }

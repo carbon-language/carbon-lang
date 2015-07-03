@@ -247,4 +247,13 @@ void ELFLinkingContext::setUndefinesResolver(std::unique_ptr<File> resolver) {
   _resolver = std::move(resolver);
 }
 
+void ELFLinkingContext::notifyInputSectionName(StringRef name) {
+  // Save sections names which can be represented as a C identifier.
+  if (name.find_first_not_of("0123456789"
+                             "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                             "abcdefghijklmnopqrstuvwxyz"
+                             "_") == StringRef::npos)
+    _cidentSections.insert(name);
+}
+
 } // end namespace lld

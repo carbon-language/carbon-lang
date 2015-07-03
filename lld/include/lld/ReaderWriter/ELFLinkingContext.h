@@ -346,6 +346,13 @@ public:
   script::Sema &linkerScriptSema() { return _linkerScriptSema; }
   const script::Sema &linkerScriptSema() const { return _linkerScriptSema; }
 
+  /// Notify the ELFLinkingContext when the new ELF section is read.
+  void notifyInputSectionName(StringRef name);
+  /// Encountered C-ident input section names.
+  const llvm::StringSet<> &cidentSectionNames() const {
+    return _cidentSections;
+  }
+
   // Set R_ARM_TARGET1 relocation behaviour
   bool armTarget1Rel() const { return _armTarget1Rel; }
   void setArmTarget1Rel(bool value) { _armTarget1Rel = value; }
@@ -401,6 +408,7 @@ protected:
   std::map<std::string, uint64_t> _absoluteSymbols;
   llvm::StringSet<> _dynamicallyExportedSymbols;
   std::unique_ptr<File> _resolver;
+  llvm::StringSet<> _cidentSections;
 
   // The linker script semantic object, which owns all script ASTs, is stored
   // in the current linking context via _linkerScriptSema.

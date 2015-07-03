@@ -113,7 +113,7 @@ protected:
 
   /// \brief Process undefined symbols that left after resolution step.
   virtual void processUndefinedSymbol(StringRef symName,
-                                      RuntimeFile<ELFT> &file) const {}
+                                      RuntimeFile<ELFT> &file) const;
 
   /// \brief Assign addresses to atoms marking section's start and end.
   void updateScopeAtomValues(StringRef sym, StringRef sec);
@@ -144,6 +144,7 @@ protected:
 
 private:
   static StringRef maybeGetSOName(Node *node);
+  void updateScopeAtomValues(StringRef start, StringRef end, StringRef sec);
 };
 
 } // namespace elf

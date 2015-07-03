@@ -246,6 +246,14 @@ template <class ELFT> void OutputELFWriter<ELFT>::finalizeDefaultAtomValues() {
     assert(a);
     a->_virtualAddr = res;
   }
+  // If there is a section named XXX, and XXX is a valid C identifier,
+  // and there are undefined or weak __start_XXX/__stop_XXX symbols,
+  // set the symbols values to the begin/end of the XXX section
+  // correspondingly.
+  for (const auto &name : _ctx.cidentSectionNames())
+    updateScopeAtomValues((Twine("__start_") + name.getKey()).str(),
+                          (Twine("__stop_") + name.getKey()).str(),
+                          name.getKey());
 }
 
 template <class ELFT> void OutputELFWriter<ELFT>::createDefaultSections() {
@@ -455,23 +463,35 @@ std::error_code OutputELFWriter<ELFT>::writeFile(const File &file,
 }
 
 template <class ELFT>
+void OutputELFWriter<ELFT>::processUndefinedSymbol(
+    StringRef symName, RuntimeFile<ELFT> &file) const {
+  if (symName.startswith("__start_")) {
+    if (_ctx.cidentSectionNames().count(symName.drop_front(8)))
+      file.addAbsoluteAtom(symName);
+  } else if (symName.startswith("__stop_")) {
+    if (_ctx.cidentSectionNames().count(symName.drop_front(7)))
+      file.addAbsoluteAtom(symName);
+  }
+}
+
+template <class ELFT>
 void OutputELFWriter<ELFT>::updateScopeAtomValues(StringRef sym,
                                                   StringRef sec) {
-  std::string start = ("__" + sym + "_start").str();
-  std::string end = ("__" + sym + "_end").str();
+  updateScopeAtomValues(("__" + sym + "_start").str().c_str(),
+                        ("__" + sym + "_end").str().c_str(), sec);
+}
+
+template <class ELFT>
+void OutputELFWriter<ELFT>::updateScopeAtomValues(StringRef start,
+                                                  StringRef end,
+                                                  StringRef sec) {
   AtomLayout *s = _layout.findAbsoluteAtom(start);
   AtomLayout *e = _layout.findAbsoluteAtom(end);
-  OutputSection<ELFT> *section = _layout.findOutputSection(sec);
-  if (!s || !e)
-    return;
-
-  if (section) {
-    s->_virtualAddr = section->virtualAddr();
-    e->_virtualAddr = section->virtualAddr() + section->memSize();
-  } else {
-    s->_virtualAddr = 0;
-    e->_virtualAddr = 0;
-  }
+  const OutputSection<ELFT> *section = _layout.findOutputSection(sec);
+  if (s)
+    s->_virtualAddr = section ? section->virtualAddr() : 0;
+  if (e)
+    e->_virtualAddr = section ? section->virtualAddr() + section->memSize() : 0;
 }
 
 template class OutputELFWriter<ELF32LE>;

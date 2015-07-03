@@ -50,6 +50,8 @@ void ARMExecutableWriter::createImplicitFiles(
 
 void ARMExecutableWriter::processUndefinedSymbol(
     StringRef symName, RuntimeFile<ELF32LE> &file) const {
+  ARMELFWriter<ExecutableWriter<ELF32LE>>::processUndefinedSymbol(symName,
+                                                                  file);
   if (symName == gotSymbol) {
     file.addAbsoluteAtom(gotSymbol);
   } else if (symName.startswith("__exidx")) {
