@@ -198,8 +198,8 @@ void MachODebugMapParser::loadCurrentObjectFileSymbols() {
 
   for (auto Sym : CurrentObjectHolder.Get().symbols()) {
 
-    uint64_t Addr;
-    if (Sym.getAddress(Addr) || Addr == UnknownAddress)
+    uint64_t Addr = Sym.getValue();
+    if (Addr == UnknownAddress)
       continue;
     ErrorOr<StringRef> Name = Sym.getName();
     if (!Name)
@@ -228,14 +228,13 @@ void MachODebugMapParser::loadMainBinarySymbols() {
     // Skip undefined and STAB entries.
     if ((Type & SymbolRef::ST_Debug) || (Type & SymbolRef::ST_Unknown))
       continue;
-    uint64_t Addr;
+    uint64_t Addr = Sym.getValue();
     // The only symbols of interest are the global variables. These
     // are the only ones that need to be queried because the address
     // of common data won't be described in the debug map. All other
     // addresses should be fetched for the debug map.
-    if (Sym.getAddress(Addr) || Addr == UnknownAddress ||
-        !(Sym.getFlags() & SymbolRef::SF_Global) || Sym.getSection(Section) ||
-        Section->isText())
+    if (Addr == UnknownAddress || !(Sym.getFlags() & SymbolRef::SF_Global) ||
+        Sym.getSection(Section) || Section->isText())
       continue;
     ErrorOr<StringRef> NameOrErr = Sym.getName();
     if (!NameOrErr)

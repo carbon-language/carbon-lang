@@ -216,9 +216,7 @@ MappingTraits<dsymutil::DebugMapObject>::YamlDMO::denormalize(IO &IO) {
     // during the test, we can't hardcode the symbols addresses, so
     // look them up here and rewrite them.
     for (const auto &Sym : ErrOrObjectFile->symbols()) {
-      uint64_t Address;
-      if (Sym.getAddress(Address))
-        continue;
+      uint64_t Address = Sym.getValue();
       ErrorOr<StringRef> Name = Sym.getName();
       if (!Name)
         continue;

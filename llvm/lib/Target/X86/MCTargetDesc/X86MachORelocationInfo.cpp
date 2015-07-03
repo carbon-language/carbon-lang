@@ -34,7 +34,7 @@ public:
     if (std::error_code EC = SymNameOrErr.getError())
       report_fatal_error(EC.message());
     StringRef SymName = *SymNameOrErr;
-    uint64_t  SymAddr; SymI->getAddress(SymAddr);
+    uint64_t SymAddr = SymI->getValue();
 
     any_relocation_info RE = Obj->getRelocation(Rel.getRawDataRefImpl());
     bool isPCRel = Obj->getAnyRelocationPCRel(RE);
@@ -90,8 +90,7 @@ public:
         const MCExpr *LHS = MCSymbolRefExpr::create(Sym, Ctx);
 
         symbol_iterator RSymI = Rel.getSymbol();
-        uint64_t RSymAddr;
-        RSymI->getAddress(RSymAddr);
+        uint64_t RSymAddr = RSymI->getValue();
         ErrorOr<StringRef> RSymName = RSymI->getName();
         if (std::error_code EC = RSymName.getError())
           report_fatal_error(EC.message());
