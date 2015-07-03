@@ -627,7 +627,7 @@ void PPCallbacksTracker::appendArgument(const char *Name,
 
 // Append a double-quoted argument to the top trace item.
 void PPCallbacksTracker::appendQuotedArgument(const char *Name,
-                                              llvm::StringRef Value) {
+                                              const std::string &Value) {
   std::string Str;
   llvm::raw_string_ostream SS(Str);
   SS << "\"" << Value << "\"";

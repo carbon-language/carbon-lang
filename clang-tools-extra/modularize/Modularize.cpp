@@ -466,9 +466,9 @@ class EntityMap : public StringMap<SmallVector<Entry, 2> > {
 public:
   DenseMap<const FileEntry *, HeaderContents> HeaderContentMismatches;
 
-  void add(StringRef Name, enum Entry::EntryKind Kind, Location Loc) {
+  void add(const std::string &Name, enum Entry::EntryKind Kind, Location Loc) {
     // Record this entity in its header.
-    HeaderEntry HE = {Name.str(), Loc};
+    HeaderEntry HE = { Name, Loc };
     CurHeaderContents[Loc.File].push_back(HE);
 
     // Check whether we've seen this entry before.

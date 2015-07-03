@@ -25,7 +25,7 @@ namespace rename {
 
 class RenamingAction {
 public:
-  RenamingAction(llvm::StringRef NewName, llvm::StringRef PrevName,
+  RenamingAction(const std::string &NewName, const std::string &PrevName,
                  const std::vector<std::string> &USRs,
                  tooling::Replacements &Replaces, bool PrintLocations = false)
       : NewName(NewName), PrevName(PrevName), USRs(USRs), Replaces(Replaces),
@@ -35,7 +35,7 @@ public:
   std::unique_ptr<ASTConsumer> newASTConsumer();
 
 private:
-  llvm::StringRef NewName, PrevName;
+  const std::string &NewName, &PrevName;
   const std::vector<std::string> &USRs;
   tooling::Replacements &Replaces;
   bool PrintLocations;

@@ -405,7 +405,7 @@ void CompilerInstance::createPCHExternalASTSource(
 }
 
 IntrusiveRefCntPtr<ASTReader> CompilerInstance::createPCHExternalASTSource(
-    StringRef Path, StringRef Sysroot, bool DisablePCHValidation,
+    StringRef Path, const std::string &Sysroot, bool DisablePCHValidation,
     bool AllowPCHWithCompilerErrors, Preprocessor &PP, ASTContext &Context,
     const PCHContainerOperations &PCHContainerOps,
     void *DeserializationListener, bool OwnDeserializationListener,
@@ -413,7 +413,7 @@ IntrusiveRefCntPtr<ASTReader> CompilerInstance::createPCHExternalASTSource(
   HeaderSearchOptions &HSOpts = PP.getHeaderSearchInfo().getHeaderSearchOpts();
 
   IntrusiveRefCntPtr<ASTReader> Reader(new ASTReader(
-      PP, Context, PCHContainerOps, Sysroot.empty() ? "" : Sysroot.data(),
+      PP, Context, PCHContainerOps, Sysroot.empty() ? "" : Sysroot.c_str(),
       DisablePCHValidation, AllowPCHWithCompilerErrors,
       /*AllowConfigurationMismatch*/ false, HSOpts.ModulesValidateSystemHeaders,
       UseGlobalModuleIndex));
@@ -502,7 +502,7 @@ void CompilerInstance::createFrontendTimer() {
 
 CodeCompleteConsumer *
 CompilerInstance::createCodeCompletionConsumer(Preprocessor &PP,
-                                               StringRef Filename,
+                                               const std::string &Filename,
                                                unsigned Line,
                                                unsigned Column,
                                                const CodeCompleteOptions &Opts,

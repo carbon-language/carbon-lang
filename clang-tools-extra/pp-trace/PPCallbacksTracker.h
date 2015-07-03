@@ -215,7 +215,7 @@ public:
   void appendArgument(const char *Name, const clang::Module *Value);
 
   /// \brief Append a double-quoted argument to the top trace item.
-  void appendQuotedArgument(const char *Name, llvm::StringRef Value);
+  void appendQuotedArgument(const char *Name, const std::string &Value);
 
   /// \brief Append a double-quoted file path argument to the top trace item.
   void appendFilePathArgument(const char *Name, llvm::StringRef Value);
