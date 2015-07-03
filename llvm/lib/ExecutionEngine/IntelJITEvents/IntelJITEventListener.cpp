@@ -118,9 +118,10 @@ void IntelJITEventListener::NotifyObjectEmitted(
       if (!Name)
         continue;
 
-      uint64_t Addr;
-      if (Sym.getAddress(Addr))
+      ErrorOr<uint64_t> AddrOrErr = Sym.getAddress();
+      if (AddrOrErr.getError())
         continue;
+      uint64_t Addr = *AddrOrErr;
       uint64_t Size = P.second;
 
       // Record this address in a local vector

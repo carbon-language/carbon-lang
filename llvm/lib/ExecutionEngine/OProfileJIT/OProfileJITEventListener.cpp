@@ -89,12 +89,14 @@ void OProfileJITEventListener::NotifyObjectEmitted(
   for (const std::pair<SymbolRef, uint64_t> &P : computeSymbolSizes(DebugObj)) {
     SymbolRef Sym = P.first;
     if (Sym.getType() == SymbolRef::ST_Function) {
-      StringRef  Name;
-      uint64_t   Addr;
-      if (Sym.getName(Name))
+      ErrorOr<StringRef> NameOrErr = Sym.getName();
+      if (NameOrErr.getError())
         continue;
-      if (Sym.getAddress(Addr))
+      StringRef Name = *NameOrErr;
+      ErrorOr<uint64_t> AddrOrErr = Sym.getAddress();
+      if (AddrOrErr.getError())
         continue;
+      uint64_t Addr = *AddrOrErr;
       uint64_t Size = P.second;
 
       if (Wrapper->op_write_native_code(Name.data(), Addr, (void*)Addr, Size)
@@ -126,8 +128,10 @@ void OProfileJITEventListener::NotifyFreeingObject(const ObjectFile &Obj) {
                          E = DebugObj.symbol_end();
          I != E; ++I) {
       if (I->getType() == SymbolRef::ST_Function) {
-        uint64_t   Addr;
-        if (I->getAddress(Addr)) continue;
+        ErrorOr<uint64_t> AddrOrErr = I->getAddress();
+        if (AddrOrErr.getError())
+          continue;
+        uint64_t Addr = *AddrOrErr;
 
         if (Wrapper->op_unload_native_code(Addr) == -1) {
           DEBUG(dbgs()
