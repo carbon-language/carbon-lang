@@ -265,7 +265,7 @@ CMICmdCmdDataEvaluateExpression::CreateSelf(void)
 // Throws:  None.
 //--
 bool
-CMICmdCmdDataEvaluateExpression::HaveInvalidCharacterInExpression(const CMIUtilString &vrExpr, MIchar &vrwInvalidChar)
+CMICmdCmdDataEvaluateExpression::HaveInvalidCharacterInExpression(const CMIUtilString &vrExpr, char &vrwInvalidChar)
 {
     static const std::string strInvalidCharacters(";#\\");
     const size_t nInvalidCharacterOffset = vrExpr.find_first_of(strInvalidCharacters);
@@ -403,20 +403,20 @@ CMICmdCmdDataDisassemble::Execute(void)
 
     for (size_t i = 0; i < nInstructions; i++)
     {
-        const MIchar *pUnknown = "??";
+        const char *pUnknown = "??";
         lldb::SBInstruction instrt = instructions.GetInstructionAtIndex(i);
-        const MIchar *pStrMnemonic = instrt.GetMnemonic(sbTarget);
+        const char *pStrMnemonic = instrt.GetMnemonic(sbTarget);
         pStrMnemonic = (pStrMnemonic != nullptr) ? pStrMnemonic : pUnknown;
-        const MIchar *pStrComment = instrt.GetComment(sbTarget);
+        const char *pStrComment = instrt.GetComment(sbTarget);
         CMIUtilString strComment;
         if (pStrComment != nullptr && *pStrComment != '\0')
             strComment = CMIUtilString::Format("; %s", pStrComment);
         lldb::SBAddress address = instrt.GetAddress();
         lldb::addr_t addr = address.GetLoadAddress(sbTarget);
-        const MIchar *pFnName = address.GetFunction().GetName();
+        const char *pFnName = address.GetFunction().GetName();
         pFnName = (pFnName != nullptr) ? pFnName : pUnknown;
         lldb::addr_t addrOffSet = address.GetOffset() - start_offset;
-        const MIchar *pStrOperands = instrt.GetOperands(sbTarget);
+        const char *pStrOperands = instrt.GetOperands(sbTarget);
         pStrOperands = (pStrOperands != nullptr) ? pStrOperands : pUnknown;
         const size_t instrtSize = instrt.GetByteSize();
 
@@ -441,7 +441,7 @@ CMICmdCmdDataDisassemble::Execute(void)
         {
             lldb::SBLineEntry lineEntry = address.GetLineEntry();
             const MIuint nLine = lineEntry.GetLine();
-            const MIchar *pFileName = lineEntry.GetFileSpec().GetFilename();
+            const char *pFileName = lineEntry.GetFileSpec().GetFilename();
             pFileName = (pFileName != nullptr) ? pFileName : pUnknown;
 
             // MI "src_and_asm_line={line=\"%u\",file=\"%s\",line_asm_insn=[ ]}"
@@ -660,7 +660,7 @@ CMICmdCmdDataReadMemoryBytes::Execute(void)
     nAddrStart += nAddrOffset;
     const MIuint64 nAddrNumBytes = pArgNumBytes->GetValue();
 
-    m_pBufferMemory = new MIuchar[nAddrNumBytes];
+    m_pBufferMemory = new unsigned char[nAddrNumBytes];
     if (m_pBufferMemory == nullptr)
     {
         SetError(CMIUtilString::Format(MIRSRC(IDS_CMD_ERR_MEMORY_ALLOC_FAILURE), m_cmdData.strMiCmd.c_str(), nAddrNumBytes));
@@ -1544,13 +1544,13 @@ CMICmdCmdDataWriteMemory::Execute(void)
     m_nCount = pArgNumber->GetValue();
     const MIuint64 nValue = pArgContents->GetValue();
 
-    m_pBufferMemory = new MIuchar[m_nCount];
+    m_pBufferMemory = new unsigned char[m_nCount];
     if (m_pBufferMemory == nullptr)
     {
         SetError(CMIUtilString::Format(MIRSRC(IDS_CMD_ERR_MEMORY_ALLOC_FAILURE), m_cmdData.strMiCmd.c_str(), m_nCount));
         return MIstatus::failure;
     }
-    *m_pBufferMemory = static_cast<MIchar>(nValue);
+    *m_pBufferMemory = static_cast<char>(nValue);
 
     CMICmnLLDBDebugSessionInfo &rSessionInfo(CMICmnLLDBDebugSessionInfo::Instance());
     lldb::SBProcess sbProcess = rSessionInfo.GetProcess();

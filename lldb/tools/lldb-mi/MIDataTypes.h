@@ -76,9 +76,6 @@ typedef unsigned int MIuint;
 // Fundamentals:
 typedef float MIflt;
 typedef double MIdbl;
-typedef char MIchar;                 // Defaults to signed char, i.e. MIschar.
-typedef signed char MIschar;         // Range: -128 to 127. More explicit than using MIchar.
-typedef unsigned char MIuchar;       // Range: 0 to 255.
 typedef long long MIint64;           // 64bit signed integer.
 typedef unsigned long long MIuint64; // 64bit unsigned integer.
 

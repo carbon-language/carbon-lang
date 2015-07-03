@@ -76,7 +76,7 @@ CMICmnMIValueTuple::~CMICmnMIValueTuple(void)
 bool
 CMICmnMIValueTuple::BuildTuple(void)
 {
-    const MIchar *pFormat = "{%s}";
+    const char *pFormat = "{%s}";
     m_strValue = CMIUtilString::Format(pFormat, m_strValue.c_str());
 
     return MIstatus::success;
@@ -110,7 +110,7 @@ CMICmnMIValueTuple::BuildTuple(const CMICmnMIValueResult &vResult)
         m_strValue = m_strValue.substr(0, m_strValue.size() - 1);
     }
 
-    const MIchar *pFormat = m_bSpaceAfterComma ? "{%s, %s}" : "{%s,%s}";
+    const char *pFormat = m_bSpaceAfterComma ? "{%s, %s}" : "{%s,%s}";
     m_strValue = CMIUtilString::Format(pFormat, m_strValue.c_str(), vResult.GetString().c_str());
 
     return MIstatus::success;
@@ -136,7 +136,7 @@ CMICmnMIValueTuple::BuildTuple(const CMIUtilString &vValue)
     }
 
     const CMIUtilString data(ExtractContentNoBrackets());
-    const MIchar *pFormat = m_bSpaceAfterComma ? "{%s, %s}" : "{%s,%s}";
+    const char *pFormat = m_bSpaceAfterComma ? "{%s, %s}" : "{%s,%s}";
     m_strValue = CMIUtilString::Format(pFormat, data.c_str(), vValue.c_str());
 
     return MIstatus::success;

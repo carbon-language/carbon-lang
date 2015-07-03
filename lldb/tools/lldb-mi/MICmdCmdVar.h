@@ -122,7 +122,7 @@ class CMICmdCmdVarUpdate : public CMICmdBase
     // Methods:
   private:
     bool ExamineSBValueForChange(lldb::SBValue &vrwValue, bool &vrwbChanged);
-    bool MIFormResponse(const CMIUtilString &vrStrVarName, const MIchar *const vpValue, const CMIUtilString &vrStrScope);
+    bool MIFormResponse(const CMIUtilString &vrStrVarName, const char *const vpValue, const CMIUtilString &vrStrScope);
 
     // Attribute:
   private:

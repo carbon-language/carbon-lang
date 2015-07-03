@@ -40,5 +40,5 @@ class CMIUtilDateTimeStd
     // Attributes:
   private:
     std::time_t m_rawTime;
-    MIchar m_pScratch[16];
+    char m_pScratch[16];
 };

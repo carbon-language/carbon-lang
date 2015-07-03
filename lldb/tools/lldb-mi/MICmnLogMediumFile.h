@@ -66,7 +66,7 @@ class CMICmnLogMediumFile : public CMICmnBase, public CMICmnLog::IMedium
     bool FileFormFileNamePath(void);
     CMIUtilString MassagedData(const CMIUtilString &vData, const CMICmnLog::ELogVerbosity veType);
     bool FileWriteHeader(void);
-    MIchar ConvertLogVerbosityTypeToId(const CMICmnLog::ELogVerbosity veType) const;
+    char ConvertLogVerbosityTypeToId(const CMICmnLog::ELogVerbosity veType) const;
     CMIUtilString ConvertCr(const CMIUtilString &vData) const;
 
     // Attributes:

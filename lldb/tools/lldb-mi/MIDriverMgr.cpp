@@ -337,7 +337,7 @@ CMIDriverMgr::DriverParseArgs(const int argc, const char *argv[], FILE *vpStdOut
     if (!bOk)
     {
         CMIUtilString errMsg;
-        const MIchar *pErrorCstr = error.GetCString();
+        const char *pErrorCstr = error.GetCString();
         if (pErrorCstr != nullptr)
             errMsg = CMIUtilString::Format(MIRSRC(IDS_DRIVER_ERR_PARSE_ARGS), m_pDriverCurrent->GetName().c_str(), pErrorCstr);
         else

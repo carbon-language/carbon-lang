@@ -76,7 +76,7 @@ CMICmnMIValueList::~CMICmnMIValueList(void)
 bool
 CMICmnMIValueList::BuildList(void)
 {
-    const MIchar *pFormat = "[%s]";
+    const char *pFormat = "[%s]";
     m_strValue = CMIUtilString::Format(pFormat, m_strValue.c_str());
 
     return MIstatus::success;
@@ -136,7 +136,7 @@ CMICmnMIValueList::BuildList(const CMICmnMIValueResult &vResult)
     }
 
     const CMIUtilString data(ExtractContentNoBrackets());
-    const MIchar *pFormat = "[%s,%s]";
+    const char *pFormat = "[%s,%s]";
     m_strValue = CMIUtilString::Format(pFormat, data.c_str(), vResult.GetString().c_str());
 
     return MIstatus::success;
@@ -168,7 +168,7 @@ CMICmnMIValueList::BuildList(const CMICmnMIValue &vValue)
     size_t len = m_strValue.size();
     if ( (len > 1) && (m_strValue[0] == '[') && (m_strValue[len - 1] == ']') )
         m_strValue = m_strValue.substr(1, len - 2);
-    const MIchar *pFormat = "[%s,%s]";
+    const char *pFormat = "[%s,%s]";
     m_strValue = CMIUtilString::Format(pFormat, m_strValue.c_str(), vValue.GetString().c_str());
 
     return MIstatus::success;

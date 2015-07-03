@@ -186,7 +186,7 @@ CMICmdInterpreter::MiHasCmdTokenEndingHyphen(const CMIUtilString &vTextLine)
 bool
 CMICmdInterpreter::MiHasCmdTokenEndingAlpha(const CMIUtilString &vTextLine)
 {
-    MIchar cChar = vTextLine[0];
+    char cChar = vTextLine[0];
     MIuint i = 0;
     while (::isdigit(cChar) != 0)
     {

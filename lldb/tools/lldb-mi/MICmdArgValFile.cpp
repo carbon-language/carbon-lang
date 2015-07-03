@@ -121,7 +121,7 @@ CMICmdArgValFile::GetFileNamePath(const CMIUtilString &vrTxt) const
     CMIUtilString fileNamePath(vrTxt);
 
     // Look for a space in the path
-    const MIchar cSpace = ' ';
+    const char cSpace = ' ';
     const MIint nPos = fileNamePath.find(cSpace);
     if (nPos != (MIint)std::string::npos)
         fileNamePath = CMIUtilString::Format("\"%s\"", fileNamePath.c_str());
@@ -182,10 +182,10 @@ bool
 CMICmdArgValFile::IsValidChars(const CMIUtilString &vrText) const
 {
     static CMIUtilString s_strSpecialCharacters(".'\"`@#$%^&*()_+-={}[]| ");
-    const MIchar *pPtr = const_cast<MIchar *>(vrText.c_str());
+    const char *pPtr = const_cast<char *>(vrText.c_str());
     for (MIuint i = 0; i < vrText.length(); i++, pPtr++)
     {
-        const MIchar c = *pPtr;
+        const char c = *pPtr;
         if (::isalnum((int)c) == 0)
         {
             if (s_strSpecialCharacters.find(c) == CMIUtilString::npos)

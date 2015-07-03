@@ -461,7 +461,7 @@ CMICmdCmdVarUpdate::CreateSelf(void)
 // Throws:  None.
 //--
 bool
-CMICmdCmdVarUpdate::MIFormResponse(const CMIUtilString &vrStrVarName, const MIchar *const vpValue, const CMIUtilString &vrStrScope)
+CMICmdCmdVarUpdate::MIFormResponse(const CMIUtilString &vrStrVarName, const char *const vpValue, const CMIUtilString &vrStrScope)
 {
     // MI print "[{name=\"%s\",value=\"%s\",in_scope=\"%s\",type_changed=\"false\",has_more=\"0\"}]"
     const CMICmnMIValueConst miValueConst(vrStrVarName);
@@ -1335,7 +1335,7 @@ CMICmdCmdVarInfoPathExpression::Execute(void)
         return MIstatus::failure;
     }
 
-    const MIchar *pPathExpression = stream.GetData();
+    const char *pPathExpression = stream.GetData();
     if (pPathExpression == nullptr)
     {
         // Build expression from what we do know

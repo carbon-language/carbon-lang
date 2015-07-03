@@ -37,7 +37,7 @@ CMIUtilString::CMIUtilString(void)
 // Return:  None.
 // Throws:  None.
 //--
-CMIUtilString::CMIUtilString(const MIchar *vpData)
+CMIUtilString::CMIUtilString(const char *vpData)
     : std::string(vpData)
 {
 }
@@ -49,7 +49,7 @@ CMIUtilString::CMIUtilString(const MIchar *vpData)
 // Return:  None.
 // Throws:  None.
 //--
-CMIUtilString::CMIUtilString(const MIchar *const *vpData)
+CMIUtilString::CMIUtilString(const char *const *vpData)
     : std::string((const char *)vpData)
 {
 }
@@ -61,7 +61,7 @@ CMIUtilString::CMIUtilString(const MIchar *const *vpData)
 // Return:  CMIUtilString & - *this string.
 // Throws:  None.
 //--
-CMIUtilString &CMIUtilString::operator=(const MIchar *vpRhs)
+CMIUtilString &CMIUtilString::operator=(const char *vpRhs)
 {
     if (*this == vpRhs)
         return *this;
@@ -480,7 +480,7 @@ CMIUtilString::ExtractNumberFromHexadecimal(MIint64 &vwrNumber) const
 // Throws:  None.
 //--
 bool
-CMIUtilString::IsAllValidAlphaAndNumeric(const MIchar *vpText)
+CMIUtilString::IsAllValidAlphaAndNumeric(const char *vpText)
 {
     const MIuint len = ::strlen(vpText);
     if (len == 0)
@@ -488,7 +488,7 @@ CMIUtilString::IsAllValidAlphaAndNumeric(const MIchar *vpText)
 
     for (MIuint i = 0; i < len; i++, vpText++)
     {
-        const MIchar c = *vpText;
+        const char c = *vpText;
         if (::isalnum((int)c) == 0)
             return false;
     }
@@ -525,7 +525,7 @@ CMIUtilString
 CMIUtilString::Trim(void) const
 {
     CMIUtilString strNew(*this);
-    const MIchar *pWhiteSpace = " \t\n\v\f\r";
+    const char *pWhiteSpace = " \t\n\v\f\r";
     const MIint nPos = find_last_not_of(pWhiteSpace);
     if (nPos != (MIint)std::string::npos)
     {
@@ -548,7 +548,7 @@ CMIUtilString::Trim(void) const
 // Throws:  None.
 //--
 CMIUtilString
-CMIUtilString::Trim(const MIchar vChar) const
+CMIUtilString::Trim(const char vChar) const
 {
     CMIUtilString strNew(*this);
     const MIint nLen = strNew.length();
@@ -584,7 +584,7 @@ CMIUtilString::FormatBinary(const MIuint64 vnDecimal)
         nNum = nNum >> 1;
         nLen++;
     }
-    MIchar pN[nConstBits + 1];
+    char pN[nConstBits + 1];
     MIuint j = 0;
     for (i = nLen; i > 0; --i, j++)
     {
@@ -606,7 +606,7 @@ CMIUtilString::FormatBinary(const MIuint64 vnDecimal)
 // Throws:  None.
 //--
 CMIUtilString
-CMIUtilString::RemoveRepeatedCharacters(const MIchar vChar)
+CMIUtilString::RemoveRepeatedCharacters(const char vChar)
 {
     return RemoveRepeatedCharacters(0, vChar);
 }
@@ -622,9 +622,9 @@ CMIUtilString::RemoveRepeatedCharacters(const MIchar vChar)
 // Throws:  None.
 //--
 CMIUtilString
-CMIUtilString::RemoveRepeatedCharacters(const MIint vnPos, const MIchar vChar)
+CMIUtilString::RemoveRepeatedCharacters(const MIint vnPos, const char vChar)
 {
-    const MIchar cQuote = '"';
+    const char cQuote = '"';
 
     // Look for first quote of two
     MIint nPos = find(cQuote, vnPos);
@@ -654,7 +654,7 @@ CMIUtilString::RemoveRepeatedCharacters(const MIint vnPos, const MIchar vChar)
 bool
 CMIUtilString::IsQuoted(void) const
 {
-    const MIchar cQuote = '"';
+    const char cQuote = '"';
 
     if (at(0) != cQuote)
         return false;
@@ -763,8 +763,8 @@ CMIUtilString::FindFirstNot(const CMIUtilString &vrPattern, const MIuint vnPos /
 MIuint
 CMIUtilString::FindFirstQuote(const MIuint vnPos) const
 {
-    const MIchar cBckSlash('\\');
-    const MIchar cQuote('"');
+    const char cBckSlash('\\');
+    const char cQuote('"');
     const MIuint nLen(length());
 
     MIuint nPos = vnPos;
@@ -801,7 +801,7 @@ CMIUtilString::Escape(const bool vbEscapeQuotes /* = false */) const
     strNew.reserve(nLen);
     for (MIuint nIndex(0); nIndex < nLen; ++nIndex)
     {
-        const MIchar cUnescapedChar((*this)[nIndex]);
+        const char cUnescapedChar((*this)[nIndex]);
         if (cUnescapedChar == '"' && vbEscapeQuotes)
             strNew.append("\\\"");
         else
@@ -821,7 +821,7 @@ CMIUtilString::Escape(const bool vbEscapeQuotes /* = false */) const
 CMIUtilString
 CMIUtilString::AddSlashes(void) const
 {
-    const MIchar cBckSlash('\\');
+    const char cBckSlash('\\');
     const MIuint nLen(length());
     CMIUtilString strNew;
     strNew.reserve(nLen);
@@ -840,7 +840,7 @@ CMIUtilString::AddSlashes(void) const
         const MIuint nAppendLen(nUnescapedCharPos - nOffset);
         strNew.append(*this, nOffset, nAppendLen);
         strNew.push_back(cBckSlash);
-        const MIchar cUnescapedChar((*this)[nUnescapedCharPos]);
+        const char cUnescapedChar((*this)[nUnescapedCharPos]);
         strNew.push_back(cUnescapedChar);
         nOffset = nUnescapedCharPos + 1;
     }
@@ -858,7 +858,7 @@ CMIUtilString::AddSlashes(void) const
 CMIUtilString
 CMIUtilString::StripSlashes(void) const
 {
-    const MIchar cBckSlash('\\');
+    const char cBckSlash('\\');
     const MIuint nLen(length());
     CMIUtilString strNew;
     strNew.reserve(nLen);
@@ -882,7 +882,7 @@ CMIUtilString::StripSlashes(void) const
             strNew.push_back(cBckSlash);
             break;
         }
-        const MIchar cEscapedChar((*this)[nBckSlashPos + 1]);
+        const char cEscapedChar((*this)[nBckSlashPos + 1]);
         const MIuint nEscapedCharPos(std::string("\"\\").find(cEscapedChar));
         const bool bEscapedCharNotFound(nEscapedCharPos == (MIuint)std::string::npos);
         if (bEscapedCharNotFound)

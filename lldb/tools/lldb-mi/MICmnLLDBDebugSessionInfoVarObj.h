@@ -57,7 +57,7 @@ class CMICmnLLDBDebugSessionInfoVarObj
     // Statics:
   public:
     static varFormat_e GetVarFormatForString(const CMIUtilString &vrStrFormat);
-    static varFormat_e GetVarFormatForChar(const MIchar &vrcFormat);
+    static varFormat_e GetVarFormatForChar(const char &vrcFormat);
     static CMIUtilString GetValueStringFormatted(const lldb::SBValue &vrValue, const varFormat_e veVarFormat);
     static void VarObjAdd(const CMICmnLLDBDebugSessionInfoVarObj &vrVarObj);
     static void VarObjDelete(const CMIUtilString &vrVarName);
@@ -105,7 +105,7 @@ class CMICmnLLDBDebugSessionInfoVarObj
 
     // Statics:
   private:
-    static CMIUtilString GetStringFormatted(const MIuint64 vnValue, const MIchar *vpStrValueNatural, varFormat_e veVarFormat);
+    static CMIUtilString GetStringFormatted(const MIuint64 vnValue, const char *vpStrValueNatural, varFormat_e veVarFormat);
 
     // Methods:
   private:
@@ -114,8 +114,8 @@ class CMICmnLLDBDebugSessionInfoVarObj
 
     // Attributes:
   private:
-    static const MIchar *ms_aVarFormatStrings[];
-    static const MIchar *ms_aVarFormatChars[];
+    static const char *ms_aVarFormatStrings[];
+    static const char *ms_aVarFormatChars[];
     static MapKeyToVarObj_t ms_mapVarIdToVarObj;
     static MIuint ms_nVarUniqueId;
     static varFormat_e ms_eDefaultFormat;    // overrides "natural" format

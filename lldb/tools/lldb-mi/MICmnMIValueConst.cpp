@@ -73,13 +73,13 @@ CMICmnMIValueConst::BuildConst(void)
         }
         else
         {
-            const MIchar *pFormat = "%s%s%s";
+            const char *pFormat = "%s%s%s";
             m_strValue = CMIUtilString::Format(pFormat, ms_constStrDblQuote.c_str(), strValue.c_str(), ms_constStrDblQuote.c_str());
         }
     }
     else
     {
-        const MIchar *pFormat = "%s%s";
+        const char *pFormat = "%s%s";
         m_strValue = CMIUtilString::Format(pFormat, ms_constStrDblQuote.c_str(), ms_constStrDblQuote.c_str());
     }
 

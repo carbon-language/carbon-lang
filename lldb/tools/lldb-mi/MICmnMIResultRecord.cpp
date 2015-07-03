@@ -106,7 +106,7 @@ CMICmnMIResultRecord::GetString(void) const
 bool
 CMICmnMIResultRecord::BuildResultRecord(void)
 {
-    const MIchar *pFormat = "%s%s%s";
+    const char *pFormat = "%s%s%s";
     const CMIUtilString &rStrResultRecord(ms_MapResultClassToResultClassText[m_eResultRecordResultClass]);
     m_strResultRecord =
         CMIUtilString::Format(pFormat, m_strResultRecordToken.c_str(), ms_constStrResultRecordHat.c_str(), rStrResultRecord.c_str());

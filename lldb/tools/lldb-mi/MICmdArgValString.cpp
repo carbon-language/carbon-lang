@@ -179,7 +179,7 @@ CMICmdArgValString::ValidateQuotedText(CMICmdArgContext &vrwArgContext)
     if (vrwArgContext.RemoveArg(rArg))
     {
         m_bValid = true;
-        const MIchar cQuote = '"';
+        const char cQuote = '"';
         m_argValue = rArg.Trim(cQuote).StripSlashes();
         return MIstatus::success;
     }
@@ -262,7 +262,7 @@ CMICmdArgValString::IsStringArgQuotedText(const CMIUtilString &vrTxt) const
         return true;
 
     // CODETAG_QUOTEDTEXT_SIMILAR_CODE
-    const MIchar cQuote = '"';
+    const char cQuote = '"';
     const MIint nPos = vrTxt.find(cQuote);
     if (nPos == (MIint)std::string::npos)
         return false;
@@ -273,8 +273,8 @@ CMICmdArgValString::IsStringArgQuotedText(const CMIUtilString &vrTxt) const
 
     // Quote must be the first character in the string or be preceded by a space
     // Also check for embedded string formating quote
-    const MIchar cBckSlash = '\\';
-    const MIchar cSpace = ' ';
+    const char cBckSlash = '\\';
+    const char cSpace = ' ';
     if ((nPos > 1) && (vrTxt[nPos - 1] == cBckSlash) && (vrTxt[nPos - 2] != cSpace))
     {
         return false;
@@ -308,13 +308,13 @@ bool
 CMICmdArgValString::IsStringArgQuotedTextEmbedded(const CMIUtilString &vrTxt) const
 {
     // CODETAG_QUOTEDTEXT_SIMILAR_CODE
-    const MIchar cBckSlash = '\\';
+    const char cBckSlash = '\\';
     const MIint nPos = vrTxt.find(cBckSlash);
     if (nPos == (MIint)std::string::npos)
         return false;
 
     // Slash must be the first character in the string or be preceded by a space
-    const MIchar cSpace = ' ';
+    const char cSpace = ' ';
     if ((nPos > 0) && (vrTxt[nPos - 1] != cSpace))
         return false;
 

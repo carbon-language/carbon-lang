@@ -103,11 +103,11 @@ bool
 CMICmnLLDBProxySBValue::GetCString(const lldb::SBValue &vrValue, CMIUtilString &vwCString)
 {
     lldb::SBValue &rValue = const_cast<lldb::SBValue &>(vrValue);
-    const MIchar *pCType = rValue.GetTypeName();
+    const char *pCType = rValue.GetTypeName();
     if (pCType == nullptr)
         return MIstatus::failure;
 
-    const MIchar *pType = "unsigned char *";
+    const char *pType = "unsigned char *";
     if (!CMIUtilString::Compare(pCType, pType))
         return MIstatus::failure;
 
@@ -120,7 +120,7 @@ CMICmnLLDBProxySBValue::GetCString(const lldb::SBValue &vrValue, CMIUtilString &
     lldb::SBProcess sbProcess = rSessionInfo.GetProcess();
     MIuint nBufferSize = 64;
     bool bNeedResize = false;
-    MIchar *pBuffer = static_cast<MIchar *>(::malloc(nBufferSize));
+    char *pBuffer = static_cast<char *>(::malloc(nBufferSize));
     do
     {
         lldb::SBError error;
@@ -129,7 +129,7 @@ CMICmnLLDBProxySBValue::GetCString(const lldb::SBValue &vrValue, CMIUtilString &
         {
             bNeedResize = true;
             nBufferSize = nBufferSize << 1;
-            pBuffer = static_cast<MIchar *>(::realloc(pBuffer, nBufferSize));
+            pBuffer = static_cast<char *>(::realloc(pBuffer, nBufferSize));
         }
         else
             bNeedResize = false;

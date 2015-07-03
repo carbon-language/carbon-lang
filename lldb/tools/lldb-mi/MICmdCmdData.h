@@ -68,7 +68,7 @@ class CMICmdCmdDataEvaluateExpression : public CMICmdBase
 
     // Methods:
   private:
-    bool HaveInvalidCharacterInExpression(const CMIUtilString &vrExpr, MIchar &vrwInvalidChar);
+    bool HaveInvalidCharacterInExpression(const CMIUtilString &vrExpr, char &vrwInvalidChar);
 
     // Attributes:
   private:
@@ -78,7 +78,7 @@ class CMICmdCmdDataEvaluateExpression : public CMICmdBase
     CMICmnMIValueTuple m_miValueTuple;
     bool m_bCompositeVarType; // True = yes composite type, false = internal type
     bool m_bFoundInvalidChar; // True = yes found unexpected character in the expression, false = all ok
-    MIchar m_cExpressionInvalidChar;
+    char m_cExpressionInvalidChar;
     const CMIUtilString m_constStrArgThread; // Not specified in MI spec but Eclipse gives this option. Not handled by command.
     const CMIUtilString m_constStrArgFrame;  // Not specified in MI spec but Eclipse gives this option. Not handled by command.
     const CMIUtilString m_constStrArgExpr;
@@ -155,7 +155,7 @@ class CMICmdCmdDataReadMemoryBytes : public CMICmdBase
     const CMIUtilString m_constStrArgByteOffset;
     const CMIUtilString m_constStrArgAddrExpr;
     const CMIUtilString m_constStrArgNumBytes;
-    MIuchar *m_pBufferMemory;
+    unsigned char *m_pBufferMemory;
     MIuint64 m_nAddrStart;
     MIuint64 m_nAddrNumBytesToRead;
 };
@@ -368,7 +368,7 @@ class CMICmdCmdDataWriteMemory : public CMICmdBase
     MIuint64 m_nAddr;
     CMIUtilString m_strContents;
     MIuint64 m_nCount;
-    MIuchar *m_pBufferMemory;
+    unsigned char *m_pBufferMemory;
 };
 
 //++ ============================================================================

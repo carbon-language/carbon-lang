@@ -559,7 +559,7 @@ CMIDriver::DoMainLoop(void)
     while (bOk && !m_bExitApp)
     {
         CMIUtilString errorText;
-        const MIchar *pCmd = m_rStdin.ReadLine (errorText);
+        const char *pCmd = m_rStdin.ReadLine (errorText);
         if (pCmd != nullptr)
         {
             CMIUtilString lineText(pCmd);
@@ -649,8 +649,8 @@ CMIDriver::InterpretCommandFallThruDriver(const CMIUtilString &vTextLine, bool &
     //      errMsg = errMsg.StripCREndOfLine();
     //      errMsg = errMsg.StripCRAll();
     //      const CMIDriverBase * pOtherDriver = GetDriverToFallThruTo();
-    //      const MIchar * pName = pOtherDriver->GetDriverName().c_str();
-    //      const MIchar * pId = pOtherDriver->GetDriverId().c_str();
+    //      const char * pName = pOtherDriver->GetDriverName().c_str();
+    //      const char * pId = pOtherDriver->GetDriverId().c_str();
     //      const CMIUtilString msg( CMIUtilString::Format( MIRSRC( IDS_DRIVER_ERR_FALLTHRU_DRIVER_ERR ), pName, pId, errMsg.c_str() )
     //);
     //      m_pLog->WriteMsg( msg );

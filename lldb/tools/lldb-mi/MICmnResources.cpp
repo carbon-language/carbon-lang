@@ -422,7 +422,7 @@ CMICmnResources::GetStringFromResource(const MIuint vResourceId, CMIUtilString &
 
     const MIuint nRsrcId((*it).first);
     MIunused(nRsrcId);
-    const MIchar *pRsrcData((*it).second);
+    const char *pRsrcData((*it).second);
 
     // Return result
     vrwResourceString = pRsrcData;

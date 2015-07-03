@@ -104,7 +104,7 @@ CMICmdCmdSymbolListLines::Acknowledge(void)
 {
     if (m_lldbResult.GetErrorSize() > 0)
     {
-        const MIchar *pLldbErr = m_lldbResult.GetError();
+        const char *pLldbErr = m_lldbResult.GetError();
         const CMIUtilString strMsg(CMIUtilString(pLldbErr).StripCRAll());
         const CMICmnMIValueConst miValueConst(strMsg);
         const CMICmnMIValueResult miValueResult("message", miValueConst);

@@ -330,8 +330,8 @@ CMICmdCmdListThreadGroups::Acknowledge(void)
         if (rSessionInfo.GetTarget().IsValid())
         {
             lldb::SBTarget sbTrgt = rSessionInfo.GetTarget();
-            const MIchar *pDir = sbTrgt.GetExecutable().GetDirectory();
-            const MIchar *pFileName = sbTrgt.GetExecutable().GetFilename();
+            const char *pDir = sbTrgt.GetExecutable().GetDirectory();
+            const char *pFileName = sbTrgt.GetExecutable().GetFilename();
             const CMIUtilString strFile(CMIUtilString::Format("%s/%s", pDir, pFileName));
             const CMICmnMIValueConst miValueConst4(strFile);
             const CMICmnMIValueResult miValueResult4("executable", miValueConst4);

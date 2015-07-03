@@ -106,8 +106,8 @@ CMICmdCmdFileExecAndSymbols::Execute(void)
     CMICmnLLDBDebugSessionInfo &rSessionInfo(CMICmnLLDBDebugSessionInfo::Instance());
     lldb::SBDebugger &rDbgr = rSessionInfo.GetDebugger();
     lldb::SBError error;
-    const MIchar *pTargetTriple = nullptr; // Let LLDB discover the triple required
-    const MIchar *pTargetPlatformName = platformName.c_str();
+    const char *pTargetTriple = nullptr; // Let LLDB discover the triple required
+    const char *pTargetPlatformName = platformName.c_str();
     const bool bAddDepModules = false;
     lldb::SBTarget target = rDbgr.CreateTarget(strExeFilePath.c_str(), pTargetTriple, pTargetPlatformName, bAddDepModules, error);
     CMIUtilString strWkDir;

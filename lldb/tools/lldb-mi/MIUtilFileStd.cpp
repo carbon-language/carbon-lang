@@ -147,7 +147,7 @@ CMIUtilFileStd::Write(const CMIUtilString &vData)
 // Throws:  None.
 //--
 bool
-CMIUtilFileStd::Write(const MIchar *vpData, const MIuint vCharCnt)
+CMIUtilFileStd::Write(const char *vpData, const MIuint vCharCnt)
 {
     if (vCharCnt == 0)
         return MIstatus::success;
@@ -273,10 +273,10 @@ CMIUtilFileStd::StripOffFileName(const CMIUtilString &vDirectoryPath)
 //          is running on.
 // Type:    Static method.
 // Args:    None.
-// Return:  MIchar - '/' or '\' character.
+// Return:  char - '/' or '\' character.
 // Throws:  None.
 //--
-MIchar
+char
 CMIUtilFileStd::GetSlash(void)
 {
 #if !defined(_MSC_VER)

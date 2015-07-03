@@ -198,7 +198,7 @@ CMICmdCmdExecContinue::~CMICmdCmdExecContinue(void)
 bool
 CMICmdCmdExecContinue::Execute(void)
 {
-    const MIchar *pCmd = "continue";
+    const char *pCmd = "continue";
     CMICmnLLDBDebugSessionInfo &rSessionInfo(CMICmnLLDBDebugSessionInfo::Instance());
     const lldb::ReturnStatus rtn = rSessionInfo.GetDebugger().GetCommandInterpreter().HandleCommand(pCmd, m_lldbResult);
     MIunused(rtn);
@@ -217,7 +217,7 @@ CMICmdCmdExecContinue::Execute(void)
     {
         // ToDo: Re-evaluate if this is required when application near finished as this is parsing LLDB error message
         // which seems a hack and is code brittle
-        const MIchar *pLldbErr = m_lldbResult.GetError();
+        const char *pLldbErr = m_lldbResult.GetError();
         const CMIUtilString strLldbMsg(CMIUtilString(pLldbErr).StripCREndOfLine());
         if (strLldbMsg == "error: Process must be launched.")
         {
@@ -367,7 +367,7 @@ CMICmdCmdExecNext::Acknowledge(void)
 {
     if (m_lldbResult.GetErrorSize() > 0)
     {
-        const MIchar *pLldbErr = m_lldbResult.GetError();
+        const char *pLldbErr = m_lldbResult.GetError();
         MIunused(pLldbErr);
         const CMICmnMIValueConst miValueConst(m_lldbResult.GetError());
         const CMICmnMIValueResult miValueResult("message", miValueConst);
@@ -494,7 +494,7 @@ CMICmdCmdExecStep::Acknowledge(void)
 {
     if (m_lldbResult.GetErrorSize() > 0)
     {
-        const MIchar *pLldbErr = m_lldbResult.GetError();
+        const char *pLldbErr = m_lldbResult.GetError();
         MIunused(pLldbErr);
         const CMICmnMIValueConst miValueConst(m_lldbResult.GetError());
         const CMICmnMIValueResult miValueResult("message", miValueConst);
@@ -621,7 +621,7 @@ CMICmdCmdExecNextInstruction::Acknowledge(void)
 {
     if (m_lldbResult.GetErrorSize() > 0)
     {
-        const MIchar *pLldbErr = m_lldbResult.GetError();
+        const char *pLldbErr = m_lldbResult.GetError();
         MIunused(pLldbErr);
         const CMICmnMIValueConst miValueConst(m_lldbResult.GetError());
         const CMICmnMIValueResult miValueResult("message", miValueConst);
@@ -748,7 +748,7 @@ CMICmdCmdExecStepInstruction::Acknowledge(void)
 {
     if (m_lldbResult.GetErrorSize() > 0)
     {
-        const MIchar *pLldbErr = m_lldbResult.GetError();
+        const char *pLldbErr = m_lldbResult.GetError();
         MIunused(pLldbErr);
         const CMICmnMIValueConst miValueConst(m_lldbResult.GetError());
         const CMICmnMIValueResult miValueResult("message", miValueConst);
@@ -876,7 +876,7 @@ CMICmdCmdExecFinish::Acknowledge(void)
 {
     if (m_lldbResult.GetErrorSize() > 0)
     {
-        const MIchar *pLldbErr = m_lldbResult.GetError();
+        const char *pLldbErr = m_lldbResult.GetError();
         MIunused(pLldbErr);
         const CMICmnMIValueConst miValueConst(m_lldbResult.GetError());
         const CMICmnMIValueResult miValueResult("message", miValueConst);

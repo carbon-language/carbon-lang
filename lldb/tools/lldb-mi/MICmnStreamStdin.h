@@ -39,7 +39,7 @@ class CMICmnStreamStdin : public CMICmnBase, public MI::ISingleton<CMICmnStreamS
     bool SetPrompt(const CMIUtilString &vNewPrompt);
     void SetEnablePrompt(const bool vbYes);
     bool GetEnablePrompt(void) const;
-    const MIchar *ReadLine(CMIUtilString &vwErrMsg);
+    const char *ReadLine(CMIUtilString &vwErrMsg);
 
     // Methods:
   private:
@@ -57,5 +57,5 @@ class CMICmnStreamStdin : public CMICmnBase, public MI::ISingleton<CMICmnStreamS
     CMIUtilString m_strPromptCurrent; // Command line prompt as shown to the user
     bool m_bShowPrompt;               // True = Yes prompt is shown/output to the user (stdout), false = no prompt
     static const int m_constBufferSize = 2048;
-    MIchar *m_pCmdBuffer;
+    char *m_pCmdBuffer;
 };

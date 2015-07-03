@@ -143,7 +143,7 @@ CMICmnMIOutOfBandRecord::GetString(void) const
 bool
 CMICmnMIOutOfBandRecord::BuildAsyncRecord(void)
 {
-    const MIchar *pFormat = "%s%s";
+    const char *pFormat = "%s%s";
     const CMIUtilString &rStrAsyncRecord(ms_MapOutOfBandToOutOfBandText[m_eResultAsyncRecordClass]);
     const CMIUtilString &rStrToken(ms_constMapAsyncRecordTextToToken[m_eResultAsyncRecordClass]);
     m_strAsyncRecord = CMIUtilString::Format(pFormat, rStrToken.c_str(), rStrAsyncRecord.c_str());

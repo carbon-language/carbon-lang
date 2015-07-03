@@ -72,7 +72,7 @@ CMICmnStreamStdin::Initialize(void)
 
     if (bOk)
     {
-        m_pCmdBuffer = new MIchar[m_constBufferSize];
+        m_pCmdBuffer = new char[m_constBufferSize];
     }
     else
     {
@@ -198,16 +198,16 @@ CMICmnStreamStdin::GetEnablePrompt(void) const
 // Details: Wait on new line of data from stdin stream (completed by '\n' or '\r').
 // Type:    Method.
 // Args:    vwErrMsg    - (W) Empty string ok or error description.
-// Return:  MIchar * - text buffer pointer or NULL on failure.
+// Return:  char * - text buffer pointer or NULL on failure.
 // Throws:  None.
 //--
-const MIchar *
+const char *
 CMICmnStreamStdin::ReadLine(CMIUtilString &vwErrMsg)
 {
     vwErrMsg.clear();
 
     // Read user input
-    const MIchar *pText = ::fgets(&m_pCmdBuffer[0], m_constBufferSize, stdin);
+    const char *pText = ::fgets(&m_pCmdBuffer[0], m_constBufferSize, stdin);
     if (pText == nullptr)
     {
 #ifdef _MSC_VER
@@ -228,7 +228,7 @@ CMICmnStreamStdin::ReadLine(CMIUtilString &vwErrMsg)
     }
 
     // Strip off new line characters
-    for (MIchar *pI = m_pCmdBuffer; *pI != '\0'; pI++)
+    for (char *pI = m_pCmdBuffer; *pI != '\0'; pI++)
     {
         if ((*pI == '\n') || (*pI == '\r'))
         {

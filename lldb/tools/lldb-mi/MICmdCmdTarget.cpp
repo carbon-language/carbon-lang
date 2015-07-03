@@ -111,7 +111,7 @@ CMICmdCmdTargetSelect::Execute(void)
     const CMIUtilString strUrl = CMIUtilString::Format("connect://%s", pArgParameters->GetValue().c_str());
 
     // Ask LLDB to collect to the target port
-    const MIchar *pPlugin("gdb-remote");
+    const char *pPlugin("gdb-remote");
     lldb::SBError error;
     lldb::SBProcess process = rSessionInfo.GetTarget().ConnectRemote(rSessionInfo.GetListener(), strUrl.c_str(), pPlugin, error);
 

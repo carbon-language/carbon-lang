@@ -393,7 +393,7 @@ CMICmnLLDBDebugger::RegisterForEvent(const CMIUtilString &vClientName, const CMI
     if (!ClientSaveMask(vClientName, vBroadcasterClass, vEventMask))
         return MIstatus::failure;
 
-    const MIchar *pBroadCasterName = vBroadcasterClass.c_str();
+    const char *pBroadCasterName = vBroadcasterClass.c_str();
     MIuint eventMask = vEventMask;
     eventMask += existingMask;
     const MIuint result = m_lldbListener.StartListeningForEventClass(m_lldbDebugger, pBroadCasterName, eventMask);
@@ -420,7 +420,7 @@ CMICmnLLDBDebugger::RegisterForEvent(const CMIUtilString &vClientName, const CMI
 bool
 CMICmnLLDBDebugger::RegisterForEvent(const CMIUtilString &vClientName, const lldb::SBBroadcaster &vBroadcaster, const MIuint vEventMask)
 {
-    const MIchar *pBroadcasterName = vBroadcaster.GetName();
+    const char *pBroadcasterName = vBroadcaster.GetName();
     if (pBroadcasterName == nullptr)
     {
         SetErrorDescription(CMIUtilString::Format(MIRSRC(IDS_LLDBDEBUGGER_ERR_BROARDCASTER_NAME), MIRSRC(IDS_WORD_INVALIDNULLPTR)));
@@ -485,7 +485,7 @@ CMICmnLLDBDebugger::UnregisterForEvent(const CMIUtilString &vClientName, const C
         }
     }
 
-    const MIchar *pBroadCasterName = vBroadcasterClass.c_str();
+    const char *pBroadCasterName = vBroadcasterClass.c_str();
     if (!m_lldbListener.StopListeningForEventClass(m_lldbDebugger, pBroadCasterName, newEventMask))
     {
         SetErrorDescription(CMIUtilString::Format(MIRSRC(IDS_LLDBDEBUGGER_ERR_STOPLISTENER), vClientName.c_str(), pBroadCasterName));

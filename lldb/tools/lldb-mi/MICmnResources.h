@@ -297,8 +297,8 @@ class CMICmnResources : public CMICmnBase, public MI::ISingleton<CMICmnResources
 
     // Typedef:
   private:
-    typedef std::map<MIuint, const MIchar *> MapRscrIdToTextData_t;
-    typedef std::pair<MIuint, const MIchar *> MapPairRscrIdToTextData_t;
+    typedef std::map<MIuint, const char *> MapRscrIdToTextData_t;
+    typedef std::pair<MIuint, const char *> MapPairRscrIdToTextData_t;
 
     // Enumerations:
   private:
@@ -312,7 +312,7 @@ class CMICmnResources : public CMICmnBase, public MI::ISingleton<CMICmnResources
     struct SRsrcTextData
     {
         MIuint id;
-        const MIchar *pTextData;
+        const char *pTextData;
     };
 
     // Methods:

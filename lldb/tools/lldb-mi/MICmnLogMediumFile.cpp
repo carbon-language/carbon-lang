@@ -276,7 +276,7 @@ CMICmnLogMediumFile::MassagedData(const CMIUtilString &vData, const CMICmnLog::E
 {
     const CMIUtilString strCr("\n");
     CMIUtilString data;
-    const MIchar verbosityCode(ConvertLogVerbosityTypeToId(veType));
+    const char verbosityCode(ConvertLogVerbosityTypeToId(veType));
     const CMIUtilString dt(CMIUtilString::Format("%s %s", m_strDate.c_str(), m_dateTime.GetTime().c_str()));
 
     data = CMIUtilString::Format("%c,%s,%s", verbosityCode, dt.c_str(), vData.c_str());
@@ -300,10 +300,10 @@ CMICmnLogMediumFile::MassagedData(const CMIUtilString &vData, const CMICmnLog::E
 // Return:  wchar_t - A letter.
 // Throws:  None.
 //--
-MIchar
+char
 CMICmnLogMediumFile::ConvertLogVerbosityTypeToId(const CMICmnLog::ELogVerbosity veType) const
 {
-    MIchar c = 0;
+    char c = 0;
     if (veType != 0)
     {
         MIuint cnt = 0;

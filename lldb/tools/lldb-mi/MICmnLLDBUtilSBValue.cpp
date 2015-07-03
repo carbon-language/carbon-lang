@@ -59,7 +59,7 @@ CMICmnLLDBUtilSBValue::~CMICmnLLDBUtilSBValue(void)
 CMIUtilString
 CMICmnLLDBUtilSBValue::GetName(void) const
 {
-    const MIchar *pName = m_bValidSBValue ? m_rValue.GetName() : nullptr;
+    const char *pName = m_bValidSBValue ? m_rValue.GetName() : nullptr;
     const CMIUtilString text((pName != nullptr) ? pName : m_pUnkwn);
 
     return text;
@@ -129,7 +129,7 @@ CMICmnLLDBUtilSBValue::GetSimpleValue(const bool vbHandleArrayType, CMIUtilStrin
         }
         else
         {
-            const MIchar *pValue = m_rValue.GetValue();
+            const char *pValue = m_rValue.GetValue();
             vwrValue = pValue != nullptr ? pValue : m_pUnkwn;
             return MIstatus::success;
         }
@@ -143,7 +143,7 @@ CMICmnLLDBUtilSBValue::GetSimpleValue(const bool vbHandleArrayType, CMIUtilStrin
         }
         else
         {
-            const MIchar *pValue = m_rValue.GetValue();
+            const char *pValue = m_rValue.GetValue();
             vwrValue = pValue != nullptr ? pValue : m_pUnkwn;
             return MIstatus::success;
         }
@@ -223,7 +223,7 @@ CMICmnLLDBUtilSBValue::GetSimpleValueChar(void) const
 CMIUtilString
 CMICmnLLDBUtilSBValue::GetSimpleValueCStringPointer(void) const
 {
-    const MIchar *value = m_rValue.GetValue();
+    const char *value = m_rValue.GetValue();
     if (value == nullptr)
         return m_pUnkwn;
 
@@ -521,7 +521,7 @@ CMICmnLLDBUtilSBValue::IsValueUnknown(void) const
 CMIUtilString
 CMICmnLLDBUtilSBValue::GetTypeName(void) const
 {
-    const MIchar *pName = m_bValidSBValue ? m_rValue.GetTypeName() : nullptr;
+    const char *pName = m_bValidSBValue ? m_rValue.GetTypeName() : nullptr;
     const CMIUtilString text((pName != nullptr) ? pName : m_pUnkwn);
 
     return text;
@@ -537,7 +537,7 @@ CMICmnLLDBUtilSBValue::GetTypeName(void) const
 CMIUtilString
 CMICmnLLDBUtilSBValue::GetTypeNameDisplay(void) const
 {
-    const MIchar *pName = m_bValidSBValue ? m_rValue.GetDisplayTypeName() : nullptr;
+    const char *pName = m_bValidSBValue ? m_rValue.GetDisplayTypeName() : nullptr;
     const CMIUtilString text((pName != nullptr) ? pName : m_pUnkwn);
 
     return text;
@@ -569,7 +569,7 @@ CMICmnLLDBUtilSBValue::HasName(void) const
 {
     bool bHasAName = false;
 
-    const MIchar *pName = m_bValidSBValue ? m_rValue.GetDisplayTypeName() : nullptr;
+    const char *pName = m_bValidSBValue ? m_rValue.GetDisplayTypeName() : nullptr;
     if (pName != nullptr)
     {
         bHasAName = (CMIUtilString(pName).length() > 0);
