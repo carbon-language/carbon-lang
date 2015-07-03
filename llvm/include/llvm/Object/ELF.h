@@ -234,6 +234,10 @@ public:
   const T        *getEntry(uint32_t Section, uint32_t Entry) const;
   template <typename T>
   const T *getEntry(const Elf_Shdr *Section, uint32_t Entry) const;
+
+  const Elf_Shdr *getDotSymtabSec() const { return dot_symtab_sec; }
+  const Elf_Shdr *getDotDynSymSec() const { return DotDynSymSec; }
+
   ErrorOr<StringRef> getStringTable(const Elf_Shdr *Section) const;
   const char *getDynamicString(uintX_t Offset) const;
   ErrorOr<StringRef> getSymbolVersion(const Elf_Shdr *section,

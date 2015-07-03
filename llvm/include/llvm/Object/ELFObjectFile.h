@@ -244,13 +244,25 @@ protected:
   }
 
   const Elf_Sym *toELFSymIter(DataRefImpl Sym) const {
-    return reinterpret_cast<const Elf_Sym *>(Sym.p & ~uintptr_t(1));
+    return EF.template getEntry<Elf_Sym>(Sym.d.a, Sym.d.b);
   }
 
-  DataRefImpl toDRI(const Elf_Sym *Sym, bool IsDynamic) const {
+  DataRefImpl toDRI(const Elf_Shdr *SymTable, unsigned SymbolNum) const {
     DataRefImpl DRI;
-    DRI.p =
-        reinterpret_cast<uintptr_t>(Sym) | static_cast<uintptr_t>(IsDynamic);
+    if (!SymTable) {
+      DRI.d.a = 0;
+      DRI.d.b = 0;
+      return DRI;
+    }
+    uint32_t Type = SymTable->sh_type;
+    assert(Type == ELF::SHT_SYMTAB || Type == ELF::SHT_DYNSYM);
+
+    uintptr_t SHT = reinterpret_cast<uintptr_t>(EF.section_begin());
+    unsigned SymTableIndex =
+        (reinterpret_cast<uintptr_t>(SymTable) - SHT) / sizeof(Elf_Shdr);
+
+    DRI.d.a = SymTableIndex;
+    DRI.d.b = SymbolNum;
     return DRI;
   }
 
@@ -343,14 +355,16 @@ typedef ELFObjectFile<ELFType<support::big, true>> ELF64BEObjectFile;
 
 template <class ELFT>
 void ELFObjectFile<ELFT>::moveSymbolNext(DataRefImpl &Sym) const {
-  const Elf_Sym *S = toELFSymIter(Sym);
-  Sym = toDRI(++S, Sym.p & 1);
+  ++Sym.d.b;
 }
 
 template <class ELFT>
 ErrorOr<StringRef> ELFObjectFile<ELFT>::getSymbolName(DataRefImpl Sym) const {
   const Elf_Sym *ESym = toELFSymIter(Sym);
-  return EF.getSymbolName(ESym, Sym.p & 1);
+  const Elf_Shdr *SymTableSec = *EF.getSection(Sym.d.a);
+  const Elf_Shdr *StringTableSec = *EF.getSection(SymTableSec->sh_link);
+  StringRef SymTable = *EF.getStringTable(StringTableSec);
+  return ESym->getName(SymTable);
 }
 
 template <class ELFT>
@@ -481,8 +495,7 @@ uint32_t ELFObjectFile<ELFT>::getSymbolFlags(DataRefImpl Sym) const {
     Result |= SymbolRef::SF_FormatSpecific;
 
   if (EF.getHeader()->e_machine == ELF::EM_ARM) {
-    ErrorOr<StringRef> NameOrErr = EF.getSymbolName(ESym, Sym.p & 1);
-    if (NameOrErr) {
+    if (ErrorOr<StringRef> NameOrErr = getSymbolName(Sym)) {
       StringRef Name = *NameOrErr;
       if (Name.startswith("$d") || Name.startswith("$t") ||
           Name.startswith("$a"))
@@ -669,9 +682,9 @@ ELFObjectFile<ELFT>::getRelocationSymbol(DataRefImpl Rel) const {
   bool IsDyn = Rel.d.b & 1;
   DataRefImpl SymbolData;
   if (IsDyn)
-    SymbolData = toDRI(EF.dynamic_symbol_begin() + symbolIdx, true);
+    SymbolData = toDRI(EF.getDotDynSymSec(), symbolIdx);
   else
-    SymbolData = toDRI(EF.symbol_begin() + symbolIdx, false);
+    SymbolData = toDRI(EF.getDotSymtabSec(), symbolIdx);
   return symbol_iterator(SymbolRef(SymbolData, this));
 }
 
@@ -768,26 +781,30 @@ ELFObjectFile<ELFT>::ELFObjectFile(MemoryBufferRef Object, std::error_code &EC)
 
 template <class ELFT>
 basic_symbol_iterator ELFObjectFile<ELFT>::symbol_begin_impl() const {
-  DataRefImpl Sym = toDRI(EF.symbol_begin(), false);
+  DataRefImpl Sym = toDRI(EF.getDotSymtabSec(), 0);
   return basic_symbol_iterator(SymbolRef(Sym, this));
 }
 
 template <class ELFT>
 basic_symbol_iterator ELFObjectFile<ELFT>::symbol_end_impl() const {
-  DataRefImpl Sym = toDRI(EF.symbol_end(), false);
+  const Elf_Shdr *SymTab = EF.getDotSymtabSec();
+  if (!SymTab)
+    return symbol_begin_impl();
+  DataRefImpl Sym = toDRI(SymTab, SymTab->sh_size / sizeof(Elf_Sym));
   return basic_symbol_iterator(SymbolRef(Sym, this));
 }
 
 template <class ELFT>
 elf_symbol_iterator ELFObjectFile<ELFT>::dynamic_symbol_begin() const {
-  DataRefImpl Sym = toDRI(EF.dynamic_symbol_begin(), true);
+  DataRefImpl Sym = toDRI(EF.getDotDynSymSec(), 0);
   return symbol_iterator(SymbolRef(Sym, this));
 }
 
 template <class ELFT>
 elf_symbol_iterator ELFObjectFile<ELFT>::dynamic_symbol_end() const {
-  DataRefImpl Sym = toDRI(EF.dynamic_symbol_end(), true);
-  return symbol_iterator(SymbolRef(Sym, this));
+  const Elf_Shdr *SymTab = EF.getDotDynSymSec();
+  DataRefImpl Sym = toDRI(SymTab, SymTab->sh_size / sizeof(Elf_Sym));
+  return basic_symbol_iterator(SymbolRef(Sym, this));
 }
 
 template <class ELFT>
