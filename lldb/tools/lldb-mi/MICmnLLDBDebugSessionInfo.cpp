@@ -383,7 +383,7 @@ CMICmnLLDBDebugSessionInfo::MIResponseFormThreadInfo(const SMICmdData &vCmdData,
     const MIchar *pThreadName = rThread.GetName();
     const MIuint len = (pThreadName != nullptr) ? CMIUtilString(pThreadName).length() : 0;
     const bool bHaveName = ((pThreadName != nullptr) && (len > 0) && (len < 32) &&
-                            CMIUtilString::IsAllValidAlphaAndNumeric(*pThreadName)); // 32 is arbitary number
+                            CMIUtilString::IsAllValidAlphaAndNumeric(pThreadName)); // 32 is arbitary number
     const MIchar *pThrdFmt = bHaveName ? "%s" : "Thread %d";
     CMIUtilString strThread;
     if (bHaveName)

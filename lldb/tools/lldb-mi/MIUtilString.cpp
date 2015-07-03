@@ -475,21 +475,20 @@ CMIUtilString::ExtractNumberFromHexadecimal(MIint64 &vwrNumber) const
 // Details: Determine if the text is all valid alpha numeric characters. Letters can be
 //          either upper or lower case.
 // Type:    Static method.
-// Args:    vrText  - (R) The text data to examine.
+// Args:    vpText  - (R) The text data to examine.
 // Return:  bool - True = yes all alpha, false = one or more chars is non alpha.
 // Throws:  None.
 //--
 bool
-CMIUtilString::IsAllValidAlphaAndNumeric(const MIchar &vrText)
+CMIUtilString::IsAllValidAlphaAndNumeric(const MIchar *vpText)
 {
-    const MIuint len = ::strlen(&vrText);
+    const MIuint len = ::strlen(vpText);
     if (len == 0)
         return false;
 
-    MIchar *pPtr = const_cast<MIchar *>(&vrText);
-    for (MIuint i = 0; i < len; i++, pPtr++)
+    for (MIuint i = 0; i < len; i++, vpText++)
     {
-        const MIchar c = *pPtr;
+        const MIchar c = *vpText;
         if (::isalnum((int)c) == 0)
             return false;
     }

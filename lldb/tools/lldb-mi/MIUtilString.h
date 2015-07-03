@@ -35,7 +35,7 @@ class CMIUtilString : public std::string
     static CMIUtilString Format(const CMIUtilString vFormating, ...);
     static CMIUtilString FormatBinary(const MIuint64 vnDecimal);
     static CMIUtilString FormatValist(const CMIUtilString &vrFormating, va_list vArgs);
-    static bool IsAllValidAlphaAndNumeric(const MIchar &vrText);
+    static bool IsAllValidAlphaAndNumeric(const MIchar *vpText);
     static bool Compare(const CMIUtilString &vrLhs, const CMIUtilString &vrRhs);
     static CMIUtilString ConvertToPrintableASCII(const char vChar);
     static CMIUtilString ConvertToPrintableASCII(const char16_t vChar16);
