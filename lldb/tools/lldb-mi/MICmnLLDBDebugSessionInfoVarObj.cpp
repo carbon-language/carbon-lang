@@ -234,22 +234,22 @@ CMICmnLLDBDebugSessionInfoVarObj::GetVarFormatForString(const CMIUtilString &vrS
 //++ ------------------------------------------------------------------------------------
 // Details: Retrieve the var format enumeration for the specified character.
 // Type:    Static method.
-// Args:    vrcFormat   - (R) Character representing the var format.
+// Args:    vcFormat    - Character representing the var format.
 // Return:  varFormat_e - Var format enumeration.
 //                      - No match found return eVarFormat_Invalid.
 // Throws:  None.
 //--
 CMICmnLLDBDebugSessionInfoVarObj::varFormat_e
-CMICmnLLDBDebugSessionInfoVarObj::GetVarFormatForChar(const char &vrcFormat)
+CMICmnLLDBDebugSessionInfoVarObj::GetVarFormatForChar(char vcFormat)
 {
-    if ('r' == vrcFormat)
+    if ('r' == vcFormat)
         return eVarFormat_Hex;
 
     // CODETAG_SESSIONINFO_VARFORMAT_ENUM
     for (MIuint i = 0; i < eVarFormat_count; i++)
     {
         const char *pVarFormatChar = ms_aVarFormatChars[i];
-        if (*pVarFormatChar == vrcFormat)
+        if (*pVarFormatChar == vcFormat)
             return static_cast<varFormat_e>(i);
     }
 

@@ -57,7 +57,7 @@ class CMICmnLLDBDebugSessionInfoVarObj
     // Statics:
   public:
     static varFormat_e GetVarFormatForString(const CMIUtilString &vrStrFormat);
-    static varFormat_e GetVarFormatForChar(const char &vrcFormat);
+    static varFormat_e GetVarFormatForChar(char vcFormat);
     static CMIUtilString GetValueStringFormatted(const lldb::SBValue &vrValue, const varFormat_e veVarFormat);
     static void VarObjAdd(const CMICmnLLDBDebugSessionInfoVarObj &vrVarObj);
     static void VarObjDelete(const CMIUtilString &vrVarName);
