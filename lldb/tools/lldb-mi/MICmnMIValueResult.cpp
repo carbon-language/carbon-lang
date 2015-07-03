@@ -48,7 +48,7 @@ CMICmnMIValueResult::CMICmnMIValueResult(const CMIUtilString &vrVariable, const 
 // Type:    Method.
 // Args:    vrVariable      - (R) MI value's name.
 //          vrValue         - (R) The MI value.
-//          vbUseSpacing    - (R) True = put space seperators into the string, false = no spaces used.
+//          vbUseSpacing    - (R) True = put space separators into the string, false = no spaces used.
 // Return:  None.
 // Throws:  None.
 //--

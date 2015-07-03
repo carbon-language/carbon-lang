@@ -42,7 +42,7 @@ CMICmnMIValueTuple::CMICmnMIValueTuple(const CMICmnMIValueResult &vResult)
 // Details: CMICmnMIValueTuple constructor.
 // Type:    Method.
 // Args:    vResult         - (R) MI result object.
-//          vbUseSpacing    - (R) True = put space seperators into the string, false = no spaces used.
+//          vbUseSpacing    - (R) True = put space separators into the string, false = no spaces used.
 // Return:  None.
 // Throws:  None.
 //--
@@ -164,7 +164,7 @@ CMICmnMIValueTuple::Add(const CMICmnMIValueResult &vResult)
 //          will return MIstatus::failure.
 // Type:    Method.
 // Args:    vValue          - (R) The MI value object.
-//          vbUseSpacing    - (R) True = put space seperators into the string, false = no spaces used.
+//          vbUseSpacing    - (R) True = put space separators into the string, false = no spaces used.
 // Return:  MIstatus::success - Functional succeeded.
 //          MIstatus::failure - Functional failed.
 // Throws:  None.
@@ -182,7 +182,7 @@ CMICmnMIValueTuple::Add(const CMICmnMIValueResult &vResult, const bool vbUseSpac
 //          will return MIstatus::failure.
 // Type:    Method.
 // Args:    vValue          - (R) The MI value object.
-//          vbUseSpacing    - (R) True = put space seperators into the string, false = no spaces used.
+//          vbUseSpacing    - (R) True = put space separators into the string, false = no spaces used.
 // Return:  MIstatus::success - Functional succeeded.
 //          MIstatus::failure - Functional failed.
 // Throws:  None.

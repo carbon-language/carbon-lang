@@ -60,5 +60,5 @@ class CMICmnMIValueTuple : public CMICmnMIValue
 
     // Attributes:
   private:
-    bool m_bSpaceAfterComma; // True = put space seperators into the string, false = no spaces used
+    bool m_bSpaceAfterComma; // True = put space separators into the string, false = no spaces used
 };
