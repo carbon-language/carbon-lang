@@ -89,6 +89,11 @@ public:
       return false;
     }
   }
+
+  /// \brief The path to the dynamic interpreter
+  StringRef getDefaultInterpreter() const override {
+    return "/lib/ld-linux-aarch64.so.1";
+  }
 };
 } // end namespace elf
 } // end namespace lld
