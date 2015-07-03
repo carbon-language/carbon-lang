@@ -40,6 +40,7 @@ class ELFDumper {
   ErrorOr<ELFYAML::RelocationSection *> dumpRelaSection(const Elf_Shdr *Shdr);
   ErrorOr<ELFYAML::RawContentSection *>
   dumpContentSection(const Elf_Shdr *Shdr);
+  ErrorOr<ELFYAML::NoBitsSection *> dumpNoBitsSection(const Elf_Shdr *Shdr);
   ErrorOr<ELFYAML::Group *> dumpGroup(const Elf_Shdr *Shdr);
   ErrorOr<ELFYAML::MipsABIFlags *> dumpMipsABIFlags(const Elf_Shdr *Shdr);
 
@@ -102,6 +103,13 @@ ErrorOr<ELFYAML::Object *> ELFDumper<ELFT>::dump() {
       if (std::error_code EC = G.getError())
         return EC;
       Y->Sections.push_back(std::unique_ptr<ELFYAML::Section>(G.get()));
+      break;
+    }
+    case ELF::SHT_NOBITS: {
+      ErrorOr<ELFYAML::NoBitsSection *> S = dumpNoBitsSection(&Sec);
+      if (std::error_code EC = S.getError())
+        return EC;
+      Y->Sections.push_back(std::unique_ptr<ELFYAML::Section>(S.get()));
       break;
     }
     default: {
@@ -300,6 +308,18 @@ ELFDumper<ELFT>::dumpContentSection(const Elf_Shdr *Shdr) {
     return EC;
   S->Content = yaml::BinaryRef(ContentOrErr.get());
   S->Size = S->Content.binary_size();
+
+  return S.release();
+}
+
+template <class ELFT>
+ErrorOr<ELFYAML::NoBitsSection *>
+ELFDumper<ELFT>::dumpNoBitsSection(const Elf_Shdr *Shdr) {
+  auto S = make_unique<ELFYAML::NoBitsSection>();
+
+  if (std::error_code EC = dumpCommonSection(Shdr, *S))
+    return EC;
+  S->Size = Shdr->sh_size;
 
   return S.release();
 }

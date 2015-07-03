@@ -627,6 +627,11 @@ static void sectionMapping(IO &IO, ELFYAML::RawContentSection &Section) {
   IO.mapOptional("Size", Section.Size, Hex64(Section.Content.binary_size()));
 }
 
+static void sectionMapping(IO &IO, ELFYAML::NoBitsSection &Section) {
+  commonSectionMapping(IO, Section);
+  IO.mapOptional("Size", Section.Size, Hex64(0));
+}
+
 static void sectionMapping(IO &IO, ELFYAML::RelocationSection &Section) {
   commonSectionMapping(IO, Section);
   IO.mapOptional("Relocations", Section.Relocations);
@@ -681,6 +686,11 @@ void MappingTraits<std::unique_ptr<ELFYAML::Section>>::mapping(
     if (!IO.outputting())
       Section.reset(new ELFYAML::Group());
     groupSectionMapping(IO, *cast<ELFYAML::Group>(Section.get()));
+    break;
+  case ELF::SHT_NOBITS:
+    if (!IO.outputting())
+      Section.reset(new ELFYAML::NoBitsSection());
+    sectionMapping(IO, *cast<ELFYAML::NoBitsSection>(Section.get()));
     break;
   case ELF::SHT_MIPS_ABIFLAGS:
     if (!IO.outputting())
