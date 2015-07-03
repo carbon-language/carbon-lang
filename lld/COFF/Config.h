@@ -33,6 +33,12 @@ struct Export {
   bool Noname = false;
   bool Data = false;
   bool Private = false;
+
+  bool operator==(const Export &E) {
+    return (Name == E.Name && ExtName == E.ExtName &&
+            Ordinal == E.Ordinal && Noname == E.Noname &&
+            Data == E.Data && Private == E.Private);
+  }
 };
 
 // Global configuration.

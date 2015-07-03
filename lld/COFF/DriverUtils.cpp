@@ -396,14 +396,19 @@ std::error_code fixupExports() {
   }
 
   // Uniquefy by name.
-  std::set<StringRef> Names;
+  std::map<StringRef, Export *> Map;
   std::vector<Export> V;
   for (Export &E : Config->Exports) {
-    if (!Names.insert(E.Name).second) {
-      llvm::errs() << "warning: duplicate /export option: " << E.Name << "\n";
+    auto It = Map.find(E.Name);
+    if (It == Map.end()) {
+      Map.insert(It, std::make_pair(E.Name, &E));
+      V.push_back(E);
       continue;
     }
-    V.push_back(E);
+    if (E == *It->second)
+      continue;
+    llvm::errs() << "warning: duplicate /export option: " << E.Name << "\n";
+    continue;
   }
   Config->Exports = std::move(V);
 

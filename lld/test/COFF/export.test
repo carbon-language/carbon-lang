@@ -63,3 +63,10 @@ CHECK5-NEXT:       1        0
 CHECK5-NEXT:       2   0x1010  fn2
 CHECK5-NEXT:       3   0x1008  exportfn1
 CHECK5-NEXT:       4   0x1010  exportfn3
+
+# RUN: lld -flavor link2 /out:%t.dll /dll %t.obj /export:exportfn1 /export:exportfn2 \
+# RUN:   /export:exportfn1 /export:exportfn2,@5 >& %t.log
+# RUN: FileCheck -check-prefix=CHECK6 %s < %t.log
+
+CHECK6:     duplicate /export option: exportfn2
+CHECK6-NOT: duplicate /export option: exportfn1
