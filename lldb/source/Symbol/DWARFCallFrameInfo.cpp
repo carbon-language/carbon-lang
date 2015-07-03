@@ -743,8 +743,10 @@ DWARFCallFrameInfo::FDEToUnwindPlan (dw_offset_t dwarf_offset, Address startaddr
                     // useful for compilers that move epilogue code into the body of a
                     // function.)
                     {
+                        lldb::addr_t offset = row->GetOffset ();
                         row = stack.back ();
                         stack.pop_back ();
+                        row->SetOffset (offset);
                     }
                     break;
 
