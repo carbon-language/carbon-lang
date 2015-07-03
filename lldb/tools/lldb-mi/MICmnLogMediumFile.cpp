@@ -283,8 +283,8 @@ CMICmnLogMediumFile::MassagedData(const CMIUtilString &vData, const CMICmnLog::E
     data = ConvertCr(data);
 
     // Look for EOL...
-    const MIint pos = vData.rfind(strCr);
-    if (pos == (MIint)vData.size())
+    const size_t pos = vData.rfind(strCr);
+    if (pos == vData.size())
         return data;
 
     // ... did not have an EOL so add one
@@ -382,11 +382,11 @@ CMICmnLogMediumFile::ConvertCr(const CMIUtilString &vData) const
     if (strCr == rCrCmpat)
         return vData;
 
-    const MIuint nSizeCmpat(rCrCmpat.size());
-    const MIuint nSize(strCr.size());
+    const size_t nSizeCmpat(rCrCmpat.size());
+    const size_t nSize(strCr.size());
     CMIUtilString strConv(vData);
-    MIint pos = strConv.find(strCr);
-    while (pos != (MIint)CMIUtilString::npos)
+    size_t pos = strConv.find(strCr);
+    while (pos != CMIUtilString::npos)
     {
         strConv.replace(pos, nSize, rCrCmpat);
         pos = strConv.find(strCr, pos + nSizeCmpat);

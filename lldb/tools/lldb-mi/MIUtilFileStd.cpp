@@ -256,9 +256,9 @@ CMIUtilFileStd::GetLineReturn(void) const
 CMIUtilString
 CMIUtilFileStd::StripOffFileName(const CMIUtilString &vDirectoryPath)
 {
-    const MIint nPos = vDirectoryPath.rfind('\\');
-    MIint nPos2 = vDirectoryPath.rfind('/');
-    if ((nPos == (MIint)std::string::npos) && (nPos2 == (MIint)std::string::npos))
+    const size_t nPos = vDirectoryPath.rfind('\\');
+    size_t nPos2 = vDirectoryPath.rfind('/');
+    if ((nPos == std::string::npos) && (nPos2 == std::string::npos))
         return vDirectoryPath;
 
     if (nPos > nPos2)

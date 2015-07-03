@@ -85,16 +85,16 @@ CMICmdArgContext::RemoveArg(const CMIUtilString &vArg)
     if (vArg.empty())
         return MIstatus::success;
 
-    const MIuint nLen = vArg.length();
-    const MIuint nLenCntxt = m_strCmdArgsAndOptions.length();
+    const size_t nLen = vArg.length();
+    const size_t nLenCntxt = m_strCmdArgsAndOptions.length();
     if (nLen > nLenCntxt)
         return MIstatus::failure;
 
-    MIuint nExtraSpace = 0;
-    MIint nPos = m_strCmdArgsAndOptions.find(vArg);
+    size_t nExtraSpace = 0;
+    size_t nPos = m_strCmdArgsAndOptions.find(vArg);
     while (1)
     {
-        if (nPos == (MIint)std::string::npos)
+        if (nPos == std::string::npos)
             return MIstatus::success;
 
         bool bPass1 = false;
@@ -106,7 +106,7 @@ CMICmdArgContext::RemoveArg(const CMIUtilString &vArg)
         else
             bPass1 = true;
 
-        const MIuint nEnd = nPos + nLen;
+        const size_t nEnd = nPos + nLen;
 
         if (bPass1)
         {
@@ -129,7 +129,7 @@ CMICmdArgContext::RemoveArg(const CMIUtilString &vArg)
         nPos = m_strCmdArgsAndOptions.find(vArg, nEnd);
     }
 
-    const MIuint nPosEnd = nLen + nExtraSpace;
+    const size_t nPosEnd = nLen + nExtraSpace;
     m_strCmdArgsAndOptions = m_strCmdArgsAndOptions.replace(nPos, nPosEnd, "").c_str();
     m_strCmdArgsAndOptions = m_strCmdArgsAndOptions.Trim();
 

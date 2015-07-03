@@ -122,8 +122,8 @@ CMICmdArgValFile::GetFileNamePath(const CMIUtilString &vrTxt) const
 
     // Look for a space in the path
     const char cSpace = ' ';
-    const MIint nPos = fileNamePath.find(cSpace);
-    if (nPos != (MIint)std::string::npos)
+    const size_t nPos = fileNamePath.find(cSpace);
+    if (nPos != std::string::npos)
         fileNamePath = CMIUtilString::Format("\"%s\"", fileNamePath.c_str());
 
     return fileNamePath;
@@ -146,7 +146,7 @@ CMICmdArgValFile::IsFilePath(const CMIUtilString &vrFileNamePath) const
     const bool bHaveBckSlash = (vrFileNamePath.find_first_of("\\") != std::string::npos);
 
     // Look for --someLongOption
-    MIint nPos = vrFileNamePath.find_first_of("--");
+    size_t nPos = vrFileNamePath.find_first_of("--");
     const bool bLong = (nPos == 0);
     if (bLong)
         return false;

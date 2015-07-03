@@ -263,12 +263,12 @@ CMICmdArgValString::IsStringArgQuotedText(const CMIUtilString &vrTxt) const
 
     // CODETAG_QUOTEDTEXT_SIMILAR_CODE
     const char cQuote = '"';
-    const MIint nPos = vrTxt.find(cQuote);
-    if (nPos == (MIint)std::string::npos)
+    const size_t nPos = vrTxt.find(cQuote);
+    if (nPos == std::string::npos)
         return false;
 
     // Is one and only quote at end of the string
-    if (nPos == (MIint)(vrTxt.length() - 1))
+    if (nPos == (vrTxt.length() - 1))
         return false;
 
     // Quote must be the first character in the string or be preceded by a space
@@ -283,8 +283,8 @@ CMICmdArgValString::IsStringArgQuotedText(const CMIUtilString &vrTxt) const
         return false;
 
     // Need to find the other quote
-    const MIint nPos2 = vrTxt.rfind(cQuote);
-    if (nPos2 == (MIint)std::string::npos)
+    const size_t nPos2 = vrTxt.rfind(cQuote);
+    if (nPos2 == std::string::npos)
         return false;
 
     // Make sure not same quote, need two quotes
@@ -309,8 +309,8 @@ CMICmdArgValString::IsStringArgQuotedTextEmbedded(const CMIUtilString &vrTxt) co
 {
     // CODETAG_QUOTEDTEXT_SIMILAR_CODE
     const char cBckSlash = '\\';
-    const MIint nPos = vrTxt.find(cBckSlash);
-    if (nPos == (MIint)std::string::npos)
+    const size_t nPos = vrTxt.find(cBckSlash);
+    if (nPos == std::string::npos)
         return false;
 
     // Slash must be the first character in the string or be preceded by a space
@@ -319,8 +319,8 @@ CMICmdArgValString::IsStringArgQuotedTextEmbedded(const CMIUtilString &vrTxt) co
         return false;
 
     // Need to find the other matching slash
-    const MIint nPos2 = vrTxt.rfind(cBckSlash);
-    if (nPos2 == (MIint)std::string::npos)
+    const size_t nPos2 = vrTxt.rfind(cBckSlash);
+    if (nPos2 == std::string::npos)
         return false;
 
     // Make sure not same back slash, need two slashes
@@ -343,15 +343,15 @@ CMICmdArgValString::IsStringArgQuotedTextEmbedded(const CMIUtilString &vrTxt) co
 bool
 CMICmdArgValString::IsStringArgQuotedQuotedTextEmbedded(const CMIUtilString &vrTxt) const
 {
-    const MIint nPos = vrTxt.find("\"\\\"");
-    if (nPos == (MIint)std::string::npos)
+    const size_t nPos = vrTxt.find("\"\\\"");
+    if (nPos == std::string::npos)
         return false;
 
-    const MIint nPos2 = vrTxt.rfind("\\\"\"");
-    if (nPos2 == (MIint)std::string::npos)
+    const size_t nPos2 = vrTxt.rfind("\\\"\"");
+    if (nPos2 == std::string::npos)
         return false;
 
-    const MIint nLen = vrTxt.length();
+    const size_t nLen = vrTxt.length();
     if ((nLen > 5) && ((nPos + 2) == (nPos2 - 2)))
         return false;
 

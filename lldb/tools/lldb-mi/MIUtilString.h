@@ -53,18 +53,18 @@ class CMIUtilString : public std::string
     bool IsHexadecimalNumber(void) const;
     bool IsQuoted(void) const;
     CMIUtilString RemoveRepeatedCharacters(const char vChar);
-    MIuint Split(const CMIUtilString &vDelimiter, VecString_t &vwVecSplits) const;
-    MIuint SplitConsiderQuotes(const CMIUtilString &vDelimiter, VecString_t &vwVecSplits) const;
-    MIuint SplitLines(VecString_t &vwVecSplits) const;
+    size_t Split(const CMIUtilString &vDelimiter, VecString_t &vwVecSplits) const;
+    size_t SplitConsiderQuotes(const CMIUtilString &vDelimiter, VecString_t &vwVecSplits) const;
+    size_t SplitLines(VecString_t &vwVecSplits) const;
     CMIUtilString StripCREndOfLine(void) const;
     CMIUtilString StripCRAll(void) const;
     CMIUtilString Trim(void) const;
     CMIUtilString Trim(const char vChar) const;
-    MIuint FindFirst(const CMIUtilString &vrPattern, const MIuint vnPos = 0) const;
-    MIuint FindFirst(const CMIUtilString &vrPattern, const bool vbSkipQuotedText, bool &vrwbNotFoundClosedQuote,
-                     const MIuint vnPos = 0) const;
-    MIuint FindFirstNot(const CMIUtilString &vrPattern, const MIuint vnPos = 0) const;
-    CMIUtilString Escape(const bool vbEscapeQuotes = false) const;
+    size_t FindFirst(const CMIUtilString &vrPattern, size_t vnPos = 0) const;
+    size_t FindFirst(const CMIUtilString &vrPattern, bool vbSkipQuotedText, bool &vrwbNotFoundClosedQuote,
+                     size_t vnPos = 0) const;
+    size_t FindFirstNot(const CMIUtilString &vrPattern, size_t vnPos = 0) const;
+    CMIUtilString Escape(bool vbEscapeQuotes = false) const;
     CMIUtilString AddSlashes(void) const;
     CMIUtilString StripSlashes(void) const;
     //
@@ -82,6 +82,6 @@ class CMIUtilString : public std::string
     // Methods:
   private:
     bool ExtractNumberFromHexadecimal(MIint64 &vwrNumber) const;
-    CMIUtilString RemoveRepeatedCharacters(const MIint vnPos, const char vChar);
-    MIuint FindFirstQuote(const MIuint vnPos) const;
+    CMIUtilString RemoveRepeatedCharacters(size_t vnPos, const char vChar);
+    size_t FindFirstQuote(size_t vnPos) const;
 };

@@ -518,7 +518,7 @@ CMIDriverMgr::ParseArgs(const int argc, const char *argv[], bool &vwbExiting)
             }
             if (0 == strArg.compare(0,10,"--log-dir="))
             {
-                strLogDir = strArg.substr(10,CMIUtilString::npos);
+                strLogDir = strArg.substr(10, CMIUtilString::npos);
                 bHaveArgLogDir = true;
             }
             if ((0 == strArg.compare("--help")) || (0 == strArg.compare("-h")))

@@ -862,7 +862,7 @@ CMIDriver::WrapCLICommandIntoMICommand(const CMIUtilString &vTextLine) const
     // Also possible case when command not found:
     // 001
     //    ^ -- i.e. only tokens are present (or empty string at all)
-    const MIuint nCommandOffset = vTextLine.find_first_not_of(digits);
+    const size_t nCommandOffset = vTextLine.find_first_not_of(digits);
 
     // 2. Check if command is empty
     // For example:
@@ -872,7 +872,7 @@ CMIDriver::WrapCLICommandIntoMICommand(const CMIUtilString &vTextLine) const
     // or:
     // 001
     //    ^ -- command wasn't found
-    const bool bIsEmptyCommand = (nCommandOffset == (MIuint)CMIUtilString::npos);
+    const bool bIsEmptyCommand = (nCommandOffset == CMIUtilString::npos);
 
     // 3. Check and exit if it isn't a CLI command
     // For example:
