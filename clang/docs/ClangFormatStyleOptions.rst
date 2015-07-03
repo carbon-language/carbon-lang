@@ -394,6 +394,12 @@ the configuration (without a prefix: ``Auto``).
     (https://developers.google.com/protocol-buffers/).
 
 
+**MacroBlockBegin** (``std::string``)
+  A regular expression matching macros that start a block.
+
+**MacroBlockEnd** (``std::string``)
+  A regular expression matching macros that end a block.
+
 **MaxEmptyLinesToKeep** (``unsigned``)
   The maximum number of consecutive empty lines to keep.
 

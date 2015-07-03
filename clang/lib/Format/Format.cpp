@@ -27,6 +27,7 @@
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Path.h"
+#include "llvm/Support/Regex.h"
 #include "llvm/Support/YAMLTraits.h"
 #include <queue>
 #include <string>
@@ -244,6 +245,8 @@ template <> struct MappingTraits<FormatStyle> {
                    Style.IndentWrappedFunctionNames);
     IO.mapOptional("KeepEmptyLinesAtTheStartOfBlocks",
                    Style.KeepEmptyLinesAtTheStartOfBlocks);
+    IO.mapOptional("MacroBlockBegin", Style.MacroBlockBegin);
+    IO.mapOptional("MacroBlockEnd", Style.MacroBlockEnd);
     IO.mapOptional("MaxEmptyLinesToKeep", Style.MaxEmptyLinesToKeep);
     IO.mapOptional("NamespaceIndentation", Style.NamespaceIndentation);
     IO.mapOptional("ObjCBlockIndentWidth", Style.ObjCBlockIndentWidth);
@@ -468,6 +471,8 @@ FormatStyle getChromiumStyle(FormatStyle::LanguageKind Language) {
     ChromiumStyle.BinPackParameters = false;
     ChromiumStyle.DerivePointerAlignment = false;
   }
+  ChromiumStyle.MacroBlockBegin = "^IPC_BEGIN_MESSAGE_MAP$";
+  ChromiumStyle.MacroBlockBegin = "^IPC_END_MESSAGE_MAP$";
   return ChromiumStyle;
 }
 
@@ -620,7 +625,9 @@ public:
         LessStashed(false), Column(0), TrailingWhitespace(0),
         SourceMgr(SourceMgr), ID(ID), Style(Style),
         IdentTable(getFormattingLangOpts(Style)), Keywords(IdentTable),
-        Encoding(Encoding), FirstInLineIndex(0), FormattingDisabled(false) {
+        Encoding(Encoding), FirstInLineIndex(0), FormattingDisabled(false),
+        MacroBlockBeginRegex(Style.MacroBlockBegin),
+        MacroBlockEndRegex(Style.MacroBlockEnd) {
     Lex.reset(new Lexer(ID, SourceMgr.getBuffer(ID), SourceMgr,
                         getFormattingLangOpts(Style)));
     Lex->SetKeepWhitespaceMode(true);
@@ -1168,12 +1175,21 @@ private:
       Column = FormatTok->LastLineColumnWidth;
     }
 
-    if (!(Tokens.size() > 0 && Tokens.back()->Tok.getIdentifierInfo() &&
-          Tokens.back()->Tok.getIdentifierInfo()->getPPKeywordID() ==
-              tok::pp_define) &&
-        std::find(ForEachMacros.begin(), ForEachMacros.end(),
-                  FormatTok->Tok.getIdentifierInfo()) != ForEachMacros.end())
-      FormatTok->Type = TT_ForEachMacro;
+    if (Style.Language == FormatStyle::LK_Cpp) {
+      if (!(Tokens.size() > 0 && Tokens.back()->Tok.getIdentifierInfo() &&
+            Tokens.back()->Tok.getIdentifierInfo()->getPPKeywordID() ==
+                tok::pp_define) &&
+          std::find(ForEachMacros.begin(), ForEachMacros.end(),
+                    FormatTok->Tok.getIdentifierInfo()) != ForEachMacros.end()) {
+        FormatTok->Type = TT_ForEachMacro;
+      } else if (FormatTok->is(tok::identifier)) {
+        if (MacroBlockBeginRegex.match(Text)) {
+          FormatTok->Type = TT_MacroBlockBegin;
+        } else if (MacroBlockEndRegex.match(Text)) {
+          FormatTok->Type = TT_MacroBlockEnd;
+        }
+      }
+    }
 
     return FormatTok;
   }
@@ -1197,6 +1213,9 @@ private:
   SmallVector<IdentifierInfo *, 8> ForEachMacros;
 
   bool FormattingDisabled;
+
+  llvm::Regex MacroBlockBeginRegex;
+  llvm::Regex MacroBlockEndRegex;
 
   void readRawToken(FormatToken &Tok) {
     Lex->LexFromRawLexer(Tok.Tok);

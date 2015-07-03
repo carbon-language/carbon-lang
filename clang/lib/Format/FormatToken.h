@@ -59,6 +59,8 @@ enum TokenType {
   TT_LambdaLSquare,
   TT_LeadingJavaAnnotation,
   TT_LineComment,
+  TT_MacroBlockBegin,
+  TT_MacroBlockEnd,
   TT_ObjCBlockLBrace,
   TT_ObjCBlockLParen,
   TT_ObjCDecl,

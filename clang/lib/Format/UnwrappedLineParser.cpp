@@ -269,7 +269,14 @@ void UnwrappedLineParser::parseFile() {
 void UnwrappedLineParser::parseLevel(bool HasOpeningBrace) {
   bool SwitchLabelEncountered = false;
   do {
-    switch (FormatTok->Tok.getKind()) {
+    tok::TokenKind kind = FormatTok->Tok.getKind();
+    if (FormatTok->Type == TT_MacroBlockBegin) {
+      kind = tok::l_brace;
+    } else if (FormatTok->Type == TT_MacroBlockEnd) {
+      kind = tok::r_brace;
+    }
+
+    switch (kind) {
     case tok::comment:
       nextToken();
       addUnwrappedLine();
@@ -393,9 +400,15 @@ void UnwrappedLineParser::calculateBraceTypes(bool ExpectClassBody) {
 
 void UnwrappedLineParser::parseBlock(bool MustBeDeclaration, bool AddLevel,
                                      bool MunchSemi) {
-  assert(FormatTok->Tok.is(tok::l_brace) && "'{' expected");
+  assert(FormatTok->isOneOf(tok::l_brace, TT_MacroBlockBegin) &&
+         "'{' or macro block token expected");
+  const bool MacroBlock = FormatTok->is(TT_MacroBlockBegin);
+
   unsigned InitialLevel = Line->Level;
   nextToken();
+
+  if (MacroBlock && FormatTok->is(tok::l_paren))
+    parseParens();
 
   addUnwrappedLine();
 
@@ -405,12 +418,17 @@ void UnwrappedLineParser::parseBlock(bool MustBeDeclaration, bool AddLevel,
     ++Line->Level;
   parseLevel(/*HasOpeningBrace=*/true);
 
-  if (!FormatTok->Tok.is(tok::r_brace)) {
+  if (MacroBlock ? !FormatTok->is(TT_MacroBlockEnd)
+                 : !FormatTok->is(tok::r_brace)) {
     Line->Level = InitialLevel;
     return;
   }
 
   nextToken(); // Munch the closing brace.
+
+  if (MacroBlock && FormatTok->is(tok::l_paren))
+    parseParens();
+
   if (MunchSemi && FormatTok->Tok.is(tok::semi))
     nextToken();
   Line->Level = InitialLevel;
@@ -757,6 +775,11 @@ void UnwrappedLineParser::parseStructuralElement() {
       parseForOrWhileLoop();
       return;
     }
+    if (FormatTok->is(TT_MacroBlockBegin)) {
+      parseBlock(/*MustBeDeclaration=*/false, /*AddLevel=*/true,
+                 /*MunchSemi=*/false);
+      return;
+    }
     if (Style.Language == FormatStyle::LK_JavaScript &&
         FormatTok->is(Keywords.kw_import)) {
       parseJavaScriptEs6ImportExport();
@@ -860,6 +883,11 @@ void UnwrappedLineParser::parseStructuralElement() {
       parseTryCatch();
       return;
     case tok::identifier: {
+      if (FormatTok->is(TT_MacroBlockEnd)) {
+        addUnwrappedLine();
+        return;
+      }
+
       // Parse function literal unless 'function' is the first token in a line
       // in which case this should be treated as a free-standing function.
       if (Style.Language == FormatStyle::LK_JavaScript &&
