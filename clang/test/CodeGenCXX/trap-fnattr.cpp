@@ -11,19 +11,19 @@ void test_builtin(void) {
   __builtin_trap();
 }
 
-// TRAPFUNC-LABEL: define i32 {{.*}}@_Z13test_noreturnv
+// TRAPFUNC-LABEL: define {{.*}}i32 @_Z13test_noreturnv
 // TRAPFUNC: call void @llvm.trap() [[ATTR0]]
 
-// NOOPTION-LABEL: define i32 {{.*}}@_Z13test_noreturnv
+// NOOPTION-LABEL: define {{.*}}i32 @_Z13test_noreturnv
 // NOOPTION: call void @llvm.trap(){{$}}
 
 int test_noreturn(void) {
 }
 
-// TRAPFUNC-LABEL: define i32 {{.*}}@_Z17test_add_overflowii
+// TRAPFUNC-LABEL: define {{.*}}i32 @_Z17test_add_overflowii
 // TRAPFUNC: call void @llvm.trap() [[ATTR1:#[0-9]+]]
 
-// NOOPTION-LABEL: define i32 {{.*}}@_Z17test_add_overflowii
+// NOOPTION-LABEL: define {{.*}}i32 @_Z17test_add_overflowii
 // NOOPTION: call void @llvm.trap() [[ATTR2:#[0-9]+]]
 
 int test_add_overflow(int a, int b) {
