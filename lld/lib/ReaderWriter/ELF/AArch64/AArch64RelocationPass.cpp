@@ -252,10 +252,10 @@ protected:
     return got->second;
   }
 
-  /// \brief Create a GOT TPREL entry and change the relocation to a PC32 to
-  /// the GOT.
+  /// \brief Create a GOT TPREL entry to local or external TLS variable.
   std::error_code handleGOTTPREL(const Reference &ref) {
-    if (isa<DefinedAtom>(ref.target()))
+    if (isa<DefinedAtom>(ref.target()) ||
+        isa<SharedLibraryAtom>(ref.target()))
       const_cast<Reference &>(ref).setTarget(getGOTTPREL(ref.target()));
     return std::error_code();
   }
