@@ -4459,7 +4459,10 @@ std::error_code BitcodeReader::materialize(GlobalValue *GV) {
   // Upgrade any old intrinsic calls in the function.
   for (auto &I : UpgradedIntrinsics) {
     if (I.first != I.second) {
-      for (auto *U : I.first->users()) {
+      for (auto UI = I.first->user_begin(), UE = I.first->user_end();
+           UI != UE;) {
+        User *U = *UI;
+        ++UI;
         if (CallInst *CI = dyn_cast<CallInst>(U))
           UpgradeIntrinsicCall(CI, I.second);
       }
