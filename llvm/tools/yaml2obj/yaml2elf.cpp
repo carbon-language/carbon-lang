@@ -241,8 +241,6 @@ bool ELFState<ELFT>::initSectionHeaders(std::vector<Elf_Shdr> &SHeaders,
     } else if (auto S = dyn_cast<ELFYAML::MipsABIFlags>(Sec.get())) {
       if (!writeSectionContent(SHeader, *S, CBA))
         return false;
-    } else if (isa<ELFYAML::NoBitsSection>(Sec.get())) {
-      // SHT_NOBITS section does not have content so nothing to do here.
     } else
       llvm_unreachable("Unknown section type");
 

@@ -85,13 +85,7 @@ struct SectionOrType {
 };
 
 struct Section {
-  enum class SectionKind {
-    Group,
-    RawContent,
-    Relocation,
-    NoBits,
-    MipsABIFlags
-  };
+  enum class SectionKind { Group, RawContent, Relocation, MipsABIFlags };
   SectionKind Kind;
   StringRef Name;
   ELF_SHT Type;
@@ -109,14 +103,6 @@ struct RawContentSection : Section {
   RawContentSection() : Section(SectionKind::RawContent) {}
   static bool classof(const Section *S) {
     return S->Kind == SectionKind::RawContent;
-  }
-};
-
-struct NoBitsSection : Section {
-  llvm::yaml::Hex64 Size;
-  NoBitsSection() : Section(SectionKind::NoBits) {}
-  static bool classof(const Section *S) {
-    return S->Kind == SectionKind::NoBits;
   }
 };
 
