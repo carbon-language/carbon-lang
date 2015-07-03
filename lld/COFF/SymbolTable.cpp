@@ -126,10 +126,11 @@ bool SymbolTable::reportRemainingUndefines() {
     if (!Undef)
       continue;
     StringRef Name = Undef->getName();
-    // A weak alias may have been resovled, so check for that. A weak alias
-    // may be an weak alias to other symbol, so check recursively.
-    for (Undefined *U = Undef->WeakAlias; U; U = U->WeakAlias) {
-      if (auto *D = dyn_cast<Defined>(U->repl())) {
+    // A weak alias may have been resolved, so check for that. A weak alias
+    // may be a weak alias to another symbol, so check recursively.
+    for (SymbolBody *A = Undef->WeakAlias; A;
+         A = cast<Undefined>(A)->WeakAlias) {
+      if (auto *D = dyn_cast<Defined>(A->repl())) {
         Sym->Body = D;
         goto next;
       }

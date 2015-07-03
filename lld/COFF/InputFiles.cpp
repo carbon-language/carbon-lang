@@ -199,7 +199,7 @@ Undefined *ObjectFile::createWeakExternal(COFFSymbolRef Sym, const void *AuxP) {
   COFFObj->getSymbolName(Sym, Name);
   auto *U = new (Alloc) Undefined(Name);
   auto *Aux = (const coff_aux_weak_external *)AuxP;
-  U->WeakAlias = cast<Undefined>(SparseSymbolBodies[Aux->TagIndex]);
+  U->WeakAlias = SparseSymbolBodies[Aux->TagIndex];
   return U;
 }
 

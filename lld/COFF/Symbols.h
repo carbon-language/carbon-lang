@@ -253,7 +253,7 @@ public:
   // undefined symbol a second chance if it would remain undefined.
   // If it remains undefined, it'll be replaced with whatever the
   // Alias pointer points to.
-  Undefined *WeakAlias = nullptr;
+  SymbolBody *WeakAlias = nullptr;
 };
 
 // Windows-specific classes.
