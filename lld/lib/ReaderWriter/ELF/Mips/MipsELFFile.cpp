@@ -45,6 +45,11 @@ DefinedAtom::CodeModel MipsELFDefinedAtom<ELFT>::codeModel() const {
   }
 }
 
+template <class ELFT> bool MipsELFDefinedAtom<ELFT>::isPIC() const {
+  return file().isPIC() || codeModel() == DefinedAtom::codeMipsMicroPIC ||
+         codeModel() == DefinedAtom::codeMipsPIC;
+}
+
 template class MipsELFDefinedAtom<ELF32LE>;
 template class MipsELFDefinedAtom<ELF64LE>;
 

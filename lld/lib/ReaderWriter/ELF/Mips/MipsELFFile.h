@@ -33,6 +33,8 @@ public:
 
   const MipsELFFile<ELFT>& file() const override;
   DefinedAtom::CodeModel codeModel() const override;
+
+  bool isPIC() const;
 };
 
 template <class ELFT> class MipsELFReference : public ELFReference<ELFT> {

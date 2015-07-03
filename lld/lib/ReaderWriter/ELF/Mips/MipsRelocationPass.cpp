@@ -798,7 +798,7 @@ bool RelocationPass<ELFT>::mightBeDynamic(const MipsELFDefinedAtom<ELFT> &atom,
     return true;
   if (!isMipsReadonly(atom))
     return true;
-  if (atom.file().isPIC())
+  if (atom.isPIC())
     return true;
 
   return false;
@@ -957,9 +957,7 @@ bool RelocationPass<ELFT>::requireLA25Stub(const MipsELFDefinedAtom<ELFT> &atom,
   if (atom.file().isPIC())
     return false;
   if (auto *da = dyn_cast<DefinedAtom>(ref.target()))
-    return static_cast<const MipsELFDefinedAtom<ELFT> *>(da)->file().isPIC() ||
-           da->codeModel() == DefinedAtom::codeMipsMicroPIC ||
-           da->codeModel() == DefinedAtom::codeMipsPIC;
+    return static_cast<const MipsELFDefinedAtom<ELFT> *>(da)->isPIC();
   return false;
 }
 
