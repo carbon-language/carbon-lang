@@ -207,8 +207,8 @@ bool MachineModuleInfo::doInitialization(Module &M) {
 
   ObjFileMMI = nullptr;
   CurCallSite = 0;
-  CallsEHReturn = 0;
-  CallsUnwindInit = 0;
+  CallsEHReturn = false;
+  CallsUnwindInit = false;
   DbgInfoAvailable = UsesVAFloatArgument = UsesMorestackAddr = false;
   // Always emit some info, by default "no personality" info.
   Personalities.push_back(nullptr);
@@ -247,8 +247,8 @@ void MachineModuleInfo::EndFunction() {
   TypeInfos.clear();
   FilterIds.clear();
   FilterEnds.clear();
-  CallsEHReturn = 0;
-  CallsUnwindInit = 0;
+  CallsEHReturn = false;
+  CallsUnwindInit = false;
   VariableDbgInfos.clear();
 }
 
