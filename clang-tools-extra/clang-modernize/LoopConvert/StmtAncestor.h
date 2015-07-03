@@ -170,9 +170,9 @@ private:
 class DeclFinderASTVisitor :
   public clang::RecursiveASTVisitor<DeclFinderASTVisitor> {
 public:
-  DeclFinderASTVisitor(const std::string &Name,
-                       const StmtGeneratedVarNameMap *GeneratedDecls) :
-    Name(Name), GeneratedDecls(GeneratedDecls), Found(false) { }
+  DeclFinderASTVisitor(std::string Name,
+                       const StmtGeneratedVarNameMap *GeneratedDecls)
+      : Name(std::move(Name)), GeneratedDecls(GeneratedDecls), Found(false) {}
 
   /// Attempts to find any usages of variables name Name in Body, returning
   /// true when it is used in Body. This includes the generated loop variables

@@ -112,7 +112,7 @@ private:
 ///
 /// FIXME: Do we want to support this now that we have bind()?
 template <typename T>
-internal::Matcher<T> id(const std::string &ID,
+internal::Matcher<T> id(StringRef ID,
                         const internal::BindableMatcher<T> &InnerMatcher) {
   return InnerMatcher.bind(ID);
 }

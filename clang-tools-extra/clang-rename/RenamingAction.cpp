@@ -37,14 +37,11 @@ namespace rename {
 
 class RenamingASTConsumer : public ASTConsumer {
 public:
-  RenamingASTConsumer(const std::string &NewName,
-                      const std::string &PrevName,
+  RenamingASTConsumer(StringRef NewName, StringRef PrevName,
                       const std::vector<std::string> &USRs,
-                      tooling::Replacements &Replaces,
-                      bool PrintLocations)
+                      tooling::Replacements &Replaces, bool PrintLocations)
       : NewName(NewName), PrevName(PrevName), USRs(USRs), Replaces(Replaces),
-        PrintLocations(PrintLocations) {
-  }
+        PrintLocations(PrintLocations) {}
 
   void HandleTranslationUnit(ASTContext &Context) override {
     const auto &SourceMgr = Context.getSourceManager();
@@ -58,7 +55,7 @@ public:
       NewCandidates.clear();
     }
 
-    auto PrevNameLen = PrevName.length();
+    auto PrevNameLen = PrevName.size();
     if (PrintLocations)
       for (const auto &Loc : RenamingCandidates) {
         FullSourceLoc FullLoc(Loc, SourceMgr);
@@ -75,7 +72,7 @@ public:
   }
 
 private:
-  const std::string &NewName, &PrevName;
+  StringRef NewName, PrevName;
   const std::vector<std::string> &USRs;
   tooling::Replacements &Replaces;
   bool PrintLocations;

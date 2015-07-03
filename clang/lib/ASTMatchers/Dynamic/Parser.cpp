@@ -216,7 +216,7 @@ private:
       if (Code[Length] == Marker) {
         Result->Kind = TokenInfo::TK_Literal;
         Result->Text = Code.substr(0, Length + 1);
-        Result->Value = Code.substr(1, Length - 1).str();
+        Result->Value = Code.substr(1, Length - 1);
         Code = Code.drop_front(Length + 1);
         return;
       }
