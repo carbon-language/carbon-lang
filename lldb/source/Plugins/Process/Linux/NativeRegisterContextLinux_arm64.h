@@ -30,6 +30,9 @@ namespace process_linux {
         uint32_t
         GetRegisterSetCount () const override;
 
+        uint32_t
+        GetUserRegisterCount() const override;
+
         const RegisterSet *
         GetRegisterSet (uint32_t set_index) const override;
 

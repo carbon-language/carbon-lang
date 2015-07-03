@@ -193,6 +193,15 @@ NativeRegisterContextLinux_arm64::GetRegisterSet (uint32_t set_index) const
     return nullptr;
 }
 
+uint32_t
+NativeRegisterContextLinux_arm64::GetUserRegisterCount() const
+{
+    uint32_t count = 0;
+    for (uint32_t set_index = 0; set_index < k_num_register_sets; ++set_index)
+        count += g_reg_sets_arm64[set_index].num_registers;
+    return count;
+}
+
 Error
 NativeRegisterContextLinux_arm64::ReadRegister (const RegisterInfo *reg_info, RegisterValue &reg_value)
 {
@@ -242,22 +251,7 @@ NativeRegisterContextLinux_arm64::ReadRegister (const RegisterInfo *reg_info, Re
     // Get pointer to m_fpr variable and set the data from it.
     assert (reg_info->byte_offset < sizeof m_fpr);
     uint8_t *src = (uint8_t *)&m_fpr + reg_info->byte_offset;
-    switch (reg_info->byte_size)
-    {
-        case 2:
-            reg_value.SetUInt16(*(uint16_t *)src);
-            break;
-        case 4:
-            reg_value.SetUInt32(*(uint32_t *)src);
-            break;
-        case 8:
-            reg_value.SetUInt64(*(uint64_t *)src);
-            break;
-        default:
-            assert(false && "Unhandled data size.");
-            error.SetErrorStringWithFormat ("unhandled byte size: %" PRIu32, reg_info->byte_size);
-            break;
-    }
+    reg_value.SetFromMemoryData(reg_info, src, reg_info->byte_size, eByteOrderLittle, error);
 
     return error;
 }
