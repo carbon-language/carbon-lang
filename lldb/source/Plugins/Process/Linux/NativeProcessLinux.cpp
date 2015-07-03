@@ -2851,28 +2851,22 @@ NativeProcessLinux::GetSoftwareBreakpointPCOffset (NativeRegisterContextSP conte
 {
     // FIXME put this behind a breakpoint protocol class that can be
     // set per architecture.  Need ARM, MIPS support here.
-    static const uint8_t g_aarch64_opcode[] = { 0x00, 0x00, 0x20, 0xd4 };
     static const uint8_t g_i386_opcode [] = { 0xCC };
 
     switch (m_arch.GetMachine ())
     {
-        case llvm::Triple::aarch64:
-            actual_opcode_size = static_cast<uint32_t> (sizeof(g_aarch64_opcode));
-            return Error ();
-
-        case llvm::Triple::arm:
-            actual_opcode_size = 0; // On arm the PC don't get updated for breakpoint hits
-            return Error ();
-
         case llvm::Triple::x86:
         case llvm::Triple::x86_64:
             actual_opcode_size = static_cast<uint32_t> (sizeof(g_i386_opcode));
             return Error ();
 
+        case llvm::Triple::arm:
+        case llvm::Triple::aarch64:
         case llvm::Triple::mips64:
         case llvm::Triple::mips64el:
         case llvm::Triple::mips:
         case llvm::Triple::mipsel:
+            // On these architectures the PC don't get updated for breakpoint hits
             actual_opcode_size = 0;
             return Error ();
         
