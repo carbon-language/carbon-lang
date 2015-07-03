@@ -269,7 +269,7 @@ CMIUtilFileStd::StripOffFileName(const CMIUtilString &vDirectoryPath)
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details: Return either backslash or forward slash appropriate to the OS this applilcation
+// Details: Return either backslash or forward slash appropriate to the OS this application
 //          is running on.
 // Type:    Static method.
 // Args:    None.

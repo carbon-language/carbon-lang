@@ -58,7 +58,7 @@ class CMICmdArgValString : public CMICmdArgValBaseTemplate<CMIUtilString>
 
     // Attribute:
   private:
-    bool m_bHandleQuotedString; // True = Parse a string surrounded by quotes spaces are not delimitors, false = only text up to next
+    bool m_bHandleQuotedString; // True = Parse a string surrounded by quotes spaces are not delimiters, false = only text up to next
                                 // delimiting space character
     bool m_bAcceptNumbers;      // True = Parse a string and accept as a number if number, false = numbers not recognised as string types
     bool m_bHandleDirPaths;     // True = Parse a string and accept directory file style string if present, false = directory file path not

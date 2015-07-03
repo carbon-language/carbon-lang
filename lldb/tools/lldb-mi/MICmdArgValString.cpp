@@ -44,7 +44,7 @@ CMICmdArgValString::CMICmdArgValString(const bool vbAnything)
 //++ ------------------------------------------------------------------------------------
 // Details: CMICmdArgValString constructor.
 // Type:    Method.
-// Args:    vbHandleQuotes      - (R) True = Parse a string surrounded by quotes spaces are not delimitors, false = only text up to
+// Args:    vbHandleQuotes      - (R) True = Parse a string surrounded by quotes spaces are not delimiters, false = only text up to
 // next delimiting space character.
 //          vbAcceptNumbers     - (R) True = Parse a string and accept as a number if number, false = numbers not recognised
 // as string types.
@@ -67,7 +67,7 @@ CMICmdArgValString::CMICmdArgValString(const bool vbHandleQuotes, const bool vbA
 // Args:    vrArgName       - (R) Argument's name to search by.
 //          vbMandatory     - (R) True = Yes must be present, false = optional argument.
 //          vbHandleByCmd   - (R) True = Command processes *this option, false = not handled.
-//          vbHandleQuotes  - (R) True = Parse a string surrounded by quotes spaces are not delimitors, false = only text up to
+//          vbHandleQuotes  - (R) True = Parse a string surrounded by quotes spaces are not delimiters, false = only text up to
 // next delimiting space character. (Dflt = false)
 //          vbAcceptNumbers - (R) True = Parse a string and accept as a number if number, false = numbers not recognised as
 // string types. (Dflt = false)
@@ -323,7 +323,7 @@ CMICmdArgValString::IsStringArgQuotedTextEmbedded(const CMIUtilString &vrTxt) co
     if (nPos2 == (MIint)std::string::npos)
         return false;
 
-    // Make sure not same back slash, need two slashs
+    // Make sure not same back slash, need two slashes
     if (nPos == nPos2)
         return MIstatus::failure;
 
