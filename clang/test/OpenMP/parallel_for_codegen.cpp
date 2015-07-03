@@ -27,7 +27,7 @@ void with_var_schedule() {
 // CHECK: [[CHUNK_SIZE:%.+]] = sext i8 [[CHUNK_VAL]] to i64
 // CHECK: call void @__kmpc_for_static_init_8u([[IDENT_T_TY]]* [[DEFAULT_LOC:@[^,]+]], i32 [[GTID:%[^,]+]], i32 33, i32* [[IS_LAST:%[^,]+]], i64* [[OMP_LB:%[^,]+]], i64* [[OMP_UB:%[^,]+]], i64* [[OMP_ST:%[^,]+]], i64 1, i64 [[CHUNK_SIZE]])
 // CHECK: call void @__kmpc_for_static_fini([[IDENT_T_TY]]* [[DEFAULT_LOC]], i32 [[GTID]])
-// CHECK: __kmpc_cancel_barrier
+// CHECK: __kmpc_barrier
 #pragma omp parallel for schedule(static, char(a))
   for (unsigned long long i = 1; i < 2; ++i) {
   }
@@ -73,7 +73,7 @@ void without_schedule_clause(float *a, float *b, float *c, float *d) {
   }
 // CHECK: [[LOOP1_END]]
 // CHECK: call void @__kmpc_for_static_fini([[IDENT_T_TY]]* [[DEFAULT_LOC]], i32 [[GTID]])
-// CHECK: call {{.+}} @__kmpc_cancel_barrier([[IDENT_T_TY]]* [[DEFAULT_LOC_BARRIER:[@%].+]], i32 [[GTID]])
+// CHECK: call {{.+}} @__kmpc_barrier([[IDENT_T_TY]]* [[DEFAULT_LOC_BARRIER:[@%].+]], i32 [[GTID]])
 // CHECK: ret void
 }
 
@@ -117,7 +117,7 @@ void static_not_chunked(float *a, float *b, float *c, float *d) {
   }
 // CHECK: [[LOOP1_END]]
 // CHECK: call void @__kmpc_for_static_fini([[IDENT_T_TY]]* [[DEFAULT_LOC]], i32 [[GTID]])
-// CHECK: call {{.+}} @__kmpc_cancel_barrier([[IDENT_T_TY]]* [[DEFAULT_LOC_BARRIER:[@%].+]], i32 [[GTID]])
+// CHECK: call {{.+}} @__kmpc_barrier([[IDENT_T_TY]]* [[DEFAULT_LOC_BARRIER:[@%].+]], i32 [[GTID]])
 // CHECK: ret void
 }
 
@@ -180,7 +180,7 @@ void static_chunked(float *a, float *b, float *c, float *d) {
 
 // CHECK: [[O_LOOP1_END]]
 // CHECK: call void @__kmpc_for_static_fini([[IDENT_T_TY]]* [[DEFAULT_LOC]], i32 [[GTID]])
-// CHECK: call {{.+}} @__kmpc_cancel_barrier([[IDENT_T_TY]]* [[DEFAULT_LOC_BARRIER:[@%].+]], i32 [[GTID]])
+// CHECK: call {{.+}} @__kmpc_barrier([[IDENT_T_TY]]* [[DEFAULT_LOC_BARRIER:[@%].+]], i32 [[GTID]])
 // CHECK: ret void
 }
 
@@ -225,7 +225,7 @@ void dynamic1(float *a, float *b, float *c, float *d) {
   }
 // CHECK: [[LOOP1_END]]
 // CHECK: [[O_LOOP1_END]]
-// CHECK: call {{.+}} @__kmpc_cancel_barrier([[IDENT_T_TY]]* [[DEFAULT_LOC_BARRIER:[@%].+]], i32 [[GTID]])
+// CHECK: call {{.+}} @__kmpc_barrier([[IDENT_T_TY]]* [[DEFAULT_LOC_BARRIER:[@%].+]], i32 [[GTID]])
 // CHECK: ret void
 }
 
@@ -270,7 +270,7 @@ void guided7(float *a, float *b, float *c, float *d) {
   }
 // CHECK: [[LOOP1_END]]
 // CHECK: [[O_LOOP1_END]]
-// CHECK: call {{.+}} @__kmpc_cancel_barrier([[IDENT_T_TY]]* [[DEFAULT_LOC_BARRIER:[@%].+]], i32 [[GTID]])
+// CHECK: call {{.+}} @__kmpc_barrier([[IDENT_T_TY]]* [[DEFAULT_LOC_BARRIER:[@%].+]], i32 [[GTID]])
 // CHECK: ret void
 }
 
@@ -322,7 +322,7 @@ void test_auto(float *a, float *b, float *c, float *d) {
 // CHECK: [[O_LOOP1_END]]
 // CHECK: [[GTID_REF:%.+]] = load i32*, i32** [[GTID_REF_ADDR]],
 // CHECK: [[GTID:%.+]] = load i32, i32* [[GTID_REF]],
-// CHECK: call {{.+}} @__kmpc_cancel_barrier([[IDENT_T_TY]]* [[DEFAULT_LOC_BARRIER:[@%].+]], i32 [[GTID]])
+// CHECK: call {{.+}} @__kmpc_barrier([[IDENT_T_TY]]* [[DEFAULT_LOC_BARRIER:[@%].+]], i32 [[GTID]])
 // CHECK: ret void
 }
 
@@ -369,7 +369,7 @@ void runtime(float *a, float *b, float *c, float *d) {
 // CHECK: [[O_LOOP1_END]]
 // CHECK: [[GTID_REF:%.+]] = load i32*, i32** [[GTID_REF_ADDR]],
 // CHECK: [[GTID:%.+]] = load i32, i32* [[GTID_REF]],
-// CHECK: call {{.+}} @__kmpc_cancel_barrier([[IDENT_T_TY]]* [[DEFAULT_LOC_BARRIER:[@%].+]], i32 [[GTID]])
+// CHECK: call {{.+}} @__kmpc_barrier([[IDENT_T_TY]]* [[DEFAULT_LOC_BARRIER:[@%].+]], i32 [[GTID]])
 // CHECK: ret void
 }
 
@@ -386,14 +386,14 @@ void parallel_for(float *a) {
   // TERM_DEBUG:     unwind label %[[TERM_LPAD:.+]],
   // TERM_DEBUG-NOT: __kmpc_global_thread_num
   // TERM_DEBUG:     call void @__kmpc_for_static_fini({{.+}}), !dbg [[DBG_LOC_END:![0-9]+]]
-  // TERM_DEBUG:     call {{.+}} @__kmpc_cancel_barrier({{.+}}), !dbg [[DBG_LOC_CANCEL:![0-9]+]]
+  // TERM_DEBUG:     call {{.+}} @__kmpc_barrier({{.+}}), !dbg [[DBG_LOC_CANCEL:![0-9]+]]
   // TERM_DEBUG:     [[TERM_LPAD]]
   // TERM_DEBUG:     call void @__clang_call_terminate
   // TERM_DEBUG:     unreachable
   // CLEANUP-NOT: __kmpc_global_thread_num
   // CLEANUP:     call void @__kmpc_for_static_init_4u({{.+}})
   // CLEANUP:     call void @__kmpc_for_static_fini({{.+}})
-  // CLEANUP:     call {{.+}} @__kmpc_cancel_barrier({{.+}})
+  // CLEANUP:     call {{.+}} @__kmpc_barrier({{.+}})
   for (unsigned i = 131071; i <= 2147483647; i += 127)
     a[i] += foo();
 }

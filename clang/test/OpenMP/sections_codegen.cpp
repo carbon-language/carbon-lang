@@ -72,7 +72,7 @@ int main() {
 // CHECK:      [[INNER_LOOP_END]]
   }
 // CHECK:      call void @__kmpc_for_static_fini(%{{.+}}* @{{.+}}, i32 [[GTID]])
-// CHECK:      call i32 @__kmpc_cancel_barrier(%{{.+}}* [[IMPLICIT_BARRIER_SECTIONS_LOC]],
+// CHECK:      call void @__kmpc_barrier(%{{.+}}* [[IMPLICIT_BARRIER_SECTIONS_LOC]],
 #pragma omp sections nowait
   {
     foo();
@@ -96,8 +96,8 @@ int main() {
 // CHECK-NEXT:  br label %[[END]]
 // CHECK:       [[END]]
 // CHECK-NEXT:  call i32 @__kmpc_cancel_barrier(%{{.+}}* [[IMPLICIT_BARRIER_SINGLE_LOC]],
-// CHECK-NEXT:  call i32 @__kmpc_cancel_barrier(
-// CHECK-NEXT:  ret
+// CHECK:  call i32 @__kmpc_cancel_barrier(
+// CHECK:  ret
 // CHECK:       [[TERM_LPAD]]
 // CHECK:       call void @__clang_call_terminate(i8*
 // CHECK-NEXT:  unreachable

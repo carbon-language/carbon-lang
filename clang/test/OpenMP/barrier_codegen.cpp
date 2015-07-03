@@ -24,7 +24,7 @@ int main(int argc, char **argv) {
   static int a;
 #pragma omp barrier
   // CHECK: [[GTID:%.+]] = call i32 @__kmpc_global_thread_num([[IDENT_T]]* [[LOC]])
-  // CHECK: call i32 @__kmpc_cancel_barrier([[IDENT_T]]* [[EXPLICIT_BARRIER_LOC]], i32 [[GTID]])
+  // CHECK: call void @__kmpc_barrier([[IDENT_T]]* [[EXPLICIT_BARRIER_LOC]], i32 [[GTID]])
   // CHECK: call {{.+}} [[TMAIN_INT:@.+]](i{{[0-9][0-9]}}
   // CHECK: call {{.+}} [[TMAIN_CHAR:@.+]](i{{[0-9]}}
   return tmain(argc) + tmain(argv[0][0]) + a;
@@ -32,10 +32,10 @@ int main(int argc, char **argv) {
 
 // CHECK: define {{.+}} [[TMAIN_INT]](
 // CHECK: [[GTID:%.+]] = call i32 @__kmpc_global_thread_num([[IDENT_T]]* [[LOC]])
-// CHECK: call i32 @__kmpc_cancel_barrier([[IDENT_T]]* [[EXPLICIT_BARRIER_LOC]], i32 [[GTID]])
+// CHECK: call void @__kmpc_barrier([[IDENT_T]]* [[EXPLICIT_BARRIER_LOC]], i32 [[GTID]])
 
 // CHECK: define {{.+}} [[TMAIN_CHAR]](
 // CHECK: [[GTID:%.+]] = call i32 @__kmpc_global_thread_num([[IDENT_T]]* [[LOC]])
-// CHECK: call i32 @__kmpc_cancel_barrier([[IDENT_T]]* [[EXPLICIT_BARRIER_LOC]], i32 [[GTID]])
+// CHECK: call void @__kmpc_barrier([[IDENT_T]]* [[EXPLICIT_BARRIER_LOC]], i32 [[GTID]])
 
 #endif
