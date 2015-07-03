@@ -324,7 +324,6 @@ ELF-MIPS64EL-NEXT:   - Name:            .bss
 ELF-MIPS64EL-NEXT:     Type:            SHT_NOBITS
 ELF-MIPS64EL-NEXT:     Flags:           [ SHF_WRITE, SHF_ALLOC ]
 ELF-MIPS64EL-NEXT:     AddressAlign:    0x0000000000000010
-ELF-MIPS64EL-NEXT:     Size:            0x0000000000000000
 ELF-MIPS64EL-NEXT:   - Name:            .MIPS.options
 ELF-MIPS64EL-NEXT:     Type:            SHT_MIPS_OPTIONS
 ELF-MIPS64EL-NEXT:     Flags:           [ SHF_ALLOC ]

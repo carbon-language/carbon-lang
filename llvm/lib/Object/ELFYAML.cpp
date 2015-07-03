@@ -629,7 +629,7 @@ static void sectionMapping(IO &IO, ELFYAML::RawContentSection &Section) {
 
 static void sectionMapping(IO &IO, ELFYAML::NoBitsSection &Section) {
   commonSectionMapping(IO, Section);
-  IO.mapRequired("Size", Section.Size);
+  IO.mapOptional("Size", Section.Size, Hex64(0));
 }
 
 static void sectionMapping(IO &IO, ELFYAML::RelocationSection &Section) {
