@@ -18,8 +18,6 @@
 // Throws:  None.
 //--
 CMICmdArgContext::CMICmdArgContext(void)
-    : m_constCharSpace(' ')
-    , m_constStrSpace(" ")
 {
 }
 
@@ -32,8 +30,6 @@ CMICmdArgContext::CMICmdArgContext(void)
 //--
 CMICmdArgContext::CMICmdArgContext(const CMIUtilString &vrCmdLineArgsRaw)
     : m_strCmdArgsAndOptions(vrCmdLineArgsRaw)
-    , m_constCharSpace(' ')
-    , m_constStrSpace(" ")
 {
 }
 
@@ -104,7 +100,7 @@ CMICmdArgContext::RemoveArg(const CMIUtilString &vArg)
         bool bPass1 = false;
         if (nPos != 0)
         {
-            if (m_strCmdArgsAndOptions[nPos - 1] == m_constCharSpace)
+            if (m_strCmdArgsAndOptions[nPos - 1] == ' ')
                 bPass1 = true;
         }
         else
@@ -117,7 +113,7 @@ CMICmdArgContext::RemoveArg(const CMIUtilString &vArg)
             bool bPass2 = false;
             if (nEnd < nLenCntxt)
             {
-                if (m_strCmdArgsAndOptions[nEnd] == m_constCharSpace)
+                if (m_strCmdArgsAndOptions[nEnd] == ' ')
                 {
                     bPass2 = true;
                     nExtraSpace = 1;
@@ -170,7 +166,7 @@ CMICmdArgContext::RemoveArgAtPos(const CMIUtilString &vArg, const MIuint nArgInd
             // Single words
             strBuildContextUp += rWord;
             if (bSpaceRequired)
-                strBuildContextUp += m_constStrSpace;
+                strBuildContextUp += " ";
         }
         else
         {
@@ -181,7 +177,7 @@ CMICmdArgContext::RemoveArgAtPos(const CMIUtilString &vArg, const MIuint nArgInd
                 while (vArg != words)
                 {
                     if (bSpaceRequired)
-                        words += m_constStrSpace;
+                        words += " ";
                     words += *it;
                     if (++it == itEnd)
                         break;
@@ -213,7 +209,7 @@ MIuint
 CMICmdArgContext::GetNumberArgsPresent(void) const
 {
     CMIUtilString::VecString_t vecOptions;
-    return m_strCmdArgsAndOptions.SplitConsiderQuotes(m_constStrSpace, vecOptions);
+    return m_strCmdArgsAndOptions.SplitConsiderQuotes(" ", vecOptions);
 }
 
 //++ ------------------------------------------------------------------------------------
@@ -227,7 +223,7 @@ CMIUtilString::VecString_t
 CMICmdArgContext::GetArgs(void) const
 {
     CMIUtilString::VecString_t vecOptions;
-    m_strCmdArgsAndOptions.SplitConsiderQuotes(m_constStrSpace, vecOptions);
+    m_strCmdArgsAndOptions.SplitConsiderQuotes(" ", vecOptions);
     return vecOptions;
 }
 

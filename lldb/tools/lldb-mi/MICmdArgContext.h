@@ -44,6 +44,4 @@ class CMICmdArgContext
     // Attributes:
   private:
     CMIUtilString m_strCmdArgsAndOptions;
-    const char m_constCharSpace;
-    const CMIUtilString m_constStrSpace;
 };
