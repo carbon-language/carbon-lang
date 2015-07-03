@@ -222,7 +222,7 @@ void Writer::createImportTables() {
         Text->addChunk(cast<DefinedImportThunk>(B)->getChunk());
         continue;
       }
-      if (Config->DelayLoads.count(Import->getDLLName())) {
+      if (Config->DelayLoads.count(Import->getDLLName().lower())) {
         DelayIdata.add(Import);
       } else {
         Idata.add(Import);

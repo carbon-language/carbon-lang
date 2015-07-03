@@ -59,7 +59,7 @@ struct Configuration {
   bool DLL = false;
   StringRef Implib;
   std::vector<Export> Exports;
-  std::set<StringRef> DelayLoads;
+  std::set<std::string> DelayLoads;
 
   // Used for /opt:icf
   bool ICF = false;

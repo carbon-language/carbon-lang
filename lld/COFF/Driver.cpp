@@ -421,7 +421,7 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
 
   // Handle /delayload
   for (auto *Arg : Args.filtered(OPT_delayload)) {
-    Config->DelayLoads.insert(Arg->getValue());
+    Config->DelayLoads.insert(StringRef(Arg->getValue()).lower());
     addUndefined("__delayLoadHelper2");
   }
 
