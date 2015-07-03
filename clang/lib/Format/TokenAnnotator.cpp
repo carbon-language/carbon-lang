@@ -2136,6 +2136,8 @@ bool TokenAnnotator::canBreakBefore(const AnnotatedLine &Line,
   } else if (Style.Language == FormatStyle::LK_JavaScript) {
     if (Left.is(TT_JsFatArrow) && Right.is(tok::l_brace))
       return false;
+    if (Left.is(TT_JsTypeColon))
+      return true;
   }
 
   if (Left.is(tok::at))
