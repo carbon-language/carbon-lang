@@ -109,9 +109,9 @@ public:
 //===----------------------------------------------------------------------===//
 
 void WalkAST::VisitChildren(Stmt *S) {
-  for (Stmt::child_iterator I = S->child_begin(), E = S->child_end(); I!=E; ++I)
-    if (Stmt *child = *I)
-      Visit(child);
+  for (Stmt *Child : S->children())
+    if (Child)
+      Visit(Child);
 }
 
 void WalkAST::VisitCallExpr(CallExpr *CE) {
@@ -162,11 +162,11 @@ void WalkAST::VisitCallExpr(CallExpr *CE) {
 }
 
 void WalkAST::VisitCompoundStmt(CompoundStmt *S) {
-  for (Stmt::child_iterator I = S->child_begin(), E = S->child_end(); I!=E; ++I)
-    if (Stmt *child = *I) {
-      if (CallExpr *CE = dyn_cast<CallExpr>(child))
+  for (Stmt *Child : S->children())
+    if (Child) {
+      if (CallExpr *CE = dyn_cast<CallExpr>(Child))
         checkUncheckedReturnValue(CE);
-      Visit(child);
+      Visit(Child);
     }
 }
 

@@ -1250,10 +1250,8 @@ static void reversePropagateIntererstingSymbols(BugReport &R,
       // Fall through.
     case Stmt::BinaryOperatorClass:
     case Stmt::UnaryOperatorClass: {
-      for (Stmt::const_child_iterator CI = Ex->child_begin(),
-            CE = Ex->child_end();
-            CI != CE; ++CI) {
-        if (const Expr *child = dyn_cast_or_null<Expr>(*CI)) {
+      for (const Stmt *SubStmt : Ex->children()) {
+        if (const Expr *child = dyn_cast_or_null<Expr>(SubStmt)) {
           IE.insert(child);
           SVal ChildV = State->getSVal(child, LCtx);
           R.markInteresting(ChildV);

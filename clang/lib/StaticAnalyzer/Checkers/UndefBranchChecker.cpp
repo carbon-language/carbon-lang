@@ -37,12 +37,10 @@ class UndefBranchChecker : public Checker<check::BranchCondition> {
       if (!MatchesCriteria(Ex))
         return nullptr;
 
-      for (Stmt::const_child_iterator I = Ex->child_begin(), 
-                                      E = Ex->child_end();I!=E;++I)
-        if (const Expr *ExI = dyn_cast_or_null<Expr>(*I)) {
-          const Expr *E2 = FindExpr(ExI);
-          if (E2) return E2;
-        }
+      for (const Stmt *SubStmt : Ex->children())
+        if (const Expr *ExI = dyn_cast_or_null<Expr>(SubStmt))
+          if (const Expr *E2 = FindExpr(ExI))
+            return E2;
 
       return Ex;
     }

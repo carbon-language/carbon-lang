@@ -124,10 +124,9 @@ public:
                           const CheckerBase *checker)
       : DeclWithIssue(declWithIssue), BR(br), Checker(checker) {}
   void VisitChildren(Stmt *S) {
-    for (Stmt::child_iterator I = S->child_begin(), E = S->child_end() ;
-      I != E; ++I)
-      if (Stmt *child = *I)
-        Visit(child);
+    for (Stmt *Child : S->children())
+      if (Child)
+        Visit(Child);
   }
   void VisitStmt(Stmt *S) { VisitChildren(S); }
   void VisitDeclStmt(DeclStmt *DS);

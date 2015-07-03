@@ -22,11 +22,9 @@ bool clang::ento::containsMacro(const Stmt *S) {
   if (S->getLocEnd().isMacroID())
     return true;
 
-  for (Stmt::const_child_iterator I = S->child_begin(); I != S->child_end();
-      ++I)
-    if (const Stmt *child = *I)
-      if (containsMacro(child))
-        return true;
+  for (const Stmt *Child : S->children())
+    if (Child && containsMacro(Child))
+      return true;
 
   return false;
 }
@@ -38,11 +36,9 @@ bool clang::ento::containsEnum(const Stmt *S) {
   if (DR && isa<EnumConstantDecl>(DR->getDecl()))
     return true;
 
-  for (Stmt::const_child_iterator I = S->child_begin(); I != S->child_end();
-      ++I)
-    if (const Stmt *child = *I)
-      if (containsEnum(child))
-        return true;
+  for (const Stmt *Child : S->children())
+    if (Child && containsEnum(Child))
+      return true;
 
   return false;
 }
@@ -56,11 +52,9 @@ bool clang::ento::containsStaticLocal(const Stmt *S) {
       if (VD->isStaticLocal())
         return true;
 
-  for (Stmt::const_child_iterator I = S->child_begin(); I != S->child_end();
-      ++I)
-    if (const Stmt *child = *I)
-      if (containsStaticLocal(child))
-        return true;
+  for (const Stmt *Child : S->children())
+    if (Child && containsStaticLocal(Child))
+      return true;
 
   return false;
 }
@@ -70,11 +64,9 @@ bool clang::ento::containsBuiltinOffsetOf(const Stmt *S) {
   if (isa<OffsetOfExpr>(S))
     return true;
 
-  for (Stmt::const_child_iterator I = S->child_begin(); I != S->child_end();
-      ++I)
-    if (const Stmt *child = *I)
-      if (containsBuiltinOffsetOf(child))
-        return true;
+  for (const Stmt *Child : S->children())
+    if (Child && containsBuiltinOffsetOf(Child))
+      return true;
 
   return false;
 }

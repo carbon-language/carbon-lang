@@ -69,8 +69,8 @@ static bool scan_ivar_release(Stmt *S, ObjCIvarDecl *ID,
             }
 
   // Recurse to children.
-  for (Stmt::child_iterator I = S->child_begin(), E= S->child_end(); I!=E; ++I)
-    if (*I && scan_ivar_release(*I, ID, PD, Release, SelfII, Ctx))
+  for (Stmt *SubStmt : S->children())
+    if (SubStmt && scan_ivar_release(SubStmt, ID, PD, Release, SelfII, Ctx))
       return true;
 
   return false;

@@ -322,11 +322,10 @@ void TransferFunctions::Visit(Stmt *S) {
       return;
     }
   }
-  
-  for (Stmt::child_iterator it = S->child_begin(), ei = S->child_end();
-       it != ei; ++it) {
-    if (Stmt *child = *it)
-      AddLiveStmt(val.liveStmts, LV.SSetFact, child);
+
+  for (Stmt *Child : S->children()) {
+    if (Child)
+      AddLiveStmt(val.liveStmts, LV.SSetFact, Child);
   }
 }
 

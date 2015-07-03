@@ -1130,9 +1130,8 @@ void FindLastStoreBRVisitor::registerStatementVarDecls(BugReport &BR,
       }
     }
 
-    for (Stmt::const_child_iterator I = Head->child_begin();
-        I != Head->child_end(); ++I)
-      WorkList.push_back(*I);
+    for (const Stmt *SubStmt : Head->children())
+      WorkList.push_back(SubStmt);
   }
 }
 
