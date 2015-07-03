@@ -88,26 +88,27 @@ void OProfileJITEventListener::NotifyObjectEmitted(
   // Use symbol info to iterate functions in the object.
   for (const std::pair<SymbolRef, uint64_t> &P : computeSymbolSizes(DebugObj)) {
     SymbolRef Sym = P.first;
-    if (Sym.getType() == SymbolRef::ST_Function) {
-      ErrorOr<StringRef> NameOrErr = Sym.getName();
-      if (NameOrErr.getError())
-        continue;
-      StringRef Name = *NameOrErr;
-      ErrorOr<uint64_t> AddrOrErr = Sym.getAddress();
-      if (AddrOrErr.getError())
-        continue;
-      uint64_t Addr = *AddrOrErr;
-      uint64_t Size = P.second;
+    if (Sym.getType() != SymbolRef::ST_Function)
+      continue;
 
-      if (Wrapper->op_write_native_code(Name.data(), Addr, (void*)Addr, Size)
-                        == -1) {
-        DEBUG(dbgs() << "Failed to tell OProfile about native function "
-          << Name << " at ["
-          << (void*)Addr << "-" << ((char*)Addr + Size) << "]\n");
-        continue;
-      }
-      // TODO: support line number info (similar to IntelJITEventListener.cpp)
+    ErrorOr<StringRef> NameOrErr = Sym.getName();
+    if (NameOrErr.getError())
+      continue;
+    StringRef Name = *NameOrErr;
+    ErrorOr<uint64_t> AddrOrErr = Sym.getAddress();
+    if (AddrOrErr.getError())
+      continue;
+    uint64_t Addr = *AddrOrErr;
+    uint64_t Size = P.second;
+
+    if (Wrapper->op_write_native_code(Name.data(), Addr, (void *)Addr, Size) ==
+        -1) {
+      DEBUG(dbgs() << "Failed to tell OProfile about native function " << Name
+                   << " at [" << (void *)Addr << "-" << ((char *)Addr + Size)
+                   << "]\n");
+      continue;
     }
+    // TODO: support line number info (similar to IntelJITEventListener.cpp)
   }
 
   DebugObjects[Obj.getData().data()] = std::move(DebugObjOwner);
