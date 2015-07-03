@@ -254,8 +254,8 @@ protected:
       DRI.d.b = 0;
       return DRI;
     }
-    uint32_t Type = SymTable->sh_type;
-    assert(Type == ELF::SHT_SYMTAB || Type == ELF::SHT_DYNSYM);
+    assert(SymTable->sh_type == ELF::SHT_SYMTAB ||
+           SymTable->sh_type == ELF::SHT_DYNSYM);
 
     uintptr_t SHT = reinterpret_cast<uintptr_t>(EF.section_begin());
     unsigned SymTableIndex =
