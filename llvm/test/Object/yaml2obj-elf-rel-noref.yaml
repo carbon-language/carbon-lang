@@ -32,7 +32,7 @@ Sections:
     Type:            SHT_NOBITS
     Flags:           [ SHF_WRITE, SHF_ALLOC ]
     AddressAlign:    0x0000000000000001
-    Content:         ''
+    Size:            0
   - Name:            .ARM.attributes
     Type:            SHT_ARM_ATTRIBUTES
     AddressAlign:    0x0000000000000001
