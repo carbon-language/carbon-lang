@@ -24668,16 +24668,18 @@ static SDValue PerformSINT_TO_FPCombine(SDNode *N, SelectionDAG &DAG,
 
   // Now move on to more general possibilities.
   SDValue Op0 = N->getOperand(0);
-  EVT InVT = Op0->getValueType(0);
+  EVT VT = N->getValueType(0);
+  EVT InVT = Op0.getValueType();
+  EVT InSVT = InVT.getScalarType();
 
   // SINT_TO_FP(vXi8) -> SINT_TO_FP(SEXT(vXi8 to vXi32))
   // SINT_TO_FP(vXi16) -> SINT_TO_FP(SEXT(vXi16 to vXi32))
-  if (InVT == MVT::v8i8 || InVT == MVT::v4i8 ||
-      InVT == MVT::v8i16 || InVT == MVT::v4i16) {
+  if (InVT.isVector() && (InSVT == MVT::i8 || InSVT == MVT::i16)) {
     SDLoc dl(N);
-    MVT DstVT = MVT::getVectorVT(MVT::i32, InVT.getVectorNumElements());
+    EVT DstVT = EVT::getVectorVT(*DAG.getContext(), MVT::i32,
+                                 InVT.getVectorNumElements());
     SDValue P = DAG.getNode(ISD::SIGN_EXTEND, dl, DstVT, Op0);
-    return DAG.getNode(ISD::SINT_TO_FP, dl, N->getValueType(0), P);
+    return DAG.getNode(ISD::SINT_TO_FP, dl, VT, P);
   }
 
   // Transform (SINT_TO_FP (i64 ...)) into an x87 operation if we have
@@ -24687,10 +24689,10 @@ static SDValue PerformSINT_TO_FPCombine(SDNode *N, SelectionDAG &DAG,
     EVT LdVT = Ld->getValueType(0);
 
     // This transformation is not supported if the result type is f16
-    if (N->getValueType(0) == MVT::f16)
+    if (VT == MVT::f16)
       return SDValue();
 
-    if (!Ld->isVolatile() && !N->getValueType(0).isVector() &&
+    if (!Ld->isVolatile() && !VT.isVector() &&
         ISD::isNON_EXTLoad(Op0.getNode()) && Op0.hasOneUse() &&
         !Subtarget->is64Bit() && LdVT == MVT::i64) {
       SDValue FILDChain = Subtarget->getTargetLowering()->BuildFILD(

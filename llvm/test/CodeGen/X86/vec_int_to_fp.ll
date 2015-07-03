@@ -50,31 +50,15 @@ define <2 x double> @sitofp_2vf64_i32(<4 x i32> %a) {
 define <2 x double> @sitofp_2vf64_i16(<8 x i16> %a) {
 ; SSE2-LABEL: sitofp_2vf64_i16:
 ; SSE2:       # BB#0:
-; SSE2-NEXT:    pshufd {{.*#+}} xmm0 = xmm0[0,1,0,3]
-; SSE2-NEXT:    pshufhw {{.*#+}} xmm0 = xmm0[0,1,2,3,5,5,6,7]
-; SSE2-NEXT:    pshufd {{.*#+}} xmm1 = xmm0[2,3,0,1]
-; SSE2-NEXT:    movd %xmm1, %rax
-; SSE2-NEXT:    movswq %ax, %rax
-; SSE2-NEXT:    movd %xmm0, %rcx
-; SSE2-NEXT:    movswq %cx, %rcx
-; SSE2-NEXT:    xorps %xmm0, %xmm0
-; SSE2-NEXT:    cvtsi2sdq %rcx, %xmm0
-; SSE2-NEXT:    xorps %xmm1, %xmm1
-; SSE2-NEXT:    cvtsi2sdq %rax, %xmm1
-; SSE2-NEXT:    unpcklpd {{.*#+}} xmm0 = xmm0[0],xmm1[0]
+; SSE2-NEXT:    punpcklwd {{.*#+}} xmm0 = xmm0[0,0,1,1,2,2,3,3]
+; SSE2-NEXT:    psrad $16, %xmm0
+; SSE2-NEXT:    cvtdq2pd %xmm0, %xmm0
 ; SSE2-NEXT:    retq
 ;
 ; AVX-LABEL: sitofp_2vf64_i16:
 ; AVX:       # BB#0:
-; AVX-NEXT:    vpmovzxwq {{.*#+}} xmm0 = xmm0[0],zero,zero,zero,xmm0[1],zero,zero,zero
-; AVX-NEXT:    vmovq %xmm0, %rax
-; AVX-NEXT:    movswq %ax, %rax
-; AVX-NEXT:    vpextrq $1, %xmm0, %rcx
-; AVX-NEXT:    movswq %cx, %rcx
-; AVX-NEXT:    vxorps %xmm0, %xmm0, %xmm0
-; AVX-NEXT:    vcvtsi2sdq %rcx, %xmm0, %xmm0
-; AVX-NEXT:    vcvtsi2sdq %rax, %xmm0, %xmm1
-; AVX-NEXT:    vunpcklpd {{.*#+}} xmm0 = xmm1[0],xmm0[0]
+; AVX-NEXT:    vpmovsxwd %xmm0, %xmm0
+; AVX-NEXT:    vcvtdq2pd %xmm0, %xmm0
 ; AVX-NEXT:    retq
   %shuf = shufflevector <8 x i16> %a, <8 x i16> undef, <2 x i32> <i32 0, i32 1>
   %cvt = sitofp <2 x i16> %shuf to <2 x double>
@@ -86,30 +70,14 @@ define <2 x double> @sitofp_2vf64_i8(<16 x i8> %a) {
 ; SSE2:       # BB#0:
 ; SSE2-NEXT:    punpcklbw {{.*#+}} xmm0 = xmm0[0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7]
 ; SSE2-NEXT:    punpcklwd {{.*#+}} xmm0 = xmm0[0,0,1,1,2,2,3,3]
-; SSE2-NEXT:    punpckldq {{.*#+}} xmm0 = xmm0[0,0,1,1]
-; SSE2-NEXT:    pshufd {{.*#+}} xmm1 = xmm0[2,3,0,1]
-; SSE2-NEXT:    movd %xmm1, %rax
-; SSE2-NEXT:    movsbq %al, %rax
-; SSE2-NEXT:    movd %xmm0, %rcx
-; SSE2-NEXT:    movsbq %cl, %rcx
-; SSE2-NEXT:    xorps %xmm0, %xmm0
-; SSE2-NEXT:    cvtsi2sdq %rcx, %xmm0
-; SSE2-NEXT:    xorps %xmm1, %xmm1
-; SSE2-NEXT:    cvtsi2sdq %rax, %xmm1
-; SSE2-NEXT:    unpcklpd {{.*#+}} xmm0 = xmm0[0],xmm1[0]
+; SSE2-NEXT:    psrad $24, %xmm0
+; SSE2-NEXT:    cvtdq2pd %xmm0, %xmm0
 ; SSE2-NEXT:    retq
 ;
 ; AVX-LABEL: sitofp_2vf64_i8:
 ; AVX:       # BB#0:
-; AVX-NEXT:    vpmovzxbq {{.*#+}} xmm0 = xmm0[0],zero,zero,zero,zero,zero,zero,zero,xmm0[1],zero,zero,zero,zero,zero,zero,zero
-; AVX-NEXT:    vmovq %xmm0, %rax
-; AVX-NEXT:    movsbq %al, %rax
-; AVX-NEXT:    vpextrq $1, %xmm0, %rcx
-; AVX-NEXT:    movsbq %cl, %rcx
-; AVX-NEXT:    vxorps %xmm0, %xmm0, %xmm0
-; AVX-NEXT:    vcvtsi2sdq %rcx, %xmm0, %xmm0
-; AVX-NEXT:    vcvtsi2sdq %rax, %xmm0, %xmm1
-; AVX-NEXT:    vunpcklpd {{.*#+}} xmm0 = xmm1[0],xmm0[0]
+; AVX-NEXT:    vpmovsxbd %xmm0, %xmm0
+; AVX-NEXT:    vcvtdq2pd %xmm0, %xmm0
 ; AVX-NEXT:    retq
   %shuf = shufflevector <16 x i8> %a, <16 x i8> undef, <2 x i32> <i32 0, i32 1>
   %cvt = sitofp <2 x i8> %shuf to <2 x double>
