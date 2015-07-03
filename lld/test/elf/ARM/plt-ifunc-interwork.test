@@ -149,7 +149,6 @@ Sections:
     Type:            SHT_NOBITS
     Flags:           [ SHF_WRITE, SHF_ALLOC ]
     AddressAlign:    0x0000000000000001
-    Content:         ''
 Symbols:
   Global:
     - Name:            f1
@@ -198,7 +197,6 @@ Sections:
     Type:            SHT_NOBITS
     Flags:           [ SHF_WRITE, SHF_ALLOC ]
     AddressAlign:    0x0000000000000001
-    Content:         ''
 Symbols:
  Global:
     - Name:            f1
@@ -242,7 +240,6 @@ Sections:
     Type:            SHT_NOBITS
     Flags:           [ SHF_WRITE, SHF_ALLOC ]
     AddressAlign:    0x0000000000000001
-    Content:         ''
 Symbols:
   Global:
     - Name:            f
@@ -289,7 +286,6 @@ Sections:
     Type:            SHT_NOBITS
     Flags:           [ SHF_WRITE, SHF_ALLOC ]
     AddressAlign:    0x0000000000000001
-    Content:         ''
 Symbols:
   Global:
     - Name:            f2
@@ -338,7 +334,6 @@ Sections:
     Type:            SHT_NOBITS
     Flags:           [ SHF_WRITE, SHF_ALLOC ]
     AddressAlign:    0x0000000000000001
-    Content:         ''
 Symbols:
  Global:
     - Name:            f2
@@ -388,7 +383,6 @@ Sections:
     Type:            SHT_NOBITS
     Flags:           [ SHF_WRITE, SHF_ALLOC ]
     AddressAlign:    0x0000000000000001
-    Content:         ''
 Symbols:
  Global:
     - Name:            f1

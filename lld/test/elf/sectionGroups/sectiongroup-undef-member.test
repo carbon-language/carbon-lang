@@ -49,7 +49,6 @@ Sections:
     Type:            SHT_NOBITS
     Flags:           [ SHF_WRITE, SHF_ALLOC ]
     AddressAlign:    0x0000000000000004
-    Content:         ''
   - Name:            .foo
     Type:            SHT_PROGBITS
     Flags:           [ SHF_ALLOC, SHF_EXECINSTR, SHF_GROUP ]
@@ -115,7 +114,6 @@ Sections:
     Type:            SHT_NOBITS
     Flags:           [ SHF_WRITE, SHF_ALLOC ]
     AddressAlign:    0x0000000000000004
-    Content:         ''
   - Name:            .foo
     Type:            SHT_PROGBITS
     Flags:           [ SHF_ALLOC, SHF_EXECINSTR, SHF_GROUP ]

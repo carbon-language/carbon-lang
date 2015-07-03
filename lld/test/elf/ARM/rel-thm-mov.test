@@ -55,7 +55,7 @@ Sections:
     Type:            SHT_NOBITS
     Flags:           [ SHF_WRITE, SHF_ALLOC ]
     AddressAlign:    0x0000000000000004
-    Content:         411C0000
+    Size:            4
 Symbols:
   Local:
     - Name:            _ZL5data1

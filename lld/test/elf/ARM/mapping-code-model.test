@@ -57,7 +57,6 @@ Sections:
     Type:            SHT_NOBITS
     Flags:           [ SHF_WRITE, SHF_ALLOC ]
     AddressAlign:    0x0000000000000001
-    Content:         ''
 Symbols:
   Local:
     - Name:            '$a'
@@ -95,7 +94,6 @@ Sections:
     Type:            SHT_NOBITS
     Flags:           [ SHF_WRITE, SHF_ALLOC ]
     AddressAlign:    0x0000000000000001
-    Content:         ''
 Symbols:
   Local:
     - Name:            '$t'
@@ -145,7 +143,6 @@ Sections:
     Type:            SHT_NOBITS
     Flags:           [ SHF_WRITE, SHF_ALLOC ]
     AddressAlign:    0x0000000000000001
-    Content:         ''
 Symbols:
   Local:
     - Name:            '$t'

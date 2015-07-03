@@ -20,12 +20,11 @@ Sections:
     Type:            SHT_NOBITS
     Flags:           [ SHF_WRITE, SHF_ALLOC ]
     AddressAlign:    0x0000000000000004
-    Content:         ''
   - Name:            .tbss
     Type:            SHT_NOBITS
     Flags:           [ SHF_WRITE, SHF_ALLOC, SHF_TLS ]
     AddressAlign:    0x0000000000000004
-    Content:         00636C616E672076657273696F6E2033
+    Size:            16
   - Name:            .note.GNU-stack
     Type:            SHT_PROGBITS
     AddressAlign:    0x0000000000000001

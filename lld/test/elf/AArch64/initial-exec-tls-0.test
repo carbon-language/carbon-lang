@@ -105,7 +105,6 @@ Sections:
     Type:            SHT_NOBITS
     Flags:           [ SHF_WRITE, SHF_ALLOC ]
     AddressAlign:    0x0000000000000004
-    Content:         ''
   - Name:            .comment
     Type:            SHT_PROGBITS
     Flags:           [ SHF_MERGE, SHF_STRINGS ]

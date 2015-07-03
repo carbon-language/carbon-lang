@@ -22,7 +22,6 @@ Sections:
   Type:            SHT_NOBITS
   Flags:           [ SHF_WRITE, SHF_ALLOC ]
   AddressAlign:    1
-  Content:         ''
   Size:            0x1000
 - Name: .data
   Type: SHT_PROGBITS

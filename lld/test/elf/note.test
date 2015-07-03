@@ -27,7 +27,6 @@ Sections:
     Type:            SHT_NOBITS
     Flags:           [ SHF_WRITE, SHF_ALLOC ]
     AddressAlign:    0x0000000000000004
-    Content:         ''
   - Name:            .note
     Type:            SHT_NOTE
     AddressAlign:    0x0000000000000001

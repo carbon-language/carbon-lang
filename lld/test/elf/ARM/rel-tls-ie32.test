@@ -72,7 +72,6 @@ Sections:
     Type:            SHT_NOBITS
     Flags:           [ SHF_WRITE, SHF_ALLOC ]
     AddressAlign:    0x0000000000000001
-    Content:         ''
 Symbols:
   Global:
     - Name:            main
@@ -107,7 +106,6 @@ Sections:
     Type:            SHT_NOBITS
     Flags:           [ SHF_WRITE, SHF_ALLOC ]
     AddressAlign:    0x0000000000000001
-    Content:         ''
   - Name:            .tdata
     Type:            SHT_PROGBITS
     Flags:           [ SHF_WRITE, SHF_ALLOC, SHF_TLS ]

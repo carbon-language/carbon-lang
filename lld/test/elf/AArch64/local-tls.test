@@ -85,7 +85,6 @@ Sections:
     Type:            SHT_NOBITS
     Flags:           [ SHF_WRITE, SHF_ALLOC ]
     AddressAlign:    0x0000000000000004
-    Content:         ''
   - Name:            .tdata
     Type:            SHT_PROGBITS
     Flags:           [ SHF_WRITE, SHF_ALLOC, SHF_TLS ]
@@ -95,7 +94,7 @@ Sections:
     Type:            SHT_NOBITS
     Flags:           [ SHF_WRITE, SHF_ALLOC, SHF_TLS ]
     AddressAlign:    0x0000000000000004
-    Content:         '2569202569202569'
+    Size:            8
   - Name:            .rodata.str1.1
     Type:            SHT_PROGBITS
     Flags:           [ SHF_ALLOC, SHF_MERGE, SHF_STRINGS ]
