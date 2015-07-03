@@ -163,21 +163,20 @@ uint64_t COFFObjectFile::getSymbolValue(DataRefImpl Ref) const {
   return Sym.getValue();
 }
 
-std::error_code COFFObjectFile::getSymbolAddress(DataRefImpl Ref,
-                                                 uint64_t &Result) const {
-  Result = getSymbolValue(Ref);
+ErrorOr<uint64_t> COFFObjectFile::getSymbolAddress(DataRefImpl Ref) const {
+  uint64_t Result = getSymbolValue(Ref);
   COFFSymbolRef Symb = getCOFFSymbol(Ref);
   int32_t SectionNumber = Symb.getSectionNumber();
 
   if (Symb.isAnyUndefined() || Symb.isCommon() ||
       COFF::isReservedSectionNumber(SectionNumber))
-    return std::error_code();
+    return Result;
 
   const coff_section *Section = nullptr;
   if (std::error_code EC = getSection(SectionNumber, Section))
     return EC;
   Result += Section->VirtualAddress;
-  return std::error_code();
+  return Result;
 }
 
 SymbolRef::Type COFFObjectFile::getSymbolType(DataRefImpl Ref) const {

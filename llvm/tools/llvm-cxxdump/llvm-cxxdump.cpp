@@ -207,9 +207,10 @@ static void dumpCXXData(const ObjectFile *Obj) {
     StringRef SecContents;
     if (error(Sec.getContents(SecContents)))
       return;
-    uint64_t SymAddress;
-    if (error(Sym.getAddress(SymAddress)))
+    ErrorOr<uint64_t> SymAddressOrErr = Sym.getAddress();
+    if (error(SymAddressOrErr.getError()))
       return;
+    uint64_t SymAddress = *SymAddressOrErr;
     uint64_t SecAddress = Sec.getAddress();
     uint64_t SecSize = Sec.getSize();
     uint64_t SymOffset = SymAddress - SecAddress;

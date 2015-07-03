@@ -901,8 +901,10 @@ static void dumpSymbolNamesFromObject(SymbolicFile &Obj, bool printName,
         S.Size = ELFSymbolRef(Sym).getSize();
     }
     if (PrintAddress && isa<ObjectFile>(Obj)) {
-      if (error(SymbolRef(Sym).getAddress(S.Address)))
+      ErrorOr<uint64_t> AddressOrErr = SymbolRef(Sym).getAddress();
+      if (error(AddressOrErr.getError()))
         break;
+      S.Address = *AddressOrErr;
     }
     S.TypeChar = getNMTypeChar(Obj, Sym);
     if (error(Sym.printName(OS)))

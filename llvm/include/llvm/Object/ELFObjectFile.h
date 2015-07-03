@@ -196,8 +196,7 @@ protected:
 
   void moveSymbolNext(DataRefImpl &Symb) const override;
   ErrorOr<StringRef> getSymbolName(DataRefImpl Symb) const override;
-  std::error_code getSymbolAddress(DataRefImpl Symb,
-                                   uint64_t &Res) const override;
+  ErrorOr<uint64_t> getSymbolAddress(DataRefImpl Symb) const override;
   uint64_t getSymbolValue(DataRefImpl Symb) const override;
   uint32_t getSymbolAlignment(DataRefImpl Symb) const override;
   uint64_t getCommonSymbolSizeImpl(DataRefImpl Symb) const override;
@@ -400,15 +399,15 @@ uint64_t ELFObjectFile<ELFT>::getSymbolValue(DataRefImpl Symb) const {
 }
 
 template <class ELFT>
-std::error_code ELFObjectFile<ELFT>::getSymbolAddress(DataRefImpl Symb,
-                                                      uint64_t &Result) const {
-  Result = getSymbolValue(Symb);
+ErrorOr<uint64_t>
+ELFObjectFile<ELFT>::getSymbolAddress(DataRefImpl Symb) const {
+  uint64_t Result = getSymbolValue(Symb);
   const Elf_Sym *ESym = getSymbol(Symb);
   switch (ESym->st_shndx) {
   case ELF::SHN_COMMON:
   case ELF::SHN_UNDEF:
   case ELF::SHN_ABS:
-    return std::error_code();
+    return Result;
   }
 
   const Elf_Ehdr *Header = EF.getHeader();
@@ -422,7 +421,7 @@ std::error_code ELFObjectFile<ELFT>::getSymbolAddress(DataRefImpl Symb,
       Result += Section->sh_addr;
   }
 
-  return std::error_code();
+  return Result;
 }
 
 template <class ELFT>

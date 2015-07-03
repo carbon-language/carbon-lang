@@ -34,14 +34,16 @@ public:
       report_fatal_error(EC.message());
     StringRef SymName = *SymNameOrErr;
 
-    uint64_t  SymAddr; SymI->getAddress(SymAddr);
+    ErrorOr<uint64_t> SymAddr = SymI->getAddress();
+    if (std::error_code EC = SymAddr.getError())
+      report_fatal_error(EC.message());
     uint64_t SymSize = SymI->getSize();
     int64_t Addend = *ELFRelocationRef(Rel).getAddend();
 
     MCSymbol *Sym = Ctx.getOrCreateSymbol(SymName);
     // FIXME: check that the value is actually the same.
     if (!Sym->isVariable())
-      Sym->setVariableValue(MCConstantExpr::create(SymAddr, Ctx));
+      Sym->setVariableValue(MCConstantExpr::create(*SymAddr, Ctx));
 
     const MCExpr *Expr = nullptr;
     // If hasAddend is true, then we need to add Addend (r_addend) to Expr.

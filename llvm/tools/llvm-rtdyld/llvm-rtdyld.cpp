@@ -269,9 +269,10 @@ static int printLineInfoForInput(bool LoadObjects, bool UseDebugObj) {
         ErrorOr<StringRef> Name = Sym.getName();
         if (!Name)
           continue;
-        uint64_t Addr;
-        if (Sym.getAddress(Addr))
+        ErrorOr<uint64_t> AddrOrErr = Sym.getAddress();
+        if (!AddrOrErr)
           continue;
+        uint64_t Addr = *AddrOrErr;
 
         uint64_t Size = P.second;
         // If we're not using the debug object, compute the address of the

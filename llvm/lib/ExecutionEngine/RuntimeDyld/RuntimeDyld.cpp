@@ -114,9 +114,10 @@ void RuntimeDyldImpl::mapSectionAddress(const void *LocalAddress,
 }
 
 static std::error_code getOffset(const SymbolRef &Sym, uint64_t &Result) {
-  uint64_t Address;
-  if (std::error_code EC = Sym.getAddress(Address))
+  ErrorOr<uint64_t> AddressOrErr = Sym.getAddress();
+  if (std::error_code EC = AddressOrErr.getError())
     return EC;
+  uint64_t Address = *AddressOrErr;
 
   if (Address == UnknownAddress) {
     Result = UnknownAddress;

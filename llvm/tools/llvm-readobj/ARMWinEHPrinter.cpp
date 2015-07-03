@@ -201,10 +201,10 @@ ErrorOr<object::SymbolRef> Decoder::getSymbol(const COFFObjectFile &COFF,
     if (FunctionOnly && Symbol.getType() != SymbolRef::ST_Function)
       continue;
 
-    uint64_t Address;
-    if (std::error_code EC = Symbol.getAddress(Address))
+    ErrorOr<uint64_t> Address = Symbol.getAddress();
+    if (std::error_code EC = Address.getError())
       return EC;
-    if (Address == VA)
+    if (*Address == VA)
       return Symbol;
   }
   return readobj_error::unknown_symbol;
@@ -605,7 +605,10 @@ bool Decoder::dumpUnpackedEntry(const COFFObjectFile &COFF,
     if (std::error_code EC = FunctionNameOrErr.getError())
       report_fatal_error(EC.message());
     FunctionName = *FunctionNameOrErr;
-    Function->getAddress(FunctionAddress);
+    ErrorOr<uint64_t> FunctionAddressOrErr = Function->getAddress();
+    if (std::error_code EC = FunctionAddressOrErr.getError())
+      report_fatal_error(EC.message());
+    FunctionAddress = *FunctionAddressOrErr;
   } else {
     const pe32_header *PEHeader;
     if (COFF.getPE32Header(PEHeader))
@@ -620,8 +623,10 @@ bool Decoder::dumpUnpackedEntry(const COFFObjectFile &COFF,
     if (std::error_code EC = Name.getError())
       report_fatal_error(EC.message());
 
-    uint64_t Address;
-    XDataRecord->getAddress(Address);
+    ErrorOr<uint64_t> AddressOrErr = XDataRecord->getAddress();
+    if (std::error_code EC = AddressOrErr.getError())
+      report_fatal_error(EC.message());
+    uint64_t Address = *AddressOrErr;
 
     SW.printString("ExceptionRecord", formatSymbol(*Name, Address));
 
@@ -666,7 +671,8 @@ bool Decoder::dumpPackedEntry(const object::COFFObjectFile &COFF,
     if (std::error_code EC = FunctionNameOrErr.getError())
       report_fatal_error(EC.message());
     FunctionName = *FunctionNameOrErr;
-    Function->getAddress(FunctionAddress);
+    ErrorOr<uint64_t> FunctionAddressOrErr = Function->getAddress();
+    FunctionAddress = *FunctionAddressOrErr;
   } else {
     const pe32_header *PEHeader;
     if (COFF.getPE32Header(PEHeader))

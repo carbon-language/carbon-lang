@@ -677,7 +677,13 @@ DWARFContextInMemory::DWARFContextInMemory(const object::ObjectFile &Obj,
         // First calculate the address of the symbol or section as it appears
         // in the objct file
         if (Sym != Obj.symbol_end()) {
-          Sym->getAddress(SymAddr);
+          ErrorOr<uint64_t> SymAddrOrErr = Sym->getAddress();
+          if (std::error_code EC = SymAddrOrErr.getError()) {
+            errs() << "error: failed to compute symbol address: "
+                   << EC.message() << '\n';
+            continue;
+          }
+          SymAddr = *SymAddrOrErr;
           // Also remember what section this symbol is in for later
           Sym->getSection(RSec);
         } else if (auto *MObj = dyn_cast<MachOObjectFile>(&Obj)) {
