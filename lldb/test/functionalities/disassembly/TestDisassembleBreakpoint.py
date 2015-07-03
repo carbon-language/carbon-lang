@@ -39,17 +39,21 @@ class DisassemblyTestCase(TestBase):
 
         # ARCH, if not specified, defaults to x86_64.
         if self.getArchitecture() in ["", 'x86_64', 'i386']:
-            # make sure that the software breakpoint has been removed
-            self.assertFalse("int3" in disassembly)
-            # make sure a few reasonable assembly instructions are here
-            self.expect(disassembly, exe=False,
-                        startstr = "a.out`sum(int, int)",
-                        substrs = [' mov',
-                                   ' addl ',
-                                   'ret'])
+            breakpoint_opcodes = ["int3"]
+            instructions = [' mov', ' addl ', 'ret']
+        elif self.getArchitecture() in ["arm", "aarch64"]:
+            breakpoint_opcodes = ["brk", "udf"]
+            instructions = [' add ', ' ldr ', ' str ']
         else:
             # TODO please add your arch here
             self.fail('unimplemented for arch = "{arch}"'.format(arch=self.getArchitecture()))
+
+        # make sure that the software breakpoint has been removed
+        for op in breakpoint_opcodes:
+            self.assertFalse(op in disassembly)
+
+        # make sure a few reasonable assembly instructions are here
+        self.expect(disassembly, exe=False, startstr = "a.out`sum(int, int)", substrs = instructions)
 
 if __name__ == '__main__':
     import atexit
