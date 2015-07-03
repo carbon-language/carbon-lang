@@ -2448,17 +2448,18 @@ SDValue AMDGPUTargetLowering::PerformDAGCombine(SDNode *N,
   SDLoc DL(N);
 
   switch(N->getOpcode()) {
-    default: break;
-    case ISD::MUL:
-      return performMulCombine(N, DCI);
-    case AMDGPUISD::MUL_I24:
-    case AMDGPUISD::MUL_U24: {
-      SDValue N0 = N->getOperand(0);
-      SDValue N1 = N->getOperand(1);
-      simplifyI24(N0, DCI);
-      simplifyI24(N1, DCI);
-      return SDValue();
-    }
+  default:
+    break;
+  case ISD::MUL:
+    return performMulCombine(N, DCI);
+  case AMDGPUISD::MUL_I24:
+  case AMDGPUISD::MUL_U24: {
+    SDValue N0 = N->getOperand(0);
+    SDValue N1 = N->getOperand(1);
+    simplifyI24(N0, DCI);
+    simplifyI24(N1, DCI);
+    return SDValue();
+  }
   case ISD::SELECT: {
     SDValue Cond = N->getOperand(0);
     if (Cond.getOpcode() == ISD::SETCC && Cond.hasOneUse()) {
