@@ -2702,12 +2702,25 @@ NativeProcessLinux::GetMemoryRegionInfo (lldb::addr_t load_addr, MemoryRegionInf
         // The target memory address comes somewhere after the region we just parsed.
     }
 
-    // If we made it here, we didn't find an entry that contained the given address.
-    error.SetErrorString ("address comes after final region");
-
-    if (log)
-        log->Printf ("NativeProcessLinux::%s failed to find map entry for address 0x%" PRIx64 ": %s", __FUNCTION__, load_addr, error.AsCString ());
-
+    // If we made it here, we didn't find an entry that contained the given address. Return the
+    // load_addr as start and the amount of bytes betwwen load address and the end of the memory as
+    // size.
+    range_info.GetRange ().SetRangeBase (load_addr);
+    switch (m_arch.GetAddressByteSize())
+    {
+        case 4:
+            range_info.GetRange ().SetByteSize (0x100000000ull - load_addr);
+            break;
+        case 8:
+            range_info.GetRange ().SetByteSize (0ull - load_addr);
+            break;
+        default:
+            assert(false && "Unrecognized data byte size");
+            break;
+    }
+    range_info.SetReadable (MemoryRegionInfo::OptionalBool::eNo);
+    range_info.SetWritable (MemoryRegionInfo::OptionalBool::eNo);
+    range_info.SetExecutable (MemoryRegionInfo::OptionalBool::eNo);
     return error;
 }
 
