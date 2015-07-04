@@ -136,8 +136,7 @@ std::error_code ObjectFile::initializeChunks() {
     if (Name == ".drectve") {
       ArrayRef<uint8_t> Data;
       COFFObj->getSectionContents(Sec, Data);
-      Directives = std::string((const char *)Data.data(),
-                               Sec->SizeOfRawData);
+      Directives = std::string((const char *)Data.data(), Data.size());
       continue;
     }
     if (Name.startswith(".debug"))
