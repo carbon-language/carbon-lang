@@ -815,12 +815,16 @@ void RuntimeDyldImpl::resolveExternalSymbols() {
         report_fatal_error("Program used external function '" + Name +
                            "' which could not be resolved!");
 
-      DEBUG(dbgs() << "Resolving relocations Name: " << Name << "\t"
-                   << format("0x%lx", Addr) << "\n");
-      // This list may have been updated when we called getSymbolAddress, so
-      // don't change this code to get the list earlier.
-      RelocationList &Relocs = i->second;
-      resolveRelocationList(Relocs, Addr);
+      // If Resolver returned UINT64_MAX, the client wants to handle this symbol
+      // manually and we shouldn't resolve its relocations.
+      if (Addr != UINT64_MAX) {
+        DEBUG(dbgs() << "Resolving relocations Name: " << Name << "\t"
+                     << format("0x%lx", Addr) << "\n");
+        // This list may have been updated when we called getSymbolAddress, so
+        // don't change this code to get the list earlier.
+        RelocationList &Relocs = i->second;
+        resolveRelocationList(Relocs, Addr);
+      }
     }
 
     ExternalSymbolRelocations.erase(i);

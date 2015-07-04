@@ -727,7 +727,9 @@ bool RuntimeDyldCheckerImpl::checkAllRulesInBuffer(StringRef RulePrefix,
 }
 
 bool RuntimeDyldCheckerImpl::isSymbolValid(StringRef Symbol) const {
-  return getRTDyld().getSymbolLocalAddress(Symbol) != nullptr;
+  if (getRTDyld().getSymbolLocalAddress(Symbol))
+    return true;
+  return !!getRTDyld().Resolver.findSymbol(Symbol);
 }
 
 uint64_t RuntimeDyldCheckerImpl::getSymbolLocalAddr(StringRef Symbol) const {
