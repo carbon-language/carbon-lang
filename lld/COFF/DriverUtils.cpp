@@ -172,6 +172,23 @@ std::error_code parseAlternateName(StringRef S) {
   return std::error_code();
 }
 
+// Parse a string of the form of "<from>=<to>".
+// Results are directly written to Config.
+std::error_code parseMerge(StringRef S) {
+  StringRef From, To;
+  std::tie(From, To) = S.split('=');
+  if (From.empty() || To.empty()) {
+    llvm::errs() << "/merge: invalid argument: " << S << "\n";
+    return make_error_code(LLDError::InvalidOption);
+  }
+  auto Pair = Config->Merge.insert(std::make_pair(From, To));
+  bool Inserted = Pair.second;
+  if (!Inserted)
+    llvm::errs() << "warning: " << S << ": already merged into "
+                 << Pair.first->second << "\n";
+  return std::error_code();
+}
+
 // Parses a string in the form of "EMBED[,=<integer>]|NO".
 // Results are directly written to Config.
 std::error_code parseManifest(StringRef Arg) {

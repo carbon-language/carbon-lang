@@ -132,6 +132,7 @@ std::error_code parseSubsystem(StringRef Arg, WindowsSubsystem *Sys,
                                uint32_t *Major, uint32_t *Minor);
 
 std::error_code parseAlternateName(StringRef);
+std::error_code parseMerge(StringRef);
 
 // Parses a string in the form of "EMBED[,=<integer>]|NO".
 std::error_code parseManifest(StringRef Arg);

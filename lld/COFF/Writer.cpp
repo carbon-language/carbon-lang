@@ -158,6 +158,16 @@ void Writer::dedupCOMDATs() {
     doICF(Symtab->getChunks());
 }
 
+static StringRef getOutputSection(StringRef Name) {
+  StringRef S = Name.split('$').first;
+  if (Config->Debug)
+    return S;
+  auto It = Config->Merge.find(S);
+  if (It == Config->Merge.end())
+    return S;
+  return It->second;
+}
+
 // Create output section objects and add them to OutputSections.
 void Writer::createSections() {
   // First, bin chunks by name.
@@ -178,18 +188,16 @@ void Writer::createSections() {
   // '$' and all following characters in input section names are
   // discarded when determining output section. So, .text$foo
   // contributes to .text, for example. See PE/COFF spec 3.2.
-  StringRef Name = Map.begin()->first.split('$').first;
-  auto Sec = new (CAlloc.Allocate()) OutputSection(Name, 0);
-  OutputSections.push_back(Sec);
-  for (auto &P : Map) {
-    StringRef SectionName = P.first;
-    StringRef Base = SectionName.split('$').first;
-    if (Base != Sec->getName()) {
+  std::map<StringRef, OutputSection *> Sections;
+  for (auto Pair : Map) {
+    StringRef Name = getOutputSection(Pair.first);
+    OutputSection *&Sec = Sections[Name];
+    if (!Sec) {
       size_t SectIdx = OutputSections.size();
-      Sec = new (CAlloc.Allocate()) OutputSection(Base, SectIdx);
+      Sec = new (CAlloc.Allocate()) OutputSection(Name, SectIdx);
       OutputSections.push_back(Sec);
     }
-    std::vector<Chunk *> &Chunks = P.second;
+    std::vector<Chunk *> &Chunks = Pair.second;
     for (Chunk *C : Chunks) {
       Sec->addChunk(C);
       Sec->addPermissions(C->getPermissions());

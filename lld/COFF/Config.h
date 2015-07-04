@@ -54,6 +54,7 @@ struct Configuration {
   bool DoGC = true;
   bool Relocatable = true;
   bool Force = false;
+  bool Debug = false;
 
   // Symbols in this set are considered as live by the garbage collector.
   std::set<Undefined *> GCRoot;
@@ -69,6 +70,9 @@ struct Configuration {
 
   // Used for /opt:icf
   bool ICF = false;
+
+  // Used for /merge:from=to (e.g. /merge:.rdata=.text)
+  std::map<StringRef, StringRef> Merge;
 
   // Options for manifest files.
   ManifestKind Manifest = SideBySide;

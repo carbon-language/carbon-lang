@@ -121,7 +121,8 @@ LinkerDriver::parseDirectives(StringRef S) {
       addUndefined(Arg->getValue());
       break;
     case OPT_merge:
-      // Ignore /merge for now.
+      if (auto EC = parseMerge(Arg->getValue()))
+        return EC;
       break;
     case OPT_nodefaultlib:
       Config->NoDefaultLibs.insert(doFindLib(Arg->getValue()));
@@ -290,6 +291,10 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
   if (auto *Arg = Args.getLastArg(OPT_entry))
     Config->Entry = addUndefined(Arg->getValue());
 
+  // Handle /debug
+  if (Args.hasArg(OPT_debug))
+    Config->Debug = true;
+
   // Handle /noentry
   if (Args.hasArg(OPT_noentry)) {
     if (!Args.hasArg(OPT_dll)) {
@@ -441,6 +446,11 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
     if (parseModuleDefs(MBOrErr.get()))
       return false;
   }
+
+  // Handle /merge
+  for (auto *Arg : Args.filtered(OPT_merge))
+    if (parseMerge(Arg->getValue()))
+      return false;
 
   // Handle /manifest
   if (auto *Arg = Args.getLastArg(OPT_manifest_colon)) {
