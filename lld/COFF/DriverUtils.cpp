@@ -399,13 +399,14 @@ std::error_code fixupExports() {
   std::map<StringRef, Export *> Map;
   std::vector<Export> V;
   for (Export &E : Config->Exports) {
-    auto It = Map.find(E.Name);
-    if (It == Map.end()) {
-      Map.insert(It, std::make_pair(E.Name, &E));
+    auto Pair = Map.insert(std::make_pair(E.Name, &E));
+    bool Inserted = Pair.second;
+    if (Inserted) {
       V.push_back(E);
       continue;
     }
-    if (E == *It->second)
+    Export *Existing = Pair.first->second;
+    if (E == *Existing)
       continue;
     llvm::errs() << "warning: duplicate /export option: " << E.Name << "\n";
     continue;
