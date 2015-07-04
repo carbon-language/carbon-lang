@@ -2172,8 +2172,8 @@ Value *BoUpSLP::vectorizeTree(TreeEntry *E) {
     case Instruction::FPTrunc:
     case Instruction::BitCast: {
       ValueList INVL;
-      for (int i = 0, e = E->Scalars.size(); i < e; ++i)
-        INVL.push_back(cast<Instruction>(E->Scalars[i])->getOperand(0));
+      for (Value *V : E->Scalars)
+        INVL.push_back(cast<Instruction>(V)->getOperand(0));
 
       setInsertPointAfterBundle(E->Scalars);
 
@@ -2191,9 +2191,9 @@ Value *BoUpSLP::vectorizeTree(TreeEntry *E) {
     case Instruction::FCmp:
     case Instruction::ICmp: {
       ValueList LHSV, RHSV;
-      for (int i = 0, e = E->Scalars.size(); i < e; ++i) {
-        LHSV.push_back(cast<Instruction>(E->Scalars[i])->getOperand(0));
-        RHSV.push_back(cast<Instruction>(E->Scalars[i])->getOperand(1));
+      for (Value *V : E->Scalars) {
+        LHSV.push_back(cast<Instruction>(V)->getOperand(0));
+        RHSV.push_back(cast<Instruction>(V)->getOperand(1));
       }
 
       setInsertPointAfterBundle(E->Scalars);
@@ -2217,10 +2217,10 @@ Value *BoUpSLP::vectorizeTree(TreeEntry *E) {
     }
     case Instruction::Select: {
       ValueList TrueVec, FalseVec, CondVec;
-      for (int i = 0, e = E->Scalars.size(); i < e; ++i) {
-        CondVec.push_back(cast<Instruction>(E->Scalars[i])->getOperand(0));
-        TrueVec.push_back(cast<Instruction>(E->Scalars[i])->getOperand(1));
-        FalseVec.push_back(cast<Instruction>(E->Scalars[i])->getOperand(2));
+      for (Value *V : E->Scalars) {
+        CondVec.push_back(cast<Instruction>(V)->getOperand(0));
+        TrueVec.push_back(cast<Instruction>(V)->getOperand(1));
+        FalseVec.push_back(cast<Instruction>(V)->getOperand(2));
       }
 
       setInsertPointAfterBundle(E->Scalars);
@@ -2259,9 +2259,9 @@ Value *BoUpSLP::vectorizeTree(TreeEntry *E) {
       if (isa<BinaryOperator>(VL0) && VL0->isCommutative())
         reorderInputsAccordingToOpcode(E->Scalars, LHSVL, RHSVL);
       else
-        for (int i = 0, e = E->Scalars.size(); i < e; ++i) {
-          LHSVL.push_back(cast<Instruction>(E->Scalars[i])->getOperand(0));
-          RHSVL.push_back(cast<Instruction>(E->Scalars[i])->getOperand(1));
+        for (Value *V : E->Scalars) {
+          LHSVL.push_back(cast<Instruction>(V)->getOperand(0));
+          RHSVL.push_back(cast<Instruction>(V)->getOperand(1));
         }
 
       setInsertPointAfterBundle(E->Scalars);
@@ -2322,8 +2322,8 @@ Value *BoUpSLP::vectorizeTree(TreeEntry *E) {
       unsigned AS = SI->getPointerAddressSpace();
 
       ValueList ValueOp;
-      for (int i = 0, e = E->Scalars.size(); i < e; ++i)
-        ValueOp.push_back(cast<StoreInst>(E->Scalars[i])->getValueOperand());
+      for (Value *V : E->Scalars)
+        ValueOp.push_back(cast<StoreInst>(V)->getValueOperand());
 
       setInsertPointAfterBundle(E->Scalars);
 
@@ -2351,8 +2351,8 @@ Value *BoUpSLP::vectorizeTree(TreeEntry *E) {
       setInsertPointAfterBundle(E->Scalars);
 
       ValueList Op0VL;
-      for (int i = 0, e = E->Scalars.size(); i < e; ++i)
-        Op0VL.push_back(cast<GetElementPtrInst>(E->Scalars[i])->getOperand(0));
+      for (Value *V : E->Scalars)
+        Op0VL.push_back(cast<GetElementPtrInst>(V)->getOperand(0));
 
       Value *Op0 = vectorizeTree(Op0VL);
 
@@ -2360,8 +2360,8 @@ Value *BoUpSLP::vectorizeTree(TreeEntry *E) {
       for (int j = 1, e = cast<GetElementPtrInst>(VL0)->getNumOperands(); j < e;
            ++j) {
         ValueList OpVL;
-        for (int i = 0, e = E->Scalars.size(); i < e; ++i)
-          OpVL.push_back(cast<GetElementPtrInst>(E->Scalars[i])->getOperand(j));
+        for (Value *V : E->Scalars)
+          OpVL.push_back(cast<GetElementPtrInst>(V)->getOperand(j));
 
         Value *OpVec = vectorizeTree(OpVL);
         OpVecs.push_back(OpVec);
@@ -2397,8 +2397,8 @@ Value *BoUpSLP::vectorizeTree(TreeEntry *E) {
           OpVecs.push_back(CEI->getArgOperand(j));
           continue;
         }
-        for (int i = 0, e = E->Scalars.size(); i < e; ++i) {
-          CallInst *CEI = cast<CallInst>(E->Scalars[i]);
+        for (Value *V : E->Scalars) {
+          CallInst *CEI = cast<CallInst>(V);
           OpVL.push_back(CEI->getArgOperand(j));
         }
 
