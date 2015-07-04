@@ -183,9 +183,12 @@ std::error_code parseMerge(StringRef S) {
   }
   auto Pair = Config->Merge.insert(std::make_pair(From, To));
   bool Inserted = Pair.second;
-  if (!Inserted)
-    llvm::errs() << "warning: " << S << ": already merged into "
-                 << Pair.first->second << "\n";
+  if (!Inserted) {
+    StringRef Existing = Pair.first->second;
+    if (Existing != To)
+      llvm::errs() << "warning: " << S << ": already merged into "
+                   << Existing << "\n";
+  }
   return std::error_code();
 }
 
