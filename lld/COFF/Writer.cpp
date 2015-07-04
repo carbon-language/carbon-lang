@@ -118,8 +118,8 @@ void Writer::markLive() {
   SmallVector<SectionChunk *, 256> Worklist;
 
   for (Undefined *U : Config->GCRoot) {
-    auto *D = cast<DefinedRegular>(U->repl());
-    if (D->isLive())
+    auto *D = dyn_cast<DefinedRegular>(U->repl());
+    if (!D || D->isLive())
       continue;
     D->markLive();
     Worklist.push_back(D->getChunk());
