@@ -40,7 +40,7 @@ typedef bool lto_bool_t;
  * @{
  */
 
-#define LTO_API_VERSION 16
+#define LTO_API_VERSION 17
 
 /**
  * \since prior to LTO_API_VERSION=3
@@ -63,7 +63,8 @@ typedef enum {
     LTO_SYMBOL_SCOPE_PROTECTED             = 0x00002000,
     LTO_SYMBOL_SCOPE_DEFAULT               = 0x00001800,
     LTO_SYMBOL_SCOPE_DEFAULT_CAN_BE_HIDDEN = 0x00002800,
-    LTO_SYMBOL_COMDAT                      = 0x00004000
+    LTO_SYMBOL_COMDAT                      = 0x00004000,
+    LTO_SYMBOL_ALIAS                       = 0x00008000
 } lto_symbol_attributes;
 
 /**
