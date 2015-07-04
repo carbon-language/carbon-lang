@@ -925,7 +925,7 @@ void MCAssembler::Finish() {
         Fixups = FragWithFixups->getFixups();
         Contents = FragWithFixups->getContents();
       } else
-        llvm_unreachable("Unknow fragment with fixups!");
+        llvm_unreachable("Unknown fragment with fixups!");
       for (const MCFixup &Fixup : Fixups) {
         uint64_t FixedValue;
         bool IsPCRel;
