@@ -58,3 +58,9 @@ cmpps $-129, %xmm0, %xmm0
 // 32: error: invalid operand for instruction
 // 64: error: invalid operand for instruction
 cmppd $256, %xmm0, %xmm0
+
+// 32: error: instruction requires: 64-bit mode
+jrcxz 1
+
+// 64: error: instruction requires: Not 64-bit mode
+jcxz 1

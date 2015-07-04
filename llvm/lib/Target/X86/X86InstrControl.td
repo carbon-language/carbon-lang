@@ -105,14 +105,16 @@ let isBranch = 1, isTerminator = 1, hasSideEffects = 0, SchedRW = [WriteJump] in
   // jecxz.
   let Uses = [CX] in
     def JCXZ : Ii8PCRel<0xE3, RawFrm, (outs), (ins brtarget8:$dst),
-                        "jcxz\t$dst", [], IIC_JCXZ>, AdSize16;
+                        "jcxz\t$dst", [], IIC_JCXZ>, AdSize16,
+                        Requires<[Not64BitMode]>;
   let Uses = [ECX] in
     def JECXZ : Ii8PCRel<0xE3, RawFrm, (outs), (ins brtarget8:$dst),
                         "jecxz\t$dst", [], IIC_JCXZ>, AdSize32;
 
   let Uses = [RCX] in
     def JRCXZ : Ii8PCRel<0xE3, RawFrm, (outs), (ins brtarget8:$dst),
-                           "jrcxz\t$dst", [], IIC_JCXZ>, AdSize64;
+                         "jrcxz\t$dst", [], IIC_JCXZ>, AdSize64,
+                         Requires<[In64BitMode]>;
 }
 
 // Indirect branches
