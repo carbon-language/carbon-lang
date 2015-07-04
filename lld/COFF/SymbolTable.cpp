@@ -101,8 +101,12 @@ std::error_code SymbolTable::readObjects() {
         if (auto EC = addSymbol(Sym))
           return EC;
     StringRef S = File->getDirectives();
-    if (!S.empty())
+    if (!S.empty()) {
       Directives.push_back(S);
+      if (Config->Verbose)
+        llvm::outs() << "Directives: " << File->getShortName()
+                     << ": " << S << "\n";
+    }
   }
   ObjectQueue.clear();
 
