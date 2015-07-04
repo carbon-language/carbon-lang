@@ -254,6 +254,11 @@ public:
   // If it remains undefined, it'll be replaced with whatever the
   // Alias pointer points to.
   SymbolBody *WeakAlias = nullptr;
+
+  // If this symbol is external weak, try to resolve it to a defined
+  // symbol by searching the chain of fallback symbols. Returns the symbol if
+  // successful, otherwise returns null.
+  Defined *getWeakAlias();
 };
 
 // Windows-specific classes.

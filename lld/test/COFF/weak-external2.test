@@ -1,12 +1,6 @@
 # RUN: yaml2obj %s > %t.obj
-# RUN: llvm-as -o %t.lto.obj %S/Inputs/weak-external.ll
-# RUN: lld -flavor link2 /out:%t1.exe /entry:g /subsystem:console %t.obj
-# RUN: lld -flavor link2 /out:%t2.exe /entry:g /subsystem:console /lldmap:%t2.map %t.obj %t.lto.obj
-# RUN: FileCheck %s < %t2.map
-
-# CHECK: lto-llvm{{.*}}:
-# CHECK-NOT: :
-# CHECK: {{ g$}}
+# RUN: llvm-as -o %t.lto.obj %S/Inputs/weak-external2.ll
+# RUN: lld -flavor link2 /out:%t.exe /entry:g /subsystem:console %t.obj %t.lto.obj
 
 ---
 header:          
@@ -20,7 +14,7 @@ sections:
 symbols:         
   - Name:            'f'
     Value:           0
-    SectionNumber:   1
+    SectionNumber:   0
     SimpleType:      IMAGE_SYM_TYPE_NULL
     ComplexType:     IMAGE_SYM_DTYPE_FUNCTION
     StorageClass:    IMAGE_SYM_CLASS_EXTERNAL

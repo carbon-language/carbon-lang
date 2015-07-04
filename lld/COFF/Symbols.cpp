@@ -236,5 +236,13 @@ ErrorOr<std::unique_ptr<InputFile>> Lazy::getMember() {
   return std::move(Obj);
 }
 
+Defined *Undefined::getWeakAlias() {
+  // A weak alias may be a weak alias to another symbol, so check recursively.
+  for (SymbolBody *A = WeakAlias; A; A = cast<Undefined>(A)->WeakAlias)
+    if (auto *D = dyn_cast<Defined>(A->repl()))
+      return D;
+  return nullptr;
+}
+
 } // namespace coff
 } // namespace lld

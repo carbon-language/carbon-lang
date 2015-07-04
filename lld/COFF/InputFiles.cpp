@@ -293,8 +293,11 @@ std::error_code BitcodeFile::parse() {
     if (SymbolDef == LTO_SYMBOL_DEFINITION_UNDEFINED) {
       SymbolBodies.push_back(new (Alloc) Undefined(SymName));
     } else {
-      bool Replaceable = (SymbolDef == LTO_SYMBOL_DEFINITION_TENTATIVE ||
-                          (Attrs & LTO_SYMBOL_COMDAT));
+      bool Replaceable =
+          (SymbolDef == LTO_SYMBOL_DEFINITION_TENTATIVE || // common
+           (Attrs & LTO_SYMBOL_COMDAT) ||                  // comdat
+           (SymbolDef == LTO_SYMBOL_DEFINITION_WEAK &&     // weak external
+            (Attrs & LTO_SYMBOL_ALIAS)));
       SymbolBodies.push_back(new (Alloc) DefinedBitcode(this, SymName,
                                                         Replaceable));
     }

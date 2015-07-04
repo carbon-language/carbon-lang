@@ -46,8 +46,9 @@ public:
   std::error_code run();
   bool queueEmpty();
 
-  // Print an error message on undefined symbols.
-  bool reportRemainingUndefines();
+  // Print an error message on undefined symbols. If Resolve is true, try to
+  // resolve any undefined symbols and update the symbol table accordingly.
+  bool reportRemainingUndefines(bool Resolve);
 
   // Returns a list of chunks of selected symbols.
   std::vector<Chunk *> getChunks();

@@ -594,16 +594,16 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
     }
   }
 
-  // Make sure we have resolved all symbols.
-  if (Symtab.reportRemainingUndefines())
-    return false;
-
   // Do LTO by compiling bitcode input files to a native COFF file
   // then link that file.
   if (auto EC = Symtab.addCombinedLTOObject()) {
     llvm::errs() << EC.message() << "\n";
     return false;
   }
+
+  // Make sure we have resolved all symbols.
+  if (Symtab.reportRemainingUndefines(/*Resolve=*/true))
+    return false;
 
   // Windows specific -- if no /subsystem is given, we need to infer
   // that from entry point name.

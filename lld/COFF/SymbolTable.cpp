@@ -122,7 +122,7 @@ bool SymbolTable::queueEmpty() {
   return ArchiveQueue.empty() && ObjectQueue.empty();
 }
 
-bool SymbolTable::reportRemainingUndefines() {
+bool SymbolTable::reportRemainingUndefines(bool Resolve) {
   bool Ret = false;
   for (auto &I : Symtab) {
     Symbol *Sym = I.second;
@@ -130,20 +130,19 @@ bool SymbolTable::reportRemainingUndefines() {
     if (!Undef)
       continue;
     StringRef Name = Undef->getName();
-    // A weak alias may have been resolved, so check for that. A weak alias
-    // may be a weak alias to another symbol, so check recursively.
-    for (SymbolBody *A = Undef->WeakAlias; A;
-         A = cast<Undefined>(A)->WeakAlias) {
-      if (auto *D = dyn_cast<Defined>(A->repl())) {
+    // A weak alias may have been resolved, so check for that.
+    if (Defined *D = Undef->getWeakAlias()) {
+      if (Resolve)
         Sym->Body = D;
-        goto next;
-      }
+      continue;
     }
     // If we can resolve a symbol by removing __imp_ prefix, do that.
     // This odd rule is for compatibility with MSVC linker.
     if (Name.startswith("__imp_")) {
       Symbol *Imp = find(Name.substr(strlen("__imp_")));
       if (Imp && isa<Defined>(Imp->Body)) {
+        if (!Resolve)
+          continue;
         auto *D = cast<Defined>(Imp->Body);
         auto *S = new (Alloc) DefinedLocalImport(Name, D);
         LocalImportChunks.push_back(S->getChunk());
@@ -155,11 +154,11 @@ bool SymbolTable::reportRemainingUndefines() {
     // Remaining undefined symbols are not fatal if /force is specified.
     // They are replaced with dummy defined symbols.
     if (Config->Force) {
-      Sym->Body = new (Alloc) DefinedAbsolute(Name, 0);
+      if (Resolve)
+        Sym->Body = new (Alloc) DefinedAbsolute(Name, 0);
       continue;
     }
     Ret = true;
-    next:;
   }
   return Ret;
 }
@@ -299,6 +298,12 @@ std::error_code SymbolTable::addCombinedLTOObject() {
   if (BitcodeFiles.empty())
     return std::error_code();
 
+  // Diagnose any undefined symbols early, but do not resolve weak externals,
+  // as resolution breaks the invariant that each Symbol points to a unique
+  // SymbolBody, which we rely on to replace DefinedBitcode symbols correctly.
+  if (reportRemainingUndefines(/*Resolve=*/false))
+    return make_error_code(LLDError::BrokenFile);
+
   // Create an object file and add it to the symbol table by replacing any
   // DefinedBitcode symbols with the definitions in the object file.
   LTOCodeGenerator CG;
@@ -310,21 +315,12 @@ std::error_code SymbolTable::addCombinedLTOObject() {
   for (SymbolBody *Body : Obj->getSymbols()) {
     if (!Body->isExternal())
       continue;
-    // Find an existing Symbol. We should not see any new undefined symbols at
-    // this point.
+    // We should not see any new undefined symbols at this point, but we'll
+    // diagnose them later in reportRemainingUndefines().
     StringRef Name = Body->getName();
     Symbol *Sym = insert(Body);
-    if (Sym->Body == Body && !isa<Defined>(Body)) {
-      llvm::errs() << "LTO: undefined symbol: " << Name << '\n';
-      return make_error_code(LLDError::BrokenFile);
-    }
 
     if (isa<DefinedBitcode>(Sym->Body)) {
-      // The symbol should now be defined.
-      if (!isa<Defined>(Body)) {
-        llvm::errs() << "LTO: undefined symbol: " << Name << '\n';
-        return make_error_code(LLDError::BrokenFile);
-      }
       Sym->Body = Body;
       continue;
     }
@@ -353,9 +349,6 @@ std::error_code SymbolTable::addCombinedLTOObject() {
     return make_error_code(LLDError::BrokenFile);
   }
 
-  // New runtime library symbol references may have created undefined references.
-  if (reportRemainingUndefines())
-    return make_error_code(LLDError::BrokenFile);
   return std::error_code();
 }
 
@@ -375,9 +368,12 @@ ErrorOr<ObjectFile *> SymbolTable::createLTOObject(LTOCodeGenerator *CG) {
         CG->addMustPreserveSymbol(Body->getName());
 
   // Likewise for other symbols that must be preserved.
-  for (Undefined *U : Config->GCRoot)
-    if (isa<DefinedBitcode>(U->repl()))
-      CG->addMustPreserveSymbol(U->getName());
+  for (Undefined *U : Config->GCRoot) {
+    if (auto *S = dyn_cast<DefinedBitcode>(U->repl()))
+      CG->addMustPreserveSymbol(S->getName());
+    else if (auto *S = dyn_cast_or_null<DefinedBitcode>(U->getWeakAlias()))
+      CG->addMustPreserveSymbol(S->getName());
+  }
 
   CG->setModule(BitcodeFiles[0]->releaseModule());
   for (unsigned I = 1, E = BitcodeFiles.size(); I != E; ++I)
