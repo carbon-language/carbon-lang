@@ -159,7 +159,7 @@ CMICmdFactory::IsValid(const CMIUtilString &vMiCmd) const
         return false;
     }
 
-    const size_t nPos = vMiCmd.find(" ");
+    const size_t nPos = vMiCmd.find(' ');
     if (nPos != std::string::npos)
         bValid = false;
 

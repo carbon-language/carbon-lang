@@ -231,11 +231,11 @@ CMICmdArgValString::IsStringArgSingleText(const CMIUtilString &vrTxt) const
         return false;
 
     // Look for -f type short options, if found reject
-    if ((0 == vrTxt.find("-")) && (vrTxt.length() == 2))
+    if ((0 == vrTxt.find('-')) && (vrTxt.length() == 2))
         return false;
 
     // Look for thread group i1 i2 i3...., if found reject
-    if ((vrTxt.find("i") == 0) && ::isdigit(vrTxt[1]))
+    if ((vrTxt.find('i') == 0) && ::isdigit(vrTxt[1]))
         return false;
 
     // Look for numbers, if found reject

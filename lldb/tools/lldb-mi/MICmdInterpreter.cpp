@@ -153,7 +153,7 @@ bool
 CMICmdInterpreter::MiHasCmdTokenEndingHyphen(const CMIUtilString &vTextLine)
 {
     // The hyphen is mandatory
-    const size_t nPos = vTextLine.find("-", 0);
+    const size_t nPos = vTextLine.find('-', 0);
     if ((nPos == std::string::npos))
         return false;
 
@@ -215,7 +215,7 @@ CMICmdInterpreter::MiHasCmdTokenEndingAlpha(const CMIUtilString &vTextLine)
 bool
 CMICmdInterpreter::MiHasCmdTokenPresent(const CMIUtilString &vTextLine)
 {
-    const size_t nPos = vTextLine.find("-", 0);
+    const size_t nPos = vTextLine.find('-', 0);
     return (nPos > 0);
 }
 
@@ -246,12 +246,12 @@ CMICmdInterpreter::MiHasCmd(const CMIUtilString &vTextLine)
     }
     else
     {
-        nPos = vTextLine.find("-", 0);
+        nPos = vTextLine.find('-', 0);
     }
 
     bool bFoundCmd = false;
     const size_t nLen = vTextLine.length();
-    const size_t nPos2 = vTextLine.find(" ", nPos);
+    const size_t nPos2 = vTextLine.find(' ', nPos);
     if (nPos2 != std::string::npos)
     {
         if (nPos2 == nLen)

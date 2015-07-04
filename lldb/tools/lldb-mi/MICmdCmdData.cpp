@@ -1750,8 +1750,8 @@ CMICmdCmdDataInfoLine::Acknowledge(void)
 
             // LineEntry: \[0x0000000100000f37-0x0000000100000f45\): /path/to/file:3[:1]
             //              ^^^^^^^^^^^^^^^^^^ -- start address
-            const size_t nStartAddressStartPos = rLine.find("[");
-            const size_t nStartAddressEndPos = rLine.find("-");
+            const size_t nStartAddressStartPos = rLine.find('[');
+            const size_t nStartAddressEndPos = rLine.find('-');
             const size_t nStartAddressLen = nStartAddressEndPos - nStartAddressStartPos - 1;
             const CMIUtilString strStartAddress(rLine.substr(nStartAddressStartPos + 1, nStartAddressLen).c_str());
             const CMICmnMIValueConst miValueConst(strStartAddress);
@@ -1760,7 +1760,7 @@ CMICmdCmdDataInfoLine::Acknowledge(void)
 
             // LineEntry: \[0x0000000100000f37-0x0000000100000f45\): /path/to/file:3[:1]
             //                                 ^^^^^^^^^^^^^^^^^^ -- end address
-            const size_t nEndAddressEndPos = rLine.find(")");
+            const size_t nEndAddressEndPos = rLine.find(')');
             const size_t nEndAddressLen = nEndAddressEndPos - nStartAddressEndPos - 1;
             const CMIUtilString strEndAddress(rLine.substr(nStartAddressEndPos + 1, nEndAddressLen).c_str());
             const CMICmnMIValueConst miValueConst2(strEndAddress);
