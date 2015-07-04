@@ -1131,11 +1131,16 @@ computeInstrHeights(const MachineBasicBlock *MBB) {
 
 MachineTraceMetrics::Trace
 MachineTraceMetrics::Ensemble::getTrace(const MachineBasicBlock *MBB) {
-  // FIXME: Check cache tags, recompute as needed.
-  computeTrace(MBB);
-  computeInstrDepths(MBB);
-  computeInstrHeights(MBB);
-  return Trace(*this, BlockInfo[MBB->getNumber()]);
+  TraceBlockInfo &TBI = BlockInfo[MBB->getNumber()];
+
+  if (!TBI.hasValidDepth() || !TBI.hasValidHeight())
+    computeTrace(MBB);
+  if (!TBI.HasValidInstrDepths)
+    computeInstrDepths(MBB);
+  if (!TBI.HasValidInstrHeights)
+    computeInstrHeights(MBB);
+  
+  return Trace(*this, TBI);
 }
 
 unsigned
