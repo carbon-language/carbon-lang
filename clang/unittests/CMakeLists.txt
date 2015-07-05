@@ -23,7 +23,8 @@ add_subdirectory(Format)
 add_subdirectory(Rewrite)
 add_subdirectory(Sema)
 add_subdirectory(CodeGen)
-# FIXME: Why are the libclang unit tests disabled on Windows?
+# FIXME: libclang unit tests are disabled on Windows due
+# to failures, mostly in libclang.VirtualFileOverlay_*.
 if(NOT WIN32) 
   add_subdirectory(libclang)
 endif()
