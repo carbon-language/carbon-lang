@@ -167,12 +167,19 @@ void SymbolTable::addLazy(Lazy *New, std::vector<Symbol *> *Accum) {
   Symbol *Sym = insert(New);
   if (Sym->Body == New)
     return;
-  SymbolBody *Existing = Sym->Body;
-  if (!isa<Undefined>(Existing))
+  for (;;) {
+    SymbolBody *Existing = Sym->Body;
+    if (isa<Defined>(Existing))
+      return;
+    if (Lazy *L = dyn_cast<Lazy>(Existing))
+      if (L->getFileIndex() < New->getFileIndex())
+        return;
+    if (!Sym->Body.compare_exchange_strong(Existing, New))
+      continue;
+    New->setBackref(Sym);
+    Accum->push_back(Sym);
     return;
-  Sym->Body = New;
-  New->setBackref(Sym);
-  Accum->push_back(Sym);
+  }
 }
 
 std::error_code SymbolTable::addSymbol(SymbolBody *New) {
@@ -181,32 +188,37 @@ std::error_code SymbolTable::addSymbol(SymbolBody *New) {
   Symbol *Sym = insert(New);
   if (Sym->Body == New)
     return std::error_code();
-  SymbolBody *Existing = Sym->Body;
 
-  // If we have an undefined symbol and a lazy symbol,
-  // let the lazy symbol to read a member file.
-  if (auto *L = dyn_cast<Lazy>(Existing)) {
-    // Undefined symbols with weak aliases need not to be resolved,
-    // since they would be replaced with weak aliases if they remain
-    // undefined.
-    if (auto *U = dyn_cast<Undefined>(New))
-      if (!U->WeakAlias)
-        return addMemberFile(L);
-    Sym->Body = New;
+  for (;;) {
+    SymbolBody *Existing = Sym->Body;
+
+    // If we have an undefined symbol and a lazy symbol,
+    // let the lazy symbol to read a member file.
+    if (auto *L = dyn_cast<Lazy>(Existing)) {
+      // Undefined symbols with weak aliases need not to be resolved,
+      // since they would be replaced with weak aliases if they remain
+      // undefined.
+      if (auto *U = dyn_cast<Undefined>(New))
+        if (!U->WeakAlias)
+          return addMemberFile(L);
+      if (!Sym->Body.compare_exchange_strong(Existing, New))
+        continue;
+      return std::error_code();
+    }
+
+    // compare() returns -1, 0, or 1 if the lhs symbol is less preferable,
+    // equivalent (conflicting), or more preferable, respectively.
+    int Comp = Existing->compare(New);
+    if (Comp == 0) {
+      llvm::errs() << "duplicate symbol: " << Existing->getDebugName()
+                   << " and " << New->getDebugName() << "\n";
+      return make_error_code(LLDError::DuplicateSymbols);
+    }
+    if (Comp < 0)
+      if (!Sym->Body.compare_exchange_strong(Existing, New))
+        continue;
     return std::error_code();
   }
-
-  // compare() returns -1, 0, or 1 if the lhs symbol is less preferable,
-  // equivalent (conflicting), or more preferable, respectively.
-  int Comp = Existing->compare(New);
-  if (Comp == 0) {
-    llvm::errs() << "duplicate symbol: " << Existing->getDebugName()
-                 << " and " << New->getDebugName() << "\n";
-    return make_error_code(LLDError::DuplicateSymbols);
-  }
-  if (Comp < 0)
-    Sym->Body = New;
-  return std::error_code();
 }
 
 Symbol *SymbolTable::insert(SymbolBody *New) {
