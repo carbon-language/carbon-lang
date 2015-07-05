@@ -153,6 +153,10 @@ public:
 
     /// This method returns the address of the specified function or variable.
     /// It is used to resolve symbols during module linking.
+    ///
+    /// If the returned symbol's address is equal to ~0ULL then RuntimeDyld will
+    /// skip all relocations for that symbol, and the client will be responsible
+    /// for handling them manually.
     virtual SymbolInfo findSymbol(const std::string &Name) = 0;
 
     /// This method returns the address of the specified symbol if it exists
