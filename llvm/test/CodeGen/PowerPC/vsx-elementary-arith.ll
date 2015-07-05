@@ -116,5 +116,36 @@ entry:
 ; CHECK: xssqrtdp {{[0-9]+}}
 }
 
+; Vector forms
+; Function Attrs: nounwind
+define <4 x float> @emit_xvrsqrtesp() {
+entry:
+; CHECK-LABEL: @emit_xvrsqrtesp
+  %vf = alloca <4 x float>, align 16
+  %vfr = alloca <4 x float>, align 16
+  %0 = load <4 x float>, <4 x float>* %vf, align 16
+  %call = call <4 x float> @llvm.ppc.vsx.xvrsqrtesp(<4 x float> %0)
+; CHECK: xvrsqrtesp {{[0-9]+}}, {{[0-9]+}}
+  ret <4 x float> %call
+}
+
+; Function Attrs: nounwind
+define <2 x double> @emit_xvrsqrtedp() {
+entry:
+; CHECK-LABEL: @emit_xvrsqrtedp
+  %vd = alloca <2 x double>, align 16
+  %vdr = alloca <2 x double>, align 16
+  %0 = load <2 x double>, <2 x double>* %vd, align 16
+  %call = call <2 x double> @llvm.ppc.vsx.xvrsqrtedp(<2 x double> %0)
+  ret <2 x double> %call
+; CHECK: xvrsqrtedp {{[0-9]+}}, {{[0-9]+}}
+}
+
 ; Function Attrs: nounwind
 declare double @sqrt(double)
+
+; Function Attrs: nounwind readnone
+declare <4 x float> @llvm.ppc.vsx.xvrsqrtesp(<4 x float>)
+
+; Function Attrs: nounwind readnone
+declare <2 x double> @llvm.ppc.vsx.xvrsqrtedp(<2 x double>)

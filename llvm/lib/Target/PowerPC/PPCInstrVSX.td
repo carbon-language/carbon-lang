@@ -989,6 +989,12 @@ def : Pat<(int_ppc_vsx_xvdivsp v4f32:$A, v4f32:$B),
 def : Pat<(int_ppc_vsx_xvdivdp v2f64:$A, v2f64:$B),
           (XVDIVDP $A, $B)>;
 
+// Recip. square root estimate
+def : Pat<(int_ppc_vsx_xvrsqrtesp v4f32:$A),
+          (XVRSQRTESP $A)>;
+def : Pat<(int_ppc_vsx_xvrsqrtedp v2f64:$A),
+          (XVRSQRTEDP $A)>;
+
 } // AddedComplexity
 } // HasVSX
 
