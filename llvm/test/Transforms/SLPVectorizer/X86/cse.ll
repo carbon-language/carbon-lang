@@ -93,7 +93,7 @@ entry:
 ; }
 
 ; We can't merge the gather sequences because one does not dominate the other.
-; CHECK: test2
+; CHECK-LABEL: @test2(
 ; CHECK: insertelement
 ; CHECK: insertelement
 ; CHECK: insertelement
