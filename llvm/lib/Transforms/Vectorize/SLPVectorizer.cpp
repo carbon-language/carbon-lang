@@ -3276,12 +3276,11 @@ bool SLPVectorizer::vectorizeStores(ArrayRef<StoreInst *> Stores,
       I = ConsecutiveChain[I];
     }
 
-    bool Vectorized = vectorizeStoreChain(Operands, costThreshold, R);
-
-    // Mark the vectorized stores so that we don't vectorize them again.
-    if (Vectorized)
+    if (vectorizeStoreChain(Operands, costThreshold, R)) {
+      // Mark the vectorized stores so that we don't vectorize them again.
       VectorizedStores.insert(Operands.begin(), Operands.end());
-    Changed |= Vectorized;
+      Changed = true;
+    }
   }
 
   return Changed;
