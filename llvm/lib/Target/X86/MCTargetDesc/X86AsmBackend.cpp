@@ -220,7 +220,6 @@ static unsigned getRelaxedOpcodeArith(unsigned Op) {
   case X86::PUSH32i8:  return X86::PUSHi32;
   case X86::PUSH16i8:  return X86::PUSHi16;
   case X86::PUSH64i8:  return X86::PUSH64i32;
-  case X86::PUSH64i16: return X86::PUSH64i32;
   }
 }
 

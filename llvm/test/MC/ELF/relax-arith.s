@@ -115,3 +115,11 @@ bar:
         cmpl $foo, bar
         cmp  $foo, %rbx
         cmpq $foo, bar
+
+// CHECK:      Disassembly of section push:
+// CHECK-NEXT: push:
+// CHECK-NEXT:   0: 66 68 00 00                          pushw $0
+// CHECK-NEXT:   4: 68 00 00 00 00                       pushq $0
+        .section push,"x"
+        pushw $foo
+        push  $foo

@@ -116,3 +116,15 @@ bar:
         cmpl $1, bar
         cmp  $-1, %rbx
         cmpq $42, bar
+
+// CHECK:      Disassembly of section push:
+// CHECK-NEXT: push:
+// CHECK-NEXT:   0: 66 6a 80                      pushw $-128
+// CHECK-NEXT:   3: 66 6a 7f                      pushw $127
+// CHECK-NEXT:   6: 6a 80                         pushq $-128
+// CHECK-NEXT:   8: 6a 7f                         pushq $127
+        .section push,"x"
+        pushw $-128
+        pushw $127
+        push  $-128
+        push  $127
