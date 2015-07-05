@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=x86_64-pc-linux -mattr=+sse2 -mcpu=corei7 | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-pc-linux -mattr=+sse2 | FileCheck %s
 
 ; SSE2 Logical Shift Left
 
