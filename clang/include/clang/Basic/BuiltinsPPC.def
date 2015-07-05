@@ -279,6 +279,39 @@ BUILTIN(__builtin_vsx_xvcmpgesp, "V4UiV4fV4f", "")
 BUILTIN(__builtin_vsx_xvcmpgtdp, "V2ULLiV2dV2d", "")
 BUILTIN(__builtin_vsx_xvcmpgtsp, "V4UiV4fV4f", "")
 
+BUILTIN(__builtin_vsx_xvrdpim, "V2dV2d", "")
+BUILTIN(__builtin_vsx_xvrspim, "V4fV4f", "")
+
+BUILTIN(__builtin_vsx_xvrdpi, "V2dV2d", "")
+BUILTIN(__builtin_vsx_xvrspi, "V4fV4f", "")
+
+BUILTIN(__builtin_vsx_xvrdpic, "V2dV2d", "")
+BUILTIN(__builtin_vsx_xvrspic, "V4fV4f", "")
+
+BUILTIN(__builtin_vsx_xvrdpiz, "V2dV2d", "")
+BUILTIN(__builtin_vsx_xvrspiz, "V4fV4f", "")
+
+BUILTIN(__builtin_vsx_xvmaddadp, "V2dV2dV2dV2d", "")
+BUILTIN(__builtin_vsx_xvmaddasp, "V4fV4fV4fV4f", "")
+
+BUILTIN(__builtin_vsx_xvmsubadp, "V2dV2dV2dV2d", "")
+BUILTIN(__builtin_vsx_xvmsubasp, "V4fV4fV4fV4f", "")
+
+BUILTIN(__builtin_vsx_xvmuldp, "V2dV2dV2d", "")
+BUILTIN(__builtin_vsx_xvmulsp, "V4fV4fV4f", "")
+
+BUILTIN(__builtin_vsx_xvnmaddadp, "V2dV2dV2dV2d", "")
+BUILTIN(__builtin_vsx_xvnmaddasp, "V4fV4fV4fV4f", "")
+
+BUILTIN(__builtin_vsx_xvnmsubadp, "V2dV2dV2dV2d", "")
+BUILTIN(__builtin_vsx_xvnmsubasp, "V4fV4fV4fV4f", "")
+
+BUILTIN(__builtin_vsx_xvrsqrtedp, "V2dV2d", "")
+BUILTIN(__builtin_vsx_xvrsqrtesp, "V4fV4f", "")
+
+BUILTIN(__builtin_vsx_xvsqrtdp, "V2dV2d", "")
+BUILTIN(__builtin_vsx_xvsqrtsp, "V4fV4f", "")
+
 // HTM builtins
 BUILTIN(__builtin_tbegin, "UiUIi", "")
 BUILTIN(__builtin_tend, "UiUIi", "")

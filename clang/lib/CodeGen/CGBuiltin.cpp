@@ -6633,13 +6633,82 @@ Value *CodeGenFunction::EmitPPCBuiltinExpr(unsigned BuiltinID,
     llvm::Function *F = CGM.getIntrinsic(ID);
     return Builder.CreateCall(F, Ops, "");
   }
-  case PPC::BI__builtin_vsx_xvrspip:
-  case PPC::BI__builtin_vsx_xvrdpip:
+  // Square root
+  case PPC::BI__builtin_vsx_xvsqrtsp:
+  case PPC::BI__builtin_vsx_xvsqrtdp: {
     llvm::Type *ResultType = ConvertType(E->getType());
     Value *X = EmitScalarExpr(E->getArg(0));
-    ID = Intrinsic::ceil;
+    ID = Intrinsic::sqrt;
     llvm::Function *F = CGM.getIntrinsic(ID, ResultType);
     return Builder.CreateCall(F, X);
+  }
+  // Rounding/truncation
+  case PPC::BI__builtin_vsx_xvrspip:
+  case PPC::BI__builtin_vsx_xvrdpip:
+  case PPC::BI__builtin_vsx_xvrdpim:
+  case PPC::BI__builtin_vsx_xvrspim:
+  case PPC::BI__builtin_vsx_xvrdpi:
+  case PPC::BI__builtin_vsx_xvrspi:
+  case PPC::BI__builtin_vsx_xvrdpic:
+  case PPC::BI__builtin_vsx_xvrspic:
+  case PPC::BI__builtin_vsx_xvrdpiz:
+  case PPC::BI__builtin_vsx_xvrspiz: {
+    llvm::Type *ResultType = ConvertType(E->getType());
+    Value *X = EmitScalarExpr(E->getArg(0));
+    if (BuiltinID == PPC::BI__builtin_vsx_xvrdpim ||
+        BuiltinID == PPC::BI__builtin_vsx_xvrspim)
+      ID = Intrinsic::floor;
+    else if (BuiltinID == PPC::BI__builtin_vsx_xvrdpi ||
+             BuiltinID == PPC::BI__builtin_vsx_xvrspi)
+      ID = Intrinsic::round;
+    else if (BuiltinID == PPC::BI__builtin_vsx_xvrdpic ||
+             BuiltinID == PPC::BI__builtin_vsx_xvrspic)
+      ID = Intrinsic::nearbyint;
+    else if (BuiltinID == PPC::BI__builtin_vsx_xvrdpip ||
+             BuiltinID == PPC::BI__builtin_vsx_xvrspip)
+      ID = Intrinsic::ceil;
+    else if (BuiltinID == PPC::BI__builtin_vsx_xvrdpiz ||
+             BuiltinID == PPC::BI__builtin_vsx_xvrspiz)
+      ID = Intrinsic::trunc;
+    llvm::Function *F = CGM.getIntrinsic(ID, ResultType);
+    return Builder.CreateCall(F, X);
+  }
+  // FMA variations
+  case PPC::BI__builtin_vsx_xvmaddadp:
+  case PPC::BI__builtin_vsx_xvmaddasp:
+  case PPC::BI__builtin_vsx_xvnmaddadp:
+  case PPC::BI__builtin_vsx_xvnmaddasp:
+  case PPC::BI__builtin_vsx_xvmsubadp:
+  case PPC::BI__builtin_vsx_xvmsubasp:
+  case PPC::BI__builtin_vsx_xvnmsubadp:
+  case PPC::BI__builtin_vsx_xvnmsubasp: {
+    llvm::Type *ResultType = ConvertType(E->getType());
+    Value *X = EmitScalarExpr(E->getArg(0));
+    Value *Y = EmitScalarExpr(E->getArg(1));
+    Value *Z = EmitScalarExpr(E->getArg(2));
+    Value *Zero = llvm::ConstantFP::getZeroValueForNegation(ResultType);
+    llvm::Function *F = CGM.getIntrinsic(Intrinsic::fma, ResultType);
+    switch (BuiltinID) {
+      case PPC::BI__builtin_vsx_xvmaddadp:
+      case PPC::BI__builtin_vsx_xvmaddasp:
+        return Builder.CreateCall(F, {X, Y, Z});
+      case PPC::BI__builtin_vsx_xvnmaddadp:
+      case PPC::BI__builtin_vsx_xvnmaddasp:
+        return Builder.CreateFSub(Zero,
+                                  Builder.CreateCall(F, {X, Y, Z}), "sub");
+      case PPC::BI__builtin_vsx_xvmsubadp:
+      case PPC::BI__builtin_vsx_xvmsubasp:
+        return Builder.CreateCall(F,
+                                  {X, Y, Builder.CreateFSub(Zero, Z, "sub")});
+      case PPC::BI__builtin_vsx_xvnmsubadp:
+      case PPC::BI__builtin_vsx_xvnmsubasp:
+        Value *FsubRes =
+          Builder.CreateCall(F, {X, Y, Builder.CreateFSub(Zero, Z, "sub")});
+        return Builder.CreateFSub(Zero, FsubRes, "sub");
+    }
+    llvm_unreachable("Unknown FMA operation");
+    return nullptr; // Suppress no-return warning
+  }
   }
 }
 
