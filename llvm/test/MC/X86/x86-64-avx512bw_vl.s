@@ -6583,3 +6583,146 @@
 // CHECK:  encoding: [0x62,0xe2,0x6d,0x20,0x00,0x9a,0xe0,0xef,0xff,0xff]
           vpshufb -4128(%rdx), %ymm18, %ymm19
 
+// CHECK: vpmulhuw %xmm18, %xmm21, %xmm24
+// CHECK:  encoding: [0x62,0x21,0x55,0x00,0xe4,0xc2]
+          vpmulhuw %xmm18, %xmm21, %xmm24
+
+// CHECK: vpmulhuw %xmm18, %xmm21, %xmm24 {%k3}
+// CHECK:  encoding: [0x62,0x21,0x55,0x03,0xe4,0xc2]
+          vpmulhuw %xmm18, %xmm21, %xmm24 {%k3}
+
+// CHECK: vpmulhuw %xmm18, %xmm21, %xmm24 {%k3} {z}
+// CHECK:  encoding: [0x62,0x21,0x55,0x83,0xe4,0xc2]
+          vpmulhuw %xmm18, %xmm21, %xmm24 {%k3} {z}
+
+// CHECK: vpmulhuw (%rcx), %xmm21, %xmm24
+// CHECK:  encoding: [0x62,0x61,0x55,0x00,0xe4,0x01]
+          vpmulhuw (%rcx), %xmm21, %xmm24
+
+// CHECK: vpmulhuw 291(%rax,%r14,8), %xmm21, %xmm24
+// CHECK:  encoding: [0x62,0x21,0x55,0x00,0xe4,0x84,0xf0,0x23,0x01,0x00,0x00]
+          vpmulhuw 291(%rax,%r14,8), %xmm21, %xmm24
+
+// CHECK: vpmulhuw 2032(%rdx), %xmm21, %xmm24
+// CHECK:  encoding: [0x62,0x61,0x55,0x00,0xe4,0x42,0x7f]
+          vpmulhuw 2032(%rdx), %xmm21, %xmm24
+
+// CHECK: vpmulhuw 2048(%rdx), %xmm21, %xmm24
+// CHECK:  encoding: [0x62,0x61,0x55,0x00,0xe4,0x82,0x00,0x08,0x00,0x00]
+          vpmulhuw 2048(%rdx), %xmm21, %xmm24
+
+// CHECK: vpmulhuw -2048(%rdx), %xmm21, %xmm24
+// CHECK:  encoding: [0x62,0x61,0x55,0x00,0xe4,0x42,0x80]
+          vpmulhuw -2048(%rdx), %xmm21, %xmm24
+
+// CHECK: vpmulhuw -2064(%rdx), %xmm21, %xmm24
+// CHECK:  encoding: [0x62,0x61,0x55,0x00,0xe4,0x82,0xf0,0xf7,0xff,0xff]
+          vpmulhuw -2064(%rdx), %xmm21, %xmm24
+
+// CHECK: vpmulhuw %ymm19, %ymm28, %ymm19
+// CHECK:  encoding: [0x62,0xa1,0x1d,0x20,0xe4,0xdb]
+          vpmulhuw %ymm19, %ymm28, %ymm19
+
+// CHECK: vpmulhuw %ymm19, %ymm28, %ymm19 {%k2}
+// CHECK:  encoding: [0x62,0xa1,0x1d,0x22,0xe4,0xdb]
+          vpmulhuw %ymm19, %ymm28, %ymm19 {%k2}
+
+// CHECK: vpmulhuw %ymm19, %ymm28, %ymm19 {%k2} {z}
+// CHECK:  encoding: [0x62,0xa1,0x1d,0xa2,0xe4,0xdb]
+          vpmulhuw %ymm19, %ymm28, %ymm19 {%k2} {z}
+
+// CHECK: vpmulhuw (%rcx), %ymm28, %ymm19
+// CHECK:  encoding: [0x62,0xe1,0x1d,0x20,0xe4,0x19]
+          vpmulhuw (%rcx), %ymm28, %ymm19
+
+// CHECK: vpmulhuw 291(%rax,%r14,8), %ymm28, %ymm19
+// CHECK:  encoding: [0x62,0xa1,0x1d,0x20,0xe4,0x9c,0xf0,0x23,0x01,0x00,0x00]
+          vpmulhuw 291(%rax,%r14,8), %ymm28, %ymm19
+
+// CHECK: vpmulhuw 4064(%rdx), %ymm28, %ymm19
+// CHECK:  encoding: [0x62,0xe1,0x1d,0x20,0xe4,0x5a,0x7f]
+          vpmulhuw 4064(%rdx), %ymm28, %ymm19
+
+// CHECK: vpmulhuw 4096(%rdx), %ymm28, %ymm19
+// CHECK:  encoding: [0x62,0xe1,0x1d,0x20,0xe4,0x9a,0x00,0x10,0x00,0x00]
+          vpmulhuw 4096(%rdx), %ymm28, %ymm19
+
+// CHECK: vpmulhuw -4096(%rdx), %ymm28, %ymm19
+// CHECK:  encoding: [0x62,0xe1,0x1d,0x20,0xe4,0x5a,0x80]
+          vpmulhuw -4096(%rdx), %ymm28, %ymm19
+
+// CHECK: vpmulhuw -4128(%rdx), %ymm28, %ymm19
+// CHECK:  encoding: [0x62,0xe1,0x1d,0x20,0xe4,0x9a,0xe0,0xef,0xff,0xff]
+          vpmulhuw -4128(%rdx), %ymm28, %ymm19
+
+// CHECK: vpmulhw %xmm25, %xmm20, %xmm22
+// CHECK:  encoding: [0x62,0x81,0x5d,0x00,0xe5,0xf1]
+          vpmulhw %xmm25, %xmm20, %xmm22
+
+// CHECK: vpmulhw %xmm25, %xmm20, %xmm22 {%k2}
+// CHECK:  encoding: [0x62,0x81,0x5d,0x02,0xe5,0xf1]
+          vpmulhw %xmm25, %xmm20, %xmm22 {%k2}
+
+// CHECK: vpmulhw %xmm25, %xmm20, %xmm22 {%k2} {z}
+// CHECK:  encoding: [0x62,0x81,0x5d,0x82,0xe5,0xf1]
+          vpmulhw %xmm25, %xmm20, %xmm22 {%k2} {z}
+
+// CHECK: vpmulhw (%rcx), %xmm20, %xmm22
+// CHECK:  encoding: [0x62,0xe1,0x5d,0x00,0xe5,0x31]
+          vpmulhw (%rcx), %xmm20, %xmm22
+
+// CHECK: vpmulhw 291(%rax,%r14,8), %xmm20, %xmm22
+// CHECK:  encoding: [0x62,0xa1,0x5d,0x00,0xe5,0xb4,0xf0,0x23,0x01,0x00,0x00]
+          vpmulhw 291(%rax,%r14,8), %xmm20, %xmm22
+
+// CHECK: vpmulhw 2032(%rdx), %xmm20, %xmm22
+// CHECK:  encoding: [0x62,0xe1,0x5d,0x00,0xe5,0x72,0x7f]
+          vpmulhw 2032(%rdx), %xmm20, %xmm22
+
+// CHECK: vpmulhw 2048(%rdx), %xmm20, %xmm22
+// CHECK:  encoding: [0x62,0xe1,0x5d,0x00,0xe5,0xb2,0x00,0x08,0x00,0x00]
+          vpmulhw 2048(%rdx), %xmm20, %xmm22
+
+// CHECK: vpmulhw -2048(%rdx), %xmm20, %xmm22
+// CHECK:  encoding: [0x62,0xe1,0x5d,0x00,0xe5,0x72,0x80]
+          vpmulhw -2048(%rdx), %xmm20, %xmm22
+
+// CHECK: vpmulhw -2064(%rdx), %xmm20, %xmm22
+// CHECK:  encoding: [0x62,0xe1,0x5d,0x00,0xe5,0xb2,0xf0,0xf7,0xff,0xff]
+          vpmulhw -2064(%rdx), %xmm20, %xmm22
+
+// CHECK: vpmulhw %ymm24, %ymm27, %ymm22
+// CHECK:  encoding: [0x62,0x81,0x25,0x20,0xe5,0xf0]
+          vpmulhw %ymm24, %ymm27, %ymm22
+
+// CHECK: vpmulhw %ymm24, %ymm27, %ymm22 {%k1}
+// CHECK:  encoding: [0x62,0x81,0x25,0x21,0xe5,0xf0]
+          vpmulhw %ymm24, %ymm27, %ymm22 {%k1}
+
+// CHECK: vpmulhw %ymm24, %ymm27, %ymm22 {%k1} {z}
+// CHECK:  encoding: [0x62,0x81,0x25,0xa1,0xe5,0xf0]
+          vpmulhw %ymm24, %ymm27, %ymm22 {%k1} {z}
+
+// CHECK: vpmulhw (%rcx), %ymm27, %ymm22
+// CHECK:  encoding: [0x62,0xe1,0x25,0x20,0xe5,0x31]
+          vpmulhw (%rcx), %ymm27, %ymm22
+
+// CHECK: vpmulhw 291(%rax,%r14,8), %ymm27, %ymm22
+// CHECK:  encoding: [0x62,0xa1,0x25,0x20,0xe5,0xb4,0xf0,0x23,0x01,0x00,0x00]
+          vpmulhw 291(%rax,%r14,8), %ymm27, %ymm22
+
+// CHECK: vpmulhw 4064(%rdx), %ymm27, %ymm22
+// CHECK:  encoding: [0x62,0xe1,0x25,0x20,0xe5,0x72,0x7f]
+          vpmulhw 4064(%rdx), %ymm27, %ymm22
+
+// CHECK: vpmulhw 4096(%rdx), %ymm27, %ymm22
+// CHECK:  encoding: [0x62,0xe1,0x25,0x20,0xe5,0xb2,0x00,0x10,0x00,0x00]
+          vpmulhw 4096(%rdx), %ymm27, %ymm22
+
+// CHECK: vpmulhw -4096(%rdx), %ymm27, %ymm22
+// CHECK:  encoding: [0x62,0xe1,0x25,0x20,0xe5,0x72,0x80]
+          vpmulhw -4096(%rdx), %ymm27, %ymm22
+
+// CHECK: vpmulhw -4128(%rdx), %ymm27, %ymm22
+// CHECK:  encoding: [0x62,0xe1,0x25,0x20,0xe5,0xb2,0xe0,0xef,0xff,0xff]
+          vpmulhw -4128(%rdx), %ymm27, %ymm22
