@@ -1,6 +1,6 @@
 ; These are tests for SSE3 codegen.
 
-; RUN: llc < %s -march=x86-64 -mcpu=nocona -mtriple=i686-apple-darwin9 -O3 | FileCheck %s --check-prefix=X64
+; RUN: llc < %s -mtriple=x86_64-apple-darwin9 --mattr=+sse3 | FileCheck %s --check-prefix=X64
 
 ; Test for v8xi16 lowering where we extract the first element of the vector and
 ; placed it in the second element of the result.
