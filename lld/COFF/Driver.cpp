@@ -220,7 +220,7 @@ StringRef LinkerDriver::findDefaultEntry() {
   };
   for (auto E : Entries) {
     Symbol *Sym = Symtab.find(E[0]);
-    if (Sym && !isa<Undefined>(Sym->Body))
+    if (Sym && !isa<Undefined>(Sym->Body.load()))
       return E[1];
   }
   return "";
@@ -591,7 +591,7 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
       Symbol *Sym = Symtab.find(From);
       if (!Sym)
         continue;
-      if (auto *U = dyn_cast<Undefined>(Sym->Body))
+      if (auto *U = dyn_cast<Undefined>(Sym->Body.load()))
         if (!U->WeakAlias)
           U->WeakAlias = Symtab.addUndefined(To);
     }
