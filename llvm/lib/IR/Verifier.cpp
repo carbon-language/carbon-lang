@@ -438,6 +438,9 @@ void Verifier::visitGlobalValue(const GlobalValue &GV) {
     Assert(GVar && GVar->getValueType()->isArrayTy(),
            "Only global arrays can have appending linkage!", GVar);
   }
+
+  if (GV.isDeclarationForLinker())
+    Assert(!GV.hasComdat(), "Declaration may not be in a Comdat!", &GV);
 }
 
 void Verifier::visitGlobalVariable(const GlobalVariable &GV) {
