@@ -3712,14 +3712,15 @@ static void __ATTRS_o_ai vec_mtvscr(vector float __a) {
 }
 
 /* vec_mul */
+
 static vector float __ATTRS_o_ai vec_mul(vector float __a, vector float __b) {
-  __a * __b;
+  return __a * __b;
 }
 
 #ifdef __VSX__
 static vector double __ATTRS_o_ai
 vec_mul(vector double __a, vector double __b) {
-  __a * __b;
+  return __a * __b;
 }
 #endif
 
