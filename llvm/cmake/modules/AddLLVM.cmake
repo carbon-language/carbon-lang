@@ -93,20 +93,9 @@ function(add_llvm_symbol_exports target_name export_file)
   else()
     set(native_export_file "${target_name}.def")
 
-    set(CAT "cat")
-    set(export_file_nativeslashes ${export_file})
-    if(WIN32 AND NOT CYGWIN AND NOT MSYS)
-      set(CAT "type")
-      # Convert ${export_file} to native format (backslashes) for "type"
-      # Does not use file(TO_NATIVE_PATH) as it doesn't create a native
-      # path but a build-system specific format (see CMake bug
-      # http://public.kitware.com/Bug/print_bug_page.php?bug_id=5939 )
-      string(REPLACE / \\ export_file_nativeslashes ${export_file})
-    endif()
-
     add_custom_command(OUTPUT ${native_export_file}
-      COMMAND ${CMAKE_COMMAND} -E echo "EXPORTS" > ${native_export_file}
-      COMMAND ${CAT} ${export_file_nativeslashes} >> ${native_export_file}
+      COMMAND ${PYTHON_EXECUTABLE} -c "import sys;print(''.join(['EXPORTS\\n']+sys.stdin.readlines(),))"
+        < ${export_file} > ${native_export_file}
       DEPENDS ${export_file}
       VERBATIM
       COMMENT "Creating export file for ${target_name}")
