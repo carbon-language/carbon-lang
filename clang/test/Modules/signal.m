@@ -1,4 +1,4 @@
-// REQUIRES: shell
+// REQUIRES: crash-recovery,shell
 // RUN: rm -rf %t
 
 // Crash building module.
