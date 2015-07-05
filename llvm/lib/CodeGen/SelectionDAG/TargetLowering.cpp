@@ -265,9 +265,7 @@ TargetLowering::isOffsetFoldingLegal(const GlobalAddressSDNode *GA) const {
 
   // In dynamic-no-pic mode, assume that known defined values are safe.
   if (getTargetMachine().getRelocationModel() == Reloc::DynamicNoPIC &&
-      GA &&
-      !GA->getGlobal()->isDeclaration() &&
-      !GA->getGlobal()->isWeakForLinker())
+      GA && GA->getGlobal()->isStrongDefinitionForLinker())
     return true;
 
   // Otherwise assume nothing is safe.

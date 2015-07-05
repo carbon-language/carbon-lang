@@ -326,25 +326,23 @@ bool DAE::DeleteDeadVarargs(Function &Fn) {
 /// instead.
 bool DAE::RemoveDeadArgumentsFromCallers(Function &Fn)
 {
-  if (Fn.isDeclaration() || Fn.mayBeOverridden())
+  // We cannot change the arguments if this TU does not define the function or
+  // if the linker may choose a function body from another TU, even if the
+  // nominal linkage indicates that other copies of the function have the same
+  // semantics. In the below example, the dead load from %p may not have been
+  // eliminated from the linker-chosen copy of f, so replacing %p with undef
+  // in callers may introduce undefined behavior.
+  //
+  // define linkonce_odr void @f(i32* %p) {
+  //   %v = load i32 %p
+  //   ret void
+  // }
+  if (!Fn.isStrongDefinitionForLinker())
     return false;
 
   // Functions with local linkage should already have been handled, except the
   // fragile (variadic) ones which we can improve here.
   if (Fn.hasLocalLinkage() && !Fn.getFunctionType()->isVarArg())
-    return false;
-
-  // If a function seen at compile time is not necessarily the one linked to
-  // the binary being built, it is illegal to change the actual arguments
-  // passed to it. These functions can be captured by isWeakForLinker().
-  // *NOTE* that mayBeOverridden() is insufficient for this purpose as it
-  // doesn't include linkage types like AvailableExternallyLinkage and
-  // LinkOnceODRLinkage. Take link_odr* as an example, it indicates a set of
-  // *EQUIVALENT* globals that can be merged at link-time. However, the
-  // semantic of *EQUIVALENT*-functions includes parameters. Changing
-  // parameters breaks this assumption.
-  //
-  if (Fn.isWeakForLinker())
     return false;
 
   if (Fn.use_empty())

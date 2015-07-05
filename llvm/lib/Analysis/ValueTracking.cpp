@@ -1464,7 +1464,7 @@ void computeKnownBits(Value *V, APInt &KnownZero, APInt &KnownOne,
           // If the object is defined in the current Module, we'll be giving
           // it the preferred alignment. Otherwise, we have to assume that it
           // may only have the minimum ABI alignment.
-          if (!GVar->isDeclaration() && !GVar->isWeakForLinker())
+          if (GVar->isStrongDefinitionForLinker())
             Align = DL.getPreferredAlignment(GVar);
           else
             Align = DL.getABITypeAlignment(ObjectType);

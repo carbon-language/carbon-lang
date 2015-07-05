@@ -57,7 +57,7 @@ AArch64Subtarget::AArch64Subtarget(const Triple &TT, const std::string &CPU,
 unsigned char
 AArch64Subtarget::ClassifyGlobalReference(const GlobalValue *GV,
                                         const TargetMachine &TM) const {
-  bool isDecl = GV->isDeclarationForLinker();
+  bool isDef = GV->isStrongDefinitionForLinker();
 
   // MachO large model always goes via a GOT, simply to get a single 8-byte
   // absolute relocation on all global addresses.
@@ -66,8 +66,7 @@ AArch64Subtarget::ClassifyGlobalReference(const GlobalValue *GV,
 
   // The small code mode's direct accesses use ADRP, which cannot necessarily
   // produce the value 0 (if the code is above 4GB).
-  if (TM.getCodeModel() == CodeModel::Small &&
-      GV->isWeakForLinker() && isDecl) {
+  if (TM.getCodeModel() == CodeModel::Small && GV->hasExternalWeakLinkage()) {
     // In PIC mode use the GOT, but in absolute mode use a constant pool load.
     if (TM.getRelocationModel() == Reloc::Static)
         return AArch64II::MO_CONSTPOOL;
@@ -85,8 +84,7 @@ AArch64Subtarget::ClassifyGlobalReference(const GlobalValue *GV,
   //     defined could end up in unexpected places. Use a GOT.
   if (TM.getRelocationModel() != Reloc::Static && GV->hasDefaultVisibility()) {
     if (isTargetMachO())
-      return (isDecl || GV->isWeakForLinker()) ? AArch64II::MO_GOT
-                                               : AArch64II::MO_NO_FLAG;
+      return isDef ? AArch64II::MO_NO_FLAG : AArch64II::MO_GOT;
     else
       // No need to go through the GOT for local symbols on ELF.
       return GV->hasLocalLinkage() ? AArch64II::MO_NO_FLAG : AArch64II::MO_GOT;

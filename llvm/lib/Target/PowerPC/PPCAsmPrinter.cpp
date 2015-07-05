@@ -197,7 +197,7 @@ void PPCAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
 
     // External or weakly linked global variables need non-lazily-resolved stubs
     if (TM.getRelocationModel() != Reloc::Static &&
-        (GV->isDeclaration() || GV->isWeakForLinker())) {
+        !GV->isStrongDefinitionForLinker()) {
       if (!GV->hasHiddenVisibility()) {
         SymToPrint = getSymbolWithGlobalValueBase(GV, "$non_lazy_ptr");
         MachineModuleInfoImpl::StubValueTy &StubSym = 
@@ -624,7 +624,7 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
       IsExternal = GV->isDeclaration();
       IsCommon = GV->hasCommonLinkage();
       IsNonLocalFunction = GV->getType()->getElementType()->isFunctionTy() &&
-        (GV->isDeclaration() || GV->isWeakForLinker());
+        !GV->isStrongDefinitionForLinker();
       IsAvailExt = GV->hasAvailableExternallyLinkage();
     } else if (MO.isCPI())
       MOSymbol = GetCPISymbol(MO.getIndex());
@@ -706,7 +706,7 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
       MOSymbol = getSymbol(GV);
       IsExternal = GV->isDeclaration();
       IsNonLocalFunction = GV->getType()->getElementType()->isFunctionTy() &&
-        (GV->isDeclaration() || GV->isWeakForLinker());
+        !GV->isStrongDefinitionForLinker();
     } else if (MO.isCPI())
       MOSymbol = GetCPISymbol(MO.getIndex());
 

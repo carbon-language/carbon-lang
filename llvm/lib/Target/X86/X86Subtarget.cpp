@@ -68,7 +68,7 @@ ClassifyGlobalReference(const GlobalValue *GV, const TargetMachine &TM) const {
   if (GV->hasDLLImportStorageClass())
     return X86II::MO_DLLIMPORT;
 
-  bool isDecl = GV->isDeclarationForLinker();
+  bool isDef = GV->isStrongDefinitionForLinker();
 
   // X86-64 in PIC mode.
   if (isPICStyleRIPRel()) {
@@ -80,8 +80,7 @@ ClassifyGlobalReference(const GlobalValue *GV, const TargetMachine &TM) const {
       // If symbol visibility is hidden, the extra load is not needed if
       // target is x86-64 or the symbol is definitely defined in the current
       // translation unit.
-      if (GV->hasDefaultVisibility() &&
-          (isDecl || GV->isWeakForLinker()))
+      if (GV->hasDefaultVisibility() && !isDef)
         return X86II::MO_GOTPCREL;
     } else if (!isTargetWin64()) {
       assert(isTargetELF() && "Unknown rip-relative target");
@@ -107,7 +106,7 @@ ClassifyGlobalReference(const GlobalValue *GV, const TargetMachine &TM) const {
 
     // If this is a strong reference to a definition, it is definitely not
     // through a stub.
-    if (!isDecl && !GV->isWeakForLinker())
+    if (isDef)
       return X86II::MO_PIC_BASE_OFFSET;
 
     // Unless we have a symbol with hidden visibility, we have to go through a
@@ -117,7 +116,7 @@ ClassifyGlobalReference(const GlobalValue *GV, const TargetMachine &TM) const {
 
     // If symbol visibility is hidden, we have a stub for common symbol
     // references and external declarations.
-    if (isDecl || GV->hasCommonLinkage()) {
+    if (GV->isDeclarationForLinker() || GV->hasCommonLinkage()) {
       // Hidden $non_lazy_ptr reference.
       return X86II::MO_DARWIN_HIDDEN_NONLAZY_PIC_BASE;
     }
@@ -131,7 +130,7 @@ ClassifyGlobalReference(const GlobalValue *GV, const TargetMachine &TM) const {
 
     // If this is a strong reference to a definition, it is definitely not
     // through a stub.
-    if (!isDecl && !GV->isWeakForLinker())
+    if (isDef)
       return X86II::MO_NO_FLAG;
 
     // Unless we have a symbol with hidden visibility, we have to go through a

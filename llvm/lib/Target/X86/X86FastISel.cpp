@@ -3108,7 +3108,7 @@ bool X86FastISel::fastLowerCall(CallLoweringInfo &CLI) {
         GV->hasDefaultVisibility() && !GV->hasLocalLinkage()) {
       OpFlags = X86II::MO_PLT;
     } else if (Subtarget->isPICStyleStubAny() &&
-               (GV->isDeclaration() || GV->isWeakForLinker()) &&
+               !GV->isStrongDefinitionForLinker() &&
                (!Subtarget->getTargetTriple().isMacOSX() ||
                 Subtarget->getTargetTriple().isMacOSXVersionLT(10, 5))) {
       // PC-relative references to external symbols should go through $stub,

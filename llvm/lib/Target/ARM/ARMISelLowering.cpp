@@ -1734,12 +1734,12 @@ ARMTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   } else if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
     const GlobalValue *GV = G->getGlobal();
     isDirect = true;
-    bool isExt = GV->isDeclaration() || GV->isWeakForLinker();
-    bool isStub = (isExt && Subtarget->isTargetMachO()) &&
+    bool isDef = GV->isStrongDefinitionForLinker();
+    bool isStub = (!isDef && Subtarget->isTargetMachO()) &&
                    getTargetMachine().getRelocationModel() != Reloc::Static;
     isARMFunc = !Subtarget->isThumb() || (isStub && !Subtarget->isMClass());
     // ARM call to a local ARM function is predicable.
-    isLocalARMFunc = !Subtarget->isThumb() && (!isExt || !ARMInterworking);
+    isLocalARMFunc = !Subtarget->isThumb() && (isDef || !ARMInterworking);
     // tBX takes a register source operand.
     if (isStub && Subtarget->isThumb1Only() && !Subtarget->hasV5TOps()) {
       assert(Subtarget->isTargetMachO() && "WrapperPIC use on non-MachO?");

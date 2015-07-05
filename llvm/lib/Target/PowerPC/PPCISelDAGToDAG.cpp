@@ -2901,7 +2901,7 @@ SDNode *PPCDAGToDAGISel::Select(SDNode *N) {
     if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(GA)) {
       const GlobalValue *GValue = G->getGlobal();
       if ((GValue->getType()->getElementType()->isFunctionTy() &&
-           (GValue->isDeclaration() || GValue->isWeakForLinker())) ||
+           !GValue->isStrongDefinitionForLinker()) ||
           GValue->isDeclaration() || GValue->hasCommonLinkage() ||
           GValue->hasAvailableExternallyLinkage())
         return transferMemOperands(N, CurDAG->getMachineNode(PPC::LDtocL, dl,

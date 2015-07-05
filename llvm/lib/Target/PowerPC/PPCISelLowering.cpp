@@ -4084,8 +4084,7 @@ unsigned PrepareCall(SelectionDAG &DAG, SDValue &Callee, SDValue &InFlag,
     if ((DAG.getTarget().getRelocationModel() != Reloc::Static &&
          (Subtarget.getTargetTriple().isMacOSX() &&
           Subtarget.getTargetTriple().isMacOSXVersionLT(10, 5)) &&
-         (G->getGlobal()->isDeclaration() ||
-          G->getGlobal()->isWeakForLinker())) ||
+         !G->getGlobal()->isStrongDefinitionForLinker()) ||
         (Subtarget.isTargetELF() && !isPPC64 &&
          !G->getGlobal()->hasLocalLinkage() &&
          DAG.getTarget().getRelocationModel() == Reloc::PIC_)) {
@@ -4254,8 +4253,7 @@ static
 bool isLocalCall(const SDValue &Callee)
 {
   if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee))
-    return !G->getGlobal()->isDeclaration() &&
-           !G->getGlobal()->isWeakForLinker();
+    return G->getGlobal()->isStrongDefinitionForLinker();
   return false;
 }
 

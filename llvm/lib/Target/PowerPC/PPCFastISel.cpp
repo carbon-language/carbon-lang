@@ -1979,7 +1979,7 @@ unsigned PPCFastISel::PPCMaterializeGV(const GlobalValue *GV, MVT VT) {
     // on the "if" path here.
     if (CModel == CodeModel::Large ||
         (GV->getType()->getElementType()->isFunctionTy() &&
-         (GV->isDeclaration() || GV->isWeakForLinker())) ||
+         !GV->isStrongDefinitionForLinker()) ||
         GV->isDeclaration() || GV->hasCommonLinkage() ||
         GV->hasAvailableExternallyLinkage())
       BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(PPC::LDtocL),
