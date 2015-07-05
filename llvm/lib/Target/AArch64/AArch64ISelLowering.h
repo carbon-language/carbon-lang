@@ -471,8 +471,7 @@ private:
                         std::vector<SDNode *> *Created) const override;
   bool combineRepeatedFPDivisors(unsigned NumUsers) const override;
 
-  ConstraintType
-  getConstraintType(const std::string &Constraint) const override;
+  ConstraintType getConstraintType(StringRef Constraint) const override;
   unsigned getRegisterByName(const char* RegName, EVT VT) const override;
 
   /// Examine constraint string and operand type and determine a weight value.
@@ -483,14 +482,12 @@ private:
 
   std::pair<unsigned, const TargetRegisterClass *>
   getRegForInlineAsmConstraint(const TargetRegisterInfo *TRI,
-                               const std::string &Constraint,
-                               MVT VT) const override;
+                               StringRef Constraint, MVT VT) const override;
   void LowerAsmOperandForConstraint(SDValue Op, std::string &Constraint,
                                     std::vector<SDValue> &Ops,
                                     SelectionDAG &DAG) const override;
 
-  unsigned getInlineAsmMemConstraint(
-      const std::string &ConstraintCode) const override {
+  unsigned getInlineAsmMemConstraint(StringRef ConstraintCode) const override {
     if (ConstraintCode == "Q")
       return InlineAsm::Constraint_Q;
     // FIXME: clang has code for 'Ump', 'Utf', 'Usa', and 'Ush' but these are

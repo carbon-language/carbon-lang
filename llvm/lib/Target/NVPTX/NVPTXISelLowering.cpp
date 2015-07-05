@@ -3772,7 +3772,7 @@ bool NVPTXTargetLowering::isLegalAddressingMode(const AddrMode &AM,
 /// getConstraintType - Given a constraint letter, return the type of
 /// constraint it is for this target.
 NVPTXTargetLowering::ConstraintType
-NVPTXTargetLowering::getConstraintType(const std::string &Constraint) const {
+NVPTXTargetLowering::getConstraintType(StringRef Constraint) const {
   if (Constraint.size() == 1) {
     switch (Constraint[0]) {
     default:
@@ -3794,7 +3794,7 @@ NVPTXTargetLowering::getConstraintType(const std::string &Constraint) const {
 
 std::pair<unsigned, const TargetRegisterClass *>
 NVPTXTargetLowering::getRegForInlineAsmConstraint(const TargetRegisterInfo *TRI,
-                                                  const std::string &Constraint,
+                                                  StringRef Constraint,
                                                   MVT VT) const {
   if (Constraint.size() == 1) {
     switch (Constraint[0]) {

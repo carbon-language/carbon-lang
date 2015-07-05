@@ -2105,9 +2105,8 @@ PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const {
 //  Inline Assembler Implementation Methods
 //===----------------------------------------------------------------------===//
 
-
 TargetLowering::ConstraintType
-TargetLowering::getConstraintType(const std::string &Constraint) const {
+TargetLowering::getConstraintType(StringRef Constraint) const {
   unsigned S = Constraint.size();
 
   if (S == 1) {
@@ -2140,7 +2139,7 @@ TargetLowering::getConstraintType(const std::string &Constraint) const {
   }
 
   if (S > 1 && Constraint[0] == '{' && Constraint[S-1] == '}') {
-    if (S == 8 && !Constraint.compare(1, 6, "memory", 6))  // "{memory}"
+    if (S == 8 && Constraint.substr(1, 6) == "memory") // "{memory}"
       return C_Memory;
     return C_Register;
   }
@@ -2227,7 +2226,7 @@ void TargetLowering::LowerAsmOperandForConstraint(SDValue Op,
 
 std::pair<unsigned, const TargetRegisterClass *>
 TargetLowering::getRegForInlineAsmConstraint(const TargetRegisterInfo *RI,
-                                             const std::string &Constraint,
+                                             StringRef Constraint,
                                              MVT VT) const {
   if (Constraint.empty() || Constraint[0] != '{')
     return std::make_pair(0u, static_cast<TargetRegisterClass*>(nullptr));

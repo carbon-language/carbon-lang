@@ -707,8 +707,7 @@ namespace llvm {
 
     bool ExpandInlineAsm(CallInst *CI) const override;
 
-    ConstraintType
-      getConstraintType(const std::string &Constraint) const override;
+    ConstraintType getConstraintType(StringRef Constraint) const override;
 
     /// Examine constraint string and operand type and determine a weight value.
     /// The operand object must already have been set up with the operand type.
@@ -726,8 +725,8 @@ namespace llvm {
                                       std::vector<SDValue> &Ops,
                                       SelectionDAG &DAG) const override;
 
-    unsigned getInlineAsmMemConstraint(
-        const std::string &ConstraintCode) const override {
+    unsigned
+    getInlineAsmMemConstraint(StringRef ConstraintCode) const override {
       if (ConstraintCode == "i")
         return InlineAsm::Constraint_i;
       else if (ConstraintCode == "o")
@@ -745,8 +744,7 @@ namespace llvm {
     /// error, this returns a register number of 0.
     std::pair<unsigned, const TargetRegisterClass *>
     getRegForInlineAsmConstraint(const TargetRegisterInfo *TRI,
-                                 const std::string &Constraint,
-                                 MVT VT) const override;
+                                 StringRef Constraint, MVT VT) const override;
 
     /// Return true if the addressing mode represented
     /// by AM is legal for this target, for a load/store of the specified type.

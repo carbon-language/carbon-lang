@@ -2212,9 +2212,8 @@ SDValue SITargetLowering::CreateLiveInRegister(SelectionDAG &DAG,
 
 std::pair<unsigned, const TargetRegisterClass *>
 SITargetLowering::getRegForInlineAsmConstraint(const TargetRegisterInfo *TRI,
-                                               const std::string &Constraint_,
+                                               StringRef Constraint,
                                                MVT VT) const {
-  StringRef Constraint(Constraint_);
   if (Constraint == "r") {
     switch(VT.SimpleTy) {
       default: llvm_unreachable("Unhandled type for 'r' inline asm constraint");

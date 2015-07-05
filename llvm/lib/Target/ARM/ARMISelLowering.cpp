@@ -10664,7 +10664,7 @@ bool ARMTargetLowering::ExpandInlineAsm(CallInst *CI) const {
 /// getConstraintType - Given a constraint letter, return the type of
 /// constraint it is for this target.
 ARMTargetLowering::ConstraintType
-ARMTargetLowering::getConstraintType(const std::string &Constraint) const {
+ARMTargetLowering::getConstraintType(StringRef Constraint) const {
   if (Constraint.size() == 1) {
     switch (Constraint[0]) {
     default:  break;
@@ -10723,10 +10723,8 @@ ARMTargetLowering::getSingleConstraintMatchWeight(
 }
 
 typedef std::pair<unsigned, const TargetRegisterClass*> RCPair;
-RCPair
-ARMTargetLowering::getRegForInlineAsmConstraint(const TargetRegisterInfo *TRI,
-                                                const std::string &Constraint,
-                                                MVT VT) const {
+RCPair ARMTargetLowering::getRegForInlineAsmConstraint(
+    const TargetRegisterInfo *TRI, StringRef Constraint, MVT VT) const {
   if (Constraint.size() == 1) {
     // GCC ARM Constraint Letters
     switch (Constraint[0]) {

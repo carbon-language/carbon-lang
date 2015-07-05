@@ -213,7 +213,7 @@ SDValue MSP430TargetLowering::LowerOperation(SDValue Op,
 /// getConstraintType - Given a constraint letter, return the type of
 /// constraint it is for this target.
 TargetLowering::ConstraintType
-MSP430TargetLowering::getConstraintType(const std::string &Constraint) const {
+MSP430TargetLowering::getConstraintType(StringRef Constraint) const {
   if (Constraint.size() == 1) {
     switch (Constraint[0]) {
     case 'r':
@@ -227,8 +227,7 @@ MSP430TargetLowering::getConstraintType(const std::string &Constraint) const {
 
 std::pair<unsigned, const TargetRegisterClass *>
 MSP430TargetLowering::getRegForInlineAsmConstraint(
-    const TargetRegisterInfo *TRI, const std::string &Constraint,
-    MVT VT) const {
+    const TargetRegisterInfo *TRI, StringRef Constraint, MVT VT) const {
   if (Constraint.size() == 1) {
     // GCC Constraint Letters
     switch (Constraint[0]) {

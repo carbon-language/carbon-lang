@@ -4232,7 +4232,7 @@ bool AArch64TargetLowering::isFPImmLegal(const APFloat &Imm, EVT VT) const {
 /// getConstraintType - Given a constraint letter, return the type of
 /// constraint it is for this target.
 AArch64TargetLowering::ConstraintType
-AArch64TargetLowering::getConstraintType(const std::string &Constraint) const {
+AArch64TargetLowering::getConstraintType(StringRef Constraint) const {
   if (Constraint.size() == 1) {
     switch (Constraint[0]) {
     default:
@@ -4283,8 +4283,7 @@ AArch64TargetLowering::getSingleConstraintMatchWeight(
 
 std::pair<unsigned, const TargetRegisterClass *>
 AArch64TargetLowering::getRegForInlineAsmConstraint(
-    const TargetRegisterInfo *TRI, const std::string &Constraint,
-    MVT VT) const {
+    const TargetRegisterInfo *TRI, StringRef Constraint, MVT VT) const {
   if (Constraint.size() == 1) {
     switch (Constraint[0]) {
     case 'r':
@@ -4320,10 +4319,9 @@ AArch64TargetLowering::getRegForInlineAsmConstraint(
     unsigned Size = Constraint.size();
     if ((Size == 4 || Size == 5) && Constraint[0] == '{' &&
         tolower(Constraint[1]) == 'v' && Constraint[Size - 1] == '}') {
-      const std::string Reg =
-          std::string(&Constraint[2], &Constraint[Size - 1]);
-      int RegNo = atoi(Reg.c_str());
-      if (RegNo >= 0 && RegNo <= 31) {
+      int RegNo;
+      bool Failed = Constraint.slice(2, Size - 1).getAsInteger(10, RegNo);
+      if (!Failed && RegNo >= 0 && RegNo <= 31) {
         // v0 - v31 are aliases of q0 - q31.
         // By default we'll emit v0-v31 for this unless there's a modifier where
         // we'll emit the correct register as well.

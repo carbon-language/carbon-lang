@@ -379,10 +379,9 @@ public:
   const char *getTargetNodeName(unsigned Opcode) const override;
   std::pair<unsigned, const TargetRegisterClass *>
   getRegForInlineAsmConstraint(const TargetRegisterInfo *TRI,
-                               const std::string &Constraint,
-                               MVT VT) const override;
+                               StringRef Constraint, MVT VT) const override;
   TargetLowering::ConstraintType
-    getConstraintType(const std::string &Constraint) const override;
+  getConstraintType(StringRef Constraint) const override;
   TargetLowering::ConstraintWeight
     getSingleConstraintMatchWeight(AsmOperandInfo &info,
                                    const char *constraint) const override;
@@ -391,8 +390,7 @@ public:
                                     std::vector<SDValue> &Ops,
                                     SelectionDAG &DAG) const override;
 
-  unsigned getInlineAsmMemConstraint(
-      const std::string &ConstraintCode) const override {
+  unsigned getInlineAsmMemConstraint(StringRef ConstraintCode) const override {
     if (ConstraintCode.size() == 1) {
       switch(ConstraintCode[0]) {
       default:

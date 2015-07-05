@@ -544,7 +544,7 @@ bool SystemZTargetLowering::isTruncateFree(EVT FromVT, EVT ToVT) const {
 //===----------------------------------------------------------------------===//
 
 TargetLowering::ConstraintType
-SystemZTargetLowering::getConstraintType(const std::string &Constraint) const {
+SystemZTargetLowering::getConstraintType(StringRef Constraint) const {
   if (Constraint.size() == 1) {
     switch (Constraint[0]) {
     case 'a': // Address register
@@ -641,13 +641,14 @@ getSingleConstraintMatchWeight(AsmOperandInfo &info,
 // has already been verified.  MC is the class associated with "t" and
 // Map maps 0-based register numbers to LLVM register numbers.
 static std::pair<unsigned, const TargetRegisterClass *>
-parseRegisterNumber(const std::string &Constraint,
-                    const TargetRegisterClass *RC, const unsigned *Map) {
+parseRegisterNumber(StringRef Constraint, const TargetRegisterClass *RC,
+                    const unsigned *Map) {
   assert(*(Constraint.end()-1) == '}' && "Missing '}'");
   if (isdigit(Constraint[2])) {
-    std::string Suffix(Constraint.data() + 2, Constraint.size() - 2);
-    unsigned Index = atoi(Suffix.c_str());
-    if (Index < 16 && Map[Index])
+    unsigned Index;
+    bool Failed =
+        Constraint.slice(2, Constraint.size() - 1).getAsInteger(10, Index);
+    if (!Failed && Index < 16 && Map[Index])
       return std::make_pair(Map[Index], RC);
   }
   return std::make_pair(0U, nullptr);
@@ -655,8 +656,7 @@ parseRegisterNumber(const std::string &Constraint,
 
 std::pair<unsigned, const TargetRegisterClass *>
 SystemZTargetLowering::getRegForInlineAsmConstraint(
-    const TargetRegisterInfo *TRI, const std::string &Constraint,
-    MVT VT) const {
+    const TargetRegisterInfo *TRI, StringRef Constraint, MVT VT) const {
   if (Constraint.size() == 1) {
     // GCC Constraint Letters
     switch (Constraint[0]) {
@@ -687,7 +687,7 @@ SystemZTargetLowering::getRegForInlineAsmConstraint(
       return std::make_pair(0U, &SystemZ::FP32BitRegClass);
     }
   }
-  if (Constraint[0] == '{') {
+  if (Constraint.size() > 0 && Constraint[0] == '{') {
     // We need to override the default register parsing for GPRs and FPRs
     // because the interpretation depends on VT.  The internal names of
     // the registers are also different from the external names

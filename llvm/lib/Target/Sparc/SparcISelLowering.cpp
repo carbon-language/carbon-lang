@@ -3065,7 +3065,7 @@ SparcTargetLowering::expandAtomicRMW(MachineInstr *MI,
 /// getConstraintType - Given a constraint letter, return the type of
 /// constraint it is for this target.
 SparcTargetLowering::ConstraintType
-SparcTargetLowering::getConstraintType(const std::string &Constraint) const {
+SparcTargetLowering::getConstraintType(StringRef Constraint) const {
   if (Constraint.size() == 1) {
     switch (Constraint[0]) {
     default:  break;
@@ -3139,7 +3139,7 @@ LowerAsmOperandForConstraint(SDValue Op,
 
 std::pair<unsigned, const TargetRegisterClass *>
 SparcTargetLowering::getRegForInlineAsmConstraint(const TargetRegisterInfo *TRI,
-                                                  const std::string &Constraint,
+                                                  StringRef Constraint,
                                                   MVT VT) const {
   if (Constraint.size() == 1) {
     switch (Constraint[0]) {

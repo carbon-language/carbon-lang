@@ -2679,7 +2679,7 @@ public:
                                       SelectionDAG *DAG = nullptr) const;
 
   /// Given a constraint, return the type of constraint it is for this target.
-  virtual ConstraintType getConstraintType(const std::string &Constraint) const;
+  virtual ConstraintType getConstraintType(StringRef Constraint) const;
 
   /// Given a physical register constraint (e.g.  {edx}), return the register
   /// number and the register class for the register.
@@ -2692,10 +2692,9 @@ public:
   /// returns a register number of 0 and a null register class pointer.
   virtual std::pair<unsigned, const TargetRegisterClass *>
   getRegForInlineAsmConstraint(const TargetRegisterInfo *TRI,
-                               const std::string &Constraint, MVT VT) const;
+                               StringRef Constraint, MVT VT) const;
 
-  virtual unsigned
-  getInlineAsmMemConstraint(const std::string &ConstraintCode) const {
+  virtual unsigned getInlineAsmMemConstraint(StringRef ConstraintCode) const {
     if (ConstraintCode == "i")
       return InlineAsm::Constraint_i;
     else if (ConstraintCode == "m")

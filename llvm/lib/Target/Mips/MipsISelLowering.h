@@ -478,8 +478,7 @@ namespace llvm {
     bool shouldSignExtendTypeInLibCall(EVT Type, bool IsSigned) const override;
 
     // Inline asm support
-    ConstraintType
-      getConstraintType(const std::string &Constraint) const override;
+    ConstraintType getConstraintType(StringRef Constraint) const override;
 
     /// Examine constraint string and operand type and determine a weight value.
     /// The operand object must already have been set up with the operand type.
@@ -493,8 +492,7 @@ namespace llvm {
 
     std::pair<unsigned, const TargetRegisterClass *>
     getRegForInlineAsmConstraint(const TargetRegisterInfo *TRI,
-                                 const std::string &Constraint,
-                                 MVT VT) const override;
+                                 StringRef Constraint, MVT VT) const override;
 
     /// LowerAsmOperandForConstraint - Lower the specified operand into the Ops
     /// vector.  If it is invalid, don't add anything to Ops. If hasMemory is
@@ -505,8 +503,8 @@ namespace llvm {
                                       std::vector<SDValue> &Ops,
                                       SelectionDAG &DAG) const override;
 
-    unsigned getInlineAsmMemConstraint(
-        const std::string &ConstraintCode) const override {
+    unsigned
+    getInlineAsmMemConstraint(StringRef ConstraintCode) const override {
       if (ConstraintCode == "R")
         return InlineAsm::Constraint_R;
       else if (ConstraintCode == "ZC")

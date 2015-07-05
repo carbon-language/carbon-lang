@@ -1970,7 +1970,7 @@ XCoreTargetLowering::isLegalAddressingMode(const AddrMode &AM,
 
 std::pair<unsigned, const TargetRegisterClass *>
 XCoreTargetLowering::getRegForInlineAsmConstraint(const TargetRegisterInfo *TRI,
-                                                  const std::string &Constraint,
+                                                  StringRef Constraint,
                                                   MVT VT) const {
   if (Constraint.size() == 1) {
     switch (Constraint[0]) {

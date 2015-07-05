@@ -114,9 +114,9 @@ public:
                                   SDLoc DL,
                                   SDValue Ptr) const;
 
-  std::pair<unsigned, const TargetRegisterClass *> getRegForInlineAsmConstraint(
-                                   const TargetRegisterInfo *TRI,
-                                   const std::string &Constraint, MVT VT) const override;
+  std::pair<unsigned, const TargetRegisterClass *>
+  getRegForInlineAsmConstraint(const TargetRegisterInfo *TRI,
+                               StringRef Constraint, MVT VT) const override;
   SDValue copyToM0(SelectionDAG &DAG, SDValue Chain, SDLoc DL, SDValue V) const;
 };
 

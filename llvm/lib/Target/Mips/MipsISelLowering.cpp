@@ -3198,9 +3198,8 @@ MipsTargetLowering::LowerReturn(SDValue Chain,
 
 /// getConstraintType - Given a constraint letter, return the type of
 /// constraint it is for this target.
-MipsTargetLowering::ConstraintType MipsTargetLowering::
-getConstraintType(const std::string &Constraint) const
-{
+MipsTargetLowering::ConstraintType
+MipsTargetLowering::getConstraintType(StringRef Constraint) const {
   // Mips specific constraints
   // GCC config/mips/constraints.md
   //
@@ -3290,9 +3289,8 @@ MipsTargetLowering::getSingleConstraintMatchWeight(
 /// into non-numeric and numeric parts (Prefix and Reg). The first boolean flag
 /// that is returned indicates whether parsing was successful. The second flag
 /// is true if the numeric part exists.
-static std::pair<bool, bool>
-parsePhysicalReg(StringRef C, std::string &Prefix,
-                 unsigned long long &Reg) {
+static std::pair<bool, bool> parsePhysicalReg(StringRef C, StringRef &Prefix,
+                                              unsigned long long &Reg) {
   if (C.front() != '{' || C.back() != '}')
     return std::make_pair(false, false);
 
@@ -3300,7 +3298,7 @@ parsePhysicalReg(StringRef C, std::string &Prefix,
   StringRef::const_iterator I, B = C.begin() + 1, E = C.end() - 1;
   I = std::find_if(B, E, std::ptr_fun(isdigit));
 
-  Prefix.assign(B, I - B);
+  Prefix = StringRef(B, I - B);
 
   // The second flag is set to false if no numeric characters were found.
   if (I == E)
@@ -3316,7 +3314,7 @@ parseRegForInlineAsmConstraint(StringRef C, MVT VT) const {
   const TargetRegisterInfo *TRI =
       Subtarget.getRegisterInfo();
   const TargetRegisterClass *RC;
-  std::string Prefix;
+  StringRef Prefix;
   unsigned long long Reg;
 
   std::pair<bool, bool> R = parsePhysicalReg(C, Prefix, Reg);
@@ -3332,7 +3330,7 @@ parseRegForInlineAsmConstraint(StringRef C, MVT VT) const {
     RC = TRI->getRegClass(Prefix == "hi" ?
                           Mips::HI32RegClassID : Mips::LO32RegClassID);
     return std::make_pair(*(RC->begin()), RC);
-  } else if (Prefix.compare(0, 4, "$msa") == 0) {
+  } else if (Prefix.startswith("$msa")) {
     // Parse $msa(ir|csr|access|save|modify|request|map|unmap)
 
     // No numeric characters follow the name.
@@ -3390,7 +3388,7 @@ parseRegForInlineAsmConstraint(StringRef C, MVT VT) const {
 /// pointer.
 std::pair<unsigned, const TargetRegisterClass *>
 MipsTargetLowering::getRegForInlineAsmConstraint(const TargetRegisterInfo *TRI,
-                                                 const std::string &Constraint,
+                                                 StringRef Constraint,
                                                  MVT VT) const {
   if (Constraint.size() == 1) {
     switch (Constraint[0]) {

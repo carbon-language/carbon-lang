@@ -179,11 +179,10 @@ bool isPositiveHalfWord(SDNode *N);
 
     std::pair<unsigned, const TargetRegisterClass *>
     getRegForInlineAsmConstraint(const TargetRegisterInfo *TRI,
-                                 const std::string &Constraint,
-                                 MVT VT) const override;
+                                 StringRef Constraint, MVT VT) const override;
 
-    unsigned getInlineAsmMemConstraint(
-        const std::string &ConstraintCode) const override {
+    unsigned
+    getInlineAsmMemConstraint(StringRef ConstraintCode) const override {
       if (ConstraintCode == "o")
         return InlineAsm::Constraint_o;
       else if (ConstraintCode == "v")

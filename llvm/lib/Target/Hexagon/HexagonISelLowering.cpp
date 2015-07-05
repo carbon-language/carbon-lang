@@ -2338,8 +2338,7 @@ HexagonTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
 
 std::pair<unsigned, const TargetRegisterClass *>
 HexagonTargetLowering::getRegForInlineAsmConstraint(
-    const TargetRegisterInfo *TRI, const std::string &Constraint,
-    MVT VT) const {
+    const TargetRegisterInfo *TRI, StringRef Constraint, MVT VT) const {
   if (Constraint.size() == 1) {
     switch (Constraint[0]) {
     case 'r':   // R0-R31

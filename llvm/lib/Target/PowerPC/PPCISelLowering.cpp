@@ -10691,7 +10691,7 @@ unsigned PPCTargetLowering::getPrefLoopAlignment(MachineLoop *ML) const {
 /// getConstraintType - Given a constraint, return the type of
 /// constraint it is for this target.
 PPCTargetLowering::ConstraintType
-PPCTargetLowering::getConstraintType(const std::string &Constraint) const {
+PPCTargetLowering::getConstraintType(StringRef Constraint) const {
   if (Constraint.size() == 1) {
     switch (Constraint[0]) {
     default: break;
@@ -10776,7 +10776,7 @@ PPCTargetLowering::getSingleConstraintMatchWeight(
 
 std::pair<unsigned, const TargetRegisterClass *>
 PPCTargetLowering::getRegForInlineAsmConstraint(const TargetRegisterInfo *TRI,
-                                                const std::string &Constraint,
+                                                StringRef Constraint,
                                                 MVT VT) const {
   if (Constraint.size() == 1) {
     // GCC RS6000 Constraint Letters
