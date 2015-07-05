@@ -18,6 +18,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/raw_ostream.h"
+#include <mutex>
 
 using namespace llvm::object;
 using namespace llvm::support::endian;
@@ -76,7 +77,9 @@ std::error_code ArchiveFile::parse() {
 }
 
 // Returns a buffer pointing to a member file containing a given symbol.
+// This function is thread-safe.
 ErrorOr<MemoryBufferRef> ArchiveFile::getMember(const Archive::Symbol *Sym) {
+  static std::mutex Mu;
   auto ItOrErr = Sym->getMember();
   if (auto EC = ItOrErr.getError())
     return EC;
@@ -84,7 +87,9 @@ ErrorOr<MemoryBufferRef> ArchiveFile::getMember(const Archive::Symbol *Sym) {
 
   // Return an empty buffer if we have already returned the same buffer.
   const char *StartAddr = It->getBuffer().data();
+  Mu.lock();
   auto Pair = Seen.insert(StartAddr);
+  Mu.unlock();
   if (!Pair.second)
     return MemoryBufferRef();
   return It->getMemoryBufferRef();
