@@ -339,8 +339,8 @@ void test1() {
 
   res_vd = vec_nor(vd, vd);
 // CHECK: bitcast <2 x double> %{{[0-9]+}} to <2 x i64>
-// CHECK: [[OR:[0-9]+]] = or <2 x i64> %{{[0-9]+}}, %{{[0-9]+}}
-// CHECK-NEXT: xor <2 x i64> %or.i.[[OR]], <i64 -1, i64 -1>
+// CHECK: [[OR:%.+]] = or <2 x i64> %{{[0-9]+}}, %{{[0-9]+}}
+// CHECK-NEXT: xor <2 x i64> [[OR]], <i64 -1, i64 -1>
 
   /* vec_or */
   res_vsll = vec_or(vsll, vsll);
@@ -463,22 +463,22 @@ void test1() {
 // CHECK: call void @dummy()
 
   res_vd = vec_xor(vd, vd);
-// CHECK: [[X1:[0-9]+]] = xor <2 x i64> %{{[0-9]+}}, %{{[0-9]+}}
-// CHECK: bitcast <2 x i64> %xor.i.[[X1]] to <2 x double>
+// CHECK: [[X1:%.+]] = xor <2 x i64> %{{[0-9]+}}, %{{[0-9]+}}
+// CHECK: bitcast <2 x i64> [[X1]] to <2 x double>
 
   dummy();
 // CHECK: call void @dummy()
 
   res_vd = vec_xor(vd, vbll);
-// CHECK: [[X1:[0-9]+]] = xor <2 x i64> %{{[0-9]+}}, %{{[0-9]+}}
-// CHECK: bitcast <2 x i64> %xor.i.[[X1]] to <2 x double>
+// CHECK: [[X1:%.+]] = xor <2 x i64> %{{[0-9]+}}, %{{[0-9]+}}
+// CHECK: bitcast <2 x i64> [[X1]] to <2 x double>
 
   dummy();
 // CHECK: call void @dummy()
 
   res_vd = vec_xor(vbll, vd);
-// CHECK: [[X1:[0-9]+]] = xor <2 x i64> %{{[0-9]+}}, %{{[0-9]+}}
-// CHECK: bitcast <2 x i64> %xor.i.[[X1]] to <2 x double>
+// CHECK: [[X1:%.+]] = xor <2 x i64> %{{[0-9]+}}, %{{[0-9]+}}
+// CHECK: bitcast <2 x i64> [[X1]] to <2 x double>
 
   /* vec_vxor */
   res_vsll = vec_vxor(vsll, vsll);
