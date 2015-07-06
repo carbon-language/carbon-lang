@@ -49,11 +49,22 @@ class StopHookForMultipleThreadsTestCase(TestBase):
         prompt = "(lldb) "
 
         # So that the child gets torn down after the test.
-        self.child = pexpect.spawn('%s %s %s' % (lldbtest_config.lldbExec, self.lldbOption, exe))
+        self.child = pexpect.spawn('%s %s' % (lldbtest_config.lldbExec, self.lldbOption))
         child = self.child
         # Turn on logging for what the child sends back.
         if self.TraceOn():
             child.logfile_read = sys.stdout
+
+        if lldb.remote_platform:
+            child.expect_exact(prompt)
+            child.sendline('platform select %s' % lldb.remote_platform.GetName())
+            child.expect_exact(prompt)
+            child.sendline('platform connect %s' % lldb.platform_url)
+            child.expect_exact(prompt)
+            child.sendline('platform settings -w %s' % lldb.remote_platform_working_dir)
+
+        child.expect_exact(prompt)
+        child.sendline('target create %s' % exe)
 
         # Set the breakpoint, followed by the target stop-hook commands.
         child.expect_exact(prompt)
