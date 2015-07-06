@@ -1514,9 +1514,13 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
         // Grab the various features and prepend a "+" to turn on the feature to
         // the backend and add them to our existing set of features.
         for (auto &Feature : AttrFeatures) {
+	  // Go ahead and trim whitespace rather than either erroring or
+	  // accepting it weirdly.
+	  Feature = Feature.trim();
+
           // While we're here iterating check for a different target cpu.
           if (Feature.startswith("arch="))
-            TargetCPU = Feature.split("=").second;
+            TargetCPU = Feature.split("=").second.trim();
 	  else if (Feature.startswith("tune="))
 	    // We don't support cpu tuning this way currently.
 	    ;
