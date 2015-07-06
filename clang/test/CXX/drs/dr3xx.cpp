@@ -110,18 +110,6 @@ namespace dr305 { // dr305: no
     x->~X<char>(); // expected-error {{no member named}}
   }
 
-  // FIXME: This appears to be valid (but allowing the nested types might be a
-  // defect).
-  template<typename> struct Nested {
-    template<typename> struct Nested {};
-  };
-  void testNested(Nested<int> n) { n.~Nested<int>(); } // expected-error {{no member named}}
-#if __cplusplus < 201103L
-  // expected-error@-2 {{ambiguous}}
-  // expected-note@-6 {{here}}
-  // expected-note@-6 {{here}}
-#endif
-
 #if __cplusplus >= 201103L
   struct Y {
     template<typename T> using T1 = Y;

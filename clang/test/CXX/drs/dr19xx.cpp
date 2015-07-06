@@ -39,6 +39,21 @@ namespace dr1902 { // dr1902: 3.7
 #endif
 }
 
+namespace dr1909 { // dr1909: yes
+  struct A {
+    template<typename T> struct A {}; // expected-error {{member 'A' has the same name as its class}}
+  };
+  struct B {
+    template<typename T> void B() {} // expected-error {{constructor cannot have a return type}}
+  };
+  struct C {
+    template<typename T> static int C; // expected-error {{member 'C' has the same name as its class}} expected-error 0-1{{extension}}
+  };
+  struct D {
+    template<typename T> using D = int; // expected-error {{member 'D' has the same name as its class}} expected-error 0-1{{extension}}
+  };
+}
+
 #if __cplusplus >= 201103L
 namespace dr1940 { // dr1940: yes
 static union {

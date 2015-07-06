@@ -83,12 +83,10 @@ namespace InFunctions {
 
 namespace ClassNameRedecl {
   class C0 {
-    // FIXME: this diagnostic is pretty poor
-    using C0 = int; // expected-error {{name defined in alias declaration must be an identifier}}
+    using C0 = int; // expected-error {{member 'C0' has the same name as its class}}
   };
   class C1 {
-    // FIXME: this diagnostic is pretty poor
-    using C1 = C1; // expected-error {{name defined in alias declaration must be an identifier}}
+    using C1 = C1; // expected-error {{member 'C1' has the same name as its class}}
   };
   class C2 {
     using C0 = C1; // ok

@@ -11560,6 +11560,14 @@ Decl *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
       goto CreateNewDecl;
     }
   } else if (Name) {
+    // C++14 [class.mem]p14:
+    //   If T is the name of a class, then each of the following shall have a
+    //   name different from T:
+    //    -- every member of class T that is itself a type
+    if (TUK != TUK_Reference && TUK != TUK_Friend &&
+        DiagnoseClassNameShadow(SearchDC, DeclarationNameInfo(Name, NameLoc)))
+      return nullptr;
+
     // If this is a named struct, check to see if there was a previous forward
     // declaration or definition.
     // FIXME: We're looking into outer scopes here, even when we
@@ -13620,12 +13628,9 @@ Decl *Sema::ActOnEnumConstant(Scope *S, Decl *theEnumDecl, Decl *lastEnumConst,
   // different from T:
   // - every enumerator of every member of class T that is an unscoped 
   // enumerated type
-  if (CXXRecordDecl *Record
-                      = dyn_cast<CXXRecordDecl>(
-                             TheEnumDecl->getDeclContext()->getRedeclContext()))
-    if (!TheEnumDecl->isScoped() && 
-        Record->getIdentifier() && Record->getIdentifier() == Id)
-      Diag(IdLoc, diag::err_member_name_of_class) << Id;
+  if (!TheEnumDecl->isScoped())
+    DiagnoseClassNameShadow(TheEnumDecl->getDeclContext(),
+                            DeclarationNameInfo(Id, IdLoc));
   
   EnumConstantDecl *New =
     CheckEnumConstant(TheEnumDecl, LastEnumConst, IdLoc, Id, Val);

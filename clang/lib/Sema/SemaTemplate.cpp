@@ -893,6 +893,16 @@ Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
     LookupQualifiedName(Previous, SemanticContext);
   } else {
     SemanticContext = CurContext;
+
+    // C++14 [class.mem]p14:
+    //   If T is the name of a class, then each of the following shall have a
+    //   name different from T:
+    //    -- every member template of class T
+    if (TUK != TUK_Friend &&
+        DiagnoseClassNameShadow(SemanticContext,
+                                DeclarationNameInfo(Name, NameLoc)))
+      return true;
+
     LookupName(Previous, S);
   }
 

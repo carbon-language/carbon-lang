@@ -543,10 +543,11 @@ Decl *Parser::ParseUsingDeclaration(unsigned Context,
     SourceLocation IdLoc = ConsumeToken();
     ParsedType Type = Actions.getInheritingConstructorName(SS, IdLoc, *LastII);
     Name.setConstructorName(Type, IdLoc, IdLoc);
-  } else if (ParseUnqualifiedId(SS, /*EnteringContext=*/ false,
-                                /*AllowDestructorName=*/ true,
-                                /*AllowConstructorName=*/ true, ParsedType(),
-                                TemplateKWLoc, Name)) {
+  } else if (ParseUnqualifiedId(
+                 SS, /*EnteringContext=*/false,
+                 /*AllowDestructorName=*/true,
+                 /*AllowConstructorName=*/NextToken().isNot(tok::equal),
+                 ParsedType(), TemplateKWLoc, Name)) {
     SkipUntil(tok::semi);
     return nullptr;
   }

@@ -8,8 +8,8 @@ template<typename T> struct Y; // expected-note{{did you mean class here?}}
 template<class U> class Y { }; // expected-warning{{previously declared}}
 
 template <typename>
-struct Z {   // expected-note{{previous definition is here}}
-  struct Z { // expected-error{{nested redefinition of 'Z'}}
+struct Z {
+  struct Z { // expected-error{{member 'Z' has the same name as its class}}
   };
 };
 
