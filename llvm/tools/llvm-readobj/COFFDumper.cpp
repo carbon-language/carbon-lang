@@ -48,7 +48,6 @@ public:
   COFFDumper(const llvm::object::COFFObjectFile *Obj, StreamWriter& Writer)
     : ObjDumper(Writer)
     , Obj(Obj) {
-    cacheRelocations();
   }
 
   void printFileHeaders() override;
@@ -92,6 +91,7 @@ private:
   typedef DenseMap<const coff_section*, std::vector<RelocationRef> > RelocMapTy;
 
   const llvm::object::COFFObjectFile *Obj;
+  bool RelocCached = false;
   RelocMapTy RelocMap;
   StringRef CVFileIndexToStringOffsetTable;
   StringRef CVStringTable;
@@ -119,6 +119,7 @@ std::error_code createCOFFDumper(const object::ObjectFile *Obj,
 // symbol used for the relocation at the offset.
 std::error_code COFFDumper::resolveSymbol(const coff_section *Section,
                                           uint64_t Offset, SymbolRef &Sym) {
+  cacheRelocations();
   const auto &Relocations = RelocMap[Section];
   for (const auto &Relocation : Relocations) {
     uint64_t RelocationOffset = Relocation.getOffset();
@@ -339,6 +340,10 @@ static std::error_code getSymbolAuxData(const COFFObjectFile *Obj,
 }
 
 void COFFDumper::cacheRelocations() {
+  if (RelocCached)
+    return;
+  RelocCached = true;
+
   for (const SectionRef &S : Obj->sections()) {
     const coff_section *Section = Obj->getCOFFSection(S);
 
