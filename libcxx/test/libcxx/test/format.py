@@ -141,13 +141,16 @@ class LibcxxTestFormat(object):
 
     def _evaluate_fail_test(self, test):
         source_path = test.getSourcePath()
-        # TODO: Move the checking of USE_VERIFY into
-        # lit.TestRunner.parseIntegratedTestScript by adding support for custom
-        # tags.
         with open(source_path, 'r') as f:
             contents = f.read()
-        use_verify = 'USE_VERIFY' in contents and self.use_verify_for_fail
-        extra_flags = ['-Xclang', '-verify'] if use_verify else []
+        verify_tags = ['expected-note', 'expected-remark', 'expected-warning',
+                       'expected-error', 'expected-no-diagnostics']
+        use_verify = self.use_verify_for_fail and \
+                     any([tag in contents for tag in verify_tags])
+        extra_flags = []
+        if use_verify:
+            extra_flags += ['-Xclang', '-verify',
+                            '-Xclang', '-verify-ignore-unexpected=note']
         cmd, out, err, rc = self.cxx.compile(source_path, out=os.devnull,
                                              flags=extra_flags)
         expected_rc = 0 if use_verify else 1
@@ -155,5 +158,6 @@ class LibcxxTestFormat(object):
             return lit.Test.PASS, ''
         else:
             report = libcxx.util.makeReport(cmd, out, err, rc)
-            return (lit.Test.FAIL,
-                    report + 'Expected compilation to fail!\n')
+            report_msg = ('Expected compilation to fail!' if use_verify else
+                          'Expected compilation using verify to pass!')
+            return lit.Test.FAIL, report + report_msg + '\n'

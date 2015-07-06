@@ -201,8 +201,10 @@ class Configuration(object):
         '''If set, run clang with -verify on failing tests.'''
         self.use_clang_verify = self.get_lit_bool('use_clang_verify')
         if self.use_clang_verify is None:
-            # TODO: Default this to True when using clang.
-            self.use_clang_verify = False
+            # NOTE: We do not test for the -verify flag directly because
+            #   -verify will always exit with non-zero on an empty file.
+            self.use_clang_verify = self.cxx.hasCompileFlag(
+                ['-Xclang', '-verify-ignore-unexpected'])
             self.lit_config.note(
                 "inferred use_clang_verify as: %r" % self.use_clang_verify)
 

@@ -15,7 +15,6 @@
 
 // default unique_ptr ctor should require default Deleter ctor
 
-// USE_VERIFY
 
 #include <memory>
 

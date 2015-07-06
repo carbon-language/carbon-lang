@@ -139,7 +139,10 @@ class CXXCompiler(object):
         return lit.util.capture(cmd).strip()
 
     def hasCompileFlag(self, flag):
-        flags = [flag]
+        if isinstance(flag, list):
+            flags = list(flag)
+        else:
+            flags = [flag]
         # Add -Werror to ensure that an unrecognized flag causes a non-zero
         # exit code. -Werror is supported on all known compiler types.
         if self.type is not None:
