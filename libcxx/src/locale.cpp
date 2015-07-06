@@ -575,8 +575,10 @@ locale::global(const locale& loc)
     locale& g = __global();
     locale r = g;
     g = loc;
+#ifndef __CloudABI__
     if (g.name() != "*")
         setlocale(LC_ALL, g.name().c_str());
+#endif
     return r;
 }
 
@@ -1707,22 +1709,23 @@ codecvt<wchar_t, char, mbstate_t>::do_unshift(state_type& st,
 int
 codecvt<wchar_t, char, mbstate_t>::do_encoding() const  _NOEXCEPT
 {
+#ifndef __CloudABI__
 #ifdef _LIBCPP_LOCALE__L_EXTENSIONS
-    if (mbtowc_l(nullptr, nullptr, MB_LEN_MAX, __l) == 0)
+    if (mbtowc_l(nullptr, nullptr, MB_LEN_MAX, __l) != 0)
 #else
-    if (__mbtowc_l(nullptr, nullptr, MB_LEN_MAX, __l) == 0)
+    if (__mbtowc_l(nullptr, nullptr, MB_LEN_MAX, __l) != 0)
 #endif
-    {
-        // stateless encoding
+        return -1;
+#endif
+
+    // stateless encoding
 #ifdef _LIBCPP_LOCALE__L_EXTENSIONS
-        if (__l == 0 || MB_CUR_MAX_L(__l) == 1)  // there are no known constant length encodings
+    if (__l == 0 || MB_CUR_MAX_L(__l) == 1)  // there are no known constant length encodings
 #else
-        if (__l == 0 || __mb_cur_max_l(__l) == 1)  // there are no known constant length encodings
+    if (__l == 0 || __mb_cur_max_l(__l) == 1)  // there are no known constant length encodings
 #endif
-            return 1;                // which take more than 1 char to form a wchar_t
-         return 0;
-    }
-    return -1;
+        return 1;                // which take more than 1 char to form a wchar_t
+    return 0;
 }
 
 bool
