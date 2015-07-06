@@ -510,9 +510,17 @@ int AArch64A57FPLoadBalancing::scavengeRegister(Chain *G, Color C,
       if (J.isRegMask())
         AvailableRegs.clearBitsNotInMask(J.getRegMask());
 
-      if (J.isReg() && J.isDef() && AvailableRegs[J.getReg()]) {
-        assert(J.isDead() && "Non-dead def should have been removed by now!");
-        AvailableRegs.reset(J.getReg());
+      if (J.isReg() && J.isDef()) {
+        MCRegAliasIterator AI(J.getReg(), TRI, /*IncludeSelf=*/true);
+        if (J.isDead())
+          for (; AI.isValid(); ++AI)
+            AvailableRegs.reset(*AI);
+#ifndef NDEBUG
+        else
+          for (; AI.isValid(); ++AI)
+            assert(!AvailableRegs[*AI] &&
+                   "Non-dead def should have been removed by now!");
+#endif
       }
     }
   }
