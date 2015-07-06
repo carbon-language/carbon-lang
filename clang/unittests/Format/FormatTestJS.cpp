@@ -885,6 +885,9 @@ TEST_F(FormatTestJS, TypeArguments) {
   verifyFormat("function f(): List<any> {}");
   verifyFormat("function aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa():\n"
                "    bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb {}");
+  verifyFormat("function aaaaaaaaaa(aaaaaaaaaaaaaaaa: aaaaaaaaaaaaaaaaaa,\n"
+               "                    aaaaaaaaaaaaaaaa: aaaaaaaaaaaaaaaaaa):\n"
+               "    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa {}");
 }
 
 TEST_F(FormatTestJS, OptionalTypes) {
