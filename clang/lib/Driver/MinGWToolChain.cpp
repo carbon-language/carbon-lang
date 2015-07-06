@@ -45,6 +45,7 @@ MinGW::MinGW(const Driver &D, const llvm::Triple &Triple, const ArgList &Args)
   llvm::sys::fs::directory_iterator MingW64Entry(LibDir + Arch, EC);
   if (!EC) {
     GccLibDir = MingW64Entry->path();
+    Ver = llvm::sys::path::filename(GccLibDir);
   } else {
     // If mingw-w64 not found, try looking for mingw.org.
     Arch = "mingw32";
@@ -128,16 +129,21 @@ void MinGW::AddClangCXXStdlibIncludeArgs(const ArgList &DriverArgs,
       DriverArgs.hasArg(options::OPT_nostdincxx))
     return;
 
-  llvm::SmallString<1024> IncludeDir;
-  for (bool MingW64 : {true, false}) {
-    if (MingW64)
-      IncludeDir = Base + Arch;
-    else
-      IncludeDir = GccLibDir;
-    llvm::sys::path::append(IncludeDir, "include", "c++");
-    addSystemInclude(DriverArgs, CC1Args, IncludeDir.str());
-    IncludeDir += llvm::sys::path::get_separator();
-    addSystemInclude(DriverArgs, CC1Args, IncludeDir.str() + Arch);
-    addSystemInclude(DriverArgs, CC1Args, IncludeDir.str() + "backward");
+  // C++ includes may be found in several locations depending on distribution.
+  // mingw-w64 mingw-builds: $sysroot/i686-w64-mingw32/include/c++.
+  // mingw-w64 msys2:        $sysroot/include/c++/4.9.2
+  // mingw.org:              GccLibDir/include/c++
+  llvm::SmallVector<llvm::SmallString<1024>, 3> CppIncludeBases;
+  CppIncludeBases.emplace_back(Base);
+  llvm::sys::path::append(CppIncludeBases[0], Arch, "include", "c++");
+  CppIncludeBases.emplace_back(Base);
+  llvm::sys::path::append(CppIncludeBases[1], "include", "c++", Ver);
+  CppIncludeBases.emplace_back(GccLibDir);
+  llvm::sys::path::append(CppIncludeBases[2], "include", "c++");
+  for (auto &CppIncludeBase : CppIncludeBases) {
+    CppIncludeBase += llvm::sys::path::get_separator();
+    addSystemInclude(DriverArgs, CC1Args, CppIncludeBase);
+    addSystemInclude(DriverArgs, CC1Args, CppIncludeBase + Arch);
+    addSystemInclude(DriverArgs, CC1Args, CppIncludeBase + "backward");
   }
 }
