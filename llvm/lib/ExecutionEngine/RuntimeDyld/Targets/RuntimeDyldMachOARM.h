@@ -74,7 +74,7 @@ public:
         getRelocationValueRef(Obj, RelI, RE, ObjSectionToID));
 
     if (RE.IsPCRel)
-      makeValueAddendPCRel(Value, Obj, RelI, 8);
+      makeValueAddendPCRel(Value, RelI, 8);
 
     if ((RE.RelType & 0xf) == MachO::ARM_RELOC_BR24)
       processBranchRelocation(RE, Value, Stubs);

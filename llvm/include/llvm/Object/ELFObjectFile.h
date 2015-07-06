@@ -225,7 +225,6 @@ protected:
   section_iterator getRelocatedSection(DataRefImpl Sec) const override;
 
   void moveRelocationNext(DataRefImpl &Rel) const override;
-  ErrorOr<uint64_t> getRelocationAddress(DataRefImpl Rel) const override;
   uint64_t getRelocationOffset(DataRefImpl Rel) const override;
   symbol_iterator getRelocationSymbol(DataRefImpl Rel) const override;
   uint64_t getRelocationType(DataRefImpl Rel) const override;
@@ -680,23 +679,6 @@ ELFObjectFile<ELFT>::getRelocationSymbol(DataRefImpl Rel) const {
   else
     SymbolData = toDRI(EF.getDotSymtabSec(), symbolIdx);
   return symbol_iterator(SymbolRef(SymbolData, this));
-}
-
-template <class ELFT>
-ErrorOr<uint64_t>
-ELFObjectFile<ELFT>::getRelocationAddress(DataRefImpl Rel) const {
-  uint64_t ROffset = getROffset(Rel);
-  const Elf_Ehdr *Header = EF.getHeader();
-
-  if (Header->e_type == ELF::ET_REL) {
-    const Elf_Shdr *RelocationSec = getRelSection(Rel);
-    ErrorOr<const Elf_Shdr *> RelocatedSec =
-        EF.getSection(RelocationSec->sh_info);
-    if (std::error_code EC = RelocatedSec.getError())
-      return EC;
-    return ROffset + (*RelocatedSec)->sh_addr;
-  }
-  return ROffset;
 }
 
 template <class ELFT>

@@ -89,19 +89,11 @@ RelocationValueRef RuntimeDyldMachO::getRelocationValueRef(
 }
 
 void RuntimeDyldMachO::makeValueAddendPCRel(RelocationValueRef &Value,
-                                            const ObjectFile &BaseTObj,
                                             const relocation_iterator &RI,
                                             unsigned OffsetToNextPC) {
-  const MachOObjectFile &Obj =
-      static_cast<const MachOObjectFile &>(BaseTObj);
-  MachO::any_relocation_info RelInfo =
-      Obj.getRelocation(RI->getRawDataRefImpl());
-
-  bool IsPCRel = Obj.getAnyRelocationPCRel(RelInfo);
-  if (IsPCRel) {
-    ErrorOr<uint64_t> RelocAddr = RI->getAddress();
-    Value.Offset += *RelocAddr + OffsetToNextPC;
-  }
+  auto &O = *cast<MachOObjectFile>(RI->getObject());
+  section_iterator SecI = O.getRelocationRelocatedSection(RI);
+  Value.Offset += RI->getOffset() + OffsetToNextPC + SecI->getAddress();
 }
 
 void RuntimeDyldMachO::dumpRelocationToResolve(const RelocationEntry &RE,

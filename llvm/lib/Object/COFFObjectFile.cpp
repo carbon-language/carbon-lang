@@ -958,10 +958,6 @@ void COFFObjectFile::moveRelocationNext(DataRefImpl &Rel) const {
             reinterpret_cast<const coff_relocation*>(Rel.p) + 1);
 }
 
-ErrorOr<uint64_t> COFFObjectFile::getRelocationAddress(DataRefImpl Rel) const {
-  report_fatal_error("getRelocationAddress not implemented in COFFObjectFile");
-}
-
 uint64_t COFFObjectFile::getRelocationOffset(DataRefImpl Rel) const {
   const coff_relocation *R = toRel(Rel);
   return R->VirtualAddress;

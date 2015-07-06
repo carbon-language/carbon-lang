@@ -50,7 +50,6 @@ public:
 
   void moveNext();
 
-  ErrorOr<uint64_t> getAddress() const;
   uint64_t getOffset() const;
   symbol_iterator getSymbol() const;
   uint64_t getType() const;
@@ -228,7 +227,6 @@ protected:
   // Same as above for RelocationRef.
   friend class RelocationRef;
   virtual void moveRelocationNext(DataRefImpl &Rel) const = 0;
-  virtual ErrorOr<uint64_t> getRelocationAddress(DataRefImpl Rel) const = 0;
   virtual uint64_t getRelocationOffset(DataRefImpl Rel) const = 0;
   virtual symbol_iterator getRelocationSymbol(DataRefImpl Rel) const = 0;
   virtual uint64_t getRelocationType(DataRefImpl Rel) const = 0;
@@ -427,10 +425,6 @@ inline bool RelocationRef::operator==(const RelocationRef &Other) const {
 
 inline void RelocationRef::moveNext() {
   return OwningObject->moveRelocationNext(RelocationPimpl);
-}
-
-inline ErrorOr<uint64_t> RelocationRef::getAddress() const {
-  return OwningObject->getRelocationAddress(RelocationPimpl);
 }
 
 inline uint64_t RelocationRef::getOffset() const {

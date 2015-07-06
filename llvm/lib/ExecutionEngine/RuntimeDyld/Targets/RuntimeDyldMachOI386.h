@@ -68,7 +68,7 @@ public:
     //   Value.Addend += RelocAddr + 4;
     // }
     if (RE.IsPCRel)
-      makeValueAddendPCRel(Value, Obj, RelI, 1 << RE.Size);
+      makeValueAddendPCRel(Value, RelI, 1 << RE.Size);
 
     RE.Addend = Value.Offset;
 

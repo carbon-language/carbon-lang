@@ -588,15 +588,6 @@ void MachOObjectFile::moveRelocationNext(DataRefImpl &Rel) const {
   ++Rel.d.b;
 }
 
-ErrorOr<uint64_t> MachOObjectFile::getRelocationAddress(DataRefImpl Rel) const {
-  uint64_t Offset = getRelocationOffset(Rel);
-
-  DataRefImpl Sec;
-  Sec.d.a = Rel.d.a;
-  uint64_t SecAddress = getSectionAddress(Sec);
-  return SecAddress + Offset;
-}
-
 uint64_t MachOObjectFile::getRelocationOffset(DataRefImpl Rel) const {
   assert(getHeader().filetype == MachO::MH_OBJECT &&
          "Only implemented for MH_OBJECT");
@@ -925,6 +916,13 @@ std::error_code MachOObjectFile::getLibraryShortNameByIndex(unsigned Index,
 
   Res = LibrariesShortNames[Index];
   return std::error_code();
+}
+
+section_iterator
+MachOObjectFile::getRelocationRelocatedSection(relocation_iterator Rel) const {
+  DataRefImpl Sec;
+  Sec.d.a = Rel->getRawDataRefImpl().d.a;
+  return section_iterator(SectionRef(Sec, this));
 }
 
 basic_symbol_iterator MachOObjectFile::symbol_begin_impl() const {

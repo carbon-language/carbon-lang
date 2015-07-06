@@ -232,7 +232,6 @@ public:
   relocation_iterator section_rel_end(DataRefImpl Sec) const override;
 
   void moveRelocationNext(DataRefImpl &Rel) const override;
-  ErrorOr<uint64_t> getRelocationAddress(DataRefImpl Rel) const override;
   uint64_t getRelocationOffset(DataRefImpl Rel) const override;
   symbol_iterator getRelocationSymbol(DataRefImpl Rel) const override;
   section_iterator getRelocationSection(DataRefImpl Rel) const;
@@ -243,6 +242,8 @@ public:
 
   // MachO specific.
   std::error_code getLibraryShortNameByIndex(unsigned Index, StringRef &) const;
+
+  section_iterator getRelocationRelocatedSection(relocation_iterator Rel) const;
 
   // TODO: Would be useful to have an iterator based version
   // of the load command interface too.

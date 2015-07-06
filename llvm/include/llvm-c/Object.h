@@ -81,7 +81,6 @@ uint64_t LLVMGetSymbolAddress(LLVMSymbolIteratorRef SI);
 uint64_t LLVMGetSymbolSize(LLVMSymbolIteratorRef SI);
 
 // RelocationRef accessors
-uint64_t LLVMGetRelocationAddress(LLVMRelocationIteratorRef RI);
 uint64_t LLVMGetRelocationOffset(LLVMRelocationIteratorRef RI);
 LLVMSymbolIteratorRef LLVMGetRelocationSymbol(LLVMRelocationIteratorRef RI);
 uint64_t LLVMGetRelocationType(LLVMRelocationIteratorRef RI);
