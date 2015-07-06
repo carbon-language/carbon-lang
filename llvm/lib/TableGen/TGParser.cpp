@@ -184,7 +184,7 @@ bool TGParser::AddSubClass(Record *CurRec, SubClassReference &SubClass) {
 
   // Since everything went well, we can now set the "superclass" list for the
   // current record.
-  const std::vector<Record*> &SCs = SC->getSuperClasses();
+  ArrayRef<Record *> SCs = SC->getSuperClasses();
   ArrayRef<SMRange> SCRanges = SC->getSuperClassRanges();
   for (unsigned i = 0, e = SCs.size(); i != e; ++i) {
     if (CurRec->isSubClassOf(SCs[i]))

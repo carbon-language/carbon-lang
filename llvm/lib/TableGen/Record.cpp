@@ -1648,7 +1648,7 @@ raw_ostream &llvm::operator<<(raw_ostream &OS, const Record &R) {
   }
 
   OS << " {";
-  const std::vector<Record*> &SC = R.getSuperClasses();
+  ArrayRef<Record *> SC = R.getSuperClasses();
   if (!SC.empty()) {
     OS << "\t//";
     for (const Record *Super : SC)

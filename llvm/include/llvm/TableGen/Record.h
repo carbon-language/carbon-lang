@@ -1222,11 +1222,11 @@ public:
   /// get the corresponding DefInit.
   DefInit *getDefInit();
 
-  const std::vector<Init *> &getTemplateArgs() const {
+  ArrayRef<Init *> getTemplateArgs() const {
     return TemplateArgs;
   }
-  const std::vector<RecordVal> &getValues() const { return Values; }
-  const std::vector<Record*>   &getSuperClasses() const { return SuperClasses; }
+  ArrayRef<RecordVal> getValues() const { return Values; }
+  ArrayRef<Record *>  getSuperClasses() const { return SuperClasses; }
   ArrayRef<SMRange> getSuperClassRanges() const { return SuperClassRanges; }
 
   bool isTemplateArg(Init *Name) const {
