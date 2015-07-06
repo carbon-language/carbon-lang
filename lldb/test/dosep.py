@@ -67,12 +67,14 @@ eTimedOut, ePassed, eFailed = 124, 0, 1
 output_lock = None
 test_counter = None
 total_tests = None
+dotest_options = None
 
-def setup_lock_and_counter(lock, counter, total):
-    global output_lock, test_counter, total_tests
+def setup_global_variables(lock, counter, total, options):
+    global output_lock, test_counter, total_tests, dotest_options
     output_lock = lock
     test_counter = counter
     total_tests = total
+    dotest_options = options
 
 def update_status(name = None, command = None, output = None):
     global output_lock, test_counter, total_tests
@@ -152,7 +154,7 @@ def process_dir(root, files, test_root, dotest_argv):
 
         timeout_name = os.path.basename(os.path.splitext(name)[0]).upper()
 
-        timeout = os.getenv("LLDB_%s_TIMEOUT" % timeout_name) or default_timeout
+        timeout = os.getenv("LLDB_%s_TIMEOUT" % timeout_name) or getDefaultTimeout(dotest_options.lldb_platform_name)
 
         exit_status, pass_count, fail_count = call_with_timeout(command, timeout, name)
 
@@ -202,8 +204,8 @@ def walk_and_invoke(test_directory, test_subdir, dotest_argv, num_threads):
     # calling each individually.
     if num_threads > 1:
         pool = multiprocessing.Pool(num_threads,
-            initializer = setup_lock_and_counter,
-            initargs = (output_lock, test_counter, total_tests))
+            initializer = setup_global_variables,
+            initargs = (output_lock, test_counter, total_tests, dotest_options))
         test_results = pool.map(process_dir_worker, test_work_items)
     else:
         test_results = []
@@ -336,6 +338,7 @@ Run lldb test suite using a separate process for each test file.
     dotest_argv = shlex.split(dotest_option_string, posix=is_posix) if dotest_option_string else []
 
     parser = dotest_args.create_parser()
+    global dotest_options
     dotest_options = dotest_args.parse_args(parser, dotest_argv)
 
     if not dotest_options.s:
@@ -371,9 +374,6 @@ Run lldb test suite using a separate process for each test file.
             num_threads = multiprocessing.cpu_count()
     if num_threads < 1:
         num_threads = 1
-
-    global default_timeout
-    default_timeout = getDefaultTimeout(dotest_options.lldb_platform_name)
 
     system_info = " ".join(platform.uname())
     (timed_out, failed, passed, all_fails, all_passes) = walk_and_invoke(test_directory, test_subdir, dotest_argv, num_threads)
