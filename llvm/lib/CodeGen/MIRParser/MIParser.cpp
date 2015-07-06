@@ -18,6 +18,7 @@
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/SourceMgr.h"
@@ -67,6 +68,7 @@ public:
   bool parseMBB(MachineBasicBlock *&MBB);
 
   bool parseRegister(unsigned &Reg);
+  bool parseRegisterFlag(unsigned &Flags);
   bool parseRegisterOperand(MachineOperand &Dest, bool IsDef = false);
   bool parseImmediateOperand(MachineOperand &Dest);
   bool parseMBBReference(MachineBasicBlock *&MBB);
@@ -138,7 +140,7 @@ bool MIParser::parse(MachineInstr *&MI) {
   // TODO: Allow parsing of multiple operands before '='
   MachineOperand MO = MachineOperand::CreateImm(0);
   SmallVector<MachineOperand, 8> Operands;
-  if (Token.isRegister()) {
+  if (Token.isRegister() || Token.isRegisterFlag()) {
     if (parseRegisterOperand(MO, /*IsDef=*/true))
       return true;
     Operands.push_back(MO);
@@ -167,21 +169,8 @@ bool MIParser::parse(MachineInstr *&MI) {
 
   const auto &MCID = MF.getSubtarget().getInstrInfo()->get(OpCode);
 
-  // Verify machine operands.
-  if (!MCID.isVariadic()) {
-    for (size_t I = 0, E = Operands.size(); I < E; ++I) {
-      if (I < MCID.getNumOperands())
-        continue;
-      // Mark this register as implicit to prevent an assertion when it's added
-      // to an instruction. This is a temporary workaround until the implicit
-      // register flag can be parsed.
-      if (Operands[I].isReg())
-        Operands[I].setImplicit();
-    }
-  }
-
-  // TODO: Determine the implicit behaviour when implicit register flags are
-  // parsed.
+  // TODO: Check for extraneous machine operands.
+  // TODO: Check that this instruction has the implicit register operands.
   MI = MF.CreateMachineInstr(MCID, DebugLoc(), /*NoImplicit=*/true);
   for (const auto &Operand : Operands)
     MI->addOperand(MF, Operand);
@@ -229,14 +218,38 @@ bool MIParser::parseRegister(unsigned &Reg) {
   return false;
 }
 
+bool MIParser::parseRegisterFlag(unsigned &Flags) {
+  switch (Token.kind()) {
+  case MIToken::kw_implicit:
+    Flags |= RegState::Implicit;
+    break;
+  case MIToken::kw_implicit_define:
+    Flags |= RegState::ImplicitDefine;
+    break;
+  // TODO: report an error when we specify the same flag more than once.
+  // TODO: parse the other register flags.
+  default:
+    llvm_unreachable("The current token should be a register flag");
+  }
+  lex();
+  return false;
+}
+
 bool MIParser::parseRegisterOperand(MachineOperand &Dest, bool IsDef) {
   unsigned Reg;
-  // TODO: Parse register flags.
+  unsigned Flags = IsDef ? RegState::Define : 0;
+  while (Token.isRegisterFlag()) {
+    if (parseRegisterFlag(Flags))
+      return true;
+  }
+  if (!Token.isRegister())
+    return error("expected a register after register flags");
   if (parseRegister(Reg))
     return true;
   lex();
   // TODO: Parse subregister.
-  Dest = MachineOperand::CreateReg(Reg, IsDef);
+  Dest = MachineOperand::CreateReg(Reg, Flags & RegState::Define,
+                                   Flags & RegState::Implicit);
   return false;
 }
 
@@ -318,6 +331,8 @@ bool MIParser::parseGlobalAddressOperand(MachineOperand &Dest) {
 
 bool MIParser::parseMachineOperand(MachineOperand &Dest) {
   switch (Token.kind()) {
+  case MIToken::kw_implicit:
+  case MIToken::kw_implicit_define:
   case MIToken::underscore:
   case MIToken::NamedRegister:
     return parseRegisterOperand(Dest);

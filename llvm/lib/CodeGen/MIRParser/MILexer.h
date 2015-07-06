@@ -36,6 +36,10 @@ struct MIToken {
     equal,
     underscore,
 
+    // Keywords
+    kw_implicit,
+    kw_implicit_define,
+
     // Identifier tokens
     Identifier,
     NamedRegister,
@@ -67,6 +71,10 @@ public:
 
   bool isRegister() const {
     return Kind == NamedRegister || Kind == underscore;
+  }
+
+  bool isRegisterFlag() const {
+    return Kind == kw_implicit || Kind == kw_implicit_define;
   }
 
   bool is(TokenKind K) const { return Kind == K; }

@@ -35,9 +35,9 @@ body:
     name:        entry
     instructions:
       # CHECK:      - 'PUSH64r %rax
-      # CHECK-NEXT: - 'CALL64pcrel32 @compute, csr_64, %rsp, %edi, %rsp, %eax'
+      # CHECK-NEXT: - 'CALL64pcrel32 @compute, csr_64, implicit %rsp, implicit %edi, implicit-def %rsp, implicit-def %eax'
       - 'PUSH64r %rax'
-      - 'CALL64pcrel32 @compute, csr_64, %rsp, %edi, %rsp, %eax'
+      - 'CALL64pcrel32 @compute, csr_64, implicit %rsp, implicit %edi, implicit-def %rsp, implicit-def %eax'
       - '%rdx = POP64r'
       - 'RETQ %eax'
 ...

@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "MILexer.h"
+#include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/Twine.h"
 #include <cctype>
 
@@ -64,6 +65,14 @@ static bool isIdentifierChar(char C) {
   return isalpha(C) || isdigit(C) || C == '_' || C == '-' || C == '.';
 }
 
+static MIToken::TokenKind getIdentifierKind(StringRef Identifier) {
+  return StringSwitch<MIToken::TokenKind>(Identifier)
+      .Case("_", MIToken::underscore)
+      .Case("implicit", MIToken::kw_implicit)
+      .Case("implicit-def", MIToken::kw_implicit_define)
+      .Default(MIToken::Identifier);
+}
+
 static Cursor maybeLexIdentifier(Cursor C, MIToken &Token) {
   if (!isalpha(C.peek()) && C.peek() != '_')
     return None;
@@ -71,8 +80,7 @@ static Cursor maybeLexIdentifier(Cursor C, MIToken &Token) {
   while (isIdentifierChar(C.peek()))
     C.advance();
   auto Identifier = Range.upto(C);
-  Token = MIToken(Identifier == "_" ? MIToken::underscore : MIToken::Identifier,
-                  Identifier);
+  Token = MIToken(getIdentifierKind(Identifier), Identifier);
   return C;
 }
 

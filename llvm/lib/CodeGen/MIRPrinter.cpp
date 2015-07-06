@@ -211,7 +211,9 @@ void MIPrinter::printMBBReference(const MachineBasicBlock &MBB) {
 void MIPrinter::print(const MachineOperand &Op, const TargetRegisterInfo *TRI) {
   switch (Op.getType()) {
   case MachineOperand::MO_Register:
-    // TODO: Print register flags.
+    // TODO: Print the other register flags.
+    if (Op.isImplicit())
+      OS << (Op.isDef() ? "implicit-def " : "implicit ");
     printReg(Op.getReg(), OS, TRI);
     // TODO: Print sub register.
     break;
