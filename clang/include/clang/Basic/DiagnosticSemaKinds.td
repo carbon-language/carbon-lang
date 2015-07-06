@@ -4740,6 +4740,8 @@ def warn_division_by_zero : Warning<"division by zero is undefined">,
   InGroup<DivZero>;
 def warn_remainder_by_zero : Warning<"remainder by zero is undefined">,
   InGroup<DivZero>;
+def warn_shift_lhs_negative : Warning<"shifting a negative signed value is undefined">,
+  InGroup<DiagGroup<"shift-negative-value">>;
 def warn_shift_negative : Warning<"shift count is negative">,
   InGroup<DiagGroup<"shift-count-negative">>;
 def warn_shift_gt_typewidth : Warning<"shift count >= width of type">,

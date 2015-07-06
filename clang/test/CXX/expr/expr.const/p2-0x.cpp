@@ -157,7 +157,7 @@ namespace UndefinedBehavior {
   constexpr int shl_unsigned_negative = unsigned(-3) << 1; // ok
   constexpr int shl_unsigned_into_sign = 1u << 31; // ok
   constexpr int shl_unsigned_overflow = 1024u << 31; // ok
-  constexpr int shl_signed_negative = (-3) << 1; // expected-error {{constant expression}} expected-note {{left shift of negative value -3}}
+  constexpr int shl_signed_negative = (-3) << 1; // expected-warning {{shifting a negative signed value is undefined}} // expected-error {{constant expression}} expected-note {{left shift of negative value -3}}
   constexpr int shl_signed_ok = 1 << 30; // ok
   constexpr int shl_signed_into_sign = 1 << 31; // ok (DR1457)
   constexpr int shl_signed_into_sign_2 = 0x7fffffff << 1; // ok (DR1457)
