@@ -67,6 +67,9 @@ public:
         m_index = 0;
     }
 
+    void
+    SkipSpaces ();
+
     std::string &
     GetStringRef ()
     {
@@ -95,6 +98,15 @@ public:
 
     char
     GetChar (char fail_value = '\0');
+
+    char
+    PeekChar (char fail_value = '\0')
+    {
+        const char *cstr = Peek();
+        if (cstr)
+            return cstr[0];
+        return fail_value;
+    }
 
     int
     DecodeHexU8();

@@ -11,6 +11,7 @@
 #define utility_JSON_h_
 
 #include "lldb/Core/Stream.h"
+#include "Utility/StringExtractor.h"
 
 #include <inttypes.h>
 #include <map>
@@ -22,6 +23,7 @@
 #include "llvm/Support/Casting.h"
 
 namespace lldb_private {
+
     class JSONValue
     {
     public:
@@ -97,8 +99,9 @@ namespace lldb_private {
     {
     public:
         JSONNumber ();
-        JSONNumber (int64_t i);
-        
+        explicit JSONNumber (uint64_t i);
+        explicit JSONNumber (double d);
+
         JSONNumber (const JSONNumber& s) = delete;
         JSONNumber&
         operator = (const JSONNumber& s) = delete;
@@ -107,10 +110,19 @@ namespace lldb_private {
         Write (Stream& s);
         
         typedef std::shared_ptr<JSONNumber> SP;
-        
-        int64_t
+
+        uint64_t
         GetData () { return m_data; }
-        
+
+        double
+        GetAsDouble()
+        {
+            if (m_is_integer)
+                return (double)m_data;
+            else
+                return m_double;
+        }
+
         static bool classof(const JSONValue *V)
         {
             return V->GetKind() == JSONValue::Kind::Number;
@@ -120,7 +132,9 @@ namespace lldb_private {
         ~JSONNumber () = default;
         
     private:
-        int64_t m_data;
+        bool m_is_integer;
+        uint64_t m_data;
+        double m_double;
     };
 
     class JSONTrue : public JSONValue
@@ -270,6 +284,48 @@ namespace lldb_private {
         ~JSONArray () = default;
         
         Vector m_elements;
+    };
+
+
+    class JSONParser : public StringExtractor
+    {
+    public:
+        enum Token
+        {
+            Invalid,
+            Error,
+            ObjectStart,
+            ObjectEnd,
+            ArrayStart,
+            ArrayEnd,
+            Comma,
+            Colon,
+            String,
+            Integer,
+            Float,
+            True,
+            False,
+            Null,
+            EndOfFile
+        };
+
+        JSONParser (const char *cstr);
+
+        int
+        GetEscapedChar (bool &was_escaped);
+
+        Token
+        GetToken (std::string &value);
+
+        JSONValue::SP
+        ParseJSONValue ();
+
+    protected:
+        JSONValue::SP
+        ParseJSONObject ();
+
+        JSONValue::SP
+        ParseJSONArray ();
     };
 }
 

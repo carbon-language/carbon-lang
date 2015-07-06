@@ -14,301 +14,148 @@
 #include <inttypes.h>
 
 #include "lldb/Core/StreamString.h"
+#include "lldb/Host/StringConvert.h"
+#include "lldb/Utility/JSON.h"
 
 using namespace lldb_private;
 
 
-static StructuredData::ObjectSP read_json_object (const char **ch);
-static StructuredData::ObjectSP read_json_array (const char **ch);
+//----------------------------------------------------------------------
+// Functions that use a JSONParser to parse JSON into StructuredData
+//----------------------------------------------------------------------
+static StructuredData::ObjectSP ParseJSONValue (JSONParser &json_parser);
+static StructuredData::ObjectSP ParseJSONObject (JSONParser &json_parser);
+static StructuredData::ObjectSP ParseJSONArray (JSONParser &json_parser);
 
 static StructuredData::ObjectSP
-read_json_number (const char **ch)
+ParseJSONObject (JSONParser &json_parser)
 {
-    StructuredData::ObjectSP object_sp;
-    while (isspace (**ch))
-        (*ch)++;
-    const char *start_of_number = *ch;
-    bool is_integer = true;
-    bool is_float = false;
-    while (isdigit(**ch) || **ch == '-' || **ch == '.' || **ch == '+' || **ch == 'e' || **ch == 'E')
-    {
-        if (isdigit(**ch) == false && **ch != '-')
-        {
-            is_integer = false;
-            is_float = true;
-        }
-        (*ch)++;
-    }
-    while (isspace (**ch))
-        (*ch)++;
-    if (**ch == ',' || **ch == ']' || **ch == '}')
-    {
-        if (is_integer)
-        {
-            errno = 0;
-            uint64_t val = strtoul (start_of_number, NULL, 10);
-            if (errno == 0)
-            {
-                object_sp.reset(new StructuredData::Integer());
-                object_sp->GetAsInteger()->SetValue (val);
-            }
-        }
-        if (is_float)
-        {
-            char *end_of_number = NULL;
-            errno = 0;
-            double val = strtod (start_of_number, &end_of_number);
-            if (errno == 0 && end_of_number != start_of_number && end_of_number != NULL)
-            {
-                object_sp.reset(new StructuredData::Float());
-                object_sp->GetAsFloat()->SetValue (val);
-            }
-        }
-    }
-    return object_sp;
-}
+    // The "JSONParser::Token::ObjectStart" token should have already been consumed
+    // by the time this function is called
+    std::unique_ptr<StructuredData::Dictionary> dict_up(new StructuredData::Dictionary());
 
-static std::string
-read_json_string (const char **ch)
-{
-    std::string string;
-    if (**ch == '"')
+    std::string value;
+    std::string key;
+    while (1)
     {
-        (*ch)++;
-        while (**ch != '\0')
-        {
-            if (**ch == '"')
-            {
-                (*ch)++;
-                while (isspace (**ch))
-                    (*ch)++;
-                break;
-            }
-            else if (**ch == '\\')
-            {
-                switch (**ch)
-                {
-                    case '"':
-                        string.push_back('"');
-                        *ch += 2;
-                        break;
-                    case '\\':
-                        string.push_back('\\');
-                        *ch += 2;
-                        break;
-                    case '/':
-                        string.push_back('/');
-                        *ch += 2;
-                        break;
-                    case 'b':
-                        string.push_back('\b');
-                        *ch += 2;
-                        break;
-                    case 'f':
-                        string.push_back('\f');
-                        *ch += 2;
-                        break;
-                    case 'n':
-                        string.push_back('\n');
-                        *ch += 2;
-                        break;
-                    case 'r':
-                        string.push_back('\r');
-                        *ch += 2;
-                        break;
-                    case 't':
-                        string.push_back('\t');
-                        *ch += 2;
-                        break;
-                    case 'u':
-                        // FIXME handle four-hex-digits 
-                        *ch += 10;
-                        break;
-                    default:
-                        *ch += 1;
-                }
-            }
-            else
-            {
-                string.push_back (**ch);
-            }
-            (*ch)++;
-        }
-    }
-    return string;
-}
+        JSONParser::Token token = json_parser.GetToken(value);
 
-static StructuredData::ObjectSP
-read_json_value (const char **ch)
-{
-    StructuredData::ObjectSP object_sp;
-    while (isspace (**ch))
-        (*ch)++;
-
-    if (**ch == '{')
-    {
-        object_sp = read_json_object (ch);
-    }
-    else if (**ch == '[')
-    {
-        object_sp = read_json_array (ch);
-    }
-    else if (**ch == '"')
-    {
-        std::string string = read_json_string (ch);
-        object_sp.reset(new StructuredData::String());
-        object_sp->GetAsString()->SetValue(string);
-    }
-    else
-    {
-        if (strncmp (*ch, "true", 4) == 0)
+        if (token == JSONParser::Token::String)
         {
-            object_sp.reset(new StructuredData::Boolean());
-            object_sp->GetAsBoolean()->SetValue(true);
-            *ch += 4;
+            key.swap(value);
+            token = json_parser.GetToken(value);
+            if (token == JSONParser::Token::Colon)
+            {
+                StructuredData::ObjectSP value_sp = ParseJSONValue(json_parser);
+                if (value_sp)
+                    dict_up->AddItem(key, value_sp);
+                else
+                    break;
+            }
         }
-        else if (strncmp (*ch, "false", 5) == 0)
+        else if (token == JSONParser::Token::ObjectEnd)
         {
-            object_sp.reset(new StructuredData::Boolean());
-            object_sp->GetAsBoolean()->SetValue(false);
-            *ch += 5;
+            return StructuredData::ObjectSP(dict_up.release());
         }
-        else if (strncmp (*ch, "null", 4) == 0)
+        else if (token == JSONParser::Token::Comma)
         {
-            object_sp.reset(new StructuredData::Null());
-            *ch += 4;
+            continue;
         }
         else
         {
-            object_sp = read_json_number (ch);
+            break;
         }
     }
-    return object_sp;
+    return StructuredData::ObjectSP();
 }
 
 static StructuredData::ObjectSP
-read_json_array (const char **ch)
+ParseJSONArray (JSONParser &json_parser)
 {
-    StructuredData::ObjectSP object_sp;
-    if (**ch == '[')
-    {
-        (*ch)++;
-        while (isspace (**ch))
-            (*ch)++;
+    // The "JSONParser::Token::ObjectStart" token should have already been consumed
+    // by the time this function is called
+    std::unique_ptr<StructuredData::Array> array_up(new StructuredData::Array());
 
-        bool first_value = true;
-        while (**ch != '\0' && (first_value || **ch == ','))
+    std::string value;
+    std::string key;
+    while (1)
+    {
+        StructuredData::ObjectSP value_sp = ParseJSONValue(json_parser);
+        if (value_sp)
+            array_up->AddItem(value_sp);
+        else
+            break;
+
+        JSONParser::Token token = json_parser.GetToken(value);
+        if (token == JSONParser::Token::Comma)
         {
-            if (**ch == ',')
-                (*ch)++;
-            first_value = false;
-            while (isspace (**ch))
-                (*ch)++;
-            lldb_private::StructuredData::ObjectSP value_sp = read_json_value (ch);
-            if (value_sp)
-            {
-                if (object_sp.get() == NULL)
-                {
-                    object_sp.reset(new StructuredData::Array());
-                }
-                object_sp->GetAsArray()->Push (value_sp);
-            }
-            while (isspace (**ch))
-                (*ch)++;
+            continue;
         }
-        if (**ch == ']')
+        else if (token == JSONParser::Token::ArrayEnd)
         {
-            // FIXME should throw an error if we don't see a } to close out the JSON object
-            (*ch)++;
-            while (isspace (**ch))
-                (*ch)++;
+            return StructuredData::ObjectSP(array_up.release());
+        }
+        else
+        {
+            break;
         }
     }
-    return object_sp;
+    return StructuredData::ObjectSP();
 }
 
 static StructuredData::ObjectSP
-read_json_object (const char **ch)
+ParseJSONValue (JSONParser &json_parser)
 {
-    StructuredData::ObjectSP object_sp;
-    if (**ch == '{')
+    std::string value;
+    const JSONParser::Token token = json_parser.GetToken(value);
+    switch (token)
     {
-        (*ch)++;
-        while (isspace (**ch))
-            (*ch)++;
-        bool first_pair = true;
-        while (**ch != '\0' && (first_pair || **ch == ','))
-        {
-            first_pair = false;
-            if (**ch == ',')
-                (*ch)++;
-            while (isspace (**ch))
-                (*ch)++;
-            if (**ch != '"')
-                break;
-            std::string key_string = read_json_string (ch);
-            while (isspace (**ch))
-                (*ch)++;
-            if (key_string.size() > 0 && **ch == ':')
-            {
-                (*ch)++;
-                while (isspace (**ch))
-                    (*ch)++;
-                lldb_private::StructuredData::ObjectSP value_sp = read_json_value (ch);
-                if (value_sp.get())
-                {
-                    if (object_sp.get() == NULL)
-                    {
-                        object_sp.reset(new StructuredData::Dictionary());
-                    }
-                    object_sp->GetAsDictionary()->AddItem (key_string.c_str(), value_sp);
-                }
-            }
-            while (isspace (**ch))
-                (*ch)++;
-        }
-        if (**ch == '}')
-        {
-            // FIXME should throw an error if we don't see a } to close out the JSON object
-            (*ch)++;
-            while (isspace (**ch))
-                (*ch)++;
-        }
-    }
-    return object_sp;
-}
+        case JSONParser::Token::ObjectStart:
+            return ParseJSONObject(json_parser);
 
+        case JSONParser::Token::ArrayStart:
+            return ParseJSONArray(json_parser);
+
+        case JSONParser::Token::Integer:
+            {
+                bool success = false;
+                uint64_t uval = StringConvert::ToUInt64(value.c_str(), 0, 0, &success);
+                if (success)
+                    return StructuredData::ObjectSP(new StructuredData::Integer(uval));
+            }
+            break;
+
+        case JSONParser::Token::Float:
+            {
+                bool success = false;
+                double val = StringConvert::ToDouble(value.c_str(), 0.0, &success);
+                if (success)
+                    return StructuredData::ObjectSP(new StructuredData::Float(val));
+            }
+            break;
+
+        case JSONParser::Token::String:
+            return StructuredData::ObjectSP(new StructuredData::String(value));
+
+        case JSONParser::Token::True:
+        case JSONParser::Token::False:
+            return StructuredData::ObjectSP(new StructuredData::Boolean(token == JSONParser::Token::True));
+
+        case JSONParser::Token::Null:
+            return StructuredData::ObjectSP(new StructuredData::Null());
+
+        default:
+            break;
+    }
+    return StructuredData::ObjectSP();
+
+}
 
 StructuredData::ObjectSP
 StructuredData::ParseJSON (std::string json_text)
 {
-    StructuredData::ObjectSP object_sp;
-    const size_t json_text_size = json_text.size();
-    if (json_text_size > 0)
-    {
-        const char *start_of_json_text = json_text.c_str();
-        const char *c = json_text.c_str();
-        while (*c != '\0' &&
-               static_cast<size_t>(c - start_of_json_text) <= json_text_size)
-        {
-            while (isspace (*c) &&
-                   static_cast<size_t>(c - start_of_json_text) < json_text_size)
-                c++;
-            if (*c == '{')
-            {
-                object_sp = read_json_object (&c);
-            }
-            else if (*c == '[')
-            {
-                object_sp = read_json_array (&c);
-            }
-            else
-            {
-                // We have bad characters here, this is likely an illegal JSON string.
-                return object_sp;
-            }
-        }
-    }
+    JSONParser json_parser(json_text.c_str());
+    StructuredData::ObjectSP object_sp = ParseJSONValue(json_parser);
     return object_sp;
 }
 
@@ -395,7 +242,7 @@ StructuredData::Integer::Dump (Stream &s) const
 void
 StructuredData::Float::Dump (Stream &s) const
 {
-    s.Printf ("%lf", m_value);
+    s.Printf ("%lg", m_value);
 }
 
 void

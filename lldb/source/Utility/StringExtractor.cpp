@@ -476,3 +476,12 @@ StringExtractor::GetNameColonValue (std::string &name, std::string &value)
     m_index = UINT64_MAX;
     return false;
 }
+
+void
+StringExtractor::SkipSpaces ()
+{
+    const size_t n = m_packet.size();
+    while (m_index < n && isspace(m_packet[m_index]))
+        ++m_index;
+}
+
