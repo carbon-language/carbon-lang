@@ -73,13 +73,18 @@ std::error_code ArchiveFile::parse() {
     if (B->getName() != "__NULL_IMPORT_DESCRIPTOR")
       LazySymbols.push_back(B);
   }
+
+  // Seen is a map from member files to boolean values. Initially
+  // all members are mapped to false, which indicates all these files
+  // are not read yet.
+  for (const Archive::Child &Child : File->children())
+    Seen[Child.getBuffer().data()].clear();
   return std::error_code();
 }
 
 // Returns a buffer pointing to a member file containing a given symbol.
 // This function is thread-safe.
 ErrorOr<MemoryBufferRef> ArchiveFile::getMember(const Archive::Symbol *Sym) {
-  static std::mutex Mu;
   auto ItOrErr = Sym->getMember();
   if (auto EC = ItOrErr.getError())
     return EC;
@@ -87,10 +92,7 @@ ErrorOr<MemoryBufferRef> ArchiveFile::getMember(const Archive::Symbol *Sym) {
 
   // Return an empty buffer if we have already returned the same buffer.
   const char *StartAddr = It->getBuffer().data();
-  Mu.lock();
-  auto Pair = Seen.insert(StartAddr);
-  Mu.unlock();
-  if (!Pair.second)
+  if (Seen[StartAddr].test_and_set())
     return MemoryBufferRef();
   return It->getMemoryBufferRef();
 }
