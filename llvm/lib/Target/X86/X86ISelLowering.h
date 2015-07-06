@@ -233,12 +233,6 @@ namespace llvm {
       /// Floating point horizontal sub.
       FHSUB,
 
-      /// Unsigned integer max and min.
-      UMAX, UMIN,
-
-      /// Signed integer max and min.
-      SMAX, SMIN,
-
       // Integer absolute value
       ABS,
 

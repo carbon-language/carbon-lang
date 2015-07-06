@@ -3236,32 +3236,32 @@ let Predicates = [HasBWI] in {
   defm VPACKUSWB : avx512_packs_all_i16_i8 <0x67, "vpackuswb", X86Packus>, AVX512BIBase, VEX_W;
 }
 
-defm VPMAXSB : avx512_binop_rm_vl_b<0x3C, "vpmaxs", X86smax,
+defm VPMAXSB : avx512_binop_rm_vl_b<0x3C, "vpmaxs", smax,
                                      SSE_INTALU_ITINS_P, HasBWI, 1>, T8PD;
-defm VPMAXSW : avx512_binop_rm_vl_w<0xEE, "vpmaxs", X86smax,
+defm VPMAXSW : avx512_binop_rm_vl_w<0xEE, "vpmaxs", smax,
                                      SSE_INTALU_ITINS_P, HasBWI, 1>;
-defm VPMAXS : avx512_binop_rm_vl_dq<0x3D, 0x3D, "vpmaxs", X86smax,
+defm VPMAXS : avx512_binop_rm_vl_dq<0x3D, 0x3D, "vpmaxs", smax,
                                      SSE_INTALU_ITINS_P, HasAVX512, 1>, T8PD;
 
-defm VPMAXUB : avx512_binop_rm_vl_b<0xDE, "vpmaxu", X86umax,
+defm VPMAXUB : avx512_binop_rm_vl_b<0xDE, "vpmaxu", umax,
                                      SSE_INTALU_ITINS_P, HasBWI, 1>;
-defm VPMAXUW : avx512_binop_rm_vl_w<0x3E, "vpmaxu", X86umax,
+defm VPMAXUW : avx512_binop_rm_vl_w<0x3E, "vpmaxu", umax,
                                      SSE_INTALU_ITINS_P, HasBWI, 1>, T8PD;
-defm VPMAXU : avx512_binop_rm_vl_dq<0x3F, 0x3F, "vpmaxu", X86umax,
+defm VPMAXU : avx512_binop_rm_vl_dq<0x3F, 0x3F, "vpmaxu", umax,
                                      SSE_INTALU_ITINS_P, HasAVX512, 1>, T8PD;
 
-defm VPMINSB : avx512_binop_rm_vl_b<0x38, "vpmins", X86smin,
+defm VPMINSB : avx512_binop_rm_vl_b<0x38, "vpmins", smin,
                                      SSE_INTALU_ITINS_P, HasBWI, 1>, T8PD;
-defm VPMINSW : avx512_binop_rm_vl_w<0xEA, "vpmins", X86smin,
+defm VPMINSW : avx512_binop_rm_vl_w<0xEA, "vpmins", smin,
                                      SSE_INTALU_ITINS_P, HasBWI, 1>;
-defm VPMINS : avx512_binop_rm_vl_dq<0x39, 0x39, "vpmins", X86smin,
+defm VPMINS : avx512_binop_rm_vl_dq<0x39, 0x39, "vpmins", smin,
                                      SSE_INTALU_ITINS_P, HasAVX512, 1>, T8PD;
 
-defm VPMINUB : avx512_binop_rm_vl_b<0xDA, "vpminu", X86umin,
+defm VPMINUB : avx512_binop_rm_vl_b<0xDA, "vpminu", umin,
                                      SSE_INTALU_ITINS_P, HasBWI, 1>;
-defm VPMINUW : avx512_binop_rm_vl_w<0x3A, "vpminu", X86umin,
+defm VPMINUW : avx512_binop_rm_vl_w<0x3A, "vpminu", umin,
                                      SSE_INTALU_ITINS_P, HasBWI, 1>, T8PD;
-defm VPMINU : avx512_binop_rm_vl_dq<0x3B, 0x3B, "vpminu", X86umin,
+defm VPMINU : avx512_binop_rm_vl_dq<0x3B, 0x3B, "vpminu", umin,
                                      SSE_INTALU_ITINS_P, HasAVX512, 1>, T8PD;
 
 //===----------------------------------------------------------------------===//
@@ -4041,7 +4041,7 @@ multiclass avx512_fma3p_213_rm<bits<8> opc, string OpcodeStr, SDNode OpNode,
               OpcodeStr,   !strconcat("${src3}", _.BroadcastStr,", $src2"),
               !strconcat("$src2, ${src3}", _.BroadcastStr ),
               (OpNode _.RC:$src1,
-               _.RC:$src2,(_.VT (X86VBroadcast (_.ScalarLdFrag addr:$src3))))>,	
+               _.RC:$src2,(_.VT (X86VBroadcast (_.ScalarLdFrag addr:$src3))))>,
               AVX512FMA3Base, EVEX_B;
   }
 }

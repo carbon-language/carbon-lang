@@ -4035,13 +4035,13 @@ defm PSUBUSB : PDI_binop_all<0xD8, "psubusb", X86subus, v16i8, v32i8,
                              SSE_INTALU_ITINS_P, 0>;
 defm PSUBUSW : PDI_binop_all<0xD9, "psubusw", X86subus, v8i16, v16i16,
                              SSE_INTALU_ITINS_P, 0>;
-defm PMINUB  : PDI_binop_all<0xDA, "pminub", X86umin, v16i8, v32i8,
+defm PMINUB  : PDI_binop_all<0xDA, "pminub", umin, v16i8, v32i8,
                              SSE_INTALU_ITINS_P, 1>;
-defm PMINSW  : PDI_binop_all<0xEA, "pminsw", X86smin, v8i16, v16i16,
+defm PMINSW  : PDI_binop_all<0xEA, "pminsw", smin, v8i16, v16i16,
                              SSE_INTALU_ITINS_P, 1>;
-defm PMAXUB  : PDI_binop_all<0xDE, "pmaxub", X86umax, v16i8, v32i8,
+defm PMAXUB  : PDI_binop_all<0xDE, "pmaxub", umax, v16i8, v32i8,
                              SSE_INTALU_ITINS_P, 1>;
-defm PMAXSW  : PDI_binop_all<0xEE, "pmaxsw", X86smax, v8i16, v16i16,
+defm PMAXSW  : PDI_binop_all<0xEE, "pmaxsw", smax, v8i16, v16i16,
                              SSE_INTALU_ITINS_P, 1>;
 
 // Intrinsic forms
@@ -6835,28 +6835,28 @@ multiclass SS48I_binop_rm2<bits<8> opc, string OpcodeStr, SDNode OpNode,
 
 let Predicates = [HasAVX, NoVLX] in {
   let isCommutable = 0 in
-  defm VPMINSB   : SS48I_binop_rm<0x38, "vpminsb", X86smin, v16i8, VR128,
+  defm VPMINSB   : SS48I_binop_rm<0x38, "vpminsb", smin, v16i8, VR128,
                                   loadv2i64, i128mem, 0, SSE_INTALU_ITINS_P>,
                                   VEX_4V;
-  defm VPMINSD   : SS48I_binop_rm<0x39, "vpminsd", X86smin, v4i32, VR128,
+  defm VPMINSD   : SS48I_binop_rm<0x39, "vpminsd", smin, v4i32, VR128,
                                   loadv2i64, i128mem, 0, SSE_INTALU_ITINS_P>,
                                   VEX_4V;
-  defm VPMINUD   : SS48I_binop_rm<0x3B, "vpminud", X86umin, v4i32, VR128,
+  defm VPMINUD   : SS48I_binop_rm<0x3B, "vpminud", umin, v4i32, VR128,
                                   loadv2i64, i128mem, 0, SSE_INTALU_ITINS_P>,
                                   VEX_4V;
-  defm VPMINUW   : SS48I_binop_rm<0x3A, "vpminuw", X86umin, v8i16, VR128,
+  defm VPMINUW   : SS48I_binop_rm<0x3A, "vpminuw", umin, v8i16, VR128,
                                   loadv2i64, i128mem, 0, SSE_INTALU_ITINS_P>,
                                   VEX_4V;
-  defm VPMAXSB   : SS48I_binop_rm<0x3C, "vpmaxsb", X86smax, v16i8, VR128,
+  defm VPMAXSB   : SS48I_binop_rm<0x3C, "vpmaxsb", smax, v16i8, VR128,
                                   loadv2i64, i128mem, 0, SSE_INTALU_ITINS_P>,
                                   VEX_4V;
-  defm VPMAXSD   : SS48I_binop_rm<0x3D, "vpmaxsd", X86smax, v4i32, VR128,
+  defm VPMAXSD   : SS48I_binop_rm<0x3D, "vpmaxsd", smax, v4i32, VR128,
                                   loadv2i64, i128mem, 0, SSE_INTALU_ITINS_P>,
                                   VEX_4V;
-  defm VPMAXUD   : SS48I_binop_rm<0x3F, "vpmaxud", X86umax, v4i32, VR128,
+  defm VPMAXUD   : SS48I_binop_rm<0x3F, "vpmaxud", umax, v4i32, VR128,
                                   loadv2i64, i128mem, 0, SSE_INTALU_ITINS_P>,
                                   VEX_4V;
-  defm VPMAXUW   : SS48I_binop_rm<0x3E, "vpmaxuw", X86umax, v8i16, VR128,
+  defm VPMAXUW   : SS48I_binop_rm<0x3E, "vpmaxuw", umax, v8i16, VR128,
                                   loadv2i64, i128mem, 0, SSE_INTALU_ITINS_P>,
                                   VEX_4V;
   defm VPMULDQ   : SS48I_binop_rm2<0x28, "vpmuldq", X86pmuldq, v2i64, v4i32,
@@ -6866,28 +6866,28 @@ let Predicates = [HasAVX, NoVLX] in {
 
 let Predicates = [HasAVX2, NoVLX] in {
   let isCommutable = 0 in
-  defm VPMINSBY  : SS48I_binop_rm<0x38, "vpminsb", X86smin, v32i8, VR256,
+  defm VPMINSBY  : SS48I_binop_rm<0x38, "vpminsb", smin, v32i8, VR256,
                                   loadv4i64, i256mem, 0, SSE_INTALU_ITINS_P>,
                                   VEX_4V, VEX_L;
-  defm VPMINSDY  : SS48I_binop_rm<0x39, "vpminsd", X86smin, v8i32, VR256,
+  defm VPMINSDY  : SS48I_binop_rm<0x39, "vpminsd", smin, v8i32, VR256,
                                   loadv4i64, i256mem, 0, SSE_INTALU_ITINS_P>,
                                   VEX_4V, VEX_L;
-  defm VPMINUDY  : SS48I_binop_rm<0x3B, "vpminud", X86umin, v8i32, VR256,
+  defm VPMINUDY  : SS48I_binop_rm<0x3B, "vpminud", umin, v8i32, VR256,
                                   loadv4i64, i256mem, 0, SSE_INTALU_ITINS_P>,
                                   VEX_4V, VEX_L;
-  defm VPMINUWY  : SS48I_binop_rm<0x3A, "vpminuw", X86umin, v16i16, VR256,
+  defm VPMINUWY  : SS48I_binop_rm<0x3A, "vpminuw", umin, v16i16, VR256,
                                   loadv4i64, i256mem, 0, SSE_INTALU_ITINS_P>,
                                   VEX_4V, VEX_L;
-  defm VPMAXSBY  : SS48I_binop_rm<0x3C, "vpmaxsb", X86smax, v32i8, VR256,
+  defm VPMAXSBY  : SS48I_binop_rm<0x3C, "vpmaxsb", smax, v32i8, VR256,
                                   loadv4i64, i256mem, 0, SSE_INTALU_ITINS_P>,
                                   VEX_4V, VEX_L;
-  defm VPMAXSDY  : SS48I_binop_rm<0x3D, "vpmaxsd", X86smax, v8i32, VR256,
+  defm VPMAXSDY  : SS48I_binop_rm<0x3D, "vpmaxsd", smax, v8i32, VR256,
                                   loadv4i64, i256mem, 0, SSE_INTALU_ITINS_P>,
                                   VEX_4V, VEX_L;
-  defm VPMAXUDY  : SS48I_binop_rm<0x3F, "vpmaxud", X86umax, v8i32, VR256,
+  defm VPMAXUDY  : SS48I_binop_rm<0x3F, "vpmaxud", umax, v8i32, VR256,
                                   loadv4i64, i256mem, 0, SSE_INTALU_ITINS_P>,
                                   VEX_4V, VEX_L;
-  defm VPMAXUWY  : SS48I_binop_rm<0x3E, "vpmaxuw", X86umax, v16i16, VR256,
+  defm VPMAXUWY  : SS48I_binop_rm<0x3E, "vpmaxuw", umax, v16i16, VR256,
                                   loadv4i64, i256mem, 0, SSE_INTALU_ITINS_P>,
                                   VEX_4V, VEX_L;
   defm VPMULDQY : SS48I_binop_rm2<0x28, "vpmuldq", X86pmuldq, v4i64, v8i32,
@@ -6897,21 +6897,21 @@ let Predicates = [HasAVX2, NoVLX] in {
 
 let Constraints = "$src1 = $dst" in {
   let isCommutable = 0 in
-  defm PMINSB   : SS48I_binop_rm<0x38, "pminsb", X86smin, v16i8, VR128,
+  defm PMINSB   : SS48I_binop_rm<0x38, "pminsb", smin, v16i8, VR128,
                                  memopv2i64, i128mem, 1, SSE_INTALU_ITINS_P>;
-  defm PMINSD   : SS48I_binop_rm<0x39, "pminsd", X86smin, v4i32, VR128,
+  defm PMINSD   : SS48I_binop_rm<0x39, "pminsd", smin, v4i32, VR128,
                                  memopv2i64, i128mem, 1, SSE_INTALU_ITINS_P>;
-  defm PMINUD   : SS48I_binop_rm<0x3B, "pminud", X86umin, v4i32, VR128,
+  defm PMINUD   : SS48I_binop_rm<0x3B, "pminud", umin, v4i32, VR128,
                                  memopv2i64, i128mem, 1, SSE_INTALU_ITINS_P>;
-  defm PMINUW   : SS48I_binop_rm<0x3A, "pminuw", X86umin, v8i16, VR128,
+  defm PMINUW   : SS48I_binop_rm<0x3A, "pminuw", umin, v8i16, VR128,
                                  memopv2i64, i128mem, 1, SSE_INTALU_ITINS_P>;
-  defm PMAXSB   : SS48I_binop_rm<0x3C, "pmaxsb", X86smax, v16i8, VR128,
+  defm PMAXSB   : SS48I_binop_rm<0x3C, "pmaxsb", smax, v16i8, VR128,
                                  memopv2i64, i128mem, 1, SSE_INTALU_ITINS_P>;
-  defm PMAXSD   : SS48I_binop_rm<0x3D, "pmaxsd", X86smax, v4i32, VR128,
+  defm PMAXSD   : SS48I_binop_rm<0x3D, "pmaxsd", smax, v4i32, VR128,
                                  memopv2i64, i128mem, 1, SSE_INTALU_ITINS_P>;
-  defm PMAXUD   : SS48I_binop_rm<0x3F, "pmaxud", X86umax, v4i32, VR128,
+  defm PMAXUD   : SS48I_binop_rm<0x3F, "pmaxud", umax, v4i32, VR128,
                                  memopv2i64, i128mem, 1, SSE_INTALU_ITINS_P>;
-  defm PMAXUW   : SS48I_binop_rm<0x3E, "pmaxuw", X86umax, v8i16, VR128,
+  defm PMAXUW   : SS48I_binop_rm<0x3E, "pmaxuw", umax, v8i16, VR128,
                                  memopv2i64, i128mem, 1, SSE_INTALU_ITINS_P>;
   defm PMULDQ   : SS48I_binop_rm2<0x28, "pmuldq", X86pmuldq, v2i64, v4i32,
                                   VR128, memopv2i64, i128mem,

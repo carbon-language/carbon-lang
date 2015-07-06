@@ -825,6 +825,11 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     setOperationAction(ISD::FNEG,               MVT::v2f64, Custom);
     setOperationAction(ISD::FABS,               MVT::v2f64, Custom);
 
+    setOperationAction(ISD::SMAX,               MVT::v8i16, Legal);
+    setOperationAction(ISD::UMAX,               MVT::v16i8, Legal);
+    setOperationAction(ISD::SMIN,               MVT::v8i16, Legal);
+    setOperationAction(ISD::UMIN,               MVT::v16i8, Legal);
+
     setOperationAction(ISD::SETCC,              MVT::v2i64, Custom);
     setOperationAction(ISD::SETCC,              MVT::v16i8, Custom);
     setOperationAction(ISD::SETCC,              MVT::v8i16, Custom);
@@ -943,6 +948,15 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
       setOperationAction(ISD::FRINT,            RoundedTy,  Legal);
       setOperationAction(ISD::FNEARBYINT,       RoundedTy,  Legal);
     }
+
+    setOperationAction(ISD::SMAX,               MVT::v16i8, Legal);
+    setOperationAction(ISD::SMAX,               MVT::v4i32, Legal);
+    setOperationAction(ISD::UMAX,               MVT::v8i16, Legal);
+    setOperationAction(ISD::UMAX,               MVT::v4i32, Legal);
+    setOperationAction(ISD::SMIN,               MVT::v16i8, Legal);
+    setOperationAction(ISD::SMIN,               MVT::v4i32, Legal);
+    setOperationAction(ISD::UMIN,               MVT::v8i16, Legal);
+    setOperationAction(ISD::UMIN,               MVT::v4i32, Legal);
 
     // FIXME: Do we need to handle scalar-to-vector here?
     setOperationAction(ISD::MUL,                MVT::v4i32, Legal);
@@ -1140,6 +1154,19 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
       setOperationAction(ISD::SMUL_LOHI,       MVT::v8i32, Custom);
       setOperationAction(ISD::MULHU,           MVT::v16i16, Legal);
       setOperationAction(ISD::MULHS,           MVT::v16i16, Legal);
+
+      setOperationAction(ISD::SMAX,            MVT::v32i8,  Legal);
+      setOperationAction(ISD::SMAX,            MVT::v16i16, Legal);
+      setOperationAction(ISD::SMAX,            MVT::v8i32,  Legal);
+      setOperationAction(ISD::UMAX,            MVT::v32i8,  Legal);
+      setOperationAction(ISD::UMAX,            MVT::v16i16, Legal);
+      setOperationAction(ISD::UMAX,            MVT::v8i32,  Legal);
+      setOperationAction(ISD::SMIN,            MVT::v32i8,  Legal);
+      setOperationAction(ISD::SMIN,            MVT::v16i16, Legal);
+      setOperationAction(ISD::SMIN,            MVT::v8i32,  Legal);
+      setOperationAction(ISD::UMIN,            MVT::v32i8,  Legal);
+      setOperationAction(ISD::UMIN,            MVT::v16i16, Legal);
+      setOperationAction(ISD::UMIN,            MVT::v8i32,  Legal);
 
       // The custom lowering for UINT_TO_FP for v8i32 becomes interesting
       // when we have a 256bit-wide blend with immediate.
@@ -1376,6 +1403,15 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     setOperationAction(ISD::SELECT,             MVT::v16i1, Custom);
     setOperationAction(ISD::SELECT,             MVT::v8i1,  Custom);
 
+    setOperationAction(ISD::SMAX,               MVT::v16i32, Legal);
+    setOperationAction(ISD::SMAX,               MVT::v8i64, Legal);
+    setOperationAction(ISD::UMAX,               MVT::v16i32, Legal);
+    setOperationAction(ISD::UMAX,               MVT::v8i64, Legal);
+    setOperationAction(ISD::SMIN,               MVT::v16i32, Legal);
+    setOperationAction(ISD::SMIN,               MVT::v8i64, Legal);
+    setOperationAction(ISD::UMIN,               MVT::v16i32, Legal);
+    setOperationAction(ISD::UMIN,               MVT::v8i64, Legal);
+
     setOperationAction(ISD::ADD,                MVT::v8i64, Legal);
     setOperationAction(ISD::ADD,                MVT::v16i32, Legal);
 
@@ -1494,6 +1530,15 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     setOperationAction(ISD::TRUNCATE,           MVT::v32i1, Custom);
     setOperationAction(ISD::TRUNCATE,           MVT::v64i1, Custom);
 
+    setOperationAction(ISD::SMAX,               MVT::v64i8, Legal);
+    setOperationAction(ISD::SMAX,               MVT::v32i16, Legal);
+    setOperationAction(ISD::UMAX,               MVT::v64i8, Legal);
+    setOperationAction(ISD::UMAX,               MVT::v32i16, Legal);
+    setOperationAction(ISD::SMIN,               MVT::v64i8, Legal);
+    setOperationAction(ISD::SMIN,               MVT::v32i16, Legal);
+    setOperationAction(ISD::UMIN,               MVT::v64i8, Legal);
+    setOperationAction(ISD::UMIN,               MVT::v32i16, Legal);
+
     for (int i = MVT::v32i8; i != MVT::v8i64; ++i) {
       const MVT VT = (MVT::SimpleValueType)i;
 
@@ -1533,6 +1578,15 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     setOperationAction(ISD::XOR,                MVT::v4i32, Legal);
     setOperationAction(ISD::SRA,                MVT::v2i64, Custom);
     setOperationAction(ISD::SRA,                MVT::v4i64, Custom);
+
+    setOperationAction(ISD::SMAX,               MVT::v2i64, Legal);
+    setOperationAction(ISD::SMAX,               MVT::v4i64, Legal);
+    setOperationAction(ISD::UMAX,               MVT::v2i64, Legal);
+    setOperationAction(ISD::UMAX,               MVT::v4i64, Legal);
+    setOperationAction(ISD::SMIN,               MVT::v2i64, Legal);
+    setOperationAction(ISD::SMIN,               MVT::v4i64, Legal);
+    setOperationAction(ISD::UMIN,               MVT::v2i64, Legal);
+    setOperationAction(ISD::UMIN,               MVT::v4i64, Legal);
   }
 
   // We want to custom lower some of our intrinsics.
@@ -13355,8 +13409,8 @@ static SDValue LowerVSETCC(SDValue Op, const X86Subtarget *Subtarget,
   if (hasMinMax) {
     switch (SetCCOpcode) {
     default: break;
-    case ISD::SETULE: Opc = X86ISD::UMIN; MinMax = true; break;
-    case ISD::SETUGE: Opc = X86ISD::UMAX; MinMax = true; break;
+    case ISD::SETULE: Opc = ISD::UMIN; MinMax = true; break;
+    case ISD::SETUGE: Opc = ISD::UMAX; MinMax = true; break;
     }
 
     if (MinMax) { Swap = false; Invert = false; FlipSigns = false; }
@@ -18446,10 +18500,6 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::HSUB:               return "X86ISD::HSUB";
   case X86ISD::FHADD:              return "X86ISD::FHADD";
   case X86ISD::FHSUB:              return "X86ISD::FHSUB";
-  case X86ISD::UMAX:               return "X86ISD::UMAX";
-  case X86ISD::UMIN:               return "X86ISD::UMIN";
-  case X86ISD::SMAX:               return "X86ISD::SMAX";
-  case X86ISD::SMIN:               return "X86ISD::SMIN";
   case X86ISD::ABS:                return "X86ISD::ABS";
   case X86ISD::FMAX:               return "X86ISD::FMAX";
   case X86ISD::FMAX_RND:           return "X86ISD::FMAX_RND";
@@ -21626,16 +21676,16 @@ matchIntegerMINMAX(SDValue Cond, EVT VT, SDValue LHS, SDValue RHS,
     default: break;
     case ISD::SETULT:
     case ISD::SETULE:
-      Opc = hasUnsigned ? X86ISD::UMIN : 0u; break;
+      Opc = hasUnsigned ? ISD::UMIN : 0u; break;
     case ISD::SETUGT:
     case ISD::SETUGE:
-      Opc = hasUnsigned ? X86ISD::UMAX : 0u; break;
+      Opc = hasUnsigned ? ISD::UMAX : 0u; break;
     case ISD::SETLT:
     case ISD::SETLE:
-      Opc = hasSigned ? X86ISD::SMIN : 0u; break;
+      Opc = hasSigned ? ISD::SMIN : 0u; break;
     case ISD::SETGT:
     case ISD::SETGE:
-      Opc = hasSigned ? X86ISD::SMAX : 0u; break;
+      Opc = hasSigned ? ISD::SMAX : 0u; break;
     }
   // Check for x CC y ? y : x -- a min/max with reversed arms.
   } else if (DAG.isEqualTo(LHS, Cond.getOperand(1)) &&
@@ -21644,16 +21694,16 @@ matchIntegerMINMAX(SDValue Cond, EVT VT, SDValue LHS, SDValue RHS,
     default: break;
     case ISD::SETULT:
     case ISD::SETULE:
-      Opc = hasUnsigned ? X86ISD::UMAX : 0u; break;
+      Opc = hasUnsigned ? ISD::UMAX : 0u; break;
     case ISD::SETUGT:
     case ISD::SETUGE:
-      Opc = hasUnsigned ? X86ISD::UMIN : 0u; break;
+      Opc = hasUnsigned ? ISD::UMIN : 0u; break;
     case ISD::SETLT:
     case ISD::SETLE:
-      Opc = hasSigned ? X86ISD::SMAX : 0u; break;
+      Opc = hasSigned ? ISD::SMAX : 0u; break;
     case ISD::SETGT:
     case ISD::SETGE:
-      Opc = hasSigned ? X86ISD::SMIN : 0u; break;
+      Opc = hasSigned ? ISD::SMIN : 0u; break;
     }
   }
 
