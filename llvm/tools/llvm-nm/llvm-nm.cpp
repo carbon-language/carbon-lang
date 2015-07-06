@@ -510,7 +510,7 @@ static void sortAndPrintSymbolList(SymbolicFile &Obj, bool printName,
       Cmp = compareSymbolName;
 
     if (ReverseSort)
-      Cmp = [=](const NMSymbol &A, const NMSymbol &B) { return !Cmp(A, B); };
+      Cmp = [=](const NMSymbol &A, const NMSymbol &B) { return Cmp(B, A); };
     std::sort(SymbolList.begin(), SymbolList.end(), Cmp);
   }
 
