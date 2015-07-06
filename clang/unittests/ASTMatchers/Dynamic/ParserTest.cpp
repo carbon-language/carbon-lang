@@ -162,7 +162,7 @@ using ast_matchers::internal::Matcher;
 
 Parser::NamedValueMap getTestNamedValues() {
   Parser::NamedValueMap Values;
-  Values["nameX"] = std::string("x");
+  Values["nameX"] = llvm::StringRef("x");
   Values["hasParamA"] =
       VariantMatcher::SingleMatcher(hasParameter(0, hasName("a")));
   return Values;

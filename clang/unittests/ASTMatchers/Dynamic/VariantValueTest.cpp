@@ -32,7 +32,7 @@ TEST(VariantValueTest, Unsigned) {
 }
 
 TEST(VariantValueTest, String) {
-  const ::std::string kString = "string";
+  const StringRef kString = "string";
   VariantValue Value = kString;
 
   EXPECT_TRUE(Value.isString());
@@ -74,7 +74,7 @@ TEST(VariantValueTest, DynTypedMatcher) {
 }
 
 TEST(VariantValueTest, Assignment) {
-  VariantValue Value = std::string("A");
+  VariantValue Value = StringRef("A");
   EXPECT_TRUE(Value.isString());
   EXPECT_EQ("A", Value.getString());
   EXPECT_TRUE(Value.hasValue());
@@ -115,7 +115,7 @@ TEST(VariantValueTest, ImplicitBool) {
   EXPECT_FALSE(IfTrue);
   EXPECT_TRUE(!Value);
 
-  Value = std::string();
+  Value = StringRef();
   IfTrue = false;
   if (Value) {
     IfTrue = true;
