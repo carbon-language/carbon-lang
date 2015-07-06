@@ -678,6 +678,25 @@ The semantics are as follows:
   }];
 }
 
+def TargetDocs : Documentation {
+  let Category = DocCatFunction;
+  let Content = [{
+Clang supports the GNU style ``__attribute__((target("OPTIONS")))`` attribute.
+This attribute may be attached to a function definition and instructs
+the backend to use different code generation options than were passed on the
+command line.
+
+The current set of options correspond to the existing "subtarget features" for
+the target with or without a "-mno-" in front corresponding to the absence
+of the feature, as well as ``arch="CPU"`` which will change the default "CPU"
+for the function.
+
+Example "subtarget features" from the x86 backend include: "mmx", "sse", "sse4.2",
+"avx", "xop" and largely correspond to the machine specific options handled by
+the front end.
+}];
+}
+
 def DocCatAMDGPURegisterAttributes :
   DocumentationCategory<"AMD GPU Register Attributes"> {
   let Content = [{
