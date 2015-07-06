@@ -833,7 +833,7 @@ bool WinEHPrepare::prepareExceptionHandlers(
         LoadInst *LI;
         if (auto *Phi = dyn_cast<PHINode>(I))
           LI = new LoadInst(SEHExceptionCodeSlot, "sehcode", false,
-                            Phi->getIncomingBlock(*U));
+                            Phi->getIncomingBlock(*U)->getTerminator());
         else
           LI = new LoadInst(SEHExceptionCodeSlot, "sehcode", false, I);
         U->set(LI);
