@@ -93,8 +93,11 @@ namespace {
 
         makeVisible(*I, Delete);
 
-        if (Delete)
+        if (Delete) {
+          // Make this a declaration and drop it's comdat.
           I->setInitializer(nullptr);
+          I->setComdat(nullptr);
+        }
       }
 
       // Visit the Functions.
@@ -108,8 +111,11 @@ namespace {
 
         makeVisible(*I, Delete);
 
-        if (Delete)
+        if (Delete) {
+          // Make this a declaration and drop it's comdat.
           I->deleteBody();
+          I->setComdat(nullptr);
+        }
       }
 
       // Visit the Aliases.
