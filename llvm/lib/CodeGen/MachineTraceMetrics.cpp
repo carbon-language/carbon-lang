@@ -509,18 +509,17 @@ MachineTraceMetrics::Ensemble::invalidate(const MachineBasicBlock *BadMBB) {
             << " height.\n");
       // Find any MBB predecessors that have MBB as their preferred successor.
       // They are the only ones that need to be invalidated.
-      for (MachineBasicBlock::const_pred_iterator
-           I = MBB->pred_begin(), E = MBB->pred_end(); I != E; ++I) {
-        TraceBlockInfo &TBI = BlockInfo[(*I)->getNumber()];
+      for (const MachineBasicBlock *Pred : MBB->predecessors()) {
+        TraceBlockInfo &TBI = BlockInfo[Pred->getNumber()];
         if (!TBI.hasValidHeight())
           continue;
         if (TBI.Succ == MBB) {
           TBI.invalidateHeight();
-          WorkList.push_back(*I);
+          WorkList.push_back(Pred);
           continue;
         }
         // Verify that TBI.Succ is actually a *I successor.
-        assert((!TBI.Succ || (*I)->isSuccessor(TBI.Succ)) && "CFG changed");
+        assert((!TBI.Succ || Pred->isSuccessor(TBI.Succ)) && "CFG changed");
       }
     } while (!WorkList.empty());
   }
@@ -535,18 +534,17 @@ MachineTraceMetrics::Ensemble::invalidate(const MachineBasicBlock *BadMBB) {
             << " depth.\n");
       // Find any MBB successors that have MBB as their preferred predecessor.
       // They are the only ones that need to be invalidated.
-      for (MachineBasicBlock::const_succ_iterator
-           I = MBB->succ_begin(), E = MBB->succ_end(); I != E; ++I) {
-        TraceBlockInfo &TBI = BlockInfo[(*I)->getNumber()];
+      for (const MachineBasicBlock *Succ : MBB->successors()) {
+        TraceBlockInfo &TBI = BlockInfo[Succ->getNumber()];
         if (!TBI.hasValidDepth())
           continue;
         if (TBI.Pred == MBB) {
           TBI.invalidateDepth();
-          WorkList.push_back(*I);
+          WorkList.push_back(Succ);
           continue;
         }
         // Verify that TBI.Pred is actually a *I predecessor.
-        assert((!TBI.Pred || (*I)->isPredecessor(TBI.Pred)) && "CFG changed");
+        assert((!TBI.Pred || Succ->isPredecessor(TBI.Pred)) && "CFG changed");
       }
     } while (!WorkList.empty());
   }
