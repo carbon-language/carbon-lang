@@ -55,7 +55,7 @@ inline bool operator==(const MCTargetOptions &LHS, const MCTargetOptions &RHS) {
           ARE_EQUAL(ShowMCInst) &&
           ARE_EQUAL(AsmVerbose) &&
           ARE_EQUAL(DwarfVersion) &&
-	  ARE_EQUAL(ABIName));
+          ARE_EQUAL(ABIName));
 #undef ARE_EQUAL
 }
 

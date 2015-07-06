@@ -1650,14 +1650,14 @@ class DIModule : public DIScope {
                            StorageType Storage, bool ShouldCreate = true) {
     return getImpl(Context, Scope, getCanonicalMDString(Context, Name),
                    getCanonicalMDString(Context, ConfigurationMacros),
-		   getCanonicalMDString(Context, IncludePath),
-		   getCanonicalMDString(Context, ISysRoot),
+                   getCanonicalMDString(Context, IncludePath),
+                   getCanonicalMDString(Context, ISysRoot),
                    Storage, ShouldCreate);
   }
   static DIModule *getImpl(LLVMContext &Context, Metadata *Scope,
                            MDString *Name, MDString *ConfigurationMacros,
-			   MDString *IncludePath, MDString *ISysRoot,
-			   StorageType Storage, bool ShouldCreate = true);
+                           MDString *IncludePath, MDString *ISysRoot,
+                           StorageType Storage, bool ShouldCreate = true);
 
   TempDIModule cloneImpl() const {
     return getTemporary(getContext(), getScope(), getName(),
@@ -1667,12 +1667,12 @@ class DIModule : public DIScope {
 
 public:
   DEFINE_MDNODE_GET(DIModule, (DIScope *Scope, StringRef Name,
-			       StringRef ConfigurationMacros, StringRef IncludePath,
-			       StringRef ISysRoot),
+                               StringRef ConfigurationMacros, StringRef IncludePath,
+                               StringRef ISysRoot),
                     (Scope, Name, ConfigurationMacros, IncludePath, ISysRoot))
   DEFINE_MDNODE_GET(DIModule,
                     (Metadata *Scope, MDString *Name, MDString *ConfigurationMacros,
-		     MDString *IncludePath, MDString *ISysRoot),
+                     MDString *IncludePath, MDString *ISysRoot),
                     (Scope, Name, ConfigurationMacros, IncludePath, ISysRoot))
 
   TempDIModule clone() const { return cloneImpl(); }
