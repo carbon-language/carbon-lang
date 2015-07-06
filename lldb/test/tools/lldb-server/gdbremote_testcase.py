@@ -158,7 +158,10 @@ class GdbRemoteTestCaseBase(TestBase):
             # Remote platforms don't support named pipe based port negotiation
             use_named_pipe = False
 
-            pid = run_shell_cmd("echo $PPID")
+            # Grab the ppid from /proc/[shell pid]/stat
+            shell_stat = run_shell_cmd("cat /proc/$$/stat")
+            # [pid] ([executable]) [state] [*ppid*]
+            pid = re.match(r"^\d+ \(.+\) . (\d+)", shell_stat).group(1)
             ls_output = run_shell_cmd("ls -l /proc/%s/exe" % pid)
             exe = ls_output.split()[-1]
 
