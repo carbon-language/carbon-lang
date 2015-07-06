@@ -20,7 +20,7 @@
 //++ ============================================================================
 // Details: MI common code implementation class. Handle application trace
 //          activity logging. Medium objects derived from the Medium abstract
-///          class are registered with this loggor. The function Write is called
+///          class are registered with this logger. The function Write is called
 //          by a client callee to log information. That information is given to
 //          registered relevant mediums. The medium file is registered during
 //          *this logs initialization so it will always have a file log for the
@@ -37,14 +37,14 @@ class CMICmnLog : public MI::ISingleton<CMICmnLog>
     // Enumeration:
   public:
     //++
-    // Description: Data given to the Logger can be of serveral types. The Logger can be
+    // Description: Data given to the Logger can be of several types. The Logger can be
     //              set at levels of verbosity. Can determine how data is sent to one or
     //              mediums.
     //--
     enum ELogVerbosity
     {                                         // Descriptions of what 'may' occur, depends ultimately on the medium itself. See the medium.
         eLogVerbosity_FnTrace = 0x00000004,   // Debug function stack call tracing
-        eLogVerbosity_DbgOp = 0x00000008,     // Send a string to the debugguer for display (not implemented)
+        eLogVerbosity_DbgOp = 0x00000008,     // Send a string to the debugger for display (not implemented)
         eLogVerbosity_ClientMsg = 0x00000010, // A client using MI can insert messages into the log (not implemented)
         eLogVerbosity_Log = 0x00000020        // Send to only the Log file.
     };

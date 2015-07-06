@@ -46,7 +46,7 @@ class CMIDriver : public CMICmnBase,
     // Enumerations:
   public:
     //++ ----------------------------------------------------------------------
-    // Details: The MI Driver has a running state which is used to help determin
+    // Details: The MI Driver has a running state which is used to help determine
     //          which specific action(s) it should take or not allow.
     //          The driver when operational and not shutting down alternates
     //          between eDriverState_RunningNotDebugging and

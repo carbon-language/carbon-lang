@@ -27,7 +27,7 @@ class CMICmdBase;
 //++ ============================================================================
 // Details: MI command manager. Oversees command operations, controls command
 //          production and the running of commands.
-//          Command Invoker, Command Factory and Command Monitor while independant
+//          Command Invoker, Command Factory and Command Monitor while independent
 //          units are overseen/managed by *this manager.
 //          A singleton class.
 // Gotchas: None.
