@@ -199,9 +199,7 @@ bool error(std::error_code EC) {
 }
 
 bool relocAddressLess(RelocationRef a, RelocationRef b) {
-  uint64_t a_addr = a.getOffset();
-  uint64_t b_addr = b.getOffset();
-  return a_addr < b_addr;
+  return a.getOffset() < b.getOffset();
 }
 
 } // namespace llvm
