@@ -11424,6 +11424,27 @@ static FixItHint createFriendTagNNSFixIt(Sema &SemaRef, NamedDecl *ND, Scope *S,
   return FixItHint::CreateInsertion(NameLoc, Insertion);
 }
 
+/// \brief Determine whether a tag originally declared in context \p OldDC can
+/// be redeclared with an unqualfied name in \p NewDC (assuming name lookup
+/// found a declaration in \p OldDC as a previous decl, perhaps through a
+/// using-declaration).
+static bool isAcceptableTagRedeclContext(Sema &S, DeclContext *OldDC,
+                                         DeclContext *NewDC) {
+  OldDC = OldDC->getRedeclContext();
+  NewDC = NewDC->getRedeclContext();
+
+  if (OldDC->Equals(NewDC))
+    return true;
+
+  // In MSVC mode, we allow a redeclaration if the contexts are related (either
+  // encloses the other).
+  if (S.getLangOpts().MSVCCompat &&
+      (OldDC->Encloses(NewDC) || NewDC->Encloses(OldDC)))
+    return true;
+
+  return false;
+}
+
 /// \brief This is invoked when we see 'struct foo' or 'struct {'.  In the
 /// former case, Name will be non-null.  In the later case, Name will be null.
 /// TagSpec indicates what kind of tag this is. TUK indicates whether this is a
@@ -11802,14 +11823,8 @@ Decl *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
       auto *OldTag = dyn_cast<TagDecl>(PrevDecl);
       if (SS.isEmpty() && TUK != TUK_Reference && TUK != TUK_Friend &&
           isDeclInScope(Shadow, SearchDC, S, isExplicitSpecialization) &&
-          !(OldTag &&
-            (getLangOpts().MSVCCompat
-                 ? SearchDC->getRedeclContext()->Encloses(
-                       OldTag->getDeclContext()->getRedeclContext()) ||
-                   OldTag->getDeclContext()->getRedeclContext()->Encloses(
-                       SearchDC->getRedeclContext())
-                 : SearchDC->getRedeclContext()->Equals(
-                       OldTag->getDeclContext()->getRedeclContext())))) {
+          !(OldTag && isAcceptableTagRedeclContext(
+                          *this, OldTag->getDeclContext(), SearchDC))) {
         Diag(KWLoc, diag::err_using_decl_conflict_reverse);
         Diag(Shadow->getTargetDecl()->getLocation(),
              diag::note_using_decl_target);
