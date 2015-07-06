@@ -180,14 +180,16 @@ struct NMSymbol {
   uint64_t Size;
   char TypeChar;
   StringRef Name;
-  DataRefImpl Symb;
+  BasicSymbolRef Sym;
 };
 }
 
 static bool compareSymbolAddress(const NMSymbol &A, const NMSymbol &B) {
-  if (A.TypeChar == 'U' && B.TypeChar != 'U')
+  bool AUndefined = A.Sym.getFlags() & SymbolRef::SF_Undefined;
+  bool BUndefined = B.Sym.getFlags() & SymbolRef::SF_Undefined;
+  if (AUndefined && !BUndefined)
     return true;
-  if (A.TypeChar != 'U' && B.TypeChar == 'U')
+  if (!AUndefined && BUndefined)
     return false;
   if (A.Address < B.Address)
     return true;
@@ -249,11 +251,12 @@ static void darwinPrintSymbol(MachOObjectFile *MachO, SymbolListT::iterator I,
   uint16_t NDesc;
   uint32_t NStrx;
   uint64_t NValue;
+  DataRefImpl SymDRI = I->Sym.getRawDataRefImpl();
   if (MachO->is64Bit()) {
     H_64 = MachO->MachOObjectFile::getHeader64();
     Filetype = H_64.filetype;
     Flags = H_64.flags;
-    STE_64 = MachO->getSymbol64TableEntry(I->Symb);
+    STE_64 = MachO->getSymbol64TableEntry(SymDRI);
     NType = STE_64.n_type;
     NSect = STE_64.n_sect;
     NDesc = STE_64.n_desc;
@@ -263,7 +266,7 @@ static void darwinPrintSymbol(MachOObjectFile *MachO, SymbolListT::iterator I,
     H = MachO->MachOObjectFile::getHeader();
     Filetype = H.filetype;
     Flags = H.flags;
-    STE = MachO->getSymbolTableEntry(I->Symb);
+    STE = MachO->getSymbolTableEntry(SymDRI);
     NType = STE.n_type;
     NSect = STE.n_sect;
     NDesc = STE.n_desc;
@@ -331,7 +334,7 @@ static void darwinPrintSymbol(MachOObjectFile *MachO, SymbolListT::iterator I,
     break;
   case MachO::N_SECT: {
     section_iterator Sec = MachO->section_end();
-    MachO->getSymbolSection(I->Symb, Sec);
+    MachO->getSymbolSection(I->Sym.getRawDataRefImpl(), Sec);
     DataRefImpl Ref = Sec->getRawDataRefImpl();
     StringRef SectionName;
     MachO->getSectionName(Ref, SectionName);
@@ -390,7 +393,7 @@ static void darwinPrintSymbol(MachOObjectFile *MachO, SymbolListT::iterator I,
   if ((NType & MachO::N_TYPE) == MachO::N_INDR) {
     outs() << I->Name << " (for ";
     StringRef IndirectName;
-    if (MachO->getIndirectName(I->Symb, IndirectName))
+    if (MachO->getIndirectName(I->Sym.getRawDataRefImpl(), IndirectName))
       outs() << "?)";
     else
       outs() << IndirectName << ")";
@@ -473,13 +476,14 @@ static void darwinPrintStab(MachOObjectFile *MachO, SymbolListT::iterator I) {
   uint8_t NType;
   uint8_t NSect;
   uint16_t NDesc;
+  DataRefImpl SymDRI = I->Sym.getRawDataRefImpl();
   if (MachO->is64Bit()) {
-    STE_64 = MachO->getSymbol64TableEntry(I->Symb);
+    STE_64 = MachO->getSymbol64TableEntry(SymDRI);
     NType = STE_64.n_type;
     NSect = STE_64.n_sect;
     NDesc = STE_64.n_desc;
   } else {
-    STE = MachO->getSymbolTableEntry(I->Symb);
+    STE = MachO->getSymbolTableEntry(SymDRI);
     NType = STE.n_type;
     NSect = STE.n_sect;
     NDesc = STE.n_desc;
@@ -537,9 +541,11 @@ static void sortAndPrintSymbolList(SymbolicFile &Obj, bool printName,
 
   for (SymbolListT::iterator I = SymbolList.begin(), E = SymbolList.end();
        I != E; ++I) {
-    if ((I->TypeChar != 'U') && UndefinedOnly)
+    uint32_t SymFlags = I->Sym.getFlags();
+    bool Undefined = SymFlags & SymbolRef::SF_Undefined;
+    if (!Undefined && UndefinedOnly)
       continue;
-    if ((I->TypeChar == 'U') && DefinedOnly)
+    if (Undefined && DefinedOnly)
       continue;
     if (SizeSort && !PrintAddress)
       continue;
@@ -895,7 +901,7 @@ static void dumpSymbolNamesFromObject(SymbolicFile &Obj, bool printName,
     if (error(Sym.printName(OS)))
       break;
     OS << '\0';
-    S.Symb = Sym.getRawDataRefImpl();
+    S.Sym = Sym;
     SymbolList.push_back(S);
   }
 

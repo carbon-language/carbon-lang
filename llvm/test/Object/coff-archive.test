@@ -71,6 +71,8 @@ CHECKIDX: Debug\mymath.obj:
 CHECKIDX:          U ??2@YAPAXI@Z
 CHECKIDX:          U ??3@YAXPAX@Z
 CHECKIDX:          U ??_7type_info@@6B@
+CHECKIDX:          w ??_Einvalid_argument@std@@UAEPAXI@Z
+CHECKIDX:          w ??_Elogic_error@std@@UAEPAXI@Z
 CHECKIDX:          U ??_Ginvalid_argument@std@@UAEPAXI@Z
 CHECKIDX:          U ??_Glogic_error@std@@UAEPAXI@Z
 CHECKIDX:          U ?what@exception@std@@UBEPBDXZ
@@ -222,5 +224,3 @@ CHECKIDX: 00000004 R ??_7logic_error@std@@6B@
 CHECKIDX: 00000008 r __ehfuncinfo$?Divide@MyMathFuncs@MathFuncs@@SANNN@Z
 CHECKIDX: 0000000e t __ehhandler$?Divide@MyMathFuncs@MathFuncs@@SANNN@Z
 CHECKIDX: 00ab9d1b a @comp.id
-CHECKIDX:          w ??_Einvalid_argument@std@@UAEPAXI@Z
-CHECKIDX:          w ??_Elogic_error@std@@UAEPAXI@Z
