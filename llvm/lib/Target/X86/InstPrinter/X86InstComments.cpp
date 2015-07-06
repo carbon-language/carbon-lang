@@ -878,6 +878,29 @@ bool llvm::EmitAnyX86InstComments(const MCInst *MI, raw_ostream &OS,
     DestName = getRegName(MI->getOperand(0).getReg());
     break;
 
+  case X86::EXTRQI:
+    if (MI->getOperand(2).isImm() &&
+        MI->getOperand(3).isImm())
+      DecodeEXTRQIMask(MI->getOperand(2).getImm(),
+                       MI->getOperand(3).getImm(),
+                       ShuffleMask);
+
+    DestName = getRegName(MI->getOperand(0).getReg());
+    Src1Name = getRegName(MI->getOperand(1).getReg());
+    break;
+
+  case X86::INSERTQI:
+    if (MI->getOperand(3).isImm() &&
+        MI->getOperand(4).isImm())
+      DecodeINSERTQIMask(MI->getOperand(3).getImm(),
+                         MI->getOperand(4).getImm(),
+                         ShuffleMask);
+
+    DestName = getRegName(MI->getOperand(0).getReg());
+    Src1Name = getRegName(MI->getOperand(1).getReg());
+    Src2Name = getRegName(MI->getOperand(2).getReg());
+    break;
+
   case X86::PMOVZXBWrr:
   case X86::PMOVZXBDrr:
   case X86::PMOVZXBQrr:

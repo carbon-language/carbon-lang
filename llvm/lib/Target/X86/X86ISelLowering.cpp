@@ -3938,6 +3938,15 @@ bool X86TargetLowering::isCheapToSpeculateCtlz() const {
   return Subtarget->hasLZCNT();
 }
 
+/// isUndefInRange - Return true if every element in Mask, beginning
+/// from position Pos and ending in Pos+Size is undef.
+static bool isUndefInRange(ArrayRef<int> Mask, unsigned Pos, unsigned Size) {
+  for (unsigned i = Pos, e = Pos + Size; i != e; ++i)
+    if (0 <= Mask[i])
+      return false;
+  return true;
+}
+
 /// isUndefOrInRange - Return true if Val is undef or if its value falls within
 /// the specified range (L, H].
 static bool isUndefOrInRange(int Val, int Low, int Hi) {
@@ -6914,6 +6923,136 @@ static SDValue lowerVectorShuffleAsShift(SDLoc DL, MVT VT, SDValue V1,
   return SDValue();
 }
 
+/// \brief Try to lower a vector shuffle using SSE4a EXTRQ/INSERTQ.
+static SDValue lowerVectorShuffleWithSSE4A(SDLoc DL, MVT VT, SDValue V1,
+                                           SDValue V2, ArrayRef<int> Mask,
+                                           SelectionDAG &DAG) {
+  SmallBitVector Zeroable = computeZeroableShuffleElements(Mask, V1, V2);
+  assert(!Zeroable.all() && "Fully zeroable shuffle mask");
+
+  int Size = Mask.size();
+  int HalfSize = Size / 2;
+  assert(Size == (int)VT.getVectorNumElements() && "Unexpected mask size");
+
+  // Upper half must be undefined.
+  if (!isUndefInRange(Mask, HalfSize, HalfSize))
+    return SDValue();
+
+  // EXTRQ: Extract Len elements from lower half of source, starting at Idx.
+  // Remainder of lower half result is zero and upper half is all undef.
+  auto LowerAsEXTRQ = [&]() {
+    // Determine the extraction length from the part of the
+    // lower half that isn't zeroable.
+    int Len = HalfSize;
+    for (; Len >= 0; --Len)
+      if (!Zeroable[Len - 1])
+        break;
+    assert(Len > 0 && "Zeroable shuffle mask");
+
+    // Attempt to match first Len sequential elements from the lower half.
+    SDValue Src;
+    int Idx = -1;
+    for (int i = 0; i != Len; ++i) {
+      int M = Mask[i];
+      if (M < 0)
+        continue;
+      SDValue &V = (M < Size ? V1 : V2);
+      M = M % Size;
+
+      // All mask elements must be in the lower half.
+      if (M > HalfSize)
+        return SDValue();
+
+      if (Idx < 0 || (Src == V && Idx == (M - i))) {
+        Src = V;
+        Idx = M - i;
+        continue;
+      }
+      return SDValue();
+    }
+
+    if (Idx < 0)
+      return SDValue();
+
+    assert((Idx + Len) <= HalfSize && "Illegal extraction mask");
+    int BitLen = (Len * VT.getScalarSizeInBits()) & 0x3f;
+    int BitIdx = (Idx * VT.getScalarSizeInBits()) & 0x3f;
+    return DAG.getNode(X86ISD::EXTRQI, DL, VT, Src,
+                       DAG.getConstant(BitLen, DL, MVT::i8),
+                       DAG.getConstant(BitIdx, DL, MVT::i8));
+  };
+
+  if (SDValue ExtrQ = LowerAsEXTRQ())
+    return ExtrQ;
+
+  // INSERTQ: Extract lowest Len elements from lower half of second source and
+  // insert over first source, starting at Idx.
+  // { A[0], .., A[Idx-1], B[0], .., B[Len-1], A[Idx+Len], .., UNDEF, ... }
+  auto LowerAsInsertQ = [&]() {
+    for (int Idx = 0; Idx != HalfSize; ++Idx) {
+      SDValue Base;
+
+      // Attempt to match first source from mask before insertion point.
+      if (isUndefInRange(Mask, 0, Idx)) {
+        /* EMPTY */
+      } else if (isSequentialOrUndefInRange(Mask, 0, Idx, 0)) {
+        Base = V1;
+      } else if (isSequentialOrUndefInRange(Mask, 0, Idx, Size)) {
+        Base = V2;
+      } else {
+        continue;
+      }
+
+      // Extend the extraction length looking to match both the insertion of
+      // the second source and the remaining elements of the first.
+      for (int Hi = Idx + 1; Hi <= HalfSize; ++Hi) {
+        SDValue Insert;
+        int Len = Hi - Idx;
+
+        // Match insertion.
+        if (isSequentialOrUndefInRange(Mask, Idx, Len, 0)) {
+          Insert = V1;
+        } else if (isSequentialOrUndefInRange(Mask, Idx, Len, Size)) {
+          Insert = V2;
+        } else {
+          continue;
+        }
+
+        // Match the remaining elements of the lower half.
+        if (isUndefInRange(Mask, Hi, HalfSize - Hi)) {
+          /* EMPTY */
+        } else if ((!Base || (Base == V1)) &&
+                   isSequentialOrUndefInRange(Mask, Hi, HalfSize - Hi, Hi)) {
+          Base = V1;
+        } else if ((!Base || (Base == V2)) &&
+                   isSequentialOrUndefInRange(Mask, Hi, HalfSize - Hi,
+                                              Size + Hi)) {
+          Base = V2;
+        } else {
+          continue;
+        }
+
+        // We may not have a base (first source) - this can safely be undefined.
+        if (!Base)
+          Base = DAG.getUNDEF(VT);
+
+        int BitLen = (Len * VT.getScalarSizeInBits()) & 0x3f;
+        int BitIdx = (Idx * VT.getScalarSizeInBits()) & 0x3f;
+        return DAG.getNode(X86ISD::INSERTQI, DL, VT, Base, Insert,
+                           DAG.getConstant(BitLen, DL, MVT::i8),
+                           DAG.getConstant(BitIdx, DL, MVT::i8));
+      }
+    }
+
+    return SDValue();
+  };
+
+  if (SDValue InsertQ = LowerAsInsertQ())
+    return InsertQ;
+
+  return SDValue();
+}
+
 /// \brief Lower a vector shuffle as a zero or any extension.
 ///
 /// Given a specific number of elements, element bit width, and extension
@@ -6921,7 +7060,7 @@ static SDValue lowerVectorShuffleAsShift(SDLoc DL, MVT VT, SDValue V1,
 /// features of the subtarget.
 static SDValue lowerVectorShuffleAsSpecificZeroOrAnyExtend(
     SDLoc DL, MVT VT, int Scale, bool AnyExt, SDValue InputV,
-    const X86Subtarget *Subtarget, SelectionDAG &DAG) {
+    ArrayRef<int> Mask, const X86Subtarget *Subtarget, SelectionDAG &DAG) {
   assert(Scale > 1 && "Need a scale to extend.");
   int NumElements = VT.getVectorNumElements();
   int EltBits = VT.getScalarSizeInBits();
@@ -6956,6 +7095,28 @@ static SDValue lowerVectorShuffleAsSpecificZeroOrAnyExtend(
         VT, DAG.getNode(X86ISD::PSHUFHW, DL, MVT::v8i16,
                         DAG.getBitcast(MVT::v8i16, InputV),
                         getV4X86ShuffleImm8ForMask(PSHUFHWMask, DL, DAG)));
+  }
+
+  // The SSE4A EXTRQ instruction can efficiently extend the first 2 lanes
+  // to 64-bits.
+  if ((Scale * EltBits) == 64 && EltBits < 32 && Subtarget->hasSSE4A()) {
+    assert(NumElements == (int)Mask.size() && "Unexpected shuffle mask size!");
+    assert(VT.getSizeInBits() == 128 && "Unexpected vector width!");
+
+    SDValue Lo = DAG.getNode(ISD::BITCAST, DL, MVT::v2i64,
+                             DAG.getNode(X86ISD::EXTRQI, DL, VT, InputV,
+                                         DAG.getConstant(EltBits, DL, MVT::i8),
+                                         DAG.getConstant(0, DL, MVT::i8)));
+    if (isUndefInRange(Mask, NumElements/2, NumElements/2))
+      return DAG.getNode(ISD::BITCAST, DL, VT, Lo);
+
+    SDValue Hi =
+        DAG.getNode(ISD::BITCAST, DL, MVT::v2i64,
+                    DAG.getNode(X86ISD::EXTRQI, DL, VT, InputV,
+                                DAG.getConstant(EltBits, DL, MVT::i8),
+                                DAG.getConstant(EltBits, DL, MVT::i8)));
+    return DAG.getNode(ISD::BITCAST, DL, VT,
+                       DAG.getNode(X86ISD::UNPCKL, DL, MVT::v2i64, Lo, Hi));
   }
 
   // If this would require more than 2 unpack instructions to expand, use
@@ -7048,7 +7209,7 @@ static SDValue lowerVectorShuffleAsZeroOrAnyExtend(
       return SDValue();
 
     return lowerVectorShuffleAsSpecificZeroOrAnyExtend(
-        DL, VT, Scale, AnyExt, InputV, Subtarget, DAG);
+        DL, VT, Scale, AnyExt, InputV, Mask, Subtarget, DAG);
   };
 
   // The widest scale possible for extending is to a 64-bit integer.
@@ -8575,6 +8736,11 @@ static SDValue lowerV8I16VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
           lowerVectorShuffleAsShift(DL, MVT::v8i16, V1, V2, Mask, DAG))
     return Shift;
 
+  // See if we can use SSE4A Extraction / Insertion.
+  if (Subtarget->hasSSE4A())
+    if (SDValue V = lowerVectorShuffleWithSSE4A(DL, MVT::v8i16, V1, V2, Mask, DAG))
+      return V;
+
   // There are special ways we can lower some single-element blends.
   if (NumV2Inputs == 1)
     if (SDValue V = lowerVectorShuffleAsElementInsertion(DL, MVT::v8i16, V1, V2,
@@ -8726,6 +8892,11 @@ static SDValue lowerV16I8VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   if (SDValue ZExt = lowerVectorShuffleAsZeroOrAnyExtend(
           DL, MVT::v16i8, V1, V2, Mask, Subtarget, DAG))
     return ZExt;
+
+  // See if we can use SSE4A Extraction / Insertion.
+  if (Subtarget->hasSSE4A())
+    if (SDValue V = lowerVectorShuffleWithSSE4A(DL, MVT::v16i8, V1, V2, Mask, DAG))
+      return V;
 
   int NumV2Elements =
       std::count_if(Mask.begin(), Mask.end(), [](int M) { return M >= 16; });
@@ -15116,6 +15287,9 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, const X86Subtarget *Subtarget
     case INTR_TYPE_3OP:
       return DAG.getNode(IntrData->Opc0, dl, Op.getValueType(), Op.getOperand(1),
         Op.getOperand(2), Op.getOperand(3));
+    case INTR_TYPE_4OP:
+      return DAG.getNode(IntrData->Opc0, dl, Op.getValueType(), Op.getOperand(1),
+        Op.getOperand(2), Op.getOperand(3), Op.getOperand(4));
     case INTR_TYPE_1OP_MASK_RM: {
       SDValue Src = Op.getOperand(1);
       SDValue PassThru = Op.getOperand(2);
@@ -18509,6 +18683,8 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::FMINC:              return "X86ISD::FMINC";
   case X86ISD::FRSQRT:             return "X86ISD::FRSQRT";
   case X86ISD::FRCP:               return "X86ISD::FRCP";
+  case X86ISD::EXTRQI:             return "X86ISD::EXTRQI";
+  case X86ISD::INSERTQI:           return "X86ISD::INSERTQI";
   case X86ISD::TLSADDR:            return "X86ISD::TLSADDR";
   case X86ISD::TLSBASEADDR:        return "X86ISD::TLSBASEADDR";
   case X86ISD::TLSCALL:            return "X86ISD::TLSCALL";

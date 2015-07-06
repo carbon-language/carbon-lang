@@ -7773,7 +7773,7 @@ let Constraints = "$src = $dst" in {
 def EXTRQI : Ii8<0x78, MRMXr, (outs VR128:$dst),
                  (ins VR128:$src, u8imm:$len, u8imm:$idx),
                  "extrq\t{$idx, $len, $src|$src, $len, $idx}",
-                 [(set VR128:$dst, (int_x86_sse4a_extrqi VR128:$src, imm:$len,
+                 [(set VR128:$dst, (X86extrqi VR128:$src, imm:$len,
                                     imm:$idx))]>, PD;
 def EXTRQ  : I<0x79, MRMSrcReg, (outs VR128:$dst),
               (ins VR128:$src, VR128:$mask),
@@ -7784,8 +7784,8 @@ def EXTRQ  : I<0x79, MRMSrcReg, (outs VR128:$dst),
 def INSERTQI : Ii8<0x78, MRMSrcReg, (outs VR128:$dst),
                    (ins VR128:$src, VR128:$src2, u8imm:$len, u8imm:$idx),
                    "insertq\t{$idx, $len, $src2, $src|$src, $src2, $len, $idx}",
-                   [(set VR128:$dst, (int_x86_sse4a_insertqi VR128:$src,
-                                      VR128:$src2, imm:$len, imm:$idx))]>, XD;
+                   [(set VR128:$dst, (X86insertqi VR128:$src, VR128:$src2,
+                                      imm:$len, imm:$idx))]>, XD;
 def INSERTQ  : I<0x79, MRMSrcReg, (outs VR128:$dst),
                  (ins VR128:$src, VR128:$mask),
                  "insertq\t{$mask, $src|$src, $mask}",

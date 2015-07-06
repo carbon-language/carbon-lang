@@ -204,6 +204,14 @@ def X86pmuldq  : SDNode<"X86ISD::PMULDQ",
                          SDTypeProfile<1, 2, [SDTCisVec<0>, SDTCisVec<1>,
                                        SDTCisSameAs<1,2>]>>;
 
+def X86extrqi : SDNode<"X86ISD::EXTRQI",
+                  SDTypeProfile<1, 3, [SDTCisVT<0, v2i64>, SDTCisSameAs<0,1>,
+                                       SDTCisVT<2, i8>, SDTCisVT<3, i8>]>>;
+def X86insertqi : SDNode<"X86ISD::INSERTQI",
+                    SDTypeProfile<1, 4, [SDTCisVT<0, v2i64>, SDTCisSameAs<0,1>,
+                                         SDTCisSameAs<1,2>, SDTCisVT<3, i8>,
+                                         SDTCisVT<4, i8>]>>;
+
 // Specific shuffle nodes - At some point ISD::VECTOR_SHUFFLE will always get
 // translated into one of the target nodes below during lowering.
 // Note: this is a work in progress...

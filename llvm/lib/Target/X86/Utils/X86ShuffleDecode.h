@@ -100,6 +100,14 @@ void DecodeZeroMoveLowMask(MVT VT, SmallVectorImpl<int> &ShuffleMask);
 /// \brief Decode a scalar float move instruction as a shuffle mask.
 void DecodeScalarMoveMask(MVT VT, bool IsLoad,
                           SmallVectorImpl<int> &ShuffleMask);
+
+/// \brief Decode a SSE4A EXTRQ instruction as a v16i8 shuffle mask.
+void DecodeEXTRQIMask(int Len, int Idx,
+                      SmallVectorImpl<int> &ShuffleMask);
+
+/// \brief Decode a SSE4A INSERTQ instruction as a v16i8 shuffle mask.
+void DecodeINSERTQIMask(int Len, int Idx,
+                        SmallVectorImpl<int> &ShuffleMask);
 } // llvm namespace
 
 #endif

@@ -394,6 +394,9 @@ namespace llvm {
       VINSERT,
       VEXTRACT,
 
+      /// SSE4A Extraction and Insertion.
+      EXTRQI, INSERTQI,
+
       // Vector multiply packed unsigned doubleword integers
       PMULUDQ,
       // Vector multiply packed signed doubleword integers
