@@ -1,7 +1,10 @@
 # RUN: llvm-mc -triple=i386-apple-macosx10.4 -relocation-model=dynamic-no-pic -filetype=obj -o %T/test_i386.o %s
 # RUN: llvm-rtdyld -triple=i386-apple-macosx10.4 -verify -check=%s %/T/test_i386.o
 
-	.section	__TEXT,__text,regular,pure_instructions
+// Put the section used in the test at a non zero address.
+	.long 4
+
+	.section	__TEXT,__text2,regular,pure_instructions
 	.globl	bar
 	.align	4, 0x90
 bar:
