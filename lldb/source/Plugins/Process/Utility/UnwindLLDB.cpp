@@ -120,29 +120,28 @@ unwind_done:
     return false;
 }
 
-// For adding a non-zero stack frame to m_frames.
-bool
-UnwindLLDB::AddOneMoreFrame (ABI *abi)
+UnwindLLDB::CursorSP
+UnwindLLDB::GetOneMoreFrame (ABI* abi)
 {
+    assert (m_frames.size() != 0 && "Get one more frame called with empty frame list");
+
     // If we've already gotten to the end of the stack, don't bother to try again...
     if (m_unwind_complete)
-        return false;
+        return nullptr;
         
     Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_UNWIND));
+
+    CursorSP prev_frame = m_frames.back();
+    uint32_t cur_idx = m_frames.size();
+
     CursorSP cursor_sp(new Cursor ());
-
-    // Frame zero is a little different
-    if (m_frames.size() == 0)
-        return false;
-
-    uint32_t cur_idx = m_frames.size ();
     RegisterContextLLDBSP reg_ctx_sp(new RegisterContextLLDB (m_thread, 
-                                                              m_frames[cur_idx - 1]->reg_ctx_lldb_sp, 
+                                                              prev_frame->reg_ctx_lldb_sp, 
                                                               cursor_sp->sctx, 
                                                               cur_idx, 
                                                               *this));
 
-    // We want to detect an unwind that cycles erronously and stop backtracing.
+    // We want to detect an unwind that cycles erroneously and stop backtracing.
     // Don't want this maximum unwind limit to be too low -- if you have a backtrace
     // with an "infinitely recursing" bug, it will crash when the stack blows out
     // and the first 35,000 frames are uninteresting - it's the top most 5 frames that
@@ -154,21 +153,20 @@ UnwindLLDB::AddOneMoreFrame (ABI *abi)
         if (log)
             log->Printf ("%*sFrame %d unwound too many frames, assuming unwind has gone astray, stopping.", 
                          cur_idx < 100 ? cur_idx : 100, "", cur_idx);
-        goto unwind_done;
+        return nullptr;
     }
 
     if (reg_ctx_sp.get() == NULL)
     {
         // If the RegisterContextLLDB has a fallback UnwindPlan, it will switch to that and return
         // true.  Subsequent calls to TryFallbackUnwindPlan() will return false.
-        if (m_frames[cur_idx - 1]->reg_ctx_lldb_sp->TryFallbackUnwindPlan())
-        {
-            return AddOneMoreFrame (abi);
-        }
+        if (prev_frame->reg_ctx_lldb_sp->TryFallbackUnwindPlan())
+            return GetOneMoreFrame (abi);
+
         if (log)
             log->Printf ("%*sFrame %d did not get a RegisterContext, stopping.",
                          cur_idx < 100 ? cur_idx : 100, "", cur_idx);
-        goto unwind_done;
+        return nullptr;
     }
 
     if (!reg_ctx_sp->IsValid())
@@ -176,31 +174,25 @@ UnwindLLDB::AddOneMoreFrame (ABI *abi)
         // We failed to get a valid RegisterContext.
         // See if the regctx below this on the stack has a fallback unwind plan it can use.
         // Subsequent calls to TryFallbackUnwindPlan() will return false.
-        if (m_frames[cur_idx - 1]->reg_ctx_lldb_sp->TryFallbackUnwindPlan())
-        {
-            return AddOneMoreFrame (abi);
-        }
+        if (prev_frame->reg_ctx_lldb_sp->TryFallbackUnwindPlan())
+            return GetOneMoreFrame (abi);
+
         if (log)
-        {
             log->Printf("%*sFrame %d invalid RegisterContext for this frame, stopping stack walk", 
                         cur_idx < 100 ? cur_idx : 100, "", cur_idx);
-        }
-        goto unwind_done;
+        return nullptr;
     }
     if (!reg_ctx_sp->GetCFA (cursor_sp->cfa))
     {
         // If the RegisterContextLLDB has a fallback UnwindPlan, it will switch to that and return
         // true.  Subsequent calls to TryFallbackUnwindPlan() will return false.
-        if (m_frames[cur_idx - 1]->reg_ctx_lldb_sp->TryFallbackUnwindPlan())
-        {
-            return AddOneMoreFrame (abi);
-        }
+        if (prev_frame->reg_ctx_lldb_sp->TryFallbackUnwindPlan())
+            return GetOneMoreFrame (abi);
+
         if (log)
-        {
             log->Printf("%*sFrame %d did not get CFA for this frame, stopping stack walk",
                         cur_idx < 100 ? cur_idx : 100, "", cur_idx);
-        }
-        goto unwind_done;
+        return nullptr;
     }
     if (abi && !abi->CallFrameAddressIsValid(cursor_sp->cfa))
     {
@@ -219,24 +211,19 @@ UnwindLLDB::AddOneMoreFrame (ABI *abi)
                 || reg_ctx_sp->GetCFA (cursor_sp->cfa) == false
                 || abi->CallFrameAddressIsValid(cursor_sp->cfa) == false)
             {
-                if (m_frames[cur_idx - 1]->reg_ctx_lldb_sp->TryFallbackUnwindPlan())
-                {
-                    return AddOneMoreFrame (abi);
-                }
+                if (prev_frame->reg_ctx_lldb_sp->TryFallbackUnwindPlan())
+                    return GetOneMoreFrame (abi);
+
                 if (log)
-                {
                     log->Printf("%*sFrame %d did not get a valid CFA for this frame, stopping stack walk",
                                 cur_idx < 100 ? cur_idx : 100, "", cur_idx);
-                }
-                goto unwind_done;
+                return nullptr;
             }
             else
             {
                 if (log)
-                {
                     log->Printf("%*sFrame %d had a bad CFA value but we switched the UnwindPlan being used and got one that looks more realistic.",
                                 cur_idx < 100 ? cur_idx : 100, "", cur_idx);
-                }
             }
         }
     }
@@ -244,54 +231,103 @@ UnwindLLDB::AddOneMoreFrame (ABI *abi)
     {
         // If the RegisterContextLLDB has a fallback UnwindPlan, it will switch to that and return
         // true.  Subsequent calls to TryFallbackUnwindPlan() will return false.
-        if (m_frames[cur_idx - 1]->reg_ctx_lldb_sp->TryFallbackUnwindPlan())
-        {
-            return AddOneMoreFrame (abi);
-        }
+        if (prev_frame->reg_ctx_lldb_sp->TryFallbackUnwindPlan())
+            return GetOneMoreFrame (abi);
+
         if (log)
-        {
             log->Printf("%*sFrame %d did not get PC for this frame, stopping stack walk",
                         cur_idx < 100 ? cur_idx : 100, "", cur_idx);
-        }
-        goto unwind_done;
+        return nullptr;
     }
     if (abi && !abi->CodeAddressIsValid (cursor_sp->start_pc))
     {
         // If the RegisterContextLLDB has a fallback UnwindPlan, it will switch to that and return
         // true.  Subsequent calls to TryFallbackUnwindPlan() will return false.
-        if (m_frames[cur_idx - 1]->reg_ctx_lldb_sp->TryFallbackUnwindPlan())
-        {
-            return AddOneMoreFrame (abi);
-        }
+        if (prev_frame->reg_ctx_lldb_sp->TryFallbackUnwindPlan())
+            return GetOneMoreFrame (abi);
+
         if (log)
-        {
             log->Printf("%*sFrame %d did not get a valid PC, stopping stack walk",
                         cur_idx < 100 ? cur_idx : 100, "", cur_idx);
-        }
-        goto unwind_done;
+        return nullptr;
     }
-    if (!m_frames.empty())
+    // Infinite loop where the current cursor is the same as the previous one...
+    if (prev_frame->start_pc == cursor_sp->start_pc && prev_frame->cfa == cursor_sp->cfa)
     {
-        // Infinite loop where the current cursor is the same as the previous one...
-        if (m_frames.back()->start_pc == cursor_sp->start_pc && m_frames.back()->cfa == cursor_sp->cfa)
-        {
-            if (log)
-                log->Printf ("th%d pc of this frame is the same as the previous frame and CFAs for both frames are identical -- stopping unwind", m_thread.GetIndexID());
-            goto unwind_done; 
-        }
+        if (log)
+            log->Printf ("th%d pc of this frame is the same as the previous frame and CFAs for both frames are identical -- stopping unwind", m_thread.GetIndexID());
+        return nullptr;
     }
 
     cursor_sp->reg_ctx_lldb_sp = reg_ctx_sp;
-    m_frames.push_back (cursor_sp);
-    return true;
-    
-unwind_done:
-    if (log)
+    return cursor_sp;
+}
+
+bool
+UnwindLLDB::AddOneMoreFrame (ABI *abi)
+{
+    Log *log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_UNWIND));
+
+    // Frame zero is a little different
+    if (m_frames.empty())
+        return false;
+
+    // If we've already gotten to the end of the stack, don't bother to try again...
+    if (m_unwind_complete)
+        return false;
+
+    CursorSP new_frame = m_candidate_frame;
+    if (new_frame == nullptr)
+        new_frame = GetOneMoreFrame(abi);
+
+    if (new_frame == nullptr)
     {
-        log->Printf ("th%d Unwind of this thread is complete.", m_thread.GetIndexID());
+        if (log)
+            log->Printf ("th%d Unwind of this thread is complete.", m_thread.GetIndexID());
+        m_unwind_complete = true;
+        return false;
     }
-    m_unwind_complete = true;
-    return false;
+
+    m_frames.push_back(new_frame);
+
+    // If we can get one more frame further then accept that we get back a correct frame.
+    m_candidate_frame = GetOneMoreFrame(abi);
+    if (m_candidate_frame)
+        return true;
+
+    // We can't go further from the frame returned by GetOneMore frame. Lets try to get a
+    // different frame with using the fallback unwind plan.
+    if (!m_frames[m_frames.size() - 2]->reg_ctx_lldb_sp->TryFallbackUnwindPlan())
+    {
+        // We don't have a valid fallback unwind plan. Accept the frame as it is. This is a
+        // valid situation when we are at the bottom of the stack.
+        return true;
+    }
+
+    // Remove the possibly incorrect frame from the frame list and try to add a different one with
+    // the newly selected fallback unwind plan.
+    m_frames.pop_back();
+    CursorSP new_frame_v2 = GetOneMoreFrame(abi);
+    if (new_frame_v2 == nullptr)
+    {
+        // We haven't got a new frame from the fallback unwind plan. Accept the frame from the
+        // original unwind plan. This is a valid situation when we are at the bottom of the stack.
+        m_frames.push_back(new_frame);
+        return true;
+    }
+
+    // Push the new frame to the list and try to continue from this frame. If we can get a new frame
+    // then accept it as the correct one.
+    m_frames.push_back(new_frame_v2);
+    m_candidate_frame = GetOneMoreFrame(abi);
+    if (m_candidate_frame)
+        return true;
+
+    // The new frame isn't helped in unwinding. Fall back to the original one as the default unwind
+    // plan is usually more reliable then the fallback one.
+    m_frames.pop_back();
+    m_frames.push_back(new_frame);
+    return true;
 }
 
 bool

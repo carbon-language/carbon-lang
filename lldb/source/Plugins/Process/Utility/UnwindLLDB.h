@@ -65,6 +65,7 @@ protected:
     DoClear()
     {
         m_frames.clear();
+        m_candidate_frame.reset();
         m_unwind_complete = false;
     }
 
@@ -126,14 +127,21 @@ private:
 
     typedef std::shared_ptr<Cursor> CursorSP;
     std::vector<CursorSP> m_frames;
+    CursorSP m_candidate_frame;
     bool m_unwind_complete; // If this is true, we've enumerated all the frames in the stack, and m_frames.size() is the 
                             // number of frames, etc.  Otherwise we've only gone as far as directly asked, and m_frames.size()
                             // is how far we've currently gone.
  
     std::vector<ConstString> m_user_supplied_trap_handler_functions;
 
-    bool AddOneMoreFrame (ABI *abi);
-    bool AddFirstFrame ();
+    CursorSP
+    GetOneMoreFrame (ABI* abi);
+
+    bool
+    AddOneMoreFrame (ABI *abi);
+
+    bool
+    AddFirstFrame ();
 
     //------------------------------------------------------------------
     // For UnwindLLDB only
