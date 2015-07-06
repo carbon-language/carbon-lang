@@ -71,6 +71,12 @@ ModulePass *createGlobalOptimizerPass();
 ModulePass *createGlobalDCEPass();
 
 //===----------------------------------------------------------------------===//
+/// This transform is designed to eliminate available external globals
+/// (functions or global variables)
+///
+ModulePass *createEliminateAvailableExternallyPass();
+
+//===----------------------------------------------------------------------===//
 /// createGVExtractionPass - If deleteFn is true, this pass deletes
 /// the specified global values. Otherwise, it deletes as much of the module as
 /// possible, except for the global values specified.
