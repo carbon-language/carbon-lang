@@ -26,6 +26,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineOperand.h"
@@ -46,6 +47,11 @@ static cl::opt<unsigned> PageSize("imp-null-check-page-size",
                                   cl::desc("The page size of the target in "
                                            "bytes"),
                                   cl::init(4096));
+
+#define DEBUG_TYPE "implicit-null-checks"
+
+STATISTIC(NumImplicitNullChecks,
+          "Number of explicit null checks made implicit");
 
 namespace {
 
@@ -257,6 +263,8 @@ void ImplicitNullChecks::rewriteNullChecks(
     // Emit the HandlerLabel as an EH_LABEL.
     BuildMI(*NC.NullSucc, NC.NullSucc->begin(), DL,
             TII->get(TargetOpcode::EH_LABEL)).addSym(HandlerLabel);
+
+    NumImplicitNullChecks++;
   }
 }
 
