@@ -263,3 +263,67 @@ struct B : A {
   static int f() { return n; } // expected-error {{invalid use of member 'n' in static member function}}
 };
 }
+
+namespace PR24030 {
+  namespace X {
+    class A; // expected-note {{target}}
+    int i; // expected-note {{target}}
+  }
+  namespace Y {
+    using X::A; // expected-note {{using}}
+    using X::i; // expected-note {{using}}
+    class A {}; // expected-error {{conflicts}}
+    int i; // expected-error {{conflicts}}
+  }
+}
+
+namespace PR24033 {
+  extern int a; // expected-note 2{{target of using declaration}}
+  void f(); // expected-note 2{{target of using declaration}}
+  struct s; // expected-note 2{{target of using declaration}}
+  enum e {}; // expected-note 2{{target of using declaration}}
+
+  template<typename> extern int vt; // expected-note 2{{target of using declaration}} expected-warning 0-1{{extension}}
+  template<typename> void ft(); // expected-note 2{{target of using declaration}}
+  template<typename> struct st; // expected-note 2{{target of using declaration}}
+
+  namespace X {
+    using PR24033::a; // expected-note {{using declaration}}
+    using PR24033::f; // expected-note {{using declaration}}
+    using PR24033::s; // expected-note {{using declaration}}
+    using PR24033::e; // expected-note {{using declaration}}
+
+    using PR24033::vt; // expected-note {{using declaration}}
+    using PR24033::ft; // expected-note {{using declaration}}
+    using PR24033::st; // expected-note {{using declaration}}
+
+    extern int a; // expected-error {{declaration conflicts with target of using declaration already in scope}}
+    void f(); // expected-error {{declaration conflicts with target of using declaration already in scope}}
+    struct s; // expected-error {{declaration conflicts with target of using declaration already in scope}}
+    enum e {}; // expected-error {{declaration conflicts with target of using declaration already in scope}}
+
+    template<typename> extern int vt; // expected-error {{declaration conflicts with target of using declaration already in scope}} expected-warning 0-1{{extension}}
+    template<typename> void ft(); // expected-error {{declaration conflicts with target of using declaration already in scope}}
+    template<typename> struct st; // expected-error {{declaration conflicts with target of using declaration already in scope}}
+  }
+
+  namespace Y {
+    extern int a; // expected-note {{conflicting declaration}}
+    void f(); // expected-note {{conflicting declaration}}
+    struct s; // expected-note {{conflicting declaration}}
+    enum e {}; // expected-note {{conflicting declaration}}
+
+    template<typename> extern int vt; // expected-note {{conflicting declaration}} expected-warning 0-1{{extension}}
+    template<typename> void ft(); // expected-note {{conflicting declaration}}
+    template<typename> struct st; // expected-note {{conflicting declaration}}
+
+    using PR24033::a; // expected-error {{target of using declaration conflicts with declaration already in scope}}
+    using PR24033::f; // expected-error {{target of using declaration conflicts with declaration already in scope}}
+    using PR24033::s; // expected-error {{target of using declaration conflicts with declaration already in scope}}
+    using PR24033::e; // expected-error {{target of using declaration conflicts with declaration already in scope}}
+
+    using PR24033::vt; // expected-error {{target of using declaration conflicts with declaration already in scope}}
+    using PR24033::ft; // expected-error {{target of using declaration conflicts with declaration already in scope}}
+    using PR24033::st; // expected-error {{target of using declaration conflicts with declaration already in scope}}
+  }
+}

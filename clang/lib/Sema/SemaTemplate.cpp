@@ -957,8 +957,7 @@ Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
 
         // Check that the chosen semantic context doesn't already contain a
         // declaration of this name as a non-tag type.
-        LookupResult Previous(*this, Name, NameLoc, LookupOrdinaryName,
-                              ForRedeclaration);
+        Previous.clear(LookupOrdinaryName);
         DeclContext *LookupContext = SemanticContext;
         while (LookupContext->isTransparentContext())
           LookupContext = LookupContext->getLookupParent();
@@ -972,8 +971,24 @@ Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
       }
     }
   } else if (PrevDecl &&
-             !isDeclInScope(PrevDecl, SemanticContext, S, SS.isValid()))
+             !isDeclInScope(Previous.getRepresentativeDecl(), SemanticContext,
+                            S, SS.isValid()))
     PrevDecl = PrevClassTemplate = nullptr;
+
+  if (auto *Shadow = dyn_cast_or_null<UsingShadowDecl>(
+          PrevDecl ? Previous.getRepresentativeDecl() : nullptr)) {
+    if (SS.isEmpty() &&
+        !(PrevClassTemplate &&
+          PrevClassTemplate->getDeclContext()->getRedeclContext()->Equals(
+              SemanticContext->getRedeclContext()))) {
+      Diag(KWLoc, diag::err_using_decl_conflict_reverse);
+      Diag(Shadow->getTargetDecl()->getLocation(),
+           diag::note_using_decl_target);
+      Diag(Shadow->getUsingDecl()->getLocation(), diag::note_using_decl) << 0;
+      // Recover by ignoring the old declaration.
+      PrevDecl = PrevClassTemplate = nullptr;
+    }
+  }
 
   if (PrevClassTemplate) {
     // Ensure that the template parameter lists are compatible. Skip this check
