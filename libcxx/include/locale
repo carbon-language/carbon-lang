@@ -1191,7 +1191,7 @@ num_get<_CharT, _InputIterator>::do_get(iter_type __b, iter_type __e,
 #ifdef _LIBCPP_LOCALE__L_EXTENSIONS
     if (sscanf_l(__buf.c_str(), _LIBCPP_GET_C_LOCALE, "%p", &__v) != 1)
 #else
-    if (__sscanf_l(__buf.c_str(), __cloc(), "%p", &__v) != 1)
+    if (__sscanf_l(__buf.c_str(), _LIBCPP_GET_C_LOCALE, "%p", &__v) != 1)
 #endif
         __err = ios_base::failbit;
     // EOF checked
@@ -1561,7 +1561,7 @@ num_put<_CharT, _OutputIterator>::do_put(iter_type __s, ios_base& __iob,
 #ifdef _LIBCPP_LOCALE__L_EXTENSIONS
     int __nc = snprintf_l(__nar, sizeof(__nar), _LIBCPP_GET_C_LOCALE, __fmt, __v);
 #else
-    int __nc = __snprintf_l(__nar, sizeof(__nar), __cloc(), __fmt, __v);
+    int __nc = __snprintf_l(__nar, sizeof(__nar), _LIBCPP_GET_C_LOCALE, __fmt, __v);
 #endif
     char* __ne = __nar + __nc;
     char* __np = this->__identify_padding(__nar, __ne, __iob);
@@ -1591,7 +1591,7 @@ num_put<_CharT, _OutputIterator>::do_put(iter_type __s, ios_base& __iob,
 #ifdef _LIBCPP_LOCALE__L_EXTENSIONS
     int __nc = snprintf_l(__nar, sizeof(__nar), _LIBCPP_GET_C_LOCALE, __fmt, __v);
 #else
-    int __nc = __snprintf_l(__nar, sizeof(__nar), __cloc(), __fmt, __v);
+    int __nc = __snprintf_l(__nar, sizeof(__nar), _LIBCPP_GET_C_LOCALE, __fmt, __v);
 #endif
     char* __ne = __nar + __nc;
     char* __np = this->__identify_padding(__nar, __ne, __iob);
@@ -1621,7 +1621,7 @@ num_put<_CharT, _OutputIterator>::do_put(iter_type __s, ios_base& __iob,
 #ifdef _LIBCPP_LOCALE__L_EXTENSIONS
     int __nc = snprintf_l(__nar, sizeof(__nar), _LIBCPP_GET_C_LOCALE, __fmt, __v);
 #else
-    int __nc = __snprintf_l(__nar, sizeof(__nar), __cloc(), __fmt, __v);
+    int __nc = __snprintf_l(__nar, sizeof(__nar), _LIBCPP_GET_C_LOCALE, __fmt, __v);
 #endif
     char* __ne = __nar + __nc;
     char* __np = this->__identify_padding(__nar, __ne, __iob);
@@ -1651,7 +1651,7 @@ num_put<_CharT, _OutputIterator>::do_put(iter_type __s, ios_base& __iob,
 #ifdef _LIBCPP_LOCALE__L_EXTENSIONS
     int __nc = snprintf_l(__nar, sizeof(__nar), _LIBCPP_GET_C_LOCALE, __fmt, __v);
 #else
-    int __nc = __snprintf_l(__nar, sizeof(__nar), __cloc(), __fmt, __v);
+    int __nc = __snprintf_l(__nar, sizeof(__nar), _LIBCPP_GET_C_LOCALE, __fmt, __v);
 #endif
     char* __ne = __nar + __nc;
     char* __np = this->__identify_padding(__nar, __ne, __iob);
@@ -1683,14 +1683,14 @@ num_put<_CharT, _OutputIterator>::do_put(iter_type __s, ios_base& __iob,
         __nc = snprintf_l(__nb, __nbuf, _LIBCPP_GET_C_LOCALE, __fmt,
                                    (int)__iob.precision(), __v);
 #else
-        __nc = __snprintf_l(__nb, __nbuf, __cloc(), __fmt,
-                            (int)__iob.precision(), __v);
+        __nc = __snprintf_l(__nb, __nbuf, _LIBCPP_GET_C_LOCALE, __fmt,
+                                   (int)__iob.precision(), __v);
 #endif
     else
 #ifdef _LIBCPP_LOCALE__L_EXTENSIONS
         __nc = snprintf_l(__nb, __nbuf, _LIBCPP_GET_C_LOCALE, __fmt, __v);
 #else
-        __nc = __snprintf_l(__nb, __nbuf, __cloc(), __fmt, __v);
+        __nc = __snprintf_l(__nb, __nbuf, _LIBCPP_GET_C_LOCALE, __fmt, __v);
 #endif
     unique_ptr<char, void(*)(void*)> __nbh(0, free);
     if (__nc > static_cast<int>(__nbuf-1))
@@ -1699,14 +1699,13 @@ num_put<_CharT, _OutputIterator>::do_put(iter_type __s, ios_base& __iob,
 #ifdef _LIBCPP_LOCALE__L_EXTENSIONS
             __nc = asprintf_l(&__nb, _LIBCPP_GET_C_LOCALE, __fmt, (int)__iob.precision(), __v);
 #else
-            __nc = __asprintf_l(&__nb, __cloc(), __fmt,
-                              (int)__iob.precision(), __v);
+            __nc = __asprintf_l(&__nb, _LIBCPP_GET_C_LOCALE, __fmt, (int)__iob.precision(), __v);
 #endif
         else
 #ifdef _LIBCPP_LOCALE__L_EXTENSIONS
             __nc = asprintf_l(&__nb, _LIBCPP_GET_C_LOCALE, __fmt, __v);
 #else
-            __nc = __asprintf_l(&__nb, __cloc(), __fmt, (int)__iob.precision(), __v);
+            __nc = __asprintf_l(&__nb, _LIBCPP_GET_C_LOCALE, __fmt, (int)__iob.precision(), __v);
 #endif
         if (__nb == 0)
             __throw_bad_alloc();
@@ -1752,14 +1751,14 @@ num_put<_CharT, _OutputIterator>::do_put(iter_type __s, ios_base& __iob,
         __nc = snprintf_l(__nb, __nbuf, _LIBCPP_GET_C_LOCALE, __fmt,
                                    (int)__iob.precision(), __v);
 #else
-        __nc = __snprintf_l(__nb, __nbuf, __cloc(), __fmt,
-                            (int)__iob.precision(), __v);
+        __nc = __snprintf_l(__nb, __nbuf, _LIBCPP_GET_C_LOCALE, __fmt,
+                                   (int)__iob.precision(), __v);
 #endif
     else
 #ifdef _LIBCPP_LOCALE__L_EXTENSIONS
         __nc = snprintf_l(__nb, __nbuf, _LIBCPP_GET_C_LOCALE, __fmt, __v);
 #else
-        __nc = __snprintf_l(__nb, __nbuf, __cloc(), __fmt, __v);
+        __nc = __snprintf_l(__nb, __nbuf, _LIBCPP_GET_C_LOCALE, __fmt, __v);
 #endif
     unique_ptr<char, void(*)(void*)> __nbh(0, free);
     if (__nc > static_cast<int>(__nbuf-1))
@@ -1768,14 +1767,13 @@ num_put<_CharT, _OutputIterator>::do_put(iter_type __s, ios_base& __iob,
 #ifdef _LIBCPP_LOCALE__L_EXTENSIONS
             __nc = asprintf_l(&__nb, _LIBCPP_GET_C_LOCALE, __fmt, (int)__iob.precision(), __v);
 #else
-            __nc = __asprintf_l(&__nb, __cloc(), __fmt,
-                              (int)__iob.precision(), __v);
+            __nc = __asprintf_l(&__nb, _LIBCPP_GET_C_LOCALE, __fmt, (int)__iob.precision(), __v);
 #endif
         else
 #ifdef _LIBCPP_LOCALE__L_EXTENSIONS
             __nc = asprintf_l(&__nb, _LIBCPP_GET_C_LOCALE, __fmt, __v);
 #else
-            __nc = __asprintf_l(&__nb, __cloc(), __fmt, __v);
+            __nc = __asprintf_l(&__nb, _LIBCPP_GET_C_LOCALE, __fmt, __v);
 #endif
         if (__nb == 0)
             __throw_bad_alloc();
@@ -1815,7 +1813,7 @@ num_put<_CharT, _OutputIterator>::do_put(iter_type __s, ios_base& __iob,
 #ifdef _LIBCPP_LOCALE__L_EXTENSIONS
     int __nc = snprintf_l(__nar, sizeof(__nar), _LIBCPP_GET_C_LOCALE, __fmt, __v);
 #else
-    int __nc = __snprintf_l(__nar, sizeof(__nar), __cloc(), __fmt, __v);
+    int __nc = __snprintf_l(__nar, sizeof(__nar), _LIBCPP_GET_C_LOCALE, __fmt, __v);
 #endif
     char* __ne = __nar + __nc;
     char* __np = this->__identify_padding(__nar, __ne, __iob);
@@ -3528,7 +3526,7 @@ money_put<_CharT, _OutputIterator>::do_put(iter_type __s, bool __intl,
 #ifdef _LIBCPP_LOCALE__L_EXTENSIONS
         __n = static_cast<size_t>(asprintf_l(&__bb, _LIBCPP_GET_C_LOCALE, "%.0Lf", __units));
 #else
-        __n = __asprintf_l(&__bb, __cloc(), "%.0Lf", __units);
+        __n = __asprintf_l(&__bb, _LIBCPP_GET_C_LOCALE, "%.0Lf", __units);
 #endif
         if (__bb == 0)
             __throw_bad_alloc();
