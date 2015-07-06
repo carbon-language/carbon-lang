@@ -5553,6 +5553,11 @@ TEST_F(FormatTest, UnderstandsAttributes) {
   verifyFormat("SomeType s __attribute__((unused)) (InitValue);");
   verifyFormat("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa __attribute__((unused))\n"
                "aaaaaaaaaaaaaaaaaaaaaaa(int i);");
+  FormatStyle AfterType = getLLVMStyle();
+  AfterType.AlwaysBreakAfterDefinitionReturnType = FormatStyle::DRTBS_All;
+  verifyFormat("__attribute__((nodebug)) void\n"
+               "foo() {}\n",
+               AfterType);
 }
 
 TEST_F(FormatTest, UnderstandsEllipsis) {

@@ -505,7 +505,8 @@ private:
       if (Line.MustBeDeclaration && Contexts.size() == 1 &&
           !Contexts.back().IsExpression && !Line.startsWith(TT_ObjCProperty) &&
           (!Tok->Previous ||
-           !Tok->Previous->isOneOf(tok::kw_decltype, TT_LeadingJavaAnnotation)))
+           !Tok->Previous->isOneOf(tok::kw_decltype, tok::kw___attribute,
+                                   TT_LeadingJavaAnnotation)))
         Line.MightBeFunctionDecl = true;
       break;
     case tok::l_square:
