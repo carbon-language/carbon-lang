@@ -280,10 +280,10 @@ void GCNPassConfig::addPostRegAlloc() {
 }
 
 void GCNPassConfig::addPreSched2() {
-  addPass(createSIInsertWaits(*TM), false);
 }
 
 void GCNPassConfig::addPreEmitPass() {
+  addPass(createSIInsertWaits(*TM), false);
   addPass(createSILowerControlFlowPass(*TM), false);
 }
 
