@@ -1362,7 +1362,7 @@ MCTargetStreamer *createARMNullTargetStreamer(MCStreamer &S) {
 MCTargetStreamer *createARMObjectTargetStreamer(MCStreamer &S,
                                                 const MCSubtargetInfo &STI) {
   const Triple &TT = STI.getTargetTriple();
-  if (TT.getObjectFormat() == Triple::ELF)
+  if (TT.isOSBinFormatELF())
     return new ARMTargetELFStreamer(S);
   return new ARMTargetStreamer(S);
 }

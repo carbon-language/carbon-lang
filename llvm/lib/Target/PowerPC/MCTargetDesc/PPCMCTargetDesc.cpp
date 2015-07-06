@@ -231,7 +231,7 @@ static MCTargetStreamer *createAsmTargetStreamer(MCStreamer &S,
 static MCTargetStreamer *
 createObjectTargetStreamer(MCStreamer &S, const MCSubtargetInfo &STI) {
   const Triple &TT = STI.getTargetTriple();
-  if (TT.getObjectFormat() == Triple::ELF)
+  if (TT.isOSBinFormatELF())
     return new PPCTargetELFStreamer(S);
   return new PPCTargetMachOStreamer(S);
 }
