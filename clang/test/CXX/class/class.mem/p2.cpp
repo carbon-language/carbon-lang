@@ -76,13 +76,10 @@ namespace PR12629 {
 
 namespace PR12688 {
   struct S {
-    // FIXME: Producing one error saying this can't have the same name
-    //        as the class because it's not a constructor, then producing
-    //        another error saying this can't have a return type because
-    //        it is a constructor, is redundant and inconsistent.
+    // FIXME: Maybe suppress the "constructor cannot have a return type" error
+    // if the return type is invalid.
     nonsense S() throw (more_nonsense); // \
     // expected-error {{'nonsense'}} \
-    // expected-error {{has the same name as its class}} \
     // expected-error {{constructor cannot have a return type}}
   };
 }

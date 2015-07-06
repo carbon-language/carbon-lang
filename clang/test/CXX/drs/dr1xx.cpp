@@ -943,10 +943,10 @@ namespace dr188 { // dr188: yes
 namespace dr194 { // dr194: yes
   struct A {
     A();
-    void A(); // expected-error {{has the same name as its class}} expected-error {{constructor cannot have a return type}}
+    void A(); // expected-error {{constructor cannot have a return type}}
   };
   struct B {
-    void B(); // expected-error {{has the same name as its class}} expected-error {{constructor cannot have a return type}}
+    void B(); // expected-error {{constructor cannot have a return type}}
     B();
   };
   struct C {

@@ -15,8 +15,7 @@ class Foo {
   virtual Foo(double); // expected-error{{constructor cannot be declared 'virtual'}}
   Foo(long) const; // expected-error{{'const' qualifier is not allowed on a constructor}}
   
-  int Foo(int, int); // expected-error{{constructor cannot have a return type}} \
-  // expected-error{{member 'Foo' has the same name as its class}}
+  int Foo(int, int); // expected-error{{constructor cannot have a return type}}
 
   volatile Foo(float); // expected-error{{constructor cannot have a return type}}
 };
