@@ -151,6 +151,9 @@ private:
     // Call to kmp_int32 __kmpc_cancellationpoint(ident_t *loc, kmp_int32
     // global_tid, kmp_int32 cncl_kind);
     OMPRTL__kmpc_cancellationpoint,
+    // Call to kmp_int32 __kmpc_cancel(ident_t *loc, kmp_int32 global_tid,
+    // kmp_int32 cncl_kind);
+    OMPRTL__kmpc_cancel,
   };
 
   /// \brief Values for bit flags used in the ident_t to describe the fields.
@@ -698,6 +701,12 @@ public:
   virtual void emitCancellationPointCall(CodeGenFunction &CGF,
                                          SourceLocation Loc,
                                          OpenMPDirectiveKind CancelRegion);
+
+  /// \brief Emit code for 'cancel' construct.
+  /// \param CancelRegion Region kind for which the cancel must be emitted.
+  ///
+  virtual void emitCancelCall(CodeGenFunction &CGF, SourceLocation Loc,
+                              OpenMPDirectiveKind CancelRegion);
 };
 
 } // namespace CodeGen
