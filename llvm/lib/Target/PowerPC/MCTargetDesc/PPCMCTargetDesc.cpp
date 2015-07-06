@@ -51,10 +51,9 @@ static MCInstrInfo *createPPCMCInstrInfo() {
   return X;
 }
 
-static MCRegisterInfo *createPPCMCRegisterInfo(StringRef TT) {
-  Triple TheTriple(TT);
-  bool isPPC64 = (TheTriple.getArch() == Triple::ppc64 ||
-                  TheTriple.getArch() == Triple::ppc64le);
+static MCRegisterInfo *createPPCMCRegisterInfo(const Triple &TT) {
+  bool isPPC64 =
+      (TT.getArch() == Triple::ppc64 || TT.getArch() == Triple::ppc64le);
   unsigned Flavour = isPPC64 ? 0 : 1;
   unsigned RA = isPPC64 ? PPC::LR8 : PPC::LR;
 
@@ -90,22 +89,20 @@ static MCAsmInfo *createPPCMCAsmInfo(const MCRegisterInfo &MRI,
   return MAI;
 }
 
-static MCCodeGenInfo *createPPCMCCodeGenInfo(StringRef TT, Reloc::Model RM,
+static MCCodeGenInfo *createPPCMCCodeGenInfo(const Triple &TT, Reloc::Model RM,
                                              CodeModel::Model CM,
                                              CodeGenOpt::Level OL) {
   MCCodeGenInfo *X = new MCCodeGenInfo();
 
   if (RM == Reloc::Default) {
-    Triple T(TT);
-    if (T.isOSDarwin())
+    if (TT.isOSDarwin())
       RM = Reloc::DynamicNoPIC;
     else
       RM = Reloc::Static;
   }
   if (CM == CodeModel::Default) {
-    Triple T(TT);
-    if (!T.isOSDarwin() &&
-        (T.getArch() == Triple::ppc64 || T.getArch() == Triple::ppc64le))
+    if (!TT.isOSDarwin() &&
+        (TT.getArch() == Triple::ppc64 || TT.getArch() == Triple::ppc64le))
       CM = CodeModel::Medium;
   }
   X->initMCCodeGenInfo(RM, CM, OL);

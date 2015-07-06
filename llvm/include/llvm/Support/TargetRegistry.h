@@ -71,7 +71,7 @@ MCStreamer *createMachOStreamer(MCContext &Ctx, MCAsmBackend &TAB,
 
 MCRelocationInfo *createMCRelocationInfo(const Triple &TT, MCContext &Ctx);
 
-MCSymbolizer *createMCSymbolizer(StringRef TT, LLVMOpInfoCallback GetOpInfo,
+MCSymbolizer *createMCSymbolizer(const Triple &TT, LLVMOpInfoCallback GetOpInfo,
                                  LLVMSymbolLookupCallback SymbolLookUp,
                                  void *DisInfo, MCContext *Ctx,
                                  std::unique_ptr<MCRelocationInfo> &&RelInfo);
@@ -92,17 +92,18 @@ public:
 
   typedef MCAsmInfo *(*MCAsmInfoCtorFnTy)(const MCRegisterInfo &MRI,
                                           const Triple &TT);
-  typedef MCCodeGenInfo *(*MCCodeGenInfoCtorFnTy)(StringRef TT, Reloc::Model RM,
+  typedef MCCodeGenInfo *(*MCCodeGenInfoCtorFnTy)(const Triple &TT,
+                                                  Reloc::Model RM,
                                                   CodeModel::Model CM,
                                                   CodeGenOpt::Level OL);
   typedef MCInstrInfo *(*MCInstrInfoCtorFnTy)(void);
   typedef MCInstrAnalysis *(*MCInstrAnalysisCtorFnTy)(const MCInstrInfo *Info);
-  typedef MCRegisterInfo *(*MCRegInfoCtorFnTy)(StringRef TT);
+  typedef MCRegisterInfo *(*MCRegInfoCtorFnTy)(const Triple &TT);
   typedef MCSubtargetInfo *(*MCSubtargetInfoCtorFnTy)(const Triple &TT,
                                                       StringRef CPU,
                                                       StringRef Features);
   typedef TargetMachine *(*TargetMachineCtorTy)(
-      const Target &T, StringRef TT, StringRef CPU, StringRef Features,
+      const Target &T, const Triple &TT, StringRef CPU, StringRef Features,
       const TargetOptions &Options, Reloc::Model RM, CodeModel::Model CM,
       CodeGenOpt::Level OL);
   // If it weren't for layering issues (this header is in llvm/Support, but
@@ -150,7 +151,7 @@ public:
   typedef MCRelocationInfo *(*MCRelocationInfoCtorTy)(const Triple &TT,
                                                       MCContext &Ctx);
   typedef MCSymbolizer *(*MCSymbolizerCtorTy)(
-      StringRef TT, LLVMOpInfoCallback GetOpInfo,
+      const Triple &TT, LLVMOpInfoCallback GetOpInfo,
       LLVMSymbolLookupCallback SymbolLookUp, void *DisInfo, MCContext *Ctx,
       std::unique_ptr<MCRelocationInfo> &&RelInfo);
 
@@ -300,12 +301,12 @@ public:
 
   /// createMCCodeGenInfo - Create a MCCodeGenInfo implementation.
   ///
-  MCCodeGenInfo *createMCCodeGenInfo(StringRef Triple, Reloc::Model RM,
+  MCCodeGenInfo *createMCCodeGenInfo(StringRef TT, Reloc::Model RM,
                                      CodeModel::Model CM,
                                      CodeGenOpt::Level OL) const {
     if (!MCCodeGenInfoCtorFn)
       return nullptr;
-    return MCCodeGenInfoCtorFn(Triple, RM, CM, OL);
+    return MCCodeGenInfoCtorFn(Triple(TT), RM, CM, OL);
   }
 
   /// createMCInstrInfo - Create a MCInstrInfo implementation.
@@ -326,10 +327,10 @@ public:
 
   /// createMCRegInfo - Create a MCRegisterInfo implementation.
   ///
-  MCRegisterInfo *createMCRegInfo(StringRef Triple) const {
+  MCRegisterInfo *createMCRegInfo(StringRef TT) const {
     if (!MCRegInfoCtorFn)
       return nullptr;
-    return MCRegInfoCtorFn(Triple);
+    return MCRegInfoCtorFn(Triple(TT));
   }
 
   /// createMCSubtargetInfo - Create a MCSubtargetInfo implementation.
@@ -356,15 +357,15 @@ public:
   /// either the target triple from the module, or the target triple of the
   /// host if that does not exist.
   TargetMachine *
-  createTargetMachine(StringRef Triple, StringRef CPU, StringRef Features,
+  createTargetMachine(StringRef TT, StringRef CPU, StringRef Features,
                       const TargetOptions &Options,
                       Reloc::Model RM = Reloc::Default,
                       CodeModel::Model CM = CodeModel::Default,
                       CodeGenOpt::Level OL = CodeGenOpt::Default) const {
     if (!TargetMachineCtorFn)
       return nullptr;
-    return TargetMachineCtorFn(*this, Triple, CPU, Features, Options, RM, CM,
-                               OL);
+    return TargetMachineCtorFn(*this, Triple(TT), CPU, Features, Options, RM,
+                               CM, OL);
   }
 
   /// createMCAsmBackend - Create a target specific assembly parser.
@@ -529,7 +530,8 @@ public:
                      std::unique_ptr<MCRelocationInfo> &&RelInfo) const {
     MCSymbolizerCtorTy Fn =
         MCSymbolizerCtorFn ? MCSymbolizerCtorFn : llvm::createMCSymbolizer;
-    return Fn(TT, GetOpInfo, SymbolLookUp, DisInfo, Ctx, std::move(RelInfo));
+    return Fn(Triple(TT), GetOpInfo, SymbolLookUp, DisInfo, Ctx,
+              std::move(RelInfo));
   }
 
   /// @}
@@ -924,7 +926,7 @@ template <class MCCodeGenInfoImpl> struct RegisterMCCodeGenInfo {
   }
 
 private:
-  static MCCodeGenInfo *Allocator(StringRef /*TT*/, Reloc::Model /*RM*/,
+  static MCCodeGenInfo *Allocator(const Triple & /*TT*/, Reloc::Model /*RM*/,
                                   CodeModel::Model /*CM*/,
                                   CodeGenOpt::Level /*OL*/) {
     return new MCCodeGenInfoImpl();
@@ -1023,7 +1025,7 @@ template <class MCRegisterInfoImpl> struct RegisterMCRegInfo {
   }
 
 private:
-  static MCRegisterInfo *Allocator(StringRef /*TT*/) {
+  static MCRegisterInfo *Allocator(const Triple & /*TT*/) {
     return new MCRegisterInfoImpl();
   }
 };
@@ -1090,11 +1092,11 @@ template <class TargetMachineImpl> struct RegisterTargetMachine {
   }
 
 private:
-  static TargetMachine *Allocator(const Target &T, StringRef TT, StringRef CPU,
-                                  StringRef FS, const TargetOptions &Options,
-                                  Reloc::Model RM, CodeModel::Model CM,
-                                  CodeGenOpt::Level OL) {
-    return new TargetMachineImpl(T, Triple(TT), CPU, FS, Options, RM, CM, OL);
+  static TargetMachine *Allocator(const Target &T, const Triple &TT,
+                                  StringRef CPU, StringRef FS,
+                                  const TargetOptions &Options, Reloc::Model RM,
+                                  CodeModel::Model CM, CodeGenOpt::Level OL) {
+    return new TargetMachineImpl(T, TT, CPU, FS, Options, RM, CM, OL);
   }
 };
 

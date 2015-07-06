@@ -268,7 +268,7 @@ static MCInstrInfo *createARMMCInstrInfo() {
   return X;
 }
 
-static MCRegisterInfo *createARMMCRegisterInfo(StringRef Triple) {
+static MCRegisterInfo *createARMMCRegisterInfo(const Triple &Triple) {
   MCRegisterInfo *X = new MCRegisterInfo();
   InitARMMCRegisterInfo(X, ARM::LR, 0, 0, ARM::PC);
   return X;
@@ -292,14 +292,13 @@ static MCAsmInfo *createARMMCAsmInfo(const MCRegisterInfo &MRI,
   return MAI;
 }
 
-static MCCodeGenInfo *createARMMCCodeGenInfo(StringRef TT, Reloc::Model RM,
+static MCCodeGenInfo *createARMMCCodeGenInfo(const Triple &TT, Reloc::Model RM,
                                              CodeModel::Model CM,
                                              CodeGenOpt::Level OL) {
   MCCodeGenInfo *X = new MCCodeGenInfo();
   if (RM == Reloc::Default) {
-    Triple TheTriple(TT);
     // Default relocation model on Darwin is PIC, not DynamicNoPIC.
-    RM = TheTriple.isOSDarwin() ? Reloc::PIC_ : Reloc::DynamicNoPIC;
+    RM = TT.isOSDarwin() ? Reloc::PIC_ : Reloc::DynamicNoPIC;
   }
   X->initMCCodeGenInfo(RM, CM, OL);
   return X;

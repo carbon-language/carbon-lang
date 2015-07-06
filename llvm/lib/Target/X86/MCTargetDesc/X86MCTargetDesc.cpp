@@ -99,17 +99,14 @@ static MCInstrInfo *createX86MCInstrInfo() {
   return X;
 }
 
-static MCRegisterInfo *createX86MCRegisterInfo(StringRef TT) {
-  Triple TheTriple(TT);
-  unsigned RA = (TheTriple.getArch() == Triple::x86_64)
-    ? X86::RIP     // Should have dwarf #16.
-    : X86::EIP;    // Should have dwarf #8.
+static MCRegisterInfo *createX86MCRegisterInfo(const Triple &TT) {
+  unsigned RA = (TT.getArch() == Triple::x86_64)
+                    ? X86::RIP  // Should have dwarf #16.
+                    : X86::EIP; // Should have dwarf #8.
 
   MCRegisterInfo *X = new MCRegisterInfo();
-  InitX86MCRegisterInfo(X, RA,
-                        X86_MC::getDwarfRegFlavour(TheTriple, false),
-                        X86_MC::getDwarfRegFlavour(TheTriple, true),
-                        RA);
+  InitX86MCRegisterInfo(X, RA, X86_MC::getDwarfRegFlavour(TT, false),
+                        X86_MC::getDwarfRegFlavour(TT, true), RA);
   X86_MC::InitLLVM2SEHRegisterMapping(X);
   return X;
 }
@@ -156,24 +153,23 @@ static MCAsmInfo *createX86MCAsmInfo(const MCRegisterInfo &MRI,
   return MAI;
 }
 
-static MCCodeGenInfo *createX86MCCodeGenInfo(StringRef TT, Reloc::Model RM,
+static MCCodeGenInfo *createX86MCCodeGenInfo(const Triple &TT, Reloc::Model RM,
                                              CodeModel::Model CM,
                                              CodeGenOpt::Level OL) {
   MCCodeGenInfo *X = new MCCodeGenInfo();
 
-  Triple T(TT);
-  bool is64Bit = T.getArch() == Triple::x86_64;
+  bool is64Bit = TT.getArch() == Triple::x86_64;
 
   if (RM == Reloc::Default) {
     // Darwin defaults to PIC in 64 bit mode and dynamic-no-pic in 32 bit mode.
     // Win64 requires rip-rel addressing, thus we force it to PIC. Otherwise we
     // use static relocation model by default.
-    if (T.isOSDarwin()) {
+    if (TT.isOSDarwin()) {
       if (is64Bit)
         RM = Reloc::PIC_;
       else
         RM = Reloc::DynamicNoPIC;
-    } else if (T.isOSWindows() && is64Bit)
+    } else if (TT.isOSWindows() && is64Bit)
       RM = Reloc::PIC_;
     else
       RM = Reloc::Static;
@@ -186,13 +182,13 @@ static MCCodeGenInfo *createX86MCCodeGenInfo(StringRef TT, Reloc::Model RM,
   if (RM == Reloc::DynamicNoPIC) {
     if (is64Bit)
       RM = Reloc::PIC_;
-    else if (!T.isOSDarwin())
+    else if (!TT.isOSDarwin())
       RM = Reloc::Static;
   }
 
   // If we are on Darwin, disallow static relocation model in X86-64 mode, since
   // the Mach-O file format doesn't support it.
-  if (RM == Reloc::Static && T.isOSDarwin() && is64Bit)
+  if (RM == Reloc::Static && TT.isOSDarwin() && is64Bit)
     RM = Reloc::PIC_;
 
   // For static codegen, if we're not already set, use Small codegen.

@@ -16,6 +16,10 @@
 
 using namespace llvm;
 
+namespace llvm {
+class Triple;
+}
+
 // This function tries to add a symbolic operand in place of the immediate
 // Value in the MCInst. The immediate Value has had any PC adjustment made by
 // the caller. If the instruction is a branch instruction then IsBranch is true,
@@ -184,7 +188,7 @@ void MCExternalSymbolizer::tryAddingPcLoadReferenceComment(raw_ostream &cStream,
 }
 
 namespace llvm {
-MCSymbolizer *createMCSymbolizer(StringRef TT, LLVMOpInfoCallback GetOpInfo,
+MCSymbolizer *createMCSymbolizer(const Triple &TT, LLVMOpInfoCallback GetOpInfo,
                                  LLVMSymbolLookupCallback SymbolLookUp,
                                  void *DisInfo, MCContext *Ctx,
                                  std::unique_ptr<MCRelocationInfo> &&RelInfo) {

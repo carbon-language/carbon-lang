@@ -228,7 +228,7 @@ DecodeStatus AArch64Disassembler::getInstruction(MCInst &MI, uint64_t &Size,
 }
 
 static MCSymbolizer *
-createAArch64ExternalSymbolizer(StringRef TT, LLVMOpInfoCallback GetOpInfo,
+createAArch64ExternalSymbolizer(const Triple &TT, LLVMOpInfoCallback GetOpInfo,
                                 LLVMSymbolLookupCallback SymbolLookUp,
                                 void *DisInfo, MCContext *Ctx,
                                 std::unique_ptr<MCRelocationInfo> &&RelInfo) {
