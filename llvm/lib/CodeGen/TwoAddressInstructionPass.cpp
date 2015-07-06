@@ -1215,11 +1215,11 @@ tryInstructionTransform(MachineBasicBlock::iterator &mi,
   //   addl	%esi, %edi
   //   movl	%edi, %eax
   //   ret
-  bool commuted = false;
+  bool Commuted = false;
 
   // If it's profitable to commute, try to do so.
   if (TryCommute && commuteInstruction(mi, regB, regC, Dist)) {
-    commuted = true;
+    Commuted = true;
     ++NumCommuted;
     if (AggressiveCommute)
       ++NumAggrCommuted;
@@ -1232,7 +1232,7 @@ tryInstructionTransform(MachineBasicBlock::iterator &mi,
 
   // If there is one more use of regB later in the same MBB, consider
   // re-schedule this MI below it.
-  if (!commuted && EnableRescheduling && rescheduleMIBelowKill(mi, nmi, regB)) {
+  if (!Commuted && EnableRescheduling && rescheduleMIBelowKill(mi, nmi, regB)) {
     ++NumReSchedDowns;
     return true;
   }
@@ -1250,7 +1250,7 @@ tryInstructionTransform(MachineBasicBlock::iterator &mi,
   }
 
   // Return if it is commuted but 3 addr conversion is failed.
-  if (commuted)
+  if (Commuted)
     return false;
 
   // If there is one more use of regB later in the same MBB, consider
