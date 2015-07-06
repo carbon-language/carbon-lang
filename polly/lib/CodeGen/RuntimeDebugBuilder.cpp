@@ -10,6 +10,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "polly/CodeGen/RuntimeDebugBuilder.h"
+#include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Support/Debug.h"
 #include <string>
@@ -55,6 +56,45 @@ Function *RuntimeDebugBuilder::getAddressSpaceCast(PollyIRBuilder &Builder,
   return F;
 }
 
+std::vector<Value *>
+RuntimeDebugBuilder::getGPUThreadIdentifiers(PollyIRBuilder &Builder) {
+  std::vector<Value *> Identifiers;
+
+  auto M = Builder.GetInsertBlock()->getParent()->getParent();
+
+  std::vector<Function *> BlockIDs = {
+      Intrinsic::getDeclaration(M, Intrinsic::ptx_read_ctaid_x),
+      Intrinsic::getDeclaration(M, Intrinsic::ptx_read_ctaid_y),
+      Intrinsic::getDeclaration(M, Intrinsic::ptx_read_ctaid_z),
+  };
+
+  Identifiers.push_back(Builder.CreateGlobalStringPtr("> block-id: ", "", 4));
+  for (auto GetID : BlockIDs) {
+    Value *Id = Builder.CreateCall(GetID, {});
+    Id = Builder.CreateIntCast(Id, Builder.getInt64Ty(), false);
+    Identifiers.push_back(Id);
+    Identifiers.push_back(Builder.CreateGlobalStringPtr(" ", "", 4));
+  }
+
+  Identifiers.push_back(Builder.CreateGlobalStringPtr("| ", "", 4));
+
+  std::vector<Function *> ThreadIDs = {
+      Intrinsic::getDeclaration(M, Intrinsic::ptx_read_tid_x),
+      Intrinsic::getDeclaration(M, Intrinsic::ptx_read_tid_y),
+      Intrinsic::getDeclaration(M, Intrinsic::ptx_read_tid_z),
+  };
+
+  Identifiers.push_back(Builder.CreateGlobalStringPtr("thread-id: ", "", 4));
+  for (auto GetId : ThreadIDs) {
+    Value *Id = Builder.CreateCall(GetId, {});
+    Id = Builder.CreateIntCast(Id, Builder.getInt64Ty(), false);
+    Identifiers.push_back(Id);
+    Identifiers.push_back(Builder.CreateGlobalStringPtr(" ", "", 4));
+  }
+
+  return Identifiers;
+}
+
 void RuntimeDebugBuilder::createGPUVAPrinter(PollyIRBuilder &Builder,
                                              ArrayRef<Value *> Values) {
   std::string str;
@@ -68,8 +108,13 @@ void RuntimeDebugBuilder::createGPUVAPrinter(PollyIRBuilder &Builder,
   auto *Zero = Builder.getInt64(0);
   auto *DataPtr = Builder.CreateGEP(Data, {Zero, Zero});
 
+  auto ToPrint = getGPUThreadIdentifiers(Builder);
+
+  ToPrint.push_back(Builder.CreateGlobalStringPtr("\n  ", "", 4));
+  ToPrint.insert(ToPrint.end(), Values.begin(), Values.end());
+
   int Offset = 0;
-  for (auto Val : Values) {
+  for (auto Val : ToPrint) {
     auto Ptr = Builder.CreateGEP(DataPtr, Builder.getInt64(Offset));
     Type *Ty = Val->getType();
 

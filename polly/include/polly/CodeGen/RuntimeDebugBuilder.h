@@ -15,6 +15,7 @@
 #include "polly/CodeGen/IRBuilder.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringRef.h"
+#include <vector>
 
 namespace llvm {
 class Value;
@@ -119,6 +120,16 @@ private:
                                              unsigned Src, unsigned Dst,
                                              unsigned SrcBits = 8,
                                              unsigned DstBits = 8);
+
+  /// @brief Get identifiers that describe the currently executed GPU thread.
+  ///
+  /// The result will be a vector that if passed to the GPU printer will result
+  /// into a string (initialized to values corresponding to the printing
+  /// thread):
+  ///
+  ///   "> block-id: bidx bid1y bidz | thread-id: tidx tidy tidz "
+  static std::vector<llvm::Value *>
+  getGPUThreadIdentifiers(PollyIRBuilder &Builder);
 };
 }
 
