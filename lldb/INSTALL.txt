@@ -1,7 +1,6 @@
 LLDB Installation Instructions
 ==============================
 
-
 LLDB builds on Mac OS X (with Xcode) and Linux (with GCC or Clang).
 
 On Mac OS X, in addition to using Xcode you'll need to enable code signing
