@@ -1506,7 +1506,7 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
 
     const FunctionDecl *FD = dyn_cast_or_null<FunctionDecl>(TargetDecl);
     if (FD) {
-      if (const TargetAttr *TD = FD->getAttr<TargetAttr>()) {
+      if (const auto *TD = FD->getAttr<TargetAttr>()) {
         StringRef FeaturesStr = TD->getFeatures();
         SmallVector<StringRef, 1> AttrFeatures;
         FeaturesStr.split(AttrFeatures, ",");
