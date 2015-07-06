@@ -77,7 +77,7 @@ std::error_code SymbolTable::readArchives() {
   // Add archive member files to ObjectQueue that should resolve
   // existing undefined symbols.
   for (Symbol *Sym : LazySyms)
-    if (auto EC = addMemberFile(cast<Lazy>(Sym->Body.load())))
+    if (auto EC = addMemberFile(cast<Lazy>(Sym->Body)))
       return EC;
   return std::error_code();
 }
@@ -126,7 +126,7 @@ bool SymbolTable::reportRemainingUndefines(bool Resolve) {
   bool Ret = false;
   for (auto &I : Symtab) {
     Symbol *Sym = I.second;
-    auto *Undef = dyn_cast<Undefined>(Sym->Body.load());
+    auto *Undef = dyn_cast<Undefined>(Sym->Body);
     if (!Undef)
       continue;
     StringRef Name = Undef->getName();
@@ -140,10 +140,10 @@ bool SymbolTable::reportRemainingUndefines(bool Resolve) {
     // This odd rule is for compatibility with MSVC linker.
     if (Name.startswith("__imp_")) {
       Symbol *Imp = find(Name.substr(strlen("__imp_")));
-      if (Imp && isa<Defined>(Imp->Body.load())) {
+      if (Imp && isa<Defined>(Imp->Body)) {
         if (!Resolve)
           continue;
-        auto *D = cast<Defined>(Imp->Body.load());
+        auto *D = cast<Defined>(Imp->Body);
         auto *S = new (Alloc) DefinedLocalImport(Name, D);
         LocalImportChunks.push_back(S->getChunk());
         Sym->Body = S;
@@ -332,11 +332,11 @@ std::error_code SymbolTable::addCombinedLTOObject() {
     StringRef Name = Body->getName();
     Symbol *Sym = insert(Body);
 
-    if (isa<DefinedBitcode>(Sym->Body.load())) {
+    if (isa<DefinedBitcode>(Sym->Body)) {
       Sym->Body = Body;
       continue;
     }
-    if (auto *L = dyn_cast<Lazy>(Sym->Body.load())) {
+    if (auto *L = dyn_cast<Lazy>(Sym->Body)) {
       // We may see new references to runtime library symbols such as __chkstk
       // here. These symbols must be wholly defined in non-bitcode files.
       if (auto EC = addMemberFile(L))

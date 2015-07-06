@@ -359,4 +359,13 @@ private:
 } // namespace coff
 } // namespace lld
 
+// Support isa<>, cast<> and dyn_cast<> for Symbol::Body.
+namespace llvm {
+template <typename T>
+struct simplify_type<std::atomic<T *>> {
+  typedef T *SimpleType;
+  static T *getSimplifiedValue(std::atomic<T *> &A) { return A.load(); }
+};
+}
+
 #endif

@@ -244,7 +244,7 @@ void Writer::createImportTables() {
   }
   if (!DelayIdata.empty()) {
     Symbol *Sym = Symtab->find("__delayLoadHelper2");
-    Defined *Helper = cast<Defined>(Sym->Body.load());
+    Defined *Helper = cast<Defined>(Sym->Body);
     DelayIdata.create(Helper);
     OutputSection *Sec = createSection(".didat");
     for (Chunk *C : DelayIdata.getChunks())
@@ -416,7 +416,7 @@ void Writer::writeHeader() {
     Dir[EXCEPTION_TABLE].Size = Sec->getVirtualSize();
   }
   if (Symbol *Sym = Symtab->find("_tls_used")) {
-    if (Defined *B = dyn_cast<Defined>(Sym->Body.load())) {
+    if (Defined *B = dyn_cast<Defined>(Sym->Body)) {
       Dir[TLS_TABLE].RelativeVirtualAddress = B->getRVA();
       Dir[TLS_TABLE].Size = 40;
     }
@@ -542,7 +542,7 @@ OutputSection *Writer::createSection(StringRef Name) {
 // Dest is .reloc section. Add contents to that section.
 void Writer::addBaserels(OutputSection *Dest) {
   std::vector<uint32_t> V;
-  Defined *ImageBase = cast<Defined>(Symtab->find("__ImageBase")->Body.load());
+  Defined *ImageBase = cast<Defined>(Symtab->find("__ImageBase")->Body);
   for (OutputSection *Sec : OutputSections) {
     if (Sec == Dest)
       continue;
