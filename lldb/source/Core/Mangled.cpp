@@ -339,6 +339,12 @@ Mangled::GetDemangledName () const
 }
 
 
+ConstString
+Mangled::GetDisplayDemangledName () const
+{
+    return GetDemangledName();
+}
+
 bool
 Mangled::NameMatches (const RegularExpression& regex) const
 {

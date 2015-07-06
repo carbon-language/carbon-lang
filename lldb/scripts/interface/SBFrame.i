@@ -127,6 +127,9 @@ public:
     ") GetFunctionName;
     const char *
     GetFunctionName();
+             
+     const char *
+     GetDisplayFunctionName ();
 
     const char *
     GetFunctionName() const;

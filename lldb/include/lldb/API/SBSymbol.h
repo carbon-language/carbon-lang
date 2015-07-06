@@ -38,6 +38,9 @@ public:
     GetName() const;
 
     const char *
+    GetDisplayName() const;
+    
+    const char *
     GetMangledName () const;
 
     lldb::SBInstructionList

@@ -1602,3 +1602,59 @@ SBFrame::GetFunctionName() const
     }
     return name;
 }
+
+const char *
+SBFrame::GetDisplayFunctionName()
+{
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    const char *name = NULL;
+    ExecutionContext exe_ctx(m_opaque_sp.get());
+    StackFrame *frame = NULL;
+    Target *target = exe_ctx.GetTargetPtr();
+    Process *process = exe_ctx.GetProcessPtr();
+    if (target && process)
+    {
+        Process::StopLocker stop_locker;
+        if (stop_locker.TryLock(&process->GetRunLock()))
+        {
+            frame = exe_ctx.GetFramePtr();
+            if (frame)
+            {
+                SymbolContext sc (frame->GetSymbolContext(eSymbolContextFunction | eSymbolContextBlock | eSymbolContextSymbol));
+                if (sc.block)
+                {
+                    Block *inlined_block = sc.block->GetContainingInlinedBlock ();
+                    if (inlined_block)
+                    {
+                        const InlineFunctionInfo* inlined_info = inlined_block->GetInlinedFunctionInfo();
+                        name = inlined_info->GetDisplayName().AsCString();
+                    }
+                }
+                
+                if (name == NULL)
+                {
+                    if (sc.function)
+                        name = sc.function->GetDisplayName().GetCString();
+                }
+                
+                if (name == NULL)
+                {
+                    if (sc.symbol)
+                        name = sc.symbol->GetDisplayName().GetCString();
+                }
+            }
+            else
+            {
+                if (log)
+                    log->Printf ("SBFrame::GetDisplayFunctionName () => error: could not reconstruct frame object for this SBFrame.");
+            }
+        }
+        else
+        {
+            if (log)
+                log->Printf ("SBFrame::GetDisplayFunctionName() => error: process is running");
+            
+        }
+    }
+    return name;
+}

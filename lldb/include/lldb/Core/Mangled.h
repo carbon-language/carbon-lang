@@ -184,6 +184,15 @@ public:
     const ConstString&
     GetDemangledName () const;
 
+    //----------------------------------------------------------------------
+    /// Display demangled name get accessor.
+    ///
+    /// @return
+    ///     A const reference to the display demangled name string object.
+    //----------------------------------------------------------------------
+    ConstString
+    GetDisplayDemangledName () const;
+    
     void
     SetDemangledName (const ConstString &name)
     {

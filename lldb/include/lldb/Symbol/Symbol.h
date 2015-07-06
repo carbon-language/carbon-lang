@@ -158,6 +158,9 @@ public:
         return m_mangled.GetName();
     }
 
+    ConstString
+    GetDisplayName () const;
+    
     uint32_t
     GetID() const
     {

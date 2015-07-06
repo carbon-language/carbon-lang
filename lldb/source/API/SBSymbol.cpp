@@ -73,6 +73,20 @@ SBSymbol::GetName() const
 }
 
 const char *
+SBSymbol::GetDisplayName() const
+{
+    const char *name = NULL;
+    if (m_opaque_ptr)
+    name = m_opaque_ptr->GetMangled().GetDisplayDemangledName().AsCString();
+    
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    if (log)
+    log->Printf ("SBSymbol(%p)::GetDisplayName () => \"%s\"",
+                 static_cast<void*>(m_opaque_ptr), name ? name : "");
+    return name;
+}
+
+const char *
 SBSymbol::GetMangledName () const
 {
     const char *name = NULL;

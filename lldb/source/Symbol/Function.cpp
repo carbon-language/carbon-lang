@@ -159,6 +159,13 @@ InlineFunctionInfo::GetName () const
     return m_name;
 }
 
+ConstString
+InlineFunctionInfo::GetDisplayName () const
+{
+    if (m_mangled)
+        return m_mangled.GetDisplayDemangledName();
+    return m_name;
+}
 
 Declaration &
 InlineFunctionInfo::GetCallSite ()
@@ -457,6 +464,14 @@ Function::MemorySize () const
 {
     size_t mem_size = sizeof(Function) + m_block.MemorySize();
     return mem_size;
+}
+
+ConstString
+Function::GetDisplayName () const
+{
+    if (!m_mangled)
+        return ConstString();
+    return m_mangled.GetDisplayDemangledName();
 }
 
 clang::DeclContext *

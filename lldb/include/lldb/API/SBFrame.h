@@ -90,6 +90,10 @@ public:
     /// See also IsInlined().
     const char *
     GetFunctionName();
+    
+    // Get an appropriate function name for this frame that is suitable for display to a user
+    const char *
+    GetDisplayFunctionName ();
 
     const char *
     GetFunctionName() const;

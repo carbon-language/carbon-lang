@@ -58,6 +58,9 @@ public:
 
     const char *
     GetName() const;
+    
+    const char *
+    GetDisplayName() const;
 
     const char *
     GetMangledName () const;

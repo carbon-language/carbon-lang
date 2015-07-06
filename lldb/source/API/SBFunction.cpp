@@ -76,6 +76,26 @@ SBFunction::GetName() const
 }
 
 const char *
+SBFunction::GetDisplayName() const
+{
+    const char *cstr = NULL;
+    if (m_opaque_ptr)
+    cstr = m_opaque_ptr->GetMangled().GetDisplayDemangledName().AsCString();
+    
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    if (log)
+    {
+        if (cstr)
+        log->Printf ("SBFunction(%p)::GetDisplayName () => \"%s\"",
+                     static_cast<void*>(m_opaque_ptr), cstr);
+        else
+        log->Printf ("SBFunction(%p)::GetDisplayName () => NULL",
+                     static_cast<void*>(m_opaque_ptr));
+    }
+    return cstr;
+}
+
+const char *
 SBFunction::GetMangledName () const
 {
     const char *cstr = NULL;

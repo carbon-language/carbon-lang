@@ -245,6 +245,9 @@ public:
     const ConstString &
     GetName () const;
 
+    ConstString
+    GetDisplayName () const;
+    
     //------------------------------------------------------------------
     /// Get accessor for the call site declaration information.
     ///
@@ -529,6 +532,9 @@ public:
     {
         return m_mangled.GetName();
     }
+    
+    ConstString
+    GetDisplayName () const;
 
     const Mangled &
     GetMangled() const
