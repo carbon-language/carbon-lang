@@ -92,7 +92,7 @@ will be assumed, which sets the defaults for the specified architecture.
 The system name is generally the OS (linux, darwin), but could be special
 like the bare-metal "none".
 
-When a parameter is not important, they can be omitted, or you can
+When a parameter is not important, it can be omitted, or you can
 choose ``unknown`` and the defaults will be used. If you choose a parameter
 that Clang doesn't know, like ``blerg``, it'll ignore and assume
 ``unknown``, which is not always desired, so be careful.
