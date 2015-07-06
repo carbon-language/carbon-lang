@@ -4390,6 +4390,7 @@ static SDValue getShuffleVectorZeroOrUndef(SDValue V2, unsigned Idx,
 /// IsUnary to true if only uses one source. Note that this will set IsUnary for
 /// shuffles which use a single input multiple times, and in those cases it will
 /// adjust the mask to only have indices within that single input.
+/// FIXME: Add support for Decode*Mask functions that return SM_SentinelZero.
 static bool getTargetShuffleMask(SDNode *N, MVT VT,
                                  SmallVectorImpl<int> &Mask, bool &IsUnary) {
   unsigned NumElems = VT.getVectorNumElements();
@@ -4519,6 +4520,10 @@ static bool getTargetShuffleMask(SDNode *N, MVT VT,
     ImmN = N->getOperand(N->getNumOperands()-1);
     DecodeVPERM2X128Mask(VT, cast<ConstantSDNode>(ImmN)->getZExtValue(), Mask);
     if (Mask.empty()) return false;
+    // Mask only contains negative index if an element is zero.
+    if (std::any_of(Mask.begin(), Mask.end(), 
+                    [](int M){ return M == SM_SentinelZero; }))
+      return false;
     break;
   case X86ISD::MOVSLDUP:
     DecodeMOVSLDUPMask(VT, Mask);

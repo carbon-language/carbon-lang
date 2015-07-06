@@ -255,15 +255,13 @@ void DecodeUNPCKLMask(MVT VT, SmallVectorImpl<int> &ShuffleMask) {
 
 void DecodeVPERM2X128Mask(MVT VT, unsigned Imm,
                           SmallVectorImpl<int> &ShuffleMask) {
-  if (Imm & 0x88)
-    return; // Not a shuffle
-
   unsigned HalfSize = VT.getVectorNumElements() / 2;
 
   for (unsigned l = 0; l != 2; ++l) {
-    unsigned HalfBegin = ((Imm >> (l * 4)) & 0x3) * HalfSize;
+    unsigned HalfMask = Imm >> (l * 4);
+    unsigned HalfBegin = (HalfMask & 0x3) * HalfSize;
     for (unsigned i = HalfBegin, e = HalfBegin + HalfSize; i != e; ++i)
-      ShuffleMask.push_back(i);
+      ShuffleMask.push_back(HalfMask & 8 ? SM_SentinelZero : i);
   }
 }
 
