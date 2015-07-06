@@ -415,6 +415,12 @@ void Writer::writeHeader() {
     Dir[EXCEPTION_TABLE].RelativeVirtualAddress = Sec->getRVA();
     Dir[EXCEPTION_TABLE].Size = Sec->getVirtualSize();
   }
+  if (Symbol *Sym = Symtab->find("_tls_used")) {
+    if (Defined *B = dyn_cast<Defined>(Sym->Body.load())) {
+      Dir[TLS_TABLE].RelativeVirtualAddress = B->getRVA();
+      Dir[TLS_TABLE].Size = 40;
+    }
+  }
 
   // Section table
   // Name field in the section table is 8 byte long. Longer names need
