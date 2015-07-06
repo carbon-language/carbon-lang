@@ -31,7 +31,8 @@ struct CPPTargetMachine : public TargetMachine {
 public:
   bool addPassesToEmitFile(PassManagerBase &PM, raw_pwrite_stream &Out,
                            CodeGenFileType FileType, bool DisableVerify,
-                           AnalysisID StartAfter, AnalysisID StopAfter,
+                           AnalysisID StartBefore, AnalysisID StartAfter,
+                           AnalysisID StopAfter,
                            MachineFunctionInitializer *MFInitializer) override;
 };
 

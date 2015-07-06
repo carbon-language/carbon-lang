@@ -212,8 +212,8 @@ public:
   /// supported, or false on success.
   virtual bool addPassesToEmitFile(
       PassManagerBase &, raw_pwrite_stream &, CodeGenFileType,
-      bool /*DisableVerify*/ = true, AnalysisID /*StartAfter*/ = nullptr,
-      AnalysisID /*StopAfter*/ = nullptr,
+      bool /*DisableVerify*/ = true, AnalysisID /*StartBefore*/ = nullptr,
+      AnalysisID /*StartAfter*/ = nullptr, AnalysisID /*StopAfter*/ = nullptr,
       MachineFunctionInitializer * /*MFInitializer*/ = nullptr) {
     return true;
   }
@@ -260,8 +260,8 @@ public:
   /// emitted.  Typically this will involve several steps of code generation.
   bool addPassesToEmitFile(
       PassManagerBase &PM, raw_pwrite_stream &Out, CodeGenFileType FileType,
-      bool DisableVerify = true, AnalysisID StartAfter = nullptr,
-      AnalysisID StopAfter = nullptr,
+      bool DisableVerify = true, AnalysisID StartBefore = nullptr,
+      AnalysisID StartAfter = nullptr, AnalysisID StopAfter = nullptr,
       MachineFunctionInitializer *MFInitializer = nullptr) override;
 
   /// Add passes to the specified pass manager to get machine code emitted with

@@ -333,29 +333,44 @@ static int compileModule(char **argv, LLVMContext &Context) {
       OS = BOS.get();
     }
 
+    AnalysisID StartBeforeID = nullptr;
     AnalysisID StartAfterID = nullptr;
     AnalysisID StopAfterID = nullptr;
     const PassRegistry *PR = PassRegistry::getPassRegistry();
-    if (!StartAfter.empty()) {
-      const PassInfo *PI = PR->getPassInfo(StartAfter);
-      if (!PI) {
-        errs() << argv[0] << ": start-after pass is not registered.\n";
+    if (!RunPass.empty()) {
+      if (!StartAfter.empty() || !StopAfter.empty()) {
+        errs() << argv[0] << ": start-after and/or stop-after passes are "
+                             "redundant when run-pass is specified.\n";
         return 1;
       }
-      StartAfterID = PI->getTypeInfo();
-    }
-    if (!StopAfter.empty()) {
-      const PassInfo *PI = PR->getPassInfo(StopAfter);
+      const PassInfo *PI = PR->getPassInfo(RunPass);
       if (!PI) {
-        errs() << argv[0] << ": stop-after pass is not registered.\n";
+        errs() << argv[0] << ": run-pass pass is not registered.\n";
         return 1;
       }
-      StopAfterID = PI->getTypeInfo();
+      StopAfterID = StartBeforeID = PI->getTypeInfo();
+    } else {
+      if (!StartAfter.empty()) {
+        const PassInfo *PI = PR->getPassInfo(StartAfter);
+        if (!PI) {
+          errs() << argv[0] << ": start-after pass is not registered.\n";
+          return 1;
+        }
+        StartAfterID = PI->getTypeInfo();
+      }
+      if (!StopAfter.empty()) {
+        const PassInfo *PI = PR->getPassInfo(StopAfter);
+        if (!PI) {
+          errs() << argv[0] << ": stop-after pass is not registered.\n";
+          return 1;
+        }
+        StopAfterID = PI->getTypeInfo();
+      }
     }
 
     // Ask the target to add backend passes as necessary.
-    if (Target->addPassesToEmitFile(PM, *OS, FileType, NoVerify, StartAfterID,
-                                    StopAfterID, MIR.get())) {
+    if (Target->addPassesToEmitFile(PM, *OS, FileType, NoVerify, StartBeforeID,
+                                    StartAfterID, StopAfterID, MIR.get())) {
       errs() << argv[0] << ": target does not support generation of this"
              << " file type!\n";
       return 1;

@@ -90,8 +90,8 @@ TargetIRAnalysis LLVMTargetMachine::getTargetIRAnalysis() {
 /// addPassesToX helper drives creation and initialization of TargetPassConfig.
 static MCContext *
 addPassesToGenerateCode(LLVMTargetMachine *TM, PassManagerBase &PM,
-                        bool DisableVerify, AnalysisID StartAfter,
-                        AnalysisID StopAfter,
+                        bool DisableVerify, AnalysisID StartBefore,
+                        AnalysisID StartAfter, AnalysisID StopAfter,
                         MachineFunctionInitializer *MFInitializer = nullptr) {
 
   // Add internal analysis passes from the target machine.
@@ -100,7 +100,7 @@ addPassesToGenerateCode(LLVMTargetMachine *TM, PassManagerBase &PM,
   // Targets may override createPassConfig to provide a target-specific
   // subclass.
   TargetPassConfig *PassConfig = TM->createPassConfig(PM);
-  PassConfig->setStartStopPasses(StartAfter, StopAfter);
+  PassConfig->setStartStopPasses(StartBefore, StartAfter, StopAfter);
 
   // Set PassConfig options provided by TargetMachine.
   PassConfig->setDisableVerify(DisableVerify);
@@ -143,11 +143,12 @@ addPassesToGenerateCode(LLVMTargetMachine *TM, PassManagerBase &PM,
 
 bool LLVMTargetMachine::addPassesToEmitFile(
     PassManagerBase &PM, raw_pwrite_stream &Out, CodeGenFileType FileType,
-    bool DisableVerify, AnalysisID StartAfter, AnalysisID StopAfter,
-    MachineFunctionInitializer *MFInitializer) {
+    bool DisableVerify, AnalysisID StartBefore, AnalysisID StartAfter,
+    AnalysisID StopAfter, MachineFunctionInitializer *MFInitializer) {
   // Add common CodeGen passes.
-  MCContext *Context = addPassesToGenerateCode(
-      this, PM, DisableVerify, StartAfter, StopAfter, MFInitializer);
+  MCContext *Context =
+      addPassesToGenerateCode(this, PM, DisableVerify, StartBefore, StartAfter,
+                              StopAfter, MFInitializer);
   if (!Context)
     return true;
 
@@ -231,7 +232,8 @@ bool LLVMTargetMachine::addPassesToEmitMC(PassManagerBase &PM, MCContext *&Ctx,
                                           raw_pwrite_stream &Out,
                                           bool DisableVerify) {
   // Add common CodeGen passes.
-  Ctx = addPassesToGenerateCode(this, PM, DisableVerify, nullptr, nullptr);
+  Ctx = addPassesToGenerateCode(this, PM, DisableVerify, nullptr, nullptr,
+                                nullptr);
   if (!Ctx)
     return true;
 

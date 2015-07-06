@@ -101,7 +101,7 @@ public:
 
 private:
   PassManagerBase *PM;
-  AnalysisID StartAfter;
+  AnalysisID StartBefore, StartAfter;
   AnalysisID StopAfter;
   bool Started;
   bool Stopped;
@@ -142,16 +142,24 @@ public:
 
   CodeGenOpt::Level getOptLevel() const { return TM->getOptLevel(); }
 
-  /// setStartStopPasses - Set the StartAfter and StopAfter passes to allow
-  /// running only a portion of the normal code-gen pass sequence.  If the
-  /// Start pass ID is zero, then compilation will begin at the normal point;
-  /// otherwise, clear the Started flag to indicate that passes should not be
-  /// added until the starting pass is seen.  If the Stop pass ID is zero,
-  /// then compilation will continue to the end.
-  void setStartStopPasses(AnalysisID Start, AnalysisID Stop) {
-    StartAfter = Start;
-    StopAfter = Stop;
-    Started = (StartAfter == nullptr);
+  /// Set the StartAfter, StartBefore and StopAfter passes to allow running only
+  /// a portion of the normal code-gen pass sequence.
+  ///
+  /// If the StartAfter and StartBefore pass ID is zero, then compilation will
+  /// begin at the normal point; otherwise, clear the Started flag to indicate
+  /// that passes should not be added until the starting pass is seen.  If the
+  /// Stop pass ID is zero, then compilation will continue to the end.
+  ///
+  /// This function expects that at least one of the StartAfter or the
+  /// StartBefore pass IDs is null.
+  void setStartStopPasses(AnalysisID StartBefore, AnalysisID StartAfter,
+                          AnalysisID StopAfter) {
+    if (StartAfter)
+      assert(!StartBefore && "Start after and start before passes are given");
+    this->StartBefore = StartBefore;
+    this->StartAfter = StartAfter;
+    this->StopAfter = StopAfter;
+    Started = (StartAfter == nullptr) && (StartBefore == nullptr);
   }
 
   void setDisableVerify(bool Disable) { setOpt(DisableVerify, Disable); }
