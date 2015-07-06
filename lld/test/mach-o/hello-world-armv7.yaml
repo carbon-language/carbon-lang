@@ -71,6 +71,6 @@ undefined-symbols:
     value:           0x0000000000000000
 ...
 
-# CHECK:	{{[0-9a-f]+}} (__TEXT,__text) external [Thumb] _main
 # CHECK:	(undefined) external _printf (from libSystem)
 # CHECK:	(undefined) external dyld_stub_binder (from libSystem)
+# CHECK:	{{[0-9a-f]+}} (__TEXT,__text) external [Thumb] _main

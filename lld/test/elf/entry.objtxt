@@ -11,11 +11,11 @@
 # RUN: lld -flavor gnu -target x86_64 %s -e _entrypoint --noinhibit-exec -o %t1
 # RUN: llvm-nm -n %t1 | FileCheck %s
 #
+# CHECK:           U _entrypoint
 # CHECK:  004001e0 T main
 # CHECK:  00401000 D _DYNAMIC
 # CHECK:  00401060 A _end
 # CHECK:  00401060 A end
-# CHECK:           U _entrypoint
 
 defined-atoms:
   - name:            .text
