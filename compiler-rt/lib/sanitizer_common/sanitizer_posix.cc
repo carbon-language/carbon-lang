@@ -270,6 +270,7 @@ bool MemoryRangeIsAvailable(uptr range_start, uptr range_end) {
   while (proc_maps.Next(&start, &end,
                         /*offset*/0, /*filename*/0, /*filename_size*/0,
                         /*protection*/0)) {
+    if (start == end) continue;  // Empty range.
     CHECK_NE(0, end);
     if (!IntervalsAreSeparate(start, end - 1, range_start, range_end))
       return false;
