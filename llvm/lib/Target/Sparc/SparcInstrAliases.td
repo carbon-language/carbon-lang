@@ -245,6 +245,7 @@ multiclass fp_cond_alias<string cond, int condVal> {
 }
 
 defm : int_cond_alias<"a",    0b1000>;
+defm : int_cond_alias<"",     0b1000>; // same as a; gnu asm, not in manual
 defm : int_cond_alias<"n",    0b0000>;
 defm : int_cond_alias<"ne",   0b1001>;
 defm : int_cond_alias<"nz",   0b1001>; // same as ne
@@ -266,6 +267,7 @@ defm : int_cond_alias<"vc",   0b1111>;
 defm : int_cond_alias<"vs",   0b0111>;
 
 defm : fp_cond_alias<"a",     0b0000>;
+defm : fp_cond_alias<"",      0b0000>; // same as a; gnu asm, not in manual
 defm : fp_cond_alias<"n",     0b1000>;
 defm : fp_cond_alias<"u",     0b0111>;
 defm : fp_cond_alias<"g",     0b0110>;
@@ -284,7 +286,16 @@ defm : fp_cond_alias<"le",    0b1101>;
 defm : fp_cond_alias<"ule",   0b1110>;
 defm : fp_cond_alias<"o",     0b1111>;
 
-// Instruction aliases for JMPL.
+// Section A.3 Synthetic Instructions
+
+// Most are marked as Emit=0, so that they are not used for disassembly. This is
+// an aesthetic issue, but the chosen policy is to typically prefer using the
+// non-alias form, except for the most obvious and clarifying aliases: cmp, jmp,
+// call, tst, ret, retl.
+
+// Note: cmp is handled in SparcInstrInfo.
+//       jmp/call/ret/retl have special case handling for output in
+//       SparcInstPrinter.cpp
 
 // jmp addr -> jmpl addr, %g0
 def : InstAlias<"jmp $addr", (JMPLrr G0, MEMrr:$addr), 0>;
@@ -294,28 +305,129 @@ def : InstAlias<"jmp $addr", (JMPLri G0, MEMri:$addr), 0>;
 def : InstAlias<"call $addr", (JMPLrr O7, MEMrr:$addr), 0>;
 def : InstAlias<"call $addr", (JMPLri O7, MEMri:$addr), 0>;
 
-// retl -> RETL 8
-def : InstAlias<"retl", (RETL 8)>;
+// tst reg -> orcc %g0, reg, %g0
+def : InstAlias<"tst $rs2", (ORCCrr G0, IntRegs:$rs2, G0)>;
 
-// ret -> RET 8
+// ret -> jmpl %i7+8, %g0 (aka RET 8)
 def : InstAlias<"ret", (RET 8)>;
 
-// mov reg, rd -> or %g0, reg, rd
-def : InstAlias<"mov $rs2, $rd", (ORrr IntRegs:$rd, G0, IntRegs:$rs2)>;
+// retl -> jmpl %o7+8, %g0 (aka RETL 8)
+def : InstAlias<"retl", (RETL 8)>;
 
-// mov simm13, rd -> or %g0, simm13, rd
-def : InstAlias<"mov $simm13, $rd", (ORri IntRegs:$rd, G0, i32imm:$simm13)>;
+// restore -> restore %g0, %g0, %g0
+def : InstAlias<"restore", (RESTORErr G0, G0, G0)>;
 
-// flush -> flush %g0
-def : InstAlias<"flush", (FLUSH), 0>;
+// save -> restore %g0, %g0, %g0
+def : InstAlias<"save", (SAVErr G0, G0, G0)>;
 
 // set value, rd
 // (turns into a sequence of sethi+or, depending on the value)
 // def : InstAlias<"set $val, $rd", (ORri IntRegs:$rd, (SETHIi (HI22 imm:$val)), (LO10 imm:$val))>;
 def SET : AsmPseudoInst<(outs IntRegs:$rd), (ins i32imm:$val), "set $val, $rd">;
 
-// restore -> restore %g0, %g0, %g0
-def : InstAlias<"restore", (RESTORErr G0, G0, G0)>;
+// not rd -> xnor rd, %g0, rd
+def : InstAlias<"not $rd", (XNORrr IntRegs:$rd, IntRegs:$rd, G0), 0>;
+
+// not reg, rd -> xnor reg, %g0, rd
+def : InstAlias<"not $rs1, $rd", (XNORrr IntRegs:$rd, IntRegs:$rs1, G0), 0>;
+
+// neg rd -> sub %g0, rd, rd
+def : InstAlias<"neg $rd", (SUBrr IntRegs:$rd, G0, IntRegs:$rd), 0>;
+
+// neg reg, rd -> sub %g0, reg, rd
+def : InstAlias<"neg $rs2, $rd", (SUBrr IntRegs:$rd, G0, IntRegs:$rs2), 0>;
+
+// inc rd -> add rd, 1, rd
+def : InstAlias<"inc $rd", (ADDri IntRegs:$rd, IntRegs:$rd, 1), 0>;
+
+// inc simm13, rd -> add rd, simm13, rd
+def : InstAlias<"inc $simm13, $rd", (ADDri IntRegs:$rd, IntRegs:$rd, i32imm:$simm13), 0>;
+
+// inccc rd -> addcc rd, 1, rd
+def : InstAlias<"inccc $rd", (ADDCCri IntRegs:$rd, IntRegs:$rd, 1), 0>;
+
+// inccc simm13, rd -> addcc rd, simm13, rd
+def : InstAlias<"inccc $simm13, $rd", (ADDCCri IntRegs:$rd, IntRegs:$rd, i32imm:$simm13), 0>;
+
+// dec rd -> sub rd, 1, rd
+def : InstAlias<"dec $rd", (SUBri IntRegs:$rd, IntRegs:$rd, 1), 0>;
+
+// dec simm13, rd -> sub rd, simm13, rd
+def : InstAlias<"dec $simm13, $rd", (SUBri IntRegs:$rd, IntRegs:$rd, i32imm:$simm13), 0>;
+
+// deccc rd -> subcc rd, 1, rd
+def : InstAlias<"deccc $rd", (SUBCCri IntRegs:$rd, IntRegs:$rd, 1), 0>;
+
+// deccc simm13, rd -> subcc rd, simm13, rd
+def : InstAlias<"deccc $simm13, $rd", (SUBCCri IntRegs:$rd, IntRegs:$rd, i32imm:$simm13), 0>;
+
+// btst reg_or_imm, reg -> andcc reg,reg_or_imm,%g0
+def : InstAlias<"btst $rs2, $rs1", (ANDCCrr G0, IntRegs:$rs1, IntRegs:$rs2), 0>;
+def : InstAlias<"btst $simm13, $rs1", (ANDCCri G0, IntRegs:$rs1, i32imm:$simm13), 0>;
+
+// bset reg_or_imm, rd -> or rd,reg_or_imm,rd
+def : InstAlias<"bset $rs2, $rd", (ORrr IntRegs:$rd, IntRegs:$rd, IntRegs:$rs2), 0>;
+def : InstAlias<"bset $simm13, $rd", (ORri IntRegs:$rd, IntRegs:$rd, i32imm:$simm13), 0>;
+
+// bclr reg_or_imm, rd -> andn rd,reg_or_imm,rd
+def : InstAlias<"bclr $rs2, $rd", (ANDNrr IntRegs:$rd, IntRegs:$rd, IntRegs:$rs2), 0>;
+def : InstAlias<"bclr $simm13, $rd", (ANDNri IntRegs:$rd, IntRegs:$rd, i32imm:$simm13), 0>;
+
+// btog reg_or_imm, rd -> xor rd,reg_or_imm,rd
+def : InstAlias<"btog $rs2, $rd", (XORrr IntRegs:$rd, IntRegs:$rd, IntRegs:$rs2), 0>;
+def : InstAlias<"btog $simm13, $rd", (XORri IntRegs:$rd, IntRegs:$rd, i32imm:$simm13), 0>;
+
+
+// clr rd -> or %g0, %g0, rd
+def : InstAlias<"clr $rd", (ORrr IntRegs:$rd, G0, G0), 0>;
+
+// clr{b,h,} [addr] -> st{b,h,} %g0, [addr]
+def : InstAlias<"clrb [$addr]", (STBrr MEMrr:$addr, G0), 0>;
+def : InstAlias<"clrb [$addr]", (STBri MEMri:$addr, G0), 0>;
+def : InstAlias<"clrh [$addr]", (STHrr MEMrr:$addr, G0), 0>;
+def : InstAlias<"clrh [$addr]", (STHri MEMri:$addr, G0), 0>;
+def : InstAlias<"clr [$addr]", (STrr MEMrr:$addr, G0), 0>;
+def : InstAlias<"clr [$addr]", (STri MEMri:$addr, G0), 0>;
+
+
+// mov reg_or_imm, rd -> or %g0, reg_or_imm, rd
+def : InstAlias<"mov $rs2, $rd", (ORrr IntRegs:$rd, G0, IntRegs:$rs2)>;
+def : InstAlias<"mov $simm13, $rd", (ORri IntRegs:$rd, G0, i32imm:$simm13)>;
+
+// mov specialreg, rd -> rd specialreg, rd
+def : InstAlias<"mov $asr, $rd", (RDASR IntRegs:$rd, ASRRegs:$asr), 0>;
+def : InstAlias<"mov %psr, $rd", (RDPSR IntRegs:$rd), 0>;
+def : InstAlias<"mov %wim, $rd", (RDWIM IntRegs:$rd), 0>;
+def : InstAlias<"mov %tbr, $rd", (RDTBR IntRegs:$rd), 0>;
+
+// mov reg_or_imm, specialreg -> wr %g0, reg_or_imm, specialreg
+def : InstAlias<"mov $rs2, $asr", (WRASRrr ASRRegs:$asr, G0, IntRegs:$rs2), 0>;
+def : InstAlias<"mov $simm13, $asr", (WRASRri ASRRegs:$asr, G0, i32imm:$simm13), 0>;
+def : InstAlias<"mov $rs2, %psr", (WRPSRrr G0, IntRegs:$rs2), 0>;
+def : InstAlias<"mov $simm13, %psr", (WRPSRri G0, i32imm:$simm13), 0>;
+def : InstAlias<"mov $rs2, %wim", (WRWIMrr G0, IntRegs:$rs2), 0>;
+def : InstAlias<"mov $simm13, %wim", (WRWIMri G0, i32imm:$simm13), 0>;
+def : InstAlias<"mov $rs2, %tbr", (WRTBRrr G0, IntRegs:$rs2), 0>;
+def : InstAlias<"mov $simm13, %tbr", (WRTBRri G0, i32imm:$simm13), 0>;
+
+// End of Section A.3
+
+// wr reg_or_imm, specialreg -> wr %g0, reg_or_imm, specialreg
+// (aka: omit the first arg when it's g0. This is not in the manual, but is
+// supported by gnu and solaris as)
+def : InstAlias<"wr $rs2, $asr", (WRASRrr ASRRegs:$asr, G0, IntRegs:$rs2), 0>;
+def : InstAlias<"wr $simm13, $asr", (WRASRri ASRRegs:$asr, G0, i32imm:$simm13), 0>;
+def : InstAlias<"wr $rs2, %psr", (WRPSRrr G0, IntRegs:$rs2), 0>;
+def : InstAlias<"wr $simm13, %psr", (WRPSRri G0, i32imm:$simm13), 0>;
+def : InstAlias<"wr $rs2, %wim", (WRWIMrr G0, IntRegs:$rs2), 0>;
+def : InstAlias<"wr $simm13, %wim", (WRWIMri G0, i32imm:$simm13), 0>;
+def : InstAlias<"wr $rs2, %tbr", (WRTBRrr G0, IntRegs:$rs2), 0>;
+def : InstAlias<"wr $simm13, %tbr", (WRTBRri G0, i32imm:$simm13), 0>;
+
+
+// flush -> flush %g0
+def : InstAlias<"flush", (FLUSH), 0>;
+
 
 def : MnemonicAlias<"return", "rett">, Requires<[HasV9]>;
 
