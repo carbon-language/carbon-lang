@@ -185,60 +185,31 @@ struct NMSymbol {
 }
 
 static bool compareSymbolAddress(const NMSymbol &A, const NMSymbol &B) {
-  if (!ReverseSort) {
-    if (A.Address < B.Address)
-      return true;
-    if (A.Address == B.Address && A.Name < B.Name)
-      return true;
-    if (A.Address == B.Address && A.Name == B.Name && A.Size < B.Size)
-      return true;
-    return false;
-  }
-
-  if (A.Address > B.Address)
+  if (A.Address < B.Address)
     return true;
-  if (A.Address == B.Address && A.Name > B.Name)
+  if (A.Address == B.Address && A.Name < B.Name)
     return true;
-  if (A.Address == B.Address && A.Name == B.Name && A.Size > B.Size)
+  if (A.Address == B.Address && A.Name == B.Name && A.Size < B.Size)
     return true;
   return false;
 }
 
 static bool compareSymbolSize(const NMSymbol &A, const NMSymbol &B) {
-  if (!ReverseSort) {
-    if (A.Size < B.Size)
-      return true;
-    if (A.Size == B.Size && A.Name < B.Name)
-      return true;
-    if (A.Size == B.Size && A.Name == B.Name && A.Address < B.Address)
-      return true;
-    return false;
-  }
-
-  if (A.Size > B.Size)
+  if (A.Size < B.Size)
     return true;
-  if (A.Size == B.Size && A.Name > B.Name)
+  if (A.Size == B.Size && A.Name < B.Name)
     return true;
-  if (A.Size == B.Size && A.Name == B.Name && A.Address > B.Address)
+  if (A.Size == B.Size && A.Name == B.Name && A.Address < B.Address)
     return true;
   return false;
 }
 
 static bool compareSymbolName(const NMSymbol &A, const NMSymbol &B) {
-  if (!ReverseSort) {
-    if (A.Name < B.Name)
-      return true;
-    if (A.Name == B.Name && A.Size < B.Size)
-      return true;
-    if (A.Name == B.Name && A.Size == B.Size && A.Address < B.Address)
-      return true;
-    return false;
-  }
-  if (A.Name > B.Name)
+  if (A.Name < B.Name)
     return true;
-  if (A.Name == B.Name && A.Size > B.Size)
+  if (A.Name == B.Name && A.Size < B.Size)
     return true;
-  if (A.Name == B.Name && A.Size == B.Size && A.Address > B.Address)
+  if (A.Name == B.Name && A.Size == B.Size && A.Address < B.Address)
     return true;
   return false;
 }
@@ -526,12 +497,17 @@ static void sortAndPrintSymbolList(SymbolicFile &Obj, bool printName,
                                    std::string ArchiveName,
                                    std::string ArchitectureName) {
   if (!NoSort) {
+    std::function<bool(const NMSymbol &, const NMSymbol &)> Cmp;
     if (NumericSort)
-      std::sort(SymbolList.begin(), SymbolList.end(), compareSymbolAddress);
+      Cmp = compareSymbolAddress;
     else if (SizeSort)
-      std::sort(SymbolList.begin(), SymbolList.end(), compareSymbolSize);
+      Cmp = compareSymbolSize;
     else
-      std::sort(SymbolList.begin(), SymbolList.end(), compareSymbolName);
+      Cmp = compareSymbolName;
+
+    if (ReverseSort)
+      Cmp = [=](const NMSymbol &A, const NMSymbol &B) { return !Cmp(A, B); };
+    std::sort(SymbolList.begin(), SymbolList.end(), Cmp);
   }
 
   if (!PrintFileName) {
