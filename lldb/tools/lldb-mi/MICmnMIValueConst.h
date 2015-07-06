@@ -45,7 +45,7 @@ class CMICmnMIValueConst : public CMICmnMIValue
     // Overridden:
   public:
     // From CMICmnBase
-    /* dtor */ virtual ~CMICmnMIValueConst(void);
+    /* dtor */ ~CMICmnMIValueConst(void) override;
 
     // Methods:
   private:

@@ -45,7 +45,7 @@ class CMICmdArgValConsume : public CMICmdArgValBaseTemplate<CMIUtilString>
     // Overridden:
   public:
     // From CMICmdArgValBase
-    /* dtor */ virtual ~CMICmdArgValConsume(void);
+    /* dtor */ ~CMICmdArgValConsume(void) override;
     // From CMICmdArgSet::IArg
-    virtual bool Validate(CMICmdArgContext &vwArgContext);
+    bool Validate(CMICmdArgContext &vwArgContext) override;
 };

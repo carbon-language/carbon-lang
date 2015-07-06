@@ -95,9 +95,9 @@ class CMIUtilVariant
         // Overridden:
       public:
         // From CDataObjectBase
-        virtual ~CDataObject(void);
-        virtual CDataObjectBase *CreateCopyOfSelf(void);
-        virtual bool GetIsDerivedClass(void) const;
+        ~CDataObject(void) override;
+        CDataObjectBase *CreateCopyOfSelf(void) override;
+        bool GetIsDerivedClass(void) const override;
 
         // Overrideable:
       private:
@@ -106,7 +106,7 @@ class CMIUtilVariant
         // Overridden:
       private:
         // From CDataObjectBase
-        virtual void Destroy(void);
+        void Destroy(void) override;
 
         // Attributes:
       private:

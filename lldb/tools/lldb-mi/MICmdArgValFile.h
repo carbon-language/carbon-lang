@@ -39,9 +39,9 @@ class CMICmdArgValFile : public CMICmdArgValBaseTemplate<CMIUtilString>
     // Overridden:
   public:
     // From CMICmdArgValBase
-    /* dtor */ virtual ~CMICmdArgValFile(void);
+    /* dtor */ ~CMICmdArgValFile(void) override;
     // From CMICmdArgSet::IArg
-    virtual bool Validate(CMICmdArgContext &vwArgContext);
+    bool Validate(CMICmdArgContext &vwArgContext) override;
 
     // Methods:
   private:

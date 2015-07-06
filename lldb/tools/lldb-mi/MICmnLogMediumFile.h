@@ -48,13 +48,13 @@ class CMICmnLogMediumFile : public CMICmnBase, public CMICmnLog::IMedium
     // Overridden:
   public:
     // From CMICmnBase
-    /* dtor */ virtual ~CMICmnLogMediumFile(void);
+    /* dtor */ ~CMICmnLogMediumFile(void) override;
     // From CMICmnLog::IMedium
-    virtual bool Initialize(void);
-    virtual const CMIUtilString &GetName(void) const;
-    virtual bool Write(const CMIUtilString &vData, const CMICmnLog::ELogVerbosity veType);
-    virtual const CMIUtilString &GetError(void) const;
-    virtual bool Shutdown(void);
+    bool Initialize(void) override;
+    const CMIUtilString &GetName(void) const override;
+    bool Write(const CMIUtilString &vData, const CMICmnLog::ELogVerbosity veType) override;
+    const CMIUtilString &GetError(void) const override;
+    bool Shutdown(void) override;
 
     // Methods:
   private:

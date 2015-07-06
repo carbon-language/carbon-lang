@@ -46,9 +46,9 @@ class CMICmdArgValOptionLong : public CMICmdArgValListBase
     // Overridden:
   public:
     // From CMICmdArgValBase
-    /* dtor */ virtual ~CMICmdArgValOptionLong(void);
+    /* dtor */ ~CMICmdArgValOptionLong(void) override;
     // From CMICmdArgSet::IArg
-    virtual bool Validate(CMICmdArgContext &vArgContext);
+    bool Validate(CMICmdArgContext &vArgContext) override;
 
     // Methods:
   protected:

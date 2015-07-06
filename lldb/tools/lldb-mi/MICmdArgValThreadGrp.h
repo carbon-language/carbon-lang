@@ -39,9 +39,9 @@ class CMICmdArgValThreadGrp : public CMICmdArgValBaseTemplate<MIuint>
     // Overridden:
   public:
     // From CMICmdArgValBase
-    /* dtor */ virtual ~CMICmdArgValThreadGrp(void);
+    /* dtor */ ~CMICmdArgValThreadGrp(void) override;
     // From CMICmdArgSet::IArg
-    virtual bool Validate(CMICmdArgContext &vArgContext);
+    bool Validate(CMICmdArgContext &vArgContext) override;
 
     // Methods:
   private:

@@ -45,8 +45,8 @@ class CMICmdCmdSupportListFeatures : public CMICmdBase
     // Overridden:
   public:
     // From CMICmdInvoker::ICmd
-    virtual bool Execute(void);
-    virtual bool Acknowledge(void);
+    bool Execute(void) override;
+    bool Acknowledge(void) override;
     // From CMICmnBase
-    /* dtor */ virtual ~CMICmdCmdSupportListFeatures(void);
+    /* dtor */ ~CMICmdCmdSupportListFeatures(void) override;
 };

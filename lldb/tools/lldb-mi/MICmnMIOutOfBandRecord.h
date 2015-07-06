@@ -86,7 +86,7 @@ class CMICmnMIOutOfBandRecord : public CMICmnBase
     // Overridden:
   public:
     // From CMICmnBase
-    /* dtor */ virtual ~CMICmnMIOutOfBandRecord(void);
+    /* dtor */ ~CMICmnMIOutOfBandRecord(void) override;
 
     // Methods:
   private:

@@ -41,9 +41,9 @@ class CMICmdArgValString : public CMICmdArgValBaseTemplate<CMIUtilString>
     // Overridden:
   public:
     // From CMICmdArgValBase
-    /* dtor */ virtual ~CMICmdArgValString(void);
+    /* dtor */ ~CMICmdArgValString(void) override;
     // From CMICmdArgSet::IArg
-    virtual bool Validate(CMICmdArgContext &vrwArgContext);
+    bool Validate(CMICmdArgContext &vrwArgContext) override;
 
     // Methods:
   private:

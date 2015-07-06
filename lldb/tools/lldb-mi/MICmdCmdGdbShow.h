@@ -52,11 +52,11 @@ class CMICmdCmdGdbShow : public CMICmdBase
     // Overridden:
   public:
     // From CMICmdInvoker::ICmd
-    virtual bool Execute(void);
-    virtual bool Acknowledge(void);
-    virtual bool ParseArgs(void);
+    bool Execute(void) override;
+    bool Acknowledge(void) override;
+    bool ParseArgs(void) override;
     // From CMICmnBase
-    /* dtor */ virtual ~CMICmdCmdGdbShow(void);
+    /* dtor */ ~CMICmdCmdGdbShow(void) override;
 
     // Typedefs:
   private:

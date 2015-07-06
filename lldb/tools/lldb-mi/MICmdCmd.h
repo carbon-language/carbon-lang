@@ -59,10 +59,10 @@ class CMICmdCmdEnablePrettyPrinting : public CMICmdBase
     // Overridden:
   public:
     // From CMICmdInvoker::ICmd
-    virtual bool Execute(void);
-    virtual bool Acknowledge(void);
+    bool Execute(void) override;
+    bool Acknowledge(void) override;
     // From CMICmnBase
-    /* dtor */ virtual ~CMICmdCmdEnablePrettyPrinting(void);
+    /* dtor */ ~CMICmdCmdEnablePrettyPrinting(void) override;
 };
 
 //++ ============================================================================
@@ -86,8 +86,8 @@ class CMICmdCmdSource : public CMICmdBase
     // Overridden:
   public:
     // From CMICmdInvoker::ICmd
-    virtual bool Execute(void);
-    virtual bool Acknowledge(void);
+    bool Execute(void) override;
+    bool Acknowledge(void) override;
     // From CMICmnBase
-    /* dtor */ virtual ~CMICmdCmdSource(void);
+    /* dtor */ ~CMICmdCmdSource(void) override;
 };

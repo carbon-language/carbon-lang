@@ -42,7 +42,7 @@ class CMIUtilMapIdToVariant : public CMICmnBase
     // Overridden:
   public:
     // From CMICmnBase
-    /* dtor */ virtual ~CMIUtilMapIdToVariant(void);
+    /* dtor */ ~CMIUtilMapIdToVariant(void) override;
 
     // Typdefs:
   private:

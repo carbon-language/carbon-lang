@@ -32,8 +32,8 @@ class CMICmnStreamStdin : public CMICmnBase, public MI::ISingleton<CMICmnStreamS
 
     // Methods:
   public:
-    bool Initialize(void);
-    bool Shutdown(void);
+    bool Initialize(void) override;
+    bool Shutdown(void) override;
     //
     const CMIUtilString &GetPrompt(void) const;
     bool SetPrompt(const CMIUtilString &vNewPrompt);
@@ -50,7 +50,7 @@ class CMICmnStreamStdin : public CMICmnBase, public MI::ISingleton<CMICmnStreamS
     // Overridden:
   private:
     // From CMICmnBase
-    /* dtor */ virtual ~CMICmnStreamStdin(void);
+    /* dtor */ ~CMICmnStreamStdin(void) override;
 
     // Attributes:
   private:

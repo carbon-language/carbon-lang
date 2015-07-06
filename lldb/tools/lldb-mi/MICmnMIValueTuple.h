@@ -50,7 +50,7 @@ class CMICmnMIValueTuple : public CMICmnMIValue
     // Overridden:
   public:
     // From CMICmnBase
-    /* dtor */ virtual ~CMICmnMIValueTuple(void);
+    /* dtor */ ~CMICmnMIValueTuple(void) override;
 
     // Methods:
   private:

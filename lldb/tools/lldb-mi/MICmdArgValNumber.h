@@ -52,9 +52,9 @@ class CMICmdArgValNumber : public CMICmdArgValBaseTemplate<MIint64>
     // Overridden:
   public:
     // From CMICmdArgValBase
-    /* dtor */ virtual ~CMICmdArgValNumber(void);
+    /* dtor */ ~CMICmdArgValNumber(void) override;
     // From CMICmdArgSet::IArg
-    virtual bool Validate(CMICmdArgContext &vwArgContext);
+    bool Validate(CMICmdArgContext &vwArgContext) override;
 
     // Methods:
   private:

@@ -60,11 +60,11 @@ class CMICmdCmdDataEvaluateExpression : public CMICmdBase
     // Overridden:
   public:
     // From CMICmdInvoker::ICmd
-    virtual bool Execute(void);
-    virtual bool Acknowledge(void);
-    virtual bool ParseArgs(void);
+    bool Execute(void) override;
+    bool Acknowledge(void) override;
+    bool ParseArgs(void) override;
     // From CMICmnBase
-    /* dtor */ virtual ~CMICmdCmdDataEvaluateExpression(void);
+    /* dtor */ ~CMICmdCmdDataEvaluateExpression(void) override;
 
     // Methods:
   private:
@@ -105,11 +105,11 @@ class CMICmdCmdDataDisassemble : public CMICmdBase
     // Overridden:
   public:
     // From CMICmdInvoker::ICmd
-    virtual bool Execute(void);
-    virtual bool Acknowledge(void);
-    virtual bool ParseArgs(void);
+    bool Execute(void) override;
+    bool Acknowledge(void) override;
+    bool ParseArgs(void) override;
     // From CMICmnBase
-    /* dtor */ virtual ~CMICmdCmdDataDisassemble(void);
+    /* dtor */ ~CMICmdCmdDataDisassemble(void) override;
 
     // Attributes:
   private:
@@ -142,11 +142,11 @@ class CMICmdCmdDataReadMemoryBytes : public CMICmdBase
     // Overridden:
   public:
     // From CMICmdInvoker::ICmd
-    virtual bool Execute(void);
-    virtual bool Acknowledge(void);
-    virtual bool ParseArgs(void);
+    bool Execute(void) override;
+    bool Acknowledge(void) override;
+    bool ParseArgs(void) override;
     // From CMICmnBase
-    /* dtor */ virtual ~CMICmdCmdDataReadMemoryBytes(void);
+    /* dtor */ ~CMICmdCmdDataReadMemoryBytes(void) override;
 
     // Attributes:
   private:
@@ -181,10 +181,10 @@ class CMICmdCmdDataReadMemory : public CMICmdBase
     // Overridden:
   public:
     // From CMICmdInvoker::ICmd
-    virtual bool Execute(void);
-    virtual bool Acknowledge(void);
+    bool Execute(void) override;
+    bool Acknowledge(void) override;
     // From CMICmnBase
-    /* dtor */ virtual ~CMICmdCmdDataReadMemory(void);
+    /* dtor */ ~CMICmdCmdDataReadMemory(void) override;
 };
 
 //++ ============================================================================
@@ -208,11 +208,11 @@ class CMICmdCmdDataListRegisterNames : public CMICmdBase
     // Overridden:
   public:
     // From CMICmdInvoker::ICmd
-    virtual bool Execute(void);
-    virtual bool Acknowledge(void);
-    virtual bool ParseArgs(void);
+    bool Execute(void) override;
+    bool Acknowledge(void) override;
+    bool ParseArgs(void) override;
     // From CMICmnBase
-    /* dtor */ virtual ~CMICmdCmdDataListRegisterNames(void);
+    /* dtor */ ~CMICmdCmdDataListRegisterNames(void) override;
 
     // Methods:
   private:
@@ -246,11 +246,11 @@ class CMICmdCmdDataListRegisterValues : public CMICmdBase
     // Overridden:
   public:
     // From CMICmdInvoker::ICmd
-    virtual bool Execute(void);
-    virtual bool Acknowledge(void);
-    virtual bool ParseArgs(void);
+    bool Execute(void) override;
+    bool Acknowledge(void) override;
+    bool ParseArgs(void) override;
     // From CMICmnBase
-    /* dtor */ virtual ~CMICmdCmdDataListRegisterValues(void);
+    /* dtor */ ~CMICmdCmdDataListRegisterValues(void) override;
 
     // Methods:
   private:
@@ -287,10 +287,10 @@ class CMICmdCmdDataListRegisterChanged : public CMICmdBase
     // Overridden:
   public:
     // From CMICmdInvoker::ICmd
-    virtual bool Execute(void);
-    virtual bool Acknowledge(void);
+    bool Execute(void) override;
+    bool Acknowledge(void) override;
     // From CMICmnBase
-    /* dtor */ virtual ~CMICmdCmdDataListRegisterChanged(void);
+    /* dtor */ ~CMICmdCmdDataListRegisterChanged(void) override;
 };
 
 //++ ============================================================================
@@ -314,11 +314,11 @@ class CMICmdCmdDataWriteMemoryBytes : public CMICmdBase
     // Overridden:
   public:
     // From CMICmdInvoker::ICmd
-    virtual bool Execute(void);
-    virtual bool Acknowledge(void);
-    virtual bool ParseArgs(void);
+    bool Execute(void) override;
+    bool Acknowledge(void) override;
+    bool ParseArgs(void) override;
     // From CMICmnBase
-    /* dtor */ virtual ~CMICmdCmdDataWriteMemoryBytes(void);
+    /* dtor */ ~CMICmdCmdDataWriteMemoryBytes(void) override;
 
     // Attributes:
   private:
@@ -351,11 +351,11 @@ class CMICmdCmdDataWriteMemory : public CMICmdBase
     // Overridden:
   public:
     // From CMICmdInvoker::ICmd
-    virtual bool Execute(void);
-    virtual bool Acknowledge(void);
-    virtual bool ParseArgs(void);
+    bool Execute(void) override;
+    bool Acknowledge(void) override;
+    bool ParseArgs(void) override;
     // From CMICmnBase
-    /* dtor */ virtual ~CMICmdCmdDataWriteMemory(void);
+    /* dtor */ ~CMICmdCmdDataWriteMemory(void) override;
 
     // Attributes:
   private:
@@ -390,11 +390,11 @@ class CMICmdCmdDataInfoLine : public CMICmdBase
     // Overridden:
   public:
     // From CMICmdInvoker::ICmd
-    virtual bool Execute(void);
-    virtual bool Acknowledge(void);
-    virtual bool ParseArgs(void);
+    bool Execute(void) override;
+    bool Acknowledge(void) override;
+    bool ParseArgs(void) override;
     // From CMICmnBase
-    /* dtor */ virtual ~CMICmdCmdDataInfoLine(void);
+    /* dtor */ ~CMICmdCmdDataInfoLine(void) override;
 
     // Attributes:
   private:

@@ -43,7 +43,7 @@ class CMICmnMIValue : public CMICmnBase
     // Overridden:
   public:
     // From CMICmnBase
-    /* dtor */ virtual ~CMICmnMIValue(void);
+    /* dtor */ ~CMICmnMIValue(void) override;
 
     // Attributes:
   protected:

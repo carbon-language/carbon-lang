@@ -41,7 +41,7 @@ class CMIUtilFileStd : public CMICmnBase
     // Overridden:
   public:
     // From CMICmnBase
-    /* dtor */ virtual ~CMIUtilFileStd(void);
+    /* dtor */ ~CMIUtilFileStd(void) override;
 
     // Attributes:
   private:

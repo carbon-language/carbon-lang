@@ -68,8 +68,8 @@ class CMICmdInvoker : public CMICmnBase, public CMICmdMgrSetCmdDeleteCallback::I
 
     // Methods:
   public:
-    bool Initialize(void);
-    bool Shutdown(void);
+    bool Initialize(void) override;
+    bool Shutdown(void) override;
     bool CmdExecute(CMICmdBase &vCmd);
     bool CmdExecuteFinished(CMICmdBase &vCmd);
 
@@ -92,9 +92,9 @@ class CMICmdInvoker : public CMICmnBase, public CMICmdMgrSetCmdDeleteCallback::I
     // Overridden:
   private:
     // From CMICmnBase
-    /* dtor */ virtual ~CMICmdInvoker(void);
+    /* dtor */ ~CMICmdInvoker(void) override;
     // From CMICmdMgrSetCmdDeleteCallback::ICallback
-    virtual void Delete(SMICmdData &vCmd);
+    void Delete(SMICmdData &vCmd) override;
 
     // Attributes:
   private:

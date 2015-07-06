@@ -45,7 +45,7 @@ class CMICmnMIValueResult : public CMICmnMIValue
     // Overridden:
   public:
     // From CMICmnBase
-    /* dtor */ virtual ~CMICmnMIValueResult(void);
+    /* dtor */ ~CMICmnMIValueResult(void) override;
 
     // Methods:
   private:

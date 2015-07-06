@@ -35,8 +35,8 @@ class CMICmnStreamStdout : public CMICmnBase, public MI::ISingleton<CMICmnStream
 
     // Methods:
   public:
-    bool Initialize(void);
-    bool Shutdown(void);
+    bool Initialize(void) override;
+    bool Shutdown(void) override;
     //
     bool Lock(void);
     bool Unlock(void);
@@ -54,7 +54,7 @@ class CMICmnStreamStdout : public CMICmnBase, public MI::ISingleton<CMICmnStream
     // Overridden:
   private:
     // From CMICmnBase
-    /* dtor */ virtual ~CMICmnStreamStdout(void);
+    /* dtor */ ~CMICmnStreamStdout(void) override;
 
     // Attributes:
   private:

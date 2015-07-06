@@ -56,10 +56,10 @@ class CMICmdCmdExecRun : public CMICmdBase
     // Overridden:
   public:
     // From CMICmdInvoker::ICmd
-    virtual bool Execute(void);
-    virtual bool Acknowledge(void);
+    bool Execute(void) override;
+    bool Acknowledge(void) override;
     // From CMICmnBase
-    /* dtor */ virtual ~CMICmdCmdExecRun(void);
+    /* dtor */ ~CMICmdCmdExecRun(void) override;
 
     // Attributes:
   private:
@@ -87,10 +87,10 @@ class CMICmdCmdExecContinue : public CMICmdBase
     // Overridden:
   public:
     // From CMICmdInvoker::ICmd
-    virtual bool Execute(void);
-    virtual bool Acknowledge(void);
+    bool Execute(void) override;
+    bool Acknowledge(void) override;
     // From CMICmnBase
-    /* dtor */ virtual ~CMICmdCmdExecContinue(void);
+    /* dtor */ ~CMICmdCmdExecContinue(void) override;
 
     // Attributes:
   private:
@@ -118,11 +118,11 @@ class CMICmdCmdExecNext : public CMICmdBase
     // Overridden:
   public:
     // From CMICmdInvoker::ICmd
-    virtual bool Execute(void);
-    virtual bool Acknowledge(void);
-    virtual bool ParseArgs(void);
+    bool Execute(void) override;
+    bool Acknowledge(void) override;
+    bool ParseArgs(void) override;
     // From CMICmnBase
-    /* dtor */ virtual ~CMICmdCmdExecNext(void);
+    /* dtor */ ~CMICmdCmdExecNext(void) override;
 
     // Attributes:
   private:
@@ -152,11 +152,11 @@ class CMICmdCmdExecStep : public CMICmdBase
     // Overridden:
   public:
     // From CMICmdInvoker::ICmd
-    virtual bool Execute(void);
-    virtual bool Acknowledge(void);
-    virtual bool ParseArgs(void);
+    bool Execute(void) override;
+    bool Acknowledge(void) override;
+    bool ParseArgs(void) override;
     // From CMICmnBase
-    /* dtor */ virtual ~CMICmdCmdExecStep(void);
+    /* dtor */ ~CMICmdCmdExecStep(void) override;
 
     // Attributes:
   private:
@@ -186,11 +186,11 @@ class CMICmdCmdExecNextInstruction : public CMICmdBase
     // Overridden:
   public:
     // From CMICmdInvoker::ICmd
-    virtual bool Execute(void);
-    virtual bool Acknowledge(void);
-    virtual bool ParseArgs(void);
+    bool Execute(void) override;
+    bool Acknowledge(void) override;
+    bool ParseArgs(void) override;
     // From CMICmnBase
-    /* dtor */ virtual ~CMICmdCmdExecNextInstruction(void);
+    /* dtor */ ~CMICmdCmdExecNextInstruction(void) override;
 
     // Attributes:
   private:
@@ -220,11 +220,11 @@ class CMICmdCmdExecStepInstruction : public CMICmdBase
     // Overridden:
   public:
     // From CMICmdInvoker::ICmd
-    virtual bool Execute(void);
-    virtual bool Acknowledge(void);
-    virtual bool ParseArgs(void);
+    bool Execute(void) override;
+    bool Acknowledge(void) override;
+    bool ParseArgs(void) override;
     // From CMICmnBase
-    /* dtor */ virtual ~CMICmdCmdExecStepInstruction(void);
+    /* dtor */ ~CMICmdCmdExecStepInstruction(void) override;
 
     // Attributes:
   private:
@@ -254,11 +254,11 @@ class CMICmdCmdExecFinish : public CMICmdBase
     // Overridden:
   public:
     // From CMICmdInvoker::ICmd
-    virtual bool Execute(void);
-    virtual bool Acknowledge(void);
-    virtual bool ParseArgs(void);
+    bool Execute(void) override;
+    bool Acknowledge(void) override;
+    bool ParseArgs(void) override;
     // From CMICmnBase
-    /* dtor */ virtual ~CMICmdCmdExecFinish(void);
+    /* dtor */ ~CMICmdCmdExecFinish(void) override;
 
     // Attributes:
   private:
@@ -290,10 +290,10 @@ class CMICmdCmdExecInterrupt : public CMICmdBase
     // Overridden:
   public:
     // From CMICmdInvoker::ICmd
-    virtual bool Execute(void);
-    virtual bool Acknowledge(void);
+    bool Execute(void) override;
+    bool Acknowledge(void) override;
     // From CMICmnBase
-    /* dtor */ virtual ~CMICmdCmdExecInterrupt(void);
+    /* dtor */ ~CMICmdCmdExecInterrupt(void) override;
 
     // Attributes:
   private:
@@ -321,11 +321,11 @@ class CMICmdCmdExecArguments : public CMICmdBase
     // Overridden:
   public:
     // From CMICmdInvoker::ICmd
-    virtual bool Execute(void);
-    virtual bool Acknowledge(void);
-    virtual bool ParseArgs(void);
+    bool Execute(void) override;
+    bool Acknowledge(void) override;
+    bool ParseArgs(void) override;
     // From CMICmnBase
-    /* dtor */ virtual ~CMICmdCmdExecArguments(void);
+    /* dtor */ ~CMICmdCmdExecArguments(void) override;
 
     // Attributes:
   private:
@@ -350,8 +350,8 @@ class CMICmdCmdExecAbort : public CMICmdBase
     // Overridden:
   public:
     // From CMICmdInvoker::ICmd
-    virtual bool Execute(void);
-    virtual bool Acknowledge(void);
+    bool Execute(void) override;
+    bool Acknowledge(void) override;
     // From CMICmnBase
-    /* dtor */ virtual ~CMICmdCmdExecAbort(void);
+    /* dtor */ ~CMICmdCmdExecAbort(void) override;
 };

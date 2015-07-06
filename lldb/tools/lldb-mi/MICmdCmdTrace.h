@@ -44,8 +44,8 @@ class CMICmdCmdTraceStatus : public CMICmdBase
     // Overridden:
   public:
     // From CMICmdInvoker::ICmd
-    virtual bool Execute(void);
-    virtual bool Acknowledge(void);
+    bool Execute(void) override;
+    bool Acknowledge(void) override;
     // From CMICmnBase
-    /* dtor */ virtual ~CMICmdCmdTraceStatus(void);
+    /* dtor */ ~CMICmdCmdTraceStatus(void) override;
 };

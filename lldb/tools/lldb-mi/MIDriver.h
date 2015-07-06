@@ -68,8 +68,8 @@ class CMIDriver : public CMICmnBase,
     // Methods:
   public:
     // MI system
-    bool Initialize(void);
-    bool Shutdown(void);
+    bool Initialize(void) override;
+    bool Shutdown(void) override;
 
     // MI state
     bool GetExitApplicationFlag(void) const;
@@ -94,26 +94,26 @@ class CMIDriver : public CMICmnBase,
     // Overridden:
   public:
     // From CMIDriverMgr::IDriver
-    virtual bool DoInitialize(void);
-    virtual bool DoShutdown(void);
-    virtual bool DoMainLoop(void);
-    virtual lldb::SBError DoParseArgs(const int argc, const char *argv[], FILE *vpStdOut, bool &vwbExiting);
-    virtual CMIUtilString GetError(void) const;
-    virtual const CMIUtilString &GetName(void) const;
-    virtual lldb::SBDebugger &GetTheDebugger(void);
-    virtual bool GetDriverIsGDBMICompatibleDriver(void) const;
-    virtual bool SetId(const CMIUtilString &vId);
-    virtual const CMIUtilString &GetId(void) const;
+    bool DoInitialize(void) override;
+    bool DoShutdown(void) override;
+    bool DoMainLoop(void) override;
+    lldb::SBError DoParseArgs(const int argc, const char *argv[], FILE *vpStdOut, bool &vwbExiting) override;
+    CMIUtilString GetError(void) const override;
+    const CMIUtilString &GetName(void) const override;
+    lldb::SBDebugger &GetTheDebugger(void) override;
+    bool GetDriverIsGDBMICompatibleDriver(void) const override;
+    bool SetId(const CMIUtilString &vId) override;
+    const CMIUtilString &GetId(void) const override;
     // From CMIDriverBase
-    virtual void SetExitApplicationFlag(const bool vbForceExit);
-    virtual bool DoFallThruToAnotherDriver(const CMIUtilString &vCmd, CMIUtilString &vwErrMsg);
-    virtual bool SetDriverToFallThruTo(const CMIDriverBase &vrOtherDriver);
-    virtual FILE *GetStdin(void) const;
-    virtual FILE *GetStdout(void) const;
-    virtual FILE *GetStderr(void) const;
-    virtual const CMIUtilString &GetDriverName(void) const;
-    virtual const CMIUtilString &GetDriverId(void) const;
-    virtual void DeliverSignal(int signal);
+    void SetExitApplicationFlag(const bool vbForceExit) override;
+    bool DoFallThruToAnotherDriver(const CMIUtilString &vCmd, CMIUtilString &vwErrMsg) override;
+    bool SetDriverToFallThruTo(const CMIDriverBase &vrOtherDriver) override;
+    FILE *GetStdin(void) const override;
+    FILE *GetStdout(void) const override;
+    FILE *GetStderr(void) const override;
+    const CMIUtilString &GetDriverName(void) const override;
+    const CMIUtilString &GetDriverId(void) const override;
+    void DeliverSignal(int signal) override;
 
     // Typedefs:
   private:
@@ -142,7 +142,7 @@ class CMIDriver : public CMICmnBase,
     // Overridden:
   private:
     // From CMICmnBase
-    /* dtor */ virtual ~CMIDriver(void);
+    /* dtor */ ~CMIDriver(void) override;
 
     // Attributes:
   private:

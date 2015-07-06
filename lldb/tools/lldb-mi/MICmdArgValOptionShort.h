@@ -44,11 +44,11 @@ class CMICmdArgValOptionShort : public CMICmdArgValOptionLong
     // Overridden:
   public:
     // From CMICmdArgValBase
-    /* dtor */ virtual ~CMICmdArgValOptionShort(void);
+    /* dtor */ ~CMICmdArgValOptionShort(void) override;
 
     // Overridden:
   private:
     // From CMICmdArgValOptionLong
-    virtual bool IsArgOptionCorrect(const CMIUtilString &vrTxt) const;
-    virtual bool ArgNameMatch(const CMIUtilString &vrTxt) const;
+    bool IsArgOptionCorrect(const CMIUtilString &vrTxt) const override;
+    bool ArgNameMatch(const CMIUtilString &vrTxt) const override;
 };

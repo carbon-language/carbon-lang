@@ -51,11 +51,11 @@ class CMICmdCmdStackInfoDepth : public CMICmdBase
     // Overridden:
   public:
     // From CMICmdInvoker::ICmd
-    virtual bool Execute(void);
-    virtual bool Acknowledge(void);
-    virtual bool ParseArgs(void);
+    bool Execute(void) override;
+    bool Acknowledge(void) override;
+    bool ParseArgs(void) override;
     // From CMICmnBase
-    /* dtor */ virtual ~CMICmdCmdStackInfoDepth(void);
+    /* dtor */ ~CMICmdCmdStackInfoDepth(void) override;
 
     // Attributes:
   private:
@@ -82,11 +82,11 @@ class CMICmdCmdStackInfoFrame : public CMICmdBase
     // Overridden:
   public:
     // From CMICmdInvoker::ICmd
-    virtual bool Execute(void);
-    virtual bool Acknowledge(void);
-    virtual bool ParseArgs(void);
+    bool Execute(void) override;
+    bool Acknowledge(void) override;
+    bool ParseArgs(void) override;
     // From CMICmnBase
-    /* dtor */ virtual ~CMICmdCmdStackInfoFrame(void);
+    /* dtor */ ~CMICmdCmdStackInfoFrame(void) override;
 
     // Attributes:
   private:
@@ -114,11 +114,11 @@ class CMICmdCmdStackListFrames : public CMICmdBase
     // Overridden:
   public:
     // From CMICmdInvoker::ICmd
-    virtual bool Execute(void);
-    virtual bool Acknowledge(void);
-    virtual bool ParseArgs(void);
+    bool Execute(void) override;
+    bool Acknowledge(void) override;
+    bool ParseArgs(void) override;
     // From CMICmnBase
-    /* dtor */ virtual ~CMICmdCmdStackListFrames(void);
+    /* dtor */ ~CMICmdCmdStackListFrames(void) override;
 
     // Typedefs:
   private:
@@ -154,11 +154,11 @@ class CMICmdCmdStackListArguments : public CMICmdBase
     // Overridden:
   public:
     // From CMICmdInvoker::ICmd
-    virtual bool Execute(void);
-    virtual bool Acknowledge(void);
-    virtual bool ParseArgs(void);
+    bool Execute(void) override;
+    bool Acknowledge(void) override;
+    bool ParseArgs(void) override;
     // From CMICmnBase
-    /* dtor */ virtual ~CMICmdCmdStackListArguments(void);
+    /* dtor */ ~CMICmdCmdStackListArguments(void) override;
 
     // Attributes:
   private:
@@ -191,11 +191,11 @@ class CMICmdCmdStackListLocals : public CMICmdBase
     // Overridden:
   public:
     // From CMICmdInvoker::ICmd
-    virtual bool Execute(void);
-    virtual bool Acknowledge(void);
-    virtual bool ParseArgs(void);
+    bool Execute(void) override;
+    bool Acknowledge(void) override;
+    bool ParseArgs(void) override;
     // From CMICmnBase
-    /* dtor */ virtual ~CMICmdCmdStackListLocals(void);
+    /* dtor */ ~CMICmdCmdStackListLocals(void) override;
 
     // Attributes:
   private:
@@ -224,11 +224,11 @@ public:
     // Overridden:
 public:
     // From CMICmdInvoker::ICmd
-    virtual bool Execute(void);
-    virtual bool Acknowledge(void);
-    virtual bool ParseArgs(void);
+    bool Execute(void) override;
+    bool Acknowledge(void) override;
+    bool ParseArgs(void) override;
     // From CMICmnBase
-    /* dtor */ virtual ~CMICmdCmdStackListVariables(void);
+    /* dtor */ ~CMICmdCmdStackListVariables(void) override;
     
     // Attributes
 private:
@@ -257,11 +257,11 @@ class CMICmdCmdStackSelectFrame : public CMICmdBase
     // Overridden:
   public:
     // From CMICmdInvoker::ICmd
-    virtual bool Execute(void);
-    virtual bool Acknowledge(void);
-    virtual bool ParseArgs(void);
+    bool Execute(void) override;
+    bool Acknowledge(void) override;
+    bool ParseArgs(void) override;
     // From CMICmnBase
-    /* dtor */ virtual ~CMICmdCmdStackSelectFrame(void);
+    /* dtor */ ~CMICmdCmdStackSelectFrame(void) override;
 
     // Attributes:
   private:

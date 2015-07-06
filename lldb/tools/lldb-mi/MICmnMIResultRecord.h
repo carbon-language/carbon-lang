@@ -76,7 +76,7 @@ class CMICmnMIResultRecord : public CMICmnBase
     // Overridden:
   public:
     // From CMICmnBase
-    /* dtor */ virtual ~CMICmnMIResultRecord(void);
+    /* dtor */ ~CMICmnMIResultRecord(void) override;
 
     // Methods:
   private:

@@ -49,9 +49,9 @@ class CMICmdArgValListOfN : public CMICmdArgValListBase
     // Overridden:
   public:
     // From CMICmdArgValBase
-    /* dtor */ virtual ~CMICmdArgValListOfN(void);
+    /* dtor */ ~CMICmdArgValListOfN(void) override;
     // From CMICmdArgSet::IArg
-    virtual bool Validate(CMICmdArgContext &vArgContext);
+    bool Validate(CMICmdArgContext &vArgContext) override;
 
     // Methods:
   private:

@@ -75,8 +75,8 @@ class CMIDriverMgr : public CMICmnBase, public MI::ISingleton<CMIDriverMgr>
     // Methods:
   public:
     // MI system
-    bool Initialize(void);
-    bool Shutdown(void);
+    bool Initialize(void) override;
+    bool Shutdown(void) override;
     //
     CMIUtilString GetAppVersion(void) const;
     bool RegisterDriver(const IDriver &vrADriver, const CMIUtilString &vrDriverID);
@@ -115,7 +115,7 @@ class CMIDriverMgr : public CMICmnBase, public MI::ISingleton<CMIDriverMgr>
     // Overridden:
   private:
     // From CMICmnBase
-    /* dtor */ virtual ~CMIDriverMgr(void);
+    /* dtor */ ~CMIDriverMgr(void) override;
 
     // Attributes:
   private:

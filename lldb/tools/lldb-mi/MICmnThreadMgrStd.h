@@ -35,8 +35,8 @@ class CMICmnThreadMgrStd : public CMICmnBase, public MI::ISingleton<CMICmnThread
 
     // Methods:
   public:
-    bool Initialize(void);
-    bool Shutdown(void);
+    bool Initialize(void) override;
+    bool Shutdown(void) override;
     bool
     ThreadAllTerminate(void); // Ask all threads to stop (caution)
     template <typename T>     // Ask the thread manager to start and stop threads on our behalf
@@ -58,7 +58,7 @@ class CMICmnThreadMgrStd : public CMICmnBase, public MI::ISingleton<CMICmnThread
     // Overridden:
   private:
     // From CMICmnBase
-    /* dtor */ virtual ~CMICmnThreadMgrStd(void);
+    /* dtor */ ~CMICmnThreadMgrStd(void) override;
 
     // Attributes:
   private:

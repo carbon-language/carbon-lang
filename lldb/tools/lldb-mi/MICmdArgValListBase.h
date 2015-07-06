@@ -75,7 +75,7 @@ class CMICmdArgValListBase : public CMICmdArgValBaseTemplate<std::vector<CMICmdA
     // Overridden:
   public:
     // From CMICmdArgValBase
-    /* dtor */ virtual ~CMICmdArgValListBase(void);
+    /* dtor */ ~CMICmdArgValListBase(void) override;
 
     // Methods:
   protected:

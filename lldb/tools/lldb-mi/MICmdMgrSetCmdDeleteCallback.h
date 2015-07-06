@@ -64,7 +64,7 @@ class CSetClients : public std::set<class ICallback *>, public CMICmnBase
     // Overridden:
   public:
     // From CMICmnBase
-    /* dtor */ virtual ~CSetClients(void);
+    /* dtor */ ~CSetClients(void) override;
 
     // Attributes:
   private:

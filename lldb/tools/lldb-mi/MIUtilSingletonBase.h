@@ -22,8 +22,8 @@ namespace MI
 //   // Overridden:
 //   public:
 //       // From MI::ISingleton
-//       virtual bool Initialize( void );
-//       virtual bool Shutdown( void );
+//       bool Initialize(void) override;
+//       bool Shutdown(void) override;
 //   };
 
 //++ ============================================================================

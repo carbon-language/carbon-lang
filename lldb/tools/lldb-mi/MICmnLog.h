@@ -93,8 +93,8 @@ class CMICmnLog : public MI::ISingleton<CMICmnLog>
     // Overridden:
   public:
     // From MI::ISingleton
-    virtual bool Initialize(void);
-    virtual bool Shutdown(void);
+    bool Initialize(void) override;
+    bool Shutdown(void) override;
 
     // Methods:
   private:
@@ -105,7 +105,7 @@ class CMICmnLog : public MI::ISingleton<CMICmnLog>
     // Overridden:
   private:
     // From CMICmnBase
-    /* dtor */ virtual ~CMICmnLog(void);
+    /* dtor */ ~CMICmnLog(void) override;
 
     // Typedef:
   private:
