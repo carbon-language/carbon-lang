@@ -1,8 +1,9 @@
 ; RUN: llc < %s -march=x86 -mattr=+sse4.2 | FileCheck %s
-; CHECK: {{cwtl|movswl}}
-; CHECK: {{cwtl|movswl}}
+; CHECK: psllq $48, %xmm0
+; CHECK: psrad $16, %xmm0
+; CHECK: pshufd {{.*#+}} xmm0 = xmm0[1,3,2,3]
 
-; sign extension v2i32 to v2i16
+; sign extension v2i16 to v2i32
 
 define void @convert(<2 x i32>* %dst.addr, <2 x i16> %src) nounwind {
 entry:

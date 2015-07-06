@@ -3,13 +3,12 @@
 ; test vector shifts converted to proper SSE2 vector shifts when the shift
 ; amounts are the same.
 
-; Note that x86 does have ashr 
+; Note that x86 does have ashr
 
-; shift1a can't use a packed shift
 define void @shift1a(<2 x i64> %val, <2 x i64>* %dst) nounwind {
 entry:
 ; CHECK-LABEL: shift1a:
-; CHECK: sarl
+; CHECK: psrad $31
   %ashr = ashr <2 x i64> %val, < i64 32, i64 32 >
   store <2 x i64> %ashr, <2 x i64>* %dst
   ret void

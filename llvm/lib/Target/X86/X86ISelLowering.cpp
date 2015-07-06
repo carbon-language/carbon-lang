@@ -1032,6 +1032,7 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     setOperationAction(ISD::SHL,               MVT::v2i64, Custom);
     setOperationAction(ISD::SHL,               MVT::v4i32, Custom);
 
+    setOperationAction(ISD::SRA,               MVT::v2i64, Custom);
     setOperationAction(ISD::SRA,               MVT::v4i32, Custom);
   }
 
@@ -1211,6 +1212,7 @@ X86TargetLowering::X86TargetLowering(const X86TargetMachine &TM,
     setOperationAction(ISD::SHL,               MVT::v4i64, Custom);
     setOperationAction(ISD::SHL,               MVT::v8i32, Custom);
 
+    setOperationAction(ISD::SRA,               MVT::v4i64, Custom);
     setOperationAction(ISD::SRA,               MVT::v8i32, Custom);
 
     // Custom lower several nodes for 256-bit types.
@@ -16948,6 +16950,38 @@ static SDValue LowerScalarImmediateShift(SDValue Op, SelectionDAG &DAG,
   unsigned X86Opc = (Op.getOpcode() == ISD::SHL) ? X86ISD::VSHLI :
     (Op.getOpcode() == ISD::SRL) ? X86ISD::VSRLI : X86ISD::VSRAI;
 
+  auto ArithmeticShiftRight64 = [&](uint64_t ShiftAmt) {
+    assert((VT == MVT::v2i64 || VT == MVT::v4i64) && "Unexpected SRA type");
+    MVT ExVT = MVT::getVectorVT(MVT::i32, VT.getVectorNumElements() * 2);
+    SDValue Ex = DAG.getBitcast(ExVT, R);
+
+    if (ShiftAmt >= 32) {
+      // Splat sign to upper i32 dst, and SRA upper i32 src to lower i32.
+      SDValue Upper =
+          getTargetVShiftByConstNode(X86ISD::VSRAI, dl, ExVT, Ex, 31, DAG);
+      SDValue Lower = getTargetVShiftByConstNode(X86ISD::VSRAI, dl, ExVT, Ex,
+                                                 ShiftAmt - 32, DAG);
+      if (VT == MVT::v2i64)
+        Ex = DAG.getVectorShuffle(ExVT, dl, Upper, Lower, {5, 1, 7, 3});
+      if (VT == MVT::v4i64)
+        Ex = DAG.getVectorShuffle(ExVT, dl, Upper, Lower,
+                                  {9, 1, 11, 3, 13, 5, 15, 7});
+    } else {
+      // SRA upper i32, SHL whole i64 and select lower i32.
+      SDValue Upper = getTargetVShiftByConstNode(X86ISD::VSRAI, dl, ExVT, Ex,
+                                                 ShiftAmt, DAG);
+      SDValue Lower =
+          getTargetVShiftByConstNode(X86ISD::VSRLI, dl, VT, R, ShiftAmt, DAG);
+      Lower = DAG.getBitcast(ExVT, Lower);
+      if (VT == MVT::v2i64)
+        Ex = DAG.getVectorShuffle(ExVT, dl, Upper, Lower, {4, 1, 6, 3});
+      if (VT == MVT::v4i64)
+        Ex = DAG.getVectorShuffle(ExVT, dl, Upper, Lower,
+                                  {8, 1, 10, 3, 12, 5, 14, 7});
+    }
+    return DAG.getBitcast(VT, Ex);
+  };
+
   // Optimize shl/srl/sra with constant shift amount.
   if (auto *BVAmt = dyn_cast<BuildVectorSDNode>(Amt)) {
     if (auto *ShiftConst = BVAmt->getConstantSplatNode()) {
@@ -16955,6 +16989,11 @@ static SDValue LowerScalarImmediateShift(SDValue Op, SelectionDAG &DAG,
 
       if (SupportedVectorShiftWithImm(VT, Subtarget, Op.getOpcode()))
         return getTargetVShiftByConstNode(X86Opc, dl, VT, R, ShiftAmt, DAG);
+
+      // i64 SRA needs to be performed as partial shifts.
+      if ((VT == MVT::v2i64 || (Subtarget->hasInt256() && VT == MVT::v4i64)) &&
+          Op.getOpcode() == ISD::SRA)
+        return ArithmeticShiftRight64(ShiftAmt);
 
       if (VT == MVT::v16i8 || (Subtarget->hasInt256() && VT == MVT::v32i8)) {
         unsigned NumElts = VT.getVectorNumElements();
@@ -17039,7 +17078,12 @@ static SDValue LowerScalarImmediateShift(SDValue Op, SelectionDAG &DAG,
       if (ShAmt != ShiftAmt)
         return SDValue();
     }
-    return getTargetVShiftByConstNode(X86Opc, dl, VT, R, ShiftAmt, DAG);
+
+    if (SupportedVectorShiftWithImm(VT, Subtarget, Op.getOpcode()))
+      return getTargetVShiftByConstNode(X86Opc, dl, VT, R, ShiftAmt, DAG);
+
+    if (Op.getOpcode() == ISD::SRA)
+      return ArithmeticShiftRight64(ShiftAmt);
   }
 
   return SDValue();
@@ -17121,7 +17165,9 @@ static SDValue LowerScalarVariableShift(SDValue Op, SelectionDAG &DAG,
         if (Vals[j] != Amt.getOperand(i + j))
           return SDValue();
     }
-    return DAG.getNode(X86OpcV, dl, VT, R, Op.getOperand(1));
+
+    if (SupportedVectorShiftWithBaseAmnt(VT, Subtarget, Op.getOpcode()))
+      return DAG.getNode(X86OpcV, dl, VT, R, Op.getOperand(1));
   }
   return SDValue();
 }

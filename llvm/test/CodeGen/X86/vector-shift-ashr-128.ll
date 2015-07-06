@@ -954,38 +954,35 @@ define <16 x i8> @constant_shift_v16i8(<16 x i8> %a) {
 define <2 x i64> @splatconstant_shift_v2i64(<2 x i64> %a) {
 ; SSE2-LABEL: splatconstant_shift_v2i64:
 ; SSE2:       # BB#0:
-; SSE2-NEXT:    movd       %xmm0, %rax
-; SSE2-NEXT:    sarq       $7, %rax
-; SSE2-NEXT:    movd       %rax, %xmm1
-; SSE2-NEXT:    pshufd     {{.*#+}} xmm0 = xmm0[2,3,0,1]
-; SSE2-NEXT:    movd       %xmm0, %rax
-; SSE2-NEXT:    sarq       $7, %rax
-; SSE2-NEXT:    movd       %rax, %xmm0
-; SSE2-NEXT:    punpcklqdq {{.*#+}} xmm1 = xmm1[0],xmm0[0]
-; SSE2-NEXT:    movdqa     %xmm1, %xmm0
+; SSE2-NEXT:    movdqa    %xmm0, %xmm1
+; SSE2-NEXT:    psrad     $7, %xmm1
+; SSE2-NEXT:    pshufd    {{.*#+}} xmm1 = xmm1[1,3,2,3]
+; SSE2-NEXT:    psrlq     $7, %xmm0
+; SSE2-NEXT:    pshufd    {{.*#+}} xmm0 = xmm0[0,2,2,3]
+; SSE2-NEXT:    punpckldq {{.*#+}} xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1]
 ; SSE2-NEXT:    retq
 ;
 ; SSE41-LABEL: splatconstant_shift_v2i64:
 ; SSE41:       # BB#0:
-; SSE41-NEXT:    pextrq     $1, %xmm0, %rax
-; SSE41-NEXT:    sarq       $7, %rax
-; SSE41-NEXT:    movd       %rax, %xmm1
-; SSE41-NEXT:    movd       %xmm0, %rax
-; SSE41-NEXT:    sarq       $7, %rax
-; SSE41-NEXT:    movd       %rax, %xmm0
-; SSE41-NEXT:    punpcklqdq {{.*#+}} xmm0 = xmm0[0],xmm1[0]
+; SSE41-NEXT:    movdqa  %xmm0, %xmm1
+; SSE41-NEXT:    psrad   $7, %xmm1
+; SSE41-NEXT:    psrlq   $7, %xmm0
+; SSE41-NEXT:    pblendw {{.*#+}} xmm0 = xmm0[0,1],xmm1[2,3],xmm0[4,5],xmm1[6,7]
 ; SSE41-NEXT:    retq
 ;
-; AVX-LABEL: splatconstant_shift_v2i64:
-; AVX:       # BB#0:
-; AVX-NEXT:    vpextrq     $1, %xmm0, %rax
-; AVX-NEXT:    sarq        $7, %rax
-; AVX-NEXT:    vmovq       %rax, %xmm1
-; AVX-NEXT:    vmovq       %xmm0, %rax
-; AVX-NEXT:    sarq        $7, %rax
-; AVX-NEXT:    vmovq       %rax, %xmm0
-; AVX-NEXT:    vpunpcklqdq {{.*#+}} xmm0 = xmm0[0],xmm1[0]
-; AVX-NEXT:    retq
+; AVX1-LABEL: splatconstant_shift_v2i64:
+; AVX1:       # BB#0:
+; AVX1-NEXT:    vpsrad   $7, %xmm0, %xmm1
+; AVX1-NEXT:    vpsrlq   $7, %xmm0, %xmm0
+; AVX1-NEXT:    vpblendw {{.*#+}} xmm0 = xmm0[0,1],xmm1[2,3],xmm0[4,5],xmm1[6,7]
+; AVX1-NEXT:    retq
+;
+; AVX2-LABEL: splatconstant_shift_v2i64:
+; AVX2:       # BB#0:
+; AVX2-NEXT:    vpsrad   $7, %xmm0, %xmm1
+; AVX2-NEXT:    vpsrlq   $7, %xmm0, %xmm0
+; AVX2-NEXT:    vpblendd {{.*#+}} xmm0 = xmm0[0],xmm1[1],xmm0[2],xmm1[3]
+; AVX2-NEXT:    retq
   %shift = ashr <2 x i64> %a, <i64 7, i64 7>
   ret <2 x i64> %shift
 }

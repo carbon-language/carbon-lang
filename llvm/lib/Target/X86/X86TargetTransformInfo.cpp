@@ -117,6 +117,8 @@ unsigned X86TTIImpl::getArithmeticInstrCost(
 
   static const CostTblEntry<MVT::SimpleValueType>
   AVX2UniformConstCostTable[] = {
+    { ISD::SRA,  MVT::v4i64,   4 }, // 2 x psrad + shuffle.
+
     { ISD::SDIV, MVT::v16i16,  6 }, // vpmulhw sequence
     { ISD::UDIV, MVT::v16i16,  6 }, // vpmulhuw sequence
     { ISD::SDIV, MVT::v8i32,  15 }, // vpmuldq sequence
@@ -211,6 +213,7 @@ unsigned X86TTIImpl::getArithmeticInstrCost(
     { ISD::SRA,  MVT::v16i8,  4 }, // psrlw, pand, pxor, psubb.
     { ISD::SRA,  MVT::v8i16,  1 }, // psraw.
     { ISD::SRA,  MVT::v4i32,  1 }, // psrad.
+    { ISD::SRA,  MVT::v2i64,  4 }, // 2 x psrad + shuffle.
 
     { ISD::SDIV, MVT::v8i16,  6 }, // pmulhw sequence
     { ISD::UDIV, MVT::v8i16,  6 }, // pmulhuw sequence
