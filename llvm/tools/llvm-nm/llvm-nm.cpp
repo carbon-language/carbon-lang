@@ -901,10 +901,15 @@ static void dumpSymbolNamesFromObject(SymbolicFile &Obj, bool printName,
         S.Size = ELFSymbolRef(Sym).getSize();
     }
     if (PrintAddress && isa<ObjectFile>(Obj)) {
-      ErrorOr<uint64_t> AddressOrErr = SymbolRef(Sym).getAddress();
-      if (error(AddressOrErr.getError()))
-        break;
-      S.Address = *AddressOrErr;
+      SymbolRef SymRef(Sym);
+      if (SymFlags & SymbolRef::SF_Common) {
+        S.Address = SymRef.getCommonSize();
+      } else {
+        ErrorOr<uint64_t> AddressOrErr = SymRef.getAddress();
+        if (error(AddressOrErr.getError()))
+          break;
+        S.Address = *AddressOrErr;
+      }
     }
     S.TypeChar = getNMTypeChar(Obj, Sym);
     if (error(Sym.printName(OS)))

@@ -3,6 +3,7 @@
 
 // CHECK: 0000000000000000 ffffffffffffffff n a
 // CHECK: 0000000000000000 0000000000000000 N b
+// CHECK: 0000000000000004 0000000000000004 C c
 
         .section foo
 a:
@@ -10,3 +11,5 @@ a:
 
         .global b
 b:
+
+        .comm c,4,8
