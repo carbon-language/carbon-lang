@@ -90,10 +90,14 @@ void DIBuilder::finalize() {
   for (unsigned I = 0, E = AllRetainTypes.size(); I < E; I++)
     if (RetainSet.insert(AllRetainTypes[I]).second)
       RetainValues.push_back(AllRetainTypes[I]);
-  CUNode->replaceRetainedTypes(MDTuple::get(VMContext, RetainValues));
+
+  if (!RetainValues.empty())
+    CUNode->replaceRetainedTypes(MDTuple::get(VMContext, RetainValues));
 
   DISubprogramArray SPs = MDTuple::get(VMContext, AllSubprograms);
-  CUNode->replaceSubprograms(SPs.get());
+  if (!AllSubprograms.empty())
+    CUNode->replaceSubprograms(SPs.get());
+
   for (auto *SP : SPs) {
     if (MDTuple *Temp = SP->getVariables().get()) {
       const auto &PV = PreservedVariables.lookup(SP);
@@ -103,11 +107,13 @@ void DIBuilder::finalize() {
     }
   }
 
-  CUNode->replaceGlobalVariables(MDTuple::get(VMContext, AllGVs));
+  if (!AllGVs.empty())
+    CUNode->replaceGlobalVariables(MDTuple::get(VMContext, AllGVs));
 
-  CUNode->replaceImportedEntities(MDTuple::get(
-      VMContext, SmallVector<Metadata *, 16>(AllImportedModules.begin(),
-                                             AllImportedModules.end())));
+  if (!AllImportedModules.empty())
+    CUNode->replaceImportedEntities(MDTuple::get(
+        VMContext, SmallVector<Metadata *, 16>(AllImportedModules.begin(),
+                                               AllImportedModules.end())));
 
   // Now that all temp nodes have been replaced or deleted, resolve remaining
   // cycles.
