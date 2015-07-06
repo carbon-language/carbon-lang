@@ -52,10 +52,6 @@ TargetThreadWindows::RefreshStateAfterStop()
 void
 TargetThreadWindows::WillResume(lldb::StateType resume_state)
 {
-    Log *log(lldb_private::GetLogIfAllCategoriesSet (WINDOWS_LOG_THREAD));
-    if (log)
-        log->Printf ("TargetThreadWindows::WillResume (tid = %" PRIi64 ") setting thread resume state to %s",
-                     GetID(), StateAsCString(resume_state));
 }
 
 void
@@ -125,7 +121,7 @@ TargetThreadWindows::GetUnwinder()
 bool
 TargetThreadWindows::DoResume()
 {
-    StateType resume_state = GetResumeState();
+    StateType resume_state = GetTemporaryResumeState();
     StateType current_state = GetState();
     if (resume_state == current_state)
         return true;
