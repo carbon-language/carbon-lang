@@ -859,7 +859,8 @@ bool AMDGPUDAGToDAGISel::isDSOffsetLegal(const SDValue &Base, unsigned Offset,
       (OffsetBits == 8 && !isUInt<8>(Offset)))
     return false;
 
-  if (Subtarget->getGeneration() >= AMDGPUSubtarget::SEA_ISLANDS)
+  if (Subtarget->getGeneration() >= AMDGPUSubtarget::SEA_ISLANDS ||
+      Subtarget->unsafeDSOffsetFoldingEnabled())
     return true;
 
   // On Southern Islands instruction with a negative base value and an offset

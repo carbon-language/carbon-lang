@@ -76,6 +76,7 @@ private:
   bool EnablePromoteAlloca;
   bool EnableIfCvt;
   bool EnableLoadStoreOpt;
+  bool EnableUnsafeDSOffsetFolding;
   unsigned WavefrontSize;
   bool CFALUBug;
   int LocalMemorySize;
@@ -220,6 +221,10 @@ public:
 
   bool loadStoreOptEnabled() const {
     return EnableLoadStoreOpt;
+  }
+
+  bool unsafeDSOffsetFoldingEnabled() const {
+    return EnableUnsafeDSOffsetFolding;
   }
 
   unsigned getWavefrontSize() const {
