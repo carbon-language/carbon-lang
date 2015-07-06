@@ -77,8 +77,10 @@ class ExprSyscallTestCase(TestBase):
         process.Continue()
 
         # process all events
-        while listener.WaitForEvent(1, event):
-            pass
+        while listener.WaitForEvent(10, event):
+            new_state = lldb.SBProcess.GetStateFromEvent(event)
+            if new_state == lldb.eStateExited:
+                break
 
         self.assertEqual(process.GetState(), lldb.eStateExited)
         self.assertEqual(process.GetExitStatus(), 0)
