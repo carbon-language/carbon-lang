@@ -900,7 +900,7 @@ void UnwrappedLineParser::parseStructuralElement() {
           FormatTok->is(Keywords.kw_interface)) {
         parseRecord();
         addUnwrappedLine();
-        break;
+        return;
       }
 
       StringRef Text = FormatTok->TokenText;
