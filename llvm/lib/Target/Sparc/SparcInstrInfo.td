@@ -828,6 +828,20 @@ let rd = 0 in
   def UNIMP : F2_1<0b000, (outs), (ins i32imm:$imm22),
                   "unimp $imm22", []>;
 
+// Section B.32 - Flush Instruction Memory
+let rd = 0 in {
+  def FLUSHrr : F3_1<2, 0b111011, (outs), (ins MEMrr:$addr),
+                       "flush $addr", []>;
+  def FLUSHri : F3_2<2, 0b111011, (outs), (ins MEMri:$addr),
+                       "flush $addr", []>;
+
+  // The no-arg FLUSH is only here for the benefit of the InstAlias
+  // "flush", which cannot seem to use FLUSHrr, due to the inability
+  // to construct a MEMrr with fixed G0 registers.
+  let rs1 = 0, rs2 = 0 in
+    def FLUSH   : F3_1<2, 0b111011, (outs), (ins), "flush %g0", []>;
+}
+
 // Section B.33 - Floating-point Operate (FPop) Instructions
 
 // Convert Integer to Floating-point Instructions, p. 141

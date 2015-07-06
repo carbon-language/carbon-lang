@@ -306,6 +306,9 @@ def : InstAlias<"mov $rs2, $rd", (ORrr IntRegs:$rd, G0, IntRegs:$rs2)>;
 // mov simm13, rd -> or %g0, simm13, rd
 def : InstAlias<"mov $simm13, $rd", (ORri IntRegs:$rd, G0, i32imm:$simm13)>;
 
+// flush -> flush %g0
+def : InstAlias<"flush", (FLUSH), 0>;
+
 // set value, rd
 // (turns into a sequence of sethi+or, depending on the value)
 // def : InstAlias<"set $val, $rd", (ORri IntRegs:$rd, (SETHIi (HI22 imm:$val)), (LO10 imm:$val))>;

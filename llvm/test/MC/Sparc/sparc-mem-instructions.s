@@ -72,3 +72,13 @@
         st %o2, [%g1]
         ! CHECK: sta %o2, [%i0+%l6] 131 ! encoding: [0xd4,0xa6,0x10,0x76]
         sta %o2, [%i0 + %l6] 131
+
+        ! CHECK:  flush %g1+%g2         ! encoding: [0x81,0xd8,0x40,0x02]
+        flush %g1 + %g2
+        ! CHECK:  flush %g1+8           ! encoding: [0x81,0xd8,0x60,0x08]
+        flush %g1 + 8
+        ! CHECK:  flush %g1             ! encoding: [0x81,0xd8,0x40,0x00]
+        flush %g1
+        ! Not specified in manual, but accepted by gas.
+        ! CHECK:  flush %g0             ! encoding: [0x81,0xd8,0x00,0x00]
+        flush
