@@ -404,6 +404,8 @@ namespace llvm {
       PMULUDQ,
       // Vector multiply packed signed doubleword integers
       PMULDQ,
+      // Vector Multiply Packed UnsignedIntegers with Round and Scale
+      MULHRS,
 
       // FMA nodes
       FMADD,

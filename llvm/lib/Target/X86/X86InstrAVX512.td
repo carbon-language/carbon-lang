@@ -3140,6 +3140,8 @@ defm VPMULHW : avx512_binop_rm_vl_w<0xE5, "vpmulh", mulhs, SSE_INTALU_ITINS_P,
                                     HasBWI, 1>;
 defm VPMULHUW : avx512_binop_rm_vl_w<0xE4, "vpmulhu", mulhu, SSE_INTMUL_ITINS_P, 
                                     HasBWI, 1>;
+defm VPMULHRSW : avx512_binop_rm_vl_w<0x0B, "vpmulhrs", X86mulhrs, SSE_INTMUL_ITINS_P, 
+                                    HasBWI, 1>, T8PD;
 defm VPAVG : avx512_binop_rm_vl_bw<0xE0, 0xE3, "vpavg", X86avg,
                                     SSE_INTALU_ITINS_P, HasBWI, 1>;
                                    
