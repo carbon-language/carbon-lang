@@ -185,6 +185,10 @@ struct NMSymbol {
 }
 
 static bool compareSymbolAddress(const NMSymbol &A, const NMSymbol &B) {
+  if (A.TypeChar == 'U' && B.TypeChar != 'U')
+    return true;
+  if (A.TypeChar != 'U' && B.TypeChar == 'U')
+    return false;
   if (A.Address < B.Address)
     return true;
   if (A.Address == B.Address && A.Name < B.Name)
