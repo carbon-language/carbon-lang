@@ -1066,7 +1066,7 @@ createArgument(const Record &Arg, StringRef Attr,
 
   if (!Ptr) {
     // Search in reverse order so that the most-derived type is handled first.
-    std::vector<Record*> Bases = Search->getSuperClasses();
+    ArrayRef<Record*> Bases = Search->getSuperClasses();
     for (const auto *Base : llvm::make_range(Bases.rbegin(), Bases.rend())) {
       if ((Ptr = createArgument(Arg, Attr, Base)))
         break;
@@ -1456,7 +1456,7 @@ void EmitClangAttrClass(RecordKeeper &Records, raw_ostream &OS) {
     if (!R.getValueAsBit("ASTNode"))
       continue;
     
-    const std::vector<Record *> Supers = R.getSuperClasses();
+    ArrayRef<Record *> Supers = R.getSuperClasses();
     assert(!Supers.empty() && "Forgot to specify a superclass for the attr");
     std::string SuperName;
     for (const auto *Super : llvm::make_range(Supers.rbegin(), Supers.rend())) {
