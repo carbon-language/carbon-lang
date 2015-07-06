@@ -73,37 +73,41 @@ void DIBuilder::trackIfUnresolved(MDNode *N) {
 }
 
 void DIBuilder::finalize() {
-  if (CUNode) {
-    CUNode->replaceEnumTypes(MDTuple::get(VMContext, AllEnumTypes));
-
-    SmallVector<Metadata *, 16> RetainValues;
-    // Declarations and definitions of the same type may be retained. Some
-    // clients RAUW these pairs, leaving duplicates in the retained types
-    // list. Use a set to remove the duplicates while we transform the
-    // TrackingVHs back into Values.
-    SmallPtrSet<Metadata *, 16> RetainSet;
-    for (unsigned I = 0, E = AllRetainTypes.size(); I < E; I++)
-      if (RetainSet.insert(AllRetainTypes[I]).second)
-        RetainValues.push_back(AllRetainTypes[I]);
-    CUNode->replaceRetainedTypes(MDTuple::get(VMContext, RetainValues));
-
-    DISubprogramArray SPs = MDTuple::get(VMContext, AllSubprograms);
-    CUNode->replaceSubprograms(SPs.get());
-    for (auto *SP : SPs) {
-      if (MDTuple *Temp = SP->getVariables().get()) {
-        const auto &PV = PreservedVariables.lookup(SP);
-        SmallVector<Metadata *, 4> Variables(PV.begin(), PV.end());
-        DINodeArray AV = getOrCreateArray(Variables);
-        TempMDTuple(Temp)->replaceAllUsesWith(AV.get());
-      }
-    }
-
-    CUNode->replaceGlobalVariables(MDTuple::get(VMContext, AllGVs));
-
-    CUNode->replaceImportedEntities(MDTuple::get(
-        VMContext, SmallVector<Metadata *, 16>(AllImportedModules.begin(),
-                                               AllImportedModules.end())));
+  if (!CUNode) {
+    assert(!AllowUnresolvedNodes &&
+           "creating type nodes without a CU is not supported");
+    return;
   }
+
+  CUNode->replaceEnumTypes(MDTuple::get(VMContext, AllEnumTypes));
+
+  SmallVector<Metadata *, 16> RetainValues;
+  // Declarations and definitions of the same type may be retained. Some
+  // clients RAUW these pairs, leaving duplicates in the retained types
+  // list. Use a set to remove the duplicates while we transform the
+  // TrackingVHs back into Values.
+  SmallPtrSet<Metadata *, 16> RetainSet;
+  for (unsigned I = 0, E = AllRetainTypes.size(); I < E; I++)
+    if (RetainSet.insert(AllRetainTypes[I]).second)
+      RetainValues.push_back(AllRetainTypes[I]);
+  CUNode->replaceRetainedTypes(MDTuple::get(VMContext, RetainValues));
+
+  DISubprogramArray SPs = MDTuple::get(VMContext, AllSubprograms);
+  CUNode->replaceSubprograms(SPs.get());
+  for (auto *SP : SPs) {
+    if (MDTuple *Temp = SP->getVariables().get()) {
+      const auto &PV = PreservedVariables.lookup(SP);
+      SmallVector<Metadata *, 4> Variables(PV.begin(), PV.end());
+      DINodeArray AV = getOrCreateArray(Variables);
+      TempMDTuple(Temp)->replaceAllUsesWith(AV.get());
+    }
+  }
+
+  CUNode->replaceGlobalVariables(MDTuple::get(VMContext, AllGVs));
+
+  CUNode->replaceImportedEntities(MDTuple::get(
+      VMContext, SmallVector<Metadata *, 16>(AllImportedModules.begin(),
+                                             AllImportedModules.end())));
 
   // Now that all temp nodes have been replaced or deleted, resolve remaining
   // cycles.
