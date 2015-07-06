@@ -39,6 +39,11 @@ R_MIPS_26:
 	j   foo
 	nop
 
+# rtdyld-check:  decode_operand(R_MIPS_PC16, 1)[17:0] = (foo - R_MIPS_PC16)[17:0]
+R_MIPS_PC16:
+	bal   foo
+	nop
+
 # rtdyld-check:  decode_operand(R_MIPS_HI16, 1)[15:0] = foo[31:16]
 R_MIPS_HI16:
 	lui	$1, %hi(foo)

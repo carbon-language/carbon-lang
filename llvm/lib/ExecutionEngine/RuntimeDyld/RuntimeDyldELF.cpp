@@ -511,10 +511,53 @@ void RuntimeDyldELF::resolveMIPSRelocation(const SectionEntry &Section,
     Insn |= Value & 0xffff;
     writeBytesUnaligned(Insn, TargetPtr, 4);
     break;
-  case ELF::R_MIPS_PC32:
+  case ELF::R_MIPS_PC32: {
     uint32_t FinalAddress = (Section.LoadAddress + Offset);
-    writeBytesUnaligned(Value + Addend - FinalAddress, (uint8_t *)TargetPtr, 4);
+    writeBytesUnaligned(Value - FinalAddress, (uint8_t *)TargetPtr, 4);
     break;
+  }
+  case ELF::R_MIPS_PC16: {
+    uint32_t FinalAddress = (Section.LoadAddress + Offset);
+    Insn &= 0xffff0000;
+    Insn |= ((Value - FinalAddress) >> 2) & 0xffff;
+    writeBytesUnaligned(Insn, TargetPtr, 4);
+    break;
+  }
+  case ELF::R_MIPS_PC19_S2: {
+    uint32_t FinalAddress = (Section.LoadAddress + Offset);
+    Insn &= 0xfff80000;
+    Insn |= ((Value - (FinalAddress & ~0x3)) >> 2) & 0x7ffff;
+    writeBytesUnaligned(Insn, TargetPtr, 4);
+    break;
+  }
+  case ELF::R_MIPS_PC21_S2: {
+    uint32_t FinalAddress = (Section.LoadAddress + Offset);
+    Insn &= 0xffe00000;
+    Insn |= ((Value - FinalAddress) >> 2) & 0x1fffff;
+    writeBytesUnaligned(Insn, TargetPtr, 4);
+    break;
+  }
+  case ELF::R_MIPS_PC26_S2: {
+    uint32_t FinalAddress = (Section.LoadAddress + Offset);
+    Insn &= 0xfc000000;
+    Insn |= ((Value - FinalAddress) >> 2) & 0x3ffffff;
+    writeBytesUnaligned(Insn, TargetPtr, 4);
+    break;
+  }
+  case ELF::R_MIPS_PCHI16: {
+    uint32_t FinalAddress = (Section.LoadAddress + Offset);
+    Insn &= 0xffff0000;
+    Insn |= ((Value - FinalAddress + 0x8000) >> 16) & 0xffff;
+    writeBytesUnaligned(Insn, TargetPtr, 4);
+    break;
+  }
+  case ELF::R_MIPS_PCLO16: {
+    uint32_t FinalAddress = (Section.LoadAddress + Offset);
+    Insn &= 0xffff0000;
+    Insn |= (Value - FinalAddress) & 0xffff;
+    writeBytesUnaligned(Insn, TargetPtr, 4);
+    break;
+  }
   }
 }
 
@@ -1263,12 +1306,24 @@ relocation_iterator RuntimeDyldELF::processRelocationRef(
         Section.StubOffset += getMaxStubSize();
       }
     } else {
-      if (RelType == ELF::R_MIPS_HI16)
+      // FIXME: Calculate correct addends for R_MIPS_HI16, R_MIPS_LO16,
+      // R_MIPS_PCHI16 and R_MIPS_PCLO16 relocations.
+      if (RelType == ELF::R_MIPS_HI16 || RelType == ELF::R_MIPS_PCHI16)
         Value.Addend += (Opcode & 0x0000ffff) << 16;
       else if (RelType == ELF::R_MIPS_LO16)
         Value.Addend += (Opcode & 0x0000ffff);
       else if (RelType == ELF::R_MIPS_32)
         Value.Addend += Opcode;
+      else if (RelType == ELF::R_MIPS_PCLO16)
+        Value.Addend += SignExtend32<16>((Opcode & 0x0000ffff));
+      else if (RelType == ELF::R_MIPS_PC16)
+        Value.Addend += SignExtend32<18>((Opcode & 0x0000ffff) << 2);
+      else if (RelType == ELF::R_MIPS_PC19_S2)
+        Value.Addend += SignExtend32<21>((Opcode & 0x0007ffff) << 2);
+      else if (RelType == ELF::R_MIPS_PC21_S2)
+        Value.Addend += SignExtend32<23>((Opcode & 0x001fffff) << 2);
+      else if (RelType == ELF::R_MIPS_PC26_S2)
+        Value.Addend += SignExtend32<28>((Opcode & 0x03ffffff) << 2);
       processSimpleRelocation(SectionID, Offset, RelType, Value);
     }
   } else if (IsMipsN64ABI) {
