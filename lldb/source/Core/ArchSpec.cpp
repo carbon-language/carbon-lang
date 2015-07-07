@@ -887,20 +887,15 @@ ArchSpec::SetArchitecture (ArchitectureType arch_type, uint32_t cpu, uint32_t su
                 }
                 else if (arch_type == eArchTypeELF)
                 {
-                    llvm::Triple::OSType ostype;
                     switch (os)
                     {
-                        case llvm::ELF::ELFOSABI_AIX:      ostype = llvm::Triple::OSType::AIX; break;
-                        case llvm::ELF::ELFOSABI_FREEBSD:  ostype = llvm::Triple::OSType::FreeBSD; break;
-                        case llvm::ELF::ELFOSABI_GNU:      ostype = llvm::Triple::OSType::Linux; break;
-                        case llvm::ELF::ELFOSABI_NETBSD:   ostype = llvm::Triple::OSType::NetBSD; break;
-                        case llvm::ELF::ELFOSABI_OPENBSD:  ostype = llvm::Triple::OSType::OpenBSD; break;
-                        case llvm::ELF::ELFOSABI_SOLARIS:  ostype = llvm::Triple::OSType::Solaris; break;
-                        default:
-                            ostype = llvm::Triple::OSType::UnknownOS;
+                        case llvm::ELF::ELFOSABI_AIX:     m_triple.setOS (llvm::Triple::OSType::AIX);     break;
+                        case llvm::ELF::ELFOSABI_FREEBSD: m_triple.setOS (llvm::Triple::OSType::FreeBSD); break;
+                        case llvm::ELF::ELFOSABI_GNU:     m_triple.setOS (llvm::Triple::OSType::Linux);   break;
+                        case llvm::ELF::ELFOSABI_NETBSD:  m_triple.setOS (llvm::Triple::OSType::NetBSD);  break;
+                        case llvm::ELF::ELFOSABI_OPENBSD: m_triple.setOS (llvm::Triple::OSType::OpenBSD); break;
+                        case llvm::ELF::ELFOSABI_SOLARIS: m_triple.setOS (llvm::Triple::OSType::Solaris); break;
                     }
-                    m_triple.setOS (ostype);
-                    m_triple.setVendor (llvm::Triple::UnknownVendor);
                 }
                 // Fall back onto setting the machine type if the arch by name failed...
                 if (m_triple.getArch () == llvm::Triple::UnknownArch)
