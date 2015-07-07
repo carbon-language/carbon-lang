@@ -406,10 +406,10 @@ void InstrEmitter::AddOperand(MachineInstrBuilder &MIB,
     Type *Type = CP->getType();
     // MachineConstantPool wants an explicit alignment.
     if (Align == 0) {
-      Align = MF->getTarget().getDataLayout()->getPrefTypeAlignment(Type);
+      Align = MF->getDataLayout().getPrefTypeAlignment(Type);
       if (Align == 0) {
         // Alignment of vector types.  FIXME!
-        Align = MF->getTarget().getDataLayout()->getTypeAllocSize(Type);
+        Align = MF->getDataLayout().getTypeAllocSize(Type);
       }
     }
 

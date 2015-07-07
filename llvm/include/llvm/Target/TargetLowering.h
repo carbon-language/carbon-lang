@@ -2414,6 +2414,7 @@ public:
     ArgListTy &getArgs() {
       return Args;
     }
+
   };
 
   /// This function lowers an abstract call to a function into an actual call.
@@ -2657,7 +2658,8 @@ public:
   /// specific constraints and their prefixes, and also tie in the associated
   /// operand values.  If this returns an empty vector, and if the constraint
   /// string itself isn't empty, there was an error parsing.
-  virtual AsmOperandInfoVector ParseConstraints(const TargetRegisterInfo *TRI,
+  virtual AsmOperandInfoVector ParseConstraints(const DataLayout &DL,
+                                                const TargetRegisterInfo *TRI,
                                                 ImmutableCallSite CS) const;
 
   /// Examine constraint type and operand type and determine a weight value.

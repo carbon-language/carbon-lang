@@ -1398,7 +1398,7 @@ TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
           APInt newMask = APInt::getLowBitsSet(maskWidth, width);
           for (unsigned offset=0; offset<origWidth/width; offset++) {
             if ((newMask & Mask) == Mask) {
-              if (!getDataLayout()->isLittleEndian())
+              if (!DAG.getDataLayout().isLittleEndian())
                 bestOffset = (origWidth/width - offset - 1) * (width/8);
               else
                 bestOffset = (uint64_t)offset * (width/8);
@@ -2290,7 +2290,8 @@ unsigned TargetLowering::AsmOperandInfo::getMatchedOperand() const {
 /// If this returns an empty vector, and if the constraint string itself
 /// isn't empty, there was an error parsing.
 TargetLowering::AsmOperandInfoVector
-TargetLowering::ParseConstraints(const TargetRegisterInfo *TRI,
+TargetLowering::ParseConstraints(const DataLayout &DL,
+                                 const TargetRegisterInfo *TRI,
                                  ImmutableCallSite CS) const {
   /// ConstraintOperands - Information about all of the constraints.
   AsmOperandInfoVector ConstraintOperands;
@@ -2358,7 +2359,7 @@ TargetLowering::ParseConstraints(const TargetRegisterInfo *TRI,
       // If OpTy is not a single value, it may be a struct/union that we
       // can tile with integers.
       if (!OpTy->isSingleValueType() && OpTy->isSized()) {
-        unsigned BitSize = getDataLayout()->getTypeSizeInBits(OpTy);
+        unsigned BitSize = DL.getTypeSizeInBits(OpTy);
         switch (BitSize) {
         default: break;
         case 1:
@@ -2372,8 +2373,7 @@ TargetLowering::ParseConstraints(const TargetRegisterInfo *TRI,
           break;
         }
       } else if (PointerType *PT = dyn_cast<PointerType>(OpTy)) {
-        unsigned PtrSize
-          = getDataLayout()->getPointerSizeInBits(PT->getAddressSpace());
+        unsigned PtrSize = DL.getPointerSizeInBits(PT->getAddressSpace());
         OpInfo.ConstraintVT = MVT::getIntegerVT(PtrSize);
       } else {
         OpInfo.ConstraintVT = MVT::getVT(OpTy, true);

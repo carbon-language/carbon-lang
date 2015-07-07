@@ -742,7 +742,7 @@ void DAGTypeLegalizer::SplitVecRes_BITCAST(SDNode *N, SDValue &Lo,
     // expanded pieces.
     if (LoVT == HiVT) {
       GetExpandedOp(InOp, Lo, Hi);
-      if (TLI.isBigEndian())
+      if (DAG.getDataLayout().isBigEndian())
         std::swap(Lo, Hi);
       Lo = DAG.getNode(ISD::BITCAST, dl, LoVT, Lo);
       Hi = DAG.getNode(ISD::BITCAST, dl, HiVT, Hi);
@@ -761,12 +761,12 @@ void DAGTypeLegalizer::SplitVecRes_BITCAST(SDNode *N, SDValue &Lo,
   // In the general case, convert the input to an integer and split it by hand.
   EVT LoIntVT = EVT::getIntegerVT(*DAG.getContext(), LoVT.getSizeInBits());
   EVT HiIntVT = EVT::getIntegerVT(*DAG.getContext(), HiVT.getSizeInBits());
-  if (TLI.isBigEndian())
+  if (DAG.getDataLayout().isBigEndian())
     std::swap(LoIntVT, HiIntVT);
 
   SplitInteger(BitConvertToInteger(InOp), LoIntVT, HiIntVT, Lo, Hi);
 
-  if (TLI.isBigEndian())
+  if (DAG.getDataLayout().isBigEndian())
     std::swap(Lo, Hi);
   Lo = DAG.getNode(ISD::BITCAST, dl, LoVT, Lo);
   Hi = DAG.getNode(ISD::BITCAST, dl, HiVT, Hi);
@@ -840,7 +840,7 @@ void DAGTypeLegalizer::SplitVecRes_INSERT_SUBVECTOR(SDNode *N, SDValue &Lo,
   // Store the new subvector into the specified index.
   SDValue SubVecPtr = GetVectorElementPointer(StackPtr, SubVecVT, Idx);
   Type *VecType = VecVT.getTypeForEVT(*DAG.getContext());
-  unsigned Alignment = TLI.getDataLayout()->getPrefTypeAlignment(VecType);
+  unsigned Alignment = DAG.getDataLayout().getPrefTypeAlignment(VecType);
   Store = DAG.getStore(Store, dl, SubVec, SubVecPtr, MachinePointerInfo(),
                        false, false, 0);
 
@@ -919,8 +919,7 @@ void DAGTypeLegalizer::SplitVecRes_INSERT_VECTOR_ELT(SDNode *N, SDValue &Lo,
   // so use a truncating store.
   SDValue EltPtr = GetVectorElementPointer(StackPtr, EltVT, Idx);
   Type *VecType = VecVT.getTypeForEVT(*DAG.getContext());
-  unsigned Alignment =
-    TLI.getDataLayout()->getPrefTypeAlignment(VecType);
+  unsigned Alignment = DAG.getDataLayout().getPrefTypeAlignment(VecType);
   Store = DAG.getTruncStore(Store, dl, Elt, EltPtr, MachinePointerInfo(), EltVT,
                             false, false, 0);
 
@@ -1472,7 +1471,7 @@ SDValue DAGTypeLegalizer::SplitVecOp_BITCAST(SDNode *N) {
   Lo = BitConvertToInteger(Lo);
   Hi = BitConvertToInteger(Hi);
 
-  if (TLI.isBigEndian())
+  if (DAG.getDataLayout().isBigEndian())
     std::swap(Lo, Hi);
 
   return DAG.getNode(ISD::BITCAST, SDLoc(N), N->getValueType(0),

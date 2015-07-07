@@ -2986,7 +2986,8 @@ static bool IsOperandAMemoryOperand(CallInst *CI, InlineAsm *IA, Value *OpVal,
   const TargetLowering *TLI = TM.getSubtargetImpl(*F)->getTargetLowering();
   const TargetRegisterInfo *TRI = TM.getSubtargetImpl(*F)->getRegisterInfo();
   TargetLowering::AsmOperandInfoVector TargetConstraints =
-      TLI->ParseConstraints(TRI, ImmutableCallSite(CI));
+      TLI->ParseConstraints(F->getParent()->getDataLayout(), TRI,
+                            ImmutableCallSite(CI));
   for (unsigned i = 0, e = TargetConstraints.size(); i != e; ++i) {
     TargetLowering::AsmOperandInfo &OpInfo = TargetConstraints[i];
 
@@ -3547,8 +3548,8 @@ bool CodeGenPrepare::OptimizeInlineAsmInst(CallInst *CS) {
 
   const TargetRegisterInfo *TRI =
       TM->getSubtargetImpl(*CS->getParent()->getParent())->getRegisterInfo();
-  TargetLowering::AsmOperandInfoVector
-    TargetConstraints = TLI->ParseConstraints(TRI, CS);
+  TargetLowering::AsmOperandInfoVector TargetConstraints =
+      TLI->ParseConstraints(*DL, TRI, CS);
   unsigned ArgNo = 0;
   for (unsigned i = 0, e = TargetConstraints.size(); i != e; ++i) {
     TargetLowering::AsmOperandInfo &OpInfo = TargetConstraints[i];

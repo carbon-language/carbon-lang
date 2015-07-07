@@ -392,17 +392,18 @@ static void ExpandUnalignedStore(StoreSDNode *ST, SelectionDAG &DAG,
 
   // Store the two parts
   SDValue Store1, Store2;
-  Store1 = DAG.getTruncStore(Chain, dl, TLI.isLittleEndian()?Lo:Hi, Ptr,
-                             ST->getPointerInfo(), NewStoredVT,
+  Store1 = DAG.getTruncStore(Chain, dl,
+                             DAG.getDataLayout().isLittleEndian() ? Lo : Hi,
+                             Ptr, ST->getPointerInfo(), NewStoredVT,
                              ST->isVolatile(), ST->isNonTemporal(), Alignment);
 
   Ptr = DAG.getNode(ISD::ADD, dl, Ptr.getValueType(), Ptr,
                     DAG.getConstant(IncrementSize, dl, TLI.getPointerTy(AS)));
   Alignment = MinAlign(Alignment, IncrementSize);
-  Store2 = DAG.getTruncStore(Chain, dl, TLI.isLittleEndian()?Hi:Lo, Ptr,
-                             ST->getPointerInfo().getWithOffset(IncrementSize),
-                             NewStoredVT, ST->isVolatile(), ST->isNonTemporal(),
-                             Alignment, ST->getAAInfo());
+  Store2 = DAG.getTruncStore(
+      Chain, dl, DAG.getDataLayout().isLittleEndian() ? Hi : Lo, Ptr,
+      ST->getPointerInfo().getWithOffset(IncrementSize), NewStoredVT,
+      ST->isVolatile(), ST->isNonTemporal(), Alignment, ST->getAAInfo());
 
   SDValue Result =
     DAG.getNode(ISD::TokenFactor, dl, MVT::Other, Store1, Store2);
@@ -522,7 +523,7 @@ ExpandUnalignedLoad(LoadSDNode *LD, SelectionDAG &DAG,
 
   // Load the value in two parts
   SDValue Lo, Hi;
-  if (TLI.isLittleEndian()) {
+  if (DAG.getDataLayout().isLittleEndian()) {
     Lo = DAG.getExtLoad(ISD::ZEXTLOAD, dl, VT, Chain, Ptr, LD->getPointerInfo(),
                         NewLoadedVT, LD->isVolatile(),
                         LD->isNonTemporal(), LD->isInvariant(), Alignment,
@@ -677,7 +678,8 @@ SDValue SelectionDAGLegalize::OptimizeFloatStore(StoreSDNode* ST) {
         const APInt &IntVal = CFP->getValueAPF().bitcastToAPInt();
         SDValue Lo = DAG.getConstant(IntVal.trunc(32), dl, MVT::i32);
         SDValue Hi = DAG.getConstant(IntVal.lshr(32).trunc(32), dl, MVT::i32);
-        if (TLI.isBigEndian()) std::swap(Lo, Hi);
+        if (DAG.getDataLayout().isBigEndian())
+          std::swap(Lo, Hi);
 
         Lo = DAG.getStore(Chain, dl, Lo, Ptr, ST->getPointerInfo(), isVolatile,
                           isNonTemporal, Alignment, AAInfo);
@@ -724,7 +726,7 @@ void SelectionDAGLegalize::LegalizeStoreOps(SDNode *Node) {
           unsigned Align = ST->getAlignment();
           if (!TLI.allowsMisalignedMemoryAccesses(ST->getMemoryVT(), AS, Align)) {
             Type *Ty = ST->getMemoryVT().getTypeForEVT(*DAG.getContext());
-            unsigned ABIAlignment= TLI.getDataLayout()->getABITypeAlignment(Ty);
+            unsigned ABIAlignment = DAG.getDataLayout().getABITypeAlignment(Ty);
             if (Align < ABIAlignment)
               ExpandUnalignedStore(cast<StoreSDNode>(Node), DAG, TLI, this);
           }
@@ -756,6 +758,7 @@ void SelectionDAGLegalize::LegalizeStoreOps(SDNode *Node) {
 
       EVT StVT = ST->getMemoryVT();
       unsigned StWidth = StVT.getSizeInBits();
+      auto &DL = DAG.getDataLayout();
 
       if (StWidth != StVT.getStoreSizeInBits()) {
         // Promote to a byte-sized store with upper bits zero if not
@@ -782,7 +785,7 @@ void SelectionDAGLegalize::LegalizeStoreOps(SDNode *Node) {
         SDValue Lo, Hi;
         unsigned IncrementSize;
 
-        if (TLI.isLittleEndian()) {
+        if (DL.isLittleEndian()) {
           // TRUNCSTORE:i24 X -> TRUNCSTORE:i16 X, TRUNCSTORE@+2:i8 (srl X, 16)
           // Store the bottom RoundWidth bits.
           Lo = DAG.getTruncStore(Chain, dl, Value, Ptr, ST->getPointerInfo(),
@@ -838,7 +841,7 @@ void SelectionDAGLegalize::LegalizeStoreOps(SDNode *Node) {
           // expand it.
           if (!TLI.allowsMisalignedMemoryAccesses(ST->getMemoryVT(), AS, Align)) {
             Type *Ty = ST->getMemoryVT().getTypeForEVT(*DAG.getContext());
-            unsigned ABIAlignment= TLI.getDataLayout()->getABITypeAlignment(Ty);
+            unsigned ABIAlignment = DL.getABITypeAlignment(Ty);
             if (Align < ABIAlignment)
               ExpandUnalignedStore(cast<StoreSDNode>(Node), DAG, TLI, this);
           }
@@ -890,8 +893,7 @@ void SelectionDAGLegalize::LegalizeLoadOps(SDNode *Node) {
       // expand it.
       if (!TLI.allowsMisalignedMemoryAccesses(LD->getMemoryVT(), AS, Align)) {
         Type *Ty = LD->getMemoryVT().getTypeForEVT(*DAG.getContext());
-        unsigned ABIAlignment =
-          TLI.getDataLayout()->getABITypeAlignment(Ty);
+        unsigned ABIAlignment = DAG.getDataLayout().getABITypeAlignment(Ty);
         if (Align < ABIAlignment){
           ExpandUnalignedLoad(cast<LoadSDNode>(Node), DAG, TLI, RVal, RChain);
         }
@@ -995,8 +997,9 @@ void SelectionDAGLegalize::LegalizeLoadOps(SDNode *Node) {
     EVT ExtraVT = EVT::getIntegerVT(*DAG.getContext(), ExtraWidth);
     SDValue Lo, Hi, Ch;
     unsigned IncrementSize;
+    auto &DL = DAG.getDataLayout();
 
-    if (TLI.isLittleEndian()) {
+    if (DL.isLittleEndian()) {
       // EXTLOAD:i24 -> ZEXTLOAD:i16 | (shl EXTLOAD@+2:i8, 16)
       // Load the bottom RoundWidth bits.
       Lo = DAG.getExtLoad(ISD::ZEXTLOAD, dl, Node->getValueType(0),
@@ -1086,7 +1089,7 @@ void SelectionDAGLegalize::LegalizeLoadOps(SDNode *Node) {
         unsigned Align = LD->getAlignment();
         if (!TLI.allowsMisalignedMemoryAccesses(MemVT, AS, Align)) {
           Type *Ty = LD->getMemoryVT().getTypeForEVT(*DAG.getContext());
-          unsigned ABIAlignment = TLI.getDataLayout()->getABITypeAlignment(Ty);
+          unsigned ABIAlignment = DAG.getDataLayout().getABITypeAlignment(Ty);
           if (Align < ABIAlignment){
             ExpandUnalignedLoad(cast<LoadSDNode>(Node), DAG, TLI, Value, Chain);
           }
@@ -1569,6 +1572,7 @@ SDValue SelectionDAGLegalize::ExpandFCOPYSIGN(SDNode* Node) {
     // Convert to an integer with the same sign bit.
     SignBit = DAG.getNode(ISD::BITCAST, dl, IVT, Tmp2);
   } else {
+    auto &DL = DAG.getDataLayout();
     // Store the float to memory, then load the sign part out as an integer.
     MVT LoadTy = TLI.getPointerTy();
     // First create a temporary that is aligned for both the load and store.
@@ -1577,7 +1581,7 @@ SDValue SelectionDAGLegalize::ExpandFCOPYSIGN(SDNode* Node) {
     SDValue Ch =
       DAG.getStore(DAG.getEntryNode(), dl, Tmp2, StackPtr, MachinePointerInfo(),
                    false, false, 0);
-    if (TLI.isBigEndian()) {
+    if (DL.isBigEndian()) {
       assert(FloatVT.isByteSized() && "Unsupported floating point type!");
       // Load out a legal integer with the same sign bit as the float.
       SignBit = DAG.getLoad(LoadTy, dl, Ch, StackPtr, MachinePointerInfo(),
@@ -1777,9 +1781,8 @@ SDValue SelectionDAGLegalize::EmitStackConvert(SDValue SrcOp,
                                                EVT DestVT,
                                                SDLoc dl) {
   // Create the stack frame object.
-  unsigned SrcAlign =
-    TLI.getDataLayout()->getPrefTypeAlignment(SrcOp.getValueType().
-                                              getTypeForEVT(*DAG.getContext()));
+  unsigned SrcAlign = DAG.getDataLayout().getPrefTypeAlignment(
+      SrcOp.getValueType().getTypeForEVT(*DAG.getContext()));
   SDValue FIPtr = DAG.CreateStackTemporary(SlotVT, SrcAlign);
 
   FrameIndexSDNode *StackPtrFI = cast<FrameIndexSDNode>(FIPtr);
@@ -1790,7 +1793,7 @@ SDValue SelectionDAGLegalize::EmitStackConvert(SDValue SrcOp,
   unsigned SlotSize = SlotVT.getSizeInBits();
   unsigned DestSize = DestVT.getSizeInBits();
   Type *DestType = DestVT.getTypeForEVT(*DAG.getContext());
-  unsigned DestAlign = TLI.getDataLayout()->getPrefTypeAlignment(DestType);
+  unsigned DestAlign = DAG.getDataLayout().getPrefTypeAlignment(DestType);
 
   // Emit a store to the stack slot.  Use a truncstore if the input value is
   // later than DestVT.
@@ -2426,7 +2429,7 @@ SDValue SelectionDAGLegalize::ExpandLegalINT_TO_FP(bool isSigned,
     SDValue Hi = StackSlot;
     SDValue Lo = DAG.getNode(ISD::ADD, dl, StackSlot.getValueType(),
                              StackSlot, WordOff);
-    if (TLI.isLittleEndian())
+    if (DAG.getDataLayout().isLittleEndian())
       std::swap(Hi, Lo);
 
     // if signed map to unsigned space
@@ -2584,7 +2587,8 @@ SDValue SelectionDAGLegalize::ExpandLegalINT_TO_FP(bool isSigned,
   case MVT::i32: FF = 0x4F800000ULL; break;  // 2^32 (as a float)
   case MVT::i64: FF = 0x5F800000ULL; break;  // 2^64 (as a float)
   }
-  if (TLI.isLittleEndian()) FF <<= 32;
+  if (DAG.getDataLayout().isLittleEndian())
+    FF <<= 32;
   Constant *FudgeFactor = ConstantInt::get(
                                        Type::getInt64Ty(*DAG.getContext()), FF);
 
@@ -3111,10 +3115,9 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node) {
 
     // Increment the pointer, VAList, to the next vaarg
     Tmp3 = DAG.getNode(ISD::ADD, dl, VAList.getValueType(), VAList,
-                       DAG.getConstant(TLI.getDataLayout()->
-                          getTypeAllocSize(VT.getTypeForEVT(*DAG.getContext())),
-                                       dl,
-                                       VAList.getValueType()));
+                       DAG.getConstant(DAG.getDataLayout().getTypeAllocSize(
+                                           VT.getTypeForEVT(*DAG.getContext())),
+                                       dl, VAList.getValueType()));
     // Store the incremented VAList to the legalized pointer
     Tmp3 = DAG.getStore(VAListLoad.getValue(1), dl, Tmp3, Tmp2,
                         MachinePointerInfo(V), false, false, 0);
@@ -3830,7 +3833,7 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node) {
 
     EVT PTy = TLI.getPointerTy();
 
-    const DataLayout &TD = *TLI.getDataLayout();
+    const DataLayout &TD = DAG.getDataLayout();
     unsigned EntrySize =
       DAG.getMachineFunction().getJumpTableInfo()->getEntrySize(TD);
 

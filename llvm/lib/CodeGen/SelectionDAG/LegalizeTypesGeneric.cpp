@@ -131,7 +131,7 @@ void DAGTypeLegalizer::ExpandRes_BITCAST(SDNode *N, SDValue &Lo, SDValue &Hi) {
         SDValue LHS = Vals[Slot];
         SDValue RHS = Vals[Slot + 1];
 
-        if (TLI.isBigEndian())
+        if (DAG.getDataLayout().isBigEndian())
           std::swap(LHS, RHS);
 
         Vals.push_back(DAG.getNode(ISD::BUILD_PAIR, dl,
@@ -143,7 +143,7 @@ void DAGTypeLegalizer::ExpandRes_BITCAST(SDNode *N, SDValue &Lo, SDValue &Hi) {
       Lo = Vals[Slot++];
       Hi = Vals[Slot++];
 
-      if (TLI.isBigEndian())
+      if (DAG.getDataLayout().isBigEndian())
         std::swap(Lo, Hi);
 
       return;
@@ -155,9 +155,8 @@ void DAGTypeLegalizer::ExpandRes_BITCAST(SDNode *N, SDValue &Lo, SDValue &Hi) {
 
   // Create the stack frame object.  Make sure it is aligned for both
   // the source and expanded destination types.
-  unsigned Alignment =
-    TLI.getDataLayout()->getPrefTypeAlignment(NOutVT.
-                                              getTypeForEVT(*DAG.getContext()));
+  unsigned Alignment = DAG.getDataLayout().getPrefTypeAlignment(
+      NOutVT.getTypeForEVT(*DAG.getContext()));
   SDValue StackPtr = DAG.CreateStackTemporary(InVT, Alignment);
   int SPFI = cast<FrameIndexSDNode>(StackPtr.getNode())->getIndex();
   MachinePointerInfo PtrInfo = MachinePointerInfo::getFixedStack(SPFI);
@@ -241,7 +240,7 @@ void DAGTypeLegalizer::ExpandRes_EXTRACT_VECTOR_ELT(SDNode *N, SDValue &Lo,
                     DAG.getConstant(1, dl, Idx.getValueType()));
   Hi = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, NewVT, NewVec, Idx);
 
-  if (TLI.isBigEndian())
+  if (DAG.getDataLayout().isBigEndian())
     std::swap(Lo, Hi);
 }
 
@@ -325,7 +324,7 @@ void DAGTypeLegalizer::IntegerToVector(SDValue Op, unsigned NumElements,
   if (NumElements > 1) {
     NumElements >>= 1;
     SplitInteger(Op, Parts[0], Parts[1]);
-      if (TLI.isBigEndian())
+    if (DAG.getDataLayout().isBigEndian())
         std::swap(Parts[0], Parts[1]);
     IntegerToVector(Parts[0], NumElements, Ops, EltVT);
     IntegerToVector(Parts[1], NumElements, Ops, EltVT);
@@ -389,7 +388,7 @@ SDValue DAGTypeLegalizer::ExpandOp_BUILD_VECTOR(SDNode *N) {
   for (unsigned i = 0; i < NumElts; ++i) {
     SDValue Lo, Hi;
     GetExpandedOp(N->getOperand(i), Lo, Hi);
-    if (TLI.isBigEndian())
+    if (DAG.getDataLayout().isBigEndian())
       std::swap(Lo, Hi);
     NewElts.push_back(Lo);
     NewElts.push_back(Hi);
@@ -431,7 +430,7 @@ SDValue DAGTypeLegalizer::ExpandOp_INSERT_VECTOR_ELT(SDNode *N) {
 
   SDValue Lo, Hi;
   GetExpandedOp(Val, Lo, Hi);
-  if (TLI.isBigEndian())
+  if (DAG.getDataLayout().isBigEndian())
     std::swap(Lo, Hi);
 
   SDValue Idx = N->getOperand(2);

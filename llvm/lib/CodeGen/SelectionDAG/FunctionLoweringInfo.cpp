@@ -106,9 +106,9 @@ void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf,
         if (AI->isStaticAlloca()) {
           const ConstantInt *CUI = cast<ConstantInt>(AI->getArraySize());
           Type *Ty = AI->getAllocatedType();
-          uint64_t TySize = TLI->getDataLayout()->getTypeAllocSize(Ty);
+          uint64_t TySize = MF->getDataLayout().getTypeAllocSize(Ty);
           unsigned Align =
-              std::max((unsigned)TLI->getDataLayout()->getPrefTypeAlignment(Ty),
+              std::max((unsigned)MF->getDataLayout().getPrefTypeAlignment(Ty),
                        AI->getAlignment());
 
           TySize *= CUI->getZExtValue();   // Get total allocated size.
@@ -118,10 +118,10 @@ void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf,
             MF->getFrameInfo()->CreateStackObject(TySize, Align, false, AI);
 
         } else {
-          unsigned Align = std::max(
-              (unsigned)TLI->getDataLayout()->getPrefTypeAlignment(
-                AI->getAllocatedType()),
-              AI->getAlignment());
+          unsigned Align =
+              std::max((unsigned)MF->getDataLayout().getPrefTypeAlignment(
+                           AI->getAllocatedType()),
+                       AI->getAlignment());
           unsigned StackAlign =
               MF->getSubtarget().getFrameLowering()->getStackAlignment();
           if (Align <= StackAlign)
@@ -138,7 +138,7 @@ void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf,
           unsigned SP = TLI->getStackPointerRegisterToSaveRestore();
           const TargetRegisterInfo *TRI = MF->getSubtarget().getRegisterInfo();
           std::vector<TargetLowering::AsmOperandInfo> Ops =
-              TLI->ParseConstraints(TRI, CS);
+              TLI->ParseConstraints(Fn->getParent()->getDataLayout(), TRI, CS);
           for (size_t I = 0, E = Ops.size(); I != E; ++I) {
             TargetLowering::AsmOperandInfo &Op = Ops[I];
             if (Op.Type == InlineAsm::isClobber) {

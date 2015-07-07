@@ -281,6 +281,7 @@ public:
   void clear();
 
   MachineFunction &getMachineFunction() const { return *MF; }
+  const DataLayout &getDataLayout() const { return MF->getDataLayout(); }
   const TargetMachine &getTarget() const { return TM; }
   const TargetSubtargetInfo &getSubtarget() const { return MF->getSubtarget(); }
   const TargetLowering &getTargetLoweringInfo() const { return *TLI; }

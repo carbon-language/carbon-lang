@@ -282,7 +282,7 @@ SDValue DAGTypeLegalizer::PromoteIntRes_BITCAST(SDNode *N) {
     Lo = BitConvertToInteger(Lo);
     Hi = BitConvertToInteger(Hi);
 
-    if (TLI.isBigEndian())
+    if (DAG.getDataLayout().isBigEndian())
       std::swap(Lo, Hi);
 
     InOp = DAG.getNode(ISD::ANY_EXTEND, dl,
@@ -799,7 +799,7 @@ SDValue DAGTypeLegalizer::PromoteIntRes_VAARG(SDNode *N) {
   }
 
   // Handle endianness of the load.
-  if (TLI.isBigEndian())
+  if (DAG.getDataLayout().isBigEndian())
     std::reverse(Parts.begin(), Parts.end());
 
   // Assemble the parts in the promoted type.
@@ -1984,7 +1984,7 @@ void DAGTypeLegalizer::ExpandIntRes_LOAD(LoadSDNode *N,
       // The high part is undefined.
       Hi = DAG.getUNDEF(NVT);
     }
-  } else if (TLI.isLittleEndian()) {
+  } else if (DAG.getDataLayout().isLittleEndian()) {
     // Little-endian - low bits are at low addresses.
     Lo = DAG.getLoad(NVT, dl, Ch, Ptr, N->getPointerInfo(),
                      isVolatile, isNonTemporal, isInvariant, Alignment,
@@ -2845,7 +2845,7 @@ SDValue DAGTypeLegalizer::ExpandIntOp_STORE(StoreSDNode *N, unsigned OpNo) {
                              Alignment, AAInfo);
   }
 
-  if (TLI.isLittleEndian()) {
+  if (DAG.getDataLayout().isLittleEndian()) {
     // Little-endian - low bits are at low addresses.
     GetExpandedInteger(N->getValue(), Lo, Hi);
 
@@ -2963,7 +2963,8 @@ SDValue DAGTypeLegalizer::ExpandIntOp_UINT_TO_FP(SDNode *N) {
     // Get a pointer to FF if the sign bit was set, or to 0 otherwise.
     SDValue Zero = DAG.getIntPtrConstant(0, dl);
     SDValue Four = DAG.getIntPtrConstant(4, dl);
-    if (TLI.isBigEndian()) std::swap(Zero, Four);
+    if (DAG.getDataLayout().isBigEndian())
+      std::swap(Zero, Four);
     SDValue Offset = DAG.getSelect(dl, Zero.getValueType(), SignSet,
                                    Zero, Four);
     unsigned Alignment = cast<ConstantPoolSDNode>(FudgePtr)->getAlignment();
