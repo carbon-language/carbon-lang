@@ -25,11 +25,11 @@
 #include "lldb/Core/StringList.h"
 #include "lldb/Core/ThreadSafeValue.h"
 #include "lldb/Host/HostThread.h"
+#include "lldb/Utility/StringExtractor.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/Thread.h"
 
 #include "CommunicationKDP.h"
-#include "Utility/StringExtractor.h"
 
 class ThreadKDP;
 
