@@ -284,7 +284,7 @@ void CodeGenFunction::FinishFunction(SourceLocation EndLoc) {
     Builder.ClearInsertionPoint();
   }
 
-  // If some of our locals escaped, insert a call to llvm.frameescape in the
+  // If some of our locals escaped, insert a call to llvm.localescape in the
   // entry block.
   if (!EscapedLocals.empty()) {
     // Invert the map from local to index into a simple vector. There should be
@@ -294,7 +294,7 @@ void CodeGenFunction::FinishFunction(SourceLocation EndLoc) {
     for (auto &Pair : EscapedLocals)
       EscapeArgs[Pair.second] = Pair.first;
     llvm::Function *FrameEscapeFn = llvm::Intrinsic::getDeclaration(
-        &CGM.getModule(), llvm::Intrinsic::frameescape);
+        &CGM.getModule(), llvm::Intrinsic::localescape);
     CGBuilderTy(AllocaInsertPt).CreateCall(FrameEscapeFn, EscapeArgs);
   }
 

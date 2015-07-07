@@ -888,7 +888,7 @@ private:
   DeclMapTy LocalDeclMap;
 
   /// Track escaped local variables with auto storage. Used during SEH
-  /// outlining to produce a call to llvm.frameescape.
+  /// outlining to produce a call to llvm.localescape.
   llvm::DenseMap<llvm::AllocaInst *, int> EscapedLocals;
 
   /// LabelMap - This keeps track of the LLVM basic block for each C label.
@@ -2068,13 +2068,13 @@ public:
 
   /// Scan the outlined statement for captures from the parent function. For
   /// each capture, mark the capture as escaped and emit a call to
-  /// llvm.framerecover. Insert the framerecover result into the LocalDeclMap.
+  /// llvm.localrecover. Insert the localrecover result into the LocalDeclMap.
   void EmitCapturedLocals(CodeGenFunction &ParentCGF, const Stmt *OutlinedStmt,
                           bool IsFilter);
 
   /// Recovers the address of a local in a parent function. ParentVar is the
   /// address of the variable used in the immediate parent function. It can
-  /// either be an alloca or a call to llvm.framerecover if there are nested
+  /// either be an alloca or a call to llvm.localrecover if there are nested
   /// outlined functions. ParentFP is the frame pointer of the outermost parent
   /// frame.
   llvm::Value *recoverAddrOfEscapedLocal(CodeGenFunction &ParentCGF,

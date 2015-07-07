@@ -57,7 +57,7 @@ int safe_div(int numerator, int denominator, int *res) {
 // X86-LABEL: define internal i32 @"\01?filt$0@0@safe_div@@"()
 // X86: %[[ebp:[^ ]*]] = call i8* @llvm.frameaddress(i32 1)
 // X86: %[[fp:[^ ]*]] = call i8* @llvm.x86.seh.recoverfp(i8* bitcast (i32 (i32, i32, i32*)* @safe_div to i8*), i8* %[[ebp]])
-// X86: call i8* @llvm.framerecover(i8* bitcast (i32 (i32, i32, i32*)* @safe_div to i8*), i8* %[[fp]], i32 0)
+// X86: call i8* @llvm.localrecover(i8* bitcast (i32 (i32, i32, i32*)* @safe_div to i8*), i8* %[[fp]], i32 0)
 // X86: load i8*, i8**
 // X86: load i32*, i32**
 // X86: load i32, i32*
@@ -79,8 +79,8 @@ int filter_expr_capture(void) {
 // CHECK-LABEL: define i32 @filter_expr_capture()
 // X64-SAME: personality i8* bitcast (i32 (...)* @__C_specific_handler to i8*)
 // X86-SAME: personality i8* bitcast (i32 (...)* @_except_handler3 to i8*)
-// X64: call void (...) @llvm.frameescape(i32* %[[r:[^ ,]*]])
-// X86: call void (...) @llvm.frameescape(i32* %[[r:[^ ,]*]], i32* %[[code:[^ ,]*]])
+// X64: call void (...) @llvm.localescape(i32* %[[r:[^ ,]*]])
+// X86: call void (...) @llvm.localescape(i32* %[[r:[^ ,]*]], i32* %[[code:[^ ,]*]])
 // CHECK: store i32 42, i32* %[[r]]
 // CHECK: invoke void @j() #[[NOINLINE]]
 //
@@ -92,12 +92,12 @@ int filter_expr_capture(void) {
 // CHECK: ret i32 %[[rv]]
 
 // X64-LABEL: define internal i32 @"\01?filt$0@0@filter_expr_capture@@"(i8* %exception_pointers, i8* %frame_pointer)
-// X64: call i8* @llvm.framerecover(i8* bitcast (i32 ()* @filter_expr_capture to i8*), i8* %frame_pointer, i32 0)
+// X64: call i8* @llvm.localrecover(i8* bitcast (i32 ()* @filter_expr_capture to i8*), i8* %frame_pointer, i32 0)
 //
 // X86-LABEL: define internal i32 @"\01?filt$0@0@filter_expr_capture@@"()
 // X86: %[[ebp:[^ ]*]] = call i8* @llvm.frameaddress(i32 1)
 // X86: %[[fp:[^ ]*]] = call i8* @llvm.x86.seh.recoverfp(i8* bitcast (i32 ()* @filter_expr_capture to i8*), i8* %[[ebp]])
-// X86: call i8* @llvm.framerecover(i8* bitcast (i32 ()* @filter_expr_capture to i8*), i8* %[[fp]], i32 0)
+// X86: call i8* @llvm.localrecover(i8* bitcast (i32 ()* @filter_expr_capture to i8*), i8* %[[fp]], i32 0)
 //
 // CHECK: store i32 -1, i32* %{{.*}}
 // CHECK: ret i32 -1
@@ -181,7 +181,7 @@ int basic_finally(int g) {
 // X64-SAME: personality i8* bitcast (i32 (...)* @__C_specific_handler to i8*)
 // X86-SAME: personality i8* bitcast (i32 (...)* @_except_handler3 to i8*)
 // CHECK: %[[g_addr:[^ ]*]] = alloca i32, align 4
-// CHECK: call void (...) @llvm.frameescape(i32* %[[g_addr]])
+// CHECK: call void (...) @llvm.localescape(i32* %[[g_addr]])
 // CHECK: store i32 %g, i32* %[[g_addr]]
 //
 // CHECK: invoke void @j()
@@ -201,7 +201,7 @@ int basic_finally(int g) {
 // CHECK: resume
 
 // CHECK: define internal void @"\01?fin$0@0@basic_finally@@"({{i8( zeroext)?}} %abnormal_termination, i8* %frame_pointer)
-// CHECK:   call i8* @llvm.framerecover(i8* bitcast (i32 (i32)* @basic_finally to i8*), i8* %frame_pointer, i32 0)
+// CHECK:   call i8* @llvm.localrecover(i8* bitcast (i32 (i32)* @basic_finally to i8*), i8* %frame_pointer, i32 0)
 // CHECK:   load i32, i32* %{{.*}}, align 4
 // CHECK:   add nsw i32 %{{.*}}, 1
 // CHECK:   store i32 %{{.*}}, i32* %{{.*}}, align 4

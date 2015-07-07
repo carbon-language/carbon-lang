@@ -1396,13 +1396,13 @@ llvm::Value *CodeGenFunction::recoverAddrOfEscapedLocal(
   CGBuilderTy Builder(AllocaInsertPt);
   if (auto *ParentAlloca = dyn_cast<llvm::AllocaInst>(ParentVar)) {
     // Mark the variable escaped if nobody else referenced it and compute the
-    // frameescape index.
+    // localescape index.
     auto InsertPair = ParentCGF.EscapedLocals.insert(
         std::make_pair(ParentAlloca, ParentCGF.EscapedLocals.size()));
     int FrameEscapeIdx = InsertPair.first->second;
-    // call i8* @llvm.framerecover(i8* bitcast(@parentFn), i8* %fp, i32 N)
+    // call i8* @llvm.localrecover(i8* bitcast(@parentFn), i8* %fp, i32 N)
     llvm::Function *FrameRecoverFn = llvm::Intrinsic::getDeclaration(
-        &CGM.getModule(), llvm::Intrinsic::framerecover);
+        &CGM.getModule(), llvm::Intrinsic::localrecover);
     llvm::Constant *ParentI8Fn =
         llvm::ConstantExpr::getBitCast(ParentCGF.CurFn, Int8PtrTy);
     RecoverCall = Builder.CreateCall(
@@ -1411,12 +1411,12 @@ llvm::Value *CodeGenFunction::recoverAddrOfEscapedLocal(
 
   } else {
     // If the parent didn't have an alloca, we're doing some nested outlining.
-    // Just clone the existing framerecover call, but tweak the FP argument to
+    // Just clone the existing localrecover call, but tweak the FP argument to
     // use our FP value. All other arguments are constants.
     auto *ParentRecover =
         cast<llvm::IntrinsicInst>(ParentVar->stripPointerCasts());
-    assert(ParentRecover->getIntrinsicID() == llvm::Intrinsic::framerecover &&
-           "expected alloca or framerecover in parent LocalDeclMap");
+    assert(ParentRecover->getIntrinsicID() == llvm::Intrinsic::localrecover &&
+           "expected alloca or localrecover in parent LocalDeclMap");
     RecoverCall = cast<llvm::CallInst>(ParentRecover->clone());
     RecoverCall->setArgOperand(1, ParentFP);
     RecoverCall->insertBefore(AllocaInsertPt);
@@ -1468,7 +1468,7 @@ void CodeGenFunction::EmitCapturedLocals(CodeGenFunction &ParentCGF,
     ParentFP = AI;
   }
 
-  // Create llvm.framerecover calls for all captures.
+  // Create llvm.localrecover calls for all captures.
   for (const VarDecl *VD : Finder.Captures) {
     if (isa<ImplicitParamDecl>(VD)) {
       CGM.ErrorUnsupported(VD, "'this' captured by SEH");
