@@ -38,6 +38,8 @@ WebAssemblyTargetLowering::WebAssemblyTargetLowering(
   // WebAssembly does not produce floating-point exceptions on normal floating
   // point operations.
   setHasFloatingPointExceptions(false);
+  // We don't know the microarchitecture here, so just reduce register pressure.
+  setSchedulingPreference(Sched::RegPressure);
 }
 
 //===----------------------------------------------------------------------===//
