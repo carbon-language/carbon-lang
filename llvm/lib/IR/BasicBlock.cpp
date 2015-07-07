@@ -163,40 +163,47 @@ CallInst *BasicBlock::getTerminatingMustTailCall() {
 }
 
 Instruction* BasicBlock::getFirstNonPHI() {
-  for (Instruction &I : *this)
-    if (!isa<PHINode>(I))
-      return &I;
-  return nullptr;
+  BasicBlock::iterator i = begin();
+  // All valid basic blocks should have a terminator,
+  // which is not a PHINode. If we have an invalid basic
+  // block we'll get an assertion failure when dereferencing
+  // a past-the-end iterator.
+  while (isa<PHINode>(i)) ++i;
+  return &*i;
 }
 
 Instruction* BasicBlock::getFirstNonPHIOrDbg() {
-  for (Instruction &I : *this)
-    if (!isa<PHINode>(I) && !isa<DbgInfoIntrinsic>(I))
-      return &I;
-  return nullptr;
+  BasicBlock::iterator i = begin();
+  // All valid basic blocks should have a terminator,
+  // which is not a PHINode. If we have an invalid basic
+  // block we'll get an assertion failure when dereferencing
+  // a past-the-end iterator.
+  while (isa<PHINode>(i) || isa<DbgInfoIntrinsic>(i)) ++i;
+  return &*i;
 }
 
 Instruction* BasicBlock::getFirstNonPHIOrDbgOrLifetime() {
-  for (Instruction &I : *this) {
-    if (isa<PHINode>(I) || isa<DbgInfoIntrinsic>(I))
+  // All valid basic blocks should have a terminator,
+  // which is not a PHINode. If we have an invalid basic
+  // block we'll get an assertion failure when dereferencing
+  // a past-the-end iterator.
+  BasicBlock::iterator i = begin();
+  for (;; ++i) {
+    if (isa<PHINode>(i) || isa<DbgInfoIntrinsic>(i))
       continue;
 
-    if (auto *II = dyn_cast<IntrinsicInst>(&I))
-      if (II->getIntrinsicID() == Intrinsic::lifetime_start ||
-          II->getIntrinsicID() == Intrinsic::lifetime_end)
-        continue;
-
-    return &I;
+    const IntrinsicInst *II = dyn_cast<IntrinsicInst>(i);
+    if (!II)
+      break;
+    if (II->getIntrinsicID() != Intrinsic::lifetime_start &&
+        II->getIntrinsicID() != Intrinsic::lifetime_end)
+      break;
   }
-  return nullptr;
+  return &*i;
 }
 
 BasicBlock::iterator BasicBlock::getFirstInsertionPt() {
-  Instruction *FirstNonPHI = getFirstNonPHI();
-  if (!FirstNonPHI)
-    return end();
-
-  iterator InsertPt = FirstNonPHI;
+  iterator InsertPt = getFirstNonPHI();
   if (isa<LandingPadInst>(InsertPt)) ++InsertPt;
   return InsertPt;
 }
