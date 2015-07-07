@@ -708,6 +708,9 @@ static void getARMTargetFeatures(const Driver &D, const llvm::Triple &Triple,
     Features.insert(Features.begin(), "+v8.1a");
   }
 
+  // Look for the last occurrence of -mlong-calls or -mno-long-calls. If
+  // neither options are specified, see if we are compiling for kernel/kext and
+  // decide whether to pass "+long-calls" based on the OS and its version.
   if (Arg *A = Args.getLastArg(options::OPT_mlong_calls,
                                options::OPT_mno_long_calls)) {
     if (A->getOption().matches(options::OPT_mlong_calls))
