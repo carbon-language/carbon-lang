@@ -1612,7 +1612,7 @@ FastISel::FastISel(FunctionLoweringInfo &FuncInfo,
                    bool SkipTargetIndependentISel)
     : FuncInfo(FuncInfo), MF(FuncInfo.MF), MRI(FuncInfo.MF->getRegInfo()),
       MFI(*FuncInfo.MF->getFrameInfo()), MCP(*FuncInfo.MF->getConstantPool()),
-      TM(FuncInfo.MF->getTarget()), DL(*TM.getDataLayout()),
+      TM(FuncInfo.MF->getTarget()), DL(MF->getDataLayout()),
       TII(*MF->getSubtarget().getInstrInfo()),
       TLI(*MF->getSubtarget().getTargetLowering()),
       TRI(*MF->getSubtarget().getRegisterInfo()), LibInfo(LibInfo),
