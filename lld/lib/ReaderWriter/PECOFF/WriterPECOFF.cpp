@@ -583,7 +583,7 @@ static void applyThumbBranchImmediate(ulittle16_t *bl, int32_t imm) {
   //
   //          I1 = ~(J1 ^ S), I2 = ~(J2 ^ S)
 
-  assert((~abs(imm) & (-1 << 24)) && "bl/b.w out of range");
+  assert((~abs(imm) & (~0ULL << 24)) && "bl/b.w out of range");
 
   uint32_t S = (imm < 0 ? 1 : 0);
   uint32_t J1 = ((~imm & 0x00800000) >> 23) ^ S;
