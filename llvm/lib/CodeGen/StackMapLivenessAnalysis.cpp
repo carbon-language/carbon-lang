@@ -94,8 +94,7 @@ void StackMapLiveness::getAnalysisUsage(AnalysisUsage &AU) const {
   // We preserve all information.
   AU.setPreservesAll();
   AU.setPreservesCFG();
-  // Default dependencie for all MachineFunction passes.
-  AU.addRequired<MachineFunctionAnalysis>();
+  MachineFunctionPass::getAnalysisUsage(AU);
 }
 
 /// Calculate the liveness information for the given machine function.
