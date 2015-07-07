@@ -62,7 +62,7 @@ static std::string computeDataLayout(const Triple &TT, StringRef CPU,
   if (!ABI.IsN64())
     Ret += "-p:32:32";
 
-  // 8 and 16 bit integers only need no have natural alignment, but try to
+  // 8 and 16 bit integers only need to have natural alignment, but try to
   // align them to 32 bits. 64 bit integers have natural alignment.
   Ret += "-i8:8:32-i16:16:32-i64:64";
 
