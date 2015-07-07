@@ -305,6 +305,9 @@ bool MIParser::parseRegisterFlag(unsigned &Flags) {
   case MIToken::kw_implicit_define:
     Flags |= RegState::ImplicitDefine;
     break;
+  case MIToken::kw_dead:
+    Flags |= RegState::Dead;
+    break;
   // TODO: report an error when we specify the same flag more than once.
   // TODO: parse the other register flags.
   default:
@@ -328,7 +331,8 @@ bool MIParser::parseRegisterOperand(MachineOperand &Dest, bool IsDef) {
   lex();
   // TODO: Parse subregister.
   Dest = MachineOperand::CreateReg(Reg, Flags & RegState::Define,
-                                   Flags & RegState::Implicit);
+                                   Flags & RegState::Implicit, /*IsKill=*/false,
+                                   Flags & RegState::Dead);
   return false;
 }
 
@@ -412,6 +416,7 @@ bool MIParser::parseMachineOperand(MachineOperand &Dest) {
   switch (Token.kind()) {
   case MIToken::kw_implicit:
   case MIToken::kw_implicit_define:
+  case MIToken::kw_dead:
   case MIToken::underscore:
   case MIToken::NamedRegister:
     return parseRegisterOperand(Dest);

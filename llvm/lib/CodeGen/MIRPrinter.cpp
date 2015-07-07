@@ -214,6 +214,8 @@ void MIPrinter::print(const MachineOperand &Op, const TargetRegisterInfo *TRI) {
     // TODO: Print the other register flags.
     if (Op.isImplicit())
       OS << (Op.isDef() ? "implicit-def " : "implicit ");
+    if (Op.isDead())
+      OS << "dead ";
     printReg(Op.getReg(), OS, TRI);
     // TODO: Print sub register.
     break;

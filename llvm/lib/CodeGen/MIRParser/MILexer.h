@@ -39,6 +39,7 @@ struct MIToken {
     // Keywords
     kw_implicit,
     kw_implicit_define,
+    kw_dead,
 
     // Identifier tokens
     Identifier,
@@ -74,7 +75,7 @@ public:
   }
 
   bool isRegisterFlag() const {
-    return Kind == kw_implicit || Kind == kw_implicit_define;
+    return Kind == kw_implicit || Kind == kw_implicit_define || Kind == kw_dead;
   }
 
   bool is(TokenKind K) const { return Kind == K; }
