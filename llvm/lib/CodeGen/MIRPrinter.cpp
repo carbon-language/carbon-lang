@@ -19,6 +19,7 @@
 #include "llvm/CodeGen/MIRYamlMapping.h"
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/Module.h"
+#include "llvm/IR/ModuleSlotTracker.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/YAMLTraits.h"
@@ -41,7 +42,7 @@ public:
   void print(const MachineFunction &MF);
 
   void convert(yaml::MachineFunction &MF, const MachineRegisterInfo &RegInfo);
-  void convert(const Module &M, yaml::MachineBasicBlock &YamlMBB,
+  void convert(ModuleSlotTracker &MST, yaml::MachineBasicBlock &YamlMBB,
                const MachineBasicBlock &MBB);
 
 private:
@@ -51,14 +52,14 @@ private:
 /// This class prints out the machine instructions using the MIR serialization
 /// format.
 class MIPrinter {
-  const Module &M;
   raw_ostream &OS;
+  ModuleSlotTracker &MST;
   const DenseMap<const uint32_t *, unsigned> &RegisterMaskIds;
 
 public:
-  MIPrinter(const Module &M, raw_ostream &OS,
+  MIPrinter(raw_ostream &OS, ModuleSlotTracker &MST,
             const DenseMap<const uint32_t *, unsigned> &RegisterMaskIds)
-      : M(M), OS(OS), RegisterMaskIds(RegisterMaskIds) {}
+      : OS(OS), MST(MST), RegisterMaskIds(RegisterMaskIds) {}
 
   void print(const MachineInstr &MI);
   void printMBBReference(const MachineBasicBlock &MBB);
@@ -95,7 +96,7 @@ void MIRPrinter::print(const MachineFunction &MF) {
   convert(YamlMF, MF.getRegInfo());
 
   int I = 0;
-  const auto &M = *MF.getFunction()->getParent();
+  ModuleSlotTracker MST(MF.getFunction()->getParent());
   for (const auto &MBB : MF) {
     // TODO: Allow printing of non sequentially numbered MBBs.
     // This is currently needed as the basic block references get their index
@@ -105,7 +106,7 @@ void MIRPrinter::print(const MachineFunction &MF) {
            "Can't print MBBs that aren't sequentially numbered");
     (void)I;
     yaml::MachineBasicBlock YamlMBB;
-    convert(M, YamlMBB, MBB);
+    convert(MST, YamlMBB, MBB);
     YamlMF.BasicBlocks.push_back(YamlMBB);
   }
   yaml::Output Out(OS);
@@ -119,7 +120,8 @@ void MIRPrinter::convert(yaml::MachineFunction &MF,
   MF.TracksSubRegLiveness = RegInfo.subRegLivenessEnabled();
 }
 
-void MIRPrinter::convert(const Module &M, yaml::MachineBasicBlock &YamlMBB,
+void MIRPrinter::convert(ModuleSlotTracker &MST,
+                         yaml::MachineBasicBlock &YamlMBB,
                          const MachineBasicBlock &MBB) {
   assert(MBB.getNumber() >= 0 && "Invalid MBB number");
   YamlMBB.ID = (unsigned)MBB.getNumber();
@@ -134,7 +136,7 @@ void MIRPrinter::convert(const Module &M, yaml::MachineBasicBlock &YamlMBB,
   for (const auto *SuccMBB : MBB.successors()) {
     std::string Str;
     raw_string_ostream StrOS(Str);
-    MIPrinter(M, StrOS, RegisterMaskIds).printMBBReference(*SuccMBB);
+    MIPrinter(StrOS, MST, RegisterMaskIds).printMBBReference(*SuccMBB);
     YamlMBB.Successors.push_back(StrOS.str());
   }
 
@@ -143,7 +145,7 @@ void MIRPrinter::convert(const Module &M, yaml::MachineBasicBlock &YamlMBB,
   std::string Str;
   for (const auto &MI : MBB) {
     raw_string_ostream StrOS(Str);
-    MIPrinter(M, StrOS, RegisterMaskIds).print(MI);
+    MIPrinter(StrOS, MST, RegisterMaskIds).print(MI);
     YamlMBB.Instructions.push_back(StrOS.str());
     Str.clear();
   }
@@ -226,10 +228,7 @@ void MIPrinter::print(const MachineOperand &Op, const TargetRegisterInfo *TRI) {
     printMBBReference(*Op.getMBB());
     break;
   case MachineOperand::MO_GlobalAddress:
-    // FIXME: Make this faster - print as operand will create a slot tracker to
-    // print unnamed values for the whole module every time it's called, which
-    // is inefficient.
-    Op.getGlobal()->printAsOperand(OS, /*PrintType=*/false, &M);
+    Op.getGlobal()->printAsOperand(OS, /*PrintType=*/false, MST);
     // TODO: Print offset and target flags.
     break;
   case MachineOperand::MO_RegisterMask: {
