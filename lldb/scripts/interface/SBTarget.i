@@ -739,7 +739,11 @@ public:
     operator != (const lldb::SBTarget &rhs) const;
 
     lldb::SBValue
+    EvaluateExpression (const char *expr);
+
+    lldb::SBValue
     EvaluateExpression (const char *expr, const lldb::SBExpressionOptions &options);
+
     %pythoncode %{
         class modules_access(object):
             '''A helper object that will lazily hand out lldb.SBModule objects for a target when supplied an index, or by full or partial path.'''

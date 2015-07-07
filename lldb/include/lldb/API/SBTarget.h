@@ -769,6 +769,9 @@ public:
     GetDescription (lldb::SBStream &description, lldb::DescriptionLevel description_level);
 
     lldb::SBValue
+    EvaluateExpression (const char *expr);
+
+    lldb::SBValue
     EvaluateExpression (const char *expr, const SBExpressionOptions &options);
 
     lldb::addr_t

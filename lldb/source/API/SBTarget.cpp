@@ -2293,6 +2293,19 @@ SBTarget::FindSymbols (const char *name, lldb::SymbolType symbol_type)
     
 }
 
+lldb::SBValue
+SBTarget::EvaluateExpression (const char *expr)
+{
+    TargetSP target_sp(GetSP());
+    if (!target_sp)
+        return SBValue();
+
+    SBExpressionOptions options;
+    lldb::DynamicValueType fetch_dynamic_value = target_sp->GetPreferDynamicValue();
+    options.SetFetchDynamicValue (fetch_dynamic_value);
+    options.SetUnwindOnError (true);
+    return EvaluateExpression(expr, options);
+}
 
 lldb::SBValue
 SBTarget::EvaluateExpression (const char *expr, const SBExpressionOptions &options)
