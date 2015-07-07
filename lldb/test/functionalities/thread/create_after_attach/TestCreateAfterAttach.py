@@ -34,6 +34,7 @@ class CreateAfterAttachTestCase(TestBase):
                    # for FreeBSD.
     @dwarf_test
     @skipIfRemote
+    @skipIfWindows # Windows doesn't have fork.
     @expectedFlakeyLinux("llvm.org/pr16229") # 1/100 dosep, build 3546, clang-3.5 x84_64
     def test_create_after_attach_with_dwarf_and_fork(self):
         """Test thread creation after process attach."""
