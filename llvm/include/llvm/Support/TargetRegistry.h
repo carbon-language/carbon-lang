@@ -352,7 +352,7 @@ public:
   /// createTargetMachine - Create a target specific machine implementation
   /// for the specified \p Triple.
   ///
-  /// \param Triple This argument is used to determine the target machine
+  /// \param TT This argument is used to determine the target machine
   /// feature set; it should always be provided. Generally this should be
   /// either the target triple from the module, or the target triple of the
   /// host if that does not exist.
