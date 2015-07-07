@@ -14,6 +14,10 @@ set(LLVM_LINK_COMPONENTS
   nativecodegen
   object
   selectiondag
+  Support
+  ExecutionEngine
+  RuntimeDyld
+  Core
   )
 
 add_llvm_tool(llvm-jitlistener
