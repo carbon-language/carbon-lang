@@ -4,7 +4,7 @@
 # RUN: lld -flavor link2 /out:%t.exe /entry:main %t.obj /force >& %t.log
 # RUN: FileCheck %s < %t.log
 
-# CHECK: undefined symbol: foo
+# CHECK: .obj: undefined symbol: foo
 
 ---
 header:

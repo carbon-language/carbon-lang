@@ -21,7 +21,7 @@
 
 CHECK1: hello64.obj: {{[Nn]}}o such file or directory
 CHECK2: hello64: {{[Nn]}}o such file or directory
-CHECK3: undefined symbol: MessageBoxA
+CHECK3: hello64.obj: undefined symbol: MessageBoxA
 
 # RUN: lld -flavor link2 /libpath:%T /out:%t.exe /entry:main \
 # RUN:   /subsystem:console hello64.obj /defaultlib:std64.lib

@@ -123,7 +123,7 @@ bool SymbolTable::queueEmpty() {
 }
 
 bool SymbolTable::reportRemainingUndefines(bool Resolve) {
-  bool Ret = false;
+  llvm::SmallPtrSet<SymbolBody *, 8> Undefs;
   for (auto &I : Symtab) {
     Symbol *Sym = I.second;
     auto *Undef = dyn_cast<Undefined>(Sym->Body);
@@ -150,17 +150,24 @@ bool SymbolTable::reportRemainingUndefines(bool Resolve) {
         continue;
       }
     }
-    llvm::errs() << "undefined symbol: " << Name << "\n";
     // Remaining undefined symbols are not fatal if /force is specified.
     // They are replaced with dummy defined symbols.
-    if (Config->Force) {
-      if (Resolve)
-        Sym->Body = new (Alloc) DefinedAbsolute(Name, 0);
-      continue;
-    }
-    Ret = true;
+    if (Config->Force && Resolve)
+      Sym->Body = new (Alloc) DefinedAbsolute(Name, 0);
+    Undefs.insert(Sym->Body);
   }
-  return Ret;
+  if (Undefs.empty())
+    return false;
+  for (Undefined *U : Config->GCRoot)
+    if (Undefs.count(U->repl()))
+      llvm::errs() << "<root>: undefined symbol: " << U->getName() << "\n";
+  for (std::unique_ptr<InputFile> &File : Files)
+    if (!isa<ArchiveFile>(File.get()))
+      for (SymbolBody *Sym : File->getSymbols())
+        if (Undefs.count(Sym->repl()))
+          llvm::errs() << File->getShortName() << ": undefined symbol: "
+                       << Sym->getName() << "\n";
+  return !Config->Force;
 }
 
 void SymbolTable::addLazy(Lazy *New, std::vector<Symbol *> *Accum) {
