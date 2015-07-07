@@ -7824,4 +7824,8 @@ def err_objc_type_arg_not_id_compatible : Error<
 def err_objc_type_arg_does_not_match_bound : Error<
   "type argument %0 does not satisfy the bound (%1) of type parameter %2">;
 
+def warn_objc_redundant_qualified_class_type : Warning<
+  "parameterized class %0 already conforms to the protocols listed; did you "
+  "forget a '*'?">, InGroup<ObjCProtocolQualifiers>;
+
 } // end of sema component.

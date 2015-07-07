@@ -3,8 +3,11 @@
 // Test the substitution of type arguments for type parameters when
 // using parameterized classes in Objective-C.
 
+@protocol NSObject
+@end
+
 __attribute__((objc_root_class))
-@interface NSObject
+@interface NSObject <NSObject>
 + (instancetype)alloc;
 - (instancetype)init;
 @end
@@ -376,3 +379,8 @@ void test_ternary_operator(NSArray<NSString *> *stringArray,
   ip = [super array]; // expected-warning{{from 'NSArray<NSString *> *'}}
 }
 @end
+
+// --------------------------------------------------------------------------
+// warning about likely protocol/class name typos.
+// --------------------------------------------------------------------------
+typedef NSArray<NSObject> ArrayOfNSObjectWarning; // expected-warning{{parameterized class 'NSArray' already conforms to the protocols listed; did you forget a '*'?}}

@@ -7194,6 +7194,7 @@ public:
   /// arguments, as appropriate.
   void actOnObjCTypeArgsOrProtocolQualifiers(
          Scope *S,
+         ParsedType baseType,
          SourceLocation lAngleLoc,
          ArrayRef<IdentifierInfo *> identifiers,
          ArrayRef<SourceLocation> identifierLocs,

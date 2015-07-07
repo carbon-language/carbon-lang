@@ -319,7 +319,8 @@ Decl *Parser::ParseObjCAtInterfaceDeclaration(SourceLocation AtLoc,
 
     // Type arguments for the superclass or protocol conformances.
     if (Tok.is(tok::less)) {
-      parseObjCTypeArgsOrProtocolQualifiers(typeArgsLAngleLoc,
+      parseObjCTypeArgsOrProtocolQualifiers(ParsedType(),
+                                            typeArgsLAngleLoc,
                                             typeArgs,
                                             typeArgsRAngleLoc,
                                             LAngleLoc,
@@ -1589,6 +1590,7 @@ TypeResult Parser::parseObjCProtocolQualifierType(SourceLocation &rAngleLoc) {
 ///     '<' type-name '...'[opt] (',' type-name '...'[opt])* '>'
 ///
 void Parser::parseObjCTypeArgsOrProtocolQualifiers(
+       ParsedType baseType,
        SourceLocation &typeArgsLAngleLoc,
        SmallVectorImpl<ParsedType> &typeArgs,
        SourceLocation &typeArgsRAngleLoc,
@@ -1648,6 +1650,7 @@ void Parser::parseObjCTypeArgsOrProtocolQualifiers(
 
     // Let Sema figure out what we parsed.
     Actions.actOnObjCTypeArgsOrProtocolQualifiers(getCurScope(),
+                                                  baseType,
                                                   lAngleLoc,
                                                   identifiers,
                                                   identifierLocs,
@@ -1723,6 +1726,7 @@ void Parser::parseObjCTypeArgsOrProtocolQualifiers(
 }
 
 void Parser::parseObjCTypeArgsAndProtocolQualifiers(
+       ParsedType baseType,
        SourceLocation &typeArgsLAngleLoc,
        SmallVectorImpl<ParsedType> &typeArgs,
        SourceLocation &typeArgsRAngleLoc,
@@ -1734,7 +1738,8 @@ void Parser::parseObjCTypeArgsAndProtocolQualifiers(
   assert(Tok.is(tok::less));
 
   // Parse the first angle-bracket-delimited clause.
-  parseObjCTypeArgsOrProtocolQualifiers(typeArgsLAngleLoc,
+  parseObjCTypeArgsOrProtocolQualifiers(baseType,
+                                        typeArgsLAngleLoc,
                                         typeArgs,
                                         typeArgsRAngleLoc,
                                         protocolLAngleLoc,
@@ -1786,7 +1791,7 @@ TypeResult Parser::parseObjCTypeArgsAndProtocolQualifiers(
   SourceLocation protocolRAngleLoc;
 
   // Parse type arguments and protocol qualifiers.
-  parseObjCTypeArgsAndProtocolQualifiers(typeArgsLAngleLoc, typeArgs,
+  parseObjCTypeArgsAndProtocolQualifiers(type, typeArgsLAngleLoc, typeArgs,
                                          typeArgsRAngleLoc, protocolLAngleLoc,
                                          protocols, protocolLocs,
                                          protocolRAngleLoc, consumeLastToken);

@@ -1220,6 +1220,7 @@ class ObjCTypeArgOrProtocolValidatorCCC : public CorrectionCandidateCallback {
 
 void Sema::actOnObjCTypeArgsOrProtocolQualifiers(
        Scope *S,
+       ParsedType baseType,
        SourceLocation lAngleLoc,
        ArrayRef<IdentifierInfo *> identifiers,
        ArrayRef<SourceLocation> identifierLocs,
@@ -1237,6 +1238,27 @@ void Sema::actOnObjCTypeArgsOrProtocolQualifiers(
   auto resolvedAsProtocols = [&] {
     assert(numProtocolsResolved == identifiers.size() && "Unresolved protocols");
     
+    // Determine whether the base type is a parameterized class, in
+    // which case we want to warn about typos such as
+    // "NSArray<NSObject>" (that should be NSArray<NSObject *>).
+    ObjCInterfaceDecl *baseClass = nullptr;
+    QualType base = GetTypeFromParser(baseType, nullptr);
+    bool allAreTypeNames = false;
+    SourceLocation firstClassNameLoc;
+    if (!base.isNull()) {
+      if (const auto *objcObjectType = base->getAs<ObjCObjectType>()) {
+        baseClass = objcObjectType->getInterface();
+        if (baseClass) {
+          if (auto typeParams = baseClass->getTypeParamList()) {
+            if (typeParams->size() == numProtocolsResolved) {
+              // Note that we should be looking for type names, too.
+              allAreTypeNames = true;
+            }
+          }
+        }
+      }
+    }
+
     for (unsigned i = 0, n = protocols.size(); i != n; ++i) {
       ObjCProtocolDecl *&proto 
         = reinterpret_cast<ObjCProtocolDecl *&>(protocols[i]);
@@ -1260,6 +1282,47 @@ void Sema::actOnObjCTypeArgsOrProtocolQualifiers(
           << proto->getDeclName();
         Diag(forwardDecl->getLocation(), diag::note_protocol_decl_undefined)
           << forwardDecl;
+      }
+
+      // If everything this far has been a type name (and we care
+      // about such things), check whether this name refers to a type
+      // as well.
+      if (allAreTypeNames) {
+        if (auto *decl = LookupSingleName(S, identifiers[i], identifierLocs[i],
+                                          LookupOrdinaryName)) {
+          if (isa<ObjCInterfaceDecl>(decl)) {
+            if (firstClassNameLoc.isInvalid())
+              firstClassNameLoc = identifierLocs[i];
+          } else if (!isa<TypeDecl>(decl)) {
+            // Not a type.
+            allAreTypeNames = false;
+          }
+        } else {
+          allAreTypeNames = false;
+        }
+      }
+    }
+    
+    // All of the protocols listed also have type names, and at least
+    // one is an Objective-C class name. Check whether all of the
+    // protocol conformances are declared by the base class itself, in
+    // which case we warn.
+    if (allAreTypeNames && firstClassNameLoc.isValid()) {
+      llvm::SmallPtrSet<ObjCProtocolDecl*, 8> knownProtocols;
+      Context.CollectInheritedProtocols(baseClass, knownProtocols);
+      bool allProtocolsDeclared = true;
+      for (auto proto : protocols) {
+        if (knownProtocols.count(static_cast<ObjCProtocolDecl *>(proto)) == 0) {
+          allProtocolsDeclared = false;
+          break;
+        }
+      }
+
+      if (allProtocolsDeclared) {
+        Diag(firstClassNameLoc, diag::warn_objc_redundant_qualified_class_type)
+          << baseClass->getDeclName() << SourceRange(lAngleLoc, rAngleLoc)
+          << FixItHint::CreateInsertion(
+               PP.getLocForEndOfToken(firstClassNameLoc), " *");
       }
     }
 
