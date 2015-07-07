@@ -197,10 +197,14 @@ void MachODebugMapParser::loadCurrentObjectFileSymbols() {
   CurrentObjectAddresses.clear();
 
   for (auto Sym : CurrentObjectHolder.Get().symbols()) {
-
-    uint64_t Addr = Sym.getValue();
-    if (Addr == UnknownAddress)
-      continue;
+    uint64_t Addr;
+    if (Sym.getFlags() & SymbolRef::SF_Common) {
+      Addr = Sym.getCommonSize();
+    } else {
+      Addr = Sym.getValue();
+      if (Addr == UnknownAddress)
+        continue;
+    }
     ErrorOr<StringRef> Name = Sym.getName();
     if (!Name)
       continue;
