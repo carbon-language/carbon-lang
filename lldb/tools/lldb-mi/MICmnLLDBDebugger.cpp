@@ -423,13 +423,13 @@ CMICmnLLDBDebugger::RegisterForEvent(const CMIUtilString &vClientName, const lld
     const char *pBroadcasterName = vBroadcaster.GetName();
     if (pBroadcasterName == nullptr)
     {
-        SetErrorDescription(CMIUtilString::Format(MIRSRC(IDS_LLDBDEBUGGER_ERR_BROARDCASTER_NAME), MIRSRC(IDS_WORD_INVALIDNULLPTR)));
+        SetErrorDescription(CMIUtilString::Format(MIRSRC(IDS_LLDBDEBUGGER_ERR_BROADCASTER_NAME), MIRSRC(IDS_WORD_INVALIDNULLPTR)));
         return MIstatus::failure;
     }
     CMIUtilString broadcasterName(pBroadcasterName);
     if (broadcasterName.length() == 0)
     {
-        SetErrorDescription(CMIUtilString::Format(MIRSRC(IDS_LLDBDEBUGGER_ERR_BROARDCASTER_NAME), MIRSRC(IDS_WORD_INVALIDEMPTY)));
+        SetErrorDescription(CMIUtilString::Format(MIRSRC(IDS_LLDBDEBUGGER_ERR_BROADCASTER_NAME), MIRSRC(IDS_WORD_INVALIDEMPTY)));
         return MIstatus::failure;
     }
 
