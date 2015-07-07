@@ -51,6 +51,10 @@
 @end
 @protocol P2
 @end
+@protocol P3 <P1>
+@end
+@protocol P4 <P1>
+@end
 
 @interface A <P0>
 @end
@@ -62,6 +66,9 @@
 @end
 
 @interface D
+@end
+
+@interface E : A
 @end
 
 void f0(id<P0> x) {
@@ -117,4 +124,8 @@ void f11(int a, id<P0> x, id<P1> y) {
 
 void f12(int a, A<P0> *x, A<P1> *y) {
   A<P1>* l0 = (a ? x : y ); // expected-warning {{incompatible pointer types initializing 'A<P1> *' with an expression of type 'A<P0> *'}}
+}
+
+void f13(int a, B<P3, P0> *x, E<P0, P4> *y) {
+  int *ip = a ? x : y; // expected-warning{{expression of type 'A<P1> *'}}
 }

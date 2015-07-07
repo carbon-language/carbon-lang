@@ -1260,6 +1260,15 @@ void ObjCObjectType::computeSuperClassTypeSlow() const {
     true);
 }
 
+const ObjCInterfaceType *ObjCObjectPointerType::getInterfaceType() const {
+  if (auto interfaceDecl = getObjectType()->getInterface()) {
+    return interfaceDecl->getASTContext().getObjCInterfaceType(interfaceDecl)
+             ->castAs<ObjCInterfaceType>();
+  }
+
+  return nullptr;
+}
+
 QualType ObjCObjectPointerType::getSuperClassType() const {
   QualType superObjectType = getObjectType()->getSuperClassType();
   if (superObjectType.isNull())

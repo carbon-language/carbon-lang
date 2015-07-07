@@ -51,5 +51,5 @@ UIWebPDFView *getView()
 {
     UIWebBrowserView *browserView;
     UIWebPDFView *pdfView;
-    return pdfView ? pdfView : browserView; // expected-warning {{incompatible pointer types returning 'UIView<NSObject> *' from a function with result type 'UIWebPDFView *'}}
+    return pdfView ? pdfView : browserView; // expected-warning {{incompatible pointer types returning 'UIView *' from a function with result type 'UIWebPDFView *'}}
 }

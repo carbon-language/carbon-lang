@@ -4772,9 +4772,7 @@ public:
   /// qualifiers on the interface are ignored.
   ///
   /// \return null if the base type for this pointer is 'id' or 'Class'
-  const ObjCInterfaceType *getInterfaceType() const {
-    return getObjectType()->getBaseType()->getAs<ObjCInterfaceType>();
-  }
+  const ObjCInterfaceType *getInterfaceType() const;
 
   /// getInterfaceDecl - If this pointer points to an Objective \@interface
   /// type, gets the declaration for that interface.

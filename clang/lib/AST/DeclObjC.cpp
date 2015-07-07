@@ -251,7 +251,7 @@ ObjCTypeParamList *ObjCInterfaceDecl::getTypeParamList() const {
   // Otherwise, look at previous declarations to determine whether any
   // of them has a type parameter list, skipping over those
   // declarations that do not.
-  for (auto decl = getPreviousDecl(); decl; decl = decl->getPreviousDecl()) {
+  for (auto decl = getMostRecentDecl(); decl; decl = decl->getPreviousDecl()) {
     if (ObjCTypeParamList *written = decl->getTypeParamListAsWritten())
       return written;
   }

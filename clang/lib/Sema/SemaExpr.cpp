@@ -6273,7 +6273,10 @@ QualType Sema::FindCompositeObjCPointerType(ExprResult &LHS, ExprResult &RHS,
 
     // FIXME: Consider unifying with 'areComparableObjCPointerTypes'.
     // It could return the composite type.
-    if (Context.canAssignObjCInterfaces(LHSOPT, RHSOPT)) {
+    if (!(compositeType =
+          Context.areCommonBaseCompatible(LHSOPT, RHSOPT)).isNull()) {
+      // Nothing more to do.
+    } else if (Context.canAssignObjCInterfaces(LHSOPT, RHSOPT)) {
       compositeType = RHSOPT->isObjCBuiltinType() ? RHSTy : LHSTy;
     } else if (Context.canAssignObjCInterfaces(RHSOPT, LHSOPT)) {
       compositeType = LHSOPT->isObjCBuiltinType() ? LHSTy : RHSTy;
@@ -6287,10 +6290,7 @@ QualType Sema::FindCompositeObjCPointerType(ExprResult &LHS, ExprResult &RHS,
       compositeType = Context.getObjCIdType();
     } else if (LHSTy->isObjCIdType() || RHSTy->isObjCIdType()) {
       compositeType = Context.getObjCIdType();
-    } else if (!(compositeType =
-                 Context.areCommonBaseCompatible(LHSOPT, RHSOPT)).isNull())
-      ;
-    else {
+    } else {
       Diag(QuestionLoc, diag::ext_typecheck_cond_incompatible_operands)
       << LHSTy << RHSTy
       << LHS.get()->getSourceRange() << RHS.get()->getSourceRange();

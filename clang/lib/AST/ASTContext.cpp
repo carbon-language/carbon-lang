@@ -1917,11 +1917,7 @@ void ASTContext::CollectInheritedProtocols(const Decl *CDecl,
     // We can use protocol_iterator here instead of
     // all_referenced_protocol_iterator since we are walking all categories.    
     for (auto *Proto : OI->all_referenced_protocols()) {
-      Protocols.insert(Proto->getCanonicalDecl());
-      for (auto *P : Proto->protocols()) {
-        Protocols.insert(P->getCanonicalDecl());
-        CollectInheritedProtocols(P, Protocols);
-      }
+      CollectInheritedProtocols(Proto, Protocols);
     }
     
     // Categories of this Interface.
@@ -1935,16 +1931,16 @@ void ASTContext::CollectInheritedProtocols(const Decl *CDecl,
       }
   } else if (const ObjCCategoryDecl *OC = dyn_cast<ObjCCategoryDecl>(CDecl)) {
     for (auto *Proto : OC->protocols()) {
-      Protocols.insert(Proto->getCanonicalDecl());
-      for (const auto *P : Proto->protocols())
-        CollectInheritedProtocols(P, Protocols);
+      CollectInheritedProtocols(Proto, Protocols);
     }
   } else if (const ObjCProtocolDecl *OP = dyn_cast<ObjCProtocolDecl>(CDecl)) {
-    for (auto *Proto : OP->protocols()) {
-      Protocols.insert(Proto->getCanonicalDecl());
-      for (const auto *P : Proto->protocols())
-        CollectInheritedProtocols(P, Protocols);
-    }
+    // Insert the protocol.
+    if (!Protocols.insert(
+          const_cast<ObjCProtocolDecl *>(OP->getCanonicalDecl())).second)
+      return;
+
+    for (auto *Proto : OP->protocols())
+      CollectInheritedProtocols(Proto, Protocols);
   }
 }
 
@@ -5663,13 +5659,8 @@ void ASTContext::getObjCEncodingForTypeImpl(QualType T, std::string& S,
   
   case Type::ObjCInterface: {
     // Ignore protocol qualifiers when mangling at this level.
-    T = T->castAs<ObjCObjectType>()->getBaseType();
-
-    // The assumption seems to be that this assert will succeed
-    // because nested levels will have filtered out 'id' and 'Class'.
-    const ObjCInterfaceType *OIT = T->castAs<ObjCInterfaceType>();
     // @encode(class_name)
-    ObjCInterfaceDecl *OI = OIT->getDecl();
+    ObjCInterfaceDecl *OI = T->castAs<ObjCObjectType>()->getInterface();
     S += '{';
     S += OI->getObjCRuntimeNameAsString();
     S += '=';
@@ -6836,88 +6827,199 @@ bool ASTContext::canAssignObjCInterfacesInBlockPointer(
   return false;
 }
 
+/// Comparison routine for Objective-C protocols to be used with
+/// llvm::array_pod_sort.
+static int compareObjCProtocolsByName(ObjCProtocolDecl * const *lhs,
+                                      ObjCProtocolDecl * const *rhs) {
+  return (*lhs)->getName().compare((*rhs)->getName());
+
+}
+
 /// getIntersectionOfProtocols - This routine finds the intersection of set
-/// of protocols inherited from two distinct objective-c pointer objects.
+/// of protocols inherited from two distinct objective-c pointer objects with
+/// the given common base.
 /// It is used to build composite qualifier list of the composite type of
 /// the conditional expression involving two objective-c pointer objects.
 static 
 void getIntersectionOfProtocols(ASTContext &Context,
+                                const ObjCInterfaceDecl *CommonBase,
                                 const ObjCObjectPointerType *LHSOPT,
                                 const ObjCObjectPointerType *RHSOPT,
-      SmallVectorImpl<ObjCProtocolDecl *> &IntersectionOfProtocols) {
+      SmallVectorImpl<ObjCProtocolDecl *> &IntersectionSet) {
   
   const ObjCObjectType* LHS = LHSOPT->getObjectType();
   const ObjCObjectType* RHS = RHSOPT->getObjectType();
   assert(LHS->getInterface() && "LHS must have an interface base");
   assert(RHS->getInterface() && "RHS must have an interface base");
-  
-  llvm::SmallPtrSet<ObjCProtocolDecl *, 8> InheritedProtocolSet;
-  unsigned LHSNumProtocols = LHS->getNumProtocols();
-  if (LHSNumProtocols > 0)
-    InheritedProtocolSet.insert(LHS->qual_begin(), LHS->qual_end());
-  else {
-    llvm::SmallPtrSet<ObjCProtocolDecl *, 8> LHSInheritedProtocols;
-    Context.CollectInheritedProtocols(LHS->getInterface(),
-                                      LHSInheritedProtocols);
-    InheritedProtocolSet.insert(LHSInheritedProtocols.begin(), 
-                                LHSInheritedProtocols.end());
+
+  // Add all of the protocols for the LHS.
+  llvm::SmallPtrSet<ObjCProtocolDecl *, 8> LHSProtocolSet;
+
+  // Start with the protocol qualifiers.
+  for (auto proto : LHS->quals()) {
+    Context.CollectInheritedProtocols(proto, LHSProtocolSet);
   }
-  
-  unsigned RHSNumProtocols = RHS->getNumProtocols();
-  if (RHSNumProtocols > 0) {
-    ObjCProtocolDecl **RHSProtocols =
-      const_cast<ObjCProtocolDecl **>(RHS->qual_begin());
-    for (unsigned i = 0; i < RHSNumProtocols; ++i)
-      if (InheritedProtocolSet.count(RHSProtocols[i]))
-        IntersectionOfProtocols.push_back(RHSProtocols[i]);
-  } else {
-    llvm::SmallPtrSet<ObjCProtocolDecl *, 8> RHSInheritedProtocols;
-    Context.CollectInheritedProtocols(RHS->getInterface(),
-                                      RHSInheritedProtocols);
-    for (ObjCProtocolDecl *ProtDecl : RHSInheritedProtocols)
-      if (InheritedProtocolSet.count(ProtDecl))
-        IntersectionOfProtocols.push_back(ProtDecl);
+
+  // Also add the protocols associated with the LHS interface.
+  Context.CollectInheritedProtocols(LHS->getInterface(), LHSProtocolSet);
+
+  // Add all of the protocls for the RHS.
+  llvm::SmallPtrSet<ObjCProtocolDecl *, 8> RHSProtocolSet;
+
+  // Start with the protocol qualifiers.
+  for (auto proto : RHS->quals()) {
+    Context.CollectInheritedProtocols(proto, RHSProtocolSet);
   }
+
+  // Also add the protocols associated with the RHS interface.
+  Context.CollectInheritedProtocols(RHS->getInterface(), RHSProtocolSet);
+
+  // Compute the intersection of the collected protocol sets.
+  for (auto proto : LHSProtocolSet) {
+    if (RHSProtocolSet.count(proto))
+      IntersectionSet.push_back(proto);
+  }
+
+  // Compute the set of protocols that is implied by either the common type or
+  // the protocols within the intersection.
+  llvm::SmallPtrSet<ObjCProtocolDecl *, 8> ImpliedProtocols;
+  Context.CollectInheritedProtocols(CommonBase, ImpliedProtocols);
+
+  // Remove any implied protocols from the list of inherited protocols.
+  if (!ImpliedProtocols.empty()) {
+    IntersectionSet.erase(
+      std::remove_if(IntersectionSet.begin(),
+                     IntersectionSet.end(),
+                     [&](ObjCProtocolDecl *proto) -> bool {
+                       return ImpliedProtocols.count(proto) > 0;
+                     }),
+      IntersectionSet.end());
+  }
+
+  // Sort the remaining protocols by name.
+  llvm::array_pod_sort(IntersectionSet.begin(), IntersectionSet.end(),
+                       compareObjCProtocolsByName);
 }
 
-/// areCommonBaseCompatible - Returns common base class of the two classes if
-/// one found. Note that this is O'2 algorithm. But it will be called as the
-/// last type comparison in a ?-exp of ObjC pointer types before a 
-/// warning is issued. So, its invokation is extremely rare.
+// Check that the given Objective-C type argument lists are equivalent.
+static bool sameObjCTypeArgs(const ASTContext &ctx, ArrayRef<QualType> lhsArgs,
+                             ArrayRef<QualType> rhsArgs) {
+  if (lhsArgs.size() != rhsArgs.size())
+    return false;
+
+  for (unsigned i = 0, n = lhsArgs.size(); i != n; ++i) {
+    if (!ctx.hasSameType(lhsArgs[i], rhsArgs[i]))
+      return false;
+  }
+
+  return true;
+}
+
 QualType ASTContext::areCommonBaseCompatible(
-                                          const ObjCObjectPointerType *Lptr,
-                                          const ObjCObjectPointerType *Rptr) {
+           const ObjCObjectPointerType *Lptr,
+           const ObjCObjectPointerType *Rptr) {
   const ObjCObjectType *LHS = Lptr->getObjectType();
   const ObjCObjectType *RHS = Rptr->getObjectType();
   const ObjCInterfaceDecl* LDecl = LHS->getInterface();
   const ObjCInterfaceDecl* RDecl = RHS->getInterface();
-  if (!LDecl || !RDecl || (declaresSameEntity(LDecl, RDecl)))
+
+  if (!LDecl || !RDecl)
     return QualType();
 
-  while (!declaresSameEntity(LHS->getInterface(), RDecl)) {
-    // Strip protocols from the left-hand side.
-    if (LHS->getNumProtocols() > 0)
-      LHS = getObjCObjectType(LHS->getBaseType(), LHS->getTypeArgsAsWritten(),
-                              { })->castAs<ObjCObjectType>();
+  // Follow the left-hand side up the class hierarchy until we either hit a
+  // root or find the RHS. Record the ancestors in case we don't find it.
+  llvm::SmallDenseMap<const ObjCInterfaceDecl *, const ObjCObjectType *, 4>
+    LHSAncestors;
+  while (true) {
+    // Record this ancestor. We'll need this if the common type isn't in the
+    // path from the LHS to the root.
+    LHSAncestors[LHS->getInterface()->getCanonicalDecl()] = LHS;
 
-    if (canAssignObjCInterfaces(LHS, RHS)) {
+    if (declaresSameEntity(LHS->getInterface(), RDecl)) {
+      // Get the type arguments.
+      ArrayRef<QualType> LHSTypeArgs = LHS->getTypeArgsAsWritten();
+      bool anyChanges = false;
+      if (LHS->isSpecialized() && RHS->isSpecialized()) {
+        // Both have type arguments, compare them.
+        if (!sameObjCTypeArgs(*this, LHS->getTypeArgs(), RHS->getTypeArgs()))
+          return QualType();
+      } else if (LHS->isSpecialized() != RHS->isSpecialized()) {
+        // If only one has type arguments, the result will not have type
+        // arguments.
+        LHSTypeArgs = { };
+        anyChanges = true;
+      }
+
+      // Compute the intersection of protocols.
       SmallVector<ObjCProtocolDecl *, 8> Protocols;
-      getIntersectionOfProtocols(*this, Lptr, Rptr, Protocols);
-
-      QualType Result = QualType(LHS, 0);
+      getIntersectionOfProtocols(*this, LHS->getInterface(), Lptr, Rptr,
+                                 Protocols);
       if (!Protocols.empty())
-        Result = getObjCObjectType(Result, Protocols.data(), Protocols.size());
-      Result = getObjCObjectPointerType(Result);
-      return Result;
+        anyChanges = true;
+
+      // If anything in the LHS will have changed, build a new result type.
+      if (anyChanges) {
+        QualType Result = getObjCInterfaceType(LHS->getInterface());
+        Result = getObjCObjectType(Result, LHSTypeArgs, Protocols);
+        return getObjCObjectPointerType(Result);
+      }
+
+      return getObjCObjectPointerType(QualType(LHS, 0));
     }
 
+    // Find the superclass.
     QualType LHSSuperType = LHS->getSuperClassType();
     if (LHSSuperType.isNull())
       break;
 
     LHS = LHSSuperType->castAs<ObjCObjectType>();
   }
-    
+
+  // We didn't find anything by following the LHS to its root; now check
+  // the RHS against the cached set of ancestors.
+  while (true) {
+    auto KnownLHS = LHSAncestors.find(RHS->getInterface()->getCanonicalDecl());
+    if (KnownLHS != LHSAncestors.end()) {
+      LHS = KnownLHS->second;
+
+      // Get the type arguments.
+      ArrayRef<QualType> RHSTypeArgs = RHS->getTypeArgsAsWritten();
+      bool anyChanges = false;
+      if (LHS->isSpecialized() && RHS->isSpecialized()) {
+        // Both have type arguments, compare them.
+        if (!sameObjCTypeArgs(*this, LHS->getTypeArgs(), RHS->getTypeArgs()))
+          return QualType();
+      } else if (LHS->isSpecialized() != RHS->isSpecialized()) {
+        // If only one has type arguments, the result will not have type
+        // arguments.
+        RHSTypeArgs = { };
+        anyChanges = true;
+      }
+
+      // Compute the intersection of protocols.
+      SmallVector<ObjCProtocolDecl *, 8> Protocols;
+      getIntersectionOfProtocols(*this, RHS->getInterface(), Lptr, Rptr,
+                                 Protocols);
+      if (!Protocols.empty())
+        anyChanges = true;
+
+      if (anyChanges) {
+        QualType Result = getObjCInterfaceType(RHS->getInterface());
+        Result = getObjCObjectType(Result, RHSTypeArgs, Protocols);
+        return getObjCObjectPointerType(Result);
+      }
+
+      return getObjCObjectPointerType(QualType(RHS, 0));
+    }
+
+    // Find the superclass of the RHS.
+    QualType RHSSuperType = RHS->getSuperClassType();
+    if (RHSSuperType.isNull())
+      break;
+
+    RHS = RHSSuperType->castAs<ObjCObjectType>();
+  }
+
   return QualType();
 }
 
@@ -6946,7 +7048,7 @@ bool ASTContext::canAssignObjCInterfaces(const ObjCObjectType *LHS,
     // Also, if RHS has explicit quelifiers, include them for comparing with LHS's
     // qualifiers.
     for (auto *RHSPI : RHS->quals())
-      SuperClassInheritedProtocols.insert(RHSPI->getCanonicalDecl());
+      CollectInheritedProtocols(RHSPI, SuperClassInheritedProtocols);
     // If there is no protocols associated with RHS, it is not a match.
     if (SuperClassInheritedProtocols.empty())
       return false;
@@ -6972,13 +7074,9 @@ bool ASTContext::canAssignObjCInterfaces(const ObjCObjectType *LHS,
       RHSSuper = RHSSuper->getSuperClassType()->castAs<ObjCObjectType>();
 
     // If the RHS is specializd, compare type arguments.
-    if (RHSSuper->isSpecialized()) {
-      ArrayRef<QualType> LHSTypeArgs = LHS->getTypeArgs();
-      ArrayRef<QualType> RHSTypeArgs = RHSSuper->getTypeArgs();
-      for (unsigned i = 0, n = LHSTypeArgs.size(); i != n; ++i) {
-        if (!hasSameType(LHSTypeArgs[i], RHSTypeArgs[i]))
-          return false;
-      }
+    if (RHSSuper->isSpecialized() &&
+        !sameObjCTypeArgs(*this, LHS->getTypeArgs(), RHSSuper->getTypeArgs())) {
+      return false;
     }
   }
 

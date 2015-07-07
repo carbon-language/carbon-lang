@@ -198,3 +198,11 @@ void Test3() {
   NSObject<NSObject, P1, NSCopying> *NSO5 = aBlock; // expected-error {{initializing 'NSObject<NSObject,P1,NSCopying> *' with an expression of incompatible type 'void (^)()'}}
   NSObject<NSCopying> *NSO6 = aBlock; // Ok
 }
+
+// rdar://problem/19420731
+typedef NSObject<P1> NSObject_P1;
+typedef NSObject_P1<P2> NSObject_P1_P2;
+
+void Test4(void (^handler)(NSObject_P1_P2 *p)) {
+  Test4(^(NSObject<P2> *p) { });
+}

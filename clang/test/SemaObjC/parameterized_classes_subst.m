@@ -344,10 +344,16 @@ void test_ternary_operator(NSArray<NSString *> *stringArray,
   ip = cond ? stringArray : mutStringArray; // expected-warning{{from 'NSArray<NSString *> *'}}
   ip = cond ? mutStringArray : stringArray; // expected-warning{{from 'NSArray<NSString *> *'}}
 
-  ip = cond ? stringArray2 : mutStringArray; // expected-warning{{from 'NSArray<NSString *><NSCopying> *'}}
-  ip = cond ? mutStringArray : stringArray2; // expected-warning{{from 'NSArray<NSString *><NSCopying> *'}}
+  ip = cond ? stringArray2 : mutStringArray; // expected-warning{{from 'NSArray<NSString *> *'}}
+  ip = cond ? mutStringArray : stringArray2; // expected-warning{{from 'NSArray<NSString *> *'}}
 
-  ip = cond ? stringArray : mutArray; // FIXME: expected-warning{{from 'NSArray<NSString *> *'}}
+  ip = cond ? stringArray : mutArray; // expected-warning{{from 'NSArray *'}}
+
+  ip = cond ? stringArray2 : mutArray; // expected-warning{{from 'NSArray *'}}
+
+  ip = cond ? mutArray : stringArray; // expected-warning{{from 'NSArray *'}}
+
+  ip = cond ? mutArray : stringArray2; // expected-warning{{from 'NSArray *'}}
 
   object = cond ? stringArray : numberArray; // expected-warning{{incompatible operand types ('NSArray<NSString *> *' and 'NSArray<NSNumber *> *')}}
 }
