@@ -111,11 +111,6 @@ std::error_code ObjectFile::parse() {
     llvm::errs() << getName() << " is not a COFF file.\n";
     return make_error_code(LLDError::InvalidFile);
   }
-  if (COFFObj->getMachine() != IMAGE_FILE_MACHINE_AMD64 &&
-      COFFObj->getMachine() != IMAGE_FILE_MACHINE_UNKNOWN) {
-    llvm::errs() << getName() << " is not an x64 object file.\n";
-    return make_error_code(LLDError::InvalidFile);
-  }
 
   // Read section and symbol tables.
   if (auto EC = initializeChunks())

@@ -118,6 +118,7 @@ void printHelp(const char *Argv0);
 
 // For /machine option.
 ErrorOr<MachineTypes> getMachineType(llvm::opt::InputArgList *Args);
+StringRef machineTypeToStr(MachineTypes MT);
 
 // Parses a string in the form of "<integer>[,<integer>]".
 std::error_code parseNumbers(StringRef Arg, uint64_t *Addr,

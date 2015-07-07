@@ -30,9 +30,7 @@
 #include <memory>
 
 using namespace llvm;
-using llvm::COFF::IMAGE_SUBSYSTEM_UNKNOWN;
-using llvm::COFF::IMAGE_SUBSYSTEM_WINDOWS_CUI;
-using llvm::COFF::IMAGE_SUBSYSTEM_WINDOWS_GUI;
+using namespace llvm::COFF;
 using llvm::sys::Process;
 using llvm::sys::fs::OpenFlags;
 using llvm::sys::fs::file_magic;
@@ -623,6 +621,28 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
       llvm::errs() << "subsystem must be defined\n";
       return false;
     }
+  }
+
+  // Check if all object files are for the same CPU type and
+  // compatible with /machine option (if given).
+  for (ObjectFile *File : Symtab.ObjectFiles) {
+    auto MT = static_cast<MachineTypes>(File->getCOFFObj()->getMachine());
+    if (MT == IMAGE_FILE_MACHINE_UNKNOWN)
+      continue;
+    if (Config->MachineType == IMAGE_FILE_MACHINE_UNKNOWN) {
+      Config->MachineType = MT;
+      continue;
+    }
+    if (Config->MachineType != MT) {
+      llvm::errs() << File->getShortName() << ": machine type "
+                   << machineTypeToStr(MT) << " conflicts with "
+                   << machineTypeToStr(Config->MachineType) << "\n";
+      return false;
+    }
+  }
+  if (Config->MachineType == IMAGE_FILE_MACHINE_UNKNOWN) {
+    llvm::errs() << "machine type must be specified\n";
+    return false;
   }
 
   // Windows specific -- when we are creating a .dll file, we also

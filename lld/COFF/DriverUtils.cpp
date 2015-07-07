@@ -96,6 +96,19 @@ ErrorOr<MachineTypes> getMachineType(llvm::opt::InputArgList *Args) {
   return IMAGE_FILE_MACHINE_UNKNOWN;
 }
 
+StringRef machineTypeToStr(MachineTypes MT) {
+  switch (MT) {
+  case IMAGE_FILE_MACHINE_ARMNT:
+    return "arm";
+  case IMAGE_FILE_MACHINE_AMD64:
+    return "x64";
+  case IMAGE_FILE_MACHINE_I386:
+    return "x86";
+  default:
+    llvm_unreachable("unknown machine type");
+  }
+}
+
 // Parses a string in the form of "<integer>[,<integer>]".
 std::error_code parseNumbers(StringRef Arg, uint64_t *Addr, uint64_t *Size) {
   StringRef S1, S2;
