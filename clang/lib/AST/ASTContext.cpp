@@ -3615,21 +3615,24 @@ QualType ASTContext::getObjCObjectType(QualType BaseType,
                                        ObjCProtocolDecl * const *Protocols,
                                        unsigned NumProtocols) const {
   return getObjCObjectType(BaseType, { },
-                           llvm::makeArrayRef(Protocols, NumProtocols));
+                           llvm::makeArrayRef(Protocols, NumProtocols),
+                           /*isKindOf=*/false);
 }
 
 QualType ASTContext::getObjCObjectType(
            QualType baseType,
            ArrayRef<QualType> typeArgs,
-           ArrayRef<ObjCProtocolDecl *> protocols) const {
+           ArrayRef<ObjCProtocolDecl *> protocols,
+           bool isKindOf) const {
   // If the base type is an interface and there aren't any protocols or
   // type arguments to add, then the interface type will do just fine.
-  if (typeArgs.empty() && protocols.empty() && isa<ObjCInterfaceType>(baseType))
+  if (typeArgs.empty() && protocols.empty() && !isKindOf &&
+      isa<ObjCInterfaceType>(baseType))
     return baseType;
 
   // Look in the folding set for an existing type.
   llvm::FoldingSetNodeID ID;
-  ObjCObjectTypeImpl::Profile(ID, baseType, typeArgs, protocols);
+  ObjCObjectTypeImpl::Profile(ID, baseType, typeArgs, protocols, isKindOf);
   void *InsertPos = nullptr;
   if (ObjCObjectType *QT = ObjCObjectTypes.FindNodeOrInsertPos(ID, InsertPos))
     return QualType(QT, 0);
@@ -3681,7 +3684,7 @@ QualType ASTContext::getObjCObjectType(
     }
 
     canonical = getObjCObjectType(getCanonicalType(baseType), canonTypeArgs,
-                                  canonProtocols);
+                                  canonProtocols, isKindOf);
 
     // Regenerate InsertPos.
     ObjCObjectTypes.FindNodeOrInsertPos(ID, InsertPos);
@@ -3692,7 +3695,8 @@ QualType ASTContext::getObjCObjectType(
   size += protocols.size() * sizeof(ObjCProtocolDecl *);
   void *mem = Allocate(size, TypeAlignment);
   ObjCObjectTypeImpl *T =
-    new (mem) ObjCObjectTypeImpl(canonical, baseType, typeArgs, protocols);
+    new (mem) ObjCObjectTypeImpl(canonical, baseType, typeArgs, protocols,
+                                 isKindOf);
 
   Types.push_back(T);
   ObjCObjectTypes.InsertNode(T, InsertPos);
@@ -6775,18 +6779,36 @@ bool ASTContext::canAssignObjCInterfaces(const ObjCObjectPointerType *LHSOPT,
       RHS->isObjCUnqualifiedIdOrClass())
     return true;
 
-  if (LHS->isObjCQualifiedId() || RHS->isObjCQualifiedId())
-    return ObjCQualifiedIdTypesAreCompatible(QualType(LHSOPT,0),
-                                             QualType(RHSOPT,0),
-                                             false);
+  // Function object that propagates a successful result or handles
+  // __kindof types.
+  auto finish = [&](bool succeeded) -> bool {
+    if (succeeded)
+      return true;
+
+    if (!RHS->isKindOfType())
+      return false;
+
+    // Strip off __kindof and protocol qualifiers, then check whether
+    // we can assign the other way.
+    return canAssignObjCInterfaces(RHSOPT->stripObjCKindOfTypeAndQuals(*this),
+                                   LHSOPT->stripObjCKindOfTypeAndQuals(*this));
+  };
+
+  if (LHS->isObjCQualifiedId() || RHS->isObjCQualifiedId()) {
+    return finish(ObjCQualifiedIdTypesAreCompatible(QualType(LHSOPT,0),
+                                                    QualType(RHSOPT,0),
+                                                    false));
+  }
   
-  if (LHS->isObjCQualifiedClass() && RHS->isObjCQualifiedClass())
-    return ObjCQualifiedClassTypesAreCompatible(QualType(LHSOPT,0),
-                                                QualType(RHSOPT,0));
+  if (LHS->isObjCQualifiedClass() && RHS->isObjCQualifiedClass()) {
+    return finish(ObjCQualifiedClassTypesAreCompatible(QualType(LHSOPT,0),
+                                                       QualType(RHSOPT,0)));
+  }
   
   // If we have 2 user-defined types, fall into that path.
-  if (LHS->getInterface() && RHS->getInterface())
-    return canAssignObjCInterfaces(LHS, RHS);
+  if (LHS->getInterface() && RHS->getInterface()) {
+    return finish(canAssignObjCInterfaces(LHS, RHS));
+  }
 
   return false;
 }
@@ -6800,26 +6822,46 @@ bool ASTContext::canAssignObjCInterfacesInBlockPointer(
                                          const ObjCObjectPointerType *LHSOPT,
                                          const ObjCObjectPointerType *RHSOPT,
                                          bool BlockReturnType) {
+
+  // Function object that propagates a successful result or handles
+  // __kindof types.
+  auto finish = [&](bool succeeded) -> bool {
+    if (succeeded)
+      return true;
+
+    const ObjCObjectPointerType *Expected = BlockReturnType ? RHSOPT : LHSOPT;
+    if (!Expected->isKindOfType())
+      return false;
+
+    // Strip off __kindof and protocol qualifiers, then check whether
+    // we can assign the other way.
+    return canAssignObjCInterfacesInBlockPointer(
+             RHSOPT->stripObjCKindOfTypeAndQuals(*this),
+             LHSOPT->stripObjCKindOfTypeAndQuals(*this),
+             BlockReturnType);
+  };
+
   if (RHSOPT->isObjCBuiltinType() || LHSOPT->isObjCIdType())
     return true;
   
   if (LHSOPT->isObjCBuiltinType()) {
-    return RHSOPT->isObjCBuiltinType() || RHSOPT->isObjCQualifiedIdType();
+    return finish(RHSOPT->isObjCBuiltinType() ||
+                  RHSOPT->isObjCQualifiedIdType());
   }
   
   if (LHSOPT->isObjCQualifiedIdType() || RHSOPT->isObjCQualifiedIdType())
-    return ObjCQualifiedIdTypesAreCompatible(QualType(LHSOPT,0),
-                                             QualType(RHSOPT,0),
-                                             false);
+    return finish(ObjCQualifiedIdTypesAreCompatible(QualType(LHSOPT,0),
+                                                    QualType(RHSOPT,0),
+                                                    false));
   
   const ObjCInterfaceType* LHS = LHSOPT->getInterfaceType();
   const ObjCInterfaceType* RHS = RHSOPT->getInterfaceType();
   if (LHS && RHS)  { // We have 2 user-defined types.
     if (LHS != RHS) {
       if (LHS->getDecl()->isSuperClassOf(RHS->getDecl()))
-        return BlockReturnType;
+        return finish(BlockReturnType);
       if (RHS->getDecl()->isSuperClassOf(LHS->getDecl()))
-        return !BlockReturnType;
+        return finish(!BlockReturnType);
     }
     else
       return true;
@@ -6903,13 +6945,19 @@ void getIntersectionOfProtocols(ASTContext &Context,
 
 // Check that the given Objective-C type argument lists are equivalent.
 static bool sameObjCTypeArgs(const ASTContext &ctx, ArrayRef<QualType> lhsArgs,
-                             ArrayRef<QualType> rhsArgs) {
+                             ArrayRef<QualType> rhsArgs,
+                             bool stripKindOf) {
   if (lhsArgs.size() != rhsArgs.size())
     return false;
 
   for (unsigned i = 0, n = lhsArgs.size(); i != n; ++i) {
-    if (!ctx.hasSameType(lhsArgs[i], rhsArgs[i]))
-      return false;
+    if (!ctx.hasSameType(lhsArgs[i], rhsArgs[i])) {
+      if (!stripKindOf ||
+          !ctx.hasSameType(lhsArgs[i].stripObjCKindOfType(ctx),
+                           rhsArgs[i].stripObjCKindOfType(ctx))) {
+        return false;
+      }
+    }
   }
 
   return true;
@@ -6941,7 +6989,8 @@ QualType ASTContext::areCommonBaseCompatible(
       bool anyChanges = false;
       if (LHS->isSpecialized() && RHS->isSpecialized()) {
         // Both have type arguments, compare them.
-        if (!sameObjCTypeArgs(*this, LHS->getTypeArgs(), RHS->getTypeArgs()))
+        if (!sameObjCTypeArgs(*this, LHS->getTypeArgs(), RHS->getTypeArgs(),
+                              /*stripKindOf=*/true))
           return QualType();
       } else if (LHS->isSpecialized() != RHS->isSpecialized()) {
         // If only one has type arguments, the result will not have type
@@ -6960,7 +7009,8 @@ QualType ASTContext::areCommonBaseCompatible(
       // If anything in the LHS will have changed, build a new result type.
       if (anyChanges) {
         QualType Result = getObjCInterfaceType(LHS->getInterface());
-        Result = getObjCObjectType(Result, LHSTypeArgs, Protocols);
+        Result = getObjCObjectType(Result, LHSTypeArgs, Protocols,
+                                   LHS->isKindOfType());
         return getObjCObjectPointerType(Result);
       }
 
@@ -6987,7 +7037,8 @@ QualType ASTContext::areCommonBaseCompatible(
       bool anyChanges = false;
       if (LHS->isSpecialized() && RHS->isSpecialized()) {
         // Both have type arguments, compare them.
-        if (!sameObjCTypeArgs(*this, LHS->getTypeArgs(), RHS->getTypeArgs()))
+        if (!sameObjCTypeArgs(*this, LHS->getTypeArgs(), RHS->getTypeArgs(),
+                              /*stripKindOf=*/true))
           return QualType();
       } else if (LHS->isSpecialized() != RHS->isSpecialized()) {
         // If only one has type arguments, the result will not have type
@@ -7005,7 +7056,8 @@ QualType ASTContext::areCommonBaseCompatible(
 
       if (anyChanges) {
         QualType Result = getObjCInterfaceType(RHS->getInterface());
-        Result = getObjCObjectType(Result, RHSTypeArgs, Protocols);
+        Result = getObjCObjectType(Result, RHSTypeArgs, Protocols,
+                                   RHS->isKindOfType());
         return getObjCObjectPointerType(Result);
       }
 
@@ -7075,7 +7127,8 @@ bool ASTContext::canAssignObjCInterfaces(const ObjCObjectType *LHS,
 
     // If the RHS is specializd, compare type arguments.
     if (RHSSuper->isSpecialized() &&
-        !sameObjCTypeArgs(*this, LHS->getTypeArgs(), RHSSuper->getTypeArgs())) {
+        !sameObjCTypeArgs(*this, LHS->getTypeArgs(), RHSSuper->getTypeArgs(),
+                          /*stripKindOf=*/true)) {
       return false;
     }
   }

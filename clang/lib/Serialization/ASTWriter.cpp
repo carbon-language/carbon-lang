@@ -427,6 +427,7 @@ void ASTTypeWriter::VisitObjCObjectType(const ObjCObjectType *T) {
   Record.push_back(T->getNumProtocols());
   for (const auto *I : T->quals())
     Writer.AddDeclRef(I, Record);
+  Record.push_back(T->isKindOfTypeAsWritten());
   Code = TYPE_OBJC_OBJECT;
 }
 

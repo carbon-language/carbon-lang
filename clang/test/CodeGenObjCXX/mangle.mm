@@ -98,3 +98,18 @@ template<> void X<A*>::f() {}
 // CHECK-LABEL: define void @_ZN1XIP1AE1fEv
 template<> void X<A<P>*>::f() {}
 // CHECK-LABEL: define void @_ZN1XIPU11objcproto1P1AE1fEv
+
+// CHECK-LABEL: define void @_Z12kindof_test2PU8__kindof5Test2
+void kindof_test2(__kindof Test2 *t2) { }
+
+@interface Parameterized<T, U> : A
+@end
+
+// CHECK-LABEL: define void @_Z19parameterized_test1P13ParameterizedIP1AP4TestE
+void parameterized_test1(Parameterized<A *, Test *> *p) {}
+
+// CHECK-LABEL: define void @_Z19parameterized_test2PU8__kindof13ParameterizedIP1AP4TestE
+void parameterized_test2(__kindof Parameterized<A *, Test *> *p) {}
+
+// CHECK-LABEL: define void @_Z19parameterized_test3P13Parameterized
+void parameterized_test3(Parameterized *p) {}

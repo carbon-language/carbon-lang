@@ -7240,6 +7240,10 @@ public:
                                SourceLocation ProtocolRAngleLoc,
                                bool FailOnError = false);
 
+  /// Check the application of the Objective-C '__kindof' qualifier to
+  /// the given type.
+  bool checkObjCKindOfType(QualType &type, SourceLocation loc);
+
   /// Ensure attributes are consistent with type.
   /// \param [in, out] Attributes The attributes to check; they will
   /// be modified to be consistent with \p PropertyTy.

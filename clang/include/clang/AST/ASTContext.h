@@ -1195,14 +1195,15 @@ public:
   QualType getObjCInterfaceType(const ObjCInterfaceDecl *Decl,
                                 ObjCInterfaceDecl *PrevDecl = nullptr) const;
 
-  /// Legacy interface: cannot provide type arguments.
+  /// Legacy interface: cannot provide type arguments or __kindof.
   QualType getObjCObjectType(QualType Base,
                              ObjCProtocolDecl * const *Protocols,
                              unsigned NumProtocols) const;
 
   QualType getObjCObjectType(QualType Base,
                              ArrayRef<QualType> typeArgs,
-                             ArrayRef<ObjCProtocolDecl *> protocols) const;
+                             ArrayRef<ObjCProtocolDecl *> protocols,
+                             bool isKindOf) const;
   
   bool ObjCObjectAdoptsQTypeProtocols(QualType QT, ObjCInterfaceDecl *Decl);
   /// QIdProtocolsAdoptObjCObjectProtocols - Checks that protocols in

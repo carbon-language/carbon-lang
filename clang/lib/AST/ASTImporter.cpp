@@ -1853,7 +1853,6 @@ QualType ASTNodeImporter::VisitObjCObjectType(const ObjCObjectType *T) {
     TypeArgs.push_back(ImportedTypeArg);
   }
 
-
   SmallVector<ObjCProtocolDecl *, 4> Protocols;
   for (auto *P : T->quals()) {
     ObjCProtocolDecl *Protocol
@@ -1864,7 +1863,8 @@ QualType ASTNodeImporter::VisitObjCObjectType(const ObjCObjectType *T) {
   }
 
   return Importer.getToContext().getObjCObjectType(ToBaseType, TypeArgs,
-                                                   Protocols);
+                                                   Protocols,
+                                                   T->isKindOfTypeAsWritten());
 }
 
 QualType

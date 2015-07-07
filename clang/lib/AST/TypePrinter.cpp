@@ -1129,6 +1129,9 @@ void TypePrinter::printAttributedBefore(const AttributedType *T,
       T->getAttrKind() == AttributedType::attr_objc_ownership)
     return printBefore(T->getEquivalentType(), OS);
 
+  if (T->getAttrKind() == AttributedType::attr_objc_kindof)
+    OS << "__kindof ";
+
   printBefore(T->getModifiedType(), OS);
 
   if (T->isMSTypeSpec()) {
@@ -1164,6 +1167,9 @@ void TypePrinter::printAttributedAfter(const AttributedType *T,
   if (T->getAttrKind() == AttributedType::attr_objc_gc ||
       T->getAttrKind() == AttributedType::attr_objc_ownership)
     return printAfter(T->getEquivalentType(), OS);
+
+  if (T->getAttrKind() == AttributedType::attr_objc_kindof)
+    return;
 
   // TODO: not all attributes are GCC-style attributes.
   if (T->isMSTypeSpec())
@@ -1310,8 +1316,12 @@ void TypePrinter::printObjCInterfaceAfter(const ObjCInterfaceType *T,
 
 void TypePrinter::printObjCObjectBefore(const ObjCObjectType *T,
                                         raw_ostream &OS) {
-  if (T->qual_empty() && T->isUnspecializedAsWritten())
+  if (T->qual_empty() && T->isUnspecializedAsWritten() &&
+      !T->isKindOfTypeAsWritten())
     return printBefore(T->getBaseType(), OS);
+
+  if (T->isKindOfTypeAsWritten())
+    OS << "__kindof ";
 
   print(T->getBaseType(), OS, StringRef());
 
@@ -1346,7 +1356,8 @@ void TypePrinter::printObjCObjectBefore(const ObjCObjectType *T,
 }
 void TypePrinter::printObjCObjectAfter(const ObjCObjectType *T,
                                         raw_ostream &OS) {
-  if (T->qual_empty() && T->isUnspecializedAsWritten())
+  if (T->qual_empty() && T->isUnspecializedAsWritten() &&
+      !T->isKindOfTypeAsWritten())
     return printAfter(T->getBaseType(), OS);
 }
 

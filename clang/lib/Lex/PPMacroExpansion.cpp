@@ -1088,6 +1088,7 @@ static bool HasFeature(const Preprocessor &PP, const IdentifierInfo *II) {
       .Case("objc_default_synthesize_properties", LangOpts.ObjC2)
       .Case("objc_fixed_enum", LangOpts.ObjC2)
       .Case("objc_instancetype", LangOpts.ObjC2)
+      .Case("objc_kindof", LangOpts.ObjC2)
       .Case("objc_modules", LangOpts.ObjC2 && LangOpts.Modules)
       .Case("objc_nonfragile_abi", LangOpts.ObjCRuntime.isNonFragile())
       .Case("objc_property_explicit_atomic",

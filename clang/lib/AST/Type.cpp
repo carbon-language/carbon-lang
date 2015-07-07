@@ -466,15 +466,61 @@ const RecordType *Type::getAsUnionType() const {
   return nullptr;
 }
 
+bool Type::isObjCIdOrObjectKindOfType(const ASTContext &ctx,
+                                      const ObjCObjectType *&bound) const {
+  bound = nullptr;
+
+  const ObjCObjectPointerType *OPT = getAs<ObjCObjectPointerType>();
+  if (!OPT)
+    return false;
+
+  // Easy case: id.
+  if (OPT->isObjCIdType())
+    return true;
+
+  // If it's not a __kindof type, reject it now.
+  if (!OPT->isKindOfType())
+    return false;
+
+  // If it's Class or qualified Class, it's not an object type.
+  if (OPT->isObjCClassType() || OPT->isObjCQualifiedClassType())
+    return false;
+
+  // Figure out the type bound for the __kindof type.
+  bound = OPT->getObjectType()->stripObjCKindOfTypeAndQuals(ctx)
+            ->getAs<ObjCObjectType>();
+  return true;
+}
+
+bool Type::isObjCClassOrClassKindOfType() const {
+  const ObjCObjectPointerType *OPT = getAs<ObjCObjectPointerType>();
+  if (!OPT)
+    return false;
+
+  // Easy case: Class.
+  if (OPT->isObjCClassType())
+    return true;
+
+  // If it's not a __kindof type, reject it now.
+  if (!OPT->isKindOfType())
+    return false;
+
+  // If it's Class or qualified Class, it's a class __kindof type.
+  return OPT->isObjCClassType() || OPT->isObjCQualifiedClassType();
+}
+
 ObjCObjectType::ObjCObjectType(QualType Canonical, QualType Base,
                                ArrayRef<QualType> typeArgs,
-                               ArrayRef<ObjCProtocolDecl *> protocols)
+                               ArrayRef<ObjCProtocolDecl *> protocols,
+                               bool isKindOf)
   : Type(ObjCObject, Canonical, Base->isDependentType(), 
          Base->isInstantiationDependentType(), 
          Base->isVariablyModifiedType(), 
          Base->containsUnexpandedParameterPack()),
     BaseType(Base) 
 {
+  ObjCObjectTypeBits.IsKindOf = isKindOf;
+
   ObjCObjectTypeBits.NumTypeArgs = typeArgs.size();
   assert(getTypeArgsAsWritten().size() == typeArgs.size() &&
          "bitfield overflow in type argument count");
@@ -533,6 +579,52 @@ ArrayRef<QualType> ObjCObjectType::getTypeArgs() const {
 
   // No type arguments.
   return { };
+}
+
+bool ObjCObjectType::isKindOfType() const {
+  if (isKindOfTypeAsWritten())
+    return true;
+
+  // Look at the base type, which might have type arguments.
+  if (auto objcObject = getBaseType()->getAs<ObjCObjectType>()) {
+    // Terminate when we reach an interface type.
+    if (isa<ObjCInterfaceType>(objcObject))
+      return false;
+
+    return objcObject->isKindOfType();
+  }
+
+  // Not a "__kindof" type.
+  return false;
+}
+
+QualType ObjCObjectType::stripObjCKindOfTypeAndQuals(
+           const ASTContext &ctx) const {
+  if (!isKindOfType() && qual_empty())
+    return QualType(this, 0);
+
+  // Recursively strip __kindof.
+  SplitQualType splitBaseType = getBaseType().split();
+  QualType baseType(splitBaseType.Ty, 0);
+  if (const ObjCObjectType *baseObj
+        = splitBaseType.Ty->getAs<ObjCObjectType>()) {
+    baseType = baseObj->stripObjCKindOfTypeAndQuals(ctx);
+  }
+
+  return ctx.getObjCObjectType(ctx.getQualifiedType(baseType,
+                                                    splitBaseType.Quals),
+                               getTypeArgsAsWritten(),
+                               /*protocols=*/{ },
+                               /*isKindOf=*/false);
+}
+
+const ObjCObjectPointerType *ObjCObjectPointerType::stripObjCKindOfTypeAndQuals(
+                               const ASTContext &ctx) const {
+  if (!isKindOfType() && qual_empty())
+    return this;
+
+  QualType obj = getObjectType()->stripObjCKindOfTypeAndQuals(ctx);
+  return ctx.getObjCObjectPointerType(obj)->castAs<ObjCObjectPointerType>();
 }
 
 namespace {
@@ -888,7 +980,8 @@ QualType simpleTransform(ASTContext &ctx, QualType type, F &&f) {
 
       return Ctx.getObjCObjectType(baseType, typeArgs, 
                                    llvm::makeArrayRef(T->qual_begin(),
-                                                      T->getNumProtocols()));
+                                                      T->getNumProtocols()),
+                                   T->isKindOfTypeAsWritten());
     }
 
     TRIVIAL_TYPE_CLASS(ObjCInterface)
@@ -971,18 +1064,28 @@ QualType QualType::substObjCTypeArgs(
                                       splitType.Quals);
 
         case ObjCSubstitutionContext::Result:
-        case ObjCSubstitutionContext::Property:
-          // Substitute 'id' or 'Class', as appropriate.
+        case ObjCSubstitutionContext::Property: {
+          // Substitute the __kindof form of the underlying type.
+          const auto *objPtr = typeParam->getUnderlyingType()
+            ->castAs<ObjCObjectPointerType>();
 
-          // If the underlying type is based on 'Class', substitute 'Class'.
-          if (typeParam->getUnderlyingType()->isObjCClassType() ||
-              typeParam->getUnderlyingType()->isObjCQualifiedClassType()) {
-            return ctx.getQualifiedType(ctx.getObjCClassType(),
+          // __kindof types, id, and Class don't need an additional
+          // __kindof.
+          if (objPtr->isKindOfType() || objPtr->isObjCIdOrClassType())
+            return ctx.getQualifiedType(typeParam->getUnderlyingType(),
                                         splitType.Quals);
-          }
 
-          // Otherwise, substitute 'id'.
-          return ctx.getQualifiedType(ctx.getObjCIdType(), splitType.Quals);
+          // Add __kindof.
+          const auto *obj = objPtr->getObjectType();
+          QualType resultTy = ctx.getObjCObjectType(obj->getBaseType(),
+                                                    obj->getTypeArgsAsWritten(),
+                                                    obj->getProtocols(),
+                                                    /*isKindOf=*/true);
+
+          // Rebuild object pointer type.
+          resultTy = ctx.getObjCObjectPointerType(resultTy);
+          return ctx.getQualifiedType(resultTy, splitType.Quals);
+        }
         }
       }
     }
@@ -1086,8 +1189,10 @@ QualType QualType::substObjCTypeArgs(
                                            objcObjectType->getNumProtocols());
             if (typeArgs.empty() &&
                 context != ObjCSubstitutionContext::Superclass) {
-              return ctx.getObjCObjectType(objcObjectType->getBaseType(), { },
-                                           protocols);
+              return ctx.getObjCObjectType(
+                       objcObjectType->getBaseType(), { },
+                       protocols,
+                       objcObjectType->isKindOfTypeAsWritten());
             }
 
             anyChanged = true;
@@ -1101,7 +1206,8 @@ QualType QualType::substObjCTypeArgs(
                                          objcObjectType->qual_begin(),
                                          objcObjectType->getNumProtocols());
           return ctx.getObjCObjectType(objcObjectType->getBaseType(),
-                                       newTypeArgs, protocols);
+                                       newTypeArgs, protocols,
+                                       objcObjectType->isKindOfTypeAsWritten());
         }
       }
 
@@ -1119,6 +1225,30 @@ QualType QualType::substObjCMemberType(QualType objectType,
     return substObjCTypeArgs(dc->getParentASTContext(), *subs, context);
 
   return *this;
+}
+
+QualType QualType::stripObjCKindOfType(const ASTContext &constCtx) const {
+  // FIXME: Because ASTContext::getAttributedType() is non-const.
+  auto &ctx = const_cast<ASTContext &>(constCtx);
+  return simpleTransform(ctx, *this,
+           [&](QualType type) -> QualType {
+             SplitQualType splitType = type.split();
+             if (auto *objType = splitType.Ty->getAs<ObjCObjectType>()) {
+               if (!objType->isKindOfType())
+                 return type;
+
+               QualType baseType
+                 = objType->getBaseType().stripObjCKindOfType(ctx);
+               return ctx.getQualifiedType(
+                        ctx.getObjCObjectType(baseType,
+                                              objType->getTypeArgsAsWritten(),
+                                              objType->getProtocols(),
+                                              /*isKindOf=*/false),
+                        splitType.Quals);
+             }
+
+             return type;
+           });
 }
 
 Optional<ArrayRef<QualType>> Type::getObjCSubstitutions(
@@ -2745,7 +2875,9 @@ bool AttributedType::isCallingConv() const {
   case attr_nonnull:
   case attr_nullable:
   case attr_null_unspecified:
+  case attr_objc_kindof:
     return false;
+
   case attr_pcs:
   case attr_pcs_vfp:
   case attr_cdecl:
@@ -2895,7 +3027,8 @@ QualifierCollector::apply(const ASTContext &Context, const Type *T) const {
 void ObjCObjectTypeImpl::Profile(llvm::FoldingSetNodeID &ID,
                                  QualType BaseType,
                                  ArrayRef<QualType> typeArgs,
-                                 ArrayRef<ObjCProtocolDecl *> protocols) {
+                                 ArrayRef<ObjCProtocolDecl *> protocols,
+                                 bool isKindOf) {
   ID.AddPointer(BaseType.getAsOpaquePtr());
   ID.AddInteger(typeArgs.size());
   for (auto typeArg : typeArgs)
@@ -2903,11 +3036,13 @@ void ObjCObjectTypeImpl::Profile(llvm::FoldingSetNodeID &ID,
   ID.AddInteger(protocols.size());
   for (auto proto : protocols)
     ID.AddPointer(proto);
+  ID.AddBoolean(isKindOf);
 }
 
 void ObjCObjectTypeImpl::Profile(llvm::FoldingSetNodeID &ID) {
-  Profile(ID, getBaseType(), getTypeArgs(), 
-          llvm::makeArrayRef(qual_begin(), getNumProtocols()));
+  Profile(ID, getBaseType(), getTypeArgsAsWritten(),
+          llvm::makeArrayRef(qual_begin(), getNumProtocols()),
+          isKindOfTypeAsWritten());
 }
 
 namespace {

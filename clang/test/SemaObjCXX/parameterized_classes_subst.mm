@@ -172,7 +172,7 @@ void test_property_read(
   ip = mutSet.allObjects; // expected-error{{from incompatible type 'NSArray *'}}
   ip = mutArraySet.allObjects; // expected-error{{from incompatible type 'NSArray *'}}
 
-  ip = mutDict.someRandomKey; // expected-error{{from incompatible type 'id'}}
+  ip = mutDict.someRandomKey; // expected-error{{from incompatible type '__kindof id<NSCopying>'}}
 }
 
 void test_property_write(

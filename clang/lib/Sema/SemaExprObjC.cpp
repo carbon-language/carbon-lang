@@ -962,7 +962,8 @@ ExprResult Sema::BuildObjCDictionaryLiteral(SourceRange SR,
               Context.getObjCObjectType(Context.ObjCBuiltinIdTy, { },
                                         llvm::makeArrayRef(
                                           (ObjCProtocolDecl**) PQ,
-                                          1));
+                                          1),
+                                        false);
             QIDNSCopying = Context.getObjCObjectPointerType(QIDNSCopying);
           }
         }
@@ -2620,35 +2621,41 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
   // of the more detailed type-checking on the receiver.
 
   if (!Method) {
-    // Handle messages to id.
-    bool receiverIsId = ReceiverType->isObjCIdType();
-    if (receiverIsId || ReceiverType->isBlockPointerType() ||
+    // Handle messages to id and __kindof types (where we use the
+    // global method pool).
+    // FIXME: The type bound is currently ignored by lookup in the
+    // global pool.
+    const ObjCObjectType *typeBound = nullptr;
+    bool receiverIsIdLike = ReceiverType->isObjCIdOrObjectKindOfType(Context,
+                                                                     typeBound);
+    if (receiverIsIdLike || ReceiverType->isBlockPointerType() ||
         (Receiver && Context.isObjCNSObjectType(Receiver->getType()))) {
       Method = LookupInstanceMethodInGlobalPool(Sel, 
                                                 SourceRange(LBracLoc, RBracLoc),
-                                                receiverIsId);
+                                                receiverIsIdLike);
       if (!Method)
         Method = LookupFactoryMethodInGlobalPool(Sel, 
                                                  SourceRange(LBracLoc,RBracLoc),
-                                                 receiverIsId);
+                                                 receiverIsIdLike);
       if (Method) {
         if (ObjCMethodDecl *BestMethod =
               SelectBestMethod(Sel, ArgsIn, Method->isInstanceMethod()))
           Method = BestMethod;
         if (!AreMultipleMethodsInGlobalPool(Sel, Method,
                                             SourceRange(LBracLoc, RBracLoc),
-                                            receiverIsId)) {
+                                            receiverIsIdLike)) {
           DiagnoseUseOfDecl(Method, SelLoc);
         }
       }
-    } else if (ReceiverType->isObjCClassType() ||
+    } else if (ReceiverType->isObjCClassOrClassKindOfType() ||
                ReceiverType->isObjCQualifiedClassType()) {
       // Handle messages to Class.
       // We allow sending a message to a qualified Class ("Class<foo>"), which
       // is ok as long as one of the protocols implements the selector (if not,
       // warn).
-      if (const ObjCObjectPointerType *QClassTy 
-            = ReceiverType->getAsObjCQualifiedClassType()) {
+      if (!ReceiverType->isObjCClassOrClassKindOfType()) {
+        const ObjCObjectPointerType *QClassTy
+          = ReceiverType->getAsObjCQualifiedClassType();
         // Search protocols for class methods.
         Method = LookupMethodInQualifiedType(Sel, QClassTy, false);
         if (!Method) {

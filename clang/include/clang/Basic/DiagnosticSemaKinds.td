@@ -978,6 +978,12 @@ def warning_multiple_selectors: Warning<
   "several methods with selector %0 of mismatched types are found "
   "for the @selector expression">,
   InGroup<SelectorTypeMismatch>, DefaultIgnore;
+
+def err_objc_kindof_nonobject : Error<
+  "'__kindof' specifier cannot be applied to non-object type %0">;
+def err_objc_kindof_wrong_position : Error<
+  "'__kindof' type specifier must precede the declarator">;
+
 // C++ declarations
 def err_static_assert_expression_is_not_constant : Error<
   "static_assert expression is not an integral constant expression">;

@@ -526,6 +526,9 @@ KEYWORD(__bridge_transfer            , KEYARC)
 KEYWORD(__bridge_retained            , KEYARC)
 KEYWORD(__bridge_retain              , KEYARC)
 
+// Objective-C keywords.
+KEYWORD(__kindof                 , KEYOBJC2)
+
 // Alternate spelling for various tokens.  There are GCC extensions in all
 // languages, but should not be disabled in strict conformance mode.
 ALIAS("__alignof__"  , __alignof  , KEYALL)

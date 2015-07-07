@@ -5271,7 +5271,8 @@ QualType ASTReader::readTypeRecord(unsigned Index) {
     SmallVector<ObjCProtocolDecl*, 4> Protos;
     for (unsigned I = 0; I != NumProtos; ++I)
       Protos.push_back(ReadDeclAs<ObjCProtocolDecl>(*Loc.F, Record, Idx));
-    return Context.getObjCObjectType(Base, TypeArgs, Protos);
+    bool IsKindOf = Record[Idx++];
+    return Context.getObjCObjectType(Base, TypeArgs, Protos, IsKindOf);
   }
 
   case TYPE_OBJC_OBJECT_POINTER: {

@@ -2152,23 +2152,7 @@ bool Sema::isObjCPointerConversion(QualType FromType, QualType ToType,
                                        FromObjCPtr->getPointeeType()))
       return false;
 
-    // Check for compatible 
-    // Objective C++: We're able to convert between "id" or "Class" and a
-    // pointer to any interface (in both directions).
-    if (ToObjCPtr->isObjCBuiltinType() && FromObjCPtr->isObjCBuiltinType()) {
-      ConvertedType = AdoptQualifiers(Context, ToType, FromQualifiers);
-      return true;
-    }
-    // Conversions with Objective-C's id<...>.
-    if ((FromObjCPtr->isObjCQualifiedIdType() ||
-         ToObjCPtr->isObjCQualifiedIdType()) &&
-        Context.ObjCQualifiedIdTypesAreCompatible(ToType, FromType,
-                                                  /*compare=*/false)) {
-      ConvertedType = AdoptQualifiers(Context, ToType, FromQualifiers);
-      return true;
-    }
-    // Objective C++: We're able to convert from a pointer to an
-    // interface to a pointer to a different interface.
+    // Conversion between Objective-C pointers.
     if (Context.canAssignObjCInterfaces(ToObjCPtr, FromObjCPtr)) {
       const ObjCInterfaceType* LHS = ToObjCPtr->getInterfaceType();
       const ObjCInterfaceType* RHS = FromObjCPtr->getInterfaceType();

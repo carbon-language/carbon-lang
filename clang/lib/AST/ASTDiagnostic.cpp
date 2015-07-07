@@ -139,7 +139,8 @@ break; \
       QualType BaseType = Desugar(Context, Ty->getBaseType(), ShouldAKA);
       QT = Context.getObjCObjectType(BaseType, Ty->getTypeArgsAsWritten(),
                                      llvm::makeArrayRef(Ty->qual_begin(),
-                                                        Ty->getNumProtocols()));
+                                                        Ty->getNumProtocols()),
+                                     Ty->isKindOfTypeAsWritten());
     }
   }
 
