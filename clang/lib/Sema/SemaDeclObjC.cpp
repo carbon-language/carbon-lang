@@ -20,12 +20,15 @@
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExprObjC.h"
 #include "clang/Basic/SourceManager.h"
+#include "clang/Lex/Preprocessor.h"
 #include "clang/Sema/DeclSpec.h"
 #include "clang/Sema/ExternalSemaSource.h"
 #include "clang/Sema/Lookup.h"
 #include "clang/Sema/Scope.h"
 #include "clang/Sema/ScopeInfo.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
+#include "TypeLocBuilder.h"
 
 using namespace clang;
 
@@ -461,9 +464,214 @@ static void diagnoseUseOfProtocols(Sema &TheSema,
   }
 }
 
+DeclResult Sema::actOnObjCTypeParam(Scope *S, IdentifierInfo *paramName,
+                                    SourceLocation paramLoc,
+                                    SourceLocation colonLoc,
+                                    ParsedType parsedTypeBound) {
+  // If there was an explicitly-provided type bound, check it.
+  TypeSourceInfo *typeBoundInfo = nullptr;
+  if (parsedTypeBound) {
+    // The type bound can be any Objective-C pointer type.
+    QualType typeBound = GetTypeFromParser(parsedTypeBound, &typeBoundInfo);
+    if (typeBound->isObjCObjectPointerType()) {
+      // okay
+    } else if (typeBound->isObjCObjectType()) {
+      // The user forgot the * on an Objective-C pointer type, e.g.,
+      // "T : NSView".
+      SourceLocation starLoc = PP.getLocForEndOfToken(
+                                 typeBoundInfo->getTypeLoc().getEndLoc());
+      Diag(typeBoundInfo->getTypeLoc().getBeginLoc(),
+           diag::err_objc_type_param_bound_missing_pointer)
+        << typeBound << paramName
+        << FixItHint::CreateInsertion(starLoc, " *");
+
+      // Create a new type location builder so we can update the type
+      // location information we have.
+      TypeLocBuilder builder;
+      builder.pushFullCopy(typeBoundInfo->getTypeLoc());
+
+      // Create the Objective-C pointer type.
+      typeBound = Context.getObjCObjectPointerType(typeBound);
+      ObjCObjectPointerTypeLoc newT
+        = builder.push<ObjCObjectPointerTypeLoc>(typeBound);
+      newT.setStarLoc(starLoc);
+
+      // Form the new type source information.
+      typeBoundInfo = builder.getTypeSourceInfo(Context, typeBound);
+    } else {
+      // Not a
+      Diag(typeBoundInfo->getTypeLoc().getBeginLoc(),
+           diag::err_objc_type_param_bound_nonobject)
+        << typeBound << paramName;
+
+      // Forget the bound; we'll default to id later.
+      typeBoundInfo = nullptr;
+    }
+  }
+
+  // If there was no explicit type bound (or we removed it due to an error),
+  // use 'id' instead.
+  if (!typeBoundInfo) {
+    colonLoc = SourceLocation();
+    typeBoundInfo = Context.getTrivialTypeSourceInfo(Context.getObjCIdType());
+  }
+
+  // Create the type parameter.
+  return ObjCTypeParamDecl::Create(Context, CurContext, paramLoc, paramName,
+                                   colonLoc, typeBoundInfo);
+}
+
+ObjCTypeParamList *Sema::actOnObjCTypeParamList(Scope *S,
+                                                SourceLocation lAngleLoc,
+                                                ArrayRef<Decl *> typeParamsIn,
+                                                SourceLocation rAngleLoc) {
+  // We know that the array only contains Objective-C type parameters.
+  ArrayRef<ObjCTypeParamDecl *>
+    typeParams(
+      reinterpret_cast<ObjCTypeParamDecl * const *>(typeParamsIn.data()),
+      typeParamsIn.size());
+
+  // Diagnose redeclarations of type parameters.
+  // We do this now because Objective-C type parameters aren't pushed into
+  // scope until later (after the instance variable block), but we want the
+  // diagnostics to occur right after we parse the type parameter list.
+  llvm::SmallDenseMap<IdentifierInfo *, ObjCTypeParamDecl *> knownParams;
+  for (auto typeParam : typeParams) {
+    auto known = knownParams.find(typeParam->getIdentifier());
+    if (known != knownParams.end()) {
+      Diag(typeParam->getLocation(), diag::err_objc_type_param_redecl)
+        << typeParam->getIdentifier()
+        << SourceRange(known->second->getLocation());
+
+      typeParam->setInvalidDecl();
+    } else {
+      knownParams.insert(std::make_pair(typeParam->getIdentifier(), typeParam));
+
+      // Push the type parameter into scope.
+      PushOnScopeChains(typeParam, S, /*AddToContext=*/false);
+    }
+  }
+
+  // Create the parameter list.
+  return ObjCTypeParamList::create(Context, lAngleLoc, typeParams, rAngleLoc);
+}
+
+void Sema::popObjCTypeParamList(Scope *S, ObjCTypeParamList *typeParamList) {
+  for (auto typeParam : *typeParamList) {
+    if (!typeParam->isInvalidDecl()) {
+      S->RemoveDecl(typeParam);
+      IdResolver.RemoveDecl(typeParam);
+    }
+  }
+}
+
+namespace {
+  /// The context in which an Objective-C type parameter list occurs, for use
+  /// in diagnostics.
+  enum class TypeParamListContext {
+    ForwardDeclaration,
+    Definition,
+    Category,
+    Extension
+  };
+}
+
+/// Check consistency between two Objective-C type parameter lists, e.g.,
+/// between a category/extension and an @interface or between an @class and an
+/// @interface.
+static bool checkTypeParamListConsistency(Sema &S,
+                                          ObjCTypeParamList *prevTypeParams,
+                                          ObjCTypeParamList *newTypeParams,
+                                          TypeParamListContext newContext) {
+  // If the sizes don't match, complain about that.
+  if (prevTypeParams->size() != newTypeParams->size()) {
+    SourceLocation diagLoc;
+    if (newTypeParams->size() > prevTypeParams->size()) {
+      diagLoc = newTypeParams->begin()[prevTypeParams->size()]->getLocation();
+    } else {
+      diagLoc = S.PP.getLocForEndOfToken(newTypeParams->back()->getLocEnd());
+    }
+
+    S.Diag(diagLoc, diag::err_objc_type_param_arity_mismatch)
+      << static_cast<unsigned>(newContext)
+      << (newTypeParams->size() > prevTypeParams->size())
+      << prevTypeParams->size()
+      << newTypeParams->size();
+
+    return true;
+  }
+
+  // Match up the type parameters.
+  for (unsigned i = 0, n = prevTypeParams->size(); i != n; ++i) {
+    ObjCTypeParamDecl *prevTypeParam = prevTypeParams->begin()[i];
+    ObjCTypeParamDecl *newTypeParam = newTypeParams->begin()[i];
+
+    // If the bound types match, there's nothing to do.
+    if (S.Context.hasSameType(prevTypeParam->getUnderlyingType(),
+                              newTypeParam->getUnderlyingType()))
+      continue;
+
+    // If the new type parameter's bound was explicit, complain about it being
+    // different from the original.
+    if (newTypeParam->hasExplicitBound()) {
+      SourceRange newBoundRange = newTypeParam->getTypeSourceInfo()
+                                    ->getTypeLoc().getSourceRange();
+      S.Diag(newBoundRange.getBegin(), diag::err_objc_type_param_bound_conflict)
+        << newTypeParam->getUnderlyingType()
+        << newTypeParam->getDeclName()
+        << prevTypeParam->hasExplicitBound()
+        << prevTypeParam->getUnderlyingType()
+        << (newTypeParam->getDeclName() == prevTypeParam->getDeclName())
+        << prevTypeParam->getDeclName()
+        << FixItHint::CreateReplacement(
+             newBoundRange,
+             prevTypeParam->getUnderlyingType().getAsString(
+               S.Context.getPrintingPolicy()));
+
+      S.Diag(prevTypeParam->getLocation(), diag::note_objc_type_param_here)
+        << prevTypeParam->getDeclName();
+
+      // Override the new type parameter's bound type with the previous type,
+      // so that it's consistent.
+      newTypeParam->setTypeSourceInfo(
+        S.Context.getTrivialTypeSourceInfo(prevTypeParam->getUnderlyingType()));
+      continue;
+    }
+
+    // The new type parameter got the implicit bound of 'id'. That's okay for
+    // categories and extensions (overwrite it later), but not for forward
+    // declarations and @interfaces, because those must be standalone.
+    if (newContext == TypeParamListContext::ForwardDeclaration ||
+        newContext == TypeParamListContext::Definition) {
+      // Diagnose this problem for forward declarations and definitions.
+      SourceLocation insertionLoc
+        = S.PP.getLocForEndOfToken(newTypeParam->getLocation());
+      std::string newCode
+        = " : " + prevTypeParam->getUnderlyingType().getAsString(
+                    S.Context.getPrintingPolicy());
+      S.Diag(newTypeParam->getLocation(),
+             diag::err_objc_type_param_bound_missing)
+        << prevTypeParam->getUnderlyingType()
+        << newTypeParam->getDeclName()
+        << (newContext == TypeParamListContext::ForwardDeclaration)
+        << FixItHint::CreateInsertion(insertionLoc, newCode);
+
+      S.Diag(prevTypeParam->getLocation(), diag::note_objc_type_param_here)
+        << prevTypeParam->getDeclName();
+    }
+
+    // Update the new type parameter's bound to match the previous one.
+    newTypeParam->setTypeSourceInfo(
+      S.Context.getTrivialTypeSourceInfo(prevTypeParam->getUnderlyingType()));
+  }
+
+  return false;
+}
+
 Decl *Sema::
 ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
                          IdentifierInfo *ClassName, SourceLocation ClassLoc,
+                         ObjCTypeParamList *typeParamList,
                          IdentifierInfo *SuperName, SourceLocation SuperLoc,
                          Decl * const *ProtoRefs, unsigned NumProtoRefs,
                          const SourceLocation *ProtoLocs, 
@@ -498,10 +706,47 @@ ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
     ClassName = PrevIDecl->getIdentifier();
   }
 
+  // If there was a forward declaration with type parameters, check
+  // for consistency.
+  if (PrevIDecl) {
+    if (ObjCTypeParamList *prevTypeParamList = PrevIDecl->getTypeParamList()) {
+      if (typeParamList) {
+        // Both have type parameter lists; check for consistency.
+        if (checkTypeParamListConsistency(*this, prevTypeParamList, 
+                                          typeParamList,
+                                          TypeParamListContext::Definition)) {
+          typeParamList = nullptr;
+        }
+      } else {
+        Diag(ClassLoc, diag::err_objc_parameterized_forward_class_first)
+          << ClassName;
+        Diag(prevTypeParamList->getLAngleLoc(), diag::note_previous_decl)
+          << ClassName;
+
+        // Clone the type parameter list.
+        SmallVector<ObjCTypeParamDecl *, 4> clonedTypeParams;
+        for (auto typeParam : *prevTypeParamList) {
+          clonedTypeParams.push_back(
+            ObjCTypeParamDecl::Create(
+              Context,
+              CurContext,
+              SourceLocation(),
+              typeParam->getIdentifier(),
+              SourceLocation(),
+              Context.getTrivialTypeSourceInfo(typeParam->getUnderlyingType())));
+        }
+
+        typeParamList = ObjCTypeParamList::create(Context, 
+                                                  SourceLocation(),
+                                                  clonedTypeParams,
+                                                  SourceLocation());
+      }
+    }
+  }
+
   ObjCInterfaceDecl *IDecl
     = ObjCInterfaceDecl::Create(Context, CurContext, AtInterfaceLoc, ClassName,
-                                PrevIDecl, ClassLoc);
-  
+                                typeParamList, PrevIDecl, ClassLoc);
   if (PrevIDecl) {
     // Class already seen. Was it a definition?
     if (ObjCInterfaceDecl *Def = PrevIDecl->getDefinition()) {
@@ -906,6 +1151,7 @@ Sema::ActOnForwardProtocolDeclaration(SourceLocation AtProtocolLoc,
 Decl *Sema::
 ActOnStartCategoryInterface(SourceLocation AtInterfaceLoc,
                             IdentifierInfo *ClassName, SourceLocation ClassLoc,
+                            ObjCTypeParamList *typeParamList,
                             IdentifierInfo *CategoryName,
                             SourceLocation CategoryLoc,
                             Decl * const *ProtoRefs,
@@ -925,7 +1171,8 @@ ActOnStartCategoryInterface(SourceLocation AtInterfaceLoc,
     // the enclosing method declarations.  We mark the decl invalid
     // to make it clear that this isn't a valid AST.
     CDecl = ObjCCategoryDecl::Create(Context, CurContext, AtInterfaceLoc,
-                                     ClassLoc, CategoryLoc, CategoryName,IDecl);
+                                     ClassLoc, CategoryLoc, CategoryName,
+                                     IDecl, typeParamList);
     CDecl->setInvalidDecl();
     CurContext->addDecl(CDecl);
         
@@ -951,8 +1198,28 @@ ActOnStartCategoryInterface(SourceLocation AtInterfaceLoc,
     }
   }
 
+  // If we have a type parameter list, check it.
+  if (typeParamList) {
+    if (auto prevTypeParamList = IDecl->getTypeParamList()) {
+      if (checkTypeParamListConsistency(*this, prevTypeParamList, typeParamList,
+                                        CategoryName
+                                          ? TypeParamListContext::Category
+                                          : TypeParamListContext::Extension))
+        typeParamList = nullptr;
+    } else {
+      Diag(typeParamList->getLAngleLoc(),
+           diag::err_objc_parameterized_category_nonclass)
+        << (CategoryName != nullptr)
+        << ClassName
+        << typeParamList->getSourceRange();
+
+      typeParamList = nullptr;
+    }
+  }
+
   CDecl = ObjCCategoryDecl::Create(Context, CurContext, AtInterfaceLoc,
-                                   ClassLoc, CategoryLoc, CategoryName, IDecl);
+                                   ClassLoc, CategoryLoc, CategoryName, IDecl,
+                                   typeParamList);
   // FIXME: PushOnScopeChains?
   CurContext->addDecl(CDecl);
 
@@ -987,7 +1254,8 @@ Decl *Sema::ActOnStartCategoryImplementation(
       // Create and install one.
       CatIDecl = ObjCCategoryDecl::Create(Context, CurContext, AtCatImplLoc,
                                           ClassLoc, CatLoc,
-                                          CatName, IDecl);
+                                          CatName, IDecl,
+                                          /*typeParamList=*/nullptr);
       CatIDecl->setImplicit();
     }
   }
@@ -1101,7 +1369,8 @@ Decl *Sema::ActOnStartClassImplementation(
     // FIXME: Do we support attributes on the @implementation? If so we should
     // copy them over.
     IDecl = ObjCInterfaceDecl::Create(Context, CurContext, AtClassImplLoc,
-                                      ClassName, /*PrevDecl=*/nullptr, ClassLoc,
+                                      ClassName, /*typeParamList=*/nullptr,
+                                      /*PrevDecl=*/nullptr, ClassLoc,
                                       true);
     IDecl->startDefinition();
     if (SDecl) {
@@ -2083,6 +2352,7 @@ Sema::DeclGroupPtrTy
 Sema::ActOnForwardClassDeclaration(SourceLocation AtClassLoc,
                                    IdentifierInfo **IdentList,
                                    SourceLocation *IdentLocs,
+                                   ArrayRef<ObjCTypeParamList *> TypeParamLists,
                                    unsigned NumElts) {
   SmallVector<Decl *, 8> DeclsInGroup;
   for (unsigned i = 0; i != NumElts; ++i) {
@@ -2137,9 +2407,33 @@ Sema::ActOnForwardClassDeclaration(SourceLocation AtClassLoc,
       ClassName = PrevIDecl->getIdentifier();
     }
 
+    // If this forward declaration has type parameters, compare them with the
+    // type parameters of the previous declaration.
+    ObjCTypeParamList *TypeParams = TypeParamLists[i];
+    if (PrevIDecl && TypeParams) {
+      if (ObjCTypeParamList *PrevTypeParams = PrevIDecl->getTypeParamList()) {
+        // Check for consistency with the previous declaration.
+        if (checkTypeParamListConsistency(
+              *this, PrevTypeParams, TypeParams,
+              TypeParamListContext::ForwardDeclaration)) {
+          TypeParams = nullptr;
+        }
+      } else if (ObjCInterfaceDecl *Def = PrevIDecl->getDefinition()) {
+        // The @interface does not have type parameters. Complain.
+        Diag(IdentLocs[i], diag::err_objc_parameterized_forward_class)
+          << ClassName
+          << TypeParams->getSourceRange();
+        Diag(Def->getLocation(), diag::note_defined_here)
+          << ClassName;
+
+        TypeParams = nullptr;
+      }
+    }
+
     ObjCInterfaceDecl *IDecl
       = ObjCInterfaceDecl::Create(Context, CurContext, AtClassLoc,
-                                  ClassName, PrevIDecl, IdentLocs[i]);
+                                  ClassName, TypeParams, PrevIDecl,
+                                  IdentLocs[i]);
     IDecl->setAtEndRange(IdentLocs[i]);
     
     PushOnScopeChains(IDecl, TUScope);

@@ -7743,6 +7743,42 @@ def warn_nullability_missing : Warning<
   "%select{pointer|block pointer|member pointer}0 is missing a nullability "
   "type specifier (_Nonnull, _Nullable, or _Null_unspecified)">,
   InGroup<NullabilityCompleteness>;
+}
+
+let CategoryName = "Generics Issue" in {
+
+def err_objc_type_param_bound_nonobject : Error<
+  "type bound %0 for type parameter %1 is not an Objective-C pointer type">;
+
+def err_objc_type_param_bound_missing_pointer : Error<
+  "missing '*' in type bound %0 for type parameter %1">;
+
+def err_objc_type_param_redecl : Error<
+  "redeclaration of type parameter %0">;
+
+def err_objc_type_param_arity_mismatch : Error<
+  "%select{forward class declaration|class definition|category|extension}0 has "
+  "too %select{few|many}1 type parameters (expected %2, have %3)">;
+
+def err_objc_type_param_bound_conflict : Error<
+  "type bound %0 for type parameter %1 conflicts with "
+  "%select{implicit|previous}2 bound %3%select{for type parameter %5|}4">;
+
+def note_objc_type_param_here : Note<"type parameter %0 declared here">;
+
+def err_objc_type_param_bound_missing : Error<
+  "missing type bound %0 for type parameter %1 in %select{@interface|@class}2">;
+
+def err_objc_parameterized_category_nonclass : Error<
+  "%select{extension|category}0 of non-parameterized class %1 cannot have type "
+  "parameters">;
+
+def err_objc_parameterized_forward_class : Error<
+  "forward declaration of non-parameterized class %0 cannot have type "
+  "parameters">;
+
+def err_objc_parameterized_forward_class_first : Error<
+  "class %0 previously declared with type parameters">;
 
 }
 

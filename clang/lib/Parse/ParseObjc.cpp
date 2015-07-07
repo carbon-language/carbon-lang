@@ -96,14 +96,17 @@ Parser::DeclGroupPtrTy Parser::ParseObjCAtDirectives() {
 
 ///
 /// objc-class-declaration:
-///    '@' 'class' identifier-list ';'
+///    '@' 'class' objc-class-forward-decl (',' objc-class-forward-decl)* ';'
+///
+/// objc-class-forward-decl:
+///   identifier objc-type-parameter-list[opt]
 ///
 Parser::DeclGroupPtrTy
 Parser::ParseObjCAtClassDeclaration(SourceLocation atLoc) {
   ConsumeToken(); // the identifier "class"
   SmallVector<IdentifierInfo *, 8> ClassNames;
   SmallVector<SourceLocation, 8> ClassLocs;
-
+  SmallVector<ObjCTypeParamList *, 8> ClassTypeParams;
 
   while (1) {
     MaybeSkipAttributes(tok::objc_class);
@@ -116,6 +119,14 @@ Parser::ParseObjCAtClassDeclaration(SourceLocation atLoc) {
     ClassLocs.push_back(Tok.getLocation());
     ConsumeToken();
 
+    // Parse the optional objc-type-parameter-list.
+    ObjCTypeParamList *TypeParams = nullptr;
+    if (Tok.is(tok::less)) {
+      TypeParams = parseObjCTypeParamList();
+      if (TypeParams)
+        Actions.popObjCTypeParamList(getCurScope(), TypeParams);
+    }
+    ClassTypeParams.push_back(TypeParams);
     if (!TryConsumeToken(tok::comma))
       break;
   }
@@ -126,6 +137,7 @@ Parser::ParseObjCAtClassDeclaration(SourceLocation atLoc) {
 
   return Actions.ActOnForwardClassDeclaration(atLoc, ClassNames.data(),
                                               ClassLocs.data(),
+                                              ClassTypeParams,
                                               ClassNames.size());
 }
 
@@ -154,15 +166,15 @@ void Parser::CheckNestedObjCContexts(SourceLocation AtLoc)
 ///     objc-category-interface
 ///
 ///   objc-class-interface:
-///     '@' 'interface' identifier objc-superclass[opt]
-///       objc-protocol-refs[opt]
+///     '@' 'interface' identifier objc-type-parameter-list[opt]
+///       objc-superclass[opt] objc-protocol-refs[opt]
 ///       objc-class-instance-variables[opt]
 ///       objc-interface-decl-list
 ///     @end
 ///
 ///   objc-category-interface:
-///     '@' 'interface' identifier '(' identifier[opt] ')'
-///       objc-protocol-refs[opt]
+///     '@' 'interface' identifier objc-type-parameter-list[opt]
+///       '(' identifier[opt] ')' objc-protocol-refs[opt]
 ///       objc-interface-decl-list
 ///     @end
 ///
@@ -202,7 +214,20 @@ Decl *Parser::ParseObjCAtInterfaceDeclaration(SourceLocation AtLoc,
   // We have a class or category name - consume it.
   IdentifierInfo *nameId = Tok.getIdentifierInfo();
   SourceLocation nameLoc = ConsumeToken();
-  if (Tok.is(tok::l_paren) && 
+
+  // Parse the objc-type-parameter-list or objc-protocol-refs. For the latter
+  // case, LAngleLoc will be valid and ProtocolIdents will capture the
+  // protocol references (that have not yet been resolved).
+  SourceLocation LAngleLoc, EndProtoLoc;
+  SmallVector<IdentifierLocPair, 8> ProtocolIdents;
+  ObjCTypeParamList *typeParameterList = nullptr;
+  if (Tok.is(tok::less)) {
+    typeParameterList = parseObjCTypeParamListOrProtocolRefs(LAngleLoc, 
+                                                             ProtocolIdents,
+                                                             EndProtoLoc);
+  }
+
+  if (Tok.is(tok::l_paren) &&
       !isKnownToBeTypeSpecifier(GetLookAheadToken(1))) { // we have a category.
     
     BalancedDelimiterTracker T(*this, tok::l_paren);
@@ -237,7 +262,7 @@ Decl *Parser::ParseObjCAtInterfaceDeclaration(SourceLocation AtLoc,
     }
     
     // Next, we need to check for any protocol references.
-    SourceLocation LAngleLoc, EndProtoLoc;
+    assert(LAngleLoc.isInvalid() && "Cannot have already parsed protocols");
     SmallVector<Decl *, 8> ProtocolRefs;
     SmallVector<SourceLocation, 8> ProtocolLocs;
     if (Tok.is(tok::less) &&
@@ -248,6 +273,7 @@ Decl *Parser::ParseObjCAtInterfaceDeclaration(SourceLocation AtLoc,
     Decl *CategoryType =
     Actions.ActOnStartCategoryInterface(AtLoc,
                                         nameId, nameLoc,
+                                        typeParameterList,
                                         categoryId, categoryLoc,
                                         ProtocolRefs.data(),
                                         ProtocolRefs.size(),
@@ -258,6 +284,10 @@ Decl *Parser::ParseObjCAtInterfaceDeclaration(SourceLocation AtLoc,
       ParseObjCClassInstanceVariables(CategoryType, tok::objc_private, AtLoc);
       
     ParseObjCInterfaceDeclList(tok::objc_not_keyword, CategoryType);
+
+    if (typeParameterList)
+      Actions.popObjCTypeParamList(getCurScope(), typeParameterList);
+
     return CategoryType;
   }
   // Parse a class interface.
@@ -281,21 +311,44 @@ Decl *Parser::ParseObjCAtInterfaceDeclaration(SourceLocation AtLoc,
     }
     superClassId = Tok.getIdentifierInfo();
     superClassLoc = ConsumeToken();
+  } else if (typeParameterList) {
+    // An objc-type-parameter-list is ambiguous with an objc-protocol-refs
+    // in an @interface without a specified superclass, so such classes
+    // are ill-formed. We have determined that we have an
+    // objc-type-parameter-list but no superclass, so complain and record
+    // as if we inherited from NSObject.
+    SourceLocation insertLoc = PP.getLocForEndOfToken(PrevTokLocation);
+    Diag(insertLoc, diag::err_objc_parameterized_class_without_base)
+      << nameId
+      << FixItHint::CreateInsertion(insertLoc, " : NSObject");
+    superClassId = PP.getIdentifierInfo("NSObject");
+    superClassLoc = Tok.getLocation();
   }
+  
   // Next, we need to check for any protocol references.
   SmallVector<Decl *, 8> ProtocolRefs;
   SmallVector<SourceLocation, 8> ProtocolLocs;
-  SourceLocation LAngleLoc, EndProtoLoc;
-  if (Tok.is(tok::less) &&
-      ParseObjCProtocolReferences(ProtocolRefs, ProtocolLocs, true, true,
-                                  LAngleLoc, EndProtoLoc))
+  if (LAngleLoc.isValid()) {
+    // We already parsed the protocols named when we thought we had a
+    // type parameter list. Translate them into actual protocol references.
+    for (const auto &pair : ProtocolIdents) {
+      ProtocolLocs.push_back(pair.second);
+    }
+    Actions.FindProtocolDeclaration(/*WarnOnDeclarations=*/true,
+                                    /*ForObjCContainer=*/true,
+                                    &ProtocolIdents[0], ProtocolIdents.size(),
+                                    ProtocolRefs);
+  } else if (Tok.is(tok::less) &&
+             ParseObjCProtocolReferences(ProtocolRefs, ProtocolLocs, true, true,
+                                         LAngleLoc, EndProtoLoc)) {
     return nullptr;
+  }
 
   if (Tok.isNot(tok::less))
     Actions.ActOnTypedefedProtocols(ProtocolRefs, superClassId, superClassLoc);
   
   Decl *ClsType =
-    Actions.ActOnStartClassInterface(AtLoc, nameId, nameLoc,
+    Actions.ActOnStartClassInterface(AtLoc, nameId, nameLoc, typeParameterList,
                                      superClassId, superClassLoc,
                                      ProtocolRefs.data(), ProtocolRefs.size(),
                                      ProtocolLocs.data(),
@@ -305,6 +358,10 @@ Decl *Parser::ParseObjCAtInterfaceDeclaration(SourceLocation AtLoc,
     ParseObjCClassInstanceVariables(ClsType, tok::objc_protected, AtLoc);
 
   ParseObjCInterfaceDeclList(tok::objc_interface, ClsType);
+
+  if (typeParameterList)
+    Actions.popObjCTypeParamList(getCurScope(), typeParameterList);
+
   return ClsType;
 }
 
@@ -337,6 +394,172 @@ static void addContextSensitiveTypeNullability(Parser &P,
     D.getMutableDeclSpec().addAttributes(getNullabilityAttr());
     addedToDeclSpec = true;
   }
+}
+
+/// Parse an Objective-C type parameter list, if present, or capture
+/// the locations of the protocol identifiers for a list of protocol
+/// references.
+///
+///   objc-type-parameter-list:
+///     '<' objc-type-parameter (',' objc-type-parameter)* '>'
+///
+///   objc-type-parameter:
+///     identifier objc-type-parameter-bound[opt]
+///
+///   objc-type-parameter-bound:
+///     ':' type-name
+///
+/// \param lAngleLoc The location of the starting '<'.
+///
+/// \param protocolIdents Will capture the list of identifiers, if the
+/// angle brackets contain a list of protocol references rather than a
+/// type parameter list.
+///
+/// \param rAngleLoc The location of the ending '>'.
+ObjCTypeParamList *Parser::parseObjCTypeParamListOrProtocolRefs(
+                         SourceLocation &lAngleLoc,
+                         SmallVectorImpl<IdentifierLocPair> &protocolIdents,
+                         SourceLocation &rAngleLoc,
+                         bool mayBeProtocolList) {
+  assert(Tok.is(tok::less) && "Not at the beginning of a type parameter list");
+
+  // Within the type parameter list, don't treat '>' as an operator.
+  GreaterThanIsOperatorScope G(GreaterThanIsOperator, false);
+
+  // Local function to "flush" the protocol identifiers, turning them into
+  // type parameters.
+  SmallVector<Decl *, 4> typeParams;
+  auto makeProtocolIdentsIntoTypeParameters = [&]() {
+    for (const auto &pair : protocolIdents) {
+      DeclResult typeParam = Actions.actOnObjCTypeParam(getCurScope(),
+                                                        pair.first,
+                                                        pair.second,
+                                                        SourceLocation(),
+                                                        ParsedType());
+      if (typeParam.isUsable())
+        typeParams.push_back(typeParam.get());
+    }
+
+    protocolIdents.clear();
+    mayBeProtocolList = false;
+  };
+
+  bool invalid = false;
+  lAngleLoc = ConsumeToken();
+  do {
+    // Parse the identifier.
+    if (!Tok.is(tok::identifier)) {
+      // Code completion.
+      if (Tok.is(tok::code_completion)) {
+        // FIXME: If these aren't protocol references, we'll need different
+        // completions.
+        Actions.CodeCompleteObjCProtocolReferences(protocolIdents.data(),
+                                                   protocolIdents.size());
+        cutOffParsing();
+
+        // FIXME: Better recovery here?.
+        return nullptr;
+      }
+
+      Diag(Tok, diag::err_objc_expected_type_parameter);
+      invalid = true;
+      break;
+    }
+
+    IdentifierInfo *paramName = Tok.getIdentifierInfo();
+    SourceLocation paramLoc = ConsumeToken();
+
+    // If there is a bound, parse it.
+    SourceLocation colonLoc;
+    TypeResult boundType;
+    if (TryConsumeToken(tok::colon, colonLoc)) {
+      // Once we've seen a bound, we know this is not a list of protocol
+      // references.
+      if (mayBeProtocolList) {
+        // Up until now, we have been queuing up parameters because they
+        // might be protocol references. Turn them into parameters now.
+        makeProtocolIdentsIntoTypeParameters();
+      }
+
+      // type-name
+      boundType = ParseTypeName();
+      if (boundType.isInvalid())
+        invalid = true;
+    } else if (mayBeProtocolList) {
+      // If this could still be a protocol list, just capture the identifier.
+      // We don't want to turn it into a parameter.
+      protocolIdents.push_back(std::make_pair(paramName, paramLoc));
+      continue;
+    }
+
+    // Create the type parameter.
+    DeclResult typeParam = Actions.actOnObjCTypeParam(getCurScope(),
+                                                      paramName,
+                                                      paramLoc,
+                                                      colonLoc,
+                                                      boundType.isUsable()
+                                                        ? boundType.get()
+                                                        : ParsedType());
+    if (typeParam.isUsable())
+      typeParams.push_back(typeParam.get());
+  } while (TryConsumeToken(tok::comma));
+
+  // Parse the '>'.
+  if (invalid) {
+    SkipUntil(tok::greater, tok::at, StopBeforeMatch);
+    if (Tok.is(tok::greater))
+      ConsumeToken();
+  } else if (ParseGreaterThanInTemplateList(rAngleLoc,
+                                            /*ConsumeLastToken=*/true,
+                                            /*ObjCGenericList=*/true)) {
+    Diag(lAngleLoc, diag::note_matching) << "'<'";
+    SkipUntil({tok::greater, tok::greaterequal, tok::at, tok::minus,
+               tok::minus, tok::plus, tok::colon, tok::l_paren, tok::l_brace,
+               tok::comma, tok::semi },
+              StopBeforeMatch);
+    if (Tok.is(tok::greater))
+      ConsumeToken();
+  }
+
+  if (mayBeProtocolList) {
+    // A type parameter list must be followed by either a ':' (indicating the
+    // presence of a superclass) or a '(' (indicating that this is a category
+    // or extension). This disambiguates between an objc-type-parameter-list
+    // and a objc-protocol-refs.
+    if (Tok.isNot(tok::colon) && Tok.isNot(tok::l_paren)) {
+      // Returning null indicates that we don't have a type parameter list.
+      // The results the caller needs to handle the protocol references are
+      // captured in the reference parameters already.
+      return nullptr;
+    }
+
+    // We have a type parameter list that looks like a list of protocol
+    // references. Turn that parameter list into type parameters.
+    makeProtocolIdentsIntoTypeParameters();
+  }
+
+  // Form the type parameter list.
+  ObjCTypeParamList *list = Actions.actOnObjCTypeParamList(
+                              getCurScope(),
+                              lAngleLoc,
+                              typeParams,
+                              rAngleLoc);
+
+  // Clear out the angle locations; they're used by the caller to indicate
+  // whether there are any protocol references.
+  lAngleLoc = SourceLocation();
+  rAngleLoc = SourceLocation();
+  return list;
+}
+
+/// Parse an objc-type-parameter-list.
+ObjCTypeParamList *Parser::parseObjCTypeParamList() {
+  SourceLocation lAngleLoc;
+  SmallVector<IdentifierLocPair, 1> protocolIdents;
+  SourceLocation rAngleLoc;
+  return parseObjCTypeParamListOrProtocolRefs(lAngleLoc, protocolIdents, 
+                                              rAngleLoc, 
+                                              /*mayBeProtocolList=*/false);
 }
 
 ///   objc-interface-decl-list:
@@ -1311,7 +1534,8 @@ ParseObjCProtocolReferences(SmallVectorImpl<Decl *> &Protocols,
   }
 
   // Consume the '>'.
-  if (ParseGreaterThanInTemplateList(EndLoc, /*ConsumeLastToken=*/true))
+  if (ParseGreaterThanInTemplateList(EndLoc, /*ConsumeLastToken=*/true,
+                                     /*ObjCGenericList=*/false))
     return true;
 
   // Convert the list of protocols identifiers into a list of protocol decls.
@@ -1597,6 +1821,22 @@ Parser::ParseObjCAtImplementationDeclaration(SourceLocation AtLoc) {
   IdentifierInfo *nameId = Tok.getIdentifierInfo();
   SourceLocation nameLoc = ConsumeToken(); // consume class or category name
   Decl *ObjCImpDecl = nullptr;
+
+  // Neither a type parameter list nor a list of protocol references is
+  // permitted here. Parse and diagnose them.
+  if (Tok.is(tok::less)) {
+    SourceLocation lAngleLoc, rAngleLoc;
+    SmallVector<IdentifierLocPair, 8> protocolIdents;
+    SourceLocation diagLoc = Tok.getLocation();
+    if (parseObjCTypeParamListOrProtocolRefs(lAngleLoc, protocolIdents, 
+                                             rAngleLoc)) {
+      Diag(diagLoc, diag::err_objc_parameterized_implementation)
+        << SourceRange(diagLoc, PrevTokLocation);
+    } else if (lAngleLoc.isValid()) {
+      Diag(lAngleLoc, diag::err_unexpected_protocol_qualifier)
+        << FixItHint::CreateRemoval(SourceRange(lAngleLoc, rAngleLoc));
+    }
+  }
 
   if (Tok.is(tok::l_paren)) {
     // we have a category implementation.

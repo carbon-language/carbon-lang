@@ -738,11 +738,16 @@ void Parser::DiagnoseMisplacedEllipsisInDeclarator(SourceLocation EllipsisLoc,
 ///
 /// \param RAngleLoc the location of the consumed '>'.
 ///
-/// \param ConsumeLastToken if true, the '>' is not consumed.
+/// \param ConsumeLastToken if true, the '>' is consumed.
+///
+/// \param ObjCGenericList if true, this is the '>' closing an Objective-C
+/// type parameter or type argument list, rather than a C++ template parameter
+/// or argument list.
 ///
 /// \returns true, if current token does not start with '>', false otherwise.
 bool Parser::ParseGreaterThanInTemplateList(SourceLocation &RAngleLoc,
-                                            bool ConsumeLastToken) {
+                                            bool ConsumeLastToken,
+                                            bool ObjCGenericList) {
   // What will be left once we've consumed the '>'.
   tok::TokenKind RemainingToken;
   const char *ReplacementStr = "> >";
@@ -783,40 +788,44 @@ bool Parser::ParseGreaterThanInTemplateList(SourceLocation &RAngleLoc,
   // the token isn't '>>' or '>>>'.
   // '>>>' is for CUDA, where this sequence of characters is parsed into
   // tok::greatergreatergreater, rather than two separate tokens.
-
+  //
+  // We always allow this for Objective-C type parameter and type argument
+  // lists.
   RAngleLoc = Tok.getLocation();
-
-  // The source range of the '>>' or '>=' at the start of the token.
-  CharSourceRange ReplacementRange =
-      CharSourceRange::getCharRange(RAngleLoc,
-          Lexer::AdvanceToTokenCharacter(RAngleLoc, 2, PP.getSourceManager(),
-                                         getLangOpts()));
-
-  // A hint to put a space between the '>>'s. In order to make the hint as
-  // clear as possible, we include the characters either side of the space in
-  // the replacement, rather than just inserting a space at SecondCharLoc.
-  FixItHint Hint1 = FixItHint::CreateReplacement(ReplacementRange,
-                                                 ReplacementStr);
-
-  // A hint to put another space after the token, if it would otherwise be
-  // lexed differently.
-  FixItHint Hint2;
   Token Next = NextToken();
-  if ((RemainingToken == tok::greater ||
-       RemainingToken == tok::greatergreater) &&
-      Next.isOneOf(tok::greater, tok::greatergreater,
-                   tok::greatergreatergreater, tok::equal, tok::greaterequal,
-                   tok::greatergreaterequal, tok::equalequal) &&
-      areTokensAdjacent(Tok, Next))
-    Hint2 = FixItHint::CreateInsertion(Next.getLocation(), " ");
+  if (!ObjCGenericList) {
+    // The source range of the '>>' or '>=' at the start of the token.
+    CharSourceRange ReplacementRange =
+        CharSourceRange::getCharRange(RAngleLoc,
+            Lexer::AdvanceToTokenCharacter(RAngleLoc, 2, PP.getSourceManager(),
+                                           getLangOpts()));
 
-  unsigned DiagId = diag::err_two_right_angle_brackets_need_space;
-  if (getLangOpts().CPlusPlus11 &&
-      Tok.isOneOf(tok::greatergreater, tok::greatergreatergreater))
-    DiagId = diag::warn_cxx98_compat_two_right_angle_brackets;
-  else if (Tok.is(tok::greaterequal))
-    DiagId = diag::err_right_angle_bracket_equal_needs_space;
-  Diag(Tok.getLocation(), DiagId) << Hint1 << Hint2;
+    // A hint to put a space between the '>>'s. In order to make the hint as
+    // clear as possible, we include the characters either side of the space in
+    // the replacement, rather than just inserting a space at SecondCharLoc.
+    FixItHint Hint1 = FixItHint::CreateReplacement(ReplacementRange,
+                                                   ReplacementStr);
+
+    // A hint to put another space after the token, if it would otherwise be
+    // lexed differently.
+    FixItHint Hint2;
+    if ((RemainingToken == tok::greater ||
+         RemainingToken == tok::greatergreater) &&
+        (Next.isOneOf(tok::greater, tok::greatergreater,
+                      tok::greatergreatergreater, tok::equal,
+                      tok::greaterequal, tok::greatergreaterequal,
+                      tok::equalequal)) &&
+        areTokensAdjacent(Tok, Next))
+      Hint2 = FixItHint::CreateInsertion(Next.getLocation(), " ");
+
+    unsigned DiagId = diag::err_two_right_angle_brackets_need_space;
+    if (getLangOpts().CPlusPlus11 &&
+        (Tok.is(tok::greatergreater) || Tok.is(tok::greatergreatergreater)))
+      DiagId = diag::warn_cxx98_compat_two_right_angle_brackets;
+    else if (Tok.is(tok::greaterequal))
+      DiagId = diag::err_right_angle_bracket_equal_needs_space;
+    Diag(Tok.getLocation(), DiagId) << Hint1 << Hint2;
+  }
 
   // Strip the initial '>' from the token.
   if (RemainingToken == tok::equal && Next.is(tok::equal) &&
@@ -895,7 +904,8 @@ Parser::ParseTemplateIdAfterTemplateName(TemplateTy Template,
     }
   }
 
-  return ParseGreaterThanInTemplateList(RAngleLoc, ConsumeLastToken);
+  return ParseGreaterThanInTemplateList(RAngleLoc, ConsumeLastToken,
+                                        /*ObjCGenericList=*/false);
 }
 
 /// \brief Replace the tokens that form a simple-template-id with an

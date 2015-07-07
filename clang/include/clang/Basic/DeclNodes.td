@@ -21,6 +21,7 @@ def Named : Decl<1>;
     def TypedefName : DDecl<Type, 1>;
       def Typedef : DDecl<TypedefName>;
       def TypeAlias : DDecl<TypedefName>;
+      def ObjCTypeParam : DDecl<TypedefName>;
     def UnresolvedUsingTypename : DDecl<Type>;
     def Tag : DDecl<Type, 1>, DeclContext;
       def Enum : DDecl<Tag>;

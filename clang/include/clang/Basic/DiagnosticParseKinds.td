@@ -1017,4 +1017,17 @@ def err_module_expected_semi : Error<
   "expected ';' after module name">;
 }
 
+let CategoryName = "Generics Issue" in {
+
+def err_objc_expected_type_parameter : Error<
+  "expected type parameter name">;
+
+def err_objc_parameterized_class_without_base : Error<
+  "parameterized Objective-C class %0 must have a superclass">;
+
+def err_objc_parameterized_implementation : Error<
+  "@implementation cannot have type parameters">;
+
+}
+
 } // end of Parser diagnostics

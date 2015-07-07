@@ -501,6 +501,124 @@ public:
   friend class ASTDeclWriter;
 };
 
+/// Represents the declaration of an Objective-C type parameter.
+///
+/// \code
+/// @interface NSDictionary<Key : id<NSCopying>, Value>
+/// @end
+/// \endcode
+///
+/// In the example above, both \c Key and \c Value are represented by
+/// \c ObjCTypeParamDecl. \c Key has an explicit bound of \c id<NSCopying>,
+/// while \c Value gets an implicit bound of \c id.
+///
+/// Objective-C type parameters are typedef-names in the grammar,
+class ObjCTypeParamDecl : public TypedefNameDecl {
+  void anchor() override;
+
+  // The location of the ':', which will be valid when the bound was
+  // explicitly specified.
+  SourceLocation ColonLoc;
+
+  ObjCTypeParamDecl(ASTContext &ctx, DeclContext *dc,
+                    SourceLocation nameLoc, IdentifierInfo *name,
+                    SourceLocation colonLoc, TypeSourceInfo *boundInfo)
+    : TypedefNameDecl(ObjCTypeParam, ctx, dc, nameLoc, nameLoc, name,
+                      boundInfo),
+      ColonLoc(colonLoc) { }
+
+public:
+  static ObjCTypeParamDecl *Create(ASTContext &ctx, DeclContext *dc,
+                                   SourceLocation nameLoc,
+                                   IdentifierInfo *name,
+                                   SourceLocation colonLoc,
+                                   TypeSourceInfo *boundInfo);
+  static ObjCTypeParamDecl *CreateDeserialized(ASTContext &ctx, unsigned ID);
+
+  SourceRange getSourceRange() const override LLVM_READONLY;
+
+  /// Whether this type parameter has an explicitly-written type bound, e.g.,
+  /// "T : NSView".
+  bool hasExplicitBound() const { return ColonLoc.isValid(); }
+
+  /// Retrieve the location of the ':' separating the type parameter name
+  /// from the explicitly-specified bound.
+  SourceLocation getColonLoc() const { return ColonLoc; }
+
+  // Implement isa/cast/dyncast/etc.
+  static bool classof(const Decl *D) { return classofKind(D->getKind()); }
+  static bool classofKind(Kind K) { return K == ObjCTypeParam; }
+
+  friend class ASTDeclReader;
+  friend class ASTDeclWriter;
+};
+
+/// Stores a list of Objective-C type parameters for a parameterized class
+/// or a category/extension thereof.
+///
+/// \code
+/// @interface NSArray<T> // stores the <T>
+/// @end
+/// \endcode
+class ObjCTypeParamList {
+  union { 
+    /// Location of the left and right angle brackets.
+    SourceRange Brackets;
+
+    // Used only for alignment.
+    ObjCTypeParamDecl *AlignmentHack;
+  };
+
+  /// The number of parameters in the list, which are tail-allocated.
+  unsigned NumParams;
+
+  ObjCTypeParamList(SourceLocation lAngleLoc,
+                    ArrayRef<ObjCTypeParamDecl *> typeParams,
+                    SourceLocation rAngleLoc);
+
+public:
+  /// Create a new Objective-C type parameter list.
+  static ObjCTypeParamList *create(ASTContext &ctx,
+                                   SourceLocation lAngleLoc,
+                                   ArrayRef<ObjCTypeParamDecl *> typeParams,
+                                   SourceLocation rAngleLoc);
+
+  /// Iterate through the type parameters in the list.
+  typedef ObjCTypeParamDecl **iterator;
+
+  iterator begin() { return reinterpret_cast<ObjCTypeParamDecl **>(this + 1); }
+
+  iterator end() { return begin() + size(); }
+
+  /// Determine the number of type parameters in this list.
+  unsigned size() const { return NumParams; }
+
+  // Iterate through the type parameters in the list.
+  typedef ObjCTypeParamDecl * const *const_iterator;
+
+  const_iterator begin() const {
+    return reinterpret_cast<ObjCTypeParamDecl * const *>(this + 1);
+  }
+
+  const_iterator end() const {
+    return begin() + size();
+  }
+
+  ObjCTypeParamDecl *front() const {
+    assert(size() > 0 && "empty Objective-C type parameter list");
+    return *begin();
+  }
+
+  ObjCTypeParamDecl *back() const {
+    assert(size() > 0 && "empty Objective-C type parameter list");
+    return *(end() - 1);
+  }
+
+  SourceLocation getLAngleLoc() const { return Brackets.getBegin(); }
+  SourceLocation getRAngleLoc() const { return Brackets.getEnd(); }
+  SourceRange getSourceRange() const { return Brackets; }
+};
+
 /// ObjCContainerDecl - Represents a container for method declarations.
 /// Current sub-classes are ObjCInterfaceDecl, ObjCCategoryDecl,
 /// ObjCProtocolDecl, and ObjCImplDecl.
@@ -736,10 +854,14 @@ class ObjCInterfaceDecl : public ObjCContainerDecl
   };
 
   ObjCInterfaceDecl(const ASTContext &C, DeclContext *DC, SourceLocation AtLoc,
-                    IdentifierInfo *Id, SourceLocation CLoc,
-                    ObjCInterfaceDecl *PrevDecl, bool IsInternal);
+                    IdentifierInfo *Id, ObjCTypeParamList *typeParamList,
+                    SourceLocation CLoc, ObjCInterfaceDecl *PrevDecl,
+                    bool IsInternal);
 
   void LoadExternalDefinition() const;
+
+  /// The type parameters associated with this class, if any.
+  ObjCTypeParamList *TypeParamList;
 
   /// \brief Contains a pointer to the data associated with this class,
   /// which will be NULL if this class has not yet been defined.
@@ -771,11 +893,26 @@ public:
   static ObjCInterfaceDecl *Create(const ASTContext &C, DeclContext *DC,
                                    SourceLocation atLoc,
                                    IdentifierInfo *Id,
+                                   ObjCTypeParamList *typeParamList,
                                    ObjCInterfaceDecl *PrevDecl,
                                    SourceLocation ClassLoc = SourceLocation(),
                                    bool isInternal = false);
 
   static ObjCInterfaceDecl *CreateDeserialized(const ASTContext &C, unsigned ID);
+
+  /// Retrieve the type parameters of this class.
+  ///
+  /// This function looks for a type parameter list for the given
+  /// class; if the class has been declared (with @class) but not
+  /// defined (with @interface), it will search for a declaration that
+  /// has type parameters, skipping any declarations that do not.
+  ObjCTypeParamList *getTypeParamList() const;
+
+  /// Retrieve the type parameters written on this particular declaration of
+  /// the class.
+  ObjCTypeParamList *getTypeParamListAsWritten() const {
+    return TypeParamList;
+  }
 
   SourceRange getSourceRange() const override LLVM_READONLY {
     if (isThisDeclarationADefinition())
@@ -1719,6 +1856,9 @@ class ObjCCategoryDecl : public ObjCContainerDecl {
   /// Interface belonging to this category
   ObjCInterfaceDecl *ClassInterface;
 
+  /// The type parameters associated with this category, if any.
+  ObjCTypeParamList *TypeParamList;
+
   /// referenced protocols in this category.
   ObjCProtocolList ReferencedProtocols;
 
@@ -1736,13 +1876,9 @@ class ObjCCategoryDecl : public ObjCContainerDecl {
   ObjCCategoryDecl(DeclContext *DC, SourceLocation AtLoc,
                    SourceLocation ClassNameLoc, SourceLocation CategoryNameLoc,
                    IdentifierInfo *Id, ObjCInterfaceDecl *IDecl,
+                   ObjCTypeParamList *typeParamList,
                    SourceLocation IvarLBraceLoc=SourceLocation(),
-                   SourceLocation IvarRBraceLoc=SourceLocation())
-    : ObjCContainerDecl(ObjCCategory, DC, Id, ClassNameLoc, AtLoc),
-      ClassInterface(IDecl), NextClassCategory(nullptr),
-      CategoryNameLoc(CategoryNameLoc),
-      IvarLBraceLoc(IvarLBraceLoc), IvarRBraceLoc(IvarRBraceLoc) {
-  }
+                   SourceLocation IvarRBraceLoc=SourceLocation());
 
 public:
 
@@ -1752,12 +1888,17 @@ public:
                                   SourceLocation CategoryNameLoc,
                                   IdentifierInfo *Id,
                                   ObjCInterfaceDecl *IDecl,
+                                  ObjCTypeParamList *typeParamList,
                                   SourceLocation IvarLBraceLoc=SourceLocation(),
                                   SourceLocation IvarRBraceLoc=SourceLocation());
   static ObjCCategoryDecl *CreateDeserialized(ASTContext &C, unsigned ID);
 
   ObjCInterfaceDecl *getClassInterface() { return ClassInterface; }
   const ObjCInterfaceDecl *getClassInterface() const { return ClassInterface; }
+
+  /// Retrieve the type parameter list associated with this category or
+  /// extension.
+  ObjCTypeParamList *getTypeParamList() const { return TypeParamList; }
 
   ObjCCategoryImplDecl *getImplementation() const;
   void setImplementation(ObjCCategoryImplDecl *ImplD);

@@ -44,6 +44,8 @@ namespace {
     void PrintObjCMethodType(ASTContext &Ctx, Decl::ObjCDeclQualifier Quals, 
                              QualType T);
 
+    void PrintObjCTypeParams(ObjCTypeParamList *Params);
+
   public:
     DeclPrinter(raw_ostream &Out, const PrintingPolicy &Policy,
                 unsigned Indentation = 0, bool PrintInstantiation = false)
@@ -962,6 +964,25 @@ void DeclPrinter::PrintObjCMethodType(ASTContext &Ctx,
   Out << ')';
 }
 
+void DeclPrinter::PrintObjCTypeParams(ObjCTypeParamList *Params) {
+  Out << "<";
+  unsigned First = true;
+  for (auto *Param : *Params) {
+    if (First) {
+      First = false;
+    } else {
+      Out << ", ";
+    }
+
+    Out << Param->getDeclName().getAsString();
+
+    if (Param->hasExplicitBound()) {
+      Out << " : " << Param->getUnderlyingType().getAsString(Policy);
+    }
+  }
+  Out << ">";
+}
+
 void DeclPrinter::VisitObjCMethodDecl(ObjCMethodDecl *OMD) {
   if (OMD->isInstanceMethod())
     Out << "- ";
@@ -1037,14 +1058,24 @@ void DeclPrinter::VisitObjCInterfaceDecl(ObjCInterfaceDecl *OID) {
   ObjCInterfaceDecl *SID = OID->getSuperClass();
 
   if (!OID->isThisDeclarationADefinition()) {
-    Out << "@class " << I << ";";
+    Out << "@class " << I;
+
+    if (auto TypeParams = OID->getTypeParamListAsWritten()) {
+      PrintObjCTypeParams(TypeParams);
+    }
+
+    Out << ";";
     return;
   }
   bool eolnOut = false;
+  Out << "@interface " << I;
+
+  if (auto TypeParams = OID->getTypeParamListAsWritten()) {
+    PrintObjCTypeParams(TypeParams);
+  }
+  
   if (SID)
-    Out << "@interface " << I << " : " << *SID;
-  else
-    Out << "@interface " << I;
+    Out << " : " << OID->getSuperClass()->getName();
 
   // Protocols?
   const ObjCList<ObjCProtocolDecl> &Protocols = OID->getReferencedProtocols();
@@ -1107,7 +1138,11 @@ void DeclPrinter::VisitObjCCategoryImplDecl(ObjCCategoryImplDecl *PID) {
 }
 
 void DeclPrinter::VisitObjCCategoryDecl(ObjCCategoryDecl *PID) {
-  Out << "@interface " << *PID->getClassInterface() << '(' << *PID << ")\n";
+  Out << "@interface " << *PID->getClassInterface();
+  if (auto TypeParams = PID->getTypeParamList()) {
+    PrintObjCTypeParams(TypeParams);
+  }
+  Out << "(" << *PID << ")\n";
   if (PID->ivar_size() > 0) {
     Out << "{\n";
     Indentation += Policy.Indentation;

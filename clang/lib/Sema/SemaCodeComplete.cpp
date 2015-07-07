@@ -3029,7 +3029,9 @@ CXCursorKind clang::getCursorKindForDecl(const Decl *D) {
 
       case Decl::Import:
         return CXCursor_ModuleImportDecl;
-      
+
+    case Decl::ObjCTypeParam:   return CXCursor_TemplateTypeParameter;
+
     default:
       if (const TagDecl *TD = dyn_cast<TagDecl>(D)) {
         switch (TD->getTagKind()) {

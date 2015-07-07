@@ -5038,6 +5038,7 @@ CXCursor clang_getCursorDefinition(CXCursor C) {
   case Decl::ClassScopeFunctionSpecialization:
   case Decl::Import:
   case Decl::OMPThreadPrivate:
+  case Decl::ObjCTypeParam:
     return C;
 
   // Declaration kinds that don't make any sense here, but are
@@ -6321,6 +6322,7 @@ static CXLanguageKind getDeclLanguage(const Decl *D) {
     case Decl::ObjCProperty:
     case Decl::ObjCPropertyImpl:
     case Decl::ObjCProtocol:
+    case Decl::ObjCTypeParam:
       return CXLanguage_ObjC;
     case Decl::CXXConstructor:
     case Decl::CXXConversion:

@@ -350,8 +350,11 @@ namespace clang {
                               RedeclarableTemplateDecl *Existing,
                               DeclID DsID);
 
+    ObjCTypeParamList *ReadObjCTypeParamList();
+
     // FIXME: Reorder according to DeclNodes.td?
     void VisitObjCMethodDecl(ObjCMethodDecl *D);
+    void VisitObjCTypeParamDecl(ObjCTypeParamDecl *D);
     void VisitObjCContainerDecl(ObjCContainerDecl *D);
     void VisitObjCInterfaceDecl(ObjCInterfaceDecl *D);
     void VisitObjCIvarDecl(ObjCIvarDecl *D);
@@ -899,10 +902,37 @@ void ASTDeclReader::VisitObjCMethodDecl(ObjCMethodDecl *MD) {
   MD->setParamsAndSelLocs(Reader.getContext(), Params, SelLocs);
 }
 
+void ASTDeclReader::VisitObjCTypeParamDecl(ObjCTypeParamDecl *D) {
+  VisitTypedefNameDecl(D);
+  D->ColonLoc = ReadSourceLocation(Record, Idx);
+}
+
 void ASTDeclReader::VisitObjCContainerDecl(ObjCContainerDecl *CD) {
   VisitNamedDecl(CD);
   CD->setAtStartLoc(ReadSourceLocation(Record, Idx));
   CD->setAtEndRange(ReadSourceRange(Record, Idx));
+}
+
+ObjCTypeParamList *ASTDeclReader::ReadObjCTypeParamList() {
+  unsigned numParams = Record[Idx++];
+  if (numParams == 0)
+    return nullptr;
+
+  SmallVector<ObjCTypeParamDecl *, 4> typeParams;
+  typeParams.reserve(numParams);
+  for (unsigned i = 0; i != numParams; ++i) {
+    auto typeParam = ReadDeclAs<ObjCTypeParamDecl>(Record, Idx);
+    if (!typeParam)
+      return nullptr;
+
+    typeParams.push_back(typeParam);
+  }
+
+  SourceLocation lAngleLoc = ReadSourceLocation(Record, Idx);
+  SourceLocation rAngleLoc = ReadSourceLocation(Record, Idx);
+
+  return ObjCTypeParamList::create(Reader.getContext(), lAngleLoc,
+                                   typeParams, rAngleLoc);
 }
 
 void ASTDeclReader::VisitObjCInterfaceDecl(ObjCInterfaceDecl *ID) {
@@ -910,7 +940,8 @@ void ASTDeclReader::VisitObjCInterfaceDecl(ObjCInterfaceDecl *ID) {
   VisitObjCContainerDecl(ID);
   TypeIDForTypeDecl = Reader.getGlobalTypeID(F, Record[Idx++]);
   mergeRedeclarable(ID, Redecl);
-  
+
+  ID->TypeParamList = ReadObjCTypeParamList();
   if (Record[Idx++]) {
     // Read the definition.
     ID->allocateDefinitionData();
@@ -1020,6 +1051,7 @@ void ASTDeclReader::VisitObjCCategoryDecl(ObjCCategoryDecl *CD) {
   Reader.CategoriesDeserialized.insert(CD);
 
   CD->ClassInterface = ReadDeclAs<ObjCInterfaceDecl>(Record, Idx);
+  CD->TypeParamList = ReadObjCTypeParamList();
   unsigned NumProtoRefs = Record[Idx++];
   SmallVector<ObjCProtocolDecl *, 16> ProtoRefs;
   ProtoRefs.reserve(NumProtoRefs);
@@ -3258,6 +3290,9 @@ Decl *ASTReader::ReadDeclRecord(DeclID ID) {
     break;
   case DECL_EMPTY:
     D = EmptyDecl::CreateDeserialized(Context, ID);
+    break;
+  case DECL_OBJC_TYPE_PARAM:
+    D = ObjCTypeParamDecl::CreateDeserialized(Context, ID);
     break;
   }
 
