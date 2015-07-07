@@ -285,18 +285,15 @@ class _LocalProcess(_BaseProcess):
     def terminate(self):
         if self._proc.poll() == None:
             # Terminate _proc like it does the pexpect
-            self._proc.send_signal(signal.SIGHUP)
-            time.sleep(self._delayafterterminate)
-            if self._proc.poll() != None:
-                return
-            self._proc.send_signal(signal.SIGCONT)
-            time.sleep(self._delayafterterminate)
-            if self._proc.poll() != None:
-                return
-            self._proc.send_signal(signal.SIGINT)
-            time.sleep(self._delayafterterminate)
-            if self._proc.poll() != None:
-                return
+            signals_to_try = [sig for sig in ['SIGHUP', 'SIGCONT', 'SIGINT'] if sig in dir(signal)]
+            for sig in signals_to_try:
+                try:
+                    self._proc.send_signal(getattr(signal, sig))
+                    time.sleep(self._delayafterterminate)
+                    if self._proc.poll() != None:
+                        return
+                except ValueError:
+                    pass  # Windows says SIGINT is not a valid signal to send
             self._proc.terminate()
             time.sleep(self._delayafterterminate)
             if self._proc.poll() != None:
