@@ -608,12 +608,15 @@ public:
 /// @end
 /// \endcode
 class ObjCTypeParamList {
+  /// Stores the components of a SourceRange as a POD.
+  struct PODSourceRange {
+    unsigned Begin;
+    unsigned End;
+  };
+
   union { 
     /// Location of the left and right angle brackets.
-    struct {
-      unsigned Begin;
-      unsigned End;
-    } Brackets;
+    PODSourceRange Brackets;
 
     // Used only for alignment.
     ObjCTypeParamDecl *AlignmentHack;
