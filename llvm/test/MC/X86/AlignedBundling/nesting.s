@@ -6,7 +6,7 @@
 # Will be bundle-aligning to 16 byte boundaries
   .bundle_align_mode 4
   .text
-# CHECK-LABEL: foo
+# CHECK-LABEL: foo:
 foo:
 # Test that bundle alignment mode can be set more than once.
   .bundle_align_mode 4
@@ -19,11 +19,11 @@ foo:
   callq bar     
   .bundle_unlock
   .bundle_unlock
-# CHECK:      10: callq
-# CHECK-NEXT: 15: callq
+# CHECK:      10: callq {{.*}} <bar>
+# CHECK-NEXT: 15: callq {{.*}} <bar>
 
   .p2align 4
-# CHECK-LABEL: bar
+# CHECK-LABEL: bar:
 bar:
   callq foo
   callq foo
@@ -35,10 +35,10 @@ bar:
   callq bar
   .bundle_unlock
   .bundle_unlock
-# CHECK:      36: callq
-# CHECK-NEXT: 3b: callq
+# CHECK:      36: callq {{.*}} <bar>
+# CHECK-NEXT: 3b: callq {{.*}} <bar>
 
-# CHECK-LABEL: baz
+# CHECK-LABEL: baz:
 baz:
   callq foo
   callq foo
@@ -50,8 +50,8 @@ baz:
   callq bar
   .bundle_unlock
   .bundle_unlock
-# CHECK:      56: callq
-# CHECK-NEXT: 5b: callq
+# CHECK:      56: callq {{.*}} <bar>
+# CHECK-NEXT: 5b: callq {{.*}} <bar>
 
 # CHECK-LABEL: quux
 quux:
@@ -65,5 +65,5 @@ quux:
   .bundle_unlock
 # Check that the calls are bundled together when the second one is after the
 # inner nest is closed.
-# CHECK:      70: callq
-# CHECK-NEXT: 75: callq
+# CHECK:      70: callq {{.*}} <bar>
+# CHECK-NEXT: 75: callq {{.*}} <bar>

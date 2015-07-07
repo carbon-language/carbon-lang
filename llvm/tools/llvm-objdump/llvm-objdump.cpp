@@ -808,6 +808,27 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
       SectionRelocMap[*Sec2].push_back(Section);
   }
 
+  // Create a mapping from virtual address to symbol name.  This is used to
+  // pretty print the target of a call.
+  std::vector<std::pair<uint64_t, StringRef>> AllSymbols;
+  if (MIA) {
+    for (const SymbolRef &Symbol : Obj->symbols()) {
+      ErrorOr<uint64_t> AddressOrErr = Symbol.getAddress();
+      if (error(AddressOrErr.getError()))
+        break;
+      uint64_t Address = *AddressOrErr;
+
+      ErrorOr<StringRef> Name = Symbol.getName();
+      if (error(Name.getError()))
+        break;
+      if (Name->empty())
+        continue;
+      AllSymbols.push_back(std::make_pair(Address, *Name));
+    }
+
+    array_pod_sort(AllSymbols.begin(), AllSymbols.end());
+  }
+
   for (const SectionRef &Section : Obj->sections()) {
     if (!Section.isText() || Section.isVirtual())
       continue;
@@ -912,6 +933,21 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
                         SectionAddr + Index, outs(), "", *STI);
           outs() << CommentStream.str();
           Comments.clear();
+          if (MIA && (MIA->isCall(Inst) || MIA->isUnconditionalBranch(Inst))) {
+            uint64_t Target;
+            if (MIA->evaluateBranch(Inst, SectionAddr + Index, Size, Target)) {
+              const auto &TargetSym =
+                  std::lower_bound(AllSymbols.begin(), AllSymbols.end(),
+                                   std::make_pair(Target, StringRef()));
+              if (TargetSym != AllSymbols.end()) {
+                outs() << " <" << TargetSym->second;
+                uint64_t Disp = TargetSym->first - Target;
+                if (Disp)
+                  outs() << '-' << Disp;
+                outs() << '>';
+              }
+            }
+          }
           outs() << "\n";
         } else {
           errs() << ToolName << ": warning: invalid instruction encoding\n";
