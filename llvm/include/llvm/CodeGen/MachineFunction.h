@@ -155,6 +155,9 @@ public:
   MachineModuleInfo &getMMI() const { return MMI; }
   MCContext &getContext() const { return Ctx; }
 
+  /// Return the DataLayout attached to the Module associated to this MF.
+  const DataLayout &getDataLayout() const;
+
   /// getFunction - Return the LLVM function that this machine code represents
   ///
   const Function *getFunction() const { return Fn; }

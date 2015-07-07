@@ -135,17 +135,18 @@ public:
 /// address of the function constant pool values.
 /// @brief The machine constant pool.
 class MachineConstantPool {
-  const TargetMachine &TM;      ///< The target machine.
   unsigned PoolAlignment;       ///< The alignment for the pool.
   std::vector<MachineConstantPoolEntry> Constants; ///< The pool of constants.
   /// MachineConstantPoolValues that use an existing MachineConstantPoolEntry.
   DenseSet<MachineConstantPoolValue*> MachineCPVsSharingEntries;
+  const DataLayout &DL;
 
-  const DataLayout *getDataLayout() const;
+  const DataLayout &getDataLayout() const { return DL; }
+
 public:
   /// @brief The only constructor.
-  explicit MachineConstantPool(const TargetMachine &TM)
-    : TM(TM), PoolAlignment(1) {}
+  explicit MachineConstantPool(const DataLayout &DL)
+      : PoolAlignment(1), DL(DL) {}
   ~MachineConstantPool();
     
   /// getConstantPoolAlignment - Return the alignment required by
