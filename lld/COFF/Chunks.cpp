@@ -48,6 +48,25 @@ static void add16(uint8_t *P, int16_t V) { write16le(P, read16le(P) + V); }
 static void add32(uint8_t *P, int32_t V) { write32le(P, read32le(P) + V); }
 static void add64(uint8_t *P, int64_t V) { write64le(P, read64le(P) + V); }
 
+void SectionChunk::applyRelX64(uint8_t *Off, uint16_t Type, uint64_t S,
+                               uint64_t P) {
+  switch (Type) {
+  case IMAGE_REL_AMD64_ADDR32:   add32(Off, S + Config->ImageBase); break;
+  case IMAGE_REL_AMD64_ADDR64:   add64(Off, S + Config->ImageBase); break;
+  case IMAGE_REL_AMD64_ADDR32NB: add32(Off, S); break;
+  case IMAGE_REL_AMD64_REL32:    add32(Off, S - P - 4); break;
+  case IMAGE_REL_AMD64_REL32_1:  add32(Off, S - P - 5); break;
+  case IMAGE_REL_AMD64_REL32_2:  add32(Off, S - P - 6); break;
+  case IMAGE_REL_AMD64_REL32_3:  add32(Off, S - P - 7); break;
+  case IMAGE_REL_AMD64_REL32_4:  add32(Off, S - P - 8); break;
+  case IMAGE_REL_AMD64_REL32_5:  add32(Off, S - P - 9); break;
+  case IMAGE_REL_AMD64_SECTION:  add16(Off, Out->getSectionIndex()); break;
+  case IMAGE_REL_AMD64_SECREL:   add32(Off, S - Out->getRVA()); break;
+  default:
+    llvm::report_fatal_error("Unsupported relocation type");
+  }
+}
+
 void SectionChunk::writeTo(uint8_t *Buf) {
   if (!hasData())
     return;
@@ -61,21 +80,7 @@ void SectionChunk::writeTo(uint8_t *Buf) {
     SymbolBody *Body = File->getSymbolBody(Rel.SymbolTableIndex)->repl();
     uint64_t S = cast<Defined>(Body)->getRVA();
     uint64_t P = RVA + Rel.VirtualAddress;
-    switch (Rel.Type) {
-    case IMAGE_REL_AMD64_ADDR32:   add32(Off, S + Config->ImageBase); break;
-    case IMAGE_REL_AMD64_ADDR64:   add64(Off, S + Config->ImageBase); break;
-    case IMAGE_REL_AMD64_ADDR32NB: add32(Off, S); break;
-    case IMAGE_REL_AMD64_REL32:    add32(Off, S - P - 4); break;
-    case IMAGE_REL_AMD64_REL32_1:  add32(Off, S - P - 5); break;
-    case IMAGE_REL_AMD64_REL32_2:  add32(Off, S - P - 6); break;
-    case IMAGE_REL_AMD64_REL32_3:  add32(Off, S - P - 7); break;
-    case IMAGE_REL_AMD64_REL32_4:  add32(Off, S - P - 8); break;
-    case IMAGE_REL_AMD64_REL32_5:  add32(Off, S - P - 9); break;
-    case IMAGE_REL_AMD64_SECTION:  add16(Off, Out->getSectionIndex()); break;
-    case IMAGE_REL_AMD64_SECREL:   add32(Off, S - Out->getRVA()); break;
-    default:
-      llvm::report_fatal_error("Unsupported relocation type");
-    }
+    applyRelX64(Off, Rel.Type, S, P);
   }
 }
 

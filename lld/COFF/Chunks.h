@@ -136,6 +136,7 @@ public:
   StringRef getSectionName() const override { return SectionName; }
   void getBaserels(std::vector<uint32_t> *Res, Defined *ImageBase) override;
   bool isCOMDAT() const;
+  void applyRelX64(uint8_t *Off, uint16_t Type, uint64_t S, uint64_t P);
 
   // Called if the garbage collector decides to not include this chunk
   // in a final output. It's supposed to print out a log message to stdout.
