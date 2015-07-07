@@ -296,7 +296,7 @@ void implicit_convert_array(NSArray<__kindof NSString *> *kindofStringsArray,
 
 void testNullability() {
   // The base type being a pointer type tickles the bug.
-  extern __kindof id <NSCopying> __nonnull getSomeCopyable();
+  extern __kindof id <NSCopying> _Nonnull getSomeCopyable();
   NSString *string = getSomeCopyable(); // no-warning
 
   void processCopyable(__typeof(getSomeCopyable()) string);
