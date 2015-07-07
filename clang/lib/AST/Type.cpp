@@ -629,390 +629,396 @@ const ObjCObjectPointerType *ObjCObjectPointerType::stripObjCKindOfTypeAndQuals(
 
 namespace {
 
+template<typename F>
+QualType simpleTransform(ASTContext &ctx, QualType type, F &&f);
+
+/// Visitor used by simpleTransform() to perform the transformation.
+template<typename F>
+struct SimpleTransformVisitor 
+         : public TypeVisitor<SimpleTransformVisitor<F>, QualType> {
+  ASTContext &Ctx;
+  F &&TheFunc;
+
+  QualType recurse(QualType type) {
+    return simpleTransform(Ctx, type, std::move(TheFunc));
+  }
+
+public:
+  SimpleTransformVisitor(ASTContext &ctx, F &&f) : Ctx(ctx), TheFunc(std::move(f)) { }
+
+  // None of the clients of this transformation can occur where
+  // there are dependent types, so skip dependent types.
+#define TYPE(Class, Base)
+#define DEPENDENT_TYPE(Class, Base) \
+  QualType Visit##Class##Type(const Class##Type *T) { return QualType(T, 0); }
+#include "clang/AST/TypeNodes.def"
+
+#define TRIVIAL_TYPE_CLASS(Class) \
+  QualType Visit##Class##Type(const Class##Type *T) { return QualType(T, 0); }
+
+  TRIVIAL_TYPE_CLASS(Builtin)
+
+  QualType VisitComplexType(const ComplexType *T) { 
+    QualType elementType = recurse(T->getElementType());
+    if (elementType.isNull())
+      return QualType();
+
+    if (elementType.getAsOpaquePtr() == T->getElementType().getAsOpaquePtr())
+      return QualType(T, 0);
+
+    return Ctx.getComplexType(elementType);
+  }
+
+  QualType VisitPointerType(const PointerType *T) {
+    QualType pointeeType = recurse(T->getPointeeType());
+    if (pointeeType.isNull())
+      return QualType();
+
+    if (pointeeType.getAsOpaquePtr() == T->getPointeeType().getAsOpaquePtr())
+      return QualType(T, 0);
+
+    return Ctx.getPointerType(pointeeType);
+  }
+
+  QualType VisitBlockPointerType(const BlockPointerType *T) {
+    QualType pointeeType = recurse(T->getPointeeType());
+    if (pointeeType.isNull())
+      return QualType();
+
+    if (pointeeType.getAsOpaquePtr() == T->getPointeeType().getAsOpaquePtr())
+      return QualType(T, 0);
+
+    return Ctx.getBlockPointerType(pointeeType);
+  }
+
+  QualType VisitLValueReferenceType(const LValueReferenceType *T) {
+    QualType pointeeType = recurse(T->getPointeeTypeAsWritten());
+    if (pointeeType.isNull())
+      return QualType();
+
+    if (pointeeType.getAsOpaquePtr() 
+          == T->getPointeeTypeAsWritten().getAsOpaquePtr())
+      return QualType(T, 0);
+
+    return Ctx.getLValueReferenceType(pointeeType, T->isSpelledAsLValue());
+  }
+
+  QualType VisitRValueReferenceType(const RValueReferenceType *T) {
+    QualType pointeeType = recurse(T->getPointeeTypeAsWritten());
+    if (pointeeType.isNull())
+      return QualType();
+
+    if (pointeeType.getAsOpaquePtr() 
+          == T->getPointeeTypeAsWritten().getAsOpaquePtr())
+      return QualType(T, 0);
+
+    return Ctx.getRValueReferenceType(pointeeType);
+  }
+
+  QualType VisitMemberPointerType(const MemberPointerType *T) {
+    QualType pointeeType = recurse(T->getPointeeType());
+    if (pointeeType.isNull())
+      return QualType();
+
+    if (pointeeType.getAsOpaquePtr() == T->getPointeeType().getAsOpaquePtr())
+      return QualType(T, 0);
+
+    return Ctx.getMemberPointerType(pointeeType, T->getClass());      
+  }
+
+  QualType VisitConstantArrayType(const ConstantArrayType *T) {
+    QualType elementType = recurse(T->getElementType());
+    if (elementType.isNull())
+      return QualType();
+
+    if (elementType.getAsOpaquePtr() == T->getElementType().getAsOpaquePtr())
+      return QualType(T, 0);
+
+    return Ctx.getConstantArrayType(elementType, T->getSize(),
+                                    T->getSizeModifier(),
+                                    T->getIndexTypeCVRQualifiers());
+  }
+
+  QualType VisitVariableArrayType(const VariableArrayType *T) {
+    QualType elementType = recurse(T->getElementType());
+    if (elementType.isNull())
+      return QualType();
+
+    if (elementType.getAsOpaquePtr() == T->getElementType().getAsOpaquePtr())
+      return QualType(T, 0);
+
+    return Ctx.getVariableArrayType(elementType, T->getSizeExpr(),
+                                    T->getSizeModifier(),
+                                    T->getIndexTypeCVRQualifiers(),
+                                    T->getBracketsRange());
+  }
+
+  QualType VisitIncompleteArrayType(const IncompleteArrayType *T) {
+    QualType elementType = recurse(T->getElementType());
+    if (elementType.isNull())
+      return QualType();
+
+    if (elementType.getAsOpaquePtr() == T->getElementType().getAsOpaquePtr())
+      return QualType(T, 0);
+
+    return Ctx.getIncompleteArrayType(elementType, T->getSizeModifier(),
+                                      T->getIndexTypeCVRQualifiers());
+  }
+
+  QualType VisitVectorType(const VectorType *T) { 
+    QualType elementType = recurse(T->getElementType());
+    if (elementType.isNull())
+      return QualType();
+
+    if (elementType.getAsOpaquePtr() == T->getElementType().getAsOpaquePtr())
+      return QualType(T, 0);
+
+    return Ctx.getVectorType(elementType, T->getNumElements(), 
+                             T->getVectorKind());
+  }
+
+  QualType VisitExtVectorType(const ExtVectorType *T) { 
+    QualType elementType = recurse(T->getElementType());
+    if (elementType.isNull())
+      return QualType();
+
+    if (elementType.getAsOpaquePtr() == T->getElementType().getAsOpaquePtr())
+      return QualType(T, 0);
+
+    return Ctx.getExtVectorType(elementType, T->getNumElements());
+  }
+
+  QualType VisitFunctionNoProtoType(const FunctionNoProtoType *T) { 
+    QualType returnType = recurse(T->getReturnType());
+    if (returnType.isNull())
+      return QualType();
+
+    if (returnType.getAsOpaquePtr() == T->getReturnType().getAsOpaquePtr())
+      return QualType(T, 0);
+
+    return Ctx.getFunctionNoProtoType(returnType, T->getExtInfo());
+  }
+
+  QualType VisitFunctionProtoType(const FunctionProtoType *T) { 
+    QualType returnType = recurse(T->getReturnType());
+    if (returnType.isNull())
+      return QualType();
+
+    // Transform parameter types.
+    SmallVector<QualType, 4> paramTypes;
+    bool paramChanged = false;
+    for (auto paramType : T->getParamTypes()) {
+      QualType newParamType = recurse(paramType);
+      if (newParamType.isNull())
+        return QualType();
+
+      if (newParamType.getAsOpaquePtr() != paramType.getAsOpaquePtr())
+        paramChanged = true;
+
+      paramTypes.push_back(newParamType);
+    }
+
+    // Transform extended info.
+    FunctionProtoType::ExtProtoInfo info = T->getExtProtoInfo();
+    bool exceptionChanged = false;
+    if (info.ExceptionSpec.Type == EST_Dynamic) {
+      SmallVector<QualType, 4> exceptionTypes;
+      for (auto exceptionType : info.ExceptionSpec.Exceptions) {
+        QualType newExceptionType = recurse(exceptionType);
+        if (newExceptionType.isNull())
+          return QualType();
+        
+        if (newExceptionType.getAsOpaquePtr() 
+              != exceptionType.getAsOpaquePtr())
+          exceptionChanged = true;
+
+        exceptionTypes.push_back(newExceptionType);
+      }
+
+      if (exceptionChanged) {
+        unsigned size = sizeof(QualType) * exceptionTypes.size();
+        void *mem = Ctx.Allocate(size, llvm::alignOf<QualType>());
+        memcpy(mem, exceptionTypes.data(), size);
+        info.ExceptionSpec.Exceptions
+          = llvm::makeArrayRef((QualType *)mem, exceptionTypes.size());
+      }
+    }
+
+    if (returnType.getAsOpaquePtr() == T->getReturnType().getAsOpaquePtr() &&
+        !paramChanged && !exceptionChanged)
+      return QualType(T, 0);
+
+    return Ctx.getFunctionType(returnType, paramTypes, info);
+  }
+
+  QualType VisitParenType(const ParenType *T) { 
+    QualType innerType = recurse(T->getInnerType());
+    if (innerType.isNull())
+      return QualType();
+
+    if (innerType.getAsOpaquePtr() == T->getInnerType().getAsOpaquePtr())
+      return QualType(T, 0);
+
+    return Ctx.getParenType(innerType);
+  }
+
+  TRIVIAL_TYPE_CLASS(Typedef)
+
+  QualType VisitAdjustedType(const AdjustedType *T) { 
+    QualType originalType = recurse(T->getOriginalType());
+    if (originalType.isNull())
+      return QualType();
+
+    QualType adjustedType = recurse(T->getAdjustedType());
+    if (adjustedType.isNull())
+      return QualType();
+
+    if (originalType.getAsOpaquePtr() 
+          == T->getOriginalType().getAsOpaquePtr() &&
+        adjustedType.getAsOpaquePtr() == T->getAdjustedType().getAsOpaquePtr())
+      return QualType(T, 0);
+
+    return Ctx.getAdjustedType(originalType, adjustedType);
+  }
+  
+  QualType VisitDecayedType(const DecayedType *T) { 
+    QualType originalType = recurse(T->getOriginalType());
+    if (originalType.isNull())
+      return QualType();
+
+    if (originalType.getAsOpaquePtr() 
+          == T->getOriginalType().getAsOpaquePtr())
+      return QualType(T, 0);
+
+    return Ctx.getDecayedType(originalType);
+  }
+
+  TRIVIAL_TYPE_CLASS(TypeOfExpr)
+  TRIVIAL_TYPE_CLASS(TypeOf)
+  TRIVIAL_TYPE_CLASS(Decltype)
+  TRIVIAL_TYPE_CLASS(UnaryTransform)
+  TRIVIAL_TYPE_CLASS(Record)
+  TRIVIAL_TYPE_CLASS(Enum)
+
+  // FIXME: Non-trivial to implement, but important for C++
+  TRIVIAL_TYPE_CLASS(Elaborated)
+
+  QualType VisitAttributedType(const AttributedType *T) { 
+    QualType modifiedType = recurse(T->getModifiedType());
+    if (modifiedType.isNull())
+      return QualType();
+
+    QualType equivalentType = recurse(T->getEquivalentType());
+    if (equivalentType.isNull())
+      return QualType();
+
+    if (modifiedType.getAsOpaquePtr() 
+          == T->getModifiedType().getAsOpaquePtr() &&
+        equivalentType.getAsOpaquePtr() 
+          == T->getEquivalentType().getAsOpaquePtr())
+      return QualType(T, 0);
+
+    return Ctx.getAttributedType(T->getAttrKind(), modifiedType, 
+                                 equivalentType);
+  }
+
+  QualType VisitSubstTemplateTypeParmType(const SubstTemplateTypeParmType *T) {
+    QualType replacementType = recurse(T->getReplacementType());
+    if (replacementType.isNull())
+      return QualType();
+
+    if (replacementType.getAsOpaquePtr() 
+          == T->getReplacementType().getAsOpaquePtr())
+      return QualType(T, 0);
+
+    return Ctx.getSubstTemplateTypeParmType(T->getReplacedParameter(),
+                                            replacementType);
+  }
+
+  // FIXME: Non-trivial to implement, but important for C++
+  TRIVIAL_TYPE_CLASS(TemplateSpecialization)
+
+  QualType VisitAutoType(const AutoType *T) {
+    if (!T->isDeduced())
+      return QualType(T, 0);
+
+    QualType deducedType = recurse(T->getDeducedType());
+    if (deducedType.isNull())
+      return QualType();
+
+    if (deducedType.getAsOpaquePtr() 
+          == T->getDeducedType().getAsOpaquePtr())
+      return QualType(T, 0);
+
+    return Ctx.getAutoType(deducedType, T->isDecltypeAuto(),
+                           T->isDependentType());
+  }
+
+  // FIXME: Non-trivial to implement, but important for C++
+  TRIVIAL_TYPE_CLASS(PackExpansion)
+
+  QualType VisitObjCObjectType(const ObjCObjectType *T) {
+    QualType baseType = recurse(T->getBaseType());
+    if (baseType.isNull())
+      return QualType();
+
+    // Transform type arguments.
+    bool typeArgChanged = false;
+    SmallVector<QualType, 4> typeArgs;
+    for (auto typeArg : T->getTypeArgsAsWritten()) {
+      QualType newTypeArg = recurse(typeArg);
+      if (newTypeArg.isNull())
+        return QualType();
+
+      if (newTypeArg.getAsOpaquePtr() != typeArg.getAsOpaquePtr())
+        typeArgChanged = true;
+
+      typeArgs.push_back(newTypeArg);
+    }
+
+    if (baseType.getAsOpaquePtr() == T->getBaseType().getAsOpaquePtr() &&
+        !typeArgChanged)
+      return QualType(T, 0);
+
+    return Ctx.getObjCObjectType(baseType, typeArgs, 
+                                 llvm::makeArrayRef(T->qual_begin(),
+                                                    T->getNumProtocols()),
+                                 T->isKindOfTypeAsWritten());
+  }
+
+  TRIVIAL_TYPE_CLASS(ObjCInterface)
+
+  QualType VisitObjCObjectPointerType(const ObjCObjectPointerType *T) {
+    QualType pointeeType = recurse(T->getPointeeType());
+    if (pointeeType.isNull())
+      return QualType();
+
+    if (pointeeType.getAsOpaquePtr() 
+          == T->getPointeeType().getAsOpaquePtr())
+      return QualType(T, 0);
+
+    return Ctx.getObjCObjectPointerType(pointeeType);
+  }
+
+  QualType VisitAtomicType(const AtomicType *T) {
+    QualType valueType = recurse(T->getValueType());
+    if (valueType.isNull())
+      return QualType();
+
+    if (valueType.getAsOpaquePtr() 
+          == T->getValueType().getAsOpaquePtr())
+      return QualType(T, 0);
+
+    return Ctx.getAtomicType(valueType);
+  }
+
+#undef TRIVIAL_TYPE_CLASS
+};
+
 /// Perform a simple type transformation that does not change the
 /// semantics of the type.
 template<typename F>
 QualType simpleTransform(ASTContext &ctx, QualType type, F &&f) {
-  struct Visitor : public TypeVisitor<Visitor, QualType> {
-    ASTContext &Ctx;
-    F &&TheFunc;
-
-    QualType recurse(QualType type) {
-      return simpleTransform(Ctx, type, std::move(TheFunc));
-    }
-
-  public:
-    Visitor(ASTContext &ctx, F &&f) : Ctx(ctx), TheFunc(std::move(f)) { }
-
-    // None of the clients of this transformation can occur where
-    // there are dependent types, so skip dependent types.
-#define TYPE(Class, Base)
-#define DEPENDENT_TYPE(Class, Base) \
-    QualType Visit##Class##Type(const Class##Type *T) { return QualType(T, 0); }
-#include "clang/AST/TypeNodes.def"
-
-#define TRIVIAL_TYPE_CLASS(Class) \
-    QualType Visit##Class##Type(const Class##Type *T) { return QualType(T, 0); }
-
-    TRIVIAL_TYPE_CLASS(Builtin)
-
-    QualType VisitComplexType(const ComplexType *T) { 
-      QualType elementType = recurse(T->getElementType());
-      if (elementType.isNull())
-        return QualType();
-
-      if (elementType.getAsOpaquePtr() == T->getElementType().getAsOpaquePtr())
-        return QualType(T, 0);
-
-      return Ctx.getComplexType(elementType);
-    }
-
-    QualType VisitPointerType(const PointerType *T) {
-      QualType pointeeType = recurse(T->getPointeeType());
-      if (pointeeType.isNull())
-        return QualType();
-
-      if (pointeeType.getAsOpaquePtr() == T->getPointeeType().getAsOpaquePtr())
-        return QualType(T, 0);
-
-      return Ctx.getPointerType(pointeeType);
-    }
-
-    QualType VisitBlockPointerType(const BlockPointerType *T) {
-      QualType pointeeType = recurse(T->getPointeeType());
-      if (pointeeType.isNull())
-        return QualType();
-
-      if (pointeeType.getAsOpaquePtr() == T->getPointeeType().getAsOpaquePtr())
-        return QualType(T, 0);
-
-      return Ctx.getBlockPointerType(pointeeType);
-    }
-
-    QualType VisitLValueReferenceType(const LValueReferenceType *T) {
-      QualType pointeeType = recurse(T->getPointeeTypeAsWritten());
-      if (pointeeType.isNull())
-        return QualType();
-
-      if (pointeeType.getAsOpaquePtr() 
-            == T->getPointeeTypeAsWritten().getAsOpaquePtr())
-        return QualType(T, 0);
-
-      return Ctx.getLValueReferenceType(pointeeType, T->isSpelledAsLValue());
-    }
-
-    QualType VisitRValueReferenceType(const RValueReferenceType *T) {
-      QualType pointeeType = recurse(T->getPointeeTypeAsWritten());
-      if (pointeeType.isNull())
-        return QualType();
-
-      if (pointeeType.getAsOpaquePtr() 
-            == T->getPointeeTypeAsWritten().getAsOpaquePtr())
-        return QualType(T, 0);
-
-      return Ctx.getRValueReferenceType(pointeeType);
-    }
-
-    QualType VisitMemberPointerType(const MemberPointerType *T) {
-      QualType pointeeType = recurse(T->getPointeeType());
-      if (pointeeType.isNull())
-        return QualType();
-
-      if (pointeeType.getAsOpaquePtr() == T->getPointeeType().getAsOpaquePtr())
-        return QualType(T, 0);
-
-      return Ctx.getMemberPointerType(pointeeType, T->getClass());      
-    }
-
-    QualType VisitConstantArrayType(const ConstantArrayType *T) {
-      QualType elementType = recurse(T->getElementType());
-      if (elementType.isNull())
-        return QualType();
-
-      if (elementType.getAsOpaquePtr() == T->getElementType().getAsOpaquePtr())
-        return QualType(T, 0);
-
-      return Ctx.getConstantArrayType(elementType, T->getSize(),
-                                      T->getSizeModifier(),
-                                      T->getIndexTypeCVRQualifiers());
-    }
-
-    QualType VisitVariableArrayType(const VariableArrayType *T) {
-      QualType elementType = recurse(T->getElementType());
-      if (elementType.isNull())
-        return QualType();
-
-      if (elementType.getAsOpaquePtr() == T->getElementType().getAsOpaquePtr())
-        return QualType(T, 0);
-
-      return Ctx.getVariableArrayType(elementType, T->getSizeExpr(),
-                                      T->getSizeModifier(),
-                                      T->getIndexTypeCVRQualifiers(),
-                                      T->getBracketsRange());
-    }
-
-    QualType VisitIncompleteArrayType(const IncompleteArrayType *T) {
-      QualType elementType = recurse(T->getElementType());
-      if (elementType.isNull())
-        return QualType();
-
-      if (elementType.getAsOpaquePtr() == T->getElementType().getAsOpaquePtr())
-        return QualType(T, 0);
-
-      return Ctx.getIncompleteArrayType(elementType, T->getSizeModifier(),
-                                        T->getIndexTypeCVRQualifiers());
-    }
-
-    QualType VisitVectorType(const VectorType *T) { 
-      QualType elementType = recurse(T->getElementType());
-      if (elementType.isNull())
-        return QualType();
-
-      if (elementType.getAsOpaquePtr() == T->getElementType().getAsOpaquePtr())
-        return QualType(T, 0);
-
-      return Ctx.getVectorType(elementType, T->getNumElements(), 
-                               T->getVectorKind());
-    }
-
-    QualType VisitExtVectorType(const ExtVectorType *T) { 
-      QualType elementType = recurse(T->getElementType());
-      if (elementType.isNull())
-        return QualType();
-
-      if (elementType.getAsOpaquePtr() == T->getElementType().getAsOpaquePtr())
-        return QualType(T, 0);
-
-      return Ctx.getExtVectorType(elementType, T->getNumElements());
-    }
-
-    QualType VisitFunctionNoProtoType(const FunctionNoProtoType *T) { 
-      QualType returnType = recurse(T->getReturnType());
-      if (returnType.isNull())
-        return QualType();
-
-      if (returnType.getAsOpaquePtr() == T->getReturnType().getAsOpaquePtr())
-        return QualType(T, 0);
-
-      return Ctx.getFunctionNoProtoType(returnType, T->getExtInfo());
-    }
-
-    QualType VisitFunctionProtoType(const FunctionProtoType *T) { 
-      QualType returnType = recurse(T->getReturnType());
-      if (returnType.isNull())
-        return QualType();
-
-      // Transform parameter types.
-      SmallVector<QualType, 4> paramTypes;
-      bool paramChanged = false;
-      for (auto paramType : T->getParamTypes()) {
-        QualType newParamType = recurse(paramType);
-        if (newParamType.isNull())
-          return QualType();
-
-        if (newParamType.getAsOpaquePtr() != paramType.getAsOpaquePtr())
-          paramChanged = true;
-
-        paramTypes.push_back(newParamType);
-      }
-
-      // Transform extended info.
-      FunctionProtoType::ExtProtoInfo info = T->getExtProtoInfo();
-      bool exceptionChanged = false;
-      if (info.ExceptionSpec.Type == EST_Dynamic) {
-        SmallVector<QualType, 4> exceptionTypes;
-        for (auto exceptionType : info.ExceptionSpec.Exceptions) {
-          QualType newExceptionType = recurse(exceptionType);
-          if (newExceptionType.isNull())
-            return QualType();
-          
-          if (newExceptionType.getAsOpaquePtr() 
-                != exceptionType.getAsOpaquePtr())
-            exceptionChanged = true;
-
-          exceptionTypes.push_back(newExceptionType);
-        }
-
-        if (exceptionChanged) {
-          unsigned size = sizeof(QualType) * exceptionTypes.size();
-          void *mem = Ctx.Allocate(size, llvm::alignOf<QualType>());
-          memcpy(mem, exceptionTypes.data(), size);
-          info.ExceptionSpec.Exceptions
-            = llvm::makeArrayRef((QualType *)mem, exceptionTypes.size());
-        }
-      }
-
-      if (returnType.getAsOpaquePtr() == T->getReturnType().getAsOpaquePtr() &&
-          !paramChanged && !exceptionChanged)
-        return QualType(T, 0);
-
-      return Ctx.getFunctionType(returnType, paramTypes, info);
-    }
-
-    QualType VisitParenType(const ParenType *T) { 
-      QualType innerType = recurse(T->getInnerType());
-      if (innerType.isNull())
-        return QualType();
-
-      if (innerType.getAsOpaquePtr() == T->getInnerType().getAsOpaquePtr())
-        return QualType(T, 0);
-
-      return Ctx.getParenType(innerType);
-    }
-
-    TRIVIAL_TYPE_CLASS(Typedef)
-
-    QualType VisitAdjustedType(const AdjustedType *T) { 
-      QualType originalType = recurse(T->getOriginalType());
-      if (originalType.isNull())
-        return QualType();
-
-      QualType adjustedType = recurse(T->getAdjustedType());
-      if (adjustedType.isNull())
-        return QualType();
-
-      if (originalType.getAsOpaquePtr() 
-            == T->getOriginalType().getAsOpaquePtr() &&
-          adjustedType.getAsOpaquePtr() == T->getAdjustedType().getAsOpaquePtr())
-        return QualType(T, 0);
-
-      return Ctx.getAdjustedType(originalType, adjustedType);
-    }
-    
-    QualType VisitDecayedType(const DecayedType *T) { 
-      QualType originalType = recurse(T->getOriginalType());
-      if (originalType.isNull())
-        return QualType();
-
-      if (originalType.getAsOpaquePtr() 
-            == T->getOriginalType().getAsOpaquePtr())
-        return QualType(T, 0);
-
-      return Ctx.getDecayedType(originalType);
-    }
-
-    TRIVIAL_TYPE_CLASS(TypeOfExpr)
-    TRIVIAL_TYPE_CLASS(TypeOf)
-    TRIVIAL_TYPE_CLASS(Decltype)
-    TRIVIAL_TYPE_CLASS(UnaryTransform)
-    TRIVIAL_TYPE_CLASS(Record)
-    TRIVIAL_TYPE_CLASS(Enum)
-
-    // FIXME: Non-trivial to implement, but important for C++
-    TRIVIAL_TYPE_CLASS(Elaborated)
-
-    QualType VisitAttributedType(const AttributedType *T) { 
-      QualType modifiedType = recurse(T->getModifiedType());
-      if (modifiedType.isNull())
-        return QualType();
-
-      QualType equivalentType = recurse(T->getEquivalentType());
-      if (equivalentType.isNull())
-        return QualType();
-
-      if (modifiedType.getAsOpaquePtr() 
-            == T->getModifiedType().getAsOpaquePtr() &&
-          equivalentType.getAsOpaquePtr() 
-            == T->getEquivalentType().getAsOpaquePtr())
-        return QualType(T, 0);
-
-      return Ctx.getAttributedType(T->getAttrKind(), modifiedType, 
-                                   equivalentType);
-    }
-
-    QualType VisitSubstTemplateTypeParmType(const SubstTemplateTypeParmType *T) {
-      QualType replacementType = recurse(T->getReplacementType());
-      if (replacementType.isNull())
-        return QualType();
-
-      if (replacementType.getAsOpaquePtr() 
-            == T->getReplacementType().getAsOpaquePtr())
-        return QualType(T, 0);
-
-      return Ctx.getSubstTemplateTypeParmType(T->getReplacedParameter(),
-                                              replacementType);
-    }
-
-    // FIXME: Non-trivial to implement, but important for C++
-    TRIVIAL_TYPE_CLASS(TemplateSpecialization)
-
-    QualType VisitAutoType(const AutoType *T) {
-      if (!T->isDeduced())
-        return QualType(T, 0);
-
-      QualType deducedType = recurse(T->getDeducedType());
-      if (deducedType.isNull())
-        return QualType();
-
-      if (deducedType.getAsOpaquePtr() 
-            == T->getDeducedType().getAsOpaquePtr())
-        return QualType(T, 0);
-
-      return Ctx.getAutoType(deducedType, T->isDecltypeAuto(),
-                             T->isDependentType());
-    }
-
-    // FIXME: Non-trivial to implement, but important for C++
-    TRIVIAL_TYPE_CLASS(PackExpansion)
-
-    QualType VisitObjCObjectType(const ObjCObjectType *T) {
-      QualType baseType = recurse(T->getBaseType());
-      if (baseType.isNull())
-        return QualType();
-
-      // Transform type arguments.
-      bool typeArgChanged = false;
-      SmallVector<QualType, 4> typeArgs;
-      for (auto typeArg : T->getTypeArgsAsWritten()) {
-        QualType newTypeArg = recurse(typeArg);
-        if (newTypeArg.isNull())
-          return QualType();
-
-        if (newTypeArg.getAsOpaquePtr() != typeArg.getAsOpaquePtr())
-          typeArgChanged = true;
-
-        typeArgs.push_back(newTypeArg);
-      }
-
-      if (baseType.getAsOpaquePtr() == T->getBaseType().getAsOpaquePtr() &&
-          !typeArgChanged)
-        return QualType(T, 0);
-
-      return Ctx.getObjCObjectType(baseType, typeArgs, 
-                                   llvm::makeArrayRef(T->qual_begin(),
-                                                      T->getNumProtocols()),
-                                   T->isKindOfTypeAsWritten());
-    }
-
-    TRIVIAL_TYPE_CLASS(ObjCInterface)
-
-    QualType VisitObjCObjectPointerType(const ObjCObjectPointerType *T) {
-      QualType pointeeType = recurse(T->getPointeeType());
-      if (pointeeType.isNull())
-        return QualType();
-
-      if (pointeeType.getAsOpaquePtr() 
-            == T->getPointeeType().getAsOpaquePtr())
-        return QualType(T, 0);
-
-      return Ctx.getObjCObjectPointerType(pointeeType);
-    }
-
-    QualType VisitAtomicType(const AtomicType *T) {
-      QualType valueType = recurse(T->getValueType());
-      if (valueType.isNull())
-        return QualType();
-
-      if (valueType.getAsOpaquePtr() 
-            == T->getValueType().getAsOpaquePtr())
-        return QualType(T, 0);
-
-      return Ctx.getAtomicType(valueType);
-    }
-
-#undef TRIVIAL_TYPE_CLASS
-  };
-
   // Transform the type. If it changed, return the transformed result.
   QualType transformed = f(type);
   if (transformed.getAsOpaquePtr() != type.getAsOpaquePtr())
@@ -1022,7 +1028,7 @@ QualType simpleTransform(ASTContext &ctx, QualType type, F &&f) {
   SplitQualType splitType = type.split();
 
   // Visit the type itself.
-  Visitor visitor(ctx, std::move(f));
+  SimpleTransformVisitor<F> visitor(ctx, std::move(f));
   QualType result = visitor.Visit(splitType.Ty);
   if (result.isNull())
     return result;
