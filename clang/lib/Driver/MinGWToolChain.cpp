@@ -1,5 +1,4 @@
-//===--- MinGWToolChain.cpp - MinGWToolChain Implementation
-//-----------------------===//
+//===--- MinGWToolChain.cpp - MinGWToolChain Implementation ---------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
