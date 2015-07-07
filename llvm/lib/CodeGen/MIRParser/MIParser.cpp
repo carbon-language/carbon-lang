@@ -47,8 +47,7 @@ class MIParser {
   SMDiagnostic &Error;
   StringRef Source, CurrentSource;
   MIToken Token;
-  /// Maps from basic block numbers to MBBs.
-  const DenseMap<unsigned, MachineBasicBlock *> &MBBSlots;
+  const PerFunctionMIParsingState &PFS;
   /// Maps from indices to unnamed global values and metadata nodes.
   const SlotMapping &IRSlots;
   /// Maps from instruction names to op codes.
@@ -60,8 +59,7 @@ class MIParser {
 
 public:
   MIParser(SourceMgr &SM, MachineFunction &MF, SMDiagnostic &Error,
-           StringRef Source,
-           const DenseMap<unsigned, MachineBasicBlock *> &MBBSlots,
+           StringRef Source, const PerFunctionMIParsingState &PFS,
            const SlotMapping &IRSlots);
 
   void lex();
@@ -122,12 +120,10 @@ private:
 } // end anonymous namespace
 
 MIParser::MIParser(SourceMgr &SM, MachineFunction &MF, SMDiagnostic &Error,
-                   StringRef Source,
-                   const DenseMap<unsigned, MachineBasicBlock *> &MBBSlots,
+                   StringRef Source, const PerFunctionMIParsingState &PFS,
                    const SlotMapping &IRSlots)
     : SM(SM), MF(MF), Error(Error), Source(Source), CurrentSource(Source),
-      Token(MIToken::Error, StringRef()), MBBSlots(MBBSlots), IRSlots(IRSlots) {
-}
+      Token(MIToken::Error, StringRef()), PFS(PFS), IRSlots(IRSlots) {}
 
 void MIParser::lex() {
   CurrentSource = lexMIToken(
@@ -362,8 +358,8 @@ bool MIParser::parseMBBReference(MachineBasicBlock *&MBB) {
   unsigned Number;
   if (getUnsigned(Number))
     return true;
-  auto MBBInfo = MBBSlots.find(Number);
-  if (MBBInfo == MBBSlots.end())
+  auto MBBInfo = PFS.MBBSlots.find(Number);
+  if (MBBInfo == PFS.MBBSlots.end())
     return error(Twine("use of undefined machine basic block #") +
                  Twine(Number));
   MBB = MBBInfo->second;
@@ -506,16 +502,16 @@ const uint32_t *MIParser::getRegMask(StringRef Identifier) {
   return RegMaskInfo->getValue();
 }
 
-bool llvm::parseMachineInstr(
-    MachineInstr *&MI, SourceMgr &SM, MachineFunction &MF, StringRef Src,
-    const DenseMap<unsigned, MachineBasicBlock *> &MBBSlots,
-    const SlotMapping &IRSlots, SMDiagnostic &Error) {
-  return MIParser(SM, MF, Error, Src, MBBSlots, IRSlots).parse(MI);
+bool llvm::parseMachineInstr(MachineInstr *&MI, SourceMgr &SM,
+                             MachineFunction &MF, StringRef Src,
+                             const PerFunctionMIParsingState &PFS,
+                             const SlotMapping &IRSlots, SMDiagnostic &Error) {
+  return MIParser(SM, MF, Error, Src, PFS, IRSlots).parse(MI);
 }
 
-bool llvm::parseMBBReference(
-    MachineBasicBlock *&MBB, SourceMgr &SM, MachineFunction &MF, StringRef Src,
-    const DenseMap<unsigned, MachineBasicBlock *> &MBBSlots,
-    const SlotMapping &IRSlots, SMDiagnostic &Error) {
-  return MIParser(SM, MF, Error, Src, MBBSlots, IRSlots).parseMBB(MBB);
+bool llvm::parseMBBReference(MachineBasicBlock *&MBB, SourceMgr &SM,
+                             MachineFunction &MF, StringRef Src,
+                             const PerFunctionMIParsingState &PFS,
+                             const SlotMapping &IRSlots, SMDiagnostic &Error) {
+  return MIParser(SM, MF, Error, Src, PFS, IRSlots).parseMBB(MBB);
 }

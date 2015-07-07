@@ -90,10 +90,9 @@ public:
   /// Initialize the machine basic block using it's YAML representation.
   ///
   /// Return true if an error occurred.
-  bool initializeMachineBasicBlock(
-      MachineFunction &MF, MachineBasicBlock &MBB,
-      const yaml::MachineBasicBlock &YamlMBB,
-      const DenseMap<unsigned, MachineBasicBlock *> &MBBSlots);
+  bool initializeMachineBasicBlock(MachineFunction &MF, MachineBasicBlock &MBB,
+                                   const yaml::MachineBasicBlock &YamlMBB,
+                                   const PerFunctionMIParsingState &PFS);
 
   bool initializeRegisterInfo(MachineRegisterInfo &RegInfo,
                               const yaml::MachineFunction &YamlMF);
@@ -236,8 +235,8 @@ bool MIRParserImpl::initializeMachineFunction(MachineFunction &MF) {
   if (initializeRegisterInfo(MF.getRegInfo(), YamlMF))
     return true;
 
+  PerFunctionMIParsingState PFS;
   const auto &F = *MF.getFunction();
-  DenseMap<unsigned, MachineBasicBlock *> MBBSlots;
   for (const auto &YamlMBB : YamlMF.BasicBlocks) {
     const BasicBlock *BB = nullptr;
     if (!YamlMBB.Name.empty()) {
@@ -249,7 +248,8 @@ bool MIRParserImpl::initializeMachineFunction(MachineFunction &MF) {
     }
     auto *MBB = MF.CreateMachineBasicBlock(BB);
     MF.insert(MF.end(), MBB);
-    bool WasInserted = MBBSlots.insert(std::make_pair(YamlMBB.ID, MBB)).second;
+    bool WasInserted =
+        PFS.MBBSlots.insert(std::make_pair(YamlMBB.ID, MBB)).second;
     if (!WasInserted)
       return error(Twine("redefinition of machine basic block with id #") +
                    Twine(YamlMBB.ID));
@@ -260,7 +260,7 @@ bool MIRParserImpl::initializeMachineFunction(MachineFunction &MF) {
   unsigned I = 0;
   for (const auto &YamlMBB : YamlMF.BasicBlocks) {
     if (initializeMachineBasicBlock(MF, *MF.getBlockNumbered(I++), YamlMBB,
-                                    MBBSlots))
+                                    PFS))
       return true;
   }
   return false;
@@ -269,7 +269,7 @@ bool MIRParserImpl::initializeMachineFunction(MachineFunction &MF) {
 bool MIRParserImpl::initializeMachineBasicBlock(
     MachineFunction &MF, MachineBasicBlock &MBB,
     const yaml::MachineBasicBlock &YamlMBB,
-    const DenseMap<unsigned, MachineBasicBlock *> &MBBSlots) {
+    const PerFunctionMIParsingState &PFS) {
   MBB.setAlignment(YamlMBB.Alignment);
   if (YamlMBB.AddressTaken)
     MBB.setHasAddressTaken();
@@ -278,7 +278,7 @@ bool MIRParserImpl::initializeMachineBasicBlock(
   // Parse the successors.
   for (const auto &MBBSource : YamlMBB.Successors) {
     MachineBasicBlock *SuccMBB = nullptr;
-    if (parseMBBReference(SuccMBB, SM, MF, MBBSource.Value, MBBSlots, IRSlots,
+    if (parseMBBReference(SuccMBB, SM, MF, MBBSource.Value, PFS, IRSlots,
                           Error))
       return error(Error, MBBSource.SourceRange);
     // TODO: Report an error when adding the same successor more than once.
@@ -287,7 +287,7 @@ bool MIRParserImpl::initializeMachineBasicBlock(
   // Parse the instructions.
   for (const auto &MISource : YamlMBB.Instructions) {
     MachineInstr *MI = nullptr;
-    if (parseMachineInstr(MI, SM, MF, MISource.Value, MBBSlots, IRSlots, Error))
+    if (parseMachineInstr(MI, SM, MF, MISource.Value, PFS, IRSlots, Error))
       return error(Error, MISource.SourceRange);
     MBB.insert(MBB.end(), MI);
   }
