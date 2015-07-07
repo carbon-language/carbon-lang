@@ -638,6 +638,8 @@ static void getARMTargetFeatures(const Driver &D, const llvm::Triple &Triple,
                                  const ArgList &Args,
                                  std::vector<const char *> &Features,
                                  bool ForAS) {
+  bool KernelOrKext =
+      Args.hasArg(options::OPT_mkernel, options::OPT_fapple_kext);
   StringRef FloatABI = tools::arm::getARMFloatABI(D, Args, Triple);
   if (!ForAS) {
     // FIXME: Note, this is a hack, the LLVM backend doesn't actually use these
@@ -704,6 +706,14 @@ static void getARMTargetFeatures(const Driver &D, const llvm::Triple &Triple,
 
   if (Triple.getSubArch() == llvm::Triple::SubArchType::ARMSubArch_v8_1a) {
     Features.insert(Features.begin(), "+v8.1a");
+  }
+
+  if (Arg *A = Args.getLastArg(options::OPT_mlong_calls,
+                               options::OPT_mno_long_calls)) {
+    if (A->getOption().matches(options::OPT_mlong_calls))
+      Features.push_back("+long-calls");
+  } else if (KernelOrKext && (!Triple.isiOS() || Triple.isOSVersionLT(6))) {
+      Features.push_back("+long-calls");
   }
 }
 
@@ -778,11 +788,6 @@ void Clang::AddARMTargetArgs(const ArgList &Args, ArgStringList &CmdArgs,
 
   // Kernel code has more strict alignment requirements.
   if (KernelOrKext) {
-    if (!Triple.isiOS() || Triple.isOSVersionLT(6)) {
-      CmdArgs.push_back("-backend-option");
-      CmdArgs.push_back("-arm-long-calls");
-    }
-
     CmdArgs.push_back("-backend-option");
     CmdArgs.push_back("-arm-strict-align");
 
@@ -4072,17 +4077,6 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     // Windows on ARM expects restricted IT blocks
     CmdArgs.push_back("-backend-option");
     CmdArgs.push_back("-arm-restrict-it");
-  }
-
-  if (TT.getArch() == llvm::Triple::arm ||
-      TT.getArch() == llvm::Triple::thumb) {
-    if (Arg *A = Args.getLastArg(options::OPT_mlong_calls,
-                                 options::OPT_mno_long_calls)) {
-      if (A->getOption().matches(options::OPT_mlong_calls)) {
-        CmdArgs.push_back("-backend-option");
-        CmdArgs.push_back("-arm-long-calls");
-      }
-    }
   }
 
   // Forward -f options with positive and negative forms; we translate

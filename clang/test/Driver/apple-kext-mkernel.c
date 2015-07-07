@@ -11,7 +11,7 @@
 // RUN:   -arch armv7 -mkernel -mstrict-align -### -fsyntax-only %s 2> %t
 // RUN: FileCheck --check-prefix=CHECK-ARM < %t %s
 
-// CHECK-ARM: "-backend-option" "-arm-long-calls"
+// CHECK-ARM: "-target-feature" "+long-calls"
 // CHECK-ARM: "-backend-option" "-arm-strict-align"
 // CHECK-ARM-NOT: "-backend-option" "-arm-strict-align"
 // CHECK-ARM: "-fno-builtin"
