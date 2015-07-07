@@ -205,7 +205,7 @@ int nested___except___except() {
 // CHECK:  br label %[[except:[^ ]*]]
 
 // CHECK: [[except]]
-// CHECK-NEXT: invoke void @g()
+// CHECK: invoke void @g()
 // CHECK-NEXT:       to label %[[g2_cont:.*]] unwind label %[[g2_lpad:.*]]
 
 // CHECK: [[g2_cont]]
@@ -216,7 +216,7 @@ int nested___except___except() {
 // CHECK: br label %[[outerexcept:[^ ]*]]
 
 // CHECK: [[outerexcept]]
-// CHECK-NEXT: br label %[[trycont4:[^ ]*]]
+// CHECK: br label %[[trycont4:[^ ]*]]
 
 // CHECK: [[trycont4]]
 // CHECK-NEXT: ret i32 1
@@ -258,11 +258,11 @@ int nested___finally___except() {
 // CHECK:  br label %[[except:[^ ]*]]
 
 // CHECK: [[except]]
-// CHECK-NEXT: invoke void @g()
+// CHECK: invoke void @g()
 // CHECK-NEXT:       to label %[[g2_cont:.*]] unwind label %[[g2_lpad:.*]]
 
 // CHECK: [[g2_cont]]
-// CHECK-NEXT: br label %[[tryleave:[^ ]*]]
+// CHECK: br label %[[tryleave:[^ ]*]]
 // CHECK-NOT: 23
 
 // CHECK: [[g2_lpad]]
