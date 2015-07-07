@@ -686,7 +686,7 @@
 				SKIP_INSTALL = YES;
 				"SKIP_INSTALL[sdk=iphoneos*]" = NO;
 				STRIP_INSTALLED_PRODUCT = YES;
-				USER_HEADER_SEARCH_PATHS = "./source ../../source $(DERIVED_SOURCES_DIR)";
+				USER_HEADER_SEARCH_PATHS = "./source ../../source $(DERIVED_SOURCES_DIR) ../../include";
 				ZERO_LINK = NO;
 			};
 			name = BuildAndIntegration;
@@ -757,7 +757,7 @@
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
 				"PROVISIONING_PROFILE[sdk=macosx*]" = "";
 				SKIP_INSTALL = YES;
-				USER_HEADER_SEARCH_PATHS = "./source ../../source $(DERIVED_SOURCES_DIR)";
+				USER_HEADER_SEARCH_PATHS = "./source ../../source $(DERIVED_SOURCES_DIR) ../../include";
 				ZERO_LINK = NO;
 			};
 			name = Debug;
@@ -828,7 +828,7 @@
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
 				"PROVISIONING_PROFILE[sdk=macosx*]" = "";
 				SKIP_INSTALL = YES;
-				USER_HEADER_SEARCH_PATHS = "./source ../../source $(DERIVED_SOURCES_DIR)";
+				USER_HEADER_SEARCH_PATHS = "./source ../../source $(DERIVED_SOURCES_DIR) ../../include";
 				ZERO_LINK = NO;
 			};
 			name = Release;
@@ -943,7 +943,7 @@
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "";
 				"PROVISIONING_PROFILE[sdk=macosx*]" = "";
 				SKIP_INSTALL = YES;
-				USER_HEADER_SEARCH_PATHS = "./source ../../source $(DERIVED_SOURCES_DIR)";
+				USER_HEADER_SEARCH_PATHS = "./source ../../source $(DERIVED_SOURCES_DIR) ../../include";
 				ZERO_LINK = NO;
 			};
 			name = DebugClang;

@@ -33,7 +33,7 @@
 #include "RNBContext.h"
 #include "RNBServices.h"
 #include "RNBSocket.h"
-#include "Utility/StringExtractor.h"
+#include "lldb/Utility/StringExtractor.h"
 #include "MacOSX/Genealogy.h"
 
 #if defined (HAVE_LIBCOMPRESSION)
