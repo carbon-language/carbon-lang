@@ -516,6 +516,10 @@ TEST_F(FormatTest, FormatsForLoop) {
                "         aaaaaaaaaa);\n"
                "     iter; ++iter) {\n"
                "}");
+  verifyFormat("for (auto aaaaaaaaaaaaaaaaaaaaaaaaaaa(\n"
+               "         aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa);\n"
+               "     aaaaaaaaaaaaaaaaaaaaaaaaaaa != bbbbbbbbbbbbbbbbbbbbbbb;\n"
+               "     ++aaaaaaaaaaaaaaaaaaaaaaaaaaa) {");
 
   FormatStyle NoBinPacking = getLLVMStyle();
   NoBinPacking.BinPackParameters = false;
