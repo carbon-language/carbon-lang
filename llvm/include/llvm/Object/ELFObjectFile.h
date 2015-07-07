@@ -197,7 +197,7 @@ protected:
   void moveSymbolNext(DataRefImpl &Symb) const override;
   ErrorOr<StringRef> getSymbolName(DataRefImpl Symb) const override;
   ErrorOr<uint64_t> getSymbolAddress(DataRefImpl Symb) const override;
-  uint64_t getSymbolValue(DataRefImpl Symb) const override;
+  uint64_t getSymbolValueImpl(DataRefImpl Symb) const override;
   uint32_t getSymbolAlignment(DataRefImpl Symb) const override;
   uint64_t getCommonSymbolSizeImpl(DataRefImpl Symb) const override;
   uint32_t getSymbolFlags(DataRefImpl Symb) const override;
@@ -370,19 +370,13 @@ uint32_t ELFObjectFile<ELFT>::getSectionType(DataRefImpl Sec) const {
 }
 
 template <class ELFT>
-uint64_t ELFObjectFile<ELFT>::getSymbolValue(DataRefImpl Symb) const {
+uint64_t ELFObjectFile<ELFT>::getSymbolValueImpl(DataRefImpl Symb) const {
   const Elf_Sym *ESym = getSymbol(Symb);
-  switch (ESym->st_shndx) {
-  case ELF::SHN_COMMON:
-  case ELF::SHN_UNDEF:
-    return UnknownAddress;
-  case ELF::SHN_ABS:
-    return ESym->st_value;
-  }
+  uint64_t Ret = ESym->st_value;
+  if (ESym->st_shndx == ELF::SHN_ABS)
+    return Ret;
 
   const Elf_Ehdr *Header = EF.getHeader();
-  uint64_t Ret = ESym->st_value;
-
   // Clear the ARM/Thumb or microMIPS indicator flag.
   if ((Header->e_machine == ELF::EM_ARM || Header->e_machine == ELF::EM_MIPS) &&
       ESym->getType() == ELF::STT_FUNC)

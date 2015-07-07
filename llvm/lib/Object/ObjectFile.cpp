@@ -35,6 +35,15 @@ bool SectionRef::containsSymbol(SymbolRef S) const {
   return *this == *SymSec;
 }
 
+uint64_t ObjectFile::getSymbolValue(DataRefImpl Ref) const {
+  uint32_t Flags = getSymbolFlags(Ref);
+  if (Flags & SymbolRef::SF_Undefined)
+    return 0;
+  if (Flags & SymbolRef::SF_Common)
+    return getCommonSymbolSize(Ref);
+  return getSymbolValueImpl(Ref);
+}
+
 std::error_code ObjectFile::printSymbolName(raw_ostream &OS,
                                             DataRefImpl Symb) const {
   ErrorOr<StringRef> Name = getSymbolName(Symb);

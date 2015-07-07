@@ -115,8 +115,6 @@ public:
 
 typedef content_iterator<BasicSymbolRef> basic_symbol_iterator;
 
-const uint64_t UnknownAddress = ~0ULL;
-
 class SymbolicFile : public Binary {
 public:
   ~SymbolicFile() override;

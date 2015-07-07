@@ -206,7 +206,6 @@ public:
   unsigned getSectionType(SectionRef Sec) const;
 
   ErrorOr<uint64_t> getSymbolAddress(DataRefImpl Symb) const override;
-  uint64_t getSymbolValue(DataRefImpl Symb) const override;
   uint32_t getSymbolAlignment(DataRefImpl Symb) const override;
   uint64_t getCommonSymbolSizeImpl(DataRefImpl Symb) const override;
   SymbolRef::Type getSymbolType(DataRefImpl Symb) const override;
@@ -425,6 +424,8 @@ public:
   }
 
 private:
+  uint64_t getSymbolValueImpl(DataRefImpl Symb) const override;
+
   union {
     MachO::mach_header_64 Header64;
     MachO::mach_header Header;

@@ -154,13 +154,8 @@ ErrorOr<StringRef> COFFObjectFile::getSymbolName(DataRefImpl Ref) const {
   return Result;
 }
 
-uint64_t COFFObjectFile::getSymbolValue(DataRefImpl Ref) const {
-  COFFSymbolRef Sym = getCOFFSymbol(Ref);
-
-  if (Sym.isAnyUndefined() || Sym.isCommon())
-    return UnknownAddress;
-
-  return Sym.getValue();
+uint64_t COFFObjectFile::getSymbolValueImpl(DataRefImpl Ref) const {
+  return getCOFFSymbol(Ref).getValue();
 }
 
 ErrorOr<uint64_t> COFFObjectFile::getSymbolAddress(DataRefImpl Ref) const {

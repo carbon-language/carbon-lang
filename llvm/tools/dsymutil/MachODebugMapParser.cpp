@@ -160,8 +160,6 @@ void MachODebugMapParser::handleStabSymbolTableEntry(uint32_t StringIndex,
     // symbol table to find its address as it might not be in the
     // debug map (for common symbols).
     Value = getMainBinarySymbolAddress(Name);
-    if (Value == UnknownAddress)
-      return;
     break;
   case MachO::N_FUN:
     // Functions are scopes in STABS. They have an end marker that
@@ -197,14 +195,7 @@ void MachODebugMapParser::loadCurrentObjectFileSymbols() {
   CurrentObjectAddresses.clear();
 
   for (auto Sym : CurrentObjectHolder.Get().symbols()) {
-    uint64_t Addr;
-    if (Sym.getFlags() & SymbolRef::SF_Common) {
-      Addr = Sym.getCommonSize();
-    } else {
-      Addr = Sym.getValue();
-      if (Addr == UnknownAddress)
-        continue;
-    }
+    uint64_t Addr = Sym.getValue();
     ErrorOr<StringRef> Name = Sym.getName();
     if (!Name)
       continue;
@@ -218,7 +209,7 @@ void MachODebugMapParser::loadCurrentObjectFileSymbols() {
 uint64_t MachODebugMapParser::getMainBinarySymbolAddress(StringRef Name) {
   auto Sym = MainBinarySymbolAddresses.find(Name);
   if (Sym == MainBinarySymbolAddresses.end())
-    return UnknownAddress;
+    return 0;
   return Sym->second;
 }
 
@@ -232,14 +223,14 @@ void MachODebugMapParser::loadMainBinarySymbols() {
     // Skip undefined and STAB entries.
     if ((Type & SymbolRef::ST_Debug) || (Type & SymbolRef::ST_Unknown))
       continue;
-    uint64_t Addr = Sym.getValue();
     // The only symbols of interest are the global variables. These
     // are the only ones that need to be queried because the address
     // of common data won't be described in the debug map. All other
     // addresses should be fetched for the debug map.
-    if (Addr == UnknownAddress || !(Sym.getFlags() & SymbolRef::SF_Global) ||
-        Sym.getSection(Section) || Section->isText())
+    if (!(Sym.getFlags() & SymbolRef::SF_Global) || Sym.getSection(Section) ||
+        Section == MainBinary.section_end() || Section->isText())
       continue;
+    uint64_t Addr = Sym.getValue();
     ErrorOr<StringRef> NameOrErr = Sym.getName();
     if (!NameOrErr)
       continue;

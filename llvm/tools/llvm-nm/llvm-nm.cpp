@@ -564,12 +564,12 @@ static void sortAndPrintSymbolList(SymbolicFile &Obj, bool printName,
     char SymbolAddrStr[18] = "";
     char SymbolSizeStr[18] = "";
 
-    if (OutputFormat == sysv || I->Address == UnknownAddress)
+    if (OutputFormat == sysv || I->TypeChar == 'U')
       strcpy(SymbolAddrStr, printBlanks);
     if (OutputFormat == sysv)
       strcpy(SymbolSizeStr, printBlanks);
 
-    if (I->Address != UnknownAddress)
+    if (I->TypeChar != 'U')
       format(printFormat, I->Address)
           .print(SymbolAddrStr, sizeof(SymbolAddrStr));
     format(printFormat, I->Size).print(SymbolSizeStr, sizeof(SymbolSizeStr));
@@ -881,21 +881,17 @@ static void dumpSymbolNamesFromObject(SymbolicFile &Obj, bool printName,
       continue;
     NMSymbol S;
     S.Size = 0;
-    S.Address = UnknownAddress;
+    S.Address = 0;
     if (PrintSize) {
       if (isa<ELFObjectFileBase>(&Obj))
         S.Size = ELFSymbolRef(Sym).getSize();
     }
     if (PrintAddress && isa<ObjectFile>(Obj)) {
       SymbolRef SymRef(Sym);
-      if (SymFlags & SymbolRef::SF_Common) {
-        S.Address = SymRef.getCommonSize();
-      } else {
-        ErrorOr<uint64_t> AddressOrErr = SymRef.getAddress();
-        if (error(AddressOrErr.getError()))
-          break;
-        S.Address = *AddressOrErr;
-      }
+      ErrorOr<uint64_t> AddressOrErr = SymRef.getAddress();
+      if (error(AddressOrErr.getError()))
+        break;
+      S.Address = *AddressOrErr;
     }
     S.TypeChar = getNMTypeChar(Obj, Sym);
     if (error(Sym.printName(OS)))

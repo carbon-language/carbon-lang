@@ -198,7 +198,7 @@ protected:
   std::error_code printSymbolName(raw_ostream &OS,
                                   DataRefImpl Symb) const override;
   virtual ErrorOr<uint64_t> getSymbolAddress(DataRefImpl Symb) const = 0;
-  virtual uint64_t getSymbolValue(DataRefImpl Symb) const = 0;
+  virtual uint64_t getSymbolValueImpl(DataRefImpl Symb) const = 0;
   virtual uint32_t getSymbolAlignment(DataRefImpl Symb) const;
   virtual uint64_t getCommonSymbolSizeImpl(DataRefImpl Symb) const = 0;
   virtual SymbolRef::Type getSymbolType(DataRefImpl Symb) const = 0;
@@ -232,6 +232,8 @@ protected:
   virtual uint64_t getRelocationType(DataRefImpl Rel) const = 0;
   virtual void getRelocationTypeName(DataRefImpl Rel,
                                      SmallVectorImpl<char> &Result) const = 0;
+
+  uint64_t getSymbolValue(DataRefImpl Symb) const;
 
 public:
   uint64_t getCommonSymbolSize(DataRefImpl Symb) const {
