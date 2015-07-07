@@ -469,7 +469,10 @@ const RecordType *Type::getAsUnionType() const {
 ObjCObjectType::ObjCObjectType(QualType Canonical, QualType Base,
                                ArrayRef<QualType> typeArgs,
                                ArrayRef<ObjCProtocolDecl *> protocols)
-  : Type(ObjCObject, Canonical, false, false, false, false),
+  : Type(ObjCObject, Canonical, Base->isDependentType(), 
+         Base->isInstantiationDependentType(), 
+         Base->isVariablyModifiedType(), 
+         Base->containsUnexpandedParameterPack()),
     BaseType(Base) 
 {
   ObjCObjectTypeBits.NumTypeArgs = typeArgs.size();
@@ -484,6 +487,16 @@ ObjCObjectType::ObjCObjectType(QualType Canonical, QualType Base,
   if (!protocols.empty())
     memcpy(getProtocolStorage(), protocols.data(),
            protocols.size() * sizeof(ObjCProtocolDecl*));
+
+  for (auto typeArg : typeArgs) {
+    if (typeArg->isDependentType())
+      setDependent();
+    else if (typeArg->isInstantiationDependentType())
+      setInstantiationDependent();
+
+    if (typeArg->containsUnexpandedParameterPack())
+      setContainsUnexpandedParameterPack();
+  }
 }
 
 bool ObjCObjectType::isSpecialized() const { 

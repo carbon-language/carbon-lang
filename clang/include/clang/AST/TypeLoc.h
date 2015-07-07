@@ -177,6 +177,9 @@ public:
     memcpy(getOpaqueData(), Other.getOpaqueData(), Size);
   }
 
+  /// Copies the other type loc into this one.
+  void copy(TypeLoc other);
+
   friend bool operator==(const TypeLoc &LHS, const TypeLoc &RHS) {
     return LHS.Ty == RHS.Ty && LHS.Data == RHS.Data;
   }
@@ -250,6 +253,10 @@ public:
   /// Initializes the local data of this type source info block to
   /// provide no information.
   void initializeLocal(ASTContext &Context, SourceLocation Loc) {
+    // do nothing
+  }
+
+  void copyLocal(TypeLoc other) {
     // do nothing
   }
 
@@ -341,6 +348,20 @@ public:
     size = llvm::RoundUpToAlignment(size, extraAlign);
     size += asDerived()->getExtraLocalDataSize();
     return size;
+  }
+
+  void copyLocal(Derived other) {
+    // Some subclasses have no data to copy.
+    if (asDerived()->getLocalDataSize() == 0) return;
+
+    // Copy the fixed-sized local data.
+    memcpy(getLocalData(), other.getLocalData(), sizeof(LocalData));
+
+    // Copy the variable-sized local data. We need to do this
+    // separately because the padding in the source and the padding in
+    // the destination might be different.
+    memcpy(getExtraLocalData(), other.getExtraLocalData(),
+           asDerived()->getExtraLocalDataSize());
   }
 
   TypeLoc getNextTypeLoc() const {
@@ -890,6 +911,11 @@ public:
   ObjCProtocolDecl *getProtocol(unsigned i) const {
     assert(i < getNumProtocols() && "Index is out of bounds!");
     return *(this->getTypePtr()->qual_begin() + i);
+  }
+
+
+  ArrayRef<SourceLocation> getProtocolLocs() const {
+    return llvm::makeArrayRef(getProtocolLocArray(), getNumProtocols());
   }
 
   bool hasBaseTypeAsWritten() const {

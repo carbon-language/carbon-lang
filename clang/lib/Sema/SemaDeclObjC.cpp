@@ -560,29 +560,19 @@ ActOnSuperClassOfClassInterface(Scope *S,
 
     // Handle type arguments on the superclass.
     TypeSourceInfo *SuperClassTInfo = nullptr;
-    if (!SuperTypeArgs.empty()) {
-      // Form declaration specifiers naming this superclass type with
-      // type arguments.
-      AttributeFactory attrFactory;
-      DeclSpec DS(attrFactory);
-      const char* prevSpec; // unused
-      unsigned diagID; // unused
-      TypeSourceInfo *parsedTSInfo
-        = Context.getTrivialTypeSourceInfo(SuperClassType, SuperLoc);
-      ParsedType parsedType = CreateParsedType(SuperClassType, parsedTSInfo);
-
-      DS.SetTypeSpecType(DeclSpec::TST_typename, SuperLoc, prevSpec, diagID,
-                         parsedType, Context.getPrintingPolicy());
-      DS.SetRangeStart(SuperLoc);
-      DS.SetRangeEnd(SuperLoc);
-      DS.setObjCTypeArgs(SuperTypeArgsRange.getBegin(),
-                         SuperTypeArgs,
-                         SuperTypeArgsRange.getEnd());
-
-      // Form the declarator.
-      Declarator D(DS, Declarator::TypeNameContext);
-     
-      TypeResult fullSuperClassType = ActOnTypeName(S, D);
+    if (!SuperTypeArgs.empty()) {     
+      TypeResult fullSuperClassType = actOnObjCTypeArgsAndProtocolQualifiers(
+                                        S,
+                                        SuperLoc,
+                                        CreateParsedType(SuperClassType, 
+                                                         nullptr),
+                                        SuperTypeArgsRange.getBegin(),
+                                        SuperTypeArgs,
+                                        SuperTypeArgsRange.getEnd(),
+                                        SourceLocation(),
+                                        { },
+                                        { },
+                                        SourceLocation());
       if (!fullSuperClassType.isUsable())
         return;
 
@@ -1230,21 +1220,26 @@ class ObjCTypeArgOrProtocolValidatorCCC : public CorrectionCandidateCallback {
 
 void Sema::actOnObjCTypeArgsOrProtocolQualifiers(
        Scope *S,
-       DeclSpec &DS,
        SourceLocation lAngleLoc,
        ArrayRef<IdentifierInfo *> identifiers,
        ArrayRef<SourceLocation> identifierLocs,
        SourceLocation rAngleLoc,
+       SourceLocation &typeArgsLAngleLoc,
+       SmallVectorImpl<ParsedType> &typeArgs,
+       SourceLocation &typeArgsRAngleLoc,
+       SourceLocation &protocolLAngleLoc,
+       SmallVectorImpl<Decl *> &protocols,
+       SourceLocation &protocolRAngleLoc,
        bool warnOnIncompleteProtocols) {
   // Local function that updates the declaration specifiers with
   // protocol information.
-  SmallVector<ObjCProtocolDecl *, 4> protocols;
   unsigned numProtocolsResolved = 0;
   auto resolvedAsProtocols = [&] {
     assert(numProtocolsResolved == identifiers.size() && "Unresolved protocols");
     
     for (unsigned i = 0, n = protocols.size(); i != n; ++i) {
-      ObjCProtocolDecl *&proto = protocols[i];
+      ObjCProtocolDecl *&proto 
+        = reinterpret_cast<ObjCProtocolDecl *&>(protocols[i]);
       // For an objc container, delay protocol reference checking until after we
       // can set the objc decl as the availability context, otherwise check now.
       if (!warnOnIncompleteProtocols) {
@@ -1268,12 +1263,9 @@ void Sema::actOnObjCTypeArgsOrProtocolQualifiers(
       }
     }
 
-    DS.setProtocolQualifiers((Decl * const *)(protocols.data()),
-                             protocols.size(),
-                             const_cast<SourceLocation *>(identifierLocs.data()),
-                             lAngleLoc);
-    if (rAngleLoc.isValid())
-      DS.SetRangeEnd(rAngleLoc);
+    protocolLAngleLoc = lAngleLoc;
+    protocolRAngleLoc = rAngleLoc;
+    assert(protocols.size() == identifierLocs.size());
   };
 
   // Attempt to resolve all of the identifiers as protocols.
@@ -1370,20 +1362,24 @@ void Sema::actOnObjCTypeArgsOrProtocolQualifiers(
   // Local function that updates the declaration specifiers with
   // type argument information.
   auto resolvedAsTypeDecls = [&] {
+    // We did not resolve these as protocols.
+    protocols.clear();
+
     assert(numTypeDeclsResolved == identifiers.size() && "Unresolved type decl");
     // Map type declarations to type arguments.
-    SmallVector<ParsedType, 4> typeArgs;
     for (unsigned i = 0, n = identifiers.size(); i != n; ++i) {
       // Map type reference to a type.
       TypeResult type = resolveTypeReference(typeDecls[i], identifierLocs[i]);
-      if (!type.isUsable())
+      if (!type.isUsable()) {
+        typeArgs.clear();
         return;
+      }
 
       typeArgs.push_back(type.get());
     }
 
-    // Record the Objective-C type arguments.
-    DS.setObjCTypeArgs(lAngleLoc, typeArgs, rAngleLoc);
+    typeArgsLAngleLoc = lAngleLoc;
+    typeArgsRAngleLoc = rAngleLoc;
   };
 
   // If all of the identifiers can be resolved as type names or
@@ -1432,6 +1428,8 @@ void Sema::actOnObjCTypeArgsOrProtocolQualifiers(
         << identifiers[0]
         << SourceRange(identifierLocs[0]);
 
+      protocols.clear();
+      typeArgs.clear();
       return;
     }
 
@@ -1483,6 +1481,8 @@ void Sema::actOnObjCTypeArgsOrProtocolQualifiers(
           : lookupKind == LookupObjCProtocolName ? diag::err_undeclared_protocol
           : diag::err_unknown_typename))
       << identifiers[i];
+    protocols.clear();
+    typeArgs.clear();
     return;
   }
 

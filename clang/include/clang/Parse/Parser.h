@@ -1267,19 +1267,45 @@ private:
                                    bool WarnOnDeclarations,
                                    bool ForObjCContainer,
                                    SourceLocation &LAngleLoc,
-                                   SourceLocation &EndProtoLoc);
-  bool ParseObjCProtocolQualifiers(DeclSpec &DS);
-  void ParseObjCTypeArgsOrProtocolQualifiers(DeclSpec &DS,
-                                             bool warnOnIncompleteProtocols);
+                                   SourceLocation &EndProtoLoc,
+                                   bool consumeLastToken);
+
+  /// Parse the first angle-bracket-delimited clause for an
+  /// Objective-C object or object pointer type, which may be either
+  /// type arguments or protocol qualifiers.
+  void parseObjCTypeArgsOrProtocolQualifiers(
+         SourceLocation &typeArgsLAngleLoc,
+         SmallVectorImpl<ParsedType> &typeArgs,
+         SourceLocation &typeArgsRAngleLoc,
+         SourceLocation &protocolLAngleLoc,
+         SmallVectorImpl<Decl *> &protocols,
+         SmallVectorImpl<SourceLocation> &protocolLocs,
+         SourceLocation &protocolRAngleLoc,
+         bool consumeLastToken,
+         bool warnOnIncompleteProtocols);
 
   /// Parse either Objective-C type arguments or protocol qualifiers; if the
   /// former, also parse protocol qualifiers afterward.
-  void ParseObjCTypeArgsAndProtocolQualifiers(DeclSpec &DS);
+  void parseObjCTypeArgsAndProtocolQualifiers(
+         SourceLocation &typeArgsLAngleLoc,
+         SmallVectorImpl<ParsedType> &typeArgs,
+         SourceLocation &typeArgsRAngleLoc,
+         SourceLocation &protocolLAngleLoc,
+         SmallVectorImpl<Decl *> &protocols,
+         SmallVectorImpl<SourceLocation> &protocolLocs,
+         SourceLocation &protocolRAngleLoc,
+         bool consumeLastToken);
+
+  /// Parse a protocol qualifier type such as '<NSCopying>', which is
+  /// an anachronistic way of writing 'id<NSCopying>'.
+  TypeResult parseObjCProtocolQualifierType(SourceLocation &rAngleLoc);
 
   /// Parse Objective-C type arguments and protocol qualifiers, extending the
   /// current type with the parsed result.
-  TypeResult ParseObjCTypeArgsAndProtocolQualifiers(SourceLocation loc,
-                                                    ParsedType type);
+  TypeResult parseObjCTypeArgsAndProtocolQualifiers(SourceLocation loc,
+                                                    ParsedType type,
+                                                    bool consumeLastToken,
+                                                    SourceLocation &endLoc);
 
   void ParseObjCInterfaceDeclList(tok::ObjCKeywordKind contextKey,
                                   Decl *CDecl);

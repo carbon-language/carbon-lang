@@ -3,10 +3,9 @@
 // FIXME: We could do much better with this, if we recognized
 // placeholders somehow. However, we're content with not generating
 // bogus 'archaic' warnings with bad location info.
-@protocol <#protocol name#> <NSObject> // expected-error 2{{expected identifier}} \
-// expected-error{{cannot find protocol declaration for 'NSObject'}} \
+@protocol <#protocol name#> <NSObject> // expected-error {{expected identifier or '('}} \
+// expected-error 2{{expected identifier}} \
 // expected-warning{{protocol has no object type specified; defaults to qualified 'id'}}
+<#methods#>
 
-<#methods#>  // expected-error{{expected identifier}}
-
-@end // expected-error{{prefix attribute}}
+@end

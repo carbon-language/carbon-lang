@@ -1,5 +1,9 @@
 // RUN: %clang_cc1 -fblocks %s -verify
 
+#if !__has_feature(objc_generics)
+#  error Compiler does not support Objective-C generics?
+#endif
+
 @protocol NSObject // expected-note{{'NSObject' declared here}}
 @end
 
@@ -255,14 +259,14 @@ typedef PC15<int (^)(int, int), // block pointers as 'id'
 typedef PC15<NSObject *, NSObject *, id<NSCopying>> typeArgs8;
 
 typedef PC15<NSObject *, NSObject *,
-             NSObject *> typeArgs8b; // expected-error{{type argument 'NSObject *' does not satisy the bound ('id<NSCopying>') of type parameter 'V'}}
+             NSObject *> typeArgs8b; // expected-error{{type argument 'NSObject *' does not satisfy the bound ('id<NSCopying>') of type parameter 'V'}}
 
 typedef PC15<id,
-             id,  // expected-error{{type argument 'id' does not satisy the bound ('NSObject *') of type parameter 'U'}}
+             id,  // expected-error{{type argument 'id' does not satisfy the bound ('NSObject *') of type parameter 'U'}}
              id> typeArgs9;
 
 typedef PC15<id, NSObject *,
-             id> typeArgs10; // expected-error{{type argument 'id' does not satisy the bound ('id<NSCopying>') of type parameter 'V'}}
+             id> typeArgs10; // expected-error{{type argument 'id' does not satisfy the bound ('id<NSCopying>') of type parameter 'V'}}
 
 typedef PC15<id,
              int (^)(int, int), // okay
@@ -306,7 +310,7 @@ void testSpecializedTypePrinting() {
 @interface PC23<T : NSObject *> : PC1<T, U> // expected-error{{unknown type name 'U'}}
 @end
 
-@interface PC24<T> : PC1<T, T> // expected-error{{type argument 'T' (aka 'id') does not satisy the bound ('NSObject *') of type parameter 'U'}}
+@interface PC24<T> : PC1<T, T> // expected-error{{type argument 'T' (aka 'id') does not satisfy the bound ('NSObject *') of type parameter 'U'}}
 @end
 
 @interface NSFoo : PC1<NSObject *, NSObject *> // okay

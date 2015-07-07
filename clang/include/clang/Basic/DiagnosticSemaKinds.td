@@ -7817,6 +7817,6 @@ def err_objc_type_arg_not_id_compatible : Error<
   "type argument %0 is neither an Objective-C object nor a block type">;
 
 def err_objc_type_arg_does_not_match_bound : Error<
-  "type argument %0 does not satisy the bound (%1) of type parameter %2">;
+  "type argument %0 does not satisfy the bound (%1) of type parameter %2">;
 
 } // end of sema component.

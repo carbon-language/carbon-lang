@@ -152,6 +152,7 @@ static Rdar8595462_A * Rdar8595462_staticVar;
   @property int extensionProperty;
 @end
 
+typedef id<Proto> *proto_ptr;
 
 // RUN: c-index-test -test-annotate-tokens=%s:1:1:118:1 %s -DIBOutlet='__attribute__((iboutlet))' -DIBAction='void)__attribute__((ibaction)' | FileCheck %s
 // CHECK: Punctuation: "@" [1:1 - 1:2] ObjCInterfaceDecl=Foo:1:12
@@ -596,3 +597,9 @@ static Rdar8595462_A * Rdar8595462_staticVar;
 // CHECK-PROP: Keyword: "property" [152:4 - 152:12] ObjCPropertyDecl=extensionProperty:152:17
 // CHECK-PROP: Keyword: "int" [152:13 - 152:16] ObjCPropertyDecl=extensionProperty:152:17
 // CHECK-PROP: Identifier: "extensionProperty" [152:17 - 152:34] ObjCPropertyDecl=extensionProperty:152:17
+
+// RUN: c-index-test -test-annotate-tokens=%s:155:1:156:1 %s -DIBOutlet='__attribute__((iboutlet))' -DIBAction='void)__attribute__((ibaction)' -target x86_64-apple-macosx10.7.0 | FileCheck -check-prefix=CHECK-ID-PROTO %s
+// CHECK-ID-PROTO: Identifier: "id" [155:9 - 155:11] TypeRef=id:0:0
+// CHECK-ID-PROTO: Punctuation: "<" [155:11 - 155:12] TypedefDecl=proto_ptr:155:20 (Definition)
+// CHECK-ID-PROTO: Identifier: "Proto" [155:12 - 155:17] ObjCProtocolRef=Proto
+// CHECK-ID-PROTO: Punctuation: ">" [155:17 - 155:18] TypedefDecl=proto_ptr:155:20 (Definition)

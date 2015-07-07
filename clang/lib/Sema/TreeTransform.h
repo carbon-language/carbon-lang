@@ -685,6 +685,27 @@ public:
   QualType RebuildMemberPointerType(QualType PointeeType, QualType ClassType,
                                     SourceLocation Sigil);
 
+  /// \brief Build an Objective-C object type.
+  ///
+  /// By default, performs semantic analysis when building the object type.
+  /// Subclasses may override this routine to provide different behavior.
+  QualType RebuildObjCObjectType(QualType BaseType,
+                                 SourceLocation Loc,
+                                 SourceLocation TypeArgsLAngleLoc,
+                                 ArrayRef<TypeSourceInfo *> TypeArgs,
+                                 SourceLocation TypeArgsRAngleLoc,
+                                 SourceLocation ProtocolLAngleLoc,
+                                 ArrayRef<ObjCProtocolDecl *> Protocols,
+                                 ArrayRef<SourceLocation> ProtocolLocs,
+                                 SourceLocation ProtocolRAngleLoc);
+
+  /// \brief Build a new Objective-C object pointer type given the pointee type.
+  ///
+  /// By default, directly builds the pointer type, with no additional semantic
+  /// analysis.
+  QualType RebuildObjCObjectPointerType(QualType PointeeType,
+                                        SourceLocation Star);
+
   /// \brief Build a new array type given the element type, size
   /// modifier, size of the array (if known), size expression, and index type
   /// qualifiers.
@@ -5606,18 +5627,153 @@ template<typename Derived>
 QualType
 TreeTransform<Derived>::TransformObjCObjectType(TypeLocBuilder &TLB,
                                                 ObjCObjectTypeLoc TL) {
-  // ObjCObjectType is never dependent.
-  TLB.pushFullCopy(TL);
-  return TL.getType();
+  // Transform base type.
+  QualType BaseType = getDerived().TransformType(TLB, TL.getBaseLoc());
+  if (BaseType.isNull())
+    return QualType();
+
+  bool AnyChanged = BaseType != TL.getBaseLoc().getType();
+
+  // Transform type arguments.
+  SmallVector<TypeSourceInfo *, 4> NewTypeArgInfos;
+  for (unsigned i = 0, n = TL.getNumTypeArgs(); i != n; ++i) {
+    TypeSourceInfo *TypeArgInfo = TL.getTypeArgTInfo(i);
+    TypeLoc TypeArgLoc = TypeArgInfo->getTypeLoc();
+    QualType TypeArg = TypeArgInfo->getType();
+    if (auto PackExpansionLoc = TypeArgLoc.getAs<PackExpansionTypeLoc>()) {
+      AnyChanged = true;
+
+      // We have a pack expansion. Instantiate it.
+      const auto *PackExpansion = PackExpansionLoc.getType()
+                                    ->castAs<PackExpansionType>();
+      SmallVector<UnexpandedParameterPack, 2> Unexpanded;
+      SemaRef.collectUnexpandedParameterPacks(PackExpansion->getPattern(),
+                                              Unexpanded);
+      assert(!Unexpanded.empty() && "Pack expansion without parameter packs?");
+
+      // Determine whether the set of unexpanded parameter packs can
+      // and should be expanded.
+      TypeLoc PatternLoc = PackExpansionLoc.getPatternLoc();
+      bool Expand = false;
+      bool RetainExpansion = false;
+      Optional<unsigned> NumExpansions = PackExpansion->getNumExpansions();
+      if (getDerived().TryExpandParameterPacks(
+            PackExpansionLoc.getEllipsisLoc(), PatternLoc.getSourceRange(),
+            Unexpanded, Expand, RetainExpansion, NumExpansions))
+        return QualType();
+
+      if (!Expand) {
+        // We can't expand this pack expansion into separate arguments yet;
+        // just substitute into the pattern and create a new pack expansion
+        // type.
+        Sema::ArgumentPackSubstitutionIndexRAII SubstIndex(getSema(), -1);
+
+        TypeLocBuilder TypeArgBuilder;
+        TypeArgBuilder.reserve(PatternLoc.getFullDataSize());
+        QualType NewPatternType = getDerived().TransformType(TypeArgBuilder, 
+                                                             PatternLoc);
+        if (NewPatternType.isNull())
+          return QualType();
+
+        QualType NewExpansionType = SemaRef.Context.getPackExpansionType(
+                                      NewPatternType, NumExpansions);
+        auto NewExpansionLoc = TLB.push<PackExpansionTypeLoc>(NewExpansionType);
+        NewExpansionLoc.setEllipsisLoc(PackExpansionLoc.getEllipsisLoc());
+        NewTypeArgInfos.push_back(
+          TypeArgBuilder.getTypeSourceInfo(SemaRef.Context, NewExpansionType));
+        continue;
+      }
+
+      // Substitute into the pack expansion pattern for each slice of the
+      // pack.
+      for (unsigned ArgIdx = 0; ArgIdx != *NumExpansions; ++ArgIdx) {
+        Sema::ArgumentPackSubstitutionIndexRAII SubstIndex(getSema(), ArgIdx);
+
+        TypeLocBuilder TypeArgBuilder;
+        TypeArgBuilder.reserve(PatternLoc.getFullDataSize());
+
+        QualType NewTypeArg = getDerived().TransformType(TypeArgBuilder,
+                                                         PatternLoc);
+        if (NewTypeArg.isNull())
+          return QualType();
+
+        NewTypeArgInfos.push_back(
+          TypeArgBuilder.getTypeSourceInfo(SemaRef.Context, NewTypeArg));
+      }
+
+      continue;
+    }
+
+    TypeLocBuilder TypeArgBuilder;
+    TypeArgBuilder.reserve(TypeArgLoc.getFullDataSize());
+    QualType NewTypeArg = getDerived().TransformType(TypeArgBuilder, TypeArgLoc);
+    if (NewTypeArg.isNull())
+      return QualType();
+
+    // If nothing changed, just keep the old TypeSourceInfo.
+    if (NewTypeArg == TypeArg) {
+      NewTypeArgInfos.push_back(TypeArgInfo);
+      continue;
+    }
+
+    NewTypeArgInfos.push_back(
+      TypeArgBuilder.getTypeSourceInfo(SemaRef.Context, NewTypeArg));
+    AnyChanged = true;
+  }
+
+  QualType Result = TL.getType();
+  if (getDerived().AlwaysRebuild() || AnyChanged) {
+    // Rebuild the type.
+    Result = getDerived().RebuildObjCObjectType(
+               BaseType,
+               TL.getLocStart(),
+               TL.getTypeArgsLAngleLoc(),
+               NewTypeArgInfos,
+               TL.getTypeArgsRAngleLoc(),
+               TL.getProtocolLAngleLoc(),
+               llvm::makeArrayRef(TL.getTypePtr()->qual_begin(),
+                                  TL.getNumProtocols()),
+               TL.getProtocolLocs(),
+               TL.getProtocolRAngleLoc());
+
+    if (Result.isNull())
+      return QualType();
+  }
+
+  ObjCObjectTypeLoc NewT = TLB.push<ObjCObjectTypeLoc>(Result);
+  assert(TL.hasBaseTypeAsWritten() && "Can't be dependent");
+  NewT.setHasBaseTypeAsWritten(true);
+  NewT.setTypeArgsLAngleLoc(TL.getTypeArgsLAngleLoc());
+  for (unsigned i = 0, n = TL.getNumTypeArgs(); i != n; ++i)
+    NewT.setTypeArgTInfo(i, NewTypeArgInfos[i]);
+  NewT.setTypeArgsRAngleLoc(TL.getTypeArgsRAngleLoc());
+  NewT.setProtocolLAngleLoc(TL.getProtocolLAngleLoc());
+  for (unsigned i = 0, n = TL.getNumProtocols(); i != n; ++i)
+    NewT.setProtocolLoc(i, TL.getProtocolLoc(i));
+  NewT.setProtocolRAngleLoc(TL.getProtocolRAngleLoc());
+  return Result;
 }
 
 template<typename Derived>
 QualType
 TreeTransform<Derived>::TransformObjCObjectPointerType(TypeLocBuilder &TLB,
                                                ObjCObjectPointerTypeLoc TL) {
-  // ObjCObjectPointerType is never dependent.
-  TLB.pushFullCopy(TL);
-  return TL.getType();
+  QualType PointeeType = getDerived().TransformType(TLB, TL.getPointeeLoc());
+  if (PointeeType.isNull())
+    return QualType();
+
+  QualType Result = TL.getType();
+  if (getDerived().AlwaysRebuild() ||
+      PointeeType != TL.getPointeeLoc().getType()) {
+    Result = getDerived().RebuildObjCObjectPointerType(PointeeType,
+                                                       TL.getStarLoc());
+    if (Result.isNull())
+      return QualType();
+  }
+
+  ObjCObjectPointerTypeLoc NewT = TLB.push<ObjCObjectPointerTypeLoc>(Result);
+  NewT.setStarLoc(TL.getStarLoc());
+  return Result;
 }
 
 //===----------------------------------------------------------------------===//
@@ -10491,6 +10647,31 @@ TreeTransform<Derived>::RebuildMemberPointerType(QualType PointeeType,
                                                  SourceLocation Sigil) {
   return SemaRef.BuildMemberPointerType(PointeeType, ClassType, Sigil,
                                         getDerived().getBaseEntity());
+}
+
+template<typename Derived>
+QualType TreeTransform<Derived>::RebuildObjCObjectType(
+           QualType BaseType,
+           SourceLocation Loc,
+           SourceLocation TypeArgsLAngleLoc,
+           ArrayRef<TypeSourceInfo *> TypeArgs,
+           SourceLocation TypeArgsRAngleLoc,
+           SourceLocation ProtocolLAngleLoc,
+           ArrayRef<ObjCProtocolDecl *> Protocols,
+           ArrayRef<SourceLocation> ProtocolLocs,
+           SourceLocation ProtocolRAngleLoc) {
+  return SemaRef.BuildObjCObjectType(BaseType, Loc, TypeArgsLAngleLoc,
+                                     TypeArgs, TypeArgsRAngleLoc,
+                                     ProtocolLAngleLoc, Protocols, ProtocolLocs,
+                                     ProtocolRAngleLoc,
+                                     /*FailOnError=*/true);
+}
+
+template<typename Derived>
+QualType TreeTransform<Derived>::RebuildObjCObjectPointerType(
+           QualType PointeeType,
+           SourceLocation Star) {
+  return SemaRef.Context.getObjCObjectPointerType(PointeeType);
 }
 
 template<typename Derived>

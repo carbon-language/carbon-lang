@@ -4730,7 +4730,11 @@ class ObjCObjectPointerType : public Type, public llvm::FoldingSetNode {
   QualType PointeeType;
 
   ObjCObjectPointerType(QualType Canonical, QualType Pointee)
-    : Type(ObjCObjectPointer, Canonical, false, false, false, false),
+    : Type(ObjCObjectPointer, Canonical,
+           Pointee->isDependentType(),
+           Pointee->isInstantiationDependentType(),
+           Pointee->isVariablyModifiedType(),
+           Pointee->containsUnexpandedParameterPack()),
       PointeeType(Pointee) {}
   friend class ASTContext;  // ASTContext creates these.
 

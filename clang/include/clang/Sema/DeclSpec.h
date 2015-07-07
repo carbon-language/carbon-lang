@@ -373,22 +373,6 @@ private:
   // Scope specifier for the type spec, if applicable.
   CXXScopeSpec TypeScope;
 
-  /// List of Objective-C type arguments, e.g., in \c NSArray<NSView *>.
-  ArrayRef<ParsedType> ObjCTypeArgs;
-
-  /// Location of the '<' that starts a list of Objective-C type arguments.
-  SourceLocation ObjCTypeArgsLAngleLoc;
-  /// Location of the '>' that ends a list of Objective-C type arguments.
-  SourceLocation ObjCTypeArgsRAngleLoc;
-
-  // List of protocol qualifiers for objective-c classes.  Used for
-  // protocol-qualified interfaces "NString<foo>" and protocol-qualified id
-  // "id<foo>".
-  Decl * const *ProtocolQualifiers;
-  unsigned NumProtocolQualifiers;
-  SourceLocation ProtocolLAngleLoc;
-  SourceLocation *ProtocolLocs;
-
   // SourceLocation info.  These are null if the item wasn't specified or if
   // the setting was synthesized.
   SourceRange Range;
@@ -450,17 +434,10 @@ public:
       Constexpr_specified(false),
       Concept_specified(false),
       Attrs(attrFactory),
-      ProtocolQualifiers(nullptr),
-      NumProtocolQualifiers(0),
-      ProtocolLocs(nullptr),
       writtenBS(),
       ObjCQualifiers(nullptr) {
   }
-  ~DeclSpec() {
-    delete [] ObjCTypeArgs.data();
-    delete [] ProtocolQualifiers;
-    delete [] ProtocolLocs;
-  }
+
   // storage-class-specifier
   SCS getStorageClassSpec() const { return (SCS)StorageClassSpec; }
   TSCS getThreadStorageClassSpec() const {
@@ -499,6 +476,8 @@ public:
   bool isTypeAltiVecPixel() const { return TypeAltiVecPixel; }
   bool isTypeAltiVecBool() const { return TypeAltiVecBool; }
   bool isTypeSpecOwned() const { return TypeSpecOwned; }
+  bool isTypeRep() const { return isTypeRep((TST) TypeSpecType); }
+
   ParsedType getRepAsType() const {
     assert(isTypeRep((TST) TypeSpecType) && "DeclSpec does not store a type");
     return TypeRep;
@@ -759,38 +738,6 @@ public:
   void takeAttributesFrom(ParsedAttributes &attrs) {
     Attrs.takeAllFrom(attrs);
   }
-
-  /// Determine whether the declaration specifiers contain Objective-C
-  /// type arguments.
-  bool hasObjCTypeArgs() const { return !ObjCTypeArgs.empty(); }
-
-  ArrayRef<ParsedType> getObjCTypeArgs() const { return ObjCTypeArgs; }
-  SourceLocation getObjCTypeArgsLAngleLoc() const {
-    return ObjCTypeArgsLAngleLoc;
-  }
-  SourceLocation getObjCTypeArgsRAngleLoc() const {
-    return ObjCTypeArgsRAngleLoc;
-  }
-  SourceRange getObjCTypeArgsRange() const {
-    return SourceRange(ObjCTypeArgsLAngleLoc, ObjCTypeArgsRAngleLoc);
-  }
-
-  void setObjCTypeArgs(SourceLocation lAngleLoc,
-                       ArrayRef<ParsedType> args,
-                       SourceLocation rAngleLoc);
-
-  typedef Decl * const *ProtocolQualifierListTy;
-  ProtocolQualifierListTy getProtocolQualifiers() const {
-    return ProtocolQualifiers;
-  }
-  SourceLocation *getProtocolLocs() const { return ProtocolLocs; }
-  unsigned getNumProtocolQualifiers() const {
-    return NumProtocolQualifiers;
-  }
-  SourceLocation getProtocolLAngleLoc() const { return ProtocolLAngleLoc; }
-  void setProtocolQualifiers(Decl * const *Protos, unsigned NP,
-                             SourceLocation *ProtoLocs,
-                             SourceLocation LAngleLoc);
 
   /// Finish - This does final analysis of the declspec, issuing diagnostics for
   /// things like "_Imaginary" (lacking an FP type).  After calling this method,

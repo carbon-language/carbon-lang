@@ -916,6 +916,18 @@ bool CursorVisitor::VisitTemplateTemplateParmDecl(TemplateTemplateParmDecl *D) {
   return false;
 }
 
+bool CursorVisitor::VisitObjCTypeParamDecl(ObjCTypeParamDecl *D) {
+  // Visit the bound, if it's explicit.
+  if (D->hasExplicitBound()) {
+    if (auto TInfo = D->getTypeSourceInfo()) {
+      if (Visit(TInfo->getTypeLoc()))
+        return true;
+    }
+  }
+
+  return false;
+}
+
 bool CursorVisitor::VisitObjCMethodDecl(ObjCMethodDecl *ND) {
   if (TypeSourceInfo *TSInfo = ND->getReturnTypeSourceInfo())
     if (Visit(TSInfo->getTypeLoc()))
@@ -1091,14 +1103,6 @@ bool CursorVisitor::VisitObjCTypeParamList(ObjCTypeParamList *typeParamList) {
     // Visit the type parameter.
     if (Visit(MakeCXCursor(typeParam, TU, RegionOfInterest)))
       return true;
-
-    // Visit the bound, if it's explicit.
-    if (typeParam->hasExplicitBound()) {
-      if (auto TInfo = typeParam->getTypeSourceInfo()) {
-        if (Visit(TInfo->getTypeLoc()))
-          return true;
-      }
-    }
   }
 
   return false;
