@@ -5283,18 +5283,23 @@ def : Pat<(v8f16 (AArch64NvCast (v4i32 FPR128:$src))), (v8f16 FPR128:$src)>;
 def : Pat<(v4i32 (AArch64NvCast (v4i32 FPR128:$src))), (v4i32 FPR128:$src)>;
 def : Pat<(v4f32 (AArch64NvCast (v4i32 FPR128:$src))), (v4f32 FPR128:$src)>;
 def : Pat<(v2i64 (AArch64NvCast (v4i32 FPR128:$src))), (v2i64 FPR128:$src)>;
+def : Pat<(v2f64 (AArch64NvCast (v4i32 FPR128:$src))), (v2f64 FPR128:$src)>;
 
 def : Pat<(v16i8 (AArch64NvCast (v8i16 FPR128:$src))), (v16i8 FPR128:$src)>;
 def : Pat<(v8i16 (AArch64NvCast (v8i16 FPR128:$src))), (v8i16 FPR128:$src)>;
 def : Pat<(v8f16 (AArch64NvCast (v8i16 FPR128:$src))), (v8f16 FPR128:$src)>;
 def : Pat<(v4i32 (AArch64NvCast (v8i16 FPR128:$src))), (v4i32 FPR128:$src)>;
 def : Pat<(v2i64 (AArch64NvCast (v8i16 FPR128:$src))), (v2i64 FPR128:$src)>;
+def : Pat<(v4f32 (AArch64NvCast (v8i16 FPR128:$src))), (v4f32 FPR128:$src)>;
+def : Pat<(v2f64 (AArch64NvCast (v8i16 FPR128:$src))), (v2f64 FPR128:$src)>;
 
 def : Pat<(v16i8 (AArch64NvCast (v16i8 FPR128:$src))), (v16i8 FPR128:$src)>;
 def : Pat<(v8i16 (AArch64NvCast (v16i8 FPR128:$src))), (v8i16 FPR128:$src)>;
 def : Pat<(v8f16 (AArch64NvCast (v16i8 FPR128:$src))), (v8f16 FPR128:$src)>;
 def : Pat<(v4i32 (AArch64NvCast (v16i8 FPR128:$src))), (v4i32 FPR128:$src)>;
 def : Pat<(v2i64 (AArch64NvCast (v16i8 FPR128:$src))), (v2i64 FPR128:$src)>;
+def : Pat<(v4f32 (AArch64NvCast (v16i8 FPR128:$src))), (v4f32 FPR128:$src)>;
+def : Pat<(v2f64 (AArch64NvCast (v16i8 FPR128:$src))), (v2f64 FPR128:$src)>;
 
 def : Pat<(v16i8 (AArch64NvCast (v2i64 FPR128:$src))), (v16i8 FPR128:$src)>;
 def : Pat<(v8i16 (AArch64NvCast (v2i64 FPR128:$src))), (v8i16 FPR128:$src)>;
@@ -5309,12 +5314,15 @@ def : Pat<(v8i16 (AArch64NvCast (v4f32 FPR128:$src))), (v8i16 FPR128:$src)>;
 def : Pat<(v4i32 (AArch64NvCast (v4f32 FPR128:$src))), (v4i32 FPR128:$src)>;
 def : Pat<(v4f32 (AArch64NvCast (v4f32 FPR128:$src))), (v4f32 FPR128:$src)>;
 def : Pat<(v2i64 (AArch64NvCast (v4f32 FPR128:$src))), (v2i64 FPR128:$src)>;
+def : Pat<(v8f16 (AArch64NvCast (v4f32 FPR128:$src))), (v8f16 FPR128:$src)>;
+def : Pat<(v2f64 (AArch64NvCast (v4f32 FPR128:$src))), (v2f64 FPR128:$src)>;
 
 def : Pat<(v16i8 (AArch64NvCast (v2f64 FPR128:$src))), (v16i8 FPR128:$src)>;
 def : Pat<(v8i16 (AArch64NvCast (v2f64 FPR128:$src))), (v8i16 FPR128:$src)>;
 def : Pat<(v4i32 (AArch64NvCast (v2f64 FPR128:$src))), (v4i32 FPR128:$src)>;
 def : Pat<(v2i64 (AArch64NvCast (v2f64 FPR128:$src))), (v2i64 FPR128:$src)>;
 def : Pat<(v2f64 (AArch64NvCast (v2f64 FPR128:$src))), (v2f64 FPR128:$src)>;
+def : Pat<(v8f16 (AArch64NvCast (v2f64 FPR128:$src))), (v8f16 FPR128:$src)>;
 def : Pat<(v4f32 (AArch64NvCast (v2f64 FPR128:$src))), (v4f32 FPR128:$src)>;
 
 let Predicates = [IsLE] in {
