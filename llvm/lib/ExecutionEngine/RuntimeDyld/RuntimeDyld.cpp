@@ -113,29 +113,12 @@ void RuntimeDyldImpl::mapSectionAddress(const void *LocalAddress,
   llvm_unreachable("Attempting to remap address of unknown section!");
 }
 
-static std::error_code getOffset(const SymbolRef &Sym, uint64_t &Result) {
+static std::error_code getOffset(const SymbolRef &Sym, SectionRef Sec,
+                                 uint64_t &Result) {
   ErrorOr<uint64_t> AddressOrErr = Sym.getAddress();
   if (std::error_code EC = AddressOrErr.getError())
     return EC;
-  uint64_t Address = *AddressOrErr;
-
-  if (Address == UnknownAddress) {
-    Result = UnknownAddress;
-    return std::error_code();
-  }
-
-  const ObjectFile *Obj = Sym.getObject();
-  section_iterator SecI(Obj->section_begin());
-  if (std::error_code EC = Sym.getSection(SecI))
-    return EC;
-
-  if (SecI == Obj->section_end()) {
-    Result = UnknownAddress;
-    return std::error_code();
-  }
-
-  uint64_t SectionAddress = SecI->getAddress();
-  Result = Address - SectionAddress;
+  Result = *AddressOrErr - Sec.getAddress();
   return std::error_code();
 }
 
@@ -185,12 +168,12 @@ RuntimeDyldImpl::loadObjectImpl(const object::ObjectFile &Obj) {
         ErrorOr<StringRef> NameOrErr = I->getName();
         Check(NameOrErr.getError());
         StringRef Name = *NameOrErr;
-        uint64_t SectOffset;
-        Check(getOffset(*I, SectOffset));
         section_iterator SI = Obj.section_end();
         Check(I->getSection(SI));
         if (SI == Obj.section_end())
           continue;
+        uint64_t SectOffset;
+        Check(getOffset(*I, *SI, SectOffset));
         StringRef SectionData;
         Check(SI->getContents(SectionData));
         bool IsCode = SI->isText();
