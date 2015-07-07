@@ -37,6 +37,7 @@
 #include "lldb/Target/RegisterContext.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Thread.h"
+#include "lldb/Utility/StringExtractor.h"
 
 #define USEC_PER_SEC 1000000
 
