@@ -46,7 +46,6 @@
 #include "ThreadKDP.h"
 #include "Plugins/DynamicLoader/Darwin-Kernel/DynamicLoaderDarwinKernel.h"
 #include "Plugins/DynamicLoader/Static/DynamicLoaderStatic.h"
-#include "Utility/StringExtractor.h"
 
 using namespace lldb;
 using namespace lldb_private;

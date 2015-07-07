@@ -1,7 +1,7 @@
 #include <limits.h>
 #include "gtest/gtest.h"
 
-#include "Utility/StringExtractor.h"
+#include "lldb/Utility/StringExtractor.h"
 
 namespace
 {
