@@ -17,6 +17,8 @@ set( LLVM_LINK_COMPONENTS
   Vectorize
   )
 
+set(LLVM_NO_DEAD_STRIP 1)
+
 add_clang_executable(clang-check
   ClangCheck.cpp
   )
