@@ -12,7 +12,9 @@ tablegen(LLVM HexagonGenSubtargetInfo.inc -gen-subtarget)
 add_public_tablegen_target(HexagonCommonTableGen)
 
 add_llvm_target(HexagonCodeGen
+  BitTracker.cpp
   HexagonAsmPrinter.cpp
+  HexagonBitTracker.cpp
   HexagonCFGOptimizer.cpp
   HexagonCopyToCombine.cpp
   HexagonExpandCondsets.cpp
