@@ -41,7 +41,7 @@ entry:
           to label %invoke.cont unwind label %lpad
 
 invoke.cont:                                      ; preds = %entry
-  %0 = call i8* @llvm.frameaddress(i32 0)
+  %0 = call i8* @llvm.localaddress()
   invoke void @"\01?fin$0@0@use_both@@"(i1 zeroext false, i8* %0) #5
           to label %invoke.cont2 unwind label %lpad1
 
@@ -56,7 +56,7 @@ lpad:                                             ; preds = %entry
   store i8* %2, i8** %exn.slot
   %3 = extractvalue { i8*, i32 } %1, 1
   store i32 %3, i32* %ehselector.slot
-  %4 = call i8* @llvm.frameaddress(i32 0)
+  %4 = call i8* @llvm.localaddress()
   invoke void @"\01?fin$0@0@use_both@@"(i1 zeroext true, i8* %4) #5
           to label %invoke.cont3 unwind label %lpad1
 
@@ -153,7 +153,7 @@ declare i32 @puts(i8*) #3
 declare i32 @__C_specific_handler(...)
 
 ; Function Attrs: nounwind readnone
-declare i8* @llvm.frameaddress(i32) #4
+declare i8* @llvm.localaddress() #4
 
 ; Function Attrs: nounwind readnone
 declare i32 @llvm.eh.typeid.for(i8*) #4

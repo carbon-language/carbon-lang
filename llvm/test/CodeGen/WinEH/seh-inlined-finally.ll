@@ -14,7 +14,7 @@ declare i32 @puts(i8*)
 declare void @may_crash()
 declare i32 @__C_specific_handler(...)
 declare i8* @llvm.localrecover(i8*, i8*, i32) #1
-declare i8* @llvm.frameaddress(i32)
+declare i8* @llvm.localaddress()
 declare void @llvm.localescape(...)
 declare dllimport void @EnterCriticalSection(%struct._RTL_CRITICAL_SECTION*)
 declare dllimport void @LeaveCriticalSection(%struct._RTL_CRITICAL_SECTION*)
@@ -53,7 +53,7 @@ entry:
           to label %invoke.cont unwind label %lpad
 
 invoke.cont:                                      ; preds = %entry
-  %tmp2 = call i8* @llvm.frameaddress(i32 0)
+  %tmp2 = call i8* @llvm.localaddress()
   %tmp3 = call i8* @llvm.localrecover(i8* bitcast (i32 ()* @call_may_crash_locked to i8*), i8* %tmp2, i32 0) #2
   %tmp6 = bitcast i8* %tmp3 to %struct._RTL_CRITICAL_SECTION*
   call void @LeaveCriticalSection(%struct._RTL_CRITICAL_SECTION* %tmp6)
@@ -62,7 +62,7 @@ invoke.cont:                                      ; preds = %entry
 lpad:                                             ; preds = %entry
   %tmp7 = landingpad { i8*, i32 }
             cleanup
-  %tmp8 = call i8* @llvm.frameaddress(i32 0)
+  %tmp8 = call i8* @llvm.localaddress()
   %tmp9 = call i8* @llvm.localrecover(i8* bitcast (i32 ()* @call_may_crash_locked to i8*), i8* %tmp8, i32 0)
   %tmp12 = bitcast i8* %tmp9 to %struct._RTL_CRITICAL_SECTION*
   call void @LeaveCriticalSection(%struct._RTL_CRITICAL_SECTION* %tmp12)

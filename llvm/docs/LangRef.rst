@@ -7811,10 +7811,10 @@ bitcasted pointer to a function defined in the current module. The code
 generator cannot determine the frame allocation offset of functions defined in
 other modules.
 
-The ``fp`` argument to '``llvm.localrecover``' must be a frame
-pointer of a call frame that is currently live. The return value of
-'``llvm.frameaddress``' is one way to produce such a value, but most platforms
-also expose the frame pointer through stack unwinding mechanisms.
+The ``fp`` argument to '``llvm.localrecover``' must be a frame pointer of a
+call frame that is currently live. The return value of '``llvm.localaddress``'
+is one way to produce such a value, but various runtimes also expose a suitable
+pointer in platform-specific ways.
 
 The ``idx`` argument to '``llvm.localrecover``' indicates which alloca passed to
 '``llvm.localescape``' to recover. It is zero-indexed.

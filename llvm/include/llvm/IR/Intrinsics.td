@@ -268,15 +268,23 @@ def int_gcwrite : Intrinsic<[],
 //
 def int_returnaddress : Intrinsic<[llvm_ptr_ty], [llvm_i32_ty], [IntrNoMem]>;
 def int_frameaddress  : Intrinsic<[llvm_ptr_ty], [llvm_i32_ty], [IntrNoMem]>;
-def int_localescape : Intrinsic<[], [llvm_vararg_ty]>;
-def int_localrecover : Intrinsic<[llvm_ptr_ty],
-                                 [llvm_ptr_ty, llvm_ptr_ty, llvm_i32_ty],
-                                 [IntrNoMem]>;
 def int_read_register  : Intrinsic<[llvm_anyint_ty], [llvm_metadata_ty],
                                    [IntrReadMem], "llvm.read_register">;
 def int_write_register : Intrinsic<[], [llvm_metadata_ty, llvm_anyint_ty],
                                    [], "llvm.write_register">;
 
+// Gets the address of the local variable area. This is typically a copy of the
+// stack, frame, or base pointer depending on the type of prologue.
+def int_localaddress : Intrinsic<[llvm_ptr_ty], [], [IntrNoMem]>;
+
+// Escapes local variables to allow access from other functions.
+def int_localescape : Intrinsic<[], [llvm_vararg_ty]>;
+
+// Given a function and the localaddress of a parent frame, returns a pointer
+// to an escaped allocation indicated by the index.
+def int_localrecover : Intrinsic<[llvm_ptr_ty],
+                                 [llvm_ptr_ty, llvm_ptr_ty, llvm_i32_ty],
+                                 [IntrNoMem]>;
 // Note: we treat stacksave/stackrestore as writemem because we don't otherwise
 // model their dependencies on allocas.
 def int_stacksave     : Intrinsic<[llvm_ptr_ty]>,

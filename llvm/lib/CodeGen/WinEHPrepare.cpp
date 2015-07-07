@@ -155,7 +155,7 @@ private:
   // outlined but before the outlined code is pruned from the parent function.
   DenseMap<const BasicBlock *, BasicBlock *> LPadTargetBlocks;
 
-  // Map from outlined handler to call to llvm.frameaddress(1). Only used for
+  // Map from outlined handler to call to parent local address. Only used for
   // 32-bit EH.
   DenseMap<Function *, Value *> HandlerToParentFP;
 
@@ -1595,9 +1595,8 @@ void LandingPadMap::remapEHValues(ValueToValueMapTy &VMap, Value *EHPtrValue,
     VMap[Extract] = SelectorValue;
 }
 
-static bool isFrameAddressCall(const Value *V) {
-  return match(const_cast<Value *>(V),
-               m_Intrinsic<Intrinsic::frameaddress>(m_SpecificInt(0)));
+static bool isLocalAddressCall(const Value *V) {
+  return match(const_cast<Value *>(V), m_Intrinsic<Intrinsic::localaddress>());
 }
 
 CloningDirector::CloningAction WinEHCloningDirectorBase::handleInstruction(
@@ -1639,9 +1638,9 @@ CloningDirector::CloningAction WinEHCloningDirectorBase::handleInstruction(
   if (match(Inst, m_Intrinsic<Intrinsic::eh_typeid_for>()))
     return handleTypeIdFor(VMap, Inst, NewBB);
 
-  // When outlining llvm.frameaddress(i32 0), remap that to the second argument,
+  // When outlining llvm.localaddress(), remap that to the second argument,
   // which is the FP of the parent.
-  if (isFrameAddressCall(Inst)) {
+  if (isLocalAddressCall(Inst)) {
     VMap[Inst] = ParentFP;
     return CloningDirector::SkipInstruction;
   }
@@ -2233,16 +2232,16 @@ static void createCleanupHandler(LandingPadActions &Actions,
 static CallSite matchOutlinedFinallyCall(BasicBlock *BB,
                                          Instruction *MaybeCall) {
   // Look for finally blocks that Clang has already outlined for us.
-  //   %fp = call i8* @llvm.frameaddress(i32 0)
+  //   %fp = call i8* @llvm.localaddress()
   //   call void @"fin$parent"(iN 1, i8* %fp)
-  if (isFrameAddressCall(MaybeCall) && MaybeCall != BB->getTerminator())
+  if (isLocalAddressCall(MaybeCall) && MaybeCall != BB->getTerminator())
     MaybeCall = MaybeCall->getNextNode();
   CallSite FinallyCall(MaybeCall);
   if (!FinallyCall || FinallyCall.arg_size() != 2)
     return CallSite();
   if (!match(FinallyCall.getArgument(0), m_SpecificInt(1)))
     return CallSite();
-  if (!isFrameAddressCall(FinallyCall.getArgument(1)))
+  if (!isLocalAddressCall(FinallyCall.getArgument(1)))
     return CallSite();
   return FinallyCall;
 }
