@@ -188,7 +188,7 @@ int basic_finally(int g) {
 // CHECK:       to label %[[cont:[^ ]*]] unwind label %[[lpad:[^ ]*]]
 //
 // CHECK: [[cont]]
-// CHECK: %[[fp:[^ ]*]] = call i8* @llvm.frameaddress(i32 0)
+// CHECK: %[[fp:[^ ]*]] = call i8* @llvm.localaddress()
 // CHECK: call void @"\01?fin$0@0@basic_finally@@"({{i8( zeroext)?}} 0, i8* %[[fp]])
 // CHECK: load i32, i32* %[[g_addr]], align 4
 // CHECK: ret i32
@@ -196,7 +196,7 @@ int basic_finally(int g) {
 // CHECK: [[lpad]]
 // CHECK: landingpad { i8*, i32 }
 // CHECK-NEXT: cleanup
-// CHECK: %[[fp:[^ ]*]] = call i8* @llvm.frameaddress(i32 0)
+// CHECK: %[[fp:[^ ]*]] = call i8* @llvm.localaddress()
 // CHECK: call void @"\01?fin$0@0@basic_finally@@"({{i8( zeroext)?}} 1, i8* %[[fp]])
 // CHECK: resume
 

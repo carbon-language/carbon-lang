@@ -19,14 +19,14 @@ void basic_finally(void) {
 // CHECK:     to label %[[invoke_cont:[^ ]*]] unwind label %[[lpad:[^ ]*]]
 //
 // CHECK: [[invoke_cont]]
-// CHECK: %[[fp:[^ ]*]] = call i8* @llvm.frameaddress(i32 0)
+// CHECK: %[[fp:[^ ]*]] = call i8* @llvm.localaddress()
 // CHECK: call void @"\01?fin$0@0@basic_finally@@"({{i8( zeroext)?}} 0, i8* %[[fp]])
 // CHECK-NEXT: ret void
 //
 // CHECK: [[lpad]]
 // CHECK-NEXT: landingpad
 // CHECK-NEXT: cleanup
-// CHECK: %[[fp:[^ ]*]] = call i8* @llvm.frameaddress(i32 0)
+// CHECK: %[[fp:[^ ]*]] = call i8* @llvm.localaddress()
 // CHECK: call void @"\01?fin$0@0@basic_finally@@"({{i8( zeroext)?}} 1, i8* %[[fp]])
 // CHECK: resume { i8*, i32 }
 
@@ -59,7 +59,7 @@ l:
 // CHECK:     to label %[[invoke_cont:[^ ]*]] unwind label %[[lpad:[^ ]*]]
 //
 // CHECK: [[invoke_cont]]
-// CHECK: %[[fp:[^ ]*]] = call i8* @llvm.frameaddress(i32 0)
+// CHECK: %[[fp:[^ ]*]] = call i8* @llvm.localaddress()
 // CHECK: call void @"\01?fin$0@0@label_in_finally@@"({{i8( zeroext)?}} 0, i8* %[[fp]])
 // CHECK: ret void
 
@@ -86,14 +86,14 @@ void use_abnormal_termination(void) {
 // CHECK:     to label %[[invoke_cont:[^ ]*]] unwind label %[[lpad:[^ ]*]]
 //
 // CHECK: [[invoke_cont]]
-// CHECK: %[[fp:[^ ]*]] = call i8* @llvm.frameaddress(i32 0)
+// CHECK: %[[fp:[^ ]*]] = call i8* @llvm.localaddress()
 // CHECK: call void @"\01?fin$0@0@use_abnormal_termination@@"({{i8( zeroext)?}} 0, i8* %[[fp]])
 // CHECK: ret void
 //
 // CHECK: [[lpad]]
 // CHECK-NEXT: landingpad
 // CHECK-NEXT: cleanup
-// CHECK: %[[fp:[^ ]*]] = call i8* @llvm.frameaddress(i32 0)
+// CHECK: %[[fp:[^ ]*]] = call i8* @llvm.localaddress()
 // CHECK: call void @"\01?fin$0@0@use_abnormal_termination@@"({{i8( zeroext)?}} 1, i8* %[[fp]])
 // CHECK: resume { i8*, i32 }
 
