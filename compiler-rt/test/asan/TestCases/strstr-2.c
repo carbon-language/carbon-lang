@@ -1,5 +1,5 @@
 // Test needle overflow in strstr function
-// RUN: %clang_asan %s -o %t && ASAN_OPTIONS=strict_string_checks=true not %run %t 2>&1 | FileCheck %s
+// RUN: %clang_asan %s -o %t && env ASAN_OPTIONS=$ASAN_OPTIONS:strict_string_checks=true not %run %t 2>&1 | FileCheck %s
 
 // Test intercept_strstr asan option
 // Disable other interceptors because strlen may be called inside strstr
