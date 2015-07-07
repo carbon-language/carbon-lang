@@ -147,10 +147,13 @@ class TypePromotionTransaction;
     /// OptSize - True if optimizing for size.
     bool OptSize;
 
+    /// DataLayout for the Function being processed.
+    const DataLayout *DL;
+
   public:
     static char ID; // Pass identification, replacement for typeid
     explicit CodeGenPrepare(const TargetMachine *TM = nullptr)
-        : FunctionPass(ID), TM(TM), TLI(nullptr), TTI(nullptr) {
+        : FunctionPass(ID), TM(TM), TLI(nullptr), TTI(nullptr), DL(nullptr) {
         initializeCodeGenPreparePass(*PassRegistry::getPassRegistry());
       }
     bool runOnFunction(Function &F) override;
@@ -202,6 +205,8 @@ FunctionPass *llvm::createCodeGenPreparePass(const TargetMachine *TM) {
 bool CodeGenPrepare::runOnFunction(Function &F) {
   if (skipOptnoneFunction(F))
     return false;
+
+  DL = &F.getParent()->getDataLayout();
 
   bool EverMadeChange = false;
   // Clear per function information.
@@ -1307,12 +1312,10 @@ bool CodeGenPrepare::OptimizeCallInst(CallInst *CI, bool& ModifiedDT) {
       return true;
   }
 
-  const DataLayout *TD = TLI ? TLI->getDataLayout() : nullptr;
-
   // Align the pointer arguments to this call if the target thinks it's a good
   // idea
   unsigned MinSize, PrefAlign;
-  if (TLI && TD && TLI->shouldAlignPointerArgs(CI, MinSize, PrefAlign)) {
+  if (TLI && TLI->shouldAlignPointerArgs(CI, MinSize, PrefAlign)) {
     for (auto &Arg : CI->arg_operands()) {
       // We want to align both objects whose address is used directly and
       // objects whose address is used in casts and GEPs, though it only makes
@@ -1320,36 +1323,34 @@ bool CodeGenPrepare::OptimizeCallInst(CallInst *CI, bool& ModifiedDT) {
       // if size - offset meets the size threshold.
       if (!Arg->getType()->isPointerTy())
         continue;
-      APInt Offset(TD->getPointerSizeInBits(
-                     cast<PointerType>(Arg->getType())->getAddressSpace()), 0);
-      Value *Val = Arg->stripAndAccumulateInBoundsConstantOffsets(*TD, Offset);
+      APInt Offset(DL->getPointerSizeInBits(
+                       cast<PointerType>(Arg->getType())->getAddressSpace()),
+                   0);
+      Value *Val = Arg->stripAndAccumulateInBoundsConstantOffsets(*DL, Offset);
       uint64_t Offset2 = Offset.getLimitedValue();
       if ((Offset2 & (PrefAlign-1)) != 0)
         continue;
       AllocaInst *AI;
-      if ((AI = dyn_cast<AllocaInst>(Val)) &&
-          AI->getAlignment() < PrefAlign &&
-          TD->getTypeAllocSize(AI->getAllocatedType()) >= MinSize + Offset2)
+      if ((AI = dyn_cast<AllocaInst>(Val)) && AI->getAlignment() < PrefAlign &&
+          DL->getTypeAllocSize(AI->getAllocatedType()) >= MinSize + Offset2)
         AI->setAlignment(PrefAlign);
       // Global variables can only be aligned if they are defined in this
       // object (i.e. they are uniquely initialized in this object), and
       // over-aligning global variables that have an explicit section is
       // forbidden.
       GlobalVariable *GV;
-      if ((GV = dyn_cast<GlobalVariable>(Val)) &&
-          GV->hasUniqueInitializer() &&
-          !GV->hasSection() &&
-          GV->getAlignment() < PrefAlign &&
-          TD->getTypeAllocSize(
-            GV->getType()->getElementType()) >= MinSize + Offset2)
+      if ((GV = dyn_cast<GlobalVariable>(Val)) && GV->hasUniqueInitializer() &&
+          !GV->hasSection() && GV->getAlignment() < PrefAlign &&
+          DL->getTypeAllocSize(GV->getType()->getElementType()) >=
+              MinSize + Offset2)
         GV->setAlignment(PrefAlign);
     }
     // If this is a memcpy (or similar) then we may be able to improve the
     // alignment
     if (MemIntrinsic *MI = dyn_cast<MemIntrinsic>(CI)) {
-      unsigned Align = getKnownAlignment(MI->getDest(), *TD);
+      unsigned Align = getKnownAlignment(MI->getDest(), *DL);
       if (MemTransferInst *MTI = dyn_cast<MemTransferInst>(MI))
-        Align = std::min(Align, getKnownAlignment(MTI->getSource(), *TD));
+        Align = std::min(Align, getKnownAlignment(MTI->getSource(), *DL));
       if (Align > MI->getAlignment())
         MI->setAlignment(ConstantInt::get(MI->getAlignmentType(), Align));
     }
@@ -2099,6 +2100,7 @@ class AddressingModeMatcher {
   SmallVectorImpl<Instruction*> &AddrModeInsts;
   const TargetMachine &TM;
   const TargetLowering &TLI;
+  const DataLayout &DL;
 
   /// AccessTy/MemoryInst - This is the type for the access (e.g. double) and
   /// the memory instruction that we're computing this address for.
@@ -2131,8 +2133,9 @@ class AddressingModeMatcher {
       : AddrModeInsts(AMI), TM(TM),
         TLI(*TM.getSubtargetImpl(*MI->getParent()->getParent())
                  ->getTargetLowering()),
-        AccessTy(AT), AddrSpace(AS), MemoryInst(MI), AddrMode(AM),
-        InsertedInsts(InsertedInsts), PromotedInsts(PromotedInsts), TPT(TPT) {
+        DL(MI->getModule()->getDataLayout()), AccessTy(AT), AddrSpace(AS),
+        MemoryInst(MI), AddrMode(AM), InsertedInsts(InsertedInsts),
+        PromotedInsts(PromotedInsts), TPT(TPT) {
     IgnoreProfitability = false;
   }
 public:
@@ -2752,16 +2755,15 @@ bool AddressingModeMatcher::MatchOperationAddr(User *AddrInst, unsigned Opcode,
     unsigned VariableScale = 0;
 
     int64_t ConstantOffset = 0;
-    const DataLayout *TD = TLI.getDataLayout();
     gep_type_iterator GTI = gep_type_begin(AddrInst);
     for (unsigned i = 1, e = AddrInst->getNumOperands(); i != e; ++i, ++GTI) {
       if (StructType *STy = dyn_cast<StructType>(*GTI)) {
-        const StructLayout *SL = TD->getStructLayout(STy);
+        const StructLayout *SL = DL.getStructLayout(STy);
         unsigned Idx =
           cast<ConstantInt>(AddrInst->getOperand(i))->getZExtValue();
         ConstantOffset += SL->getElementOffset(Idx);
       } else {
-        uint64_t TypeSize = TD->getTypeAllocSize(GTI.getIndexedType());
+        uint64_t TypeSize = DL.getTypeAllocSize(GTI.getIndexedType());
         if (ConstantInt *CI = dyn_cast<ConstantInt>(AddrInst->getOperand(i))) {
           ConstantOffset += CI->getSExtValue()*TypeSize;
         } else if (TypeSize) {  // Scales of zero don't do anything.
@@ -3324,7 +3326,7 @@ bool CodeGenPrepare::OptimizeMemoryInst(Instruction *MemoryInst, Value *Addr,
     // prevents new inttoptr/ptrtoint pairs from degrading AA capabilities.
     DEBUG(dbgs() << "CGP: SINKING nonlocal addrmode: " << AddrMode << " for "
                  << *MemoryInst << "\n");
-    Type *IntPtrTy = TLI->getDataLayout()->getIntPtrType(Addr->getType());
+    Type *IntPtrTy = DL->getIntPtrType(Addr->getType());
     Value *ResultPtr = nullptr, *ResultIndex = nullptr;
 
     // First, find the pointer.
@@ -3443,7 +3445,7 @@ bool CodeGenPrepare::OptimizeMemoryInst(Instruction *MemoryInst, Value *Addr,
   } else {
     DEBUG(dbgs() << "CGP: SINKING nonlocal addrmode: " << AddrMode << " for "
                  << *MemoryInst << "\n");
-    Type *IntPtrTy = TLI->getDataLayout()->getIntPtrType(Addr->getType());
+    Type *IntPtrTy = DL->getIntPtrType(Addr->getType());
     Value *Result = nullptr;
 
     // Start with the base register. Do this first so that subsequent address
@@ -4368,8 +4370,7 @@ bool CodeGenPrepare::OptimizeInst(Instruction *I, bool& ModifiedDT) {
     // It is possible for very late stage optimizations (such as SimplifyCFG)
     // to introduce PHI nodes too late to be cleaned up.  If we detect such a
     // trivial PHI, go ahead and zap it here.
-    const DataLayout &DL = I->getModule()->getDataLayout();
-    if (Value *V = SimplifyInstruction(P, DL, TLInfo, nullptr)) {
+    if (Value *V = SimplifyInstruction(P, *DL, TLInfo, nullptr)) {
       P->replaceAllUsesWith(V);
       P->eraseFromParent();
       ++NumPHIsElim;
