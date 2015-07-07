@@ -1,6 +1,6 @@
 // RUN: rm -rf %t
 // RUN: cd %S
-//
+// REQUIRES: x86-registered-target
 // RUN: %clang_cc1 -fmodules -x c++ -fmodules-cache-path=%t \
 // RUN:   -iquote Inputs/merge-target-features \
 // RUN:   -fno-implicit-modules \
