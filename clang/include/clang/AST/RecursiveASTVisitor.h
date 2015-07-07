@@ -1387,8 +1387,9 @@ DEF_TRAVERSE_DECL(ObjCCompatibleAliasDecl, {// FIXME: implement
 
 DEF_TRAVERSE_DECL(ObjCCategoryDecl, {// FIXME: implement
   if (ObjCTypeParamList *typeParamList = D->getTypeParamList()) {
-    for (auto typeParam : *typeParamList)
+    for (auto typeParam : *typeParamList) {
       TRY_TO(TraverseObjCTypeParamDecl(typeParam));
+    }
   }
 })
 
