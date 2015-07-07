@@ -37,6 +37,11 @@ void test2(Test *obj) {
 -(id)getit:(id)val {}
 @end
 
+void test3() {
+  Test<> t;
+  NSObject<> n;
+}
+
 // RUN: c-index-test -code-completion-at=%s:25:8 %s | FileCheck -check-prefix=CHECK-CC0 %s
 // CHECK-CC0: ObjCInstanceMethodDecl:{ResultType void}{TypedText apply2:}{Placeholder ^(MyClsA *, MyClsB *)block} (35)
 // CHECK-CC0: ObjCInstanceMethodDecl:{ResultType void}{TypedText apply:}{Placeholder ^(MyClsA *, MyClsB *)block} (35)
@@ -64,3 +69,11 @@ void test2(Test *obj) {
 // CHECK-CC6: ObjCInstanceMethodDecl:{LeftParen (}{Text void}{RightParen )}{TypedText apply}{TypedText :}{LeftParen (}{Text void (^)(id, NSObject *)}{RightParen )}{Text block} (40)
 // CHECK-CC6: ObjCInstanceMethodDecl:{LeftParen (}{Text NSObject *}{RightParen )}{TypedText getit}{TypedText :}{LeftParen (}{Text id}{RightParen )}{Text val} (40)
 // CHECK-CC6: ObjCInstanceMethodDecl:{LeftParen (}{Text id}{RightParen )}{TypedText prop} (40)
+
+// RUN: c-index-test -code-completion-at=%s:41:8 %s | FileCheck -check-prefix=CHECK-CC7 %s
+// CHECK-CC7: ObjCInterfaceDecl:{TypedText MyClsA}
+// RUN: c-index-test -code-completion-at=%s:42:12 %s > %t.out
+// RUN: FileCheck -input-file=%t.out -check-prefix=CHECK-CC8 %s
+// RUN: FileCheck -input-file=%t.out -check-prefix=CHECK-CC9 %s
+// CHECK-CC8: ObjCProtocolDecl:{TypedText NSObject}
+// CHECK-CC9-NOT: ObjCInterfaceDecl:{TypedText MyClsA}

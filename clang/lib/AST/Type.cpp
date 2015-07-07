@@ -1339,6 +1339,17 @@ Optional<ArrayRef<QualType>> Type::getObjCSubstitutions(
   return objectType->getTypeArgs();
 }
 
+bool Type::acceptsObjCTypeParams() const {
+  if (auto *IfaceT = getAsObjCInterfaceType()) {
+    if (auto *ID = IfaceT->getInterface()) {
+      if (ID->getTypeParamList())
+        return true;
+    }
+  }
+
+  return false;
+}
+
 void ObjCObjectType::computeSuperClassTypeSlow() const {
   // Retrieve the class declaration for this type. If there isn't one
   // (e.g., this is some variant of "id" or "Class"), then there is no

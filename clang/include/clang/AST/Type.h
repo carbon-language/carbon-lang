@@ -1942,6 +1942,10 @@ public:
   Optional<ArrayRef<QualType>>
   getObjCSubstitutions(const DeclContext *dc) const;
 
+  /// Determines if this is an ObjC interface type that may accept type
+  /// parameters.
+  bool acceptsObjCTypeParams() const;
+
   const char *getTypeClassName() const;
 
   QualType getCanonicalTypeInternal() const {
