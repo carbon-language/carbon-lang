@@ -1592,6 +1592,7 @@ ClangASTContext::CreateObjCClass
                                                          SourceLocation(),
                                                          &ast->Idents.get(name),
                                                          nullptr,
+                                                         nullptr,
                                                          SourceLocation(),
                                                          /*isForwardDecl,*/
                                                          isInternal);

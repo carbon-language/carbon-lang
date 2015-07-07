@@ -5354,7 +5354,9 @@ ClangASTType::SetObjCSuperClass (const ClangASTType &superclass_clang_type)
         clang::ObjCInterfaceDecl *super_interface_decl = superclass_clang_type.GetAsObjCInterfaceDecl ();
         if (class_interface_decl && super_interface_decl)
         {
-            class_interface_decl->setSuperClass(super_interface_decl);
+
+            class_interface_decl->setSuperClass(
+                    m_ast->getTrivialTypeSourceInfo(m_ast->getObjCInterfaceType(super_interface_decl)));
             return true;
         }
     }

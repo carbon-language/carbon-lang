@@ -568,7 +568,8 @@ ClangASTImporter::Minion::ImportDefinitionTo (clang::Decl *to, clang::Decl *from
             if (!to_objc_interface->hasDefinition())
                 to_objc_interface->startDefinition();
             
-            to_objc_interface->setSuperClass(imported_from_superclass);
+            to_objc_interface->setSuperClass(
+                    m_source_ctx->getTrivialTypeSourceInfo(m_source_ctx->getObjCInterfaceType(imported_from_superclass)));
         }
         while (0);
     }
