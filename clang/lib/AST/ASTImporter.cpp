@@ -3491,13 +3491,16 @@ Decl *ASTNodeImporter::VisitObjCCategoryDecl(ObjCCategoryDecl *D) {
                                        Importer.Import(D->getCategoryNameLoc()), 
                                           Name.getAsIdentifierInfo(),
                                           ToInterface,
-                                          ImportObjCTypeParamList(
-                                            D->getTypeParamList()),
+                                          /*TypeParamList=*/nullptr,
                                        Importer.Import(D->getIvarLBraceLoc()),
                                        Importer.Import(D->getIvarRBraceLoc()));
     ToCategory->setLexicalDeclContext(LexicalDC);
     LexicalDC->addDeclInternal(ToCategory);
     Importer.Imported(D, ToCategory);
+    // Import the type parameter list after calling Imported, to avoid
+    // loops when bringing in their DeclContext.
+    ToCategory->setTypeParamList(ImportObjCTypeParamList(
+                                   D->getTypeParamList()));
     
     // Import protocols
     SmallVector<ObjCProtocolDecl *, 4> Protocols;
@@ -3819,14 +3822,17 @@ Decl *ASTNodeImporter::VisitObjCInterfaceDecl(ObjCInterfaceDecl *D) {
     ToIface = ObjCInterfaceDecl::Create(Importer.getToContext(), DC,
                                         Importer.Import(D->getAtStartLoc()),
                                         Name.getAsIdentifierInfo(),
-                                        ImportObjCTypeParamList(
-                                          D->getTypeParamListAsWritten()),
+                                        /*TypeParamList=*/nullptr,
                                         /*PrevDecl=*/nullptr, Loc,
                                         D->isImplicitInterfaceDecl());
     ToIface->setLexicalDeclContext(LexicalDC);
     LexicalDC->addDeclInternal(ToIface);
   }
   Importer.Imported(D, ToIface);
+  // Import the type parameter list after calling Imported, to avoid
+  // loops when bringing in their DeclContext.
+  ToIface->setTypeParamList(ImportObjCTypeParamList(
+                              D->getTypeParamListAsWritten()));
   
   if (D->isThisDeclarationADefinition() && ImportDefinition(D, ToIface))
     return nullptr;

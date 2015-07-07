@@ -956,6 +956,12 @@ public:
   /// has type parameters, skipping any declarations that do not.
   ObjCTypeParamList *getTypeParamList() const;
 
+  /// Set the type parameters of this class.
+  ///
+  /// This function is used by the AST importer, which must import the type
+  /// parameters after creating their DeclContext to avoid loops.
+  void setTypeParamList(ObjCTypeParamList *TPL);
+
   /// Retrieve the type parameters written on this particular declaration of
   /// the class.
   ObjCTypeParamList *getTypeParamListAsWritten() const {
@@ -1962,6 +1968,13 @@ public:
   /// Retrieve the type parameter list associated with this category or
   /// extension.
   ObjCTypeParamList *getTypeParamList() const { return TypeParamList; }
+
+  /// Set the type parameters of this category.
+  ///
+  /// This function is used by the AST importer, which must import the type
+  /// parameters after creating their DeclContext to avoid loops.
+  void setTypeParamList(ObjCTypeParamList *TPL);
+
 
   ObjCCategoryImplDecl *getImplementation() const;
   void setImplementation(ObjCCategoryImplDecl *ImplD);
