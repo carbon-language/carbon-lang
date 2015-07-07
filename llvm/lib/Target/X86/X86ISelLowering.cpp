@@ -15953,6 +15953,9 @@ static SDValue LowerSEHRESTOREFRAME(SDValue Op, const X86Subtarget *Subtarget,
   SDLoc dl(Op);
   SDValue Chain = Op.getOperand(0);
 
+  assert(Subtarget->getFrameLowering()->hasFP(MF) &&
+         "using llvm.x86.seh.restoreframe requires a frame pointer");
+
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
   MVT VT = TLI.getPointerTy();
 
@@ -15974,6 +15977,8 @@ static SDValue LowerSEHRESTOREFRAME(SDValue Op, const X86Subtarget *Subtarget,
   Chain = DAG.getCopyToReg(Chain, dl, SPReg, NewSP);
 
   // FIXME: Restore the base pointer in case of stack realignment!
+  if (RegInfo->needsStackRealignment(MF))
+    report_fatal_error("SEH with stack realignment not yet implemented");
 
   // Adjust EBP to point back to the original frame position.
   SDValue NewFP = recoverFramePointer(DAG, MF.getFunction(), IncomingEBP);
