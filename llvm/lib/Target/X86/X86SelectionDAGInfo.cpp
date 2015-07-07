@@ -37,7 +37,7 @@ bool X86SelectionDAGInfo::isBaseRegConflictPossible(
   // dynamic stack adjustments (hopefully rare) and the base pointer would
   // conflict if we had to use it.
   MachineFrameInfo *MFI = DAG.getMachineFunction().getFrameInfo();
-  if (!MFI->hasVarSizedObjects() && !MFI->hasInlineAsmWithSPAdjust())
+  if (!MFI->hasVarSizedObjects() && !MFI->hasOpaqueSPAdjustment())
     return false;
 
   const X86RegisterInfo *TRI = static_cast<const X86RegisterInfo *>(

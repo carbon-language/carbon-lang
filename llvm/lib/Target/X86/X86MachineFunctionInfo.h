@@ -84,6 +84,14 @@ class X86MachineFunctionInfo : public MachineFunctionInfo {
   /// of pushes to pass function parameters.
   bool HasPushSequences = false;
 
+  /// True if the function uses llvm.x86.seh.restoreframe, and it needed a spill
+  /// slot for the frame pointer.
+  bool HasSEHFramePtrSave = false;
+
+  /// The frame index of a stack object containing the original frame pointer
+  /// used to address arguments in a function using a base pointer.
+  int SEHFramePtrSaveIndex = 0;
+
 private:
   /// ForwardedMustTailRegParms - A list of virtual and physical registers
   /// that must be forwarded to every musttail call.
@@ -142,6 +150,12 @@ public:
 
   unsigned getNumLocalDynamicTLSAccesses() const { return NumLocalDynamics; }
   void incNumLocalDynamicTLSAccesses() { ++NumLocalDynamics; }
+
+  bool getHasSEHFramePtrSave() const { return HasSEHFramePtrSave; }
+  void setHasSEHFramePtrSave(bool V) { HasSEHFramePtrSave = V; }
+
+  int getSEHFramePtrSaveIndex() const { return SEHFramePtrSaveIndex; }
+  void setSEHFramePtrSaveIndex(int Index) { SEHFramePtrSaveIndex = Index; }
 
   SmallVectorImpl<ForwardedRegister> &getForwardedMustTailRegParms() {
     return ForwardedMustTailRegParms;

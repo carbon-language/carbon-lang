@@ -90,7 +90,7 @@ bool X86FrameLowering::hasFP(const MachineFunction &MF) const {
   return (MF.getTarget().Options.DisableFramePointerElim(MF) ||
           TRI->needsStackRealignment(MF) ||
           MFI->hasVarSizedObjects() ||
-          MFI->isFrameAddressTaken() || MFI->hasInlineAsmWithSPAdjust() ||
+          MFI->isFrameAddressTaken() || MFI->hasOpaqueSPAdjustment() ||
           MF.getInfo<X86MachineFunctionInfo>()->getForceFramePointer() ||
           MMI.callsUnwindInit() || MMI.callsEHReturn() ||
           MFI->hasStackMap() || MFI->hasPatchPoint());
@@ -967,12 +967,25 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF,
       .addReg(StackPtr)
       .setMIFlag(MachineInstr::FrameSetup);
     if (X86FI->getRestoreBasePointer()) {
-      // Stash value of base pointer.  Saving RSP instead of EBP shortens dependence chain.
+      // Stash value of base pointer.  Saving RSP instead of EBP shortens
+      // dependence chain. Used by SjLj EH.
       unsigned Opm = Uses64BitFramePtr ? X86::MOV64mr : X86::MOV32mr;
       addRegOffset(BuildMI(MBB, MBBI, DL, TII.get(Opm)),
                    FramePtr, true, X86FI->getRestoreBasePointerOffset())
         .addReg(StackPtr)
         .setMIFlag(MachineInstr::FrameSetup);
+    }
+
+    if (X86FI->getHasSEHFramePtrSave()) {
+      // Stash the value of the frame pointer relative to the base pointer for
+      // Win32 EH. This supports Win32 EH, which does the inverse of the above:
+      // it recovers the frame pointer from the base pointer rather than the
+      // other way around.
+      unsigned Opm = Uses64BitFramePtr ? X86::MOV64mr : X86::MOV32mr;
+      addRegOffset(BuildMI(MBB, MBBI, DL, TII.get(Opm)), BasePtr, true,
+                   getFrameIndexOffset(MF, X86FI->getSEHFramePtrSaveIndex()))
+          .addReg(FramePtr)
+          .setMIFlag(MachineInstr::FrameSetup);
     }
   }
 

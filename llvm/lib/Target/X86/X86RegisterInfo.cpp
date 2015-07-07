@@ -452,7 +452,7 @@ bool X86RegisterInfo::hasBasePointer(const MachineFunction &MF) const {
    // use both the SP and the FP, we need a separate base pointer register.
    bool CantUseFP = needsStackRealignment(MF);
    bool CantUseSP =
-       MFI->hasVarSizedObjects() || MFI->hasInlineAsmWithSPAdjust();
+       MFI->hasVarSizedObjects() || MFI->hasOpaqueSPAdjustment();
    return CantUseFP && CantUseSP;
 }
 

@@ -2558,7 +2558,7 @@ X86TargetLowering::LowerFormalArguments(SDValue Chain,
 
   MachineModuleInfo &MMI = MF.getMMI();
   const Function *WinEHParent = nullptr;
-  if (IsWin64 && MMI.hasWinEHFuncInfo(Fn))
+  if (MMI.hasWinEHFuncInfo(Fn))
     WinEHParent = MMI.getWinEHParent(Fn);
   bool IsWinEHOutlined = WinEHParent && WinEHParent != Fn;
   bool IsWinEHParent = WinEHParent && WinEHParent == Fn;
@@ -2651,7 +2651,7 @@ X86TargetLowering::LowerFormalArguments(SDValue Chain,
 
     if (!MemOps.empty())
       Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, MemOps);
-  } else if (IsWinEHOutlined) {
+  } else if (IsWin64 && IsWinEHOutlined) {
     // Get to the caller-allocated home save location.  Add 8 to account
     // for the return address.
     int HomeOffset = TFI.getOffsetOfLocalArea() + 8;
@@ -2739,14 +2739,21 @@ X86TargetLowering::LowerFormalArguments(SDValue Chain,
   FuncInfo->setArgumentStackSize(StackSize);
 
   if (IsWinEHParent) {
-    int UnwindHelpFI = MFI->CreateStackObject(8, 8, /*isSS=*/false);
-    SDValue StackSlot = DAG.getFrameIndex(UnwindHelpFI, MVT::i64);
-    MMI.getWinEHFuncInfo(MF.getFunction()).UnwindHelpFrameIdx = UnwindHelpFI;
-    SDValue Neg2 = DAG.getConstant(-2, dl, MVT::i64);
-    Chain = DAG.getStore(Chain, dl, Neg2, StackSlot,
-                         MachinePointerInfo::getFixedStack(UnwindHelpFI),
-                         /*isVolatile=*/true,
-                         /*isNonTemporal=*/false, /*Alignment=*/0);
+    if (Is64Bit) {
+      int UnwindHelpFI = MFI->CreateStackObject(8, 8, /*isSS=*/false);
+      SDValue StackSlot = DAG.getFrameIndex(UnwindHelpFI, MVT::i64);
+      MMI.getWinEHFuncInfo(MF.getFunction()).UnwindHelpFrameIdx = UnwindHelpFI;
+      SDValue Neg2 = DAG.getConstant(-2, dl, MVT::i64);
+      Chain = DAG.getStore(Chain, dl, Neg2, StackSlot,
+                           MachinePointerInfo::getFixedStack(UnwindHelpFI),
+                           /*isVolatile=*/true,
+                           /*isNonTemporal=*/false, /*Alignment=*/0);
+    } else {
+      // Functions using Win32 EH are considered to have opaque SP adjustments
+      // to force local variables to be addressed from the frame or base
+      // pointers.
+      MFI->setHasOpaqueSPAdjustment(true);
+    }
   }
 
   return Chain;
@@ -15230,6 +15237,20 @@ static SDValue getScalarMaskingNode(SDValue Op, SDValue Mask,
     return DAG.getNode(X86ISD::SELECT, dl, VT, IMask, Op, PreservedSrc);
 }
 
+static int getSEHRegistrationNodeSize(const Function *Fn) {
+  if (!Fn->hasPersonalityFn())
+    report_fatal_error(
+        "querying registration node size for function without personality");
+  // The RegNodeSize is 6 32-bit words for SEH and 4 for C++ EH. See
+  // WinEHStatePass for the full struct definition.
+  switch (classifyEHPersonality(Fn->getPersonalityFn())) {
+  case EHPersonality::MSVC_X86SEH: return 24;
+  case EHPersonality::MSVC_CXX: return 16;
+  default: break;
+  }
+  report_fatal_error("can only recover FP for MSVC EH personality functions");
+}
+
 /// When the 32-bit MSVC runtime transfers control to us, either to an outlined
 /// function or when returning to a parent frame after catching an exception, we
 /// recover the parent frame pointer by doing arithmetic on the incoming EBP.
@@ -15252,15 +15273,7 @@ static SDValue recoverFramePointer(SelectionDAG &DAG, const Function *Fn,
   if (!Fn->hasPersonalityFn())
     return EntryEBP;
 
-  // The RegNodeSize is 6 32-bit words for SEH and 4 for C++ EH. See
-  // WinEHStatePass for the full struct definition.
-  int RegNodeSize;
-  switch (classifyEHPersonality(Fn->getPersonalityFn())) {
-  default:
-    report_fatal_error("can only recover FP for MSVC EH personality functions");
-  case EHPersonality::MSVC_X86SEH: RegNodeSize = 24; break;
-  case EHPersonality::MSVC_CXX: RegNodeSize = 16; break;
-  }
+  int RegNodeSize = getSEHRegistrationNodeSize(Fn);
 
   // Get an MCSymbol that will ultimately resolve to the frame offset of the EH
   // registration.
@@ -15963,6 +15976,7 @@ static SDValue LowerREADCYCLECOUNTER(SDValue Op, const X86Subtarget *Subtarget,
 static SDValue LowerSEHRESTOREFRAME(SDValue Op, const X86Subtarget *Subtarget,
                                     SelectionDAG &DAG) {
   MachineFunction &MF = DAG.getMachineFunction();
+  const Function *Fn = MF.getFunction();
   SDLoc dl(Op);
   SDValue Chain = Op.getOperand(0);
 
@@ -15976,26 +15990,46 @@ static SDValue LowerSEHRESTOREFRAME(SDValue Op, const X86Subtarget *Subtarget,
   unsigned FrameReg =
       RegInfo->getPtrSizedFrameRegister(DAG.getMachineFunction());
   unsigned SPReg = RegInfo->getStackRegister();
+  unsigned SlotSize = RegInfo->getSlotSize();
 
   // Get incoming EBP.
   SDValue IncomingEBP =
       DAG.getCopyFromReg(Chain, dl, FrameReg, VT);
 
-  // Load [EBP-24] into SP.
-  SDValue SPAddr =
-      DAG.getNode(ISD::ADD, dl, VT, IncomingEBP, DAG.getConstant(-24, dl, VT));
+  // SP is saved in the first field of every registration node, so load
+  // [EBP-RegNodeSize] into SP.
+  int RegNodeSize = getSEHRegistrationNodeSize(Fn);
+  SDValue SPAddr = DAG.getNode(ISD::ADD, dl, VT, IncomingEBP,
+                               DAG.getConstant(-RegNodeSize, dl, VT));
   SDValue NewSP =
       DAG.getLoad(VT, dl, Chain, SPAddr, MachinePointerInfo(), false, false,
                   false, VT.getScalarSizeInBits() / 8);
   Chain = DAG.getCopyToReg(Chain, dl, SPReg, NewSP);
 
-  // FIXME: Restore the base pointer in case of stack realignment!
-  if (RegInfo->needsStackRealignment(MF))
-    report_fatal_error("SEH with stack realignment not yet implemented");
+  if (!RegInfo->needsStackRealignment(MF)) {
+    // Adjust EBP to point back to the original frame position.
+    SDValue NewFP = recoverFramePointer(DAG, Fn, IncomingEBP);
+    Chain = DAG.getCopyToReg(Chain, dl, FrameReg, NewFP);
+  } else {
+    assert(RegInfo->hasBasePointer(MF) &&
+           "functions with Win32 EH must use frame or base pointer register");
 
-  // Adjust EBP to point back to the original frame position.
-  SDValue NewFP = recoverFramePointer(DAG, MF.getFunction(), IncomingEBP);
-  Chain = DAG.getCopyToReg(Chain, dl, FrameReg, NewFP);
+    // Reload the base pointer (ESI) with the adjusted incoming EBP.
+    SDValue NewBP = recoverFramePointer(DAG, Fn, IncomingEBP);
+    Chain = DAG.getCopyToReg(Chain, dl, RegInfo->getBaseRegister(), NewBP);
+
+    // Reload the spilled EBP value, now that the stack and base pointers are
+    // set up.
+    X86MachineFunctionInfo *X86FI = MF.getInfo<X86MachineFunctionInfo>();
+    X86FI->setHasSEHFramePtrSave(true);
+    int FI = MF.getFrameInfo()->CreateSpillStackObject(SlotSize, SlotSize);
+    X86FI->setSEHFramePtrSaveIndex(FI);
+    SDValue NewFP = DAG.getLoad(VT, dl, Chain, DAG.getFrameIndex(FI, VT),
+                                MachinePointerInfo(), false, false, false,
+                                VT.getScalarSizeInBits() / 8);
+    Chain = DAG.getCopyToReg(NewFP, dl, FrameReg, NewFP);
+  }
+
   return Chain;
 }
 

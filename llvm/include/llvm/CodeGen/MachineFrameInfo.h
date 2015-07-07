@@ -229,9 +229,9 @@ class MachineFrameInfo {
   /// Whether the "realign-stack" option is on.
   bool RealignOption;
 
-  /// True if the function includes inline assembly that adjusts the stack
-  /// pointer.
-  bool HasInlineAsmWithSPAdjust;
+  /// True if the function dynamically adjusts the stack pointer through some
+  /// opaque mechanism like inline assembly or Win32 EH.
+  bool HasOpaqueSPAdjustment;
 
   /// True if the function contains a call to the llvm.vastart intrinsic.
   bool HasVAStart;
@@ -269,7 +269,7 @@ public:
     LocalFrameSize = 0;
     LocalFrameMaxAlign = 0;
     UseLocalStackAllocationBlock = false;
-    HasInlineAsmWithSPAdjust = false;
+    HasOpaqueSPAdjustment = false;
     HasVAStart = false;
     HasMustTailInVarArgFunc = false;
     Save = nullptr;
@@ -468,9 +468,9 @@ public:
   bool hasCalls() const { return HasCalls; }
   void setHasCalls(bool V) { HasCalls = V; }
 
-  /// Returns true if the function contains any stack-adjusting inline assembly.
-  bool hasInlineAsmWithSPAdjust() const { return HasInlineAsmWithSPAdjust; }
-  void setHasInlineAsmWithSPAdjust(bool B) { HasInlineAsmWithSPAdjust = B; }
+  /// Returns true if the function contains opaque dynamic stack adjustments.
+  bool hasOpaqueSPAdjustment() const { return HasOpaqueSPAdjustment; }
+  void setHasOpaqueSPAdjustment(bool B) { HasOpaqueSPAdjustment = B; }
 
   /// Returns true if the function calls the llvm.va_start intrinsic.
   bool hasVAStart() const { return HasVAStart; }

@@ -796,7 +796,7 @@ void RegsForValue::AddInlineAsmOperands(unsigned Code, bool HasMatching,
       if (TheReg == SP && Code == InlineAsm::Kind_Clobber) {
         // If we clobbered the stack pointer, MFI should know about it.
         assert(DAG.getMachineFunction().getFrameInfo()->
-            hasInlineAsmWithSPAdjust());
+            hasOpaqueSPAdjustment());
       }
     }
   }
