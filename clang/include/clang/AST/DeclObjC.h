@@ -333,9 +333,7 @@ public:
 
   /// \brief Determine the type of an expression that sends a message to this
   /// function.
-  QualType getSendResultType() const {
-    return getReturnType().getNonLValueExprType(getASTContext());
-  }
+  QualType getSendResultType() const;
 
   /// Determine the type of an expression that sends a message to this
   /// function with the given receiver type.

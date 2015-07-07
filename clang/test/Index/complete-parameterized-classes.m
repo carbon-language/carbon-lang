@@ -11,7 +11,7 @@
 }
 -(U)getit:(T)val;
 -(void)apply:(void(^)(T, U))block;
--(void)apply2:(void(^__nonnull)(T, U))block;
+-(void)apply2:(void(^_Nonnull)(T, U))block;
 
 @property (strong) T prop;
 @end
@@ -32,6 +32,10 @@ void test2(Test *obj) {
   obj.;
   obj->;
 }
+
+@implementation Test
+-(id)getit:(id)val {}
+@end
 
 // RUN: c-index-test -code-completion-at=%s:25:8 %s | FileCheck -check-prefix=CHECK-CC0 %s
 // CHECK-CC0: ObjCInstanceMethodDecl:{ResultType void}{TypedText apply2:}{Placeholder ^(MyClsA *, MyClsB *)block} (35)
@@ -54,3 +58,9 @@ void test2(Test *obj) {
 
 // RUN: c-index-test -code-completion-at=%s:33:8 %s | FileCheck -check-prefix=CHECK-CC5 %s
 // CHECK-CC5: ObjCIvarDecl:{ResultType __kindof NSObject *}{TypedText myVar} (35)
+
+// RUN: c-index-test -code-completion-at=%s:37:2 %s | FileCheck -check-prefix=CHECK-CC6 %s
+// CHECK-CC6: ObjCInstanceMethodDecl:{LeftParen (}{Text void}{RightParen )}{TypedText apply2}{TypedText :}{LeftParen (}{Text void (^ _Nonnull)(id, NSObject *)}{RightParen )}{Text block} (40)
+// CHECK-CC6: ObjCInstanceMethodDecl:{LeftParen (}{Text void}{RightParen )}{TypedText apply}{TypedText :}{LeftParen (}{Text void (^)(id, NSObject *)}{RightParen )}{Text block} (40)
+// CHECK-CC6: ObjCInstanceMethodDecl:{LeftParen (}{Text NSObject *}{RightParen )}{TypedText getit}{TypedText :}{LeftParen (}{Text id}{RightParen )}{Text val} (40)
+// CHECK-CC6: ObjCInstanceMethodDecl:{LeftParen (}{Text id}{RightParen )}{TypedText prop} (40)
