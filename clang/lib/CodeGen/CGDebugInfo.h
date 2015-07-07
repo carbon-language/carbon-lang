@@ -65,7 +65,6 @@ class CGDebugInfo {
   llvm::DIType *OCLImage2dArrayDITy = nullptr;
   llvm::DIType *OCLImage3dDITy = nullptr;
   llvm::DIType *OCLEventDITy = nullptr;
-  llvm::DIType *BlockLiteralGeneric = nullptr;
 
   /// \brief Cache of previously constructed Types.
   llvm::DenseMap<const void *, llvm::TrackingMDRef> TypeCache;

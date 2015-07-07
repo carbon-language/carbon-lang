@@ -705,9 +705,6 @@ llvm::DIType *CGDebugInfo::getOrCreateStructPtrType(StringRef Name,
 
 llvm::DIType *CGDebugInfo::CreateType(const BlockPointerType *Ty,
                                       llvm::DIFile *Unit) {
-  if (BlockLiteralGeneric)
-    return BlockLiteralGeneric;
-
   SmallVector<llvm::Metadata *, 8> EltTys;
   QualType FType;
   uint64_t FieldSize, FieldOffset;
@@ -753,12 +750,15 @@ llvm::DIType *CGDebugInfo::CreateType(const BlockPointerType *Ty,
   FieldOffset += FieldSize;
   Elements = DBuilder.getOrCreateArray(EltTys);
 
+  // The __block_literal_generic structs are marked with a special
+  // DW_AT_APPLE_BLOCK attribute and are an implementation detail only
+  // the debugger needs to know about. To allow type uniquing, emit
+  // them without a name or a location.
   EltTy =
-      DBuilder.createStructType(Unit, "__block_literal_generic", nullptr, LineNo,
+      DBuilder.createStructType(Unit, "", nullptr, LineNo,
                                 FieldOffset, 0, Flags, nullptr, Elements);
 
-  BlockLiteralGeneric = DBuilder.createPointerType(EltTy, Size);
-  return BlockLiteralGeneric;
+  return DBuilder.createPointerType(EltTy, Size);
 }
 
 llvm::DIType *CGDebugInfo::CreateType(const TemplateSpecializationType *Ty,
