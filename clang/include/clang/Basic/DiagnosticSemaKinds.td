@@ -2131,6 +2131,11 @@ def warn_concatenated_nsarray_literal : Warning<
   InGroup<ObjCStringConcatenation>;
 def note_objc_literal_comparison_isequal : Note<
   "use 'isEqual:' instead">;
+def warn_objc_collection_literal_element : Warning<
+  "object of type %0 is not compatible with "
+  "%select{array element type|dictionary key type|dictionary value type}1 %2">,
+  InGroup<ObjCLiteralConversion>;
+
 def err_attribute_argument_is_zero : Error<
   "%0 attribute must be greater than 0">;
 def warn_attribute_argument_n_negative : Warning<

@@ -6884,6 +6884,101 @@ static void DiagnoseNullConversion(Sema &S, Expr *E, QualType T,
                                       S.getFixItZeroLiteralForType(T, Loc));
 }
 
+static void checkObjCArrayLiteral(Sema &S, QualType TargetType,
+                                  ObjCArrayLiteral *ArrayLiteral);
+static void checkObjCDictionaryLiteral(Sema &S, QualType TargetType,
+                                       ObjCDictionaryLiteral *DictionaryLiteral);
+
+/// Check a single element within a collection literal against the
+/// target element type.
+static void checkObjCCollectionLiteralElement(Sema &S,
+                                              QualType TargetElementType,
+                                              Expr *Element,
+                                              unsigned ElementKind) {
+  // Skip a bitcast to 'id' or qualified 'id'.
+  if (auto ICE = dyn_cast<ImplicitCastExpr>(Element)) {
+    if (ICE->getCastKind() == CK_BitCast &&
+        ICE->getSubExpr()->getType()->getAs<ObjCObjectPointerType>())
+      Element = ICE->getSubExpr();
+  }
+
+  QualType ElementType = Element->getType();
+  ExprResult ElementResult(Element);
+  if (ElementType->getAs<ObjCObjectPointerType>() &&
+      S.CheckSingleAssignmentConstraints(TargetElementType,
+                                         ElementResult,
+                                         false, false)
+        != Sema::Compatible) {
+    S.Diag(Element->getLocStart(),
+           diag::warn_objc_collection_literal_element)
+      << ElementType << ElementKind << TargetElementType
+      << Element->getSourceRange();
+  }
+
+  if (auto ArrayLiteral = dyn_cast<ObjCArrayLiteral>(Element))
+    checkObjCArrayLiteral(S, TargetElementType, ArrayLiteral);
+  else if (auto DictionaryLiteral = dyn_cast<ObjCDictionaryLiteral>(Element))
+    checkObjCDictionaryLiteral(S, TargetElementType, DictionaryLiteral);
+}
+
+/// Check an Objective-C array literal being converted to the given
+/// target type.
+static void checkObjCArrayLiteral(Sema &S, QualType TargetType,
+                                  ObjCArrayLiteral *ArrayLiteral) {
+  if (!S.NSArrayDecl)
+    return;
+
+  const auto *TargetObjCPtr = TargetType->getAs<ObjCObjectPointerType>();
+  if (!TargetObjCPtr)
+    return;
+
+  if (TargetObjCPtr->isUnspecialized() ||
+      TargetObjCPtr->getInterfaceDecl()->getCanonicalDecl()
+        != S.NSArrayDecl->getCanonicalDecl())
+    return;
+
+  auto TypeArgs = TargetObjCPtr->getTypeArgs();
+  if (TypeArgs.size() != 1)
+    return;
+
+  QualType TargetElementType = TypeArgs[0];
+  for (unsigned I = 0, N = ArrayLiteral->getNumElements(); I != N; ++I) {
+    checkObjCCollectionLiteralElement(S, TargetElementType,
+                                      ArrayLiteral->getElement(I),
+                                      0);
+  }
+}
+
+/// Check an Objective-C dictionary literal being converted to the given
+/// target type.
+static void checkObjCDictionaryLiteral(
+              Sema &S, QualType TargetType,
+              ObjCDictionaryLiteral *DictionaryLiteral) {
+  if (!S.NSDictionaryDecl)
+    return;
+
+  const auto *TargetObjCPtr = TargetType->getAs<ObjCObjectPointerType>();
+  if (!TargetObjCPtr)
+    return;
+
+  if (TargetObjCPtr->isUnspecialized() ||
+      TargetObjCPtr->getInterfaceDecl()->getCanonicalDecl()
+        != S.NSDictionaryDecl->getCanonicalDecl())
+    return;
+
+  auto TypeArgs = TargetObjCPtr->getTypeArgs();
+  if (TypeArgs.size() != 2)
+    return;
+
+  QualType TargetKeyType = TypeArgs[0];
+  QualType TargetObjectType = TypeArgs[1];
+  for (unsigned I = 0, N = DictionaryLiteral->getNumElements(); I != N; ++I) {
+    auto Element = DictionaryLiteral->getKeyValueElement(I);
+    checkObjCCollectionLiteralElement(S, TargetKeyType, Element.Key, 1);
+    checkObjCCollectionLiteralElement(S, TargetObjectType, Element.Value, 2);
+  }
+}
+
 void CheckImplicitConversion(Sema &S, Expr *E, QualType T,
                              SourceLocation CC, bool *ICContext = nullptr) {
   if (E->isTypeDependent() || E->isValueDependent()) return;
@@ -6922,6 +7017,13 @@ void CheckImplicitConversion(Sema &S, Expr *E, QualType T,
                                      SourceRange(CC));
     }
   }
+
+  // Check implicit casts from Objective-C collection literals to specialized
+  // collection types, e.g., NSArray<NSString *> *.
+  if (auto *ArrayLiteral = dyn_cast<ObjCArrayLiteral>(E))
+    checkObjCArrayLiteral(S, QualType(Target, 0), ArrayLiteral);
+  else if (auto *DictionaryLiteral = dyn_cast<ObjCDictionaryLiteral>(E))
+    checkObjCDictionaryLiteral(S, QualType(Target, 0), DictionaryLiteral);
 
   // Strip vector types.
   if (isa<VectorType>(Source)) {
