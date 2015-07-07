@@ -29,6 +29,7 @@
 #include "llvm/Object/COFF.h"
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/TargetRegistry.h"
+#include "llvm/Support/TargetSelect.h"
 #include <memory>
 using namespace clang;
 
@@ -99,10 +100,10 @@ public:
       Builder->Release();
 
     // Initialize the backend if we haven't done so already.
-    LLVMInitializeAllTargetInfos();
-    LLVMInitializeAllTargets();
-    LLVMInitializeAllAsmPrinters();
-    LLVMInitializeAllTargetMCs();
+    llvm::InitializeAllTargetInfos();
+    llvm::InitializeAllTargets();
+    llvm::InitializeAllAsmPrinters();
+    llvm::InitializeAllTargetMCs();
 
     // Ensure the target exists.
     std::string Error;
