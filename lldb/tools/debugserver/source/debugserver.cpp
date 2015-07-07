@@ -27,6 +27,7 @@
 
 #if defined (__APPLE__)
 #include <sched.h>
+extern "C" int proc_set_wakemon_params(pid_t, int, int); // <libproc_internal.h> SPI
 #endif
 
 #include "CFString.h"
@@ -891,6 +892,8 @@ main (int argc, char *argv[])
         thread_param.sched_priority = 47;
         pthread_setschedparam(pthread_self(), thread_sched_policy, &thread_param);
     }
+
+    ::proc_set_wakemon_params (getpid(), 500, 0); // Allow up to 500 wakeups/sec to avoid EXC_RESOURCE for normal use.
 #endif
 #endif
 
