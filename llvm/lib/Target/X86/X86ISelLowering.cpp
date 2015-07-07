@@ -21903,16 +21903,16 @@ matchIntegerMINMAX(SDValue Cond, EVT VT, SDValue LHS, SDValue RHS,
     default: break;
     case ISD::SETULT:
     case ISD::SETULE:
-      Opc = hasUnsigned ? ISD::UMIN : 0u; break;
+      Opc = hasUnsigned ? ISD::UMIN : 0; break;
     case ISD::SETUGT:
     case ISD::SETUGE:
-      Opc = hasUnsigned ? ISD::UMAX : 0u; break;
+      Opc = hasUnsigned ? ISD::UMAX : 0; break;
     case ISD::SETLT:
     case ISD::SETLE:
-      Opc = hasSigned ? ISD::SMIN : 0u; break;
+      Opc = hasSigned ? ISD::SMIN : 0; break;
     case ISD::SETGT:
     case ISD::SETGE:
-      Opc = hasSigned ? ISD::SMAX : 0u; break;
+      Opc = hasSigned ? ISD::SMAX : 0; break;
     }
   // Check for x CC y ? y : x -- a min/max with reversed arms.
   } else if (DAG.isEqualTo(LHS, Cond.getOperand(1)) &&
@@ -21921,16 +21921,16 @@ matchIntegerMINMAX(SDValue Cond, EVT VT, SDValue LHS, SDValue RHS,
     default: break;
     case ISD::SETULT:
     case ISD::SETULE:
-      Opc = hasUnsigned ? ISD::UMAX : 0u; break;
+      Opc = hasUnsigned ? ISD::UMAX : 0; break;
     case ISD::SETUGT:
     case ISD::SETUGE:
-      Opc = hasUnsigned ? ISD::UMIN : 0u; break;
+      Opc = hasUnsigned ? ISD::UMIN : 0; break;
     case ISD::SETLT:
     case ISD::SETLE:
-      Opc = hasSigned ? ISD::SMAX : 0u; break;
+      Opc = hasSigned ? ISD::SMAX : 0; break;
     case ISD::SETGT:
     case ISD::SETGE:
-      Opc = hasSigned ? ISD::SMIN : 0u; break;
+      Opc = hasSigned ? ISD::SMIN : 0; break;
     }
   }
 

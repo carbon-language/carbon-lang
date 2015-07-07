@@ -261,7 +261,7 @@ void DecodeVPERM2X128Mask(MVT VT, unsigned Imm,
     unsigned HalfMask = Imm >> (l * 4);
     unsigned HalfBegin = (HalfMask & 0x3) * HalfSize;
     for (unsigned i = HalfBegin, e = HalfBegin + HalfSize; i != e; ++i)
-      ShuffleMask.push_back(HalfMask & 8 ? SM_SentinelZero : i);
+      ShuffleMask.push_back(HalfMask & 8 ? SM_SentinelZero : (int)i);
   }
 }
 
