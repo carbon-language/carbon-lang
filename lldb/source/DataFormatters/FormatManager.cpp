@@ -1608,6 +1608,26 @@ FormatManager::LoadHardcodedFormatters()
                                             }
                                             return nullptr;
                                         });
+        m_hardcoded_summaries.push_back(
+                                         [](lldb_private::ValueObject& valobj,
+                                            lldb::DynamicValueType,
+                                            FormatManager& fmt_mgr) -> TypeSummaryImpl::SharedPointer {
+                                             static CXXFunctionSummaryFormat::SharedPointer formatter_sp(new CXXFunctionSummaryFormat(TypeSummaryImpl::Flags()
+                                                                                                                                      .SetCascades(true)
+                                                                                                                                      .SetDontShowChildren(true)
+                                                                                                                                      .SetHideItemNames(true)
+                                                                                                                                      .SetShowMembersOneLiner(true)
+                                                                                                                                      .SetSkipPointers(true)
+                                                                                                                                      .SetSkipReferences(false),
+                                                                                                                                      lldb_private::formatters::VectorTypeSummaryProvider,
+                                                                                                                                      "vector_type pointer summary provider"));
+                                             if (valobj.GetClangType().IsVectorType(nullptr, nullptr))
+                                             {
+                                                 if (fmt_mgr.GetCategory(fmt_mgr.m_vectortypes_category_name)->IsEnabled())
+                                                     return formatter_sp;
+                                             }
+                                             return nullptr;
+                                         });
     }
     {
         // insert code to load synthetics here

@@ -18,6 +18,7 @@
 #include "lldb/Core/ConstString.h"
 #include "lldb/DataFormatters/FormatClasses.h"
 #include "lldb/DataFormatters/TypeSynthetic.h"
+#include "lldb/DataFormatters/VectorType.h"
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/ObjCLanguageRuntime.h"
 #include "lldb/Target/Target.h"
