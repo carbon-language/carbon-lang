@@ -289,7 +289,7 @@ CMICmnLLDBDebugSessionInfoVarObj::GetValueStringFormatted(const lldb::SBValue &v
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details: Return nuber formatted string according to the given value type.
+// Details: Return number formatted string according to the given value type.
 // Type:    Static method.
 // Args:    vnValue             - (R) The number value to get formatted.
 //          vpStrValueNatural   - (R) The natural representation of the number value.
@@ -535,7 +535,7 @@ CMICmnLLDBDebugSessionInfoVarObj::GetValue(void) const
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details: Set the var format type for *this object and upate the formatting.
+// Details: Set the var format type for *this object and update the formatting.
 // Type:    Method.
 // Args:    None.
 // Return:  MIstatus::success - Functional succeeded.

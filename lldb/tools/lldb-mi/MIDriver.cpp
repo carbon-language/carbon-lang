@@ -343,7 +343,7 @@ CMIDriver::SetDriverToFallThruTo(const CMIDriverBase &vrOtherDriver)
 //++ ------------------------------------------------------------------------------------
 // Details: Proxy function CMIDriverMgr IDriver interface implementation. *this driver's
 //          implementation called from here to match the existing function name of the
-//          original LLDb driver class (the extra indirection is not necessarily required).
+//          original LLDB driver class (the extra indirection is not necessarily required).
 //          Check the arguments that were passed to this program to make sure they are
 //          valid and to get their argument values (if any).
 // Type:    Overridden.

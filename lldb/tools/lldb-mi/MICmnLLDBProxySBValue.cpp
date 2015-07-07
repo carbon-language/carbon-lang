@@ -36,7 +36,7 @@ CMICmnLLDBProxySBValue::GetValueAsUnsigned(const lldb::SBValue &vrValue, MIuint6
     MIuint64 nValue = rValue.GetValueAsUnsigned(nFailValue);
     if (nValue == nFailValue)
     {
-        nFailValue = 5; // Some arbitary number
+        nFailValue = 5; // Some arbitrary number
         nValue = rValue.GetValueAsUnsigned(nFailValue);
         if (nValue != nFailValue)
         {
@@ -72,7 +72,7 @@ CMICmnLLDBProxySBValue::GetValueAsSigned(const lldb::SBValue &vrValue, MIint64 &
     MIuint64 nValue = rValue.GetValueAsSigned(nFailValue);
     if (nValue == nFailValue)
     {
-        nFailValue = 5; // Some arbitary number
+        nFailValue = 5; // Some arbitrary number
         nValue = rValue.GetValueAsSigned(nFailValue);
         if (nValue != nFailValue)
         {

@@ -120,7 +120,7 @@ class CMICmnLLDBDebugSessionInfoVarObj
     static MIuint ms_nVarUniqueId;
     static varFormat_e ms_eDefaultFormat;    // overrides "natural" format
     //
-    // *** Upate the copy move constructors and assignment operator ***
+    // *** Update the copy move constructors and assignment operator ***
     varFormat_e m_eVarFormat;
     varType_e m_eVarType;
     CMIUtilString m_strName;
@@ -128,5 +128,5 @@ class CMICmnLLDBDebugSessionInfoVarObj
     CMIUtilString m_strNameReal;
     CMIUtilString m_strFormattedValue;
     CMIUtilString m_strVarObjParentName;
-    // *** Upate the copy move constructors and assignment operator ***
+    // *** Update the copy move constructors and assignment operator ***
 };

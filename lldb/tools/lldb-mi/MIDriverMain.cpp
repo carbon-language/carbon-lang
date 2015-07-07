@@ -124,7 +124,7 @@ DriverSystemShutdown(const bool vbAppExitOk)
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details: MI's application start point of execution. The applicaton runs in two modes.
+// Details: MI's application start point of execution. The application runs in two modes.
 //          An LLDB native driver mode where it acts no different from the LLDB driver.
 //          The other mode is the MI when it finds on the command line
 //          the --interpreter option. Command line argument --help on its own will give
@@ -140,7 +140,7 @@ DriverSystemShutdown(const bool vbAppExitOk)
 //                >0    = Program success with status i.e. Control-C signal status
 //                <0    = Program failed.
 //              -1      = Program failed reason not specified here, see MI log file.
-//              -1000   = Program failed did not initailize successfully.
+//              -1000   = Program failed did not initialize successfully.
 // Throws:  None.
 //--
 int

@@ -93,7 +93,7 @@ CMICmnStreamStdout::Shutdown(void)
 
 //++ ------------------------------------------------------------------------------------
 // Details: Write an MI format type response to stdout. The text data does not need to
-//          include a carrage line return as this is added to the text. The function also
+//          include a carriage line return as this is added to the text. The function also
 //          then passes the text data into the CMICmnLog logger.
 // Type:    Method.
 // Args:    vText       - (R) MI formatted text.
@@ -110,7 +110,7 @@ CMICmnStreamStdout::WriteMIResponse(const CMIUtilString &vText, const bool vbSen
 
 //++ ------------------------------------------------------------------------------------
 // Details: Write text data to stdout. The text data does not need to
-//          include a carrage line return as this is added to the text. The function also
+//          include a carriage line return as this is added to the text. The function also
 //          then passes the text data into the CMICmnLog logger.
 // Type:    Method.
 // Args:    vText       - (R) Text data.
@@ -132,7 +132,7 @@ CMICmnStreamStdout::Write(const CMIUtilString &vText, const bool vbSendToLog /* 
 
 //++ ------------------------------------------------------------------------------------
 // Details: Write text data to stdout. The text data does not need to
-//          include a carrage line return as this is added to the text. The function also
+//          include a carriage line return as this is added to the text. The function also
 //          then passes the text data into the CMICmnLog logger.
 // Type:    Method.
 // Args:    vText           - (R) Text data prefixed with MI app's short name.

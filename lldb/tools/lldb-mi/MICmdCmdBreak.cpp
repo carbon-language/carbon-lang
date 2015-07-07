@@ -1009,7 +1009,7 @@ CMICmdCmdBreakCondition::CreateSelf(void)
 //              a single string i.e. '2' -> ok.
 //              a quoted string i.e. "a > 100" -> ok
 //              a non quoted string i.e. 'a > 100' -> not ok
-//          CMICmdArgValString only extracts the first space seperated string, the "a".
+//          CMICmdArgValString only extracts the first space separated string, the "a".
 //          This function using the optional argument type CMICmdArgValListOfN collects
 //          the rest of the expression so that is may be added to the 'a' part to form a
 //          complete expression string i.e. "a > 100".

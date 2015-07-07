@@ -78,7 +78,7 @@ CMIUtilSystemLinux::GetOSLastError(void) const
 // Details: Retrieves the fully qualified path for the this application. If the function
 //          fails the string is filled with the error message.
 // Type:    Method.
-// Args:    vrwFileNamePath - (W) The excutable's name and path or last error description.
+// Args:    vrwFileNamePath - (W) The executable's name and path or last error description.
 // Return:  MIstatus::success - Functional succeeded.
 //          MIstatus::failure - Functional failed.
 // Throws:  None.

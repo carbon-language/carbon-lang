@@ -26,7 +26,7 @@
 //--
 class CMIUtilString : public std::string
 {
-    // Typdefs:
+    // Typedefs:
   public:
     typedef std::vector<CMIUtilString> VecString_t;
 

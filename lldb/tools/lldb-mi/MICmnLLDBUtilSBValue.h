@@ -16,7 +16,7 @@
 #include "MIDataTypes.h"
 #include "MICmnMIValueTuple.h"
 
-// Declerations:
+// Declarations:
 class CMIUtilString;
 
 //++ ============================================================================

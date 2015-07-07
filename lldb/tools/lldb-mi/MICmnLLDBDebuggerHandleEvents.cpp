@@ -64,7 +64,7 @@ CMICmnLLDBDebuggerHandleEvents::~CMICmnLLDBDebuggerHandleEvents(void)
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details: Initialize resources for *this broardcaster object.
+// Details: Initialize resources for *this broadcaster object.
 // Type:    Method.
 // Args:    None.
 // Return:  MIstatus::success - Functionality succeeded.
@@ -90,7 +90,7 @@ CMICmnLLDBDebuggerHandleEvents::Initialize(void)
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details: Release resources for *this broardcaster object.
+// Details: Release resources for *this broadcaster object.
 // Type:    Method.
 // Args:    None.
 // Return:  MIstatus::success - Functionality succeeded.
@@ -112,7 +112,7 @@ CMICmnLLDBDebuggerHandleEvents::Shutdown(void)
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details: Interpret the event object to asscertain the action to take or information to
+// Details: Interpret the event object to ascertain the action to take or information to
 //          to form and put in a MI Out-of-band record object which is given to stdout.
 // Type:    Method.
 // Args:    vEvent          - (R) An LLDB broadcast event.

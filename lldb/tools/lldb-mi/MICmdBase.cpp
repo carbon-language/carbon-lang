@@ -69,7 +69,7 @@ CMICmdBase::GetErrorDescription(void) const
 //          options description string.
 // Type:    Overridden.
 // Args:    None.
-// Return:  CMIUtilString & -   Command decription.
+// Return:  CMIUtilString & -   Command description.
 // Throws:  None.
 //--
 const CMIUtilString &
@@ -141,7 +141,7 @@ CMICmdBase::GetMIResultRecord(void) const
 
 //++ ------------------------------------------------------------------------------------
 // Details: Retrieve from the command additional MI result to its 1 line response.
-//          Because of using LLDB addtional 'fake'/hack output is sometimes required to
+//          Because of using LLDB additional 'fake'/hack output is sometimes required to
 //          help the driver client operate i.e. Eclipse.
 // Type:    Overridden.
 // Args:    None.
@@ -156,7 +156,7 @@ CMICmdBase::GetMIResultRecordExtra(void) const
 
 //++ ------------------------------------------------------------------------------------
 // Details: Hss *this command got additional MI result to its 1 line response.
-//          Because of using LLDB addtional 'fake'/hack output is sometimes required to
+//          Because of using LLDB additional 'fake'/hack output is sometimes required to
 //          help the driver client operate i.e. Eclipse.
 // Type:    Overridden.
 // Args:    None.

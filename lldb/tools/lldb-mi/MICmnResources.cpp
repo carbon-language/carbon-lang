@@ -129,7 +129,7 @@ const CMICmnResources::SRsrcTextData CMICmnResources::ms_pResourceId2TextData[] 
     {IDS_LLDBDEBUGGER_ERR_INVALIDCLIENTNAME, "LLDB Debugger. Invalid client name '%s' "},
     {IDS_LLDBDEBUGGER_ERR_CLIENTNOTREGISTERED, "LLDB Debugger. Client name '%s' not registered for listening events"},
     {IDS_LLDBDEBUGGER_ERR_STOPLISTENER, "LLDB Debugger. Failure occurred stopping event for client '%s' SBBroadcaster '%s'"},
-    {IDS_LLDBDEBUGGER_ERR_BROARDCASTER_NAME, "LLDB Debugger. Broardcaster's name '%s' is not valid"},
+    {IDS_LLDBDEBUGGER_ERR_BROARDCASTER_NAME, "LLDB Debugger. Broadcaster's name '%s' is not valid"},
     {IDS_LLDBDEBUGGER_WRN_UNKNOWN_EVENT, "LLDB Debugger. Unhandled event '%s'"},
     {IDS_LLDBOUTOFBAND_ERR_UNKNOWN_EVENT, "LLDB Out-of-band. Handling event for '%s', an event enumeration '%d' not recognised"},
     {IDS_LLDBOUTOFBAND_ERR_PROCESS_INVALID, "LLDB Out-of-band. Invalid '%s' in '%s'"},

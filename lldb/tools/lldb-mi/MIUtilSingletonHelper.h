@@ -24,7 +24,7 @@ namespace MI
 //          MI components (singletons) required by a client module.
 // Type:    Template method.
 // Args:    vErrorResrcId   - (R)  The string resource ID error message identifier to place in errMsg.
-//          vwrbOk          - (RW) On input True = Try to initalise MI driver module.
+//          vwrbOk          - (RW) On input True = Try to initialize MI driver module.
 //                                 On output True = MI driver module initialise successfully.
 //          vwrErrMsg       - (W)  MI driver module initialise error description on failure.
 // Return:  MIstatus::success - Functional succeeded.
@@ -46,7 +46,7 @@ ModuleInit(const MIint vErrorResrcId, bool &vwrbOk, CMIUtilString &vwrErrMsg)
 }
 
 //++ ============================================================================
-// Details: Short cut helper function to simplify repeated shutodown of
+// Details: Short cut helper function to simplify repeated shutdown of
 //          MI components (singletons) required by a client module.
 // Type:    Template method.
 // Args:    vErrorResrcId   - (R)  The string resource ID error message identifier

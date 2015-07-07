@@ -33,7 +33,7 @@ class CMICmnStreamStdout;
 //          exceed a time limit which if it exceeds informs the command(s) to
 //          stop work.
 //          The work by the Invoker is carried out in the main thread.
-//          The Invoker takes ownersip of any commands created which means it
+//          The Invoker takes ownership of any commands created which means it
 //          is the only object to delete them when a command is finished working.
 //          A singleton class.
 // Gotchas: None.

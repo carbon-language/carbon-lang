@@ -59,7 +59,7 @@ CMIUtilThreadActiveObjBase::ThreadIsActive(void)
 
 //++ ------------------------------------------------------------------------------------
 // Details: Set up *this thread.
-// Type:    Mrthod.
+// Type:    Method.
 // Args:    None.
 // Return:  MIstatus::success - Functional succeeded.
 //          MIstatus::failure - Functional failed.
@@ -73,7 +73,7 @@ CMIUtilThreadActiveObjBase::ThreadExecute(void)
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details: Aquire a reference to CMIUtilThreadActiveObjBase.
+// Details: Acquire a reference to CMIUtilThreadActiveObjBase.
 // Type:    Method.
 // Args:    None.
 // Return:  MIstatus::success - Functional succeeded.

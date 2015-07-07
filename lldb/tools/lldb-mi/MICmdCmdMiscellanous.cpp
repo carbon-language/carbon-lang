@@ -184,7 +184,7 @@ CMICmdCmdListThreadGroups::ParseArgs(void)
 //++ ------------------------------------------------------------------------------------
 // Details: The invoker requires this function. The command does work in this function.
 //          The command is likely to communicate with the LLDB SBDebugger in here.
-//          Synopis: -list-thread-groups [ --available ] [ --recurse 1 ] [ group ... ]
+//          Synopsis: -list-thread-groups [ --available ] [ --recurse 1 ] [ group ... ]
 //          This command does not follow the MI documentation exactly. Has an extra
 //          argument "i1" to handle.
 //          Ref:

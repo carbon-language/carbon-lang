@@ -46,7 +46,7 @@ CMICmnBase::~CMICmnBase(void)
 // Details: Retrieve whether *this object has an error description set.
 // Type:    Method.
 // Args:    None.
-// Return:  bool    - True = Yes already defined, false = empty discription.
+// Return:  bool    - True = Yes already defined, false = empty description.
 // Throws:  None.
 //--
 bool

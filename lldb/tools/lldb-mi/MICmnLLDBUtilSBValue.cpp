@@ -20,7 +20,7 @@
 //++ ------------------------------------------------------------------------------------
 // Details: CMICmnLLDBUtilSBValue constructor.
 // Type:    Method.
-// Args:    vrValue             - (R) The LLDb value object.
+// Args:    vrValue             - (R) The LLDB value object.
 //          vbHandleCharType    - (R) True = Yes return text molding to char type,
 //                                    False = just return data.
 // Return:  None.
@@ -579,7 +579,7 @@ CMICmnLLDBUtilSBValue::HasName(void) const
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details: Determine if the value object' respresents a LLDB variable i.e. "$0".
+// Details: Determine if the value object' represents a LLDB variable i.e. "$0".
 // Type:    Method.
 // Args:    None.
 // Return:  bool    - True = Yes LLDB variable, false = no.

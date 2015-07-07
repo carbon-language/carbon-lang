@@ -176,7 +176,7 @@ CMICmdInvoker::CmdAdd(const CMICmdBase &vCmd)
 //++ ------------------------------------------------------------------------------------
 // Details: Having previously had the potential command validated and found valid now
 //          get the command executed.
-//          If the Functionalityity returns MIstatus::failure call GetErrorDescription().
+//          If the Functionality returns MIstatus::failure call GetErrorDescription().
 //          This function is used by the application's main thread.
 // Type:    Method.
 // Args:    vCmd    - (RW) Command object.
@@ -220,7 +220,7 @@ CMICmdInvoker::CmdExecute(CMICmdBase &vCmd)
 
 //++ ------------------------------------------------------------------------------------
 // Details: Called when a command has finished its Execution() work either synchronously
-//          because the command executed was the type a non event type or asynchronoulsy
+//          because the command executed was the type a non event type or asynchronously
 //          via the command's callback (because of an SB Listener event). Needs to be called
 //          so that *this invoker call do some house keeping and then proceed to call
 //          the command's Acknowledge() function.

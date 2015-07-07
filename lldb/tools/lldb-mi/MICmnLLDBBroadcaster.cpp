@@ -35,7 +35,7 @@ CMICmnLLDBBroadcaster::~CMICmnLLDBBroadcaster(void)
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details: Initialize resources for *this broardcaster object.
+// Details: Initialize resources for *this broadcaster object.
 // Type:    Method.
 // Args:    None.
 // Return:  MIstatus::success - Functionality succeeded.
@@ -56,7 +56,7 @@ CMICmnLLDBBroadcaster::Initialize(void)
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details: Release resources for *this broardcaster object.
+// Details: Release resources for *this broadcaster object.
 // Type:    Method.
 // Args:    None.
 // Return:  MIstatus::success - Functionality succeeded.

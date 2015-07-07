@@ -35,8 +35,8 @@ class CMICmnMIValueList;
 // Details: MI debug session object that holds debugging information between
 //          instances of MI commands executing their work and producing MI
 //          result records. Information/data is set by one or many commands then
-//          retrieved by the same or other sebsequent commands.
-//          It primarily to hold LLDB type objects.
+//          retrieved by the same or other subsequent commands.
+//          It primarily holds LLDB type objects.
 //          A singleton class.
 // Gotchas: None.
 // Authors: Illya Rudkin 04/03/2014.

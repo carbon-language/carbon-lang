@@ -84,7 +84,7 @@ CMICmnMIValueList::BuildList(void)
 
 //++ ------------------------------------------------------------------------------------
 // Details: Add another MI result object to  the value list's of list is results.
-//          Only result obejcts can be added to a list of result otherwise this function
+//          Only result objects can be added to a list of result otherwise this function
 //          will return MIstatus::failure.
 // Type:    Method.
 // Args:    vResult - (R) The MI result object.
@@ -116,7 +116,7 @@ CMICmnMIValueList::Add(const CMICmnMIValue &vValue)
 
 //++ ------------------------------------------------------------------------------------
 // Details: Add another MI result object to  the value list's of list is results.
-//          Only result obejcts can be added to a list of result otherwise this function
+//          Only result objects can be added to a list of result otherwise this function
 //          will return MIstatus::failure.
 // Type:    Method.
 // Args:    vResult - (R) The MI result object.

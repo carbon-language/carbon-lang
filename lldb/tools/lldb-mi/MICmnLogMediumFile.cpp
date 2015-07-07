@@ -396,7 +396,7 @@ CMICmnLogMediumFile::ConvertCr(const CMIUtilString &vData) const
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details: Set the header text that is written to the logger file at the begining.
+// Details: Set the header text that is written to the logger file at the beginning.
 // Type:    Method.
 // Args:    vText   - (R) Text.
 // Return:  MIstatus::success - Functional succeeded.
@@ -425,7 +425,7 @@ CMICmnLogMediumFile::GetLineReturn(void) const
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details: Set the diretory to place the log file.
+// Details: Set the directory to place the log file.
 // Type:    Method.
 // Args:    vPath   - (R) Path to log.
 // Return:  MIstatus::success - Functional succeeded.

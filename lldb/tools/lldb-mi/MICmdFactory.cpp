@@ -85,7 +85,7 @@ CMICmdFactory::Shutdown(void)
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details: Register a command's creator function with the command identitier the MI
+// Details: Register a command's creator function with the command identifier the MI
 //          command name i.e. 'file-exec-and-symbols'.
 // Type:    Method.
 // Args:    vMiCmd          - (R) Command's name, the MI command.

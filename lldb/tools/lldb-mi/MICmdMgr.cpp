@@ -170,7 +170,7 @@ CMICmdMgr::CmdInterpret(const CMIUtilString &vTextLine, bool &vwbYesValid, bool 
 //++ ------------------------------------------------------------------------------------
 // Details: Having previously had the potential command validated and found valid now
 //          get the command executed.
-//          If the Functionalityity returns MIstatus::failure call GetErrorDescription().
+//          If the Functionality returns MIstatus::failure call GetErrorDescription().
 //          This function is used by the application's main thread.
 // Type:    Method.
 // Args:    vCmdData    - (RW) Command meta data.

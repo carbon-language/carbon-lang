@@ -15,7 +15,7 @@
 #include "MIUtilSingletonBase.h"
 
 //++ ============================================================================
-// Details: MI derived class from LLDB SBBroardcaster API.
+// Details: MI derived class from LLDB SBBroadcaster API.
 //
 //          *** This class (files) is a place holder until we know we need it or
 //          *** not
