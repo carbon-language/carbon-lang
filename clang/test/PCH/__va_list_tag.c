@@ -1,4 +1,3 @@
-// REQUIRES: x86-registered-target
 // PR13189
 // rdar://problem/11741429
 // Test this without pch.

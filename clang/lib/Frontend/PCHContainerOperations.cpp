@@ -18,6 +18,8 @@
 #include "clang/Lex/ModuleLoader.h"
 using namespace clang;
 
+PCHContainerOperations::~PCHContainerOperations() {}
+
 namespace {
 
 /// \brief A PCHContainerGenerator that writes out the PCH to a flat file.
