@@ -1022,12 +1022,11 @@ let CategoryName = "Generics Issue" in {
 def err_objc_expected_type_parameter : Error<
   "expected type parameter name">;
 
-def err_objc_parameterized_class_without_base : Error<
-  "parameterized Objective-C class %0 must have a superclass">;
-
 def err_objc_parameterized_implementation : Error<
   "@implementation cannot have type parameters">;
 
+def err_objc_type_args_after_protocols : Error<
+  "protocol qualifiers must precede type arguments">;
 }
 
 } // end of Parser diagnostics

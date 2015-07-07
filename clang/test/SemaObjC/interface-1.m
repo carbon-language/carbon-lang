@@ -3,7 +3,7 @@
 
 @interface NSWhatever :
 NSObject     // expected-error {{cannot find interface declaration for 'NSObject'}}
-<NSCopying>  // expected-error {{cannot find protocol declaration for 'NSCopying'}}
+<NSCopying>  // expected-error {{no type or protocol named 'NSCopying'}}
 @end
 
 

@@ -893,6 +893,7 @@ bool DeclSpec::SetConstexprSpec(SourceLocation Loc, const char *&PrevSpec,
   return false;
 }
 
+
 bool DeclSpec::SetConceptSpec(SourceLocation Loc, const char *&PrevSpec,
                               unsigned &DiagID) {
   if (Concept_specified) {
@@ -903,6 +904,16 @@ bool DeclSpec::SetConceptSpec(SourceLocation Loc, const char *&PrevSpec,
   Concept_specified = true;
   ConceptLoc = Loc;
   return false;
+}
+
+void DeclSpec::setObjCTypeArgs(SourceLocation lAngleLoc,
+                               ArrayRef<ParsedType> args,
+                               SourceLocation rAngleLoc) {
+  ParsedType *argsCopy = new ParsedType[args.size()];
+  memcpy(argsCopy, args.data(), args.size() * sizeof(ParsedType));
+  ObjCTypeArgs = llvm::makeArrayRef(argsCopy, args.size());
+  ObjCTypeArgsLAngleLoc = lAngleLoc;
+  ObjCTypeArgsRAngleLoc = rAngleLoc;
 }
 
 void DeclSpec::setProtocolQualifiers(Decl * const *Protos,

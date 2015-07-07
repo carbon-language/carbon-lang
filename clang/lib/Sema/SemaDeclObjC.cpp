@@ -464,6 +464,142 @@ static void diagnoseUseOfProtocols(Sema &TheSema,
   }
 }
 
+void Sema::
+ActOnSuperClassOfClassInterface(Scope *S,
+                                SourceLocation AtInterfaceLoc,
+                                ObjCInterfaceDecl *IDecl,
+                                IdentifierInfo *ClassName,
+                                SourceLocation ClassLoc,
+                                IdentifierInfo *SuperName,
+                                SourceLocation SuperLoc,
+                                ArrayRef<ParsedType> SuperTypeArgs,
+                                SourceRange SuperTypeArgsRange) {
+  // Check if a different kind of symbol declared in this scope.
+  NamedDecl *PrevDecl = LookupSingleName(TUScope, SuperName, SuperLoc,
+                                         LookupOrdinaryName);
+
+  if (!PrevDecl) {
+    // Try to correct for a typo in the superclass name without correcting
+    // to the class we're defining.
+    if (TypoCorrection Corrected = CorrectTypo(
+            DeclarationNameInfo(SuperName, SuperLoc),
+            LookupOrdinaryName, TUScope,
+            NULL, llvm::make_unique<ObjCInterfaceValidatorCCC>(IDecl),
+            CTK_ErrorRecovery)) {
+      diagnoseTypo(Corrected, PDiag(diag::err_undef_superclass_suggest)
+                   << SuperName << ClassName);
+      PrevDecl = Corrected.getCorrectionDeclAs<ObjCInterfaceDecl>();
+    }
+  }
+
+  if (declaresSameEntity(PrevDecl, IDecl)) {
+    Diag(SuperLoc, diag::err_recursive_superclass)
+      << SuperName << ClassName << SourceRange(AtInterfaceLoc, ClassLoc);
+    IDecl->setEndOfDefinitionLoc(ClassLoc);
+  } else {
+    ObjCInterfaceDecl *SuperClassDecl =
+    dyn_cast_or_null<ObjCInterfaceDecl>(PrevDecl);
+    QualType SuperClassType;
+
+    // Diagnose classes that inherit from deprecated classes.
+    if (SuperClassDecl) {
+      (void)DiagnoseUseOfDecl(SuperClassDecl, SuperLoc);
+      SuperClassType = Context.getObjCInterfaceType(SuperClassDecl);
+    }
+
+    if (PrevDecl && SuperClassDecl == 0) {
+      // The previous declaration was not a class decl. Check if we have a
+      // typedef. If we do, get the underlying class type.
+      if (const TypedefNameDecl *TDecl =
+          dyn_cast_or_null<TypedefNameDecl>(PrevDecl)) {
+        QualType T = TDecl->getUnderlyingType();
+        if (T->isObjCObjectType()) {
+          if (NamedDecl *IDecl = T->getAs<ObjCObjectType>()->getInterface()) {
+            SuperClassDecl = dyn_cast<ObjCInterfaceDecl>(IDecl);
+            SuperClassType = Context.getTypeDeclType(TDecl);
+
+            // This handles the following case:
+            // @interface NewI @end
+            // typedef NewI DeprI __attribute__((deprecated("blah")))
+            // @interface SI : DeprI /* warn here */ @end
+            (void)DiagnoseUseOfDecl(const_cast<TypedefNameDecl*>(TDecl), SuperLoc);
+          }
+        }
+      }
+
+      // This handles the following case:
+      //
+      // typedef int SuperClass;
+      // @interface MyClass : SuperClass {} @end
+      //
+      if (!SuperClassDecl) {
+        Diag(SuperLoc, diag::err_redefinition_different_kind) << SuperName;
+        Diag(PrevDecl->getLocation(), diag::note_previous_definition);
+      }
+    }
+
+    if (!dyn_cast_or_null<TypedefNameDecl>(PrevDecl)) {
+      if (!SuperClassDecl)
+        Diag(SuperLoc, diag::err_undef_superclass)
+          << SuperName << ClassName << SourceRange(AtInterfaceLoc, ClassLoc);
+      else if (RequireCompleteType(SuperLoc,
+                                   SuperClassType,
+                                   diag::err_forward_superclass,
+                                   SuperClassDecl->getDeclName(),
+                                   ClassName,
+                                   SourceRange(AtInterfaceLoc, ClassLoc))) {
+        SuperClassDecl = 0;
+        SuperClassType = QualType();
+      }
+    }
+
+    if (SuperClassType.isNull()) {
+      assert(!SuperClassDecl && "Failed to set SuperClassType?");
+      return;
+    }
+
+    // Handle type arguments on the superclass.
+    TypeSourceInfo *SuperClassTInfo = nullptr;
+    if (!SuperTypeArgs.empty()) {
+      // Form declaration specifiers naming this superclass type with
+      // type arguments.
+      AttributeFactory attrFactory;
+      DeclSpec DS(attrFactory);
+      const char* prevSpec; // unused
+      unsigned diagID; // unused
+      TypeSourceInfo *parsedTSInfo
+        = Context.getTrivialTypeSourceInfo(SuperClassType, SuperLoc);
+      ParsedType parsedType = CreateParsedType(SuperClassType, parsedTSInfo);
+
+      DS.SetTypeSpecType(DeclSpec::TST_typename, SuperLoc, prevSpec, diagID,
+                         parsedType, Context.getPrintingPolicy());
+      DS.SetRangeStart(SuperLoc);
+      DS.SetRangeEnd(SuperLoc);
+      DS.setObjCTypeArgs(SuperTypeArgsRange.getBegin(),
+                         SuperTypeArgs,
+                         SuperTypeArgsRange.getEnd());
+
+      // Form the declarator.
+      Declarator D(DS, Declarator::TypeNameContext);
+     
+      TypeResult fullSuperClassType = ActOnTypeName(S, D);
+      if (!fullSuperClassType.isUsable())
+        return;
+
+      SuperClassType = GetTypeFromParser(fullSuperClassType.get(), 
+                                         &SuperClassTInfo);
+    }
+
+    if (!SuperClassTInfo) {
+      SuperClassTInfo = Context.getTrivialTypeSourceInfo(SuperClassType, 
+                                                         SuperLoc);
+    }
+
+    IDecl->setSuperClass(SuperClassTInfo);
+    IDecl->setEndOfDefinitionLoc(SuperClassTInfo->getTypeLoc().getLocEnd());
+  }
+}
+
 DeclResult Sema::actOnObjCTypeParam(Scope *S, IdentifierInfo *paramName,
                                     SourceLocation paramLoc,
                                     SourceLocation colonLoc,
@@ -499,7 +635,7 @@ DeclResult Sema::actOnObjCTypeParam(Scope *S, IdentifierInfo *paramName,
       // Form the new type source information.
       typeBoundInfo = builder.getTypeSourceInfo(Context, typeBound);
     } else {
-      // Not a
+      // Not a valid type bound.
       Diag(typeBoundInfo->getTypeLoc().getBeginLoc(),
            diag::err_objc_type_param_bound_nonobject)
         << typeBound << paramName;
@@ -669,10 +805,12 @@ static bool checkTypeParamListConsistency(Sema &S,
 }
 
 Decl *Sema::
-ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
+ActOnStartClassInterface(Scope *S, SourceLocation AtInterfaceLoc,
                          IdentifierInfo *ClassName, SourceLocation ClassLoc,
                          ObjCTypeParamList *typeParamList,
                          IdentifierInfo *SuperName, SourceLocation SuperLoc,
+                         ArrayRef<ParsedType> SuperTypeArgs,
+                         SourceRange SuperTypeArgsRange,
                          Decl * const *ProtoRefs, unsigned NumProtoRefs,
                          const SourceLocation *ProtoLocs, 
                          SourceLocation EndProtoLoc, AttributeList *AttrList) {
@@ -767,84 +905,13 @@ ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
     IDecl->startDefinition();
   
   if (SuperName) {
-    // Check if a different kind of symbol declared in this scope.
-    PrevDecl = LookupSingleName(TUScope, SuperName, SuperLoc,
-                                LookupOrdinaryName);
+    // Diagnose availability in the context of the @interface.
+    ContextRAII SavedContext(*this, IDecl);
 
-    if (!PrevDecl) {
-      // Try to correct for a typo in the superclass name without correcting
-      // to the class we're defining.
-      if (TypoCorrection Corrected =
-              CorrectTypo(DeclarationNameInfo(SuperName, SuperLoc),
-                          LookupOrdinaryName, TUScope, nullptr,
-                          llvm::make_unique<ObjCInterfaceValidatorCCC>(IDecl),
-                          CTK_ErrorRecovery)) {
-        diagnoseTypo(Corrected, PDiag(diag::err_undef_superclass_suggest)
-                                    << SuperName << ClassName);
-        PrevDecl = Corrected.getCorrectionDeclAs<ObjCInterfaceDecl>();
-      }
-    }
-
-    if (declaresSameEntity(PrevDecl, IDecl)) {
-      Diag(SuperLoc, diag::err_recursive_superclass)
-        << SuperName << ClassName << SourceRange(AtInterfaceLoc, ClassLoc);
-      IDecl->setEndOfDefinitionLoc(ClassLoc);
-    } else {
-      ObjCInterfaceDecl *SuperClassDecl =
-                                dyn_cast_or_null<ObjCInterfaceDecl>(PrevDecl);
-
-      // Diagnose availability in the context of the @interface.
-      ContextRAII SavedContext(*this, IDecl);
-      // Diagnose classes that inherit from deprecated classes.
-      if (SuperClassDecl)
-        (void)DiagnoseUseOfDecl(SuperClassDecl, SuperLoc);
-
-      if (PrevDecl && !SuperClassDecl) {
-        // The previous declaration was not a class decl. Check if we have a
-        // typedef. If we do, get the underlying class type.
-        if (const TypedefNameDecl *TDecl =
-              dyn_cast_or_null<TypedefNameDecl>(PrevDecl)) {
-          QualType T = TDecl->getUnderlyingType();
-          if (T->isObjCObjectType()) {
-            if (NamedDecl *IDecl = T->getAs<ObjCObjectType>()->getInterface()) {
-              SuperClassDecl = dyn_cast<ObjCInterfaceDecl>(IDecl);
-              // This handles the following case:
-              // @interface NewI @end
-              // typedef NewI DeprI __attribute__((deprecated("blah")))
-              // @interface SI : DeprI /* warn here */ @end
-              (void)DiagnoseUseOfDecl(const_cast<TypedefNameDecl*>(TDecl), SuperLoc);
-            }
-          }
-        }
-
-        // This handles the following case:
-        //
-        // typedef int SuperClass;
-        // @interface MyClass : SuperClass {} @end
-        //
-        if (!SuperClassDecl) {
-          Diag(SuperLoc, diag::err_redefinition_different_kind) << SuperName;
-          Diag(PrevDecl->getLocation(), diag::note_previous_definition);
-        }
-      }
-
-      if (!dyn_cast_or_null<TypedefNameDecl>(PrevDecl)) {
-        if (!SuperClassDecl)
-          Diag(SuperLoc, diag::err_undef_superclass)
-            << SuperName << ClassName << SourceRange(AtInterfaceLoc, ClassLoc);
-        else if (RequireCompleteType(SuperLoc, 
-                                  Context.getObjCInterfaceType(SuperClassDecl),
-                                     diag::err_forward_superclass,
-                                     SuperClassDecl->getDeclName(),
-                                     ClassName,
-                                     SourceRange(AtInterfaceLoc, ClassLoc))) {
-          SuperClassDecl = nullptr;
-        }
-      }
-      IDecl->setSuperClass(SuperClassDecl);
-      IDecl->setSuperClassLoc(SuperLoc);
-      IDecl->setEndOfDefinitionLoc(SuperLoc);
-    }
+    ActOnSuperClassOfClassInterface(S, AtInterfaceLoc, IDecl, 
+                                    ClassName, ClassLoc, 
+                                    SuperName, SuperLoc, SuperTypeArgs, 
+                                    SuperTypeArgsRange);
   } else { // we have a root class.
     IDecl->setEndOfDefinitionLoc(ClassLoc);
   }
@@ -1089,6 +1156,325 @@ Sema::FindProtocolDeclaration(bool WarnOnDeclarations, bool ForObjCContainer,
     }
     Protocols.push_back(PDecl);
   }
+}
+
+// Callback to only accept typo corrections that are either
+// Objective-C protocols or valid Objective-C type arguments.
+class ObjCTypeArgOrProtocolValidatorCCC : public CorrectionCandidateCallback {
+  ASTContext &Context;
+  Sema::LookupNameKind LookupKind;
+ public:
+  ObjCTypeArgOrProtocolValidatorCCC(ASTContext &context,
+                                    Sema::LookupNameKind lookupKind)
+    : Context(context), LookupKind(lookupKind) { }
+
+  bool ValidateCandidate(const TypoCorrection &candidate) override {
+    // If we're allowed to find protocols and we have a protocol, accept it.
+    if (LookupKind != Sema::LookupOrdinaryName) {
+      if (candidate.getCorrectionDeclAs<ObjCProtocolDecl>())
+        return true;
+    }
+
+    // If we're allowed to find type names and we have one, accept it.
+    if (LookupKind != Sema::LookupObjCProtocolName) {
+      // If we have a type declaration, we might accept this result.
+      if (auto typeDecl = candidate.getCorrectionDeclAs<TypeDecl>()) {
+        // If we found a tag declaration outside of C++, skip it. This
+        // can happy because we look for any name when there is no
+        // bias to protocol or type names.
+        if (isa<RecordDecl>(typeDecl) && !Context.getLangOpts().CPlusPlus)
+          return false;
+
+        // Make sure the type is something we would accept as a type
+        // argument.
+        auto type = Context.getTypeDeclType(typeDecl);
+        if (type->isObjCObjectPointerType() ||
+            type->isBlockPointerType() ||
+            type->isDependentType() ||
+            type->isObjCObjectType())
+          return true;
+
+        return false;
+      }
+
+      // If we have an Objective-C class type, accept it; there will
+      // be another fix to add the '*'.
+      if (candidate.getCorrectionDeclAs<ObjCInterfaceDecl>())
+        return true;
+
+      return false;
+    }
+
+    return false;
+  }
+};
+
+void Sema::actOnObjCTypeArgsOrProtocolQualifiers(
+       Scope *S,
+       DeclSpec &DS,
+       SourceLocation lAngleLoc,
+       ArrayRef<IdentifierInfo *> identifiers,
+       ArrayRef<SourceLocation> identifierLocs,
+       SourceLocation rAngleLoc,
+       bool warnOnIncompleteProtocols) {
+  // Local function that updates the declaration specifiers with
+  // protocol information.
+  SmallVector<ObjCProtocolDecl *, 4> protocols;
+  unsigned numProtocolsResolved = 0;
+  auto resolvedAsProtocols = [&] {
+    assert(numProtocolsResolved == identifiers.size() && "Unresolved protocols");
+    
+    for (unsigned i = 0, n = protocols.size(); i != n; ++i) {
+      ObjCProtocolDecl *&proto = protocols[i];
+      // For an objc container, delay protocol reference checking until after we
+      // can set the objc decl as the availability context, otherwise check now.
+      if (!warnOnIncompleteProtocols) {
+        (void)DiagnoseUseOfDecl(proto, identifierLocs[i]);
+      }
+
+      // If this is a forward protocol declaration, get its definition.
+      if (!proto->isThisDeclarationADefinition() && proto->getDefinition())
+        proto = proto->getDefinition();
+
+      // If this is a forward declaration and we are supposed to warn in this
+      // case, do it.
+      // FIXME: Recover nicely in the hidden case.
+      ObjCProtocolDecl *forwardDecl = nullptr;
+      if (warnOnIncompleteProtocols &&
+          NestedProtocolHasNoDefinition(proto, forwardDecl)) {
+        Diag(identifierLocs[i], diag::warn_undef_protocolref)
+          << proto->getDeclName();
+        Diag(forwardDecl->getLocation(), diag::note_protocol_decl_undefined)
+          << forwardDecl;
+      }
+    }
+
+    DS.setProtocolQualifiers((Decl * const *)(protocols.data()),
+                             protocols.size(),
+                             const_cast<SourceLocation *>(identifierLocs.data()),
+                             lAngleLoc);
+    if (rAngleLoc.isValid())
+      DS.SetRangeEnd(rAngleLoc);
+  };
+
+  // Attempt to resolve all of the identifiers as protocols.
+  for (unsigned i = 0, n = identifiers.size(); i != n; ++i) {
+    ObjCProtocolDecl *proto = LookupProtocol(identifiers[i], identifierLocs[i]);
+    protocols.push_back(proto);
+    if (proto)
+      ++numProtocolsResolved;
+  }
+
+  // If all of the names were protocols, these were protocol qualifiers.
+  if (numProtocolsResolved == identifiers.size())
+    return resolvedAsProtocols();
+
+  // Attempt to resolve all of the identifiers as type names or
+  // Objective-C class names. The latter is technically ill-formed,
+  // but is probably something like \c NSArray<NSView *> missing the
+  // \c*.
+  typedef llvm::PointerUnion<TypeDecl *, ObjCInterfaceDecl *> TypeOrClassDecl;
+  SmallVector<TypeOrClassDecl, 4> typeDecls;
+  unsigned numTypeDeclsResolved = 0;
+  for (unsigned i = 0, n = identifiers.size(); i != n; ++i) {
+    NamedDecl *decl = LookupSingleName(S, identifiers[i], identifierLocs[i],
+                                       LookupOrdinaryName);
+    if (!decl) {
+      typeDecls.push_back(TypeOrClassDecl());
+      continue;
+    }
+
+    if (auto typeDecl = dyn_cast<TypeDecl>(decl)) {
+      typeDecls.push_back(typeDecl);
+      ++numTypeDeclsResolved;
+      continue;
+    }
+
+    if (auto objcClass = dyn_cast<ObjCInterfaceDecl>(decl)) {
+      typeDecls.push_back(objcClass);
+      ++numTypeDeclsResolved;
+      continue;
+    }
+
+    typeDecls.push_back(TypeOrClassDecl());
+  }
+
+  AttributeFactory attrFactory;
+
+  // Local function that forms a reference to the given type or
+  // Objective-C class declaration.
+  auto resolveTypeReference = [&](TypeOrClassDecl typeDecl, SourceLocation loc) 
+                                -> TypeResult {
+    // Form declaration specifiers. They simply refer to the type.
+    DeclSpec DS(attrFactory);
+    const char* prevSpec; // unused
+    unsigned diagID; // unused
+    QualType type;
+    if (auto *actualTypeDecl = typeDecl.dyn_cast<TypeDecl *>())
+      type = Context.getTypeDeclType(actualTypeDecl);
+    else
+      type = Context.getObjCInterfaceType(typeDecl.get<ObjCInterfaceDecl *>());
+    TypeSourceInfo *parsedTSInfo = Context.getTrivialTypeSourceInfo(type, loc);
+    ParsedType parsedType = CreateParsedType(type, parsedTSInfo);
+    DS.SetTypeSpecType(DeclSpec::TST_typename, loc, prevSpec, diagID,
+                       parsedType, Context.getPrintingPolicy());
+    // Use the identifier location for the type source range.
+    DS.SetRangeStart(loc);
+    DS.SetRangeEnd(loc);
+
+    // Form the declarator.
+    Declarator D(DS, Declarator::TypeNameContext);
+
+    // If we have a typedef of an Objective-C class type that is missing a '*',
+    // add the '*'.
+    if (type->getAs<ObjCInterfaceType>()) {
+      SourceLocation starLoc = PP.getLocForEndOfToken(loc);
+      ParsedAttributes parsedAttrs(attrFactory);
+      D.AddTypeInfo(DeclaratorChunk::getPointer(/*typeQuals=*/0, starLoc,
+                                                SourceLocation(),
+                                                SourceLocation(),
+                                                SourceLocation(),
+                                                SourceLocation()),
+                    parsedAttrs,
+                    starLoc);
+
+      // Diagnose the missing '*'.
+      Diag(loc, diag::err_objc_type_arg_missing_star)
+        << type
+        << FixItHint::CreateInsertion(starLoc, " *");
+    }
+
+    // Convert this to a type.
+    return ActOnTypeName(S, D);
+  };
+
+  // Local function that updates the declaration specifiers with
+  // type argument information.
+  auto resolvedAsTypeDecls = [&] {
+    assert(numTypeDeclsResolved == identifiers.size() && "Unresolved type decl");
+    // Map type declarations to type arguments.
+    SmallVector<ParsedType, 4> typeArgs;
+    for (unsigned i = 0, n = identifiers.size(); i != n; ++i) {
+      // Map type reference to a type.
+      TypeResult type = resolveTypeReference(typeDecls[i], identifierLocs[i]);
+      if (!type.isUsable())
+        return;
+
+      typeArgs.push_back(type.get());
+    }
+
+    // Record the Objective-C type arguments.
+    DS.setObjCTypeArgs(lAngleLoc, typeArgs, rAngleLoc);
+  };
+
+  // If all of the identifiers can be resolved as type names or
+  // Objective-C class names, we have type arguments.
+  if (numTypeDeclsResolved == identifiers.size())
+    return resolvedAsTypeDecls();
+
+  // Error recovery: some names weren't found, or we have a mix of
+  // type and protocol names. Go resolve all of the unresolved names
+  // and complain if we can't find a consistent answer.
+  LookupNameKind lookupKind = LookupAnyName;
+  for (unsigned i = 0, n = identifiers.size(); i != n; ++i) {
+    // If we already have a protocol or type. Check whether it is the
+    // right thing.
+    if (protocols[i] || typeDecls[i]) {
+      // If we haven't figured out whether we want types or protocols
+      // yet, try to figure it out from this name.
+      if (lookupKind == LookupAnyName) {
+        // If this name refers to both a protocol and a type (e.g., \c
+        // NSObject), don't conclude anything yet.
+        if (protocols[i] && typeDecls[i])
+          continue;
+
+        // Otherwise, let this name decide whether we'll be correcting
+        // toward types or protocols.
+        lookupKind = protocols[i] ? LookupObjCProtocolName
+                                  : LookupOrdinaryName;
+        continue;
+      }
+
+      // If we want protocols and we have a protocol, there's nothing
+      // more to do.
+      if (lookupKind == LookupObjCProtocolName && protocols[i])
+        continue;
+
+      // If we want types and we have a type declaration, there's
+      // nothing more to do.
+      if (lookupKind == LookupOrdinaryName && typeDecls[i])
+        continue;
+
+      // We have a conflict: some names refer to protocols and others
+      // refer to types.
+      Diag(identifierLocs[i], diag::err_objc_type_args_and_protocols)
+        << (protocols[i] != nullptr)
+        << identifiers[i]
+        << identifiers[0]
+        << SourceRange(identifierLocs[0]);
+
+      return;
+    }
+
+    // Perform typo correction on the name.
+    TypoCorrection corrected = CorrectTypo(
+        DeclarationNameInfo(identifiers[i], identifierLocs[i]), lookupKind, S,
+        nullptr,
+        llvm::make_unique<ObjCTypeArgOrProtocolValidatorCCC>(Context,
+                                                             lookupKind),
+        CTK_ErrorRecovery);
+    if (corrected) {
+      // Did we find a protocol?
+      if (auto proto = corrected.getCorrectionDeclAs<ObjCProtocolDecl>()) {
+        diagnoseTypo(corrected,
+                     PDiag(diag::err_undeclared_protocol_suggest)
+                       << identifiers[i]);
+        lookupKind = LookupObjCProtocolName;
+        protocols[i] = proto;
+        ++numProtocolsResolved;
+        continue;
+      }
+
+      // Did we find a type?
+      if (auto typeDecl = corrected.getCorrectionDeclAs<TypeDecl>()) {
+        diagnoseTypo(corrected,
+                     PDiag(diag::err_unknown_typename_suggest)
+                       << identifiers[i]);
+        lookupKind = LookupOrdinaryName;
+        typeDecls[i] = typeDecl;
+        ++numTypeDeclsResolved;
+        continue;
+      }
+
+      // Did we find an Objective-C class?
+      if (auto objcClass = corrected.getCorrectionDeclAs<ObjCInterfaceDecl>()) {
+        diagnoseTypo(corrected,
+                     PDiag(diag::err_unknown_type_or_class_name_suggest)
+                       << identifiers[i] << true);
+        lookupKind = LookupOrdinaryName;
+        typeDecls[i] = objcClass;
+        ++numTypeDeclsResolved;
+        continue;
+      }
+    }
+
+    // We couldn't find anything.
+    Diag(identifierLocs[i],
+         (lookupKind == LookupAnyName ? diag::err_objc_type_arg_missing
+          : lookupKind == LookupObjCProtocolName ? diag::err_undeclared_protocol
+          : diag::err_unknown_typename))
+      << identifiers[i];
+    return;
+  }
+
+  // If all of the names were (corrected to) protocols, these were
+  // protocol qualifiers.
+  if (numProtocolsResolved == identifiers.size())
+    return resolvedAsProtocols();
+
+  // Otherwise, all of the names were (corrected to) types.
+  assert(numTypeDeclsResolved == identifiers.size() && "Not all types?");
+  return resolvedAsTypeDecls();
 }
 
 /// DiagnoseClassExtensionDupMethods - Check for duplicate declaration of
@@ -1374,8 +1760,9 @@ Decl *Sema::ActOnStartClassImplementation(
                                       true);
     IDecl->startDefinition();
     if (SDecl) {
-      IDecl->setSuperClass(SDecl);
-      IDecl->setSuperClassLoc(SuperClassLoc);
+      IDecl->setSuperClass(Context.getTrivialTypeSourceInfo(
+                             Context.getObjCInterfaceType(SDecl),
+                             SuperClassLoc));
       IDecl->setEndOfDefinitionLoc(SuperClassLoc);
     } else {
       IDecl->setEndOfDefinitionLoc(ClassLoc);

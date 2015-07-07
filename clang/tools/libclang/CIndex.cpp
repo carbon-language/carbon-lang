@@ -1021,6 +1021,9 @@ bool CursorVisitor::VisitObjCCategoryDecl(ObjCCategoryDecl *ND) {
                                    TU)))
     return true;
 
+  if (VisitObjCTypeParamList(ND->getTypeParamList()))
+    return true;
+
   ObjCCategoryDecl::protocol_loc_iterator PL = ND->protocol_loc_begin();
   for (ObjCCategoryDecl::protocol_iterator I = ND->protocol_begin(),
          E = ND->protocol_end(); I != E; ++I, ++PL)
@@ -1080,11 +1083,36 @@ bool CursorVisitor::VisitObjCPropertyDecl(ObjCPropertyDecl *PD) {
   return false;
 }
 
+bool CursorVisitor::VisitObjCTypeParamList(ObjCTypeParamList *typeParamList) {
+  if (!typeParamList)
+    return false;
+
+  for (auto *typeParam : *typeParamList) {
+    // Visit the type parameter.
+    if (Visit(MakeCXCursor(typeParam, TU, RegionOfInterest)))
+      return true;
+
+    // Visit the bound, if it's explicit.
+    if (typeParam->hasExplicitBound()) {
+      if (auto TInfo = typeParam->getTypeSourceInfo()) {
+        if (Visit(TInfo->getTypeLoc()))
+          return true;
+      }
+    }
+  }
+
+  return false;
+}
+
 bool CursorVisitor::VisitObjCInterfaceDecl(ObjCInterfaceDecl *D) {
   if (!D->isThisDeclarationADefinition()) {
     // Forward declaration is treated like a reference.
     return Visit(MakeCursorObjCClassRef(D, D->getLocation(), TU));
   }
+
+  // Objective-C type parameters.
+  if (VisitObjCTypeParamList(D->getTypeParamListAsWritten()))
+    return true;
 
   // Issue callbacks for super class.
   if (D->getSuperClass() &&
@@ -1092,6 +1120,10 @@ bool CursorVisitor::VisitObjCInterfaceDecl(ObjCInterfaceDecl *D) {
                                         D->getSuperClassLoc(),
                                         TU)))
     return true;
+
+  if (TypeSourceInfo *SuperClassTInfo = D->getSuperClassTInfo())
+    if (Visit(SuperClassTInfo->getTypeLoc()))
+      return true;
 
   ObjCInterfaceDecl::protocol_loc_iterator PL = D->protocol_loc_begin();
   for (ObjCInterfaceDecl::protocol_iterator I = D->protocol_begin(),
@@ -1485,6 +1517,11 @@ bool CursorVisitor::VisitObjCInterfaceTypeLoc(ObjCInterfaceTypeLoc TL) {
 bool CursorVisitor::VisitObjCObjectTypeLoc(ObjCObjectTypeLoc TL) {
   if (TL.hasBaseTypeAsWritten() && Visit(TL.getBaseLoc()))
     return true;
+
+  for (unsigned I = 0, N = TL.getNumTypeArgs(); I != N; ++I) {
+    if (Visit(TL.getTypeArgTInfo(I)->getTypeLoc()))
+      return true;
+  }
 
   for (unsigned I = 0, N = TL.getNumProtocols(); I != N; ++I) {
     if (Visit(MakeCursorObjCProtocolRef(TL.getProtocol(I), TL.getProtocolLoc(I),
@@ -4411,7 +4448,12 @@ static enum CXChildVisitResult GetCursorVisitor(CXCursor cursor,
     *BestCursor = getTypeRefedCallExprCursor(*BestCursor);
     return CXChildVisit_Recurse;
   }
-  
+
+  // If we already have an Objective-C superclass reference, don't
+  // update it further.
+  if (BestCursor->kind == CXCursor_ObjCSuperClassRef)
+    return CXChildVisit_Break;
+
   *BestCursor = cursor;
   return CXChildVisit_Recurse;
 }

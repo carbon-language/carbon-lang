@@ -1384,7 +1384,7 @@ Parser::isCXXDeclarationSpecifier(Parser::TPResult BracedCastResult,
   case_typename:
     // In Objective-C, we might have a protocol-qualified type.
     if (getLangOpts().ObjC1 && NextToken().is(tok::less)) {
-      // Tentatively parse the 
+      // Tentatively parse the protocol qualifiers.
       TentativeParsingAction PA(*this);
       ConsumeToken(); // The type token
       

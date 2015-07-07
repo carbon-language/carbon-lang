@@ -312,6 +312,22 @@ TypeLoc TypeLoc::IgnoreParensImpl(TypeLoc TL) {
   return TL;
 }
 
+void ObjCObjectTypeLoc::initializeLocal(ASTContext &Context, 
+                                        SourceLocation Loc) {
+  setHasBaseTypeAsWritten(true);
+  setTypeArgsLAngleLoc(Loc);
+  setTypeArgsRAngleLoc(Loc);
+  for (unsigned i = 0, e = getNumTypeArgs(); i != e; ++i) {
+    setTypeArgTInfo(i, 
+                   Context.getTrivialTypeSourceInfo(
+                     getTypePtr()->getTypeArgsAsWritten()[i], Loc));
+  }
+  setProtocolLAngleLoc(Loc);
+  setProtocolRAngleLoc(Loc);
+  for (unsigned i = 0, e = getNumProtocols(); i != e; ++i)
+    setProtocolLoc(i, Loc);
+}
+
 void TypeOfTypeLoc::initializeLocal(ASTContext &Context,
                                        SourceLocation Loc) {
   TypeofLikeTypeLoc<TypeOfTypeLoc, TypeOfType, TypeOfTypeLocInfo>

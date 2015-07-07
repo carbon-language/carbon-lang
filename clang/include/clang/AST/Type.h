@@ -1288,10 +1288,14 @@ protected:
 
     unsigned : NumTypeBits;
 
+    /// The number of type arguments stored directly on this object type.
+    unsigned NumTypeArgs : 7;
+
     /// NumProtocols - The number of protocols stored directly on this
     /// object type.
-    unsigned NumProtocols : 32 - NumTypeBits;
+    unsigned NumProtocols : 7;
   };
+  static_assert(NumTypeBits + 7 + 7 <= 32, "Does not fit in an unsigned");
 
   class ReferenceTypeBitfields {
     friend class ReferenceType;
@@ -1586,6 +1590,7 @@ public:
   bool isObjCObjectOrInterfaceType() const;
   bool isObjCIdType() const;                    // id
   bool isObjCClassType() const;                 // Class
+  bool isBlockCompatibleObjCPointerType(ASTContext &ctx) const;
   bool isObjCSelType() const;                 // Class
   bool isObjCBuiltinType() const;               // 'id' or 'Class'
   bool isObjCARCBridgableType() const;
@@ -4369,19 +4374,25 @@ public:
 };
 
 /// ObjCObjectType - Represents a class type in Objective C.
-/// Every Objective C type is a combination of a base type and a
-/// list of protocols.
+///
+/// Every Objective C type is a combination of a base type, a set of
+/// type arguments (optional, for parameterized classes) and a list of
+/// protocols.
 ///
 /// Given the following declarations:
 /// \code
-///   \@class C;
+///   \@class C<T>;
 ///   \@protocol P;
 /// \endcode
 ///
 /// 'C' is an ObjCInterfaceType C.  It is sugar for an ObjCObjectType
 /// with base C and no protocols.
 ///
-/// 'C<P>' is an ObjCObjectType with base C and protocol list [P].
+/// 'C<P>' is an unspecialized ObjCObjectType with base C and protocol list [P].
+/// 'C<C*>' is a specialized ObjCObjectType with type arguments 'C*' and no 
+/// protocol list.
+/// 'C<C*><P>' is a specialized ObjCObjectType with base C, type arguments 'C*',
+/// and protocol list [P].
 ///
 /// 'id' is a TypedefType which is sugar for an ObjCObjectPointerType whose
 /// pointee is an ObjCObjectType with base BuiltinType::ObjCIdType
@@ -4391,8 +4402,10 @@ public:
 /// with base BuiltinType::ObjCIdType and protocol list [P].  Eventually
 /// this should get its own sugar class to better represent the source.
 class ObjCObjectType : public Type {
-  // ObjCObjectType.NumProtocols - the number of protocols stored
+  // ObjCObjectType.NumTypeArgs - the number of type arguments stored
   // after the ObjCObjectPointerType node.
+  // ObjCObjectType.NumProtocols - the number of protocols stored
+  // after the type arguments of ObjCObjectPointerType node.
   //
   // These protocols are those written directly on the type.  If
   // protocol qualifiers ever become additive, the iterators will need
@@ -4408,17 +4421,24 @@ class ObjCObjectType : public Type {
     return const_cast<ObjCObjectType*>(this)->getProtocolStorage();
   }
 
+  QualType *getTypeArgStorage();
+  const QualType *getTypeArgStorage() const {
+    return const_cast<ObjCObjectType *>(this)->getTypeArgStorage();
+  }
+
   ObjCProtocolDecl **getProtocolStorage();
 
 protected:
   ObjCObjectType(QualType Canonical, QualType Base,
-                 ObjCProtocolDecl * const *Protocols, unsigned NumProtocols);
+                 ArrayRef<QualType> typeArgs,
+                 ArrayRef<ObjCProtocolDecl *> protocols);
 
   enum Nonce_ObjCInterface { Nonce_ObjCInterface };
   ObjCObjectType(enum Nonce_ObjCInterface)
         : Type(ObjCInterface, QualType(), false, false, false, false),
       BaseType(QualType(this_(), 0)) {
     ObjCObjectTypeBits.NumProtocols = 0;
+    ObjCObjectTypeBits.NumTypeArgs = 0;
   }
 
 public:
@@ -4451,6 +4471,33 @@ public:
   /// Gets the interface declaration for this object type, if the base type
   /// really is an interface.
   ObjCInterfaceDecl *getInterface() const;
+
+  /// Determine whether this object type is "specialized", meaning
+  /// that it has type arguments.
+  bool isSpecialized() const;
+
+  /// Determine whether this object type was written with type arguments.
+  bool isSpecializedAsWritten() const { 
+    return ObjCObjectTypeBits.NumTypeArgs > 0; 
+  }
+
+  /// Determine whether this object type is "unspecialized", meaning
+  /// that it has no type arguments.
+  bool isUnspecialized() const { return !isSpecialized(); }
+
+  /// Determine whether this object type is "unspecialized" as
+  /// written, meaning that it has no type arguments.
+  bool isUnspecializedAsWritten() const { return !isSpecializedAsWritten(); }
+
+  /// Retrieve the type arguments of this object type (semantically).
+  ArrayRef<QualType> getTypeArgs() const;
+
+  /// Retrieve the type arguments of this object type as they were
+  /// written.
+  ArrayRef<QualType> getTypeArgsAsWritten() const { 
+    return ArrayRef<QualType>(getTypeArgStorage(), 
+                              ObjCObjectTypeBits.NumTypeArgs);
+  }
 
   typedef ObjCProtocolDecl * const *qual_iterator;
   typedef llvm::iterator_range<qual_iterator> qual_range;
@@ -4491,21 +4538,25 @@ class ObjCObjectTypeImpl : public ObjCObjectType, public llvm::FoldingSetNode {
   // will need to be modified.
 
   ObjCObjectTypeImpl(QualType Canonical, QualType Base,
-                     ObjCProtocolDecl * const *Protocols,
-                     unsigned NumProtocols)
-    : ObjCObjectType(Canonical, Base, Protocols, NumProtocols) {}
+                     ArrayRef<QualType> typeArgs,
+                     ArrayRef<ObjCProtocolDecl *> protocols)
+    : ObjCObjectType(Canonical, Base, typeArgs, protocols) {}
 
 public:
   void Profile(llvm::FoldingSetNodeID &ID);
   static void Profile(llvm::FoldingSetNodeID &ID,
                       QualType Base,
-                      ObjCProtocolDecl *const *protocols,
-                      unsigned NumProtocols);
+                      ArrayRef<QualType> typeArgs,
+                      ArrayRef<ObjCProtocolDecl *> protocols);
 };
 
+inline QualType *ObjCObjectType::getTypeArgStorage() {
+  return reinterpret_cast<QualType *>(static_cast<ObjCObjectTypeImpl*>(this)+1);
+}
+
 inline ObjCProtocolDecl **ObjCObjectType::getProtocolStorage() {
-  return reinterpret_cast<ObjCProtocolDecl**>(
-            static_cast<ObjCObjectTypeImpl*>(this) + 1);
+    return reinterpret_cast<ObjCProtocolDecl**>(
+             getTypeArgStorage() + ObjCObjectTypeBits.NumTypeArgs);
 }
 
 /// ObjCInterfaceType - Interfaces are the core concept in Objective-C for
@@ -4556,9 +4607,14 @@ public:
 };
 
 inline ObjCInterfaceDecl *ObjCObjectType::getInterface() const {
-  if (const ObjCInterfaceType *T =
-        getBaseType()->getAs<ObjCInterfaceType>())
-    return T->getDecl();
+  QualType baseType = getBaseType();
+  while (const ObjCObjectType *ObjT = baseType->getAs<ObjCObjectType>()) {
+    if (const ObjCInterfaceType *T = dyn_cast<ObjCInterfaceType>(ObjT))
+      return T->getDecl();
+
+    baseType = ObjT->getBaseType();
+  }
+
   return nullptr;
 }
 
@@ -4651,6 +4707,31 @@ public:
   /// some non-empty set of protocols.
   bool isObjCQualifiedClassType() const {
     return getObjectType()->isObjCQualifiedClass();
+  }
+
+  /// Whether this type is specialized, meaning that it has type arguments.
+  bool isSpecialized() const { return getObjectType()->isSpecialized(); }
+
+  /// Whether this type is specialized, meaning that it has type arguments.
+  bool isSpecializedAsWritten() const { 
+    return getObjectType()->isSpecializedAsWritten(); 
+  }
+  
+  /// Whether this type is unspecialized, meaning that is has no type arguments.
+  bool isUnspecialized() const { return getObjectType()->isUnspecialized(); }
+
+  /// Determine whether this object type is "unspecialized" as
+  /// written, meaning that it has no type arguments.
+  bool isUnspecializedAsWritten() const { return !isSpecializedAsWritten(); }
+
+  /// Retrieve the type arguments for this type.
+  ArrayRef<QualType> getTypeArgs() const { 
+    return getObjectType()->getTypeArgs(); 
+  }
+
+  /// Retrieve the type arguments for this type.
+  ArrayRef<QualType> getTypeArgsAsWritten() const { 
+    return getObjectType()->getTypeArgsAsWritten(); 
   }
 
   /// An iterator over the qualifiers on the object type.  Provided

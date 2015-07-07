@@ -953,8 +953,7 @@ void ASTDeclReader::VisitObjCInterfaceDecl(ObjCInterfaceDecl *ID) {
     ObjCInterfaceDecl::DefinitionData &Data = ID->data();
     
     // Read the superclass.
-    Data.SuperClass = ReadDeclAs<ObjCInterfaceDecl>(Record, Idx);
-    Data.SuperClassLoc = ReadSourceLocation(Record, Idx);
+    Data.SuperClassTInfo = GetTypeSourceInfo(Record, Idx);
 
     Data.EndLoc = ReadSourceLocation(Record, Idx);
     Data.HasDesignatedInitializers = Record[Idx++];

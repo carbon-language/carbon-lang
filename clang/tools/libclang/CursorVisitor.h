@@ -222,6 +222,7 @@ public:
   bool VisitObjCCategoryDecl(ObjCCategoryDecl *ND);
   bool VisitObjCProtocolDecl(ObjCProtocolDecl *PID);
   bool VisitObjCPropertyDecl(ObjCPropertyDecl *PD);
+  bool VisitObjCTypeParamList(ObjCTypeParamList *typeParamList);
   bool VisitObjCInterfaceDecl(ObjCInterfaceDecl *D);
   bool VisitObjCImplDecl(ObjCImplDecl *D);
   bool VisitObjCCategoryImplDecl(ObjCCategoryImplDecl *D);

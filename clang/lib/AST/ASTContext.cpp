@@ -3618,45 +3618,85 @@ static void SortAndUniqueProtocols(ObjCProtocolDecl **Protocols,
 QualType ASTContext::getObjCObjectType(QualType BaseType,
                                        ObjCProtocolDecl * const *Protocols,
                                        unsigned NumProtocols) const {
-  // If the base type is an interface and there aren't any protocols
-  // to add, then the interface type will do just fine.
-  if (!NumProtocols && isa<ObjCInterfaceType>(BaseType))
-    return BaseType;
+  return getObjCObjectType(BaseType, { },
+                           llvm::makeArrayRef(Protocols, NumProtocols));
+}
+
+QualType ASTContext::getObjCObjectType(
+           QualType baseType,
+           ArrayRef<QualType> typeArgs,
+           ArrayRef<ObjCProtocolDecl *> protocols) const {
+  // If the base type is an interface and there aren't any protocols or
+  // type arguments to add, then the interface type will do just fine.
+  if (typeArgs.empty() && protocols.empty() && isa<ObjCInterfaceType>(baseType))
+    return baseType;
 
   // Look in the folding set for an existing type.
   llvm::FoldingSetNodeID ID;
-  ObjCObjectTypeImpl::Profile(ID, BaseType, Protocols, NumProtocols);
+  ObjCObjectTypeImpl::Profile(ID, baseType, typeArgs, protocols);
   void *InsertPos = nullptr;
   if (ObjCObjectType *QT = ObjCObjectTypes.FindNodeOrInsertPos(ID, InsertPos))
     return QualType(QT, 0);
 
-  // Build the canonical type, which has the canonical base type and
-  // a sorted-and-uniqued list of protocols.
-  QualType Canonical;
-  bool ProtocolsSorted = areSortedAndUniqued(Protocols, NumProtocols);
-  if (!ProtocolsSorted || !BaseType.isCanonical()) {
-    if (!ProtocolsSorted) {
-      SmallVector<ObjCProtocolDecl*, 8> Sorted(Protocols,
-                                                     Protocols + NumProtocols);
-      unsigned UniqueCount = NumProtocols;
+  // Determine the type arguments to be used for canonicalization,
+  // which may be explicitly specified here or written on the base
+  // type.
+  ArrayRef<QualType> effectiveTypeArgs = typeArgs;
+  if (effectiveTypeArgs.empty()) {
+    if (auto baseObject = baseType->getAs<ObjCObjectType>())
+      effectiveTypeArgs = baseObject->getTypeArgs();
+  }
 
-      SortAndUniqueProtocols(&Sorted[0], UniqueCount);
-      Canonical = getObjCObjectType(getCanonicalType(BaseType),
-                                    &Sorted[0], UniqueCount);
+  // Build the canonical type, which has the canonical base type and a
+  // sorted-and-uniqued list of protocols and the type arguments
+  // canonicalized.
+  QualType canonical;
+  bool typeArgsAreCanonical = std::all_of(effectiveTypeArgs.begin(),
+                                          effectiveTypeArgs.end(),
+                                          [&](QualType type) {
+                                            return type.isCanonical();
+                                          });
+  bool protocolsSorted = areSortedAndUniqued(protocols.data(),
+                                             protocols.size());
+  if (!typeArgsAreCanonical || !protocolsSorted || !baseType.isCanonical()) {
+    // Determine the canonical type arguments.
+    ArrayRef<QualType> canonTypeArgs;
+    SmallVector<QualType, 4> canonTypeArgsVec;
+    if (!typeArgsAreCanonical) {
+      canonTypeArgsVec.reserve(effectiveTypeArgs.size());
+      for (auto typeArg : effectiveTypeArgs)
+        canonTypeArgsVec.push_back(getCanonicalType(typeArg));
+      canonTypeArgs = canonTypeArgsVec;
     } else {
-      Canonical = getObjCObjectType(getCanonicalType(BaseType),
-                                    Protocols, NumProtocols);
+      canonTypeArgs = effectiveTypeArgs;
     }
+
+    ArrayRef<ObjCProtocolDecl *> canonProtocols;
+    SmallVector<ObjCProtocolDecl*, 8> canonProtocolsVec;
+    if (!protocolsSorted) {
+      canonProtocolsVec.insert(canonProtocolsVec.begin(),
+                               protocols.begin(), 
+                               protocols.end());
+      unsigned uniqueCount = protocols.size();
+      SortAndUniqueProtocols(&canonProtocolsVec[0], uniqueCount);
+      canonProtocols = llvm::makeArrayRef(&canonProtocolsVec[0], uniqueCount);
+    } else {
+      canonProtocols = protocols;
+    }
+
+    canonical = getObjCObjectType(getCanonicalType(baseType), canonTypeArgs,
+                                  canonProtocols);
 
     // Regenerate InsertPos.
     ObjCObjectTypes.FindNodeOrInsertPos(ID, InsertPos);
   }
 
-  unsigned Size = sizeof(ObjCObjectTypeImpl);
-  Size += NumProtocols * sizeof(ObjCProtocolDecl *);
-  void *Mem = Allocate(Size, TypeAlignment);
+  unsigned size = sizeof(ObjCObjectTypeImpl);
+  size += typeArgs.size() * sizeof(QualType);
+  size += protocols.size() * sizeof(ObjCProtocolDecl *);
+  void *mem = Allocate(size, TypeAlignment);
   ObjCObjectTypeImpl *T =
-    new (Mem) ObjCObjectTypeImpl(Canonical, BaseType, Protocols, NumProtocols);
+    new (mem) ObjCObjectTypeImpl(canonical, baseType, typeArgs, protocols);
 
   Types.push_back(T);
   ObjCObjectTypes.InsertNode(T, InsertPos);
@@ -5921,7 +5961,7 @@ void ASTContext::getObjCEncodingForTypeQualifier(Decl::ObjCDeclQualifier QT,
 
 TypedefDecl *ASTContext::getObjCIdDecl() const {
   if (!ObjCIdDecl) {
-    QualType T = getObjCObjectType(ObjCBuiltinIdTy, nullptr, 0);
+    QualType T = getObjCObjectType(ObjCBuiltinIdTy, { }, { });
     T = getObjCObjectPointerType(T);
     ObjCIdDecl = buildImplicitTypedef(T, "id");
   }
@@ -5938,7 +5978,7 @@ TypedefDecl *ASTContext::getObjCSelDecl() const {
 
 TypedefDecl *ASTContext::getObjCClassDecl() const {
   if (!ObjCClassDecl) {
-    QualType T = getObjCObjectType(ObjCBuiltinClassTy, nullptr, 0);
+    QualType T = getObjCObjectType(ObjCBuiltinClassTy, { }, { });
     T = getObjCObjectPointerType(T);
     ObjCClassDecl = buildImplicitTypedef(T, "Class");
   }

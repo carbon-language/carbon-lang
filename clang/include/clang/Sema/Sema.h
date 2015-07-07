@@ -7098,17 +7098,30 @@ public:
                                             SourceLocation rAngleLoc);
   void popObjCTypeParamList(Scope *S, ObjCTypeParamList *typeParamList);
 
-  Decl *ActOnStartClassInterface(SourceLocation AtInterfaceLoc,
+  Decl *ActOnStartClassInterface(Scope *S,
+                                 SourceLocation AtInterfaceLoc,
                                  IdentifierInfo *ClassName,
                                  SourceLocation ClassLoc,
                                  ObjCTypeParamList *typeParamList,
                                  IdentifierInfo *SuperName,
                                  SourceLocation SuperLoc,
+                                 ArrayRef<ParsedType> SuperTypeArgs,
+                                 SourceRange SuperTypeArgsRange,
                                  Decl * const *ProtoRefs,
                                  unsigned NumProtoRefs,
                                  const SourceLocation *ProtoLocs,
                                  SourceLocation EndProtoLoc,
                                  AttributeList *AttrList);
+    
+  void ActOnSuperClassOfClassInterface(Scope *S,
+                                       SourceLocation AtInterfaceLoc,
+                                       ObjCInterfaceDecl *IDecl,
+                                       IdentifierInfo *ClassName,
+                                       SourceLocation ClassLoc,
+                                       IdentifierInfo *SuperName,
+                                       SourceLocation SuperLoc,
+                                       ArrayRef<ParsedType> SuperTypeArgs,
+                                       SourceRange SuperTypeArgsRange);
   
   void ActOnTypedefedProtocols(SmallVectorImpl<Decl *> &ProtocolRefs,
                                IdentifierInfo *SuperName,
@@ -7173,6 +7186,19 @@ public:
                                const IdentifierLocPair *ProtocolId,
                                unsigned NumProtocols,
                                SmallVectorImpl<Decl *> &Protocols);
+
+  /// Given a list of identifiers (and their locations), resolve the
+  /// names to either Objective-C protocol qualifiers or type
+  /// arguments, as appropriate. The result will be attached to the
+  /// given declaration specifiers.
+  void actOnObjCTypeArgsOrProtocolQualifiers(
+         Scope *S,
+         DeclSpec &DS,
+         SourceLocation lAngleLoc,
+         ArrayRef<IdentifierInfo *> identifiers,
+         ArrayRef<SourceLocation> identifierLocs,
+         SourceLocation rAngleLoc,
+         bool warnOnIncompleteProtocols);
 
   /// Ensure attributes are consistent with type.
   /// \param [in, out] Attributes The attributes to check; they will

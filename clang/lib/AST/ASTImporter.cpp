@@ -1844,6 +1844,16 @@ QualType ASTNodeImporter::VisitObjCObjectType(const ObjCObjectType *T) {
   if (ToBaseType.isNull())
     return QualType();
 
+  SmallVector<QualType, 4> TypeArgs;
+  for (auto TypeArg : T->getTypeArgs()) {
+    QualType ImportedTypeArg = Importer.Import(TypeArg);
+    if (ImportedTypeArg.isNull())
+      return QualType();
+
+    TypeArgs.push_back(ImportedTypeArg);
+  }
+
+
   SmallVector<ObjCProtocolDecl *, 4> Protocols;
   for (auto *P : T->quals()) {
     ObjCProtocolDecl *Protocol
@@ -1853,9 +1863,8 @@ QualType ASTNodeImporter::VisitObjCObjectType(const ObjCObjectType *T) {
     Protocols.push_back(Protocol);
   }
 
-  return Importer.getToContext().getObjCObjectType(ToBaseType,
-                                                   Protocols.data(),
-                                                   Protocols.size());
+  return Importer.getToContext().getObjCObjectType(ToBaseType, TypeArgs,
+                                                   Protocols);
 }
 
 QualType
@@ -3694,13 +3703,11 @@ bool ASTNodeImporter::ImportDefinition(ObjCInterfaceDecl *From,
   
   // If this class has a superclass, import it.
   if (From->getSuperClass()) {
-    ObjCInterfaceDecl *Super = cast_or_null<ObjCInterfaceDecl>(
-                                 Importer.Import(From->getSuperClass()));
-    if (!Super)
+    TypeSourceInfo *SuperTInfo = Importer.Import(From->getSuperClassTInfo());
+    if (!SuperTInfo)
       return true;
-    
-    To->setSuperClass(Super);
-    To->setSuperClassLoc(Importer.Import(From->getSuperClassLoc()));
+
+    To->setSuperClass(SuperTInfo);
   }
   
   // Import protocols
@@ -5367,7 +5374,7 @@ TypeSourceInfo *ASTImporter::Import(TypeSourceInfo *FromTSI) {
     return nullptr;
 
   return ToContext.getTrivialTypeSourceInfo(T, 
-                        FromTSI->getTypeLoc().getLocStart());
+           Import(FromTSI->getTypeLoc().getLocStart()));
 }
 
 Decl *ASTImporter::GetAlreadyImportedOrNull(Decl *FromD) {

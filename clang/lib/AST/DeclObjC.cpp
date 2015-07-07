@@ -259,6 +259,33 @@ ObjCTypeParamList *ObjCInterfaceDecl::getTypeParamList() const {
   return nullptr;
 }
 
+ObjCInterfaceDecl *ObjCInterfaceDecl::getSuperClass() const {
+  // FIXME: Should make sure no callers ever do this.
+  if (!hasDefinition())
+    return nullptr;
+    
+  if (data().ExternallyCompleted)
+    LoadExternalDefinition();
+
+  if (const ObjCObjectType *superType = getSuperClassType()) {
+    if (ObjCInterfaceDecl *superDecl = superType->getInterface()) {
+      if (ObjCInterfaceDecl *superDef = superDecl->getDefinition())
+        return superDef;
+
+      return superDecl;
+    }
+  }
+
+  return nullptr;
+}
+
+SourceLocation ObjCInterfaceDecl::getSuperClassLoc() const {
+  if (TypeSourceInfo *superTInfo = getSuperClassTInfo())
+    return superTInfo->getTypeLoc().getLocStart();
+  
+  return SourceLocation();
+}
+
 /// FindPropertyVisibleInPrimaryClass - Finds declaration of the property
 /// with name 'PropertyId' in the primary class; including those in protocols
 /// (direct or indirect) used by the primary class.

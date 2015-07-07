@@ -125,12 +125,22 @@ break; \
   if (const PointerType *Ty = QT->getAs<PointerType>()) {
     QT = Context.getPointerType(Desugar(Context, Ty->getPointeeType(),
                                         ShouldAKA));
+  } else if (const auto *Ty = QT->getAs<ObjCObjectPointerType>()) {
+    QT = Context.getObjCObjectPointerType(Desugar(Context, Ty->getPointeeType(),
+                                                  ShouldAKA));
   } else if (const LValueReferenceType *Ty = QT->getAs<LValueReferenceType>()) {
     QT = Context.getLValueReferenceType(Desugar(Context, Ty->getPointeeType(),
                                                 ShouldAKA));
   } else if (const RValueReferenceType *Ty = QT->getAs<RValueReferenceType>()) {
     QT = Context.getRValueReferenceType(Desugar(Context, Ty->getPointeeType(),
                                                 ShouldAKA));
+  } else if (const auto *Ty = QT->getAs<ObjCObjectType>()) {
+    if (Ty->getBaseType().getTypePtr() != Ty && !ShouldAKA) {
+      QualType BaseType = Desugar(Context, Ty->getBaseType(), ShouldAKA);
+      QT = Context.getObjCObjectType(BaseType, Ty->getTypeArgsAsWritten(),
+                                     llvm::makeArrayRef(Ty->qual_begin(),
+                                                        Ty->getNumProtocols()));
+    }
   }
 
   return QC.apply(Context, QT);

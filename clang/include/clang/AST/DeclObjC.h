@@ -794,9 +794,9 @@ class ObjCInterfaceDecl : public ObjCContainerDecl
     /// declaration.
     ObjCInterfaceDecl *Definition;
     
-    /// Class's super class.
-    ObjCInterfaceDecl *SuperClass;
-
+    /// When non-null, this is always an ObjCObjectType.
+    TypeSourceInfo *SuperClassTInfo;
+    
     /// Protocols referenced in the \@interface  declaration
     ObjCProtocolList ReferencedProtocols;
 
@@ -837,16 +837,13 @@ class ObjCInterfaceDecl : public ObjCContainerDecl
     };
     /// One of the \c InheritedDesignatedInitializersState enumeratos.
     mutable unsigned InheritedDesignatedInitializers : 2;
-
-    /// \brief The location of the superclass, if any.
-    SourceLocation SuperClassLoc;
     
     /// \brief The location of the last location in this declaration, before
     /// the properties/methods. For example, this will be the '>', '}', or 
     /// identifier, 
     SourceLocation EndLoc; 
 
-    DefinitionData() : Definition(), SuperClass(), CategoryList(), IvarList(), 
+    DefinitionData() : Definition(), SuperClassTInfo(), CategoryList(), IvarList(), 
                        ExternallyCompleted(),
                        IvarListMissingImplementation(true),
                        HasDesignatedInitializers(),
@@ -903,8 +900,8 @@ public:
   /// Retrieve the type parameters of this class.
   ///
   /// This function looks for a type parameter list for the given
-  /// class; if the class has been declared (with @class) but not
-  /// defined (with @interface), it will search for a declaration that
+  /// class; if the class has been declared (with \c \@class) but not
+  /// defined (with \c \@interface), it will search for a declaration that
   /// has type parameters, skipping any declarations that do not.
   ObjCTypeParamList *getTypeParamList() const;
 
@@ -1160,7 +1157,16 @@ public:
   /// a forward declaration (\@class) to a definition (\@interface).
   void startDefinition();
   
-  ObjCInterfaceDecl *getSuperClass() const {
+  /// Retrieve the superclass type.
+  const ObjCObjectType *getSuperClassType() const {
+    if (TypeSourceInfo *TInfo = getSuperClassTInfo())
+      return TInfo->getType()->castAs<ObjCObjectType>();
+
+    return nullptr;
+  }
+
+  // Retrieve the type source information for the superclass.
+  TypeSourceInfo *getSuperClassTInfo() const {
     // FIXME: Should make sure no callers ever do this.
     if (!hasDefinition())
       return nullptr;
@@ -1168,13 +1174,15 @@ public:
     if (data().ExternallyCompleted)
       LoadExternalDefinition();
 
-    return data().SuperClass;
+    return data().SuperClassTInfo;
   }
 
-  void setSuperClass(ObjCInterfaceDecl * superCls) { 
-    data().SuperClass = 
-      (superCls && superCls->hasDefinition()) ? superCls->getDefinition() 
-                                              : superCls; 
+  // Retrieve the declaration for the superclass of this class, which
+  // does not include any type arguments that apply to the superclass.
+  ObjCInterfaceDecl *getSuperClass() const;
+
+  void setSuperClass(TypeSourceInfo *superClass) { 
+    data().SuperClassTInfo = superClass;
   }
 
   /// \brief Iterator that walks over the list of categories, filtering out
@@ -1466,8 +1474,8 @@ public:
                           
   void setEndOfDefinitionLoc(SourceLocation LE) { data().EndLoc = LE; }
 
-  void setSuperClassLoc(SourceLocation Loc) { data().SuperClassLoc = Loc; }
-  SourceLocation getSuperClassLoc() const { return data().SuperClassLoc; }
+  /// Retrieve the starting location of the superclass.
+  SourceLocation getSuperClassLoc() const;
 
   /// isImplicitInterfaceDecl - check that this is an implicitly declared
   /// ObjCInterfaceDecl node. This is for legacy objective-c \@implementation

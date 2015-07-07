@@ -604,8 +604,7 @@ void ASTDeclWriter::VisitObjCInterfaceDecl(ObjCInterfaceDecl *D) {
     // Write the DefinitionData
     ObjCInterfaceDecl::DefinitionData &Data = D->data();
     
-    Writer.AddDeclRef(D->getSuperClass(), Record);
-    Writer.AddSourceLocation(D->getSuperClassLoc(), Record);
+    Writer.AddTypeSourceInfo(D->getSuperClassTInfo(), Record);
     Writer.AddSourceLocation(D->getEndOfDefinitionLoc(), Record);
     Record.push_back(Data.HasDesignatedInitializers);
 

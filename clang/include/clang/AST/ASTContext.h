@@ -236,6 +236,12 @@ class ASTContext : public RefCountedBase<ASTContext> {
   QualType ObjCClassRedefinitionType;
   QualType ObjCSelRedefinitionType;
 
+  /// The identifier 'NSObject'.
+  IdentifierInfo *NSObjectName = nullptr;
+
+  /// The identifier 'NSCopying'.
+  IdentifierInfo *NSCopyingName = nullptr;
+
   QualType ObjCConstantStringType;
   mutable RecordDecl *CFConstantStringTypeDecl;
   
@@ -1189,9 +1195,14 @@ public:
   QualType getObjCInterfaceType(const ObjCInterfaceDecl *Decl,
                                 ObjCInterfaceDecl *PrevDecl = nullptr) const;
 
+  /// Legacy interface: cannot provide type arguments.
   QualType getObjCObjectType(QualType Base,
                              ObjCProtocolDecl * const *Protocols,
                              unsigned NumProtocols) const;
+
+  QualType getObjCObjectType(QualType Base,
+                             ArrayRef<QualType> typeArgs,
+                             ArrayRef<ObjCProtocolDecl *> protocols) const;
   
   bool ObjCObjectAdoptsQTypeProtocols(QualType QT, ObjCInterfaceDecl *Decl);
   /// QIdProtocolsAdoptObjCObjectProtocols - Checks that protocols in
@@ -1349,6 +1360,24 @@ public:
   /// \brief Set the user-written type that redefines 'SEL'.
   void setObjCSelRedefinitionType(QualType RedefType) {
     ObjCSelRedefinitionType = RedefType;
+  }
+
+  /// Retrieve the identifier 'NSObject'.
+  IdentifierInfo *getNSObjectName() {
+    if (!NSObjectName) {
+      NSObjectName = &Idents.get("NSObject");
+    }
+
+    return NSObjectName;
+  }
+
+  /// Retrieve the identifier 'NSCopying'.
+  IdentifierInfo *getNSCopyingName() {
+    if (!NSCopyingName) {
+      NSCopyingName = &Idents.get("NSCopying");
+    }
+
+    return NSCopyingName;
   }
 
   /// \brief Retrieve the Objective-C "instancetype" type, if already known;

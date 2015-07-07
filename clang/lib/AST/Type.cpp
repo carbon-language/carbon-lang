@@ -467,18 +467,55 @@ const RecordType *Type::getAsUnionType() const {
 }
 
 ObjCObjectType::ObjCObjectType(QualType Canonical, QualType Base,
-                               ObjCProtocolDecl * const *Protocols,
-                               unsigned NumProtocols)
+                               ArrayRef<QualType> typeArgs,
+                               ArrayRef<ObjCProtocolDecl *> protocols)
   : Type(ObjCObject, Canonical, false, false, false, false),
     BaseType(Base) 
 {
-  ObjCObjectTypeBits.NumProtocols = NumProtocols;
-  assert(getNumProtocols() == NumProtocols &&
+  ObjCObjectTypeBits.NumTypeArgs = typeArgs.size();
+  assert(getTypeArgsAsWritten().size() == typeArgs.size() &&
+         "bitfield overflow in type argument count");
+  ObjCObjectTypeBits.NumProtocols = protocols.size();
+  assert(getNumProtocols() == protocols.size() &&
          "bitfield overflow in protocol count");
-  if (NumProtocols)
-    memcpy(getProtocolStorage(), Protocols,
-           NumProtocols * sizeof(ObjCProtocolDecl*));
+  if (!typeArgs.empty())
+    memcpy(getTypeArgStorage(), typeArgs.data(),
+           typeArgs.size() * sizeof(QualType));
+  if (!protocols.empty())
+    memcpy(getProtocolStorage(), protocols.data(),
+           protocols.size() * sizeof(ObjCProtocolDecl*));
 }
+
+bool ObjCObjectType::isSpecialized() const { 
+  // If we have type arguments written here, the type is specialized.
+  if (ObjCObjectTypeBits.NumTypeArgs > 0)
+    return true;
+
+  if (!qual_empty()) {
+    // Otherwise, check whether the base type is specialized.
+    if (auto objcObject = getBaseType()->getAs<ObjCObjectType>())
+      return objcObject->isSpecialized();
+  }
+
+  // Not specialized.
+  return false;
+}
+
+ArrayRef<QualType> ObjCObjectType::getTypeArgs() const {
+  // We have type arguments written on this type.
+  if (isSpecializedAsWritten())
+    return getTypeArgsAsWritten();
+
+  if (!qual_empty()) {
+    // Look at the base type, which might have type arguments.
+    if (auto objcObject = getBaseType()->getAs<ObjCObjectType>())
+      return objcObject->getTypeArgs();
+  }
+
+  // No type arguments.
+  return { };
+}
+
 
 const ObjCObjectType *Type::getAsObjCQualifiedInterfaceType() const {
   // There is no sugar for ObjCObjectType's, just return the canonical
@@ -2076,15 +2113,20 @@ QualifierCollector::apply(const ASTContext &Context, const Type *T) const {
 
 void ObjCObjectTypeImpl::Profile(llvm::FoldingSetNodeID &ID,
                                  QualType BaseType,
-                                 ObjCProtocolDecl * const *Protocols,
-                                 unsigned NumProtocols) {
+                                 ArrayRef<QualType> typeArgs,
+                                 ArrayRef<ObjCProtocolDecl *> protocols) {
   ID.AddPointer(BaseType.getAsOpaquePtr());
-  for (unsigned i = 0; i != NumProtocols; i++)
-    ID.AddPointer(Protocols[i]);
+  ID.AddInteger(typeArgs.size());
+  for (auto typeArg : typeArgs)
+    ID.AddPointer(typeArg.getAsOpaquePtr());
+  ID.AddInteger(protocols.size());
+  for (auto proto : protocols)
+    ID.AddPointer(proto);
 }
 
 void ObjCObjectTypeImpl::Profile(llvm::FoldingSetNodeID &ID) {
-  Profile(ID, getBaseType(), qual_begin(), getNumProtocols());
+  Profile(ID, getBaseType(), getTypeArgs(), 
+          llvm::makeArrayRef(qual_begin(), getNumProtocols()));
 }
 
 namespace {
@@ -2493,6 +2535,39 @@ Optional<NullabilityKind> AttributedType::stripOuterNullability(QualType &T) {
   }
 
   return None;
+}
+
+bool Type::isBlockCompatibleObjCPointerType(ASTContext &ctx) const {
+  const ObjCObjectPointerType *objcPtr = getAs<ObjCObjectPointerType>();
+  if (!objcPtr)
+    return false;
+
+  if (objcPtr->isObjCIdType()) {
+    // id is always okay.
+    return true;
+  }
+
+  // Blocks are NSObjects.
+  if (ObjCInterfaceDecl *iface = objcPtr->getInterfaceDecl()) {
+    if (iface->getIdentifier() != ctx.getNSObjectName())
+      return false;
+
+    // Continue to check qualifiers, below.
+  } else if (objcPtr->isObjCQualifiedIdType()) {
+    // Continue to check qualifiers, below.
+  } else {
+    return false;
+  }
+
+  // Check protocol qualifiers.
+  for (ObjCProtocolDecl *proto : objcPtr->quals()) {
+    // Blocks conform to NSObject and NSCopying.
+    if (proto->getIdentifier() != ctx.getNSObjectName() &&
+        proto->getIdentifier() != ctx.getNSCopyingName())
+      return false;
+  }
+
+  return true;
 }
 
 Qualifiers::ObjCLifetime Type::getObjCARCImplicitLifetime() const {

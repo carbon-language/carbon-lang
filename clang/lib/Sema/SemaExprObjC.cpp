@@ -959,8 +959,10 @@ ExprResult Sema::BuildObjCDictionaryLiteral(SourceRange SR,
               LookupProtocol(&Context.Idents.get("NSCopying"), SR.getBegin())) {
             ObjCProtocolDecl *PQ[] = {NSCopyingPDecl};
             QIDNSCopying = 
-              Context.getObjCObjectType(Context.ObjCBuiltinIdTy,
-                                        (ObjCProtocolDecl**) PQ,1);
+              Context.getObjCObjectType(Context.ObjCBuiltinIdTy, { },
+                                        llvm::makeArrayRef(
+                                          (ObjCProtocolDecl**) PQ,
+                                          1));
             QIDNSCopying = Context.getObjCObjectPointerType(QIDNSCopying);
           }
         }

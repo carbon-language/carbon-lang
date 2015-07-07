@@ -7780,6 +7780,36 @@ def err_objc_parameterized_forward_class : Error<
 def err_objc_parameterized_forward_class_first : Error<
   "class %0 previously declared with type parameters">;
 
+def err_objc_type_arg_missing_star : Error<
+  "type argument %0 must be a pointer (requires a '*')">;
+
+def err_objc_type_arg_missing : Error<
+  "no type or protocol named %0">;
+
+def err_objc_protocol_suggest : Error<
+  "no protocol named %0: did you mean %1?">;
+
+def err_objc_type_args_and_protocols : Error<
+  "angle brackets contain both a %select{type|protocol}0 (%1) and a "
+  "%select{protocol|type}0 (%2)">;
+
+def err_objc_type_args_non_class : Error<
+  "type arguments cannot be applied to non-class type %0">;
+
+def err_objc_type_args_non_parameterized_class : Error<
+  "type arguments cannot be applied to non-parameterized class %0">;
+
+def err_objc_type_args_specialized_class : Error<
+  "type arguments cannot be applied to already-specialized class type %0">;
+
+def err_objc_type_args_wrong_arity : Error<
+  "too %select{many|few}0 type arguments for class %1 (have %2, expected %3)">;
 }
+
+def err_objc_type_arg_not_id_compatible : Error<
+  "type argument %0 is neither an Objective-C object nor a block type">;
+
+def err_objc_type_arg_does_not_match_bound : Error<
+  "type argument %0 does not satisy the bound (%1) of type parameter %2">;
 
 } // end of sema component.

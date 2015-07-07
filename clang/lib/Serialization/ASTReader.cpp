@@ -5263,11 +5263,15 @@ QualType ASTReader::readTypeRecord(unsigned Index) {
   case TYPE_OBJC_OBJECT: {
     unsigned Idx = 0;
     QualType Base = readType(*Loc.F, Record, Idx);
+    unsigned NumTypeArgs = Record[Idx++];
+    SmallVector<QualType, 4> TypeArgs;
+    for (unsigned I = 0; I != NumTypeArgs; ++I)
+      TypeArgs.push_back(readType(*Loc.F, Record, Idx));
     unsigned NumProtos = Record[Idx++];
     SmallVector<ObjCProtocolDecl*, 4> Protos;
     for (unsigned I = 0; I != NumProtos; ++I)
       Protos.push_back(ReadDeclAs<ObjCProtocolDecl>(*Loc.F, Record, Idx));
-    return Context.getObjCObjectType(Base, Protos.data(), NumProtos);
+    return Context.getObjCObjectType(Base, TypeArgs, Protos);
   }
 
   case TYPE_OBJC_OBJECT_POINTER: {
@@ -5646,8 +5650,12 @@ void TypeLocReader::VisitObjCInterfaceTypeLoc(ObjCInterfaceTypeLoc TL) {
 }
 void TypeLocReader::VisitObjCObjectTypeLoc(ObjCObjectTypeLoc TL) {
   TL.setHasBaseTypeAsWritten(Record[Idx++]);
-  TL.setLAngleLoc(ReadSourceLocation(Record, Idx));
-  TL.setRAngleLoc(ReadSourceLocation(Record, Idx));
+  TL.setTypeArgsLAngleLoc(ReadSourceLocation(Record, Idx));
+  TL.setTypeArgsRAngleLoc(ReadSourceLocation(Record, Idx));
+  for (unsigned i = 0, e = TL.getNumTypeArgs(); i != e; ++i)
+    TL.setTypeArgTInfo(i, Reader.GetTypeSourceInfo(F, Record, Idx));
+  TL.setProtocolLAngleLoc(ReadSourceLocation(Record, Idx));
+  TL.setProtocolRAngleLoc(ReadSourceLocation(Record, Idx));
   for (unsigned i = 0, e = TL.getNumProtocols(); i != e; ++i)
     TL.setProtocolLoc(i, ReadSourceLocation(Record, Idx));
 }

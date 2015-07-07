@@ -2886,11 +2886,26 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       DS.SetRangeEnd(Tok.getAnnotationEndLoc());
       ConsumeToken(); // The typename
 
-      // Objective-C supports syntax of the form 'id<proto1,proto2>' where 'id'
-      // is a specific typedef and 'itf<proto1,proto2>' where 'itf' is an
-      // Objective-C interface.
-      if (Tok.is(tok::less) && getLangOpts().ObjC1)
-        ParseObjCProtocolQualifiers(DS);
+      // Objective-C supports type arguments and protocol references
+      // following an Objective-C object pointer type. Handle either
+      // one of them.
+      if (Tok.is(tok::less) && getLangOpts().ObjC1) {
+        ParseObjCTypeArgsOrProtocolQualifiers(
+          DS, /*warnOnIncompleteProtocols=*/false);
+
+        // An Objective-C object pointer followed by type arguments
+        // can then be followed again by a set of protocol references, e.g.,
+        // \c NSArray<NSView><NSTextDelegate>
+        if (Tok.is(tok::less)) {
+          if (DS.getProtocolQualifiers()) {
+            Diag(Tok, diag::err_objc_type_args_after_protocols)
+              << SourceRange(DS.getProtocolLAngleLoc(), DS.getLocEnd());
+            SkipUntil(tok::greater, tok::greatergreater);
+          } else {
+            ParseObjCProtocolQualifiers(DS);
+          }
+        }
+      }
 
       continue;
     }
@@ -2997,11 +3012,26 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       DS.SetRangeEnd(Tok.getLocation());
       ConsumeToken(); // The identifier
 
-      // Objective-C supports syntax of the form 'id<proto1,proto2>' where 'id'
-      // is a specific typedef and 'itf<proto1,proto2>' where 'itf' is an
-      // Objective-C interface.
-      if (Tok.is(tok::less) && getLangOpts().ObjC1)
-        ParseObjCProtocolQualifiers(DS);
+      // Objective-C supports type arguments and protocol references
+      // following an Objective-C object pointer type. Handle either
+      // one of them.
+      if (Tok.is(tok::less) && getLangOpts().ObjC1) {
+        ParseObjCTypeArgsOrProtocolQualifiers(
+          DS, /*warnOnIncompleteProtocols=*/false);
+
+        // An Objective-C object pointer followed by type arguments
+        // can then be followed again by a set of protocol references, e.g.,
+        // \c NSArray<NSView><NSTextDelegate>
+        if (Tok.is(tok::less)) {
+          if (DS.getProtocolQualifiers()) {
+            Diag(Tok, diag::err_objc_type_args_after_protocols)
+              << SourceRange(DS.getProtocolLAngleLoc(), DS.getLocEnd());
+            SkipUntil(tok::greater, tok::greatergreater);
+          } else {
+            ParseObjCProtocolQualifiers(DS);
+          }
+        }
+      }
 
       // Need to support trailing type qualifiers (e.g. "id<p> const").
       // If a type specifier follows, it will be diagnosed elsewhere.

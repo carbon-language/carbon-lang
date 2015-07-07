@@ -940,6 +940,8 @@ DEF_TRAVERSE_TYPE(ObjCObjectType, {
   // type is itself.
   if (T->getBaseType().getTypePtr() != T)
     TRY_TO(TraverseType(T->getBaseType()));
+  for (auto typeArg : T->getTypeArgsAsWritten())
+    TRY_TO(TraverseType(typeArg));
 })
 
 DEF_TRAVERSE_TYPE(ObjCObjectPointerType,
@@ -1166,6 +1168,8 @@ DEF_TRAVERSE_TYPELOC(ObjCObjectType, {
   // type is itself.
   if (TL.getTypePtr()->getBaseType().getTypePtr() != TL.getTypePtr())
     TRY_TO(TraverseTypeLoc(TL.getBaseLoc()));
+  for (unsigned i = 0, n = TL.getNumTypeArgs(); i != n; ++i)
+    TRY_TO(TraverseTypeLoc(TL.getTypeArgTInfo(i)->getTypeLoc()));
 })
 
 DEF_TRAVERSE_TYPELOC(ObjCObjectPointerType,
@@ -1325,7 +1329,10 @@ DEF_TRAVERSE_DECL(ObjCInterfaceDecl, {// FIXME: implement
     for (auto typeParam : *typeParamList)
       TRY_TO(TraverseObjCTypeParamDecl(typeParam));
   }
-  return true;
+
+  if (TypeSourceInfo *superTInfo = D->getSuperClassTInfo()) {
+    TRY_TO(TraverseTypeLoc(superTInfo->getTypeLoc()));
+  }
 })
 
 DEF_TRAVERSE_DECL(ObjCProtocolDecl, {// FIXME: implement
