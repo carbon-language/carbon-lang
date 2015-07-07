@@ -165,8 +165,10 @@ public:
     if (Size > (size_t)(OutBufEnd - OutBufCur))
       return write(Str.data(), Size);
 
-    memcpy(OutBufCur, Str.data(), Size);
-    OutBufCur += Size;
+    if (Size) {
+      memcpy(OutBufCur, Str.data(), Size);
+      OutBufCur += Size;
+    }
     return *this;
   }
 
