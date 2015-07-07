@@ -67,7 +67,13 @@ macro(add_lldb_library name)
     lldb_link_common_libs(${name} "${libkind}")
 
     
-    target_link_libraries(${name} ${cmake_2_8_12_PUBLIC} ${CLANG_USED_LIBS})
+    target_link_libraries(${name})
+    if (COMPILER_SUPPORTS_GROUPS)
+        target_link_libraries(${name} ${cmake_2_8_12_PUBLIC}
+                    -Wl,--start-group ${CLANG_USED_LIBS} -Wl,--end-group)
+    else()
+        target_link_libraries(${name} ${cmake_2_8_12_PUBLIC} ${CLANG_USED_LIBS})
+    endif()
     llvm_config(${name} ${LLVM_LINK_COMPONENTS})
 
     if (NOT LLVM_INSTALL_TOOLCHAIN_ONLY OR ${name} STREQUAL "liblldb")
