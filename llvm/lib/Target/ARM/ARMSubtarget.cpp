@@ -172,6 +172,7 @@ void ARMSubtarget::initializeEnvironment() {
   AllowsUnalignedMem = false;
   Thumb2DSP = false;
   UseNaClTrap = false;
+  GenLongCalls = false;
   UnsafeFPMath = false;
 }
 
