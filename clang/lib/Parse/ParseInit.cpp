@@ -252,11 +252,9 @@ ExprResult Parser::ParseInitializerWithPotentialDesignator() {
       // Three cases. This is a message send to a type: [type foo]
       // This is a message send to super:  [super foo]
       // This is a message sent to an expr:  [super.bar foo]
-      switch (Sema::ObjCMessageKind Kind
-                = Actions.getObjCMessageKind(getCurScope(), II, IILoc, 
-                                             II == Ident_super,
-                                             NextToken().is(tok::period),
-                                             ReceiverType)) {
+      switch (Actions.getObjCMessageKind(
+          getCurScope(), II, IILoc, II == Ident_super,
+          NextToken().is(tok::period), ReceiverType)) {
       case Sema::ObjCSuperMessage:
         CheckArrayDesignatorSyntax(*this, StartLoc, Desig);
         return ParseAssignmentExprWithObjCMessageExprStart(StartLoc,
