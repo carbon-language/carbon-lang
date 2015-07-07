@@ -1094,17 +1094,13 @@ TypeResult Sema::actOnObjCTypeArgsAndProtocolQualifiers(
 
   // Build the object type.
   QualType Result = BuildObjCObjectType(
-                      T, 
-                      BaseTypeInfo->getTypeLoc().getSourceRange().getBegin(),
-                      TypeArgsLAngleLoc, 
-                      ActualTypeArgInfos, 
-                      TypeArgsRAngleLoc,
-                      ProtocolLAngleLoc,
-                      llvm::makeArrayRef((ObjCProtocolDecl **)Protocols.data(),
-                                         Protocols.size()),
-                      ProtocolLocs,
-                      ProtocolRAngleLoc,
-                      /*FailOnError=*/false);
+      T, BaseTypeInfo->getTypeLoc().getSourceRange().getBegin(),
+      TypeArgsLAngleLoc, ActualTypeArgInfos, TypeArgsRAngleLoc,
+      ProtocolLAngleLoc,
+      llvm::makeArrayRef((ObjCProtocolDecl * const *)Protocols.data(),
+                         Protocols.size()),
+      ProtocolLocs, ProtocolRAngleLoc,
+      /*FailOnError=*/false);
 
   if (Result == T)
     return BaseType;
