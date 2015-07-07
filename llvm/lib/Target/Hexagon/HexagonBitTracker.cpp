@@ -195,15 +195,13 @@ bool HexagonEvaluator::evaluate(const MachineInstr *MI,
       return eIMM(Op.getImm(), W);
     if (!Op.isReg())
       return RegisterCell::self(0, W);
-    uint16_t w = getRegBitWidth(Reg[N]);
-    assert(w == W && "Register width mismatch");
+    assert(getRegBitWidth(Reg[N]) == W && "Register width mismatch");
     return rc(N);
   };
   // Extract RW low bits of the cell.
   auto lo = [this] (const BT::RegisterCell &RC, uint16_t RW)
         -> BT::RegisterCell {
-    uint16_t W = RC.width();
-    assert(RW <= W);
+    assert(RW <= RC.width());
     return eXTR(RC, 0, RW);
   };
   // Extract RW high bits of the cell.
@@ -216,8 +214,7 @@ bool HexagonEvaluator::evaluate(const MachineInstr *MI,
   // Extract N-th halfword (counting from the least significant position).
   auto half = [this] (const BT::RegisterCell &RC, unsigned N)
         -> BT::RegisterCell {
-    uint16_t W = RC.width();
-    assert(N*16+16 <= W);
+    assert(N*16+16 <= RC.width());
     return eXTR(RC, N*16, N*16+16);
   };
   // Shuffle bits (pick even/odd from cells and merge into result).

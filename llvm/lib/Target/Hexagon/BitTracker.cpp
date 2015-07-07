@@ -527,8 +527,7 @@ BT::RegisterCell BT::MachineEvaluator::eMLU(const RegisterCell &A1,
 
 BT::RegisterCell BT::MachineEvaluator::eASL(const RegisterCell &A1,
       uint16_t Sh) const {
-  uint16_t W = A1.width();
-  assert(Sh <= W);
+  assert(Sh <= A1.width());
   RegisterCell Res = RegisterCell::ref(A1);
   Res.rol(Sh);
   Res.fill(0, Sh, BitValue::Zero);
@@ -644,8 +643,7 @@ BT::RegisterCell BT::MachineEvaluator::eNOT(const RegisterCell &A1) const {
 
 BT::RegisterCell BT::MachineEvaluator::eSET(const RegisterCell &A1,
       uint16_t BitN) const {
-  uint16_t W = A1.width();
-  assert(BitN < W);
+  assert(BitN < A1.width());
   RegisterCell Res = RegisterCell::ref(A1);
   Res[BitN] = BitValue::One;
   return Res;
@@ -654,8 +652,7 @@ BT::RegisterCell BT::MachineEvaluator::eSET(const RegisterCell &A1,
 
 BT::RegisterCell BT::MachineEvaluator::eCLR(const RegisterCell &A1,
       uint16_t BitN) const {
-  uint16_t W = A1.width();
-  assert(BitN < W);
+  assert(BitN < A1.width());
   RegisterCell Res = RegisterCell::ref(A1);
   Res[BitN] = BitValue::Zero;
   return Res;
@@ -722,6 +719,7 @@ BT::RegisterCell BT::MachineEvaluator::eXTR(const RegisterCell &A1,
 BT::RegisterCell BT::MachineEvaluator::eINS(const RegisterCell &A1,
       const RegisterCell &A2, uint16_t AtN) const {
   uint16_t W1 = A1.width(), W2 = A2.width();
+  (void)W1;
   assert(AtN < W1 && AtN+W2 <= W1);
   // Copy bits from A1, insert A2 at position AtN.
   RegisterCell Res = RegisterCell::ref(A1);
@@ -1017,6 +1015,7 @@ void BT::subst(RegisterRef OldRR, RegisterRef NewRR) {
   BitMask NM = ME.mask(NewRR.Reg, NewRR.Sub);
   uint16_t OMB = OM.first(), OME = OM.last();
   uint16_t NMB = NM.first(), NME = NM.last();
+  (void)NME;
   assert((OME-OMB == NME-NMB) &&
          "Substituting registers of different lengths");
   for (CellMapType::iterator I = Map.begin(), E = Map.end(); I != E; ++I) {
