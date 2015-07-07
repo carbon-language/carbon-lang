@@ -40,10 +40,10 @@
 #include "lldb/Target/Target.h"
 #include "lldb/Utility/LLDBAssert.h"
 #include "lldb/Utility/PseudoTerminal.h"
+#include "lldb/Utility/StringExtractor.h"
 
 #include "Plugins/Process/POSIX/ProcessPOSIXLog.h"
 #include "Plugins/Process/Utility/LinuxSignals.h"
-#include "Utility/StringExtractor.h"
 #include "NativeThreadLinux.h"
 #include "ProcFileReader.h"
 #include "Procfs.h"

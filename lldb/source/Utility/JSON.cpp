@@ -8,6 +8,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "lldb/Utility/JSON.h"
+
+#include <limits.h>
 #include "lldb/Core/StreamString.h"
 #include "lldb/Host/StringConvert.h"
 

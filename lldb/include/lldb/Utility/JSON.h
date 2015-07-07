@@ -11,7 +11,7 @@
 #define utility_JSON_h_
 
 #include "lldb/Core/Stream.h"
-#include "Utility/StringExtractor.h"
+#include "lldb/Utility/StringExtractor.h"
 
 #include <inttypes.h>
 #include <map>

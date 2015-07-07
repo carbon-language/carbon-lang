@@ -27,11 +27,11 @@
 #include "lldb/Core/ThreadSafeValue.h"
 #include "lldb/Host/HostThread.h"
 #include "lldb/lldb-private-forward.h"
+#include "lldb/Utility/StringExtractor.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/Thread.h"
 
 #include "GDBRemoteCommunicationClient.h"
-#include "Utility/StringExtractor.h"
 #include "GDBRemoteRegisterContext.h"
 
 namespace lldb_private {

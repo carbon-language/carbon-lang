@@ -15,7 +15,7 @@
 #include <string>
 // Other libraries and framework includes
 // Project includes
-#include "Utility/StringExtractor.h"
+#include "lldb/Utility/StringExtractor.h"
 
 class StringExtractorGDBRemote : public StringExtractor
 {
