@@ -1198,28 +1198,36 @@ ObjCMethodDecl::findPropertyDecl(bool CheckOverrides) const {
 void ObjCTypeParamDecl::anchor() { }
 
 ObjCTypeParamDecl *ObjCTypeParamDecl::Create(ASTContext &ctx, DeclContext *dc,
+                                             ObjCTypeParamVariance variance,
+                                             SourceLocation varianceLoc,
                                              unsigned index,
                                              SourceLocation nameLoc,
                                              IdentifierInfo *name,
                                              SourceLocation colonLoc,
                                              TypeSourceInfo *boundInfo) {
-  return new (ctx, dc) ObjCTypeParamDecl(ctx, dc, index, nameLoc, name, colonLoc,
-                                         boundInfo);
+  return new (ctx, dc) ObjCTypeParamDecl(ctx, dc, variance, varianceLoc, index,
+                                         nameLoc, name, colonLoc, boundInfo);
 }
 
 ObjCTypeParamDecl *ObjCTypeParamDecl::CreateDeserialized(ASTContext &ctx,
                                                          unsigned ID) {
-  return new (ctx, ID) ObjCTypeParamDecl(ctx, nullptr, 0, SourceLocation(),
+  return new (ctx, ID) ObjCTypeParamDecl(ctx, nullptr,
+                                         ObjCTypeParamVariance::Invariant,
+                                         SourceLocation(), 0, SourceLocation(),
                                          nullptr, SourceLocation(), nullptr);
 }
 
 SourceRange ObjCTypeParamDecl::getSourceRange() const {
+  SourceLocation startLoc = VarianceLoc;
+  if (startLoc.isInvalid())
+    startLoc = getLocation();
+
   if (hasExplicitBound()) {
-    return SourceRange(getLocation(),
+    return SourceRange(startLoc,
                        getTypeSourceInfo()->getTypeLoc().getEndLoc());
   }
 
-  return SourceRange(getLocation());
+  return SourceRange(startLoc);
 }
 
 //===----------------------------------------------------------------------===//

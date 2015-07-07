@@ -416,10 +416,14 @@ static void addContextSensitiveTypeNullability(Parser &P,
 ///     '<' objc-type-parameter (',' objc-type-parameter)* '>'
 ///
 ///   objc-type-parameter:
-///     identifier objc-type-parameter-bound[opt]
+///     objc-type-parameter-variance? identifier objc-type-parameter-bound[opt]
 ///
 ///   objc-type-parameter-bound:
 ///     ':' type-name
+///
+///   objc-type-parameter-variance:
+///     '__covariant'
+///     '__contravariant'
 ///
 /// \param lAngleLoc The location of the starting '<'.
 ///
@@ -444,12 +448,15 @@ ObjCTypeParamList *Parser::parseObjCTypeParamListOrProtocolRefs(
   auto makeProtocolIdentsIntoTypeParameters = [&]() {
     unsigned index = 0;
     for (const auto &pair : protocolIdents) {
-      DeclResult typeParam = Actions.actOnObjCTypeParam(getCurScope(),
-                                                        index++,
-                                                        pair.first,
-                                                        pair.second,
-                                                        SourceLocation(),
-                                                        ParsedType());
+      DeclResult typeParam = Actions.actOnObjCTypeParam(
+                               getCurScope(),
+                               ObjCTypeParamVariance::Invariant,
+                               SourceLocation(),
+                               index++,
+                               pair.first,
+                               pair.second,
+                               SourceLocation(),
+                               ParsedType());
       if (typeParam.isUsable())
         typeParams.push_back(typeParam.get());
     }
@@ -460,7 +467,26 @@ ObjCTypeParamList *Parser::parseObjCTypeParamListOrProtocolRefs(
 
   bool invalid = false;
   lAngleLoc = ConsumeToken();
+
   do {
+    // Parse the variance, if any.
+    SourceLocation varianceLoc;
+    ObjCTypeParamVariance variance = ObjCTypeParamVariance::Invariant;
+    if (Tok.is(tok::kw___covariant) || Tok.is(tok::kw___contravariant)) {
+      variance = Tok.is(tok::kw___covariant)
+                   ? ObjCTypeParamVariance::Covariant
+                   : ObjCTypeParamVariance::Contravariant;
+      varianceLoc = ConsumeToken();
+
+      // Once we've seen a variance specific , we know this is not a
+      // list of protocol references.
+      if (mayBeProtocolList) {
+        // Up until now, we have been queuing up parameters because they
+        // might be protocol references. Turn them into parameters now.
+        makeProtocolIdentsIntoTypeParameters();
+      }
+    }
+
     // Parse the identifier.
     if (!Tok.is(tok::identifier)) {
       // Code completion.
@@ -508,6 +534,8 @@ ObjCTypeParamList *Parser::parseObjCTypeParamListOrProtocolRefs(
 
     // Create the type parameter.
     DeclResult typeParam = Actions.actOnObjCTypeParam(getCurScope(),
+                                                      variance,
+                                                      varianceLoc,
                                                       typeParams.size(),
                                                       paramName,
                                                       paramLoc,

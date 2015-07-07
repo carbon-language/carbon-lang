@@ -7089,7 +7089,10 @@ public:
   };
   ObjCContainerKind getObjCContainerKind() const;
 
-  DeclResult actOnObjCTypeParam(Scope *S, unsigned index,
+  DeclResult actOnObjCTypeParam(Scope *S,
+                                ObjCTypeParamVariance variance,
+                                SourceLocation varianceLoc,
+                                unsigned index,
                                 IdentifierInfo *paramName,
                                 SourceLocation paramLoc,
                                 SourceLocation colonLoc,

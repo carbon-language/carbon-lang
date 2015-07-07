@@ -4,6 +4,10 @@
 #  error Compiler does not support Objective-C generics?
 #endif
 
+#if !__has_feature(objc_generics_variance)
+#  error Compiler does not support co- and contr-variance?
+#endif
+
 @protocol NSObject // expected-note{{'NSObject' declared here}}
 @end
 
@@ -314,4 +318,40 @@ void testSpecializedTypePrinting() {
 @end
 
 @interface NSFoo : PC1<NSObject *, NSObject *> // okay
+@end
+
+// --------------------------------------------------------------------------
+// Co- and contra-variance.
+// --------------------------------------------------------------------------
+@class Variance1<T, U>;
+
+@class Variance1<__covariant T, __contravariant U>;
+
+@interface Variance1<__covariant T, __contravariant U> : NSObject // expected-note 2{{declared here}}
+@end
+
+@interface Variance1<T, U> () // okay, inferred
+@end
+
+@interface Variance1<T, U> (Cat1) // okay, inferred
+@end
+
+@class Variance1<T, U>; // okay, inferred
+
+@interface Variance1<__covariant T, __contravariant U> () // okay, matches
+@end
+
+@interface Variance1<__covariant T, __contravariant U> (Cat2) // okay, matches
+@end
+
+@class Variance1<__covariant T, __contravariant U>; // okay, matches
+
+@interface Variance1<__contravariant X, // expected-error{{contravariant type parameter 'X' conflicts with previous covariant type parameter 'T'}}
+                     __covariant Y> () // expected-error{{covariant type parameter 'Y' conflicts with previous contravariant type parameter 'U'}}
+@end
+
+@class Variance2<__covariant T, __contravariant U>; // expected-note 2{{declared here}}
+
+@interface Variance2<__contravariant T, // expected-error{{contravariant type parameter 'T' conflicts with previous covariant type parameter 'T'}}
+                     U> : NSObject // expected-error{{invariant type parameter 'U' conflicts with previous contravariant type parameter 'U'}}
 @end

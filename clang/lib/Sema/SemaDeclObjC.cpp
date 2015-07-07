@@ -590,7 +590,10 @@ ActOnSuperClassOfClassInterface(Scope *S,
   }
 }
 
-DeclResult Sema::actOnObjCTypeParam(Scope *S, unsigned index,
+DeclResult Sema::actOnObjCTypeParam(Scope *S,
+                                    ObjCTypeParamVariance variance,
+                                    SourceLocation varianceLoc,
+                                    unsigned index,
                                     IdentifierInfo *paramName,
                                     SourceLocation paramLoc,
                                     SourceLocation colonLoc,
@@ -661,8 +664,9 @@ DeclResult Sema::actOnObjCTypeParam(Scope *S, unsigned index,
   }
 
   // Create the type parameter.
-  return ObjCTypeParamDecl::Create(Context, CurContext, index, paramLoc, 
-                                   paramName, colonLoc, typeBoundInfo);
+  return ObjCTypeParamDecl::Create(Context, CurContext, variance, varianceLoc,
+                                   index, paramLoc, paramName, colonLoc,
+                                   typeBoundInfo);
 }
 
 ObjCTypeParamList *Sema::actOnObjCTypeParamList(Scope *S,
@@ -749,6 +753,65 @@ static bool checkTypeParamListConsistency(Sema &S,
   for (unsigned i = 0, n = prevTypeParams->size(); i != n; ++i) {
     ObjCTypeParamDecl *prevTypeParam = prevTypeParams->begin()[i];
     ObjCTypeParamDecl *newTypeParam = newTypeParams->begin()[i];
+
+    // Check for consistency of the variance.
+    if (newTypeParam->getVariance() != prevTypeParam->getVariance()) {
+      if (newTypeParam->getVariance() == ObjCTypeParamVariance::Invariant &&
+          newContext != TypeParamListContext::Definition) {
+        // When the new type parameter is invariant and is not part
+        // of the definition, just propagate the variance.
+        newTypeParam->setVariance(prevTypeParam->getVariance());
+      } else if (prevTypeParam->getVariance() 
+                   == ObjCTypeParamVariance::Invariant &&
+                 !(isa<ObjCInterfaceDecl>(prevTypeParam->getDeclContext()) &&
+                   cast<ObjCInterfaceDecl>(prevTypeParam->getDeclContext())
+                     ->getDefinition() == prevTypeParam->getDeclContext())) {
+        // When the old parameter is invariant and was not part of the
+        // definition, just ignore the difference because it doesn't
+        // matter.
+      } else {
+        {
+          // Diagnose the conflict and update the second declaration.
+          SourceLocation diagLoc = newTypeParam->getVarianceLoc();
+          if (diagLoc.isInvalid())
+            diagLoc = newTypeParam->getLocStart();
+
+          auto diag = S.Diag(diagLoc,
+                             diag::err_objc_type_param_variance_conflict)
+                        << static_cast<unsigned>(newTypeParam->getVariance())
+                        << newTypeParam->getDeclName()
+                        << static_cast<unsigned>(prevTypeParam->getVariance())
+                        << prevTypeParam->getDeclName();
+          switch (prevTypeParam->getVariance()) {
+          case ObjCTypeParamVariance::Invariant:
+            diag << FixItHint::CreateRemoval(newTypeParam->getVarianceLoc());
+            break;
+
+          case ObjCTypeParamVariance::Covariant:
+          case ObjCTypeParamVariance::Contravariant: {
+            StringRef newVarianceStr
+               = prevTypeParam->getVariance() == ObjCTypeParamVariance::Covariant
+                   ? "__covariant"
+                   : "__contravariant";
+            if (newTypeParam->getVariance()
+                  == ObjCTypeParamVariance::Invariant) {
+              diag << FixItHint::CreateInsertion(newTypeParam->getLocStart(),
+                                                 (newVarianceStr + " ").str());
+            } else {
+              diag << FixItHint::CreateReplacement(newTypeParam->getVarianceLoc(),
+                                               newVarianceStr);
+            }
+          }
+          }
+        }
+
+        S.Diag(prevTypeParam->getLocation(), diag::note_objc_type_param_here)
+          << prevTypeParam->getDeclName();
+
+        // Override the variance.
+        newTypeParam->setVariance(prevTypeParam->getVariance());
+      }
+    }
 
     // If the bound types match, there's nothing to do.
     if (S.Context.hasSameType(prevTypeParam->getUnderlyingType(),
@@ -876,6 +939,8 @@ ActOnStartClassInterface(Scope *S, SourceLocation AtInterfaceLoc,
             ObjCTypeParamDecl::Create(
               Context,
               CurContext,
+              typeParam->getVariance(),
+              SourceLocation(),
               typeParam->getIndex(),
               SourceLocation(),
               typeParam->getIdentifier(),

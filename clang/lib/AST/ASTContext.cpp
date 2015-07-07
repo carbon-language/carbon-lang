@@ -6943,20 +6943,62 @@ void getIntersectionOfProtocols(ASTContext &Context,
                        compareObjCProtocolsByName);
 }
 
+/// Determine whether the first type is a subtype of the second.
+static bool canAssignObjCObjectTypes(ASTContext &ctx, QualType lhs,
+                                     QualType rhs) {
+  // Common case: two object pointers.
+  const ObjCObjectPointerType *lhsOPT = lhs->getAs<ObjCObjectPointerType>();
+  const ObjCObjectPointerType *rhsOPT = rhs->getAs<ObjCObjectPointerType>();
+  if (lhsOPT && rhsOPT)
+    return ctx.canAssignObjCInterfaces(lhsOPT, rhsOPT);
+
+  // Two block pointers.
+  const BlockPointerType *lhsBlock = lhs->getAs<BlockPointerType>();
+  const BlockPointerType *rhsBlock = rhs->getAs<BlockPointerType>();
+  if (lhsBlock && rhsBlock)
+    return ctx.typesAreBlockPointerCompatible(lhs, rhs);
+
+  // If either is an unqualified 'id' and the other is a block, it's
+  // acceptable.
+  if ((lhsOPT && lhsOPT->isObjCIdType() && rhsBlock) ||
+      (rhsOPT && rhsOPT->isObjCIdType() && lhsBlock))
+    return true;
+
+  return false;
+}
+
 // Check that the given Objective-C type argument lists are equivalent.
-static bool sameObjCTypeArgs(const ASTContext &ctx, ArrayRef<QualType> lhsArgs,
+static bool sameObjCTypeArgs(ASTContext &ctx,
+                             const ObjCInterfaceDecl *iface,
+                             ArrayRef<QualType> lhsArgs,
                              ArrayRef<QualType> rhsArgs,
                              bool stripKindOf) {
   if (lhsArgs.size() != rhsArgs.size())
     return false;
 
+  ObjCTypeParamList *typeParams = iface->getTypeParamList();
   for (unsigned i = 0, n = lhsArgs.size(); i != n; ++i) {
-    if (!ctx.hasSameType(lhsArgs[i], rhsArgs[i])) {
+    if (ctx.hasSameType(lhsArgs[i], rhsArgs[i]))
+      continue;
+
+    switch (typeParams->begin()[i]->getVariance()) {
+    case ObjCTypeParamVariance::Invariant:
       if (!stripKindOf ||
           !ctx.hasSameType(lhsArgs[i].stripObjCKindOfType(ctx),
                            rhsArgs[i].stripObjCKindOfType(ctx))) {
         return false;
       }
+      break;
+
+    case ObjCTypeParamVariance::Covariant:
+      if (!canAssignObjCObjectTypes(ctx, lhsArgs[i], rhsArgs[i]))
+        return false;
+      break;
+
+    case ObjCTypeParamVariance::Contravariant:
+      if (!canAssignObjCObjectTypes(ctx, rhsArgs[i], lhsArgs[i]))
+        return false;
+      break;
     }
   }
 
@@ -6989,7 +7031,8 @@ QualType ASTContext::areCommonBaseCompatible(
       bool anyChanges = false;
       if (LHS->isSpecialized() && RHS->isSpecialized()) {
         // Both have type arguments, compare them.
-        if (!sameObjCTypeArgs(*this, LHS->getTypeArgs(), RHS->getTypeArgs(),
+        if (!sameObjCTypeArgs(*this, LHS->getInterface(),
+                              LHS->getTypeArgs(), RHS->getTypeArgs(),
                               /*stripKindOf=*/true))
           return QualType();
       } else if (LHS->isSpecialized() != RHS->isSpecialized()) {
@@ -7037,7 +7080,8 @@ QualType ASTContext::areCommonBaseCompatible(
       bool anyChanges = false;
       if (LHS->isSpecialized() && RHS->isSpecialized()) {
         // Both have type arguments, compare them.
-        if (!sameObjCTypeArgs(*this, LHS->getTypeArgs(), RHS->getTypeArgs(),
+        if (!sameObjCTypeArgs(*this, LHS->getInterface(),
+                              LHS->getTypeArgs(), RHS->getTypeArgs(),
                               /*stripKindOf=*/true))
           return QualType();
       } else if (LHS->isSpecialized() != RHS->isSpecialized()) {
@@ -7127,7 +7171,8 @@ bool ASTContext::canAssignObjCInterfaces(const ObjCObjectType *LHS,
 
     // If the RHS is specializd, compare type arguments.
     if (RHSSuper->isSpecialized() &&
-        !sameObjCTypeArgs(*this, LHS->getTypeArgs(), RHSSuper->getTypeArgs(),
+        !sameObjCTypeArgs(*this, LHS->getInterface(),
+                          LHS->getTypeArgs(), RHSSuper->getTypeArgs(),
                           /*stripKindOf=*/true)) {
       return false;
     }

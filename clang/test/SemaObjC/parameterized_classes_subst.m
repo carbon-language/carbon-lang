@@ -343,6 +343,36 @@ void test_implicit_conversions(NSArray<NSString *> *stringArray,
   array = mutStringArray;
 }
 
+@interface NSCovariant1<__covariant T>
+@end
+
+@interface NSContravariant1<__contravariant T>
+@end
+
+void test_variance(NSCovariant1<NSString *> *covariant1,
+                   NSCovariant1<NSMutableString *> *covariant2,
+                   NSCovariant1<NSString *(^)(void)> *covariant3,
+                   NSCovariant1<NSMutableString *(^)(void)> *covariant4,
+                   NSCovariant1<id> *covariant5,
+                   NSCovariant1<id<NSCopying>> *covariant6,
+                   NSContravariant1<NSString *> *contravariant1,
+                   NSContravariant1<NSMutableString *> *contravariant2) {
+  covariant1 = covariant2; // okay
+  covariant2 = covariant1; // expected-warning{{incompatible pointer types assigning to 'NSCovariant1<NSMutableString *> *' from 'NSCovariant1<NSString *> *'}}
+
+  covariant3 = covariant4; // okay
+  covariant4 = covariant3; // expected-warning{{incompatible pointer types assigning to 'NSCovariant1<NSMutableString *(^)(void)> *' from 'NSCovariant1<NSString *(^)(void)> *'}}
+
+  covariant5 = covariant1; // okay
+  covariant1 = covariant5; // okay: id is promiscuous
+
+  covariant5 = covariant3; // okay
+  covariant3 = covariant5; // okay
+
+  contravariant1 = contravariant2; // expected-warning{{incompatible pointer types assigning to 'NSContravariant1<NSString *> *' from 'NSContravariant1<NSMutableString *> *'}}
+  contravariant2 = contravariant1; // okay
+}
+
 // --------------------------------------------------------------------------
 // Ternary operator
 // --------------------------------------------------------------------------

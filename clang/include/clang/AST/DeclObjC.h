@@ -505,6 +505,18 @@ public:
   friend class ASTDeclWriter;
 };
 
+/// Describes the variance of a given generic parameter.
+enum class ObjCTypeParamVariance : uint8_t {
+  /// The parameter is invariant: must match exactly.
+  Invariant,
+  /// The parameter is covariant, e.g., X<T> is a subtype of X<U> when
+  /// the type parameter is covariant and T is a subtype of U.
+  Covariant,
+  /// The parameter is contravariant, e.g., X<T> is a subtype of X<U>
+  /// when the type parameter is covariant and U is a subtype of T.
+  Contravariant,
+};
+
 /// Represents the declaration of an Objective-C type parameter.
 ///
 /// \code
@@ -521,21 +533,32 @@ class ObjCTypeParamDecl : public TypedefNameDecl {
   void anchor() override;
 
   /// Index of this type parameter in the type parameter list.
-  unsigned Index : 16;
+  unsigned Index : 14;
 
-  // The location of the ':', which will be valid when the bound was
-  // explicitly specified.
+  /// The variance of the type parameter.
+  unsigned Variance : 2;
+
+  /// The location of the variance, if any.
+  SourceLocation VarianceLoc;
+
+  /// The location of the ':', which will be valid when the bound was
+  /// explicitly specified.
   SourceLocation ColonLoc;
 
-  ObjCTypeParamDecl(ASTContext &ctx, DeclContext *dc, unsigned index,
+  ObjCTypeParamDecl(ASTContext &ctx, DeclContext *dc, 
+                    ObjCTypeParamVariance variance, SourceLocation varianceLoc,
+                    unsigned index,
                     SourceLocation nameLoc, IdentifierInfo *name,
                     SourceLocation colonLoc, TypeSourceInfo *boundInfo)
     : TypedefNameDecl(ObjCTypeParam, ctx, dc, nameLoc, nameLoc, name,
                       boundInfo),
-      Index(index), ColonLoc(colonLoc) { }
+      Index(index), Variance(static_cast<unsigned>(variance)),
+      VarianceLoc(varianceLoc), ColonLoc(colonLoc) { }
 
 public:
   static ObjCTypeParamDecl *Create(ASTContext &ctx, DeclContext *dc,
+                                   ObjCTypeParamVariance variance,
+                                   SourceLocation varianceLoc,
                                    unsigned index,
                                    SourceLocation nameLoc,
                                    IdentifierInfo *name,
@@ -544,6 +567,19 @@ public:
   static ObjCTypeParamDecl *CreateDeserialized(ASTContext &ctx, unsigned ID);
 
   SourceRange getSourceRange() const override LLVM_READONLY;
+
+  /// Determine the variance of this type parameter.
+  ObjCTypeParamVariance getVariance() const {
+    return static_cast<ObjCTypeParamVariance>(Variance);
+  }
+
+  /// Set the variance of this type parameter.
+  void setVariance(ObjCTypeParamVariance variance) {
+    Variance = static_cast<unsigned>(variance);
+  }
+
+  /// Retrieve the location of the variance keyword.
+  SourceLocation getVarianceLoc() const { return VarianceLoc; }
 
   /// Retrieve the index into its type parameter list.
   unsigned getIndex() const { return Index; }

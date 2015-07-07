@@ -974,6 +974,19 @@ void DeclPrinter::PrintObjCTypeParams(ObjCTypeParamList *Params) {
       Out << ", ";
     }
 
+    switch (Param->getVariance()) {
+    case ObjCTypeParamVariance::Invariant:
+      break;
+
+    case ObjCTypeParamVariance::Covariant:
+      Out << "__covariant ";
+      break;
+
+    case ObjCTypeParamVariance::Contravariant:
+      Out << "__contravariant ";
+      break;
+    }
+
     Out << Param->getDeclName().getAsString();
 
     if (Param->hasExplicitBound()) {

@@ -7782,6 +7782,10 @@ def err_objc_type_param_bound_conflict : Error<
   "type bound %0 for type parameter %1 conflicts with "
   "%select{implicit|previous}2 bound %3%select{for type parameter %5|}4">;
 
+def err_objc_type_param_variance_conflict : Error<
+  "%select{in|co|contra}0variant type parameter %1 conflicts with previous "
+  "%select{in|co|contra}2variant type parameter %3">;
+
 def note_objc_type_param_here : Note<"type parameter %0 declared here">;
 
 def err_objc_type_param_bound_missing : Error<

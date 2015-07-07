@@ -581,7 +581,9 @@ void ASTDeclWriter::VisitObjCMethodDecl(ObjCMethodDecl *D) {
 
 void ASTDeclWriter::VisitObjCTypeParamDecl(ObjCTypeParamDecl *D) {
   VisitTypedefNameDecl(D);
+  Record.push_back(D->Variance);
   Record.push_back(D->Index);
+  Writer.AddSourceLocation(D->VarianceLoc, Record);
   Writer.AddSourceLocation(D->ColonLoc, Record);
 
   Code = serialization::DECL_OBJC_TYPE_PARAM;

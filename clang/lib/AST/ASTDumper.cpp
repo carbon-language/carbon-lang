@@ -1475,6 +1475,19 @@ void ASTDumper::VisitObjCMethodDecl(const ObjCMethodDecl *D) {
 
 void ASTDumper::VisitObjCTypeParamDecl(const ObjCTypeParamDecl *D) {
   dumpName(D);
+  switch (D->getVariance()) {
+  case ObjCTypeParamVariance::Invariant:
+    break;
+
+  case ObjCTypeParamVariance::Covariant:
+    OS << " covariant";
+    break;
+
+  case ObjCTypeParamVariance::Contravariant:
+    OS << " contravariant";
+    break;
+  }
+
   if (D->hasExplicitBound())
     OS << " bounded";
   dumpType(D->getUnderlyingType());
