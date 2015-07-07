@@ -28,7 +28,7 @@ let TargetPrefix = "x86" in {
   def int_x86_seh_restoreframe : Intrinsic<[], [], []>;
 
   // Given a pointer to the end of an EH registration object, returns the true
-  // parent frame address that can be used with llvm.framerecover.
+  // parent frame address that can be used with llvm.localrecover.
   def int_x86_seh_recoverfp : Intrinsic<[llvm_ptr_ty],
                                         [llvm_ptr_ty, llvm_ptr_ty],
                                         [IntrNoMem]>;

@@ -60,7 +60,7 @@ bool DeadMachineInstructionElim::isDead(const MachineInstr *MI) const {
     return false;
 
   // Don't delete frame allocation labels.
-  if (MI->getOpcode() == TargetOpcode::FRAME_ALLOC)
+  if (MI->getOpcode() == TargetOpcode::LOCAL_ESCAPE)
     return false;
 
   // Don't delete instructions with side effects.

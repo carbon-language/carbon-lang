@@ -25,7 +25,7 @@ target triple = "x86_64-pc-windows-msvc"
 ; CHECK: entry:
 ; CHECK:   [[OBJ_PTR:\%.+]] = alloca %class.SomeClass, align 4
 ; CHECK:   call void @_ZN9SomeClassC1Ev(%class.SomeClass* [[OBJ_PTR]])
-; CHECK:   call void (...) @llvm.frameescape(%class.SomeClass* [[OBJ_PTR]])
+; CHECK:   call void (...) @llvm.localescape(%class.SomeClass* [[OBJ_PTR]])
 ; CHECK:   invoke void @_Z9may_throwv()
 ; CHECK:           to label %invoke.cont unwind label %[[LPAD_LABEL:lpad[0-9]*]]
 
@@ -74,7 +74,7 @@ eh.resume:                                        ; preds = %lpad
 ; This cleanup handler should be outlined.
 ; CHECK: define internal void @_Z4testv.cleanup(i8*, i8*)
 ; CHECK: entry:
-; CHECK:   [[RECOVER_OBJ:\%.+]] = call i8* @llvm.framerecover(i8* bitcast (void ()* @_Z4testv to i8*), i8* %1, i32 0)
+; CHECK:   [[RECOVER_OBJ:\%.+]] = call i8* @llvm.localrecover(i8* bitcast (void ()* @_Z4testv to i8*), i8* %1, i32 0)
 ; CHECK:   [[OBJ_PTR1:\%.+]] = bitcast i8* [[RECOVER_OBJ]] to %class.SomeClass*
 ; CHECK:   call void @_ZN9SomeClassD1Ev(%class.SomeClass* [[OBJ_PTR1]])
 ; CHECK:   ret void

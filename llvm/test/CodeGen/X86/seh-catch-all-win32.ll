@@ -10,14 +10,14 @@ declare void @crash()
 declare i32 @printf(i8* nocapture readonly, ...) nounwind
 declare i32 @llvm.eh.typeid.for(i8*)
 declare i8* @llvm.frameaddress(i32)
-declare i8* @llvm.framerecover(i8*, i8*, i32)
-declare void @llvm.frameescape(...)
+declare i8* @llvm.localrecover(i8*, i8*, i32)
+declare void @llvm.localescape(...)
 declare i8* @llvm.x86.seh.recoverfp(i8*, i8*)
 
 define i32 @main() personality i8* bitcast (i32 (...)* @_except_handler3 to i8*) {
 entry:
   %__exceptioncode = alloca i32, align 4
-  call void (...) @llvm.frameescape(i32* %__exceptioncode)
+  call void (...) @llvm.localescape(i32* %__exceptioncode)
   invoke void @crash() #5
           to label %__try.cont unwind label %lpad
 
@@ -45,7 +45,7 @@ define internal i32 @"filt$main"() {
 entry:
   %ebp = tail call i8* @llvm.frameaddress(i32 1)
   %parentfp = tail call i8* @llvm.x86.seh.recoverfp(i8* bitcast (i32 ()* @main to i8*), i8* %ebp)
-  %code.i8 = tail call i8* @llvm.framerecover(i8* bitcast (i32 ()* @main to i8*), i8* %parentfp, i32 0)
+  %code.i8 = tail call i8* @llvm.localrecover(i8* bitcast (i32 ()* @main to i8*), i8* %parentfp, i32 0)
   %__exceptioncode = bitcast i8* %code.i8 to i32*
   %info.addr = getelementptr inbounds i8, i8* %ebp, i32 -20
   %0 = bitcast i8* %info.addr to i32***

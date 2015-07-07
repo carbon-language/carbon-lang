@@ -31,7 +31,7 @@ target triple = "x86_64-pc-windows-msvc"
 ;
 ; CHECK-LABEL: define void @"\01?test@@YAXXZ"()
 ; CHECK: entry:
-; CHECK:   call void (...) @llvm.frameescape
+; CHECK:   call void (...) @llvm.localescape
 ; CHECK: }
 
 ; Function Attrs: nounwind uwtable
@@ -67,7 +67,7 @@ try.cont:                                         ; preds = %catch, %invoke.cont
 ; Verify that a cleanup handler was created and that it calls ~Obj().
 ; CHECK-LABEL: define internal void @"\01?test@@YAXXZ.cleanup"(i8*, i8*)
 ; CHECK: entry:
-; CHECK:   @llvm.framerecover(i8* bitcast (void ()* @"\01?test@@YAXXZ" to i8*), i8* %1, i32 0)
+; CHECK:   @llvm.localrecover(i8* bitcast (void ()* @"\01?test@@YAXXZ" to i8*), i8* %1, i32 0)
 ; CHECK:   call void @"\01??1Obj@@QEAA@XZ"
 ; CHECK:   ret void
 ; CHECK: }

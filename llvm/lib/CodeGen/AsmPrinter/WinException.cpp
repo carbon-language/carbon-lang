@@ -555,7 +555,7 @@ void WinException::emitEHRegistrationOffsetLabel(const WinEHFuncInfo &FuncInfo,
   // we've code generated the parent, we can emit the label assignment that
   // those helpers use to get the offset of the registration node.
   assert(FuncInfo.EHRegNodeEscapeIndex != INT_MAX &&
-         "no EH reg node frameescape index");
+         "no EH reg node localescape index");
   MCSymbol *ParentFrameOffset =
       Asm->OutContext.getOrCreateParentFrameOffsetSymbol(FLinkageName);
   MCSymbol *RegistrationOffsetSym = Asm->OutContext.getOrCreateFrameAllocSymbol(

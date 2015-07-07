@@ -519,12 +519,12 @@ X86RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   else
     BasePtr = (TFI->hasFP(MF) ? FramePtr : StackPtr);
 
-  // FRAME_ALLOC uses a single offset, with no register. It only works in the
+  // LOCAL_ESCAPE uses a single offset, with no register. It only works in the
   // simple FP case, and doesn't work with stack realignment. On 32-bit, the
   // offset is from the traditional base pointer location.  On 64-bit, the
   // offset is from the SP at the end of the prologue, not the FP location. This
   // matches the behavior of llvm.frameaddress.
-  if (Opc == TargetOpcode::FRAME_ALLOC) {
+  if (Opc == TargetOpcode::LOCAL_ESCAPE) {
     MachineOperand &FI = MI.getOperand(FIOperandNum);
     bool IsWinEH = MF.getTarget().getMCAsmInfo()->usesWindowsCFI();
     int Offset;

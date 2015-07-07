@@ -184,12 +184,12 @@ class Verifier : public InstVisitor<Verifier>, VerifierSupport {
   /// \brief Track unresolved string-based type references.
   SmallDenseMap<const MDString *, const MDNode *, 32> UnresolvedTypeRefs;
 
-  /// \brief Whether we've seen a call to @llvm.frameescape in this function
+  /// \brief Whether we've seen a call to @llvm.localescape in this function
   /// already.
   bool SawFrameEscape;
 
-  /// Stores the count of how many objects were passed to llvm.frameescape for a
-  /// given function and the largest index passed to llvm.framerecover.
+  /// Stores the count of how many objects were passed to llvm.localescape for a
+  /// given function and the largest index passed to llvm.localrecover.
   DenseMap<Function *, std::pair<unsigned, unsigned>> FrameEscapeInfo;
 
 public:
@@ -1669,8 +1669,8 @@ void Verifier::verifyFrameRecoverIndices() {
     unsigned EscapedObjectCount = Counts.second.first;
     unsigned MaxRecoveredIndex = Counts.second.second;
     Assert(MaxRecoveredIndex <= EscapedObjectCount,
-           "all indices passed to llvm.framerecover must be less than the "
-           "number of arguments passed ot llvm.frameescape in the parent "
+           "all indices passed to llvm.localrecover must be less than the "
+           "number of arguments passed ot llvm.localescape in the parent "
            "function",
            F);
   }
@@ -3279,32 +3279,32 @@ void Verifier::visitIntrinsicCallSite(Intrinsic::ID ID, CallSite CS) {
            "llvm.invariant.end parameter #2 must be a constant integer", CS);
     break;
 
-  case Intrinsic::frameescape: {
+  case Intrinsic::localescape: {
     BasicBlock *BB = CS.getParent();
     Assert(BB == &BB->getParent()->front(),
-           "llvm.frameescape used outside of entry block", CS);
+           "llvm.localescape used outside of entry block", CS);
     Assert(!SawFrameEscape,
-           "multiple calls to llvm.frameescape in one function", CS);
+           "multiple calls to llvm.localescape in one function", CS);
     for (Value *Arg : CS.args()) {
       if (isa<ConstantPointerNull>(Arg))
         continue; // Null values are allowed as placeholders.
       auto *AI = dyn_cast<AllocaInst>(Arg->stripPointerCasts());
       Assert(AI && AI->isStaticAlloca(),
-             "llvm.frameescape only accepts static allocas", CS);
+             "llvm.localescape only accepts static allocas", CS);
     }
     FrameEscapeInfo[BB->getParent()].first = CS.getNumArgOperands();
     SawFrameEscape = true;
     break;
   }
-  case Intrinsic::framerecover: {
+  case Intrinsic::localrecover: {
     Value *FnArg = CS.getArgOperand(0)->stripPointerCasts();
     Function *Fn = dyn_cast<Function>(FnArg);
     Assert(Fn && !Fn->isDeclaration(),
-           "llvm.framerecover first "
+           "llvm.localrecover first "
            "argument must be function defined in this module",
            CS);
     auto *IdxArg = dyn_cast<ConstantInt>(CS.getArgOperand(2));
-    Assert(IdxArg, "idx argument of llvm.framerecover must be a constant int",
+    Assert(IdxArg, "idx argument of llvm.localrecover must be a constant int",
            CS);
     auto &Entry = FrameEscapeInfo[Fn];
     Entry.second = unsigned(

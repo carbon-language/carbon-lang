@@ -1,17 +1,17 @@
 ; RUN: opt %s -S -place-safepoints | FileCheck %s
 
-declare void @llvm.frameescape(...)
+declare void @llvm.localescape(...)
 
-; Do we insert the entry safepoint after the frameescape intrinsic?
+; Do we insert the entry safepoint after the localescape intrinsic?
 define void @parent() gc "statepoint-example" {
 ; CHECK-LABEL: @parent
 entry:
 ; CHECK-LABEL: entry
 ; CHECK-NEXT: alloca
-; CHECK-NEXT: frameescape
+; CHECK-NEXT: localescape
 ; CHECK-NEXT: statepoint
   %ptr = alloca i32
-  call void (...) @llvm.frameescape(i32* %ptr)
+  call void (...) @llvm.localescape(i32* %ptr)
   ret void
 }
 

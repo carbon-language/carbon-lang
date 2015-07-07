@@ -953,16 +953,16 @@ bool WinEHPrepare::prepareExceptionHandlers(
   Builder.SetInsertPoint(Entry->getFirstInsertionPt());
 
   Function *FrameEscapeFn =
-      Intrinsic::getDeclaration(M, Intrinsic::frameescape);
+      Intrinsic::getDeclaration(M, Intrinsic::localescape);
   Function *RecoverFrameFn =
-      Intrinsic::getDeclaration(M, Intrinsic::framerecover);
+      Intrinsic::getDeclaration(M, Intrinsic::localrecover);
   SmallVector<Value *, 8> AllocasToEscape;
 
-  // Scan the entry block for an existing call to llvm.frameescape. We need to
+  // Scan the entry block for an existing call to llvm.localescape. We need to
   // keep escaping those objects.
   for (Instruction &I : F.front()) {
     auto *II = dyn_cast<IntrinsicInst>(&I);
-    if (II && II->getIntrinsicID() == Intrinsic::frameescape) {
+    if (II && II->getIntrinsicID() == Intrinsic::localescape) {
       auto Args = II->arg_operands();
       AllocasToEscape.append(Args.begin(), Args.end());
       II->eraseFromParent();
@@ -971,7 +971,7 @@ bool WinEHPrepare::prepareExceptionHandlers(
   }
 
   // Finally, replace all of the temporary allocas for frame variables used in
-  // the outlined handlers with calls to llvm.framerecover.
+  // the outlined handlers with calls to llvm.localrecover.
   for (auto &VarInfoEntry : FrameVarInfo) {
     Value *ParentVal = VarInfoEntry.first;
     TinyPtrVector<AllocaInst *> &Allocas = VarInfoEntry.second;
@@ -992,7 +992,7 @@ bool WinEHPrepare::prepareExceptionHandlers(
       llvm::Value *FP = HandlerToParentFP[HandlerFn];
       assert(FP);
 
-      // FIXME: Sink this framerecover into the blocks where it is used.
+      // FIXME: Sink this localrecover into the blocks where it is used.
       Builder.SetInsertPoint(TempAlloca);
       Builder.SetCurrentDebugLocation(TempAlloca->getDebugLoc());
       Value *RecoverArgs[] = {
@@ -1014,7 +1014,7 @@ bool WinEHPrepare::prepareExceptionHandlers(
     }
   } // End for each FrameVarInfo entry.
 
-  // Insert 'call void (...)* @llvm.frameescape(...)' at the end of the entry
+  // Insert 'call void (...)* @llvm.localescape(...)' at the end of the entry
   // block.
   Builder.SetInsertPoint(&F.getEntryBlock().back());
   Builder.CreateCall(FrameEscapeFn, AllocasToEscape);
@@ -1961,7 +1961,7 @@ Value *WinEHFrameVariableMaterializer::materializeValueFor(Value *V) {
   // If we're asked to materialize a static alloca, we temporarily create an
   // alloca in the outlined function and add this to the FrameVarInfo map.  When
   // all the outlining is complete, we'll replace these temporary allocas with
-  // calls to llvm.framerecover.
+  // calls to llvm.localrecover.
   if (auto *AV = dyn_cast<AllocaInst>(V)) {
     assert(AV->isStaticAlloca() &&
            "cannot materialize un-demoted dynamic alloca");
@@ -1991,7 +1991,7 @@ void WinEHFrameVariableMaterializer::escapeCatchObject(Value *V) {
   // of a catch parameter, add a sentinel to the multimap to indicate that it's
   // used from another handler. This will prevent us from trying to sink the
   // alloca into the handler and ensure that the catch parameter is present in
-  // the call to llvm.frameescape.
+  // the call to llvm.localescape.
   FrameVarInfo[V].push_back(getCatchObjectSentinel());
 }
 

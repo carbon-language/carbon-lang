@@ -17,7 +17,7 @@ target triple = "x86_64-pc-windows-msvc"
 ; Function Attrs: uwtable
 define void @do_except() #0 personality i8* bitcast (i32 (...)* @__C_specific_handler to i8*) {
 entry:
-  call void (...) @llvm.frameescape()
+  call void (...) @llvm.localescape()
   invoke void @g() #5
           to label %__try.cont unwind label %lpad1
 
@@ -64,10 +64,10 @@ declare i32 @llvm.eh.typeid.for(i8*) #3
 declare i8* @llvm.eh.actions(...) #4
 
 ; Function Attrs: nounwind
-declare void @llvm.frameescape(...) #4
+declare void @llvm.localescape(...) #4
 
 ; Function Attrs: nounwind readnone
-declare i8* @llvm.framerecover(i8*, i8*, i32) #3
+declare i8* @llvm.localrecover(i8*, i8*, i32) #3
 
 attributes #0 = { uwtable "less-precise-fpmad"="false" "no-frame-pointer-elim"="false" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "unsafe-fp-math"="false" "use-soft-float"="false" "wineh-parent"="do_except" }
 attributes #1 = { noinline nounwind "less-precise-fpmad"="false" "no-frame-pointer-elim"="false" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "unsafe-fp-math"="false" "use-soft-float"="false" }

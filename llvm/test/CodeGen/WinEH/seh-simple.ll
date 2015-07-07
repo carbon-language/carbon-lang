@@ -196,6 +196,6 @@ eh.resume:
 ; X64-LABEL: define internal void @lpad_phi.cleanup(i8*, i8*)
 ; X86-LABEL: define internal void @lpad_phi.cleanup()
 ; X86: call i8* @llvm.frameaddress(i32 1)
-; CHECK: call i8* @llvm.framerecover({{.*}})
+; CHECK: call i8* @llvm.localrecover({{.*}})
 ; CHECK: load i32
 ; CHECK: store i32 %{{.*}}, i32*

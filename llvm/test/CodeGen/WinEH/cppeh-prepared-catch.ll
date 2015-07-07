@@ -32,7 +32,7 @@ $"\01??_R0H@8" = comdat any
 
 define internal i8* @"\01?f@@YAXXZ.catch"(i8*, i8*) #4 personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*) {
 entry:
-  %.i8 = call i8* @llvm.framerecover(i8* bitcast (void ()* @"\01?f@@YAXXZ" to i8*), i8* %1, i32 0)
+  %.i8 = call i8* @llvm.localrecover(i8* bitcast (void ()* @"\01?f@@YAXXZ" to i8*), i8* %1, i32 0)
   %bc2 = bitcast i8* %.i8 to i32**
   %bc3 = bitcast i32** %bc2 to i8*
   invoke void @"\01?may_throw@@YAXXZ"()
@@ -58,7 +58,7 @@ lpad1:                                            ; preds = %entry
 
 define internal i8* @"\01?f@@YAXXZ.catch1"(i8*, i8*) #4 personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*) {
 entry:
-  %.i8 = call i8* @llvm.framerecover(i8* bitcast (void ()* @"\01?f@@YAXXZ" to i8*), i8* %1, i32 1)
+  %.i8 = call i8* @llvm.localrecover(i8* bitcast (void ()* @"\01?f@@YAXXZ" to i8*), i8* %1, i32 1)
   %2 = bitcast i8* %.i8 to double*
   %3 = bitcast double* %2 to i8*
   invoke void () @llvm.donothing()
@@ -88,7 +88,7 @@ entry:
   %ehselector.slot = alloca i32
   %0 = alloca i32*, align 8
   %1 = alloca double, align 8
-  call void (...) @llvm.frameescape(i32** %0, double* %1)
+  call void (...) @llvm.localescape(i32** %0, double* %1)
   invoke void @"\01?may_throw@@YAXXZ"()
           to label %invoke.cont unwind label %lpad2
 
@@ -196,10 +196,10 @@ declare void @llvm.eh.endcatch() #3
 declare i8* @llvm.eh.actions(...) #3
 
 ; Function Attrs: nounwind
-declare void @llvm.frameescape(...) #3
+declare void @llvm.localescape(...) #3
 
 ; Function Attrs: nounwind readnone
-declare i8* @llvm.framerecover(i8*, i8*, i32) #2
+declare i8* @llvm.localrecover(i8*, i8*, i32) #2
 
 declare void @llvm.donothing()
 

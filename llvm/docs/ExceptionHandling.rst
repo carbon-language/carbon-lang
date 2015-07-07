@@ -339,11 +339,11 @@ original context before code generation.
 
 Catch handlers are called with a pointer to the handler itself as the first
 argument and a pointer to the parent function's stack frame as the second
-argument.  The catch handler uses the `llvm.recoverframe
-<LangRef.html#llvm-frameallocate-and-llvm-framerecover-intrinsics>`_ to get a
+argument.  The catch handler uses the `llvm.localrecover
+<LangRef.html#llvm-localescape-and-llvm-localrecover-intrinsics>`_ to get a
 pointer to a frame allocation block that is created in the parent frame using
-the `llvm.allocateframe 
-<LangRef.html#llvm-frameallocate-and-llvm-framerecover-intrinsics>`_ intrinsic.
+the `llvm.localescape
+<LangRef.html#llvm-localescape-and-llvm-localrecover-intrinsics>`_ intrinsic.
 The ``WinEHPrepare`` pass will have created a structure definition for the
 contents of this block.  The first two members of the structure will always be
 (1) a 32-bit integer that the runtime uses to track the exception state of the
@@ -520,12 +520,12 @@ action.
 A code of ``i32 1`` indicates a catch action, which expects three additional
 arguments. Different EH schemes give different meanings to the three arguments,
 but the first argument indicates whether the catch should fire, the second is
-the frameescape index of the exception object, and the third is the code to run
+the localescape index of the exception object, and the third is the code to run
 to catch the exception.
 
 For Windows C++ exception handling, the first argument for a catch handler is a
 pointer to the RTTI type descriptor for the object to catch. The second
-argument is an index into the argument list of the ``llvm.frameescape`` call in
+argument is an index into the argument list of the ``llvm.localescape`` call in
 the main function. The exception object will be copied into the provided stack
 object. If the exception object is not required, this argument should be -1.
 The third argument is a pointer to a function implementing the catch.  This

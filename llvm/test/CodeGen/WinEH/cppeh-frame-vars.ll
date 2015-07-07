@@ -58,7 +58,7 @@ $"\01??_R0H@8" = comdat any
 ; CHECK:   [[TMP:\%.+]] = bitcast %struct.SomeData* [[DATA_PTR]] to i8*
 ; CHECK:   call void @llvm.memset(i8* [[TMP]], i8 0, i64 8, i32 4, i1 false)
 ; CHECK:   store i32 0, i32* [[I_PTR]], align 4
-; CHECK:   call void (...) @llvm.frameescape(i32* [[E_PTR]], i32* [[NUMEXCEPTIONS_PTR]], [10 x i32]* [[EXCEPTIONVAL_PTR]], i32* [[I_PTR]], %struct.SomeData* [[DATA_PTR]])
+; CHECK:   call void (...) @llvm.localescape(i32* [[E_PTR]], i32* [[NUMEXCEPTIONS_PTR]], [10 x i32]* [[EXCEPTIONVAL_PTR]], i32* [[I_PTR]], %struct.SomeData* [[DATA_PTR]])
 ; CHECK:   br label %for.cond
 
 ; Function Attrs: uwtable
@@ -198,15 +198,15 @@ eh.resume:                                        ; preds = %catch.dispatch
 ; The following catch handler should be outlined.
 ; CHECK-LABEL: define internal i8* @"\01?test@@YAXXZ.catch"(i8*, i8*)
 ; CHECK: entry:
-; CHECK:   [[RECOVER_E:\%.+]] = call i8* @llvm.framerecover(i8* bitcast (void ()* @"\01?test@@YAXXZ" to i8*), i8* %1, i32 0)
+; CHECK:   [[RECOVER_E:\%.+]] = call i8* @llvm.localrecover(i8* bitcast (void ()* @"\01?test@@YAXXZ" to i8*), i8* %1, i32 0)
 ; CHECK:   [[E_PTR1:\%.+]] = bitcast i8* [[RECOVER_E]] to i32*
-; CHECK:   [[RECOVER_NUMEXCEPTIONS:\%.+]] = call i8* @llvm.framerecover(i8* bitcast (void ()* @"\01?test@@YAXXZ" to i8*), i8* %1, i32 1)
+; CHECK:   [[RECOVER_NUMEXCEPTIONS:\%.+]] = call i8* @llvm.localrecover(i8* bitcast (void ()* @"\01?test@@YAXXZ" to i8*), i8* %1, i32 1)
 ; CHECK:   [[NUMEXCEPTIONS_PTR1:\%.+]] = bitcast i8* [[RECOVER_NUMEXCEPTIONS]] to i32*
-; CHECK:   [[RECOVER_EXCEPTIONVAL:\%.+]] = call i8* @llvm.framerecover(i8* bitcast (void ()* @"\01?test@@YAXXZ" to i8*), i8* %1, i32 2)
+; CHECK:   [[RECOVER_EXCEPTIONVAL:\%.+]] = call i8* @llvm.localrecover(i8* bitcast (void ()* @"\01?test@@YAXXZ" to i8*), i8* %1, i32 2)
 ; CHECK:   [[EXCEPTIONVAL_PTR1:\%.+]] = bitcast i8* [[RECOVER_EXCEPTIONVAL]] to [10 x i32]*
-; CHECK:   [[RECOVER_I:\%.+]] = call i8* @llvm.framerecover(i8* bitcast (void ()* @"\01?test@@YAXXZ" to i8*), i8* %1, i32 3)
+; CHECK:   [[RECOVER_I:\%.+]] = call i8* @llvm.localrecover(i8* bitcast (void ()* @"\01?test@@YAXXZ" to i8*), i8* %1, i32 3)
 ; CHECK:   [[I_PTR1:\%.+]] = bitcast i8* [[RECOVER_I]] to i32*
-; CHECK:   [[RECOVER_DATA:\%.+]] = call i8* @llvm.framerecover(i8* bitcast (void ()* @"\01?test@@YAXXZ" to i8*), i8* %1, i32 4)
+; CHECK:   [[RECOVER_DATA:\%.+]] = call i8* @llvm.localrecover(i8* bitcast (void ()* @"\01?test@@YAXXZ" to i8*), i8* %1, i32 4)
 ; CHECK:   [[DATA_PTR1:\%.+]] = bitcast i8* [[RECOVER_DATA]] to %struct.SomeData*
 ; CHECK:   [[TMP:\%.+]] = load i32, i32* [[E_PTR1]], align 4
 ; CHECK:   [[TMP1:\%.+]] = load i32, i32* [[NUMEXCEPTIONS_PTR]], align 4

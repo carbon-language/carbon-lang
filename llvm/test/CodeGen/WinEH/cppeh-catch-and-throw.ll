@@ -45,7 +45,7 @@ $_TI1H = comdat any
 ; This is just a minimal check to verify that main was handled by WinEHPrepare.
 ; CHECK: define void @"\01?test@@YAXXZ"()
 ; CHECK: entry:
-; CHECK:   call void (...) @llvm.frameescape
+; CHECK:   call void (...) @llvm.localescape
 ; CHECK:   invoke void @_CxxThrowException
 ; CHECK: }
 
@@ -105,7 +105,7 @@ unreachable:                                      ; preds = %catch, %entry
 ;
 ; CHECK-LABEL: define internal void @"\01?test@@YAXXZ.cleanup"(i8*, i8*)
 ; CHECK: entry:
-; CHECK:   call i8* @llvm.framerecover
+; CHECK:   call i8* @llvm.localrecover
 ; CHECK:   call void @"\01??1Obj@@QEAA@XZ"
 ; CHECK:   invoke void @llvm.donothing()
 ; CHECK:           to label %[[SPLIT_LABEL:.+]] unwind label %[[LPAD_LABEL:.+]]

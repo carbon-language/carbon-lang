@@ -30,7 +30,7 @@ $"\01??_R0H@8" = comdat any
 
 ; CHECK-LABEL: define void @"\01?f@@YAXXZ"()
 ; CHECK: entry:
-; CHECK:   call void (...) @llvm.frameescape()
+; CHECK:   call void (...) @llvm.localescape()
 ; CHECK:   invoke void @"\01?g@@YAXXZ"()
 
 ; Function Attrs: nounwind

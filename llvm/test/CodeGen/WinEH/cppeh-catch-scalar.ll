@@ -24,7 +24,7 @@ target triple = "x86_64-pc-windows-msvc"
 ; CHECK: define void @_Z4testv()
 ; CHECK: entry:
 ; CHECK:   [[I_PTR:\%.+]] = alloca i32, align 4
-; CHECK:   call void (...) @llvm.frameescape(i32* [[I_PTR]])
+; CHECK:   call void (...) @llvm.localescape(i32* [[I_PTR]])
 ; CHECK:   invoke void @_Z9may_throwv()
 ; CHECK:           to label %invoke.cont unwind label %[[LPAD_LABEL:lpad[0-9]*]]
 
@@ -96,7 +96,7 @@ eh.resume:                                        ; preds = %catch.dispatch
 
 ; CHECK: define internal i8* @_Z4testv.catch(i8*, i8*)
 ; CHECK: entry:
-; CHECK:   [[RECOVER_I:\%.+]] = call i8* @llvm.framerecover(i8* bitcast (void ()* @_Z4testv to i8*), i8* %1, i32 0)
+; CHECK:   [[RECOVER_I:\%.+]] = call i8* @llvm.localrecover(i8* bitcast (void ()* @_Z4testv to i8*), i8* %1, i32 0)
 ; CHECK:   [[I_PTR1:\%.+]] = bitcast i8* [[RECOVER_I]] to i32*
 ; CHECK:   [[TMP:\%.+]] = load i32, i32* [[I_PTR1]], align 4
 ; CHECK:   call void @_Z10handle_inti(i32 [[TMP]])

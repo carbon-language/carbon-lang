@@ -15269,7 +15269,7 @@ static SDValue recoverFramePointer(SelectionDAG &DAG, const Function *Fn,
           GlobalValue::getRealLinkageName(Fn->getName()));
   SDValue OffsetSymVal = DAG.getMCSymbol(OffsetSym, PtrVT);
   SDValue RegNodeFrameOffset =
-      DAG.getNode(ISD::FRAME_ALLOC_RECOVER, dl, PtrVT, OffsetSymVal);
+      DAG.getNode(ISD::LOCAL_RECOVER, dl, PtrVT, OffsetSymVal);
 
   // RegNodeBase = EntryEBP - RegNodeSize
   // ParentFP = RegNodeBase - RegNodeFrameOffset

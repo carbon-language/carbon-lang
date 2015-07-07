@@ -41,7 +41,7 @@ $"\01??_R0H@8" = comdat any
 ; CHECK:   %i = alloca i32, align 4
 ; CHECK:   %j = alloca i32, align 4
 ; CHECK:   %f = alloca float, align 4
-; CHECK:   call void (...) @llvm.frameescape(i32* %j, i32* %i, float* %f)
+; CHECK:   call void (...) @llvm.localescape(i32* %j, i32* %i, float* %f)
 ; CHECK:   invoke void @"\01?may_throw@@YAXXZ"()
 ; CHECK:           to label %invoke.cont unwind label %[[LPAD_LABEL:lpad[0-9]*]]
 
@@ -181,9 +181,9 @@ eh.resume:                                        ; preds = %lpad16, %catch.disp
 
 ; CHECK: define internal i8* @"\01?test@@YAXXZ.catch"(i8*, i8*)
 ; CHECK: entry:
-; CHECK:   [[RECOVER_J:\%.+]] = call i8* @llvm.framerecover(i8* bitcast (void ()* @"\01?test@@YAXXZ" to i8*), i8* %1, i32 0)
+; CHECK:   [[RECOVER_J:\%.+]] = call i8* @llvm.localrecover(i8* bitcast (void ()* @"\01?test@@YAXXZ" to i8*), i8* %1, i32 0)
 ; CHECK:   [[J_PTR:\%.+]] = bitcast i8* [[RECOVER_J]] to i32*
-; CHECK:   [[RECOVER_I1:\%.+]] = call i8* @llvm.framerecover(i8* bitcast (void ()* @"\01?test@@YAXXZ" to i8*), i8* %1, i32 1)
+; CHECK:   [[RECOVER_I1:\%.+]] = call i8* @llvm.localrecover(i8* bitcast (void ()* @"\01?test@@YAXXZ" to i8*), i8* %1, i32 1)
 ; CHECK:   [[I_PTR1:\%.+]] = bitcast i8* [[RECOVER_I1]] to i32*
 ; CHECK:   [[TMP3:\%.+]] = load i32, i32* [[J_PTR]], align 4
 ; CHECK:   store i32 [[TMP3]], i32* [[I_PTR1]]
@@ -192,7 +192,7 @@ eh.resume:                                        ; preds = %lpad16, %catch.disp
 
 ; CHECK: define internal i8* @"\01?test@@YAXXZ.catch.1"(i8*, i8*)
 ; CHECK: entry:
-; CHECK:   [[RECOVER_F:\%.+]] = call i8* @llvm.framerecover(i8* bitcast (void ()* @"\01?test@@YAXXZ" to i8*), i8* %1, i32 2)
+; CHECK:   [[RECOVER_F:\%.+]] = call i8* @llvm.localrecover(i8* bitcast (void ()* @"\01?test@@YAXXZ" to i8*), i8* %1, i32 2)
 ; CHECK:   [[F_PTR:\%.+]] = bitcast i8* [[RECOVER_F]] to float*
 ; CHECK:   [[TMP2:\%.+]] = load float, float* [[F_PTR]], align 4
 ; CHECK:   call void @"\01?handle_float@@YAXM@Z"(float [[TMP2]])
@@ -201,7 +201,7 @@ eh.resume:                                        ; preds = %lpad16, %catch.disp
 
 ; CHECK: define internal i8* @"\01?test@@YAXXZ.catch.2"(i8*, i8*)
 ; CHECK: entry:
-; CHECK:   [[RECOVER_I:\%.+]] = call i8* @llvm.framerecover(i8* bitcast (void ()* @"\01?test@@YAXXZ" to i8*), i8* %1, i32 1)
+; CHECK:   [[RECOVER_I:\%.+]] = call i8* @llvm.localrecover(i8* bitcast (void ()* @"\01?test@@YAXXZ" to i8*), i8* %1, i32 1)
 ; CHECK:   [[I_PTR:\%.+]] = bitcast i8* [[RECOVER_I]] to i32*
 ; CHECK:   invoke void @"\01?may_throw@@YAXXZ"()
 ; CHECK:           to label %invoke.cont2 unwind label %[[LPAD1_LABEL:lpad[0-9]*]]

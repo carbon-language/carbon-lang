@@ -36,7 +36,7 @@ $"\01??_R0H@8" = comdat any
 ; CHECK:   [[OBJ_PTR:\%.+]] = alloca %class.SomeClass
 ; CHECK:   [[TMP0:\%.+]] = alloca i32, align 4
 ; CHECK:   [[TMP1:\%.+]] = alloca i32, align 4
-; CHECK:   call void (...) @llvm.frameescape(i32* [[TMP1]], %class.SomeClass* [[OBJ_PTR]], i32* [[TMP0]])
+; CHECK:   call void (...) @llvm.localescape(i32* [[TMP1]], %class.SomeClass* [[OBJ_PTR]], i32* [[TMP0]])
 ; CHECK:   %call = invoke %class.SomeClass* @"\01??0SomeClass@@QEAA@XZ"(%class.SomeClass* %obj)
 ; CHECK:           to label %invoke.cont unwind label %[[LPAD_LABEL:lpad[0-9]*]]
 
@@ -177,7 +177,7 @@ eh.resume:                                        ; preds = %catch.dispatch7
 
 ; CHECK-LABEL: define internal i8* @"\01?test@@YAXXZ.catch"(i8*, i8*)
 ; CHECK: entry:
-; CHECK:   [[RECOVER_TMP1:\%.+]] = call i8* @llvm.framerecover(i8* bitcast (void ()* @"\01?test@@YAXXZ" to i8*), i8* %1, i32 0)
+; CHECK:   [[RECOVER_TMP1:\%.+]] = call i8* @llvm.localrecover(i8* bitcast (void ()* @"\01?test@@YAXXZ" to i8*), i8* %1, i32 0)
 ; CHECK:   [[TMP1_PTR:\%.+]] = bitcast i8* [[RECOVER_TMP1]] to i32*
 ; CHECK:   call void @"\01?handle_exception@@YAXXZ"()
 ; CHECK:   ret i8* blockaddress(@"\01?test@@YAXXZ", %try.cont15)
@@ -185,7 +185,7 @@ eh.resume:                                        ; preds = %catch.dispatch7
 
 ; CHECK-LABEL: define internal void @"\01?test@@YAXXZ.cleanup"(i8*, i8*)
 ; CHECK: entry:
-; CHECK:   [[RECOVER_OBJ:\%.+]] = call i8* @llvm.framerecover(i8* bitcast (void ()* @"\01?test@@YAXXZ" to i8*), i8* %1, i32 1)
+; CHECK:   [[RECOVER_OBJ:\%.+]] = call i8* @llvm.localrecover(i8* bitcast (void ()* @"\01?test@@YAXXZ" to i8*), i8* %1, i32 1)
 ; CHECK:   [[OBJ_PTR:\%.+]] = bitcast i8* %obj.i8 to %class.SomeClass*
 ; CHECK:   call void @"\01??1SomeClass@@QEAA@XZ"(%class.SomeClass* [[OBJ_PTR]])
 ; CHECK:   ret void
@@ -193,7 +193,7 @@ eh.resume:                                        ; preds = %catch.dispatch7
 
 ; CHECK-LABEL: define internal i8* @"\01?test@@YAXXZ.catch.1"(i8*, i8*)
 ; CHECK: entry:
-; CHECK:   [[RECOVER_TMP0:\%.+]] = call i8* @llvm.framerecover(i8* bitcast (void ()* @"\01?test@@YAXXZ" to i8*), i8* %1, i32 2)
+; CHECK:   [[RECOVER_TMP0:\%.+]] = call i8* @llvm.localrecover(i8* bitcast (void ()* @"\01?test@@YAXXZ" to i8*), i8* %1, i32 2)
 ; CHECK:   [[TMP0_PTR:\%.+]] = bitcast i8* [[RECOVER_TMP0]] to i32*
 ; CHECK:   invoke void @"\01?handle_exception@@YAXXZ"()
 ; CHECK:           to label %invoke.cont6 unwind label %[[LPAD5_LABEL:lpad[0-9]+]]

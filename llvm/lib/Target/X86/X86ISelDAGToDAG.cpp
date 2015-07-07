@@ -1025,7 +1025,7 @@ bool X86DAGToDAGISel::MatchAddressRecursively(SDValue N, X86ISelAddressMode &AM,
 
   switch (N.getOpcode()) {
   default: break;
-  case ISD::FRAME_ALLOC_RECOVER: {
+  case ISD::LOCAL_RECOVER: {
     if (!AM.hasSymbolicDisplacement() && AM.Disp == 0)
       if (const auto *ESNode = dyn_cast<MCSymbolSDNode>(N.getOperand(0))) {
         // Use the symbol and don't prefix it.

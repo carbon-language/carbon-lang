@@ -79,7 +79,7 @@ entry:
   call void @"\01?two@@YAXXZ"() #3
   store i32 2, i32* %tmp
   %0 = bitcast i32* %tmp to i8*
-  call void (...) @llvm.frameescape(i32* %x, i8* %c, i32* %x21)
+  call void (...) @llvm.localescape(i32* %x, i8* %c, i32* %x21)
   invoke void @_CxxThrowException(i8* %0, %eh.ThrowInfo* @_TI1H) #5
           to label %unreachable unwind label %lpad
 
@@ -166,7 +166,7 @@ declare i8* @llvm.eh.actions(...) #3
 
 define internal i8* @"\01?test@@YAXXZ.catch"(i8*, i8*) #4 personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*) {
 entry:
-  %x.i8 = call i8* @llvm.framerecover(i8* bitcast (void ()* @"\01?test@@YAXXZ" to i8*), i8* %1, i32 0)
+  %x.i8 = call i8* @llvm.localrecover(i8* bitcast (void ()* @"\01?test@@YAXXZ" to i8*), i8* %1, i32 0)
   %x = bitcast i8* %x.i8 to i32*
   %2 = bitcast i32* %x to i8*
   call void @"\01?catch_two@@YAXXZ"() #3
@@ -204,7 +204,7 @@ stub:                                             ; preds = %entry
 
 define internal i8* @"\01?test@@YAXXZ.catch2"(i8*, i8*) #4 personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*) {
 entry:
-  %x21.i8 = call i8* @llvm.framerecover(i8* bitcast (void ()* @"\01?test@@YAXXZ" to i8*), i8* %1, i32 2)
+  %x21.i8 = call i8* @llvm.localrecover(i8* bitcast (void ()* @"\01?test@@YAXXZ" to i8*), i8* %1, i32 2)
   %x21 = bitcast i8* %x21.i8 to i32*
   %2 = bitcast i32* %x21 to i8*
   call void @"\01?catch_one@@YAXXZ"() #3
@@ -238,10 +238,10 @@ stub:                                             ; preds = %entry
 }
 
 ; Function Attrs: nounwind
-declare void @llvm.frameescape(...) #3
+declare void @llvm.localescape(...) #3
 
 ; Function Attrs: nounwind readnone
-declare i8* @llvm.framerecover(i8*, i8*, i32) #2
+declare i8* @llvm.localrecover(i8*, i8*, i32) #2
 
 attributes #0 = { nounwind uwtable "less-precise-fpmad"="false" "no-frame-pointer-elim"="false" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+sse,+sse2" "unsafe-fp-math"="false" "use-soft-float"="false" "wineh-parent"="?test@@YAXXZ" }
 attributes #1 = { nounwind "less-precise-fpmad"="false" "no-frame-pointer-elim"="false" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+sse,+sse2" "unsafe-fp-math"="false" "use-soft-float"="false" }

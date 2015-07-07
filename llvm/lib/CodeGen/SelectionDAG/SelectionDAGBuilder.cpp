@@ -4934,11 +4934,11 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
   case Intrinsic::instrprof_increment:
     llvm_unreachable("instrprof failed to lower an increment");
 
-  case Intrinsic::frameescape: {
+  case Intrinsic::localescape: {
     MachineFunction &MF = DAG.getMachineFunction();
     const TargetInstrInfo *TII = DAG.getSubtarget().getInstrInfo();
 
-    // Directly emit some FRAME_ALLOC machine instrs. Label assignment emission
+    // Directly emit some LOCAL_ESCAPE machine instrs. Label assignment emission
     // is the same on all targets.
     for (unsigned Idx = 0, E = I.getNumArgOperands(); Idx < E; ++Idx) {
       Value *Arg = I.getArgOperand(Idx)->stripPointerCasts();
@@ -4952,7 +4952,7 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
           MF.getMMI().getContext().getOrCreateFrameAllocSymbol(
               GlobalValue::getRealLinkageName(MF.getName()), Idx);
       BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, dl,
-              TII->get(TargetOpcode::FRAME_ALLOC))
+              TII->get(TargetOpcode::LOCAL_ESCAPE))
           .addSym(FrameAllocSym)
           .addFrameIndex(FI);
     }
@@ -4960,8 +4960,8 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
     return nullptr;
   }
 
-  case Intrinsic::framerecover: {
-    // i8* @llvm.framerecover(i8* %fn, i8* %fp, i32 %idx)
+  case Intrinsic::localrecover: {
+    // i8* @llvm.localrecover(i8* %fn, i8* %fp, i32 %idx)
     MachineFunction &MF = DAG.getMachineFunction();
     MVT PtrVT = TLI.getPointerTy(0);
 
@@ -4977,7 +4977,7 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
     // that would make this PC relative.
     SDValue OffsetSym = DAG.getMCSymbol(FrameAllocSym, PtrVT);
     SDValue OffsetVal =
-        DAG.getNode(ISD::FRAME_ALLOC_RECOVER, sdl, PtrVT, OffsetSym);
+        DAG.getNode(ISD::LOCAL_RECOVER, sdl, PtrVT, OffsetSym);
 
     // Add the offset to the FP.
     Value *FP = I.getArgOperand(1);

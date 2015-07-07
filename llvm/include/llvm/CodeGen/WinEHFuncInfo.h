@@ -91,7 +91,7 @@ private:
   // When the parseEHActions function is called to populate a vector of
   // instances of this class, the ExceptionObjectVar field will be nullptr
   // and the ExceptionObjectIndex will be the index of the exception object in
-  // the parent function's frameescape block.
+  // the parent function's localescape block.
   const Value *ExceptionObjectVar;
   int ExceptionObjectIndex;
   TinyPtrVector<BasicBlock *> ReturnTargets;
@@ -148,7 +148,7 @@ struct WinEHFuncInfo {
   int UnwindHelpFrameOffset = -1;
   unsigned NumIPToStateFuncsVisited = 0;
 
-  /// frameescape index of the 32-bit EH registration node. Set by
+  /// localescape index of the 32-bit EH registration node. Set by
   /// WinEHStatePass and used indirectly by SEH filter functions of the parent.
   int EHRegNodeEscapeIndex = INT_MAX;
 

@@ -53,7 +53,7 @@ $_TI1H = comdat any
 
 ; CHECK-LABEL: define void @"\01?test1@@YAXXZ"()
 ; CHECK: entry:
-; CHECK:   call void (...) @llvm.frameescape
+; CHECK:   call void (...) @llvm.localescape
 
 ; Function Attrs: nounwind uwtable
 define void @"\01?test1@@YAXXZ"() #0 personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*) {
@@ -121,7 +121,7 @@ declare void @llvm.eh.endcatch() #1
 
 ; CHECK-LABEL: define void @"\01?test2@@YAXXZ"()
 ; CHECK: entry:
-; CHECK:   call void (...) @llvm.frameescape
+; CHECK:   call void (...) @llvm.localescape
 
 ; Function Attrs: nounwind uwtable
 define void @"\01?test2@@YAXXZ"() #0 personality i8* bitcast (i32 (...)* @__CxxFrameHandler3 to i8*) {

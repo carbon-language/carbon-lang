@@ -72,10 +72,13 @@ namespace ISD {
     /// the parent's frame or return address, and so on.
     FRAMEADDR, RETURNADDR,
 
-    /// FRAME_ALLOC_RECOVER - Represents the llvm.framerecover
-    /// intrinsic. Materializes the offset from the frame pointer of another
-    /// function to the result of llvm.frameallocate.
-    FRAME_ALLOC_RECOVER,
+    /// LOCAL_RECOVER - Represents the llvm.localrecover intrinsic.
+    /// Materializes the offset from the local object pointer of another
+    /// function to a particular local object passed to llvm.localescape. The
+    /// operand is the MCSymbol label used to represent this offset, since
+    /// typically the offset is not known until after code generation of the
+    /// parent.
+    LOCAL_RECOVER,
 
     /// READ_REGISTER, WRITE_REGISTER - This node represents llvm.register on
     /// the DAG, which implements the named register global variables extension.

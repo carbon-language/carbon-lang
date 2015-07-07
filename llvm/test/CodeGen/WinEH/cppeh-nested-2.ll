@@ -44,7 +44,7 @@ target triple = "x86_64-pc-windows-msvc"
 ; CHECK:   %inner = alloca %class.Inner, align 1
 ; CHECK:   %i = alloca i32, align 4
 ; CHECK:   %f = alloca float, align 4
-; CHECK:   call void (...) @llvm.frameescape(float* %f, i32* %i, %class.Outer* %outer, %class.Inner* %inner)
+; CHECK:   call void (...) @llvm.localescape(float* %f, i32* %i, %class.Outer* %outer, %class.Inner* %inner)
 ; CHECK:   invoke void @_ZN5OuterC1Ev(%class.Outer* %outer)
 ; CHECK:           to label %invoke.cont unwind label %[[LPAD_LABEL:lpad[0-9]*]]
 
@@ -243,7 +243,7 @@ eh.resume:                                        ; preds = %catch.dispatch11
 ; This catch handler should be outlined.
 ; CHECK: define internal i8* @_Z4testv.catch(i8*, i8*)
 ; CHECK: entry:
-; CHECK:   [[RECOVER_F:\%.+]] = call i8* @llvm.framerecover(i8* bitcast (void ()* @_Z4testv to i8*), i8* %1, i32 0)
+; CHECK:   [[RECOVER_F:\%.+]] = call i8* @llvm.localrecover(i8* bitcast (void ()* @_Z4testv to i8*), i8* %1, i32 0)
 ; CHECK:   [[F_PTR:\%.+]] = bitcast i8* [[RECOVER_F]] to float*
 ; CHECK:   [[TMP:\%.+]] = load float, float* [[F_PTR]], align 4
 ; CHECK:   call void @_Z12handle_floatf(float [[TMP]])
@@ -253,7 +253,7 @@ eh.resume:                                        ; preds = %catch.dispatch11
 ; This catch handler should be outlined.
 ; CHECK: define internal i8* @_Z4testv.catch.1(i8*, i8*)
 ; CHECK: entry:
-; CHECK:   [[RECOVER_I:\%.+]] = call i8* @llvm.framerecover(i8* bitcast (void ()* @_Z4testv to i8*), i8* %1, i32 1)
+; CHECK:   [[RECOVER_I:\%.+]] = call i8* @llvm.localrecover(i8* bitcast (void ()* @_Z4testv to i8*), i8* %1, i32 1)
 ; CHECK:   [[I_PTR:\%.+]] = bitcast i8* [[RECOVER_I]] to i32*
 ; CHECK:   [[TMP1:\%.+]] = load i32, i32* [[I_PTR]], align 4
 ; CHECK:   invoke void @_Z10handle_inti(i32 [[TMP1]])
@@ -270,7 +270,7 @@ eh.resume:                                        ; preds = %catch.dispatch11
 ; This cleanup handler should be outlined.
 ; CHECK: define internal void @_Z4testv.cleanup(i8*, i8*)
 ; CHECK: entry:
-; CHECK:   [[RECOVER_OUTER:\%.+]] = call i8* @llvm.framerecover(i8* bitcast (void ()* @_Z4testv to i8*), i8* %1, i32 2)
+; CHECK:   [[RECOVER_OUTER:\%.+]] = call i8* @llvm.localrecover(i8* bitcast (void ()* @_Z4testv to i8*), i8* %1, i32 2)
 ; CHECK:   [[OUTER_PTR:\%.+]] = bitcast i8* [[RECOVER_OUTER]] to %class.Outer*
 ; CHECK:   call void @_ZN5OuterD1Ev(%class.Outer* [[OUTER_PTR]])
 ; CHECK:   ret void
@@ -279,7 +279,7 @@ eh.resume:                                        ; preds = %catch.dispatch11
 ; This cleanup handler should be outlined.
 ; CHECK: define internal void @_Z4testv.cleanup.2(i8*, i8*)
 ; CHECK: entry:
-; CHECK:   [[RECOVER_INNER:\%.+]] = call i8* @llvm.framerecover(i8* bitcast (void ()* @_Z4testv to i8*), i8* %1, i32 3)
+; CHECK:   [[RECOVER_INNER:\%.+]] = call i8* @llvm.localrecover(i8* bitcast (void ()* @_Z4testv to i8*), i8* %1, i32 3)
 ; CHECK:   [[INNER_PTR:\%.+]] = bitcast i8* [[RECOVER_INNER]] to %class.Inner*
 ; CHECK:   call void @_ZN5InnerD1Ev(%class.Inner* [[INNER_PTR]])
 ; CHECK:   ret void

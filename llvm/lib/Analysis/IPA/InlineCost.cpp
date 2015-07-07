@@ -783,7 +783,7 @@ bool CallAnalyzer::visitCallSite(CallSite CS) {
       case Intrinsic::memmove:
         // SROA can usually chew through these intrinsics, but they aren't free.
         return false;
-      case Intrinsic::frameescape:
+      case Intrinsic::localescape:
         HasFrameEscape = true;
         return false;
       }
@@ -1424,11 +1424,11 @@ bool InlineCostAnalysis::isInlineViable(Function &F) {
           cast<CallInst>(CS.getInstruction())->canReturnTwice())
         return false;
 
-      // Disallow inlining functions that call @llvm.frameescape. Doing this
+      // Disallow inlining functions that call @llvm.localescape. Doing this
       // correctly would require major changes to the inliner.
       if (CS.getCalledFunction() &&
           CS.getCalledFunction()->getIntrinsicID() ==
-              llvm::Intrinsic::frameescape)
+              llvm::Intrinsic::localescape)
         return false;
     }
   }

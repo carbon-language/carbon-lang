@@ -41,7 +41,7 @@ $"\01??_R0H@8" = comdat any
 ; CHECK:   [[RETVAL:\%.+]] = alloca i32, align 4
 ; CHECK:   [[E_PTR:\%.+]] = alloca i32, align 4
 ; CHECK:   [[CLEANUP_SLOT:\%.+]] = alloca i32
-; CHECK:   call void (...) @llvm.frameescape(i32* %e, <{ %struct.A }>** [[TMP_REGMEM]], i32* [[RETVAL]], i32* [[CLEANUP_SLOT]])
+; CHECK:   call void (...) @llvm.localescape(i32* %e, <{ %struct.A }>** [[TMP_REGMEM]], i32* [[RETVAL]], i32* [[CLEANUP_SLOT]])
 ; CHECK:   invoke void @"\01?may_throw@@YAXXZ"()
 ; CHECK:           to label %invoke.cont unwind label %[[LPAD_LABEL:lpad[0-9]*]]
 
@@ -139,13 +139,13 @@ eh.resume:                                        ; preds = %ehcleanup
 ; The following catch handler should be outlined.
 ; CHECK: define internal i8* @"\01?test@@YAHUA@@@Z.catch"(i8*, i8*)
 ; CHECK: entry:
-; CHECK:   [[RECOVER_E:\%.+]] = call i8* @llvm.framerecover(i8* bitcast (i32 (<{ %struct.A }>*)* @"\01?test@@YAHUA@@@Z" to i8*), i8* %1, i32 0)
+; CHECK:   [[RECOVER_E:\%.+]] = call i8* @llvm.localrecover(i8* bitcast (i32 (<{ %struct.A }>*)* @"\01?test@@YAHUA@@@Z" to i8*), i8* %1, i32 0)
 ; CHECK:   [[E_PTR:\%.+]] = bitcast i8* [[RECOVER_E]] to i32*
-; CHECK:   [[RECOVER_EH_TEMP:\%.+]] = call i8* @llvm.framerecover(i8* bitcast (i32 (<{ %struct.A }>*)* @"\01?test@@YAHUA@@@Z" to i8*), i8* %1, i32 1)
+; CHECK:   [[RECOVER_EH_TEMP:\%.+]] = call i8* @llvm.localrecover(i8* bitcast (i32 (<{ %struct.A }>*)* @"\01?test@@YAHUA@@@Z" to i8*), i8* %1, i32 1)
 ; CHECK:   [[EH_TEMP:\%.+]] = bitcast i8* [[RECOVER_EH_TEMP]] to <{ %struct.A }>**
-; CHECK:   [[RECOVER_RETVAL:\%.+]] = call i8* @llvm.framerecover(i8* bitcast (i32 (<{ %struct.A }>*)* @"\01?test@@YAHUA@@@Z" to i8*), i8* %1, i32 2)
+; CHECK:   [[RECOVER_RETVAL:\%.+]] = call i8* @llvm.localrecover(i8* bitcast (i32 (<{ %struct.A }>*)* @"\01?test@@YAHUA@@@Z" to i8*), i8* %1, i32 2)
 ; CHECK:   [[RETVAL1:\%.+]] = bitcast i8* [[RECOVER_RETVAL]] to i32*
-; CHECK:   [[RECOVER_CLEANUPSLOT:\%.+]] = call i8* @llvm.framerecover(i8* bitcast (i32 (<{ %struct.A }>*)* @"\01?test@@YAHUA@@@Z" to i8*), i8* %1, i32 3)
+; CHECK:   [[RECOVER_CLEANUPSLOT:\%.+]] = call i8* @llvm.localrecover(i8* bitcast (i32 (<{ %struct.A }>*)* @"\01?test@@YAHUA@@@Z" to i8*), i8* %1, i32 3)
 ; CHECK:   [[CLEANUPSLOT1:\%.+]] = bitcast i8* [[RECOVER_CLEANUPSLOT]] to i32*
 ; CHECK:   [[E_I8PTR:\%.+]] = bitcast i32* [[E_PTR]] to i8*
 ; CHECK:   [[TMP_RELOAD:\%.+]] = load <{ %struct.A }>*, <{ %struct.A }>** [[EH_TEMP]]
@@ -162,7 +162,7 @@ eh.resume:                                        ; preds = %ehcleanup
 ; The following cleanup handler should be outlined.
 ; CHECK: define internal void @"\01?test@@YAHUA@@@Z.cleanup"(i8*, i8*)
 ; CHECK: entry:
-; CHECK:   [[RECOVER_EH_TEMP1:\%.+]] = call i8* @llvm.framerecover(i8* bitcast (i32 (<{ %struct.A }>*)* @"\01?test@@YAHUA@@@Z" to i8*), i8* %1, i32 1)
+; CHECK:   [[RECOVER_EH_TEMP1:\%.+]] = call i8* @llvm.localrecover(i8* bitcast (i32 (<{ %struct.A }>*)* @"\01?test@@YAHUA@@@Z" to i8*), i8* %1, i32 1)
 ; CHECK:   [[EH_TEMP1:\%.+]] = bitcast i8* [[RECOVER_EH_TEMP]] to <{ %struct.A }>**
 ; CHECK:   [[TMP_RELOAD1:\%.+]] = load <{ %struct.A }>*, <{ %struct.A }>** [[EH_TEMP1]]
 ; CHECK:   [[A3:\%.+]] = getelementptr inbounds <{ %struct.A }>, <{ %struct.A }>* [[TMP_RELOAD1]], i32 0, i32 0

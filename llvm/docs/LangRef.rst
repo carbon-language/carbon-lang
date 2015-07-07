@@ -7780,7 +7780,7 @@ Note that calling this intrinsic does not prevent function inlining or
 other aggressive transformations, so the value returned may not be that
 of the obvious source-language caller.
 
-'``llvm.frameescape``' and '``llvm.framerecover``' Intrinsics
+'``llvm.localescape``' and '``llvm.localrecover``' Intrinsics
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Syntax:
@@ -7788,49 +7788,47 @@ Syntax:
 
 ::
 
-      declare void @llvm.frameescape(...)
-      declare i8* @llvm.framerecover(i8* %func, i8* %fp, i32 %idx)
+      declare void @llvm.localescape(...)
+      declare i8* @llvm.localrecover(i8* %func, i8* %fp, i32 %idx)
 
 Overview:
 """""""""
 
-The '``llvm.frameescape``' intrinsic escapes offsets of a collection of static
-allocas, and the '``llvm.framerecover``' intrinsic applies those offsets to a
+The '``llvm.localescape``' intrinsic escapes offsets of a collection of static
+allocas, and the '``llvm.localrecover``' intrinsic applies those offsets to a
 live frame pointer to recover the address of the allocation. The offset is
-computed during frame layout of the caller of ``llvm.frameescape``.
+computed during frame layout of the caller of ``llvm.localescape``.
 
 Arguments:
 """"""""""
 
-All arguments to '``llvm.frameescape``' must be pointers to static allocas or
-casts of static allocas. Each function can only call '``llvm.frameescape``'
+All arguments to '``llvm.localescape``' must be pointers to static allocas or
+casts of static allocas. Each function can only call '``llvm.localescape``'
 once, and it can only do so from the entry block.
 
-The ``func`` argument to '``llvm.framerecover``' must be a constant
+The ``func`` argument to '``llvm.localrecover``' must be a constant
 bitcasted pointer to a function defined in the current module. The code
 generator cannot determine the frame allocation offset of functions defined in
 other modules.
 
-The ``fp`` argument to '``llvm.framerecover``' must be a frame
+The ``fp`` argument to '``llvm.localrecover``' must be a frame
 pointer of a call frame that is currently live. The return value of
 '``llvm.frameaddress``' is one way to produce such a value, but most platforms
 also expose the frame pointer through stack unwinding mechanisms.
 
-The ``idx`` argument to '``llvm.framerecover``' indicates which alloca passed to
-'``llvm.frameescape``' to recover. It is zero-indexed.
+The ``idx`` argument to '``llvm.localrecover``' indicates which alloca passed to
+'``llvm.localescape``' to recover. It is zero-indexed.
 
 Semantics:
 """"""""""
 
-These intrinsics allow a group of functions to access one stack memory
-allocation in an ancestor stack frame. The memory returned from
-'``llvm.frameallocate``' may be allocated prior to stack realignment, so the
-memory is only aligned to the ABI-required stack alignment.  Each function may
-only call '``llvm.frameallocate``' one or zero times from the function entry
-block.  The frame allocation intrinsic inhibits inlining, as any frame
-allocations in the inlined function frame are likely to be at a different
-offset from the one used by '``llvm.framerecover``' called with the
-uninlined function.
+These intrinsics allow a group of functions to share access to a set of local
+stack allocations of a one parent function. The parent function may call the
+'``llvm.localescape``' intrinsic once from the function entry block, and the
+child functions can use '``llvm.localrecover``' to access the escaped allocas.
+The '``llvm.localescape``' intrinsic blocks inlining, as inlining changes where
+the escaped allocas are allocated, which would break attempts to use
+'``llvm.localrecover``'.
 
 .. _int_read_register:
 .. _int_write_register:

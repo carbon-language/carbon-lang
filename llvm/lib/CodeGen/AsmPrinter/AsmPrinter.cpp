@@ -819,7 +819,7 @@ void AsmPrinter::EmitFunctionBody() {
         emitCFIInstruction(MI);
         break;
 
-      case TargetOpcode::FRAME_ALLOC:
+      case TargetOpcode::LOCAL_ESCAPE:
         emitFrameAlloc(MI);
         break;
 

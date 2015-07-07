@@ -113,8 +113,8 @@ char WinEHStatePass::ID = 0;
 
 bool WinEHStatePass::doInitialization(Module &M) {
   TheModule = &M;
-  FrameEscape = Intrinsic::getDeclaration(TheModule, Intrinsic::frameescape);
-  FrameRecover = Intrinsic::getDeclaration(TheModule, Intrinsic::framerecover);
+  FrameEscape = Intrinsic::getDeclaration(TheModule, Intrinsic::localescape);
+  FrameRecover = Intrinsic::getDeclaration(TheModule, Intrinsic::localrecover);
   FrameAddress = Intrinsic::getDeclaration(TheModule, Intrinsic::frameaddress);
   return false;
 }
@@ -133,7 +133,7 @@ bool WinEHStatePass::doFinalization(Module &M) {
 
 void WinEHStatePass::getAnalysisUsage(AnalysisUsage &AU) const {
   // This pass should only insert a stack allocation, memory accesses, and
-  // framerecovers.
+  // localrecovers.
   AU.setPreservesCFG();
 }
 
@@ -419,14 +419,14 @@ void WinEHStatePass::addCXXStateStores(Function &F, MachineModuleInfo &MMI) {
 }
 
 /// Escape RegNode so that we can access it from child handlers. Find the call
-/// to frameescape, if any, in the entry block and append RegNode to the list
+/// to localescape, if any, in the entry block and append RegNode to the list
 /// of arguments.
 int WinEHStatePass::escapeRegNode(Function &F) {
-  // Find the call to frameescape and extract its arguments.
+  // Find the call to localescape and extract its arguments.
   IntrinsicInst *EscapeCall = nullptr;
   for (Instruction &I : F.getEntryBlock()) {
     IntrinsicInst *II = dyn_cast<IntrinsicInst>(&I);
-    if (II && II->getIntrinsicID() == Intrinsic::frameescape) {
+    if (II && II->getIntrinsicID() == Intrinsic::localescape) {
       EscapeCall = II;
       break;
     }
