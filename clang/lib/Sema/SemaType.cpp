@@ -786,6 +786,19 @@ static QualType applyObjCTypeArgs(Sema &S, SourceLocation loc, QualType type,
   for (unsigned i = 0, n = typeArgs.size(); i != n; ++i) {
     TypeSourceInfo *typeArgInfo = nullptr;
     QualType typeArg = S.GetTypeFromParser(typeArgs[i], &typeArgInfo);
+
+    // Type arguments cannot explicitly specify nullability.
+    if (auto nullability = AttributedType::stripOuterNullability(typeArg)) {
+      SourceLocation nullabilityLoc
+        = typeArgInfo->getTypeLoc().findNullabilityLoc();
+      SourceLocation diagLoc = nullabilityLoc.isValid()? nullabilityLoc
+        : typeArgInfo->getTypeLoc().getLocStart();
+      S.Diag(diagLoc,
+             diag::err_type_arg_explicit_nullability)
+        << typeArg
+        << FixItHint::CreateRemoval(nullabilityLoc);
+    }
+
     finalTypeArgs.push_back(typeArg);
 
     // Objective-C object pointer types must be substitutable for the bounds.
@@ -3257,7 +3270,6 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
     case CAMN_Yes:
       checkNullabilityConsistency(state, pointerKind, pointerLoc);
     }
-
     return nullptr;
   };
 

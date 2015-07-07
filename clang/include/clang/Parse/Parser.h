@@ -1271,6 +1271,16 @@ private:
   bool ParseObjCProtocolQualifiers(DeclSpec &DS);
   void ParseObjCTypeArgsOrProtocolQualifiers(DeclSpec &DS,
                                              bool warnOnIncompleteProtocols);
+
+  /// Parse either Objective-C type arguments or protocol qualifiers; if the
+  /// former, also parse protocol qualifiers afterward.
+  void ParseObjCTypeArgsAndProtocolQualifiers(DeclSpec &DS);
+
+  /// Parse Objective-C type arguments and protocol qualifiers, extending the
+  /// current type with the parsed result.
+  TypeResult ParseObjCTypeArgsAndProtocolQualifiers(SourceLocation loc,
+                                                    ParsedType type);
+
   void ParseObjCInterfaceDeclList(tok::ObjCKeywordKind contextKey,
                                   Decl *CDecl);
   DeclGroupPtrTy ParseObjCAtProtocolDeclaration(SourceLocation atLoc,

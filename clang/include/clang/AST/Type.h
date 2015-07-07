@@ -533,6 +533,24 @@ struct SplitQualType {
   }
 };
 
+/// The kind of type we are substituting Objective-C type arguments into.
+///
+/// The kind of substitution affects the replacement of type parameters when
+/// no concrete type information is provided, e.g., when dealing with an
+/// unspecialized type.
+enum class ObjCSubstitutionContext {
+  /// An ordinary type.
+  Ordinary,
+  /// The result type of a method or function.
+  Result,
+  /// The parameter type of a method or function.
+  Parameter,
+  /// The type of a property.
+  Property,
+  /// The superclass of a type.
+  Superclass,
+};
+
 /// QualType - For efficiency, we don't store CV-qualified types as nodes on
 /// their own: instead each reference to a type stores the qualifiers.  This
 /// greatly reduces the number of nodes we need to allocate for types (for
@@ -993,6 +1011,48 @@ public:
   ///   An lvalue is an expression with an object type or an incomplete
   ///   type other than void.
   bool isCForbiddenLValueType() const;
+
+  /// Substitute type arguments for the Objective-C type parameters used in the
+  /// subject type.
+  ///
+  /// \param ctx ASTContext in which the type exists.
+  ///
+  /// \param typeArgs The type arguments that will be substituted for the
+  /// Objective-C type parameters in the subject type, which are generally
+  /// computed via \c Type::getObjCSubstitutions. If empty, the type
+  /// parameters will be replaced with their bounds or id/Class, as appropriate
+  /// for the context.
+  ///
+  /// \param context The context in which the subject type was written.
+  ///
+  /// \returns the resulting type.
+  QualType substObjCTypeArgs(ASTContext &ctx,
+                             ArrayRef<QualType> typeArgs,
+                             ObjCSubstitutionContext context) const;
+
+  /// Substitute type arguments from an object type for the Objective-C type
+  /// parameters used in the subject type.
+  ///
+  /// This operation combines the computation of type arguments for
+  /// substitution (\c Type::getObjCSubstitutions) with the actual process of
+  /// substitution (\c QualType::substObjCTypeArgs) for the convenience of
+  /// callers that need to perform a single substitution in isolation.
+  ///
+  /// \param objectType The type of the object whose member type we're
+  /// substituting into. For example, this might be the receiver of a message
+  /// or the base of a property access.
+  ///
+  /// \param dc The declaration context from which the subject type was
+  /// retrieved, which indicates (for example) which type parameters should
+  /// be substituted.
+  ///
+  /// \param context The context in which the subject type was written.
+  ///
+  /// \returns the subject type after replacing all of the Objective-C type
+  /// parameters with their corresponding arguments.
+  QualType substObjCMemberType(QualType objectType,
+                               const DeclContext *dc,
+                               ObjCSubstitutionContext context) const;
 
 private:
   // These methods are implemented in a separate translation unit;
@@ -1702,6 +1762,7 @@ public:
   /// NOTE: getAs*ArrayType are methods on ASTContext.
   const RecordType *getAsUnionType() const;
   const ComplexType *getAsComplexIntegerType() const; // GCC complex int type.
+  const ObjCObjectType *getAsObjCInterfaceType() const;
   // The following is a convenience method that returns an ObjCObjectPointerType
   // for object declared using an interface.
   const ObjCObjectPointerType *getAsObjCInterfacePointerType() const;
@@ -1836,6 +1897,24 @@ public:
   /// or a dependent type that could instantiate to any kind of
   /// pointer type.
   bool canHaveNullability() const;
+
+  /// Retrieve the set of substitutions required when accessing a member
+  /// of the Objective-C receiver type that is declared in the given context.
+  ///
+  /// \c *this is the type of the object we're operating on, e.g., the
+  /// receiver for a message send or the base of a property access, and is
+  /// expected to be of some object or object pointer type.
+  ///
+  /// \param dc The declaration context for which we are building up a
+  /// substitution mapping, which should be an Objective-C class, extension,
+  /// category, or method within.
+  ///
+  /// \returns an array of type arguments that can be substituted for
+  /// the type parameters of the given declaration context in any type described
+  /// within that context, or an empty optional to indicate that no
+  /// substitution is required.
+  Optional<ArrayRef<QualType>>
+  getObjCSubstitutions(const DeclContext *dc) const;
 
   const char *getTypeClassName() const;
 
@@ -4417,6 +4496,10 @@ class ObjCObjectType : public Type {
   /// Either a BuiltinType or an InterfaceType or sugar for either.
   QualType BaseType;
 
+  /// Cached superclass type.
+  mutable llvm::PointerIntPair<const ObjCObjectType *, 1, bool>
+    CachedSuperClassType;
+
   ObjCProtocolDecl * const *getProtocolStorage() const {
     return const_cast<ObjCObjectType*>(this)->getProtocolStorage();
   }
@@ -4440,6 +4523,8 @@ protected:
     ObjCObjectTypeBits.NumProtocols = 0;
     ObjCObjectTypeBits.NumTypeArgs = 0;
   }
+
+  void computeSuperClassTypeSlow() const;
 
 public:
   /// getBaseType - Gets the base type of this object type.  This is
@@ -4516,6 +4601,20 @@ public:
   ObjCProtocolDecl *getProtocol(unsigned I) const {
     assert(I < getNumProtocols() && "Out-of-range protocol access");
     return qual_begin()[I];
+  }
+
+  /// Retrieve the type of the superclass of this object type.
+  ///
+  /// This operation substitutes any type arguments into the
+  /// superclass of the current class type, potentially producing a
+  /// specialization of the superclass type. Produces a null type if
+  /// there is no superclass.
+  QualType getSuperClassType() const {
+    if (!CachedSuperClassType.getInt())
+      computeSuperClassTypeSlow();
+
+    assert(CachedSuperClassType.getInt() && "Superclass not set?");
+    return QualType(CachedSuperClassType.getPointer(), 0);
   }
 
   bool isSugared() const { return false; }
@@ -4763,6 +4862,14 @@ public:
 
   bool isSugared() const { return false; }
   QualType desugar() const { return QualType(this, 0); }
+
+  /// Retrieve the type of the superclass of this object pointer type.
+  ///
+  /// This operation substitutes any type arguments into the
+  /// superclass of the current class type, potentially producing a
+  /// pointer to a specialization of the superclass type. Produces a
+  /// null type if there is no superclass.
+  QualType getSuperClassType() const;
 
   void Profile(llvm::FoldingSetNodeID &ID) {
     Profile(ID, getPointeeType());

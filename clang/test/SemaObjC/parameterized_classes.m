@@ -173,28 +173,16 @@ __attribute__((objc_root_class))
   T object;
 }
 
-- (U)method:(V)param; // expected-note{{passing argument to parameter 'param' here}}
+- (U)method:(V)param;
 @end
 
 @interface PC20<T, U, V> (Cat1)
-- (U)catMethod:(V)param; // expected-note{{passing argument to parameter 'param' here}}
+- (U)catMethod:(V)param;
 @end
 
 @interface PC20<X, Y, Z>()
-- (X)extMethod:(Y)param; // expected-note{{passing argument to parameter 'param' here}}
+- (X)extMethod:(Y)param;
 @end
-
-void test_PC20_unspecialized(PC20 *pc20) {
-  // FIXME: replace type parameters with underlying types?
-  int *ip = [pc20 method: 0]; // expected-warning{{incompatible pointer types initializing 'int *' with an expression of type 'U' (aka 'NSObject *')}}
-  [pc20 method: ip]; // expected-warning{{incompatible pointer types sending 'int *' to parameter of type 'V' (aka 'NSString *')}}
-
-  ip = [pc20 catMethod: 0]; // expected-warning{{incompatible pointer types assigning to 'int *' from 'U' (aka 'NSObject *')}}
-  [pc20 catMethod: ip]; // expected-warning{{incompatible pointer types sending 'int *' to parameter of type 'V' (aka 'NSString *')}}
-
-  ip = [pc20 extMethod: 0]; // expected-warning{{incompatible pointer types assigning to 'int *' from 'X' (aka 'id')}}
-  [pc20 extMethod: ip]; // expected-warning{{incompatible pointer types sending 'int *' to parameter of type 'Y' (aka 'NSObject *')}}
-}
 
 // --------------------------------------------------------------------------
 // Parsing type arguments.

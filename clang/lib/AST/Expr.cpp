@@ -3748,6 +3748,16 @@ ObjCInterfaceDecl *ObjCMessageExpr::getReceiverInterface() const {
   return nullptr;
 }
 
+QualType ObjCPropertyRefExpr::getReceiverType(const ASTContext &ctx) const {
+  if (isClassReceiver())
+    return ctx.getObjCInterfaceType(getClassReceiver());
+
+  if (isSuperReceiver())
+    return getSuperReceiverType();
+
+  return getBase()->getType();
+}
+
 StringRef ObjCBridgedCastExpr::getBridgeKindName() const {
   switch (getBridgeKind()) {
   case OBC_Bridge:

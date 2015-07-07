@@ -687,46 +687,16 @@ public:
   QualType getSuperReceiverType() const { 
     return QualType(Receiver.get<const Type*>(), 0); 
   }
-  QualType getGetterResultType() const {
-    QualType ResultType;
-    if (isExplicitProperty()) {
-      const ObjCPropertyDecl *PDecl = getExplicitProperty();
-      if (const ObjCMethodDecl *Getter = PDecl->getGetterMethodDecl())
-        ResultType = Getter->getReturnType();
-      else
-        ResultType = PDecl->getType();
-    } else {
-      const ObjCMethodDecl *Getter = getImplicitPropertyGetter();
-      if (Getter)
-        ResultType = Getter->getReturnType(); // with reference!
-    }
-    return ResultType;
-  }
 
-  QualType getSetterArgType() const {
-    QualType ArgType;
-    if (isImplicitProperty()) {
-      const ObjCMethodDecl *Setter = getImplicitPropertySetter();
-      ObjCMethodDecl::param_const_iterator P = Setter->param_begin(); 
-      ArgType = (*P)->getType();
-    } else {
-      if (ObjCPropertyDecl *PDecl = getExplicitProperty())
-        if (const ObjCMethodDecl *Setter = PDecl->getSetterMethodDecl()) {
-          ObjCMethodDecl::param_const_iterator P = Setter->param_begin(); 
-          ArgType = (*P)->getType();
-        }
-      if (ArgType.isNull())
-        ArgType = getType();
-    }
-    return ArgType;
-  }
-  
   ObjCInterfaceDecl *getClassReceiver() const {
     return Receiver.get<ObjCInterfaceDecl*>();
   }
   bool isObjectReceiver() const { return Receiver.is<Stmt*>(); }
   bool isSuperReceiver() const { return Receiver.is<const Type*>(); }
   bool isClassReceiver() const { return Receiver.is<ObjCInterfaceDecl*>(); }
+
+  /// Determine the type of the base, regardless of the kind of receiver.
+  QualType getReceiverType(const ASTContext &ctx) const;
 
   SourceLocation getLocStart() const LLVM_READONLY {
     return isObjectReceiver() ? getBase()->getLocStart() :getReceiverLocation();

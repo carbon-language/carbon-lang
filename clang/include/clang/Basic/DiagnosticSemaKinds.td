@@ -7743,6 +7743,13 @@ def warn_nullability_missing : Warning<
   "%select{pointer|block pointer|member pointer}0 is missing a nullability "
   "type specifier (_Nonnull, _Nullable, or _Null_unspecified)">,
   InGroup<NullabilityCompleteness>;
+
+def err_type_arg_explicit_nullability : Error<
+  "type argument %0 cannot explicitly specify nullability">;
+
+def err_type_param_bound_explicit_nullability : Error<
+  "type parameter %0 bound %1 cannot explicitly specify nullability">;
+
 }
 
 let CategoryName = "Generics Issue" in {

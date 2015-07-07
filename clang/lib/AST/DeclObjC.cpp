@@ -1013,6 +1013,14 @@ SourceRange ObjCMethodDecl::getReturnTypeSourceRange() const {
   return SourceRange();
 }
 
+QualType ObjCMethodDecl::getSendResultType(QualType receiverType) const {
+  // FIXME: Handle related result types here.
+
+  return getReturnType().getNonLValueExprType(getASTContext())
+           .substObjCMemberType(receiverType, getDeclContext(),
+                                ObjCSubstitutionContext::Result);
+}
+
 static void CollectOverriddenMethodsRecurse(const ObjCContainerDecl *Container,
                                             const ObjCMethodDecl *Method,
                                SmallVectorImpl<const ObjCMethodDecl *> &Methods,
@@ -1190,17 +1198,18 @@ ObjCMethodDecl::findPropertyDecl(bool CheckOverrides) const {
 void ObjCTypeParamDecl::anchor() { }
 
 ObjCTypeParamDecl *ObjCTypeParamDecl::Create(ASTContext &ctx, DeclContext *dc,
+                                             unsigned index,
                                              SourceLocation nameLoc,
                                              IdentifierInfo *name,
                                              SourceLocation colonLoc,
                                              TypeSourceInfo *boundInfo) {
-  return new (ctx, dc) ObjCTypeParamDecl(ctx, dc, nameLoc, name, colonLoc,
+  return new (ctx, dc) ObjCTypeParamDecl(ctx, dc, index, nameLoc, name, colonLoc,
                                          boundInfo);
 }
 
 ObjCTypeParamDecl *ObjCTypeParamDecl::CreateDeserialized(ASTContext &ctx,
                                                          unsigned ID) {
-  return new (ctx, ID) ObjCTypeParamDecl(ctx, nullptr, SourceLocation(),
+  return new (ctx, ID) ObjCTypeParamDecl(ctx, nullptr, 0, SourceLocation(),
                                          nullptr, SourceLocation(), nullptr);
 }
 
@@ -1237,6 +1246,13 @@ ObjCTypeParamList *ObjCTypeParamList::create(
   unsigned align = llvm::alignOf<ObjCTypeParamList>();
   void *mem = ctx.Allocate(size, align);
   return new (mem) ObjCTypeParamList(lAngleLoc, typeParams, rAngleLoc);
+}
+
+void ObjCTypeParamList::gatherDefaultTypeArgs(
+       SmallVectorImpl<QualType> &typeArgs) const {
+  typeArgs.reserve(size());
+  for (auto typeParam : *this)
+    typeArgs.push_back(typeParam->getUnderlyingType());
 }
 
 //===----------------------------------------------------------------------===//
@@ -1604,6 +1620,11 @@ const ObjCInterfaceDecl *ObjCIvarDecl::getContainingInterface() const {
   case ObjCInterface:
     return cast<ObjCInterfaceDecl>(DC);
   }
+}
+
+QualType ObjCIvarDecl::getUsageType(QualType objectType) const {
+  return getType().substObjCMemberType(objectType, getDeclContext(),
+                                       ObjCSubstitutionContext::Property);
 }
 
 //===----------------------------------------------------------------------===//
@@ -2010,6 +2031,11 @@ ObjCPropertyDecl *ObjCPropertyDecl::CreateDeserialized(ASTContext &C,
   return new (C, ID) ObjCPropertyDecl(nullptr, SourceLocation(), nullptr,
                                       SourceLocation(), SourceLocation(),
                                       QualType(), nullptr, None);
+}
+
+QualType ObjCPropertyDecl::getUsageType(QualType objectType) const {
+  return DeclType.substObjCMemberType(objectType, getDeclContext(),
+                                      ObjCSubstitutionContext::Property);
 }
 
 //===----------------------------------------------------------------------===//

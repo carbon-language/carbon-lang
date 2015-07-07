@@ -312,6 +312,17 @@ TypeLoc TypeLoc::IgnoreParensImpl(TypeLoc TL) {
   return TL;
 }
 
+SourceLocation TypeLoc::findNullabilityLoc() const {
+  if (auto attributedLoc = getAs<AttributedTypeLoc>()) {
+    if (attributedLoc.getAttrKind() == AttributedType::attr_nullable ||
+        attributedLoc.getAttrKind() == AttributedType::attr_nonnull ||
+        attributedLoc.getAttrKind() == AttributedType::attr_null_unspecified)
+      return attributedLoc.getAttrNameLoc();
+  }
+
+  return SourceLocation();
+}
+
 void ObjCObjectTypeLoc::initializeLocal(ASTContext &Context, 
                                         SourceLocation Loc) {
   setHasBaseTypeAsWritten(true);

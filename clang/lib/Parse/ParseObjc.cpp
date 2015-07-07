@@ -438,8 +438,10 @@ ObjCTypeParamList *Parser::parseObjCTypeParamListOrProtocolRefs(
   // type parameters.
   SmallVector<Decl *, 4> typeParams;
   auto makeProtocolIdentsIntoTypeParameters = [&]() {
+    unsigned index = 0;
     for (const auto &pair : protocolIdents) {
       DeclResult typeParam = Actions.actOnObjCTypeParam(getCurScope(),
+                                                        index++,
                                                         pair.first,
                                                         pair.second,
                                                         SourceLocation(),
@@ -502,6 +504,7 @@ ObjCTypeParamList *Parser::parseObjCTypeParamListOrProtocolRefs(
 
     // Create the type parameter.
     DeclResult typeParam = Actions.actOnObjCTypeParam(getCurScope(),
+                                                      typeParams.size(),
                                                       paramName,
                                                       paramLoc,
                                                       colonLoc,
@@ -1675,6 +1678,45 @@ void Parser::ParseObjCTypeArgsOrProtocolQualifiers(
   DS.setObjCTypeArgs(lAngleLoc, typeArgs, rAngleLoc);
 }
 
+void Parser::ParseObjCTypeArgsAndProtocolQualifiers(DeclSpec &DS) {
+  assert(Tok.is(tok::less));
+
+  ParseObjCTypeArgsOrProtocolQualifiers(DS,
+                                        /*warnOnIncompleteProtocols=*/false);
+
+  // An Objective-C object pointer followed by type arguments
+  // can then be followed again by a set of protocol references, e.g.,
+  // \c NSArray<NSView><NSTextDelegate>
+  if (Tok.is(tok::less)) {
+    if (DS.getProtocolQualifiers()) {
+      Diag(Tok, diag::err_objc_type_args_after_protocols)
+        << SourceRange(DS.getProtocolLAngleLoc(), DS.getLocEnd());
+      SkipUntil(tok::greater, tok::greatergreater);
+    } else {
+      ParseObjCProtocolQualifiers(DS);
+    }
+  }
+}
+
+TypeResult Parser::ParseObjCTypeArgsAndProtocolQualifiers(SourceLocation loc,
+                                                          ParsedType type) {
+  assert(Tok.is(tok::less));
+
+  // Create declaration specifiers and set the type as the type specifier.
+  DeclSpec DS(AttrFactory);
+  const char *prevSpec = nullptr;
+  unsigned diagID;
+  DS.SetTypeSpecType(TST_typename, loc, prevSpec, diagID, type,
+                     Actions.getASTContext().getPrintingPolicy());
+
+  // Parse type arguments and protocol qualifiers.
+  ParseObjCTypeArgsAndProtocolQualifiers(DS);
+
+  // Form a declarator to turn this into a type.
+  Declarator D(DS, Declarator::TypeNameContext);
+  return Actions.ActOnTypeName(getCurScope(), D);
+}
+
 void Parser::HelperActionsForIvarDeclarations(Decl *interfaceDecl, SourceLocation atLoc,
                                  BalancedDelimiterTracker &T,
                                  SmallVectorImpl<Decl *> &AllIvarDecls,
@@ -2828,6 +2870,18 @@ ExprResult Parser::ParseObjCMessageExpression() {
       }
 
       ConsumeToken(); // the type name
+
+      // Parse type arguments and protocol qualifiers.
+      if (Tok.is(tok::less)) {
+        TypeResult NewReceiverType
+          = ParseObjCTypeArgsAndProtocolQualifiers(NameLoc, ReceiverType);
+        if (!NewReceiverType.isUsable()) {
+          SkipUntil(tok::r_square, StopAtSemi);
+          return ExprError();
+        }
+
+        ReceiverType = NewReceiverType.get();
+      }
 
       return ParseObjCMessageExpressionBody(LBracLoc, SourceLocation(), 
                                             ReceiverType, nullptr);

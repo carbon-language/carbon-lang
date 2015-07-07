@@ -337,6 +337,10 @@ public:
     return getReturnType().getNonLValueExprType(getASTContext());
   }
 
+  /// Determine the type of an expression that sends a message to this
+  /// function with the given receiver type.
+  QualType getSendResultType(QualType receiverType) const;
+
   TypeSourceInfo *getReturnTypeSourceInfo() const { return ReturnTInfo; }
   void setReturnTypeSourceInfo(TypeSourceInfo *TInfo) { ReturnTInfo = TInfo; }
 
@@ -516,19 +520,23 @@ public:
 class ObjCTypeParamDecl : public TypedefNameDecl {
   void anchor() override;
 
+  /// Index of this type parameter in the type parameter list.
+  unsigned Index : 16;
+
   // The location of the ':', which will be valid when the bound was
   // explicitly specified.
   SourceLocation ColonLoc;
 
-  ObjCTypeParamDecl(ASTContext &ctx, DeclContext *dc,
+  ObjCTypeParamDecl(ASTContext &ctx, DeclContext *dc, unsigned index,
                     SourceLocation nameLoc, IdentifierInfo *name,
                     SourceLocation colonLoc, TypeSourceInfo *boundInfo)
     : TypedefNameDecl(ObjCTypeParam, ctx, dc, nameLoc, nameLoc, name,
                       boundInfo),
-      ColonLoc(colonLoc) { }
+      Index(index), ColonLoc(colonLoc) { }
 
 public:
   static ObjCTypeParamDecl *Create(ASTContext &ctx, DeclContext *dc,
+                                   unsigned index,
                                    SourceLocation nameLoc,
                                    IdentifierInfo *name,
                                    SourceLocation colonLoc,
@@ -536,6 +544,9 @@ public:
   static ObjCTypeParamDecl *CreateDeserialized(ASTContext &ctx, unsigned ID);
 
   SourceRange getSourceRange() const override LLVM_READONLY;
+
+  /// Retrieve the index into its type parameter list.
+  unsigned getIndex() const { return Index; }
 
   /// Whether this type parameter has an explicitly-written type bound, e.g.,
   /// "T : NSView".
@@ -617,6 +628,10 @@ public:
   SourceLocation getLAngleLoc() const { return Brackets.getBegin(); }
   SourceLocation getRAngleLoc() const { return Brackets.getEnd(); }
   SourceRange getSourceRange() const { return Brackets; }
+
+  /// Gather the default set of type arguments to be substituted for
+  /// these type parameters when dealing with an unspecialized type.
+  void gatherDefaultTypeArgs(SmallVectorImpl<QualType> &typeArgs) const;
 };
 
 /// ObjCContainerDecl - Represents a container for method declarations.
@@ -1583,6 +1598,10 @@ public:
   void setSynthesize(bool synth) { Synthesized = synth; }
   bool getSynthesize() const { return Synthesized; }
 
+  /// Retrieve the type of this instance variable when viewed as a member of a
+  /// specific object type.
+  QualType getUsageType(QualType objectType) const;
+
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classofKind(Kind K) { return K == ObjCIvar; }
@@ -2423,6 +2442,10 @@ public:
     DeclType = T;
     DeclTypeSourceInfo = TSI; 
   }
+
+  /// Retrieve the type when this property is used with a specific base object
+  /// type.
+  QualType getUsageType(QualType objectType) const;
 
   PropertyAttributeKind getPropertyAttributes() const {
     return PropertyAttributeKind(PropertyAttributes);

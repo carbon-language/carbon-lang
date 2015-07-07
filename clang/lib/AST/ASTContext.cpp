@@ -6893,9 +6893,13 @@ QualType ASTContext::areCommonBaseCompatible(
   const ObjCInterfaceDecl* RDecl = RHS->getInterface();
   if (!LDecl || !RDecl || (declaresSameEntity(LDecl, RDecl)))
     return QualType();
-  
-  do {
-    LHS = cast<ObjCInterfaceType>(getObjCInterfaceType(LDecl));
+
+  while (!declaresSameEntity(LHS->getInterface(), RDecl)) {
+    // Strip protocols from the left-hand side.
+    if (LHS->getNumProtocols() > 0)
+      LHS = getObjCObjectType(LHS->getBaseType(), LHS->getTypeArgsAsWritten(),
+                              { })->castAs<ObjCObjectType>();
+
     if (canAssignObjCInterfaces(LHS, RHS)) {
       SmallVector<ObjCProtocolDecl *, 8> Protocols;
       getIntersectionOfProtocols(*this, Lptr, Rptr, Protocols);
@@ -6906,7 +6910,13 @@ QualType ASTContext::areCommonBaseCompatible(
       Result = getObjCObjectPointerType(Result);
       return Result;
     }
-  } while ((LDecl = LDecl->getSuperClass()));
+
+    QualType LHSSuperType = LHS->getSuperClassType();
+    if (LHSSuperType.isNull())
+      break;
+
+    LHS = LHSSuperType->castAs<ObjCObjectType>();
+  }
     
   return QualType();
 }
@@ -6918,21 +6928,15 @@ bool ASTContext::canAssignObjCInterfaces(const ObjCObjectType *LHS,
 
   // Verify that the base decls are compatible: the RHS must be a subclass of
   // the LHS.
-  if (!LHS->getInterface()->isSuperClassOf(RHS->getInterface()))
+  ObjCInterfaceDecl *LHSInterface = LHS->getInterface();
+  bool IsSuperClass = LHSInterface->isSuperClassOf(RHS->getInterface());
+  if (!IsSuperClass)
     return false;
 
-  // RHS must have a superset of the protocols in the LHS.  If the LHS is not
-  // protocol qualified at all, then we are good.
-  if (LHS->getNumProtocols() == 0)
-    return true;
-
-  // Okay, we know the LHS has protocol qualifiers. But RHS may or may not.
-  // More detailed analysis is required.
-  // OK, if LHS is same or a superclass of RHS *and*
-  // this LHS, or as RHS's super class is assignment compatible with LHS.
-  bool IsSuperClass =
-    LHS->getInterface()->isSuperClassOf(RHS->getInterface());
-  if (IsSuperClass) {
+  // If the LHS has protocol qualifiers, determine whether all of them are
+  // satisfied by the RHS (i.e., the RHS has a superset of the protocols in the
+  // LHS).
+  if (LHS->getNumProtocols() > 0) {
     // OK if conversion of LHS to SuperClass results in narrowing of types
     // ; i.e., SuperClass may implement at least one of the protocols
     // in LHS's protocol list. Example, SuperObj<P1> = lhs<P1,P2> is ok.
@@ -6957,9 +6961,28 @@ bool ASTContext::canAssignObjCInterfaces(const ObjCObjectType *LHS,
       if (!SuperImplementsProtocol)
         return false;
     }
-    return true;
   }
-  return false;
+
+  // If the LHS is specialized, we may need to check type arguments.
+  if (LHS->isSpecialized()) {
+    // Follow the superclass chain until we've matched the LHS class in the
+    // hierarchy. This substitutes type arguments through.
+    const ObjCObjectType *RHSSuper = RHS;
+    while (!declaresSameEntity(RHSSuper->getInterface(), LHSInterface))
+      RHSSuper = RHSSuper->getSuperClassType()->castAs<ObjCObjectType>();
+
+    // If the RHS is specializd, compare type arguments.
+    if (RHSSuper->isSpecialized()) {
+      ArrayRef<QualType> LHSTypeArgs = LHS->getTypeArgs();
+      ArrayRef<QualType> RHSTypeArgs = RHSSuper->getTypeArgs();
+      for (unsigned i = 0, n = LHSTypeArgs.size(); i != n; ++i) {
+        if (!hasSameType(LHSTypeArgs[i], RHSTypeArgs[i]))
+          return false;
+      }
+    }
+  }
+
+  return true;
 }
 
 bool ASTContext::areComparableObjCPointerTypes(QualType LHS, QualType RHS) {

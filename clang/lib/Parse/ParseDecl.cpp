@@ -2890,21 +2890,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       // following an Objective-C object pointer type. Handle either
       // one of them.
       if (Tok.is(tok::less) && getLangOpts().ObjC1) {
-        ParseObjCTypeArgsOrProtocolQualifiers(
-          DS, /*warnOnIncompleteProtocols=*/false);
-
-        // An Objective-C object pointer followed by type arguments
-        // can then be followed again by a set of protocol references, e.g.,
-        // \c NSArray<NSView><NSTextDelegate>
-        if (Tok.is(tok::less)) {
-          if (DS.getProtocolQualifiers()) {
-            Diag(Tok, diag::err_objc_type_args_after_protocols)
-              << SourceRange(DS.getProtocolLAngleLoc(), DS.getLocEnd());
-            SkipUntil(tok::greater, tok::greatergreater);
-          } else {
-            ParseObjCProtocolQualifiers(DS);
-          }
-        }
+        ParseObjCTypeArgsAndProtocolQualifiers(DS);
       }
 
       continue;
@@ -3016,21 +3002,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       // following an Objective-C object pointer type. Handle either
       // one of them.
       if (Tok.is(tok::less) && getLangOpts().ObjC1) {
-        ParseObjCTypeArgsOrProtocolQualifiers(
-          DS, /*warnOnIncompleteProtocols=*/false);
-
-        // An Objective-C object pointer followed by type arguments
-        // can then be followed again by a set of protocol references, e.g.,
-        // \c NSArray<NSView><NSTextDelegate>
-        if (Tok.is(tok::less)) {
-          if (DS.getProtocolQualifiers()) {
-            Diag(Tok, diag::err_objc_type_args_after_protocols)
-              << SourceRange(DS.getProtocolLAngleLoc(), DS.getLocEnd());
-            SkipUntil(tok::greater, tok::greatergreater);
-          } else {
-            ParseObjCProtocolQualifiers(DS);
-          }
-        }
+        ParseObjCTypeArgsAndProtocolQualifiers(DS);
       }
 
       // Need to support trailing type qualifiers (e.g. "id<p> const").

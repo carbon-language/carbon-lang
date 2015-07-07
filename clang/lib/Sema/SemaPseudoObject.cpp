@@ -689,15 +689,7 @@ ExprResult ObjCPropertyOpBuilder::buildGet() {
   if (SyntacticRefExpr)
     SyntacticRefExpr->setIsMessagingGetter();
 
-  QualType receiverType;
-  if (RefExpr->isClassReceiver()) {
-    receiverType = S.Context.getObjCInterfaceType(RefExpr->getClassReceiver());
-  } else if (RefExpr->isSuperReceiver()) {
-    receiverType = RefExpr->getSuperReceiverType();
-  } else {
-    assert(InstanceReceiver);
-    receiverType = InstanceReceiver->getType();
-  }
+  QualType receiverType = RefExpr->getReceiverType(S.Context);
   if (!Getter->isImplicit())
     S.DiagnoseUseOfDecl(Getter, GenericLoc, nullptr, true);
   // Build a message-send.
@@ -730,21 +722,17 @@ ExprResult ObjCPropertyOpBuilder::buildSet(Expr *op, SourceLocation opcLoc,
   if (SyntacticRefExpr)
     SyntacticRefExpr->setIsMessagingSetter();
 
-  QualType receiverType;
-  if (RefExpr->isClassReceiver()) {
-    receiverType = S.Context.getObjCInterfaceType(RefExpr->getClassReceiver());
-  } else if (RefExpr->isSuperReceiver()) {
-    receiverType = RefExpr->getSuperReceiverType();
-  } else {
-    assert(InstanceReceiver);
-    receiverType = InstanceReceiver->getType();
-  }
+  QualType receiverType = RefExpr->getReceiverType(S.Context);
 
   // Use assignment constraints when possible; they give us better
   // diagnostics.  "When possible" basically means anything except a
   // C++ class type.
   if (!S.getLangOpts().CPlusPlus || !op->getType()->isRecordType()) {
-    QualType paramType = (*Setter->param_begin())->getType();
+    QualType paramType = (*Setter->param_begin())->getType()
+                           .substObjCMemberType(
+                             receiverType,
+                             Setter->getDeclContext(),
+                             ObjCSubstitutionContext::Parameter);
     if (!S.getLangOpts().CPlusPlus || !paramType->isRecordType()) {
       ExprResult opResult = op;
       Sema::AssignConvertType assignResult
@@ -819,7 +807,9 @@ ExprResult ObjCPropertyOpBuilder::buildRValueOperation(Expr *op) {
   // As a special case, if the method returns 'id', try to get
   // a better type from the property.
   if (RefExpr->isExplicitProperty() && result.get()->isRValue()) {
-    QualType propType = RefExpr->getExplicitProperty()->getType();
+    QualType receiverType = RefExpr->getReceiverType(S.Context);
+    QualType propType = RefExpr->getExplicitProperty()
+                          ->getUsageType(receiverType);
     if (result.get()->getType()->isObjCIdType()) {
       if (const ObjCObjectPointerType *ptr
             = propType->getAs<ObjCObjectPointerType>()) {
@@ -1119,9 +1109,6 @@ bool ObjCSubscriptOpBuilder::findAtIndexGetter() {
   if (const ObjCObjectPointerType *PTy =
       BaseT->getAs<ObjCObjectPointerType>()) {
     ResultType = PTy->getPointeeType();
-    if (const ObjCObjectType *iQFaceTy = 
-        ResultType->getAsObjCQualifiedInterfaceType())
-      ResultType = iQFaceTy->getBaseType();
   }
   Sema::ObjCSubscriptKind Res = 
     S.CheckSubscriptingKind(RefExpr->getKeyExpr());
@@ -1228,9 +1215,6 @@ bool ObjCSubscriptOpBuilder::findAtIndexSetter() {
   if (const ObjCObjectPointerType *PTy =
       BaseT->getAs<ObjCObjectPointerType>()) {
     ResultType = PTy->getPointeeType();
-    if (const ObjCObjectType *iQFaceTy = 
-        ResultType->getAsObjCQualifiedInterfaceType())
-      ResultType = iQFaceTy->getBaseType();
   }
   
   Sema::ObjCSubscriptKind Res = 

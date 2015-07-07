@@ -21,6 +21,7 @@ __attribute__((objc_root_class))
 
 typedef PC1<id, NSObject *> PC1Specialization1;
 
+typedef PC1Specialization1 <NSObject> PC1Specialization2;
 #else
 
 @interface PC1<T : NSObject *, // expected-error{{type bound 'NSObject *' for type parameter 'T' conflicts with implicit bound 'id}}
@@ -29,6 +30,8 @@ typedef PC1<id, NSObject *> PC1Specialization1;
  // expected-note@15{{type parameter 'U' declared here}}
 @end
 
-typedef PC1Specialization1<id, NSObject *> PC1Specialization2; // expected-error{{type arguments cannot be applied to already-specialized class type 'PC1Specialization1' (aka 'PC1<id,NSObject *>')}}
+typedef PC1Specialization1<id, NSObject *> PC1Specialization3; // expected-error{{type arguments cannot be applied to already-specialized class type 'PC1Specialization1' (aka 'PC1<id,NSObject *>')}}
+
+typedef PC1Specialization2<id, NSObject *> PC1Specialization4; // expected-error{{already-specialized class type 'PC1Specialization2' (aka 'PC1Specialization1<NSObject>')}}
 
 #endif

@@ -1378,7 +1378,8 @@ static ExprResult LookupMemberExpr(Sema &S, LookupResult &R,
     }
 
     ObjCIvarRefExpr *Result = new (S.Context) ObjCIvarRefExpr(
-        IV, IV->getType(), MemberLoc, OpLoc, BaseExpr.get(), IsArrow);
+        IV, IV->getUsageType(BaseType), MemberLoc, OpLoc, BaseExpr.get(),
+        IsArrow);
 
     if (S.getLangOpts().ObjCAutoRefCount) {
       if (IV->getType().getObjCLifetime() == Qualifiers::OCL_Weak) {

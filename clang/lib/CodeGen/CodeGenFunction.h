@@ -2943,6 +2943,26 @@ private:
                                   SourceLocation Loc);
 
 public:
+#ifndef NDEBUG
+  // Determine whether the given argument is an Objective-C method
+  // that may have type parameters in its signature.
+  static bool isObjCMethodWithTypeParams(const ObjCMethodDecl *method) {
+    const DeclContext *dc = method->getDeclContext();
+    if (const ObjCInterfaceDecl *classDecl= dyn_cast<ObjCInterfaceDecl>(dc)) {
+      return classDecl->getTypeParamListAsWritten();
+    }
+
+    if (const ObjCCategoryDecl *catDecl = dyn_cast<ObjCCategoryDecl>(dc)) {
+      return catDecl->getTypeParamList();
+    }
+
+    return false;
+  }
+
+  template<typename T>
+  static bool isObjCMethodWithTypeParams(const T *) { return false; }
+#endif
+
   /// EmitCallArgs - Emit call arguments for a function.
   template <typename T>
   void EmitCallArgs(CallArgList &Args, const T *CallArgTypeInfo,
@@ -2956,13 +2976,19 @@ public:
     assert((ParamsToSkip == 0 || CallArgTypeInfo) &&
            "Can't skip parameters if type info is not provided");
     if (CallArgTypeInfo) {
+#ifndef NDEBUG
+      bool isGenericMethod = isObjCMethodWithTypeParams(CallArgTypeInfo);
+#endif
+
       // First, use the argument types that the type info knows about
       for (auto I = CallArgTypeInfo->param_type_begin() + ParamsToSkip,
                 E = CallArgTypeInfo->param_type_end();
            I != E; ++I, ++Arg) {
         assert(Arg != ArgEnd && "Running over edge of argument list!");
         assert(
+            isGenericMethod ||
             ((*I)->isVariablyModifiedType() ||
+             (*I).getNonReferenceType()->isObjCRetainableType() ||
              getContext()
                      .getCanonicalType((*I).getNonReferenceType())
                      .getTypePtr() ==
