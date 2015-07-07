@@ -2204,6 +2204,11 @@ static std::string FormatFunctionParameter(const PrintingPolicy &Policy,
           TL = QualifiedTL.getUnqualifiedLoc();
           continue;
         }
+
+        if (AttributedTypeLoc AttrTL = TL.getAs<AttributedTypeLoc>()) {
+          TL = AttrTL.getModifiedLoc();
+          continue;
+        }
       }
       
       // Try to get the function prototype behind the block pointer type,

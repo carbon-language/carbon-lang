@@ -11,6 +11,7 @@
 }
 -(U)getit:(T)val;
 -(void)apply:(void(^)(T, U))block;
+-(void)apply2:(void(^__nonnull)(T, U))block;
 
 @property (strong) T prop;
 @end
@@ -32,22 +33,24 @@ void test2(Test *obj) {
   obj->;
 }
 
-// RUN: c-index-test -code-completion-at=%s:24:8 %s | FileCheck -check-prefix=CHECK-CC0 %s
+// RUN: c-index-test -code-completion-at=%s:25:8 %s | FileCheck -check-prefix=CHECK-CC0 %s
+// CHECK-CC0: ObjCInstanceMethodDecl:{ResultType void}{TypedText apply2:}{Placeholder ^(MyClsA *, MyClsB *)block} (35)
 // CHECK-CC0: ObjCInstanceMethodDecl:{ResultType void}{TypedText apply:}{Placeholder ^(MyClsA *, MyClsB *)block} (35)
 // CHECK-CC0: ObjCInstanceMethodDecl:{ResultType MyClsB *}{TypedText getit:}{Placeholder (MyClsA *)} (35)
 
-// RUN: c-index-test -code-completion-at=%s:25:7 %s | FileCheck -check-prefix=CHECK-CC1 %s
+// RUN: c-index-test -code-completion-at=%s:26:7 %s | FileCheck -check-prefix=CHECK-CC1 %s
 // CHECK-CC1: ObjCPropertyDecl:{ResultType MyClsA *}{TypedText prop} (35)
 
-// RUN: c-index-test -code-completion-at=%s:26:8 %s | FileCheck -check-prefix=CHECK-CC2 %s
+// RUN: c-index-test -code-completion-at=%s:27:8 %s | FileCheck -check-prefix=CHECK-CC2 %s
 // CHECK-CC2: ObjCIvarDecl:{ResultType MyClsB *}{TypedText myVar} (35)
 
-// RUN: c-index-test -code-completion-at=%s:30:8 %s | FileCheck -check-prefix=CHECK-CC3 %s
+// RUN: c-index-test -code-completion-at=%s:31:8 %s | FileCheck -check-prefix=CHECK-CC3 %s
+// CHECK-CC3: ObjCInstanceMethodDecl:{ResultType void}{TypedText apply2:}{Placeholder ^(id, NSObject *)block} (35)
 // CHECK-CC3: ObjCInstanceMethodDecl:{ResultType void}{TypedText apply:}{Placeholder ^(id, NSObject *)block} (35)
 // CHECK-CC3: ObjCInstanceMethodDecl:{ResultType __kindof NSObject *}{TypedText getit:}{Placeholder (id)} (35)
 
-// RUN: c-index-test -code-completion-at=%s:31:7 %s | FileCheck -check-prefix=CHECK-CC4 %s
+// RUN: c-index-test -code-completion-at=%s:32:7 %s | FileCheck -check-prefix=CHECK-CC4 %s
 // CHECK-CC4: ObjCPropertyDecl:{ResultType id}{TypedText prop} (35)
 
-// RUN: c-index-test -code-completion-at=%s:32:8 %s | FileCheck -check-prefix=CHECK-CC5 %s
+// RUN: c-index-test -code-completion-at=%s:33:8 %s | FileCheck -check-prefix=CHECK-CC5 %s
 // CHECK-CC5: ObjCIvarDecl:{ResultType __kindof NSObject *}{TypedText myVar} (35)
