@@ -348,7 +348,11 @@ function package_release() {
     cd $cwd
 }
 
-set -e                          # Exit if any command fails
+# Exit if any command fails
+# Note: pipefail is necessary for running build commands through
+# a pipe (i.e. it changes the output of ``false | tee /dev/null ; echo $?``)
+set -e
+set -o pipefail
 
 if [ "$do_checkout" = "yes" ]; then
     export_sources
