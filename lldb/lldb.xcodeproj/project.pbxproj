@@ -55,6 +55,7 @@
 			buildConfigurationList = 26CEF3BD14FD596A007286B2 /* Build configuration list for PBXAggregateTarget "ios" */;
 			buildPhases = (
 				AFF87C85150FF5CC000E1742 /* CopyFiles */,
+				AF3059151B4B390800E25622 /* Run Script - remove unneeded Resources and Swift dirs from iOS LLDB.framework bundle */,
 			);
 			dependencies = (
 				26CEF3C214FD5973007286B2 /* PBXTargetDependency */,
@@ -5820,6 +5821,21 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "sh $SRCROOT/scripts/finish-swig-wrapper-classes.sh $SRCROOT $TARGET_BUILD_DIR $CONFIGURATION_BUILD_DIR \"\"";
+		};
+		AF3059151B4B390800E25622 /* Run Script - remove unneeded Resources and Swift dirs from iOS LLDB.framework bundle */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 12;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Run Script - remove unneeded Resources and Swift dirs from iOS LLDB.framework bundle";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = "/bin/sh -x";
+			shellScript = "/bin/rm -rf \"$INSTALL_ROOT/System/Library/PrivateFrameworks/LLDB.framework/Resources\" \"$INSTALL_ROOT/System/Library/PrivateFrameworks/LLDB.framework/Swift\"";
+			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
 
