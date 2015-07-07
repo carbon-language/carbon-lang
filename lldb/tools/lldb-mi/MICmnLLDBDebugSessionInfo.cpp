@@ -231,7 +231,7 @@ CMICmnLLDBDebugSessionInfo::GetThreadFrames(const SMICmdData &vCmdData, const MI
     // MI print
     // "frame={level=\"%d\",addr=\"0x%016" PRIx64 "\",func=\"%s\",args=[%s],file=\"%s\",fullname=\"%s\",line=\"%d\"},frame={level=\"%d\",addr=\"0x%016" PRIx64 "\",func=\"%s\",args=[%s],file=\"%s\",fullname=\"%s\",line=\"%d\"},
     // ..."
-    CMIUtilString strListCommaSeperated;
+    CMIUtilString strListCommaSeparated;
     for (MIuint nLevel = 0; nLevel < nFrames; nLevel++)
     {
         CMICmnMIValueTuple miValueTuple;
@@ -240,11 +240,11 @@ CMICmnLLDBDebugSessionInfo::GetThreadFrames(const SMICmdData &vCmdData, const MI
 
         const CMICmnMIValueResult miValueResult2("frame", miValueTuple);
         if (nLevel != 0)
-            strListCommaSeperated += ",";
-        strListCommaSeperated += miValueResult2.GetString();
+            strListCommaSeparated += ",";
+        strListCommaSeparated += miValueResult2.GetString();
     }
 
-    vwrThreadFrames = strListCommaSeperated;
+    vwrThreadFrames = strListCommaSeparated;
 
     return MIstatus::success;
 }
