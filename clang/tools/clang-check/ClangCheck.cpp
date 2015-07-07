@@ -17,6 +17,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/AST/ASTConsumer.h"
+#include "clang/CodeGen/ObjectFilePCHContainerOperations.h"
 #include "clang/Driver/Options.h"
 #include "clang/Frontend/ASTConsumers.h"
 #include "clang/Frontend/CompilerInstance.h"
@@ -151,7 +152,8 @@ int main(int argc, const char **argv) {
   llvm::sys::PrintStackTraceOnErrorSignal();
   CommonOptionsParser OptionsParser(argc, argv, ClangCheckCategory);
   ClangTool Tool(OptionsParser.getCompilations(),
-                 OptionsParser.getSourcePathList());
+                 OptionsParser.getSourcePathList(),
+                 std::make_shared<clang::ObjectFilePCHContainerOperations>());
 
   // Clear adjusters because -fsyntax-only is inserted by the default chain.
   Tool.clearArgumentsAdjusters();

@@ -3976,8 +3976,7 @@ bool ASTReader::readASTFileControlBlock(
 
   // Initialize the stream
   llvm::BitstreamReader StreamFile;
-  StreamFile.init((const unsigned char *)(*Buffer)->getBufferStart(),
-                  (const unsigned char *)(*Buffer)->getBufferEnd());
+  PCHContainerOps.ExtractPCH((*Buffer)->getMemBufferRef(), StreamFile);
   BitstreamCursor Stream(StreamFile);
 
   // Sniff for the signature.

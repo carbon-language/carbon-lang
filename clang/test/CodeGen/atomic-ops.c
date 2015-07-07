@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 %s -emit-llvm -o - -ffreestanding -triple=i686-apple-darwin9 | FileCheck %s
+// REQUIRES: x86-registered-target
 
 // Also test serialization of atomic operations here, to avoid duplicating the
 // test.

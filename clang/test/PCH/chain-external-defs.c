@@ -1,3 +1,4 @@
+// REQUIRES: x86-registered-target
 // Test with pch.
 // RUN: %clang_cc1 -triple x86_64-apple-darwin9 -emit-pch -o %t1.pch %S/Inputs/chain-external-defs1.h
 // RUN: %clang_cc1 -triple x86_64-apple-darwin9 -emit-pch -o %t2.pch %S/Inputs/chain-external-defs2.h -include-pch %t1.pch

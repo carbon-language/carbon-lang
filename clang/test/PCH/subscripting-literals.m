@@ -1,6 +1,7 @@
 // RUN: %clang_cc1 -triple x86_64-apple-darwin -emit-llvm -o %t.nopch.ll %s
 // RUN: %clang_cc1 -triple x86_64-apple-darwin -emit-pch -o %t.pch %s
 // RUN: %clang_cc1 -triple x86_64-apple-darwin -emit-llvm -o %t.pch.ll %s -include-pch %t.pch
+// REQUIRES: x86-registered-target
 // RUN: diff %t.nopch.ll %t.pch.ll
 
 #ifndef HEADER

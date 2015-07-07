@@ -1,4 +1,5 @@
 set(LLVM_LINK_COMPONENTS
+  ${LLVM_TARGETS_TO_BUILD}
   Option
   Support
   )
@@ -11,6 +12,7 @@ target_link_libraries(clang-check
   clangAST
   clangBasic
   clangDriver
+  clangCodeGen
   clangFrontend
   clangRewriteFrontend
   clangStaticAnalyzerFrontend

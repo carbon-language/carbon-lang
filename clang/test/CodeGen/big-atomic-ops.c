@@ -1,5 +1,5 @@
 // RUN: %clang_cc1 %s -emit-llvm -o - -triple=x86_64-apple-macosx10.9.0 | FileCheck %s
-
+// REQUIRES: x86-registered-target
 // Also test serialization of atomic operations here, to avoid duplicating the
 // test.
 // RUN: %clang_cc1 %s -emit-pch -o %t -triple=x86_64-apple-macosx10.9.0
