@@ -1799,11 +1799,10 @@ bool IPSCCP::runOnModule(Module &M) {
         if (!TI->use_empty())
           TI->replaceAllUsesWith(UndefValue::get(TI->getType()));
         TI->eraseFromParent();
+        new UnreachableInst(M.getContext(), BB);
 
         if (&*BB != &F->front())
           BlocksToErase.push_back(BB);
-        else
-          new UnreachableInst(M.getContext(), BB);
         continue;
       }
 
