@@ -177,7 +177,8 @@ void SymbolTable::addLazy(Lazy *New, std::vector<Symbol *> *Accum) {
     if (!Sym->Body.compare_exchange_strong(Existing, New))
       continue;
     New->setBackref(Sym);
-    Accum->push_back(Sym);
+    if (isa<Undefined>(Existing))
+      Accum->push_back(Sym);
     return;
   }
 }
