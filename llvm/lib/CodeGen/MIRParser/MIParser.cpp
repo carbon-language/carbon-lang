@@ -29,6 +29,18 @@ using namespace llvm;
 
 namespace {
 
+/// A wrapper struct around the 'MachineOperand' struct that includes a source
+/// range.
+struct MachineOperandWithLocation {
+  MachineOperand Operand;
+  StringRef::iterator Begin;
+  StringRef::iterator End;
+
+  MachineOperandWithLocation(const MachineOperand &Operand,
+                             StringRef::iterator Begin, StringRef::iterator End)
+      : Operand(Operand), Begin(Begin), End(End) {}
+};
+
 class MIParser {
   SourceMgr &SM;
   MachineFunction &MF;
@@ -90,6 +102,9 @@ private:
 
   bool parseInstruction(unsigned &OpCode);
 
+  bool verifyImplicitOperands(ArrayRef<MachineOperandWithLocation> Operands,
+                              const MCInstrDesc &MCID);
+
   void initNames2Regs();
 
   /// Try to convert a register name to a register number. Return true if the
@@ -139,11 +154,12 @@ bool MIParser::parse(MachineInstr *&MI) {
   // Parse any register operands before '='
   // TODO: Allow parsing of multiple operands before '='
   MachineOperand MO = MachineOperand::CreateImm(0);
-  SmallVector<MachineOperand, 8> Operands;
+  SmallVector<MachineOperandWithLocation, 8> Operands;
   if (Token.isRegister() || Token.isRegisterFlag()) {
+    auto Loc = Token.location();
     if (parseRegisterOperand(MO, /*IsDef=*/true))
       return true;
-    Operands.push_back(MO);
+    Operands.push_back(MachineOperandWithLocation(MO, Loc, Token.location()));
     if (Token.isNot(MIToken::equal))
       return error("expected '='");
     lex();
@@ -157,9 +173,10 @@ bool MIParser::parse(MachineInstr *&MI) {
 
   // Parse the remaining machine operands.
   while (Token.isNot(MIToken::Eof)) {
+    auto Loc = Token.location();
     if (parseMachineOperand(MO))
       return true;
-    Operands.push_back(MO);
+    Operands.push_back(MachineOperandWithLocation(MO, Loc, Token.location()));
     if (Token.is(MIToken::Eof))
       break;
     if (Token.isNot(MIToken::comma))
@@ -168,12 +185,16 @@ bool MIParser::parse(MachineInstr *&MI) {
   }
 
   const auto &MCID = MF.getSubtarget().getInstrInfo()->get(OpCode);
+  if (!MCID.isVariadic()) {
+    // FIXME: Move the implicit operand verification to the machine verifier.
+    if (verifyImplicitOperands(Operands, MCID))
+      return true;
+  }
 
   // TODO: Check for extraneous machine operands.
-  // TODO: Check that this instruction has the implicit register operands.
   MI = MF.CreateMachineInstr(MCID, DebugLoc(), /*NoImplicit=*/true);
   for (const auto &Operand : Operands)
-    MI->addOperand(MF, Operand);
+    MI->addOperand(MF, Operand.Operand);
   return false;
 }
 
@@ -187,6 +208,68 @@ bool MIParser::parseMBB(MachineBasicBlock *&MBB) {
   if (Token.isNot(MIToken::Eof))
     return error(
         "expected end of string after the machine basic block reference");
+  return false;
+}
+
+static const char *printImplicitRegisterFlag(const MachineOperand &MO) {
+  assert(MO.isImplicit());
+  return MO.isDef() ? "implicit-def" : "implicit";
+}
+
+static std::string getRegisterName(const TargetRegisterInfo *TRI,
+                                   unsigned Reg) {
+  assert(TargetRegisterInfo::isPhysicalRegister(Reg) && "expected phys reg");
+  return StringRef(TRI->getName(Reg)).lower();
+}
+
+bool MIParser::verifyImplicitOperands(
+    ArrayRef<MachineOperandWithLocation> Operands, const MCInstrDesc &MCID) {
+  if (MCID.isCall())
+    // We can't verify call instructions as they can contain arbitrary implicit
+    // register and register mask operands.
+    return false;
+
+  // Gather all the expected implicit operands.
+  SmallVector<MachineOperand, 4> ImplicitOperands;
+  if (MCID.ImplicitDefs)
+    for (const uint16_t *ImpDefs = MCID.getImplicitDefs(); *ImpDefs; ++ImpDefs)
+      ImplicitOperands.push_back(
+          MachineOperand::CreateReg(*ImpDefs, true, true));
+  if (MCID.ImplicitUses)
+    for (const uint16_t *ImpUses = MCID.getImplicitUses(); *ImpUses; ++ImpUses)
+      ImplicitOperands.push_back(
+          MachineOperand::CreateReg(*ImpUses, false, true));
+
+  const auto *TRI = MF.getSubtarget().getRegisterInfo();
+  assert(TRI && "Expected target register info");
+  size_t I = ImplicitOperands.size(), J = Operands.size();
+  while (I) {
+    --I;
+    if (J) {
+      --J;
+      const auto &ImplicitOperand = ImplicitOperands[I];
+      const auto &Operand = Operands[J].Operand;
+      if (ImplicitOperand.isIdenticalTo(Operand))
+        continue;
+      if (Operand.isReg() && Operand.isImplicit()) {
+        return error(Operands[J].Begin,
+                     Twine("expected an implicit register operand '") +
+                         printImplicitRegisterFlag(ImplicitOperand) + " %" +
+                         getRegisterName(TRI, ImplicitOperand.getReg()) + "'");
+      }
+    }
+    // TODO: Fix source location when Operands[J].end is right before '=', i.e:
+    // insead of reporting an error at this location:
+    //            %eax = MOV32r0
+    //                 ^
+    // report the error at the following location:
+    //            %eax = MOV32r0
+    //                          ^
+    return error(J < Operands.size() ? Operands[J].End : Token.location(),
+                 Twine("missing implicit register operand '") +
+                     printImplicitRegisterFlag(ImplicitOperands[I]) + " %" +
+                     getRegisterName(TRI, ImplicitOperands[I].getReg()) + "'");
+  }
   return false;
 }
 

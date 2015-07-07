@@ -31,7 +31,7 @@ body:
       # CHECK: - '%rax = MOV64rm %rip, 1, _, @G, _'
       - '%rax = MOV64rm %rip, 1, _, @G, _'
       - '%eax = MOV32rm %rax, 1, _, 0, _'
-      - '%eax = INC32r %eax'
+      - '%eax = INC32r %eax, implicit-def %eflags'
       - 'RETQ %eax'
 ...
 ---
@@ -44,6 +44,6 @@ body:
       # CHECK: - '%rax = MOV64rm %rip, 1, _, @0, _'
       - '%rax = MOV64rm %rip, 1, _, @0, _'
       - '%eax = MOV32rm %rax, 1, _, 0, _'
-      - '%eax = INC32r %eax'
+      - '%eax = INC32r %eax, implicit-def %eflags'
       - 'RETQ %eax'
 ...

@@ -23,12 +23,12 @@ body:
    name: entry
    instructions:
      - '%eax = MOV32rm %rdi, 1, _, 0, _'
-     - 'CMP32ri8 %eax, 10'
+     - 'CMP32ri8 %eax, 10, implicit-def %eflags'
      # CHECK: [[@LINE+1]]:14: expected 32-bit integer (too large)
-     - 'JG_1 %bb.123456789123456'
+     - 'JG_1 %bb.123456789123456, implicit %eflags'
  - id: 1
    instructions:
-     - '%eax = MOV32r0'
+     - '%eax = MOV32r0 implicit-def %eflags'
  - id: 2
    instructions:
      - 'RETQ %eax'

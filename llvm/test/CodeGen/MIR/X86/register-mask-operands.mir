@@ -24,7 +24,7 @@ body:
   - id:          0
     name:        body
     instructions:
-      - '%eax = IMUL32rri8 %edi, 11'
+      - '%eax = IMUL32rri8 %edi, 11, implicit-def %eflags'
       - 'RETQ %eax'
 ...
 ---
@@ -36,8 +36,8 @@ body:
     instructions:
       # CHECK:      - 'PUSH64r %rax
       # CHECK-NEXT: - 'CALL64pcrel32 @compute, csr_64, implicit %rsp, implicit %edi, implicit-def %rsp, implicit-def %eax'
-      - 'PUSH64r %rax'
+      - 'PUSH64r %rax, implicit-def %rsp, implicit %rsp'
       - 'CALL64pcrel32 @compute, csr_64, implicit %rsp, implicit %edi, implicit-def %rsp, implicit-def %eax'
-      - '%rdx = POP64r'
+      - '%rdx = POP64r implicit-def %rsp, implicit %rsp'
       - 'RETQ %eax'
 ...

@@ -18,6 +18,6 @@ body:
    instructions:
      # CHECK:      - '%eax = MOV32r0
      # CHECK-NEXT: - 'RETQ %eax
-     - '%eax = MOV32r0'
+     - '%eax = MOV32r0 implicit-def %eflags'
      - 'RETQ %eax'
 ...

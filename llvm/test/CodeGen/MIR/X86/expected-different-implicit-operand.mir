@@ -5,33 +5,34 @@
   define i32 @foo(i32* %p) {
   entry:
     %a = load i32, i32* %p
-    %b = icmp sle i32 %a, 10
-    br i1 %b, label %yes, label %nah
+    %0 = icmp sle i32 %a, 10
+    br i1 %0, label %less, label %exit
 
-  yes:
+  less:
     ret i32 0
 
-  nah:
+  exit:
     ret i32 %a
   }
+
 
 ...
 ---
 name:            foo
 body:
- - id: 0
-   name:   entry
+ - id:              0
+   name:            entry
    instructions:
      - '%eax = MOV32rm %rdi, 1, _, 0, _'
      - 'CMP32ri8 %eax, 10, implicit-def %eflags'
-     # CHECK: [[@LINE+1]]:18: expected a number after '%bb.'
-     - 'JG_1 %bb.nah, implicit %eflags'
- - id: 1
-   name: yes
+# CHECK: [[@LINE+1]]:26: expected an implicit register operand 'implicit %eflags'
+     - 'JG_1 %bb.2.exit, implicit %eax'
+ - id:              1
+   name:            less
    instructions:
      - '%eax = MOV32r0 implicit-def %eflags'
- - id: 2
-   name: nah
+ - id:              2
+   name:            exit
    instructions:
      - 'RETQ %eax'
 ...

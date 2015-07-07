@@ -25,13 +25,13 @@ body:
    name:            entry
    instructions:
      - '%eax = MOV32rm %rdi, 1, _, 0, _'
-     - 'CMP32ri8 %eax, 10'
+     - 'CMP32ri8 %eax, 10, implicit-def %eflags'
      # CHECK: [[@LINE+1]]:14: the name of machine basic block #2 isn't 'hit'
-     - 'JG_1 %bb.2.hit'
+     - 'JG_1 %bb.2.hit, implicit %eflags'
  - id:              1
    name:            less
    instructions:
-     - '%eax = MOV32r0'
+     - '%eax = MOV32r0 implicit-def %eflags'
  - id:              2
    name:            exit
    instructions:
