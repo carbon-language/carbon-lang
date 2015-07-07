@@ -625,6 +625,18 @@ void* align(size_t alignment, size_t size, void*& ptr, size_t& space);
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
+template <class _ValueType>
+inline _LIBCPP_ALWAYS_INLINE
+_ValueType __libcpp_relaxed_load(_ValueType const* __value) {
+#if !defined(_LIBCPP_HAS_NO_THREADS) && \
+    defined(__ATOMIC_RELAXED) &&        \
+    (__has_builtin(__atomic_load_n) || _GNUC_VER >= 407)
+    return __atomic_load_n(__value, __ATOMIC_RELAXED);
+#else
+    return *__value;
+#endif
+}
+
 // addressof moved to <__functional_base>
 
 template <class _Tp> class allocator;
@@ -3672,7 +3684,9 @@ public:
     void __add_shared() _NOEXCEPT;
     bool __release_shared() _NOEXCEPT;
     _LIBCPP_INLINE_VISIBILITY
-    long use_count() const _NOEXCEPT {return __shared_owners_ + 1;}
+    long use_count() const _NOEXCEPT {
+        return __libcpp_relaxed_load(&__shared_owners_) + 1;
+    }
 };
 
 class _LIBCPP_TYPE_VIS __shared_weak_count

@@ -12,6 +12,7 @@
 #include "limits"
 #include "system_error"
 #include "cassert"
+#include "support/atomic_support.h"
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 #ifndef _LIBCPP_HAS_NO_THREADS
@@ -220,6 +221,9 @@ static pthread_mutex_t mut = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t  cv  = PTHREAD_COND_INITIALIZER;
 #endif
 
+/// NOTE: Changes to flag are done via relaxed atomic stores
+///       even though the accesses are protected by a mutex because threads
+///       just entering 'call_once` concurrently read from flag.
 void
 __call_once(volatile unsigned long& flag, void* arg, void(*func)(void*))
 {
@@ -252,11 +256,11 @@ __call_once(volatile unsigned long& flag, void* arg, void(*func)(void*))
         try
         {
 #endif  // _LIBCPP_NO_EXCEPTIONS
-            flag = 1;
+            __libcpp_relaxed_store(&flag, 1ul);
             pthread_mutex_unlock(&mut);
             func(arg);
             pthread_mutex_lock(&mut);
-            flag = ~0ul;
+            __libcpp_relaxed_store(&flag, ~0ul);
             pthread_mutex_unlock(&mut);
             pthread_cond_broadcast(&cv);
 #ifndef _LIBCPP_NO_EXCEPTIONS
@@ -264,7 +268,7 @@ __call_once(volatile unsigned long& flag, void* arg, void(*func)(void*))
         catch (...)
         {
             pthread_mutex_lock(&mut);
-            flag = 0ul;
+            __libcpp_relaxed_store(&flag, 0ul);
             pthread_mutex_unlock(&mut);
             pthread_cond_broadcast(&cv);
             throw;

@@ -13,24 +13,28 @@
 #include "mutex"
 #include "thread"
 #endif
+#include "support/atomic_support.h"
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
 namespace
 {
 
+// NOTE: Relaxed and acq/rel atomics (for increment and decrement respectively)
+// should be sufficient for thread safety.
+// See https://llvm.org/bugs/show_bug.cgi?id=22803
 template <class T>
 inline T
 increment(T& t) _NOEXCEPT
 {
-    return __sync_add_and_fetch(&t, 1);
+    return __libcpp_atomic_add(&t, 1, _AO_Relaxed);
 }
 
 template <class T>
 inline T
 decrement(T& t) _NOEXCEPT
 {
-    return __sync_add_and_fetch(&t, -1);
+    return __libcpp_atomic_add(&t, -1, _AO_Acq_Rel);
 }
 
 }  // namespace
@@ -99,14 +103,13 @@ __shared_weak_count::__release_weak() _NOEXCEPT
 __shared_weak_count*
 __shared_weak_count::lock() _NOEXCEPT
 {
-    long object_owners = __shared_owners_;
+    long object_owners = __libcpp_atomic_load(&__shared_owners_);
     while (object_owners != -1)
     {
-        if (__sync_bool_compare_and_swap(&__shared_owners_,
-                                         object_owners,
-                                         object_owners+1))
+        if (__libcpp_atomic_compare_exchange(&__shared_owners_,
+                                             &object_owners,
+                                             object_owners+1))
             return this;
-        object_owners = __shared_owners_;
     }
     return 0;
 }
