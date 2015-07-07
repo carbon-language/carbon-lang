@@ -332,7 +332,9 @@ public:
   SourceRange getReturnTypeSourceRange() const;
 
   /// \brief Determine the type of an expression that sends a message to this
-  /// function.
+  /// function. This replaces the type parameters with the types they would
+  /// get if the receiver was parameterless (e.g. it may replace the type
+  /// parameter with 'id').
   QualType getSendResultType() const;
 
   /// Determine the type of an expression that sends a message to this
