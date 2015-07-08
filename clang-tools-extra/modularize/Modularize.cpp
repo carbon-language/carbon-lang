@@ -298,7 +298,7 @@ static cl::list<std::string>
 IncludePaths("I", cl::desc("Include path for coverage check."),
 cl::ZeroOrMore, cl::value_desc("path"));
 
-// Option for just doing the coverage check.
+// Option for disabling the coverage check.
 static cl::opt<bool>
 NoCoverageCheck("no-coverage-check", cl::init(false),
 cl::desc("Don't do the coverage check."));
