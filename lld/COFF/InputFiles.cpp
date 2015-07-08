@@ -20,12 +20,9 @@
 #include "llvm/Support/raw_ostream.h"
 #include <mutex>
 
+using namespace llvm::COFF;
 using namespace llvm::object;
 using namespace llvm::support::endian;
-using llvm::COFF::ImportHeader;
-using llvm::COFF::IMAGE_COMDAT_SELECT_ASSOCIATIVE;
-using llvm::COFF::IMAGE_FILE_MACHINE_AMD64;
-using llvm::COFF::IMAGE_FILE_MACHINE_UNKNOWN;
 using llvm::RoundUpToAlignment;
 using llvm::sys::fs::identify_magic;
 using llvm::sys::fs::file_magic;
@@ -260,11 +257,23 @@ std::error_code ImportFile::parse() {
   StringRef Name = StringAlloc.save(StringRef(Buf + sizeof(*Hdr)));
   StringRef ImpName = StringAlloc.save(Twine("__imp_") + Name);
   StringRef DLLName(Buf + sizeof(coff_import_header) + Name.size() + 1);
-  StringRef ExternalName = Name;
-  if (Hdr->getNameType() == llvm::COFF::IMPORT_ORDINAL)
-    ExternalName = "";
-  auto *ImpSym = new (Alloc) DefinedImportData(DLLName, ImpName, ExternalName,
-                                               Hdr);
+  StringRef ExtName;
+  switch (Hdr->getNameType()) {
+  case IMPORT_ORDINAL:
+    ExtName = "";
+    break;
+  case IMPORT_NAME:
+    ExtName = Name;
+    break;
+  case IMPORT_NAME_NOPREFIX:
+    ExtName = Name.ltrim("?@_");
+    break;
+  case IMPORT_NAME_UNDECORATE:
+    ExtName = Name.ltrim("?@_");
+    ExtName = ExtName.substr(0, ExtName.find('@'));
+    break;
+  }
+  auto *ImpSym = new (Alloc) DefinedImportData(DLLName, ImpName, ExtName, Hdr);
   SymbolBodies.push_back(ImpSym);
 
   // If type is function, we need to create a thunk which jump to an
