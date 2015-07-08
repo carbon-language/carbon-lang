@@ -824,22 +824,15 @@ NativeProcessLinux::LaunchArgs::~LaunchArgs()
 // -----------------------------------------------------------------------------
 
 Error
-NativeProcessProtocol::Launch (
+NativeProcessLinux::LaunchProcess (
+    Module *exe_module,
     ProcessLaunchInfo &launch_info,
     NativeProcessProtocol::NativeDelegate &native_delegate,
     NativeProcessProtocolSP &native_process_sp)
 {
     Log *log (GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
 
-    lldb::ModuleSP exe_module_sp;
-    PlatformSP platform_sp (Platform::GetHostPlatform ());
-    Error error = platform_sp->ResolveExecutable(
-            ModuleSpec(launch_info.GetExecutableFile(), launch_info.GetArchitecture()),
-            exe_module_sp,
-            nullptr);
-
-    if (! error.Success())
-        return error;
+    Error error;
 
     // Verify the working directory is valid if one was specified.
     FileSpec working_dir{launch_info.GetWorkingDirectory()};
@@ -913,7 +906,7 @@ NativeProcessProtocol::Launch (
     }
 
     std::static_pointer_cast<NativeProcessLinux> (native_process_sp)->LaunchInferior (
-            exe_module_sp.get(),
+            exe_module,
             launch_info.GetArguments ().GetConstArgumentVector (),
             launch_info.GetEnvironmentEntries ().GetConstArgumentVector (),
             stdin_file_spec,
@@ -937,7 +930,7 @@ NativeProcessProtocol::Launch (
 }
 
 Error
-NativeProcessProtocol::Attach (
+NativeProcessLinux::AttachToProcess (
     lldb::pid_t pid,
     NativeProcessProtocol::NativeDelegate &native_delegate,
     NativeProcessProtocolSP &native_process_sp)

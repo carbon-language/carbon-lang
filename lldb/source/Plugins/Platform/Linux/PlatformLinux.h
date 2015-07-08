@@ -108,6 +108,17 @@ namespace platform_linux {
         void
         CalculateTrapHandlerSymbolNames () override;
 
+        Error
+        LaunchNativeProcess (
+            ProcessLaunchInfo &launch_info,
+            NativeProcessProtocol::NativeDelegate &native_delegate,
+            NativeProcessProtocolSP &process_sp) override;
+
+        Error
+        AttachNativeProcess (lldb::pid_t pid,
+                             NativeProcessProtocol::NativeDelegate &native_delegate,
+                             NativeProcessProtocolSP &process_sp) override;
+
         uint64_t
         ConvertMmapFlagsToPlatform(const ArchSpec &arch, unsigned flags) override;
 

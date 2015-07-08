@@ -40,17 +40,21 @@ namespace process_linux {
     /// Changes in the inferior process state are broadcasted.
     class NativeProcessLinux: public NativeProcessProtocol
     {
-        friend Error
-        NativeProcessProtocol::Launch (ProcessLaunchInfo &launch_info,
-                NativeDelegate &native_delegate,
-                NativeProcessProtocolSP &process_sp);
+    public:
 
-        friend Error
-        NativeProcessProtocol::Attach (lldb::pid_t pid,
+        static Error
+        LaunchProcess (
+            Module *exe_module,
+            ProcessLaunchInfo &launch_info,
             NativeProcessProtocol::NativeDelegate &native_delegate,
             NativeProcessProtocolSP &native_process_sp);
 
-    public:
+        static Error
+        AttachToProcess (
+            lldb::pid_t pid,
+            NativeProcessProtocol::NativeDelegate &native_delegate,
+            NativeProcessProtocolSP &native_process_sp);
+
         //------------------------------------------------------------------------------
         /// @class Operation
         /// @brief Represents a NativeProcessLinux operation.

@@ -1536,6 +1536,27 @@ Platform::CalculateMD5 (const FileSpec& file_spec,
         return false;
 }
 
+Error
+Platform::LaunchNativeProcess (
+    ProcessLaunchInfo &launch_info,
+    lldb_private::NativeProcessProtocol::NativeDelegate &native_delegate,
+    NativeProcessProtocolSP &process_sp)
+{
+    // Platforms should override this implementation if they want to
+    // support lldb-gdbserver.
+    return Error("unimplemented");
+}
+
+Error
+Platform::AttachNativeProcess (lldb::pid_t pid,
+                               lldb_private::NativeProcessProtocol::NativeDelegate &native_delegate,
+                               NativeProcessProtocolSP &process_sp)
+{
+    // Platforms should override this implementation if they want to
+    // support lldb-gdbserver.
+    return Error("unimplemented");
+}
+
 void
 Platform::SetLocalCacheDirectory (const char* local)
 {
