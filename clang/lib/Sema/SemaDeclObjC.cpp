@@ -725,8 +725,8 @@ namespace {
 }
 
 /// Check consistency between two Objective-C type parameter lists, e.g.,
-/// between a category/extension and an @interface or between an @class and an
-/// @interface.
+/// between a category/extension and an \@interface or between an \@class and an
+/// \@interface.
 static bool checkTypeParamListConsistency(Sema &S,
                                           ObjCTypeParamList *prevTypeParams,
                                           ObjCTypeParamList *newTypeParams,
