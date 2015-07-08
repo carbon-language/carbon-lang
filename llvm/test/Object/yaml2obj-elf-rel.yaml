@@ -75,7 +75,7 @@ Symbols:
 # CHECK-NEXT:     Flags [ (0x0)
 # CHECK-NEXT:     ]
 # CHECK-NEXT:     Address: 0x0
-# CHECK-NEXT:     Offset: 0x160
+# CHECK-NEXT:     Offset: 0x{{[0-9A-F]+}}
 # CHECK-NEXT:     Size: 24
 # CHECK-NEXT:     Link: 4
 # CHECK-NEXT:     Info: 1
@@ -89,7 +89,7 @@ Symbols:
 # CHECK-NEXT:     Flags [ (0x0)
 # CHECK-NEXT:     ]
 # CHECK-NEXT:     Address: 0x0
-# CHECK-NEXT:     Offset: 0x180
+# CHECK-NEXT:     Offset: 0x{{[0-9A-F]+}}
 # CHECK-NEXT:     Size: 36
 # CHECK-NEXT:     Link: 4
 # CHECK-NEXT:     Info: 1
