@@ -120,6 +120,9 @@ class CGDebugInfo {
   llvm::DenseMap<const Decl *, llvm::TrackingMDRef> StaticDataMemberCache;
 
   /// Helper functions for getOrCreateType.
+  /// @{
+  /// Currently the checksum of an interface includes the number of
+  /// ivars and property accessors.
   unsigned Checksum(const ObjCInterfaceDecl *InterfaceDecl);
   llvm::DIType *CreateType(const BuiltinType *Ty);
   llvm::DIType *CreateType(const ComplexType *Ty);
@@ -131,14 +134,17 @@ class CGDebugInfo {
   llvm::DIType *CreateType(const PointerType *Ty, llvm::DIFile *F);
   llvm::DIType *CreateType(const BlockPointerType *Ty, llvm::DIFile *F);
   llvm::DIType *CreateType(const FunctionType *Ty, llvm::DIFile *F);
+  /// Get structure or union type.
   llvm::DIType *CreateType(const RecordType *Tyg);
   llvm::DIType *CreateTypeDefinition(const RecordType *Ty);
   llvm::DICompositeType *CreateLimitedType(const RecordType *Ty);
   void CollectContainingType(const CXXRecordDecl *RD,
                              llvm::DICompositeType *CT);
+  /// Get Objective-C interface type.
   llvm::DIType *CreateType(const ObjCInterfaceType *Ty, llvm::DIFile *F);
   llvm::DIType *CreateTypeDefinition(const ObjCInterfaceType *Ty,
                                      llvm::DIFile *F);
+  /// Get Objective-C object type.
   llvm::DIType *CreateType(const ObjCObjectType *Ty, llvm::DIFile *F);
   llvm::DIType *CreateType(const VectorType *Ty, llvm::DIFile *F);
   llvm::DIType *CreateType(const ArrayType *Ty, llvm::DIFile *F);
@@ -146,10 +152,25 @@ class CGDebugInfo {
   llvm::DIType *CreateType(const RValueReferenceType *Ty, llvm::DIFile *Unit);
   llvm::DIType *CreateType(const MemberPointerType *Ty, llvm::DIFile *F);
   llvm::DIType *CreateType(const AtomicType *Ty, llvm::DIFile *F);
+  /// Get enumeration type.
   llvm::DIType *CreateEnumType(const EnumType *Ty);
   llvm::DIType *CreateTypeDefinition(const EnumType *Ty);
+  /// Look up the completed type for a self pointer in the TypeCache and
+  /// create a copy of it with the ObjectPointer and Artificial flags
+  /// set. If the type is not cached, a new one is created. This should
+  /// never happen though, since creating a type for the implicit self
+  /// argument implies that we already parsed the interface definition
+  /// and the ivar declarations in the implementation.
   llvm::DIType *CreateSelfType(const QualType &QualTy, llvm::DIType *Ty);
+  /// @}
+
+  /// Get the type from the cache or return null type if it doesn't
+  /// exist.
   llvm::DIType *getTypeOrNull(const QualType);
+  /// Return the debug type for a C++ method.
+  /// \arg CXXMethodDecl is of FunctionType. This function type is
+  /// not updated to include implicit \c this pointer. Use this routine
+  /// to get a method type which includes \c this pointer.
   llvm::DISubroutineType *getOrCreateMethodType(const CXXMethodDecl *Method,
                                                 llvm::DIFile *F);
   llvm::DISubroutineType *
@@ -157,7 +178,9 @@ class CGDebugInfo {
                                 llvm::DIFile *Unit);
   llvm::DISubroutineType *
   getOrCreateFunctionType(const Decl *D, QualType FnType, llvm::DIFile *F);
+  /// \return debug info descriptor for vtable.
   llvm::DIType *getOrCreateVTablePtrType(llvm::DIFile *F);
+  /// \return namespace descriptor for the given namespace decl.
   llvm::DINamespace *getOrCreateNameSpace(const NamespaceDecl *N);
   llvm::DIType *getOrCreateTypeDeclaration(QualType PointeeTy, llvm::DIFile *F);
   llvm::DIType *CreatePointerLikeType(llvm::dwarf::Tag Tag, const Type *Ty,
@@ -166,23 +189,37 @@ class CGDebugInfo {
   llvm::Value *getCachedInterfaceTypeOrNull(const QualType Ty);
   llvm::DIType *getOrCreateStructPtrType(StringRef Name, llvm::DIType *&Cache);
 
+  /// A helper function to create a subprogram for a single member
+  /// function GlobalDecl.
   llvm::DISubprogram *CreateCXXMemberFunction(const CXXMethodDecl *Method,
                                               llvm::DIFile *F,
                                               llvm::DIType *RecordTy);
 
+  /// A helper function to collect debug info for C++ member
+  /// functions. This is used while creating debug info entry for a
+  /// Record.
   void CollectCXXMemberFunctions(const CXXRecordDecl *Decl, llvm::DIFile *F,
                                  SmallVectorImpl<llvm::Metadata *> &E,
                                  llvm::DIType *T);
 
+  /// A helper function to collect debug info for C++ base
+  /// classes. This is used while creating debug info entry for a
+  /// Record.
   void CollectCXXBases(const CXXRecordDecl *Decl, llvm::DIFile *F,
                        SmallVectorImpl<llvm::Metadata *> &EltTys,
                        llvm::DIType *RecordTy);
 
+  /// A helper function to collect template parameters.
   llvm::DINodeArray CollectTemplateParams(const TemplateParameterList *TPList,
                                           ArrayRef<TemplateArgument> TAList,
                                           llvm::DIFile *Unit);
+  /// A helper function to collect debug info for function template
+  /// parameters.
   llvm::DINodeArray CollectFunctionTemplateParams(const FunctionDecl *FD,
                                                   llvm::DIFile *Unit);
+
+  /// A helper function to collect debug info for template
+  /// parameters.
   llvm::DINodeArray
   CollectCXXTemplateParams(const ClassTemplateSpecializationDecl *TS,
                            llvm::DIFile *F);
@@ -209,6 +246,8 @@ class CGDebugInfo {
                            SmallVectorImpl<llvm::Metadata *> &E,
                            llvm::DICompositeType *RecordTy);
 
+  /// If the C++ class has vtable info then insert appropriate debug
+  /// info entry in EltTys vector.
   void CollectVTableInfo(const CXXRecordDecl *Decl, llvm::DIFile *F,
                          SmallVectorImpl<llvm::Metadata *> &EltTys);
   /// @}
@@ -227,7 +266,8 @@ public:
   void setLocation(SourceLocation Loc);
 
   /// Emit metadata to indicate a change in line/column information in
-  /// the source file.
+  /// the source file. If the location is invalid, the previous
+  /// location will be reused.
   void EmitLocation(CGBuilderTy &Builder, SourceLocation Loc);
 
   /// Emit a call to llvm.dbg.function.start to indicate
@@ -366,12 +406,14 @@ private:
   /// declaration.
   llvm::DINode *getDeclarationOrDefinition(const Decl *D);
 
-  /// Return debug info descriptor to describe method
+  /// \return debug info descriptor to describe method
   /// declaration for the given method definition.
   llvm::DISubprogram *getFunctionDeclaration(const Decl *D);
 
-  /// Return debug info descriptor to describe in-class static data member
-  /// declaration for the given out-of-class definition.
+  /// \return debug info descriptor to describe in-class static data
+  /// member declaration for the given out-of-class definition.  If D
+  /// is an out-of-class definition of a static data member of a
+  /// class, find its corresponding in-class declaration.
   llvm::DIDerivedType *
   getOrCreateStaticDataMemberDeclarationOrNull(const VarDecl *D);
 
@@ -384,8 +426,13 @@ private:
   llvm::DIGlobalVariable *
   getGlobalVariableForwardDeclaration(const VarDecl *VD);
 
-  /// Return a global variable that represents one of the collection of
-  /// global variables created for an anonmyous union.
+  /// \brief Return a global variable that represents one of the
+  /// collection of global variables created for an anonmyous union.
+  ///
+  /// Recursively collect all of the member fields of a global
+  /// anonymous decl and create static variables for them. The first
+  /// time this is called it needs to be on a union and then from
+  /// there we can have additional unnamed fields.
   llvm::DIGlobalVariable *
   CollectAnonRecordDecls(const RecordDecl *RD, llvm::DIFile *Unit,
                          unsigned LineNo, StringRef LinkageName,
@@ -407,7 +454,7 @@ private:
   /// Get class name including template argument list.
   StringRef getClassName(const RecordDecl *RD);
 
-  /// Get vtable name for the given Class.
+  /// Get the vtable name for the given class.
   StringRef getVTableName(const CXXRecordDecl *Decl);
 
   /// Get line number for the location. If location is invalid
