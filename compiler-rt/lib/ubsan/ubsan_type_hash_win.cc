@@ -19,12 +19,23 @@
 #include "sanitizer_common/sanitizer_common.h"
 
 #include <typeinfo>
-#include <windows.h>
 
 struct CompleteObjectLocator {
   int is_image_relative;
   int offset_to_top;
   int vfptr_offset;
+  int rtti_addr;
+  int chd_addr;
+  int obj_locator_addr;
+};
+
+struct CompleteObjectLocatorAbs {
+  int is_image_relative;
+  int offset_to_top;
+  int vfptr_offset;
+  std::type_info *rtti_addr;
+  void *chd_addr;
+  CompleteObjectLocator *obj_locator_addr;
 };
 
 bool __ubsan::checkDynamicType(void *Object, void *Type, HashValue Hash) {
@@ -45,17 +56,15 @@ __ubsan::getDynamicTypeInfoFromVtable(void *VtablePtr) {
 
   CompleteObjectLocator *obj_locator = *obj_locator_ptr;
   if (!IsAccessibleMemoryRange((uptr)obj_locator,
-                               sizeof(CompleteObjectLocator)+sizeof(void*)))
+                               sizeof(CompleteObjectLocator)))
     return DynamicTypeInfo(0, 0, 0);
 
   std::type_info *tinfo;
   if (obj_locator->is_image_relative == 1) {
-    MEMORY_BASIC_INFORMATION mbi;
-    VirtualQuery(obj_locator, &mbi, sizeof(mbi));
-    tinfo = (std::type_info*)(*(int*)(obj_locator+1) +
-                              (char*)mbi.AllocationBase);
+    char *image_base = ((char *)obj_locator) - obj_locator->obj_locator_addr;
+    tinfo = (std::type_info *)(image_base + obj_locator->rtti_addr);
   } else if (obj_locator->is_image_relative == 0)
-    tinfo = *(std::type_info**)(obj_locator+1);
+    tinfo = ((CompleteObjectLocatorAbs *)obj_locator)->rtti_addr;
   else
     // Probably not a complete object locator.
     return DynamicTypeInfo(0, 0, 0);
