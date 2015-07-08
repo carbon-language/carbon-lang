@@ -474,7 +474,7 @@ struct coff_import_header {
   support::ulittle16_t OrdinalHint;
   support::ulittle16_t TypeInfo;
   int getType() const { return TypeInfo & 0x3; }
-  int getNameType() const { return (TypeInfo & 0x7) >> 2; }
+  int getNameType() const { return (TypeInfo >> 2) & 0x7; }
 };
 
 struct coff_import_directory_table_entry {
