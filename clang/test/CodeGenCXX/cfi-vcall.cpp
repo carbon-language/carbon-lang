@@ -134,6 +134,29 @@ void foo() {
   af(&fa);
 }
 
+namespace test2 {
+
+struct A {
+  virtual void m_fn1();
+};
+struct B {
+  virtual void m_fn2();
+};
+struct C : B, A {};
+struct D : C {
+  void m_fn1();
+};
+
+// ITANIUM: define void @_ZN5test21fEPNS_1DE
+// MS: define void @"\01?f@test2@@YAXPEAUD@1@@Z"
+void f(D *d) {
+  // ITANIUM: {{%[^ ]*}} = call i1 @llvm.bitset.test(i8* {{%[^ ]*}}, metadata !"N5test21DE")
+  // MS: {{%[^ ]*}} = call i1 @llvm.bitset.test(i8* {{%[^ ]*}}, metadata !"A@test2@@")
+  d->m_fn1();
+}
+
+}
+
 // Check for the expected number of elements (9 or 15 respectively).
 // MS: !llvm.bitsets = !{[[X:[^,]*(,[^,]*){8}]]}
 // ITANIUM: !llvm.bitsets = !{[[X:[^,]*(,[^,]*){14}]]}
