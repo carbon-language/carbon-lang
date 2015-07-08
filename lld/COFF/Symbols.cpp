@@ -221,17 +221,19 @@ ErrorOr<std::unique_ptr<InputFile>> Lazy::getMember() {
     return std::unique_ptr<InputFile>(nullptr);
 
   file_magic Magic = identify_magic(MBRef.getBuffer());
-  if (Magic == file_magic::bitcode)
-    return std::unique_ptr<InputFile>(new BitcodeFile(MBRef));
   if (Magic == file_magic::coff_import_library)
     return std::unique_ptr<InputFile>(new ImportFile(MBRef));
 
-  if (Magic != file_magic::coff_object) {
+  std::unique_ptr<InputFile> Obj;
+  if (Magic == file_magic::coff_object) {
+    Obj.reset(new ObjectFile(MBRef));
+  } else if (Magic == file_magic::bitcode) {
+    Obj.reset(new BitcodeFile(MBRef));
+  } else {
     llvm::errs() << File->getName() << ": unknown file type\n";
     return make_error_code(LLDError::InvalidFile);
   }
 
-  std::unique_ptr<InputFile> Obj(new ObjectFile(MBRef));
   Obj->setParentName(File->getName());
   return std::move(Obj);
 }

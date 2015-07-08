@@ -11,7 +11,7 @@
 ; RUN: lld -flavor link2 /out:%T/main.exe /entry:main /include:f2 /subsystem:console %T/main.lto.obj %T/foo.lto.obj
 ; RUN: llvm-readobj -file-headers %T/main.exe | FileCheck -check-prefix=HEADERS-11 %s
 ; RUN: llvm-objdump -d %T/main.exe | FileCheck -check-prefix=TEXT-11 %s
-; RUN: lld -flavor link2 /out:%T/main.exe /entry:main /include:f2 /subsystem:console %T/main.lto.obj %T/foo.lto.lib
+; RUN: lld -flavor link2 /out:%T/main.exe /entry:main /include:f2 /subsystem:console %T/main.lto.obj %T/foo.lto.lib /verbose 2>&1 | FileCheck -check-prefix=VERBOSE %s
 ; RUN: llvm-readobj -file-headers %T/main.exe | FileCheck -check-prefix=HEADERS-11 %s
 ; RUN: llvm-objdump -d %T/main.exe | FileCheck -check-prefix=TEXT-11 %s
 
@@ -28,6 +28,8 @@
 ; RUN: lld -flavor link2 /out:%T/main.exe /entry:main /subsystem:console %T/main.lto.obj %T/foo.lib
 ; RUN: llvm-readobj -file-headers %T/main.exe | FileCheck -check-prefix=HEADERS-10 %s
 ; RUN: llvm-objdump -d %T/main.exe | FileCheck -check-prefix=TEXT-10 %s
+
+; VERBOSE: foo.lto.lib({{.*}}foo.lto.obj)
 
 ; HEADERS-11: AddressOfEntryPoint: 0x1000
 ; TEXT-11: Disassembly of section .text:
