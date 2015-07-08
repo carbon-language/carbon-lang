@@ -2615,6 +2615,19 @@ void InnerLoopVectorizer::createEmptyLoop() {
   // times the unroll factor (num of SIMD instructions).
   Constant *Step = ConstantInt::get(IdxTy, VF * UF);
 
+  // Generate code to check that the loop's trip count that we computed by
+  // adding one to the backedge-taken count will not overflow.
+  auto PastOverflowCheck = std::next(BasicBlock::iterator(OverflowCheckAnchor));
+  BasicBlock *CheckBlock =
+      BypassBlock->splitBasicBlock(PastOverflowCheck, "overflow.checked");
+  if (ParentLoop)
+    ParentLoop->addBasicBlockToLoop(CheckBlock, *LI);
+  LoopBypassBlocks.push_back(CheckBlock);
+  ReplaceInstWithInst(
+      BypassBlock->getTerminator(),
+      BranchInst::Create(ScalarPH, CheckBlock, CheckBCOverflow));
+  BypassBlock = CheckBlock;
+
   // This is the IR builder that we use to add all of the logic for bypassing
   // the new vector loop.
   IRBuilder<> BypassBuilder(BypassBlock->getTerminator());
@@ -2646,22 +2659,6 @@ void InnerLoopVectorizer::createEmptyLoop() {
   // jump to the scalar loop.
   Value *Cmp =
       BypassBuilder.CreateICmpEQ(IdxEndRoundDown, StartIdx, "cmp.zero");
-
-  // Generate code to check that the loops trip count that we computed by adding
-  // one to the backedge-taken count will not overflow.
-  {
-    auto PastOverflowCheck =
-        std::next(BasicBlock::iterator(OverflowCheckAnchor));
-    BasicBlock *CheckBlock =
-      BypassBlock->splitBasicBlock(PastOverflowCheck, "overflow.checked");
-    if (ParentLoop)
-      ParentLoop->addBasicBlockToLoop(CheckBlock, *LI);
-    LoopBypassBlocks.push_back(CheckBlock);
-    ReplaceInstWithInst(
-        BypassBlock->getTerminator(),
-        BranchInst::Create(ScalarPH, CheckBlock, CheckBCOverflow));
-    BypassBlock = CheckBlock;
-  }
 
   // Generate the code to check that the strides we assumed to be one are really
   // one. We want the new basic block to start at the first instruction in a
