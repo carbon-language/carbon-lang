@@ -116,24 +116,18 @@ static void printMemberHeader(raw_fd_ostream &Out, StringRef Name,
   printRestOfMemberHeader(Out, ModTime, UID, GID, Perms, Size);
 }
 
-static void printMemberHeader(raw_fd_ostream &Out, unsigned NameOffset,
-                              const sys::TimeValue &ModTime, unsigned UID,
-                              unsigned GID, unsigned Perms, unsigned Size) {
-  Out << '/';
-  printWithSpacePadding(Out, NameOffset, 15);
-  printRestOfMemberHeader(Out, ModTime, UID, GID, Perms, Size);
-}
-
 static void
 printMemberHeader(raw_fd_ostream &Out, StringRef Name,
                   std::vector<unsigned>::iterator &StringMapIndexIter,
                   const sys::TimeValue &ModTime, unsigned UID, unsigned GID,
                   unsigned Perms, unsigned Size) {
-  if (Name.size() < 16)
+  if (Name.size() < 16) {
     printMemberHeader(Out, Name, ModTime, UID, GID, Perms, Size);
-  else
-    printMemberHeader(Out, *StringMapIndexIter++, ModTime, UID, GID, Perms,
-                      Size);
+    return;
+  }
+  Out << '/';
+  printWithSpacePadding(Out, *StringMapIndexIter++, 15);
+  printRestOfMemberHeader(Out, ModTime, UID, GID, Perms, Size);
 }
 
 static void writeStringTable(raw_fd_ostream &Out,
