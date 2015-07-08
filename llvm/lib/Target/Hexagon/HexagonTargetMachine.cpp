@@ -37,8 +37,6 @@ static cl::opt<bool> EnableExpandCondsets("hexagon-expand-condsets",
   cl::init(true), cl::Hidden, cl::ZeroOrMore,
   cl::desc("Early expansion of MUX"));
 
-static cl::opt<bool> EnableGenInsert("hexagon-insert", cl::init(true),
-  cl::Hidden, cl::desc("Generate \"insert\" instructions"));
 
 /// HexagonTargetMachineModule - Note that this is used on hosts that
 /// cannot link in a library unless there are references into the
@@ -66,12 +64,12 @@ namespace llvm {
   FunctionPass *createHexagonISelDag(HexagonTargetMachine &TM,
                                      CodeGenOpt::Level OptLevel);
   FunctionPass *createHexagonDelaySlotFillerPass(const TargetMachine &TM);
+  FunctionPass *createHexagonFPMoverPass(const TargetMachine &TM);
   FunctionPass *createHexagonRemoveExtendArgs(const HexagonTargetMachine &TM);
   FunctionPass *createHexagonCFGOptimizer();
 
   FunctionPass *createHexagonSplitConst32AndConst64();
   FunctionPass *createHexagonExpandPredSpillCode();
-  FunctionPass *createHexagonGenInsert();
   FunctionPass *createHexagonHardwareLoops();
   FunctionPass *createHexagonPeephole();
   FunctionPass *createHexagonFixupHwLoops();
@@ -148,8 +146,6 @@ bool HexagonPassConfig::addInstSelector() {
   if (!NoOpt) {
     addPass(createHexagonPeephole());
     printAndVerify("After hexagon peephole pass");
-    if (EnableGenInsert)
-      addPass(createHexagonGenInsert(), false);
   }
 
   return false;
