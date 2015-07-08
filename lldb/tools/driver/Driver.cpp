@@ -452,7 +452,7 @@ Driver::OptionData::Clear ()
 }
 
 void
-Driver::OptionData::AddInitialCommand (const char *command, CommandPlacement placement, bool is_file,  bool silent, SBError &error)
+Driver::OptionData::AddInitialCommand (const char *command, CommandPlacement placement, bool is_file, SBError &error)
 {
     std::vector<InitialCmdEntry> *command_set;
     switch (placement)
@@ -472,18 +472,18 @@ Driver::OptionData::AddInitialCommand (const char *command, CommandPlacement pla
     {
         SBFileSpec file(command);
         if (file.Exists())
-            command_set->push_back (InitialCmdEntry(command, is_file, silent));
+            command_set->push_back (InitialCmdEntry(command, is_file));
         else if (file.ResolveExecutableLocation())
         {
             char final_path[PATH_MAX];
             file.GetPath (final_path, sizeof(final_path));
-            command_set->push_back (InitialCmdEntry(final_path, is_file, silent));
+            command_set->push_back (InitialCmdEntry(final_path, is_file));
         }
         else
             error.SetErrorStringWithFormat("file specified in --source (-s) option doesn't exist: '%s'", optarg);
     }
     else
-        command_set->push_back (InitialCmdEntry(command, is_file, silent));
+        command_set->push_back (InitialCmdEntry(command, is_file));
 }
 
 void
@@ -746,10 +746,10 @@ Driver::ParseArgs (int argc, const char *argv[], FILE *out_fh, bool &exiting)
                         break;
 
                     case 'K':
-                        m_option_data.AddInitialCommand(optarg, eCommandPlacementAfterCrash, true, true, error);
+                        m_option_data.AddInitialCommand(optarg, eCommandPlacementAfterCrash, true, error);
                         break;
                     case 'k':
-                        m_option_data.AddInitialCommand(optarg, eCommandPlacementAfterCrash, false, true, error);
+                        m_option_data.AddInitialCommand(optarg, eCommandPlacementAfterCrash, false, error);
                         break;
 
                     case 'n':
@@ -770,16 +770,16 @@ Driver::ParseArgs (int argc, const char *argv[], FILE *out_fh, bool &exiting)
                         }
                         break;
                     case 's':
-                        m_option_data.AddInitialCommand(optarg, eCommandPlacementAfterFile, true, true, error);
+                        m_option_data.AddInitialCommand(optarg, eCommandPlacementAfterFile, true, error);
                         break;
                     case 'o':
-                        m_option_data.AddInitialCommand(optarg, eCommandPlacementAfterFile, false, true, error);
+                        m_option_data.AddInitialCommand(optarg, eCommandPlacementAfterFile, false, error);
                         break;
                     case 'S':
-                        m_option_data.AddInitialCommand(optarg, eCommandPlacementBeforeFile, true, true, error);
+                        m_option_data.AddInitialCommand(optarg, eCommandPlacementBeforeFile, true, error);
                         break;
                     case 'O':
-                        m_option_data.AddInitialCommand(optarg, eCommandPlacementBeforeFile, false, true, error);
+                        m_option_data.AddInitialCommand(optarg, eCommandPlacementBeforeFile, false, error);
                         break;
                     default:
                         m_option_data.m_print_help = true;

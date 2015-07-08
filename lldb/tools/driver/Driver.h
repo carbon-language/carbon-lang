@@ -75,7 +75,7 @@ public:
         Clear();
 
         void
-        AddInitialCommand (const char *command, CommandPlacement placement, bool is_file, bool quietly, lldb::SBError &error);
+        AddInitialCommand (const char *command, CommandPlacement placement, bool is_file, lldb::SBError &error);
     
         //static OptionDefinition m_cmd_option_table[];
 
