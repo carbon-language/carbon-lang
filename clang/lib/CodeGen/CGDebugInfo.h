@@ -300,8 +300,7 @@ public:
   /// \brief Emit record type's standalone debug info.
   llvm::DIType *getOrCreateRecordType(QualType Ty, SourceLocation L);
 
-  /// \brief Emit an objective c interface type standalone
-  /// debug info.
+  /// \brief Emit an Objective-C interface type standalone debug info.
   llvm::DIType *getOrCreateInterfaceType(QualType Ty, SourceLocation Loc);
 
   void completeType(const EnumDecl *ED);
