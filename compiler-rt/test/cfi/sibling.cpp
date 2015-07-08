@@ -1,19 +1,19 @@
 // XFAIL: *
 
-// RUN: %clangxx_cfi -o %t %s
-// RUN: not --crash %t 2>&1 | FileCheck --check-prefix=CFI %s
+// RUN: %clangxx_cfi -o %t1 %s
+// RUN: %expect_crash %t1 2>&1 | FileCheck --check-prefix=CFI %s
 
-// RUN: %clangxx_cfi -DB32 -o %t %s
-// RUN: not --crash %t 2>&1 | FileCheck --check-prefix=CFI %s
+// RUN: %clangxx_cfi -DB32 -o %t2 %s
+// RUN: %expect_crash %t2 2>&1 | FileCheck --check-prefix=CFI %s
 
-// RUN: %clangxx_cfi -DB64 -o %t %s
-// RUN: not --crash %t 2>&1 | FileCheck --check-prefix=CFI %s
+// RUN: %clangxx_cfi -DB64 -o %t3 %s
+// RUN: %expect_crash %t3 2>&1 | FileCheck --check-prefix=CFI %s
 
-// RUN: %clangxx_cfi -DBM -o %t %s
-// RUN: not --crash %t 2>&1 | FileCheck --check-prefix=CFI %s
+// RUN: %clangxx_cfi -DBM -o %t4 %s
+// RUN: %expect_crash %t4 2>&1 | FileCheck --check-prefix=CFI %s
 
-// RUN: %clangxx -o %t %s
-// RUN: %t 2>&1 | FileCheck --check-prefix=NCFI %s
+// RUN: %clangxx -o %t5 %s
+// RUN: %t5 2>&1 | FileCheck --check-prefix=NCFI %s
 
 // Tests that the CFI enforcement distinguishes betwen non-overriding siblings.
 // XFAILed as not implemented yet.

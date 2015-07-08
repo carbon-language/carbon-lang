@@ -15,6 +15,8 @@ set(UBSAN_STANDALONE_SOURCES
 set(UBSAN_CXX_SOURCES
   ubsan_handlers_cxx.cc
   ubsan_type_hash.cc
+  ubsan_type_hash_itanium.cc
+  ubsan_type_hash_win.cc
   )
 
 include_directories(..)

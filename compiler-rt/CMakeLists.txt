@@ -213,17 +213,16 @@ append_list_if(COMPILER_RT_HAS_FNO_FUNCTION_SECTIONS_FLAG -fno-function-sections
 append_list_if(COMPILER_RT_HAS_FNO_LTO_FLAG -fno-lto SANITIZER_COMMON_CFLAGS)
 
 if(MSVC)
-  # Replace the /MD[d] flags with /MT.
+  # Replace the /M[DT][d] flags with /MT, and strip any definitions of _DEBUG,
+  # which cause definition mismatches at link time.
   # FIXME: In fact, sanitizers should support both /MT and /MD, see PR20214.
   if(COMPILER_RT_HAS_MT_FLAG)
     foreach(flag_var
       CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS_RELEASE
       CMAKE_CXX_FLAGS_MINSIZEREL CMAKE_CXX_FLAGS_RELWITHDEBINFO)
-      if(${flag_var} MATCHES "/MD")
-        string(REGEX REPLACE "/MD" "/MT" ${flag_var} "${${flag_var}}")
-      elseif(${flag_var} MATCHES "/MDd")
-        string(REGEX REPLACE "/MDd" "/MT" ${flag_var} "${${flag_var}}")
-      endif()
+      string(REGEX REPLACE "/M[DT]d" "/MT" ${flag_var} "${${flag_var}}")
+      string(REGEX REPLACE "/MD" "/MT" ${flag_var} "${${flag_var}}")
+      string(REGEX REPLACE "/D_DEBUG" "" ${flag_var} "${${flag_var}}")
     endforeach()
   endif()
   append_list_if(COMPILER_RT_HAS_Oy_FLAG /Oy- SANITIZER_COMMON_CFLAGS)
@@ -332,9 +331,6 @@ endif()
 if(APPLE AND SANITIZER_MIN_OSX_VERSION VERSION_LESS "10.9")
   # Mac OS X prior to 10.9 had problems with exporting symbols from
   # libc++/libc++abi.
-  set(SANITIZER_CAN_USE_CXXABI FALSE)
-elseif(WIN32)
-  # We do not currently support the Microsoft C++ ABI.
   set(SANITIZER_CAN_USE_CXXABI FALSE)
 else()
   set(SANITIZER_CAN_USE_CXXABI TRUE)

@@ -54,19 +54,19 @@ static void HandleDynamicTypeCacheMiss(
   // If possible, say what type it actually points to.
   if (!DTI.isValid())
     Diag(Pointer, DL_Note, "object has invalid vptr")
-        << MangledName(DTI.getMostDerivedTypeName())
+        << TypeName(DTI.getMostDerivedTypeName())
         << Range(Pointer, Pointer + sizeof(uptr), "invalid vptr");
   else if (!DTI.getOffset())
     Diag(Pointer, DL_Note, "object is of type %0")
-        << MangledName(DTI.getMostDerivedTypeName())
+        << TypeName(DTI.getMostDerivedTypeName())
         << Range(Pointer, Pointer + sizeof(uptr), "vptr for %0");
   else
     // FIXME: Find the type at the specified offset, and include that
     //        in the note.
     Diag(Pointer - DTI.getOffset(), DL_Note,
          "object is base class subobject at offset %0 within object of type %1")
-        << DTI.getOffset() << MangledName(DTI.getMostDerivedTypeName())
-        << MangledName(DTI.getSubobjectTypeName())
+        << DTI.getOffset() << TypeName(DTI.getMostDerivedTypeName())
+        << TypeName(DTI.getSubobjectTypeName())
         << Range(Pointer, Pointer + sizeof(uptr),
                  "vptr for %2 base class of %1");
 }
@@ -104,7 +104,7 @@ static void HandleCFIBadType(CFIBadTypeData *Data, ValueHandle Vtable,
     Diag(Vtable, DL_Note, "invalid vtable");
   else
     Diag(Vtable, DL_Note, "vtable is of type %0")
-        << MangledName(DTI.getMostDerivedTypeName());
+        << TypeName(DTI.getMostDerivedTypeName());
 }
 
 void __ubsan::__ubsan_handle_cfi_bad_type(CFIBadTypeData *Data,

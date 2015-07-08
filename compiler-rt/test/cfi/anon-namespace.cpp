@@ -1,32 +1,32 @@
 // RUN: %clangxx_cfi -c -DTU1 -o %t1.o %s
 // RUN: %clangxx_cfi -c -DTU2 -o %t2.o %S/../cfi/anon-namespace.cpp
-// RUN: %clangxx_cfi -o %t %t1.o %t2.o
-// RUN: not --crash %t 2>&1 | FileCheck --check-prefix=CFI %s
+// RUN: %clangxx_cfi -o %t1 %t1.o %t2.o
+// RUN: %expect_crash %t1 2>&1 | FileCheck --check-prefix=CFI %s
 
 // RUN: %clangxx_cfi -c -DTU1 -DB32 -o %t1.o %s
 // RUN: %clangxx_cfi -c -DTU2 -DB32 -o %t2.o %S/../cfi/anon-namespace.cpp
-// RUN: %clangxx_cfi -o %t %t1.o %t2.o
-// RUN: not --crash %t 2>&1 | FileCheck --check-prefix=CFI %s
+// RUN: %clangxx_cfi -o %t2 %t1.o %t2.o
+// RUN: %expect_crash %t2 2>&1 | FileCheck --check-prefix=CFI %s
 
 // RUN: %clangxx_cfi -c -DTU1 -DB64 -o %t1.o %s
 // RUN: %clangxx_cfi -c -DTU2 -DB64 -o %t2.o %S/../cfi/anon-namespace.cpp
-// RUN: %clangxx_cfi -o %t %t1.o %t2.o
-// RUN: not --crash %t 2>&1 | FileCheck --check-prefix=CFI %s
+// RUN: %clangxx_cfi -o %t3 %t1.o %t2.o
+// RUN: %expect_crash %t3 2>&1 | FileCheck --check-prefix=CFI %s
 
 // RUN: %clangxx_cfi -c -DTU1 -DBM -o %t1.o %s
 // RUN: %clangxx_cfi -c -DTU2 -DBM -o %t2.o %S/../cfi/anon-namespace.cpp
-// RUN: %clangxx_cfi -o %t %t1.o %t2.o
-// RUN: not --crash %t 2>&1 | FileCheck --check-prefix=CFI %s
+// RUN: %clangxx_cfi -o %t4 %t1.o %t2.o
+// RUN: %expect_crash %t4 2>&1 | FileCheck --check-prefix=CFI %s
 
 // RUN: %clangxx -c -DTU1 -o %t1.o %s
 // RUN: %clangxx -c -DTU2 -o %t2.o %S/../cfi/anon-namespace.cpp
-// RUN: %clangxx -o %t %t1.o %t2.o
-// RUN: %t 2>&1 | FileCheck --check-prefix=NCFI %s
+// RUN: %clangxx -o %t5 %t1.o %t2.o
+// RUN: %t5 2>&1 | FileCheck --check-prefix=NCFI %s
 
 // RUN: %clangxx_cfi_diag -c -DTU1 -o %t1.o %s
 // RUN: %clangxx_cfi_diag -c -DTU2 -o %t2.o %S/../cfi/anon-namespace.cpp
-// RUN: %clangxx_cfi_diag -o %t %t1.o %t2.o
-// RUN: %t 2>&1 | FileCheck --check-prefix=CFI-DIAG %s
+// RUN: %clangxx_cfi_diag -o %t6 %t1.o %t2.o
+// RUN: %t6 2>&1 | FileCheck --check-prefix=CFI-DIAG %s
 
 // Tests that the CFI mechanism treats classes in the anonymous namespace in
 // different translation units as having distinct identities. This is done by
@@ -91,13 +91,13 @@ int main() {
   fprintf(stderr, "1\n");
 
   // CFI-DIAG: runtime error: control flow integrity check for type '(anonymous namespace)::B' failed during base-to-derived cast
-  // CFI-DIAG-NEXT: note: vtable is of type '(anonymous namespace)::B'
+  // CFI-DIAG-NEXT: note: vtable is of type '{{.*}}anonymous namespace{{.*}}::B'
   // CFI-DIAG: runtime error: control flow integrity check for type '(anonymous namespace)::B' failed during virtual call
-  // CFI-DIAG-NEXT: note: vtable is of type '(anonymous namespace)::B'
+  // CFI-DIAG-NEXT: note: vtable is of type '{{.*}}anonymous namespace{{.*}}::B'
   ((B *)a)->f(); // UB here
 
-  // CFI-NOT: 2
-  // NCFI: 2
+  // CFI-NOT: {{^2$}}
+  // NCFI: {{^2$}}
   fprintf(stderr, "2\n");
 }
 
