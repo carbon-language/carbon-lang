@@ -137,13 +137,10 @@ bool NVPTXLowerAggrCopies::runOnFunction(Function &F) {
   //
   // Collect all the aggrLoads, aggrMemcpys and addrMemsets.
   //
-  //const BasicBlock *firstBB = &F.front();  // first BB in F
   for (Function::iterator BI = F.begin(), BE = F.end(); BI != BE; ++BI) {
-    //BasicBlock *bb = BI;
     for (BasicBlock::iterator II = BI->begin(), IE = BI->end(); II != IE;
          ++II) {
       if (LoadInst *load = dyn_cast<LoadInst>(II)) {
-
         if (!load->hasOneUse())
           continue;
 
@@ -152,7 +149,7 @@ bool NVPTXLowerAggrCopies::runOnFunction(Function &F) {
 
         User *use = load->user_back();
         if (StoreInst *store = dyn_cast<StoreInst>(use)) {
-          if (store->getOperand(0) != load) //getValueOperand
+          if (store->getOperand(0) != load)
             continue;
           aggrLoads.push_back(load);
         }
