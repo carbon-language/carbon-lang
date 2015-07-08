@@ -163,8 +163,6 @@ public:
   const TargetMachine &getTargetMachine() const { return TM; }
   const DataLayout *getDataLayout() const { return TM.getDataLayout(); }
 
-  bool isBigEndian() const { return !IsLittleEndian; }
-  bool isLittleEndian() const { return IsLittleEndian; }
   virtual bool useSoftFloat() const { return false; }
 
   /// Return the pointer type for the given address space, defaults to
@@ -818,8 +816,8 @@ public:
   /// When splitting a value of the specified type into parts, does the Lo
   /// or Hi part come first?  This usually follows the endianness, except
   /// for ppcf128, where the Hi part always comes first.
-  bool hasBigEndianPartOrdering(EVT VT) const {
-    return isBigEndian() || VT == MVT::ppcf128;
+  bool hasBigEndianPartOrdering(EVT VT, const DataLayout &DL) const {
+    return DL.isBigEndian() || VT == MVT::ppcf128;
   }
 
   /// If true, the target has custom DAG combine transformations that it can
@@ -1733,9 +1731,6 @@ public:
 
 private:
   const TargetMachine &TM;
-
-  /// True if this is a little endian target.
-  bool IsLittleEndian;
 
   /// Tells the code generator not to expand operations into sequences that use
   /// the select operations if possible.
