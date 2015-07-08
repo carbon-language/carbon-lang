@@ -196,3 +196,19 @@ namespace test9 {
     return sret;
   }
 }
+
+namespace test10 {
+#pragma pack(1)
+struct BasePacked {
+  char one;
+  short two;
+};
+#pragma pack()
+struct DerivedPacked : public BasePacked {
+  int three;
+};
+// CHECK-LABEL: define i32 @_ZN6test1020FuncForDerivedPackedENS_13DerivedPackedE({{.*}}* byval align 8
+int FuncForDerivedPacked(DerivedPacked d) {
+  return d.three;
+}
+}
