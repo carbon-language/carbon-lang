@@ -109,6 +109,7 @@ public:
     Child child;
 
   public:
+    child_iterator() : child(Child(nullptr, nullptr)) {}
     child_iterator(const Child &c) : child(c) {}
     const Child *operator->() const { return &child; }
     const Child &operator*() const { return child; }

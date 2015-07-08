@@ -24,10 +24,9 @@ class NewArchiveIterator {
   bool IsNewMember;
   StringRef Name;
 
-  union {
   object::Archive::child_iterator OldI;
+
   StringRef NewFilename;
-  };
 
 public:
   NewArchiveIterator(object::Archive::child_iterator I, StringRef Name);
