@@ -72,6 +72,7 @@ static MIToken::TokenKind getIdentifierKind(StringRef Identifier) {
       .Case("implicit-def", MIToken::kw_implicit_define)
       .Case("dead", MIToken::kw_dead)
       .Case("killed", MIToken::kw_killed)
+      .Case("undef", MIToken::kw_undef)
       .Default(MIToken::Identifier);
 }
 

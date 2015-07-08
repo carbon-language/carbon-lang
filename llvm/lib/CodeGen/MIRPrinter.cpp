@@ -220,6 +220,8 @@ void MIPrinter::print(const MachineOperand &Op, const TargetRegisterInfo *TRI) {
       OS << "dead ";
     if (Op.isKill())
       OS << "killed ";
+    if (Op.isUndef())
+      OS << "undef ";
     printReg(Op.getReg(), OS, TRI);
     // TODO: Print sub register.
     break;
