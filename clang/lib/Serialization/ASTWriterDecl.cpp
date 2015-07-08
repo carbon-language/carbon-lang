@@ -1016,10 +1016,12 @@ void ASTDeclWriter::VisitNamespaceDecl(NamespaceDecl *D) {
     StoredDeclsMap *Map = NS->buildLookup();
     SmallVector<std::pair<DeclarationName, DeclContext::lookup_result>, 16>
         LookupResults;
-    LookupResults.reserve(Map->size());
-    for (auto &Entry : *Map)
-      LookupResults.push_back(
-          std::make_pair(Entry.first, Entry.second.getLookupResult()));
+    if (Map) {
+      LookupResults.reserve(Map->size());
+      for (auto &Entry : *Map)
+        LookupResults.push_back(
+            std::make_pair(Entry.first, Entry.second.getLookupResult()));
+    }
 
     std::sort(LookupResults.begin(), LookupResults.end(), llvm::less_first());
     for (auto &NameAndResult : LookupResults) {

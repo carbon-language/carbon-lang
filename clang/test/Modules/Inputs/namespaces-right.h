@@ -66,3 +66,5 @@ namespace N12 {
   }
   void consumeFoo(Foo*);
 }
+
+namespace Empty {}
