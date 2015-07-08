@@ -747,7 +747,9 @@ public:
   void AddCXXStdlibLibArgs(const llvm::opt::ArgList &Args,
                            llvm::opt::ArgStringList &CmdArgs) const override;
 
-  bool IsIntegratedAssemblerDefault() const override { return false; }
+  bool IsIntegratedAssemblerDefault() const override {
+    return getTriple().getArch() == llvm::Triple::mipsel;
+  }
 
   // Get the path to the file containing NaCl's ARM macros. It lives in NaCl_TC
   // because the AssembleARM tool needs a const char * that it can pass around
