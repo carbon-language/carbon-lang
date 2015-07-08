@@ -787,14 +787,6 @@ bool Driver::HandleImmediateArgs(const Compilation &C) {
     }
     return false;
   }
-
-  if (C.getArgs().hasArg(options::OPT_print_multi_os_directory)) {
-    // FIXME: This should print out "lib/../lib", "lib/../lib64", or
-    // "lib/../lib32" as appropriate for the toolchain. For now, print
-    // nothing because it's not supported yet.
-    return false;
-  }
-
   return true;
 }
 

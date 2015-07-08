@@ -1518,7 +1518,8 @@ def print_libgcc_file_name : Flag<["-", "--"], "print-libgcc-file-name">,
   HelpText<"Print the library path for \"libgcc.a\"">;
 def print_multi_directory : Flag<["-", "--"], "print-multi-directory">;
 def print_multi_lib : Flag<["-", "--"], "print-multi-lib">;
-def print_multi_os_directory : Flag<["-", "--"], "print-multi-os-directory">;
+def print_multi_os_directory : Flag<["-", "--"], "print-multi-os-directory">,
+  Flags<[Unsupported]>;
 def print_prog_name_EQ : Joined<["-", "--"], "print-prog-name=">,
   HelpText<"Print the full program path of <name>">, MetaVarName<"<name>">;
 def print_search_dirs : Flag<["-", "--"], "print-search-dirs">,
