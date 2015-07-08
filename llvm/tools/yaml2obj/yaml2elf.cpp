@@ -35,6 +35,8 @@ class ContiguousBlobAccumulator {
 
   /// \returns The new offset.
   uint64_t padToAlignment(unsigned Align) {
+    if (Align == 0)
+      Align = 1;
     uint64_t CurrentOffset = InitialOffset + OS.tell();
     uint64_t AlignedOffset = RoundUpToAlignment(CurrentOffset, Align);
     for (; CurrentOffset != AlignedOffset; ++CurrentOffset)
@@ -46,7 +48,7 @@ public:
   ContiguousBlobAccumulator(uint64_t InitialOffset_)
       : InitialOffset(InitialOffset_), Buf(), OS(Buf) {}
   template <class Integer>
-  raw_ostream &getOSAndAlignedOffset(Integer &Offset, unsigned Align = 16) {
+  raw_ostream &getOSAndAlignedOffset(Integer &Offset, unsigned Align) {
     Offset = padToAlignment(Align);
     return OS;
   }
@@ -246,7 +248,7 @@ bool ELFState<ELFT>::initSectionHeaders(std::vector<Elf_Shdr> &SHeaders,
       SHeader.sh_size = S->Size;
       // SHT_NOBITS section does not have content
       // so just to setup the section offset.
-      CBA.getOSAndAlignedOffset(SHeader.sh_offset);
+      CBA.getOSAndAlignedOffset(SHeader.sh_offset, SHeader.sh_addralign);
     } else
       llvm_unreachable("Unknown section type");
 
@@ -287,8 +289,9 @@ void ELFState<ELFT>::initSymtabSectionHeader(Elf_Shdr &SHeader,
   addSymbols(Doc.Symbols.Global, Syms, ELF::STB_GLOBAL);
   addSymbols(Doc.Symbols.Weak, Syms, ELF::STB_WEAK);
 
-  writeArrayData(CBA.getOSAndAlignedOffset(SHeader.sh_offset),
-                 makeArrayRef(Syms));
+  writeArrayData(
+      CBA.getOSAndAlignedOffset(SHeader.sh_offset, SHeader.sh_addralign),
+      makeArrayRef(Syms));
   SHeader.sh_size = arrayDataSize(makeArrayRef(Syms));
 }
 
@@ -299,7 +302,8 @@ void ELFState<ELFT>::initStrtabSectionHeader(Elf_Shdr &SHeader, StringRef Name,
   zero(SHeader);
   SHeader.sh_name = DotShStrtab.getOffset(Name);
   SHeader.sh_type = ELF::SHT_STRTAB;
-  CBA.getOSAndAlignedOffset(SHeader.sh_offset) << STB.data();
+  CBA.getOSAndAlignedOffset(SHeader.sh_offset, SHeader.sh_addralign)
+      << STB.data();
   SHeader.sh_size = STB.data().size();
   SHeader.sh_addralign = 1;
 }
@@ -337,7 +341,8 @@ ELFState<ELFT>::writeSectionContent(Elf_Shdr &SHeader,
                                     ContiguousBlobAccumulator &CBA) {
   assert(Section.Size >= Section.Content.binary_size() &&
          "Section size and section content are inconsistent");
-  raw_ostream &OS = CBA.getOSAndAlignedOffset(SHeader.sh_offset);
+  raw_ostream &OS =
+      CBA.getOSAndAlignedOffset(SHeader.sh_offset, SHeader.sh_addralign);
   Section.Content.writeAsBinary(OS);
   for (auto i = Section.Content.binary_size(); i < Section.Size; ++i)
     OS.write(0);
@@ -364,7 +369,7 @@ ELFState<ELFT>::writeSectionContent(Elf_Shdr &SHeader,
   SHeader.sh_entsize = IsRela ? sizeof(Elf_Rela) : sizeof(Elf_Rel);
   SHeader.sh_size = SHeader.sh_entsize * Section.Relocations.size();
 
-  auto &OS = CBA.getOSAndAlignedOffset(SHeader.sh_offset);
+  auto &OS = CBA.getOSAndAlignedOffset(SHeader.sh_offset, SHeader.sh_addralign);
 
   for (const auto &Rel : Section.Relocations) {
     unsigned SymIdx = 0;
@@ -402,7 +407,7 @@ bool ELFState<ELFT>::writeSectionContent(Elf_Shdr &SHeader,
   SHeader.sh_entsize = sizeof(Elf_Word);
   SHeader.sh_size = SHeader.sh_entsize * Section.Members.size();
 
-  auto &OS = CBA.getOSAndAlignedOffset(SHeader.sh_offset);
+  auto &OS = CBA.getOSAndAlignedOffset(SHeader.sh_offset, SHeader.sh_addralign);
 
   for (auto member : Section.Members) {
     Elf_Word SIdx;
@@ -433,7 +438,7 @@ bool ELFState<ELFT>::writeSectionContent(Elf_Shdr &SHeader,
   SHeader.sh_entsize = sizeof(Flags);
   SHeader.sh_size = SHeader.sh_entsize;
 
-  auto &OS = CBA.getOSAndAlignedOffset(SHeader.sh_offset);
+  auto &OS = CBA.getOSAndAlignedOffset(SHeader.sh_offset, SHeader.sh_addralign);
   Flags.version = Section.Version;
   Flags.isa_level = Section.ISALevel;
   Flags.isa_rev = Section.ISARevision;
