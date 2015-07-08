@@ -158,6 +158,6 @@ class LibcxxTestFormat(object):
             return lit.Test.PASS, ''
         else:
             report = libcxx.util.makeReport(cmd, out, err, rc)
-            report_msg = ('Expected compilation to fail!' if use_verify else
+            report_msg = ('Expected compilation to fail!' if not use_verify else
                           'Expected compilation using verify to pass!')
             return lit.Test.FAIL, report + report_msg + '\n'
