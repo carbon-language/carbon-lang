@@ -288,7 +288,7 @@ Archive::Archive(MemoryBufferRef Source, std::error_code &ec)
 
     ++i;
     if (i == e) {
-      ec = object_error::parse_failed;
+      ec = std::error_code();
       return;
     }
     Name = i->getRawName();

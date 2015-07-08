@@ -34,3 +34,7 @@ THIN:      rw-r--r-- 1000/1000      8 2014-12-16 00:56:27.000000000 evenlen
 THIN-NEXT: rw-r--r-- 1000/1000      7 2014-12-16 00:56:27.000000000 oddlen
 THIN-NEXT: rwxr-xr-x 1000/1000   1465 2014-12-16 00:56:27.000000000 very_long_bytecode_file_name.bc
 THIN-NEXT: rw-r--r-- 1000/1000   2280 2014-12-16 00:56:27.000000000 IsNAN.o
+
+Test reading an archive with just a symbol table. We use to reject them.
+RUN: llvm-ar tv %p/Inputs/symtab-only.a | FileCheck --allow-empty --check-prefix=EMPTY %s
+EMPTY-NOT: {{.}}
