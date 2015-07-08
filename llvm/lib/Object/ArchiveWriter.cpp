@@ -183,14 +183,11 @@ writeSymbolTable(raw_fd_ostream &Out, object::Archive::Kind Kind,
     return 0;
 
   unsigned StartOffset = 0;
-  unsigned MemberNum = 0;
-  std::string NameBuf;
-  raw_string_ostream NameOS(NameBuf);
+  SmallString<128> NameBuf;
+  raw_svector_ostream NameOS(NameBuf);
   unsigned NumSyms = 0;
   LLVMContext Context;
-  for (ArrayRef<NewArchiveIterator>::iterator I = Members.begin(),
-                                              E = Members.end();
-       I != E; ++I, ++MemberNum) {
+  for (unsigned MemberNum = 0, N = Members.size(); MemberNum < N; ++MemberNum) {
     MemoryBufferRef MemberBuffer = Buffers[MemberNum];
     ErrorOr<std::unique_ptr<object::SymbolicFile>> ObjOrErr =
         object::SymbolicFile::createSymbolicFile(
