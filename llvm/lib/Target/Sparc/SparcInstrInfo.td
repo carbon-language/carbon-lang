@@ -560,12 +560,12 @@ let Defs = [Y, ICC] in {
 }
 
 // Section B.19 - Divide Instructions, p. 115
-let Defs = [Y] in {
+let Uses = [Y], Defs = [Y] in {
   defm UDIV : F3_12np<"udiv", 0b001110>;
   defm SDIV : F3_12np<"sdiv", 0b001111>;
 }
 
-let Defs = [Y, ICC] in {
+let Uses = [Y], Defs = [Y, ICC] in {
   defm UDIVCC : F3_12np<"udivcc", 0b011110>;
   defm SDIVCC : F3_12np<"sdivcc", 0b011111>;
 }

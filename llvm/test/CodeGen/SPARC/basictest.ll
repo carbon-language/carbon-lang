@@ -38,7 +38,7 @@ entry:
 
 ; CHECK-LABEL: signed_divide:
 ; CHECK: sra %o0, 31, %o2
-; CHECK: wr %o2, %g0, %y
+; CHECK: wr %g0, %o2, %y
 ; CHECK: sdiv %o0, %o1, %o0
 define i32 @signed_divide(i32 %a, i32 %b) {
   %r = sdiv i32 %a, %b

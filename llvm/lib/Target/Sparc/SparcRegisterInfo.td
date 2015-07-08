@@ -249,4 +249,6 @@ def FCCRegs : RegisterClass<"SP", [i1], 1, (sequence "FCC%u", 0, 3)>;
 
 // Ancillary state registers
 def ASRRegs : RegisterClass<"SP", [i32], 32,
-                            (add Y, (sequence "ASR%u", 1, 31))>;
+                            (add Y, (sequence "ASR%u", 1, 31))> {
+  let isAllocatable = 0;
+}

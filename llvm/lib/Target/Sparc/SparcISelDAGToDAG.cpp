@@ -168,10 +168,9 @@ SDNode *SparcDAGToDAGISel::Select(SDNode *N) {
     } else {
       TopPart = CurDAG->getRegister(SP::G0, MVT::i32);
     }
-    TopPart = SDValue(CurDAG->getMachineNode(SP::WRASRrr, dl, MVT::i32,
-                                 TopPart,
-                                 CurDAG->getRegister(SP::G0, MVT::i32)), 0);
-    TopPart = CurDAG->getCopyToReg(TopPart, dl, SP::Y, TopPart, SDValue()).getValue(1);
+    TopPart = CurDAG->getCopyToReg(CurDAG->getEntryNode(), dl, SP::Y, TopPart,
+                                   SDValue())
+                  .getValue(1);
 
     // FIXME: Handle div by immediate.
     unsigned Opcode = N->getOpcode() == ISD::SDIV ? SP::SDIVrr : SP::UDIVrr;
@@ -184,12 +183,11 @@ SDNode *SparcDAGToDAGISel::Select(SDNode *N) {
     SDValue MulLHS = N->getOperand(0);
     SDValue MulRHS = N->getOperand(1);
     unsigned Opcode = N->getOpcode() == ISD::MULHU ? SP::UMULrr : SP::SMULrr;
-    SDNode *Mul = CurDAG->getMachineNode(Opcode, dl, MVT::i32, MVT::Glue,
-                                         MulLHS, MulRHS);
-    // The high part is in the Y register.
-    return CurDAG->SelectNodeTo(N, SP::RDASR, MVT::i32,
-                                CurDAG->getRegister(SP::Y, MVT::i32),
-                                SDValue(Mul, 1));
+    SDNode *Mul =
+        CurDAG->getMachineNode(Opcode, dl, MVT::i32, MVT::i32, MulLHS, MulRHS);
+    SDValue ResultHigh = SDValue(Mul, 1);
+    ReplaceUses(SDValue(N, 0), ResultHigh);
+    return nullptr;
   }
   }
 
