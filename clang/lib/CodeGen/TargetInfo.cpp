@@ -2094,11 +2094,13 @@ void X86_64ABIInfo::classify(QualType Ty, uint64_t OffsetBase,
       //
       if (Size > 128 && getContext().getTypeSize(i->getType()) != 256) {
         Lo = Memory;
+        postMerge(Size, Lo, Hi);
         return;
       }
       // Note, skip this test for bit-fields, see below.
       if (!BitField && Offset % getContext().getTypeAlign(i->getType())) {
         Lo = Memory;
+        postMerge(Size, Lo, Hi);
         return;
       }
 
