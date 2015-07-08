@@ -535,7 +535,8 @@ computeNewArchiveMembers(ArchiveOperation Operation,
   assert(unsigned(InsertPos) <= Ret.size());
   Ret.insert(Ret.begin() + InsertPos, Moved.begin(), Moved.end());
 
-  Ret.insert(Ret.begin() + InsertPos, Members.size(), NewArchiveIterator());
+  Ret.insert(Ret.begin() + InsertPos, Members.size(),
+             NewArchiveIterator("", ""));
   int Pos = InsertPos;
   for (auto &Member : Members) {
     StringRef Name = sys::path::filename(Member);

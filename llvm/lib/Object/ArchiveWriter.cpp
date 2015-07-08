@@ -34,8 +34,6 @@
 
 using namespace llvm;
 
-NewArchiveIterator::NewArchiveIterator() {}
-
 NewArchiveIterator::NewArchiveIterator(object::Archive::child_iterator I,
                                        StringRef Name)
     : IsNewMember(false), Name(Name), OldI(I) {}
