@@ -22,9 +22,6 @@ class ProcessAttachTestCase(TestBase):
         self.process_attach_by_id()
 
     @dwarf_test
-    #Make sure this test appears when grepping for XFAIL. It is also skipped because it tends to time out.
-    @expectedFailureLinux # llvm.org/pr23360
-    @skipIfLinux 
     def test_attach_to_process_by_id_with_dwarf(self):
         """Test attach by process id"""
         self.buildDwarf()
@@ -38,9 +35,6 @@ class ProcessAttachTestCase(TestBase):
         self.process_attach_by_name()
 
     @dwarf_test
-    #Make sure this test appears when grepping for XFAIL. It is also skipped because it tends to time out.
-    @expectedFailureLinux # llvm.org/pr23360
-    @skipIfLinux 
     def test_attach_to_process_by_name_with_dwarf(self):
         """Test attach by process name"""
         self.buildDwarf()
