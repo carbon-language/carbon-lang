@@ -67,6 +67,20 @@ void SectionChunk::applyRelX64(uint8_t *Off, uint16_t Type, uint64_t S,
   }
 }
 
+void SectionChunk::applyRelX86(uint8_t *Off, uint16_t Type, uint64_t S,
+                               uint64_t P) {
+  switch (Type) {
+  case IMAGE_REL_I386_ABSOLUTE: break;
+  case IMAGE_REL_I386_DIR32:    add32(Off, S + Config->ImageBase); break;
+  case IMAGE_REL_I386_DIR32NB:  add32(Off, S); break;
+  case IMAGE_REL_I386_REL32:    add32(Off, S - P - 4); break;
+  case IMAGE_REL_I386_SECTION:  add16(Off, Out->getSectionIndex() + 1); break;
+  case IMAGE_REL_I386_SECREL:   add32(Off, S - Out->getRVA()); break;
+  default:
+    llvm::report_fatal_error("Unsupported relocation type");
+  }
+}
+
 void SectionChunk::writeTo(uint8_t *Buf) {
   if (!hasData())
     return;
@@ -80,7 +94,16 @@ void SectionChunk::writeTo(uint8_t *Buf) {
     SymbolBody *Body = File->getSymbolBody(Rel.SymbolTableIndex)->repl();
     uint64_t S = cast<Defined>(Body)->getRVA();
     uint64_t P = RVA + Rel.VirtualAddress;
-    applyRelX64(Off, Rel.Type, S, P);
+    switch (Config->MachineType) {
+    case IMAGE_FILE_MACHINE_AMD64:
+      applyRelX64(Off, Rel.Type, S, P);
+      break;
+    case IMAGE_FILE_MACHINE_I386:
+      applyRelX86(Off, Rel.Type, S, P);
+      break;
+    default:
+      llvm_unreachable("unknown machine type");
+    }
   }
 }
 

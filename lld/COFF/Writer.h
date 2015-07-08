@@ -74,7 +74,7 @@ private:
 // The writer writes a SymbolTable result to a file.
 class Writer {
 public:
-  explicit Writer(SymbolTable *T) : Symtab(T) {}
+  explicit Writer(SymbolTable *T);
   std::error_code write(StringRef Path);
 
 private:
@@ -87,7 +87,7 @@ private:
   void assignAddresses();
   void removeEmptySections();
   std::error_code openFile(StringRef OutputPath);
-  void writeHeader();
+  template <typename PEHeaderTy> void writeHeader();
   void writeSections();
   void sortExceptionTable();
   void applyRelocations();
@@ -109,6 +109,7 @@ private:
   DelayLoadContents DelayIdata;
   EdataContents Edata;
 
+  bool Is64;
   uint64_t FileSize;
   uint64_t SizeOfImage;
   uint64_t SizeOfHeaders;

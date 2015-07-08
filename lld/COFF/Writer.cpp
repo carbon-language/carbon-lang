@@ -52,7 +52,11 @@ std::error_code Writer::write(StringRef OutputPath) {
   removeEmptySections();
   if (auto EC = openFile(OutputPath))
     return EC;
-  writeHeader();
+  if (Is64) {
+    writeHeader<pe32plus_header>();
+  } else {
+    writeHeader<pe32_header>();
+  }
   writeSections();
   sortExceptionTable();
   return Buffer->commit();
@@ -104,6 +108,9 @@ void OutputSection::writeHeaderTo(uint8_t *Buf) {
     strncpy(Hdr->Name, Name.data(), Name.size());
   }
 }
+
+Writer::Writer(SymbolTable *T)
+    : Symtab(T), Is64(Config->MachineType == IMAGE_FILE_MACHINE_AMD64) {}
 
 // Set live bit on for each reachable chunk. Unmarked (unreachable)
 // COMDAT chunks will be ignored in the next step, so that they don't
@@ -278,11 +285,11 @@ void Writer::removeEmptySections() {
 // Visits all sections to assign incremental, non-overlapping RVAs and
 // file offsets.
 void Writer::assignAddresses() {
-  SizeOfHeaders = RoundUpToAlignment(
-      DOSStubSize + sizeof(PEMagic) + sizeof(coff_file_header) +
-      sizeof(pe32plus_header) +
-      sizeof(data_directory) * NumberfOfDataDirectory +
-      sizeof(coff_section) * OutputSections.size(), PageSize);
+  SizeOfHeaders = DOSStubSize + sizeof(PEMagic) + sizeof(coff_file_header) +
+                  sizeof(data_directory) * NumberfOfDataDirectory +
+                  sizeof(coff_section) * OutputSections.size();
+  SizeOfHeaders += Is64 ? sizeof(pe32plus_header) : sizeof(pe32_header);
+  SizeOfHeaders = RoundUpToAlignment(SizeOfHeaders, PageSize);
   uint64_t RVA = 0x1000; // The first page is kept unmapped.
   uint64_t FileOff = SizeOfHeaders;
   for (OutputSection *Sec : OutputSections) {
@@ -309,7 +316,7 @@ inferMachineType(const std::vector<ObjectFile *> &Files) {
   return IMAGE_FILE_MACHINE_UNKNOWN;
 }
 
-void Writer::writeHeader() {
+template <typename PEHeaderTy> void Writer::writeHeader() {
   // Write DOS stub
   uint8_t *Buf = Buffer->getBufferStart();
   auto *DOS = reinterpret_cast<dos_header *>(Buf);
@@ -334,18 +341,19 @@ void Writer::writeHeader() {
   COFF->Machine = MachineType;
   COFF->NumberOfSections = OutputSections.size();
   COFF->Characteristics = IMAGE_FILE_EXECUTABLE_IMAGE;
-  COFF->Characteristics |= IMAGE_FILE_LARGE_ADDRESS_AWARE;
+  if (Is64)
+    COFF->Characteristics |= IMAGE_FILE_LARGE_ADDRESS_AWARE;
   if (Config->DLL)
     COFF->Characteristics |= IMAGE_FILE_DLL;
   if (!Config->Relocatable)
     COFF->Characteristics |= IMAGE_FILE_RELOCS_STRIPPED;
   COFF->SizeOfOptionalHeader =
-      sizeof(pe32plus_header) + sizeof(data_directory) * NumberfOfDataDirectory;
+      sizeof(PEHeaderTy) + sizeof(data_directory) * NumberfOfDataDirectory;
 
   // Write PE header
-  auto *PE = reinterpret_cast<pe32plus_header *>(Buf);
+  auto *PE = reinterpret_cast<PEHeaderTy *>(Buf);
   Buf += sizeof(*PE);
-  PE->Magic = PE32Header::PE32_PLUS;
+  PE->Magic = Is64 ? PE32Header::PE32_PLUS : PE32Header::PE32;
   PE->ImageBase = Config->ImageBase;
   PE->SectionAlignment = SectionAlignment;
   PE->FileAlignment = FileAlignment;
