@@ -102,9 +102,6 @@ cl::list<std::string>
                        cl::desc("Prints the specified segment,section for "
                                 "Mach-O objects (requires -macho)"));
 
-cl::opt<bool> llvm::Raw("raw",
-                        cl::desc("Have -section dump the raw binary contents"));
-
 cl::opt<bool>
     llvm::InfoPlist("info-plist",
                     cl::desc("Print the info plist section as strings for "
@@ -1046,11 +1043,6 @@ static void DumpSectionContents(StringRef Filename, MachOObjectFile *O,
         uint32_t sect_size = BytesStr.size();
         uint64_t sect_addr = Section.getAddress();
 
-        if (Raw) {
-          outs().write(BytesStr.data(), BytesStr.size());
-          continue;
-        }
-
         outs() << "Contents of (" << SegName << "," << SectName
                << ") section\n";
 
@@ -1179,8 +1171,7 @@ static void ProcessMachO(StringRef Filename, MachOObjectFile *MachOOF,
   // UniversalHeaders or ArchiveHeaders.
   if (Disassemble || PrivateHeaders || ExportsTrie || Rebase || Bind ||
       LazyBind || WeakBind || IndirectSymbols || DataInCode || LinkOptHints ||
-      DylibsUsed || DylibId || ObjcMetaData ||
-      (DumpSections.size() != 0 && !Raw)) {
+      DylibsUsed || DylibId || ObjcMetaData || (DumpSections.size() != 0)) {
     outs() << Filename;
     if (!ArchiveMemberName.empty())
       outs() << '(' << ArchiveMemberName << ')';
