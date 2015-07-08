@@ -167,17 +167,17 @@ define <32 x i8> @var_shift_v32i8(<32 x i8> %a, <32 x i8> %b) {
 ;
 ; AVX2-LABEL: var_shift_v32i8:
 ; AVX2:       # BB#0:
-; AVX2-NEXT:    vpsllw    $5, %ymm1, %ymm1
-; AVX2-NEXT:    vpsrlw    $4, %ymm0, %ymm2
-; AVX2-NEXT:    vpand     {{.*}}(%rip), %ymm2, %ymm2
+; AVX2-NEXT:    vpsllw $5, %ymm1, %ymm1
+; AVX2-NEXT:    vpsrlw $4, %ymm0, %ymm2
+; AVX2-NEXT:    vpand {{.*}}(%rip), %ymm2, %ymm2
 ; AVX2-NEXT:    vpblendvb %ymm1, %ymm2, %ymm0, %ymm0
-; AVX2-NEXT:    vpsrlw    $2, %ymm0, %ymm2
-; AVX2-NEXT:    vpand     {{.*}}(%rip), %ymm2, %ymm2
-; AVX2-NEXT:    vpaddb    %ymm1, %ymm1, %ymm1
+; AVX2-NEXT:    vpsrlw $2, %ymm0, %ymm2
+; AVX2-NEXT:    vpand {{.*}}(%rip), %ymm2, %ymm2
+; AVX2-NEXT:    vpaddb %ymm1, %ymm1, %ymm1
 ; AVX2-NEXT:    vpblendvb %ymm1, %ymm2, %ymm0, %ymm0
-; AVX2-NEXT:    vpsrlw    $1, %ymm0, %ymm2
-; AVX2-NEXT:    vpand     {{.*}}(%rip), %ymm2, %ymm2
-; AVX2-NEXT:    vpaddb    %ymm1, %ymm1, %ymm1
+; AVX2-NEXT:    vpsrlw $1, %ymm0, %ymm2
+; AVX2-NEXT:    vpand {{.*}}(%rip), %ymm2, %ymm2
+; AVX2-NEXT:    vpaddb %ymm1, %ymm1, %ymm1
 ; AVX2-NEXT:    vpblendvb %ymm1, %ymm2, %ymm0, %ymm0
 ; AVX2-NEXT:    retq
   %shift = lshr <32 x i8> %a, %b
@@ -453,18 +453,18 @@ define <32 x i8> @constant_shift_v32i8(<32 x i8> %a) {
 ;
 ; AVX2-LABEL: constant_shift_v32i8:
 ; AVX2:       # BB#0:
-; AVX2-NEXT:    vmovdqa   {{.*#+}} ymm1 = [0,1,2,3,4,5,6,7,7,6,5,4,3,2,1,0,0,1,2,3,4,5,6,7,7,6,5,4,3,2,1,0]
-; AVX2-NEXT:    vpsllw    $5, %ymm1, %ymm1
-; AVX2-NEXT:    vpsrlw    $4, %ymm0, %ymm2
-; AVX2-NEXT:    vpand     {{.*}}(%rip), %ymm2, %ymm2
+; AVX2-NEXT:    vmovdqa {{.*#+}} ymm1 = [0,1,2,3,4,5,6,7,7,6,5,4,3,2,1,0,0,1,2,3,4,5,6,7,7,6,5,4,3,2,1,0]
+; AVX2-NEXT:    vpsllw $5, %ymm1, %ymm1
+; AVX2-NEXT:    vpsrlw $4, %ymm0, %ymm2
+; AVX2-NEXT:    vpand {{.*}}(%rip), %ymm2, %ymm2
 ; AVX2-NEXT:    vpblendvb %ymm1, %ymm2, %ymm0, %ymm0
-; AVX2-NEXT:    vpsrlw    $2, %ymm0, %ymm2
-; AVX2-NEXT:    vpand     {{.*}}(%rip), %ymm2, %ymm2
-; AVX2-NEXT:    vpaddb    %ymm1, %ymm1, %ymm1
+; AVX2-NEXT:    vpsrlw $2, %ymm0, %ymm2
+; AVX2-NEXT:    vpand {{.*}}(%rip), %ymm2, %ymm2
+; AVX2-NEXT:    vpaddb %ymm1, %ymm1, %ymm1
 ; AVX2-NEXT:    vpblendvb %ymm1, %ymm2, %ymm0, %ymm0
-; AVX2-NEXT:    vpsrlw    $1, %ymm0, %ymm2
-; AVX2-NEXT:    vpand     {{.*}}(%rip), %ymm2, %ymm2
-; AVX2-NEXT:    vpaddb    %ymm1, %ymm1, %ymm1
+; AVX2-NEXT:    vpsrlw $1, %ymm0, %ymm2
+; AVX2-NEXT:    vpand {{.*}}(%rip), %ymm2, %ymm2
+; AVX2-NEXT:    vpaddb %ymm1, %ymm1, %ymm1
 ; AVX2-NEXT:    vpblendvb %ymm1, %ymm2, %ymm0, %ymm0
 ; AVX2-NEXT:    retq
   %shift = lshr <32 x i8> %a, <i8 0, i8 1, i8 2, i8 3, i8 4, i8 5, i8 6, i8 7, i8 7, i8 6, i8 5, i8 4, i8 3, i8 2, i8 1, i8 0, i8 0, i8 1, i8 2, i8 3, i8 4, i8 5, i8 6, i8 7, i8 7, i8 6, i8 5, i8 4, i8 3, i8 2, i8 1, i8 0>
@@ -540,8 +540,8 @@ define <32 x i8> @splatconstant_shift_v32i8(<32 x i8> %a) {
 ;
 ; AVX2-LABEL: splatconstant_shift_v32i8:
 ; AVX2:       # BB#0:
-; AVX2-NEXT:    vpsrlw $3, %ymm0
-; AVX2-NEXT:    vpand {{.*}}(%rip), %ymm0
+; AVX2-NEXT:    vpsrlw $3, %ymm0, %ymm0
+; AVX2-NEXT:    vpand {{.*}}(%rip), %ymm0, %ymm0
 ; AVX2-NEXT:    retq
   %shift = lshr <32 x i8> %a, <i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3>
   ret <32 x i8> %shift

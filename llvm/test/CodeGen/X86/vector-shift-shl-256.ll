@@ -193,7 +193,7 @@ define <8 x i32> @splatvar_shift_v8i32(<8 x i32> %a, <8 x i32> %b) {
 ; AVX2-LABEL: splatvar_shift_v8i32:
 ; AVX2:       # BB#0:
 ; AVX2-NEXT:    vpxor %xmm2, %xmm2, %xmm2
-; AVX2-NEXT:    vpblendw $3, %xmm1, %xmm2, %xmm1 # xmm1 = xmm1[0,1],xmm2[2,3,4,5,6,7]
+; AVX2-NEXT:    vpblendw {{.*#+}} xmm1 = xmm1[0,1],xmm2[2,3,4,5,6,7]
 ; AVX2-NEXT:    vpslld %xmm1, %ymm0, %ymm0
 ; AVX2-NEXT:    retq
   %splat = shufflevector <8 x i32> %b, <8 x i32> undef, <8 x i32> zeroinitializer
@@ -341,7 +341,7 @@ define <32 x i8> @constant_shift_v32i8(<32 x i8> %a) {
 ; AVX1-NEXT:    vpsllw $4, %xmm1, %xmm2
 ; AVX1-NEXT:    vmovdqa {{.*#+}} xmm3 = [240,240,240,240,240,240,240,240,240,240,240,240,240,240,240,240]
 ; AVX1-NEXT:    vpand %xmm3, %xmm2, %xmm2
-; AVX1-NEXT:    vmovdqa {{.*}}(%rip), %xmm4  # xmm4 = [0,1,2,3,4,5,6,7,7,6,5,4,3,2,1,0]
+; AVX1-NEXT:    vmovdqa {{.*#+}} xmm4 = [0,1,2,3,4,5,6,7,7,6,5,4,3,2,1,0]
 ; AVX1-NEXT:    vpsllw $5, %xmm4, %xmm4
 ; AVX1-NEXT:    vpblendvb %xmm4, %xmm2, %xmm1, %xmm1
 ; AVX1-NEXT:    vpsllw $2, %xmm1, %xmm2

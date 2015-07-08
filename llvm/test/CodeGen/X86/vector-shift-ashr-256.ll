@@ -663,19 +663,19 @@ define <4 x i64> @splatconstant_shift_v4i64(<4 x i64> %a) {
 ; AVX1-LABEL: splatconstant_shift_v4i64:
 ; AVX1:       # BB#0:
 ; AVX1-NEXT:    vextractf128 $1, %ymm0, %xmm1
-; AVX1-NEXT:    vpsrad       $7, %xmm1, %xmm2
-; AVX1-NEXT:    vpsrlq       $7, %xmm1, %xmm1
-; AVX1-NEXT:    vpblendw     {{.*#+}} xmm1 = xmm1[0,1],xmm2[2,3],xmm1[4,5],xmm2[6,7]
-; AVX1-NEXT:    vpsrad       $7, %xmm0, %xmm2
-; AVX1-NEXT:    vpsrlq       $7, %xmm0, %xmm0
-; AVX1-NEXT:    vpblendw     {{.*#+}} xmm0 = xmm0[0,1],xmm2[2,3],xmm0[4,5],xmm2[6,7]
-; AVX1-NEXT:    vinsertf128  $1, %xmm1, %ymm0, %ymm0
+; AVX1-NEXT:    vpsrad $7, %xmm1, %xmm2
+; AVX1-NEXT:    vpsrlq $7, %xmm1, %xmm1
+; AVX1-NEXT:    vpblendw {{.*#+}} xmm1 = xmm1[0,1],xmm2[2,3],xmm1[4,5],xmm2[6,7]
+; AVX1-NEXT:    vpsrad $7, %xmm0, %xmm2
+; AVX1-NEXT:    vpsrlq $7, %xmm0, %xmm0
+; AVX1-NEXT:    vpblendw {{.*#+}} xmm0 = xmm0[0,1],xmm2[2,3],xmm0[4,5],xmm2[6,7]
+; AVX1-NEXT:    vinsertf128 $1, %xmm1, %ymm0, %ymm0
 ; AVX1-NEXT:    retq
 ;
 ; AVX2-LABEL: splatconstant_shift_v4i64:
 ; AVX2:       # BB#0:
-; AVX2-NEXT:    vpsrad   $7, %ymm0, %ymm1
-; AVX2-NEXT:    vpsrlq   $7, %ymm0, %ymm0
+; AVX2-NEXT:    vpsrad $7, %ymm0, %ymm1
+; AVX2-NEXT:    vpsrlq $7, %ymm0, %ymm0
 ; AVX2-NEXT:    vpblendd {{.*#+}} ymm0 = ymm0[0],ymm1[1],ymm0[2],ymm1[3],ymm0[4],ymm1[5],ymm0[6],ymm1[7]
 ; AVX2-NEXT:    retq
   %shift = ashr <4 x i64> %a, <i64 7, i64 7, i64 7, i64 7>
@@ -735,11 +735,11 @@ define <32 x i8> @splatconstant_shift_v32i8(<32 x i8> %a) {
 ;
 ; AVX2-LABEL: splatconstant_shift_v32i8:
 ; AVX2:       # BB#0:
-; AVX2-NEXT:    vpsrlw  $3, %ymm0, %ymm0
-; AVX2-NEXT:    vpand   {{.*}}(%rip), %ymm0, %ymm0
+; AVX2-NEXT:    vpsrlw $3, %ymm0, %ymm0
+; AVX2-NEXT:    vpand {{.*}}(%rip), %ymm0, %ymm0
 ; AVX2-NEXT:    vmovdqa {{.*#+}} ymm1 = [16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16,16]
-; AVX2-NEXT:    vpxor   %ymm1, %ymm0, %ymm0
-; AVX2-NEXT:    vpsubb  %ymm1, %ymm0, %ymm0
+; AVX2-NEXT:    vpxor %ymm1, %ymm0, %ymm0
+; AVX2-NEXT:    vpsubb %ymm1, %ymm0, %ymm0
 ; AVX2-NEXT:    retq
   %shift = ashr <32 x i8> %a, <i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3, i8 3>
   ret <32 x i8> %shift
