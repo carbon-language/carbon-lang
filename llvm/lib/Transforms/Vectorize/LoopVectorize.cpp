@@ -2647,22 +2647,20 @@ void InnerLoopVectorizer::createEmptyLoop() {
   Value *Cmp =
       BypassBuilder.CreateICmpEQ(IdxEndRoundDown, StartIdx, "cmp.zero");
 
-  BasicBlock *LastBypassBlock = BypassBlock;
-
   // Generate code to check that the loops trip count that we computed by adding
   // one to the backedge-taken count will not overflow.
   {
     auto PastOverflowCheck =
         std::next(BasicBlock::iterator(OverflowCheckAnchor));
     BasicBlock *CheckBlock =
-      LastBypassBlock->splitBasicBlock(PastOverflowCheck, "overflow.checked");
+      BypassBlock->splitBasicBlock(PastOverflowCheck, "overflow.checked");
     if (ParentLoop)
       ParentLoop->addBasicBlockToLoop(CheckBlock, *LI);
     LoopBypassBlocks.push_back(CheckBlock);
     ReplaceInstWithInst(
-        LastBypassBlock->getTerminator(),
+        BypassBlock->getTerminator(),
         BranchInst::Create(ScalarPH, CheckBlock, CheckBCOverflow));
-    LastBypassBlock = CheckBlock;
+    BypassBlock = CheckBlock;
   }
 
   // Generate the code to check that the strides we assumed to be one are really
@@ -2671,23 +2669,23 @@ void InnerLoopVectorizer::createEmptyLoop() {
   Instruction *StrideCheck;
   Instruction *FirstCheckInst;
   std::tie(FirstCheckInst, StrideCheck) =
-      addStrideCheck(LastBypassBlock->getTerminator());
+      addStrideCheck(BypassBlock->getTerminator());
   if (StrideCheck) {
     AddedSafetyChecks = true;
     // Create a new block containing the stride check.
     BasicBlock *CheckBlock =
-        LastBypassBlock->splitBasicBlock(FirstCheckInst, "vector.stridecheck");
+        BypassBlock->splitBasicBlock(FirstCheckInst, "vector.stridecheck");
     if (ParentLoop)
       ParentLoop->addBasicBlockToLoop(CheckBlock, *LI);
     LoopBypassBlocks.push_back(CheckBlock);
 
     // Replace the branch into the memory check block with a conditional branch
     // for the "few elements case".
-    ReplaceInstWithInst(LastBypassBlock->getTerminator(),
+    ReplaceInstWithInst(BypassBlock->getTerminator(),
                         BranchInst::Create(MiddleBlock, CheckBlock, Cmp));
 
     Cmp = StrideCheck;
-    LastBypassBlock = CheckBlock;
+    BypassBlock = CheckBlock;
   }
 
   // Generate the code that checks in runtime if arrays overlap. We put the
@@ -2695,26 +2693,26 @@ void InnerLoopVectorizer::createEmptyLoop() {
   // faster.
   Instruction *MemRuntimeCheck;
   std::tie(FirstCheckInst, MemRuntimeCheck) =
-    Legal->getLAI()->addRuntimeCheck(LastBypassBlock->getTerminator());
+    Legal->getLAI()->addRuntimeCheck(BypassBlock->getTerminator());
   if (MemRuntimeCheck) {
     AddedSafetyChecks = true;
     // Create a new block containing the memory check.
     BasicBlock *CheckBlock =
-        LastBypassBlock->splitBasicBlock(FirstCheckInst, "vector.memcheck");
+        BypassBlock->splitBasicBlock(FirstCheckInst, "vector.memcheck");
     if (ParentLoop)
       ParentLoop->addBasicBlockToLoop(CheckBlock, *LI);
     LoopBypassBlocks.push_back(CheckBlock);
 
     // Replace the branch into the memory check block with a conditional branch
     // for the "few elements case".
-    ReplaceInstWithInst(LastBypassBlock->getTerminator(),
+    ReplaceInstWithInst(BypassBlock->getTerminator(),
                         BranchInst::Create(MiddleBlock, CheckBlock, Cmp));
 
     Cmp = MemRuntimeCheck;
-    LastBypassBlock = CheckBlock;
+    BypassBlock = CheckBlock;
   }
 
-  ReplaceInstWithInst(LastBypassBlock->getTerminator(),
+  ReplaceInstWithInst(BypassBlock->getTerminator(),
                       BranchInst::Create(MiddleBlock, VectorPH, Cmp));
 
   // We are going to resume the execution of the scalar loop.
