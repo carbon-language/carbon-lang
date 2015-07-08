@@ -124,6 +124,18 @@ static void printMemberHeader(raw_fd_ostream &Out, unsigned NameOffset,
   printRestOfMemberHeader(Out, ModTime, UID, GID, Perms, Size);
 }
 
+static void
+printMemberHeader(raw_fd_ostream &Out, StringRef Name,
+                  std::vector<unsigned>::iterator &StringMapIndexIter,
+                  const sys::TimeValue &ModTime, unsigned UID, unsigned GID,
+                  unsigned Perms, unsigned Size) {
+  if (Name.size() < 16)
+    printMemberHeader(Out, Name, ModTime, UID, GID, Perms, Size);
+  else
+    printMemberHeader(Out, *StringMapIndexIter++, ModTime, UID, GID, Perms,
+                      Size);
+}
+
 static void writeStringTable(raw_fd_ostream &Out,
                              ArrayRef<NewArchiveIterator> Members,
                              std::vector<unsigned> &StringMapIndexes) {
@@ -278,8 +290,8 @@ llvm::writeArchive(StringRef ArcName,
   writeStringTable(Out, NewMembers, StringMapIndexes);
 
   unsigned MemberNum = 0;
-  unsigned LongNameMemberNum = 0;
   unsigned NewMemberNum = 0;
+  std::vector<unsigned>::iterator StringMapIndexIter = StringMapIndexes.begin();
   std::vector<unsigned> MemberOffset;
   for (const NewArchiveIterator &I : NewMembers) {
     MemoryBufferRef File = Members[MemberNum++];
@@ -289,32 +301,17 @@ llvm::writeArchive(StringRef ArcName,
 
     if (I.isNewMember()) {
       StringRef FileName = I.getNew();
-      const sys::fs::file_status &Status = NewMemberStatus[NewMemberNum];
-      NewMemberNum++;
-
-      StringRef Name = sys::path::filename(FileName);
-      if (Name.size() < 16)
-        printMemberHeader(Out, Name, Status.getLastModificationTime(),
-                          Status.getUser(), Status.getGroup(),
-                          Status.permissions(), Status.getSize());
-      else
-        printMemberHeader(Out, StringMapIndexes[LongNameMemberNum++],
-                          Status.getLastModificationTime(), Status.getUser(),
-                          Status.getGroup(), Status.permissions(),
-                          Status.getSize());
+      const sys::fs::file_status &Status = NewMemberStatus[NewMemberNum++];
+      printMemberHeader(Out, sys::path::filename(FileName), StringMapIndexIter,
+                        Status.getLastModificationTime(), Status.getUser(),
+                        Status.getGroup(), Status.permissions(),
+                        Status.getSize());
     } else {
       object::Archive::child_iterator OldMember = I.getOld();
-      StringRef Name = I.getName();
-
-      if (Name.size() < 16)
-        printMemberHeader(Out, Name, OldMember->getLastModified(),
-                          OldMember->getUID(), OldMember->getGID(),
-                          OldMember->getAccessMode(), OldMember->getSize());
-      else
-        printMemberHeader(Out, StringMapIndexes[LongNameMemberNum++],
-                          OldMember->getLastModified(), OldMember->getUID(),
-                          OldMember->getGID(), OldMember->getAccessMode(),
-                          OldMember->getSize());
+      printMemberHeader(Out, I.getName(), StringMapIndexIter,
+                        OldMember->getLastModified(), OldMember->getUID(),
+                        OldMember->getGID(), OldMember->getAccessMode(),
+                        OldMember->getSize());
     }
 
     Out << File.getBuffer();
