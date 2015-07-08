@@ -161,7 +161,7 @@ SymbolFileSymtab::ParseCompileUnitAtIndex(uint32_t idx)
     {
         const Symbol *cu_symbol = m_obj_file->GetSymtab()->SymbolAtIndex(m_source_indexes[idx]);
         if (cu_symbol)
-            cu_sp.reset(new CompileUnit (m_obj_file->GetModule(), NULL, cu_symbol->GetMangled().GetName().AsCString(), 0, eLanguageTypeUnknown));
+            cu_sp.reset(new CompileUnit (m_obj_file->GetModule(), NULL, cu_symbol->GetName().AsCString(), 0, eLanguageTypeUnknown));
     }
     return cu_sp;
 }

@@ -3775,9 +3775,10 @@ SymbolFileDWARF::FunctionDieMatchesPartialName (const DWARFDebugInfoEntry* die,
             }
         }
 
-        if (best_name.GetDemangledName())
+        const LanguageType cu_language = const_cast<DWARFCompileUnit *>(dwarf_cu)->GetLanguageType();
+        if (best_name.GetDemangledName(cu_language))
         {
-            const char *demangled = best_name.GetDemangledName().GetCString();
+            const char *demangled = best_name.GetDemangledName(cu_language).GetCString();
             if (demangled)
             {
                 std::string name_no_parens(partial_name, base_name_end - partial_name);

@@ -267,11 +267,11 @@ IRForTarget::GetFunctionAddress (llvm::Function *fun,
                 {
                     if (mangled_name.GetMangledName())
                         m_error_stream->Printf("error: call to a function '%s' ('%s') that is not present in the target\n",
-                                               mangled_name.GetName().GetCString(),
+                                               mangled_name.GetName(lldb::eLanguageTypeObjC_plus_plus).GetCString(),
                                                mangled_name.GetMangledName().GetCString());
                     else
                         m_error_stream->Printf("error: call to a function '%s' that is not present in the target\n",
-                                               mangled_name.GetName().GetCString());
+                                               mangled_name.GetName(lldb::eLanguageTypeObjC_plus_plus).GetCString());
                 }
                 return LookupResult::Fail;
             }

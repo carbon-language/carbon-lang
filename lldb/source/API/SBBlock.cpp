@@ -75,7 +75,15 @@ SBBlock::GetInlinedName () const
     {
         const InlineFunctionInfo* inlined_info = m_opaque_ptr->GetInlinedFunctionInfo ();
         if (inlined_info)
-            return inlined_info->GetName().AsCString (NULL);
+        {
+            Function *function = m_opaque_ptr->CalculateSymbolContextFunction();
+            LanguageType language;
+            if (function)
+                language = function->GetLanguage();
+            else
+                language = lldb::eLanguageTypeUnknown;
+            return inlined_info->GetName(language).AsCString (NULL);
+        }
     }
     return NULL;
 }

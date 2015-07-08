@@ -500,7 +500,7 @@ DynamicLoaderHexagonDYLD::GetStepThroughTrampolinePlan(Thread &thread, bool stop
     if (sym == NULL || !sym->IsTrampoline())
         return thread_plan_sp;
 
-    const ConstString &sym_name = sym->GetMangled().GetName(Mangled::ePreferMangled);
+    const ConstString sym_name = sym->GetMangled().GetName(lldb::eLanguageTypeUnknown, Mangled::ePreferMangled);
     if (!sym_name)
         return thread_plan_sp;
 

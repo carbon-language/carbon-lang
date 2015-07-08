@@ -611,7 +611,7 @@ BreakpointLocation::GetDescription (Stream *s, lldb::DescriptionLevel level)
                 {
                     s->EOL();
                     s->Indent("function = ");
-                    s->PutCString (sc.function->GetMangled().GetName().AsCString("<unknown>"));
+                    s->PutCString (sc.function->GetName().AsCString("<unknown>"));
                 }
 
                 if (sc.line_entry.line > 0)
@@ -632,7 +632,7 @@ BreakpointLocation::GetDescription (Stream *s, lldb::DescriptionLevel level)
                         s->Indent ("re-exported target = ");
                     else
                         s->Indent("symbol = ");
-                    s->PutCString(sc.symbol->GetMangled().GetName().AsCString("<unknown>"));
+                    s->PutCString(sc.symbol->GetName().AsCString("<unknown>"));
                 }
             }
         }

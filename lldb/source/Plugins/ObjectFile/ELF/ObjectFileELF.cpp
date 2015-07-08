@@ -2031,8 +2031,9 @@ ObjectFileELF::ParseSymbols (Symtab *symtab,
             if (! mangled_name.empty())
                 mangled.SetMangledName( ConstString((mangled_name + suffix).str()) );
 
-            llvm::StringRef demangled_name = mangled.GetDemangledName().GetStringRef();
-            if (! demangled_name.empty())
+            ConstString demangled = mangled.GetDemangledName(lldb::eLanguageTypeUnknown);
+            llvm::StringRef demangled_name = demangled.GetStringRef();
+            if (!demangled_name.empty())
                 mangled.SetDemangledName( ConstString((demangled_name + suffix).str()) );
         }
 

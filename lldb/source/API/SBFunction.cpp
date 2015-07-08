@@ -60,7 +60,7 @@ SBFunction::GetName() const
 {
     const char *cstr = NULL;
     if (m_opaque_ptr)
-        cstr = m_opaque_ptr->GetMangled().GetName().AsCString();
+        cstr = m_opaque_ptr->GetName().AsCString();
 
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
@@ -80,7 +80,7 @@ SBFunction::GetDisplayName() const
 {
     const char *cstr = NULL;
     if (m_opaque_ptr)
-    cstr = m_opaque_ptr->GetMangled().GetDisplayDemangledName().AsCString();
+        cstr = m_opaque_ptr->GetMangled().GetDisplayDemangledName(m_opaque_ptr->GetLanguage()).AsCString();
     
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)

@@ -15,6 +15,7 @@
 #include "lldb/Core/ValueObject.h"
 #include "lldb/Core/ValueObjectVariable.h"
 #include "lldb/Symbol/Block.h"
+#include "lldb/Symbol/CompileUnit.h"
 #include "lldb/Symbol/Function.h"
 #include "lldb/Symbol/SymbolContext.h"
 #include "lldb/Symbol/Type.h"
@@ -65,22 +66,51 @@ Variable::~Variable()
 {
 }
 
+lldb::LanguageType
+Variable::GetLanguage () const
+{
+    SymbolContext variable_sc;
+    m_owner_scope->CalculateSymbolContext(&variable_sc);
+    if (variable_sc.comp_unit)
+        return variable_sc.comp_unit->GetLanguage();
+    return lldb::eLanguageTypeUnknown;
+}
 
-const ConstString&
+
+
+ConstString
 Variable::GetName() const
 {
-    const ConstString &name = m_mangled.GetName();
-    if (name)
-        return name;
+    if (m_mangled)
+    {
+        ConstString name = m_mangled.GetName(GetLanguage());
+        if (name)
+            return name;
+    }
     return m_name;
 }
 
+bool
+Variable::NameMatches (const ConstString &name) const
+{
+    if (m_name == name)
+        return true;
+    SymbolContext variable_sc;
+    m_owner_scope->CalculateSymbolContext(&variable_sc);
+
+    LanguageType language = eLanguageTypeUnknown;
+    if (variable_sc.comp_unit)
+        language = variable_sc.comp_unit->GetLanguage();
+    return m_mangled.NameMatches (name, language);
+}
 bool
 Variable::NameMatches (const RegularExpression& regex) const
 {
     if (regex.Execute (m_name.AsCString()))
         return true;
-    return m_mangled.NameMatches (regex);
+    if (m_mangled)
+        return m_mangled.NameMatches (regex, GetLanguage());
+    return false;
 }
 
 Type *

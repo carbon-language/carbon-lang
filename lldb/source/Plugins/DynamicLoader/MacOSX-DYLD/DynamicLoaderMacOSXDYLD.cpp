@@ -1604,7 +1604,7 @@ DynamicLoaderMacOSXDYLD::GetStepThroughTrampolinePlan (Thread &thread, bool stop
         
         if (current_symbol->IsTrampoline())
         {
-            const ConstString &trampoline_name = current_symbol->GetMangled().GetName(Mangled::ePreferMangled);
+            const ConstString &trampoline_name = current_symbol->GetMangled().GetName(current_symbol->GetLanguage(), Mangled::ePreferMangled);
             
             if (trampoline_name)
             {
@@ -1754,7 +1754,7 @@ DynamicLoaderMacOSXDYLD::FindEquivalentSymbols (lldb_private::Symbol *original_s
                                                lldb_private::ModuleList &images, 
                                                lldb_private::SymbolContextList &equivalent_symbols)
 {
-    const ConstString &trampoline_name = original_symbol->GetMangled().GetName(Mangled::ePreferMangled);
+    const ConstString &trampoline_name = original_symbol->GetMangled().GetName(original_symbol->GetLanguage(), Mangled::ePreferMangled);
     if (!trampoline_name)
         return 0;
         

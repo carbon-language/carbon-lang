@@ -430,7 +430,7 @@ ThreadPlanStepOverRange::DoWillResume (lldb::StateType resume_state, bool curren
                             const InlineFunctionInfo *inline_info = frame_block->GetInlinedFunctionInfo();
                             const char *name;
                             if (inline_info)
-                                name = inline_info->GetName().AsCString();
+                                name = inline_info->GetName(frame_block->CalculateSymbolContextFunction()->GetLanguage()).AsCString();
                             else
                                 name = "<unknown-notinlined>";
                             

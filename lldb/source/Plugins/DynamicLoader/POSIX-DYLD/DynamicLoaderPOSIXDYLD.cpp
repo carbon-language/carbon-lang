@@ -458,7 +458,7 @@ DynamicLoaderPOSIXDYLD::GetStepThroughTrampolinePlan(Thread &thread, bool stop)
     if (sym == NULL || !sym->IsTrampoline())
         return thread_plan_sp;
 
-    const ConstString &sym_name = sym->GetMangled().GetName(Mangled::ePreferMangled);
+    ConstString sym_name = sym->GetName();
     if (!sym_name)
         return thread_plan_sp;
 

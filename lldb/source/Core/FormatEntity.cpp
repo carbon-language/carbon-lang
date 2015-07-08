@@ -1666,7 +1666,7 @@ FormatEntity::Format (const Entry &entry,
                             if (inline_info)
                             {
                                 s.PutCString(" [inlined] ");
-                                inline_info->GetName().Dump(&s);
+                                inline_info->GetName(sc->function->GetLanguage()).Dump(&s);
                             }
                         }
                     }
@@ -1679,9 +1679,9 @@ FormatEntity::Format (const Entry &entry,
             {
                 ConstString name;
                 if (sc->function)
-                    name = sc->function->GetMangled().GetName (Mangled::ePreferDemangledWithoutArguments);
+                    name = sc->function->GetNameNoArguments();
                 else if (sc->symbol)
-                    name = sc->symbol->GetMangled().GetName (Mangled::ePreferDemangledWithoutArguments);
+                    name = sc->symbol->GetNameNoArguments();
                 if (name)
                 {
                     s.PutCString(name.GetCString());
@@ -1724,7 +1724,7 @@ FormatEntity::Format (const Entry &entry,
                         {
                             s.PutCString (cstr);
                             s.PutCString (" [inlined] ");
-                            cstr = inline_info->GetName().GetCString();
+                            cstr = inline_info->GetName(sc->function->GetLanguage()).GetCString();
                         }
 
                         VariableList args;

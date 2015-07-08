@@ -113,7 +113,7 @@ SymbolFileDWARFDebugMap::CompileUnitInfo::GetFileRangeMap(SymbolFileDWARFDebugMa
                             // correctly to the new addresses in the main executable.
 
                             // First we find the original symbol in the .o file's symbol table
-                            Symbol *oso_fun_symbol = oso_symtab->FindFirstSymbolWithNameAndType (exe_symbol->GetMangled().GetName(Mangled::ePreferMangled),
+                            Symbol *oso_fun_symbol = oso_symtab->FindFirstSymbolWithNameAndType (exe_symbol->GetMangled().GetName(lldb::eLanguageTypeUnknown, Mangled::ePreferMangled),
                                                                                                  eSymbolTypeCode,
                                                                                                  Symtab::eDebugNo,
                                                                                                  Symtab::eVisibilityAny);
@@ -145,7 +145,7 @@ SymbolFileDWARFDebugMap::CompileUnitInfo::GetFileRangeMap(SymbolFileDWARFDebugMa
                             // sizes from the DWARF info as we are parsing.
 
                             // Next we find the non-stab entry that corresponds to the N_GSYM in the .o file
-                            Symbol *oso_gsym_symbol = oso_symtab->FindFirstSymbolWithNameAndType (exe_symbol->GetMangled().GetName(Mangled::ePreferMangled),
+                            Symbol *oso_gsym_symbol = oso_symtab->FindFirstSymbolWithNameAndType (exe_symbol->GetMangled().GetName(lldb::eLanguageTypeUnknown, Mangled::ePreferMangled),
                                                                                                   eSymbolTypeData,
                                                                                                   Symtab::eDebugNo,
                                                                                                   Symtab::eVisibilityAny);

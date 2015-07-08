@@ -123,7 +123,7 @@ public:
     /// @return
     ///     A const reference to the method name object.
     //------------------------------------------------------------------
-    const ConstString&
+    ConstString
     GetName () const;
 
     //------------------------------------------------------------------
@@ -240,13 +240,13 @@ public:
     Dump(Stream *s, bool show_fullpaths) const;
 
     void
-    DumpStopContext (Stream *s) const;
-
-    const ConstString &
-    GetName () const;
+    DumpStopContext (Stream *s, lldb::LanguageType language) const;
 
     ConstString
-    GetDisplayName () const;
+    GetName (lldb::LanguageType language) const;
+
+    ConstString
+    GetDisplayName (lldb::LanguageType language) const;
     
     //------------------------------------------------------------------
     /// Get accessor for the call site declaration information.
@@ -440,6 +440,8 @@ public:
         return m_range;
     }
 
+    lldb::LanguageType
+    GetLanguage() const;
     //------------------------------------------------------------------
     /// Find the file and line number of the source location of the start
     /// of the function.  This will use the declaration if present and fall
@@ -527,11 +529,11 @@ public:
         return m_frame_base;
     }
 
-    const ConstString &
-    GetName() const
-    {
-        return m_mangled.GetName();
-    }
+    ConstString
+    GetName() const;
+
+    ConstString
+    GetNameNoArguments () const;
     
     ConstString
     GetDisplayName () const;

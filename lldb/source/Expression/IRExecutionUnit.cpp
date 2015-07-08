@@ -373,7 +373,7 @@ IRExecutionUnit::GetRunnableInfo(Error &error,
                 ss.PutCString("\n");
             emitNewLine = true;
             ss.PutCString("  ");
-            ss.PutCString(Mangled(failed_lookup).GetDemangledName().AsCString());
+            ss.PutCString(Mangled(failed_lookup).GetDemangledName(lldb::eLanguageTypeObjC_plus_plus).AsCString());
         }
         
         m_failed_lookups.clear();

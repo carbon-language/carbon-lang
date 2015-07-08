@@ -63,7 +63,7 @@ SBSymbol::GetName() const
 {
     const char *name = NULL;
     if (m_opaque_ptr)
-        name = m_opaque_ptr->GetMangled().GetName().AsCString();
+        name = m_opaque_ptr->GetName().AsCString();
 
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
@@ -77,7 +77,7 @@ SBSymbol::GetDisplayName() const
 {
     const char *name = NULL;
     if (m_opaque_ptr)
-    name = m_opaque_ptr->GetMangled().GetDisplayDemangledName().AsCString();
+        name = m_opaque_ptr->GetMangled().GetDisplayDemangledName(m_opaque_ptr->GetLanguage()).AsCString();
     
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
