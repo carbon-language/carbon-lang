@@ -526,8 +526,5 @@ MSVCToolChain::ComputeEffectiveClangTriple(const ArgList &Args,
 SanitizerMask MSVCToolChain::getSupportedSanitizers() const {
   SanitizerMask Res = ToolChain::getSupportedSanitizers();
   Res |= SanitizerKind::Address;
-  // CFI checks are not implemented for MSVC ABI for now.
-  Res &= ~SanitizerKind::CFI;
-  Res &= ~SanitizerKind::CFICastStrict;
   return Res;
 }

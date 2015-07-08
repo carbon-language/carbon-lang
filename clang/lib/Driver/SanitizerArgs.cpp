@@ -289,8 +289,12 @@ SanitizerArgs::SanitizerArgs(const ToolChain &TC,
   // toolchain. We don't have a good way to check the latter, so we just
   // check if the toolchan supports vptr.
   if (~Supported & Vptr) {
-    if (SanitizerMask KindsToDiagnose =
-            Kinds & ~TrappingKinds & NeedsUbsanCxxRt) {
+    SanitizerMask KindsToDiagnose = Kinds & ~TrappingKinds & NeedsUbsanCxxRt;
+    // The runtime library supports the Microsoft C++ ABI, but only well enough
+    // for CFI. FIXME: Remove this once we support vptr on Windows.
+    if (TC.getTriple().isOSWindows())
+      KindsToDiagnose &= ~CFI;
+    if (KindsToDiagnose) {
       SanitizerSet S;
       S.Mask = KindsToDiagnose;
       D.Diag(diag::err_drv_unsupported_opt_for_target)
