@@ -39,4 +39,5 @@ required_libraries =
  SelectionDAG
  Support
  Target
+ TransformUtils
 add_to_library_groups = Hexagon
