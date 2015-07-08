@@ -375,17 +375,6 @@ void Writer::assignAddresses() {
              RoundUpToAlignment(FileOff - SizeOfHeaders, FileAlignment);
 }
 
-static MachineTypes
-inferMachineType(const std::vector<ObjectFile *> &Files) {
-  for (ObjectFile *F : Files) {
-    // Try to infer machine type from the magic byte of the object file.
-    auto MT = static_cast<MachineTypes>(F->getCOFFObj()->getMachine());
-    if (MT != IMAGE_FILE_MACHINE_UNKNOWN)
-      return MT;
-  }
-  return IMAGE_FILE_MACHINE_UNKNOWN;
-}
-
 template <typename PEHeaderTy> void Writer::writeHeader() {
   // Write DOS stub
   uint8_t *Buf = Buffer->getBufferStart();
@@ -400,15 +389,10 @@ template <typename PEHeaderTy> void Writer::writeHeader() {
   memcpy(Buf, PEMagic, sizeof(PEMagic));
   Buf += sizeof(PEMagic);
 
-  // Determine machine type, infer if needed. TODO: diagnose conflicts.
-  MachineTypes MachineType = Config->MachineType;
-  if (MachineType == IMAGE_FILE_MACHINE_UNKNOWN)
-    MachineType = inferMachineType(Symtab->ObjectFiles);
-
   // Write COFF header
   auto *COFF = reinterpret_cast<coff_file_header *>(Buf);
   Buf += sizeof(*COFF);
-  COFF->Machine = MachineType;
+  COFF->Machine = Config->MachineType;
   COFF->NumberOfSections = OutputSections.size();
   COFF->Characteristics = IMAGE_FILE_EXECUTABLE_IMAGE;
   if (Is64)
