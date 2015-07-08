@@ -134,8 +134,6 @@ void MIParser::lex() {
 bool MIParser::error(const Twine &Msg) { return error(Token.location(), Msg); }
 
 bool MIParser::error(StringRef::iterator Loc, const Twine &Msg) {
-  // TODO: Get the proper location in the MIR file, not just a location inside
-  // the string.
   assert(Loc >= Source.data() && Loc <= (Source.data() + Source.size()));
   Error = SMDiagnostic(
       SM, SMLoc(),
