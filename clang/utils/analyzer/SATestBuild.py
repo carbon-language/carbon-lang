@@ -16,6 +16,7 @@ Repository Directory structure:
    - Project Dir2
      - ReferenceOutput
    ..
+Note that the build tree must be inside the project dir.
 
 To test the build of the analyzer one would:
    - Copy over a copy of the Repository Directory. (TODO: Prefer to ensure that 
@@ -337,6 +338,18 @@ def buildProject(Dir, SBOutputDir, ProjectBuildMode, IsReferenceBuild):
         
         if IsReferenceBuild :
             runCleanupScript(Dir, PBuildLogFile)
+
+            # Make the absolute paths relative in the reference results.
+            for (DirPath, Dirnames, Filenames) in os.walk(SBOutputDir):
+                for F in Filenames:
+                    if (not F.endswith('plist')):
+                        continue
+                    Plist = os.path.join(DirPath, F)
+                    Data = plistlib.readPlist(Plist)
+                    Paths = [SourceFile[len(Dir)+1:] if SourceFile.startswith(Dir)\
+                            else SourceFile for SourceFile in Data['files']]
+                    Data['files'] = Paths
+                    plistlib.writePlist(Data, Plist)
            
     finally:
         PBuildLogFile.close()
@@ -450,7 +463,7 @@ def runCmpResults(Dir, Strictness = 0):
             print "  Comparing Results: %s %s" % (RefDir, NewDir)
     
         DiffsPath = os.path.join(NewDir, DiffsSummaryFileName)
-        Opts = CmpRuns.CmpOptions(DiffsPath)
+        Opts = CmpRuns.CmpOptions(DiffsPath, "", Dir)
         # Discard everything coming out of stdout (CmpRun produces a lot of them).
         OLD_STDOUT = sys.stdout
         sys.stdout = Discarder()
