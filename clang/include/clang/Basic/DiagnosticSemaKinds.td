@@ -7808,9 +7808,6 @@ def err_objc_type_arg_missing_star : Error<
 def err_objc_type_arg_missing : Error<
   "no type or protocol named %0">;
 
-def err_objc_protocol_suggest : Error<
-  "no protocol named %0: did you mean %1?">;
-
 def err_objc_type_args_and_protocols : Error<
   "angle brackets contain both a %select{type|protocol}0 (%1) and a "
   "%select{protocol|type}0 (%2)">;
