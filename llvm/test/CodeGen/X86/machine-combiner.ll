@@ -144,3 +144,24 @@ define float @reassociate_adds6(float %x0, float %x1, float %x2, float %x3) {
   ret float %t2
 }
 
+; Verify that SSE and AVX scalar single precison multiplies are reassociated.
+
+define float @reassociate_muls1(float %x0, float %x1, float %x2, float %x3) {
+; SSE-LABEL: reassociate_muls1:
+; SSE:       # BB#0:
+; SSE-NEXT:    divss %xmm1, %xmm0
+; SSE-NEXT:    mulss %xmm3, %xmm2
+; SSE-NEXT:    mulss %xmm2, %xmm0
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: reassociate_muls1:
+; AVX:       # BB#0:
+; AVX-NEXT:    vdivss %xmm1, %xmm0, %xmm0
+; AVX-NEXT:    vmulss %xmm3, %xmm2, %xmm1
+; AVX-NEXT:    vmulss %xmm1, %xmm0, %xmm0
+; AVX-NEXT:    retq
+  %t0 = fdiv float %x0, %x1
+  %t1 = fmul float %x2, %t0
+  %t2 = fmul float %x3, %t1
+  ret float %t2
+}

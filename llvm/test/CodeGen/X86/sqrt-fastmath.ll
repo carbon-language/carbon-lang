@@ -34,11 +34,11 @@ define float @ff(float %f) #0 {
 ; ESTIMATE:       # BB#0:
 ; ESTIMATE-NEXT:    vrsqrtss %xmm0, %xmm0, %xmm1
 ; ESTIMATE-NEXT:    vmulss {{.*}}(%rip), %xmm1, %xmm2
-; ESTIMATE-NEXT:    vmulss %xmm1, %xmm1, %xmm1
-; ESTIMATE-NEXT:    vmulss %xmm0, %xmm1, %xmm1
+; ESTIMATE-NEXT:    vmulss %xmm0, %xmm1, %xmm3
+; ESTIMATE-NEXT:    vmulss %xmm3, %xmm1, %xmm1
 ; ESTIMATE-NEXT:    vaddss {{.*}}(%rip), %xmm1, %xmm1
+; ESTIMATE-NEXT:    vmulss %xmm0, %xmm2, %xmm2
 ; ESTIMATE-NEXT:    vmulss %xmm2, %xmm1, %xmm1
-; ESTIMATE-NEXT:    vmulss %xmm1, %xmm0, %xmm1
 ; ESTIMATE-NEXT:    vxorps %xmm2, %xmm2, %xmm2
 ; ESTIMATE-NEXT:    vcmpeqss %xmm2, %xmm0, %xmm0
 ; ESTIMATE-NEXT:    vandnps %xmm1, %xmm0, %xmm0
@@ -78,7 +78,7 @@ define float @reciprocal_square_root(float %x) #0 {
 ; ESTIMATE:       # BB#0:
 ; ESTIMATE-NEXT:    vrsqrtss %xmm0, %xmm0, %xmm1
 ; ESTIMATE-NEXT:    vmulss {{.*}}(%rip), %xmm1, %xmm2
-; ESTIMATE-NEXT:    vmulss %xmm1, %xmm1, %xmm1
+; ESTIMATE-NEXT:    vmulss %xmm0, %xmm1, %xmm0
 ; ESTIMATE-NEXT:    vmulss %xmm0, %xmm1, %xmm0
 ; ESTIMATE-NEXT:    vaddss {{.*}}(%rip), %xmm0, %xmm0
 ; ESTIMATE-NEXT:    vmulss %xmm2, %xmm0, %xmm0

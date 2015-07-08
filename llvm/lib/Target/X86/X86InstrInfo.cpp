@@ -6405,11 +6405,13 @@ static bool hasReassocSibling(const MachineInstr &Inst, bool &Commuted) {
 
 // TODO: There are many more machine instruction opcodes to match:
 //       1. Other data types (double, integer, vectors)
-//       2. Other math / logic operations (mul, and, or)
+//       2. Other math / logic operations (and, or)
 static bool isAssociativeAndCommutative(unsigned Opcode) {
   switch (Opcode) {
-  case X86::VADDSSrr:
   case X86::ADDSSrr:
+  case X86::VADDSSrr:
+  case X86::MULSSrr:
+  case X86::VMULSSrr:
     return true;
   default:
     return false;

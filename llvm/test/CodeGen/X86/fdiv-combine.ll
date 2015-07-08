@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=x86_64-unknown-unknown | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mcpu=x86-64 | FileCheck %s
 
 ; Anything more than one division using a single divisor operand
 ; should be converted into a reciprocal and multiplication.
@@ -17,8 +17,8 @@ define float @div2_arcp(float %x, float %y, float %z) #0 {
 ; CHECK:       # BB#0:
 ; CHECK-NEXT:    movss {{.*#+}} xmm3 = mem[0],zero,zero,zero
 ; CHECK-NEXT:    divss %xmm2, %xmm3
-; CHECK-NEXT:    mulss %xmm3, %xmm0
 ; CHECK-NEXT:    mulss %xmm1, %xmm0
+; CHECK-NEXT:    mulss %xmm3, %xmm0
 ; CHECK-NEXT:    mulss %xmm3, %xmm0
 ; CHECK-NEXT:    retq
   %div1 = fdiv arcp float %x, %z
