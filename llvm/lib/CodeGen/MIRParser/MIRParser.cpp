@@ -60,6 +60,11 @@ public:
   /// Always returns true.
   bool error(const Twine &Message);
 
+  /// Report an error with the given message at the given location.
+  ///
+  /// Always returns true.
+  bool error(SMLoc Loc, const Twine &Message);
+
   /// Report a given error with the location translated from the location in an
   /// embedded string literal to a location in the MIR file.
   ///
@@ -121,6 +126,12 @@ MIRParserImpl::MIRParserImpl(std::unique_ptr<MemoryBuffer> Contents,
 bool MIRParserImpl::error(const Twine &Message) {
   Context.diagnose(DiagnosticInfoMIRParser(
       DS_Error, SMDiagnostic(Filename, SourceMgr::DK_Error, Message.str())));
+  return true;
+}
+
+bool MIRParserImpl::error(SMLoc Loc, const Twine &Message) {
+  Context.diagnose(DiagnosticInfoMIRParser(
+      DS_Error, SM.GetMessage(Loc, SourceMgr::DK_Error, Message)));
   return true;
 }
 
@@ -239,12 +250,15 @@ bool MIRParserImpl::initializeMachineFunction(MachineFunction &MF) {
   const auto &F = *MF.getFunction();
   for (const auto &YamlMBB : YamlMF.BasicBlocks) {
     const BasicBlock *BB = nullptr;
-    if (!YamlMBB.Name.empty()) {
+    const yaml::StringValue &Name = YamlMBB.Name;
+    if (!Name.Value.empty()) {
       BB = dyn_cast_or_null<BasicBlock>(
-          F.getValueSymbolTable().lookup(YamlMBB.Name));
+          F.getValueSymbolTable().lookup(Name.Value));
       if (!BB)
-        return error(Twine("basic block '") + YamlMBB.Name +
-                     "' is not defined in the function '" + MF.getName() + "'");
+        return error(Name.SourceRange.Start,
+                     Twine("basic block '") + Name.Value +
+                         "' is not defined in the function '" + MF.getName() +
+                         "'");
     }
     auto *MBB = MF.CreateMachineBasicBlock(BB);
     MF.insert(MF.end(), MBB);

@@ -127,9 +127,9 @@ void MIRPrinter::convert(ModuleSlotTracker &MST,
   YamlMBB.ID = (unsigned)MBB.getNumber();
   // TODO: Serialize unnamed BB references.
   if (const auto *BB = MBB.getBasicBlock())
-    YamlMBB.Name = BB->hasName() ? BB->getName() : "<unnamed bb>";
+    YamlMBB.Name.Value = BB->hasName() ? BB->getName() : "<unnamed bb>";
   else
-    YamlMBB.Name = "";
+    YamlMBB.Name.Value = "";
   YamlMBB.Alignment = MBB.getAlignment();
   YamlMBB.AddressTaken = MBB.hasAddressTaken();
   YamlMBB.IsLandingPad = MBB.isLandingPad();

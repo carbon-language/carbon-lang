@@ -83,7 +83,7 @@ namespace yaml {
 
 struct MachineBasicBlock {
   unsigned ID;
-  std::string Name;
+  StringValue Name;
   unsigned Alignment = 0;
   bool IsLandingPad = false;
   bool AddressTaken = false;
@@ -97,7 +97,7 @@ template <> struct MappingTraits<MachineBasicBlock> {
   static void mapping(IO &YamlIO, MachineBasicBlock &MBB) {
     YamlIO.mapRequired("id", MBB.ID);
     YamlIO.mapOptional("name", MBB.Name,
-                       std::string()); // Don't print out an empty name.
+                       StringValue()); // Don't print out an empty name.
     YamlIO.mapOptional("alignment", MBB.Alignment);
     YamlIO.mapOptional("isLandingPad", MBB.IsLandingPad);
     YamlIO.mapOptional("addressTaken", MBB.AddressTaken);

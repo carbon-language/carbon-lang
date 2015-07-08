@@ -13,7 +13,7 @@
 ---
 name:            foo
 body:
-  # CHECK: basic block 'entrie' is not defined in the function 'foo'
+  # CHECK: [[@LINE+2]]:18: basic block 'entrie' is not defined in the function 'foo'
   - id:          0
     name:        entrie
 ...
