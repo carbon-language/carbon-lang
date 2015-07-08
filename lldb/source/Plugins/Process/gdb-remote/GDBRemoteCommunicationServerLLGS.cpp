@@ -218,7 +218,7 @@ GDBRemoteCommunicationServerLLGS::LaunchProcess ()
     {
         Mutex::Locker locker (m_debugged_process_mutex);
         assert (!m_debugged_process_sp && "lldb-gdbserver creating debugged process but one already exists");
-        error = m_platform_sp->LaunchNativeProcess (
+        error = NativeProcessProtocol::Launch(
             m_process_launch_info,
             *this,
             m_debugged_process_sp);
@@ -306,7 +306,7 @@ GDBRemoteCommunicationServerLLGS::AttachToProcess (lldb::pid_t pid)
         }
 
         // Try to attach.
-        error = m_platform_sp->AttachNativeProcess (pid, *this, m_debugged_process_sp);
+        error = NativeProcessProtocol::Attach(pid, *this, m_debugged_process_sp);
         if (!error.Success ())
         {
             fprintf (stderr, "%s: failed to attach to process %" PRIu64 ": %s", __FUNCTION__, pid, error.AsCString ());
