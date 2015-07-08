@@ -34,13 +34,11 @@ void doICF(const std::vector<Chunk *> &Chunks);
 // non-overlapping file offsets and RVAs.
 class OutputSection {
 public:
-  OutputSection(StringRef N, uint32_t SI)
-      : Name(N), SectionIndex(SI), Header({}) {}
+  OutputSection(StringRef N) : Name(N), Header({}) {}
   void setRVA(uint64_t);
   void setFileOffset(uint64_t);
   void addChunk(Chunk *C);
   StringRef getName() { return Name; }
-  uint64_t getSectionIndex() { return SectionIndex; }
   std::vector<Chunk *> &getChunks() { return Chunks; }
   void addPermissions(uint32_t C);
   uint32_t getPermissions() { return Header.Characteristics & PermMask; }
@@ -63,9 +61,11 @@ public:
   // Used only when the name is longer than 8 bytes.
   void setStringTableOff(uint32_t V) { StringTableOff = V; }
 
+  // N.B. The section index is one based.
+  uint32_t SectionIndex = 0;
+
 private:
   StringRef Name;
-  uint32_t SectionIndex;
   coff_section Header;
   uint32_t StringTableOff = 0;
   std::vector<Chunk *> Chunks;
@@ -86,6 +86,8 @@ private:
   void createExportTable();
   void assignAddresses();
   void removeEmptySections();
+  void createSymbolAndStringTable();
+  size_t addEntryToStringTable(StringRef Str);
   std::error_code openFile(StringRef OutputPath);
   template <typename PEHeaderTy> void writeHeader();
   void writeSections();
@@ -105,12 +107,15 @@ private:
   llvm::SpecificBumpPtrAllocator<OutputSection> CAlloc;
   llvm::SpecificBumpPtrAllocator<BaserelChunk> BAlloc;
   std::vector<OutputSection *> OutputSections;
+  std::vector<char> Strtab;
+  std::vector<llvm::object::coff_symbol16> OutputSymtab;
   IdataContents Idata;
   DelayLoadContents DelayIdata;
   EdataContents Edata;
 
   bool Is64;
   uint64_t FileSize;
+  uint32_t PointerToSymbolTable = 0;
   uint64_t SizeOfImage;
   uint64_t SizeOfHeaders;
 

@@ -50,6 +50,7 @@ std::error_code Writer::write(StringRef OutputPath) {
     createSection(".reloc");
   assignAddresses();
   removeEmptySections();
+  createSymbolAndStringTable();
   if (auto EC = openFile(OutputPath))
     return EC;
   if (Is64) {
@@ -104,8 +105,9 @@ void OutputSection::writeHeaderTo(uint8_t *Buf) {
     // If name is too long, write offset into the string table as a name.
     sprintf(Hdr->Name, "/%d", StringTableOff);
   } else {
-    assert(Name.size() <= COFF::NameSize);
-    strncpy(Hdr->Name, Name.data(), Name.size());
+    assert(!Config->Debug || Name.size() <= COFF::NameSize);
+    strncpy(Hdr->Name, Name.data(),
+            std::min(Name.size(), (size_t)COFF::NameSize));
   }
 }
 
@@ -200,8 +202,7 @@ void Writer::createSections() {
     StringRef Name = getOutputSection(Pair.first);
     OutputSection *&Sec = Sections[Name];
     if (!Sec) {
-      size_t SectIdx = OutputSections.size();
-      Sec = new (CAlloc.Allocate()) OutputSection(Name, SectIdx);
+      Sec = new (CAlloc.Allocate()) OutputSection(Name);
       OutputSections.push_back(Sec);
     }
     std::vector<Chunk *> &Chunks = Pair.second;
@@ -280,6 +281,75 @@ void Writer::removeEmptySections() {
   OutputSections.erase(
       std::remove_if(OutputSections.begin(), OutputSections.end(), IsEmpty),
       OutputSections.end());
+  uint32_t Idx = 1;
+  for (OutputSection *Sec : OutputSections)
+    Sec->SectionIndex = Idx++;
+}
+
+size_t Writer::addEntryToStringTable(StringRef Str) {
+  assert(Str.size() > COFF::NameSize);
+  size_t OffsetOfEntry = Strtab.size() + 4; // +4 for the size field
+  Strtab.insert(Strtab.end(), Str.begin(), Str.end());
+  Strtab.push_back('\0');
+  return OffsetOfEntry;
+}
+
+void Writer::createSymbolAndStringTable() {
+  if (!Config->Debug)
+    return;
+  // Name field in the section table is 8 byte long. Longer names need
+  // to be written to the string table. First, construct string table.
+  for (OutputSection *Sec : OutputSections) {
+    StringRef Name = Sec->getName();
+    if (Name.size() <= COFF::NameSize)
+      continue;
+    Sec->setStringTableOff(addEntryToStringTable(Name));
+  }
+  for (ObjectFile *File : Symtab->ObjectFiles) {
+    for (SymbolBody *B : File->getSymbols()) {
+      auto *D = dyn_cast<DefinedRegular>(B);
+      if (!D || !D->isLive())
+        continue;
+      uint64_t RVA = D->getRVA();
+      OutputSection *SymSec = nullptr;
+      for (OutputSection *Sec : OutputSections) {
+        if (Sec->getRVA() > RVA)
+          break;
+        SymSec = Sec;
+      }
+      uint64_t SectionRVA = SymSec->getRVA();
+      uint64_t SymbolValue = RVA - SectionRVA;
+
+      StringRef Name = D->getName();
+      coff_symbol16 Sym;
+      if (Name.size() > COFF::NameSize) {
+        Sym.Name.Offset.Zeroes = 0;
+        Sym.Name.Offset.Offset = addEntryToStringTable(Name);
+      } else {
+        memset(Sym.Name.ShortName, 0, COFF::NameSize);
+        memcpy(Sym.Name.ShortName, Name.data(), Name.size());
+      }
+
+      Sym.Value = SymbolValue;
+      Sym.SectionNumber = SymSec->SectionIndex;
+      Sym.StorageClass = IMAGE_SYM_CLASS_NULL;
+      Sym.NumberOfAuxSymbols = 0;
+      OutputSymtab.push_back(Sym);
+    }
+  }
+  OutputSection *LastSection = OutputSections.back();
+  // We position the symbol table to be adjacent to the end of the last section.
+  uint64_t FileOff =
+      LastSection->getFileOff() +
+      RoundUpToAlignment(LastSection->getRawSize(), FileAlignment);
+  if (!OutputSymtab.empty()) {
+    PointerToSymbolTable = FileOff;
+    FileOff += OutputSymtab.size() * sizeof(coff_symbol16);
+  }
+  if (!Strtab.empty())
+    FileOff += Strtab.size() + 4;
+  FileSize = SizeOfHeaders +
+             RoundUpToAlignment(FileOff - SizeOfHeaders, FileAlignment);
 }
 
 // Visits all sections to assign incremental, non-overlapping RVAs and
@@ -430,39 +500,25 @@ template <typename PEHeaderTy> void Writer::writeHeader() {
     }
   }
 
-  // Section table
-  // Name field in the section table is 8 byte long. Longer names need
-  // to be written to the string table. First, construct string table.
-  std::vector<char> Strtab;
-  for (OutputSection *Sec : OutputSections) {
-    StringRef Name = Sec->getName();
-    if (Name.size() <= COFF::NameSize)
-      continue;
-    Sec->setStringTableOff(Strtab.size() + 4); // +4 for the size field
-    Strtab.insert(Strtab.end(), Name.begin(), Name.end());
-    Strtab.push_back('\0');
-  }
-
   // Write section table
   for (OutputSection *Sec : OutputSections) {
     Sec->writeHeaderTo(Buf);
     Buf += sizeof(coff_section);
   }
 
-  // Write string table if we need to. The string table immediately
-  // follows the symbol table, so we create a dummy symbol table
-  // first. The symbol table contains one dummy symbol.
-  if (Strtab.empty())
+  if (OutputSymtab.empty())
     return;
-  COFF->PointerToSymbolTable = Buf - Buffer->getBufferStart();
-  COFF->NumberOfSymbols = 1;
-  auto *SymbolTable = reinterpret_cast<coff_symbol16 *>(Buf);
-  Buf += sizeof(*SymbolTable);
-  // (Set 4 to make the dummy symbol point to the first string table
-  // entry, so that tools to print out symbols don't read NUL bytes.)
-  SymbolTable->Name.Offset.Offset = 4;
-  // Then create the symbol table. The first 4 bytes is length
-  // including itself.
+
+  COFF->PointerToSymbolTable = PointerToSymbolTable;
+  uint32_t NumberOfSymbols = OutputSymtab.size();
+  COFF->NumberOfSymbols = NumberOfSymbols;
+  auto *SymbolTable = reinterpret_cast<coff_symbol16 *>(
+      Buffer->getBufferStart() + COFF->PointerToSymbolTable);
+  for (size_t I = 0; I != NumberOfSymbols; ++I)
+    SymbolTable[I] = OutputSymtab[I];
+  // Create the string table, it follows immediately after the symbol table.
+  // The first 4 bytes is length including itself.
+  Buf = reinterpret_cast<uint8_t *>(&SymbolTable[NumberOfSymbols]);
   write32le(Buf, Strtab.size() + 4);
   memcpy(Buf + 4, Strtab.data(), Strtab.size());
 }
@@ -540,8 +596,7 @@ OutputSection *Writer::createSection(StringRef Name) {
                        .Default(0);
   if (!Perms)
     llvm_unreachable("unknown section name");
-  size_t SectIdx = OutputSections.size();
-  auto Sec = new (CAlloc.Allocate()) OutputSection(Name, SectIdx);
+  auto Sec = new (CAlloc.Allocate()) OutputSection(Name);
   Sec->addPermissions(Perms);
   OutputSections.push_back(Sec);
   return Sec;

@@ -1,0 +1,84 @@
+# RUN: yaml2obj < %s > %t.obj
+# RUN: lld -flavor link2 /debug /out:%t.exe /entry:main %t.obj
+# RUN: llvm-readobj -symbols %t.exe | FileCheck %s
+
+# CHECK:      Symbols [
+# CHECK-NEXT:   Symbol {
+# CHECK-NEXT:     Name: .text
+# CHECK-NEXT:     Value: 0
+# CHECK-NEXT:     Section: .text
+# CHECK-NEXT:     BaseType: Null (0x0)
+# CHECK-NEXT:     ComplexType: Null (0x0)
+# CHECK-NEXT:     StorageClass: Null (0x0)
+# CHECK-NEXT:     AuxSymbolCount: 0
+# CHECK-NEXT:   }
+# CHECK-NEXT:   Symbol {
+# CHECK-NEXT:     Name: f
+# CHECK-NEXT:     Value: 2
+# CHECK-NEXT:     Section: .text
+# CHECK-NEXT:     BaseType: Null (0x0)
+# CHECK-NEXT:     ComplexType: Null (0x0)
+# CHECK-NEXT:     StorageClass: Null (0x0)
+# CHECK-NEXT:     AuxSymbolCount: 0
+# CHECK-NEXT:   }
+# CHECK-NEXT:   Symbol {
+# CHECK-NEXT:     Name: g
+# CHECK-NEXT:     Value: 4
+# CHECK-NEXT:     Section: .text
+# CHECK-NEXT:     BaseType: Null (0x0)
+# CHECK-NEXT:     ComplexType: Null (0x0)
+# CHECK-NEXT:     StorageClass: Null (0x0)
+# CHECK-NEXT:     AuxSymbolCount: 0
+# CHECK-NEXT:   }
+# CHECK-NEXT:   Symbol {
+# CHECK-NEXT:     Name: main
+# CHECK-NEXT:     Value: 0
+# CHECK-NEXT:     Section: .text
+# CHECK-NEXT:     BaseType: Null (0x0)
+# CHECK-NEXT:     ComplexType: Null (0x0)
+# CHECK-NEXT:     StorageClass: Null (0x0)
+# CHECK-NEXT:     AuxSymbolCount: 0
+# CHECK-NEXT:   }
+# CHECK-NEXT: ]
+
+---
+header:
+  Machine:         IMAGE_FILE_MACHINE_AMD64
+  Characteristics: [  ]
+sections:
+  - Name:            .text
+    Characteristics: [ IMAGE_SCN_CNT_CODE, IMAGE_SCN_MEM_EXECUTE, IMAGE_SCN_MEM_READ ]
+    Alignment:       4
+    SectionData:     B82A00
+symbols:
+  - Name:            .text
+    Value:           0
+    SectionNumber:   1
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_NULL
+    StorageClass:    IMAGE_SYM_CLASS_STATIC
+    SectionDefinition:
+      Length:          6
+      NumberOfRelocations: 0
+      NumberOfLinenumbers: 0
+      CheckSum:        0
+      Number:          0
+  - Name:            f
+    Value:           2
+    SectionNumber:   1
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_NULL
+    StorageClass:    IMAGE_SYM_CLASS_EXTERNAL
+  - Name:            g
+    Value:           4
+    SectionNumber:   1
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_NULL
+    StorageClass:    IMAGE_SYM_CLASS_EXTERNAL
+  - Name:            main
+    Value:           0
+    SectionNumber:   1
+    SimpleType:      IMAGE_SYM_TYPE_NULL
+    ComplexType:     IMAGE_SYM_DTYPE_NULL
+    StorageClass:    IMAGE_SYM_CLASS_EXTERNAL
+...

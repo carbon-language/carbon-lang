@@ -60,7 +60,7 @@ void SectionChunk::applyRelX64(uint8_t *Off, uint16_t Type, uint64_t S,
   case IMAGE_REL_AMD64_REL32_3:  add32(Off, S - P - 7); break;
   case IMAGE_REL_AMD64_REL32_4:  add32(Off, S - P - 8); break;
   case IMAGE_REL_AMD64_REL32_5:  add32(Off, S - P - 9); break;
-  case IMAGE_REL_AMD64_SECTION:  add16(Off, Out->getSectionIndex() + 1); break;
+  case IMAGE_REL_AMD64_SECTION:  add16(Off, Out->SectionIndex); break;
   case IMAGE_REL_AMD64_SECREL:   add32(Off, S - Out->getRVA()); break;
   default:
     llvm::report_fatal_error("Unsupported relocation type");
@@ -74,7 +74,7 @@ void SectionChunk::applyRelX86(uint8_t *Off, uint16_t Type, uint64_t S,
   case IMAGE_REL_I386_DIR32:    add32(Off, S + Config->ImageBase); break;
   case IMAGE_REL_I386_DIR32NB:  add32(Off, S); break;
   case IMAGE_REL_I386_REL32:    add32(Off, S - P - 4); break;
-  case IMAGE_REL_I386_SECTION:  add16(Off, Out->getSectionIndex() + 1); break;
+  case IMAGE_REL_I386_SECTION:  add16(Off, Out->SectionIndex); break;
   case IMAGE_REL_I386_SECREL:   add32(Off, S - Out->getRVA()); break;
   default:
     llvm::report_fatal_error("Unsupported relocation type");

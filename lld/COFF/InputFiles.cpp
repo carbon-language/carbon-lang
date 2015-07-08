@@ -141,7 +141,8 @@ std::error_code ObjectFile::initializeChunks() {
       Directives = std::string((const char *)Data.data(), Data.size());
       continue;
     }
-    if (Name.startswith(".debug"))
+    // We want to preserve DWARF debug sections only when /debug is on.
+    if (!Config->Debug && Name.startswith(".debug"))
       continue;
     if (Sec->Characteristics & llvm::COFF::IMAGE_SCN_LNK_REMOVE)
       continue;
