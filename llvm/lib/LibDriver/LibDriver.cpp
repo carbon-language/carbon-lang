@@ -56,17 +56,13 @@ public:
 
 }
 
-static std::string getOutputPath(llvm::opt::InputArgList *Args) {
+static std::string getOutputPath(llvm::opt::InputArgList *Args,
+                                 const llvm::NewArchiveIterator &FirstMember) {
   if (auto *Arg = Args->getLastArg(OPT_out))
     return Arg->getValue();
-  for (auto *Arg : Args->filtered(OPT_INPUT)) {
-    if (!StringRef(Arg->getValue()).endswith_lower(".obj"))
-      continue;
-    SmallString<128> Val = StringRef(Arg->getValue());
-    llvm::sys::path::replace_extension(Val, ".lib");
-    return Val.str();
-  }
-  llvm_unreachable("internal error");
+  SmallString<128> Val = FirstMember.getNew();
+  llvm::sys::path::replace_extension(Val, ".lib");
+  return Val.str();
 }
 
 static std::vector<StringRef> getSearchPaths(llvm::opt::InputArgList *Args,
@@ -143,8 +139,8 @@ int llvm::libDriverMain(llvm::ArrayRef<const char*> ArgsArr) {
                          llvm::sys::path::filename(Arg->getValue()));
   }
 
-  std::pair<StringRef, std::error_code> Result =
-      llvm::writeArchive(getOutputPath(&Args), Members, /*WriteSymtab=*/true);
+  std::pair<StringRef, std::error_code> Result = llvm::writeArchive(
+      getOutputPath(&Args, Members[0]), Members, /*WriteSymtab=*/true);
   if (Result.second) {
     if (Result.first.empty())
       Result.first = ArgsArr[0];

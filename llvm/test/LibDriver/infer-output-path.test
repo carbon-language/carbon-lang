@@ -1,0 +1,15 @@
+RUN: llvm-mc -triple=x86_64-pc-windows-msvc -filetype=obj -o %T/a.obj %S/Inputs/a.s
+RUN: llvm-mc -triple=x86_64-pc-windows-msvc -filetype=obj -o %T/b.o %S/Inputs/b.s
+RUN: llvm-mc -triple=x86_64-pc-windows-msvc -filetype=obj -o %T/c %S/Inputs/b.s
+
+RUN: rm -f %T/a.lib
+RUN: llvm-lib %T/a.obj
+RUN: test -e %T/a.lib
+
+RUN: rm -f %T/b.lib
+RUN: llvm-lib /libpath:%T b.o
+RUN: test -e %T/b.lib
+
+RUN: rm -f %T/c.lib
+RUN: llvm-lib /libpath:%T c
+RUN: test -e %T/c.lib
