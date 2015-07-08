@@ -69,10 +69,6 @@
 //    -coverage-check-only
 //          Only do the coverage check.
 //
-// Note that because modularize does not use the clang driver,
-// you will likely need to pass in additional compiler front-end
-// arguments to match those passed in by default by the driver.
-//
 // Note that by default, the modularize assumes .h files contain C++ source.
 // If your .h files in the file list contain another language, you should
 // append an appropriate -x option to your command line, i.e.:  -x c
@@ -330,7 +326,7 @@ static std::string findInputFile(const CommandLineArguments &CLArgs) {
 }
 
 // This arguments adjuster inserts "-include (file)" arguments for header
-// dependencies.  It also insertts a "-w" option and a "-x c++",
+// dependencies.  It also inserts a "-w" option and a "-x c++",
 // if no other "-x" option is present.
 static ArgumentsAdjuster
 getModularizeArgumentsAdjuster(DependencyMap &Dependencies) {
