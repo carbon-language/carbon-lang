@@ -18,6 +18,7 @@
 #include "lldb/Host/HostInfo.h"
 #include "lldb/Symbol/CompileUnit.h"
 #include "lldb/Target/Target.h"
+#include "lldb/Utility/LLDBAssert.h"
 
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Frontend/CompilerInstance.h"
@@ -444,18 +445,18 @@ ClangModulesDeclVendorImpl::ForEachMacro(const ClangModulesDeclVendor::ModuleVec
         }
         
         ssize_t found_priority = -1;
-        clang::MacroInfo *info = nullptr;
+        clang::MacroInfo *macro_info = nullptr;
         
-        for (clang::ModuleMacro *macro : m_compiler_instance->getPreprocessor().getLeafModuleMacros(ii))
+        for (clang::ModuleMacro *module_macro : m_compiler_instance->getPreprocessor().getLeafModuleMacros(ii))
         {
-            clang::Module *module = macro->getOwningModule();
+            clang::Module *module = module_macro->getOwningModule();
             
             {
                 ModulePriorityMap::iterator pi = module_priorities.find(reinterpret_cast<ModuleID>(module));
                 
                 if (pi != module_priorities.end() && pi->second > found_priority)
                 {
-                    info = macro->getMacroInfo();
+                    macro_info = module_macro->getMacroInfo();
                     found_priority = pi->second;
                 }
             }
@@ -465,26 +466,20 @@ ClangModulesDeclVendorImpl::ForEachMacro(const ClangModulesDeclVendor::ModuleVec
             if (top_level_module != module)
             {
                 ModulePriorityMap::iterator pi = module_priorities.find(reinterpret_cast<ModuleID>(top_level_module));
-
+                
                 if ((pi != module_priorities.end()) && pi->second > found_priority)
                 {
-                    info = macro->getMacroInfo();
+                    macro_info = module_macro->getMacroInfo();
                     found_priority = pi->second;
                 }
             }
         }
         
-        if (!info)
+        if (macro_info)
         {
-            continue;
-        }
-        
-        if (mi->second.getLatest()->getKind() == clang::MacroDirective::MD_Define)
-        {            
             std::string macro_expansion = "#define ";
             macro_expansion.append(mi->first->getName().str().c_str());
-                
-            if (clang::MacroInfo *macro_info = mi->second.getLatest()->getMacroInfo())
+            
             {
                 if (macro_info->isFunctionLike())
                 {
@@ -560,9 +555,7 @@ ClangModulesDeclVendorImpl::ForEachMacro(const ClangModulesDeclVendor::ModuleVec
                             
                             if (invalid)
                             {
-#ifdef LLDB_CONFIGURATION_DEBUG
-                                assert(!"Unhandled token kind");
-#endif
+                                lldbassert(!"Unhandled token kind");
                                 macro_expansion.append("<unknown literal value>");
                             }
                             else
@@ -594,17 +587,11 @@ ClangModulesDeclVendorImpl::ForEachMacro(const ClangModulesDeclVendor::ModuleVec
                         }
                     }
                 }
-            }
-            else
-            {
-#ifdef LLDB_CONFIGURATION_DEBUG
-                assert(!"#define with no macro info");
-#endif
-            }
-            
-            if (handler(macro_expansion))
-            {
-                return;
+                
+                if (handler(macro_expansion))
+                {
+                    return;
+                }
             }
         }
     }
