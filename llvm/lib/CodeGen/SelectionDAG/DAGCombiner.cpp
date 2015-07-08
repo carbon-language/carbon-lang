@@ -8406,30 +8406,29 @@ SDValue DAGCombiner::visitFREM(SDNode *N) {
 }
 
 SDValue DAGCombiner::visitFSQRT(SDNode *N) {
-  if (DAG.getTarget().Options.UnsafeFPMath &&
-      !TLI.isFsqrtCheap()) {
-    // Compute this as X * (1/sqrt(X)) = X * (X ** -0.5)
-    if (SDValue RV = BuildRsqrtEstimate(N->getOperand(0))) {
-      EVT VT = RV.getValueType();
-      SDLoc DL(N);
-      RV = DAG.getNode(ISD::FMUL, DL, VT, N->getOperand(0), RV);
-      AddToWorklist(RV.getNode());
+  if (!DAG.getTarget().Options.UnsafeFPMath || TLI.isFsqrtCheap())
+    return SDValue();
 
-      // Unfortunately, RV is now NaN if the input was exactly 0.
-      // Select out this case and force the answer to 0.
-      SDValue Zero = DAG.getConstantFP(0.0, DL, VT);
-      SDValue ZeroCmp =
-        DAG.getSetCC(DL, TLI.getSetCCResultType(*DAG.getContext(), VT),
-                     N->getOperand(0), Zero, ISD::SETEQ);
-      AddToWorklist(ZeroCmp.getNode());
-      AddToWorklist(RV.getNode());
+  // Compute this as X * (1/sqrt(X)) = X * (X ** -0.5)
+  SDValue RV = BuildRsqrtEstimate(N->getOperand(0));
+  if (!RV)
+    return SDValue();
+  
+  EVT VT = RV.getValueType();
+  SDLoc DL(N);
+  RV = DAG.getNode(ISD::FMUL, DL, VT, N->getOperand(0), RV);
+  AddToWorklist(RV.getNode());
 
-      RV = DAG.getNode(VT.isVector() ? ISD::VSELECT : ISD::SELECT,
-                       DL, VT, ZeroCmp, Zero, RV);
-      return RV;
-    }
-  }
-  return SDValue();
+  // Unfortunately, RV is now NaN if the input was exactly 0.
+  // Select out this case and force the answer to 0.
+  SDValue Zero = DAG.getConstantFP(0.0, DL, VT);
+  EVT CCVT = TLI.getSetCCResultType(*DAG.getContext(), VT);
+  SDValue ZeroCmp = DAG.getSetCC(DL, CCVT, N->getOperand(0), Zero, ISD::SETEQ);
+  AddToWorklist(ZeroCmp.getNode());
+  AddToWorklist(RV.getNode());
+
+  return DAG.getNode(VT.isVector() ? ISD::VSELECT : ISD::SELECT, DL, VT,
+                     ZeroCmp, Zero, RV);
 }
 
 SDValue DAGCombiner::visitFCOPYSIGN(SDNode *N) {
