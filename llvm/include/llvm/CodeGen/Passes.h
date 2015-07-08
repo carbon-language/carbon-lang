@@ -605,7 +605,7 @@ namespace llvm {
   /// createSjLjEHPreparePass - This pass adapts exception handling code to use
   /// the GCC-style builtin setjmp/longjmp (sjlj) to handling EH control flow.
   ///
-  FunctionPass *createSjLjEHPreparePass(const TargetMachine *TM);
+  FunctionPass *createSjLjEHPreparePass();
 
   /// LocalStackSlotAllocation - This pass assigns local frame indices to stack
   /// slots relative to one another and allocates base registers to access them
