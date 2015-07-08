@@ -1,8 +1,7 @@
 // RUN: %clang_cc1 %s -triple x86_64-pc-win32 -fms-extensions -emit-llvm -o - \
 // RUN:         | FileCheck %s --check-prefix=CHECK --check-prefix=X64
-// FIXME: Re-enable 32-bit SEH.
-// RUNX: %clang_cc1 %s -triple i686-pc-win32 -fms-extensions -emit-llvm -o - \
-// RUNX:         | FileCheck %s --check-prefix=CHECK --check-prefix=X86
+// RUN: %clang_cc1 %s -triple i686-pc-win32 -fms-extensions -emit-llvm -o - \
+// RUN:         | FileCheck %s --check-prefix=CHECK --check-prefix=X86
 
 void try_body(int numerator, int denominator, int *myres) {
   *myres = numerator / denominator;
