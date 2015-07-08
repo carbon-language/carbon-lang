@@ -479,6 +479,9 @@ bool AccessAnalysis::canCheckPtrAtRT(
   // Accesses between different groups doesn't need to be checked.
   unsigned ASId = 1;
   for (auto &AS : AST) {
+    int NumReadPtrChecks = 0;
+    int NumWritePtrChecks = 0;
+
     // We assign consecutive id to access from different dependence sets.
     // Accesses within the same set don't need a runtime check.
     unsigned RunningDepId = 1;
@@ -488,6 +491,11 @@ bool AccessAnalysis::canCheckPtrAtRT(
       Value *Ptr = A.getValue();
       bool IsWrite = Accesses.count(MemAccessInfo(Ptr, true));
       MemAccessInfo Access(Ptr, IsWrite);
+
+      if (IsWrite)
+        ++NumWritePtrChecks;
+      else
+        ++NumReadPtrChecks;
 
       if (hasComputableBounds(SE, StridesMap, Ptr) &&
           // When we run after a failing dependency check we have to make sure
@@ -516,14 +524,20 @@ bool AccessAnalysis::canCheckPtrAtRT(
       }
     }
 
+    // If we have at least two writes or one write and a read then we need to
+    // check them.  But there is no need to checks if there is only one
+    // dependence set for this alias set.
+    //
+    // Note that this function computes CanDoRT and NeedRTCheck independently.
+    // For example CanDoRT=false, NeedRTCheck=false means that we have a pointer
+    // for which we couldn't find the bounds but we don't actually need to emit
+    // any checks so it does not matter.
+    if (!(IsDepCheckNeeded && CanDoRT && RunningDepId == 2))
+      NeedRTCheck |= (NumWritePtrChecks >= 2 || (NumReadPtrChecks >= 1 &&
+                                                 NumWritePtrChecks >= 1));
+
     ++ASId;
   }
-
-  // We need a runtime check if there are any accesses that need checking.
-  // However, some accesses cannot be checked (for example because we
-  // can't determine their bounds). In these cases we would need a check
-  // but wouldn't be able to add it.
-  NeedRTCheck = !CanDoRT || RtCheck.needsAnyChecking(nullptr);
 
   // If the pointers that we would use for the bounds comparison have different
   // address spaces, assume the values aren't directly comparable, so we can't
