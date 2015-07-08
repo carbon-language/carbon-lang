@@ -447,8 +447,26 @@ public:
   }
 
   bool isCallingConvWin64(CallingConv::ID CC) const {
-    return (isTargetWin64() && CC != CallingConv::X86_64_SysV) ||
-           CC == CallingConv::X86_64_Win64;
+    switch (CC) {
+    // On Win64, all these conventions just use the default convention.
+    case CallingConv::C:
+    case CallingConv::Fast:
+    case CallingConv::X86_FastCall:
+    case CallingConv::X86_StdCall:
+    case CallingConv::X86_ThisCall:
+    case CallingConv::X86_VectorCall:
+    case CallingConv::Intel_OCL_BI:
+      return isTargetWin64();
+    // This convention allows using the Win64 convention on other targets.
+    case CallingConv::X86_64_Win64:
+      return true;
+    // This convention allows using the SysV convention on Windows targets.
+    case CallingConv::X86_64_SysV:
+      return false;
+    // Otherwise, who knows what this is.
+    default:
+      return false;
+    }
   }
 
   /// ClassifyGlobalReference - Classify a global variable reference for the
