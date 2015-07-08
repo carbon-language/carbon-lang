@@ -2571,10 +2571,8 @@ void InnerLoopVectorizer::createEmptyLoop() {
   LoopBypassBlocks.push_back(BypassBlock);
 
   // Split the single block loop into the two loop structure described above.
-  BasicBlock *VectorPH =
-  BypassBlock->splitBasicBlock(BypassBlock->getTerminator(), "vector.ph");
   BasicBlock *VecBody =
-  VectorPH->splitBasicBlock(VectorPH->getTerminator(), "vector.body");
+      BypassBlock->splitBasicBlock(BypassBlock->getTerminator(), "vector.body");
   BasicBlock *MiddleBlock =
   VecBody->splitBasicBlock(VecBody->getTerminator(), "middle.block");
   BasicBlock *ScalarPH =
@@ -2589,7 +2587,6 @@ void InnerLoopVectorizer::createEmptyLoop() {
   if (ParentLoop) {
     ParentLoop->addChildLoop(Lp);
     ParentLoop->addBasicBlockToLoop(ScalarPH, *LI);
-    ParentLoop->addBasicBlockToLoop(VectorPH, *LI);
     ParentLoop->addBasicBlockToLoop(MiddleBlock, *LI);
   } else {
     LI->addTopLevelLoop(Lp);
@@ -2613,7 +2610,6 @@ void InnerLoopVectorizer::createEmptyLoop() {
       BypassBlock->getTerminator(), "overflow.checked");
   if (ParentLoop)
     ParentLoop->addBasicBlockToLoop(CheckBlock, *LI);
-  LoopBypassBlocks.push_back(CheckBlock);
   ReplaceInstWithInst(
       BypassBlock->getTerminator(),
       BranchInst::Create(ScalarPH, CheckBlock, CheckBCOverflow));
@@ -2650,6 +2646,14 @@ void InnerLoopVectorizer::createEmptyLoop() {
   // jump to the scalar loop.
   Value *Cmp =
       BypassBuilder.CreateICmpEQ(IdxEndRoundDown, StartIdx, "cmp.zero");
+  CheckBlock =
+      BypassBlock->splitBasicBlock(BypassBlock->getTerminator(), "vector.ph");
+  if (ParentLoop)
+    ParentLoop->addBasicBlockToLoop(CheckBlock, *LI);
+  LoopBypassBlocks.push_back(BypassBlock);
+  ReplaceInstWithInst(BypassBlock->getTerminator(),
+                      BranchInst::Create(MiddleBlock, CheckBlock, Cmp));
+  BypassBlock = CheckBlock;
 
   // Generate the code to check that the strides we assumed to be one are really
   // one. We want the new basic block to start at the first instruction in a
@@ -2661,18 +2665,19 @@ void InnerLoopVectorizer::createEmptyLoop() {
   if (StrideCheck) {
     AddedSafetyChecks = true;
     // Create a new block containing the stride check.
+    BypassBlock->setName("vector.stridecheck");
     BasicBlock *CheckBlock =
-        BypassBlock->splitBasicBlock(FirstCheckInst, "vector.stridecheck");
+        BypassBlock->splitBasicBlock(BypassBlock->getTerminator(), "vector.ph");
     if (ParentLoop)
       ParentLoop->addBasicBlockToLoop(CheckBlock, *LI);
-    LoopBypassBlocks.push_back(CheckBlock);
+    LoopBypassBlocks.push_back(BypassBlock);
 
     // Replace the branch into the memory check block with a conditional branch
     // for the "few elements case".
-    ReplaceInstWithInst(BypassBlock->getTerminator(),
-                        BranchInst::Create(MiddleBlock, CheckBlock, Cmp));
+    ReplaceInstWithInst(
+        BypassBlock->getTerminator(),
+        BranchInst::Create(MiddleBlock, CheckBlock, StrideCheck));
 
-    Cmp = StrideCheck;
     BypassBlock = CheckBlock;
   }
 
@@ -2685,23 +2690,22 @@ void InnerLoopVectorizer::createEmptyLoop() {
   if (MemRuntimeCheck) {
     AddedSafetyChecks = true;
     // Create a new block containing the memory check.
+    BypassBlock->setName("vector.memcheck");
     BasicBlock *CheckBlock =
-        BypassBlock->splitBasicBlock(FirstCheckInst, "vector.memcheck");
+        BypassBlock->splitBasicBlock(BypassBlock->getTerminator(), "vector.ph");
     if (ParentLoop)
       ParentLoop->addBasicBlockToLoop(CheckBlock, *LI);
-    LoopBypassBlocks.push_back(CheckBlock);
+    LoopBypassBlocks.push_back(BypassBlock);
 
     // Replace the branch into the memory check block with a conditional branch
     // for the "few elements case".
-    ReplaceInstWithInst(BypassBlock->getTerminator(),
-                        BranchInst::Create(MiddleBlock, CheckBlock, Cmp));
+    ReplaceInstWithInst(
+        BypassBlock->getTerminator(),
+        BranchInst::Create(MiddleBlock, CheckBlock, MemRuntimeCheck));
 
-    Cmp = MemRuntimeCheck;
     BypassBlock = CheckBlock;
   }
-
-  ReplaceInstWithInst(BypassBlock->getTerminator(),
-                      BranchInst::Create(MiddleBlock, VectorPH, Cmp));
+  BasicBlock *VectorPH = BypassBlock;
 
   // We are going to resume the execution of the scalar loop.
   // Go over all of the induction variables that we found and fix the
