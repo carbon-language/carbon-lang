@@ -17,6 +17,7 @@
 #include "lldb/Symbol/ClangASTImporter.h"
 #include "lldb/Symbol/ClangExternalASTSourceCommon.h"
 #include "lldb/Symbol/ClangNamespaceDecl.h"
+#include "lldb/Utility/LLDBAssert.h"
 
 using namespace lldb_private;
 using namespace clang;
@@ -109,6 +110,134 @@ ClangASTImporter::CopyDecl (clang::ASTContext *dst_ast,
     return nullptr;
 }
 
+class DeclContextOverride
+{
+private:
+    struct Backup
+    {
+        clang::DeclContext *decl_context;
+        clang::DeclContext *lexical_decl_context;
+    };
+    
+    std::map<clang::Decl *, Backup> m_backups;
+    
+    void OverrideOne(clang::Decl *decl)
+    {
+        if (m_backups.find(decl) != m_backups.end())
+        {
+            return;
+        }
+            
+        m_backups[decl] = { decl->getDeclContext(), decl->getLexicalDeclContext() };
+        
+        decl->setDeclContext(decl->getASTContext().getTranslationUnitDecl());
+        decl->setLexicalDeclContext(decl->getASTContext().getTranslationUnitDecl());
+    }
+    
+    bool ChainPassesThrough(clang::Decl *decl,
+                            clang::DeclContext *base,
+                            clang::DeclContext *(clang::Decl::*contextFromDecl)(),
+                            clang::DeclContext *(clang::DeclContext::*contextFromContext)())
+    {
+        for (DeclContext *decl_ctx = (decl->*contextFromDecl)();
+             decl_ctx;
+             decl_ctx = (decl_ctx->*contextFromContext)())
+        {
+            if (decl_ctx == base)
+            {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+    
+    clang::Decl *GetEscapedChild(clang::Decl *decl, clang::DeclContext *base = nullptr)
+    {
+        if (base)
+        {
+            // decl's DeclContext chains must pass through base.
+            
+            if (!ChainPassesThrough(decl, base, &clang::Decl::getDeclContext, &clang::DeclContext::getParent) ||
+                !ChainPassesThrough(decl, base, &clang::Decl::getLexicalDeclContext, &clang::DeclContext::getLexicalParent))
+            {
+                return decl;
+            }
+        }
+        else
+        {
+            base = clang::dyn_cast<clang::DeclContext>(decl);
+            
+            if (!base)
+            {
+                return nullptr;
+            }
+        }
+        
+        if (clang::DeclContext *context = clang::dyn_cast<clang::DeclContext>(decl))
+        {
+            for (clang::Decl *decl : context->decls())
+            {
+                if (clang::Decl *escaped_child = GetEscapedChild(decl))
+                {
+                    return escaped_child;
+                }
+            }
+        }
+        
+        return nullptr;
+    }
+    
+    void Override(clang::Decl *decl)
+    {
+        if (clang::Decl *escaped_child = GetEscapedChild(decl))
+        {
+            Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+            
+            if (log)
+                log->Printf("    [ClangASTImporter] DeclContextOverride couldn't override (%sDecl*)%p - its child (%sDecl*)%p escapes",
+                            decl->getDeclKindName(), static_cast<void*>(decl),
+                            escaped_child->getDeclKindName(), static_cast<void*>(escaped_child));
+            lldbassert(0 && "Couldn't override!");
+        }
+        
+        OverrideOne(decl);
+    }
+    
+public:
+    DeclContextOverride()
+    {
+    }
+    
+    void OverrideAllDeclsFromContainingFunction(clang::Decl *decl)
+    {
+        for (DeclContext *decl_context = decl->getLexicalDeclContext();
+             decl_context;
+             decl_context = decl_context->getLexicalParent())
+        {
+            DeclContext *redecl_context = decl_context->getRedeclContext();
+            
+            if (llvm::isa<FunctionDecl>(redecl_context) &&
+                llvm::isa<TranslationUnitDecl>(redecl_context->getLexicalParent()))
+            {
+                for (clang::Decl *child_decl : decl_context->decls())
+                {
+                    Override(child_decl);
+                }
+            }
+        }
+    }
+    
+    ~DeclContextOverride()
+    {
+        for (const std::pair<clang::Decl *, Backup> &backup : m_backups)
+        {
+            backup.first->setDeclContext(backup.second.decl_context);
+            backup.first->setLexicalDeclContext(backup.second.lexical_decl_context);
+        }
+    }
+};
+
 lldb::clang_type_t
 ClangASTImporter::DeportType (clang::ASTContext *dst_ctx,
                               clang::ASTContext *src_ctx,
@@ -121,6 +250,13 @@ ClangASTImporter::DeportType (clang::ASTContext *dst_ctx,
     
     std::set<NamedDecl *> decls_to_deport;
     std::set<NamedDecl *> decls_already_deported;
+    
+    DeclContextOverride decl_context_override;
+    
+    if (const clang::TagType *tag_type = clang::QualType::getFromOpaquePtr(type)->getAs<TagType>())
+    {
+        decl_context_override.OverrideAllDeclsFromContainingFunction(tag_type->getDecl());
+    }
     
     minion_sp->InitDeportWorkQueues(&decls_to_deport,
                                     &decls_already_deported);
@@ -156,6 +292,10 @@ ClangASTImporter::DeportDecl (clang::ASTContext *dst_ctx,
 
     std::set<NamedDecl *> decls_to_deport;
     std::set<NamedDecl *> decls_already_deported;
+    
+    DeclContextOverride decl_context_override;
+    
+    decl_context_override.OverrideAllDeclsFromContainingFunction(decl);
 
     minion_sp->InitDeportWorkQueues(&decls_to_deport,
                                     &decls_already_deported);
