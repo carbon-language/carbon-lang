@@ -94,3 +94,6 @@ namespace MergeFunctionTemplateSpecializations {
   };
   using xiq = X<int>::Q<int>;
 }
+
+enum ScopedEnum : int;
+enum ScopedEnum : int { a, b, c };

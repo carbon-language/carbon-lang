@@ -69,6 +69,11 @@ J<> pre_j; // expected-error {{declaration of 'J' must be imported}}
 #endif
 // expected-note@defs.h:51 +{{here}}
 
+ScopedEnum pre_scopedenum; // expected-error {{must be imported}} expected-error {{must use 'enum'}}
+// expected-note@defs.h:99 {{here}}
+enum ScopedEnum : int;
+ScopedEnum pre_scopedenum_declared; // ok
+
 // Make definitions from second module visible.
 #ifdef TEXTUAL
 #include "import-and-redefine.h"
