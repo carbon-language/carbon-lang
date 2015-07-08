@@ -2564,14 +2564,6 @@ void InnerLoopVectorizer::createEmptyLoop() {
                        IdxTy):
     ConstantInt::get(IdxTy, 0);
 
-  // We need an instruction to anchor the overflow check on. StartIdx needs to
-  // be defined before the overflow check branch. Because the scalar preheader
-  // is going to merge the start index and so the overflow branch block needs to
-  // contain a definition of the start index.
-  Instruction *OverflowCheckAnchor = BinaryOperator::CreateAdd(
-      StartIdx, ConstantInt::get(IdxTy, 0), "overflow.check.anchor",
-      BypassBlock->getTerminator());
-
   // Count holds the overall loop count (N).
   Value *Count = Exp.expandCodeFor(ExitCount, ExitCount->getType(),
                                    BypassBlock->getTerminator());
@@ -2617,9 +2609,8 @@ void InnerLoopVectorizer::createEmptyLoop() {
 
   // Generate code to check that the loop's trip count that we computed by
   // adding one to the backedge-taken count will not overflow.
-  auto PastOverflowCheck = std::next(BasicBlock::iterator(OverflowCheckAnchor));
-  BasicBlock *CheckBlock =
-      BypassBlock->splitBasicBlock(PastOverflowCheck, "overflow.checked");
+  BasicBlock *CheckBlock = BypassBlock->splitBasicBlock(
+      BypassBlock->getTerminator(), "overflow.checked");
   if (ParentLoop)
     ParentLoop->addBasicBlockToLoop(CheckBlock, *LI);
   LoopBypassBlocks.push_back(CheckBlock);
