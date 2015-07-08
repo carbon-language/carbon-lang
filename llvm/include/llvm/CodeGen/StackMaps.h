@@ -1,5 +1,4 @@
 //===------------------- StackMaps.h - StackMaps ----------------*- C++ -*-===//
-
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -42,10 +41,12 @@ class PatchPointOpers {
 public:
   /// Enumerate the meta operands.
   enum { IDPos, NBytesPos, TargetPos, NArgPos, CCPos, MetaEnd };
+
 private:
   const MachineInstr *MI;
   bool HasDef;
   bool IsAnyReg;
+
 public:
   explicit PatchPointOpers(const MachineInstr *MI);
 
@@ -66,8 +67,8 @@ public:
   /// Get the operand index of the variable list of non-argument operands.
   /// These hold the "live state".
   unsigned getVarIdx() const {
-    return getMetaIdx() + MetaEnd
-      + MI->getOperand(getMetaIdx(NArgPos)).getImm();
+    return getMetaIdx() + MetaEnd +
+           MI->getOperand(getMetaIdx(NArgPos)).getImm();
   }
 
   /// Get the index at which stack map locations will be recorded.
@@ -98,15 +99,10 @@ private:
 
   // These values are relative offests from the start of the statepoint meta
   // arguments (i.e. the end of the call arguments).
-  enum {
-    CCOffset = 1,
-    FlagsOffset = 3,
-    NumVMSArgsOffset = 5
-  };
+  enum { CCOffset = 1, FlagsOffset = 3, NumVMSArgsOffset = 5 };
 
 public:
-  explicit StatepointOpers(const MachineInstr *MI):
-    MI(MI) { }
+  explicit StatepointOpers(const MachineInstr *MI) : MI(MI) {}
 
   /// Get starting index of non call related arguments
   /// (calling convention, statepoint flags, vm state and gc state).
@@ -134,15 +130,21 @@ private:
 class StackMaps {
 public:
   struct Location {
-    enum LocationType { Unprocessed, Register, Direct, Indirect, Constant,
-                        ConstantIndex };
+    enum LocationType {
+      Unprocessed,
+      Register,
+      Direct,
+      Indirect,
+      Constant,
+      ConstantIndex
+    };
     LocationType LocType;
     unsigned Size;
     unsigned Reg;
     int64_t Offset;
     Location() : LocType(Unprocessed), Size(0), Reg(0), Offset(0) {}
     Location(LocationType LocType, unsigned Size, unsigned Reg, int64_t Offset)
-      : LocType(LocType), Size(Size), Reg(Reg), Offset(Offset) {}
+        : LocType(LocType), Size(Size), Reg(Reg), Offset(Offset) {}
   };
 
   struct LiveOutReg {
@@ -152,12 +154,12 @@ public:
 
     LiveOutReg() : Reg(0), RegNo(0), Size(0) {}
     LiveOutReg(unsigned short Reg, unsigned short RegNo, unsigned short Size)
-      : Reg(Reg), RegNo(RegNo), Size(Size) {}
+        : Reg(Reg), RegNo(RegNo), Size(Size) {}
 
     void MarkInvalid() { Reg = 0; }
 
     // Only sort by the dwarf register number.
-    bool operator< (const LiveOutReg &LO) const { return RegNo < LO.RegNo; }
+    bool operator<(const LiveOutReg &LO) const { return RegNo < LO.RegNo; }
     static bool IsInvalid(const LiveOutReg &LO) { return LO.Reg == 0; }
   };
 
@@ -205,8 +207,8 @@ private:
     CallsiteInfo() : CSOffsetExpr(nullptr), ID(0) {}
     CallsiteInfo(const MCExpr *CSOffsetExpr, uint64_t ID,
                  LocationVec &&Locations, LiveOutVec &&LiveOuts)
-      : CSOffsetExpr(CSOffsetExpr), ID(ID), Locations(std::move(Locations)),
-        LiveOuts(std::move(LiveOuts)) {}
+        : CSOffsetExpr(CSOffsetExpr), ID(ID), Locations(std::move(Locations)),
+          LiveOuts(std::move(LiveOuts)) {}
   };
 
   typedef std::vector<CallsiteInfo> CallsiteInfoList;
@@ -218,8 +220,8 @@ private:
 
   MachineInstr::const_mop_iterator
   parseOperand(MachineInstr::const_mop_iterator MOI,
-               MachineInstr::const_mop_iterator MOE,
-               LocationVec &Locs, LiveOutVec &LiveOuts) const;
+               MachineInstr::const_mop_iterator MOE, LocationVec &Locs,
+               LiveOutVec &LiveOuts) const;
 
   /// \brief Create a live-out register record for the given register @p Reg.
   LiveOutReg createLiveOutReg(unsigned Reg,
@@ -254,7 +256,6 @@ private:
   void print(raw_ostream &OS);
   void debug() { print(dbgs()); }
 };
-
 }
 
 #endif

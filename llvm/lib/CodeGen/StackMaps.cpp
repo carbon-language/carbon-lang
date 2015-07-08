@@ -29,17 +29,17 @@ using namespace llvm;
 
 #define DEBUG_TYPE "stackmaps"
 
-static cl::opt<int> StackMapVersion("stackmap-version", cl::init(1),
-  cl::desc("Specify the stackmap encoding version (default = 1)"));
+static cl::opt<int> StackMapVersion(
+    "stackmap-version", cl::init(1),
+    cl::desc("Specify the stackmap encoding version (default = 1)"));
 
 const char *StackMaps::WSMP = "Stack Maps: ";
 
 PatchPointOpers::PatchPointOpers(const MachineInstr *MI)
-  : MI(MI),
-    HasDef(MI->getOperand(0).isReg() && MI->getOperand(0).isDef() &&
-           !MI->getOperand(0).isImplicit()),
-    IsAnyReg(MI->getOperand(getMetaIdx(CCPos)).getImm() == CallingConv::AnyReg)
-{
+    : MI(MI), HasDef(MI->getOperand(0).isReg() && MI->getOperand(0).isDef() &&
+                     !MI->getOperand(0).isImplicit()),
+      IsAnyReg(MI->getOperand(getMetaIdx(CCPos)).getImm() ==
+               CallingConv::AnyReg) {
 #ifndef NDEBUG
   unsigned CheckStartIdx = 0, e = MI->getNumOperands();
   while (CheckStartIdx < e && MI->getOperand(CheckStartIdx).isReg() &&
@@ -81,17 +81,18 @@ static unsigned getDwarfRegNum(unsigned Reg, const TargetRegisterInfo *TRI) {
     RegNo = TRI->getDwarfRegNum(*SR, false);
 
   assert(RegNo >= 0 && "Invalid Dwarf register number.");
-  return (unsigned) RegNo;
+  return (unsigned)RegNo;
 }
 
 MachineInstr::const_mop_iterator
 StackMaps::parseOperand(MachineInstr::const_mop_iterator MOI,
-                        MachineInstr::const_mop_iterator MOE,
-                        LocationVec &Locs, LiveOutVec &LiveOuts) const {
+                        MachineInstr::const_mop_iterator MOE, LocationVec &Locs,
+                        LiveOutVec &LiveOuts) const {
   const TargetRegisterInfo *TRI = AP.MF->getSubtarget().getRegisterInfo();
   if (MOI->isImm()) {
     switch (MOI->getImm()) {
-    default: llvm_unreachable("Unrecognized operand type.");
+    default:
+      llvm_unreachable("Unrecognized operand type.");
     case StackMaps::DirectMemRefOp: {
       unsigned Size = AP.TM.getDataLayout()->getPointerSizeInBits();
       assert((Size % 8) == 0 && "Need pointer size in bytes.");
@@ -143,8 +144,7 @@ StackMaps::parseOperand(MachineInstr::const_mop_iterator MOI,
     if (SubRegIdx)
       Offset = TRI->getSubRegIdxOffset(SubRegIdx);
 
-    Locs.push_back(
-      Location(Location::Register, RC->getSize(), RegNo, Offset));
+    Locs.push_back(Location(Location::Register, RC->getSize(), RegNo, Offset));
     return ++MOI;
   }
 
@@ -174,10 +174,10 @@ void StackMaps::print(raw_ostream &OS) {
         break;
       case Location::Register:
         OS << "Register ";
-	if (TRI)
-	  OS << TRI->getName(Loc.Reg);
-	else
-	  OS << Loc.Reg;
+        if (TRI)
+          OS << TRI->getName(Loc.Reg);
+        else
+          OS << Loc.Reg;
         break;
       case Location::Direct:
         OS << "Direct ";
@@ -249,8 +249,8 @@ StackMaps::parseRegisterLiveOutMask(const uint32_t *Mask) const {
   // in the list. Merge entries that refer to the same dwarf register and use
   // the maximum size that needs to be spilled.
   std::sort(LiveOuts.begin(), LiveOuts.end());
-  for (LiveOutVec::iterator I = LiveOuts.begin(), E = LiveOuts.end();
-       I != E; ++I) {
+  for (LiveOutVec::iterator I = LiveOuts.begin(), E = LiveOuts.end(); I != E;
+       ++I) {
     for (LiveOutVec::iterator II = std::next(I); II != E; ++II) {
       if (I->RegNo != II->RegNo) {
         // Skip all the now invalid entries.
@@ -263,8 +263,9 @@ StackMaps::parseRegisterLiveOutMask(const uint32_t *Mask) const {
       II->MarkInvalid();
     }
   }
-  LiveOuts.erase(std::remove_if(LiveOuts.begin(), LiveOuts.end(),
-                                LiveOutReg::IsInvalid), LiveOuts.end());
+  LiveOuts.erase(
+      std::remove_if(LiveOuts.begin(), LiveOuts.end(), LiveOutReg::IsInvalid),
+      LiveOuts.end());
   return LiveOuts;
 }
 
@@ -282,8 +283,8 @@ void StackMaps::recordStackMapOpers(const MachineInstr &MI, uint64_t ID,
 
   if (recordResult) {
     assert(PatchPointOpers(&MI).hasDef() && "Stackmap has no return value.");
-    parseOperand(MI.operands_begin(), std::next(MI.operands_begin()),
-                 Locations, LiveOuts);
+    parseOperand(MI.operands_begin(), std::next(MI.operands_begin()), Locations,
+                 LiveOuts);
   }
 
   // Parse operands.
@@ -292,8 +293,8 @@ void StackMaps::recordStackMapOpers(const MachineInstr &MI, uint64_t ID,
   }
 
   // Move large constants into the constant pool.
-  for (LocationVec::iterator I = Locations.begin(), E = Locations.end();
-       I != E; ++I) {
+  for (LocationVec::iterator I = Locations.begin(), E = Locations.end(); I != E;
+       ++I) {
     // Constants are encoded as sign-extended integers.
     // -1 is directly encoded as .long 0xFFFFFFFF with no constant pool.
     if (I->LocType == Location::Constant && !isInt<32>(I->Offset)) {
@@ -316,9 +317,8 @@ void StackMaps::recordStackMapOpers(const MachineInstr &MI, uint64_t ID,
   // Create an expression to calculate the offset of the callsite from function
   // entry.
   const MCExpr *CSOffsetExpr = MCBinaryExpr::createSub(
-    MCSymbolRefExpr::create(MILabel, OutContext),
-    MCSymbolRefExpr::create(AP.CurrentFnSymForSize, OutContext),
-    OutContext);
+      MCSymbolRefExpr::create(MILabel, OutContext),
+      MCSymbolRefExpr::create(AP.CurrentFnSymForSize, OutContext), OutContext);
 
   CSInfos.emplace_back(CSOffsetExpr, ID, std::move(Locations),
                        std::move(LiveOuts));
@@ -326,10 +326,10 @@ void StackMaps::recordStackMapOpers(const MachineInstr &MI, uint64_t ID,
   // Record the stack size of the current function.
   const MachineFrameInfo *MFI = AP.MF->getFrameInfo();
   const TargetRegisterInfo *RegInfo = AP.MF->getSubtarget().getRegisterInfo();
-  const bool DynamicFrameSize = MFI->hasVarSizedObjects() ||
-    RegInfo->needsStackRealignment(*(AP.MF));
+  const bool DynamicFrameSize =
+      MFI->hasVarSizedObjects() || RegInfo->needsStackRealignment(*(AP.MF));
   FnStackSize[AP.CurrentFnSym] =
-    DynamicFrameSize ? UINT64_MAX : MFI->getStackSize();
+      DynamicFrameSize ? UINT64_MAX : MFI->getStackSize();
 }
 
 void StackMaps::recordStackMap(const MachineInstr &MI) {
@@ -347,7 +347,7 @@ void StackMaps::recordPatchPoint(const MachineInstr &MI) {
   int64_t ID = opers.getMetaOper(PatchPointOpers::IDPos).getImm();
 
   MachineInstr::const_mop_iterator MOI =
-    std::next(MI.operands_begin(), opers.getStackMapStartIdx());
+      std::next(MI.operands_begin(), opers.getStackMapStartIdx());
   recordStackMapOpers(MI, ID, MOI, MI.operands_end(),
                       opers.isAnyReg() && opers.hasDef());
 
@@ -356,15 +356,14 @@ void StackMaps::recordPatchPoint(const MachineInstr &MI) {
   LocationVec &Locations = CSInfos.back().Locations;
   if (opers.isAnyReg()) {
     unsigned NArgs = opers.getMetaOper(PatchPointOpers::NArgPos).getImm();
-    for (unsigned i = 0, e = (opers.hasDef() ? NArgs+1 : NArgs); i != e; ++i)
+    for (unsigned i = 0, e = (opers.hasDef() ? NArgs + 1 : NArgs); i != e; ++i)
       assert(Locations[i].LocType == Location::Register &&
              "anyreg arg must be in reg.");
   }
 #endif
 }
 void StackMaps::recordStatepoint(const MachineInstr &MI) {
-  assert(MI.getOpcode() == TargetOpcode::STATEPOINT &&
-         "expected statepoint");
+  assert(MI.getOpcode() == TargetOpcode::STATEPOINT && "expected statepoint");
 
   StatepointOpers opers(&MI);
   // Record all the deopt and gc operands (they're contiguous and run from the
@@ -387,8 +386,8 @@ void StackMaps::recordStatepoint(const MachineInstr &MI) {
 void StackMaps::emitStackmapHeader(MCStreamer &OS) {
   // Header.
   OS.EmitIntValue(StackMapVersion, 1); // Version.
-  OS.EmitIntValue(0, 1); // Reserved.
-  OS.EmitIntValue(0, 2); // Reserved.
+  OS.EmitIntValue(0, 1);               // Reserved.
+  OS.EmitIntValue(0, 2);               // Reserved.
 
   // Num functions.
   DEBUG(dbgs() << WSMP << "#functions = " << FnStackSize.size() << '\n');
@@ -412,7 +411,7 @@ void StackMaps::emitFunctionFrameRecords(MCStreamer &OS) {
   DEBUG(dbgs() << WSMP << "functions:\n");
   for (auto const &FR : FnStackSize) {
     DEBUG(dbgs() << WSMP << "function addr: " << FR.first
-                         << " frame size: " << FR.second);
+                 << " frame size: " << FR.second);
     OS.EmitSymbolValue(FR.first, 8);
     OS.EmitIntValue(FR.second, 8);
   }
@@ -511,7 +510,7 @@ void StackMaps::emitCallsiteEntries(MCStreamer &OS) {
 
 /// Serialize the stackmap data.
 void StackMaps::serializeToStackMapSection() {
-  (void) WSMP;
+  (void)WSMP;
   // Bail out if there's no stack map data.
   assert((!CSInfos.empty() || (CSInfos.empty() && ConstPool.empty())) &&
          "Expected empty constant pool too!");
