@@ -1107,6 +1107,8 @@ X86InstrInfo::X86InstrInfo(X86Subtarget &STI)
     { X86::PUNPCKLQDQrr,    X86::PUNPCKLQDQrm,  TB_ALIGN_16 },
     { X86::PUNPCKLWDrr,     X86::PUNPCKLWDrm,   TB_ALIGN_16 },
     { X86::PXORrr,          X86::PXORrm,        TB_ALIGN_16 },
+    { X86::ROUNDSDr,        X86::ROUNDSDm,      0 },
+    { X86::ROUNDSSr,        X86::ROUNDSSm,      0 },
     { X86::SBB32rr,         X86::SBB32rm,       0 },
     { X86::SBB64rr,         X86::SBB64rm,       0 },
     { X86::SHUFPDrri,       X86::SHUFPDrmi,     TB_ALIGN_16 },
@@ -1403,6 +1405,8 @@ X86InstrInfo::X86InstrInfo(X86Subtarget &STI)
     { X86::VPUNPCKLQDQrr,     X86::VPUNPCKLQDQrm,      0 },
     { X86::VPUNPCKLWDrr,      X86::VPUNPCKLWDrm,       0 },
     { X86::VPXORrr,           X86::VPXORrm,            0 },
+    { X86::VROUNDSDr,         X86::VROUNDSDm,          0 },
+    { X86::VROUNDSSr,         X86::VROUNDSSm,          0 },
     { X86::VSHUFPDrri,        X86::VSHUFPDrmi,         0 },
     { X86::VSHUFPSrri,        X86::VSHUFPSrmi,         0 },
     { X86::VSUBPDrr,          X86::VSUBPDrm,           0 },
@@ -6395,7 +6399,7 @@ static bool hasReassocSibling(const MachineInstr &Inst, bool &Commuted) {
       hasVirtualRegDefsInBasicBlock(*MI1, MBB) &&
       MRI.hasOneNonDBGUse(MI1->getOperand(0).getReg()))
     return true;
-  
+
   return false;
 }
 
@@ -6500,7 +6504,7 @@ static void reassociateOps(MachineInstr &Root, MachineInstr &Prev,
   MachineOperand &OpX = Prev.getOperand(OpIdx[Pattern][2]);
   MachineOperand &OpY = Root.getOperand(OpIdx[Pattern][3]);
   MachineOperand &OpC = Root.getOperand(0);
-  
+
   unsigned RegA = OpA.getReg();
   unsigned RegB = OpB.getReg();
   unsigned RegX = OpX.getReg();
@@ -6535,7 +6539,7 @@ static void reassociateOps(MachineInstr &Root, MachineInstr &Prev,
       .addReg(RegX, getKillRegState(KillX))
       .addReg(RegY, getKillRegState(KillY));
   InsInstrs.push_back(MIB1);
-  
+
   MachineInstrBuilder MIB2 =
     BuildMI(*MF, Root.getDebugLoc(), TII->get(Opcode), RegC)
       .addReg(RegA, getKillRegState(KillA))
@@ -6567,7 +6571,7 @@ void X86InstrInfo::genAlternativeCodeSequence(
       Prev = MRI.getUniqueVRegDef(Root.getOperand(2).getReg());
   }
   assert(Prev && "Unknown pattern for machine combiner");
-  
+
   reassociateOps(Root, *Prev, Pattern, InsInstrs, DelInstrs, InstIdxForVirtReg);
   return;
 }
