@@ -20,6 +20,7 @@
 namespace lld {
 namespace coff {
 
+using llvm::COFF::IMAGE_FILE_MACHINE_UNKNOWN;
 using llvm::COFF::WindowsSubsystem;
 using llvm::StringRef;
 class Undefined;
@@ -45,7 +46,7 @@ struct Export {
 struct Configuration {
   enum ManifestKind { SideBySide, Embed, No };
 
-  llvm::COFF::MachineTypes MachineType = llvm::COFF::IMAGE_FILE_MACHINE_AMD64;
+  llvm::COFF::MachineTypes MachineType = IMAGE_FILE_MACHINE_UNKNOWN;
   bool Verbose = false;
   WindowsSubsystem Subsystem = llvm::COFF::IMAGE_SUBSYSTEM_UNKNOWN;
   Undefined *Entry = nullptr;

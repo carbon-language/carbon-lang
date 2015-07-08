@@ -322,12 +322,12 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
   }
 
   // Handle /machine
-  auto MTOrErr = getMachineType(&Args);
-  if (auto EC = MTOrErr.getError()) {
-    llvm::errs() << EC.message() << "\n";
-    return false;
+  if (auto *Arg = Args.getLastArg(OPT_machine)) {
+    ErrorOr<MachineTypes> MTOrErr = getMachineType(Arg->getValue());
+    if (MTOrErr.getError())
+      return false;
+    Config->MachineType = MTOrErr.get();
   }
-  Config->MachineType = MTOrErr.get();
 
   // Handle /nodefaultlib:<filename>
   for (auto *Arg : Args.filtered(OPT_nodefaultlib))

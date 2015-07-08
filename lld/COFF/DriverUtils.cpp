@@ -79,21 +79,16 @@ private:
 } // anonymous namespace
 
 // Returns /machine's value.
-ErrorOr<MachineTypes> getMachineType(llvm::opt::InputArgList *Args) {
-  if (auto *Arg = Args->getLastArg(OPT_machine)) {
-    StringRef S(Arg->getValue());
-    MachineTypes MT = StringSwitch<MachineTypes>(S.lower())
-                          .Case("arm", IMAGE_FILE_MACHINE_ARMNT)
-                          .Case("x64", IMAGE_FILE_MACHINE_AMD64)
-                          .Case("x86", IMAGE_FILE_MACHINE_I386)
-                          .Default(IMAGE_FILE_MACHINE_UNKNOWN);
-    if (MT == IMAGE_FILE_MACHINE_UNKNOWN) {
-      llvm::errs() << "unknown /machine argument" << S << "\n";
-      return make_error_code(LLDError::InvalidOption);
-    }
+ErrorOr<MachineTypes> getMachineType(StringRef S) {
+  MachineTypes MT = StringSwitch<MachineTypes>(S.lower())
+                        .Case("arm", IMAGE_FILE_MACHINE_ARMNT)
+                        .Case("x64", IMAGE_FILE_MACHINE_AMD64)
+                        .Case("x86", IMAGE_FILE_MACHINE_I386)
+                        .Default(IMAGE_FILE_MACHINE_UNKNOWN);
+  if (MT != IMAGE_FILE_MACHINE_UNKNOWN)
     return MT;
-  }
-  return IMAGE_FILE_MACHINE_UNKNOWN;
+  llvm::errs() << "unknown /machine argument" << S << "\n";
+  return make_error_code(LLDError::InvalidOption);
 }
 
 StringRef machineTypeToStr(MachineTypes MT) {

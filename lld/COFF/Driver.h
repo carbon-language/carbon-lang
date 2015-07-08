@@ -117,7 +117,7 @@ std::error_code writeImportLibrary();
 void printHelp(const char *Argv0);
 
 // For /machine option.
-ErrorOr<MachineTypes> getMachineType(llvm::opt::InputArgList *Args);
+ErrorOr<MachineTypes> getMachineType(StringRef Arg);
 StringRef machineTypeToStr(MachineTypes MT);
 
 // Parses a string in the form of "<integer>[,<integer>]".
