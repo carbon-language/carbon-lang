@@ -154,7 +154,8 @@ public:
 
   // A complex method to determine is a certain is deprecated or not, and return
   // the reason for deprecation.
-  bool (*ComplexDeprecationInfo)(MCInst &, MCSubtargetInfo &, std::string &);
+  bool (*ComplexDeprecationInfo)(MCInst &, const MCSubtargetInfo &,
+                                 std::string &);
 
   /// \brief Returns the value of the specific constraint if
   /// it is set. Returns -1 if it is not set.
@@ -170,7 +171,7 @@ public:
 
   /// \brief Returns true if a certain instruction is deprecated and if so
   /// returns the reason in \p Info.
-  bool getDeprecatedInfo(MCInst &MI, MCSubtargetInfo &STI,
+  bool getDeprecatedInfo(MCInst &MI, const MCSubtargetInfo &STI,
                          std::string &Info) const;
 
   /// \brief Return the opcode number for this descriptor.
