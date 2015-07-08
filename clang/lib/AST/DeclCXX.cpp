@@ -1272,7 +1272,7 @@ const CXXRecordDecl *CXXRecordDecl::getTemplateInstantiationPattern() const {
           break;
         CTD = NewCTD;
       }
-      return CTD->getTemplatedDecl();
+      return CTD->getTemplatedDecl()->getDefinition();
     }
     if (auto *CTPSD =
             From.dyn_cast<ClassTemplatePartialSpecializationDecl *>()) {
@@ -1281,7 +1281,7 @@ const CXXRecordDecl *CXXRecordDecl::getTemplateInstantiationPattern() const {
           break;
         CTPSD = NewCTPSD;
       }
-      return CTPSD;
+      return CTPSD->getDefinition();
     }
   }
 
@@ -1290,7 +1290,7 @@ const CXXRecordDecl *CXXRecordDecl::getTemplateInstantiationPattern() const {
       const CXXRecordDecl *RD = this;
       while (auto *NewRD = RD->getInstantiatedFromMemberClass())
         RD = NewRD;
-      return RD;
+      return RD->getDefinition();
     }
   }
 
