@@ -1234,6 +1234,8 @@ bool llvm::canConstantFoldCallTo(const Function *F) {
   case Intrinsic::floor:
   case Intrinsic::ceil:
   case Intrinsic::sqrt:
+  case Intrinsic::sin:
+  case Intrinsic::cos:
   case Intrinsic::pow:
   case Intrinsic::powi:
   case Intrinsic::bswap:
@@ -1450,6 +1452,10 @@ static Constant *ConstantFoldScalarCall(StringRef Name, unsigned IntrinsicID,
           return ConstantFoldFP(floor, V, Ty);
         case Intrinsic::ceil:
           return ConstantFoldFP(ceil, V, Ty);
+        case Intrinsic::sin:
+          return ConstantFoldFP(sin, V, Ty);
+        case Intrinsic::cos:
+          return ConstantFoldFP(cos, V, Ty);
       }
 
       if (!TLI)

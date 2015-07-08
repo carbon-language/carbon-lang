@@ -17,6 +17,8 @@ declare i32 @llvm.cttz.i32(i32, i1) nounwind readnone
 declare i32 @llvm.ctlz.i32(i32, i1) nounwind readnone
 declare i32 @llvm.ctpop.i32(i32) nounwind readnone
 declare i8 @llvm.ctlz.i8(i8, i1) nounwind readnone
+declare double @llvm.cos.f64(double %Val) nounwind readonly
+declare double @llvm.sin.f64(double %Val) nounwind readonly
 
 define i8 @uaddtest1(i8 %A, i8 %B) {
   %x = call %overflow.result @llvm.uadd.with.overflow.i8(i8 %A, i8 %B)
@@ -424,4 +426,24 @@ define %ov.result.32 @never_overflows_ssub_test0(i32 %a) {
 ; CHECK-LABEL: @never_overflows_ssub_test0
 ; CHECK-NEXT: %[[x:.*]] = insertvalue %ov.result.32 { i32 undef, i1 false }, i32 %a, 0
 ; CHECK-NEXT:  ret %ov.result.32 %[[x]]
+}
+
+define void @cos(double *%P) {
+entry:
+  %B = tail call double @llvm.cos.f64(double 0.0) nounwind
+  store volatile double %B, double* %P
+
+  ret void
+; CHECK-LABEL: @cos(
+; CHECK: store volatile double 1.000000e+00, double* %P
+}
+
+define void @sin(double *%P) {
+entry:
+  %B = tail call double @llvm.sin.f64(double 0.0) nounwind
+  store volatile double %B, double* %P
+
+  ret void
+; CHECK-LABEL: @sin(
+; CHECK: store volatile double 0.000000e+00, double* %P
 }
