@@ -236,7 +236,7 @@ private:
           "FileArchive",
           llvm::dbgs() << llvm::format("0x%08llX ", member->getBuffer().data())
                        << "'" << name << "'\n");
-      _symbolMemberMap[name] = member;
+      _symbolMemberMap.insert(std::make_pair(name, member));
     }
     return std::error_code();
   }
