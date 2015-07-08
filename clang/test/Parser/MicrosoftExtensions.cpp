@@ -400,3 +400,10 @@ static_assert(__alignof(struct align_before_key1) == 16, "");
 static_assert(__alignof(struct align_before_key2) == 16, "");
 static_assert(__alignof(struct align_before_key3) == 16, "");
 }
+
+namespace PR24027 {
+struct S {
+  template <typename T>
+  S(T);
+} f([] {});
+}
