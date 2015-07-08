@@ -32,13 +32,11 @@ entry:
   %e = load i32*, i32** @E, align 8
   br label %for.body
 
-; We have two compares for each array overlap check which is a total of 10
-; compares.
+; We have two compares for each array overlap check.
+; Since the checks to A and A + 4 get merged, this will give us a
+; total of 8 compares.
 ;
 ; CHECK: for.body.lver.memcheck:
-; CHECK:     = icmp
-; CHECK:     = icmp
-
 ; CHECK:     = icmp
 ; CHECK:     = icmp
 

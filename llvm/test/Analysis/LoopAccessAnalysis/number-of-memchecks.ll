@@ -1,19 +1,20 @@
 ; RUN: opt -loop-accesses -analyze < %s | FileCheck %s
 
-; 3 reads and 3 writes should need 12 memchecks
-
 target datalayout = "e-m:e-i64:64-i128:128-n32:64-S128"
 target triple = "aarch64--linux-gnueabi"
 
+; 3 reads and 3 writes should need 12 memchecks
+; CHECK: function 'testf':
 ; CHECK: Memory dependences are safe with run-time checks
-; Memory dependecies have labels starting from 0, so in
+
+; Memory dependencies have labels starting from 0, so in
 ; order to verify that we have n checks, we look for
 ; (n-1): and not n:.
 
 ; CHECK: Run-time memory checks:
-; CHECK-NEXT: 0:
-; CHECK: 11:
-; CHECK-NOT: 12:
+; CHECK-NEXT: Check 0:
+; CHECK: Check 11:
+; CHECK-NOT: Check 12:
 
 define void @testf(i16* %a,
                i16* %b,
@@ -49,6 +50,165 @@ for.body:                                         ; preds = %for.body, %entry
 
   %arrayidxF = getelementptr inbounds i16, i16* %f, i64 %ind
   store i16 %mul1, i16* %arrayidxF, align 2
+
+  %exitcond = icmp eq i64 %add, 20
+  br i1 %exitcond, label %for.end, label %for.body
+
+for.end:                                          ; preds = %for.body
+  ret void
+}
+
+; The following (testg and testh) check that we can group
+; memory checks of accesses which differ by a constant value.
+; Both tests are based on the following C code:
+;
+; void testh(short *a, short *b, short *c) {
+;   unsigned long ind = 0;
+;   for (unsigned long ind = 0; ind < 20; ++ind) {
+;     c[2 * ind] = a[ind] * a[ind + 1];
+;     c[2 * ind + 1] = a[ind] * a[ind + 1] * b[ind];
+;   }
+; }
+;
+; It is sufficient to check the intervals
+; [a, a + 21], [b, b + 20] against [c, c + 41].
+
+; 3 reads and 2 writes - two of the reads can be merged,
+; and the writes can be merged as well. This gives us a
+; total of 2 memory checks.
+
+; CHECK: function 'testg':
+
+; CHECK: Run-time memory checks:
+; CHECK-NEXT:   Check 0:
+; CHECK-NEXT:     Comparing group 0:
+; CHECK-NEXT:       %arrayidxA1 = getelementptr inbounds i16, i16* %a, i64 %add
+; CHECK-NEXT:       %arrayidxA = getelementptr inbounds i16, i16* %a, i64 %ind
+; CHECK-NEXT:     Against group 2:
+; CHECK-NEXT:       %arrayidxC1 = getelementptr inbounds i16, i16* %c, i64 %store_ind_inc
+; CHECK-NEXT:       %arrayidxC = getelementptr inbounds i16, i16* %c, i64 %store_ind
+; CHECK-NEXT:   Check 1:
+; CHECK-NEXT:     Comparing group 1:
+; CHECK-NEXT:       %arrayidxB = getelementptr inbounds i16, i16* %b, i64 %ind
+; CHECK-NEXT:     Against group 2:
+; CHECK-NEXT:       %arrayidxC1 = getelementptr inbounds i16, i16* %c, i64 %store_ind_inc
+; CHECK-NEXT:       %arrayidxC = getelementptr inbounds i16, i16* %c, i64 %store_ind
+; CHECK-NEXT:   Grouped accesses:
+; CHECK-NEXT:    Group 0:
+; CHECK-NEXT:       (Low: %a High: (40 + %a))
+; CHECK-NEXT:         Member: {(2 + %a),+,2}
+; CHECK-NEXT:         Member: {%a,+,2}
+; CHECK-NEXT:     Group 1:
+; CHECK-NEXT:       (Low: %b High: (38 + %b))
+; CHECK-NEXT:         Member: {%b,+,2}
+; CHECK-NEXT:     Group 2:
+; CHECK-NEXT:       (Low: %c High: (78 + %c))
+; CHECK-NEXT:         Member: {(2 + %c),+,4}
+; CHECK-NEXT:         Member: {%c,+,4}
+
+define void @testg(i16* %a,
+               i16* %b,
+               i16* %c) {
+entry:
+  br label %for.body
+
+for.body:                                         ; preds = %for.body, %entry
+  %ind = phi i64 [ 0, %entry ], [ %add, %for.body ]
+  %store_ind = phi i64 [ 0, %entry ], [ %store_ind_next, %for.body ]
+
+  %add = add nuw nsw i64 %ind, 1
+  %store_ind_inc = add nuw nsw i64 %store_ind, 1
+  %store_ind_next = add nuw nsw i64 %store_ind_inc, 1
+
+  %arrayidxA = getelementptr inbounds i16, i16* %a, i64 %ind
+  %loadA = load i16, i16* %arrayidxA, align 2
+
+  %arrayidxA1 = getelementptr inbounds i16, i16* %a, i64 %add
+  %loadA1 = load i16, i16* %arrayidxA1, align 2
+
+  %arrayidxB = getelementptr inbounds i16, i16* %b, i64 %ind
+  %loadB = load i16, i16* %arrayidxB, align 2
+
+  %mul = mul i16 %loadA, %loadA1
+  %mul1 = mul i16 %mul, %loadB
+
+  %arrayidxC = getelementptr inbounds i16, i16* %c, i64 %store_ind
+  store i16 %mul1, i16* %arrayidxC, align 2
+
+  %arrayidxC1 = getelementptr inbounds i16, i16* %c, i64 %store_ind_inc
+  store i16 %mul, i16* %arrayidxC1, align 2
+
+  %exitcond = icmp eq i64 %add, 20
+  br i1 %exitcond, label %for.end, label %for.body
+
+for.end:                                          ; preds = %for.body
+  ret void
+}
+
+; 3 reads and 2 writes - the writes can be merged into a single
+; group, but the GEPs used for the reads are not marked as inbounds.
+; We can still merge them because we are using a unit stride for
+; accesses, so we cannot overflow the GEPs.
+
+; CHECK: function 'testh':
+; CHECK: Run-time memory checks:
+; CHECK-NEXT:   Check 0:
+; CHECK-NEXT:     Comparing group 0:
+; CHECK-NEXT:         %arrayidxA1 = getelementptr i16, i16* %a, i64 %add
+; CHECK-NEXT:         %arrayidxA = getelementptr i16, i16* %a, i64 %ind
+; CHECK-NEXT:     Against group 2:
+; CHECK-NEXT:         %arrayidxC1 = getelementptr inbounds i16, i16* %c, i64 %store_ind_inc
+; CHECK-NEXT:         %arrayidxC = getelementptr inbounds i16, i16* %c, i64 %store_ind
+; CHECK-NEXT:   Check 1:
+; CHECK-NEXT:     Comparing group 1:
+; CHECK-NEXT:         %arrayidxB = getelementptr i16, i16* %b, i64 %ind
+; CHECK-NEXT:     Against group 2:
+; CHECK-NEXT:         %arrayidxC1 = getelementptr inbounds i16, i16* %c, i64 %store_ind_inc
+; CHECK-NEXT:         %arrayidxC = getelementptr inbounds i16, i16* %c, i64 %store_ind
+; CHECK-NEXT:   Grouped accesses:
+; CHECK-NEXT:     Group 0:
+; CHECK-NEXT:       (Low: %a High: (40 + %a))
+; CHECK-NEXT:         Member: {(2 + %a),+,2}
+; CHECK-NEXT:         Member: {%a,+,2}
+; CHECK-NEXT:     Group 1:
+; CHECK-NEXT:       (Low: %b High: (38 + %b))
+; CHECK-NEXT:         Member: {%b,+,2}
+; CHECK-NEXT:     Group 2:
+; CHECK-NEXT:       (Low: %c High: (78 + %c))
+; CHECK-NEXT:         Member: {(2 + %c),+,4}
+; CHECK-NEXT:         Member: {%c,+,4}
+
+define void @testh(i16* %a,
+               i16* %b,
+               i16* %c) {
+entry:
+  br label %for.body
+
+for.body:                                         ; preds = %for.body, %entry
+  %ind = phi i64 [ 0, %entry ], [ %add, %for.body ]
+  %store_ind = phi i64 [ 0, %entry ], [ %store_ind_next, %for.body ]
+
+  %add = add nuw nsw i64 %ind, 1
+  %store_ind_inc = add nuw nsw i64 %store_ind, 1
+  %store_ind_next = add nuw nsw i64 %store_ind_inc, 1
+
+  %arrayidxA = getelementptr i16, i16* %a, i64 %ind
+  %loadA = load i16, i16* %arrayidxA, align 2
+
+  %arrayidxA1 = getelementptr i16, i16* %a, i64 %add
+  %loadA1 = load i16, i16* %arrayidxA1, align 2
+
+  %arrayidxB = getelementptr i16, i16* %b, i64 %ind
+  %loadB = load i16, i16* %arrayidxB, align 2
+
+  %mul = mul i16 %loadA, %loadA1
+  %mul1 = mul i16 %mul, %loadB
+
+  %arrayidxC = getelementptr inbounds i16, i16* %c, i64 %store_ind
+  store i16 %mul1, i16* %arrayidxC, align 2
+
+  %arrayidxC1 = getelementptr inbounds i16, i16* %c, i64 %store_ind_inc
+  store i16 %mul, i16* %arrayidxC1, align 2
 
   %exitcond = icmp eq i64 %add, 20
   br i1 %exitcond, label %for.end, label %for.body

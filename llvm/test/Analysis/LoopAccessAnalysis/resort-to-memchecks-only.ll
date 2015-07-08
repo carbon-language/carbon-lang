@@ -15,7 +15,9 @@ target triple = "x86_64-apple-macosx10.10.0"
 ; CHECK-NEXT: Interesting Dependences:
 ; CHECK-NEXT: Run-time memory checks:
 ; CHECK-NEXT: 0:
+; CHECK-NEXT: Comparing group
 ; CHECK-NEXT:   %arrayidxA2 = getelementptr inbounds i16, i16* %a, i64 %idx
+; CHECK-NEXT: Against group
 ; CHECK-NEXT:   %arrayidxA = getelementptr inbounds i16, i16* %a, i64 %indvar
 
 @B = common global i16* null, align 8
