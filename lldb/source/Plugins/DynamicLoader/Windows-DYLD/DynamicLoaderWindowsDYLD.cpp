@@ -1,4 +1,4 @@
-//===-- DynamicLoaderWindows.cpp --------------------------------*- C++ -*-===//
+//===-- DynamicLoaderWindowsDYLD.cpp --------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,8 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "DynamicLoaderWindows.h"
-#include "ProcessWindowsLog.h"
+#include "DynamicLoaderWindowsDYLD.h"
 
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Target/Process.h"
@@ -19,42 +18,43 @@
 using namespace lldb;
 using namespace lldb_private;
 
-DynamicLoaderWindows::DynamicLoaderWindows(Process *process)
+DynamicLoaderWindowsDYLD::DynamicLoaderWindowsDYLD(Process *process)
     : DynamicLoader(process)
 {
 
 }
 
-DynamicLoaderWindows::~DynamicLoaderWindows()
+DynamicLoaderWindowsDYLD::~DynamicLoaderWindowsDYLD()
 {
+
 }
 
-void DynamicLoaderWindows::Initialize()
+void DynamicLoaderWindowsDYLD::Initialize()
 {
     PluginManager::RegisterPlugin(GetPluginNameStatic(),
                                   GetPluginDescriptionStatic(),
                                   CreateInstance);
 }
 
-void DynamicLoaderWindows::Terminate()
+void DynamicLoaderWindowsDYLD::Terminate()
 {
 
 }
 
-ConstString DynamicLoaderWindows::GetPluginNameStatic()
+ConstString DynamicLoaderWindowsDYLD::GetPluginNameStatic()
 {
     static ConstString g_plugin_name("windows-dyld");
     return g_plugin_name;
 }
 
-const char *DynamicLoaderWindows::GetPluginDescriptionStatic()
+const char *DynamicLoaderWindowsDYLD::GetPluginDescriptionStatic()
 {
     return "Dynamic loader plug-in that watches for shared library "
            "loads/unloads in Windows processes.";
 }
 
 
-DynamicLoader *DynamicLoaderWindows::CreateInstance(Process *process, bool force)
+DynamicLoader *DynamicLoaderWindowsDYLD::CreateInstance(Process *process, bool force)
 {
     bool should_create = force;
     if (!should_create)
@@ -65,38 +65,38 @@ DynamicLoader *DynamicLoaderWindows::CreateInstance(Process *process, bool force
     }
 
     if (should_create)
-        return new DynamicLoaderWindows (process);
+        return new DynamicLoaderWindowsDYLD (process);
 
     return nullptr;
 }
 
-void DynamicLoaderWindows::DidAttach()
+void DynamicLoaderWindowsDYLD::DidAttach()
 {
 
 }
 
-void DynamicLoaderWindows::DidLaunch()
+void DynamicLoaderWindowsDYLD::DidLaunch()
 {
 
 }
 
-Error DynamicLoaderWindows::CanLoadImage()
+Error DynamicLoaderWindowsDYLD::CanLoadImage()
 {
     return Error();
 }
 
-ConstString DynamicLoaderWindows::GetPluginName()
+ConstString DynamicLoaderWindowsDYLD::GetPluginName()
 {
     return GetPluginNameStatic();
 }
 
-uint32_t DynamicLoaderWindows::GetPluginVersion()
+uint32_t DynamicLoaderWindowsDYLD::GetPluginVersion()
 {
     return 1;
 }
 
 ThreadPlanSP
-DynamicLoaderWindows::GetStepThroughTrampolinePlan(Thread &thread, bool stop)
+DynamicLoaderWindowsDYLD::GetStepThroughTrampolinePlan(Thread &thread, bool stop)
 {
     return ThreadPlanSP();
 }

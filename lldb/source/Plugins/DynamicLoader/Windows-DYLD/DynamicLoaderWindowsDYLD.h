@@ -1,4 +1,4 @@
-//===-- DynamicLoaderWindows.h ----------------------------------*- C++ -*-===//
+//===-- DynamicLoaderWindowsDYLDh ----------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef liblldb_Plugins_Process_Windows_DynamicLoaderWindows_H_
-#define liblldb_Plugins_Process_Windows_DynamicLoaderWindows_H_
+#ifndef liblldb_Plugins_Process_Windows_DynamicLoaderWindowsDYLD_H_
+#define liblldb_Plugins_Process_Windows_DynamicLoaderWindowsDYLD_H_
 
 #include "lldb/lldb-forward.h"
 #include "lldb/Target/DynamicLoader.h"
@@ -16,11 +16,11 @@
 namespace lldb_private
 {
 
-class DynamicLoaderWindows : public DynamicLoader
+class DynamicLoaderWindowsDYLD : public DynamicLoader
 {
   public:
-    DynamicLoaderWindows(Process *process);
-    virtual ~DynamicLoaderWindows();
+    DynamicLoaderWindowsDYLD(Process *process);
+    virtual ~DynamicLoaderWindowsDYLD();
 
     static void Initialize();
     static void Terminate();

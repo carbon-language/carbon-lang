@@ -58,7 +58,6 @@
 
 #if defined(_MSC_VER)
 #include "lldb/Host/windows/windows.h"
-#include "Plugins/Process/Windows/DynamicLoaderWindows.h"
 #include "Plugins/Process/Windows/ProcessWindows.h"
 #endif
 
@@ -264,7 +263,6 @@ SystemInitializerFull::Initialize()
     RenderScriptRuntime::Initialize();
 
 #if defined(_MSC_VER)
-    DynamicLoaderWindows::Initialize();
     ProcessWindows::Initialize();
 #endif
 #if defined(__FreeBSD__)
@@ -368,9 +366,6 @@ SystemInitializerFull::Terminate()
     ProcessMachCore::Terminate();
     ProcessKDP::Terminate();
     SymbolVendorMacOSX::Terminate();
-#endif
-#if defined(_MSC_VER)
-    DynamicLoaderWindows::Terminate();
 #endif
 
 #if defined(__FreeBSD__)

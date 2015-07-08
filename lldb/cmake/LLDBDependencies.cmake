@@ -19,6 +19,7 @@ set( LLDB_USED_LIBS
   lldbPluginDynamicLoaderStatic
   lldbPluginDynamicLoaderPosixDYLD
   lldbPluginDynamicLoaderHexagonDYLD
+  lldbPluginDynamicLoaderWindowsDYLD
 
   lldbPluginObjectFileELF
   lldbPluginObjectFileJIT

@@ -5,7 +5,6 @@ include_directories(../Utility)
 
 set(PROC_WINDOWS_SOURCES
   DebuggerThread.cpp
-  DynamicLoaderWindows.cpp
   LocalDebugDelegate.cpp
   ProcessWindows.cpp
   ProcessWindowsLog.cpp
