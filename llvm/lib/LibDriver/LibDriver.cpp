@@ -139,8 +139,10 @@ int llvm::libDriverMain(llvm::ArrayRef<const char*> ArgsArr) {
                          llvm::sys::path::filename(Arg->getValue()));
   }
 
-  std::pair<StringRef, std::error_code> Result = llvm::writeArchive(
-      getOutputPath(&Args, Members[0]), Members, /*WriteSymtab=*/true);
+  std::pair<StringRef, std::error_code> Result =
+      llvm::writeArchive(getOutputPath(&Args, Members[0]), Members,
+                         /*WriteSymtab=*/true, object::Archive::K_GNU);
+
   if (Result.second) {
     if (Result.first.empty())
       Result.first = ArgsArr[0];

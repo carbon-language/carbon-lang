@@ -117,10 +117,25 @@ static void printMemberHeader(raw_fd_ostream &Out, StringRef Name,
 }
 
 static void
-printMemberHeader(raw_fd_ostream &Out, StringRef Name,
+printMemberHeader(raw_fd_ostream &Out, object::Archive::Kind Kind,
+                  StringRef Name,
                   std::vector<unsigned>::iterator &StringMapIndexIter,
                   const sys::TimeValue &ModTime, unsigned UID, unsigned GID,
                   unsigned Perms, unsigned Size) {
+  if (Kind == object::Archive::K_BSD) {
+    uint64_t PosAfterHeader = Out.tell() + 60 + Name.size();
+    // Pad so that even 64 bit object files are aligned.
+    unsigned Pad = OffsetToAlignment(PosAfterHeader, 8);
+    unsigned NameWithPadding = Name.size() + Pad;
+    printWithSpacePadding(Out, Twine("#1/") + Twine(NameWithPadding), 16);
+    printRestOfMemberHeader(Out, ModTime, UID, GID, Perms,
+                            NameWithPadding + Size);
+    Out << Name;
+    assert(PosAfterHeader == Out.tell());
+    while (Pad--)
+      Out.write(uint8_t(0));
+    return;
+  }
   if (Name.size() < 16) {
     printMemberHeader(Out, Name, ModTime, UID, GID, Perms, Size);
     return;
@@ -160,9 +175,13 @@ static void writeStringTable(raw_fd_ostream &Out,
 
 // Returns the offset of the first reference to a member offset.
 static ErrorOr<unsigned>
-writeSymbolTable(raw_fd_ostream &Out, ArrayRef<NewArchiveIterator> Members,
+writeSymbolTable(raw_fd_ostream &Out, object::Archive::Kind Kind,
+                 ArrayRef<NewArchiveIterator> Members,
                  ArrayRef<MemoryBufferRef> Buffers,
                  std::vector<unsigned> &MemberOffsetRefs) {
+  if (Kind != object::Archive::K_GNU)
+    return 0;
+
   unsigned StartOffset = 0;
   unsigned MemberNum = 0;
   std::string NameBuf;
@@ -222,7 +241,7 @@ writeSymbolTable(raw_fd_ostream &Out, ArrayRef<NewArchiveIterator> Members,
 std::pair<StringRef, std::error_code>
 llvm::writeArchive(StringRef ArcName,
                    std::vector<NewArchiveIterator> &NewMembers,
-                   bool WriteSymtab) {
+                   bool WriteSymtab, object::Archive::Kind Kind) {
   SmallString<128> TmpArchive;
   int TmpArchiveFD;
   if (auto EC = sys::fs::createUniqueFile(ArcName + ".temp-archive-%%%%%%%.a",
@@ -274,14 +293,15 @@ llvm::writeArchive(StringRef ArcName,
   unsigned MemberReferenceOffset = 0;
   if (WriteSymtab) {
     ErrorOr<unsigned> MemberReferenceOffsetOrErr =
-        writeSymbolTable(Out, NewMembers, Members, MemberOffsetRefs);
+        writeSymbolTable(Out, Kind, NewMembers, Members, MemberOffsetRefs);
     if (auto EC = MemberReferenceOffsetOrErr.getError())
       return std::make_pair(ArcName, EC);
     MemberReferenceOffset = MemberReferenceOffsetOrErr.get();
   }
 
   std::vector<unsigned> StringMapIndexes;
-  writeStringTable(Out, NewMembers, StringMapIndexes);
+  if (Kind != object::Archive::K_BSD)
+    writeStringTable(Out, NewMembers, StringMapIndexes);
 
   unsigned MemberNum = 0;
   unsigned NewMemberNum = 0;
@@ -296,13 +316,13 @@ llvm::writeArchive(StringRef ArcName,
     if (I.isNewMember()) {
       StringRef FileName = I.getNew();
       const sys::fs::file_status &Status = NewMemberStatus[NewMemberNum++];
-      printMemberHeader(Out, sys::path::filename(FileName), StringMapIndexIter,
-                        Status.getLastModificationTime(), Status.getUser(),
-                        Status.getGroup(), Status.permissions(),
-                        Status.getSize());
+      printMemberHeader(Out, Kind, sys::path::filename(FileName),
+                        StringMapIndexIter, Status.getLastModificationTime(),
+                        Status.getUser(), Status.getGroup(),
+                        Status.permissions(), Status.getSize());
     } else {
       object::Archive::child_iterator OldMember = I.getOld();
-      printMemberHeader(Out, I.getName(), StringMapIndexIter,
+      printMemberHeader(Out, Kind, I.getName(), StringMapIndexIter,
                         OldMember->getLastModified(), OldMember->getUID(),
                         OldMember->getGID(), OldMember->getAccessMode(),
                         OldMember->getSize());

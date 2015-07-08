@@ -17,3 +17,13 @@ CHECK-NEXT: 0123456789abcdef/
 CHECK-NEXT: 0123456789abcde/{{................................}}4         `
 CHECK-NEXT: bar./0              {{................................}}4         `
 CHECK-NEXT: zed.
+
+RUN: rm -f test-bsd.a
+RUN: llvm-ar --format=bsd rc test-bsd.a 0123456789abcde 0123456789abcdef
+RUN: cat test-bsd.a | FileCheck -strict-whitespace --check-prefix=BSD %s
+
+BSD:      !<arch>
+BSD-NEXT: #1/20           {{..............................}}  24        `
+BSD-NEXT: 0123456789abcde{{.....}}bar.
+BSD-SAME: #1/16           {{..............................}}  20        `
+BSD-NEXT: 0123456789abcdefzed.
