@@ -1,11 +1,24 @@
 ; RUN: opt < %s -basicaa -slp-vectorizer -S -mcpu=corei7-avx | FileCheck %s
+; RUN: opt < %s -basicaa -slp-vectorizer -slp-max-reg-size=128 -S -mcpu=corei7-avx | FileCheck %s --check-prefix=V128
 
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-unknown-linux-gnu"
 
-; CHECK: load <2 x double>, <2 x double>*
-; CHECK: fadd <2 x double>
-; CHECK: store <2 x double>
+; CHECK-LABEL: @foo(
+; CHECK: load <4 x double>
+; CHECK: fadd <4 x double>
+; CHECK: fadd <4 x double>
+; CHECK: store <4 x double>
+
+; V128-LABEL: @foo(
+; V128: load <2 x double>
+; V128: fadd <2 x double>
+; V128: fadd <2 x double>
+; V128: store <2 x double>
+; V128: load <2 x double>
+; V128: fadd <2 x double>
+; V128: fadd <2 x double>
+; V128: store <2 x double>
 
 define void @foo(double* %x) {
   %1 = load double, double* %x, align 8

@@ -1,4 +1,9 @@
 ; RUN: opt -S -march=r600 -mcpu=cayman -basicaa -slp-vectorizer -dce < %s | FileCheck %s
+; XFAIL: *
+; 
+; FIXME: If this test expects to be vectorized, the TTI must indicate that the target
+;        has vector registers of the expected width.
+;        Currently, it says there are 8 vector registers that are 32-bits wide.
 
 target datalayout = "e-p:32:32:32-p3:16:16:16-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-v16:16:16-v24:32:32-v32:32:32-v48:64:64-v64:64:64-v96:128:128-v128:128:128-v192:256:256-v256:256:256-v512:512:512-v1024:1024:1024-v2048:2048:2048-n32:64"
 

@@ -12,11 +12,8 @@ target triple = "i386-apple-macosx10.8.0"
 
 ;CHECK-LABEL: @test(
 ;CHECK: load <2 x double>
-;CHECK: fadd <2 x double>
-;CHECK: store <2 x double>
-;CHECK: insertelement <2 x double>
-;CHECK: fadd <2 x double>
-;CHECK: store <2 x double>
+;CHECK: fadd <4 x double>
+;CHECK: store <4 x double>
 ;CHECK: ret i32
 
 define i32 @test(double* nocapture %G) {
@@ -48,11 +45,12 @@ entry:
 ;  A[2] = A[2] * 7.6 * n + 3.0;
 ;  A[3] = A[3] * 7.4 * n + 4.0;
 ;}
-;CHECK-LABEL: @foo(
-;CHECK: insertelement <2 x double>
-;CHECK: insertelement <2 x double>
-;CHECK-NOT: insertelement <2 x double>
-;CHECK: ret
+; CHECK-LABEL: @foo(
+; CHECK: load <4 x double>
+; CHECK: fmul <4 x double>
+; CHECK: fmul <4 x double>
+; CHECK: fadd <4 x double>
+; CHECK: store <4 x double>
 define i32 @foo(double* nocapture %A, i32 %n) {
 entry:
   %0 = load double, double* %A, align 8
@@ -140,11 +138,12 @@ define i32 @test2(double* nocapture %G, i32 %k) {
 ;  A[2] = A[2] * 7.9 * n + 6.0;
 ;  A[3] = A[3] * 7.9 * n + 6.0;
 ;}
-;CHECK-LABEL: @foo4(
-;CHECK: insertelement <2 x double>
-;CHECK: insertelement <2 x double>
-;CHECK-NOT: insertelement <2 x double>
-;CHECK: ret
+; CHECK-LABEL: @foo4(
+; CHECK: load <4 x double>
+; CHECK: fmul <4 x double>
+; CHECK: fmul <4 x double>
+; CHECK: fadd <4 x double>
+; CHECK: store <4 x double>
 define i32 @foo4(double* nocapture %A, i32 %n) {
 entry:
   %0 = load double, double* %A, align 8
