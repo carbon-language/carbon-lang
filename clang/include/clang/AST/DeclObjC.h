@@ -403,6 +403,11 @@ public:
   /// have already been created.
   void createImplicitParams(ASTContext &Context, const ObjCInterfaceDecl *ID);
 
+  /// \return the type for \c self and set \arg selfIsPseudoStrong and
+  /// \arg selfIsConsumed accordingly.
+  QualType getSelfType(ASTContext &Context, const ObjCInterfaceDecl *OID,
+                       bool &selfIsPseudoStrong, bool &selfIsConsumed);
+
   ImplicitParamDecl * getSelfDecl() const { return SelfDecl; }
   void setSelfDecl(ImplicitParamDecl *SD) { SelfDecl = SD; }
   ImplicitParamDecl * getCmdDecl() const { return CmdDecl; }
