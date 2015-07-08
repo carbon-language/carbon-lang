@@ -77,6 +77,16 @@ void RegPressureTracker::dump() const {
   P.dump(TRI);
 }
 
+void PressureDiff::dump(const TargetRegisterInfo &TRI) const {
+  for (const PressureChange &Change : *this) {
+    if (!Change.isValid() || Change.getUnitInc() == 0)
+      continue;
+    dbgs() << "    " << TRI.getRegPressureSetName(Change.getPSet())
+           << " " << Change.getUnitInc();
+  }
+  dbgs() << '\n';
+}
+
 /// Increase the current pressure as impacted by these registers and bump
 /// the high water mark if needed.
 void RegPressureTracker::increaseRegPressure(ArrayRef<unsigned> RegUnits) {
@@ -787,6 +797,8 @@ getMaxUpwardPressureDelta(const MachineInstr *MI, PressureDiff *PDiff,
   RegPressureDelta Delta2;
   getUpwardPressureDelta(MI, *PDiff, Delta2, CriticalPSets, MaxPressureLimit);
   if (Delta != Delta2) {
+    dbgs() << "PDiff: ";
+    PDiff->dump(*TRI);
     dbgs() << "DELTA: " << *MI;
     if (Delta.Excess.isValid())
       dbgs() << "Excess1 " << TRI->getRegPressureSetName(Delta.Excess.getPSet())

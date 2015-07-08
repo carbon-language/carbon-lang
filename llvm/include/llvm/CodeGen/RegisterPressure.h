@@ -135,6 +135,8 @@ public:
 
   void addPressureChange(unsigned RegUnit, bool IsDec,
                          const MachineRegisterInfo *MRI);
+
+  LLVM_DUMP_METHOD void dump(const TargetRegisterInfo &TRI) const;
 };
 
 /// Array of PressureDiffs.
