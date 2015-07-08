@@ -520,6 +520,11 @@ void WinEHStatePass::addSEHStateStores(Function &F, MachineModuleInfo &MMI) {
           for (auto &Handler : ActionList) {
             if (auto *CH = dyn_cast<CatchHandler>(Handler.get())) {
               auto *BA = cast<BlockAddress>(CH->getHandlerBlockOrFunc());
+#ifndef NDEBUG
+              for (BasicBlock *Pred : predecessors(BA->getBasicBlock()))
+                assert(Pred->isLandingPad() &&
+                       "WinEHPrepare failed to split block");
+#endif
               ExceptBlocks.insert(BA->getBasicBlock());
             }
           }

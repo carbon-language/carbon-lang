@@ -533,9 +533,9 @@ void WinEHPrepare::findSEHEHReturnPoints(
     BasicBlock *NextBB;
     Constant *Selector;
     if (isSelectorDispatch(BB, CatchHandler, Selector, NextBB)) {
-      // Split the edge if there is a phi node. Returning from EH to a phi node
-      // is just as impossible as having a phi after an indirectbr.
-      if (isa<PHINode>(CatchHandler->begin())) {
+      // Split the edge if there are multiple predecessors. This creates a place
+      // where we can insert EH recovery code.
+      if (!CatchHandler->getSinglePredecessor()) {
         DEBUG(dbgs() << "splitting EH return edge from " << BB->getName()
                      << " to " << CatchHandler->getName() << '\n');
         BBI = CatchHandler = SplitCriticalEdge(
