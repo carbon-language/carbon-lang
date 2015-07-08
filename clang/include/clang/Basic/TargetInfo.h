@@ -812,8 +812,7 @@ public:
   /// \brief Whether the target supports SEH __try.
   bool isSEHTrySupported() const {
     return getTriple().isOSWindows() &&
-           (getTriple().getArch() == llvm::Triple::x86 ||
-            getTriple().getArch() == llvm::Triple::x86_64);
+           getTriple().getArch() == llvm::Triple::x86_64;
   }
 
   /// \brief Return true if {|} are normal characters in the asm string.

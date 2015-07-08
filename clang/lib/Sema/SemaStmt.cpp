@@ -3650,10 +3650,6 @@ StmtResult Sema::ActOnSEHTryBlock(bool IsCXXTry, SourceLocation TryLoc,
   else
     Diag(TryLoc, diag::err_seh_try_outside_functions);
 
-  // Reject __try on unsupported targets.
-  if (!Context.getTargetInfo().isSEHTrySupported())
-    Diag(TryLoc, diag::err_seh_try_unsupported);
-
   return SEHTryStmt::Create(Context, IsCXXTry, TryLoc, TryBlock, Handler);
 }
 

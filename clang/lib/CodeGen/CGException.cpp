@@ -1280,6 +1280,10 @@ llvm::BasicBlock *CodeGenFunction::getEHResumeBlock(bool isCleanup) {
 }
 
 void CodeGenFunction::EmitSEHTryStmt(const SEHTryStmt &S) {
+  // Reject __try on unsupported targets.
+  if (!getContext().getTargetInfo().isSEHTrySupported())
+    ErrorUnsupported(&S, "SEH '__try' on this target");
+
   EnterSEHTryStmt(S);
   {
     JumpDest TryExit = getJumpDestInCurrentScope("__try.__leave");
