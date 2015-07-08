@@ -281,16 +281,14 @@ llvm::writeArchive(StringRef ArcName,
   unsigned LongNameMemberNum = 0;
   unsigned NewMemberNum = 0;
   std::vector<unsigned> MemberOffset;
-  for (std::vector<NewArchiveIterator>::iterator I = NewMembers.begin(),
-                                                 E = NewMembers.end();
-       I != E; ++I, ++MemberNum) {
+  for (const NewArchiveIterator &I : NewMembers) {
+    MemoryBufferRef File = Members[MemberNum++];
 
     unsigned Pos = Out.tell();
     MemberOffset.push_back(Pos);
 
-    MemoryBufferRef File = Members[MemberNum];
-    if (I->isNewMember()) {
-      StringRef FileName = I->getNew();
+    if (I.isNewMember()) {
+      StringRef FileName = I.getNew();
       const sys::fs::file_status &Status = NewMemberStatus[NewMemberNum];
       NewMemberNum++;
 
@@ -305,8 +303,8 @@ llvm::writeArchive(StringRef ArcName,
                           Status.getGroup(), Status.permissions(),
                           Status.getSize());
     } else {
-      object::Archive::child_iterator OldMember = I->getOld();
-      StringRef Name = I->getName();
+      object::Archive::child_iterator OldMember = I.getOld();
+      StringRef Name = I.getName();
 
       if (Name.size() < 16)
         printMemberHeader(Out, Name, OldMember->getLastModified(),
