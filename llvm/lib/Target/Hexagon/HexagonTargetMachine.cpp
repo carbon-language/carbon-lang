@@ -40,6 +40,10 @@ static cl::opt<bool> EnableExpandCondsets("hexagon-expand-condsets",
 static cl::opt<bool> EnableGenInsert("hexagon-insert", cl::init(true),
   cl::Hidden, cl::desc("Generate \"insert\" instructions"));
 
+static cl::opt<bool> EnableCommGEP("hexagon-commgep", cl::init(true),
+  cl::Hidden, cl::ZeroOrMore, cl::desc("Enable commoning of GEP instructions"));
+
+
 /// HexagonTargetMachineModule - Note that this is used on hosts that
 /// cannot link in a library unless there are references into the
 /// library.  In particular, it seems that it is not possible to get
@@ -62,6 +66,7 @@ SchedCustomRegistry("hexagon", "Run Hexagon's custom scheduler",
                     createVLIWMachineSched);
 
 namespace llvm {
+  FunctionPass *createHexagonCommonGEP();
   FunctionPass *createHexagonExpandCondsets();
   FunctionPass *createHexagonISelDag(HexagonTargetMachine &TM,
                                      CodeGenOpt::Level OptLevel);
@@ -124,6 +129,7 @@ public:
     return createVLIWMachineSched(C);
   }
 
+  void addIRPasses() override;
   bool addInstSelector() override;
   void addPreRegAlloc() override;
   void addPostRegAlloc() override;
@@ -134,6 +140,14 @@ public:
 
 TargetPassConfig *HexagonTargetMachine::createPassConfig(PassManagerBase &PM) {
   return new HexagonPassConfig(this, PM);
+}
+
+void HexagonPassConfig::addIRPasses() {
+  TargetPassConfig::addIRPasses();
+
+  bool NoOpt = (getOptLevel() == CodeGenOpt::None);
+  if (!NoOpt && EnableCommGEP)
+    addPass(createHexagonCommonGEP());
 }
 
 bool HexagonPassConfig::addInstSelector() {
