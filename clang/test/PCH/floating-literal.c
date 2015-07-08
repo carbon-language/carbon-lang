@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -triple mips64-none-linux-gnu -emit-pch -o %t %s
+// REQUIRES: mips-registered-target
 // RUN: %clang_cc1 -x ast -ast-print %t | FileCheck %s
 
 // Make sure the semantics of FloatingLiterals are stored correctly in

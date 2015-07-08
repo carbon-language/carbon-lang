@@ -1,3 +1,4 @@
+// REQUIRES: x86-registered-target
 // Test this without pch.
 // RUN: %clang_cc1 -fblocks -triple x86_64-apple-darwin11 -fobjc-arc -include %S/Inputs/arc.h -fsyntax-only -emit-llvm-only %s
 

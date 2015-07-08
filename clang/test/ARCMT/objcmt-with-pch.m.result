@@ -1,3 +1,4 @@
+// REQUIRES: x86-registered-target
 // RUN: rm -rf %t
 // RUN: %clang_cc1 -triple x86_64-apple-darwin10 -x objective-c %S/Common.h -emit-pch -o %t.pch
 // RUN: %clang_cc1 -triple x86_64-apple-darwin10 -objcmt-migrate-literals -objcmt-migrate-subscripting -mt-migrate-directory %t %s -x objective-c -include-pch %t.pch

@@ -1,3 +1,4 @@
+// REQUIRES: x86-registered-target
 // Test this without PCH.
 // RUN: %clang_cc1 -triple x86_64-apple-macosx10.9.0 -include %S/local_static.h -fsyntax-only %s -emit-llvm -o %t.no_pch.ll %s
 // RUN: FileCheck --input-file %t.no_pch.ll %s

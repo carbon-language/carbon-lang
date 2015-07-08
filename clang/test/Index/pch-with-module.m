@@ -1,3 +1,4 @@
+// REQUIRES: x86-registered-target
 // RUN: rm -rf %t.cache
 // RUN: c-index-test -write-pch %t.h.pch %s -target x86_64-apple-macosx10.7 -fobjc-arc -fmodules-cache-path=%t.cache -fmodules -F %S/../Modules/Inputs -Xclang -fdisable-module-hash
 // RUN: %clang -fsyntax-only %s -target x86_64-apple-macosx10.7 -include %t.h -fobjc-arc -fmodules-cache-path=%t.cache -fmodules -F %S/../Modules/Inputs \

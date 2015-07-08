@@ -1,3 +1,4 @@
+// REQUIRES: x86-registered-target
 // RUN: rm -rf %t
 // RUN: %clang_cc1 -triple x86_64-apple-macosx10 -fmodules -fimplicit-module-maps -fmodules-cache-path=%t \
 // RUN:     -fmodules-ignore-macro=PREFIX -DPREFIX -I %S/Inputs/va_list \

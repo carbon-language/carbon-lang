@@ -29,6 +29,7 @@
 #include "clang/Basic/DiagnosticIDs.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Basic/Version.h"
+#include "clang/CodeGen/ObjectFilePCHContainerOperations.h"
 #include "clang/Frontend/ASTUnit.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
@@ -53,6 +54,7 @@
 #include "llvm/Support/Program.h"
 #include "llvm/Support/SaveAndRestore.h"
 #include "llvm/Support/Signals.h"
+#include "llvm/Support/TargetSelect.h"
 #include "llvm/Support/Threading.h"
 #include "llvm/Support/Timer.h"
 #include "llvm/Support/raw_ostream.h"
@@ -2876,7 +2878,14 @@ CXIndex clang_createIndex(int excludeDeclarationsFromPCH,
   // registered once.
   (void)*RegisterFatalErrorHandlerOnce;
 
-  CIndexer *CIdxr = new CIndexer();
+  // Initialize targets for clang module support.
+  llvm::InitializeAllTargets();
+  llvm::InitializeAllTargetMCs();
+  llvm::InitializeAllAsmPrinters();
+  llvm::InitializeAllAsmParsers();
+
+  CIndexer *CIdxr =
+      new CIndexer(std::make_shared<ObjectFilePCHContainerOperations>());
   if (excludeDeclarationsFromPCH)
     CIdxr->setOnlyLocalDecls();
   if (displayDiagnostics)

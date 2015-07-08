@@ -3,6 +3,7 @@
 // RUN: %clang -target x86_64-apple-darwin10 -fsyntax-only \
 // RUN:   -include-pch %t -isysroot %S/libroot %s -Xclang -verify
 // RUN: not %clang -target x86_64-apple-darwin10 -include-pch %t %s
+// REQUIRES: x86-registered-target
 
 #include <reloc.h>
 

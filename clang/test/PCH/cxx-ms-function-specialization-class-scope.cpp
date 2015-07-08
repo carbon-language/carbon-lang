@@ -1,3 +1,4 @@
+// REQUIRES: x86-registered-target
 // RUN: %clang_cc1 -fms-extensions -triple i386-unknown-unknown  -x c++-header -emit-pch -o %t %S/cxx-ms-function-specialization-class-scope.h
 // RUN: %clang_cc1 -fms-extensions -triple i386-unknown-unknown -include-pch %t -fsyntax-only -verify %s 
 // expected-no-diagnostics
