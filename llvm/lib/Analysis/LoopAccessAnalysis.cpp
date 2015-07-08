@@ -1028,8 +1028,10 @@ MemoryDepChecker::isDependent(const MemAccessInfo &A, unsigned AIdx,
 
   unsigned Stride = std::abs(StrideAPtr);
   if (Stride > 1 &&
-      areStridedAccessesIndependent(Distance, Stride, TypeByteSize))
+      areStridedAccessesIndependent(Distance, Stride, TypeByteSize)) {
+    DEBUG(dbgs() << "LAA: Strided accesses are independent\n");
     return Dependence::NoDep;
+  }
 
   // Bail out early if passed-in parameters make vectorization not feasible.
   unsigned ForcedFactor = (VectorizerParams::VectorizationFactor ?
