@@ -2503,9 +2503,9 @@ void InnerLoopVectorizer::createEmptyLoop() {
    */
 
   BasicBlock *OldBasicBlock = OrigLoop->getHeader();
-  BasicBlock *BypassBlock = OrigLoop->getLoopPreheader();
+  BasicBlock *VectorPH = OrigLoop->getLoopPreheader();
   BasicBlock *ExitBlock = OrigLoop->getExitBlock();
-  assert(BypassBlock && "Invalid loop structure");
+  assert(VectorPH && "Invalid loop structure");
   assert(ExitBlock && "Must have an exit block");
 
   // Some loops have a single integer induction variable, while other loops
@@ -2545,34 +2545,35 @@ void InnerLoopVectorizer::createEmptyLoop() {
   // loop.
   Value *BackedgeCount =
       Exp.expandCodeFor(BackedgeTakeCount, BackedgeTakeCount->getType(),
-                        BypassBlock->getTerminator());
+                        VectorPH->getTerminator());
   if (BackedgeCount->getType()->isPointerTy())
     BackedgeCount = CastInst::CreatePointerCast(BackedgeCount, IdxTy,
                                                 "backedge.ptrcnt.to.int",
-                                                BypassBlock->getTerminator());
+                                                VectorPH->getTerminator());
   Instruction *CheckBCOverflow =
       CmpInst::Create(Instruction::ICmp, CmpInst::ICMP_EQ, BackedgeCount,
                       Constant::getAllOnesValue(BackedgeCount->getType()),
-                      "backedge.overflow", BypassBlock->getTerminator());
+                      "backedge.overflow", VectorPH->getTerminator());
 
   // The loop index does not have to start at Zero. Find the original start
   // value from the induction PHI node. If we don't have an induction variable
   // then we know that it starts at zero.
-  Builder.SetInsertPoint(BypassBlock->getTerminator());
-  Value *StartIdx = ExtendedIdx = OldInduction ?
-    Builder.CreateZExt(OldInduction->getIncomingValueForBlock(BypassBlock),
-                       IdxTy):
-    ConstantInt::get(IdxTy, 0);
+  Builder.SetInsertPoint(VectorPH->getTerminator());
+  Value *StartIdx = ExtendedIdx =
+      OldInduction
+          ? Builder.CreateZExt(OldInduction->getIncomingValueForBlock(VectorPH),
+                               IdxTy)
+          : ConstantInt::get(IdxTy, 0);
 
   // Count holds the overall loop count (N).
   Value *Count = Exp.expandCodeFor(ExitCount, ExitCount->getType(),
-                                   BypassBlock->getTerminator());
+                                   VectorPH->getTerminator());
 
-  LoopBypassBlocks.push_back(BypassBlock);
+  LoopBypassBlocks.push_back(VectorPH);
 
   // Split the single block loop into the two loop structure described above.
   BasicBlock *VecBody =
-      BypassBlock->splitBasicBlock(BypassBlock->getTerminator(), "vector.body");
+      VectorPH->splitBasicBlock(VectorPH->getTerminator(), "vector.body");
   BasicBlock *MiddleBlock =
   VecBody->splitBasicBlock(VecBody->getTerminator(), "middle.block");
   BasicBlock *ScalarPH =
@@ -2606,18 +2607,18 @@ void InnerLoopVectorizer::createEmptyLoop() {
 
   // Generate code to check that the loop's trip count that we computed by
   // adding one to the backedge-taken count will not overflow.
-  BasicBlock *CheckBlock = BypassBlock->splitBasicBlock(
-      BypassBlock->getTerminator(), "overflow.checked");
+  BasicBlock *NewVectorPH =
+      VectorPH->splitBasicBlock(VectorPH->getTerminator(), "overflow.checked");
   if (ParentLoop)
-    ParentLoop->addBasicBlockToLoop(CheckBlock, *LI);
+    ParentLoop->addBasicBlockToLoop(NewVectorPH, *LI);
   ReplaceInstWithInst(
-      BypassBlock->getTerminator(),
-      BranchInst::Create(ScalarPH, CheckBlock, CheckBCOverflow));
-  BypassBlock = CheckBlock;
+      VectorPH->getTerminator(),
+      BranchInst::Create(ScalarPH, NewVectorPH, CheckBCOverflow));
+  VectorPH = NewVectorPH;
 
   // This is the IR builder that we use to add all of the logic for bypassing
   // the new vector loop.
-  IRBuilder<> BypassBuilder(BypassBlock->getTerminator());
+  IRBuilder<> BypassBuilder(VectorPH->getTerminator());
   setDebugLocFromInst(BypassBuilder,
                       getDebugLocFromInstOrOperands(OldInduction));
 
@@ -2646,14 +2647,14 @@ void InnerLoopVectorizer::createEmptyLoop() {
   // jump to the scalar loop.
   Value *Cmp =
       BypassBuilder.CreateICmpEQ(IdxEndRoundDown, StartIdx, "cmp.zero");
-  CheckBlock =
-      BypassBlock->splitBasicBlock(BypassBlock->getTerminator(), "vector.ph");
+  NewVectorPH =
+      VectorPH->splitBasicBlock(VectorPH->getTerminator(), "vector.ph");
   if (ParentLoop)
-    ParentLoop->addBasicBlockToLoop(CheckBlock, *LI);
-  LoopBypassBlocks.push_back(BypassBlock);
-  ReplaceInstWithInst(BypassBlock->getTerminator(),
-                      BranchInst::Create(MiddleBlock, CheckBlock, Cmp));
-  BypassBlock = CheckBlock;
+    ParentLoop->addBasicBlockToLoop(NewVectorPH, *LI);
+  LoopBypassBlocks.push_back(VectorPH);
+  ReplaceInstWithInst(VectorPH->getTerminator(),
+                      BranchInst::Create(MiddleBlock, NewVectorPH, Cmp));
+  VectorPH = NewVectorPH;
 
   // Generate the code to check that the strides we assumed to be one are really
   // one. We want the new basic block to start at the first instruction in a
@@ -2661,24 +2662,24 @@ void InnerLoopVectorizer::createEmptyLoop() {
   Instruction *StrideCheck;
   Instruction *FirstCheckInst;
   std::tie(FirstCheckInst, StrideCheck) =
-      addStrideCheck(BypassBlock->getTerminator());
+      addStrideCheck(VectorPH->getTerminator());
   if (StrideCheck) {
     AddedSafetyChecks = true;
     // Create a new block containing the stride check.
-    BypassBlock->setName("vector.stridecheck");
-    BasicBlock *CheckBlock =
-        BypassBlock->splitBasicBlock(BypassBlock->getTerminator(), "vector.ph");
+    VectorPH->setName("vector.stridecheck");
+    NewVectorPH =
+        VectorPH->splitBasicBlock(VectorPH->getTerminator(), "vector.ph");
     if (ParentLoop)
-      ParentLoop->addBasicBlockToLoop(CheckBlock, *LI);
-    LoopBypassBlocks.push_back(BypassBlock);
+      ParentLoop->addBasicBlockToLoop(NewVectorPH, *LI);
+    LoopBypassBlocks.push_back(VectorPH);
 
     // Replace the branch into the memory check block with a conditional branch
     // for the "few elements case".
     ReplaceInstWithInst(
-        BypassBlock->getTerminator(),
-        BranchInst::Create(MiddleBlock, CheckBlock, StrideCheck));
+        VectorPH->getTerminator(),
+        BranchInst::Create(MiddleBlock, NewVectorPH, StrideCheck));
 
-    BypassBlock = CheckBlock;
+    VectorPH = NewVectorPH;
   }
 
   // Generate the code that checks in runtime if arrays overlap. We put the
@@ -2686,26 +2687,25 @@ void InnerLoopVectorizer::createEmptyLoop() {
   // faster.
   Instruction *MemRuntimeCheck;
   std::tie(FirstCheckInst, MemRuntimeCheck) =
-    Legal->getLAI()->addRuntimeCheck(BypassBlock->getTerminator());
+      Legal->getLAI()->addRuntimeCheck(VectorPH->getTerminator());
   if (MemRuntimeCheck) {
     AddedSafetyChecks = true;
     // Create a new block containing the memory check.
-    BypassBlock->setName("vector.memcheck");
-    BasicBlock *CheckBlock =
-        BypassBlock->splitBasicBlock(BypassBlock->getTerminator(), "vector.ph");
+    VectorPH->setName("vector.memcheck");
+    NewVectorPH =
+        VectorPH->splitBasicBlock(VectorPH->getTerminator(), "vector.ph");
     if (ParentLoop)
-      ParentLoop->addBasicBlockToLoop(CheckBlock, *LI);
-    LoopBypassBlocks.push_back(BypassBlock);
+      ParentLoop->addBasicBlockToLoop(NewVectorPH, *LI);
+    LoopBypassBlocks.push_back(VectorPH);
 
     // Replace the branch into the memory check block with a conditional branch
     // for the "few elements case".
     ReplaceInstWithInst(
-        BypassBlock->getTerminator(),
-        BranchInst::Create(MiddleBlock, CheckBlock, MemRuntimeCheck));
+        VectorPH->getTerminator(),
+        BranchInst::Create(MiddleBlock, NewVectorPH, MemRuntimeCheck));
 
-    BypassBlock = CheckBlock;
+    VectorPH = NewVectorPH;
   }
-  BasicBlock *VectorPH = BypassBlock;
 
   // We are going to resume the execution of the scalar loop.
   // Go over all of the induction variables that we found and fix the
