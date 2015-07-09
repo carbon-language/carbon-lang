@@ -97,7 +97,7 @@ void WinCodeViewLineTables::maybeRecordLocation(DebugLoc DL,
   MCSymbol *MCL = Asm->MMI->getContext().createTempSymbol();
   Asm->OutStreamer->EmitLabel(MCL);
   CurFn->Instrs.push_back(MCL);
-  InstrInfo[MCL] = InstrInfoTy(Filename, DL.getLine());
+  InstrInfo[MCL] = InstrInfoTy(Filename, DL.getLine(), DL.getCol());
 }
 
 WinCodeViewLineTables::WinCodeViewLineTables(AsmPrinter *AP)
@@ -264,22 +264,38 @@ void WinCodeViewLineTables::emitDebugInfoForFunction(const Function *GV) {
   // Identify the function this subsection is for.
   Asm->OutStreamer->EmitCOFFSecRel32(Fn);
   Asm->OutStreamer->EmitCOFFSectionIndex(Fn);
-  // Insert padding after a 16-bit section index.
-  Asm->EmitInt16(0);
+  // Insert flags after a 16-bit section index.
+  Asm->EmitInt16(COFF::DEBUG_LINE_TABLES_HAVE_COLUMN_RECORDS);
 
   // Length of the function's code, in bytes.
   EmitLabelDiff(*Asm->OutStreamer, Fn, FI.End);
 
   // PC-to-linenumber lookup table:
   MCSymbol *FileSegmentEnd = nullptr;
+
+  // The start of the last segment:
+  size_t LastSegmentStart = 0;
+
+  auto FinishPreviousChunk = [&] {
+    if (!FileSegmentEnd)
+      return;
+    for (size_t ColSegI = LastSegmentStart,
+                ColSegEnd = ColSegI + FilenameSegmentLengths[LastSegmentStart];
+         ColSegI != ColSegEnd; ++ColSegI) {
+      unsigned ColumnNumber = InstrInfo[FI.Instrs[ColSegI]].ColumnNumber;
+      Asm->EmitInt16(ColumnNumber); // Start column
+      Asm->EmitInt16(ColumnNumber); // End column
+    }
+    Asm->OutStreamer->EmitLabel(FileSegmentEnd);
+  };
+
   for (size_t J = 0, F = FI.Instrs.size(); J != F; ++J) {
     MCSymbol *Instr = FI.Instrs[J];
     assert(InstrInfo.count(Instr));
 
     if (FilenameSegmentLengths.count(J)) {
       // We came to a beginning of a new filename segment.
-      if (FileSegmentEnd)
-        Asm->OutStreamer->EmitLabel(FileSegmentEnd);
+      FinishPreviousChunk();
       StringRef CurFilename = InstrInfo[FI.Instrs[J]].Filename;
       assert(FileNameRegistry.Infos.count(CurFilename));
       size_t IndexInStringTable =
@@ -300,6 +316,7 @@ void WinCodeViewLineTables::emitDebugInfoForFunction(const Function *GV) {
       // records.
       FileSegmentEnd = Asm->MMI->getContext().createTempSymbol();
       EmitLabelDiff(*Asm->OutStreamer, FileSegmentBegin, FileSegmentEnd);
+      LastSegmentStart = J;
     }
 
     // The first PC with the given linenumber and the linenumber itself.
@@ -307,8 +324,7 @@ void WinCodeViewLineTables::emitDebugInfoForFunction(const Function *GV) {
     Asm->EmitInt32(InstrInfo[Instr].LineNumber);
   }
 
-  if (FileSegmentEnd)
-    Asm->OutStreamer->EmitLabel(FileSegmentEnd);
+  FinishPreviousChunk();
   Asm->OutStreamer->EmitLabel(LineTableEnd);
 }
 

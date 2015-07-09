@@ -82,7 +82,7 @@
 ; X86-NEXT: [[F2_START]]:
 ; X86-NEXT: .secrel32       _x
 ; X86-NEXT: .secidx _x
-; X86-NEXT: .short 0
+; X86-NEXT: .short 1
 ; X86-NEXT: .long [[END_OF_X]]-_x
 ; X86-NEXT: [[FILE_SEGMENT_START:[^:]*]]:
 ; X86-NEXT: .long   0
@@ -92,6 +92,10 @@
 ; X86-NEXT: .long   4
 ; X86-NEXT: .long [[X_RETURN]]-_x
 ; X86-NEXT: .long   5
+; X86-NEXT: .short 42
+; X86-NEXT: .short 42
+; X86-NEXT: .short 43
+; X86-NEXT: .short 43
 ; X86-NEXT: [[FILE_SEGMENT_END]]:
 ; X86-NEXT: [[F2_END]]:
 ; Symbol subsection for y
@@ -121,7 +125,7 @@
 ; X86-NEXT: [[F2_START]]:
 ; X86-NEXT: .secrel32       _y
 ; X86-NEXT: .secidx _y
-; X86-NEXT: .short 0
+; X86-NEXT: .short 1
 ; X86-NEXT: .long [[END_OF_Y]]-_y
 ; X86-NEXT: [[FILE_SEGMENT_START:[^:]*]]:
 ; X86-NEXT: .long   0
@@ -131,6 +135,10 @@
 ; X86-NEXT: .long   8
 ; X86-NEXT: .long [[Y_RETURN]]-_y
 ; X86-NEXT: .long   9
+; X86-NEXT: .short 52
+; X86-NEXT: .short 52
+; X86-NEXT: .short 53
+; X86-NEXT: .short 53
 ; X86-NEXT: [[FILE_SEGMENT_END]]:
 ; X86-NEXT: [[F2_END]]:
 ; Symbol subsection for f
@@ -160,7 +168,7 @@
 ; X86-NEXT: [[F2_START]]:
 ; X86-NEXT: .secrel32 _f
 ; X86-NEXT: .secidx _f
-; X86-NEXT: .short 0
+; X86-NEXT: .short 1
 ; X86-NEXT: .long [[END_OF_F]]-_f
 ; X86-NEXT: [[FILE_SEGMENT_START:[^:]*]]:
 ; X86-NEXT: .long   0
@@ -174,6 +182,14 @@
 ; X86-NEXT: .long   14
 ; X86-NEXT: .long [[F_RETURN]]-_f
 ; X86-NEXT: .long   15
+; X86-NEXT: .short 62
+; X86-NEXT: .short 62
+; X86-NEXT: .short 63
+; X86-NEXT: .short 63
+; X86-NEXT: .short 72
+; X86-NEXT: .short 72
+; X86-NEXT: .short 73
+; X86-NEXT: .short 73
 ; X86-NEXT: [[FILE_SEGMENT_END]]:
 ; X86-NEXT: [[F2_END]]:
 ; File index to string table offset subsection
@@ -198,14 +214,14 @@
 ; OBJ32-NEXT:   0x30 IMAGE_REL_I386_SECTION _x
 ; OBJ32-NEXT:   0x44 IMAGE_REL_I386_SECREL _x
 ; OBJ32-NEXT:   0x48 IMAGE_REL_I386_SECTION _x
-; OBJ32-NEXT:   0x94 IMAGE_REL_I386_SECREL _y
-; OBJ32-NEXT:   0x98 IMAGE_REL_I386_SECTION _y
-; OBJ32-NEXT:   0xAC IMAGE_REL_I386_SECREL _y
-; OBJ32-NEXT:   0xB0 IMAGE_REL_I386_SECTION _y
-; OBJ32-NEXT:   0xFC IMAGE_REL_I386_SECREL _f
-; OBJ32-NEXT:   0x100 IMAGE_REL_I386_SECTION _f
-; OBJ32-NEXT:   0x114 IMAGE_REL_I386_SECREL _f
-; OBJ32-NEXT:   0x118 IMAGE_REL_I386_SECTION _f
+; OBJ32-NEXT:   0x9C IMAGE_REL_I386_SECREL _y
+; OBJ32-NEXT:   0xA0 IMAGE_REL_I386_SECTION _y
+; OBJ32-NEXT:   0xB4 IMAGE_REL_I386_SECREL _y
+; OBJ32-NEXT:   0xB8 IMAGE_REL_I386_SECTION _y
+; OBJ32-NEXT:   0x10C IMAGE_REL_I386_SECREL _f
+; OBJ32-NEXT:   0x110 IMAGE_REL_I386_SECTION _f
+; OBJ32-NEXT:   0x124 IMAGE_REL_I386_SECREL _f
+; OBJ32-NEXT:   0x128 IMAGE_REL_I386_SECTION _f
 ; OBJ32-NEXT: ]
 ; OBJ32:      Subsection [
 ; OBJ32-NEXT:   Type: 0xF1
@@ -248,24 +264,35 @@
 ; OBJ32:      ]
 ; OBJ32:      FunctionLineTable [
 ; OBJ32-NEXT:   Name: _x
+; OBJ32-NEXT:   Flags: 0x1
 ; OBJ32-NEXT:   CodeSize: 0x6
 ; OBJ32-NEXT:   FilenameSegment [
 ; OBJ32-NEXT:     Filename: D:\source.c
 ; OBJ32-NEXT:     +0x0: 4
 ; OBJ32-NEXT:     +0x5: 5
+; OBJ32-NEXT:     ColStart: 42
+; OBJ32-NEXT:     ColEnd: 42
+; OBJ32-NEXT:     ColStart: 43
+; OBJ32-NEXT:     ColEnd: 43
 ; OBJ32-NEXT:   ]
 ; OBJ32-NEXT: ]
 ; OBJ32-NEXT: FunctionLineTable [
 ; OBJ32-NEXT:   Name: _y
+; OBJ32-NEXT:   Flags: 0x1
 ; OBJ32-NEXT:   CodeSize: 0x6
 ; OBJ32-NEXT:   FilenameSegment [
 ; OBJ32-NEXT:     Filename: D:\source.c
 ; OBJ32-NEXT:     +0x0: 8
 ; OBJ32-NEXT:     +0x5: 9
+; OBJ32-NEXT:     ColStart: 52
+; OBJ32-NEXT:     ColEnd: 52
+; OBJ32-NEXT:     ColStart: 53
+; OBJ32-NEXT:     ColEnd: 53
 ; OBJ32-NEXT:   ]
 ; OBJ32-NEXT: ]
 ; OBJ32-NEXT: FunctionLineTable [
 ; OBJ32-NEXT:   Name: _f
+; OBJ32-NEXT:   Flags: 0x1
 ; OBJ32-NEXT:   CodeSize: 0x10
 ; OBJ32-NEXT:   FilenameSegment [
 ; OBJ32-NEXT:     Filename: D:\source.c
@@ -273,6 +300,14 @@
 ; OBJ32-NEXT:     +0x5: 13
 ; OBJ32-NEXT:     +0xA: 14
 ; OBJ32-NEXT:     +0xF: 15
+; OBJ32-NEXT:     ColStart: 62
+; OBJ32-NEXT:     ColEnd: 62
+; OBJ32-NEXT:     ColStart: 63
+; OBJ32-NEXT:     ColEnd: 63
+; OBJ32-NEXT:     ColStart: 72
+; OBJ32-NEXT:     ColEnd: 72
+; OBJ32-NEXT:     ColStart: 73
+; OBJ32-NEXT:     ColEnd: 73
 ; OBJ32-NEXT:   ]
 ; OBJ32-NEXT: ]
 ; OBJ32:    }
@@ -349,7 +384,7 @@
 ; X64-NEXT: [[F2_START]]:
 ; X64-NEXT: .secrel32 x
 ; X64-NEXT: .secidx x
-; X64-NEXT: .short 0
+; X64-NEXT: .short 1
 ; X64-NEXT: .long [[END_OF_X]]-x
 ; X64-NEXT: [[FILE_SEGMENT_START:[^:]*]]:
 ; X64-NEXT: .long   0
@@ -361,6 +396,12 @@
 ; X64-NEXT: .long   4
 ; X64-NEXT: .long [[X_EPILOG_AND_RET]]-x
 ; X64-NEXT: .long   5
+; X64-NEXT: .short 0
+; X64-NEXT: .short 0
+; X64-NEXT: .short 42
+; X64-NEXT: .short 42
+; X64-NEXT: .short 43
+; X64-NEXT: .short 43
 ; X64-NEXT: [[FILE_SEGMENT_END]]:
 ; X64-NEXT: [[F2_END]]:
 ; Symbol subsection for y
@@ -390,7 +431,7 @@
 ; X64-NEXT: [[F2_START]]:
 ; X64-NEXT: .secrel32 y
 ; X64-NEXT: .secidx y
-; X64-NEXT: .short 0
+; X64-NEXT: .short 1
 ; X64-NEXT: .long [[END_OF_Y]]-y
 ; X64-NEXT: [[FILE_SEGMENT_START:[^:]*]]:
 ; X64-NEXT: .long   0
@@ -402,6 +443,12 @@
 ; X64-NEXT: .long   8
 ; X64-NEXT: .long [[Y_EPILOG_AND_RET]]-y
 ; X64-NEXT: .long   9
+; X64-NEXT: .short 0
+; X64-NEXT: .short 0
+; X64-NEXT: .short 52
+; X64-NEXT: .short 52
+; X64-NEXT: .short 53
+; X64-NEXT: .short 53
 ; X64-NEXT: [[FILE_SEGMENT_END]]:
 ; X64-NEXT: [[F2_END]]:
 ; Symbol subsection for f
@@ -431,7 +478,7 @@
 ; X64-NEXT: [[F2_START]]:
 ; X64-NEXT: .secrel32 f
 ; X64-NEXT: .secidx f
-; X64-NEXT: .short 0
+; X64-NEXT: .short 1
 ; X64-NEXT: .long [[END_OF_F]]-f
 ; X64-NEXT: [[FILE_SEGMENT_START:[^:]*]]:
 ; X64-NEXT: .long   0
@@ -447,6 +494,16 @@
 ; X64-NEXT: .long   14
 ; X64-NEXT: .long [[F_EPILOG_AND_RET]]-f
 ; X64-NEXT: .long   15
+; X64-NEXT: .short 0
+; X64-NEXT: .short 0
+; X64-NEXT: .short 62
+; X64-NEXT: .short 62
+; X64-NEXT: .short 63
+; X64-NEXT: .short 63
+; X64-NEXT: .short 72
+; X64-NEXT: .short 72
+; X64-NEXT: .short 73
+; X64-NEXT: .short 73
 ; X64-NEXT: [[FILE_SEGMENT_END]]:
 ; X64-NEXT: [[F2_END]]:
 ; File index to string table offset subsection
@@ -471,14 +528,14 @@
 ; OBJ64-NEXT:   0x30 IMAGE_REL_AMD64_SECTION x
 ; OBJ64-NEXT:   0x44 IMAGE_REL_AMD64_SECREL x
 ; OBJ64-NEXT:   0x48 IMAGE_REL_AMD64_SECTION x
-; OBJ64-NEXT:   0x9C IMAGE_REL_AMD64_SECREL y
-; OBJ64-NEXT:   0xA0 IMAGE_REL_AMD64_SECTION y
-; OBJ64-NEXT:   0xB4 IMAGE_REL_AMD64_SECREL y
-; OBJ64-NEXT:   0xB8 IMAGE_REL_AMD64_SECTION y
-; OBJ64-NEXT:   0x10C IMAGE_REL_AMD64_SECREL f
-; OBJ64-NEXT:   0x110 IMAGE_REL_AMD64_SECTION f
+; OBJ64-NEXT:   0xA8 IMAGE_REL_AMD64_SECREL y
+; OBJ64-NEXT:   0xAC IMAGE_REL_AMD64_SECTION y
+; OBJ64-NEXT:   0xC0 IMAGE_REL_AMD64_SECREL y
+; OBJ64-NEXT:   0xC4 IMAGE_REL_AMD64_SECTION y
 ; OBJ64-NEXT:   0x124 IMAGE_REL_AMD64_SECREL f
 ; OBJ64-NEXT:   0x128 IMAGE_REL_AMD64_SECTION f
+; OBJ64-NEXT:   0x13C IMAGE_REL_AMD64_SECREL f
+; OBJ64-NEXT:   0x140 IMAGE_REL_AMD64_SECTION f
 ; OBJ64-NEXT: ]
 ; OBJ64:      Subsection [
 ; OBJ64-NEXT:   Type: 0xF1
@@ -521,26 +578,41 @@
 ; OBJ64:      ]
 ; OBJ64:      FunctionLineTable [
 ; OBJ64-NEXT:   Name: x
+; OBJ64-NEXT:   Flags: 0x1
 ; OBJ64-NEXT:   CodeSize: 0xE
 ; OBJ64-NEXT:   FilenameSegment [
 ; OBJ64-NEXT:     Filename: D:\source.c
 ; OBJ64-NEXT:     +0x0: 3
 ; OBJ64-NEXT:     +0x4: 4
 ; OBJ64-NEXT:     +0x9: 5
+; OBJ64-NEXT:     ColStart: 0
+; OBJ64-NEXT:     ColEnd: 0
+; OBJ64-NEXT:     ColStart: 42
+; OBJ64-NEXT:     ColEnd: 42
+; OBJ64-NEXT:     ColStart: 43
+; OBJ64-NEXT:     ColEnd: 43
 ; OBJ64-NEXT:   ]
 ; OBJ64-NEXT: ]
 ; OBJ64-NEXT: FunctionLineTable [
 ; OBJ64-NEXT:   Name: y
+; OBJ64-NEXT:   Flags: 0x1
 ; OBJ64-NEXT:   CodeSize: 0xE
 ; OBJ64-NEXT:   FilenameSegment [
 ; OBJ64-NEXT:     Filename: D:\source.c
 ; OBJ64-NEXT:     +0x0: 7
 ; OBJ64-NEXT:     +0x4: 8
 ; OBJ64-NEXT:     +0x9: 9
+; OBJ64-NEXT:     ColStart: 0
+; OBJ64-NEXT:     ColEnd: 0
+; OBJ64-NEXT:     ColStart: 52
+; OBJ64-NEXT:     ColEnd: 52
+; OBJ64-NEXT:     ColStart: 53
+; OBJ64-NEXT:     ColEnd: 53
 ; OBJ64-NEXT:   ]
 ; OBJ64-NEXT: ]
 ; OBJ64-NEXT: FunctionLineTable [
 ; OBJ64-NEXT:   Name: f
+; OBJ64-NEXT:   Flags: 0x1
 ; OBJ64-NEXT:   CodeSize: 0x18
 ; OBJ64-NEXT:   FilenameSegment [
 ; OBJ64-NEXT:     Filename: D:\source.c
@@ -549,6 +621,16 @@
 ; OBJ64-NEXT:     +0x9: 13
 ; OBJ64-NEXT:     +0xE: 14
 ; OBJ64-NEXT:     +0x13: 15
+; OBJ64-NEXT:     ColStart: 0
+; OBJ64-NEXT:     ColEnd: 0
+; OBJ64-NEXT:     ColStart: 62
+; OBJ64-NEXT:     ColEnd: 62
+; OBJ64-NEXT:     ColStart: 63
+; OBJ64-NEXT:     ColEnd: 63
+; OBJ64-NEXT:     ColStart: 72
+; OBJ64-NEXT:     ColEnd: 72
+; OBJ64-NEXT:     ColStart: 73
+; OBJ64-NEXT:     ColEnd: 73
 ; OBJ64-NEXT:   ]
 ; OBJ64-NEXT: ]
 ; OBJ64:    }
@@ -599,11 +681,11 @@ attributes #1 = { "less-precise-fpmad"="false" "no-frame-pointer-elim"="false" "
 !11 = !{i32 2, !"Dwarf Version", i32 4}
 !12 = !{i32 1, !"Debug Info Version", i32 3}
 !13 = !{!"clang version 3.5 "}
-!14 = !DILocation(line: 4, scope: !4)
-!15 = !DILocation(line: 5, scope: !4)
-!16 = !DILocation(line: 8, scope: !9)
-!17 = !DILocation(line: 9, scope: !9)
-!18 = !DILocation(line: 12, scope: !10)
-!19 = !DILocation(line: 13, scope: !10)
-!20 = !DILocation(line: 14, scope: !10)
-!21 = !DILocation(line: 15, scope: !10)
+!14 = !DILocation(line: 4, column: 42, scope: !4)
+!15 = !DILocation(line: 5, column: 43, scope: !4)
+!16 = !DILocation(line: 8, column: 52, scope: !9)
+!17 = !DILocation(line: 9, column: 53, scope: !9)
+!18 = !DILocation(line: 12, column: 62, scope: !10)
+!19 = !DILocation(line: 13, column: 63, scope: !10)
+!20 = !DILocation(line: 14, column: 72, scope: !10)
+!21 = !DILocation(line: 15, column: 73, scope: !10)

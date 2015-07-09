@@ -585,7 +585,11 @@ void COFFDumper::printCodeViewDebugInfo(const SectionRef &Section) {
     W.printString("FunctionName", Name);
 
     DataExtractor DE(FunctionLineTables[Name], true, 4);
-    uint32_t Offset = 8;  // Skip relocations.
+    uint32_t Offset = 6;  // Skip relocations.
+    uint16_t Flags = DE.getU16(&Offset);
+    W.printHex("Flags", Flags);
+    bool HasColumnInformation =
+        Flags & COFF::DEBUG_LINE_TABLES_HAVE_COLUMN_RECORDS;
     uint32_t FunctionSize = DE.getU32(&Offset);
     W.printHex("CodeSize", FunctionSize);
     while (DE.isValidOffset(Offset)) {
@@ -595,11 +599,6 @@ void COFFDumper::printCodeViewDebugInfo(const SectionRef &Section) {
       uint32_t OffsetInIndex = DE.getU32(&Offset),
                SegmentLength   = DE.getU32(&Offset),
                FullSegmentSize = DE.getU32(&Offset);
-      if (FullSegmentSize != 12 + 8 * SegmentLength) {
-        error(object_error::parse_failed);
-        return;
-      }
-
       uint32_t FilenameOffset;
       {
         DataExtractor SDE(CVFileIndexToStringOffsetTable, true, 4);
@@ -635,6 +634,15 @@ void COFFDumper::printCodeViewDebugInfo(const SectionRef &Section) {
         char Buffer[32];
         format("+0x%X", PC).snprint(Buffer, 32);
         W.printNumber(Buffer, LineNumber);
+      }
+      if (HasColumnInformation) {
+        for (unsigned J = 0; J != SegmentLength && DE.isValidOffset(Offset);
+             ++J) {
+          uint16_t ColStart = DE.getU16(&Offset);
+          W.printNumber("ColStart", ColStart);
+          uint16_t ColEnd = DE.getU16(&Offset);
+          W.printNumber("ColEnd", ColEnd);
+        }
       }
     }
   }

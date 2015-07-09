@@ -104,6 +104,7 @@ MFUN32-NEXT:     PayloadSize: 0x8
 MFUN32:        ]
 MFUN32-NEXT:   FunctionLineTable [
 MFUN32-NEXT:     FunctionName: _x
+MFUN32-NEXT:     Flags: 0x0
 MFUN32-NEXT:     CodeSize: 0xA
 MFUN32-NEXT:     FilenameSegment [
 MFUN32-NEXT:       Filename: d:\source.c
@@ -114,6 +115,7 @@ MFUN32-NEXT:     ]
 MFUN32-NEXT:   ]
 MFUN32-NEXT:   FunctionLineTable [
 MFUN32-NEXT:     FunctionName: _y
+MFUN32-NEXT:     Flags: 0x0
 MFUN32-NEXT:     CodeSize: 0xA
 MFUN32-NEXT:     FilenameSegment [
 MFUN32-NEXT:       Filename: d:\source.c
@@ -124,6 +126,7 @@ MFUN32-NEXT:     ]
 MFUN32-NEXT:   ]
 MFUN32-NEXT:   FunctionLineTable [
 MFUN32-NEXT:     FunctionName: _f
+MFUN32-NEXT:     Flags: 0x0
 MFUN32-NEXT:     CodeSize: 0x14
 MFUN32-NEXT:     FilenameSegment [
 MFUN32-NEXT:       Filename: d:\source.c
@@ -201,6 +204,7 @@ MFUN64-NEXT:     PayloadSize: 0x8
 MFUN64:        ]
 MFUN64-NEXT:   FunctionLineTable [
 MFUN64-NEXT:     FunctionName: x
+MFUN64-NEXT:     Flags: 0x0
 MFUN64-NEXT:     CodeSize: 0xE
 MFUN64-NEXT:     FilenameSegment [
 MFUN64-NEXT:       Filename: d:\source.c
@@ -211,6 +215,7 @@ MFUN64-NEXT:     ]
 MFUN64-NEXT:   ]
 MFUN64-NEXT:   FunctionLineTable [
 MFUN64-NEXT:     FunctionName: y
+MFUN64-NEXT:     Flags: 0x0
 MFUN64-NEXT:     CodeSize: 0xE
 MFUN64-NEXT:     FilenameSegment [
 MFUN64-NEXT:       Filename: d:\source.c
@@ -221,6 +226,7 @@ MFUN64-NEXT:     ]
 MFUN64-NEXT:   ]
 MFUN64-NEXT:   FunctionLineTable [
 MFUN64-NEXT:     FunctionName: f
+MFUN64-NEXT:     Flags: 0x0
 MFUN64-NEXT:     CodeSize: 0x18
 MFUN64-NEXT:     FilenameSegment [
 MFUN64-NEXT:       Filename: d:\source.c
@@ -296,6 +302,7 @@ MFILE32-NEXT:     PayloadSize: 0x8
 MFILE32:        ]
 MFILE32-NEXT:   FunctionLineTable [
 MFILE32-NEXT:     FunctionName: _f
+MFILE32-NEXT:     Flags: 0x0
 MFILE32-NEXT:     CodeSize: 0x14
 MFILE32-NEXT:     FilenameSegment [
 MFILE32-NEXT:       Filename: d:\input.c
@@ -352,6 +359,7 @@ MFILE64-NEXT:     PayloadSize: 0x8
 MFILE64:        ]
 MFILE64-NEXT:   FunctionLineTable [
 MFILE64-NEXT:     FunctionName: f
+MFILE64-NEXT:     Flags: 0x0
 MFILE64-NEXT:     CodeSize: 0x18
 MFILE64-NEXT:     FilenameSegment [
 MFILE64-NEXT:       Filename: d:\input.c
@@ -399,6 +407,7 @@ MCOMDAT-NEXT:   CodeSize: 0x7
 MCOMDAT-NEXT: }
 MCOMDAT:      FunctionLineTable [
 MCOMDAT-NEXT:   FunctionName: ?f@@YAHXZ
+MCOMDAT-NEXT:   Flags: 0x0
 MCOMDAT-NEXT:   CodeSize: 0x7
 MCOMDAT-NEXT:   FilenameSegment [
 MCOMDAT-NEXT:     Filename: c:\src\test.cc
@@ -414,6 +423,7 @@ MCOMDAT-NEXT:   CodeSize: 0x7
 MCOMDAT-NEXT: }
 MCOMDAT:      FunctionLineTable [
 MCOMDAT-NEXT:   FunctionName: ?g@@YAHXZ
+MCOMDAT-NEXT:   Flags: 0x0
 MCOMDAT-NEXT:   CodeSize: 0x7
 MCOMDAT-NEXT:   FilenameSegment [
 MCOMDAT-NEXT:     Filename: c:\src\test.cc
