@@ -138,29 +138,31 @@ public:
       Constant,
       ConstantIndex
     };
-    LocationType LocType;
+    LocationType Type;
     unsigned Size;
     unsigned Reg;
     int64_t Offset;
-    Location() : LocType(Unprocessed), Size(0), Reg(0), Offset(0) {}
-    Location(LocationType LocType, unsigned Size, unsigned Reg, int64_t Offset)
-        : LocType(LocType), Size(Size), Reg(Reg), Offset(Offset) {}
+    Location() : Type(Unprocessed), Size(0), Reg(0), Offset(0) {}
+    Location(LocationType Type, unsigned Size, unsigned Reg, int64_t Offset)
+        : Type(Type), Size(Size), Reg(Reg), Offset(Offset) {}
   };
 
   struct LiveOutReg {
     unsigned short Reg;
-    unsigned short RegNo;
+    unsigned short DwarfRegNum;
     unsigned short Size;
-
-    LiveOutReg() : Reg(0), RegNo(0), Size(0) {}
-    LiveOutReg(unsigned short Reg, unsigned short RegNo, unsigned short Size)
-        : Reg(Reg), RegNo(RegNo), Size(Size) {}
 
     void MarkInvalid() { Reg = 0; }
 
     // Only sort by the dwarf register number.
-    bool operator<(const LiveOutReg &LO) const { return RegNo < LO.RegNo; }
+    bool operator<(const LiveOutReg &LO) const {
+      return DwarfRegNum < LO.DwarfRegNum;
+    }
     static bool IsInvalid(const LiveOutReg &LO) { return LO.Reg == 0; }
+    LiveOutReg() : Reg(0), DwarfRegNum(0), Size(0) {}
+    LiveOutReg(unsigned short Reg, unsigned short DwarfRegNum,
+               unsigned short Size)
+        : Reg(Reg), DwarfRegNum(DwarfRegNum), Size(Size) {}
   };
 
   // OpTypes are used to encode information about the following logical
