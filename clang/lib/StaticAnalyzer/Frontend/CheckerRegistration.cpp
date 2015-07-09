@@ -114,6 +114,7 @@ ento::createCheckerManager(AnalyzerOptions &opts, const LangOptions &langOpts,
 
   ClangCheckerRegistry allCheckers(plugins, &diags);
   allCheckers.initializeManager(*checkerMgr, checkerOpts);
+  allCheckers.validateCheckerOptions(opts, diags);
   checkerMgr->finishedCheckerRegistration();
 
   for (unsigned i = 0, e = checkerOpts.size(); i != e; ++i) {

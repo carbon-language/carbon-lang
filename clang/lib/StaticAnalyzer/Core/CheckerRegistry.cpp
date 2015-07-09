@@ -8,7 +8,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/StaticAnalyzer/Core/CheckerRegistry.h"
+#include "clang/Basic/Diagnostic.h"
+#include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/StaticAnalyzer/Core/CheckerOptInfo.h"
+#include "clang/StaticAnalyzer/Core/AnalyzerOptions.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/Support/raw_ostream.h"
 
@@ -108,6 +111,28 @@ void CheckerRegistry::initializeManager(CheckerManager &checkerMgr,
          i = enabledCheckers.begin(), e = enabledCheckers.end(); i != e; ++i) {
     checkerMgr.setCurrentCheckName(CheckName((*i)->FullName));
     (*i)->Initialize(checkerMgr);
+  }
+}
+
+void CheckerRegistry::validateCheckerOptions(const AnalyzerOptions &opts,
+                                             DiagnosticsEngine &diags) const {
+  for (auto &config : opts.Config) {
+    size_t pos = config.getKey().find(':');
+    if (pos == StringRef::npos)
+      continue;
+
+    bool hasChecker = false;
+    StringRef checkerName = config.getKey().substr(0, pos);
+    for (auto &checker : Checkers) {
+      if (checker.FullName.startswith(checkerName) &&
+          (checker.FullName.size() == pos || checker.FullName[pos] == '.')) {
+        hasChecker = true;
+        break;
+      }
+    }
+    if (!hasChecker) {
+      diags.Report(diag::err_unknown_analyzer_checker) << checkerName;
+    }
   }
 }
 
