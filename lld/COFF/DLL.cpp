@@ -31,12 +31,12 @@ using namespace llvm::support::endian;
 using namespace llvm::COFF;
 using llvm::RoundUpToAlignment;
 
-static const size_t LookupChunkSize = sizeof(uint64_t);
-
 namespace lld {
 namespace coff {
 
 // Import table
+
+static int ptrSize() { return Config->is64() ? 8 : 4; }
 
 // A chunk for the import descriptor table.
 class HintNameChunk : public Chunk {
@@ -63,7 +63,7 @@ private:
 class LookupChunk : public Chunk {
 public:
   explicit LookupChunk(Chunk *C) : HintName(C) {}
-  size_t getSize() const override { return LookupChunkSize; }
+  size_t getSize() const override { return ptrSize(); }
 
   void writeTo(uint8_t *Buf) override {
     write32le(Buf + FileOff, HintName->getRVA());
@@ -78,12 +78,16 @@ public:
 class OrdinalOnlyChunk : public Chunk {
 public:
   explicit OrdinalOnlyChunk(uint16_t V) : Ordinal(V) {}
-  size_t getSize() const override { return sizeof(uint64_t); }
+  size_t getSize() const override { return ptrSize(); }
 
   void writeTo(uint8_t *Buf) override {
     // An import-by-ordinal slot has MSB 1 to indicate that
     // this is import-by-ordinal (and not import-by-name).
-    write64le(Buf + FileOff, (uint64_t(1) << 63) | Ordinal);
+    if (Config->is64()) {
+      write64le(Buf + FileOff, (1ULL << 63) | Ordinal);
+    } else {
+      write32le(Buf + FileOff, (1ULL << 31) | Ordinal);
+    }
   }
 
   uint16_t Ordinal;
@@ -125,7 +129,7 @@ uint64_t IdataContents::getDirSize() {
 }
 
 uint64_t IdataContents::getIATSize() {
-  return Addresses.size() * LookupChunkSize;
+  return Addresses.size() * ptrSize();
 }
 
 // Returns a list of .idata contents.
@@ -196,8 +200,8 @@ void IdataContents::create() {
       Hints.push_back(std::move(C));
     }
     // Terminate with null values.
-    Lookups.push_back(make_unique<NullChunk>(LookupChunkSize));
-    Addresses.push_back(make_unique<NullChunk>(LookupChunkSize));
+    Lookups.push_back(make_unique<NullChunk>(ptrSize()));
+    Addresses.push_back(make_unique<NullChunk>(ptrSize()));
 
     for (int I = 0, E = Syms.size(); I < E; ++I)
       Syms[I]->setLocation(Addresses[Base + I].get());

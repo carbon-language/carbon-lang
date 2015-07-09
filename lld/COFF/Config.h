@@ -20,6 +20,7 @@
 namespace lld {
 namespace coff {
 
+using llvm::COFF::IMAGE_FILE_MACHINE_AMD64;
 using llvm::COFF::IMAGE_FILE_MACHINE_UNKNOWN;
 using llvm::COFF::WindowsSubsystem;
 using llvm::StringRef;
@@ -45,6 +46,7 @@ struct Export {
 // Global configuration.
 struct Configuration {
   enum ManifestKind { SideBySide, Embed, No };
+  bool is64() { return MachineType == IMAGE_FILE_MACHINE_AMD64; }
 
   llvm::COFF::MachineTypes MachineType = IMAGE_FILE_MACHINE_UNKNOWN;
   bool Verbose = false;
