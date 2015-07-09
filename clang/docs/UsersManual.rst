@@ -1488,6 +1488,45 @@ instrumentation:
    profile. As you make changes to your code, clang may no longer be able to
    use the profile data. It will warn you when this happens.
 
+Profile generation and use can also be controlled by the GCC-compatible flags
+``-fprofile-generate`` and ``-fprofile-use``. Although these flags are
+semantically equivalent to their GCC counterparts, they *do not* handle
+GCC-compatible profiles. They are only meant to implement GCC's semantics
+with respect to profile creation and use.
+
+.. option:: -fprofile-generate[=<dirname>]
+
+  Without any other arguments, ``-fprofile-generate`` behaves identically to
+  ``-fprofile-instr-generate``. When given a directory name, it generates the
+  profile file ``default.profraw`` in the directory named ``dirname``. If
+  ``dirname`` does not exist, it will be created at runtime. The environment
+  variable ``LLVM_PROFILE_FILE`` can be used to override the directory and
+  filename for the profile file at runtime. For example,
+
+  .. code-block:: console
+
+    $ clang++ -O2 -fprofile-generate=yyy/zzz code.cc -o code
+
+  When ``code`` is executed, the profile will be written to the file
+  ``yyy/zzz/default.profraw``. This can be altered at runtime via the
+  ``LLVM_PROFILE_FILE`` environment variable:
+
+  .. code-block:: console
+
+    $ LLVM_PROFILE_FILE=/tmp/myprofile/code.profraw ./code
+
+  The above invocation will produce the profile file
+  ``/tmp/myprofile/code.profraw`` instead of ``yyy/zzz/default.profraw``.
+  Notice that ``LLVM_PROFILE_FILE`` overrides the directory *and* the file
+  name for the profile file.
+
+.. option:: -fprofile-use[=<pathname>]
+
+  Without any other arguments, ``-fprofile-use`` behaves identically to
+  ``-fprofile-instr-use``. Otherwise, if ``pathname`` is the full path to a
+  profile file, it reads from that file. If ``pathname`` is a directory name,
+  it reads from ``pathname/default.profdata``.
+
 
 Controlling Size of Debug Information
 -------------------------------------

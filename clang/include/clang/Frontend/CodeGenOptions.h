@@ -155,6 +155,7 @@ public:
   std::vector<std::string> DependentLibraries;
 
   /// Name of the profile file to use as output for -fprofile-instr-generate
+  /// and -fprofile-generate.
   std::string InstrProfileOutput;
 
   /// Name of the profile file to use with -fprofile-sample-use.
