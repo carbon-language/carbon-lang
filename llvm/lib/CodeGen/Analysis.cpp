@@ -109,7 +109,7 @@ void llvm::ComputeValueVTs(const TargetLowering &TLI, const DataLayout &DL,
   if (Ty->isVoidTy())
     return;
   // Base case: we can get an EVT for this LLVM IR type.
-  ValueVTs.push_back(TLI.getValueType(Ty));
+  ValueVTs.push_back(TLI.getValueType(DL, Ty));
   if (Offsets)
     Offsets->push_back(StartingOffset);
 }
@@ -233,7 +233,8 @@ static bool isNoopBitcast(Type *T1, Type *T2,
 static const Value *getNoopInput(const Value *V,
                                  SmallVectorImpl<unsigned> &ValLoc,
                                  unsigned &DataBits,
-                                 const TargetLoweringBase &TLI) {
+                                 const TargetLoweringBase &TLI,
+                                 const DataLayout &DL) {
   while (true) {
     // Try to look through V1; if V1 is not an instruction, it can't be looked
     // through.
@@ -255,16 +256,16 @@ static const Value *getNoopInput(const Value *V,
       // Make sure this isn't a truncating or extending cast.  We could
       // support this eventually, but don't bother for now.
       if (!isa<VectorType>(I->getType()) &&
-          TLI.getPointerTy().getSizeInBits() ==
-          cast<IntegerType>(Op->getType())->getBitWidth())
+          DL.getPointerSizeInBits() ==
+              cast<IntegerType>(Op->getType())->getBitWidth())
         NoopInput = Op;
     } else if (isa<PtrToIntInst>(I)) {
       // Look through ptrtoint.
       // Make sure this isn't a truncating or extending cast.  We could
       // support this eventually, but don't bother for now.
       if (!isa<VectorType>(I->getType()) &&
-          TLI.getPointerTy().getSizeInBits() ==
-          cast<IntegerType>(I->getType())->getBitWidth())
+          DL.getPointerSizeInBits() ==
+              cast<IntegerType>(I->getType())->getBitWidth())
         NoopInput = Op;
     } else if (isa<TruncInst>(I) &&
                TLI.allowTruncateForTailCall(Op->getType(), I->getType())) {
@@ -331,14 +332,15 @@ static bool slotOnlyDiscardsData(const Value *RetVal, const Value *CallVal,
                                  SmallVectorImpl<unsigned> &RetIndices,
                                  SmallVectorImpl<unsigned> &CallIndices,
                                  bool AllowDifferingSizes,
-                                 const TargetLoweringBase &TLI) {
+                                 const TargetLoweringBase &TLI,
+                                 const DataLayout &DL) {
 
   // Trace the sub-value needed by the return value as far back up the graph as
   // possible, in the hope that it will intersect with the value produced by the
   // call. In the simple case with no "returned" attribute, the hope is actually
   // that we end up back at the tail call instruction itself.
   unsigned BitsRequired = UINT_MAX;
-  RetVal = getNoopInput(RetVal, RetIndices, BitsRequired, TLI);
+  RetVal = getNoopInput(RetVal, RetIndices, BitsRequired, TLI, DL);
 
   // If this slot in the value returned is undef, it doesn't matter what the
   // call puts there, it'll be fine.
@@ -350,7 +352,7 @@ static bool slotOnlyDiscardsData(const Value *RetVal, const Value *CallVal,
   // a "returned" attribute, the search will be blocked immediately and the loop
   // a Noop.
   unsigned BitsProvided = UINT_MAX;
-  CallVal = getNoopInput(CallVal, CallIndices, BitsProvided, TLI);
+  CallVal = getNoopInput(CallVal, CallIndices, BitsProvided, TLI, DL);
 
   // There's no hope if we can't actually trace them to (the same part of!) the
   // same value.
@@ -606,7 +608,8 @@ bool llvm::returnTypeIsEligibleForTailCall(const Function *F,
     // Finally, we can check whether the value produced by the tail call at this
     // index is compatible with the value we return.
     if (!slotOnlyDiscardsData(RetVal, CallVal, TmpRetPath, TmpCallPath,
-                              AllowDifferingSizes, TLI))
+                              AllowDifferingSizes, TLI,
+                              F->getParent()->getDataLayout()))
       return false;
 
     CallEmpty  = !nextRealType(CallSubTypes, CallPath);

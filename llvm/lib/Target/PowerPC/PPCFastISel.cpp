@@ -262,7 +262,7 @@ static Optional<PPC::Predicate> getComparePred(CmpInst::Predicate Pred) {
 // fast-isel, and return its equivalent machine type in VT.
 // FIXME: Copied directly from ARM -- factor into base class?
 bool PPCFastISel::isTypeLegal(Type *Ty, MVT &VT) {
-  EVT Evt = TLI.getValueType(Ty, true);
+  EVT Evt = TLI.getValueType(DL, Ty, true);
 
   // Only handle simple types.
   if (Evt == MVT::Other || !Evt.isSimple()) return false;
@@ -324,12 +324,13 @@ bool PPCFastISel::PPCComputeAddress(const Value *Obj, Address &Addr) {
       return PPCComputeAddress(U->getOperand(0), Addr);
     case Instruction::IntToPtr:
       // Look past no-op inttoptrs.
-      if (TLI.getValueType(U->getOperand(0)->getType()) == TLI.getPointerTy())
+      if (TLI.getValueType(DL, U->getOperand(0)->getType()) ==
+          TLI.getPointerTy(DL))
         return PPCComputeAddress(U->getOperand(0), Addr);
       break;
     case Instruction::PtrToInt:
       // Look past no-op ptrtoints.
-      if (TLI.getValueType(U->getType()) == TLI.getPointerTy())
+      if (TLI.getValueType(DL, U->getType()) == TLI.getPointerTy(DL))
         return PPCComputeAddress(U->getOperand(0), Addr);
       break;
     case Instruction::GetElementPtr: {
@@ -799,7 +800,7 @@ bool PPCFastISel::SelectBranch(const Instruction *I) {
 bool PPCFastISel::PPCEmitCmp(const Value *SrcValue1, const Value *SrcValue2,
                              bool IsZExt, unsigned DestReg) {
   Type *Ty = SrcValue1->getType();
-  EVT SrcEVT = TLI.getValueType(Ty, true);
+  EVT SrcEVT = TLI.getValueType(DL, Ty, true);
   if (!SrcEVT.isSimple())
     return false;
   MVT SrcVT = SrcEVT.getSimpleVT();
@@ -893,8 +894,8 @@ bool PPCFastISel::PPCEmitCmp(const Value *SrcValue1, const Value *SrcValue2,
 // Attempt to fast-select a floating-point extend instruction.
 bool PPCFastISel::SelectFPExt(const Instruction *I) {
   Value *Src  = I->getOperand(0);
-  EVT SrcVT  = TLI.getValueType(Src->getType(), true);
-  EVT DestVT = TLI.getValueType(I->getType(), true);
+  EVT SrcVT = TLI.getValueType(DL, Src->getType(), true);
+  EVT DestVT = TLI.getValueType(DL, I->getType(), true);
 
   if (SrcVT != MVT::f32 || DestVT != MVT::f64)
     return false;
@@ -911,8 +912,8 @@ bool PPCFastISel::SelectFPExt(const Instruction *I) {
 // Attempt to fast-select a floating-point truncate instruction.
 bool PPCFastISel::SelectFPTrunc(const Instruction *I) {
   Value *Src  = I->getOperand(0);
-  EVT SrcVT  = TLI.getValueType(Src->getType(), true);
-  EVT DestVT = TLI.getValueType(I->getType(), true);
+  EVT SrcVT = TLI.getValueType(DL, Src->getType(), true);
+  EVT DestVT = TLI.getValueType(DL, I->getType(), true);
 
   if (SrcVT != MVT::f64 || DestVT != MVT::f32)
     return false;
@@ -992,7 +993,7 @@ bool PPCFastISel::SelectIToFP(const Instruction *I, bool IsSigned) {
     return false;
 
   Value *Src = I->getOperand(0);
-  EVT SrcEVT = TLI.getValueType(Src->getType(), true);
+  EVT SrcEVT = TLI.getValueType(DL, Src->getType(), true);
   if (!SrcEVT.isSimple())
     return false;
 
@@ -1157,7 +1158,7 @@ bool PPCFastISel::SelectFPToI(const Instruction *I, bool IsSigned) {
 // Attempt to fast-select a binary integer operation that isn't already
 // handled automatically.
 bool PPCFastISel::SelectBinaryIntOp(const Instruction *I, unsigned ISDOpcode) {
-  EVT DestVT  = TLI.getValueType(I->getType(), true);
+  EVT DestVT = TLI.getValueType(DL, I->getType(), true);
 
   // We can get here in the case when we have a binary operation on a non-legal
   // type and the target independent selector doesn't know how to handle it.
@@ -1641,7 +1642,7 @@ bool PPCFastISel::SelectRet(const Instruction *I) {
         RetRegs.push_back(VA.getLocReg());
         unsigned SrcReg = Reg + VA.getValNo();
 
-        EVT RVEVT = TLI.getValueType(RV->getType());
+        EVT RVEVT = TLI.getValueType(DL, RV->getType());
         if (!RVEVT.isSimple())
           return false;
         MVT RVVT = RVEVT.getSimpleVT();
@@ -1769,8 +1770,8 @@ bool PPCFastISel::SelectIndirectBr(const Instruction *I) {
 // Attempt to fast-select an integer truncate instruction.
 bool PPCFastISel::SelectTrunc(const Instruction *I) {
   Value *Src  = I->getOperand(0);
-  EVT SrcVT  = TLI.getValueType(Src->getType(), true);
-  EVT DestVT = TLI.getValueType(I->getType(), true);
+  EVT SrcVT = TLI.getValueType(DL, Src->getType(), true);
+  EVT DestVT = TLI.getValueType(DL, I->getType(), true);
 
   if (SrcVT != MVT::i64 && SrcVT != MVT::i32 && SrcVT != MVT::i16)
     return false;
@@ -1806,8 +1807,8 @@ bool PPCFastISel::SelectIntExt(const Instruction *I) {
   if (!SrcReg) return false;
 
   EVT SrcEVT, DestEVT;
-  SrcEVT = TLI.getValueType(SrcTy, true);
-  DestEVT = TLI.getValueType(DestTy, true);
+  SrcEVT = TLI.getValueType(DL, SrcTy, true);
+  DestEVT = TLI.getValueType(DL, DestTy, true);
   if (!SrcEVT.isSimple())
     return false;
   if (!DestEVT.isSimple())
@@ -2127,7 +2128,7 @@ unsigned PPCFastISel::PPCMaterializeInt(const Constant *C, MVT VT,
 // Materialize a constant into a register, and return the register
 // number (or zero if we failed to handle it).
 unsigned PPCFastISel::fastMaterializeConstant(const Constant *C) {
-  EVT CEVT = TLI.getValueType(C->getType(), true);
+  EVT CEVT = TLI.getValueType(DL, C->getType(), true);
 
   // Only handle simple types.
   if (!CEVT.isSimple()) return 0;

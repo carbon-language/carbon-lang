@@ -610,10 +610,11 @@ static bool isWorthFoldingADDlow(SDValue N) {
 bool AArch64DAGToDAGISel::SelectAddrModeIndexed(SDValue N, unsigned Size,
                                               SDValue &Base, SDValue &OffImm) {
   SDLoc dl(N);
+  const DataLayout &DL = CurDAG->getDataLayout();
   const TargetLowering *TLI = getTargetLowering();
   if (N.getOpcode() == ISD::FrameIndex) {
     int FI = cast<FrameIndexSDNode>(N)->getIndex();
-    Base = CurDAG->getTargetFrameIndex(FI, TLI->getPointerTy());
+    Base = CurDAG->getTargetFrameIndex(FI, TLI->getPointerTy(DL));
     OffImm = CurDAG->getTargetConstant(0, dl, MVT::i64);
     return true;
   }
@@ -628,10 +629,9 @@ bool AArch64DAGToDAGISel::SelectAddrModeIndexed(SDValue N, unsigned Size,
 
     const GlobalValue *GV = GAN->getGlobal();
     unsigned Alignment = GV->getAlignment();
-    const DataLayout *DL = TLI->getDataLayout();
     Type *Ty = GV->getType()->getElementType();
     if (Alignment == 0 && Ty->isSized())
-      Alignment = DL->getABITypeAlignment(Ty);
+      Alignment = DL.getABITypeAlignment(Ty);
 
     if (Alignment >= Size)
       return true;
@@ -645,7 +645,7 @@ bool AArch64DAGToDAGISel::SelectAddrModeIndexed(SDValue N, unsigned Size,
         Base = N.getOperand(0);
         if (Base.getOpcode() == ISD::FrameIndex) {
           int FI = cast<FrameIndexSDNode>(Base)->getIndex();
-          Base = CurDAG->getTargetFrameIndex(FI, TLI->getPointerTy());
+          Base = CurDAG->getTargetFrameIndex(FI, TLI->getPointerTy(DL));
         }
         OffImm = CurDAG->getTargetConstant(RHSC >> Scale, dl, MVT::i64);
         return true;
@@ -688,7 +688,8 @@ bool AArch64DAGToDAGISel::SelectAddrModeUnscaled(SDValue N, unsigned Size,
       if (Base.getOpcode() == ISD::FrameIndex) {
         int FI = cast<FrameIndexSDNode>(Base)->getIndex();
         const TargetLowering *TLI = getTargetLowering();
-        Base = CurDAG->getTargetFrameIndex(FI, TLI->getPointerTy());
+        Base = CurDAG->getTargetFrameIndex(
+            FI, TLI->getPointerTy(CurDAG->getDataLayout()));
       }
       OffImm = CurDAG->getTargetConstant(RHSC, SDLoc(N), MVT::i64);
       return true;
@@ -2351,7 +2352,8 @@ SDNode *AArch64DAGToDAGISel::Select(SDNode *Node) {
     int FI = cast<FrameIndexSDNode>(Node)->getIndex();
     unsigned Shifter = AArch64_AM::getShifterImm(AArch64_AM::LSL, 0);
     const TargetLowering *TLI = getTargetLowering();
-    SDValue TFI = CurDAG->getTargetFrameIndex(FI, TLI->getPointerTy());
+    SDValue TFI = CurDAG->getTargetFrameIndex(
+        FI, TLI->getPointerTy(CurDAG->getDataLayout()));
     SDLoc DL(Node);
     SDValue Ops[] = { TFI, CurDAG->getTargetConstant(0, DL, MVT::i32),
                       CurDAG->getTargetConstant(Shifter, DL, MVT::i32) };

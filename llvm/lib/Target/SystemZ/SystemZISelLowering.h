@@ -342,7 +342,7 @@ public:
   MVT getScalarShiftAmountTy(EVT LHSTy) const override {
     return MVT::i32;
   }
-  MVT getVectorIdxTy() const override {
+  MVT getVectorIdxTy(const DataLayout &DL) const override {
     // Only the lower 12 bits of an element index are used, so we don't
     // want to clobber the upper 32 bits of a GPR unnecessarily.
     return MVT::i32;
@@ -364,7 +364,8 @@ public:
       return TypeWidenVector;
     return TargetLoweringBase::getPreferredVectorAction(VT);
   }
-  EVT getSetCCResultType(LLVMContext &, EVT) const override;
+  EVT getSetCCResultType(const DataLayout &DL, LLVMContext &,
+                         EVT) const override;
   bool isFMAFasterThanFMulAndFAdd(EVT VT) const override;
   bool isFPImmLegal(const APFloat &Imm, EVT VT) const override;
   bool isLegalICmpImmediate(int64_t Imm) const override;

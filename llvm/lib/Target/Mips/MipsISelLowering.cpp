@@ -466,7 +466,8 @@ MipsTargetLowering::createFastISel(FunctionLoweringInfo &funcInfo,
   return Mips::createFastISel(funcInfo, libInfo);
 }
 
-EVT MipsTargetLowering::getSetCCResultType(LLVMContext &, EVT VT) const {
+EVT MipsTargetLowering::getSetCCResultType(const DataLayout &, LLVMContext &,
+                                           EVT VT) const {
   if (!VT.isVector())
     return MVT::i32;
   return VT.changeVectorElementTypeToInteger();
@@ -1579,7 +1580,8 @@ SDValue MipsTargetLowering::lowerBR_JT(SDValue Op, SelectionDAG &DAG) const {
   SDValue Table = Op.getOperand(1);
   SDValue Index = Op.getOperand(2);
   SDLoc DL(Op);
-  EVT PTy = getPointerTy();
+  auto &TD = DAG.getDataLayout();
+  EVT PTy = getPointerTy(TD);
   unsigned EntrySize =
     DAG.getMachineFunction().getJumpTableInfo()->getEntrySize(*getDataLayout());
 
@@ -1647,10 +1649,10 @@ lowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const
 {
   SDLoc DL(Op);
   EVT Ty = Op.getOperand(0).getValueType();
-  SDValue Cond = DAG.getNode(ISD::SETCC, DL,
-                             getSetCCResultType(*DAG.getContext(), Ty),
-                             Op.getOperand(0), Op.getOperand(1),
-                             Op.getOperand(4));
+  SDValue Cond =
+      DAG.getNode(ISD::SETCC, DL, getSetCCResultType(DAG.getDataLayout(),
+                                                     *DAG.getContext(), Ty),
+                  Op.getOperand(0), Op.getOperand(1), Op.getOperand(4));
 
   return DAG.getNode(ISD::SELECT, DL, Op.getValueType(), Cond, Op.getOperand(2),
                      Op.getOperand(3));
@@ -1723,7 +1725,7 @@ lowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const
   GlobalAddressSDNode *GA = cast<GlobalAddressSDNode>(Op);
   SDLoc DL(GA);
   const GlobalValue *GV = GA->getGlobal();
-  EVT PtrVT = getPointerTy();
+  EVT PtrVT = getPointerTy(DAG.getDataLayout());
 
   TLSModel::Model model = getTargetMachine().getTLSModel(GV);
 
@@ -1831,7 +1833,7 @@ SDValue MipsTargetLowering::lowerVASTART(SDValue Op, SelectionDAG &DAG) const {
 
   SDLoc DL(Op);
   SDValue FI = DAG.getFrameIndex(FuncInfo->getVarArgsFrameIndex(),
-                                 getPointerTy());
+                                 getPointerTy(MF.getDataLayout()));
 
   // vastart just stores the address of the VarArgsFrameIndex slot into the
   // memory location argument.
@@ -1850,9 +1852,9 @@ SDValue MipsTargetLowering::lowerVAARG(SDValue Op, SelectionDAG &DAG) const {
   SDLoc DL(Node);
   unsigned ArgSlotSizeInBytes = (ABI.IsN32() || ABI.IsN64()) ? 8 : 4;
 
-  SDValue VAListLoad = DAG.getLoad(getPointerTy(), DL, Chain, VAListPtr,
-                                   MachinePointerInfo(SV), false, false, false,
-                                   0);
+  SDValue VAListLoad =
+      DAG.getLoad(getPointerTy(DAG.getDataLayout()), DL, Chain, VAListPtr,
+                  MachinePointerInfo(SV), false, false, false, 0);
   SDValue VAList = VAListLoad;
 
   // Re-align the pointer if necessary.
@@ -2062,7 +2064,7 @@ SDValue MipsTargetLowering::lowerEH_RETURN(SDValue Op, SelectionDAG &DAG)
   Chain = DAG.getCopyToReg(Chain, DL, AddrReg, Handler, Chain.getValue(1));
   return DAG.getNode(MipsISD::EH_RETURN, DL, MVT::Other, Chain,
                      DAG.getRegister(OffsetReg, Ty),
-                     DAG.getRegister(AddrReg, getPointerTy()),
+                     DAG.getRegister(AddrReg, getPointerTy(MF.getDataLayout())),
                      Chain.getValue(1));
 }
 
@@ -2479,15 +2481,16 @@ MipsTargetLowering::passArgOnStack(SDValue StackPtr, unsigned Offset,
                                    SDValue Chain, SDValue Arg, SDLoc DL,
                                    bool IsTailCall, SelectionDAG &DAG) const {
   if (!IsTailCall) {
-    SDValue PtrOff = DAG.getNode(ISD::ADD, DL, getPointerTy(), StackPtr,
-                                 DAG.getIntPtrConstant(Offset, DL));
+    SDValue PtrOff =
+        DAG.getNode(ISD::ADD, DL, getPointerTy(DAG.getDataLayout()), StackPtr,
+                    DAG.getIntPtrConstant(Offset, DL));
     return DAG.getStore(Chain, DL, Arg, PtrOff, MachinePointerInfo(), false,
                         false, 0);
   }
 
   MachineFrameInfo *MFI = DAG.getMachineFunction().getFrameInfo();
   int FI = MFI->CreateFixedObject(Arg.getValueSizeInBits() / 8, Offset, false);
-  SDValue FIN = DAG.getFrameIndex(FI, getPointerTy());
+  SDValue FIN = DAG.getFrameIndex(FI, getPointerTy(DAG.getDataLayout()));
   return DAG.getStore(Chain, DL, Arg, FIN, MachinePointerInfo(),
                       /*isVolatile=*/ true, false, 0);
 }
@@ -2611,8 +2614,9 @@ MipsTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   if (!IsTailCall)
     Chain = DAG.getCALLSEQ_START(Chain, NextStackOffsetVal, DL);
 
-  SDValue StackPtr = DAG.getCopyFromReg(
-      Chain, DL, ABI.IsN64() ? Mips::SP_64 : Mips::SP, getPointerTy());
+  SDValue StackPtr =
+      DAG.getCopyFromReg(Chain, DL, ABI.IsN64() ? Mips::SP_64 : Mips::SP,
+                         getPointerTy(DAG.getDataLayout()));
 
   // With EABI is it possible to have 16 args on registers.
   std::deque< std::pair<unsigned, SDValue> > RegsToPass;
@@ -2750,7 +2754,8 @@ MipsTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
         IsCallReloc = true;
       }
     } else
-      Callee = DAG.getTargetGlobalAddress(G->getGlobal(), DL, getPointerTy(), 0,
+      Callee = DAG.getTargetGlobalAddress(G->getGlobal(), DL,
+                                          getPointerTy(DAG.getDataLayout()), 0,
                                           MipsII::MO_NO_FLAG);
     GlobalOrExternal = true;
   }
@@ -2758,8 +2763,8 @@ MipsTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
     const char *Sym = S->getSymbol();
 
     if (!ABI.IsN64() && !IsPIC) // !N64 && static
-      Callee =
-          DAG.getTargetExternalSymbol(Sym, getPointerTy(), MipsII::MO_NO_FLAG);
+      Callee = DAG.getTargetExternalSymbol(
+          Sym, getPointerTy(DAG.getDataLayout()), MipsII::MO_NO_FLAG);
     else if (LargeGOT) {
       Callee = getAddrGlobalLargeGOT(S, DL, Ty, DAG, MipsII::MO_CALL_HI16,
                                      MipsII::MO_CALL_LO16, Chain,
@@ -3029,7 +3034,7 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
                                       VA.getLocMemOffset(), true);
 
       // Create load nodes to retrieve arguments from the stack
-      SDValue FIN = DAG.getFrameIndex(FI, getPointerTy());
+      SDValue FIN = DAG.getFrameIndex(FI, getPointerTy(DAG.getDataLayout()));
       SDValue ArgValue = DAG.getLoad(LocVT, DL, Chain, FIN,
                                      MachinePointerInfo::getFixedStack(FI),
                                      false, false, false, 0);
@@ -3174,12 +3179,13 @@ MipsTargetLowering::LowerReturn(SDValue Chain,
 
     if (!Reg)
       llvm_unreachable("sret virtual register not created in the entry block");
-    SDValue Val = DAG.getCopyFromReg(Chain, DL, Reg, getPointerTy());
+    SDValue Val =
+        DAG.getCopyFromReg(Chain, DL, Reg, getPointerTy(DAG.getDataLayout()));
     unsigned V0 = ABI.IsN64() ? Mips::V0_64 : Mips::V0;
 
     Chain = DAG.getCopyToReg(Chain, DL, V0, Val, Flag);
     Flag = Chain.getValue(1);
-    RetOps.push_back(DAG.getRegister(V0, getPointerTy()));
+    RetOps.push_back(DAG.getRegister(V0, getPointerTy(DAG.getDataLayout())));
   }
 
   RetOps[0] = Chain;  // Update chain.
@@ -3623,7 +3629,7 @@ void MipsTargetLowering::copyByValRegs(
     FrameObjOffset = VA.getLocMemOffset();
 
   // Create frame object.
-  EVT PtrTy = getPointerTy();
+  EVT PtrTy = getPointerTy(DAG.getDataLayout());
   int FI = MFI->CreateFixedObject(FrameObjSize, FrameObjOffset, true);
   SDValue FIN = DAG.getFrameIndex(FI, PtrTy);
   InVals.push_back(FIN);
@@ -3660,7 +3666,8 @@ void MipsTargetLowering::passByValArg(
   unsigned OffsetInBytes = 0; // From beginning of struct
   unsigned RegSizeInBytes = Subtarget.getGPRSizeInBytes();
   unsigned Alignment = std::min(Flags.getByValAlign(), RegSizeInBytes);
-  EVT PtrTy = getPointerTy(), RegTy = MVT::getIntegerVT(RegSizeInBytes * 8);
+  EVT PtrTy = getPointerTy(DAG.getDataLayout()),
+      RegTy = MVT::getIntegerVT(RegSizeInBytes * 8);
   unsigned NumRegs = LastReg - FirstReg;
 
   if (NumRegs) {
@@ -3785,7 +3792,7 @@ void MipsTargetLowering::writeVarArgRegs(std::vector<SDValue> &OutChains,
     unsigned Reg = addLiveIn(MF, ArgRegs[I], RC);
     SDValue ArgValue = DAG.getCopyFromReg(Chain, DL, Reg, RegTy);
     FI = MFI->CreateFixedObject(RegSizeInBytes, VaArgOffset, true);
-    SDValue PtrOff = DAG.getFrameIndex(FI, getPointerTy());
+    SDValue PtrOff = DAG.getFrameIndex(FI, getPointerTy(DAG.getDataLayout()));
     SDValue Store = DAG.getStore(Chain, DL, ArgValue, PtrOff,
                                  MachinePointerInfo(), false, false, 0);
     cast<StoreSDNode>(Store.getNode())->getMemOperand()->setValue(

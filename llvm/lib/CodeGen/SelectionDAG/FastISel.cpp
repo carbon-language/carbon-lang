@@ -166,7 +166,7 @@ bool FastISel::hasTrivialKill(const Value *V) {
 }
 
 unsigned FastISel::getRegForValue(const Value *V) {
-  EVT RealVT = TLI.getValueType(V->getType(), /*AllowUnknown=*/true);
+  EVT RealVT = TLI.getValueType(DL, V->getType(), /*AllowUnknown=*/true);
   // Don't handle non-simple values in FastISel.
   if (!RealVT.isSimple())
     return 0;
@@ -228,7 +228,7 @@ unsigned FastISel::materializeConstant(const Value *V, MVT VT) {
     if (!Reg) {
       // Try to emit the constant by using an integer constant with a cast.
       const APFloat &Flt = CF->getValueAPF();
-      EVT IntVT = TLI.getPointerTy();
+      EVT IntVT = TLI.getPointerTy(DL);
 
       uint64_t x[2];
       uint32_t IntBitWidth = IntVT.getSizeInBits();
@@ -321,7 +321,7 @@ std::pair<unsigned, bool> FastISel::getRegForGEPIndex(const Value *Idx) {
   bool IdxNIsKill = hasTrivialKill(Idx);
 
   // If the index is smaller or larger than intptr_t, truncate or extend it.
-  MVT PtrVT = TLI.getPointerTy();
+  MVT PtrVT = TLI.getPointerTy(DL);
   EVT IdxVT = EVT::getEVT(Idx->getType(), /*HandleUnknown=*/false);
   if (IdxVT.bitsLT(PtrVT)) {
     IdxN = fastEmit_r(IdxVT.getSimpleVT(), PtrVT, ISD::SIGN_EXTEND, IdxN,
@@ -493,7 +493,7 @@ bool FastISel::selectGetElementPtr(const User *I) {
   // FIXME: What's a good SWAG number for MaxOffs?
   uint64_t MaxOffs = 2048;
   Type *Ty = I->getOperand(0)->getType();
-  MVT VT = TLI.getPointerTy();
+  MVT VT = TLI.getPointerTy(DL);
   for (GetElementPtrInst::const_op_iterator OI = I->op_begin() + 1,
                                             E = I->op_end();
        OI != E; ++OI) {
@@ -1245,8 +1245,8 @@ bool FastISel::selectIntrinsicCall(const IntrinsicInst *II) {
 }
 
 bool FastISel::selectCast(const User *I, unsigned Opcode) {
-  EVT SrcVT = TLI.getValueType(I->getOperand(0)->getType());
-  EVT DstVT = TLI.getValueType(I->getType());
+  EVT SrcVT = TLI.getValueType(DL, I->getOperand(0)->getType());
+  EVT DstVT = TLI.getValueType(DL, I->getType());
 
   if (SrcVT == MVT::Other || !SrcVT.isSimple() || DstVT == MVT::Other ||
       !DstVT.isSimple())
@@ -1288,8 +1288,8 @@ bool FastISel::selectBitCast(const User *I) {
   }
 
   // Bitcasts of other values become reg-reg copies or BITCAST operators.
-  EVT SrcEVT = TLI.getValueType(I->getOperand(0)->getType());
-  EVT DstEVT = TLI.getValueType(I->getType());
+  EVT SrcEVT = TLI.getValueType(DL, I->getOperand(0)->getType());
+  EVT DstEVT = TLI.getValueType(DL, I->getType());
   if (SrcEVT == MVT::Other || DstEVT == MVT::Other ||
       !TLI.isTypeLegal(SrcEVT) || !TLI.isTypeLegal(DstEVT))
     // Unhandled type. Halt "fast" selection and bail.
@@ -1413,7 +1413,7 @@ bool FastISel::selectFNeg(const User *I) {
   bool OpRegIsKill = hasTrivialKill(I);
 
   // If the target has ISD::FNEG, use it.
-  EVT VT = TLI.getValueType(I->getType());
+  EVT VT = TLI.getValueType(DL, I->getType());
   unsigned ResultReg = fastEmit_r(VT.getSimpleVT(), VT.getSimpleVT(), ISD::FNEG,
                                   OpReg, OpRegIsKill);
   if (ResultReg) {
@@ -1456,7 +1456,7 @@ bool FastISel::selectExtractValue(const User *U) {
 
   // Make sure we only try to handle extracts with a legal result.  But also
   // allow i1 because it's easy.
-  EVT RealVT = TLI.getValueType(EVI->getType(), /*AllowUnknown=*/true);
+  EVT RealVT = TLI.getValueType(DL, EVI->getType(), /*AllowUnknown=*/true);
   if (!RealVT.isSimple())
     return false;
   MVT VT = RealVT.getSimpleVT();
@@ -1582,8 +1582,8 @@ bool FastISel::selectOperator(const User *I, unsigned Opcode) {
 
   case Instruction::IntToPtr: // Deliberate fall-through.
   case Instruction::PtrToInt: {
-    EVT SrcVT = TLI.getValueType(I->getOperand(0)->getType());
-    EVT DstVT = TLI.getValueType(I->getType());
+    EVT SrcVT = TLI.getValueType(DL, I->getOperand(0)->getType());
+    EVT DstVT = TLI.getValueType(DL, I->getType());
     if (DstVT.bitsGT(SrcVT))
       return selectCast(I, ISD::ZERO_EXTEND);
     if (DstVT.bitsLT(SrcVT))
@@ -2037,7 +2037,7 @@ bool FastISel::handlePHINodesInSuccessorBlocks(const BasicBlock *LLVMBB) {
       // own moves. Second, this check is necessary because FastISel doesn't
       // use CreateRegs to create registers, so it always creates
       // exactly one register for each non-void instruction.
-      EVT VT = TLI.getValueType(PN->getType(), /*AllowUnknown=*/true);
+      EVT VT = TLI.getValueType(DL, PN->getType(), /*AllowUnknown=*/true);
       if (VT == MVT::Other || !TLI.isTypeLegal(VT)) {
         // Handle integer promotions, though, because they're common and easy.
         if (!(VT == MVT::i1 || VT == MVT::i8 || VT == MVT::i16)) {

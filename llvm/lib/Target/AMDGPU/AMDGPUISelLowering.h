@@ -123,7 +123,7 @@ public:
 
   bool isNarrowingProfitable(EVT VT1, EVT VT2) const override;
 
-  MVT getVectorIdxTy() const override;
+  MVT getVectorIdxTy(const DataLayout &) const override;
   bool isSelectSupported(SelectSupportKind) const override;
 
   bool isFPImmLegal(const APFloat &Imm, EVT VT) const override;

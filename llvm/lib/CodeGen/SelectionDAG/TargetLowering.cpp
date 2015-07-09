@@ -102,7 +102,8 @@ TargetLowering::makeLibCall(SelectionDAG &DAG,
   }
   if (LC == RTLIB::UNKNOWN_LIBCALL)
     report_fatal_error("Unsupported library call operation!");
-  SDValue Callee = DAG.getExternalSymbol(getLibcallName(LC), getPointerTy());
+  SDValue Callee = DAG.getExternalSymbol(getLibcallName(LC),
+                                         getPointerTy(DAG.getDataLayout()));
 
   Type *RetTy = RetVT.getTypeForEVT(*DAG.getContext());
   TargetLowering::CallLoweringInfo CLI(DAG);
@@ -206,14 +207,16 @@ void TargetLowering::softenSetCCOperands(SelectionDAG &DAG, EVT VT,
   NewRHS = DAG.getConstant(0, dl, RetVT);
   CCCode = getCmpLibcallCC(LC1);
   if (LC2 != RTLIB::UNKNOWN_LIBCALL) {
-    SDValue Tmp = DAG.getNode(ISD::SETCC, dl,
-                              getSetCCResultType(*DAG.getContext(), RetVT),
-                              NewLHS, NewRHS, DAG.getCondCode(CCCode));
+    SDValue Tmp = DAG.getNode(
+        ISD::SETCC, dl,
+        getSetCCResultType(DAG.getDataLayout(), *DAG.getContext(), RetVT),
+        NewLHS, NewRHS, DAG.getCondCode(CCCode));
     NewLHS = makeLibCall(DAG, LC2, RetVT, Ops, 2, false/*sign irrelevant*/,
                          dl).first;
-    NewLHS = DAG.getNode(ISD::SETCC, dl,
-                         getSetCCResultType(*DAG.getContext(), RetVT), NewLHS,
-                         NewRHS, DAG.getCondCode(getCmpLibcallCC(LC2)));
+    NewLHS = DAG.getNode(
+        ISD::SETCC, dl,
+        getSetCCResultType(DAG.getDataLayout(), *DAG.getContext(), RetVT),
+        NewLHS, NewRHS, DAG.getCondCode(getCmpLibcallCC(LC2)));
     NewLHS = DAG.getNode(ISD::OR, dl, Tmp.getValueType(), Tmp, NewLHS);
     NewRHS = SDValue();
   }
@@ -242,7 +245,7 @@ SDValue TargetLowering::getPICJumpTableRelocBase(SDValue Table,
 
   if ((JTEncoding == MachineJumpTableInfo::EK_GPRel64BlockAddress) ||
       (JTEncoding == MachineJumpTableInfo::EK_GPRel32BlockAddress))
-    return DAG.getGLOBAL_OFFSET_TABLE(getPointerTy(0));
+    return DAG.getGLOBAL_OFFSET_TABLE(getPointerTy(DAG.getDataLayout()));
 
   return Table;
 }
@@ -1471,7 +1474,8 @@ TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
         if (DCI.isBeforeLegalizeOps() ||
             (isOperationLegal(ISD::SETCC, newVT) &&
              getCondCodeAction(Cond, newVT.getSimpleVT()) == Legal)) {
-          EVT NewSetCCVT = getSetCCResultType(*DAG.getContext(), newVT);
+          EVT NewSetCCVT =
+              getSetCCResultType(DAG.getDataLayout(), *DAG.getContext(), newVT);
           SDValue NewConst = DAG.getConstant(C1.trunc(InSize), dl, newVT);
 
           SDValue NewSetCC = DAG.getSetCC(dl, NewSetCCVT, N0.getOperand(0),
@@ -1690,11 +1694,13 @@ TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
     if ((Cond == ISD::SETEQ || Cond == ISD::SETNE) &&
         (VT == N0.getValueType() ||
          (isTypeLegal(VT) && VT.bitsLE(N0.getValueType()))) &&
-        N0.getOpcode() == ISD::AND)
+        N0.getOpcode() == ISD::AND) {
+      auto &DL = DAG.getDataLayout();
       if (ConstantSDNode *AndRHS =
                   dyn_cast<ConstantSDNode>(N0.getOperand(1))) {
-        EVT ShiftTy = DCI.isBeforeLegalize() ?
-          getPointerTy() : getShiftAmountTy(N0.getValueType());
+        EVT ShiftTy = DCI.isBeforeLegalize()
+                          ? getPointerTy(DL)
+                          : getShiftAmountTy(N0.getValueType());
         if (Cond == ISD::SETNE && C1 == 0) {// (X & 8) != 0  -->  (X & 8) >> 3
           // Perform the xform if the AND RHS is a single bit.
           if (AndRHS->getAPIntValue().isPowerOf2()) {
@@ -1714,6 +1720,7 @@ TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
           }
         }
       }
+    }
 
     if (C1.getMinSignedBits() <= 64 &&
         !isLegalICmpImmediate(C1.getSExtValue())) {
@@ -1725,8 +1732,10 @@ TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
           const APInt &AndRHSC = AndRHS->getAPIntValue();
           if ((-AndRHSC).isPowerOf2() && (AndRHSC & C1) == C1) {
             unsigned ShiftBits = AndRHSC.countTrailingZeros();
-            EVT ShiftTy = DCI.isBeforeLegalize() ?
-              getPointerTy() : getShiftAmountTy(N0.getValueType());
+            auto &DL = DAG.getDataLayout();
+            EVT ShiftTy = DCI.isBeforeLegalize()
+                              ? getPointerTy(DL)
+                              : getShiftAmountTy(N0.getValueType());
             EVT CmpTy = N0.getValueType();
             SDValue Shift = DAG.getNode(ISD::SRL, dl, CmpTy, N0.getOperand(0),
                                         DAG.getConstant(ShiftBits, dl,
@@ -1755,8 +1764,10 @@ TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
         NewC = NewC.lshr(ShiftBits);
         if (ShiftBits && NewC.getMinSignedBits() <= 64 &&
           isLegalICmpImmediate(NewC.getSExtValue())) {
-          EVT ShiftTy = DCI.isBeforeLegalize() ?
-            getPointerTy() : getShiftAmountTy(N0.getValueType());
+          auto &DL = DAG.getDataLayout();
+          EVT ShiftTy = DCI.isBeforeLegalize()
+                            ? getPointerTy(DL)
+                            : getShiftAmountTy(N0.getValueType());
           EVT CmpTy = N0.getValueType();
           SDValue Shift = DAG.getNode(ISD::SRL, dl, CmpTy, N0,
                                       DAG.getConstant(ShiftBits, dl, ShiftTy));
@@ -2327,10 +2338,11 @@ TargetLowering::ParseConstraints(const DataLayout &DL,
       assert(!CS.getType()->isVoidTy() &&
              "Bad inline asm!");
       if (StructType *STy = dyn_cast<StructType>(CS.getType())) {
-        OpInfo.ConstraintVT = getSimpleValueType(STy->getElementType(ResNo));
+        OpInfo.ConstraintVT =
+            getSimpleValueType(DL, STy->getElementType(ResNo));
       } else {
         assert(ResNo == 0 && "Asm only has one result!");
-        OpInfo.ConstraintVT = getSimpleValueType(CS.getType());
+        OpInfo.ConstraintVT = getSimpleValueType(DL, CS.getType());
       }
       ++ResNo;
       break;

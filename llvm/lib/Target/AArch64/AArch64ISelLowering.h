@@ -278,7 +278,8 @@ public:
   bool isShuffleMaskLegal(const SmallVectorImpl<int> &M, EVT VT) const override;
 
   /// getSetCCResultType - Return the ISD::SETCC ValueType
-  EVT getSetCCResultType(LLVMContext &Context, EVT VT) const override;
+  EVT getSetCCResultType(const DataLayout &DL, LLVMContext &Context,
+                         EVT VT) const override;
 
   SDValue ReconstructShuffle(SDValue Op, SelectionDAG &DAG) const;
 

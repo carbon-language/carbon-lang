@@ -366,7 +366,7 @@ void NVPTXAsmPrinter::printReturnValStr(const Function *F, raw_ostream &O) {
 
       O << ".param .b" << size << " func_retval0";
     } else if (isa<PointerType>(Ty)) {
-      O << ".param .b" << TLI->getPointerTy().getSizeInBits()
+      O << ".param .b" << TLI->getPointerTy(DL).getSizeInBits()
         << " func_retval0";
     } else if ((Ty->getTypeID() == Type::StructTyID) || isa<VectorType>(Ty)) {
       unsigned totalsz = DL.getTypeAllocSize(Ty);
@@ -1433,7 +1433,7 @@ void NVPTXAsmPrinter::emitFunctionParamList(const Function *F, raw_ostream &O) {
   bool first = true;
   bool isKernelFunc = llvm::isKernelFunction(*F);
   bool isABI = (nvptxSubtarget->getSmVersion() >= 20);
-  MVT thePointerTy = TLI->getPointerTy();
+  MVT thePointerTy = TLI->getPointerTy(*TD);
 
   O << "(\n";
 

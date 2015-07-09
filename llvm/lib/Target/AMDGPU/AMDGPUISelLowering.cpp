@@ -444,7 +444,7 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM,
 // Target Information
 //===----------------------------------------------------------------------===//
 
-MVT AMDGPUTargetLowering::getVectorIdxTy() const {
+MVT AMDGPUTargetLowering::getVectorIdxTy(const DataLayout &) const {
   return MVT::i32;
 }
 
@@ -785,7 +785,7 @@ SDValue AMDGPUTargetLowering::LowerGlobalAddress(AMDGPUMachineFunction* MFI,
                                                  SDValue Op,
                                                  SelectionDAG &DAG) const {
 
-  const DataLayout *TD = getDataLayout();
+  const DataLayout &DL = DAG.getDataLayout();
   GlobalAddressSDNode *G = cast<GlobalAddressSDNode>(Op);
   const GlobalValue *GV = G->getGlobal();
 
@@ -801,7 +801,7 @@ SDValue AMDGPUTargetLowering::LowerGlobalAddress(AMDGPUMachineFunction* MFI,
 
     unsigned Offset;
     if (MFI->LocalMemoryObjects.count(GV) == 0) {
-      uint64_t Size = TD->getTypeAllocSize(GV->getType()->getElementType());
+      uint64_t Size = DL.getTypeAllocSize(GV->getType()->getElementType());
       Offset = MFI->LDSSize;
       MFI->LocalMemoryObjects[GV] = Offset;
       // XXX: Account for alignment?
@@ -811,16 +811,16 @@ SDValue AMDGPUTargetLowering::LowerGlobalAddress(AMDGPUMachineFunction* MFI,
     }
 
     return DAG.getConstant(Offset, SDLoc(Op),
-                           getPointerTy(AMDGPUAS::LOCAL_ADDRESS));
+                           getPointerTy(DL, AMDGPUAS::LOCAL_ADDRESS));
   }
   case AMDGPUAS::CONSTANT_ADDRESS: {
     MachineFrameInfo *FrameInfo = DAG.getMachineFunction().getFrameInfo();
     Type *EltType = GV->getType()->getElementType();
-    unsigned Size = TD->getTypeAllocSize(EltType);
-    unsigned Alignment = TD->getPrefTypeAlignment(EltType);
+    unsigned Size = DL.getTypeAllocSize(EltType);
+    unsigned Alignment = DL.getPrefTypeAlignment(EltType);
 
-    MVT PrivPtrVT = getPointerTy(AMDGPUAS::PRIVATE_ADDRESS);
-    MVT ConstPtrVT = getPointerTy(AMDGPUAS::CONSTANT_ADDRESS);
+    MVT PrivPtrVT = getPointerTy(DL, AMDGPUAS::PRIVATE_ADDRESS);
+    MVT ConstPtrVT = getPointerTy(DL, AMDGPUAS::CONSTANT_ADDRESS);
 
     int FI = FrameInfo->CreateStackObject(Size, Alignment, false);
     SDValue InitPtr = DAG.getFrameIndex(FI, PrivPtrVT);
@@ -1653,7 +1653,7 @@ SDValue AMDGPUTargetLowering::LowerDIVREM24(SDValue Op, SelectionDAG &DAG, bool 
   // fb = fabs(fb);
   fb = DAG.getNode(ISD::FABS, DL, FltVT, fb);
 
-  EVT SetCCVT = getSetCCResultType(*DAG.getContext(), VT);
+  EVT SetCCVT = getSetCCResultType(DAG.getDataLayout(), *DAG.getContext(), VT);
 
   // int cv = fr >= fb;
   SDValue cv = DAG.getSetCC(DL, SetCCVT, fr, fb, ISD::SETOGE);
@@ -1960,7 +1960,8 @@ SDValue AMDGPUTargetLowering::LowerFCEIL(SDValue Op, SelectionDAG &DAG) const {
   const SDValue Zero = DAG.getConstantFP(0.0, SL, MVT::f64);
   const SDValue One = DAG.getConstantFP(1.0, SL, MVT::f64);
 
-  EVT SetCCVT = getSetCCResultType(*DAG.getContext(), MVT::f64);
+  EVT SetCCVT =
+      getSetCCResultType(DAG.getDataLayout(), *DAG.getContext(), MVT::f64);
 
   SDValue Lt0 = DAG.getSetCC(SL, SetCCVT, Src, Zero, ISD::SETOGT);
   SDValue NeTrunc = DAG.getSetCC(SL, SetCCVT, Src, Trunc, ISD::SETONE);
@@ -2020,7 +2021,8 @@ SDValue AMDGPUTargetLowering::LowerFTRUNC(SDValue Op, SelectionDAG &DAG) const {
   SDValue Not = DAG.getNOT(SL, Shr, MVT::i64);
   SDValue Tmp0 = DAG.getNode(ISD::AND, SL, MVT::i64, BcInt, Not);
 
-  EVT SetCCVT = getSetCCResultType(*DAG.getContext(), MVT::i32);
+  EVT SetCCVT =
+      getSetCCResultType(DAG.getDataLayout(), *DAG.getContext(), MVT::i32);
 
   const SDValue FiftyOne = DAG.getConstant(FractBits - 1, SL, MVT::i32);
 
@@ -2051,7 +2053,8 @@ SDValue AMDGPUTargetLowering::LowerFRINT(SDValue Op, SelectionDAG &DAG) const {
   APFloat C2Val(APFloat::IEEEdouble, "0x1.fffffffffffffp+51");
   SDValue C2 = DAG.getConstantFP(C2Val, SL, MVT::f64);
 
-  EVT SetCCVT = getSetCCResultType(*DAG.getContext(), MVT::f64);
+  EVT SetCCVT =
+      getSetCCResultType(DAG.getDataLayout(), *DAG.getContext(), MVT::f64);
   SDValue Cond = DAG.getSetCC(SL, SetCCVT, Fabs, C2, ISD::SETOGT);
 
   return DAG.getSelect(SL, MVT::f64, Cond, Src, Tmp2);
@@ -2081,7 +2084,8 @@ SDValue AMDGPUTargetLowering::LowerFROUND32(SDValue Op, SelectionDAG &DAG) const
 
   SDValue SignOne = DAG.getNode(ISD::FCOPYSIGN, SL, MVT::f32, One, X);
 
-  EVT SetCCVT = getSetCCResultType(*DAG.getContext(), MVT::f32);
+  EVT SetCCVT =
+      getSetCCResultType(DAG.getDataLayout(), *DAG.getContext(), MVT::f32);
 
   SDValue Cmp = DAG.getSetCC(SL, SetCCVT, AbsDiff, Half, ISD::SETOGE);
 
@@ -2100,8 +2104,8 @@ SDValue AMDGPUTargetLowering::LowerFROUND64(SDValue Op, SelectionDAG &DAG) const
   const SDValue One = DAG.getConstant(1, SL, MVT::i32);
   const SDValue NegOne = DAG.getConstant(-1, SL, MVT::i32);
   const SDValue FiftyOne = DAG.getConstant(51, SL, MVT::i32);
-  EVT SetCCVT = getSetCCResultType(*DAG.getContext(), MVT::i32);
-
+  EVT SetCCVT =
+      getSetCCResultType(DAG.getDataLayout(), *DAG.getContext(), MVT::i32);
 
   SDValue BC = DAG.getNode(ISD::BITCAST, SL, MVT::v2i32, X);
 
@@ -2172,7 +2176,8 @@ SDValue AMDGPUTargetLowering::LowerFFLOOR(SDValue Op, SelectionDAG &DAG) const {
   const SDValue Zero = DAG.getConstantFP(0.0, SL, MVT::f64);
   const SDValue NegOne = DAG.getConstantFP(-1.0, SL, MVT::f64);
 
-  EVT SetCCVT = getSetCCResultType(*DAG.getContext(), MVT::f64);
+  EVT SetCCVT =
+      getSetCCResultType(DAG.getDataLayout(), *DAG.getContext(), MVT::f64);
 
   SDValue Lt0 = DAG.getSetCC(SL, SetCCVT, Src, Zero, ISD::SETOLT);
   SDValue NeTrunc = DAG.getSetCC(SL, SetCCVT, Src, Trunc, ISD::SETONE);

@@ -38,7 +38,9 @@ public:
                               const SmallVectorImpl<ISD::InputArg> &Ins,
                               SDLoc DL, SelectionDAG &DAG,
                               SmallVectorImpl<SDValue> &InVals) const override;
-  EVT getSetCCResultType(LLVMContext &, EVT VT) const override;
+  EVT getSetCCResultType(const DataLayout &DL, LLVMContext &,
+                         EVT VT) const override;
+
 private:
   unsigned Gen;
   /// Each OpenCL kernel has nine implicit parameters that are stored in the

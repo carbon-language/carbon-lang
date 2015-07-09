@@ -121,12 +121,14 @@ EmitSpecializedLibcall(SelectionDAG &DAG, SDLoc dl,
     { "__aeabi_memclr",  "__aeabi_memclr4",  "__aeabi_memclr8"  }
   };
   TargetLowering::CallLoweringInfo CLI(DAG);
-  CLI.setDebugLoc(dl).setChain(Chain)
-    .setCallee(TLI->getLibcallCallingConv(LC),
-               Type::getVoidTy(*DAG.getContext()),
-               DAG.getExternalSymbol(FunctionNames[AEABILibcall][AlignVariant],
-                                     TLI->getPointerTy()), std::move(Args), 0)
-    .setDiscardResult();
+  CLI.setDebugLoc(dl)
+      .setChain(Chain)
+      .setCallee(
+           TLI->getLibcallCallingConv(LC), Type::getVoidTy(*DAG.getContext()),
+           DAG.getExternalSymbol(FunctionNames[AEABILibcall][AlignVariant],
+                                 TLI->getPointerTy(DAG.getDataLayout())),
+           std::move(Args), 0)
+      .setDiscardResult();
   std::pair<SDValue,SDValue> CallResult = TLI->LowerCallTo(CLI);
   
   return CallResult.second;

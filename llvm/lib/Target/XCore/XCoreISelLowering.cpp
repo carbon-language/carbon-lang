@@ -312,8 +312,9 @@ LowerGlobalAddress(SDValue Op, SelectionDAG &DAG) const
     Constant *GAI = ConstantExpr::getGetElementPtr(
         Type::getInt8Ty(*DAG.getContext()), GA, Idx);
     SDValue CP = DAG.getConstantPool(GAI, MVT::i32);
-    return DAG.getLoad(getPointerTy(), DL, DAG.getEntryNode(), CP,
-                       MachinePointerInfo(), false, false, false, 0);
+    return DAG.getLoad(getPointerTy(DAG.getDataLayout()), DL,
+                       DAG.getEntryNode(), CP, MachinePointerInfo(), false,
+                       false, false, 0);
   }
 }
 
@@ -321,11 +322,11 @@ SDValue XCoreTargetLowering::
 LowerBlockAddress(SDValue Op, SelectionDAG &DAG) const
 {
   SDLoc DL(Op);
-
+  auto PtrVT = getPointerTy(DAG.getDataLayout());
   const BlockAddress *BA = cast<BlockAddressSDNode>(Op)->getBlockAddress();
-  SDValue Result = DAG.getTargetBlockAddress(BA, getPointerTy());
+  SDValue Result = DAG.getTargetBlockAddress(BA, PtrVT);
 
-  return DAG.getNode(XCoreISD::PCRelativeWrapper, DL, getPointerTy(), Result);
+  return DAG.getNode(XCoreISD::PCRelativeWrapper, DL, PtrVT, Result);
 }
 
 SDValue XCoreTargetLowering::
@@ -378,9 +379,10 @@ SDValue XCoreTargetLowering::
 lowerLoadWordFromAlignedBasePlusOffset(SDLoc DL, SDValue Chain, SDValue Base,
                                        int64_t Offset, SelectionDAG &DAG) const
 {
+  auto PtrVT = getPointerTy(DAG.getDataLayout());
   if ((Offset & 0x3) == 0) {
-    return DAG.getLoad(getPointerTy(), DL, Chain, Base, MachinePointerInfo(),
-                       false, false, false, 0);
+    return DAG.getLoad(PtrVT, DL, Chain, Base, MachinePointerInfo(), false,
+                       false, false, 0);
   }
   // Lower to pair of consecutive word aligned loads plus some bit shifting.
   int32_t HighOffset = RoundUpToAlignment(Offset, 4);
@@ -401,11 +403,9 @@ lowerLoadWordFromAlignedBasePlusOffset(SDLoc DL, SDValue Chain, SDValue Base,
   SDValue LowShift = DAG.getConstant((Offset - LowOffset) * 8, DL, MVT::i32);
   SDValue HighShift = DAG.getConstant((HighOffset - Offset) * 8, DL, MVT::i32);
 
-  SDValue Low = DAG.getLoad(getPointerTy(), DL, Chain,
-                            LowAddr, MachinePointerInfo(),
+  SDValue Low = DAG.getLoad(PtrVT, DL, Chain, LowAddr, MachinePointerInfo(),
                             false, false, false, 0);
-  SDValue High = DAG.getLoad(getPointerTy(), DL, Chain,
-                             HighAddr, MachinePointerInfo(),
+  SDValue High = DAG.getLoad(PtrVT, DL, Chain, HighAddr, MachinePointerInfo(),
                              false, false, false, 0);
   SDValue LowShifted = DAG.getNode(ISD::SRL, DL, MVT::i32, Low, LowShift);
   SDValue HighShifted = DAG.getNode(ISD::SHL, DL, MVT::i32, High, HighShift);
@@ -495,10 +495,11 @@ LowerLOAD(SDValue Op, SelectionDAG &DAG) const {
   Args.push_back(Entry);
 
   TargetLowering::CallLoweringInfo CLI(DAG);
-  CLI.setDebugLoc(DL).setChain(Chain)
-    .setCallee(CallingConv::C, IntPtrTy,
-               DAG.getExternalSymbol("__misaligned_load", getPointerTy()),
-               std::move(Args), 0);
+  CLI.setDebugLoc(DL).setChain(Chain).setCallee(
+      CallingConv::C, IntPtrTy,
+      DAG.getExternalSymbol("__misaligned_load",
+                            getPointerTy(DAG.getDataLayout())),
+      std::move(Args), 0);
 
   std::pair<SDValue, SDValue> CallResult = LowerCallTo(CLI);
   SDValue Ops[] = { CallResult.first, CallResult.second };
@@ -557,10 +558,11 @@ LowerSTORE(SDValue Op, SelectionDAG &DAG) const
   Args.push_back(Entry);
 
   TargetLowering::CallLoweringInfo CLI(DAG);
-  CLI.setDebugLoc(dl).setChain(Chain)
-    .setCallee(CallingConv::C, Type::getVoidTy(*DAG.getContext()),
-               DAG.getExternalSymbol("__misaligned_store", getPointerTy()),
-               std::move(Args), 0);
+  CLI.setDebugLoc(dl).setChain(Chain).setCallee(
+      CallingConv::C, Type::getVoidTy(*DAG.getContext()),
+      DAG.getExternalSymbol("__misaligned_store",
+                            getPointerTy(DAG.getDataLayout())),
+      std::move(Args), 0);
 
   std::pair<SDValue, SDValue> CallResult = LowerCallTo(CLI);
   return CallResult.second;
@@ -833,9 +835,9 @@ LowerRETURNADDR(SDValue Op, SelectionDAG &DAG) const {
   XCoreFunctionInfo *XFI = MF.getInfo<XCoreFunctionInfo>();
   int FI = XFI->createLRSpillSlot(MF);
   SDValue FIN = DAG.getFrameIndex(FI, MVT::i32);
-  return DAG.getLoad(getPointerTy(), SDLoc(Op), DAG.getEntryNode(), FIN,
-                     MachinePointerInfo::getFixedStack(FI), false, false,
-                     false, 0);
+  return DAG.getLoad(
+      getPointerTy(DAG.getDataLayout()), SDLoc(Op), DAG.getEntryNode(), FIN,
+      MachinePointerInfo::getFixedStack(FI), false, false, false, 0);
 }
 
 SDValue XCoreTargetLowering::
@@ -979,11 +981,10 @@ LowerATOMIC_LOAD(SDValue Op, SelectionDAG &DAG) const {
   if (N->getMemoryVT() == MVT::i32) {
     if (N->getAlignment() < 4)
       report_fatal_error("atomic load must be aligned");
-    return DAG.getLoad(getPointerTy(), SDLoc(Op), N->getChain(),
-                       N->getBasePtr(), N->getPointerInfo(),
-                       N->isVolatile(), N->isNonTemporal(),
-                       N->isInvariant(), N->getAlignment(),
-                       N->getAAInfo(), N->getRanges());
+    return DAG.getLoad(getPointerTy(DAG.getDataLayout()), SDLoc(Op),
+                       N->getChain(), N->getBasePtr(), N->getPointerInfo(),
+                       N->isVolatile(), N->isNonTemporal(), N->isInvariant(),
+                       N->getAlignment(), N->getAAInfo(), N->getRanges());
   }
   if (N->getMemoryVT() == MVT::i16) {
     if (N->getAlignment() < 2)
@@ -1150,9 +1151,10 @@ XCoreTargetLowering::LowerCCCCallTo(SDValue Chain, SDValue Callee,
 
   // Get a count of how many bytes are to be pushed on the stack.
   unsigned NumBytes = RetCCInfo.getNextStackOffset();
+  auto PtrVT = getPointerTy(DAG.getDataLayout());
 
-  Chain = DAG.getCALLSEQ_START(Chain,DAG.getConstant(NumBytes, dl,
-                                 getPointerTy(), true), dl);
+  Chain = DAG.getCALLSEQ_START(Chain,
+                               DAG.getConstant(NumBytes, dl, PtrVT, true), dl);
 
   SmallVector<std::pair<unsigned, SDValue>, 4> RegsToPass;
   SmallVector<SDValue, 12> MemOpChains;
@@ -1239,11 +1241,8 @@ XCoreTargetLowering::LowerCCCCallTo(SDValue Chain, SDValue Callee,
   InFlag = Chain.getValue(1);
 
   // Create the CALLSEQ_END node.
-  Chain = DAG.getCALLSEQ_END(Chain,
-                             DAG.getConstant(NumBytes, dl, getPointerTy(),
-                                             true),
-                             DAG.getConstant(0, dl, getPointerTy(), true),
-                             InFlag, dl);
+  Chain = DAG.getCALLSEQ_END(Chain, DAG.getConstant(NumBytes, dl, PtrVT, true),
+                             DAG.getConstant(0, dl, PtrVT, true), InFlag, dl);
   InFlag = Chain.getValue(1);
 
   // Handle result values, copying them out of physregs into vregs that we

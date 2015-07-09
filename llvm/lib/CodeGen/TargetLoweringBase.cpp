@@ -878,19 +878,6 @@ void TargetLoweringBase::initActions() {
   setOperationAction(ISD::DEBUGTRAP, MVT::Other, Expand);
 }
 
-MVT TargetLoweringBase::getPointerTy(uint32_t AS) const {
-  return MVT::getIntegerVT(getPointerSizeInBits(AS));
-}
-
-unsigned TargetLoweringBase::getPointerSizeInBits(uint32_t AS) const {
-  return getDataLayout()->getPointerSizeInBits(AS);
-}
-
-unsigned TargetLoweringBase::getPointerTypeSizeInBits(Type *Ty) const {
-  assert(Ty->isPointerTy());
-  return getPointerSizeInBits(Ty->getPointerAddressSpace());
-}
-
 MVT TargetLoweringBase::getScalarShiftAmountTy(EVT LHSTy) const {
   return MVT::getIntegerVT(8 * getDataLayout()->getPointerSize(0));
 }
@@ -1397,9 +1384,10 @@ void TargetLoweringBase::computeRegisterProperties(
   }
 }
 
-EVT TargetLoweringBase::getSetCCResultType(LLVMContext &, EVT VT) const {
+EVT TargetLoweringBase::getSetCCResultType(const DataLayout &DL, LLVMContext &,
+                                           EVT VT) const {
   assert(!VT.isVector() && "No default SetCC type for vectors!");
-  return getPointerTy(0).SimpleTy;
+  return getPointerTy(DL).SimpleTy;
 }
 
 MVT::SimpleValueType TargetLoweringBase::getCmpLibcallReturnType() const {
@@ -1613,9 +1601,10 @@ int TargetLoweringBase::InstructionOpcodeToISD(unsigned Opcode) const {
 }
 
 std::pair<unsigned, MVT>
-TargetLoweringBase::getTypeLegalizationCost(Type *Ty) const {
+TargetLoweringBase::getTypeLegalizationCost(const DataLayout &DL,
+                                            Type *Ty) const {
   LLVMContext &C = Ty->getContext();
-  EVT MTy = getValueType(Ty);
+  EVT MTy = getValueType(DL, Ty);
 
   unsigned Cost = 1;
   // We keep legalizing the type until we find a legal kind. We assume that

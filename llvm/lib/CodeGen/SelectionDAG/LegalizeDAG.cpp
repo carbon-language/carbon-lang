@@ -65,7 +65,7 @@ class SelectionDAGLegalize {
   SmallSetVector<SDNode *, 16> *UpdatedNodes;
 
   EVT getSetCCResultType(EVT VT) const {
-    return TLI.getSetCCResultType(*DAG.getContext(), VT);
+    return TLI.getSetCCResultType(DAG.getDataLayout(), *DAG.getContext(), VT);
   }
 
   // Libcall insertion helpers.
@@ -269,7 +269,8 @@ SelectionDAGLegalize::ExpandConstantFP(ConstantFPSDNode *CFP, bool UseCP) {
     }
   }
 
-  SDValue CPIdx = DAG.getConstantPool(LLVMC, TLI.getPointerTy());
+  SDValue CPIdx =
+      DAG.getConstantPool(LLVMC, TLI.getPointerTy(DAG.getDataLayout()));
   unsigned Alignment = cast<ConstantPoolSDNode>(CPIdx)->getAlignment();
   if (Extend) {
     SDValue Result =
@@ -331,7 +332,8 @@ static void ExpandUnalignedStore(StoreSDNode *ST, SelectionDAG &DAG,
     SDValue Store = DAG.getTruncStore(Chain, dl,
                                       Val, StackPtr, MachinePointerInfo(),
                                       StoredVT, false, false, 0);
-    SDValue Increment = DAG.getConstant(RegBytes, dl, TLI.getPointerTy(AS));
+    SDValue Increment = DAG.getConstant(
+        RegBytes, dl, TLI.getPointerTy(DAG.getDataLayout(), AS));
     SmallVector<SDValue, 8> Stores;
     unsigned Offset = 0;
 
@@ -398,7 +400,8 @@ static void ExpandUnalignedStore(StoreSDNode *ST, SelectionDAG &DAG,
                              ST->isVolatile(), ST->isNonTemporal(), Alignment);
 
   Ptr = DAG.getNode(ISD::ADD, dl, Ptr.getValueType(), Ptr,
-                    DAG.getConstant(IncrementSize, dl, TLI.getPointerTy(AS)));
+                    DAG.getConstant(IncrementSize, dl,
+                                    TLI.getPointerTy(DAG.getDataLayout(), AS)));
   Alignment = MinAlign(Alignment, IncrementSize);
   Store2 = DAG.getTruncStore(
       Chain, dl, DAG.getDataLayout().isLittleEndian() ? Hi : Lo, Ptr,
@@ -449,7 +452,8 @@ ExpandUnalignedLoad(LoadSDNode *LD, SelectionDAG &DAG,
     // Make sure the stack slot is also aligned for the register type.
     SDValue StackBase = DAG.CreateStackTemporary(LoadedVT, RegVT);
 
-    SDValue Increment = DAG.getConstant(RegBytes, dl, TLI.getPointerTy());
+    SDValue Increment =
+        DAG.getConstant(RegBytes, dl, TLI.getPointerTy(DAG.getDataLayout()));
     SmallVector<SDValue, 8> Stores;
     SDValue StackPtr = StackBase;
     unsigned Offset = 0;
@@ -582,7 +586,7 @@ PerformInsertVectorEltInMemory(SDValue Vec, SDValue Val, SDValue Idx,
   EVT VT    = Tmp1.getValueType();
   EVT EltVT = VT.getVectorElementType();
   EVT IdxVT = Tmp3.getValueType();
-  EVT PtrVT = TLI.getPointerTy();
+  EVT PtrVT = TLI.getPointerTy(DAG.getDataLayout());
   SDValue StackPtr = DAG.CreateStackTemporary(VT);
 
   int SPFI = cast<FrameIndexSDNode>(StackPtr.getNode())->getIndex();
@@ -1442,7 +1446,7 @@ SDValue SelectionDAGLegalize::ExpandExtractFromVectorThroughStack(SDValue Op) {
   Idx = DAG.getNode(ISD::MUL, dl, Idx.getValueType(), Idx,
                     DAG.getConstant(EltSize, SDLoc(Vec), Idx.getValueType()));
 
-  Idx = DAG.getZExtOrTrunc(Idx, dl, TLI.getPointerTy());
+  Idx = DAG.getZExtOrTrunc(Idx, dl, TLI.getPointerTy(DAG.getDataLayout()));
   StackPtr = DAG.getNode(ISD::ADD, dl, Idx.getValueType(), Idx, StackPtr);
 
   SDValue NewLoad;
@@ -1494,7 +1498,7 @@ SDValue SelectionDAGLegalize::ExpandInsertToVectorThroughStack(SDValue Op) {
 
   Idx = DAG.getNode(ISD::MUL, dl, Idx.getValueType(), Idx,
                     DAG.getConstant(EltSize, SDLoc(Vec), Idx.getValueType()));
-  Idx = DAG.getZExtOrTrunc(Idx, dl, TLI.getPointerTy());
+  Idx = DAG.getZExtOrTrunc(Idx, dl, TLI.getPointerTy(DAG.getDataLayout()));
 
   SDValue SubStackPtr = DAG.getNode(ISD::ADD, dl, Idx.getValueType(), Idx,
                                     StackPtr);
@@ -1574,7 +1578,7 @@ SDValue SelectionDAGLegalize::ExpandFCOPYSIGN(SDNode* Node) {
   } else {
     auto &DL = DAG.getDataLayout();
     // Store the float to memory, then load the sign part out as an integer.
-    MVT LoadTy = TLI.getPointerTy();
+    MVT LoadTy = TLI.getPointerTy(DL);
     // First create a temporary that is aligned for both the load and store.
     SDValue StackPtr = DAG.CreateStackTemporary(FloatVT, LoadTy);
     // Then store the float to it.
@@ -1997,7 +2001,8 @@ SDValue SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
       }
     }
     Constant *CP = ConstantVector::get(CV);
-    SDValue CPIdx = DAG.getConstantPool(CP, TLI.getPointerTy());
+    SDValue CPIdx =
+        DAG.getConstantPool(CP, TLI.getPointerTy(DAG.getDataLayout()));
     unsigned Alignment = cast<ConstantPoolSDNode>(CPIdx)->getAlignment();
     return DAG.getLoad(VT, dl, DAG.getEntryNode(), CPIdx,
                        MachinePointerInfo::getConstantPool(),
@@ -2061,7 +2066,7 @@ SDValue SelectionDAGLegalize::ExpandLibCall(RTLIB::Libcall LC, SDNode *Node,
     Args.push_back(Entry);
   }
   SDValue Callee = DAG.getExternalSymbol(TLI.getLibcallName(LC),
-                                         TLI.getPointerTy());
+                                         TLI.getPointerTy(DAG.getDataLayout()));
 
   Type *RetTy = Node->getValueType(0).getTypeForEVT(*DAG.getContext());
 
@@ -2109,7 +2114,7 @@ SDValue SelectionDAGLegalize::ExpandLibCall(RTLIB::Libcall LC, EVT RetVT,
     Args.push_back(Entry);
   }
   SDValue Callee = DAG.getExternalSymbol(TLI.getLibcallName(LC),
-                                         TLI.getPointerTy());
+                                         TLI.getPointerTy(DAG.getDataLayout()));
 
   Type *RetTy = RetVT.getTypeForEVT(*DAG.getContext());
 
@@ -2143,7 +2148,7 @@ SelectionDAGLegalize::ExpandChainLibCall(RTLIB::Libcall LC,
     Args.push_back(Entry);
   }
   SDValue Callee = DAG.getExternalSymbol(TLI.getLibcallName(LC),
-                                         TLI.getPointerTy());
+                                         TLI.getPointerTy(DAG.getDataLayout()));
 
   Type *RetTy = Node->getValueType(0).getTypeForEVT(*DAG.getContext());
 
@@ -2280,7 +2285,7 @@ SelectionDAGLegalize::ExpandDivRemLibCall(SDNode *Node,
   Args.push_back(Entry);
 
   SDValue Callee = DAG.getExternalSymbol(TLI.getLibcallName(LC),
-                                         TLI.getPointerTy());
+                                         TLI.getPointerTy(DAG.getDataLayout()));
 
   SDLoc dl(Node);
   TargetLowering::CallLoweringInfo CLI(DAG);
@@ -2392,7 +2397,7 @@ SelectionDAGLegalize::ExpandSinCosLibCall(SDNode *Node,
   Args.push_back(Entry);
 
   SDValue Callee = DAG.getExternalSymbol(TLI.getLibcallName(LC),
-                                         TLI.getPointerTy());
+                                         TLI.getPointerTy(DAG.getDataLayout()));
 
   SDLoc dl(Node);
   TargetLowering::CallLoweringInfo CLI(DAG);
@@ -2592,7 +2597,8 @@ SDValue SelectionDAGLegalize::ExpandLegalINT_TO_FP(bool isSigned,
   Constant *FudgeFactor = ConstantInt::get(
                                        Type::getInt64Ty(*DAG.getContext()), FF);
 
-  SDValue CPIdx = DAG.getConstantPool(FudgeFactor, TLI.getPointerTy());
+  SDValue CPIdx =
+      DAG.getConstantPool(FudgeFactor, TLI.getPointerTy(DAG.getDataLayout()));
   unsigned Alignment = cast<ConstantPoolSDNode>(CPIdx)->getAlignment();
   CPIdx = DAG.getNode(ISD::ADD, dl, CPIdx.getValueType(), CPIdx, CstOffset);
   Alignment = std::min(Alignment, 4u);
@@ -2907,10 +2913,12 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node) {
     TargetLowering::ArgListTy Args;
 
     TargetLowering::CallLoweringInfo CLI(DAG);
-    CLI.setDebugLoc(dl).setChain(Node->getOperand(0))
-      .setCallee(CallingConv::C, Type::getVoidTy(*DAG.getContext()),
-                 DAG.getExternalSymbol("__sync_synchronize",
-                 TLI.getPointerTy()), std::move(Args), 0);
+    CLI.setDebugLoc(dl)
+        .setChain(Node->getOperand(0))
+        .setCallee(CallingConv::C, Type::getVoidTy(*DAG.getContext()),
+                   DAG.getExternalSymbol("__sync_synchronize",
+                                         TLI.getPointerTy(DAG.getDataLayout())),
+                   std::move(Args), 0);
 
     std::pair<SDValue, SDValue> CallResult = TLI.LowerCallTo(CLI);
 
@@ -3006,10 +3014,12 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node) {
     // If this operation is not supported, lower it to 'abort()' call
     TargetLowering::ArgListTy Args;
     TargetLowering::CallLoweringInfo CLI(DAG);
-    CLI.setDebugLoc(dl).setChain(Node->getOperand(0))
-      .setCallee(CallingConv::C, Type::getVoidTy(*DAG.getContext()),
-                 DAG.getExternalSymbol("abort", TLI.getPointerTy()),
-                 std::move(Args), 0);
+    CLI.setDebugLoc(dl)
+        .setChain(Node->getOperand(0))
+        .setCallee(CallingConv::C, Type::getVoidTy(*DAG.getContext()),
+                   DAG.getExternalSymbol("abort",
+                                         TLI.getPointerTy(DAG.getDataLayout())),
+                   std::move(Args), 0);
     std::pair<SDValue, SDValue> CallResult = TLI.LowerCallTo(CLI);
 
     Results.push_back(CallResult.second);
@@ -3096,9 +3106,9 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node) {
     Tmp2 = Node->getOperand(1);
     unsigned Align = Node->getConstantOperandVal(3);
 
-    SDValue VAListLoad = DAG.getLoad(TLI.getPointerTy(), dl, Tmp1, Tmp2,
-                                     MachinePointerInfo(V),
-                                     false, false, false, 0);
+    SDValue VAListLoad =
+        DAG.getLoad(TLI.getPointerTy(DAG.getDataLayout()), dl, Tmp1, Tmp2,
+                    MachinePointerInfo(V), false, false, false, 0);
     SDValue VAList = VAListLoad;
 
     if (Align > TLI.getMinStackArgumentAlignment()) {
@@ -3132,9 +3142,9 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node) {
     // output, returning the chain.
     const Value *VD = cast<SrcValueSDNode>(Node->getOperand(3))->getValue();
     const Value *VS = cast<SrcValueSDNode>(Node->getOperand(4))->getValue();
-    Tmp1 = DAG.getLoad(TLI.getPointerTy(), dl, Node->getOperand(0),
-                       Node->getOperand(2), MachinePointerInfo(VS),
-                       false, false, false, 0);
+    Tmp1 = DAG.getLoad(TLI.getPointerTy(DAG.getDataLayout()), dl,
+                       Node->getOperand(0), Node->getOperand(2),
+                       MachinePointerInfo(VS), false, false, false, 0);
     Tmp1 = DAG.getStore(Tmp1.getValue(1), dl, Tmp1, Node->getOperand(1),
                         MachinePointerInfo(VD), false, false, 0);
     Results.push_back(Tmp1);
@@ -3229,14 +3239,14 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node) {
       }
       unsigned Idx = Mask[i];
       if (Idx < NumElems)
-        Ops.push_back(DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, EltVT,
-                                  Op0,
-                                  DAG.getConstant(Idx, dl, TLI.getVectorIdxTy())));
+        Ops.push_back(DAG.getNode(
+            ISD::EXTRACT_VECTOR_ELT, dl, EltVT, Op0,
+            DAG.getConstant(Idx, dl, TLI.getVectorIdxTy(DAG.getDataLayout()))));
       else
-        Ops.push_back(DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, EltVT,
-                                  Op1,
-                                  DAG.getConstant(Idx - NumElems, dl,
-                                                  TLI.getVectorIdxTy())));
+        Ops.push_back(DAG.getNode(
+            ISD::EXTRACT_VECTOR_ELT, dl, EltVT, Op1,
+            DAG.getConstant(Idx - NumElems, dl,
+                            TLI.getVectorIdxTy(DAG.getDataLayout()))));
     }
 
     Tmp1 = DAG.getNode(ISD::BUILD_VECTOR, dl, VT, Ops);
@@ -3762,12 +3772,14 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node) {
       // The high part is obtained by SRA'ing all but one of the bits of low
       // part.
       unsigned LoSize = VT.getSizeInBits();
-      SDValue HiLHS = DAG.getNode(ISD::SRA, dl, VT, RHS,
-                                  DAG.getConstant(LoSize - 1, dl,
-                                                  TLI.getPointerTy()));
-      SDValue HiRHS = DAG.getNode(ISD::SRA, dl, VT, LHS,
-                                  DAG.getConstant(LoSize - 1, dl,
-                                                  TLI.getPointerTy()));
+      SDValue HiLHS =
+          DAG.getNode(ISD::SRA, dl, VT, RHS,
+                      DAG.getConstant(LoSize - 1, dl,
+                                      TLI.getPointerTy(DAG.getDataLayout())));
+      SDValue HiRHS =
+          DAG.getNode(ISD::SRA, dl, VT, LHS,
+                      DAG.getConstant(LoSize - 1, dl,
+                                      TLI.getPointerTy(DAG.getDataLayout())));
 
       // Here we're passing the 2 arguments explicitly as 4 arguments that are
       // pre-lowered to the correct types. This all depends upon WideVT not
@@ -3831,7 +3843,7 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node) {
     SDValue Table = Node->getOperand(1);
     SDValue Index = Node->getOperand(2);
 
-    EVT PTy = TLI.getPointerTy();
+    EVT PTy = TLI.getPointerTy(DAG.getDataLayout());
 
     const DataLayout &TD = DAG.getDataLayout();
     unsigned EntrySize =
@@ -3939,7 +3951,8 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node) {
       assert(!TLI.isOperationExpand(ISD::SELECT, VT) &&
              "Cannot expand ISD::SELECT_CC when ISD::SELECT also needs to be "
              "expanded.");
-      EVT CCVT = TLI.getSetCCResultType(*DAG.getContext(), CmpVT);
+      EVT CCVT =
+          TLI.getSetCCResultType(DAG.getDataLayout(), *DAG.getContext(), CmpVT);
       SDValue Cond = DAG.getNode(ISD::SETCC, dl, CCVT, Tmp1, Tmp2, CC);
       Results.push_back(DAG.getSelect(dl, VT, Cond, Tmp3, Tmp4));
       break;
@@ -4039,14 +4052,12 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node) {
 
     SmallVector<SDValue, 8> Scalars;
     for (unsigned Idx = 0; Idx < NumElem; Idx++) {
-      SDValue Ex = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl,
-                               VT.getScalarType(),
-                               Node->getOperand(0),
-                               DAG.getConstant(Idx, dl, TLI.getVectorIdxTy()));
-      SDValue Sh = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl,
-                               VT.getScalarType(),
-                               Node->getOperand(1),
-                               DAG.getConstant(Idx, dl, TLI.getVectorIdxTy()));
+      SDValue Ex = DAG.getNode(
+          ISD::EXTRACT_VECTOR_ELT, dl, VT.getScalarType(), Node->getOperand(0),
+          DAG.getConstant(Idx, dl, TLI.getVectorIdxTy(DAG.getDataLayout())));
+      SDValue Sh = DAG.getNode(
+          ISD::EXTRACT_VECTOR_ELT, dl, VT.getScalarType(), Node->getOperand(1),
+          DAG.getConstant(Idx, dl, TLI.getVectorIdxTy(DAG.getDataLayout())));
       Scalars.push_back(DAG.getNode(Node->getOpcode(), dl,
                                     VT.getScalarType(), Ex, Sh));
     }

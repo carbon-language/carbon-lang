@@ -921,7 +921,8 @@ void SelectionDAGISel::DoInstructionSelection() {
 bool SelectionDAGISel::PrepareEHLandingPad() {
   MachineBasicBlock *MBB = FuncInfo->MBB;
 
-  const TargetRegisterClass *PtrRC = TLI->getRegClassFor(TLI->getPointerTy());
+  const TargetRegisterClass *PtrRC =
+      TLI->getRegClassFor(TLI->getPointerTy(CurDAG->getDataLayout()));
 
   // Add a label to mark the beginning of the landing pad.  Deletion of the
   // landing pad can thus be detected via the MachineModuleInfo.
@@ -2329,21 +2330,23 @@ CheckOpcode(const unsigned char *MatcherTable, unsigned &MatcherIndex,
 }
 
 LLVM_ATTRIBUTE_ALWAYS_INLINE static bool
-CheckType(const unsigned char *MatcherTable, unsigned &MatcherIndex,
-          SDValue N, const TargetLowering *TLI) {
+CheckType(const unsigned char *MatcherTable, unsigned &MatcherIndex, SDValue N,
+          const TargetLowering *TLI, const DataLayout &DL) {
   MVT::SimpleValueType VT = (MVT::SimpleValueType)MatcherTable[MatcherIndex++];
   if (N.getValueType() == VT) return true;
 
   // Handle the case when VT is iPTR.
-  return VT == MVT::iPTR && N.getValueType() == TLI->getPointerTy();
+  return VT == MVT::iPTR && N.getValueType() == TLI->getPointerTy(DL);
 }
 
 LLVM_ATTRIBUTE_ALWAYS_INLINE static bool
 CheckChildType(const unsigned char *MatcherTable, unsigned &MatcherIndex,
-               SDValue N, const TargetLowering *TLI, unsigned ChildNo) {
+               SDValue N, const TargetLowering *TLI, const DataLayout &DL,
+               unsigned ChildNo) {
   if (ChildNo >= N.getNumOperands())
     return false;  // Match fails if out of range child #.
-  return ::CheckType(MatcherTable, MatcherIndex, N.getOperand(ChildNo), TLI);
+  return ::CheckType(MatcherTable, MatcherIndex, N.getOperand(ChildNo), TLI,
+                     DL);
 }
 
 LLVM_ATTRIBUTE_ALWAYS_INLINE static bool
@@ -2355,13 +2358,13 @@ CheckCondCode(const unsigned char *MatcherTable, unsigned &MatcherIndex,
 
 LLVM_ATTRIBUTE_ALWAYS_INLINE static bool
 CheckValueType(const unsigned char *MatcherTable, unsigned &MatcherIndex,
-               SDValue N, const TargetLowering *TLI) {
+               SDValue N, const TargetLowering *TLI, const DataLayout &DL) {
   MVT::SimpleValueType VT = (MVT::SimpleValueType)MatcherTable[MatcherIndex++];
   if (cast<VTSDNode>(N)->getVT() == VT)
     return true;
 
   // Handle the case when VT is iPTR.
-  return VT == MVT::iPTR && cast<VTSDNode>(N)->getVT() == TLI->getPointerTy();
+  return VT == MVT::iPTR && cast<VTSDNode>(N)->getVT() == TLI->getPointerTy(DL);
 }
 
 LLVM_ATTRIBUTE_ALWAYS_INLINE static bool
@@ -2444,7 +2447,8 @@ static unsigned IsPredicateKnownToFail(const unsigned char *Table,
     Result = !::CheckOpcode(Table, Index, N.getNode());
     return Index;
   case SelectionDAGISel::OPC_CheckType:
-    Result = !::CheckType(Table, Index, N, SDISel.TLI);
+    Result = !::CheckType(Table, Index, N, SDISel.TLI,
+                          SDISel.CurDAG->getDataLayout());
     return Index;
   case SelectionDAGISel::OPC_CheckChild0Type:
   case SelectionDAGISel::OPC_CheckChild1Type:
@@ -2454,15 +2458,16 @@ static unsigned IsPredicateKnownToFail(const unsigned char *Table,
   case SelectionDAGISel::OPC_CheckChild5Type:
   case SelectionDAGISel::OPC_CheckChild6Type:
   case SelectionDAGISel::OPC_CheckChild7Type:
-    Result = !::CheckChildType(Table, Index, N, SDISel.TLI,
-                               Table[Index - 1] -
-                                   SelectionDAGISel::OPC_CheckChild0Type);
+    Result = !::CheckChildType(
+                 Table, Index, N, SDISel.TLI, SDISel.CurDAG->getDataLayout(),
+                 Table[Index - 1] - SelectionDAGISel::OPC_CheckChild0Type);
     return Index;
   case SelectionDAGISel::OPC_CheckCondCode:
     Result = !::CheckCondCode(Table, Index, N);
     return Index;
   case SelectionDAGISel::OPC_CheckValueType:
-    Result = !::CheckValueType(Table, Index, N, SDISel.TLI);
+    Result = !::CheckValueType(Table, Index, N, SDISel.TLI,
+                               SDISel.CurDAG->getDataLayout());
     return Index;
   case SelectionDAGISel::OPC_CheckInteger:
     Result = !::CheckInteger(Table, Index, N);
@@ -2816,7 +2821,8 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
       continue;
 
     case OPC_CheckType:
-      if (!::CheckType(MatcherTable, MatcherIndex, N, TLI))
+      if (!::CheckType(MatcherTable, MatcherIndex, N, TLI,
+                       CurDAG->getDataLayout()))
         break;
       continue;
 
@@ -2864,7 +2870,7 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
 
         MVT CaseVT = (MVT::SimpleValueType)MatcherTable[MatcherIndex++];
         if (CaseVT == MVT::iPTR)
-          CaseVT = TLI->getPointerTy();
+          CaseVT = TLI->getPointerTy(CurDAG->getDataLayout());
 
         // If the VT matches, then we will execute this case.
         if (CurNodeVT == CaseVT)
@@ -2887,14 +2893,16 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
     case OPC_CheckChild4Type: case OPC_CheckChild5Type:
     case OPC_CheckChild6Type: case OPC_CheckChild7Type:
       if (!::CheckChildType(MatcherTable, MatcherIndex, N, TLI,
-                            Opcode-OPC_CheckChild0Type))
+                            CurDAG->getDataLayout(),
+                            Opcode - OPC_CheckChild0Type))
         break;
       continue;
     case OPC_CheckCondCode:
       if (!::CheckCondCode(MatcherTable, MatcherIndex, N)) break;
       continue;
     case OPC_CheckValueType:
-      if (!::CheckValueType(MatcherTable, MatcherIndex, N, TLI))
+      if (!::CheckValueType(MatcherTable, MatcherIndex, N, TLI,
+                            CurDAG->getDataLayout()))
         break;
       continue;
     case OPC_CheckInteger:
@@ -3097,7 +3105,7 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
         MVT::SimpleValueType VT =
           (MVT::SimpleValueType)MatcherTable[MatcherIndex++];
         if (VT == MVT::iPTR)
-          VT = TLI->getPointerTy().SimpleTy;
+          VT = TLI->getPointerTy(CurDAG->getDataLayout()).SimpleTy;
         VTs.push_back(VT);
       }
 

@@ -168,9 +168,9 @@ public:
   /// Return the pointer type for the given address space, defaults to
   /// the pointer type from the data layout.
   /// FIXME: The default needs to be removed once all the code is updated.
-  virtual MVT getPointerTy(uint32_t /*AS*/ = 0) const;
-  unsigned getPointerSizeInBits(uint32_t AS = 0) const;
-  unsigned getPointerTypeSizeInBits(Type *Ty) const;
+  MVT getPointerTy(const DataLayout &DL, uint32_t AS = 0) const {
+    return MVT::getIntegerVT(DL.getPointerSizeInBits(AS));
+  }
   virtual MVT getScalarShiftAmountTy(EVT LHSTy) const;
 
   EVT getShiftAmountTy(EVT LHSTy) const;
@@ -178,8 +178,8 @@ public:
   /// Returns the type to be used for the index operand of:
   /// ISD::INSERT_VECTOR_ELT, ISD::EXTRACT_VECTOR_ELT,
   /// ISD::INSERT_SUBVECTOR, and ISD::EXTRACT_SUBVECTOR
-  virtual MVT getVectorIdxTy() const {
-    return getPointerTy();
+  virtual MVT getVectorIdxTy(const DataLayout &DL) const {
+    return getPointerTy(DL);
   }
 
   /// Return true if the select operation is expensive for this target.
@@ -325,7 +325,8 @@ public:
   }
 
   /// Return the ValueType of the result of SETCC operations.
-  virtual EVT getSetCCResultType(LLVMContext &Context, EVT VT) const;
+  virtual EVT getSetCCResultType(const DataLayout &DL, LLVMContext &Context,
+                                 EVT VT) const;
 
   /// Return the ValueType for comparison libcalls. Comparions libcalls include
   /// floating point comparion calls, and Ordered/Unordered check calls on
@@ -713,17 +714,18 @@ public:
   /// operations except for the pointer size.  If AllowUnknown is true, this
   /// will return MVT::Other for types with no EVT counterpart (e.g. structs),
   /// otherwise it will assert.
-  EVT getValueType(Type *Ty, bool AllowUnknown = false) const {
+  EVT getValueType(const DataLayout &DL, Type *Ty,
+                   bool AllowUnknown = false) const {
     // Lower scalar pointers to native pointer types.
     if (PointerType *PTy = dyn_cast<PointerType>(Ty))
-      return getPointerTy(PTy->getAddressSpace());
+      return getPointerTy(DL, PTy->getAddressSpace());
 
     if (Ty->isVectorTy()) {
       VectorType *VTy = cast<VectorType>(Ty);
       Type *Elm = VTy->getElementType();
       // Lower vectors of pointers to native pointer types.
       if (PointerType *PT = dyn_cast<PointerType>(Elm)) {
-        EVT PointerTy(getPointerTy(PT->getAddressSpace()));
+        EVT PointerTy(getPointerTy(DL, PT->getAddressSpace()));
         Elm = PointerTy.getTypeForEVT(Ty->getContext());
       }
 
@@ -734,8 +736,9 @@ public:
   }
 
   /// Return the MVT corresponding to this LLVM type. See getValueType.
-  MVT getSimpleValueType(Type *Ty, bool AllowUnknown = false) const {
-    return getValueType(Ty, AllowUnknown).getSimpleVT();
+  MVT getSimpleValueType(const DataLayout &DL, Type *Ty,
+                         bool AllowUnknown = false) const {
+    return getValueType(DL, Ty, AllowUnknown).getSimpleVT();
   }
 
   /// Return the desired alignment for ByVal or InAlloca aggregate function
@@ -1004,7 +1007,8 @@ public:
   int InstructionOpcodeToISD(unsigned Opcode) const;
 
   /// Estimate the cost of type-legalization and the legalized type.
-  std::pair<unsigned, MVT> getTypeLegalizationCost(Type *Ty) const;
+  std::pair<unsigned, MVT> getTypeLegalizationCost(const DataLayout &DL,
+                                                   Type *Ty) const;
 
   /// @}
 

@@ -42,12 +42,14 @@ EmitTargetCodeForMemcpy(SelectionDAG &DAG, SDLoc dl, SDValue Chain,
     Entry.Node = Size; Args.push_back(Entry);
 
     TargetLowering::CallLoweringInfo CLI(DAG);
-    CLI.setDebugLoc(dl).setChain(Chain)
-      .setCallee(TLI.getLibcallCallingConv(RTLIB::MEMCPY),
-                 Type::getVoidTy(*DAG.getContext()),
-                 DAG.getExternalSymbol("__memcpy_4", TLI.getPointerTy()),
-                 std::move(Args), 0)
-      .setDiscardResult();
+    CLI.setDebugLoc(dl)
+        .setChain(Chain)
+        .setCallee(TLI.getLibcallCallingConv(RTLIB::MEMCPY),
+                   Type::getVoidTy(*DAG.getContext()),
+                   DAG.getExternalSymbol("__memcpy_4",
+                                         TLI.getPointerTy(DAG.getDataLayout())),
+                   std::move(Args), 0)
+        .setDiscardResult();
 
     std::pair<SDValue,SDValue> CallResult = TLI.LowerCallTo(CLI);
     return CallResult.second;

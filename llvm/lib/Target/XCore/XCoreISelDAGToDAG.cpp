@@ -144,10 +144,9 @@ SDNode *XCoreDAGToDAGISel::Select(SDNode *N) {
                                     MVT::i32, MskSize);
     }
     else if (!isUInt<16>(Val)) {
-      SDValue CPIdx =
-        CurDAG->getTargetConstantPool(ConstantInt::get(
-                              Type::getInt32Ty(*CurDAG->getContext()), Val),
-                                      getTargetLowering()->getPointerTy());
+      SDValue CPIdx = CurDAG->getTargetConstantPool(
+          ConstantInt::get(Type::getInt32Ty(*CurDAG->getContext()), Val),
+          getTargetLowering()->getPointerTy(CurDAG->getDataLayout()));
       SDNode *node = CurDAG->getMachineNode(XCore::LDWCP_lru6, dl, MVT::i32,
                                             MVT::Other, CPIdx,
                                             CurDAG->getEntryNode());

@@ -317,7 +317,7 @@ unsigned PPCTTIImpl::getMemoryOpCost(unsigned Opcode, Type *Src,
                                      unsigned Alignment,
                                      unsigned AddressSpace) {
   // Legalize the type.
-  std::pair<unsigned, MVT> LT = TLI->getTypeLegalizationCost(Src);
+  std::pair<unsigned, MVT> LT = TLI->getTypeLegalizationCost(DL, Src);
   assert((Opcode == Instruction::Load || Opcode == Instruction::Store) &&
          "Invalid Opcode");
 

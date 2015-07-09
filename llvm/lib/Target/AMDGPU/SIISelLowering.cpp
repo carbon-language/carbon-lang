@@ -425,13 +425,13 @@ SDValue SITargetLowering::LowerParameter(SelectionDAG &DAG, EVT VT, EVT MemVT,
   Type *Ty = VT.getTypeForEVT(*DAG.getContext());
 
   MachineRegisterInfo &MRI = DAG.getMachineFunction().getRegInfo();
-  MVT PtrVT = getPointerTy(AMDGPUAS::CONSTANT_ADDRESS);
+  MVT PtrVT = getPointerTy(DAG.getDataLayout(), AMDGPUAS::CONSTANT_ADDRESS);
   PointerType *PtrTy = PointerType::get(Ty, AMDGPUAS::CONSTANT_ADDRESS);
   SDValue BasePtr = DAG.getCopyFromReg(Chain, SL,
                                        MRI.getLiveInVirtReg(InputPtrReg), PtrVT);
   SDValue Ptr = DAG.getNode(ISD::ADD, SL, PtrVT, BasePtr,
                             DAG.getConstant(Offset, SL, PtrVT));
-  SDValue PtrOffset = DAG.getUNDEF(getPointerTy(AMDGPUAS::CONSTANT_ADDRESS));
+  SDValue PtrOffset = DAG.getUNDEF(PtrVT);
   MachinePointerInfo PtrInfo(UndefValue::get(PtrTy));
 
   unsigned Align = DL->getABITypeAlignment(Ty);
@@ -695,7 +695,8 @@ bool SITargetLowering::enableAggressiveFMAFusion(EVT VT) const {
   return true;
 }
 
-EVT SITargetLowering::getSetCCResultType(LLVMContext &Ctx, EVT VT) const {
+EVT SITargetLowering::getSetCCResultType(const DataLayout &DL, LLVMContext &Ctx,
+                                         EVT VT) const {
   if (!VT.isVector()) {
     return MVT::i1;
   }
@@ -888,7 +889,7 @@ SDValue SITargetLowering::LowerGlobalAddress(AMDGPUMachineFunction *MFI,
 
   SDLoc DL(GSD);
   const GlobalValue *GV = GSD->getGlobal();
-  MVT PtrVT = getPointerTy(GSD->getAddressSpace());
+  MVT PtrVT = getPointerTy(DAG.getDataLayout(), GSD->getAddressSpace());
 
   SDValue Ptr = DAG.getNode(AMDGPUISD::CONST_DATA_PTR, DL, PtrVT);
   SDValue GA = DAG.getTargetGlobalAddress(GV, DL, MVT::i32);
@@ -1213,7 +1214,8 @@ SDValue SITargetLowering::LowerFDIV32(SDValue Op, SelectionDAG &DAG) const {
 
   const SDValue One = DAG.getConstantFP(1.0, SL, MVT::f32);
 
-  EVT SetCCVT = getSetCCResultType(*DAG.getContext(), MVT::f32);
+  EVT SetCCVT =
+      getSetCCResultType(DAG.getDataLayout(), *DAG.getContext(), MVT::f32);
 
   SDValue r2 = DAG.getSetCC(SL, SetCCVT, r1, K0, ISD::SETOGT);
 

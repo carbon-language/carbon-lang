@@ -88,7 +88,8 @@ namespace llvm {
     MVT getScalarShiftAmountTy(EVT LHSTy) const override { return MVT::i32; }
 
     /// getSetCCResultType - Return the ISD::SETCC ValueType
-    EVT getSetCCResultType(LLVMContext &Context, EVT VT) const override;
+    EVT getSetCCResultType(const DataLayout &DL, LLVMContext &Context,
+                           EVT VT) const override;
 
     SDValue
       LowerFormalArguments(SDValue Chain,

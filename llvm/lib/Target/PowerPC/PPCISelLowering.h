@@ -434,7 +434,8 @@ namespace llvm {
     }
 
     /// getSetCCResultType - Return the ISD::SETCC ValueType
-    EVT getSetCCResultType(LLVMContext &Context, EVT VT) const override;
+    EVT getSetCCResultType(const DataLayout &DL, LLVMContext &Context,
+                           EVT VT) const override;
 
     /// Return true if target always beneficiates from combining into FMA for a
     /// given value type. This must typically return false on targets where FMA

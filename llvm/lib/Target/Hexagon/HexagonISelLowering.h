@@ -165,7 +165,8 @@ bool isPositiveHalfWord(SDNode *N);
 
     SDValue LowerVASTART(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerConstantPool(SDValue Op, SelectionDAG &DAG) const;
-    EVT getSetCCResultType(LLVMContext &C, EVT VT) const override {
+    EVT getSetCCResultType(const DataLayout &, LLVMContext &C,
+                           EVT VT) const override {
       if (!VT.isVector())
         return MVT::i1;
       else

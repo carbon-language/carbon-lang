@@ -1234,7 +1234,7 @@ SDValue SelectionDAG::getConstant(const ConstantInt &Val, SDLoc DL, EVT VT,
 }
 
 SDValue SelectionDAG::getIntPtrConstant(uint64_t Val, SDLoc DL, bool isTarget) {
-  return getConstant(Val, DL, TLI->getPointerTy(), isTarget);
+  return getConstant(Val, DL, TLI->getPointerTy(getDataLayout()), isTarget);
 }
 
 SDValue SelectionDAG::getConstantFP(const APFloat& V, SDLoc DL, EVT VT,
@@ -1867,7 +1867,7 @@ SDValue SelectionDAG::CreateStackTemporary(EVT VT, unsigned minAlign) {
       std::max((unsigned)getDataLayout().getPrefTypeAlignment(Ty), minAlign);
 
   int FrameIdx = FrameInfo->CreateStackObject(ByteSize, StackAlign, false);
-  return getFrameIndex(FrameIdx, TLI->getPointerTy());
+  return getFrameIndex(FrameIdx, TLI->getPointerTy(getDataLayout()));
 }
 
 /// CreateStackTemporary - Create a stack temporary suitable for holding
@@ -1883,7 +1883,7 @@ SDValue SelectionDAG::CreateStackTemporary(EVT VT1, EVT VT2) {
 
   MachineFrameInfo *FrameInfo = getMachineFunction().getFrameInfo();
   int FrameIdx = FrameInfo->CreateStackObject(Bytes, Align, false);
-  return getFrameIndex(FrameIdx, TLI->getPointerTy());
+  return getFrameIndex(FrameIdx, TLI->getPointerTy(getDataLayout()));
 }
 
 SDValue SelectionDAG::FoldSetCC(EVT VT, SDValue N1,
@@ -4068,7 +4068,7 @@ static bool FindOptimalMemOpLowering(std::vector<EVT> &MemOps,
     unsigned AS = 0;
     if (DstAlign >= DAG.getDataLayout().getPointerPrefAlignment(AS) ||
         TLI.allowsMisalignedMemoryAccesses(VT, AS, DstAlign)) {
-      VT = TLI.getPointerTy();
+      VT = TLI.getPointerTy(DAG.getDataLayout());
     } else {
       switch (DstAlign & 7) {
       case 0:  VT = MVT::i64; break;
@@ -4494,13 +4494,15 @@ SDValue SelectionDAG::getMemcpy(SDValue Chain, SDLoc dl, SDValue Dst,
   Entry.Node = Size; Args.push_back(Entry);
   // FIXME: pass in SDLoc
   TargetLowering::CallLoweringInfo CLI(*this);
-  CLI.setDebugLoc(dl).setChain(Chain)
-    .setCallee(TLI->getLibcallCallingConv(RTLIB::MEMCPY),
-               Type::getVoidTy(*getContext()),
-               getExternalSymbol(TLI->getLibcallName(RTLIB::MEMCPY),
-                                 TLI->getPointerTy()), std::move(Args), 0)
-    .setDiscardResult()
-    .setTailCall(isTailCall);
+  CLI.setDebugLoc(dl)
+      .setChain(Chain)
+      .setCallee(TLI->getLibcallCallingConv(RTLIB::MEMCPY),
+                 Type::getVoidTy(*getContext()),
+                 getExternalSymbol(TLI->getLibcallName(RTLIB::MEMCPY),
+                                   TLI->getPointerTy(getDataLayout())),
+                 std::move(Args), 0)
+      .setDiscardResult()
+      .setTailCall(isTailCall);
 
   std::pair<SDValue,SDValue> CallResult = TLI->LowerCallTo(CLI);
   return CallResult.second;
@@ -4550,13 +4552,15 @@ SDValue SelectionDAG::getMemmove(SDValue Chain, SDLoc dl, SDValue Dst,
   Entry.Node = Size; Args.push_back(Entry);
   // FIXME:  pass in SDLoc
   TargetLowering::CallLoweringInfo CLI(*this);
-  CLI.setDebugLoc(dl).setChain(Chain)
-    .setCallee(TLI->getLibcallCallingConv(RTLIB::MEMMOVE),
-               Type::getVoidTy(*getContext()),
-               getExternalSymbol(TLI->getLibcallName(RTLIB::MEMMOVE),
-                                 TLI->getPointerTy()), std::move(Args), 0)
-    .setDiscardResult()
-    .setTailCall(isTailCall);
+  CLI.setDebugLoc(dl)
+      .setChain(Chain)
+      .setCallee(TLI->getLibcallCallingConv(RTLIB::MEMMOVE),
+                 Type::getVoidTy(*getContext()),
+                 getExternalSymbol(TLI->getLibcallName(RTLIB::MEMMOVE),
+                                   TLI->getPointerTy(getDataLayout())),
+                 std::move(Args), 0)
+      .setDiscardResult()
+      .setTailCall(isTailCall);
 
   std::pair<SDValue,SDValue> CallResult = TLI->LowerCallTo(CLI);
   return CallResult.second;
@@ -4608,13 +4612,15 @@ SDValue SelectionDAG::getMemset(SDValue Chain, SDLoc dl, SDValue Dst,
 
   // FIXME: pass in SDLoc
   TargetLowering::CallLoweringInfo CLI(*this);
-  CLI.setDebugLoc(dl).setChain(Chain)
-    .setCallee(TLI->getLibcallCallingConv(RTLIB::MEMSET),
-               Type::getVoidTy(*getContext()),
-               getExternalSymbol(TLI->getLibcallName(RTLIB::MEMSET),
-                                 TLI->getPointerTy()), std::move(Args), 0)
-    .setDiscardResult()
-    .setTailCall(isTailCall);
+  CLI.setDebugLoc(dl)
+      .setChain(Chain)
+      .setCallee(TLI->getLibcallCallingConv(RTLIB::MEMSET),
+                 Type::getVoidTy(*getContext()),
+                 getExternalSymbol(TLI->getLibcallName(RTLIB::MEMSET),
+                                   TLI->getPointerTy(getDataLayout())),
+                 std::move(Args), 0)
+      .setDiscardResult()
+      .setTailCall(isTailCall);
 
   std::pair<SDValue,SDValue> CallResult = TLI->LowerCallTo(CLI);
   return CallResult.second;
@@ -6784,10 +6790,9 @@ SDValue SelectionDAG::UnrollVectorOp(SDNode *N, unsigned ResNE) {
       if (OperandVT.isVector()) {
         // A vector operand; extract a single element.
         EVT OperandEltVT = OperandVT.getVectorElementType();
-        Operands[j] = getNode(ISD::EXTRACT_VECTOR_ELT, dl,
-                              OperandEltVT,
-                              Operand,
-                              getConstant(i, dl, TLI->getVectorIdxTy()));
+        Operands[j] =
+            getNode(ISD::EXTRACT_VECTOR_ELT, dl, OperandEltVT, Operand,
+                    getConstant(i, dl, TLI->getVectorIdxTy(getDataLayout())));
       } else {
         // A scalar operand; just use it as is.
         Operands[j] = Operand;
@@ -6950,10 +6955,10 @@ SelectionDAG::SplitVector(const SDValue &N, const SDLoc &DL, const EVT &LoVT,
          "More vector elements requested than available!");
   SDValue Lo, Hi;
   Lo = getNode(ISD::EXTRACT_SUBVECTOR, DL, LoVT, N,
-               getConstant(0, DL, TLI->getVectorIdxTy()));
+               getConstant(0, DL, TLI->getVectorIdxTy(getDataLayout())));
   Hi = getNode(ISD::EXTRACT_SUBVECTOR, DL, HiVT, N,
                getConstant(LoVT.getVectorNumElements(), DL,
-                           TLI->getVectorIdxTy()));
+                           TLI->getVectorIdxTy(getDataLayout())));
   return std::make_pair(Lo, Hi);
 }
 
@@ -6965,7 +6970,7 @@ void SelectionDAG::ExtractVectorElements(SDValue Op,
     Count = VT.getVectorNumElements();
 
   EVT EltVT = VT.getVectorElementType();
-  EVT IdxTy = TLI->getVectorIdxTy();
+  EVT IdxTy = TLI->getVectorIdxTy(getDataLayout());
   SDLoc SL(Op);
   for (unsigned i = Start, e = Start + Count; i != e; ++i) {
     Args.push_back(getNode(ISD::EXTRACT_VECTOR_ELT, SL, EltVT,

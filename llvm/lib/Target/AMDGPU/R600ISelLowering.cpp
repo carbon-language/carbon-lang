@@ -897,8 +897,9 @@ SDValue R600TargetLowering::vectorToVerticalVector(SelectionDAG &DAG,
 
   for (unsigned i = 0, e = VecVT.getVectorNumElements();
                                                            i != e; ++i) {
-    Args.push_back(DAG.getNode(ISD::EXTRACT_VECTOR_ELT, DL, EltVT, Vector,
-                               DAG.getConstant(i, DL, getVectorIdxTy())));
+    Args.push_back(DAG.getNode(
+        ISD::EXTRACT_VECTOR_ELT, DL, EltVT, Vector,
+        DAG.getConstant(i, DL, getVectorIdxTy(DAG.getDataLayout()))));
   }
 
   return DAG.getNode(AMDGPUISD::BUILD_VERTICAL_VECTOR, DL, VecVT, Args);
@@ -1471,10 +1472,11 @@ SDValue R600TargetLowering::LowerLOAD(SDValue Op, SelectionDAG &DAG) const
   // Lower loads constant address space global variable loads
   if (LoadNode->getAddressSpace() == AMDGPUAS::CONSTANT_ADDRESS &&
       isa<GlobalVariable>(GetUnderlyingObject(
-          LoadNode->getMemOperand()->getValue(), *getDataLayout()))) {
+          LoadNode->getMemOperand()->getValue(), DAG.getDataLayout()))) {
 
-    SDValue Ptr = DAG.getZExtOrTrunc(LoadNode->getBasePtr(), DL,
-        getPointerTy(AMDGPUAS::PRIVATE_ADDRESS));
+    SDValue Ptr = DAG.getZExtOrTrunc(
+        LoadNode->getBasePtr(), DL,
+        getPointerTy(DAG.getDataLayout(), AMDGPUAS::PRIVATE_ADDRESS));
     Ptr = DAG.getNode(ISD::SRL, DL, MVT::i32, Ptr,
         DAG.getConstant(2, DL, MVT::i32));
     return DAG.getNode(AMDGPUISD::REGISTER_LOAD, DL, Op->getVTList(),
@@ -1702,7 +1704,8 @@ SDValue R600TargetLowering::LowerFormalArguments(
   return Chain;
 }
 
-EVT R600TargetLowering::getSetCCResultType(LLVMContext &, EVT VT) const {
+EVT R600TargetLowering::getSetCCResultType(const DataLayout &DL, LLVMContext &,
+                                           EVT VT) const {
    if (!VT.isVector())
      return MVT::i32;
    return VT.changeVectorElementTypeToInteger();
