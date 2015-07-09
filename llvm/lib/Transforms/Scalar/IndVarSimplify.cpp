@@ -41,6 +41,7 @@
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/PatternMatch.h"
 #include "llvm/IR/Type.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
@@ -135,6 +136,10 @@ namespace {
                                      PHINode *IndVar, SCEVExpander &Rewriter);
 
     void SinkUnusedInvariants(Loop *L);
+
+    Value *ExpandSCEVIfNeeded(SCEVExpander &Rewriter, const SCEV *S, Loop *L,
+                              Instruction *InsertPt, Type *Ty,
+                              bool &IsHighCostExpansion);
   };
 }
 
@@ -496,6 +501,52 @@ struct RewritePhi {
 };
 }
 
+Value *IndVarSimplify::ExpandSCEVIfNeeded(SCEVExpander &Rewriter, const SCEV *S,
+                                          Loop *L, Instruction *InsertPt,
+                                          Type *ResultTy,
+                                          bool &IsHighCostExpansion) {
+  using namespace llvm::PatternMatch;
+
+  if (!Rewriter.isHighCostExpansion(S, L)) {
+    IsHighCostExpansion = false;
+    return Rewriter.expandCodeFor(S, ResultTy, InsertPt);
+  }
+
+  // Before expanding S into an expensive LLVM expression, see if we can use an
+  // already existing value as the expansion for S.  There is potential to make
+  // this significantly smarter, but this simple heuristic already gets some
+  // interesting cases.
+
+  SmallVector<BasicBlock *, 4> Latches;
+  L->getLoopLatches(Latches);
+
+  for (BasicBlock *BB : Latches) {
+    ICmpInst::Predicate Pred;
+    Instruction *LHS, *RHS;
+    BasicBlock *TrueBB, *FalseBB;
+
+    if (!match(BB->getTerminator(),
+               m_Br(m_ICmp(Pred, m_Instruction(LHS), m_Instruction(RHS)),
+                    TrueBB, FalseBB)))
+      continue;
+
+    if (SE->getSCEV(LHS) == S && DT->dominates(LHS, InsertPt)) {
+      IsHighCostExpansion = false;
+      return LHS;
+    }
+
+    if (SE->getSCEV(RHS) == S && DT->dominates(RHS, InsertPt)) {
+      IsHighCostExpansion = false;
+      return RHS;
+    }
+  }
+
+  // We didn't find anything, fall back to using SCEVExpander.
+  assert(Rewriter.isHighCostExpansion(S, L) && "this should not have changed!");
+  IsHighCostExpansion = true;
+  return Rewriter.expandCodeFor(S, ResultTy, InsertPt);
+}
+
 //===----------------------------------------------------------------------===//
 // RewriteLoopExitValues - Optimize IV users outside the loop.
 // As a side effect, reduces the amount of IV processing within the loop.
@@ -628,7 +679,9 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L, SCEVExpander &Rewriter) {
             continue;
         }
 
-        Value *ExitVal = Rewriter.expandCodeFor(ExitValue, PN->getType(), Inst);
+        bool HighCost = false;
+        Value *ExitVal = ExpandSCEVIfNeeded(Rewriter, ExitValue, L, Inst,
+                                            PN->getType(), HighCost);
 
         DEBUG(dbgs() << "INDVARS: RLEV: AfterLoopVal = " << *ExitVal << '\n'
                      << "  LoopVal = " << *Inst << "\n");
@@ -637,7 +690,6 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L, SCEVExpander &Rewriter) {
           DeadInsts.push_back(ExitVal);
           continue;
         }
-        bool HighCost = Rewriter.isHighCostExpansion(ExitValue, L);
 
         // Collect all the candidate PHINodes to be rewritten.
         RewritePhiSet.push_back(
