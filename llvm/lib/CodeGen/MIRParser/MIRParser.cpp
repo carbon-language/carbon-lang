@@ -275,6 +275,9 @@ bool MIRParserImpl::initializeMachineFunction(MachineFunction &MF) {
                    Twine(YamlMBB.ID));
   }
 
+  if (YamlMF.BasicBlocks.empty())
+    return error(Twine("machine function '") + Twine(MF.getName()) +
+                 "' requires at least one machine basic block in its body");
   // Initialize the machine basic blocks after creating them all so that the
   // machine instructions parser can resolve the MBB references.
   unsigned I = 0;

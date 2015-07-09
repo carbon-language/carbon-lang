@@ -4,4 +4,6 @@
 ---
 # CHECK: name: foo
 name: foo
+body:
+  - id: 0
 ...
