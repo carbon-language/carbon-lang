@@ -488,7 +488,7 @@ convertResToCOFF(const std::vector<MemoryBufferRef> &MBs) {
 
   // Execute cvtres.exe.
   Executor E("cvtres.exe");
-  E.add("/machine:x64");
+  E.add("/machine:" + machineTypeToStr(Config->MachineType));
   E.add("/readonly");
   E.add("/nologo");
   E.add("/out:" + Path);
@@ -541,7 +541,7 @@ std::error_code writeImportLibrary() {
 
   Executor E("lib.exe");
   E.add("/nologo");
-  E.add("/machine:x64");
+  E.add("/machine:" + machineTypeToStr(Config->MachineType));
   E.add(Twine("/def:") + Def);
   if (Config->Implib.empty()) {
     SmallString<128> Out = StringRef(Config->OutputFile);
