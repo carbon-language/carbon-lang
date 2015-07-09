@@ -63,7 +63,7 @@ struct TestVFO {
       clang_VirtualFileOverlay_writeToBuffer(VFO, 0, &BufPtr, &BufSize);
       std::string BufStr(BufPtr, BufSize);
       EXPECT_STREQ(Contents, BufStr.c_str());
-      free(BufPtr);
+      clang_free(BufPtr);
     }
     clang_VirtualFileOverlay_dispose(VFO);
   }
@@ -345,7 +345,7 @@ TEST(libclang, ModuleMapDescriptor) {
   clang_ModuleMapDescriptor_writeToBuffer(MMD, 0, &BufPtr, &BufSize);
   std::string BufStr(BufPtr, BufSize);
   EXPECT_STREQ(Contents, BufStr.c_str());
-  free(BufPtr);
+  clang_free(BufPtr);
   clang_ModuleMapDescriptor_dispose(MMD);
 }
 

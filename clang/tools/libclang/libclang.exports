@@ -132,6 +132,7 @@ clang_findIncludesInFileWithBlock
 clang_findReferencesInFile
 clang_findReferencesInFileWithBlock
 clang_formatDiagnostic
+clang_free
 clang_getArgType
 clang_getArrayElementType
 clang_getArraySize
