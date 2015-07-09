@@ -783,7 +783,7 @@ int llvm::isStridedPtr(ScalarEvolution *SE, Value *Ptr, const Loop *Lp,
   // Check the step is constant.
   const SCEV *Step = AR->getStepRecurrence(*SE);
 
-  // Calculate the pointer stride and check if it is consecutive.
+  // Calculate the pointer stride and check if it is constant.
   const SCEVConstant *C = dyn_cast<SCEVConstant>(Step);
   if (!C) {
     DEBUG(dbgs() << "LAA: Bad stride - Not a constant strided " << *Ptr <<
@@ -988,11 +988,11 @@ MemoryDepChecker::isDependent(const MemAccessInfo &A, unsigned AIdx,
   DEBUG(dbgs() << "LAA: Distance for " << *InstMap[AIdx] << " to "
         << *InstMap[BIdx] << ": " << *Dist << "\n");
 
-  // Need consecutive accesses. We don't want to vectorize
+  // Need accesses with constant stride. We don't want to vectorize
   // "A[B[i]] += ..." and similar code or pointer arithmetic that could wrap in
   // the address space.
   if (!StrideAPtr || !StrideBPtr || StrideAPtr != StrideBPtr){
-    DEBUG(dbgs() << "Non-consecutive pointer access\n");
+    DEBUG(dbgs() << "Pointer access with non-constant stride\n");
     return Dependence::Unknown;
   }
 
