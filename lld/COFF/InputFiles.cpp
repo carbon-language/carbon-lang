@@ -24,8 +24,9 @@ using namespace llvm::COFF;
 using namespace llvm::object;
 using namespace llvm::support::endian;
 using llvm::RoundUpToAlignment;
-using llvm::sys::fs::identify_magic;
+using llvm::Triple;
 using llvm::sys::fs::file_magic;
+using llvm::sys::fs::identify_magic;
 
 namespace lld {
 namespace coff {
@@ -242,6 +243,12 @@ Defined *ObjectFile::createDefined(COFFSymbolRef Sym, const void *AuxP,
   return B;
 }
 
+MachineTypes ObjectFile::getMachineType() {
+  if (COFFObj)
+    return static_cast<MachineTypes>(COFFObj->getMachine());
+  return IMAGE_FILE_MACHINE_UNKNOWN;
+}
+
 std::error_code ImportFile::parse() {
   const char *Buf = MB.getBufferStart();
   const char *End = MB.getBufferEnd();
@@ -317,6 +324,21 @@ std::error_code BitcodeFile::parse() {
 
   Directives = M->getLinkerOpts();
   return std::error_code();
+}
+
+MachineTypes BitcodeFile::getMachineType() {
+  if (!M)
+    return IMAGE_FILE_MACHINE_UNKNOWN;
+  switch (Triple(M->getTargetTriple()).getArch()) {
+  case Triple::x86_64:
+    return IMAGE_FILE_MACHINE_AMD64;
+  case Triple::x86:
+    return IMAGE_FILE_MACHINE_I386;
+  case Triple::arm:
+    return IMAGE_FILE_MACHINE_ARMNT;
+  default:
+    return IMAGE_FILE_MACHINE_UNKNOWN;
+  }
 }
 
 } // namespace coff

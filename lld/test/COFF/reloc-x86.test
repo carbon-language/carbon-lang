@@ -21,22 +21,22 @@ sections:
     SectionData:     A100000000A100000000A100000000A100000000A100000000A100000000
     Relocations:
       - VirtualAddress:  1
-        SymbolName:      main
+        SymbolName:      _main
         Type:            IMAGE_REL_I386_ABSOLUTE
       - VirtualAddress:  6
-        SymbolName:      main
+        SymbolName:      _main
         Type:            IMAGE_REL_I386_DIR32
       - VirtualAddress:  11
-        SymbolName:      main
+        SymbolName:      _main
         Type:            IMAGE_REL_I386_DIR32NB
       - VirtualAddress:  16
-        SymbolName:      main
+        SymbolName:      _main
         Type:            IMAGE_REL_I386_REL32
       - VirtualAddress:  23
-        SymbolName:      main
+        SymbolName:      _main
         Type:            IMAGE_REL_I386_SECTION
       - VirtualAddress:  26
-        SymbolName:      main
+        SymbolName:      _main
         Type:            IMAGE_REL_I386_SECREL
 symbols:
   - Name:            .text
@@ -51,7 +51,7 @@ symbols:
       NumberOfLinenumbers: 0
       CheckSum:        0
       Number:          0
-  - Name:            main
+  - Name:            _main
     Value:           0
     SectionNumber:   1
     SimpleType:      IMAGE_SYM_TYPE_NULL

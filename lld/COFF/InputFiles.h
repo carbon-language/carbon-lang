@@ -24,6 +24,8 @@ namespace lld {
 namespace coff {
 
 using llvm::LTOModule;
+using llvm::COFF::IMAGE_FILE_MACHINE_UNKNOWN;
+using llvm::COFF::MachineTypes;
 using llvm::object::Archive;
 using llvm::object::COFFObjectFile;
 using llvm::object::COFFSymbolRef;
@@ -50,6 +52,9 @@ public:
   // Reads a file (constructors don't do that). Returns an error if a
   // file is broken.
   virtual std::error_code parse() = 0;
+
+  // Returns the CPU type this file was compiled to.
+  virtual MachineTypes getMachineType() { return IMAGE_FILE_MACHINE_UNKNOWN; }
 
   // Returns a short, human-friendly filename. If this is a member of
   // an archive file, a returned value includes parent's filename.
@@ -112,6 +117,7 @@ public:
   explicit ObjectFile(MemoryBufferRef M) : InputFile(ObjectKind, M) {}
   static bool classof(const InputFile *F) { return F->kind() == ObjectKind; }
   std::error_code parse() override;
+  MachineTypes getMachineType() override;
   std::vector<Chunk *> &getChunks() { return Chunks; }
   std::vector<SymbolBody *> &getSymbols() override { return SymbolBodies; }
 
@@ -181,6 +187,7 @@ public:
   explicit BitcodeFile(MemoryBufferRef M) : InputFile(BitcodeKind, M) {}
   static bool classof(const InputFile *F) { return F->kind() == BitcodeKind; }
   std::vector<SymbolBody *> &getSymbols() override { return SymbolBodies; }
+  MachineTypes getMachineType() override;
 
   LTOModule *getModule() const { return M.get(); }
   LTOModule *releaseModule() { return M.release(); }

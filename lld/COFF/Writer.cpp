@@ -592,7 +592,8 @@ OutputSection *Writer::createSection(StringRef Name) {
 // Dest is .reloc section. Add contents to that section.
 void Writer::addBaserels(OutputSection *Dest) {
   std::vector<uint32_t> V;
-  Defined *ImageBase = cast<Defined>(Symtab->find("__ImageBase")->Body);
+  StringRef Name = Config->is64() ? "__ImageBase" : "___ImageBase";
+  Defined *ImageBase = cast<Defined>(Symtab->find(Name)->Body);
   for (OutputSection *Sec : OutputSections) {
     if (Sec == Dest)
       continue;

@@ -42,6 +42,7 @@ struct Symbol;
 class SymbolTable {
 public:
   void addFile(std::unique_ptr<InputFile> File);
+  std::vector<std::unique_ptr<InputFile>> &getFiles() { return Files; }
   std::error_code step();
   std::error_code run();
   bool queueEmpty();
