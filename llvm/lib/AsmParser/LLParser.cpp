@@ -2873,8 +2873,8 @@ bool LLParser::ParseValID(ValID &ID, PerFunctionState *PFS) {
         if (ValTy->isVectorTy() != BaseType->isVectorTy())
           return Error(ID.Loc, "getelementptr index type missmatch");
         if (ValTy->isVectorTy()) {
-          unsigned ValNumEl = cast<VectorType>(ValTy)->getNumElements();
-          unsigned PtrNumEl = cast<VectorType>(BaseType)->getNumElements();
+          unsigned ValNumEl = ValTy->getVectorNumElements();
+          unsigned PtrNumEl = BaseType->getVectorNumElements();
           if (ValNumEl != PtrNumEl)
             return Error(
                 ID.Loc,
@@ -5572,6 +5572,11 @@ int LLParser::ParseGetElementPtr(Instruction *&Inst, PerFunctionState &PFS) {
 
   SmallVector<Value*, 16> Indices;
   bool AteExtraComma = false;
+  // GEP returns a vector of pointers if at least one of parameters is a vector.
+  // All vector parameters should have the same vector width.
+  unsigned GEPWidth = BaseType->isVectorTy() ?
+    BaseType->getVectorNumElements() : 0;
+
   while (EatIfPresent(lltok::comma)) {
     if (Lex.getKind() == lltok::MetadataVar) {
       AteExtraComma = true;
@@ -5580,14 +5585,13 @@ int LLParser::ParseGetElementPtr(Instruction *&Inst, PerFunctionState &PFS) {
     if (ParseTypeAndValue(Val, EltLoc, PFS)) return true;
     if (!Val->getType()->getScalarType()->isIntegerTy())
       return Error(EltLoc, "getelementptr index must be an integer");
-    if (Val->getType()->isVectorTy() != Ptr->getType()->isVectorTy())
-      return Error(EltLoc, "getelementptr index type missmatch");
+
     if (Val->getType()->isVectorTy()) {
-      unsigned ValNumEl = cast<VectorType>(Val->getType())->getNumElements();
-      unsigned PtrNumEl = cast<VectorType>(Ptr->getType())->getNumElements();
-      if (ValNumEl != PtrNumEl)
+      unsigned ValNumEl = Val->getType()->getVectorNumElements();
+      if (GEPWidth && GEPWidth != ValNumEl)
         return Error(EltLoc,
           "getelementptr vector index has a wrong number of elements");
+      GEPWidth = ValNumEl;
     }
     Indices.push_back(Val);
   }

@@ -2538,10 +2538,6 @@ void Verifier::visitGetElementPtrInst(GetElementPtrInst &GEP) {
   Assert(isa<PointerType>(TargetTy),
          "GEP base pointer is not a vector or a vector of pointers", &GEP);
   Assert(GEP.getSourceElementType()->isSized(), "GEP into unsized type!", &GEP);
-  Assert(GEP.getPointerOperandType()->isVectorTy() ==
-             GEP.getType()->isVectorTy(),
-         "Vector GEP must return a vector value", &GEP);
-
   SmallVector<Value*, 16> Idxs(GEP.idx_begin(), GEP.idx_end());
   Type *ElTy =
       GetElementPtrInst::getIndexedType(GEP.getSourceElementType(), Idxs);
@@ -2551,17 +2547,20 @@ void Verifier::visitGetElementPtrInst(GetElementPtrInst &GEP) {
              GEP.getResultElementType() == ElTy,
          "GEP is not of right type for indices!", &GEP, ElTy);
 
-  if (GEP.getPointerOperandType()->isVectorTy()) {
+  if (GEP.getType()->isVectorTy()) {
     // Additional checks for vector GEPs.
-    unsigned GepWidth = GEP.getPointerOperandType()->getVectorNumElements();
-    Assert(GepWidth == GEP.getType()->getVectorNumElements(),
-           "Vector GEP result width doesn't match operand's", &GEP);
+    unsigned GEPWidth = GEP.getType()->getVectorNumElements();
+    if (GEP.getPointerOperandType()->isVectorTy())
+      Assert(GEPWidth == GEP.getPointerOperandType()->getVectorNumElements(),
+             "Vector GEP result width doesn't match operand's", &GEP);
     for (unsigned i = 0, e = Idxs.size(); i != e; ++i) {
       Type *IndexTy = Idxs[i]->getType();
-      Assert(IndexTy->isVectorTy(), "Vector GEP must have vector indices!",
-             &GEP);
-      unsigned IndexWidth = IndexTy->getVectorNumElements();
-      Assert(IndexWidth == GepWidth, "Invalid GEP index vector width", &GEP);
+      if (IndexTy->isVectorTy()) {
+        unsigned IndexWidth = IndexTy->getVectorNumElements();
+        Assert(IndexWidth == GEPWidth, "Invalid GEP index vector width", &GEP);
+      }
+      Assert(IndexTy->getScalarType()->isIntegerTy(),
+             "All GEP indices should be of integer type");
     }
   }
   visitInstruction(GEP);

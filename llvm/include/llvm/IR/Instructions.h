@@ -990,10 +990,14 @@ public:
                                    Ptr->getType()->getPointerAddressSpace());
     // Vector GEP
     if (Ptr->getType()->isVectorTy()) {
-      unsigned NumElem = cast<VectorType>(Ptr->getType())->getNumElements();
+      unsigned NumElem = Ptr->getType()->getVectorNumElements();
       return VectorType::get(PtrTy, NumElem);
     }
-
+    for (Value *Index : IdxList)
+      if (Index->getType()->isVectorTy()) {
+        unsigned NumElem = Index->getType()->getVectorNumElements();
+        return VectorType::get(PtrTy, NumElem);
+      }
     // Scalar GEP
     return PtrTy;
   }

@@ -6718,7 +6718,8 @@ Overview:
 
 The '``getelementptr``' instruction is used to get the address of a
 subelement of an :ref:`aggregate <t_aggregate>` data structure. It performs
-address calculation only and does not access memory.
+address calculation only and does not access memory. The instruction can also
+be used to calculate a vector of such addresses.
 
 Arguments:
 """"""""""
@@ -6844,12 +6845,61 @@ Example:
         ; yields i32*:iptr
         %iptr = getelementptr [10 x i32], [10 x i32]* @arr, i16 0, i16 0
 
-In cases where the pointer argument is a vector of pointers, each index
-must be a vector with the same number of elements. For example:
+Vector of pointers:
+"""""""""""""""""""
+
+The ``getelementptr`` returns a vector of pointers, instead of a single address,
+when one or more of its arguments is a vector. In such cases, all vector
+arguments should have the same number of elements, and every scalar argument
+will be effectively broadcast into a vector during address calculation.
 
 .. code-block:: llvm
 
-     %A = getelementptr i8, <4 x i8*> %ptrs, <4 x i64> %offsets,
+     ; All arguments are vectors:
+     ;   A[i] = ptrs[i] + offsets[i]*sizeof(i8)
+     %A = getelementptr i8, <4 x i8*> %ptrs, <4 x i64> %offsets
+     
+     ; Add the same scalar offset to each pointer of a vector:
+     ;   A[i] = ptrs[i] + offset*sizeof(i8)
+     %A = getelementptr i8, <4 x i8*> %ptrs, i64 %offset
+     
+     ; Add distinct offsets to the same pointer:
+     ;   A[i] = ptr + offsets[i]*sizeof(i8)
+     %A = getelementptr i8, i8* %ptr, <4 x i64> %offsets
+     
+     ; In all cases described above the type of the result is <4 x i8*>
+
+The two following instructions are equivalent:
+
+.. code-block:: llvm
+
+     getelementptr  %struct.ST, <4 x %struct.ST*> %s, <4 x i64> %ind1,
+       <4 x i32> <i32 2, i32 2, i32 2, i32 2>,
+       <4 x i32> <i32 1, i32 1, i32 1, i32 1>,
+       <4 x i32> %ind4,
+       <4 x i64> <i64 13, i64 13, i64 13, i64 13>
+     
+     getelementptr  %struct.ST, <4 x %struct.ST*> %s, <4 x i64> %ind1,
+       i32 2, i32 1, <4 x i32> %ind4, i64 13
+
+Let's look at the C code, where the vector version of ``getelementptr``
+makes sense:
+
+.. code-block:: c
+
+    // Let's assume that we vectorize the following loop:
+    double *A, B; int *C;
+    for (int i = 0; i < size; ++i) {
+      A[i] = B[C[i]];
+    }
+
+.. code-block:: llvm
+
+    ; get pointers for 8 elements from array B
+    %ptrs = getelementptr double, double* %B, <8 x i32> %C
+    ; load 8 elements from array B into A
+    %A = call <8 x double> @llvm.masked.gather.v8f64(<8 x double*> %ptrs,
+         i32 8, <8 x i1> %mask, <8 x double> %passthru)
 
 Conversion Operations
 ---------------------

@@ -92,3 +92,25 @@ entry:
 ;CHECK: ret
 }
 
+;CHECK-LABEL: AGEP7:
+define <4 x i8*> @AGEP7(<4 x i8*> %param, i32 %off) nounwind {
+entry:
+;CHECK: vbroadcastss
+;CHECK: vpadd
+  %A = getelementptr i8, <4 x i8*> %param, i32 %off
+  ret <4 x i8*> %A
+;CHECK: ret
+}
+
+;CHECK-LABEL: AGEP8:
+define <4 x i16*> @AGEP8(i16* %param, <4 x i32> %off) nounwind {
+entry:
+; Multiply offset by two (add it to itself).
+;CHECK: vpadd
+; add the base to the offset
+;CHECK: vbroadcastss
+;CHECK-NEXT: vpadd
+  %A = getelementptr i16, i16* %param, <4 x i32> %off
+  ret <4 x i16*> %A
+;CHECK: ret
+}

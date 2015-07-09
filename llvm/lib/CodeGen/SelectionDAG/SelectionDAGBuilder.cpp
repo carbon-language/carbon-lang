@@ -2787,6 +2787,16 @@ void SelectionDAGBuilder::visitGetElementPtr(const User &I) {
   SDValue N = getValue(Op0);
   SDLoc dl = getCurSDLoc();
 
+  // Normalize Vector GEP - all scalar operands should be converted to the
+  // splat vector.
+  unsigned VectorWidth = I.getType()->isVectorTy() ?
+    cast<VectorType>(I.getType())->getVectorNumElements() : 0;
+
+  if (VectorWidth && !N.getValueType().isVector()) {
+    MVT VT = MVT::getVectorVT(N.getValueType().getSimpleVT(), VectorWidth);
+    SmallVector<SDValue, 16> Ops(VectorWidth, N);
+    N = DAG.getNode(ISD::BUILD_VECTOR, dl, VT, Ops);
+  }
   for (GetElementPtrInst::const_op_iterator OI = I.op_begin()+1, E = I.op_end();
        OI != E; ++OI) {
     const Value *Idx = *OI;
@@ -2807,12 +2817,20 @@ void SelectionDAGBuilder::visitGetElementPtr(const User &I) {
       unsigned PtrSize = PtrTy.getSizeInBits();
       APInt ElementSize(PtrSize, DL->getTypeAllocSize(Ty));
 
-      // If this is a constant subscript, handle it quickly.
-      if (const auto *CI = dyn_cast<ConstantInt>(Idx)) {
+      // If this is a scalar constant or a splat vector of constants,
+      // handle it quickly.
+      const auto *CI = dyn_cast<ConstantInt>(Idx);
+      if (!CI && isa<ConstantDataVector>(Idx) &&
+          cast<ConstantDataVector>(Idx)->getSplatValue())
+        CI = cast<ConstantInt>(cast<ConstantDataVector>(Idx)->getSplatValue());
+
+      if (CI) {
         if (CI->isZero())
           continue;
         APInt Offs = ElementSize * CI->getValue().sextOrTrunc(PtrSize);
-        SDValue OffsVal = DAG.getConstant(Offs, dl, PtrTy);
+        SDValue OffsVal = VectorWidth ?
+          DAG.getConstant(Offs, dl, MVT::getVectorVT(PtrTy, VectorWidth)) :
+          DAG.getConstant(Offs, dl, PtrTy);
         N = DAG.getNode(ISD::ADD, dl, N.getValueType(), N, OffsVal);
         continue;
       }
@@ -2820,6 +2838,11 @@ void SelectionDAGBuilder::visitGetElementPtr(const User &I) {
       // N = N + Idx * ElementSize;
       SDValue IdxN = getValue(Idx);
 
+      if (!IdxN.getValueType().isVector() && VectorWidth) {
+        MVT VT = MVT::getVectorVT(IdxN.getValueType().getSimpleVT(), VectorWidth);
+        SmallVector<SDValue, 16> Ops(VectorWidth, IdxN);
+        IdxN = DAG.getNode(ISD::BUILD_VECTOR, dl, VT, Ops);      
+      }
       // If the index is smaller or larger than intptr_t, truncate or extend
       // it.
       IdxN = DAG.getSExtOrTrunc(IdxN, dl, N.getValueType());
