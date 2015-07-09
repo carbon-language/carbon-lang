@@ -51,4 +51,46 @@ define i32 @imp_null_check_load_no_md(i32* %x) {
   ret i32 %t
 }
 
+define i32 @imp_null_check_no_hoist_over_acquire_load(i32* %x, i32* %y) {
+; We cannot hoist %t1 over %t0 since %t0 is an acquire load
+ entry:
+  %c = icmp eq i32* %x, null
+  br i1 %c, label %is_null, label %not_null, !make.implicit !0
+
+ is_null:
+  ret i32 42
+
+ not_null:
+  %t0 = load atomic i32, i32* %y acquire, align 4
+  %t1 = load i32, i32* %x
+  %p = add i32 %t0, %t1
+  ret i32 %p
+}
+
+define i32 @imp_null_check_add_result(i32* %x, i32* %y) {
+; This will codegen to:
+;
+;   movl    (%rsi), %eax
+;   addl    (%rdi), %eax
+;
+; The load instruction we wish to hoist is the addl, but there is a
+; write-after-write hazard preventing that from happening.  We could
+; get fancy here and exploit the commutativity of addition, but right
+; now -implicit-null-checks isn't that smart.
+;
+
+ entry:
+  %c = icmp eq i32* %x, null
+  br i1 %c, label %is_null, label %not_null, !make.implicit !0
+
+ is_null:
+  ret i32 42
+
+ not_null:
+  %t0 = load i32, i32* %y
+  %t1 = load i32, i32* %x
+  %p = add i32 %t0, %t1
+  ret i32 %p
+}
+
 !0 = !{}
