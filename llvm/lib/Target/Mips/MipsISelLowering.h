@@ -266,7 +266,8 @@ namespace llvm {
 
     void HandleByVal(CCState *, unsigned &, unsigned) const override;
 
-    unsigned getRegisterByName(const char* RegName, EVT VT) const override;
+    unsigned getRegisterByName(const char* RegName, EVT VT,
+                               SelectionDAG &DAG) const override;
 
   protected:
     SDValue getGlobalReg(SelectionDAG &DAG, EVT Ty) const;

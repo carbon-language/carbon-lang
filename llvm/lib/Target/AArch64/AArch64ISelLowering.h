@@ -473,7 +473,8 @@ private:
   bool combineRepeatedFPDivisors(unsigned NumUsers) const override;
 
   ConstraintType getConstraintType(StringRef Constraint) const override;
-  unsigned getRegisterByName(const char* RegName, EVT VT) const override;
+  unsigned getRegisterByName(const char* RegName, EVT VT,
+                             SelectionDAG &DAG) const override;
 
   /// Examine constraint string and operand type and determine a weight value.
   /// The operand object must already have been set up with the operand type.

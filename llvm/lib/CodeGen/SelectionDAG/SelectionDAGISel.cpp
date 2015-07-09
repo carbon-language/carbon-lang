@@ -1932,7 +1932,8 @@ SDNode
   MDNodeSDNode *MD = dyn_cast<MDNodeSDNode>(Op->getOperand(1));
   const MDString *RegStr = dyn_cast<MDString>(MD->getMD()->getOperand(0));
   unsigned Reg =
-      TLI->getRegisterByName(RegStr->getString().data(), Op->getValueType(0));
+      TLI->getRegisterByName(RegStr->getString().data(), Op->getValueType(0),
+                             *CurDAG);
   SDValue New = CurDAG->getCopyFromReg(
                         Op->getOperand(0), dl, Reg, Op->getValueType(0));
   New->setNodeId(-1);
@@ -1945,7 +1946,8 @@ SDNode
   MDNodeSDNode *MD = dyn_cast<MDNodeSDNode>(Op->getOperand(1));
   const MDString *RegStr = dyn_cast<MDString>(MD->getMD()->getOperand(0));
   unsigned Reg = TLI->getRegisterByName(RegStr->getString().data(),
-                                        Op->getOperand(2).getValueType());
+                                        Op->getOperand(2).getValueType(),
+                                        *CurDAG);
   SDValue New = CurDAG->getCopyToReg(
                         Op->getOperand(0), dl, Reg, Op->getOperand(2));
   New->setNodeId(-1);

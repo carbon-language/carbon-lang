@@ -11031,8 +11031,8 @@ SDValue PPCTargetLowering::LowerFRAMEADDR(SDValue Op,
 
 // FIXME? Maybe this could be a TableGen attribute on some registers and
 // this table could be generated automatically from RegInfo.
-unsigned PPCTargetLowering::getRegisterByName(const char* RegName,
-                                              EVT VT) const {
+unsigned PPCTargetLowering::getRegisterByName(const char* RegName, EVT VT,
+                                              SelectionDAG &DAG) const {
   bool isPPC64 = Subtarget.isPPC64();
   bool isDarwinABI = Subtarget.isDarwinABI();
 

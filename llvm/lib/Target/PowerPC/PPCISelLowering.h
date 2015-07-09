@@ -490,7 +490,8 @@ namespace llvm {
     SDValue BuildSDIVPow2(SDNode *N, const APInt &Divisor, SelectionDAG &DAG,
                           std::vector<SDNode *> *Created) const override;
 
-    unsigned getRegisterByName(const char* RegName, EVT VT) const override;
+    unsigned getRegisterByName(const char* RegName, EVT VT,
+                               SelectionDAG &DAG) const override;
 
     void computeKnownBitsForTargetNode(const SDValue Op,
                                        APInt &KnownZero,

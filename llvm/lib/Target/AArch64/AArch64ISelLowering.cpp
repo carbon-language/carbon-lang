@@ -4065,8 +4065,8 @@ SDValue AArch64TargetLowering::LowerFRAMEADDR(SDValue Op,
 
 // FIXME? Maybe this could be a TableGen attribute on some registers and
 // this table could be generated automatically from RegInfo.
-unsigned AArch64TargetLowering::getRegisterByName(const char* RegName,
-                                                  EVT VT) const {
+unsigned AArch64TargetLowering::getRegisterByName(const char* RegName, EVT VT,
+                                                  SelectionDAG &DAG) const {
   unsigned Reg = StringSwitch<unsigned>(RegName)
                        .Case("sp", AArch64::SP)
                        .Default(0);

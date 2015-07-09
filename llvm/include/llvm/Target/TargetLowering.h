@@ -2487,7 +2487,8 @@ public:
   /// Return the register ID of the name passed in. Used by named register
   /// global variables extension. There is no target-independent behaviour
   /// so the default action is to bail.
-  virtual unsigned getRegisterByName(const char* RegName, EVT VT) const {
+  virtual unsigned getRegisterByName(const char* RegName, EVT VT,
+                                     SelectionDAG &DAG) const {
     report_fatal_error("Named registers not implemented for this target");
   }
 
