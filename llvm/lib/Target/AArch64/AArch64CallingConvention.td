@@ -40,6 +40,11 @@ def CC_AArch64_AAPCS : CallingConv<[
   // slot is 64-bit.
   CCIfByVal<CCPassByVal<8, 8>>,
 
+  // The 'nest' parameter, if any, is passed in X18.
+  // Darwin uses X18 as the platform register and hence 'nest' isn't currently
+  // supported there.
+  CCIfNest<CCAssignToReg<[X18]>>,
+
   CCIfConsecutiveRegs<CCCustom<"CC_AArch64_Custom_Block">>,
 
   // Handle i1, i8, i16, i32, i64, f32, f64 and v2f64 by passing in registers,
