@@ -65,6 +65,10 @@
 
     ADD      r3, r3, r1          // T2
 // CHECK: add  r3, r1               @ encoding: [0x0b,0x44]
+    ADD      r4, r4, pc          // T2
+// CHECK: add  r4, pc               @ encoding: [0x7c,0x44]
+    ADD      pc, pc, r2          // T2
+// CHECK: add  pc, r2               @ encoding: [0x97,0x44]
 
 // ADD (SP plus immediate) A8.8.9
     ADD      sp, sp, #20         // T2

@@ -5467,14 +5467,14 @@ void ARMAsmParser::getMnemonicAcceptInfo(StringRef Mnemonic, StringRef FullInst,
     CanAcceptPredicationCode = true;
 }
 
-// \brief Some Thumb1 instructions have two operand forms that are not
+// \brief Some Thumb instructions have two operand forms that are not
 // available as three operand, convert to two operand form if possible.
 //
 // FIXME: We would really like to be able to tablegen'erate this.
 void ARMAsmParser::tryConvertingToTwoOperandForm(StringRef Mnemonic,
                                                  bool CarrySetting,
                                                  OperandVector &Operands) {
-  if (Operands.size() != 6 || !isThumbOne())
+  if (Operands.size() != 6)
     return;
 
   ARMOperand &Op3 = static_cast<ARMOperand &>(*Operands[3]);
@@ -5482,7 +5482,17 @@ void ARMAsmParser::tryConvertingToTwoOperandForm(StringRef Mnemonic,
   if (!Op3.isReg() || !Op4.isReg())
     return;
 
+  // For most Thumb2 cases we just generate the 3 operand form and reduce
+  // it in processInstruction(), but for ADD involving PC the the 3 operand
+  // form won't accept PC so we do the transformation here.
   ARMOperand &Op5 = static_cast<ARMOperand &>(*Operands[5]);
+  if (isThumbTwo()) {
+    if (Mnemonic != "add" ||
+        !(Op3.getReg() == ARM::PC || Op4.getReg() == ARM::PC ||
+          (Op5.isReg() && Op5.getReg() == ARM::PC)))
+      return;
+  } else if (!isThumbOne())
+    return;
 
   if (!(Mnemonic == "add" || Mnemonic == "sub" || Mnemonic == "and" ||
         Mnemonic == "eor" || Mnemonic == "lsl" || Mnemonic == "lsr" ||
