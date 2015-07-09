@@ -373,7 +373,8 @@ public:
 
   AccessAnalysis(const DataLayout &Dl, AliasAnalysis *AA, LoopInfo *LI,
                  MemoryDepChecker::DepCandidates &DA)
-      : DL(Dl), AST(*AA), LI(LI), DepCands(DA), IsRTCheckNeeded(false) {}
+      : DL(Dl), AST(*AA), LI(LI), DepCands(DA),
+        IsRTCheckAnalysisNeeded(false) {}
 
   /// \brief Register a load  and whether it is only read from.
   void addLoad(MemoryLocation &Loc, bool IsReadOnly) {
@@ -405,8 +406,11 @@ public:
     processMemAccesses();
   }
 
-  bool isRTCheckNeeded() { return IsRTCheckNeeded; }
-
+  /// \brief Initial processing of memory accesses determined that we need to
+  /// perform dependency checking.
+  ///
+  /// Note that this can later be cleared if we retry memcheck analysis without
+  /// dependency checking (i.e. ShouldRetryWithRuntimeCheck).
   bool isDependencyCheckNeeded() { return !CheckDeps.empty(); }
 
   /// We decided that no dependence analysis would be used.  Reset the state.
@@ -446,7 +450,14 @@ private:
   /// dependence check.
   MemoryDepChecker::DepCandidates &DepCands;
 
-  bool IsRTCheckNeeded;
+  /// \brief Initial processing of memory accesses determined that we may need
+  /// to add memchecks.  Perform the analysis to determine the necessary checks.
+  ///
+  /// Note that, this is different from isDependencyCheckNeeded.  When we retry
+  /// memcheck analysis without dependency checking
+  /// (i.e. ShouldRetryWithRuntimeCheck), isDependencyCheckNeeded is cleared
+  /// while this remains set if we have potentially dependent accesses.
+  bool IsRTCheckAnalysisNeeded;
 };
 
 } // end anonymous namespace
@@ -471,7 +482,7 @@ bool AccessAnalysis::canCheckPtrAtRT(
   bool CanDoRT = true;
 
   NeedRTCheck = false;
-  if (!IsRTCheckNeeded) return true;
+  if (!IsRTCheckAnalysisNeeded) return true;
 
   bool IsDepCheckNeeded = isDependencyCheckNeeded();
 
@@ -653,7 +664,7 @@ void AccessAnalysis::processMemAccesses() {
           // catch "a[i] = a[i] + " without having to do a dependence check).
           if ((IsWrite || IsReadOnlyPtr) && SetHasWrite) {
             CheckDeps.insert(Access);
-            IsRTCheckNeeded = true;
+            IsRTCheckAnalysisNeeded = true;
           }
 
           if (IsWrite)
