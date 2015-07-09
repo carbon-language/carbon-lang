@@ -27,5 +27,22 @@ define float @div2_arcp(float %x, float %y, float %z) #0 {
   ret float %div2
 }
 
+; If the reciprocal is already calculated, we should not
+; generate an extra multiplication by 1.0. 
+
+define double @div3_arcp(double %x, double %y, double %z) #0 {
+; CHECK-LABEL: div3_arcp:
+; CHECK:       # BB#0:
+; CHECK-NEXT:    movsd{{.*#+}} xmm2 = mem[0],zero
+; CHECK-NEXT:    divsd %xmm1, %xmm2
+; CHECK-NEXT:    mulsd %xmm2, %xmm0
+; CHECK-NEXT:    addsd %xmm2, %xmm0
+; CHECK-NEXT:    retq
+  %div1 = fdiv fast double 1.0, %y
+  %div2 = fdiv fast double %x, %y
+  %ret = fadd fast double %div2, %div1
+  ret double %ret
+}
+
 ; FIXME: If the backend understands 'arcp', then this attribute is unnecessary.
 attributes #0 = { "unsafe-fp-math"="true" }

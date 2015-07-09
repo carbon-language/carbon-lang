@@ -8374,6 +8374,9 @@ SDValue DAGCombiner::visitFDIV(SDNode *N) {
 
     if (TLI.combineRepeatedFPDivisors(Users.size())) {
       SDValue FPOne = DAG.getConstantFP(1.0, DL, VT);
+      // FIXME: This optimization requires some level of fast-math, so the
+      // created reciprocal node should at least have the 'allowReciprocal'
+      // fast-math-flag set.
       SDValue Reciprocal = DAG.getNode(ISD::FDIV, DL, VT, FPOne, N1);
 
       // Dividend / Divisor -> Dividend * Reciprocal
@@ -8382,10 +8385,14 @@ SDValue DAGCombiner::visitFDIV(SDNode *N) {
         if (Dividend != FPOne) {
           SDValue NewNode = DAG.getNode(ISD::FMUL, SDLoc(U), VT, Dividend,
                                         Reciprocal);
-          DAG.ReplaceAllUsesWith(U, NewNode.getNode());
+          CombineTo(U, NewNode);
+        } else if (U != Reciprocal.getNode()) {
+          // In the absence of fast-math-flags, this user node is always the
+          // same node as Reciprocal, but with FMF they may be different nodes.
+          CombineTo(U, Reciprocal);
         }
       }
-      return SDValue();
+      return SDValue(N, 0);  // N was replaced.
     }
   }
 
