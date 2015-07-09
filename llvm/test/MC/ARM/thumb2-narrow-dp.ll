@@ -6,10 +6,76 @@
 // Assemblers should chose the narrow thumb encoding when possible, i.e.
 //   - Rd == Rn 
 //   - Rd, Rn and Rm are < r8
-// In addition, some operations are commutative, allowing the transormation 
+// In addition, some operations are commutative, allowing the transformation
 // when:
 //   - Rd == Rn || Rd == Rm
 //   - Rd, Rn and Rm are < r8
+
+// ADD immediate (not SP) A8.8.4
+    ADDS     r0, r0, #5          // T1
+// CHECK: adds  r0, r0, #5          @ encoding: [0x40,0x1d]
+    ADDS     r1, r1, #8          // T2
+// CHECK: adds  r1, #8              @ encoding: [0x08,0x31]
+    ADDS.W   r1, r1, #8          // .w => T3
+// CHECK: adds.w r1, r1, #8         @ encoding: [0x11,0xf1,0x08,0x01]
+    ADDS     r8, r8, #8          // T3
+// CHECK: adds.w r8, r8, #8         @ encoding: [0x18,0xf1,0x08,0x08]
+
+    IT EQ
+// CHECK: it eq                     @ encoding: [0x08,0xbf]
+    ADDEQ    r0, r0, #5          // T1
+// CHECK: addeq r0, r0, #5          @ encoding: [0x40,0x1d]
+    IT EQ
+// CHECK: it eq                     @ encoding: [0x08,0xbf]
+    ADDEQ    r1, r1, #8          // T2
+// CHECK: addeq r1, #8              @ encoding: [0x08,0x31]
+
+    IT EQ
+// CHECK: it eq                     @ encoding: [0x08,0xbf]
+    ADDSEQ   r0, r0, #5          // T3
+// CHECK: addseq.w r0, r0, #5       @ encoding: [0x10,0xf1,0x05,0x00]
+    IT EQ
+// CHECK: it eq                     @ encoding: [0x08,0xbf]
+    ADDSEQ   r1, r1, #8          // T3
+// CHECK: addseq.w r1, r1, #8       @ encoding: [0x11,0xf1,0x08,0x01]
+
+// ADD register (not SP) A8.8.6 (commutative)
+    ADDS     r0, r2, r1          // ADDS has T1 narrow 3 operand
+// CHECK: adds  r0, r2, r1          @ encoding: [0x50,0x18]
+    ADDS     r2, r2, r1          // ADDS has T1 narrow 3 operand
+// CHECK: adds  r2, r2, r1          @ encoding: [0x52,0x18]
+
+    IT EQ
+// CHECK: it eq                     @ encoding: [0x08,0xbf]
+    ADDEQ    r0, r2, r1          // (In IT) ADD has T1 narrow 3 operand
+// CHECK: addeq r0, r2, r1          @ encoding: [0x50,0x18]
+    IT EQ
+// CHECK: it eq                     @ encoding: [0x08,0xbf]
+    ADDEQ    r2, r2, r1          // (In IT) ADD has T1 narrow 3 operand
+// CHECK: addeq r2, r2, r1          @ encoding: [0x52,0x18]
+
+    IT EQ
+// CHECK: it eq                     @ encoding: [0x08,0xbf]
+    ADDSEQ   r0, r2, r1          // T3
+// CHECK: addseq.w r0, r2, r1       @ encoding: [0x12,0xeb,0x01,0x00]
+    IT EQ
+// CHECK: it eq                     @ encoding: [0x08,0xbf]
+    ADDSEQ   r2, r2, r1          // T3
+// CHECK: addseq.w r2, r2, r1       @ encoding: [0x12,0xeb,0x01,0x02]
+
+    ADD      r3, r3, r1          // T2
+// CHECK: add  r3, r1               @ encoding: [0x0b,0x44]
+
+// ADD (SP plus immediate) A8.8.9
+    ADD      sp, sp, #20         // T2
+// FIXME: ARMARM says 'add   sp, sp, #20'
+// CHECK: add   sp, #20         @ encoding: [0x05,0xb0]
+
+// ADD (SP plus register) A8.8.10 (commutative)
+    ADD      r9, sp, r9          // T1
+// CHECK: add   r9, sp, r9          @ encoding: [0xe9,0x44]
+    ADD      sp, sp, r10         // T2
+// CHECK: add   sp, r10             @ encoding: [0xd5,0x44]
 
 // AND (commutative)
     ANDS     r0, r2, r1          // Must be wide - 3 distinct registers
