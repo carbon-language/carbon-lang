@@ -2649,6 +2649,18 @@ SDValue AMDGPUTargetLowering::CreateLiveInRegister(SelectionDAG &DAG,
   return DAG.getRegister(VirtualRegister, VT);
 }
 
+uint32_t AMDGPUTargetLowering::getImplicitParameterOffset(
+    const AMDGPUMachineFunction *MFI, const ImplicitParameter Param) const {
+  uint64_t ArgOffset = MFI->ABIArgOffset;
+  switch (Param) {
+  case GRID_DIM:
+    return ArgOffset;
+  case GRID_OFFSET:
+    return ArgOffset + 4;
+  }
+  llvm_unreachable("unexpected implicit parameter type");
+}
+
 #define NODE_NAME_CASE(node) case AMDGPUISD::node: return #node;
 
 const char* AMDGPUTargetLowering::getTargetNodeName(unsigned Opcode) const {

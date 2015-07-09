@@ -928,6 +928,7 @@ SDValue SITargetLowering::copyToM0(SelectionDAG &DAG, SDValue Chain, SDLoc DL,
 SDValue SITargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
                                                   SelectionDAG &DAG) const {
   MachineFunction &MF = DAG.getMachineFunction();
+  auto MFI = MF.getInfo<SIMachineFunctionInfo>();
   const SIRegisterInfo *TRI =
       static_cast<const SIRegisterInfo *>(Subtarget->getRegisterInfo());
 
@@ -966,8 +967,7 @@ SDValue SITargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
 
   case Intrinsic::AMDGPU_read_workdim:
     return LowerParameter(DAG, VT, VT, DL, DAG.getEntryNode(),
-                          MF.getInfo<SIMachineFunctionInfo>()->ABIArgOffset,
-                          false);
+                          getImplicitParameterOffset(MFI, GRID_DIM), false);
 
   case Intrinsic::r600_read_tgid_x:
     return CreateLiveInRegister(DAG, &AMDGPU::SReg_32RegClass,

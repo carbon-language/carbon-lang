@@ -207,6 +207,16 @@ public:
   virtual SDValue CreateLiveInRegister(SelectionDAG &DAG,
                                        const TargetRegisterClass *RC,
                                        unsigned Reg, EVT VT) const;
+
+  enum ImplicitParameter {
+    GRID_DIM,
+    GRID_OFFSET
+  };
+
+  /// \brief Helper function that returns the byte offset of the given
+  /// type of implicit parameter.
+  unsigned getImplicitParameterOffset(const AMDGPUMachineFunction *MFI,
+                                      const ImplicitParameter Param) const;
 };
 
 namespace AMDGPUISD {
