@@ -1460,14 +1460,8 @@ SDValue R600TargetLowering::LowerLOAD(SDValue Op, SelectionDAG &DAG) const
   SDValue Ptr = Op.getOperand(1);
   SDValue LoweredLoad;
 
-  SDValue Ret = AMDGPUTargetLowering::LowerLOAD(Op, DAG);
-  if (Ret.getNode()) {
-    SDValue Ops[2] = {
-      Ret,
-      Chain
-    };
-    return DAG.getMergeValues(Ops, DL);
-  }
+  if (SDValue Ret = AMDGPUTargetLowering::LowerLOAD(Op, DAG))
+    return Ret;
 
   // Lower loads constant address space global variable loads
   if (LoadNode->getAddressSpace() == AMDGPUAS::CONSTANT_ADDRESS &&
