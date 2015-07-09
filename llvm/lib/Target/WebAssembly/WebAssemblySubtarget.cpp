@@ -42,7 +42,7 @@ WebAssemblySubtarget::WebAssemblySubtarget(const Triple &TT,
                                            const TargetMachine &TM)
     : WebAssemblyGenSubtargetInfo(TT, CPU, FS), HasSIMD128(false),
       CPUString(CPU), TargetTriple(TT), FrameLowering(),
-      InstrInfo(initializeSubtargetDependencies(FS)),
-      TSInfo(TM.getDataLayout()), TLInfo(TM, *this) {}
+      InstrInfo(initializeSubtargetDependencies(FS)), TSInfo(),
+      TLInfo(TM, *this) {}
 
 bool WebAssemblySubtarget::enableMachineScheduler() const { return true; }

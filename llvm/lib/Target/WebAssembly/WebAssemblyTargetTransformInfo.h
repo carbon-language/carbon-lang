@@ -31,7 +31,6 @@ class WebAssemblyTTIImpl final : public BasicTTIImplBase<WebAssemblyTTIImpl> {
   typedef TargetTransformInfo TTI;
   friend BaseT;
 
-  const WebAssemblyTargetMachine *TM;
   const WebAssemblySubtarget *ST;
   const WebAssemblyTargetLowering *TLI;
 
@@ -40,30 +39,15 @@ class WebAssemblyTTIImpl final : public BasicTTIImplBase<WebAssemblyTTIImpl> {
 
 public:
   WebAssemblyTTIImpl(const WebAssemblyTargetMachine *TM, Function &F)
-      : BaseT(TM), TM(TM), ST(TM->getSubtargetImpl(F)),
+      : BaseT(TM, F.getParent()->getDataLayout()), ST(TM->getSubtargetImpl(F)),
         TLI(ST->getTargetLowering()) {}
 
   // Provide value semantics. MSVC requires that we spell all of these out.
   WebAssemblyTTIImpl(const WebAssemblyTTIImpl &Arg)
-      : BaseT(static_cast<const BaseT &>(Arg)), TM(Arg.TM), ST(Arg.ST),
-        TLI(Arg.TLI) {}
+      : BaseT(static_cast<const BaseT &>(Arg)), ST(Arg.ST), TLI(Arg.TLI) {}
   WebAssemblyTTIImpl(WebAssemblyTTIImpl &&Arg)
-      : BaseT(std::move(static_cast<BaseT &>(Arg))), TM(std::move(Arg.TM)),
-        ST(std::move(Arg.ST)), TLI(std::move(Arg.TLI)) {}
-  WebAssemblyTTIImpl &operator=(const WebAssemblyTTIImpl &RHS) {
-    BaseT::operator=(static_cast<const BaseT &>(RHS));
-    TM = RHS.TM;
-    ST = RHS.ST;
-    TLI = RHS.TLI;
-    return *this;
-  }
-  WebAssemblyTTIImpl &operator=(WebAssemblyTTIImpl &&RHS) {
-    BaseT::operator=(std::move(static_cast<BaseT &>(RHS)));
-    TM = std::move(RHS.TM);
-    ST = std::move(RHS.ST);
-    TLI = std::move(RHS.TLI);
-    return *this;
-  }
+      : BaseT(std::move(static_cast<BaseT &>(Arg))), ST(std::move(Arg.ST)),
+        TLI(std::move(Arg.TLI)) {}
 
   /// \name Scalar TTI Implementations
   /// @{

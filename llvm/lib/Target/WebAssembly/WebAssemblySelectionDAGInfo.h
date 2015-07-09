@@ -22,7 +22,6 @@ namespace llvm {
 
 class WebAssemblySelectionDAGInfo final : public TargetSelectionDAGInfo {
 public:
-  explicit WebAssemblySelectionDAGInfo(const DataLayout *DL);
   ~WebAssemblySelectionDAGInfo() override;
 };
 

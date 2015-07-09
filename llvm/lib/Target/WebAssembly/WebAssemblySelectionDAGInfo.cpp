@@ -17,7 +17,4 @@ using namespace llvm;
 
 #define DEBUG_TYPE "wasm-selectiondag-info"
 
-WebAssemblySelectionDAGInfo::WebAssemblySelectionDAGInfo(const DataLayout *DL)
-    : TargetSelectionDAGInfo(DL) {}
-
 WebAssemblySelectionDAGInfo::~WebAssemblySelectionDAGInfo() {}
