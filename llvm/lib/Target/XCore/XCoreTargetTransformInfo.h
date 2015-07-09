@@ -37,8 +37,9 @@ class XCoreTTIImpl : public BasicTTIImplBase<XCoreTTIImpl> {
   const XCoreTargetLowering *getTLI() const { return TLI; }
 
 public:
-  explicit XCoreTTIImpl(const XCoreTargetMachine *TM)
-      : BaseT(TM), ST(TM->getSubtargetImpl()), TLI(ST->getTargetLowering()) {}
+  explicit XCoreTTIImpl(const XCoreTargetMachine *TM, Function &F)
+      : BaseT(TM, F.getParent()->getDataLayout()), ST(TM->getSubtargetImpl()),
+        TLI(ST->getTargetLowering()) {}
 
   // Provide value semantics. MSVC requires that we spell all of these out.
   XCoreTTIImpl(const XCoreTTIImpl &Arg)
@@ -46,18 +47,6 @@ public:
   XCoreTTIImpl(XCoreTTIImpl &&Arg)
       : BaseT(std::move(static_cast<BaseT &>(Arg))), ST(std::move(Arg.ST)),
         TLI(std::move(Arg.TLI)) {}
-  XCoreTTIImpl &operator=(const XCoreTTIImpl &RHS) {
-    BaseT::operator=(static_cast<const BaseT &>(RHS));
-    ST = RHS.ST;
-    TLI = RHS.TLI;
-    return *this;
-  }
-  XCoreTTIImpl &operator=(XCoreTTIImpl &&RHS) {
-    BaseT::operator=(std::move(static_cast<BaseT &>(RHS)));
-    ST = std::move(RHS.ST);
-    TLI = std::move(RHS.TLI);
-    return *this;
-  }
 
   unsigned getNumberOfRegisters(bool Vector) {
     if (Vector) {

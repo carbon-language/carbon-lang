@@ -34,4 +34,5 @@ cl::opt<unsigned>
                                     cl::Hidden);
 
 BasicTTIImpl::BasicTTIImpl(const TargetMachine *TM, Function &F)
-    : BaseT(TM), ST(TM->getSubtargetImpl(F)), TLI(ST->getTargetLowering()) {}
+    : BaseT(TM, F.getParent()->getDataLayout()), ST(TM->getSubtargetImpl(F)),
+      TLI(ST->getTargetLowering()) {}

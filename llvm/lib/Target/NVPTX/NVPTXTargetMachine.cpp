@@ -148,8 +148,9 @@ TargetPassConfig *NVPTXTargetMachine::createPassConfig(PassManagerBase &PM) {
 }
 
 TargetIRAnalysis NVPTXTargetMachine::getTargetIRAnalysis() {
-  return TargetIRAnalysis(
-      [this](Function &) { return TargetTransformInfo(NVPTXTTIImpl(this)); });
+  return TargetIRAnalysis([this](Function &F) {
+    return TargetTransformInfo(NVPTXTTIImpl(this, F));
+  });
 }
 
 void NVPTXPassConfig::addIRPasses() {

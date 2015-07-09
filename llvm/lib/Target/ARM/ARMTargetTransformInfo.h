@@ -42,7 +42,8 @@ class ARMTTIImpl : public BasicTTIImplBase<ARMTTIImpl> {
 
 public:
   explicit ARMTTIImpl(const ARMBaseTargetMachine *TM, Function &F)
-      : BaseT(TM), ST(TM->getSubtargetImpl(F)), TLI(ST->getTargetLowering()) {}
+      : BaseT(TM, F.getParent()->getDataLayout()), ST(TM->getSubtargetImpl(F)),
+        TLI(ST->getTargetLowering()) {}
 
   // Provide value semantics. MSVC requires that we spell all of these out.
   ARMTTIImpl(const ARMTTIImpl &Arg)
@@ -50,18 +51,6 @@ public:
   ARMTTIImpl(ARMTTIImpl &&Arg)
       : BaseT(std::move(static_cast<BaseT &>(Arg))), ST(std::move(Arg.ST)),
         TLI(std::move(Arg.TLI)) {}
-  ARMTTIImpl &operator=(const ARMTTIImpl &RHS) {
-    BaseT::operator=(static_cast<const BaseT &>(RHS));
-    ST = RHS.ST;
-    TLI = RHS.TLI;
-    return *this;
-  }
-  ARMTTIImpl &operator=(ARMTTIImpl &&RHS) {
-    BaseT::operator=(std::move(static_cast<BaseT &>(RHS)));
-    ST = std::move(RHS.ST);
-    TLI = std::move(RHS.TLI);
-    return *this;
-  }
 
   /// \name Scalar TTI Implementations
   /// @{

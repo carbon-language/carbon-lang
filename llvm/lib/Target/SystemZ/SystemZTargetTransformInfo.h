@@ -29,7 +29,8 @@ class SystemZTTIImpl : public BasicTTIImplBase<SystemZTTIImpl> {
 
 public:
   explicit SystemZTTIImpl(const SystemZTargetMachine *TM, Function &F)
-    : BaseT(TM), ST(TM->getSubtargetImpl(F)), TLI(ST->getTargetLowering()) {}
+      : BaseT(TM, F.getParent()->getDataLayout()), ST(TM->getSubtargetImpl(F)),
+        TLI(ST->getTargetLowering()) {}
 
   // Provide value semantics. MSVC requires that we spell all of these out.
   SystemZTTIImpl(const SystemZTTIImpl &Arg)
@@ -37,18 +38,6 @@ public:
   SystemZTTIImpl(SystemZTTIImpl &&Arg)
       : BaseT(std::move(static_cast<BaseT &>(Arg))), ST(std::move(Arg.ST)),
         TLI(std::move(Arg.TLI)) {}
-  SystemZTTIImpl &operator=(const SystemZTTIImpl &RHS) {
-    BaseT::operator=(static_cast<const BaseT &>(RHS));
-    ST = RHS.ST;
-    TLI = RHS.TLI;
-    return *this;
-  }
-  SystemZTTIImpl &operator=(SystemZTTIImpl &&RHS) {
-    BaseT::operator=(std::move(static_cast<BaseT &>(RHS)));
-    ST = std::move(RHS.ST);
-    TLI = std::move(RHS.TLI);
-    return *this;
-  }
 
   /// \name Scalar TTI Implementations
   /// @{

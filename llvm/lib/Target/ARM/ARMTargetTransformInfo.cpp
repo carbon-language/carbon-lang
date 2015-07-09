@@ -488,12 +488,12 @@ unsigned ARMTTIImpl::getInterleavedMemoryOpCost(unsigned Opcode, Type *VecTy,
   assert(isa<VectorType>(VecTy) && "Expect a vector type");
 
   // vldN/vstN doesn't support vector types of i64/f64 element.
-  bool EltIs64Bits = DL->getTypeAllocSizeInBits(VecTy->getScalarType()) == 64;
+  bool EltIs64Bits = DL.getTypeAllocSizeInBits(VecTy->getScalarType()) == 64;
 
   if (Factor <= TLI->getMaxSupportedInterleaveFactor() && !EltIs64Bits) {
     unsigned NumElts = VecTy->getVectorNumElements();
     Type *SubVecTy = VectorType::get(VecTy->getScalarType(), NumElts / Factor);
-    unsigned SubVecSize = TLI->getDataLayout()->getTypeAllocSize(SubVecTy);
+    unsigned SubVecSize = DL.getTypeAllocSize(SubVecTy);
 
     // vldN/vstN only support legal vector types of size 64 or 128 in bits.
     if (NumElts % Factor == 0 && (SubVecSize == 64 || SubVecSize == 128))

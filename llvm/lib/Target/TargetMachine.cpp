@@ -150,8 +150,9 @@ void TargetMachine::setOptLevel(CodeGenOpt::Level Level) const {
 }
 
 TargetIRAnalysis TargetMachine::getTargetIRAnalysis() {
-  return TargetIRAnalysis(
-      [this](Function &) { return TargetTransformInfo(getDataLayout()); });
+  return TargetIRAnalysis([this](Function &F) {
+    return TargetTransformInfo(F.getParent()->getDataLayout());
+  });
 }
 
 static bool canUsePrivateLabel(const MCAsmInfo &AsmInfo,

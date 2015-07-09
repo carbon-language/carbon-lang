@@ -91,8 +91,8 @@ private:
   }
 
 protected:
-  explicit BasicTTIImplBase(const TargetMachine *TM)
-      : BaseT(TM->getDataLayout()) {}
+  explicit BasicTTIImplBase(const TargetMachine *TM, const DataLayout &DL)
+      : BaseT(DL) {}
 
 public:
   // Provide value semantics. MSVC requires that we spell all of these out.
@@ -100,14 +100,6 @@ public:
       : BaseT(static_cast<const BaseT &>(Arg)) {}
   BasicTTIImplBase(BasicTTIImplBase &&Arg)
       : BaseT(std::move(static_cast<BaseT &>(Arg))) {}
-  BasicTTIImplBase &operator=(const BasicTTIImplBase &RHS) {
-    BaseT::operator=(static_cast<const BaseT &>(RHS));
-    return *this;
-  }
-  BasicTTIImplBase &operator=(BasicTTIImplBase &&RHS) {
-    BaseT::operator=(std::move(static_cast<BaseT &>(RHS)));
-    return *this;
-  }
 
   /// \name Scalar TTI Implementations
   /// @{
@@ -816,18 +808,6 @@ public:
   BasicTTIImpl(BasicTTIImpl &&Arg)
       : BaseT(std::move(static_cast<BaseT &>(Arg))), ST(std::move(Arg.ST)),
         TLI(std::move(Arg.TLI)) {}
-  BasicTTIImpl &operator=(const BasicTTIImpl &RHS) {
-    BaseT::operator=(static_cast<const BaseT &>(RHS));
-    ST = RHS.ST;
-    TLI = RHS.TLI;
-    return *this;
-  }
-  BasicTTIImpl &operator=(BasicTTIImpl &&RHS) {
-    BaseT::operator=(std::move(static_cast<BaseT &>(RHS)));
-    ST = std::move(RHS.ST);
-    TLI = std::move(RHS.TLI);
-    return *this;
-  }
 };
 
 }

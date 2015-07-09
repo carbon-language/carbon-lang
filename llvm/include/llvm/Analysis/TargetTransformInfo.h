@@ -69,7 +69,7 @@ public:
   ///
   /// The TTI implementation will reflect the information in the DataLayout
   /// provided if non-null.
-  explicit TargetTransformInfo(const DataLayout *DL);
+  explicit TargetTransformInfo(const DataLayout &DL);
 
   // Provide move semantics.
   TargetTransformInfo(TargetTransformInfo &&Arg);
@@ -541,7 +541,7 @@ private:
 class TargetTransformInfo::Concept {
 public:
   virtual ~Concept() = 0;
-
+  virtual const DataLayout &getDataLayout() const = 0;
   virtual unsigned getOperationCost(unsigned Opcode, Type *Ty, Type *OpTy) = 0;
   virtual unsigned getGEPCost(const Value *Ptr,
                               ArrayRef<const Value *> Operands) = 0;
@@ -635,6 +635,10 @@ class TargetTransformInfo::Model final : public TargetTransformInfo::Concept {
 public:
   Model(T Impl) : Impl(std::move(Impl)) {}
   ~Model() override {}
+
+  const DataLayout &getDataLayout() const override {
+    return Impl.getDataLayout();
+  }
 
   unsigned getOperationCost(unsigned Opcode, Type *Ty, Type *OpTy) override {
     return Impl.getOperationCost(Opcode, Ty, OpTy);

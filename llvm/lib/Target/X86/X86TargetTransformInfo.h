@@ -40,7 +40,8 @@ class X86TTIImpl : public BasicTTIImplBase<X86TTIImpl> {
 
 public:
   explicit X86TTIImpl(const X86TargetMachine *TM, Function &F)
-      : BaseT(TM), ST(TM->getSubtargetImpl(F)), TLI(ST->getTargetLowering()) {}
+      : BaseT(TM, F.getParent()->getDataLayout()), ST(TM->getSubtargetImpl(F)),
+        TLI(ST->getTargetLowering()) {}
 
   // Provide value semantics. MSVC requires that we spell all of these out.
   X86TTIImpl(const X86TTIImpl &Arg)
@@ -48,18 +49,6 @@ public:
   X86TTIImpl(X86TTIImpl &&Arg)
       : BaseT(std::move(static_cast<BaseT &>(Arg))), ST(std::move(Arg.ST)),
         TLI(std::move(Arg.TLI)) {}
-  X86TTIImpl &operator=(const X86TTIImpl &RHS) {
-    BaseT::operator=(static_cast<const BaseT &>(RHS));
-    ST = RHS.ST;
-    TLI = RHS.TLI;
-    return *this;
-  }
-  X86TTIImpl &operator=(X86TTIImpl &&RHS) {
-    BaseT::operator=(std::move(static_cast<BaseT &>(RHS)));
-    ST = std::move(RHS.ST);
-    TLI = std::move(RHS.TLI);
-    return *this;
-  }
 
   /// \name Scalar TTI Implementations
   /// @{

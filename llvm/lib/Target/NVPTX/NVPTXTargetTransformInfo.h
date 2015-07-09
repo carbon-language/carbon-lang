@@ -37,8 +37,9 @@ class NVPTXTTIImpl : public BasicTTIImplBase<NVPTXTTIImpl> {
   const NVPTXTargetLowering *getTLI() const { return TLI; };
 
 public:
-  explicit NVPTXTTIImpl(const NVPTXTargetMachine *TM)
-      : BaseT(TM), ST(TM->getSubtargetImpl()), TLI(ST->getTargetLowering()) {}
+  explicit NVPTXTTIImpl(const NVPTXTargetMachine *TM, const Function &F)
+      : BaseT(TM, F.getParent()->getDataLayout()), ST(TM->getSubtargetImpl()),
+        TLI(ST->getTargetLowering()) {}
 
   // Provide value semantics. MSVC requires that we spell all of these out.
   NVPTXTTIImpl(const NVPTXTTIImpl &Arg)
@@ -46,18 +47,6 @@ public:
   NVPTXTTIImpl(NVPTXTTIImpl &&Arg)
       : BaseT(std::move(static_cast<BaseT &>(Arg))), ST(std::move(Arg.ST)),
         TLI(std::move(Arg.TLI)) {}
-  NVPTXTTIImpl &operator=(const NVPTXTTIImpl &RHS) {
-    BaseT::operator=(static_cast<const BaseT &>(RHS));
-    ST = RHS.ST;
-    TLI = RHS.TLI;
-    return *this;
-  }
-  NVPTXTTIImpl &operator=(NVPTXTTIImpl &&RHS) {
-    BaseT::operator=(std::move(static_cast<BaseT &>(RHS)));
-    ST = std::move(RHS.ST);
-    TLI = std::move(RHS.TLI);
-    return *this;
-  }
 
   bool hasBranchDivergence() { return true; }
 
