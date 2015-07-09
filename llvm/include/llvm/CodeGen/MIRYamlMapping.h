@@ -81,6 +81,21 @@ LLVM_YAML_IS_FLOW_SEQUENCE_VECTOR(llvm::yaml::FlowStringValue)
 namespace llvm {
 namespace yaml {
 
+struct VirtualRegisterDefinition {
+  unsigned ID;
+  StringValue Class;
+  // TODO: Serialize the virtual register hints.
+};
+
+template <> struct MappingTraits<VirtualRegisterDefinition> {
+  static void mapping(IO &YamlIO, VirtualRegisterDefinition &Reg) {
+    YamlIO.mapRequired("id", Reg.ID);
+    YamlIO.mapRequired("class", Reg.Class);
+  }
+
+  static const bool flow = true;
+};
+
 struct MachineBasicBlock {
   unsigned ID;
   StringValue Name;
@@ -109,6 +124,7 @@ template <> struct MappingTraits<MachineBasicBlock> {
 } // end namespace yaml
 } // end namespace llvm
 
+LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::yaml::VirtualRegisterDefinition)
 LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::yaml::MachineBasicBlock)
 
 namespace llvm {
@@ -169,7 +185,7 @@ struct MachineFunction {
   bool IsSSA = false;
   bool TracksRegLiveness = false;
   bool TracksSubRegLiveness = false;
-  // TODO: Serialize virtual register definitions.
+  std::vector<VirtualRegisterDefinition> VirtualRegisters;
   // TODO: Serialize the various register masks.
   // TODO: Serialize live in registers.
   // Frame information
@@ -187,6 +203,7 @@ template <> struct MappingTraits<MachineFunction> {
     YamlIO.mapOptional("isSSA", MF.IsSSA);
     YamlIO.mapOptional("tracksRegLiveness", MF.TracksRegLiveness);
     YamlIO.mapOptional("tracksSubRegLiveness", MF.TracksSubRegLiveness);
+    YamlIO.mapOptional("registers", MF.VirtualRegisters);
     YamlIO.mapOptional("frameInfo", MF.FrameInfo);
     YamlIO.mapOptional("body", MF.BasicBlocks);
   }
