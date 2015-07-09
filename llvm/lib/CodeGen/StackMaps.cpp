@@ -99,8 +99,8 @@ StackMaps::parseOperand(MachineInstr::const_mop_iterator MOI,
       Size /= 8;
       unsigned Reg = (++MOI)->getReg();
       int64_t Imm = (++MOI)->getImm();
-      Locs.push_back(Location(StackMaps::Location::Direct, Size,
-                              getDwarfRegNum(Reg, TRI), Imm));
+      Locs.emplace_back(StackMaps::Location::Direct, Size,
+                        getDwarfRegNum(Reg, TRI), Imm);
       break;
     }
     case StackMaps::IndirectMemRefOp: {
@@ -108,15 +108,15 @@ StackMaps::parseOperand(MachineInstr::const_mop_iterator MOI,
       assert(Size > 0 && "Need a valid size for indirect memory locations.");
       unsigned Reg = (++MOI)->getReg();
       int64_t Imm = (++MOI)->getImm();
-      Locs.push_back(Location(StackMaps::Location::Indirect, Size,
-                              getDwarfRegNum(Reg, TRI), Imm));
+      Locs.emplace_back(StackMaps::Location::Indirect, Size,
+                        getDwarfRegNum(Reg, TRI), Imm);
       break;
     }
     case StackMaps::ConstantOp: {
       ++MOI;
       assert(MOI->isImm() && "Expected constant operand.");
       int64_t Imm = MOI->getImm();
-      Locs.push_back(Location(Location::Constant, sizeof(int64_t), 0, Imm));
+      Locs.emplace_back(Location::Constant, sizeof(int64_t), 0, Imm);
       break;
     }
     }
