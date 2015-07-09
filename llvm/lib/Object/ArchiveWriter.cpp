@@ -107,11 +107,28 @@ static void printRestOfMemberHeader(raw_fd_ostream &Out,
   Out << "`\n";
 }
 
-static void printMemberHeader(raw_fd_ostream &Out, StringRef Name,
-                              const sys::TimeValue &ModTime, unsigned UID,
-                              unsigned GID, unsigned Perms, unsigned Size) {
+static void printGNUSmallMemberHeader(raw_fd_ostream &Out, StringRef Name,
+                                      const sys::TimeValue &ModTime,
+                                      unsigned UID, unsigned GID,
+                                      unsigned Perms, unsigned Size) {
   printWithSpacePadding(Out, Twine(Name) + "/", 16);
   printRestOfMemberHeader(Out, ModTime, UID, GID, Perms, Size);
+}
+
+static void printBSDMemberHeader(raw_fd_ostream &Out, StringRef Name,
+                                 const sys::TimeValue &ModTime, unsigned UID,
+                                 unsigned GID, unsigned Perms, unsigned Size) {
+  uint64_t PosAfterHeader = Out.tell() + 60 + Name.size();
+  // Pad so that even 64 bit object files are aligned.
+  unsigned Pad = OffsetToAlignment(PosAfterHeader, 8);
+  unsigned NameWithPadding = Name.size() + Pad;
+  printWithSpacePadding(Out, Twine("#1/") + Twine(NameWithPadding), 16);
+  printRestOfMemberHeader(Out, ModTime, UID, GID, Perms,
+                          NameWithPadding + Size);
+  Out << Name;
+  assert(PosAfterHeader == Out.tell());
+  while (Pad--)
+    Out.write(uint8_t(0));
 }
 
 static void
@@ -120,24 +137,10 @@ printMemberHeader(raw_fd_ostream &Out, object::Archive::Kind Kind,
                   std::vector<unsigned>::iterator &StringMapIndexIter,
                   const sys::TimeValue &ModTime, unsigned UID, unsigned GID,
                   unsigned Perms, unsigned Size) {
-  if (Kind == object::Archive::K_BSD) {
-    uint64_t PosAfterHeader = Out.tell() + 60 + Name.size();
-    // Pad so that even 64 bit object files are aligned.
-    unsigned Pad = OffsetToAlignment(PosAfterHeader, 8);
-    unsigned NameWithPadding = Name.size() + Pad;
-    printWithSpacePadding(Out, Twine("#1/") + Twine(NameWithPadding), 16);
-    printRestOfMemberHeader(Out, ModTime, UID, GID, Perms,
-                            NameWithPadding + Size);
-    Out << Name;
-    assert(PosAfterHeader == Out.tell());
-    while (Pad--)
-      Out.write(uint8_t(0));
-    return;
-  }
-  if (Name.size() < 16) {
-    printMemberHeader(Out, Name, ModTime, UID, GID, Perms, Size);
-    return;
-  }
+  if (Kind == object::Archive::K_BSD)
+    return printBSDMemberHeader(Out, Name, ModTime, UID, GID, Perms, Size);
+  if (Name.size() < 16)
+    return printGNUSmallMemberHeader(Out, Name, ModTime, UID, GID, Perms, Size);
   Out << '/';
   printWithSpacePadding(Out, *StringMapIndexIter++, 15);
   printRestOfMemberHeader(Out, ModTime, UID, GID, Perms, Size);
@@ -195,7 +198,7 @@ writeSymbolTable(raw_fd_ostream &Out, object::Archive::Kind Kind,
     object::SymbolicFile &Obj = *ObjOrErr.get();
 
     if (!StartOffset) {
-      printMemberHeader(Out, "", sys::TimeValue::now(), 0, 0, 0, 0);
+      printGNUSmallMemberHeader(Out, "", sys::TimeValue::now(), 0, 0, 0, 0);
       StartOffset = Out.tell();
       print32BE(Out, 0);
     }
