@@ -817,6 +817,9 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
   std::vector<std::pair<uint64_t, StringRef>> AllSymbols;
   if (MIA) {
     for (const SymbolRef &Symbol : Obj->symbols()) {
+      if (Symbol.getType() != SymbolRef::ST_Function)
+        continue;
+
       ErrorOr<uint64_t> AddressOrErr = Symbol.getAddress();
       if (error(AddressOrErr.getError()))
         break;
@@ -937,17 +940,25 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
                         SectionAddr + Index, outs(), "", *STI);
           outs() << CommentStream.str();
           Comments.clear();
-          if (MIA && (MIA->isCall(Inst) || MIA->isUnconditionalBranch(Inst))) {
+          if (MIA && (MIA->isCall(Inst) || MIA->isUnconditionalBranch(Inst) ||
+                      MIA->isConditionalBranch(Inst))) {
             uint64_t Target;
             if (MIA->evaluateBranch(Inst, SectionAddr + Index, Size, Target)) {
-              const auto &TargetSym =
-                  std::lower_bound(AllSymbols.begin(), AllSymbols.end(),
-                                   std::make_pair(Target, StringRef()));
+              auto TargetSym = std::upper_bound(
+                  AllSymbols.begin(), AllSymbols.end(), Target,
+                  [](uint64_t LHS, std::pair<uint64_t, StringRef> &RHS) {
+                    return LHS < RHS.first;
+                  });
+              if (TargetSym != AllSymbols.begin())
+                --TargetSym;
+              else
+                TargetSym = AllSymbols.end();
+
               if (TargetSym != AllSymbols.end()) {
                 outs() << " <" << TargetSym->second;
-                uint64_t Disp = TargetSym->first - Target;
+                uint64_t Disp = Target - TargetSym->first;
                 if (Disp)
-                  outs() << '-' << Disp;
+                  outs() << '+' << utohexstr(Disp);
                 outs() << '>';
               }
             }

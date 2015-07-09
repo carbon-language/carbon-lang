@@ -7,6 +7,7 @@
   .bundle_align_mode 4
   .text
 # CHECK-LABEL: foo:
+.type   foo,@function
 foo:
 # Test that bundle alignment mode can be set more than once.
   .bundle_align_mode 4
@@ -24,6 +25,7 @@ foo:
 
   .p2align 4
 # CHECK-LABEL: bar:
+.type   bar,@function
 bar:
   callq foo
   callq foo
@@ -39,6 +41,7 @@ bar:
 # CHECK-NEXT: 3b: callq {{.*}} <bar>
 
 # CHECK-LABEL: baz:
+.type   baz,@function
 baz:
   callq foo
   callq foo
@@ -54,6 +57,7 @@ baz:
 # CHECK-NEXT: 5b: callq {{.*}} <bar>
 
 # CHECK-LABEL: quux
+.type   quux,@function
 quux:
   callq bar
   callq bar
