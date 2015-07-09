@@ -20,6 +20,7 @@
 #include "Error.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSwitch.h"
+#include "llvm/Support/StringSaver.h"
 #include "llvm/Support/raw_ostream.h"
 #include <system_error>
 
@@ -108,7 +109,7 @@ private:
 
 class Parser {
 public:
-  explicit Parser(StringRef S) : Lex(S) {}
+  explicit Parser(StringRef S, BumpPtrStringSaver *A) : Lex(S), Alloc(A) {}
 
   std::error_code parse() {
     do {
@@ -208,6 +209,9 @@ private:
       E.Name = E.ExtName;
     }
 
+    if (!Config->is64() && !E.Name.startswith("_@?"))
+      E.Name = Alloc->save("_" + E.Name);
+
     for (;;) {
       read();
       if (Tok.K == Identifier && Tok.Value[0] == '@') {
@@ -297,12 +301,13 @@ private:
   Lexer Lex;
   Token Tok;
   std::vector<Token> Stack;
+  BumpPtrStringSaver *Alloc;
 };
 
 } // anonymous namespace
 
-std::error_code parseModuleDefs(MemoryBufferRef MB) {
-  return Parser(MB.getBuffer()).parse();
+std::error_code parseModuleDefs(MemoryBufferRef MB, BumpPtrStringSaver *Alloc) {
+  return Parser(MB.getBuffer(), Alloc).parse();
 }
 
 } // namespace coff

@@ -108,6 +108,8 @@ LinkerDriver::parseDirectives(StringRef S) {
       ErrorOr<Export> E = parseExport(Arg->getValue());
       if (auto EC = E.getError())
         return EC;
+      if (!Config->is64() && E->ExtName.startswith("_"))
+        E->ExtName = E->ExtName.substr(1);
       Config->Exports.push_back(E.get());
       break;
     }
@@ -293,11 +295,6 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
   if (Args.hasArg(OPT_force) || Args.hasArg(OPT_force_unresolved))
     Config->Force = true;
 
-  // Handle /entry
-  StringRef Entry;
-  if (auto *Arg = Args.getLastArg(OPT_entry))
-    Entry = Arg->getValue();
-
   // Handle /debug
   if (Args.hasArg(OPT_debug))
     Config->Debug = true;
@@ -316,8 +313,6 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
     Config->DLL = true;
     Config->ImageBase = 0x180000000U;
     Config->ManifestID = 2;
-    if (Entry.empty() && !Config->NoEntry)
-      Entry = "_DllMainCRTStartup";
   }
 
   // Handle /fixed
@@ -423,14 +418,6 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
     }
   }
 
-  // Handle /export
-  for (auto *Arg : Args.filtered(OPT_export)) {
-    ErrorOr<Export> E = parseExport(Arg->getValue());
-    if (E.getError())
-      return false;
-    Config->Exports.push_back(E.get());
-  }
-
   // Handle /delayload
   for (auto *Arg : Args.filtered(OPT_delayload)) {
     Config->DelayLoads.insert(StringRef(Arg->getValue()).lower());
@@ -441,18 +428,6 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
   for (auto *Arg : Args.filtered(OPT_failifmismatch))
     if (checkFailIfMismatch(Arg->getValue()))
       return false;
-
-  // Handle /def
-  if (auto *Arg = Args.getLastArg(OPT_deffile)) {
-    ErrorOr<MemoryBufferRef> MBOrErr = openFile(Arg->getValue());
-    if (auto EC = MBOrErr.getError()) {
-      llvm::errs() << "/def: " << EC.message() << "\n";
-      return false;
-    }
-    // parseModuleDefs mutates Config object.
-    if (parseModuleDefs(MBOrErr.get()))
-      return false;
-  }
 
   // Handle /merge
   for (auto *Arg : Args.filtered(OPT_merge))
@@ -581,13 +556,16 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
     OwningMBs.push_back(std::move(MB)); // take ownership
   }
 
-  if (!Entry.empty())
-    Config->Entry = addUndefined(mangle(Entry));
-  Symtab.addAbsolute(mangle("__ImageBase"), Config->ImageBase);
-
-  // Windows specific -- If entry point name is not given, we need to
-  // infer that from user-defined entry name.
-  if (Entry.empty() && !Config->NoEntry) {
+  // Handle /entry and /dll
+  if (auto *Arg = Args.getLastArg(OPT_entry)) {
+    Config->Entry = addUndefined(mangle(Arg->getValue()));
+  } else if (Args.hasArg(OPT_dll) && !Config->NoEntry) {
+    StringRef S =
+        Config->is64() ? "_DllMainCRTStartup" : "__DllMainCRTStartup@12";
+    Config->Entry = addUndefined(S);
+  } else if (!Config->NoEntry) {
+    // Windows specific -- If entry point name is not given, we need to
+    // infer that from user-defined entry name.
     StringRef S = findDefaultEntry();
     if (S.empty()) {
       llvm::errs() << "entry point must be defined\n";
@@ -597,6 +575,30 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
     if (Config->Verbose)
       llvm::outs() << "Entry name inferred: " << S << "\n";
   }
+
+  // Handle /export
+  for (auto *Arg : Args.filtered(OPT_export)) {
+    ErrorOr<Export> E = parseExport(Arg->getValue());
+    if (E.getError())
+      return false;
+    if (!Config->is64() && !E->Name.startswith("_@?"))
+      E->Name = mangle(E->Name);
+    Config->Exports.push_back(E.get());
+  }
+
+  // Handle /def
+  if (auto *Arg = Args.getLastArg(OPT_deffile)) {
+    ErrorOr<MemoryBufferRef> MBOrErr = openFile(Arg->getValue());
+    if (auto EC = MBOrErr.getError()) {
+      llvm::errs() << "/def: " << EC.message() << "\n";
+      return false;
+    }
+    // parseModuleDefs mutates Config object.
+    if (parseModuleDefs(MBOrErr.get(), &Alloc))
+      return false;
+  }
+
+  Symtab.addAbsolute(mangle("__ImageBase"), Config->ImageBase);
 
   // Read as much files as we can from directives sections.
   if (auto EC = Symtab.run()) {

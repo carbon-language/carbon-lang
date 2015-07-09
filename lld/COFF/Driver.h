@@ -110,7 +110,8 @@ private:
   std::vector<std::unique_ptr<MemoryBuffer>> OwningMBs;
 };
 
-std::error_code parseModuleDefs(MemoryBufferRef MB);
+std::error_code parseModuleDefs(MemoryBufferRef MB,
+                                llvm::BumpPtrStringSaver *Alloc);
 std::error_code writeImportLibrary();
 
 // Functions below this line are defined in DriverUtils.cpp.
