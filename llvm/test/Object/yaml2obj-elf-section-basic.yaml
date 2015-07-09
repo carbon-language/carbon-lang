@@ -65,12 +65,15 @@ Sections:
 # CHECK:        Section {
 # CHECK:          Name: .symtab (25)
 # CHECK:          Type: SHT_SYMTAB (0x2)
+# CHECK:          AddressAlignment: 8
 # CHECK:        }
 # CHECK:        Section {
 # CHECK:          Name: .strtab (17)
 # CHECK:          Type: SHT_STRTAB (0x3)
+# CHECK:          AddressAlignment: 1
 # CHECK:        }
 # CHECK:        Section {
 # CHECK:          Name: .shstrtab (7)
 # CHECK:          Type: SHT_STRTAB (0x3)
+# CHECK:          AddressAlignment: 1
 # CHECK:        }

@@ -267,6 +267,7 @@ void ELFState<ELFT>::initSymtabSectionHeader(Elf_Shdr &SHeader,
   // One greater than symbol table index of the last local symbol.
   SHeader.sh_info = Doc.Symbols.Local.size() + 1;
   SHeader.sh_entsize = sizeof(Elf_Sym);
+  SHeader.sh_addralign = 8;
 
   std::vector<Elf_Sym> Syms;
   {
