@@ -53,7 +53,7 @@ std::error_code Writer::write(StringRef OutputPath) {
   createSymbolAndStringTable();
   if (auto EC = openFile(OutputPath))
     return EC;
-  if (Is64) {
+  if (Config->is64()) {
     writeHeader<pe32plus_header>();
   } else {
     writeHeader<pe32_header>();
@@ -110,9 +110,6 @@ void OutputSection::writeHeaderTo(uint8_t *Buf) {
             std::min(Name.size(), (size_t)COFF::NameSize));
   }
 }
-
-Writer::Writer(SymbolTable *T)
-    : Symtab(T), Is64(Config->MachineType == IMAGE_FILE_MACHINE_AMD64) {}
 
 // Set live bit on for each reachable chunk. Unmarked (unreachable)
 // COMDAT chunks will be ignored in the next step, so that they don't
@@ -358,7 +355,8 @@ void Writer::assignAddresses() {
   SizeOfHeaders = DOSStubSize + sizeof(PEMagic) + sizeof(coff_file_header) +
                   sizeof(data_directory) * NumberfOfDataDirectory +
                   sizeof(coff_section) * OutputSections.size();
-  SizeOfHeaders += Is64 ? sizeof(pe32plus_header) : sizeof(pe32_header);
+  SizeOfHeaders +=
+      Config->is64() ? sizeof(pe32plus_header) : sizeof(pe32_header);
   SizeOfHeaders = RoundUpToAlignment(SizeOfHeaders, PageSize);
   uint64_t RVA = 0x1000; // The first page is kept unmapped.
   uint64_t FileOff = SizeOfHeaders;
@@ -395,7 +393,7 @@ template <typename PEHeaderTy> void Writer::writeHeader() {
   COFF->Machine = Config->MachineType;
   COFF->NumberOfSections = OutputSections.size();
   COFF->Characteristics = IMAGE_FILE_EXECUTABLE_IMAGE;
-  if (Is64) {
+  if (Config->is64()) {
     COFF->Characteristics |= IMAGE_FILE_LARGE_ADDRESS_AWARE;
   } else {
     COFF->Characteristics |= IMAGE_FILE_32BIT_MACHINE;
@@ -410,7 +408,7 @@ template <typename PEHeaderTy> void Writer::writeHeader() {
   // Write PE header
   auto *PE = reinterpret_cast<PEHeaderTy *>(Buf);
   Buf += sizeof(*PE);
-  PE->Magic = Is64 ? PE32Header::PE32_PLUS : PE32Header::PE32;
+  PE->Magic = Config->is64() ? PE32Header::PE32_PLUS : PE32Header::PE32;
   PE->ImageBase = Config->ImageBase;
   PE->SectionAlignment = SectionAlignment;
   PE->FileAlignment = FileAlignment;

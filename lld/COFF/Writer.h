@@ -74,7 +74,7 @@ private:
 // The writer writes a SymbolTable result to a file.
 class Writer {
 public:
-  explicit Writer(SymbolTable *T);
+  explicit Writer(SymbolTable *T) : Symtab(T) {}
   std::error_code write(StringRef Path);
 
 private:
