@@ -242,6 +242,8 @@ class ARMAsmParser : public MCTargetAsmParser {
                              bool &CanAcceptCarrySet,
                              bool &CanAcceptPredicationCode);
 
+  void tryConvertingToTwoOperandForm(StringRef Mnemonic, bool CarrySetting,
+                                     OperandVector &Operands);
   bool isThumb() const {
     // FIXME: Can tablegen auto-generate this?
     return STI.getFeatureBits()[ARM::ModeThumb];
@@ -5465,6 +5467,47 @@ void ARMAsmParser::getMnemonicAcceptInfo(StringRef Mnemonic, StringRef FullInst,
     CanAcceptPredicationCode = true;
 }
 
+// \brief Some Thumb1 instructions have two operand forms that are not
+// available as three operand, convert to two operand form if possible.
+//
+// FIXME: We would really like to be able to tablegen'erate this.
+void ARMAsmParser::tryConvertingToTwoOperandForm(StringRef Mnemonic,
+                                                 bool CarrySetting,
+                                                 OperandVector &Operands) {
+  if (Operands.size() != 6 || !isThumbOne())
+    return;
+
+  ARMOperand &Op3 = static_cast<ARMOperand &>(*Operands[3]);
+  ARMOperand &Op4 = static_cast<ARMOperand &>(*Operands[4]);
+  if (!Op3.isReg() || !Op4.isReg())
+    return;
+
+  ARMOperand &Op5 = static_cast<ARMOperand &>(*Operands[5]);
+
+  if (!(Mnemonic == "add" || Mnemonic == "sub" || Mnemonic == "and" ||
+        Mnemonic == "eor" || Mnemonic == "lsl" || Mnemonic == "lsr" ||
+        Mnemonic == "asr" || Mnemonic == "adc" || Mnemonic == "sbc" ||
+        Mnemonic == "ror" || Mnemonic == "orr" || Mnemonic == "bic"))
+    return;
+
+  // If first 2 operands of a 3 operand instruction are the same
+  // then transform to 2 operand version of the same instruction
+  // e.g. 'adds r0, r0, #1' transforms to 'adds r0, #1'
+  bool Transform = Op3.getReg() == Op4.getReg();
+  // If both registers are the same then remove one of them from
+  // the operand list, with certain exceptions.
+  if (Transform) {
+    // Don't transform 'adds Rd, Rd, Rm' or 'sub{s} Rd, Rd, Rm' because the
+    // 2 operand forms don't exist.
+    if (((Mnemonic == "add" && CarrySetting) || Mnemonic == "sub") &&
+        Op5.isReg())
+      Transform = false;
+  }
+
+  if (Transform)
+    Operands.erase(Operands.begin() + 3);
+}
+
 bool ARMAsmParser::shouldOmitCCOutOperand(StringRef Mnemonic,
                                           OperandVector &Operands) {
   // FIXME: This is all horribly hacky. We really need a better way to deal
@@ -5838,6 +5881,8 @@ bool ARMAsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
                    "VFP/Neon double precision register expected");
   }
 
+  tryConvertingToTwoOperandForm(Mnemonic, CarrySetting, Operands);
+
   // Some instructions, mostly Thumb, have forms for the same mnemonic that
   // do and don't have a cc_out optional-def operand. With some spot-checks
   // of the operand list, we can figure out which variant we're trying to
@@ -5899,48 +5944,6 @@ bool ARMAsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
           ARMOperand::CreateReg(NewReg, Op1.getStartLoc(), Op2.getEndLoc());
       Operands.erase(Operands.begin() + Idx + 1);
     }
-  }
-
-  // If first 2 operands of a 3 operand instruction are the same
-  // then transform to 2 operand version of the same instruction
-  // e.g. 'adds r0, r0, #1' transforms to 'adds r0, #1'
-  // FIXME: We would really like to be able to tablegen'erate this.
-  if (isThumbOne() && Operands.size() == 6 &&
-       (Mnemonic == "add" || Mnemonic == "sub" || Mnemonic == "and" ||
-        Mnemonic == "eor" || Mnemonic == "lsl" || Mnemonic == "lsr" ||
-        Mnemonic == "asr" || Mnemonic == "adc" || Mnemonic == "sbc" ||
-        Mnemonic == "ror" || Mnemonic == "orr" || Mnemonic == "bic")) {
-      ARMOperand &Op3 = static_cast<ARMOperand &>(*Operands[3]);
-      ARMOperand &Op4 = static_cast<ARMOperand &>(*Operands[4]);
-      ARMOperand &Op5 = static_cast<ARMOperand &>(*Operands[5]);
-
-      // If both registers are the same then remove one of them from
-      // the operand list.
-      if (Op3.isReg() && Op4.isReg() && Op3.getReg() == Op4.getReg()) {
-          // If 3rd operand (variable Op5) is a register and the instruction is adds/sub
-          // then do not transform as the backend already handles this instruction
-          // correctly.
-          if (!Op5.isReg() || !((Mnemonic == "add" && CarrySetting) || Mnemonic == "sub")) {
-              Operands.erase(Operands.begin() + 3);
-              if (Mnemonic == "add" && !CarrySetting) {
-                  // Special case for 'add' (not 'adds') instruction must
-                  // remove the CCOut operand as well.
-                  Operands.erase(Operands.begin() + 1);
-              }
-          }
-      }
-  }
-
-  // If instruction is 'add' and first two register operands
-  // use SP register, then remove one of the SP registers from
-  // the instruction.
-  // FIXME: We would really like to be able to tablegen'erate this.
-  if (isThumbOne() && Operands.size() == 5 && Mnemonic == "add" && !CarrySetting) {
-      ARMOperand &Op2 = static_cast<ARMOperand &>(*Operands[2]);
-      ARMOperand &Op3 = static_cast<ARMOperand &>(*Operands[3]);
-      if (Op2.isReg() && Op3.isReg() && Op2.getReg() == ARM::SP && Op3.getReg() == ARM::SP) {
-          Operands.erase(Operands.begin() + 2);
-      }
   }
 
   // GNU Assembler extension (compatibility)

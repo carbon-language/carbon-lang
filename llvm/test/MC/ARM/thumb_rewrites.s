@@ -12,6 +12,19 @@
     add     sp, sp, r0
 @ CHECK: add    sp, r0              @ encoding: [0x85,0x44]
 
+    add     r4, sp, r4
+@ CHECK: add    r4, sp, r4          @ encoding: [0x6c,0x44]
+
+    add     r4, r4, sp
+@ CHECK: add    r4, sp              @ encoding: [0x6c,0x44]
+
+    add     sp, sp, #32
+@ FIXME: ARMARM says 'add   sp, sp, #32'
+@ CHECK: add    sp, #32             @ encoding: [0x08,0xb0]
+
+    add     r5, sp, #1016
+@ CHECK: add    r5, sp, #1016       @ encoding: [0xfe,0xad]
+
     add     r0, r0, r1
 @ CHECK: add    r0, r1              @ encoding: [0x08,0x44]
 
@@ -20,6 +33,12 @@
 
     subs    r0, r0, r0
 @ CHECK: subs   r0, r0, r0          @ encoding: [0x00,0x1a]
+
+    subs    r2, r2, #8
+@ CHECK: subs   r2, #8              @ encoding: [0x08,0x3a]
+
+    sub     sp, sp, #16
+@ CHECK: sub    sp, #16             @ encoding: [0x84,0xb0]
 
     ands    r0, r0, r1
 @ CHECK: ands   r0, r1              @ encoding: [0x08,0x40]
