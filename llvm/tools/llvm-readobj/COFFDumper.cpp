@@ -597,8 +597,9 @@ void COFFDumper::printCodeViewDebugInfo(const SectionRef &Section) {
       // in the line table.  The filename string is accessed using double
       // indirection to the string table subsection using the index subsection.
       uint32_t OffsetInIndex = DE.getU32(&Offset),
-               SegmentLength   = DE.getU32(&Offset),
-               FullSegmentSize = DE.getU32(&Offset);
+               SegmentLength = DE.getU32(&Offset);
+      Offset += sizeof(uint32_t); // Skip FullSegmentSize
+
       uint32_t FilenameOffset;
       {
         DataExtractor SDE(CVFileIndexToStringOffsetTable, true, 4);
