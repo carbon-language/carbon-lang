@@ -11,14 +11,14 @@
 # RUN: lld -flavor link2 /entry:main /subsystem:console /out:%t.exe %t.obj
 # RUN: llvm-readobj -file-headers %t.exe | FileCheck -check-prefix=I386 %s
 # RUN: lld -flavor link2 /entry:main /subsystem:console /machine:x86 \
-# RUN:   /out:%t.exe %t.obj
+# RUN:   /out:%t.exe %t.obj /fixed
 # RUN: llvm-readobj -file-headers %t.exe | FileCheck -check-prefix=I386 %s
 
 # I386: Machine: IMAGE_FILE_MACHINE_I386
 
 # RUN: sed -e s/MACHINETYPE/IMAGE_FILE_MACHINE_AMD64/ %s | yaml2obj > %t.obj
 # RUN: not lld -flavor link2 /entry:main /subsystem:console /machine:x86 \
-# RUN:   /out:%t.exe %t.obj >& %t.log
+# RUN:   /out:%t.exe %t.obj /fixed >& %t.log
 # RUN: FileCheck -check-prefix=INCOMPAT %s < %t.log
 
 # RUN: sed -e s/MACHINETYPE/IMAGE_FILE_MACHINE_I386/ %s | yaml2obj > %t1.obj

@@ -245,7 +245,9 @@ ImportThunkChunk::ImportThunkChunk(Defined *S) : ImpSymbol(S) {
 void ImportThunkChunk::writeTo(uint8_t *Buf) {
   memcpy(Buf + FileOff, ImportThunkData, sizeof(ImportThunkData));
   // The first two bytes is a JMP instruction. Fill its operand.
-  uint32_t Operand = ImpSymbol->getRVA() - RVA - getSize();
+  uint32_t Operand = Config->is64()
+      ? ImpSymbol->getRVA() - RVA - getSize()
+      : ImpSymbol->getRVA() + Config->ImageBase;
   write32le(Buf + FileOff + 2, Operand);
 }
 

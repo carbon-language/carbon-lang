@@ -93,6 +93,7 @@ private:
   std::set<std::string> VisitedFiles;
 
   Undefined *addUndefined(StringRef Sym);
+  StringRef mangle(StringRef Sym);
 
   // Windows specific -- "main" is not the only main function in Windows.
   // You can choose one from these four -- {w,}{WinMain,main}.

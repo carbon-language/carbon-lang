@@ -207,6 +207,13 @@ Undefined *LinkerDriver::addUndefined(StringRef Name) {
   return U;
 }
 
+// Symbol names are mangled by appending "_" prefix on x86.
+StringRef LinkerDriver::mangle(StringRef Sym) {
+  if (Config->MachineType == IMAGE_FILE_MACHINE_I386)
+    return Alloc.save("_" + Sym);
+  return Sym;
+}
+
 // Windows specific -- find default entry point name.
 StringRef LinkerDriver::findDefaultEntry() {
   // User-defined main functions and their corresponding entry points.
@@ -217,9 +224,9 @@ StringRef LinkerDriver::findDefaultEntry() {
       {"wWinMain", "wWinMainCRTStartup"},
   };
   for (auto E : Entries) {
-    Symbol *Sym = Symtab.find(E[0]);
+    Symbol *Sym = Symtab.find(mangle(E[0]));
     if (Sym && !isa<Undefined>(Sym->Body))
-      return E[1];
+      return mangle(E[1]);
   }
   return "";
 }
@@ -227,9 +234,9 @@ StringRef LinkerDriver::findDefaultEntry() {
 WindowsSubsystem LinkerDriver::inferSubsystem() {
   if (Config->DLL)
     return IMAGE_SUBSYSTEM_WINDOWS_GUI;
-  if (Symtab.find("main") || Symtab.find("wmain"))
+  if (Symtab.find(mangle("main")) || Symtab.find(mangle("wmain")))
     return IMAGE_SUBSYSTEM_WINDOWS_CUI;
-  if (Symtab.find("WinMain") || Symtab.find("wWinMain"))
+  if (Symtab.find(mangle("WinMain")) || Symtab.find(mangle("wWinMain")))
     return IMAGE_SUBSYSTEM_WINDOWS_GUI;
   return IMAGE_SUBSYSTEM_UNKNOWN;
 }
@@ -287,7 +294,7 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
 
   // Handle /entry
   if (auto *Arg = Args.getLastArg(OPT_entry))
-    Config->Entry = addUndefined(Arg->getValue());
+    Config->Entry = addUndefined(mangle(Arg->getValue()));
 
   // Handle /debug
   if (Args.hasArg(OPT_debug))
@@ -535,7 +542,7 @@ bool LinkerDriver::link(llvm::ArrayRef<const char *> ArgsArr) {
     OwningMBs.push_back(std::move(MB)); // take ownership
   }
 
-  Symtab.addAbsolute("__ImageBase", Config->ImageBase);
+  Symtab.addAbsolute(mangle("__ImageBase"), Config->ImageBase);
 
   // Read all input files given via the command line. Note that step()
   // doesn't read files that are specified by directive sections.
