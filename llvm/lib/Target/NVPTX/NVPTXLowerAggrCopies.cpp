@@ -185,8 +185,7 @@ bool NVPTXLowerAggrCopies::runOnFunction(Function &F) {
   //
   // Do the transformation of an aggr load/copy/set to a loop
   //
-  for (unsigned i = 0, e = aggrLoads.size(); i != e; ++i) {
-    LoadInst *load = aggrLoads[i];
+  for (LoadInst *load : aggrLoads) {
     StoreInst *store = dyn_cast<StoreInst>(*load->user_begin());
     Value *srcAddr = load->getOperand(0);
     Value *dstAddr = store->getOperand(1);
@@ -200,8 +199,7 @@ bool NVPTXLowerAggrCopies::runOnFunction(Function &F) {
     load->eraseFromParent();
   }
 
-  for (unsigned i = 0, e = aggrMemcpys.size(); i != e; ++i) {
-    MemTransferInst *cpy = aggrMemcpys[i];
+  for (MemTransferInst *cpy : aggrMemcpys) {
     Value *len = cpy->getLength();
     // llvm 2.7 version of memcpy does not have volatile
     // operand yet. So always making it non-volatile
@@ -212,8 +210,7 @@ bool NVPTXLowerAggrCopies::runOnFunction(Function &F) {
     cpy->eraseFromParent();
   }
 
-  for (unsigned i = 0, e = aggrMemsets.size(); i != e; ++i) {
-    MemSetInst *memsetinst = aggrMemsets[i];
+  for (MemSetInst *memsetinst : aggrMemsets) {
     Value *len = memsetinst->getLength();
     Value *val = memsetinst->getValue();
     convertMemSetToLoop(memsetinst, memsetinst->getDest(), len, val, Context,
