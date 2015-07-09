@@ -1625,7 +1625,10 @@ bool SIInstrInfo::isOperandLegal(const MachineInstr *MI, unsigned OpIdx,
 
   if (MO->isReg()) {
     assert(DefinedRC);
-    const TargetRegisterClass *RC = MRI.getRegClass(MO->getReg());
+    const TargetRegisterClass *RC =
+        TargetRegisterInfo::isVirtualRegister(MO->getReg()) ?
+            MRI.getRegClass(MO->getReg()) :
+            RI.getPhysRegClass(MO->getReg());
 
     // In order to be legal, the common sub-class must be equal to the
     // class of the current operand.  For example:
