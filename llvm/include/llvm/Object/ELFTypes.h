@@ -466,7 +466,7 @@ struct Elf_Phdr_Impl<ELFType<TargetEndianness, true>> {
 
 // ELFT needed for endianess.
 template <class ELFT>
-struct Elf_Hash {
+struct Elf_Hash_Impl {
   LLVM_ELF_IMPORT_TYPES_ELFT(ELFT)
   Elf_Word nbucket;
   Elf_Word nchain;

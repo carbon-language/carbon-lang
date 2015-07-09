@@ -140,7 +140,7 @@ public:
   typedef Elf_Verneed_Impl<ELFT> Elf_Verneed;
   typedef Elf_Vernaux_Impl<ELFT> Elf_Vernaux;
   typedef Elf_Versym_Impl<ELFT> Elf_Versym;
-  typedef Elf_Hash<ELFT> Elf_Hash;
+  typedef Elf_Hash_Impl<ELFT> Elf_Hash;
   typedef ELFEntityIterator<const Elf_Dyn> Elf_Dyn_Iter;
   typedef iterator_range<Elf_Dyn_Iter> Elf_Dyn_Range;
   typedef ELFEntityIterator<const Elf_Rela> Elf_Rela_Iter;
