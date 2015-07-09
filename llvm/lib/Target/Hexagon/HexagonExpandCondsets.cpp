@@ -1,3 +1,12 @@
+//===--- HexagonExpandCondsets.cpp ----------------------------------------===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+
 // Replace mux instructions with the corresponding legal instructions.
 // It is meant to work post-SSA, but still on virtual registers. It was
 // originally placed between register coalescing and machine instruction
