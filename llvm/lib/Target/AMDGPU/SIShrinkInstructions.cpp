@@ -149,7 +149,7 @@ static void foldImmediates(MachineInstr &MI, const SIInstrInfo *TII,
     return;
 
   // Try to fold Src0
-  if (Src0.isReg()) {
+  if (Src0.isReg() && MRI.hasOneUse(Src0.getReg())) {
     unsigned Reg = Src0.getReg();
     MachineInstr *Def = MRI.getUniqueVRegDef(Reg);
     if (Def && Def->isMoveImmediate()) {
