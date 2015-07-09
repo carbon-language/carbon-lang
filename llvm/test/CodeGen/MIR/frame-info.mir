@@ -1,0 +1,91 @@
+# RUN: llc -start-after machine-sink -stop-after machine-sink -o /dev/null %s | FileCheck %s
+# This test ensures that the MIR parser parses machine frame info properties
+# correctly.
+
+--- |
+
+  define i32 @test(i32 %a) {
+  entry:
+    %b = alloca i32
+    store i32 %a, i32* %b
+    %c = load i32, i32* %b
+    ret i32 %c
+  }
+
+  define i32 @test2(i32 %a) {
+  entry:
+    %b = alloca i32
+    store i32 %a, i32* %b
+    %c = load i32, i32* %b
+    ret i32 %c
+  }
+
+...
+---
+name:            test
+isSSA:           true
+tracksRegLiveness: true
+
+# CHECK: frameInfo:
+# CHECK-NEXT: isFrameAddressTaken: false
+# CHECK-NEXT: isReturnAddressTaken: false
+# CHECK-NEXT: hasStackMap: false
+# CHECK-NEXT: hasPatchPoint: false
+# CHECK-NEXT: stackSize: 0
+# CHECK-NEXT: offsetAdjustment: 0
+# Note: max alignment can be target specific when printed.
+# CHECK-NEXT: maxAlignment:
+# CHECK-NEXT: adjustsStack: false
+# CHECK-NEXT: hasCalls: false
+# CHECK-NEXT: maxCallFrameSize: 0
+# CHECK-NEXT: hasOpaqueSPAdjustment: false
+# CHECK-NEXT: hasVAStart: false
+# CHECK-NEXT: hasMustTailInVarArgFunc: false
+# CHECK: body
+frameInfo:
+  maxAlignment:    4
+body:
+  - id:          0
+    name:        entry
+...
+---
+name:            test2
+isSSA:           true
+tracksRegLiveness: true
+
+# CHECK: test2
+# CHECK: frameInfo:
+# CHECK-NEXT: isFrameAddressTaken: true
+# CHECK-NEXT: isReturnAddressTaken: true
+# CHECK-NEXT: hasStackMap: true
+# CHECK-NEXT: hasPatchPoint: true
+# CHECK-NEXT: stackSize: 4
+# CHECK-NEXT: offsetAdjustment: 4
+# Note: max alignment can be target specific when printed.
+# CHECK-NEXT: maxAlignment:
+# CHECK-NEXT: adjustsStack: true
+# CHECK-NEXT: hasCalls: true
+# CHECK-NEXT: maxCallFrameSize: 4
+# CHECK-NEXT: hasOpaqueSPAdjustment: true
+# CHECK-NEXT: hasVAStart: true
+# CHECK-NEXT: hasMustTailInVarArgFunc: true
+# CHECK: body
+frameInfo:
+  isFrameAddressTaken: true
+  isReturnAddressTaken: true
+  hasStackMap:     true
+  hasPatchPoint:   true
+  stackSize:       4
+  offsetAdjustment: 4
+  maxAlignment:    4
+  adjustsStack:    true
+  hasCalls:        true
+  maxCallFrameSize: 4
+  hasOpaqueSPAdjustment: true
+  hasVAStart:      true
+  hasMustTailInVarArgFunc: true
+body:
+  - id:          0
+    name:        entry
+...
+

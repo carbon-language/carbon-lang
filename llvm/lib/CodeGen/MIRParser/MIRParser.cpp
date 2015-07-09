@@ -21,6 +21,7 @@
 #include "llvm/AsmParser/Parser.h"
 #include "llvm/AsmParser/SlotMapping.h"
 #include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/MIRYamlMapping.h"
 #include "llvm/IR/BasicBlock.h"
@@ -101,6 +102,9 @@ public:
 
   bool initializeRegisterInfo(MachineRegisterInfo &RegInfo,
                               const yaml::MachineFunction &YamlMF);
+
+  bool initializeFrameInfo(MachineFrameInfo &MFI,
+                           const yaml::MachineFrameInfo &YamlMFI);
 
 private:
   /// Return a MIR diagnostic converted from an MI string diagnostic.
@@ -245,6 +249,8 @@ bool MIRParserImpl::initializeMachineFunction(MachineFunction &MF) {
   MF.setHasInlineAsm(YamlMF.HasInlineAsm);
   if (initializeRegisterInfo(MF.getRegInfo(), YamlMF))
     return true;
+  if (initializeFrameInfo(*MF.getFrameInfo(), YamlMF.FrameInfo))
+    return true;
 
   PerFunctionMIParsingState PFS;
   const auto &F = *MF.getFunction();
@@ -317,6 +323,25 @@ bool MIRParserImpl::initializeRegisterInfo(
   if (!YamlMF.TracksRegLiveness)
     RegInfo.invalidateLiveness();
   RegInfo.enableSubRegLiveness(YamlMF.TracksSubRegLiveness);
+  return false;
+}
+
+bool MIRParserImpl::initializeFrameInfo(MachineFrameInfo &MFI,
+                                        const yaml::MachineFrameInfo &YamlMFI) {
+  MFI.setFrameAddressIsTaken(YamlMFI.IsFrameAddressTaken);
+  MFI.setReturnAddressIsTaken(YamlMFI.IsReturnAddressTaken);
+  MFI.setHasStackMap(YamlMFI.HasStackMap);
+  MFI.setHasPatchPoint(YamlMFI.HasPatchPoint);
+  MFI.setStackSize(YamlMFI.StackSize);
+  MFI.setOffsetAdjustment(YamlMFI.OffsetAdjustment);
+  if (YamlMFI.MaxAlignment)
+    MFI.ensureMaxAlignment(YamlMFI.MaxAlignment);
+  MFI.setAdjustsStack(YamlMFI.AdjustsStack);
+  MFI.setHasCalls(YamlMFI.HasCalls);
+  MFI.setMaxCallFrameSize(YamlMFI.MaxCallFrameSize);
+  MFI.setHasOpaqueSPAdjustment(YamlMFI.HasOpaqueSPAdjustment);
+  MFI.setHasVAStart(YamlMFI.HasVAStart);
+  MFI.setHasMustTailInVarArgFunc(YamlMFI.HasMustTailInVarArgFunc);
   return false;
 }
 
