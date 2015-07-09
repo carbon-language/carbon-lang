@@ -152,13 +152,6 @@ public:
     unsigned short DwarfRegNum;
     unsigned short Size;
 
-    void MarkInvalid() { Reg = 0; }
-
-    // Only sort by the dwarf register number.
-    bool operator<(const LiveOutReg &LO) const {
-      return DwarfRegNum < LO.DwarfRegNum;
-    }
-    static bool IsInvalid(const LiveOutReg &LO) { return LO.Reg == 0; }
     LiveOutReg() : Reg(0), DwarfRegNum(0), Size(0) {}
     LiveOutReg(unsigned short Reg, unsigned short DwarfRegNum,
                unsigned short Size)

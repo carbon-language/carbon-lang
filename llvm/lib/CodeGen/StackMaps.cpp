@@ -248,10 +248,15 @@ StackMaps::parseRegisterLiveOutMask(const uint32_t *Mask) const {
   // We don't need to keep track of a register if its super-register is already
   // in the list. Merge entries that refer to the same dwarf register and use
   // the maximum size that needs to be spilled.
-  std::sort(LiveOuts.begin(), LiveOuts.end());
-  for (LiveOutVec::iterator I = LiveOuts.begin(), E = LiveOuts.end(); I != E;
-       ++I) {
-    for (LiveOutVec::iterator II = std::next(I); II != E; ++II) {
+
+  std::sort(LiveOuts.begin(), LiveOuts.end(),
+            [](const LiveOutReg &LHS, const LiveOutReg &RHS) {
+              // Only sort by the dwarf register number.
+              return LHS.DwarfRegNum < RHS.DwarfRegNum;
+            });
+
+  for (auto I = LiveOuts.begin(), E = LiveOuts.end(); I != E; ++I) {
+    for (auto II = std::next(I); II != E; ++II) {
       if (I->DwarfRegNum != II->DwarfRegNum) {
         // Skip all the now invalid entries.
         I = --II;
@@ -260,12 +265,15 @@ StackMaps::parseRegisterLiveOutMask(const uint32_t *Mask) const {
       I->Size = std::max(I->Size, II->Size);
       if (TRI->isSuperRegister(I->Reg, II->Reg))
         I->Reg = II->Reg;
-      II->MarkInvalid();
+      II->Reg = 0; // mark for deletion.
     }
   }
+
   LiveOuts.erase(
-      std::remove_if(LiveOuts.begin(), LiveOuts.end(), LiveOutReg::IsInvalid),
+      std::remove_if(LiveOuts.begin(), LiveOuts.end(),
+                     [](const LiveOutReg &LO) { return LO.Reg == 0; }),
       LiveOuts.end());
+
   return LiveOuts;
 }
 
