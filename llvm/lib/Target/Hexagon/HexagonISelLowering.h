@@ -207,6 +207,21 @@ bool isPositiveHalfWord(SDNode *N);
     /// compare a register against the immediate without having to materialize
     /// the immediate into a register.
     bool isLegalICmpImmediate(int64_t Imm) const override;
+
+    // Handling of atomic RMW instructions.
+    bool hasLoadLinkedStoreConditional() const override {
+      return true;
+    }
+    Value *emitLoadLinked(IRBuilder<> &Builder, Value *Addr,
+        AtomicOrdering Ord) const override;
+    Value *emitStoreConditional(IRBuilder<> &Builder, Value *Val,
+        Value *Addr, AtomicOrdering Ord) const override;
+    bool shouldExpandAtomicLoadInIR(LoadInst *LI) const override;
+    bool shouldExpandAtomicStoreInIR(StoreInst *SI) const override;
+    AtomicRMWExpansionKind shouldExpandAtomicRMWInIR(AtomicRMWInst *AI)
+        const override {
+      return AtomicRMWExpansionKind::LLSC;
+    }
   };
 } // end namespace llvm
 

@@ -2466,3 +2466,45 @@ bool llvm::isPositiveHalfWord(SDNode *N) {
     return true;
   }
 }
+
+Value *HexagonTargetLowering::emitLoadLinked(IRBuilder<> &Builder, Value *Addr,
+      AtomicOrdering Ord) const {
+  BasicBlock *BB = Builder.GetInsertBlock();
+  Module *M = BB->getParent()->getParent();
+  Type *Ty = cast<PointerType>(Addr->getType())->getElementType();
+  unsigned SZ = Ty->getPrimitiveSizeInBits();
+  assert((SZ == 32 || SZ == 64) && "Only 32/64-bit atomic loads supported");
+  Intrinsic::ID IntID = (SZ == 32) ? Intrinsic::hexagon_L2_loadw_locked
+                                   : Intrinsic::hexagon_L4_loadd_locked;
+  Value *Fn = Intrinsic::getDeclaration(M, IntID);
+  return Builder.CreateCall(Fn, Addr, "larx");
+}
+
+/// Perform a store-conditional operation to Addr. Return the status of the
+/// store. This should be 0 if the store succeeded, non-zero otherwise.
+Value *HexagonTargetLowering::emitStoreConditional(IRBuilder<> &Builder,
+      Value *Val, Value *Addr, AtomicOrdering Ord) const {
+  BasicBlock *BB = Builder.GetInsertBlock();
+  Module *M = BB->getParent()->getParent();
+  Type *Ty = Val->getType();
+  unsigned SZ = Ty->getPrimitiveSizeInBits();
+  assert((SZ == 32 || SZ == 64) && "Only 32/64-bit atomic stores supported");
+  Intrinsic::ID IntID = (SZ == 32) ? Intrinsic::hexagon_S2_storew_locked
+                                   : Intrinsic::hexagon_S4_stored_locked;
+  Value *Fn = Intrinsic::getDeclaration(M, IntID);
+  Value *Call = Builder.CreateCall(Fn, {Addr, Val}, "stcx");
+  Value *Cmp = Builder.CreateICmpEQ(Call, Builder.getInt32(0), "");
+  Value *Ext = Builder.CreateZExt(Cmp, Type::getInt32Ty(M->getContext()));
+  return Ext;
+}
+
+bool HexagonTargetLowering::shouldExpandAtomicLoadInIR(LoadInst *LI) const {
+  // Do not expand loads and stores that don't exceed 64 bits.
+  return LI->getType()->getPrimitiveSizeInBits() > 64;
+}
+
+bool HexagonTargetLowering::shouldExpandAtomicStoreInIR(StoreInst *SI) const {
+  // Do not expand loads and stores that don't exceed 64 bits.
+  return SI->getValueOperand()->getType()->getPrimitiveSizeInBits() > 64;
+}
+

@@ -144,8 +144,9 @@ TargetPassConfig *HexagonTargetMachine::createPassConfig(PassManagerBase &PM) {
 
 void HexagonPassConfig::addIRPasses() {
   TargetPassConfig::addIRPasses();
-
   bool NoOpt = (getOptLevel() == CodeGenOpt::None);
+
+  addPass(createAtomicExpandPass(TM));
   if (!NoOpt && EnableCommGEP)
     addPass(createHexagonCommonGEP());
 }
