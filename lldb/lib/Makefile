@@ -49,6 +49,7 @@ USEDLIBS = lldbAPI.a \
 	lldbPluginDynamicLoaderPOSIX.a \
 	lldbPluginDynamicLoaderHexagon.a \
 	lldbPluginDynamicLoaderMacOSX.a \
+	lldbPluginDynamicLoaderWindowsDYLD.a \
 	lldbPluginEmulateInstructionARM.a \
 	lldbPluginEmulateInstructionARM64.a \
 	lldbPluginEmulateInstructionMIPS.a \
