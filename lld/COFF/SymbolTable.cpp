@@ -281,7 +281,14 @@ void SymbolTable::mangleMaybe(Undefined *U) {
     return;
 
   // In Microsoft ABI, a non-member function name is mangled this way.
-  std::string Prefix = ("?" + U->getName() + "@@Y").str();
+  std::string Prefix;
+  if (Config->is64()) {
+    Prefix = ("?" + U->getName() + "@@Y").str();
+  } else {
+    if (!U->getName().startswith("_"))
+      return;
+    Prefix = ("?" + U->getName().substr(1) + "@@Y").str();
+  }
   for (auto Pair : Symtab) {
     StringRef Name = Pair.first;
     if (!Name.startswith(Prefix))

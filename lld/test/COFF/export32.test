@@ -10,7 +10,8 @@ CHECK1-NEXT:       0        0
 CHECK1-NEXT:       1   0x1008  exportfn1
 CHECK1-NEXT:       2   0x1010  exportfn2
 
-# RUN: lld -flavor link2 /out:%t.dll /dll %t.obj /export:exportfn1,@5 /export:exportfn2
+# RUN: lld -flavor link2 /out:%t.dll /dll %t.obj /export:exportfn1,@5 \
+# RUN:   /export:exportfn2 /export:mangled
 # RUN: llvm-objdump -p %t.dll | FileCheck -check-prefix=CHECK2 %s
 
 CHECK2:      Export Table:
@@ -24,6 +25,7 @@ CHECK2-NEXT:       4        0
 CHECK2-NEXT:       5   0x1008  exportfn1
 CHECK2-NEXT:       6   0x1010  exportfn2
 CHECK2-NEXT:       7   0x1010  exportfn3
+CHECK2-NEXT:       8   0x1010  mangled
 
 # RUN: lld -flavor link2 /out:%t.dll /dll %t.obj /export:exportfn1,@5,noname /export:exportfn2
 # RUN: llvm-objdump -p %t.dll | FileCheck -check-prefix=CHECK3 %s
