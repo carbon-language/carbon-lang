@@ -337,9 +337,9 @@ lowerCallFromStatepoint(ImmutableStatepoint ISP, MachineBasicBlock *LandingPad,
       // TODO: To eliminate this problem we can remove gc.result intrinsics
       //       completelly and make statepoint call to return a tuple.
       unsigned Reg = Builder.FuncInfo.CreateRegs(ISP.getActualReturnType());
-      RegsForValue RFV(*Builder.DAG.getContext(),
-                       Builder.DAG.getTargetLoweringInfo(), Reg,
-                       ISP.getActualReturnType());
+      RegsForValue RFV(
+          *Builder.DAG.getContext(), Builder.DAG.getTargetLoweringInfo(),
+          Builder.DAG.getDataLayout(), Reg, ISP.getActualReturnType());
       SDValue Chain = Builder.DAG.getEntryNode();
 
       RFV.getCopyToRegs(ReturnValue, Builder.DAG, Builder.getCurSDLoc(), Chain,

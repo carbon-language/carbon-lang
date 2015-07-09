@@ -80,14 +80,14 @@ static bool IsPTXVectorType(MVT VT) {
 /// NOTE: This is a band-aid for code that expects ComputeValueVTs to return the
 /// same number of types as the Ins/Outs arrays in LowerFormalArguments,
 /// LowerCall, and LowerReturn.
-static void ComputePTXValueVTs(const TargetLowering &TLI, Type *Ty,
-                               SmallVectorImpl<EVT> &ValueVTs,
+static void ComputePTXValueVTs(const TargetLowering &TLI, const DataLayout &DL,
+                               Type *Ty, SmallVectorImpl<EVT> &ValueVTs,
                                SmallVectorImpl<uint64_t> *Offsets = nullptr,
                                uint64_t StartingOffset = 0) {
   SmallVector<EVT, 16> TempVTs;
   SmallVector<uint64_t, 16> TempOffsets;
 
-  ComputeValueVTs(TLI, Ty, TempVTs, &TempOffsets, StartingOffset);
+  ComputeValueVTs(TLI, DL, Ty, TempVTs, &TempOffsets, StartingOffset);
   for (unsigned i = 0, e = TempVTs.size(); i != e; ++i) {
     EVT VT = TempVTs[i];
     uint64_t Off = TempOffsets[i];
@@ -960,7 +960,7 @@ NVPTXTargetLowering::getPrototype(Type *retTy, const ArgListTy &Args,
         O << "[" << sz << "]";
         // update the index for Outs
         SmallVector<EVT, 16> vtparts;
-        ComputeValueVTs(*this, Ty, vtparts);
+        ComputeValueVTs(*this, *TD, Ty, vtparts);
         if (unsigned len = vtparts.size())
           OIdx += len - 1;
         continue;
@@ -1064,9 +1064,9 @@ SDValue NVPTXTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   assert(isABI && "Non-ABI compilation is not supported");
   if (!isABI)
     return Chain;
-  const DataLayout *TD = getDataLayout();
   MachineFunction &MF = DAG.getMachineFunction();
   const Function *F = MF.getFunction();
+  auto &DL = MF.getDataLayout();
 
   SDValue tempChain = Chain;
   Chain = DAG.getCALLSEQ_START(Chain,
@@ -1096,11 +1096,11 @@ SDValue NVPTXTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
         // aggregate
         SmallVector<EVT, 16> vtparts;
         SmallVector<uint64_t, 16> Offsets;
-        ComputePTXValueVTs(*this, Ty, vtparts, &Offsets, 0);
+        ComputePTXValueVTs(*this, DL, Ty, vtparts, &Offsets, 0);
 
         unsigned align = getArgumentAlignment(Callee, CS, Ty, paramCount + 1);
         // declare .param .align <align> .b8 .param<n>[<size>];
-        unsigned sz = TD->getTypeAllocSize(Ty);
+        unsigned sz = DL.getTypeAllocSize(Ty);
         SDVTList DeclareParamVTs = DAG.getVTList(MVT::Other, MVT::Glue);
         SDValue DeclareParamOps[] = { Chain, DAG.getConstant(align, dl,
                                                              MVT::i32),
@@ -1140,7 +1140,7 @@ SDValue NVPTXTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
         EVT ObjectVT = getValueType(Ty);
         unsigned align = getArgumentAlignment(Callee, CS, Ty, paramCount + 1);
         // declare .param .align <align> .b8 .param<n>[<size>];
-        unsigned sz = TD->getTypeAllocSize(Ty);
+        unsigned sz = DL.getTypeAllocSize(Ty);
         SDVTList DeclareParamVTs = DAG.getVTList(MVT::Other, MVT::Glue);
         SDValue DeclareParamOps[] = { Chain,
                                       DAG.getConstant(align, dl, MVT::i32),
@@ -1321,7 +1321,7 @@ SDValue NVPTXTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
     SmallVector<uint64_t, 16> Offsets;
     const PointerType *PTy = dyn_cast<PointerType>(Args[i].Ty);
     assert(PTy && "Type of a byval parameter should be pointer");
-    ComputePTXValueVTs(*this, PTy->getElementType(), vtparts, &Offsets, 0);
+    ComputePTXValueVTs(*this, DL, PTy->getElementType(), vtparts, &Offsets, 0);
 
     // declare .param .align <align> .b8 .param<n>[<size>];
     unsigned sz = Outs[OIdx].Flags.getByValSize();
@@ -1371,12 +1371,12 @@ SDValue NVPTXTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   // Handle Result
   if (Ins.size() > 0) {
     SmallVector<EVT, 16> resvtparts;
-    ComputeValueVTs(*this, retTy, resvtparts);
+    ComputeValueVTs(*this, DL, retTy, resvtparts);
 
     // Declare
     //  .param .align 16 .b8 retval0[<size-in-bytes>], or
     //  .param .b<size-in-bits> retval0
-    unsigned resultsz = TD->getTypeAllocSizeInBits(retTy);
+    unsigned resultsz = DL.getTypeAllocSizeInBits(retTy);
     // Emit ".param .b<size-in-bits> retval0" instead of byte arrays only for
     // these three types to match the logic in
     // NVPTXAsmPrinter::printReturnValStr and NVPTXTargetLowering::getPrototype.
@@ -1590,13 +1590,13 @@ SDValue NVPTXTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
               Elt = DAG.getNode(ISD::TRUNCATE, dl, EltVT, Elt);
             InVals.push_back(Elt);
           }
-          Ofst += TD->getTypeAllocSize(VecVT.getTypeForEVT(F->getContext()));
+          Ofst += DL.getTypeAllocSize(VecVT.getTypeForEVT(F->getContext()));
         }
       }
     } else {
       SmallVector<EVT, 16> VTs;
       SmallVector<uint64_t, 16> Offsets;
-      ComputePTXValueVTs(*this, retTy, VTs, &Offsets, 0);
+      ComputePTXValueVTs(*this, DL, retTy, VTs, &Offsets, 0);
       assert(VTs.size() == Ins.size() && "Bad value decomposition");
       unsigned RetAlign = getArgumentAlignment(Callee, CS, retTy, 0);
       for (unsigned i = 0, e = Ins.size(); i != e; ++i) {
@@ -1608,8 +1608,7 @@ SDValue NVPTXTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
 
         SmallVector<EVT, 4> LoadRetVTs;
         EVT TheLoadType = VTs[i];
-        if (retTy->isIntegerTy() &&
-            TD->getTypeAllocSizeInBits(retTy) < 32) {
+        if (retTy->isIntegerTy() && DL.getTypeAllocSizeInBits(retTy) < 32) {
           // This is for integer types only, and specifically not for
           // aggregates.
           LoadRetVTs.push_back(MVT::i32);
@@ -2064,7 +2063,7 @@ SDValue NVPTXTargetLowering::LowerFormalArguments(
     const SmallVectorImpl<ISD::InputArg> &Ins, SDLoc dl, SelectionDAG &DAG,
     SmallVectorImpl<SDValue> &InVals) const {
   MachineFunction &MF = DAG.getMachineFunction();
-  const DataLayout *TD = getDataLayout();
+  const DataLayout &DL = MF.getDataLayout();
 
   const Function *F = MF.getFunction();
   const AttributeSet &PAL = F->getAttributes();
@@ -2118,7 +2117,7 @@ SDValue NVPTXTargetLowering::LowerFormalArguments(
       if (Ty->isAggregateType()) {
         SmallVector<EVT, 16> vtparts;
 
-        ComputePTXValueVTs(*this, Ty, vtparts);
+        ComputePTXValueVTs(*this, DL, Ty, vtparts);
         assert(vtparts.size() > 0 && "empty aggregate type not expected");
         for (unsigned parti = 0, parte = vtparts.size(); parti != parte;
              ++parti) {
@@ -2156,7 +2155,7 @@ SDValue NVPTXTargetLowering::LowerFormalArguments(
         // NOTE: Here, we lose the ability to issue vector loads for vectors
         // that are a part of a struct.  This should be investigated in the
         // future.
-        ComputePTXValueVTs(*this, Ty, vtparts, &offsets, 0);
+        ComputePTXValueVTs(*this, DL, Ty, vtparts, &offsets, 0);
         assert(vtparts.size() > 0 && "empty aggregate type not expected");
         bool aggregateIsPacked = false;
         if (StructType *STy = llvm::dyn_cast<StructType>(Ty))
@@ -2172,10 +2171,10 @@ SDValue NVPTXTargetLowering::LowerFormalArguments(
           SDValue srcAddr =
               DAG.getNode(ISD::ADD, dl, getPointerTy(), Arg,
                           DAG.getConstant(offsets[parti], dl, getPointerTy()));
-          unsigned partAlign =
-              aggregateIsPacked ? 1
-                                : TD->getABITypeAlignment(
-                                      partVT.getTypeForEVT(F->getContext()));
+          unsigned partAlign = aggregateIsPacked
+                                   ? 1
+                                   : DL.getABITypeAlignment(
+                                         partVT.getTypeForEVT(F->getContext()));
           SDValue p;
           if (Ins[InsIdx].VT.getSizeInBits() > partVT.getSizeInBits()) {
             ISD::LoadExtType ExtOp = Ins[InsIdx].Flags.isSExt() ? 
@@ -2212,9 +2211,9 @@ SDValue NVPTXTargetLowering::LowerFormalArguments(
           Value *SrcValue = Constant::getNullValue(PointerType::get(
               EltVT.getTypeForEVT(F->getContext()), llvm::ADDRESS_SPACE_PARAM));
           SDValue P = DAG.getLoad(
-              EltVT, dl, Root, Arg, MachinePointerInfo(SrcValue), false,
-              false, true,
-              TD->getABITypeAlignment(EltVT.getTypeForEVT(F->getContext())));
+              EltVT, dl, Root, Arg, MachinePointerInfo(SrcValue), false, false,
+              true,
+              DL.getABITypeAlignment(EltVT.getTypeForEVT(F->getContext())));
           if (P.getNode())
             P.getNode()->setIROrder(idx + 1);
 
@@ -2229,9 +2228,9 @@ SDValue NVPTXTargetLowering::LowerFormalArguments(
           Value *SrcValue = Constant::getNullValue(PointerType::get(
               VecVT.getTypeForEVT(F->getContext()), llvm::ADDRESS_SPACE_PARAM));
           SDValue P = DAG.getLoad(
-              VecVT, dl, Root, Arg, MachinePointerInfo(SrcValue), false,
-              false, true,
-              TD->getABITypeAlignment(VecVT.getTypeForEVT(F->getContext())));
+              VecVT, dl, Root, Arg, MachinePointerInfo(SrcValue), false, false,
+              true,
+              DL.getABITypeAlignment(VecVT.getTypeForEVT(F->getContext())));
           if (P.getNode())
             P.getNode()->setIROrder(idx + 1);
 
@@ -2275,7 +2274,7 @@ SDValue NVPTXTargetLowering::LowerFormalArguments(
             SDValue P = DAG.getLoad(
                 VecVT, dl, Root, SrcAddr, MachinePointerInfo(SrcValue), false,
                 false, true,
-                TD->getABITypeAlignment(VecVT.getTypeForEVT(F->getContext())));
+                DL.getABITypeAlignment(VecVT.getTypeForEVT(F->getContext())));
             if (P.getNode())
               P.getNode()->setIROrder(idx + 1);
 
@@ -2288,7 +2287,7 @@ SDValue NVPTXTargetLowering::LowerFormalArguments(
                 Elt = DAG.getNode(ISD::ANY_EXTEND, dl, Ins[InsIdx].VT, Elt);
               InVals.push_back(Elt);
             }
-            Ofst += TD->getTypeAllocSize(VecVT.getTypeForEVT(F->getContext()));
+            Ofst += DL.getTypeAllocSize(VecVT.getTypeForEVT(F->getContext()));
           }
           InsIdx += NumElts;
         }
@@ -2307,14 +2306,15 @@ SDValue NVPTXTargetLowering::LowerFormalArguments(
        if (ObjectVT.getSizeInBits() < Ins[InsIdx].VT.getSizeInBits()) {
         ISD::LoadExtType ExtOp = Ins[InsIdx].Flags.isSExt() ? 
                                        ISD::SEXTLOAD : ISD::ZEXTLOAD;
-        p = DAG.getExtLoad(ExtOp, dl, Ins[InsIdx].VT, Root, Arg,
-                           MachinePointerInfo(srcValue), ObjectVT, false, false,
-                           false,
-        TD->getABITypeAlignment(ObjectVT.getTypeForEVT(F->getContext())));
+        p = DAG.getExtLoad(
+            ExtOp, dl, Ins[InsIdx].VT, Root, Arg, MachinePointerInfo(srcValue),
+            ObjectVT, false, false, false,
+            DL.getABITypeAlignment(ObjectVT.getTypeForEVT(F->getContext())));
       } else {
-        p = DAG.getLoad(Ins[InsIdx].VT, dl, Root, Arg,
-                        MachinePointerInfo(srcValue), false, false, false,
-        TD->getABITypeAlignment(ObjectVT.getTypeForEVT(F->getContext())));
+        p = DAG.getLoad(
+            Ins[InsIdx].VT, dl, Root, Arg, MachinePointerInfo(srcValue), false,
+            false, false,
+            DL.getABITypeAlignment(ObjectVT.getTypeForEVT(F->getContext())));
       }
       if (p.getNode())
         p.getNode()->setIROrder(idx + 1);
@@ -2493,7 +2493,7 @@ NVPTXTargetLowering::LowerReturn(SDValue Chain, CallingConv::ID CallConv,
   } else {
     SmallVector<EVT, 16> ValVTs;
     SmallVector<uint64_t, 16> Offsets;
-    ComputePTXValueVTs(*this, RetTy, ValVTs, &Offsets, 0);
+    ComputePTXValueVTs(*this, DAG.getDataLayout(), RetTy, ValVTs, &Offsets, 0);
     assert(ValVTs.size() == OutVals.size() && "Bad return value decomposition");
 
     for (unsigned i = 0, e = Outs.size(); i != e; ++i) {
