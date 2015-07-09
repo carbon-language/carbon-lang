@@ -112,7 +112,6 @@ ARMSubtarget::ARMSubtarget(const Triple &TT, const std::string &CPU,
     : ARMGenSubtargetInfo(TT, CPU, FS), ARMProcFamily(Others),
       ARMProcClass(None), stackAlignment(4), CPUString(CPU), IsLittle(IsLittle),
       TargetTriple(TT), Options(TM.Options), TM(TM),
-      TSInfo(*TM.getDataLayout()),
       FrameLowering(initializeFrameLowering(CPU, FS)),
       // At this point initializeSubtargetDependencies has been called so
       // we can query directly.

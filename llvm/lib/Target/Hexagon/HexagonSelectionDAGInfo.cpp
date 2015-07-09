@@ -18,12 +18,6 @@ using namespace llvm;
 
 bool llvm::flag_aligned_memcpy;
 
-HexagonSelectionDAGInfo::HexagonSelectionDAGInfo(const DataLayout &DL)
-    : TargetSelectionDAGInfo(&DL) {}
-
-HexagonSelectionDAGInfo::~HexagonSelectionDAGInfo() {
-}
-
 SDValue
 HexagonSelectionDAGInfo::
 EmitTargetCodeForMemcpy(SelectionDAG &DAG, SDLoc dl, SDValue Chain,

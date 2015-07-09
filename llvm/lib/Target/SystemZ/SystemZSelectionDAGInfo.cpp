@@ -18,12 +18,6 @@ using namespace llvm;
 
 #define DEBUG_TYPE "systemz-selectiondag-info"
 
-SystemZSelectionDAGInfo::SystemZSelectionDAGInfo(const DataLayout &DL)
-    : TargetSelectionDAGInfo(&DL) {}
-
-SystemZSelectionDAGInfo::~SystemZSelectionDAGInfo() {
-}
-
 // Decide whether it is best to use a loop or straight-line code for
 // a block operation of Size bytes with source address Src and destination
 // address Dest.  Sequence is the opcode to use for straight-line code

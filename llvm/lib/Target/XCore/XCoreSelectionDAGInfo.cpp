@@ -16,12 +16,6 @@ using namespace llvm;
 
 #define DEBUG_TYPE "xcore-selectiondag-info"
 
-XCoreSelectionDAGInfo::XCoreSelectionDAGInfo(const DataLayout &DL)
-    : TargetSelectionDAGInfo(&DL) {}
-
-XCoreSelectionDAGInfo::~XCoreSelectionDAGInfo() {
-}
-
 SDValue XCoreSelectionDAGInfo::
 EmitTargetCodeForMemcpy(SelectionDAG &DAG, SDLoc dl, SDValue Chain,
                         SDValue Dst, SDValue Src, SDValue Size, unsigned Align,

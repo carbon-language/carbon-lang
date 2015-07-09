@@ -49,8 +49,8 @@ AArch64Subtarget::AArch64Subtarget(const Triple &TT, const std::string &CPU,
       HasV8_1aOps(false), HasFPARMv8(false), HasNEON(false), HasCrypto(false),
       HasCRC(false), HasZeroCycleRegMove(false), HasZeroCycleZeroing(false),
       IsLittle(LittleEndian), CPUString(CPU), TargetTriple(TT), FrameLowering(),
-      InstrInfo(initializeSubtargetDependencies(FS)),
-      TSInfo(TM.getDataLayout()), TLInfo(TM, *this) {}
+      InstrInfo(initializeSubtargetDependencies(FS)), TSInfo(),
+      TLInfo(TM, *this) {}
 
 /// ClassifyGlobalReference - Find the target operand flags that describe
 /// how a global value should be referenced for the current subtarget.

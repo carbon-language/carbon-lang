@@ -16,11 +16,6 @@ using namespace llvm;
 
 #define DEBUG_TYPE "aarch64-selectiondag-info"
 
-AArch64SelectionDAGInfo::AArch64SelectionDAGInfo(const DataLayout *DL)
-    : TargetSelectionDAGInfo(DL) {}
-
-AArch64SelectionDAGInfo::~AArch64SelectionDAGInfo() {}
-
 SDValue AArch64SelectionDAGInfo::EmitTargetCodeForMemset(
     SelectionDAG &DAG, SDLoc dl, SDValue Chain, SDValue Dst, SDValue Src,
     SDValue Size, unsigned Align, bool isVolatile,

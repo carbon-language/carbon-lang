@@ -22,8 +22,7 @@ class SystemZTargetMachine;
 
 class SystemZSelectionDAGInfo : public TargetSelectionDAGInfo {
 public:
-  explicit SystemZSelectionDAGInfo(const DataLayout &DL);
-  ~SystemZSelectionDAGInfo();
+  explicit SystemZSelectionDAGInfo() = default;
 
   SDValue EmitTargetCodeForMemcpy(SelectionDAG &DAG, SDLoc DL, SDValue Chain,
                                   SDValue Dst, SDValue Src,

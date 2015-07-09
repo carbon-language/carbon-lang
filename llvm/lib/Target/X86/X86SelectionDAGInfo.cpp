@@ -24,11 +24,6 @@ using namespace llvm;
 
 #define DEBUG_TYPE "x86-selectiondag-info"
 
-X86SelectionDAGInfo::X86SelectionDAGInfo(const DataLayout &DL)
-    : TargetSelectionDAGInfo(&DL) {}
-
-X86SelectionDAGInfo::~X86SelectionDAGInfo() {}
-
 bool X86SelectionDAGInfo::isBaseRegConflictPossible(
     SelectionDAG &DAG, ArrayRef<unsigned> ClobberSet) const {
   // We cannot use TRI->hasBasePointer() until *after* we select all basic

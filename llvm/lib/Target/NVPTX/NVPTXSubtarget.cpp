@@ -48,7 +48,7 @@ NVPTXSubtarget::NVPTXSubtarget(const Triple &TT, const std::string &CPU,
                                const NVPTXTargetMachine &TM)
     : NVPTXGenSubtargetInfo(TT, CPU, FS), PTXVersion(0), SmVersion(20), TM(TM),
       InstrInfo(), TLInfo(TM, initializeSubtargetDependencies(CPU, FS)),
-      TSInfo(TM.getDataLayout()), FrameLowering() {}
+      FrameLowering() {}
 
 bool NVPTXSubtarget::hasImageHandles() const {
   // Enable handles for Kepler+, where CUDA supports indirect surfaces and

@@ -18,12 +18,6 @@ using namespace llvm;
 
 #define DEBUG_TYPE "arm-selectiondag-info"
 
-ARMSelectionDAGInfo::ARMSelectionDAGInfo(const DataLayout &DL)
-    : TargetSelectionDAGInfo(&DL) {}
-
-ARMSelectionDAGInfo::~ARMSelectionDAGInfo() {
-}
-
 // Emit, if possible, a specialized version of the given Libcall. Typically this
 // means selecting the appropriately aligned version, but we also convert memset
 // of 0 into memclr.
