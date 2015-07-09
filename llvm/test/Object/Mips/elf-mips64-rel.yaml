@@ -58,6 +58,7 @@ Sections:
   - Name:            .rela.text
     Type:            SHT_RELA
     Flags:           [ SHF_INFO_LINK ]
+    AddressAlign:    0x8
     Info:            .text
     Relocations:
       - Offset:      0x14

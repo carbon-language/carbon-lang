@@ -9,6 +9,7 @@ Sections:
   - Name: .text
     Type: SHT_PROGBITS
     Flags: [ SHF_ALLOC, SHF_EXECINSTR ]
+    AddressAlign: 0x4
     Content: "90EBFE" # x86 machine code
                       #   NOP ; To make main's `Value` non-zero (for testing).
                       # main:
