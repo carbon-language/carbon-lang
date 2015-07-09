@@ -1,0 +1,34 @@
+RUN: llvm-readobj -mips-plt-got %p/Inputs/got-plt.exe.elf-mipsel | FileCheck %s
+
+CHECK:      PLT GOT {
+CHECK-NEXT:   Reserved entries [
+CHECK-NEXT:     Entry {
+CHECK-NEXT:       Address: 0x410814
+CHECK-NEXT:       Initial: 0x0
+CHECK-NEXT:       Purpose: PLT lazy resolver
+CHECK-NEXT:     }
+CHECK-NEXT:     Entry {
+CHECK-NEXT:       Address: 0x410818
+CHECK-NEXT:       Initial: 0x0
+CHECK-NEXT:       Purpose: Module pointer
+CHECK-NEXT:     }
+CHECK-NEXT:   ]
+CHECK-NEXT:   Entries [
+CHECK-NEXT:     Entry {
+CHECK-NEXT:       Address: 0x41081C
+CHECK-NEXT:       Initial: 0x4007C0
+CHECK-NEXT:       Value: 0x0
+CHECK-NEXT:       Type: Function (0x2)
+CHECK-NEXT:       Section: Undefined (0x0)
+CHECK-NEXT:       Name: puts@GLIBC_2.0 (71)
+CHECK-NEXT:     }
+CHECK-NEXT:     Entry {
+CHECK-NEXT:       Address: 0x410820
+CHECK-NEXT:       Initial: 0x4007C0
+CHECK-NEXT:       Value: 0x0
+CHECK-NEXT:       Type: Function (0x2)
+CHECK-NEXT:       Section: Undefined (0x0)
+CHECK-NEXT:       Name: __libc_start_main@GLIBC_2.0 (53)
+CHECK-NEXT:     }
+CHECK-NEXT:   ]
+CHECK-NEXT: }

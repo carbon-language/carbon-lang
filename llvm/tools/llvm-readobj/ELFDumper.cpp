@@ -1162,9 +1162,10 @@ public:
   typedef typename ObjectFile::Elf_Shdr Elf_Shdr;
   typedef typename ObjectFile::Elf_Sym Elf_Sym;
 
-  MipsGOTParser(const ObjectFile *Obj, StreamWriter &W) : Obj(Obj), W(W) {}
+  MipsGOTParser(const ObjectFile *Obj, StreamWriter &W);
 
-  void parseGOT(const Elf_Shdr &GOTShdr);
+  void parseGOT();
+  void parsePLT();
 
 private:
   typedef typename ObjectFile::Elf_Addr GOTEntry;
@@ -1173,35 +1174,79 @@ private:
 
   const ObjectFile *Obj;
   StreamWriter &W;
+  llvm::Optional<uint64_t> DtPltGot;
+  llvm::Optional<uint64_t> DtLocalGotNum;
+  llvm::Optional<uint64_t> DtGotSym;
+  llvm::Optional<uint64_t> DtMipsPltGot;
+  llvm::Optional<uint64_t> DtJmpRel;
 
   std::size_t getGOTTotal(ArrayRef<uint8_t> GOT) const;
   GOTIter makeGOTIter(ArrayRef<uint8_t> GOT, std::size_t EntryNum);
 
-  bool getGOTTags(uint64_t &LocalGotNum, uint64_t &GotSym);
   void printGotEntry(uint64_t GotAddr, GOTIter BeginIt, GOTIter It);
   void printGlobalGotEntry(uint64_t GotAddr, GOTIter BeginIt, GOTIter It,
                            const Elf_Sym *Sym, bool IsDynamic);
+  void printPLTEntry(uint64_t PLTAddr, GOTIter BeginIt, GOTIter It,
+                     StringRef Purpose);
+  void printPLTEntry(uint64_t PLTAddr, GOTIter BeginIt, GOTIter It,
+                     const Elf_Sym *Sym);
 };
 }
 
 template <class ELFT>
-void MipsGOTParser<ELFT>::parseGOT(const Elf_Shdr &GOTShdr) {
+MipsGOTParser<ELFT>::MipsGOTParser(const ObjectFile *Obj, StreamWriter &W)
+    : Obj(Obj), W(W) {
+  for (const auto &Entry : Obj->dynamic_table()) {
+    switch (Entry.getTag()) {
+    case ELF::DT_PLTGOT:
+      DtPltGot = Entry.getVal();
+      break;
+    case ELF::DT_MIPS_LOCAL_GOTNO:
+      DtLocalGotNum = Entry.getVal();
+      break;
+    case ELF::DT_MIPS_GOTSYM:
+      DtGotSym = Entry.getVal();
+      break;
+    case ELF::DT_MIPS_PLTGOT:
+      DtMipsPltGot = Entry.getVal();
+      break;
+    case ELF::DT_JMPREL:
+      DtJmpRel = Entry.getVal();
+      break;
+    }
+  }
+}
+
+template <class ELFT> void MipsGOTParser<ELFT>::parseGOT() {
   // See "Global Offset Table" in Chapter 5 in the following document
   // for detailed GOT description.
   // ftp://www.linux-mips.org/pub/linux/mips/doc/ABI/mipsabi.pdf
+  if (!DtPltGot) {
+    W.startLine() << "Cannot find PLTGOT dynamic table tag.\n";
+    return;
+  }
+  if (!DtLocalGotNum) {
+    W.startLine() << "Cannot find MIPS_LOCAL_GOTNO dynamic table tag.\n";
+    return;
+  }
+  if (!DtGotSym) {
+    W.startLine() << "Cannot find MIPS_GOTSYM dynamic table tag.\n";
+    return;
+  }
 
-  ErrorOr<ArrayRef<uint8_t>> GOT = Obj->getSectionContents(&GOTShdr);
+  const Elf_Shdr *GOTShdr = findSectionByAddress(Obj, *DtPltGot);
+  if (!GOTShdr) {
+    W.startLine() << "There is no .got section in the file.\n";
+    return;
+  }
+
+  ErrorOr<ArrayRef<uint8_t>> GOT = Obj->getSectionContents(GOTShdr);
   if (!GOT) {
     W.startLine() << "The .got section is empty.\n";
     return;
   }
 
-  uint64_t DtLocalGotNum;
-  uint64_t DtGotSym;
-  if (!getGOTTags(DtLocalGotNum, DtGotSym))
-    return;
-
-  if (DtLocalGotNum > getGOTTotal(*GOT)) {
+  if (*DtLocalGotNum > getGOTTotal(*GOT)) {
     W.startLine() << "MIPS_LOCAL_GOTNO exceeds a number of GOT entries.\n";
     return;
   }
@@ -1210,37 +1255,37 @@ void MipsGOTParser<ELFT>::parseGOT(const Elf_Shdr &GOTShdr) {
   const Elf_Sym *DynSymEnd = Obj->dynamic_symbol_end();
   std::size_t DynSymTotal = std::size_t(std::distance(DynSymBegin, DynSymEnd));
 
-  if (DtGotSym > DynSymTotal) {
+  if (*DtGotSym > DynSymTotal) {
     W.startLine() << "MIPS_GOTSYM exceeds a number of dynamic symbols.\n";
     return;
   }
 
-  std::size_t GlobalGotNum = DynSymTotal - DtGotSym;
+  std::size_t GlobalGotNum = DynSymTotal - *DtGotSym;
 
-  if (DtLocalGotNum + GlobalGotNum > getGOTTotal(*GOT)) {
+  if (*DtLocalGotNum + GlobalGotNum > getGOTTotal(*GOT)) {
     W.startLine() << "Number of global GOT entries exceeds the size of GOT.\n";
     return;
   }
 
   GOTIter GotBegin = makeGOTIter(*GOT, 0);
-  GOTIter GotLocalEnd = makeGOTIter(*GOT, DtLocalGotNum);
+  GOTIter GotLocalEnd = makeGOTIter(*GOT, *DtLocalGotNum);
   GOTIter It = GotBegin;
 
   DictScope GS(W, "Primary GOT");
 
-  W.printHex("Canonical gp value", GOTShdr.sh_addr + 0x7ff0);
+  W.printHex("Canonical gp value", GOTShdr->sh_addr + 0x7ff0);
   {
     ListScope RS(W, "Reserved entries");
 
     {
       DictScope D(W, "Entry");
-      printGotEntry(GOTShdr.sh_addr, GotBegin, It++);
+      printGotEntry(GOTShdr->sh_addr, GotBegin, It++);
       W.printString("Purpose", StringRef("Lazy resolver"));
     }
 
     if (It != GotLocalEnd && (*It >> (sizeof(GOTEntry) * 8 - 1)) != 0) {
       DictScope D(W, "Entry");
-      printGotEntry(GOTShdr.sh_addr, GotBegin, It++);
+      printGotEntry(GOTShdr->sh_addr, GotBegin, It++);
       W.printString("Purpose", StringRef("Module pointer (GNU extension)"));
     }
   }
@@ -1248,22 +1293,86 @@ void MipsGOTParser<ELFT>::parseGOT(const Elf_Shdr &GOTShdr) {
     ListScope LS(W, "Local entries");
     for (; It != GotLocalEnd; ++It) {
       DictScope D(W, "Entry");
-      printGotEntry(GOTShdr.sh_addr, GotBegin, It);
+      printGotEntry(GOTShdr->sh_addr, GotBegin, It);
     }
   }
   {
     ListScope GS(W, "Global entries");
 
-    GOTIter GotGlobalEnd = makeGOTIter(*GOT, DtLocalGotNum + GlobalGotNum);
-    const Elf_Sym *GotDynSym = DynSymBegin + DtGotSym;
+    GOTIter GotGlobalEnd = makeGOTIter(*GOT, *DtLocalGotNum + GlobalGotNum);
+    const Elf_Sym *GotDynSym = DynSymBegin + *DtGotSym;
     for (; It != GotGlobalEnd; ++It) {
       DictScope D(W, "Entry");
-      printGlobalGotEntry(GOTShdr.sh_addr, GotBegin, It, GotDynSym++, true);
+      printGlobalGotEntry(GOTShdr->sh_addr, GotBegin, It, GotDynSym++, true);
     }
   }
 
-  std::size_t SpecGotNum = getGOTTotal(*GOT) - DtLocalGotNum - GlobalGotNum;
+  std::size_t SpecGotNum = getGOTTotal(*GOT) - *DtLocalGotNum - GlobalGotNum;
   W.printNumber("Number of TLS and multi-GOT entries", uint64_t(SpecGotNum));
+}
+
+template <class ELFT> void MipsGOTParser<ELFT>::parsePLT() {
+  if (!DtMipsPltGot) {
+    W.startLine() << "Cannot find MIPS_PLTGOT dynamic table tag.\n";
+    return;
+  }
+  if (!DtJmpRel) {
+    W.startLine() << "Cannot find JMPREL dynamic table tag.\n";
+    return;
+  }
+
+  const Elf_Shdr *PLTShdr = findSectionByAddress(Obj, *DtMipsPltGot);
+  if (!PLTShdr) {
+    W.startLine() << "There is no .got.plt section in the file.\n";
+    return;
+  }
+  ErrorOr<ArrayRef<uint8_t>> PLT = Obj->getSectionContents(PLTShdr);
+  if (!PLT) {
+    W.startLine() << "The .got.plt section is empty.\n";
+    return;
+  }
+
+  const Elf_Shdr *PLTRelShdr = findSectionByAddress(Obj, *DtJmpRel);
+  if (!PLTShdr) {
+    W.startLine() << "There is no .rel.plt section in the file.\n";
+    return;
+  }
+
+  GOTIter PLTBegin = makeGOTIter(*PLT, 0);
+  GOTIter PLTEnd = makeGOTIter(*PLT, getGOTTotal(*PLT));
+  GOTIter It = PLTBegin;
+
+  DictScope GS(W, "PLT GOT");
+  {
+    ListScope RS(W, "Reserved entries");
+    printPLTEntry(PLTShdr->sh_addr, PLTBegin, It++, "PLT lazy resolver");
+    if (It != PLTEnd)
+      printPLTEntry(PLTShdr->sh_addr, PLTBegin, It++, "Module pointer");
+  }
+  {
+    ListScope GS(W, "Entries");
+
+    switch (PLTRelShdr->sh_type) {
+    case ELF::SHT_REL:
+      for (typename ObjectFile::Elf_Rel_Iter RI = Obj->rel_begin(PLTRelShdr),
+                                             RE = Obj->rel_end(PLTRelShdr);
+           RI != RE && It != PLTEnd; ++RI, ++It) {
+        const Elf_Sym *Sym =
+            Obj->getRelocationSymbol(&*PLTRelShdr, &*RI).second;
+        printPLTEntry(PLTShdr->sh_addr, PLTBegin, It, Sym);
+      }
+      break;
+    case ELF::SHT_RELA:
+      for (typename ObjectFile::Elf_Rela_Iter RI = Obj->rela_begin(PLTRelShdr),
+                                              RE = Obj->rela_end(PLTRelShdr);
+           RI != RE && It != PLTEnd; ++RI, ++It) {
+        const Elf_Sym *Sym =
+            Obj->getRelocationSymbol(&*PLTRelShdr, &*RI).second;
+        printPLTEntry(PLTShdr->sh_addr, PLTBegin, It, Sym);
+      }
+      break;
+    }
+  }
 }
 
 template <class ELFT>
@@ -1276,36 +1385,6 @@ typename MipsGOTParser<ELFT>::GOTIter
 MipsGOTParser<ELFT>::makeGOTIter(ArrayRef<uint8_t> GOT, std::size_t EntryNum) {
   const char *Data = reinterpret_cast<const char *>(GOT.data());
   return GOTIter(sizeof(GOTEntry), Data + EntryNum * sizeof(GOTEntry));
-}
-
-template <class ELFT>
-bool MipsGOTParser<ELFT>::getGOTTags(uint64_t &LocalGotNum, uint64_t &GotSym) {
-  bool FoundLocalGotNum = false;
-  bool FoundGotSym = false;
-  for (const auto &Entry : Obj->dynamic_table()) {
-    switch (Entry.getTag()) {
-    case ELF::DT_MIPS_LOCAL_GOTNO:
-      LocalGotNum = Entry.getVal();
-      FoundLocalGotNum = true;
-      break;
-    case ELF::DT_MIPS_GOTSYM:
-      GotSym = Entry.getVal();
-      FoundGotSym = true;
-      break;
-    }
-  }
-
-  if (!FoundLocalGotNum) {
-    W.startLine() << "Cannot find MIPS_LOCAL_GOTNO dynamic table tag.\n";
-    return false;
-  }
-
-  if (!FoundGotSym) {
-    W.startLine() << "Cannot find MIPS_GOTSYM dynamic table tag.\n";
-    return false;
-  }
-
-  return true;
 }
 
 template <class ELFT>
@@ -1335,32 +1414,44 @@ void MipsGOTParser<ELFT>::printGlobalGotEntry(uint64_t GotAddr, GOTIter BeginIt,
   W.printNumber("Name", FullSymbolName, Sym->st_name);
 }
 
+template <class ELFT>
+void MipsGOTParser<ELFT>::printPLTEntry(uint64_t PLTAddr, GOTIter BeginIt,
+                                        GOTIter It, StringRef Purpose) {
+  DictScope D(W, "Entry");
+  int64_t Offset = std::distance(BeginIt, It) * sizeof(GOTEntry);
+  W.printHex("Address", PLTAddr + Offset);
+  W.printHex("Initial", *It);
+  W.printString("Purpose", Purpose);
+}
+
+template <class ELFT>
+void MipsGOTParser<ELFT>::printPLTEntry(uint64_t PLTAddr, GOTIter BeginIt,
+                                        GOTIter It, const Elf_Sym *Sym) {
+  DictScope D(W, "Entry");
+  int64_t Offset = std::distance(BeginIt, It) * sizeof(GOTEntry);
+  W.printHex("Address", PLTAddr + Offset);
+  W.printHex("Initial", *It);
+  W.printHex("Value", Sym->st_value);
+  W.printEnum("Type", Sym->getType(), makeArrayRef(ElfSymbolTypes));
+
+  unsigned SectionIndex = 0;
+  StringRef SectionName;
+  getSectionNameIndex(*Obj, Sym, SectionName, SectionIndex);
+  W.printHex("Section", SectionName, SectionIndex);
+
+  std::string FullSymbolName = getFullSymbolName(*Obj, Sym, true);
+  W.printNumber("Name", FullSymbolName, Sym->st_name);
+}
+
 template <class ELFT> void ELFDumper<ELFT>::printMipsPLTGOT() {
   if (Obj->getHeader()->e_machine != EM_MIPS) {
     W.startLine() << "MIPS PLT GOT is available for MIPS targets only.\n";
     return;
   }
 
-  llvm::Optional<uint64_t> DtPltGot;
-  for (const auto &Entry : Obj->dynamic_table()) {
-    if (Entry.getTag() == ELF::DT_PLTGOT) {
-      DtPltGot = Entry.getVal();
-      break;
-    }
-  }
-
-  if (!DtPltGot) {
-    W.startLine() << "Cannot find PLTGOT dynamic table tag.\n";
-    return;
-  }
-
-  const Elf_Shdr *GotShdr = findSectionByAddress(Obj, *DtPltGot);
-  if (!GotShdr) {
-    W.startLine() << "There is no .got section in the file.\n";
-    return;
-  }
-
-  MipsGOTParser<ELFT>(Obj, W).parseGOT(*GotShdr);
+  MipsGOTParser<ELFT> GOTParser(Obj, W);
+  GOTParser.parseGOT();
+  GOTParser.parsePLT();
 }
 
 static const EnumEntry<unsigned> ElfMipsISAExtType[] = {
