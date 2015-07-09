@@ -1,5 +1,11 @@
 @ RUN: llvm-mc -triple thumbv6m -show-encoding < %s | FileCheck %s
 
+    adds    r1, r1, #3
+@ CHECK: adds   r1, r1, #3          @ encoding: [0xc9,0x1c]
+
+    adds    r1, #3
+@ CHECK: adds   r1, #3              @ encoding: [0x03,0x31]
+
     adds    r0, r0, #8
 @ CHECK: adds   r0, #8              @ encoding: [0x08,0x30]
 
@@ -33,6 +39,12 @@
 
     subs    r0, r0, r0
 @ CHECK: subs   r0, r0, r0          @ encoding: [0x00,0x1a]
+
+    subs    r3, r3, #5
+@ CHECK: subs   r3, r3, #5          @ encoding: [0x5b,0x1f]
+
+    subs    r3, #5
+@ CHECK: subs   r3, #5              @ encoding: [0x05,0x3b]
 
     subs    r2, r2, #8
 @ CHECK: subs   r2, #8              @ encoding: [0x08,0x3a]

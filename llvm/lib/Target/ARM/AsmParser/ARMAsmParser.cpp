@@ -5512,6 +5512,11 @@ void ARMAsmParser::tryConvertingToTwoOperandForm(StringRef Mnemonic,
     if (((Mnemonic == "add" && CarrySetting) || Mnemonic == "sub") &&
         Op5.isReg())
       Transform = false;
+
+    // Don't transform 'add/sub{s} Rd, Rd, #imm' if the immediate fits into
+    // 3-bits because the ARMARM says not to.
+    if ((Mnemonic == "add" || Mnemonic == "sub") && Op5.isImm0_7())
+      Transform = false;
   }
 
   if (Transform)
