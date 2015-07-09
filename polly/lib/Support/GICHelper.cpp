@@ -134,6 +134,8 @@ static void replace(std::string &str, const std::string &find,
 static void makeIslCompatible(std::string &str) {
   replace(str, ".", "_");
   replace(str, "\"", "_");
+  replace(str, " ", "__");
+  replace(str, "=>", "TO");
 }
 
 std::string polly::getIslCompatibleName(const std::string &Prefix,

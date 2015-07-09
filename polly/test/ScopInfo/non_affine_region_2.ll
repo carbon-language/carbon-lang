@@ -20,25 +20,25 @@
 ;    }
 ;
 ; CHECK: Region: %bb2---%bb21
-; CHECK:   Stmt_(bb3 => bb18)
+; CHECK:   Stmt_bb3__TO__bb18
 ; CHECK:         Domain :=
-; CHECK:             { Stmt_(bb3 => bb18)[i0] : i0 >= 0 and i0 <= 1023 };
+; CHECK:             { Stmt_bb3__TO__bb18[i0] : i0 >= 0 and i0 <= 1023 };
 ; CHECK:         Schedule :=
-; CHECK:             { Stmt_(bb3 => bb18)[i0] -> [i0, 0] };
-; CHECK-NOT:         { Stmt_(bb3 => bb18)[i0] -> MemRef_x_0[] };
-; CHECK-NOT:         { Stmt_(bb3 => bb18)[i0] -> MemRef_x_1[] };
+; CHECK:             { Stmt_bb3__TO__bb18[i0] -> [i0, 0] };
+; CHECK-NOT:         { Stmt_bb3__TO__bb18[i0] -> MemRef_x_0[] };
+; CHECK-NOT:         { Stmt_bb3__TO__bb18[i0] -> MemRef_x_1[] };
 ; CHECK:         ReadAccess := [Reduction Type: NONE] [Scalar: 0]
-; CHECK-NEXT:        { Stmt_(bb3 => bb18)[i0] -> MemRef_A[i0] };
-; CHECK-NOT:         { Stmt_(bb3 => bb18)[i0] -> MemRef_x_0[] };
-; CHECK-NOT:         { Stmt_(bb3 => bb18)[i0] -> MemRef_x_1[] };
+; CHECK-NEXT:        { Stmt_bb3__TO__bb18[i0] -> MemRef_A[i0] };
+; CHECK-NOT:         { Stmt_bb3__TO__bb18[i0] -> MemRef_x_0[] };
+; CHECK-NOT:         { Stmt_bb3__TO__bb18[i0] -> MemRef_x_1[] };
 ; CHECK:         MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 1]
-; CHECK-NEXT:        { Stmt_(bb3 => bb18)[i0] -> MemRef_x_2[] };
-; CHECK-NOT:         { Stmt_(bb3 => bb18)[i0] -> MemRef_x_0[] };
-; CHECK-NOT:         { Stmt_(bb3 => bb18)[i0] -> MemRef_x_1[] };
+; CHECK-NEXT:        { Stmt_bb3__TO__bb18[i0] -> MemRef_x_2[] };
+; CHECK-NOT:         { Stmt_bb3__TO__bb18[i0] -> MemRef_x_0[] };
+; CHECK-NOT:         { Stmt_bb3__TO__bb18[i0] -> MemRef_x_1[] };
 ; CHECK:         MayWriteAccess := [Reduction Type: NONE] [Scalar: 1]
-; CHECK-NEXT:        { Stmt_(bb3 => bb18)[i0] -> MemRef_x_2[] };
-; CHECK-NOT:         { Stmt_(bb3 => bb18)[i0] -> MemRef_x_0[] };
-; CHECK-NOT:         { Stmt_(bb3 => bb18)[i0] -> MemRef_x_1[] };
+; CHECK-NEXT:        { Stmt_bb3__TO__bb18[i0] -> MemRef_x_2[] };
+; CHECK-NOT:         { Stmt_bb3__TO__bb18[i0] -> MemRef_x_0[] };
+; CHECK-NOT:         { Stmt_bb3__TO__bb18[i0] -> MemRef_x_1[] };
 ; CHECK:   Stmt_bb18
 ; CHECK:         Domain :=
 ; CHECK:             { Stmt_bb18[i0] : i0 >= 0 and i0 <= 1023 };

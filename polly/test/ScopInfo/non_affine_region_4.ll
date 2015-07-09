@@ -13,19 +13,19 @@
 ;    }
 ;
 ; CHECK:    Region: %bb1---%bb11
-; CHECK:      Stmt_(bb2 => bb7)
+; CHECK:      Stmt_bb2__TO__bb7
 ; CHECK:            Domain :=
-; CHECK:                { Stmt_(bb2 => bb7)[i0] : i0 >= 0 and i0 <= 1023 };
+; CHECK:                { Stmt_bb2__TO__bb7[i0] : i0 >= 0 and i0 <= 1023 };
 ; CHECK:            Schedule :=
-; CHECK:                { Stmt_(bb2 => bb7)[i0] -> [i0, 0] };
+; CHECK:                { Stmt_bb2__TO__bb7[i0] -> [i0, 0] };
 ; CHECK:            ReadAccess := [Reduction Type: NONE] [Scalar: 0]
-; CHECK:                { Stmt_(bb2 => bb7)[i0] -> MemRef_A[i0] };
+; CHECK:                { Stmt_bb2__TO__bb7[i0] -> MemRef_A[i0] };
 ; CHECK:            MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 1]
-; CHECK:                { Stmt_(bb2 => bb7)[i0] -> MemRef_x[] };
+; CHECK:                { Stmt_bb2__TO__bb7[i0] -> MemRef_x[] };
 ; CHECK:            MustWriteAccess :=  [Reduction Type: NONE] [Scalar: 1]
-; CHECK:                { Stmt_(bb2 => bb7)[i0] -> MemRef_y[] };
+; CHECK:                { Stmt_bb2__TO__bb7[i0] -> MemRef_y[] };
 ; CHECK:            MayWriteAccess := [Reduction Type: NONE] [Scalar: 1]
-; CHECK:                { Stmt_(bb2 => bb7)[i0] -> MemRef_y[] };
+; CHECK:                { Stmt_bb2__TO__bb7[i0] -> MemRef_y[] };
 ; CHECK:      Stmt_bb7
 ; CHECK:            Domain :=
 ; CHECK:                { Stmt_bb7[i0] : i0 >= 0 and i0 <= 1023 };

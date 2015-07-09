@@ -4,7 +4,7 @@
 ; defined and used on the non-affine subregion only, thus we do not need
 ; to represent the definition and uses in the model.
 ;
-; CHECK:          Stmt_(bb2 => bb11)
+; CHECK:          Stmt_bb2__TO__bb11
 ; CHECK-NOT:        [Scalar: 1]
 ; CHECK-NOT:        MemRef_x
 ;

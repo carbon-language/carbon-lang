@@ -11,17 +11,17 @@
 ; CHECK:    Region: %bb1---%bb12
 ; CHECK:    Max Loop Depth:  1
 ; CHECK:    Statements {
-; CHECK:      Stmt_(bb3 => bb10)
+; CHECK:      Stmt_bb3__TO__bb10
 ; CHECK:            Domain :=
-; CHECK:                { Stmt_(bb3 => bb10)[i0] : i0 >= 0 and i0 <= 1023 };
+; CHECK:                { Stmt_bb3__TO__bb10[i0] : i0 >= 0 and i0 <= 1023 };
 ; CHECK:            Schedule :=
-; CHECK:                { Stmt_(bb3 => bb10)[i0] -> [i0] };
+; CHECK:                { Stmt_bb3__TO__bb10[i0] -> [i0] };
 ; CHECK:            ReadAccess := [Reduction Type: NONE] [Scalar: 0]
-; CHECK:                { Stmt_(bb3 => bb10)[i0] -> MemRef_C[i0] };
+; CHECK:                { Stmt_bb3__TO__bb10[i0] -> MemRef_C[i0] };
 ; CHECK:            ReadAccess := [Reduction Type: +] [Scalar: 0]
-; CHECK:                { Stmt_(bb3 => bb10)[i0] -> MemRef_A[i0] };
+; CHECK:                { Stmt_bb3__TO__bb10[i0] -> MemRef_A[i0] };
 ; CHECK:            MayWriteAccess :=  [Reduction Type: +] [Scalar: 0]
-; CHECK:                { Stmt_(bb3 => bb10)[i0] -> MemRef_A[i0] };
+; CHECK:                { Stmt_bb3__TO__bb10[i0] -> MemRef_A[i0] };
 ; CHECK:    }
 
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"

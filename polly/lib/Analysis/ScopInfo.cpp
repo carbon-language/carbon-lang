@@ -1083,7 +1083,7 @@ ScopStmt::ScopStmt(Scop &parent, TempScop &tempScop, const Region &CurRegion,
   for (unsigned i = 0, e = Nest.size(); i < e; ++i)
     NestLoops[i] = Nest[i];
 
-  BaseName = getIslCompatibleName("Stmt_(", R.getNameStr(), ")");
+  BaseName = getIslCompatibleName("Stmt_", R.getNameStr(), "");
 
   Domain = buildDomain(tempScop, CurRegion);
   buildSchedule(ScheduleVec);

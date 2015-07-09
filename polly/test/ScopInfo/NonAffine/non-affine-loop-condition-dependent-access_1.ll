@@ -10,17 +10,17 @@
 ; SCALAR:    Alias Groups (0):
 ; SCALAR:        n/a
 ; SCALAR:    Statements {
-; SCALAR:      Stmt_(bb3 => bb11)
+; SCALAR:      Stmt_bb3__TO__bb11
 ; SCALAR:            Domain :=
-; SCALAR:                { Stmt_(bb3 => bb11)[i0] : i0 >= 0 and i0 <= 1023 };
+; SCALAR:                { Stmt_bb3__TO__bb11[i0] : i0 >= 0 and i0 <= 1023 };
 ; SCALAR:            Schedule :=
-; SCALAR:                { Stmt_(bb3 => bb11)[i0] -> [i0] };
+; SCALAR:                { Stmt_bb3__TO__bb11[i0] -> [i0] };
 ; SCALAR:            ReadAccess := [Reduction Type: NONE] [Scalar: 0]
-; SCALAR:                { Stmt_(bb3 => bb11)[i0] -> MemRef_C[i0] };
+; SCALAR:                { Stmt_bb3__TO__bb11[i0] -> MemRef_C[i0] };
 ; SCALAR:            ReadAccess := [Reduction Type: +] [Scalar: 0]
-; SCALAR:                { Stmt_(bb3 => bb11)[i0] -> MemRef_A[o0] : o0 <= 2147483645 and o0 >= -2147483648 };
+; SCALAR:                { Stmt_bb3__TO__bb11[i0] -> MemRef_A[o0] : o0 <= 2147483645 and o0 >= -2147483648 };
 ; SCALAR:            MayWriteAccess := [Reduction Type: +] [Scalar: 0]
-; SCALAR:                { Stmt_(bb3 => bb11)[i0] -> MemRef_A[o0] : o0 <= 2147483645 and o0 >= -2147483648 };
+; SCALAR:                { Stmt_bb3__TO__bb11[i0] -> MemRef_A[o0] : o0 <= 2147483645 and o0 >= -2147483648 };
 ; SCALAR:    }
 
 ;
