@@ -6408,7 +6408,9 @@ static bool hasReassocSibling(const MachineInstr &Inst, bool &Commuted) {
 //       2. Other math / logic operations (and, or)
 static bool isAssociativeAndCommutative(unsigned Opcode) {
   switch (Opcode) {
+  case X86::ADDSDrr:
   case X86::ADDSSrr:
+  case X86::VADDSDrr:
   case X86::VADDSSrr:
   case X86::MULSSrr:
   case X86::VMULSSrr:

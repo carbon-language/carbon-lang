@@ -144,7 +144,7 @@ define float @reassociate_adds6(float %x0, float %x1, float %x2, float %x3) {
   ret float %t2
 }
 
-; Verify that SSE and AVX scalar single precison multiplies are reassociated.
+; Verify that SSE and AVX scalar single-precison multiplies are reassociated.
 
 define float @reassociate_muls1(float %x0, float %x1, float %x2, float %x3) {
 ; SSE-LABEL: reassociate_muls1:
@@ -164,4 +164,26 @@ define float @reassociate_muls1(float %x0, float %x1, float %x2, float %x3) {
   %t1 = fmul float %x2, %t0
   %t2 = fmul float %x3, %t1
   ret float %t2
+}
+
+; Verify that SSE and AVX scalar double-precison adds are reassociated.
+
+define double @reassociate_adds_double(double %x0, double %x1, double %x2, double %x3) {
+; SSE-LABEL: reassociate_adds_double:
+; SSE:       # BB#0:
+; SSE-NEXT:    divsd %xmm1, %xmm0
+; SSE-NEXT:    addsd %xmm3, %xmm2
+; SSE-NEXT:    addsd %xmm2, %xmm0
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: reassociate_adds_double:
+; AVX:       # BB#0:
+; AVX-NEXT:    vdivsd %xmm1, %xmm0, %xmm0
+; AVX-NEXT:    vaddsd %xmm3, %xmm2, %xmm1
+; AVX-NEXT:    vaddsd %xmm1, %xmm0, %xmm0
+; AVX-NEXT:    retq
+  %t0 = fdiv double %x0, %x1
+  %t1 = fadd double %x2, %t0
+  %t2 = fadd double %x3, %t1
+  ret double %t2
 }
