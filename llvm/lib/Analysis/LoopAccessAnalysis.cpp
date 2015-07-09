@@ -222,18 +222,40 @@ void LoopAccessInfo::RuntimePointerCheck::groupChecks(
   for (unsigned Pointer = 0; Pointer < Pointers.size(); ++Pointer)
     PositionMap[Pointers[Pointer]] = Pointer;
 
+  // We need to keep track of what pointers we've already seen so we
+  // don't process them twice.
+  SmallSet<unsigned, 2> Seen;
+
   // Go through all equivalence classes, get the the "pointer check groups"
-  // and add them to the overall solution.
-  for (auto DI = DepCands.begin(), DE = DepCands.end(); DI != DE; ++DI) {
-    if (!DI->isLeader())
+  // and add them to the overall solution. We use the order in which accesses
+  // appear in 'Pointers' to enforce determinism.
+  for (unsigned I = 0; I < Pointers.size(); ++I) {
+    // We've seen this pointer before, and therefore already processed
+    // its equivalence class.
+    if (Seen.count(I))
       continue;
 
-    SmallVector<CheckingPtrGroup, 2> Groups;
+    MemoryDepChecker::MemAccessInfo Access(Pointers[I], IsWritePtr[I]);
 
-    for (auto MI = DepCands.member_begin(DI), ME = DepCands.member_end();
+    SmallVector<CheckingPtrGroup, 2> Groups;
+    auto LeaderI = DepCands.findValue(DepCands.getLeaderValue(Access));
+
+    SmallVector<unsigned, 2> MemberIndices;
+
+    // Get all indeces of the members of this equivalence class and sort them.
+    // This will allow us to process all accesses in the order in which they
+    // were added to the RuntimePointerCheck.
+    for (auto MI = DepCands.member_begin(LeaderI), ME = DepCands.member_end();
          MI != ME; ++MI) {
       unsigned Pointer = PositionMap[MI->getPointer()];
+      MemberIndices.push_back(Pointer);
+    }
+    std::sort(MemberIndices.begin(), MemberIndices.end());
+
+    for (unsigned Pointer : MemberIndices) {
       bool Merged = false;
+      // Mark this pointer as seen.
+      Seen.insert(Pointer);
 
       // Go through all the existing sets and see if we can find one
       // which can include this pointer.
