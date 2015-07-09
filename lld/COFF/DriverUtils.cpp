@@ -81,9 +81,11 @@ private:
 // Returns /machine's value.
 ErrorOr<MachineTypes> getMachineType(StringRef S) {
   MachineTypes MT = StringSwitch<MachineTypes>(S.lower())
-                        .Case("arm", IMAGE_FILE_MACHINE_ARMNT)
                         .Case("x64", IMAGE_FILE_MACHINE_AMD64)
+                        .Case("amd64", IMAGE_FILE_MACHINE_AMD64)
                         .Case("x86", IMAGE_FILE_MACHINE_I386)
+                        .Case("i386", IMAGE_FILE_MACHINE_I386)
+                        .Case("arm", IMAGE_FILE_MACHINE_ARMNT)
                         .Default(IMAGE_FILE_MACHINE_UNKNOWN);
   if (MT != IMAGE_FILE_MACHINE_UNKNOWN)
     return MT;
