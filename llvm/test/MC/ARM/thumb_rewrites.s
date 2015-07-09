@@ -15,6 +15,9 @@
     add     r0, r0, r8
 @ CHECK: add    r0, r8              @ encoding: [0x40,0x44]
 
+    add     r1, r8, r1
+@ CHECK: add    r1, r8              @ encoding: [0x41,0x44]
+
     add     sp, sp, r0
 @ CHECK: add    sp, r0              @ encoding: [0x85,0x44]
 
@@ -52,10 +55,16 @@
     sub     sp, sp, #16
 @ CHECK: sub    sp, #16             @ encoding: [0x84,0xb0]
 
+    ands    r0, r1, r0
+@ CHECK: ands   r0, r1              @ encoding: [0x08,0x40]
+
     ands    r0, r0, r1
 @ CHECK: ands   r0, r1              @ encoding: [0x08,0x40]
 
     eors    r0, r0, r1
+@ CHECK: eors   r0, r1              @ encoding: [0x48,0x40]
+
+    eors    r0, r1, r0
 @ CHECK: eors   r0, r1              @ encoding: [0x48,0x40]
 
     lsls    r0, r0, r1
@@ -70,6 +79,9 @@
     adcs    r0, r0, r1
 @ CHECK: adcs   r0, r1              @ encoding: [0x48,0x41]
 
+    adcs    r0, r1, r0
+@ CHECK: adcs   r0, r1              @ encoding: [0x48,0x41]
+
     sbcs    r0, r0, r1
 @ CHECK: sbcs   r0, r1              @ encoding: [0x88,0x41]
 
@@ -77,6 +89,9 @@
 @ CHECK: rors   r0, r1              @ encoding: [0xc8,0x41]
 
     orrs    r0, r0, r1
+@ CHECK: orrs   r0, r1              @ encoding: [0x08,0x43]
+
+    orrs    r0, r1, r0
 @ CHECK: orrs   r0, r1              @ encoding: [0x08,0x43]
 
     bics    r0, r0, r1

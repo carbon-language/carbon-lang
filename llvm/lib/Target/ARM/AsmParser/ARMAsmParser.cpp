@@ -5504,23 +5504,41 @@ void ARMAsmParser::tryConvertingToTwoOperandForm(StringRef Mnemonic,
   // then transform to 2 operand version of the same instruction
   // e.g. 'adds r0, r0, #1' transforms to 'adds r0, #1'
   bool Transform = Op3.getReg() == Op4.getReg();
+
+  // For communtative operations, we might be able to transform if we swap
+  // Op4 and Op5.  The 'ADD Rdm, SP, Rdm' form is already handled specially
+  // as tADDrsp.
+  const ARMOperand *LastOp = &Op5;
+  bool Swap = false;
+  if (!Transform && Op5.isReg() && Op3.getReg() == Op5.getReg() &&
+      ((Mnemonic == "add" && Op4.getReg() != ARM::SP) ||
+       Mnemonic == "and" || Mnemonic == "eor" ||
+       Mnemonic == "adc" || Mnemonic == "orr")) {
+    Swap = true;
+    LastOp = &Op4;
+    Transform = true;
+  }
+
   // If both registers are the same then remove one of them from
   // the operand list, with certain exceptions.
   if (Transform) {
     // Don't transform 'adds Rd, Rd, Rm' or 'sub{s} Rd, Rd, Rm' because the
     // 2 operand forms don't exist.
     if (((Mnemonic == "add" && CarrySetting) || Mnemonic == "sub") &&
-        Op5.isReg())
+        LastOp->isReg())
       Transform = false;
 
     // Don't transform 'add/sub{s} Rd, Rd, #imm' if the immediate fits into
     // 3-bits because the ARMARM says not to.
-    if ((Mnemonic == "add" || Mnemonic == "sub") && Op5.isImm0_7())
+    if ((Mnemonic == "add" || Mnemonic == "sub") && LastOp->isImm0_7())
       Transform = false;
   }
 
-  if (Transform)
+  if (Transform) {
+    if (Swap)
+      std::swap(Op4, Op5);
     Operands.erase(Operands.begin() + 3);
+  }
 }
 
 bool ARMAsmParser::shouldOmitCCOutOperand(StringRef Mnemonic,
