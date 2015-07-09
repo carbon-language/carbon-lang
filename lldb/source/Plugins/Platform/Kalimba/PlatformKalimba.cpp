@@ -322,21 +322,3 @@ PlatformKalimba::CalculateTrapHandlerSymbolNames ()
 {   
     // TODO Research this sometime.
 }   
-
-Error
-PlatformKalimba::LaunchNativeProcess (
-    ProcessLaunchInfo &,
-    lldb_private::NativeProcessProtocol::NativeDelegate &,
-    NativeProcessProtocolSP &)
-{
-    return Error();
-}
-
-Error
-PlatformKalimba::AttachNativeProcess (lldb::pid_t,
-                                    lldb_private::NativeProcessProtocol::NativeDelegate &,
-                                    NativeProcessProtocolSP &)
-{
-    return Error();
-}
-

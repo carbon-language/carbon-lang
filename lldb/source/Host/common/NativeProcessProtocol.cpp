@@ -441,3 +441,25 @@ NativeProcessProtocol::Terminate ()
 {
     // Default implementation does nothing.
 }
+
+#ifndef __linux__
+// These need to be implemented to support lldb-gdb-server on a given platform. Stubs are
+// provided to make the rest of the code link on non-supported platforms.
+
+Error
+NativeProcessProtocol::Launch (ProcessLaunchInfo &launch_info,
+        NativeDelegate &native_delegate,
+        NativeProcessProtocolSP &process_sp)
+{
+    llvm_unreachable("Platform has no NativeProcessProtocol support");
+}
+
+Error
+NativeProcessProtocol::Attach (lldb::pid_t pid,
+        NativeDelegate &native_delegate,
+        NativeProcessProtocolSP &process_sp)
+{
+    llvm_unreachable("Platform has no NativeProcessProtocol support");
+}
+
+#endif

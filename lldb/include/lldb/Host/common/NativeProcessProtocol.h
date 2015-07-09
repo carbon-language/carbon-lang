@@ -35,8 +35,6 @@ namespace lldb_private
         friend class SoftwareBreakpoint;
 
     public:
-        static NativeProcessProtocol *
-        CreateInstance (lldb::pid_t pid);
 
         // lldb_private::Host calls should be used to launch a process for debugging, and
         // then the process should be attached to. When attaching to a process
@@ -44,7 +42,6 @@ namespace lldb_private
         // and then this function should be called.
         NativeProcessProtocol (lldb::pid_t pid);
 
-    public:
         virtual ~NativeProcessProtocol ()
         {
         }
@@ -296,6 +293,62 @@ namespace lldb_private
 
         virtual Error
         GetFileLoadAddress(const llvm::StringRef& file_name, lldb::addr_t& load_addr) = 0;
+
+        //------------------------------------------------------------------
+        /// Launch a process for debugging. This method will create an concrete
+        /// instance of NativeProcessProtocol, based on the host platform.
+        /// (e.g. NativeProcessLinux on linux, etc.)
+        ///
+        /// @param[in] launch_info
+        ///     Information required to launch the process.
+        ///
+        /// @param[in] native_delegate
+        ///     The delegate that will receive messages regarding the
+        ///     inferior.  Must outlive the NativeProcessProtocol
+        ///     instance.
+        ///
+        /// @param[out] process_sp
+        ///     On successful return from the method, this parameter
+        ///     contains the shared pointer to the
+        ///     NativeProcessProtocol that can be used to manipulate
+        ///     the native process.
+        ///
+        /// @return
+        ///     An error object indicating if the operation succeeded,
+        ///     and if not, what error occurred.
+        //------------------------------------------------------------------
+        static Error
+        Launch (ProcessLaunchInfo &launch_info,
+                NativeDelegate &native_delegate,
+                NativeProcessProtocolSP &process_sp);
+
+        //------------------------------------------------------------------
+        /// Attach to an existing process. This method will create an concrete
+        /// instance of NativeProcessProtocol, based on the host platform.
+        /// (e.g. NativeProcessLinux on linux, etc.)
+        ///
+        /// @param[in] pid
+        ///     pid of the process locatable
+        ///
+        /// @param[in] native_delegate
+        ///     The delegate that will receive messages regarding the
+        ///     inferior.  Must outlive the NativeProcessProtocol
+        ///     instance.
+        ///
+        /// @param[out] process_sp
+        ///     On successful return from the method, this parameter
+        ///     contains the shared pointer to the
+        ///     NativeProcessProtocol that can be used to manipulate
+        ///     the native process.
+        ///
+        /// @return
+        ///     An error object indicating if the operation succeeded,
+        ///     and if not, what error occurred.
+        //------------------------------------------------------------------
+        static Error
+        Attach (lldb::pid_t pid,
+                NativeDelegate &native_delegate,
+                NativeProcessProtocolSP &process_sp);
 
     protected:
         lldb::pid_t m_pid;
