@@ -216,3 +216,67 @@ for.body:                                         ; preds = %for.body, %entry
 for.end:                                          ; preds = %for.body
   ret void
 }
+
+; Don't merge pointers if there is some other check which could be falsely
+; invalidated. For example, in the following loop:
+;
+; for (i = 0; i < 5000; ++i)
+;   a[i + offset] = a[i] + a[i + 10000]
+;
+; we should not merge the intervals associated with the reads (0,5000) and
+; (10000, 15000) into (0, 15000) as this will pottentially fail the check
+; against the interval associated with the write.
+
+; CHECK: function 'testi':
+; CHECK: Run-time memory checks:
+; CHECK-NEXT:   Check 0:
+; CHECK-NEXT:     Comparing group 0:
+; CHECK-NEXT:       %storeidx = getelementptr inbounds i16, i16* %a, i64 %store_ind
+; CHECK-NEXT:     Against group 1:
+; CHECK-NEXT:       %arrayidxA1 = getelementptr i16, i16* %a, i64 %ind
+; CHECK-NEXT:   Check 1:
+; CHECK-NEXT:     Comparing group 0:
+; CHECK-NEXT:       %storeidx = getelementptr inbounds i16, i16* %a, i64 %store_ind
+; CHECK-NEXT:     Against group 2:
+; CHECK-NEXT:       %arrayidxA2 = getelementptr i16, i16* %a, i64 %ind2
+; CHECK-NEXT:   Grouped accesses:
+; CHECK-NEXT:     Group 0:
+; CHECK-NEXT:       (Low: ((2 * %offset) + %a) High: (9998 + (2 * %offset) + %a))
+; CHECK-NEXT:         Member: {((2 * %offset) + %a),+,2}<nsw><%for.body>
+; CHECK-NEXT:     Group 1:
+; CHECK-NEXT:       (Low: %a High: (9998 + %a))
+; CHECK-NEXT:         Member: {%a,+,2}<%for.body>
+; CHECK-NEXT:     Group 2:
+; CHECK-NEXT:       (Low: (20000 + %a) High: (29998 + %a))
+; CHECK-NEXT:         Member: {(20000 + %a),+,2}<%for.body>
+
+define void @testi(i16* %a,
+                   i64 %offset) {
+entry:
+  br label %for.body
+
+for.body:                                         ; preds = %for.body, %entry
+  %ind = phi i64 [ 0, %entry ], [ %add, %for.body ]
+  %store_ind = phi i64 [ %offset, %entry ], [ %store_ind_inc, %for.body ]
+
+  %add = add nuw nsw i64 %ind, 1
+  %store_ind_inc = add nuw nsw i64 %store_ind, 1
+
+  %arrayidxA1 = getelementptr i16, i16* %a, i64 %ind
+  %ind2 = add nuw nsw i64 %ind, 10000
+  %arrayidxA2 = getelementptr i16, i16* %a, i64 %ind2
+
+  %loadA1 = load i16, i16* %arrayidxA1, align 2
+  %loadA2 = load i16, i16* %arrayidxA2, align 2
+
+  %addres = add i16 %loadA1, %loadA2
+
+  %storeidx = getelementptr inbounds i16, i16* %a, i64 %store_ind
+  store i16 %addres, i16* %storeidx, align 2
+
+  %exitcond = icmp eq i64 %add, 5000
+  br i1 %exitcond, label %for.end, label %for.body
+
+for.end:                                          ; preds = %for.body
+  ret void
+}
