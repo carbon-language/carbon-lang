@@ -724,11 +724,11 @@ ELFFile<ELFT>::ELFFile(StringRef Object, std::error_code &EC)
 template <class ELFT>
 void ELFFile<ELFT>::scanDynamicTable() {
   // Build load-address to file-offset map.
-  typedef typename IntervalMap<
+  typedef IntervalMap<
       uintX_t, uintptr_t,
       IntervalMapImpl::NodeSizer<uintX_t, uintptr_t>::LeafSize,
       IntervalMapHalfOpenInfo<uintX_t>> LoadMapT;
-  LoadMapT::Allocator Alloc;
+  typename LoadMapT::Allocator Alloc;
   LoadMapT LoadMap(Alloc);
 
   for (Elf_Phdr_Iter PhdrI = program_header_begin(),
