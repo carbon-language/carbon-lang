@@ -59,20 +59,31 @@ entry:
 ; Check that we can get the exception code from eax to the printf.
 
 ; CHECK-LABEL: _main:
+; CHECK: pushl %ebp
+; CHECK: movl %esp, %ebp
+;       Ensure that we push *all* the CSRs, since they are clobbered by the
+;       __except block.
+; CHECK: pushl %ebx
+; CHECK: pushl %edi
+; CHECK: pushl %esi
+
 ; CHECK: Lmain$frame_escape_0 = [[code_offs:[-0-9]+]]
 ; CHECK: Lmain$frame_escape_1 = [[reg_offs:[-0-9]+]]
 ; CHECK: movl %esp, [[reg_offs]](%ebp)
 ; CHECK: movl $L__ehtable$main,
 ; 	EH state 0
-; CHECK: movl $0, -4(%ebp)
+; CHECK: movl $0, -16(%ebp)
 ; CHECK: calll _crash
+; CHECK: popl %esi
+; CHECK: popl %edi
+; CHECK: popl %ebx
 ; CHECK: retl
 ; CHECK: # Block address taken
 ; 	stackrestore
-; CHECK: movl [[reg_offs]](%ebp), %esp
+; CHECK: movl -24(%ebp), %esp
 ; 	EH state -1
 ; CHECK: movl [[code_offs]](%ebp), %[[code:[a-z]+]]
-; CHECK: movl $-1, -4(%ebp)
+; CHECK: movl $-1, -16(%ebp)
 ; CHECK-DAG: movl %[[code]], 4(%esp)
 ; CHECK-DAG: movl $_str, (%esp)
 ; CHECK: calll _printf

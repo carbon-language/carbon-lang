@@ -3258,9 +3258,24 @@ X86TargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
                                   RegsToPass[i].second.getValueType()));
 
   // Add a register mask operand representing the call-preserved registers.
-  const TargetRegisterInfo *TRI = Subtarget->getRegisterInfo();
-  const uint32_t *Mask = TRI->getCallPreservedMask(MF, CallConv);
+  const uint32_t *Mask = RegInfo->getCallPreservedMask(MF, CallConv);
   assert(Mask && "Missing call preserved mask for calling convention");
+
+  // If this is an invoke in a 32-bit function using an MSVC personality, assume
+  // the function clobbers all registers. If an exception is thrown, the runtime
+  // will not restore CSRs.
+  // FIXME: Model this more precisely so that we can register allocate across
+  // the normal edge and spill and fill across the exceptional edge.
+  if (!Is64Bit && CLI.CS && CLI.CS->isInvoke()) {
+    const Function *CallerFn = MF.getFunction();
+    EHPersonality Pers =
+        CallerFn->hasPersonalityFn()
+            ? classifyEHPersonality(CallerFn->getPersonalityFn())
+            : EHPersonality::Unknown;
+    if (isMSVCEHPersonality(Pers))
+      Mask = RegInfo->getNoPreservedMask();
+  }
+
   Ops.push_back(DAG.getRegisterMask(Mask));
 
   if (InFlag.getNode())
