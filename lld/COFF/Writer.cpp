@@ -327,9 +327,11 @@ void Writer::createSymbolAndStringTable() {
         memcpy(Sym.Name.ShortName, Name.data(), Name.size());
       }
 
+      COFFSymbolRef DSymRef= D->getCOFFSymbol();
       Sym.Value = SymbolValue;
       Sym.SectionNumber = SymSec->SectionIndex;
-      Sym.StorageClass = IMAGE_SYM_CLASS_NULL;
+      Sym.Type = DSymRef.getType();
+      Sym.StorageClass = DSymRef.getStorageClass();
       Sym.NumberOfAuxSymbols = 0;
       OutputSymtab.push_back(Sym);
     }

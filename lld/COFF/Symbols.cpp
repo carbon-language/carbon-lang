@@ -209,6 +209,14 @@ uint64_t Defined::getFileOff() {
   llvm_unreachable("unknown symbol kind");
 }
 
+COFFSymbolRef DefinedCOFF::getCOFFSymbol() {
+  size_t SymSize = File->getCOFFObj()->getSymbolTableEntrySize();
+  if (SymSize == sizeof(coff_symbol16))
+    return COFFSymbolRef(reinterpret_cast<const coff_symbol16 *>(Sym));
+  assert(SymSize == sizeof(coff_symbol32));
+  return COFFSymbolRef(reinterpret_cast<const coff_symbol32 *>(Sym));
+}
+
 ErrorOr<std::unique_ptr<InputFile>> Lazy::getMember() {
   auto MBRefOrErr = File->getMember(&Sym);
   if (auto EC = MBRefOrErr.getError())
