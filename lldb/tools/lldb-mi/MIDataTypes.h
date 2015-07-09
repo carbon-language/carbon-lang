@@ -51,18 +51,14 @@ const bool failure = false;
 // Portability issues
 #ifdef _WIN64
 typedef unsigned __int64 size_t;
-typedef unsigned __int64 PointerToInteger_t;
 typedef __int64 MIint;
 typedef unsigned __int64 MIuint;
 #else
 #ifdef _WIN32
 typedef unsigned int size_t;
-typedef unsigned int PointerToInteger_t;
 typedef int MIint;
 typedef unsigned int MIuint;
 #else
-//       typedef     long unsigned int size_t; // size_t already defined
-typedef unsigned int PointerToInteger_t;
 typedef int MIint;
 typedef unsigned int MIuint;
 
@@ -74,8 +70,6 @@ typedef unsigned int MIuint;
 // Common types:
 
 // Fundamentals:
-typedef float MIflt;
-typedef double MIdbl;
 typedef long long MIint64;           // 64bit signed integer.
 typedef unsigned long long MIuint64; // 64bit unsigned integer.
 
