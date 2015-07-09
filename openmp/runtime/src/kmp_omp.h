@@ -1,3 +1,4 @@
+#if USE_DEBUGGER
 /*
  * kmp_omp.h -- OpenMP definition for kmp_omp_struct_info_t.
  *              This is for information about runtime library structures.
@@ -200,12 +201,13 @@ typedef struct {
 
     /* Task dependency */
     offset_and_size_t  td_depnode;                  // pointer to graph node if the task has dependencies
-    offset_and_size_t  dn_successors;
     offset_and_size_t  dn_node;
     offset_and_size_t  dn_next;
+    offset_and_size_t  dn_successors;
     offset_and_size_t  dn_task;
     offset_and_size_t  dn_npredecessors;
     offset_and_size_t  dn_nrefs;
+    offset_and_size_t  dn_routine;
 
     /* kmp_thread_data_t */
     kmp_int32          hd_sizeof_struct;
@@ -220,5 +222,6 @@ typedef struct {
 
 } kmp_omp_struct_info_t;
 
+#endif /* USE_DEBUGGER */
 
 /* end of file */

@@ -32,6 +32,13 @@ VERSION {
         _You_must_link_with_*;     # Mutual detection/MS compatibility symbols.
 
 
+        #
+        # Debugger support.
+        #
+#if USE_DEBUGGER
+        __kmp_debugging;
+        __kmp_omp_debug_struct_info;
+#endif /* USE_DEBUGGER */
 
         #
         # Internal functions exported for testing purposes.

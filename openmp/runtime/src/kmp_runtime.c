@@ -1136,6 +1136,9 @@ __kmp_fork_team_threads( kmp_root_t *root, kmp_team_t *team,
                 for ( b = 0; b < bs_last_barrier; ++ b ) {
                     balign[ b ].bb.b_arrived        = team->t.t_bar[ b ].b_arrived;
                     KMP_DEBUG_ASSERT(balign[b].bb.wait_flag != KMP_BARRIER_PARENT_FLAG);
+#if USE_DEBUGGER
+                    balign[ b ].bb.b_worker_arrived = team->t.t_bar[ b ].b_team_arrived;
+#endif
                 }; // for b
             }
         }
@@ -1360,6 +1363,9 @@ __kmp_serialized_parallel(ident_t *loc, kmp_int32 global_tid)
         }
 #endif /* OMP_40_ENABLED */
 
+#if USE_DEBUGGER
+        serial_team->t.t_pkfn = (microtask_t)( ~0 ); // For the debugger.
+#endif
         this_thr->th.th_info.ds.ds_tid = 0;
 
         /* set thread cache values */
@@ -1671,6 +1677,14 @@ __kmp_fork_call(
             master_th->th.th_set_nproc = 0;
         }
 
+#if USE_DEBUGGER
+    if ( __kmp_debugging ) {    // Let debugger override number of threads.
+        int nth = __kmp_omp_num_threads( loc );
+        if ( nth > 0 ) {        // 0 means debugger does not want to change number of threads.
+            master_set_numthreads = nth;
+        }; // if
+    }; // if
+#endif
 
         KF_TRACE( 10, ( "__kmp_fork_call: before internal fork: root=%p, team=%p, master_th=%p, gtid=%d\n", root, parent_team, master_th, gtid ) );
         __kmp_internal_fork( loc, gtid, parent_team );
@@ -2397,6 +2411,9 @@ __kmp_join_call(ident_t *loc, int gtid
                 for ( b = 0; b < bs_last_barrier; ++ b ) {
                     balign[ b ].bb.b_arrived        = team->t.t_bar[ b ].b_arrived;
                     KMP_DEBUG_ASSERT(balign[ b ].bb.wait_flag != KMP_BARRIER_PARENT_FLAG);
+#if USE_DEBUGGER
+                    balign[ b ].bb.b_worker_arrived = team->t.t_bar[ b ].b_team_arrived;
+#endif
                 }
                 if ( __kmp_tasking_mode != tskm_immediate_exec ) {
                     // Synchronize thread's task state
@@ -3148,6 +3165,10 @@ __kmp_initialize_root( kmp_root_t *root )
             0                                                          // argc
             USE_NESTED_HOT_ARG(NULL)                                   // master thread is unknown
         );
+#if USE_DEBUGGER
+    // Non-NULL value should be assigned to make the debugger display the root team.
+    TCW_SYNC_PTR(root_team->t.t_pkfn, (microtask_t)( ~ 0 ));
+#endif
 
     KF_TRACE( 10, ( "__kmp_initialize_root: after root_team = %p\n", root_team ) );
 
@@ -3798,6 +3819,9 @@ __kmp_register_root( int initial_thread )
         int b;
         for ( b = 0; b < bs_last_barrier; ++ b ) {
             root_thread->th.th_bar[ b ].bb.b_arrived        = KMP_INIT_BARRIER_STATE;
+#if USE_DEBUGGER
+            root_thread->th.th_bar[ b ].bb.b_worker_arrived = 0;
+#endif
         }; // for
     }
     KMP_DEBUG_ASSERT( root->r.r_hot_team->t.t_bar[ bs_forkjoin_barrier ].b_arrived == KMP_INIT_BARRIER_STATE );
@@ -4968,6 +4992,9 @@ __kmp_allocate_team( kmp_root_t *root, int new_nproc, int max_nproc,
                 for ( b = 0; b < bs_last_barrier; ++ b ) {
                     balign[b].bb.b_arrived = team->t.t_bar[b].b_arrived;
                     KMP_DEBUG_ASSERT(balign[b].bb.wait_flag != KMP_BARRIER_PARENT_FLAG);
+#if USE_DEBUGGER
+                    balign[b].bb.b_worker_arrived = team->t.t_bar[b].b_team_arrived;
+#endif
                 }
             }
             if( hot_teams[level].hot_team_nth >= new_nproc ) {
@@ -5014,6 +5041,9 @@ __kmp_allocate_team( kmp_root_t *root, int new_nproc, int max_nproc,
                     for( b = 0; b < bs_last_barrier; ++ b ) {
                         balign[ b ].bb.b_arrived        = team->t.t_bar[ b ].b_arrived;
                         KMP_DEBUG_ASSERT(balign[b].bb.wait_flag != KMP_BARRIER_PARENT_FLAG);
+#if USE_DEBUGGER
+                        balign[ b ].bb.b_worker_arrived = team->t.t_bar[ b ].b_team_arrived;
+#endif
                     }
                 }
             }
@@ -5098,6 +5128,9 @@ __kmp_allocate_team( kmp_root_t *root, int new_nproc, int max_nproc,
                 for( b = 0; b < bs_last_barrier; ++ b ) {
                     balign[ b ].bb.b_arrived        = team->t.t_bar[ b ].b_arrived;
                     KMP_DEBUG_ASSERT(balign[b].bb.wait_flag != KMP_BARRIER_PARENT_FLAG);
+#if USE_DEBUGGER
+                    balign[ b ].bb.b_worker_arrived = team->t.t_bar[ b ].b_team_arrived;
+#endif
                 }
             }
         }
@@ -5156,6 +5189,10 @@ __kmp_allocate_team( kmp_root_t *root, int new_nproc, int max_nproc,
                 int b;
                 for ( b = 0; b < bs_last_barrier; ++ b) {
                     team->t.t_bar[ b ].b_arrived        = KMP_INIT_BARRIER_STATE;
+#if USE_DEBUGGER
+                    team->t.t_bar[ b ].b_master_arrived = 0;
+                    team->t.t_bar[ b ].b_team_arrived   = 0;
+#endif
                 }
             }
 
@@ -5214,6 +5251,10 @@ __kmp_allocate_team( kmp_root_t *root, int new_nproc, int max_nproc,
         int b;
         for ( b = 0; b < bs_last_barrier; ++ b ) {
             team->t.t_bar[ b ].b_arrived        = KMP_INIT_BARRIER_STATE;
+#if USE_DEBUGGER
+            team->t.t_bar[ b ].b_master_arrived = 0;
+            team->t.t_bar[ b ].b_team_arrived   = 0;
+#endif
         }
     }
 

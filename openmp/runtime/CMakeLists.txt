@@ -124,6 +124,10 @@ set(LIBOMP_OSX_ARCHITECTURES "${CMAKE_OSX_ARCHITECTURES}" CACHE STRING
     "For Mac builds, semicolon separated list of architectures to build for universal fat binary.")
 set(CMAKE_OSX_ARCHITECTURES ${LIBOMP_OSX_ARCHITECTURES})
 
+# - Code that allows the OpenMP library to conveniently interface with debuggers
+set(LIBOMP_USE_DEBUGGER true CACHE BOOL
+    "Enable debugger interface code?")
+
 # OMPT-support
 set(LIBOMP_OMPT_SUPPORT false CACHE BOOL
     "OMPT-support?")
@@ -590,6 +594,7 @@ if(${LIBOMP_STANDALONE_BUILD})
     endif()
     say("LIBOMP: Build                -- ${build}")
     say("LIBOMP: Stats-Gathering      -- ${LIBOMP_STATS}")
+    say("LIBOMP: Debugger-support     -- ${LIBOMP_USE_DEBUGGER}")
     say("LIBOMP: OMPT-support         -- ${LIBOMP_OMPT_SUPPORT}")
     if(${LIBOMP_OMPT_SUPPORT})
         say("LIBOMP: OMPT-blame           -- ${LIBOMP_OMPT_BLAME}")

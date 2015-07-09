@@ -709,7 +709,8 @@ else # norm or prof
         kmp_atomic                   \
         kmp_csupport                 \
         kmp_debug                    \
-	kmp_itt                      \
+        kmp_debugger                 \
+        kmp_itt                      \
         $(empty)
     ifeq "$(USE_ITT_NOTIFY)" "1"
         lib_c_items +=  ittnotify_static

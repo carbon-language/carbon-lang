@@ -41,6 +41,8 @@ endif
 cpp-flags += $(foreach i,$(VPATH),-I $(i))
 
 
+cpp-flags += -D USE_DEBUGGER=1
+
 # Shouldn't this be being set from the command line somehow?
 cpp-flags += -D USE_ITT_BUILD
 

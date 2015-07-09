@@ -86,6 +86,9 @@ class kmp_stats_list;
 #include "kmp_version.h"
 #include "kmp_debug.h"
 #include "kmp_lock.h"
+#if USE_DEBUGGER
+#include "kmp_debugger.h"
+#endif
 #include "kmp_i18n.h"
 
 #define KMP_HANDLE_SIGNALS (KMP_OS_LINUX || KMP_OS_FREEBSD || KMP_OS_WINDOWS || KMP_OS_DARWIN)
@@ -1663,6 +1666,11 @@ typedef struct KMP_ALIGN_CACHE kmp_bstate {
     kmp_uint8 offset;
     kmp_uint8 wait_flag;
     kmp_uint8 use_oncore_barrier;
+#if USE_DEBUGGER
+    // The following field is intended for the debugger solely. Only the worker thread itself accesses this
+    // field: the worker increases it by 1 when it arrives to a barrier.
+    KMP_ALIGN_CACHE kmp_uint b_worker_arrived;
+#endif /* USE_DEBUGGER */
 } kmp_bstate_t;
 
 union KMP_ALIGN_CACHE kmp_barrier_union {
@@ -1679,6 +1687,13 @@ union KMP_ALIGN_CACHE kmp_barrier_team_union {
     char         b_pad[ CACHE_LINE ];
     struct {
         kmp_uint     b_arrived;       /* STATE => task reached synch point. */
+#if USE_DEBUGGER
+        // The following two fields are indended for the debugger solely. Only master of the team accesses
+        // these fields: the first one is increased by 1 when master arrives to a barrier, the
+        // second one is increased by one when all the threads arrived.
+        kmp_uint     b_master_arrived;
+        kmp_uint     b_team_arrived;
+#endif
     };
 };
 
@@ -2718,12 +2733,22 @@ extern kmp_info_t __kmp_monitor;
 extern volatile kmp_uint32 __kmp_team_counter;      // Used by Debugging Support Library.
 extern volatile kmp_uint32 __kmp_task_counter;      // Used by Debugging Support Library.
 
+#if USE_DEBUGGER
+
+#define _KMP_GEN_ID( counter )                                         \
+    (                                                                  \
+        __kmp_debugging                                                \
+        ?                                                              \
+        KMP_TEST_THEN_INC32( (volatile kmp_int32 *) & counter ) + 1    \
+        :                                                              \
+        ~ 0                                                            \
+    )
+#else
 #define _KMP_GEN_ID( counter )                                         \
     (                                                                  \
         ~ 0                                                            \
     )
-
-
+#endif /* USE_DEBUGGER */
 
 #define KMP_GEN_TASK_ID()    _KMP_GEN_ID( __kmp_task_counter )
 #define KMP_GEN_TEAM_ID()    _KMP_GEN_ID( __kmp_team_counter )

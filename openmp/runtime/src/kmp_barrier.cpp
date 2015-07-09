@@ -1104,7 +1104,14 @@ __kmp_barrier(enum barrier_type bt, int gtid, int is_split, size_t reduce_size,
         if (__itt_sync_create_ptr || KMP_ITT_DEBUG)
             __kmp_itt_barrier_starting(gtid, itt_sync_obj);
 #endif /* USE_ITT_BUILD */
-
+#if USE_DEBUGGER
+        // Let the debugger know: the thread arrived to the barrier and waiting.
+        if (KMP_MASTER_TID(tid)) { // Master counter is stored in team structure.
+            team->t.t_bar[bt].b_master_arrived += 1;
+        } else {
+            this_thr->th.th_bar[bt].bb.b_worker_arrived += 1;
+        } // if
+#endif /* USE_DEBUGGER */
         if (reduce != NULL) {
             //KMP_DEBUG_ASSERT( is_split == TRUE );  // #C69956
             this_thr->th.th_local.reduce_data = reduce_data;
@@ -1142,7 +1149,10 @@ __kmp_barrier(enum barrier_type bt, int gtid, int is_split, size_t reduce_size,
                                      USE_ITT_BUILD_ARG(itt_sync_obj) );
                 __kmp_task_team_setup(this_thr, team, 0, 0); // use 0,0 to only setup the current team if nthreads > 1
             }
-
+#if USE_DEBUGGER
+            // Let the debugger know: All threads are arrived and starting leaving the barrier.
+            team->t.t_bar[bt].b_team_arrived += 1;
+#endif
 
 #if USE_ITT_BUILD
             /* TODO: In case of split reduction barrier, master thread may send acquired event early,
