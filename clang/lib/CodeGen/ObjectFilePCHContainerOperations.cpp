@@ -35,7 +35,7 @@ using namespace clang;
 #define DEBUG_TYPE "pchcontainer"
 
 namespace {
-class ModuleContainerGenerator : public ASTConsumer {
+class PCHContainerGenerator : public ASTConsumer {
   DiagnosticsEngine &Diags;
   const std::string MainFileName;
   ASTContext *Ctx;
@@ -51,15 +51,15 @@ class ModuleContainerGenerator : public ASTConsumer {
   std::shared_ptr<PCHBuffer> Buffer;
 
 public:
-  ModuleContainerGenerator(
-      DiagnosticsEngine &diags,
-      const HeaderSearchOptions &HSO, const PreprocessorOptions &PPO,
-      const TargetOptions &TO, const LangOptions &LO,
-      const std::string &MainFileName, const std::string &OutputFileName,
-      raw_pwrite_stream *OS, std::shared_ptr<PCHBuffer> Buffer)
-    : Diags(diags), HeaderSearchOpts(HSO), PreprocessorOpts(PPO),
-      TargetOpts(TO), LangOpts(LO), OS(OS),
-      Buffer(Buffer) {
+  PCHContainerGenerator(DiagnosticsEngine &diags,
+                        const HeaderSearchOptions &HSO,
+                        const PreprocessorOptions &PPO, const TargetOptions &TO,
+                        const LangOptions &LO, const std::string &MainFileName,
+                        const std::string &OutputFileName,
+                        raw_pwrite_stream *OS,
+                        std::shared_ptr<PCHBuffer> Buffer)
+      : Diags(diags), HeaderSearchOpts(HSO), PreprocessorOpts(PPO),
+        TargetOpts(TO), LangOpts(LO), OS(OS), Buffer(Buffer) {
     // The debug info output isn't affected by CodeModel and
     // ThreadModel, but the backend expects them to be nonempty.
     CodeGenOpts.CodeModel = "default";
@@ -68,7 +68,7 @@ public:
     CodeGenOpts.SplitDwarfFile = OutputFileName;
   }
 
-  virtual ~ModuleContainerGenerator() {}
+  virtual ~PCHContainerGenerator() {}
 
   void Initialize(ASTContext &Context) override {
     Ctx = &Context;
@@ -76,8 +76,8 @@ public:
     M.reset(new llvm::Module(MainFileName, *VMContext));
     M->setDataLayout(Ctx->getTargetInfo().getTargetDescription());
     Builder.reset(new CodeGen::CodeGenModule(*Ctx, HeaderSearchOpts,
-                                             PreprocessorOpts, CodeGenOpts,
-                                             *M, M->getDataLayout(), Diags));
+                                             PreprocessorOpts, CodeGenOpts, *M,
+                                             M->getDataLayout(), Diags));
   }
 
   /// Emit a container holding the serialized AST.
@@ -110,9 +110,9 @@ public:
     auto Size = SerializedAST.size();
     auto Int8Ty = llvm::Type::getInt8Ty(*VMContext);
     auto *Ty = llvm::ArrayType::get(Int8Ty, Size);
-    auto *Data = llvm::ConstantDataArray::
-      getString(*VMContext, StringRef(SerializedAST.data(), Size),
-                /*AddNull=*/false);
+    auto *Data = llvm::ConstantDataArray::getString(
+        *VMContext, StringRef(SerializedAST.data(), Size),
+        /*AddNull=*/false);
     auto *ASTSym = new llvm::GlobalVariable(
         *M, Ty, /*constant*/ true, llvm::GlobalVariable::InternalLinkage, Data,
         "__clang_ast");
@@ -129,15 +129,15 @@ public:
       ASTSym->setSection("__clangast");
 
     DEBUG({
-        // Print the IR for the PCH container to the debug output.
-        llvm::SmallString<0> Buffer;
-        llvm::raw_svector_ostream OS(Buffer);
-        clang::EmitBackendOutput(Diags, CodeGenOpts, TargetOpts, LangOpts,
-                                 Ctx.getTargetInfo().getTargetDescription(),
-                                 M.get(), BackendAction::Backend_EmitLL, &OS);
-        OS.flush();
-        llvm::dbgs()<<Buffer;
-      });
+      // Print the IR for the PCH container to the debug output.
+      llvm::SmallString<0> Buffer;
+      llvm::raw_svector_ostream OS(Buffer);
+      clang::EmitBackendOutput(Diags, CodeGenOpts, TargetOpts, LangOpts,
+                               Ctx.getTargetInfo().getTargetDescription(),
+                               M.get(), BackendAction::Backend_EmitLL, &OS);
+      OS.flush();
+      llvm::dbgs() << Buffer;
+    });
 
     // Use the LLVM backend to emit the pch container.
     clang::EmitBackendOutput(Diags, CodeGenOpts, TargetOpts, LangOpts,
@@ -152,7 +152,8 @@ public:
     SerializedAST = std::move(Empty);
   }
 };
-}
+
+} // namespace
 
 std::unique_ptr<ASTConsumer>
 ObjectFilePCHContainerOperations::CreatePCHContainerGenerator(
@@ -161,8 +162,8 @@ ObjectFilePCHContainerOperations::CreatePCHContainerGenerator(
     const LangOptions &LO, const std::string &MainFileName,
     const std::string &OutputFileName, llvm::raw_pwrite_stream *OS,
     std::shared_ptr<PCHBuffer> Buffer) const {
- return llvm::make_unique<ModuleContainerGenerator>
-   (Diags, HSO, PPO, TO, LO, MainFileName, OutputFileName, OS, Buffer);
+  return llvm::make_unique<PCHContainerGenerator>(
+      Diags, HSO, PPO, TO, LO, MainFileName, OutputFileName, OS, Buffer);
 }
 
 void ObjectFilePCHContainerOperations::ExtractPCH(
