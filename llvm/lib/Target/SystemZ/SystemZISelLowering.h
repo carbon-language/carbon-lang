@@ -370,7 +370,7 @@ public:
   bool isFPImmLegal(const APFloat &Imm, EVT VT) const override;
   bool isLegalICmpImmediate(int64_t Imm) const override;
   bool isLegalAddImmediate(int64_t Imm) const override;
-  bool isLegalAddressingMode(const AddrMode &AM, Type *Ty,
+  bool isLegalAddressingMode(const DataLayout &DL, const AddrMode &AM, Type *Ty,
                              unsigned AS) const override;
   bool allowsMisalignedMemoryAccesses(EVT VT, unsigned AS,
                                       unsigned Align,

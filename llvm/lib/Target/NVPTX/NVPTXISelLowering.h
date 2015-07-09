@@ -456,7 +456,7 @@ public:
   /// Used to guide target specific optimizations, like loop strength
   /// reduction (LoopStrengthReduce.cpp) and memory optimization for
   /// address mode (CodeGenPrepare.cpp)
-  bool isLegalAddressingMode(const AddrMode &AM, Type *Ty,
+  bool isLegalAddressingMode(const DataLayout &DL, const AddrMode &AM, Type *Ty,
                              unsigned AS) const override;
 
   /// getFunctionAlignment - Return the Log2 alignment of this function.

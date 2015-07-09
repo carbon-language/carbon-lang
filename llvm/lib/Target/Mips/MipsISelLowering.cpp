@@ -3550,8 +3550,8 @@ void MipsTargetLowering::LowerAsmOperandForConstraint(SDValue Op,
   TargetLowering::LowerAsmOperandForConstraint(Op, Constraint, Ops, DAG);
 }
 
-bool MipsTargetLowering::isLegalAddressingMode(const AddrMode &AM,
-                                               Type *Ty,
+bool MipsTargetLowering::isLegalAddressingMode(const DataLayout &DL,
+                                               const AddrMode &AM, Type *Ty,
                                                unsigned AS) const {
   // No global is ever allowed as a base.
   if (AM.BaseGV)

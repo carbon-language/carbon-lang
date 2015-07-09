@@ -254,8 +254,9 @@ bool SITargetLowering::isShuffleMaskLegal(const SmallVectorImpl<int> &,
   return false;
 }
 
-bool SITargetLowering::isLegalAddressingMode(const AddrMode &AM,
-                                             Type *Ty, unsigned AS) const {
+bool SITargetLowering::isLegalAddressingMode(const DataLayout &DL,
+                                             const AddrMode &AM, Type *Ty,
+                                             unsigned AS) const {
   // No global is ever allowed as a base.
   if (AM.BaseGV)
     return false;

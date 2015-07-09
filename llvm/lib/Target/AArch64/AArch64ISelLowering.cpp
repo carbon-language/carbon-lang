@@ -6900,8 +6900,8 @@ bool AArch64TargetLowering::isLegalICmpImmediate(int64_t Immed) const {
 
 /// isLegalAddressingMode - Return true if the addressing mode represented
 /// by AM is legal for this target, for a load/store of the specified type.
-bool AArch64TargetLowering::isLegalAddressingMode(const AddrMode &AM,
-                                                  Type *Ty,
+bool AArch64TargetLowering::isLegalAddressingMode(const DataLayout &DL,
+                                                  const AddrMode &AM, Type *Ty,
                                                   unsigned AS) const {
   // AArch64 has five basic addressing modes:
   //  reg
@@ -6922,7 +6922,7 @@ bool AArch64TargetLowering::isLegalAddressingMode(const AddrMode &AM,
   // i.e., reg + 0, reg + imm9, reg + SIZE_IN_BYTES * uimm12
   uint64_t NumBytes = 0;
   if (Ty->isSized()) {
-    uint64_t NumBits = getDataLayout()->getTypeSizeInBits(Ty);
+    uint64_t NumBits = DL.getTypeSizeInBits(Ty);
     NumBytes = NumBits / 8;
     if (!isPowerOf2_64(NumBits))
       NumBytes = 0;
@@ -6952,8 +6952,8 @@ bool AArch64TargetLowering::isLegalAddressingMode(const AddrMode &AM,
   return false;
 }
 
-int AArch64TargetLowering::getScalingFactorCost(const AddrMode &AM,
-                                                Type *Ty,
+int AArch64TargetLowering::getScalingFactorCost(const DataLayout &DL,
+                                                const AddrMode &AM, Type *Ty,
                                                 unsigned AS) const {
   // Scaling factors are not free at all.
   // Operands                     | Rt Latency
@@ -6962,7 +6962,7 @@ int AArch64TargetLowering::getScalingFactorCost(const AddrMode &AM,
   // -------------------------------------------
   // Rt, [Xn, Xm, lsl #imm]       | Rn: 4 Rm: 5
   // Rt, [Xn, Wm, <extend> #imm]  |
-  if (isLegalAddressingMode(AM, Ty, AS))
+  if (isLegalAddressingMode(DL, AM, Ty, AS))
     // Scale represents reg2 * scale, thus account for 1 if
     // it is not equal to 0 or 1.
     return AM.Scale != 0 && AM.Scale != 1;

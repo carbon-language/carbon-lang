@@ -1923,15 +1923,13 @@ static inline bool isImmUs4(int64_t val)
 
 /// isLegalAddressingMode - Return true if the addressing mode represented
 /// by AM is legal for this target, for a load/store of the specified type.
-bool
-XCoreTargetLowering::isLegalAddressingMode(const AddrMode &AM,
-                                           Type *Ty,
-                                           unsigned AS) const {
+bool XCoreTargetLowering::isLegalAddressingMode(const DataLayout &DL,
+                                                const AddrMode &AM, Type *Ty,
+                                                unsigned AS) const {
   if (Ty->getTypeID() == Type::VoidTyID)
     return AM.Scale == 0 && isImmUs(AM.BaseOffs) && isImmUs4(AM.BaseOffs);
 
-  const DataLayout *TD = TM.getDataLayout();
-  unsigned Size = TD->getTypeAllocSize(Ty);
+  unsigned Size = DL.getTypeAllocSize(Ty);
   if (AM.BaseGV) {
     return Size >= 4 && !AM.HasBaseReg && AM.Scale == 0 &&
                  AM.BaseOffs%4 == 0;

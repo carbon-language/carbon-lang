@@ -509,8 +509,8 @@ bool SystemZTargetLowering::allowsMisalignedMemoryAccesses(EVT VT,
   return true;
 }
 
-bool SystemZTargetLowering::isLegalAddressingMode(const AddrMode &AM,
-                                                  Type *Ty,
+bool SystemZTargetLowering::isLegalAddressingMode(const DataLayout &DL,
+                                                  const AddrMode &AM, Type *Ty,
                                                   unsigned AS) const {
   // Punt on globals for now, although they can be used in limited
   // RELATIVE LONG cases.

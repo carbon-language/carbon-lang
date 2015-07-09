@@ -1632,8 +1632,8 @@ TargetLoweringBase::getTypeLegalizationCost(const DataLayout &DL,
 
 /// isLegalAddressingMode - Return true if the addressing mode represented
 /// by AM is legal for this target, for a load/store of the specified type.
-bool TargetLoweringBase::isLegalAddressingMode(const AddrMode &AM,
-                                               Type *Ty,
+bool TargetLoweringBase::isLegalAddressingMode(const DataLayout &DL,
+                                               const AddrMode &AM, Type *Ty,
                                                unsigned AS) const {
   // The default implementation of this implements a conservative RISCy, r+r and
   // r+i addr mode.

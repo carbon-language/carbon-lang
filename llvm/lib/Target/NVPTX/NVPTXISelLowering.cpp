@@ -3732,8 +3732,8 @@ bool NVPTXTargetLowering::getTgtMemIntrinsic(
 /// Used to guide target specific optimizations, like loop strength reduction
 /// (LoopStrengthReduce.cpp) and memory optimization for address mode
 /// (CodeGenPrepare.cpp)
-bool NVPTXTargetLowering::isLegalAddressingMode(const AddrMode &AM,
-                                                Type *Ty,
+bool NVPTXTargetLowering::isLegalAddressingMode(const DataLayout &DL,
+                                                const AddrMode &AM, Type *Ty,
                                                 unsigned AS) const {
 
   // AddrMode - This represents an addressing mode of:

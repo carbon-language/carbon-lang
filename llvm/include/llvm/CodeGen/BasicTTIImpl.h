@@ -126,7 +126,7 @@ public:
     AM.BaseOffs = BaseOffset;
     AM.HasBaseReg = HasBaseReg;
     AM.Scale = Scale;
-    return getTLI()->isLegalAddressingMode(AM, Ty, AddrSpace);
+    return getTLI()->isLegalAddressingMode(DL, AM, Ty, AddrSpace);
   }
 
   int getScalingFactorCost(Type *Ty, GlobalValue *BaseGV, int64_t BaseOffset,
@@ -136,7 +136,7 @@ public:
     AM.BaseOffs = BaseOffset;
     AM.HasBaseReg = HasBaseReg;
     AM.Scale = Scale;
-    return getTLI()->getScalingFactorCost(AM, Ty, AddrSpace);
+    return getTLI()->getScalingFactorCost(DL, AM, Ty, AddrSpace);
   }
 
   bool isTruncateFree(Type *Ty1, Type *Ty2) {

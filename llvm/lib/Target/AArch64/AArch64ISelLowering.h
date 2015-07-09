@@ -324,7 +324,7 @@ public:
 
   /// isLegalAddressingMode - Return true if the addressing mode represented
   /// by AM is legal for this target, for a load/store of the specified type.
-  bool isLegalAddressingMode(const AddrMode &AM, Type *Ty,
+  bool isLegalAddressingMode(const DataLayout &DL, const AddrMode &AM, Type *Ty,
                              unsigned AS) const override;
 
   /// \brief Return the cost of the scaling factor used in the addressing
@@ -332,7 +332,7 @@ public:
   /// of the specified type.
   /// If the AM is supported, the return value must be >= 0.
   /// If the AM is not supported, it returns a negative value.
-  int getScalingFactorCost(const AddrMode &AM, Type *Ty,
+  int getScalingFactorCost(const DataLayout &DL, const AddrMode &AM, Type *Ty,
                            unsigned AS) const override;
 
   /// isFMAFasterThanFMulAndFAdd - Return true if an FMA operation is faster

@@ -1462,8 +1462,8 @@ public:
   /// If the address space cannot be determined, it will be -1.
   ///
   /// TODO: Remove default argument
-  virtual bool isLegalAddressingMode(const AddrMode &AM, Type *Ty,
-                                     unsigned AddrSpace) const;
+  virtual bool isLegalAddressingMode(const DataLayout &DL, const AddrMode &AM,
+                                     Type *Ty, unsigned AddrSpace) const;
 
   /// \brief Return the cost of the scaling factor used in the addressing mode
   /// represented by AM for this target, for a load/store of the specified type.
@@ -1472,10 +1472,10 @@ public:
   /// If the AM is not supported, it returns a negative value.
   /// TODO: Handle pre/postinc as well.
   /// TODO: Remove default argument
-  virtual int getScalingFactorCost(const AddrMode &AM, Type *Ty,
-                                   unsigned AS = 0) const {
+  virtual int getScalingFactorCost(const DataLayout &DL, const AddrMode &AM,
+                                   Type *Ty, unsigned AS = 0) const {
     // Default: assume that any scaling factor used in a legal AM is free.
-    if (isLegalAddressingMode(AM, Ty, AS))
+    if (isLegalAddressingMode(DL, AM, Ty, AS))
       return 0;
     return -1;
   }
