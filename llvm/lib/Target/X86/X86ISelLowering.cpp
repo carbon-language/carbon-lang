@@ -4852,7 +4852,7 @@ static SDValue getVShift(bool isLeft, EVT VT, SDValue SrcOp,
   MVT ShVT = MVT::v2i64;
   unsigned Opc = isLeft ? X86ISD::VSHLDQ : X86ISD::VSRLDQ;
   SrcOp = DAG.getBitcast(ShVT, SrcOp);
-  MVT ScalarShiftTy = TLI.getScalarShiftAmountTy(DAG.getDataLayout());
+  MVT ScalarShiftTy = TLI.getScalarShiftAmountTy(DAG.getDataLayout(), VT);
   assert(NumBits % 8 == 0 && "Only support byte sized shifts");
   SDValue ShiftVal = DAG.getConstant(NumBits/8, dl, ScalarShiftTy);
   return DAG.getBitcast(VT, DAG.getNode(Opc, dl, ShVT, SrcOp, ShiftVal));
@@ -7409,7 +7409,7 @@ static SDValue lowerVectorShuffleAsElementInsertion(
           X86ISD::VSHLDQ, DL, MVT::v2i64, V2,
           DAG.getConstant(V2Index * EltVT.getSizeInBits() / 8, DL,
                           DAG.getTargetLoweringInfo().getScalarShiftAmountTy(
-                              DAG.getDataLayout())));
+                              DAG.getDataLayout(), VT)));
       V2 = DAG.getBitcast(VT, V2);
     }
   }

@@ -72,7 +72,7 @@ namespace llvm {
     explicit MSP430TargetLowering(const TargetMachine &TM,
                                   const MSP430Subtarget &STI);
 
-    MVT getScalarShiftAmountTy(const DataLayout &) const override {
+    MVT getScalarShiftAmountTy(const DataLayout &, EVT) const override {
       return MVT::i8;
     }
 

@@ -233,7 +233,7 @@ public:
                                      APInt &KnownOne, const SelectionDAG &DAG,
                                      unsigned Depth = 0) const override;
 
-  MVT getScalarShiftAmountTy(const DataLayout &DL) const override;
+  MVT getScalarShiftAmountTy(const DataLayout &DL, EVT) const override;
 
   /// allowsMisalignedMemoryAccesses - Returns true if the target allows
   /// unaligned memory accesses of the specified type.

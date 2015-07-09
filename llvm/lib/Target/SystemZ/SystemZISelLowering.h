@@ -339,7 +339,7 @@ public:
                                  const SystemZSubtarget &STI);
 
   // Override TargetLowering.
-  MVT getScalarShiftAmountTy(const DataLayout &) const override {
+  MVT getScalarShiftAmountTy(const DataLayout &, EVT) const override {
     return MVT::i32;
   }
   MVT getVectorIdxTy(const DataLayout &DL) const override {

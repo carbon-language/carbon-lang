@@ -101,7 +101,7 @@ namespace llvm {
 
 
     unsigned getJumpTableEncoding() const override;
-    MVT getScalarShiftAmountTy(const DataLayout &DL) const override {
+    MVT getScalarShiftAmountTy(const DataLayout &DL, EVT) const override {
       return MVT::i32;
     }
 

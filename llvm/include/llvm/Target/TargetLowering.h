@@ -170,7 +170,10 @@ public:
   MVT getPointerTy(const DataLayout &DL, uint32_t AS = 0) const {
     return MVT::getIntegerVT(DL.getPointerSizeInBits(AS));
   }
-  virtual MVT getScalarShiftAmountTy(const DataLayout &) const;
+
+  /// EVT is not used in-tree, but is used by out-of-tree target.
+  /// A documentation for this function would be nice...
+  virtual MVT getScalarShiftAmountTy(const DataLayout &, EVT) const;
 
   EVT getShiftAmountTy(EVT LHSTy, const DataLayout &DL) const;
 

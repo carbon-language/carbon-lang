@@ -839,7 +839,8 @@ static SDValue performMULCombine(SDNode *N, SelectionDAG &DAG,
   if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(N->getOperand(1)))
     if (!VT.isVector())
       return genConstMult(N->getOperand(0), C->getZExtValue(), SDLoc(N), VT,
-                          TL->getScalarShiftAmountTy(DAG.getDataLayout()), DAG);
+                          TL->getScalarShiftAmountTy(DAG.getDataLayout(), VT),
+                          DAG);
 
   return SDValue(N, 0);
 }
