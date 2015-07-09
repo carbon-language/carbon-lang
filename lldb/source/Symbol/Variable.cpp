@@ -81,12 +81,9 @@ Variable::GetLanguage () const
 ConstString
 Variable::GetName() const
 {
-    if (m_mangled)
-    {
-        ConstString name = m_mangled.GetName(GetLanguage());
-        if (name)
-            return name;
-    }
+    ConstString name = m_mangled.GetName(GetLanguage());
+    if (name)
+        return name;
     return m_name;
 }
 
