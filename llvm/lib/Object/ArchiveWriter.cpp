@@ -91,8 +91,12 @@ static void printWithSpacePadding(raw_fd_ostream &OS, T Data, unsigned Size,
   }
 }
 
-static void print32BE(raw_ostream &Out, uint32_t Val) {
-  support::endian::Writer<support::big>(Out).write(Val);
+static void print32(raw_ostream &Out, object::Archive::Kind Kind,
+                    uint32_t Val) {
+  if (Kind == object::Archive::K_GNU)
+    support::endian::Writer<support::big>(Out).write(Val);
+  else
+    support::endian::Writer<support::little>(Out).write(Val);
 }
 
 static void printRestOfMemberHeader(raw_fd_ostream &Out,
@@ -200,7 +204,7 @@ writeSymbolTable(raw_fd_ostream &Out, object::Archive::Kind Kind,
     if (!StartOffset) {
       printGNUSmallMemberHeader(Out, "", sys::TimeValue::now(), 0, 0, 0, 0);
       StartOffset = Out.tell();
-      print32BE(Out, 0);
+      print32(Out, Kind, 0);
     }
 
     for (const object::BasicSymbolRef &S : Obj.symbols()) {
@@ -216,7 +220,7 @@ writeSymbolTable(raw_fd_ostream &Out, object::Archive::Kind Kind,
       NameOS << '\0';
       ++NumSyms;
       MemberOffsetRefs.push_back(MemberNum);
-      print32BE(Out, 0);
+      print32(Out, Kind, 0);
     }
   }
   Out << NameOS.str();
@@ -231,7 +235,7 @@ writeSymbolTable(raw_fd_ostream &Out, object::Archive::Kind Kind,
   Out.seek(StartOffset - 12);
   printWithSpacePadding(Out, Pos - StartOffset, 10);
   Out.seek(StartOffset);
-  print32BE(Out, NumSyms);
+  print32(Out, Kind, NumSyms);
   Out.seek(Pos);
   return StartOffset + 4;
 }
@@ -335,7 +339,7 @@ llvm::writeArchive(StringRef ArcName,
   if (MemberReferenceOffset) {
     Out.seek(MemberReferenceOffset);
     for (unsigned MemberNum : MemberOffsetRefs)
-      print32BE(Out, MemberOffset[MemberNum]);
+      print32(Out, Kind, MemberOffset[MemberNum]);
   }
 
   Output.keep();
