@@ -187,3 +187,26 @@ define double @reassociate_adds_double(double %x0, double %x1, double %x2, doubl
   %t2 = fadd double %x3, %t1
   ret double %t2
 }
+
+; Verify that SSE and AVX scalar double-precison multiplies are reassociated.
+
+define double @reassociate_muls_double(double %x0, double %x1, double %x2, double %x3) {
+; SSE-LABEL: reassociate_muls_double:
+; SSE:       # BB#0:
+; SSE-NEXT:    divsd %xmm1, %xmm0
+; SSE-NEXT:    mulsd %xmm3, %xmm2
+; SSE-NEXT:    mulsd %xmm2, %xmm0
+; SSE-NEXT:    retq
+;
+; AVX-LABEL: reassociate_muls_double:
+; AVX:       # BB#0:
+; AVX-NEXT:    vdivsd %xmm1, %xmm0, %xmm0
+; AVX-NEXT:    vmulsd %xmm3, %xmm2, %xmm1
+; AVX-NEXT:    vmulsd %xmm1, %xmm0, %xmm0
+; AVX-NEXT:    retq
+  %t0 = fdiv double %x0, %x1
+  %t1 = fmul double %x2, %t0
+  %t2 = fmul double %x3, %t1
+  ret double %t2
+}
+
