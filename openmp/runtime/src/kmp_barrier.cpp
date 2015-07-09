@@ -32,7 +32,7 @@
 #else
 #define ngo_load(src)            ((void)0)
 #define ngo_store_icvs(dst, src) copy_icvs((dst), (src))
-#define ngo_store_go(dst, src)   memcpy((dst), (src), CACHE_LINE)
+#define ngo_store_go(dst, src)   KMP_MEMCPY((dst), (src), CACHE_LINE)
 #define ngo_sync()               ((void)0)
 #endif /* KMP_MIC && USE_NGO_STORES */
 

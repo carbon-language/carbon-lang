@@ -23,9 +23,7 @@
 # define RSIZE_MAX_STR ( 4UL << 10 ) // 4KB
 
 // _malloca was suggested, but it is not a drop-in replacement for _alloca
-// TODO: test performance and replace with _alloca (as below)
-# define KMP_ALLOCA                  alloca
-//# define KMP_ALLOCA                  _alloca
+# define KMP_ALLOCA                  _alloca
 
 # define KMP_MEMCPY_S                memcpy_s
 # define KMP_SNPRINTF                sprintf_s
