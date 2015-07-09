@@ -976,7 +976,7 @@ bool FastISel::lowerCallTo(CallLoweringInfo &CLI) {
       // not there, but there are cases it cannot get right.
       unsigned FrameAlign = Arg.Alignment;
       if (!FrameAlign)
-        FrameAlign = TLI.getByValTypeAlignment(ElementTy);
+        FrameAlign = TLI.getByValTypeAlignment(ElementTy, DL);
       Flags.setByValSize(FrameSize);
       Flags.setByValAlign(FrameAlign);
     }

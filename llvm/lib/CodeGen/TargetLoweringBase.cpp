@@ -1522,8 +1522,9 @@ void llvm::GetReturnInfo(Type *ReturnType, AttributeSet attr,
 /// getByValTypeAlignment - Return the desired alignment for ByVal aggregate
 /// function arguments in the caller parameter area.  This is the actual
 /// alignment, not its logarithm.
-unsigned TargetLoweringBase::getByValTypeAlignment(Type *Ty) const {
-  return getDataLayout()->getABITypeAlignment(Ty);
+unsigned TargetLoweringBase::getByValTypeAlignment(Type *Ty,
+                                                   const DataLayout &DL) const {
+  return DL.getABITypeAlignment(Ty);
 }
 
 //===----------------------------------------------------------------------===//

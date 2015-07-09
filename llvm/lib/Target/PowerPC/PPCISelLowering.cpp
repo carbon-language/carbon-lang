@@ -952,7 +952,8 @@ static void getMaxByValAlign(Type *Ty, unsigned &MaxAlign,
 
 /// getByValTypeAlignment - Return the desired alignment for ByVal aggregate
 /// function arguments in the caller parameter area.
-unsigned PPCTargetLowering::getByValTypeAlignment(Type *Ty) const {
+unsigned PPCTargetLowering::getByValTypeAlignment(Type *Ty,
+                                                  const DataLayout &DL) const {
   // Darwin passes everything on 4 byte boundary.
   if (Subtarget.isDarwin())
     return 4;

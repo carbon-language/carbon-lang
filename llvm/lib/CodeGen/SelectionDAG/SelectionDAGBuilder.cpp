@@ -6878,7 +6878,7 @@ TargetLowering::LowerCallTo(TargetLowering::CallLoweringInfo &CLI) const {
         if (Args[i].Alignment)
           FrameAlign = Args[i].Alignment;
         else
-          FrameAlign = getByValTypeAlignment(ElementTy);
+          FrameAlign = getByValTypeAlignment(ElementTy, DL);
         Flags.setByValAlign(FrameAlign);
       }
       if (Args[i].isNest)
@@ -7149,7 +7149,7 @@ void SelectionDAGISel::LowerArguments(const Function &F) {
         if (F.getParamAlignment(Idx))
           FrameAlign = F.getParamAlignment(Idx);
         else
-          FrameAlign = TLI->getByValTypeAlignment(ElementTy);
+          FrameAlign = TLI->getByValTypeAlignment(ElementTy, DL);
         Flags.setByValAlign(FrameAlign);
       }
       if (F.getAttributes().hasAttribute(Idx, Attribute::Nest))

@@ -618,7 +618,8 @@ namespace llvm {
     /// function arguments in the caller parameter area. For X86, aggregates
     /// that contains are placed at 16-byte boundaries while the rest are at
     /// 4-byte boundaries.
-    unsigned getByValTypeAlignment(Type *Ty) const override;
+    unsigned getByValTypeAlignment(Type *Ty,
+                                   const DataLayout &DL) const override;
 
     /// Returns the target specific optimal type for load
     /// and store operations as a result of memset, memcpy, and memmove
