@@ -10,6 +10,7 @@
 #ifndef LLVM_OBJECT_ELFTYPES_H
 #define LLVM_OBJECT_ELFTYPES_H
 
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/Object/Error.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/ELF.h"
@@ -461,6 +462,23 @@ struct Elf_Phdr_Impl<ELFType<TargetEndianness, true>> {
   Elf_Xword p_filesz; // Num. of bytes in file image of segment (may be zero)
   Elf_Xword p_memsz;  // Num. of bytes in mem image of segment (may be zero)
   Elf_Xword p_align;  // Segment alignment constraint
+};
+
+// ELFT needed for endianess.
+template <class ELFT>
+struct Elf_Hash {
+  LLVM_ELF_IMPORT_TYPES_ELFT(ELFT);
+  Elf_Word nbucket;
+  Elf_Word nchain;
+
+  ArrayRef<const Elf_Word> buckets() const {
+    return ArrayRef<const Elf_Word>(&nbucket + 2, &nbucket + 2 + nbucket);
+  }
+
+  ArrayRef<const Elf_Word> chains() const {
+    return ArrayRef<const Elf_Word>(&nbucket + 2 + nbucket,
+                                    &nbucket + 2 + nbucket + nchain);
+  }
 };
 
 // MIPS .reginfo section

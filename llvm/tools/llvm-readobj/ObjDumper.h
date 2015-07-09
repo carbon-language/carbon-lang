@@ -37,6 +37,7 @@ public:
   virtual void printDynamicTable() { }
   virtual void printNeededLibraries() { }
   virtual void printProgramHeaders() { }
+  virtual void printHashTable() { }
 
   // Only implemented for ARM ELF at this time.
   virtual void printAttributes() { }
