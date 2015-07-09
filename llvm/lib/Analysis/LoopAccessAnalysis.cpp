@@ -1532,7 +1532,7 @@ void LoopAccessInfo::analyzeLoop(const ValueToValueMap &Strides) {
   if (CanVecMem)
     DEBUG(dbgs() << "LAA: No unsafe dependent memory operations in loop.  We"
                  << (PtrRtCheck.Need ? "" : " don't")
-                 << " need a runtime memory check.\n");
+                 << " need runtime memory checks.\n");
   else {
     emitAnalysis(LoopAccessReport() <<
                  "unsafe dependent memory operations in loop");
