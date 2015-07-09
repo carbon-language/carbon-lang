@@ -2882,6 +2882,7 @@ enum Distro {
   UbuntuTrusty,
   UbuntuUtopic,
   UbuntuVivid,
+  UbuntuWily,
   UnknownDistro
 };
 
@@ -2896,7 +2897,7 @@ static bool IsDebian(enum Distro Distro) {
 }
 
 static bool IsUbuntu(enum Distro Distro) {
-  return Distro >= UbuntuHardy && Distro <= UbuntuVivid;
+  return Distro >= UbuntuHardy && Distro <= UbuntuWily;
 }
 
 static Distro DetectDistro(llvm::Triple::ArchType Arch) {
@@ -2925,6 +2926,7 @@ static Distro DetectDistro(llvm::Triple::ArchType Arch) {
                       .Case("trusty", UbuntuTrusty)
                       .Case("utopic", UbuntuUtopic)
                       .Case("vivid", UbuntuVivid)
+                      .Case("wily", UbuntuWily)
                       .Default(UnknownDistro);
     return Version;
   }
