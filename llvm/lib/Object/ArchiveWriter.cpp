@@ -184,10 +184,8 @@ writeSymbolTable(raw_fd_ostream &Out, object::Archive::Kind Kind,
                  ArrayRef<NewArchiveIterator> Members,
                  ArrayRef<MemoryBufferRef> Buffers,
                  std::vector<unsigned> &MemberOffsetRefs) {
-  if (Kind != object::Archive::K_GNU)
-    return 0;
-
-  unsigned StartOffset = 0;
+  unsigned HeaderStartOffset = 0;
+  unsigned BodyStartOffset = 0;
   SmallString<128> NameBuf;
   raw_svector_ostream NameOS(NameBuf);
   LLVMContext Context;
@@ -200,10 +198,15 @@ writeSymbolTable(raw_fd_ostream &Out, object::Archive::Kind Kind,
       continue;  // FIXME: check only for "not an object file" errors.
     object::SymbolicFile &Obj = *ObjOrErr.get();
 
-    if (!StartOffset) {
-      printGNUSmallMemberHeader(Out, "", sys::TimeValue::now(), 0, 0, 0, 0);
-      StartOffset = Out.tell();
-      print32(Out, Kind, 0);
+    if (!HeaderStartOffset) {
+      HeaderStartOffset = Out.tell();
+      if (Kind == object::Archive::K_GNU)
+        printGNUSmallMemberHeader(Out, "", sys::TimeValue::now(), 0, 0, 0, 0);
+      else
+        printBSDMemberHeader(Out, "__.SYMDEF", sys::TimeValue::now(), 0, 0, 0,
+                             0);
+      BodyStartOffset = Out.tell();
+      print32(Out, Kind, 0); // number of entries or bytes
     }
 
     for (const object::BasicSymbolRef &S : Obj.symbols()) {
@@ -214,29 +217,45 @@ writeSymbolTable(raw_fd_ostream &Out, object::Archive::Kind Kind,
         continue;
       if (Symflags & object::SymbolRef::SF_Undefined)
         continue;
+
+      unsigned NameOffset = NameOS.tell();
       if (auto EC = S.printName(NameOS))
         return EC;
       NameOS << '\0';
       MemberOffsetRefs.push_back(MemberNum);
-      print32(Out, Kind, 0);
+      if (Kind == object::Archive::K_BSD)
+        print32(Out, Kind, NameOffset);
+      print32(Out, Kind, 0); // member offset
     }
   }
-  Out << NameOS.str();
 
-  if (StartOffset == 0)
+  if (HeaderStartOffset == 0)
     return 0;
+
+  StringRef StringTable = NameOS.str();
+  if (Kind == object::Archive::K_BSD)
+    print32(Out, Kind, StringTable.size()); // byte count of the string table
+  Out << StringTable;
 
   if (Out.tell() % 2)
     Out << '\0';
 
+  // Patch up the size of the symbol table now that we know how big it is.
   unsigned Pos = Out.tell();
-  Out.seek(StartOffset - 12);
-  printWithSpacePadding(Out, Pos - StartOffset, 10);
-  Out.seek(StartOffset);
+  const unsigned MemberHeaderSize = 60;
+  Out.seek(HeaderStartOffset + 48); // offset of the size field.
+  printWithSpacePadding(Out, Pos - MemberHeaderSize - HeaderStartOffset, 10);
+
+  // Patch up the number of symbols.
+  Out.seek(BodyStartOffset);
   unsigned NumSyms = MemberOffsetRefs.size();
-  print32(Out, Kind, NumSyms);
+  if (Kind == object::Archive::K_GNU)
+    print32(Out, Kind, NumSyms);
+  else
+    print32(Out, Kind, NumSyms * 8);
+
   Out.seek(Pos);
-  return StartOffset + 4;
+  return BodyStartOffset + 4;
 }
 
 std::pair<StringRef, std::error_code>
@@ -337,8 +356,11 @@ llvm::writeArchive(StringRef ArcName,
 
   if (MemberReferenceOffset) {
     Out.seek(MemberReferenceOffset);
-    for (unsigned MemberNum : MemberOffsetRefs)
+    for (unsigned MemberNum : MemberOffsetRefs) {
+      if (Kind == object::Archive::K_BSD)
+        Out.seek(Out.tell() + 4); // skip over the string offset
       print32(Out, Kind, MemberOffset[MemberNum]);
+    }
   }
 
   Output.keep();

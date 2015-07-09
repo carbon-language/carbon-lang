@@ -66,3 +66,24 @@ RUN: llvm-nm -M %p/Inputs/macho-archive-unsorted-x86_64.a | FileCheck %s --check
 BSD-MachO: Archive map
 BSD-MachO: _bar in bar.o
 BSD-MachO: _foo in foo.o
+
+RUN: rm -f %t.a
+RUN: llvm-ar --format=bsd rcs %t.a %p/Inputs/trivial-object-test.macho-x86-64 %p/Inputs/trivial-object-test2.macho-x86-64
+RUN: llvm-nm -M %t.a | FileCheck --check-prefix=MACHO %s
+
+MACHO: Archive map
+MACHO-NEXT: _main in trivial-object-test.macho-x86-64
+MACHO-NEXT: _foo in trivial-object-test2.macho-x86-64
+MACHO-NEXT: _main in trivial-object-test2.macho-x86-64
+MACHO-NOT: bar
+
+MACHO: trivial-object-test.macho-x86-64
+MACHO-NEXT: 0000000000000028 s L_.str
+MACHO-NEXT:                  U _SomeOtherFunction
+MACHO-NEXT: 0000000000000000 T _main
+MACHO-NEXT:                  U _puts
+
+MACHO: trivial-object-test2.macho-x86-64
+MACHO-NEXT: 0000000000000000 t _bar
+MACHO-NEXT: 0000000000000001 T _foo
+MACHO-NEXT: 0000000000000002 T _main
