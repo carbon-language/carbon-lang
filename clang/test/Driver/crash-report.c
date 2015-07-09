@@ -5,7 +5,7 @@
 // RUN:  -iprefix /the/prefix -iwithprefix /tmp -iwithprefixbefore /tmp/ \
 // RUN:  -Xclang -internal-isystem -Xclang /tmp/                         \
 // RUN:  -Xclang -internal-externc-isystem -Xclang /tmp/                 \
-// RUN:  -DFOO=BAR 2>&1 | FileCheck %s
+// RUN:  -DFOO=BAR -DBAR="BAZ QUX" 2>&1 | FileCheck %s
 // RUN: cat %t/crash-report-*.c | FileCheck --check-prefix=CHECKSRC %s
 // RUN: cat %t/crash-report-*.sh | FileCheck --check-prefix=CHECKSH %s
 // REQUIRES: crash-recovery
@@ -19,10 +19,14 @@
 FOO
 // CHECKSRC: FOO
 // CHECKSH: # Crash reproducer
+// CHECKSH-NEXT: # Driver args: "-fsyntax-only"
+// CHECKSH-SAME: "-D" "FOO=BAR"
+// CHECKSH-SAME: "-D" "BAR=BAZ QUX"
 // CHECKSH-NEXT: # Original command: {{.*$}}
 // CHECKSH-NEXT: "-cc1"
 // CHECKSH: "-main-file-name" "crash-report.c"
 // CHECKSH: "-D" "FOO=BAR"
+// CHECKSH: "-D" "BAR=BAZ QUX"
 // CHECKSH-NOT: "-F/tmp/"
 // CHECKSH-NOT: "-I" "/tmp/"
 // CHECKSH-NOT: "-idirafter" "/tmp/"

@@ -26,6 +26,8 @@ const int x = MODULE_MACRO;
 // CHECKSRC: const int x = 10;
 
 // CHECKSH: # Crash reproducer
+// CHECKSH-NEXT: # Driver args: "-fsyntax-only"
+// CHECKSH-SAME: "-D" "FOO=BAR"
 // CHECKSH-NEXT: # Original command: {{.*$}}
 // CHECKSH-NEXT: "-cc1"
 // CHECKSH: "-isysroot" "/tmp/"

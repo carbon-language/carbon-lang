@@ -398,6 +398,19 @@ Compilation *Driver::BuildCompilation(ArrayRef<const char *> ArgList) {
   return C;
 }
 
+static void printArgList(raw_ostream &OS, const llvm::opt::ArgList &Args) {
+  llvm::opt::ArgStringList ASL;
+  for (const auto *A : Args)
+    A->render(Args, ASL);
+
+  for (auto I = ASL.begin(), E = ASL.end(); I != E; ++I) {
+    if (I != ASL.begin())
+      OS << ' ';
+    Command::printArg(OS, *I, true);
+  }
+  OS << '\n';
+}
+
 // When clang crashes, produce diagnostic information including the fully
 // preprocessed source file(s).  Request that the developer attach the
 // diagnostic information to a bug report.
@@ -546,7 +559,9 @@ void Driver::generateCompilationDiagnostics(Compilation &C,
         << "Error generating run script: " + Script + " " + EC.message();
   } else {
     ScriptOS << "# Crash reproducer for " << getClangFullVersion() << "\n"
-             << "# Original command: ";
+             << "# Driver args: ";
+    printArgList(ScriptOS, C.getInputArgs());
+    ScriptOS << "# Original command: ";
     Cmd.Print(ScriptOS, "\n", /*Quote=*/true);
     Cmd.Print(ScriptOS, "\n", /*Quote=*/true, &CrashInfo);
     Diag(clang::diag::note_drv_command_failed_diag_msg) << Script;
