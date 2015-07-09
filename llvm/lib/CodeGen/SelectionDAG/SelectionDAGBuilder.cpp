@@ -2050,30 +2050,6 @@ void SelectionDAGBuilder::visitLandingPad(const LandingPadInst &LP) {
   setValue(&LP, Res);
 }
 
-unsigned
-SelectionDAGBuilder::visitLandingPadClauseBB(GlobalValue *ClauseGV,
-                                             MachineBasicBlock *LPadBB) {
-  SDValue Chain = getControlRoot();
-  SDLoc dl = getCurSDLoc();
-
-  // Get the typeid that we will dispatch on later.
-  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
-  const TargetRegisterClass *RC =
-      TLI.getRegClassFor(TLI.getPointerTy(DAG.getDataLayout()));
-  unsigned VReg = FuncInfo.MF->getRegInfo().createVirtualRegister(RC);
-  unsigned TypeID = DAG.getMachineFunction().getMMI().getTypeIDFor(ClauseGV);
-  SDValue Sel =
-      DAG.getConstant(TypeID, dl, TLI.getPointerTy(DAG.getDataLayout()));
-  Chain = DAG.getCopyToReg(Chain, dl, VReg, Sel);
-
-  // Branch to the main landing pad block.
-  MachineBasicBlock *ClauseMBB = FuncInfo.MBB;
-  ClauseMBB->addSuccessor(LPadBB);
-  DAG.setRoot(DAG.getNode(ISD::BR, dl, MVT::Other, Chain,
-                          DAG.getBasicBlock(LPadBB)));
-  return VReg;
-}
-
 void SelectionDAGBuilder::sortAndRangeify(CaseClusterVector &Clusters) {
 #ifndef NDEBUG
   for (const CaseCluster &CC : Clusters)
