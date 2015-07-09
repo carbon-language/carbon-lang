@@ -161,7 +161,6 @@ protected:
 
 public:
   const TargetMachine &getTargetMachine() const { return TM; }
-  const DataLayout *getDataLayout() const { return TM.getDataLayout(); }
 
   virtual bool useSoftFloat() const { return false; }
 

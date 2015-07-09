@@ -482,7 +482,7 @@ public:
   SDValue LowerCall(CallLoweringInfo &CLI,
                     SmallVectorImpl<SDValue> &InVals) const override;
 
-  std::string getPrototype(Type *, const ArgListTy &,
+  std::string getPrototype(const DataLayout &DL, Type *, const ArgListTy &,
                            const SmallVectorImpl<ISD::OutputArg> &,
                            unsigned retAlignment,
                            const ImmutableCallSite *CS) const;

@@ -6845,9 +6845,9 @@ void ARMTargetLowering::EmitSjLjDispatchBlock(MachineInstr *MI,
       const Constant *C = ConstantInt::get(Int32Ty, NumLPads);
 
       // MachineConstantPool wants an explicit alignment.
-      unsigned Align = getDataLayout()->getPrefTypeAlignment(Int32Ty);
+      unsigned Align = MF->getDataLayout().getPrefTypeAlignment(Int32Ty);
       if (Align == 0)
-        Align = getDataLayout()->getTypeAllocSize(C->getType());
+        Align = MF->getDataLayout().getTypeAllocSize(C->getType());
       unsigned Idx = ConstantPool->getConstantPoolIndex(C, Align);
 
       unsigned VReg1 = MRI->createVirtualRegister(TRC);
@@ -6935,9 +6935,9 @@ void ARMTargetLowering::EmitSjLjDispatchBlock(MachineInstr *MI,
       const Constant *C = ConstantInt::get(Int32Ty, NumLPads);
 
       // MachineConstantPool wants an explicit alignment.
-      unsigned Align = getDataLayout()->getPrefTypeAlignment(Int32Ty);
+      unsigned Align = MF->getDataLayout().getPrefTypeAlignment(Int32Ty);
       if (Align == 0)
-        Align = getDataLayout()->getTypeAllocSize(C->getType());
+        Align = MF->getDataLayout().getTypeAllocSize(C->getType());
       unsigned Idx = ConstantPool->getConstantPoolIndex(C, Align);
 
       unsigned VReg1 = MRI->createVirtualRegister(TRC);
@@ -7313,9 +7313,9 @@ ARMTargetLowering::EmitStructByval(MachineInstr *MI,
     const Constant *C = ConstantInt::get(Int32Ty, LoopSize);
 
     // MachineConstantPool wants an explicit alignment.
-    unsigned Align = getDataLayout()->getPrefTypeAlignment(Int32Ty);
+    unsigned Align = MF->getDataLayout().getPrefTypeAlignment(Int32Ty);
     if (Align == 0)
-      Align = getDataLayout()->getTypeAllocSize(C->getType());
+      Align = MF->getDataLayout().getTypeAllocSize(C->getType());
     unsigned Idx = ConstantPool->getConstantPoolIndex(C, Align);
 
     if (IsThumb1)
@@ -11083,7 +11083,8 @@ bool ARMTargetLowering::getTgtMemIntrinsic(IntrinsicInfo &Info,
   case Intrinsic::arm_neon_vld4lane: {
     Info.opc = ISD::INTRINSIC_W_CHAIN;
     // Conservatively set memVT to the entire set of vectors loaded.
-    uint64_t NumElts = getDataLayout()->getTypeAllocSize(I.getType()) / 8;
+    auto &DL = I.getCalledFunction()->getParent()->getDataLayout();
+    uint64_t NumElts = DL.getTypeAllocSize(I.getType()) / 8;
     Info.memVT = EVT::getVectorVT(I.getType()->getContext(), MVT::i64, NumElts);
     Info.ptrVal = I.getArgOperand(0);
     Info.offset = 0;
@@ -11103,12 +11104,13 @@ bool ARMTargetLowering::getTgtMemIntrinsic(IntrinsicInfo &Info,
   case Intrinsic::arm_neon_vst4lane: {
     Info.opc = ISD::INTRINSIC_VOID;
     // Conservatively set memVT to the entire set of vectors stored.
+    auto &DL = I.getCalledFunction()->getParent()->getDataLayout();
     unsigned NumElts = 0;
     for (unsigned ArgI = 1, ArgE = I.getNumArgOperands(); ArgI < ArgE; ++ArgI) {
       Type *ArgTy = I.getArgOperand(ArgI)->getType();
       if (!ArgTy->isVectorTy())
         break;
-      NumElts += getDataLayout()->getTypeAllocSize(ArgTy) / 8;
+      NumElts += DL.getTypeAllocSize(ArgTy) / 8;
     }
     Info.memVT = EVT::getVectorVT(I.getType()->getContext(), MVT::i64, NumElts);
     Info.ptrVal = I.getArgOperand(0);
@@ -11122,12 +11124,13 @@ bool ARMTargetLowering::getTgtMemIntrinsic(IntrinsicInfo &Info,
   }
   case Intrinsic::arm_ldaex:
   case Intrinsic::arm_ldrex: {
+    auto &DL = I.getCalledFunction()->getParent()->getDataLayout();
     PointerType *PtrTy = cast<PointerType>(I.getArgOperand(0)->getType());
     Info.opc = ISD::INTRINSIC_W_CHAIN;
     Info.memVT = MVT::getVT(PtrTy->getElementType());
     Info.ptrVal = I.getArgOperand(0);
     Info.offset = 0;
-    Info.align = getDataLayout()->getABITypeAlignment(PtrTy->getElementType());
+    Info.align = DL.getABITypeAlignment(PtrTy->getElementType());
     Info.vol = true;
     Info.readMem = true;
     Info.writeMem = false;
@@ -11135,12 +11138,13 @@ bool ARMTargetLowering::getTgtMemIntrinsic(IntrinsicInfo &Info,
   }
   case Intrinsic::arm_stlex:
   case Intrinsic::arm_strex: {
+    auto &DL = I.getCalledFunction()->getParent()->getDataLayout();
     PointerType *PtrTy = cast<PointerType>(I.getArgOperand(1)->getType());
     Info.opc = ISD::INTRINSIC_W_CHAIN;
     Info.memVT = MVT::getVT(PtrTy->getElementType());
     Info.ptrVal = I.getArgOperand(1);
     Info.offset = 0;
-    Info.align = getDataLayout()->getABITypeAlignment(PtrTy->getElementType());
+    Info.align = DL.getABITypeAlignment(PtrTy->getElementType());
     Info.vol = true;
     Info.readMem = false;
     Info.writeMem = true;
@@ -11427,9 +11431,9 @@ bool ARMTargetLowering::lowerInterleavedLoad(
   VectorType *VecTy = Shuffles[0]->getType();
   Type *EltTy = VecTy->getVectorElementType();
 
-  const DataLayout *DL = getDataLayout();
-  unsigned VecSize = DL->getTypeAllocSizeInBits(VecTy);
-  bool EltIs64Bits = DL->getTypeAllocSizeInBits(EltTy) == 64;
+  const DataLayout &DL = LI->getModule()->getDataLayout();
+  unsigned VecSize = DL.getTypeAllocSizeInBits(VecTy);
+  bool EltIs64Bits = DL.getTypeAllocSizeInBits(EltTy) == 64;
 
   // Skip illegal vector types and vector types of i64/f64 element (vldN doesn't
   // support i64/f64 element).
@@ -11439,8 +11443,8 @@ bool ARMTargetLowering::lowerInterleavedLoad(
   // A pointer vector can not be the return type of the ldN intrinsics. Need to
   // load integer vectors first and then convert to pointer vectors.
   if (EltTy->isPointerTy())
-    VecTy = VectorType::get(DL->getIntPtrType(EltTy),
-                            VecTy->getVectorNumElements());
+    VecTy =
+        VectorType::get(DL.getIntPtrType(EltTy), VecTy->getVectorNumElements());
 
   static const Intrinsic::ID LoadInts[3] = {Intrinsic::arm_neon_vld2,
                                             Intrinsic::arm_neon_vld3,
@@ -11517,9 +11521,9 @@ bool ARMTargetLowering::lowerInterleavedStore(StoreInst *SI,
   Type *EltTy = VecTy->getVectorElementType();
   VectorType *SubVecTy = VectorType::get(EltTy, NumSubElts);
 
-  const DataLayout *DL = getDataLayout();
-  unsigned SubVecSize = DL->getTypeAllocSizeInBits(SubVecTy);
-  bool EltIs64Bits = DL->getTypeAllocSizeInBits(EltTy) == 64;
+  const DataLayout &DL = SI->getModule()->getDataLayout();
+  unsigned SubVecSize = DL.getTypeAllocSizeInBits(SubVecTy);
+  bool EltIs64Bits = DL.getTypeAllocSizeInBits(EltTy) == 64;
 
   // Skip illegal sub vector types and vector types of i64/f64 element (vstN
   // doesn't support i64/f64 element).
@@ -11533,7 +11537,7 @@ bool ARMTargetLowering::lowerInterleavedStore(StoreInst *SI,
   // StN intrinsics don't support pointer vectors as arguments. Convert pointer
   // vectors to integer vectors.
   if (EltTy->isPointerTy()) {
-    Type *IntTy = DL->getIntPtrType(EltTy);
+    Type *IntTy = DL.getIntPtrType(EltTy);
 
     // Convert to the corresponding integer vector.
     Type *IntVecTy =

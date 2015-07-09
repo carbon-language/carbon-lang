@@ -36,7 +36,7 @@ EmitTargetCodeForMemcpy(SelectionDAG &DAG, SDLoc dl, SDValue Chain,
     const TargetLowering &TLI = *DAG.getSubtarget().getTargetLowering();
     TargetLowering::ArgListTy Args;
     TargetLowering::ArgListEntry Entry;
-    Entry.Ty = TLI.getDataLayout()->getIntPtrType(*DAG.getContext());
+    Entry.Ty = DAG.getDataLayout().getIntPtrType(*DAG.getContext());
     Entry.Node = Dst; Args.push_back(Entry);
     Entry.Node = Src; Args.push_back(Entry);
     Entry.Node = Size; Args.push_back(Entry);

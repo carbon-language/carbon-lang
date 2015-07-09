@@ -14984,7 +14984,7 @@ SDValue X86TargetLowering::LowerVAARG(SDValue Op, SelectionDAG &DAG) const {
 
   EVT ArgVT = Op.getNode()->getValueType(0);
   Type *ArgTy = ArgVT.getTypeForEVT(*DAG.getContext());
-  uint32_t ArgSize = getDataLayout()->getTypeAllocSize(ArgTy);
+  uint32_t ArgSize = DAG.getDataLayout().getTypeAllocSize(ArgTy);
   uint8_t ArgMode;
 
   // Decide which area this value should be read from.
@@ -21715,7 +21715,7 @@ static SDValue XFormVExtractWithShuffleIntoLoad(SDNode *N, SelectionDAG &DAG,
   // alignment is valid.
   unsigned Align = LN0->getAlignment();
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
-  unsigned NewAlign = TLI.getDataLayout()->getABITypeAlignment(
+  unsigned NewAlign = DAG.getDataLayout().getABITypeAlignment(
       EltVT.getTypeForEVT(*DAG.getContext()));
 
   if (NewAlign > Align || !TLI.isOperationLegalOrCustom(ISD::LOAD, EltVT))

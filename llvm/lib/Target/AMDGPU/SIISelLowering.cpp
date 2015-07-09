@@ -417,7 +417,7 @@ static EVT toIntegerVT(EVT VT) {
 SDValue SITargetLowering::LowerParameter(SelectionDAG &DAG, EVT VT, EVT MemVT,
                                          SDLoc SL, SDValue Chain,
                                          unsigned Offset, bool Signed) const {
-  const DataLayout *DL = getDataLayout();
+  const DataLayout &DL = DAG.getDataLayout();
   MachineFunction &MF = DAG.getMachineFunction();
   const SIRegisterInfo *TRI =
       static_cast<const SIRegisterInfo*>(Subtarget->getRegisterInfo());
@@ -426,7 +426,7 @@ SDValue SITargetLowering::LowerParameter(SelectionDAG &DAG, EVT VT, EVT MemVT,
   Type *Ty = VT.getTypeForEVT(*DAG.getContext());
 
   MachineRegisterInfo &MRI = DAG.getMachineFunction().getRegInfo();
-  MVT PtrVT = getPointerTy(DAG.getDataLayout(), AMDGPUAS::CONSTANT_ADDRESS);
+  MVT PtrVT = getPointerTy(DL, AMDGPUAS::CONSTANT_ADDRESS);
   PointerType *PtrTy = PointerType::get(Ty, AMDGPUAS::CONSTANT_ADDRESS);
   SDValue BasePtr = DAG.getCopyFromReg(Chain, SL,
                                        MRI.getLiveInVirtReg(InputPtrReg), PtrVT);
@@ -435,7 +435,7 @@ SDValue SITargetLowering::LowerParameter(SelectionDAG &DAG, EVT VT, EVT MemVT,
   SDValue PtrOffset = DAG.getUNDEF(PtrVT);
   MachinePointerInfo PtrInfo(UndefValue::get(PtrTy));
 
-  unsigned Align = DL->getABITypeAlignment(Ty);
+  unsigned Align = DL.getABITypeAlignment(Ty);
 
   if (VT != MemVT && VT.isFloatingPoint()) {
     // Do an integer load and convert.
@@ -1414,7 +1414,7 @@ SDValue SITargetLowering::performUCharToFloatCombine(SDNode *N,
     unsigned AS = Load->getAddressSpace();
     unsigned Align = Load->getAlignment();
     Type *Ty = LoadVT.getTypeForEVT(*DAG.getContext());
-    unsigned ABIAlignment = getDataLayout()->getABITypeAlignment(Ty);
+    unsigned ABIAlignment = DAG.getDataLayout().getABITypeAlignment(Ty);
 
     // Don't try to replace the load if we have to expand it due to alignment
     // problems. Otherwise we will end up scalarizing the load, and trying to

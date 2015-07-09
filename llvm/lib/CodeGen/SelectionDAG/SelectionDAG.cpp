@@ -4546,7 +4546,7 @@ SDValue SelectionDAG::getMemmove(SDValue Chain, SDLoc dl, SDValue Dst,
   // Emit a library call.
   TargetLowering::ArgListTy Args;
   TargetLowering::ArgListEntry Entry;
-  Entry.Ty = TLI->getDataLayout()->getIntPtrType(*getContext());
+  Entry.Ty = getDataLayout().getIntPtrType(*getContext());
   Entry.Node = Dst; Args.push_back(Entry);
   Entry.Node = Src; Args.push_back(Entry);
   Entry.Node = Size; Args.push_back(Entry);

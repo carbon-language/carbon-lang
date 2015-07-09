@@ -6434,6 +6434,7 @@ SDValue AArch64TargetLowering::LowerVSETCC(SDValue Op,
 bool AArch64TargetLowering::getTgtMemIntrinsic(IntrinsicInfo &Info,
                                                const CallInst &I,
                                                unsigned Intrinsic) const {
+  auto &DL = I.getModule()->getDataLayout();
   switch (Intrinsic) {
   case Intrinsic::aarch64_neon_ld2:
   case Intrinsic::aarch64_neon_ld3:
@@ -6449,7 +6450,7 @@ bool AArch64TargetLowering::getTgtMemIntrinsic(IntrinsicInfo &Info,
   case Intrinsic::aarch64_neon_ld4r: {
     Info.opc = ISD::INTRINSIC_W_CHAIN;
     // Conservatively set memVT to the entire set of vectors loaded.
-    uint64_t NumElts = getDataLayout()->getTypeAllocSize(I.getType()) / 8;
+    uint64_t NumElts = DL.getTypeAllocSize(I.getType()) / 8;
     Info.memVT = EVT::getVectorVT(I.getType()->getContext(), MVT::i64, NumElts);
     Info.ptrVal = I.getArgOperand(I.getNumArgOperands() - 1);
     Info.offset = 0;
@@ -6475,7 +6476,7 @@ bool AArch64TargetLowering::getTgtMemIntrinsic(IntrinsicInfo &Info,
       Type *ArgTy = I.getArgOperand(ArgI)->getType();
       if (!ArgTy->isVectorTy())
         break;
-      NumElts += getDataLayout()->getTypeAllocSize(ArgTy) / 8;
+      NumElts += DL.getTypeAllocSize(ArgTy) / 8;
     }
     Info.memVT = EVT::getVectorVT(I.getType()->getContext(), MVT::i64, NumElts);
     Info.ptrVal = I.getArgOperand(I.getNumArgOperands() - 1);
@@ -6493,7 +6494,7 @@ bool AArch64TargetLowering::getTgtMemIntrinsic(IntrinsicInfo &Info,
     Info.memVT = MVT::getVT(PtrTy->getElementType());
     Info.ptrVal = I.getArgOperand(0);
     Info.offset = 0;
-    Info.align = getDataLayout()->getABITypeAlignment(PtrTy->getElementType());
+    Info.align = DL.getABITypeAlignment(PtrTy->getElementType());
     Info.vol = true;
     Info.readMem = true;
     Info.writeMem = false;
@@ -6506,7 +6507,7 @@ bool AArch64TargetLowering::getTgtMemIntrinsic(IntrinsicInfo &Info,
     Info.memVT = MVT::getVT(PtrTy->getElementType());
     Info.ptrVal = I.getArgOperand(1);
     Info.offset = 0;
-    Info.align = getDataLayout()->getABITypeAlignment(PtrTy->getElementType());
+    Info.align = DL.getABITypeAlignment(PtrTy->getElementType());
     Info.vol = true;
     Info.readMem = false;
     Info.writeMem = true;
@@ -6643,6 +6644,7 @@ bool AArch64TargetLowering::isExtFreeImpl(const Instruction *Ext) const {
       break;
     case Instruction::GetElementPtr: {
       gep_type_iterator GTI = gep_type_begin(Instr);
+      auto &DL = Ext->getModule()->getDataLayout();
       std::advance(GTI, U.getOperandNo());
       Type *IdxTy = *GTI;
       // This extension will end up with a shift because of the scaling factor.
@@ -6650,7 +6652,7 @@ bool AArch64TargetLowering::isExtFreeImpl(const Instruction *Ext) const {
       // Get the shift amount based on the scaling factor:
       // log2(sizeof(IdxTy)) - log2(8).
       uint64_t ShiftAmt =
-        countTrailingZeros(getDataLayout()->getTypeStoreSizeInBits(IdxTy)) - 3;
+          countTrailingZeros(DL.getTypeStoreSizeInBits(IdxTy)) - 3;
       // Is the constant foldable in the shift of the addressing mode?
       // I.e., shift amount is between 1 and 4 inclusive.
       if (ShiftAmt == 0 || ShiftAmt > 4)
@@ -6714,10 +6716,10 @@ bool AArch64TargetLowering::lowerInterleavedLoad(
   assert(Shuffles.size() == Indices.size() &&
          "Unmatched number of shufflevectors and indices");
 
-  const DataLayout *DL = getDataLayout();
+  const DataLayout &DL = LI->getModule()->getDataLayout();
 
   VectorType *VecTy = Shuffles[0]->getType();
-  unsigned VecSize = DL->getTypeAllocSizeInBits(VecTy);
+  unsigned VecSize = DL.getTypeAllocSizeInBits(VecTy);
 
   // Skip illegal vector types.
   if (VecSize != 64 && VecSize != 128)
@@ -6727,8 +6729,8 @@ bool AArch64TargetLowering::lowerInterleavedLoad(
   // load integer vectors first and then convert to pointer vectors.
   Type *EltTy = VecTy->getVectorElementType();
   if (EltTy->isPointerTy())
-    VecTy = VectorType::get(DL->getIntPtrType(EltTy),
-                            VecTy->getVectorNumElements());
+    VecTy =
+        VectorType::get(DL.getIntPtrType(EltTy), VecTy->getVectorNumElements());
 
   Type *PtrTy = VecTy->getPointerTo(LI->getPointerAddressSpace());
   Type *Tys[2] = {VecTy, PtrTy};
@@ -6802,8 +6804,8 @@ bool AArch64TargetLowering::lowerInterleavedStore(StoreInst *SI,
   Type *EltTy = VecTy->getVectorElementType();
   VectorType *SubVecTy = VectorType::get(EltTy, NumSubElts);
 
-  const DataLayout *DL = getDataLayout();
-  unsigned SubVecSize = DL->getTypeAllocSizeInBits(SubVecTy);
+  const DataLayout &DL = SI->getModule()->getDataLayout();
+  unsigned SubVecSize = DL.getTypeAllocSizeInBits(SubVecTy);
 
   // Skip illegal vector types.
   if (SubVecSize != 64 && SubVecSize != 128)
@@ -6816,7 +6818,7 @@ bool AArch64TargetLowering::lowerInterleavedStore(StoreInst *SI,
   // StN intrinsics don't support pointer vectors as arguments. Convert pointer
   // vectors to integer vectors.
   if (EltTy->isPointerTy()) {
-    Type *IntTy = DL->getIntPtrType(EltTy);
+    Type *IntTy = DL.getIntPtrType(EltTy);
     unsigned NumOpElts =
         dyn_cast<VectorType>(Op0->getType())->getVectorNumElements();
 

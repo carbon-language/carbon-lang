@@ -1583,7 +1583,7 @@ SDValue MipsTargetLowering::lowerBR_JT(SDValue Op, SelectionDAG &DAG) const {
   auto &TD = DAG.getDataLayout();
   EVT PTy = getPointerTy(TD);
   unsigned EntrySize =
-    DAG.getMachineFunction().getJumpTableInfo()->getEntrySize(*getDataLayout());
+      DAG.getMachineFunction().getJumpTableInfo()->getEntrySize(TD);
 
   Index = DAG.getNode(ISD::MUL, DL, PTy, Index,
                       DAG.getConstant(EntrySize, DL, PTy));
@@ -1876,7 +1876,9 @@ SDValue MipsTargetLowering::lowerVAARG(SDValue Op, SelectionDAG &DAG) const {
   }
 
   // Increment the pointer, VAList, to the next vaarg.
-  unsigned ArgSizeInBytes = getDataLayout()->getTypeAllocSize(VT.getTypeForEVT(*DAG.getContext()));
+  auto &TD = DAG.getDataLayout();
+  unsigned ArgSizeInBytes =
+      TD.getTypeAllocSize(VT.getTypeForEVT(*DAG.getContext()));
   SDValue Tmp3 = DAG.getNode(ISD::ADD, DL, VAList.getValueType(), VAList,
                              DAG.getConstant(RoundUpToAlignment(ArgSizeInBytes,
                                                             ArgSlotSizeInBytes),

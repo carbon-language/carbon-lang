@@ -281,7 +281,8 @@ static bool IsSmallObject(const GlobalValue *GV, const XCoreTargetLowering &XTL)
   if (!ObjType->isSized())
     return false;
 
-  unsigned ObjSize = XTL.getDataLayout()->getTypeAllocSize(ObjType);
+  auto &DL = GV->getParent()->getDataLayout();
+  unsigned ObjSize = DL.getTypeAllocSize(ObjType);
   return ObjSize < CodeModelLargeSize && ObjSize != 0;
 }
 
@@ -435,8 +436,9 @@ LowerLOAD(SDValue Op, SelectionDAG &DAG) const {
                                      LD->getAlignment()))
     return SDValue();
 
-  unsigned ABIAlignment = getDataLayout()->
-    getABITypeAlignment(LD->getMemoryVT().getTypeForEVT(*DAG.getContext()));
+  auto &TD = DAG.getDataLayout();
+  unsigned ABIAlignment = TD.getABITypeAlignment(
+      LD->getMemoryVT().getTypeForEVT(*DAG.getContext()));
   // Leave aligned load alone.
   if (LD->getAlignment() >= ABIAlignment)
     return SDValue();
@@ -486,7 +488,7 @@ LowerLOAD(SDValue Op, SelectionDAG &DAG) const {
   }
 
   // Lower to a call to __misaligned_load(BasePtr).
-  Type *IntPtrTy = getDataLayout()->getIntPtrType(*DAG.getContext());
+  Type *IntPtrTy = TD.getIntPtrType(*DAG.getContext());
   TargetLowering::ArgListTy Args;
   TargetLowering::ArgListEntry Entry;
 
@@ -517,8 +519,8 @@ LowerSTORE(SDValue Op, SelectionDAG &DAG) const
                                      ST->getAlignment())) {
     return SDValue();
   }
-  unsigned ABIAlignment = getDataLayout()->
-    getABITypeAlignment(ST->getMemoryVT().getTypeForEVT(*DAG.getContext()));
+  unsigned ABIAlignment = DAG.getDataLayout().getABITypeAlignment(
+      ST->getMemoryVT().getTypeForEVT(*DAG.getContext()));
   // Leave aligned store alone.
   if (ST->getAlignment() >= ABIAlignment) {
     return SDValue();
@@ -546,7 +548,7 @@ LowerSTORE(SDValue Op, SelectionDAG &DAG) const
   }
 
   // Lower to a call to __misaligned_store(BasePtr, Value).
-  Type *IntPtrTy = getDataLayout()->getIntPtrType(*DAG.getContext());
+  Type *IntPtrTy = DAG.getDataLayout().getIntPtrType(*DAG.getContext());
   TargetLowering::ArgListTy Args;
   TargetLowering::ArgListEntry Entry;
 
@@ -1829,7 +1831,7 @@ SDValue XCoreTargetLowering::PerformDAGCombine(SDNode *N,
     if (StoreBits % 8) {
       break;
     }
-    unsigned ABIAlignment = getDataLayout()->getABITypeAlignment(
+    unsigned ABIAlignment = DAG.getDataLayout().getABITypeAlignment(
         ST->getMemoryVT().getTypeForEVT(*DCI.DAG.getContext()));
     unsigned Alignment = ST->getAlignment();
     if (Alignment >= ABIAlignment) {

@@ -545,9 +545,8 @@ bool AMDGPUTargetLowering::isTruncateFree(Type *Source, Type *Dest) const {
 }
 
 bool AMDGPUTargetLowering::isZExtFree(Type *Src, Type *Dest) const {
-  const DataLayout *DL = getDataLayout();
-  unsigned SrcSize = DL->getTypeSizeInBits(Src->getScalarType());
-  unsigned DestSize = DL->getTypeSizeInBits(Dest->getScalarType());
+  unsigned SrcSize = Src->getScalarSizeInBits();
+  unsigned DestSize = Dest->getScalarSizeInBits();
 
   return SrcSize == 32 && DestSize == 64;
 }
@@ -697,7 +696,7 @@ SDValue AMDGPUTargetLowering::LowerConstantInitializer(const Constant* Init,
                                                        const SDValue &InitPtr,
                                                        SDValue Chain,
                                                        SelectionDAG &DAG) const {
-  const DataLayout *TD = getDataLayout();
+  const DataLayout &TD = DAG.getDataLayout();
   SDLoc DL(InitPtr);
   Type *InitTy = Init->getType();
 
@@ -705,20 +704,20 @@ SDValue AMDGPUTargetLowering::LowerConstantInitializer(const Constant* Init,
     EVT VT = EVT::getEVT(InitTy);
     PointerType *PtrTy = PointerType::get(InitTy, AMDGPUAS::PRIVATE_ADDRESS);
     return DAG.getStore(Chain, DL, DAG.getConstant(*CI, DL, VT), InitPtr,
-                        MachinePointerInfo(UndefValue::get(PtrTy)), false, false,
-                        TD->getPrefTypeAlignment(InitTy));
+                        MachinePointerInfo(UndefValue::get(PtrTy)), false,
+                        false, TD.getPrefTypeAlignment(InitTy));
   }
 
   if (const ConstantFP *CFP = dyn_cast<ConstantFP>(Init)) {
     EVT VT = EVT::getEVT(CFP->getType());
     PointerType *PtrTy = PointerType::get(CFP->getType(), 0);
     return DAG.getStore(Chain, DL, DAG.getConstantFP(*CFP, DL, VT), InitPtr,
-                 MachinePointerInfo(UndefValue::get(PtrTy)), false, false,
-                 TD->getPrefTypeAlignment(CFP->getType()));
+                        MachinePointerInfo(UndefValue::get(PtrTy)), false,
+                        false, TD.getPrefTypeAlignment(CFP->getType()));
   }
 
   if (StructType *ST = dyn_cast<StructType>(InitTy)) {
-    const StructLayout *SL = TD->getStructLayout(ST);
+    const StructLayout *SL = TD.getStructLayout(ST);
 
     EVT PtrVT = InitPtr.getValueType();
     SmallVector<SDValue, 8> Chains;
@@ -745,7 +744,7 @@ SDValue AMDGPUTargetLowering::LowerConstantInitializer(const Constant* Init,
     else
       llvm_unreachable("Unexpected type");
 
-    unsigned EltSize = TD->getTypeAllocSize(SeqTy->getElementType());
+    unsigned EltSize = TD.getTypeAllocSize(SeqTy->getElementType());
     SmallVector<SDValue, 8> Chains;
     for (unsigned i = 0; i < NumElements; ++i) {
       SDValue Offset = DAG.getConstant(i * EltSize, DL, PtrVT);
@@ -762,8 +761,8 @@ SDValue AMDGPUTargetLowering::LowerConstantInitializer(const Constant* Init,
     EVT VT = EVT::getEVT(InitTy);
     PointerType *PtrTy = PointerType::get(InitTy, AMDGPUAS::PRIVATE_ADDRESS);
     return DAG.getStore(Chain, DL, DAG.getUNDEF(VT), InitPtr,
-                        MachinePointerInfo(UndefValue::get(PtrTy)), false, false,
-                        TD->getPrefTypeAlignment(InitTy));
+                        MachinePointerInfo(UndefValue::get(PtrTy)), false,
+                        false, TD.getPrefTypeAlignment(InitTy));
   }
 
   Init->dump();

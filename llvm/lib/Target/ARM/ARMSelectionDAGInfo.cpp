@@ -83,7 +83,7 @@ EmitSpecializedLibcall(SelectionDAG &DAG, SDLoc dl,
 
   TargetLowering::ArgListTy Args;
   TargetLowering::ArgListEntry Entry;
-  Entry.Ty = TLI->getDataLayout()->getIntPtrType(*DAG.getContext());
+  Entry.Ty = DAG.getDataLayout().getIntPtrType(*DAG.getContext());
   Entry.Node = Dst;
   Args.push_back(Entry);
   if (AEABILibcall == AEABI_MEMCLR) {
