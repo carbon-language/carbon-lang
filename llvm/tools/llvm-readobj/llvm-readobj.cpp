@@ -127,10 +127,6 @@ namespace opts {
   cl::opt<bool> ProgramHeaders("program-headers",
     cl::desc("Display ELF program headers"));
 
-  // -hash-table
-  cl::opt<bool> HashTable("hash-table",
-    cl::desc("Display ELF hash table"));
-
   // -expand-relocs
   cl::opt<bool> ExpandRelocs("expand-relocs",
     cl::desc("Expand each shown relocation to multiple lines"));
@@ -304,8 +300,6 @@ static void dumpObject(const ObjectFile *Obj) {
     Dumper->printNeededLibraries();
   if (opts::ProgramHeaders)
     Dumper->printProgramHeaders();
-  if (opts::HashTable)
-    Dumper->printHashTable();
   if (Obj->getArch() == llvm::Triple::arm && Obj->isELF())
     if (opts::ARMAttributes)
       Dumper->printAttributes();

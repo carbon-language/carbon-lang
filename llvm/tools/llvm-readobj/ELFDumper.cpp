@@ -56,7 +56,6 @@ public:
   void printDynamicTable() override;
   void printNeededLibraries() override;
   void printProgramHeaders() override;
-  void printHashTable() override;
 
   void printAttributes() override;
   void printMipsPLTGOT() override;
@@ -1118,18 +1117,6 @@ void ELFDumper<ELFT>::printProgramHeaders() {
     W.printFlags ("Flags", PI->p_flags, makeArrayRef(ElfSegmentFlags));
     W.printNumber("Alignment", PI->p_align);
   }
-}
-
-template <typename ELFT>
-void ELFDumper<ELFT>::printHashTable() {
-  DictScope D(W, "HashTable");
-  auto HT = Obj->getHashTable();
-  if (!HT)
-    return;
-  W.printNumber("Num Buckets", HT->nbucket);
-  W.printNumber("Num Chains", HT->nchain);
-  W.printList("Buckets", HT->buckets());
-  W.printList("Chains", HT->chains());
 }
 
 template <class ELFT>

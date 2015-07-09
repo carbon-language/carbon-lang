@@ -181,8 +181,8 @@ public:
     startLine() << Label << ": " << (Value ? "Yes" : "No") << '\n';
   }
 
-  template <typename T>
-  void printList(StringRef Label, const T &List) {
+  template <typename T_>
+  void printList(StringRef Label, const SmallVectorImpl<T_> &List) {
     startLine() << Label << ": [";
     bool Comma = false;
     for (const auto &Item : List) {

@@ -1,8 +1,0 @@
-RUN: llvm-readobj %p/Inputs/no-section-table.so -hash-table | FileCheck %s
-
-CHECK: HashTable {
-CHECK:   Num Buckets: 3
-CHECK:   Num Chains: 13
-CHECK:   Buckets: [12, 10, 11]
-CHECK:   Chains: [0, 0, 0, 0, 2, 3, 4, 0, 7, 5, 6, 8, 9]
-CHECK: }

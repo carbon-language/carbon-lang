@@ -16,7 +16,6 @@
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/IntervalMap.h"
 #include "llvm/ADT/PointerIntPair.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringSwitch.h"
@@ -140,7 +139,6 @@ public:
   typedef Elf_Verneed_Impl<ELFT> Elf_Verneed;
   typedef Elf_Vernaux_Impl<ELFT> Elf_Vernaux;
   typedef Elf_Versym_Impl<ELFT> Elf_Versym;
-  typedef Elf_Hash<ELFT> Elf_Hash;
   typedef ELFEntityIterator<const Elf_Dyn> Elf_Dyn_Iter;
   typedef iterator_range<Elf_Dyn_Iter> Elf_Dyn_Range;
   typedef ELFEntityIterator<const Elf_Rela> Elf_Rela_Iter;
@@ -178,7 +176,6 @@ private:
   const Elf_Shdr *dot_symtab_sec = nullptr; // Symbol table section.
   StringRef DynSymStrTab;                   // Dynnamic symbol string table.
   const Elf_Shdr *DotDynSymSec = nullptr;   // Dynamic symbol table section.
-  const Elf_Hash *HashTable = nullptr;
 
   const Elf_Shdr *SymbolTableSectionHeaderIndex = nullptr;
   DenseMap<const Elf_Sym *, ELF::Elf64_Word> ExtendedSymbolTable;
@@ -232,8 +229,6 @@ private:
   void LoadVersionNeeds(const Elf_Shdr *ec) const;
   void LoadVersionMap() const;
 
-  void scanDynamicTable();
-
 public:
   template<typename T>
   const T        *getEntry(uint32_t Section, uint32_t Entry) const;
@@ -242,7 +237,6 @@ public:
 
   const Elf_Shdr *getDotSymtabSec() const { return dot_symtab_sec; }
   const Elf_Shdr *getDotDynSymSec() const { return DotDynSymSec; }
-  const Elf_Hash *getHashTable() const { return HashTable; }
 
   ErrorOr<StringRef> getStringTable(const Elf_Shdr *Section) const;
   const char *getDynamicString(uintX_t Offset) const;
@@ -584,10 +578,8 @@ ELFFile<ELFT>::ELFFile(StringRef Object, std::error_code &EC)
 
   Header = reinterpret_cast<const Elf_Ehdr *>(base());
 
-  if (Header->e_shoff == 0) {
-    scanDynamicTable();
+  if (Header->e_shoff == 0)
     return;
-  }
 
   const uint64_t SectionTableOffset = Header->e_shoff;
 
@@ -612,13 +604,6 @@ ELFFile<ELFT>::ELFFile(StringRef Object, std::error_code &EC)
 
   for (const Elf_Shdr &Sec : sections()) {
     switch (Sec.sh_type) {
-    case ELF::SHT_HASH:
-      if (HashTable) {
-        EC = object_error::parse_failed;
-        return;
-      }
-      HashTable = reinterpret_cast<const Elf_Hash *>(base() + Sec.sh_offset);
-      break;
     case ELF::SHT_SYMTAB_SHNDX:
       if (SymbolTableSectionHeaderIndex) {
         // More than one .symtab_shndx!
@@ -716,21 +701,7 @@ ELFFile<ELFT>::ELFFile(StringRef Object, std::error_code &EC)
     }
   }
 
-  scanDynamicTable();
-
-  EC = std::error_code();
-}
-
-template <class ELFT>
-void ELFFile<ELFT>::scanDynamicTable() {
-  // Build load-address to file-offset map.
-  typedef IntervalMap<
-      uintX_t, uintptr_t,
-      IntervalMapImpl::NodeSizer<uintX_t, uintptr_t>::LeafSize,
-      IntervalMapHalfOpenInfo<uintX_t>> LoadMapT;
-  typename LoadMapT::Allocator Alloc;
-  LoadMapT LoadMap(Alloc);
-
+  // Scan program headers.
   for (Elf_Phdr_Iter PhdrI = program_header_begin(),
                      PhdrE = program_header_end();
        PhdrI != PhdrE; ++PhdrI) {
@@ -738,36 +709,34 @@ void ELFFile<ELFT>::scanDynamicTable() {
       DynamicRegion.Addr = base() + PhdrI->p_offset;
       DynamicRegion.Size = PhdrI->p_filesz;
       DynamicRegion.EntSize = sizeof(Elf_Dyn);
-      continue;
+      break;
     }
-    if (PhdrI->p_type != ELF::PT_LOAD)
-      continue;
-    if (PhdrI->p_filesz == 0)
-      continue;
-    LoadMap.insert(PhdrI->p_vaddr, PhdrI->p_vaddr + PhdrI->p_filesz,
-                   PhdrI->p_offset);
   }
 
-  auto toMappedAddr = [&](uint64_t VAddr) -> const uint8_t * {
-    auto I = LoadMap.find(VAddr);
-    if (I == LoadMap.end())
-      return nullptr;
-    return base() + I.value() + (VAddr - I.start());
-  };
-
+  // Scan dynamic table.
   for (Elf_Dyn_Iter DynI = dynamic_table_begin(), DynE = dynamic_table_end();
        DynI != DynE; ++DynI) {
     switch (DynI->d_tag) {
-    case ELF::DT_HASH:
-      if (HashTable)
-        continue;
-      HashTable =
-          reinterpret_cast<const Elf_Hash *>(toMappedAddr(DynI->getPtr()));
+    case ELF::DT_RELA: {
+      uint64_t VBase = 0;
+      const uint8_t *FBase = nullptr;
+      for (Elf_Phdr_Iter PhdrI = program_header_begin(),
+                         PhdrE = program_header_end();
+           PhdrI != PhdrE; ++PhdrI) {
+        if (PhdrI->p_type != ELF::PT_LOAD)
+          continue;
+        if (DynI->getPtr() >= PhdrI->p_vaddr &&
+            DynI->getPtr() < PhdrI->p_vaddr + PhdrI->p_memsz) {
+          VBase = PhdrI->p_vaddr;
+          FBase = base() + PhdrI->p_offset;
+          break;
+        }
+      }
+      if (!VBase)
+        return;
+      DynRelaRegion.Addr = FBase + DynI->getPtr() - VBase;
       break;
-    case ELF::DT_RELA:
-      if (!DynRelaRegion.Addr)
-        DynRelaRegion.Addr = toMappedAddr(DynI->getPtr());
-      break;
+    }
     case ELF::DT_RELASZ:
       DynRelaRegion.Size = DynI->getVal();
       break;
@@ -775,6 +744,8 @@ void ELFFile<ELFT>::scanDynamicTable() {
       DynRelaRegion.EntSize = DynI->getVal();
     }
   }
+
+  EC = std::error_code();
 }
 
 template <class ELFT>
