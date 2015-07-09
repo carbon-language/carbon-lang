@@ -1495,7 +1495,7 @@ static bool isSeveralBitsExtractOpFromShr(SDNode *N, unsigned &Opc,
 }
 
 static bool isBitfieldExtractOpFromShr(SDNode *N, unsigned &Opc, SDValue &Opd0,
-                                       unsigned &LSB, unsigned &MSB,
+                                       unsigned &Immr, unsigned &Imms,
                                        bool BiggerPattern) {
   assert((N->getOpcode() == ISD::SRA || N->getOpcode() == ISD::SRL) &&
          "N must be a SHR/SRA operation to call this function");
@@ -1509,7 +1509,7 @@ static bool isBitfieldExtractOpFromShr(SDNode *N, unsigned &Opc, SDValue &Opd0,
          "Type checking must have been done before calling this function");
 
   // Check for AND + SRL doing several bits extract.
-  if (isSeveralBitsExtractOpFromShr(N, Opc, Opd0, LSB, MSB))
+  if (isSeveralBitsExtractOpFromShr(N, Opc, Opd0, Immr, Imms))
     return true;
 
   // we're looking for a shift of a shift
@@ -1549,13 +1549,9 @@ static bool isBitfieldExtractOpFromShr(SDNode *N, unsigned &Opc, SDValue &Opd0,
 
   assert(Srl_imm > 0 && Srl_imm < VT.getSizeInBits() &&
          "bad amount in shift node!");
-  // Note: The width operand is encoded as width-1.
-  unsigned Width = VT.getSizeInBits() - Trunc_bits - Srl_imm - 1;
-  int sLSB = Srl_imm - Shl_imm;
-  if (sLSB < 0)
-    return false;
-  LSB = sLSB;
-  MSB = LSB + Width;
+  int immr = Srl_imm - Shl_imm;
+  Immr = immr < 0 ? immr + VT.getSizeInBits() : immr;
+  Imms = VT.getSizeInBits() - Shl_imm - Trunc_bits - 1;
   // SRA requires a signed extraction
   if (VT == MVT::i32)
     Opc = N->getOpcode() == ISD::SRA ? AArch64::SBFMWri : AArch64::UBFMWri;
@@ -1565,7 +1561,7 @@ static bool isBitfieldExtractOpFromShr(SDNode *N, unsigned &Opc, SDValue &Opd0,
 }
 
 static bool isBitfieldExtractOp(SelectionDAG *CurDAG, SDNode *N, unsigned &Opc,
-                                SDValue &Opd0, unsigned &LSB, unsigned &MSB,
+                                SDValue &Opd0, unsigned &Immr, unsigned &Imms,
                                 unsigned NumberOfIgnoredLowBits = 0,
                                 bool BiggerPattern = false) {
   if (N->getValueType(0) != MVT::i32 && N->getValueType(0) != MVT::i64)
@@ -1577,11 +1573,11 @@ static bool isBitfieldExtractOp(SelectionDAG *CurDAG, SDNode *N, unsigned &Opc,
       return false;
     break;
   case ISD::AND:
-    return isBitfieldExtractOpFromAnd(CurDAG, N, Opc, Opd0, LSB, MSB,
+    return isBitfieldExtractOpFromAnd(CurDAG, N, Opc, Opd0, Immr, Imms,
                                       NumberOfIgnoredLowBits, BiggerPattern);
   case ISD::SRL:
   case ISD::SRA:
-    return isBitfieldExtractOpFromShr(N, Opc, Opd0, LSB, MSB, BiggerPattern);
+    return isBitfieldExtractOpFromShr(N, Opc, Opd0, Immr, Imms, BiggerPattern);
   }
 
   unsigned NOpc = N->getMachineOpcode();
@@ -1594,8 +1590,8 @@ static bool isBitfieldExtractOp(SelectionDAG *CurDAG, SDNode *N, unsigned &Opc,
   case AArch64::UBFMXri:
     Opc = NOpc;
     Opd0 = N->getOperand(0);
-    LSB = cast<ConstantSDNode>(N->getOperand(1).getNode())->getZExtValue();
-    MSB = cast<ConstantSDNode>(N->getOperand(2).getNode())->getZExtValue();
+    Immr = cast<ConstantSDNode>(N->getOperand(1).getNode())->getZExtValue();
+    Imms = cast<ConstantSDNode>(N->getOperand(2).getNode())->getZExtValue();
     return true;
   }
   // Unreachable
@@ -1603,9 +1599,9 @@ static bool isBitfieldExtractOp(SelectionDAG *CurDAG, SDNode *N, unsigned &Opc,
 }
 
 SDNode *AArch64DAGToDAGISel::SelectBitfieldExtractOp(SDNode *N) {
-  unsigned Opc, LSB, MSB;
+  unsigned Opc, Immr, Imms;
   SDValue Opd0;
-  if (!isBitfieldExtractOp(CurDAG, N, Opc, Opd0, LSB, MSB))
+  if (!isBitfieldExtractOp(CurDAG, N, Opc, Opd0, Immr, Imms))
     return nullptr;
 
   EVT VT = N->getValueType(0);
@@ -1614,8 +1610,8 @@ SDNode *AArch64DAGToDAGISel::SelectBitfieldExtractOp(SDNode *N) {
   // If the bit extract operation is 64bit but the original type is 32bit, we
   // need to add one EXTRACT_SUBREG.
   if ((Opc == AArch64::SBFMXri || Opc == AArch64::UBFMXri) && VT == MVT::i32) {
-    SDValue Ops64[] = {Opd0, CurDAG->getTargetConstant(LSB, dl, MVT::i64),
-                       CurDAG->getTargetConstant(MSB, dl, MVT::i64)};
+    SDValue Ops64[] = {Opd0, CurDAG->getTargetConstant(Immr, dl, MVT::i64),
+                       CurDAG->getTargetConstant(Imms, dl, MVT::i64)};
 
     SDNode *BFM = CurDAG->getMachineNode(Opc, dl, MVT::i64, Ops64);
     SDValue SubReg = CurDAG->getTargetConstant(AArch64::sub_32, dl, MVT::i32);
@@ -1625,8 +1621,8 @@ SDNode *AArch64DAGToDAGISel::SelectBitfieldExtractOp(SDNode *N) {
     return Node;
   }
 
-  SDValue Ops[] = {Opd0, CurDAG->getTargetConstant(LSB, dl, VT),
-                   CurDAG->getTargetConstant(MSB, dl, VT)};
+  SDValue Ops[] = {Opd0, CurDAG->getTargetConstant(Immr, dl, VT),
+                   CurDAG->getTargetConstant(Imms, dl, VT)};
   return CurDAG->SelectNodeTo(N, Opc, VT, Ops);
 }
 
