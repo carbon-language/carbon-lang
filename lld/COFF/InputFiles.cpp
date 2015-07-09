@@ -249,6 +249,12 @@ MachineTypes ObjectFile::getMachineType() {
   return IMAGE_FILE_MACHINE_UNKNOWN;
 }
 
+StringRef ltrim1(StringRef S, const char *Chars) {
+  if (!S.empty() && strchr(Chars, S[0]))
+    return S.substr(1);
+  return S;
+}
+
 std::error_code ImportFile::parse() {
   const char *Buf = MB.getBufferStart();
   const char *End = MB.getBufferEnd();
@@ -273,10 +279,10 @@ std::error_code ImportFile::parse() {
     ExtName = Name;
     break;
   case IMPORT_NAME_NOPREFIX:
-    ExtName = Name.ltrim("?@_");
+    ExtName = ltrim1(Name, "?@_");
     break;
   case IMPORT_NAME_UNDECORATE:
-    ExtName = Name.ltrim("?@_");
+    ExtName = ltrim1(Name, "?@_");
     ExtName = ExtName.substr(0, ExtName.find('@'));
     break;
   }

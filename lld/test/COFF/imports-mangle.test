@@ -5,7 +5,7 @@
 
 # CHECK: Import {
 # CHECK:   Symbol: sym4 (0)
-# CHECK:   Symbol: sym3 (1)
+# CHECK:   Symbol: _sym3 (1)
 # CHECK:   Symbol: sym1 (2)
 # CHECK:   Symbol:  (2)
 # CHECK: }
@@ -51,7 +51,7 @@ symbols:
     SimpleType:      IMAGE_SYM_TYPE_NULL
     ComplexType:     IMAGE_SYM_DTYPE_FUNCTION
     StorageClass:    IMAGE_SYM_CLASS_EXTERNAL
-  - Name:            _sym3
+  - Name:            __sym3
     Value:           0
     SectionNumber:   0
     SimpleType:      IMAGE_SYM_TYPE_NULL
