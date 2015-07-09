@@ -190,7 +190,6 @@ writeSymbolTable(raw_fd_ostream &Out, object::Archive::Kind Kind,
   unsigned StartOffset = 0;
   SmallString<128> NameBuf;
   raw_svector_ostream NameOS(NameBuf);
-  unsigned NumSyms = 0;
   LLVMContext Context;
   for (unsigned MemberNum = 0, N = Members.size(); MemberNum < N; ++MemberNum) {
     MemoryBufferRef MemberBuffer = Buffers[MemberNum];
@@ -218,7 +217,6 @@ writeSymbolTable(raw_fd_ostream &Out, object::Archive::Kind Kind,
       if (auto EC = S.printName(NameOS))
         return EC;
       NameOS << '\0';
-      ++NumSyms;
       MemberOffsetRefs.push_back(MemberNum);
       print32(Out, Kind, 0);
     }
@@ -235,6 +233,7 @@ writeSymbolTable(raw_fd_ostream &Out, object::Archive::Kind Kind,
   Out.seek(StartOffset - 12);
   printWithSpacePadding(Out, Pos - StartOffset, 10);
   Out.seek(StartOffset);
+  unsigned NumSyms = MemberOffsetRefs.size();
   print32(Out, Kind, NumSyms);
   Out.seek(Pos);
   return StartOffset + 4;
