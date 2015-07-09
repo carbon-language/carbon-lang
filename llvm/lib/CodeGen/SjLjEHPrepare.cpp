@@ -82,6 +82,8 @@ private:
 } // end anonymous namespace
 
 char SjLjEHPrepare::ID = 0;
+INITIALIZE_PASS(SjLjEHPrepare, "sjljehprepare", "Prepare SjLj exceptions",
+                false, false)
 
 // Public Interface To the SjLjEHPrepare pass.
 FunctionPass *llvm::createSjLjEHPreparePass() { return new SjLjEHPrepare(); }
