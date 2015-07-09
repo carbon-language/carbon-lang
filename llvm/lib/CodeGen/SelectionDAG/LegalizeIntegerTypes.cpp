@@ -1358,9 +1358,9 @@ std::pair <SDValue, SDValue> DAGTypeLegalizer::ExpandAtomic(SDNode *Node) {
   return ExpandChainLibCall(LC, Node, false);
 }
 
-/// N is a shift by a value that needs to be expanded,
+/// ExpandShiftByConstant - N is a shift by a value that needs to be expanded,
 /// and the shift amount is a constant 'Amt'.  Expand the operation.
-void DAGTypeLegalizer::ExpandShiftByConstant(SDNode *N, const APInt &Amt,
+void DAGTypeLegalizer::ExpandShiftByConstant(SDNode *N, unsigned Amt,
                                              SDValue &Lo, SDValue &Hi) {
   SDLoc DL(N);
   // Expand the incoming operand to be shifted, so that we have its parts
@@ -1381,12 +1381,12 @@ void DAGTypeLegalizer::ExpandShiftByConstant(SDNode *N, const APInt &Amt,
   EVT ShTy = N->getOperand(1).getValueType();
 
   if (N->getOpcode() == ISD::SHL) {
-    if (Amt.ugt(VTBits)) {
+    if (Amt > VTBits) {
       Lo = Hi = DAG.getConstant(0, DL, NVT);
-    } else if (Amt.ugt(NVTBits)) {
+    } else if (Amt > NVTBits) {
       Lo = DAG.getConstant(0, DL, NVT);
       Hi = DAG.getNode(ISD::SHL, DL,
-                       NVT, InL, DAG.getConstant(-Amt + NVTBits, DL, ShTy));
+                       NVT, InL, DAG.getConstant(Amt - NVTBits, DL, ShTy));
     } else if (Amt == NVTBits) {
       Lo = DAG.getConstant(0, DL, NVT);
       Hi = InL;
@@ -1405,15 +1405,16 @@ void DAGTypeLegalizer::ExpandShiftByConstant(SDNode *N, const APInt &Amt,
                        DAG.getNode(ISD::SHL, DL, NVT, InH,
                                    DAG.getConstant(Amt, DL, ShTy)),
                        DAG.getNode(ISD::SRL, DL, NVT, InL,
-                                   DAG.getConstant(-Amt + NVTBits, DL, ShTy)));
+                                   DAG.getConstant(NVTBits - Amt, DL, ShTy)));
     }
     return;
   }
 
   if (N->getOpcode() == ISD::SRL) {
-    if (Amt.ugt(VTBits)) {
-      Lo = Hi = DAG.getConstant(0, DL, NVT);
-    } else if (Amt.ugt(NVTBits)) {
+    if (Amt > VTBits) {
+      Lo = DAG.getConstant(0, DL, NVT);
+      Hi = DAG.getConstant(0, DL, NVT);
+    } else if (Amt > NVTBits) {
       Lo = DAG.getNode(ISD::SRL, DL,
                        NVT, InH, DAG.getConstant(Amt - NVTBits, DL, ShTy));
       Hi = DAG.getConstant(0, DL, NVT);
@@ -1425,19 +1426,19 @@ void DAGTypeLegalizer::ExpandShiftByConstant(SDNode *N, const APInt &Amt,
                        DAG.getNode(ISD::SRL, DL, NVT, InL,
                                    DAG.getConstant(Amt, DL, ShTy)),
                        DAG.getNode(ISD::SHL, DL, NVT, InH,
-                                   DAG.getConstant(-Amt + NVTBits, DL, ShTy)));
+                                   DAG.getConstant(NVTBits - Amt, DL, ShTy)));
       Hi = DAG.getNode(ISD::SRL, DL, NVT, InH, DAG.getConstant(Amt, DL, ShTy));
     }
     return;
   }
 
   assert(N->getOpcode() == ISD::SRA && "Unknown shift!");
-  if (Amt.ugt(VTBits)) {
+  if (Amt > VTBits) {
     Hi = Lo = DAG.getNode(ISD::SRA, DL, NVT, InH,
                           DAG.getConstant(NVTBits - 1, DL, ShTy));
-  } else if (Amt.ugt(NVTBits)) {
+  } else if (Amt > NVTBits) {
     Lo = DAG.getNode(ISD::SRA, DL, NVT, InH,
-                     DAG.getConstant(Amt - NVTBits, DL, ShTy));
+                     DAG.getConstant(Amt-NVTBits, DL, ShTy));
     Hi = DAG.getNode(ISD::SRA, DL, NVT, InH,
                      DAG.getConstant(NVTBits - 1, DL, ShTy));
   } else if (Amt == NVTBits) {
@@ -1449,7 +1450,7 @@ void DAGTypeLegalizer::ExpandShiftByConstant(SDNode *N, const APInt &Amt,
                      DAG.getNode(ISD::SRL, DL, NVT, InL,
                                  DAG.getConstant(Amt, DL, ShTy)),
                      DAG.getNode(ISD::SHL, DL, NVT, InH,
-                                 DAG.getConstant(-Amt + NVTBits, DL, ShTy)));
+                                 DAG.getConstant(NVTBits - Amt, DL, ShTy)));
     Hi = DAG.getNode(ISD::SRA, DL, NVT, InH, DAG.getConstant(Amt, DL, ShTy));
   }
 }
@@ -2177,7 +2178,7 @@ void DAGTypeLegalizer::ExpandIntRes_Shift(SDNode *N,
   // If we can emit an efficient shift operation, do so now.  Check to see if
   // the RHS is a constant.
   if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N->getOperand(1)))
-    return ExpandShiftByConstant(N, CN->getAPIntValue(), Lo, Hi);
+    return ExpandShiftByConstant(N, CN->getZExtValue(), Lo, Hi);
 
   // If we can determine that the high bit of the shift is zero or one, even if
   // the low bits are variable, emit this shift in an optimized form.

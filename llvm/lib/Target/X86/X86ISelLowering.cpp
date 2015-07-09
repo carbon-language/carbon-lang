@@ -23167,7 +23167,7 @@ static SDValue PerformSHLCombine(SDNode *N, SelectionDAG &DAG) {
       // We shift all of the values by one. In many cases we do not have
       // hardware support for this operation. This is better expressed as an ADD
       // of two values.
-      if (N1SplatC->getAPIntValue() == 1)
+      if (N1SplatC->getZExtValue() == 1)
         return DAG.getNode(ISD::ADD, SDLoc(N), VT, N0, N0);
     }
 
