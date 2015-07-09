@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ADT/StringSwitch.h"
+#include "llvm/ADT/Triple.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "llvm/LibDriver/LibDriver.h"
@@ -552,9 +553,14 @@ performWriteOperation(ArchiveOperation Operation, object::Archive *OldArchive,
                       std::vector<NewArchiveIterator> *NewMembersP) {
   object::Archive::Kind Kind;
   switch (FormatOpt) {
-  case Default:
-    // FIXME: change as the support for other formats improve.
-    Kind = object::Archive::K_GNU;
+  case Default: {
+    Triple T(sys::getProcessTriple());
+    if (T.isOSDarwin())
+      Kind = object::Archive::K_BSD;
+    else
+      Kind = object::Archive::K_GNU;
+    break;
+  }
   case GNU:
     Kind = object::Archive::K_GNU;
     break;

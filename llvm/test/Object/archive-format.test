@@ -8,7 +8,7 @@ RUN: echo -n bar. > 0123456789abcde
 RUN: echo -n zed. > 0123456789abcdef
 
 RUN: rm -f test.a
-RUN: llvm-ar rc test.a 0123456789abcde 0123456789abcdef
+RUN: llvm-ar --format=gnu rc test.a 0123456789abcde 0123456789abcdef
 RUN: cat test.a | FileCheck -strict-whitespace %s
 
 CHECK:      !<arch>
