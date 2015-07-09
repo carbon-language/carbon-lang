@@ -87,3 +87,11 @@ MACHO: trivial-object-test2.macho-x86-64
 MACHO-NEXT: 0000000000000000 t _bar
 MACHO-NEXT: 0000000000000001 T _foo
 MACHO-NEXT: 0000000000000002 T _main
+
+Test that we pad the symbol table so that it ends in a multiple of 4 bytes:
+8 + 60 + 36 == 104
+RUN: rm -f %t.a
+RUN: llvm-ar --format=bsd rcs %t.a %p/Inputs/trivial-object-test.macho-x86-64
+RUN: FileCheck --check-prefix=MACHO-SYMTAB-ALIGN %s < %t.a
+MACHO-SYMTAB-ALIGN: !<arch>
+MACHO-SYMTAB-ALIGN-NEXT: #1/12           {{..........}}  0     0     0       36        `

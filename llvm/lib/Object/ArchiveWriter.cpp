@@ -237,8 +237,11 @@ writeSymbolTable(raw_fd_ostream &Out, object::Archive::Kind Kind,
     print32(Out, Kind, StringTable.size()); // byte count of the string table
   Out << StringTable;
 
-  if (Out.tell() % 2)
-    Out << '\0';
+  // ld64 requires the next member header to start at an offset that is
+  // 4 bytes aligned.
+  unsigned Pad = OffsetToAlignment(Out.tell(), 4);
+  while (Pad--)
+    Out.write(uint8_t(0));
 
   // Patch up the size of the symbol table now that we know how big it is.
   unsigned Pos = Out.tell();
