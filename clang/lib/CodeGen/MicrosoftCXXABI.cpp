@@ -1466,20 +1466,27 @@ void MicrosoftCXXABI::emitVTableBitSetEntries(VPtrInfo *Info,
 
   llvm::NamedMDNode *BitsetsMD =
       CGM.getModule().getOrInsertNamedMetadata("llvm.bitsets");
-  CharUnits PointerWidth = getContext().toCharUnitsFromBits(
-      getContext().getTargetInfo().getPointerWidth(0));
 
-  // FIXME: Add blacklisting scheme.
+  // The location of the first virtual function pointer in the virtual table,
+  // aka the "address point" on Itanium. This is at offset 0 if RTTI is
+  // disabled, or sizeof(void*) if RTTI is enabled.
+  CharUnits AddressPoint =
+      getContext().getLangOpts().RTTIData
+          ? getContext().toCharUnitsFromBits(
+                getContext().getTargetInfo().getPointerWidth(0))
+          : CharUnits::Zero();
 
   if (Info->PathToBaseWithVPtr.empty()) {
-    BitsetsMD->addOperand(
-        CGM.CreateVTableBitSetEntry(VTable, PointerWidth, RD));
+    if (!CGM.IsCFIBlacklistedRecord(RD))
+      BitsetsMD->addOperand(
+          CGM.CreateVTableBitSetEntry(VTable, AddressPoint, RD));
     return;
   }
 
   // Add a bitset entry for the least derived base belonging to this vftable.
-  BitsetsMD->addOperand(CGM.CreateVTableBitSetEntry(
-      VTable, PointerWidth, Info->PathToBaseWithVPtr.back()));
+  if (!CGM.IsCFIBlacklistedRecord(Info->PathToBaseWithVPtr.back()))
+    BitsetsMD->addOperand(CGM.CreateVTableBitSetEntry(
+        VTable, AddressPoint, Info->PathToBaseWithVPtr.back()));
 
   // Add a bitset entry for each derived class that is laid out at the same
   // offset as the least derived base.
@@ -1497,14 +1504,15 @@ void MicrosoftCXXABI::emitVTableBitSetEntries(VPtrInfo *Info,
       Offset = VBI->second.VBaseOffset;
     if (!Offset.isZero())
       return;
-    BitsetsMD->addOperand(
-        CGM.CreateVTableBitSetEntry(VTable, PointerWidth, DerivedRD));
+    if (!CGM.IsCFIBlacklistedRecord(DerivedRD))
+      BitsetsMD->addOperand(
+          CGM.CreateVTableBitSetEntry(VTable, AddressPoint, DerivedRD));
   }
 
   // Finally do the same for the most derived class.
-  if (Info->FullOffsetInMDC.isZero())
+  if (Info->FullOffsetInMDC.isZero() && !CGM.IsCFIBlacklistedRecord(RD))
     BitsetsMD->addOperand(
-        CGM.CreateVTableBitSetEntry(VTable, PointerWidth, RD));
+        CGM.CreateVTableBitSetEntry(VTable, AddressPoint, RD));
 }
 
 void MicrosoftCXXABI::emitVTableDefinitions(CodeGenVTables &CGVT,

@@ -2207,8 +2207,7 @@ void CodeGenFunction::EmitVTablePtrCheck(const CXXRecordDecl *RD,
                                          llvm::Value *VTable,
                                          CFITypeCheckKind TCK,
                                          SourceLocation Loc) {
-  // FIXME: Add blacklisting scheme.
-  if (RD->isInStdNamespace())
+  if (CGM.IsCFIBlacklistedRecord(RD))
     return;
 
   SanitizerScope SanScope(this);

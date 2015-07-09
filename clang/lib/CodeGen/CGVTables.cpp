@@ -841,6 +841,11 @@ void CodeGenModule::EmitDeferredVTables() {
   DeferredVTables.clear();
 }
 
+bool CodeGenModule::IsCFIBlacklistedRecord(const CXXRecordDecl *RD) {
+  // FIXME: Make this user configurable.
+  return RD->isInStdNamespace();
+}
+
 void CodeGenModule::EmitVTableBitSetEntries(llvm::GlobalVariable *VTable,
                                             const VTableLayout &VTLayout) {
   if (!LangOpts.Sanitize.has(SanitizerKind::CFIVCall) &&
@@ -855,8 +860,7 @@ void CodeGenModule::EmitVTableBitSetEntries(llvm::GlobalVariable *VTable,
   std::vector<llvm::MDTuple *> BitsetEntries;
   // Create a bit set entry for each address point.
   for (auto &&AP : VTLayout.getAddressPoints()) {
-    // FIXME: Add blacklisting scheme.
-    if (AP.first.getBase()->isInStdNamespace())
+    if (IsCFIBlacklistedRecord(AP.first.getBase()))
       continue;
 
     BitsetEntries.push_back(CreateVTableBitSetEntry(

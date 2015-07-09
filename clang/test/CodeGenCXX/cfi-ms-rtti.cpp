@@ -1,0 +1,12 @@
+// RUN: %clang_cc1 -emit-llvm -o - -triple=x86_64-pc-win32 %s -fsanitize=cfi-vcall | FileCheck --check-prefix=RTTI %s
+// RUN: %clang_cc1 -emit-llvm -o - -triple=x86_64-pc-win32 %s -fsanitize=cfi-vcall -fno-rtti-data | FileCheck --check-prefix=NO-RTTI %s
+
+struct A {
+  A();
+  virtual void f() {}
+};
+
+A::A() {}
+
+// RTTI: !{!"A@@", [2 x i8*]* {{.*}}, i64 8}
+// NO-RTTI: !{!"A@@", [1 x i8*]* {{.*}}, i64 0}
