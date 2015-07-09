@@ -125,7 +125,7 @@ set(LIBOMP_OSX_ARCHITECTURES "${CMAKE_OSX_ARCHITECTURES}" CACHE STRING
 set(CMAKE_OSX_ARCHITECTURES ${LIBOMP_OSX_ARCHITECTURES})
 
 # - Code that allows the OpenMP library to conveniently interface with debuggers
-set(LIBOMP_USE_DEBUGGER true CACHE BOOL
+set(LIBOMP_USE_DEBUGGER false CACHE BOOL
     "Enable debugger interface code?")
 
 # OMPT-support
