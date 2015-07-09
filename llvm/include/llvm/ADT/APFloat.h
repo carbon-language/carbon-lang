@@ -276,6 +276,10 @@ public:
   /// \param isIEEE   - If 128 bit number, select between PPC and IEEE
   static APFloat getAllOnesValue(unsigned BitWidth, bool isIEEE = false);
 
+  /// Returns the size of the floating point number (in bits) in the given
+  /// semantics.
+  static unsigned getSizeInBits(const fltSemantics &Sem);
+
   /// @}
 
   /// Used to insert APFloat objects, or objects that contain APFloat objects,
