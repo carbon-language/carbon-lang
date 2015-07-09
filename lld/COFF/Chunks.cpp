@@ -266,8 +266,16 @@ void LocalImportChunk::getBaserels(std::vector<uint32_t> *Res,
   Res->push_back(getRVA() + Config->ImageBase);
 }
 
+size_t LocalImportChunk::getSize() const {
+  return Config->is64() ? 8 : 4;
+}
+
 void LocalImportChunk::writeTo(uint8_t *Buf) {
-  write64le(Buf + FileOff, Sym->getRVA() + Config->ImageBase);
+  if (Config->is64()) {
+    write64le(Buf + FileOff, Sym->getRVA() + Config->ImageBase);
+  } else {
+    write32le(Buf + FileOff, Sym->getRVA() + Config->ImageBase);
+  }
 }
 
 // Windows-specific.

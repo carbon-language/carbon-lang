@@ -245,7 +245,7 @@ private:
 class LocalImportChunk : public Chunk {
 public:
   explicit LocalImportChunk(Defined *S) : Sym(S) {}
-  size_t getSize() const override { return 8; }
+  size_t getSize() const override;
   void getBaserels(std::vector<uint32_t> *Res, Defined *ImageBase) override;
   void writeTo(uint8_t *Buf) override;
 
