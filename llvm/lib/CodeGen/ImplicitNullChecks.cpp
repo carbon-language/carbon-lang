@@ -320,7 +320,7 @@ void ImplicitNullChecks::rewriteNullChecks(
     // touch the successors list for any basic block since we haven't changed
     // control flow, we've just made it implicit.
     insertFaultingLoad(NC.MemOperation, NC.CheckBlock, HandlerLabel);
-    NC.MemOperation->removeFromParent();
+    NC.MemOperation->eraseFromParent();
     NC.CheckOperation->eraseFromParent();
 
     // Insert an *unconditional* branch to not-null successor.
