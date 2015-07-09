@@ -4409,9 +4409,12 @@ void Sema::CodeCompleteOperatorName(Scope *S) {
 void Sema::CodeCompleteConstructorInitializer(
                               Decl *ConstructorD,
                               ArrayRef <CXXCtorInitializer *> Initializers) {
-  PrintingPolicy Policy = getCompletionPrintingPolicy(*this);
-  CXXConstructorDecl *Constructor
-    = static_cast<CXXConstructorDecl *>(ConstructorD);
+  if (!ConstructorD)
+    return;
+
+  AdjustDeclIfTemplate(ConstructorD);
+
+  CXXConstructorDecl *Constructor = dyn_cast<CXXConstructorDecl>(ConstructorD);
   if (!Constructor)
     return;
   
@@ -4435,6 +4438,7 @@ void Sema::CodeCompleteConstructorInitializer(
   // Add completions for base classes.
   CodeCompletionBuilder Builder(Results.getAllocator(),
                                 Results.getCodeCompletionTUInfo());
+  PrintingPolicy Policy = getCompletionPrintingPolicy(*this);
   bool SawLastInitializer = Initializers.empty();
   CXXRecordDecl *ClassDecl = Constructor->getParent();
   for (const auto &Base : ClassDecl->bases()) {
