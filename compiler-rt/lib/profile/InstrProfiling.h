@@ -64,7 +64,7 @@ uint64_t *__llvm_profile_end_counters(void);
  * or if it hasn't been called, the \c LLVM_PROFILE_FILE environment variable,
  * or if that's not set, the last name given to
  * \a __llvm_profile_override_default_filename(), or if that's not set,
- * \c "default.profdata".
+ * \c "default.profraw".
  */
 int __llvm_profile_write_file(void);
 

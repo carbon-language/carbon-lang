@@ -20,6 +20,8 @@
 |*
 \*===----------------------------------------------------------------------===*/
 
+#include "InstrProfilingUtil.h"
+
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -27,16 +29,8 @@
 #include <string.h>
 #include <sys/mman.h>
 #include <sys/file.h>
-#ifdef _WIN32
-#include <direct.h>
-#endif
 
 #define I386_FREEBSD (defined(__FreeBSD__) && defined(__i386__))
-
-#if !I386_FREEBSD
-#include <sys/stat.h>
-#include <sys/types.h>
-#endif
 
 #if !defined(_MSC_VER) && !I386_FREEBSD
 #include <stdint.h>
@@ -52,7 +46,6 @@ typedef unsigned long long uint64_t;
 typedef unsigned char uint8_t;
 typedef unsigned int uint32_t;
 typedef unsigned long long uint64_t;
-int mkdir(const char*, unsigned short);
 #endif
 
 /* #define DEBUG_GCDAPROFILING */
@@ -209,21 +202,6 @@ static char *mangle_filename(const char *orig_filename) {
   return new_filename;
 }
 
-static void recursive_mkdir(char *path) {
-  int i;
-
-  for (i = 1; path[i] != '\0'; ++i) {
-    if (path[i] != '/') continue;
-    path[i] = '\0';
-#ifdef _WIN32
-    _mkdir(path);
-#else
-    mkdir(path, 0755);  /* Some of these will fail, ignore it. */
-#endif
-    path[i] = '/';
-  }
-}
-
 static int map_file() {
   fseek(output_file, 0L, SEEK_END);
   file_size = ftell(output_file);
@@ -283,7 +261,7 @@ void llvm_gcda_start_file(const char *orig_filename, const char version[4],
     fd = open(filename, O_RDWR | O_CREAT, 0644);
     if (fd == -1) {
       /* Try creating the directories first then opening the file. */
-      recursive_mkdir(filename);
+      __llvm_profile_recursive_mkdir(filename);
       fd = open(filename, O_RDWR | O_CREAT, 0644);
       if (fd == -1) {
         /* Bah! It's hopeless. */

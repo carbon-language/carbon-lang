@@ -8,6 +8,7 @@
 \*===----------------------------------------------------------------------===*/
 
 #include "InstrProfiling.h"
+#include "InstrProfilingUtil.h"
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -83,6 +84,13 @@ static void truncateCurrentFile(void) {
   Filename = __llvm_profile_CurrentFilename;
   if (!Filename || !Filename[0])
     return;
+
+  /* Create the directory holding the file, if needed. */
+  if (strchr(Filename, '/')) {
+    char *Copy = malloc(strlen(Filename) + 1);
+    strcpy(Copy, Filename);
+    __llvm_profile_recursive_mkdir(Copy);
+  }
 
   /* Truncate the file.  Later we'll reopen and append. */
   File = fopen(Filename, "w");
