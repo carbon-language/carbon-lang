@@ -114,16 +114,26 @@ void SectionChunk::addAssociative(SectionChunk *Child) {
   Child->Root = false;
 }
 
+static bool isAbs(const coff_relocation &Rel) {
+  switch (Config->MachineType) {
+  case IMAGE_FILE_MACHINE_AMD64:
+    return Rel.Type == IMAGE_REL_AMD64_ADDR64;
+  case IMAGE_FILE_MACHINE_I386:
+    return Rel.Type == IMAGE_REL_I386_DIR32;
+  default:
+    llvm_unreachable("unknown machine type");
+  }
+}
+
 // Windows-specific.
-// Collect all locations that contain absolute 64-bit addresses,
-// which need to be fixed by the loader if load-time relocation is needed.
+// Collect all locations that contain absolute addresses, which need to be
+// fixed by the loader if load-time relocation is needed.
 // Only called when base relocation is enabled.
 void SectionChunk::getBaserels(std::vector<uint32_t> *Res, Defined *ImageBase) {
   for (const coff_relocation &Rel : Relocs) {
-    // ADDR64 relocations contain absolute addresses.
     // Symbol __ImageBase is special -- it's an absolute symbol, but its
     // address never changes even if image is relocated.
-    if (Rel.Type != IMAGE_REL_AMD64_ADDR64)
+    if (!isAbs(Rel))
       continue;
     SymbolBody *Body = File->getSymbolBody(Rel.SymbolTableIndex)->repl();
     if (Body == ImageBase)
