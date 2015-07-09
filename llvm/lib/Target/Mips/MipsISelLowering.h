@@ -227,7 +227,9 @@ namespace llvm {
     FastISel *createFastISel(FunctionLoweringInfo &funcInfo,
                              const TargetLibraryInfo *libInfo) const override;
 
-    MVT getScalarShiftAmountTy(EVT LHSTy) const override { return MVT::i32; }
+    MVT getScalarShiftAmountTy(const DataLayout &) const override {
+      return MVT::i32;
+    }
 
     void LowerOperationWrapper(SDNode *N,
                                SmallVectorImpl<SDValue> &Results,

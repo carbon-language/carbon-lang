@@ -598,7 +598,9 @@ namespace llvm {
     unsigned getJumpTableEncoding() const override;
     bool useSoftFloat() const override;
 
-    MVT getScalarShiftAmountTy(EVT LHSTy) const override { return MVT::i8; }
+    MVT getScalarShiftAmountTy(const DataLayout &) const override {
+      return MVT::i8;
+    }
 
     const MCExpr *
     LowerCustomJumpTableEntry(const MachineJumpTableInfo *MJTI,

@@ -563,7 +563,8 @@ SDValue VectorLegalizer::ExpandLoad(SDValue Op) {
       SDValue Lo, Hi, ShAmt;
 
       if (BitOffset < WideBits) {
-        ShAmt = DAG.getConstant(BitOffset, dl, TLI.getShiftAmountTy(WideVT));
+        ShAmt = DAG.getConstant(
+            BitOffset, dl, TLI.getShiftAmountTy(WideVT, DAG.getDataLayout()));
         Lo = DAG.getNode(ISD::SRL, dl, WideVT, LoadVals[WideIdx], ShAmt);
         Lo = DAG.getNode(ISD::AND, dl, WideVT, Lo, SrcEltBitMask);
       }
@@ -573,8 +574,9 @@ SDValue VectorLegalizer::ExpandLoad(SDValue Op) {
         WideIdx++;
         BitOffset -= WideBits;
         if (BitOffset > 0) {
-          ShAmt = DAG.getConstant(SrcEltBits - BitOffset, dl,
-                                  TLI.getShiftAmountTy(WideVT));
+          ShAmt = DAG.getConstant(
+              SrcEltBits - BitOffset, dl,
+              TLI.getShiftAmountTy(WideVT, DAG.getDataLayout()));
           Hi = DAG.getNode(ISD::SHL, dl, WideVT, LoadVals[WideIdx], ShAmt);
           Hi = DAG.getNode(ISD::AND, dl, WideVT, Hi, SrcEltBitMask);
         }
@@ -592,8 +594,9 @@ SDValue VectorLegalizer::ExpandLoad(SDValue Op) {
         Lo = DAG.getZExtOrTrunc(Lo, dl, DstEltVT);
         break;
       case ISD::SEXTLOAD:
-        ShAmt = DAG.getConstant(WideBits - SrcEltBits, dl,
-                                TLI.getShiftAmountTy(WideVT));
+        ShAmt =
+            DAG.getConstant(WideBits - SrcEltBits, dl,
+                            TLI.getShiftAmountTy(WideVT, DAG.getDataLayout()));
         Lo = DAG.getNode(ISD::SHL, dl, WideVT, Lo, ShAmt);
         Lo = DAG.getNode(ISD::SRA, dl, WideVT, Lo, ShAmt);
         Lo = DAG.getSExtOrTrunc(Lo, dl, DstEltVT);

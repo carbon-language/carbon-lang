@@ -101,7 +101,9 @@ namespace llvm {
 
 
     unsigned getJumpTableEncoding() const override;
-    MVT getScalarShiftAmountTy(EVT LHSTy) const override { return MVT::i32; }
+    MVT getScalarShiftAmountTy(const DataLayout &DL) const override {
+      return MVT::i32;
+    }
 
     /// LowerOperation - Provide custom lowering hooks for some operations.
     SDValue LowerOperation(SDValue Op, SelectionDAG &DAG) const override;

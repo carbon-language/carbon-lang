@@ -423,7 +423,9 @@ namespace llvm {
     /// DAG node.
     const char *getTargetNodeName(unsigned Opcode) const override;
 
-    MVT getScalarShiftAmountTy(EVT LHSTy) const override { return MVT::i32; }
+    MVT getScalarShiftAmountTy(const DataLayout &) const override {
+      return MVT::i32;
+    }
 
     bool isCheapToSpeculateCttz() const override {
       return true;

@@ -775,7 +775,7 @@ void AArch64TargetLowering::computeKnownBitsForTargetNode(
   }
 }
 
-MVT AArch64TargetLowering::getScalarShiftAmountTy(EVT LHSTy) const {
+MVT AArch64TargetLowering::getScalarShiftAmountTy(const DataLayout &DL) const {
   return MVT::i64;
 }
 

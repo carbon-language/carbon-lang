@@ -72,7 +72,9 @@ namespace llvm {
     explicit MSP430TargetLowering(const TargetMachine &TM,
                                   const MSP430Subtarget &STI);
 
-    MVT getScalarShiftAmountTy(EVT LHSTy) const override { return MVT::i8; }
+    MVT getScalarShiftAmountTy(const DataLayout &) const override {
+      return MVT::i8;
+    }
 
     /// LowerOperation - Provide custom lowering hooks for some operations.
     SDValue LowerOperation(SDValue Op, SelectionDAG &DAG) const override;

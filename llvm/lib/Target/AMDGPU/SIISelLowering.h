@@ -92,7 +92,7 @@ public:
   bool enableAggressiveFMAFusion(EVT VT) const override;
   EVT getSetCCResultType(const DataLayout &DL, LLVMContext &Context,
                          EVT VT) const override;
-  MVT getScalarShiftAmountTy(EVT VT) const override;
+  MVT getScalarShiftAmountTy(const DataLayout &) const override;
   bool isFMAFasterThanFMulAndFAdd(EVT VT) const override;
   SDValue LowerOperation(SDValue Op, SelectionDAG &DAG) const override;
   SDValue PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const override;

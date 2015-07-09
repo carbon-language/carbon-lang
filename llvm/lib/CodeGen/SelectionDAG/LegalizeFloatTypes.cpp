@@ -218,29 +218,35 @@ SDValue DAGTypeLegalizer::SoftenFloatRes_FCOPYSIGN(SDNode *N) {
   unsigned RSize = RVT.getSizeInBits();
 
   // First get the sign bit of second operand.
-  SDValue SignBit = DAG.getNode(ISD::SHL, dl, RVT, DAG.getConstant(1, dl, RVT),
-                                  DAG.getConstant(RSize - 1, dl,
-                                                  TLI.getShiftAmountTy(RVT)));
+  SDValue SignBit = DAG.getNode(
+      ISD::SHL, dl, RVT, DAG.getConstant(1, dl, RVT),
+      DAG.getConstant(RSize - 1, dl,
+                      TLI.getShiftAmountTy(RVT, DAG.getDataLayout())));
   SignBit = DAG.getNode(ISD::AND, dl, RVT, RHS, SignBit);
 
   // Shift right or sign-extend it if the two operands have different types.
   int SizeDiff = RVT.getSizeInBits() - LVT.getSizeInBits();
   if (SizeDiff > 0) {
-    SignBit = DAG.getNode(ISD::SRL, dl, RVT, SignBit,
-                          DAG.getConstant(SizeDiff, dl,
-                                 TLI.getShiftAmountTy(SignBit.getValueType())));
+    SignBit =
+        DAG.getNode(ISD::SRL, dl, RVT, SignBit,
+                    DAG.getConstant(SizeDiff, dl,
+                                    TLI.getShiftAmountTy(SignBit.getValueType(),
+                                                         DAG.getDataLayout())));
     SignBit = DAG.getNode(ISD::TRUNCATE, dl, LVT, SignBit);
   } else if (SizeDiff < 0) {
     SignBit = DAG.getNode(ISD::ANY_EXTEND, dl, LVT, SignBit);
-    SignBit = DAG.getNode(ISD::SHL, dl, LVT, SignBit,
-                          DAG.getConstant(-SizeDiff, dl,
-                                 TLI.getShiftAmountTy(SignBit.getValueType())));
+    SignBit =
+        DAG.getNode(ISD::SHL, dl, LVT, SignBit,
+                    DAG.getConstant(-SizeDiff, dl,
+                                    TLI.getShiftAmountTy(SignBit.getValueType(),
+                                                         DAG.getDataLayout())));
   }
 
   // Clear the sign bit of the first operand.
-  SDValue Mask = DAG.getNode(ISD::SHL, dl, LVT, DAG.getConstant(1, dl, LVT),
-                               DAG.getConstant(LSize - 1, dl,
-                                               TLI.getShiftAmountTy(LVT)));
+  SDValue Mask = DAG.getNode(
+      ISD::SHL, dl, LVT, DAG.getConstant(1, dl, LVT),
+      DAG.getConstant(LSize - 1, dl,
+                      TLI.getShiftAmountTy(LVT, DAG.getDataLayout())));
   Mask = DAG.getNode(ISD::SUB, dl, LVT, Mask, DAG.getConstant(1, dl, LVT));
   LHS = DAG.getNode(ISD::AND, dl, LVT, LHS, Mask);
 

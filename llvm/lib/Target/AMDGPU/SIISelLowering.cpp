@@ -703,7 +703,7 @@ EVT SITargetLowering::getSetCCResultType(const DataLayout &DL, LLVMContext &Ctx,
   return EVT::getVectorVT(Ctx, MVT::i1, VT.getVectorNumElements());
 }
 
-MVT SITargetLowering::getScalarShiftAmountTy(EVT VT) const {
+MVT SITargetLowering::getScalarShiftAmountTy(const DataLayout &) const {
   return MVT::i32;
 }
 

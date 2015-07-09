@@ -9858,7 +9858,7 @@ SDValue PPCTargetLowering::DAGCombineExtBoolTrunc(SDNode *N,
 
   assert(N->getOpcode() == ISD::SIGN_EXTEND &&
          "Invalid extension type");
-  EVT ShiftAmountTy = getShiftAmountTy(N->getValueType(0));
+  EVT ShiftAmountTy = getShiftAmountTy(N->getValueType(0), DAG.getDataLayout());
   SDValue ShiftCst =
     DAG.getConstant(N->getValueSizeInBits(0) - PromBits, dl, ShiftAmountTy);
   return DAG.getNode(ISD::SRA, dl, N->getValueType(0), 

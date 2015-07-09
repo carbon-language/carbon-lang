@@ -500,7 +500,9 @@ public:
   const NVPTXTargetMachine *nvTM;
 
   // PTX always uses 32-bit shift amounts
-  MVT getScalarShiftAmountTy(EVT LHSTy) const override { return MVT::i32; }
+  MVT getScalarShiftAmountTy(const DataLayout &) const override {
+    return MVT::i32;
+  }
 
   TargetLoweringBase::LegalizeTypeAction
   getPreferredVectorAction(EVT VT) const override;

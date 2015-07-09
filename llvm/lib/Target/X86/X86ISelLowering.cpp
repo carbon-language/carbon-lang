@@ -4851,7 +4851,7 @@ static SDValue getVShift(bool isLeft, EVT VT, SDValue SrcOp,
   MVT ShVT = MVT::v2i64;
   unsigned Opc = isLeft ? X86ISD::VSHLDQ : X86ISD::VSRLDQ;
   SrcOp = DAG.getBitcast(ShVT, SrcOp);
-  MVT ScalarShiftTy = TLI.getScalarShiftAmountTy(SrcOp.getValueType());
+  MVT ScalarShiftTy = TLI.getScalarShiftAmountTy(DAG.getDataLayout());
   assert(NumBits % 8 == 0 && "Only support byte sized shifts");
   SDValue ShiftVal = DAG.getConstant(NumBits/8, dl, ScalarShiftTy);
   return DAG.getBitcast(VT, DAG.getNode(Opc, dl, ShVT, SrcOp, ShiftVal));
@@ -7406,9 +7406,9 @@ static SDValue lowerVectorShuffleAsElementInsertion(
       V2 = DAG.getBitcast(MVT::v2i64, V2);
       V2 = DAG.getNode(
           X86ISD::VSHLDQ, DL, MVT::v2i64, V2,
-          DAG.getConstant(
-              V2Index * EltVT.getSizeInBits()/8, DL,
-              DAG.getTargetLoweringInfo().getScalarShiftAmountTy(MVT::v2i64)));
+          DAG.getConstant(V2Index * EltVT.getSizeInBits() / 8, DL,
+                          DAG.getTargetLoweringInfo().getScalarShiftAmountTy(
+                              DAG.getDataLayout())));
       V2 = DAG.getBitcast(VT, V2);
     }
   }
@@ -16935,9 +16935,9 @@ static SDValue LowerMUL_LOHI(SDValue Op, const X86Subtarget *Subtarget,
   // If we have a signed multiply but no PMULDQ fix up the high parts of a
   // unsigned multiply.
   if (IsSigned && !Subtarget->hasSSE41()) {
-    SDValue ShAmt =
-        DAG.getConstant(31, dl,
-                        DAG.getTargetLoweringInfo().getShiftAmountTy(VT));
+    SDValue ShAmt = DAG.getConstant(
+        31, dl,
+        DAG.getTargetLoweringInfo().getShiftAmountTy(VT, DAG.getDataLayout()));
     SDValue T1 = DAG.getNode(ISD::AND, dl, VT,
                              DAG.getNode(ISD::SRA, dl, VT, Op0, ShAmt), Op1);
     SDValue T2 = DAG.getNode(ISD::AND, dl, VT,
@@ -21857,8 +21857,8 @@ static SDValue PerformEXTRACT_VECTOR_ELTCombine(SDNode *N, SelectionDAG &DAG,
     SDValue TopHalf = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, MVT::i64, Cst,
       DAG.getConstant(1, dl, VecIdxTy));
 
-    SDValue ShAmt = DAG.getConstant(32, dl,
-      DAG.getTargetLoweringInfo().getShiftAmountTy(MVT::i64));
+    SDValue ShAmt = DAG.getConstant(
+        32, dl, DAG.getTargetLoweringInfo().getShiftAmountTy(MVT::i64, DL));
     Vals[0] = DAG.getNode(ISD::TRUNCATE, dl, MVT::i32, BottomHalf);
     Vals[1] = DAG.getNode(ISD::TRUNCATE, dl, MVT::i32,
       DAG.getNode(ISD::SRA, dl, MVT::i64, BottomHalf, ShAmt));

@@ -171,9 +171,9 @@ public:
   MVT getPointerTy(const DataLayout &DL, uint32_t AS = 0) const {
     return MVT::getIntegerVT(DL.getPointerSizeInBits(AS));
   }
-  virtual MVT getScalarShiftAmountTy(EVT LHSTy) const;
+  virtual MVT getScalarShiftAmountTy(const DataLayout &) const;
 
-  EVT getShiftAmountTy(EVT LHSTy) const;
+  EVT getShiftAmountTy(EVT LHSTy, const DataLayout &DL) const;
 
   /// Returns the type to be used for the index operand of:
   /// ISD::INSERT_VECTOR_ELT, ISD::EXTRACT_VECTOR_ELT,

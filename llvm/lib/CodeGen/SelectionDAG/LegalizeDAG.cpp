@@ -387,8 +387,9 @@ static void ExpandUnalignedStore(StoreSDNode *ST, SelectionDAG &DAG,
   int IncrementSize = NumBits / 8;
 
   // Divide the stored value in two parts.
-  SDValue ShiftAmount = DAG.getConstant(NumBits, dl,
-                                      TLI.getShiftAmountTy(Val.getValueType()));
+  SDValue ShiftAmount =
+      DAG.getConstant(NumBits, dl, TLI.getShiftAmountTy(Val.getValueType(),
+                                                        DAG.getDataLayout()));
   SDValue Lo = Val;
   SDValue Hi = DAG.getNode(ISD::SRL, dl, VT, Val, ShiftAmount);
 
@@ -554,8 +555,9 @@ ExpandUnalignedLoad(LoadSDNode *LD, SelectionDAG &DAG,
   }
 
   // aggregate the two parts
-  SDValue ShiftAmount = DAG.getConstant(NumBits, dl,
-                                       TLI.getShiftAmountTy(Hi.getValueType()));
+  SDValue ShiftAmount =
+      DAG.getConstant(NumBits, dl, TLI.getShiftAmountTy(Hi.getValueType(),
+                                                        DAG.getDataLayout()));
   SDValue Result = DAG.getNode(ISD::SHL, dl, VT, Hi, ShiftAmount);
   Result = DAG.getNode(ISD::OR, dl, VT, Result, Lo);
 
@@ -802,9 +804,10 @@ void SelectionDAGLegalize::LegalizeStoreOps(SDNode *Node) {
           Ptr = DAG.getNode(ISD::ADD, dl, Ptr.getValueType(), Ptr,
                             DAG.getConstant(IncrementSize, dl,
                                             Ptr.getValueType()));
-          Hi = DAG.getNode(ISD::SRL, dl, Value.getValueType(), Value,
-                           DAG.getConstant(RoundWidth, dl,
-                                   TLI.getShiftAmountTy(Value.getValueType())));
+          Hi = DAG.getNode(
+              ISD::SRL, dl, Value.getValueType(), Value,
+              DAG.getConstant(RoundWidth, dl,
+                              TLI.getShiftAmountTy(Value.getValueType(), DL)));
           Hi = DAG.getTruncStore(Chain, dl, Hi, Ptr,
                              ST->getPointerInfo().getWithOffset(IncrementSize),
                                  ExtraVT, isVolatile, isNonTemporal,
@@ -813,9 +816,10 @@ void SelectionDAGLegalize::LegalizeStoreOps(SDNode *Node) {
           // Big endian - avoid unaligned stores.
           // TRUNCSTORE:i24 X -> TRUNCSTORE:i16 (srl X, 8), TRUNCSTORE@+2:i8 X
           // Store the top RoundWidth bits.
-          Hi = DAG.getNode(ISD::SRL, dl, Value.getValueType(), Value,
-                           DAG.getConstant(ExtraWidth, dl,
-                                   TLI.getShiftAmountTy(Value.getValueType())));
+          Hi = DAG.getNode(
+              ISD::SRL, dl, Value.getValueType(), Value,
+              DAG.getConstant(ExtraWidth, dl,
+                              TLI.getShiftAmountTy(Value.getValueType(), DL)));
           Hi = DAG.getTruncStore(Chain, dl, Hi, Ptr, ST->getPointerInfo(),
                                  RoundVT, isVolatile, isNonTemporal, Alignment,
                                  AAInfo);
@@ -1027,9 +1031,10 @@ void SelectionDAGLegalize::LegalizeLoadOps(SDNode *Node) {
                        Hi.getValue(1));
 
       // Move the top bits to the right place.
-      Hi = DAG.getNode(ISD::SHL, dl, Hi.getValueType(), Hi,
-                       DAG.getConstant(RoundWidth, dl,
-                                      TLI.getShiftAmountTy(Hi.getValueType())));
+      Hi = DAG.getNode(
+          ISD::SHL, dl, Hi.getValueType(), Hi,
+          DAG.getConstant(RoundWidth, dl,
+                          TLI.getShiftAmountTy(Hi.getValueType(), DL)));
 
       // Join the hi and lo parts.
       Value = DAG.getNode(ISD::OR, dl, Node->getValueType(0), Lo, Hi);
@@ -1058,9 +1063,10 @@ void SelectionDAGLegalize::LegalizeLoadOps(SDNode *Node) {
                        Hi.getValue(1));
 
       // Move the top bits to the right place.
-      Hi = DAG.getNode(ISD::SHL, dl, Hi.getValueType(), Hi,
-                       DAG.getConstant(ExtraWidth, dl,
-                                      TLI.getShiftAmountTy(Hi.getValueType())));
+      Hi = DAG.getNode(
+          ISD::SHL, dl, Hi.getValueType(), Hi,
+          DAG.getConstant(ExtraWidth, dl,
+                          TLI.getShiftAmountTy(Hi.getValueType(), DL)));
 
       // Join the hi and lo parts.
       Value = DAG.getNode(ISD::OR, dl, Node->getValueType(0), Lo, Hi);
@@ -1607,9 +1613,10 @@ SDValue SelectionDAGLegalize::ExpandFCOPYSIGN(SDNode* Node) {
         (FloatVT.getSizeInBits() - 8 * ByteOffset);
       assert(BitShift < LoadTy.getSizeInBits() && "Pointer advanced wrong?");
       if (BitShift)
-        SignBit = DAG.getNode(ISD::SHL, dl, LoadTy, SignBit,
-                              DAG.getConstant(BitShift, dl,
-                                 TLI.getShiftAmountTy(SignBit.getValueType())));
+        SignBit = DAG.getNode(
+            ISD::SHL, dl, LoadTy, SignBit,
+            DAG.getConstant(BitShift, dl,
+                            TLI.getShiftAmountTy(SignBit.getValueType(), DL)));
     }
   }
   // Now get the sign bit proper, by seeing whether the value is negative.
@@ -2517,8 +2524,8 @@ SDValue SelectionDAGLegalize::ExpandLegalINT_TO_FP(bool isSigned,
     if (!isSigned) {
       SDValue Fast = DAG.getNode(ISD::SINT_TO_FP, dl, MVT::f32, Op0);
 
-      SDValue ShiftConst =
-          DAG.getConstant(1, dl, TLI.getShiftAmountTy(Op0.getValueType()));
+      SDValue ShiftConst = DAG.getConstant(
+          1, dl, TLI.getShiftAmountTy(Op0.getValueType(), DAG.getDataLayout()));
       SDValue Shr = DAG.getNode(ISD::SRL, dl, MVT::i64, Op0, ShiftConst);
       SDValue AndConst = DAG.getConstant(1, dl, MVT::i64);
       SDValue And = DAG.getNode(ISD::AND, dl, MVT::i64, Op0, AndConst);
@@ -2553,7 +2560,7 @@ SDValue SelectionDAGLegalize::ExpandLegalINT_TO_FP(bool isSigned,
                                               MVT::i64),
                               ISD::SETUGE);
     SDValue Sel2 = DAG.getSelect(dl, MVT::i64, Ge, Sel, Op0);
-    EVT SHVT = TLI.getShiftAmountTy(Sel2.getValueType());
+    EVT SHVT = TLI.getShiftAmountTy(Sel2.getValueType(), DAG.getDataLayout());
 
     SDValue Sh = DAG.getNode(ISD::SRL, dl, MVT::i64, Sel2,
                              DAG.getConstant(32, dl, SHVT));
@@ -2709,7 +2716,7 @@ SDValue SelectionDAGLegalize::PromoteLegalFP_TO_INT(SDValue LegalOp,
 /// Open code the operations for BSWAP of the specified operation.
 SDValue SelectionDAGLegalize::ExpandBSWAP(SDValue Op, SDLoc dl) {
   EVT VT = Op.getValueType();
-  EVT SHVT = TLI.getShiftAmountTy(VT);
+  EVT SHVT = TLI.getShiftAmountTy(VT, DAG.getDataLayout());
   SDValue Tmp1, Tmp2, Tmp3, Tmp4, Tmp5, Tmp6, Tmp7, Tmp8;
   switch (VT.getSimpleVT().SimpleTy) {
   default: llvm_unreachable("Unhandled Expand type in BSWAP!");
@@ -2766,7 +2773,7 @@ SDValue SelectionDAGLegalize::ExpandBitCount(unsigned Opc, SDValue Op,
   default: llvm_unreachable("Cannot expand this yet!");
   case ISD::CTPOP: {
     EVT VT = Op.getValueType();
-    EVT ShVT = TLI.getShiftAmountTy(VT);
+    EVT ShVT = TLI.getShiftAmountTy(VT, DAG.getDataLayout());
     unsigned Len = VT.getSizeInBits();
 
     assert(VT.isInteger() && Len <= 128 && Len % 8 == 0 &&
@@ -2824,7 +2831,7 @@ SDValue SelectionDAGLegalize::ExpandBitCount(unsigned Opc, SDValue Op,
     //
     // Ref: "Hacker's Delight" by Henry Warren
     EVT VT = Op.getValueType();
-    EVT ShVT = TLI.getShiftAmountTy(VT);
+    EVT ShVT = TLI.getShiftAmountTy(VT, DAG.getDataLayout());
     unsigned len = VT.getSizeInBits();
     for (unsigned i = 0; (1U << i) <= (len / 2); ++i) {
       SDValue Tmp3 = DAG.getConstant(1ULL << i, dl, ShVT);
@@ -3042,7 +3049,7 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node) {
     // SAR.  However, it is doubtful that any exist.
     EVT ExtraVT = cast<VTSDNode>(Node->getOperand(1))->getVT();
     EVT VT = Node->getValueType(0);
-    EVT ShiftAmountTy = TLI.getShiftAmountTy(VT);
+    EVT ShiftAmountTy = TLI.getShiftAmountTy(VT, DAG.getDataLayout());
     if (VT.isVector())
       ShiftAmountTy = VT;
     unsigned BitsDiff = VT.getScalarType().getSizeInBits() -
@@ -3260,8 +3267,10 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node) {
     if (cast<ConstantSDNode>(Node->getOperand(1))->getZExtValue()) {
       // 1 -> Hi
       Tmp1 = DAG.getNode(ISD::SRL, dl, OpTy, Node->getOperand(0),
-                         DAG.getConstant(OpTy.getSizeInBits()/2, dl,
-                    TLI.getShiftAmountTy(Node->getOperand(0).getValueType())));
+                         DAG.getConstant(OpTy.getSizeInBits() / 2, dl,
+                                         TLI.getShiftAmountTy(
+                                             Node->getOperand(0).getValueType(),
+                                             DAG.getDataLayout())));
       Tmp1 = DAG.getNode(ISD::TRUNCATE, dl, Node->getValueType(0), Tmp1);
     } else {
       // 0 -> Lo
@@ -3659,8 +3668,9 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node) {
         TLI.expandMUL(Node, Lo, Hi, HalfType, DAG)) {
       Lo = DAG.getNode(ISD::ZERO_EXTEND, dl, VT, Lo);
       Hi = DAG.getNode(ISD::ANY_EXTEND, dl, VT, Hi);
-      SDValue Shift = DAG.getConstant(HalfType.getSizeInBits(), dl,
-                                      TLI.getShiftAmountTy(HalfType));
+      SDValue Shift =
+          DAG.getConstant(HalfType.getSizeInBits(), dl,
+                          TLI.getShiftAmountTy(HalfType, DAG.getDataLayout()));
       Hi = DAG.getNode(ISD::SHL, dl, VT, Hi, Shift);
       Results.push_back(DAG.getNode(ISD::OR, dl, VT, Lo, Hi));
       break;
@@ -3800,8 +3810,9 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node) {
     }
 
     if (isSigned) {
-      Tmp1 = DAG.getConstant(VT.getSizeInBits() - 1, dl,
-                             TLI.getShiftAmountTy(BottomHalf.getValueType()));
+      Tmp1 = DAG.getConstant(
+          VT.getSizeInBits() - 1, dl,
+          TLI.getShiftAmountTy(BottomHalf.getValueType(), DAG.getDataLayout()));
       Tmp1 = DAG.getNode(ISD::SRA, dl, VT, BottomHalf, Tmp1);
       TopHalf = DAG.getSetCC(dl, getSetCCResultType(VT), TopHalf, Tmp1,
                              ISD::SETNE);
@@ -3817,9 +3828,10 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node) {
     EVT PairTy = Node->getValueType(0);
     Tmp1 = DAG.getNode(ISD::ZERO_EXTEND, dl, PairTy, Node->getOperand(0));
     Tmp2 = DAG.getNode(ISD::ANY_EXTEND, dl, PairTy, Node->getOperand(1));
-    Tmp2 = DAG.getNode(ISD::SHL, dl, PairTy, Tmp2,
-                       DAG.getConstant(PairTy.getSizeInBits()/2, dl,
-                                       TLI.getShiftAmountTy(PairTy)));
+    Tmp2 = DAG.getNode(
+        ISD::SHL, dl, PairTy, Tmp2,
+        DAG.getConstant(PairTy.getSizeInBits() / 2, dl,
+                        TLI.getShiftAmountTy(PairTy, DAG.getDataLayout())));
     Results.push_back(DAG.getNode(ISD::OR, dl, PairTy, Tmp1, Tmp2));
     break;
   }
@@ -4128,9 +4140,10 @@ void SelectionDAGLegalize::PromoteNode(SDNode *Node) {
     unsigned DiffBits = NVT.getSizeInBits() - OVT.getSizeInBits();
     Tmp1 = DAG.getNode(ISD::ZERO_EXTEND, dl, NVT, Node->getOperand(0));
     Tmp1 = DAG.getNode(ISD::BSWAP, dl, NVT, Tmp1);
-    Tmp1 = DAG.getNode(ISD::SRL, dl, NVT, Tmp1,
-                       DAG.getConstant(DiffBits, dl,
-                                       TLI.getShiftAmountTy(NVT)));
+    Tmp1 = DAG.getNode(
+        ISD::SRL, dl, NVT, Tmp1,
+        DAG.getConstant(DiffBits, dl,
+                        TLI.getShiftAmountTy(NVT, DAG.getDataLayout())));
     Results.push_back(Tmp1);
     break;
   }

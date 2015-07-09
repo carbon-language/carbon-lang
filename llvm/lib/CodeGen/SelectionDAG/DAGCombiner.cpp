@@ -444,8 +444,7 @@ namespace {
       if (LHSTy.isVector())
         return LHSTy;
       auto &DL = DAG.getDataLayout();
-      return LegalTypes ? TLI.getScalarShiftAmountTy(LHSTy)
-                        : TLI.getPointerTy(DL);
+      return LegalTypes ? TLI.getScalarShiftAmountTy(DL) : TLI.getPointerTy(DL);
     }
 
     /// This method returns true if we are running before type legalization or

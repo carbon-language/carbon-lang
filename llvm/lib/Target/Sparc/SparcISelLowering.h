@@ -85,7 +85,9 @@ namespace llvm {
                                  StringRef Constraint, MVT VT) const override;
 
     bool isOffsetFoldingLegal(const GlobalAddressSDNode *GA) const override;
-    MVT getScalarShiftAmountTy(EVT LHSTy) const override { return MVT::i32; }
+    MVT getScalarShiftAmountTy(const DataLayout &) const override {
+      return MVT::i32;
+    }
 
     /// getSetCCResultType - Return the ISD::SETCC ValueType
     EVT getSetCCResultType(const DataLayout &DL, LLVMContext &Context,

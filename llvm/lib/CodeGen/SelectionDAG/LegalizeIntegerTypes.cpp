@@ -310,8 +310,10 @@ SDValue DAGTypeLegalizer::PromoteIntRes_BSWAP(SDNode *N) {
   SDLoc dl(N);
 
   unsigned DiffBits = NVT.getScalarSizeInBits() - OVT.getScalarSizeInBits();
-  return DAG.getNode(ISD::SRL, dl, NVT, DAG.getNode(ISD::BSWAP, dl, NVT, Op),
-                     DAG.getConstant(DiffBits, dl, TLI.getShiftAmountTy(NVT)));
+  return DAG.getNode(
+      ISD::SRL, dl, NVT, DAG.getNode(ISD::BSWAP, dl, NVT, Op),
+      DAG.getConstant(DiffBits, dl,
+                      TLI.getShiftAmountTy(NVT, DAG.getDataLayout())));
 }
 
 SDValue DAGTypeLegalizer::PromoteIntRes_BUILD_PAIR(SDNode *N) {
@@ -2209,7 +2211,7 @@ void DAGTypeLegalizer::ExpandIntRes_Shift(SDNode *N,
     // have an illegal type.  Fix that first by casting the operand, otherwise
     // the new SHL_PARTS operation would need further legalization.
     SDValue ShiftOp = N->getOperand(1);
-    EVT ShiftTy = TLI.getShiftAmountTy(VT);
+    EVT ShiftTy = TLI.getShiftAmountTy(VT, DAG.getDataLayout());
     assert(ShiftTy.getScalarType().getSizeInBits() >=
            Log2_32_Ceil(VT.getScalarType().getSizeInBits()) &&
            "ShiftAmountTy is too small to cover the range of this type!");

@@ -878,15 +878,16 @@ void TargetLoweringBase::initActions() {
   setOperationAction(ISD::DEBUGTRAP, MVT::Other, Expand);
 }
 
-MVT TargetLoweringBase::getScalarShiftAmountTy(EVT LHSTy) const {
-  return MVT::getIntegerVT(8 * getDataLayout()->getPointerSize(0));
+MVT TargetLoweringBase::getScalarShiftAmountTy(const DataLayout &DL) const {
+  return MVT::getIntegerVT(8 * DL.getPointerSize(0));
 }
 
-EVT TargetLoweringBase::getShiftAmountTy(EVT LHSTy) const {
+EVT TargetLoweringBase::getShiftAmountTy(EVT LHSTy,
+                                         const DataLayout &DL) const {
   assert(LHSTy.isInteger() && "Shift amount is not an integer type!");
   if (LHSTy.isVector())
     return LHSTy;
-  return getScalarShiftAmountTy(LHSTy);
+  return getScalarShiftAmountTy(DL);
 }
 
 /// canOpTrap - Returns true if the operation can trap for the value type.
