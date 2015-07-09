@@ -425,7 +425,7 @@ private:
   typedef SetVector<MemAccessInfo> PtrAccessSet;
 
   /// \brief Go over all memory access and check whether runtime pointer checks
-  /// are needed /// and build sets of dependency check candidates.
+  /// are needed and build sets of dependency check candidates.
   void processMemAccesses();
 
   /// Set of all accesses.
