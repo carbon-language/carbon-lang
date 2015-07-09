@@ -597,8 +597,15 @@ void COFFDumper::printCodeViewDebugInfo(const SectionRef &Section) {
       // in the line table.  The filename string is accessed using double
       // indirection to the string table subsection using the index subsection.
       uint32_t OffsetInIndex = DE.getU32(&Offset),
-               SegmentLength = DE.getU32(&Offset);
-      Offset += sizeof(uint32_t); // Skip FullSegmentSize
+               SegmentLength = DE.getU32(&Offset),
+               FullSegmentSize = DE.getU32(&Offset);
+
+      if (FullSegmentSize !=
+          12 + 8 * SegmentLength +
+              (HasColumnInformation ? 4 * SegmentLength : 0)) {
+        error(object_error::parse_failed);
+        return;
+      }
 
       uint32_t FilenameOffset;
       {
