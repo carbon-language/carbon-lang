@@ -284,6 +284,13 @@ ProcessLaunchInfo::FinalizeFileActions (Target *target, bool default_to_use_pty)
             log->Printf ("ProcessLaunchInfo::%s at least one of stdin/stdout/stderr was not set, evaluating default handling",
                          __FUNCTION__);
 
+        if (m_flags.Test(eLaunchFlagLaunchInTTY))
+        {
+            // Do nothing, if we are launching in a remote terminal
+            // no file actions should be done at all.
+            return;
+        }
+
         if (m_flags.Test(eLaunchFlagDisableSTDIO))
         {
             if (log)
