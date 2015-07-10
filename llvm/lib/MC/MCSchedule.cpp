@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/MC/MCSchedule.h"
+#include <type_traits>
 
 using namespace llvm;
 
