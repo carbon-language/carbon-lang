@@ -45,6 +45,7 @@ class LoopInfo;
 class AllocaInst;
 class AliasAnalysis;
 class AssumptionCacheTracker;
+class DominatorTree;
 
 /// CloneModule - Return an exact copy of the specified module
 ///
@@ -232,6 +233,21 @@ bool InlineFunction(InvokeInst *II, InlineFunctionInfo &IFI,
                     bool InsertLifetime = true);
 bool InlineFunction(CallSite CS, InlineFunctionInfo &IFI,
                     bool InsertLifetime = true);
+
+/// \brief Clones a loop \p OrigLoop.  Returns the loop and the blocks in \p
+/// Blocks.
+///
+/// Updates LoopInfo and DominatorTree assuming the loop is dominated by block
+/// \p LoopDomBB.  Insert the new blocks before block specified in \p Before.
+Loop *cloneLoopWithPreheader(BasicBlock *Before, BasicBlock *LoopDomBB,
+                             Loop *OrigLoop, ValueToValueMapTy &VMap,
+                             const Twine &NameSuffix, LoopInfo *LI,
+                             DominatorTree *DT,
+                             SmallVectorImpl<BasicBlock *> &Blocks);
+
+/// \brief Remaps instructions in \p Blocks using the mapping in \p VMap.
+void remapInstructionsInBlocks(const SmallVectorImpl<BasicBlock *> &Blocks,
+                               ValueToValueMapTy &VMap);
 
 } // End llvm namespace
 

@@ -55,70 +55,6 @@ static cl::opt<bool> DistributeNonIfConvertible(
 
 STATISTIC(NumLoopsDistributed, "Number of loops distributed");
 
-/// \brief Remaps instructions in a loop including the preheader.
-static void remapInstructionsInLoop(const SmallVectorImpl<BasicBlock *> &Blocks,
-                                    ValueToValueMapTy &VMap) {
-  // Rewrite the code to refer to itself.
-  for (auto *BB : Blocks)
-    for (auto &Inst : *BB)
-      RemapInstruction(&Inst, VMap,
-                       RF_NoModuleLevelChanges | RF_IgnoreMissingEntries);
-}
-
-/// \brief Clones a loop \p OrigLoop.  Returns the loop and the blocks in \p
-/// Blocks.
-///
-/// Updates LoopInfo and DominatorTree assuming the loop is dominated by block
-/// \p LoopDomBB.  Insert the new blocks before block specified in \p Before.
-static Loop *cloneLoopWithPreheader(BasicBlock *Before, BasicBlock *LoopDomBB,
-                                    Loop *OrigLoop, ValueToValueMapTy &VMap,
-                                    const Twine &NameSuffix, LoopInfo *LI,
-                                    DominatorTree *DT,
-                                    SmallVectorImpl<BasicBlock *> &Blocks) {
-  Function *F = OrigLoop->getHeader()->getParent();
-  Loop *ParentLoop = OrigLoop->getParentLoop();
-
-  Loop *NewLoop = new Loop();
-  if (ParentLoop)
-    ParentLoop->addChildLoop(NewLoop);
-  else
-    LI->addTopLevelLoop(NewLoop);
-
-  BasicBlock *OrigPH = OrigLoop->getLoopPreheader();
-  BasicBlock *NewPH = CloneBasicBlock(OrigPH, VMap, NameSuffix, F);
-  // To rename the loop PHIs.
-  VMap[OrigPH] = NewPH;
-  Blocks.push_back(NewPH);
-
-  // Update LoopInfo.
-  if (ParentLoop)
-    ParentLoop->addBasicBlockToLoop(NewPH, *LI);
-
-  // Update DominatorTree.
-  DT->addNewBlock(NewPH, LoopDomBB);
-
-  for (BasicBlock *BB : OrigLoop->getBlocks()) {
-    BasicBlock *NewBB = CloneBasicBlock(BB, VMap, NameSuffix, F);
-    VMap[BB] = NewBB;
-
-    // Update LoopInfo.
-    NewLoop->addBasicBlockToLoop(NewBB, *LI);
-
-    // Update DominatorTree.
-    BasicBlock *IDomBB = DT->getNode(BB)->getIDom()->getBlock();
-    DT->addNewBlock(NewBB, cast<BasicBlock>(VMap[IDomBB]));
-
-    Blocks.push_back(NewBB);
-  }
-
-  // Move them physically from the end of the block list.
-  F->getBasicBlockList().splice(Before, F->getBasicBlockList(), NewPH);
-  F->getBasicBlockList().splice(Before, F->getBasicBlockList(),
-                                NewLoop->getHeader(), F->end());
-
-  return NewLoop;
-}
-
 namespace {
 /// \brief Maintains the set of instructions of the loop for a partition before
 /// cloning.  After cloning, it hosts the new loop.
@@ -204,7 +140,9 @@ public:
   ValueToValueMapTy &getVMap() { return VMap; }
 
   /// \brief Remaps the cloned instructions using VMap.
-  void remapInstructions() { remapInstructionsInLoop(ClonedLoopBlocks, VMap); }
+  void remapInstructions() {
+    remapInstructionsInBlocks(ClonedLoopBlocks, VMap);
+  }
 
   /// \brief Based on the set of instructions selected for this partition,
   /// removes the unnecessary ones.
@@ -673,7 +611,7 @@ public:
     NonVersionedLoop =
         cloneLoopWithPreheader(PH, MemCheckBB, VersionedLoop, VMap,
                                ".lver.orig", LI, DT, NonVersionedLoopBlocks);
-    remapInstructionsInLoop(NonVersionedLoopBlocks, VMap);
+    remapInstructionsInBlocks(NonVersionedLoopBlocks, VMap);
 
     // Insert the conditional branch based on the result of the memchecks.
     Instruction *OrigTerm = MemCheckBB->getTerminator();
