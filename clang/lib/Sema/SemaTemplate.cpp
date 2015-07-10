@@ -1008,7 +1008,7 @@ Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
     //   template declaration (7.1.5.3).
     RecordDecl *PrevRecordDecl = PrevClassTemplate->getTemplatedDecl();
     if (!isAcceptableTagRedeclaration(PrevRecordDecl, Kind,
-                                      TUK == TUK_Definition,  KWLoc, *Name)) {
+                                      TUK == TUK_Definition,  KWLoc, Name)) {
       Diag(KWLoc, diag::err_use_with_wrong_tag)
         << Name
         << FixItHint::CreateReplacement(KWLoc, PrevRecordDecl->getKindName());
@@ -2310,7 +2310,7 @@ TypeResult Sema::ActOnTagTemplateIdType(TagUseKind TUK,
     assert(Id && "templated class must have an identifier");
     
     if (!isAcceptableTagRedeclaration(D, TagKind, TUK == TUK_Definition,
-                                      TagLoc, *Id)) {
+                                      TagLoc, Id)) {
       Diag(TagLoc, diag::err_use_with_wrong_tag)
         << Result
         << FixItHint::CreateReplacement(SourceRange(TagLoc), D->getKindName());
@@ -6199,7 +6199,7 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
   assert(Kind != TTK_Enum && "Invalid enum tag in class template spec!");
   if (!isAcceptableTagRedeclaration(ClassTemplate->getTemplatedDecl(),
                                     Kind, TUK == TUK_Definition, KWLoc,
-                                    *ClassTemplate->getIdentifier())) {
+                                    ClassTemplate->getIdentifier())) {
     Diag(KWLoc, diag::err_use_with_wrong_tag)
       << ClassTemplate
       << FixItHint::CreateReplacement(KWLoc,
@@ -7235,7 +7235,7 @@ Sema::ActOnExplicitInstantiation(Scope *S,
 
   if (!isAcceptableTagRedeclaration(ClassTemplate->getTemplatedDecl(),
                                     Kind, /*isDefinition*/false, KWLoc,
-                                    *ClassTemplate->getIdentifier())) {
+                                    ClassTemplate->getIdentifier())) {
     Diag(KWLoc, diag::err_use_with_wrong_tag)
       << ClassTemplate
       << FixItHint::CreateReplacement(KWLoc,

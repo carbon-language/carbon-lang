@@ -11294,7 +11294,7 @@ static bool isClassCompatTagKind(TagTypeKind Tag)
 bool Sema::isAcceptableTagRedeclaration(const TagDecl *Previous,
                                         TagTypeKind NewTag, bool isDefinition,
                                         SourceLocation NewTagLoc,
-                                        const IdentifierInfo &Name) {
+                                        const IdentifierInfo *Name) {
   // C++ [dcl.type.elab]p3:
   //   The class-key or enum keyword present in the
   //   elaborated-type-specifier shall agree in kind with the
@@ -11323,7 +11323,7 @@ bool Sema::isAcceptableTagRedeclaration(const TagDecl *Previous,
       // In a template instantiation, do not offer fix-its for tag mismatches
       // since they usually mess up the template instead of fixing the problem.
       Diag(NewTagLoc, diag::warn_struct_class_tag_mismatch)
-        << getRedeclDiagFromTagKind(NewTag) << isTemplate << &Name
+        << getRedeclDiagFromTagKind(NewTag) << isTemplate << Name
         << getRedeclDiagFromTagKind(OldTag);
       return true;
     }
@@ -11342,7 +11342,7 @@ bool Sema::isAcceptableTagRedeclaration(const TagDecl *Previous,
           if (!previousMismatch) {
             previousMismatch = true;
             Diag(NewTagLoc, diag::warn_struct_class_previous_tag_mismatch)
-              << getRedeclDiagFromTagKind(NewTag) << isTemplate << &Name
+              << getRedeclDiagFromTagKind(NewTag) << isTemplate << Name
               << getRedeclDiagFromTagKind(I->getTagKind());
           }
           Diag(I->getInnerLocStart(), diag::note_struct_class_suggestion)
@@ -11364,7 +11364,7 @@ bool Sema::isAcceptableTagRedeclaration(const TagDecl *Previous,
     }
 
     Diag(NewTagLoc, diag::warn_struct_class_tag_mismatch)
-      << getRedeclDiagFromTagKind(NewTag) << isTemplate << &Name
+      << getRedeclDiagFromTagKind(NewTag) << isTemplate << Name
       << getRedeclDiagFromTagKind(OldTag);
     Diag(Redecl->getLocation(), diag::note_previous_use);
 
@@ -11847,7 +11847,7 @@ Decl *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
         // struct or something similar.
         if (!isAcceptableTagRedeclaration(PrevTagDecl, Kind,
                                           TUK == TUK_Definition, KWLoc,
-                                          *Name)) {
+                                          Name)) {
           bool SafeToContinue
             = (PrevTagDecl->getTagKind() != TTK_Enum &&
                Kind != TTK_Enum);

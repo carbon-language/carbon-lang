@@ -1010,7 +1010,7 @@ public:
     }
 
     if (!SemaRef.isAcceptableTagRedeclaration(Tag, Kind, /*isDefinition*/false,
-                                              IdLoc, *Id)) {
+                                              IdLoc, Id)) {
       SemaRef.Diag(KeywordLoc, diag::err_use_with_wrong_tag) << Id;
       SemaRef.Diag(Tag->getLocation(), diag::note_previous_use);
       return QualType();
