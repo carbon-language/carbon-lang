@@ -1527,6 +1527,31 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
                             context.m_found.function_with_type_info = true;
                             context.m_found.function = true;
                         }
+                        else if (llvm::isa<clang::VarDecl>(decl_from_modules))
+                        {
+                            if (log)
+                            {
+                                log->Printf("  CAS::FEVD[%u] Matching variable found for \"%s\" in the modules",
+                                            current_id,
+                                            name.GetCString());
+                            }
+                            
+                            clang::Decl *copied_decl = m_ast_importer->CopyDecl(m_ast_context, &decl_from_modules->getASTContext(), decl_from_modules);
+                            clang::VarDecl *copied_var_decl = copied_decl ? dyn_cast_or_null<clang::VarDecl>(copied_decl) : nullptr;
+                            
+                            if (!copied_var_decl)
+                            {
+                                if (log)
+                                    log->Printf("  CAS::FEVD[%u] - Couldn't export a variable declaration from the modules",
+                                                current_id);
+                                
+                                break;
+                            }
+                            
+                            context.AddNamedDecl(copied_var_decl);
+                            
+                            context.m_found.variable = true;
+                        }
                     }
                 } while (0);
             }

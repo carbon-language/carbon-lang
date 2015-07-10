@@ -74,6 +74,9 @@ class CModulesTestCase(TestBase):
 
         self.expect("expr MIN((uint64_t)2, (uint64_t)3)", VARIABLES_DISPLAYED_CORRECTLY,
             substrs = ["uint64_t", "2"])
+
+        self.expect("expr stdin", VARIABLES_DISPLAYED_CORRECTLY,
+            substrs = ["(FILE *)", "0x"])
             
 if __name__ == '__main__':
     import atexit
