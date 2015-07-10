@@ -309,9 +309,6 @@ public:
   /// basic block \p New instead of to it.
   void replaceSuccessorsPhiUsesWith(BasicBlock *New);
 
-  /// \brief Return true if this basic block is an exception handling block.
-  bool isEHBlock() const { return getFirstNonPHI()->isEHBlock(); }
-
   /// \brief Return true if this basic block is a landing pad.
   ///
   /// Being a ``landing pad'' means that the basic block is the destination of

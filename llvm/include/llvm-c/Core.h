@@ -248,13 +248,7 @@ typedef enum {
 
   /* Exception Handling Operators */
   LLVMResume         = 58,
-  LLVMLandingPad     = 59,
-  LLVMCleanupRet     = 61,
-  LLVMCatchRet       = 62,
-  LLVMCatchBlock     = 63,
-  LLVMTerminateBlock = 64,
-  LLVMCleanupBlock   = 65,
-  LLVMCatchEndBlock  = 66
+  LLVMLandingPad     = 59
 
 } LLVMOpcode;
 
@@ -1209,7 +1203,6 @@ LLVMTypeRef LLVMX86MMXType(void);
       macro(InsertElementInst)              \
       macro(InsertValueInst)                \
       macro(LandingPadInst)                 \
-      macro(CleanupBlockInst)               \
       macro(PHINode)                        \
       macro(SelectInst)                     \
       macro(ShuffleVectorInst)              \
@@ -1222,11 +1215,6 @@ LLVMTypeRef LLVMX86MMXType(void);
         macro(SwitchInst)                   \
         macro(UnreachableInst)              \
         macro(ResumeInst)                   \
-        macro(CleanupReturnInst)            \
-        macro(CatchReturnInst)              \
-        macro(CatchBlockInst)               \
-        macro(TerminateBlockInst)           \
-        macro(CatchEndBlockInst)            \
       macro(UnaryInstruction)               \
         macro(AllocaInst)                   \
         macro(CastInst)                     \

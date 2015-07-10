@@ -197,7 +197,7 @@ BasicBlock::iterator BasicBlock::getFirstInsertionPt() {
     return end();
 
   iterator InsertPt = FirstNonPHI;
-  if (InsertPt->isEHBlock()) ++InsertPt;
+  if (isa<LandingPadInst>(InsertPt)) ++InsertPt;
   return InsertPt;
 }
 

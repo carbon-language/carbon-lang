@@ -1168,30 +1168,6 @@ SDValue SelectionDAGBuilder::getValueImpl(const Value *V) {
   llvm_unreachable("Can't get register for value!");
 }
 
-void SelectionDAGBuilder::visitCleanupRet(const CleanupReturnInst &I) {
-  report_fatal_error("visitCleanupRet not yet implemented!");
-}
-
-void SelectionDAGBuilder::visitCatchEndBlock(const CatchEndBlockInst &I) {
-  report_fatal_error("visitCatchEndBlock not yet implemented!");
-}
-
-void SelectionDAGBuilder::visitCatchRet(const CatchReturnInst &I) {
-  report_fatal_error("visitCatchRet not yet implemented!");
-}
-
-void SelectionDAGBuilder::visitCatchBlock(const CatchBlockInst &I) {
-  report_fatal_error("visitCatchBlock not yet implemented!");
-}
-
-void SelectionDAGBuilder::visitTerminateBlock(const TerminateBlockInst &TBI) {
-  report_fatal_error("visitTerminateBlock not yet implemented!");
-}
-
-void SelectionDAGBuilder::visitCleanupBlock(const CleanupBlockInst &TBI) {
-  report_fatal_error("visitCleanupBlock not yet implemented!");
-}
-
 void SelectionDAGBuilder::visitRet(const ReturnInst &I) {
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
   auto &DL = DAG.getDataLayout();

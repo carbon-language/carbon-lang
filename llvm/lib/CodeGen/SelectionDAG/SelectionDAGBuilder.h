@@ -734,12 +734,6 @@ private:
   void visitSwitch(const SwitchInst &I);
   void visitIndirectBr(const IndirectBrInst &I);
   void visitUnreachable(const UnreachableInst &I);
-  void visitCleanupRet(const CleanupReturnInst &I);
-  void visitCatchEndBlock(const CatchEndBlockInst &I);
-  void visitCatchRet(const CatchReturnInst &I);
-  void visitCatchBlock(const CatchBlockInst &I);
-  void visitTerminateBlock(const TerminateBlockInst &TBI);
-  void visitCleanupBlock(const CleanupBlockInst &CBI);
 
   uint32_t getEdgeWeight(const MachineBasicBlock *Src,
                          const MachineBasicBlock *Dst) const;
