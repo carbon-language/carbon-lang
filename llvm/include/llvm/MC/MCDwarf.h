@@ -54,13 +54,13 @@ struct MCDwarfFile {
 /// \brief Instances of this class represent the information from a
 /// dwarf .loc directive.
 class MCDwarfLoc {
-  unsigned FileNum;
-  unsigned Line;
-  unsigned Column;
+  uint32_t FileNum;
+  uint32_t Line;
+  uint16_t Column;
   // Flags (see #define's below)
-  unsigned Flags;
-  unsigned Isa;
-  unsigned Discriminator;
+  uint8_t Flags;
+  uint8_t Isa;
+  uint32_t Discriminator;
 
 // Flag that indicates the initial value of the is_stmt_start flag.
 #define DWARF2_LINE_DEFAULT_IS_STMT 1
@@ -107,13 +107,22 @@ public:
   void setLine(unsigned line) { Line = line; }
 
   /// \brief Set the Column of this MCDwarfLoc.
-  void setColumn(unsigned column) { Column = column; }
+  void setColumn(unsigned column) {
+    assert(column <= UINT16_MAX);
+    Column = column;
+  }
 
   /// \brief Set the Flags of this MCDwarfLoc.
-  void setFlags(unsigned flags) { Flags = flags; }
+  void setFlags(unsigned flags) {
+    assert(flags <= UINT8_MAX);
+    Flags = flags;
+  }
 
   /// \brief Set the Isa of this MCDwarfLoc.
-  void setIsa(unsigned isa) { Isa = isa; }
+  void setIsa(unsigned isa) {
+    assert(isa <= UINT8_MAX);
+    Isa = isa;
+  }
 
   /// \brief Set the Discriminator of this MCDwarfLoc.
   void setDiscriminator(unsigned discriminator) {
