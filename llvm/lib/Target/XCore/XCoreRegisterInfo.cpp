@@ -222,7 +222,7 @@ XCoreRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
     XCore::R8, XCore::R9,
     0
   };
-  const TargetFrameLowering *TFI = MF->getSubtarget().getFrameLowering();
+  const XCoreFrameLowering *TFI = getFrameLowering(*MF);
   if (TFI->hasFP(*MF))
     return CalleeSavedRegsFP;
   return CalleeSavedRegs;
@@ -230,7 +230,7 @@ XCoreRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
 
 BitVector XCoreRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   BitVector Reserved(getNumRegs());
-  const TargetFrameLowering *TFI = MF.getSubtarget().getFrameLowering();
+  const XCoreFrameLowering *TFI = getFrameLowering(MF);
 
   Reserved.set(XCore::CP);
   Reserved.set(XCore::DP);
@@ -270,7 +270,7 @@ XCoreRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   const XCoreInstrInfo &TII =
       *static_cast<const XCoreInstrInfo *>(MF.getSubtarget().getInstrInfo());
 
-  const TargetFrameLowering *TFI = MF.getSubtarget().getFrameLowering();
+  const XCoreFrameLowering *TFI = getFrameLowering(MF);
   int Offset = MF.getFrameInfo()->getObjectOffset(FrameIndex);
   int StackSize = MF.getFrameInfo()->getStackSize();
 
@@ -324,7 +324,7 @@ XCoreRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
 
 
 unsigned XCoreRegisterInfo::getFrameRegister(const MachineFunction &MF) const {
-  const TargetFrameLowering *TFI = MF.getSubtarget().getFrameLowering();
+  const XCoreFrameLowering *TFI = getFrameLowering(MF);
 
   return TFI->hasFP(MF) ? XCore::R10 : XCore::SP;
 }
