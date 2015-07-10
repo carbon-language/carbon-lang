@@ -1456,9 +1456,14 @@ struct LoopVectorize : public FunctionPass {
     const BranchProbability ColdProb(1, 5); // 20%
     ColdEntryFreq = BlockFrequency(BFI->getEntryFreq()) * ColdProb;
 
-    // If the target claims to have no vector registers don't attempt
-    // vectorization.
-    if (!TTI->getNumberOfRegisters(true))
+    // Don't attempt if
+    // 1. the target claims to have no vector registers, and
+    // 2. interleaving won't help ILP.
+    //
+    // The second condition is necessary because, even if the target has no
+    // vector registers, loop vectorization may still enable scalar
+    // interleaving.
+    if (!TTI->getNumberOfRegisters(true) && TTI->getMaxInterleaveFactor(1) < 2)
       return false;
 
     // Build up a worklist of inner-loops to vectorize. This is necessary as

@@ -276,7 +276,7 @@ public:
   /// \name Vector TTI Implementations
   /// @{
 
-  unsigned getNumberOfRegisters(bool Vector) { return 1; }
+  unsigned getNumberOfRegisters(bool Vector) { return Vector ? 0 : 1; }
 
   unsigned getRegisterBitWidth(bool Vector) { return 32; }
 

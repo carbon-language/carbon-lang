@@ -117,9 +117,3 @@ unsigned NVPTXTTIImpl::getArithmeticInstrCost(
                                          Opd1PropInfo, Opd2PropInfo);
   }
 }
-
-unsigned NVPTXTTIImpl::getNumberOfRegisters(bool Vector) {
-  if (Vector)
-    return 0;
-  return BaseT::getNumberOfRegisters(Vector);
-}
