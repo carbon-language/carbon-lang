@@ -588,7 +588,7 @@ SDValue SITargetLowering::LowerFormalArguments(
                               VA.getLocMemOffset();
       // The first 36 bytes of the input buffer contains information about
       // thread group and global sizes.
-      SDValue Arg = LowerParameter(DAG, VT, MemVT,  DL, DAG.getRoot(),
+      SDValue Arg = LowerParameter(DAG, VT, MemVT,  DL, Chain,
                                    Offset, Ins[i].Flags.isSExt());
 
       const PointerType *ParamTy =
