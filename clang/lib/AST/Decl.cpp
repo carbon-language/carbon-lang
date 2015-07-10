@@ -2712,7 +2712,7 @@ bool FunctionDecl::isMSExternInline() const {
 
   for (const FunctionDecl *FD = getMostRecentDecl(); FD;
        FD = FD->getPreviousDecl())
-    if (FD->getStorageClass() == SC_Extern)
+    if (!FD->isImplicit() && FD->getStorageClass() == SC_Extern)
       return true;
 
   return false;
@@ -2724,7 +2724,7 @@ static bool redeclForcesDefMSVC(const FunctionDecl *Redecl) {
 
   for (const FunctionDecl *FD = Redecl->getPreviousDecl(); FD;
        FD = FD->getPreviousDecl())
-    if (FD->getStorageClass() == SC_Extern)
+    if (!FD->isImplicit() && FD->getStorageClass() == SC_Extern)
       return false;
 
   return true;
