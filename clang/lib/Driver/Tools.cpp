@@ -2041,17 +2041,6 @@ shouldUseExceptionTablesForObjCExceptions(const ObjCRuntime &runtime,
            Triple.getArch() == llvm::Triple::arm));
 }
 
-// exceptionSettings() exists to share the logic between -cc1 and linker
-// invocations.
-static bool exceptionSettings(const ArgList &Args, const llvm::Triple &Triple) {
-  if (Arg *A = Args.getLastArg(options::OPT_fexceptions,
-                               options::OPT_fno_exceptions))
-    if (A->getOption().matches(options::OPT_fexceptions))
-      return true;
-
-  return false;
-}
-
 /// Adds exception related arguments to the driver command arguments. There's a
 /// master flag, -fexceptions and also language specific flags to enable/disable
 /// C++ and Objective-C exceptions. This makes it possible to for example
@@ -2075,8 +2064,9 @@ static void addExceptionArgs(const ArgList &Args, types::ID InputType,
     return;
   }
 
-  // Gather the exception settings from the command line arguments.
-  bool EH = exceptionSettings(Args, Triple);
+  // See if the user explicitly enabled exceptions.
+  bool EH = Args.hasFlag(options::OPT_fexceptions, options::OPT_fno_exceptions,
+                         false);
 
   // Obj-C exceptions are enabled by default, regardless of -fexceptions. This
   // is not necessarily sensible, but follows GCC.
@@ -2089,8 +2079,11 @@ static void addExceptionArgs(const ArgList &Args, types::ID InputType,
   }
 
   if (types::isCXX(InputType)) {
-    bool CXXExceptionsEnabled =
-        Triple.getArch() != llvm::Triple::xcore && !Triple.isPS4CPU();
+    // Disable C++ EH by default on XCore, PS4, and MSVC.
+    // FIXME: Remove MSVC from this list once things work.
+    bool CXXExceptionsEnabled = Triple.getArch() != llvm::Triple::xcore &&
+                                !Triple.isPS4CPU() &&
+                                !Triple.isWindowsMSVCEnvironment();
     Arg *ExceptionArg = Args.getLastArg(
         options::OPT_fcxx_exceptions, options::OPT_fno_cxx_exceptions,
         options::OPT_fexceptions, options::OPT_fno_exceptions);
@@ -5040,6 +5033,7 @@ struct EHFlags {
 /// The default is /EHs-c-, meaning cleanups are disabled.
 static EHFlags parseClangCLEHFlags(const Driver &D, const ArgList &Args) {
   EHFlags EH;
+
   std::vector<std::string> EHArgs =
       Args.getAllArgValues(options::OPT__SLASH_EH);
   for (auto EHVal : EHArgs) {
@@ -5061,6 +5055,15 @@ static EHFlags parseClangCLEHFlags(const Driver &D, const ArgList &Args) {
       break;
     }
   }
+
+  // Only enable C++ exceptions if the user opts into it by passing
+  // -fexceptions. Lots of build systems implicitly pass /EHsc when users don't
+  // actually need it.
+  // FIXME: Remove this when they work out of the box.
+  if (!Args.hasFlag(options::OPT_fexceptions, options::OPT_fno_exceptions,
+                    /*default=*/false))
+    EH = EHFlags();
+
   return EH;
 }
 
@@ -9102,7 +9105,9 @@ void XCore::Linker::ConstructJob(Compilation &C, const JobAction &JA,
   if (Args.hasArg(options::OPT_v))
     CmdArgs.push_back("-v");
 
-  if (exceptionSettings(Args, getToolChain().getTriple()))
+  // Pass -fexceptions through to the linker if it was present.
+  if (Args.hasFlag(options::OPT_fexceptions, options::OPT_fno_exceptions,
+                   false))
     CmdArgs.push_back("-fexceptions");
 
   AddLinkerInputs(getToolChain(), Inputs, Args, CmdArgs);
