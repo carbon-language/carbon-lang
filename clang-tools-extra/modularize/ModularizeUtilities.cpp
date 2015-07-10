@@ -42,9 +42,11 @@ public:
 
 // Constructor.
 ModularizeUtilities::ModularizeUtilities(std::vector<std::string> &InputPaths,
-                                         llvm::StringRef Prefix)
+                                         llvm::StringRef Prefix,
+                                         llvm::StringRef ProblemFilesListPath)
   : InputFilePaths(InputPaths),
     HeaderPrefix(Prefix),
+    ProblemFilesPath(ProblemFilesListPath),
     HasModuleMap(false),
     MissingHeaderCount(0),
     // Init clang stuff needed for loading the module map and preprocessing.
@@ -65,9 +67,10 @@ ModularizeUtilities::ModularizeUtilities(std::vector<std::string> &InputPaths,
 // Create instance of ModularizeUtilities, to simplify setting up
 // subordinate objects.
 ModularizeUtilities *ModularizeUtilities::createModularizeUtilities(
-    std::vector<std::string> &InputPaths, llvm::StringRef Prefix) {
+    std::vector<std::string> &InputPaths, llvm::StringRef Prefix,
+    llvm::StringRef ProblemFilesListPath) {
 
-  return new ModularizeUtilities(InputPaths, Prefix);
+  return new ModularizeUtilities(InputPaths, Prefix, ProblemFilesListPath);
 }
 
 // Load all header lists and dependencies.
@@ -89,6 +92,15 @@ std::error_code ModularizeUtilities::loadAllHeaderListsAndDependencies() {
           << "': " << EC.message() << '\n';
         return EC;
       }
+    }
+  }
+  // If we have a problem files list.
+  if (ProblemFilesPath.size() != 0) {
+    // Load problem files list.
+    if (std::error_code EC = loadProblemHeaderList(ProblemFilesPath)) {
+      errs() << "modularize: error: Unable to get problem header list '" << ProblemFilesPath
+        << "': " << EC.message() << '\n';
+      return EC;
     }
   }
   return std::error_code();
@@ -190,6 +202,58 @@ std::error_code ModularizeUtilities::loadSingleHeaderListsAndDependencies(
     // Save the resulting header file path and dependencies.
     HeaderFileNames.push_back(HeaderFileName.str());
     Dependencies[HeaderFileName.str()] = Dependents;
+  }
+  return std::error_code();
+}
+
+// Load problem header list.
+std::error_code ModularizeUtilities::loadProblemHeaderList(
+  llvm::StringRef InputPath) {
+
+  // By default, use the path component of the list file name.
+  SmallString<256> HeaderDirectory(InputPath);
+  llvm::sys::path::remove_filename(HeaderDirectory);
+  SmallString<256> CurrentDirectory;
+  llvm::sys::fs::current_path(CurrentDirectory);
+
+  // Get the prefix if we have one.
+  if (HeaderPrefix.size() != 0)
+    HeaderDirectory = HeaderPrefix;
+
+  // Read the header list file into a buffer.
+  ErrorOr<std::unique_ptr<MemoryBuffer>> listBuffer =
+    MemoryBuffer::getFile(InputPath);
+  if (std::error_code EC = listBuffer.getError())
+    return EC;
+
+  // Parse the header list into strings.
+  SmallVector<StringRef, 32> Strings;
+  listBuffer.get()->getBuffer().split(Strings, "\n", -1, false);
+
+  // Collect the header file names from the string list.
+  for (SmallVectorImpl<StringRef>::iterator I = Strings.begin(),
+    E = Strings.end();
+    I != E; ++I) {
+    StringRef Line = I->trim();
+    // Ignore comments and empty lines.
+    if (Line.empty() || (Line[0] == '#'))
+      continue;
+    SmallString<256> HeaderFileName;
+    // Prepend header file name prefix if it's not absolute.
+    if (llvm::sys::path::is_absolute(Line))
+      llvm::sys::path::native(Line, HeaderFileName);
+    else {
+      if (HeaderDirectory.size() != 0)
+        HeaderFileName = HeaderDirectory;
+      else
+        HeaderFileName = CurrentDirectory;
+      llvm::sys::path::append(HeaderFileName, Line);
+      llvm::sys::path::native(HeaderFileName);
+    }
+    // Get canonical form.
+    HeaderFileName = getCanonicalPath(HeaderFileName);
+    // Save the resulting header file path.
+    ProblemFileNames.push_back(HeaderFileName.str());
   }
   return std::error_code();
 }
@@ -423,4 +487,63 @@ std::string ModularizeUtilities::getDirectoryFromPath(StringRef Path) {
   if (Directory.size() == 0)
     return ".";
   return Directory.str();
+}
+
+// Add unique problem file.
+// Also standardizes the path.
+void ModularizeUtilities::addUniqueProblemFile(std::string FilePath) {
+  FilePath = getCanonicalPath(FilePath);
+  // Don't add if already present.
+  for(auto &TestFilePath : ProblemFileNames) {
+    if (TestFilePath == FilePath)
+      return;
+  }
+  ProblemFileNames.push_back(FilePath);
+}
+
+// Add file with no compile errors.
+// Also standardizes the path.
+void ModularizeUtilities::addNoCompileErrorsFile(std::string FilePath) {
+  FilePath = getCanonicalPath(FilePath);
+  GoodFileNames.push_back(FilePath);
+}
+
+// List problem files.
+void ModularizeUtilities::displayProblemFiles() {
+  errs() << "\nThese are the files with possible errors:\n\n";
+  for (auto &ProblemFile : ProblemFileNames) {
+    errs() << ProblemFile << "\n";
+  }
+}
+
+// List files with no problems.
+void ModularizeUtilities::displayGoodFiles() {
+  errs() << "\nThese are the files with no detected errors:\n\n";
+  for (auto &GoodFile : HeaderFileNames) {
+    bool Good = true;
+    for (auto &ProblemFile : ProblemFileNames) {
+      if (ProblemFile == GoodFile) {
+        Good = false;
+        break;
+      }
+    }
+    if (Good)
+      errs() << GoodFile << "\n";
+  }
+}
+
+// List files with problem files commented out.
+void ModularizeUtilities::displayCombinedFiles() {
+  errs() <<
+    "\nThese are the combined files, with problem files preceded by #:\n\n";
+  for (auto &File : HeaderFileNames) {
+    bool Good = true;
+    for (auto &ProblemFile : ProblemFileNames) {
+      if (ProblemFile == File) {
+        Good = false;
+        break;
+      }
+    }
+    errs() << (Good ? "" : "#") << File << "\n";
+  }
 }

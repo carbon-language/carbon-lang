@@ -43,6 +43,8 @@ public:
   std::vector<std::string> InputFilePaths;
   /// The header prefix.
   llvm::StringRef HeaderPrefix;
+  /// The path of problem files list file.
+  llvm::StringRef ProblemFilesPath;
 
   // Output data.
 
@@ -54,6 +56,11 @@ public:
   bool HasModuleMap;
   /// Missing header count.
   int MissingHeaderCount;
+  /// List of header files with no problems during the first pass,
+  /// that is, no compile errors.
+  llvm::SmallVector<std::string, 32> GoodFileNames;
+  /// List of header files with problems.
+  llvm::SmallVector<std::string, 32> ProblemFileNames;
 
   // Functions.
 
@@ -62,16 +69,20 @@ public:
   /// of this object.
   /// \param InputPaths The input file paths.
   /// \param Prefix The headear path prefix.
+  /// \param ProblemFilesListPath The problem header list path.
   ModularizeUtilities(std::vector<std::string> &InputPaths,
-                      llvm::StringRef Prefix);
+                      llvm::StringRef Prefix,
+                      llvm::StringRef ProblemFilesListPath);
 
   /// Create instance of ModularizeUtilities.
   /// \param InputPaths The input file paths.
   /// \param Prefix The headear path prefix.
+  /// \param ProblemFilesListPath The problem header list path.
   /// \returns Initialized ModularizeUtilities object.
   static ModularizeUtilities *createModularizeUtilities(
       std::vector<std::string> &InputPaths,
-      llvm::StringRef Prefix);
+      llvm::StringRef Prefix,
+      llvm::StringRef ProblemFilesListPath);
 
   /// Load header list and dependencies.
   /// \returns std::error_code.
@@ -95,6 +106,25 @@ public:
   std::error_code doCoverageCheck(std::vector<std::string> &IncludePaths,
                                   llvm::ArrayRef<std::string> CommandLine);
 
+  /// Add unique problem file.
+  /// Also standardizes the path.
+  /// \param FilePath Problem file path.
+  void addUniqueProblemFile(std::string FilePath);
+
+  /// Add file with no compile errors.
+  /// Also standardizes the path.
+  /// \param FilePath Problem file path.
+  void addNoCompileErrorsFile(std::string FilePath);
+
+  /// List problem files.
+  void displayProblemFiles();
+
+  /// List files with no problems.
+  void displayGoodFiles();
+
+  /// List files with problem files commented out.
+  void displayCombinedFiles();
+
   // Internal.
 
 protected:
@@ -104,6 +134,12 @@ protected:
   /// \returns std::error_code.
   std::error_code loadSingleHeaderListsAndDependencies(
       llvm::StringRef InputPath);
+
+  /// Load problem header list.
+  /// \param InputPath The input file path.
+  /// \returns std::error_code.
+  std::error_code loadProblemHeaderList(
+    llvm::StringRef InputPath);
 
   /// Load single module map and extract header file list.
   /// \param InputPath The input file path.

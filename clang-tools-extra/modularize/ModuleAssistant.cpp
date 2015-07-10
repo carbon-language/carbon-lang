@@ -45,7 +45,7 @@ namespace {
 // Represents a module.
 class Module {
 public:
-  Module(llvm::StringRef Name);
+  Module(llvm::StringRef Name, bool Problem);
   Module();
   ~Module();
   bool output(llvm::raw_fd_ostream &OS, int Indent);
@@ -55,6 +55,7 @@ public:
   std::string Name;
   std::vector<std::string> HeaderFileNames;
   std::vector<Module *> SubModules;
+  bool IsProblem;
 };
 
 } // end anonymous namespace.
@@ -62,8 +63,9 @@ public:
 // Module functions:
 
 // Constructors.
-Module::Module(llvm::StringRef Name) : Name(Name) {}
-Module::Module() {}
+Module::Module(llvm::StringRef Name, bool Problem)
+  : Name(Name), IsProblem(Problem) {}
+Module::Module() : IsProblem(false) {}
 
 // Destructor.
 Module::~Module() {
@@ -97,7 +99,10 @@ bool Module::output(llvm::raw_fd_ostream &OS, int Indent) {
                                           E = HeaderFileNames.end();
        I != E; ++I) {
     OS.indent(Indent);
-    OS << "header \"" << *I << "\"\n";
+    if (IsProblem)
+      OS << "exclude header \"" << *I << "\"\n";
+    else
+      OS << "header \"" << *I << "\"\n";
   }
 
   // If this module has header files, output export directive.
@@ -156,7 +161,8 @@ ensureNoCollisionWithReservedName(llvm::StringRef MightBeReservedName) {
 static bool addModuleDescription(Module *RootModule,
                                  llvm::StringRef HeaderFilePath,
                                  llvm::StringRef HeaderPrefix,
-                                 DependencyMap &Dependencies) {
+                                 DependencyMap &Dependencies,
+                                 bool IsProblemFile) {
   Module *CurrentModule = RootModule;
   DependentsVector &FileDependents = Dependencies[HeaderFilePath];
   std::string FilePath;
@@ -191,7 +197,7 @@ static bool addModuleDescription(Module *RootModule,
     Stem = ensureNoCollisionWithReservedName(Stem);
     Module *SubModule = CurrentModule->findSubModule(Stem);
     if (!SubModule) {
-      SubModule = new Module(Stem);
+      SubModule = new Module(Stem, IsProblemFile);
       CurrentModule->SubModules.push_back(SubModule);
     }
     CurrentModule = SubModule;
@@ -204,10 +210,11 @@ static bool addModuleDescription(Module *RootModule,
 // Create the internal module tree representation.
 static Module *loadModuleDescriptions(
     llvm::StringRef RootModuleName, llvm::ArrayRef<std::string> HeaderFileNames,
+    llvm::ArrayRef<std::string> ProblemFileNames,
     DependencyMap &Dependencies, llvm::StringRef HeaderPrefix) {
 
   // Create root module.
-  Module *RootModule = new Module(RootModuleName);
+  Module *RootModule = new Module(RootModuleName, false);
 
   llvm::SmallString<256> CurrentDirectory;
   llvm::sys::fs::current_path(CurrentDirectory);
@@ -220,8 +227,16 @@ static Module *loadModuleDescriptions(
   for (llvm::ArrayRef<std::string>::iterator I = HeaderFileNames.begin(),
                                              E = HeaderFileNames.end();
        I != E; ++I) {
+    std::string Header(*I);
+    bool IsProblemFile = false;
+    for (auto &ProblemFile : ProblemFileNames) {
+      if (ProblemFile == Header) {
+        IsProblemFile = true;
+        break;
+      }
+    }
     // Add as a module.
-    if (!addModuleDescription(RootModule, *I, HeaderPrefix, Dependencies))
+    if (!addModuleDescription(RootModule, Header, HeaderPrefix, Dependencies, IsProblemFile))
       return nullptr;
   }
 
@@ -277,11 +292,14 @@ static bool writeModuleMap(llvm::StringRef ModuleMapPath,
 // Module map generation entry point.
 bool createModuleMap(llvm::StringRef ModuleMapPath,
                      llvm::ArrayRef<std::string> HeaderFileNames,
+                     llvm::ArrayRef<std::string> ProblemFileNames,
                      DependencyMap &Dependencies, llvm::StringRef HeaderPrefix,
                      llvm::StringRef RootModuleName) {
   // Load internal representation of modules.
-  std::unique_ptr<Module> RootModule(loadModuleDescriptions(
-      RootModuleName, HeaderFileNames, Dependencies, HeaderPrefix));
+  std::unique_ptr<Module> RootModule(
+    loadModuleDescriptions(
+      RootModuleName, HeaderFileNames, ProblemFileNames, Dependencies,
+      HeaderPrefix));
   if (!RootModule.get())
     return false;
 

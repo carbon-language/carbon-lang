@@ -58,6 +58,11 @@
 //          module to be created in the generated module.map file.  Note that
 //          you will likely need to edit this file to suit the needs of your
 //          headers.
+//    -problem-files-list=(problem files list file name)
+//          For use only with module map assistant.  Input list of files that
+//          have problems with respect to modules.  These will still be
+//          included in the generated module map, but will be marked as
+//          "excluded" headers.
 //    -root-module=(root module name)
 //          Specifies a root module to be created in the generated module.map
 //          file.
@@ -68,6 +73,14 @@
 //          Don't do the coverage check.
 //    -coverage-check-only
 //          Only do the coverage check.
+//    -display-file-lists
+//          Display lists of good files (no compile errors), problem files,
+//          and a combined list with problem files preceded by a '#'.
+//          This can be used to quickly determine which files have problems.
+//          The latter combined list might be useful in starting to modularize
+//          a set of headers.  You can start with a full list of headers,
+//          use -display-file-lists option, and then use the combined list as
+//          your intermediate list, uncommenting-out headers as you fix them.
 //
 // Note that by default, the modularize assumes .h files contain C++ source.
 // If your .h files in the file list contain another language, you should
@@ -274,8 +287,15 @@ static cl::opt<std::string> ModuleMapPath(
              " If no path is specified and if prefix option is specified,"
              " use prefix for file path."));
 
-// Option for assistant mode, telling modularize to output a module map
-// based on the headers list, and where to put it.
+// Option to specify list of problem files for assistant.
+// This will cause assistant to exclude these files.
+static cl::opt<std::string> ProblemFilesList(
+  "problem-files-list", cl::init(""),
+  cl::desc(
+  "List of files with compilation or modularization problems for"
+    " assistant mode.  This will be excluded."));
+
+// Option for assistant mode, telling modularize the name of the root module.
 static cl::opt<std::string>
 RootModule("root-module", cl::init(""),
            cl::desc("Specify the name of the root module."));
@@ -303,6 +323,12 @@ cl::desc("Don't do the coverage check."));
 static cl::opt<bool>
 CoverageCheckOnly("coverage-check-only", cl::init(false),
 cl::desc("Only do the coverage check."));
+
+// Option for displaying lists of good, bad, and mixed files.
+static cl::opt<bool>
+DisplayFileLists("display-file-lists", cl::init(false),
+cl::desc("Display lists of good files (no compile errors), problem files,"
+  " and a combined list with problem files preceded by a '#'."));
 
 // Save the program name for error messages.
 const char *Argv0;
@@ -704,6 +730,78 @@ private:
   int &HadErrors;
 };
 
+class CompileCheckVisitor
+  : public RecursiveASTVisitor<CompileCheckVisitor> {
+public:
+  CompileCheckVisitor() {}
+
+  bool TraverseStmt(Stmt *S) { return true; }
+  bool TraverseType(QualType T) { return true; }
+  bool TraverseTypeLoc(TypeLoc TL) { return true; }
+  bool TraverseNestedNameSpecifier(NestedNameSpecifier *NNS) { return true; }
+  bool TraverseNestedNameSpecifierLoc(NestedNameSpecifierLoc NNS) {
+    return true;
+  }
+  bool TraverseDeclarationNameInfo(DeclarationNameInfo NameInfo) {
+    return true;
+  }
+  bool TraverseTemplateName(TemplateName Template) { return true; }
+  bool TraverseTemplateArgument(const TemplateArgument &Arg) { return true; }
+  bool TraverseTemplateArgumentLoc(const TemplateArgumentLoc &ArgLoc) {
+    return true;
+  }
+  bool TraverseTemplateArguments(const TemplateArgument *Args,
+    unsigned NumArgs) {
+    return true;
+  }
+  bool TraverseConstructorInitializer(CXXCtorInitializer *Init) { return true; }
+  bool TraverseLambdaCapture(LambdaCapture C) { return true; }
+
+  // Check 'extern "*" {}' block for #include directives.
+  bool VisitLinkageSpecDecl(LinkageSpecDecl *D) {
+    return true;
+  }
+
+  // Check 'namespace (name) {}' block for #include directives.
+  bool VisitNamespaceDecl(const NamespaceDecl *D) {
+    return true;
+  }
+
+  // Collect definition entities.
+  bool VisitNamedDecl(NamedDecl *ND) {
+    return true;
+  }
+};
+
+class CompileCheckConsumer : public ASTConsumer {
+public:
+  CompileCheckConsumer() {}
+
+  void HandleTranslationUnit(ASTContext &Ctx) override {
+    CompileCheckVisitor().TraverseDecl(Ctx.getTranslationUnitDecl());
+  }
+};
+
+class CompileCheckAction : public SyntaxOnlyAction {
+public:
+  CompileCheckAction() {}
+
+protected:
+  std::unique_ptr<clang::ASTConsumer>
+    CreateASTConsumer(CompilerInstance &CI, StringRef InFile) override {
+    return llvm::make_unique<CompileCheckConsumer>();
+  }
+};
+
+class CompileCheckFrontendActionFactory : public FrontendActionFactory {
+public:
+  CompileCheckFrontendActionFactory() {}
+
+  CompileCheckAction *create() override {
+    return new CompileCheckAction();
+  }
+};
+
 int main(int Argc, const char **Argv) {
 
   // Save program name for error messages.
@@ -730,7 +828,7 @@ int main(int Argc, const char **Argv) {
 
   ModUtil.reset(
     ModularizeUtilities::createModularizeUtilities(
-      ListFileNames, HeaderPrefix));
+      ListFileNames, HeaderPrefix, ProblemFilesList));
 
   // Get header file names and dependencies.
   if (ModUtil->loadAllHeaderListsAndDependencies())
@@ -739,6 +837,7 @@ int main(int Argc, const char **Argv) {
   // If we are in assistant mode, output the module map and quit.
   if (ModuleMapPath.length() != 0) {
     if (!createModuleMap(ModuleMapPath, ModUtil->HeaderFileNames,
+                         ModUtil->ProblemFileNames,
                          ModUtil->Dependencies, HeaderPrefix, RootModule))
       return 1; // Failed.
     return 0;   // Success - Skip checks in assistant mode.
@@ -767,9 +866,36 @@ int main(int Argc, const char **Argv) {
     PreprocessorTracker::create(ModUtil->HeaderFileNames,
                                 BlockCheckHeaderListOnly));
 
-  // Parse all of the headers, detecting duplicates.
+  // Coolect entities here.
   EntityMap Entities;
-  ClangTool Tool(*Compilations, ModUtil->HeaderFileNames);
+
+  // Because we can't easily determine which files failed
+  // during the tool run, if we're collecting the file lists
+  // for display, we do a first compile pass on individual
+  // files to find which ones don't compile stand-alone.
+  if (DisplayFileLists) {
+    // First, make a pass to just get compile errors.
+    for (auto &CompileCheckFile : ModUtil->HeaderFileNames) {
+      llvm::SmallVector<std::string, 32> CompileCheckFileArray;
+      CompileCheckFileArray.push_back(CompileCheckFile);
+      ClangTool CompileCheckTool(*Compilations, CompileCheckFileArray);
+      CompileCheckTool.appendArgumentsAdjuster(
+        getModularizeArgumentsAdjuster(ModUtil->Dependencies));
+      int CompileCheckFileErrors = 0;
+      CompileCheckFrontendActionFactory CompileCheckFactory;
+      CompileCheckFileErrors |= CompileCheckTool.run(&CompileCheckFactory);
+      if (CompileCheckFileErrors != 0) {
+        ModUtil->addUniqueProblemFile(CompileCheckFile);   // Save problem file.
+        HadErrors |= 1;
+      }
+      else
+        ModUtil->addNoCompileErrorsFile(CompileCheckFile); // Save good file.
+    }
+  }
+
+  // Then we make another pass on the good files to do the rest of the work.
+  ClangTool Tool(*Compilations,
+    (DisplayFileLists ? ModUtil->GoodFileNames : ModUtil->HeaderFileNames));
   Tool.appendArgumentsAdjuster(
     getModularizeArgumentsAdjuster(ModUtil->Dependencies));
   ModularizeFrontendActionFactory Factory(Entities, *PPTracker, HadErrors);
@@ -816,6 +942,7 @@ int main(int Argc, const char **Argv) {
       for (LocationArray::iterator FE = DI->end(); FI != FE; ++FI) {
         errs() << "    " << FI->File->getName() << ":" << FI->Line << ":"
                << FI->Column << "\n";
+        ModUtil->addUniqueProblemFile(FI->File->getName());
       }
       HadErrors = 1;
     }
@@ -845,6 +972,7 @@ int main(int Argc, const char **Argv) {
     }
 
     HadErrors = 1;
+    ModUtil->addUniqueProblemFile(H->first->getName());
     errs() << "error: header '" << H->first->getName()
            << "' has different contents depending on how it was included.\n";
     for (unsigned I = 0, N = H->second.size(); I != N; ++I) {
@@ -853,6 +981,12 @@ int main(int Argc, const char **Argv) {
              << H->second[I].Loc.Line << ":" << H->second[I].Loc.Column
              << " not always provided\n";
     }
+  }
+
+  if (DisplayFileLists) {
+    ModUtil->displayProblemFiles();
+    ModUtil->displayGoodFiles();
+    ModUtil->displayCombinedFiles();
   }
 
   return HadErrors;

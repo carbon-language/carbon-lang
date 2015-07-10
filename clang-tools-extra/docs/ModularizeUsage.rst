@@ -59,6 +59,13 @@ Modularize Command Line Options
 
   Generate a module map and output it to the given file.  See the description
   in :ref:`module-map-generation`.
+  
+.. option:: -problem-files-list=<problem-files-list-file-name>
+
+  For use only with module map assistant.  Input list of files that
+  have problems with respect to modules.  These will still be
+  included in the generated module map, but will be marked as
+  "excluded" headers.
 
 .. option:: -root-module=<root-name>
 
@@ -79,3 +86,13 @@ Modularize Command Line Options
 .. option:: -coverage-check-only
 
   Only do the coverage check for a module map.
+
+.. option:: -display-file-lists
+
+  Display lists of good files (no compile errors), problem files,
+  and a combined list with problem files preceded by a '#'.
+  This can be used to quickly determine which files have problems.
+  The latter combined list might be useful in starting to modularize
+  a set of headers.  You can start with a full list of headers,
+  use -display-file-lists option, and then use the combined list as
+  your intermediate list, uncommenting-out headers as you fix them.

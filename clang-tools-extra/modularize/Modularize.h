@@ -37,6 +37,7 @@ typedef llvm::StringMap<DependentsVector> DependencyMap;
 /// Create the module map file.
 /// \param ModuleMapPath The path to the module map file to be generated.
 /// \param HeaderFileNames The list of header files, absolute native paths.
+/// \param ProblemFileNames The list of problem header files.
 /// \param Dependencies Map of headers that depend on other headers.
 /// \param HeaderPrefix Tells the code where the headers are, if they
 ///   aren's in the current directory, allowing the generator to strip
@@ -46,6 +47,7 @@ typedef llvm::StringMap<DependentsVector> DependencyMap;
 /// \returns True if successful.
 bool createModuleMap(llvm::StringRef ModuleMapPath,
                      llvm::ArrayRef<std::string> HeaderFileNames,
+                     llvm::ArrayRef<std::string> ProblemFileNames,
                      DependencyMap &Dependencies, llvm::StringRef HeaderPrefix,
                      llvm::StringRef RootModuleName);
 
