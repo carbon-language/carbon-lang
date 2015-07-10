@@ -30,6 +30,23 @@
 
 #define _LIBCPP_NAMESPACE _LIBCPP_CONCAT(__,_LIBCPP_ABI_VERSION)
 
+
+#ifndef __has_attribute
+#define __has_attribute(__x) 0
+#endif
+#ifndef __has_builtin
+#define __has_builtin(__x) 0
+#endif
+#ifndef __has_feature
+#define __has_feature(__x) 0
+#endif
+// '__is_identifier' returns '0' if '__x' is a reserved identifier provided by
+// the compiler and '1' otherwise.
+#ifndef __is_identifier
+#define __is_identifier(__x) 1
+#endif
+
+
 #ifdef __LITTLE_ENDIAN__
 #if __LITTLE_ENDIAN__
 #define _LIBCPP_LITTLE_ENDIAN 1
@@ -171,10 +188,6 @@
 #endif
 
 #endif // _WIN32
-
-#ifndef __has_attribute
-#define __has_attribute(__x) 0
-#endif
 
 #ifndef _LIBCPP_HIDDEN
 #define _LIBCPP_HIDDEN __attribute__ ((__visibility__("hidden")))
@@ -575,22 +588,12 @@ template <unsigned> struct __static_assert_check {};
 #endif  // _LIBCPP_HAS_NO_STATIC_ASSERT
 
 #ifdef _LIBCPP_HAS_NO_DECLTYPE
-# if defined(__clang__)
-#  define _CLANG_VER (__clang_major__ * 100 + __clang_minor__)
-# else
-#  define _CLANG_VER 0
-# endif
-// Clang 3.0 and GCC 4.6 provide __decltype in all standard modes.
-// XCode 5.0 is based off of Clang 3.3 SVN. We require Clang 3.3
-// be sure we have __decltype.
-#if (defined(__apple_build_version__) && _CLANG_VER >= 500) || \
-    (!defined(__apple_build_version__) && _CLANG_VER >= 303) || \
-    _GNUC_VER >= 406
+// GCC 4.6 provides __decltype in all standard modes.
+#if !__is_identifier(__decltype) || _GNUC_VER >= 406
 #  define decltype(__x) __decltype(__x)
 #else
 #  define decltype(__x) __typeof__(__x)
 #endif
-#undef _CLANG_VER
 #endif
 
 #ifdef _LIBCPP_HAS_NO_CONSTEXPR
@@ -609,14 +612,6 @@ template <unsigned> struct __static_assert_check {};
 #define _NOALIAS __attribute__((__malloc__))
 #else
 #define _NOALIAS
-#endif
-
-#ifndef __has_feature
-#define __has_feature(__x) 0
-#endif
-
-#ifndef __has_builtin
-#define __has_builtin(__x) 0
 #endif
 
 #if __has_feature(cxx_explicit_conversions) || defined(__IBMCPP__)
