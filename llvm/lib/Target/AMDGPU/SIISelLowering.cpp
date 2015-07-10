@@ -452,7 +452,12 @@ SDValue SITargetLowering::LowerParameter(SelectionDAG &DAG, EVT VT, EVT MemVT,
                                true, // isNonTemporal
                                true, // isInvariant
                                Align); // Alignment
-    return DAG.getNode(ISD::FP16_TO_FP, SL, VT, Load);
+    SDValue Ops[] = {
+      DAG.getNode(ISD::FP16_TO_FP, SL, VT, Load),
+      Load.getValue(1)
+    };
+
+    return DAG.getMergeValues(Ops, SL);
   }
 
   ISD::LoadExtType ExtTy = Signed ? ISD::SEXTLOAD : ISD::ZEXTLOAD;
@@ -570,6 +575,8 @@ SDValue SITargetLowering::LowerFormalArguments(
 
   AnalyzeFormalArguments(CCInfo, Splits);
 
+  SmallVector<SDValue, 16> Chains;
+
   for (unsigned i = 0, e = Ins.size(), ArgIdx = 0; i != e; ++i) {
 
     const ISD::InputArg &Arg = Ins[i];
@@ -590,6 +597,7 @@ SDValue SITargetLowering::LowerFormalArguments(
       // thread group and global sizes.
       SDValue Arg = LowerParameter(DAG, VT, MemVT,  DL, Chain,
                                    Offset, Ins[i].Flags.isSExt());
+      Chains.push_back(Arg.getValue(1));
 
       const PointerType *ParamTy =
         dyn_cast<PointerType>(FType->getParamType(Ins[i].getOrigArgIndex()));
@@ -615,7 +623,8 @@ SDValue SITargetLowering::LowerFormalArguments(
       Reg = TRI->getMatchingSuperReg(Reg, AMDGPU::sub0,
                                      &AMDGPU::SReg_64RegClass);
       Reg = MF.addLiveIn(Reg, &AMDGPU::SReg_64RegClass);
-      InVals.push_back(DAG.getCopyFromReg(Chain, DL, Reg, VT));
+      SDValue Copy = DAG.getCopyFromReg(Chain, DL, Reg, VT);
+      InVals.push_back(Copy);
       continue;
     }
 
@@ -635,7 +644,9 @@ SDValue SITargetLowering::LowerFormalArguments(
       for (unsigned j = 1; j != NumElements; ++j) {
         Reg = ArgLocs[ArgIdx++].getLocReg();
         Reg = MF.addLiveIn(Reg, RC);
-        Regs.push_back(DAG.getCopyFromReg(Chain, DL, Reg, VT));
+
+        SDValue Copy = DAG.getCopyFromReg(Chain, DL, Reg, VT);
+        Regs.push_back(Copy);
       }
 
       // Fill up the missing vector elements
@@ -654,7 +665,11 @@ SDValue SITargetLowering::LowerFormalArguments(
         AMDGPU::SGPR_32RegClass.begin(), AMDGPU::SGPR_32RegClass.getNumRegs()));
     Info->ScratchOffsetReg = AMDGPU::SGPR_32RegClass.getRegister(ScratchIdx);
   }
-  return Chain;
+
+  if (Chains.empty())
+    return Chain;
+
+  return DAG.getNode(ISD::TokenFactor, DL, MVT::Other, Chains);
 }
 
 MachineBasicBlock * SITargetLowering::EmitInstrWithCustomInserter(
